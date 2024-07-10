@@ -27,15 +27,15 @@ import com.ibm.dtfj.corereaders.MemoryAccessException;
 /**
  * Represents the J9RAS structure from Java 6 SR06 when TID and PID fields were added to the RAS structure
  * Java 6 32 bit  : length = 0x240, version = 0x10000		PID+TID, No DDR
- * Java 6 64 bit  : length = 0x278, version = 0x10000		PID+TID, No DDR 
- * 
+ * Java 6 64 bit  : length = 0x278, version = 0x10000		PID+TID, No DDR
+ *
  * @author Adam Pilkington
  *
  */
 public class J9RASFragmentJ6SR6 implements J9RASFragment {
 	private long tid = 0;
 	private long pid = 0;
-	
+
 	/**
 	 * Create a Java 6 SR 5, version 1 J9RAS fragment
 	 * @param memory address space

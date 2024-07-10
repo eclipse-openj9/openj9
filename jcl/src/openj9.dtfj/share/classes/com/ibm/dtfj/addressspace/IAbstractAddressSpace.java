@@ -30,10 +30,10 @@ import com.ibm.dtfj.corereaders.MemoryRange;
 
 /**
  * @author jmdisher
- * The interface for the abstract interface.  Note that there will probably only ever be one implementer of 
+ * The interface for the abstract interface.  Note that there will probably only ever be one implementer of
  * this interface so it will probably be flattened once it is frozen
  */
-public interface IAbstractAddressSpace 
+public interface IAbstractAddressSpace
 {
 	/**
 	 * @return An iterator of the MemoryRange objects making up the address space
@@ -103,7 +103,7 @@ public interface IAbstractAddressSpace
 	 * @throws MemoryAccessException if the memory cannot be read
 	 */
 	public byte getByteAt(int asid, long address) throws MemoryAccessException;
-	
+
 	/**
 	 * @param asid an address space ID
 	 * @param address a byte-offset into the asid
@@ -111,7 +111,7 @@ public interface IAbstractAddressSpace
 	 * @throws MemoryAccessException if the memory cannot be read
 	 */
 	public long getPointerAt(int asid, long address) throws MemoryAccessException;
-	
+
 	/**
 	 * @param asid an address space ID
 	 * @param address a byte-offset into the asid
@@ -120,20 +120,20 @@ public interface IAbstractAddressSpace
 	 * @throws MemoryAccessException if the memory cannot be read
 	 */
 	public int getBytesAt(int asid, long address, byte[] buffer) throws MemoryAccessException;
-	
+
 	/**
 	 * Provided so that callers can determine more complicated memory geometry than what can be expressed
 	 * with offsets and the above scalar data readers.
 	 * @param asid The address space id.
 	 * @return The number of bytes which are required to express a native pointer in the underlying address
-	 * space. 
+	 * space.
 	 */
 	public int bytesPerPointer(int asid);
 
 	/**
 	 * This method is provided to appease JExtract by emulating part of the old API which is used
 	 * by the JExtract natives. Also used to search for the J9RAS structure in J9RASReader.java
-	 * 
+	 *
 	 * @param whatBytes The pattern to search for
 	 * @param alignment The alignment boundary where the pattern can be expected to start
 	 * @param startFrom The first memory address to start searching in
@@ -144,7 +144,7 @@ public interface IAbstractAddressSpace
 	/**
 	 * This method is provided to appease JExtract by emulating part of the old API which is used
 	 * by the JExtract natives.
-	 * 
+	 *
 	 * @param vaddr
 	 * @param size
 	 * @return

@@ -29,20 +29,20 @@ public interface ImageRegister {
 
     /**
      * Get the name of the register.
-     * 
+     *
      * @return The conventional name of the register
      */
     public String getName();
-    
+
     /**
      * Get the value of the register.
-     * 
+     *
      * @return An integral or floating point type which contains the value of the register. The returned value may be
      * an instance of any subclass of Number. On 32-bit and 31-bit platforms the value is usually an Integer, and on
      * 64-bit platforms the value is usually a Long. On x86 architectures with MMX, the XMM registers are returned as
      * BigInteger.
-     * @throws CorruptDataException 
+     * @throws CorruptDataException
      */
     public Number getValue() throws CorruptDataException;
-    
+
 }

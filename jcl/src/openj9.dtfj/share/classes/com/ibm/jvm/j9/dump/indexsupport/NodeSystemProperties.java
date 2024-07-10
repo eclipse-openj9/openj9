@@ -33,19 +33,19 @@ import com.ibm.dtfj.java.j9.JavaRuntime;
 public class NodeSystemProperties extends NodeAbstract
 {
 	private JavaRuntime _runtime;
-	
+
 	public NodeSystemProperties(JavaRuntime runtime, Attributes attributes)
 	{
 		_runtime = runtime;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.jvm.j9.dump.indexsupport.IParserNode#nodeToPushAfterStarting(java.lang.String, java.lang.String, java.lang.String, org.xml.sax.Attributes)
 	 */
 	public IParserNode nodeToPushAfterStarting(String uri, String localName, String qName, Attributes attributes)
 	{
 		IParserNode child = null;
-		
+
 		if (qName.equals("property")) {
 			child = new NodeProperty(_runtime, attributes);
 		} else {

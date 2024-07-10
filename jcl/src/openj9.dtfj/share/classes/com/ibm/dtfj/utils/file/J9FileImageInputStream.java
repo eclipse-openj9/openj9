@@ -33,7 +33,7 @@ public class J9FileImageInputStream extends FileImageInputStream {
 	private final ManagedImageSource source;
 	private final File file;
 	private final RandomAccessFile raf;
-	
+
 	public J9FileImageInputStream(File f, ManagedImageSource source) throws FileNotFoundException,	IOException {
 		super(f);
 		this.file = f;
@@ -74,5 +74,5 @@ public class J9FileImageInputStream extends FileImageInputStream {
 			return "file:unknown";
 		}
 	}
-	
+
 }

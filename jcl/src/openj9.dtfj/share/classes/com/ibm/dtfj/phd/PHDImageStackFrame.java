@@ -57,7 +57,7 @@ public class PHDImageStackFrame implements ImageStackFrame {
 			procName_cd = new PHDCorruptData(space, e);
 		}
 	}
-	
+
 	public ImagePointer getBasePointer() throws CorruptDataException {
 		if (base_cd != null) throw new CorruptDataException(base_cd);
 		return base;

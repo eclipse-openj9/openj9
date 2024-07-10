@@ -35,11 +35,11 @@ import com.ibm.java.diagnostics.utils.plugins.PluginConstants;
 
 /**
  * Command which allows control of the loaded plugins
- * 
+ *
  * @author adam
  *
  */
-public class PluginCommand extends BaseCommand 
+public class PluginCommand extends BaseCommand
 {
 	private static final String COMMAND_NAME = "plugins";
 	private static final String SUBCOMMAND_LIST = "list";
@@ -47,8 +47,8 @@ public class PluginCommand extends BaseCommand
 	private static final String SUBCOMMAND_SHOWPATH = "showpath";
 	private static final String SUBCOMMAND_SETPATH = "setpath";
 
-	private final Map<String, Method> commands = new HashMap<String, Method>(); 
-	
+	private final Map<String, Method> commands = new HashMap<String, Method>();
+
 	{
 		try {
 			commands.put(SUBCOMMAND_LIST, getClass().getDeclaredMethod("commandListPlugins", new Class[] {String[].class, IContext.class, PrintStream.class}));
@@ -59,17 +59,17 @@ public class PluginCommand extends BaseCommand
 			System.err.println("Error creating command list : " + e.getMessage());
 		}
 	}
-	
+
 	public PluginCommand()
 	{
 		addCommand(COMMAND_NAME, "", "Plugin management commands");
 		addSubCommand(COMMAND_NAME, SUBCOMMAND_LIST, "", "Show the list of loaded plugins for the current context");
-		addSubCommand(COMMAND_NAME, SUBCOMMAND_RELOAD, "", "Reload plugins for the current context");		
-		addSubCommand(COMMAND_NAME, SUBCOMMAND_SHOWPATH, "", "Show the DTFJ View plugin search path for the current context");		
-		addSubCommand(COMMAND_NAME, SUBCOMMAND_SETPATH, "", "Set the DTFJ View plugin search path for the current context");		
+		addSubCommand(COMMAND_NAME, SUBCOMMAND_RELOAD, "", "Reload plugins for the current context");
+		addSubCommand(COMMAND_NAME, SUBCOMMAND_SHOWPATH, "", "Show the DTFJ View plugin search path for the current context");
+		addSubCommand(COMMAND_NAME, SUBCOMMAND_SETPATH, "", "Set the DTFJ View plugin search path for the current context");
 	}
-	
-	public void run(String command, String[] args, IContext context,	PrintStream out) throws CommandException 
+
+	public void run(String command, String[] args, IContext context,	PrintStream out) throws CommandException
 	{
 		if(args.length == 0) {
 			out.println("Error, all plugin commands require one or more parameters");
@@ -89,7 +89,7 @@ public class PluginCommand extends BaseCommand
 			out.println(COMMAND_NAME + " " + command + " was not recognised, run " + COMMAND_NAME + " " + SUBCOMMAND_LIST + " to see all available options");
 		}
 	}
-	
+
 	@SuppressWarnings("unused")
 	private void commandListPlugins(String[] args, IContext context, PrintStream out) throws CommandException {
 		boolean csv = false;
@@ -110,7 +110,7 @@ public class PluginCommand extends BaseCommand
 		printPlugins("Loaded plugins", plugins, out, csv);
 		printPlugins("Failed plugins", pluginFailures, out, csv);
 	}
-	
+
 	private void printPlugins(String msg, ArrayList<PluginConfig> plugins, PrintStream out, boolean csv) {
 		if(!csv) {
 			out.println(msg);
@@ -127,7 +127,7 @@ public class PluginCommand extends BaseCommand
 			}
 		}
 	}
-	
+
 	private void commandShowPath(String[] args, IContext context, PrintStream out) {
 		String path = System.getProperty(PluginConstants.PLUGIN_SYSTEM_PROPERTY);
 		if(null == path) {
@@ -137,7 +137,7 @@ public class PluginCommand extends BaseCommand
 		}
 		out.println("DTFJ View Plugin search path : " + path);
 	}
-	
+
 	/*
 	 * Sets where plugins will be loaded from
 	 */
@@ -151,7 +151,7 @@ public class PluginCommand extends BaseCommand
 		out.println("DTFJ View Plugin search path set to : " + args[1]);
 		out.println("Execute " + COMMAND_NAME + " " + SUBCOMMAND_RELOAD + " to scan this path for plugins");
 	}
-	
+
 	@SuppressWarnings("unused")
 	private void commandReload(String[] args, IContext context, PrintStream out) {
 		context.refresh();

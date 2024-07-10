@@ -23,18 +23,14 @@
 package com.ibm.dtfj.corereaders;
 
 public class StackFrame {
-	
+
 	long position;
 	long retAddr;
-	
-	
+
 	public StackFrame(long stackPosition, long retAddr)  {
 		this.retAddr = retAddr;
 		position = stackPosition;
 	}
-	 
-
- 
 
 	/**
 	 * @return Returns the position.
@@ -48,10 +44,10 @@ public class StackFrame {
 	public long getRetAddr() {
 		return retAddr;
 	}
-	
+
 	public String toString() {
 		StringBuffer sb= new StringBuffer( "(Bp: 0x");
-	 
+
 		String ra = Long.toHexString(position);
 //		ra = DumpUtils.padToPtrSize(ra);
 		sb.append( ra + ")");
@@ -62,11 +58,8 @@ public class StackFrame {
 			sb.append( "  <==");
 			sb.append(location);
 		}
-			 
+
 		return sb.toString();
-			
-		 
-		
-		
-	}	
+
+	}
 }

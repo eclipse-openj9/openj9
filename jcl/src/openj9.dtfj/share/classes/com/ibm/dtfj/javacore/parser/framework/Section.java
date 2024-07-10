@@ -27,31 +27,25 @@ import com.ibm.dtfj.javacore.parser.framework.tag.ITagParser;
 import com.ibm.dtfj.javacore.parser.j9.SovereignSectionParserPart;
 
 public class Section {
-	
+
 	private ISectionParser fSectionParser;
 	private ITagParser fTagParser;
 	private SovereignSectionParserPart fSovPart;
-	
-	
+
 	public Section (ISectionParser sectionParser, ITagParser tagParser,  SovereignSectionParserPart sovPart) {
 		fSectionParser = sectionParser;
 		fTagParser = tagParser;
 		fSovPart = sovPart;
 	}
 
-
-
-
-
 	public ISectionParser getSectionParser() {
 		return fSectionParser;
 	}
 
-
 	public ITagParser getTagParser() {
 		return fTagParser;
 	}
-	
+
 	public SovereignSectionParserPart getSovPart() {
 		return fSovPart;
 	}

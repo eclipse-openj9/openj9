@@ -27,17 +27,17 @@ import java.net.URLClassLoader;
 
 /**
  * Classloader to deal with the fact that in order to be able to shim ASM
- * onto the extensions classpath, some DTFJ classes need to be resolved 
- * by this loader rather than the parent loader (which will be the ext 
+ * onto the extensions classpath, some DTFJ classes need to be resolved
+ * by this loader rather than the parent loader (which will be the ext
  * loader). This is because the ext loader cannot see the ASM files.
- * 
+ *
  * @author adam
  *
  */
 public class PackageFilteredClassloader extends URLClassLoader {
 	private static final String PACKAGE_MASK = "com.ibm.java.diagnostics.utils.plugins.impl";
 	private ClassLoader parent;
-	
+
 	public PackageFilteredClassloader(URL[] urls, ClassLoader parent) {
 		super(urls, parent);
 		if(getParent() == null) {
@@ -55,10 +55,10 @@ public class PackageFilteredClassloader extends URLClassLoader {
 			this.parent = getParent();
 		}
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see java.lang.ClassLoader#loadClass(java.lang.String, boolean)
-	 * 
+	 *
 	 * Override the delegating model normally provided by this classloader.
 	 */
 	@Override
@@ -70,7 +70,7 @@ public class PackageFilteredClassloader extends URLClassLoader {
 				return findClass(name);
 			} catch (ClassNotFoundException e) {
 				return parent.loadClass(name);
-			}	
+			}
 		}
 		try {
 			return parent.loadClass(name);
@@ -79,5 +79,4 @@ public class PackageFilteredClassloader extends URLClassLoader {
 		}
 	}
 
-	
 }

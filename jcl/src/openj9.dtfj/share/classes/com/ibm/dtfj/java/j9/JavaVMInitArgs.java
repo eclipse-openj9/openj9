@@ -36,14 +36,14 @@ public class JavaVMInitArgs implements com.ibm.dtfj.java.JavaVMInitArgs
 	private boolean _ignoreUnrecognized;
 	private Vector _options = new Vector();
 	private ImageAddressSpace _addressSpace;
-	
+
 	public JavaVMInitArgs(ImageAddressSpace addressSpace, int version, boolean ignoreUnrecognized)
 	{
 		_version = version;
 		_ignoreUnrecognized = ignoreUnrecognized;
 		_addressSpace = addressSpace;
 	}
-	
+
 	public int getVersion() throws DataUnavailable, CorruptDataException
 	{
 		return _version;
@@ -58,7 +58,7 @@ public class JavaVMInitArgs implements com.ibm.dtfj.java.JavaVMInitArgs
 	{
 		return _options.iterator();
 	}
-	
+
 	public void addOption(String optionString, long extraInfo)
 	{
 		_options.add(new JavaVMOption(optionString, _addressSpace.getPointer(extraInfo)));

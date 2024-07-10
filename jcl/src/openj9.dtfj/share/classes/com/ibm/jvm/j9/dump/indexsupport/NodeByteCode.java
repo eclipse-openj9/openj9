@@ -38,7 +38,7 @@ public class NodeByteCode extends NodeAbstract
 		//<bytecode start="0x109e9068" end="0x109e9090"/>
 		long start = _longFromString(attributes.getValue("start"));
 		long end = _longFromString(attributes.getValue("end"));
-		
+
 		method.createNewBytecodeSection(start, end - start);
 	}
 }

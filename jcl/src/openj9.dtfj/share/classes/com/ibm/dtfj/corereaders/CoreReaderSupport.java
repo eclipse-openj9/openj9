@@ -43,23 +43,23 @@ public abstract class CoreReaderSupport implements ICoreFileReader {
 	public CoreReaderSupport(DumpReader reader) {
 		_reader = reader;
 	}
-	
+
 	protected int coreReadInt() throws IOException {
 		return _reader.readInt();
 	}
-	
+
 	protected void coreSeek(long position) throws IOException {
 		_reader.seek(position);
 	}
-	
+
 	protected long coreReadLong() throws IOException {
 		return _reader.readLong();
 	}
-	
+
 	protected long coreReadAddress() throws IOException {
 		return _reader.readAddress();
 	}
-	
+
 	protected short coreReadShort() throws IOException {
 		return _reader.readShort();
 	}
@@ -67,7 +67,7 @@ public abstract class CoreReaderSupport implements ICoreFileReader {
 	protected byte coreReadByte() throws IOException {
 		return _reader.readByte();
 	}
-	
+
 	protected byte[] coreReadBytes(int n) throws IOException {
 		return _reader.readBytes(n);
 	}
@@ -82,23 +82,23 @@ public abstract class CoreReaderSupport implements ICoreFileReader {
 				_addressSpace = new DumpReaderAddressSpace(ranges, _reader, isLittleEndian(), is64Bit());
 			}
 		}
-		
+
 		//initialize the J9RAS structure reader
 		if (_addressSpace != null) {
 			_j9rasReader = new J9RASReader(_addressSpace,is64Bit());
 		}
 		return _addressSpace;
 	}
-	
+
 	@Override
 	public boolean isTruncated() {
 		return false;
 	}
-	
+
 	protected long coreGetPosition() throws IOException {
 		return _reader.getPosition();
 	}
-	
+
 	protected boolean coreCheckOffset (long location) throws IOException {
 		boolean canRead;
 		long currentPos = coreGetPosition();

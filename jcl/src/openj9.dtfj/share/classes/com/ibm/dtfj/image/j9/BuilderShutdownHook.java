@@ -33,13 +33,13 @@ import com.ibm.dtfj.corereaders.ClosingFileReader;
 public class BuilderShutdownHook extends Thread
 {
 	List _openFiles = null;
-	
+
 	public BuilderShutdownHook()
 	{
 		super("BuilderShutdownHook"); //$NON-NLS-1$
 		_openFiles = new Vector();
 	}
-	
+
 	public void addFile(ClosingFileReader file)
 	{
 		_openFiles.add(new WeakReference(file));
@@ -62,6 +62,5 @@ public class BuilderShutdownHook extends Thread
 			}
 		}
 	}
-	
-	
+
 }

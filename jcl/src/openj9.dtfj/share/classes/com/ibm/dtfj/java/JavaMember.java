@@ -27,7 +27,7 @@ import com.ibm.dtfj.image.DataUnavailable;
 
 /**
  * <p>Base interface inherited by JavaField and JavaMethod.</p>
- * 
+ *
  * <p>This interface is modeled on java.lang.reflect.Member.</p>
  */
 public interface JavaMember {
@@ -36,7 +36,7 @@ public interface JavaMember {
 	 * Get the set of modifiers for this field or method - a set of bits
 	 * @return the modifiers for this field or method. The values for the constants representing
      * the modifiers can be obtained from java.lang.reflect.Modifier.
-	 * @throws CorruptDataException 
+	 * @throws CorruptDataException
      *
      */
     public int getModifiers()  throws CorruptDataException;
@@ -44,26 +44,26 @@ public interface JavaMember {
     /**
      * Get the class which declares this field or method
      * @return the JavaClass which declared this field or method
-     * @throws CorruptDataException 
-     * @throws DataUnavailable 
+     * @throws CorruptDataException
+     * @throws DataUnavailable
      */
     public JavaClass getDeclaringClass() throws CorruptDataException, DataUnavailable;
-    
+
     /**
      * Get the name of the field or method
      * @return the name of the field or method
-     * @throws CorruptDataException 
+     * @throws CorruptDataException
      */
     public String getName()  throws CorruptDataException;
-    
+
     /**
      * Get the signature of the field or method
      * @return the signature of the field or method.
      * e.g. "(Ljava/lang/String;)V"
-     * @throws CorruptDataException 
+     * @throws CorruptDataException
      */
     public String getSignature()  throws CorruptDataException;
-    
+
 	/**
 	 * @param obj
 	 * @return True if the given object refers to the same Java Member in the image

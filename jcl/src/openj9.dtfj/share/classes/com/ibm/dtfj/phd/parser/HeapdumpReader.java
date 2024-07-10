@@ -33,7 +33,7 @@ import com.ibm.dtfj.phd.util.*;
 import com.ibm.dtfj.phd.PHDJavaObject;
 
 /**
- *  This class parses a PHD format heapdump file. To use it, first create the object 
+ *  This class parses a PHD format heapdump file. To use it, first create the object
  *  (see {@link #HeapdumpReader}) passing the file name and then parse it (see {@link #parse})
  *  passing it an object that obeys the {@link com.ibm.dtfj.phd.parser.PortableHeapDumpListener} interface.
  */
@@ -76,7 +76,7 @@ public class HeapdumpReader extends Base {
 	/**
 	 * Create a new HeapdumpReader object from the given file. The file must be in Phd format.
 	 * Image must be supplied to allow us to clean up streams when it is closed.
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	public HeapdumpReader( File file, PHDImage image ) throws IOException {
 		this(file.getAbsolutePath());
@@ -84,31 +84,31 @@ public class HeapdumpReader extends Base {
 		// If image is null we will throw an NPE.
 		// This is intentional, this constructor should not be called without an image or
 		// there is no way to close streams when Image.close() is called and we leak file
-		// handles and block files from being closed. 
+		// handles and block files from being closed.
 		if( this.image == null ) {
 			// Throw NPE manually to provide an explanation.
 			throw new NullPointerException("PHDImage must be provided to allow streams to be cleaned up.");
 		}
 		this.image.registerReader(this);
 	}
-	
+
 	public HeapdumpReader(ImageInputStream stream, PHDImage image) throws IOException {
 		this(stream);
 		this.image = image;
 		// If image is null we will throw an NPE.
 		// This is intentional, this constructor should not be called without an image or
 		// there is no way to close streams when Image.close() is called and we leak file
-		// handles and block files from being closed. 
+		// handles and block files from being closed.
 		if( this.image == null ) {
 			// Throw NPE manually to provide an explanation.
 			throw new NullPointerException("PHDImage must be provided to allow streams to be cleaned up.");
 		}
 		this.image.registerReader(this);
 	}
-	
+
 	/**
 	 * Create a new HeapdumpReader object from the given stream. The file must be in Phd format.
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	protected HeapdumpReader(ImageInputStream stream) throws IOException {
 		this.filename="[data stream]";		//indicate that this came from a data stream not a file
@@ -116,11 +116,10 @@ public class HeapdumpReader extends Base {
 		dis = new DataStreamAdapter(stream);
 		processData();
 	}
-	
-	
+
 	/**
 	 * Create a new HeapdumpReader object from the given file. The file must be in Phd format.
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	protected HeapdumpReader(String filename) throws IOException {
 		if (dbg) System.out.println("opening file " + filename);
@@ -129,7 +128,7 @@ public class HeapdumpReader extends Base {
 		try {
 			if (filename.endsWith(".gz")) {
 				is = new BufferedInputStream(new GZIPInputStream(new FileInputStream(filename)));
-			} else {			
+			} else {
 				FileInputStream fis = new FileInputStream(filename);
 				is = new BufferedInputStream(fis);
 			}
@@ -139,7 +138,7 @@ public class HeapdumpReader extends Base {
 			try {
 				if (filename.endsWith(".gz")) {
 					is = new GZIPInputStream(new FileInputStream(filename));
-				} else {			
+				} else {
 					FileInputStream fis = new FileInputStream(filename);
 					is = new BufferedInputStream(fis);
 				}
@@ -230,9 +229,9 @@ public class HeapdumpReader extends Base {
 			IOException ioe = new IOException("Error parsing PHD file");
 			ioe.initCause(e);
 			throw ioe;
-		}	
+		}
 	}
-	
+
 	/**
 	 *  Returns the full version for the JVM that created this heapdump.
 	 */
@@ -260,7 +259,7 @@ public class HeapdumpReader extends Base {
 	public boolean isJ9() {
 		return j9;
 	}
-	
+
 	/**
 	 * Returns true all objects in this heap dump
 	 * will have hashcodes set, regardless of the
@@ -269,7 +268,7 @@ public class HeapdumpReader extends Base {
 	public boolean allObjectsHashed() {
 		return (dumpFlags & 2) != 0;
 	}
-	
+
 	/**
 	 * Returns the total number of objects in the dump.
 	 */
@@ -327,17 +326,17 @@ public class HeapdumpReader extends Base {
 	/**
 	 * Read the instance size from the stream if version 6 PHD or beyond.
 	 * <p>
-	 * In version 6 PHD and beyond, the instance size is present in the datastream for 
-	 * primitive and object arrays as an unsigned int with the size measured in 32-bit words, 
+	 * In version 6 PHD and beyond, the instance size is present in the datastream for
+	 * primitive and object arrays as an unsigned int with the size measured in 32-bit words,
 	 * i.e. the actual length divided by 4 (allows us to encode a length up to 16GB in an unsigned int)
 	 * <p>
-	 * For an object array, the instance size follows the count of number of elements.  
+	 * For an object array, the instance size follows the count of number of elements.
 	 * For a primitive array, the instance size follows the hash code if present.
 	 * <p>
 	 * Should the encoding for the instance size ever change, then this method should change and
 	 * so should the code in two other places:
 	 * 1. In the vm itself in heapdump.cpp
-	 * 2. In the code that generates a heapdump in dtfjview 
+	 * 2. In the code that generates a heapdump in dtfjview
 	 * @return the instance size or PHDJavaObject.UNSPECIFIED_INSTANCE_SIZE
 	 * @throws IOException
 	 */
@@ -345,8 +344,8 @@ public class HeapdumpReader extends Base {
 		// instance size is only present for version 6 or above
 		if (version >= 6) {
 			int val = dis.readInt();
-			// instance size is held in the PHD since PHD version 6     
-			// it is encoded in the datastream as an unsigned int with the value divided by 4 
+			// instance size is held in the PHD since PHD version 6
+			// it is encoded in the datastream as an unsigned int with the value divided by 4
 			// to make it possible to encode up to 16GB, so multiply by 4
 			return (MAX_UNSIGNED_INT_AS_LONG & (long)val) * 4;
 		} else {
@@ -398,32 +397,31 @@ public class HeapdumpReader extends Base {
 	/**
 	 * Reverse the order of the elements for an object array.
 	 * <p>
-	 * In a portable heapdump from the vm, the array elements are in reverse order, 
+	 * In a portable heapdump from the vm, the array elements are in reverse order,
 	 * because for historical reasons that is the order in which the gc iterator returns them.
-	 * <p> 
+	 * <p>
 	 * Reverse them here so that they are in the other order i.e. index order.
 	 * This means that they will come back from getReferences() in index order, which
 	 * is the order in which they are returned by DDR implementations of DTFJJavaObject.
 	 * <p>
-	 * Even though there is no guarantee in getReferences() about the order in which 
-	 * references will be returned, the jdmpview x/j command makes an implicit 
-	 * assumption that they are in index order when it prints the elements. 
-	 * So this reordering is necessary to make x/j show the array correctly. 
+	 * Even though there is no guarantee in getReferences() about the order in which
+	 * references will be returned, the jdmpview x/j command makes an implicit
+	 * assumption that they are in index order when it prints the elements.
+	 * So this reordering is necessary to make x/j show the array correctly.
 	 * See CMVC 193691
-	 * 
+	 *
 	 */
 	void reverseOrderOfRefs() {
 		int count = refEnum.numberOfElements();
-		long[] refs = new long[count];	
+		long[] refs = new long[count];
 		for (int i = 0; i < count; i++) {
-			refs[i] = (Long) refEnum.nextElement();			
+			refs[i] = (Long) refEnum.nextElement();
 		}
 		refStream.clear();
 
-
 		for (int i = count - 1; i >= 0; i--) {
 			refStream.writeLong(refs[i]);
-		}		
+		}
 		refStream.rewind();
 	}
 
@@ -675,7 +673,7 @@ public class HeapdumpReader extends Base {
 			}
 		}
 	}
-	
+
 	public void releaseResources() {
 		if( dis != null ) {
 			try {
@@ -695,7 +693,7 @@ public class HeapdumpReader extends Base {
 	 * <li>total objects
 	 * <li>total refs
 	 * </ul>
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	public static void main(String[] args) throws IOException {
 		HeapdumpReader reader = new HeapdumpReader(args[0]);
@@ -706,7 +704,7 @@ public class HeapdumpReader extends Base {
 		System.out.println("total refs = " + reader.totalRefs());
 		reader.close();
 	}
-	
+
 	/**
 	 * Used to adapt data retrieval calls between two incompatible streams
 	 * DataInputStream and ImageInputStream
@@ -716,17 +714,17 @@ public class HeapdumpReader extends Base {
 	private class DataStreamAdapter {
 		private final DataInputStream dis;
 		private final ImageInputStream iis;
-		
+
 		public DataStreamAdapter(ImageInputStream iis) {
 			this.iis = iis;
 			dis = null;
 		}
-		
+
 		public DataStreamAdapter(DataInputStream dis) {
 			this.dis = dis;
 			iis = null;
 		}
-		
+
 		public int readInt() throws IOException {
 			if(dis == null) {
 				return iis.readInt();
@@ -734,7 +732,7 @@ public class HeapdumpReader extends Base {
 				return dis.readInt();
 			}
 		}
-		
+
 		public int readUnsignedShort() throws IOException {
 			if(dis == null) {
 				return iis.readUnsignedShort();
@@ -742,7 +740,7 @@ public class HeapdumpReader extends Base {
 				return dis.readUnsignedShort();
 			}
 		}
-		
+
 		public int readUnsignedByte() throws IOException {
 			if(dis == null) {
 				return iis.readUnsignedByte();
@@ -750,7 +748,7 @@ public class HeapdumpReader extends Base {
 				return dis.readUnsignedByte();
 			}
 		}
-		
+
 		public void mark(int readlimit) {
 			if(dis == null) {
 				iis.mark();		//iis mark doesn't take a parameter
@@ -758,7 +756,7 @@ public class HeapdumpReader extends Base {
 				dis.mark(readlimit);
 			}
 		}
-		
+
 		public void reset() throws IOException {
 			if(dis == null) {
 				iis.reset();
@@ -766,7 +764,7 @@ public class HeapdumpReader extends Base {
 				dis.reset();
 			}
 		}
-		
+
 		public long readLong() throws IOException {
 			if(dis == null) {
 				return iis.readLong();
@@ -774,7 +772,7 @@ public class HeapdumpReader extends Base {
 				return dis.readLong();
 			}
 		}
-		
+
 		public short readShort() throws IOException {
 			if(dis == null) {
 				return iis.readShort();
@@ -782,7 +780,7 @@ public class HeapdumpReader extends Base {
 				return dis.readShort();
 			}
 		}
-		
+
 		public byte readByte() throws IOException {
 			if(dis == null) {
 				return iis.readByte();
@@ -790,7 +788,7 @@ public class HeapdumpReader extends Base {
 				return dis.readByte();
 			}
 		}
-		
+
 		public void readFully(byte[] buffer) throws IOException {
 			if(dis == null) {
 				iis.readFully(buffer);
@@ -798,7 +796,7 @@ public class HeapdumpReader extends Base {
 				dis.readFully(buffer);
 			}
 		}
-		
+
 		public void close() throws IOException {
 			if(dis == null) {
 				//ignore and do not close the image input stream as this will be handled by the PHD Image
@@ -806,7 +804,7 @@ public class HeapdumpReader extends Base {
 				dis.close();
 			}
 		}
-		
+
 		//allows all input sources to be closed and is used to signal the final closing
 		public void releaseResources() throws IOException {
 			if(dis == null) {

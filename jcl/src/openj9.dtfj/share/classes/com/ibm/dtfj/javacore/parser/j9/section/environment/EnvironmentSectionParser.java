@@ -45,7 +45,7 @@ public class EnvironmentSectionParser extends SectionParser implements IEnvironm
 
 	private IImageProcessBuilder fImageProcessBuilder;
 	private IJavaRuntimeBuilder fRuntimeBuilder;
-	
+
 	public EnvironmentSectionParser() {
 		super(ENVIRONMENT_SECTION);
 	}
@@ -55,23 +55,23 @@ public class EnvironmentSectionParser extends SectionParser implements IEnvironm
 	 * @throws ParserException
 	 */
 	protected void topLevelRule() throws ParserException {
-		
+
 		fImageProcessBuilder = fImageBuilder.getCurrentAddressSpaceBuilder().getCurrentImageProcessBuilder();
 		fRuntimeBuilder = fImageProcessBuilder.getCurrentJavaRuntimeBuilder();
-		
+
 		parseVersion();
 		parseUserArgs();
 		parseEnvironmentVars();
 		parseJVMMI();
 	}
-	
+
 	/**
-	 * Parse the version information (1CIJAVAVERSION, and lines) 
+	 * Parse the version information (1CIJAVAVERSION, and lines)
 	 * @throws ParserException
 	 */
 	private void parseVersion() throws ParserException {
 		IAttributeValueMap results = null;
-		
+
 		// Process the version lines
 		if ((results = processTagLineOptional(T_1CIJAVAVERSION)) != null) {
 			int pointerSize = results.getIntValue(ICommonTypes.POINTER_SIZE);
@@ -90,7 +90,7 @@ public class EnvironmentSectionParser extends SectionParser implements IEnvironm
 					}
 				} catch (NumberFormatException e) {
 					handleError("Error determining Java version", e);
-				}	
+				}
 			}
 			results = processTagLineOptional(T_1CIVMVERSION);
 			if (results != null) {
@@ -107,7 +107,7 @@ public class EnvironmentSectionParser extends SectionParser implements IEnvironm
 			if (javaversion != null) {
 				fRuntimeBuilder.setJavaVersion(javaversion);
 			}
-		} else {		
+		} else {
 			processTagLineOptional(T_1CIVMVERSION);
 			processTagLineOptional(T_1CIJITVERSION);
 			processTagLineOptional(T_1CIGCVERSION);
@@ -139,7 +139,7 @@ public class EnvironmentSectionParser extends SectionParser implements IEnvironm
 			}
 		}
 		processTagLineOptional(T_1CIRUNNINGAS);
-		
+
 		// 1CISTARTTIME   JVM start time: 2015/07/17 at 13:31:04:547
 		if ((results = processTagLineOptional(T_1CISTARTTIME)) != null) {
 			String dateTimeString = results.getTokenValue(START_TIME);
@@ -151,7 +151,7 @@ public class EnvironmentSectionParser extends SectionParser implements IEnvironm
 				}
 			}
 		}
-		
+
 		// 1CISTARTNANO   JVM start nanotime: 3534023113503
 		if ((results = processTagLineOptional(T_1CISTARTNANO)) != null) {
 			String nanoTimeString = results.getTokenValue(START_NANO);
@@ -159,14 +159,14 @@ public class EnvironmentSectionParser extends SectionParser implements IEnvironm
 				fRuntimeBuilder.setStartTimeNanos(Long.parseLong(nanoTimeString));
 			}
 		}
-		
+
 		if ((results = processTagLineOptional(T_1CIPROCESSID)) != null) {
 			String pidStr = results.getTokenValue(PID_STRING);
 			if( pidStr != null ) {
 				fImageBuilder.getCurrentAddressSpaceBuilder().getCurrentImageProcessBuilder().setID(pidStr);
 			}
 		}
-		
+
 		String cmdLine = null;
 		if ((results = processTagLineOptional(T_1CICMDLINE)) != null) {
 			cmdLine = results.getTokenValue(CMD_LINE);
@@ -237,14 +237,14 @@ public class EnvironmentSectionParser extends SectionParser implements IEnvironm
 		}
 		return javaversion;
 	}
-	
+
 	/**
-	 * Parse the user args information (1CIUSERARGS and 2CIUSERARG lines) 
+	 * Parse the user args information (1CIUSERARGS and 2CIUSERARG lines)
 	 * @throws ParserException
 	 */
 	private void parseUserArgs() throws ParserException {
 		IAttributeValueMap results = null;
-		
+
 		if ((results = processTagLineRequired(T_1CIUSERARGS)) != null) {
 			boolean added = false;
 			while((results = processTagLineOptional(T_2CIUSERARG)) != null) {
@@ -275,23 +275,23 @@ public class EnvironmentSectionParser extends SectionParser implements IEnvironm
 	}
 
 	/**
-	 * Parse (and ignore) the JVMMI information (1CIJVMMI lines) 
+	 * Parse (and ignore) the JVMMI information (1CIJVMMI lines)
 	 * @throws ParserException
 	 */
 	private void parseJVMMI() throws ParserException {
-		
+
 		// Process and ignore lines
 		processTagLineOptional(T_1CIJVMMI);
 		processTagLineOptional(T_2CIJVMMIOFF);
 	}
-		
+
 	/**
-	 * Parse the user args information (1CIUSERARGS and 2CIUSERARG lines) 
+	 * Parse the user args information (1CIUSERARGS and 2CIUSERARG lines)
 	 * @throws ParserException
 	 */
 	private void parseEnvironmentVars() throws ParserException {
 		IAttributeValueMap results = null;
-		
+
 		results = processTagLineOptional(T_1CIENVVARS);
 		if (results != null) {
 			while ((results = processTagLineOptional(T_2CIENVVAR)) != null) {
@@ -303,7 +303,7 @@ public class EnvironmentSectionParser extends SectionParser implements IEnvironm
 			}
 		}
 	}
-	
+
 	/**
 	 * Empty hook for now.
 	 */

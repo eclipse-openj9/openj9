@@ -30,10 +30,10 @@ import com.ibm.dtfj.javacore.parser.j9.IAttributeValueMap;
 import com.ibm.dtfj.javacore.parser.j9.SectionParser;
 
 public class MemorySectionParser extends SectionParser implements IMemoryTypes {
-	
+
 	private IImageAddressSpaceBuilder fImageAddressSpaceBuilder;
 	private IImageProcessBuilder fImageProcessBuilder;
-	
+
 	public MemorySectionParser() {
 		super(MEMORY_SECTION);
 	}
@@ -43,13 +43,13 @@ public class MemorySectionParser extends SectionParser implements IMemoryTypes {
 	 * @throws ParserException
 	 */
 	protected void topLevelRule() throws ParserException {
-		
-		// get access to DTFJ AddressSpace and ImageProcess objects 
+
+		// get access to DTFJ AddressSpace and ImageProcess objects
 		fImageAddressSpaceBuilder = fImageBuilder.getCurrentAddressSpaceBuilder();
 		if (fImageAddressSpaceBuilder != null) {
 			fImageProcessBuilder = fImageAddressSpaceBuilder.getCurrentImageProcessBuilder();
 		}
-		
+
 		memInfo();
 	}
 
@@ -64,11 +64,11 @@ public class MemorySectionParser extends SectionParser implements IMemoryTypes {
 		// Heap information
 		results = processTagLineOptional(T_1STHEAPALLOC);
 		results = processTagLineOptional(T_1STHEAPFREE);
-		
+
 		while ((results = processTagLineOptional(T_1STSEGTYPE)) != null) {
 			// The segment type
 			String segName = results.getTokenValue(MEMORY_SEGMENT_NAME);
-			
+
 			// Each segment
 			while ((results = processTagLineOptional(T_1STSEGMENT)) != null) {
 

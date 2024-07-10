@@ -50,10 +50,9 @@ public class ImageModule implements com.ibm.dtfj.image.ImageModule
 			_symbols.add(symbols.next());
 		}
 		_properties = properties;
-		
+
 		_loadAddress=loadAddress;
 
-		
 	}
 
 	/* (non-Javadoc)

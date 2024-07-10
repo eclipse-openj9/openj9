@@ -28,7 +28,7 @@ import com.ibm.dtfj.java.JavaClass;
 import com.ibm.dtfj.java.JavaObject;
 import com.ibm.dtfj.java.JavaReference;
 
-/** 
+/**
  * @author ajohnson
  */
 class PHDJavaReference implements JavaReference {
@@ -39,7 +39,7 @@ class PHDJavaReference implements JavaReference {
 	private final int ref;
 	private final int root;
 	private final String desc;
-	
+
 	PHDJavaReference(Object target, Object source, int reach, int ref, int root, String desc) {
 		this.target = target;
 		this.source = source;
@@ -106,7 +106,7 @@ class PHDJavaReference implements JavaReference {
 		}
 		this.desc = desc;
 	}
-	
+
 	public String getDescription() {
 		return desc;
 	}
@@ -155,13 +155,13 @@ class PHDJavaReference implements JavaReference {
 		}
 		return false;
 	}
-	
+
 	public int hashCode() {
 		return (target != null ? target.hashCode() : 0) ^
 			(source != null && source != target ? source.hashCode() : 0) ^
-			reach ^ ref ^ root ^ (getDescription() != null ? getDescription().hashCode() : 0);  		
+			reach ^ ref ^ root ^ (getDescription() != null ? getDescription().hashCode() : 0);
 	}
-	
+
 	public String toString() {
 		return getClass().getName()+"["+target+","+source+","+desc+"]";
 	}

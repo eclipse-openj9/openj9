@@ -26,12 +26,12 @@ import com.ibm.dtfj.corereaders.MemoryAccessException;
 
 /**
  * Represents the basic J9RAS structure found in all Java versions
- 	U_8 eyecatcher[8];
+	U_8 eyecatcher[8];
 	U_32 bitpattern1;
 	U_32 bitpattern2;
 	I_32 version;
 	I_32 length;
- * 
+ *
  * @author Adam Pilkington
  *
  */
@@ -46,7 +46,7 @@ public class J9RAS implements J9RASFragment {
 	private boolean valid = false;	//flag to indicate if this structure is valid or not
 	private J9RASFragment fragment = null;	//the underlying fragment which is specific to the version of the VM in the core file
 	private Memory memory = null;	//reference to the enclosing address space - used for equality tests
-	
+
 	public J9RAS (Memory memory, long address) throws MemoryAccessException {
 		this.address = address;
 		integrity = memory.getLongAt(address + 8);	//read the integrity bytes
@@ -56,33 +56,33 @@ public class J9RAS implements J9RASFragment {
 			this.memory = memory;
 		}
 	}
-	
+
 	/**
-	 * Processes the core J9RAS information (length and version) to determine which 
+	 * Processes the core J9RAS information (length and version) to determine which
 	 * underlying J9RAS fragment to create.
-	 * 
+	 *
 	 *  32 bit
 	 *  	Java 5 < SR10 : length < 0x120, version =  0x10000		No TID, PID or DDR
 	 *  	Java 5 = SR10 : length = 0x120, version =  0x10000		TID + PID, No DDR
 	 *  	Java 5 = SR12 : length = 0x128, version >= 0x20000		TID+PID+DDR (there is a 4 byte padding field present as well as the DDR pointer)
-	 *  
+	 *
 	 *   	Java 6 < SR5  : length < 0x240, version =  0x10000		No TID, PID or DDR
 	 *      Java 6 >=SR6  : length = 0x240, version =  0x10000		PID+TID, No DDR
 	 *      Java 6 >=SR9  : length = 0x248, version >= 0x20000		PID+TID+DDR
 	 *      Java 6 >=SR10 : length = 0x328, version >= 0x30000		PID+TID+DDR, long hostname
 	 *      Java 7 = GA   : length = 0x328, version >= 0x30000		PID+TID+DDR, long hostname
-	 *      
+	 *
 	 *  64 bit
 	 *  	Java 5 < SR10 : length < 0x158, version =  0x10000		No TID, PID or DDR
 	 *  	Java 5 = SR10 : length = 0x158, version =  0x10000		TID + PID, No DDR
 	 *  	Java 5 = SR11 : length = 0x160, version >= 0x20000		TID+PID+DDR
-	 *  
+	 *
 	 *      Java 6 = GA   : length < 0x278, version =  0x10000		No TID, PID or DDR
 	 *      Java 6 >=SR6  : length = 0x278, version =  0x10000		PID+TID, No DDR
 	 *      Java 6 >=SR9  : length = 0x280, version >= 0x20000		PID+TID+DDR
 	 *      Java 6 >=SR10 : length = 0x360, version >= 0x30000		PID+TID+DDR + long hostname
 	 *      Java 7 = GA   : length = 0x360, version >= 0x30000		PID+TID+DDR + long hostname
-	 *  
+	 *
 	 * @param memory
 	 * @throws MemoryAccessException
 	 */
@@ -102,7 +102,7 @@ public class J9RAS implements J9RASFragment {
 	 * @throws MemoryAccessException re-thrown from the memory
 	 */
 	private void process64bitStructure(Memory memory) throws MemoryAccessException {
-		
+
 		if(length < 0x260) {						//Java 5
 			if(version >= 0x20000) {
 				//TID+PID+DDR
@@ -130,7 +130,7 @@ public class J9RAS implements J9RASFragment {
 			}
 		}
 	}
-	
+
 	/**
 	 * Determine the J9RAS fragment to use based on length of the J9RAS structure
 	 * @param memory memory to use
@@ -145,7 +145,7 @@ public class J9RAS implements J9RASFragment {
 				if(length == 0x120) {				//supported, no DDR
 						fragment = new J9RASFragmentJ5SR10(memory, address, false);
 				} else {							//not supported
-					fragment = new J9RASFragmentJ5GA();	
+					fragment = new J9RASFragmentJ5GA();
 				}
 			}
 		} else {									//Java 6 or later
@@ -164,7 +164,7 @@ public class J9RAS implements J9RASFragment {
 			}
 		}
 	}
-	
+
 	/**
 	 * Flag to indicate if this represents a valid J9RAS structure
 	 * @return true if this is a valid structure
@@ -172,7 +172,7 @@ public class J9RAS implements J9RASFragment {
 	public boolean isValid() {
 		return valid;
 	}
-	
+
 	/**
 	 * Get the version of the J9RAS structure
 	 * @return version
@@ -196,7 +196,7 @@ public class J9RAS implements J9RASFragment {
 	public long getAddress() {
 		return address;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 * J9RAS structures are considered equal if they have the same address within the same address space
@@ -252,6 +252,5 @@ public class J9RAS implements J9RASFragment {
 		}
 		throw new UnsupportedOperationException("Get TID() is not supported as this is not a valid J9RAS structure");
 	}
-	
-	
+
 }

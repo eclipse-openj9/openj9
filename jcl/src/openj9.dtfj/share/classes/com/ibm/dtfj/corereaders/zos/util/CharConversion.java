@@ -76,7 +76,7 @@ public class CharConversion {
     }
 
     /**
-     * Null terminates the given array. 
+     * Null terminates the given array.
      * @param buf the array to be null terminated
      * @return a copy of the array but with an extra zero byte at the end
      */
@@ -105,7 +105,7 @@ public class CharConversion {
         "\u0030\u0031\u0032\u0033\u0034\u0035\u0036\u0037" + 	// 0xF0 - 0xF7
         "\u0038\u0039\u00B3\u00DB\u00DC\u00D9\u00DA\u009F" + 	// 0xF8 - 0xFF
         "\u0000\u0001\u0002\u0003\u009C\u0009\u0086\u007F" + 	// 0x00 - 0x07
-        "\u0097\u008D\u008E\u000B\u000C\r\u000E\u000F" + 	    // 0x08 - 0x0F 
+        "\u0097\u008D\u008E\u000B\u000C\r\u000E\u000F" + 	    // 0x08 - 0x0F
         "\u0010\u0011\u0012\u0013\u009D\n\u0008\u0087" + 	    // 0x10 - 0x17
         "\u0018\u0019\u0092\u008F\u001C\u001D\u001E\u001F" + 	// 0x18 - 0x1F
         "\u0080\u0081\u0082\u0083\u0084\u0085\u0017\u001B" + 	// 0x20 - 0x27
@@ -124,7 +124,7 @@ public class CharConversion {
     private final static String charToByteTable_str =
 
         "\u0000\u0001\u0002\u0003\u0037\u002D\u002E\u002F" +
-        "\u0016\u0005\u0015\u000B\u000C\r\u000E\u000F" +      
+        "\u0016\u0005\u0015\u000B\u000C\r\u000E\u000F" +
         "\u0010\u0011\u0012\u0013\u003C\u003D\u0032\u0026" +
         "\u0018\u0019\u003F\u0027\u001C\u001D\u001E\u001F" +
         "\u0040\u005A\u007F\u007B\u005B\u006C\u0050\u007D" +
@@ -139,7 +139,7 @@ public class CharConversion {
         "\u0088\u0089\u0091\u0092\u0093\u0094\u0095\u0096" +
         "\u0097\u0098\u0099\u00A2\u00A3\u00A4\u00A5\u00A6" +
         "\u00A7\u00A8\u00A9\u00C0\u004F\u00D0\u00A1\u0007" +
-        "\u0020\u0021\"\u0023\u0024\u0025\u0006\u0017" +      
+        "\u0020\u0021\"\u0023\u0024\u0025\u0006\u0017" +
         "\u0028\u0029\u002A\u002B\u002C\t\n\u001B" +
         "\u0030\u0031\u001A\u0033\u0034\u0035\u0036\u0008" +
         "\u0038\u0039\u003A\u003B\u0004\u0014\u003E\u00FF" +

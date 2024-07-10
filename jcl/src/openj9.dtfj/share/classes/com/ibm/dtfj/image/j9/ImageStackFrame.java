@@ -53,7 +53,6 @@ public class ImageStackFrame implements com.ibm.dtfj.image.ImageStackFrame
 		return _basePointer;
 	}
 
-
 	public String getProcedureName() throws CorruptDataException
 	{
 		if (null == _procedureName) {
@@ -76,7 +75,7 @@ public class ImageStackFrame implements com.ibm.dtfj.image.ImageStackFrame
 							bestDelta = delta;
 						}
 					} catch (DataUnavailable e) {
-					} catch (CorruptDataException e) {					
+					} catch (CorruptDataException e) {
 					}
 					try {
 						for (Iterator j = process.getLibraries(); j.hasNext(); ) {
@@ -92,7 +91,7 @@ public class ImageStackFrame implements com.ibm.dtfj.image.ImageStackFrame
 							}
 						}
 					} catch (DataUnavailable e) {
-					} catch (CorruptDataException e) {					
+					} catch (CorruptDataException e) {
 					}
 				}
 			}
@@ -151,8 +150,7 @@ public class ImageStackFrame implements com.ibm.dtfj.image.ImageStackFrame
 		}
 		return delta;
 	}
-	
-	
+
 	private ImageSymbol getClosestSymbolFrom(ImageModule module) {
 		long pc = _procedureAddress.getAddress();
 		long maxDifference = Long.MAX_VALUE;
@@ -171,25 +169,23 @@ public class ImageStackFrame implements com.ibm.dtfj.image.ImageStackFrame
 		return closestSymbol;
 	}
 
-
-
 // riccole commented out as not used (let me know if you need this code)
 //	/*
 //	 * Returns the ImageModule pointed to by this ImageStackFrame.
 //	 * The returned module is the one for which the following conditions hold:
 //	 * 1. the module's load address is less than or equal to this frame's procedureAddress;
 //	 * 2. the difference between this frame's procedureAddress and the module's load address is minimal.
-//	 * If, for any module, the load address is not available, then the difference between this frame's procedureAddress and the module's 
+//	 * If, for any module, the load address is not available, then the difference between this frame's procedureAddress and the module's
 //	 * first symbol address is taken into account, but this strategy is used as a backup, since it's expensive.
-//	 * At the moment, the only platform for which we're not able to determine the load address of a module (actually, of any module) 
-//	 * is z/OS, but on z/OS we don't really need it, since the stack frame's procedureName is built using DsaStackFrames.  
-//	 * 
+//	 * At the moment, the only platform for which we're not able to determine the load address of a module (actually, of any module)
+//	 * is z/OS, but on z/OS we don't really need it, since the stack frame's procedureName is built using DsaStackFrames.
+//	 *
 //	 * Returns null if  no module has a load address AND no module has any symbol.
 //	 */
 //	private ImageModule getModule() {
 //		ImageProcess process = _space.getCurrentProcess();
 //		long pc = _procedureAddress.getAddress();
-//		long delta = Long.MAX_VALUE; 
+//		long delta = Long.MAX_VALUE;
 //		ImageModule module = null;
 //		if ((null != process) && (pc != ((1L << process.getPointerSize()) - 1))) {
 //			try {
@@ -207,14 +203,14 @@ public class ImageStackFrame implements com.ibm.dtfj.image.ImageStackFrame
 //						delta = pc-firstSymbolAddress;
 //						module = executable;
 //					}
-//					
+//
 //				}
 //			} catch (DataUnavailable e) {
 //				// Ignore
 //			} catch (CorruptDataException e) {
 //
 //			}
-//			
+//
 //			try {
 //				for (Iterator iter = process.getLibraries(); iter.hasNext();) {
 //					Object candidate = iter.next();
@@ -245,7 +241,7 @@ public class ImageStackFrame implements com.ibm.dtfj.image.ImageStackFrame
 //		}
 //		return module;
 //	}
-	
+
 //	riccole commented out as not used (let me know if you need this code)
 //	private long getFirstSymbolAddressFrom(ImageModule module) {
 //		long firstSymbolAddress = Long.MAX_VALUE;
@@ -261,5 +257,5 @@ public class ImageStackFrame implements com.ibm.dtfj.image.ImageStackFrame
 //		}
 //		return firstSymbolAddress;
 //	}
-	
+
 }

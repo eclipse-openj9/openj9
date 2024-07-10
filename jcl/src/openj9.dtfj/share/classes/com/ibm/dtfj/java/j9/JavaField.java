@@ -50,7 +50,7 @@ public abstract class JavaField implements com.ibm.dtfj.java.JavaField
 	private String _signature;
 	private int _modifiers;
 	private long _declaringClassID;
-	
+
 	protected JavaField(JavaRuntime vm, String name, String signature, int modifiers, long declaringClassID)
 	{
 		if (null == vm) {
@@ -94,7 +94,7 @@ public abstract class JavaField implements com.ibm.dtfj.java.JavaField
 			throw new IllegalArgumentException("unidentified object signature ["+getSignature()+"]");
 		}
 	}
-	
+
 	public long getLong(JavaObject object) throws CorruptDataException, MemoryAccessException {
 		if (getSignature().equals(LONG_SIGNATURE)) {
 			// should not happen - handled in subclasses
@@ -112,7 +112,7 @@ public abstract class JavaField implements com.ibm.dtfj.java.JavaField
 		}
 
 	}
-	
+
 	public double getDouble(JavaObject object) throws CorruptDataException, MemoryAccessException
 	{
 		if (getSignature().equals(DOUBLE_SIGNATURE)) {
@@ -134,7 +134,7 @@ public abstract class JavaField implements com.ibm.dtfj.java.JavaField
 			throw new IllegalArgumentException("unexpected object signature ["+getSignature()+"] cannot retrieve double");
 		}
 	}
-	
+
 	public float getFloat(JavaObject object) throws CorruptDataException, MemoryAccessException {
 		if (getSignature().equals(FLOAT_SIGNATURE)) {
 			// should not happen - handled in subclasses
@@ -169,7 +169,7 @@ public abstract class JavaField implements com.ibm.dtfj.java.JavaField
 			throw new IllegalArgumentException("unexpected object signature ["+getSignature()+"] cannot retrieve int");
 		}
 	}
-	
+
 	public short getShort(JavaObject object) throws CorruptDataException, MemoryAccessException
 	{
 		if (getSignature().equals(SHORT_SIGNATURE)) {
@@ -182,9 +182,8 @@ public abstract class JavaField implements com.ibm.dtfj.java.JavaField
 		}
 	}
 
-	
 	protected abstract Object getReferenceType(JavaObject object) throws CorruptDataException, MemoryAccessException;
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.dtfj.java.JavaMember#getModifiers()
 	 */
@@ -203,7 +202,7 @@ public abstract class JavaField implements com.ibm.dtfj.java.JavaField
 			throw new CorruptDataException(new CorruptData("Unknown declaring class ID " + _declaringClassID, null));
 		}
 		return ret;
-		
+
 	}
 
 	/* (non-Javadoc)
@@ -221,18 +220,18 @@ public abstract class JavaField implements com.ibm.dtfj.java.JavaField
 	{
 		return _signature;
 	}
-	
+
 	public String getString(JavaObject hostObject) throws CorruptDataException, MemoryAccessException
 	{
 		// Cannot implement this method without knowing the underlying endianness of the core file since Strings since Java 9 are encoded using
 		// a backing byte[] which can (if compression is disabled) represent a character using two bytes in native endianness.
 		throw new CorruptDataException(new CorruptData("Cannot read String field in an endian aware manner", null));
 	}
-	
+
 	public boolean equals(Object obj)
 	{
 		boolean isEqual = false;
-		
+
 		if (obj instanceof JavaField) {
 			JavaField field = (JavaField) obj;
 			boolean hasSameName;
@@ -245,10 +244,10 @@ public abstract class JavaField implements com.ibm.dtfj.java.JavaField
 		}
 		return isEqual;
 	}
-	
+
 	public int hashCode()
 	{
-		return (_name.hashCode() ^ _signature.hashCode() ^ _javaVM.hashCode() ^ (((int)_declaringClassID) ^ ((int) (_declaringClassID >> 32)))); 
+		return (_name.hashCode() ^ _signature.hashCode() ^ _javaVM.hashCode() ^ (((int)_declaringClassID) ^ ((int) (_declaringClassID >> 32))));
 	}
 	public String toString() {
 		try {

@@ -30,20 +30,20 @@ package com.ibm.dtfj.javacore.builder;
 public class BuilderFailureException extends Exception {
 
 	/**
-	 * 
+	 *
 	 */
 	private static final long serialVersionUID = 1174726292007118464L;
-	
+
 	/**
-	 * 
+	 *
 	 * @param message
 	 */
 	public BuilderFailureException(String message) {
 		super(message);
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param e
 	 */
 	public BuilderFailureException(Throwable e) {

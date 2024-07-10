@@ -23,29 +23,29 @@
 package com.ibm.dtfj.javacore.parser.j9.section.environment;
 
 public interface IEnvironmentTypes {
-	
+
 	public static final String ENVIRONMENT_SECTION = "ENVINFO";
-	
+
 	public static final String T_1CIJAVAVERSION = "1CIJAVAVERSION";
-	public static final String T_1CIVMVERSION = "1CIVMVERSION"; 
+	public static final String T_1CIVMVERSION = "1CIVMVERSION";
 	public static final String T_1CIJITVERSION = "1CIJITVERSION";
-	public static final String T_1CIGCVERSION = "1CIGCVERSION";	
+	public static final String T_1CIGCVERSION = "1CIGCVERSION";
 	public static final String T_1CIJITMODES = "1CIJITMODES";
-	public static final String T_1CIRUNNINGAS = "1CIRUNNINGAS";  
+	public static final String T_1CIRUNNINGAS = "1CIRUNNINGAS";
 	public static final String T_1CIPROCESSID = "1CIPROCESSID";
-	public static final String T_1CICMDLINE = "1CICMDLINE";   
+	public static final String T_1CICMDLINE = "1CICMDLINE";
 	public static final String T_1CIJAVAHOMEDIR = "1CIJAVAHOMEDIR";
 	public static final String T_1CIJAVADLLDIR = "1CIJAVADLLDIR";
-	public static final String T_1CISYSCP = "1CISYSCP";      
-	public static final String T_1CIUSERARGS = "1CIUSERARGS";  
-	public static final String T_2CIUSERARG = "2CIUSERARG";    
-	public static final String T_1CIJVMMI = "1CIJVMMI";  
+	public static final String T_1CISYSCP = "1CISYSCP";
+	public static final String T_1CIUSERARGS = "1CIUSERARGS";
+	public static final String T_2CIUSERARG = "2CIUSERARG";
+	public static final String T_1CIJVMMI = "1CIJVMMI";
 	public static final String T_2CIJVMMIOFF = "2CIJVMMIOFF";
 	public static final String T_1CIENVVARS = "1CIENVVARS";
 	public static final String T_2CIENVVAR = "2CIENVVAR";
 	public static final String T_1CISTARTTIME = "1CISTARTTIME";
 	public static final String T_1CISTARTNANO = "1CISTARTNANO";
-	
+
 	/*
 	 * Attributes
 	 */
@@ -56,7 +56,7 @@ public interface IEnvironmentTypes {
 	public static final String JIT_MODE = "environment_jit_mode";
 	public static final String START_TIME = "environment_start_time";
 	public static final String START_NANO = "environment_start_nano";
-	
+
 	public static final String ENV_NAME = "environment_variable_name";
 	public static final String ENV_VALUE = "environment_variable_value";
 }

@@ -60,11 +60,11 @@ public class JCImage implements JCReleasingImage, ManagedImage {
 	private List _closables = new Vector();
 	private URI source = null;
 	private ManagedImageSource imageSource = null;
-	
+
 	public JCImage() {
 
 	}
-	
+
 	public void setSource(URI source) {
 		this.source = source;
 	}
@@ -81,10 +81,8 @@ public class JCImage implements JCReleasingImage, ManagedImage {
 		}
 	}
 
-
-
 	/**
-	 * 
+	 *
 	 * @param imageAddressSpace
 	 */
 	public void addAddressSpace(ImageAddressSpace imageAddressSpace) {
@@ -92,16 +90,16 @@ public class JCImage implements JCReleasingImage, ManagedImage {
 			fAddressSpaces.add(imageAddressSpace);
 		}
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
 	public Iterator getAddressSpaces() {
 		return fAddressSpaces.iterator();
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public long getCreationTime() throws DataUnavailable {
 		if (!fCreationTimeSet) {
@@ -111,7 +109,7 @@ public class JCImage implements JCReleasingImage, ManagedImage {
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public String getHostName() throws DataUnavailable, CorruptDataException {
 		if (fHostName == null) {
@@ -121,14 +119,14 @@ public class JCImage implements JCReleasingImage, ManagedImage {
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public Iterator getIPAddresses() throws DataUnavailable {
 		return fIPAddresses.iterator();
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public long getInstalledMemory() throws DataUnavailable {
 		if (!fBytesMemSet) {
@@ -138,7 +136,7 @@ public class JCImage implements JCReleasingImage, ManagedImage {
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public int getProcessorCount() throws DataUnavailable {
 		if (!fcpuCountSet) {
@@ -148,7 +146,7 @@ public class JCImage implements JCReleasingImage, ManagedImage {
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public String getProcessorSubType() throws DataUnavailable, CorruptDataException {
 		if (fcpuSubType == null) {
@@ -158,7 +156,7 @@ public class JCImage implements JCReleasingImage, ManagedImage {
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public String getProcessorType() throws DataUnavailable, CorruptDataException {
 		if (fcpuType == null) {
@@ -168,7 +166,7 @@ public class JCImage implements JCReleasingImage, ManagedImage {
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public String getSystemSubType() throws DataUnavailable, CorruptDataException {
 		if (fosSubType == null) {
@@ -178,7 +176,7 @@ public class JCImage implements JCReleasingImage, ManagedImage {
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public String getSystemType() throws DataUnavailable, CorruptDataException {
 		if (fosType == null) {
@@ -187,21 +185,19 @@ public class JCImage implements JCReleasingImage, ManagedImage {
 		return fosType;
 	}
 
-	
-
 	/*
 	 * The following are not in DTFJ
 	 */
-	
+
 	/**
-	 * 
+	 *
 	 */
 	public void setAddressSpaces(Vector addressSpaces) {
 		fAddressSpaces = addressSpaces;
 	}
 
 	/**
-	 * 
+	 *
 	 * @param bytesMem
 	 */
 	public void setBytesMem(long bytesMem) {
@@ -210,16 +206,16 @@ public class JCImage implements JCReleasingImage, ManagedImage {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param cpuCount
 	 */
 	public void setcpuCount(int cpuCount) {
 		fcpuCount = cpuCount;
-		fcpuCountSet = true; 
+		fcpuCountSet = true;
 	}
 
 	/**
-	 * 
+	 *
 	 * @param cpuSubType
 	 */
 	public void setcpuSubType(String cpuSubType) {
@@ -227,7 +223,7 @@ public class JCImage implements JCReleasingImage, ManagedImage {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param cpuType
 	 */
 	public void setcpuType(String cpuType) {
@@ -235,25 +231,25 @@ public class JCImage implements JCReleasingImage, ManagedImage {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param creationTime
 	 */
 	public void setCreationTime(long creationTime) {
 		fCreationTime = creationTime;
 		fCreationTimeSet = true;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param creationTimeNanos
 	 */
 	public void setCreationTimeNanos(long nanoTime) {
 		fCreationTimeNanos = nanoTime;
 		fCreationTimeNanosSet = true;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param hostName
 	 */
 	public void setHostName(String hostName) {
@@ -261,7 +257,7 @@ public class JCImage implements JCReleasingImage, ManagedImage {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param addresses
 	 */
 	public void addIPAddresses(InetAddress address) {
@@ -269,7 +265,7 @@ public class JCImage implements JCReleasingImage, ManagedImage {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param osSubType
 	 */
 	public void setOSSubType(String osSubType) {
@@ -277,7 +273,7 @@ public class JCImage implements JCReleasingImage, ManagedImage {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param osType
 	 */
 	public void setOSType(String osType) {
@@ -311,14 +307,14 @@ public class JCImage implements JCReleasingImage, ManagedImage {
 	public Properties getProperties() {
 		return new Properties();		//not supported for this reader
 	}
-	
+
 	public ManagedImageSource getImageSource() {
 		return imageSource;
 	}
 
 	public void setImageSource(ManagedImageSource source) {
 		imageSource = source;
-		
+
 	}
 
 	public long getCreationTimeNanos() throws DataUnavailable, CorruptDataException {

@@ -22,7 +22,6 @@
  */
 package com.ibm.dtfj.corereaders.zos.util;
 
-
 /**
  * This class provides an LRU (Least Recently Used) cache which maps integer keys to object values.
  * See the description in the superclass {@link com.ibm.dtfj.corereaders.zos.util.AbstractLruCache} for more

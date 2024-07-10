@@ -38,7 +38,7 @@ class PHDCorruptImageSection extends PHDImageSection implements CorruptData {
 	PHDCorruptImageSection(String name, ImagePointer base, long size) {
 		super(name,base,size);
 	}
-	
+
 	public ImagePointer getAddress() {
 		return getBaseAddress();
 	}

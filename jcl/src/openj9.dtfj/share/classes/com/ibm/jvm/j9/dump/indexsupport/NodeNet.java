@@ -33,7 +33,7 @@ import com.ibm.dtfj.image.j9.Image;
 public class NodeNet extends NodeAbstract
 {
 	private Image _image;
-	
+
 	public NodeNet(Image image, Attributes attributes)
 	{
 		String hostname = attributes.getValue("hostname");
@@ -42,14 +42,14 @@ public class NodeNet extends NodeAbstract
 		}
 		_image = image;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.jvm.j9.dump.indexsupport.IParserNode#nodeToPushAfterStarting(java.lang.String, java.lang.String, java.lang.String, org.xml.sax.Attributes)
 	 */
 	public IParserNode nodeToPushAfterStarting(String uri, String localName, String qName, Attributes attributes)
 	{
 		IParserNode child = null;
-		
+
 		if (qName.equals("ip")) {
 			child = new NodeIP(_image, attributes);
 		} else {

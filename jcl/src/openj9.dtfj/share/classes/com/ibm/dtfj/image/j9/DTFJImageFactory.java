@@ -48,20 +48,20 @@ public class DTFJImageFactory implements com.ibm.dtfj.image.ImageFactory
 	/**
 	 * This public constructor is intended for use with Class.newInstance().
 	 * This class will generally be referred to by name (e.g. using Class.forName()).
-	 * 
+	 *
 	 * @see com.ibm.dtfj.image.ImageFactory
 	 *
 	 */
 	public DTFJImageFactory() {
 	}
-	
+
 	public Image[] getImagesFromArchive(File archive, boolean extract) throws IOException {
 		throw new IOException("Not supported for legacy DTFJ");
 	}
-	
+
 	/**
 	 * Creates a new Image object based on the contents of imageFile
-	 * 
+	 *
 	 * @param imageFile a file with Image information, typically a core file but may also be a container such as a zip
 	 * @return an instance of Image (null if no image can be constructed from the given file)
 	 * @throws IOException
@@ -83,7 +83,7 @@ public class DTFJImageFactory implements com.ibm.dtfj.image.ImageFactory
 		}
 		return image;
 	}
-	
+
 	public Image getImage(ImageInputStream in, URI sourceID) throws IOException {
 		throw new IOException("Legacy DTFJ requires an XML file to be supplied when creating an image from a stream.");
 	}
@@ -106,7 +106,7 @@ public class DTFJImageFactory implements com.ibm.dtfj.image.ImageFactory
 			public int read() throws IOException {
 				return meta.read();
 			}
-			
+
 		};
 		//CMVC 154851 : pass the metadata stream through the new XML cleanup class
 		XMLInputStream xmlstream = new XMLInputStream(stream);
@@ -131,7 +131,7 @@ public class DTFJImageFactory implements com.ibm.dtfj.image.ImageFactory
 				resolver = new DefaultFileLocationResolver(source.getParentFile());
 			}
 		}
-		ReleasingImage image = indexData.parseIndexWithDump(xmlstream, core, in, resolver); 
+		ReleasingImage image = indexData.parseIndexWithDump(xmlstream, core, in, resolver);
 		meta.close();				//close access to the XML file as we won't be needing it again
 		image.addReleasable(core); //because the IIS is used to derive the core reader only the reader needs to be added as a ReleasingResource
 		if(image instanceof com.ibm.dtfj.image.j9.Image) {
@@ -139,10 +139,10 @@ public class DTFJImageFactory implements com.ibm.dtfj.image.ImageFactory
 		}
 		return image;
 	}
-	
+
 	/**
 	 * Creates a new Image object based on the contents of imageFile and metadata
-	 * 
+	 *
 	 * @param imageFile a file with Image information, typically a core file
 	 * @param metadata a file with additional Image information. This is an implementation defined file
 	 * @return an instance of Image
@@ -188,26 +188,26 @@ public class DTFJImageFactory implements com.ibm.dtfj.image.ImageFactory
 		}
 		return image;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.dtfj.image.ImageFactory#getDTFJMajorVersion()
 	 */
 	public int getDTFJMajorVersion() {
 		return DTFJ_MAJOR_VERSION;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.dtfj.image.ImageFactory#getDTFJMinorVersion()
 	 */
 	public int getDTFJMinorVersion() {
 		return DTFJ_MINOR_VERSION;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.dtfj.image.ImageFactory#getDTFJModificationLevel()
 	 */
 	public int getDTFJModificationLevel() {
-		 
+
 		int buildNumber= 0;
 		try {
 			buildNumber=Integer.parseInt(ImageFactory.class.getPackage().getImplementationVersion());

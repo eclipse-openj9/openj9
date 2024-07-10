@@ -35,7 +35,7 @@ import com.ibm.dtfj.image.ImagePointer;
 public class NodeClassInVM extends NodeAbstract implements IParserNode
 {
 	private JavaClass _class;
-	
+
 	public NodeClassInVM(JavaRuntime runtime, Attributes attributes)
 	{
 		//create the full class instance
@@ -62,21 +62,21 @@ public class NodeClassInVM extends NodeAbstract implements IParserNode
 			hashcodeSlot = Integer.parseInt(hashcodeSlotString);
 		}
 		String fileName = attributes.getValue("source");
-		
+
 		ImagePointer classPointer = runtime.pointerInAddressSpace(id);
 		ImagePointer objectPointer = (objectID == 0 ? null : runtime.pointerInAddressSpace(objectID));
 
 		_class = new JavaClass(runtime, classPointer, superId, name, instanceSize, loaderID, modifiers, flagOffset, fileName, objectPointer, hashcodeSlot);
 		runtime.addClass(_class);
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.jvm.j9.dump.indexsupport.IParserNode#nodeToPushAfterStarting(java.lang.String, java.lang.String, java.lang.String, org.xml.sax.Attributes)
 	 */
 	public IParserNode nodeToPushAfterStarting(String uri, String localName, String qName, Attributes attributes)
 	{
 		IParserNode child = null;
-		
+
 		if (qName.equals("field")) {
 			child = new NodeField(_class, attributes);
 		} else if (qName.equals("method")) {

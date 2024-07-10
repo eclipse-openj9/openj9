@@ -28,7 +28,7 @@ import com.ibm.dtfj.javacore.parser.framework.tag.TagParser;
 import com.ibm.dtfj.javacore.parser.j9.section.common.CommonPatternMatchers;
 
 public class TitleTagParser extends TagParser implements ITitleTypes {
-	
+
 	public TitleTagParser() {
 		super(TITLE_SECTION);
 	}
@@ -60,7 +60,7 @@ public class TitleTagParser extends TagParser implements ITitleTypes {
 		};
 		addTag(T_1TIDATETIME, lineRule);
 	}
-	
+
 	/**
 	 * Add rule for the dump nanotime (1TINANOTIME line)
 	 */
@@ -75,7 +75,6 @@ public class TitleTagParser extends TagParser implements ITitleTypes {
 		};
 		addTag(T_1TINANOTIME, lineRule);
 	}
-	
 
 	/**
 	 * Add rule for the dump filename (1TIFILENAME line)

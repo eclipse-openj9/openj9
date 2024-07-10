@@ -40,13 +40,13 @@ import com.ibm.dtfj.java.JavaReference;
  * @author ajohnson
  */
 class PHDCorruptJavaObject extends PHDCorruptData implements JavaObject {
-	
+
 	PHDCorruptJavaObject(String des, ImagePointer where, Exception e) {
 		super(des, where, e);
 		// Check for a null pointer - getID cannot return null
 		where.getAddress();
 	}
-	
+
 	public void arraycopy(int srcStart, Object dst, int dstStart, int length)
 			throws CorruptDataException, MemoryAccessException {
 		throw initCause(new CorruptDataException(this));

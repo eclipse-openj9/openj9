@@ -184,7 +184,7 @@ public class PrintHeapdump extends Base {
 		String s = is64Bit ? String.format("%016X",word) : String.format("%08X",word);
 		return s;
 	}
-	
+
 }
 
 class DumpClass {

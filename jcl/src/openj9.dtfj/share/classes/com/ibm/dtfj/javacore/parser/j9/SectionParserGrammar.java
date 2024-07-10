@@ -51,14 +51,14 @@ public abstract class SectionParserGrammar implements ISectionParser{
 	protected boolean anyMatched = false;
 
 	private final Vector fErrors;
-	
+
 	public SectionParserGrammar(String sectionName) {
 		fSectionName = sectionName;
 		fErrors = new Vector();
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param lookAheadBuffer
 	 * @param depth
 	 * @throws ParserException
@@ -75,29 +75,28 @@ public abstract class SectionParserGrammar implements ISectionParser{
 			handleError(e, FORCE_THROW);
 		} catch (ScannerException e) {
 			handleError(e, FORCE_THROW);
-		}	
+		}
 	}
 
-	
 	/**
-	 * 
+	 *
 	 * @param lookAheadBuffer
 	 * @throws ParserException
 	 */
 	protected void setLookAheadBuffer(ILookAheadBuffer lookAheadBuffer) throws ParserException {
 		setLookAheadBuffer(lookAheadBuffer, DEFAULT_DEPTH);
 	}
-	
+
 	/**
-	 * 
-	 * 
+	 *
+	 *
 	 */
 	protected ILookAheadBuffer getLookAheadBuffer() {
 		return fLookAheadBuffer;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param tagManager
 	 * @throws NullPointerException if tag manager is null
 	 */
@@ -107,22 +106,22 @@ public abstract class SectionParserGrammar implements ISectionParser{
 	}
 
 	/**
-	 * 
+	 *
 	 * @param scanner
 	 * @throws ParserException
 	 */
 	protected void handleRequiredMismatch(String expectedType, String actualType, String actualValue) throws ParserException {
 		handleErrorAtLineNumber(getCurrentFileLineNumber(), "Expected Type: " + expectedType + " / Actual Type: " + actualType + ": " + actualValue, null);
 	}
-	
+
 	protected void handleUnknownMismatch(String actualType, String actualValue) throws ParserException {
 		handleErrorAtLineNumber(getCurrentFileLineNumber(), "Unknown data -> " + actualType + ": " + actualValue, null);
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param depth
-	 * 
+	 *
 	 * @throws ParserException
 	 */
 	protected IParserToken lookAhead(int depth) throws ParserException{
@@ -138,16 +137,16 @@ public abstract class SectionParserGrammar implements ISectionParser{
 		}
 		return token;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
 	public String getSectionName() {
 		return fSectionName;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param lookAheadBuffer
 	 * @throws ParserException
 	 */
@@ -160,19 +159,19 @@ public abstract class SectionParserGrammar implements ISectionParser{
 			handleError(e, FORCE_THROW);
 		}
 	}
-	
+
 	/**
 	 * The match performs one additional function:
 	 * <br>
 	 * if the mismatch is due to an unrecognised javacore tag, that erroneous tag can be
-	 * interpreted as garbage for now, so the latter is consumed without further processing. 
+	 * interpreted as garbage for now, so the latter is consumed without further processing.
 	 * <br>
 	 * However, <b>beware</b> of considering
 	 * all mismatches to be garbage. It is possible that the mismatch is due to a VALID
 	 * javacore tag that pertains to another language rule. In this case, an argument
 	 * to the method decides whether to handle it as an error (i.e., match was required) or let it fall through to the next
 	 * grammar rule (match was optional).
-	 * 
+	 *
 	 * @return true if matched, false otherwise.
 	 * @param type to match
 	 * @param required will generate an error, otherwise false ignores the mismatch.
@@ -183,7 +182,7 @@ public abstract class SectionParserGrammar implements ISectionParser{
 		IParserToken token = null;
 		String tokenType = null;
 		String tokenValue = null;
-		while (searchMore && !fLookAheadBuffer.allConsumed() && !(matched = fLookAheadBuffer.match(type))) {	
+		while (searchMore && !fLookAheadBuffer.allConsumed() && !(matched = fLookAheadBuffer.match(type))) {
 			if ((token = lookAhead(1)) != null) {
 				tokenType = token.getType();
 				tokenValue = token.getValue();
@@ -206,11 +205,11 @@ public abstract class SectionParserGrammar implements ISectionParser{
 		anyMatched |= matched;
 		return matched;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param type
-	 * 
+	 *
 	 * @throws ParserException
 	 */
 	protected IAttributeValueMap getLineRuleResults(IParserToken token) throws ParserException {
@@ -230,41 +229,41 @@ public abstract class SectionParserGrammar implements ISectionParser{
 		}
 		return results;
 	}
-	
+
 	/*
 	 * Some common grammar patterns used in javacore parsing.
 	 * This is not an exhaustive list of all possible patterns, only
 	 * some that commonly occur, and can be used in subclasses that
 	 * implement grammar rules. It is not necessary to use any of
-	 * these methods implement a functional parser. 
+	 * these methods implement a functional parser.
 	 */
-	
+
 	/**
 	 * Match a type, and generate an error if a mismatch occurs. This is usually
 	 * used for grammar matches that are required.
-	 * 
+	 *
 	 * @param type
-	 * 
+	 *
 	 * @throws ParserException
 	 */
 	protected boolean matchRequired(String type) throws ParserException {
 		return match(type, true);
 	}
-	
+
 	/**
 	 * Match a type, but do not generate an error if mismatch occurs.
 	 * This is usually used when a terminal in a grammar rule is optional.
-	 * 
+	 *
 	 * @param type
-	 * 
+	 *
 	 * @throws ParserException
 	 */
 	protected boolean matchOptional(String type) throws ParserException {
 		return match(type, false);
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param tagName
 	 * @return attributevaluemap if tag line found and parsed, or null if not found.
 	 * @throws ParserException
@@ -272,9 +271,9 @@ public abstract class SectionParserGrammar implements ISectionParser{
 	protected IAttributeValueMap processTagLineRequired(String tagName) throws ParserException {
 		return processTagLine(tagName, true);
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param tagName
 	 * @return attributevaluemap if tag line found and parsed, or null if not found.
 	 * @throws ParserException
@@ -284,11 +283,11 @@ public abstract class SectionParserGrammar implements ISectionParser{
 	}
 
 	/**
-	 * 
+	 *
 	 * @param tagName
 	 * @param required
 	 * @return attribute value map if tag line successfully parsed or null otherwise.
-	 * @throws ParserException if parsing error threshold reached 
+	 * @throws ParserException if parsing error threshold reached
 	 */
 	private IAttributeValueMap processTagLine(String tagName, boolean required) throws ParserException {
 		IAttributeValueMap list = null;
@@ -299,79 +298,79 @@ public abstract class SectionParserGrammar implements ISectionParser{
 		}
 		return list;
 	}
-	
+
 	/*
-	 * 
+	 *
 	 * HELPER METHODS
-	 * 
-	 * 
+	 *
+	 *
 	 */
-	
+
 	/**
-	 * 
+	 *
 	 * @param tag
-	 * 
+	 *
 	 */
 	protected boolean isValidSectionTag(String tag) {
 		return fTagManager.isTagInSection(tag, fSectionName);
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param token
-	 * 
+	 *
 	 */
 	protected boolean isValidJavaCoreTag(IParserToken token) {
 		return (token != null) ? fTagManager.isTagInSection(token.getType(), J9TagManager.CHECK_ALL) : false;
 	}
-	
+
 	/**
 	 * Returns the current line number being parsed, or -1 if no parsing is occurring (parsing is finished, etc..).
-	 * 
+	 *
 	 * @return current line number of line being parsed, or -1 if there is nothing left to parse.
 	 * @throws ParserException
 	 */
 	public int getCurrentFileLineNumber() throws ParserException {
 		int fileLineNumber = -1;
 		if (!fLookAheadBuffer.allConsumed()) {
-			IParserToken token = lookAhead(1); 
+			IParserToken token = lookAhead(1);
 			if (token != null) {
 				fileLineNumber = token.getLineNumber();
 			}
 		}
 		return fileLineNumber;
 	}
-	
+
 	/**
 	 * @return non null Iterator to a list of errors encountered during parsing.
 	 */
 	public Iterator getErrors() {
 		return fErrors.iterator();
 	}
-	
+
 	/*
-	 * 
+	 *
 	 * ERROR HANDLING. Add error handlers as needed.
-	 * 
+	 *
 	 */
-	
+
 	/**
-	 * 
+	 *
 	 * @param message
 	 * @throws ParserException
 	 */
 	protected void handleError(String message, Exception e) throws ParserException {
 		handleError(message + e.getMessage());
 	}
-	
+
 	protected void handleError(String message) throws ParserException {
 		if (message != null) {
 			fErrors.add(message);
 		}
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param fileLineNumber
 	 * @param message
 	 * @param e
@@ -389,9 +388,9 @@ public abstract class SectionParserGrammar implements ISectionParser{
 			handleError(msg);
 		}
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param message
 	 * @param offset
 	 * @param length
@@ -400,18 +399,18 @@ public abstract class SectionParserGrammar implements ISectionParser{
 	protected void handleError(String message, int offset, int length) throws ParserException {
 		handleError(message);
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param e
 	 * @throws ParserException
 	 */
 	protected void handleError(Exception e) throws ParserException {
 		handleError(e.getMessage());
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param e
 	 * @param behaviour
 	 * @throws ParserException
@@ -421,7 +420,7 @@ public abstract class SectionParserGrammar implements ISectionParser{
 			throw new ParserException(e);
 		}
 	}
-	
+
 	public boolean anyMatched() {
 		return anyMatched;
 	}

@@ -26,18 +26,17 @@ import com.ibm.dtfj.image.Image;
 import com.ibm.dtfj.javacore.parser.framework.scanner.IScannerManager;
 
 public interface IParserController {
-	
+
 	/**
-	 * 
+	 *
 	 * @param inputBuffers
 	 */
 	public Image parse(IScannerManager scannerManager) throws ParserException;
-	
+
 	/**
-	 * 
+	 *
 	 * @param listener
 	 */
 	public void addErrorListener(IErrorListener listener);
-
 
 }

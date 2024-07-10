@@ -26,20 +26,19 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
 
-
 /**
  * Input buffer for javacore scanner. Consumes a subsection of characters from the buffer
  *
  */
 public class LineJavaCoreInputBuffer extends OffsetBasedJavaCoreInputBuffer {
-	
+
 	private BufferedReader fReader;
 
 	public LineJavaCoreInputBuffer(Reader reader) throws IOException {
 		super();
 		init(reader);
 	}
-	
+
 	/**
 	 * Initialize fields and read the first line.
 	 * @param reader
@@ -56,13 +55,12 @@ public class LineJavaCoreInputBuffer extends OffsetBasedJavaCoreInputBuffer {
 		fReader.close();
 	}
 
-	
 	/**
-	 * 
+	 *
 	 * Consumes elements from the current line.
 	 * @see com.ibm.dtfj.javacore.parser.framework.input.IInputBuffer#consume(int)
-	 * 
-	 * 
+	 *
+	 *
 	 * @param amount of characters to consume.
 	 * @return return the offset value of the consumed portion. Note that this does not return the new offset after consumption
 	 * but the offset of the section being consumed.
@@ -78,11 +76,9 @@ public class LineJavaCoreInputBuffer extends OffsetBasedJavaCoreInputBuffer {
 		updateOffset(length);
 		return offset;
 	}
-	
-	
-	
+
 	/**
-	 * 
+	 *
 	 */
 	public boolean nextLine() throws IOException{
 		boolean readNext = false;
@@ -99,12 +95,5 @@ public class LineJavaCoreInputBuffer extends OffsetBasedJavaCoreInputBuffer {
 		}
 		return readNext;
 	}
-	
-	
-
-
-	
-
-
 
 }

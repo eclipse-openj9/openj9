@@ -29,10 +29,10 @@ import com.ibm.dtfj.java.j9.JavaRuntime;
 
 /**
  * @author nhardman
- * 
+ *
  */
 public class NodeRoot extends NodeAbstract {
-	
+
 	long address;
 	int reachability = JavaReference.REACHABILITY_UNKNOWN;
 	int roottype = JavaReference.HEAP_ROOT_OTHER;
@@ -45,7 +45,7 @@ public class NodeRoot extends NodeAbstract {
 
 		address = _longFromString(attributes.getValue("id"));
 		description = typeAttr;
-		
+
 		 // do the mapping of the reachability description to a reachability value.
 		if(reachabilityAttr.equals("strong")) {
 			reachability = JavaReference.REACHABILITY_STRONG;
@@ -56,7 +56,7 @@ public class NodeRoot extends NodeAbstract {
 		} else if(reachabilityAttr.equals("phantom")) {
 			reachability = JavaReference.REACHABILITY_PHANTOM;
 		}
-		
+
 		 // do the mapping of type names to root type.
 		if (typeAttr.equals("None")) {
 			roottype = JavaReference.HEAP_ROOT_OTHER;

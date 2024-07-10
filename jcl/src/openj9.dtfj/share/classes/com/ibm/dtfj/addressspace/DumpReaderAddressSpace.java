@@ -35,13 +35,13 @@ import com.ibm.dtfj.corereaders.MemoryRange;
 public class DumpReaderAddressSpace extends CommonAddressSpace
 {
 	private DumpReader _reader;
-	
+
 	public DumpReaderAddressSpace(MemoryRange[] ranges, DumpReader reader, boolean isLittleEndian, boolean is64Bit)
 	{
 		super(ranges, isLittleEndian, is64Bit);
 		_reader = reader;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.dtfj.addressspace.IAbstractAddressSpace#isExecutable(int, long)
 	 */
@@ -71,8 +71,7 @@ public class DumpReaderAddressSpace extends CommonAddressSpace
 		MemoryRange match = _residentRange(asid, address);
 		return match.isShared();
 	}
-	
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.dtfj.addressspace.IAbstractAddressSpace#getBytesAt(int, long, byte[])
 	 */
@@ -118,15 +117,14 @@ public class DumpReaderAddressSpace extends CommonAddressSpace
 		}
 		return bytesRead;
 	}
-	
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.dtfj.addressspace.IAbstractAddressSpace#getLongAt(int, long)
 	 */
 	public long getLongAt(int asid, long address) throws MemoryAccessException
 	{
 		MemoryRange match = _residentRange(asid, address);
-		
+
 		if (null != match) {
 			if (match.isInCoreFile()) {
 				long fileOffset = match.getFileOffset() + (address - match.getVirtualAddress());
@@ -143,14 +141,14 @@ public class DumpReaderAddressSpace extends CommonAddressSpace
 			throw new MemoryAccessException(asid, address);
 		}
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.dtfj.addressspace.IAbstractAddressSpace#getIntAt(int, long)
 	 */
 	public int getIntAt(int asid, long address) throws MemoryAccessException
 	{
 		MemoryRange match = _residentRange(asid, address);
-		
+
 		if (null != match) {
 			if (match.isInCoreFile()) {
 				long fileOffset = match.getFileOffset() + (address - match.getVirtualAddress());
@@ -175,7 +173,7 @@ public class DumpReaderAddressSpace extends CommonAddressSpace
 			throws MemoryAccessException
 	{
 		MemoryRange match = _residentRange(asid, address);
-		
+
 		if (null != match) {
 			if (match.isInCoreFile()) {
 				long fileOffset = match.getFileOffset() + (address - match.getVirtualAddress());
@@ -198,9 +196,9 @@ public class DumpReaderAddressSpace extends CommonAddressSpace
 	 */
 	public byte getByteAt(int asid, long address) throws MemoryAccessException
 	{
-		
+
 		MemoryRange match = _residentRange(asid, address);
-		
+
 		if (null != match) {
 			if (match.isInCoreFile()) {
 				long fileOffset = match.getFileOffset() + (address - match.getVirtualAddress());

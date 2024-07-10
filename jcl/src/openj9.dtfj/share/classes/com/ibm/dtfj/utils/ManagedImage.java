@@ -30,15 +30,15 @@ import com.ibm.dtfj.utils.file.ManagedImageSource;
  * returned to the client. It is done as an extension to the Image interface
  * rather than a wrapper class so as to preserve to original class implementing
  * image in case that is being checked for.
- * 
+ *
  * This needs to move to the ras.jar.
- * 
+ *
  * @author adam
  *
  */
 public interface ManagedImage extends Image {
-	
+
 	public void setImageSource(ManagedImageSource source);
-	
+
 	public ManagedImageSource getImageSource();
 }

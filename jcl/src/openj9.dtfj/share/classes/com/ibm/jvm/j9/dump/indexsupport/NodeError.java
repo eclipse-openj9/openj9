@@ -31,7 +31,7 @@ import org.xml.sax.Attributes;
 public class NodeError extends NodeAbstract
 {
 	private static NodeError _errorNode = new NodeError();
-	
+
 	public static IParserNode errorTag(Attributes attributes)
 	{
 		return _errorNode;

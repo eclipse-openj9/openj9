@@ -26,7 +26,7 @@ import com.ibm.dtfj.image.CorruptDataException;
 
 /**
  * <p>Represents a generic managed runtime instance.</p>
- * 
+ *
  * <p>No class should implement this interface directly. Instead, they should implement
  * another interface which extends this interface and provides APIs for a specific
  * language runtime environment.</p>
@@ -39,7 +39,7 @@ public interface ManagedRuntime {
 	 * @return a string representation of the version information for this runtime instance
 	 * @throws CorruptDataException If the runtime presents no understandable version data
 	 * @see #getVersion()
-	 * 
+	 *
 	 * @deprecated Use "getVersion()" instead
 	 */
 	@Deprecated
@@ -48,7 +48,7 @@ public interface ManagedRuntime {
 	/**
 	 * Get the version data available for this runtime instance.
 	 * @return a string representing all the version data available for this runtime instance.
-	 * 
+	 *
 	 * @throws CorruptDataException If the runtime presents no understandable version data
 	 */
 	public String getVersion() throws CorruptDataException;

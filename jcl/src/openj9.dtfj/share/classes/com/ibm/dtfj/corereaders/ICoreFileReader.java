@@ -35,27 +35,27 @@ public interface ICoreFileReader extends ResourceReleaser
 	/**
 	 * Used to extract OS-specific data.  Called with a builder which is a sort of factory which will create
 	 * the required implementation-specific data structures exist solely above the layer of this project.
-	 * 
+	 *
 	 * @param builder
 	 */
 	public void extract(Builder builder);
-	
+
 	/**
 	 * @return An iterator of String object specifying names of additional files needed by the Dump
-	 * 
+	 *
 	 * @see java.lang.String
 	 */
 	public Iterator getAdditionalFileNames();
-	
+
 	/**
 	 * Creates a representation of the address space capable of reading data from memory as a flat address
 	 * space even though it may be fragmented across regions of several files or transport media.
-	 * 
+	 *
 	 * Note that this method is expected to be called several times and should always return the same instance.
 	 * @return
 	 */
 	public IAbstractAddressSpace getAddressSpace();
-	
+
 	/**
 	 * @return true if the core file is truncated, false otherwise
 	 */

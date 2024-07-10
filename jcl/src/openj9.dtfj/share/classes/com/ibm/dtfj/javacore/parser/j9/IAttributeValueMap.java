@@ -24,7 +24,6 @@ package com.ibm.dtfj.javacore.parser.j9;
 
 import com.ibm.dtfj.javacore.parser.framework.scanner.IParserToken;
 
-
 /**
  * Contains a map of values parsed from a tag line. It is assumed that each attribute type occurring in
  *  a tag line occurs at most once (e.g., it's not assumed that there are two "tid" attributes in a thread info tag).
@@ -33,31 +32,31 @@ import com.ibm.dtfj.javacore.parser.framework.scanner.IParserToken;
  */
 public interface IAttributeValueMap {
 	/**
-	 * 
+	 *
 	 * @param results
 	 * @param tokenType
-	 * 
+	 *
 	 */
 	public String getTokenValue(String tokenType);
-	
+
 	/**
-	 * 
+	 *
 	 * @param tokenType
-	 * 
+	 *
 	 */
 	public long getLongValue(String tokenType);
-	
+
 	/**
-	 * 
+	 *
 	 * @param tokenType
-	 * 
+	 *
 	 */
 	public int getIntValue(String tokenType);
 
 	/**
-	 * 
+	 *
 	 * @param tokenType
-	 * 
+	 *
 	 */
 	public IParserToken getToken(String tokenType);
 }

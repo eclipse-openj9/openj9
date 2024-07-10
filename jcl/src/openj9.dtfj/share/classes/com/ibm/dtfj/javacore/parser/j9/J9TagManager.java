@@ -35,25 +35,21 @@ public class J9TagManager implements ITagManager {
 	private HashMap fTagParsers;
 	private static J9TagManager fTagManager;
 	public static final String CHECK_ALL = "check_all";
-	
+
 	private String fCommentType = ICommonTypes.NULL;
-	
+
 	public static J9TagManager getCurrent() {
 		if (fTagManager == null) {
 			fTagManager = new J9TagManager();
 		}
 		return fTagManager;
 	}
-	
-	
+
 	public J9TagManager()	 {
 		fAllTags = new HashMap();
 		fTagParsers = new HashMap();
 	}
-	
-	
-	
-	
+
 	/**
 	 * Hardcoded for now.
 	 *
@@ -73,9 +69,8 @@ public class J9TagManager implements ITagManager {
 		fillAllTags();
 	}
 
-	
 	/**
-	 * 
+	 *
 	 *
 	 */
 	private void fillAllTags() {
@@ -90,9 +85,8 @@ public class J9TagManager implements ITagManager {
 		}
 	}
 
-	
 	/**
-	 * 
+	 *
 	 * @param tag to check whether it exists in the Tag Manager.
 	 * @return true if the Tag Manager has this tag registered.
 	 */
@@ -100,18 +94,15 @@ public class J9TagManager implements ITagManager {
 		return fAllTags.containsKey(identifier);
 	}
 
-	
-	
 	public ITagParser getTagParser(String section) {
 		return (ITagParser)fTagParsers.get(section);
 	}
-	
-	
+
 	/**
-	 * 
+	 *
 	 * @param tag
 	 * @param section
-	 * 
+	 *
 	 */
 	public boolean isTagInSection(String tag, String section) {
 		boolean result = false;
@@ -126,17 +117,11 @@ public class J9TagManager implements ITagManager {
 		}
 		return result;
 	}
-	
-	
-
-	
-
-
 
 	/**
-	 * 
+	 *
 	 * @param source
-	 * 
+	 *
 	 */
 	public boolean isComment(CharSequence source) {
 		boolean result = false;

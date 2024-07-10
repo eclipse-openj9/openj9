@@ -57,7 +57,6 @@ public interface JavaReference
     /** Stringtable heap root */
     int HEAP_ROOT_STRINGTABLE = 11;
 
-
      /** Unknown reference type */
     int REFERENCE_UNKNOWN           = 0;
     /** Reference from an object to its class */
@@ -87,7 +86,6 @@ public interface JavaReference
 	/** Reference from a JavaObject representing a Class to the associated JavaClass */
     int REFERENCE_ASSOCIATED_CLASS 	= 13;
     int REFERENCE_UNUSED_14 = 14;
-
 
     /** Reachability of target object via this reference is unknown */
     int REACHABILITY_UNKNOWN =  0;

@@ -29,7 +29,7 @@ import com.ibm.dtfj.javacore.parser.framework.input.IInputBuffer;
 import com.ibm.dtfj.javacore.parser.j9.J9TagManager;
 
 public class JavaCoreScanner implements IScanner {
-	
+
 	private IInputBuffer fInputBuffer;
 	private StringBuffer fLocalCache;
 	private int fLineNumber;
@@ -38,13 +38,11 @@ public class JavaCoreScanner implements IScanner {
 	private J9TagManager fTagManager;
 	private int fMaxLineLength;
 
-
-	
 	/*
 	 * Manipulate as a FIFO queue.
 	 */
 	private ArrayList fTokenCache;
-	
+
 	/*
 	 * Whitespace options are designated by setting individual bits.
 	 */
@@ -52,10 +50,8 @@ public class JavaCoreScanner implements IScanner {
 	private static final short SEPARATE_ON_WHITESPACE = 0x01;
 	private static final short GRAB_ALL = 0x02;
 
-
-
 	/**
-	 * 
+	 *
 	 * @param inputBuffer
 	 * @throws NullPointerException if inputbuffer is null.
 	 */
@@ -70,11 +66,9 @@ public class JavaCoreScanner implements IScanner {
 		fMaxLineLength = 32768;
 	}
 
-
-	
 	/**
-	 * @throws ScannerException 
-	 * 
+	 * @throws ScannerException
+	 *
 	 */
 	public IParserToken next() throws  IOException, ScannerException {
 		IParserToken token = null;
@@ -86,15 +80,12 @@ public class JavaCoreScanner implements IScanner {
 		}
 		return token;
 	}
-	
 
-	
-	
 	/**
-	 * 
+	 *
 	 * Scanned tokens are added to a cache first before being returned to the caller.
-	 * @throws ScannerException 
-	 * 
+	 * @throws ScannerException
+	 *
 	 *
 	 */
 	private void fillTokenCache() throws  IOException, ScannerException {
@@ -132,13 +123,11 @@ public class JavaCoreScanner implements IScanner {
 				readNextLine();
 			}
 		}
-		
+
 	}
-	
-	
-	
+
 	/**
-	 * 
+	 *
 	 *
 	 */
 	private boolean readNextLine() throws IOException {
@@ -151,15 +140,12 @@ public class JavaCoreScanner implements IScanner {
 		return result;
 	}
 
-	
-	
-	
 	/**
 	 * Consumes a length equivalent to the argument buffer length from the input buffer, and clears
 	 * the argument buffer.
-	 * 
+	 *
 	 * @param buffer
-	 * 
+	 *
 	 * @throws IOException
 	 */
 	private int consume(StringBuffer buffer) throws IOException {
@@ -167,45 +153,36 @@ public class JavaCoreScanner implements IScanner {
 		clear(buffer);
 		return offset;
 	}
-	
-	
+
 	/**
-	 * 
+	 *
 	 * @param length
-	 * 
+	 *
 	 * @throws IOException
 	 */
 	private int consume(int length) throws IOException {
 		return fInputBuffer.consume(length);
 	}
-	
-	
 
-	
-	
-	
-	
 	/**
-	 * 
-	 * 
+	 *
+	 *
 	 */
 	private boolean moreLeftInLine() {
 		return fInputBuffer.length() > 0;
 	}
 
-	
-	
 	/**
-	 * 
+	 *
 	 * If a token has been identified as a valid tag, the rest of the characters on the same
 	 * line are assumed to be the (unparsed) attributes for that tag. Whoever calls this scanner
-	 * should send the unparsed attributes to a separate attribute parser. 
-	 * 
+	 * should send the unparsed attributes to a separate attribute parser.
+	 *
 	 * @param currentLineNumber
 	 * @param tokenType
 	 * @throws IOException
 	 * @return if a token is generated return true
-	 * @throws ScannerException 
+	 * @throws ScannerException
 	 */
 	private void processTag() throws IOException, ScannerException {
 		String value = fLocalCache.toString();
@@ -227,24 +204,18 @@ public class JavaCoreScanner implements IScanner {
 			fTokenCache.add(TokenManager.getToken(lengthConsumed, offset, fLineNumber, tokenType, value));
 		}
 	}
-	
-	
 
-	
-	
-	
-	
 	/**
 	 * This method works on the precondition that the input buffer contains an entire line, excluding
 	 * the line feed ('\r' or '\n' or both).
-	 * 
+	 *
 	 * This method only returns a subsequence of characters based on a specified
 	 * separating condition (usually around a whitespaces). It also allows
 	 * the caller to specify if the whitespace should be included in the subsequence
 	 * or not. Note that the pattern is NOT consumed from the buffer. It is only
 	 * returned so that another method can do the proper analysis as to whether it should
 	 * be consumed or not.
-	 * 
+	 *
 	 * <br>
 	 * <br>
 	 * An empty target buffer (i.e., nothing is written into the target buffer) results when:
@@ -252,15 +223,15 @@ public class JavaCoreScanner implements IScanner {
 	 * - The scanner is set to separate on the first whitespace encountered, that whitespace
 	 * should not be written to the buffer, and the first character encountered happens to be a
 	 * whitespace
-	 * 
-	 * 
-	 * @param whiteSpaceOption indicates what to do if a white space is encountered 
+	 *
+	 *
+	 * @param whiteSpaceOption indicates what to do if a white space is encountered
 	 * @param targetBuffer target buffer where subsequence of characters should be read
-	 * @throws ScannerException 
-	 * 
+	 * @throws ScannerException
+	 *
 	 * @see #SEPARATE_ON_WHITESPACE
 	 * @see #GRAB_ALL
-	 * 
+	 *
 	 * @throws NullPointerException if the target buffer is null.
 	 */
 	private void nextCharacterSequence(int whiteSpaceOption, StringBuffer targetBuffer) throws ScannerException {
@@ -270,7 +241,7 @@ public class JavaCoreScanner implements IScanner {
 		 * Clear "separate on whitespace" and end at new line bits until either one is encountered
 		 */
 		copiedWhiteSpaceOption &= ~(SEPARATE_ON_WHITESPACE);
-		
+
 		/*
 		 * No consumption is occurring here, so the buffer length can be assumed to be fixed for
 		 * this computation.
@@ -279,41 +250,35 @@ public class JavaCoreScanner implements IScanner {
 		char nextCharacter;
 		for(int i = 0; i < length && ((copiedWhiteSpaceOption & SEPARATE_ON_WHITESPACE) == 0); i++) {
 			nextCharacter = fInputBuffer.charAt(i);
-			if (Character.isWhitespace(nextCharacter) 
+			if (Character.isWhitespace(nextCharacter)
 					&& ((whiteSpaceOption & SEPARATE_ON_WHITESPACE) == SEPARATE_ON_WHITESPACE)) {
 				copiedWhiteSpaceOption |= SEPARATE_ON_WHITESPACE;
 			}
 			else {
 				targetBuffer.append(nextCharacter);
 			}
-	
+
 			/* Check for upper bound on line length. Likely bad input file. */
 			if (i > fMaxLineLength) {
 				throw new ScannerException("Maximum line length ("+fMaxLineLength+") exceeded. Input file corrupt or not a javacore.");
 			}
 		}
 	}
-	
-	
-	
-	
+
 	/**
-	 * 
+	 *
 	 * @param buffer
 	 */
 	private void clear(StringBuffer buffer) {
 		buffer.delete(0, buffer.length());
 	}
-	
-	
-	
+
 	/**
-	 * 
+	 *
 	 */
 	public boolean allTokensGenerated() {
 		return fInputBuffer.endReached() && fTokenCache.isEmpty();
 	}
-
 
 	/**
 	 * @param maxLength
@@ -321,13 +286,12 @@ public class JavaCoreScanner implements IScanner {
 	public void setMaximumLineLength(int maxLength) {
 		fMaxLineLength = maxLength;
 	}
-	
+
 	/**
 	 * @return
 	 */
 	public int getMaximumLineLength() {
 		return fMaxLineLength;
 	}
-	
 
 }

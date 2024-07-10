@@ -41,7 +41,7 @@ import com.ibm.dtfj.java.JavaObject;
 import com.ibm.dtfj.java.JavaReference;
 import com.ibm.dtfj.phd.util.LongEnumeration;
 
-/** 
+/**
  * @author ajohnson
  */
 class PHDJavaClass implements JavaClass {
@@ -63,20 +63,20 @@ class PHDJavaClass implements JavaClass {
 	static final int UNKNOWN_SUPERCLASS = -1;
 	static final String UNKNOWN_ARRAY = "[";
 	static final String UNKNOWN_NONARRAY = "]";
-	
+
 	/**
-	 * The constructors for PHDJavaClass used to take up to 9 arguments, many of which were ints. This made it hard to tie up which 
+	 * The constructors for PHDJavaClass used to take up to 9 arguments, many of which were ints. This made it hard to tie up which
 	 * argument corresponded to which parameter and invited errors since there can be no type checking.
 	 * <p>
 	 * This is now fixed by the use of the Builder pattern as described in
-	 * Effective Java Second Edition by Joshua Bloch (http://cyclo.ps/books/Prentice.Hall.Effective.Java.2nd.Edition.May.2008.pdf), 
+	 * Effective Java Second Edition by Joshua Bloch (http://cyclo.ps/books/Prentice.Hall.Effective.Java.2nd.Edition.May.2008.pdf),
 	 * item 2 "Consider a builder when faced with many constructor parameters".
 	 * <p>
-	 * The only way to construct a PHDJavaClass is now using this Builder. Required arguments are set with 
-	 * a call to the Builder constructor and optional arguments are set before calling build() using a 
-	 * fluent interface.  
+	 * The only way to construct a PHDJavaClass is now using this Builder. Required arguments are set with
+	 * a call to the Builder constructor and optional arguments are set before calling build() using a
+	 * fluent interface.
 	 */
-	
+
 	public static class Builder {
 		// required parameters, all final, assigned once in the one constructor
 		private final ImageAddressSpace space;
@@ -85,10 +85,10 @@ class PHDJavaClass implements JavaClass {
 		private final long addr;
 		private final long superAddress;
 		private final String name;
-		
+
 		// optional parameters with default values
 		private int size = UNKNOWN_SIZE;
-		private int flags = PHDJavaObject.NO_HASHCODE; 
+		private int flags = PHDJavaObject.NO_HASHCODE;
 		private int hashCode = -1;
 		private Object refs = null;
 		private JavaClass componentType = null;
@@ -102,9 +102,9 @@ class PHDJavaClass implements JavaClass {
 		 * @param superAddress
 		 * @param name
 		 */
-		public Builder(ImageAddressSpace space, 
-				PHDJavaRuntime runtime, 
-				JavaClassLoader loader, 
+		public Builder(ImageAddressSpace space,
+				PHDJavaRuntime runtime,
+				JavaClassLoader loader,
 				long address,
 				long superAddress,
 				String name) {
@@ -113,7 +113,7 @@ class PHDJavaClass implements JavaClass {
 			this.loader = loader;
 			this.addr = address;
 			this.name = name;
-			
+
 			if ("byte".equals(name)||
 				"short".equals(name)||
 				"int".equals(name)||
@@ -125,10 +125,10 @@ class PHDJavaClass implements JavaClass {
 				"void".equals(name)) {
 				superAddress = 0;
 			}
-			
+
 			this.superAddress = superAddress;
 		}
-		
+
 		/**
 		 * Add the size attribute to a PHDJavaClass before building it.
 		 * @param size
@@ -138,7 +138,7 @@ class PHDJavaClass implements JavaClass {
 			this.size = size;
 			return this;
 		}
-		
+
 		/**
 		 * Add the flags attribute to a PHDJavaClass before building it.
 		 * @param flags
@@ -148,7 +148,7 @@ class PHDJavaClass implements JavaClass {
 			this.flags = flags;
 			return this;
 		}
-		
+
 		/**
 		 * Add the hashCode attribute to a PHDJavaClass before building it.
 		 * @param hashCode
@@ -158,7 +158,7 @@ class PHDJavaClass implements JavaClass {
 			this.hashCode = hashCode;
 			return this;
 		}
-		
+
 		/**
 		 * Add the refs attribute to a PHDJavaClass before building it.
 		 * @param refs
@@ -166,7 +166,7 @@ class PHDJavaClass implements JavaClass {
 		 */
 		public Builder refs(LongEnumeration refs) {
 			this.refs = runtime.convertRefs(refs, 0);
-			return this;			
+			return this;
 		}
 
 		/**
@@ -176,18 +176,18 @@ class PHDJavaClass implements JavaClass {
 		 */
 		public Builder componentType(JavaClass componentType) {
 			this.componentType = componentType;
-			return this;			
+			return this;
 		}
-		
+
 		/**
-		 * Build the PHDJavaClass using all the required and optional values given so far. 
+		 * Build the PHDJavaClass using all the required and optional values given so far.
 		 * @return the PHDJavaClass
 		 */
 		public PHDJavaClass build() {
 			return new PHDJavaClass(this);
-		}		
+		}
 	}
-	
+
 	public PHDJavaClass(Builder builder) {
 		space = builder.space;
 		runtime  = builder.runtime;
@@ -199,14 +199,13 @@ class PHDJavaClass implements JavaClass {
 		flags = builder.flags;
 		hashCode = builder.hashCode;
 		refs = builder.refs;
-		componentType = builder.componentType;	
+		componentType = builder.componentType;
 	}
-
 
 	public JavaClassLoader getClassLoader() throws CorruptDataException {
 		return loader;
 	}
-	
+
 	JavaClassLoader setClassLoader(JavaClassLoader jcl) {
 		JavaClassLoader ret = loader;
 		loader = jcl;
@@ -222,7 +221,7 @@ class PHDJavaClass implements JavaClass {
 				compName = nm.substring(1);
 			} else if (nm.startsWith("[L")) {
 				// Remove "L" and semicolon ";"
-				compName = nm.substring(2, nm.length()-1);			
+				compName = nm.substring(2, nm.length()-1);
 			} else if (nm.equals("[B")) compName = "byte";
 			else if (nm.equals("[C")) compName = "char";
 			else if (nm.equals("[S")) compName = "short";
@@ -241,7 +240,7 @@ class PHDJavaClass implements JavaClass {
 		if (componentType instanceof CorruptData) throw new CorruptDataException((CorruptData)componentType);
 		return componentType;
 	}
-	
+
 	/**
 	 * Set the component type if it has not been already set.
 	 * @param comp The component type, or null to query the type
@@ -254,7 +253,7 @@ class PHDJavaClass implements JavaClass {
 		}
 		return ret;
 	}
-	
+
 	public Iterator<JavaObject> getConstantPoolReferences() {
 		return Collections.<JavaObject>emptyList().iterator();
 
@@ -269,7 +268,7 @@ class PHDJavaClass implements JavaClass {
 	}
 
 	public ImagePointer getID() {
-		return addr != 0 ? space.getPointer(addr) : null; 
+		return addr != 0 ? space.getPointer(addr) : null;
 	}
 
 	public Iterator<String> getInterfaces() {
@@ -277,7 +276,7 @@ class PHDJavaClass implements JavaClass {
 	}
 
 	public int getModifiers() throws CorruptDataException {
-		return MODIFIERS_UNAVAILABLE; 
+		return MODIFIERS_UNAVAILABLE;
 	}
 
 	public String getName() throws CorruptDataException {
@@ -312,7 +311,7 @@ class PHDJavaClass implements JavaClass {
 			throw new CorruptDataException(new PHDCorruptJavaClass("No superclass available", null, null));
 		} else {
 			JavaClass sup = runtime.findClass(superAddress);
-			try { 
+			try {
 				// PHD Version 4 bug - bad superclass: J2RE 5.0 IBM J9 2.3 AIX ppc64-64 build 20080314_17962_BHdSMr
 				if (sup != null && "java/lang/Class".equals(sup.getName())) sup = null;
 			} catch (CorruptDataException e) {
@@ -324,8 +323,8 @@ class PHDJavaClass implements JavaClass {
 	}
 
 	public boolean isArray() throws CorruptDataException {
-		return componentType != null 
-			|| name != null && name.startsWith("[") 
+		return componentType != null
+			|| name != null && name.startsWith("[")
 			|| !UNKNOWN_NONARRAY.equals(name) && getName().startsWith("[");
 	}
 
@@ -339,12 +338,12 @@ class PHDJavaClass implements JavaClass {
 				try {
 					sup = getSuperclass();
 					if (sup != null) count = -1;
-				} catch (CorruptDataException e) {					
+				} catch (CorruptDataException e) {
 				}
 				try {
 					load = loader.getObject();
 					if (load != null) count = -2;
-				} catch (CorruptDataException e) {					
+				} catch (CorruptDataException e) {
 				}
 			}
 			public boolean hasNext() {
@@ -358,7 +357,7 @@ class PHDJavaClass implements JavaClass {
 					return count < arefs.length;
 				} else if (refs instanceof int[]) {
 					int arefs[] = (int[])refs;
-					return count < arefs.length;					
+					return count < arefs.length;
 				} else {
 					return false;
 				}
@@ -388,9 +387,9 @@ class PHDJavaClass implements JavaClass {
 						++count;
 					} else if (refs instanceof int[]) {
 						int arefs[] = (int[])refs;
-						ref = runtime.expandAddress(arefs[count++]);						
+						ref = runtime.expandAddress(arefs[count++]);
 					} else {
-						long arefs[] = (long[])refs;	
+						long arefs[] = (long[])refs;
 						ref = arefs[count++];
 					}
 					cls = runtime.findClass(ref);
@@ -401,7 +400,7 @@ class PHDJavaClass implements JavaClass {
 							source,
 							PHDJavaReference.REACHABILITY_STRONG,
 							refType,
-							PHDJavaReference.HEAP_ROOT_UNKNOWN,"?");					 
+							PHDJavaReference.HEAP_ROOT_UNKNOWN,"?");
 				} else {
 					return new PHDJavaReference(
 							new PHDJavaObject.Builder((PHDJavaHeap)(runtime.getHeaps().next()),ref,null,PHDJavaObject.NO_HASHCODE,-1).build(),
@@ -415,18 +414,18 @@ class PHDJavaClass implements JavaClass {
 			public void remove() {
 				throw new UnsupportedOperationException();
 			}
-			
+
 		};
 	}
 
 	public String toString() {
 		return "PHDJavaClass "+name+"@"+Long.toHexString(addr);
 	}
-	
+
 	public int hashCode() {
-		return (int)addr ^ (int)(addr >>> 32); 
+		return (int)addr ^ (int)(addr >>> 32);
 	}
-	
+
 	/**
 	 * Calculate the size of an instance.
 	 * A negative size field means a size calculated from object spacings.
@@ -445,7 +444,7 @@ class PHDJavaClass implements JavaClass {
 		}
 		return header + Math.abs(size);
 	}
-	
+
 	long getArraySize(int length) throws CorruptDataException {
 		if (!isArray()) throw new IllegalArgumentException(getName()+" is not an array");
 		int s1 = 0;
@@ -455,13 +454,13 @@ class PHDJavaClass implements JavaClass {
 			else if (name.equals("[I")||name.equals("[F")) s1 = 4;
 			else if (name.equals("[D")||name.equals("[J")) s1 = 8;
 		}
-		// Header is 2 pointers + 2 * 32-bits?, except on 1.4.2 where primitive arrays are 2 pointers+1 32-bit 
+		// Header is 2 pointers + 2 * 32-bits?, except on 1.4.2 where primitive arrays are 2 pointers+1 32-bit
 		int prefix = runtime.pointerSize()*2 + (runtime.minInstanceSize == 0 && s1 != 0 ? 4 : 8);
 		if (s1 == 0) s1 = runtime.pointerSize();
 		// Rounding is excluded
 		return prefix + (long)length*s1;
 	}
-	
+
 	/**
 	 * Is there a reference from one class to another?
 	 * E.g. from an array class to the component type? This would be an indication that they
@@ -483,7 +482,7 @@ class PHDJavaClass implements JavaClass {
 					return true;
 				}
 			} catch (DataUnavailable e) {
-			} catch (CorruptDataException e) {				
+			} catch (CorruptDataException e) {
 			}
 		}
 		return false;
@@ -492,7 +491,7 @@ class PHDJavaClass implements JavaClass {
 	void addMethod(PHDJavaMethod javaMethod) {
 		methods.add(javaMethod);
 	}
-	
+
 	/**
 	 * Set the on-heap Java object for this class
 	 * @param obj
@@ -508,7 +507,7 @@ class PHDJavaClass implements JavaClass {
 	void setName(String newName) {
 		name = newName;
 	}
-	
+
 	/**
 	 * For dummy classes get the size from the smallest instance of the class.
 	 * @param instanceAddress The address of an instance of this class.
@@ -525,5 +524,5 @@ class PHDJavaClass implements JavaClass {
 	public JavaObject getProtectionDomain() throws DataUnavailable,	CorruptDataException {
 		throw new DataUnavailable("This implementation of DTFJ does not support getProtectionDomain");
 	}
-	
+
 }

@@ -111,7 +111,7 @@ public final class Dump extends ImageInputStreamImpl {
      */
     public static boolean isValid(String filename) {
         try {
-        	// RNC: never create .zcache files in DTFJ
+            // RNC: never create .zcache files in DTFJ
             new Dump(filename, null, false, null, true);
             return true;
         } catch (FileNotFoundException e) {
@@ -127,10 +127,10 @@ public final class Dump extends ImageInputStreamImpl {
      * @throws FileNotFoundException
      */
     public Dump(String filename) throws FileNotFoundException {
-    	// RNC: never create .zcache files in DTFJ
+        // RNC: never create .zcache files in DTFJ
         this(filename, null, true, null, false);
     }
-    
+
     /**
      * Creates a new instance of Dump from the given filename. The filename must represent
      * either an absolute or relative pathname of the dump file, or if running on z/os it can
@@ -142,7 +142,7 @@ public final class Dump extends ImageInputStreamImpl {
      * @throws FileNotFoundException
      */
     public Dump(String filename, ImageInputStream stream, boolean createCacheFile) throws FileNotFoundException {
-    	// RNC: never create .zcache files in DTFJ
+        // RNC: never create .zcache files in DTFJ
         this(filename, null, true, stream, createCacheFile);
     }
 
@@ -160,7 +160,7 @@ public final class Dump extends ImageInputStreamImpl {
      * @throws FileNotFoundException
      */
     public Dump(String filename, SearchListener[] listeners) throws FileNotFoundException {
-    	// RNC: never create .zcache files in DTFJ
+        // RNC: never create .zcache files in DTFJ
         this(filename, listeners, true, null, true);
     }
 
@@ -180,11 +180,11 @@ public final class Dump extends ImageInputStreamImpl {
         try {
             //dump = new com.ibm.jvm.ras.svcdump.Dump(filename);
             //log.fine("finished opening old svcdump");
-        	if (instream != null) {
-        		raf = instream;
-        	} else { 
-        		raf = new FileImageInputStream(new RandomAccessFile(filename, "r"));
-        	}
+            if (instream != null) {
+                raf = instream;
+            } else {
+                raf = new FileImageInputStream(new RandomAccessFile(filename, "r"));
+            }
             if (buildAddressSpaces) {
                 buildAddressSpaces(createCacheFile);
                 log.fine("finished building address spaces");
@@ -252,7 +252,7 @@ public final class Dump extends ImageInputStreamImpl {
      * (no cache file exists) then every block of the dump is scanned to build a mapping for
      * each AddressSpace of address to block number (each block has a header containing the
      * AddressSpace id and the address it maps to). At the same time if this is an MVS dataset,
-     * the table of fpos info is built. 
+     * the table of fpos info is built.
      * <p>
      * If a cache file exists then the AddressSpace and fpos info is read from that instead.
      * @param createCacheFile Whether to create a new cache file
@@ -263,8 +263,8 @@ public final class Dump extends ImageInputStreamImpl {
                 /*
                  * First try and get everything from the cache file.
                  */
-            	if (filename == null) throw new FileNotFoundException("No filename supplied so no cache available");
-            	File fn = new File(filename + ".zcache");
+                if (filename == null) throw new FileNotFoundException("No filename supplied so no cache available");
+                File fn = new File(filename + ".zcache");
                 readCacheFile(fn);
             } catch (Exception e) {
                 log.log(Level.FINE, "cache read failed: ", e);
@@ -380,8 +380,8 @@ public final class Dump extends ImageInputStreamImpl {
                 log.fine("scan complete");
                 // Create the cache if required
                 if (createCacheFile && filename != null) {
-                	File cacheFile = new File(filename + ".zcache");
-                	createCacheFile(cacheFile);
+                    File cacheFile = new File(filename + ".zcache");
+                    createCacheFile(cacheFile);
                 }
             }
         } catch (IOException e) {
@@ -424,7 +424,7 @@ public final class Dump extends ImageInputStreamImpl {
 	 * @param cacheFile
 	 */
 	private void createCacheFile(File cacheFile) {
-		try {                		
+		try {
 			FileOutputStream fos = new FileOutputStream(cacheFile);
 			try {
 				ObjectOutputStream oos = new ObjectOutputStream(fos);
@@ -444,7 +444,7 @@ public final class Dump extends ImageInputStreamImpl {
 			} catch (IOException e) {
 				log.log(Level.FINE, "Unable to create cache file "+cacheFile, e);
 				// An incomplete cache file is useless, so delete it
-				cacheFile.delete();                		
+				cacheFile.delete();
 			} finally {
 				fos.close();
 			}
@@ -484,7 +484,7 @@ public final class Dump extends ImageInputStreamImpl {
      * @param offset the offset to seek to
      */
     // XXX why is this public? not thread safe - absorb into single read method
-    public void seek(long offset) throws IOException {       
+    public void seek(long offset) throws IOException {
         super.seek(offset);
         if (isMvsDataset) {
             /* Get the fpos that we squirreled away earlier */
@@ -518,12 +518,12 @@ throw new Error("TEMP!"); // XXX
      * @throws IOException
      */
     public int read() throws IOException {
-    	byte buf[] = new byte[1];
-    	int r = read(buf);
-    	if (r <= 0) return -1;
-    	return buf[0] & 0xff;
+        byte buf[] = new byte[1];
+        int r = read(buf);
+        if (r <= 0) return -1;
+        return buf[0] & 0xff;
     }
-    
+
     /**
      * Read from the dump file into the given buffer.
      * @param buf the buffer to read into
@@ -532,38 +532,38 @@ throw new Error("TEMP!"); // XXX
      */
     public int read(byte[] buf, int off, int len) throws IOException {
         if (log.isLoggable(Level.FINER))
-        	log.finer("Read into "+buf+" "+hex(off)+" "+hex(len));
-    	int n;
+            log.finer("Read into "+buf+" "+hex(off)+" "+hex(len));
+        int n;
         if (isMvsDataset) {
-        	if (off == 0) {
-        		n = Clib.fread(buf, 1, len, fp);
-        	} else {
-        		byte buf2[] = new byte[len];
-        		n = Clib.fread(buf2, 1, len, fp);
-        		if (n > 0) {
-        			System.arraycopy(buf2, 0, buf, off, n);
-        		}
-        	}
+            if (off == 0) {
+                n = Clib.fread(buf, 1, len, fp);
+            } else {
+                byte buf2[] = new byte[len];
+                n = Clib.fread(buf2, 1, len, fp);
+                if (n > 0) {
+                    System.arraycopy(buf2, 0, buf, off, n);
+                }
+            }
         } else {
             n = raf.read(buf, off, len);
         }
-        
+
         if (n > 0) streamPos += n;
-        
+
         if (log.isLoggable(Level.FINER))
             log.finer("read 0x" + hex(n) + " bytes");
-        
+
         return n;
     }
-    
+
     /**
      * Read from the dump file into the given buffer.
      * @param buf the buffer to read into
      */
     public int read(byte[] buf) throws IOException {
         if (log.isLoggable(Level.FINER))
-        	log.finer("Read into "+buf+" "+hex(buf.length));
-    	int n;
+            log.finer("Read into "+buf+" "+hex(buf.length));
+        int n;
         if (isMvsDataset) {
             n = Clib.fread(buf, 1, buf.length, fp);
         } else {
@@ -574,7 +574,7 @@ throw new Error("TEMP!"); // XXX
             log.finer("read 0x" + hex(n) + " bytes");
         return n;
     }
-    
+
     /**
      * Get the length of the dump file
      */
@@ -582,12 +582,12 @@ throw new Error("TEMP!"); // XXX
         if (isMvsDataset) {
             return -1;
         } else {
-        	try {
-        		return raf.length();
-        	} catch (IOException e) {
-        		return -1;
-        	}
-        }    	
+            try {
+                return raf.length();
+            } catch (IOException e) {
+                return -1;
+            }
+        }
     }
 
     /**
@@ -639,7 +639,7 @@ throw new Error("TEMP!"); // XXX
     public String getProductModification() {
         return productModification;
     }
-    
+
     /**
      * Convert an MVS style clock value to a Date object.
      */

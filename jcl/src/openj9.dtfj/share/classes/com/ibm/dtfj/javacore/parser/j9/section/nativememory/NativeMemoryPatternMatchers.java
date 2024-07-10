@@ -30,13 +30,13 @@ import com.ibm.dtfj.javacore.parser.j9.section.common.CommonPatternMatchers;
 public class NativeMemoryPatternMatchers
 {
 	public static final Matcher pipes = CommonPatternMatchers.generateMatcher("\\s*(\\|\\s*)*", 0);
-	
+
 	public static final Matcher crossminusminus = CommonPatternMatchers.generateMatcher("+--", Pattern.LITERAL);
-	
+
 	public static final Matcher categoryName = CommonPatternMatchers.generateMatcher("[^:]+(?=:)", 0);
-	
+
 	public static final Matcher commaDelimitedNumeric = CommonPatternMatchers.generateMatcher("[0-9,]+", 0);
-	
+
 	public static final Matcher bytesAndSeparator = CommonPatternMatchers.generateMatcher(" bytes / ", Pattern.LITERAL);
-	
+
 }

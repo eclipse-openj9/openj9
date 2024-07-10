@@ -71,7 +71,6 @@ public abstract class FileManager {
 		return tmpdir;
 	}
 
-
 	/**
 	 * A platform aware file existence checker that allows for MVS datasets on z/OS
 	 * @param file the file to check

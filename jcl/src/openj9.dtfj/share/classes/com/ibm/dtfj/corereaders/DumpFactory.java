@@ -26,12 +26,11 @@ import java.io.IOException;
 
 import javax.imageio.stream.ImageInputStream;
 
-
 public class DumpFactory {
 	public static ICoreFileReader createDumpForCore(ImageInputStream stream) throws IOException {
 		return createDumpForCore(stream, false);
 	}
-	
+
 	public static ICoreFileReader createDumpForCore(ImageInputStream stream, boolean verbose) throws IOException {
 		// TODO try next format if there is an IOException thrown from the test
 		ICoreFileReader corefile = null;

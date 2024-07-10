@@ -36,8 +36,6 @@ public class ImageBuilder extends AbstractBuilderComponent implements IImageBuil
 	private JCImage fImage;
 	private BuilderContainer fBuilderContainer;
 
-
-	
 	public ImageBuilder(String id) {
 		super(id);
 		fImage = new JCImage();
@@ -47,12 +45,11 @@ public class ImageBuilder extends AbstractBuilderComponent implements IImageBuil
 	public IImageAddressSpaceBuilder getAddressSpaceBuilder(String builderID) {
 		return (IImageAddressSpaceBuilder) fBuilderContainer.findComponent(builderID);
 	}
-	
-	
+
 	/**
-	 * 
+	 *
 	 * @param id
-	 * 
+	 *
 	 */
 	public IImageAddressSpaceBuilder generateAddressSpaceBuilder(String id) throws BuilderFailureException {
 		IImageAddressSpaceBuilder addressSpaceBuilder = null;
@@ -71,24 +68,22 @@ public class ImageBuilder extends AbstractBuilderComponent implements IImageBuil
 		}
 		return addressSpaceBuilder;
 	}
-	
-	
+
 	/**
-	 * 
+	 *
 	 */
 	public IImageAddressSpaceBuilder getCurrentAddressSpaceBuilder() {
 		return (IImageAddressSpaceBuilder) fBuilderContainer.getLastAdded();
 	}
-	
-	
+
 	/**
-	 * 
+	 *
 	 */
 	public Image getImage() {
 		return fImage;
 	}
-	
-	/** 
+
+	/**
 	 * Set OS type, equivalent to os.name property
 	 * @param osType
 	 */
@@ -97,7 +92,7 @@ public class ImageBuilder extends AbstractBuilderComponent implements IImageBuil
 	}
 
 	/**
-	 * Set OS sub-type, equivalent to os.version property 
+	 * Set OS sub-type, equivalent to os.version property
 	 * @param osSubType
 	 */
 	public void setOSSubType(String osSubType) {
@@ -113,7 +108,7 @@ public class ImageBuilder extends AbstractBuilderComponent implements IImageBuil
 	}
 
 	/**
-	 * Set CPU sub-type 
+	 * Set CPU sub-type
 	 * @param cpuSubType
 	 */
 	public void setcpuSubType(String cpuSubType) {
@@ -121,12 +116,12 @@ public class ImageBuilder extends AbstractBuilderComponent implements IImageBuil
 	}
 
 	/**
-	 * Set CPU count   
+	 * Set CPU count
 	 * @param cpuCount
 	 */
 	public void setcpuCount(int cpuCount) {
 		fImage.setcpuCount(cpuCount);
-	}	
+	}
 
 	/**
 	 * Set dump creation time
@@ -143,7 +138,7 @@ public class ImageBuilder extends AbstractBuilderComponent implements IImageBuil
 	public void setCreationTimeNanos(long nanoTime) {
 		fImage.setCreationTimeNanos(nanoTime);
 	}
-	
+
 	public void addHostAddr(InetAddress addr) {
 		fImage.addIPAddresses(addr);
 	}

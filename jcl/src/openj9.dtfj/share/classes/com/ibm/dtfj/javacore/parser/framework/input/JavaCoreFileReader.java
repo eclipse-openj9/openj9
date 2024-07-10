@@ -31,8 +31,6 @@ public class JavaCoreFileReader extends InputStreamReader {
 
 	private File fSource;
 
-	
-	
 	/**
 	 * Gets constructed only if a valid file is passed.
 	 * @param input java.io.File to read.
@@ -43,9 +41,8 @@ public class JavaCoreFileReader extends InputStreamReader {
 		fSource = input;
 	}
 
-
 	/**
-	 * 
+	 *
 	 * @return extension of file as a String or null if none exists.
 	 */
 	public String getExtension() {
@@ -60,15 +57,12 @@ public class JavaCoreFileReader extends InputStreamReader {
 		return extension;
 	}
 
-
-
 	/**
-	 * 
+	 *
 	 * @return Source for the reader
 	 */
 	public Object getSource() {
 		return fSource;
 	}
-
 
 }

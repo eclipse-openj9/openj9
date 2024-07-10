@@ -29,12 +29,12 @@ public class JCImageRegister implements ImageRegister {
 
 	private final String name;
 	private final Number value;
-	
+
 	public JCImageRegister(String name, Number value) {
 		this.name = name;
 		this.value = value;
 	}
-	
+
 	public String getName() {
 		return name;
 	}
@@ -47,7 +47,7 @@ public class JCImageRegister implements ImageRegister {
 	public String toString() {
 		return name+"="+value;
 	}
-	
+
 	/**
 	 */
 	public boolean equals(Object obj) {
@@ -60,7 +60,7 @@ public class JCImageRegister implements ImageRegister {
 		JCImageRegister to = (JCImageRegister)obj;
 		return name != null && name.equals(to.name) && value != null && value.equals(to.value);
 	}
-	
+
 	/**
 	 */
 	public int hashCode() {

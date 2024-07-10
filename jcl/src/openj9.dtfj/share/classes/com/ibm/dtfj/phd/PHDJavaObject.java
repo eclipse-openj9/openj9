@@ -39,7 +39,7 @@ import com.ibm.dtfj.java.JavaObject;
 import com.ibm.dtfj.java.JavaReference;
 import com.ibm.dtfj.phd.util.LongEnumeration;
 
-/** 
+/**
  * @author ajohnson
  */
 public class PHDJavaObject implements JavaObject {
@@ -50,7 +50,7 @@ public class PHDJavaObject implements JavaObject {
 	private Object refs;
 	private int hashCode;
 	private long instanceSize;
-	
+
 	/** bit 0 -> hashed (persistent), bit 1 -> hashed and moved (size changed?), bit 2 -> no valid hash */
 	static final int HASHED = 1;
 	static final int HASHED_AND_MOVED = 2;
@@ -66,18 +66,18 @@ public class PHDJavaObject implements JavaObject {
 	private int length = UNRESOLVED_TYPE;
 	/** instance size is an unsigned int in the datastream, so -1L is a value that cannot collide */
 	public static final long UNSPECIFIED_INSTANCE_SIZE = -1L;
-	
+
 	/**
-	 * The constructors for PHDJavaObject used to take up to 11 arguments, many of which were ints. This made it hard to tie up which 
+	 * The constructors for PHDJavaObject used to take up to 11 arguments, many of which were ints. This made it hard to tie up which
 	 * argument corresponded to which parameter and invited errors since there can be no type checking.
 	 * <p>
 	 * This is now fixed by the use of the Builder pattern as described in
-	 * Effective Java Second Edition by Joshua Bloch (http://cyclo.ps/books/Prentice.Hall.Effective.Java.2nd.Edition.May.2008.pdf), 
+	 * Effective Java Second Edition by Joshua Bloch (http://cyclo.ps/books/Prentice.Hall.Effective.Java.2nd.Edition.May.2008.pdf),
 	 * item 2 "Consider a builder when faced with many constructor parameters".
 	 * <p>
-	 * The only way to construct a PHDJavaObject is now using this Builder. Required arguments are set with 
-	 * a call to the Builder constructor, then optional arguments are set, then build() is called, usually all 
-	 * in one line using a fluent interface.  
+	 * The only way to construct a PHDJavaObject is now using this Builder. Required arguments are set with
+	 * a call to the Builder constructor, then optional arguments are set, then build() is called, usually all
+	 * in one line using a fluent interface.
 	 */
 	public static class Builder {
 		// required parameters, all final, assigned once in the one constructor
@@ -86,12 +86,12 @@ public class PHDJavaObject implements JavaObject {
 		private final JavaClass cls;
 		private final int flags;
 		private final int hashCode;
-		
+
 		// optional parameters with default values
 		private Object refs = null;
 		private int length = UNRESOLVED_TYPE;
 		private long instanceSize = UNSPECIFIED_INSTANCE_SIZE;
-		
+
 		/**
 		 * Initialize a Builder for a PHDJavaClass with the five required parameters.
 		 * @param heap
@@ -107,7 +107,7 @@ public class PHDJavaObject implements JavaObject {
 			this.flags = flags;
 			this.hashCode = hashCode;
 		}
-			
+
 		/**
 		 * Add the refs attribute to a PHDJavaObject before building it.
 		 * @param refs
@@ -118,7 +118,7 @@ public class PHDJavaObject implements JavaObject {
 			this.refs = heap.runtime.convertRefs(refs, skipped);
 			return this;
 		}
-		
+
 		/**
 		 * Add the refs attribute to a PHDJavaObject before building it.
 		 * @param refs
@@ -129,7 +129,7 @@ public class PHDJavaObject implements JavaObject {
 			this.refs = heap.runtime.convertRefs(refs, skipped);
 			return this;
 		}
-		
+
 		/**
 		 * Add the length attribute to a PHDJavaObject before building it.
 		 * @param length
@@ -138,8 +138,8 @@ public class PHDJavaObject implements JavaObject {
 		public Builder length(int length) {
 			this.length = length;
 			return this;
-		}	
-		
+		}
+
 		/**
 		 * Add the instance size attribute to a PHDJavaObject before building it.
 		 * @param instance size
@@ -149,16 +149,16 @@ public class PHDJavaObject implements JavaObject {
 			this.instanceSize = instanceSize;
 			return this;
 		}
-		
+
 		/**
-		 * Build the PHDJavaObject using all the required and optional values given so far. 
+		 * Build the PHDJavaObject using all the required and optional values given so far.
 		 * @return the PHDJavaObject
 		 */
 		public PHDJavaObject build() {
 			return new PHDJavaObject(this);
 		}
 	}
-	
+
 	public PHDJavaObject(Builder builder) {
 		heap = builder.heap;
 		address = builder.address;
@@ -169,9 +169,9 @@ public class PHDJavaObject implements JavaObject {
 		length = builder.length;
 		instanceSize = builder.instanceSize;
 	}
-	
+
 	public void arraycopy(int srcStart, Object dst, int dstStart, int length)
-			throws CorruptDataException, MemoryAccessException {		
+			throws CorruptDataException, MemoryAccessException {
 		if (dst == null) throw new NullPointerException("destination null");
 		fillInDetails(true);
 		if (!isArray()) throw new IllegalArgumentException(this+" is not an array");
@@ -187,14 +187,14 @@ public class PHDJavaObject implements JavaObject {
 		//System.out.println("array "+srcStart+" "+dst+" "+dstStart+" "+length);
 		if (srcStart < 0 || length < 0 || dstStart < 0 || srcStart + length < 0 || dstStart + length < 0)
 			throw new IndexOutOfBoundsException(srcStart+","+dstStart+","+length);
-			
-		if (srcStart + length > getArraySize()) 
+
+		if (srcStart + length > getArraySize())
 			throw new IndexOutOfBoundsException(srcStart+"+"+length+">"+getArraySize()+jc);
-		
+
 		if (dst instanceof JavaObject[]) {
 			if (!type.startsWith("[[") && !type.startsWith("[L")) throw new IllegalArgumentException("Expected "+type+" not "+dst);
-			JavaObject dst1[] = (JavaObject[])dst; 
-			
+			JavaObject dst1[] = (JavaObject[])dst;
+
 			// Get to the right point in the refs
 			int count;
 			if (refs instanceof LongEnumeration) {
@@ -213,7 +213,7 @@ public class PHDJavaObject implements JavaObject {
 			} else {
 				throw new CorruptDataException(new PHDCorruptData("Unknown array contents", getID()));
 			}
-			
+
 			// Copy the data to the destination
 			for (int idx = srcStart; idx < srcStart + length; ++idx) {
 				JavaObject target;
@@ -274,7 +274,7 @@ public class PHDJavaObject implements JavaObject {
 		} else if (dst instanceof double[]) {
 			if (!type.startsWith("[D")) throw new IllegalArgumentException("Expected "+type+" not "+dst);
 			double dst1[] = (double[])dst;
-			if (dstStart + length > dst1.length) throw new IndexOutOfBoundsException();			
+			if (dstStart + length > dst1.length) throw new IndexOutOfBoundsException();
 		} else {
 			throw new IllegalArgumentException("Expected "+type+" not "+dst);
 		}
@@ -336,7 +336,7 @@ public class PHDJavaObject implements JavaObject {
 					return count < arefs.length;
 				} else if (refs instanceof int[]) {
 					int arefs[] = (int[])refs;
-					return count < arefs.length;					
+					return count < arefs.length;
 				} else {
 					return false;
 				}
@@ -366,7 +366,7 @@ public class PHDJavaObject implements JavaObject {
 						int arefs[] = (int[])refs;
 						ref = heap.getJavaRuntime().expandAddress(arefs[count++]);
 					} else {
-						long arefs[] = (long[])refs;	
+						long arefs[] = (long[])refs;
 						ref = arefs[count++];
 					}
 					if (length >= 0) {
@@ -396,7 +396,7 @@ public class PHDJavaObject implements JavaObject {
 			public void remove() {
 				throw new UnsupportedOperationException();
 			}
-			
+
 		};
 	}
 
@@ -417,7 +417,7 @@ public class PHDJavaObject implements JavaObject {
 			return instanceSize;
 		}
 		JavaClass cls = getJavaClass();
-		if (isArray()) { 
+		if (isArray()) {
 			return ((PHDJavaClass)cls).getArraySize(length);
 		} else {
 			return ((PHDJavaClass)cls).getInstanceSize();
@@ -429,21 +429,21 @@ public class PHDJavaObject implements JavaObject {
 		if (length == SIMPLE_OBJECT) return false;
 		return getJavaClass().isArray();
 	}
-	
+
 	public boolean equals(Object o) {
 		if (!(o instanceof PHDJavaObject)) return false;
 		PHDJavaObject p = (PHDJavaObject)o;
 		return heap.equals(p.heap) && address == p.address;
 	}
-	
+
 	public int hashCode() {
-		return (int)address ^ (int)(address >>> 32); 
+		return (int)address ^ (int)(address >>> 32);
 	}
-	
+
 	/**
 	 * Sometimes a JavaObject is constructed without knowing anything about the type etc.
 	 * If this info is needed then try to retrieve it now.
-	 * @param withRefs Do we need to fill in the references array too? 
+	 * @param withRefs Do we need to fill in the references array too?
 	 */
 	private void fillInDetails(boolean withRefs) {
 		if (length == UNRESOLVED_TYPE || withRefs && refs == null) {

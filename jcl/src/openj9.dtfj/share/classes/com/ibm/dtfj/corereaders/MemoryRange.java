@@ -23,14 +23,14 @@
 package com.ibm.dtfj.corereaders;
 
 /**
- * Dumps contain lots of memory - segmented across a range of virtual 
- * addresses....... 
+ * Dumps contain lots of memory - segmented across a range of virtual
+ * addresses.......
  */
 public class MemoryRange implements Comparable {
 	private static final String printableEBCDIC[] = {
 		"40"," ",
 		"F0","0",	"F1","1",	"F2","2",	"F3","3",	"F4","4",	"F5","5",
-		"F6","6",	"F7","7",	"F8","8",	"F9","9",	 	
+		"F6","6",	"F7","7",	"F8","8",	"F9","9",
 		"C1","A",	"C2","B",	"C3","C",	"C4","D",	"C5","E",
 		"C6","F",	"C7","G",	"C8","H",	"C9","I",	"D1","J",	"D2","K",
 		"D3","L",	"D4","M",	"D5","N",	"D6","O",	"D7","P",	"D8","Q",
@@ -42,7 +42,7 @@ public class MemoryRange implements Comparable {
 		"99","r",	"A2","s",	"A3","t",	"A4","u",	"A5","v",	"A6","w",
 		"A7","x",	"A8","y",	"A9","z"
 	};
-	
+
 	private DumpReader _libraryReader = null;
 	private long _virtualAddress;
 	private long _fileOffset;
@@ -81,16 +81,16 @@ public class MemoryRange implements Comparable {
 		this(virtualAddress, fileOffset, size, asid, isShared, isReadOnly, isExecutable);
 		_inCoreFile = inCoreFile;
 	}
-	
+
 	/**
 	 * Copy constructor, used when copying shared memory ranges into another address space
-	 * 
+	 *
 	 * @return the new copy of the MemoryRange
 	 */
 	public MemoryRange(MemoryRange range, int asid)
 	{
 		this(range.getVirtualAddress(), range.getFileOffset(), range.getSize(), asid);
-		
+
 		_permissionsSupported = true;
 		try {
 			_shared = range.isShared();
@@ -108,12 +108,11 @@ public class MemoryRange implements Comparable {
 		return getVirtualAddress() <= address && address < getVirtualAddress() + getSize();
 	}
 
-	
 	public boolean contains(int asid, long address)
 	{
 		return (asid == _asid) && contains(address);
 	}
-	
+
 	/**
 	 * @return the file offset
 	 */
@@ -129,7 +128,7 @@ public class MemoryRange implements Comparable {
 	{
 		return _size;
 	}
-	
+
 	/**
 	 * @return the base virtual address
 	 */
@@ -145,7 +144,7 @@ public class MemoryRange implements Comparable {
 	{
 		return _inCoreFile;
 	}
-	
+
 	/**
 	 * @return the DumpReader for this MemoryRange
 	 */
@@ -153,7 +152,7 @@ public class MemoryRange implements Comparable {
 	{
 		return _libraryReader;
 	}
-	
+
 	/**
 	 * Set the DumpReader for this MemoryRange
 	 * @return void
@@ -174,7 +173,7 @@ public class MemoryRange implements Comparable {
 
 		if (_asid != 0) {
 			String tempASID = Integer.toHexString(_asid);
-			// OK we look to see it the complete ASID is in valid ebcdic 
+			// OK we look to see it the complete ASID is in valid ebcdic
 			// printable chars ..... if so convert to string so we can see the
 			// asid "name" such as SYS1 CICS etc.....
 			boolean bIsReadable = false;
@@ -203,7 +202,7 @@ public class MemoryRange implements Comparable {
 		return sb.toString();
 	}
 
-	// very simplistic and inefficient way of figuring out an ebcdic 
+	// very simplistic and inefficient way of figuring out an ebcdic
 	// printable char from hex characters
 	private String isPrintableEbcdic(String in)
 	{
@@ -228,7 +227,7 @@ public class MemoryRange implements Comparable {
 
 	/**
 	 * @return true if this MemoryRange is marked executable
-	 * @throws MemoryAccessException 
+	 * @throws MemoryAccessException
 	 */
 	public boolean isExecutable() throws MemoryAccessException
 	{
@@ -241,7 +240,7 @@ public class MemoryRange implements Comparable {
 
 	/**
 	 * @return true if this MemoryRange is marked read-only
-	 * @throws MemoryAccessException 
+	 * @throws MemoryAccessException
 	 */
 	public boolean isReadOnly() throws MemoryAccessException
 	{
@@ -254,7 +253,7 @@ public class MemoryRange implements Comparable {
 
 	/**
 	 * @return true if this MemoryRange is marked shared
-	 * @throws MemoryAccessException 
+	 * @throws MemoryAccessException
 	 */
 	public boolean isShared() throws MemoryAccessException
 	{
@@ -274,7 +273,7 @@ public class MemoryRange implements Comparable {
 		// Take account of address spaces
 		if (_asid < rhs._asid) return -1;
 		if (_asid > rhs._asid) return 1;
-		
+
 		// Then compare addresses as unsigned quantities
 		if (_virtualAddress == rhs._virtualAddress) {
 			return 0;

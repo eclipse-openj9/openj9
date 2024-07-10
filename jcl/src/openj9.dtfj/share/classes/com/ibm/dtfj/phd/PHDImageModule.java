@@ -32,17 +32,17 @@ import com.ibm.dtfj.image.ImageModule;
 import com.ibm.dtfj.image.ImageSection;
 import com.ibm.dtfj.image.ImageSymbol;
 
-/** 
+/**
  * @author ajohnson
  */
 public class PHDImageModule implements ImageModule {
 
 	private String moduleName;
-	
+
 	PHDImageModule(String name) {
 		moduleName = name;
 	}
-	
+
 	public String getName() throws CorruptDataException {
 		return moduleName;
 	}
@@ -62,14 +62,14 @@ public class PHDImageModule implements ImageModule {
 	public int hashCode() {
 		return moduleName.hashCode();
 	}
-	
+
 	public boolean equals(Object o) {
 		if (o == null) return false;
 		if (getClass() != o.getClass()) return false;
 		PHDImageModule m = (PHDImageModule)o;
 		return moduleName.equals(m.moduleName);
 	}
-	
+
 	public long getLoadAddress() throws DataUnavailable {
 		throw new DataUnavailable("no load address in a PHD");
 	}
