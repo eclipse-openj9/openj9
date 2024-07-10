@@ -1298,6 +1298,9 @@ static void printField(J9CfrClassFile* classfile, J9CfrField* field)
 	if(field->accessFlags & CFR_ACC_FINAL) j9tty_printf( PORTLIB, "final ");
 	if(field->accessFlags & CFR_ACC_VOLATILE) j9tty_printf( PORTLIB, "volatile ");
 	if(field->accessFlags & CFR_ACC_TRANSIENT) j9tty_printf( PORTLIB, "transient ");
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+	if(field->accessFlags & CFR_ACC_STRICT) j9tty_printf( PORTLIB, "strict ");
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 	/* Return type. */
 	string = classfile->constantPool[field->descriptorIndex].bytes;
