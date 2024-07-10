@@ -93,6 +93,8 @@ public:
    // Find a runtime-generated class for given class loader, deterministic class name prefix, and ROMClass hash
    J9Class *findGeneratedClass(J9ClassLoader *loader, const uint8_t *namePrefix, size_t namePrefixLength,
                                const JITServerROMClassHash &hash, J9VMThread *vmThread);
+   // Find the stored hash for ramClass loaded by loader if it exists in the generated classes map.
+   std::string findGeneratedClassHash(J9ClassLoader *loader, J9Class *ramClass, TR_J9VM *fe, J9VMThread *vmThread);
    // Get the RAMClass for a previously deserialized ROMClass offset for a runtime-generated class
    virtual J9Class *getGeneratedClass(J9ClassLoader *loader, uintptr_t romClassSccOffset, TR::Compilation *comp) = 0;
 

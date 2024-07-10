@@ -205,9 +205,9 @@ JITServerSharedROMClassCache::shutdown(bool lastClient)
 
 
 J9ROMClass *
-JITServerSharedROMClassCache::getOrCreate(const J9ROMClass *packedROMClass)
+JITServerSharedROMClassCache::getOrCreate(const J9ROMClass *packedROMClass, const JITServerROMClassHash *packedROMClassHash)
    {
-   JITServerROMClassHash hash(packedROMClass);
+   JITServerROMClassHash hash = packedROMClassHash ? *packedROMClassHash : JITServerROMClassHash(packedROMClass);
    return getPartition(hash).getOrCreate(packedROMClass, hash);
    }
 

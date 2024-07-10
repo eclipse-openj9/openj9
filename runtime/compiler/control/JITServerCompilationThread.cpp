@@ -905,7 +905,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          // If the client sent us the desired information in the compilation request, use that.
          if(!(std::get<0>(classInfoTuple).empty()))
             {
-            romClass = JITServerHelpers::romClassFromString(std::get<0>(classInfoTuple), clientSession->persistentMemory());
+            romClass = JITServerHelpers::romClassFromString(std::get<0>(classInfoTuple), std::get<25>(classInfoTuple), clientSession->persistentMemory());
             }
          else
             {
