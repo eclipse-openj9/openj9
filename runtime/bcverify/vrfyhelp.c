@@ -49,7 +49,7 @@ static IDATA findFieldFromRamClass (J9Class ** ramClass, J9ROMFieldRef * field, 
 static IDATA findMethodFromRamClass (J9BytecodeVerificationData * verifyData, J9Class ** ramClass, J9ROMNameAndSignature * method, UDATA firstSearch);
 static VMINLINE UDATA * pushType (J9BytecodeVerificationData *verifyData, U_8 * signature, UDATA * stackTop);
 static IDATA isRAMClassCompatible(J9BytecodeVerificationData *verifyData, U_8* parentClass, UDATA parentLength, U_8* childClass, UDATA childLength, IDATA *reasonCode);
-static IDATA findFieldFromCurrentRomClass(J9ROMClass *romClass, J9ROMFieldRef *field);
+static J9ROMFieldShape *findFieldFromCurrentRomClass(J9ROMClass *romClass, J9ROMFieldRef *field);
 
 J9_DECLARE_CONSTANT_UTF8(j9_vrfy_Object, "java/lang/Object");
 J9_DECLARE_CONSTANT_UTF8(j9_vrfy_String, "java/lang/String");
@@ -903,7 +903,18 @@ isFieldAccessCompatible(J9BytecodeVerificationData *verifyData, J9ROMFieldRef *f
 	*reasonCode = 0;
 
 	if (JBputfield == bytecode) {
+		J9BranchTargetStack *liveStack = (J9BranchTargetStack *)verifyData->liveStack;
+		J9ROMFieldShape *field = findFieldFromCurrentRomClass(romClass, fieldRef);
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+		IDATA isStrictField = (NULL != field) && J9_ARE_ALL_BITS_SET(field->modifiers, J9AccStrict);
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 		if (J9_ARE_ALL_BITS_SET(receiver, BCV_SPECIAL_INIT)) {
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+			if (FALSE == liveStack->uninitializedThis && isStrictField) {
+				/* ACC_STRICT field must be assigned before instance initialization method. */
+				return (IDATA)FALSE;
+			}
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 			J9UTF8 *classString = ((J9UTF8 *) J9ROMCLASS_CLASSNAME(romClass));
 			if (utf8string != classString) {
 				/* The following test is not necessary if the class name is uniquely referenced in a class */
@@ -931,10 +942,15 @@ isFieldAccessCompatible(J9BytecodeVerificationData *verifyData, J9ROMFieldRef *f
 				 * the field is accessible only when it exists in the subclass or the superclass's
 				 * initialization is completed in which case uninitializedThis is set to FALSE.
 				 */
-				J9BranchTargetStack *liveStack = (J9BranchTargetStack *)verifyData->liveStack;
-				return findFieldFromCurrentRomClass(romClass, fieldRef) || !liveStack->uninitializedThis;
+				return (NULL != field) || !liveStack->uninitializedThis;
 			}
 		}
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+		else if (isStrictField) {
+			/* putfield is not allowed outside of initialization for strict fields. */
+			return (IDATA)FALSE;
+		}
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 	}
 	return isClassCompatibleByName(verifyData, receiver, J9UTF8_DATA(utf8string), J9UTF8_LENGTH(utf8string), reasonCode);
 }
@@ -1222,10 +1238,10 @@ storeVerifyErrorData (J9BytecodeVerificationData * verifyData, I_16 errorDetailC
  *
  * @param romClass a pointer to J9ROMClass
  * @param field a pointer to J9ROMFieldRef
- * @return TRUE if it exists in the current ROM class
- *         FALSE when the field doesn't exist
+ * @return J9ROMFieldShape* if it exists in the current ROM class
+ *         or NULL when the field doesn't exist
  */
-static IDATA
+static J9ROMFieldShape *
 findFieldFromCurrentRomClass(J9ROMClass *romClass, J9ROMFieldRef *field)
 {
 	J9UTF8 *searchName = J9ROMNAMEANDSIGNATURE_NAME(J9ROMFIELDREF_NAMEANDSIGNATURE(field));
@@ -1240,11 +1256,10 @@ findFieldFromCurrentRomClass(J9ROMClass *romClass, J9ROMFieldRef *field)
 			&& compareTwoUTF8s(searchName, J9ROMFIELDSHAPE_NAME(currentField))
 			&& compareTwoUTF8s(searchSignature, J9ROMFIELDSHAPE_SIGNATURE(currentField))
 		) {
-			isFieldFound = (IDATA)TRUE;
 			break;
 		}
 		currentField = romFieldsNextDo(&state);
 	}
 
-	return isFieldFound;
+	return currentField;
 }
