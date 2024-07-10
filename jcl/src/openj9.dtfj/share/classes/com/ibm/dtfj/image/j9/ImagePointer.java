@@ -37,8 +37,7 @@ public class ImagePointer implements com.ibm.dtfj.image.ImagePointer
 {
 	private long _underlyingAddress;
 	private ImageAddressSpace _residentDomain;
-	
-	
+
 	public ImagePointer(ImageAddressSpace resident, long localAddress)
 	{
 		//note that we can't possibly be in a non-existent address space
@@ -100,7 +99,7 @@ public class ImagePointer implements com.ibm.dtfj.image.ImagePointer
 	public Properties getProperties() {
 		return new Properties();
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.dtfj.image.ImagePointer#getPointerAt(long)
 	 */
@@ -163,23 +162,23 @@ public class ImagePointer implements com.ibm.dtfj.image.ImagePointer
 	{
 		return Double.longBitsToDouble(getLongAt(index));
 	}
-	
+
 	public boolean equals(Object obj)
 	{
 		boolean isEqual = false;
-		
+
 		if (obj instanceof ImagePointer) {
 			ImagePointer local = (ImagePointer) obj;
 			isEqual = (_residentDomain.equals(local._residentDomain) && (_underlyingAddress == local._underlyingAddress));
 		}
 		return isEqual;
 	}
-	
+
 	public int hashCode()
 	{
 		return ((_residentDomain.hashCode()) ^ (((int)_underlyingAddress) ^ ((int)(_underlyingAddress >> 32))));
 	}
-	
+
 	public String toString()
 	{
 		return Long.toHexString(_underlyingAddress);

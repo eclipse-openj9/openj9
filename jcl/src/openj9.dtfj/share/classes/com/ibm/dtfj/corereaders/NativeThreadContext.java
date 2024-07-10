@@ -27,22 +27,21 @@ package com.ibm.dtfj.corereaders;
  * basically used to help try and generalize stack traversal
  */
 public class NativeThreadContext {
-	
+
 	long ee;
     long pc;
     long lr;
     long sp;
     long bp;
 
-
     public NativeThreadContext () {}
 
     public NativeThreadContext (int size, long ee, long pc, long lr, long sp, long bp ) {
         long anderFlag = 0x00000000ffffffffL;
         if (size == 64) {
-        	anderFlag = 0xffffffffffffffffL;
+            anderFlag = 0xffffffffffffffffL;
         }
-    	this.ee = ee & anderFlag;
+        this.ee = ee & anderFlag;
         this.pc = pc & anderFlag;
         this.lr = lr & anderFlag;
         this.sp = sp & anderFlag;

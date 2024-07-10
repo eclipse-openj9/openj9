@@ -25,7 +25,6 @@ package com.ibm.dtfj.javacore.builder.javacore;
 import com.ibm.dtfj.javacore.builder.IImageBuilder;
 import com.ibm.dtfj.javacore.builder.IImageBuilderFactory;
 
-
 public class ImageBuilderFactory implements IImageBuilderFactory{
 	public IImageBuilder generateImageBuilder(String id) {
 		return new ImageBuilder(id);

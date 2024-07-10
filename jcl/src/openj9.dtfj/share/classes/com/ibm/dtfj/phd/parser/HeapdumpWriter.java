@@ -157,13 +157,13 @@ public class HeapdumpWriter extends Base {
 		try {
 			if (absgap < 0x8000) {
 				int cacheIndex = -1;
-				if (classAddress == classAddressCache[0]) 
+				if (classAddress == classAddressCache[0])
 					cacheIndex = 0;
-				else if (classAddress == classAddressCache[1]) 
+				else if (classAddress == classAddressCache[1])
 					cacheIndex = 1;
-				else if (classAddress == classAddressCache[2]) 
+				else if (classAddress == classAddressCache[2])
 					cacheIndex = 2;
-				else if (classAddress == classAddressCache[3]) 
+				else if (classAddress == classAddressCache[3])
 					cacheIndex = 3;
 				if (cacheIndex != -1 && numRefs < 4) {
 					// short object record

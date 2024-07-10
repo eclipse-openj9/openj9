@@ -40,7 +40,7 @@ import com.ibm.dtfj.java.JavaReference;
  * @author ajohnson
  */
 class PHDCorruptJavaClass extends PHDCorruptData implements JavaClass {
-	
+
 	PHDCorruptJavaClass(String description, ImagePointer where, Exception e) {
 		super(description, where, e);
 	}

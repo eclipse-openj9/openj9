@@ -27,26 +27,26 @@ import java.util.Map;
 
 /**
  * The annotations that are found on a class.
- * 
+ *
  * @author adam
  *
  */
 public class Annotation {
 	private final String classname;
 	private final Map<String, Object> values = new HashMap<String, Object>();
-	
+
 	public Annotation(String classname) {
 		this.classname = classname;
 	}
-	
+
 	public Map<String, Object> getValues() {
 		return values;
 	}
 
 	/**
-	 * Get the value of an annotation when it only contains 
+	 * Get the value of an annotation when it only contains
 	 * a single value.
-	 * 
+	 *
 	 * @return the value or the first one in the list of a multi-value (the order is not guaranteed in this case)
 	 */
 	public Object getValue() {
@@ -55,11 +55,11 @@ public class Annotation {
 		}
 		return values.values().iterator().next();
 	}
-	
+
 	public String getClassname() {
 		return classname;
 	}
-	
+
 	public void addEntry(String name, Object value) {
 		values.put(name, value);
 	}
@@ -77,6 +77,5 @@ public class Annotation {
 	public int hashCode() {
 		return classname.hashCode();
 	}
-	
-	
+
 }

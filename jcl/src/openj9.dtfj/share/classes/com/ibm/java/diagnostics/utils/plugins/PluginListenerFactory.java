@@ -27,7 +27,7 @@ import java.util.Set;
 /**
  * Interface for factories which produce plugin listeners to be notified
  * when the class scanning takes place.
- * 
+ *
  * @author adam
  *
  */
@@ -35,7 +35,7 @@ public interface PluginListenerFactory {
 
 	/**
 	 * The set of listeners which should be notified.
-	 * 
+	 *
 	 * @return list, null or empty list if none
 	 */
 	public Set<ClassListener> getListeners();

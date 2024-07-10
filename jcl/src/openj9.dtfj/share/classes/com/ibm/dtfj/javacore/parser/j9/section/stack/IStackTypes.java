@@ -23,11 +23,11 @@
 package com.ibm.dtfj.javacore.parser.j9.section.stack;
 
 public interface IStackTypes {
-	
+
 	public static final String STACK_SECTION = "Stack";
-	
+
 	public static final String T_BTTHREADID = "BTTHREADID";
-	public static final String T_1BTSTACKENT = "1BTSTACKENT"; 
+	public static final String T_1BTSTACKENT = "1BTSTACKENT";
 	/*
 	 * Attributes
 	 */

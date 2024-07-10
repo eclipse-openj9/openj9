@@ -45,7 +45,7 @@ import com.ibm.dtfj.phd.parser.HeapdumpReader;
 import com.ibm.dtfj.phd.parser.PortableHeapDumpListener;
 import com.ibm.dtfj.phd.util.LongEnumeration;
 
-/** 
+/**
  * @author ajohnson
  */
 class PHDJavaClassLoader implements JavaClassLoader {
@@ -73,12 +73,12 @@ class PHDJavaClassLoader implements JavaClassLoader {
 		HeapdumpReader reader = new HeapdumpReader(stream, parentImage);
 		processData(reader, parentImage, space, runtime);
 	}
-	
+
 	PHDJavaClassLoader(File file, final PHDImage parentImage, final ImageAddressSpace space, final PHDJavaRuntime runtime) throws IOException {
 		HeapdumpReader reader = new HeapdumpReader(file, parentImage);
 		processData(reader, parentImage, space, runtime);
 	}
-	
+
 	private void processData(HeapdumpReader reader, final PHDImage parentImage, final ImageAddressSpace space, final PHDJavaRuntime runtime) throws IOException {
 		final JavaClassLoader loader = this;
 		final int adjustLen = reader.version() == 4 && reader.isJ9() ? 1 : 0;
@@ -96,7 +96,7 @@ class PHDJavaClassLoader implements JavaClassLoader {
 				public void classDump(long address, long superAddress, String name, int size,
 						int flags, int hashCode, LongEnumeration refs) throws Exception {
 					updateSizes(address);
-					classes.put(address, 
+					classes.put(address,
 							new PHDJavaClass.Builder(space,runtime,loader, address, superAddress, name)
 					.size(size).flags(flags).hashCode(hashCode).refs(refs).build());
 					updateAddresses(address, size, name);
@@ -114,7 +114,7 @@ class PHDJavaClassLoader implements JavaClassLoader {
 							classAddress, classAddress2);
 				}
 
-				public void objectDump(long address, long classAddress, int flags, 
+				public void objectDump(long address, long classAddress, int flags,
 						int hashCode, LongEnumeration refs, long instanceSize) throws Exception {
 					updateSizes(address);
 					updateAddresses(address, classAddress, -1);
@@ -122,7 +122,7 @@ class PHDJavaClassLoader implements JavaClassLoader {
 							hashCode);
 				}
 
-				public void primitiveArrayDump(long address, int type, int length, int flags, 
+				public void primitiveArrayDump(long address, int type, int length, int flags,
 						int hashCode, long instanceSize) throws Exception {
 					updateSizes(address);
 					updateAddresses(address, type, length);
@@ -132,14 +132,14 @@ class PHDJavaClassLoader implements JavaClassLoader {
 						final PHDJavaRuntime runtime, final JavaClassLoader loader,
 						long classAddress, int hashCode) {
 					if (!classes.containsKey(classAddress)) {
-						PHDJavaClass objClass = new PHDJavaClass.Builder(space,runtime,loader, classAddress, 
+						PHDJavaClass objClass = new PHDJavaClass.Builder(space,runtime,loader, classAddress,
 								PHDJavaClass.UNKNOWN_SUPERCLASS, PHDJavaClass.UNKNOWN_NONARRAY).build();
 						classes.put(classAddress, objClass);
 						updateAddresses(classAddress, 100, null);
 					}
 					prevObjClass = (PHDJavaClass)findClass(classAddress);
 				}
-				
+
 				private PHDJavaClass genArrayClass(final ImageAddressSpace space,
 						final PHDJavaRuntime runtime, final JavaClassLoader loader,
 						long classAddress, long sup, String name) {
@@ -167,7 +167,7 @@ class PHDJavaClassLoader implements JavaClassLoader {
 							arrayCls = findClass(classAddress2);
 						}
 						arrayClasses.put(classAddress, arrayCls);
-						
+
 						if (!classes.containsKey(classAddress)) {
 							String name = PHDJavaClass.UNKNOWN_NONARRAY;
 							genArrayClass(space, runtime, loader,
@@ -183,14 +183,14 @@ class PHDJavaClassLoader implements JavaClassLoader {
 		} catch (EOFException e) {
 			classes.put(runtime.nextDummyClassAddr(), new PHDCorruptJavaClass("Truncated dump found building class "+realClasses[0], null, e));
 		} catch (IOException e) {
-			classes.put(runtime.nextDummyClassAddr(), new PHDCorruptJavaClass("Corrupted dump found building class "+realClasses[0], null, e));			
+			classes.put(runtime.nextDummyClassAddr(), new PHDCorruptJavaClass("Corrupted dump found building class "+realClasses[0], null, e));
 		} catch (Exception e) {
 			classes.put(runtime.nextDummyClassAddr(), new PHDCorruptJavaClass("Building class "+realClasses[0], null, e));
 		} finally {
 			reader.close();
 			reader = null;
 		}
-		
+
 		jlo = 0;
 		// Use an uncached search as the index hasn't been built.
 		JavaClass jco = findClassUncached("java/lang/Object");
@@ -203,7 +203,7 @@ class PHDJavaClassLoader implements JavaClassLoader {
 			jlo = runtime.nextDummyClassAddr();
 			classes.put(jlo, jco);
 		}
-		
+
 		// If the dump is very corrupt it won't have java.lang.Class - so create one
 		JavaClass jcl = findClassUncached("java/lang/Class");
 		if (jcl == null) {
@@ -218,7 +218,7 @@ class PHDJavaClassLoader implements JavaClassLoader {
 				classes.put(runtime.nextDummyClassAddr(), jc);
 			}
 		}
-		
+
 		// Bug in PHD dumps - some Java 6 types have the type of an array being the whole array, not the elements
 		// Is the type of the array the whole array or the type of an element?
 		boolean arrayTypeIsArray = true;
@@ -234,18 +234,18 @@ class PHDJavaClassLoader implements JavaClassLoader {
 				arrayTypeIsArray = false;
 			}
 		}
-		
+
 		// Create a mapping from the phd id of an array object to the type of the whole array
 		for (Long id : arrayClasses.keySet()) {
 			JavaClass cl1 = findClass(id);
-			
+
 			if (cl1 == null) {
 				String name = arrayTypeIsArray ? PHDJavaClass.UNKNOWN_ARRAY : null;
 				long sup = arrayTypeIsArray ? jlo : PHDJavaClass.UNKNOWN_SUPERCLASS;
 				cl1 = new PHDJavaClass.Builder(space, runtime, loader, id, sup,	name).build();
 				classes.put(id, cl1);
 			}
-			
+
 			JavaClass ar = arrayClasses.get(id);
 			if (ar != null) {
 				ImagePointer ip = ar.getID();
@@ -258,7 +258,7 @@ class PHDJavaClassLoader implements JavaClassLoader {
 				// cl1 is not a component type for multidimensional arrays, but is the scalar type
 				//((PHDJavaClass)ar).setComponentType(cl1);
 			}
-			
+
 			JavaClass cl2;
 			if (arrayTypeIsArray) {
 				cl2 = cl1;
@@ -299,7 +299,7 @@ class PHDJavaClassLoader implements JavaClassLoader {
 			}
 			// Even if the array class is null (we couldn't decide), mark it so we know for later
 			arrayClasses.put(id, cl2);
-		}		
+		}
 		initCache();
 	}
 
@@ -395,13 +395,13 @@ class PHDJavaClassLoader implements JavaClassLoader {
 		} else if (name.equals("float")) {
 			arrayName = "[F";
 		} else if (name.equals("double")) {
-			arrayName = "[D";					
+			arrayName = "[D";
 		} else {
 			arrayName = "[L"+name+";";
 		}
 		return arrayName;
 	}
-	
+
 	PHDJavaClassLoader(JavaObject obj) {
 		this.obj = obj;
 	}
@@ -415,11 +415,11 @@ class PHDJavaClassLoader implements JavaClassLoader {
 			jc = findClassUncached(className);
 			if (jc != null) {
 				classNameCache.put(className, jc);
-			}	
+			}
 		}
 		return jc;
 	}
-	
+
 	JavaClass findClassUncached(String className) {
 		for (JavaClass cls : classes.values()) {
 			try {
@@ -439,7 +439,7 @@ class PHDJavaClassLoader implements JavaClassLoader {
 		}
 		return null;
 	}
-	
+
 	/**
 	 * Finds a class from a name, presuming it is unique. Relies on cache being set up with initCache.
 	 * @param className
@@ -453,8 +453,7 @@ class PHDJavaClassLoader implements JavaClassLoader {
 		}
 		return ret;
 	}
-	
-	
+
 	private Set<JavaClass> findClasses(String className) {
 		Set<JavaClass> ret = new LinkedHashSet<JavaClass>();
 		for (JavaClass cls : classes.values()) {
@@ -467,7 +466,7 @@ class PHDJavaClassLoader implements JavaClassLoader {
 		}
 		return ret;
 	}
-	
+
 	void initCache() {
 		allClasses.clear();
 		classNameCache.clear();
@@ -482,7 +481,7 @@ class PHDJavaClassLoader implements JavaClassLoader {
 		}
 		return;
 	}
-	
+
 	/**
 	 * Add the class to the list of all classes, cache it by name and record whether the name is duplicated or unique.
 	 * @param cls
@@ -500,15 +499,15 @@ class PHDJavaClassLoader implements JavaClassLoader {
 			// Ignore
 		}
 	}
-	
+
 	JavaClass findClass(long id) {
 		return classes.get(id);
 	}
-	
+
 	JavaClass findArrayOfClass(long id) {
 		return arrayClasses.get(id);
 	}
-	
+
 	public Iterator<JavaClass> getCachedClasses() {
 		return getDefinedClasses();
 	}
@@ -523,7 +522,6 @@ class PHDJavaClassLoader implements JavaClassLoader {
 		return obj;
 	}
 
-	
 	/**
 	 * Get reader to move a class from one loader to another, including the array refs.
 	 * @param from
@@ -538,7 +536,7 @@ class PHDJavaClassLoader implements JavaClassLoader {
 			if (j2 != null) setLoader(j2);
 		}
 	}
-	
+
 	/**
 	 * Set the class loader for a class to this loader
 	 * to indicate it should be moved later on
@@ -550,7 +548,7 @@ class PHDJavaClassLoader implements JavaClassLoader {
 			pjc.setClassLoader(this);
 		}
 	}
-	
+
 	/**
 	 * Complete the move from one class loader to another.
 	 * @param from
@@ -567,7 +565,7 @@ class PHDJavaClassLoader implements JavaClassLoader {
 				if (j1.equals(from.findClass(i))) {
 					address = i;
 					break;
-				}	
+				}
 			}
 		}
 		if (address != 0) {
@@ -588,7 +586,7 @@ class PHDJavaClassLoader implements JavaClassLoader {
 		minAddress = Math.min(minAddress, addr);
 		bitsAddress |= addr;
 	}
-	
+
 	private void updateAddresses(long addr, int size, String className) {
 		maxClassAddress = Math.max(maxClassAddress, addr);
 		minClassAddress = Math.min(minClassAddress, addr);
@@ -598,7 +596,7 @@ class PHDJavaClassLoader implements JavaClassLoader {
 		}
 		bitsAddress |= addr;
 	}
-	
+
 	public int hashCode() {
 		if (obj != null) return obj.hashCode();
 		return (int)(minClassAddress ^ maxClassAddress);

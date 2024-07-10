@@ -323,8 +323,8 @@ public final class CompressedRecordArray implements Serializable {
             encoding[recordIndex] = (byte)bits.readIntBits(2);
         }
 
-        /* 
-         * Now scan through decompressing as we go until we reach the desired record 
+        /*
+         * Now scan through decompressing as we go until we reach the desired record
          */
         for (int blockIndex = 0; blockIndex <= desiredBlockIndex; blockIndex++) {
             for (int recordIndex = 0; recordIndex < recordSize; recordIndex++) {

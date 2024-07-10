@@ -45,24 +45,24 @@ public class XCOFFReader
 	private long _startOffset;
 	private long _size;
 	private boolean _is64Bit;
-	
+
 	private long _textSegmentOffset = -1;
 	private long _textSegmentSize = -1;
 	private long _sybolTableOffset = -1;
-	
+
 	//values held purely for module properties
 	/**
 	 * The creation time and date of the module in milliseconds since the epoch
 	 */
 	private long _timeAndDate = 0;
 	private short _flags = 0;
-	
+
 	public XCOFFReader(ClosingFileReader backing, long offsetIntoFile, long size) throws IOException
 	{
 		_startOffset = offsetIntoFile;
 		_size = size;
 		_backing = backing;
-		
+
 		//by this point, the basic support for reading the file complete so on to looking into the file
 		seekFileRelative(0);
 		short magic = _backing.readShort();
@@ -94,17 +94,17 @@ public class XCOFFReader
 			}
 		}
 	}
-	
+
 	public XCOFFReader(ClosingFileReader backing) throws IOException
 	{
 		this(backing, 0, backing.length());
 	}
-	
+
 	public long getTextSegmentOffset()
 	{
 		return _textSegmentOffset;
 	}
-	
+
 	private void seekFileRelative(long offset) throws IOException
 	{
 		_backing.seek(_startOffset + offset);
@@ -114,18 +114,18 @@ public class XCOFFReader
 	{
 		return _textSegmentSize;
 	}
-	
+
 	private long _symbolTableOffset() throws IOException
 	{
 		return _sybolTableOffset;
 	}
-	
+
 	private int _numberOfSymbols() throws IOException
 	{
 		seekFileRelative(_is64Bit ? 20 : 12);
 		return _backing.readInt();
 	}
-	
+
 	private String _stringFromArray(byte[] rawData, int start)
 	{
 		int end = start;
@@ -139,12 +139,12 @@ public class XCOFFReader
 	{
 		return _backing;
 	}
-	
+
 	public long baseFileOffset()
 	{
 		return _startOffset;
 	}
-	
+
 	public long logicalSize()
 	{
 		return _size;
@@ -157,7 +157,7 @@ public class XCOFFReader
 	private static final short F_DYNLOAD = 0x1000;
 	private static final short F_SHROBJ = 0x2000;
 	private static final short F_LOADONLY = 0x4000;
-	
+
 	public Properties moduleProperties()
 	{
 		Properties props = new Properties();
@@ -176,7 +176,7 @@ public class XCOFFReader
 	public List buildSymbols(Builder builder, Object addressSpace, long relocationBase)
 	{
 		LinkedList symbols = new LinkedList();
-		
+
 		try {
 			long symbolTableOffset = _symbolTableOffset();
 			int numberOfSymbols = _numberOfSymbols();
@@ -191,7 +191,7 @@ public class XCOFFReader
 				if (4 != stringTableLength && 0 != stringTableLength) {
 					byte[] rawStringTable = new byte[stringTableLength-4];
 					_backing.readFully(rawStringTable);
-					
+
 					//now read the symbol table
 					seekFileRelative(symbolTableOffset);
 					byte[] symbolTableEntry = new byte[18];
@@ -203,7 +203,7 @@ public class XCOFFReader
 						} else {
 							int stringTableOffset = 0;
 							String symbolName = null;
-							
+
 							if (_is64Bit) {
 								stringTableOffset = ((0xFF & symbolTableEntry[8]) << 24)
 										| ((0xFF & symbolTableEntry[9]) << 16)

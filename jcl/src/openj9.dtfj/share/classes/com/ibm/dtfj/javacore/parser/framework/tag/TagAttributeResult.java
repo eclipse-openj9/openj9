@@ -28,9 +28,9 @@ import java.util.Iterator;
 import com.ibm.dtfj.javacore.parser.framework.scanner.IParserToken;
 
 public class TagAttributeResult implements ITagAttributeResult{
-	
+
 	private HashMap fAttributeValues;
-	
+
 	public TagAttributeResult(HashMap values) {
 		if (values == null) {
 			throw new NullPointerException("Must not pass null results");
@@ -38,7 +38,6 @@ public class TagAttributeResult implements ITagAttributeResult{
 		fAttributeValues = values;
 	}
 
-	
 	public IParserToken getAttributeValue(String attribute) {
 		return (IParserToken) fAttributeValues.get(attribute);
 	}

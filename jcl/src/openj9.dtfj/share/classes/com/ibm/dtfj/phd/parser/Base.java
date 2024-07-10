@@ -32,7 +32,6 @@ import java.text.DateFormat;
 import java.util.Calendar;
 import java.util.HashMap;
 
-
 public abstract class Base {
 
 	static DateFormat df = DateFormat.getTimeInstance();
@@ -59,7 +58,6 @@ public abstract class Base {
 		else
 			System.out.println(time + ": " + message);
 	}
-
 
 	public static boolean verbose() {
 		return verbose;

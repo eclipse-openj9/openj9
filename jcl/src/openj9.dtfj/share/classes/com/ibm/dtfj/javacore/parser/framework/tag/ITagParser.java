@@ -24,8 +24,6 @@ package com.ibm.dtfj.javacore.parser.framework.tag;
 
 import java.util.Iterator;
 
-
-
 public interface ITagParser {
 	public ILineRule getLineRule(String tag);
 	public String getSectionName();

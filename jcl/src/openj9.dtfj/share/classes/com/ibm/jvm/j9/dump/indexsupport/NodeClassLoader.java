@@ -34,14 +34,14 @@ import com.ibm.dtfj.java.j9.JavaRuntime;
 public class NodeClassLoader extends NodeAbstract
 {
 	private JavaClassLoader _classLoader;
-	
+
 	public NodeClassLoader(JavaRuntime runtime, Attributes attributes)
 	{
 		//<classloader id="0x13e5e4" obj="0x482058">
 		//parent will be javavm
 		long id = _longFromString(attributes.getValue("id"));
 		long objectID = _longFromString(attributes.getValue("obj"));
-		
+
 		_classLoader = new JavaClassLoader(runtime, runtime.pointerInAddressSpace(id), runtime.pointerInAddressSpace(objectID));
 		runtime.addClassLoader(_classLoader);
 	}
@@ -52,7 +52,7 @@ public class NodeClassLoader extends NodeAbstract
 	public IParserNode nodeToPushAfterStarting(String uri, String localName, String qName, Attributes attributes)
 	{
 		IParserNode child = null;
-		
+
 		if (qName.equals("library")) {
 			child = new NodeLibrary(_classLoader, attributes);
 		} else if (qName.equals("class")) {

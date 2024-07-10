@@ -25,7 +25,7 @@ package com.ibm.dtfj.corereaders;
 /**
  * Indicates that an attempt was made to access memory which is not included
  * within the image
- * 
+ *
  * @author fbogsany
  */
 public class MemoryAccessException extends DumpException {

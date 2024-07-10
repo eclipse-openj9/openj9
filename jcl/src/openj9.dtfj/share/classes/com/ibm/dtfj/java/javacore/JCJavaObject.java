@@ -36,12 +36,12 @@ import com.ibm.dtfj.java.JavaHeap;
 import com.ibm.dtfj.java.JavaObject;
 
 public class JCJavaObject implements JavaObject {
-	
+
 	private final ImagePointer fAddress;
 	private final JavaClass fJavaClass;
-	
+
 	private Vector fSections;
-	
+
 	public JCJavaObject(ImagePointer address, JavaClass javaClass) throws JCInvalidArgumentsException {
 		if (address == null) {
 			throw new JCInvalidArgumentsException("Must have a valid object ID");
@@ -52,39 +52,35 @@ public class JCJavaObject implements JavaObject {
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public void arraycopy(int arg0, Object arg1, int arg2, int arg3) throws CorruptDataException, MemoryAccessException {
 		throw new CorruptDataException(new JCCorruptData("No array support implemented", null));
 	}
 
-	
 	/**
-	 * 
+	 *
 	 */
 	public int getArraySize() throws CorruptDataException {
 		throw new CorruptDataException(new JCCorruptData("No array support implemented", null));
 	}
 
-	
 	/**
-	 * 
+	 *
 	 */
 	public long getHashcode() throws DataUnavailable, CorruptDataException {
 		throw new DataUnavailable("No hashCode for object");
 	}
 
-	
 	/**
-	 * 
+	 *
 	 */
 	public ImagePointer getID() {
 		return fAddress;
 	}
 
-	
 	/**
-	 * 
+	 *
 	 */
 	public JavaClass getJavaClass() throws CorruptDataException {
 		if (fJavaClass == null) {
@@ -93,32 +89,29 @@ public class JCJavaObject implements JavaObject {
 		return fJavaClass;
 	}
 
-	
 	/**
-	 * 
+	 *
 	 */
 	public long getPersistentHashcode() throws DataUnavailable, CorruptDataException {
 		throw new DataUnavailable("No hashCode for object");
 	}
 
-	
 	/**
-	 * 
+	 *
 	 */
 	public Iterator getSections() {
 		return fSections.iterator();
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public long getSize() throws CorruptDataException {
 		throw new CorruptDataException(new JCCorruptData("Size computation not supported", null));
 	}
 
-	
 	/**
-	 * 
+	 *
 	 */
 	public boolean isArray() throws CorruptDataException {
 		JavaClass type = getJavaClass();

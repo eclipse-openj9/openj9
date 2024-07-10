@@ -37,7 +37,7 @@ public interface ICommand {
 	 * @return True if this command object can process the supplied command, commands should not assume that returning true will guarantee a subsequent invocation
 	 */
 	public boolean recognises(String command, IContext context);
-	
+
 	/**
 	 * Executes the command
 	 * @param command Command string e.g. !j9x
@@ -47,21 +47,20 @@ public interface ICommand {
 	 * @throws CommandException If there is any problem running the command (incorrect usage, CorruptData etc.)
 	 */
 	public void run(String command, String[] args, IContext context, PrintStream out) throws CommandException;
-	
+
 	/**
 	 * @return Strings to be inserted in help output
 	 */
 	public Collection<String> getCommandDescriptions();
-	
 
     /**
      * @return Strings containing command names
      */
 	public Collection<String> getCommandNames();
-	
+
 	/**
 	 * Identifies the configuration from which this command was created.
-	 * 
+	 *
 	 * @return configuration for this command
 	 */
 	public PluginConfig getConfig();

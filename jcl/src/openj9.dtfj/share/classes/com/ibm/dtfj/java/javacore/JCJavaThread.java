@@ -38,7 +38,7 @@ import com.ibm.dtfj.java.JavaThread;
 import com.ibm.dtfj.javacore.builder.IBuilderData;
 
 public class JCJavaThread implements JavaThread {
-	
+
 	/*
 	 * These must be immutable as they may be used
 	 * repeatedly for conditional control, and
@@ -51,7 +51,7 @@ public class JCJavaThread implements JavaThread {
 
 	private Vector fStackFrames;
 	private Vector fStackSections;
-	
+
 	private ImagePointer fJNIEnv;
 	private JCImageThread fImageThread;
 	private JavaObject fJavaObject;
@@ -69,7 +69,7 @@ public class JCJavaThread implements JavaThread {
 		init(null, IBuilderData.NOT_AVAILABLE, IBuilderData.NOT_AVAILABLE, null);
 		fRuntime.addJavaThread(this);
 	}
-	
+
 	public JCJavaThread(JCJavaRuntime runtime, ImagePointer threadID, String name) throws JCInvalidArgumentsException {
 		if (runtime == null) {
 			throw new JCInvalidArgumentsException("A Java thread must be associated with a valid Java runtime");
@@ -81,9 +81,9 @@ public class JCJavaThread implements JavaThread {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param pointer
-	 * 
+	 *
 	 */
 	private ImagePointer checkPointer(ImagePointer pointer) throws JCInvalidArgumentsException {
 		if (pointer == null) {
@@ -91,9 +91,9 @@ public class JCJavaThread implements JavaThread {
 		}
 		return pointer;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param name
 	 * @param priority
 	 * @param state
@@ -106,10 +106,9 @@ public class JCJavaThread implements JavaThread {
 		fState = state;
 		fJavaObject = javaObject;
 	}
-	
-	
+
 	/**
-	 * 
+	 *
 	 */
 	public ImageThread getImageThread() throws CorruptDataException, DataUnavailable {
 		if (fImageThread == null) {
@@ -117,10 +116,9 @@ public class JCJavaThread implements JavaThread {
 		}
 		return fImageThread;
 	}
-	
-	
+
 	/**
-	 * 
+	 *
 	 */
 	public ImagePointer getJNIEnv() throws CorruptDataException {
 		if (fJNIEnv == null) {
@@ -129,11 +127,10 @@ public class JCJavaThread implements JavaThread {
 		return fJNIEnv;
 	}
 
-	
 	/**
-	 * 
-	 * 
-	 * 
+	 *
+	 *
+	 *
 	 */
 	public String getName() throws CorruptDataException {
 		if (fName == null) {
@@ -143,7 +140,7 @@ public class JCJavaThread implements JavaThread {
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public JavaObject getObject() throws CorruptDataException {
 		if (fJavaObject == null) {
@@ -151,9 +148,9 @@ public class JCJavaThread implements JavaThread {
 		}
 		return fJavaObject;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
 	public int getPriority() throws CorruptDataException {
 		if (fPriority == IBuilderData.NOT_AVAILABLE) {
@@ -163,14 +160,14 @@ public class JCJavaThread implements JavaThread {
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public Iterator getStackFrames() {
 		return fStackFrames.iterator();
 	}
 
 	/**
-	 * 
+	 *
 	 *
 	 */
 	public void addStackFrame(JavaStackFrame javaStackFrame) {
@@ -178,16 +175,16 @@ public class JCJavaThread implements JavaThread {
 			fStackFrames.add(javaStackFrame);
 		}
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
 	public Iterator getStackSections() {
 		return fStackSections.iterator();
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public int getState() throws CorruptDataException {
 		if (fState == IBuilderData.NOT_AVAILABLE) {
@@ -195,7 +192,7 @@ public class JCJavaThread implements JavaThread {
 		}
 		return fState;
 	}
-	
+
 	/**
 	 * NON-DTFJ
 	 * @param imageThread
@@ -203,7 +200,7 @@ public class JCJavaThread implements JavaThread {
 	public void setImageThread(JCImageThread imageThread) {
 		fImageThread = imageThread;
 	}
-	
+
 	/**
 	 * NON-DTFJ. For internal building purposes. Do not call as part of DTFJ.
 	 * @return image thread or null if non found.
@@ -211,7 +208,7 @@ public class JCJavaThread implements JavaThread {
 	public JCImageThread internalGetImageThread() {
 		return fImageThread;
 	}
-	
+
 	/**
 	 * NON-DTFJ
 	 * @param name
@@ -219,7 +216,7 @@ public class JCJavaThread implements JavaThread {
 	public void setName(String name) {
 		fName = name;
 	}
-	
+
 	/**
 	 * NON-DTFJ
 	 * @param priority
@@ -227,7 +224,7 @@ public class JCJavaThread implements JavaThread {
 	public void setPriority(int priority) {
 		fPriority = priority;
 	}
-	
+
 	/**
 	 * NON-DTFJ
 	 * @param state
@@ -240,23 +237,23 @@ public class JCJavaThread implements JavaThread {
 		else if (state.equals("B")) fState = JavaThread.STATE_ALIVE | JavaThread.STATE_WAITING | JavaThread.STATE_BLOCKED_ON_MONITOR_ENTER;
 		else if (state.equals("MW")) fState = JavaThread.STATE_ALIVE | JavaThread.STATE_WAITING | JavaThread.STATE_BLOCKED_ON_MONITOR_ENTER;
 	}
-	
+
 	/**
 	 * Not in DTFJ. Used only for building purposes.
-	 * 
+	 *
 	 */
 	public ImagePointer getThreadID() {
 		return fThreadID;
 	}
-	
+
 	/**
 	 * Not in DTFJ. Used only for building purposes.
-	 * 
+	 *
 	 */
 	public ImagePointer setJNIEnv(ImagePointer env) {
 		return fJNIEnv = env;
 	}
-		
+
 	/**
 	 * NOT in DTFJ
 	 * @param threadObject
@@ -272,7 +269,7 @@ public class JCJavaThread implements JavaThread {
 	public void setBlockingObject(JavaObject blockingObject) {
 		this.blockingJavaObject = blockingObject;
 	}
-	
+
 	public JavaObject getBlockingObject() throws CorruptDataException,
 			DataUnavailable {
 		return blockingJavaObject;

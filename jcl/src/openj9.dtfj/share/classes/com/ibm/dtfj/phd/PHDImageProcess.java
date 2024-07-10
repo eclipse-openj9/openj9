@@ -46,7 +46,7 @@ import com.ibm.dtfj.image.ImageThread;
 import com.ibm.dtfj.java.JavaRuntime;
 import com.ibm.dtfj.phd.parser.HeapdumpReader;
 
-/** 
+/**
  * @author ajohnson
  */
 class PHDImageProcess implements ImageProcess {
@@ -59,7 +59,7 @@ class PHDImageProcess implements ImageProcess {
 	private final LinkedHashMap<Object, ImageThread>threads = new LinkedHashMap<Object, ImageThread>();
 	private CorruptData modules_cd;
 	private ImageThread currentThread;
-	
+
 	PHDImageProcess(ImageInputStream stream, PHDImage parentImage, ImageAddressSpace space, ImageProcess metaImageProcess) throws IOException {
 		this.metaImageProcess = metaImageProcess;
 		JavaRuntime metaRuntime = getJavaRuntime(metaImageProcess);
@@ -71,7 +71,7 @@ class PHDImageProcess implements ImageProcess {
 		runtimes = new ArrayList<JavaRuntime>();
 		runtimes.add(new PHDJavaRuntime(stream, parentImage, space,this,metaRuntime));
 	}
-	
+
 	PHDImageProcess(File file, PHDImage parentImage, ImageAddressSpace space, ImageProcess metaImageProcess) throws IOException {
 		this.metaImageProcess = metaImageProcess;
 		JavaRuntime metaRuntime = getJavaRuntime(metaImageProcess);
@@ -81,9 +81,9 @@ class PHDImageProcess implements ImageProcess {
 		pid = getPID(file);
 		runtimes = new ArrayList<JavaRuntime>();
 		runtimes.add(new PHDJavaRuntime(file, parentImage, space,this,metaRuntime));
-	
+
 	}
-	
+
 	private JavaRuntime getJavaRuntime(ImageProcess process) {
 		JavaRuntime metaRuntime = null;
 		if (process != null) {
@@ -97,7 +97,7 @@ class PHDImageProcess implements ImageProcess {
 		}
 		return metaRuntime;
 	}
-	
+
 	private void processData(ImageAddressSpace space) {
 //		JavaRuntime metaRuntime = null;
 //		if (metaImageProcess != null) {
@@ -150,7 +150,7 @@ class PHDImageProcess implements ImageProcess {
 						currentThread = imageThread;
 					}
 				}
-				
+
 			}
 		}
 //		pid = getPID(file);
@@ -161,16 +161,16 @@ class PHDImageProcess implements ImageProcess {
 	private String getPID(File file) {
 		String pid = null;
 		String fn = file.getName();
-		
+
 		pid = getPID(fn, PHDImageFactory.earliestDump, PHDImageFactory.latestDump);
-		
+
 		if (pid == null) {
 			pid = getPIDAIX(fn, PHDImageFactory.earliestDump, PHDImageFactory.latestDump);
 		}
 
 		return pid;
 	}
-	
+
 	private String getPID(String fn, Date d1, Date d2) {
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd.HHmmss");
 		ParsePosition pp = new ParsePosition(0);
@@ -216,7 +216,7 @@ class PHDImageProcess implements ImageProcess {
 				}
 			} catch (NumberFormatException e) {
 			}
-		}	
+		}
 		return null;
 	}
 
@@ -276,7 +276,7 @@ class PHDImageProcess implements ImageProcess {
 	public Iterator<ImageThread> getThreads() {
 		return threads.values().iterator();
 	}
-	
+
 	/**
 	 * Get a ImageThread corresponding to the metafile ImageThread.
 	 * If it doesn't exist, then create one.

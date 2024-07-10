@@ -42,7 +42,7 @@ public class NodeMonitor extends NodeAbstract
 		long id = _longFromString(attributes.getValue("id"));
 		long objectID = _longFromString(attributes.getValue("object"));
 		long threadID = _longFromString(attributes.getValue("owner"));
-		
+
 		ImagePointer encompassingObjectAddress = null;
 		if (0 != objectID) {
 			encompassingObjectAddress = runtime.pointerInAddressSpace(objectID);

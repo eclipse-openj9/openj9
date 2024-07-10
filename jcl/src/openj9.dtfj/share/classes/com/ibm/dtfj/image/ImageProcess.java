@@ -34,136 +34,136 @@ public interface ImageProcess {
      * Fetch the command line for this process. This may be the exact command line
      * the user issued, or it may be a reconstructed command line based on
      * argv[] and argc.
-     * 
+     *
      * @return the command line for the process
      *
      * @exception DataUnavailable if the information cannot be provided
-     * @throws CorruptDataException 
+     * @throws CorruptDataException
      */
     public String getCommandLine() throws DataUnavailable, CorruptDataException;
-    
+
     /**
      * Get the environment variables for this process.
      * @return the environment variables for this process
-     * 
+     *
      * @exception DataUnavailable if the information cannot be provided
-     * @throws CorruptDataException 
+     * @throws CorruptDataException
      */
     public Properties getEnvironment() throws DataUnavailable, CorruptDataException;
-    
+
     /**
      * Get the system-wide identifier for the process.
      * @return a system-wide identifier for the process (e.g. a process id (pid) on Unix like
      * systems)
-     * 
-   	 * @exception DataUnavailable if the information cannot be provided
-     * @throws CorruptDataException 
+     *
+     * @exception DataUnavailable if the information cannot be provided
+     * @throws CorruptDataException
      */
     public String getID() throws DataUnavailable, CorruptDataException;
-    
+
     /**
      * Get the set of shared libraries which are loaded in this process.
      * @return an iterator to iterate over the shared libraries which are loaded in this
      * process
-     * 
+     *
      * @exception DataUnavailable if the information cannot be provided
-     * @throws CorruptDataException 
-     * 
+     * @throws CorruptDataException
+     *
      * @see ImageModule
      * @see CorruptData
      */
     public Iterator getLibraries() throws DataUnavailable, CorruptDataException;
-    
+
     /**
      * Get the module representing the executable within the image.
      * @return the module representing the executable within the image (as opposed to
      * modules representing libraries)
-     * 
+     *
      * @exception DataUnavailable if the information cannot be provided
-     * @throws CorruptDataException 
-     * 
+     * @throws CorruptDataException
+     *
      * @see ImageModule
      */
     public ImageModule getExecutable() throws DataUnavailable, CorruptDataException;
-    
+
     /**
      * Get the set of image threads in the image.
      * @return an iterator to iterate over each ImageThread in the image
-     * 
+     *
      * There is not necessarily any relationship between JavaThreads and
      * ImageThreads. A JVM implementation may use an n:m mapping of JavaThreads to
      * ImageThreads, and not all ImageThreads are necessarily attached.
-     * 
-     * @see ImageThread 
+     *
+     * @see ImageThread
      * @see CorruptData
      */
     public Iterator getThreads();
 
     /**
      * Find the thread which triggered the creation of the image
-     * 
+     *
      * @return the ImageThread which caused the image to be created, or
      * null if the image was not created due to a specific thread
-     * @throws CorruptDataException 
-     * 
+     * @throws CorruptDataException
+     *
      * @see ImageThread
      */
     public ImageThread getCurrentThread() throws CorruptDataException;
-    
+
     /**
-     * Get the set of the known ManagedRuntime environments in the image. 
+     * Get the set of the known ManagedRuntime environments in the image.
      * @return an iterator to iterate over all of the known ManagedRuntime
-     * environments in the image. 
-     * 
+     * environments in the image.
+     *
      * In a typical image, there will be only one runtime, and it will be
      * an instance of JavaRuntime. However any user of this API should be aware
      * that there is a possibility that other runtimes may exist in the image
-     * 
-     * @see com.ibm.dtfj.runtime.ManagedRuntime 
+     *
+     * @see com.ibm.dtfj.runtime.ManagedRuntime
      * @see com.ibm.dtfj.java.JavaRuntime
      * @see CorruptData
      */
     public Iterator getRuntimes();
-    
+
     /**
-     * Get the OS signal number in this process which triggered the creation 
+     * Get the OS signal number in this process which triggered the creation
      * of this image.
-     * @return the OS signal number in this process which triggered the creation 
+     * @return the OS signal number in this process which triggered the creation
      * of this image, or 0 if the image was not created because of a signal in this
      * process
-     * 
+     *
      * @exception DataUnavailable if the information cannot be provided
-     * @throws CorruptDataException 
+     * @throws CorruptDataException
      */
     public int getSignalNumber() throws DataUnavailable, CorruptDataException;
-    
+
     /**
-     * Get the name of the OS signal in this process which triggered the 
+     * Get the name of the OS signal in this process which triggered the
      * creation of this image.
-     * @return the name of the OS signal in this process which triggered the 
-     * creation of this image, or null if the image was not created because of a 
+     * @return the name of the OS signal in this process which triggered the
+     * creation of this image, or null if the image was not created because of a
      * signal in this process
-     * 
+     *
      * @exception DataUnavailable if the information cannot be provided
-     * @throws CorruptDataException 
+     * @throws CorruptDataException
      */
     public String getSignalName() throws DataUnavailable, CorruptDataException;
-    
+
     /**
      * Determine the pointer size used by this process.
      * Currently supported values are 31, 32 or 64.
      * In the future, other pointer sizes may also be supported.
-     * 
+     *
      * @return the size of a pointer, in bits
      */
     public int getPointerSize();
 
 	 /**
      * Gets the OS specific properties for this process.
-     *  
+     *
      * @return a set of OS specific properties
      * @since 1.7
      */
     public Properties getProperties();
-    
+
 }

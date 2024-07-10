@@ -26,7 +26,6 @@ import java.io.IOException;
 
 import javax.imageio.stream.ImageInputStream;
 
-
 public class DumpReader implements ResourceReleaser {
 	private ImageInputStream _file;
 	private boolean _is64Bit;
@@ -61,11 +60,11 @@ public class DumpReader implements ResourceReleaser {
 	public byte readByte() throws IOException {
 		return _file.readByte();
 	}
-	
+
 	public long readAddress() throws IOException
 	{
 		long ptr = 0;
-		
+
 		if (_is64Bit) {
 			ptr = readLong();
 		} else {
@@ -73,7 +72,7 @@ public class DumpReader implements ResourceReleaser {
 		}
 		return ptr;
 	}
-	
+
 	public long getPosition() throws IOException {
 		return _file.getStreamPosition();
 	}

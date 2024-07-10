@@ -33,7 +33,7 @@ import com.ibm.dtfj.javacore.parser.j9.SectionParser;
 
 public class NativeMemorySectionParser extends SectionParser implements INativeMemoryTypes
 {
-	
+
 	public NativeMemorySectionParser()
 	{
 		super(NATIVEMEM_SECTION);
@@ -48,51 +48,51 @@ public class NativeMemorySectionParser extends SectionParser implements INativeM
 	{
 		IImageProcessBuilder fImageProcessBuilder = fImageBuilder.getCurrentAddressSpaceBuilder().getCurrentImageProcessBuilder();
 		IJavaRuntimeBuilder fRuntimeBuilder = fImageProcessBuilder.getCurrentJavaRuntimeBuilder();
-		
+
 		IAttributeValueMap results = null;
 		Stack categoryStack = new Stack();
-		
+
 		processTagLineOptional(T_0MEMUSER);
-		
+
 		while ( (results = processMemUserLine() ) != null ) {
 			String name = results.getTokenValue(A_NAME);
-			
+
 			/* If no name available, this is a spacing line */
 			if (name == null) {
 				continue;
 			}
-			
+
 			int depth = results.getIntValue(A_DEPTH);
-			
+
 			while (categoryStack.size() >= depth) {
 				categoryStack.pop();
 			}
-			
+
 			long deepBytes = parseCommaDelimitedLong(results.getTokenValue(A_DEEP_BYTES));
 			long deepAllocations = parseCommaDelimitedLong(results.getTokenValue(A_DEEP_ALLOCATIONS));
-			
+
 			JavaRuntimeMemoryCategory parent = null;
-			
+
 			if (categoryStack.size() > 0) {
 				parent = (JavaRuntimeMemoryCategory) categoryStack.peek();
 			}
-			
+
 			if (name.equals(OTHER_CATEGORY)) {
 				//"Other" categories are special - they contain the shallow values for the parent.
-				
+
 				if (parent == null) {
 					throw new ParserException("Parse error: Unexpected NULL parent category for \"Other\" memory category");
 				}
-				
+
 				fRuntimeBuilder.setShallowCountersForCategory(parent, deepBytes, deepAllocations);
 			} else {
 				JavaRuntimeMemoryCategory category = fRuntimeBuilder.addMemoryCategory(name, deepBytes, deepAllocations, parent);
-				
+
 				categoryStack.push(category);
 			}
 		}
 	}
-	
+
 	private long parseCommaDelimitedLong(String tokenValue)
 	{
 		return Long.parseLong(tokenValue.replaceAll(",", ""));
@@ -102,22 +102,21 @@ public class NativeMemorySectionParser extends SectionParser implements INativeM
 	 * The XMEMUSER tag can occur in almost any order. processMemUserLine
 	 * looks for any of the XMEMUSER tags
 	 * @return
-	 * @throws ParserException 
+	 * @throws ParserException
 	 */
 	private IAttributeValueMap processMemUserLine() throws ParserException
 	{
 		for (int i=0; i < T_MEMUSERS.length; i++) {
 			String tag = T_MEMUSERS[i];
-			
+
 			IAttributeValueMap results = processTagLineOptional(tag);
-			
+
 			if (results != null) {
 				return results;
 			}
 		}
-		
+
 		return null;
 	}
-
 
 }

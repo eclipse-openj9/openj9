@@ -33,34 +33,34 @@ public interface ImageModule {
     /**
      * Get the file name of the shared library.
      * @return the file name of the shared library.
-     * 
-     * @throws CorruptDataException If the module is corrupt and the 
+     *
+     * @throws CorruptDataException If the module is corrupt and the
      * original file cannot be determined.
      */
     public String getName() throws CorruptDataException;
-    
+
     /**
      * Get the collection of sections that make up this library.
      * @return a collection of sections that make up this library.
-     * 
+     *
      * @see ImageSection
      * @see CorruptData
      */
     public Iterator getSections();
-    
+
     /**
      * Provides a collection of symbols defined by the library. This
      * list is likely incomplete as many symbols may be private,
      * symbols may have been stripped from the library, or symbols may
      * not by available in the image.
-     * 
+     *
      * @return a collection of symbols which are defined by this library.
-     * 
+     *
      * @see ImageSymbol
      * @see CorruptData
      */
     public Iterator getSymbols();
-    
+
     /**
      * Get the table of properties associated with this module.
      * @return a table of properties associated with this module.
@@ -68,14 +68,14 @@ public interface ImageModule {
      * <ul>
      * <li>"version" -- version information about the module</li>
      * </ul>
-     * @throws CorruptDataException 
+     * @throws CorruptDataException
      */
     public Properties getProperties() throws CorruptDataException;
-    
+
     /**
      * Get the address at which the module or executable was loaded.
-     * 
-     * @return the address 
+     *
+     * @return the address
      * @throws CorruptDataException
      * @throws DataUnavailable
      */

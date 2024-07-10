@@ -38,41 +38,40 @@ import com.ibm.java.diagnostics.utils.commands.QuitCommand;
 import com.ibm.java.diagnostics.utils.plugins.PluginConstants;
 import com.ibm.java.diagnostics.utils.plugins.PluginManager;
 
-
 /**
  * A context represents the environment within which a command is executing.
- * This abstract class provides common functionality which is required by all 
+ * This abstract class provides common functionality which is required by all
  * types of context.
- * 
+ *
  * @author adam
  *
  */
-public abstract class Context implements IContext {	
+public abstract class Context implements IContext {
 	protected final ArrayList<ICommand> globalCommands = new ArrayList<ICommand>();
 	protected final ArrayList<ICommand> commands = new ArrayList<ICommand>();
 	protected ICommand lastExecutedCommand = null;
-	protected Exception lastException = null; 
-	
+	protected Exception lastException = null;
+
 	{
 		//global commands exist irrespective of the context type
 		globalCommands.add(new QuitCommand());
 		globalCommands.add(new PluginCommand());
 	}
-	
+
 	/**
 	 * Shared logger for all commands to write to
 	 */
 	public static final Logger logger = Logger.getLogger(PluginConstants.LOGGER_NAME);
-	
+
 	protected /*PluginClassloader*/ PluginManager loader;
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.java.diagnostics.IContext#getPluginClassloader()
 	 */
 	public PluginManager getPluginManager() {
 		return loader;
 	}
-	
+
 	public boolean isCommandRecognised(String command) {
 		for (ICommand thisCommand : commands) {
 			if (thisCommand.recognises(command, this)) {
@@ -81,11 +80,11 @@ public abstract class Context implements IContext {
 		}
 		return false;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.java.diagnostics.IContext#execute(java.lang.String, java.lang.String[], java.io.PrintStream)
 	 */
-	public void execute(String command, String[] arguments, PrintStream out) 
+	public void execute(String command, String[] arguments, PrintStream out)
 	{
 		try {
 			execute(new CommandParser(command, arguments), out);
@@ -93,7 +92,7 @@ public abstract class Context implements IContext {
 			out.println("Error executing command: " + e.getMessage());
 		}
 	}
-	
+
 	public void execute(CommandParser commandParser, PrintStream out) {
 		for (ICommand thisCommand : commands) {
 			if (tryCommand(commandParser, thisCommand, out)) {
@@ -115,11 +114,11 @@ public abstract class Context implements IContext {
 			out.println("Error executing command: " + e.getMessage());
 		}
 	}
-	
+
 	/**
-	 * For a given command it is determined if this command should be 
+	 * For a given command it is determined if this command should be
 	 * invoked (via the recognises() method), and invokes it if required.
-	 * 
+	 *
 	 * @param commandParser the command name
 	 * @param arguments arguments to be passed to the command
 	 * @param thisCommand the command to test
@@ -132,7 +131,7 @@ public abstract class Context implements IContext {
 		lastException = null;				//reset the last exception
 		if (thisCommand.recognises(commandParser.getCommand(), this)) {
 			PrintStream fileOut = null;
-			lastExecutedCommand = thisCommand;	
+			lastExecutedCommand = thisCommand;
 			try {
 				if (commandParser.isRedirectedToFile()) {
 					fileOut = commandParser.getOutputFile();
@@ -148,7 +147,7 @@ public abstract class Context implements IContext {
 				defaultOut.println("Problem running command: ");
 				defaultOut.println(e.getMessage());
 			}
-			
+
 			defaultOut.flush();
 
 			if (fileOut != null) {
@@ -161,22 +160,22 @@ public abstract class Context implements IContext {
 			return false;
 		}
 	}
-	
+
 	/**
 	 * List of all the command names that are available within this context
-	 * 
+	 *
 	 * @return list of names
 	 */
-	public Vector<String> getCommandNames() 
+	public Vector<String> getCommandNames()
 	{
 		Vector<String> commandNames = new Vector<String>();
-		
+
 		for (ICommand thisCommand : commands) {
 			if (thisCommand.getCommandNames() != null) {
 				commandNames.addAll(thisCommand.getCommandNames());
 			}
 		}
-		
+
 		return commandNames;
 	}
 
@@ -187,10 +186,9 @@ public abstract class Context implements IContext {
 		return Collections.unmodifiableList(commands);
 	}
 
-	
 	/**
 	 * This adds the list of global commands which are applicable for any
-	 * context to this specific context instance  
+	 * context to this specific context instance
 	 */
 	protected void addGlobalCommandsToContext() {
 		for(ICommand cmd : globalCommands) {
@@ -205,5 +203,5 @@ public abstract class Context implements IContext {
 	public Exception getLastCommandException() {
 		return lastException;
 	}
-	
+
 }

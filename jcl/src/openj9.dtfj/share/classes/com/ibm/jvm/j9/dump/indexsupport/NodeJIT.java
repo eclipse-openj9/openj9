@@ -37,7 +37,7 @@ public class NodeJIT extends NodeAbstract
 		long id = _longFromString(attributes.getValue("id"));
 		long start = _longFromString(attributes.getValue("start"));
 		long end = _longFromString(attributes.getValue("end"));
-		
+
 		method.createNewJITSection(id, start, end-start);
 	}
 }

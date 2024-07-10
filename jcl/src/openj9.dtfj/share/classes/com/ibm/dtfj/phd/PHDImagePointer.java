@@ -30,14 +30,14 @@ import com.ibm.dtfj.image.ImageAddressSpace;
 import com.ibm.dtfj.image.ImagePointer;
 import com.ibm.dtfj.image.MemoryAccessException;
 
-/** 
+/**
  * @author ajohnson
  */
 class PHDImagePointer implements ImagePointer {
 
 	private final ImageAddressSpace space;
 	private final long addr;
-	
+
 	PHDImagePointer(ImageAddressSpace imageAddress, long arg0) {
 		space = imageAddress;
 		addr = arg0;
@@ -101,7 +101,7 @@ class PHDImagePointer implements ImagePointer {
 	public boolean isShared() throws DataUnavailable {
 		throw new DataUnavailable();
 	}
-	
+
 	public Properties getProperties() {
 		return new Properties();
 	}
@@ -113,7 +113,7 @@ class PHDImagePointer implements ImagePointer {
 		}
 		return false;
 	}
-	
+
 	public int hashCode() {
 		return space.hashCode() ^ (int)addr ^ (int)(addr >>> 32);
 	}

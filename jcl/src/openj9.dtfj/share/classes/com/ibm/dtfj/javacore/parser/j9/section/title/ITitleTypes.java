@@ -29,7 +29,7 @@ public interface ITitleTypes {
 	public static final String T_1TIDATETIME = "1TIDATETIME";
 	public static final String T_1TIFILENAME = "1TIFILENAME";
 	public static final String T_1TINANOTIME = "1TINANOTIME";
-	
+
 	/*
 	 * Attributes
 	 */

@@ -30,27 +30,21 @@ import com.ibm.dtfj.javacore.parser.framework.parser.ILookAheadBuffer;
 import com.ibm.dtfj.javacore.parser.j9.J9TagManager;
 
 public class ScannerManager implements IScannerManager {
-	
 
 	private IScanner fScanner;
 	private ILookAheadBuffer fLookAhead;
-	
+
 	public ScannerManager(Reader reader, J9TagManager tagManager) throws IOException {
 		fScanner = new JavaCoreScanner(new LineJavaCoreInputBuffer(reader), tagManager);
 		fLookAhead = new LookAheadBuffer(3, fScanner );
 	}
-	
-	
+
 	public ILookAheadBuffer getLookAheadBuffer() {
 		return fLookAhead;
 	}
 
-
 	public IScanner getScanner() {
 		return fScanner;
 	}
-
-
-
 
 }

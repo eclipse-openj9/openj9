@@ -51,7 +51,7 @@ public abstract class JavaAbstractClass implements JavaClass
 	private ImagePointer _objectID;
 	private int _flagOffset;
 	private int _hashcodeSlot;
-	
+
 	private static final String PROTECTION_DOMAIN_FIELD_NAME = "protectionDomain";
 
 	protected JavaAbstractClass(JavaRuntime vm, ImagePointer id, int modifiers, long loaderID, ImagePointer objectID, int flagOffset, int hashcodeSlot)
@@ -70,7 +70,7 @@ public abstract class JavaAbstractClass implements JavaClass
 		_flagOffset = flagOffset;
 		_hashcodeSlot = hashcodeSlot;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.dtfj.java.JavaClass#getClassLoader()
 	 */
@@ -78,13 +78,13 @@ public abstract class JavaAbstractClass implements JavaClass
 	{
 		return _javaVM.getClassLoaderForID(_classLoaderID);
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.dtfj.java.JavaClass#getObject()
 	 */
 	public JavaObject getObject() throws CorruptDataException
 	{
-		/* 
+		/*
 		 * In new VMs the objectID is distinct from the class pointer and both will be specified.
 		 * In older VMs the class ID is the object ID
 		 */
@@ -106,7 +106,7 @@ public abstract class JavaAbstractClass implements JavaClass
 	private static final int SYNTHETIC = 0x1000;
 	private static final int ANNOTATION = 0x2000;
 	private static final int ENUM = 0x4000;
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.dtfj.java.JavaClass#getModifiers()
 	 */
@@ -121,10 +121,10 @@ public abstract class JavaAbstractClass implements JavaClass
 							Modifier.STATIC | Modifier.FINAL | Modifier.INTERFACE |
 							Modifier.ABSTRACT | SYNTHETIC | ENUM | ANNOTATION);
 		}
-		
+
 		return rawModifiers;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.dtfj.java.JavaClass#getID()
 	 */
@@ -151,21 +151,21 @@ public abstract class JavaAbstractClass implements JavaClass
 	 * @return The size, in bytes, of an instance of this class (required for iterating the heap)
 	 */
 	public abstract int getInstanceSize(com.ibm.dtfj.java.JavaObject instance);
-	
+
 	public boolean equals(Object obj)
 	{
 		boolean isEqual = false;
-		
+
 		if (obj instanceof JavaAbstractClass) {
 			JavaAbstractClass clazz = (JavaAbstractClass) obj;
-			
+
 			isEqual = (getClass().equals(clazz.getClass())) && (_javaVM.equals(clazz._javaVM) && _classPointer.equals(clazz._classPointer));
 		}
 		return isEqual;
 	}
-	
+
 	/**
-	 * Returns the size of the extra slot needed for stored hashcode - if the object was moved - in JVMs built with 
+	 * Returns the size of the extra slot needed for stored hashcode - if the object was moved - in JVMs built with
 	 * J9VM_OPT_NEW_OBJECT_HASH. If the hashcode could fit in spare space in the object header, this will return 0.
 	. *
 	 * @return object instance size delta, in bytes
@@ -174,15 +174,15 @@ public abstract class JavaAbstractClass implements JavaClass
 	{
 		return _hashcodeSlot;
 	}
-	
+
 	public int hashCode()
 	{
 		return _javaVM.hashCode() ^ _classPointer.hashCode();
 	}
-	
+
 	public int readFlagsFromInstance(JavaObject instance) throws MemoryAccessException, CorruptDataException
 	{
-		try {		
+		try {
 			Object ersatzHeap = instance.getHeap();
 			if ( ! (ersatzHeap == null || ersatzHeap instanceof CorruptData)) {
 				com.ibm.dtfj.java.j9.JavaHeap heap = (com.ibm.dtfj.java.j9.JavaHeap) ersatzHeap;
@@ -192,14 +192,14 @@ public abstract class JavaAbstractClass implements JavaClass
 			}
 
 		} catch (CorruptDataException e) {
-			
+
 		} catch (DataUnavailable e) {
-	
+
 		}
 		// Problems looking at the heap, so do what we always did...
 		return instance.getID().getIntAt(_flagOffset);
 	}
-	
+
 	protected void addClassLoaderReference (Collection coll) {
 		JavaReference jRef = null;
 
@@ -236,7 +236,7 @@ public abstract class JavaAbstractClass implements JavaClass
 
 	    try {
 	        com.ibm.dtfj.java.JavaObject classObject = this.getObject();
-	    
+
 	        if(null != classObject) {
 	            jRef = new JavaReference(_javaVM,this,classObject,"Class object",JavaReference.REFERENCE_CLASS_OBJECT,JavaReference.HEAP_ROOT_UNKNOWN, JavaReference.REACHABILITY_STRONG);
 	            coll.add(jRef);
@@ -250,10 +250,10 @@ public abstract class JavaAbstractClass implements JavaClass
 		Iterator<?> fieldsIt = clazz.getDeclaredFields();
 		while(fieldsIt.hasNext()) {
 			Object potential = fieldsIt.next();
-			
+
 			if(potential instanceof JavaField) {
 				JavaField field = (JavaField) potential;
-				
+
 				if(field.getName().equals(PROTECTION_DOMAIN_FIELD_NAME)) {
 					return field;
 				}
@@ -261,16 +261,16 @@ public abstract class JavaAbstractClass implements JavaClass
 		}
 		return null;
 	}
-	
+
 	//define the search order for the protection domains
 	private enum DomainSearchOrder {
 		UNDEFINED,
 		J9CLASS_FIRST,
 		JAVA_LANG_FIRST
 	}
-	
+
 	private static DomainSearchOrder pdSearchOrder = DomainSearchOrder.UNDEFINED;
-	
+
 	public JavaObject getProtectionDomain() throws DataUnavailable,	CorruptDataException {
 		JavaField _protectionDomainField = null;
 		switch(pdSearchOrder) {
@@ -304,7 +304,7 @@ public abstract class JavaAbstractClass implements JavaClass
 				}
 			break;
 		}
-		
+
 		if(_protectionDomainField == null) {
 			throw new DataUnavailable("The protection domain is not available");
 		} else {
@@ -320,11 +320,11 @@ public abstract class JavaAbstractClass implements JavaClass
 					throw new CorruptDataException(cd);
 				}
 			}
-			
+
 			if(potential == null) {
 				return null;		//this indicates that this class is in the default protection domain
 			}
-			
+
 			if(potential instanceof JavaObject) {
 				return (JavaObject)potential;
 			} else {
@@ -333,5 +333,5 @@ public abstract class JavaAbstractClass implements JavaClass
 			}
 		}
 	}
-	
+
 }

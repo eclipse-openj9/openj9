@@ -71,14 +71,12 @@ public class NewZosDump implements ICoreFileReader {
 
 	private ImageInputStream stream;
 	private boolean _is64Bit;
-	
+
 	private Object _failingThread = null;
 
-	
-	
 	/** Maintains the list of Java address spaces */
 	private HashMap _javaAddressSpaces = new LinkedHashMap();
-	
+
     /** Logger */
     private static Logger log = Logger.getLogger(NewZosDump.class.getName());
 
@@ -86,7 +84,7 @@ public class NewZosDump implements ICoreFileReader {
 	private com.ibm.dtfj.corereaders.zos.dumpreader.Dump _dump;
 	private AddressSpace _zebedeeAddressSpaces[];
 	private boolean zebedeeInitialized;
-	
+
 	private J9RASReader _j9rasReader = null;
 	private NewZosDump(ImageInputStream in)
 	{
@@ -98,7 +96,7 @@ public class NewZosDump implements ICoreFileReader {
 
 		// List of memory ranges which are in Java address spaces
 		List keepList = null;
-		
+
 		// Collect together the address ranges associated with the IDs
 		for (Iterator iter = _javaAddressSpaces.values().iterator(); iter.hasNext();) {
 			int []asidinfo = (int[])iter.next();
@@ -109,26 +107,26 @@ public class NewZosDump implements ICoreFileReader {
 				keepList = onASID;
 			}
 			// Accumulate a global 64-bit flag
-			if (asidinfo[1] != 0) _is64Bit = true; 
+			if (asidinfo[1] != 0) _is64Bit = true;
 		}
-		
+
 		if (keepList != null) {
 			MemoryRange[] rawRanges = (MemoryRange[]) keepList.toArray(new MemoryRange[keepList.size()]);
 			_space = new DumpReaderAddressSpace(rawRanges, new DumpReader(stream, _is64Bit), false, _is64Bit);
 		}
-		
+
 		_j9rasReader = new J9RASReader(_space, _is64Bit);
-		
+
 	}
 
 	public String format(int i) {
 		return "0x"+Integer.toHexString(i);
 	}
-	
+
 	public String format(long l) {
 		return "0x"+Long.toHexString(l);
 	}
-	
+
 	/**
 	 * Create a Zebedee viewer of the dump file
 	 * @param file
@@ -141,7 +139,7 @@ public class NewZosDump implements ICoreFileReader {
 				if (file.isMVSFile()) {
 					fileName = fileName.substring(fileName.lastIndexOf('/')+1);
 				}
-				_dump = new com.ibm.dtfj.corereaders.zos.dumpreader.Dump(fileName, file, false);				
+				_dump = new com.ibm.dtfj.corereaders.zos.dumpreader.Dump(fileName, file, false);
 
 				_zebedeeAddressSpaces = _dump.getAddressSpaces();
 				zebedeeInitialized = true;
@@ -150,13 +148,13 @@ public class NewZosDump implements ICoreFileReader {
 			}
 		}
 	}
-	
+
 	private void initializeZebedeeDump(ImageInputStream stream) {
 		if (!zebedeeInitialized) {
 			try {
 				log.fine("Building Zebedee dump from stream");
-				
-				_dump = new com.ibm.dtfj.corereaders.zos.dumpreader.Dump("Stream", stream, false);				
+
+				_dump = new com.ibm.dtfj.corereaders.zos.dumpreader.Dump("Stream", stream, false);
 
 				_zebedeeAddressSpaces = _dump.getAddressSpaces();
 				zebedeeInitialized = true;
@@ -165,7 +163,7 @@ public class NewZosDump implements ICoreFileReader {
 			}
 		}
 	}
-	
+
 	/**
 	 * Finds the Zebedee address space associated with the address space identifier
 	 * @param asid
@@ -183,7 +181,7 @@ public class NewZosDump implements ICoreFileReader {
 		}
 		return adrJava;
 	}
-	
+
 	/**
 	 * Get an array of EDBs for the current address space
 	 * Convert to using HashSet when is Zebedee fixed to have Edb.equals work properly
@@ -216,12 +214,12 @@ public class NewZosDump implements ICoreFileReader {
 	 * @param imgAdr The Image address space
 	 * @param addressSpace The Zebedee address space
 	 * @param edb only consider threads from this enclave in the address space
-	 * @param stackSyms a map of (address,symbol) pairs of stack frame symbols found when processing frames  
+	 * @param stackSyms a map of (address,symbol) pairs of stack frame symbols found when processing frames
 	 * @return List of ImageThreads
 	 */
 	private List getThreads(final Builder builder, final Object imgAdr, AddressSpace addressSpace, Edb edb, Map stackSyms) {
 		List threads = new ArrayList();
-		
+
 		//get the thread ID of the failing thread
 		long tid = -1;
 		if (null != _j9rasReader) {
@@ -231,7 +229,7 @@ public class NewZosDump implements ICoreFileReader {
 				//do nothing
 			}
 		}
-		
+
 		AddressRange rr[] = addressSpace.getAddressRanges();
 		Tcb tc[] = Tcb.getTcbs(addressSpace);
 		// Walk through TCBs
@@ -240,20 +238,19 @@ public class NewZosDump implements ICoreFileReader {
 				log.fine("TCB "+format(tc[j].address()));
 				final Caa caa = new Caa(tc[j]);
 				log.fine("CAA "+format(caa.address())+" "+caa.whereFound());
-				
+
 				if (caa.getEdb().address() != edb.address()) {
 					log.fine("Skipping CAA as edb "+format(caa.getEdb().address())+" != edb for process "+format(edb.address()));
 					continue;
 				}
 
-				 
 				RegisterSet rs;
 				try {
 					rs = tc[j].getRegisters();
 				} catch (IOException e) {
 					try {
 						rs = tc[j].getRegistersFromBPXGMSTA();
-					} catch (IOException e2) {						
+					} catch (IOException e2) {
 						rs = caa.getCurrentFrame().getRegisterSet();
 					}
 				}
@@ -276,7 +273,7 @@ public class NewZosDump implements ICoreFileReader {
 				for (int i = 0; i < 16; ++i) {
 					regs.add(builder.buildRegister("R"+i, Long.valueOf(rs.getRegister(i))));
 				}
-				Properties props = new Properties();				
+				Properties props = new Properties();
 				props.setProperty("TCB", format(caa.getTcb().address()));
 				props.setProperty("CAA", format(caa.address()));
 				props.setProperty("EDB", format(caa.getEdb().address()));
@@ -285,7 +282,7 @@ public class NewZosDump implements ICoreFileReader {
 					props.setProperty("Stack direction", caa.ceecaa_stackdirection() == 0 ? "up" : "down");
 					props.setProperty("CAA CEL level", format(caa.ceecaalevel()));
 				} catch (IOException e) {
-					log.log(Level.FINE, "Problem finding stack information", e);			
+					log.log(Level.FINE, "Problem finding stack information", e);
 				}
 				// Get the Task Completion Code
 				try {
@@ -295,10 +292,10 @@ public class NewZosDump implements ICoreFileReader {
 				}
 				// Not yet implemented by Zebedee
 				//props.setProperty("Failed",Boolean.toString(caa.hasFailed()));
-							
+
 				// List of stack frames from thread
 				ArrayList stackFrames = new ArrayList();
-				
+
 				// Find sections for stack frames
 				ArrayList stackSections = new ArrayList();
 				// Avoid adding a range as section multiple times
@@ -307,7 +304,7 @@ public class NewZosDump implements ICoreFileReader {
 				try {
 					DsaStackFrame dsa = caa.getCurrentFrame();
 					if (dsa == null) {
-						log.fine("Null current frame for CAA "+format(caa.address()));												
+						log.fine("Null current frame for CAA "+format(caa.address()));
 						// No stack frames available, leave an indication of the problem
 						stackSections.add(builder.buildCorruptData(imgAdr, "Null stack frame so no stack sections with CAA", caa.address()));
 						// Don't add corruptData to the stackFrames as getStackFrames throws DataUnavailable for us if the list is empty
@@ -316,7 +313,7 @@ public class NewZosDump implements ICoreFileReader {
 							final Object builderStackFrame = builder.buildStackFrame(imgAdr, dsa.getDsaAddress(), dsa.getEntryPoint()+dsa.getEntryOffset());
 							// Remember the entry point in case it is not exported from a DLL
 							stackSyms.put(Long.valueOf(dsa.getEntryPoint()), dsa.getEntryName());
-							stackFrames.add(builderStackFrame);										
+							stackFrames.add(builderStackFrame);
 
 							long dsaAddr = dsa.getDsaAddress();
 							int i = findRange(dsaAddr, usedRange, rr);
@@ -324,42 +321,42 @@ public class NewZosDump implements ICoreFileReader {
 								// Should stack sections be more related to z/OS up-stack pieces and down-stack areas rather than dump pages?
 								stackSections.add(builder.buildStackSection(imgAdr,rr[i].getStartAddress(),rr[i].getStartAddress()+rr[i].getLength()));
 							} else if (i == -2) {
-								log.fine("Unable to find stack section for DSA "+format(dsa.getDsaAddress()));																				
+								log.fine("Unable to find stack section for DSA "+format(dsa.getDsaAddress()));
 							}
 						}
 					} catch (Error e) {
 						long dsaAddress = dsa != null ? dsa.getDsaAddress() : 0;
-						log.log(Level.FINE, "Problem finding parent frame for DSA "+format(dsaAddress), e);												
+						log.log(Level.FINE, "Problem finding parent frame for DSA "+format(dsaAddress), e);
 						// Catch the error and abort processing the stack frame, leave an indication of the problem
 						stackFrames.add(builder.buildCorruptData(imgAdr, "Corrupt stack frame with DSA "+e.getMessage(), dsaAddress));
-						stackSections.add(builder.buildCorruptData(imgAdr, "Corrupt stack frame with DSA "+e.getMessage(), dsaAddress));						
+						stackSections.add(builder.buildCorruptData(imgAdr, "Corrupt stack frame with DSA "+e.getMessage(), dsaAddress));
 					}
 				} catch (Error e) {
-					log.log(Level.FINE, "Problem finding current frame for CAA "+format(caa.address()), e);												
+					log.log(Level.FINE, "Problem finding current frame for CAA "+format(caa.address()), e);
 					// Catch the error and abort processing any stack frames, leave an indication of the problem
 					stackFrames.add(builder.buildCorruptData(imgAdr, "Corrupt stack frames with CAA "+e.getMessage(), caa.address()));
 					stackSections.add(builder.buildCorruptData(imgAdr, "Corrupt stack frames with CAA "+e.getMessage(), caa.address()));
 				}
-				// We use the pthread id, if available, as identity for the thread because this allows correlation with the Java 
+				// We use the pthread id, if available, as identity for the thread because this allows correlation with the Java
 				// threads, which also use pthread id. Note that the zOS TCB address is also provided, via an ImageThread property.
 				String threadId = "";
 				try {
 					threadId = format(caa.getPThreadID());
 				} catch (IOException e) {
 					threadId = "<unknown>";
-				}	
+				}
 				log.fine("Building thread "+threadId+" with "+stackSections.size()+" sections");
-				Object it = builder.buildThread(threadId, regs.iterator(), stackSections.iterator(), 
+				Object it = builder.buildThread(threadId, regs.iterator(), stackSections.iterator(),
 					stackFrames.iterator(), props, 0 /* signal number */);
-				
+
 				if (-1 != tid && format(tid).equals(threadId)) {
 					_failingThread = it;
 				}
 
 				threads.add(it);
-				
+
 			} catch (CaaNotFound e) {
-				log.log(Level.FINE, "Problem finding CAA for TCB "+format(tc[j].address()), e);												
+				log.log(Level.FINE, "Problem finding CAA for TCB "+format(tc[j].address()), e);
 			}
 		}
 		return threads;
@@ -391,11 +388,11 @@ public class NewZosDump implements ICoreFileReader {
 					closestDll = dll;
 					closestDist = dist;
 				}
-			}			
+			}
 		}
 		return closestDll;
 	}
-	
+
 	/**
 	 * Gets list of modules in the enclave/address space
 	 * @param builder
@@ -436,7 +433,7 @@ public class NewZosDump implements ICoreFileReader {
 					findRange(g[i].address, usedDataRange, rr);
 				}
 				// Add stack symbols in this DLL if they are closest to symbols in this DLL
-				for (Iterator i = stackSyms.keySet().iterator(); i.hasNext();) {					
+				for (Iterator i = stackSyms.keySet().iterator(); i.hasNext();) {
 					Long addr = (Long)i.next();
 					long address = addr.longValue();
 					Dll closest = (Dll)closestDlls.get(addr);
@@ -458,17 +455,17 @@ public class NewZosDump implements ICoreFileReader {
 
 				for (int i = 0; i < usedRange.length; ++i) {
 					if (usedRange[i]) {
-						sections.add(builder.buildModuleSection(imgAdr,".text", rr[i].getStartAddress(),rr[i].getStartAddress()+rr[i].getLength()));						
+						sections.add(builder.buildModuleSection(imgAdr,".text", rr[i].getStartAddress(),rr[i].getStartAddress()+rr[i].getLength()));
 					} else if (usedDataRange[i]) {
-						sections.add(builder.buildModuleSection(imgAdr,".data", rr[i].getStartAddress(),rr[i].getStartAddress()+rr[i].getLength()));						
-					} 
+						sections.add(builder.buildModuleSection(imgAdr,".data", rr[i].getStartAddress(),rr[i].getStartAddress()+rr[i].getLength()));
+					}
 				}
-				
+
 				long loadAddress;
 				try {
-					// Not yet implemented by Zebedee, which throws an Error() 
-					loadAddress = dll.getLoadAddress();					
-				} catch (Error e) {	
+					// Not yet implemented by Zebedee, which throws an Error()
+					loadAddress = dll.getLoadAddress();
+				} catch (Error e) {
 					// since the load address for z/OS modules is not available, find the first procedure symbol
 					loadAddress = Long.MAX_VALUE;
 					for (int i = 0; i < f.length; ++i) {
@@ -488,7 +485,7 @@ public class NewZosDump implements ICoreFileReader {
 				ArrayList symbols = new ArrayList();
 				boolean usedRange[] = new boolean[rr.length];
 				// Add stack symbols in this DLL
-				for (Iterator i = stackSyms.keySet().iterator(); i.hasNext();) {					
+				for (Iterator i = stackSyms.keySet().iterator(); i.hasNext();) {
 					Long addr = (Long)i.next();
 					long address = addr.longValue();
 					loadAddress = Math.min(address, loadAddress);
@@ -509,12 +506,12 @@ public class NewZosDump implements ICoreFileReader {
 						sections.add(builder.buildModuleSection(imgAdr,".text", rr[i].getStartAddress(),rr[i].getStartAddress()+rr[i].getLength()));
 					}
 				}
-				
+
 				Object mod = builder.buildModule(dllname, props, sections.iterator(), symbols.iterator(), loadAddress);
 				modules.add(mod);
 			}
 		} catch (IOException e) {
-			log.log(Level.FINE, "Problem for Zebedee finding module information", e);			
+			log.log(Level.FINE, "Problem for Zebedee finding module information", e);
 		}
 		return modules;
 	}
@@ -540,7 +537,7 @@ public class NewZosDump implements ICoreFileReader {
 
 	/**
 	 * Sees if the routine is already in an AddressRange,
-	 * or if not then returns which AddressRange it is in 
+	 * or if not then returns which AddressRange it is in
 	 * @param routine
 	 * @param used array showing if range has already been used
 	 * @param rr array of address ranges
@@ -560,9 +557,9 @@ public class NewZosDump implements ICoreFileReader {
 		}
 		return r;
 	}
-	
+
 	/**
-	 * Sees which AddressRange the routine it is in. 
+	 * Sees which AddressRange the routine it is in.
 	 * @param routine
 	 * @param rr array of address ranges
 	 * @return -2: not found, n: index of AddressRange
@@ -580,7 +577,7 @@ public class NewZosDump implements ICoreFileReader {
 		log.fine("Didn't find address "+format(routine));
 		return -2;
 	}
-	
+
 	/**
 	 * Gets the environment variables for the address space
 	 * @param build
@@ -594,11 +591,11 @@ public class NewZosDump implements ICoreFileReader {
 			Properties p = edb.getEnvVars();
 			return p;
 		} catch (IOException e) {
-			log.log(Level.FINE, "Problem for Zebedee environment", e);						
+			log.log(Level.FINE, "Problem for Zebedee environment", e);
 		}
 		return new Properties();
 	}
-	
+
 	/**
 	 * When was the dump created?
 	 * @return time in Java long format
@@ -608,7 +605,7 @@ public class NewZosDump implements ICoreFileReader {
 		log.fine("Java time of dump:"+format(tm)+" as date:"+new Date(tm));
 		return _dump.getCreationDate().getTime();
 	}
-	
+
 	/**
 	 * Get list of address ranges which match the supplied address space identifier
 	 * Also set the asidinfo[1] to 1 if the selected ranges are 64-bit
@@ -620,7 +617,7 @@ public class NewZosDump implements ICoreFileReader {
 		List keep = new ArrayList();
 		for (Iterator iter = rangeArray.iterator(); iter.hasNext();) {
 			MemoryRange range = (MemoryRange) iter.next();
-			boolean range64 = range.getVirtualAddress() + range.getSize() >= 0x100000000L; 
+			boolean range64 = range.getVirtualAddress() + range.getSize() >= 0x100000000L;
 			if (range64) {
 				log.finer("Found 64-bit address range "+format(range.getVirtualAddress())+":"+format(range.getSize())+" in address space "+format(range.getAsid()));
 			}
@@ -633,8 +630,8 @@ public class NewZosDump implements ICoreFileReader {
 					}
 				}
 			}
-			
-			// Add in any memory ranges found in a shared memory ASID. Note: do not adjust 
+
+			// Add in any memory ranges found in a shared memory ASID. Note: do not adjust
 			// the 31/64 decision for these.
 			if (range.getAsid() == SHARED_MEMORY_ASID) {
 				// System.out.println("found a shared memory range at " + range.getVirtualAddress());
@@ -675,13 +672,13 @@ public class NewZosDump implements ICoreFileReader {
 		builder.setOSType("z/OS");
 		builder.setCPUType("s390");
 		builder.setCPUSubType("");
-		
+
 		log.fine("Address spaces "+_javaAddressSpaces.size());
 		for (Iterator i = _javaAddressSpaces.values().iterator(); i.hasNext(); ) {
 			int asidinfo[] = (int[])i.next();
 			buildAddressSpace(builder, asidinfo[0], asidinfo[1] != 0);
 		}
-		
+
 		if (_dump != null) {
 			builder.setCreationTime(getCreationTime());
 		}
@@ -728,11 +725,11 @@ public class NewZosDump implements ICoreFileReader {
 					//swallow
 				}
 			}
-			
+
 			if (null == _failingThread) {
 				_failingThread = adrJava == null ? null : threads.get(0);
 			}
-			
+
 			//CMVC 156226 - DTFJ exception: XML and core file pointer sizes differ (zOS)
 			int addressSize = 31;			//default value for the address size we are dealing with
 			if(adrJava != null) {			//use the zebedee address space to determine the address size, however this not available when running jextract
@@ -740,7 +737,7 @@ public class NewZosDump implements ICoreFileReader {
 			} else {						//fall back to the previous version
 				addressSize = is64Bit ? 64 : 32;
 			}
-			
+
 			Object process = builder.buildProcess(addressSpace, pid, commandLine, environment, _failingThread , threads.iterator(), executable, mods, addressSize);
 			log.fine("Built process "+process);
 		}
@@ -789,7 +786,7 @@ public class NewZosDump implements ICoreFileReader {
 					// Search for Java spaces
 					int asid = range.getAsid();
 					if (!_javaAddressSpaces.containsKey(Integer.valueOf(asid))) {
-						stream.seek(range.getFileOffset());				
+						stream.seek(range.getFileOffset());
 						stream.readFully(buf);
 						if (bufferHasJ9RASEyeCatcher(buf)) {
 							_javaAddressSpaces.put(Integer.valueOf(asid), new int[] {asid, 0});
@@ -812,7 +809,7 @@ public class NewZosDump implements ICoreFileReader {
 		if (signature != DR1 && signature != DR2) {
 			throw new IOException("Unrecognized dump record");
 		}
-		// Note: we used to ignore records if the 'type' field (2 bytes following the signature) 
+		// Note: we used to ignore records if the 'type' field (2 bytes following the signature)
 		// was not 0xc3e5 (ebcdic 'CV'). We need to process these now to find shared memory ASIDs.
 
 		long address;
@@ -826,7 +823,7 @@ public class NewZosDump implements ICoreFileReader {
 		} else {
 			address = stream.readUnsignedInt();
 		}
-		
+
 		// Not sure where the share/read/execute flags are stored, so do not specified any values
 		return new MemoryRange(address, pos+RECORD_HEADER_LEN, RECORD_BODY_LEN, asid);
 		//return new MemoryRange(address, pos+RECORD_HEADER_LEN, RECORD_BODY_LEN, asid, false,false,true);
@@ -836,7 +833,7 @@ public class NewZosDump implements ICoreFileReader {
 	{
 		return _space;
 	}
-	
+
 	public boolean isTruncated() {
 		return false;
 	}

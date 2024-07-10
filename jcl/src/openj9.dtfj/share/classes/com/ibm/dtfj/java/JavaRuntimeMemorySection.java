@@ -28,7 +28,7 @@ import com.ibm.dtfj.image.ImageSection;
 
 /**
  * Represents a native memory range allocated by the Java Runtime.
- * 
+ *
  * @since 1.5
  */
 public interface JavaRuntimeMemorySection extends ImageSection
@@ -41,25 +41,25 @@ public interface JavaRuntimeMemorySection extends ImageSection
 	 * @see #getAllocationType
 	 */
 	public static final int ALLOCATION_TYPE_MALLOC_LIVE = 1;
-	
+
 	/**
 	 * Type code for memory that was allocated, and freed, by the Java runtime on the native heap using malloc() or similar.
 	 * @see #getAllocationType
 	 */
 	public static final int ALLOCATION_TYPE_MALLOC_FREED = 2;
-	
+
 	/**
 	 * Type code for memory allocated for memory mapping files through an API like mmap().
 	 * @see #getAllocationType
 	 */
 	public static final int ALLOCATION_TYPE_MEMORY_MAPPED_FILE = 3;
-	
+
 	/**
 	 * Type code for anonymous memory mappings / virtual allocations.
 	 * @see #getAllocationType
 	 */
 	public static final int ALLOCATION_TYPE_VIRTUAL_ALLOC = 4;
-	
+
 	/**
 	 * Type code for shared memory sections.
 	 * @see #getAllocationType
@@ -68,21 +68,21 @@ public interface JavaRuntimeMemorySection extends ImageSection
 
 	/**
 	 * Returns string describing the code that allocated this memory section.
-	 * 
+	 *
 	 * @return Allocator string.
 	 */
 	public String getAllocator() throws CorruptDataException, DataUnavailable;
-	
+
 	/**
 	 * Returns memory category this section was allocated under.
-	 * 
+	 *
 	 * @return Memory category.
 	 */
 	public JavaRuntimeMemoryCategory getMemoryCategory() throws CorruptDataException, DataUnavailable;
-	
+
 	/**
 	 * Get memory allocation type code.
-	 * 
+	 *
 	 * @return Type code.
 	 */
 	public int getAllocationType();

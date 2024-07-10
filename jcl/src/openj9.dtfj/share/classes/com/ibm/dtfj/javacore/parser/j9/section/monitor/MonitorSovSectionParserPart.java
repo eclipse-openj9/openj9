@@ -43,7 +43,7 @@ public class MonitorSovSectionParserPart extends SovereignSectionParserPart impl
 	public MonitorSovSectionParserPart() {
 		super(MONITOR_SECTION);
 	}
-	
+
 	public void computeSovRule(String sovRuleID, ILookAheadBuffer lookAheadBuffer) throws ParserException {
 		setLookAheadBuffer(lookAheadBuffer);
 		setTagManager(J9TagManager.getCurrent());
@@ -71,10 +71,10 @@ public class MonitorSovSectionParserPart extends SovereignSectionParserPart impl
 
 				results = processTagLineRequired(LK_OBJ_MON_DUMP);
 				do {
-					if ((results = processTagLineOptional(LK_INFLATED_MON)) != null) {				
+					if ((results = processTagLineOptional(LK_INFLATED_MON)) != null) {
 						processTagLineRequired(LK_INFL_DETAILS);
 					} else {
-						if ((results = processTagLineOptional(LK_FLAT_LOCKED)) != null) {						
+						if ((results = processTagLineOptional(LK_FLAT_LOCKED)) != null) {
 							String className = results.getTokenValue(MONITOR_OBJECT_FULL_JAVA_NAME);
 							className = MonitorSectionParser.fixMonitorClassName(className);
 							long objectID = results.getLongValue(MONITOR_OBJECT_ADDRESS);
@@ -82,7 +82,7 @@ public class MonitorSovSectionParserPart extends SovereignSectionParserPart impl
 							results = processTagLineRequired(LK_FLAT_DETAILS);
 							int flatid = results.getIntValue(MONITOR_FLAT_ID);
 							Object p = threads.get(Integer.valueOf(flatid));
-							long threadID = p instanceof Long ? ((Long)p).longValue() : IBuilderData.NOT_AVAILABLE; 
+							long threadID = p instanceof Long ? ((Long)p).longValue() : IBuilderData.NOT_AVAILABLE;
 							try {
 								if (monitorID != IBuilderData.NOT_AVAILABLE) {
 									// A valid monitor ID is required to build a monitor
@@ -95,18 +95,18 @@ public class MonitorSovSectionParserPart extends SovereignSectionParserPart impl
 					}
 				} while (results != null);
 			}
-		}		
+		}
 	}
 
 	public Object readIntoDTFJ(ILookAheadBuffer lookAhead) throws ParserException {
-		
+
 		return null;
 	}
 
 	public void readIntoDTFJ(ILookAheadBuffer lookAhead, IImageBuilder imageBuilder) throws ParserException {
 		fImageProcessBuilder = imageBuilder.getCurrentAddressSpaceBuilder().getCurrentImageProcessBuilder();
 		fRuntimeBuilder = fImageProcessBuilder.getCurrentJavaRuntimeBuilder();
-		
+
 	}
 
 }

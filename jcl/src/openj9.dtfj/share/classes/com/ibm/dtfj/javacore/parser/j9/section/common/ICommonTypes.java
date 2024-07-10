@@ -29,14 +29,12 @@ public interface ICommonTypes {
 	 */
 	public static final String COMMON = "common";
 
-	
-	
 	/*
 	 * Common Java Core Tags
 	 */
 	public static final String SECTION = "0SECTION";
 	public static final String NULL = "NULL";
-	
+
 	/*
 	 * Some common attributes
 	 */

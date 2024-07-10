@@ -41,7 +41,7 @@ import com.ibm.dtfj.java.JavaThread;
 
 /**
  * @author jmdisher
- * 
+ *
  * TODO:  there are more conditions where this is a null pointer that need to be handled
  */
 public class JavaObject implements com.ibm.dtfj.java.JavaObject
@@ -53,18 +53,18 @@ public class JavaObject implements com.ibm.dtfj.java.JavaObject
 	private long _arrayletLeafSize;
 	private boolean _isArraylet = false;
 	private int _objectAlignment;
-	
+
 	private byte _associatedObjectFlags = 0;
 	private JavaClass _associatedClass = null;
 	private JavaMonitor _associatedMonitor = null;
 	private JavaThread _associatedThread = null;
 	private JavaClassLoader _associatedClassLoader = null;
-	
+
 	private static final byte CLASS_FLAG = 1;
 	private static final byte THREAD_FLAG = 2;
 	private static final byte MONITOR_FLAG = 4;
 	private static final byte CLASSLOADER_FLAG = 8;
-	
+
 	protected static final String BOOLEAN_SIGNATURE = "Z";
 	protected static final String BYTE_SIGNATURE = "B";
 	protected static final String CHAR_SIGNATURE = "C";
@@ -76,9 +76,9 @@ public class JavaObject implements com.ibm.dtfj.java.JavaObject
 
 	protected static final String ARRAY_PREFIX_SIGNATURE = "[";
 	protected static final String OBJECT_PREFIX_SIGNATURE = "L";
-	
+
 	private Vector _references = null;
-	
+
 	JavaObject(JavaRuntime vm, ImagePointer address, JavaHeap containingHeap, long arrayletSpineSize, long arrayletLeafSize, boolean isArraylet, int objectAlignment) throws CorruptDataException
 	{
 		//this case will not be handled as quietly as the other cases in the factory method since it would imply a more fundamental problem
@@ -93,7 +93,7 @@ public class JavaObject implements com.ibm.dtfj.java.JavaObject
 		_isArraylet = isArraylet;
 		_objectAlignment = objectAlignment;
 	}
-	
+
 	/**
 	 * @deprecated Use {@link JavaRuntime#getObjectAtAddress(ImagePointer)} instead
 	 */
@@ -106,7 +106,7 @@ public class JavaObject implements com.ibm.dtfj.java.JavaObject
 			return null;
 		}
 	}
-	
+
 	/**
 	 * @deprecated Use {@link JavaRuntime#getObjectInHeapRegion(ImagePointer,JavaHeap,JavaHeapRegion)} instead
 	 */
@@ -135,8 +135,8 @@ public class JavaObject implements com.ibm.dtfj.java.JavaObject
 				throw new CorruptDataException(new CorruptData("unable to access class pointer", _basePointer));
 			}
 			long classID = classPointer.getAddress();
-			/* CMVC 167379: Lowest few bits of the class id are used as flags, and should be 
-			 * masked with ~(J9_REQUIRED_CLASS_ALIGNMENT - 1) to find real class id. 
+			/* CMVC 167379: Lowest few bits of the class id are used as flags, and should be
+			 * masked with ~(J9_REQUIRED_CLASS_ALIGNMENT - 1) to find real class id.
 			 */
 			long classAlignment = _containingHeap.getClassAlignment();
 			long alignedClassID = classID;
@@ -171,10 +171,10 @@ public class JavaObject implements com.ibm.dtfj.java.JavaObject
 			JavaArrayClass blueprint = (JavaArrayClass) isa;
 			int offset = blueprint.getSizeOffset();
 			int numberOfSizeBytes = blueprint.getNumberOfSizeBytes();
-			
+
 			try {
 				int numberOfElements = 0;
-				
+
 				if (4 == numberOfSizeBytes) {
 					//read an int
 					numberOfElements = _basePointer.getIntAt(offset);
@@ -210,38 +210,38 @@ public class JavaObject implements com.ibm.dtfj.java.JavaObject
 			JavaArrayClass isa = (JavaArrayClass)javaClass;
 			String type = javaClass.getName();
 			int elementCount = getArraySize();
-			
+
 			// do some rudimentary sanity checking before attempting the copy.
 			if (null == dst) {
 				// cannot copy to a null object, so raise an exception.
 				throw new NullPointerException("dst is null");
 			}
-			
+
 			if (length < 0) {
 				// length cannot be negative, so raise an exception.
 				throw new ArrayIndexOutOfBoundsException("length out of range: " + length);
 			}
-			
+
 			if (dstStart < 0) {
 				// array index cannot be negative, so raise an exception.
 				throw new ArrayIndexOutOfBoundsException("dstStart out of range: " + dstStart);
 			}
-			
+
 			if (srcStart < 0) {
 				// array index cannot be negative, so raise an exception.
 				throw new ArrayIndexOutOfBoundsException("srcStart out of range: " + srcStart);
 			}
-			
+
 			if (srcStart + length > elementCount) {
 				throw new ArrayIndexOutOfBoundsException("source array index out of range: " + (int)(srcStart + length));
 			}
-			
+
 			// Note that type name is dependent on implementation in JavaArrayClass.getName()
 			// boolean
 			if (type.equals(ARRAY_PREFIX_SIGNATURE + BYTE_SIGNATURE)) {
 				if (dst instanceof byte[]) {
 					byte target[] = (byte[])dst;
-					
+
 					if (dstStart + length > target.length) {
 						throw new ArrayIndexOutOfBoundsException("destination array index out of range: " + (int)(dstStart + length));
 					}
@@ -374,12 +374,12 @@ public class JavaObject implements com.ibm.dtfj.java.JavaObject
 					throw new IllegalArgumentException("destination array type must be double");
 				}
 			// object
-			} else { // type must be Object 
+			} else { // type must be Object
 				if (!(dst instanceof Object[])) {
 					throw new IllegalArgumentException("destination array type must be Object");
 				}
 
-				Object target[] = (Object[])dst;		
+				Object target[] = (Object[])dst;
 
 				if (dstStart + length > target.length) {
 					throw new ArrayIndexOutOfBoundsException("destination array index out of range: " + (int)(dstStart + length));
@@ -395,7 +395,7 @@ public class JavaObject implements com.ibm.dtfj.java.JavaObject
 					try {
 						//CMVC 150173 : it is possible that the pointer used to get the object is in some way invalid. If this is the case
 						//				then getObjectAtAddress may return null, so check for this and throw CorruptDataException
-						//9th Sept 2009 : reinstated original code. There are two reasons why getObjectAtAddress may return a null, 
+						//9th Sept 2009 : reinstated original code. There are two reasons why getObjectAtAddress may return a null,
 						//				when it is given an invalid address and when it is copying array slots that do not yet contain
 						//				an object.
 						if(pointer.getAddress() == 0) {
@@ -413,7 +413,7 @@ public class JavaObject implements com.ibm.dtfj.java.JavaObject
 						throw new IllegalArgumentException(e.getMessage());
 					}
 				}
-				// if no exceptions were thrown, update the caller's array all in one go 
+				// if no exceptions were thrown, update the caller's array all in one go
 				for (int i=0; i < length; i++) {
 					try {
 						target[dstStart + i] = intermediateArray[i];
@@ -430,7 +430,7 @@ public class JavaObject implements com.ibm.dtfj.java.JavaObject
 	private long leafIndexForIndex(int firstElementOffset, long index)
 	{
 		long ret = 0;
-		
+
 		if (isArraylet()) {
 			ret = index % _arrayletLeafSize;
 		} else {
@@ -442,7 +442,7 @@ public class JavaObject implements com.ibm.dtfj.java.JavaObject
 	private ImagePointer leafBaseForIndex(int firstElementOffset, long index) throws CorruptDataException, MemoryAccessException
 	{
 		ImagePointer ret = null;
-		
+
 		if (isArraylet()) {
 			int fobjectSize = _containingHeap.getFObjectSize();
 			long pointerIndex = index / _arrayletLeafSize;
@@ -462,9 +462,9 @@ public class JavaObject implements com.ibm.dtfj.java.JavaObject
 		//this is the total number of bytes consumed by the object so we will total up the section sizes
 		Iterator sections = getSections();
 		long size = 0;
-		
-		// Produce a fix for a class cast in getSize.  
-		// Sadly I can no longer get this one to fail but there's no point in just leaving it unfixed.  
+
+		// Produce a fix for a class cast in getSize.
+		// Sadly I can no longer get this one to fail but there's no point in just leaving it unfixed.
 		// Originally came from Dump analyzer defect 74504.
 		while (sections.hasNext()) {
 			Object qsect = sections.next();
@@ -606,7 +606,7 @@ public class JavaObject implements com.ibm.dtfj.java.JavaObject
 					}
 					//ensure that we are at least the minimum object size
 					spineSectionSize = Math.max(spineSectionSize, _arrayletSpineSize);
-					
+
 					JavaObjectImageSection spineSection = new JavaObjectImageSection(_basePointer, spineSectionSize);
 					if (null == externalSections) {
 						//create the section list, with the spine first (other parts of our implementation use the knowledge that the spine is first to reduce logic duplication)
@@ -648,7 +648,7 @@ public class JavaObject implements com.ibm.dtfj.java.JavaObject
 	public boolean equals(Object obj)
 	{
 		boolean isEqual = false;
-		
+
 		if (obj instanceof JavaObject) {
 			JavaObject local = (JavaObject) obj;
 			isEqual = (_javaVM.equals(local._javaVM) && _basePointer.equals(local._basePointer));
@@ -660,19 +660,19 @@ public class JavaObject implements com.ibm.dtfj.java.JavaObject
 	{
 		return _javaVM.hashCode() ^ _basePointer.hashCode();
 	}
-	
+
 	class JavaObjectImageSection extends com.ibm.dtfj.image.j9.ImageSection
 	{
 		public JavaObjectImageSection(ImagePointer base, long size)
 		{
 			super(base, size);
 		}
-		
+
 		public String getName()
 		{
 			return "In-memory Object section at 0x" + Long.toHexString(getBaseAddress().getAddress()) + " (0x" + Long.toHexString(getSize()) + " bytes)";
 		}
-		
+
 	}
 
 	public boolean isArraylet()
@@ -687,7 +687,7 @@ public class JavaObject implements com.ibm.dtfj.java.JavaObject
 
 	/**
 	 * A method required for the JavaArrayClass so it can ask the instance it is trying to size how big reference fields are in its heap
-	 * 
+	 *
 	 * @return The size of fj9object_t in the heap containing this instance
 	 */
 	public int getFObjectSize()
@@ -711,7 +711,7 @@ public class JavaObject implements com.ibm.dtfj.java.JavaObject
 					JavaReference ref = new JavaReference(_javaVM, this, jClass, "Class", JavaReference.REFERENCE_CLASS, JavaReference.HEAP_ROOT_UNKNOWN, JavaReference.REACHABILITY_STRONG);
 					_references.add(ref);
 				}
-	
+
 				// walk through the super classes to this object.
 				while (null != jClass) {
 					List refs = null;
@@ -726,12 +726,12 @@ public class JavaObject implements com.ibm.dtfj.java.JavaObject
 					}
 					jClass = jClass.getSuperclass();
 				}
-				
+
 			} catch (CorruptDataException e) {
 				// Corrupt data, so add it to the container.
 				_references.add(e.getCorruptData());
 			}
-			
+
 			// Now add association-specific references
 			if (isClassLoader()) {
 				JavaClassLoader associatedClassLoader = getAssociatedClassLoader();
@@ -743,7 +743,7 @@ public class JavaObject implements com.ibm.dtfj.java.JavaObject
 						_references.add(ref);
 					}
 				}
-			} 
+			}
 			if (isMonitor()) {
 				//need to figure out whether we need additional references here (for example to the owning thread)
 			}
@@ -755,11 +755,11 @@ public class JavaObject implements com.ibm.dtfj.java.JavaObject
 				JavaReference ref = new JavaReference(_javaVM, this, associatedClass, "Associated class", JavaReference.REFERENCE_ASSOCIATED_CLASS,JavaReference.HEAP_ROOT_UNKNOWN,JavaReference.REACHABILITY_STRONG);
 				_references.add(ref);
 			}
-			
+
 		}
-		return _references.iterator(); 
+		return _references.iterator();
 	}
-	
+
 	/*
 	 * @returns true if this object represents a class, false otherwise
 	 * J9 specific
@@ -790,16 +790,14 @@ public class JavaObject implements com.ibm.dtfj.java.JavaObject
 	public boolean isClassLoader() {
 		return (_associatedObjectFlags & CLASSLOADER_FLAG) > 0;
 	}
-	
-	
-	
+
 	private List getFieldReferences(com.ibm.dtfj.java.j9.JavaClass jClass)
 	{
 		List fieldRefs = new ArrayList();
-		
+
 		// handle an Object
 		Iterator fieldIt = jClass.getDeclaredFields();
-		
+
 		while (fieldIt.hasNext()) {
 			// iterate through all the instance fields.
 			Object fObject = fieldIt.next();
@@ -824,7 +822,7 @@ public class JavaObject implements com.ibm.dtfj.java.JavaObject
 				// this is an object reference.
 				try {
 					JavaObject jObject = (JavaObject)jField.getReferenceType(this);
-					
+
 					if (null != jObject) {
 						// build a JavaReference type and add the reference to the container.
 						String fieldName = jField.getName();
@@ -832,9 +830,9 @@ public class JavaObject implements com.ibm.dtfj.java.JavaObject
 						if (null != fieldName) {
 							description = description + " [field name:" + fieldName + "]";
 						}
-						
+
 						//Now figure out the reachability of the new reference.
-						//This will normally be "strong", except for the referent field of a reference, 
+						//This will normally be "strong", except for the referent field of a reference,
 						//for which reachability will be weak, soft or phantom, depending on the concrete reference type.
 						int reachability = JavaReference.REACHABILITY_STRONG;
 						if ("referent".equals(fieldName) && "java/lang/ref/Reference".equals(jField.getDeclaringClass().getName())) {
@@ -846,11 +844,11 @@ public class JavaObject implements com.ibm.dtfj.java.JavaObject
 								reachability = JavaReference.REACHABILITY_PHANTOM;
 							}
 						}
-						
+
 						jRef = new JavaReference(_javaVM, this, jObject, description, JavaReference.REFERENCE_FIELD, JavaReference.HEAP_ROOT_UNKNOWN, reachability);
 					}
 				} catch (CorruptDataException e) {
-				} 
+				}
 			}
 		} catch (CorruptDataException e) {
 		} catch (MemoryAccessException e) {
@@ -859,11 +857,11 @@ public class JavaObject implements com.ibm.dtfj.java.JavaObject
 	}
 
 	private List getArrayReferences(JavaArrayClass arrayClass) {
-		
+
 		List references = new ArrayList();
 		try {
 			String type = arrayClass.getComponentType().getName();
-	
+
 			if (type.equals("byte")) {
 				// ignore byte arrays.
 			} else if (type.equals("boolean")) {
@@ -880,11 +878,11 @@ public class JavaObject implements com.ibm.dtfj.java.JavaObject
 				// ignore float arrays.
 			} else if (type.equals("double")) {
 				// ignore double arrays.
-			} else { 
-				// must be Object array so handle it. 
+			} else {
+				// must be Object array so handle it.
 				Object dst[] = null;
 				int arraySize = getArraySize();
-				
+
 				if (arraySize > 0) {
 					// only deal with arrays that have space for Object references.
 					dst = new Object[arraySize];
@@ -892,18 +890,18 @@ public class JavaObject implements com.ibm.dtfj.java.JavaObject
 						// copy the objects into our own array and then build the JavaReference
 						// objects from them.
 						arraycopy(0, dst, 0, arraySize);
-	
+
 						for (int i = 0; i < dst.length; i++) {
 							if (null != dst[i]) {
 								String description = "Array Reference";
 								description  = description + " [index:" + i + "]";
-	
+
 								JavaReference jRef = new JavaReference(_javaVM, this, dst[i], description, JavaReference.REFERENCE_ARRAY_ELEMENT, JavaReference.HEAP_ROOT_UNKNOWN, JavaReference.REACHABILITY_STRONG);
 								references.add(jRef);
 							}
 						}
 					} catch (MemoryAccessException e) {
-						// Memory access problems, so create a CorruptData object 
+						// Memory access problems, so create a CorruptData object
 						// to describe the problem and add it to the container.
 						ImagePointer ptrInError = e.getPointer();
 						String message = e.getMessage();
@@ -986,7 +984,7 @@ public class JavaObject implements com.ibm.dtfj.java.JavaObject
 		_associatedObjectFlags |= CLASSLOADER_FLAG;
 		_associatedClassLoader = associatedClassLoader;
 	}
-	
+
 	public String toString() {
 		try {
 			String className = getJavaClass().getName();

@@ -29,7 +29,7 @@ import com.ibm.dtfj.image.DataUnavailable;
 
 /**
  * <p>Represents a category of native memory allocated by the Java runtime.</p>
- * 
+ *
  * <p>A category is a high-level grouping of memory allocations
  * such as "Threads", "Classes" or "Java Heap".</p>
  *
@@ -41,56 +41,56 @@ import com.ibm.dtfj.image.DataUnavailable;
  * <p> The getShallow* methods return the allocation data for
  * just this category. The getDeep* methods return the allocation
  * data for this category and all its child categories. </p>
- * 
+ *
  * @since 1.5
  */
 public interface JavaRuntimeMemoryCategory
 {
 	/**
 	 * Gets the name of this category. E.g. "Classes".
-	 * 
+	 *
 	 * @return Name string.
 	 */
 	public String getName() throws CorruptDataException;
-	
+
 	/**
 	 * Gets number of allocations recorded against this category.
-	 * 
+	 *
 	 * @return Allocation count.
 	 */
 	public long getShallowAllocations() throws CorruptDataException;
-	
+
 	/**
 	 * Gets number of bytes allocated under this category.
-	 * 
+	 *
 	 * @return Number of bytes.
 	 */
 	public long getShallowBytes() throws CorruptDataException;
 
 	/**
 	 * Gets number of allocations recorded against this category, and all children of this category.
-	 * 
+	 *
 	 * @return Allocation count.
-	 */	
+	 */
 	public long getDeepAllocations() throws CorruptDataException;
-	
+
 	/**
 	 * Gets number of bytes recorded against this category, and all children of this category.
-	 * 
+	 *
 	 * @return Number of bytes.
-	 */	
+	 */
 	public long getDeepBytes() throws CorruptDataException;
-	
+
 	/**
 	 * Gets iterator of child categories.
-	 * 
+	 *
 	 * @return Iterator of JavaRuntimeMemoryCategory objects that are immediate children of this category.
 	 */
 	public Iterator getChildren() throws CorruptDataException;
-	
+
 	/**
 	 * Gets iterator of memory sections allocated against this category.
-	 * 
+	 *
 	 * @param includeFreed If true, iterator will iterate over blocks of memory that have been freed, but haven't been re-used yet.
 	 * @see JavaRuntimeMemorySection CorruptData
 	 * @return Iterator of memory sections

@@ -24,7 +24,7 @@ package com.ibm.java.diagnostics.utils.commands;
 
 /**
  * Base exception when running commands
- * 
+ *
  * @author adam
  *
  */

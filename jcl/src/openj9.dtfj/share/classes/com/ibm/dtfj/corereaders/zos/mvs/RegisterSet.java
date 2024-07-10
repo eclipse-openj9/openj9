@@ -50,7 +50,7 @@ public class RegisterSet {
     public long getRegister(int index) {
         return registers[index];
     }
-	
+
     /**
      * Get the value of the specified register for use as an address.
      */
@@ -62,7 +62,7 @@ public class RegisterSet {
 		case 1:
 			return registers[index] & 0x7fffffff;
 		case 2:
-			assert false;			
+			assert false;
 		case 3:
 		}
 		return registers[index];
@@ -91,7 +91,7 @@ public class RegisterSet {
      */
     public void setPSW(long psw) {
         this.psw = psw;
-        log.fine("set psw to 0x" + hex(psw));		
+        log.fine("set psw to 0x" + hex(psw));
     }
 
     /**

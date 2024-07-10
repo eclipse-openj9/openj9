@@ -27,72 +27,55 @@ import java.io.IOException;
 public interface IInputBuffer {
 
 	/**
-	 * 
+	 *
 	 * Consumes a sublength of the buffer, if the sublength is > 0 and sublength <= buffer length.
-	 * It then reads from the input source to refill the previously freed spaces. 
-	 * 
-	 * 
+	 * It then reads from the input source to refill the previously freed spaces.
+	 *
+	 *
 	 * @param amount of characters to consume.
 	 * @return return the offset value of the consumed portion. Note that this does not return the new offset after consumption
 	 * but the offset of the section being consumed.
 	 * @throws IOException if error occurs while refilling the buffer.
 	 */
 	public int consume(int length) throws IOException;
-	
-	
+
 	/**
 	 * Closes the java.io.Reader or input stream associated with this
-	 * buffered reader. 
-	 * 
+	 * buffered reader.
+	 *
 	 * @throws IOException if error encountered while closing.
 	 */
 	public void close()	throws IOException;
-	
-	
+
 	/**
 	 * Retrieves a character at a given position. No consumption occurs.
 	 * Typically used by an external scanner to determine if a sequence of characters in the buffer
 	 * matches a desired pattern. If so, the pattern is consumed by a consume method.
-	 * 
+	 *
 	 * @param buffer index where character is located
 	 * @return character at specified index
 	 */
 	public char charAt(int i);
-	
-	
+
 	/**
 	 *
-	 * 
+	 *
 	 * @return boolean: determines if everything has been consumed from the reader stream.
 	 */
 	public boolean endReached();
-	
-	
+
 	/**
 	 * Reads the next line if the current buffer is empty. Returns true if a new line read, false otherwise.
-	 * 
+	 *
 	 */
 	public boolean nextLine() throws IOException;
 
-	
-	
-
-	
 	/**
 	 *	NOTE That the length of the buffer may vary during character consumption, so it cannot be assumed
-	 *  to be fixed all the time. 
-	 *  
+	 *  to be fixed all the time.
+	 *
 	 * @return the length of the buffer
 	 */
 	public int length();
-	
-	
-	
-	
-	
 
-	
-
-	
-	
 }

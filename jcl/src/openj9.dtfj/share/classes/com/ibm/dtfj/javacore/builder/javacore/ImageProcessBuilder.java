@@ -47,12 +47,12 @@ import com.ibm.dtfj.javacore.builder.IImageProcessBuilder;
 import com.ibm.dtfj.javacore.builder.IJavaRuntimeBuilder;
 
 public class ImageProcessBuilder extends AbstractBuilderComponent implements IImageProcessBuilder {
-	
+
 	private JCImageAddressSpace fImageAddressSpace;
 	private JCImageProcess fImageProcess;
 	private BuilderContainer fBuilderContainer;
 	private Map registers;
-	
+
 	public ImageProcessBuilder(JCImageAddressSpace imageAddressSpace, String id) throws JCInvalidArgumentsException {
 		super(id);
 		if (imageAddressSpace == null) {
@@ -64,23 +64,23 @@ public class ImageProcessBuilder extends AbstractBuilderComponent implements IIm
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public IJavaRuntimeBuilder getCurrentJavaRuntimeBuilder() {
 		return(IJavaRuntimeBuilder) fBuilderContainer.getLastAdded();
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public IJavaRuntimeBuilder getJavaRuntimeBuilder(String builderID) {
 		return (IJavaRuntimeBuilder) fBuilderContainer.findComponent(builderID);
 	}
 
 	/**
-	 * 
+	 *
 	 * @param id
-	 * 
+	 *
 	 */
 	public IJavaRuntimeBuilder generateJavaRuntimeBuilder(String id) throws BuilderFailureException {
 		IJavaRuntimeBuilder javaRuntimeBuilder = null;
@@ -99,9 +99,9 @@ public class ImageProcessBuilder extends AbstractBuilderComponent implements IIm
 		}
 		return javaRuntimeBuilder;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
 	public ImageModule addLibrary(String name) {
 		ImageModule module = null;
@@ -112,9 +112,9 @@ public class ImageProcessBuilder extends AbstractBuilderComponent implements IIm
 		}
 		return module;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param size
 	 */
 	public void setPointerSize(int size) {
@@ -122,7 +122,7 @@ public class ImageProcessBuilder extends AbstractBuilderComponent implements IIm
 	}
 
 	/**
-	 * 
+	 *
 	 * @param Properties with String key and String value
 	 */
 	public ImageThread addImageThread(long nativeThreadID, long systemThreadID, Properties properties) throws BuilderFailureException {
@@ -155,7 +155,7 @@ public class ImageProcessBuilder extends AbstractBuilderComponent implements IIm
 				throw new BuilderFailureException(e);
 		}
 	}
-	
+
 	/**
 	 * Set signal
 	 * @param signal number
@@ -163,7 +163,7 @@ public class ImageProcessBuilder extends AbstractBuilderComponent implements IIm
 	public void setSignal(int signal) {
 		fImageProcess.setSignal(signal);
 	}
-	
+
 	/**
 	 * Set command line
 	 * @param command line string
@@ -171,7 +171,6 @@ public class ImageProcessBuilder extends AbstractBuilderComponent implements IIm
 	public void setCommandLine(String cmdLine) {
 		fImageProcess.setCommandLine(cmdLine);
 	}
-
 
 	/**
 	 * Add a stack section to an existing image thread
@@ -183,19 +182,19 @@ public class ImageProcessBuilder extends AbstractBuilderComponent implements IIm
 		thread2.addImageStackSection(section);
 		return section;
 	}
-	
+
 	/**
 	 * Set registers if available in javacore.
-	 * @param regs Map of registers 
+	 * @param regs Map of registers
 	 */
 	public void setRegisters(Map regs) {
 		registers = regs;
 	}
-	
+
 	/**
 	 * Add environment variables
 	 * @param name
-	 * @param value 
+	 * @param value
 	 */
 	public void addEnvironmentVariable(String name, String value) {
 		fImageProcess.addEnvironment(name, value);
@@ -213,7 +212,7 @@ public class ImageProcessBuilder extends AbstractBuilderComponent implements IIm
 			long baseAddress, long procAddress) {
 		ImagePointer pointer = fImageAddressSpace.getPointer(nativeThreadID);
 		JCImageThread thread = fImageProcess.getImageThread(pointer);
-		ImagePointer ip = procAddress != IBuilderData.NOT_AVAILABLE ? fImageAddressSpace.getPointer(procAddress) : null; 
+		ImagePointer ip = procAddress != IBuilderData.NOT_AVAILABLE ? fImageAddressSpace.getPointer(procAddress) : null;
 		JCImageStackFrame stackFrame = new JCImageStackFrame(name, null, ip);
 		if (thread != null) {
 			JCImageThread thrd = (JCImageThread)thread;

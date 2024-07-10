@@ -39,7 +39,7 @@ import com.ibm.dtfj.java.JavaObject;
 import com.ibm.dtfj.java.JavaStackFrame;
 import com.ibm.dtfj.java.JavaThread;
 
-/** 
+/**
  * @author ajohnson
  */
 public class PHDJavaThread implements JavaThread {
@@ -57,7 +57,7 @@ public class PHDJavaThread implements JavaThread {
 	private CorruptData object_cd;
 	private ImageThread imageThread;
 	private CorruptData imageThread_cd;
-	
+
 	/**
 	 * Build Java thread information from a JavaThread from another dump type.
 	 * Extract all the information on object construction.
@@ -118,7 +118,7 @@ public class PHDJavaThread implements JavaThread {
 			imageThread_cd = new PHDCorruptData(space, e);
 		}
 	}
-	
+
 	public ImageThread getImageThread() throws CorruptDataException,
 			DataUnavailable {
 		if (imageThread_cd != null) throw new CorruptDataException(imageThread_cd);
@@ -162,7 +162,7 @@ public class PHDJavaThread implements JavaThread {
 	private void checkCD(CorruptData cd) throws CorruptDataException {
 		if (cd != null) throw new CorruptDataException(cd);
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.dtfj.java.JavaThread#getBlockingObject()
 	 */

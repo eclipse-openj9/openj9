@@ -26,18 +26,18 @@ import java.util.Iterator;
 import java.util.Vector;
 
 /**
- * This class represents a single "generic" thread within the dump and is basically a 
- * data holding class (together with a toString() that allows a nice view of the 
- * class ..... 
+ * This class represents a single "generic" thread within the dump and is basically a
+ * data holding class (together with a toString() that allows a nice view of the
+ * class .....
  *  - what attributes does a "generic thread" have as against extenders representing
  * a specific type of thread (viz a J9 thread)
- *  J9Thread extends this Generic thread. System threads are generic threads and 
- *  do not necessarily have same detail as java threads 
- */ 
+ *  J9Thread extends this Generic thread. System threads are generic threads and
+ *  do not necessarily have same detail as java threads
+ */
 public class GenericThread {
 	protected String threadId;
 	protected String javaLangThreadObjectAddress;
-	 
+
 	protected String threadDetails;
 	protected String threadName;
 	protected String state;
@@ -49,26 +49,25 @@ public class GenericThread {
 	Vector registers = new Vector();
 	Vector nativeFrames = new Vector();
 	protected NativeThreadContext context = null;
-	
-	
+
 	public GenericThread(GenericThread thread) {
 		threadId = thread.getThreadId();
 		javaLangThreadObjectAddress = thread.javaLangThreadObjectAddress();
 		state = thread.getState();
 		monitorId = thread.getMonitorId();
 		isJavaThread = true; // only java threads use this constructor
-		 
+
 	}
-	
+
 	public GenericThread(String threadId, long stackstart, int stacksize,int rva) {
-		this.threadId = threadId; 
+		this.threadId = threadId;
 		this.stackstart = stackstart;
 		this.stacksize = stacksize;
 		this.rva = rva;
 		this.state = "Unknown";
-		isJavaThread = false; // Only system threads use this constructor 
-	}	
-	
+		isJavaThread = false; // Only system threads use this constructor
+	}
+
 	public GenericThread(String id, String obj,String state,String monitor) {
 		threadId = id;
 		javaLangThreadObjectAddress = obj;
@@ -82,7 +81,7 @@ public class GenericThread {
 	 */
 	public   String javaLangThreadObjectAddress() {
 		// we assume they want details - so will fill in the details at this point!
-		 
+
 		return javaLangThreadObjectAddress;
 	}
 
@@ -92,8 +91,6 @@ public class GenericThread {
 	public   String getThreadId() {
 		return threadId;
 	}
-	
-	
 
 	/**
 	 * @return
@@ -119,46 +116,42 @@ public class GenericThread {
 
 	/**
 	 * @return
-	 */	
+	 */
 	public boolean isJavaThread() {
-		return false; 
-		
+		return false;
+
 	}
-	
+
 	/**
 	 */
 	public void addRegister(Register r) {
-		 registers.add(r); 
-		
+		 registers.add(r);
+
 	}
-	
+
 	public void addNativeFrame(StackFrame f) {
 		nativeFrames.add(f);
 	}
-	
+
 	public Register getNamedRegister(String name) {
 		// allow uppercase or lower case in the name
-		 
-		
+
 		String name1 = name.toUpperCase();
 		Iterator it = getRegisters();
 		while (it.hasNext()) {
-			 Register r = (Register)it.next();
-			 if (r.name.toUpperCase().equals(name1)) {
-			 	return r;
-			 }
-	
+			Register r = (Register)it.next();
+			if (r.name.toUpperCase().equals(name1)) {
+				return r;
+			}
 		}
 
-		
 		return null;
-		
 	}
-	
+
 	public Iterator getRegisters() {
 		return registers.iterator();
 	}
-	
+
 	public Iterator getNativeFrames() {
 		return nativeFrames.iterator();
 	}
@@ -169,31 +162,30 @@ public class GenericThread {
 	public int getStacksize() {
 		return stacksize;
 	}
-	
+
 	/**
 	 * @return Returns the stackstart.
 	 */
 	public long getStackstart() {
 		return stackstart;
 	}
-	
+
 	public String toString() {
-		
+
 		StringBuffer  sb = new StringBuffer();
-		
+
 		printHeader(sb);
- 
-		 
+
 		sb.append(" System thread\n");
 		sb.append("  Id      : "+threadId + "\n");
- 		
+
 		sb.append("  State   : "+ this.state);
-		
+
 		printNativeFrames(sb);
-		
+
 		sb.append("\n");
 		return sb.toString();
-		
+
 	}
 
 	public void printHeader(StringBuffer sb) {
@@ -211,7 +203,7 @@ public class GenericThread {
 			}
 		} else sb.append("\n\t No Stack available");
 	}
-	
+
 	/**
 	 * @return Returns the context.
 	 */
@@ -249,26 +241,26 @@ public class GenericThread {
 		} else {
 			String tid = getThreadId();
 			String name = getThreadName();
-			
+
 			if (tid.equals(key) ||
 				tid.toUpperCase().equals(key.toUpperCase()) ||
 				tid.equals("0x"+key) ||
 				tid.toUpperCase().equals(("0x"+key).toUpperCase())) {
-				
+
 				return true;
 			}
-			
+
 			if (null != name) {
-				if (name.equals(key) || 
+				if (name.equals(key) ||
 				name.toUpperCase().equals(key.toUpperCase()) ||
 				name.startsWith(key) ||
 				name.toUpperCase().startsWith(key.toUpperCase())) {
 					return true;
 				}
 			}
-			
+
 			String deriveThread = new String(key);
-			
+
 			if (deriveThread.toUpperCase().startsWith("0x")) {
 				deriveThread = deriveThread.substring(2);
 			}
@@ -280,7 +272,7 @@ public class GenericThread {
 			if (tid.toUpperCase().equals(deriveThread)) {
 				return true;
 			}
-			
+
 		}
 		return false;
 	}

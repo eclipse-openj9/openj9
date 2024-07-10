@@ -26,7 +26,6 @@ import java.net.InetAddress;
 
 import com.ibm.dtfj.image.Image;
 
-
 /**
  * Image building factory for com.ibm.dtfj.image.Image
  * <br><br>
@@ -41,12 +40,12 @@ import com.ibm.dtfj.image.Image;
  */
 public interface IImageBuilder {
 	/**
-	 * 
+	 *
 	 * @param builderID unique id to lookup an image address space factory
 	 * @return image address space factory if found, or null
 	 */
 	public IImageAddressSpaceBuilder getAddressSpaceBuilder(String builderID);
-	
+
 	/**
 	 * At least one image address space factory must exist for each image builder factory.
 	 * In multiple image address space scenarios, the last image address space factory generated
@@ -54,13 +53,13 @@ public interface IImageBuilder {
 	 * @return current image address space factory. Must not be null.
 	 */
 	public IImageAddressSpaceBuilder getCurrentAddressSpaceBuilder();
-	
+
 	/**
 	 * Get com.ibm.dtfj.image.Image being build by this image factory
 	 * @return valid Image. Must not be null.
 	 */
 	public Image getImage();
-	
+
 	/**
 	 * Generates a valid image address space factory and associates it with this image factory.
 	 * Must return a valid image address space factory or throw exception if an error occurred generating
@@ -73,15 +72,15 @@ public interface IImageBuilder {
 	 * @throws BuilderFailureException if image address space factory could not be generated
 	 */
 	public IImageAddressSpaceBuilder generateAddressSpaceBuilder(String id) throws BuilderFailureException;
-	
-	/** 
-	 * Set OS type, equivalent to os.name property 
+
+	/**
+	 * Set OS type, equivalent to os.name property
 	 * @param osType
 	 */
 	public void setOSType(String osType);
 
 	/**
-	 * Set OS sub-type, equivalent to os.version property 
+	 * Set OS sub-type, equivalent to os.version property
 	 * @param osSubType
 	 */
 	public void setOSSubType(String osSubType);
@@ -93,13 +92,13 @@ public interface IImageBuilder {
 	public void setcpuType(String cpuType);
 
 	/**
-	 * Set CPU sub-type 
+	 * Set CPU sub-type
 	 * @param cpuSubType
 	 */
 	public void setcpuSubType(String cpuSubType);
 
 	/**
-	 * Set CPU count 
+	 * Set CPU count
 	 * @param cpuCount
 	 */
 	public void setcpuCount(int cpuCount);
@@ -109,19 +108,19 @@ public interface IImageBuilder {
 	 * @param creationTime the time
 	 */
 	public void setCreationTime(long creationTime);
-	
+
 	/**
 	 * Set the nanotime the dump was created
 	 * @param nanoTime the time
 	 */
 	public void setCreationTimeNanos(long nanoTime);
-	
+
 	/**
 	 * Set host name
 	 * @param hostName
 	 */
 	public void setHostName(String hostName);
-	
+
 	/**
 	 * Add a host address
 	 * @param addr The IP address to add

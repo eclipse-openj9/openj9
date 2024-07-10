@@ -35,13 +35,13 @@ public abstract class ImageSection implements com.ibm.dtfj.image.ImageSection
 {
 	private ImagePointer _start;
 	private long _size;
-	
+
 	protected ImageSection(ImagePointer start, long size)
 	{
 		_start = start;
 		_size = size;
 	}
-	
+
 	public ImagePointer getBaseAddress()
 	{
 		return _start;
@@ -51,8 +51,7 @@ public abstract class ImageSection implements com.ibm.dtfj.image.ImageSection
 	{
 		return _size;
 	}
-	
-	
+
 	//in general, we don't get image section permission bits (the specific sub-classes can give us more information and override these methods)
 
 	public boolean isExecutable() throws DataUnavailable
@@ -69,7 +68,7 @@ public abstract class ImageSection implements com.ibm.dtfj.image.ImageSection
 	{
 		return _start.isShared();
 	}
-	
+
 	public Properties getProperties() {
 		return _start.getProperties();
 	}

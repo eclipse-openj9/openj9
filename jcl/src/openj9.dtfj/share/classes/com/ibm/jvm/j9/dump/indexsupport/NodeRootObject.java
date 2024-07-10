@@ -29,7 +29,7 @@ import com.ibm.dtfj.java.j9.JavaReference;
 
 /**
  * @author nhardman
- * 
+ *
  */
 public class NodeRootObject extends NodeRoot {
 	public NodeRootObject(JavaRuntime runtime, Attributes attributes)

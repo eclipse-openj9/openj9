@@ -34,7 +34,7 @@ import com.ibm.dtfj.java.JavaThread;
 import com.ibm.dtfj.javacore.builder.IBuilderData;
 
 public class JCJavaMonitor implements JavaMonitor{
-	
+
 	private Vector fEnterWaiters;
 	private Vector fNotifyWaiters;
 	private String fName;
@@ -42,7 +42,7 @@ public class JCJavaMonitor implements JavaMonitor{
 	private final ImagePointer fMonitorPointer;
 	private final JCJavaRuntime fRuntime;
 	private long fOwner;
-	
+
 	public JCJavaMonitor(JCJavaRuntime javaRuntime, ImagePointer monitorPointer, String name) throws JCInvalidArgumentsException{
 		if (monitorPointer == null) {
 			throw new JCInvalidArgumentsException("A monitor must have a valid pointer identifier");
@@ -55,54 +55,52 @@ public class JCJavaMonitor implements JavaMonitor{
 		fName = name;
 		fEncompassingObject = null;
 		fOwner = IBuilderData.NOT_AVAILABLE;
-		
+
 		fEnterWaiters = new Vector();
 		fNotifyWaiters = new Vector();
-		
+
 		// Be sure to register this monitor with the runtime
 		fRuntime.addMonitor(this);
 	}
 
-	
 	/**
-	 * 
+	 *
 	 */
 	public ImagePointer getID() {
 		return fMonitorPointer;
 	}
 
-	
 	/**
-	 * 
+	 *
 	 */
 	public String getName() throws CorruptDataException {
 		if (fName == null) {
 			String address = Long.toHexString(fMonitorPointer.getAddress());
-			fName = (fEncompassingObject == null) 
-					? "(un-named monitor @0x" + address + ")" 
+			fName = (fEncompassingObject == null)
+					? "(un-named monitor @0x" + address + ")"
 					: "(un-named monitor @0x" + address + " for object @0x" + Long.toHexString(fEncompassingObject.getID().getAddress()) + ")";
-		} 
+		}
 		return fName;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
 	public Iterator getEnterWaiters() {
 		return getThreads(fEnterWaiters);
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
 	public Iterator getNotifyWaiters() {
 		return getThreads(fNotifyWaiters);
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param threadIDs
-	 * 
+	 *
 	 */
 	private Iterator getThreads(Vector threadIDs) {
 		Vector threads = new Vector();
@@ -120,14 +118,14 @@ public class JCJavaMonitor implements JavaMonitor{
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public JavaObject getObject() {
 		return fEncompassingObject;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
 	public JavaThread getOwner() throws CorruptDataException {
 		if (fOwner != IBuilderData.NOT_AVAILABLE) {
@@ -151,8 +149,7 @@ public class JCJavaMonitor implements JavaMonitor{
 		}
 		return null;
 	}
-	
-	
+
 	/**
 	 * NOT in DTFJ
 	 * @param threadID
@@ -162,7 +159,7 @@ public class JCJavaMonitor implements JavaMonitor{
 			fEnterWaiters.add(threadID);
 		}
 	}
-	
+
 	/**
 	 * NOT in DTFJ
 	 * @param threadID
@@ -172,7 +169,7 @@ public class JCJavaMonitor implements JavaMonitor{
 			fNotifyWaiters.add(threadID);
 		}
 	}
-	
+
 	/**
 	 * NOT in DTFJ
 	 * @param encompassingObject
@@ -180,7 +177,7 @@ public class JCJavaMonitor implements JavaMonitor{
 	public void setObject(JavaObject encompassingObject) {
 		fEncompassingObject = encompassingObject;
 	}
-	
+
 	/**
 	 * NOT in DTFJ
 	 * @param javaThread

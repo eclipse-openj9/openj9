@@ -24,17 +24,16 @@ package com.ibm.dtfj.javacore.parser.framework.scanner;
 
 import java.io.IOException;
 
-
 /**
  * Lowest level of the javacore parser. Returns a new token until all characters in the input stream are consumed
  *
  */
 public interface IScanner {
 	/**
-	 * Each call to next returns a new token, 
+	 * Each call to next returns a new token,
 	 * @return next token to be scanned, or null all tokens generated
 	 * @throws IOException
-	 * @throws ScannerException 
+	 * @throws ScannerException
 	 */
 	public IParserToken next() throws  IOException, ScannerException;
 	public boolean allTokensGenerated();

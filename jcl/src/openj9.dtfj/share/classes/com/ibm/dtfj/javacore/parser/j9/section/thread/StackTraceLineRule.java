@@ -32,9 +32,8 @@ public class StackTraceLineRule extends LineRule {
 
 	private StringBuffer fNameBuffer = new StringBuffer("");
 
-	
 	/**
-	 * 
+	 *
 	 */
 	public void processLine(String source, int startingOffset) {
 		int offset = startingOffset;
@@ -54,8 +53,8 @@ public class StackTraceLineRule extends LineRule {
 		 * If not a native method, get file name and line number, if available
 		 */
 		if (methodType.equals(IThreadTypes.STACKTRACE_JAVA_METHOD)) {
-			
-			// For a java method, there are two known patterns: 
+
+			// For a java method, there are two known patterns:
 			//"java_file_name:[linenumber]"
 			//"Bytecode PC:[pc]"
 			// Java 5.0
@@ -80,18 +79,17 @@ public class StackTraceLineRule extends LineRule {
 
 				if (consumeUntilFirstMatch(CommonPatternMatchers.colon)) {
 					addToken(IThreadTypes.STACKTRACE_LINE_NUMBER, CommonPatternMatchers.dec);
-				}	
+				}
 				if (consumeUntilFirstMatch(ThreadPatternMatchers.compiled_code)){
 					compilation_level = IThreadTypes.COMPILED;
 				}
 				addToken(TokenManager.getToken(0, offset, getLineNumber(), IThreadTypes.COMPILATION_LEVEL, compilation_level));
 			}
 		}
-	}	
-	
-	
+	}
+
 	/**
-	 * 
+	 *
 	 * @param token
 	 * @param offset
 	 */

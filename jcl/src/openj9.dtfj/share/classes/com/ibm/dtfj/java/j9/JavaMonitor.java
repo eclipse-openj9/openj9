@@ -46,7 +46,6 @@ public class JavaMonitor implements com.ibm.dtfj.java.JavaMonitor
 	private Vector _blockList = new Vector();
 	private Vector _waitList = new Vector();
 
-	
 	public JavaMonitor(JavaRuntime runtime, ImagePointer pointer, String name, ImagePointer encompassingObjectAddress, long owningThread)
 	{
 		if (null == runtime) {
@@ -73,20 +72,20 @@ public class JavaMonitor implements com.ibm.dtfj.java.JavaMonitor
 	/* (non-Javadoc)
 	 * @see com.ibm.dtfj.java.JavaMonitor#getObject()
 	 */
-	public JavaObject getObject() 
+	public JavaObject getObject()
 	{
 		if (null == _encompassingObjectAddress) {
 			return null;
 		}
-		
+
 		// lazy loading of the encompassing object
 		if (null == _encompassingObject) {
 			try {
 				_encompassingObject = _javaVM.getObjectAtAddress(_encompassingObjectAddress);
 			} catch (CorruptDataException e) {
-				// since we cannot rethrow anything, we just return null 
+				// since we cannot rethrow anything, we just return null
 			} catch (IllegalArgumentException e) {
-				// since we cannot rethrow anything, we just return null 
+				// since we cannot rethrow anything, we just return null
 			}
 		}
 		return _encompassingObject;
@@ -107,10 +106,10 @@ public class JavaMonitor implements com.ibm.dtfj.java.JavaMonitor
 	{
 		JavaThread owningThread = null;
 		Iterator allThreads = _javaVM.getThreads();
-		
+
 		while (allThreads.hasNext()) {
 			JavaThread oneThread = (JavaThread) allThreads.next();
-			
+
 			if (oneThread.getJNIEnv().getAddress() == _owningThreadID) {
 				owningThread = oneThread;
 				break;
@@ -144,11 +143,11 @@ public class JavaMonitor implements com.ibm.dtfj.java.JavaMonitor
 		}
 		return _waitList.iterator();
 	}
-	
+
 	public boolean equals(Object obj)
 	{
 		boolean isEqual = false;
-		
+
 		if (obj instanceof JavaMonitor) {
 			JavaMonitor local = (JavaMonitor) obj;
 			isEqual = (_javaVM.equals(local._javaVM) && _monitorID.equals(local._monitorID));

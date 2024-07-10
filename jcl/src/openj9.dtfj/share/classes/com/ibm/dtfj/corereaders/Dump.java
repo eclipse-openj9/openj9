@@ -32,7 +32,7 @@ public interface Dump extends ICoreFileReader
 	 * e.g. "Pentium IV step 4"
 	 */
 	String getProcessorSubtype();
-	
+
 	/**
 	 * Determines when the image was created
 	 * @return the time in milliseconds since 1970
@@ -94,7 +94,7 @@ public interface Dump extends ICoreFileReader
 	 * @throws MemoryAccessException if the memory cannot be read
 	 */
 	byte getByteAt(int asid, long address) throws MemoryAccessException;
-	
+
 	/**
 	 * @return An iterator of the MemoryRange objects making up the address space
 	 * @see MemoryRange

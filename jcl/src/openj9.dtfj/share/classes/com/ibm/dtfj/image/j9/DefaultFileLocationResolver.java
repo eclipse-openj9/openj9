@@ -33,29 +33,29 @@ public class DefaultFileLocationResolver implements IFileLocationResolver
 {
 	private static char[] PATH_DELIMS = new char[]{'/', '\\', '.'};
 	private File _supportFileDir;
-	
+
 	public DefaultFileLocationResolver(File parentDirectory)
 	{
 		_supportFileDir = parentDirectory;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.dtfj.image.j9.IFileLocationResolver#findFileWithFullPath(java.lang.String)
 	 */
 	public File findFileWithFullPath(String fullPath)
 			throws FileNotFoundException
 	{
-		/* given that we may be looking for a file which came from another system, look it up in our 
-		 * support file dir first (we need that to over-ride the absolute path since it may be looking for 
-		 * a file in the same location as one on the local machine - this happens often if moving a core 
+		/* given that we may be looking for a file which came from another system, look it up in our
+		 * support file dir first (we need that to over-ride the absolute path since it may be looking for
+		 * a file in the same location as one on the local machine - this happens often if moving a core
 		 * file from one Unix system to another).
-		 * 
+		 *
 		 * resolver hierarchy = next to, relative to , absolute
-		 * 
+		 *
 		 * next to = the library is in the same directory as the core file
 		 * relative to = the absolute path of the library in the core is translated to be relative to the current core location
 		 * absolute = use the system library
-		 * 
+		 *
 		 */
 		File absolute = new File(fullPath);
 		String fileName = absolute.getName();
@@ -71,7 +71,7 @@ public class DefaultFileLocationResolver implements IFileLocationResolver
 	}
 
 	/*
-	 * Differing implementations of java.io.File will potentially behave differently when the 
+	 * Differing implementations of java.io.File will potentially behave differently when the
 	 * java.io.File(File, String) constructor is used to create a file based on the parent. If the
 	 * String is an absolute path then on Windows it will be treated as relative, but on linux will result
 	 * in the absolute path ignoring the parent File parameter
@@ -91,5 +91,5 @@ public class DefaultFileLocationResolver implements IFileLocationResolver
 		}
 		return fullPath;
 	}
-	
+
 }

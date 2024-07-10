@@ -38,7 +38,7 @@ public abstract class SectionParser  extends SectionParserGrammar implements ICo
 	 * as parsing a section from the start will
 	 * yield three tokens:
 	 * SECTION, header information token, first TAG of section
-	 * (note that NULL lines are ignored by the scanner). 
+	 * (note that NULL lines are ignored by the scanner).
 	 * Adjust as necessary for deeper analysis.
 	 */
 	protected static final int LOOKAHEAD_DEPTH = 3;
@@ -47,11 +47,11 @@ public abstract class SectionParser  extends SectionParserGrammar implements ICo
 		super(sectionName);
 		fImageBuilder = null;
 	}
-		
+
 	/**
-	 * 
+	 *
 	 * @param lookahead from where to read tokens
-	 * @param tag information containing current tag information at the time of the parse 
+	 * @param tag information containing current tag information at the time of the parse
 	 * @throws NullPointerException if a null lookaheadbuffer is passed.
 	 */
 	public void readIntoDTFJ(ILookAheadBuffer lookAheadBuffer, IImageBuilder imageBuilder) throws ParserException {
@@ -62,14 +62,13 @@ public abstract class SectionParser  extends SectionParserGrammar implements ICo
 		setLookAheadBuffer(lookAheadBuffer, LOOKAHEAD_DEPTH);
 		topLevelRule();
 	}
-	
-	
+
 	/**
-	 * 
+	 *
 	 * @param properties
 	 * @param key
 	 * @param value
-	 * 
+	 *
 	 */
 	public boolean addAsProperty(Properties properties, String key, String value) {
 		boolean added = false;
@@ -79,7 +78,6 @@ public abstract class SectionParser  extends SectionParserGrammar implements ICo
 		return added;
 	}
 
-	
 	/**
 	 * Must be implemented by subclass.
 	 * @param lookAheadBuffer
@@ -88,7 +86,7 @@ public abstract class SectionParser  extends SectionParserGrammar implements ICo
 	abstract protected void topLevelRule() throws ParserException;
 
 	/**
-	 * 
+	 *
 	 * @param startingTag
 	 * @throws ParserException
 	 */

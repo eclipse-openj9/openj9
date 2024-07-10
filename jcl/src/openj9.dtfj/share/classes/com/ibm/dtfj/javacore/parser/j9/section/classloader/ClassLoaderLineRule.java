@@ -34,8 +34,7 @@ public abstract class ClassLoaderLineRule extends LineRule implements IClassLoad
 		consumeUntilFirstMatch(ClassLoaderPatternMatchers.loader);
 		addAttributeNameAndAddress(firstAlternative, secondAlternative, attribute);
 	}
-	
-	
+
 	protected void addAttributeNameAndAddress(Matcher firstAlternative, Matcher secondAlternative, String attribute) {
 		String value = null;
 		if ((value = matchAndConsumeValue(firstAlternative)) == null) {
@@ -45,7 +44,5 @@ public abstract class ClassLoaderLineRule extends LineRule implements IClassLoad
 			addToken(attribute, value);
 		}
 	}
-	
-	
 
 }

@@ -23,7 +23,7 @@
 package com.ibm.dtfj.phd.util;
 
 /**
- * Packs references more efficiently by sorting them in order, so allowing smaller 
+ * Packs references more efficiently by sorting them in order, so allowing smaller
  * deltas to be encoded.
  */
 public class SortedNumberStream extends NumberStream {
@@ -81,7 +81,7 @@ public class SortedNumberStream extends NumberStream {
 			flushBuffer();
 		}
 	}
-	
+
 	public void rewind() {
 		flushBuffer();
 		super.rewind();

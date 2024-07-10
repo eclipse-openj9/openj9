@@ -24,7 +24,7 @@ package com.ibm.java.diagnostics.utils.commands;
 
 /**
  * Description for how a command should be executed
- * 
+ *
  * @author adam
  *
  */
@@ -33,34 +33,34 @@ public class CommandDescription {
 	private String argumentDescription;
 	private String helpDescription;
 	private CommandDescription parent = null;
-	
+
 	public CommandDescription(String commandName, String argumentDescription, String helpDescription) {
 		super();
 		this.commandName = commandName;
 		this.argumentDescription = argumentDescription;
 		this.helpDescription = helpDescription;
 	}
-	
+
 	public String getCommandName() {
 		return commandName;
 	}
-	
+
 	public void setCommandName(String commandName) {
 		this.commandName = commandName;
 	}
-	
+
 	public String getArgumentDescription() {
 		return argumentDescription;
 	}
-	
+
 	public void setArgumentDescription(String argumentDescription) {
 		this.argumentDescription = argumentDescription;
 	}
-	
+
 	public String getHelpDescription() {
 		return helpDescription;
 	}
-	
+
 	public void setHelpDescription(String helpDescription) {
 		this.helpDescription = helpDescription;
 	}

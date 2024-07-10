@@ -25,7 +25,7 @@ package com.ibm.jvm.j9.dump.extract;
 public class JExtractFatalException extends RuntimeException {
 	private static final long serialVersionUID = -4336525511241349351L;
 	private int code;
-	
+
 	public int getCode() {
 		return code;
 	}

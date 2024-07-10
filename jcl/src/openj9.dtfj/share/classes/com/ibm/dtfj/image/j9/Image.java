@@ -57,7 +57,7 @@ public class Image implements ReleasingImage, ManagedImage
 	private List _closables = new Vector();
 	private URI source = null;
 	private ManagedImageSource imageSource = null;
-	
+
 	public Image(String osType, String osSubType, String cpuType, String cpuSubType, int cpuCount, long bytesMem, long creationTime)
 	{
 		_osType = osType;
@@ -147,7 +147,7 @@ public class Image implements ReleasingImage, ManagedImage
 		}
 		return _creationTime;
 	}
-	
+
 	public void addAddressSpace(ImageAddressSpace addressSpace)
 	{
 		_addressSpaces.add(addressSpace);
@@ -176,7 +176,7 @@ public class Image implements ReleasingImage, ManagedImage
 			throw new DataUnavailable();
 		}
 	}
-	
+
 	public void setHostName(String hostname)
 	{
 		//make sure that we aren't hiding any errors
@@ -191,7 +191,7 @@ public class Image implements ReleasingImage, ManagedImage
 			throw new UnsupportedOperationException("hostname cannot be set more than once");
 		}
 	}
-	
+
 	public void addIPAddress(Object newAddress)
 	{
 		//this could be CorruptData or InetAddress so we have to allow objects in
@@ -201,7 +201,7 @@ public class Image implements ReleasingImage, ManagedImage
 	public void addReleasable(ResourceReleaser o) {
 		_closables.add(o);
 	}
-	
+
 	public void close() {
 		Iterator it = _closables.iterator();
 		while(it.hasNext()) {
@@ -222,7 +222,7 @@ public class Image implements ReleasingImage, ManagedImage
 			}
 		}
 	}
-	
+
 	/*
 	 * Do NOT rely on this finalizer to clean up. Always call the close() method when done with this Image.
 	 * (non-Javadoc)
@@ -237,11 +237,11 @@ public class Image implements ReleasingImage, ManagedImage
 	public Properties getProperties() {
 		return new Properties();
 	}
-	
+
 	public void SetSource(URI source) {
 		this.source = source;		//allow the factory to set the source without changing the legacy public methods
 	}
-	
+
 	public URI getSource() {
 		try {
 			if(source == null) {
@@ -253,7 +253,7 @@ public class Image implements ReleasingImage, ManagedImage
 			return null;
 		}
 	}
-	
+
 	public ManagedImageSource getImageSource() {
 		return imageSource;
 	}

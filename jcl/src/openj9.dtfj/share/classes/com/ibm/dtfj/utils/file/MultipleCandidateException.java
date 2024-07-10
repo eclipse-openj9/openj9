@@ -31,7 +31,7 @@ import java.util.List;
  * Thrown when there is more than one core file present in a zip
  * file and the calling application has not specified which entry
  * should be used.
- * 
+ *
  * @author adam
  *
  */
@@ -66,7 +66,6 @@ public class MultipleCandidateException extends IOException {
 	public File getFile() {
 		return file;
 	}
-	
-	
+
 }
 

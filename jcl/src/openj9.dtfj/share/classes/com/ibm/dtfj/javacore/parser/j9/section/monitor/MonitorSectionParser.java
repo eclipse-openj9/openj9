@@ -40,13 +40,13 @@ public class MonitorSectionParser extends SectionParser implements IMonitorTypes
 
 	private IJavaRuntimeBuilder fRuntimeBuilder;
 	private IImageProcessBuilder fImageProcessBuilder;
-	
+
 	public MonitorSectionParser() {
 		super(MONITOR_SECTION);
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
 	protected void topLevelRule() throws ParserException {
 		poolInfo();
@@ -55,15 +55,15 @@ public class MonitorSectionParser extends SectionParser implements IMonitorTypes
 		sovOnlyRules(T_1LKREGMONDUMP);
 //		deadLocks();
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @throws ParserException
 	 */
 	private void poolInfo() throws ParserException {
 		fImageProcessBuilder = fImageBuilder.getCurrentAddressSpaceBuilder().getCurrentImageProcessBuilder();
 		fRuntimeBuilder = fImageProcessBuilder.getCurrentJavaRuntimeBuilder();
-		
+
 		// General header info. No useful DTFJ data.
 		processTagLineRequired(T_1LKPOOLINFO);
 		// Sov hook: Sov only information after the 1LKPOOLINFO tag
@@ -73,18 +73,18 @@ public class MonitorSectionParser extends SectionParser implements IMonitorTypes
 		// Sov hook: Sov only information after the 2LKPOOLTOTAL tag
 		sovOnlyRules(T_2LKPOOLTOTAL);
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @throws ParserException
 	 */
 	private void objectLocks() throws ParserException {
 		processTagLineRequired(T_1LKMONPOOLDUMP);
 		monitorsInUse();
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @throws ParserException
 	 */
 	private void systemLocks() throws ParserException {
@@ -93,7 +93,7 @@ public class MonitorSectionParser extends SectionParser implements IMonitorTypes
 	}
 
 	/**
-	 * Will create monitor objects for each 2LKMONINUSE encountered. 
+	 * Will create monitor objects for each 2LKMONINUSE encountered.
 	 * <br>
 	 * <br>
 	 * For every one of these tags encountered, a valid monitor ID must be parsed
@@ -121,7 +121,7 @@ public class MonitorSectionParser extends SectionParser implements IMonitorTypes
 			}
 			try {
 				/*
-				 * A monitor object must be created if the 2LKMONINUSE tag is encountered, else an 
+				 * A monitor object must be created if the 2LKMONINUSE tag is encountered, else an
 				 * error encountered.
 				 */
 				generateMonitor(null, monitorID, objectID, className, monitorThreadID);
@@ -165,16 +165,16 @@ public class MonitorSectionParser extends SectionParser implements IMonitorTypes
 		}
 		return className;
 	}
-	
+
 	/**
 	 * Must pass a valid monitor ID in order to successfully create a monitor object.
-	 * 
+	 *
 	 * @param monitorName optional
 	 * @param monitorID required: must pass a valid ID or exception is thrown.
 	 * @param objectID optional
 	 * @param className optional
 	 * @param owningThread optional
-	 * 
+	 *
 	 * @throws ParserException
 	 * @throws BuilderFailureException if invalid monitorID is passed.
 	 */
@@ -183,7 +183,7 @@ public class MonitorSectionParser extends SectionParser implements IMonitorTypes
 		waitOnNotifyOrEnter(monitor);
 		return monitor;
 	}
-	
+
 	/**
 	 * This handles both wait on notify and wait on enter threads for a given java monitor.
 	 * <br><br>
@@ -220,9 +220,9 @@ public class MonitorSectionParser extends SectionParser implements IMonitorTypes
 			}
 		}
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param monitor
 	 * @param results
 	 * @param waitOnNotify
@@ -250,9 +250,9 @@ public class MonitorSectionParser extends SectionParser implements IMonitorTypes
 			handleError(message, e);
 		}
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @throws ParserException
 	 */
 	private void registeredMonitors() throws ParserException {
@@ -261,9 +261,9 @@ public class MonitorSectionParser extends SectionParser implements IMonitorTypes
 			processRegMonitors(results);
 		}
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param results
 	 * @throws ParserException
 	 */
@@ -278,8 +278,7 @@ public class MonitorSectionParser extends SectionParser implements IMonitorTypes
 			}
 		}
 	}
-	
-	
+
 	/**
 	 * Sov specific lock information.
 	 */
@@ -290,7 +289,7 @@ public class MonitorSectionParser extends SectionParser implements IMonitorTypes
 			sovPart.computeSovRule(startingTag, getLookAheadBuffer());
 		}
 	}
-	
+
 	/*
 	 * NOTE: deadlock parsing not tested. No DTFJ builder for deadlocks.
 	 */
@@ -304,7 +303,7 @@ public class MonitorSectionParser extends SectionParser implements IMonitorTypes
 //			deadLockThread();
 //		}
 //	}
-//	
+//
 //	/**
 //	 * Here, a dead lock thread points to further threads until
 //	 * the original dead lock thread is reached (i.e a cycle).
@@ -344,11 +343,11 @@ public class MonitorSectionParser extends SectionParser implements IMonitorTypes
 //			}
 //		}
 //	}
-//	
+//
 //	/**
-//	 * 
+//	 *
 //	 * @param required
-//	 * 
+//	 *
 //	 * @throws ParserException
 //	 */
 //	private boolean deadLockThreadSection(boolean required) throws ParserException {
@@ -364,6 +363,5 @@ public class MonitorSectionParser extends SectionParser implements IMonitorTypes
 //		}
 //		return wasMatched;
 //	}
-	
 
 }

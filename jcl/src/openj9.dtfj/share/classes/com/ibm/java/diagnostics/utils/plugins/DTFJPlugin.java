@@ -29,35 +29,35 @@ import java.lang.annotation.RetentionPolicy;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface DTFJPlugin {
 	/**
-	 * Version is of the formx.y where x.y is the minimum level of the DTFJ API 
-	 * required in order for the plugin to work with x being the major version 
-	 * and y the minor version. The wildcard * can be used to specify any match 
+	 * Version is of the formx.y where x.y is the minimum level of the DTFJ API
+	 * required in order for the plugin to work with x being the major version
+	 * and y the minor version. The wildcard * can be used to specify any match
 	 * e.g. 1.* would match any implementation of version 1 of the DTFJ API.
-	 * 
+	 *
 	 * @return the minimum version of the API for which this plugin is valid
 	 */
 	public String version();
-	
+
 	/**
 	 * Specifies that the DTFJ plugin does or does not require the presence of
 	 * a JavaRuntime.
-	 * 
+	 *
 	 * @return
 	 */
 	public boolean runtime() default true;
-	
+
 	/**
-	 * Specifies that the DTFJ does or does not require the presence of 
+	 * Specifies that the DTFJ does or does not require the presence of
 	 * an Image
-	 * 
+	 *
 	 * @return
 	 */
 	public boolean image() default true;
-	
+
 	/**
 	 * Specifies that the output from this plugin can be cached.
 	 * Default is true.
-	 * 
+	 *
 	 * @return true if output can be cached, false if not
 	 */
 	public boolean cacheOutput() default false;

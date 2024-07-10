@@ -29,21 +29,10 @@ import com.ibm.dtfj.javacore.parser.framework.scanner.IScannerManager;
 import com.ibm.dtfj.javacore.parser.framework.scanner.ScannerManager;
 import com.ibm.dtfj.javacore.parser.j9.J9TagManager;
 
-
 public class RegisteredComponents {
-	
-	
-	
-	
+
 	public IScannerManager getScannerManager(Reader reader, J9TagManager tagManager) throws IOException {
 		return new ScannerManager(reader, tagManager);
 	}
-	
-	
-	
-
-	
-	
-
 
 }

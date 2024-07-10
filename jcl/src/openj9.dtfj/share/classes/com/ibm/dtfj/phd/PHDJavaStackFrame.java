@@ -33,7 +33,7 @@ import com.ibm.dtfj.java.JavaLocation;
 import com.ibm.dtfj.java.JavaReference;
 import com.ibm.dtfj.java.JavaStackFrame;
 
-/** 
+/**
  * @author ajohnson
  */
 public class PHDJavaStackFrame implements JavaStackFrame {
@@ -42,7 +42,7 @@ public class PHDJavaStackFrame implements JavaStackFrame {
 	private CorruptData loc_cd;
 	private ImagePointer base;
 	private CorruptData base_cd;
-	
+
 	/**
 	 * Build Java stack framed information from a JavaStackFrame from another dump type.
 	 * Extract all the information on object construction.
@@ -62,7 +62,7 @@ public class PHDJavaStackFrame implements JavaStackFrame {
 			base_cd = new PHDCorruptData(space, e);
 		}
 	}
-	
+
 	public ImagePointer getBasePointer() throws CorruptDataException {
 		if (base_cd != null)  throw new CorruptDataException(base_cd);
 		return base;

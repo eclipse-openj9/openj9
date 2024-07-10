@@ -29,22 +29,22 @@ import java.util.NoSuchElementException;
  * Keeps the refs in a LongArray - only outputs to the compressed bitstream if it overflows
  */
 public class BufferedNumberStream extends NumberStream {
-	
+
 	static final int BUFFER_SIZE = LongArray.CHUNK_SIZE;
 	LongArray buffer;
 	int bufferCount;
 	int size;
 	int readBufferCount;
-	
+
 	public BufferedNumberStream() {
 		this(BUFFER_SIZE);
 	}
-	
+
 	public BufferedNumberStream(int size) {
 		buffer = new LongArray(size);
 		this.size = size;
 	}
-	
+
 	public void writeLong(long n) {
 		buffer.put(bufferCount++, n);
 		if (bufferCount == BUFFER_SIZE) {
@@ -72,21 +72,21 @@ public class BufferedNumberStream extends NumberStream {
 				throw new NoSuchElementException();
 		}
 	}
-	
+
 	public boolean hasMore() {
 		return super.hasMore() || readBufferCount > 0;
 	}
-	
+
 	public int elementCount() {
 		return super.elementCount() + bufferCount;
 	}
-	
+
 	public void rewind() {
 		//flushBuffer();
 		super.rewind();
 		readBufferCount = bufferCount;
 	}
-	
+
 	public void clear() {
 		super.clear();
 		bufferCount = 0;

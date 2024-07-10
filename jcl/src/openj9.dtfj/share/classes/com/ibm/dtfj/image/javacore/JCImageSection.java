@@ -33,7 +33,7 @@ public class JCImageSection implements ImageSection {
 	private final String name;
 	private final ImagePointer base;
 	private final long size;
-	
+
 	/**
 	  * Construct a new Image section with the given name, base address and length in bytes
 	  */
@@ -42,7 +42,7 @@ public class JCImageSection implements ImageSection {
 		this.base = base;
 		this.size = size;
 	}
-	
+
 	public ImagePointer getBaseAddress() {
 		return base;
 	}
@@ -66,7 +66,7 @@ public class JCImageSection implements ImageSection {
 	public boolean isShared() throws DataUnavailable {
 		throw new DataUnavailable();
 	}
-	
+
 	public Properties getProperties() {
 		return base.getProperties();
 	}

@@ -56,20 +56,19 @@ public class XMLIndexReader extends DefaultHandler implements IParserNode
 	private ICoreFileReader _coreFile;
 	private Image _coreImage;
 	private Stack _elements;
-		
+
 	//used for pulling out raw data between XML tags
 	private StringBuffer _scrapingBuffer = new StringBuffer();
-	
+
 	/**
 	 * Responsible for finding files requested by the DTFJ components.  This is passed to the Builder so it can
 	 * intelligently delegate file resolution.
 	 */
 	private IFileLocationResolver _fileResolvingAgent;
-	
+
 	private ClosingFileReader _reader;
 	private ImageInputStream _stream;
-	
-	
+
 	/**
 	 * Creates an Image from the given XML index stream and the corresponding corefile
 	 * @param input
@@ -104,7 +103,7 @@ public class XMLIndexReader extends DefaultHandler implements IParserNode
 		//we need to hook the image we created here
 		return _coreImage;
 	}
-	
+
 	/**
 	 * Creates an Image from the given XML index stream and the corresponding corefile
 	 * @param input
@@ -138,7 +137,7 @@ public class XMLIndexReader extends DefaultHandler implements IParserNode
 		//we need to hook the image we created here
 		return _coreImage;
 	}
-	
+
 	public void startElement(String uri,
             String localName,
             String qName,
@@ -150,7 +149,7 @@ public class XMLIndexReader extends DefaultHandler implements IParserNode
 		assert (null != node) : "Node should not be null when starting new tag: " + qName;
 		_elements.push(node);
     }
-	
+
 	public void endElement(String uri,
             String localName,
             String qName)
@@ -168,7 +167,7 @@ public class XMLIndexReader extends DefaultHandler implements IParserNode
 		_scrapingBuffer = new StringBuffer();
 		((IParserNode)(_elements.peek())).stringWasParsed(collapse);
 	}
-	
+
 	public void characters(char[] arg0, int arg1, int arg2) throws SAXException
 	{
 		_scrapingBuffer.append(arg0, arg1, arg2);
@@ -177,7 +176,7 @@ public class XMLIndexReader extends DefaultHandler implements IParserNode
 	public IParserNode nodeToPushAfterStarting(String uri, String localName, String qName, Attributes attributes)
 	{
 		IParserNode next = null;
-		
+
 		if (qName.equals("j9dump")) {
 			next = new NodeJ9Dump(this,  attributes);
 		} else {
@@ -186,17 +185,17 @@ public class XMLIndexReader extends DefaultHandler implements IParserNode
 		}
 		return next;
      }
-	
+
 	public void stringWasParsed(String string)
 	{
 		//ignore
 	}
-	
+
 	public void didFinishParsing()
 	{
 		//ignore
 	}
-	
+
 	public void setJ9DumpData(long environ, String osType, String osSubType, String cpuType, int cpuCount, long bytesMem, int pointerSize, Image[] imageRef, ImageAddressSpace[] addressSpaceRef, ImageProcess[] processRef)
 	{
 		Builder builder = null;
@@ -229,7 +228,7 @@ public class XMLIndexReader extends DefaultHandler implements IParserNode
 				if (vb) try {
 					System.out.println("process "+process1.getID());
 				} catch (DataUnavailable e) {
-				} catch (CorruptDataException e) {	
+				} catch (CorruptDataException e) {
 				}
 				if (process == null || isProcessForEnvironment(environ, addressSpace1, process1)) {
 					addressSpace = addressSpace1;
@@ -242,7 +241,7 @@ public class XMLIndexReader extends DefaultHandler implements IParserNode
 			// Double-check core file and XML pointer sizes
 			//CMVC 156226 - DTFJ exception: XML and core file pointer sizes differ (zOS)
 			// z/OS can have 64-bit or 31-bit processes, Java only reports 64-bit or 32-bit.
-			if (process.getPointerSize() != pointerSize && 
+			if (process.getPointerSize() != pointerSize &&
 				!(process.getPointerSize() == 31 && pointerSize == 32)) {
 				System.out.println("XML and core file pointer sizes differ "+process.getPointerSize()+"!="+pointerSize);
 			}
@@ -302,11 +301,11 @@ public class XMLIndexReader extends DefaultHandler implements IParserNode
 		}
 		return false;
 	}
-	
+
 	/**
-	 * This is like the setJ9DumpData method but is to be used when we fail to parse the file.  It is meant to try to construct the 
+	 * This is like the setJ9DumpData method but is to be used when we fail to parse the file.  It is meant to try to construct the
 	 * Image object with what it was able to get
-	 * 
+	 *
 	 * @param e The cause of the error
 	 */
 	private void _createCoreImageAfterParseError(Exception e)

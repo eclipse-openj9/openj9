@@ -33,7 +33,7 @@ import com.ibm.dtfj.java.JavaMethod;
  * @author ajohnson
  */
 public class PHDCorruptJavaLocation extends PHDCorruptData implements JavaLocation {
-	
+
 	PHDCorruptJavaLocation(ImageAddressSpace space, CorruptData cd) {
 		super(space, cd);
 	}

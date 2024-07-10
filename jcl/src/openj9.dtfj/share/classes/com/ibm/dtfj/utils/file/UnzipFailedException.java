@@ -24,7 +24,6 @@ package com.ibm.dtfj.utils.file;
 
 import java.io.IOException;
 
-
 /**
  * Thrown when an error occurs while unzipping an archive
  */

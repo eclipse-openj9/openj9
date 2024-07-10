@@ -25,7 +25,7 @@ package com.ibm.dtfj.corereaders.j9;
 /**
  * Represents the J9RAS structure prior to SR5.
  * Does not support TID and PID
- * 
+ *
  * @author Adam Pilkington
  *
  */

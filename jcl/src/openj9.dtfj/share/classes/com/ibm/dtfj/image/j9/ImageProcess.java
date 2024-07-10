@@ -164,11 +164,11 @@ public class ImageProcess implements com.ibm.dtfj.image.ImageProcess
 	public com.ibm.dtfj.image.ImageThread getCurrentThread() throws CorruptDataException
 	{
 		ImageThread current = _currentThread;
-		
+
 		if (0 != _faultingNativeID) {
 			//look up this thread
 			Iterator threads = getThreads();
-			
+
 			while (threads.hasNext()) {
 				Object next = threads.next();
 				if (next instanceof CorruptData)
@@ -194,7 +194,7 @@ public class ImageProcess implements com.ibm.dtfj.image.ImageProcess
 	{
 		//left un-initialized so the compiler will warn us if we miss a code path
 		Iterator iter;
-		
+
 		if (null == _runtimeCheckFailure)
 		{
 			//this is the normal case where we have a real list of runtimes to work with so just return the iterator
@@ -202,7 +202,7 @@ public class ImageProcess implements com.ibm.dtfj.image.ImageProcess
 		}
 		else
 		{
-			// If something went wrong during startup to the point where we didn't even get to see what the JavaRuntime 
+			// If something went wrong during startup to the point where we didn't even get to see what the JavaRuntime
 			// is (currently this happens if the XML is corrupt), fake up a corrupt data object and return it.
 			iter = Collections.singleton(new CorruptData("No runtimes due to early startup error:  " + _runtimeCheckFailure.getMessage(), null)).iterator();
 		}
@@ -279,7 +279,7 @@ public class ImageProcess implements com.ibm.dtfj.image.ImageProcess
 			// At this point we have a signal number to convert to a name which really should be done by
 			// something platform specific like the corereader.  There is a separate problem in that sometimes
 			// on a GPF we get a 'generic' signal which would need some tricky mapping.  To simplify this situation
-			// we have chosen to merge the signal names for Windows and Unix and have a single routine to do 
+			// we have chosen to merge the signal names for Windows and Unix and have a single routine to do
 			// the conversion.
 			int num = getSignalNumber();
 			return resolvePlatformName(num);
@@ -298,7 +298,7 @@ public class ImageProcess implements com.ibm.dtfj.image.ImageProcess
 	{
 		_runtimes.add(vm);
 	}
-	
+
 	public void setFaultingThreadID(long nativeID)
 	{
 		_faultingNativeID = nativeID;
@@ -306,7 +306,7 @@ public class ImageProcess implements com.ibm.dtfj.image.ImageProcess
 
 	/**
 	 * TODO:  REMOVE THIS once there is a reliable way to find signal numbers from ImageThreads on all platforms!
-	 * 
+	 *
 	 * @param signalNumber
 	 */
 	public void setSignalNumber(int signalNumber)
@@ -317,7 +317,7 @@ public class ImageProcess implements com.ibm.dtfj.image.ImageProcess
 	/**
 	 * Called if the early extraction of the data from the meta-data and core file failed in some unrecoverable way.  If this is called it
 	 * essentially means that we are stuck in native Image data and can't describe anything from the Java side.
-	 * 
+	 *
 	 * @param e The exception which caused the failure
 	 */
 	public void runtimeExtractionFailed(Exception e)

@@ -40,9 +40,9 @@ public class LayeredAddressSpace extends CommonAddressSpace
 {
 	private TreeMap _moduleRanges = new TreeMap();
 	private IAbstractAddressSpace _base;
-	private MemoryRange[] _moduleRangesArray = null; 
+	private MemoryRange[] _moduleRangesArray = null;
 	private Integer _lastModuleRange = Integer.valueOf(0);
-	
+
 	public LayeredAddressSpace(IAbstractAddressSpace base, boolean isLittleEndian, boolean is64Bit)
 	{
 		super(_extractRanges(base.getMemoryRanges()), isLittleEndian, is64Bit);
@@ -108,7 +108,7 @@ public class LayeredAddressSpace extends CommonAddressSpace
 		}
 
 		int retI = findWhichMemoryRange(asid, address, _moduleRangesArray, _lastModuleRange, false);
-		
+
 		if (retI > -1) {
 			MemoryRange range = (MemoryRange) _moduleRangesArray[retI];
 			if (range.contains(address)) {
@@ -124,11 +124,10 @@ public class LayeredAddressSpace extends CommonAddressSpace
 				}
 			}
 		}
-		
+
 		//this must not be in one of the newer regions
 		return _base.getBytesAt(asid, address, buffer);
 	}
-
 
 	public void mapRegion(long virtualAddress, ClosingFileReader residentFile, long fileOffset, long size)
 	{

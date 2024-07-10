@@ -38,7 +38,7 @@ public class CorruptData implements com.ibm.dtfj.image.CorruptData
 		_message = message;
 		_address = address;
 	}
-	
+
 	/**
 	 * Create a corrupt data object without an associated address
 	 * @param message
@@ -47,7 +47,7 @@ public class CorruptData implements com.ibm.dtfj.image.CorruptData
 		_message = message;
 		_address = null;	//DTFJ API allows for null addresses to be returned
 	}
-	
+
 	public String toString()
 	{
 		return _message;

@@ -32,7 +32,7 @@ import com.ibm.dtfj.image.ImageThread;
 
 /**
  * Represents a Java thread.
- * 
+ *
  * @see com.ibm.dtfj.java.JavaRuntime#getThreads()
  */
 public interface JavaThread  {
@@ -69,55 +69,54 @@ public interface JavaThread  {
 	int STATE_VENDOR_2					= 0x20000000;
 	/** The thread is in a vendor specific state */
 	int STATE_VENDOR_3					= 0x40000000;
-	
+
     /**
      * Get the address of the JNIEnv structure which represents this thread instance in JNI.
      * @return the address of the JNIEnv structure which represents this thread instance in JNI
-     * @throws CorruptDataException 
+     * @throws CorruptDataException
      */
     public ImagePointer getJNIEnv() throws CorruptDataException;
-    
+
     /**
      * Get the Java priority of the thread.
      * @return the Java priority of the thread (a number between 1 and 10 inclusive)
-     * @throws CorruptDataException 
-     * 
+     * @throws CorruptDataException
+     *
      * @see Thread#getPriority()
      */
     public int getPriority() throws CorruptDataException;
-    
 
     /**
      * Fetch the java.lang.Thread associated with this thread. If the thread is in the process
      * of being attached, this may return null.
-     * 
+     *
      * @return the a JavaObject representing the java.lang.Thread associated with this thread
-     * @throws CorruptDataException 
-     * 
+     * @throws CorruptDataException
+     *
      * @see JavaObject
      * @see Thread
      */
     public JavaObject getObject() throws CorruptDataException;
-    
+
     /**
      * Get the state of the thread when the image was created.
      * @return the state of the thread when the image was created.
      * The result is a bit vector, and uses the states defined by
      * the JVMTI specification.
-     * @throws CorruptDataException 
+     * @throws CorruptDataException
      */
     public int getState() throws CorruptDataException;
-    
+
     /**
      * Represents the joining point between the Java view of execution and the corresponding native view.
      * This method is where the mapping from Java into native threading resources is provided.
-     * 
+     *
      * @return the ImageThread which this ManagedThread is currently bound to.
      * @throws CorruptDataException If the underlying resource describing the native representation of the thread
      * is damaged
-     * @throws DataUnavailable If no mapping is provided due to missing or limited underlying resources (this 
+     * @throws DataUnavailable If no mapping is provided due to missing or limited underlying resources (this
      * exception added in DTFJ 1.1)
-     * 
+     *
      * @see ImageThread
      */
     public ImageThread getImageThread() throws CorruptDataException, DataUnavailable;
@@ -128,50 +127,50 @@ public interface JavaThread  {
      * <p>
      * Some Runtime implementations may also use parts of the ImageThread's stack
      * for ManagesStackFrames
-     * 
+     *
      * @see ImageSection
      * @see ImageThread#getStackSections()
      * @see com.ibm.dtfj.image.CorruptData
      */
     public Iterator getStackSections();
-    
+
     /**
      * Get the set of stack frames.
-     * @return an iterator to walk the managed stack frames in order from 
+     * @return an iterator to walk the managed stack frames in order from
      * top-of-stack (that is, the most recent frame) to bottom-of-stack
-     * 
+     *
      * @see JavaStackFrame
      * @see com.ibm.dtfj.image.CorruptData
-     * 
+     *
      */
     public Iterator getStackFrames();
-    
+
     /**
      * Return the name of the thread.
-     * 
+     *
      * Usually this is derived from the object associated with the thread, but if the
      * name cannot be derived this way (e.g. there is no object associated with the thread)
      * DTFJ will synthesize a name for the thread.
-     * 
+     *
      * @return the name of the thread
-     * @throws CorruptDataException 
+     * @throws CorruptDataException
      */
     public String getName() throws CorruptDataException;
-    
+
     /**
      * For threads that are in STATE_BLOCKED_ON_MONITOR_ENTER this method returns the JavaObject who's monitor they are blocked on.
      * For threads that are in STATE_IN_OBJECT_WAIT this method returns the JavaObject that Object.wait() was called on.
      * For threads that are in STATE_PARKED this method returns the JavaObject that was passed as the "blocker" object to the java.util.concurrent.LockSupport.park() call. It may return null if no blocker object was passed.
      * For threads in any other state this call will return null.
      * The state of the thread can be determined by calling JavaThread.getState()
-     * 
+     *
      * @return the object this thread is waiting on or null.
      * @throws CorruptDataException
      * @throws DataUnavailable
      * @since 1.6
      */
     public JavaObject getBlockingObject() throws CorruptDataException, DataUnavailable;
-    
+
 	/**
 	 * @param obj
 	 * @return True if the given object refers to the same Java Thread in the image

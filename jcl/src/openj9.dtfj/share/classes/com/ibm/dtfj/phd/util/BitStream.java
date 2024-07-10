@@ -27,7 +27,7 @@ package com.ibm.dtfj.phd.util;
  */
 
 public final class BitStream {
-	
+
 	private int[] bits = new int[100];
 	private int wordOffset;
 	private int bitOffset;
@@ -139,7 +139,7 @@ public final class BitStream {
 	}
 
 	public int readIntBits(int len) {
-		if (len > 32 || len <= 0) { 
+		if (len > 32 || len <= 0) {
 			throw new Error("bad length: " + len);
 		}
 		if (len < (32 - bitOffset)) {

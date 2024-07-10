@@ -28,30 +28,30 @@ import java.util.Iterator;
 /**
  * Contains a collection of factories. Each factory is identified by a unique
  * id. Factories with the same ID are not allowed.
- * 
+ *
  * @see com.ibm.dtfj.javacore.builder
  *
  */
 public class BuilderContainer {
-	
+
 	private HashMap fList;
 	private AbstractBuilderComponent fCurrentComponent;
-	
+
 	public BuilderContainer() {
 		fList = new HashMap();
 		fCurrentComponent = null;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @return iterator to the entire list of factories. Is never null.
 	 */
 	public Iterator getList()	{
 		return fList.values().iterator();
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param id unique id to lookup a particular factory in the container.
 	 * @return found factory, or null if not found
 	 */
@@ -62,7 +62,7 @@ public class BuilderContainer {
 		}
 		return component;
 	}
-	
+
 	/**
 	 * If factory component already exists, it will overwrite the existing entry in the container.
 	 * @param component to be added.
@@ -76,9 +76,9 @@ public class BuilderContainer {
 		}
 		return added;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @return the last added factory component. May be null if no factory components have been added yet.
 	 */
 	public AbstractBuilderComponent getLastAdded() {

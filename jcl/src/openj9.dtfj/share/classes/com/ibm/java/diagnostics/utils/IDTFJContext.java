@@ -29,36 +29,36 @@ import com.ibm.dtfj.java.JavaRuntime;
 public interface IDTFJContext extends IContext {
 	/**
 	 * The major version of the DTFJ API for this context.
-	 * 
+	 *
 	 * @return major version number
 	 */
 	public int getMajorVersion();
-	
+
 	/**
 	 * The minor version of the DTFJ API for this context.
-	 * 
+	 *
 	 * @return minor version number
 	 */
 	public int getMinorVersion();
-	
+
 	/**
 	 * The address space for this context. This may or may not
 	 * contain any processes.
-	 * 
+	 *
 	 * @return the image address space
 	 */
 	public ImageAddressSpace getAddressSpace();
-	
+
 	/**
 	 * The process for this context. A process may or may not
 	 * contain a Java runtime.
 	 * @return
 	 */
 	public ImageProcess getProcess();
-	
+
 	/**
 	 * The Java runtime for this context.
-	 * 
+	 *
 	 * @return the runtime or null if there is no runtime available
 	 */
 	public JavaRuntime getRuntime();
@@ -67,11 +67,11 @@ public interface IDTFJContext extends IContext {
 	 * A simple Java bean which allows access to the data on DTFJ image interface.
 	 * This removes the requirement to provide a command/plugin with a direct
 	 * reference to the Image.
-	 * 
+	 *
 	 * @return the bean
 	 */
 	public DTFJImageBean getImage();
-	
+
 	/**
 	 * Used to determine if a property has been set in the context property
 	 * bag, and that the value of that property is TRUE
