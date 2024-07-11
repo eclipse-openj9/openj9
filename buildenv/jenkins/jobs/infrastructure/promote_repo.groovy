@@ -52,7 +52,7 @@ timestamps {
                     dir('repo') {
                         CRED_ID = variableFile.get_user_credentials_id('github')
 
-                        git branch: TARGET_BRANCH, url: REPO
+                        sh "git clone --reference-if-able ~/openjdk_cache -b ${TARGET_BRANCH} ${REPO} ."
 
                         OLD_SHA = buildfile.get_sha(REPO, TARGET_BRANCH)
 
