@@ -1507,6 +1507,41 @@ checkTransitionToDebugInterpreter(J9VMThread *currentThread)
 	return result;
 }
 
+#if defined(LINUX)
+// getRSS_kb() returns the Resident Set Size (RSS) of the current process in kilobytes.
+// It collects this information from the "VmRSS" field in the /proc/self/status pseudofile
+// on Linux systems. It is used for diagnostics only.
+size_t getRSS_Kb()
+   {
+   size_t rss = 0;
+#if defined (LINUX)
+   ::FILE* statFile = fopen("/proc/self/status", "r");
+   if (statFile)
+      {
+      static const int bufferSize = 128;
+      char buffer[bufferSize];
+      bool foundRSS= false;
+
+      // Looking for something like
+      // VmRSS:    290028 kB
+      while (fgets(buffer, bufferSize, statFile))
+         {
+         if (strncmp(buffer, "VmRSS:", 6) == 0)
+            {
+            if (sscanf(buffer, "VmRSS: %zu kB", &rss) == 1)
+               foundRSS = true;
+            break;
+            }
+         }
+      fclose(statFile);
+      if (!foundRSS)
+         rss = 0;
+      }
+#endif // LINUX
+   return rss;
+   }
+#endif /* defined(LINUX) */
+
 void JNICALL
 criuCheckpointJVMImpl(JNIEnv *env,
 		jstring imagesDir,
@@ -1582,6 +1617,8 @@ criuCheckpointJVMImpl(JNIEnv *env,
 		U_32 intGhostFileLimit = 0;
 		IDATA criuDumpReturnCode = 0;
 		bool restoreFailure = false;
+		size_t rssBefore = 0;
+		size_t rssAfter = 0;
 
 		internalEnterVMFromJNI(currentThread);
 
@@ -1838,7 +1875,10 @@ criuCheckpointJVMImpl(JNIEnv *env,
 
 #if defined(LINUX)
 		if (J9_ARE_ALL_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_CRIU_DISCLAIM_CLASSES)) {
+			rssBefore = getRSS_Kb();
 			systemReturnCode = vm->internalVMFunctions->disclaimAllClassMemory(vm);
+			rssAfter = getRSS_Kb();
+			Trc_VM_criu_disclaimAllClassMemory_result(rssBefore, rssAfter);
 			if (0 != systemReturnCode) {
 				systemReturnCode = errno;
 				currentExceptionClass = vm->checkpointState.criuJVMCheckpointExceptionClass;
