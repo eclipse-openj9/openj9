@@ -35,7 +35,7 @@
 #include "ObjectAccessBarrierAPI.hpp"
 #include "VMHelpers.hpp"
 
-static constexpr const char* threadStateNames[] = {
+static constexpr const char * const threadStateNames[] = {
 	"STATE_NEW",
 	"STATE_TERMINATED",
 	"STATE_RUNNABLE",
@@ -101,7 +101,7 @@ private:
 	bool _finalWrite;
 
 	/* Constantpool types */
-	VM_JFRConstantPoolTypes *_constantPoolTypes;
+	VM_JFRConstantPoolTypes _constantPoolTypes;
 
 	/* Processing buffers */
 	StackFrame *_currentStackFrameBuffer;
@@ -111,10 +111,10 @@ private:
 	void **_globalStringTable;
 	U_8 *_jfrHeaderCursor;
 	VM_BufferWriter *_bufferWriter;
-	U_8* _metadataOffset;
-	U_8* _checkPointEventOffset;
-	U_8* _previousCheckpointDelta;
-	U_8* _lastDataStart;
+	U_8 *_metadataOffset;
+	U_8 *_checkPointEventOffset;
+	U_8 *_previousCheckpointDelta;
+	U_8 *_lastDataStart;
 
 	static constexpr int STRING_BUFFER_LENGTH = 128;
 	/* JFR CHUNK Header size */
@@ -145,12 +145,10 @@ protected:
 
 public:
 
-
 	/*
 	 * Function members
 	 */
 private:
-
 	bool isResultNotOKay() {
 		if (!isOkay()) {
 			if (_debug) {
@@ -160,8 +158,6 @@ private:
 		}
 		return false;
 	}
-
-
 
 protected:
 
@@ -173,18 +169,25 @@ public:
 		, _debug(false)
 		, privatePortLibrary(_vm->portLibrary)
 		, _finalWrite(finalWrite)
+		, _constantPoolTypes(currentThread)
+		, _currentStackFrameBuffer(NULL)
+		, _previousStackTraceEntry(NULL)
+		, _firstStackTraceEntry(NULL)
+		, _currentFrameCount(0)
+		, _globalStringTable(NULL)
+		, _jfrHeaderCursor(NULL)
+		, _bufferWriter(NULL)
+		, _metadataOffset(NULL)
 		, _previousCheckpointDelta(NULL)
 		, _lastDataStart(NULL)
 	{
-		_constantPoolTypes = new VM_JFRConstantPoolTypes(currentThread);
-
-		return;
 	}
+
 	void
 	loadEvents()
 	{
-		_constantPoolTypes->loadEvents();
-		_buildResult = _constantPoolTypes->getBuildResult();
+		_constantPoolTypes.loadEvents();
+		_buildResult = _constantPoolTypes.getBuildResult();
 	}
 
 	bool isOkay()
@@ -208,62 +211,65 @@ public:
 		}
 
 		if (_debug) {
-			_constantPoolTypes->printTables();
+			_constantPoolTypes.printTables();
 		}
 
 		requiredBufferSize = calculateRequiredBufferSize();
-		if (isResultNotOKay()) goto done;
-
-		buffer = (U_8*) j9mem_allocate_memory(requiredBufferSize, J9MEM_CATEGORY_CLASSES);
-		if (NULL == buffer) {
-			_buildResult = OutOfMemory;
+		if (isResultNotOKay()) {
 			goto done;
 		}
 
-		_bufferWriter = new VM_BufferWriter(buffer, requiredBufferSize);
+		buffer = (U_8 *)j9mem_allocate_memory(requiredBufferSize, J9MEM_CATEGORY_CLASSES);
+		if (NULL == buffer) {
+			_buildResult = OutOfMemory;
+		} else {
+			VM_BufferWriter writer(buffer, requiredBufferSize);
 
-		/* write the header last */
-		_jfrHeaderCursor = _bufferWriter->getAndIncCursor(JFR_CHUNK_HEADER_SIZE);
+			_bufferWriter = &writer;
 
-		/* Metadata is always written first, checkpoint events can be in any order */
-		_metadataOffset = writeJFRMetadata();
+			/* write the header last */
+			_jfrHeaderCursor = _bufferWriter->getAndIncCursor(JFR_CHUNK_HEADER_SIZE);
 
-		_checkPointEventOffset = writeThreadStateCheckpointEvent();
+			/* Metadata is always written first, checkpoint events can be in any order */
+			_metadataOffset = writeJFRMetadata();
 
-		writeFrameTypeCheckpointEvent();
+			_checkPointEventOffset = writeThreadStateCheckpointEvent();
 
-		writeThreadCheckpointEvent();
+			writeFrameTypeCheckpointEvent();
 
-		writeThreadGroupCheckpointEvent();
+			writeThreadCheckpointEvent();
 
-		writeSymbolTableCheckpointEvent();
+			writeThreadGroupCheckpointEvent();
 
-		writeModuleCheckpointEvent();
+			writeSymbolTableCheckpointEvent();
 
-		writeClassloaderCheckpointEvent();
+			writeModuleCheckpointEvent();
 
-		writeClassCheckpointEvent();
+			writeClassloaderCheckpointEvent();
 
-		writePackageCheckpointEvent();
+			writeClassCheckpointEvent();
 
-		writeMethodCheckpointEvent();
+			writePackageCheckpointEvent();
 
-		writeStacktraceCheckpointEvent();
+			writeMethodCheckpointEvent();
 
-		pool_do(_constantPoolTypes->getExecutionSampleTable(), &writeExecutionSampleEvent, _bufferWriter);
+			writeStacktraceCheckpointEvent();
 
-		pool_do(_constantPoolTypes->getThreadStartTable(), &writeThreadStartEvent, _bufferWriter);
+			pool_do(_constantPoolTypes.getExecutionSampleTable(), &writeExecutionSampleEvent, _bufferWriter);
 
-		pool_do(_constantPoolTypes->getThreadEndTable(), &writeThreadEndEvent, _bufferWriter);
+			pool_do(_constantPoolTypes.getThreadStartTable(), &writeThreadStartEvent, _bufferWriter);
 
-		pool_do(_constantPoolTypes->getThreadSleepTable(), &writeThreadSleepEvent, _bufferWriter);
+			pool_do(_constantPoolTypes.getThreadEndTable(), &writeThreadEndEvent, _bufferWriter);
 
-		writeJFRHeader();
+			pool_do(_constantPoolTypes.getThreadSleepTable(), &writeThreadSleepEvent, _bufferWriter);
 
-		writeJFRChunkToFile();
+			writeJFRHeader();
 
-		j9mem_free_memory(buffer);
+			writeJFRChunkToFile();
 
+			_bufferWriter = NULL;
+			j9mem_free_memory(buffer);
+		}
 done:
 		return;
 	}
@@ -271,8 +277,8 @@ done:
 	static void
 	writeExecutionSampleEvent(void *anElement, void *userData)
 	{
-		ExecutionSampleEntry *entry = (ExecutionSampleEntry*)anElement;
-		VM_BufferWriter *_bufferWriter = (VM_BufferWriter*) userData;
+		ExecutionSampleEntry *entry = (ExecutionSampleEntry *)anElement;
+		VM_BufferWriter *_bufferWriter = (VM_BufferWriter *)userData;
 
 		/* reserve size field */
 		U_8 *dataStart = _bufferWriter->getAndIncCursor(sizeof(U_32));
@@ -299,8 +305,8 @@ done:
 	static void
 	writeThreadStartEvent(void *anElement, void *userData)
 	{
-		ThreadStartEntry *entry = (ThreadStartEntry*)anElement;
-		VM_BufferWriter *_bufferWriter = (VM_BufferWriter*) userData;
+		ThreadStartEntry *entry = (ThreadStartEntry *)anElement;
+		VM_BufferWriter *_bufferWriter = (VM_BufferWriter *)userData;
 
 		/* reserve size field */
 		U_8 *dataStart = _bufferWriter->getAndIncCursor(sizeof(U_32));
@@ -330,8 +336,8 @@ done:
 	static void
 	writeThreadEndEvent(void *anElement, void *userData)
 	{
-		ThreadEndEntry *entry = (ThreadEndEntry*)anElement;
-		VM_BufferWriter *_bufferWriter = (VM_BufferWriter*) userData;
+		ThreadEndEntry *entry = (ThreadEndEntry *)anElement;
+		VM_BufferWriter *_bufferWriter = (VM_BufferWriter *)userData;
 
 		/* reserve size field */
 		U_8 *dataStart = _bufferWriter->getAndIncCursor(sizeof(U_32));
@@ -355,8 +361,8 @@ done:
 	static void
 	writeThreadSleepEvent(void *anElement, void *userData)
 	{
-		ThreadSleepEntry *entry = (ThreadSleepEntry*)anElement;
-		VM_BufferWriter *_bufferWriter = (VM_BufferWriter*) userData;
+		ThreadSleepEntry *entry = (ThreadSleepEntry *)anElement;
+		VM_BufferWriter *_bufferWriter = (VM_BufferWriter *) userData;
 
 		/* reserve size field */
 		U_8 *dataStart = _bufferWriter->getAndIncCursor(sizeof(U_32));
@@ -402,41 +408,40 @@ done:
 
 	void writeJFRHeader();
 
-	U_8* writeJFRMetadata();
+	U_8 *writeJFRMetadata();
 
-	U_8* writeCheckpointEventHeader(CheckpointTypeMask typeMask, U_32 cpCount);
+	U_8 *writeCheckpointEventHeader(CheckpointTypeMask typeMask, U_32 cpCount);
 
 	void writeUTF8String(J9UTF8* string);
 
-	void writeUTF8String(U_8* data, UDATA len);
+	void writeUTF8String(U_8 *data, UDATA len);
 
-	U_8* writeThreadStateCheckpointEvent();
+	U_8 *writeThreadStateCheckpointEvent();
 
-	U_8* writePackageCheckpointEvent();
+	U_8 *writePackageCheckpointEvent();
 
-	U_8* writeMethodCheckpointEvent();
+	U_8 *writeMethodCheckpointEvent();
 
-	U_8* writeClassloaderCheckpointEvent();
+	U_8 *writeClassloaderCheckpointEvent();
 
-	U_8* writeClassCheckpointEvent();
+	U_8 *writeClassCheckpointEvent();
 
-	U_8* writeModuleCheckpointEvent();
+	U_8 *writeModuleCheckpointEvent();
 
-	U_8* writeThreadCheckpointEvent();
+	U_8 *writeThreadCheckpointEvent();
 
-	U_8* writeThreadGroupCheckpointEvent();
+	U_8 *writeThreadGroupCheckpointEvent();
 
-	U_8* writeFrameTypeCheckpointEvent();
+	U_8 *writeFrameTypeCheckpointEvent();
 
-	U_8* writeSymbolTableCheckpointEvent();
+	U_8 *writeSymbolTableCheckpointEvent();
 
-	U_8* writeStacktraceCheckpointEvent();
-
+	U_8 *writeStacktraceCheckpointEvent();
 
 	UDATA
 	calculateRequiredBufferSize()
 	{
-		UDATA requireBufferSize = _constantPoolTypes->getRequiredBufferSize();
+		UDATA requireBufferSize = _constantPoolTypes.getRequiredBufferSize();
 		requireBufferSize += JFR_CHUNK_HEADER_SIZE;
 
 		requireBufferSize += METADATA_HEADER_SIZE;
@@ -445,38 +450,37 @@ done:
 
 		requireBufferSize += THREADSTATE_ENTRY_LENGTH;
 
-		requireBufferSize += CHECKPOINT_EVENT_HEADER_AND_FOOTER + (_constantPoolTypes->getClassCount() * CLASS_ENTRY_ENTRY_SIZE);
+		requireBufferSize += CHECKPOINT_EVENT_HEADER_AND_FOOTER + (_constantPoolTypes.getClassCount() * CLASS_ENTRY_ENTRY_SIZE);
 
-		requireBufferSize += CHECKPOINT_EVENT_HEADER_AND_FOOTER + (_constantPoolTypes->getClassloaderCount() * CLASSLOADER_ENTRY_SIZE);
+		requireBufferSize += CHECKPOINT_EVENT_HEADER_AND_FOOTER + (_constantPoolTypes.getClassloaderCount() * CLASSLOADER_ENTRY_SIZE);
 
-		requireBufferSize += CHECKPOINT_EVENT_HEADER_AND_FOOTER + (_constantPoolTypes->getPackageCount() * PACKAGE_ENTRY_SIZE);
+		requireBufferSize += CHECKPOINT_EVENT_HEADER_AND_FOOTER + (_constantPoolTypes.getPackageCount() * PACKAGE_ENTRY_SIZE);
 
-		requireBufferSize += CHECKPOINT_EVENT_HEADER_AND_FOOTER + (_constantPoolTypes->getMethodCount() * METHOD_ENTRY_SIZE);
+		requireBufferSize += CHECKPOINT_EVENT_HEADER_AND_FOOTER + (_constantPoolTypes.getMethodCount() * METHOD_ENTRY_SIZE);
 
-		requireBufferSize += CHECKPOINT_EVENT_HEADER_AND_FOOTER + (_constantPoolTypes->getThreadCount() * THREAD_ENTRY_SIZE);
+		requireBufferSize += CHECKPOINT_EVENT_HEADER_AND_FOOTER + (_constantPoolTypes.getThreadCount() * THREAD_ENTRY_SIZE);
 
-		requireBufferSize += CHECKPOINT_EVENT_HEADER_AND_FOOTER + (_constantPoolTypes->getThreadGroupCount() * THREADGROUP_ENTRY_SIZE);
+		requireBufferSize += CHECKPOINT_EVENT_HEADER_AND_FOOTER + (_constantPoolTypes.getThreadGroupCount() * THREADGROUP_ENTRY_SIZE);
 
-		requireBufferSize += CHECKPOINT_EVENT_HEADER_AND_FOOTER + (_constantPoolTypes->getModuleCount() * MODULE_ENTRY_SIZE);
+		requireBufferSize += CHECKPOINT_EVENT_HEADER_AND_FOOTER + (_constantPoolTypes.getModuleCount() * MODULE_ENTRY_SIZE);
 
-		requireBufferSize += CHECKPOINT_EVENT_HEADER_AND_FOOTER + (_constantPoolTypes->getStackTraceCount() * STACKTRACE_ENTRY_SIZE);
+		requireBufferSize += CHECKPOINT_EVENT_HEADER_AND_FOOTER + (_constantPoolTypes.getStackTraceCount() * STACKTRACE_ENTRY_SIZE);
 
-		requireBufferSize += CHECKPOINT_EVENT_HEADER_AND_FOOTER + (_constantPoolTypes->getStackFrameCount() * STACKFRAME_ENTRY_SIZE);
+		requireBufferSize += CHECKPOINT_EVENT_HEADER_AND_FOOTER + (_constantPoolTypes.getStackFrameCount() * STACKFRAME_ENTRY_SIZE);
 
-		requireBufferSize += _constantPoolTypes->getExecutionSampleCount() * EXECUTION_SAMPLE_EVENT_SIZE;
+		requireBufferSize += _constantPoolTypes.getExecutionSampleCount() * EXECUTION_SAMPLE_EVENT_SIZE;
 
-		requireBufferSize += _constantPoolTypes->getThreadStartCount() * THREAD_START_EVENT_SIZE;
+		requireBufferSize += _constantPoolTypes.getThreadStartCount() * THREAD_START_EVENT_SIZE;
 
-		requireBufferSize += _constantPoolTypes->getThreadEndCount() * THREAD_END_EVENT_SIZE;
+		requireBufferSize += _constantPoolTypes.getThreadEndCount() * THREAD_END_EVENT_SIZE;
 
-		requireBufferSize += _constantPoolTypes->getThreadSleepCount() * THREAD_SLEEP_EVENT_SIZE;
+		requireBufferSize += _constantPoolTypes.getThreadSleepCount() * THREAD_SLEEP_EVENT_SIZE;
 
 		return requireBufferSize;
 	}
 
 	~VM_JFRChunkWriter()
 	{
-		delete(_constantPoolTypes);
 	}
 };
 #endif /* defined(J9VM_OPT_JFR) */

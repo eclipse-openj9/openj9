@@ -31,52 +31,52 @@ VM_JFRChunkWriter::writeJFRHeader()
 	_bufferWriter->setCursor(_jfrHeaderCursor);
 
 	/* Magic number "FLR\0" in ASCII */
-	_bufferWriter->writeU32(0x464c5200);//0
+	_bufferWriter->writeU32(0x464c5200); // 0
 
 	/* Major and Minor version numbers */
-	_bufferWriter->writeU16(2);//4
+	_bufferWriter->writeU16(2); // 4
 	_bufferWriter->writeU16(1);
 
 	/* chunk size */
-	_bufferWriter->writeU64(_bufferWriter->getSize());//8
+	_bufferWriter->writeU64(_bufferWriter->getSize()); // 8
 
 	/* checkpoint offset */
-	_bufferWriter->writeU64(_bufferWriter->getFileOffsetFromStart(_checkPointEventOffset));//16
+	_bufferWriter->writeU64(_bufferWriter->getFileOffsetFromStart(_checkPointEventOffset)); // 16
 
 	/* metadata offset */
-	_bufferWriter->writeU64(_bufferWriter->getFileOffsetFromStart(_metadataOffset));//24
+	_bufferWriter->writeU64(_bufferWriter->getFileOffsetFromStart(_metadataOffset)); // 24
 
 	/* start time */
-	_bufferWriter->writeU64(VM_JFRUtils::getCurrentTimeNanos(privatePortLibrary, _buildResult));//32
+	_bufferWriter->writeU64(VM_JFRUtils::getCurrentTimeNanos(privatePortLibrary, _buildResult)); // 32
 
 	/* duration */
-	_bufferWriter->writeU64(0);//40
+	_bufferWriter->writeU64(0); // 40
 
 	/* start ticks */
-	_bufferWriter->writeU64(0);//48
+	_bufferWriter->writeU64(0); // 48
 
 	/* ticks per second */
-	_bufferWriter->writeU64(1);//56 //TODO ???
+	_bufferWriter->writeU64(1); // 56 // TODO ???
 
 	/* file state or generation */
-	_bufferWriter->writeU8(0);//64 //TODO ???
+	_bufferWriter->writeU8(0); // 64 // TODO ???
 
 	/* pad */
-	_bufferWriter->writeU16(0);//65
+	_bufferWriter->writeU16(0); // 65
 
 	/* flags */
 	if (_finalWrite) {
-		_bufferWriter->writeU8(0x2);//67 //final chunk bit?
+		_bufferWriter->writeU8(0x2); // 67 // final chunk bit?
 	} else {
 		_bufferWriter->writeU8(2);
 	}
 }
 
-U_8*
+U_8 *
 VM_JFRChunkWriter::writeJFRMetadata()
 {
 	/* reserve metadata size field */
-	U_8* dataStart = _bufferWriter->getAndIncCursor(sizeof(U_32));
+	U_8 *dataStart = _bufferWriter->getAndIncCursor(sizeof(U_32));
 
 	if (_debug) {
 		j9tty_printf(PORTLIB, "Metadata frame start offset = 0x%lX\n", _bufferWriter->getFileOffsetFromStart(dataStart));
@@ -95,7 +95,7 @@ VM_JFRChunkWriter::writeJFRMetadata()
 	_bufferWriter->writeLEB128((U_64)METADATA_ID);
 
 
-	U_8* blobStart = _bufferWriter->getCursor();
+	U_8 *blobStart = _bufferWriter->getCursor();
 	if (_debug) {
 		j9tty_printf(PORTLIB, "Metadata blob start offset = 0x%lX, size = %d\n", _bufferWriter->getFileOffsetFromStart(_bufferWriter->getCursor()), (int) _vm->jfrState.metaDataBlobFileSize);
 	}
@@ -117,7 +117,7 @@ VM_JFRChunkWriter::writeJFRMetadata()
 	return dataStart;
 }
 
-U_8*
+U_8 *
 VM_JFRChunkWriter::writeCheckpointEventHeader(CheckpointTypeMask typeMask, U_32 cpCount)
 {
 	/* write delta offset in previous checkpoint event */
@@ -170,14 +170,14 @@ VM_JFRChunkWriter::writeUTF8String(J9UTF8* string)
 }
 
 void
-VM_JFRChunkWriter::writeUTF8String(U_8* data, UDATA len)
+VM_JFRChunkWriter::writeUTF8String(U_8 *data, UDATA len)
 {
 	_bufferWriter->writeLEB128(UTF8);
 	_bufferWriter->writeLEB128(len);
 	_bufferWriter->writeData(data, len);
 }
 
-U_8*
+U_8 *
 VM_JFRChunkWriter::writeThreadStateCheckpointEvent()
 {
 	U_8 *dataStart = writeCheckpointEventHeader(Generic, 1);
@@ -199,8 +199,8 @@ VM_JFRChunkWriter::writeThreadStateCheckpointEvent()
 		U_32 len = strlen(threadStateNames[i]);
 		_bufferWriter->writeLEB128(len);
 
-		/* write string */ //need to think about UTF8 enconding
-		_bufferWriter->writeData((U_8*)threadStateNames[i], len);
+		/* write string */ // need to think about UTF8 enconding
+		_bufferWriter->writeData((U_8 *)threadStateNames[i], len);
 	}
 
 	/* write size */
@@ -209,27 +209,27 @@ VM_JFRChunkWriter::writeThreadStateCheckpointEvent()
 	return dataStart;
 }
 
-U_8*
+U_8 *
 VM_JFRChunkWriter::writePackageCheckpointEvent()
 {
 	U_8 *dataStart = NULL;
 
-	if (_constantPoolTypes->getPackageCount() > 0) {
+	if (_constantPoolTypes.getPackageCount() > 0) {
 		dataStart = writeCheckpointEventHeader(Generic, 1);
 
 		/* class ID */
 		_bufferWriter->writeLEB128(PackageID);
 
 		/* number of states */
-		_bufferWriter->writeLEB128(_constantPoolTypes->getPackageCount());
+		_bufferWriter->writeLEB128(_constantPoolTypes.getPackageCount());
 
-		PackageEntry *entry = _constantPoolTypes->getPackageEntry();
+		PackageEntry *entry = _constantPoolTypes.getPackageEntry();
 		while (NULL != entry) {
 			/* write index */
 			_bufferWriter->writeLEB128(entry->index);
 
 			/* name index */
-			_bufferWriter->writeLEB128(_constantPoolTypes->getStringUTF8Count() + entry->index);
+			_bufferWriter->writeLEB128(_constantPoolTypes.getStringUTF8Count() + entry->index);
 
 			/* module index */
 			_bufferWriter->writeLEB128(entry->moduleIndex);
@@ -247,21 +247,21 @@ VM_JFRChunkWriter::writePackageCheckpointEvent()
 	return dataStart;
 }
 
-U_8*
+U_8 *
 VM_JFRChunkWriter::writeMethodCheckpointEvent()
 {
 	U_8 *dataStart = NULL;
 
-	if (_constantPoolTypes->getMethodCount() > 0) {
+	if (_constantPoolTypes.getMethodCount() > 0) {
 		dataStart = writeCheckpointEventHeader(Generic, 1);
 
 		/* class ID */
 		_bufferWriter->writeLEB128(MethodID);
 
 		/* number of states */
-		_bufferWriter->writeLEB128(_constantPoolTypes->getMethodCount());
+		_bufferWriter->writeLEB128(_constantPoolTypes.getMethodCount());
 
-		MethodEntry *entry = _constantPoolTypes->getMethodEntry();
+		MethodEntry *entry = _constantPoolTypes.getMethodEntry();
 		while (NULL != entry) {
 			/* write index */
 			_bufferWriter->writeLEB128(entry->index);
@@ -291,21 +291,21 @@ VM_JFRChunkWriter::writeMethodCheckpointEvent()
 	return dataStart;
 }
 
-U_8*
+U_8 *
 VM_JFRChunkWriter::writeClassloaderCheckpointEvent()
 {
 	U_8 *dataStart = NULL;
 
-	if (_constantPoolTypes->getClassloaderCount() > 0) {
+	if (_constantPoolTypes.getClassloaderCount() > 0) {
 		dataStart = writeCheckpointEventHeader(Generic, 1);
 
 		/* class ID */
 		_bufferWriter->writeLEB128(ClassLoaderID);
 
 		/* number of states */
-		_bufferWriter->writeLEB128(_constantPoolTypes->getClassloaderCount());
+		_bufferWriter->writeLEB128(_constantPoolTypes.getClassloaderCount());
 
-		ClassloaderEntry *entry = _constantPoolTypes->getClassloaderEntry();
+		ClassloaderEntry *entry = _constantPoolTypes.getClassloaderEntry();
 		while (NULL != entry) {
 			/* write index */
 			_bufferWriter->writeLEB128(entry->index);
@@ -326,21 +326,21 @@ VM_JFRChunkWriter::writeClassloaderCheckpointEvent()
 	return dataStart;
 }
 
-U_8*
+U_8 *
 VM_JFRChunkWriter:: writeClassCheckpointEvent()
 {
 	U_8 *dataStart = NULL;
 
-	if (_constantPoolTypes->getClassCount() > 0) {
+	if (_constantPoolTypes.getClassCount() > 0) {
 		dataStart = writeCheckpointEventHeader(Generic, 1);
 
 		/* class ID */
 		_bufferWriter->writeLEB128(ClassID);
 
 		/* number of states */
-		_bufferWriter->writeLEB128(_constantPoolTypes->getClassCount());
+		_bufferWriter->writeLEB128(_constantPoolTypes.getClassCount());
 
-		ClassEntry *entry = _constantPoolTypes->getClassEntry();
+		ClassEntry *entry = _constantPoolTypes.getClassEntry();
 		while (NULL != entry) {
 			/* write index */
 			_bufferWriter->writeLEB128(entry->index);
@@ -370,21 +370,21 @@ VM_JFRChunkWriter:: writeClassCheckpointEvent()
 	return dataStart;
 }
 
-U_8*
+U_8 *
 VM_JFRChunkWriter::writeModuleCheckpointEvent()
 {
 	U_8 *dataStart = NULL;
 
-	if (_constantPoolTypes->getModuleCount() > 0) {
+	if (_constantPoolTypes.getModuleCount() > 0) {
 		dataStart = writeCheckpointEventHeader(Generic, 1);
 
 		/* class ID */
 		_bufferWriter->writeLEB128(ModuleID);
 
 		/* number of states */
-		_bufferWriter->writeLEB128(_constantPoolTypes->getModuleCount());
+		_bufferWriter->writeLEB128(_constantPoolTypes.getModuleCount());
 
-		ModuleEntry *entry = _constantPoolTypes->getModuleEntry();
+		ModuleEntry *entry = _constantPoolTypes.getModuleEntry();
 		while (NULL != entry) {
 			/* write index */
 			_bufferWriter->writeLEB128(entry->index);
@@ -411,21 +411,21 @@ VM_JFRChunkWriter::writeModuleCheckpointEvent()
 	return dataStart;
 }
 
-U_8*
+U_8 *
 VM_JFRChunkWriter::writeThreadCheckpointEvent()
 {
 	U_8 *dataStart = NULL;
 
-	if (_constantPoolTypes->getThreadCount() > 0) {
+	if (_constantPoolTypes.getThreadCount() > 0) {
 		dataStart = writeCheckpointEventHeader(Generic, 1);
 
 		/* class ID */
 		_bufferWriter->writeLEB128(ThreadID);
 
 		/* number of states */
-		_bufferWriter->writeLEB128(_constantPoolTypes->getThreadCount());
+		_bufferWriter->writeLEB128(_constantPoolTypes.getThreadCount());
 
-		ThreadEntry *entry = _constantPoolTypes->getThreadEntry();
+		ThreadEntry *entry = _constantPoolTypes.getThreadEntry();
 		while (NULL != entry) {
 			/* write index */
 			_bufferWriter->writeLEB128(entry->index);
@@ -455,21 +455,21 @@ VM_JFRChunkWriter::writeThreadCheckpointEvent()
 	return dataStart;
 }
 
-U_8*
+U_8 *
 VM_JFRChunkWriter::writeThreadGroupCheckpointEvent()
 {
 	U_8 *dataStart = NULL;
 
-	if (_constantPoolTypes->getThreadGroupCount() > 0) {
+	if (_constantPoolTypes.getThreadGroupCount() > 0) {
 		dataStart = writeCheckpointEventHeader(Generic, 1);
 
 		/* class ID */
 		_bufferWriter->writeLEB128(ThreadGroupID);
 
 		/* number of states */
-		_bufferWriter->writeLEB128(_constantPoolTypes->getThreadGroupCount());
+		_bufferWriter->writeLEB128(_constantPoolTypes.getThreadGroupCount());
 
-		ThreadGroupEntry *entry = _constantPoolTypes->getThreadGroupEntry();
+		ThreadGroupEntry *entry = _constantPoolTypes.getThreadGroupEntry();
 		while (NULL != entry) {
 			/* write index */
 			_bufferWriter->writeLEB128(entry->index);
@@ -490,7 +490,7 @@ VM_JFRChunkWriter::writeThreadGroupCheckpointEvent()
 	return dataStart;
 }
 
-U_8*
+U_8 *
 VM_JFRChunkWriter::writeFrameTypeCheckpointEvent()
 {
 	U_8 *dataStart = writeCheckpointEventHeader(Generic, 1);
@@ -521,7 +521,7 @@ VM_JFRChunkWriter::writeFrameTypeCheckpointEvent()
 
 		/* write string */
 		/* TODO need to think about UTF8 enconding */
-		_bufferWriter->writeData((U_8*)frameTypeNames[i], len);
+		_bufferWriter->writeData((U_8 *)frameTypeNames[i], len);
 	}
 
 	/* write size */
@@ -530,24 +530,24 @@ VM_JFRChunkWriter::writeFrameTypeCheckpointEvent()
 	return dataStart;
 }
 
-U_8*
+U_8 *
 VM_JFRChunkWriter::writeSymbolTableCheckpointEvent()
 {
 	U_8 *dataStart = NULL;
 
-	if (_constantPoolTypes->getPackageCount() > 0) {
+	if (_constantPoolTypes.getPackageCount() > 0) {
 		dataStart = writeCheckpointEventHeader(Generic, 1);
 
 		/* class ID */
 		_bufferWriter->writeLEB128(SymbolID);
 
 		/* number of states */
-		UDATA stringCount = _constantPoolTypes->getStringUTF8Count();
-		UDATA packageCount = _constantPoolTypes->getPackageCount();
+		UDATA stringCount = _constantPoolTypes.getStringUTF8Count();
+		UDATA packageCount = _constantPoolTypes.getPackageCount();
 		_bufferWriter->writeLEB128(stringCount + packageCount);
 
 		for (UDATA i = 0; i < stringCount; i++) {
-			StringUTF8Entry *stringEntry = (StringUTF8Entry*)_constantPoolTypes->getSymbolTableEntry(i);
+			StringUTF8Entry *stringEntry = (StringUTF8Entry*)_constantPoolTypes.getSymbolTableEntry(i);
 
 			/* write index */
 			_bufferWriter->writeLEB128(i);
@@ -557,7 +557,7 @@ VM_JFRChunkWriter::writeSymbolTableCheckpointEvent()
 		}
 
 		for (UDATA i = stringCount; i < (stringCount + packageCount); i++) {
-			PackageEntry *packageEntry = (PackageEntry*)_constantPoolTypes->getSymbolTableEntry(i);
+			PackageEntry *packageEntry = (PackageEntry*)_constantPoolTypes.getSymbolTableEntry(i);
 
 			/* write index */
 			_bufferWriter->writeLEB128(i);
@@ -573,21 +573,21 @@ VM_JFRChunkWriter::writeSymbolTableCheckpointEvent()
 	return dataStart;
 }
 
-U_8*
+U_8 *
 VM_JFRChunkWriter::writeStacktraceCheckpointEvent()
 {
 	U_8 *dataStart = NULL;
 
-	if (_constantPoolTypes->getStackTraceCount() > 0) {
+	if (_constantPoolTypes.getStackTraceCount() > 0) {
 		dataStart = writeCheckpointEventHeader(Generic, 1);
 
 		/* class ID */
 		_bufferWriter->writeLEB128(StackTraceID);
 
 		/* number of states */
-		_bufferWriter->writeLEB128(_constantPoolTypes->getStackTraceCount());
+		_bufferWriter->writeLEB128(_constantPoolTypes.getStackTraceCount());
 
-		StackTraceEntry *entry = _constantPoolTypes->getStackTraceEntry();
+		StackTraceEntry *entry = _constantPoolTypes.getStackTraceEntry();
 		while (NULL != entry) {
 			/* write index */
 			_bufferWriter->writeLEB128(entry->index);
