@@ -289,6 +289,7 @@ findJ9ClassForROMClass(J9VMThread *vmThread, J9ROMClass *romClass, J9ClassLoader
 		classLoader = vm->internalVMFunctions->allClassLoadersStartDo(&walkState, vm, 0);
 		while (NULL != classLoader) {
 			if ((classLoader != *resultClassLoader)
+				&& (classLoader != vm->extensionClassLoader)
 				&& (classLoader != vm->applicationClassLoader)
 			) {
 				ramClass = hashClassTableAt(classLoader, J9UTF8_DATA(utfClassName), J9UTF8_LENGTH(utfClassName));
