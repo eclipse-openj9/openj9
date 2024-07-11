@@ -143,6 +143,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	<classref name="java/lang/invoke/MemberName" flags="opt_openjdkMethodhandle"/>
 	<classref name="java/lang/invoke/MethodTypeForm" flags="opt_openjdkMethodhandle"/>
 	<classref name="java/lang/invoke/LambdaForm" flags="opt_openjdkMethodhandle"/>
+	<classref name="java/lang/invoke/DirectMethodHandle" flags="opt_openjdkMethodhandle"/>
 
 	<classref name="jdk/internal/loader/NativeLibraries" versions="15-"/>
 	<classref name="jdk/internal/loader/NativeLibraries$NativeLibraryImpl" versions="15-"/>
@@ -415,6 +416,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	<fieldref class="java/lang/invoke/MemberName" name="resolution" signature="Ljava/lang/Object;" flags="opt_openjdkMethodhandle"/>
 	<fieldref class="java/lang/invoke/LambdaForm" name="vmentry" signature="Ljava/lang/invoke/MemberName;" flags="opt_openjdkMethodhandle"/>
 	<fieldref class="java/lang/invoke/MethodHandle" name="form" signature="Ljava/lang/invoke/LambdaForm;" flags="opt_openjdkMethodhandle"/>
+	<fieldref class="java/lang/invoke/DirectMethodHandle" name="member" signature="Ljava/lang/invoke/MemberName;" flags="opt_openjdkMethodhandle"/>
 	<fieldref class="java/lang/invoke/MethodType" name="form" signature="Ljava/lang/invoke/MethodTypeForm;" flags="opt_openjdkMethodhandle"/>
 	<fieldref class="java/lang/invoke/MethodTypeForm" name="argCounts" signature="J" flags="opt_openjdkMethodhandle" versions="8-13"/>
 	<fieldref class="java/lang/invoke/MethodTypeForm" name="parameterSlotCount" signature="S" flags="opt_openjdkMethodhandle" versions="14-"/>
