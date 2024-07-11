@@ -741,8 +741,23 @@ JVM_IsValhallaEnabled()
 JNIEXPORT jboolean JNICALL
 JVM_IsImplicitlyConstructibleClass(JNIEnv *env, jclass cls)
 {
-	assert(!"JVM_IsImplicitlyConstructibleClass unimplemented");
-	return JNI_FALSE;
+	jboolean result = JNI_FALSE;
+	J9VMThread *currentThread = (J9VMThread *)env;
+	J9InternalVMFunctions const * const vmFuncs = currentThread->javaVM->internalVMFunctions;
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+	if (NULL == cls) {
+		vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
+	} else {
+		J9Class *clazz = J9VM_J9CLASS_FROM_JCLASS(currentThread, cls);
+		J9ROMClass *romClass = clazz->romClass;
+		if (J9_ARE_ALL_BITS_SET(romClass->optionalFlags, J9_ROMCLASS_OPTINFO_IMPLICITCREATION_ATTRIBUTE)
+			&& J9_ARE_ALL_BITS_SET(getImplicitCreationFlags(romClass), J9AccImplicitCreateHasDefaultValue)
+		) {
+			result = JNI_TRUE;
+		}
+	}
+	vmFuncs->internalExitVMToJNI(currentThread);
+	return result;
 }
 
 JNIEXPORT jboolean JNICALL
