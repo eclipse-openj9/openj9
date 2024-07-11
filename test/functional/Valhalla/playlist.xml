@@ -318,6 +318,7 @@
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 		--enable-preview \
+		--add-exports java.base/jdk.internal.value=ALL-UNNAMED \
 		-cp $(Q)$(LIB_DIR)$(D)asm.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)ValhallaTests.jar$(Q) \
 		org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames ValhallaAttributeTests \
 		-groups $(TEST_GROUP) \
