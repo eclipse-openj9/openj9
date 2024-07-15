@@ -4272,7 +4272,7 @@ done:
 
 			if (J9CLASS_IS_ARRAY(receiverClass)) {
 				I_64 arrayDataSize = J9INDEXABLEOBJECT_SIZE(_currentThread, receiver) * J9ARRAYCLASS_GET_STRIDE(receiverClass);
-				I_64 headerSize = J9VMTHREAD_CONTIGUOUS_INDEXABLE_HEADER_SIZE(_currentThread);
+				I_64 headerSize = J9VMTHREAD_UNSAFE_INDEXABLE_HEADER_SIZE(_currentThread);
 				returnDoubleFromINL(REGISTER_ARGS, arrayDataSize + headerSize, 2);
 			} else {
 				I_64 headerSize = (I_64)J9VMTHREAD_OBJECT_HEADER_SIZE(_currentThread);
