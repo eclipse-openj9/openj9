@@ -5541,6 +5541,7 @@ typedef struct J9VMThread {
 	j9object_t scopedError;
 	j9object_t closeScopeObj;
 #endif /* JAVA_SPEC_VERSION >= 22 */
+	UDATA unsafeIndexableHeaderSize;
 } J9VMThread;
 
 #define J9VMTHREAD_ALIGNMENT  0x100
@@ -5604,6 +5605,7 @@ typedef struct J9VMThread {
 #define J9VMTHREAD_OBJECT_HEADER_SIZE(vmThread) (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) ? sizeof(J9ObjectCompressed) : sizeof(J9ObjectFull))
 #define J9VMTHREAD_CONTIGUOUS_INDEXABLE_HEADER_SIZE(vmThread) ((vmThread)->contiguousIndexableHeaderSize)
 #define J9VMTHREAD_DISCONTIGUOUS_INDEXABLE_HEADER_SIZE(vmThread) ((vmThread)->discontiguousIndexableHeaderSize)
+#define J9VMTHREAD_UNSAFE_INDEXABLE_HEADER_SIZE(vmThread) ((vmThread)->unsafeIndexableHeaderSize)
 
 typedef struct JFRState {
 	char *jfrFileName;
@@ -6147,6 +6149,7 @@ typedef struct J9JavaVM {
 	omrthread_monitor_t closeScopeMutex;
 	UDATA closeScopeNotifyCount;
 #endif /* JAVA_SPEC_VERSION >= 22 */
+	UDATA unsafeIndexableHeaderSize;
 } J9JavaVM;
 
 #define J9VM_PHASE_STARTUP  1
