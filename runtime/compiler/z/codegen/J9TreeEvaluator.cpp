@@ -10189,8 +10189,6 @@ genHeapAlloc(TR::Node * node, TR::Instruction *& iCursor, bool isVariableLen, TR
       {
       TR::Register *metaReg = cg->getMethodMetaDataRealRegister();
 
-      // bool sizeInReg = (isVariableLen || (allocSize > MAX_IMMEDIATE_VAL));
-
       int alignmentConstant = TR::Compiler->om.getObjectAlignmentInBytes();
 
       if (isVariableLen)
@@ -10261,61 +10259,49 @@ genHeapAlloc(TR::Node * node, TR::Instruction *& iCursor, bool isVariableLen, TR
       //   integer arithmetic, checking carry bit is enough to detect it.
       //   For variable length array, we did an up-front check already.
 
-      static char * disableInitClear = feGetEnv("TR_disableInitClear");
-      static char * disableBatchClear = feGetEnv("TR_DisableBatchClear");
+      // Zero initialize newly allocated array or object if batch clearing is disabled and node can not skip zero initialization.
+      static bool disableBatchClear = feGetEnv("TR_DisableBatchClear") != NULL;
+      bool inlineZeroInitialization = disableBatchClear && !node->canSkipZeroInitialization();
 
-      TR::Register * addressReg = NULL, * lengthReg = NULL, * shiftReg = NULL;
-      if (disableBatchClear && disableInitClear==NULL)
-         {
-         addressReg = cg->allocateRegister();
-         lengthReg = cg->allocateRegister();
-         shiftReg = cg->allocateRegister();
-
-         if (conditions != NULL)
-            {
-            conditions->resetIsUsed();
-            conditions->addPostCondition(addressReg, TR::RealRegister::AssignAny);
-            conditions->addPostCondition(shiftReg, TR::RealRegister::AssignAny);
-            conditions->addPostCondition(lengthReg, TR::RealRegister::AssignAny);
-            }
-         }
-
-      if (isVariableLen)
-         {
-         if (disableBatchClear && disableInitClear==NULL)
-            iCursor = generateRRInstruction(cg, TR::InstOpCode::LGR, node, lengthReg, sizeReg, iCursor);
-         if (!comp->getOption(TR_DisableDualTLH) && node->canSkipZeroInitialization())
-            {
-            iCursor = generateRXInstruction(cg, TR::InstOpCode::getAddOpCode(), node, sizeReg,
-                  generateS390MemoryReference(metaReg, offsetof(J9VMThread, nonZeroHeapAlloc), cg), iCursor);
-            }
-         else
-            {
-            iCursor = generateRXInstruction(cg, TR::InstOpCode::getAddOpCode(), node, sizeReg,
-                  generateS390MemoryReference(metaReg, offsetof(J9VMThread, heapAlloc), cg), iCursor);
-            }
-         }
-      else
+      if (!isVariableLen)
          {
          if (comp->target().is64Bit())
             iCursor = genLoadLongConstant(cg, node, allocSize, sizeReg, iCursor, conditions);
          else
             iCursor = generateLoad32BitConstant(cg, node, allocSize, sizeReg, true, iCursor, conditions);
+         }
 
-         if (disableBatchClear && disableInitClear==NULL)
-            iCursor = generateRRInstruction(cg, TR::InstOpCode::LGR, node, lengthReg, sizeReg, iCursor);
-
-         if (!comp->getOption(TR_DisableDualTLH) && node->canSkipZeroInitialization())
+      TR::Register * lengthReg = NULL;
+      if (inlineZeroInitialization && isVariableLen)
+         {
+         lengthReg = cg->allocateRegister();
+         if (conditions != NULL)
             {
-            iCursor = generateRXInstruction(cg, TR::InstOpCode::getAddOpCode(), node, sizeReg,
-                  generateS390MemoryReference(metaReg, offsetof(J9VMThread, nonZeroHeapAlloc), cg), iCursor);
+            conditions->resetIsUsed();
+            conditions->addPostCondition(lengthReg, TR::RealRegister::AssignAny);
+            }
+         // Saving size - 1 since XC instruction is used to zero memory.
+         // The size is a positive number therefore the result value can not be negative.
+         if (comp->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z196))
+            {
+            iCursor = generateRIEInstruction(cg, TR::InstOpCode::getAddHalfWordImmDistinctOperandOpCode(), node, lengthReg, sizeReg, -1);
             }
          else
             {
-            iCursor = generateRXInstruction(cg, TR::InstOpCode::getAddOpCode(), node, sizeReg,
-                  generateS390MemoryReference(metaReg, offsetof(J9VMThread, heapAlloc), cg), iCursor);
+            iCursor = generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, lengthReg, sizeReg, iCursor);
+            iCursor = generateRIInstruction(cg, TR::InstOpCode::getAddHalfWordImmOpCode(), node, lengthReg, -1);
             }
+         }
 
+      if (!comp->getOption(TR_DisableDualTLH) && node->canSkipZeroInitialization())
+         {
+         iCursor = generateRXInstruction(cg, TR::InstOpCode::getAddOpCode(), node, sizeReg,
+               generateS390MemoryReference(metaReg, offsetof(J9VMThread, nonZeroHeapAlloc), cg), iCursor);
+         }
+      else
+         {
+         iCursor = generateRXInstruction(cg, TR::InstOpCode::getAddOpCode(), node, sizeReg,
+               generateS390MemoryReference(metaReg, offsetof(J9VMThread, heapAlloc), cg), iCursor);
          }
 
       if (allocSize > cg->getMaxObjectSizeGuaranteedNotToOverflow())
@@ -10378,45 +10364,112 @@ genHeapAlloc(TR::Node * node, TR::Instruction *& iCursor, bool isVariableLen, TR
          iCursor = generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, sizeReg,
                       generateS390MemoryReference(metaReg, offsetof(J9VMThread, heapAlloc), cg), iCursor);
       TR::LabelSymbol * fillerRemLabel = generateLabelSymbol(cg);
-      TR::LabelSymbol * doneLabel = generateLabelSymbol(cg);
 
       TR::LabelSymbol * fillerLoopLabel = generateLabelSymbol(cg);
 
-      // do this clear, if disableBatchClear is on
-      if (disableBatchClear && disableInitClear==NULL) //&& (node->getOpCodeValue() == TR::anewarray) && (node->getFirstChild()->getInt()>0) && (node->getFirstChild()->getInt()<6) )
+      if (inlineZeroInitialization)
          {
-         iCursor = generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, addressReg, resReg, iCursor);
-         // Dont overwrite the class
-         //
-         iCursor = generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, shiftReg, lengthReg, iCursor);
-         iCursor = generateRSInstruction(cg, TR::InstOpCode::SRA, node, shiftReg, 8);
+         int32_t loops = allocSize / 256;
+         // If number of loops is 2 or less, consequent XC instructions is prefered over BRTC loops.
+         bool generateXCLoop = loops > 2;
+         TR::Register * shiftReg = NULL;
+         TR::Register * addressReg = resReg;
+         if(isVariableLen || generateXCLoop)
+            {
+            shiftReg = cg->allocateRegister();
+            addressReg = cg->allocateRegister();
+            if (conditions != NULL)
+               {
+               conditions->resetIsUsed();
+               conditions->addPostCondition(shiftReg, TR::RealRegister::AssignAny);
+               conditions->addPostCondition(addressReg, TR::RealRegister::AssignAny);
+               }
 
-         iCursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BZ, node, fillerRemLabel, iCursor);
-         iCursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, fillerLoopLabel);
-         iCursor = generateSS1Instruction(cg, TR::InstOpCode::XC, node, 255, generateS390MemoryReference(addressReg, 0, cg), generateS390MemoryReference(addressReg, 0, cg), iCursor);
+            iCursor = generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, addressReg, resReg, iCursor);
+            }
 
-         iCursor = generateRXInstruction(cg, TR::InstOpCode::LA, node, addressReg, generateS390MemoryReference(addressReg, 256, cg), iCursor);
+         if(isVariableLen)
+            {
+            if (TR::comp()->target().is64Bit())
+               {
+               iCursor = generateRSInstruction(cg, TR::InstOpCode::SRAG, node, shiftReg, lengthReg, 8, iCursor);
+               }
+            else
+               {
+               if (comp->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z196))
+                  {
+                  iCursor = generateRSInstruction(cg, TR::InstOpCode::SRAK, node, shiftReg, lengthReg, 8, iCursor);
+                  }
+               else
+                  {
+                  iCursor = generateRRInstruction(cg, TR::InstOpCode::LR, node, shiftReg, lengthReg, iCursor);
+                  iCursor = generateRSInstruction(cg, TR::InstOpCode::SRA, node, shiftReg, 8, iCursor);
+                  }
+               }
 
-         iCursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRCT, node, shiftReg, fillerLoopLabel);
-         iCursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, fillerRemLabel);
+            // Zero blocks of 256 bytes if size > 256.
+            iCursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BZ, node, fillerRemLabel, iCursor);
+            iCursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, fillerLoopLabel);
+            iCursor = generateSS1Instruction(cg, TR::InstOpCode::XC, node, 255, generateS390MemoryReference(addressReg, 0, cg), generateS390MemoryReference(addressReg, 0, cg), iCursor);
+            iCursor = generateRXInstruction(cg, TR::InstOpCode::LA, node, addressReg, generateS390MemoryReference(addressReg, 256, cg), iCursor);
+            iCursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRCT, node, shiftReg, fillerLoopLabel);
+            iCursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, fillerRemLabel);
 
-         // and to only get the right 8 bits (remainder)
-         iCursor = generateRIInstruction(cg, TR::InstOpCode::NILL, node, lengthReg, 0x00FF);
-         iCursor = generateRIInstruction(cg, TR::InstOpCode::AHI, node, lengthReg, -1);
-         // branch to done if length < 0
+            // Zero the residue bytes.
+            TR::LabelSymbol *exrlTargetLabel = generateLabelSymbol(cg);
+            iCursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, exrlTargetLabel);
+            iCursor = generateSS1Instruction(cg, TR::InstOpCode::XC, node, 0, generateS390MemoryReference(addressReg, 0, cg), generateS390MemoryReference(addressReg, 0, cg), iCursor);
+            iCursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, fillerRemLabel);
+            iCursor = generateRILInstruction(cg, TR::InstOpCode::EXRL, node, lengthReg, exrlTargetLabel);
+            }
+         else
+            {
+            int32_t numberOfResidueBytes = allocSize % 256;
+            int32_t displacement = 0;
+            // Using a BRCT loop to clean blocks of 256 to save iCache.
+            if (generateXCLoop)
+               {
+               shiftReg = cg->allocateRegister();
+               if (conditions != NULL)
+                  conditions->addPostCondition(shiftReg, TR::RealRegister::AssignAny);
 
-         iCursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BL, node, doneLabel, iCursor);
+               iCursor = generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, addressReg, resReg, iCursor);
+               iCursor = generateLoad32BitConstant(cg, node, loops, shiftReg, true, iCursor, conditions);
+               iCursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, fillerLoopLabel);
+               iCursor = generateSS1Instruction(cg, TR::InstOpCode::XC, node, 255, generateS390MemoryReference(addressReg, 0, cg), generateS390MemoryReference(addressReg, 0, cg), iCursor);
+               iCursor = generateRXInstruction(cg, TR::InstOpCode::LA, node, addressReg, generateS390MemoryReference(addressReg, 256, cg), iCursor);
+               iCursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRCT, node, shiftReg, fillerLoopLabel);
+               }
+            else
+               {
+               while (loops > 0)
+                  {
+                  iCursor = generateSS1Instruction(cg, TR::InstOpCode::XC, node, 255, generateS390MemoryReference(addressReg, displacement, cg), generateS390MemoryReference(addressReg, displacement, cg), iCursor);
+                  displacement += 256;
+                  loops--;
+                  }
+               }
 
-         iCursor = generateSS1Instruction(cg, TR::InstOpCode::XC, node, 0, generateS390MemoryReference(addressReg, 0, cg), generateS390MemoryReference(addressReg, 0, cg), iCursor);
+            if (numberOfResidueBytes == 8)
+               {
+               iCursor = generateSILInstruction(cg, TR::InstOpCode::MVGHI, node, generateS390MemoryReference(addressReg, displacement, cg), 0, iCursor);
+               }
+            else if (numberOfResidueBytes > 0)
+               {
+               iCursor = generateSS1Instruction(cg, TR::InstOpCode::XC, node, (numberOfResidueBytes - 1), generateS390MemoryReference(addressReg, displacement, cg),
+                                                   generateS390MemoryReference(addressReg, displacement, cg), iCursor);
+               }
+            }
 
-         // minus 1 from lengthreg since xc auto adds 1 to it
+            if (addressReg != NULL && addressReg != resReg)
+               cg->stopUsingRegister(addressReg);
 
-         iCursor = generateEXDispatch(node, cg, lengthReg, shiftReg, iCursor);
-         iCursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, doneLabel);
+            if (shiftReg != NULL)
+               cg->stopUsingRegister(shiftReg);
+
+            if (lengthReg != NULL)
+               cg->stopUsingRegister(lengthReg);
          }
-      cg->stopUsingRegister(addressReg);
-      cg->stopUsingRegister(shiftReg);
-      cg->stopUsingRegister(lengthReg);
 
       if (zeroReg != NULL)
          {
@@ -10428,8 +10481,6 @@ genHeapAlloc(TR::Node * node, TR::Instruction *& iCursor, bool isVariableLen, TR
       TR_ASSERT(0, "genHeapAlloc() not supported for RT");
       }
    }
-
-
 
 static void
 genInitObjectHeader(TR::Node * node, TR::Instruction *& iCursor, TR_OpaqueClassBlock * classAddress, TR::Register * classReg, TR::Register * resReg,
@@ -10665,8 +10716,8 @@ genInitArrayHeader(TR::Node * node, TR::Instruction *& iCursor, bool isVariableL
 
    static char * allocZeroArrayWithVM = feGetEnv("TR_VMALLOCZEROARRAY");
 
-   //write 0
-   if(!comp->getOption(TR_DisableDualTLH) && node->canSkipZeroInitialization() && allocZeroArrayWithVM == NULL)
+   // Zero size arrays are discontiguous. If the array is not discontiguous, it writes the length in first element which should not cause any issue.
+   if(node->canSkipZeroInitialization() && allocZeroArrayWithVM == NULL)
       iCursor = generateRXInstruction(cg, TR::InstOpCode::ST, node, eNumReg,
                       generateS390MemoryReference(resReg, fej9->getOffsetOfDiscontiguousArraySizeField(), cg), iCursor);
    }
@@ -10915,7 +10966,7 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
             TR::LabelSymbol * startOOLLabel = generateLabelSymbol(cg);
             exitOOLLabel = generateLabelSymbol(cg);
             TR_S390OutOfLineCodeSection *zeroSizeArrayChckOOL;
-            if (comp->target().is64Bit())
+            if (comp->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z196) && comp->target().is64Bit())
                {
                //need 31 bit as well, combining lgfr + sllg into rsibg
                int32_t shift_amount = trailingZeroes(elementSize);
