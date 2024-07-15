@@ -541,7 +541,7 @@ UDATA initializeExclusiveAccess(J9JavaVM *vm);
 void shutDownExclusiveAccess(J9JavaVM *vm);
 
 #if JAVA_SPEC_VERSION >= 16
-/* LayoutFFITypeHelpers.cpp */
+/* ------------------- LayoutFFITypeHelpers.cpp ----------------- */
 
 /**
  * Release the memory of struct specific ffi_types if exist in the argument/return types
@@ -551,6 +551,21 @@ void shutDownExclusiveAccess(J9JavaVM *vm);
  */
 void
 freeAllStructFFITypes(J9VMThread *currentThread, void *cifNode);
+
+/* ------------------- UpcallThunkMem.cpp ----------------- */
+
+/**
+ * @brief Release the thunk heap list if exists.
+ *
+ * @param vm a pointer to J9JavaVM
+ *
+ * Note:
+ * This function empties the thunk heap list by cleaning up all resources
+ * created via allocateUpcallThunkMemory, including the generated thunk
+ * and the corresponding metadata of each entry in the hashtable.
+ */
+void
+releaseThunkHeap(J9JavaVM *vm);
 #endif /* JAVA_SPEC_VERSION >= 16 */
 
 /* ------------------- jnimisc.cpp ----------------- */

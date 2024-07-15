@@ -33,13 +33,13 @@ static void * subAllocateThunkFromHeap(J9UpcallMetaData *data);
 static J9UpcallThunkHeapList * allocateThunkHeap(J9UpcallMetaData *data);
 static UDATA upcallMetaDataHashFn(void *key, void *userData);
 static UDATA upcallMetaDataEqualFn(void *leftKey, void *rightKey, void *userData);
+static UDATA freeUpcallMetaDataDoFn(J9UpcallMetaDataEntry *entry, void *userData);
 
 /**
- * @brief Flush the generated thunk to the memory
+ * @brief Flush the generated thunk to the memory.
  *
  * @param data a pointer to J9UpcallMetaData
  * @param thunkAddress The address of the generated thunk
- * @return void
  */
 void
 doneUpcallThunkGeneration(J9UpcallMetaData *data, void *thunkAddress)
@@ -54,10 +54,10 @@ doneUpcallThunkGeneration(J9UpcallMetaData *data, void *thunkAddress)
 }
 
 /**
- * @brief Allocate a piece of thunk memory with a given size from the existing virtual memory block
+ * @brief Allocate a piece of thunk memory with a given size from the existing virtual memory block.
  *
  * @param data a pointer to J9UpcallMetaData
- * @return the start address of the upcall thunk memory, or NULL on failure.
+ * @return the start address of the upcall thunk memory, or NULL on failure
  */
 void *
 allocateUpcallThunkMemory(J9UpcallMetaData *data)
@@ -204,7 +204,7 @@ allocateThunkHeap(J9UpcallMetaData *data)
 
 	omrthread_jit_write_protect_disable();
 
-	/* Initialize the allocated memory as a J9Heap */
+	/* Initialize the allocated memory as a J9Heap. */
 	thunkHeap = j9heap_create(allocMemPtr, pageSize, 0);
 	if (NULL == thunkHeap) {
 		Trc_VM_allocateThunkHeap_create_heap_failed(allocMemPtr, pageSize);
@@ -265,7 +265,50 @@ freeAllMemoryThenExit:
 }
 
 /**
- * Compute the hash code (namely the thunk address value) for the supplied J9UpcallMetaDataEntry
+ * @brief Release the thunk heap list if exists.
+ *
+ * @param vm a pointer to J9JavaVM
+ *
+ * Note:
+ * This function empties the thunk heap list by cleaning up all resources
+ * created via allocateUpcallThunkMemory, including the generated thunk
+ * and the corresponding metadata of each entry in the hashtable.
+ */
+void
+releaseThunkHeap(J9JavaVM *vm)
+{
+	J9UpcallThunkHeapList *thunkHeapHead = vm->thunkHeapHead;
+	J9UpcallThunkHeapList *thunkHeapNode = NULL;
+	PORT_ACCESS_FROM_JAVAVM(vm);
+	UDATA byteAmount = j9vmem_supported_page_sizes()[0];
+
+	if (NULL != thunkHeapHead->metaDataHashTable) {
+		J9HashTable *metaDataHashTable = thunkHeapHead->metaDataHashTable;
+		hashTableForEachDo(metaDataHashTable, (J9HashTableDoFn)freeUpcallMetaDataDoFn, NULL);
+		hashTableFree(metaDataHashTable);
+		metaDataHashTable = NULL;
+	}
+
+	thunkHeapNode = thunkHeapHead->next;
+	thunkHeapHead->next = NULL;
+	thunkHeapHead = thunkHeapNode;
+	while (NULL != thunkHeapHead) {
+		J9UpcallThunkHeapWrapper *thunkHeapWrapper = thunkHeapHead->thunkHeapWrapper;
+		if (NULL != thunkHeapWrapper) {
+			J9PortVmemIdentifier vmemID = thunkHeapWrapper->vmemID;
+			j9vmem_free_memory(vmemID.address, byteAmount, &vmemID);
+			j9mem_free_memory(thunkHeapWrapper);
+			thunkHeapWrapper = NULL;
+		}
+		thunkHeapNode = thunkHeapHead;
+		thunkHeapHead = thunkHeapHead->next;
+		j9mem_free_memory(thunkHeapNode);
+	}
+	vm->thunkHeapHead = NULL;
+}
+
+/**
+ * Compute the hash code (namely the thunk address value) for the supplied J9UpcallMetaDataEntry.
  */
 static UDATA
 upcallMetaDataHashFn(void *key, void *userData)
@@ -274,12 +317,49 @@ upcallMetaDataHashFn(void *key, void *userData)
 }
 
 /**
- * Determines if leftKey and rightKey refer to the same entry in the upcall metadata hashtable
+ * Determine if leftKey and rightKey refer to the same entry in the upcall metadata hashtable.
  */
 static UDATA
 upcallMetaDataEqualFn(void *leftKey, void *rightKey, void *userData)
 {
 	return ((J9UpcallMetaDataEntry *)leftKey)->thunkAddrValue == ((J9UpcallMetaDataEntry *)rightKey)->thunkAddrValue;
+}
+
+/**
+ * Release the memory of the generated thunk and the metadata in the
+ * specified entry of the metadata hashtable intended for upcall.
+ */
+static UDATA
+freeUpcallMetaDataDoFn(J9UpcallMetaDataEntry *entry, void *userData)
+{
+	void *thunkAddr = (void *)(entry->thunkAddrValue);
+	J9UpcallMetaData *metaData = entry->upcallMetaData;
+
+	if ((NULL != thunkAddr) && (NULL != metaData)) {
+		J9JavaVM *vm = metaData->vm;
+		const J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+		J9VMThread *currentThread = vmFuncs->currentVMThread(vm);
+		J9UpcallNativeSignature *nativeFuncSig = metaData->nativeFuncSignature;
+		J9Heap *thunkHeap = metaData->thunkHeapWrapper->heap;
+		PORT_ACCESS_FROM_JAVAVM(vm);
+
+		if (NULL != nativeFuncSig) {
+			j9mem_free_memory(nativeFuncSig->sigArray);
+			j9mem_free_memory(nativeFuncSig);
+			nativeFuncSig = NULL;
+		}
+		vmFuncs->j9jni_deleteGlobalRef((JNIEnv *)currentThread, metaData->mhMetaData, JNI_FALSE);
+		j9mem_free_memory(metaData);
+		metaData = NULL;
+
+		if (NULL != thunkHeap) {
+			omrthread_jit_write_protect_disable();
+			j9heap_free(thunkHeap, thunkAddr);
+			omrthread_jit_write_protect_enable();
+		}
+		entry->thunkAddrValue = 0;
+	}
+	return JNI_OK;
 }
 
 #endif /* JAVA_SPEC_VERSION >= 16 */

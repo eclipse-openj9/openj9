@@ -327,10 +327,6 @@ static UDATA parseGlrOption(J9JavaVM* jvm, char* option);
 static void cleanupEnsureHashedConfig(J9JavaVM *jvm);
 static UDATA parseEnsureHashedConfig(J9JavaVM *jvm, char *options, BOOLEAN isAdd);
 
-#if JAVA_SPEC_VERSION >= 16
-static UDATA freeUpcallMetaDataDoFn(J9UpcallMetaDataEntry *entry, void *userData);
-#endif /* JAVA_SPEC_VERSION >= 16 */
-
 J9_DECLARE_CONSTANT_UTF8(j9_int_void, "(I)V");
 J9_DECLARE_CONSTANT_UTF8(j9_dispatch, "dispatch");
 
@@ -674,41 +670,9 @@ freeJavaVM(J9JavaVM * vm)
 		vm->cifArgumentTypesCache = NULL;
 	}
 
-	/* Empty the thunk heap list by cleaning up all resources created via allocateUpcallThunkMemory,
-	 * including the generated thunk and the corresponding metadata of each entry in the hashtable.
-	 * See UpcallThunkMem.cpp for details.
-	 */
+	/* Empty the thunk heap list if exists. */
 	if (NULL != vm->thunkHeapHead) {
-		J9UpcallThunkHeapList *thunkHeapHead = vm->thunkHeapHead;
-		J9UpcallThunkHeapList *thunkHeapNode = NULL;
-		UDATA byteAmount = j9vmem_supported_page_sizes()[0];
-
-		if (NULL != thunkHeapHead->metaDataHashTable) {
-			J9HashTable *metaDataHashTable = thunkHeapHead->metaDataHashTable;
-			UDATA entryCount = hashTableGetCount(metaDataHashTable);
-			if (entryCount > 0) {
-				hashTableForEachDo(metaDataHashTable, (J9HashTableDoFn)freeUpcallMetaDataDoFn, NULL);
-			}
-			hashTableFree(metaDataHashTable);
-			metaDataHashTable = NULL;
-		}
-
-		thunkHeapNode = thunkHeapHead->next;
-		thunkHeapHead->next = NULL;
-		thunkHeapHead = thunkHeapNode;
-		while (NULL != thunkHeapHead) {
-			J9UpcallThunkHeapWrapper *thunkHeapWrapper = thunkHeapHead->thunkHeapWrapper;
-			if (NULL != thunkHeapWrapper) {
-				J9PortVmemIdentifier vmemID = thunkHeapWrapper->vmemID;
-				j9vmem_free_memory(vmemID.address, byteAmount, &vmemID);
-				j9mem_free_memory(thunkHeapWrapper);
-				thunkHeapWrapper = NULL;
-			}
-			thunkHeapNode = thunkHeapHead;
-			thunkHeapHead = thunkHeapHead->next;
-			j9mem_free_memory(thunkHeapNode);
-		}
-		vm->thunkHeapHead = NULL;
+		releaseThunkHeap(vm);
 	}
 #endif /* JAVA_SPEC_VERSION >= 16 */
 
@@ -8852,46 +8816,3 @@ parseEnsureHashedConfig(J9JavaVM *jvm, char *options, BOOLEAN isAdd)
 
 	return result;
 }
-
-#if JAVA_SPEC_VERSION >= 16
-/**
- * This function free the memory of the generated thunk and the metadata
- * in the specified entry of the metadata hashtable intended for upcall.
- *
- * @param entry A pointer to J9UpcallMetaDataEntry
- * @param userData An optional parameter which is unused
- * @returns JNI_OK on success
- */
-static UDATA
-freeUpcallMetaDataDoFn(J9UpcallMetaDataEntry *entry, void *userData)
-{
-	void *thunkAddr = (void *)(entry->thunkAddrValue);
-	J9UpcallMetaData *metaData = entry->upcallMetaData;
-
-	if ((NULL != thunkAddr) && (NULL != metaData)) {
-		J9JavaVM *vm = metaData->vm;
-		const J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
-		J9VMThread *currentThread = vmFuncs->currentVMThread(vm);
-		J9UpcallNativeSignature *nativeFuncSig = metaData->nativeFuncSignature;
-		J9Heap *thunkHeap = metaData->thunkHeapWrapper->heap;
-		PORT_ACCESS_FROM_JAVAVM(vm);
-
-		if (NULL != nativeFuncSig) {
-			j9mem_free_memory(nativeFuncSig->sigArray);
-			j9mem_free_memory(nativeFuncSig);
-			nativeFuncSig = NULL;
-		}
-		vmFuncs->j9jni_deleteGlobalRef((JNIEnv *)currentThread, metaData->mhMetaData, JNI_FALSE);
-		j9mem_free_memory(metaData);
-		metaData = NULL;
-
-		if (NULL != thunkHeap) {
-			omrthread_jit_write_protect_disable();
-			j9heap_free(thunkHeap, thunkAddr);
-			omrthread_jit_write_protect_enable();
-		}
-		entry->thunkAddrValue = 0;
-	}
-	return JNI_OK;
-}
-#endif /* JAVA_SPEC_VERSION >= 16 */
