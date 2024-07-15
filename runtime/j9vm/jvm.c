@@ -3977,6 +3977,7 @@ JVM_LoadLibrary(const char *libName, jboolean throwOnFailure)
 #endif /* defined(WIN32) */
 		Trc_SC_LoadLibrary_Entry(libName);
 		{
+			UDATA slOpenResult = 0;
 			UDATA handle = 0;
 			UDATA flags = J9_ARE_ANY_BITS_SET(javaVM->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_LAZY_SYMBOL_RESOLUTION) ? J9PORT_SLOPEN_LAZY : 0;
 
@@ -3986,18 +3987,82 @@ JVM_LoadLibrary(const char *libName, jboolean throwOnFailure)
 			}
 #endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) */
 
-			UDATA slOpenResult = j9sl_open_shared_library((char *)libName, &handle, flags);
+			slOpenResult = j9sl_open_shared_library((char *)libName, &handle, flags);
 			Trc_SC_LoadLibrary_OpenShared(libName);
 
-/* jdk17+ calls JVM_LoadLibrary with decorated library names. If the following is done
- * then it overwrites the real error with a failure to load "liblib<name>.so.so".
- */
-#if JAVA_SPEC_VERSION < 17
 			if (0 != slOpenResult) {
-				slOpenResult = j9sl_open_shared_library((char *)libName, &handle, flags | J9PORT_SLOPEN_DECORATE);
-				Trc_SC_LoadLibrary_OpenShared_Decorate(libName);
+				char *libNameNotDecorated = (char *)libName;
+#if JAVA_SPEC_VERSION >= 17
+				/* JDK17+ jdk.internal.loader.NativeLibraries.load() calls JVM_LoadLibrary()
+				 * with a decorated library name, i.e., a path to the library name returned
+				 * from Java_java_lang_System_mapLibraryName(nameNoPrefixNoExtension).
+				 * The library name passed to j9sl_open_shared_library() with the flag
+				 * J9PORT_SLOPEN_DECORATE must be platform independent, i.e., it must not
+				 * contain any prefix or file extension.
+				 */
+				const char *fileExt = strrchr(libName, '.');
+				BOOLEAN doOpenLibrary = TRUE;
+				char libPath[EsMaxPath];
+				libPath[0] = '\0';
+				if (NULL == fileExt) {
+					/* A decorated library name is expected with a file extension,
+					 * pass to j9sl_open_shared_library w/o modification.
+					 */
+					Trc_SC_libName_no_extension(libNameNotDecorated);
+				} else {
+					const char *fileNameTmp = strrchr(libName, DIR_SEPARATOR);
+					const char *fileName = (NULL == fileNameTmp) ? libName : (fileNameTmp + 1);
+#if defined(J9OS_I5) || defined(WIN32)
+					/* no library prefix for J9OS_I5 and WIN32 */
+					const size_t libStrLength = 0;
+#else /* defined(J9OS_I5) || defined(WIN32) */
+					/*  strlen("lib") = 3 */
+					const size_t libStrLength = 3;
+					if (0 != strncmp("lib", fileName, libStrLength)) {
+						/* A decorated library name is expected to start with lib prefix for
+						 * platforms other than WIN32 & J9OS_I5.
+						 * Pass to j9sl_open_shared_library w/o modification.
+						 */
+						Trc_SC_libName_no_prefix(fileName);
+					} else
+#endif /* defined(J9OS_I5) || defined(WIN32) */
+					{
+						const char *fileNameNoPrefix = fileName + libStrLength;
+						uintptr_t libDirLength = (uintptr_t)fileName - (uintptr_t)libName;
+						uintptr_t fileNameNotDecoratedLength = (uintptr_t)fileExt - (uintptr_t)fileNameNoPrefix;
+						size_t libPathLength = libDirLength + fileNameNotDecoratedLength + 1;
+						if (libPathLength <= EsMaxPath) {
+							libNameNotDecorated = libPath;
+						} else {
+							libNameNotDecorated = (char *)j9mem_allocate_memory(libPathLength, OMRMEM_CATEGORY_VM);
+						}
+						if (NULL == libNameNotDecorated) {
+							doOpenLibrary = FALSE;
+							Trc_SC_allocate_memory_failed(libPathLength);
+						} else {
+							j9str_printf(PORTLIB,
+									libNameNotDecorated,
+									libPathLength,
+									"%.*s%.*s",
+									libDirLength,
+									libName,
+									fileNameNotDecoratedLength,
+									fileNameNoPrefix);
+						}
+					}
+				}
+				if (doOpenLibrary)
+#endif /* JAVA_SPEC_VERSION >= 17 */
+				{
+					slOpenResult = j9sl_open_shared_library(libNameNotDecorated, &handle, flags | J9PORT_SLOPEN_DECORATE);
+					Trc_SC_LoadLibrary_OpenShared_Decorate(libNameNotDecorated);
+#if JAVA_SPEC_VERSION >= 17
+					if ((libName != libNameNotDecorated) && (libPath != libNameNotDecorated)) {
+						j9mem_free_memory(libNameNotDecorated);
+					}
+#endif /* JAVA_SPEC_VERSION >= 17 */
+				}
 			}
-#endif /* JAVA_SPEC_VERSION < 17 */
 			if (0 == slOpenResult) {
 				result = (void *)handle;
 			}
