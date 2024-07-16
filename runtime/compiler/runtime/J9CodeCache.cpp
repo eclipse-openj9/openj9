@@ -146,6 +146,29 @@ J9::CodeCache::initialize(TR::CodeCacheManager *manager,
    if (!self()->OMR::CodeCache::initialize(manager, codeCacheSegment, allocatedCodeCacheSizeInBytes))
       return false;
 
+
+   if (OMR::RSSReport::instance())
+      {
+      J9JavaVM * javaVM = jitConfig->javaVM;
+      PORT_ACCESS_FROM_JAVAVM(javaVM); // for j9vmem_supported_page_sizes
+
+#if 0 // might be useful but better to track the whole CodeCache
+      TR_ASSERT_FATAL(_coldCodeRSSRegion == NULL, "Cold code RSS Region is already non-NULL");
+
+      _coldCodeRSSRegion = new (PERSISTENT_NEW) OMR::RSSRegion("cold code", _coldCodeAlloc, 0,
+                                                               OMR::RSSRegion::highToLow,
+                                                               j9vmem_supported_page_sizes()[0]);
+      OMR::RSSReport::instance()->addRegion(_coldCodeRSSRegion);
+#else
+
+      OMR::RSSRegion *codeCacheRSSRegion = new (PERSISTENT_NEW) OMR::RSSRegion("Code Cache", _warmCodeAlloc,
+                                                                               _coldCodeAlloc - _warmCodeAlloc,
+                                                               OMR::RSSRegion::lowToHigh,
+                                                               j9vmem_supported_page_sizes()[0]);
+      OMR::RSSReport::instance()->addRegion(codeCacheRSSRegion);
+#endif
+      }
+
    self()->setInitialAllocationPointers();
 
 #ifdef LINUX

@@ -511,10 +511,9 @@ J9::CodeCacheManager::allocateCodeCacheSegment(size_t segmentSize,
 #endif // LINUX
 
       if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "Allocated new code cache segment %p starting at address %p %d Kb",
+         TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "Allocated new code cache segment %p starting at address %p",
                                         codeCacheSegment,
-                                        codeCacheSegment->heapBase,
-                                        _jitConfig->codeCacheKB);
+                                        codeCacheSegment->heapBase);
       }
    else
       {
