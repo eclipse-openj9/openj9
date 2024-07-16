@@ -724,6 +724,7 @@ JVM_VirtualThreadEnd(JNIEnv *env, jobject vthread)
 	TRIGGER_J9HOOK_VM_VIRTUAL_THREAD_END(vm->hookInterface, currentThread);
 	setContinuationStateToLastUnmount((J9VMThread *)env, vthread);
 	virtualThreadUnmountBegin(env, vthread);
+	TRIGGER_J9HOOK_VM_VIRTUAL_THREAD_DESTROY(vm->hookInterface, currentThread);
 
 	vmFuncs->internalExitVMToJNI(currentThread);
 

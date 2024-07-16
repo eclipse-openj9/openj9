@@ -968,7 +968,7 @@ unhookAllEvents(J9JVMTIEnv * j9env)
 
 	hookUnregister(vmHook, J9HOOK_VM_THREAD_DESTROY, jvmtiHookThreadDestroy, NULL, j9env);
 #if JAVA_SPEC_VERSION >= 19
-	hookUnregister(vmHook, J9HOOK_VM_VIRTUAL_THREAD_END, jvmtiHookVirtualThreadDestroy, NULL, j9env);
+	hookUnregister(vmHook, J9HOOK_VM_VIRTUAL_THREAD_DESTROY, jvmtiHookVirtualThreadDestroy, NULL, j9env);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 	hookUnregister(vmHook, J9HOOK_VM_POP_FRAMES_INTERRUPT, jvmtiHookPopFramesInterrupt, NULL, j9env);
 
@@ -987,7 +987,7 @@ hookRequiredEvents(J9JVMTIEnv * j9env)
 	}
 
 #if JAVA_SPEC_VERSION >= 19
-	if (hookRegister(vmHook, J9HOOK_VM_VIRTUAL_THREAD_END, jvmtiHookVirtualThreadDestroy, OMR_GET_CALLSITE(), j9env)) {
+	if (hookRegister(vmHook, J9HOOK_VM_VIRTUAL_THREAD_DESTROY, jvmtiHookVirtualThreadDestroy, OMR_GET_CALLSITE(), j9env)) {
 		return 1;
 	}
 #endif /* JAVA_SPEC_VERSION >= 19 */
