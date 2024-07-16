@@ -4887,7 +4887,7 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
       {
       newState = IDLE_STATE;
       }
-   else if (persistentInfo->isClassLoadingPhase()) // new classe being injected into the system
+   else if (persistentInfo->isClassLoadingPhase()) // new class being injected into the system
       {
       newState = STARTUP_STATE;
       if (oldState != STARTUP_STATE)
@@ -5022,6 +5022,14 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
 
 
    // Enable/disable GCR counting
+   // We will take into account the JIT startup state only if TR_LookAtJitStateForGCREnablement
+   // environment variable is defined, or if the JVM is not a JITServer client
+   static char *lookAtJitStateForGCREnablementEnvVar = feGetEnv("TR_LookAtJitStateForGCREnablement");
+   bool lookAtJitStateForGCREnablement = (lookAtJitStateForGCREnablementEnvVar != NULL)
+#if defined(J9VM_OPT_JITSERVER)
+                                         || (persistentInfo->getRemoteCompilationMode() != JITServer::CLIENT)
+#endif /* defined(J9VM_OPT_JITSERVER) */
+                                         ;
    if (!TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableGuardedCountingRecompilations) &&
        !TR::Options::getJITCmdLineOptions()->getOption(TR_DisableGuardedCountingRecompilations))
       {
@@ -5031,12 +5039,14 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
          if (TR::Options::getAOTCmdLineOptions()->getOption(TR_EnableMultipleGCRPeriods) ||
              TR::Options::getJITCmdLineOptions()->getOption(TR_EnableMultipleGCRPeriods))
             {
-            if (newState != STARTUP_STATE &&  // Do not enable GCR counting during JIT startup
-               javaVM->phase == J9VM_PHASE_NOT_STARTUP && // Do not enable GCR counting during VM startup
-               newState != DEEPSTEADY_STATE && // Do not enable GCR counting during DEEPSTEADY
-               crtElapsedTime - lastTimeInJITStartupMode > TR::Options::_waitTimeToGCR &&
-               // Do not enable GCR counting if we already have a large number of queued GCR requests
-               compInfo->getNumGCRRequestsQueued() <= TR::Options::_GCRQueuedThresholdForCounting-GCR_HYSTERESIS)
+            if (javaVM->phase == J9VM_PHASE_NOT_STARTUP && // Do not enable GCR counting during VM startup
+                newState != DEEPSTEADY_STATE && // Do not enable GCR counting during DEEPSTEADY
+                // Do not enable GCR counting if we already have a large number of queued GCR requests
+                compInfo->getNumGCRRequestsQueued() <= TR::Options::_GCRQueuedThresholdForCounting-GCR_HYSTERESIS &&
+                // If so configured, do not enable GCR counting during JIT startup or immediately after
+                (!lookAtJitStateForGCREnablement || (newState != STARTUP_STATE &&
+                 crtElapsedTime - lastTimeInJITStartupMode > TR::Options::_waitTimeToGCR))
+               )
                enable = true;
             }
          else // Old scheme
@@ -5057,7 +5067,7 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
          if ((TR::Options::getAOTCmdLineOptions()->getOption(TR_EnableMultipleGCRPeriods) ||
               TR::Options::getJITCmdLineOptions()->getOption(TR_EnableMultipleGCRPeriods))
             && // stop counting if STARTUP, DEEPSTEADY or too many queued GCR requests
-             (newState == STARTUP_STATE ||
+             ((lookAtJitStateForGCREnablement && newState == STARTUP_STATE) ||
               newState == DEEPSTEADY_STATE ||
               compInfo->getNumGCRRequestsQueued() > TR::Options::_GCRQueuedThresholdForCounting+GCR_HYSTERESIS)
             )
