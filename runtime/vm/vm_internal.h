@@ -684,6 +684,25 @@ memcpyFromHeapArray(J9VMThread *currentThread, j9object_t arrayObject, jboolean 
 void
 memcpyToHeapArray(J9VMThread *currentThread, j9object_t arrayObject, void *elems, jint mode, jboolean ensureMem32);
 
+/* ------------------- EnsureHashedConfig.cpp ----------------- */
+
+/**
+ * @brief This should be called to clean up the utf8String configuration.
+ *
+ * @param jvm pointer to J9JavaVM that can be used by the method
+ */
+void
+cleanupEnsureHashedConfig(J9JavaVM *jvm);
+
+/**
+ * @brief This function parses a string containing utf8String options.
+ *
+ * @param options string containing the options specified on the command line
+ * @returns JNI_OK on success
+ */
+UDATA
+parseEnsureHashedConfig(J9JavaVM *jvm, char *options, BOOLEAN isAdd);
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
