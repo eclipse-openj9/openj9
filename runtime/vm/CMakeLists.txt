@@ -95,6 +95,7 @@ set(main_sources
 	description.c
 	dllsup.c
 	drophelp.c
+	EnsureHashedConfig.cpp
 	exceptiondescribe.c
 	exceptionsupport.c
 	extendedMessageNPE.cpp
