@@ -862,7 +862,7 @@ def build_all() {
                 timeout(time: 5, unit: 'HOURS') {
                     if ("${DOCKER_IMAGE}") {
                         // TODO: remove this workaround when https://github.com/adoptium/infrastructure/issues/3597 resolved. related: infra 9292
-                        if ((SDK_VERSION.toInteger() >= 17 && PLATFORM ==~ /x86-64_linux.*/) || (PLATFORM ==~ /ppc64le_linux.*/ )) {
+                        if ( (PLATFORM ==~ /x86-64_linux.*/ && (SDK_VERSION.toLowerCase() == 'next' || SDK_VERSION.toInteger() >= 17)) || (PLATFORM ==~ /ppc64le_linux.*/ )) {
                             create_docker_image_locally()
                         }
                         prepare_docker_environment()
