@@ -4706,6 +4706,7 @@ void memoryDisclaimLogic(TR::CompilationInfo *compInfo, uint64_t crtElapsedTime,
              crtElapsedTime > lastDataCacheDisclaimTime + 12 * TR::Options::_minTimeBetweenMemoryDisclaims)
             {
             disclaimDataCaches(crtElapsedTime);
+            javaVM->internalVMFunctions->disclaimAllClassMemory(javaVM);
             lastDataCacheDisclaimTime = crtElapsedTime; // Update the time when disclaim was last performed
             lastNumAllocatedDataCaches = TR_DataCacheManager::getManager()->numAllocatedCaches();
             }
