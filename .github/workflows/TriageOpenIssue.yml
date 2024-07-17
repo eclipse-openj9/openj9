@@ -1,0 +1,43 @@
+name: Triager on Opened issues
+run-name: Triage Opened Issue
+
+on:
+    issues:
+        types: [opened]
+
+jobs:
+  issue_opened:
+      name: Issue Opened
+      runs-on: ubuntu-latest
+      steps:
+        - name: Check out repository
+          uses: actions/checkout@v4
+          with:
+            repository: eclipse-openj9/openj9
+            ref: master
+
+        - name: Set up Node.js
+          uses: actions/setup-node@v4
+          with:
+            node-version: '18'
+
+        - name: Install dependencies
+          run: npm install axios@0.28.0 @actions/github @actions/core
+
+        - name: Extract issue details
+          id: extract_issue
+          uses: actions/github-script@v4
+          with:
+              github-token: ${{ secrets.GITHUB_TOKEN }}
+              script: |
+                  core.setOutput('issue_title', context.payload.issue.title);
+                  core.setOutput('issue_description', context.payload.issue.body);
+                  core.setOutput('issue_number', context.issue.number.toString());
+
+        - name: Run recommendations
+          run: node .github/recommendation.js
+          env:
+            ISSUE_TITLE: ${{ steps.extract_issue.outputs.issue_title }}
+            ISSUE_DESCRIPTION: ${{ steps.extract_issue.outputs.issue_description }}
+            ISSUE_NUMBER: ${{ steps.extract_issue.outputs.issue_number }}
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

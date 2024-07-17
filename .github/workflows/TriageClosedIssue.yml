@@ -1,0 +1,82 @@
+name: Triager on Closed issues
+run-name: TriagerX for closed Issue
+
+on:
+  issues:
+    types: [closed]
+
+jobs:
+  issue_closed:
+    name: Issue Closed
+    runs-on: ubuntu-latest
+    steps:
+      - name: Commenting on the issue
+        uses: actions/github-script@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { data: issueData } = await github.issues.get({
+              issue_number: context.payload.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo
+            });
+
+            const commentsUrl = issueData.comments_url;
+            const { data: commentsData } = await github.request(commentsUrl);
+
+            const sandboxIssueNumber = 19673;
+            const sandboxOwner = context.repo.owner;
+            const sandboxRepo = context.repo.repo;
+
+            const actualLabels = issueData.labels.map(label => label['name']);
+            let resultString = `Issue number: ${context.issue.number}\n`;
+            resultString += 'Status: Closed\n';
+            if (actualLabels.length > 0) {
+              resultString += `Actual components: ${actualLabels.join(', ')}\n`;
+            } else {
+              resultString += `Actual components: None :(\n`;
+            }
+
+            // Check if there is a closed/merged pull request associated with the issue
+            // Check if the pull request has been merged
+
+            let actualAssignees = [];
+            const timeline = await github.issues.listEventsForTimeline({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            let prAssignees = [];
+            timeline.data.forEach(event => {
+              if (event.event === 'cross-referenced' && event.source && event.source.issue.pull_request) {
+                const pr = event.source.issue;
+                if (pr.state === 'closed' || pr.merged === true) {
+                  prAssignees.push(pr.user.login);
+                }
+              }
+            });
+
+            if (issueData.assignees.length != 0) {
+              const assignees = issueData.assignees.map(assignee => assignee.login);
+              actualAssignees.concat(assignees);
+            }
+            if (actualAssignees.length > 0) {
+              resultString += `Actual assignees: ${actualAssignees.join(', ')}\n`;
+            } else {
+              resultString += `Actual assignees: No one :(\n`;
+            }
+
+            if (prAssignees.length > 0) {
+              resultString += `PR assignees: ${prAssignees.join(', ')}`;
+            } else {
+              resultString += `PR assignees: No one :(`;
+            }
+
+            await github.issues.createComment({
+              issue_number: sandboxIssueNumber,
+              owner: sandboxOwner,
+              repo: sandboxRepo,
+              body: resultString,
+              body: resultString,
+            });

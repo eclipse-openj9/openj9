@@ -1,0 +1,63 @@
+name: Run when "triagerx" is mentioned in an issue comment
+run-name: Triagerx Trigger
+
+on:
+  issue_comment:
+      types: [created]
+
+jobs:
+  triagerx_trigger:
+    runs-on: ubuntu-latest
+    if: startsWith(github.event.comment.body, 'triagerx')
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          repository: eclipse-openj9/openj9
+          ref: master
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Node Version
+        run: node --version
+
+      - name: Install dependencies
+        run: npm install axios@0.28.0 @actions/github @actions/core
+
+      - name: Extract issue details
+        id: extract_issue
+        uses: actions/github-script@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const commentBody = context.payload.comment.body;
+            const restCommentBody = commentBody.replace('triagerx', '');
+
+            let issueUrl = commentBody.includes('https') ? restCommentBody.trim() : context.payload.issue.html_url;
+            let issueNumber = issueUrl.split('/').pop();
+            let issueOwner = issueUrl.split('/')[3];
+            let issueRepo = issueUrl.split('/')[4];
+
+            const { data: issueData } = await github.issues.get({
+              issue_number: issueNumber,
+              owner: issueOwner,
+              repo: issueRepo
+            });
+
+            const issueTitle = issueData.title;
+            const issueDescription = issueData.body;
+
+            core.setOutput('issue_title', issueTitle);
+            core.setOutput('issue_description', issueDescription);
+            core.setOutput('issue_number', issueNumber);
+
+      - name: Run recommendations
+        run: node .github/recommendation.js
+        env:
+          ISSUE_TITLE: ${{ steps.extract_issue.outputs.issue_title }}
+          ISSUE_DESCRIPTION: ${{ steps.extract_issue.outputs.issue_description }}
+          ISSUE_NUMBER: ${{ steps.extract_issue.outputs.issue_number }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
