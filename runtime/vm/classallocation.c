@@ -208,7 +208,7 @@ allocateClassLoader(J9JavaVM *javaVM)
 }
 
 
-void  
+void
 freeClassLoader(J9ClassLoader *classLoader, J9JavaVM *javaVM, J9VMThread *vmThread, UDATA needsFrameBuild)
 {
 #ifdef J9VM_GC_DYNAMIC_CLASS_UNLOADING
@@ -259,7 +259,7 @@ freeClassLoader(J9ClassLoader *classLoader, J9JavaVM *javaVM, J9VMThread *vmThre
 			classLoader->hotFieldPoolMutex = NULL;
 		}
 	}
-	
+
 	/* free the class path entries allocated for system and non-system class loaders */
 	if (javaVM->systemClassLoader == classLoader) {
 		if (NULL != classLoader->classPathEntries) {
@@ -300,7 +300,7 @@ freeClassLoader(J9ClassLoader *classLoader, J9JavaVM *javaVM, J9VMThread *vmThre
 		if (NULL != nativeLibrary) {
 			Assert_VM_mustHaveVMAccess(vmThread);
 		}
-		
+
 		while (NULL != nativeLibrary) {
 			BOOLEAN unloadPerformed = FALSE;
 
@@ -385,9 +385,7 @@ freeClassLoader(J9ClassLoader *classLoader, J9JavaVM *javaVM, J9VMThread *vmThre
 	}
 
 	if (NULL != classLoader->jniIDs) {
-		if (J9_ARE_NO_BITS_SET(javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_NEVER_KEEP_JNI_IDS)
-		&& (classLoader->asyncGetCallTraceUsed || J9_ARE_ANY_BITS_SET(javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ALWAYS_KEEP_JNI_IDS))
-		) {
+		if (J9VM_SHOULD_CLEAR_JNIIDS_FOR_ASGCT(javaVM, classLoader)) {
 			pool_state idWalkState;
 			J9GenericJNIID *jniID = pool_startDo(classLoader->jniIDs, &idWalkState);
 
@@ -419,7 +417,7 @@ freeClassLoader(J9ClassLoader *classLoader, J9JavaVM *javaVM, J9VMThread *vmThre
 			moduleExtraInfoPtr = (J9ModuleExtraInfo *)hashTableNextDo(&moduleExtraInfoWalkState);
 		}
 		hashTableFree(classLoader->moduleExtraInfoHashTable);
-		classLoader->moduleExtraInfoHashTable = NULL;	
+		classLoader->moduleExtraInfoHashTable = NULL;
 	}
 	if (NULL != classLoader->classLocationHashTable) {
 		hashTableFree(classLoader->classLocationHashTable);

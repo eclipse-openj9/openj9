@@ -383,7 +383,7 @@ JNICALL throwNew(JNIEnv *env, jclass clazz, const char *message)
 {
 	jmethodID constructor;
 	jobject throwable;
-	
+
 	if (message) {
 		jstring messageObject;
 		constructor = getMethodID(env, clazz, "<init>", "(Ljava/lang/String;)V");
@@ -470,7 +470,7 @@ void JNICALL gpCheckInitialize(J9VMThread* env, J9Class* clazz)
 
 
 
-void   
+void
 gpCheckCallin(JNIEnv *env, jobject receiver, jclass cls, jmethodID methodID, void* args)
 {
 	J9RedirectedCallInArgs handlerArgs;
@@ -1882,9 +1882,9 @@ retry:
 				UDATA inconsistentData = 0;
 				id = getJNIFieldID(vmThread, declaringClass, (J9ROMFieldShape *) element, offset, &inconsistentData);
 				if (0 != inconsistentData) {
-					/* declaringClass->romClass & element are inconsistent due to 
+					/* declaringClass->romClass & element are inconsistent due to
 					 * class redefinition. Retry the operation and hope a redefinition
-					 * doesn't occur again 
+					 * doesn't occur again
 					 */
 					goto retry;
 				}
@@ -2056,8 +2056,8 @@ fail:
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 			if (J9_IS_J9CLASS_VALUETYPE(badClass)) {
 				setCurrentExceptionNLSWithArgs(vmThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE, J9VMCONSTANTPOOL_JAVALANGIDENTITYEXCEPTION, J9UTF8_LENGTH(badClassName), J9UTF8_DATA(badClassName));
-			} else 
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */		
+			} else
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			{
 				Assert_VM_true(J9_ARE_ALL_BITS_SET(vmThread->javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_VALUE_BASED_EXCEPTION));
 				setCurrentExceptionNLSWithArgs(vmThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED, J9VMCONSTANTPOOL_JAVALANGVIRTUALMACHINEERROR, J9UTF8_LENGTH(badClassName), J9UTF8_DATA(badClassName));
@@ -2159,7 +2159,7 @@ ensureJNIIDTable(J9VMThread *currentThread, J9Class* clazz)
 	jniIDs = clazz->jniIDs;
 	if (jniIDs == NULL) {
 		J9ROMClass * romclass = clazz->romClass;
-		UDATA size = (romclass->romMethodCount + romclass->romFieldCount) * sizeof(void *);
+		UDATA size = J9VM_NUM_OF_ENTRIES_IN_CLASS_JNIID_TABLE(romclass) * sizeof(void *);
 
 		jniIDs = (void**)j9mem_allocate_memory(size, J9MEM_CATEGORY_JNI);
 		if (jniIDs != NULL) {
@@ -2470,7 +2470,7 @@ getModule(JNIEnv *env, jclass clazz)
 {
 	J9VMThread *vmThread = (J9VMThread *) env;
 	jobject module = NULL;
-	
+
 	VM_VMAccess::inlineEnterVMFromJNI(vmThread);
 	if (NULL == clazz) {
 		setCurrentExceptionUTF(vmThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
@@ -2688,7 +2688,7 @@ defineClass(JNIEnv *env, const char *name, jobject loader, const jbyte *buf, jsi
 					}
 				}
 			}
-			
+
 			result = (jclass)VM_VMHelpers::createLocalRef(env, J9VM_J9CLASS_TO_HEAPCLASS(clazz));
 		}
 

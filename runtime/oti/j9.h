@@ -416,4 +416,9 @@ static_assert((LITERAL_STRLEN(J9_UNMODIFIABLE_CLASS_ANNOTATION) < (size_t)'/'), 
 #endif /* __cplusplus */
 #endif /* 0 */
 
+#define J9VM_NUM_OF_ENTRIES_IN_CLASS_JNIID_TABLE(romclass) ((romclass)->romMethodCount + (romclass)->romFieldCount)
+
+#define J9VM_SHOULD_CLEAR_JNIIDS_FOR_ASGCT(vm, classLoader) (J9_ARE_NO_BITS_SET((vm)->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_NEVER_KEEP_JNI_IDS) \
+		&& ((classLoader)->asyncGetCallTraceUsed || J9_ARE_ANY_BITS_SET((vm)->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ALWAYS_KEEP_JNI_IDS)))
+
 #endif /* J9_H */
