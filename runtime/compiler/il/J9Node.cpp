@@ -66,7 +66,7 @@ J9::Node::Node(TR::Node *originatingByteCodeNode, TR::ILOpCodes op, uint16_t num
        + self()->hasBranchDestinationNode()
        + self()->hasBlock()
        + self()->hasArrayStride()
-       + self()->hasPinningArrayPointer()
+       + (self()->hasPinningArrayPointer() && !self()->supportsPinningArrayPointerInNodeExtension())
        + self()->hasDataType() <= 1,
          "_unionPropertyA union is not disjoint for this node %s (%p):\n"
          "  has({SymbolReference, ...}, ..., DataType) = ({%1d,%1d},%1d,%1d,%1d,%1d,%1d)\n",
@@ -76,7 +76,7 @@ J9::Node::Node(TR::Node *originatingByteCodeNode, TR::ILOpCodes op, uint16_t num
          self()->hasBranchDestinationNode(),
          self()->hasBlock(),
          self()->hasArrayStride(),
-         self()->hasPinningArrayPointer(),
+         (self()->hasPinningArrayPointer() && !self()->supportsPinningArrayPointerInNodeExtension()),
          self()->hasDataType());
 
    // check that _unionPropertyB union is disjoint
