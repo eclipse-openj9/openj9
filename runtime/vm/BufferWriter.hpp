@@ -31,11 +31,11 @@ class VM_BufferWriter {
 	 * Data members
 	 */
 	private:
-	U_8* _buffer;
-	U_8* _cursor;
+	U_8 *_buffer;
+	U_8 *_cursor;
 	UDATA _size;
 
-	U_8* _maxCursor;
+	U_8 *_maxCursor;
 
 #if defined(J9VM_ENV_LITTLE_ENDIAN)
 	static const bool _isLE = true;
@@ -91,26 +91,26 @@ class VM_BufferWriter {
 	public:
 
 	VM_BufferWriter(U_8 *buffer, UDATA size)
-	: _buffer(buffer)
-	, _cursor(buffer)
-	, _size(size)
+		: _buffer(buffer)
+		, _cursor(buffer)
+		, _size(size)
+		, _maxCursor(NULL)
 	{
-		_maxCursor = NULL;
 	}
 
 	U_64
-	getFileOffset(U_8* bufferOffset, U_8* from)
+	getFileOffset(U_8 *bufferOffset, U_8 *from)
 	{
 		return (U_64)((UDATA)bufferOffset - (UDATA)from);
 	}
 
 	U_64
-	getFileOffsetFromStart(U_8* bufferOffset)
+	getFileOffsetFromStart(U_8 *bufferOffset)
 	{
 		return getFileOffset(bufferOffset, _buffer);
 	}
 
-	U_8*
+	U_8 *
 	getBufferStart()
 	{
 		return _buffer;
@@ -136,7 +136,7 @@ class VM_BufferWriter {
 		if (_isLE) {
 			newVal = byteSwap(val);
 		}
-		*(U_16*)_cursor = newVal;
+		*(U_16 *)_cursor = newVal;
 		_cursor += sizeof(U_16);
 	}
 
@@ -147,7 +147,7 @@ class VM_BufferWriter {
 		if (_isLE) {
 			newVal = byteSwap(val);
 		}
-		*(U_32*)_cursor = newVal;
+		*(U_32 *)_cursor = newVal;
 		_cursor += sizeof(U_32);
 	}
 
@@ -158,7 +158,7 @@ class VM_BufferWriter {
 		if (_isLE) {
 			newVal = byteSwap(val);
 		}
-		*(U_64*)_cursor = newVal;
+		*(U_64 *)_cursor = newVal;
 		_cursor += sizeof(U_64);
 	}
 
@@ -169,21 +169,22 @@ class VM_BufferWriter {
 		_cursor += size;
 	}
 
-	U_8*
+	U_8 *
 	getAndIncCursor(UDATA size)
-	 {
+	{
 		U_8 *old = _cursor;
 		_cursor += size;
 
 		return old;
 	}
 
-	U_8*
+	U_8 *
 	getCursor()
 	{
 		return _cursor;
 	}
-	U_8*
+
+	U_8 *
 	getMaxCursor()
 	{
 		if ((UDATA)_cursor > (UDATA)_maxCursor) {
@@ -193,7 +194,7 @@ class VM_BufferWriter {
 	}
 
 	void
-	setCursor(U_8* cursor)
+	setCursor(U_8 *cursor)
 	{
 		getMaxCursor();
 		_cursor = cursor;
@@ -214,13 +215,13 @@ class VM_BufferWriter {
 				byte |= 0x80;
 			}
 			writeU8(byte);
-		} while(newVal > 0);
+		} while (newVal > 0);
 	}
 
 	void
-	writeLEB128PaddedU64(U_8* cursor, U_64 val)
+	writeLEB128PaddedU64(U_8 *cursor, U_64 val)
 	{
-		U_8* old = _cursor;
+		U_8 *old = _cursor;
 		_cursor = cursor;
 		writeLEB128PaddedU64(val);
 		_cursor = old;
@@ -244,9 +245,9 @@ class VM_BufferWriter {
 	}
 
 	void
-	writeLEB128PaddedU32(U_8* cursor, U_32 val)
+	writeLEB128PaddedU32(U_8 *cursor, U_32 val)
 	{
-		U_8* old = _cursor;
+		U_8 *old = _cursor;
 		_cursor = cursor;
 		writeLEB128PaddedU32(val);
 		_cursor = old;
@@ -266,11 +267,9 @@ class VM_BufferWriter {
 	}
 
 	static U_32
-	convertFromLEB128ToU32(U_8* start)
+	convertFromLEB128ToU32(U_8 *start)
 	{
-		U_32 val = 0;
-
-		val = *start & 0x7F;
+		U_32 val = *start & 0x7F;
 
 		if (J9_ARE_ALL_BITS_SET(*start, 0x80)) {
 			start++;
@@ -293,11 +292,9 @@ class VM_BufferWriter {
 	}
 
 	static U_64
-	convertFromLEB128ToU64(U_8* start)
+	convertFromLEB128ToU64(U_8 *start)
 	{
-		U_64 val = 0;
-
-		val = *start & 0x7F;
+		U_64 val = *start & 0x7F;
 
 		if (J9_ARE_ALL_BITS_SET(*start, 0x80)) {
 			start++;
