@@ -87,7 +87,8 @@ public:
       std::vector<J9ROMMethod *>,        // 21: _origROMMethods
       std::string,                       // 22: _classNameIdentifyingLoader
       int32_t,                           // 23: _arrayElementSize
-      j9object_t *                       // 24: _defaultValueSlotAddress
+      j9object_t *,                      // 24: _defaultValueSlotAddress
+      std::string                        // 25: optional hash of packedROMClass
       >;
 
    // Packs a ROMClass to be transferred to the server.
@@ -107,7 +108,7 @@ public:
    static J9ROMClass *getRemoteROMClassIfCached(ClientSessionData *clientSessionData, J9Class *clazz);
    static J9ROMClass *getRemoteROMClass(J9Class *clazz, JITServer::ServerStream *stream,
                                         TR_PersistentMemory *persistentMemory, ClassInfoTuple &classInfoTuple);
-   static J9ROMClass *romClassFromString(const std::string &romClassStr, TR_PersistentMemory *persistentMemory);
+   static J9ROMClass *romClassFromString(const std::string &romClassStr, const std::string &romClassHashStr, TR_PersistentMemory *persistentMemory);
    static bool getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *clientSessionData,
                                        JITServer::ServerStream *stream, ClassInfoDataType dataType, void *data);
    static bool getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *clientSessionData,

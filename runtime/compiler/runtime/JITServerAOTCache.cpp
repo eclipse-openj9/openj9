@@ -814,40 +814,48 @@ JITServerAOTCache::getClassRecord(const AOTCacheClassLoaderRecord *classLoaderRe
    auto cache = compInfo->getJITServerSharedROMClassCache();
 
    JITServerROMClassHash hash;
-   size_t size = 0;
    //NOTE: Assuming array classes are not runtime-generated
    size_t prefixLength = numDimensions ? 0 : JITServerHelpers::getGeneratedClassNamePrefixLength(romClass);
-   if (prefixLength)
-      {
-      // The class is runtime-generated. Re-pack the romClass to compute its deterministic hash.
-      J9ROMClass *packedROMClass;
-      if (scratchSegmentProvider)
-         {
-         // Called from outside of a compilation. Use supplied scratchSegmentProvider for scratch memory allocations.
-         size_t segmentSize = scratchSegmentProvider->getPreferredSegmentSize();
-         if (!segmentSize)
-            segmentSize = 1 << 24/*16 MB*/;
-         TR::RawAllocator rawAllocator(compInfo->getJITConfig()->javaVM);
-         J9::SystemSegmentProvider segmentProvider(1 << 16/*64 KB*/, segmentSize, TR::Options::getScratchSpaceLimit(),
-                                                   *scratchSegmentProvider, rawAllocator);
-         TR::Region region(segmentProvider, rawAllocator);
-         TR_Memory trMemory(*compInfo->persistentMemory(), region);
-         packedROMClass = JITServerHelpers::packROMClass(romClass, &trMemory, NULL, size, 0, prefixLength);
-         }
-      else
-         {
-         TR_ASSERT(TR::comp(), "Must be inside a compilation");
-         TR_Memory *trMemory = TR::comp()->trMemory();
-         TR::StackMemoryRegion region(*trMemory);
-         packedROMClass = JITServerHelpers::packROMClass(romClass, trMemory, NULL, size, 0, prefixLength);
-         }
 
-      hash = JITServerROMClassHash(packedROMClass);
+   if (cache)
+      {
+      hash = cache->getHash(romClass);
       }
    else
       {
-      hash = cache ? cache->getHash(romClass) : JITServerROMClassHash(romClass);
-      size = romClass->romSize;
+      const J9ROMClass *packedROMClass;
+      if (prefixLength)
+         {
+         // The class is runtime-generated. Re-pack the romClass to compute its deterministic hash.
+         if (scratchSegmentProvider)
+            {
+            // Called from outside of a compilation. Use supplied scratchSegmentProvider for scratch memory allocations.
+            size_t segmentSize = scratchSegmentProvider->getPreferredSegmentSize();
+            if (!segmentSize)
+               segmentSize = 1 << 24/*16 MB*/;
+            TR::RawAllocator rawAllocator(compInfo->getJITConfig()->javaVM);
+            J9::SystemSegmentProvider segmentProvider(1 << 16/*64 KB*/, segmentSize, TR::Options::getScratchSpaceLimit(),
+                                                      *scratchSegmentProvider, rawAllocator);
+            TR::Region region(segmentProvider, rawAllocator);
+            TR_Memory trMemory(*compInfo->persistentMemory(), region);
+            size_t packedSize = 0;
+            packedROMClass = JITServerHelpers::packROMClass(romClass, &trMemory, NULL, packedSize, 0, prefixLength);
+            }
+         else
+            {
+            TR_ASSERT(TR::comp(), "Must be inside a compilation");
+            TR_Memory *trMemory = TR::comp()->trMemory();
+            TR::StackMemoryRegion region(*trMemory);
+            size_t packedSize = 0;
+            packedROMClass = JITServerHelpers::packROMClass(romClass, trMemory, NULL, packedSize, 0, prefixLength);
+            }
+         }
+      else
+         {
+         packedROMClass = romClass;
+         }
+
+      hash = JITServerROMClassHash(packedROMClass);
       }
 
    if (numDimensions)
@@ -855,7 +863,6 @@ JITServerAOTCache::getClassRecord(const AOTCacheClassLoaderRecord *classLoaderRe
       TR_ASSERT(baseComponent, "Invalid arguments");
       JITServerROMClassHash baseHash = cache ? cache->getHash(baseComponent) : JITServerROMClassHash(baseComponent);
       hash = JITServerROMClassHash(hash, baseHash, numDimensions);
-      size = romClass->romSize;
       }
 
    OMR::CriticalSection cs(_classMonitor);
@@ -867,7 +874,12 @@ JITServerAOTCache::getClassRecord(const AOTCacheClassLoaderRecord *classLoaderRe
    if (!JITServerAOTCacheMap::cacheHasSpace())
       return NULL;
 
-   auto record = AOTCacheClassRecord::create(_nextClassId, classLoaderRecord, hash, size,
+   // The romSize of the packed romClass received from the client is used as the size in the
+   // AOTCacheClassRecord. This will be slightly larger than the deterministic packed size if the romClass
+   // is runtime-generated, but this won't matter as long as we are consistent in what size is used.
+   // This also doesn't currently matter at the client, as runtime-generated classes are looked up by hash
+   // during deserialization, and the size in their class record is never examined.
+   auto record = AOTCacheClassRecord::create(_nextClassId, classLoaderRecord, hash, romClass->romSize,
                                              prefixLength != 0, romClass, baseComponent, numDimensions);
    addToMap(_classMap, _classHead, _classTail, it, getRecordKey(record), record);
    ++_nextClassId;
