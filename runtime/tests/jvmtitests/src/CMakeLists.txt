@@ -200,5 +200,9 @@ target_link_libraries(jvmti_test_src
 )
 
 if(OMR_OS_ZOS)
-	target_compile_options(jvmti_test_src PRIVATE -Wc,DLL,EXPORTALL)
+	if(OMR_TOOLCONFIG STREQUAL "openxl")
+		target_compile_options(jvmti_test_src PRIVATE -fvisibility=default)
+	else()
+		target_compile_options(jvmti_test_src PRIVATE -Wc,DLL,EXPORTALL)
+	endif()
 endif()
