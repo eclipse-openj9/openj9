@@ -1384,6 +1384,16 @@ typedef UDATA (* lookupNativeAddressCallback)(struct J9VMThread *currentThread, 
 	</event>
 
 	<event>
+		<name>J9HOOK_VM_VIRTUAL_THREAD_DESTROY</name>
+		<description>
+			Triggered after J9HOOK_VM_VIRTUAL_THREAD_END to free native resources.
+			currentThread->threadObject is the virtual thread at the point of trigger.
+		</description>
+		<struct>J9VMVirtualThreadDestroyEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+	</event>
+
+	<event>
 		<name>J9HOOK_VM_CRIU_CHECKPOINT</name>
 		<description>Triggered at the end of CRIU checkpoint, just before CRIU dump</description>
 		<once />

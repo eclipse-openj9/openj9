@@ -105,6 +105,7 @@
 
 #define COM_SUN_HOTSPOT_EVENTS_VIRTUAL_THREAD_MOUNT "com.sun.hotspot.events.VirtualThreadMount"
 #define COM_SUN_HOTSPOT_EVENTS_VIRTUAL_THREAD_UNMOUNT "com.sun.hotspot.events.VirtualThreadUnmount"
+#define COM_SUN_HOTSPOT_EVENTS_VIRTUAL_THREAD_DESTROY "com.sun.hotspot.events.VirtualThreadDestroy"
 
 #define OPENJ9_EVENT_VM_CHECKPOINT "openj9.event.VMCheckpoint"
 #define OPENJ9_EVENT_VM_RESTORE "openj9.event.VMRestore"
