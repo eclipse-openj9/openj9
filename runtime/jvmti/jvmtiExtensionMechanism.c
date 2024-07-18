@@ -366,6 +366,12 @@ static const jvmtiParamInfo jvmtiVirtualThreadUnmount_params[] = {
 	{ "jni_env", JVMTI_KIND_IN_PTR, JVMTI_TYPE_JNIENV, JNI_FALSE },
 	{ "thread", JVMTI_KIND_IN, JVMTI_TYPE_JTHREAD, JNI_FALSE }
 };
+
+/* (jvmtiEnv *jvmti_env, jthread thread) */
+static const jvmtiParamInfo jvmtiVirtualThreadDestroy_params[] = {
+	{ "jni_env", JVMTI_KIND_IN_PTR, JVMTI_TYPE_JNIENV, JNI_FALSE },
+	{ "thread", JVMTI_KIND_IN, JVMTI_TYPE_JTHREAD, JNI_FALSE }
+};
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
 #if JAVA_SPEC_VERSION >= 19
@@ -905,6 +911,12 @@ static const J9JVMTIExtensionEventInfo J9JVMTIExtensionEventInfoTable[] = {
 		COM_SUN_HOTSPOT_EVENTS_VIRTUAL_THREAD_UNMOUNT,
 		J9NLS_JVMTI_COM_SUN_HOTSPOT_EVENTS_VIRTUAL_THREAD_UNMOUNT,
 		SIZE_AND_TABLE(jvmtiVirtualThreadUnmount_params),
+	},
+	{
+		J9JVMTI_EVENT_COM_SUN_HOTSPOT_EVENTS_VIRTUAL_THREAD_DESTROY,
+		COM_SUN_HOTSPOT_EVENTS_VIRTUAL_THREAD_DESTROY,
+		J9NLS_JVMTI_COM_SUN_HOTSPOT_EVENTS_VIRTUAL_THREAD_DESTROY,
+		SIZE_AND_TABLE(jvmtiVirtualThreadDestroy_params),
 	},
 #endif /* JAVA_SPEC_VERSION >= 19 */
 #if defined(J9VM_OPT_CRIU_SUPPORT)
