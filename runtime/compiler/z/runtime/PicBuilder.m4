@@ -2323,9 +2323,7 @@ ifdef({ASM_J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
 
 ifdef({J9ZOS390},{dnl
 ifdef({TR_HOST_64BIT},{dnl
-
 ZZ 64bit XPLINK doesn't need call descriptors
-
 },{dnl
 
 ZZ We will share this call descriptor for all calls to
@@ -2352,4 +2350,3 @@ ZZ                                     unprototyped call
 
     END
 })dnl
-

@@ -846,6 +846,6 @@ LCALLDESCDRM      DS    0D           * Dword Boundary
         DC    BL.3'000',BL.5'01001'  * XPLINK Linkage+Returns:double
         DC    BL.6'001000',BL.6'000000',BL.6'000000',BL.6'000000'
 ZZ                                   unprototyped call
-    END
 })dnl
+    END
 })dnl
