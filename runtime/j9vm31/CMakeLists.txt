@@ -58,12 +58,27 @@ set(compile_flags_to_remove
 	"\"-Wa,SYSPARM(BIT64)\""
 	"-DJ9ZOS39064"
 	"-qxplink=noback"
+	"-m64"
 )
+
+if(OMR_TOOLCONFIG STREQUAL "openxl")
+	set(compile_flags_to_append
+		"-m32n"
+		"-mzos-float-kind=ieee"
+		"-Wno-c++11-narrowing"
+	)
+endif()
 
 foreach(flag IN LISTS compile_flags_to_remove)
 	omr_remove_flags(CMAKE_C_FLAGS "${flag}")
 	omr_remove_flags(CMAKE_CXX_FLAGS "${flag}")
 	omr_remove_flags(CMAKE_ASM_FLAGS "${flag}")
+endforeach()
+
+foreach(flag IN LISTS compile_flags_to_append)
+	omr_append_flags(CMAKE_C_FLAGS "${flag}")
+	omr_append_flags(CMAKE_CXX_FLAGS "${flag}")
+	omr_append_flags(CMAKE_ASM_FLAGS "${flag}")
 endforeach()
 
 # Flags to be removed when linking.
