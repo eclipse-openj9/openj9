@@ -226,7 +226,7 @@ public:
 
 private:
    friend class AOTCacheRecord;
-   template<class D, class R, typename... Args> friend class AOTCacheListRecord;
+   friend class AOTCacheClassChainRecord;
 
    ClassChainSerializationRecord(uintptr_t id, size_t length);
    ClassChainSerializationRecord();
@@ -254,7 +254,7 @@ public:
 
 private:
    friend class AOTCacheRecord;
-   template<class D, class R, typename... Args> friend class AOTCacheListRecord;
+   friend class AOTCacheWellKnownClassesRecord;
 
    WellKnownClassesSerializationRecord(uintptr_t id, size_t length, uintptr_t includedClasses);
    WellKnownClassesSerializationRecord();
