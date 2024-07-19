@@ -306,7 +306,7 @@ class TR_J9InlinerPolicy : public OMR_InlinerPolicy
        *           needed to perform a more "indirect" reference loading or storing a
        *           static field value for the \c Unsafe method call
        * \param directAccessWithConversionTreeTop A pointer to a \ref TR::TreeTop for
-       *           the IL needed to perform a nearly "direct" reference loading or 
+       *           the IL needed to perform a nearly "direct" reference loading or
        *           storing a value for the \c Unsafe method call, with a conversion
        *           for one or two byte values
        * \param needNullCheck A \bool value indicating whether a \ref TR::NULLCHK
@@ -328,7 +328,7 @@ class TR_J9InlinerPolicy : public OMR_InlinerPolicy
                                   TR::TreeTop* prevTreeTop, TR::SymbolReference* newSymbolReferenceForAddress,
                                   TR::TreeTop* directAccessTreeTop, TR::TreeTop* arraydirectAccessTreeTop,
                                   TR::TreeTop* indirectAccessTreeTop, TR::TreeTop* directAccessWithConversionTreeTop,
-                                  bool needNullCheck, bool isUnsafeGet, bool conversionNeeded, 
+                                  bool needNullCheck, bool isUnsafeGet, bool conversionNeeded,
                                   bool arrayBlockNeeded, bool typeTestsNeeded, TR::Node* orderedCallNode);
       virtual bool callMustBeInlined(TR_CallTarget *calltarget);
       virtual bool callMustBeInlinedInCold(TR_ResolvedMethod *method);
