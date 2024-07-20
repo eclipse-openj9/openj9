@@ -504,7 +504,7 @@ STFPCHKF26 DS 0H
          AFI 15,-4              we've handled 4 bytes
          AFI 7,4                advance 4 bytes into argarea
 
-         B STRCTLP              copy rest of struct
+         B CPXMRG               copy rest of struct
 
 STFPCHKF202 DS 0H
          LE 0,0(6,13)           first float
@@ -516,7 +516,7 @@ STFPCHKF202 DS 0H
          AFI 15,-8              we've handled 8 bytes (all the struct)
          AFI 7,8                bump local storage by 8 bytes
 
-         B STRCTLP
+         B CPXMRG
 
 STFPCHKF224 DS 0H
          LE 2,0(6,13)           first float
@@ -528,7 +528,7 @@ STFPCHKF224 DS 0H
          AFI 15,-8              we've handled 8 bytes (all the struct)
          AFI 7,8                bump local storage by 8 bytes
 
-         B STRCTLP
+         B CPXMRG
 
 
 STFPCHKF246 DS 0H
@@ -541,7 +541,7 @@ STFPCHKF246 DS 0H
          AFI 15,-8              we've handled 8 bytes (all the struct)
          AFI 7,8                bump local storage by 8 bytes
 
-         B STRCTLP
+         B CPXMRG
 
 CPXD     DS 0H
          CFI 14,4               no FPRs are available
@@ -571,7 +571,7 @@ STFPCHKD26 DS 0H
          AFI 15,-8
          AFI 7,8
 
-         B STRCTLP
+         B CPXMRG
 
 STFPCHKD202 DS 0H
          LD 0,0(6,13)           first double
@@ -583,7 +583,7 @@ STFPCHKD202 DS 0H
          AFI 15,-16
          AFI 7,16
 
-         B STRCTLP
+         B CPXMRG
 
 STFPCHKD224 DS 0H
          LD 2,0(6,13)           first double
@@ -595,7 +595,7 @@ STFPCHKD224 DS 0H
          AFI 15,-16
          AFI 7,16
 
-         B STRCTLP
+         B CPXMRG
 
 
 STFPCHKD246 DS 0H
@@ -608,7 +608,7 @@ STFPCHKD246 DS 0H
          AFI 15,-16
          AFI 7,16
 
-         B STRCTLP
+         B CPXMRG
 
 
 *determine how to pass the struct based on size
@@ -727,6 +727,11 @@ BYTE24R3 DS 0H               Struct goes in R3 and Memory
 
          LA 0,3
          B STRCTLP
+
+CPXMRG   DS 0H               Reached max GPRs, set R0 to 3
+         CFI 0,4
+         BL STRCTLP
+         LA 0,3
 
 STRCTLP  DS 0H               Rest of struct goes in Memory
          CFI 15,0            Size remaining > 0?
