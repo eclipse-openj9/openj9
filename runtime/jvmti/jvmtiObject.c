@@ -141,7 +141,7 @@ jvmtiGetObjectMonitorUsage(jvmtiEnv *env,
 
 		vm->internalVMFunctions->acquireExclusiveVMAccess(currentThread);
 
-		owner = getObjectMonitorOwner(vm, *((j9object_t *) object), &count);
+		owner = getObjectMonitorOwner(vm, *((j9object_t *)object), &count);
 		memset(info_ptr, 0, sizeof(jvmtiMonitorUsage));
 
 		if ((NULL != owner) && (NULL != owner->threadObject)
@@ -150,7 +150,7 @@ jvmtiGetObjectMonitorUsage(jvmtiEnv *env,
 #endif /* JAVA_SPEC_VERSION >= 23 */
 		) {
 			j9object_t target = (j9object_t)owner->threadObject;
-			rv_owner = (jthread) vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *)currentThread, target);
+			rv_owner = (jthread)vm->internalVMFunctions->j9jni_createLocalRef((JNIEnv *)currentThread, target);
 			rv_entry_count = (jint)count;
 		}
 
@@ -236,45 +236,44 @@ findMonitorThreads(J9VMThread *vmThread, J9JVMTIMonitorStats *pStats)
 
 		threadState &= ~(J9VMTHREAD_STATE_SUSPENDED | J9VMTHREAD_STATE_INTERRUPTED);
 		switch (threadState) {
-			case J9VMTHREAD_STATE_WAITING:
-			case J9VMTHREAD_STATE_WAITING_TIMED:
-				if (NULL == pStats->waiting) {
-					pStats->numWaiting += 1;
-				} else {
-					if (pStats->waitingCntr < pStats->numWaiting) {
-						pStats->waiting[pStats->waitingCntr] =
-								(jthread) vm->internalVMFunctions->j9jni_createLocalRef(jniEnv, target);
-						pStats->waitingCntr += 1;
-					}
+		case J9VMTHREAD_STATE_WAITING:
+		case J9VMTHREAD_STATE_WAITING_TIMED:
+			if (NULL == pStats->waiting) {
+				pStats->numWaiting += 1;
+			} else {
+				if (pStats->waitingCntr < pStats->numWaiting) {
+					pStats->waiting[pStats->waitingCntr] =
+							(jthread)vm->internalVMFunctions->j9jni_createLocalRef(jniEnv, target);
+					pStats->waitingCntr += 1;
 				}
+			}
 
-				/* CMVC 87023 - the spec is unclear, but from experimentation it appears that 'waiting to be notified' threads
-				 * should appear in both lists.
-				 *
-				 * In JDK23+, these threads no longer appear in both lists. This behaviour will incrementally be backported to
-				 * JDK8/11/17/21 as the RI backports the fix and dependent test changes in their codebase. Backporting this
-				 * behaviour to older JDK versions before the RI will break existing third party tests.
-				 */
+			/* CMVC 87023 - the spec is unclear, but from experimentation it appears that 'waiting to be notified' threads
+			 * should appear in both lists.
+			 *
+			 * In JDK23+, these threads no longer appear in both lists. This behaviour will incrementally be backported to
+			 * JDK8/11/17/21 as the RI backports the fix and dependent test changes in their codebase. Backporting this
+			 * behaviour to older JDK versions before the RI will break existing third party tests.
+			 */
 #if JAVA_SPEC_VERSION >= 23
-				break;
+			break;
 #else /* JAVA_SPEC_VERSION >= 23 */
-				/* FALL THROUGH */
+			/* FALL THROUGH */
 #endif /* JAVA_SPEC_VERSION >= 23 */
-
-			case J9VMTHREAD_STATE_BLOCKED:
-				if (NULL == pStats->blocked) {
-					pStats->numBlocked += 1;
-				} else {
-					if (pStats->blockedCntr < pStats->numBlocked) {
-						pStats->blocked[pStats->blockedCntr] =
-								(jthread) vm->internalVMFunctions->j9jni_createLocalRef(jniEnv, target);
-						pStats->blockedCntr += 1;
-					}
+		case J9VMTHREAD_STATE_BLOCKED:
+			if (NULL == pStats->blocked) {
+				pStats->numBlocked += 1;
+			} else {
+				if (pStats->blockedCntr < pStats->numBlocked) {
+					pStats->blocked[pStats->blockedCntr] =
+							(jthread)vm->internalVMFunctions->j9jni_createLocalRef(jniEnv, target);
+					pStats->blockedCntr += 1;
 				}
-				break;
+			}
+			break;
 
-			default:
-				break;
+		default:
+			break;
 		}
 	}
 }
