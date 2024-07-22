@@ -25,6 +25,7 @@
 #include "jclprots.h"
 #include "j9protos.h"
 #include "j9jclnls.h"
+#include "j9vmnls.h"
 
 jclass 
 defineClassCommon(JNIEnv *env, jobject classLoaderObject,
@@ -100,10 +101,25 @@ defineClassCommon(JNIEnv *env, jobject classLoaderObject,
 			stringFlags |= J9_STR_XLAT;
 		}
 
+		/* Perform maximum length check to avoid copy in extreme cases. */
+		if (J9VMJAVALANGSTRING_LENGTH(currentThread, classNameObject) > J9VM_MAX_CLASS_NAME_LENGTH) {
+			vmFuncs->setCurrentExceptionNLS(currentThread,
+				J9VMCONSTANTPOOL_JAVALANGCLASSNOTFOUNDEXCEPTION,
+				J9NLS_VM_CLASS_NAME_EXCEEDS_MAX_LENGTH);
+			goto done;
+		}
+
 		utf8Name = (U_8*)vmFuncs->copyStringToUTF8WithMemAlloc(currentThread, classNameObject, stringFlags, "", 0, utf8NameStackBuffer, J9VM_PACKAGE_NAME_BUFFER_LENGTH, &utf8Length);
 
 		if (NULL == utf8Name) {
 			vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+			goto done;
+		}
+
+		if (utf8Length > J9VM_MAX_CLASS_NAME_LENGTH) {
+			vmFuncs->setCurrentExceptionNLS(currentThread,
+				J9VMCONSTANTPOOL_JAVALANGCLASSNOTFOUNDEXCEPTION,
+				J9NLS_VM_CLASS_NAME_EXCEEDS_MAX_LENGTH);
 			goto done;
 		}
 

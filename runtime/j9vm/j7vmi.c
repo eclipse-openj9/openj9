@@ -2566,14 +2566,32 @@ jvmDefineClassHelper(JNIEnv *env, jobject classLoaderObject,
 
 	if (NULL != className) {
 		j9object_t classNameObject = J9_JNI_UNWRAP_REFERENCE(className);
+
+		/* Perform maximum length check to avoid copy in extreme cases. */
+		if (J9VMJAVALANGSTRING_LENGTH(currentThread, classNameObject) > J9VM_MAX_CLASS_NAME_LENGTH) {
+			vmFuncs->setCurrentExceptionNLS(currentThread,
+				J9VMCONSTANTPOOL_JAVALANGCLASSNOTFOUNDEXCEPTION,
+				J9NLS_VM_CLASS_NAME_EXCEEDS_MAX_LENGTH);
+			goto done;
+		}
+
 		utf8Name = (U_8*)vmFuncs->copyStringToUTF8WithMemAlloc(currentThread, classNameObject, J9_STR_NULL_TERMINATE_RESULT, "", 0, utf8NameStackBuffer, J9VM_PACKAGE_NAME_BUFFER_LENGTH, &utf8Length);
 		if (NULL == utf8Name) {
 			vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
 			goto done;
 		}
 
+		if (utf8Length > J9VM_MAX_CLASS_NAME_LENGTH) {
+			vmFuncs->setCurrentExceptionNLS(currentThread,
+				J9VMCONSTANTPOOL_JAVALANGCLASSNOTFOUNDEXCEPTION,
+				J9NLS_VM_CLASS_NAME_EXCEEDS_MAX_LENGTH);
+			goto done;
+		}
+
 		if (CLASSNAME_INVALID == vmFuncs->verifyQualifiedName(currentThread, utf8Name, utf8Length, CLASSNAME_VALID_NON_ARRARY)) {
-			vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGNOCLASSDEFFOUNDERROR, (UDATA *)*(j9object_t*)className);
+			vmFuncs->setCurrentException(currentThread,
+				J9VMCONSTANTPOOL_JAVALANGNOCLASSDEFFOUNDERROR,
+				(UDATA *)*(j9object_t *)className);
 			goto done;
 		}
 	}
