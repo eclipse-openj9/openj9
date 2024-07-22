@@ -232,7 +232,7 @@ findMonitorThreads(J9VMThread *vmThread, J9JVMTIMonitorStats *pStats)
 	/* Stopped on the same monitor object? */
 	if (lockObject == pStats->lockObject) {
 		J9JavaVM *vm = pStats->vm;
-		JNIEnv *jniEnv = (JNIEnv *)pStats->currentThread;
+		JNIEnv *jniEnv = (JNIEnv *)currentThread;
 
 		threadState &= ~(J9VMTHREAD_STATE_SUSPENDED | J9VMTHREAD_STATE_INTERRUPTED);
 		switch (threadState) {
