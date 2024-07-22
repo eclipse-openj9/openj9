@@ -47,6 +47,14 @@
 #include "verbosenls.h"
 #endif
 
+#if defined(J9VM_OPT_CRIU_SUPPORT) && defined(LINUX)
+#include <sys/mman.h>
+
+#ifndef MADV_PAGEOUT
+#define MADV_PAGEOUT 21
+#endif /* MADV_PAGEOUT */
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) && defined(LINUX) */
+
 static void trcModulesFreeJ9ModuleEntry(J9JavaVM *javaVM, J9Module *j9module);
 
 void 
@@ -439,3 +447,29 @@ cleanUpClassLoader(J9VMThread *vmThread, J9ClassLoader* classLoader)
 }
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 
+#if defined(J9VM_OPT_CRIU_SUPPORT) && defined(LINUX)
+I_32
+disclaimAllClassMemory(J9JavaVM *vm)
+{
+	I_32 result = 0;
+	J9MemorySegment *segment = NULL;
+	J9ClassLoaderWalkState walkState;
+	J9ClassLoader *classLoader = vm->internalVMFunctions->allClassLoadersStartDo(&walkState, vm, 0);
+	while (NULL != classLoader) {
+		segment = classLoader->classSegments;
+		while (NULL != segment) {
+			Trc_VM_criu_disclaimAllClassMemory_segment(segment, segment->baseAddress, segment->heapBase, segment->size, segment->type);
+			Assert_VM_true(J9_ARE_ANY_BITS_SET(segment->type, MEMORY_TYPE_RAM_CLASS | MEMORY_TYPE_ROM_CLASS));
+			result = madvise(segment->heapBase, segment->size, MADV_PAGEOUT);
+			if (-1 == result) {
+				goto done;
+			}
+			segment = segment->nextSegmentInClassLoader;
+		}
+		classLoader = vm->internalVMFunctions->allClassLoadersNextDo(&walkState);
+	}
+	vm->internalVMFunctions->allClassLoadersEndDo(&walkState);
+done:
+	return result;
+}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) && defined(LINUX) */
