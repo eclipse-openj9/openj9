@@ -25,10 +25,10 @@ async function run() {
 
         const issueComment = response.data;
         const issueNumber = process.env.ISSUE_NUMBER;
-        predictedAssignees = issueComment.recommended_developers;
-        predictedLabels = issueComment.recommended_components;
-
+        let predictedAssignees = issueComment.recommended_developers;
+        let predictedLabels = issueComment.recommended_components;
         let resultString = `Issue Number: ${issueNumber}\n`;
+        
         resultString += 'Status: Open\n';
         resultString += `Recommended Components: ${predictedLabels.join(', ')}\n`;
         resultString += `Recommended Assignees: ${predictedAssignees.join(', ')}\n`;
