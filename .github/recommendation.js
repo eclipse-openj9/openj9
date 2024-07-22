@@ -3,7 +3,7 @@ const core = require('@actions/core');
 const github = require('@actions/github');
 
 async function run() {
-    const sandboxIssueNumber = 19673;
+    const sandboxIssueNumber = 1;
     const sandboxOwner = 'eclipse-openj9';
     const sandboxRepo = 'openj9';
 
