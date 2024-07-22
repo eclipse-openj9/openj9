@@ -179,7 +179,14 @@ getVMThread(J9VMThread *currentThread, jthread thread, J9VMThread **vmThreadPtr,
 				targetThread = carrierVMThread;
 			}
 		}
-		isThreadAlive = (JVMTI_VTHREAD_STATE_NEW != vthreadState) && (JVMTI_VTHREAD_STATE_TERMINATED != vthreadState);
+		j9object_t continuationObj = J9VMJAVALANGVIRTUALTHREAD_CONT(currentThread, threadObject);
+		ContinuationState continuationState = *VM_ContinuationHelpers::getContinuationStateAddress(currentThread, continuationObj);
+		if ((JVMTI_VTHREAD_STATE_NEW != vthreadState)
+		&& (JVMTI_VTHREAD_STATE_TERMINATED != vthreadState)
+		&& !VM_ContinuationHelpers::isFinished(continuationState)
+		) {
+			isThreadAlive = TRUE;
+		}
 	} else
 #endif /* JAVA_SPEC_VERSION >= 19 */
 	{
