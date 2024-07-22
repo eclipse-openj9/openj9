@@ -4,7 +4,7 @@ const github = require('@actions/github');
 
 async function run() {
     const sandboxIssueNumber = 1;
-    const sandboxOwner = 'eclipse-openj9';
+    const sandboxOwner = 'Tigers-X';
     const sandboxRepo = 'openj9';
 
     const input = {
