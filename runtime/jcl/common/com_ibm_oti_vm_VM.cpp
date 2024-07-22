@@ -21,15 +21,17 @@
  *******************************************************************************/
 
 #include <string.h>
-#include "jni.h"
 #include "jcl.h"
 #include "jclglob.h"
 #include "jclprots.h"
-#include "jcl_internal.h"
+#include "jni.h"
+#include "omrlinkedlist.h"
 #include "util_api.h"
+#include "VMHelpers.hpp"
+
+extern "C" {
 
 /* private static native byte[][] getVMArgsImpl(); */
-
 jobjectArray JNICALL
 Java_com_ibm_oti_vm_VM_getVMArgsImpl(JNIEnv *env, jobject recv)
 {
@@ -53,9 +55,9 @@ Java_com_ibm_oti_vm_VM_getVMArgsImpl(JNIEnv *env, jobject recv)
 
 	/* Create the result array and fill it in, including only options that begin with "-" */
 
-	byteArrayClass = (*env)->FindClass(env, "[B");
+	byteArrayClass = env->FindClass("[B");
 	if (NULL != byteArrayClass) {
-		result = (*env)->NewObjectArray(env, resultSize, byteArrayClass, NULL);
+		result = env->NewObjectArray(resultSize, byteArrayClass, NULL);
 		if (NULL != result) {
 			jint writeIndex = 0;
 
@@ -64,15 +66,15 @@ Java_com_ibm_oti_vm_VM_getVMArgsImpl(JNIEnv *env, jobject recv)
 
 				if ('-' == optionString[0]) {
 					jint optionLength = (jint) strlen(optionString);
-					jbyteArray option = (*env)->NewByteArray(env, optionLength);
+					jbyteArray option = env->NewByteArray(optionLength);
 
 					if (NULL == option) {
 						/* Don't use break here to avoid triggering the assertion below */
 						return NULL;
 					}
-					(*env)->SetByteArrayRegion(env, option, 0, optionLength, (jbyte*)optionString);
-					(*env)->SetObjectArrayElement(env, result, writeIndex, option);
-					(*env)->DeleteLocalRef(env, option);
+					env->SetByteArrayRegion(option, 0, optionLength, (jbyte*)optionString);
+					env->SetObjectArrayElement(result, writeIndex, option);
+					env->DeleteLocalRef(option);
 					writeIndex += 1;
 				}
 			}
@@ -190,3 +192,30 @@ Java_com_ibm_oti_vm_VM_isJVMInSingleThreadedMode(JNIEnv *env, jclass unused)
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 	return result;
 }
+
+#if defined(J9VM_OPT_JFR)
+void JNICALL
+Java_com_ibm_oti_vm_VM_triggerExecutionSample(JNIEnv *env, jclass unused) {
+	J9VMThread *currentThread = (J9VMThread *)env;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+	vmFuncs->acquireExclusiveVMAccess(currentThread);
+
+	J9VMThread *walkThread = J9_LINKED_LIST_START_DO(vm->mainThread);
+	while (NULL != walkThread) {
+		if (VM_VMHelpers::threadCanRunJavaCode(walkThread)
+			&& (currentThread != walkThread)
+		) {
+			vmFuncs->jfrExecutionSample(currentThread, walkThread);
+		}
+		walkThread = J9_LINKED_LIST_NEXT_DO(vm->mainThread, walkThread);
+	}
+
+	vmFuncs->releaseExclusiveVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
+}
+#endif /* defined(J9VM_OPT_JFR) */
+
+} /* extern "C" */

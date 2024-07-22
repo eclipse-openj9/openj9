@@ -22,6 +22,7 @@
 
 #include "j9protos.h"
 #include "vm_api.h"
+#include "vm_internal.h"
 #if defined(J9VM_OPT_VM_LOCAL_STORAGE)
 
 #include "j9vmls.h"
@@ -454,4 +455,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 #if defined(J9VM_ZOS_3164_INTEROPERABILITY) && (JAVA_SPEC_VERSION >= 17)
 	invoke31BitJNI_OnXLoad,
 #endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) && (JAVA_SPEC_VERSION >= 17) */
+#if defined(J9VM_OPT_JFR)
+	jfrExecutionSample,
+#endif /* defined(J9VM_OPT_JFR) */
 };

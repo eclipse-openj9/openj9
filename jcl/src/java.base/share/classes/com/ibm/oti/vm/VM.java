@@ -637,4 +637,11 @@ public static ConstantPool getConstantPoolFromAnnotationBytes(Class<?> clazz, by
 public static Properties internalGetProperties() {
 	return getVMLangAccess().internalGetProperties();
 }
+
+/*[IF JFR_SUPPORT]*/
+/**
+ * Trigger ExecutionSample JFR event on all Java threads.
+ */
+public static native void triggerExecutionSample();
+/*[ENDIF] JFR_SUPPORT */
 }

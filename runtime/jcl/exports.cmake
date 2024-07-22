@@ -687,6 +687,12 @@ if(J9VM_OPT_CRIU_SUPPORT)
 	endif()
 endif()
 
+if(J9VM_OPT_JFR)
+	omr_add_exports(jclse
+		Java_com_ibm_oti_vm_VM_triggerExecutionSample
+	)
+endif()
+
 # Java 19 only
 if(JAVA_SPEC_VERSION EQUAL 19)
 	omr_add_exports(jclse
