@@ -284,7 +284,7 @@ elseif(OMR_OS_AIX)
 		-DSUPPORTS_THREAD_LOCAL
 	)
 	if(OMR_ENV_DATA64)
-		if(CMAKE_C_COMPILER_IS_OPENXL)
+		if(OMR_TOOLCONFIG STREQUAL "openxl")
 			list(APPEND J9_SHAREDFLAGS -m64)
 		else()
 			list(APPEND J9_SHAREDFLAGS -q64)
@@ -358,6 +358,10 @@ create_omr_compiler_library(NAME j9jit
 if(OMR_OS_ZOS)
 	# Workaround a compile problem on z/OS by appending "-O" (to override "-O3").
 	set_property(SOURCE "optimizer/VectorAPIExpansion.cpp" APPEND PROPERTY COMPILE_FLAGS "-O")
+	if(OMR_TOOLCONFIG STREQUAL "openxl")
+		# Workaround a Open XL compile problem on z/OS by appending "-O0" (to override "-O3").
+		set_property(SOURCE "runtime/codertinit.cpp" APPEND PROPERTY COMPILE_FLAGS "-O0")
+	endif()
 endif()
 
 add_dependencies(j9jit
