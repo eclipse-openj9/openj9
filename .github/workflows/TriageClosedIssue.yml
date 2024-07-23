@@ -21,7 +21,7 @@ jobs:
               repo: context.repo.repo
             });
 
-            const sandboxIssueNumber = 1;
+            const sandboxIssueNumber = 19673;
             const sandboxOwner = context.repo.owner;
             const sandboxRepo = context.repo.repo;
 
