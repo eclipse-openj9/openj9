@@ -1,5 +1,5 @@
-name: Triager on Closed issues
-run-name: TriagerX for closed Issue
+name: TriagerX for Closed Issue
+run-name: TriagerX for Closed Issue
 
 on:
   issues:
@@ -7,10 +7,10 @@ on:
 
 jobs:
   issue_closed:
-    name: Issue Closed
+    name: Analyzing a closed issue
     runs-on: ubuntu-latest
     steps:
-      - name: Commenting on the issue
+      - name: Collecting data and commenting on the sandbox issue
         uses: actions/github-script@v4
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -31,6 +31,7 @@ jobs:
             const actualLabels = issueData.labels.map(label => label['name']);
             let resultString = `Issue number: ${context.issue.number}\n`;
             resultString += 'Status: Closed\n';
+
             if (actualLabels.length > 0) {
               resultString += `Actual components: ${actualLabels.join(', ')}\n`;
             } else {
@@ -41,13 +42,14 @@ jobs:
             // Check if the pull request has been merged
 
             let actualAssignees = [];
+            let prAssignees = [];
+
             const timeline = await github.issues.listEventsForTimeline({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
             });
 
-            let prAssignees = [];
             timeline.data.forEach(event => {
               if (event.event === 'cross-referenced' && event.source && event.source.issue.pull_request) {
                 const pr = event.source.issue;
@@ -57,10 +59,11 @@ jobs:
               }
             });
 
-            if (issueData.assignees.length != 0) {
+            if (issueData.assignees.length > 0) {
               const assignees = issueData.assignees.map(assignee => assignee.login);
               actualAssignees.concat(assignees);
             }
+
             if (actualAssignees.length > 0) {
               resultString += `Actual assignees: ${actualAssignees.join(', ')}\n`;
             } else {
@@ -77,6 +80,5 @@ jobs:
               issue_number: sandboxIssueNumber,
               owner: sandboxOwner,
               repo: sandboxRepo,
-              body: resultString,
-              body: resultString,
+              body: resultString
             });
