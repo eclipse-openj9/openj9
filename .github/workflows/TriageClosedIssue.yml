@@ -1,5 +1,5 @@
 name: TriagerX for Closed Issues
-run-name: TriagerX for Closed Issue
+run-name: TriagerX for Closed Issues
 
 on:
   issues:
@@ -56,6 +56,7 @@ jobs:
               }
             });
 
+            console.log(issueData.assignees);
             if (issueData.assignees.length > 0) {
               const assignees = issueData.assignees.map(assignee => assignee['login']);
               actualAssignees.concat(assignees);
