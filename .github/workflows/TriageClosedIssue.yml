@@ -56,10 +56,9 @@ jobs:
               }
             });
 
-            console.log(issueData.assignees);
             if (issueData.assignees.length > 0) {
               const assignees = issueData.assignees.map(assignee => assignee['login']);
-              actualAssignees.concat(assignees);
+              actualAssignees = actualAssignees.concat(assignees);
             }
 
             if (actualAssignees.length > 0) {
