@@ -46,10 +46,12 @@ jobs:
 
             const issueTitle = issueData.title;
             const issueDescription = issueData.body;
+            const issueStatus = issueData.state;
 
             core.setOutput('issue_title', issueTitle);
             core.setOutput('issue_description', issueDescription);
             core.setOutput('issue_number', issueNumber);
+            core.setOutput('issue_status', issueStatus);
 
       - name: Run the TriagerX model
         run: node .github/recommendation.js
@@ -57,4 +59,5 @@ jobs:
           ISSUE_TITLE: ${{ steps.extract_issue.outputs.issue_title }}
           ISSUE_DESCRIPTION: ${{ steps.extract_issue.outputs.issue_description }}
           ISSUE_NUMBER: ${{ steps.extract_issue.outputs.issue_number }}
+          ISSUE_STATUS: ${{ steps.extract_issue.outputs.issue_status }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
