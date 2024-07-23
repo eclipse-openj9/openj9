@@ -981,8 +981,8 @@ TR_J9InlinerPolicy::genCodeForUnsafeGetPut(TR::Node* unsafeAddress,
       debugTrace(tracer(), "\t In genCodeForUnsafeGetPut, Block %d created for low tag comparison\n", lowTagCmpBlock->getNumber());
 
       TR::Node *testIsArrayFlag = comp()->fej9()->testIsClassArrayType(vftLoad);
-      TR::Node *flagConstNode = TR::Node::create(testIsArrayFlag, TR::iconst, 0, TR::Compiler->cls.flagValueForArrayCheck(comp()));
-      TR::Node *isArrayNode = TR::Node::createif(TR::ificmpeq, testIsArrayFlag, flagConstNode, NULL);
+      TR::Node *zeroNode = TR::Node::iconst(testIsArrayFlag, 0);
+      TR::Node *isArrayNode = TR::Node::createif(TR::ificmpne, testIsArrayFlag, zeroNode, NULL);
       isArrayTreeTop = TR::TreeTop::create(comp(), isArrayNode, NULL, NULL);
       isArrayBlock = TR::Block::createEmptyBlock(vftLoad, comp(), indirectAccessBlock->getFrequency());
       isArrayBlock->append(isArrayTreeTop);

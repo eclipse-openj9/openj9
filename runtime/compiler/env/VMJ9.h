@@ -1246,30 +1246,39 @@ public:
    /**
     * \brief Load class flags field of the specified class and test whether any of the
     *        specified flags is set.
-    * \param j9ClassRefNode A node representing a reference to a \ref J9Class
-    * \param flagsToTest    The class field flags that are to be checked
+    * \param[in] j9ClassRefNode  A node representing a reference to a \ref J9Class
+    * \param[in] flagsToTest     The class field flags that are to be checked
+    * \param[in] zeroOrOneResult A \c bool flag specifying that the result of the
+    *                            test will be zero or one if the flag is true, or
+    *                            zero or non-zero if the flag is false
     * \return \ref TR::Node that evaluates to a non-zero integer if any of the specified
     *         flags is set; or evaluates to zero, otherwise.
     */
-   TR::Node * testAreSomeClassFlagsSet(TR::Node *j9ClassRefNode, uint32_t flagsToTest);
+   TR::Node * testAreSomeClassFlagsSet(TR::Node *j9ClassRefNode, uint32_t flagsToTest, bool zeroOrOneResult = false);
 
    /**
     * \brief Load class flags field of the specified class and test whether the value type
     *        flag is set.
-    * \param j9ClassRefNode A node representing a reference to a \ref J9Class
+    * \param[in] j9ClassRefNode  A node representing a reference to a \ref J9Class
+    * \param[in] zeroOrOneResult A \c bool flag specifying that the result of the
+    *                            test will be zero or one if the flag is true, or
+    *                            zero or non-zero if the flag is false
     * \return \ref TR::Node that evaluates to a non-zero integer if the class is a value type,
     *         or zero if the class is an identity type
     */
-   TR::Node * testIsClassValueType(TR::Node *j9ClassRefNode);
+   TR::Node * testIsClassValueType(TR::Node *j9ClassRefNode, bool zeroOrOneResult = false);
 
    /**
     * \brief Load class flags field of the specified class and test whether the hasIdentity
     *        flag is set.
-    * \param j9ClassRefNode A node representing a reference to a \ref J9Class
+    * \param[in] j9ClassRefNode  A node representing a reference to a \ref J9Class
+    * \param[in] zeroOrOneResult A \c bool flag specifying that the result of the
+    *                            test will be zero or one if the flag is true, or
+    *                            zero or non-zero if the flag is false
     * \return \ref TR::Node that evaluates to a non-zero integer if the class is an identity type,
     *         or zero otherwise
     */
-   TR::Node * testIsClassIdentityType(TR::Node *j9ClassRefNode);
+   TR::Node * testIsClassIdentityType(TR::Node *j9ClassRefNode, bool zeroOrOneResult = false);
 
    /**
     * \brief Generate IL to load the value of the \c componentType field of the specified
@@ -1292,22 +1301,28 @@ public:
    /**
     * \brief Generate IL to load the \c classDepthAndFlags field of the specified
     *        \ref J9Class, and apply the mask specified by \c flagsToTest.
-    * \param j9ClassRefNode A node representing a reference to a \ref J9Class
-    * \param flagsToTest Flags to use as a mask for the \ref classAndFlags field
+    * \param[in] j9ClassRefNode  A node representing a reference to a \ref J9Class
+    * \param[in] flagsToTest     Flags to use as a mask for the \ref classAndFlags field
+    * \param[in] zeroOrOneResult A \c bool flag specifying that the result of the
+    *                            test will be zero or one if the flag is true, or
+    *                            zero or non-zero if the flag is false
     * \return A \ref TR::Node that produces the result of loading \c classDepthAndFlags
     *         and applying the \c flagsToTest mask to it.
     */
-   TR::Node * testAreSomeClassDepthAndFlagsSet(TR::Node *j9ClassRefNode, uint32_t flagsToTest);
+   TR::Node * testAreSomeClassDepthAndFlagsSet(TR::Node *j9ClassRefNode, uint32_t flagsToTest, bool zeroOrOneResult = false);
 
    /**
     * \brief Generate IL to test whether the specified \ref J9Class is an array class.
-    * \param j9ClassRefNode A node representing a reference to a \ref J9Class
+    * \param[in] j9ClassRefNode  A node representing a reference to a \ref J9Class
+    * \param[in] zeroOrOneResult A \c bool flag specifying that the result of the
+    *                            test will be zero or one if the flag is true, or
+    *                            zero or non-zero if the flag is false
     * \return A \ref TR::Node that will evaluate to zero if the specified \ref J9Class
     *         is not an array class, or the value of
     *         \c TR::Compiler->cls.flagValueForArrayCheck (which is non-zero) if it is
     *         an array class.
     */
-   TR::Node * testIsClassArrayType(TR::Node *j9ClassRefNode);
+   TR::Node * testIsClassArrayType(TR::Node *j9ClassRefNode, bool zeroOrOneResult = false);
 
    /**
     * \brief Test whether any of the specified flags is set on the array's component class
