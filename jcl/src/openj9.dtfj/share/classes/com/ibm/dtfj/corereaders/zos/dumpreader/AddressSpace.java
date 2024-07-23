@@ -416,7 +416,7 @@ public class AddressSpace implements Serializable {
     public short readShort(long address) throws IOException {
         return (short)readUnsignedShort(address);
     }
-    
+
     /**
      * Read an unsigned int at the specified address.
      * @throws IOException if the given address is not present in this address space
@@ -425,7 +425,7 @@ public class AddressSpace implements Serializable {
         long i = readInt(address);
         return i & 0xffffffffL;
     }
-    
+
     /**
      * Read a long at the specified address.
      * @throws IOException if the given address is not present in this address space

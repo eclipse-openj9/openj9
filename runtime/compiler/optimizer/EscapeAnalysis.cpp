@@ -191,7 +191,15 @@ bool TR_EscapeAnalysis::isImmutableObject(TR::Node *node)
       return false;
       }
 
-   char *className = getClassName(node->getFirstChild());
+   TR::Node *classNode = node->getFirstChild();
+
+   TR_OpaqueClassBlock *clazz = (TR_OpaqueClassBlock *)classNode->getSymbol()->getStaticSymbol()->getStaticAddress();
+   if (TR::Compiler->cls.isValueTypeClass(clazz))
+      {
+      return true;
+      }
+
+   char *className = getClassName(classNode);
 
    if (NULL != className &&
           !strncmp("java/lang/", className, 10) &&

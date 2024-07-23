@@ -119,8 +119,12 @@ public:
    */
    void resetAllocationPointers();
 
-   uint8_t * _warmCodeAllocBase; // used to reset the allocation pointers to initial values
-   uint8_t * _coldCodeAllocBase;
+   uint8_t *_warmCodeAllocBase; // used to reset the allocation pointers to initial values
+   uint8_t *_coldCodeAllocBase;
+#ifdef LINUX
+   uint8_t *_smallPageAreaStart; // used for code cache disclaiming to remember where the small page area starts/ends
+   uint8_t *_smallPageAreaEnd;
+#endif
    };
 
 

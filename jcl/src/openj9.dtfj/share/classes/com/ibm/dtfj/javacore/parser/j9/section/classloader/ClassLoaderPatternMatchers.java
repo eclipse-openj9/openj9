@@ -28,7 +28,7 @@ import java.util.regex.Pattern;
 import com.ibm.dtfj.javacore.parser.j9.section.common.CommonPatternMatchers;
 
 public class ClassLoaderPatternMatchers {
-	
+
 	public static final Matcher loader = CommonPatternMatchers.generateMatcher("Loader[ \t]+", Pattern.CASE_INSENSITIVE);
 	public static final Matcher system = CommonPatternMatchers.generateMatcher("\\*System\\*", Pattern.CASE_INSENSITIVE);
 	public static final Matcher shadow = CommonPatternMatchers.generateMatcher("Shadow", Pattern.CASE_INSENSITIVE);
@@ -36,5 +36,4 @@ public class ClassLoaderPatternMatchers {
 	public static final Matcher none = CommonPatternMatchers.generateMatcher("\\*none\\*", Pattern.CASE_INSENSITIVE);
 	public static final Matcher locked = CommonPatternMatchers.generateMatcher("\\[locked\\]", Pattern.CASE_INSENSITIVE);
 
-	
 }

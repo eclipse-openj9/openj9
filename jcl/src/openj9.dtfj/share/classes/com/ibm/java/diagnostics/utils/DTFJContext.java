@@ -41,7 +41,7 @@ import com.ibm.java.diagnostics.utils.plugins.PluginManagerLocator;
 
 /**
  * A DTFJ context within which a DTFJ command executes
- * 
+ *
  * @author adam
  */
 public class DTFJContext extends Context implements IDTFJContext, PluginLoader {
@@ -108,7 +108,7 @@ public class DTFJContext extends Context implements IDTFJContext, PluginLoader {
 		try {
 			pluginManager.refreshSearchPath();
 			pluginManager.scanForClassFiles();
-		} catch (CommandException e) { // may catch a CommandException when loading plugins 
+		} catch (CommandException e) { // may catch a CommandException when loading plugins
 			logger.log(Level.FINE, "Problem loading DTFJ View plugins: " + e.getMessage());
 			logger.log(Level.FINEST, "Problem loading DTFJ View plugins: ", e);
 		}

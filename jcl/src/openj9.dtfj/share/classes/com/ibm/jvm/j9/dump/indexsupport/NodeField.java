@@ -41,7 +41,7 @@ public class NodeField extends NodeAbstract
 		String sig = attributes.getValue("sig");
 		int modifiers = (int)_longFromString(attributes.getValue("modifiers"));
 		int offset = Integer.parseInt(attributes.getValue("offset"));
-		
+
 		theClass.createNewField(name, sig, modifiers, offset, classID);
 	}
 }

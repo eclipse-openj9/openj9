@@ -36,6 +36,10 @@
 #include "j9javaaccessflags.h"
 
 #define J9VM_MAX_HIDDEN_FIELDS_PER_CLASS 8
+/* Class names are stored in the VM as CONSTANT_Utf8_info which stores
+ * length in two bytes.
+ */
+#define J9VM_MAX_CLASS_NAME_LENGTH 0xFFFF
 
 #define J9VM_DLT_HISTORY_SIZE  16
 #define J9VM_OBJECT_MONITOR_CACHE_SIZE  32
@@ -4266,6 +4270,7 @@ typedef struct J9JITConfig {
 	uint64_t clientUID;
 	uint64_t serverUID;
 #endif /* J9VM_OPT_JITSERVER */
+	void (*jitAddNewLowToHighRSSRegion)(const char *name, uint8_t *start, uint32_t size, size_t pageSize);
 } J9JITConfig;
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
@@ -5541,6 +5546,7 @@ typedef struct J9VMThread {
 	j9object_t scopedError;
 	j9object_t closeScopeObj;
 #endif /* JAVA_SPEC_VERSION >= 22 */
+	UDATA unsafeIndexableHeaderSize;
 } J9VMThread;
 
 #define J9VMTHREAD_ALIGNMENT  0x100
@@ -5604,6 +5610,7 @@ typedef struct J9VMThread {
 #define J9VMTHREAD_OBJECT_HEADER_SIZE(vmThread) (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) ? sizeof(J9ObjectCompressed) : sizeof(J9ObjectFull))
 #define J9VMTHREAD_CONTIGUOUS_INDEXABLE_HEADER_SIZE(vmThread) ((vmThread)->contiguousIndexableHeaderSize)
 #define J9VMTHREAD_DISCONTIGUOUS_INDEXABLE_HEADER_SIZE(vmThread) ((vmThread)->discontiguousIndexableHeaderSize)
+#define J9VMTHREAD_UNSAFE_INDEXABLE_HEADER_SIZE(vmThread) ((vmThread)->unsafeIndexableHeaderSize)
 
 typedef struct JFRState {
 	char *jfrFileName;
@@ -6147,6 +6154,7 @@ typedef struct J9JavaVM {
 	omrthread_monitor_t closeScopeMutex;
 	UDATA closeScopeNotifyCount;
 #endif /* JAVA_SPEC_VERSION >= 22 */
+	UDATA unsafeIndexableHeaderSize;
 } J9JavaVM;
 
 #define J9VM_PHASE_STARTUP  1

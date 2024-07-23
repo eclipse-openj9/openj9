@@ -27,8 +27,8 @@ import com.ibm.dtfj.image.DataUnavailable;
 /**
  * @author jmdisher
  * This class exists to be thrown in the cases where data might be available after future support is added.  It
- * allows us to correctly implement the spec but still keep a sort of eye-catching data in the code which we can 
- * use to evaluate what still needs to be done in the future.  Most likely, occurrences of this class will be 
+ * allows us to correctly implement the spec but still keep a sort of eye-catching data in the code which we can
+ * use to evaluate what still needs to be done in the future.  Most likely, occurrences of this class will be
  * replaced by DataUnavailable or will be implemented in terms of new core file data or improved JExtract support.
  */
 public class FutureImplementation extends DataUnavailable
@@ -40,7 +40,7 @@ public class FutureImplementation extends DataUnavailable
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	private static final long serialVersionUID = 1L;
 }

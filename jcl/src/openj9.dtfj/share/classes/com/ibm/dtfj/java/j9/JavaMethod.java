@@ -45,7 +45,7 @@ public class JavaMethod implements com.ibm.dtfj.java.JavaMethod
 	private JavaClass _declaringClass;
 	private Vector _compiledSections = new Vector();
 	private Vector _bytecodeSections = new Vector();
-	
+
 	public JavaMethod(ImagePointer methodID, String name, String signature, int modifiers, JavaClass declaringClass)
 	{
 		if (null == methodID) {
@@ -113,7 +113,7 @@ public class JavaMethod implements com.ibm.dtfj.java.JavaMethod
 	public boolean equals(Object obj)
 	{
 		boolean isEqual = false;
-		
+
 		if (obj instanceof JavaMethod) {
 			JavaMethod local = (JavaMethod) obj;
 			isEqual = (_declaringClass.equals(local._declaringClass) && _methodID.equals(local._methodID));

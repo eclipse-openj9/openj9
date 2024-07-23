@@ -197,7 +197,7 @@ public:
    virtual intptr_t getVFTEntry(TR_OpaqueClassBlock *clazz, int32_t offset) override;
    virtual bool isClassArray(TR_OpaqueClassBlock *klass) override;
    virtual uintptr_t getFieldOffset(TR::Compilation * comp, TR::SymbolReference* classRef, TR::SymbolReference* fieldRef) override { return 0; } // safe answer
-   virtual bool canDereferenceAtCompileTime(TR::SymbolReference *fieldRef,  TR::Compilation *comp) { return false; } // safe answer, might change in the future
+   virtual bool canDereferenceAtCompileTime(TR::SymbolReference *fieldRef,  TR::Compilation *comp) override { return false; } // safe answer, might change in the future
    virtual bool instanceOfOrCheckCast(J9Class *instanceClass, J9Class* castClass) override;
    virtual bool instanceOfOrCheckCastNoCacheUpdate(J9Class *instanceClass, J9Class* castClass) override;
    virtual bool transformJlrMethodInvoke(J9Method *callerMethod, J9Class *callerClass) override;
@@ -228,7 +228,7 @@ public:
    virtual UDATA getLowTenureAddress() override;
    virtual UDATA getHighTenureAddress() override;
 
-   virtual MethodOfHandle methodOfDirectOrVirtualHandle(uintptr_t *mh, bool isVirtual);
+   virtual MethodOfHandle methodOfDirectOrVirtualHandle(uintptr_t *mh, bool isVirtual) override;
 
    // Openjdk implementation
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)

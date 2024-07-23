@@ -34,21 +34,21 @@ import com.ibm.dtfj.image.j9.CorruptData;
 /**
  * Class to represent a corrupt pointer and can be used to populate a corrupt data exception.
  * It will throw exceptions if an attempt is made to read data using it.
- *  
+ *
  * @author Adam Pilkington
  *
  */
 public class CorruptImagePointer implements ImagePointer {
 	private long address = 0;
 	private ImageAddressSpace memory = null;
-	
+
 	public CorruptImagePointer(long address, ImageAddressSpace memory) {
 		this.address = address;
 		this.memory = memory;
 	}
-	
+
 	public ImagePointer add(long offset) {
-		return memory.getPointer(address + offset);		
+		return memory.getPointer(address + offset);
 	}
 
 	public long getAddress() {
@@ -58,7 +58,7 @@ public class CorruptImagePointer implements ImagePointer {
 	public ImageAddressSpace getAddressSpace() {
 		return memory;
 	}
-	
+
 	public String toString() {
 		return "0x" + Long.toHexString(address);
 	}
@@ -102,7 +102,7 @@ public class CorruptImagePointer implements ImagePointer {
 	public boolean isShared() throws DataUnavailable {
 		throw new DataUnavailable();
 	}
-	
+
 	public Properties getProperties() {
 		return new Properties();
 	}

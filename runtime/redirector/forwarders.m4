@@ -382,7 +382,7 @@ _IF([JAVA_SPEC_VERSION >= 16],
 	[_X(JVM_DefineArchivedModules, JNICALL, false, void, JNIEnv *env, jobject obj1, jobject obj2)])
 _IF([JAVA_SPEC_VERSION >= 16],
 	[_X(JVM_LogLambdaFormInvoker, JNICALL, false, void, JNIEnv *env, jstring str)])
-_X(JVM_IsUseContainerSupport, JNICALL, false, jboolean, JNIEnv *env)
+_X(JVM_IsUseContainerSupport, JNICALL, false, jboolean, void)
 _X(AsyncGetCallTrace, JNICALL, false, void, void *trace, jint depth, void *ucontext)
 _IF([JAVA_SPEC_VERSION >= 17],
 	[_X(JVM_DumpClassListToFile, JNICALL, false, void, JNIEnv *env, jstring str)])
@@ -442,3 +442,5 @@ _IF([JAVA_SPEC_VERSION >= 23],
 	[_X(JVM_VirtualThreadDisableSuspend, JNICALL, false, void, JNIEnv *env, jclass clz, jboolean enter)])
 _IF([JAVA_SPEC_VERSION >= 23],
 	[_X(JVM_GetCDSConfigStatus, JNICALL, false, jint, void)])
+_IF([JAVA_SPEC_VERSION >= 24],
+	[_X(JVM_IsContainerized, JNICALL, false, jboolean, void)])

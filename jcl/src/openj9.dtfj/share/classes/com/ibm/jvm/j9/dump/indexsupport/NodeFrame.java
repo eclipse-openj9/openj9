@@ -54,7 +54,7 @@ public class NodeFrame extends NodeAbstract
 		    _frame = thread.addNewStackFrame(arguments, method, pc, lineNumber);
 
 		} catch(IllegalArgumentException e){
-			// skip bad frame (subsequent error tag will indicate corrupt stack) 
+			// skip bad frame (subsequent error tag will indicate corrupt stack)
 		}
 	}
 

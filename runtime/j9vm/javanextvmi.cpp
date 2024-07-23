@@ -724,6 +724,7 @@ JVM_VirtualThreadEnd(JNIEnv *env, jobject vthread)
 	TRIGGER_J9HOOK_VM_VIRTUAL_THREAD_END(vm->hookInterface, currentThread);
 	setContinuationStateToLastUnmount((J9VMThread *)env, vthread);
 	virtualThreadUnmountBegin(env, vthread);
+	TRIGGER_J9HOOK_VM_VIRTUAL_THREAD_DESTROY(vm->hookInterface, currentThread);
 
 	vmFuncs->internalExitVMToJNI(currentThread);
 
@@ -741,8 +742,23 @@ JVM_IsValhallaEnabled()
 JNIEXPORT jboolean JNICALL
 JVM_IsImplicitlyConstructibleClass(JNIEnv *env, jclass cls)
 {
-	assert(!"JVM_IsImplicitlyConstructibleClass unimplemented");
-	return JNI_FALSE;
+	jboolean result = JNI_FALSE;
+	J9VMThread *currentThread = (J9VMThread *)env;
+	J9InternalVMFunctions const * const vmFuncs = currentThread->javaVM->internalVMFunctions;
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+	if (NULL == cls) {
+		vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
+	} else {
+		J9Class *clazz = J9VM_J9CLASS_FROM_JCLASS(currentThread, cls);
+		J9ROMClass *romClass = clazz->romClass;
+		if (J9_ARE_ALL_BITS_SET(romClass->optionalFlags, J9_ROMCLASS_OPTINFO_IMPLICITCREATION_ATTRIBUTE)
+			&& J9_ARE_ALL_BITS_SET(getImplicitCreationFlags(romClass), J9AccImplicitCreateHasDefaultValue)
+		) {
+			result = JNI_TRUE;
+		}
+	}
+	vmFuncs->internalExitVMToJNI(currentThread);
+	return result;
 }
 
 JNIEXPORT jboolean JNICALL
@@ -791,5 +807,28 @@ JVM_GetCDSConfigStatus()
 	return 0;
 }
 #endif /* JAVA_SPEC_VERSION >= 23 */
+
+#if JAVA_SPEC_VERSION >= 24
+/**
+ * @brief Determine if the JVM is running inside a container.
+ *
+ * @return JNI_TRUE if running inside a container; otherwise, JNI_FALSE
+ */
+JNIEXPORT jboolean JNICALL
+JVM_IsContainerized(void)
+{
+	J9JavaVM *vm = BFUjavaVM;
+	jboolean isContainerized = JNI_FALSE;
+
+	Assert_SC_true(NULL != vm);
+
+	OMRPORT_ACCESS_FROM_J9PORT(vm->portLibrary);
+	if (omrsysinfo_is_running_in_container()) {
+		isContainerized = JNI_TRUE;
+	}
+
+	return isContainerized;
+}
+#endif /* JAVA_SPEC_VERSION >= 24 */
 
 } /* extern "C" */

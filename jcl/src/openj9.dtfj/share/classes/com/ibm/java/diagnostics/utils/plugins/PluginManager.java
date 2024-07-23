@@ -40,12 +40,12 @@ public interface PluginManager {
 	public Container getCache();
 	/**
 	 * Add a listener to the manager. If the listener already
-	 * exists as determined by a call to equals() then the 
+	 * exists as determined by a call to equals() then the
 	 * existing instance is replace by the new one. This allows
 	 * clients to install a single type of handler but update
 	 * the configuration or it's methods of operation without retaining
 	 * a handle to original listener.
-	 * 
+	 *
 	 * @param listener listener to add
 	 * @return result from the standard Set.add() method
 	 */

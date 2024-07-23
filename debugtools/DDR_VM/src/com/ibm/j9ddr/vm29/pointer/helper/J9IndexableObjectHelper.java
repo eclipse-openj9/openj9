@@ -397,9 +397,6 @@ public class J9IndexableObjectHelper extends J9ObjectHelper
 		}
 
 		case 'L':
-		/*[IF INLINE-TYPES]*/
-		case 'Q':
-		/*[ENDIF] INLINE-TYPES */
 		case '[':
 		{
 			if (!(dst instanceof J9ObjectPointer[])) {
@@ -570,9 +567,6 @@ public class J9IndexableObjectHelper extends J9ObjectHelper
 		}
 
 		case 'L':
-		/*[IF INLINE-TYPES]*/
-		case 'Q':
-		/*[ENDIF] INLINE-TYPES */
 		case '[':
 		{
 			J9ObjectPointer[] data = new J9ObjectPointer[arraySize];
@@ -649,9 +643,6 @@ public class J9IndexableObjectHelper extends J9ObjectHelper
 				break;
 
 			case 'L':
-			/*[IF INLINE-TYPES]*/
-			case 'Q':
-			/*[ENDIF] INLINE-TYPES */
 			case '[':
 			{
 				J9ObjectPointer item = ((J9ObjectPointer[]) data)[i];

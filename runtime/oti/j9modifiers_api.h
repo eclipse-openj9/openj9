@@ -45,14 +45,12 @@
  * that has already been read in */
 #define J9ROMCLASS_IS_PUBLIC(romClass)          _J9ROMCLASS_SUNMODIFIER_IS_SET((romClass), J9AccPublic)
 #define J9ROMCLASS_IS_FINAL(romClass)           _J9ROMCLASS_SUNMODIFIER_IS_SET((romClass), J9AccFinal)
-#define J9ROMCLASS_IS_SUPER(romClass)           _J9ROMCLASS_SUNMODIFIER_IS_SET((romClass), J9AccSuper)
 #define J9ROMCLASS_IS_INTERFACE(romClass)       _J9ROMCLASS_SUNMODIFIER_IS_SET((romClass), J9AccInterface)
 #define J9ROMCLASS_IS_ABSTRACT(romClass)        _J9ROMCLASS_SUNMODIFIER_IS_SET((romClass), J9AccAbstract)
 
 #define J9ROMCLASS_IS_SYNTHETIC(romClass)		_J9ROMCLASS_SUNMODIFIER_IS_SET((romClass), J9AccSynthetic)
 #define J9ROMCLASS_IS_ARRAY(romClass)			_J9ROMCLASS_SUNMODIFIER_IS_SET((romClass), J9AccClassArray)
 #define J9ROMCLASS_IS_PRIMITIVE_TYPE(romClass)	_J9ROMCLASS_SUNMODIFIER_IS_SET((romClass), J9AccClassInternalPrimitiveType)
-#define J9ROMCLASS_HAS_IDENTITY(romClass)			_J9ROMCLASS_SUNMODIFIER_IS_SET((romClass), J9AccClassHasIdentity)
 
 #define J9ROMCLASS_IS_INTERMEDIATE_DATA_A_CLASSFILE(romClass)		_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccClassIntermediateDataIsClassfile)
 #define J9ROMCLASS_IS_UNSAFE(romClass)			_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccClassUnsafe)
@@ -84,16 +82,10 @@
 #define J9ROMCLASS_IS_CONTENDED(romClass)	_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccClassIsContended)
 
 #ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
-#define J9ROMCLASS_IS_VALUE(romClass)   (((romClass)->majorVersion >= VALUE_TYPES_MAJOR_VERSION) && (PREVIEW_MINOR_VERSION == (romClass)->minorVersion) && !_J9ROMCLASS_SUNMODIFIER_IS_SET((romClass), J9AccClassHasIdentity))
+#define J9ROMCLASS_IS_VALUE(romClass)   (((romClass)->majorVersion >= VALUE_TYPES_MAJOR_VERSION) && (PREVIEW_MINOR_VERSION == (romClass)->minorVersion) && !_J9ROMCLASS_SUNMODIFIER_IS_ANY_SET((romClass), J9AccClassHasIdentity | J9AccInterface))
 #else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 #define J9ROMCLASS_IS_VALUE(romClass)	FALSE
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
-
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-#define J9ROMCLASS_IS_PRIMITIVE_VALUE_TYPE(romClass)	_J9ROMCLASS_SUNMODIFIER_IS_SET((romClass), J9AccPrimitiveValueType)
-#else /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
-#define J9ROMCLASS_IS_PRIMITIVE_VALUE_TYPE(romClass)	FALSE
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 #define J9ROMMETHOD_IS_GETTER(romMethod)				_J9ROMMETHOD_J9MODIFIER_IS_SET((romMethod), J9AccGetterMethod)
 #define J9ROMMETHOD_IS_FORWARDER(romMethod)				_J9ROMMETHOD_J9MODIFIER_IS_SET((romMethod), J9AccForwarderMethod)
@@ -118,12 +110,6 @@
 #define J9ROMMETHOD_IS_OBJECT_CONSTRUCTOR(romMethod)	_J9ROMMETHOD_J9MODIFIER_IS_SET((romMethod), J9AccMethodObjectConstructor)
 #define J9ROMMETHOD_IS_CALLER_SENSITIVE(romMethod)	_J9ROMMETHOD_J9MODIFIER_IS_SET((romMethod), J9AccMethodCallerSensitive)
 #define J9ROMMETHOD_IS_STATIC(romMethod)	_J9ROMMETHOD_J9MODIFIER_IS_SET((romMethod), J9AccStatic)
-
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-#define J9ROMMETHOD_IS_UNNAMED_FACTORY(romMethod) \
-	(J9ROMMETHOD_IS_STATIC((romMethod)) \
-	&& (J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(J9ROMMETHOD_NAME((romMethod))), J9UTF8_LENGTH(J9ROMMETHOD_NAME((romMethod))), "<vnew>")))
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 #define J9ROMFIELD_IS_CONTENDED(romField)	J9_ARE_ALL_BITS_SET((romField)->modifiers, J9FieldFlagIsContended)
 

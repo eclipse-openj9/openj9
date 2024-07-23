@@ -847,6 +847,29 @@ internalExceptionDescribe(J9VMThread *vmThread);
 UDATA
 iterateStackTrace(J9VMThread * vmThread, j9object_t* exception,  UDATA  (*callback) (J9VMThread * vmThread, void * userData, UDATA bytecodeOffset, J9ROMClass * romClass, J9ROMMethod * romMethod, J9UTF8 * fileName, UDATA lineNumber, J9ClassLoader* classLoader, J9Class* ramClass), void * userData, UDATA pruneConstructors, UDATA skipHiddenFrames);
 
+/**
+* @brief
+* @param vmThread
+* @param exception
+* @param vmThread
+* @param userData
+* @param bytecodeOffset
+* @param romClass
+* @param romMethod
+* @param fileName
+* @param lineNumber
+* @param classLoader
+* @param ramClass)
+* @param userData
+* @param pruneConstructors
+* @param skipHiddenFrames
+* @param sizeOfWalkstateCache
+* @param exceptionIsJavaObject
+* @return UDATA
+*/
+UDATA
+iterateStackTraceImpl(J9VMThread * vmThread, j9object_t* exception,  UDATA  (*callback) (J9VMThread * vmThread, void * userData, UDATA bytecodeOffset, J9ROMClass * romClass, J9ROMMethod * romMethod, J9UTF8 * fileName, UDATA lineNumber, J9ClassLoader* classLoader, J9Class* ramClass), void * userData, UDATA pruneConstructors, UDATA skipHiddenFrames, UDATA sizeOfWalkstateCache, BOOLEAN exceptionIsJavaObject);
+
 
 /* ---------------- exceptionsupport.c ---------------- */
 
@@ -5156,7 +5179,7 @@ throwNewJavaIoIOException(JNIEnv *env, const char *message);
 /* ------------------- UpcallThunkGen.cpp ----------------- */
 
 /**
- * @brief Generate the appropriate thunk/adaptor for a given J9UpcallMetaData
+ * @brief Generate the appropriate thunk/adaptor for a given J9UpcallMetaData.
  *
  * @param metaData[in/out] a pointer to the given J9UpcallMetaData
  * @return the address for this future upcall function handle, either the thunk or the thunk-descriptor
@@ -5165,7 +5188,7 @@ void *
 createUpcallThunk(J9UpcallMetaData *data);
 
 /**
- * @brief Calculate the requested argument in-stack memory address to return
+ * @brief Calculate the requested argument in-stack memory address to return.
  *
  * @param nativeSig a pointer to the J9UpcallNativeSignature
  * @param argListPtr a pointer to the argument list prepared by the thunk
@@ -5180,7 +5203,7 @@ void *
 getArgPointer(J9UpcallNativeSignature *nativeSig, void *argListPtr, int argIdx);
 
 /**
- * @brief Allocate a piece of thunk memory with a given size from the existing virtual memory block
+ * @brief Allocate a piece of thunk memory with a given size from the existing virtual memory block.
  *
  * @param data a pointer to J9UpcallMetaData
  * @return the start address of the upcall thunk memory, or NULL on failure.
@@ -5190,11 +5213,10 @@ allocateUpcallThunkMemory(J9UpcallMetaData *data);
 
 
 /**
- * @brief Flush the generated thunk to the memory
+ * @brief Flush the generated thunk to the memory.
  *
  * @param data a pointer to J9UpcallMetaData
  * @param thunkAddress the address of the generated thunk
- * @return void
  */
 void
 doneUpcallThunkGeneration(J9UpcallMetaData *data, void *thunkAddress);

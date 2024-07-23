@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright IBM Corp. and others 2017
+ * Copyright IBM Corp. and others 2024
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,22 +20,57 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
+#if !defined(JFRUTILS_HPP_)
+#define JFRUTILS_HPP_
+
 #include "j9.h"
+#include "vm_api.h"
 
-#include "Jit.hpp"
-#include "ilgen/TypeDictionary.hpp"
-#include "ilgen/MethodBuilder.hpp"
-#include "JavaMethodCallbackGen.hpp"
+#if defined(J9VM_OPT_JFR)
 
-JavaMethodCallbackGen::JavaMethodCallbackGen(J9VMThread *vmThread, TR::TypeDictionary *types) : MethodBuilder(types)
-{
-	DefineLine(LINETOSTR(__LINE__));
-	DefineFile(__FILE__);
-	DefineName("JavaMethodCallbackGen");
-}
+enum BuildResult {
+	OK,
+	OutOfMemory,
+	InternalVMError,
+	FileIOError,
+	EnvVarsNotSet,
+	TimeFailure,
+	MetaDataFileNotLoaded,
+};
 
-bool
-JavaMethodCallbackGen::buildIL()
-{
-	return true;
-}
+class VM_JFRUtils {
+	/*
+	 * Data members
+	 */
+private:
+
+protected:
+
+public:
+
+	/*
+	 * Function members
+	 */
+private:
+
+protected:
+
+public:
+
+	static U_64 getCurrentTimeNanos(J9PortLibrary *privatePortLibrary, BuildResult &buildResult) {
+		UDATA success = 0;
+		U_64 result = (U_64) j9time_current_time_nanos(&success);
+
+		if (success == 0) {
+			buildResult = TimeFailure;
+
+		}
+
+		return result;
+	}
+
+};
+
+#endif /* defined(J9VM_OPT_JFR) */
+
+#endif /* JFRCHUNKWRITER_HPP_ */

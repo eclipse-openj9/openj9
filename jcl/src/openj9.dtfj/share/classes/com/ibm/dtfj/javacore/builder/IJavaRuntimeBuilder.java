@@ -36,7 +36,7 @@ import com.ibm.dtfj.java.JavaThread;
  *
  */
 public interface IJavaRuntimeBuilder {
-	
+
 	/**
 	 * Adds a com.ibm.dtfj.java.JavaClass into DTFJ. If class already exists, it updates any missing information.
 	 * The updated/added class is returned. If error occurs during class generation/update, throw exception
@@ -45,27 +45,26 @@ public interface IJavaRuntimeBuilder {
 	 * @param classID valid address
 	 * @param superClassID valid address
 	 * @return generated/modified java class.
-	 * 
+	 *
 	 */
 	public JavaClass addClass(JavaClassLoader jClassLoader, String name, long classID, long superClassID, String fileName) throws BuilderFailureException;
-	
-	
+
 	/**
 	 * Adds a com.ibm.dtfj.java.JavaClassLoader into DTFJ. If the class already exists, it updates missing information.
 	 * Returns added/updated classloader. IF error occurs, throw exception.
 	 * @param name of classloader
 	 * @param clID address classloader
-	 * @param objectID address of class loader object instance 
+	 * @param objectID address of class loader object instance
 	 * @return added/modified classLoader
 	 * @throws BuilderFailureException if failed to add/update classloader
 	 */
 	public JavaClassLoader addClassLoader(String name, long clID, long objectID) throws BuilderFailureException;
-	
+
 	/**
 	 * Not available in a javacore: object ID and the java.lang.Thread class name associated with a thread.
-	 * 
+	 *
 	 * Adds a javathread, or modifies an existing one with information being passed into the method. Returns the updated/modified javathread.
-	 * 
+	 *
 	 * @param imageThread associated with javathread
 	 * @param name for now, just the string name parsed directly from the javacore.
 	 * @param tid = JNIENV or J9JVMThread, i.e., it equals the internal VM data structure for a java thread
@@ -74,16 +73,16 @@ public interface IJavaRuntimeBuilder {
 	 * @param jniEnv The JNIENV
 	 * @param state
 	 * @param priority
-	 * @param blockingObjectClassName 
-	 * @param blockingObjectAddress 
+	 * @param blockingObjectClassName
+	 * @param blockingObjectAddress
 	 * @return added/modified JavaThread.
 	 * @throws BuilderFailureException if failed to add/update java thread
 	 */
 	public JavaThread addJavaThread(ImageThread imageThread, String name, long tid, long j9thread_t, long javaObjID, long jniEnv, String state, int priority, long blockingObjectAddress, String blockingObjectClassName) throws BuilderFailureException;
-	
+
 	/**
 	 * Adds a java stack frame to a javathread. It does not check if a stack frame has already been added or not, so it is possible to added
-	 * the same stack frame multiple times. Returns the java stack frame added. Throws exception if it failed to generate and add the stack frame to the 
+	 * the same stack frame multiple times. Returns the java stack frame added. Throws exception if it failed to generate and add the stack frame to the
 	 * java thread specified in the argument.
 	 * @param javaThread where java stack trace is to be added
 	 * @param className
@@ -92,11 +91,10 @@ public interface IJavaRuntimeBuilder {
 	 * @param methodType whether native or interpreted method.
 	 * @param compilationLevel
 	 * @param lineNumber as it appears in the javacore
-	 * 
+	 *
 	 */
 	public JavaStackFrame addJavaStackFrame(JavaThread javaThread, String className, String classFileName, String methodName, String methodType, String compilationLevel, int lineNumber) throws BuilderFailureException;
-	
-	
+
 	/**
 	 * Adds a java monitor or modifies an existing one. Returns the updated/modified monitor. Throws exception if error occurs during monitor
 	 * generation or update.
@@ -108,17 +106,16 @@ public interface IJavaRuntimeBuilder {
 	 * @return added/modified
 	 */
 	public JavaMonitor addJavaMonitor(String name, long monitorID, long objectID, String className, long owningThread) throws BuilderFailureException;
-	
-	
+
 	/**
-	 * 
+	 *
 	 * @param monitor
 	 * @param thread
 	 */
 	public void addWaitOnNotifyThread(JavaMonitor monitor, long threadID) throws BuilderFailureException;
-	
+
 	/**
-	 * 
+	 *
 	 * @param monitor
 	 * @param thread
 	 */
@@ -140,7 +137,7 @@ public interface IJavaRuntimeBuilder {
 
 	/**
 	 * Adds an individual Java VM option to JavaVMInitArgs, with 'extra information' field
-	 * @param option 
+	 * @param option
 	 * @param extraInfo
 	 * @return void
 	 */
@@ -161,31 +158,31 @@ public interface IJavaRuntimeBuilder {
 	 * @return
 	 */
 	public JavaRuntimeMemoryCategory addMemoryCategory(String name, long deepBytes, long deepAllocations, JavaRuntimeMemoryCategory parent);
-	
+
 	/**
 	 * Sets the shallow memory categories for an existing memory category
 	 */
 	public void setShallowCountersForCategory(JavaRuntimeMemoryCategory category, long shallowBytes, long shallowAllocations);
-	
+
 	/**
 	 * Sets if the JIT was enabled for this runtime
 	 * @param enabled true if it was enabled
 	 */
 	public void setJITEnabled(boolean enabled);
-	
+
 	/**
 	 * Add a property with which the JIT was running for this runtime
 	 * @param name property name
 	 * @param value	value
 	 */
 	public void addJITProperty(String name, String value);
-	
+
 	/**
 	 * Set the time the JVM started
 	 * @param startTime the time
 	 */
 	public void setStartTime(long startTime);
-	
+
 	/**
 	 * Set the nanotime the JVM was started
 	 * @param nanoTime the time

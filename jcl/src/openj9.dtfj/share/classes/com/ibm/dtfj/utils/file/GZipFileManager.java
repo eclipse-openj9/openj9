@@ -33,7 +33,7 @@ import javax.imageio.stream.MemoryCacheImageInputStream;
 /**
  * File manger for gzip'd files. The gzip algorithm does not support a hierarchical archive
  * and only works on a single file.
- * 
+ *
  * @author adam
  *
  */

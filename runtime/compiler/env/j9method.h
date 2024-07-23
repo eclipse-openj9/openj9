@@ -72,7 +72,7 @@ inline const char *nextSignatureArgument(const char *currentArgument)
    const char *result = currentArgument;
    while (*result == '[')
       result++;
-   if (*result == 'L' || *result == 'Q')
+   if (*result == 'L')
       while (*result != ';')
          result++;
    return result+1;

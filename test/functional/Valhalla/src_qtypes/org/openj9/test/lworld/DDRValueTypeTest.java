@@ -47,7 +47,7 @@ public class DDRValueTypeTest {
 		Class assortedValueWithSingleAlignmentClass = ValueTypeGenerator.generateValueClass("AssortedValueWithSingleAlignment", ValueTypeTests.typeWithSingleAlignmentFields);
 		
 		MethodHandle makeAssortedValueWithSingleAlignment = MethodHandles.lookup().findStatic(assortedValueWithSingleAlignmentClass,
-			"makeValueGeneric", MethodType.methodType(Object.class, Object.class,
+			"makeObjectGeneric", MethodType.methodType(Object.class, Object.class,
 						Object.class, Object.class, Object.class, Object.class, Object.class));
 		
 		Object[] altFields = {

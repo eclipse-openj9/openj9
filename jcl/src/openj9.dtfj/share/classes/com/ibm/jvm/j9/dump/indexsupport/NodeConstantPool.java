@@ -33,19 +33,19 @@ import com.ibm.dtfj.java.j9.JavaClass;
 public class NodeConstantPool extends NodeAbstract
 {
 	private JavaClass _class;
-	
+
 	public NodeConstantPool(JavaClass theClass, Attributes attributes)
 	{
 		_class = theClass;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.jvm.j9.dump.indexsupport.IParserNode#nodeToPushAfterStarting(java.lang.String, java.lang.String, java.lang.String, org.xml.sax.Attributes)
 	 */
 	public IParserNode nodeToPushAfterStarting(String uri, String localName, String qName, Attributes attributes)
 	{
 		IParserNode child = null;
-		
+
 		if (qName.equals("object")) {
 			child = new NodeObject(_class, attributes);
 		} else if (qName.equals("class")) {

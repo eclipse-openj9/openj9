@@ -35,12 +35,12 @@ import com.ibm.dtfj.image.ImageSection;
 import com.ibm.dtfj.image.ImageStackFrame;
 import com.ibm.dtfj.image.ImageThread;
 
-/** 
+/**
  * @author ajohnson
  */
 public class PHDCorruptImageThread extends PHDCorruptData implements
 		ImageThread {
-	
+
 	public PHDCorruptImageThread(ImageAddressSpace space, CorruptData cd) {
 		super(space, cd);
 	}

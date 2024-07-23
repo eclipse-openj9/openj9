@@ -149,7 +149,7 @@ bcvCheckMethodName (J9CfrConstantPoolInfo * info);
 * @return IDATA
 */
 I_32
-bcvIsInitOrClinitOrNew (J9CfrConstantPoolInfo * info);
+bcvIsInitOrClinit (J9CfrConstantPoolInfo * info);
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 /**

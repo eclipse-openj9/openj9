@@ -78,11 +78,6 @@ isConstructor(J9Method *ramMethod)
 {
 	J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(ramMethod);
 	UDATA rc = (!J9ROMMETHOD_IS_STATIC(romMethod)) && ('<' == J9UTF8_DATA(J9ROMMETHOD_NAME(romMethod))[0]);
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	if (!rc) {
-		rc = J9ROMMETHOD_IS_UNNAMED_FACTORY(romMethod);
-	}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	return rc;
 }
 
@@ -473,7 +468,6 @@ classForSignature(struct J9VMThread *vmThread, U_8 **sigDataPtr, struct J9ClassL
 
 	/* Non-array case */
 	switch (c) {
-	case 'Q':
 	case 'L': {
 		/* object case */
 		U_8 *tempData = sigData;

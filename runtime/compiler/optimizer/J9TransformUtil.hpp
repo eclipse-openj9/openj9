@@ -360,6 +360,36 @@ public:
       TR::Symbol::RecognizedField recField,
       TR::AnyConst *outValue);
 
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+   /**
+    * \brief
+    *    Converts Unsafe.copyMemory call into arraycopy node replacing
+    *    src and dest to loads if symbol reference is passed.
+    *
+    * \return
+    *    Return the TreeTop of the arrayCopy
+    */
+   static TR::TreeTop* convertUnsafeCopyMemoryCallToArrayCopyWithSymRefLoad(TR::Compilation *comp, TR::TreeTop *arrayCopyTT, TR::SymbolReference * srcRef, TR::SymbolReference * destRef);
+
+   /**
+    * \brief
+    *    Insert Unsafe.copyMemory src/dest argument checks and adjustments for offheap.
+    *
+    * \return
+    *    Return the new call block.
+    */
+   static TR::Block* insertUnsafeCopyMemoryArgumentChecksAndAdjustForOffHeap(TR::Compilation *comp, TR::Node* node, TR::SymbolReference* symRef, TR::Block* callBlock, bool insertArrayCheck, TR::CFG* cfg);
+
+   /**
+    * \brief
+    *    Convert Unsafe.copyMemory call to an arraycopy with all necessary checks for offheap
+    *
+    * \return
+    *    Return true if call is converted
+    */
+   static void transformUnsafeCopyMemorytoArrayCopyForOffHeap(TR::Compilation *comp, TR::TreeTop *arrayCopyTT, TR::Node *arraycopyNode);
+#endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
+
 protected:
    /**
     * \brief

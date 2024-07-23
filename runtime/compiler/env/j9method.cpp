@@ -2734,6 +2734,8 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_util_Arrays_copyOfRange_double, "copyOfRange",     "([DII)[D")},
       {x(TR::java_util_Arrays_copyOfRange_Object1,"copyOfRange",     "([Ljava/lang/Object;II)[Ljava/lang/Object;")},
       {x(TR::java_util_Arrays_copyOfRange_Object2,"copyOfRange",     "([Ljava/lang/Object;IILjava/lang/Class;)[Ljava/lang/Object;")},
+
+      {x(TR::java_util_Arrays_copyOfRangeByte, "copyOfRangeByte",    "([BII)[B")},
       {  TR::unknownMethod}
       };
 
@@ -2743,7 +2745,9 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_lang_String_init_String,         "<init>",              "(Ljava/lang/String;)V")},
       {x(TR::java_lang_String_init_String_char,    "<init>",              "(Ljava/lang/String;C)V")},
       {x(TR::java_lang_String_init_int_String_int_String_String, "<init>","(ILjava/lang/String;ILjava/lang/String;Ljava/lang/String;)V")},
-      {x(TR::java_lang_String_init_int_int_char_boolean, "<init>",       "(II[CZ)V")},
+      {x(TR::java_lang_String_init_int_int_char_boolean,       "<init>",  "(II[CZ)V")},
+      {x(TR::java_lang_String_init_StringBuilder,              "<init>",  "(Ljava/lang/StringBuilder;)V")},
+      {x(TR::java_lang_String_init_AbstractStringBuilder_Void, "<init>",  "(Ljava/lang/AbstractStringBuilder;Ljava/lang/Void;)V")},
       {  TR::java_lang_String_init,          6,    "<init>", (int16_t)-1,    "*"},
       {x(TR::java_lang_String_charAt,              "charAt",              "(I)C")},
       {x(TR::java_lang_String_charAtInternal_I,    "charAtInternal",      "(I)C")},
@@ -7485,9 +7489,9 @@ TR_ResolvedJ9Method::makeParameterList(TR::ResolvedMethodSymbol *methodSym)
          }
 
       // Walk to the end of the class name, if this is a class name
-      if (*end == 'L' || *end == 'Q')
+      if (*end == 'L')
          {
-         // Assume the form is L<classname> or Q<classname>; where <classname> is
+         // Assume the form is L<classname>; where <classname> is
          // at least 1 char and therefore skip the first 2 chars
          end += 2;
          end = (char *)memchr(end, ';', sigEnd - end);
@@ -7666,7 +7670,7 @@ TR_J9MethodParameterIterator::TR_J9MethodParameterIterator(TR_J9MethodBase &j9Me
 
 TR::DataType TR_J9MethodParameterIterator::getDataType()
    {
-   if (*_sig == 'L' || *_sig == '[' || *_sig == 'Q')
+   if (*_sig == 'L' || *_sig == '[')
       {
       _nextIncrBy = 0;
       while (_sig[_nextIncrBy] == '[')
@@ -7674,7 +7678,7 @@ TR::DataType TR_J9MethodParameterIterator::getDataType()
          ++_nextIncrBy;
          }
 
-      if (_sig[_nextIncrBy] != 'L' && _sig[_nextIncrBy] != 'Q')
+      if (_sig[_nextIncrBy] != 'L')
          {
          // Primitive array
          ++_nextIncrBy;
@@ -7731,7 +7735,7 @@ TR::DataType TR_J9MethodParameterIterator::getDataType()
 TR_OpaqueClassBlock * TR_J9MethodParameterIterator::getOpaqueClass()
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(_comp.fe());
-   TR_ASSERT(*_sig == '[' || *_sig == 'L' || *_sig == 'Q', "Asked for class of incorrect Java parameter.");
+   TR_ASSERT(*_sig == '[' || *_sig == 'L', "Asked for class of incorrect Java parameter.");
    if (_nextIncrBy == 0) getDataType();
    return _resolvedMethod == NULL ? NULL :
       fej9->getClassFromSignature(_sig, _nextIncrBy, _resolvedMethod);
@@ -7750,7 +7754,7 @@ bool TR_J9MethodParameterIterator::isArray()
 
 bool TR_J9MethodParameterIterator::isClass()
    {
-   return (*_sig == 'L' || *_sig == 'Q');
+   return (*_sig == 'L');
    }
 
 bool TR_J9MethodParameterIterator::atEnd()
@@ -7800,7 +7804,6 @@ static TR::DataType typeFromSig(char sig)
       {
       case 'L':
       case '[':
-      case 'Q':
          return TR::Address;
       case 'I':
       case 'Z':
@@ -8024,7 +8027,6 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             const char *targetName = targetBuf; const char *targetType = targetBuf;
             switch (sourceSig[0])
                {
-               case 'Q':
                case 'L':
                case '[':
                   sourceName = "object";
@@ -8036,7 +8038,6 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                }
             switch (targetSig[0])
                {
-               case 'Q':
                case 'L':
                case '[':
                   targetName = "object";
@@ -8052,7 +8053,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             if (strcmp(sourceType, targetType))
                {
                char methodName[30], methodSignature[50];
-               if ((sourceType[0] == 'L' || sourceType[0] == 'Q') && isExplicit)
+               if ((sourceType[0] == 'L') && isExplicit)
                   sprintf(methodName, "explicitObject2%s", targetName);
                else
                   sprintf(methodName, "%s2%s", sourceName, targetName);
@@ -8073,7 +8074,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 
             // Address conversions need a downcast after the call
             //
-            if (targetType[0] == 'L' || targetType[0] == 'Q')
+            if (targetType[0] == 'L')
                {
                uintptr_t methodHandle;
                uintptr_t sourceArguments;
@@ -8240,7 +8241,6 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                break;
             case 'L':
             case '[':
-            case 'Q':
                callOp = TR::acalli;
                break;
             case 'V':
@@ -8378,7 +8378,6 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                      {
                      case 'L':
                      case '[':
-                     case 'Q':
                         sprintf(extraName, "extra_L");
                         extraSignature = artificialSignature(stackAlloc, "(L" JSR292_ArgumentMoverHandle ";I)Ljava/lang/Object;");
                         break;
@@ -8462,7 +8461,6 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                      {
                      case 'L':
                      case '[':
-                     case 'Q':
                         sprintf(extraName, "extra_L");
                         extraSignature = artificialSignature(stackAlloc, "(L" JSR292_ArgumentMoverHandle ";I)Ljava/lang/Object;");
                         break;

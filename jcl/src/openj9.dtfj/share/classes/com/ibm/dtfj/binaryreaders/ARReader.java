@@ -26,7 +26,6 @@ import java.io.IOException;
 
 import com.ibm.dtfj.corereaders.ClosingFileReader;
 
-
 /**
  * @author jmdisher
  * Reads the AR files used to store a flat list of shared libraries on AIX
@@ -35,8 +34,7 @@ public class ARReader
 {
 	private ClosingFileReader _backing;
 	private long _firstModuleHeader;
-	
-		
+
 	public ARReader(ClosingFileReader file)
 	{
 		_backing = file;
@@ -56,11 +54,11 @@ public class ARReader
 			e.printStackTrace();
 		}
 	}
-	
+
 	public long offsetOfModule(String name)
 	{
 		long next = _firstModuleHeader;
-		
+
 		while (0 != next) {
 			try {
 				_backing.seek(next);
@@ -99,11 +97,11 @@ public class ARReader
 		}
 		return -1;
 	}
-	
+
 	public long sizeOfModule(String name)
 	{
 		long next = _firstModuleHeader;
-		
+
 		while (0 != next) {
 			try {
 				_backing.seek(next);
@@ -137,7 +135,6 @@ public class ARReader
 		return -1;
 	}
 
-	
 	/**
 	 * @param buffer
 	 * @return

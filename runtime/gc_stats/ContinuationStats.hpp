@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright IBM Corp. and others 2017
+ * Copyright IBM Corp. and others 1991
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,26 +19,47 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
- 
-#ifndef JAVAMETHODCALLBACK_HPP_
-#define JAVAMETHODCALLBACK_HPP_
+#if !defined(CONTINUATIONSTATS_HPP_)
+#define CONTINUATIONSTATS_HPP_
+#include "j9port.h"
+#include "modronopt.h"
 
-#include "j9.h"
+#include "Base.hpp"
+#include "AtomicOperations.hpp"
 
-#include "ilgen/MethodBuilder.hpp"
+/**
+ * Storage for statistics relevant to the continuation Objects
+ * @ingroup GC_Stats
+ */
+class MM_ContinuationStats : public MM_Base {
+private:
+protected:
+public:
+	uintptr_t _total;	/**< number of alive continuation objects on heap at the end of cycle */
+	uintptr_t _started;	/**< number of continuation objects has started at the end of cycle */
 
-class JavaMethodCallbackGen : public TR::MethodBuilder
-{
-/* fields */
-	public:
-	J9VMThread *vmThread;
+	/* function members */
+private:
+protected:
+public:
+	void clear()
+	{
+		_total = 0;
+		_started = 0;
+	}
 
+	void merge(MM_ContinuationStats* statsToMerge)
+	{
+		_total += statsToMerge->_total;
+		_started += statsToMerge->_started;
+	}
 
-/* methods */
-	public:
-	JavaMethodCallbackGen(J9VMThread *vmThread, TR::TypeDictionary *types);
-	virtual bool buildIL();
+	MM_ContinuationStats() :
+		MM_Base()
+		, _total(0)
+		, _started(0)
+	{
+		clear();
+	}
 };
-
-
-#endif /* JAVAMETHODCALLBACK_HPP_ */
+#endif /* CONTINUATIONSTATS_HPP_ */

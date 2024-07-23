@@ -2869,3 +2869,189 @@ J9::TransformUtil::refineMethodHandleLinkTo(TR::Compilation* comp, TR::TreeTop* 
    return false;
 #endif
    }
+
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+TR::TreeTop* J9::TransformUtil::convertUnsafeCopyMemoryCallToArrayCopyWithSymRefLoad(TR::Compilation *comp, TR::TreeTop *arrayCopyTT, TR::SymbolReference * srcRef, TR::SymbolReference * destRef)
+   {
+   // Convert call to arraycopy node
+   TR::Node *arrayCopyNode = arrayCopyTT->getNode()->getFirstChild();
+   arrayCopyNode->setNodeIsRecognizedArrayCopyCall(false);
+   TR::Node::recreate(arrayCopyNode, TR::arraycopy);
+
+   // Adjust src/dest
+   TR::Node* adjustedSrc = srcRef ? TR::Node::createLoad(arrayCopyNode, srcRef) : arrayCopyNode->getChild(1);
+   TR::Node* adjustedDest = destRef ? TR::Node::createLoad(arrayCopyNode, destRef) : arrayCopyNode->getChild(3);
+   adjustedSrc = TR::Node::create(TR::aladd, 2, adjustedSrc, arrayCopyNode->getChild(2));
+   adjustedDest = TR::Node::create(TR::aladd, 2, adjustedDest, arrayCopyNode->getChild(4));
+
+   TR::Node* newArrayCopyNode = TR::Node::createArraycopy(adjustedSrc, adjustedDest,  arrayCopyNode->getChild(5));
+   TR::TreeTop* newTT = TR::TreeTop::create(comp, newArrayCopyNode);
+   arrayCopyTT->insertAfter(newTT);
+   TR::TransformUtil::removeTree(comp, arrayCopyTT);
+
+   return newTT;
+
+   }
+
+TR::Block* J9::TransformUtil::insertUnsafeCopyMemoryArgumentChecksAndAdjustForOffHeap(TR::Compilation *comp, TR::Node* node, TR::SymbolReference* symRef, TR::Block* callBlock, bool insertArrayCheck, TR::CFG* cfg)
+   {
+   /**
+    *    Called if src/dest type is array (insertArrayCheck = false) or `java/lang/Object` (insertArrayCheck = true)
+    *    Inserts the following blocks:
+    *
+    *    BBStart nullCheckBlock
+    *    ifacmpeq --> newCallBlock
+    *      aload  src/dest
+    *      aconst NULL
+    *    BBEnd
+    *
+    *    ===== if (insertArrayCheck == true) =====
+    *    BBStart arrayCheckBlock
+    *    ificmpeq --> newCallBlock           // jumps if not an array
+    *      iand
+    *        l2i
+    *          lloadi  <isClassAndDepthFlags>
+    *            aloadi  <vft-symbol>
+    *              aload  src/dest
+    *        iconst 0x10000                  // array flag
+    *      iconst 0
+    *    BBEnd
+    *    =========================================
+    *
+    *    BBStart
+    *    astore  temp symRef
+    *      aloadi  <contiguousArrayDataAddrFieldSymbol>
+    *        aload  src/dest
+    *    BBEnd
+    */
+
+   TR::Block *nullCheckBlock = callBlock;
+   TR::Block *newCallBlock = nullCheckBlock->split(nullCheckBlock->getEntry()->getNextTreeTop(), cfg);
+   TR::Block *adjustBlock = nullCheckBlock->split(nullCheckBlock->getExit(), cfg);
+
+   // Insert null check trees
+   TR::Node* nullCheckNode = TR::Node::createif(TR::ifacmpeq, node->duplicateTree(), TR::Node::create(node, TR::aconst, 0, 0), newCallBlock->getEntry());
+   nullCheckBlock->append(TR::TreeTop::create(comp, nullCheckNode));
+   cfg->addEdge(nullCheckBlock, newCallBlock);
+
+   if (insertArrayCheck)
+      {
+      TR::Block* arrayCheckBlock = callBlock->split(callBlock->getExit(), cfg);
+
+      TR::Node *vftLoad = TR::Node::createWithSymRef(TR::aloadi, 1, 1, node->duplicateTree(), comp->getSymRefTab()->findOrCreateVftSymbolRef());
+      TR::Node *isArrayField = TR::Node::createWithSymRef(TR::lloadi, 1, 1, vftLoad, comp->getSymRefTab()->findOrCreateClassAndDepthFlagsSymbolRef());
+      isArrayField = TR::Node::create(TR::l2i, 1, isArrayField);
+      TR::Node *andConstNode = TR::Node::create(isArrayField, TR::iconst, 0, TR::Compiler->cls.flagValueForArrayCheck(comp));
+      TR::Node *andNode = TR::Node::create(TR::iand, 2, isArrayField, andConstNode);
+      TR::Node *arrayCheckNode = TR::Node::createif(TR::ificmpeq, andNode, TR::Node::create(node, TR::iconst, 0), newCallBlock->getEntry());
+
+      arrayCheckBlock->append(TR::TreeTop::create(comp, arrayCheckNode, NULL, NULL));
+      cfg->addEdge(callBlock, newCallBlock);
+      }
+
+   // Insert adjust trees
+   TR::Node* adjustedNode = TR::TransformUtil::generateDataAddrLoadTrees(comp, node->duplicateTree());
+   TR::Node *newStore = TR::Node::createStore(symRef, adjustedNode);
+   TR::TreeTop *newStoreTree = TR::TreeTop::create(comp, newStore);
+   adjustBlock->append(newStoreTree);
+
+   return newCallBlock;
+   }
+
+void J9::TransformUtil::transformUnsafeCopyMemorytoArrayCopyForOffHeap(TR::Compilation *comp, TR::TreeTop *arrayCopyTT, TR::Node *arraycopyNode)
+   {
+   // When using balanced GC policy with offheap allocation enabled, there are three possible for an argument type:
+   //
+   // 1.) The type is known to be a non-array object at compile time. In this scenario, the final address
+   //     can be calculated by simply adding ref and offset.
+   // 2.) The type is known to be an array at compile time. In this scenario, if the ref at runtime is `null` then
+   //     final address is calculated as in case 1. If not `null` then final address is the adjusted ref, by loading
+   //     the dataAddr pointer field then add it to the offset.
+   // 3.) The type of the object at dest is unknown at compile time (type is `java/lang/Object` or an interface).
+   //     In this scenario, a runtime null check and array check must be generated to determine whether it needs to
+   //     be handled such as case 1 or case 2.
+   //     Interface is included as valid bytecode can store an array into an interface type and then gets passed to
+   //     Unsafe.copyMemory().
+
+   TR::Node *src        = arraycopyNode->getChild(1);
+   TR::Node *dest       = arraycopyNode->getChild(3);
+
+   // Check src/dest type at compile time
+   int srcSigLen, destSigLen;
+   const char *srcObjTypeSig = src->getSymbolReference() ? src->getSymbolReference()->getTypeSignature(srcSigLen) : 0;
+   const char *destObjTypeSig = dest->getSymbolReference() ? dest->getSymbolReference()->getTypeSignature(destSigLen) : 0;
+
+   // Case 3
+   bool srcArrayCheckNeeded, destArrayCheckNeeded;
+   if (!srcObjTypeSig)
+      srcArrayCheckNeeded = true;
+   else
+      {
+      TR_OpaqueClassBlock *srcClass = comp->fej9()->getClassFromSignature(srcObjTypeSig, srcSigLen, src->getSymbolReference()->getOwningMethod(comp));
+      srcArrayCheckNeeded = srcClass == NULL ||
+                              srcClass == comp->getObjectClassPointer() ||
+                              TR::Compiler->cls.isInterfaceClass(comp, srcClass);
+      }
+
+   if (!destObjTypeSig)
+      destArrayCheckNeeded = true;
+   else
+      {
+      TR_OpaqueClassBlock *destClass = comp->fej9()->getClassFromSignature(destObjTypeSig, destSigLen, dest->getSymbolReference()->getOwningMethod(comp));
+      destArrayCheckNeeded = destClass == NULL ||
+                              destClass == comp->getObjectClassPointer() ||
+                              TR::Compiler->cls.isInterfaceClass(comp, destClass);
+      }
+
+   // Case 2 & 3
+   bool srcAdjustmentNeeded = srcArrayCheckNeeded || srcObjTypeSig[0] == '[';
+   bool destAdjustmentNeeded = destArrayCheckNeeded || destObjTypeSig[0] == '[';
+
+   TR::TransformUtil::separateNullCheck(comp, arrayCopyTT);
+
+   if (!(srcAdjustmentNeeded || destAdjustmentNeeded))
+      {
+      TR::TransformUtil::convertUnsafeCopyMemoryCallToArrayCopyWithSymRefLoad(comp, arrayCopyTT, NULL, NULL);
+      return;
+      }
+
+   // Anchor nodes
+   for (int32_t i=1; i < arraycopyNode->getNumChildren(); i++)
+      {
+      TR::Node* childNode = arraycopyNode->getChild(i);
+      if ( !(childNode->getOpCode().isLoadConst() ||
+            (childNode->getOpCode().isLoadVarDirect() && childNode->getSymbolReference()->getSymbol()->isAutoOrParm())) )
+         arrayCopyTT->insertBefore(TR::TreeTop::create(comp, TR::Node::create(TR::treetop, 1, childNode)));
+      }
+
+   TR::CFG *cfg = comp->getFlowGraph();
+   TR::Block *currentBlock = arrayCopyTT->getEnclosingBlock();
+   TR::Block *callBlock = currentBlock->split(arrayCopyTT, cfg, true);
+   TR::Block *nextBlock = callBlock->split(arrayCopyTT->getNextTreeTop(), cfg, true);
+
+   TR::SymbolReference *adjustSrcTempRef = NULL;
+   TR::SymbolReference *adjustDestTempRef = NULL;
+   if (srcAdjustmentNeeded)
+      {
+      adjustSrcTempRef = comp->getSymRefTab()->createTemporary(comp->getMethodSymbol(), TR::Address);
+      adjustSrcTempRef->getSymbol()->setNotCollected();
+      TR::Node* storeNode = TR::Node::createStore(adjustSrcTempRef, src);
+      TR::TreeTop* storeTree = TR::TreeTop::create(comp, storeNode);
+      currentBlock->getExit()->insertBefore(storeTree);
+      callBlock = TR::TransformUtil::insertUnsafeCopyMemoryArgumentChecksAndAdjustForOffHeap(comp, arraycopyNode->getChild(1), adjustSrcTempRef, callBlock, srcArrayCheckNeeded, cfg);
+      }
+   if (destAdjustmentNeeded)
+      {
+      adjustDestTempRef = comp->getSymRefTab()->createTemporary(comp->getMethodSymbol(), TR::Address);
+      adjustDestTempRef->getSymbol()->setNotCollected();
+      TR::Node* storeNode = TR::Node::createStore(adjustDestTempRef, dest);
+      TR::TreeTop* storeTree = TR::TreeTop::create(comp, storeNode);
+      currentBlock->getExit()->insertBefore(storeTree);
+      callBlock = TR::TransformUtil::insertUnsafeCopyMemoryArgumentChecksAndAdjustForOffHeap(comp, arraycopyNode->getChild(3), adjustDestTempRef, callBlock, destArrayCheckNeeded, cfg);
+      }
+
+   TR::TransformUtil::convertUnsafeCopyMemoryCallToArrayCopyWithSymRefLoad(comp, arrayCopyTT, adjustSrcTempRef, adjustDestTempRef);
+
+   return;
+   }
+#endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */

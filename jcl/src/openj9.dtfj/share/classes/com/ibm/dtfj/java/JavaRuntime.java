@@ -39,7 +39,7 @@ public interface JavaRuntime extends ManagedRuntime {
     /**
      * Get the object that represents the virtual machine
      * @return the address of the JavaVM structure which represents this JVM instance in JNI
-     * @throws CorruptDataException 
+     * @throws CorruptDataException
      */
     public ImagePointer getJavaVM() throws CorruptDataException;
 
@@ -58,92 +58,92 @@ public interface JavaRuntime extends ManagedRuntime {
     /**
      * Fetch the JavaVMInitArgs which were used to create this VM.
      * See JNI_CreateJavaVM in the JNI Specification for more details.
-     * 
+     *
      * @return the JavaVMInitArgs which were used to create this VM.
-     * @throws DataUnavailable if the arguments are not available 
+     * @throws DataUnavailable if the arguments are not available
      * @throws CorruptDataException
      */
     public JavaVMInitArgs getJavaVMInitArgs() throws DataUnavailable, CorruptDataException;
-    
+
     /**
      * Get the set of class loaders active in this VM
      * @return an iterator of all of the class loaders within this JavaVM
-     * 
+     *
      * @see JavaClassLoader
      * @see com.ibm.dtfj.image.CorruptData
      */
     public Iterator getJavaClassLoaders();
-    
+
     /**
-     * Get the set of Java threads known by the VM 
+     * Get the set of Java threads known by the VM
      * @return an iterator of the JavaThreads in the runtime
-     * 
+     *
      * @see JavaThread
      * @see com.ibm.dtfj.image.CorruptData
      */
     public Iterator getThreads();
-    
+
     /**
      * This is short cut method. The same result can be found by iterating over all
      * methods in all class loaders in all classes.
-     * 
+     *
      * @return an iterator over all of the JavaMethods in the JavaRuntime which
      * have been compiled
-     * 
+     *
      * @see JavaMethod
      * @see com.ibm.dtfj.image.CorruptData
      */
     public Iterator getCompiledMethods();
-    
+
     /**
-     * Provides access to the collection of monitors used in the JavaVM. This 
+     * Provides access to the collection of monitors used in the JavaVM. This
      * collection includes both monitors associated with managed objects (e.g. object
      * monitors) and monitors associated with internal control structures (e.g.
      * raw monitors)
-     * 
+     *
      * @return an iterator over the collection of monitors
-     * 
+     *
      * @see JavaMonitor
      * @see com.ibm.dtfj.image.CorruptData
      */
     public Iterator getMonitors();
-    
+
     /**
      * Get the set of heaps known by the VM
      * @return an iterator for all of the Java heaps within this runtime. Heaps
      * may be specific to this JavaVM instance, or may be shared between multiple
      * JavaVM instances
-     * 
+     *
      * @see JavaHeap
      * @see com.ibm.dtfj.image.CorruptData
      */
     public Iterator getHeaps();
-    
+
     /**
      * Get the set of object and class roots known to the VM.
      * Stack frame roots are not included in the set, they can be retrieved using JavaStackFrame.getHeapRoots().
 	 *
-     * @return an iterator over the collection of JavaReferences representing the known global heap roots within this runtime. 
-     *      
+     * @return an iterator over the collection of JavaReferences representing the known global heap roots within this runtime.
+     *
      * @see JavaReference
      * @see JavaStackFrame
      * @see com.ibm.dtfj.image.CorruptData
-     * 
+     *
      */
     public Iterator getHeapRoots();
-    
+
     /**
      * Fetches implementation specific trace buffers, like the verbose GC buffer
      * or the Universal Trace Engine (UTE) buffer
-     * 
+     *
      * @param bufferName a String naming the buffer to be fetched
-     * @param formatted true if formatting should be performed on the buffer, or 
+     * @param formatted true if formatting should be performed on the buffer, or
      * false if the raw buffer contents should be returned
-     * @return an implementation specific result, depending on the parameters 
-     * @throws CorruptDataException 
+     * @return an implementation specific result, depending on the parameters
+     * @throws CorruptDataException
      */
     public Object getTraceBuffer(String bufferName, boolean formatted) throws CorruptDataException;
-    
+
     /**
      * Gets the object located at address <code>address</code> in the heap.
      * @param	address the <code>ImagePointer</code> instance representing the start address of object in the heap;
@@ -155,12 +155,11 @@ public interface JavaRuntime extends ManagedRuntime {
      * @see 	com.ibm.dtfj.java.JavaObject
      */
      public JavaObject getObjectAtAddress(ImagePointer address) throws CorruptDataException, IllegalArgumentException, MemoryAccessException, DataUnavailable;
-     
- 	
+
      /**
       * Returns iterator of the top-level memory categories used by this
       * Java runtime.
-      * 
+      *
       * @return Iterator of memory categories
       * @see JavaRuntimeMemoryCategory CorruptData
       * @since 1.5
@@ -169,7 +168,7 @@ public interface JavaRuntime extends ManagedRuntime {
 
      /**
       * Returns an iterator of JavaRuntimeMemorySection objects corresponding to the blocks of memory allocated by the JavaRuntime.
-      * 
+      *
       * @param includeFreed If true, iterator will iterate over blocks of memory that have been freed, but haven't been re-used yet.
       * @return Iterator of memory sections.
       * @see JavaRuntimeMemorySection CorruptData
@@ -186,14 +185,14 @@ public interface JavaRuntime extends ManagedRuntime {
 
 	/**
 	 * Determine if the JIT was enabled for this Java runtime.
-	 * 
+	 *
 	 * @return true if the JIT was enabled, false if not
 	 * @throws DataUnavailable if it is not possible to determine the JIT status
 	 * @throws CorruptDataException
 	 * @since 1.8
 	 */
 	public boolean isJITEnabled() throws DataUnavailable, CorruptDataException;
-	
+
 	/**
 	 * Get any vendor specific properties in use by the JIT for this Java runtime
 	 * @return the set of properties, which may be empty if none were set.
@@ -205,24 +204,24 @@ public interface JavaRuntime extends ManagedRuntime {
 
 	/**
 	 * Get the time when the JVM was started.
-	 * 
+	 *
 	 * @return the time the JVM was started, in milliseconds since 1970
-	 * 
+	 *
 	 * @throws DataUnavailable if the JVM start time is not available
 	 * @throws CorruptDataException if the JVM start time is corrupted
-	 * 
+	 *
 	 * @since 1.12
 	 */
 	public long getStartTime() throws DataUnavailable, CorruptDataException;
-	
+
 	/**
 	 * Get the value of the JVM's high-resolution timer when the JVM was started.
-	 * 
+	 *
 	 * @return the value of the high-resolution timer when the JVM was started, in nanoseconds
-	 * 
+	 *
 	 * @throws DataUnavailable if the JVM start time is not available
 	 * @throws CorruptDataException if the JVM start time is corrupted
-	 * 
+	 *
 	 * @since 1.12
 	 */
 	public long getStartTimeNanos() throws DataUnavailable, CorruptDataException;

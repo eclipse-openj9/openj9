@@ -26,41 +26,41 @@ import java.util.Iterator;
 
 /**
  * <p>Represents a heap of managed objects.</p>
- * 
- * <p>There may be multiple heaps within a JVM, for instance a generational 
- * heap and a class heap. Additionally, heaps may consist of non-contiguous 
- * memory regions. For instance, an object heap may be divided into a hot 
+ *
+ * <p>There may be multiple heaps within a JVM, for instance a generational
+ * heap and a class heap. Additionally, heaps may consist of non-contiguous
+ * memory regions. For instance, an object heap may be divided into a hot
  * and cold section.</p>
- * 
+ *
  */
 public interface JavaHeap {
-    
+
     /**
-     * Get the set of contiguous memory regions which form this heap. 
+     * Get the set of contiguous memory regions which form this heap.
      * @return an iterator over the collection of contiguous memory regions
      * which form this heap
-     * 
+     *
      * @see com.ibm.dtfj.image.ImageSection
      * @see com.ibm.dtfj.image.CorruptData
      */
     public Iterator getSections();
-    
+
     /**
      * Get a brief textual description of this heap.
      * @return a brief textual description of this heap
      */
     public String getName();
-    
+
     /**
      * Get the set of objects which are stored in this heap.
      * @return an iterator over the collection of objects which
      * are stored in this heap
-     * 
+     *
      * @see JavaObject
      * @see com.ibm.dtfj.image.CorruptData
      */
     public Iterator getObjects();
-    
+
 	/**
 	 * @param obj
 	 * @return True if the given object refers to the same Java Heap in the image

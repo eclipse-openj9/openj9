@@ -42,7 +42,7 @@ public class JavaStackFrame implements com.ibm.dtfj.java.JavaStackFrame
 	private ImagePointer _pc;
 	private int _lineNumber;
 	private Vector _stackRoots = new Vector();
-	
+
 	private JavaStackFrame(JavaRuntime javaVM, ImagePointer basePointer, ImagePointer pc, int lineNumber)
 	{
 		if (null == basePointer) {
@@ -56,7 +56,7 @@ public class JavaStackFrame implements com.ibm.dtfj.java.JavaStackFrame
 		_pc = pc;
 		_lineNumber = lineNumber;
 	}
-	
+
 	public JavaStackFrame(JavaRuntime javaVM, ImagePointer basePointer, JavaMethod method, ImagePointer pc, int lineNumber)
 	{
 		this(javaVM, basePointer, pc, lineNumber);
@@ -65,7 +65,7 @@ public class JavaStackFrame implements com.ibm.dtfj.java.JavaStackFrame
 		}
 		_method = method;
 	}
-	
+
 	public JavaStackFrame(JavaRuntime javaVM, ImagePointer basePointer, ImagePointer methodID, ImagePointer pc, int lineNumber)
 	{
 		this(javaVM, basePointer, pc, lineNumber);
@@ -101,16 +101,16 @@ public class JavaStackFrame implements com.ibm.dtfj.java.JavaStackFrame
 		jRef = new JavaReference(_javaVM, this, id, "StackFrame Root", JavaReference.REFERENCE_UNKNOWN, JavaReference.HEAP_ROOT_STACK_LOCAL, JavaReference.REACHABILITY_STRONG);
 		_stackRoots.add(jRef);
 	}
-	
+
 	private static boolean equals(Object o1, Object o2)
 	{
 		return o1 == o2 || o1 != null && o1.equals(o2);
 	}
-	
+
 	public boolean equals(Object obj)
 	{
 		boolean isEqual = false;
-		
+
 		if (obj instanceof JavaStackFrame) {
 			JavaStackFrame local = (JavaStackFrame) obj;
 			isEqual = equals(_method, local._method) && equals(_pc, local._pc);
@@ -122,7 +122,7 @@ public class JavaStackFrame implements com.ibm.dtfj.java.JavaStackFrame
 	{
 		return o1 == null ? 0 : o1.hashCode();
 	}
-	
+
 	public int hashCode()
 	{
 		return hashCode(_method) ^ _pc.hashCode() ^ hashCode(_methodID);

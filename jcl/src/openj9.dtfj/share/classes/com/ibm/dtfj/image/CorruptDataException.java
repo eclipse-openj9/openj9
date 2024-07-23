@@ -31,28 +31,28 @@ public class CorruptDataException extends DTFJException {
 	private static final long serialVersionUID = 1824138624307972457L;
 
 	private CorruptData corruptData;
-	
+
 	/**
 	 * Construct a new CorruptDataException for the specified corrupt data
-	 * 
+	 *
 	 * @param data the corruptData
 	 */
 	public CorruptDataException(CorruptData data) {
         super(data==null ? "" : data.toString());
 
         if (data == null) {
-        	throw new IllegalArgumentException("data must not be null");
+            throw new IllegalArgumentException("data must not be null");
         }
         corruptData = data;
     }
-    
+
 	/**
 	 * Get more info about the corrupted data
-	 * 
+	 *
 	 * @return the CorruptData object
 	 */
 	public CorruptData getCorruptData() {
-    	return corruptData;
+        return corruptData;
     }
-    
+
 }

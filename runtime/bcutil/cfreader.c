@@ -1717,6 +1717,24 @@ checkFields(J9PortLibrary* portLib, J9CfrClassFile * classfile, U_8 * segment, U
 					goto _errorFound;
 				}
 			}
+
+			/* Each field of a value class must have exactly one of its ACC_STATIC or ACC_STRICT flags set. */
+			if (J9_ARE_NO_BITS_SET(value, CFR_ACC_STRICT | CFR_ACC_STATIC)) {
+				errorCode = J9NLS_CFR_ERR_VALUE_CLASS_FIELD_NOT_STATIC_OR_STRICT__ID;
+				goto _errorFound;
+			}
+		}
+
+		/* A field must not have set both ACC_STRICT and ACC_STATIC. */
+		if (J9_ARE_ALL_BITS_SET(value, CFR_ACC_STRICT | CFR_ACC_STATIC)) {
+			errorCode = J9NLS_CFR_ERR_FIELD_CANT_BE_STRICT_AND_STATIC__ID;
+			goto _errorFound;
+		}
+
+		/* A field that has set ACC_STRICT must also have set ACC_FINAL. */
+		if (J9_ARE_ALL_BITS_SET(value, CFR_ACC_STRICT) && J9_ARE_NO_BITS_SET(value, CFR_ACC_FINAL)) {
+			errorCode = J9NLS_CFR_ERR_STRICT_FIELD_MUST_BE_FINAL__ID;
+			goto _errorFound;
 		}
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
@@ -1885,23 +1903,6 @@ checkMethods(J9PortLibrary* portLib, J9CfrClassFile* classfile, U_8* segment, U_
 				}
 			}
 		}
-
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-		if (nameIndexOK && utf8Equal(&classfile->constantPool[method->nameIndex], "<vnew>", 6)) {
-			if (J9_ARE_ANY_BITS_SET(classfile->accessFlags, CFR_ACC_ABSTRACT | CFR_ACC_IDENTITY | CFR_ACC_INTERFACE)) {
-				errorCode = J9NLS_CFR_ERR_INVALID_CLASS_FLAGS_ON_VNEW__ID;
-				goto _errorFound;
-			}
-			if (J9_ARE_NO_BITS_SET(value, CFR_ACC_STATIC)) {
-				errorCode = J9NLS_CFR_ERR_INVALID_FLAGS_ON_NEW__ID;
-				goto _errorFound;
-			}
-			if (J9_ARE_ANY_BITS_SET(value, ~CFR_VNEW_METHOD_ACCESS_MASK)) {
-				errorCode = J9NLS_CFR_ERR_INVALID_FLAGS_ON_NEW__ID;
-				goto _errorFound;
-			}
-		}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 		/* Check interface-method-only access flag constraints. */
 		if (classfile->accessFlags & CFR_ACC_INTERFACE) {
@@ -3131,16 +3132,19 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 	}
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	/* Currently value type is built on JDK22, so compare with JDK22 for now. */
+	/* Currently value type is built on JDK23, so compare with JDK23 for now. */
 	if ((flags & BCT_MajorClassFileVersionMask) < BCT_JavaMajorVersionShifted(23)) {
 		classfile->accessFlags &= ~CFR_ACC_IDENTITY;
+	} else if (J9_ARE_NO_BITS_SET(
+				classfile->accessFlags,
+				CFR_ACC_INTERFACE | CFR_ACC_FINAL | CFR_ACC_IDENTITY | CFR_ACC_ABSTRACT)
+	) {
+		errorCode = J9NLS_CFR_ERR_CLASS_MUST_HAVE_AT_LEAST_ONE_FINAL_IDENTITY_ABSTRACT_FLAG__ID;
+		offset = index - data - 2;
+		goto _errorFound;
 	}
+
 	if (J9_IS_CLASSFILE_VALUETYPE(classfile)) {
-		if (J9_ARE_NO_BITS_SET(classfile->accessFlags, CFR_ACC_ABSTRACT | CFR_ACC_FINAL)) {
-			errorCode = J9NLS_CFR_ERR_FINAL_ABSTRACT_FLAG_MISSING_ON_VALUE_CLASS__ID;
-			offset = index - data - 2;
-			goto _errorFound;
-		}
 		if (J9_ARE_ANY_BITS_SET(classfile->accessFlags, CFR_ACC_IDENTITY | CFR_ACC_ENUM | CFR_ACC_MODULE)) {
 			errorCode = J9NLS_CFR_ERR_INCORRECT_FLAG_FOUND_ON_VALUE_CLASS__ID;
 			offset = index - data - 2;

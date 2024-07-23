@@ -35,7 +35,7 @@ import java.util.zip.ZipFile;
 import javax.imageio.stream.ImageInputStream;
 
 public class ZipFileManager extends CompressedFileManager {
-	
+
 	public ZipFileManager(File file) {
 		super(file);
 	}
@@ -67,7 +67,7 @@ public class ZipFileManager extends CompressedFileManager {
 		zip.close();		//file contents not recognised so close file and exit
 		return candidates;
 	}
-	
+
 	private boolean identifiedCoreFile(ZipFile zip, ZipEntry entry, ArrayList<ManagedImageSource> candidates) throws IOException {
 		if(entry.getSize() < MIN_CORE_SIZE) {
 			return false;		// entry is not big enough for a core file so skip
@@ -91,7 +91,7 @@ public class ZipFileManager extends CompressedFileManager {
 		}
 		return false;
 	}
-	
+
 	private boolean identifiedJavaCore(ZipFile zip, ZipEntry entry, ArrayList<ManagedImageSource> candidates) throws IOException {
 		//now check to see if the file that has been located in the zip is a core file or not
 		InputStream stream = zip.getInputStream(entry);
@@ -102,9 +102,9 @@ public class ZipFileManager extends CompressedFileManager {
 			logger.finer("Identified javacore file : " + candidate.toURI());
 			return true;
 		}
-		return false;	
+		return false;
 	}
-	
+
 	private boolean identifiedPHD(ZipFile zip, ZipEntry entry, ArrayList<ManagedImageSource> candidates) throws IOException {
 		//now check to see if the file that has been located in the zip is a core file or not
 		InputStream stream = zip.getInputStream(entry);
@@ -126,30 +126,30 @@ public class ZipFileManager extends CompressedFileManager {
 			candidates.add(candidate);
 			return true;
 		}
-		return false;	
+		return false;
 	}
-	
+
 	/**
 	 * Extracts the specified core file to the specified directory
 	 * @param file
-	 * @throws IOException 
-	 * @throws ZipException 
+	 * @throws IOException
+	 * @throws ZipException
 	 */
 	public void extract(ManagedImageSource file, File todir) throws IOException {
 		checkDirectoryToExtractTo(todir);
 		//check if the name contains the directory hierarchy which needs to be replicated
 		File extractTo = getExtractLocation(file.getName(), todir);
 		//extract into the correct path
-		
+
 		ZipFile zip = new ZipFile(managedFile);
 		ZipEntry entry = zip.getEntry(file.getName());
 		extractEntry(zip, entry, extractTo);
-		
+
 		//update the managed file object
 		file.setExtractedTo(extractTo);
 		file.incRefCount();
 	}
-	
+
 	//zip files are hierarchical so this method maps the hierarchy in the zip onto the extraction directory
 	private File getExtractLocation(String path, File todir) throws IOException {
 		String todirPath = todir.getCanonicalPath();
@@ -159,13 +159,13 @@ public class ZipFileManager extends CompressedFileManager {
 		if((npath.length() > 2) && (npath.charAt(1) == ':')) {
 			npath = npath.substring(2);
 		}
-		
+
 		File tempFile = new File(todirPath, npath);
 		String tempFileString = tempFile.getCanonicalPath();
 		if (!tempFileString.startsWith(todirPath)) {
 			throw new IOException(tempFileString + " should be subdirectory of " + todirPath);
 		}
-		
+
 		String[] subdirs = npath.split("/");
 		for(int i = 0; i < subdirs.length - 1; i++) {
 			if(subdirs[i].length() > 0) {
@@ -178,12 +178,12 @@ public class ZipFileManager extends CompressedFileManager {
 		extractTo.deleteOnExit();
 		return extractTo;
 	}
-	
+
 	private void extractEntry(ZipFile zip, ZipEntry entry, File path) throws IOException {
 		InputStream in = zip.getInputStream(entry);
 		extractEntry(in, path);
 	}
-	
+
 	public ImageInputStream getStream(ManagedImageSource source) throws IOException {
 		ZipFile zip = new ZipFile(source.getArchive());
 		ZipEntry entry = zip.getEntry(source.getName());
@@ -191,7 +191,7 @@ public class ZipFileManager extends CompressedFileManager {
 		ImageInputStream iis = new ZipMemoryCacheImageInputStream(entry, is, source);
 		return iis;
 	}
-	
+
 	//this will extract the entire contents of the zip file to the specified directory
 	@Override
 	public void extract(File todir) throws IOException {

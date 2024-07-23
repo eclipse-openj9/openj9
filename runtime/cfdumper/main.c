@@ -1298,6 +1298,9 @@ static void printField(J9CfrClassFile* classfile, J9CfrField* field)
 	if(field->accessFlags & CFR_ACC_FINAL) j9tty_printf( PORTLIB, "final ");
 	if(field->accessFlags & CFR_ACC_VOLATILE) j9tty_printf( PORTLIB, "volatile ");
 	if(field->accessFlags & CFR_ACC_TRANSIENT) j9tty_printf( PORTLIB, "transient ");
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+	if(field->accessFlags & CFR_ACC_STRICT) j9tty_printf( PORTLIB, "strict ");
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
 	/* Return type. */
 	string = classfile->constantPool[field->descriptorIndex].bytes;
@@ -1793,9 +1796,6 @@ static void printDisassembledMethod(J9CfrClassFile* classfile, J9CfrMethod* meth
 				case CFR_BC_putstatic:
 				case CFR_BC_getfield:
 				case CFR_BC_putfield:
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-				case CFR_BC_withfield:
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 					fieldFlag = TRUE;
 
 				case CFR_BC_invokevirtual:
@@ -1857,9 +1857,6 @@ static void printDisassembledMethod(J9CfrClassFile* classfile, J9CfrMethod* meth
 				case CFR_BC_anewarray:
 				case CFR_BC_checkcast:
 				case CFR_BC_instanceof:
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-				case CFR_BC_aconst_init:
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 					NEXT_U16_ENDIAN(bigEndian, index, bcIndex);
 					info = classfile->constantPool[index];
 					j9tty_printf( PORTLIB, "%i ", index);
@@ -6706,9 +6703,6 @@ static void j9_formatBytecodes(J9ROMClass* romClass, J9ROMMethod* method, U_8* b
 				case JBputstatic:
 				case JBgetfield:
 				case JBputfield:
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-				case JBwithfield:
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 					j9_formatBytecode(romClass, method, bytecodes, bcIndex, bc, 3, CFR_DECODE_J9_FIELDREF, formatString, stringLength, flags);
 					pc += 2;
 					bcIndex += 3;
@@ -6731,9 +6725,6 @@ static void j9_formatBytecodes(J9ROMClass* romClass, J9ROMMethod* method, U_8* b
 				case JBanewarray:
 				case JBcheckcast:
 				case JBinstanceof:
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-				case JBaconst_init:
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 					j9_formatBytecode(romClass, method, bytecodes, bcIndex, bc, 3, CFR_DECODE_J9_CLASSREF, formatString, stringLength, flags);
 					pc += 2;
 					bcIndex += 3;

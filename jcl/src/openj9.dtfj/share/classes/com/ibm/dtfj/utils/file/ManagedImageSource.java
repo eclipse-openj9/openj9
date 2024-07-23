@@ -31,9 +31,9 @@ import java.util.logging.Logger;
 import com.ibm.dtfj.image.ImageFactory;
 
 /**
- * Represents a managed core file. The core can reside in 
+ * Represents a managed core file. The core can reside in
  * a compressed archive or be extracted to the local file system.
- * 
+ *
  * @author adam
  *
  */
@@ -47,12 +47,12 @@ public class ManagedImageSource {
 	private ManagedImageSource metadata = null;
 	private final ImageSourceType type;
 	private final UUID uuid = UUID.randomUUID();	//used as a backup unique identifier
-	
+
 	public ManagedImageSource(String name, ImageSourceType type) {
 		this.name = name;
 		this.type = type;
 	}
-	
+
 	public ImageSourceType getType() {
 		return type;
 	}
@@ -92,7 +92,7 @@ public class ManagedImageSource {
 	public void setArchive(File archive) {
 		this.archive = archive;
 	}
-	
+
 	public File getExtractedTo() {
 		return extractedTo;
 	}
@@ -104,11 +104,11 @@ public class ManagedImageSource {
 	public int getRefCount() {
 		return refcount;
 	}
-	
+
 	public void incRefCount() {
 		refcount++;
 	}
-	
+
 	public void decRefCount() {
 		if(refcount > 0) {
 			refcount--;
@@ -128,7 +128,7 @@ public class ManagedImageSource {
 	public int hashCode() {
 		return name.hashCode();
 	}
-	
+
 	public String getPathToExtractedFile() {
 		return extractedTo.getAbsolutePath();
 	}
@@ -144,7 +144,7 @@ public class ManagedImageSource {
 			return null;
 		}
 	}
-	
+
 	/**
 	 * Provides a URI for the location of the file before it has been extracted i.e. within the archive
 	 * @return
@@ -159,7 +159,7 @@ public class ManagedImageSource {
 					uri.append(path);
 					uri.append("/");
 				}
-				uri.append(name);	
+				uri.append(name);
 				String unsafeURI = uri.toString();	// the string builder contains a potentially invalid URI so extract it to a String
 				// replace \ with / and spaces are encoded to %20 (this is common for Windows paths)
 				String safeURI = unsafeURI.replace('\\', '/').replace(" ", "%20");
@@ -182,7 +182,7 @@ public class ManagedImageSource {
 		}
 		try {
 			//catch all if can't work out a suitable URI
-			return new URI("file://" + uuid);	
+			return new URI("file://" + uuid);
 		} catch (Exception e) {
 			return null;
 		}
@@ -196,7 +196,5 @@ public class ManagedImageSource {
 		data.append(")");
 		return data.toString();
 	}
-	
-	
-	
+
 }

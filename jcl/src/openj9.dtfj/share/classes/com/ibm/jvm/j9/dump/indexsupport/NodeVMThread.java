@@ -35,7 +35,7 @@ import com.ibm.dtfj.java.j9.JavaThread;
 public class NodeVMThread extends NodeAbstract
 {
 	private JavaThread _javaThread;
-	
+
 	public NodeVMThread(JavaRuntime runtime, Attributes attributes)
 	{
 		//<vmthread id="0x123f00" obj="0x420500" state="Blocked" monitor="0x35f20" native="0xdac">
@@ -44,9 +44,9 @@ public class NodeVMThread extends NodeAbstract
 		String state = attributes.getValue("state");
 		long monitorID = _longFromString(attributes.getValue("monitor"));
 		long nativeID = _longFromString(attributes.getValue("native"));
-		
+
 		ImageThread imageThread = runtime.nativeThreadForID(nativeID);
-		
+
 		_javaThread = new JavaThread(runtime, runtime.pointerInAddressSpace(id), runtime.pointerInAddressSpace(objectID), state, imageThread);
 		long blockedID = 0;
 		long waitingID = 0;
@@ -64,7 +64,7 @@ public class NodeVMThread extends NodeAbstract
 	public IParserNode nodeToPushAfterStarting(String uri, String localName, String qName, Attributes attributes)
 	{
 		IParserNode child = null;
-		
+
 		if (qName.equals("stack")) {
 			child = new NodeStack(_javaThread, attributes);
 		} else {

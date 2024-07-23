@@ -32,7 +32,7 @@ public class ImageRegister implements com.ibm.dtfj.image.ImageRegister
 {
 	private String _name;
 	private Number _value;
-	
+
 	public ImageRegister(String name, Number value) {
 		_name = name;
 		_value = value;
@@ -53,7 +53,7 @@ public class ImageRegister implements com.ibm.dtfj.image.ImageRegister
 	{
 		return _value;
 	}
-	
+
 	public String toString() {
 		return String.format("%s:%x", _name, _value);
 	}

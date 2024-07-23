@@ -29,12 +29,12 @@ public class JCImageSymbol implements ImageSymbol {
 
 	private final String name;
 	private final ImagePointer address;
-	
+
 	public JCImageSymbol(String name, ImagePointer address) {
 		this.name = name;
 		this.address = address;
 	}
-	
+
 	public ImagePointer getAddress() {
 		return address;
 	}
@@ -50,7 +50,7 @@ public class JCImageSymbol implements ImageSymbol {
 		ImageSymbol o2 = (ImageSymbol)o;
 		return getName().equals(o2.getName()) && address.equals(o2.getAddress());
 	}
-	
+
 	public int hashCode() {
 		return name.hashCode() ^ address.hashCode();
 	}

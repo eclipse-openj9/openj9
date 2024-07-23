@@ -29,7 +29,7 @@ public interface IParserNode
 	/**
 	 * Called when a start tag is parsed.  Returns the node to handle this new scope which may be the same instance
 	 * as the receiver if this same node wants to take responsibility.
-	 * 
+	 *
 	 * @param uri
 	 * @param localName
 	 * @param qName
@@ -37,14 +37,14 @@ public interface IParserNode
 	 * @return
 	 */
 	public IParserNode nodeToPushAfterStarting(String uri, String localName, String qName, Attributes attributes);
-	
+
 	/**
 	 * Called when a literal string is parsed in the XML stream.
-	 * 
+	 *
 	 * @param string
 	 */
 	public void stringWasParsed(String string);
-	
+
 	/**
 	 * Called when this tag is done being parsed (the start tag and all children have been fully parsed) and it is
 	 * going to be discarded by the parser.

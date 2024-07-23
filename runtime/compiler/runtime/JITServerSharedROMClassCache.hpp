@@ -44,7 +44,9 @@ public:
    // Releases memory used by the cache. Must be called when the last client session is destroyed.
    void shutdown(bool lastClient = true);
 
-   J9ROMClass *getOrCreate(const J9ROMClass *packedROMClass);
+   // Get an existing cache entry for packedROMClass or create one. The packedROMClassHash may be NULL; if not,
+   // it will be the cached deterministic hash of packedROMClass received from the client.
+   J9ROMClass *getOrCreate(const J9ROMClass *packedROMClass, const JITServerROMClassHash *packedROMClassHash);
    void release(J9ROMClass *romClass);
 
    // Get precomputed hash of a shared ROMClass

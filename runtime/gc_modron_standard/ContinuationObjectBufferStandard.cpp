@@ -33,6 +33,9 @@
 #include "ContinuationObjectBufferStandard.hpp"
 #include "ContinuationObjectList.hpp"
 #include "ParallelTask.hpp"
+#if JAVA_SPEC_VERSION >= 19
+#include "ContinuationHelpers.hpp"
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 MM_ContinuationObjectBufferStandard::MM_ContinuationObjectBufferStandard(MM_GCExtensions *extensions, uintptr_t maxObjectCount)
 	: MM_ContinuationObjectBuffer(extensions, maxObjectCount)
@@ -113,6 +116,7 @@ MM_ContinuationObjectBufferStandard::iterateAllContinuationObjects(MM_Environmen
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
 	MM_HeapRegionDescriptorStandard *region = NULL;
 	GC_HeapRegionIteratorStandard regionIterator(extensions->heapRegionManager);
+	GC_Environment *gcEnv = env->getGCEnvironment();
 
 	/* to make sure that previous pruning phase of continuation list(scanContinuationObjects()) is complete */
 	env->_currentTask->synchronizeGCThreads(env, UNIQUE_ID);
@@ -126,9 +130,11 @@ MM_ContinuationObjectBufferStandard::iterateAllContinuationObjects(MM_Environmen
 
 					omrobjectptr_t object = list->getHeadOfList();
 					while (NULL != object) {
+						gcEnv->_continuationStats._total += 1;
 						omrobjectptr_t next = extensions->accessBarrier->getContinuationLink(object);
-						J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF((J9VMThread *)env->getLanguageVMThread(), object);
-						if (NULL != continuation) {
+						ContinuationState volatile *continuationStatePtr = VM_ContinuationHelpers::getContinuationStateAddress((J9VMThread *)env->getLanguageVMThread(), object);
+						if (VM_ContinuationHelpers::isActive(*continuationStatePtr)) {
+							gcEnv->_continuationStats._started += 1;
 							TRIGGER_J9HOOK_MM_WALKCONTINUATION(extensions->hookInterface, (J9VMThread *)env->getLanguageVMThread(), object);
 						}
 						object = next;

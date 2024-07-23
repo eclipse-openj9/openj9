@@ -27,33 +27,28 @@ import com.ibm.dtfj.image.ImagePointer;
 import com.ibm.dtfj.javacore.builder.IBuilderData;
 
 public class BuilderData {
-	
-	
 
-	
 	public static String stringIsSet(String value) throws DataUnavailable {
 		if (value == null) {
 			throw new DataUnavailable();
 		}
 		return value;
 	}
-	
-	
+
 	public static long valLongIsSet(long value) throws DataUnavailable {
 		if (value == IBuilderData.NOT_AVAILABLE) {
 			throw new DataUnavailable();
 		}
 		return value;
 	}
-	
-	
+
 	public static int valIntIsSet(int value) throws DataUnavailable {
 		if (value == IBuilderData.NOT_AVAILABLE) {
 			throw new DataUnavailable();
 		}
 		return value;
 	}
-	
+
 	public static ImagePointer imagePointerIsSet(ImagePointer pointer) throws DataUnavailable {
 		if (pointer == null) {
 			throw new DataUnavailable();

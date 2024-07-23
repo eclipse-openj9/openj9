@@ -48,18 +48,16 @@ public class JavaCoreReader {
 
 	private RegisteredComponents fComponents;
 	private IImageBuilderFactory fImageBuilderFactory;
-	
+
 	public JavaCoreReader(IImageBuilderFactory imageBuilderFactory) {
 		fImageBuilderFactory = imageBuilderFactory;
 		fComponents = new RegisteredComponents();
 	}
 
-
-	
 	/**
-	 * 
+	 *
 	 * @param input
-	 * 
+	 *
 	 * @throws UnsupportedSourceException
 	 * @throws ParserException
 	 * @throws IOException
@@ -78,12 +76,12 @@ public class JavaCoreReader {
 			IParserController parserController = new ParserController(frameworkSections, fImageBuilderFactory);
 			parserController.addErrorListener(new IErrorListener() {
 				private Logger logger = Logger.getLogger(ImageFactory.DTFJ_LOGGER_NAME);
-				
+
 				public void handleEvent(String msg) {
 					//map errors onto Level.FINE so that DTFJ is silent unless explicitly changed
 					logger.fine(msg);
 				}
-				
+
 			});
 			J9TagManager tagManager = J9TagManager.getCurrent();
 			return parserController.parse(fComponents.getScannerManager(reader, tagManager));
@@ -101,7 +99,7 @@ public class JavaCoreReader {
 			byte[] headBytes = new byte[256];
 			input.read(headBytes);
 			ByteBuffer headByteBuffer = ByteBuffer.wrap(headBytes);
-			String[] estimates = new String[] { 
+			String[] estimates = new String[] {
 				"IBM1047", // EBCDIC
 				"UTF-16BE", // Multibyte big endian
 				"UTF-16LE", // Multibyte Windows
@@ -117,7 +115,7 @@ public class JavaCoreReader {
 			}
 		} catch (JavacoreFileEncodingException e) {
 			/* As it isn't possible to report the error through the API
-			 * we have no choice but to silently consume it here. The 
+			 * we have no choice but to silently consume it here. The
 			 * API will continue in a best effort basis.
 			 */
 			Logger.getLogger(com.ibm.dtfj.image.ImageFactory.DTFJ_LOGGER_NAME).log(Level.INFO,e.getMessage());
@@ -141,11 +139,11 @@ public class JavaCoreReader {
 		final String charsetEyeCatcher = "1TICHARSET";
 		headByteBuffer.rewind();
 		String head = trialCharset.decode(headByteBuffer).toString();
-		
+
 		/* If we can find the section eyecatcher, this encoding is mostly good */
 		if (head.indexOf(sectionEyeCatcher) >= 0) {
 			int idx = head.indexOf(charsetEyeCatcher);
-			
+
 			/* The charset eyecatcher is much newer, so may not be present */
 			if (idx >= 0) {
 				idx += charsetEyeCatcher.length();
@@ -171,7 +169,7 @@ public class JavaCoreReader {
 						return trueCharset;
 					} else {
 						throw new JavacoreFileEncodingException(
-							"Ignoring Javacore encoding '" + javacoreCharset + "' hinted at by '" + 
+							"Ignoring Javacore encoding '" + javacoreCharset + "' hinted at by '" +
 							charsetEyeCatcher + "' eye catcher due to suspected change of encoding.\n" +
 							"Eye catcher was readable using encoding '"	+ trialCharset.displayName() + "'."
 						);
@@ -191,9 +189,9 @@ public class JavaCoreReader {
 					 * the trial charset, which to reach here must be supported.
 					 */
 					throw new JavacoreFileEncodingException(
-							"Unable to use Javacore encoding '" + javacoreCharset + "' hinted at by '" + 
+							"Unable to use Javacore encoding '" + javacoreCharset + "' hinted at by '" +
 							charsetEyeCatcher + "' eye catcher as the JVM does not support this encoding.", e
-						);			
+						);
 				}
 			} else {
 				/* Couldn't find the charset eyecatcher, but the section eyecatcher worked */

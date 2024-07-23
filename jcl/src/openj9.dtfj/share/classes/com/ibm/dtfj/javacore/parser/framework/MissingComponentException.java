@@ -25,11 +25,10 @@ package com.ibm.dtfj.javacore.parser.framework;
 public class MissingComponentException extends Exception {
 
 	/**
-	 * 
+	 *
 	 */
 	private static final long serialVersionUID = 8636302966945965032L;
-	
-	
+
 	public MissingComponentException(Exception e) {
 		super(e);
 	}

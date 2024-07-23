@@ -33,14 +33,14 @@ import com.ibm.dtfj.java.j9.JavaThread;
 public class NodeStack extends NodeAbstract
 {
 	private JavaThread _thread;
-	
+
 	public NodeStack(JavaThread thread, Attributes attributes)
 	{
 		//the stack of a vmthread
 		//<stack end="0x8aafc18" size="2048">
 		long startPtr = _longFromString(attributes.getValue("start"));
 		long endPtr = _longFromString(attributes.getValue("end"));
-		
+
 		thread.setStackSection(startPtr, endPtr - startPtr);
 		_thread = thread;
 	}
@@ -51,7 +51,7 @@ public class NodeStack extends NodeAbstract
 	public IParserNode nodeToPushAfterStarting(String uri, String localName, String qName, Attributes attributes)
 	{
 		IParserNode child = null;
-		
+
 		if (qName.equals("frame")) {
 			child = new NodeFrame(_thread, attributes);
 		} else {

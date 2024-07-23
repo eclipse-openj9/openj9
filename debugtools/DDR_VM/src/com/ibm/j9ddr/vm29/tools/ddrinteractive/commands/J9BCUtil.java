@@ -84,6 +84,7 @@ import com.ibm.j9ddr.vm29.pointer.helper.J9ROMClassHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ROMFieldShapeHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ROMMethodHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9UTF8Helper;
+import com.ibm.j9ddr.vm29.pointer.helper.ValueTypeHelper;
 import com.ibm.j9ddr.vm29.structure.J9BCTranslationData;
 import com.ibm.j9ddr.vm29.structure.J9CfrClassFile;
 import com.ibm.j9ddr.vm29.structure.J9ConstantPool;
@@ -120,7 +121,7 @@ public class J9BCUtil {
 		out.append("  Name: " + J9UTF8Helper.stringValue(name) + nl);
 		out.append("  Signature: " + J9UTF8Helper.stringValue(signature) + nl);
 		out.append(String.format("  Access Flags (%s): ", Long.toHexString(romMethod.modifiers().longValue())));
-		dumpModifiers(out, romMethod.modifiers().longValue(), MODIFIERSOURCE_METHOD, INCLUDE_INTERNAL_MODIFIERS);
+		dumpModifiers(out, romMethod.modifiers().longValue(), MODIFIERSOURCE_METHOD, INCLUDE_INTERNAL_MODIFIERS, false);
 		out.append(nl);
 		out.append("  Internal Attribute Flags:");
 		dumpMethodJ9Modifiers(out, romMethod.modifiers(), J9ROMMethodHelper.getExtendedModifiersDataFromROMMethod(romMethod));
@@ -190,7 +191,7 @@ public class J9BCUtil {
 	 * 		:: CLASS ::
 	 * 			-ACC_PUBLIC
 	 *			-ACC_FINAL
-	 *			-ACC_SUPER
+	 *			-ACC_SUPER | ACC_IDENTITY
 	 *			-ACC_INTERFACE
 	 *			-ACC_ABSTRACT
 	 *			-ACC_SYNTHETIC
@@ -233,6 +234,7 @@ public class J9BCUtil {
 	 *			-ACC_TRANSIENT
 	 *			-ACC_SYNTHETIC
 	 *			-ACC_ENUM
+	 *			-ACC_STRICT
 	 *			-J9FieldFlagConstant
 	 *			-J9FieldFlagIsNullRestricted
 	 *
@@ -243,7 +245,7 @@ public class J9BCUtil {
 	 *
 	 *
 	 */
-	private static void dumpModifiers(PrintStream out, long modifiers, int modifierSrc, int modScope)
+	private static void dumpModifiers(PrintStream out, long modifiers, int modifierSrc, int modScope, boolean isValueClass)
 	{
 		switch (modifierSrc)
 		{
@@ -390,6 +392,9 @@ public class J9BCUtil {
 				out.append("annotation ");
 				modifiers &= ~J9CfrClassFile.CFR_ACC_ANNOTATION;
 			}
+			if (isValueClass) {
+				out.append("value ");
+			}
 		}
 
 		if (modifierSrc == MODIFIERSOURCE_METHOD) {
@@ -428,6 +433,11 @@ public class J9BCUtil {
 			if ((modifiers & J9CfrClassFile.CFR_ACC_TRANSIENT) != 0) {
 				out.append("transient ");
 				modifiers &= ~J9CfrClassFile.CFR_ACC_TRANSIENT;
+			}
+
+			if ((modifiers & J9CfrClassFile.CFR_ACC_STRICT) != 0) {
+				out.append("strict ");
+				modifiers &= ~J9CfrClassFile.CFR_ACC_STRICT;
 			}
 		}
 
@@ -564,7 +574,8 @@ public class J9BCUtil {
 		dumpEnclosingMethod(out, romClass, flags);
 
 		out.append(String.format("Basic Access Flags (0x%s): ", Long.toHexString(romClass.modifiers().longValue())));
-		dumpModifiers(out, romClass.modifiers().longValue(), MODIFIERSOURCE_CLASS, ONLY_SPEC_MODIFIERS);
+		dumpModifiers(out, romClass.modifiers().longValue(), MODIFIERSOURCE_CLASS, ONLY_SPEC_MODIFIERS,
+			ValueTypeHelper.getValueTypeHelper().isRomClassAValueType(romClass));
 		out.append(nl);
 		out.append(String.format("J9 Access Flags (0x%s): ", Long.toHexString(romClass.extraModifiers().longValue())));
 		dumpClassJ9ExtraModifiers(out, romClass.extraModifiers().longValue());
@@ -599,7 +610,8 @@ public class J9BCUtil {
 			out.append("Declaring Class: " + J9UTF8Helper.stringValue(romClass.outerClassName()));
 			out.append(nl);
 			out.append(String.format("Member Access Flags (0x%s): ", Long.toHexString(romClass.memberAccessFlags().longValue())));
-			dumpModifiers(out, romClass.memberAccessFlags().longValue(), MODIFIERSOURCE_CLASS, ONLY_SPEC_MODIFIERS);
+			dumpModifiers(out, romClass.memberAccessFlags().longValue(), MODIFIERSOURCE_CLASS, ONLY_SPEC_MODIFIERS,
+				ValueTypeHelper.getValueTypeHelper().isRomClassAValueType(romClass));
 			out.append(nl);
 
 			outerClassName = outerClassName.add(1);
@@ -713,7 +725,7 @@ public class J9BCUtil {
 		out.append("  Name: " + J9UTF8Helper.stringValue(romField.nameAndSignature().name()) + nl);
 		out.append("  Signature: " + J9UTF8Helper.stringValue(romField.nameAndSignature().signature()) + nl);
 		out.append(String.format("  Access Flags (%s): ", Long.toHexString(romField.modifiers().longValue())));
-		dumpModifiers(out, romField.modifiers().longValue(), MODIFIERSOURCE_FIELD, INCLUDE_INTERNAL_MODIFIERS);
+		dumpModifiers(out, romField.modifiers().longValue(), MODIFIERSOURCE_FIELD, INCLUDE_INTERNAL_MODIFIERS, false);
 		out.append(nl);
 	}
 
@@ -721,7 +733,7 @@ public class J9BCUtil {
 		out.append("  Name: " + J9UTF8Helper.stringValue(romStatic.nameAndSignature().name()) + nl);
 		out.append("  Signature: " + J9UTF8Helper.stringValue(romStatic.nameAndSignature().signature()) + nl);
 		out.append(String.format("  Access Flags (%s): ", Long.toHexString(romStatic.modifiers().longValue())));
-		dumpModifiers(out, romStatic.modifiers().longValue(), MODIFIERSOURCE_FIELD, INCLUDE_INTERNAL_MODIFIERS);
+		dumpModifiers(out, romStatic.modifiers().longValue(), MODIFIERSOURCE_FIELD, INCLUDE_INTERNAL_MODIFIERS, false);
 		out.append(nl);
 	}
 
@@ -1212,7 +1224,7 @@ public class J9BCUtil {
 				}
 
 				out.print(String.format("    0x%x ( ", parameterFlags));
-				dumpModifiers(out, parameterFlags, MODIFIERSOURCE_METHODPARAMETER, ONLY_SPEC_MODIFIERS);
+				dumpModifiers(out, parameterFlags, MODIFIERSOURCE_METHODPARAMETER, ONLY_SPEC_MODIFIERS, false);
 				out.println(" )\n");
 			}
 			out.println("\n");

@@ -220,19 +220,23 @@ UDATA  walkStackFrames(J9VMThread *currentThread, J9StackWalkState *walkState)
 	if (walkState->flags & J9_STACKWALK_CHECK_I_SLOTS_FOR_OBJECTS) swPrintf(walkState, 2, "\tCHECK_I_SLOTS_FOR_OBJECTS\n");
 	if (walkState->flags & J9_STACKWALK_SAVE_STACKED_REGISTERS) swPrintf(walkState, 2, "\tSAVE_STACKED_REGISTERS\n");
 
-	if ((walkState->flags & (J9_STACKWALK_MAINTAIN_REGISTER_MAP | J9_STACKWALK_INCLUDE_CALL_IN_FRAMES)) == (J9_STACKWALK_MAINTAIN_REGISTER_MAP | J9_STACKWALK_INCLUDE_CALL_IN_FRAMES)) {
-		PORT_ACCESS_FROM_WALKSTATE(walkState);
-		J9UTF8 * className = J9ROMCLASS_CLASSNAME(((J9Class *) walkState->userData4)->romClass);
-		char detailStackBuffer[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
-		char * detail = NULL;
-		j9object_t detailMessage = J9VMJAVALANGTHROWABLE_DETAILMESSAGE(currentThread, walkState->restartException);
+	if (J9_ARE_ALL_BITS_SET(walkState->flags, J9_STACKWALK_MAINTAIN_REGISTER_MAP | J9_STACKWALK_INCLUDE_CALL_IN_FRAMES)) {
+		J9Class * clazz = (J9Class *) walkState->userData4;
 
-		if (NULL != detailMessage) {
-			detail = walkState->walkThread->javaVM->internalVMFunctions->copyStringToUTF8WithMemAlloc(currentThread, detailMessage, J9_STR_NULL_TERMINATE_RESULT, ": ", 2, detailStackBuffer, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
-		}
-		swPrintf(walkState, 2, "\tThrowing exception: %.*s%s\n", J9UTF8_LENGTH(className), J9UTF8_DATA(className), detail ? detail : "");
-		if (detailStackBuffer != detail) {
-			j9mem_free_memory(detail);
+		if (NULL != clazz) {
+			PORT_ACCESS_FROM_WALKSTATE(walkState);
+			J9UTF8 * className = J9ROMCLASS_CLASSNAME(clazz->romClass);
+			char detailStackBuffer[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
+			char * detail = NULL;
+			j9object_t detailMessage = J9VMJAVALANGTHROWABLE_DETAILMESSAGE(currentThread, walkState->restartException);
+
+			if (NULL != detailMessage) {
+				detail = walkState->walkThread->javaVM->internalVMFunctions->copyStringToUTF8WithMemAlloc(currentThread, detailMessage, J9_STR_NULL_TERMINATE_RESULT, ": ", 2, detailStackBuffer, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
+			}
+			swPrintf(walkState, 2, "\tThrowing exception: %.*s%s\n", J9UTF8_LENGTH(className), J9UTF8_DATA(className), detail ? detail : "");
+			if (detailStackBuffer != detail) {
+				j9mem_free_memory(detail);
+			}
 		}
 	}
 

@@ -32,7 +32,7 @@ public class ClassLoaderTagParser extends TagParser implements IClassLoaderTypes
 	public ClassLoaderTagParser() {
 		super(CLASSLOADER_SECTION);
 	}
-	
+
 	protected void initTagAttributeRules() {
 		addTag(T_1CLTEXTCLLOS, null);
 		addTag(T_1CLTEXTCLLSS, null);
@@ -46,11 +46,9 @@ public class ClassLoaderTagParser extends TagParser implements IClassLoaderTypes
 		addTextCLLoad();
 		addTextClass();
 	}
-	
-
 
 	/**
-	 * 
+	 *
 	 *
 	 */
 	private void addTextCLLoader() {
@@ -72,11 +70,9 @@ public class ClassLoaderTagParser extends TagParser implements IClassLoaderTypes
 		};
 		addTag(T_2CLTEXTCLLOADER, lineRule);
 	}
-	
-	
-	
+
 	/**
-	 * 
+	 *
 	 *
 	 */
 	private void addNumberLoadedLib() {
@@ -87,11 +83,9 @@ public class ClassLoaderTagParser extends TagParser implements IClassLoaderTypes
 		};
 		addTag(T_3CLNMBRLOADEDLIB, lineRule);
 	}
-	
-	
-	
+
 	/**
-	 * 
+	 *
 	 *
 	 */
 	private void addNumberLoadedClasses() {
@@ -102,11 +96,9 @@ public class ClassLoaderTagParser extends TagParser implements IClassLoaderTypes
 		};
 		addTag(T_3CLNMBRLOADEDCL, lineRule);
 	}
-	
-	
-	
+
 	/**
-	 * 
+	 *
 	 *
 	 */
 	private void addTextCLLib2() {
@@ -118,12 +110,9 @@ public class ClassLoaderTagParser extends TagParser implements IClassLoaderTypes
 		};
 		addTag(T_2CLTEXTCLLIB, lineRule);
 	}
-	
-	
-	
-	
+
 	/**
-	 * 
+	 *
 	 *
 	 */
 	private void addTextLib() {
@@ -135,11 +124,9 @@ public class ClassLoaderTagParser extends TagParser implements IClassLoaderTypes
 		};
 		addTag(T_3CLTEXTLIB, lineRule);
 	}
-	
-	
-	
+
 	/**
-	 * 
+	 *
 	 *
 	 */
 	private void addTextCLLoad() {
@@ -151,11 +138,9 @@ public class ClassLoaderTagParser extends TagParser implements IClassLoaderTypes
 		};
 		addTag(T_2CLTEXTCLLOAD, lineRule);
 	}
-	
-	
-	
+
 	/**
-	 * 
+	 *
 	 *
 	 */
 	private void addTextClass() {

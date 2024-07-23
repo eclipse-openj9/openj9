@@ -165,8 +165,6 @@ typedef struct {
 #define FUNCTION_THREAD_INIT "threadInitStages"
 #define FUNCTION_ZERO_INIT	"zeroInitStages"
 
-#define ENSUREHASHED_INITIAL_TABLE_SIZE 16
-
 static const struct J9VMIgnoredOption ignoredOptionTable[] = {
 	{ IGNORE_ME_STRING, EXACT_MATCH },
 	{ VMOPT_XDEBUG, EXACT_MATCH },
@@ -233,9 +231,7 @@ void sidecarExit(J9VMThread* shutdownThread);
 static jint runLoadStage (J9JavaVM *vm, IDATA flags);
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 static void freeClassNativeMemory (J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
-#if JAVA_SPEC_VERSION >= 22
 static void vmHookAnonClassesUnload(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
-#endif /* JAVA_SPEC_VERSION >= 22 */
 #endif /* GC_DYNAMIC_CLASS_UNLOADING */
 static jint runShutdownStage (J9JavaVM* vm, IDATA stage, void* reserved, UDATA filterFlags);
 static jint modifyDllLoadTable (J9JavaVM * vm, J9Pool* loadTable, J9VMInitArgs* j9vm_args);
@@ -323,13 +319,6 @@ static void signalDispatch(J9VMThread *vmThread, I_32 sigNum);
 
 static UDATA parseGlrConfig(J9JavaVM* jvm, char* options);
 static UDATA parseGlrOption(J9JavaVM* jvm, char* option);
-
-static void cleanupEnsureHashedConfig(J9JavaVM *jvm);
-static UDATA parseEnsureHashedConfig(J9JavaVM *jvm, char *options, BOOLEAN isAdd);
-
-#if JAVA_SPEC_VERSION >= 16
-static UDATA freeUpcallMetaDataDoFn(J9UpcallMetaDataEntry *entry, void *userData);
-#endif /* JAVA_SPEC_VERSION >= 16 */
 
 J9_DECLARE_CONSTANT_UTF8(j9_int_void, "(I)V");
 J9_DECLARE_CONSTANT_UTF8(j9_dispatch, "dispatch");
@@ -674,41 +663,9 @@ freeJavaVM(J9JavaVM * vm)
 		vm->cifArgumentTypesCache = NULL;
 	}
 
-	/* Empty the thunk heap list by cleaning up all resources created via allocateUpcallThunkMemory,
-	 * including the generated thunk and the corresponding metadata of each entry in the hashtable.
-	 * See UpcallThunkMem.cpp for details.
-	 */
+	/* Empty the thunk heap list if exists. */
 	if (NULL != vm->thunkHeapHead) {
-		J9UpcallThunkHeapList *thunkHeapHead = vm->thunkHeapHead;
-		J9UpcallThunkHeapList *thunkHeapNode = NULL;
-		UDATA byteAmount = j9vmem_supported_page_sizes()[0];
-
-		if (NULL != thunkHeapHead->metaDataHashTable) {
-			J9HashTable *metaDataHashTable = thunkHeapHead->metaDataHashTable;
-			UDATA entryCount = hashTableGetCount(metaDataHashTable);
-			if (entryCount > 0) {
-				hashTableForEachDo(metaDataHashTable, (J9HashTableDoFn)freeUpcallMetaDataDoFn, NULL);
-			}
-			hashTableFree(metaDataHashTable);
-			metaDataHashTable = NULL;
-		}
-
-		thunkHeapNode = thunkHeapHead->next;
-		thunkHeapHead->next = NULL;
-		thunkHeapHead = thunkHeapNode;
-		while (NULL != thunkHeapHead) {
-			J9UpcallThunkHeapWrapper *thunkHeapWrapper = thunkHeapHead->thunkHeapWrapper;
-			if (NULL != thunkHeapWrapper) {
-				J9PortVmemIdentifier vmemID = thunkHeapWrapper->vmemID;
-				j9vmem_free_memory(vmemID.address, byteAmount, &vmemID);
-				j9mem_free_memory(thunkHeapWrapper);
-				thunkHeapWrapper = NULL;
-			}
-			thunkHeapNode = thunkHeapHead;
-			thunkHeapHead = thunkHeapHead->next;
-			j9mem_free_memory(thunkHeapNode);
-		}
-		vm->thunkHeapHead = NULL;
+		releaseThunkHeap(vm);
 	}
 #endif /* JAVA_SPEC_VERSION >= 16 */
 
@@ -7569,9 +7526,7 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 	vmHooks = getVMHookInterface(vm);
 	if(0 != (*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_CLASS_UNLOAD, freeClassNativeMemory, OMR_GET_CALLSITE(), NULL)
-#if JAVA_SPEC_VERSION >= 22
 		|| 0 != (*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_ANON_CLASSES_UNLOAD, vmHookAnonClassesUnload, OMR_GET_CALLSITE(), NULL)
-#endif /* JAVA_SPEC_VERSION >= 22 */
 	) {
 		goto error;
 	}
@@ -8193,17 +8148,30 @@ freeClassNativeMemory(J9HookInterface** hook, UDATA eventNum, void* eventData, v
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 }
 
-#if JAVA_SPEC_VERSION >= 22
+
 static void
 vmHookAnonClassesUnload(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData)
 {
 	J9VMAnonymousClassesUnloadEvent * unloadedEvent = (J9VMAnonymousClassesUnloadEvent *)eventData;
 	J9VMThread * vmThread = unloadedEvent->currentThread;
+	J9JavaVM *vm = vmThread->javaVM;
 	for (J9Class* j9clazz = unloadedEvent->anonymousClassesToUnload; j9clazz; j9clazz = j9clazz->gcLink) {
+		/* AnonClass->classLoader points to the hostclass->classLoader not the anonClassLoader. */
+		if (J9VM_SHOULD_CLEAR_JNIIDS_FOR_ASGCT(vm, j9clazz->classLoader)) {
+			void **jniIDs = j9clazz->jniIDs;
+			if (NULL != jniIDs) {
+				UDATA size = J9VM_NUM_OF_ENTRIES_IN_CLASS_JNIID_TABLE(j9clazz->romClass);
+				for (UDATA i = 0; i < size; i++) {
+					J9GenericJNIID *id = (J9GenericJNIID*)(jniIDs[i]);
+					memset(id, -1, sizeof(J9GenericJNIID));
+				}
+			}
+		}
+#if JAVA_SPEC_VERSION >= 22
 		hashClassTablePackageDelete(vmThread, j9clazz->classLoader, j9clazz->romClass);
+#endif /* JAVA_SPEC_VERSION >= 22 */
 	}
 }
-#endif /* JAVA_SPEC_VERSION >= 22 */
 
 #endif /* GC_DYNAMIC_CLASS_UNLOADING */
 
@@ -8670,215 +8638,3 @@ parseGlrOption(J9JavaVM* jvm, char* option)
 
 	return JNI_ERR;
 }
-
-/**
- * Function that returns the hash for an entry in the ensureHashed classes table
- *
- * @param entry the entry
- * @param userData data specified as userData when the hashtable was created, in our case pointer to the port library
- * @returns the hash
- */
-static UDATA
-ensureHashedHashFn(void *entry, void *userData)
-{
-	J9UTF8 *hashtableEntry = *(J9UTF8 **)entry;
-
-	return computeHashForUTF8(J9UTF8_DATA(hashtableEntry), J9UTF8_LENGTH(hashtableEntry));
-}
-
-/**
- * Function that compares two entries for equality
- *
- * @param lhsEntry the first entry to compare
- * @param rhsEntry the second entry to compare
- * @param userData data specified as userData when the hashtable was created, in our case pointer to the port library
- * @returns 1 if the entries match, 0 otherwise
- */
-static UDATA
-ensureHashedHashEqualFn(void *lhsEntry, void *rhsEntry, void *userData)
-{
-	J9UTF8 *lhsHashtableEntry = *(J9UTF8 **)lhsEntry;
-	J9UTF8 *rhsHashtableEntry = *(J9UTF8 **)rhsEntry;
-
-	return J9UTF8_DATA_EQUALS(J9UTF8_DATA(lhsHashtableEntry), J9UTF8_LENGTH(lhsHashtableEntry), J9UTF8_DATA(rhsHashtableEntry), J9UTF8_LENGTH(rhsHashtableEntry));
-}
-
-/**
- * Function that is called when we are deleting an entry from the hashtable
- *
- * @param entry the entry to be deleted
- * @param userData data specified as userData when the hashtable was created, in our case pointer to the port library
- */
-static UDATA
-ensureHashedDoDelete(void *entry, void *userData)
-{
-	PORT_ACCESS_FROM_PORT((J9PortLibrary *)userData);
-
-	j9mem_free_memory(*(J9UTF8 **)entry);
-	return TRUE;
-}
-
-/**
- * This should be called to clean up the ensureHashed configuration
- *
- * @param jvm pointer to J9JavaVM that can be used by the method
- */
-static void
-cleanupEnsureHashedConfig(J9JavaVM *jvm)
-{
-	PORT_ACCESS_FROM_JAVAVM(jvm);
-
-	if (NULL != jvm->ensureHashedClasses) {
-		hashTableForEachDo(jvm->ensureHashedClasses, ensureHashedDoDelete, PORTLIB);
-		hashTableFree(jvm->ensureHashedClasses);
-	}
-	jvm->ensureHashedClasses = NULL;
-}
-
-/**
- * This function parses a specific option
- *
- * @param option the option to be parsed
- * @returns JNI_OK on success
- */
-static UDATA
-parseEnsureHashedOption(J9JavaVM *jvm, char *option, BOOLEAN isAdd)
-{
-	PORT_ACCESS_FROM_JAVAVM(jvm);
-	char *className = option;
-	size_t classNameLength = strlen(className);
-	J9UTF8 *hashtableEntry;
-
-	if (0 == strcmp(option, "")) {
-		/* Empty class name */
-		j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_INVALID_EMPTY_OPTION, isAdd ? VMOPT_XXENABLEENSUREHASHED : VMOPT_XXDISABLEENSUREHASHED);
-		return J9VMDLLMAIN_FAILED;
-	}
-
-	if (NULL == jvm->ensureHashedClasses) {
-		jvm->ensureHashedClasses = hashTableNew(OMRPORT_FROM_J9PORT(PORTLIB),
-				J9_GET_CALLSITE(),
-				ENSUREHASHED_INITIAL_TABLE_SIZE,
-				sizeof(char*),
-				0,
-				0,
-				OMRMEM_CATEGORY_VM,
-				ensureHashedHashFn,
-				ensureHashedHashEqualFn,
-				NULL,
-				PORTLIB);
-
-		if (NULL == jvm->ensureHashedClasses) {
-			/* we failed the allocation */
-			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_ENSUREHASHED_CONFIG_OUT_OF_MEM);
-			return JNI_ENOMEM;
-		}
-	}
-
-	hashtableEntry = j9mem_allocate_memory(classNameLength + sizeof(J9UTF8_LENGTH(hashtableEntry)), OMRMEM_CATEGORY_VM);
-	if (NULL == hashtableEntry) {
-		j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_ENSUREHASHED_CONFIG_OUT_OF_MEM);
-		return JNI_ENOMEM;
-	}
-	memcpy(J9UTF8_DATA(hashtableEntry), className, classNameLength);
-	J9UTF8_SET_LENGTH(hashtableEntry, (U_16)classNameLength);
-
-	if (TRUE == isAdd) {
-		/* -XX:+EnsureHashed: */
-		if (NULL == hashTableFind(jvm->ensureHashedClasses, &hashtableEntry)) {
-			if (NULL == hashTableAdd(jvm->ensureHashedClasses, &hashtableEntry)) {
-				j9mem_free_memory(hashtableEntry);
-				hashtableEntry = NULL;
-				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_ENSUREHASHED_CONFIG_OUT_OF_MEM);
-				return JNI_ENOMEM;
-			}
-		} else {
-			/* Already in the table, discard the new entry */
-			j9mem_free_memory(hashtableEntry);
-			hashtableEntry = NULL;
-		}
-	} else {
-		/* -XX:-EnsureHashed: */
-		hashTableRemove(jvm->ensureHashedClasses, &hashtableEntry);
-		j9mem_free_memory(hashtableEntry);
-		hashtableEntry = NULL;
-	}
-
-	return JNI_OK;
-}
-
-/**
- * This function parses a string containing ensureHashed options
- *
- * @param options string containing the options specified on the command line
- * @returns JNI_OK on success
- */
-static UDATA
-parseEnsureHashedConfig(J9JavaVM *jvm, char *options, BOOLEAN isAdd)
-{
-	UDATA result = JNI_OK;
-	char *nextOption = NULL;
-	char *cursor = options;
-	PORT_ACCESS_FROM_JAVAVM(jvm);
-
-	/* parse out each of the options */
-	while (NULL != strstr(cursor, ",")) {
-		nextOption = scan_to_delim(PORTLIB, &cursor, ',');
-		if (NULL == nextOption) {
-			result = JNI_ERR;
-			break;
-		} else {
-			result = parseEnsureHashedOption(jvm, nextOption, isAdd);
-			j9mem_free_memory(nextOption);
-			nextOption = NULL;
-		}
-	}
-	if (JNI_OK == result) {
-		result = parseEnsureHashedOption(jvm, cursor, isAdd);
-	}
-
-	return result;
-}
-
-#if JAVA_SPEC_VERSION >= 16
-/**
- * This function free the memory of the generated thunk and the metadata
- * in the specified entry of the metadata hashtable intended for upcall.
- *
- * @param entry A pointer to J9UpcallMetaDataEntry
- * @param userData An optional parameter which is unused
- * @returns JNI_OK on success
- */
-static UDATA
-freeUpcallMetaDataDoFn(J9UpcallMetaDataEntry *entry, void *userData)
-{
-	void *thunkAddr = (void *)(entry->thunkAddrValue);
-	J9UpcallMetaData *metaData = entry->upcallMetaData;
-
-	if ((NULL != thunkAddr) && (NULL != metaData)) {
-		J9JavaVM *vm = metaData->vm;
-		const J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
-		J9VMThread *currentThread = vmFuncs->currentVMThread(vm);
-		J9UpcallNativeSignature *nativeFuncSig = metaData->nativeFuncSignature;
-		J9Heap *thunkHeap = metaData->thunkHeapWrapper->heap;
-		PORT_ACCESS_FROM_JAVAVM(vm);
-
-		if (NULL != nativeFuncSig) {
-			j9mem_free_memory(nativeFuncSig->sigArray);
-			j9mem_free_memory(nativeFuncSig);
-			nativeFuncSig = NULL;
-		}
-		vmFuncs->j9jni_deleteGlobalRef((JNIEnv *)currentThread, metaData->mhMetaData, JNI_FALSE);
-		j9mem_free_memory(metaData);
-		metaData = NULL;
-
-		if (NULL != thunkHeap) {
-			omrthread_jit_write_protect_disable();
-			j9heap_free(thunkHeap, thunkAddr);
-			omrthread_jit_write_protect_enable();
-		}
-		entry->thunkAddrValue = 0;
-	}
-	return JNI_OK;
-}
-#endif /* JAVA_SPEC_VERSION >= 16 */

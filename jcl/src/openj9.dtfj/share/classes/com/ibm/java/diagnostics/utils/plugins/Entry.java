@@ -30,7 +30,7 @@ import java.util.logging.Logger;
 
 /**
  * Describes an entry in a file system. It could be a class file or a container.
- * 
+ *
  * @author adam
  */
 public class Entry {

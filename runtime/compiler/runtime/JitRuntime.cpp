@@ -1492,7 +1492,6 @@ static void printMethodHandleArgs(j9object_t methodHandle, void **stack, J9VMThr
                   break;
                case 'L':
                case '[':
-               case 'Q':
                   TR_VerboseLog::writeLine(vlogTag, "%p     arg " POINTER_PRINTF_FORMAT " %.*s", vmThread, (void*)(*(intptr_t*)stack), nextArg-curArg, curArg);
                   stack -= 1;
                   break;

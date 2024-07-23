@@ -55,11 +55,13 @@ if(OMR_TOOLCONFIG STREQUAL "gnu")
 	# defining _FORTIFY_SOURCE is invalid when optimizations are disabled
 	omr_remove_flags(CMAKE_C_FLAGS ${OMR_STRNCPY_FORTIFY_OPTIONS})
 	omr_remove_flags(CMAKE_CXX_FLAGS ${OMR_STRNCPY_FORTIFY_OPTIONS})
-	if(NOT CMAKE_CXX_COMPILER_ID MATCHES Clang)
-		target_compile_options(j9ddr_misc PRIVATE -femit-class-debug-always)
-	endif()
 endif()
 
+if(CMAKE_C_COMPILER_ID MATCHES "Clang")
+	target_compile_options(j9ddr_misc PRIVATE -fno-eliminate-unused-debug-types)
+elseif(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+	target_compile_options(j9ddr_misc PRIVATE -femit-class-debug-always)
+endif()
 
 if(OMR_OS_AIX)
 	target_link_libraries(j9ddr_misc

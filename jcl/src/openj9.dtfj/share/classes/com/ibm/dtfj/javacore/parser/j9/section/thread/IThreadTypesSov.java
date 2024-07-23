@@ -23,22 +23,20 @@
 package com.ibm.dtfj.javacore.parser.j9.section.thread;
 
 public interface IThreadTypesSov {
-	
+
 	public static final String REGISTER_LIST = "3HPREGISTERS";
 	public static final String REGISTER_LIST_VALUES = "3HPREGVALUES";
 	public static final String NATIVE_STACK = "3HPNATIVESTACK";
 	public static final String STACK_LINE = "3HPSTACKLINE";
-	
+
 	public static final String NATIVE_STACK_AIX = "3XHNATIVESTACK";
 	public static final String STACK_LINE_AIX = "3XHSTACKLINE";
 	public static final String STACK_LINE_ERR_AIX = "3XHSTACKLINEERR";
 
-	
 	/*
 	 * Attributes
 	 */
 	public static final String STACK_LINE_ADDRESS = "stck_line_addr";
 	public static final String STACK_LINE_LOCATION = "stck_line_loc";
-	
-	
+
 }

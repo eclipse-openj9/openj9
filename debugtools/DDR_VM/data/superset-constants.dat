@@ -951,7 +951,6 @@ C|opt_noClassloaders
 C|opt_nrr
 C|opt_paas
 C|opt_packed
-C|opt_panama
 C|opt_phpSupport
 C|opt_reflect
 C|opt_remoteConsoleSupport
@@ -1385,7 +1384,6 @@ C|CFR_BC_vload
 C|CFR_BC_vreturn
 C|CFR_BC_vstore
 C|CFR_BC_vunbox
-C|CFR_BC_vwithfield
 C|CFR_BC_wide
 S|J9ClassInitFlags|J9ClassInitFlagsPointer|
 C|J9ClassInitFailed
@@ -4155,7 +4153,6 @@ C|JCL_RTFLAG_DEFAULT
 C|JCL_RTFLAG_INTERP_HOT_CODE_REPLACEMENT
 C|JCL_RTFLAG_JIT_NEW_INSTANCE_PROTOTYPE
 C|JCL_RTFLAG_OPT_METHOD_HANDLE
-C|JCL_RTFLAG_OPT_PANAMA
 C|JCL_RTFLAG_OPT_REFLECT
 S|J9VmlsConstants|J9VmlsConstantsPointer|
 C|J9VMLS_MAX_KEYS

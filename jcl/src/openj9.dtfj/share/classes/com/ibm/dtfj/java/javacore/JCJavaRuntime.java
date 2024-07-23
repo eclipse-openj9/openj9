@@ -47,7 +47,7 @@ import com.ibm.dtfj.java.JavaVMInitArgs;
 import com.ibm.dtfj.javacore.builder.IBuilderData;
 
 /**
- * A javacore-based implementation of 
+ * A javacore-based implementation of
  * JavaRuntime. This supports partial object creation, meaning
  * that a javaclass, javathread, etc.. can be partially constructed and
  * stored, and at a later time during the javacore parsing, when
@@ -59,16 +59,16 @@ import com.ibm.dtfj.javacore.builder.IBuilderData;
  * <br><br>
  * Rudimentary multiplatform support is also added in the form of unique
  * runtime ids that must be passed during construction.
- * 
+ *
  * @see com.ibm.dtfj.java.javacore.JCJavaClass
  * @see com.ibm.dtfj.java.javacore.JCJavaClassLoader
  * @see com.ibm.dtfj.java.javacore.JCJavaThread
  * @see com.ibm.dtfj.java.javacore.JCJavaMonitor
- * 
+ *
  * @see com.ibm.dtfj.java.JavaRuntime
  */
 public class JCJavaRuntime implements JavaRuntime {
-	
+
 	private Vector fHeaps;
 	private Vector fCompiledMethods;
 	private HashMap fJavaClassLoaders;
@@ -78,23 +78,22 @@ public class JCJavaRuntime implements JavaRuntime {
 	private HashMap fJavaClassIDs;
 	private JCJavaVMInitArgs fJavaVMInitArgs;
 	private List fMemoryCategories;
-	
+
 	private String fFullVersion;
 	private String fVersion;
 	private String fID;
-	
+
 	private final LookupKey fIDLookupKey;
 	private final JCImageProcess fImageProcess;
 	private final JCImageAddressSpace fImageAddressSpace;
-	
+
 	private boolean isJITEnabled = false;
 	private Properties jitOptions = new Properties();
-	
+
 	private long fStartTime;
 	private boolean fStartTimeSet = false;
 	private long fStartTimeNanos;
 	private boolean fStartTimeNanosSet = false;
-	
 
 	public JCJavaRuntime(JCImageProcess imageProcess, String id) throws JCInvalidArgumentsException {
 		if (imageProcess == null) {
@@ -106,7 +105,7 @@ public class JCJavaRuntime implements JavaRuntime {
 		fID = id;
 		fImageProcess = imageProcess;
 		fImageAddressSpace = imageProcess.getImageAddressSpace();
-		
+
 		fHeaps = new Vector();
 		fCompiledMethods = new Vector();
 		fJavaClassLoaders = new LinkedHashMap();
@@ -115,13 +114,13 @@ public class JCJavaRuntime implements JavaRuntime {
 		fJavaClasses = new HashMap();
 		fJavaClassIDs = new HashMap();
 		fMemoryCategories = new LinkedList();
-		
+
 		fFullVersion = null;
 		fVersion = null;
 		fIDLookupKey = new LookupKey(IBuilderData.NOT_AVAILABLE);
 		imageProcess.addRuntime(this);
 	}
-	
+
 	/**
 	 * @see com.ibm.dtfj.java.JavaRuntime#getCompiledMethods()
 	 */
@@ -142,14 +141,14 @@ public class JCJavaRuntime implements JavaRuntime {
 	public Iterator getJavaClassLoaders() {
 		return fJavaClassLoaders.values().iterator();
 	}
-	
+
 	/**
 	 * @see com.ibm.dtfj.java.JavaRuntime#getMonitors()
 	 */
 	public Iterator getMonitors() {
 		return fMonitors.values().iterator();
 	}
-	
+
 	/**
 	 * @see com.ibm.dtfj.java.JavaRuntime#getThreads()
 	 */
@@ -167,7 +166,7 @@ public class JCJavaRuntime implements JavaRuntime {
 			return fJavaVMInitArgs;
 		}
 	}
-	
+
 	/**
 	 *  @see com.ibm.dtfj.java.JavaRuntime#getJavaVM()
 	 */
@@ -201,13 +200,13 @@ public class JCJavaRuntime implements JavaRuntime {
 		}
 		return fVersion;
 	}
-	
+
 	/*
 	 * ****************
 	 * NON-DTFJ methods
 	 * ****************
 	 */
-	
+
 	/**
 	 * NON-DTFJ
 	 * <br>
@@ -215,12 +214,12 @@ public class JCJavaRuntime implements JavaRuntime {
 	 * <br><br>
 	 * May be used in multiple runtime environments, where each runtime in a javacore
 	 * is identified uniquely. This method is generally just used during the building process only.
-	 * 
+	 *
 	 */
 	public String getInternalID() {
 		return fID;
 	}
-	
+
 	/**
 	 * NON-DTFJ
 	 * <br>
@@ -235,7 +234,7 @@ public class JCJavaRuntime implements JavaRuntime {
 		}
 		fJavaClassLoaders.put(new LookupKey(((JCJavaClassLoader)javaClassLoader).getPointerID().getAddress()), javaClassLoader);
 	}
-	
+
 	/**
 	 * NON-DTFJ
 	 * <br>
@@ -248,7 +247,7 @@ public class JCJavaRuntime implements JavaRuntime {
 		fIDLookupKey.setKey(clLoaderID);
 		return (JCJavaClassLoader) fJavaClassLoaders.get(fIDLookupKey);
 	}
-	
+
 	/**
 	 * NON-DTFJ
 	 * <br>
@@ -263,7 +262,7 @@ public class JCJavaRuntime implements JavaRuntime {
 		}
 		fMonitors.put(new LookupKey(monitor.getID().getAddress()), monitor);
 	}
-	
+
 	/**
 	 * NON-DTFJ
 	 * <br>
@@ -290,7 +289,7 @@ public class JCJavaRuntime implements JavaRuntime {
 		}
 		fJavaThreads.put(new LookupKey(javaThread.getThreadID().getAddress()), javaThread);
 	}
-	
+
 	/**
 	 * NON-DTFJ
 	 * <br>
@@ -330,7 +329,7 @@ public class JCJavaRuntime implements JavaRuntime {
 		}
 		return (JCJavaThread) javaThread;
 	}
-	
+
 	/**
 	 * NON-DTFJ
 	 * <br>
@@ -341,7 +340,7 @@ public class JCJavaRuntime implements JavaRuntime {
 	public JCImageProcess getImageProcess() {
 		return fImageProcess;
 	}
-	
+
 	/**
 	 * NON-DTFJ
 	 * <br>
@@ -351,7 +350,7 @@ public class JCJavaRuntime implements JavaRuntime {
 	 * are used for lookups while building the runtime object. When a valid javaclass is added, it gets
 	 * added at least the name-based map, and may be added to the ID-based map if the ID is available. The
 	 * class name of the java class is a requirement, so this field must be set in the java class being passed.
-	 * 
+	 *
 	 * @param javaClass must not be null or exception thrown
 	 * @throws JCRegistrationFailureException if java class is null
 	 */
@@ -378,7 +377,7 @@ public class JCJavaRuntime implements JavaRuntime {
 	public JCJavaClass findJavaClass(String javaClassName) {
 		return (JCJavaClass) fJavaClasses.get(javaClassName);
 	}
-	
+
 	/**
 	 * NON-DTFJ
 	 * <br>
@@ -386,7 +385,7 @@ public class JCJavaRuntime implements JavaRuntime {
 	 * <br><br>
 	 * In some cases, all that is available is a class ID, so it should be possible to retrieve
 	 * a class based on just an ID.
-	 * 
+	 *
 	 * @param id class address
 	 * @return found class or null if not found
 	 */
@@ -398,7 +397,7 @@ public class JCJavaRuntime implements JavaRuntime {
 		}
 		return javaClass;
 	}
-	
+
 	/**
 	 * NON-DTFJ
 	 * <br>
@@ -421,7 +420,7 @@ public class JCJavaRuntime implements JavaRuntime {
 	public JavaObject getObjectAtAddress(ImagePointer address)	throws DataUnavailable {
 		throw new DataUnavailable("Object information not available.");
 	}
-	
+
 	/**
 	 * NON-DTFJ
 	 * <br>
@@ -456,11 +455,11 @@ public class JCJavaRuntime implements JavaRuntime {
 	public void setJITEnabled(boolean enabled) {
 		isJITEnabled = enabled;
 	}
-	
+
 	public void addJITProperty(String name, String value) {
 		jitOptions.put(name, value);
 	}
-	
+
 	public Properties getJITProperties() throws DataUnavailable,	CorruptDataException {
 		if(isJITEnabled) {
 			return jitOptions;
@@ -484,15 +483,15 @@ public class JCJavaRuntime implements JavaRuntime {
 			throw new DataUnavailable("JVM start nanotime not available");
 		}
 	}
-	
+
 	public void setStartTime(long startTime) {
 		fStartTime = startTime;
 		fStartTimeSet = true;
 	}
-	
+
 	public void setStartTimeNanos(long nanoTime) {
 		fStartTimeNanos = nanoTime;
 		fStartTimeNanosSet = true;
 	}
-	
+
 }

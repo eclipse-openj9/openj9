@@ -26,9 +26,9 @@ public interface ITagManager {
 	public boolean hasTag(String identifier);
 
 	public ITagParser getTagParser(String section);
-	
+
 	public boolean isTagInSection(String tag, String section);
-	
+
 	public boolean isComment(CharSequence source);
 
 }

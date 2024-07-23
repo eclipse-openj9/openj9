@@ -31,13 +31,13 @@ public class JCImageStackFrame implements ImageStackFrame {
 	private final String name;
 	private final ImagePointer base;
 	private final ImagePointer proc;
-	
+
 	public JCImageStackFrame(String name, ImagePointer base, ImagePointer proc) {
 		this.name = name;
 		this.base = base;
 		this.proc = proc;
 	}
-	
+
 	public ImagePointer getBasePointer() throws CorruptDataException {
 		if (base == null) throw new CorruptDataException(new JCCorruptData("no base pointer", null));
 		return base;

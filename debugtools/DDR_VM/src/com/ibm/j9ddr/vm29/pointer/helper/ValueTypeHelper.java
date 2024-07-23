@@ -40,6 +40,7 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9BuildFlags;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMFieldShapePointer;
+import com.ibm.j9ddr.vm29.structure.J9Consts;
 import com.ibm.j9ddr.vm29.structure.J9JavaAccessFlags;
 import com.ibm.j9ddr.vm29.structure.J9JavaClassFlags;
 import com.ibm.j9ddr.vm29.types.U32;
@@ -218,7 +219,10 @@ public class ValueTypeHelper {
 		@Override
 		public boolean isRomClassAValueType(J9ROMClassPointer romClass) throws CorruptDataException {
 			long flag = J9JavaAccessFlags.J9AccClassHasIdentity;
-			return (flag != 0) && !romClass.modifiers().anyBitsIn(flag);
+			return (flag != 0) /* Always return false if identity flag isn't defined. */
+				&& (J9Consts.VALUE_TYPES_MAJOR_VERSION <= romClass.majorVersion().longValue())
+				&& (J9Consts.PREVIEW_MINOR_VERSION == romClass.minorVersion().longValue())
+				&& !romClass.modifiers().anyBitsIn(flag);
 		}
 
 		@Override

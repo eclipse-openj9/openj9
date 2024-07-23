@@ -21,6 +21,7 @@
  */
 package org.openj9.test.lworld;
 
+import jdk.internal.vm.annotation.ImplicitlyConstructible;
 import org.testng.annotations.Test;
 import org.testng.Assert;
 
@@ -161,8 +162,7 @@ public class ValhallaAttributeTests {
 	}
 
 	/* Instance field with NullRestricted attribute cannot be set to null. */
-	/* https://github.com/eclipse-openj9/openj9/issues/19692 tracks excluded tests */
-	@Test(priority=2, invocationCount=2, expectedExceptions = java.lang.NullPointerException.class, enabled = false)
+	@Test(priority=2, invocationCount=2, expectedExceptions = java.lang.NullPointerException.class)
 	static public void testPutFieldNullToNullRestrictedField() throws Throwable {
 		testPutFieldNullToNullRestrictedFieldClass.newInstance();
 	}
@@ -196,5 +196,32 @@ public class ValhallaAttributeTests {
 			throw e;
 		}
 		Assert.fail("Test expected a NullPointerException wrapped in ExceptionInInitializerError.");
+	}
+
+	@ImplicitlyConstructible
+	static value class ImplicitClass {
+		Object o;
+		ImplicitClass(Object o) {
+			this.o = o;
+		}
+	}
+
+	/* Test to verify JVM_IsImplicitlyConstructibleClass */
+	@Test
+	static public void testValueClassIsImplicitlyConstructible() {
+		ImplicitClass ic = (ImplicitClass)jdk.internal.value.ValueClass.zeroInstance(ImplicitClass.class);
+	}
+
+	static value class NonImplicitClass {
+		Object o;
+		NonImplicitClass(Object o) {
+			this.o = o;
+		}
+	}
+
+	/* Test to verify JVM_IsImplicitlyConstructibleClass */
+	@Test(expectedExceptions = IllegalArgumentException.class)
+	static public void testValueClassIsImplicitlyConstructible2() {
+		jdk.internal.value.ValueClass.zeroInstance(NonImplicitClass.class);
 	}
 }

@@ -387,9 +387,6 @@ IDATA j9bcutil_dumpBytecodes(J9PortLibrary * portLib, J9ROMClass * romClass,
 		case JBputstatic:
 		case JBgetfield:
 		case JBputfield:
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-		case JBwithfield:
-#endif
 			_GETNEXT_U16(index, bcIndex);
 			info = &constantPool[index];
 			outputFunction(userData, "%i ", index);
@@ -471,9 +468,6 @@ IDATA j9bcutil_dumpBytecodes(J9PortLibrary * portLib, J9ROMClass * romClass,
 		case JBanewarray:
 		case JBcheckcast:
 		case JBinstanceof:
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-		case JBaconst_init:
-#endif
 			_GETNEXT_U16(index, bcIndex);
 			info = &constantPool[index];
 			outputFunction(userData, "%i ", index);

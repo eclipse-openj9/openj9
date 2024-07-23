@@ -30,7 +30,6 @@
 #include "compile/Compilation.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/TRMemory.hpp"
-#include "env/VMJ9.h"
 #include "il/Block.hpp"
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
@@ -824,8 +823,8 @@ createArrayHeaderConst(TR::Compilation *comp, bool is64bit, TR::Node *baseNode)
 TR::Node*
 createArrayTopAddressTree(TR::Compilation *comp, bool is64bit, TR::Node *baseNode)
    {
-   TR::Node *top = TR::TransformUtil::generateFirstArrayElementAddressTrees(comp, createLoad(baseNode));
-   return top;
+   TR::Node *aload = createLoad(baseNode);
+   return TR::TransformUtil::generateFirstArrayElementAddressTrees(comp, aload);
    }
 
 
@@ -885,25 +884,31 @@ createBytesFromElement(TR::Compilation *comp, bool is64bit, TR::Node *indexNode,
 
 
 //*****************************************************************************************
+// It creates an index address tree for the given indexNode and size.
+//*****************************************************************************************
+TR::Node*
+createIndexOffsetTree(TR::Compilation *comp, bool is64bit, TR::Node *indexNode, int multiply)
+   {
+   return createBytesFromElement(comp, is64bit, indexNode, multiply);
+   }
+
+
+//*****************************************************************************************
 // It creates an effective address tree for the given baseNode, indexNode and size.
 //*****************************************************************************************
 TR::Node*
 createArrayAddressTree(TR::Compilation *comp, bool is64bit, TR::Node *baseNode, TR::Node *indexNode, int multiply)
    {
-   TR::Node *top = NULL;
-   TR::Node *c2 = NULL;
-   TR::Node *arrayObject = createLoad(baseNode);
    if (indexNode->getOpCodeValue() == TR::iconst && indexNode->getInt() == 0)
       {
-      top = TR::TransformUtil::generateFirstArrayElementAddressTrees(comp, arrayObject);
+      return createArrayTopAddressTree(comp, is64bit, baseNode);
       }
    else
       {
-      c2 = TR::TransformUtil::generateConvertArrayElementIndexToOffsetTrees(comp, indexNode, NULL, multiply);
-      top = TR::TransformUtil::generateArrayElementAddressTrees(comp, arrayObject, c2);
+      TR::Node *c2 = createIndexOffsetTree(comp, is64bit, indexNode, multiply);
+      TR::Node *aload = createLoad(baseNode);
+      return TR::TransformUtil::generateArrayElementAddressTrees(comp, aload, c2);
       }
-
-   return top;
    }
 
 

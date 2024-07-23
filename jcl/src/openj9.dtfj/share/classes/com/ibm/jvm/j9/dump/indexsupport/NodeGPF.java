@@ -39,13 +39,13 @@ import com.ibm.dtfj.image.j9.ImageProcess;
  * Module_base_address=96C58000 Symbol=Java_VMBench_GPTests_GPTest_gpWrite
  * Symbol_address=96C5879E
  * &lt;/gpf&gt;
- * 
+ *
  * @author jmdisher
  */
 public class NodeGPF extends NodeAbstract
 {
 	private ImageProcess _process;
-	
+
 	public NodeGPF(ImageProcess process, Attributes attributes)
 	{
 		long faultingNativeID = _longFromString(attributes.getValue("nativeFailingThread"));
@@ -57,7 +57,7 @@ public class NodeGPF extends NodeAbstract
 	{
 		int signalNumber = (int)_longByResolvingRawKey(string, "Signal_Number");
 		if (0 == signalNumber) {
-			// This is not great but there are various occasions when the gpf node only contains 
+			// This is not great but there are various occasions when the gpf node only contains
 			// info on the generic signal.  To reduce the level of confusion we map the generic signal
 			// number to a 'normalised' number at this point.
 			signalNumber = resolveGenericSignal((int)_longByResolvingRawKey(string, "J9Generic_Signal"));
@@ -81,7 +81,7 @@ public class NodeGPF extends NodeAbstract
 	private final static int J9PORT_SIG_FLAG_SIGFPE_DIV_BY_ZERO 	= 0x40020;
 	private final static int J9PORT_SIG_FLAG_SIGFPE_INT_DIV_BY_ZERO = 0x80020;
 	private final static int J9PORT_SIG_FLAG_SIGFPE_INT_OVERFLOW 	= 0x100020;
-	
+
 	private int resolveGenericSignal(int num) {
 		if ((num & J9PORT_SIG_FLAG_SIGQUIT) != 0) 	return 3;
 		if ((num & J9PORT_SIG_FLAG_SIGILL) != 0) 	return 4;

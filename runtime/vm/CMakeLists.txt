@@ -95,6 +95,7 @@ set(main_sources
 	description.c
 	dllsup.c
 	drophelp.c
+	EnsureHashedConfig.cpp
 	exceptiondescribe.c
 	exceptionsupport.c
 	extendedMessageNPE.cpp
@@ -148,7 +149,6 @@ set(main_sources
 	ObjectFieldInfo.cpp
 	ObjectMonitor.cpp
 	OutOfLineINL_com_ibm_jit_JITHelpers.cpp
-	OutOfLineINL_java_lang_invoke_NativeMethodHandle.cpp
 	OutOfLineINL_jdk_internal_misc_Unsafe.cpp
 	OutOfLineINL_openj9_internal_foreign_abi_InternalDowncallHandler.cpp
 	OutOfLineINL_openj9_internal_foreign_abi_InternalUpcallHandler.cpp
@@ -198,6 +198,8 @@ endif()
 if(J9VM_OPT_JFR)
 	list(APPEND main_sources
 		jfr.cpp
+		JFRConstantPoolTypes.cpp
+		JFRChunkWriter.cpp
 	)
 endif()
 

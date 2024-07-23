@@ -28,15 +28,15 @@ import java.util.Set;
 class DTFJClassListener implements ClassListener {
 	private final Set<PluginConfig> plugins = new HashSet<PluginConfig>();
 	private final String id;		//optional ID for making this listener a singleton
-	
+
 	public DTFJClassListener() {
 		id = null;
 	}
-	
+
 	public DTFJClassListener(String id) {
 		this.id = id;
 	}
-	
+
 	public void visit(int version, int access, String name,	String signature, String superName, String[] interfaces) {
 		//do nothing
 	}
@@ -83,6 +83,5 @@ class DTFJClassListener implements ClassListener {
 			return id.hashCode();
 		}
 	}
-	
-	
+
 }

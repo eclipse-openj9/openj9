@@ -42,11 +42,11 @@ public class PHDCorruptImageModule extends PHDCorruptData implements ImageModule
 	PHDCorruptImageModule(ImageAddressSpace space, CorruptData cd) {
 		super(space, cd);
 	}
-	
+
 	PHDCorruptImageModule(ImageAddressSpace space, CorruptDataException cde) {
 		super(space, cde);
 	}
-	
+
 	public String getName() throws CorruptDataException {
 		throw initCause(new CorruptDataException(this));
 	}

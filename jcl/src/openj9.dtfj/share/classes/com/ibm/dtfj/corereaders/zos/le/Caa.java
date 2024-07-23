@@ -40,8 +40,8 @@ import com.ibm.dtfj.corereaders.zos.mvs.Tcb;
  * structures. For programs written in C, this is the most useful thread view because it
  * gives access to the C stack.
  *
- * The layout of the CAA control block is documented in the zOS Language Environment Debugging Guide GA22-7560-05 
- * 
+ * The layout of the CAA control block is documented in the zOS Language Environment Debugging Guide GA22-7560-05
+ *
  * @depend - - - com.ibm.dtfj.corereaders.zos.mvs.Tcb
  * @depend - - - com.ibm.dtfj.corereaders.zos.dumpreader.AddressSpace
  * @has - - - com.ibm.dtfj.corereaders.zos.le.DsaStackFrame
@@ -250,7 +250,6 @@ public class Caa {
         return false;
     }
 
-
     /**
      * This class emulates the cel4rreg macro. Most of the comments are from there.
      */
@@ -326,11 +325,11 @@ public class Caa {
                     }
                 }
             } catch (IOException e) {
-            	throw new Error("oops: " + e);
+                throw new Error("oops: " + e);
             }
             whereFound = "not found";
         }
-        
+
         /**
          * Try and get the registers from the RTM2 work area. Returns null if none found. As a
          * side-effect it also sets the stackdirection.
@@ -338,8 +337,8 @@ public class Caa {
         private RegisterSet getRegistersFromRTM2() throws IOException {
             int level = ceecaalevel();
             log.finer("caa level is " + level);
-            /* If the CAA level is 13 or greater, get stack direction from 
-             * CAA.  For older releases or the dummy CAA, default stack 
+            /* If the CAA level is 13 or greater, get stack direction from
+             * CAA.  For older releases or the dummy CAA, default stack
              * direction to UP.
              */
             if (level >= 13) { /* If LE 2.10 or higher */
@@ -521,7 +520,7 @@ public class Caa {
                     long tptr = ceecaaerrcm();
                     /* Chicken egg situation */
                     //assert !space.is64bit();
-                    /* If the input DSA address is within the HCOM and double word aligned, 
+                    /* If the input DSA address is within the HCOM and double word aligned,
                      * assume that it is good. */
                     if (p_dsaptr < (tptr + hcomLength) && p_dsaptr >= tptr && (p_dsaptr & 7) == 0) {
                         log.fine("upstack dsa " + hex(p_dsaptr) + " is inside hcom");
@@ -600,7 +599,7 @@ public class Caa {
     }
 
     /**
-     * Get the current (ie top) stack frame for this thread. 
+     * Get the current (ie top) stack frame for this thread.
      * @return the current stack frame or null if there is no stack
      */
     public DsaStackFrame getCurrentFrame() {
@@ -692,7 +691,7 @@ public class Caa {
         return (int)caaTemplate.getCeecaalevel(inputStream, address);
     }
 
-    /** 
+    /**
      * Returns the stack direction, either 0 (up) or 1 (down). Should only be called if the LE
      * level is 13 or greater.
      * @throws IOException if an error occurred reading from the address space
@@ -704,7 +703,7 @@ public class Caa {
         return (int)caaTemplate.getCeecaa_stackdirection(inputStream, address);
     }
 
-    /** 
+    /**
      * Returns the address of the storage manager control block.
      * @throws IOException if an error occurred reading from the address space
      */
@@ -713,7 +712,7 @@ public class Caa {
         return ((Caa32Template)caaTemplate).getCeecaasmcb(inputStream, address);
     }
 
-    /** 
+    /**
      * Returns the address of the region control block.
      * @throws IOException if an error occurred reading from the address space
      */
@@ -721,7 +720,7 @@ public class Caa {
         return caaTemplate.getCeecaarcb(inputStream, address);
     }
 
-    /** 
+    /**
      * Returns the address of the thread value block anchor
      * @throws IOException if an error occurred reading from the address space
      */
@@ -777,8 +776,8 @@ public class Caa {
         return 0;
     }
 
-    /** 
-     * Returns the address of the dummy dsa. This is used to indicate the bottom of 
+    /**
+     * Returns the address of the dummy dsa. This is used to indicate the bottom of
      * the stack.
      */
     public long ceecaaddsa() {
@@ -789,7 +788,7 @@ public class Caa {
         }
     }
 
-    /** 
+    /**
      * Returns the address of the enclave data block.
      * @throws IOException if an error occurred reading from the address space
      */
@@ -797,7 +796,7 @@ public class Caa {
         return caaTemplate.getCeecaaedb(inputStream, address);
     }
 
-    /** 
+    /**
      * Returns the address of the hcom.
      * @throws IOException if an error occurred reading from the address space
      */

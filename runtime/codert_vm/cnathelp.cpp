@@ -1733,7 +1733,7 @@ slow_jitMonitorEnterImpl(J9VMThread *currentThread, bool forMethod)
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 			if (J9_IS_J9CLASS_VALUETYPE(badClass)) {
 				currentThread->javaVM->internalVMFunctions->setCurrentExceptionNLSWithArgs(currentThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE, 
-					J9VMCONSTANTPOOL_JAVALANGILLEGALMONITORSTATEEXCEPTION, J9UTF8_LENGTH(className), J9UTF8_DATA(className));
+					J9VMCONSTANTPOOL_JAVALANGIDENTITYEXCEPTION, J9UTF8_LENGTH(className), J9UTF8_DATA(className));
 			} else 
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			{
@@ -2552,9 +2552,6 @@ old_slow_jitResolveFlattenableField(J9VMThread *currentThread)
 	if (!resolved) {
 		UDATA resolveFlags = J9_RESOLVE_FLAG_RUNTIME_RESOLVE;
 		switch(resolveType) {
-		case J9TR_FLAT_RESOLVE_WITHFIELD:
-			resolveFlags |= J9_RESOLVE_FLAG_WITH_FIELD;
-			break;
 		case J9TR_FLAT_RESOLVE_GETFIELD:
 			break;
 		case J9TR_FLAT_RESOLVE_PUTFIELD:

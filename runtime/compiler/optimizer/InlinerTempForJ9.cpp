@@ -4021,7 +4021,7 @@ int32_t TR_MultipleCallTargetInliner::scaleSizeBasedOnBlockFrequency(int32_t byt
 
       float factor = (float)adjFrequency / (float)maxFrequency;
       float weight = (float)bytecodeSize / (factor*factor);
-      bytecodeSize = (weight > 0x7fffffff) ? 0x7fffffff : ((int32_t)weight);
+      bytecodeSize = (weight >= (float)0x7fffffff) ? 0x7fffffff : ((int32_t)weight);
 
       heuristicTrace(tracer(),"exceedsSizeThreshold: Scaled up size for call from %d to %d", oldSize, bytecodeSize);
       }
@@ -5886,7 +5886,7 @@ TR_PrexArgInfo* TR_PrexArgInfo::buildPrexArgInfoForMethodSymbol(TR::ResolvedMeth
       int32_t len = 0;
       const char *sig = p->getTypeSignature(len);
 
-      if (*sig == 'L' || *sig == 'Q' || *sig == '[')
+      if (*sig == 'L' || *sig == '[')
          {
          TR_OpaqueClassBlock *clazz = (index == 0 && !methodSymbol->isStatic()) ? feMethod->containingClass() :  comp->fe()->getClassFromSignature(sig, len, feMethod);
          if (clazz)

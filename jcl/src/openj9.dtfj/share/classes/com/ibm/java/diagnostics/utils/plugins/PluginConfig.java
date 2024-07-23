@@ -31,7 +31,7 @@ import com.ibm.java.diagnostics.utils.commands.ICommand;
 
 /**
  * Simple Java bean to represent a plugin
- * 
+ *
  * @author adam
  *
  */
@@ -39,15 +39,15 @@ public abstract class PluginConfig {
 	protected final Entry entry;
 	protected Throwable t = null;			//any exception which occurred when instantiating a new instance
 	protected boolean cacheOutput = true;	//default the caching of output to true
-	
+
 	public PluginConfig(Entry entry) {
 		this.entry = entry;
 	}
-	
+
 	public String getName() {
 		return entry.getName();
 	}
-	
+
 	public ICommand newInstance(ClassLoader loader) throws CommandException {
 		ClassInfo info = entry.getData();
 		try {
@@ -65,7 +65,7 @@ public abstract class PluginConfig {
 	}
 
 	public abstract String toCSV();
-	
+
 	public String getClassName() {
 		ClassInfo info = entry.getData();
 		return info.getClassname();
@@ -86,23 +86,23 @@ public abstract class PluginConfig {
 	public int hashCode() {
 		return getClassName().hashCode();
 	}
-	
+
 	public String getId() {
 		return getClassName();
 	}
-	
+
 	public Throwable getError() {
 		return t;
 	}
-	
+
 	public boolean isEnabled() {
 		return (t == null);
 	}
-	
+
 	public URL getURL() {
 		return entry.toURL();
 	}
-	
+
 	public boolean cacheOutput() {
 		return cacheOutput;
 	}

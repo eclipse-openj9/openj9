@@ -43,8 +43,7 @@ import com.ibm.dtfj.javacore.parser.framework.scanner.ScannerException;
 import com.ibm.dtfj.javacore.parser.j9.section.common.ICommonTypes;
 
 public class ParserController implements IParserController {
-	
-	
+
 	private List fFramework;
 	private IErrorListener fListener;
 	private IImageBuilderFactory fImageBuilderFactory;
@@ -53,10 +52,8 @@ public class ParserController implements IParserController {
 	private static final String DEFAULT_IMAGE_PROCESS_BUILDER = "default_image_process_builder";
 	private static final String DEFAULT_JAVA_RUNTIME_BUILDER = "default_java_runtime_builder";
 
-	
-	
 	/**
-	 * 
+	 *
 	 * @param framework
 	 */
 	public ParserController(List framework, IImageBuilderFactory imageBuilderFactory) throws ParserException {
@@ -66,8 +63,7 @@ public class ParserController implements IParserController {
 		fFramework = framework;
 		fImageBuilderFactory = imageBuilderFactory;
 	}
-	
-	
+
 	/**
 	 * Support for one image builder parsing javacore data for only one runtime.
 	 * Multiple runtime support will require overriding this method in a subclass.
@@ -98,9 +94,9 @@ public class ParserController implements IParserController {
 		} catch (BuilderFailureException e) {
 			throw new ParserException(e);
 		}
-	
+
 		boolean anyMatched = false;
-		
+
 		try {
 			lookAhead.init();
 			for (Iterator it = fFramework.iterator(); it.hasNext();) {
@@ -134,21 +130,19 @@ public class ParserController implements IParserController {
 			throw e;
 		} catch (ScannerException e) {
 			throw new ParserException(e);
-		}	
-		
+		}
+
 		if (!anyMatched) {
 			throw new ParserException("Not a javacore file. First line: "+first);
 		}
 		return imageBuilder.getImage();
 	}
 
-	
-	
 	/**
 	 * Will consume unknown data until a recognised section tag is reached. Common tags are also consumed.
-	 * 
+	 *
 	 * @param lookAheadBuffer
-	 * @throws ScannerException 
+	 * @throws ScannerException
 	 */
 	private void processUnknownData(ILookAheadBuffer lookAheadBuffer) throws IOException, ScannerException {
 		J9TagManager tagManager = J9TagManager.getCurrent();
@@ -169,11 +163,10 @@ public class ParserController implements IParserController {
 			}
 		}
 	}
-	
-	
+
 	/**
-	 * 
-	 * 
+	 *
+	 *
 	 * @throws BuilderFailureException
 	 */
 	private IImageBuilder generateImageBuilder() throws BuilderFailureException {
@@ -184,9 +177,6 @@ public class ParserController implements IParserController {
 		return imageBuilder;
 	}
 
-	
-
-	
 	/**
 	 *
 	 * @see com.ibm.dtfj.javacore.parser.framework.parser.IParserController#addErrorListener(com.ibm.dtfj.javacore.parser.framework.parser.IErrorListener)
@@ -194,9 +184,5 @@ public class ParserController implements IParserController {
 	public void addErrorListener(IErrorListener listener) {
 		fListener = listener;
 	}
-	
-
-
-
 
 }

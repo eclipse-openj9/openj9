@@ -25,11 +25,10 @@ package com.ibm.dtfj.javacore.parser.framework.scanner;
 public class ScannerException extends Exception {
 
 	/**
-	 * 
+	 *
 	 */
 	private static final long serialVersionUID = -8955419182055105536L;
-	
-	
+
 	public ScannerException(String message) {
 		super(message);
 	}

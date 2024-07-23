@@ -40,7 +40,7 @@ public class NodeStatic extends NodeAbstract
 		String sig = attributes.getValue("sig");
 		int modifiers = (int)_longFromString(attributes.getValue("modifiers"));
 		String value = attributes.getValue("value");
-		
+
 		if (null != value) {
 			if (value.startsWith("0x")) {
 				value = value.substring(2);

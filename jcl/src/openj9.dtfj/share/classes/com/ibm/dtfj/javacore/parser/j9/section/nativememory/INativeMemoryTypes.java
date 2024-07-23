@@ -26,7 +26,7 @@ public interface INativeMemoryTypes
 {
 
 	public static final String NATIVEMEM_SECTION = "NATIVEMEMINFO";
-	
+
 	public static final String T_0MEMUSER = "0MEMUSER";
 	public static final String T_1MEMUSER = "1MEMUSER";
 	public static final String T_2MEMUSER = "2MEMUSER";
@@ -34,13 +34,13 @@ public interface INativeMemoryTypes
 	public static final String T_4MEMUSER = "4MEMUSER";
 	public static final String T_5MEMUSER = "5MEMUSER";
 	public static final String T_6MEMUSER = "6MEMUSER";
-	
-	public static final String[] T_MEMUSERS = {T_0MEMUSER, T_1MEMUSER, T_2MEMUSER, T_3MEMUSER, T_4MEMUSER, T_5MEMUSER, T_6MEMUSER}; 
-	
+
+	public static final String[] T_MEMUSERS = {T_0MEMUSER, T_1MEMUSER, T_2MEMUSER, T_3MEMUSER, T_4MEMUSER, T_5MEMUSER, T_6MEMUSER};
+
 	public static final String OTHER_CATEGORY = "Other";
-	
+
 	/* Attributes */
-	
+
 	public static final String A_DEPTH = "nativemem_depth";
 	public static final String A_NAME = "nativemem_name";
 	public static final String A_DEEP_BYTES = "nativemem_deepbytes";

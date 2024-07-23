@@ -129,7 +129,7 @@ public class Lse {
         return (int)Lsestate1Template.getLses1pasn(inputStream, lsesptr);
     }
 
-    /** 
+    /**
      * Returns true if this is Z/Architecture (ie the variant with all the 1's)
      */
     public boolean isZArchitecture() throws IOException {

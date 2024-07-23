@@ -44,11 +44,11 @@ public interface IImageAddressSpaceBuilder {
 	 */
 	public IImageProcessBuilder getCurrentImageProcessBuilder();
 	/**
-	 * 
+	 *
 	 * @param builderID
-	 * 
+	 *
 	 */
-	
+
 	/**
 	 * In multiple image process scenarios, each image process is associated with
 	 * it's own image process factory, and the latter are distinguished by unique
@@ -57,7 +57,7 @@ public interface IImageAddressSpaceBuilder {
 	 * @return image process factory if found, or null
 	 */
 	public IImageProcessBuilder getImageProcessBuilder(String builderID);
-	
+
 	/**
 	 * To associate a new image process to the image address space being built
 	 * by this image address space factory, use this interface to create a new
@@ -69,7 +69,7 @@ public interface IImageAddressSpaceBuilder {
 	 * @throws BuilderFailureException if error generating image process factory
 	 */
 	public IImageProcessBuilder generateImageProcessBuilder(String id) throws BuilderFailureException;
-	
+
 	/**
 	 * Create a new image section with the given name, base address and size
 	 * and add it to the list in the ImageAddressSpace.

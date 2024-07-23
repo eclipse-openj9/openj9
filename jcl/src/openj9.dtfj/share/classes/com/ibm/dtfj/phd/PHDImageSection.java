@@ -28,11 +28,11 @@ import com.ibm.dtfj.image.DataUnavailable;
 import com.ibm.dtfj.image.ImagePointer;
 import com.ibm.dtfj.image.ImageSection;
 
-/** 
+/**
  *  @author ajohnson
  */
 class PHDImageSection implements ImageSection {
-	
+
 	private final ImagePointer base;
 	private final long size;
 	private final String name;
@@ -69,17 +69,17 @@ class PHDImageSection implements ImageSection {
 	public Properties getProperties() {
 		return base.getProperties();
 	}
-	
+
 	public int hashCode() {
 		return base.hashCode() ^ (int)size ^ (int)(size >>> 32);
 	}
-	
+
 	public boolean equals(Object o) {
 		if (!(o instanceof PHDImageSection)) return false;
 		PHDImageSection to = (PHDImageSection)o;
 		return base.equals(to.base) && size == to.size;
 	}
-	
+
 	public String toString() {
 		return this.getClass().getName()+" "+getName()+" 0x"+Long.toHexString(getBaseAddress().getAddress())+":0x"+Long.toHexString(getBaseAddress().getAddress()+getSize());
 	}

@@ -29,7 +29,7 @@ import com.ibm.dtfj.image.ImagePointer;
 /**
  * <p>Represents the JavaVMOption C structures passed to JNI_CreateJavaVM
  * to create the VM.</p>
- * 
+ *
  * <p>Each JavaVMOption consists of two components:</p>
  * <ol>
  *     <li>an optionString string, used to identify the option.</li>
@@ -45,7 +45,7 @@ public interface JavaVMOption {
 	 * @throws CorruptDataException
 	 */
 	public String getOptionString() throws DataUnavailable, CorruptDataException;
-	
+
 	/**
 	 * Fetch the extraInfo component of this option.
 	 * @return the pointer value from the extraInfo (usually null).

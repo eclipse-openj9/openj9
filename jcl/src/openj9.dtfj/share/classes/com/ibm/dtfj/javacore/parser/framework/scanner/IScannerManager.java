@@ -25,7 +25,7 @@ package com.ibm.dtfj.javacore.parser.framework.scanner;
 import com.ibm.dtfj.javacore.parser.framework.parser.ILookAheadBuffer;
 
 public interface IScannerManager {
-	
+
 	public ILookAheadBuffer getLookAheadBuffer();
 	public IScanner getScanner();
 

@@ -757,6 +757,21 @@ PersistentAllocator::disclaimAllSegments()
 #endif // LINUX
    return numSegDisclaimed;
    }
+
+void
+TR::PersistentAllocator::adviseDontNeedSegments()
+   {
+#ifdef LINUX
+   j9thread_monitor_enter(_segmentMonitor);
+   for (auto segmentIterator = _segments.begin(); segmentIterator != _segments.end(); ++segmentIterator)
+      {
+      J9MemorySegment &segment = *segmentIterator;
+      size_t segLength = segment.heapTop - segment.heapBase;
+      madvise(segment.heapBase, segLength, MADV_DONTNEED);
+      }
+   j9thread_monitor_exit(_segmentMonitor);
+#endif
+   }
 } // namespace J9
 
 void *

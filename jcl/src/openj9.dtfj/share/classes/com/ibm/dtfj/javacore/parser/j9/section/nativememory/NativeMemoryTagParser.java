@@ -36,50 +36,50 @@ public class NativeMemoryTagParser extends TagParser implements INativeMemoryTyp
 
 	/**
 	 * Line rule to cope with all *MEMUSER lines.
-	 * 
+	 *
 	 * Unusual in that it adds a pseudo depth token
 	 * @author andhall
 	 */
 	private static class NativeMemoryUserLineRule extends LineRule
 	{
 		private final int depth;
-		
+
 		NativeMemoryUserLineRule(int depth)
 		{
 			this.depth = depth;
 		}
-		
+
 		//Line format: 3MEMUSER       |  +--Classes: 2,468,456 bytes / 69 allocations
 		protected void processLine(String source, int startingOffset)
 		{
 			/* Add pseudo-token containing the depth */
 			addToken(A_DEPTH, Integer.toString(depth));
-			
+
 			/* Strip off any | | |*/
 			final boolean foundPipes = consumeUntilFirstMatch(NativeMemoryPatternMatchers.pipes);
-			
+
 			final boolean foundCrossMinusMinus = consumeUntilFirstMatch(NativeMemoryPatternMatchers.crossminusminus);
-			
-			//Only worth looking on if either this is a level 1 
+
+			//Only worth looking on if either this is a level 1
 			//memuser with no foundPipes, or foundCrossMinusMinus is set
 			final boolean level1WithData = depth == 1 && foundPipes;
-			
+
 			if (level1WithData || foundCrossMinusMinus) {
 				addToken(A_NAME, NativeMemoryPatternMatchers.categoryName);
-				
+
 				consumeUntilFirstMatch(CommonPatternMatchers.colon);
-				
+
 				addToken(A_DEEP_BYTES, NativeMemoryPatternMatchers.commaDelimitedNumeric);
-				
+
 				consumeUntilFirstMatch(NativeMemoryPatternMatchers.bytesAndSeparator);
-				
+
 				addToken(A_DEEP_ALLOCATIONS, NativeMemoryPatternMatchers.commaDelimitedNumeric);
 			}
 
 		}
-		
+
 	}
-	
+
 	protected void initTagAttributeRules()
 	{
 		addTag(T_0MEMUSER, null);
@@ -88,5 +88,4 @@ public class NativeMemoryTagParser extends TagParser implements INativeMemoryTyp
 		}
 	}
 
-	
 }

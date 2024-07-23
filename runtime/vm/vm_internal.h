@@ -389,7 +389,7 @@ fixBadUtf8(const U_8 * original, U_8 *corrected, size_t length);
  *
  * @returns the array of interfaces, or NULL on failure (in which case an exception will be pending)
  */
-j9object_t   
+j9object_t
 getInterfacesHelper(J9VMThread *currentThread, j9object_t clazz);
 
 /**
@@ -541,7 +541,7 @@ UDATA initializeExclusiveAccess(J9JavaVM *vm);
 void shutDownExclusiveAccess(J9JavaVM *vm);
 
 #if JAVA_SPEC_VERSION >= 16
-/* LayoutFFITypeHelpers.cpp */
+/* ------------------- LayoutFFITypeHelpers.cpp ----------------- */
 
 /**
  * Release the memory of struct specific ffi_types if exist in the argument/return types
@@ -551,6 +551,21 @@ void shutDownExclusiveAccess(J9JavaVM *vm);
  */
 void
 freeAllStructFFITypes(J9VMThread *currentThread, void *cifNode);
+
+/* ------------------- UpcallThunkMem.cpp ----------------- */
+
+/**
+ * @brief Release the thunk heap list if exists.
+ *
+ * @param vm a pointer to J9JavaVM
+ *
+ * Note:
+ * This function empties the thunk heap list by cleaning up all resources
+ * created via allocateUpcallThunkMemory, including the generated thunk
+ * and the corresponding metadata of each entry in the hashtable.
+ */
+void
+releaseThunkHeap(J9JavaVM *vm);
 #endif /* JAVA_SPEC_VERSION >= 16 */
 
 /* ------------------- jnimisc.cpp ----------------- */
@@ -614,9 +629,10 @@ initializeJFR(J9JavaVM *vm);
  * Take an execution sample of the current thread.
  *
  * @param currentThread[in] the current J9VMThread
+ * @param currentThread[in] the thread being walked
  */
 void
-jfrExecutionSample(J9VMThread *currentThread);
+jfrExecutionSample(J9VMThread *currentThread, J9VMThread *sampleThread);
 
 /**
  * Begin event iteration in a JFR buffer.
@@ -667,6 +683,25 @@ memcpyFromHeapArray(J9VMThread *currentThread, j9object_t arrayObject, jboolean 
 */
 void
 memcpyToHeapArray(J9VMThread *currentThread, j9object_t arrayObject, void *elems, jint mode, jboolean ensureMem32);
+
+/* ------------------- EnsureHashedConfig.cpp ----------------- */
+
+/**
+ * @brief This should be called to clean up the utf8String configuration.
+ *
+ * @param jvm pointer to J9JavaVM that can be used by the method
+ */
+void
+cleanupEnsureHashedConfig(J9JavaVM *jvm);
+
+/**
+ * @brief This function parses a string containing utf8String options.
+ *
+ * @param options string containing the options specified on the command line
+ * @returns JNI_OK on success
+ */
+UDATA
+parseEnsureHashedConfig(J9JavaVM *jvm, char *options, BOOLEAN isAdd);
 
 #ifdef __cplusplus
 } /* extern "C" */

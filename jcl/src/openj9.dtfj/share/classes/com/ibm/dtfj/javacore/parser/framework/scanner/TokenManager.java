@@ -22,14 +22,10 @@
  */
 package com.ibm.dtfj.javacore.parser.framework.scanner;
 
-
 public class TokenManager {
-	
 
-	
 	public static IParserToken getToken(int length, int offset, int lineNumber, String type, String value) {
 		return new ParserToken(length, offset, lineNumber, type, value);
 	}
-	
 
 }

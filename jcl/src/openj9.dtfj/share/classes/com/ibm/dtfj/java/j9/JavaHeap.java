@@ -43,12 +43,12 @@ public class JavaHeap implements com.ibm.dtfj.java.JavaHeap
 	private String _name;
 	private ImagePointer _id;
 	private long _size;
-	
+
 	/**
 	 * Contains an ordered list of all the pairings of regions and image sections in the heap in address order so we can search through them faster
 	 */
 	private HeapSubRegionSection[] _allSortedRegionSections;
-	
+
 	/**
 	 * All the JavaHeapRegions which make up the heap (note that this is always one in a legacy heap)
 	 */
@@ -64,11 +64,10 @@ public class JavaHeap implements com.ibm.dtfj.java.JavaHeap
 	private int _classSize;
 	private long _classAlignment;
 	private boolean _isSWH;
-	
+
 	//required for binary search and generally looking for ImagePointers inside JavaHeapRegions
 	private static RegionMatcher _matcher = new RegionMatcher();
-	
-	
+
 	public JavaHeap(JavaRuntime vm, String name, ImagePointer id, ImagePointer start, long size, int arrayletIdOffset, int arrayletIdWidth, long arrayletIdMask, long arrayletIdResult, int fobjectSize, int fobjectPointerScale, long fobjectPointerDisplacement, int classOffset, int classSize, long classAlignment, boolean isSWH)
 	{
 		if (null == vm) {
@@ -81,12 +80,12 @@ public class JavaHeap implements com.ibm.dtfj.java.JavaHeap
 		_id = id;
 		_name = name;
 		_size = size;
-		
+
 		_arrayletIdOffset = arrayletIdOffset;
 		_arrayletIdWidth = arrayletIdWidth;
 		_arrayletIdMask = arrayletIdMask;
 		_arrayletIdResult = arrayletIdResult;
-		
+
 		_fobjectSize = fobjectSize;
 		_fobjectPointerScale = fobjectPointerScale;
 		_fobjectPointerDisplacement = fobjectPointerDisplacement;
@@ -120,14 +119,14 @@ public class JavaHeap implements com.ibm.dtfj.java.JavaHeap
 	{
 		return new MultiLevelExtentWalker(_heapRegions);
 	}
-	
+
 	public boolean equals(Object obj)
 	{
 		boolean isEqual = false;
-		
+
 		if ((null != _name) && (obj instanceof JavaHeap)) {
 			JavaHeap local = (JavaHeap) obj;
-			
+
 			isEqual = (_javaVM.equals(local._javaVM))
 				&& (_name.equals(local._name))
 				&& (_id.equals(local._id)
@@ -140,17 +139,17 @@ public class JavaHeap implements com.ibm.dtfj.java.JavaHeap
 	{
 		return 	(_javaVM.hashCode() ^ _name.hashCode() ^ _id.hashCode() ^ ((int) _size));
 	}
-	
+
 	private class MultiLevelSectionIterator implements Iterator
 	{
 		private Iterator _outer;
 		private Iterator _inner;
-		
+
 		public MultiLevelSectionIterator(List list)
 		{
 			_outer = list.iterator();
 		}
-		
+
 		public boolean hasNext()
 		{
 			_refreshInner();
@@ -167,7 +166,7 @@ public class JavaHeap implements com.ibm.dtfj.java.JavaHeap
 		{
 			throw new UnsupportedOperationException("The core-resident Java heap is immutable");
 		}
-		
+
 		private void _refreshInner()
 		{
 			if ((null == _inner) || (!_inner.hasNext())) {
@@ -179,7 +178,7 @@ public class JavaHeap implements com.ibm.dtfj.java.JavaHeap
 			}
 		}
 	}
-	
+
 	private class MultiLevelExtentWalker implements Iterator
 	{
 		private Iterator _outer;
@@ -189,7 +188,7 @@ public class JavaHeap implements com.ibm.dtfj.java.JavaHeap
 		{
 			_outer = list.iterator();
 		}
-		
+
 		public boolean hasNext()
 		{
 			_refreshInner();
@@ -206,7 +205,7 @@ public class JavaHeap implements com.ibm.dtfj.java.JavaHeap
 		{
 			throw new UnsupportedOperationException("The core-resident Java heap is immutable");
 		}
-		
+
 		private void _refreshInner()
 		{
 			if ((null == _inner) || (!_inner.hasNext())) {
@@ -220,7 +219,7 @@ public class JavaHeap implements com.ibm.dtfj.java.JavaHeap
 			}
 		}
 	}
-	
+
 	private static class RegionMatcher implements Comparator
 	{
 		public int compare(Object arg0, Object arg1)
@@ -231,8 +230,8 @@ public class JavaHeap implements com.ibm.dtfj.java.JavaHeap
 			ImageSection section = region.getSection();
 			long base = section.getBaseAddress().getAddress();
 			long offset = pointer.getAddress() - base;
-			
-			if (offset < 0) { 
+
+			if (offset < 0) {
 				//the address was less than the base so it is a region before this one
 				result = 1;
 			} else if (offset < section.getSize()) {
@@ -245,18 +244,18 @@ public class JavaHeap implements com.ibm.dtfj.java.JavaHeap
 			return result;
 		}
 	}
-	
+
 	public JavaHeapRegion regionForPointer(ImagePointer address)
 	{
 		JavaHeapRegion match = null;
 		int foundIndex = Arrays.binarySearch(_allSortedRegionSections, address, _matcher);
-		
+
 		if ((foundIndex >= 0) && (foundIndex < _allSortedRegionSections.length)) {
 			match = _allSortedRegionSections[foundIndex].getRegion();
 		}
 		return match;
 	}
-	
+
 	public int getArrayletIdentificationWidth()
 	{
 		return _arrayletIdWidth;
@@ -266,7 +265,7 @@ public class JavaHeap implements com.ibm.dtfj.java.JavaHeap
 	{
 		return _arrayletIdOffset;
 	}
-	
+
 	public long getArrayletIdentificationBitmask()
 	{
 		return _arrayletIdMask;
@@ -310,18 +309,18 @@ public class JavaHeap implements com.ibm.dtfj.java.JavaHeap
 			}
 		});
 	}
-	
+
 	private class HeapSubRegionSection
 	{
 		private JavaHeapRegion _region;
 		private ImageSection _section;
-		
+
 		private HeapSubRegionSection(JavaHeapRegion region, ImageSection section)
 		{
 			_region = region;
 			_section = section;
 		}
-		
+
 		public ImageSection getSection()
 		{
 			return _section;
@@ -342,7 +341,7 @@ public class JavaHeap implements com.ibm.dtfj.java.JavaHeap
 	{
 		return _fobjectSize;
 	}
-	
+
 	public long tokenToPointer(long fobject)
 	{
 		return (fobject * _fobjectPointerScale) + _fobjectPointerDisplacement;
@@ -351,7 +350,7 @@ public class JavaHeap implements com.ibm.dtfj.java.JavaHeap
 	public ImagePointer readClassPointerRelativeTo(ImagePointer pointer) throws MemoryAccessException, CorruptDataException
 	{
 		long classPointer;
-		
+
 		if (8 == _classSize)
 		{
 			//8-byte fj9object_t
@@ -372,7 +371,7 @@ public class JavaHeap implements com.ibm.dtfj.java.JavaHeap
 	public ImagePointer readFObjectAt(ImagePointer basePointer, long offset) throws MemoryAccessException, CorruptDataException
 	{
 		long pointer;
-		
+
 		if (8 == _fobjectSize)
 		{
 			//8-byte fj9object_t

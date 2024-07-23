@@ -87,7 +87,7 @@ public final class AddressSpaceImageInputStream extends ImageInputStreamImpl {
         streamPos += 4;
         return ret;
     }
-    
+
     /**
      * Read an unsigned int from the current position. Also increments streamPos.
      * For efficiency to avoid multiple reads via ImageInputStream

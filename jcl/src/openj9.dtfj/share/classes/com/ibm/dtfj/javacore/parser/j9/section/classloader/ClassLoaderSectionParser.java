@@ -34,7 +34,7 @@ import com.ibm.dtfj.javacore.parser.j9.IAttributeValueMap;
 import com.ibm.dtfj.javacore.parser.j9.SectionParser;
 
 /**
- * 
+ *
  *
  */
 public class ClassLoaderSectionParser extends SectionParser implements IClassLoaderTypes{
@@ -45,9 +45,9 @@ public class ClassLoaderSectionParser extends SectionParser implements IClassLoa
 	public ClassLoaderSectionParser() {
 		super(CLASSLOADER_SECTION);
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
 	protected void topLevelRule() throws ParserException {
 		fImageProcessBuilder = fImageBuilder.getCurrentAddressSpaceBuilder().getCurrentImageProcessBuilder();
@@ -56,9 +56,9 @@ public class ClassLoaderSectionParser extends SectionParser implements IClassLoa
 		classLoaderLibraries();
 		classLoaders();
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @throws ParserException
 	 */
 	private void classLoaderSummaries() throws ParserException {
@@ -66,7 +66,7 @@ public class ClassLoaderSectionParser extends SectionParser implements IClassLoa
 		 * 1CLTEXTCLLOS and 1CLTEXTCLLSS contain no meaningful data. Process and ignore.
 		 */
 		processTagLineRequired(T_1CLTEXTCLLOS);
-		processTagLineRequired(T_1CLTEXTCLLSS);	
+		processTagLineRequired(T_1CLTEXTCLLSS);
 		IAttributeValueMap results = null;
 		if ((results = processTagLineRequired(T_2CLTEXTCLLOADER)) != null) {
 			processClassLoaderStats(results);
@@ -75,7 +75,7 @@ public class ClassLoaderSectionParser extends SectionParser implements IClassLoa
 			}
 		}
 	}
-	
+
 	/**
 	 * Loaded libraries data may not be found in Sovereign VMs, therefore make
 	 * it optional, even though it is a standard tag in later J9 VMs.
@@ -102,7 +102,7 @@ public class ClassLoaderSectionParser extends SectionParser implements IClassLoa
 	}
 
 	/**
-	 * 
+	 *
 	 * @throws ParserException
 	 */
 	private void classLoaders() throws ParserException {
@@ -115,9 +115,9 @@ public class ClassLoaderSectionParser extends SectionParser implements IClassLoa
 			}
 		}
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param results
 	 * @throws ParserException
 	 */
@@ -131,7 +131,7 @@ public class ClassLoaderSectionParser extends SectionParser implements IClassLoa
 		} catch (BuilderFailureException e) {
 			handleError("Failed to add class loader: " + cl_name + " " + cl_address + " ", e);
 		}
-		
+
 		// listing a parent class loader may be optional, therefore do a check
 		// that parent class loader attributes are present before catching
 		// any possible exceptions.
@@ -155,7 +155,7 @@ public class ClassLoaderSectionParser extends SectionParser implements IClassLoa
 		processTagLineOptional(T_3CLNMBRLOADEDLIB);
 		processTagLineOptional(T_3CLNMBRLOADEDCL);
 	}
-	
+
 	/**
 	 * Appears to be information only present in J9VMs.
 	 * @param results
@@ -169,7 +169,7 @@ public class ClassLoaderSectionParser extends SectionParser implements IClassLoa
 		} catch (BuilderFailureException e) {
 			handleError("Failed to add class loader: " + cl_name + " " + cl_address + " ", e);
 		}
-		
+
 		results = null;
 		if ((results = processTagLineRequired(T_3CLTEXTLIB)) != null) {
 			fImageProcessBuilder.addLibrary(results.getTokenValue(CL_ATT_LIB_NAME));
@@ -178,13 +178,13 @@ public class ClassLoaderSectionParser extends SectionParser implements IClassLoa
 			}
 		}
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * Grammar subsection 2CLTEXTCLLOAD
 	 * Although classes must be associated with classloaders in DTFJ, if a class loader
 	 * is not built due to corruption of data, yet a class list still exists for it,
-	 * the parser still has to process the class data from the buffer any way, 
+	 * the parser still has to process the class data from the buffer any way,
 	 * even though it may not be added to
 	 * DTFJ by the builder.
 	 */
@@ -207,10 +207,10 @@ public class ClassLoaderSectionParser extends SectionParser implements IClassLoa
 			}
 		}
 	}
-	
+
 	/**
 	 * Empty hook
 	 */
-	protected void sovOnlyRules(String startingTag) throws ParserException {	
+	protected void sovOnlyRules(String startingTag) throws ParserException {
 	}
 }

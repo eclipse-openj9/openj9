@@ -38,9 +38,9 @@ import com.ibm.dtfj.java.JavaObject;
 import com.ibm.dtfj.javacore.builder.IBuilderData;
 
 public class JCJavaClass implements JavaClass{
-	
+
 	private final JCJavaRuntime fJavaRuntime;
-	
+
 	private JavaClassLoader fJavaClassLoader;
 	private JavaObject fJavaObject;
 	private long fClassID;
@@ -48,14 +48,14 @@ public class JCJavaClass implements JavaClass{
 	private final String fClassName;
 	private ImagePointer fClassPointer;
 	private int fModifiers;
-	
+
 	private LinkedHashSet fMethods;
 	private Vector fConstantPoolReferences;
 	private Vector fDeclaredFields;
 	private Vector fInterfaces;
-	
+
 	/**
-	 * 
+	 *
 	 * @param javaRuntime
 	 * @param className
 	 */
@@ -68,7 +68,7 @@ public class JCJavaClass implements JavaClass{
 		}
 		// final
 		fClassName = className;
-		
+
 		// all other
 		fJavaRuntime = javaRuntime;
 		fClassPointer = null;
@@ -77,19 +77,19 @@ public class JCJavaClass implements JavaClass{
 		fClassID = IBuilderData.NOT_AVAILABLE;
 		fSuperClassID = IBuilderData.NOT_AVAILABLE;
 		fModifiers = IBuilderData.NOT_AVAILABLE;
-		
+
 		// containers
 		fMethods = new LinkedHashSet();
 		fConstantPoolReferences = new Vector();
 		fDeclaredFields = new Vector();
 		fInterfaces = new Vector();
-		
+
 		// must associate with a runtime.
 		fJavaRuntime.addJavaClass(this);
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
 	public JavaClassLoader getClassLoader() throws CorruptDataException {
 		if (fJavaClassLoader == null) {
@@ -104,30 +104,30 @@ public class JCJavaClass implements JavaClass{
 	public JavaClass getComponentType() throws CorruptDataException {
 		throw new CorruptDataException(new JCCorruptData(null));
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
 	public Iterator getConstantPoolReferences() {
 		return fConstantPoolReferences.iterator();
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public Iterator getDeclaredFields() {
 		return fDeclaredFields.iterator();
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public Iterator getDeclaredMethods() {
 		return fMethods.iterator();
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
 	public ImagePointer getID() {
 		if (fClassPointer == null && fClassID != IBuilderData.NOT_AVAILABLE) {
@@ -135,14 +135,14 @@ public class JCJavaClass implements JavaClass{
 		}
 		return fClassPointer;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
 	public Iterator getInterfaces() {
 		return fInterfaces.iterator();
 	}
-	
+
 	/**
 	 * @see com.ibm.dtfj.java.JavaClass#getModifiers()
 	 * @throws CorruptDataException if modifiers not set
@@ -164,7 +164,7 @@ public class JCJavaClass implements JavaClass{
 		}
 		return fClassName;
 	}
-	
+
 	/**
 	 * Instance object of this class
 	 * @see com.ibm.dtfj.java.JavaClass#getObject()
@@ -192,14 +192,14 @@ public class JCJavaClass implements JavaClass{
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public long getInstanceSize() throws DataUnavailable, CorruptDataException {
 		throw new DataUnavailable("Instance size is not available in a javacore");
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * Same as the J9 System Core implementation for DTFJ.
 	 * @see com.ibm.dtfj.java.j9.JavaClass
 	 * @return true if an array
@@ -208,7 +208,7 @@ public class JCJavaClass implements JavaClass{
 		String name = getName();
 		return name.startsWith("[");
 	}
-	
+
 	/**
 	 * NON-DTFJ
 	 * <br>
@@ -225,18 +225,18 @@ public class JCJavaClass implements JavaClass{
 		// Add the new ID to the list of all class IDs
 		fJavaRuntime.addJavaClass(this);
 	}
-	
+
 	/**
 	 * NON-DTFJ
 	 * <br>
 	 * <b>For internal building purposes only</b>. Do not call outside the DTFJ implementation.
 	 * <br><br>
-	 * @return class Name 
+	 * @return class Name
 	 */
 	public String internalGetName() {
 		return fClassName;
 	}
-	
+
 	/**
 	 * NON-DTFJ
 	 * <br>
@@ -247,7 +247,7 @@ public class JCJavaClass implements JavaClass{
 	public void setClassLoader(JavaClassLoader classLoader) {
 		fJavaClassLoader = classLoader;
 	}
-	
+
 	/**
 	 * NON-DTFJ
 	 * <br>
@@ -258,7 +258,7 @@ public class JCJavaClass implements JavaClass{
 	public void setJavaSuperClass(long superClassID) {
 		fSuperClassID = superClassID;
 	}
-	
+
 	/**
 	 * NON-DTFJ
 	 * <br>
@@ -269,7 +269,7 @@ public class JCJavaClass implements JavaClass{
 	public void setJavaObject(JavaObject javaObject) {
 		fJavaObject = javaObject;
 	}
-	
+
 	/**
 	 * NON-DTFJ
 	 * <br>
@@ -284,7 +284,7 @@ public class JCJavaClass implements JavaClass{
 	public Iterator getReferences() {
 		return Collections.EMPTY_LIST.iterator();
 	}
-	
+
 	/**
 	 * NON-DTFJ
 	 * <br>

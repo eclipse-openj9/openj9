@@ -32,19 +32,19 @@ import com.ibm.dtfj.java.JavaMethod;
 import com.ibm.dtfj.javacore.builder.IBuilderData;
 
 public class JCJavaLocation implements JavaLocation {
-	
+
 	private final JavaMethod fMethod;
 	private ImagePointer fAddress;
 	private int fCompilationLevel;
 	private String fFileName;
 	private int fLineNumber;
-	
+
 	public JCJavaLocation(JavaMethod javaMethod) throws JCInvalidArgumentsException{
 		if (javaMethod == null) {
 			throw new JCInvalidArgumentsException("A java location must be associated with a java method");
 		}
 		fMethod = javaMethod;
-		
+
 		fAddress = null;
 		fCompilationLevel = IBuilderData.NOT_AVAILABLE;
 		fFileName = null;
@@ -52,7 +52,7 @@ public class JCJavaLocation implements JavaLocation {
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public ImagePointer getAddress() throws CorruptDataException {
 		if (fAddress == null) {
@@ -60,7 +60,7 @@ public class JCJavaLocation implements JavaLocation {
 		}
 		return fAddress;
 	}
-	
+
 	/**
 	 * NON-DTFJ
 	 * @param address
@@ -70,7 +70,7 @@ public class JCJavaLocation implements JavaLocation {
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public int getCompilationLevel() throws CorruptDataException {
 		if (fCompilationLevel == IBuilderData.NOT_AVAILABLE) {
@@ -87,12 +87,12 @@ public class JCJavaLocation implements JavaLocation {
 		if ("compiled".equals(compilationLevel)) {
 			fCompilationLevel = 1;
 		} else {
-			fCompilationLevel = 0;			
+			fCompilationLevel = 0;
 		}
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
 	public String getFilename() throws DataUnavailable, CorruptDataException {
 		if (fFileName == null) {
@@ -100,7 +100,7 @@ public class JCJavaLocation implements JavaLocation {
 		}
 		return fFileName;
 	}
-	
+
 	/**
 	 * NON-DTFJ
 	 * @param fileName
@@ -110,7 +110,7 @@ public class JCJavaLocation implements JavaLocation {
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public int getLineNumber() throws DataUnavailable, CorruptDataException {
 		if (fLineNumber == IBuilderData.NOT_AVAILABLE) {
@@ -118,7 +118,7 @@ public class JCJavaLocation implements JavaLocation {
 		}
 		return fLineNumber;
 	}
-	
+
 	/**
 	 * NON-DTFJ
 	 * @param lineNumber
@@ -126,9 +126,9 @@ public class JCJavaLocation implements JavaLocation {
 	public void setLineNumber(int lineNumber) {
 		fLineNumber = lineNumber;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
 	public JavaMethod getMethod() throws CorruptDataException {
 		if (fMethod == null) {
@@ -136,7 +136,7 @@ public class JCJavaLocation implements JavaLocation {
 		}
 		return fMethod;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.dtfj.java.JavaLocation#toString()
 	 * copied directly from:
@@ -146,7 +146,7 @@ public class JCJavaLocation implements JavaLocation {
 	public String toString()
 	{
 		String output = null;
-		
+
 		try {
 			String className = getMethod().getDeclaringClass().getName();
 			className = className.replace('/', '.');

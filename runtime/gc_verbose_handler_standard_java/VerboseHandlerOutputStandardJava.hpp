@@ -55,6 +55,7 @@ private:
 	 */
 	void outputOwnableSynchronizerInfo(MM_EnvironmentBase *env, uintptr_t indent, uintptr_t ownableSynchronizerCandidates, uintptr_t ownableSynchronizerCleared);
 	void outputContinuationInfo(MM_EnvironmentBase *env, uintptr_t indent, uintptr_t continuationCandidates, uintptr_t continuationCleared);
+	void outputContinuationObjectInfo(MM_EnvironmentBase *env, uintptr_t indent);
 
 	/**
 	 * Output reference processing summary.

@@ -100,6 +100,8 @@ private:
    int32_t _avgCpuUsage; // percentage of time each processor is used on average (0..100)
    int32_t _avgCpuIdle;  // percentage of time each processor is idle on average (0..100)
 
+   const int64_t _minIntervalLength; // Postpone the update until this many ns passed since the last update operation
+
    int64_t _prevIntervalLength; // the duration (in ns) of the last update interval
 
    // values recorded at start of this update interval

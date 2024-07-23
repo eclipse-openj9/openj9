@@ -2066,9 +2066,7 @@ checkFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *clas
 		J9UTF8 *signature = J9ROMFIELDSHAPE_SIGNATURE(field);
 		U_8 *signatureChars = J9UTF8_DATA(signature);
 		if (J9_ARE_NO_BITS_SET(modifiers, J9AccStatic)) {
-			if ('Q' == signatureChars[0]
-				|| J9_ARE_ALL_BITS_SET(modifiers, J9FieldFlagIsNullRestricted)
-			) {
+			if (J9_ARE_ALL_BITS_SET(modifiers, J9FieldFlagIsNullRestricted)) {
 				J9Class *valueClass = internalFindClassUTF8(currentThread, signatureChars + 1, J9UTF8_LENGTH(signature) - 2, classLoader, J9_FINDCLASS_FLAG_EXISTING_ONLY);
 				Assert_VM_notNull(valueClass);
 				J9ROMClass *valueROMClass = valueClass->romClass;
@@ -2286,7 +2284,6 @@ nativeOOM:
 			}
 		}
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 		if (J9_ARE_ALL_BITS_SET(romClass->optionalFlags, J9_ROMCLASS_OPTINFO_IMPLICITCREATION_ATTRIBUTE)) {
 			U_16 implicitCreationFlags = getImplicitCreationFlags(romClass);
@@ -2301,6 +2298,7 @@ nativeOOM:
 
 		if (J9ROMCLASS_IS_VALUE(romClass)) {
 			classFlags |= J9ClassIsValueType;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 			/* superclass can be NULL if primitive classes are changed to value typess in the future. */
 			if ((NULL != superclass) && J9_ARE_ALL_BITS_SET(superclass->classFlags, J9ClassHasIdentity)) {
 				J9UTF8 *superclassName = J9ROMCLASS_SUPERCLASSNAME(romClass);
@@ -2312,13 +2310,8 @@ nativeOOM:
 				}
 			}
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-			if (J9ROMCLASS_IS_PRIMITIVE_VALUE_TYPE(romClass)
-				|| J9_ARE_ALL_BITS_SET(classFlags, J9ClassAllowsInitialDefaultValue)
-			) {
+			if (J9_ARE_ALL_BITS_SET(classFlags, J9ClassAllowsInitialDefaultValue)) {
 				UDATA instanceSize = state->ramClass->totalInstanceSize;
-				if (J9ROMCLASS_IS_PRIMITIVE_VALUE_TYPE(romClass)) {
-					classFlags |= J9ClassIsPrimitiveValueType;
-				}
 				if ((instanceSize <= javaVM->valueFlatteningThreshold)
 					&& !J9ROMCLASS_IS_CONTENDED(romClass)
 				) {
@@ -2338,6 +2331,7 @@ nativeOOM:
 				}
 			}
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		} else {
 			classFlags |= J9ClassHasIdentity;
 		}
@@ -2350,7 +2344,6 @@ nativeOOM:
 
 		}
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 		state->ramClass->classFlags = classFlags;
 
@@ -3443,9 +3436,7 @@ fail:
 					 */
 					ramArrayClass->classFlags |= (elementClass->classFlags & arrayFlags);
 				}
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-				ramArrayClass->classFlags |= J9ClassHasIdentity; 
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+				ramArrayClass->classFlags |= J9ClassHasIdentity;
 				ramArrayClass->leafComponentType = leafComponentType;
 				ramArrayClass->arity = arity;
 				ramArrayClass->componentType = elementClass;

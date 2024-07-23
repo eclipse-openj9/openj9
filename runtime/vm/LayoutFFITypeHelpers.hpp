@@ -116,6 +116,10 @@ public:
 			typeCode = J9NtcPointer;
 			break;
 		case FFI_TYPE_STRUCT:
+#if defined(J9ZOS390) && defined(J9VM_ENV_DATA64)
+		case FFI_TYPE_STRUCT_FF:
+		case FFI_TYPE_STRUCT_DD:
+#endif /* defined(J9ZOS390) && defined(J9VM_ENV_DATA64) */
 			typeCode = J9NtcStruct;
 			break;
 		default:

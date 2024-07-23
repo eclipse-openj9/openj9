@@ -34,7 +34,7 @@ import com.ibm.dtfj.image.ImageThread;
 /**
  * Factory for building a com.ibm.dtfj.image.ImageProcess
  * <br>
- * Each Image Process factory must have at least one 
+ * Each Image Process factory must have at least one
  * Java runtime factory that builds {@link com.ibm.dtfj.java.JavaRuntime}
  * <br>
  * Basic support for multiple java runtime factories is present.
@@ -47,14 +47,14 @@ public interface IImageProcessBuilder {
 	 * @return current java runtime factory. Must never be null.
 	 */
 	public IJavaRuntimeBuilder getCurrentJavaRuntimeBuilder();
-	
+
 	/**
-	 * 
+	 *
 	 * @param builderID unique id that looks up a java runtime factory
 	 * @return found java runtime factory, or null.
 	 */
 	public IJavaRuntimeBuilder getJavaRuntimeBuilder(String builderID);
-	
+
 	/**
 	 * Will add an com.ibm.dtfj.image.ImageModule for the specified library name.
 	 * If the image module already exists, it will return the latter. A null library name
@@ -64,13 +64,13 @@ public interface IImageProcessBuilder {
 	 * @return added/found ImageModule, or null if not added (if the library name isnull)
 	 */
 	public ImageModule addLibrary(String name);
-	
+
 	/**
 	 * Adds a com.ibm.dtfj.image.ImageThread to the Image process being built.
 	 * If the arguments are invalid and a valid ImageThread cannot be constructed,
 	 * error occurs.
 	 * <br><br>
-	 * If the thread already exists, it will populate any missing data into the image thread, 
+	 * If the thread already exists, it will populate any missing data into the image thread,
 	 * and return the latter.
 	 * <br><br>
 	 * If the thread does not exist, it will create a new ImageThread and register it
@@ -82,7 +82,7 @@ public interface IImageProcessBuilder {
 	 * @throws BuilderFailureException if valid image thread was not created or found/updated.
 	 */
 	public ImageThread addImageThread(long nativeThreadID, long systemThreadID, Properties properties) throws BuilderFailureException;
-	
+
 	/**
 	 * Adds a stack section to an image thread
 	 * @param thread
@@ -99,7 +99,7 @@ public interface IImageProcessBuilder {
 	 * @return
 	 */
 	public ImageStackFrame addImageStackFrame(long nativeThreadID, String name, long baseAddress, long procAddress);
-	
+
 	/**
 	 * Generates a new java runtime factory. If generation fails, an exception is thrown.
 	 * If the java runtime factory already exists, it returns the latter.
@@ -108,39 +108,38 @@ public interface IImageProcessBuilder {
 	 * @throws BuilderFailureException if java runtime factory is not created.
 	 */
 	public IJavaRuntimeBuilder generateJavaRuntimeBuilder(String id) throws BuilderFailureException;
-	
+
 	/**
 	 * Valid values: 64, 32, or 31 (s390) bits.
-	 * @param pointer size for this javacore. Usually parsed or computed from the data found in the javacore. 
+	 * @param pointer size for this javacore. Usually parsed or computed from the data found in the javacore.
 	 */
 	public void setPointerSize(int size);
-	
+
 	/**
 	 * Set signal value if available in javacore.
-	 * @param generic signal value. 
+	 * @param generic signal value.
 	 */
 	public void setSignal(int signal);
-	
+
 	/**
 	 * Set command line if available in javacore.
-	 * @param command line string 
+	 * @param command line string
 	 */
 	public void setCommandLine(String cmdLine);
-	
+
 	/**
 	 * Set registers if available in javacore.
-	 * @param regs Map of registers 
+	 * @param regs Map of registers
 	 */
 	public void setRegisters(Map regs);
-	
-	
+
 	/**
 	 * Add environment variables
 	 * @param name
-	 * @param value 
+	 * @param value
 	 */
 	public void addEnvironmentVariable(String name, String value);
-	
+
 	/**
 	 * Add a routine to a module
 	 * @param library

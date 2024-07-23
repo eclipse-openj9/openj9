@@ -24,7 +24,7 @@ package com.ibm.dtfj.image.javacore;
 
 public class LookupKey {
 	public long fThreadKey;
-	
+
 	public LookupKey(long key) {
 		fThreadKey = key;
 	}
@@ -32,9 +32,9 @@ public class LookupKey {
 	public void setKey(long key) {
 		fThreadKey = key;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 */
 	public int hashCode() {
 		final int PRIME = 31;
@@ -43,9 +43,8 @@ public class LookupKey {
 		return result;
 	}
 
-
 	/**
-	 * 
+	 *
 	 */
 	public boolean equals(Object obj) {
 		if (this == obj)
@@ -58,5 +57,5 @@ public class LookupKey {
 		if (fThreadKey != other.fThreadKey)
 			return false;
 		return true;
-	}	
+	}
 }

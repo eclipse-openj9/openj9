@@ -47,11 +47,11 @@ import com.ibm.dtfj.phd.parser.HeapdumpReader;
 import com.ibm.dtfj.utils.ManagedImage;
 import com.ibm.dtfj.utils.file.ManagedImageSource;
 
-/** 
+/**
  * @author ajohnson
  */
 public class PHDImage implements ManagedImage {
-	
+
 	private final File file;
 	private final ArrayList<ImageAddressSpace> addressList;
 	private final Image meta;
@@ -59,7 +59,7 @@ public class PHDImage implements ManagedImage {
 	private final URI source;
 	private ManagedImageSource imageSource = null;
 
-	/** 
+	/**
 	 * Build the image from the PHD file
 	 * @param file The phd file.
 	 */
@@ -67,7 +67,7 @@ public class PHDImage implements ManagedImage {
 		this(file, null);
 	}
 
-	/** 
+	/**
 	 * Build the image from the PHD file and an associated Javacore file
 	 * @param file The phd file.
 	 * @param meta The DTFJ image for the metafile data
@@ -100,16 +100,16 @@ public class PHDImage implements ManagedImage {
 			throw e;
 		}
 	}
-	
-	/** 
+
+	/**
 	 * Build the image from the PHD file
 	 * @param file The phd file.
 	 */
 	PHDImage(URI source, ImageInputStream stream) throws IOException {
 		this(source, stream, null);
 	}
-	
-	/** 
+
+	/**
 	 * Build the image from the PHD file and an associated Javacore file
 	 * @param file The stream containing the PHD
 	 * @param meta The DTFJ image for the metafile data
@@ -142,8 +142,7 @@ public class PHDImage implements ManagedImage {
 			throw e;
 		}
 	}
-	
-	
+
 	public URI getSource() {
 		if(source == null) {
 			return file.toURI();
@@ -161,11 +160,11 @@ public class PHDImage implements ManagedImage {
 	 * else the file date
 	 */
 	public long getCreationTime() throws DataUnavailable {
-		
+
 		if( file == null ) {
 			throw new DataUnavailable("File creation time not available.");
 		}
-		
+
 		String name = file.getName();
 		String prefix = "heapdump";
 		// Allow extra stuff in front of "heapdump"
@@ -183,7 +182,7 @@ public class PHDImage implements ManagedImage {
 				}
 			}
 		}
-		
+
 		// or for AIX 1.4.2 heapdumpPID.EPOCHTIME.phd
 		// heapdump454808.1244656860.phd
 		String s[] = name.split("\\.");
@@ -203,7 +202,7 @@ public class PHDImage implements ManagedImage {
 			} catch (NumberFormatException e) {
 			}
 		}
-		
+
 		try {
 			if (meta != null) return meta.getCreationTime();
 		} catch (DataUnavailable e) {
@@ -273,16 +272,16 @@ public class PHDImage implements ManagedImage {
 			imageSource.getExtractedTo().delete();		//attempt to delete the file
 		}
 	}
-	
+
 	protected void finalize() throws Throwable {
 		close();
 		super.finalize();
 	}
-	
+
 	// Methods to maintain a list of HeapdumpReaders that have
 	// opened the heap dump file. Should only be accessed by
 	// HeapdumpReader(File, Image) and HeapdumpReader.close();
-	
+
 	/**
 	 * Register a HeapdumpReader as needing to be closed when
 	 * Image.close() is called on this Image.

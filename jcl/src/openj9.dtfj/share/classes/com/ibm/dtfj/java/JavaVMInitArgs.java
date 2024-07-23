@@ -47,38 +47,38 @@ public interface JavaVMInitArgs {
 	 * The JNI specified version constant for the Java 1.4 version of JNI
 	 */
 	public static final int JNI_VERSION_1_4 = 0x00010004;
-	
+
 	/**
 	 * The JNI specified version constant for the Java 1.6 version of JNI
 	 */
 	public static final int JNI_VERSION_1_6 = 0x00010006;
-	
+
 	/**
 	 * Fetch the JNI version from the JavaVMInitArgs structure used to create this VM.
 	 * See the JNI specification for the meaning for this field.
-	 *  
+	 *
 	 * @return the JNI version
 	 * @throws DataUnavailable
 	 * @throws CorruptDataException
 	 */
 	public int getVersion() throws DataUnavailable, CorruptDataException;
-	
+
 	/**
 	 * Fetch the ignoreUnrecognized field from the JavaVMInitArgs structure used to create this VM.
 	 * See the JNI specification for the meaning of this field.
-	 * 
+	 *
 	 * @return true if ignoreUnrecognized was set to a non-zero value with the VM was invoked
 	 * @throws DataUnavailable
 	 * @throws CorruptDataException
 	 */
 	public boolean getIgnoreUnrecognized() throws DataUnavailable, CorruptDataException;
-	
+
 	/**
 	 * Fetch the options used to start this VM, in the order they were originally specified.
-	 * 
+	 *
 	 * @return an Iterator over the collection of JavaVMOptions
 	 * @throws DataUnavailable
-	 * 
+	 *
 	 * @see JavaVMOption
 	 */
 	public Iterator getOptions() throws DataUnavailable;

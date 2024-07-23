@@ -359,6 +359,27 @@ JITServerAOTDeserializer::findGeneratedClass(J9ClassLoader *loader, const uint8_
    return (h_it != n_it->second._classHashMap.end()) ? h_it->second : NULL;
    }
 
+std::string
+JITServerAOTDeserializer::findGeneratedClassHash(J9ClassLoader *loader, J9Class *ramClass, TR_J9VM *fe, J9VMThread *vmThread)
+   {
+   assertSharedVmAccess(vmThread);
+
+   size_t namePrefixLength = JITServerHelpers::getGeneratedClassNamePrefixLength(ramClass->romClass);
+   if (namePrefixLength == 0)
+      return std::string();
+   const uint8_t *name = J9UTF8_DATA(J9ROMCLASS_CLASSNAME(ramClass->romClass));
+
+   OMR::CriticalSection cs(_generatedClassesMonitor);
+
+   auto n_it = _generatedClasses.find({ loader, StringKey(name, namePrefixLength) });
+   if (n_it == _generatedClasses.end())
+      return std::string();
+
+   auto h_it = n_it->second._classPtrMap.find(ramClass);
+   if (h_it == n_it->second._classPtrMap.end())
+      return std::string();
+   return std::string((const char *)&h_it->second, sizeof(h_it->second));
+   }
 
 void
 JITServerAOTDeserializer::printStats(FILE *f) const

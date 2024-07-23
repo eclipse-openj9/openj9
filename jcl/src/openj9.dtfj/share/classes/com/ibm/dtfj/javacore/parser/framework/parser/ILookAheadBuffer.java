@@ -27,66 +27,61 @@ import java.io.IOException;
 import com.ibm.dtfj.javacore.parser.framework.scanner.IParserToken;
 import com.ibm.dtfj.javacore.parser.framework.scanner.ScannerException;
 
-
 /**
  * Prediction buffer that holds a certain number of tokens. Tokens are consumed when the are matched, and the buffer
  * is kept filled all the time until end of token stream is reached.
  *
  */
 public interface ILookAheadBuffer {
-	
+
 	/**
 	 * Matches a given type to the token type found at the first element of the buffer.
-	 * 
+	 *
 	 * @param type to match against first element in buffer
 	 * @return true if match is successful
 	 */
 	public boolean match(String type);
-	
-	
+
 	/**
 	 * Consumes the first element of the buffer.
-	 * 
-	 * @throws ScannerException 
+	 *
+	 * @throws ScannerException
 	 * @throws IOException
 	 */
 	public void consume() throws IOException, ScannerException;
-	
-	
+
 	/**
-	 * 
+	 *
 	 * @return true if all tokens from both the input stream and the lookahead buffer have been consumed
 	 */
 	public boolean allConsumed();
-	
+
 	/**
 	 * Looks ahead by a depth amount. The lowest depth to look ahead is 1. Note that in some cases,
-	 * a lookahead may be attempted on an earlier error condition that lead to an empty buffer (e.g., 
+	 * a lookahead may be attempted on an earlier error condition that lead to an empty buffer (e.g.,
 	 * an exception was thrown during a fill process, and although more tokens may remain in the
 	 * input source, the lookahead value may itself be null. Consequently, the lookahead buffer refills first
 	 * before attempting the lookahead.
-	 * 
+	 *
 	 * @param depth to lookahead
 	 * @return token at specified lookahead depth or {@link IndexOutOfBoundsException}.
 	 * @throws ScannerException
 	 * @throws IOException
-	 * @throws IndexOutOfBoundsException if depth is outside the depth range of the buffer. Minimum depth is always 1. 
+	 * @throws IndexOutOfBoundsException if depth is outside the depth range of the buffer. Minimum depth is always 1.
 	 */
 	public IParserToken lookAhead(int depth) throws IOException, ScannerException, IndexOutOfBoundsException;
-	
-	
+
 	public int length();
-	
+
 	public int maxDepth();
-	
+
 	/**
-	 * 
+	 *
 	 * @throws ScannerException
 	 * @throws IOException
 	 */
 	public void init() throws IOException, ScannerException;
-	
-	
+
 	/**
 	 * Depth of the lookahead can be changed after creation.
 	 * <br>

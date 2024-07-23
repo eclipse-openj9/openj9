@@ -85,6 +85,7 @@ static const UDATA reasonCodeFromJVMTIEvent[] = {
 	J9_JNI_OFFLOAD_SWITCH_J9JVMTI_GC_CYCLE_FINISH,						/* J9JVMTI_EVENT_COM_IBM_GARBAGE_COLLECTION_CYCLE_FINISH */
 	J9_JNI_OFFLOAD_SWITCH_J9JVMTI_VIRTUAL_THREAD_MOUNT,					/* J9JVMTI_EVENT_COM_SUN_HOTSPOT_EVENTS_VIRTUAL_THREAD_MOUNT */
 	J9_JNI_OFFLOAD_SWITCH_J9JVMTI_VIRTUAL_THREAD_UNMOUNT,				/* J9JVMTI_EVENT_COM_SUN_HOTSPOT_EVENTS_VIRTUAL_THREAD_UNMOUNT */
+	J9_JNI_OFFLOAD_SWITCH_J9JVMTI_VIRTUAL_THREAD_DESTROY,				/* J9JVMTI_EVENT_COM_SUN_HOTSPOT_EVENTS_VIRTUAL_THREAD_DESTROY */
 	J9_JNI_OFFLOAD_SWITCH_J9JVMTI_EVENT_OPENJ9_VM_CHECKPOINT,			/* J9JVMTI_EVENT_OPENJ9_VM_CHECKPOINT */
 	J9_JNI_OFFLOAD_SWITCH_J9JVMTI_EVENT_OPENJ9_VM_RESTORE,				/* J9JVMTI_EVENT_OPENJ9_VM_RESTORE */
 };
@@ -178,7 +179,14 @@ getVMThread(J9VMThread *currentThread, jthread thread, J9VMThread **vmThreadPtr,
 				targetThread = carrierVMThread;
 			}
 		}
-		isThreadAlive = (JVMTI_VTHREAD_STATE_NEW != vthreadState) && (JVMTI_VTHREAD_STATE_TERMINATED != vthreadState);
+		j9object_t continuationObj = J9VMJAVALANGVIRTUALTHREAD_CONT(currentThread, threadObject);
+		ContinuationState continuationState = *VM_ContinuationHelpers::getContinuationStateAddress(currentThread, continuationObj);
+		if ((JVMTI_VTHREAD_STATE_NEW != vthreadState)
+		&& (JVMTI_VTHREAD_STATE_TERMINATED != vthreadState)
+		&& !VM_ContinuationHelpers::isFinished(continuationState)
+		) {
+			isThreadAlive = TRUE;
+		}
 	} else
 #endif /* JAVA_SPEC_VERSION >= 19 */
 	{

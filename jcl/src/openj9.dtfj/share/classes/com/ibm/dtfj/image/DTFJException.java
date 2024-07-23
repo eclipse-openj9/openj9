@@ -38,7 +38,7 @@ public class DTFJException extends Exception {
 	public DTFJException(String description) {
         super(description);
     }
-    
+
     /**
      * Build exception with no description
      */

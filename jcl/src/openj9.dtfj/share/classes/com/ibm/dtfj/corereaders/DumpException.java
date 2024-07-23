@@ -24,7 +24,7 @@ package com.ibm.dtfj.corereaders;
 
 /**
  * This class is the superclass of all exceptions thrown by Dump classes
- * 
+ *
  * @author fbogsanyi
  */
 public class DumpException extends Exception {

@@ -348,7 +348,6 @@ static const struct { \
 		J9_IS_J9CLASS_FLATTENED(fieldClazz) && \
 		(J9_ARE_NO_BITS_SET((romFieldShape)->modifiers, J9AccVolatile) || (J9CLASS_UNPADDED_INSTANCE_SIZE(fieldClazz) <= sizeof(U_64))))
 #define J9_VALUETYPE_FLATTENED_SIZE(clazz) (J9CLASS_HAS_4BYTE_PREPADDING((clazz)) ? ((clazz)->totalInstanceSize - sizeof(U_32)) : (clazz)->totalInstanceSize)
-#define IS_REF_OR_VAL_SIGNATURE(firstChar) ('L' == (firstChar) || 'Q' == (firstChar))
 #else /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 #define J9CLASS_UNPADDED_INSTANCE_SIZE(clazz) ((clazz)->totalInstanceSize)
 #define J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(clazz) FALSE
@@ -357,11 +356,8 @@ static const struct { \
 #define J9_IS_FIELD_FLATTENED(fieldClazz, romFieldShape) FALSE
 #define J9_IS_NULL_RESTRICTED_FIELD_FLATTENED(fieldClazz, romFieldShape) FALSE
 #define J9_VALUETYPE_FLATTENED_SIZE(clazz)((UDATA) 0) /* It is not possible for this macro to be used since we always check J9_IS_J9CLASS_FLATTENED before ever using it. */
-#define IS_REF_OR_VAL_SIGNATURE(firstChar) ('L' == (firstChar))
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
-
-#define VALUE_TYPES_MAJOR_VERSION 67
-#define PREVIEW_MINOR_VERSION 65535
+#define IS_REF_OR_VAL_SIGNATURE(firstChar) ('L' == (firstChar))
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 #define J9_IS_CRIU_OR_CRAC_CHECKPOINT_ENABLED(vm) (J9_ARE_ANY_BITS_SET(vm->checkpointState.flags, J9VM_CRAC_IS_CHECKPOINT_ENABLED | J9VM_CRIU_IS_CHECKPOINT_ENABLED))
@@ -419,5 +415,10 @@ static_assert((LITERAL_STRLEN(J9_UNMODIFIABLE_CLASS_ANNOTATION) < (size_t)'/'), 
 #endif /* !TYPESTUBS_H */
 #endif /* __cplusplus */
 #endif /* 0 */
+
+#define J9VM_NUM_OF_ENTRIES_IN_CLASS_JNIID_TABLE(romclass) ((romclass)->romMethodCount + (romclass)->romFieldCount)
+
+#define J9VM_SHOULD_CLEAR_JNIIDS_FOR_ASGCT(vm, classLoader) (J9_ARE_NO_BITS_SET((vm)->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_NEVER_KEEP_JNI_IDS) \
+		&& ((classLoader)->asyncGetCallTraceUsed || J9_ARE_ANY_BITS_SET((vm)->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ALWAYS_KEEP_JNI_IDS)))
 
 #endif /* J9_H */

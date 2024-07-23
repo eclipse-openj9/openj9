@@ -33,7 +33,7 @@ public interface IPlatformTypes {
 	public static final String T_3XHNUMASUP = "3XHNUMASUP";
 	public static final String T_1XHEXCPCODE = "1XHEXCPCODE";
 	public static final String T_1XHERROR2 = "1XHERROR2";
-	
+
 	public static final String T_1XHEXCPMODULE = "1XHEXCPMODULE";
 
 	public static final String T_1XHREGISTERS = "1XHREGISTERS";
@@ -52,7 +52,7 @@ public interface IPlatformTypes {
 	public static final String PL_CPU_ARCH = "platform_cpu_arch";
 	public static final String PL_CPU_COUNT = "platform_cpu_count";
 	public static final String PL_SIGNAL = "platform_signal";
-	
+
 	public static final String PL_MODULE_NAME = "platform_module_name";
 	public static final String PL_MODULE_BASE = "platform_module_base";
 	public static final String PL_MODULE_OFFSET = "platform_module_offset";

@@ -102,6 +102,7 @@
 #include "control/JITServerHelpers.hpp"
 #include "runtime/JITClientSession.hpp"
 #include "runtime/JITServerAOTDeserializer.hpp"
+#include "runtime/OMRRSSReport.hpp"
 #include "net/ClientStream.hpp"
 #include "net/ServerStream.hpp"
 #include "net/CommunicationStream.hpp"
@@ -3255,6 +3256,14 @@ void printAllCounts(J9JavaVM *javaVM)
 
 void TR::CompilationInfo::stopCompilationThreads()
    {
+   OMR::RSSReport *rssReport = OMR::RSSReport::instance();
+
+   if (rssReport)
+      {
+      rssReport->printTitle();
+      rssReport->printRegions();
+      }
+
    J9JavaVM   * const vm       = _jitConfig->javaVM;
    J9VMThread * const vmThread = vm->internalVMFunctions->currentVMThread(vm);
 
@@ -11097,21 +11106,21 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
                OMR::CodeGenerator::MethodStats methodStats;
                compiler->cg()->getMethodStats(methodStats);
 
-               TR_VerboseLog::writeLineLocked(TR_Vlog_METHOD_STATS, "%s j9m=%p "
-                                                                    "codeSize=%iB warmBlocks=%iB coldBlocks=%iB "
-                                                                    "prologue=%iB snippets=%iB outOfLine=%iB "
-                                                                    "unaccounted=%iB blocksInColdCache=%iB "
-                                                                    "overestimateInColdCache=%iB",
-                                                                     compiler->signature(), method,
-                                                                     methodStats.codeSize,
-                                                                     methodStats.warmBlocks,
-                                                                     methodStats.coldBlocks,
-                                                                     methodStats.prologue,
-                                                                     methodStats.snippets,
-                                                                     methodStats.outOfLine,
-                                                                     methodStats.unaccounted,
-                                                                     methodStats.blocksInColdCache,
-                                                                     methodStats.overestimateInColdCache);
+               TR_VerboseLog::writeLine(TR_Vlog_METHOD_STATS, "%s j9m=%p "
+                                                              "codeSize=%iB warmBlocks=%iB coldBlocks=%iB "
+                                                              "prologue=%iB snippets=%iB outOfLine=%iB "
+                                                              "unaccounted=%iB blocksInColdCache=%iB "
+                                                              "overestimateInColdCache=%iB",
+                                                               compiler->signature(), method,
+                                                               methodStats.codeSize,
+                                                               methodStats.warmBlocks,
+                                                               methodStats.coldBlocks,
+                                                               methodStats.prologue,
+                                                               methodStats.snippets,
+                                                               methodStats.outOfLine,
+                                                               methodStats.unaccounted,
+                                                               methodStats.blocksInColdCache,
+                                                               methodStats.overestimateInColdCache);
                }
             }
 

@@ -40,11 +40,11 @@ public class StackTagParser extends TagParser implements
 	public StackTagParser() {
 		super(STACK_SECTION);
 	}
-	
+
 	// E.g. Linux [0x123456]
 	private static final Matcher LINUXADDRESS = CommonPatternMatchers.generateMatcher("\\[0[xX]\\p{XDigit}+\\]");
 	/**
-	 * Initialize parser with rules for lines in the environment (CI) section in 
+	 * Initialize parser with rules for lines in the environment (CI) section in
 	 * the javacore
 	 */
 	protected void initTagAttributeRules() {
@@ -55,9 +55,9 @@ public class StackTagParser extends TagParser implements
 				addPrefixedHexToken(STACK_THREAD);
 			}
 		};
-		
+
 		addTag(T_BTTHREADID, lineRule);
-		
+
 		lineRule = new LineRule() {
 			// Consider all the possibilities
 			// Linux
@@ -71,11 +71,11 @@ public class StackTagParser extends TagParser implements
 			//1BTSTACKENT          MM_ConcurrentSweepScheme::workThreadFindMinimumSizeFreeEntry(MM_EnvironmentModron*,MM_Memor...:0x2C280D0C [0x2C280840 +0x000004CC]
 			//1BTSTACKENT          :0x2C284192 [0x2C283FF0 +0x000001A2]
 			//1BTSTACKENT          thread_wrapper:0x2B697FBA [0x2B697B48 +0x00000472]
-			//1BTSTACKENT          CEEVROND:0x0F7E1AE8 [0x0F7E1198 +0x00000950]			
+			//1BTSTACKENT          CEEVROND:0x0F7E1AE8 [0x0F7E1198 +0x00000950]
 
 			public void processLine(String source, int startingOffset) {
 				consumeUntilFirstMatch(CommonPatternMatchers.whitespace);
-				
+
 				//this.consumeUntilFirstMatch(CommonPatternMatchers.whitespace);
 				//this.matchAndConsumeValue(CommonPatternMatchers.whitespace);
 				//this.indexOfLast(CommonPatternMatchers.whitespace);
@@ -83,7 +83,7 @@ public class StackTagParser extends TagParser implements
 				//this.addAllCharactersAsTokenUntilFirstMatch("abc", CommonPatternMatchers.whitespace);
 				//this.addAllCharactersAsTokenUntilIndex("abc", 1, true);
 				//this.consumeCharacters(1, 10);
-				
+
 				if (indexOfLast(LINUXADDRESS) >= 0) {
 					IParserToken token = addAllCharactersAsTokenAndConsumeFirstMatch(STACK_MODULE, CommonPatternMatchers.open_paren);
 					if (token != null) {
@@ -109,8 +109,8 @@ public class StackTagParser extends TagParser implements
 				}
 			}
 		};
-		
+
 		addTag(T_1BTSTACKENT, lineRule);
 	}
-	
+
 }

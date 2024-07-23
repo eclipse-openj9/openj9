@@ -24,7 +24,7 @@ package com.ibm.dtfj.image;
 
 /**
  * Represents a symbol defined in an ImageModule.
- * 
+ *
  * @see ImageModule
  */
 public interface ImageSymbol {
@@ -34,11 +34,11 @@ public interface ImageSymbol {
 	 * @return the address of this symbol in the image
 	 */
 	public ImagePointer getAddress();
-	
+
 	/**
 	 * Get the name of the symbol.
 	 * @return the name of the symbol
 	 */
 	public String getName();
-	
+
 }

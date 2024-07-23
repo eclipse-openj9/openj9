@@ -64,12 +64,12 @@ public class Tcb {
      * this address space contains no Tcbs.
      */
     public static Tcb[] getTcbs(AddressSpace space) {
-    	if(space == null) {
-    		return null;
-    	}
+        if (space == null) {
+            return null;
+        }
         AddressSpaceImageInputStream inputStream = space.getImageInputStream();
-        if(space.getRootAddressSpace() == null) {
-        	return null;
+        if (space.getRootAddressSpace() == null) {
+            return null;
         }
         AddressSpaceImageInputStream rootInputStream = space.getRootAddressSpace().getImageInputStream();
         Tcb[] tcbs = (Tcb[])tcbMap.get(space);
@@ -217,26 +217,26 @@ public class Tcb {
         RegisterSet regs = new RegisterSet();
         /* Following comments are from bpxgmsta.plx:
          *
-         * BPXGMSTA accesses the dump to get data necessary to             
-         * extract PSW and GPRs relevant to the input TCB.                 
-         *                                                                 
-         * 1) Single RB on the input TCB RB chain                          
+         * BPXGMSTA accesses the dump to get data necessary to
+         * extract PSW and GPRs relevant to the input TCB.
+         *
+         * 1) Single RB on the input TCB RB chain
          *    a) If current linkage stack is empty, registers are extracted
-         *       from the input TCB and PSW is extracted from the current   
-         *       RB.                                                       
-         *    b) If linkage stack is present, and non-fast path Kernel     
-         *       call has been issued, registers and PSW are extracted     
-         *       from USTA, which can be accessed via the input TCB.       
-         *    c) For all other cases, first entry of the linkage stack     
-         *       contains the registers and PSW from the last point        
-         *       where LE/C had control.                                   
-         * 2) multiple RBs on the input TCB RB chain                       
-         *    a) PSW is extracted from the oldest RB on the chain, which   
-         *       is the first RB added to the chain.  And the adjacent     
-         *       RB to the oldest RB contains the registers from the last  
-         *       point where LE/C had control.                             
-         * 3) Any other scenario not covered by above cases are            
-         *    considered to be very unlikely to occur.                     
+         *       from the input TCB and PSW is extracted from the current
+         *       RB.
+         *    b) If linkage stack is present, and non-fast path Kernel
+         *       call has been issued, registers and PSW are extracted
+         *       from USTA, which can be accessed via the input TCB.
+         *    c) For all other cases, first entry of the linkage stack
+         *       contains the registers and PSW from the last point
+         *       where LE/C had control.
+         * 2) multiple RBs on the input TCB RB chain
+         *    a) PSW is extracted from the oldest RB on the chain, which
+         *       is the first RB added to the chain.  And the adjacent
+         *       RB to the oldest RB contains the registers from the last
+         *       point where LE/C had control.
+         * 3) Any other scenario not covered by above cases are
+         *    considered to be very unlikely to occur.
          */
         try {
             long rbp = tcbrbp();
@@ -289,7 +289,7 @@ public class Tcb {
                          * can't be empty. If the first LSE indicates this is a OMVS syscall and not a
                          * fastpath syscall get the registers from the usta. */
                         Lse lse = linkageStack[linkageStack.length - 1];
-                        /* Check the first LSE on the stack for the OMVS non-fastpath 
+                        /* Check the first LSE on the stack for the OMVS non-fastpath
                          * syscall range  */
                         assert stcbotcb != 0;
                         long otcbcofptr = BpxzotcbTemplate.getOtcbcofptr(inputStream, stcbotcb);
@@ -375,8 +375,8 @@ public class Tcb {
                 return linkageStack;
             }
             long entrysize = LsedTemplate.getLsednes(inputStream, stcbestk);
-            if(entrysize <= 0) {
-            	log.fine("linkage stack empty");
+            if (entrysize <= 0) {
+                log.fine("linkage stack empty");
                 linkageStack = new Lse[0];
                 return linkageStack;
             }

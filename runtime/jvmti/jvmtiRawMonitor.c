@@ -259,9 +259,51 @@ continueWait:
 			break;
 		case J9THREAD_INTERRUPTED:
 			/* FALLTHROUGH*/
-		case J9THREAD_PRIORITY_INTERRUPTED:
+		case J9THREAD_PRIORITY_INTERRUPTED: {
+#if JAVA_SPEC_VERSION >= 19
+			J9InternalVMFunctions const * const vmFuncs = vm->internalVMFunctions;
+			j9object_t threadObject = NULL;
+			j9object_t threadLock = NULL;
+
+			vmFuncs->internalEnterVMFromJNI(currentThread);
+
+			threadObject = currentThread->threadObject;
+			Assert_JVMTI_true(NULL != threadObject);
+
+			threadLock = J9VMJAVALANGTHREAD_LOCK(currentThread, threadObject);
+			threadLock = (j9object_t)vmFuncs->objectMonitorEnter(currentThread, threadLock);
+
+			if (J9_OBJECT_MONITOR_ENTER_FAILED(threadLock)) {
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+				if (J9_OBJECT_MONITOR_CRIU_SINGLE_THREAD_MODE_THROW == (UDATA)threadLock) {
+					vmFuncs->setCRIUSingleThreadModeJVMCRIUException(currentThread, 0, 0);
+					rc = JVMTI_ERROR_INTERNAL;
+				} else
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+				if (J9_OBJECT_MONITOR_OOM == (UDATA)threadLock) {
+					rc = JVMTI_ERROR_OUT_OF_MEMORY;
+				}
+				goto release;
+			} else {
+				/* Refetch J9VMThread->threadObject as it can be moved by the GC while waiting for the monitor. */
+				threadObject = currentThread->threadObject;
+				if (J9VMJAVALANGTHREAD_DEADINTERRUPT(currentThread, threadObject)) {
+					J9VMJAVALANGTHREAD_SET_DEADINTERRUPT(currentThread, threadObject, JNI_FALSE);
+					if (IS_JAVA_LANG_VIRTUALTHREAD(currentThread, threadObject)) {
+						J9VMJAVALANGTHREAD_SET_DEADINTERRUPT(currentThread, currentThread->carrierThreadObject, JNI_FALSE);
+					}
+				}
+				vmFuncs->objectMonitorExit(currentThread, threadLock);
+			}
+
 			rc = JVMTI_ERROR_INTERRUPT;
+release:
+			vmFuncs->internalExitVMToJNI(currentThread);
+#else /* JAVA_SPEC_VERSION >= 19 */
+			rc = JVMTI_ERROR_INTERRUPT;
+#endif /* JAVA_SPEC_VERSION >= 19 */
 			break;
+		}
 		case J9THREAD_INVALID_ARGUMENT:
 			rc = JVMTI_ERROR_INTERRUPT;
 			break;
@@ -343,6 +385,3 @@ jvmtiRawMonitorNotifyAll(jvmtiEnv* env,
 done:
 	TRACE_JVMTI_RETURN(jvmtiRawMonitorNotifyAll);
 }
-
-
-

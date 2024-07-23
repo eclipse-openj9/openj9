@@ -81,6 +81,12 @@ class OMR_EXTENSIBLE KnownObjectTable : public OMR::KnownObjectTableConnector
 public:
    TR_ALLOC(TR_Memory::FrontEnd);
 
+   // Note that the KnownObjectTable is often initialized inside the J9::Compilation
+   // constructor of the TR::Compilation that gets passed in here. For that reason, the
+   // TR::Compilation *comp() can only be used in the methods of this class if you know
+   // the relevant components of the compilation have have been initialized or otherwise
+   // properly set up by the time those methods will be called. This affects
+   // getExistingIndexAt and getOrCreateIndexAt in particular.
    KnownObjectTable(TR::Compilation *comp);
 
    TR::KnownObjectTable *self();

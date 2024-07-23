@@ -28,14 +28,14 @@ import com.ibm.dtfj.corereaders.MemoryAccessException;
  * Represents the J9RAS structure starting from Java 6 SR09 which contains the DDR blob pointer
  * Java 6 32 bit : length =  0x248, version = 0x20000		TID+PID+DDR
  * Java 6 64 bit : length =  0x280, version = 0x20000		TID+PID+DDR
- * 
+ *
  * @author Adam Pilkington
  *
  */
 public class J9RASFragmentJ6v2 implements J9RASFragment {
 	private long tid = 0;
 	private long pid = 0;
-	
+
 	/**
 	 * Create a Java 6, version 2 J9RAS fragment
 	 * @param memory address space

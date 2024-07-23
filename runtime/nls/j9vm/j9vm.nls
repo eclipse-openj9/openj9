@@ -1887,7 +1887,7 @@ J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE=bad object type %2$.*1$s:
 J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE.sample_input_1=3
 J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE.sample_input_2=Foo
 J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE.explanation=The class has specified the bytecode monitorenter or monitorexit operation which cannot be performed on a value type but the object on stack is a value type.
-J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE.system_action=The JVM will throw an IllegalMonitorStateException.
+J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE.system_action=The JVM will throw an IdentityException.
 J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
 
@@ -2415,4 +2415,11 @@ J9NLS_VM_OPENJ9_JFR_METADATA_FILE_NOT_FOUND=Either the %s environment variable i
 J9NLS_VM_OPENJ9_JFR_METADATA_FILE_NOT_FOUND.explanation=Couldn't find JFR metadata blob file.
 J9NLS_VM_OPENJ9_JFR_METADATA_FILE_NOT_FOUND.system_action=The JVM will not generate a JFR file.
 J9NLS_VM_OPENJ9_JFR_METADATA_FILE_NOT_FOUND.user_response=Set the required environment variables.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_CLASS_NAME_EXCEEDS_MAX_LENGTH=Class name exceeds maximum length
+# START NON-TRANSLATABLE
+J9NLS_VM_CLASS_NAME_EXCEEDS_MAX_LENGTH.explanation=Class name cannot be longer than 65535 characters.
+J9NLS_VM_CLASS_NAME_EXCEEDS_MAX_LENGTH.system_action=The JVM will throw a ClassNotFoundException.
+J9NLS_VM_CLASS_NAME_EXCEEDS_MAX_LENGTH.user_response=Shorten the class name.
 # END NON-TRANSLATABLE

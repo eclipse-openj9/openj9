@@ -35,16 +35,11 @@ FFISYS CELQPRLG DSASIZE=DSASZ,PSECT=ASP
 
          LGR 5,14              Copy of parameter types
 *Reset registers used in code gen
-*         SR  0,0              GPR counter
-          LA  0,0
-*         SR  14,14            FPR counter
-          LA  14,0
-*         SR  7,7              Offset in the arg area
-          LA  7,0
-*         SR  10,10            Offset in array of parm types
-          LA  10,0
-*         SR  6,6              Offset in stored parm values
-          LA  6,0
+         LA  0,0               GPR counter
+         LA  14,0              FPR counter
+         LA  7,0               Offset in the arg area
+         LA  10,0              Offset in array of parm types
+         LA  6,0               Offset in stored parm values
 
 *bytes, we need to allocate space for the dummy argument
 *that holds the return value pointer
@@ -52,8 +47,10 @@ FFISYS CELQPRLG DSASIZE=DSASZ,PSECT=ASP
          LG 15,0(,15)           ecif->cif
          LG 15,16(,15)          cif->rtype
          LG 15,0(,15)           rtype->size
-         CGIJNH 15,24,GETNARGS  size>24, means we need to use gpr1
+         CGIJNH 15,24,GETNARGS
 
+* return size is > 24, r1 should contain address in caller stack
+* to store the return value.
          LG 1,(2176+(((DSASZ+31)/32)*32)+24)(,4)
          AHI 0,1                One less gpr to work with
          AHI 7,8                reserve space in arg area
@@ -65,7 +62,7 @@ GETNARGS DS 0H
 
 *Place arguments passed to the foreign function based on type
 ARGLOOP  LG  11,0(10,5)       Get pointer to current ffi_type
-         LLGC 11,11(11)       ffi_type->type
+         LLGH 11,10(11)       ffi_type->type
          SLL 11,2             Find offset in branch tabel
          LA  15,ATABLE
          L   15,0(11,15)
@@ -479,62 +476,12 @@ DARGF    DS 0H                l_DOUBLE in arg area
          LA  14,4             We reached max fprs
          B CONT               Next parameter
 
-*If we have spare gprs, pass up to 24 bytes in GPRs.
-STRCT    DS 0H
-         LG  11,0(10,5)
-
-*check if first element is float or double
-STFPCHK  DS 0H
-         LG 15,16(,11)          type->elements
-         LG 15,0(,15)           type->elements[0]
-         LH 15,10(,15)          type->elements[0]->type
-         CFI 15,11              is it a float?
-         BE STFPCHKF
-         CFI 15,1               is it a double?
-         BE STFPCHKD
-         B STRCT2
-
-*first arg is a float
-STFPCHKF DS 0H
-         LG 15,16(,11)          type->elements
-         LA 15,8(,15)           type->elements[0]
-         LG 15,0(,15)
-         LH 15,10(,15)          type->elements[0]->type
-         CFI 15,11              is it a float?
-         BE STFPCHKF2
-         B STRCT2
-
-*first arg is a double
-STFPCHKD DS 0H
-         LG 15,16(,11)          type->elements
-         LA 15,8(,15)           type->elements[1]
-         LG 15,0(,15)
-         LH 15,10(,15)          type->elements[1]->type
-         CFI 15,1               is it a double?
-         BE STFPCHKD2
-         B STRCT2
-
-
-*check if there are more elements
-*if not we have a special case
-*this is to handle complex types
-*in languages that don't support
-*complex types natively
-*in this case we pass the struct
-*in the first 2 free FPRs, just check this
-*against r14 the free FPR counter
-STFPCHKF2 DS 0H
-         LG 15,16(,11)          type->elements
-         LA 15,16(,15)          type->elements[0]
-         LG 15,0(,15)
-         CFI 15,0
-         BNE STRCT2             if no, not special case
+CPXF     DS 0H
+         CFI 14,4               no FPRs are available
+         BNL STRCT              if yes, not special case
 
          LG  11,0(10,5)
          LG 15,0(,11)           type->size
-
-         CFI 14,4               no FPRs are available
-         BNL STRCT2             if yes, not special case
 
          CFI 14,3               1 FPR is available
          BNL STFPCHKF26         use fpr6 + memory
@@ -548,7 +495,6 @@ STFPCHKF2 DS 0H
          CFI 14,0               4 FPRs available
          BE STFPCHKF202         use fpr0 + fpr2
 
-
 STFPCHKF26 DS 0H
          LE 6,0(6,13)           first float will go in fpr
          AFI 0,1                one less GPR available
@@ -558,8 +504,7 @@ STFPCHKF26 DS 0H
          AFI 15,-4              we've handled 4 bytes
          AFI 7,4                advance 4 bytes into argarea
 
-         B STRCTLP              copy rest of struct
-
+         B CPXMRG               copy rest of struct
 
 STFPCHKF202 DS 0H
          LE 0,0(6,13)           first float
@@ -571,7 +516,7 @@ STFPCHKF202 DS 0H
          AFI 15,-8              we've handled 8 bytes (all the struct)
          AFI 7,8                bump local storage by 8 bytes
 
-         B STRCTLP
+         B CPXMRG
 
 STFPCHKF224 DS 0H
          LE 2,0(6,13)           first float
@@ -583,7 +528,7 @@ STFPCHKF224 DS 0H
          AFI 15,-8              we've handled 8 bytes (all the struct)
          AFI 7,8                bump local storage by 8 bytes
 
-         B STRCTLP
+         B CPXMRG
 
 
 STFPCHKF246 DS 0H
@@ -596,23 +541,13 @@ STFPCHKF246 DS 0H
          AFI 15,-8              we've handled 8 bytes (all the struct)
          AFI 7,8                bump local storage by 8 bytes
 
-         B STRCTLP
+         B CPXMRG
 
-
-
-*same as the float case (STFPCHKF2) above but for doubles
-STFPCHKD2 DS 0H
-         LG 15,16(,11)          type->elements
-         LA 15,16(,15)          type->elements + 1
-         LG 15,0(,15)           *(type->elements + 1)
-         CFI 15,0               is NULL?
-         BNE STRCT2             if no, not special case
-
+CPXD     DS 0H
+         CFI 14,4               no FPRs are available
+         BNL STRCT              if yes, not special case
          LG 11,0(10,5)          ensure we have size
          LG 15,0(,11)           ready for labels we branch to
-
-         CFI 14,4               no FPRs are available
-         BNL STRCT2             if yes, not special case
 
          CFI 14,3               1 FPR is available
          BNL STFPCHKD26         use fpr6+memory
@@ -636,7 +571,7 @@ STFPCHKD26 DS 0H
          AFI 15,-8
          AFI 7,8
 
-         B STRCTLP
+         B CPXMRG
 
 STFPCHKD202 DS 0H
          LD 0,0(6,13)           first double
@@ -648,7 +583,7 @@ STFPCHKD202 DS 0H
          AFI 15,-16
          AFI 7,16
 
-         B STRCTLP
+         B CPXMRG
 
 STFPCHKD224 DS 0H
          LD 2,0(6,13)           first double
@@ -660,7 +595,7 @@ STFPCHKD224 DS 0H
          AFI 15,-16
          AFI 7,16
 
-         B STRCTLP
+         B CPXMRG
 
 
 STFPCHKD246 DS 0H
@@ -673,22 +608,23 @@ STFPCHKD246 DS 0H
          AFI 15,-16
          AFI 7,16
 
-         B STRCTLP
+         B CPXMRG
 
 
 *determine how to pass the struct based on size
 *at this point we've weeded out all the float/double
 *pair structs that get passed purely in FPRs
-STRCT2  DS 0H
-         LG 15,0(,11)          type->size
-         CFI 15,8              Struct <= 8 bytes?
+STRCT    DS 0H
+         LG  11,0(10,5)
+         LG  15,0(,11)          type->size
+         CFI 15,8               Struct <= 8 bytes?
          BNH  BYTE8
-         CFI 15,16             Struct <= 16 bytes?
+         CFI 15,16              Struct <= 16 bytes?
          BNH   BYTE16
-         CFI 15,24             Struct <= 24 bytes?
+         CFI 15,24              Struct <= 24 bytes?
          B BYTE24
 
-BYTE8    DS 0H               Struct <= 8 bytes
+BYTE8    DS 0H                  Struct <= 8 bytes
 
 *Since a struct here can be <8 bytes
 *we need to pad it to 8 bytes in the arg area
@@ -792,6 +728,11 @@ BYTE24R3 DS 0H               Struct goes in R3 and Memory
          LA 0,3
          B STRCTLP
 
+CPXMRG   DS 0H               Reached max GPRs, set R0 to 3
+         CFI 0,4
+         BL STRCTLP
+         LA 0,3
+
 STRCTLP  DS 0H               Rest of struct goes in Memory
          CFI 15,0            Size remaining > 0?
          BNH CONT
@@ -890,82 +831,29 @@ RS       DS 0H
 * r9 = cif->rtype
 * r7 = ecif->rvalue
 RSREG    DS 0H
-         LG 11,16(,9)         rtype->elements
-         LA 15,0              number of floats seen
-         LA 0,0               number of doubles seen
-         LA 6,0               number of elements in struct
-
-RSLOOP   DS 0H
-         LG 12,0(,11)         load the current element, we update
-*                             this register in NEXT so it's technically
-*                             actually rtype->elements + i
-         CGIJE 12,0,RSFPR     if we have NULL, we are done
-*                             this means we have all float types
-         LA 13,10(,12)        address of rtype->elements[i]->type
-         LLGH 10,0(,13)        load the type (halfword)
-         CFI 10,11            if type == FFI_TYPE_FLOAT
-         BE NEXTF             check next element
-         CFI 10,1             if type == FFI_TYPE_DOUBLE
-         BE NEXTD             check next element
-         B RSGPR              we have an integral type, use GPRs
-
-NEXTF    DS 0H
-         LA 11,8(,11)         increment the pointer to the next element
-         LA 15,1              we have seen a float
-         AFI 6,1
-         CGIJE 0,1,RSGPR      we have a mix of float/double use GPRs
-         B RSLOOP             loop back to the top
-
-NEXTD    DS 0H
-         LA 11,8(,11)         increment the pointer to the next element
-         LA 0,1               we have seen a double
-         AFI 6,1
-         CGIJE 15,1,RSGPR     we have a mix of float/double use GPRs
-         B RSLOOP             loop back to the top
-
-* label if we're using FPRs
-RSFPR    DS 0H
-         CFI 6,2
-         BNE RSGPR
-         LA 5,0
+         LLGH 11,10(,9)       rtype->type
          LA 15,SSTOR
-         LG 11,16(,9)
-         LG 12,0(,11)
-         CGIJE 12,0,RSCPY
-         LA 13,10(,12)        address of rtype->elements[i]->type
-         LLGH 10,0(,13)       load the type (halfword)
-         CFI 10,11            if type == FFI_TYPE_FLOAT
-         BE STOREF1           store the float in the return area
-         CFI 10,1             if type == FFI_TYPE_DOUBLE
+         CFI 11,16            rtype->type == FFI_TYPE_STRUCT_FF
+         BE STOREF1
+         CFI 11,17            rtype->type == FFI_TYPE_STRUCT_DD
          BE STORED1
-
-STOREF1  DS 0H
-         STE 0,0(5,15)
-         STE 2,4(5,15)
-         AGFI 5,4
-         B RSCPY
-
-STORED1  DS 0H
-         STD 0,0(5,15)
-         STD 2,8(5,15)
-         AGFI 5,8
-         B RSCPY
-
-* label if we're using GPRs
-RSGPR    DS 0H
-* so to save us from having to figure out
-* how many regs to save, we'll just save them all
-* into some local storage, then copy the right amount
-         LA 15,SSTOR
          STG  1,0(,15)
          STG  2,8(,15)
          STG  3,16(,15)
          B RSCPY
 
+STOREF1  DS 0H
+         STE 0,0(,15)
+         STE 2,4(,15)
+         B RSCPY
+
+STORED1  DS 0H
+         STD 0,0(,15)
+         STD 2,8(,15)
+
 * label to copy the struct to the return area
 * just move one byte at a time from r15 to r7
 * while r14 is non-zero
-
 RSCPY    DS 0H
          CGIJNH 14,0,RET
          LB 1,0(,15)
@@ -1001,6 +889,8 @@ ATABLE DC A(I)                Labels for parm types
  DC A(VOID)
  DC A(I)
  DC A(D)
+ DC A(CPXF)
+ DC A(CPXD)
 I32 DC A(IGPR1)               Labels for passing INT in gpr
  DC A(IGPR2)
  DC A(IGPR3)

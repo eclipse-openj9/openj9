@@ -25,15 +25,14 @@ package com.ibm.dtfj.javacore.parser.framework.parser;
 public class ParserException extends Exception {
 
 	/**
-	 * 
+	 *
 	 */
 	private static final long serialVersionUID = 6714358367596015919L;
-	
+
 	public ParserException(String errorMessage) {
 		super(errorMessage);
 	}
-	
-	
+
 	public ParserException(Exception e) {
 		super(e);
 	}
