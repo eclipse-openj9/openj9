@@ -34,7 +34,7 @@ jobs:
                 core.setOutput('issue_description', context.payload.issue.body);
                 core.setOutput('issue_number', context.issue.number.toString());
 
-      - name: Run recommendations
+      - name: Run the TriagerX model
         run: node .github/recommendation.js
         env:
           ISSUE_TITLE: ${{ steps.extract_issue.outputs.issue_title }}
