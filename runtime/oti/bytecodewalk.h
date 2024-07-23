@@ -61,10 +61,10 @@
 32bit type => [8 bits arity] [ 19 bits class index] [5 tag bits]
 
 tag bits:
-	special (new / init / ret)
-	base / object
-	base type array / regular object, array
-	null
+	base type or top of stack (clear bit means object or array)
+	base type array or null
+	special init object ("this" for <init>)
+	special new object (PC offset in upper 28 bits)
 
 base types: (in the 19bit class index field)
 	int
