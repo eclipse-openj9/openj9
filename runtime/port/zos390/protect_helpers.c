@@ -25,6 +25,8 @@
 #include <sys/mman.h>
 #include <errno.h>
 
+extern intptr_t _MPROT(uintptr_t address, uintptr_t length); /* j9mprotect.s */
+extern intptr_t _MUNPROT(uintptr_t address, uintptr_t length); /* j9munprotect.s */
 
 /**
  * @internal @file
@@ -40,8 +42,6 @@ intptr_t
 protect_memory(struct J9PortLibrary *portLibrary, void *address, uintptr_t length, uintptr_t flags)
 {
 	OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
-	uintptr_t index;
-	intptr_t unixFlags = 0;
 	intptr_t rc = -1;
 
 	if ((flags & OMRPORT_PAGE_PROTECT_WRITE) == 0) {
