@@ -831,11 +831,13 @@ TR_J9InlinerPolicy::createAnchorNodesForUnsafeGetPut(TR::TreeTop* treeTop,
 
       TR::Node* node = treeTop->getNode();
       TR::TreeTop *compRefTT =
-         TR::TreeTop::create(comp(), genCompressedRefs(isUnsafeGet ? node->getFirstChild() : node,
-                                                       false));
+         TR::TreeTop::create(comp(), genCompressedRefs(isUnsafeGet?node->getFirstChild():node,
+                                                      false));
+
       TR::TreeTop *prevTT = treeTop->getPrevTreeTop();
-      prevTT->join(compRefTT);
+      if (prevTT != NULL) prevTT->join(compRefTT);
       compRefTT->join(isUnsafeGet ? treeTop : treeTop->getNextTreeTop());
+
       }
    }
 
@@ -849,86 +851,202 @@ TR_J9InlinerPolicy::genCodeForUnsafeGetPut(TR::Node* unsafeAddress,
                                        TR::TreeTop* directAccessTreeTop,
                                        TR::TreeTop* arrayDirectAccessTreeTop,
                                        TR::TreeTop* indirectAccessTreeTop,
+                                       TR::TreeTop* directAccessWithConversionTreeTop,
                                        bool needNullCheck, bool isUnsafeGet,
                                        bool conversionNeeded,
+                                       bool arrayBlockNeeded, bool typeTestsNeeded,
                                        TR::Node* orderedCallNode = NULL)
    {
    TR::CFG *cfg = comp()->getFlowGraph();
+   TR_OpaqueClassBlock *javaLangClass = comp()->getClassClassPointer(/* isVettedForAOT = */ true);
 
-   // Generate the tree for the null comparison
-   TR::Node *addrLoad =
-      TR::Node::createWithSymRef(unsafeAddress,
-                      comp()->il.opCodeForDirectLoad(unsafeAddress->getDataType()),
-                      0, newSymbolReferenceForAddress);
-   TR::Node *nullComparisonNode =
-      TR::Node::createif(TR::ifacmpeq, addrLoad,
-                        TR::Node::create(addrLoad, TR::aconst, 0, 0), NULL);
-   TR::TreeTop *nullComparisonTree = TR::TreeTop::create(comp(), nullComparisonNode);
+   // There are 6 possible cases determining which checks and blocks should be added to the generated IL trees:
+   // 1.) typeTestsNeeded && arrayBlockNeeded
+   //     (i.e.: object type is unknown at compile time AND (offheap OR data element size < 4 (byte, short)))
+   //     - tests: NULL test, Array test, Lowtag test
+   //     - blocks: arrayDirectAccess, directAccess, indirectAccess, directAccessWithConversion (if data element size < 4)
+   // 2.) typeTestsNeeded && !arrayBlockNeeded && javaLangClass != NULL
+   //     (i.e.: object type is unknown at compile time AND gencon AND data element size >= 4 (int, long) AND able to get java/lang/Class)
+   //     - tests: Lowtag test, NULL test, Class test
+   //     - blocks: directAccess, indirectAccess
+   // 3.) typeTestsNeeded && !arrayBlockNeeded && javaLangClass == NULL
+   //     (i.e.: object type is unknown at compile time AND gencon AND data element size >= 4 (int, long) AND unable to get java/lang/Class)
+   //     - tests: NULL test, Array test, Lowtag test
+   //     - blocks: directAccess, indirectAccess
+   // 4.) !typeTestsNeeded && arrayBlockNeeded
+   //     (i.e.: object is known to be array at compile time AND (offheap OR data element size < 4 (byte, short)))
+   //     - tests: NULL test
+   //     - blocks: arrayDirectAccess, directAccess, directAccessWithConversion (if data element size < 4)
+   //    *NOTE: Special Case*
+   //     When conversionNeeded is true and offheap is not enabled, both the NULL and non-NULL cases need to be handled by
+   //     direct access with conversion (which in the non-offheap case, is the same as array access). Thus, in this case:
+   //     - test: none
+   //     - blocks: arrayDirectAccess
+   // 5.) !typeTestsNeeded && !arrayBlockNeeded && conversionNeeded
+   //     (i.e.: object is known to be non-array at compile time AND data element size < 4 (byte, short))
+   //     - tests: NULL test
+   //     - blocks: directAccess, directAccessWithConversion
+   // 6.) !typeTestsNeeded && !arrayBlockNeeded && !conversionNeeded
+   //     (i.e.: object is known to be non-array at compnile time AND data element size >= 4 (int, long))
+   //     - test: none
+   //     - block: directAccess
 
-   // If low-order bit of offset is set, perform indirect access.  The IL for the case
-   // that handles conversion places the indirect access code on the fall-through
-   // path, so it needs to branch if the bit is not set; otherise, the indirect
-   // access code is on the taken path of the branch, so it needs to branch if the
-   // bit is set.
-   //
-   TR::TreeTop *lowTagCmpTree = genClassCheckForUnsafeGetPut(unsafeOffset, /* branchIfLowTagged */ !conversionNeeded);
+   TR::Node *nullComparisonNode = NULL;
+   TR::TreeTop *nullComparisonTree = NULL;
+   TR::Block *nullComparisonBlock = NULL;
+
+   if (typeTestsNeeded || // CASES (1), (2), (3)
+       (arrayBlockNeeded && (conversionNeeded == (bool)directAccessWithConversionTreeTop)) || // CASE (4) excluding special case
+       (!arrayBlockNeeded && conversionNeeded)) // CASE (5)
+      {
+      // Generate the tree for the null test
+      TR::Node *addrLoad =
+         TR::Node::createWithSymRef(unsafeAddress,
+                        comp()->il.opCodeForDirectLoad(unsafeAddress->getDataType()),
+                        0, newSymbolReferenceForAddress);
+      nullComparisonNode = TR::Node::createif(TR::ifacmpeq, addrLoad, TR::Node::create(addrLoad, TR::aconst, 0, 0), NULL);
+      nullComparisonTree = TR::TreeTop::create(comp(), nullComparisonNode);
+      nullComparisonBlock = prevTreeTop->getEnclosingBlock();
+      }
+
+   // If low-order bit of offset is set, perform indirect access. In all cases where
+   // a runtime lowtag test is needed (CASES 1, 2, and 3), the direct access code is placed
+   // on the fallthrough path, so it will ALWAYS need to take the branch to the indirect
+   // access block if the bit is set.
+
+   TR::TreeTop *lowTagCmpTree = typeTestsNeeded ? // CASES (1), (2), (3)
+      genClassCheckForUnsafeGetPut(unsafeOffset, true) : NULL;
 
    TR::TreeTop *firstComparisonTree;
    TR::TreeTop *branchTargetTree;
    TR::TreeTop *fallThroughTree;
 
-   TR_OpaqueClassBlock *javaLangClass = comp()->getClassClassPointer(/* isVettedForAOT = */ true);
-
    // Determine overall layout of IL - which test to place first (null test of object or
    // setting of low-order bit of offset) - and whether direct or indirect access IL will
    // be placed on the fall-through path of the first branch.
    //
-   if (conversionNeeded)
+   if (typeTestsNeeded && arrayBlockNeeded) // CASE (1)
       {
       firstComparisonTree = nullComparisonTree;
-      branchTargetTree = arrayDirectAccessTreeTop;
-      fallThroughTree = indirectAccessTreeTop;
+      branchTargetTree = directAccessWithConversionTreeTop ? directAccessWithConversionTreeTop : arrayDirectAccessTreeTop;
+      fallThroughTree = directAccessTreeTop;
       }
-   else
+   else if (typeTestsNeeded && !arrayBlockNeeded && javaLangClass != NULL) // CASE (2)
       {
-      firstComparisonTree = (javaLangClass != NULL) ? lowTagCmpTree : nullComparisonTree;
+      firstComparisonTree = lowTagCmpTree;
       branchTargetTree = indirectAccessTreeTop;
       fallThroughTree = directAccessTreeTop;
       }
+   else if (typeTestsNeeded && !arrayBlockNeeded) // CASE (3)
+      {
+      firstComparisonTree = nullComparisonTree;
+      branchTargetTree = indirectAccessTreeTop;
+      fallThroughTree = directAccessTreeTop;
+      }
+   else if (!typeTestsNeeded && arrayBlockNeeded) // CASE (4)
+      {
+      //SPECIAL CASE
+      if (!directAccessWithConversionTreeTop && conversionNeeded)
+         {
+         firstComparisonTree = NULL;
+         branchTargetTree = NULL;
+         fallThroughTree = arrayDirectAccessTreeTop;
+         }
+      else
+         {
+         firstComparisonTree = nullComparisonTree;
+         branchTargetTree = directAccessWithConversionTreeTop ? directAccessWithConversionTreeTop
+                                                              : directAccessTreeTop;
+         fallThroughTree = arrayDirectAccessTreeTop;
+         }
+      }
+   else if (conversionNeeded) // CASE (5)
+      {
+      firstComparisonTree = nullComparisonTree;
+      branchTargetTree = directAccessWithConversionTreeTop;
+      fallThroughTree = directAccessTreeTop;
+      }
+   else  // CASE (6)
+      {
+      firstComparisonTree = NULL;
+      branchTargetTree = NULL;
+      fallThroughTree = directAccessTreeTop;
+      }
 
-   TR::Block *joinBlock =
-         createUnsafeGetPutCallDiamond(
-               callNodeTreeTop, firstComparisonTree, branchTargetTree, fallThroughTree);
 
-   debugTrace(tracer(), "\t In genCodeForUnsafeGetPut, joinBlock is %d\n", joinBlock->getNumber());
+   TR::Block *joinBlock = NULL;
+
+   if (firstComparisonTree) // All except CASE (6) and CASE (4) special case
+      {
+      joinBlock = createUnsafeGetPutCallDiamond(callNodeTreeTop, firstComparisonTree, branchTargetTree, fallThroughTree);
+      debugTrace(tracer(), "\t In genCodeForUnsafeGetPut, joinBlock is %d\n", joinBlock->getNumber());
+      }
+   else // CASE (6) and CASE (4) special case
+      {
+      joinBlock = callNodeTreeTop->getEnclosingBlock()->split(callNodeTreeTop, cfg, true);
+
+      //remove original tree from joinBlock
+      callNodeTreeTop->getNode()->removeAllChildren();
+      callNodeTreeTop->getPrevTreeTop()->join(callNodeTreeTop->getNextTreeTop());
+      }
 
    TR::Block *beforeCallBlock = prevTreeTop->getEnclosingBlock();
 
    TR::Block *arrayDirectAccessBlock = NULL;
-   TR::Block *indirectAccessBlock;
-   TR::Block *directAccessBlock;
+   TR::Block *indirectAccessBlock = NULL;
+   TR::Block *directAccessBlock = NULL;
+   TR::Block *directAccessWithConversionBlock = NULL;
 
-   if (conversionNeeded)
+   if (typeTestsNeeded && arrayBlockNeeded) // CASE (1)
       {
-      indirectAccessBlock = beforeCallBlock->getNextBlock();
+      directAccessBlock = beforeCallBlock->getNextBlock();
 
-      //Generating block for direct access
-      directAccessBlock = TR::Block::createEmptyBlock(lowTagCmpTree->getNode(), comp(),
-                                                      indirectAccessBlock->getFrequency());
-      directAccessBlock->append(directAccessTreeTop);
-      directAccessBlock->append(
+      if (directAccessWithConversionTreeTop)
+         {
+         //get directAccessWithConversionBlock
+         directAccessWithConversionBlock = firstComparisonTree->getNode()->getBranchDestination()->getNode()->getBlock();
+
+         //generate arrayDirectAccessBlock
+         arrayDirectAccessBlock = TR::Block::createEmptyBlock(lowTagCmpTree->getNode(), comp(),
+                                                              directAccessBlock->getFrequency());
+         arrayDirectAccessBlock->append(arrayDirectAccessTreeTop);
+         arrayDirectAccessBlock->append(
             TR::TreeTop::create(comp(),
-                                TR::Node::create(directAccessTreeTop->getNode(),
+                                TR::Node::create(arrayDirectAccessTreeTop->getNode(),
                                                  TR::Goto, 0, joinBlock->getEntry())));
 
-      arrayDirectAccessBlock = firstComparisonTree->getNode()->getBranchDestination()->getNode()->getBlock();
-      arrayDirectAccessBlock->getExit()->insertTreeTopsAfterMe(directAccessBlock->getEntry(),
-                                                               directAccessBlock->getExit());
+         directAccessWithConversionBlock->getExit()->insertTreeTopsAfterMe(arrayDirectAccessBlock->getEntry(),
+                                                                           arrayDirectAccessBlock->getExit());
 
-      cfg->addNode(directAccessBlock);
-      cfg->addEdge(TR::CFGEdge::createEdge(directAccessBlock, joinBlock, trMemory()));
+         cfg->addNode(arrayDirectAccessBlock);
+         cfg->addEdge(TR::CFGEdge::createEdge(arrayDirectAccessBlock, joinBlock, trMemory()));
+         }
+      else
+         {
+         //get arrayDirectAccessBlock
+         arrayDirectAccessBlock = firstComparisonTree->getNode()->getBranchDestination()->getNode()->getBlock();
+
+         //fix NULL test so that directAccessBlock is executed if object is NULL
+         nullComparisonTree->getNode()->setBranchDestination(conversionNeeded ? arrayDirectAccessBlock->getEntry()
+                                                                              : directAccessBlock->getEntry());
+         }
+
+      //Generating block for indirect access
+      indirectAccessBlock = TR::Block::createEmptyBlock(lowTagCmpTree->getNode(), comp(),
+                                                        directAccessBlock->getFrequency());
+      indirectAccessBlock->append(indirectAccessTreeTop);
+      indirectAccessBlock->append(
+            TR::TreeTop::create(comp(),
+                                TR::Node::create(indirectAccessTreeTop->getNode(),
+                                                 TR::Goto, 0, joinBlock->getEntry())));
+
+      arrayDirectAccessBlock->getExit()->insertTreeTopsAfterMe(indirectAccessBlock->getEntry(),
+                                                               indirectAccessBlock->getExit());
+
+      cfg->addNode(indirectAccessBlock);
+      cfg->addEdge(TR::CFGEdge::createEdge(indirectAccessBlock, joinBlock, trMemory()));
       }
-   else
+   else if (typeTestsNeeded && !arrayBlockNeeded) // CASE (2), (3)
       {
       directAccessBlock = beforeCallBlock->getNextBlock();
 
@@ -936,27 +1054,74 @@ TR_J9InlinerPolicy::genCodeForUnsafeGetPut(TR::Node* unsafeAddress,
       indirectAccessBlock->setFrequency(VERSIONED_COLD_BLOCK_COUNT);
       indirectAccessBlock->setIsCold();
 
-      // If java/lang/Class is not available, the IL generated by createUnsafeGetPutCallDiamond
-      // places the direct access block on the "else" path, just to keep that nearby on the
-      // fall-through path and has the test branch to the indirect access path - but that was
-      // just a trick.  If the object is NULL, we really need to branch directly to the direct
-      // access block.  Other conditions will be placed on the fall-through path following this
-      // first comparison, and they might branch to the indirect access block that was originally
-      // the target of that first "if".
-      //
-      if (javaLangClass == NULL)
+      if (javaLangClass == NULL) // CASE (3) only
          {
+         //fix NULL test so that directAccessBlock is executed if object is NULL
          nullComparisonTree->getNode()->setBranchDestination(directAccessBlock->getEntry());
          }
       }
+   else if (!typeTestsNeeded && arrayBlockNeeded) // CASE (4)
+      {
+      //SPECIAL CASE
+      if (!directAccessWithConversionTreeTop && conversionNeeded)
+         {
+         //Generating block for arrayDirectAccess (direct access with conversion)
+         arrayDirectAccessBlock = TR::Block::createEmptyBlock(callNodeTreeTop->getNode(), comp(),
+                                                              joinBlock->getFrequency());
+         arrayDirectAccessBlock->append(arrayDirectAccessTreeTop);
+         beforeCallBlock->getExit()->insertTreeTopsAfterMe(arrayDirectAccessBlock->getEntry(), arrayDirectAccessBlock->getExit());
 
-   debugTrace(tracer(), "\t In genCodeForUnsafeGetPut, directAccessBlock is %d\n", directAccessBlock->getNumber());
-   debugTrace(tracer(), "\t In genCodeForUnsafeGetPut, indirectAccessBlock is %d\n", indirectAccessBlock->getNumber());
+         //add arrayDirectAccessBlock to cfg
+         cfg->addNode(arrayDirectAccessBlock);
+         cfg->addEdge(TR::CFGEdge::createEdge(beforeCallBlock, arrayDirectAccessBlock, trMemory()));
+         cfg->addEdge(TR::CFGEdge::createEdge(arrayDirectAccessBlock, joinBlock, trMemory()));
+         cfg->removeEdge(beforeCallBlock, joinBlock);
+         }
+      else
+         {
+         if (directAccessWithConversionTreeTop)
+            directAccessWithConversionBlock = firstComparisonTree->getNode()->getBranchDestination()->getNode()->getBlock();
+         else
+            directAccessBlock = firstComparisonTree->getNode()->getBranchDestination()->getNode()->getBlock();
+         arrayDirectAccessBlock = beforeCallBlock->getNextBlock();
+         }
+      }
+   else if (conversionNeeded) // CASE (5)
+      {
+      directAccessWithConversionBlock = firstComparisonTree->getNode()->getBranchDestination()->getNode()->getBlock();
+      directAccessBlock = beforeCallBlock->getNextBlock();
+      }
+   else // CASE (6)
+      {
+      //Generating block for direct access
+      directAccessBlock = TR::Block::createEmptyBlock(callNodeTreeTop->getNode(), comp(),
+                                                      joinBlock->getFrequency());
+      directAccessBlock->append(directAccessTreeTop);
+      beforeCallBlock->getExit()->insertTreeTopsAfterMe(directAccessBlock->getEntry(), directAccessBlock->getExit());
+
+      //add directAccessBlock to cfg
+      cfg->addNode(directAccessBlock);
+      cfg->addEdge(TR::CFGEdge::createEdge(beforeCallBlock, directAccessBlock, trMemory()));
+      cfg->addEdge(TR::CFGEdge::createEdge(directAccessBlock, joinBlock, trMemory()));
+      cfg->removeEdge(beforeCallBlock, joinBlock);
+      }
+
+   if (directAccessBlock)
+      debugTrace(tracer(), "\t In genCodeForUnsafeGetPut, directAccessBlock is %d\n", directAccessBlock->getNumber());
+
+   if (indirectAccessBlock)
+      debugTrace(tracer(), "\t In genCodeForUnsafeGetPut, indirectAccessBlock is %d\n", indirectAccessBlock->getNumber());
+
+   if (directAccessWithConversionBlock)
+      debugTrace(tracer(), "\t In genCodeForUnsafeGetPut, directAccessWithConversion is %d\n", directAccessWithConversionBlock->getNumber());
 
    createAnchorNodesForUnsafeGetPut(directAccessTreeTop, type, isUnsafeGet);
 
    if (arrayDirectAccessTreeTop)
       createAnchorNodesForUnsafeGetPut(arrayDirectAccessTreeTop, type, isUnsafeGet);
+
+   if (directAccessWithConversionTreeTop)
+      createAnchorNodesForUnsafeGetPut(directAccessWithConversionTreeTop, type, isUnsafeGet);
 
    TR::Node *objLoad = TR::Node::createWithSymRef(unsafeAddress,
                              comp()->il.opCodeForDirectLoad(unsafeAddress->getDataType()), 0,
@@ -967,50 +1132,45 @@ TR_J9InlinerPolicy::genCodeForUnsafeGetPut(TR::Node* unsafeAddress,
    TR::Block *isArrayBlock;
    TR::TreeTop *isClassTreeTop;
    TR::Block *isClassBlock;
-   // If we need conversion or java/lang/Class is not loaded yet, we generate old sequence of tests
-   if (conversionNeeded || javaLangClass == NULL)
+
+   //Generate sequence of runtime tests if object type is not known at compile time
+   if (typeTestsNeeded && (arrayBlockNeeded || javaLangClass == NULL)) // CASES (1) and (3)
       {
       //Generating block for lowTagCmpTree
       TR::Block *lowTagCmpBlock =
                     TR::Block::createEmptyBlock(unsafeAddress, comp(),
-                                                conversionNeeded ? indirectAccessBlock->getFrequency()
+                                                arrayBlockNeeded ? indirectAccessBlock->getFrequency()
                                                                  : directAccessBlock->getFrequency());
       lowTagCmpBlock->append(lowTagCmpTree);
       cfg->addNode(lowTagCmpBlock);
 
+      directAccessBlock->getEntry()->insertTreeTopsBeforeMe(lowTagCmpBlock->getEntry(), lowTagCmpBlock->getExit());
+      lowTagCmpTree->getNode()->setBranchDestination(indirectAccessBlock->getEntry());
+
+      cfg->addEdge(TR::CFGEdge::createEdge(lowTagCmpBlock, directAccessBlock, trMemory()));
+      cfg->addEdge(TR::CFGEdge::createEdge(lowTagCmpBlock, indirectAccessBlock, trMemory()));
+
       debugTrace(tracer(), "\t In genCodeForUnsafeGetPut, Block %d created for low tag comparison\n", lowTagCmpBlock->getNumber());
 
       TR::Node *testIsArrayFlag = comp()->fej9()->testIsClassArrayType(vftLoad);
-      TR::Node *flagConstNode = TR::Node::create(testIsArrayFlag, TR::iconst, 0, TR::Compiler->cls.flagValueForArrayCheck(comp()));
-      TR::Node *isArrayNode = TR::Node::createif(TR::ificmpeq, testIsArrayFlag, flagConstNode, NULL);
+      TR::Node *isArrayNode = TR::Node::createif(TR::ificmpne, testIsArrayFlag, TR::Node::create(TR::iconst, 0), NULL);
       isArrayTreeTop = TR::TreeTop::create(comp(), isArrayNode, NULL, NULL);
       isArrayBlock = TR::Block::createEmptyBlock(vftLoad, comp(), indirectAccessBlock->getFrequency());
       isArrayBlock->append(isArrayTreeTop);
       cfg->addNode(isArrayBlock);
-      isArrayNode->setBranchDestination(conversionNeeded ? arrayDirectAccessBlock->getEntry() : directAccessBlock->getEntry());
-      if (conversionNeeded)
-         {
-         indirectAccessBlock->getEntry()->insertTreeTopsBeforeMe(lowTagCmpBlock->getEntry(), lowTagCmpBlock->getExit());
-         lowTagCmpTree->getNode()->setBranchDestination(directAccessBlock->getEntry());
-         }
-      else
-         {
-         traceMsg(comp(),"\t\t Generating an isArray test as j9class of java/lang/Class is NULL");
-         directAccessBlock->getEntry()->insertTreeTopsBeforeMe(lowTagCmpBlock->getEntry(), lowTagCmpBlock->getExit());
-         lowTagCmpTree->getNode()->setBranchDestination(indirectAccessBlock->getEntry());
-         }
+      isArrayNode->setBranchDestination(arrayBlockNeeded ? arrayDirectAccessBlock->getEntry() : directAccessBlock->getEntry());
+
       lowTagCmpBlock->getEntry()->insertTreeTopsBeforeMe(isArrayBlock->getEntry(),
                                                          isArrayBlock->getExit());
       cfg->addEdge(TR::CFGEdge::createEdge(isArrayBlock, lowTagCmpBlock, trMemory()));
-      cfg->addEdge(TR::CFGEdge::createEdge(isArrayBlock, conversionNeeded ? arrayDirectAccessBlock
-                                                                          : directAccessBlock, trMemory()));
-      cfg->addEdge(TR::CFGEdge::createEdge(lowTagCmpBlock, directAccessBlock, trMemory()));
-      cfg->addEdge(TR::CFGEdge::createEdge(lowTagCmpBlock, indirectAccessBlock, trMemory()));
+      cfg->addEdge(TR::CFGEdge::createEdge(isArrayBlock, arrayBlockNeeded ? arrayDirectAccessBlock
+                                                                        : directAccessBlock, trMemory()));
       cfg->addEdge(TR::CFGEdge::createEdge(beforeCallBlock, isArrayBlock, trMemory()));
 
       debugTrace(tracer(), "\t In genCodeForUnsafeGetPut, Block %d created for array check\n", isArrayBlock->getNumber());
+
       }
-   else
+   else if (typeTestsNeeded) // CASE (2)
       {
       TR::Block *nullComparisonBlock = TR::Block::createEmptyBlock(objLoad, comp(), indirectAccessBlock->getFrequency());
       nullComparisonNode->setBranchDestination(directAccessBlock->getEntry());
@@ -1059,12 +1219,15 @@ TR_J9InlinerPolicy::genCodeForUnsafeGetPut(TR::Node* unsafeAddress,
       debugTrace(tracer(), "\t In genCodeForUnsafeGetPut, Block %d created for isClass Test\n", isClassBlock->getNumber());
       }
 
-   cfg->removeEdge(beforeCallBlock, indirectAccessBlock);
+   if (indirectAccessBlock)
+      cfg->removeEdge(beforeCallBlock, indirectAccessBlock);
 
-   //Generating treetop and block for array check
+   if (typeTestsNeeded && arrayBlockNeeded)
+      cfg->removeEdge(nullComparisonBlock, conversionNeeded ? directAccessBlock : arrayDirectAccessBlock);
+
    if (needNullCheck)
       {
-      TR::TreeTop *treeBeforeCmp = firstComparisonTree->getPrevTreeTop();
+      TR::TreeTop *treeBeforeCmp = firstComparisonTree ? firstComparisonTree->getPrevTreeTop() : beforeCallBlock->getExit()->getPrevTreeTop();
       TR::TreeTop *nullchkTree =
          TR::TreeTop::create(comp(), treeBeforeCmp,
                 TR::Node::createWithSymRef(TR::NULLCHK, 1, 1,
@@ -1083,54 +1246,115 @@ TR_J9InlinerPolicy::genCodeForUnsafeGetPut(TR::Node* unsafeAddress,
       TR::TreeTop *orderedCallTree = TR::TreeTop::create(comp(), orderedCallNode);
       joinBlock->prepend(orderedCallTree);
       }
+
    }
 
 /*
-Converting Unsafe.get/put* routines into inlined code involves two cases:
-1) if the size of the element to put/get is 4 bytes or more
-2) if the size of the element to put/get is less than 4 bytes (boolean, byte, char, short)
+When converting Unsafe.get/put* routines into inlined code there are three factors that
+determine what the resulting IL trees will look like:
+1) The size of the element to put/get
+2) The GC policy being used
+3) The type of the object that the data is being read from/written to
 
-In (1), there are two alternatives on how to read from/write to the object: direct and
-indirect write/read. The selection of alternatives is done by looking at three conditions:
+This means that when the type of the object is UNKNOWN at compile time, there are four
+cases that need to be handled:
+1) if offheap/balanced GC policy is enabled AND element size is 4 bytes or more (int, long)
+2) if offheap/balanced GC policy is enabled AND element size is less than 4 bytes (boolean, byte, char, short)
+3) if offheap/balanced GC policy is NOT enabled AND element size is 4 bytes or more (int, long)
+4) if offheap/balanced GC policy is NOT enabled AND element size is less than 4 bytes (boolean, byte, char, short)
+
+As well, in general, there are four alternatives on how to read from/write to the object: direct read/write,
+indirect read/write, array read/write, and direct read/write with conversion. The selection of alternatives
+is done by looking at three conditions:
 a) whether the object is NULL
 b) whether the object is array
 c) whether the object is of type java.lang.Class (which might involve testing the
    low-order bit of the offset or comparing the <vft-symbol> of the object)
 
-The pseudocode of the generated inline code for case (1) under normal compilation is :
+Thus, the pseudocode for each of the cases outlined above is as follows:
 
-  if (offset is low-tagged)
-    use direct access
-  else if (object == NULL)
-    use direct access
-  else if (object is not of type java/lang/Class)
-    use direct access
-  else
-    use indirect access
+1) offheap AND element size >= 4 bytes
 
-If we cannot get the J9Class of java/lang/Class, we generate following sequence of tests:
+   if (object == NULL)
+     use direct access
+   else if (object is array type)
+     use array access
+   else if (offset is low tagged)
+     use indirect access
+   else
+     use direct access
 
-  if (object == NULL)
-    use direct access
-  else if (object is Array type)
-    use direct access
-  else if (offset is low-tagged)
-    use indirect access
-  else
-    use direct access
+2) offheap AND element size < 4 bytes
 
-In (2), there are three alternatives on how to read from/write the object. direct,
-direct with conversion, indirect. The same three conditions are used to decide which one
-to use based on the following pseudocode:
+   if (object == NULL)
+     use direct access with conversion
+   else if (object is array type)
+     use array access
+   else if (offset is low-tagged)
+     use indirect access
+   else
+     use direct access
 
-  if (object is NULL)
-    use direct access with conversion
-  else if (object is array)
-    use direct access with conversion
-  else if (offset is not low-tagged)
-    use direct access
-  else
-    use indirect access
+3) non-offheap AND element size >= 4 bytes
+
+   if (offset is low-tagged)
+     use indirect access
+   else if (object == NULL)
+     use direct access
+   else if (offset is Class type)
+     use indirect access
+   else
+     use direct access
+
+4) non-offheap AND element size < 4 bytes
+
+   if (object == NULL)
+     use direct access with conversion
+   else if (object is array type)
+     use direct access with conversion
+   else if (offset is low-tagged)
+     use indirect access
+   else
+     use direct access
+
+When the type of the object IS known at compile time, however, the only condition that needs to be
+tested for is whether the object is NULL. In this scenario, there are two situations that need to
+be handled:
+a) The object is an array type
+b) The object is some non-array, non-Class type
+
+The resulting IL trees for each case in this situation are outlined below:
+
+1) offheap AND element size >= 4 bytes
+   a) object is array                        b) object is non-array
+
+      if (object == NULL)                       use direct access (no runtime tests needed, since both NULL
+        use direct access                                          and non-NULL cases use direct access)
+      else
+        use array access
+
+2) offheap AND element size < 4 bytes
+   a) object is array                        b) object is non-array
+
+      if (object == NULL)                       if (object == NULL)
+        use direct access with conversion         use direct access with conversion
+      else                                      else
+        use array access                          use direct access
+
+3) non-offheap AND element size >= 4 bytes
+
+   use direct access for both (a) and (b) (no runtime tests needed, since all possible cases use direct access)
+
+4) non-offheap AND element size < 4 bytes
+   a) object is array                        b) object is non-array
+
+      use direct access with conversion         if (object == NULL)
+      (no runtime tests needed, since both        use direct access with conversion
+       NULL and non-NULL cases use direct       else
+       access with conversion)                    use direct access
+
+
+The functions used to construct the trees for all the cases outlined above are as follows:
 
 - genClassCheckForUnsafeGetPut builds the treetop for low-tagged offset test
 - genDirectAccessCodeForUnsafeGetPut completes the building of treetop for
@@ -1181,6 +1405,49 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
    // Preserve null check on the unsafe object
    TR::TransformUtil::separateNullCheck(comp(), callNodeTreeTop, tracer()->debugLevel());
 
+
+   bool conversionNeeded = comp()->fe()->dataTypeForLoadOrStore(type) != type;
+
+   // If we are not able to get javaLangClass it is still inefficient to put direct Access far
+   // So in that case we will generate lowTagCmpTest to branch to indirect access if true
+   TR_OpaqueClassBlock *javaLangClass = comp()->getClassClassPointer(/* isVettedForAOT = */ true);
+
+   int length;
+   const char *objTypeSig = unsafeCall->getChild(1)->getSymbolReference() ? unsafeCall->getChild(1)->getSymbolReference()->getTypeSignature(length) : NULL;
+
+   // There are four cases where we cannot be sure of the Object type at compile time:
+   // 1.) The object's type signature is unavailable/unknown
+   // 2.) The signature names java/lang/Object
+   // 3.) The signature names some interface type, which is a problem because interface types are
+   //     not checked by the verifier
+   // 4.) The signature belongs to a parameter of the calling method, which is a problem because
+   //     parameters can share slots with variables of other, potentially incompatible types
+   bool objTypeUnknown;
+   TR_OpaqueClassBlock *objClass = NULL;
+
+   if (objTypeSig == NULL)
+      {
+      objTypeUnknown = true;
+      }
+   else
+      {
+      objClass = comp()->fe()->getClassFromSignature(objTypeSig, length, unsafeCall->getChild(1)->getSymbolReference()->getOwningMethod(comp()));
+      bool isParameter = unsafeCall->getChild(1)->getSymbolReference()->getSymbol()->isParm();
+
+      objTypeUnknown = objClass == NULL || objClass == comp()->getObjectClassPointer() || TR::Compiler->cls.isInterfaceClass(comp(), objClass) || isParameter;
+      }
+
+   // There are two cases where IL for type tests (array, class, lowtag) needs to be generated:
+   // 1.) Object type is unknown at compile time
+   // 2.) Object is known at compile time to be a java/lang/Class object (to match JNI implementation)
+   bool typeTestsNeeded = objTypeUnknown || objClass == javaLangClass;
+
+   // We need to generate arrayDirectAccessBlock if BOTH of following conditions hold:
+   // - conversionNeeded == true OR javaLangClass == NULL OR offheap is enabled
+   // - object is known be an array at compile time OR object type is unknown at compile time
+   bool arrayBlockNeeded = (conversionNeeded || TR::Compiler->om.isOffHeapAllocationEnabled() && comp()->target().is64Bit()) &&
+                           (objTypeUnknown || objTypeSig[0] == '[');
+
    // Since the block has to be split, we need to create temps for the arguments to the call
    for (int i = 0; i < unsafeCall->getNumChildren(); i++)
       {
@@ -1227,7 +1494,6 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
    debugTrace(tracer(), "\tvalueWithouTConversion = %p\n", valueWithoutConversion);
 
 
-   bool conversionNeeded = comp()->fe()->dataTypeForLoadOrStore(type) != type;
    if (conversionNeeded)
       {
       TR::ILOpCodes conversionOpCode =
@@ -1261,7 +1527,6 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
       comp()->getDebug()->print(comp()->getOutFile(), oldCallNodeTreeTop);
       }
 
-
    TR::TreeTop* directAccessTreeTop = genDirectAccessCodeForUnsafeGetPut(unsafeNode, false, false);
 
    if (tracer()->debugLevel())
@@ -1270,15 +1535,42 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
       comp()->getDebug()->print(comp()->getOutFile(), directAccessTreeTop);
       }
 
-   TR::TreeTop* arrayDirectAccessTreeTop = conversionNeeded
-      ? genDirectAccessCodeForUnsafeGetPut(unsafeNodeWithConversion, conversionNeeded, false)
-      : NULL;
+   // We need to generate an arrayDirectAccessBlock AND a directAccessBlock in the following cases:
+   // 1.) typeTestsNeeded && arrayBlockNeeded: arrayDirectAccessBlock used for array access,
+   //                                          directAccessBlock used for non-array/non-class object access
+   // 2.) !typeTestsNeeded && arrayBlockNeeded: arrayDirectAccessBlock used for array access,
+   //                                           directAccessBlock used if object is NULL
+   // Otherwise, only the directAccessBlock is needed.
+   TR::TreeTop* arrayDirectAccessTreeTop;
+
+   if (conversionNeeded && arrayBlockNeeded)
+      arrayDirectAccessTreeTop = genDirectAccessCodeForUnsafeGetPut(unsafeNodeWithConversion, conversionNeeded, false);
+   else if (arrayBlockNeeded)
+      arrayDirectAccessTreeTop = genDirectAccessCodeForUnsafeGetPut(unsafeNode, false, false);
+   else
+      arrayDirectAccessTreeTop = NULL;
 
    if (tracer()->debugLevel() && conversionNeeded)
       {
       debugTrace(tracer(), "\t After genDirectAccessCodeForUnsafeGetPut, arrayDirectAccessTreeTop dump:\n");
       comp()->getDebug()->print(comp()->getOutFile(), arrayDirectAccessTreeTop);
       }
+
+   // When conversionNeeded is true, NULL references must be accessed via direct access with conversion.
+   // We need to generate a separate directAccessWithConversionBlock in the following cases:
+   // 1.) arrayBlockNeeded && offheap enabled
+   // 2.) !typeTestsNeeded && !arrayBlockNeeded
+   // We can simply use the already existing arrayDirectAccessBlock as the directAccessWithConversionBlock in the following cases:
+   // 3.) arrayBlockNeeded && gencon
+   // Otherwise, the directAccessWithConversionBlock is not needed
+   TR::TreeTop* directAccessWithConversionTreeTop = NULL;
+
+   if (conversionNeeded)
+   {
+      if ((arrayBlockNeeded && TR::Compiler->om.isOffHeapAllocationEnabled() && comp()->target().is64Bit()) ||
+          (!typeTestsNeeded && !arrayBlockNeeded))
+         directAccessWithConversionTreeTop = genDirectAccessCodeForUnsafeGetPut(unsafeNodeWithConversion, conversionNeeded, false);
+   }
 
    TR::TreeTop* indirectAccessTreeTop = genIndirectAccessCodeForUnsafeGetPut(callNodeTreeTop->getNode(), unsafeAddress);
 
@@ -1294,15 +1586,52 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
       indirectAccessTreeTop->getNode()->setIsUnsafeStaticWrtBar(true);
       }
 
+
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+   //adjust arguments if object is array and offheap is being used by changing
+   //object base address (second child) to dataAddr
+
+   // CASE 1: conversionNeeded == true (e.g.: Unsafe.putShort())
+   //   sstorei        -> arrayDirectAccessTreeTop->getNode()
+   //     aladd        -> address to access (base address + offset)
+   //       aload      -> object base address
+   //       lload      -> offset
+   //     i2s          -> conversion
+   //       iload      -> value to put
+
+   // CASE 2: conversionNeeded == false (e.g.: Unsafe.putLong())
+   //   sstorei        -> arrayDirectAccessTreeTop->getNode()
+   //     aladd        -> address to access (base address + offset)
+   //       aload      -> object base address
+   //       lload      -> offset
+   //     iload        -> value to put
+
+   if (TR::Compiler->om.isOffHeapAllocationEnabled() && arrayBlockNeeded)
+      {
+      TR::Node *addrToAccessNode = arrayDirectAccessTreeTop->getNode()->getChild(0);
+
+      //change object base address to dataAddr
+      TR::Node *objBaseAddrNode = addrToAccessNode->getChild(0);
+      TR::Node *dataAddrNode = TR::TransformUtil::generateDataAddrLoadTrees(comp(), objBaseAddrNode);
+      addrToAccessNode->setChild(0, dataAddrNode);
+
+      //correct refcounts
+      objBaseAddrNode->decReferenceCount();
+      dataAddrNode->incReferenceCount();
+      }
+#endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
+
    genCodeForUnsafeGetPut(unsafeAddress, offset, type, callNodeTreeTop,
                           prevTreeTop, newSymbolReferenceForAddress,
                           directAccessTreeTop, arrayDirectAccessTreeTop,
-                          indirectAccessTreeTop, needNullCheck, false, conversionNeeded,
+                          indirectAccessTreeTop, directAccessWithConversionTreeTop,
+                          needNullCheck, false, conversionNeeded,
+                          arrayBlockNeeded, typeTestsNeeded,
                           orderedCallNode);
 
 
    // Test for static final field
-   if (reportFinalFieldModification)
+   if (reportFinalFieldModification && typeTestsNeeded)
       {
       TR::Block* storeToStaticFieldBlock = indirectAccessTreeTop->getEnclosingBlock();
       auto isFinalStaticNode = TR::Node::createif(TR::iflcmpeq,
@@ -1399,31 +1728,145 @@ TR_J9InlinerPolicy::createUnsafeCASCallDiamond( TR::TreeTop *callNodeTreeTop, TR
    // Codegens have a fast path for the compare and swaps, but cannot deal with the case where the offset value passed in to a the CAS is low tagged
    // (A low tagged offset value means the object being passed in is a java/lang/Class object, and we want a static field)
 
+   // Regarding which checks/diamonds get generated, there are three possible cases:
+   // 1.) Only the low tagged check is generated. This will occur either when gencon GC policy is being used, or under
+   //     balanced GC policy with offheap allocation enabled if the object being operated on is known NOT to be an array
+   //     at compile time.
+   // 2.) No checks are generated. This will occur under balanced GC policy with offheap allocation enabled if the object
+   //     being operated on is known to be an array at compile time (since if the object is an array, it can't also be a
+   //     java/lang/Class object).
+   // 3.) Both the array and low tagged checks are generated. This will occur under balanced GC policy with offheap allocation
+   //     enabled if the type of the object being operated on is unknown at compile time.
+
    // This method assumes the offset node is of type long, and is the second child of the unsafe call.
    TR_InlinerDelimiter delimiter(tracer(),"createUnsafeCASCallDiamond");
    debugTrace(tracer(),"Transforming unsafe callNode = %p",callNode);
+
+   int length;
+   const char *objTypeSig = callNode->getChild(1)->getSymbolReference() ? callNode->getChild(1)->getSymbolReference()->getTypeSignature(length) : NULL;
+
+   // There are four cases where we cannot be sure of the Object type at compile time:
+   // 1.) The object's type signature is unavailable/unknown
+   // 2.) The signature names java/lang/Object
+   // 3.) The signature names some interface type, which is a problem because interface types are
+   //     not checked by the verifier
+   // 4.) The signature belongs to a parameter of the calling method, which is a problem because
+   //     parameters can share slots with variables of other, potentially incompatible types
+   bool objTypeUnknown;
+
+   if (objTypeSig == NULL)
+      {
+      objTypeUnknown = true;
+      }
+   else
+      {
+      TR_OpaqueClassBlock *objClass = comp()->fe()->getClassFromSignature(objTypeSig, length, callNode->getChild(1)->getSymbolReference()->getOwningMethod(comp()));
+      bool isParameter = callNode->getChild(1)->getSymbolReference()->getSymbol()->isParm();
+
+      objTypeUnknown = objClass == NULL || objClass == comp()->getObjectClassPointer() || TR::Compiler->cls.isInterfaceClass(comp(), objClass) || isParameter;
+      }
+
+   //only generate array test in case (3)
+   bool arrayTestNeeded = TR::Compiler->om.isOffHeapAllocationEnabled() && comp()->target().is64Bit() && objTypeUnknown;
+
+   //only generate separate array access block in cases (2) or (3)
+   bool arrayBlockNeeded = TR::Compiler->om.isOffHeapAllocationEnabled() && comp()->target().is64Bit() &&
+                           (arrayTestNeeded || objTypeSig[0] == '[');
 
    createTempsForUnsafeCall(callNodeTreeTop, callNode);
 
    TR::Node *offsetNode = callNode->getChild(2);
 
-   TR::TreeTop *compareTree = genClassCheckForUnsafeGetPut(offsetNode, /* branchIfLowTagged */ false);
+   TR::TreeTop *compareTree;
 
-   // genClassCheck generates a ifcmpne offset&mask 1, meaning if it is NOT
-   // lowtagged (ie offset&mask == 0), the branch will be taken
-   TR::TreeTop *branchTargetTree = TR::TreeTop::create(comp(),callNodeTreeTop->getNode()->duplicateTree());
-   branchTargetTree->getNode()->getFirstChild()->setIsSafeForCGToFastPathUnsafeCall(true);
+   //do not generate low tagged test in case (2)
+   if (!arrayTestNeeded && arrayBlockNeeded)
+      compareTree = NULL;
+   else
+      compareTree = genClassCheckForUnsafeGetPut(offsetNode, /* branchIfLowTagged */ false );
+
+   TR::TreeTop *isArrayTreeTop = NULL;
+   TR::TreeTop *arrayAccessTreeTop = NULL;
+   TR::TreeTop *nonArrayAccessTreeTop = NULL;
+
+#if defined (J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+   if (arrayTestNeeded)
+      {
+      //create array test treetop
+
+      // ificmpeq                               -> isArrayNode
+      //   iand                                 -> andNode
+      //     l2i                                -> isArrayField
+      //       lloadi  <isClassDepthAndFlags>
+      //         aloadi  <vft-symbol>           -> vftLoad Node
+      //           aload
+      //     iconst                             -> andConstNode
+      //   ==>iconst                            -> andConstNode
+
+      TR::Node * unsafeAddress = createUnsafeAddressWithOffset(callNode);
+      TR::SymbolReference *newSymbolReferenceForAddress = callNode->getChild(1)->getSymbolReference();
+
+      TR::Node *vftLoad = TR::Node::createWithSymRef(TR::aloadi, 1, 1, TR::Node::createWithSymRef(unsafeAddress, comp()->il.opCodeForDirectLoad(unsafeAddress->getDataType()), 0, newSymbolReferenceForAddress), comp()->getSymRefTab()->findOrCreateVftSymbolRef());
+
+      TR::Node *andNode = comp()->fej9()->testIsClassArrayType(vftLoad);
+      TR::Node *isArrayNode = TR::Node::createif(TR::ificmpne, andNode, TR::Node::create(TR::iconst, 0), NULL);
+
+      isArrayTreeTop = TR::TreeTop::create(comp(), isArrayNode, NULL, NULL);
+      }
+
+   if (arrayBlockNeeded)
+      {
+      //create array access treetop
+      //adjust arguments if object is array and offheap is being used by changing
+      //object base address (second child) to dataAddr
+
+      // NULLCHK on object base address               -> arrayDirectAddressTreeTop->getNode()
+      //   icall  sun/misc/Unsafe.compareAndSwap      -> Unsafe.compareAndSwap call
+      //     aload                                    -> Unsafe instance
+      //     aload                                    -> object base address
+      //     lload                                    -> offset
+      //     lload                                    -> value to compare against
+      //     lload                                    -> value to swap in
+
+      arrayAccessTreeTop = TR::TreeTop::create(comp(),callNodeTreeTop->getNode()->duplicateTree());
+      TR::Node *CASicallNode = arrayAccessTreeTop->getNode()->getChild(0);
+
+      //change object base address to dataAddr
+      TR::Node *objBaseAddrNode = CASicallNode->getChild(1);
+      TR::Node *dataAddrNode = TR::TransformUtil::generateDataAddrLoadTrees(comp(), objBaseAddrNode);
+      CASicallNode->setChild(1, dataAddrNode);
+
+      //correct refcounts
+      objBaseAddrNode->decReferenceCount();
+      dataAddrNode->incReferenceCount();
+
+      CASicallNode->setIsSafeForCGToFastPathUnsafeCall(true);
+
+      //if array test is being generated, need to create non-array access treetop (same as default)
+      if (isArrayTreeTop)
+         nonArrayAccessTreeTop = TR::TreeTop::create(comp(),callNodeTreeTop->getNode()->duplicateTree());
+      }
+#endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
+
+   TR::TreeTop *branchTargetTree;
+   TR::TreeTop *fallThroughTree;
+
+   //only generate if and else trees for low tagged test in cases (1) and (3)
+   if (compareTree != NULL)
+      {
+      // genClassCheck generates a ifcmpne offset&mask 1, meaning if it is NOT
+      // lowtagged (ie offset&mask == 0), the branch will be taken
+      branchTargetTree = TR::TreeTop::create(comp(),callNodeTreeTop->getNode()->duplicateTree());
+      branchTargetTree->getNode()->getFirstChild()->setIsSafeForCGToFastPathUnsafeCall(true);
+
+      fallThroughTree = TR::TreeTop::create(comp(),callNodeTreeTop->getNode()->duplicateTree());
 
 
-   TR::TreeTop *fallThroughTree = TR::TreeTop::create(comp(),callNodeTreeTop->getNode()->duplicateTree());
+      branchTargetTree->getNode()->getFirstChild()->setVisitCount(_inliner->getVisitCount());
+      fallThroughTree->getNode()->getFirstChild()->setVisitCount(_inliner->getVisitCount());
 
-
-   branchTargetTree->getNode()->getFirstChild()->setVisitCount(_inliner->getVisitCount());
-   fallThroughTree->getNode()->getFirstChild()->setVisitCount(_inliner->getVisitCount());
-
-
-   debugTrace(tracer(),"branchTargetTree = %p fallThroughTree = %p",branchTargetTree->getNode(),fallThroughTree->getNode());
-
+      debugTrace(tracer(),"branchTargetTree = %p fallThroughTree = %p",branchTargetTree->getNode(),fallThroughTree->getNode());
+      }
 
 
    // the call itself may be commoned, so we need to create a temp for the callnode itself
@@ -1440,30 +1883,53 @@ TR_J9InlinerPolicy::createUnsafeCASCallDiamond( TR::TreeTop *callNodeTreeTop, TR
       }
 
 
-
-
    TR::Block *callBlock = callNodeTreeTop->getEnclosingBlock();
 
-   callBlock->createConditionalBlocksBeforeTree(callNodeTreeTop,compareTree, branchTargetTree, fallThroughTree, comp()->getFlowGraph(),false,false);
+   if (arrayTestNeeded) //in case (3), we generate the array test diamond, followed by the low tagged check test
+      {
+      callBlock->createConditionalBlocksBeforeTree(callNodeTreeTop, isArrayTreeTop, arrayAccessTreeTop, nonArrayAccessTreeTop, comp()->getFlowGraph(), false, false);
+      nonArrayAccessTreeTop->getEnclosingBlock()->createConditionalBlocksBeforeTree(nonArrayAccessTreeTop, compareTree, branchTargetTree, fallThroughTree, comp()->getFlowGraph(), false, false);
+      }
+   else if (arrayBlockNeeded) //in case (2), no branching is needed: we simply need to replace the original CAS call with the modified array access block
+      {
+      callNodeTreeTop->insertAfter(arrayAccessTreeTop);
+      callNodeTreeTop->getPrevTreeTop()->join(callNodeTreeTop->getNextTreeTop());
+      callBlock->split(arrayAccessTreeTop->getNextTreeTop(), comp()->getFlowGraph(), true);
+      callBlock->split(arrayAccessTreeTop, comp()->getFlowGraph(), true);
+      }
+   else if (compareTree != NULL) //in case (1), we only generate the low tagged test diamond
+      callBlock->createConditionalBlocksBeforeTree(callNodeTreeTop, compareTree, branchTargetTree, fallThroughTree, comp()->getFlowGraph(), false, false);
+
 
    // the original call will be deleted by createConditionalBlocksBeforeTree, but if the refcount was > 1, we need to insert stores.
-
    if (newSymbolReference)
       {
-      TR::Node *branchTargetStoreNode = TR::Node::createWithSymRef(comp()->il.opCodeForDirectStore(dataType), 1, 1, branchTargetTree->getNode()->getFirstChild(), newSymbolReference);
-      TR::TreeTop *branchTargetStoreTree = TR::TreeTop::create(comp(), branchTargetStoreNode);
+      if (compareTree != NULL) //case (1) and (3) only
+         {
+         TR::Node *branchTargetStoreNode = TR::Node::createWithSymRef(comp()->il.opCodeForDirectStore(dataType), 1, 1, branchTargetTree->getNode()->getFirstChild(), newSymbolReference);
+         TR::TreeTop *branchTargetStoreTree = TR::TreeTop::create(comp(), branchTargetStoreNode);
 
-      branchTargetTree->insertAfter(branchTargetStoreTree);
+         branchTargetTree->insertAfter(branchTargetStoreTree);
 
-      debugTrace(tracer(),"Inserted store tree %p for branch target (taken) side of the diamond",branchTargetStoreNode);
+         debugTrace(tracer(),"Inserted store tree %p for branch target (taken) side of the diamond", branchTargetStoreNode);
 
-      TR::Node *fallThroughStoreNode = TR::Node::createWithSymRef(comp()->il.opCodeForDirectStore(dataType), 1, 1, fallThroughTree->getNode()->getFirstChild(), newSymbolReference);
-      TR::TreeTop *fallThroughStoreTree = TR::TreeTop::create(comp(), fallThroughStoreNode);
+         TR::Node *fallThroughStoreNode = TR::Node::createWithSymRef(comp()->il.opCodeForDirectStore(dataType), 1, 1, fallThroughTree->getNode()->getFirstChild(), newSymbolReference);
+         TR::TreeTop *fallThroughStoreTree = TR::TreeTop::create(comp(), fallThroughStoreNode);
 
-      fallThroughTree->insertAfter(fallThroughStoreTree);
+         fallThroughTree->insertAfter(fallThroughStoreTree);
 
-      debugTrace(tracer(),"Inserted store tree %p for fall-through side of the diamond",fallThroughStoreNode);
+         debugTrace(tracer(),"Inserted store tree %p for fall-through side of the diamond", fallThroughStoreNode);
+         }
 
+      if (arrayAccessTreeTop != NULL) //case (1) only
+         {
+         TR::Node *arrayAccessStoreNode = TR::Node::createWithSymRef(comp()->il.opCodeForDirectStore(dataType), 1, 1, arrayAccessTreeTop->getNode()->getFirstChild(), newSymbolReference);
+         TR::TreeTop *arrayAccessStoreTree = TR::TreeTop::create(comp(), arrayAccessStoreNode);
+
+         arrayAccessTreeTop->insertAfter(arrayAccessStoreTree);
+
+         debugTrace(tracer(),"Inserted store tree %p for array access block", arrayAccessStoreNode);
+         }
       }
 
 
@@ -1494,6 +1960,49 @@ TR_J9InlinerPolicy::createUnsafeGetWithOffset(TR::ResolvedMethodSymbol *calleeSy
    TR::Node *unsafeAddress = unsafeCall->getChild(1);
    TR::Node *offset = unsafeCall->getChild(2);
 
+
+   bool conversionNeeded = comp()->fe()->dataTypeForLoadOrStore(type) != type;
+
+   // If we are not able to get javaLangClass it is still inefficient to put direct Access far
+   // So in that case we will generate lowTagCmpTest to branch to indirect access if true
+   TR_OpaqueClassBlock *javaLangClass = comp()->getClassClassPointer(/* isVettedForAOT = */ true);
+
+   int length;
+   const char *objTypeSig = unsafeAddress->getSymbolReference() ? unsafeAddress->getSymbolReference()->getTypeSignature(length) : NULL;
+
+   // There are four cases where we cannot be sure of the Object type at compile time:
+   // 1.) The object's type signature is unavailable/unknown
+   // 2.) The signature names java/lang/Object
+   // 3.) The signature names some interface type, which is a problem because interface types are
+   //     not checked by the verifier
+   // 4.) The signature belongs to a parameter of the calling method, which is a problem because
+   //     parameters can share slots with variables of other, potentially incompatible types
+   bool objTypeUnknown;
+   TR_OpaqueClassBlock *objClass = NULL;
+
+   if (objTypeSig == NULL)
+      {
+      objTypeUnknown = true;
+      }
+   else
+      {
+      objClass = comp()->fe()->getClassFromSignature(objTypeSig, length, unsafeAddress->getSymbolReference()->getOwningMethod(comp()));
+      bool isParameter = unsafeAddress->getSymbolReference()->getSymbol()->isParm();
+
+      objTypeUnknown = objClass == NULL || objClass == comp()->getObjectClassPointer() || TR::Compiler->cls.isInterfaceClass(comp(), objClass) || isParameter;
+      }
+
+   // There are two cases where IL for type tests (array, class, lowtag) needs to be generated:
+   // 1.) Object type is unknown at compile time
+   // 2.) Object is known at compile time to be a java/lang/Class object (to match JNI implementation)
+   bool typeTestsNeeded = objTypeUnknown || objClass == javaLangClass;
+
+   // We need to generate arrayDirectAccessBlock if BOTH of following conditions hold:
+   // - conversionNeeded == true OR offheap is enabled
+   // - object is known be an array at compile time OR object type is unknown at compile time
+   bool arrayBlockNeeded = (conversionNeeded || TR::Compiler->om.isOffHeapAllocationEnabled() && comp()->target().is64Bit()) &&
+                           (objTypeUnknown || objTypeSig[0] == '[');
+
    TR::TreeTop *prevTreeTop = callNodeTreeTop->getPrevTreeTop();
    TR::SymbolReference *newSymbolReferenceForAddress = NULL;
 
@@ -1510,7 +2019,6 @@ TR_J9InlinerPolicy::createUnsafeGetWithOffset(TR::ResolvedMethodSymbol *calleeSy
    unsafeCall->setNumChildren(1);
 
    TR::SymbolReference* symRef = comp()->getSymRefTab()->findOrCreateUnsafeSymbolRef(type, true, false, isVolatile);
-   bool conversionNeeded = comp()->fe()->dataTypeForLoadOrStore(type) != type;
    TR_ASSERT(unsafeCall == callNodeTreeTop->getNode()->getFirstChild(), "assumption not valid\n");
    TR::Node* unsafeCallWithConversion = NULL;
    TR::Node* callNodeWithConversion = NULL;
@@ -1573,16 +2081,87 @@ TR_J9InlinerPolicy::createUnsafeGetWithOffset(TR::ResolvedMethodSymbol *calleeSy
 
    TR::TreeTop* directAccessTreeTop =
       genDirectAccessCodeForUnsafeGetPut(callNodeTreeTop->getNode(), false, true);
-   TR::TreeTop* arrayDirectAccessTreeTop = conversionNeeded
-      ? genDirectAccessCodeForUnsafeGetPut(callNodeWithConversion, conversionNeeded, true)
-      : NULL;
+
+   // We need to generate an arrayDirectAccessBlock AND a directAccessBlock in the following cases:
+   // 1.) typeTestsNeeded && arrayBlockNeeded: arrayDirectAccessBlock used for array access,
+   //                                          directAccessBlock used for non-array/non-class object access
+   // 2.) !typeTestsNeeded && arrayBlockNeeded: arrayDirectAccessBlock used for array access,
+   //                                           directAccessBlock used if object is NULL
+   // Otherwise, only the directAccessBlock is needed.
+   TR::TreeTop* arrayDirectAccessTreeTop;
+
+   if (conversionNeeded && arrayBlockNeeded)
+      arrayDirectAccessTreeTop = genDirectAccessCodeForUnsafeGetPut(callNodeWithConversion, conversionNeeded, true);
+   else if (arrayBlockNeeded)
+      arrayDirectAccessTreeTop = genDirectAccessCodeForUnsafeGetPut(callNodeTreeTop->getNode(), false, true);
+   else
+      arrayDirectAccessTreeTop = NULL;
+
+   // When conversionNeeded is true, NULL references must be accessed via direct access with conversion.
+   // We need to generate a separate directAccessWithConversionBlock in the following cases:
+   // 1.) arrayBlockNeeded && offheap enabled
+   // 2.) !typeTestsNeeded && !arrayBlockNeeded
+   // We can simply use the already existing arrayDirectAccessBlock as the directAccessWithConversionBlock in the following cases:
+   // 3.) arrayBlockNeeded && gencon
+   // Otherwise, the directAccessWithConversionBlock is not needed
+   TR::TreeTop* directAccessWithConversionTreeTop = NULL;
+
+   if (conversionNeeded)
+   {
+      if ((arrayBlockNeeded && TR::Compiler->om.isOffHeapAllocationEnabled() && comp()->target().is64Bit()) ||
+          (!typeTestsNeeded && !arrayBlockNeeded))
+         directAccessWithConversionTreeTop = genDirectAccessCodeForUnsafeGetPut(callNodeWithConversion, conversionNeeded, true);
+   }
+
    TR::TreeTop* indirectAccessTreeTop =
       genIndirectAccessCodeForUnsafeGetPut(callNodeTreeTop->getNode(), unsafeAddress);
+
+
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+   //adjust arguments if object is array and offheap is being used by changing
+   //object base address (second child) to dataAddr
+
+   // CASE 1: conversionNeeded == true (e.g.: Unsafe.getShort())
+   //   istore         -> arrayDirectAccessTreeTop->getNode()
+   //     s2i          -> conversion
+   //       sloadi
+   //         aladd    -> address to access (base address + offset)
+   //           aload  -> object base address
+   //           lload  -> offset
+
+   // CASE 2: conversionNeeded == false (e.g.: Unsafe.getLong())
+   //   lstore         -> arrayDirectAccessTreeTop->getNode()
+   //     lloadi
+   //       aladd      -> address to access (base address + offset)
+   //         aload    -> object base address
+   //         lload    -> offset
+
+   if (TR::Compiler->om.isOffHeapAllocationEnabled() && arrayBlockNeeded)
+      {
+      TR::Node *addrToAccessNode;
+
+      if (conversionNeeded) //CASE 1
+         addrToAccessNode = arrayDirectAccessTreeTop->getNode()->getChild(0)->getChild(0)->getChild(0);
+      else //CASE 2
+         addrToAccessNode = arrayDirectAccessTreeTop->getNode()->getChild(0)->getChild(0);
+
+      //change object base address to dataAddr
+      TR::Node *objBaseAddrNode = addrToAccessNode->getChild(0);
+      TR::Node *dataAddrNode = TR::TransformUtil::generateDataAddrLoadTrees(comp(), objBaseAddrNode);
+      addrToAccessNode->setChild(0, dataAddrNode);
+
+      //correct refcounts
+      objBaseAddrNode->decReferenceCount();
+      dataAddrNode->incReferenceCount();
+      }
+#endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
 
    genCodeForUnsafeGetPut(unsafeAddress, offset, type, callNodeTreeTop,
                           prevTreeTop, newSymbolReferenceForAddress,
                           directAccessTreeTop, arrayDirectAccessTreeTop,
-                          indirectAccessTreeTop, needNullCheck, false, conversionNeeded);
+                          indirectAccessTreeTop, directAccessWithConversionTreeTop,
+                          needNullCheck, false, conversionNeeded,
+                          arrayBlockNeeded, typeTestsNeeded);
 
    for (int32_t j=0; j<unsafeCall->getNumChildren(); j++)
       unsafeCall->getChild(j)->recursivelyDecReferenceCount();
