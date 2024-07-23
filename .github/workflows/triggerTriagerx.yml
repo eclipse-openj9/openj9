@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     if: startsWith(github.event.comment.body, 'triagerx')
     steps:
-      - name: Check out repository
+      - name: Check out the repository
         uses: actions/checkout@v4
         with:
           repository: eclipse-openj9/openj9
@@ -20,9 +20,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-
-      - name: Node Version
-        run: node --version
 
       - name: Install dependencies
         run: npm install axios@0.28.0 @actions/github @actions/core
@@ -54,7 +51,7 @@ jobs:
             core.setOutput('issue_description', issueDescription);
             core.setOutput('issue_number', issueNumber);
 
-      - name: Run recommendations
+      - name: Run the TriagerX model
         run: node .github/recommendation.js
         env:
           ISSUE_TITLE: ${{ steps.extract_issue.outputs.issue_title }}
