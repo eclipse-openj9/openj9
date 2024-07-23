@@ -271,6 +271,7 @@ isNewPageSize(UDATA pageSize, UDATA pageFlags)
  * On z/OS, 1M fixed and 2G fixed pages can be used only to allocate above 2G bar.
  * Only 4K and 1M pageable pages can be used to allocate memory below the bar.
  */
+BOOLEAN
 isPageSizeSupportedBelowBar(UDATA pageSize, UDATA pageFlags)
 {
 	if ((FOUR_KB == pageSize) ||
