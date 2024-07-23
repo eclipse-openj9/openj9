@@ -2401,3 +2401,25 @@ J9NLS_VM_CRIU_CHECK_TRANSITION_TO_DEBUG_INTERPRETER_FAILED.explanation=checkTran
 J9NLS_VM_CRIU_CHECK_TRANSITION_TO_DEBUG_INTERPRETER_FAILED.system_action=The JVM will throw a JVMRestoreException.
 J9NLS_VM_CRIU_CHECK_TRANSITION_TO_DEBUG_INTERPRETER_FAILED.user_response=View CRIU documentation to determine how to resolve the error.
 # END NON-TRANSLATABLE
+
+J9NLS_VM_UNRECOGNISED_SUN_MISC_UNSAFE_MEMORY_ACCESS_VALUE=Value specified to --sun-misc-unsafe-memory-access not recognized: '%s'
+# START NON-TRANSLATABLE
+J9NLS_VM_UNRECOGNISED_SUN_MISC_UNSAFE_MEMORY_ACCESS_VALUE.sample_input_1=disallow
+J9NLS_VM_UNRECOGNISED_SUN_MISC_UNSAFE_MEMORY_ACCESS_VALUE.explanation=The value specified is not known.
+J9NLS_VM_UNRECOGNISED_SUN_MISC_UNSAFE_MEMORY_ACCESS_VALUE.system_action=The JVM will fail to start.
+J9NLS_VM_UNRECOGNISED_SUN_MISC_UNSAFE_MEMORY_ACCESS_VALUE.user_response=Change the value to one of "allow", "warn", "debug" or "deny".
+# END NON-TRANSLATABLE
+
+J9NLS_VM_OPENJ9_JFR_METADATA_FILE_NOT_FOUND=Either the %s environment variable is not set, or the file does not exist in the specified location.
+# START NON-TRANSLATABLE
+J9NLS_VM_OPENJ9_JFR_METADATA_FILE_NOT_FOUND.explanation=Couldn't find JFR metadata blob file.
+J9NLS_VM_OPENJ9_JFR_METADATA_FILE_NOT_FOUND.system_action=The JVM will not generate a JFR file.
+J9NLS_VM_OPENJ9_JFR_METADATA_FILE_NOT_FOUND.user_response=Set the required environment variables.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_CLASS_NAME_EXCEEDS_MAX_LENGTH=Class name exceeds maximum length
+# START NON-TRANSLATABLE
+J9NLS_VM_CLASS_NAME_EXCEEDS_MAX_LENGTH.explanation=Class name cannot be longer than 65535 characters.
+J9NLS_VM_CLASS_NAME_EXCEEDS_MAX_LENGTH.system_action=The JVM will throw a ClassNotFoundException.
+J9NLS_VM_CLASS_NAME_EXCEEDS_MAX_LENGTH.user_response=Shorten the class name.
+# END NON-TRANSLATABLE

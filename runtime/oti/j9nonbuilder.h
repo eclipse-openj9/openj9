@@ -36,6 +36,10 @@
 #include "j9javaaccessflags.h"
 
 #define J9VM_MAX_HIDDEN_FIELDS_PER_CLASS 8
+/* Class names are stored in the VM as CONSTANT_Utf8_info which stores
+ * length in two bytes.
+ */
+#define J9VM_MAX_CLASS_NAME_LENGTH 0xFFFF
 
 #define J9VM_DLT_HISTORY_SIZE  16
 #define J9VM_OBJECT_MONITOR_CACHE_SIZE  32
