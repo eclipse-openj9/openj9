@@ -1864,6 +1864,19 @@ public class Test_String {
 	 * @tests java.lang.String#replaceAll(String, String)
 	 */
 	@Test
+	public void test_replaceAll() {
+		String replace1 = "1a2a3a\u0011";
+		String result1 = replace1.replaceAll("\u1161", "[");
+		AssertJUnit.assertSame("replaceAll() compact result should be identical", replace1, result1);
+		String replace2 = "1a2b3c\u1161";
+		String result2 = replace2.replaceAll("\u1162", "\u1234");
+		AssertJUnit.assertSame("replaceAll() non-compact result should be identical", replace2, result2);
+	}
+
+	/**
+	 * @tests java.lang.String#replaceAll(String, String)
+	 */
+	@Test
 	public void test_replaceAll_last_char_dollarsign() {
 		try {
 			"1a2b3c".replaceAll("[0-9]", "$");
@@ -1872,6 +1885,7 @@ public class Test_String {
 			// expected
 		}
 	}
+
 	/**
 	 * @tests java.lang.String#replaceAll(String, String)
 	 */
