@@ -22,6 +22,7 @@
 
 #include "jvmti_test.h"
 #include <string.h>
+#include <strings.h>
 
 static agentEnv * env;
 static jmethodID catchMethod = NULL;
