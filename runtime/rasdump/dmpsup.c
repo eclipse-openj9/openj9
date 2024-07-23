@@ -60,6 +60,7 @@ char* dumpDirectoryPrefix = NULL;
 #if defined(J9ZOS390)
 #if defined(J9VM_ENV_DATA64)
 #include <__le_api.h>
+#include <ctest.h>
 #else
 #include <leawi.h>
 #include <ceeedcct.h>
