@@ -316,6 +316,14 @@ internalFindClassString(J9VMThread* currentThread, j9object_t moduleName, j9obje
 			stringFlags |= J9_STR_XLAT;
 		}
 
+		/* Perform maximum length check to avoid copy in extreme cases. */
+		if (J9VMJAVALANGSTRING_LENGTH(currentThread, className) > J9VM_MAX_CLASS_NAME_LENGTH) {
+			setCurrentExceptionNLS(currentThread,
+				J9VMCONSTANTPOOL_JAVALANGCLASSNOTFOUNDEXCEPTION,
+				J9NLS_VM_CLASS_NAME_EXCEEDS_MAX_LENGTH);
+			return NULL;
+		}
+
 		utf8Name = (U_8*)copyStringToUTF8WithMemAlloc(currentThread, className, stringFlags, "", 0, (char *)localBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, &utf8Length);
 		if (NULL == utf8Name) {
 			/* Throw out-of-memory */
@@ -324,7 +332,13 @@ internalFindClassString(J9VMThread* currentThread, j9object_t moduleName, j9obje
 		}
 
 		/* Make sure the name is legal */
-		if ((CLASSNAME_INVALID == allowedBitsForClassName)
+		if (utf8Length > J9VM_MAX_CLASS_NAME_LENGTH) {
+			if (CLASSNAME_INVALID != allowedBitsForClassName) {
+				setCurrentExceptionNLS(currentThread,
+					J9VMCONSTANTPOOL_JAVALANGCLASSNOTFOUNDEXCEPTION,
+					J9NLS_VM_CLASS_NAME_EXCEEDS_MAX_LENGTH);
+			}
+		} else if ((CLASSNAME_INVALID == allowedBitsForClassName)
 			|| (CLASSNAME_INVALID != verifyQualifiedName(currentThread, utf8Name, utf8Length, allowedBitsForClassName))
 		) {
 			if (NULL != moduleName) {
