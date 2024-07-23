@@ -90,17 +90,38 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 						<property name="excludeFile" value="" />
 					</else>
 				</if>
-				<javac destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
-					<src path="${src}" />
-					<src path="${extraSrc}" />
-					<exclude name="${excludeFile}" />
-					<exclude name="${excludeJDK21UpGetStackTraceExtendedTest}" />
-					<exclude name="${excludeJDK21UpGetThreadListStackTracesExtendedTest}" />
-					<compilerarg line="${addExports}" />
-					<classpath>
-						<pathelement location="${asm.jar}" />
-					</classpath>
-				</javac>
+				<if>
+					<matches string="${JDK_VERSION}" pattern="^(8|9|1[0-9]|2[0-2])$$" />
+					<then>
+						<javac destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
+							<src path="${src}" />
+							<src path="${extraSrc}" />
+							<exclude name="${excludeFile}" />
+							<exclude name="${excludeJDK21UpGetStackTraceExtendedTest}" />
+							<exclude name="${excludeJDK21UpGetThreadListStackTracesExtendedTest}" />
+							<compilerarg line="${addExports}" />
+							<classpath>
+								<pathelement location="${asm.jar}" />
+							</classpath>
+						</javac>
+					</then>
+					<else>
+						<!-- Java 23+ (SecurityManage and several Thread functions removed) -->
+						<javac destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
+							<src path="${src}" />
+							<src path="${extraSrc}" />
+							<exclude name="${excludeFile}" />
+							<exclude name="${excludeJDK21UpGetStackTraceExtendedTest}" />
+							<exclude name="${excludeJDK21UpGetThreadListStackTracesExtendedTest}" />
+							<exclude name="${excludeJDK21UpGetThreadListStackTracesExtendedTest}" />
+							<compilerarg line="${addExports}" />
+							<exclude name="com/ibm/jvmti/tests/getThreadState/gts001.java" />
+							<classpath>
+								<pathelement location="${asm.jar}" />
+							</classpath>
+						</javac>
+					</else>
+				</if>
 			</else>
 		</if>
 
