@@ -4365,6 +4365,7 @@ typedef struct J9CRIUCheckpointState {
 	/* the array of threads is updated by the JDWP agent */
 	jthread javaDebugThreads[J9VM_CRIU_MAX_DEBUG_THREADS_STORED];
 	UDATA javaDebugThreadCount;
+	BOOLEAN debugInterpreterRequested;
 } J9CRIUCheckpointState;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
