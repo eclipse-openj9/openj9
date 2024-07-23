@@ -6123,6 +6123,9 @@ typedef struct J9JavaVM {
 	J9VMContinuation **continuationT2Cache;
 	U_32 continuationT1Size;
 	U_32 continuationT2Size;
+#if JAVA_SPEC_VERSION >= 21
+	UDATA initialVirtualStackSize;
+#endif /* JAVA_SPEC_VERSION >= 21 */
 #if defined(J9VM_PROF_CONTINUATION_ALLOCATION)
 	volatile U_32 t1CacheHit;
 	volatile U_32 t2CacheHit;

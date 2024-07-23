@@ -183,6 +183,7 @@ dumpMemorySizes(J9JavaVM *jvm)
 	dumpQualifiedSize(PORTLIB, jvm->initialStackSize, "-Xiss", J9NLS_VERB_SIZES_XISS);
 	dumpQualifiedSize(PORTLIB, jvm->stackSizeIncrement, "-Xssi", J9NLS_VERB_SIZES_XSSI);
 	dumpQualifiedSize(PORTLIB, jvm->stackSize, "-Xss", J9NLS_VERB_SIZES_XSS_GROWABLE);
+	dumpQualifiedSize(PORTLIB, jvm->initialVirtualStackSize, "-XXivss", J9NLS_VERB_SIZES_XXIVSS);
 #else
 	dumpQualifiedSize(PORTLIB, jvm->stackSize, "-Xss", J9NLS_VERB_SIZES_XSS_NONGROWABLE);
 #endif /* J9VM_INTERP_GROWABLE_STACKS */

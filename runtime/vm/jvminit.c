@@ -4603,6 +4603,12 @@ threadInitStages(J9JavaVM* vm, IDATA stage, void* reserved)
 				parseErrorOption = VMOPT_XSSI;
 				goto _memParseError;
 			}
+#if JAVA_SPEC_VERSION >= 21
+			if (0 != (parseError = setMemoryOptionToOptElse(vm, &(vm->initialVirtualStackSize), VMOPT_XXIVSS, J9_INITIAL_STACK_SIZE, TRUE))) {
+				parseErrorOption = VMOPT_XISS;
+				goto _memParseError;
+			}
+#endif /* JAVA_SPEC_VERSION >= 21 */
 #endif
 			if (0 != (parseError = setMemoryOptionToOptElse(vm, &(vm->stackSize), VMOPT_XSS, J9_STACK_SIZE, TRUE))) {
 				parseErrorOption = VMOPT_XSS;
