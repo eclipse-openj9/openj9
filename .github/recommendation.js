@@ -7,6 +7,8 @@ async function run() {
     const sandboxOwner = 'eclipse-openj9';
     const sandboxRepo = 'openj9';
 
+    const issueNumber = process.env.ISSUE_NUMBER;
+
     const input = {
         issue_title: process.env.ISSUE_TITLE,
         issue_description: process.env.ISSUE_DESCRIPTION,
@@ -24,7 +26,6 @@ async function run() {
         });
 
         const issueComment = response.data;
-        const issueNumber = process.env.ISSUE_NUMBER;
         let predictedAssignees = issueComment.recommended_developers;
         let predictedLabels = issueComment.recommended_components;
         let resultString = `Issue Number: ${issueNumber}\n`;
