@@ -3202,6 +3202,9 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			int length = lengthInternal();
 			if (substituteLength < 2) {
 				if (COMPACT_STRINGS && isCompressed() && (substituteLength == 0 || substitute.isCompressed())) {
+					if (!regex.isCompressed()) {
+						return this;
+					}
 					byte[] newChars = new byte[length];
 					byte toReplace = helpers.getByteFromArrayByIndex(regex.value, 0);
 					byte replacement = (byte)0; // assign dummy value that isn't used
@@ -3210,13 +3213,20 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 						checkLastChar((char)replacement);
 					}
 					int newCharIndex = 0;
+					boolean replaced = false;
 					for (int i = 0; i < length; ++i) {
 						byte current = helpers.getByteFromArrayByIndex(value, i);
 						if (current != toReplace) {
 							helpers.putByteInArrayByIndex(newChars, newCharIndex++, current);
-						} else if (substituteLength == 1) {
-							helpers.putByteInArrayByIndex(newChars, newCharIndex++, replacement);
+						} else {
+							replaced = true;
+							if (substituteLength == 1) {
+								helpers.putByteInArrayByIndex(newChars, newCharIndex++, replacement);
+							}
 						}
+					}
+					if (!replaced) {
+						return this;
 					}
 					return new String(newChars, 0, newCharIndex, true);
 				} else if (!COMPACT_STRINGS || !isCompressed()) {
@@ -3228,13 +3238,20 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 						checkLastChar(replacement);
 					}
 					int newCharIndex = 0;
+					boolean replaced = false;
 					for (int i = 0; i < length; ++i) {
 						char current = helpers.getCharFromArrayByIndex(value, i);
 						if (current != toReplace) {
 							helpers.putCharInArrayByIndex(newChars, newCharIndex++, current);
-						} else if (substituteLength == 1) {
-							helpers.putCharInArrayByIndex(newChars, newCharIndex++, replacement);
+						} else {
+							replaced = true;
+							if (substituteLength == 1) {
+								helpers.putCharInArrayByIndex(newChars, newCharIndex++, replacement);
+							}
 						}
+					}
+					if (!replaced) {
+						return this;
 					}
 					if (replacement > 255) {
 						// If the original String isn't compressed and the replacement character isn't Latin1, the result is uncompressed.
@@ -7601,6 +7618,9 @@ written authorization of the copyright holder.
 			int length = lengthInternal();
 			if (substituteLength < 2) {
 				if (COMPACT_STRINGS && isCompressed() && (substituteLength == 0 || substitute.isCompressed())) {
+					if (!regex.isCompressed()) {
+						return this;
+					}
 					char[] newChars = new char[(length + 1) >>> 1];
 					byte toReplace = helpers.getByteFromArrayByIndex(regex.value, 0);
 					byte replacement = (byte)-1;  // assign dummy value that will never be used
@@ -7609,13 +7629,20 @@ written authorization of the copyright holder.
 						checkLastChar((char)replacement);
 					}
 					int newCharIndex = 0;
+					boolean replaced = false;
 					for (int i = 0; i < length; ++i) {
 						byte current = helpers.getByteFromArrayByIndex(value, i);
 						if (current != toReplace) {
 							helpers.putByteInArrayByIndex(newChars, newCharIndex++, current);
-						} else if (substituteLength == 1) {
-							helpers.putByteInArrayByIndex(newChars, newCharIndex++, replacement);
+						} else {
+							replaced = true;
+							if (substituteLength == 1) {
+								helpers.putByteInArrayByIndex(newChars, newCharIndex++, replacement);
+							}
 						}
+					}
+					if (!replaced) {
+						return this;
 					}
 					return new String(newChars, 0, newCharIndex, true);
 				} else if (!COMPACT_STRINGS || !isCompressed()) {
@@ -7627,13 +7654,20 @@ written authorization of the copyright holder.
 						checkLastChar(replacement);
 					}
 					int newCharIndex = 0;
+					boolean replaced = false;
 					for (int i = 0; i < length; ++i) {
 						char current = helpers.getCharFromArrayByIndex(value, i);
 						if (current != toReplace) {
 							helpers.putCharInArrayByIndex(newChars, newCharIndex++, current);
-						} else if (substituteLength == 1) {
-							helpers.putCharInArrayByIndex(newChars, newCharIndex++, replacement);
+						} else {
+							replaced = true;
+							if (substituteLength == 1) {
+								helpers.putCharInArrayByIndex(newChars, newCharIndex++, replacement);
+							}
 						}
+					}
+					if (!replaced) {
+						return this;
 					}
 					return new String(newChars, 0, newCharIndex, false);
 				}
