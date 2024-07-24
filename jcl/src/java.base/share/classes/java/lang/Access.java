@@ -551,10 +551,12 @@ final class Access implements JavaLangAccess {
 		StringUTF16.putChar(val, index, c);
 	}
 
+/*[IF JAVA_SPEC_VERSION < 24]*/
 	@Override
 	public long stringConcatHelperPrepend(long indexCoder, byte[] buf, String value) {
 		return StringConcatHelper.prepend(indexCoder, buf, value);
 	}
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 	@Override
 	public long stringConcatMix(long lengthCoder, char value) {
