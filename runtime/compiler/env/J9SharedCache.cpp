@@ -1034,7 +1034,7 @@ TR_J9SharedCache::rememberClass(J9Class *clazz, const AOTCacheClassChainRecord *
    }
 
 UDATA
-TR_J9SharedCache::rememberDebugCounterName(const char *name)
+TR_J9SharedCache::storeStringToSCC(const char *string, uintptr_t length)
    {
    UDATA offset = 0;
 #if defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
@@ -1042,8 +1042,8 @@ TR_J9SharedCache::rememberDebugCounterName(const char *name)
    J9VMThread *vmThread = fej9->getCurrentVMThread();
 
    J9SharedDataDescriptor dataDescriptor;
-   dataDescriptor.address = (U_8*)name;
-   dataDescriptor.length  = (strlen(name) + 1); // +1 for the \0 terminator
+   dataDescriptor.address = (U_8*)string;
+   dataDescriptor.length  = length;
    dataDescriptor.type    = J9SHR_DATA_TYPE_JITHINT;
    dataDescriptor.flags   = J9SHRDATA_NOT_INDEXED;
 
@@ -1060,13 +1060,13 @@ TR_J9SharedCache::rememberDebugCounterName(const char *name)
    }
 
 const char *
-TR_J9SharedCache::getDebugCounterName(UDATA offset)
+TR_J9SharedCache::getStringFromSCC(UDATA offset)
    {
-   const char *name = (offset != (UDATA)-1) ? (const char *)pointerFromOffsetInSharedCache(offset) : NULL;
+   const char *string = (offset != (UDATA)-1) ? (const char *)pointerFromOffsetInSharedCache(offset) : NULL;
 
    //printf("\ngetDebugCounterName: Tried to find %p, name=%s (%p)\n", offset, (name ? name : ""), name);
 
-   return name;
+   return string;
    }
 
 bool

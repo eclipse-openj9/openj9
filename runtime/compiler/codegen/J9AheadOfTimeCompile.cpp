@@ -1256,7 +1256,9 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
 
          TR::DebugCounterReloData *counterReloData = counter->getReloData();
 
-         uintptr_t offsetOfNameString = fej9->sharedCache()->rememberDebugCounterName(counter->getName());
+         const char * name = counter->getName();
+         uintptr_t length = strlen(name) + 1; // +1 for the \0 terminator
+         uintptr_t offsetOfNameString = fej9->sharedCache()->storeStringToSCC(name, length);
          uint8_t flags = counterReloData->_seqKind;
 
          dcRecord->setReloFlags(reloTarget, flags);

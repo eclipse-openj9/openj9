@@ -6056,7 +6056,7 @@ TR_RelocationRecordDebugCounter::preparePrivateData(TR_RelocationRuntime *reloRu
    reloPrivateData->_staticDelta = staticDelta(reloTarget);
 
    UDATA offset                  = offsetOfNameString(reloTarget);
-   reloPrivateData->_name        =  reloRuntime->fej9()->sharedCache()->getDebugCounterName(offset);
+   reloPrivateData->_name        =  reloRuntime->fej9()->sharedCache()->getStringFromSCC(offset);
    }
 
 TR_RelocationErrorCode

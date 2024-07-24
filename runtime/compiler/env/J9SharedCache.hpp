@@ -195,8 +195,8 @@ public:
    virtual uintptr_t rememberClass(J9Class *clazz, const AOTCacheClassChainRecord **classChainRecord = NULL,
                                     bool create = true);
 
-   virtual UDATA rememberDebugCounterName(const char *name);
-   virtual const char *getDebugCounterName(UDATA offset);
+   virtual UDATA storeStringToSCC(const char *string, uintptr_t length);
+   virtual const char *getStringFromSCC(UDATA offset);
 
    virtual bool classMatchesCachedVersion(J9Class *clazz, UDATA *chainData=NULL);
    virtual bool classMatchesCachedVersion(TR_OpaqueClassBlock *classPtr, UDATA *chainData=NULL)
@@ -659,8 +659,8 @@ public:
    virtual uintptr_t rememberClass(J9Class *clazz, const AOTCacheClassChainRecord **classChainRecord = NULL,
                                    bool create = true) override;
 
-   virtual UDATA rememberDebugCounterName(const char *name) override { TR_ASSERT_FATAL(false, "called"); return 0;}
-   virtual const char *getDebugCounterName(UDATA offset) override { TR_ASSERT_FATAL(false, "called"); return NULL;}
+   virtual UDATA storeStringToSCC(const char *string, uintptr_t length) override { TR_ASSERT_FATAL(false, "called"); return 0;}
+   virtual const char *getStringFromSCC(UDATA offset) override { TR_ASSERT_FATAL(false, "called"); return NULL;}
 
    virtual bool isClassInSharedCache(TR_OpaqueClassBlock *clazz, uintptr_t *cacheOffset = NULL) override;
    virtual bool isMethodInSharedCache(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *definingClass, uintptr_t *cacheOffset = NULL) override;
@@ -765,8 +765,8 @@ public:
                                    bool create = true) override
       { TR_ASSERT_FATAL(false, "called"); return TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET; }
 
-   virtual UDATA rememberDebugCounterName(const char *name) override { TR_ASSERT_FATAL(false, "called"); return 0; }
-   virtual const char *getDebugCounterName(UDATA offset) override { TR_ASSERT_FATAL(false, "called"); return NULL; }
+   virtual UDATA storeStringToSCC(const char *string, uintptr_t length) override { TR_ASSERT_FATAL(false, "called"); return 0; }
+   virtual const char *getStringFromSCC(UDATA offset) override { TR_ASSERT_FATAL(false, "called"); return NULL; }
 
    virtual bool isPointerInSharedCache(void *ptr, uintptr_t *cacheOffset = NULL) override { TR_ASSERT_FATAL(false, "called"); return false; }
    virtual bool isOffsetInSharedCache(uintptr_t encoded_offset, void *ptr = NULL) override { TR_ASSERT_FATAL(false, "called"); return false; }
