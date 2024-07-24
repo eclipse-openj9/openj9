@@ -4262,6 +4262,7 @@ typedef struct J9JITConfig {
 	uint64_t serverUID;
 #endif /* J9VM_OPT_JITSERVER */
 	void (*jitAddNewLowToHighRSSRegion)(const char *name, uint8_t *start, uint32_t size, size_t pageSize);
+	void (*generateRSSReport)();
 } J9JITConfig;
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)

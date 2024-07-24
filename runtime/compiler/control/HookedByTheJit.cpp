@@ -4707,6 +4707,7 @@ void memoryDisclaimLogic(TR::CompilationInfo *compInfo, uint64_t crtElapsedTime,
             {
             disclaimDataCaches(crtElapsedTime);
             javaVM->internalVMFunctions->disclaimAllClassMemory(javaVM);
+            jitConfig->generateRSSReport();
             lastDataCacheDisclaimTime = crtElapsedTime; // Update the time when disclaim was last performed
             lastNumAllocatedDataCaches = TR_DataCacheManager::getManager()->numAllocatedCaches();
             }
@@ -4734,7 +4735,7 @@ void memoryDisclaimLogic(TR::CompilationInfo *compInfo, uint64_t crtElapsedTime,
 
             disclaimCodeCaches(crtElapsedTime);
             javaVM->internalVMFunctions->disclaimAllClassMemory(javaVM);
-
+            jitConfig->generateRSSReport();
             if (rssReport) rssReport->printRegions();
 
             lastCodeCacheDisclaimTime = crtElapsedTime; // Update the time when disclaim was last performed

@@ -1619,6 +1619,7 @@ criuCheckpointJVMImpl(JNIEnv *env,
 		bool restoreFailure = false;
 		size_t rssBefore = 0;
 		size_t rssAfter = 0;
+		J9JITConfig *jitConfig = vm->jitConfig;
 
 		internalEnterVMFromJNI(currentThread);
 
@@ -1879,6 +1880,7 @@ criuCheckpointJVMImpl(JNIEnv *env,
 			systemReturnCode = vm->internalVMFunctions->disclaimAllClassMemory(vm);
 			rssAfter = getRSS_Kb();
 			Trc_VM_criu_disclaimAllClassMemory_result(rssBefore, rssAfter);
+			jitConfig->generateRSSReport();
 			if (0 != systemReturnCode) {
 				systemReturnCode = errno;
 				currentExceptionClass = vm->checkpointState.criuJVMCheckpointExceptionClass;
