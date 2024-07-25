@@ -1775,14 +1775,15 @@ _illegalPrimitiveReturn:
 						goto _inconsistentStack2;
 					}
 				} else {
-					/* Need to ensure that there is at least an Object reference on the stack for the 
-					 * invokeinterface receiver.  If the top of stack is a base type or TOP, then 
-					 * throw a verify error.  The check for the receiver to be an interface occurs in
-					 * the invokeinterface bytecode.
-					 * Note: we need to check whether the Object reference on the stack is initialized
-					 * so as to stop an uninitialized object from being addressed here by invokeinterface.
+					/* Throw a verify error for any of the following invokeinterface scenarios:
+					 * 1. The top of the stack holds a base type or TOP
+					 * 2. The top of the stack holds an array. Null type has a different meaning for arity bits.
+					 *  Don't fail at this point, a NullPointerException is expected later on.
+					 * 3. The Object reference on the stack is uninitialized
+					 * The check for the receiver to be an interface occurs in the bytecode interpreter.
 					 */
 					if ((BCV_TAG_BASE_TYPE_OR_TOP == (type & BCV_TAG_MASK))
+						|| ((type != BCV_BASE_TYPE_NULL) && (BCV_ARITY_FROM_TYPE(type) > 0))
 						|| J9_ARE_ANY_BITS_SET(type, BCV_SPECIAL)
 					) {
 						errorType = J9NLS_BCV_ERR_RECEIVER_NOT_COMPATIBLE__ID;
