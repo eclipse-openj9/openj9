@@ -6559,41 +6559,41 @@ public final class Unsafe {
 
 	/*[IF INLINE-TYPES]*/
 	/**
-	 * Retrieves the value of the primitive type in the obj parameter referenced by offset.
-	 * The primitive type in obj at the given offset must be flattened.
+	 * Retrieves the value of the value type in the obj parameter referenced by offset.
+	 * The value type in obj at the given offset must be flattened.
 	 * This is a non-volatile operation.
 	 *
-	 * @param obj object from which to retrieve the primitive type
-	 * @param offset position of the primitive type in obj
-	 * @param clz the class of primitive type to return
-	 * @return the value of the primitive type stored in obj at the given offset
+	 * @param obj object from which to retrieve the value type
+	 * @param offset position of the value type in obj
+	 * @param clz the class of value type to return
+	 * @return the value stored in obj at the given offset
 	 */
 	public native <V> V getValue(Object obj, long offset, Class<?> clz);
 
 	/**
-	 * Sets the value of the primitive type in the obj parameter at memory offset.
-	 * Both the new value and the primitive type in obj at the given offset must be flattened.
+	 * Sets the value of the value type in the obj parameter at memory offset.
+	 * Both the new value and the value type in obj at the given offset must be flattened.
 	 * This is a non-volatile operation.
 	 *
-	 * @param obj object into which to store the primitive type
-	 * @param offset position of the primitive type in obj
-	 * @param clz the class of the primitive type to store in obj
-	 * @param value primitive type to store in obj
+	 * @param obj object into which to store the value type
+	 * @param offset position of the value type in obj
+	 * @param clz the class of the value type to store in obj
+	 * @param value value type to store in obj
 	 */
 	public native <V> void putValue(Object obj, long offset, Class<?> clz, V value);
 
 	/**
-	 * Returns the uninitialized default instance of the specified primitive class
+	 * Returns the uninitialized default instance of the specified value class
 	 *
-	 * @param clz the specificed primitive class
+	 * @param clz the specificed value class
 	 * @return the uninitialized default instance of clz
 	 */
 	public native <V> V uninitializedDefaultValue(Class<?> clz);
 
 	/**
-	 * Determines the size of the header for a specified primitive class
+	 * Determines the size of the header for a specified value class
 	 *
-	 * @param clz the specified primitive class
+	 * @param clz the specified value class
 	 * @return the size of the header for clz
 	 */
 	public native <V> long valueHeaderSize(Class<V> clz);
@@ -6632,7 +6632,7 @@ public final class Unsafe {
 	private native boolean isFieldAtOffsetFlattened(Class<?> clz, long offset);
 
 	/**
-	 * Atomically sets the primitive type at offset in obj if the parameter v1
+	 * Atomically sets the value type at offset in obj if the parameter v1
 	 * matches the existing value in the object.
 	 * The get operation has memory semantics of getVolatile.
 	 * The set operation has the memory semantics of setVolatile.
@@ -6660,7 +6660,7 @@ public final class Unsafe {
 	}
 
 	/**
-	 * Atomically sets the primitive type at offset in obj if the parameter v1
+	 * Atomically sets the value type at offset in obj if the parameter v1
 	 * matches the existing value in the object.
 	 * The get operation has memory semantics of getVolatile.
 	 * The set operation has the memory semantics of setVolatile.
@@ -6688,7 +6688,7 @@ public final class Unsafe {
 	}
 
 	/**
-	 * Atomically sets the primitive type at offset in obj if the parameter v1
+	 * Atomically sets the value type at offset in obj if the parameter v1
 	 * matches the existing value in the object.
 	 * The get operation has memory semantics of getAcquire.
 	 * The set operation has the memory semantics of set.
@@ -6705,7 +6705,7 @@ public final class Unsafe {
 	}
 
 	/**
-	 * Atomically sets the primitive type at offset in obj if the parameter v1
+	 * Atomically sets the value type at offset in obj if the parameter v1
 	 * matches the existing value in the object.
 	 * The get operation has memory semantics of get.
 	 * The set operation has the memory semantics of setRelease.
@@ -6722,7 +6722,7 @@ public final class Unsafe {
 	}
 
 	/**
-	 * Sets the primitive type at offset in obj if the parameter v1
+	 * Sets the value type at offset in obj if the parameter v1
 	 * matches the existing value in the object.
 	 * The get operation has memory semantics of get.
 	 * The set operation has the memory semantics of set.
@@ -6739,7 +6739,7 @@ public final class Unsafe {
 	}
 
 	/**
-	 * Sets the primitive type at offset in obj if the parameter v1
+	 * Sets the value type at offset in obj if the parameter v1
 	 * matches the existing value in the object.
 	 * The get operation has memory semantics of getAcquire.
 	 * The set operation has the memory semantics of set.
@@ -6756,7 +6756,7 @@ public final class Unsafe {
 	}
 
 	/**
-	 * Sets the primitive type at offset in obj if the parameter v1
+	 * Sets the value type at offset in obj if the parameter v1
 	 * matches the existing value in the object.
 	 * The get operation has memory semantics of get.
 	 * The set operation has the memory semantics of setRelease.
@@ -6773,7 +6773,7 @@ public final class Unsafe {
 	}
 
 	/**
-	 * Sets the primitive type at offset in obj if the parameter v1
+	 * Sets the value type at offset in obj if the parameter v1
 	 * matches the existing value in the object.
 	 * The get operation has memory semantics of get.
 	 * The set operation has the memory semantics of set.
@@ -6790,12 +6790,12 @@ public final class Unsafe {
 	}
 
 	/**
-	 * Atomically retrieves the primitive type in the obj parameter referenced by offset.
+	 * Atomically retrieves the value type in the obj parameter referenced by offset.
 	 *
-	 * @param obj object from which to retrieve the primitive type
-	 * @param offset position of the primitive type in obj
-	 * @param clz the class of primitive type to return
-	 * @return primitive type stored in obj
+	 * @param obj object from which to retrieve the value type
+	 * @param offset position of the value type in obj
+	 * @param clz the class of value type to return
+	 * @return value type stored in obj
 	 */
 	public final <V> Object getValueVolatile(Object obj, long offset, Class<?> clz) {
 		synchronized (inlineTypesLock) {
@@ -6804,13 +6804,13 @@ public final class Unsafe {
 	}
 
 	/**
-	 * Atomically sets the value of the primitive type in the obj parameter at memory offset.
+	 * Atomically sets the value of the value type in the obj parameter at memory offset.
 	 * This is a non-volatile operation.
 	 *
-	 * @param obj object into which to store the primitive type
-	 * @param offset position of the primitive type in obj
-	 * @param clz the class of the primitive type to store in obj
-	 * @param v primitive type to store in obj
+	 * @param obj object into which to store the value type
+	 * @param offset position of the value type in obj
+	 * @param clz the class of the value type to store in obj
+	 * @param v value type to store in obj
 	 */
 	public final <V> void putValueVolatile(Object obj, long offset, Class<?> clz, V v) {
 		synchronized (inlineTypesLock) {
@@ -6819,68 +6819,68 @@ public final class Unsafe {
 	}
 
 	/**
-	 * Retrieves the primitive type in the obj parameter referenced by offset using acquire semantics.
+	 * Retrieves the value type in the obj parameter referenced by offset using acquire semantics.
 	 * Preceding loads will not be reordered with subsequent loads/stores.
 	 *
-	 * @param obj object from which to retrieve the primitive type
-	 * @param offset position of the primitive type in obj
-	 * @param clz the class of primitive type to return
-	 * @return primitive type stored in obj
+	 * @param obj object from which to retrieve the value type
+	 * @param offset position of the value type in obj
+	 * @param clz the class of value type to return
+	 * @return value type stored in obj
 	 */
 	public final <V> Object getValueAcquire(Object obj, long offset, Class<?> clz) {
 		return getValueVolatile(obj, offset, clz);
 	}
 
 	/**
-	 * Sets the value of primitive type in the obj parameter at memory offset using acquire semantics.
+	 * Sets the value of value type in the obj parameter at memory offset using acquire semantics.
 	 * Preceding stores will not be reordered with subsequent loads/stores.
 	 *
-	 * @param obj object into which to store the primitive type
-	 * @param offset position of the primitive type in obj
-	 * @param clz the class of the primitive type to store in obj
-	 * @param v primitive type to store in obj
+	 * @param obj object into which to store the value type
+	 * @param offset position of the value type in obj
+	 * @param clz the class of the value type to store in obj
+	 * @param v value type to store in obj
 	 */
 	public final <V> void putValueRelease(Object obj, long offset, Class<?> clz, V v) {
 		putValueVolatile(obj, offset, clz, v);
 	}
 
 	/**
-	 * Retrieves the primitive type in the obj parameter referenced by offset.
+	 * Retrieves the value type in the obj parameter referenced by offset.
 	 * The operation is in program order, but does enforce ordering with respect to other threads.
 	 *
-	 * @param obj object from which to retrieve the primitive type
-	 * @param offset position of the primitive type in obj
-	 * @param clz the class of primitive type to return
-	 * @return primitive type stored in obj
+	 * @param obj object from which to retrieve the value type
+	 * @param offset position of the value type in obj
+	 * @param clz the class of value type to return
+	 * @return value type stored in obj
 	 */
 	public final <V> Object getValueOpaque(Object obj, long offset, Class<?> clz) {
 		return getValueVolatile(obj, offset, clz);
 	}
 
 	/**
-	 * Sets the value of primitive type in the obj parameter at memory offset.
+	 * Sets the value of value type in the obj parameter at memory offset.
 	 * The operation is in program order, but does enforce ordering with respect to other threads.
 	 *
-	 * @param obj object into which to store the primitive type
-	 * @param offset position of the primitive type in obj
-	 * @param clz the class of the primitive type to store in obj
-	 * @param v primitive type to store in obj
+	 * @param obj object into which to store the value type
+	 * @param offset position of the value type in obj
+	 * @param clz the class of the value type to store in obj
+	 * @param v value type to store in obj
 	 */
 	public final <V> void putValueOpaque(Object obj, long offset, Class<?> clz, V v) {
 		putValueVolatile(obj, offset, clz, v);
 	}
 
 	/**
-	 * Atomically sets the primitive type at offset in obj
+	 * Atomically sets the value type at offset in obj
 	 * and returns the value of the field prior to the update.
 	 * The get operation has the memory semantics of getVolatile.
 	 * The set operation has the memory semantics of setVolatile.
 	 *
-	 * @param obj object into which to store the primitive type
-	 * @param offset position of the primitive type in obj
-	 * @param clz the class of the primitive type to store in obj
-	 * @param v primitive type to store in obj
-	 * @return primitive type in obj at offset before update
+	 * @param obj object into which to store the value type
+	 * @param offset position of the value type in obj
+	 * @param clz the class of the value type to store in obj
+	 * @param v value type to store in obj
+	 * @return value type in obj at offset before update
 	 */
 	public final <V> Object getAndSetValue(Object obj, long offset, Class<?> clz, V v) {
 		Object valueAtOffset = null;
@@ -6898,32 +6898,32 @@ public final class Unsafe {
 	}
 
 	/**
-	 * Atomically sets the primitive type at offset in obj
+	 * Atomically sets the value type at offset in obj
 	 * and returns the value of the field prior to the update.
 	 * The get operation has the memory semantics of get.
 	 * The set operation has the memory semantics of setRelease.
 	 *
-	 * @param obj object into which to store the primitive type
-	 * @param offset position of the primitive type in obj
-	 * @param clz the class of the primitive type to store in obj
-	 * @param v primitive type to store in obj
-	 * @return primitive type in obj at offset before update
+	 * @param obj object into which to store the value type
+	 * @param offset position of the value type in obj
+	 * @param clz the class of the value type to store in obj
+	 * @param v value type to store in obj
+	 * @return value type in obj at offset before update
 	 */
 	public final <V> Object getAndSetValueRelease(Object obj, long offset, Class<?> clz, V v) {
 		return getAndSetValue(obj, offset, clz, v);
 	}
 
 	/**
-	 * Atomically sets the primitive type at offset in obj
+	 * Atomically sets the value type at offset in obj
 	 * and returns the value of the field prior to the update.
 	 * The get operation has the memory semantics of getAcquire.
 	 * The set operation has the memory semantics of set.
 	 *
-	 * @param obj object into which to store the primitive type
-	 * @param offset position of the primitive type in obj
-	 * @param clz the class of the primitive type to store in obj
-	 * @param v primitive type to store in obj
-	 * @return primitive type in obj at offset before update
+	 * @param obj object into which to store the value type
+	 * @param offset position of the value type in obj
+	 * @param clz the class of the value type to store in obj
+	 * @param v value type to store in obj
+	 * @return value type in obj at offset before update
 	 */
 	public final <V> Object getAndSetValueAcquire(Object obj, long offset, Class<?> clz, V v) {
 		return getAndSetValue(obj, offset, clz, v);
@@ -7065,16 +7065,6 @@ public final class Unsafe {
 		return weakCompareAndSetReference(obj, offset, compareValue, setValue);
 	}
 
-	public Object getReferenceVolatile(Object obj, long offset, Class<?> clz) {
-		// ToDo: this is a temporary implementation - https://github.com/eclipse-openj9/openj9/issues/13614
-		return getReferenceVolatile(obj, offset);
-	}
-
-	public Object getReference(Object obj, long offset, Class<?> clz) {
-		// ToDo: this is a temporary implementation - https://github.com/eclipse-openj9/openj9/issues/13614
-		return getReference(obj, offset);
-	}
-
 	public <V> V makePrivateBuffer(V v) {
 		// ToDo: this is a temporary implementation - https://github.com/eclipse-openj9/openj9/issues/13614
 		return null;
@@ -7085,9 +7075,16 @@ public final class Unsafe {
 		return null;
 	}
 
-	private static InternalError OpenJDKCompileStubThrowError() {
-		// ToDo: https://github.com/eclipse-openj9/openj9/issues/13614
-		throw new InternalError("Compile stub invoked! Apart from deliberate reflective access, this should not happen. Please report this to the project so it can be addressed");	//$NON-NLS-1$
+	/**
+	 * This method will always return false since OpenJ9 does not use null markers.
+	 * @return false
+	 */
+	public boolean hasNullMarker(Field f) {
+		return false;
+	}
+
+	public int nullMarkerOffset(Field f) {
+		throw new Error("jdk.internal.misc.Unsafe.nullMarkerOffset unimplemented"); //$NON-NLS-1$
 	}
 	/*[ENDIF] INLINE-TYPES */
 }
