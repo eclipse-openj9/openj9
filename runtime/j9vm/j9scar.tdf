@@ -387,3 +387,7 @@ TraceExit=Trc_SC_VirtualThreadStart_Exit Overhead=1 Level=3 Template="thread = %
 
 TraceEntry=Trc_SC_VirtualThreadEnd_Entry Overhead=1 Level=3 Template="thread = %p"
 TraceExit=Trc_SC_VirtualThreadEnd_Exit Overhead=1 Level=3 Template="thread = %p"
+
+TraceEvent=Trc_SC_libName_no_prefix NoEnv Overhead=1 Level=3 Test Template="Skip JDK17+ libName(%s) without a lib prefix"
+TraceEvent=Trc_SC_libName_no_extension NoEnv Overhead=1 Level=3 Test Template="Skip JDK17+ libName(%s) without a file extension"
+TraceEvent=Trc_SC_allocate_memory_failed NoEnv Overhead=1 Level=2 Test Template="j9mem_allocate_memory(%zu) for libNameNotDecorated failed"
