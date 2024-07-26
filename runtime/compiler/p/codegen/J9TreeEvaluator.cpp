@@ -6483,7 +6483,7 @@ TR::Register *J9::Power::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeG
                   tmp5Reg, tmp4Reg, conditions, needZeroInit, cg);
 
 #ifdef J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION
-         if (TR::Compiler->om.isIndexableDataAddrPresent())
+         if (TR::Compiler->om.isOffHeapAllocationEnabled())
             {
             /* Here we'll update dataAddr slot for both fixed and variable length arrays. Fixed length arrays are
              * simple as we just need to check first child of the node for array size. For variable length arrays,

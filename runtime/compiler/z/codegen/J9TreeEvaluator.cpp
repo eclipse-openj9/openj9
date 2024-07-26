@@ -4770,8 +4770,8 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    TR::LabelSymbol *oolFailLabel = generateLabelSymbol(cg);
 
 #if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
-   bool isIndexableDataAddrPresent = TR::Compiler->om.isIndexableDataAddrPresent();
-   TR::LabelSymbol *populateFirstDimDataAddrSlot = isIndexableDataAddrPresent ? generateLabelSymbol(cg) : NULL;
+   bool isOffHeapAllocationEnabled = TR::Compiler->om.isOffHeapAllocationEnabled();
+   TR::LabelSymbol *populateFirstDimDataAddrSlot = isOffHeapAllocationEnabled ? generateLabelSymbol(cg) : NULL;
 #endif /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
 
    // oolJumpLabel is a common point that all branches will jump to. From this label, we branch to OOL code.
@@ -4851,7 +4851,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
       }
 
 #if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
-   if (isIndexableDataAddrPresent)
+   if (isOffHeapAllocationEnabled)
       {
       TR_ASSERT_FATAL_WITH_NODE(node,
          (TR::Compiler->om.compressObjectReferences()
@@ -4961,7 +4961,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    TR::Register *temp3Reg = cg->allocateRegister();
 
 #if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
-   if (isIndexableDataAddrPresent)
+   if (isOffHeapAllocationEnabled)
       {
       // Populate dataAddr slot for 2nd dimension zero size array.
       generateRXInstruction(cg,
@@ -5001,7 +5001,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CL, node, firstDimLenReg, 0, TR::InstOpCode::COND_BNE, loopLabel, false);
 
 #if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
-   if (isIndexableDataAddrPresent)
+   if (isOffHeapAllocationEnabled)
       {
       // No offset is needed since 1st dimension array is contiguous.
       generateRRInstruction(cg, TR::InstOpCode::getXORRegOpCode(), node, temp1Reg, temp1Reg);
@@ -5029,7 +5029,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, oolFailLabel);
 
 #if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
-   if (isIndexableDataAddrPresent)
+   if (isOffHeapAllocationEnabled)
       {
       /* Populate dataAddr slot of 1st dimension array. Arrays of non-zero size
        * use contiguous header layout while zero size arrays use discontiguous header layout.
@@ -11015,7 +11015,7 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
                   resReg, enumReg, dataSizeReg, litPoolBaseReg, conditions, cg);
 
 #ifdef J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION
-         if (TR::Compiler->om.isIndexableDataAddrPresent())
+         if (TR::Compiler->om.isOffHeapAllocationEnabled())
             {
             /* Here we'll update dataAddr slot for both fixed and variable length arrays. Fixed length arrays are
              * simple as we just need to check first child of the node for array size. For variable length arrays

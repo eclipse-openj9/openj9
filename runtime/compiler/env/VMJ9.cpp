@@ -4084,7 +4084,7 @@ TR_J9VMBase::initializeLocalArrayHeader(TR::Compilation * comp, TR::Node * alloc
    prevTree = TR::TreeTop::create(comp, prevTree, node);
 
 #if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
-   if (TR::Compiler->om.isIndexableDataAddrPresent())
+   if (TR::Compiler->om.isOffHeapAllocationEnabled())
       {
       // -----------------------------------------------------------------------------------
       // Initialize data address field
