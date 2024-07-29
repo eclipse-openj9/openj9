@@ -556,16 +556,16 @@ final class Access implements JavaLangAccess {
 	public long stringConcatHelperPrepend(long indexCoder, byte[] buf, String value) {
 		return StringConcatHelper.prepend(indexCoder, buf, value);
 	}
+
+	@Override
+	public int stringSize(long x) {
+		return Long.stringSize(x);
+	}
 /*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 	@Override
 	public long stringConcatMix(long lengthCoder, char value) {
 		return StringConcatHelper.mix(lengthCoder, value);
-	}
-
-	@Override
-	public int stringSize(long x) {
-		return Long.stringSize(x);
 	}
 
 	/*[IF !INLINE-TYPES]*/
