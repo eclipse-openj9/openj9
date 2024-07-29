@@ -595,6 +595,7 @@ final class Access implements JavaLangAccess {
 		return Thread.currentCarrierThread();
 	}
 
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	public <V> V executeOnCarrierThread(Callable<V> task) throws Exception {
 		V result;
 		Thread currentThread = Thread.currentThread();
@@ -611,6 +612,7 @@ final class Access implements JavaLangAccess {
 		}
 		return result;
 	}
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 	public Continuation getContinuation(Thread thread) {
 		return thread.getContinuation();
