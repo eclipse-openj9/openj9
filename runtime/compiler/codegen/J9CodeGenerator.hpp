@@ -472,6 +472,16 @@ public:
    void setSupportsInlineStringLatin1Inflate() { _j9Flags.set(SupportsInlineStringLatin1Inflate); }
 
    /** \brief
+   *    Determines whether the code generator supports inlining of java/lang/StringUTF16.compress([CI[BII)
+   */
+   bool getSupportsInlineStringUTF16CompressCharArray() { return _j9Flags.testAny(SupportsInlineStringUTF16CompressCharArray); }
+
+   /** \brief
+   *    The code generator supports inlining of java/lang/StringUTF16.compress([CI[BII)
+   */
+   void setSupportsInlineStringUTF16CompressCharArray() { _j9Flags.set(SupportsInlineStringUTF16CompressCharArray); }
+
+   /** \brief
    *    Determines whether the code generator supports inlining of java_util_concurrent_ConcurrentLinkedQueue_tm*
    *    methods
    */
@@ -677,6 +687,7 @@ private:
       SavesNonVolatileGPRsForGC                           = 0x00000800,
       SupportsInlineVectorizedMismatch                    = 0x00001000,
       SupportsInlineVectorizedHashCode                    = 0x00002000,
+      SupportsInlineStringUTF16CompressCharArray          = 0x00004000, /*! codegen inlining of Java StringUTF16.compress([CI[BII) */
       };
 
    flags32_t _j9Flags;

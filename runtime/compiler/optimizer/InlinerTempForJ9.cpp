@@ -5518,6 +5518,14 @@ TR_J9InlinerPolicy::supressInliningRecognizedInitialCallee(TR_CallSite* callsite
             return true;
             }
          break;
+#if JAVA_SPEC_VERSION >= 11
+      case TR::java_lang_StringUTF16_compress_charArray:
+         if (comp->cg()->getSupportsInlineStringUTF16CompressCharArray())
+            {
+            return true;
+            }
+         break;
+#endif /* JAVA_SPEC_VERSION >= 11 */
       default:
          break;
       }

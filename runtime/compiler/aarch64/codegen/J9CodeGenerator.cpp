@@ -99,6 +99,11 @@ J9::ARM64::CodeGenerator::initialize()
       {
       cg->setSupportsInlineStringLatin1Inflate();
       }
+   static bool disableInlineStringUTF16CompressCharArray = feGetEnv("TR_disableInlineStringUTF16CompressCharArray") != NULL;
+   if ((!TR::Compiler->om.canGenerateArraylets()) && (!disableInlineStringUTF16CompressCharArray) && !TR::Compiler->om.isOffHeapAllocationEnabled())
+      {
+      cg->setSupportsInlineStringUTF16CompressCharArray();
+      }
    if (comp->fej9()->hasFixedFrameC_CallingConvention())
       cg->setHasFixedFrameC_CallingConvention();
    }

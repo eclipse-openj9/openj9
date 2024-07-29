@@ -3236,6 +3236,7 @@ void TR_ResolvedJ9Method::construct()
       { x(TR::java_lang_StringUTF16_compareCodePointCI,                       "compareCodePointCI", "(II)I")},
       { x(TR::java_lang_StringUTF16_compareToCIImpl,                          "compareToCIImpl",    "([BII[BII)I")},
       { x(TR::java_lang_StringUTF16_compareValues,                            "compareValues",      "([B[BII)I")},
+      { x(TR::java_lang_StringUTF16_compress_charArray,                       "compress",           "([CI[BII)I")},
       { x(TR::java_lang_StringUTF16_getChar,                                  "getChar",            "([BI)C")},
       { x(TR::java_lang_StringUTF16_indexOf,                                  "indexOf",            "([BI[BII)I")},
       { x(TR::java_lang_StringUTF16_indexOfCharUnsafe,                        "indexOfCharUnsafe",  "([BIII)I")},

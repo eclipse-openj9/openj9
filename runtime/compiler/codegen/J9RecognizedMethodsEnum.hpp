@@ -240,6 +240,7 @@
    java_lang_StringUTF16_compareCodePointCI,
    java_lang_StringUTF16_compareToCIImpl,
    java_lang_StringUTF16_compareValues,
+   java_lang_StringUTF16_compress_charArray,
    java_lang_StringUTF16_getChar,
    java_lang_StringUTF16_indexOf,
    java_lang_StringUTF16_indexOfCharUnsafe,

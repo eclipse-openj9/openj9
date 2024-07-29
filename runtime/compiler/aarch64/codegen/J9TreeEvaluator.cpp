@@ -6756,6 +6756,175 @@ static TR::Register *inlineStringLatin1Inflate(TR::Node *node, TR::CodeGenerator
    return NULL;
    }
 
+#if JAVA_SPEC_VERSION >= 11
+static TR::Register *inlineStringUTF16compressCharArray(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR_ASSERT_FATAL(!TR::Compiler->om.canGenerateArraylets(), "StringUTF16.compress intrinsic is not supported with arraylets");
+   TR_ASSERT_FATAL_WITH_NODE(node, node->getNumChildren() == 5, "Wrong number of children in inlineStringUTF16compressCharArray");
+
+   TR::Node *srcArrayNode  = node->getChild(0);
+   TR::Node *srcOffsetNode = node->getChild(1);
+   TR::Node *dstArrayNode  = node->getChild(2);
+   TR::Node *dstOffsetNode = node->getChild(3);
+   TR::Node *lengthNode    = node->getChild(4);
+
+   TR::Register *srcArrayReg, *srcOffsetReg, *dstArrayReg, *dstOffsetReg, *lengthReg, *resultReg;
+   bool stopUsingCopyReg1, stopUsingCopyReg2, stopUsingCopyReg3, stopUsingCopyReg4;
+
+   stopUsingCopyReg1 = TR::TreeEvaluator::stopUsingCopyReg(srcArrayNode, srcArrayReg, cg);
+   stopUsingCopyReg2 = TR::TreeEvaluator::stopUsingCopyReg(srcOffsetNode, srcOffsetReg, cg);
+   stopUsingCopyReg3 = TR::TreeEvaluator::stopUsingCopyReg(dstArrayNode, dstArrayReg, cg);
+   stopUsingCopyReg4 = TR::TreeEvaluator::stopUsingCopyReg(dstOffsetNode, dstOffsetReg, cg);
+   lengthReg = cg->evaluate(lengthNode);
+   if (lengthNode->getReferenceCount() > 1)
+      {
+      resultReg = cg->allocateRegister();
+      generateMovInstruction(cg, node, resultReg, lengthReg);
+      }
+   else
+      {
+      resultReg = lengthReg;
+      }
+
+   TR::Register *tmpReg = cg->allocateRegister();
+   TR::Register *vtmp0Reg = cg->allocateRegister(TR_VRF);
+   TR::Register *vtmp1Reg = cg->allocateRegister(TR_VRF);
+   TR::Register *vtmp2Reg = cg->allocateRegister(TR_VRF);
+
+   TR::LabelSymbol *loopLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *compress8Label = generateLabelSymbol(cg);
+   TR::LabelSymbol *compress4Label = generateLabelSymbol(cg);
+   TR::LabelSymbol *compress2Label = generateLabelSymbol(cg);
+   TR::LabelSymbol *compress1Label = generateLabelSymbol(cg);
+   TR::LabelSymbol *failLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
+
+   // add header size
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, srcArrayReg, srcArrayReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, dstArrayReg, dstArrayReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+
+   // add offsets
+   if (!srcOffsetNode->getOpCode().isLoadConst() || srcOffsetNode->getInt() != 0)
+      {
+      generateTrg1Src2ShiftedInstruction(cg, TR::InstOpCode::addx, node, srcArrayReg, srcArrayReg, srcOffsetReg, TR::SH_LSL, 1);
+      }
+   if (!dstOffsetNode->getOpCode().isLoadConst() || dstOffsetNode->getInt() != 0)
+      {
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::addx, node, dstArrayReg, dstArrayReg, dstOffsetReg);
+      }
+   generateCompareImmInstruction(cg, node, lengthReg, 16, /* is64bit */ false);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, compress8Label, TR::CC_CC);
+   generateLogicalShiftRightImmInstruction(cg, node, tmpReg, lengthReg, 4, /* is64bit */ false);
+
+   // loop for copying 16 elements
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, loopLabel);
+   // load 16 char elements into 2 SIMD registers
+   generateTrg2MemInstruction(cg, TR::InstOpCode::vldppostq, node, vtmp0Reg, vtmp1Reg, TR::MemoryReference::createWithDisplacement(cg, srcArrayReg, 32));
+   // collect upper 8 bits of the char elements
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::vuzp2_16b, node, vtmp2Reg, vtmp0Reg, vtmp1Reg);
+   // fail when any one of them is non-zero
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::vumaxp4s, node, vtmp2Reg, vtmp2Reg, vtmp2Reg);
+   generateMovVectorElementToGPRInstruction(cg, TR::InstOpCode::umovxd, node, srcOffsetReg, vtmp2Reg, 0);
+   generateCompareBranchInstruction(cg, TR::InstOpCode::cbnzx, node, srcOffsetReg, failLabel);
+   // collect lower 8 bits of the char elements
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::vuzp1_16b, node, vtmp2Reg, vtmp0Reg, vtmp1Reg);
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subsimmw, node, tmpReg, tmpReg, 1);
+   // store 16 byte elements
+   generateMemSrc1Instruction(cg, TR::InstOpCode::vstrpostq, node, TR::MemoryReference::createWithDisplacement(cg, dstArrayReg, 16), vtmp2Reg);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, loopLabel, TR::CC_NE);
+
+   // residue
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, compress8Label);
+   generateTestImmInstruction(cg, node, lengthReg, 0x740, false, false); // 0x740 is immr:imms for 8
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, compress4Label, TR::CC_EQ);
+   // load 8 char elements into a SIMD register
+   generateTrg1MemInstruction(cg, TR::InstOpCode::vldrpostq, node, vtmp0Reg, TR::MemoryReference::createWithDisplacement(cg, srcArrayReg, 16));
+   // collect upper 8 bits of the char elements
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::vtrn2_16b, node, vtmp2Reg, vtmp0Reg, vtmp0Reg);
+   // fail when any one of them is non-zero
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::vumaxp4s, node, vtmp2Reg, vtmp2Reg, vtmp2Reg);
+   generateMovVectorElementToGPRInstruction(cg, TR::InstOpCode::umovxd, node, srcOffsetReg, vtmp2Reg, 0);
+   generateCompareBranchInstruction(cg, TR::InstOpCode::cbnzx, node, srcOffsetReg, failLabel);
+   // collect lower 8 bits of the char elements
+   generateTrg1Src1Instruction(cg, TR::InstOpCode::vxtn_8b, node, vtmp2Reg, vtmp0Reg);
+   // store 8 byte elements
+   generateMemSrc1Instruction(cg, TR::InstOpCode::vstrpostd, node, TR::MemoryReference::createWithDisplacement(cg, dstArrayReg, 8), vtmp2Reg);
+
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, compress4Label);
+   generateTestImmInstruction(cg, node, lengthReg, 0x780, false, false); // 0x780 is immr:imms for 4
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, compress2Label, TR::CC_EQ);
+   // load 4 char elements into a SIMD register
+   generateTrg1MemInstruction(cg, TR::InstOpCode::vldrpostd, node, vtmp0Reg, TR::MemoryReference::createWithDisplacement(cg, srcArrayReg, 8));
+   // collect upper 8 bits of the char elements
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::vtrn2_8b, node, vtmp2Reg, vtmp0Reg, vtmp0Reg);
+   // fail when any one of them is non-zero
+   generateMovVectorElementToGPRInstruction(cg, TR::InstOpCode::umovxd, node, srcOffsetReg, vtmp2Reg, 0);
+   generateCompareBranchInstruction(cg, TR::InstOpCode::cbnzx, node, srcOffsetReg, failLabel);
+   // collect lower 8 bits of the char elements
+   generateTrg1Src1Instruction(cg, TR::InstOpCode::vxtn_8b, node, vtmp2Reg, vtmp0Reg);
+   // store 4 byte elements
+   generateMemSrc1Instruction(cg, TR::InstOpCode::vstrposts, node, TR::MemoryReference::createWithDisplacement(cg, dstArrayReg, 4), vtmp2Reg);
+
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, compress2Label);
+   generateTestImmInstruction(cg, node, lengthReg, 0x7c0, false, false); // 0x7c0 is immr:imms for 2
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, compress1Label, TR::CC_EQ);
+   // load 2 char elements into a SIMD register
+   generateTrg1MemInstruction(cg, TR::InstOpCode::vldrposts, node, vtmp0Reg, TR::MemoryReference::createWithDisplacement(cg, srcArrayReg, 4));
+   // collect upper 8 bits of the char elements
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::vtrn2_8b, node, vtmp2Reg, vtmp0Reg, vtmp0Reg);
+   // fail when any one of them is non-zero
+   generateMovVectorElementToGPRInstruction(cg, TR::InstOpCode::umovws, node, srcOffsetReg, vtmp2Reg, 0);
+   generateCompareBranchInstruction(cg, TR::InstOpCode::cbnzw, node, srcOffsetReg, failLabel);
+   // collect lower 8 bits of the char elements
+   generateTrg1Src1Instruction(cg, TR::InstOpCode::vxtn_8b, node, vtmp2Reg, vtmp0Reg);
+   // store 2 byte elements
+   generateMemSrc1Instruction(cg, TR::InstOpCode::vstrposth, node, TR::MemoryReference::createWithDisplacement(cg, dstArrayReg, 2), vtmp2Reg);
+
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, compress1Label);
+   generateTestImmInstruction(cg, node, lengthReg, 0x000, false, false); // 0x000 is immr:imms for 1
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_EQ);
+   // load a char element
+   generateTrg1MemInstruction(cg, TR::InstOpCode::ldrhpost, node, tmpReg, TR::MemoryReference::createWithDisplacement(cg, srcArrayReg, 2));
+   // fail when it is 256 or larger
+   generateCompareImmInstruction(cg, node, tmpReg, 256, false); // 32-bit comparison
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, failLabel, TR::CC_CS);
+   // store the lower 8 bits
+   generateMemSrc1Instruction(cg, TR::InstOpCode::strbpost, node, TR::MemoryReference::createWithDisplacement(cg, dstArrayReg, 1), tmpReg);
+   generateLabelInstruction(cg, TR::InstOpCode::b, node, doneLabel);
+
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, failLabel);
+   // set 0 as the result
+   loadConstant64(cg, node, 0, resultReg);
+
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel);
+
+   node->setRegister(resultReg);
+
+   if (stopUsingCopyReg1)
+      {
+      cg->stopUsingRegister(srcArrayReg);
+      }
+   if (stopUsingCopyReg2)
+      {
+      cg->stopUsingRegister(srcOffsetReg);
+      }
+   if (stopUsingCopyReg3)
+      {
+      cg->stopUsingRegister(dstArrayReg);
+      }
+   if (stopUsingCopyReg4)
+      {
+      cg->stopUsingRegister(dstOffsetReg);
+      }
+   cg->stopUsingRegister(tmpReg);
+   cg->stopUsingRegister(vtmp0Reg);
+   cg->stopUsingRegister(vtmp1Reg);
+   cg->stopUsingRegister(vtmp2Reg);
+
+   return resultReg;
+   }
+#endif /* JAVA_SPEC_VERSION >= 11 */
+
 bool
 J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&resultReg)
    {
@@ -6876,6 +7045,12 @@ J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
                return true;
                }
             break;
+
+#if JAVA_SPEC_VERSION >= 11
+         case TR::java_lang_StringUTF16_compress_charArray:
+            resultReg = inlineStringUTF16compressCharArray(node, cg);
+            return true;
+#endif /* JAVA_SPEC_VERSION >= 11 */
 
          case TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z:
             {
