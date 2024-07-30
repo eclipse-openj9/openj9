@@ -4208,12 +4208,12 @@ hshelpUTRegister(J9JavaVM *vm)
  *
  * @param[in]     currentThread
  * @param[in]     jitEventData       event data describing redefined classes
- * @param[in]     extensionsEnabled  specifies if the extensions are enabled, always true if FSD is on
+ * @param[in]     extensionsEnabled  specifies if the extensions are enabled
  *
- * Notify the JIT of the changes. Enabled extensions mean that the JIT has
- * been initialized in FSD mode. We need to dump the whole code cache in such a case.
- * If the extensions have NOT been enabled we take the smarter code path and ask the
- * jit to patch the compiled code to account for the redefined classes.
+ * Notify the JIT of the changes. If FSD is enabled or there are HCR extensions, we
+ * need to dump the whole code cache.
+ * If neither is the case, we take the smarter code path and ask the jit to patch
+ * the compiled code to account for the redefined classes.
  */
 void
 jitClassRedefineEvent(J9VMThread * currentThread, J9JVMTIHCRJitEventData * jitEventData, UDATA extensionsEnabled, UDATA extensionsUsed)
@@ -4223,7 +4223,7 @@ jitClassRedefineEvent(J9VMThread * currentThread, J9JVMTIHCRJitEventData * jitEv
 
 	if (NULL != jitConfig) {
 		jitConfig->jitClassesRedefined(currentThread, jitEventData->classCount, (J9JITRedefinedClass*)jitEventData->data, extensionsUsed);
-		if (extensionsEnabled) {
+		if (extensionsEnabled || J9_FSD_ENABLED(vm)) {
 			/* Toss the whole code cache */
 			jitConfig->jitHotswapOccurred(currentThread);
 		}
