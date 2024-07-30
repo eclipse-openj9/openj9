@@ -3749,11 +3749,27 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
             intptr_t rtn = 0;
             compiler->getOptions()->setLogFileForClientOptions(compilationSequenceNumber);
             releaseVMAccess(vmThread);
+            if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+               TR_VerboseLog::writeLineLocked(
+                  TR_Vlog_JITServer,
+                  "Client compiling method %s @ %s [metaData=%p, startPC=%p] locally following remote compilation",
+                  compiler->signature(),
+                  compiler->getHotnessName(),
+                  metaData, (metaData) ? (void *)metaData->startPC : NULL
+                  );
             if ((rtn = compiler->compile()) != COMPILATION_SUCCEEDED)
                {
                TR_ASSERT(false, "Compiler returned non zero return code %d\n", rtn);
                compiler->failCompilation<TR::CompilationException>("Compilation Failure");
                }
+            if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+               TR_VerboseLog::writeLineLocked(
+                  TR_Vlog_JITServer,
+                  "Client successfully recompiled method %s @ %s [metaData=%p, startPC=%p] locally following remote compilation",
+                  compiler->signature(),
+                  compiler->getHotnessName(),
+                  metaData, (metaData) ? (void *)metaData->startPC : NULL
+                  );
             acquireVMAccessNoSuspend(vmThread);
             compiler->getOptions()->closeLogFileForClientOptions();
             }
