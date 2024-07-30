@@ -2972,15 +2972,6 @@ typedef struct J9VMGCSegregatedAllocationCacheEntry {
 
 #if defined(J9VM_GC_THREAD_LOCAL_HEAP)
 
-typedef struct J9GCVMInfo {
-	UDATA tlhSize;
-	UDATA tlhThreshold;
-} J9GCVMInfo;
-
-typedef struct J9GCThreadInfo {
-	UDATA foobar;
-} J9GCThreadInfo;
-
 typedef struct J9ModronThreadLocalHeap {
 	U_8* heapBase;
 	U_8* realHeapTop;
@@ -5841,7 +5832,6 @@ typedef struct J9JavaVM {
 	void* codertOldVMShutdown;
 	void* jitOldAboutToBootstrap;
 	void* jitOldVMShutdown;
-	struct J9GCVMInfo gcInfo;
 	void* gcExtensions;
 	UDATA gcAllocationType;
 	UDATA gcWriteBarrierType;
