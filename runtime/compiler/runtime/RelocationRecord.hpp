@@ -1566,6 +1566,34 @@ class TR_RelocationRecordValidateDynamicMethodFromCallsiteIndex : public TR_Relo
       uintptr_t signatureOffsetInSCC(TR_RelocationTarget *reloTarget);
    };
 
+class TR_RelocationRecordValidateHandleMethodFromCPIndex : public TR_RelocationRecord
+   {
+   public:
+      TR_RelocationRecordValidateHandleMethodFromCPIndex() {}
+      TR_RelocationRecordValidateHandleMethodFromCPIndex(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecord(reloRuntime, record) {}
+      virtual bool isValidationRecord() { return true; }
+      virtual const char *name() { return "TR_RelocationRecordValidateHandleMethodFromCPIndex"; }
+      virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget) {}
+      virtual TR_RelocationErrorCode applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
+
+      virtual void print(TR_RelocationRuntime *reloRuntime);
+
+      void setMethodID(TR_RelocationTarget *reloTarget, uint16_t methodID);
+      uint16_t methodID(TR_RelocationTarget *reloTarget);
+
+      void setBeholderID(TR_RelocationTarget *reloTarget, uint16_t beholderID);
+      uint16_t beholderID(TR_RelocationTarget *reloTarget);
+
+      void setCpIndex(TR_RelocationTarget *reloTarget, int32_t cpIndex);
+      int32_t cpIndex(TR_RelocationTarget *reloTarget);
+
+      void setSignatureLength(TR_RelocationTarget *reloTarget, uint32_t signatureLength);
+      uint32_t signatureLength(TR_RelocationTarget *reloTarget);
+
+      void setSignatureOffsetInSCC(TR_RelocationTarget *reloTarget, uintptr_t signatureOffsetInSCC);
+      uintptr_t signatureOffsetInSCC(TR_RelocationTarget *reloTarget);
+   };
+
 class TR_RelocationRecordValidateStackWalkerMaySkipFrames : public TR_RelocationRecord
    {
    public:

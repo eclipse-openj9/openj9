@@ -7076,6 +7076,16 @@ TR_ResolvedJ9Method::getResolvedHandleMethod(TR::Compilation * comp, I_32 cpInde
       int32_t signatureLength;
       char * linkToStaticSignature = _fe->getSignatureForLinkToStaticForInvokeHandle(comp, signature, signatureLength);
       result = _fe->createResolvedMethodWithSignature(comp->trMemory(), dummyInvoke, NULL, linkToStaticSignature, signatureLength, this);
+
+      if (comp->compileRelocatableCode())
+         {
+         TR_ASSERT_FATAL(comp->getOption(TR_UseSymbolValidationManager), "invokeHandle not supported without SVM!\n");
+         comp->getSymbolValidationManager()->addHandleMethodFromCPIndex(
+            result->getNonPersistentIdentifier(),
+            cp(),
+            cpIndex,
+            static_cast<TR_ResolvedJ9Method *>(result)->_signature);
+         }
       }
 #else
 

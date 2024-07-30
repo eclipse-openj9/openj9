@@ -138,3 +138,4 @@ exact type of the API class for each relocation kind can be found in
 |`TR_StartPC`|Relocates the startPC of the method being compiled. Only implemented and used on Power.|
 |`TR_MethodEnterExitHookAddress`|Relocates the address of the method enter or exit hook.|
 |`TR_ValidateDynamicMethodFromCallsiteIndex`|Validates an unresolved dynamic method from callsite index.|
+|`TR_ValidateHandleMethodFromCPIndex`|Validates an unresolved handle method from CP index.|

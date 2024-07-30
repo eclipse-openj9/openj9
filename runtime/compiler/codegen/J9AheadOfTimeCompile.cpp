@@ -1371,6 +1371,26 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          }
          break;
 
+      case TR_ValidateHandleMethodFromCPIndex:
+         {
+         auto *hmciRecord = reinterpret_cast<TR_RelocationRecordValidateHandleMethodFromCPIndex *>(reloRecord);
+
+         TR::HandleMethodFromCPIndex *svmRecord = reinterpret_cast<TR::HandleMethodFromCPIndex *>(relocation->getTargetAddress());
+
+         J9UTF8 *signature = svmRecord->_signature;
+         uint32_t signatureLength;
+         const char * signatureChars = utf8Data(signature, signatureLength);
+
+         uintptr_t signatureOffset = fej9->sharedCache()->storeStringToSCC(signatureChars, signatureLength);
+
+         hmciRecord->setMethodID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_method));
+         hmciRecord->setBeholderID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_beholder));
+         hmciRecord->setCpIndex(reloTarget, svmRecord->_cpIndex);
+         hmciRecord->setSignatureLength(reloTarget, signatureLength);
+         hmciRecord->setSignatureOffsetInSCC(reloTarget, signatureOffset);
+         }
+         break;
+
       default:
          TR_ASSERT(false, "Unknown relo type %d!\n", kind);
          comp->failCompilation<J9::AOTRelocationRecordGenerationFailure>("Unknown relo type %d!\n", kind);
@@ -2329,6 +2349,25 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
                      dmciRecord->callsiteIndex(reloTarget),
                      dmciRecord->signatureLength(reloTarget),
                      dmciRecord->signatureOffsetInSCC(reloTarget));
+            }
+         }
+         break;
+
+      case TR_ValidateHandleMethodFromCPIndex:
+         {
+         auto *hmciRecord = reinterpret_cast<TR_RelocationRecordValidateHandleMethodFromCPIndex *>(reloRecord);
+
+         self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            traceMsg(
+               self()->comp(),
+               "\n Validate Dynamic Method From Callsite Index: methodID=%d, beholderID=%d, cpIndex=%d, signatureLength=%d, signatureOffsetInSCC=%p ",
+                     (uint32_t)hmciRecord->methodID(reloTarget),
+                     (uint32_t)hmciRecord->beholderID(reloTarget),
+                     hmciRecord->cpIndex(reloTarget),
+                     hmciRecord->signatureLength(reloTarget),
+                     hmciRecord->signatureOffsetInSCC(reloTarget));
             }
          }
          break;
