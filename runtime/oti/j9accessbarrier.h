@@ -124,24 +124,38 @@ typedef struct J9IndexableObject* mm_j9array_t;
 		: (&((elemType*)((((J9IndexableObjectContiguousFull *)(array)) + 1)))[index]))
 
 #if defined(J9VM_ENV_DATA64)
-#define J9JAVAARRAYCONTIGUOUS_WITH_DATAADDRESS_EA(vmThread, array, index, elemType) \
+#define J9JAVAARRAYCONTIGUOUS_WITH_DATAADDRESS_VIRTUALLARGEOBJECTHEAPDISABLED_EA(vmThread, array, index, elemType) \
+	(J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) \
+		? (&((elemType*)((((J9IndexableObjectWithDataAddressContiguousCompressed *)(array)) + 1)))[index]) \
+		: (&((elemType*)((((J9IndexableObjectWithDataAddressContiguousFull *)(array)) + 1)))[index]))
+
+#define J9JAVAARRAYCONTIGUOUS_WITH_DATAADDRESS_VIRTUALLARGEOBJECTHEAPDISABLED_EA_VM(javaVM, array, index, elemType) \
+	(J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM) \
+		? (&((elemType*)((((J9IndexableObjectWithDataAddressContiguousCompressed *)(array)) + 1)))[index]) \
+		: (&((elemType*)((((J9IndexableObjectWithDataAddressContiguousFull *)(array)) + 1)))[index]))
+
+#define J9JAVAARRAYCONTIGUOUS_WITH_DATAADDRESS_VIRTUALLARGEOBJECTHEAPENABLED_EA(vmThread, array, index, elemType) \
 	(J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) \
 		? (&((elemType*)((((J9IndexableObjectWithDataAddressContiguousCompressed *)(array))->dataAddr)))[index]) \
 		: (&((elemType*)((((J9IndexableObjectWithDataAddressContiguousFull *)(array))->dataAddr)))[index]))
 
-#define J9JAVAARRAYCONTIGUOUS_WITH_DATAADDRESS_EA_VM(javaVM, array, index, elemType) \
+#define J9JAVAARRAYCONTIGUOUS_WITH_DATAADDRESS_VIRTUALLARGEOBJECTHEAPENABLED_EA_VM(javaVM, array, index, elemType) \
 	(J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM) \
 		? (&((elemType*)((((J9IndexableObjectWithDataAddressContiguousCompressed *)(array))->dataAddr)))[index]) \
 		: (&((elemType*)((((J9IndexableObjectWithDataAddressContiguousFull *)(array))->dataAddr)))[index]))
 
 #define J9JAVAARRAYCONTIGUOUS_EA(vmThread, array, index, elemType) \
 	(((vmThread)->isIndexableDataAddrPresent) \
-		? J9JAVAARRAYCONTIGUOUS_WITH_DATAADDRESS_EA(vmThread, array, index, elemType) \
+		? (((vmThread)->isVirtualLargeObjectHeapEnabled) \
+				? J9JAVAARRAYCONTIGUOUS_WITH_DATAADDRESS_VIRTUALLARGEOBJECTHEAPENABLED_EA(vmThread, array, index, elemType) \
+				: J9JAVAARRAYCONTIGUOUS_WITH_DATAADDRESS_VIRTUALLARGEOBJECTHEAPDISABLED_EA(vmThread, array, index, elemType)) \
 		: J9JAVAARRAYCONTIGUOUS_WITHOUT_DATAADDRESS_EA(vmThread, array, index, elemType))
 
 #define J9JAVAARRAYCONTIGUOUS_EA_VM(javaVM, array, index, elemType) \
 	(((javaVM)->isIndexableDataAddrPresent) \
-		? J9JAVAARRAYCONTIGUOUS_WITH_DATAADDRESS_EA_VM(javaVM, array, index, elemType) \
+		? (((javaVM)->isVirtualLargeObjectHeapEnabled) \
+				? J9JAVAARRAYCONTIGUOUS_WITH_DATAADDRESS_VIRTUALLARGEOBJECTHEAPENABLED_EA_VM(javaVM, array, index, elemType) \
+				: J9JAVAARRAYCONTIGUOUS_WITH_DATAADDRESS_VIRTUALLARGEOBJECTHEAPDISABLED_EA_VM(javaVM, array, index, elemType)) \
 		: J9JAVAARRAYCONTIGUOUS_WITHOUT_DATAADDRESS_EA_VM(javaVM, array, index, elemType))
 
 #else /* defined(J9VM_ENV_DATA64) */
