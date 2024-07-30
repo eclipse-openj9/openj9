@@ -50,6 +50,9 @@ J9::StaticSymbol::makeCallSiteTableEntry(int32_t callSiteIndex)
    TR_ASSERT(self()->getDataType() == TR::Address, "CallSiteTableEntries have historically had TR::Address as data type");
    _callSiteIndex = callSiteIndex;
    self()->setCallSiteTableEntry();
+
+   // Needed so that the relo infra does not think this is a static field address
+   self()->setNotDataAddress();
    }
 
 

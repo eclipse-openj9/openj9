@@ -247,6 +247,19 @@ void TR::S390EncodingRelocation::addRelocation(TR::CodeGenerator *cg, uint8_t *c
          line,
          node);
       }
+   else if (_reloType==TR_CallsiteTableEntryAddress)
+      {
+      cg->addExternalRelocation(
+         TR::ExternalRelocation::create(
+            cursor,
+            (uint8_t *)_symbolReference,
+            NULL,
+            TR_CallsiteTableEntryAddress,
+            cg),
+         file,
+         line,
+         node);
+      }
    else
       {
       TR_ASSERT(0,"relocation type [%d] not handled yet", _reloType);
