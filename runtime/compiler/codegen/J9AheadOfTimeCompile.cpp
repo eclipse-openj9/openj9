@@ -1351,6 +1351,26 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          }
          break;
 
+      case TR_ValidateDynamicMethodFromCallsiteIndex:
+         {
+         auto *dmciRecord = reinterpret_cast<TR_RelocationRecordValidateDynamicMethodFromCallsiteIndex *>(reloRecord);
+
+         TR::DynamicMethodFromCallsiteIndexRecord *svmRecord = reinterpret_cast<TR::DynamicMethodFromCallsiteIndexRecord *>(relocation->getTargetAddress());
+
+         J9UTF8 *signature = svmRecord->_signature;
+         uint32_t signatureLength;
+         const char * signatureChars = utf8Data(signature, signatureLength);
+
+         uintptr_t signatureOffset = fej9->sharedCache()->storeStringToSCC(signatureChars, signatureLength);
+
+         dmciRecord->setMethodID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_method));
+         dmciRecord->setBeholderID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_beholder));
+         dmciRecord->setCallsiteIndex(reloTarget, svmRecord->_callsiteIndex);
+         dmciRecord->setSignatureLength(reloTarget, signatureLength);
+         dmciRecord->setSignatureOffsetInSCC(reloTarget, signatureOffset);
+         }
+         break;
+
       default:
          TR_ASSERT(false, "Unknown relo type %d!\n", kind);
          comp->failCompilation<J9::AOTRelocationRecordGenerationFailure>("Unknown relo type %d!\n", kind);
@@ -2290,6 +2310,25 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
                self()->comp(),
                "\n Method Enter/Exit Hook Address: isEnterHookAddr=%s ",
                mehaRecord->isEnterHookAddr(reloTarget) ? "true" : "false");
+            }
+         }
+         break;
+
+      case TR_ValidateDynamicMethodFromCallsiteIndex:
+         {
+         auto *dmciRecord = reinterpret_cast<TR_RelocationRecordValidateDynamicMethodFromCallsiteIndex *>(reloRecord);
+
+         self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            traceMsg(
+               self()->comp(),
+               "\n Validate Dynamic Method From Callsite Index: methodID=%d, beholderID=%d, callsiteIndex=%d, signatureLength=%d, signatureOffsetInSCC=%p ",
+                     (uint32_t)dmciRecord->methodID(reloTarget),
+                     (uint32_t)dmciRecord->beholderID(reloTarget),
+                     dmciRecord->callsiteIndex(reloTarget),
+                     dmciRecord->signatureLength(reloTarget),
+                     dmciRecord->signatureOffsetInSCC(reloTarget));
             }
          }
          break;

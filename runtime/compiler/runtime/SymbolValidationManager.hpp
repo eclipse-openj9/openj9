@@ -708,6 +708,26 @@ struct IsClassVisibleRecord : public SymbolValidationRecord
    bool _isVisible;
    };
 
+struct DynamicMethodFromCallsiteIndexRecord : public MethodValidationRecord
+   {
+   DynamicMethodFromCallsiteIndexRecord(TR_OpaqueMethodBlock *method,
+                                       TR_OpaqueClassBlock *beholder,
+                                       int32_t callsiteIndex,
+                                       J9UTF8 *signature)
+      : MethodValidationRecord(TR_ValidateDynamicMethodFromCallsiteIndex, method),
+        _beholder(beholder),
+        _callsiteIndex(callsiteIndex),
+        _signature(signature)
+      {}
+
+   virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
+   virtual void printFields();
+
+   TR_OpaqueClassBlock *_beholder;
+   int32_t _callsiteIndex;
+   J9UTF8 *_signature;
+   };
+
 class SymbolValidationManager
    {
 public:
@@ -787,6 +807,7 @@ public:
                                           TR_OpaqueClassBlock *thisClass,
                                           int32_t vftSlot,
                                           TR_OpaqueMethodBlock *callerMethod);
+   bool addDynamicMethodFromCallsiteIndex(TR_OpaqueMethodBlock *method, J9ConstantPool *cp, int32_t callsiteIndex, J9UTF8 *signature);
 
    bool addStackWalkerMaySkipFramesRecord(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *methodClass, bool skipFrames);
    bool addClassInfoIsInitializedRecord(TR_OpaqueClassBlock *clazz, bool isInitialized);
@@ -834,6 +855,7 @@ public:
                                                uint16_t thisClassID,
                                                int32_t vftSlot,
                                                uint16_t callerMethodID);
+   bool validateDynamicMethodFromCallsiteIndex(uint16_t methodID, uint16_t beholderID, int32_t callsiteIndex, const char *signature, uint32_t length);
 
    bool validateStackWalkerMaySkipFramesRecord(uint16_t methodID, uint16_t methodClassID, bool couldSkipFrames);
    bool validateClassInfoIsInitializedRecord(uint16_t classID, bool wasInitialized);

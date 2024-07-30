@@ -7003,6 +7003,16 @@ TR_ResolvedJ9Method::getResolvedDynamicMethod(TR::Compilation * comp, I_32 callS
       int32_t signatureLength;
       char * linkToStaticSignature = _fe->getSignatureForLinkToStaticForInvokeDynamic(comp, signature, signatureLength);
       result = _fe->createResolvedMethodWithSignature(comp->trMemory(), dummyInvoke, NULL, linkToStaticSignature, signatureLength, this);
+
+      if (comp->compileRelocatableCode())
+         {
+         TR_ASSERT_FATAL(comp->getOption(TR_UseSymbolValidationManager), "invokeDynamic not supported without SVM!\n");
+         comp->getSymbolValidationManager()->addDynamicMethodFromCallsiteIndex(
+            result->getNonPersistentIdentifier(),
+            cp(),
+            callSiteIndex,
+            static_cast<TR_ResolvedJ9Method *>(result)->_signature);
+         }
       }
 #else
    TR_OpaqueMethodBlock *dummyInvokeExact = _fe->getMethodFromName("java/lang/invoke/MethodHandle", "invokeExact", JSR292_invokeExactSig);

@@ -1055,6 +1055,15 @@ TR::SymbolValidationManager::addMethodFromSingleAbstractImplementerRecord(TR_Opa
    }
 
 bool
+TR::SymbolValidationManager::addDynamicMethodFromCallsiteIndex(TR_OpaqueMethodBlock *method, J9ConstantPool *cp, int32_t callsiteIndex, J9UTF8 *signature)
+   {
+   TR_OpaqueClassBlock *beholder = _fej9->getClassFromCP(cp);
+   SVM_ASSERT_ALREADY_VALIDATED(this, method);
+   SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
+   return addMethodRecord(new (_region) DynamicMethodFromCallsiteIndexRecord(method, beholder, callsiteIndex, signature));
+   }
+
+bool
 TR::SymbolValidationManager::addStackWalkerMaySkipFramesRecord(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *methodClass, bool skipFrames)
    {
    if (!method || !methodClass)
@@ -1543,6 +1552,28 @@ TR::SymbolValidationManager::validateMethodFromSingleAbstractImplementerRecord(u
    TR_OpaqueMethodBlock *method = calleeResolvedMethod->getPersistentIdentifier();
 
    return validateSymbol(methodID, definingClassID, method);
+   }
+
+bool
+TR::SymbolValidationManager::validateDynamicMethodFromCallsiteIndex(uint16_t methodID, uint16_t beholderID, int32_t callsiteIndex, const char *signature, uint32_t length)
+   {
+   TR_OpaqueMethodBlock *method = getMethodFromID(methodID);
+   TR_OpaqueMethodBlock *dummyInvoke = _fej9->getMethodFromName("java/lang/invoke/MethodHandle", "linkToStatic", "([Ljava/lang/Object;)Ljava/lang/Object;");
+
+   TR_OpaqueClassBlock *beholder = getClassFromID(beholderID);
+   J9ROMClass *romClass = reinterpret_cast<J9Class *>(beholder)->romClass;
+
+   J9SRP                 *namesAndSigs = (J9SRP*)J9ROMCLASS_CALLSITEDATA(romClass);
+   J9ROMNameAndSignature *nameAndSig   = NNSRP_GET(namesAndSigs[callsiteIndex], J9ROMNameAndSignature*);
+   J9UTF8                *signatureUTF8 = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSig);
+
+   int32_t signatureLength;
+   const char * linkToStaticSignature = _fej9->getSignatureForLinkToStaticForInvokeDynamic(_comp, signatureUTF8, signatureLength);
+
+   return (NULL != signature)
+          && (method == dummyInvoke)
+          && (signatureLength == length)
+          && (0 == strncmp(signature, linkToStaticSignature, length));
    }
 
 bool
@@ -2169,4 +2200,24 @@ void TR::IsClassVisibleRecord::printFields()
    traceMsg(TR::comp(), "\t_destClass=0x%p\n", _destClass);
    printClass(_destClass);
    traceMsg(TR::comp(), "\t_isVisible=%s\n", _isVisible ? "true" : "false");
+   }
+
+bool TR::DynamicMethodFromCallsiteIndexRecord::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::DynamicMethodFromCallsiteIndexRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_method, rhs->_method)
+      .thenBy(_beholder, rhs->_beholder)
+      .thenBy(_callsiteIndex, rhs->_callsiteIndex)
+      .thenBy(_signature, rhs->_signature).less();
+   }
+
+void TR::DynamicMethodFromCallsiteIndexRecord::printFields()
+   {
+   traceMsg(TR::comp(), "DynamicMethodFromCallsiteIndexRecord\n");
+   traceMsg(TR::comp(), "\t_method=0x%p\n", _method);
+   traceMsg(TR::comp(), "\t_beholder=0x%p\n", _beholder);
+   printClass(_beholder);
+   traceMsg(TR::comp(), "\t_callsiteIndex=%d\n", _callsiteIndex);
+   traceMsg(TR::comp(), "\t_signature=%.*s\n", J9UTF8_LENGTH(_signature), (char *)J9UTF8_DATA(_signature));
    }
