@@ -718,6 +718,10 @@ private static void ensureProperties(boolean isInitialization) {
 	/*[ENDIF] CRAC_SUPPORT */
 	/*[ENDIF] CRIU_SUPPORT */
 
+	/*[IF JFR_SUPPORT]*/
+	initializedProperties.put("org.eclipse.openj9.jfr.isJFREnabled", "true"); //$NON-NLS-1$ //$NON-NLS-2$
+	/*[ENDIF] JFR_SUPPORT */
+
 	String[] list = getPropertyList();
 	for (int i = 0; i < list.length; i += 2) {
 		String key = list[i];

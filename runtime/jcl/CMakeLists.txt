@@ -113,7 +113,7 @@ target_sources(jclse
 		${CMAKE_CURRENT_SOURCE_DIR}/common/bpinit.c
 		${CMAKE_CURRENT_SOURCE_DIR}/common/clsldr.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/common/com_ibm_jvm_Stats.c
-		${CMAKE_CURRENT_SOURCE_DIR}/common/com_ibm_oti_vm_VM.c
+		${CMAKE_CURRENT_SOURCE_DIR}/common/com_ibm_oti_vm_VM.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/common/compiler.c
 		${CMAKE_CURRENT_SOURCE_DIR}/common/dump.c
 		${CMAKE_CURRENT_SOURCE_DIR}/common/exhelp.c

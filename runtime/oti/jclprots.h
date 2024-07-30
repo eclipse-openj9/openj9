@@ -1269,6 +1269,11 @@ Java_com_ibm_oti_vm_VM_getJ9ConstantPoolFromJ9Class(JNIEnv *env, jclass unused, 
 jboolean JNICALL
 Java_com_ibm_oti_vm_VM_isJVMInSingleThreadedMode(JNIEnv *env, jclass unused);
 
+#if defined(J9VM_OPT_JFR)
+void JNICALL
+Java_com_ibm_oti_vm_VM_triggerExecutionSample(JNIEnv *env, jclass unused);
+#endif /* defined(J9VM_OPT_JFR) */
+
 #if JAVA_SPEC_VERSION >= 16
 jboolean JNICALL
 Java_java_lang_ref_Reference_refersTo(JNIEnv *env, jobject reference, jobject target);
