@@ -1379,6 +1379,21 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          }
          break;
 
+      case TR_CallsiteTableEntryAddress:
+         {
+         auto *cteaRecord = reinterpret_cast<TR_RelocationRecordCallsiteTableEntryAddress *>(reloRecord);
+
+         TR::SymbolReference *symRef = reinterpret_cast<TR::SymbolReference *>(relocation->getTargetAddress());
+         uint8_t flags = static_cast<uint8_t>(reinterpret_cast<uintptr_t>(relocation->getTargetAddress2()));
+
+         TR_OpaqueMethodBlock *method = symRef->getOwningMethod(comp)->getNonPersistentIdentifier();
+
+         cteaRecord->setReloFlags(reloTarget, flags);
+         cteaRecord->setMethodID(reloTarget, symValManager->getSymbolIDFromValue(method));
+         cteaRecord->setCallsiteIndex(reloTarget, symRef->getSymbol()->getStaticSymbol()->getCallSiteIndex());
+         }
+         break;
+
       default:
          TR_ASSERT(false, "Unknown relo type %d!\n", kind);
          comp->failCompilation<J9::AOTRelocationRecordGenerationFailure>("Unknown relo type %d!\n", kind);
@@ -2358,6 +2373,22 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
                      hmciRecord->appendixObjectNull(reloTarget) ? "true" : "false",
                      (uint32_t)hmciRecord->definingClassID(reloTarget),
                      hmciRecord->methodIndex(reloTarget));
+            }
+         }
+         break;
+
+      case TR_CallsiteTableEntryAddress:
+         {
+         auto *cteaRecord = reinterpret_cast<TR_RelocationRecordCallsiteTableEntryAddress *>(reloRecord);
+
+         self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            traceMsg(
+               self()->comp(),
+               "\n Callsite Table Entry Address: methodID=%d, callsiteIndex=%d ",
+               (uint32_t)cteaRecord->methodID(reloTarget),
+               cteaRecord->callsiteIndex(reloTarget));
             }
          }
          break;

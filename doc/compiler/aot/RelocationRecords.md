@@ -139,3 +139,5 @@ exact type of the API class for each relocation kind can be found in
 |`TR_MethodEnterExitHookAddress`|Relocates the address of the method enter or exit hook.|
 |`TR_ValidateDynamicMethodFromCallsiteIndex`|Validates the target method of an `invokeDynamic` invocation.|
 |`TR_ValidateHandleMethodFromCPIndex`|Validates the target method of an `invokeHandle` invocation.|
+|`TR_CallsiteTableEntryAddress`|Relocates the callsite table entry address.|
+

@@ -423,6 +423,12 @@ struct TR_RelocationRecordMethodEnterExitHookAddressBinaryTemplate : public TR_R
    uint8_t _isEnterHookAddr;
    };
 
+struct TR_RelocationRecordCallsiteTableEntryAddressBinaryTemplate : public TR_RelocationRecordBinaryTemplate
+   {
+   uint16_t _methodID;
+   int32_t _callsiteIndex;
+   };
+
 // END OF BINARY TEMPLATES
 
 uint8_t
@@ -861,6 +867,9 @@ TR_RelocationRecord::create(TR_RelocationRecord *storage, TR_RelocationRuntime *
          break;
       case TR_MethodEnterExitHookAddress:
          reloRecord = new (storage) TR_RelocationRecordMethodEnterExitHookAddress(reloRuntime, record);
+         break;
+      case TR_CallsiteTableEntryAddress:
+         reloRecord = new (storage) TR_RelocationRecordCallsiteTableEntryAddress(reloRuntime, record);
          break;
       default:
          // TODO: error condition
@@ -6823,6 +6832,74 @@ TR_RelocationRecordMethodEnterExitHookAddress::applyRelocation(TR_RelocationRunt
    return TR_RelocationErrorCode::relocationOK;
    }
 
+// TR_RelocationRecordCallsiteTableEntryAddress
+void
+TR_RelocationRecordCallsiteTableEntryAddress::print(TR_RelocationRuntime *reloRuntime)
+   {
+   TR_RelocationTarget *reloTarget = reloRuntime->reloTarget();
+   TR_RelocationRuntimeLogger *reloLogger = reloRuntime->reloLogger();
+   TR_RelocationRecord::print(reloRuntime);
+   reloLogger->printf("\tmethodID %d\n", methodID(reloTarget));
+   reloLogger->printf("\tcallsiteIndex %d\n", callsiteIndex(reloTarget));
+   }
+
+void
+TR_RelocationRecordCallsiteTableEntryAddress::setMethodID(TR_RelocationTarget *reloTarget, uint16_t methodID)
+   {
+   reloTarget->storeUnsigned16b(methodID, (uint8_t *) &((TR_RelocationRecordCallsiteTableEntryAddressBinaryTemplate *)_record)->_methodID);
+   }
+
+uint16_t
+TR_RelocationRecordCallsiteTableEntryAddress::methodID(TR_RelocationTarget *reloTarget)
+   {
+   return reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordCallsiteTableEntryAddressBinaryTemplate *)_record)->_methodID);
+   }
+
+void
+TR_RelocationRecordCallsiteTableEntryAddress::setCallsiteIndex(TR_RelocationTarget *reloTarget, int32_t callsiteIndex)
+   {
+   reloTarget->storeSigned32b(callsiteIndex, (uint8_t *) &((TR_RelocationRecordCallsiteTableEntryAddressBinaryTemplate *)_record)->_callsiteIndex);
+   }
+
+int32_t
+TR_RelocationRecordCallsiteTableEntryAddress::callsiteIndex(TR_RelocationTarget *reloTarget)
+   {
+   return reloTarget->loadSigned32b((uint8_t *) &((TR_RelocationRecordCallsiteTableEntryAddressBinaryTemplate *)_record)->_callsiteIndex);
+   }
+
+void
+TR_RelocationRecordCallsiteTableEntryAddress::preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget)
+   {
+   TR_RelocationRecordCallsiteTableEntryAddressPrivateData *reloPrivateData = &(privateData()->callsiteTableEntryAddr);
+
+   TR_OpaqueMethodBlock *method = reloRuntime->comp()->getSymbolValidationManager()->getMethodFromID(methodID(reloTarget));
+   TR_ResolvedMethod *resolvedMethod = reloRuntime->fej9()->createResolvedMethod(reloRuntime->trMemory(), method, NULL);
+
+   reloPrivateData->_callsiteTableEntryAddress = resolvedMethod->callSiteTableEntryAddress(callsiteIndex(reloTarget));
+   }
+
+TR_RelocationErrorCode
+TR_RelocationRecordCallsiteTableEntryAddress::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
+   {
+   TR_RelocationRecordCallsiteTableEntryAddressPrivateData *reloPrivateData = &(privateData()->callsiteTableEntryAddr);
+   void *callsiteTableEntryAddr = reloPrivateData->_callsiteTableEntryAddress;
+
+   reloTarget->storeAddressSequence((uint8_t *)callsiteTableEntryAddr, reloLocation, reloFlags(reloTarget));
+
+   return TR_RelocationErrorCode::relocationOK;
+   }
+
+TR_RelocationErrorCode
+TR_RelocationRecordCallsiteTableEntryAddress::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocationHigh, uint8_t *reloLocationLow)
+   {
+   TR_RelocationRecordCallsiteTableEntryAddressPrivateData *reloPrivateData = &(privateData()->callsiteTableEntryAddr);
+   void *callsiteTableEntryAddr = reloPrivateData->_callsiteTableEntryAddress;
+
+   reloTarget->storeAddress((uint8_t *)callsiteTableEntryAddr, reloLocationHigh, reloLocationLow, reloFlags(reloTarget));
+
+   return TR_RelocationErrorCode::relocationOK;
+   }
+
 // The _relocationRecordHeaderSizeTable table should be the last thing in this file
 uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRelocationKinds] =
    {
@@ -6944,5 +7021,6 @@ uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRel
    sizeof(TR_RelocationRecordMethodEnterExitHookAddressBinaryTemplate),              // TR_MethodEnterExitHookAddress                   = 115
    sizeof(TR_RelocationRecordValidateDynamicMethodFromCallsiteIndexBinaryTemplate),  // TR_ValidateDynamicMethodFromCallsiteIndex       = 116
    sizeof(TR_RelocationRecordValidateHandleMethodFromCPIndexBinaryTemplate),         // TR_ValidateHandleMethodFromCPIndex              = 117
+   sizeof(TR_RelocationRecordCallsiteTableEntryAddressBinaryTemplate),               // TR_CallsiteTableEntryAddress                    = 118
    };
 // The _relocationRecordHeaderSizeTable table should be the last thing in this file
