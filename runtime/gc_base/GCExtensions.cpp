@@ -103,11 +103,6 @@ MM_GCExtensions::initialize(MM_EnvironmentBase *env)
 	getJavaVM()->jniArrayCacheMaxSize = J9_GC_JNI_ARRAY_CACHE_SIZE;
 #endif /* J9VM_GC_JNI_ARRAY_CACHE */
 
-#if defined(J9VM_GC_THREAD_LOCAL_HEAP)
-	getJavaVM()->gcInfo.tlhThreshold = J9_GC_TLH_THRESHOLD;
-	getJavaVM()->gcInfo.tlhSize = J9_GC_TLH_SIZE;
-#endif /* J9VM_GC_THREAD_LOCAL_HEAP */
-
 	/* if tuned for virtualized environment, we compromise a bit of performance for lower footprint */
 	if (getJavaVM()->runtimeFlags & J9_RUNTIME_TUNE_VIRTUALIZED) {
 		heapFreeMinimumRatioMultiplier = 20;
