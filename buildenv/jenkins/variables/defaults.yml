@@ -175,12 +175,6 @@ boot_jdk_default:
 cuda:
   extra_configure_options: '--enable-cuda'
 #========================================#
-# CUDA version 9
-#========================================#
-cuda_9:
-  extends: ['cuda']
-  extra_configure_options: '--with-cuda=/usr/local/cuda-9.0'
-#========================================#
 # CUDA default version
 #========================================#
 cuda_default:
@@ -217,7 +211,7 @@ ojdk292:
 # Linux PPCLE 64bits
 #========================================#
 ppc64le_linux:
-  extends: ['boot_jdk_default', 'cuda_9', 'debuginfo', 'openjdk_reference_repo', 'openssl']
+  extends: ['boot_jdk_default', 'cuda_default', 'debuginfo', 'openjdk_reference_repo', 'openssl']
   boot_jdk:
     arch: 'ppc64le'
     os: 'linux'
