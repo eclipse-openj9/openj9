@@ -5549,8 +5549,6 @@ public final class Unsafe {
         return "x86".equals(arch) || "amd64".equals(arch) || "x86_64".equals(arch);
     }
 
-
-
 	/**
 	 * @return true if machine is big endian, false otherwise
 	 */
