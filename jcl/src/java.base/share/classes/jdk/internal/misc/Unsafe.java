@@ -5534,9 +5534,22 @@ public final class Unsafe {
 	 * Inserts a release memory fence, ensuring that no stores before this fence
 	 *  are reordered with any loads/stores after the fence.
 	 */
+	
 	public final void storeStoreFence() {
+		if (isX86()) {
+            // No-op for x86 platforms
+            return;
+        }
 		storeFence();
 	}
+
+    private boolean isX86() {
+        // Implemented the logic to determine if the platform is x86
+        String arch = System.getProperty("os.arch");
+        return "x86".equals(arch) || "amd64".equals(arch) || "x86_64".equals(arch);
+    }
+
+
 
 	/**
 	 * @return true if machine is big endian, false otherwise
