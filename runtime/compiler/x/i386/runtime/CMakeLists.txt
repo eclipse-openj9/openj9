@@ -22,6 +22,5 @@
 
 j9jit_files(
 	x/i386/runtime/IA32Recompilation.nasm
-	x/i386/runtime/J9IA32CompressString.nasm
 	x/i386/runtime/J9IA32Math64.nasm
 )

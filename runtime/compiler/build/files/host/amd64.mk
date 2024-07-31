@@ -19,5 +19,4 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 
 JIT_PRODUCT_SOURCE_FILES+=\
-    compiler/x/amd64/runtime/AMD64CompressString.nasm \
     compiler/x/amd64/runtime/AMD64Recompilation.nasm
