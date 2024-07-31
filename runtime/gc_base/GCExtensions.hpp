@@ -81,6 +81,12 @@ class MM_IdleGCManager;
 #define MINIMUM_SURVIVOR_MINIMUM_FREESIZE 	512
 #define MINIMUM_SURVIVOR_THRESHOLD 			512
 
+
+#define J9_MAXIMUM_TLH_SIZE (1024 * 1024)
+#if defined(J9VM_GC_BATCH_CLEAR_TLH)
+#define J9_MAXIMUM_TLH_SIZE_BATCH_CLEAR (128 * 1024)
+#endif /* defined(J9VM_GC_BATCH_CLEAR_TLH) */
+
 /**
  * @todo Provide class documentation
  * @ingroup GC_Base
@@ -192,6 +198,8 @@ public:
 	};
 
 	UserSpecifiedParameters userSpecifiedParameters; /**< A collection of user-speicifed parameters */
+
+	bool tlhMaximumSizeSpecified; /**< true, if tlhMaximumSize specified by a command line option */
 
 	bool dynamicHeapAdjustmentForRestore; /**< If set to true, the default heuristic-calculated softmx is prioritized over the user-specified values. */
 	/**
@@ -417,6 +425,7 @@ public:
 		, objectListFragmentCount(0)
 		, numaCommonThreadClassNamePatterns(NULL)
 		, userSpecifiedParameters()
+		, tlhMaximumSizeSpecified(false)
 		, dynamicHeapAdjustmentForRestore(false)
 		, stringDedupPolicy(J9_JIT_STRING_DEDUP_POLICY_UNDEFINED)
 		, _asyncCallbackKey(-1)
