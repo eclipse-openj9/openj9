@@ -181,6 +181,11 @@ struct TR_RelocationRecordCallsiteTableEntryAddressPrivateData
    void *_callsiteTableEntryAddress;
    };
 
+struct TR_RelocationRecordMethodTypeTableEntryAddressPrivateData
+   {
+   void *_methodTypeTableEntryAddress;
+   };
+
 union TR_RelocationRecordPrivateData
    {
    TR_RelocationRecordHelperAddressPrivateData helperAddress;
@@ -201,6 +206,7 @@ union TR_RelocationRecordPrivateData
    TR_RelocationRecordBreakpointGuardPrivateData breakpointGuard;
    TR_RelocationRecordMethodEnterExitHookAddressPrivateData hookAddress;
    TR_RelocationRecordCallsiteTableEntryAddressPrivateData callsiteTableEntryAddr;
+   TR_RelocationRecordMethodTypeTableEntryAddressPrivateData methodTypeTableEntryAddr;
    };
 
 enum TR_RelocationRecordAction
@@ -2083,6 +2089,27 @@ class TR_RelocationRecordCallsiteTableEntryAddress : public TR_RelocationRecord
 
       void setCallsiteIndex(TR_RelocationTarget *reloTarget, int32_t callsiteIndex);
       int32_t callsiteIndex(TR_RelocationTarget *reloTarget);
+
+      virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget);
+
+      virtual TR_RelocationErrorCode applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
+      virtual TR_RelocationErrorCode applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocationHigh, uint8_t *reloLocationLow);
+   };
+
+class TR_RelocationRecordMethodTypeTableEntryAddress : public TR_RelocationRecord
+   {
+   public:
+      TR_RelocationRecordMethodTypeTableEntryAddress() {}
+      TR_RelocationRecordMethodTypeTableEntryAddress(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecord(reloRuntime, record) {}
+
+      virtual const char *name() { return "TR_RelocationRecordMethodTypeTableEntryAddress"; }
+      virtual void print(TR_RelocationRuntime *reloRuntime);
+
+      void setMethodID(TR_RelocationTarget *reloTarget, uint16_t methodID);
+      uint16_t methodID(TR_RelocationTarget *reloTarget);
+
+      void setCpIndex(TR_RelocationTarget *reloTarget, int32_t cpIndex);
+      int32_t cpIndex(TR_RelocationTarget *reloTarget);
 
       virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget);
 

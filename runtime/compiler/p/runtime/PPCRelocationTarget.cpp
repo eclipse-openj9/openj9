@@ -314,6 +314,7 @@ TR_PPC32RelocationTarget::isOrderedPairRelocation(TR_RelocationRecord *reloRecor
       case TR_DebugCounter:
       case TR_MethodEnterExitHookAddress:
       case TR_CallsiteTableEntryAddress:
+      case TR_MethodTypeTableEntryAddress:
          return true;
       default:
          return false;

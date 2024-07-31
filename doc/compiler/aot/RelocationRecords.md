@@ -140,4 +140,4 @@ exact type of the API class for each relocation kind can be found in
 |`TR_ValidateDynamicMethodFromCallsiteIndex`|Validates the target method of an `invokeDynamic` invocation.|
 |`TR_ValidateHandleMethodFromCPIndex`|Validates the target method of an `invokeHandle` invocation.|
 |`TR_CallsiteTableEntryAddress`|Relocates the callsite table entry address.|
-
+|`TR_MethodTypeTableEntryAddress`|Relocates the method type table entry address.|

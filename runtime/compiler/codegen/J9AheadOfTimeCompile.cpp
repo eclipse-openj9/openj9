@@ -1394,6 +1394,22 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          }
          break;
 
+
+      case TR_MethodTypeTableEntryAddress:
+         {
+         auto *mteaRecord = reinterpret_cast<TR_RelocationRecordMethodTypeTableEntryAddress *>(reloRecord);
+
+         TR::SymbolReference *symRef = reinterpret_cast<TR::SymbolReference *>(relocation->getTargetAddress());
+         uint8_t flags = static_cast<uint8_t>(reinterpret_cast<uintptr_t>(relocation->getTargetAddress2()));
+
+         TR_OpaqueMethodBlock *method = symRef->getOwningMethod(comp)->getNonPersistentIdentifier();
+
+         mteaRecord->setReloFlags(reloTarget, flags);
+         mteaRecord->setMethodID(reloTarget, symValManager->getSymbolIDFromValue(method));
+         mteaRecord->setCpIndex(reloTarget, symRef->getSymbol()->getStaticSymbol()->getMethodTypeIndex());
+         }
+         break;
+
       default:
          TR_ASSERT(false, "Unknown relo type %d!\n", kind);
          comp->failCompilation<J9::AOTRelocationRecordGenerationFailure>("Unknown relo type %d!\n", kind);
@@ -2389,6 +2405,22 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
                "\n Callsite Table Entry Address: methodID=%d, callsiteIndex=%d ",
                (uint32_t)cteaRecord->methodID(reloTarget),
                cteaRecord->callsiteIndex(reloTarget));
+            }
+         }
+         break;
+
+      case TR_MethodTypeTableEntryAddress:
+         {
+         auto *mteaRecord = reinterpret_cast<TR_RelocationRecordMethodTypeTableEntryAddress *>(reloRecord);
+
+         self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            traceMsg(
+               self()->comp(),
+               "\n Method Type Table Entry Address: methodID=%d, cpIndex=%d ",
+                     (uint32_t)mteaRecord->methodID(reloTarget),
+                     mteaRecord->cpIndex(reloTarget));
             }
          }
          break;

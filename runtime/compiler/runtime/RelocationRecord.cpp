@@ -429,6 +429,12 @@ struct TR_RelocationRecordCallsiteTableEntryAddressBinaryTemplate : public TR_Re
    int32_t _callsiteIndex;
    };
 
+struct TR_RelocationRecordMethodTypeTableEntryAddressBinaryTemplate : public TR_RelocationRecordBinaryTemplate
+   {
+   uint16_t _methodID;
+   int32_t _cpIndex;
+   };
+
 // END OF BINARY TEMPLATES
 
 uint8_t
@@ -870,6 +876,9 @@ TR_RelocationRecord::create(TR_RelocationRecord *storage, TR_RelocationRuntime *
          break;
       case TR_CallsiteTableEntryAddress:
          reloRecord = new (storage) TR_RelocationRecordCallsiteTableEntryAddress(reloRuntime, record);
+         break;
+      case TR_MethodTypeTableEntryAddress:
+         reloRecord = new (storage) TR_RelocationRecordMethodTypeTableEntryAddress(reloRuntime, record);
          break;
       default:
          // TODO: error condition
@@ -6900,6 +6909,74 @@ TR_RelocationRecordCallsiteTableEntryAddress::applyRelocation(TR_RelocationRunti
    return TR_RelocationErrorCode::relocationOK;
    }
 
+// TR_RelocationRecordMethodTypeTableEntryAddress
+void
+TR_RelocationRecordMethodTypeTableEntryAddress::print(TR_RelocationRuntime *reloRuntime)
+   {
+   TR_RelocationTarget *reloTarget = reloRuntime->reloTarget();
+   TR_RelocationRuntimeLogger *reloLogger = reloRuntime->reloLogger();
+   TR_RelocationRecord::print(reloRuntime);
+   reloLogger->printf("\tmethodID %d\n", methodID(reloTarget));
+   reloLogger->printf("\tcpIndex %d\n", cpIndex(reloTarget));
+   }
+
+void
+TR_RelocationRecordMethodTypeTableEntryAddress::setMethodID(TR_RelocationTarget *reloTarget, uint16_t methodID)
+   {
+   reloTarget->storeUnsigned16b(methodID, (uint8_t *) &((TR_RelocationRecordMethodTypeTableEntryAddressBinaryTemplate *)_record)->_methodID);
+   }
+
+uint16_t
+TR_RelocationRecordMethodTypeTableEntryAddress::methodID(TR_RelocationTarget *reloTarget)
+   {
+   return reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordMethodTypeTableEntryAddressBinaryTemplate *)_record)->_methodID);
+   }
+
+void
+TR_RelocationRecordMethodTypeTableEntryAddress::setCpIndex(TR_RelocationTarget *reloTarget, int32_t cpIndex)
+   {
+   reloTarget->storeSigned32b(cpIndex, (uint8_t *) &((TR_RelocationRecordMethodTypeTableEntryAddressBinaryTemplate *)_record)->_cpIndex);
+   }
+
+int32_t
+TR_RelocationRecordMethodTypeTableEntryAddress::cpIndex(TR_RelocationTarget *reloTarget)
+   {
+   return reloTarget->loadSigned32b((uint8_t *) &((TR_RelocationRecordMethodTypeTableEntryAddressBinaryTemplate *)_record)->_cpIndex);
+   }
+
+void
+TR_RelocationRecordMethodTypeTableEntryAddress::preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget)
+   {
+   TR_RelocationRecordMethodTypeTableEntryAddressPrivateData *reloPrivateData = &(privateData()->methodTypeTableEntryAddr);
+
+   TR_OpaqueMethodBlock *method = reloRuntime->comp()->getSymbolValidationManager()->getMethodFromID(methodID(reloTarget));
+   TR_ResolvedMethod *resolvedMethod = reloRuntime->fej9()->createResolvedMethod(reloRuntime->trMemory(), method, NULL);
+
+   reloPrivateData->_methodTypeTableEntryAddress = resolvedMethod->methodTypeTableEntryAddress(cpIndex(reloTarget));
+   }
+
+TR_RelocationErrorCode
+TR_RelocationRecordMethodTypeTableEntryAddress::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
+   {
+   TR_RelocationRecordMethodTypeTableEntryAddressPrivateData *reloPrivateData = &(privateData()->methodTypeTableEntryAddr);
+   void *methodTypeTableEntryAddr = reloPrivateData->_methodTypeTableEntryAddress;
+
+   reloTarget->storeAddressSequence((uint8_t *)methodTypeTableEntryAddr, reloLocation, reloFlags(reloTarget));
+
+   return TR_RelocationErrorCode::relocationOK;
+   }
+
+TR_RelocationErrorCode
+TR_RelocationRecordMethodTypeTableEntryAddress::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocationHigh, uint8_t *reloLocationLow)
+   {
+   TR_RelocationRecordMethodTypeTableEntryAddressPrivateData *reloPrivateData = &(privateData()->methodTypeTableEntryAddr);
+   void *methodTypeTableEntryAddr = reloPrivateData->_methodTypeTableEntryAddress;
+
+   reloTarget->storeAddress((uint8_t *)methodTypeTableEntryAddr, reloLocationHigh, reloLocationLow, reloFlags(reloTarget));
+
+   return TR_RelocationErrorCode::relocationOK;
+   }
+
 // The _relocationRecordHeaderSizeTable table should be the last thing in this file
 uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRelocationKinds] =
    {
@@ -7022,5 +7099,6 @@ uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRel
    sizeof(TR_RelocationRecordValidateDynamicMethodFromCallsiteIndexBinaryTemplate),  // TR_ValidateDynamicMethodFromCallsiteIndex       = 116
    sizeof(TR_RelocationRecordValidateHandleMethodFromCPIndexBinaryTemplate),         // TR_ValidateHandleMethodFromCPIndex              = 117
    sizeof(TR_RelocationRecordCallsiteTableEntryAddressBinaryTemplate),               // TR_CallsiteTableEntryAddress                    = 118
+   sizeof(TR_RelocationRecordMethodTypeTableEntryAddressBinaryTemplate),             // TR_MethodTypeTableEntryAddress                  = 119
    };
 // The _relocationRecordHeaderSizeTable table should be the last thing in this file
