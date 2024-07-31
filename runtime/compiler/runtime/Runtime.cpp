@@ -2133,6 +2133,7 @@ bool isOrderedPair(U_8 recordType)
       case TR_DebugCounter:
       case TR_MethodEnterExitHookAddress:
       case TR_CallsiteTableEntryAddress:
+      case TR_MethodTypeTableEntryAddress:
 #endif
          isOrderedPair = true;
          break;
