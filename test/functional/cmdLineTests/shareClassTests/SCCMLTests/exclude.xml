@@ -276,4 +276,28 @@
 	<exclude id="Test 180 - 197 clean up with destroyAllLayers" platform=".*-3[12].*">
 		<reason> The multi-layer cache feature is only supported on 64-bit platforms </reason>
 	</exclude>
+	<exclude id="Test 71-a: create a shared cache that has doubele-page aligned boundaries" platform="zos_390-64.*">
+		<reason>This test is not required on 64-bit z/OS as the memory protection is always disabled on it and omrshmem_get_region_granularity() returns 0 as page size</reason>
+	</exclude>
+	<exclude id="Test 71-b: Re-use the shared cache in readonly mode, which should detect the page difference" platform="zos_390-64.*">
+		<reason>This test is not required on 64-bit z/OS as the memory protection is always disabled on it and omrshmem_get_region_granularity() returns 0 as page size</reason>
+	</exclude>
+	<exclude id="Test 71-c: Re-use the shared cache, which should detect the page difference" platform="zos_390-64.*">
+		<reason>This test is not required on 64-bit z/OS as the memory protection is always disabled on it and omrshmem_get_region_granularity() returns 0 as page size</reason>
+	</exclude>
+	<exclude id="Test 71-d: destroy cache for cleanup" platform="zos_390-64.*">
+		<reason>This test is not required on 64-bit z/OS as the memory protection is always disabled on it and omrshmem_get_region_granularity() returns 0 as page size</reason>
+	</exclude>
+	<exclude id="Test 72-a: create a shared cache that has half-page aligned boundaries" platform="zos_390-64.*">
+		<reason>This test is not required on 64-bit z/OS as the memory protection is always disabled on it and omrshmem_get_region_granularity() returns 0 as page size</reason>
+	</exclude>
+	<exclude id="Test 72-b: Re-use the shared cache in readonly mode, which should detect the page difference" platform="zos_390-64.*">
+		<reason>This test is not required on 64-bit z/OS as the memory protection is always disabled on it and omrshmem_get_region_granularity() returns 0 as page size</reason>
+	</exclude>
+	<exclude id="Test 72-c: Re-use the shared cache, which should detect the page difference. mprotect should be enabled" platform="zos_390-64.*">
+		<reason>This test is not required on 64-bit z/OS as the memory protection is always disabled on it and omrshmem_get_region_granularity() returns 0 as page size</reason>
+	</exclude>
+	<exclude id="Test 72-d: destroy cache for cleanup" platform="zos_390-64.*">
+		<reason>This test is not required on 64-bit z/OS as the memory protection is always disabled on it and omrshmem_get_region_granularity() returns 0 as page size.</reason>
+	</exclude>
 </suite>

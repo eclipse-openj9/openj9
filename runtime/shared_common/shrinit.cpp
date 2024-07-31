@@ -382,6 +382,8 @@ J9SharedClassesOptions J9SHAREDCLASSESOPTIONS[] = {
 #if defined(J9ZOS39064)
 	{ OPTION_MAP31, PARSE_TYPE_EXACT, RESULT_DO_ADD_RUNTIMEFLAG, J9SHR_RUNTIMEFLAG_MAP31},
 #endif /* defined(J9ZOS39064) */
+	{ OPTION_TEST_DOUBLE_PAGESIZE, PARSE_TYPE_EXACT, RESULT_DO_ADD_RUNTIMEFLAG2, J9SHR_RUNTIMEFLAG2_TEST_DOUBLE_PAGESIZE},
+	{ OPTION_TEST_HALF_PAGESIZE, PARSE_TYPE_EXACT, RESULT_DO_ADD_RUNTIMEFLAG2, J9SHR_RUNTIMEFLAG2_TEST_HALF_PAGESIZE},
 	{ NULL, 0, 0 }
 };
 
@@ -587,7 +589,7 @@ recoverMethodSpecSeparator(char* string, char* end)
 }
 
 UDATA
-parseArgs(J9JavaVM* vm, char* options, U_64* runtimeFlags, UDATA* verboseFlags, char** cacheName,
+parseArgs(J9JavaVM* vm, char* options, U_64* runtimeFlags, U_64* runtimeFlags2, UDATA* verboseFlags, char** cacheName,
 		char** modContext, char** expireTime, char** ctrlDirName, char **cacheDirPerm, char** methodSpecs, UDATA* printStatsOptions, UDATA* storageKeyTesting)
 {
 	UDATA returnAction = 0;
@@ -642,6 +644,10 @@ parseArgs(J9JavaVM* vm, char* options, U_64* runtimeFlags, UDATA* verboseFlags, 
 
 		case RESULT_DO_ADD_RUNTIMEFLAG:
 			*runtimeFlags |= J9SHAREDCLASSESOPTIONS[i].flag;
+			break;
+
+		case RESULT_DO_ADD_RUNTIMEFLAG2:
+			*runtimeFlags2 |= J9SHAREDCLASSESOPTIONS[i].flag;
 			break;
 
 		case RESULT_DO_SET_VERBOSEFLAG:

@@ -991,6 +991,7 @@ SH_CacheMap::initializeROMSegmentList(J9VMThread* currentThread)
 	config->cacheDescriptorList->romclassStartAddress = firstROMClassAddress;
 	config->cacheDescriptorList->metadataStartAddress = cacheDebugAreaStart;
 	config->cacheDescriptorList->cacheSizeBytes = _ccHead->getCacheMemorySize();
+	config->cacheDescriptorList->osPageSizeInHeader = _ccHead->getOSPageSizeInHeader();
 
 #if defined(J9VM_THR_PREEMPTIVE)
 	if (memorySegmentMutex) {
@@ -5001,6 +5002,15 @@ SH_CacheMap::printCacheStatsTopLayerStatsHelper(J9VMThread* currentThread, UDATA
 		CACHEMAP_PRINT1(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_SHRC_CM_PRINTSTATS_FEATURE, "default");
 	}
 
+	UDATA osPageSizeInHeader = _sharedClassConfig->cacheDescriptorList->osPageSizeInHeader;
+	/* OS page size is not shown by default, as in most cases the osPage size is the same in cold and warm runs. */
+	if (J9_ARE_ALL_BITS_SET(runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_DETAILED_STATS)
+		|| (osPageSizeInHeader != javacoreData->currentOSPageSize)
+	) {
+		j9tty_printf(_portlib, "\t");
+		CACHEMAP_PRINT2(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_SHRC_CM_PRINTSTATS_PAGESIZEE, osPageSizeInHeader, javacoreData->currentOSPageSize);
+	}
+
 #if (defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390) || defined(J9VM_ARCH_POWER))
 	if (currentThread->javaVM->jitConfig) {
 		j9tty_printf(_portlib, "\t");
@@ -5652,6 +5662,7 @@ SH_CacheMap::appendCacheDescriptorList(J9VMThread* currentThread, J9SharedClassC
 	cacheDesc->romclassStartAddress = ccToUse->getFirstROMClassAddress();
 	cacheDesc->metadataStartAddress = (U_8*)ccToUse->getClassDebugDataStartAddress() - sizeof(ShcItemHdr);
 	cacheDesc->cacheSizeBytes = ccToUse->getCacheMemorySize();
+	cacheDesc->osPageSizeInHeader = ccToUse->getOSPageSizeInHeader();
 
 	cacheDescriptorTail->next = cacheDesc;
 	cacheDesc->previous = cacheDescriptorTail;
