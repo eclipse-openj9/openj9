@@ -1101,4 +1101,18 @@ VM_JFRConstantPoolTypes::freeUTF8Strings(void *entry, void *userData)
 	return FALSE;
 }
 
+UDATA
+VM_JFRConstantPoolTypes::freeStackStraceEntries(void *entry, void *userData)
+{
+	StackTraceEntry *tableEntry = (StackTraceEntry *) entry;
+	J9VMThread *currentThread = (J9VMThread *)userData;
+	PORT_ACCESS_FROM_VMC(currentThread);
+
+	j9mem_free_memory(tableEntry->frames);
+	tableEntry->frames = NULL;
+
+	return FALSE;
+}
+
+
 #endif /* defined(J9VM_OPT_JFR) */

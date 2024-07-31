@@ -64,12 +64,11 @@ VM_JFRChunkWriter::writeJFRHeader()
 	/* pad */
 	_bufferWriter->writeU16(0); // 65
 
-	/* flags */
+	U_8 flags = JFR_HEADER_SPECIALFLAGS_COMPRESSED_INTS;
 	if (_finalWrite) {
-		_bufferWriter->writeU8(0x2); // 67 // final chunk bit?
-	} else {
-		_bufferWriter->writeU8(2);
+		flags |= JFR_HEADER_SPECIALFLAGS_LAST_CHUNK;
 	}
+	_bufferWriter->writeU8(flags);
 }
 
 U_8 *
@@ -597,7 +596,7 @@ VM_JFRChunkWriter::writeStacktraceCheckpointEvent()
 
 			/* number of stack frames */
 			UDATA framesCount = entry->numOfFrames;
-			_bufferWriter->writeU8(framesCount);
+			_bufferWriter->writeLEB128(framesCount);
 
 			for (UDATA i = 0; i < framesCount; i++) {
 				StackFrame *frame = entry->frames + i;

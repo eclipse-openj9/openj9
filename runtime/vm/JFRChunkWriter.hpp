@@ -35,6 +35,11 @@
 #include "ObjectAccessBarrierAPI.hpp"
 #include "VMHelpers.hpp"
 
+static constexpr const char * const intermediateChunkFileName = "openj9ChunkFile";
+
+static constexpr const int JFR_HEADER_SPECIALFLAGS_COMPRESSED_INTS = 1;
+static constexpr const int JFR_HEADER_SPECIALFLAGS_LAST_CHUNK = 2;
+
 static constexpr const char * const threadStateNames[] = {
 	"STATE_NEW",
 	"STATE_TERMINATED",
@@ -200,6 +205,34 @@ public:
 		return _buildResult;
 	}
 
+	void
+	writeIntermediateJFRChunkToFile()
+	{
+		UDATA written = 0;
+		char fileName[sizeof(intermediateChunkFileName) + 16 + sizeof(".jfr")];
+		sprintf(fileName, "%s%lX.jfr", intermediateChunkFileName, _vm->jfrState.jfrChunkCount);
+		UDATA len = _bufferWriter->getSize();
+		IDATA fd = j9file_open(fileName, EsOpenWrite | EsOpenCreate | EsOpenTruncate , 0666);
+
+		if (-1 == fd) {
+			_buildResult = FileIOError;
+			goto done;
+		}
+
+		written = j9file_write(fd, _bufferWriter->getBufferStart(), len);
+
+		if (len != written) {
+			_buildResult = FileIOError;
+		}
+
+		if (-1 != fd) {
+			j9file_close(fd);
+		}
+done:
+		return;
+
+	}
+
 	void writeJFRChunk()
 	{
 		U_8 *buffer = NULL;
@@ -269,6 +302,8 @@ public:
 
 			_bufferWriter = NULL;
 			j9mem_free_memory(buffer);
+
+			_vm->jfrState.jfrChunkCount += 1;
 		}
 done:
 		return;
@@ -401,6 +436,10 @@ done:
 
 		if (len != written) {
 			_buildResult = FileIOError;
+		}
+
+		if (_debug) {
+			writeIntermediateJFRChunkToFile();
 		}
 
 		return;
