@@ -275,26 +275,109 @@ void J9::RecognizedCallTransformer::process_java_lang_StringUTF16_toBytes(TR::Tr
    {
    TR_J9VMBase* fej9 = static_cast<TR_J9VMBase*>(comp()->fe());
 
+   // Place arguments to StringUTF16.toBytes in temporaries
+   // to allow for control flow
+   TransformUtil::createTempsForCall(this, treetop);
+
    TR::Node* valueNode = node->getChild(0);
    TR::Node* offNode = node->getChild(1);
    TR::Node* lenNode = node->getChild(2);
 
-   anchorAllChildren(node, treetop);
-   prepareToReplaceNode(node);
+   TR::CFG *cfg = comp()->getFlowGraph();
 
+   // The implementation of java.lang.StringUTF16.toBytes(char[],int,int) will
+   // throw a NegativeArraySizeException or OutOfMemoryError if the specified
+   // length is outside the range [0,0x3fffffff].  In order to avoid deciding
+   // which to throw in the IL, fallback to the out-of-line call if the length
+   // is negative or too great.  Otherwise, create the byte array and copy the
+   // input char array to it with java.lang.String.decompressedArrayCopy
+   //
+   // Before:
+   //
+   // +----------------------------------------+
+   // | treetop                                |
+   // |   acall  java/lang/StringUTF16.toBytes |
+   // |     aload  charArr                     |
+   // |     iload  off                         |
+   // |     iload  len                         |
+   // +----------------------------------------+
+   //
+   // After:
+   //
+   // ifCmpblock
+   // +----------------------------------------+
+   // | astore charArrTemp                     |
+   // |   aload  charArr                       |
+   // | istore offTemp                         |
+   // |   iload  off                           |
+   // | istore lenTemp                         |
+   // |   iload  len                           |
+   // | ifiucmpgt --> fallbackPathBlock  -----------------+
+   // |   iload lenTemp                        |          |
+   // |   iconst 0x3fffffff                    |          |
+   // +--------------------+-------------------+          |
+   //                      |                              |
+   // fallThroughPathBlock V                              |
+   // +----------------------------------------+          |
+   // | astore result                          |          |
+   // |   newarray jitNewArray                 |          |
+   // |     ishl                               |          |
+   // |       iload lenTemp                    |          |
+   // |       icosnt 1                         |          |
+   // |     iconst 8   ; array type is byte    |          |
+   // | treetop                                |          |
+   // |   call java/lang/String.decompressedArrayCopy     |
+   // |     aload charArrTemp                  |          |
+   // |     iload offTemp                      |          |
+   // |     ==>newarray                        |          |
+   // |     iconst 0                           |          |
+   // |     iload lenTemp                      |          |
+   // | goto joinBlock   ----------------------------+    |
+   // +----------------------------------------+     |    |
+   //                                                |    |
+   //                      +------------------------------+
+   //                      |                         |
+   // fallBackPathBlock    V (freq 0) (cold)         |
+   // +----------------------------------------+     |
+   // | astore result                          |     |
+   // |   acall  java/lang/StringUTF16.toBytes |     |
+   // |     aload  charArrTemp                 |     |
+   // |     iload  offTemp                     |     |
+   // |     iload  lenTemp                     |     |
+   // +--------------------+-------------------+     |
+   //                      |                         |
+   //                      +-------------------------+
+   //                      |
+   // joinBlock            V
+   // +----------------------------------------+
+   // | treetop                                |
+   // |   aload result  ; Replaces acall StringUTF16.toBytes
+   // +----------------------------------------+
+   //
+   TR::Node *upperBoundConstNode = TR::Node::iconst(node, TR::getMaxSigned<TR::Int32>() >> 1);
+   TR::Node *ifCmpNode = TR::Node::createif(TR::ifiucmpgt, lenNode, upperBoundConstNode);
+   TR::TreeTop *ifCmpTreeTop = TR::TreeTop::create(comp(), treetop->getPrevTreeTop(), ifCmpNode);
+
+   // Create temporary variable that will be used to hold result
+   TR::DataType resultDataType = node->getDataType();
+   TR::SymbolReference *resultSymRef = comp()->getSymRefTab()->createTemporary(comp()->getMethodSymbol(), resultDataType);
+
+   // Create result byte array and copy input char array to it with String.decompressedArrayCopy
    int32_t byteArrayType = fej9->getNewArrayTypeFromClass(fej9->getByteArrayClass());
 
-   TR::Node::recreateWithoutProperties(node, TR::newarray, 2,
-      TR::Node::create(TR::ishl, 2,
-         lenNode,
-         TR::Node::iconst(1)),
-      TR::Node::iconst(byteArrayType),
+   TR::Node *newByteArrayNode = TR::Node::createWithSymRef(TR::newarray, 2, 2,
+                                      TR::Node::create(TR::ishl, 2, lenNode,
+                                                       TR::Node::iconst(1)),
+                                      TR::Node::iconst(byteArrayType),
+                                      getSymRefTab()->findOrCreateNewArraySymbolRef(
+                                            node->getSymbolReference()->getOwningMethodSymbol(comp())));
 
-      getSymRefTab()->findOrCreateNewArraySymbolRef(node->getSymbolReference()->getOwningMethodSymbol(comp())));
-
-   TR::Node* newByteArrayNode = node;
+   newByteArrayNode->copyByteCodeInfo(node);
    newByteArrayNode->setCanSkipZeroInitialization(true);
    newByteArrayNode->setIsNonNull(true);
+
+   TR::Node *newByteArrayStoreNode = TR::Node::createStore(node, resultSymRef, newByteArrayNode);
+   TR::TreeTop *newByteArraryTreeTop = TR::TreeTop::create(comp(), ifCmpTreeTop, newByteArrayStoreNode);
 
    TR::Node* newCallNode = TR::Node::createWithSymRef(node, TR::call, 5,
       getSymRefTab()->methodSymRefFromName(comp()->getMethodSymbol(), "java/lang/String", "decompressedArrayCopy", "([CI[BII)V", TR::MethodSymbol::Static));
@@ -304,14 +387,58 @@ void J9::RecognizedCallTransformer::process_java_lang_StringUTF16_toBytes(TR::Tr
    newCallNode->setAndIncChild(3, TR::Node::iconst(0));
    newCallNode->setAndIncChild(4, lenNode);
 
-   TR::TreeTop* newTT = treetop->insertAfter(TR::TreeTop::create(comp(), TR::Node::create(node, TR::treetop, 1, newCallNode)));
+   TR::TreeTop* lastFallThroughTreeTop = TR::TreeTop::create(comp(), newByteArraryTreeTop,
+                                          TR::Node::create(node, TR::treetop, 1, newCallNode));
+
    // Insert the allocationFence after the arraycopy because the array can be allocated from the non-zeroed TLH
    // and therefore we need to make sure no other thread sees stale memory from the array element section.
    if (cg()->getEnforceStoreOrder())
       {
       TR::Node *allocationFence = TR::Node::createAllocationFence(newByteArrayNode, newByteArrayNode);
-      newTT->insertAfter(TR::TreeTop::create(comp(), allocationFence));
+      lastFallThroughTreeTop = TR::TreeTop::create(comp(), lastFallThroughTreeTop, allocationFence);
       }
+
+   // Copy the original call tree for the fallback path, and store the
+   // result into the temporary that was created.
+   TR::Node *fallbackCallNode = node->duplicateTree();
+   TR::Node *fallbackStoreNode = TR::Node::createStore(node, resultSymRef, fallbackCallNode);
+   TR::TreeTop *fallbackTreeTop = TR::TreeTop::create(comp(), lastFallThroughTreeTop, fallbackStoreNode);
+
+   // Replace original call node with the load of the temporary
+   // variable that is stored on both sides of the if branch.
+   prepareToReplaceNode(node);
+   TR::Node::recreate(node, comp()->il.opCodeForDirectLoad(resultDataType));
+   node->setSymbolReference(resultSymRef);
+
+   // Split the current block right after the ifuicmpgt
+   TR::Block *ifCmpBlock = ifCmpTreeTop->getEnclosingBlock();
+
+   // Then split the inline version of the code into its own block
+   TR::Block *fallThroughPathBlock = ifCmpBlock->split(newByteArraryTreeTop, cfg, true /* fixUpCommoning */, true /* copyExceptionSuccessors */);
+
+   // Then split the fall-back, out-of-line call into its own block
+   TR::Block *fallbackPathBlock = fallThroughPathBlock->split(fallbackTreeTop, cfg, true /* fixUpCommoning */, true /* copyExceptionSuccessors */);
+
+   // Then split again at the original call TreeTop to create the tail block
+   TR::Block *tailBlock = fallbackPathBlock->split(treetop, cfg, true /* fixUpCommoning */, true /* copyExceptionSuccessors */);
+
+   // Now create a node to go to the merge (i.e. tail) block.
+   TR::Node *gotoNode = TR::Node::create(node, TR::Goto);
+   TR::TreeTop *gotoTree = TR::TreeTop::create(comp(), gotoNode, NULL, NULL);
+   gotoNode->setBranchDestination(tailBlock->getEntry());
+   fallThroughPathBlock->getExit()->insertBefore(gotoTree);
+
+   // Now we have fall-through block, fallback block and tail/merge block.
+   // Set the ifuicmp's destination to the fallback block and update the CFG as well.
+   ifCmpNode->setBranchDestination(fallbackPathBlock->getEntry());
+   cfg->addEdge(ifCmpBlock, fallbackPathBlock);
+   cfg->addEdge(fallThroughPathBlock, tailBlock);
+   cfg->removeEdge(fallThroughPathBlock, fallbackPathBlock);
+
+   // The original call to StringUTF16.toBytes will only be used
+   // if an exception needs to be thrown.  Mark it as cold.
+   fallbackPathBlock->setFrequency(UNKNOWN_COLD_BLOCK_COUNT);
+   fallbackPathBlock->setIsCold();
    }
 
 void J9::RecognizedCallTransformer::process_jdk_internal_util_ArraysSupport_vectorizedMismatch(TR::TreeTop* treetop, TR::Node* node)
