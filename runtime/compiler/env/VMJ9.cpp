@@ -8896,7 +8896,7 @@ TR_J9SharedCacheVM::isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vett
    }
 
 TR_OpaqueMethodBlock *
-TR_J9SharedCacheVM::getMethodFromClass(TR_OpaqueClassBlock * methodClass, char * methodName, char * signature, TR_OpaqueClassBlock *callingClass)
+TR_J9SharedCacheVM::getMethodFromClass(TR_OpaqueClassBlock * methodClass, const char * methodName, const char * signature, TR_OpaqueClassBlock *callingClass)
    {
    TR_OpaqueMethodBlock* omb = this->TR_J9VM::getMethodFromClass(methodClass, methodName, signature, callingClass);
    if (omb)

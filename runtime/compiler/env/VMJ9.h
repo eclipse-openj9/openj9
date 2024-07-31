@@ -1666,7 +1666,7 @@ public:
    virtual bool               hasFinalizer(TR_OpaqueClassBlock * classPointer);
    virtual uintptr_t         getClassDepthAndFlagsValue(TR_OpaqueClassBlock * classPointer);
    virtual uintptr_t         getClassFlagsValue(TR_OpaqueClassBlock * classPointer);
-   virtual TR_OpaqueMethodBlock * getMethodFromClass(TR_OpaqueClassBlock *, char *, char *, TR_OpaqueClassBlock * = NULL);
+   virtual TR_OpaqueMethodBlock * getMethodFromClass(TR_OpaqueClassBlock *, const char *, const char *, TR_OpaqueClassBlock * = NULL);
    virtual bool               isPrimitiveClass(TR_OpaqueClassBlock *clazz);
    virtual TR_OpaqueClassBlock * getComponentClassFromArrayClass(TR_OpaqueClassBlock * arrayClass);
    virtual TR_OpaqueClassBlock * getArrayClassFromComponentClass(TR_OpaqueClassBlock *componentClass);
