@@ -2423,3 +2423,18 @@ J9NLS_VM_CLASS_NAME_EXCEEDS_MAX_LENGTH.explanation=Class name cannot be longer t
 J9NLS_VM_CLASS_NAME_EXCEEDS_MAX_LENGTH.system_action=The JVM will throw a ClassNotFoundException.
 J9NLS_VM_CLASS_NAME_EXCEEDS_MAX_LENGTH.user_response=Shorten the class name.
 # END NON-TRANSLATABLE
+
+J9NLS_VM_CRIU_DISCLAIM_ALL_CLASS_MEMORY_FAILURE=disclaimAllClassMemory failed with errno: %1$zd.
+# START NON-TRANSLATABLE
+J9NLS_VM_CRIU_DISCLAIM_ALL_CLASS_MEMORY_FAILURE.sample_input_1=-1
+J9NLS_VM_CRIU_DISCLAIM_ALL_CLASS_MEMORY_FAILURE.explanation=madvise is not supported.
+J9NLS_VM_CRIU_DISCLAIM_ALL_CLASS_MEMORY_FAILURE.system_action=The JVM will throw a JVMCheckpointException.
+J9NLS_VM_CRIU_DISCLAIM_ALL_CLASS_MEMORY_FAILURE.user_response=Use -XX:-DisclaimClasses to disable disclaiming classes.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_CRIU_DISCLAIM_CLASSES_INVALID_PAGE_SIZE=Page size needs to be 4K for -XX:+DisclaimClasses.
+# START NON-TRANSLATABLE
+J9NLS_VM_CRIU_DISCLAIM_CLASSES_INVALID_PAGE_SIZE.explanation=-XX:+DisclaimClasses is only supported for 4K pages.
+J9NLS_VM_CRIU_DISCLAIM_CLASSES_INVALID_PAGE_SIZE.system_action=The JVM will print a warning.
+J9NLS_VM_CRIU_DISCLAIM_CLASSES_INVALID_PAGE_SIZE.user_response=Set page size to 4K or use -XX:-DisclaimClasses.
+# END NON-TRANSLATABLE

@@ -592,6 +592,7 @@ extern J9_CFUNC int32_t j9port_isCompatible(struct J9PortLibraryVersion *expecte
 #define j9mem_allocate_memory32(param1, category) OMRPORT_FROM_J9PORT(privatePortLibrary)->mem_allocate_memory32(OMRPORT_FROM_J9PORT(privatePortLibrary),param1, J9_GET_CALLSITE(), category)
 #define j9mem_free_memory32(param1) OMRPORT_FROM_J9PORT(privatePortLibrary)->mem_free_memory32(OMRPORT_FROM_J9PORT(privatePortLibrary),param1)
 #define j9mem_ensure_capacity32(param1) OMRPORT_FROM_J9PORT(privatePortLibrary)->mem_ensure_capacity32(OMRPORT_FROM_J9PORT(privatePortLibrary),param1)
+#define j9mem_disclaimAllMem32() OMRPORT_FROM_J9PORT(privatePortLibrary)->mem_disclaimAllMem32(OMRPORT_FROM_J9PORT(privatePortLibrary))
 #define j9cpu_startup() OMRPORT_FROM_J9PORT(privatePortLibrary)->cpu_startup(OMRPORT_FROM_J9PORT(privatePortLibrary))
 #define j9cpu_shutdown() OMRPORT_FROM_J9PORT(privatePortLibrary)->cpu_shutdown(OMRPORT_FROM_J9PORT(privatePortLibrary))
 #define j9cpu_flush_icache(param1,param2) OMRPORT_FROM_J9PORT(privatePortLibrary)->cpu_flush_icache(OMRPORT_FROM_J9PORT(privatePortLibrary),param1,param2)

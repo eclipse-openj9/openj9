@@ -254,6 +254,17 @@ extern "C" void jitAddNewLowToHighRSSRegion(const char *name, uint8_t *start, ui
       rssReport->addNewRegion(name, start, size, OMR::RSSRegion::lowToHigh, pageSize);
    }
 
+extern "C" void generateRSSReport()
+   {
+   static OMR::RSSReport *rssReport = OMR::RSSReport::instance();
+
+   if (rssReport)
+      {
+      rssReport->printTitle();
+      rssReport->printRegions();
+      }
+   }
+
 
 // -----------------------------------------------------------------------------
 // Method translation
@@ -1913,6 +1924,7 @@ onLoadInternal(
 
 
    jitConfig->jitAddNewLowToHighRSSRegion = jitAddNewLowToHighRSSRegion;
+   jitConfig->generateRSSReport = generateRSSReport;
 
    return 0;
    }
