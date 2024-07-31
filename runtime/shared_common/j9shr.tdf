@@ -2318,7 +2318,7 @@ TraceExit=Trc_SHR_OSC_openCache_Exit_CreatedHeaderInitFailed NoEnv Overhead=1 Le
 TraceEvent=Trc_SHR_Bad_CC_Init_Value Overhead=1 Level=1 Template="Bad composite cache header value. CompositeCache = %p, _theca->ccInitComplete = %zu"
 TraceEvent=Trc_SHR_CC_Startup_Cache_Initialization_Failure Overhead=1 Level=1 Template="After waiting, read-only cache is still not initialized."
 TraceEvent=Trc_SHR_CC_Startup_No_Cachelets Obsolete Overhead=1 Level=1 Template="No cachelets exist on startup. *_runtimeFlags = %llu, getContainsCachelets() = %d"
-TraceEvent=Trc_SHR_CC_OSPAGE_SIZE_MISMATCH Overhead=1 Level=1 Template="Mismatch in composite cache osPageSize value. CompositeCache = %p, _theca->osPageSize = %zu, _osPageSize = %zu"
+TraceEvent=Trc_SHR_CC_OSPAGE_SIZE_MISMATCH Obsolete Overhead=1 Level=1 Template="Mismatch in composite cache osPageSize value. CompositeCache = %p, _theca->osPageSize = %zu, _osPageSize = %zu"
 
 TraceExit=Trc_SHR_CC_allocate_Exit_CacheCorrupt Overhead=1 Level=3 Template="CC allocate: Failed because cache is marked as corrupt"
 TraceExit=Trc_SHR_CC_allocate_Exit_CacheFull Overhead=1 Level=3 Template="CC allocate: Failed because cache is full"
@@ -3004,3 +3004,5 @@ TraceEvent=Trc_SHR_TMI_LocalCheckTimestamp_Timestamps Overhead=1 Level=6 Templat
 TraceEvent=Trc_SHR_VMInitStages_Event_UsingJITServerAOTCacheLayer Overhead=1 Level=1 Template="The shared cache is using a temporary top layer for the JITServer AOT cache"
 TraceEvent=Trc_SHR_OSC_Mmap_startup_jitserverlayergooddelete NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::startup: deleteCacheFile succeeded for cache path name = %s, file handle %zd"
 TraceException=Trc_SHR_OSC_Mmap_startup_jitserverlayerbaddelete NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::startup: deleteCacheFile failed for cache path name = %s, file handle %zd"
+
+TraceEvent=Trc_SHR_CC_OSPAGE_SIZE_MISMATCH_V1 Overhead=1 Level=1 Template="Mismatch in layer %d composite cache osPageSize value. CompositeCache = %p, _theca->osPageSize = %zu, _osPageSize = %zu, _theca->roundedPagesFlag is %u, _readOnlyOSCache is %d"

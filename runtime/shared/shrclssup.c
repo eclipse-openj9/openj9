@@ -255,7 +255,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 
 				parseXXOptions(vm, &runtimeFlags);
 
-				vm->sharedCacheAPI->parseResult = parseArgs(vm, optionsBufferPtr, &runtimeFlags, &verboseFlags, &cacheName, &modContext,
+				vm->sharedCacheAPI->parseResult = parseArgs(vm, optionsBufferPtr, &runtimeFlags, &runtimeFlags2, &verboseFlags, &cacheName, &modContext,
 								&expireTime, &ctrlDirName, &cacheDirPermStr, &methodSpecs, &printStatsOptions, &storageKeyTesting);
 				if ((RESULT_PARSE_FAILED == vm->sharedCacheAPI->parseResult)
 				){
@@ -391,6 +391,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 				vm->sharedCacheAPI->verboseFlags = J9SHR_VERBOSEFLAG_ENABLE_VERBOSE_DEFAULT;
 			}
 			vm->sharedCacheAPI->runtimeFlags = runtimeFlags;
+			vm->sharedCacheAPI->runtimeFlags2 = runtimeFlags2;
 			vm->sharedCacheAPI->cacheDirPerm = J9SH_DIRPERM_ABSENT;
 		}
 	}
