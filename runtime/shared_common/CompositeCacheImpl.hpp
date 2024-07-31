@@ -547,6 +547,11 @@ private:
 
 	void unsetCacheHeaderFullFlags(J9VMThread *currentThread, UDATA flagsToUnset);
 
+	void updateMprotectRuntimeFlags(void);
+#if defined(J9VM_OPT_SHR_MSYNC_SUPPORT)
+	void updateMsyncRuntimeFlags(void);
+#endif /* defined(J9VM_OPT_SHR_MSYNC_SUPPORT) */
+
 	BlockPtr getRomClassProtectEnd() {
 		return _romClassProtectEnd;
 	}
