@@ -364,7 +364,9 @@ jvmtiAddCapabilities(jvmtiEnv* env,
 
 			/* Make sure all of the requested capabilities are available */
 
-			if ((byte & ~(((U_8 *) &potentialCapabilities)[i])) != 0) {
+			if (0 != (byte & ~(((U_8 *) &potentialCapabilities)[i]))) {
+				Trc_JVMTI_jvmtiAddCapabilities_no_capability(currentThread,
+					i, ((U_8 *) &potentialCapabilities)[i], (byte & ~(((U_8 *) &potentialCapabilities)[i])));
 				goto fail;
 			}
 
@@ -382,6 +384,7 @@ jvmtiAddCapabilities(jvmtiEnv* env,
 					vm->requiredDebugAttributes |= J9VM_DEBUG_ATTRIBUTE_MAINTAIN_ORIGINAL_METHOD_ORDER;
 				} else {
 					rc = JVMTI_ERROR_NOT_AVAILABLE;
+					Trc_JVMTI_jvmtiAddCapabilities_not_onload(currentThread);
 					goto fail;
 				}
 			}
@@ -391,6 +394,7 @@ jvmtiAddCapabilities(jvmtiEnv* env,
 		if (newCapabilities.can_generate_sampled_object_alloc_events) {
 			if (J9_ARE_ANY_BITS_SET(jvmtiData->flags, J9JVMTI_FLAG_SAMPLED_OBJECT_ALLOC_ENABLED)) {
 				rc = JVMTI_ERROR_NOT_AVAILABLE;
+				Trc_JVMTI_jvmtiAddCapabilities_object_alloc_set_already(currentThread);
 				goto fail;
 			}
 
@@ -411,13 +415,15 @@ jvmtiAddCapabilities(jvmtiEnv* env,
 
 		/* Reserve hooks for any events now allowed by the new capabilities */
 
-		if (mapCapabilitiesToEvents(j9env, &newCapabilities, reserveEvent) != 0) {
+		if (0 != mapCapabilitiesToEvents(j9env, &newCapabilities, reserveEvent)) {
+			Trc_JVMTI_jvmtiAddCapabilities_mapCapabilitiesToEvents_failed(currentThread);
 			goto fail;
 		}
 
 		/* Handle non-event hooks */
 
-		if (hookNonEventCapabilities(j9env, &newCapabilities) != 0) {
+		if (0 != hookNonEventCapabilities(j9env, &newCapabilities)) {
+			Trc_JVMTI_jvmtiAddCapabilities_hookNonEventCapabilities_failed(currentThread);
 			goto fail;
 		}
 

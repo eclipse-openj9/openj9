@@ -46,8 +46,6 @@
 #include "jvmtiHelpers.h"
 
 #define THIS_DLL_NAME J9_JVMTI_DLL_NAME
-#define OPT_AGENTPATH_COLON "-agentpath:"
-#define OPT_AGENTLIB_COLON "-agentlib:"
 
 static void shutDownJVMTI (J9JavaVM * vm);
 static jint createAgentLibrary (J9JavaVM * vm, const char *libraryAndOptions, UDATA libraryLength, const char* options, UDATA optionsLength, UDATA decorate, J9JVMTIAgentLibrary **result);
@@ -114,111 +112,207 @@ parseLibraryAndOptions(char *libraryAndOptions, UDATA *libraryLength, char **opt
 
 #define OPTIONSBUFF_LEN 512
 
-IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
+/**
+ * Create an agent library from an option index.
+ *
+ * @param[in] vm Java VM
+ * @param[in] argsList a J9VMInitArgs
+ * @param[in] agentIndex the option index for the agent library
+ * @param[in/out] agentLibrary environment for the agent
+ *
+ * @return JNI_OK if succeeded, otherwise JNI_ERR/JNI_ENOMEM
+ */
+static jint
+createAgentLibraryWithOption(J9JavaVM *vm, J9VMInitArgs *argsList, IDATA agentIndex, J9JVMTIAgentLibrary **agentLibrary)
+{
+	jint result = JNI_OK;
+	char optionsBuf[OPTIONSBUFF_LEN];
+	char *optionsPtr = (char*)optionsBuf;
+	UDATA buflen = OPTIONSBUFF_LEN;
+	IDATA option_rc = 0;
+	UDATA libraryLength = 0;
+	char *options = NULL;
+	UDATA optionsLength = 0;
+	PORT_ACCESS_FROM_JAVAVM(vm);
+
+	do {
+		option_rc = COPY_OPTION_VALUE_ARGS(argsList, agentIndex, ':', &optionsPtr, buflen);
+		if (OPTION_BUFFER_OVERFLOW == option_rc) {
+			if (optionsPtr != (char*)optionsBuf) {
+				j9mem_free_memory(optionsPtr);
+			}
+			buflen *= 2;
+			optionsPtr = (char*)j9mem_allocate_memory(buflen, OMRMEM_CATEGORY_VM);
+			if (NULL == optionsPtr) {
+				Trc_JVMTI_createAgentLibraryWithOption_OOM();
+				return JNI_ENOMEM;
+			}
+		}
+	} while (OPTION_BUFFER_OVERFLOW == option_rc);
+
+	parseLibraryAndOptions(optionsPtr, &libraryLength, &options, &optionsLength);
+	result = createAgentLibrary(vm, optionsPtr, libraryLength, options, optionsLength, TRUE, agentLibrary);
+	if (optionsPtr != (char*)optionsBuf) {
+		j9mem_free_memory(optionsPtr);
+	}
+	Trc_JVMTI_createAgentLibraryWithOption_result(optionsPtr, libraryLength, options, optionsLength, *agentLibrary, result);
+
+	return result;
+}
+
+/**
+ * Create an agent library from an option index.
+ *
+ * @param[in] vm Java VM
+ * @param[in] argsList a J9VMInitArgs
+ * @param[in] agentColon the agent option, VMOPT_AGENTLIB_COLON or VMOPT_AGENTPATH_COLON
+ * @param[in] loadLibrary indicate if the agent library created to be loaded or not
+ *
+ * @return TRUE if succeeded, otherwise FALSE
+ */
+static BOOLEAN
+processAgentLibraryFromArgsList(J9JavaVM *vm, J9VMInitArgs *argsList, const char *agentColon, BOOLEAN loadLibrary)
+{
+	IDATA agentIndex = FIND_AND_CONSUME_ARG_FORWARD(argsList, STARTSWITH_MATCH, agentColon, NULL);
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	BOOLEAN jdwpEnabled = FALSE;
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+	BOOLEAN result = TRUE;
+
+	while (agentIndex >= 0) {
+		J9JVMTIAgentLibrary *agentLibrary = NULL;
+		if (JNI_OK != createAgentLibraryWithOption(vm, argsList, agentIndex, &agentLibrary)) {
+			result = FALSE;
+			break;
+		}
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+		if (loadLibrary) {
+			if (JNI_OK != loadAgentLibrary(vm, agentLibrary)) {
+				result = FALSE;
+				break;
+			}
+			jdwpEnabled = TRUE;
+		}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
+		agentIndex = FIND_NEXT_ARG_IN_ARGS_FORWARD(argsList, STARTSWITH_MATCH, agentColon, NULL, agentIndex);
+	}
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	if (jdwpEnabled) {
+		vm->checkpointState.flags |= J9VM_CRIU_IS_JDWP_ENABLED;
+	}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
+	return result;
+}
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+/**
+ * Add JVMTI capabilities before checkpoint.
+ * This is required for debugger support when JIT is enabled.
+ * This function can be removed when JIT allows capabilities to be added after restore.
+ *
+ * @param[in] vm Java VM
+ * @param[in] jitEnabled FALSE if -Xint, otherwise TRUE
+ *
+ * @return JNI_OK if succeeded, otherwise JNI_ERR
+ */
+static jint
+criuAddCapabilities(J9JavaVM *vm, BOOLEAN jitEnabled) {
+	jvmtiError jvmtiRet = JVMTI_ERROR_NONE;
+	jvmtiCapabilities requiredCapabilities;
+	JavaVM *javaVM = (JavaVM*)vm;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	jvmtiEnv *jvmti_env = NULL;
+	jint rc = vmFuncs->GetEnv(javaVM, (void **)&jvmti_env, JVMTI_VERSION_1_1);
+	if (JNI_OK != rc) {
+		if ((JNI_EVERSION != rc) || (JNI_OK != (vmFuncs->GetEnv(javaVM, (void **)&jvmti_env, JVMTI_VERSION_1_0)))) {
+			return JNI_ERR;
+		}
+	}
+
+	memset(&requiredCapabilities,0,sizeof(requiredCapabilities));
+	requiredCapabilities.can_access_local_variables = 1;
+	if (jitEnabled) {
+		jvmtiCapabilities potentialCapabilities;
+
+		requiredCapabilities.can_tag_objects = 1;
+		requiredCapabilities.can_get_source_file_name = 1;
+		requiredCapabilities.can_get_line_numbers = 1;
+		requiredCapabilities.can_get_source_debug_extension = 1;
+		requiredCapabilities.can_maintain_original_method_order = 1;
+		requiredCapabilities.can_generate_single_step_events = 1;
+		requiredCapabilities.can_generate_exception_events = 1;
+		requiredCapabilities.can_generate_frame_pop_events = 1;
+		requiredCapabilities.can_generate_breakpoint_events = 1;
+		requiredCapabilities.can_suspend = 1;
+		requiredCapabilities.can_generate_method_entry_events = 1;
+		requiredCapabilities.can_generate_method_exit_events = 1;
+		requiredCapabilities.can_generate_monitor_events = 1;
+		requiredCapabilities.can_generate_garbage_collection_events = 1;
+#if JAVA_SPEC_VERSION >= 21
+		requiredCapabilities.can_support_virtual_threads = 1;
+#endif /* JAVA_SPEC_VERSION >= 21 */
+		memset(&potentialCapabilities, 0, sizeof(potentialCapabilities));
+		jvmtiRet = (*jvmti_env)->GetPotentialCapabilities(jvmti_env, &potentialCapabilities);
+		if (JVMTI_ERROR_NONE != jvmtiRet) {
+			return JNI_ERR;
+		}
+		requiredCapabilities.can_generate_field_modification_events = potentialCapabilities.can_generate_field_modification_events;
+		requiredCapabilities.can_generate_field_access_events = potentialCapabilities.can_generate_field_access_events;
+		requiredCapabilities.can_get_bytecodes = potentialCapabilities.can_get_bytecodes;
+		requiredCapabilities.can_get_synthetic_attribute = potentialCapabilities.can_get_synthetic_attribute;
+		requiredCapabilities.can_get_owned_monitor_info = potentialCapabilities.can_get_owned_monitor_info;
+		requiredCapabilities.can_get_current_contended_monitor = potentialCapabilities.can_get_current_contended_monitor;
+		requiredCapabilities.can_get_monitor_info = potentialCapabilities.can_get_monitor_info;
+		requiredCapabilities.can_pop_frame = potentialCapabilities.can_pop_frame;
+		requiredCapabilities.can_redefine_classes = potentialCapabilities.can_redefine_classes;
+		requiredCapabilities.can_signal_thread = potentialCapabilities.can_signal_thread;
+		requiredCapabilities.can_redefine_any_class = potentialCapabilities.can_redefine_any_class;
+		requiredCapabilities.can_force_early_return = potentialCapabilities.can_force_early_return;
+		requiredCapabilities.can_get_owned_monitor_stack_depth_info = potentialCapabilities.can_get_owned_monitor_stack_depth_info;
+		requiredCapabilities.can_get_constant_pool = potentialCapabilities.can_get_constant_pool;
+	}
+	jvmtiRet = (*jvmti_env)->AddCapabilities(jvmti_env, &requiredCapabilities);
+	if (JVMTI_ERROR_NONE != jvmtiRet) {
+		return JNI_ERR;
+	}
+
+	return JNI_OK;
+}
+
+void
+criuRestoreInitializeLib(J9JavaVM *vm)
+{
+	J9VMInitArgs *criuRestoreArgsList = vm->checkpointState.restoreArgsList;
+
+	processAgentLibraryFromArgsList(vm, criuRestoreArgsList, VMOPT_AGENTLIB_COLON, TRUE);
+	processAgentLibraryFromArgsList(vm, criuRestoreArgsList, VMOPT_AGENTPATH_COLON, TRUE);
+}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
+IDATA J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
 {
 	IDATA returnVal = J9VMDLLMAIN_OK;
-	IDATA agentIndex;
-	pool_state poolState;
-	J9JVMTIAgentLibrary * agentLibrary;
-	J9JVMTIData * jvmtiData;
 
 	switch(stage) {
-
-		case ALL_VM_ARGS_CONSUMED :
+		case ALL_VM_ARGS_CONSUMED:
 		{
-			PORT_ACCESS_FROM_JAVAVM(vm);
-			char optionsBuf[OPTIONSBUFF_LEN];
-			char* optionsPtr = (char*)optionsBuf;
-			UDATA buflen = OPTIONSBUFF_LEN;
-			IDATA option_rc = 0;
-
-			if (initializeJVMTI(vm) != JNI_OK) {
+			if (JNI_OK != initializeJVMTI(vm)) {
 				goto _error;
 			}
-
-			agentIndex = FIND_AND_CONSUME_VMARG_FORWARD( STARTSWITH_MATCH, OPT_AGENTLIB_COLON, NULL);
-			while (agentIndex >= 0) {
-				UDATA libraryLength;
-				char *options;
-				UDATA optionsLength;
-
-				do {
-					option_rc = COPY_OPTION_VALUE(agentIndex, ':', &optionsPtr, buflen);
-					if (OPTION_BUFFER_OVERFLOW == option_rc) {
-						if (optionsPtr != (char*)optionsBuf) {
-							j9mem_free_memory(optionsPtr);
-							optionsPtr = NULL;
-						}
-						buflen *= 2;
-						optionsPtr = (char*)j9mem_allocate_memory(buflen, OMRMEM_CATEGORY_VM);
-						if (NULL == optionsPtr) {
-							goto _error;
-						}
-					}
-				} while (OPTION_BUFFER_OVERFLOW == option_rc);
-
-				parseLibraryAndOptions(optionsPtr, &libraryLength, &options, &optionsLength);
-				if (createAgentLibrary(vm, optionsPtr, libraryLength, options, optionsLength, TRUE, NULL) != JNI_OK) {
-					if (optionsPtr != (char*)optionsBuf) {
-						j9mem_free_memory(optionsPtr);
-						optionsPtr = NULL;
-					}
-					goto _error;
-				}
-				agentIndex = FIND_NEXT_ARG_IN_VMARGS_FORWARD( STARTSWITH_MATCH, OPT_AGENTLIB_COLON, NULL, agentIndex);
+			if (FALSE == processAgentLibraryFromArgsList(vm, vm->vmArgsArray, VMOPT_AGENTLIB_COLON, FALSE)) {
+				goto _error;
 			}
-			if (optionsPtr != (char*)optionsBuf) {
-				j9mem_free_memory(optionsPtr);
-				optionsPtr = NULL;
+			if (FALSE == processAgentLibraryFromArgsList(vm, vm->vmArgsArray, VMOPT_AGENTPATH_COLON, FALSE)) {
+				goto _error;
 			}
-
-			agentIndex = FIND_AND_CONSUME_VMARG_FORWARD( STARTSWITH_MATCH, OPT_AGENTPATH_COLON, NULL);
-			optionsPtr = (char*)optionsBuf;
-			buflen = OPTIONSBUFF_LEN;
-			while (agentIndex >= 0) {
-				UDATA libraryLength;
-				char *options;
-				UDATA optionsLength;
-
-				do {
-					option_rc = COPY_OPTION_VALUE(agentIndex, ':', &optionsPtr, buflen);
-					if (OPTION_BUFFER_OVERFLOW == option_rc) {
-						if (optionsPtr != (char*)optionsBuf) {
-							j9mem_free_memory(optionsPtr);
-							optionsPtr = NULL;
-						}
-						buflen *= 2;
-						optionsPtr = (char*)j9mem_allocate_memory(buflen, OMRMEM_CATEGORY_VM);
-						if (NULL == optionsPtr) {
-							goto _error;
-						}
-					}
-				} while (OPTION_BUFFER_OVERFLOW == option_rc);
-
-				parseLibraryAndOptions(optionsPtr, &libraryLength, &options, &optionsLength);
-				if (createAgentLibrary(vm, optionsPtr, libraryLength, options, optionsLength, FALSE, NULL) != JNI_OK) {
-					if (optionsPtr != (char*)optionsBuf) {
-						j9mem_free_memory(optionsPtr);
-						optionsPtr = NULL;
-					}
-					goto _error;
-				}
-				agentIndex = FIND_NEXT_ARG_IN_VMARGS_FORWARD( STARTSWITH_MATCH, OPT_AGENTPATH_COLON, NULL, agentIndex);
-			}
-			if (optionsPtr != (char*)optionsBuf) {
-				j9mem_free_memory(optionsPtr);
-				optionsPtr = NULL;
-			}
-
 			/* -Xrun libraries that have an Agent_OnLoad are treated like -agentlib: */
-
-			if (createXrunLibraries(vm) != JNI_OK) {
+			if (JNI_OK != createXrunLibraries(vm)) {
 				goto _error;
 			}
-
 			vm->loadAgentLibraryOnAttach = &loadAgentLibraryOnAttach;
 			vm->isAgentLibraryLoaded = &isAgentLibraryLoaded;
-
 			break;
 		}
 
@@ -235,7 +329,10 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 			break;
 
 		case AGENTS_STARTED:
-			jvmtiData = J9JVMTI_DATA_FROM_VM(vm);
+		{
+			pool_state poolState;
+			J9JVMTIAgentLibrary *agentLibrary = NULL;
+			J9JVMTIData *jvmtiData = J9JVMTI_DATA_FROM_VM(vm);
 			if (hookGlobalEvents(jvmtiData)) {
 				PORT_ACCESS_FROM_JAVAVM(vm);
 				j9tty_err_printf(PORTLIB, "Need NLS message here\n");
@@ -243,20 +340,33 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 			}
 
 			agentLibrary = pool_startDo(jvmtiData->agentLibraries, &poolState);
-			while (agentLibrary != NULL) {
-				if (loadAgentLibrary(vm, agentLibrary) != JNI_OK) {
+			while (NULL != agentLibrary) {
+				if (JNI_OK != loadAgentLibrary(vm, agentLibrary)) {
 					goto _error;
 				}
 				agentLibrary = pool_nextDo(&poolState);
 			}
 
 			/* Register the hotswap helper trace points */
-            hshelpUTRegister(vm);
+			hshelpUTRegister(vm);
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+			/*
+			 * Adding capabilities is required before checkpoint if JIT is enabled.
+			 * Following code can be removed when JIT allows capabilities to be added after restore.
+			 */
+			if (vm->internalVMFunctions->isDebugOnRestoreEnabled(vm->mainThread)) {
+				Trc_JVMTI_criuAddCapabilities_invoked();
+				/* ignore the failure, it won't cause a problem if JDWP is not enabled later */
+				criuAddCapabilities(vm, NULL != vm->jitConfig);
+			}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 			jvmtiData->phase = JVMTI_PHASE_PRIMORDIAL;
 			break;
+		}
 
-		case LIBRARIES_ONUNLOAD :
+		case LIBRARIES_ONUNLOAD:
 			shutDownJVMTI(vm);
 			break;
 
@@ -271,8 +381,6 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 	}
 	return returnVal;
 }
-
-
 
 /**
  * \brief	Mangle the agent library name to include full path
