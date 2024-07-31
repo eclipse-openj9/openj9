@@ -7,6 +7,10 @@ async function run() {
     const sandboxOwner = 'eclipse-openj9';
     const sandboxRepo = 'openj9';
 
+    const issueNumber = process.env.ISSUE_NUMBER;
+    let issueStatus = process.env.ISSUE_STATUS;
+    issueStatus = issueStatus[0].toUpperCase() + issueStatus.slice(1);
+
     const input = {
         issue_title: process.env.ISSUE_TITLE,
         issue_description: process.env.ISSUE_DESCRIPTION,
@@ -24,10 +28,11 @@ async function run() {
         });
 
         const issueComment = response.data;
-        predictedAssignees = issueComment.recommended_developers;
-        predictedLabels = issueComment.recommended_components;
+        let predictedAssignees = issueComment.recommended_developers;
+        let predictedLabels = issueComment.recommended_components;
+        let resultString = `Issue Number: ${issueNumber}\n`;
 
-        resultString += 'Status: Open\n';
+        resultString += `Status: ${issueStatus}\n`;
         resultString += `Recommended Components: ${predictedLabels.join(', ')}\n`;
         resultString += `Recommended Assignees: ${predictedAssignees.join(', ')}\n`;
 
