@@ -2791,7 +2791,6 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_lang_String_equalsIgnoreCase,    "equalsIgnoreCase",    "(Ljava/lang/String;)Z")},
       {x(TR::java_lang_String_compareToIgnoreCase, "compareToIgnoreCase", "(Ljava/lang/String;)I")},
       {x(TR::java_lang_String_compress,            "compress",            "([C[BII)I")},
-      {x(TR::java_lang_String_compressNoCheck,     "compressNoCheck",     "([C[BII)V")},
       {x(TR::java_lang_String_andOR,               "andOR",               "([CII)I")},
       {x(TR::java_lang_String_unsafeCharAt,        "unsafeCharAt",        "(I)C")},
       {x(TR::java_lang_String_split_str_int,       "split",               "(Ljava/lang/String;I)[Ljava/lang/String;")},

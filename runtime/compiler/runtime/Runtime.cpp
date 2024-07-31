@@ -343,9 +343,7 @@ JIT_HELPER(icallVMprJavaSendVirtualF);
 JIT_HELPER(icallVMprJavaSendVirtualD);
 
 JIT_HELPER(compressString);
-JIT_HELPER(compressStringNoCheck);
 JIT_HELPER(compressStringJ);
-JIT_HELPER(compressStringNoCheckJ);
 JIT_HELPER(andORString);
 JIT_HELPER(encodeUTF16Big);
 JIT_HELPER(encodeUTF16Little);
@@ -375,9 +373,7 @@ JIT_HELPER(SSEdoubleRemainderIA32Thunk);
 JIT_HELPER(SSEdouble2LongIA32);
 
 JIT_HELPER(compressString);
-JIT_HELPER(compressStringNoCheck);
 JIT_HELPER(compressStringJ);
-JIT_HELPER(compressStringNoCheckJ);
 JIT_HELPER(andORString);
 JIT_HELPER(encodeUTF16Big);
 JIT_HELPER(encodeUTF16Little);
@@ -477,9 +473,7 @@ JIT_HELPER(ECP256subNoMod_PPC_compressed);
 
 #ifndef LINUX
 JIT_HELPER(__compressString);
-JIT_HELPER(__compressStringNoCheck);
 JIT_HELPER(__compressStringJ);
-JIT_HELPER(__compressStringNoCheckJ);
 JIT_HELPER(__andORString);
 #endif
 JIT_HELPER(__arrayTranslateTRTO);
@@ -521,9 +515,7 @@ JIT_HELPER(__long2Double);
 JIT_HELPER(__long2Float);
 JIT_HELPER(__arrayCopy);
 JIT_HELPER(__compressString);
-JIT_HELPER(__compressStringNoCheck);
 JIT_HELPER(__compressStringJ);
-JIT_HELPER(__compressStringNoCheckJ);
 JIT_HELPER(__andORString);
 JIT_HELPER(__multi64);
 JIT_HELPER(_interpreterUnresolvedStaticGlue);
@@ -1238,9 +1230,7 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
 
    SET(TR_AMD64jitCollapseJNIReferenceFrame,          (void *)jitCollapseJNIReferenceFrame,   TR_Helper);
    SET(TR_AMD64compressString,                        (void *)compressString,            TR_Helper);
-   SET(TR_AMD64compressStringNoCheck,                 (void *)compressStringNoCheck,     TR_Helper);
    SET(TR_AMD64compressStringJ,                       (void *)compressStringJ,           TR_Helper);
-   SET(TR_AMD64compressStringNoCheckJ,                (void *)compressStringNoCheckJ,    TR_Helper);
    SET(TR_AMD64andORString,                           (void *)andORString,               TR_Helper);
    SET(TR_AMD64arrayTranslateTRTO,                    (void *)arrayTranslateTRTO,        TR_Helper);
    SET(TR_AMD64arrayTranslateTROTNoBreak,             (void *)arrayTranslateTROTNoBreak, TR_Helper);
@@ -1291,9 +1281,7 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_IA32floatToInt,                             (void *)floatToInt,   TR_Helper);
 
    SET(TR_IA32compressString,                         (void *)compressString,            TR_Helper);
-   SET(TR_IA32compressStringNoCheck,                  (void *)compressStringNoCheck,     TR_Helper);
    SET(TR_IA32compressStringJ,                        (void *)compressStringJ,           TR_Helper);
-   SET(TR_IA32compressStringNoCheckJ,                 (void *)compressStringNoCheckJ,    TR_Helper);
    SET(TR_IA32andORString,                            (void *)andORString,               TR_Helper);
    SET(TR_IA32arrayTranslateTRTO,                     (void *)arrayTranslateTRTO,        TR_Helper);
    SET(TR_IA32arrayTranslateTROTNoBreak,              (void *)arrayTranslateTROTNoBreak, TR_Helper);
@@ -1411,9 +1399,7 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
 
 #ifndef LINUX
    SET(TR_PPCcompressString,               (void *) __compressString,               TR_Helper);
-   SET(TR_PPCcompressStringNoCheck,        (void *) __compressStringNoCheck,        TR_Helper);
    SET(TR_PPCcompressStringJ,              (void *) __compressStringJ,              TR_Helper);
-   SET(TR_PPCcompressStringNoCheckJ,       (void *) __compressStringNoCheckJ,       TR_Helper);
    SET(TR_PPCandORString,                  (void *) __andORString,                  TR_Helper);
 #endif
    SET(TR_PPCreferenceArrayCopy,           (void *) __referenceArrayCopy,           TR_Helper);

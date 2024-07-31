@@ -9658,72 +9658,6 @@ static TR::Register *compressStringEvaluator(TR::Node *node, TR::CodeGenerator *
    return (resultReg);
    }
 
-static TR::Register *compressStringNoCheckEvaluator(TR::Node *node, TR::CodeGenerator *cg, bool japaneseMethod)
-   {
-   TR_J9VMBase *fej9 = (TR_J9VMBase *) (cg->comp()->fe());
-   TR::Node *srcObjNode, *dstObjNode, *startNode, *lengthNode;
-   TR::Register *srcObjReg = NULL, *dstObjReg = NULL, *lengthReg = NULL, *startReg = NULL;
-
-   srcObjNode = node->getChild(0);
-   dstObjNode = node->getChild(1);
-   startNode = node->getChild(2);
-   lengthNode = node->getChild(3);
-
-   bool stopUsingCopyReg1, stopUsingCopyReg2, stopUsingCopyReg3, stopUsingCopyReg4;
-
-   stopUsingCopyReg1 = TR::TreeEvaluator::stopUsingCopyReg(srcObjNode, srcObjReg, cg);
-   stopUsingCopyReg2 = TR::TreeEvaluator::stopUsingCopyReg(dstObjNode, dstObjReg, cg);
-   stopUsingCopyReg3 = TR::TreeEvaluator::stopUsingCopyReg(startNode, startReg, cg);
-   stopUsingCopyReg4 = TR::TreeEvaluator::stopUsingCopyReg(lengthNode, lengthReg, cg);
-
-   uintptr_t hdrSize = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
-   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, srcObjReg, srcObjReg, hdrSize);
-   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, dstObjReg, dstObjReg, hdrSize);
-
-   int numOfRegs = japaneseMethod ? 11 : 12;
-   TR::RegisterDependencyConditions *conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(numOfRegs, numOfRegs, cg->trMemory());
-   TR::Register *cndRegister = cg->allocateRegister(TR_CCR);
-   TR::addDependency(conditions, cndRegister, TR::RealRegister::cr0, TR_CCR, cg);
-   TR::addDependency(conditions, lengthReg, TR::RealRegister::gr8, TR_GPR, cg);
-   TR::addDependency(conditions, startReg, TR::RealRegister::gr7, TR_GPR, cg);
-   TR::addDependency(conditions, srcObjReg, TR::RealRegister::gr9, TR_GPR, cg);
-   TR::addDependency(conditions, dstObjReg, TR::RealRegister::gr10, TR_GPR, cg);
-
-   TR::addDependency(conditions, NULL, TR::RealRegister::gr0, TR_GPR, cg);
-   TR::addDependency(conditions, NULL, TR::RealRegister::gr11, TR_GPR, cg);
-   TR::addDependency(conditions, NULL, TR::RealRegister::gr6, TR_GPR, cg);
-   TR::addDependency(conditions, NULL, TR::RealRegister::gr4, TR_GPR, cg);
-   TR::addDependency(conditions, NULL, TR::RealRegister::gr5, TR_GPR, cg);
-   TR::addDependency(conditions, NULL, TR::RealRegister::gr3, TR_GPR, cg);
-   if (!japaneseMethod)
-      TR::addDependency(conditions, NULL, TR::RealRegister::gr12, TR_GPR, cg);
-
-   if (japaneseMethod)
-      TR::TreeEvaluator::generateHelperBranchAndLinkInstruction(TR_PPCcompressStringNoCheckJ, node, conditions, cg);
-   else
-      TR::TreeEvaluator::generateHelperBranchAndLinkInstruction(TR_PPCcompressStringNoCheck, node, conditions, cg);
-
-   TR::Register* regs[4] =
-      {
-      lengthReg, startReg, srcObjReg, dstObjReg
-      };
-   conditions->stopUsingDepRegs(cg, 4, regs);
-   for (uint16_t i = 0; i < node->getNumChildren(); i++)
-      cg->decReferenceCount(node->getChild(i));
-   if (stopUsingCopyReg1)
-      cg->stopUsingRegister(srcObjReg);
-   if (stopUsingCopyReg2)
-      cg->stopUsingRegister(dstObjReg);
-   if (stopUsingCopyReg3)
-      cg->stopUsingRegister(startReg);
-   if (stopUsingCopyReg4)
-      cg->stopUsingRegister(lengthReg);
-
-   cg->machine()->setLinkRegisterKilled(true);
-   cg->setHasCall();
-   return NULL;
-   }
-
 static TR::Register *andORStringEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *) (cg->comp()->fe());
@@ -11945,10 +11879,6 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
          resultReg = compressStringEvaluator(node, cg, useJapaneseCompression);
          return true;
          break;
-
-      case TR::java_lang_String_compressNoCheck:
-         resultReg = compressStringNoCheckEvaluator(node, cg, useJapaneseCompression);
-         return true;
 
       case TR::java_lang_String_andOR:
          resultReg = andORStringEvaluator(node, cg);

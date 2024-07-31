@@ -34,13 +34,9 @@
 #ifdef AIXPPC
 	.globl    .__compressString
 	.globl    .__compressStringJ
-	.globl    .__compressStringNoCheck
-	.globl    .__compressStringNoCheckJ
 	.globl    .__andORString
 	.globl    __compressString{DS}
 	.globl    __compressStringJ{DS}
-	.globl    __compressStringNoCheck{DS}
-	.globl    __compressStringNoCheckJ{DS}
 	.globl    __andORString{DS}
 !	.globl    .__arrayCopy_dp
 !	.globl    __arrayCopy_dp{DS}
@@ -50,18 +46,12 @@
 	.type     FUNC_LABEL(__compressString),@function
 	.globl    FUNC_LABEL(__compressStringJ)
 	.type     FUNC_LABEL(__compressStringJ),@function
-	.globl    FUNC_LABEL(__compressStringNoCheck)
-	.type     FUNC_LABEL(__compressStringNoCheck),@function
-	.globl    FUNC_LABEL(__compressStringNoCheckJ)
-	.type     FUNC_LABEL(__compressStringNoCheckJ),@function
 	.globl    FUNC_LABEL(__andORString)
 	.type     FUNC_LABEL(__andOrString),@function
 
 #elif defined(LINUX)
 	.globl    __compressString
 	.globl    __compressStringJ
-	.globl    __compressStringNocheck
-	.globl    __compressStringNocheckJ
 	.globl    __andORString
 !	.globl    __arrayCopy_dp
 #endif
@@ -264,168 +254,6 @@ L.__finish:
 	bclr    BO_IF, CR0_EQ
 	endproc.__compressString:
 
-#ifdef AIXPPC
-	.csect	__compressStringNoCheck{PR}
-.__compressStringNoCheck:
-	.function .__compressStringNoCheck,startproc.__compressStringNoCheck,16,0,(endproc.__compressStringNoCheck-startproc.__compressStringNoCheck)
-#elif defined(LINUXPPC64)
-FUNC_LABEL(__compressStringNoCheck):
-#else
-__compressStringNoCheck:
-#endif
-
-	startproc.__compressStringNoCheck:
-L.__compressStringNoCheck:
-	add	r11, r7, r7
-	add	r9, r9, r11
-	srwi.	r0, r8, 4
-	bc	BO_IF, CR0_EQ, L.__residueNoCheck
-        mtctr   r0
-L.__loopNoCheck:
-	lwz     r0, 0(r9)
-	lwz     r11, 4(r9)
-	lwz     r6, 8(r9)
-	lwz     r3, 12(r9)
-	rlwinm	r4, r0, 8, 0xFF000000	!method 1
-	rlwinm	r7, r0, 16, 0xFF0000	!method 1
-	rlwinm	r5, r6, 8, 0xFF000000   !method 1
-	rlwinm	r12, r6, 16, 0xFF0000   !method 1
-	rlwimi	r4, r11, 24, 0xFF00	!method 1
-	rlwimi	r7, r11, 0, 0xFF	!method 1
-	rlwimi  r5, r3, 24, 0xFF00	!method 1
-	rlwimi  r12, r3, 0, 0xFF	!method 1
-	or	r4, r4, r7		!method 1
-	or	r5, r5, r12		!method 1
-	stw	r4, 0(r10)
-	stw     r5, 4(r10)
-
-	lwz     r0, 16(r9)
-	lwz     r11,20(r9)
-	lwz     r6, 24(r9)
-	lwz     r3, 28(r9)
-	addi	r9, r9, 32
-	rlwinm	r4, r0, 8, 0xFF000000	!method 1
-	rlwinm	r7, r0, 16, 0xFF0000	!method 1
-	rlwinm	r5, r6, 8, 0xFF000000	!method 1
-	rlwinm	r12, r6, 16, 0xFF0000	!method 1
-	rlwimi	r4, r11, 24, 0xFF00	!method 1
-	rlwimi	r7, r11, 0, 0xFF	!method 1
-	rlwimi  r5, r3, 24, 0xFF00	!method 1
-	rlwimi  r12, r3, 0, 0xFF	!method 1
-	or	r4, r4, r7		!method 1
-	or	r5, r5, r12		!method 1
-	stw	r4, 8(r10)
-	stw     r5, 12(r10)
-	addi	r10, r10, 16
-	subi    r8, r8, 16
-	bdnz	L.__loopNoCheck
-
-L.__residueNoCheck:
-	srwi.	r0, r8, 2
-	bc	BO_IF, CR0_EQ, L.__residue2NoCheck
-	mtctr	r0
-L.__residueLoopNoCheck:
-	lwz	r0, 0(r9)
-	lwz     r11, 4(r9)
-	addi	r9, r9, 8
-	rlwinm	r4, r0, 8, 0xFF000000
-	rlwinm	r7, r0, 16, 0xFF0000
-	rlwimi	r4, r11, 24, 0xFF00	!method 1
-	rlwimi	r7, r11, 0, 0xFF	!method 1
-	or	r4, r4, r7		!method 1
-	stw	r4, 0(r10)
-	addi    r10, r10, 4
-	subi	r8, r8, 4
-	bdnz	L.__residueLoopNoCheck
-
-L.__residue2NoCheck:
-	srwi.   r0, r8, 0
-	bc	BO_IF, CR0_EQ, L.__finishNoCheck
-	mtctr	r0
-L.__residueLoop2NoCheck:
-	lhz	r0, 0(r9)
-	addi    r9, r9, 2
-	stb	r0, 0(r10)
-	addi    r10, r10, 1
-	bdnz	L.__residueLoop2NoCheck
-
-L.__finishNoCheck:
-	bclr    BO_IF, CR0_EQ
-
-	endproc.__compressStringNoCheck:
-
-#ifdef AIXPPC
-	.csect	__compressStringNoCheckJ{PR}
-.__compressStringNoCheckJ:
-	.function .__compressStringNoCheckJ,startproc.__compressStringNoCheckJ,16,0,(endproc.__compressStringNoCheckJ-startproc.__compressStringNoCheckJ)
-#elif defined(LINUXPPC64)
-FUNC_LABEL(__compressStringNoCheckJ):
-#else
-__compressStringNoCheckJ:
-#endif
-	startproc.__compressStringNoCheckJ:
-L.__compressStringNoCheckJ:
-	add	r11, r7, r7
-	add	r9, r9, r11
-	srwi.    r0, r8, 4
-	bc	BO_IF, CR0_EQ, L.__residueNoCheckJ
-        mtctr   r0
-L.__loopNoCheckJ:
-	lwz     r0, 0(r9)
-	lwz     r11, 4(r9)
-	lwz     r6, 8(r9)
-	lwz     r3, 12(r9)
-	rlwinm  r4, r11, 8, 0xFFFFFFFF  !method 2
-	rlwinm  r5, r3, 8, 0xFFFFFFFF	!method 2
-	or      r4, r4, r0		!method 2
-	or	r5, r5, r6		!method 2
-	stw	r4, 0(r10)
-	stw     r5, 4(r10)
-
-	lwz     r0, 16(r9)
-	lwz     r11,20(r9)
-	lwz     r6, 24(r9)
-	lwz     r3, 28(r9)
-	addi	r9, r9, 32
-	rlwinm  r4, r11, 8, 0xFFFFFFFF	!method 2
-	rlwinm  r5, r3, 8, 0xFFFFFFFF	!method 2
-	or      r4, r4, r0		!method 2
-	or	r5, r5, r6		!method 2
-	stw	r4, 8(r10)
-	stw     r5, 12(r10)
-	addi	r10, r10, 16
-	subi    r8, r8, 16
-	bdnz	L.__loopNoCheckJ
-L.__residueNoCheckJ:
-	srwi.	r0, r8, 2
-	bc	BO_IF, CR0_EQ, L.__residue2NoCheckJ
-	mtctr	r0
-L.__residueLoopNoCheckJ:
-	lwz	r0, 0(r9)
-	lwz     r11, 4(r9)
-	addi	r9, r9, 8
-	rlwinm  r4, r11, 8, 0xFFFFFFFF	!method 2
-	or      r4, r4, r0		!method 2
-	stw	r4, 0(r10)
-	addi	r10, r10, 4
-	subi	r8, r8, 4
-	bdnz	L.__residueLoopNoCheckJ
-
-L.__residue2NoCheckJ:
-	srwi.   r0, r8, 0
-	bc	BO_IF, CR0_EQ, L.__finishNoCheckJ
-	mtctr	r0
-L.__residueLoop2NoCheckJ:
-	lhz	r0, 0(r9)
-	addi    r9, r9, 2
-	stb	r0, 0(r10)
-	addi    r10, r10, 1
-	bdnz	L.__residueLoop2NoCheckJ
-
-L.__finishNoCheckJ:
-	bclr    BO_IF, CR0_EQ
-	endproc.__compressStringNoCheckJ:
-
 
 #ifdef AIXPPC
 	.csect	__andORString{PR}
@@ -536,18 +364,6 @@ L.__finishandOR:
 	ADDR      0x00000000
 ! End   csect     __compressStringJ{DS}
 
-	.csect    __compressStringNoCheck{DS}
-	ADDR      .__compressStringNoCheck
-	ADDR      TOC{TC0}
-	ADDR      0x00000000
-! End   csect     __compressStringNoCheck{DS}
-
-	.csect    __compressStringNoCheckJ{DS}
-	ADDR      .__compressStringNoCheckJ
-	ADDR      TOC{TC0}
-	ADDR      0x00000000
-! End   csect     __compressStringNoCheckJ{DS}
-
 
 !	.csect    __arrayCopy_dp{DS}
 !	ADDR      .__arrayCopy_dp
@@ -574,22 +390,6 @@ __compressString:
 	.size     __compressStringJ,24
 __compressStringJ:
 	.quad     .__compressStringJ
-	.quad     .TOC.@tocbase
-	.long     0x00000000
-	.long     0x00000000
-
-	.globl    __compressStringNoCheck
-	.size     __compressStringNoCheck,24
-__compressStringNoCheck:
-	.quad     .__compressStringNoCheck
-	.quad     .TOC.@tocbase
-	.long     0x00000000
-	.long     0x00000000
-
-	.globl    __compressStringNoCheckJ
-	.size     __compressStringNoCheckJ,24
-__compressStringNoCheckJ:
-	.quad     .__compressStringNoCheckJ
 	.quad     .TOC.@tocbase
 	.long     0x00000000
 	.long     0x00000000
