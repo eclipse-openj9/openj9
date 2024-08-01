@@ -21,13 +21,11 @@
  */
 package org.openj9.test.jep425;
 
-import org.testng.annotations.Test;
 import org.testng.Assert;
 import org.testng.AssertJUnit;
-import static org.testng.Assert.fail;
+import org.testng.annotations.Test;
 
 import java.lang.reflect.*;
-import java.lang.Thread;
 import java.time.Duration;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -35,12 +33,15 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 import java.util.stream.IntStream;
 
+import org.openj9.test.util.VersionCheck;
+
 /**
  * Test cases for JEP 425: Virtual Threads (Preview) Continuation execution
  * which verifies the basic cases including Continuation enter, yield, resume.
  */
 @Test(groups = { "level.sanity" })
 public class VirtualThreadTests {
+
 	static {
 		try {
 			System.loadLibrary("j9ben");
@@ -63,7 +64,9 @@ public class VirtualThreadTests {
 
 	@Test
 	public void test_basicVirtualthread() {
-		var wrapper = new Object(){ boolean executed = false; };
+		var wrapper = new Object() {
+			boolean executed = false;
+		};
 		try {
 			Thread t = Thread.ofVirtual().name("duke").unstarted(() -> {
 				wrapper.executed = true;
@@ -87,14 +90,14 @@ public class VirtualThreadTests {
 			int[] results = new int[numThreads];
 
 			IntStream.range(0, numThreads).forEach(i -> {
-					executor.submit(() -> {
-							results[i] = 1;
-							Thread.sleep(Duration.ofSeconds(1));
-							results[i] += 1;
-							Thread.sleep(Duration.ofSeconds(1));
-							results[i] += 1;
-							return i;
-					});
+				executor.submit(() -> {
+					results[i] = 1;
+					Thread.sleep(Duration.ofSeconds(1));
+					results[i] += 1;
+					Thread.sleep(Duration.ofSeconds(1));
+					results[i] += 1;
+					return i;
+				});
 			});
 
 			/* Wait incrementally for the worst-case scenario where all virtual threads are
@@ -161,13 +164,14 @@ public class VirtualThreadTests {
 			while (!testJNIThreadReady) {
 				Thread.sleep(10);
 			}
+
 			/* Incrementally wait for 10000 ms to let the virtual thread park. */
 			incrementalWait(t);
 			Assert.assertEquals(t.getState(), Thread.State.WAITING);
 			LockSupport.unpark(t);
 			t.join();
 		} catch (Exception e) {
-			Assert.fail("Unexpected exception occured : " + e.getMessage() , e);
+			Assert.fail("Unexpected exception occured : " + e.getMessage(), e);
 		}
 	}
 
@@ -175,15 +179,16 @@ public class VirtualThreadTests {
 
 	@Test
 	public void test_YieldedVirtualThreadGetStackTrace() {
-		/* The expected frame count is based on test's callstack */
-		int expectedFrames = 6;
+		/* The expected frame count is based on test's callstack. */
+		int expectedFrames = (VersionCheck.major() >= 24) ? 5 : 6;
 		String expectedMethodName = "park";
 
 		try {
 			Thread t = Thread.ofVirtual().name("yielded-stackwalker").start(() -> {
-					testThread1Ready = true;
-					LockSupport.park();
-				});
+				testThread1Ready = true;
+				LockSupport.park();
+			});
+
 			while (!testThread1Ready) {
 				Thread.sleep(10);
 			}
@@ -227,9 +232,12 @@ public class VirtualThreadTests {
 			String expectedClassName = "org.openj9.test.jep425.VirtualThreadTests";
 
 			Thread t = Thread.ofVirtual().name("running-stackwalker").start(() -> {
-					testThread2_state = true;
-					while (testThread2_state);
-				});
+				testThread2_state = true;
+				while (testThread2_state) {
+					// busy wait
+				}
+			});
+
 			while (!testThread2_state) {
 				Thread.sleep(10);
 			}
@@ -353,7 +361,7 @@ public class VirtualThreadTests {
 				Assert.fail("JVMTI_VTHREAD_STATE_SUSPENDED (" + JVMTI_VTHREAD_STATE_SUSPENDED + ") does not match VirtualThread.SUSPENDED (" + value + ")");
 			}
 		} catch (Exception e) {
-			Assert.fail("Unexpected exception occured : " + e.getMessage() , e);
+			Assert.fail("Unexpected exception occured : " + e.getMessage(), e);
 		}
 	}
 }
