@@ -333,6 +333,7 @@ extern void TEMPORARY_initJ9PPCTreeEvaluatorTable(TR::CodeGenerator *cg)
    tet[TR::allocationFence] = TR::TreeEvaluator::flushEvaluator;
    tet[TR::loadFence] = TR::TreeEvaluator::flushEvaluator;
    tet[TR::storeFence] = TR::TreeEvaluator::flushEvaluator;
+   tet[TR::storeStoreFence] = TR::TreeEvaluator::flushEvaluator;
    tet[TR::fullFence] = TR::TreeEvaluator::flushEvaluator;
 
    tet[TR::icall]  = TR::TreeEvaluator::directCallEvaluator;
@@ -3378,7 +3379,7 @@ TR::Register *J9::Power::TreeEvaluator::flushEvaluator(TR::Node *node, TR::CodeG
          else
             generateInstruction(cg, TR::InstOpCode::isync, node);
          }
-      else if (opCode == TR::storeFence)
+      else if (opCode == TR::storeFence || opCode == TR::storeStoreFence)
          generateInstruction(cg, TR::InstOpCode::lwsync, node);
       else if (opCode == TR::fullFence)
          {

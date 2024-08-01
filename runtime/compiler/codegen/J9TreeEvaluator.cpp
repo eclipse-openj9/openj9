@@ -606,6 +606,12 @@ J9::TreeEvaluator::BCDCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    return TR::TreeEvaluator::unImpOpEvaluator(node, cg);
    }
 
+TR::Register*
+J9::TreeEvaluator::storeStoreFenceEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::unImpOpEvaluator(node, cg);
+   }
+
 TR::Snippet *
 J9::TreeEvaluator::getFieldWatchInstanceSnippet(TR::CodeGenerator *cg, TR::Node *node, J9Method *m, UDATA loc, UDATA os)
    {
