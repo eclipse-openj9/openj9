@@ -69,9 +69,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		</jar>
 		<copy todir="${DEST}">
 			<fileset dir="${src}/../">
-				<filename name="metadata.blob" />
-				<filename name="*.mk" />
-				<filename name="*.xml" />
+				<include name="**/metadata.blob" />
+				<include name="**/*.xml" />
 			</fileset>
 		</copy>
 	</target>
