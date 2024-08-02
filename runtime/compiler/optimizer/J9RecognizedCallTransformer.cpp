@@ -288,7 +288,7 @@ void J9::RecognizedCallTransformer::process_java_lang_StringUTF16_toBytes(TR::Tr
    // The implementation of java.lang.StringUTF16.toBytes(char[],int,int) will
    // throw a NegativeArraySizeException or OutOfMemoryError if the specified
    // length is outside the range [0,0x3fffffff].  In order to avoid deciding
-   // which to throw in the IL, fallback to the out-of-line call if the length
+   // which to throw in the IL, fall back to the out-of-line call if the length
    // is negative or too great.  Otherwise, create the byte array and copy the
    // input char array to it with java.lang.String.decompressedArrayCopy
    //
@@ -337,7 +337,7 @@ void J9::RecognizedCallTransformer::process_java_lang_StringUTF16_toBytes(TR::Tr
    //                                                |    |
    //                      +------------------------------+
    //                      |                         |
-   // fallBackPathBlock    V (freq 0) (cold)         |
+   // fallbackPathBlock    V (freq 0) (cold)         |
    // +----------------------------------------+     |
    // | astore result                          |     |
    // |   acall  java/lang/StringUTF16.toBytes |     |
@@ -416,7 +416,7 @@ void J9::RecognizedCallTransformer::process_java_lang_StringUTF16_toBytes(TR::Tr
    // Then split the inline version of the code into its own block
    TR::Block *fallThroughPathBlock = ifCmpBlock->split(newByteArraryTreeTop, cfg, true /* fixUpCommoning */, true /* copyExceptionSuccessors */);
 
-   // Then split the fall-back, out-of-line call into its own block
+   // Then split the fallback, out-of-line call into its own block
    TR::Block *fallbackPathBlock = fallThroughPathBlock->split(fallbackTreeTop, cfg, true /* fixUpCommoning */, true /* copyExceptionSuccessors */);
 
    // Then split again at the original call TreeTop to create the tail block
