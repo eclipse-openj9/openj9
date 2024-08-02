@@ -510,7 +510,7 @@ getClassSignatureInout(J9VMThread *currentThread, J9Class *clazz, LocalJ9UTF8Buf
 				}
 			}
 			/* +1 to ensure we can add a null-terminator. */
-			U_32 sigLength = 1;
+			UDATA sigLength = 1;
 			if (!isPrimitive) {
 				/* +2 so that we can fit 'L' and ';' around the class name. */
 				sigLength += 2;
@@ -521,7 +521,7 @@ getClassSignatureInout(J9VMThread *currentThread, J9Class *clazz, LocalJ9UTF8Buf
 			sigLength += nameLength + numDims;
 
 			if (sigLength <= stringBuffer->remaining()) {
-				for (U_32 i = 0; i < numDims; i++) {
+				for (UDATA i = 0; i < numDims; i++) {
 					stringBuffer->putCharAtCursor('[');
 				}
 
