@@ -390,7 +390,8 @@ done:
 			sigType->sizeInByte = (U_32)getIntFromLayout(&cSignature);
 			cSignature += 1; /* Skip over '#' to the signature. */
 
-			if ('[' == *cSignature) { /* The start of a struct signature string. */
+			/* The start of a struct/union signature string. */
+			if (('[' == *cSignature) || ('{' == *cSignature)) {
 				sigType->type = encodeOuterStruct(cSignature, sigType->sizeInByte);
 			} else {
 				sigType->type = encodeUpcallPrimitive(cSignature);
@@ -447,6 +448,57 @@ done:
 		return primSigType;
 	}
 
+	/* @brief Compare the struct (rather than the union) size and the specified layout ([FF]/[DD]) size
+	 * in bytes to determine whether they are identical on z/OS or not in the case of ALL_SP/ALL_DP.
+	 *
+	 * @param structSig[in] A pointer to the specified struct signature string
+	 * @param structSize[in] the struct size in bytes
+	 * @param layoutSize[in] the layout size in bytes
+	 * @return true if they are identical on z/OS; false otherwise
+	 */
+	static bool
+	isStructWithFFOrDD(const char *structSig, U_32 structSize, U_32 layoutSize)
+	{
+#if defined(J9ZOS390)
+		/* Check whether the specified signature is a union (starting from '{')
+		 * which must be excluded given a union is treated as a non-complex
+		 * type according to the z/OS ABI.
+		 *
+		 * Note:
+		 * [1] The following float/double related structs ('T' stands for float or double) are complex:
+		 * 1) struct {T a[1]; T b[1];} which is"[1:F1:F]" or "[1:D1:D]" in the signature string.
+		 * 2) struct {T a[1]; T b;} which is "[1:FF]" or "[1:DD]" in the signature string.
+		 * 3) struct {T a; T b[1];} which is "[F1:F]" or "[D1:D]" in the signature string.
+		 * [2] The following float/double related union/structs are non-complex even though they are
+		 * ALL_SP/ALL_DP with 8/16 bytes in size:
+		 * 1) union {T a[2]; T b;} which is "{2:F}" or "{2:D}" in the signature string.
+		 * 2) struct {T a[2];} which is "[2:F]" or "[2:D]" in the signature string.
+		 * 3) struct {struct {T a; T b;} c;} which is "[[FF]]" or "[[DD]]" in the signature string.
+		 */
+		return ((structSize == layoutSize) /* The struct must be 8-byte or 16-byte in size. */
+				&& '{' != structSig[0]) /* A union starts from '{'. */
+				&& !strstr(structSig, "[[FF]]") /* A struct nested by "[[FF]]" or its variant. */
+				&& !strstr(structSig, "[[DD]]") /* A struct nested by "[[DD]]" or its variant. */
+				&& !(('2' == structSig[1]) && (':' == structSig[2])); /* "[2:F]" or "[2:D]" contains "2:" from index 1. */
+#else /* defined(J9ZOS390) */
+		return true;
+#endif /* defined(J9ZOS390) */
+	}
+
+	/* @brief Determine whether the current platform is z/OS or not.
+	 *
+	 * @return true for z/OS; false otherwise
+	 */
+	static bool
+	isZos()
+	{
+#if defined(J9ZOS390)
+		return true;
+#else /* defined(J9ZOS390) */
+		return false;
+#endif /* defined(J9ZOS390) */
+	}
+
 	/* @brief This wrapper function invokes parseStruct() to determine
 	 * the AGGREGATE subtype of the specified struct.
 	 *
@@ -457,6 +509,7 @@ done:
 	static U_8
 	encodeOuterStruct(const char *structSig, U_32 sizeInByte)
 	{
+		const char *initSig = structSig;
 		bool isAllSP = true;
 		bool isAllDP = true;
 		U_8 structSigType = 0;
@@ -468,13 +521,25 @@ done:
 		 */
 		parseStruct(&structSig, &isAllSP, &isAllDP, first16ByteComposTypes, &curIndex);
 
-		if (isAllSP) {
+		/* As per the z/OS ABI, ALL_SP/ALL_DP are only intended for struct {float, float} and
+		 * struct {double, double} or their variants as the complex type placed on FPRs given
+		 * the struct size is 8 bytes for [FF]/variant or 16 bytes for [DD]/variant; otherwise,
+		 * the non-complex types are categorized into AGGREGATE_OTHER placed on GPRs.
+		 *
+		 * e.g.
+		 * 1) struct {float, union {float, float}} belong to ALL_SP while
+		 *    struct {double, union {double, double}} belongs to ALL_DP.
+		 * 2) struct {float a[2]} ([2:F] in terms of the layout string)
+		 *    and struct {double b[2]} ([2:D] in terms of the layout string)
+		 *    belong to AGGREGATE_OTHER placed on GPRs.
+		 */
+		if (isAllSP && isStructWithFFOrDD(initSig, sizeInByte, J9_FFI_UPCALL_STRUCT_FF_SIZE)) {
 			structSigType = J9_FFI_UPCALL_SIG_TYPE_STRUCT_AGGREGATE_ALL_SP;
-		} else if (isAllDP) {
+		} else if (isAllDP && isStructWithFFOrDD(initSig, sizeInByte, J9_FFI_UPCALL_STRUCT_DD_SIZE)) {
 			structSigType = J9_FFI_UPCALL_SIG_TYPE_STRUCT_AGGREGATE_ALL_DP;
-		} else if (sizeInByte > J9_FFI_UPCALL_COMPOSITION_TYPE_ARRAY_LENGTH) {
+		} else if (isZos() || (sizeInByte > J9_FFI_UPCALL_COMPOSITION_TYPE_ARRAY_LENGTH)) {
 			/* AGGREGATE_OTHER (mix of different types without pure float/double) is
-			 * intended for the native signature greater than 16 bytes in size.
+			 * intended for the native signature greater than 16 bytes in size
 			 */
 			structSigType = J9_FFI_UPCALL_SIG_TYPE_STRUCT_AGGREGATE_OTHER;
 		} else {
@@ -555,10 +620,12 @@ done:
 				setByteCellforPrimitive(isAllSP, isAllDP, first16ByteComposTypes, currentIndex, J9_FFI_UPCALL_COMPOSITION_TYPE_E, paddingBytes, 0);
 				break;
 			case '[': /* The start of a nested struct signature. */
+			case '{': /* The start of a nested union signature. */
 				setByteCellforStruct(&curStruSig, isAllSP, isAllDP, first16ByteComposTypes, currentIndex, arrayLength);
 				arrayLength = 0; /* Reset for the next array if exists. */
 				break;
 			case ']': /* The end of a struct signature. */
+			case '}': /* The end of a union signature. */
 				*currentStructSig = curStruSig;
 				return;
 			case '0':
