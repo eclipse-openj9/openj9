@@ -197,9 +197,7 @@
 			<class name="org.openj9.test.java.lang.Test_StringBuffer"/>
 			<class name="org.openj9.test.java.lang.Test_StringBuilder"/>
 			<class name="org.openj9.test.java.lang.Test_System"/>
-			<class name="org.openj9.test.java.lang.Test_Thread"/>
 			<class name="org.openj9.test.java.lang.Test_Thread_Extra"/>			
-			<class name="org.openj9.test.java.lang.Test_ThreadGroup"/>
 			<class name="org.openj9.test.java.lang.Test_Throwable"/>
 			<class name="org.openj9.test.java.lang.Test_VMAccess"/>
 		</classes>

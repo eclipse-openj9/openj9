@@ -286,11 +286,32 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 							<compilerarg line='${commonArgs}' />
 						</javac>
 					</then>
+					<elseif>
+						<matches string="${JDK_VERSION}" pattern="^(19|2[0-2])$$" />
+						<then>
+							<!-- Java 19 - 22 (SecurityManager removed) -->
+							<javac srcdir="${srcpath}" excludes="${commonExcludes}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" classpathref="build.cp">
+								<compilerarg line='${commonArgs}' />
+								<!-- exclude tests that depend on SecurityManager -->
+								<exclude name="org/openj9/test/java/security/Test_AccessController.java" />
+								<exclude name="org/openj9/test/java/security/Test_AccessControlContext.java" />
+								<exclude name="org/openj9/test/java/lang/Test_Class_SM.java" />
+								<exclude name="org/openj9/test/java/lang/Test_System_SM.java" />
+								<exclude name="org/openj9/test/java/lang/Test_Thread_SM.java" />
+								<exclude name="org/openj9/test/java/lang/Test_ThreadGroup_SM.java" />
+								<exclude name="org/openj9/test/java/lang/invoke/Test_MethodHandleInfo_SM.java" />
+								<exclude name="org/openj9/test/java/lang/Test_ClassLoader_SM.java" />
+								<exclude name="org/openj9/test/java/lang/Test_J9VMInternals_SM.java" />
+								<exclude name="org/openj9/test/java/lang/Test_J9VMInternalsImpl_SM.java" />
+								<exclude name="org/openj9/test/vm/Test_VM.java" />
+							</javac>
+						</then>
+					</elseif>
 					<else>
-						<!-- Java 19+ (SecurityManager removed) -->
+						<!-- Java 23+ (SecurityManage and Thread functions removed) -->
 						<javac srcdir="${srcpath}" excludes="${commonExcludes}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" classpathref="build.cp">
 							<compilerarg line='${commonArgs}' />
-							<!-- exclude tests that depend on SecurityManager -->
+							<!-- exclude tests that depend on SecurityManager or Thread functions -->
 							<exclude name="org/openj9/test/java/security/Test_AccessController.java" />
 							<exclude name="org/openj9/test/java/security/Test_AccessControlContext.java" />
 							<exclude name="org/openj9/test/java/lang/Test_Class_SM.java" />
@@ -301,6 +322,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 							<exclude name="org/openj9/test/java/lang/Test_ClassLoader_SM.java" />
 							<exclude name="org/openj9/test/java/lang/Test_J9VMInternals_SM.java" />
 							<exclude name="org/openj9/test/java/lang/Test_J9VMInternalsImpl_SM.java" />
+							<exclude name="org/openj9/test/java/lang/Test_Thread.java" />
+							<exclude name="org/openj9/test/java/lang/Test_ThreadGroup.java" />
 							<exclude name="org/openj9/test/vm/Test_VM.java" />
 						</javac>
 					</else>
