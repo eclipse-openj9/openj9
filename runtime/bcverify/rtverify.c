@@ -1759,31 +1759,26 @@ _illegalPrimitiveReturn:
 					}
 					break;
 				}
+				utf8string = J9ROMSTRINGREF_UTF8DATA(classRef);
 
-				if (bc != JBinvokeinterface) {
-					utf8string = J9ROMSTRINGREF_UTF8DATA(classRef);
-
-					rc = isClassCompatibleByName (verifyData, type, J9UTF8_DATA(utf8string), J9UTF8_LENGTH(utf8string), &reasonCode);
-					if (FALSE == rc) {
-						if (BCV_ERR_INSUFFICIENT_MEMORY == reasonCode) {
-							goto _outOfMemoryError;
-						}
-						errorType = J9NLS_BCV_ERR_RECEIVER_NOT_COMPATIBLE__ID;
-						/* Jazz 82615: Store the index of the expected data type for later retrieval in classNameList */
-						errorTargetType = convertClassNameToStackMapType(verifyData, J9UTF8_DATA(utf8string), J9UTF8_LENGTH(utf8string), 0, 0);
-						errorStackIndex = stackTop - liveStack->stackElements;
-						goto _inconsistentStack2;
+				rc = isClassCompatibleByName(verifyData, type, J9UTF8_DATA(utf8string), J9UTF8_LENGTH(utf8string), &reasonCode);
+				if (FALSE == rc) {
+					if (BCV_ERR_INSUFFICIENT_MEMORY == reasonCode) {
+						goto _outOfMemoryError;
 					}
-				} else {
+					errorType = J9NLS_BCV_ERR_RECEIVER_NOT_COMPATIBLE__ID;
+					/* Jazz 82615: Store the index of the expected data type for later retrieval in classNameList */
+					errorTargetType = convertClassNameToStackMapType(verifyData, J9UTF8_DATA(utf8string), J9UTF8_LENGTH(utf8string), 0, 0);
+					errorStackIndex = stackTop - liveStack->stackElements;
+					goto _inconsistentStack2;
+				}
+				if (JBinvokeinterface == bc) {
 					/* Throw a verify error for any of the following invokeinterface scenarios:
 					 * 1. The top of the stack holds a base type or TOP
-					 * 2. The top of the stack holds an array. Null type has a different meaning for arity bits.
-					 *  Don't fail at this point, a NullPointerException is expected later on.
-					 * 3. The Object reference on the stack is uninitialized
+					 * 2. The Object reference on the stack is uninitialized
 					 * The check for the receiver to be an interface occurs in the bytecode interpreter.
 					 */
 					if ((BCV_TAG_BASE_TYPE_OR_TOP == (type & BCV_TAG_MASK))
-						|| ((type != BCV_BASE_TYPE_NULL) && (BCV_ARITY_FROM_TYPE(type) > 0))
 						|| J9_ARE_ANY_BITS_SET(type, BCV_SPECIAL)
 					) {
 						errorType = J9NLS_BCV_ERR_RECEIVER_NOT_COMPATIBLE__ID;
