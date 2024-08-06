@@ -446,7 +446,6 @@ class MethodIterator
 		}
 
 		bool isEmpty() const { return 0 != (_methodsInfo[_methodIndex].modifiers & J9AccEmptyMethod); }
-		bool isForwarder() const { return 0 != (_methodsInfo[_methodIndex].modifiers & J9AccForwarderMethod); }
 		bool isGetter() const { return 0 != (_methodsInfo[_methodIndex].modifiers & J9AccGetterMethod); }
 		bool isVirtual() const { return 0 != (_methodsInfo[_methodIndex].modifiers & J9AccMethodVTable); }
 		bool isSynthetic() const { return 0 != (_methodsInfo[_methodIndex].modifiers & J9AccSynthetic); }
@@ -1199,9 +1198,8 @@ private:
 
 	U_8 * walkStackMapSlots(U_8 *framePointer, U_16 typeInfoCount);
 
-	bool methodIsFinalize(U_16 methodIndex, bool isForwarder);
+	bool methodIsFinalize(U_16 methodIndex);
 	bool methodIsEmpty(U_16 methodIndex);
-	bool methodIsForwarder(U_16 methodIndex);
 	bool methodIsGetter(U_16 methodIndex);
 	bool methodIsVirtual(U_16 methodIndex);
 	bool methodIsObjectConstructor(U_16 methodIndex);

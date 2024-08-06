@@ -1114,7 +1114,7 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 						lookupOptions |= J9_LOOK_INTERFACE;
 						break;
 					case MH_REF_INVOKESPECIAL:
-						lookupOptions |= (J9_LOOK_VIRTUAL | J9_LOOK_ALLOW_FWD | J9_LOOK_HANDLE_DEFAULT_METHOD_CONFLICTS);
+						lookupOptions |= (J9_LOOK_VIRTUAL | J9_LOOK_HANDLE_DEFAULT_METHOD_CONFLICTS);
 						break;
 					case MH_REF_INVOKESTATIC:
 						lookupOptions |= J9_LOOK_STATIC;

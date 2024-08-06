@@ -2333,16 +2333,6 @@ javaLookupMethodImpl (J9VMThread *vmContext, J9Class *clazz, J9ROMNameAndSignatu
 
 /**
 * @brief
-* @param currentThread
-* @param method
-* @return J9Method*
-*/
-J9Method*
-getForwardedMethod(J9VMThread* currentThread, J9Method* method);
-
-
-/**
-* @brief
 * @param vm
 * @return UDATA
 */

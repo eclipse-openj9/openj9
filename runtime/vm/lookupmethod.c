@@ -253,12 +253,6 @@ processMethod(J9VMThread * currentThread, UDATA lookupOptions, J9Method * method
 		}
 	}
 
-	/* Check for forwarder methods */
-
-	if (lookupOptions & J9_LOOK_ALLOW_FWD) {
-		method = getForwardedMethod(currentThread, method);
-	}
-
 	/* Method is valid */
 
 	return method;
@@ -573,7 +567,6 @@ doneItableSearch:
  * 		J9_LOOK_DIRECT_NAS						NAS contains direct pointers to UTF8, not SRPs (this option is mutually exclusive with lookupOptionsJNI)
  * 		J9_LOOK_CLCONSTRAINTS					Check that the found method doesn't violate any class loading constraints between the found class and the sender class.
  * 		J9_LOOK_PARTIAL_SIGNATURE				Allow the search to match a partial signature
- *		J9_LOOK_ALLOW_FWD						Allow lookup to follow the forwarding chain
  *		J9_LOOK_NO_VISIBILITY_CHECK				Do not perform any visilbity checking
  *		J9_LOOK_NO_JLOBJECT						When doing an interface lookup, do not consider method in java.lang.Object
  *		J9_LOOK_REFLECT_CALL					Use reflection behaviour when dealing with module visibility

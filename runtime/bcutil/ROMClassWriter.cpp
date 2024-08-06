@@ -1304,7 +1304,7 @@ ROMClassWriter::writeMethods(Cursor *cursor, Cursor *lineNumberCursor, Cursor *v
 			 *                          + AccStrict
 			 *
 			 *                        + AccSynthetic
-			 *                       + AccForwarderMethod * (Not currently used by specification)
+			 *                       + UNUSED
 			 *                      + AccEmptyMethod * (Not currently used by specification)
 			 *                     + UNUSED
 			 *

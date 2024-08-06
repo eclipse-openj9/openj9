@@ -860,8 +860,6 @@ ClassFileOracle::walkMethods()
 		 */
 		if (methodIsEmpty(methodIndex)) {
 			_methodsInfo[methodIndex].modifiers |= J9AccEmptyMethod;
-		} else if (methodIsForwarder(methodIndex)) {
-			_methodsInfo[methodIndex].modifiers |= J9AccForwarderMethod;
 		} else if (methodIsGetter(methodIndex)) {
 			_methodsInfo[methodIndex].modifiers |= J9AccGetterMethod;
 		} else if (methodIsClinit(methodIndex)) {
@@ -883,7 +881,7 @@ ClassFileOracle::walkMethods()
 		}
 
 		/* Look for an instance selector whose name is finalize()V */
-		if (methodIsFinalize(methodIndex, 0 != (_methodsInfo[methodIndex].modifiers & J9AccForwarderMethod))) {
+		if (methodIsFinalize(methodIndex)) {
 			_hasFinalizeMethod = true;
 			/* If finalize() is empty, mark this class so it does not inherit CFR_ACC_FINALIZE_NEEDED from its superclass */
 			if (0 != (_methodsInfo[methodIndex].modifiers & J9AccEmptyMethod)) {
@@ -2244,7 +2242,7 @@ ClassFileOracle::walkStackMapSlots(U_8 *framePointer, U_16 typeInfoCount)
 }
 
 bool
-ClassFileOracle::methodIsFinalize(U_16 methodIndex, bool isForwarder)
+ClassFileOracle::methodIsFinalize(U_16 methodIndex)
 {
 	ROMCLASS_VERBOSE_PHASE_HOT(_context, MethodIsFinalize);
 
@@ -2317,155 +2315,6 @@ ClassFileOracle::methodIsClinit(U_16 methodIndex)
 
 	return false;
 }
-
-/* answers non-zero if this method simply forwards to its superclass.
-   A forwarder method is not synchronized.
-   Forwarder methods must have return type void (because right now we only care if it forwards to an empty method)
-*/
-
-bool
-ClassFileOracle::methodIsForwarder(U_16 methodIndex)
-{
-	ROMCLASS_VERBOSE_PHASE_HOT(_context, MethodIsForwarder);
-	if (_classFile->methods[methodIndex].accessFlags & (CFR_ACC_ABSTRACT | CFR_ACC_NATIVE | CFR_ACC_SYNCHRONIZED | CFR_ACC_STATIC)) {
-		return false;
-	}
-
-	/* Must return void */
-	U_16 signatureIndex = _classFile->methods[methodIndex].descriptorIndex;
-	U_8 *signatureData = getUTF8Data(signatureIndex);
-	U_16 signatureLength = getUTF8Length(signatureIndex);
-	if ((signatureData[signatureLength - 1]) != 'V') {
-		return false;
-	}
-
-	J9CfrAttributeCode *codeAttribute = _classFile->methods[methodIndex].codeAttribute;
-
-	/* ensure that there are no exception handlers */
-	if (codeAttribute->exceptionTableLength > 0) {
-		return false;
-	}
-
-	/* check that there are no temps */
-	U_8 argCount = _methodsInfo[methodIndex].sendSlotCount;
-	++argCount; /* not static */
-	U_16 tempCount = codeAttribute->maxLocals;
-	if (tempCount >= argCount) {
-		tempCount -= argCount;
-	} else {
-		Trc_BCU_Assert_Equals(0, tempCount);
-	}
-
-	if (0 != tempCount) {
-		return false;
-	}
-
-	IDATA thisArg = 0;
-	U_8 *code = codeAttribute->code;
-	for (U_32 codeIndex = 0; ;codeIndex++) {
-		switch (code[codeIndex]) {
-		case CFR_BC_aload_0:
-			if (thisArg++ != 0) {
-				return false;
-			}
-			break;
-		case CFR_BC_iload_1:
-		case CFR_BC_fload_1:
-		case CFR_BC_aload_1:
-			if (thisArg++ != 1) {
-				return false;
-			}
-			break;
-		case CFR_BC_dload_1:
-		case CFR_BC_lload_1:
-			if (thisArg != 1) {
-				return false;
-			}
-			thisArg += 2;
-			break;
-		case CFR_BC_iload_2:
-		case CFR_BC_fload_2:
-		case CFR_BC_aload_2:
-			if (thisArg++ != 2) {
-				return false;
-			}
-			break;
-		case CFR_BC_dload_2:
-		case CFR_BC_lload_2:
-			if (thisArg != 2) {
-				return false;
-			}
-			thisArg += 2;
-			break;
-		case CFR_BC_iload_3:
-		case CFR_BC_fload_3:
-		case CFR_BC_aload_3:
-			if (thisArg++ != 3) {
-				return false;
-			}
-			break;
-		case CFR_BC_dload_3:
-		case CFR_BC_lload_3:
-			if (thisArg != 3) {
-				return false;
-			}
-			thisArg += 2;
-			break;
-		case CFR_BC_iload:
-		case CFR_BC_fload:
-		case CFR_BC_aload:
-			if (thisArg++ != code[++codeIndex]) {
-				return false;
-			}
-			break;
-		case CFR_BC_dload:
-		case CFR_BC_lload:
-			if (thisArg != code[++codeIndex]) {
-				return false;
-			}
-			thisArg += 2;
-			break;
-		case CFR_BC_invokespecial: {
-			if (thisArg++ != argCount) {
-				/* we haven't pushed all of our arguments */
-				return false;
-			}
-#define PARAM_U16() (U_16(code[codeIndex + 1]) << 8) | U_16(code[codeIndex + 2])
-			J9CfrConstantPoolInfo *methodRef = (J9CfrConstantPoolInfo *) &_classFile->constantPool[PARAM_U16()];
-#undef PARAM_U16
-
-			/* use identity comparisons for name and sig for simplicity.  Since they came from the same
-				class file they're almost certainly identical,and if not we just run a bit slower */
-
-			/* check that this is a super send */
-			if ( methodRef->slot1 != _classFile->superClass ) {
-				return false;
-			}
-			J9CfrConstantPoolInfo *nas = (J9CfrConstantPoolInfo *) &_classFile->constantPool[methodRef->slot2];
-			if ( !isUTF8AtIndexEqualToString(nas->slot1, (const char *)getUTF8Data(_classFile->methods[methodIndex].nameIndex),  getUTF8Length(_classFile->methods[methodIndex].nameIndex)+1)) {
-				return false;
-			}
-			if ( !isUTF8AtIndexEqualToString(nas->slot2, (const char *)getUTF8Data(_classFile->methods[methodIndex].descriptorIndex),  getUTF8Length(_classFile->methods[methodIndex].descriptorIndex)+1)) {
-				return false;
-			}
-
-			/* check that the next instruction is a void return */
-			if (CFR_BC_return == code[codeIndex+3]) {
-				return true;
-			}
-
-			/* fall through */
-		}
-		default:
-			return false;
-		}
-	}
-
-	/* can't get here, but add a return false just in case */
-	return false;
-}
-
-
 
 bool
 ClassFileOracle::methodIsGetter (U_16 methodIndex)

@@ -88,7 +88,6 @@
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 #define J9ROMMETHOD_IS_GETTER(romMethod)				_J9ROMMETHOD_J9MODIFIER_IS_SET((romMethod), J9AccGetterMethod)
-#define J9ROMMETHOD_IS_FORWARDER(romMethod)				_J9ROMMETHOD_J9MODIFIER_IS_SET((romMethod), J9AccForwarderMethod)
 #define J9ROMMETHOD_IS_EMPTY(romMethod)					_J9ROMMETHOD_J9MODIFIER_IS_SET((romMethod), J9AccEmptyMethod)
 #define J9ROMMETHOD_HAS_VTABLE(romMethod)				_J9ROMMETHOD_J9MODIFIER_IS_SET((romMethod), J9AccMethodVTable)
 #define J9ROMMETHOD_HAS_EXCEPTION_INFO(romMethod)		_J9ROMMETHOD_J9MODIFIER_IS_SET((romMethod), J9AccMethodHasExceptionInfo)
