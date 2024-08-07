@@ -1121,6 +1121,17 @@ TR_IProfiler::findOrCreateEntry(int32_t bucket, uintptr_t pc, bool addIt)
    if (!entry)
       return NULL;
 
+   // While the entry is being allocated, another thread could have added an entry with the same PC.
+   // If that happened, it's likely that the duplicate entry is at the head of this list.
+   // Check to see if that's the case. This technique does not eliminate the race completely
+   // but catches most of duplicate situations.
+   TR_IPBytecodeHashTableEntry *headEntry = _bcHashTable[bucket];
+   if (headEntry && headEntry->getPC() == pc)
+      {
+      // Note: We never delete IP entries
+      return headEntry;
+      }
+
    entry->setNext(_bcHashTable[bucket]);
    FLUSH_MEMORY(TR::Compiler->target.isSMP());
    _bcHashTable[bucket] = entry;
