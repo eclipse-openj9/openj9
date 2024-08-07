@@ -65,6 +65,7 @@ enum MetadataTypeID {
 	ThreadStartID = 2,
 	ThreadEndID = 3,
 	ThreadSleepID = 4,
+	JVMInformationID = 86,
 	ExecutionSampleID = 108,
 	ThreadID = 163,
 	ThreadGroupID = 164,
@@ -143,6 +144,7 @@ private:
 	static constexpr int THREAD_START_EVENT_SIZE = (6 * sizeof(U_64)) + sizeof(U_32);
 	static constexpr int THREAD_END_EVENT_SIZE = (4 * sizeof(U_64)) + sizeof(U_32);
 	static constexpr int THREAD_SLEEP_EVENT_SIZE = (7 * sizeof(U_64)) + sizeof(U_32);
+	static constexpr int JVM_INFORMATION_EVENT_SIZE = 3000;
 
 	static constexpr int METADATA_ID = 1;
 
@@ -295,6 +297,8 @@ done:
 			pool_do(_constantPoolTypes.getThreadEndTable(), &writeThreadEndEvent, _bufferWriter);
 
 			pool_do(_constantPoolTypes.getThreadSleepTable(), &writeThreadSleepEvent, _bufferWriter);
+
+			writeJVMInformationEvent();
 
 			writeJFRHeader();
 
@@ -455,6 +459,8 @@ done:
 
 	void writeUTF8String(U_8 *data, UDATA len);
 
+	void writeStringLiteral(const char *string);
+
 	U_8 *writeThreadStateCheckpointEvent();
 
 	U_8 *writePackageCheckpointEvent();
@@ -476,6 +482,8 @@ done:
 	U_8 *writeSymbolTableCheckpointEvent();
 
 	U_8 *writeStacktraceCheckpointEvent();
+
+	U_8 *writeJVMInformationEvent();
 
 	UDATA
 	calculateRequiredBufferSize()
@@ -514,6 +522,8 @@ done:
 		requireBufferSize += _constantPoolTypes.getThreadEndCount() * THREAD_END_EVENT_SIZE;
 
 		requireBufferSize += _constantPoolTypes.getThreadSleepCount() * THREAD_SLEEP_EVENT_SIZE;
+
+		requireBufferSize += JVM_INFORMATION_EVENT_SIZE;
 
 		return requireBufferSize;
 	}

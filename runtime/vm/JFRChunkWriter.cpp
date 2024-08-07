@@ -176,6 +176,17 @@ VM_JFRChunkWriter::writeUTF8String(U_8 *data, UDATA len)
 	_bufferWriter->writeData(data, len);
 }
 
+void
+VM_JFRChunkWriter::writeStringLiteral(const char *string)
+{
+	if (NULL == string) {
+		_bufferWriter->writeLEB128(NullString);
+	} else {
+		const UDATA length = strlen(string);
+		writeUTF8String((U_8 *)string, length);
+	}
+}
+
 U_8 *
 VM_JFRChunkWriter::writeThreadStateCheckpointEvent()
 {
@@ -623,5 +634,47 @@ VM_JFRChunkWriter::writeStacktraceCheckpointEvent()
 
 	return dataStart;
 }
+
+U_8 *
+VM_JFRChunkWriter::writeJVMInformationEvent()
+{
+	JVMInformationEntry *jvmInfo= &(((JFRConstantEvents *)(_vm->jfrState.constantEvents))->JVMInfoEntry);
+
+	/* reserve size field */
+	U_8 *dataStart = _bufferWriter->getAndIncCursor(sizeof(U_32));
+
+	/* write event type */
+	_bufferWriter->writeLEB128(JVMInformationID);
+
+	/* write start time */
+	_bufferWriter->writeLEB128(jvmInfo->jvmStartTime);
+
+	/* write JVM name */
+	writeStringLiteral(jvmInfo->jvmName);
+
+	/* write JVM version */
+	writeStringLiteral(jvmInfo->jvmVersion);
+
+	/* write JVM arguments */
+	writeStringLiteral(jvmInfo->jvmArguments);
+
+	/* write JVM flags */
+	writeStringLiteral(jvmInfo->jvmFlags);
+
+	/* write Java arguments */
+	writeStringLiteral(jvmInfo->javaArguments);
+
+	/* write JVM start time */
+	_bufferWriter->writeLEB128(jvmInfo->jvmStartTime);
+
+	/* write pid */
+	_bufferWriter->writeLEB128(jvmInfo->pid);
+
+	/* write size */
+	_bufferWriter->writeLEB128PaddedU32(dataStart, _bufferWriter->getCursor() - dataStart);
+
+	return dataStart;
+}
+
 
 #endif /* defined(J9VM_OPT_JFR) */
