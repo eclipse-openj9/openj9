@@ -228,6 +228,8 @@ private:
 	J9Pool *_threadSleepTable;
 	UDATA _threadSleepCount;
 
+    J9JFRJVMInformation _jvmInformation;
+
 	/* Processing buffers */
 	StackFrame *_currentStackFrameBuffer;
 	StackTraceEntry *_previousStackTraceEntry;
@@ -413,6 +415,110 @@ done:
 		return;
 	}
 
+	const char *getSystemProp(const char *propName) {
+		J9VMSystemProperty *jvmInfoProperty = NULL;
+		J9InternalVMFunctions *vmFuncs = _vm->internalVMFunctions;
+		const char *value = "";
+		UDATA getPropertyResult = vmFuncs->getSystemProperty(_vm, propName, &jvmInfoProperty);
+		if (J9SYSPROP_ERROR_NOT_FOUND != getPropertyResult) {
+			value = jvmInfoProperty->value;
+		}
+		return value;
+	}
+
+    void initJVMInfo() {
+		const char *javaVMName = getSystemProp("java.vm.name");
+		const UDATA javaVMNameLen = strlen(javaVMName);
+
+		const char *jdkDebugLevel = getSystemProp("jdk.debug");
+		const UDATA jdkDebugLevelLen = strlen(jdkDebugLevel);
+
+		const char *javaVMVersion = getSystemProp("java.vm.version");
+		const UDATA javaVMVersionLen = strlen(javaVMVersion);
+
+		const char *javaVMInfo = getSystemProp("java.vm.info");
+		const char *newLineChar = strchr(javaVMInfo, '\n'); /* only keep the first line */
+		const UDATA javaVMInfoLen = (NULL == newLineChar ? strlen(javaVMInfo) : newLineChar - javaVMInfo);
+
+		_jvmInformation = {0};
+		/* Set jvmName */
+		_jvmInformation.jvmName = (J9UTF8 *)j9mem_allocate_memory(sizeof(J9UTF8) + javaVMNameLen, OMRMEM_CATEGORY_VM);
+		J9UTF8_SET_LENGTH(_jvmInformation.jvmName, javaVMNameLen);
+		memcpy(J9UTF8_DATA(_jvmInformation.jvmName), javaVMName, javaVMNameLen);
+
+		/* Set jvmVersion */
+		/* These numbers are the lengths of the string literal parts */
+		const UDATA jvmVersionLen = javaVMNameLen + 2 + jdkDebugLevelLen + 6 + javaVMVersionLen + 2 + javaVMInfoLen + 1;
+		_jvmInformation.jvmVersion = (J9UTF8 *)j9mem_allocate_memory(sizeof(J9UTF8) + jvmVersionLen, OMRMEM_CATEGORY_VM);
+		U_8 *data = J9UTF8_DATA(_jvmInformation.jvmVersion);
+		memcpy(data, javaVMName, javaVMNameLen);
+		data += javaVMNameLen;
+		memcpy(data, " (", 2);
+		data += 2;
+		memcpy(data, jdkDebugLevel, jdkDebugLevelLen);
+		data += jdkDebugLevelLen;
+		memcpy(data, "build ", 6);
+		data += 6;
+		memcpy(data, javaVMVersion, javaVMVersionLen);
+		data += javaVMVersionLen;
+		memcpy(data, ", ", 2);
+		data += 2;
+		memcpy(data, javaVMInfo, javaVMInfoLen);
+		data += javaVMInfoLen;
+		memcpy(data, ")", 1);
+		J9UTF8_SET_LENGTH(_jvmInformation.jvmVersion, jvmVersionLen);
+
+		/* Set JVM arguments */
+		JavaVMInitArgs* vmArgs = _vm->vmArgsArray->actualVMArgs;
+		const char *javaCommand = "-Dsun.java.command=";
+		UDATA javaArgsLen = 0;
+		for (UDATA i = 0; i < vmArgs->nOptions; i++) {
+			if (0 == strncmp(vmArgs->options[i].optionString, javaCommand, strlen(javaCommand))) {
+				javaArgsLen = strlen(vmArgs->options[i].optionString) - strlen(javaCommand);
+				_jvmInformation.javaArguments = (J9UTF8 *)j9mem_allocate_memory(sizeof(J9UTF8) + javaArgsLen, OMRMEM_CATEGORY_VM);
+				memcpy(J9UTF8_DATA(_jvmInformation.javaArguments), vmArgs->options[i].optionString + strlen(javaCommand), javaArgsLen);
+				J9UTF8_SET_LENGTH(_jvmInformation.javaArguments, javaArgsLen);
+				break;
+			}
+		}
+
+		/* Get JVM arguments from command line by removing the command name and Java arguments */
+		const char *envVarName = "OPENJ9_JAVA_COMMAND_LINE";
+		IDATA result = j9sysinfo_get_env(envVarName, NULL, 0);
+
+		if (result >= 0) {
+			/* Length of the buffer to hold command line, which is length of command line + 1 */
+			UDATA len = result;
+			char *buffer = (char *)j9mem_allocate_memory(sizeof(char) * len, OMRMEM_CATEGORY_VM);
+			j9sysinfo_get_env(envVarName, buffer, len);
+
+			UDATA cmdLen = strchr(buffer, ' ') - buffer;
+
+			/* Command line should be longer than command name and Java arguments */
+			Assert_VM_true(len - 1 > javaArgsLen + cmdLen + 2);
+
+			len -= 1 + javaArgsLen + cmdLen + 2;
+
+			_jvmInformation.jvmArguments = (J9UTF8 *)j9mem_allocate_memory(sizeof(J9UTF8) + len, OMRMEM_CATEGORY_VM);
+			memcpy(J9UTF8_DATA(_jvmInformation.jvmArguments), buffer + cmdLen + 1, len);
+			J9UTF8_SET_LENGTH(_jvmInformation.jvmArguments, len);
+			j9mem_free_memory(buffer);
+		}
+
+		/* Ignoring jvmFlags for now */
+		_jvmInformation.jvmFlags = NULL;
+		_jvmInformation.jvmStartTime = _vm->j9ras->startTimeMillis;
+		_jvmInformation.pid = _vm->j9ras->pid;
+    }
+
+	void freeJVMInfo() {
+		j9mem_free_memory(_jvmInformation.jvmArguments);
+		j9mem_free_memory(_jvmInformation.jvmFlags);
+		j9mem_free_memory(_jvmInformation.jvmName);
+		j9mem_free_memory(_jvmInformation.jvmVersion);
+		j9mem_free_memory(_jvmInformation.javaArguments);
+	}
+
 protected:
 
 public:
@@ -568,6 +674,11 @@ public:
 	UDATA getStackFrameCount()
 	{
 		return _stackFrameCount;
+	}
+
+	J9JFRJVMInformation *getJVMInformationData()
+	{
+		return &_jvmInformation;
 	}
 
 	void printTables();
@@ -752,6 +863,8 @@ done:
 			goto done;
 		}
 
+		initJVMInfo();
+
 		/* Add reserved index for default entries. For strings zero is the empty or NUll string.
 		 * For package zero is the deafult package, for Module zero is the unnamed module. ThreadGroup
 		 * zero is NULL threadGroup.
@@ -800,6 +913,7 @@ done:
 		pool_kill(_threadEndTable);
 		pool_kill(_threadSleepTable);
 		j9mem_free_memory(_globalStringTable);
+		freeJVMInfo();
 	}
 
 };
