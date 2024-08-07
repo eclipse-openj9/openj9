@@ -134,7 +134,6 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *directCallEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *encodeUTF16Evaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *compressStringEvaluator(TR::Node *node, TR::CodeGenerator *cg, bool japaneseMethod);
-   static TR::Register *compressStringNoCheckEvaluator(TR::Node *node, TR::CodeGenerator *cg, bool japaneseMethod);
    static TR::Register *andORStringEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *toUpperIntrinsicUTF16Evaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *toLowerIntrinsicUTF16Evaluator(TR::Node *node, TR::CodeGenerator *cg);

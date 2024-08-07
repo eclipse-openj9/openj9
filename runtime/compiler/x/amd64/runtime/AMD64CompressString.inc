@@ -22,8 +22,6 @@ segment .text
 
         DECLARE_GLOBAL  compressString
         DECLARE_GLOBAL  compressStringJ
-        DECLARE_GLOBAL  compressStringNoCheck
-        DECLARE_GLOBAL  compressStringNoCheckJ
         DECLARE_GLOBAL  andORString
 
         align 16
@@ -156,70 +154,4 @@ eightchars2:
         and  edx, ecx				            ; building the and
 
         mov  dx, bx
-ret
-
-
-compressStringNoCheckJ:
-        shr  rcx, 4
-        add  rsi, rax
-        add  rsi, rax
-eightcharsNoCheckJ:
-        mov  rax, QWORD  [rsi]  		        ; load 4 bytes from the source array into EAX (2 chars)
-        mov  rbx, QWORD  [rsi+8]  		        ; load 4 bytes from the source array into EAX (2 chars)
-        shl  rbx, 8					            ; shift right by 8
-        or   rax, rbx					        ; or the 2 values
-        mov  QWORD  [rdi], rax			        ; write the low 2 bytes of the 4 byte value in the destination
-
-        mov  rax, QWORD  [rsi+16]  		        ; load 4 bytes from the source array into EAX (2 chars)
-        mov  rbx, QWORD  [rsi+24]  		        ; load 4 bytes from the source array into EAX (2 chars)
-        shl  rbx, 8					            ; shift right by 8
-        or   rax, rbx					        ; or the 2 values
-        mov  QWORD  [rdi+8], rax			    ; write the low 2 bytes of the 4 byte value in the destination
-
-        add  rdi, 16
-        add  rsi, 32		
-        loop eightcharsNoCheckJ
-ret
-
-compressStringNoCheck:
-        shr  rcx, 4
-        add  rsi, rax
-        add  rsi, rax
-eightcharsNoCheck:
-        mov  rax, QWORD  [rsi]  		; load 4 bytes from the source array into EAX (2 chars)
-        mov  rbx, rax					; copy the loaded value
-        shr  rbx, 8					    ; shift right by 8
-        or   rax, rbx					; or the 2 values
-        mov  WORD  [rdi], ax			; write the low 2 bytes of the 4 byte value in the destination
-        shr  rax, 32
-        mov  WORD  [rdi+2], ax			; write the low 2 bytes of the 4 byte value in the destination
-
-        mov  rax, QWORD  [rsi+8]  		; load 4 bytes from the source array into EAX (2 chars)
-        mov  rbx, rax					; copy the loaded value
-        shr  rbx, 8					    ; shift right by 8
-        or   rax, rbx					; or the 2 values
-        mov  WORD  [rdi+4], ax			; write the low 2 bytes of the 4 byte value in the destination
-        shr  rax, 32
-        mov  WORD  [rdi+6], ax			; write the low 2 bytes of the 4 byte value in the destination
-
-        mov  rax, QWORD  [rsi+16]  		; load 4 bytes from the source array into EAX (2 chars)
-        mov  rbx, rax					; copy the loaded value
-        shr  rbx, 8					    ; shift right by 8
-        or   rax, rbx					; or the 2 values
-        mov  WORD  [rdi+8], ax			; write the low 2 bytes of the 4 byte value in the destination
-        shr  rax, 32
-        mov  WORD  [rdi+10], ax			; write the low 2 bytes of the 4 byte value in the destination
-
-
-        mov  rax, QWORD  [rsi+24]  		; load 4 bytes from the source array into EAX (2 chars)
-        mov  rbx, rax					; copy the loaded value
-        shr  rbx, 8					    ; shift right by 8
-        or   rax, rbx					; or the 2 values
-        mov  WORD  [rdi+12], ax			; write the low 2 bytes of the 4 byte value in the destination
-        shr  rax, 32
-        mov  WORD  [rdi+14], ax			; write the low 2 bytes of the 4 byte value in the destination
-
-        add  rdi, 16
-        add  rsi, 32		
-        loop eightcharsNoCheck
 ret
