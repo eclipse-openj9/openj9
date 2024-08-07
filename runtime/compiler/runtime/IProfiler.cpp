@@ -562,8 +562,7 @@ void *
 TR_IProfiler::operator new (size_t size) throw()
    {
    memoryConsumed += (int32_t)size;
-   void *alloc = _allocator->allocate(size, std::nothrow);
-   return alloc;
+   return _allocator->allocate(size, std::nothrow);
    }
 
 TR::PersistentAllocator *
@@ -1128,7 +1127,7 @@ TR_IProfiler::findOrCreateEntry(int32_t bucket, uintptr_t pc, bool addIt)
    TR_IPBytecodeHashTableEntry *headEntry = _bcHashTable[bucket];
    if (headEntry && headEntry->getPC() == pc)
       {
-      // Note: We never delete IP entries
+      delete entry; // Newly allocated entry is not needed
       return headEntry;
       }
 
@@ -2623,33 +2622,17 @@ TR_IProfiler::outputStats()
    checkMethodHashTable();
    }
 
-void *
-TR_IPBytecodeHashTableEntry::alignedPersistentAlloc(size_t size)
-   {
-#if defined(TR_HOST_64BIT)
-   size += 4;
-   memoryConsumed += (int32_t)size;
-   void *address = (void *) TR_IProfiler::allocator()->allocate(size, std::nothrow);
 
-   return (void *)(((uintptr_t)address + 4) & ~0x7);
-#else
+void *
+TR_IPBytecodeHashTableEntry::operator new (size_t size) throw()
+   {
    memoryConsumed += (int32_t)size;
    return TR_IProfiler::allocator()->allocate(size, std::nothrow);
-#endif
    }
 
-
-
-void *
-TR_IPBCDataCallGraph::operator new (size_t size) throw()
+void TR_IPBytecodeHashTableEntry::operator delete(void *p) throw()
    {
-   return TR_IPBytecodeHashTableEntry::alignedPersistentAlloc(size);
-   }
-
-void *
-TR_IPBCDataFourBytes::operator new (size_t size) throw()
-   {
-   return TR_IPBytecodeHashTableEntry::alignedPersistentAlloc(size);
+   TR_IProfiler::allocator()->deallocate(p);
    }
 
 #if defined(J9VM_OPT_JITSERVER)
@@ -2705,18 +2688,6 @@ TR_IPBCDataFourBytes::getSumBranchCount()
    uint16_t fallThroughCount = (uint16_t)(data & 0x0000FFFF) | 0x1;
    uint16_t branchToCount = (uint16_t)((data & 0xFFFF0000)>>16) | 0x1;
    return (fallThroughCount + branchToCount);
-   }
-
-void *
-TR_IPBCDataAllocation::operator new (size_t size) throw()
-   {
-   return TR_IPBytecodeHashTableEntry::alignedPersistentAlloc(size);
-   }
-
-void *
-TR_IPBCDataEightWords::operator new (size_t size) throw()
-   {
-   return TR_IPBytecodeHashTableEntry::alignedPersistentAlloc(size);
    }
 
 void
@@ -2915,7 +2886,8 @@ TR_IPBCDataCallGraph::getData(TR::Compilation *comp)
 void *
 TR_IPMethodHashTableEntry::operator new (size_t size) throw()
    {
-   return TR_IPBytecodeHashTableEntry::alignedPersistentAlloc(size);
+   memoryConsumed += (int32_t)size;
+   return TR_IProfiler::allocator()->allocate(size, std::nothrow);
    }
 
 int32_t
@@ -4543,8 +4515,7 @@ void *
 TR_IPHashedCallSite::operator new (size_t size) throw()
    {
    memoryConsumed += (int32_t)size;
-   void *alloc = TR_IProfiler::allocator()->allocate(size, std::nothrow);
-   return alloc;
+   return TR_IProfiler::allocator()->allocate(size, std::nothrow);
    }
 
 inline
