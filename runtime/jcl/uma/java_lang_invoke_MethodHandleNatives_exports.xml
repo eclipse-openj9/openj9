@@ -21,6 +21,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 <exports group="java_lang_invoke_MethodHandleNatives">
 	<export name="Java_java_lang_invoke_MethodHandleNatives_init" />
 	<export name="Java_java_lang_invoke_MethodHandleNatives_expand" />
+	<export name="Java_java_lang_invoke_MethodHandleNatives_findLambdaInSCC" />
+	<export name="Java_java_lang_invoke_MethodHandleNatives_findLambdaFormInSCC" />
 	<export name="Java_java_lang_invoke_MethodHandleNatives_resolve" />
 	<export name="Java_java_lang_invoke_MethodHandleNatives_getMembers" />
 	<export name="Java_java_lang_invoke_MethodHandleNatives_objectFieldOffset" />

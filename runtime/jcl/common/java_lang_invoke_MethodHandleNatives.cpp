@@ -32,10 +32,14 @@
 #include "j9vmconstantpool.h"
 #include "ObjectAccessBarrierAPI.hpp"
 #include "objhelp.h"
+#include "SCAbstractAPI.h"
 
 #include <string.h>
 #include <assert.h>
 
+#undef UT_MODULE_LOADED
+#undef UT_MODULE_UNLOADED
+#include "CacheMap.hpp"
 #include "VMHelpers.hpp"
 
 extern "C" {
@@ -946,6 +950,121 @@ Java_java_lang_invoke_MethodHandleNatives_expand(JNIEnv *env, jclass clazz, jobj
 }
 
 /**
+ * Find a Lambda or customized LambdaForm class in the SCC.
+ * Requires non-null input arguments.
+ * If found, returns a pointer to a RAMClass of the SCC-cached class, otherwise nullptr.
+ *
+ * Throws OutOfMemoryError if lookup key memory allocation fails.
+ */
+jobject
+findLambdaOrLambdaFormInSCC(JNIEnv *env, jclass clazz, jstring classnameObject, jclass lookupClass, UDATA options)
+{
+	jobject result = nullptr;
+
+#if defined(J9VM_OPT_SHARED_CLASSES)
+	J9VMThread *currentThread = reinterpret_cast<J9VMThread*>(env);
+	J9JavaVM *vm = currentThread->javaVM;
+	const J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	PORT_ACCESS_FROM_JAVAVM(vm);
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+	Trc_JCL_java_lang_invoke_MethodHandleNatives_findLambdaOrLambdaFormInSCC_Entry(env, classnameObject, lookupClass, options);
+
+#if defined(J9VM_ENV_DATA64)
+#define J9_ROM_ADDRESS_SUFFIX "/0x0000000000000000"
+#else /* defined(J9VM_ENV_DATA64) */
+#define J9_ROM_ADDRESS_SUFFIX "/0x00000000"
+#endif /* defined(J9VM_ENV_DATA64) */
+	j9object_t classname = J9_JNI_UNWRAP_REFERENCE(classnameObject);
+	IDATA classnameLength = vmFuncs->getStringUTF8Length(currentThread, classname);
+	UDATA romAddressSuffixLength = LITERAL_STRLEN(J9_ROM_ADDRESS_SUFFIX);
+	UDATA lookupKeyLength = classnameLength + romAddressSuffixLength + 1; /* +1 for null terminator. */
+	char *lookupKey = static_cast<char *>(j9mem_allocate_memory(lookupKeyLength, OMRMEM_CATEGORY_VM));
+
+	if (nullptr == lookupKey) {
+		vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+	} else {
+		vmFuncs->copyStringToUTF8Helper(currentThread, classname, J9_STR_NONE, 0, classnameLength, reinterpret_cast<U_8 *>(lookupKey), classnameLength);
+		memcpy(lookupKey + classnameLength, J9_ROM_ADDRESS_SUFFIX, romAddressSuffixLength);
+		lookupKey[lookupKeyLength - 1] = '\0';
+
+		if (nullptr != vm->sharedClassConfig && nullptr != vm->sharedClassConfig->sharedAPIObject) {
+			SCAbstractAPI *sharedapi = static_cast<SCAbstractAPI *>(vm->sharedClassConfig->sharedAPIObject);
+			J9ROMClass *romClass = sharedapi->jclFindOrphanROMClassByUniqueID(currentThread, lookupKey, lookupKeyLength - 1);
+			if (nullptr != romClass) {
+				J9Class *hostClass = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, J9_JNI_UNWRAP_REFERENCE(lookupClass));
+				J9ClassLoader *classloader = hostClass->classLoader;
+				if (nullptr != hostClass) {
+					omrthread_monitor_enter(vm->classTableMutex);
+					/* internalCreateRAMClassFromROMClass will release the classTableMutex. */
+					J9Class *ramClass = vmFuncs->internalCreateRAMClassFromROMClass(
+													currentThread,
+													classloader,
+													romClass,
+													options,
+													nullptr /* elementClass */,
+													nullptr /* protectionDomain */,
+													nullptr /* methodRemapArray */,
+													J9_CP_INDEX_NONE,
+													LOAD_LOCATION_UNKNOWN,
+													nullptr /* classBeingRedefined */,
+													hostClass);
+					if (nullptr != ramClass && nullptr == currentThread->currentException) {
+						Trc_JCL_java_lang_invoke_MethodHandleNatives_findLambdaOrLambdaFormInSCC_Found(env, lookupKeyLength - 1, lookupKey, lookupClass, options);
+						result = vmFuncs->j9jni_createLocalRef(env, J9VM_J9CLASS_TO_HEAPCLASS(ramClass));
+					}
+				}
+			}
+		}
+	}
+
+	if (nullptr != lookupKey) {
+		j9mem_free_memory(lookupKey);
+	}
+	Trc_JCL_java_lang_invoke_MethodHandleNatives_findLambdaOrLambdaFormInSCC_Exit(env);
+	vmFuncs->internalExitVMToJNI(currentThread);
+#undef J9_ROM_ADDRESS_SUFFIX
+#endif /* J9VM_OPT_SHARED_CLASSES */
+	return result;
+}
+
+/**
+ * static native Class<?> findLambdaInSCC(String classname, Class<?> hostClass);
+ *
+ * Find a Lambda class in the SCC.
+ * Requires non-null input arguments.
+ * If found, returns a pointer to a RAMClass of the SCC-cached, otherwise nullptr.
+ */
+jobject JNICALL
+Java_java_lang_invoke_MethodHandleNatives_findLambdaInSCC(JNIEnv *env, jclass clazz, jstring classnameObject, jclass lookupClass)
+{
+	UDATA options = J9_FINDCLASS_FLAG_NO_CHECK_FOR_EXISTING_CLASS
+				  | J9_FINDCLASS_FLAG_THROW_ON_FAIL
+				  | J9_FINDCLASS_FLAG_UNSAFE
+				  | J9_FINDCLASS_FLAG_HIDDEN
+				  | J9_FINDCLASS_FLAG_CLASS_OPTION_NESTMATE
+				  | J9_FINDCLASS_FLAG_CLASS_OPTION_STRONG;
+	return findLambdaOrLambdaFormInSCC(env, clazz, classnameObject, lookupClass, options);
+}
+
+/**
+ * static native Class<?> findLambdaFormInSCC(String classname, Class<?> hostClass);
+ *
+ * Find a customized LambdaForm class in the SCC.
+ * Requires non-null input arguments.
+ * If found, returns a pointer to a RAMClass of the SCC-cached class, otherwise nullptr.
+ */
+jobject JNICALL
+Java_java_lang_invoke_MethodHandleNatives_findLambdaFormInSCC(JNIEnv *env, jclass clazz, jstring classnameObject, jclass lookupClass)
+{
+	UDATA options = J9_FINDCLASS_FLAG_NO_CHECK_FOR_EXISTING_CLASS
+				  | J9_FINDCLASS_FLAG_THROW_ON_FAIL
+				  | J9_FINDCLASS_FLAG_UNSAFE
+				  | J9_FINDCLASS_FLAG_HIDDEN
+				  | J9_FINDCLASS_FLAG_ANON;
+	return findLambdaOrLambdaFormInSCC(env, clazz, classnameObject, lookupClass, options);
+}
+
+/**
  * [JDK8] static native MemberName resolve(MemberName self, Class<?> caller)
  * 	             throws LinkageError, ClassNotFoundException;
  *
@@ -987,7 +1106,7 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 	char nameBuffer[256];
 	nameBuffer[0] = 0;
 	J9UTF8 *signature = NULL;
-	char signatureBuffer[256];
+	char signatureBuffer[512];
 	signatureBuffer[0] = 0;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	vmFuncs->internalEnterVMFromJNI(currentThread);
@@ -1419,7 +1538,7 @@ Java_java_lang_invoke_MethodHandleNatives_getMembers(
 	char nameBuffer[256];
 	nameBuffer[0] = 0;
 	J9UTF8 *signature = NULL;
-	char signatureBuffer[256];
+	char signatureBuffer[512];
 	signatureBuffer[0] = 0;
 	j9object_t callerObject = ((NULL == caller) ? NULL : J9_JNI_UNWRAP_REFERENCE(caller));
 

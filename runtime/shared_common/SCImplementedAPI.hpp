@@ -43,7 +43,8 @@ BOOLEAN j9shr_classStoreTransaction_isOK(void * tobj);
 BOOLEAN j9shr_classStoreTransaction_hasSharedStringTableLock(void * tobj);
 void j9shr_classStoreTransaction_updateUnstoredBytes(U_32 romClassSizeFullSize, void * tobj);
 
-J9ROMClass * j9shr_jclUpdateROMClassMetaData(J9VMThread* currentThread, J9ClassLoader* classloader, J9ClassPathEntry** classPathEntries, UDATA cpEntryCount, UDATA entryIndex, const J9UTF8* partition, const J9ROMClass * existingClass);
+J9ROMClass *j9shr_jclUpdateROMClassMetaData(J9VMThread *currentThread, J9ClassLoader *classloader, J9ClassPathEntry **classPathEntries, UDATA cpEntryCount, UDATA entryIndex, const J9UTF8 *partition, const J9ROMClass *existingClass);
+J9ROMClass *j9shr_jclFindOrphanROMClassByUniqueID(J9VMThread *currentThread, const char *uniqueID, UDATA uniqueIDLength);
 
 #ifdef __cplusplus
 }/*extern "C"*/

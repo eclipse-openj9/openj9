@@ -853,13 +853,6 @@ j9shr_classStoreTransaction_nextSharedClassForCompare(void * tobj)
 	const char *stringBytes = (const char*)obj->classnameData;
 	U_16 stringLength = obj->classnameLength;
 
-#if JAVA_SPEC_VERSION < 21
-	char *end = getLastDollarSignOfLambdaClassName(stringBytes, obj->classnameLength);
-	if (NULL != end) {
-		stringLength = (U_16)(end - stringBytes + 1);
-	}
-#endif /* JAVA_SPEC_VERSION < 21 */
-
 	obj->findNextRomClass = (J9ROMClass *)cachemap->findNextROMClass(currentThread, obj->findNextIterator, obj->firstFound, stringLength, stringBytes);
 
 	Trc_SHR_API_j9shr_nextSharedClassForCompare_Exit(currentThread);
@@ -1173,3 +1166,34 @@ done:
 	}
 }
 
+/**
+ * Called by JCL natives, this function tries to find an orphan ROMClass in the SCC using a unique ID as a lookup key.
+ *
+ * @param [in] currentThread thread calling this function
+ * @param [in] uniqueID lookup key for SCC
+ * @param [in] uniqueIDLength
+ *
+ * @return pointer to a J9ROMClass if present in the SCC, nullptr otherwise
+ */
+J9ROMClass *
+j9shr_jclFindOrphanROMClassByUniqueID(J9VMThread *currentThread, const char *uniqueID, UDATA uniqueIDLength)
+{
+	Trc_SHR_API_j9shr_jclFindOrphanROMClassByUniqueID_Entry(currentThread, (UDATA)uniqueIDLength, uniqueID);
+
+	J9JavaVM *vm = currentThread->javaVM;
+	J9SharedClassConfig *sconfig = currentThread->javaVM->sharedClassConfig;
+	if (nullptr == sconfig) {
+		return nullptr;
+	}
+
+	SH_CacheMap *cachemap = reinterpret_cast<SH_CacheMap*>(sconfig->sharedClassCache);
+	void *iterator = nullptr;
+	void *firstFound = nullptr;
+	omrthread_monitor_enter(vm->classMemorySegments->segmentMutex);
+	J9ROMClass *romClass = const_cast<J9ROMClass *>(cachemap->findNextROMClass(currentThread, iterator, firstFound, uniqueIDLength, uniqueID));
+	omrthread_monitor_exit(vm->classMemorySegments->segmentMutex);
+
+	Trc_SHR_API_j9shr_jclFindOrphanROMClassByUniqueID_Exit(currentThread, (UDATA)uniqueIDLength, uniqueID);
+
+	return romClass;
+}

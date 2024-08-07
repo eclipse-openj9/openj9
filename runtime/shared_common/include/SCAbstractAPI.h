@@ -59,7 +59,8 @@ typedef struct SCAbstractAPI
 	void (*classStoreTransaction_updateUnstoredBytes) (U_32 romClassSizeFullSize, void * tobj);
 
 	/*Function for JCL to update cache metadata for an existing shared class*/
-	J9ROMClass * (*jclUpdateROMClassMetaData)(J9VMThread* currentThread, J9ClassLoader* classloader, J9ClassPathEntry** classPathEntries, UDATA cpEntryCount, UDATA entryIndex, const J9UTF8* partition, const J9ROMClass * existingClass);
+	J9ROMClass *(*jclUpdateROMClassMetaData)(J9VMThread *currentThread, J9ClassLoader *classloader, J9ClassPathEntry **classPathEntries, UDATA cpEntryCount, UDATA entryIndex, const J9UTF8 *partition, const J9ROMClass *existingClass);
+	J9ROMClass *(*jclFindOrphanROMClassByUniqueID)(J9VMThread *currentThread, const char *uniqueID, UDATA uniqueIDLength);
 
 	/* Functions for finishing initialization of shared classes. Called between
 	 * AGENTS_STARTED & ABOUT_TO_BOOTSTRAP by jvminit.c

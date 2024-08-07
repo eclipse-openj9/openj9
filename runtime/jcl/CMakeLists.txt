@@ -92,6 +92,9 @@ target_link_libraries(jclse
 		j9vm_interface
 		j9vm_gc_includes
 
+		j9shrcommon
+		j9shrutil
+		j9zip
 		omrsig
 		j9hookable
 		j9zlib

@@ -428,29 +428,10 @@ ComparingCursor::shouldCheckForEquality(DataType dataType, U_32 u32Value)
 	}
 
 	switch (dataType) {
-	case SRP_TO_UTF8_CLASS_NAME:
-#if JAVA_SPEC_VERSION < 21
-		if (_context->isLambdaClass() && _romClassIsShared) {
-			/*
-			 * If the class is a lambda class, don't compare the class names because lambda
-			 * classes might have different index numbers from run to run.
-			 */
-			return false;
-		}
-#endif /* JAVA_SPEC_VERSION < 21 */
-		break;
+	case SRP_TO_UTF8_CLASS_NAME: /* fall through */
 	case BYTECODE: /* fall through */
 	case GENERIC: /* fall through */
 	case CLASS_FILE_SIZE: /* fall through */
-#if JAVA_SPEC_VERSION < 21
-		if ((CLASS_FILE_SIZE == dataType) 
-			&& _context->isLambdaClass()
-			&& _romClassIsShared
-		) {
-			/* If comparing a lambda class from the shared cache, class file size comparison is already done in ROMClassBuilder::compareROMClassForEquality().  */
-			return false;
-		}
-#endif /* JAVA_SPEC_VERSION < 21 */
 	case SRP_TO_DEBUG_DATA: /* fall through */
 	case SRP_TO_GENERIC: /* fall through */
 	case SRP_TO_UTF8: /* fall through */
