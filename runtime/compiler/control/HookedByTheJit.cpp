@@ -5113,7 +5113,12 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
    if (IProfilerOffSinceStartup &&
        !TR::Options::getCmdLineOptions()->getOption(TR_DisableInterpreterProfiling) &&
        TR::Options::getCmdLineOptions()->getOption(TR_NoIProfilerDuringStartupPhase) &&
-       interpreterProfilingState == IPROFILING_STATE_OFF)
+       interpreterProfilingState == IPROFILING_STATE_OFF
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+       && (!jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(compInfo->getSamplerThread())
+           || compInfo->getCRRuntime()->allowStateChange())
+#endif
+      )
       {
        // Should we turn it ON?
       TR_IProfiler *iProfiler = TR_J9VMBase::get(jitConfig, 0)->getIProfiler();
@@ -5176,7 +5181,12 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
                if (compInfo->isInZOSSupervisorState())
                   waitTime = waitTime * 2;
 #endif
-               if (crtElapsedTime - lastTimeInStartupMode > waitTime)
+               if (crtElapsedTime - lastTimeInStartupMode > waitTime
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+                   && (!jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(compInfo->getSamplerThread())
+                       || compInfo->getCRRuntime()->allowStateChange())
+#endif
+                  )
                   {
                   javaVM->internalVMFunctions->jvmPhaseChange(javaVM, J9VM_PHASE_NOT_STARTUP);
                   }
@@ -5191,8 +5201,15 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
             // Exit startup when the 'endOfStartup' arrives
             // The case where the 'endOfStartup' hint arrived, but don't want to follow strictly
             // is implemented above in the IF block
-            if (persistentInfo->getExternalStartupEndedSignal())
+            if (persistentInfo->getExternalStartupEndedSignal()
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+                && (!jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(compInfo->getSamplerThread())
+                    || compInfo->getCRRuntime()->allowStateChange())
+#endif
+               )
+               {
                javaVM->internalVMFunctions->jvmPhaseChange(javaVM, J9VM_PHASE_NOT_STARTUP);
+               }
             }
          }
       else // javaVM->phase == J9VM_PHASE_EARLY_STARTUP
@@ -5206,14 +5223,42 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
             {
             // Normal gracePeriod rules apply
             if (crtElapsedTime >= (uint64_t)persistentInfo->getClassLoadingPhaseGracePeriod()) // grace period has ended
-               javaVM->internalVMFunctions->jvmPhaseChange(javaVM, (newState == STARTUP_STATE) ? J9VM_PHASE_STARTUP : J9VM_PHASE_NOT_STARTUP);
+               {
+               if (newState == STARTUP_STATE)
+                  {
+                  javaVM->internalVMFunctions->jvmPhaseChange(javaVM, J9VM_PHASE_STARTUP);
+                  }
+               else
+                  {
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+                  if (!jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(compInfo->getSamplerThread())
+                      || compInfo->getCRRuntime()->allowStateChange())
+#endif
+                     {
+                     javaVM->internalVMFunctions->jvmPhaseChange(javaVM, J9VM_PHASE_NOT_STARTUP);
+                     }
+                  }
+               }
             }
          else
             {
             // 'beginningOfStartup' hint was seen
             // If 'endOfStartup' was not seen, move to STARTUP, otherwise, following hints strictly,
             // we have to exit STARTUP
-            javaVM->internalVMFunctions->jvmPhaseChange(javaVM, !persistentInfo->getExternalStartupEndedSignal() ? J9VM_PHASE_STARTUP : J9VM_PHASE_NOT_STARTUP);
+            if (!persistentInfo->getExternalStartupEndedSignal())
+               {
+               javaVM->internalVMFunctions->jvmPhaseChange(javaVM, J9VM_PHASE_STARTUP);
+               }
+            else
+               {
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+               if (!jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(compInfo->getSamplerThread())
+                   || compInfo->getCRRuntime()->allowStateChange())
+#endif
+                  {
+                  javaVM->internalVMFunctions->jvmPhaseChange(javaVM, J9VM_PHASE_NOT_STARTUP);
+                  }
+               }
             }
          }
       if (javaVM->phase == J9VM_PHASE_NOT_STARTUP)

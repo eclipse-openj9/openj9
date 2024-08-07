@@ -182,6 +182,13 @@ class CRRuntime
     */
    void recompileMethodsCompiledPreCheckpoint();
 
+   /**
+    * @brief Determine whether it's ok for the JIT to change states.
+    *
+    * @return true if ok to chnage states, false otherwise.
+    */
+   bool allowStateChange();
+
    private:
 
    class TR_MemoizedComp : public TR_Link0<TR_MemoizedComp>
@@ -395,6 +402,8 @@ class CRRuntime
    bool _remoteCompilationRequestedAtBootstrap;
    bool _remoteCompilationExplicitlyDisabledAtBootstrap;
 #endif
+
+   uint64_t _restoreTime;
    };
 
 } // namespace TR

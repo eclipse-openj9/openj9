@@ -400,6 +400,7 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    static int32_t _waitTimeToGCR;
    static int32_t _waitTimeToStartIProfiler;
    static int32_t _compilationDelayTime;
+   static int32_t _delayBeforeStateChange;
 
    static int32_t _invocationThresholdToTriggerLowPriComp; // we trigger an LPQ comp req only if the method
                                                            // was invoked at least this many times
