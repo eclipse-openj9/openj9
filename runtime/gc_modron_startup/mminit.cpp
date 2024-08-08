@@ -2962,6 +2962,7 @@ gcInitializeDefaults(J9JavaVM* vm)
 #if defined(J9VM_ENV_DATA64)
 	vm->isIndexableDualHeaderShapeEnabled = TRUE;
 	vm->isIndexableDataAddrPresent = FALSE;
+	vm->isVirtualLargeObjectHeapEnabled = FALSE;
 #endif /* defined(J9VM_ENV_DATA64) */
 
 	/* enable estimateFragmentation for all GCs as default for java, but not the estimated result would not affect concurrentgc kickoff by default */
@@ -3137,6 +3138,8 @@ gcInitializeDefaults(J9JavaVM* vm)
 
 		/* Try to initialize basic heap structures with the memory parameters we currently have */
 		if (JNI_OK == j9gc_initialize_heap(vm, memoryParameterTable, extensions->memoryMax)) {
+			/* set vm->isVirtualLargeObjectHeapEnabled after extensions->isVirtualLargeObjectHeapEnabled is set in j9gc_initialize_heap(). */
+			vm->isVirtualLargeObjectHeapEnabled = (extensions->isVirtualLargeObjectHeapEnabled) ? TRUE : FALSE;
 			break;
 		}
 

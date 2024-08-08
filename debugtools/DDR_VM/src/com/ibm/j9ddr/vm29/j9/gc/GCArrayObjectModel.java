@@ -128,6 +128,15 @@ abstract class GCArrayObjectModel extends GCBase
 	public abstract VoidPointer getDataPointerForContiguous(J9IndexableObjectPointer arrayPtr) throws CorruptDataException;
 	
 	/**
+	 * Determine the validity of the data address belonging to arrayPtr.
+	 *
+	 * @param arrayPtr array object who's data address validity we are checking
+	 * @throws CorruptDataException if there's a problem accessing the indexable object dataAddr field
+	 * @return true if the data address of arrayPtr is valid, false otherwise
+	 */
+	public abstract boolean hasCorrectDataAddrPointer(J9IndexableObjectPointer arrayPtr) throws CorruptDataException;
+
+	/**
 	 * Returns the address of first arraylet leaf slot in the spine
 	 * @param arrayPtr Ptr to an array
 	 * @return Arrayoid ptr
