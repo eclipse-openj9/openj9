@@ -4030,6 +4030,7 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 		}
 		memset(vm->checkpointState.javaDebugThreads, 0, sizeof(vm->checkpointState.javaDebugThreads));
 		vm->checkpointState.javaDebugThreadCount = 0;
+		vm->checkpointState.debugInterpreterRequested = FALSE;
 	}
 
 	vm->checkpointState.lastRestoreTimeInNanoseconds = -1;
