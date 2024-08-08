@@ -47,6 +47,11 @@ public class GCClassArrayClassSlotIterator extends GCIterator
 			slots.add(slot);
 			addresses.add(VoidPointer.cast(clazz.arrayClassEA()));
 		}
+		slot = clazz.nullRestrictedArrayClass();
+		if(slot.notNull()) {
+			slots.add(slot);
+			addresses.add(VoidPointer.cast(clazz.nullRestrictedArrayClassEA()));
+		}
 		if(clazz.romClass().modifiers().allBitsIn(J9AccClassArray)) {
 			J9ArrayClassPointer arrayClass = J9ArrayClassPointer.cast(clazz);
 			slot = arrayClass.componentType();

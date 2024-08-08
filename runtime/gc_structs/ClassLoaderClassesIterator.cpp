@@ -99,6 +99,21 @@ GC_ClassLoaderClassesIterator::switchToSystemMode()
 	return isSystemClassLoader;
 }
 
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+J9Class *
+GC_ClassLoaderClassesIterator::getNullRestrictedArray(J9Class* c) {
+     J9Class* baseClass = NULL;
+     if (NULL == ((J9ArrayClass *)c)->leafComponentType) {
+        /* c is a baseClass */
+        baseClass = c;
+     } else {
+         /* c is an arrayClass,  c->leafComponentType is the baseClass */
+        baseClass = ((J9ArrayClass *)c)->leafComponentType;
+     }
+     return baseClass->nullRestrictedArrayClass;
+}
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+
 J9Class *
 GC_ClassLoaderClassesIterator::nextClass()
 {
@@ -108,9 +123,13 @@ GC_ClassLoaderClassesIterator::nextClass()
 		if (ANONYMOUS_CLASSES == _mode) {
 			_nextClass = nextAnonymousClass();
 		} else {
-			if ( (result->classLoader == _classLoader) && (NULL != result->arrayClass) ) {
+			if ((result->classLoader == _classLoader) && (NULL != result->arrayClass)) {
 				/* this class is defined in the loader, so follow its array classes */
 				_nextClass = result->arrayClass;
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+			} else if ((result->classLoader == _classLoader) && (NULL != getNullRestrictedArray(result))) {
+				_nextClass = getNullRestrictedArray(result);
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 			} else if (TABLE_CLASSES == _mode) {
 				_nextClass = nextTableClass();
 			} else {

@@ -358,6 +358,18 @@ J9Class*
 internalCreateArrayClass(J9VMThread* vmThread, J9ROMArrayClass* romClass, J9Class* elementClass);
 
 /**
+* @brief
+* @param vmThread
+* @param romClass
+* @param elementClass
+* @param options
+* @return J9Class*
+*/
+J9Class*
+internalCreateArrayClassWithOptions(J9VMThread* vmThread, J9ROMArrayClass* romClass, J9Class* elementClass, UDATA options);
+
+
+/**
  * Load the class with the specified name in a given module
  *
  * @param currentThread Current VM thread
