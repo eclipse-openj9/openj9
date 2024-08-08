@@ -308,11 +308,6 @@ calculateMapSize(
 // temps and which internal pointers are derived from each base array temp
 // in the format described above.
 //
-// This method creates the internal ptr data structure (common to entire method;
-// so hung off the stack atlas). It contains information specifying the base array
-// temps and which internal pointers are derived from each base array temp
-// in the format described above.
-//
 static uint8_t *
 createInternalPtrStackMapInJ9Format(
       TR_FrontEnd *vm,
