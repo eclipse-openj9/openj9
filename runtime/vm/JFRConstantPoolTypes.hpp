@@ -22,6 +22,9 @@
 #if !defined(JFRCONSTANTPOOLTYPES_HPP_)
 #define JFRCONSTANTPOOLTYPES_HPP_
 
+#include <initializer_list>
+#include <utility>
+
 #include "j9cfg.h"
 #include "j9.h"
 #include "omrlinkedlist.h"
@@ -426,6 +429,26 @@ done:
 		return value;
 	}
 
+	J9UTF8 *makeJ9UTF8(std::initializer_list<std::pair<const char *, UDATA>> parts) {
+		UDATA len = 0;
+
+		for (auto s = parts.begin(); s != parts.end(); ++s) {
+			len += s->second;
+		}
+
+		J9UTF8 *result = (J9UTF8 *)j9mem_allocate_memory(sizeof(J9UTF8) + len, OMRMEM_CATEGORY_VM);
+		U_8 *data = J9UTF8_DATA(result);
+
+		for (auto s = parts.begin(); s != parts.end(); ++s) {
+			memcpy(data, s->first, s->second);
+			data += s->second;
+		}
+
+		J9UTF8_SET_LENGTH(result, len);
+
+		return result;
+	}
+
     void initJVMInfo() {
 		const char *javaVMName = getSystemProp("java.vm.name");
 		const UDATA javaVMNameLen = strlen(javaVMName);
@@ -442,31 +465,19 @@ done:
 
 		_jvmInformation = {0};
 		/* Set jvmName */
-		_jvmInformation.jvmName = (J9UTF8 *)j9mem_allocate_memory(sizeof(J9UTF8) + javaVMNameLen, OMRMEM_CATEGORY_VM);
-		J9UTF8_SET_LENGTH(_jvmInformation.jvmName, javaVMNameLen);
-		memcpy(J9UTF8_DATA(_jvmInformation.jvmName), javaVMName, javaVMNameLen);
+		_jvmInformation.jvmName = makeJ9UTF8({{javaVMName, javaVMNameLen}});
 
 		/* Set jvmVersion */
-		/* These numbers are the lengths of the string literal parts */
-		const UDATA jvmVersionLen = javaVMNameLen + 2 + jdkDebugLevelLen + 6 + javaVMVersionLen + 2 + javaVMInfoLen + 1;
-		_jvmInformation.jvmVersion = (J9UTF8 *)j9mem_allocate_memory(sizeof(J9UTF8) + jvmVersionLen, OMRMEM_CATEGORY_VM);
-		U_8 *data = J9UTF8_DATA(_jvmInformation.jvmVersion);
-		memcpy(data, javaVMName, javaVMNameLen);
-		data += javaVMNameLen;
-		memcpy(data, " (", 2);
-		data += 2;
-		memcpy(data, jdkDebugLevel, jdkDebugLevelLen);
-		data += jdkDebugLevelLen;
-		memcpy(data, "build ", 6);
-		data += 6;
-		memcpy(data, javaVMVersion, javaVMVersionLen);
-		data += javaVMVersionLen;
-		memcpy(data, ", ", 2);
-		data += 2;
-		memcpy(data, javaVMInfo, javaVMInfoLen);
-		data += javaVMInfoLen;
-		memcpy(data, ")", 1);
-		J9UTF8_SET_LENGTH(_jvmInformation.jvmVersion, jvmVersionLen);
+		_jvmInformation.jvmVersion = makeJ9UTF8({
+			{ javaVMName, javaVMNameLen },
+			{ " (", 2 },
+			{ jdkDebugLevel, jdkDebugLevelLen },
+			{ "build ", 6 },
+			{ javaVMVersion, javaVMVersionLen },
+			{ ", ", 2 },
+			{ javaVMInfo, javaVMInfoLen },
+			{ ")", 1 },
+		});
 
 		/* Set JVM arguments */
 		JavaVMInitArgs* vmArgs = _vm->vmArgsArray->actualVMArgs;
@@ -475,9 +486,7 @@ done:
 		for (UDATA i = 0; i < vmArgs->nOptions; i++) {
 			if (0 == strncmp(vmArgs->options[i].optionString, javaCommand, strlen(javaCommand))) {
 				javaArgsLen = strlen(vmArgs->options[i].optionString) - strlen(javaCommand);
-				_jvmInformation.javaArguments = (J9UTF8 *)j9mem_allocate_memory(sizeof(J9UTF8) + javaArgsLen, OMRMEM_CATEGORY_VM);
-				memcpy(J9UTF8_DATA(_jvmInformation.javaArguments), vmArgs->options[i].optionString + strlen(javaCommand), javaArgsLen);
-				J9UTF8_SET_LENGTH(_jvmInformation.javaArguments, javaArgsLen);
+				_jvmInformation.javaArguments = makeJ9UTF8({{vmArgs->options[i].optionString + strlen(javaCommand), javaArgsLen}});
 				break;
 			}
 		}
@@ -499,9 +508,7 @@ done:
 
 			len -= 1 + javaArgsLen + cmdLen + 2;
 
-			_jvmInformation.jvmArguments = (J9UTF8 *)j9mem_allocate_memory(sizeof(J9UTF8) + len, OMRMEM_CATEGORY_VM);
-			memcpy(J9UTF8_DATA(_jvmInformation.jvmArguments), buffer + cmdLen + 1, len);
-			J9UTF8_SET_LENGTH(_jvmInformation.jvmArguments, len);
+			_jvmInformation.jvmArguments = makeJ9UTF8({{buffer + cmdLen + 1, len}});
 			j9mem_free_memory(buffer);
 		}
 
