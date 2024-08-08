@@ -374,7 +374,7 @@ AFI(I_8 *instructionPtr, I_32 sourceRegister, I_32 immediateInteger)
  * Generates a sequence of instructions to copy data from a Java MemorySegment Object to a C struct.
  * The struct is smaller than or equal to 4096 bytes.
  */
-static I_32
+I_32
 generateSmallStructCopyInstructions(I_8 *instructionPtr, I_32 structSize, I_32 offsetToParameterArea, I_32 sourceRegister, I_32 destinationRegister)
 {
 	I_32 totalInstructionSize = 0;
@@ -400,7 +400,7 @@ generateSmallStructCopyInstructions(I_8 *instructionPtr, I_32 structSize, I_32 o
  * Generates a sequence of instructions to copy data from a Java MemorySegment Object to a C struct.
  * The struct is larger than 4096 bytes.
  */
-static I_32
+I_32
 generateLargeStructCopyInstructions(I_8 *instructionPtr, I_32 structSize, I_32 offsetToParameterArea, I_32 sourceRegister, I_32 destinationRegister)
 {
 	I_32 totalInstructionSize = 0;
