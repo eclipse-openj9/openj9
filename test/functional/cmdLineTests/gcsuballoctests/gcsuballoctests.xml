@@ -24,10 +24,11 @@
 
 <!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
 
-<suite id="J9 GC  Tests" timeout="60">
- 
- <!-- Following tests are for compressedrefs platforms. 
-	Because -Xgc:suballocatorInitialSize= and -Xgc:suballocatorCommitSize= options are defined only for compressedrefs. -->
+<suite id="J9 GC Suballocator Tests" timeout="60">
+
+ <!-- Following tests are for compressedrefs platforms because -Xgc:suballocatorInitialSize=,
+      -Xgc:suballocatorCommitSize=, -Xgc:suballocatorIncrementSize=, -Xgc:suballocatorQuickAllocDisable
+      and -Xgc:suballocatorQuickAllocEnable options are used only for compressedrefs. -->
 
  <test id="-Xgc:suballocatorInitialSize=100m">
   <command>$EXE$ -Xgc:suballocatorInitialSize=100m -version</command>
@@ -48,12 +49,42 @@
   <output regex="no" type="failure">JVMDUMP006I</output>
   <output regex="no" type="failure">Processing dump event</output>
  </test>
- 
+
+ <test id="-Xgc:suballocatorIncrementSize=100m">
+  <command>$EXE$ -Xgc:suballocatorIncrementSize=100m -version</command>
+  <output regex="no" type="success">version</output>
+  <output regex="yes" caseSensitive="yes" javaUtilPattern="yes" type="required">(Semeru|OpenJDK|Java\(TM\) SE) Runtime</output>
+  <output regex="no" type="failure">Exception</output>
+  <output regex="no" type="failure">Error</output>
+  <output regex="no" type="failure">JVMDUMP006I</output>
+  <output regex="no" type="failure">Processing dump event</output>
+ </test>
+
+ <test id="-Xgc:suballocatorQuickAllocEnable">
+  <command>$EXE$ -Xgc:suballocatorQuickAllocEnable -version</command>
+  <output regex="no" type="success">version</output>
+  <output regex="yes" caseSensitive="yes" javaUtilPattern="yes" type="required">(Semeru|OpenJDK|Java\(TM\) SE) Runtime</output>
+  <output regex="no" type="failure">Exception</output>
+  <output regex="no" type="failure">Error</output>
+  <output regex="no" type="failure">JVMDUMP006I</output>
+  <output regex="no" type="failure">Processing dump event</output>
+ </test>
+
+ <test id="-Xgc:suballocatorQuickAllocDisable">
+  <command>$EXE$ -Xgc:suballocatorQuickAllocDisable -version</command>
+  <output regex="no" type="success">version</output>
+  <output regex="yes" caseSensitive="yes" javaUtilPattern="yes" type="required">(Semeru|OpenJDK|Java\(TM\) SE) Runtime</output>
+  <output regex="no" type="failure">Exception</output>
+  <output regex="no" type="failure">Error</output>
+  <output regex="no" type="failure">JVMDUMP006I</output>
+  <output regex="no" type="failure">Processing dump event</output>
+ </test>
+
  <test id="-Xgc:suballocatorCommitSize=300m">
   <command>$EXE$ -Xgc:suballocatorCommitSize=300m -version</command>
   <!--  JVMJ9GC057E -Xgc:suballocatorCommitSize= must be no greater than -Xgc:suballocatorInitialSize= -->
   <output regex="no" type="success">JVMJ9GC057E</output>
-  <!-- JVMJ9VM015W Initialization error for library j9gc26(2): Failed to initialize -->
+  <!-- JVMJ9VM015W Initialization error for library j9gc29(2): Failed to initialize -->
   <output regex="no" type="required">JVMJ9VM015W</output>
   <output regex="no" caseSensitive="no" type="required">Could not create the Java Virtual Machine.</output>
   <output regex="no" type="failure">version</output>
@@ -61,12 +92,12 @@
   <output regex="no" type="failure">JVMDUMP006I</output>
   <output regex="no" type="failure">Processing dump event</output>
  </test>
- 
+
  <test id="-Xgc:suballocatorCommitSize=0">
   <command>$EXE$ -Xgc:suballocatorCommitSize=0 -version</command>
   <!-- JVMJ9GC036E -Xgc:suballocatorCommitSize= value must be above 0 -->
   <output regex="no" type="success">JVMJ9GC036E</output>
-  <!-- JVMJ9VM015W Initialization error for library j9gc26(2): Failed to initialize -->
+  <!-- JVMJ9VM015W Initialization error for library j9gc29(2): Failed to initialize -->
   <output regex="no" type="required">JVMJ9VM015W</output>
   <output regex="no" caseSensitive="no" type="required">Could not create the Java Virtual Machine.</output>
   <output regex="no" type="failure">version</output>
@@ -79,7 +110,20 @@
   <command>$EXE$ -Xgc:suballocatorInitialSize=0 -version</command>
   <!-- JVMJ9GC036E -Xgc:suballocatorInitialSize= value must be above 0 -->
   <output regex="no" type="success">JVMJ9GC036E</output>
-  <!-- JVMJ9VM015W Initialization error for library j9gc26(2): Failed to initialize -->
+  <!-- JVMJ9VM015W Initialization error for library j9gc29(2): Failed to initialize -->
+  <output regex="no" type="required">JVMJ9VM015W</output>
+  <output regex="no" caseSensitive="no" type="required">Could not create the Java Virtual Machine.</output>
+  <output regex="no" type="failure">version</output>
+  <output regex="yes" caseSensitive="yes" javaUtilPattern="yes" type="failure">(Semeru|OpenJDK|Java\(TM\) SE) Runtime</output>
+  <output regex="no" type="failure">JVMDUMP006I</output>
+  <output regex="no" type="failure">Processing dump event</output>
+ </test>
+
+ <test id="-Xgc:suballocatorIncrementSize=0">
+  <command>$EXE$ -Xgc:suballocatorIncrementSize=0 -version</command>
+  <!-- JVMJ9GC036E -Xgc:suballocatorIncrementSize= value must be above 0 -->
+  <output regex="no" type="success">JVMJ9GC036E</output>
+  <!-- JVMJ9VM015W Initialization error for library j9gc29(2): Failed to initialize -->
   <output regex="no" type="required">JVMJ9VM015W</output>
   <output regex="no" caseSensitive="no" type="required">Could not create the Java Virtual Machine.</output>
   <output regex="no" type="failure">version</output>
@@ -92,7 +136,7 @@
   <command>$EXE$ -Xgc:suballocatorCommitSize=512m -Xgc:suballocatorInitialSize=256m -version</command>
   <!-- JVMJ9GC057E -Xgc:suballocatorCommitSize= must be no greater than -Xgc:suballocatorInitialSize= -->
   <output regex="no" type="success">JVMJ9GC057E</output>
-  <!-- JVMJ9VM015W Initialization error for library j9gc26(2): Failed to initialize -->
+  <!-- JVMJ9VM015W Initialization error for library j9gc29(2): Failed to initialize -->
   <output regex="no" type="required">JVMJ9VM015W</output>
   <output regex="no" caseSensitive="no" type="required">Could not create the Java Virtual Machine.</output>
   <output regex="no" type="failure">version</output>
@@ -176,4 +220,3 @@
  </test>
 
 </suite>
-
