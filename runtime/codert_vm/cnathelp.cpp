@@ -114,7 +114,7 @@ convertITableOffsetToVTableOffset(J9VMThread *currentThread, J9Class *receiverCl
 	if (interfaceClass == iTable->interfaceClass) {
 		goto foundITable;
 	}
-	
+
 	iTable = (J9ITable*)receiverClass->iTable;
 	while (NULL != iTable) {
 		if (interfaceClass == iTable->interfaceClass) {
@@ -467,7 +467,7 @@ buildJITResolveFrameForRuntimeCheck(J9VMThread *currentThread)
 	void *oldPC = currentThread->jitReturnAddress;
 #if defined(J9VM_ARCH_X86)
 	U_8 *pc = (U_8*)oldPC;
-	U_32 offset = *(U_32*)pc;
+	I_32 offset = *(U_32*)pc;
 	pc -= offset; /* compute addr of throwing instruction */
 	pc += 1; /* move forward by a byte as codegen uses the beginning of instructions */
 	oldPC = (void*)pc;
@@ -1732,13 +1732,13 @@ slow_jitMonitorEnterImpl(J9VMThread *currentThread, bool forMethod)
 			TIDY_BEFORE_THROW();
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 			if (J9_IS_J9CLASS_VALUETYPE(badClass)) {
-				currentThread->javaVM->internalVMFunctions->setCurrentExceptionNLSWithArgs(currentThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE, 
+				currentThread->javaVM->internalVMFunctions->setCurrentExceptionNLSWithArgs(currentThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE,
 					J9VMCONSTANTPOOL_JAVALANGIDENTITYEXCEPTION, J9UTF8_LENGTH(className), J9UTF8_DATA(className));
-			} else 
+			} else
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			{
 				Assert_CodertVM_true(J9_ARE_ALL_BITS_SET(currentThread->javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_VALUE_BASED_EXCEPTION));
-				currentThread->javaVM->internalVMFunctions->setCurrentExceptionNLSWithArgs(currentThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED, 
+				currentThread->javaVM->internalVMFunctions->setCurrentExceptionNLSWithArgs(currentThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_BASED,
 					J9VMCONSTANTPOOL_JAVALANGVIRTUALMACHINEERROR, J9UTF8_LENGTH(className), J9UTF8_DATA(className));
 			}
 			addr = J9_JITHELPER_ACTION_THROW;
@@ -1818,7 +1818,7 @@ fast_jitMonitorExitImpl(J9VMThread *currentThread, j9object_t syncObject, bool f
 		if (0 == monstatus) {
 			slowPathRequired = false;
 		} else {
-			currentThread->floatTemp2 = (void*)J9THREAD_ILLEGAL_MONITOR_STATE;			
+			currentThread->floatTemp2 = (void*)J9THREAD_ILLEGAL_MONITOR_STATE;
 		}
 	}
 	return slowPathRequired;
@@ -2237,7 +2237,7 @@ retry:
 			/* Direct method - methodIndex is an index into the method list of either Object or interfaceClass */
 			J9Class *methodClass = interfaceClass;
 			if (J9_ARE_ANY_BITS_SET(methodIndexAndArgCount, J9_ITABLE_INDEX_OBJECT)) {
-				methodClass = J9VMJAVALANGOBJECT_OR_NULL(currentThread->javaVM);	
+				methodClass = J9VMJAVALANGOBJECT_OR_NULL(currentThread->javaVM);
 			}
 			iTableOffset = ((UDATA)(methodClass->ramMethods + methodIndex)) | J9_ITABLE_OFFSET_DIRECT;
 		} else if (J9_ARE_ANY_BITS_SET(methodIndexAndArgCount, J9_ITABLE_INDEX_OBJECT)) {
