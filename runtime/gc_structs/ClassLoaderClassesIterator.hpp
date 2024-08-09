@@ -99,6 +99,10 @@ private:
 	 * @return true if this is the system class loader, false otherwise 
 	 */
 	bool switchToSystemMode();
+
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+	J9Class *getNullRestrictedArray(J9Class* c);
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 	
 protected:
 	
