@@ -1,5 +1,5 @@
 /*
- * Copyright IBM Corp. and others 2023
+ * Copyright IBM Corp. and others 2024
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,27 +32,31 @@ import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemoryLayout.PathElement;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.SegmentAllocator;
+import java.lang.foreign.SequenceLayout;
 import java.lang.foreign.SymbolLookup;
 import static java.lang.foreign.ValueLayout.JAVA_INT;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
 
 /**
- * Test cases for JEP 442: Foreign Linker API (Third Preview) for primitive types in downcall, which
- * verifies the downcalls with the shared downcall handlder (cached as soft reference in OpenJDK)
- * in multithreading.
+ * Test cases for JEP 442: Foreign Linker API for duplicate structs in arguments/return type in downcall,
+ * which verifies the downcall with the diffrent layouts in arguments/return types in multithreading.
  */
 @Test(groups = { "level.sanity" })
-public class MultiThreadingTests2 implements Thread.UncaughtExceptionHandler {
+public class MultiThreadingTests6 implements Thread.UncaughtExceptionHandler {
 	private volatile Throwable initException;
+	private static Linker linker = Linker.nativeLinker();
 
 	static {
 		System.loadLibrary("clinkerffitests");
 	}
-	private static final GroupLayout structLayout = MemoryLayout.structLayout(JAVA_INT.withName("elem1"), JAVA_INT.withName("elem2"));
-	private static final FunctionDescriptor fd = FunctionDescriptor.of(structLayout, structLayout, structLayout);
-	private static final MemorySegment functionSymbol = SymbolLookup.loaderLookup().find("add2IntStructs_returnStruct").get();
-	private static final MethodHandle mh = Linker.nativeLinker().downcallHandle(functionSymbol, fd);
+	private static final SymbolLookup nativeLibLookup = SymbolLookup.loaderLookup();
+
+	private static GroupLayout structLayout1 = MemoryLayout.structLayout(JAVA_INT.withName("elem1"), JAVA_INT.withName("elem2"));
+	private static VarHandle intHandle1 = structLayout1.varHandle(PathElement.groupElement("elem1"));
+	private static VarHandle intHandle2 = structLayout1.varHandle(PathElement.groupElement("elem2"));
+	private static SequenceLayout structArray = MemoryLayout.sequenceLayout(2, structLayout1);
+	private static GroupLayout structLayout2 = MemoryLayout.structLayout(structArray.withName("struct_array_elem1"), JAVA_INT.withName("elem2"));
 
 	@Test(enabled=false)
 	@Override
@@ -61,19 +65,20 @@ public class MultiThreadingTests2 implements Thread.UncaughtExceptionHandler {
 	}
 
 	@Test
-	public void test_twoThreadsWithSameFuncDesc_SharedDowncallHandler() throws Throwable {
+	public void test_twoThreadsWithDiffFuncDescriptor_dupStruct() throws Throwable {
 		Thread thr1 = new Thread() {
 			@Override
 			public void run() {
 				try {
-					VarHandle intHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
-					VarHandle intHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
+					FunctionDescriptor fd = FunctionDescriptor.of(structLayout1, structLayout1, structLayout1);
+					MemorySegment functionSymbol = nativeLibLookup.find("add2IntStructs_returnStruct").get();
+					MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
 					try (Arena arena = Arena.ofConfined()) {
-						MemorySegment structSegmt1 = arena.allocate(structLayout);
+						MemorySegment structSegmt1 = arena.allocate(structLayout1);
 						intHandle1.set(structSegmt1, 11223344);
 						intHandle2.set(structSegmt1, 55667788);
-						MemorySegment structSegmt2 = arena.allocate(structLayout);
+						MemorySegment structSegmt2 = arena.allocate(structLayout1);
 						intHandle1.set(structSegmt2, 99001122);
 						intHandle2.set(structSegmt2, 33445566);
 
@@ -91,20 +96,24 @@ public class MultiThreadingTests2 implements Thread.UncaughtExceptionHandler {
 			@Override
 			public void run() {
 				try {
-					VarHandle intHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
-					VarHandle intHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
+					FunctionDescriptor fd = FunctionDescriptor.of(structLayout1, structLayout1, structLayout2);
+					MemorySegment functionSymbol = nativeLibLookup.find("addIntStruct1AndNestedIntStructArrayStruct2_returnStruct1_dupStruct").get();
+					MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
 					try (Arena arena = Arena.ofConfined()) {
-						MemorySegment structSegmt1 = arena.allocate(structLayout);
-						intHandle1.set(structSegmt1, 11223344);
-						intHandle2.set(structSegmt1, 55667788);
-						MemorySegment structSegmt2 = arena.allocate(structLayout);
-						intHandle1.set(structSegmt2, 99001123);
-						intHandle2.set(structSegmt2, 33445567);
+						MemorySegment structSegmt1 = arena.allocate(structLayout1);
+						intHandle1.set(structSegmt1, 1111111);
+						intHandle2.set(structSegmt1, 2222222);
+						MemorySegment structSegmt2 = arena.allocate(structLayout2);
+						structSegmt2.set(JAVA_INT, 0,  1222324);
+						structSegmt2.set(JAVA_INT, 4,  3262728);
+						structSegmt2.set(JAVA_INT, 8,  1303132);
+						structSegmt2.set(JAVA_INT, 12, 2323233);
+						structSegmt2.set(JAVA_INT, 16, 1545454);
 
 						MemorySegment resultSegmt = (MemorySegment)mh.invokeExact((SegmentAllocator)arena, structSegmt1, structSegmt2);
-						Assert.assertEquals(intHandle1.get(resultSegmt), 110224467);
-						Assert.assertEquals(intHandle2.get(resultSegmt), 89113355);
+						Assert.assertEquals(intHandle1.get(resultSegmt), 3636567);
+						Assert.assertEquals(intHandle2.get(resultSegmt), 9353637);
 					}
 				} catch (Throwable t) {
 					throw new RuntimeException(t);
