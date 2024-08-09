@@ -32,9 +32,10 @@ extern "C" {
 
 #undef DEBUG
 
-// TODO: allow different buffer sizes on different threads and configureable sizes
+// TODO: allow configureable values
 #define J9JFR_THREAD_BUFFER_SIZE (1024*1024)
 #define J9JFR_GLOBAL_BUFFER_SIZE (10 * J9JFR_THREAD_BUFFER_SIZE)
+#define J9JFR_SAMPLING_RATE 1000
 
 static UDATA jfrEventSize(J9JFREvent *jfrEvent);
 static void tearDownJFR(J9JavaVM *vm);
@@ -48,7 +49,9 @@ static void jfrClassesUnload(J9HookInterface **hook, UDATA eventNum, void *event
 static void jfrVMShutdown(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
 static void jfrThreadStarting(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
 static void jfrThreadEnd(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
+static void jfrVMInitialized(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
 static void initializeEventFields(J9VMThread *currentThread, J9JFREvent *jfrEvent, UDATA eventType);
+static int J9THREAD_PROC jfrSamplingThreadProc(void *entryArg);
 
 /**
  * Calculate the size in bytes of a JFR event.
@@ -496,6 +499,41 @@ jfrVMSleep(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userDa
 	}
 }
 
+/**
+ * Hook for VM intialized. Called without VM access.
+ *
+ * @param hook[in] the VM hook interface
+ * @param eventNum[in] the event number
+ * @param eventData[in] the event data
+ * @param userData[in] the registered user data
+ */
+static void
+jfrVMInitialized(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData)
+{
+	J9VMInitEvent *event = (J9VMInitEvent *)eventData;
+	J9VMThread *currentThread = event->vmThread;
+	J9JavaVM *vm = currentThread->javaVM;
+
+#if defined(DEBUG)
+	PORT_ACCESS_FROM_VMC(currentThread);
+	j9tty_printf(PORTLIB, "\n!!! VM init %p\n", currentThread);
+#endif /* defined(DEBUG) */
+
+	/* Start the sampler thread */
+	if (0 == omrthread_create(&(vm->jfrSamplerThread), vm->defaultOSStackSize, J9THREAD_PRIORITY_NORMAL, FALSE, jfrSamplingThreadProc, (void*)vm)) {
+		omrthread_monitor_enter(vm->jfrSamplerMutex);
+		while (J9JFR_SAMPLER_STATE_UNINITIALIZED == vm->jfrSamplerState) {
+			omrthread_monitor_wait(vm->jfrSamplerMutex);
+		}
+		omrthread_monitor_exit(vm->jfrSamplerMutex);
+		if (J9JFR_SAMPLER_STATE_DEAD == vm->jfrSamplerState) {
+			// TODO: tracepoint?
+		}
+	} else {
+		// TODO: tracepoint?
+	}
+}
+
 jint
 initializeJFR(J9JavaVM *vm)
 {
@@ -525,8 +563,11 @@ initializeJFR(J9JavaVM *vm)
 	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_SLEEP, jfrVMSleep, OMR_GET_CALLSITE(), NULL)) {
 		goto fail;
 	}
+	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_INITIALIZED, jfrVMInitialized, OMR_GET_CALLSITE(), NULL)) {
+		goto fail;
+	}
 
-	/* Allocate the global buffer and mutex */
+	/* Allocate global data */
 	buffer = (U_8*)j9mem_allocate_memory(J9JFR_GLOBAL_BUFFER_SIZE, OMRMEM_CATEGORY_VM);
 	if (NULL == buffer) {
 		goto fail;
@@ -537,7 +578,10 @@ initializeJFR(J9JavaVM *vm)
 	vm->jfrBuffer.bufferRemaining = J9JFR_GLOBAL_BUFFER_SIZE;
 	vm->jfrState.jfrChunkCount = 0;
 	if (omrthread_monitor_init_with_name(&vm->jfrBufferMutex, 0, "JFR global buffer mutex")) {
-		goto done;
+		goto fail;
+	}
+	if (omrthread_monitor_init_with_name(&vm->jfrSamplerMutex, 0, "JFR sampler mutex")) {
+		goto fail;
 	}
 
 	if (!VM_JFRWriter::initializaJFRWriter(vm)) {
@@ -563,6 +607,21 @@ tearDownJFR(J9JavaVM *vm)
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	J9HookInterface **vmHooks = getVMHookInterface(vm);
 
+	/* Stop the sampler thread */
+	if (NULL != vm->jfrSamplerMutex) {
+		omrthread_monitor_enter(vm->jfrSamplerMutex);
+		if (J9JFR_SAMPLER_STATE_RUNNING == vm->jfrSamplerState) {
+			vm->jfrSamplerState = J9JFR_SAMPLER_STATE_STOP;
+			omrthread_monitor_notify_all(vm->jfrSamplerMutex);
+			while (J9JFR_SAMPLER_STATE_DEAD != vm->jfrSamplerState) {
+				omrthread_monitor_wait(vm->jfrSamplerMutex);
+			}
+		}
+		omrthread_monitor_exit(vm->jfrSamplerMutex);
+		omrthread_monitor_destroy(vm->jfrSamplerMutex);
+		vm->jfrSamplerMutex = NULL;
+	}
+
 	VM_JFRWriter::teardownJFRWriter(vm);
 
 	/* Unhook all the events */
@@ -573,17 +632,18 @@ tearDownJFR(J9JavaVM *vm)
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_THREAD_STARTING, jfrThreadStarting, NULL);
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_THREAD_END, jfrThreadEnd, NULL);
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_SLEEP, jfrVMSleep, NULL);
+	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_INITIALIZED, jfrVMInitialized, NULL);
 
-	/* Free global buffer and mutex */
-
+	/* Free global data */
 	j9mem_free_memory((void*)vm->jfrBuffer.bufferStart);
 	memset(&vm->jfrBuffer, 0, sizeof(vm->jfrBuffer));
 	if (NULL != vm->jfrBufferMutex) {
 		omrthread_monitor_destroy(vm->jfrBufferMutex);
 		vm->jfrBufferMutex = NULL;
 	}
-	vm->jfrState.metaDataBlobFileSize = 0;
 	j9mem_free_memory(vm->jfrState.metaDataBlobFile);
+	vm->jfrState.metaDataBlobFile = NULL;
+	vm->jfrState.metaDataBlobFileSize = 0;
 }
 
 /**
@@ -602,13 +662,56 @@ initializeEventFields(J9VMThread *currentThread, J9JFREvent *event, UDATA eventT
 	event->vmThread = currentThread;
 }
 
+// TODO: add thread state parameter
 void
 jfrExecutionSample(J9VMThread *currentThread, J9VMThread *sampleThread)
 {
+#if defined(DEBUG)
+	PORT_ACCESS_FROM_VMC(currentThread);
+	j9tty_printf(PORTLIB, "\n!!! execution sample %p %p\n", currentThread, sampleThread);
+#endif /* defined(DEBUG) */
+
 	J9JFRExecutionSample *jfrEvent = (J9JFRExecutionSample*)reserveBufferWithStackTrace(currentThread, sampleThread, J9JFR_EVENT_TYPE_EXECUTION_SAMPLE, sizeof(*jfrEvent));
 	if (NULL != jfrEvent) {
 		jfrEvent->threadState = J9JFR_THREAD_STATE_RUNNING;
 	}
+}
+
+static int J9THREAD_PROC
+jfrSamplingThreadProc(void *entryArg)
+{
+	J9JavaVM *vm = (J9JavaVM*)entryArg;
+	J9VMThread *currentThread = NULL;
+
+	if (JNI_OK == attachSystemDaemonThread(vm, &currentThread, "JFR sampler")) {
+		omrthread_monitor_enter(vm->jfrSamplerMutex);
+		vm->jfrSamplerState = J9JFR_SAMPLER_STATE_RUNNING;
+		omrthread_monitor_notify_all(vm->jfrSamplerMutex);
+		while (J9JFR_SAMPLER_STATE_STOP != vm->jfrSamplerState) {
+			omrthread_monitor_exit(vm->jfrSamplerMutex);
+			internalEnterVMFromJNI(currentThread);
+			acquireExclusiveVMAccess(currentThread);
+			J9VMThread *walkThread = J9_LINKED_LIST_START_DO(vm->mainThread);
+			while (NULL != walkThread) {
+				if (VM_VMHelpers::threadCanRunJavaCode(walkThread)) {
+					jfrExecutionSample(currentThread, walkThread);
+				}
+				walkThread = J9_LINKED_LIST_NEXT_DO(vm->mainThread, walkThread);
+			}
+			releaseExclusiveVMAccess(currentThread);
+			internalExitVMToJNI(currentThread);
+			omrthread_monitor_enter(vm->jfrSamplerMutex);
+			omrthread_monitor_wait_timed(vm->jfrSamplerMutex, J9JFR_SAMPLING_RATE, 0);
+		}
+		omrthread_monitor_exit(vm->jfrSamplerMutex);
+		DetachCurrentThread((JavaVM*)vm);
+	}
+
+	omrthread_monitor_enter(vm->jfrSamplerMutex);
+	vm->jfrSamplerState = J9JFR_SAMPLER_STATE_DEAD;
+	omrthread_monitor_notify_all(vm->jfrSamplerMutex);
+	omrthread_exit(vm->jfrSamplerMutex);
+	return 0;
 }
 
 } /* extern "C" */
