@@ -6929,3 +6929,10 @@ J9NLS_SHRC_OSCACHE_MMAP_STARTUP_JITSERVER_LAYER_FILE_DELETE_ERROR.explanation=Th
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_JITSERVER_LAYER_FILE_DELETE_ERROR.system_action=The JVM continues.
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_JITSERVER_LAYER_FILE_DELETE_ERROR.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
+
+J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1=The page size of the operating system is different from the page size of the system on which this cache was created.
+# START NON-TRANSLATABLE
+J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1.explanation=The cache is divided up on page boundaries according to the page size of system on which it was created. If there is a page size mismatch, the data might not be page aligned anymore.
+J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1.system_action=The JVM continues, but with memory page protection disabled if data is not page aligned anymore.
+J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1.user_response=No action required
+# END NON-TRANSLATABLE

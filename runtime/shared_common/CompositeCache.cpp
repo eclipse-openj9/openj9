@@ -1143,18 +1143,6 @@ SH_CompositeCacheImpl::startup(J9VMThread* currentThread, J9SharedClassPreinitCo
 				setCorruptCache(currentThread, CACHE_BAD_CC_INIT, _theca->ccInitComplete);
 				goto releaseLockCheck;
 			}
-
-			if (isCacheInitComplete() == true) {
-				if (_theca->osPageSize != _osPageSize) {
-					/* For some reason, the osPageSize supported by this platform is different to the one on which
-				 	 * the cache was created. We cannot use the cache, so attempt to recreate it */
-					CC_TRACE(J9SHR_VERBOSEFLAG_ENABLE_VERBOSE, J9NLS_INFO, J9NLS_CC_OSPAGE_SIZE_MISMATCH);
-					Trc_SHR_CC_OSPAGE_SIZE_MISMATCH(currentThread, _theca, _theca->osPageSize, _osPageSize);
-					rc = CC_STARTUP_RESET;
-					goto releaseLockCheck;
-				}
-			}
-
 #if defined(WIN32)
 			if ((true == this->isMemProtectEnabled()) && (false == _readOnlyOSCache)) {
 				/* CMVC 171136
@@ -1389,54 +1377,16 @@ SH_CompositeCacheImpl::startup(J9VMThread* currentThread, J9SharedClassPreinitCo
 					_readWriteAreaStart = NULL;
 					_readWriteAreaBytes = 0;
 				}
+
 				if (isFirstStart) {
-					if ((0 == _theca->roundedPagesFlag) || _readOnlyOSCache) {
-					/* If we don't have rounded pages or if we're running readonly, we can't do mprotect or msync */
-#if defined(J9VM_OPT_SHR_MSYNC_SUPPORT)
-						*_runtimeFlags &= ~(J9SHR_RUNTIMEFLAG_ENABLE_MSYNC
-										| J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT
-										| J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT_ALL
-										| J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT_RW
-										| J9SHR_RUNTIMEFLAG_MPROTECT_PARTIAL_PAGES_ON_STARTUP
-										| J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT_PARTIAL_PAGES
-										| J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT_ONFIND);
-						if (!_readOnlyOSCache) {
-							CC_TRACE(J9SHR_VERBOSEFLAG_ENABLE_VERBOSE, J9NLS_INFO, J9NLS_CC_PAGE_PROTECTION_UNSUPPORTED);
-							CC_TRACE(J9SHR_VERBOSEFLAG_ENABLE_VERBOSE, J9NLS_INFO, J9NLS_CC_MSYNC_UNSUPPORTED);
-						}
-					} else {
-						if (J9_ARE_ALL_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_PERSISTENT_CACHE)) {
-							int32_t mmapCapabilities = j9mmap_capabilities();
-							if (J9_ARE_NO_BITS_SET(mmapCapabilities, J9PORT_MMAP_CAPABILITY_MSYNC)) {
-								*_runtimeFlags &= ~J9SHR_RUNTIMEFLAG_ENABLE_MSYNC;
-								if (!_readOnlyOSCache) {
-									CC_TRACE(J9SHR_VERBOSEFLAG_ENABLE_VERBOSE, J9NLS_INFO, J9NLS_CC_MSYNC_UNSUPPORTED);
-								}
-							}
-							if (J9_ARE_NO_BITS_SET(mmapCapabilities, J9PORT_MMAP_CAPABILITY_PROTECT)) {
-								*_runtimeFlags &= ~(J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT
-												| J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT_ALL
-												| J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT_RW
-												| J9SHR_RUNTIMEFLAG_MPROTECT_PARTIAL_PAGES_ON_STARTUP
-												| J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT_PARTIAL_PAGES
-												| J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT_ONFIND);
-								if (!_readOnlyOSCache) {
-									CC_TRACE(J9SHR_VERBOSEFLAG_ENABLE_VERBOSE, J9NLS_INFO, J9NLS_CC_PAGE_PROTECTION_UNSUPPORTED);
-								}
-							}
-						}
-#else /* defined(J9VM_OPT_SHR_MSYNC_SUPPORT) */
-						*_runtimeFlags &= ~(J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT
-										| J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT_ALL
-										| J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT_RW
-										| J9SHR_RUNTIMEFLAG_MPROTECT_PARTIAL_PAGES_ON_STARTUP
-										| J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT_PARTIAL_PAGES
-										| J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT_ONFIND);
-						if (!_readOnlyOSCache) {
-							CC_TRACE(J9SHR_VERBOSEFLAG_ENABLE_VERBOSE, J9NLS_INFO, J9NLS_CC_PAGE_PROTECTION_UNSUPPORTED);
-						}
-#endif /* defined(J9VM_OPT_SHR_MSYNC_SUPPORT) */
+					if (_theca->osPageSize != _osPageSize) {
+						Trc_SHR_CC_OSPAGE_SIZE_MISMATCH_V1(currentThread, _theca, _theca->osPageSize, _osPageSize, _theca->roundedPagesFlag, _readOnlyOSCache);
+						CC_TRACE(J9SHR_VERBOSEFLAG_ENABLE_VERBOSE, J9NLS_INFO, J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1);
 					}
+					updateMprotectRuntimeFlags();
+#if defined(J9VM_OPT_SHR_MSYNC_SUPPORT)
+					updateMsyncRuntimeFlags();
+#endif /* defined(J9VM_OPT_SHR_MSYNC_SUPPORT) */
 				}
 
 #if defined(J9VM_OPT_SHR_MSYNC_SUPPORT)
@@ -1589,7 +1539,7 @@ SH_CompositeCacheImpl::startup(J9VMThread* currentThread, J9SharedClassPreinitCo
 			 * already initialized during _parent startup. Else _debugData needs to be initialized
 			 */
 			if (this->_parent == NULL) {
-				if (_debugData->Init(currentThread, _theca, (AbstractMemoryPermission *)this, verboseFlags, runtimeFlags, false) == false) {
+				if (_debugData->Init(currentThread, _theca, (AbstractMemoryPermission *)this, verboseFlags, runtimeFlags, _osPageSize, false) == false) {
 					setCorruptCache(currentThread, _debugData->getFailureReason(), _debugData->getFailureValue());
 					rc = CC_STARTUP_CORRUPT;
 				}
@@ -5046,7 +4996,12 @@ SH_CompositeCacheImpl::startupForStats(J9VMThread* currentThread, SH_OSCache * o
 
 	/* _verboseFlags = J9SHR_VERBOSEFLAG_ENABLE_VERBOSE_PAGES; */
 
-	if (!oscache->isRunningReadOnly() && _theca->roundedPagesFlag && ((currentThread->javaVM->sharedCacheAPI->runtimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT) != 0)) {
+	if (!oscache->isRunningReadOnly()
+		&& _theca->roundedPagesFlag
+		&& ((currentThread->javaVM->sharedCacheAPI->runtimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT) != 0)
+		&& (0 != _osPageSize)
+		&& (0 == _theca->osPageSize % _osPageSize)
+	) {
 		/* If mprotection is globally enabled, protect the entire cache body. Although
 		 * we have the write lock, the header may still be written by other JVMs to
 		 * take the read lock. The read-write area can also be written since we don't
@@ -5082,7 +5037,7 @@ SH_CompositeCacheImpl::startupForStats(J9VMThread* currentThread, SH_OSCache * o
 	 */
 	_prevScan = _scan = (ShcItemHdr*)CCFIRSTENTRY(_theca);
 
-	if (_debugData->Init(currentThread, _theca, (AbstractMemoryPermission *)this, verboseFlags, _runtimeFlags, true) == false) {
+	if (_debugData->Init(currentThread, _theca, (AbstractMemoryPermission *)this, verboseFlags, _runtimeFlags, _osPageSize, true) == false) {
 		retval = CC_STARTUP_CORRUPT;
 		goto done;
 	}
@@ -5192,7 +5147,12 @@ SH_CompositeCacheImpl::startupNonTopLayerForStats(J9VMThread* currentThread, con
 		goto done;
 	}
 
-	if (!_readOnlyOSCache && _theca->roundedPagesFlag && ((currentThread->javaVM->sharedCacheAPI->runtimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT) != 0)) {
+	if (!_readOnlyOSCache
+		&& _theca->roundedPagesFlag
+		&& ((currentThread->javaVM->sharedCacheAPI->runtimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT) != 0)
+		&& (0 != _osPageSize)
+		&& (0 == _theca->osPageSize % _osPageSize)
+	) {
 		/* If mprotection is globally enabled, protect the entire cache body. Although
 		 * we have the write lock, the header may still be written by other JVMs to
 		 * take the read lock. The read-write area can also be written since we don't
@@ -5220,7 +5180,7 @@ SH_CompositeCacheImpl::startupNonTopLayerForStats(J9VMThread* currentThread, con
 	 */
 	_prevScan = _scan = (ShcItemHdr*)CCFIRSTENTRY(_theca);
 
-	if (_debugData->Init(currentThread, _theca, (AbstractMemoryPermission *)this, verboseFlags, _runtimeFlags, true) == false) {
+	if (_debugData->Init(currentThread, _theca, (AbstractMemoryPermission *)this, verboseFlags, _runtimeFlags, _osPageSize, true) == false) {
 		retval = CC_STARTUP_CORRUPT;
 		goto done;
 	}
@@ -6728,3 +6688,81 @@ SH_CompositeCacheImpl::hasReadMutex(J9VMThread* currentThread) const
 	return J9_ARE_ALL_BITS_SET(currentThread->privateFlags2, J9_PRIVATE_FLAGS2_IN_SHARED_CACHE_READ_MUTEX);
 }
 
+/**
+ * This function must be called after setCacheAreaBoundaries().
+ * Page level operations in shared cache are mprotect and msync.
+ * We cannot do memory page protection if one of the following is true:
+ * 	The cache is in read only mode
+ * 	We don't have a valid page size
+ * 	The data is not page aligned when created
+ * 	The data is not page aligned anymore because of the change of page size
+ * 	Memory page protection is not supported.
+ * Unset runtime flags releated to mprotect in these cases.
+ */
+void
+SH_CompositeCacheImpl::updateMprotectRuntimeFlags(void)
+{
+	PORT_ACCESS_FROM_PORT(_portlib);
+	if (_started) {
+		Trc_SHR_Assert_ShouldNeverHappen();
+		return;
+	}
+	if (_readOnlyOSCache
+		|| (0 == _osPageSize)
+		|| (0 == _theca->roundedPagesFlag)
+		|| (0 != _theca->osPageSize % _osPageSize)
+	) {
+		*_runtimeFlags &= ~(J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT
+						| J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT_ALL
+						| J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT_RW
+						| J9SHR_RUNTIMEFLAG_MPROTECT_PARTIAL_PAGES_ON_STARTUP
+						| J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT_PARTIAL_PAGES
+						| J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT_ONFIND
+						| J9SHR_RUNTIMEFLAG_ENABLE_ROUND_TO_PAGE_SIZE);
+		if (!_readOnlyOSCache) {
+			if (0 == _osPageSize) {
+				CC_TRACE(J9SHR_VERBOSEFLAG_ENABLE_VERBOSE, J9NLS_INFO, J9NLS_CC_PAGE_PROTECTION_UNSUPPORTED);
+			}
+		}
+	} else if (J9_ARE_ALL_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_PERSISTENT_CACHE)) {
+		if (J9_ARE_NO_BITS_SET(j9mmap_capabilities(), J9PORT_MMAP_CAPABILITY_PROTECT)) {
+			*_runtimeFlags &= ~(J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT
+							| J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT_ALL
+							| J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT_RW
+							| J9SHR_RUNTIMEFLAG_MPROTECT_PARTIAL_PAGES_ON_STARTUP
+							| J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT_PARTIAL_PAGES
+							| J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT_ONFIND);
+			/* No need to unset J9SHR_RUNTIMEFLAG_ENABLE_ROUND_TO_PAGE_SIZE as data could still be page aligned when mprotect is not supported. */
+			CC_TRACE(J9SHR_VERBOSEFLAG_ENABLE_VERBOSE, J9NLS_INFO, J9NLS_CC_PAGE_PROTECTION_UNSUPPORTED);
+		}
+	}
+}
+#if defined(J9VM_OPT_SHR_MSYNC_SUPPORT)
+/**
+ * Page level operations in shared cache are mprotect and msync.
+ * We always use _osPageSize to calulate the length of data to synchronise.
+ * We cannot do msync if the shared cache is read only, we cannot get a valid _osPageSize, or msync is not supported.
+ * Unset runtime flags releated to msync in these cases.
+ */
+void
+SH_CompositeCacheImpl::updateMsyncRuntimeFlags(void)
+{
+	PORT_ACCESS_FROM_PORT(_portlib);
+	if (_started) {
+		Trc_SHR_Assert_ShouldNeverHappen();
+		return;
+	}
+	if (J9_ARE_NO_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_PERSISTENT_CACHE)) {
+		return;
+	}
+	if (_readOnlyOSCache
+		|| (0 == _osPageSize)
+		|| J9_ARE_NO_BITS_SET(j9mmap_capabilities(), J9PORT_MMAP_CAPABILITY_MSYNC)
+	) {
+		*_runtimeFlags &= ~J9SHR_RUNTIMEFLAG_ENABLE_MSYNC;
+		if (!_readOnlyOSCache) {
+			CC_TRACE(J9SHR_VERBOSEFLAG_ENABLE_VERBOSE, J9NLS_INFO, J9NLS_CC_MSYNC_UNSUPPORTED);
+		}
+	}
+}
+#endif /* defined(J9VM_OPT_SHR_MSYNC_SUPPORT) */

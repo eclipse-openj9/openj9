@@ -32,7 +32,7 @@ class ClassDebugDataProvider
 {
 public:	
 	void initialize();
-	bool Init(J9VMThread* currentThread, J9SharedCacheHeader * ca, AbstractMemoryPermission * permSetter, UDATA verboseFlags, U_64 * runtimeFlags, bool startupForStats);
+	bool Init(J9VMThread* currentThread, J9SharedCacheHeader * ca, AbstractMemoryPermission * permSetter, UDATA verboseFlags, U_64 * runtimeFlags, UDATA osPageSize, bool startupForStats);
 	UDATA getJavacoreData(J9JavaVM *vm, J9SharedClassJavacoreDataDescriptor* descriptor, J9SharedCacheHeader * ca);
 	IDATA allocateClassDebugData(J9VMThread* currentThread, U_16 classnameLength, const char* classnameData, const J9RomClassRequirements * sizes, J9SharedRomClassPieces * pieces, AbstractMemoryPermission * permSetter);
 	void rollbackClassDebugData(J9VMThread* currentThread, U_16 classnameLength, const char* classnameData, AbstractMemoryPermission * permSetter);
@@ -74,6 +74,7 @@ private:
 	UDATA failureValue;
 	UDATA _verboseFlags;
 	U_64 * _runtimeFlags;
+	UDATA _osPageSize;
 
 	void *operator new(size_t size);
 	ClassDebugDataProvider();
