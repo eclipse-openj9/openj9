@@ -25,6 +25,8 @@
 #include <sys/mman.h>
 #include <errno.h>
 
+extern intptr_t _MPROT(uintptr_t address, uintptr_t length);
+extern intptr_t _MUNPROT(uintptr_t address, uintptr_t length);
 
 /**
  * @internal @file
