@@ -624,4 +624,46 @@ VM_JFRChunkWriter::writeStacktraceCheckpointEvent()
 	return dataStart;
 }
 
+U_8 *
+VM_JFRChunkWriter::writeJVMInformationEvent()
+{
+	J9JFRJVMInformation *jvmInformationData = _constantPoolTypes.getJVMInformationData();
+
+	/* reserve size field */
+	U_8 *dataStart = _bufferWriter->getAndIncCursor(sizeof(U_32));
+
+	/* write event type */
+	_bufferWriter->writeLEB128(JVMInformationID);
+
+	/* write start time */
+	_bufferWriter->writeLEB128(jvmInformationData->jvmStartTime);
+
+	/* write JVM name */
+	writeUTF8String(jvmInformationData->jvmName);
+
+	/* write JVM version */
+	writeUTF8String(jvmInformationData->jvmVersion);
+
+	/* write JVM arguments */
+	writeUTF8String(jvmInformationData->jvmArguments);
+
+	/* write JVM flags */
+	writeUTF8String(jvmInformationData->jvmFlags);
+
+	/* write Java arguments */
+	writeUTF8String(jvmInformationData->javaArguments);
+
+	/* write JVM start time */
+	_bufferWriter->writeLEB128(jvmInformationData->jvmStartTime);
+
+	/* write pid */
+	_bufferWriter->writeLEB128(jvmInformationData->pid);
+
+	/* write size */
+	_bufferWriter->writeLEB128PaddedU32(dataStart, _bufferWriter->getCursor() - dataStart);
+
+	return dataStart;
+}
+
+
 #endif /* defined(J9VM_OPT_JFR) */

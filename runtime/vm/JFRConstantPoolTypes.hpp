@@ -22,6 +22,9 @@
 #if !defined(JFRCONSTANTPOOLTYPES_HPP_)
 #define JFRCONSTANTPOOLTYPES_HPP_
 
+#include <initializer_list>
+#include <utility>
+
 #include "j9cfg.h"
 #include "j9.h"
 #include "omrlinkedlist.h"
@@ -238,6 +241,8 @@ private:
 	J9Pool *_threadSleepTable;
 	UDATA _threadSleepCount;
 
+    J9JFRJVMInformation _jvmInformation;
+
 	/* Processing buffers */
 	StackFrame *_currentStackFrameBuffer;
 	StackTraceEntry *_previousStackTraceEntry;
@@ -449,6 +454,114 @@ done:
 		return;
 	}
 
+	const char *getSystemProp(const char *propName) {
+		J9VMSystemProperty *jvmInfoProperty = NULL;
+		J9InternalVMFunctions *vmFuncs = _vm->internalVMFunctions;
+		const char *value = "";
+		UDATA getPropertyResult = vmFuncs->getSystemProperty(_vm, propName, &jvmInfoProperty);
+		if (J9SYSPROP_ERROR_NOT_FOUND != getPropertyResult) {
+			value = jvmInfoProperty->value;
+		}
+		return value;
+	}
+
+	J9UTF8 *makeJ9UTF8(std::initializer_list<std::pair<const char *, UDATA>> parts) {
+		UDATA len = 0;
+
+		for (auto s = parts.begin(); s != parts.end(); ++s) {
+			len += s->second;
+		}
+
+		J9UTF8 *result = (J9UTF8 *)j9mem_allocate_memory(sizeof(J9UTF8) + len, OMRMEM_CATEGORY_VM);
+		U_8 *data = J9UTF8_DATA(result);
+
+		for (auto s = parts.begin(); s != parts.end(); ++s) {
+			memcpy(data, s->first, s->second);
+			data += s->second;
+		}
+
+		J9UTF8_SET_LENGTH(result, len);
+
+		return result;
+	}
+
+    void initJVMInfo() {
+		const char *javaVMName = getSystemProp("java.vm.name");
+		const UDATA javaVMNameLen = strlen(javaVMName);
+
+		const char *jdkDebugLevel = getSystemProp("jdk.debug");
+		const UDATA jdkDebugLevelLen = strlen(jdkDebugLevel);
+
+		const char *javaVMVersion = getSystemProp("java.vm.version");
+		const UDATA javaVMVersionLen = strlen(javaVMVersion);
+
+		const char *javaVMInfo = getSystemProp("java.vm.info");
+		const char *newLineChar = strchr(javaVMInfo, '\n'); /* only keep the first line */
+		const UDATA javaVMInfoLen = (NULL == newLineChar ? strlen(javaVMInfo) : newLineChar - javaVMInfo);
+
+		_jvmInformation = {0};
+		/* Set jvmName */
+		_jvmInformation.jvmName = makeJ9UTF8({{javaVMName, javaVMNameLen}});
+
+		/* Set jvmVersion */
+		_jvmInformation.jvmVersion = makeJ9UTF8({
+			{ javaVMName, javaVMNameLen },
+			{ " (", 2 },
+			{ jdkDebugLevel, jdkDebugLevelLen },
+			{ "build ", 6 },
+			{ javaVMVersion, javaVMVersionLen },
+			{ ", ", 2 },
+			{ javaVMInfo, javaVMInfoLen },
+			{ ")", 1 },
+		});
+
+		/* Set JVM arguments */
+		JavaVMInitArgs* vmArgs = _vm->vmArgsArray->actualVMArgs;
+		const char *javaCommand = "-Dsun.java.command=";
+		UDATA javaArgsLen = 0;
+		for (UDATA i = 0; i < vmArgs->nOptions; i++) {
+			if (0 == strncmp(vmArgs->options[i].optionString, javaCommand, strlen(javaCommand))) {
+				javaArgsLen = strlen(vmArgs->options[i].optionString) - strlen(javaCommand);
+				_jvmInformation.javaArguments = makeJ9UTF8({{vmArgs->options[i].optionString + strlen(javaCommand), javaArgsLen}});
+				break;
+			}
+		}
+
+		/* Get JVM arguments from command line by removing the command name and Java arguments */
+		const char *envVarName = "OPENJ9_JAVA_COMMAND_LINE";
+		IDATA result = j9sysinfo_get_env(envVarName, NULL, 0);
+
+		if (result >= 0) {
+			/* Length of the buffer to hold command line, which is length of command line + 1 */
+			UDATA len = result;
+			char *buffer = (char *)j9mem_allocate_memory(sizeof(char) * len, OMRMEM_CATEGORY_VM);
+			j9sysinfo_get_env(envVarName, buffer, len);
+
+			UDATA cmdLen = strchr(buffer, ' ') - buffer;
+
+			/* Command line should be longer than command name and Java arguments */
+			Assert_VM_true(len - 1 > javaArgsLen + cmdLen + 2);
+
+			len -= 1 + javaArgsLen + cmdLen + 2;
+
+			_jvmInformation.jvmArguments = makeJ9UTF8({{buffer + cmdLen + 1, len}});
+			j9mem_free_memory(buffer);
+		}
+
+		/* Ignoring jvmFlags for now */
+		_jvmInformation.jvmFlags = NULL;
+		_jvmInformation.jvmStartTime = _vm->j9ras->startTimeMillis;
+		_jvmInformation.pid = _vm->j9ras->pid;
+    }
+
+	void freeJVMInfo() {
+		j9mem_free_memory(_jvmInformation.jvmArguments);
+		j9mem_free_memory(_jvmInformation.jvmFlags);
+		j9mem_free_memory(_jvmInformation.jvmName);
+		j9mem_free_memory(_jvmInformation.jvmVersion);
+		j9mem_free_memory(_jvmInformation.javaArguments);
+	}
+
 protected:
 
 public:
@@ -604,6 +717,11 @@ public:
 	UDATA getStackFrameCount()
 	{
 		return _stackFrameCount;
+	}
+
+	J9JFRJVMInformation *getJVMInformationData()
+	{
+		return &_jvmInformation;
 	}
 
 	void printTables();
@@ -798,6 +916,8 @@ done:
 			goto done;
 		}
 
+		initJVMInfo();
+
 		/* Add reserved index for default entries. For strings zero is the empty or NUll string.
 		 * For package zero is the deafult package, for Module zero is the unnamed module. ThreadGroup
 		 * zero is NULL threadGroup.
@@ -878,6 +998,7 @@ done:
 		pool_kill(_threadEndTable);
 		pool_kill(_threadSleepTable);
 		j9mem_free_memory(_globalStringTable);
+		freeJVMInfo();
 	}
 
 };

@@ -383,6 +383,16 @@ typedef struct J9JFRExecutionSample {
 
 #define J9JFREXECUTIONSAMPLE_STACKTRACE(jfrEvent) ((UDATA*)(((J9JFRExecutionSample*)(jfrEvent)) + 1))
 
+typedef struct J9JFRJVMInformation {
+    struct J9UTF8 *jvmName;
+    struct J9UTF8 *jvmVersion;
+    struct J9UTF8 *jvmArguments;
+    struct J9UTF8 *jvmFlags;
+    struct J9UTF8 *javaArguments;
+    I_64 jvmStartTime;
+    I_64 pid;
+} J9JFRJVMInformation;
+
 /* Variable-size structure - stackTraceSize worth of UDATA follow the fixed portion */
 typedef struct J9JFRThreadStart {
 	J9JFR_EVENT_WITH_STACKTRACE_FIELDS
