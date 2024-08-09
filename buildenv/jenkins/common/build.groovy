@@ -337,7 +337,7 @@ def build() {
 }
 
 def get_compile_command() {
-	return "make ${EXTRA_MAKE_OPTIONS} all"
+    return "make ${EXTRA_MAKE_OPTIONS} all"
 }
 
 def archive_sdk() {
@@ -844,9 +844,10 @@ def build_all() {
             node("${NODE}") {
                 timeout(time: 5, unit: 'HOURS') {
                     if ("${DOCKER_IMAGE}") {
-                        // TODO: remove this workaround when https://github.com/adoptium/infrastructure/issues/3597 resolved. related: infra 9292
-                        if ((PLATFORM ==~ /ppc64le_linux.*/) ||
-                            ((PLATFORM ==~ /x86-64_linux.*/) && ((SDK_VERSION.toLowerCase() == 'next') || (SDK_VERSION.toInteger() >= 17)))) {
+                        // TODO: Remove this workaround when https://github.com/adoptium/infrastructure/issues/3597 is resolved. Related: infra 9292.
+                        if ((PLATFORM ==~ /ppc64le_linux.*/)
+                        || ((PLATFORM ==~ /x86-64_linux.*/) && (!SDK_VERSION.isInteger() || (SDK_VERSION.toInteger() >= 17)))
+                        ) {
                             create_docker_image_locally()
                         }
                         prepare_docker_environment()
