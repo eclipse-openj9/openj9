@@ -5297,7 +5297,9 @@ done:
 		for (U_8 i = 0; i < ffiArgCount; i++) {
 			U_8 argType = LayoutFFITypeHelpers::getJ9NativeTypeCodeFromFFIType(cif->arg_types[i]);
 
-			if (J9NtcPointer == argType) {
+			if ((0 == ffiArgs[i]) && (J9NtcPointer != argType)) {
+				values[i] = &(ffiArgs[i]);
+			} else if (J9NtcPointer == argType) {
 				/* ffi_call expects the address of the pointer is the address of the stackslot. */
 				pointerValues[i] = (U_64)ffiArgs[i];
 #if JAVA_SPEC_VERSION >= 22
@@ -5348,15 +5350,13 @@ done:
 			} else {
 				values[i] = &(ffiArgs[i]);
 #if !defined(J9VM_ENV_LITTLE_ENDIAN)
-				if (0 != ffiArgs[i]) {
-					/* Note: A float number is converted to int by Float.floatToIntBits() in InternalDowncallHandler. */
-					if ((J9NtcInt == argType) || (J9NtcFloat == argType)) {
-						values[i] = (void *)((U_64)values[i] + extraBytesOfInt);
-					} else if ((J9NtcShort == argType) || (J9NtcChar == argType)) {
-						values[i] = (void *)((U_64)values[i] + extraBytesOfShortAndChar);
-					} else if ((J9NtcBoolean == argType) || (J9NtcByte == argType)) {
-						values[i] = (void *)((U_64)values[i] + extraBytesOfBoolAndByte);
-					}
+				/* Note: A float number is converted to int by Float.floatToIntBits() in InternalDowncallHandler. */
+				if ((J9NtcInt == argType) || (J9NtcFloat == argType)) {
+					values[i] = (void *)((U_64)values[i] + extraBytesOfInt);
+				} else if ((J9NtcShort == argType) || (J9NtcChar == argType)) {
+					values[i] = (void *)((U_64)values[i] + extraBytesOfShortAndChar);
+				} else if ((J9NtcBoolean == argType) || (J9NtcByte == argType)) {
+					values[i] = (void *)((U_64)values[i] + extraBytesOfBoolAndByte);
 				}
 #endif /*J9VM_ENV_LITTLE_ENDIAN */
 			}
