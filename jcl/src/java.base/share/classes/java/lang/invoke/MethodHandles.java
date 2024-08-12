@@ -355,8 +355,14 @@ public class MethodHandles {
 			/* Use Reflection.getClassAccessFlags to get the actual ROM Class modifiers
 			 * instead of the attribute flags for innerclasses
 			 */
-			if (cls.isPrimitive() || cls.isArray()) {
+			if (cls.isPrimitive()) {
 				modifiers = cls.getModifiers();
+			} else if (cls.isArray()) {
+				Class<?> componentClass = cls.getComponentType();
+				while (componentClass.isArray()) {
+					componentClass = componentClass.getComponentType();
+				}
+				modifiers = Reflection.getClassAccessFlags(componentClass);
 			} else {
 				modifiers = Reflection.getClassAccessFlags(cls);
 			}
