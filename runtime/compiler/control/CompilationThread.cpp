@@ -8961,8 +8961,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                // Disable AOT w/ SVM during startup
                if (jitConfig->javaVM->phase != J9VM_PHASE_NOT_STARTUP)
                   {
-                  static char *dontDisableSVMDuringStartup = feGetEnv("TR_DontDisableSVMDuringStartup");
-                  if (!dontDisableSVMDuringStartup)
+                  if (TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableSVMDuringStartup))
                      options->setOption(TR_UseSymbolValidationManager, false);
                   }
 
