@@ -1484,6 +1484,87 @@ JavaCoreDumpWriter::writeEnvUserArgsHelper(J9VMInitArgs *vmArgs)
 				_OutputStream.writeCharacters("\n");
 			}
 		}
+
+		/* Ignored options for -Xjit and -Xaot follows the following rules:
+		 * 1. If Xjit is followed by -Xint or -Xnojit,
+		 	then any -Xjit:optionString beforehand appears as ignored
+		 * 2. If XX:+MergeCompilerOptions is present,
+			then all Xjit options after any Xint or Xnojit should not be ignored
+		 * 3. If multiple Xjit string appear, all but the last one will appear as ignored
+		 *
+		 * and the same for -Xaot
+		 */
+
+		int numXjit = 0, numXaot = 0;
+		bool hasXXMerge = false;
+
+		/* These indices ensure all the options before them will be printed as ignored */
+		int ignoreXjitBefore = 0, ignoreXaotBefore = 0;
+
+		for (jint i = 0; i < args->nOptions; i++) {
+			const char * optionString = args->options[i].optionString;
+
+			if (0 == strncmp(optionString, "-Xint", 5)) {
+				/* Case 1: ignores all options before */
+				ignoreXjitBefore = numXjit;
+				ignoreXaotBefore = numXaot;
+			} else if (0 == strncmp(optionString, "-Xnojit", 7)) {
+				/* Case 1: ignore all jit options before */
+				ignoreXjitBefore = numXjit;
+			} else if (0 == strncmp(optionString, "-Xnoaot", 7)) {
+				/* Case 1: ignore all aot options before */
+				ignoreXaotBefore = numXaot;
+			} else if (0 == strncmp(optionString, "-XX:+MergeCompilerOptions", 25)) {
+				/* Case 2 */
+				hasXXMerge = true;
+			} else if (0 == strncmp(optionString, "-Xjit", 5)) {
+				/* Case 3 */
+				numXjit++;
+			} else if (0 == strncmp(optionString, "-Xaot", 5)) {
+				/* Case 3 */
+				numXaot++;
+			}
+		}
+
+		int countXjit = 0, countXaot = 0;
+		for (jint i = 0; i < args->nOptions; i++) {
+			bool ignoreLine = false;
+			const char * optionString = args->options[i].optionString;
+
+			if (0 == strncmp(optionString, "-Xjit", 5)) {
+				countXjit++;
+				if (countXjit <= ignoreXjitBefore) {
+					/* Case 1: Anything before Xint/Xnojit is ignored */
+					ignoreLine = true;
+				} else {
+					/* Case 2 & 3: Only the last option is not ignored
+					 * unless XX:+Merge[...] */
+					ignoreLine = ((!hasXXMerge) && (!(countXjit == numXjit)));
+				}
+			} else if (0 == strncmp(optionString, "-Xaot", 5)) {
+				countXaot++;
+				if (countXaot <= ignoreXaotBefore) {
+					/* Case 1: Anything before Xint/Xnojit is ignored */
+					ignoreLine = true;
+				} else {
+					/* Case 2 & 3: Only the last option is not ignored
+					 * unless XX:+Merge[...] */
+					ignoreLine = ((!hasXXMerge) && (!(countXaot == numXaot)));
+				}
+			}
+
+			if (ignoreLine) {
+				if (!anyIgnored) {
+					_OutputStream.writeCharacters("NULL\n");
+					_OutputStream.writeCharacters(ignoredArgsHeader);
+					anyIgnored = true;
+				}
+
+				_OutputStream.writeCharacters(singleIgnoredArgHeader);
+				_OutputStream.writeCharacters(optionString);
+				_OutputStream.writeCharacters("\n");
+			}
+		}
 	}
 }
 
