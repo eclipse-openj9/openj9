@@ -6147,6 +6147,9 @@ typedef struct J9JavaVM {
 	JFRState jfrState;
 	J9JFRBuffer jfrBuffer;
 	omrthread_monitor_t jfrBufferMutex;
+	omrthread_monitor_t jfrSamplerMutex;
+	omrthread_t jfrSamplerThread;
+	UDATA jfrSamplerState;
 #endif /* defined(J9VM_OPT_JFR) */
 #if JAVA_SPEC_VERSION >= 22
 	omrthread_monitor_t closeScopeMutex;
@@ -6154,6 +6157,11 @@ typedef struct J9JavaVM {
 #endif /* JAVA_SPEC_VERSION >= 22 */
 	UDATA unsafeIndexableHeaderSize;
 } J9JavaVM;
+
+#define J9JFR_SAMPLER_STATE_UNINITIALIZED 0
+#define J9JFR_SAMPLER_STATE_RUNNING 1
+#define J9JFR_SAMPLER_STATE_STOP 2
+#define J9JFR_SAMPLER_STATE_DEAD 3
 
 #define J9VM_PHASE_STARTUP  1
 #define J9VM_PHASE_NOT_STARTUP  2
