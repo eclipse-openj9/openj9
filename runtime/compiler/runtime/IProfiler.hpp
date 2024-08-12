@@ -190,9 +190,13 @@ enum TR_EntryStatusInfo
 class TR_IPBytecodeHashTableEntry
    {
 public:
-   static void* alignedPersistentAlloc(size_t size);
-   TR_IPBytecodeHashTableEntry(uintptr_t pc) : _next(NULL), _pc(pc), _lastSeenClassUnloadID(-1), _entryFlags(0), _persistFlags(IPBC_ENTRY_CAN_PERSIST_FLAG) {}
+   void * operator new (size_t size) throw();
+   void operator delete(void *p) throw();
+   void * operator new (size_t size, void * placement) {return placement;}
+   void operator delete(void *p, void *) {}
 
+   TR_IPBytecodeHashTableEntry(uintptr_t pc) : _next(NULL), _pc(pc), _lastSeenClassUnloadID(-1), _entryFlags(0), _persistFlags(IPBC_ENTRY_CAN_PERSIST_FLAG) {}
+   virtual ~TR_IPBytecodeHashTableEntry() {}
    uintptr_t getPC() const { return _pc; }
    TR_IPBytecodeHashTableEntry * getNext() const { return _next; }
    void setNext(TR_IPBytecodeHashTableEntry *n) { _next = n; }
@@ -298,10 +302,6 @@ class TR_IPBCDataFourBytes : public TR_IPBytecodeHashTableEntry
    {
 public:
    TR_IPBCDataFourBytes(uintptr_t pc) : TR_IPBytecodeHashTableEntry(pc), data(0) {}
-   void * operator new (size_t size) throw();
-   void operator delete(void *p) throw() {}
-   void * operator new (size_t size, void * placement) {return placement;}
-   void operator delete(void *p, void *) {}
 
    static const uint32_t IPROFILING_INVALID = ~0;
    virtual uintptr_t getData(TR::Compilation *comp = NULL) { return (uint32_t)data; }
@@ -329,8 +329,6 @@ class TR_IPBCDataAllocation : public TR_IPBytecodeHashTableEntry
    {
 public:
    TR_IPBCDataAllocation(uintptr_t pc) : TR_IPBytecodeHashTableEntry(pc), clazz(0), method(0), data(0) {}
-   void * operator new (size_t size) throw();
-   void operator delete(void *p) throw() {}
    static const uint32_t IPROFILING_INVALID = ~0;
    virtual uintptr_t getData(TR::Compilation *comp = NULL) { return (uint32_t)data; }
    virtual uint32_t* getDataReference() { return &data; }
@@ -359,10 +357,6 @@ public:
       for (int i = 0; i < SWITCH_DATA_COUNT; i++)
          data[i] = 0;
       };
-   void * operator new (size_t size) throw();
-   void operator delete(void *p) throw() {}
-   void * operator new (size_t size, void * placement) {return placement;}
-   void operator delete(void *p, void *) {}
    static const uint64_t IPROFILING_INVALID = ~0;
    virtual uintptr_t getData(TR::Compilation *comp = NULL) { /*TR_ASSERT(0, "Don't call me, I'm empty"); */return 0;}
    virtual int32_t setData(uintptr_t value, uint32_t freq = 1) { /*TR_ASSERT(0, "Don't call me, I'm empty");*/ return 0;}
@@ -394,10 +388,6 @@ public:
       {
       _csInfo.initialize();
       }
-   void * operator new (size_t size) throw();
-   void operator delete(void *p) throw() {}
-   void * operator new (size_t size, void * placement) {return placement;}
-   void operator delete(void *p, void *) {}
 
    // Set the higher 32 bits to zero under compressedref to avoid assertion in
    // CallSiteProfileInfo::setClazz, which is called by setInvalid with IPROFILING_INVALID
