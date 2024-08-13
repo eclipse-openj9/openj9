@@ -1232,7 +1232,10 @@ obj:
 						} else {
 							rc = THROW_ARRAY_STORE;
 						}
-					} else if (J9_IS_J9CLASS_FLATTENED(srcClazz) || J9_IS_J9CLASS_FLATTENED(destClazz) || J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(destComponentClass)) {
+					} else if (J9_IS_J9CLASS_FLATTENED(srcClazz)
+						|| J9_IS_J9CLASS_FLATTENED(destClazz)
+						|| J9_IS_J9CLASS_ALLOW_DEFAULT_VALUE(destComponentClass)
+					) {
 						/* VM_ArrayCopyHelpers::referenceArrayCopy cannot handle flattened arrays or null elements being copied into arrays of primitive value types, so for those cases use copyFlattenableArray instead */
 						updateVMStruct(REGISTER_ARGS);
 						I_32 value = VM_ValueTypeHelpers::copyFlattenableArray(_currentThread, _objectAccessBarrier, _objectAllocate, srcObject, destObject, srcStart, destStart, elementCount);

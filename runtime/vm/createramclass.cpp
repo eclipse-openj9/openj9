@@ -1990,7 +1990,7 @@ loadFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *class
 								J9NLS_VM_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS);
 						}
 
-						if (!J9_IS_NULL_RESTRICTED_FIELD_FLATTENED(valueClass, field)) {
+						if (!J9_IS_FIELD_FLATTENED(valueClass, field)) {
 							*valueTypeFlags |= (J9ClassContainsUnflattenedFlattenables | J9ClassHasReferences);
 							eligibleForFastSubstitutability = false;
 						} else if (J9_ARE_NO_BITS_SET(valueClass->classFlags, J9ClassCanSupportFastSubstitutability)) {
