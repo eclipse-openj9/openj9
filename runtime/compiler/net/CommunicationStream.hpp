@@ -128,7 +128,7 @@ protected:
    // likely to lose an increment when merging/rebasing/etc.
    //
    static const uint8_t MAJOR_NUMBER = 1;
-   static const uint16_t MINOR_NUMBER = 65; // ID: YxVkiLqD7B1LhYMv58y8
+   static const uint16_t MINOR_NUMBER = 66; // ID: Smx17vPdRk39t3iUpE0Y
    static const uint8_t PATCH_NUMBER = 0;
    static uint32_t CONFIGURATION_FLAGS;
 
