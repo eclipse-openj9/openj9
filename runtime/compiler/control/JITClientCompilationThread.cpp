@@ -3746,9 +3746,13 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
          int compilationSequenceNumber = compiler->getOptions()->writeLogFileFromServer(logFileStr);
          if (compiler->getOption(TR_JITServerFollowRemoteCompileWithLocalCompile) && compilationSequenceNumber)
             {
-            intptr_t rtn = 0;
             compiler->getOptions()->setLogFileForClientOptions(compilationSequenceNumber);
-            releaseVMAccess(vmThread);
+            bool compileWithoutVMAccess = !compiler->getOption(TR_DisableNoVMAccess);
+            if (compileWithoutVMAccess)
+               {
+               releaseVMAccess(vmThread);
+               TR::MonitorTable::get()->readAcquireClassUnloadMonitor(compInfoPT->getCompThreadId());
+               }
             if (TR::Options::getVerboseOption(TR_VerboseJITServer))
                TR_VerboseLog::writeLineLocked(
                   TR_Vlog_JITServer,
@@ -3757,7 +3761,22 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
                   compiler->getHotnessName(),
                   metaData, (metaData) ? (void *)metaData->startPC : NULL
                   );
-            if ((rtn = compiler->compile()) != COMPILATION_SUCCEEDED)
+            intptr_t rtn = 0;
+            try
+               {
+               rtn = compiler->compile();
+               }
+            catch(...)
+               {
+               // This compilation wasn't started from TR::CompilationInfoPerThreadBase::compile,
+               // so we need to make sure that we release the class unload monitor on exception.
+               if (compileWithoutVMAccess)
+                  TR::MonitorTable::get()->readReleaseClassUnloadMonitor(compInfoPT->getCompThreadId());
+               throw;
+               }
+            if (compileWithoutVMAccess)
+               TR::MonitorTable::get()->readReleaseClassUnloadMonitor(compInfoPT->getCompThreadId());
+            if (rtn != COMPILATION_SUCCEEDED)
                {
                TR_ASSERT(false, "Compiler returned non zero return code %d\n", rtn);
                compiler->failCompilation<TR::CompilationException>("Compilation Failure");
@@ -3770,7 +3789,8 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
                   compiler->getHotnessName(),
                   metaData, (metaData) ? (void *)metaData->startPC : NULL
                   );
-            acquireVMAccessNoSuspend(vmThread);
+            if (compileWithoutVMAccess)
+               acquireVMAccessNoSuspend(vmThread);
             compiler->getOptions()->closeLogFileForClientOptions();
             }
 
