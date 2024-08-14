@@ -24,10 +24,10 @@ async function run() {
         });
 
         const issueComment = response.data;
-        predictedAssignees = issueComment.recommended_developers;
-        predictedLabels = issueComment.recommended_components;
+        let predictedAssignees = issueComment.recommended_developers;
+        let predictedLabels = issueComment.recommended_components;
 
-        resultString += 'Status: Open\n';
+        let resultString = 'Status: Open\n';
         resultString += `Recommended Components: ${predictedLabels.join(', ')}\n`;
         resultString += `Recommended Assignees: ${predictedAssignees.join(', ')}\n`;
 
@@ -43,7 +43,7 @@ async function run() {
             issue_number: sandboxIssueNumber,
             owner: sandboxOwner,
             repo: sandboxRepo,
-            body: `The TriagerX model is currently not responding to the issue ${issueNumber}. Please try again later.`
+            body: `The TriagerX model is currently not responding to the issue ${process.env.ISSUE_NUMBER}. Please try again later.`
         });
     }
 }
