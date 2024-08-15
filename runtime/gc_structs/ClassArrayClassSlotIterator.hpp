@@ -46,6 +46,9 @@ class GC_ClassArrayClassSlotIterator
 	
 	enum {
 		classArrayClassSlotIterator_state_arrayClass = 0,
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+		classArrayClassSlotIterator_state_companionArray,
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 		classArrayClassSlotIterator_state_componentType,
 		classArrayClassSlotIterator_state_leafComponentType,
 		classArrayClassSlotIterator_state_done

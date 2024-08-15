@@ -27,6 +27,7 @@ import java.util.Iterator;
 import com.ibm.j9ddr.CorruptDataException;
 import com.ibm.j9ddr.vm29.pointer.VoidPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ArrayClassPointer;
+import com.ibm.j9ddr.vm29.pointer.generated.J9BuildFlags;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ClassPointer;
 
 import static com.ibm.j9ddr.vm29.structure.J9JavaAccessFlags.J9AccClassArray;
@@ -43,19 +44,30 @@ public class GCClassArrayClassSlotIterator extends GCIterator
 		J9ClassPointer slot;
 		
 		slot = clazz.arrayClass(); 
-		if(slot.notNull()) {
+		if (slot.notNull()) {
 			slots.add(slot);
 			addresses.add(VoidPointer.cast(clazz.arrayClassEA()));
 		}
-		if(clazz.romClass().modifiers().allBitsIn(J9AccClassArray)) {
+		if (clazz.romClass().modifiers().allBitsIn(J9AccClassArray)) {
 			J9ArrayClassPointer arrayClass = J9ArrayClassPointer.cast(clazz);
+			if (J9BuildFlags.J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) {
+				try {
+					slot = arrayClass.companionArray();
+					if (slot.notNull()) {
+						slots.add(slot);
+						addresses.add(VoidPointer.cast(arrayClass.companionArrayEA()));
+					}
+				} catch (NoSuchFieldException e) {
+					throw new CorruptDataException("J9ArrayClass.companionArray field does not exist", e);
+				}
+			}
 			slot = arrayClass.componentType();
-			if(slot.notNull()) {
+			if (slot.notNull()) {
 				slots.add(slot);
 				addresses.add(VoidPointer.cast(arrayClass.componentTypeEA()));
 			}
 			slot = arrayClass.leafComponentType();
-			if(slot.notNull()) {
+			if (slot.notNull()) {
 				slots.add(slot);
 				addresses.add(VoidPointer.cast(arrayClass.leafComponentTypeEA()));
 			}

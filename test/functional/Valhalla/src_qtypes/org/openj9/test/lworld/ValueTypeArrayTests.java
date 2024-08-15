@@ -25,6 +25,8 @@ import org.testng.Assert;
 import static org.testng.Assert.*;
 import org.testng.annotations.Test;
 
+import jdk.internal.value.CheckedType;
+import jdk.internal.value.NormalCheckedType;
 import jdk.internal.value.NullRestrictedCheckedType;
 import jdk.internal.value.ValueClass;
 import jdk.internal.vm.annotation.ImplicitlyConstructible;
@@ -228,7 +230,7 @@ public class ValueTypeArrayTests {
 						new Class[] {null, null, null, null, null}, // All values can be assigned to Object[]
 						new Class[] {null, ASE,  null, null, null}, // ASE for SomeIface[] = Object
 						new Class[] {null, ASE,  ASE,  null, ASE},  // ASE for PointV[] = PointPV, SomeIface
-						new Class[] {NPE,  ASE,  ASE,  ASE,  null}, // NPE for PointPV[] = null; ASE for PointPV[] = PointV
+						new Class[] {ASE,  ASE,  ASE,  ASE,  null}, // ASE for PointPV[] = null; ASE for PointPV[] = PointV
 					};
 
 	/**
@@ -328,7 +330,8 @@ public class ValueTypeArrayTests {
 	 */
 	@Test(priority=1,invocationCount=2)
 	static public void testValueTypeArrayAssignments() throws Throwable {
-		Object[][] testArrays = new Object[][] {new Object[2], new SomeIface[2], new PointV[2], new PointPV[2]};
+		Object[][] testArrays = new Object[][] {new Object[2], new SomeIface[2], new PointV[2],
+			ValueClass.newArrayInstance(NullRestrictedCheckedType.of(PointPV.class), 2)};
 		int[] kinds = {OBJ_TYPE, IFACE_TYPE, VAL_TYPE, PRIM_TYPE};
 		Object[] vals = new Object[] {null, bogusIfaceObj, new PointV(1.0, 2.0), new PointPV(3.0, 4.0)};
 
@@ -753,11 +756,11 @@ public class ValueTypeArrayTests {
 
 		try {
 			arrayElementStoreNull(dstData, ARRAY_LENGTH/2);
-		} catch (NullPointerException npe) {
+		} catch (ArrayStoreException ase) {
 			return; /* pass */
 		}
 
-		Assert.fail("Expect a NullPointerException. No exception or wrong kind of exception thrown");
+		Assert.fail("Expect an ArrayStoreException. No exception or wrong kind of exception thrown");
 	}
 
 	@Test(priority=1,invocationCount=2)
@@ -769,10 +772,29 @@ public class ValueTypeArrayTests {
 
 		try {
 			arrayElementStore(dstData, ARRAY_LENGTH/2, obj);
-		} catch (NullPointerException npe) {
+		} catch (ArrayStoreException ase) {
 			return; /* pass */
 		}
 
-		Assert.fail("Expect a NullPointerException. No exception or wrong kind of exception thrown");
+		Assert.fail("Expect an ArrayStoreException. No exception or wrong kind of exception thrown");
+	}
+
+	@ImplicitlyConstructible
+	public static value class EmptyNullRestricted {
+	}
+
+	/* This test passes with Xint, disable until all cases are passing. */
+	/* Test JVM_IsNullRestrictedArray which is called by ValueClass.componentCheckedType */
+	@Test
+	public static void testJVMIsNullRestrictedArray() {
+		EmptyNullRestricted[] nrArray = (EmptyNullRestricted[])ValueClass.newArrayInstance(
+			NullRestrictedCheckedType.of(EmptyNullRestricted.class), 4);
+		CheckedType nrType = ValueClass.componentCheckedType(nrArray);
+		assertTrue(nrType instanceof NullRestrictedCheckedType);
+
+		EmptyNullRestricted[] normalArray = (EmptyNullRestricted[])ValueClass.newArrayInstance(
+			NormalCheckedType.of(EmptyNullRestricted.class), 4);
+		CheckedType normalType = ValueClass.componentCheckedType(normalArray);
+		assertTrue(normalType instanceof NormalCheckedType);
 	}
 }

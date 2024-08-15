@@ -96,6 +96,7 @@
 #define J9ClassAllowsInitialDefaultValue 0x400000
 #define J9ClassAllowsNonAtomicCreation 0x800000
 #define J9ClassNeedToPruneMemberNames 0x1000000
+#define J9ClassArrayIsNullRestricted 0x2000000
 
 /* @ddr_namespace: map_to_type=J9FieldFlags */
 
@@ -3391,6 +3392,9 @@ typedef struct J9Class {
 	/* A linked list of weak global references to every resolved MemberName whose clazz is this class. */
 	J9MemberNameListNode *memberNames;
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+	struct J9Class *nullRestrictedArrayClass;
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 } J9Class;
 
 /* Interface classes can never be instantiated, so the following fields in J9Class will not be used:
@@ -3487,6 +3491,13 @@ typedef struct J9ArrayClass {
 	/* A linked list of weak global references to every resolved MemberName whose clazz is this class. */
 	J9MemberNameListNode *memberNames;
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+	/*
+	 * A nullable J9ArrayClass points to its null-restricted companion, if one exists.
+	 * A null-restricted J9ArrayClass points to its nullable companion, if one exists.
+	 */
+	struct J9Class *companionArray;
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 } J9ArrayClass;
 
 
@@ -4800,6 +4811,7 @@ typedef struct J9InternalVMFunctions {
 	void  (JNICALL *sendInit)(struct J9VMThread *vmContext, j9object_t object, struct J9Class *senderClass, UDATA lookupOptions) ;
 	void  ( *internalAcquireVMAccessNoMutex)(struct J9VMThread * vmThread) ;
 	struct J9Class*  ( *internalCreateArrayClass)(struct J9VMThread* vmThread, struct J9ROMArrayClass* romClass, struct J9Class* elementClass) ;
+	struct J9Class *(*internalCreateArrayClassWithOptions)(struct J9VMThread *vmThread, struct J9ROMArrayClass *romClass, struct J9Class *elementClass, UDATA options);
 	IDATA  ( *attachSystemDaemonThread)(struct J9JavaVM * vm, struct J9VMThread ** p_env, const char * threadName) ;
 	void  ( *internalAcquireVMAccessClearStatus)(struct J9VMThread * vmThread, UDATA flags) ;
 #if defined(J9VM_OPT_REFLECT)
