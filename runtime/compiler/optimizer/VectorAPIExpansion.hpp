@@ -349,23 +349,42 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *     \c TR::NoVectorLength otherwise
    */
    static TR::VectorLength supportedOnPlatform(TR::Compilation *comp, vec_sz_t vectorLength)
+      {
+      // General check for supported infrastructure
+      if (!comp->target().cpu.isPower() &&
+         !(comp->target().cpu.isZ() && comp->cg()->getSupportsVectorRegisters()) &&
+         !comp->target().cpu.isARM64() &&
+         !comp->getOption(TR_EnableVectorAPIExpansion))
+         return TR::NoVectorLength;
+
+      if (vectorLength != 128 && !comp->target().cpu.isX86())
+         return TR::NoVectorLength;
+
+      if (comp->target().cpu.isX86())
          {
-         // General check for supported infrastructure
-         if (!comp->target().cpu.isPower() &&
-               !(comp->target().cpu.isZ() && comp->cg()->getSupportsVectorRegisters()) &&
-               !comp->target().cpu.isARM64())
-            return TR::NoVectorLength;
-
-         if (vectorLength != 128)
-            return TR::NoVectorLength;
-
-         TR::VectorLength length = OMR::DataType::bitsToVectorLength(vectorLength);
-
-         TR_ASSERT_FATAL(length > TR::NoVectorLength && length <= TR::NumVectorLengths,
-                         "VectorAPIExpansion requested invalid vector length %d\n", length);
-
-         return length;
+         // If x86 is enabled (via TR_EnableVectorAPIExpansion), we should check for platform support
+         switch (vectorLength)
+            {
+            case 512:
+               if (!comp->target().cpu.supportsFeature(OMR_FEATURE_X86_AVX512F))
+                  return TR::NoVectorLength;
+               break;
+            case 256:
+               if (!comp->target().cpu.supportsFeature(OMR_FEATURE_X86_AVX))
+                  return TR::NoVectorLength;
+               break;
+            default:
+               break;
+            }
          }
+
+      TR::VectorLength length = OMR::DataType::bitsToVectorLength(vectorLength);
+
+      TR_ASSERT_FATAL(length > TR::NoVectorLength && length <= TR::NumVectorLengths,
+                      "VectorAPIExpansion requested invalid vector length %d\n", length);
+
+      return length;
+      }
 
    /** \brief
     *     Checks if the method being compiled contains any recognized Vector API methods
