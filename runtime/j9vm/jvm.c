@@ -1954,9 +1954,9 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 	UDATA argEncoding = ARG_ENCODING_DEFAULT;
 	UDATA altJavaHomeSpecified = 0; /* not used on non-Windows */
 	J9PortLibraryVersion portLibraryVersion;
-#if defined(AIXPPC)
+#if defined(AIXPPC) || (defined(J9ZOS390) && (JAVA_SPEC_VERSION >= 21))
 	char *origLibpath = NULL;
-#endif /* AIXPPC */
+#endif /* defined(AIXPPC) || (defined(J9ZOS390) && (JAVA_SPEC_VERSION >= 21)) */
 	I_32 portLibraryInitStatus;
 	UDATA expectedLibrarySize;
 	UDATA localVerboseLevel = 0;
@@ -2045,7 +2045,7 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 	}
 #endif
 
-#if defined(AIXPPC)
+#if defined(AIXPPC) || (defined(J9ZOS390) && (JAVA_SPEC_VERSION >= 21))
 	/* CMVC 137180:
 	 * in some cases the LIBPATH does not contain /usr/lib, when
 	 * trying to load application native libraries that are linked against
@@ -2059,13 +2059,21 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 		 * Example libpath:
 		 * LIBPATH=/jre/lib/ppc64/j9vm:/jre/lib/ppc64:/jre/lib/ppc64/jli:/jre/../lib/ppc64:/usr/lib
 		 */
-
+#if defined(AIXPPC)
+		const char *usrLib = "/usr/lib";
+		const UDATA usrLibLength = LITERAL_STRLEN("/usr/lib");
+#else /* defined(AIXPPC) */
+		/*
+		 * Currently Java 21 and up on z/OS build with system zlib: /lib/libzz64.so. If /lib isn't
+		 * already present in LIBPATH, append it to the end, so that system zlib can be resolved.
+		 */
+		const char *usrLib = "/lib";
+		const UDATA usrLibLength = LITERAL_STRLEN("/lib");
+#endif /* defined(AIXPPC) */
 		const char *currentLibPath = getenv("LIBPATH");
 		BOOLEAN appendToLibPath = TRUE;
 		if (NULL != currentLibPath) {
 			const size_t currentLibPathLength = strlen(currentLibPath);
-			const char *usrLib = "/usr/lib";
-			const UDATA usrLibLength = LITERAL_STRLEN("/usr/lib");
 			const char *needle = strstr(currentLibPath, usrLib);
 			while (NULL != needle) {
 				/* Note, inside the loop we're guaranteed to have
@@ -2085,7 +2093,7 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 			}
 		}
 		if (appendToLibPath) {
-			addToLibpath("/usr/lib", FALSE);
+			addToLibpath(usrLib, FALSE);
 		}
 	}
 	/* CMVC 135358.
@@ -2095,7 +2103,7 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 	 * result from above.
 	 */
 	origLibpath = getenv("LIBPATH");
-#endif
+#endif /* defined(AIXPPC) || (defined(J9ZOS390) && (JAVA_SPEC_VERSION >= 21)) */
 
 	/* no tracing for this function, since it's unlikely to be used once the VM is running and the trace engine is initialized */
 	preloadLibraries();
