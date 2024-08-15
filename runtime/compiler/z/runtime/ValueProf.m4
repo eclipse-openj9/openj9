@@ -919,4 +919,3 @@ END_FUNC(_jitRIOFF,_jitRIOFF,11)
 ifdef({J9ZOS390},{dnl
     END
 })dnl
-
