@@ -697,25 +697,6 @@ J9::SymbolReferenceTable::findOrCreateArrayClassRomPtrSymbolRef()
    }
 
 
-TR::SymbolReference *
-J9::SymbolReferenceTable::findOrCreateJavaLangReferenceReferentShadowSymbol(
-      TR::ResolvedMethodSymbol * owningMethodSymbol,
-      bool isResolved,
-      TR::DataType type,
-      uint32_t offset, bool isUnresolvedInCP)
-   {
-   TR_ResolvedMethod * owningMethod = owningMethodSymbol->getResolvedMethod();
-
-   TR::SymbolReference * symRef = NULL;
-   symRef = findJavaLangReferenceReferentShadowSymbol(owningMethod, TR::Address, offset);
-   if (!symRef)
-      {
-      symRef = createShadowSymbolWithoutCpIndex(owningMethodSymbol, true, TR::Address, offset, false);
-      }
-   return symRef;
-   }
-
-
 // Right now it only works for private fields or fields that are guaranteed to be accessed only from one class
 // because searchRecognizedField only does a name comparison, t does not work if the field is accessed from a subclass of the expected one
 TR::SymbolReference *
