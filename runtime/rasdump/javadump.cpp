@@ -1468,11 +1468,84 @@ JavaCoreDumpWriter::writeEnvUserArgsHelper(J9VMInitArgs *vmArgs)
 	}
 
 	{
-		/* write ignored options */
-		bool anyIgnored = false;
+		/* Write ignored options.
+		 *
+		 * An option is printed as ignored if it has not been consumed or if
+		 * it is an -Xjit or -Xaot option that falls under the rules below.
+		 *
+		 * Ignored options for -Xjit and -Xaot follows these rules:
+		 * 1. If -Xjit is followed by -Xint or -Xnojit,
+		 *    then any -Xjit:optionString beforehand appears as ignored.
+		 * 2. If -XX:+MergeCompilerOptions is present,
+		 *    then all -Xjit options after -Xint or -Xnojit should not be ignored.
+		 * 3. If multiple -Xjit strings appear, all but the last one will appear as ignored.
+		 *
+		 * Similar rules apply for -Xaot.
+		 */
+
+		/* The indices for the relevant options in args->options. */
+		jint lastXjit = -1;
+		jint lastXaot = -1;
+		jint lastXnojitOrXint = -1; /* The last occurence of either -Xnojit or -Xint. */
+		jint lastXnoaotOrXint = -1; /* The last occurence of either -Xnoaot or -Xint. */
+		bool hasXXMerge = false;
 
 		for (jint i = 0; i < args->nOptions; i++) {
-			if (IS_CONSUMABLE(vmArgs, i) && !IS_CONSUMED(vmArgs, i)) {
+			const char *optionString = args->options[i].optionString;
+
+			if (0 == strncmp(optionString, "-Xint", 6)) {
+				/* Case 1: ignore all -Xjit or -Xaot options before. */
+				lastXnojitOrXint = i;
+				lastXnoaotOrXint = i;
+			} else if (0 == strncmp(optionString, "-Xnojit", 8)) {
+				/* Case 1: ignore all -Xjit options before. */
+				lastXnojitOrXint = i;
+			} else if (0 == strncmp(optionString, "-Xnoaot", 8)) {
+				/* Case 1: ignore all -Xaot options before. */
+				lastXnoaotOrXint = i;
+			} else if (0 == strncmp(optionString, "-XX:+MergeCompilerOptions", 26)) {
+				/* Case 2. */
+				hasXXMerge = true;
+			} else if (0 == strncmp(optionString, "-XX:-MergeCompilerOptions", 26)) {
+				/* If -XX:-MergeCompilerOptions is encountered after
+				 * -XX:+MergeCompilerOptions, the latter is overriden.
+				 */
+				hasXXMerge = false;
+			} else if ((0 == strncmp(optionString, "-Xjit", 5))
+				&& (('\0' == optionString[5]) || (':' == optionString[5]))
+			) {
+				/* Case 3. */
+				lastXjit = i;
+			} else if ((0 == strncmp(optionString, "-Xaot", 5))
+				&& (('\0' == optionString[5]) || (':' == optionString[5]))
+			) {
+				/* Case 3. */
+				lastXaot = i;
+			}
+		}
+
+		bool anyIgnored = false;
+		for (jint i = 0; i < args->nOptions; i++) {
+			bool optionIgnored = false;
+			const char *optionString = args->options[i].optionString;
+
+			if ((0 == strncmp(optionString, "-Xjit", 5))
+				&& (('\0' == optionString[5]) || (':' == optionString[5]))
+			) {
+				if ((i < lastXnojitOrXint) || ((i < lastXjit) && !hasXXMerge)) {
+					optionIgnored = true;
+				}
+			} else if ((0 == strncmp(optionString, "-Xaot", 5))
+				&& (('\0' == optionString[5]) || (':' == optionString[5]))
+			) {
+				if ((i < lastXnoaotOrXint) || ((i < lastXaot) && !hasXXMerge)) {
+					optionIgnored = true;
+				}
+			}
+
+			if (optionIgnored
+				|| (IS_CONSUMABLE(vmArgs, i) && !IS_CONSUMED(vmArgs, i))
+			) {
 				if (!anyIgnored) {
 					_OutputStream.writeCharacters("NULL\n");
 					_OutputStream.writeCharacters(ignoredArgsHeader);
@@ -1480,7 +1553,7 @@ JavaCoreDumpWriter::writeEnvUserArgsHelper(J9VMInitArgs *vmArgs)
 				}
 
 				_OutputStream.writeCharacters(singleIgnoredArgHeader);
-				_OutputStream.writeCharacters(args->options[i].optionString);
+				_OutputStream.writeCharacters(optionString);
 				_OutputStream.writeCharacters("\n");
 			}
 		}
