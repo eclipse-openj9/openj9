@@ -20,6 +20,7 @@ OpenJDK Assembly Exception [2].
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 -->
 <exports group="jfr_jdk11">
+	<export name="Java_com_ibm_oti_vm_VM_getjfrCMDLineOption" />
 	<export name="Java_com_ibm_oti_vm_VM_isJFRRecordingStarted" />
 	<export name="Java_com_ibm_oti_vm_VM_jfrDump" />
 	<export name="Java_com_ibm_oti_vm_VM_setJFRRecordingFileName" />
