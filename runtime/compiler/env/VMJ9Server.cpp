@@ -1726,6 +1726,10 @@ TR_J9ServerVM::getStringHashCode(TR::Compilation *comp, uintptr_t* stringLocatio
 int32_t
 TR_J9ServerVM::getLineNumberForMethodAndByteCodeIndex(TR_OpaqueMethodBlock *method, int32_t bcIndex)
    {
+   static bool ignoreLineNumbers = feGetEnv("TR_JITServerShouldIgnoreLineNumbers") != NULL;
+   if (ignoreLineNumbers)
+      return -1;
+
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JITServer::MessageType::VM_getLineNumberForMethodAndByteCodeIndex, method, bcIndex);
    return std::get<0>(stream->read<int32_t>());
