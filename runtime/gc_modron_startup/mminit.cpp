@@ -3136,6 +3136,10 @@ gcInitializeDefaults(J9JavaVM* vm)
 			break;
 		}
 
+		if (MM_GCExtensions::getExtensions(vm)->isVirtualLargeObjectHeapEnabled) {
+			vm->unsafeIndexableHeaderSize = 0;
+		}
+
 		if(extensions->largePageFailedToSatisfy) {
 			/* We were unable to satisfy the user's request for a strict page size. */
 			goto error;
@@ -3310,11 +3314,6 @@ initializeIndexableObjectHeaderSizes(J9JavaVM* vm)
 #else /* defined(J9VM_ENV_DATA64) */
 	setIndexableObjectHeaderSizeWithoutDataAddress(vm);
 #endif /* defined(J9VM_ENV_DATA64) */
-	if (MM_GCExtensions::getExtensions(vm)->isVirtualLargeObjectHeapEnabled) {
-		vm->unsafeIndexableHeaderSize = 0;
-	} else {
-		vm->unsafeIndexableHeaderSize = vm->contiguousIndexableHeaderSize;
-	}
 }
 
 #if defined(J9VM_ENV_DATA64)
@@ -3324,9 +3323,11 @@ setIndexableObjectHeaderSizeWithDataAddress(J9JavaVM* vm)
 	if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
 		vm->contiguousIndexableHeaderSize = sizeof(J9IndexableObjectWithDataAddressContiguousCompressed);
 		vm->discontiguousIndexableHeaderSize = sizeof(J9IndexableObjectWithDataAddressDiscontiguousCompressed);
+		vm->unsafeIndexableHeaderSize = sizeof(J9IndexableObjectWithDataAddressContiguousCompressed);
 	} else {
 		vm->contiguousIndexableHeaderSize = sizeof(J9IndexableObjectWithDataAddressContiguousFull);
 		vm->discontiguousIndexableHeaderSize = sizeof(J9IndexableObjectWithDataAddressDiscontiguousFull);
+		vm->unsafeIndexableHeaderSize = sizeof(J9IndexableObjectWithDataAddressContiguousFull);
 	}
 }
 #endif /* defined(J9VM_ENV_DATA64) */
@@ -3337,9 +3338,11 @@ setIndexableObjectHeaderSizeWithoutDataAddress(J9JavaVM* vm)
 	if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
 		vm->contiguousIndexableHeaderSize = sizeof(J9IndexableObjectContiguousCompressed);
 		vm->discontiguousIndexableHeaderSize = sizeof(J9IndexableObjectDiscontiguousCompressed);
+		vm->unsafeIndexableHeaderSize = sizeof(J9IndexableObjectDiscontiguousCompressed);
 	} else {
 		vm->contiguousIndexableHeaderSize = sizeof(J9IndexableObjectContiguousFull);
 		vm->discontiguousIndexableHeaderSize = sizeof(J9IndexableObjectDiscontiguousFull);
+		vm->unsafeIndexableHeaderSize = sizeof(J9IndexableObjectDiscontiguousFull);
 	}
 }
 
