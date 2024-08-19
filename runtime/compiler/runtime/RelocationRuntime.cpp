@@ -1120,7 +1120,18 @@ TR_SharedCacheRelocationRuntime::allocateSpaceInCodeCache(UDATA codeSize)
       }
 
    uint8_t *coldCode;
-   U_8 *codeStart = manager->allocateCodeMemory(codeSize, 0, &_codeCache, &coldCode, false);
+   U_8 *codeStart;
+   bool installIntoCold = TR::Options::getCmdLineOptions()->getOption(TR_InstallAOTToColdCode);
+
+   if (!installIntoCold)
+      {
+      codeStart = manager->allocateCodeMemory(codeSize, 0, &_codeCache, &coldCode, false);
+      }
+   else
+      {
+      codeStart = manager->allocateCodeMemory(0, codeSize, &_codeCache, &coldCode, false);
+      }
+
    // FIXME: the GC may unload classes if code caches have been switched
    if (compThreadID >= 0 && fej9->getCompilationShouldBeInterruptedFlag())
       {
@@ -1129,7 +1140,8 @@ TR_SharedCacheRelocationRuntime::allocateSpaceInCodeCache(UDATA codeSize)
       //*returnCode = compilationInterrupted; // allow retrial
       return NULL; // fail this AOT load
       }
-   return codeStart;
+
+   return installIntoCold ? coldCode : codeStart;
    }
 
 
