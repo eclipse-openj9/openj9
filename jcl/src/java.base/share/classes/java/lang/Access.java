@@ -817,5 +817,12 @@ final class Access implements JavaLangAccess {
 	}
 /*[ENDIF] INLINE-TYPES */
 
+/*[IF JAVA_SPEC_VERSION >= 24]*/
+	@Override
+	public Object stringConcat1(String[] constants) {
+		return new StringConcatHelper.Concat1(constants);
+	}
+/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
+
 /*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 }
