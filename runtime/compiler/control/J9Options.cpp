@@ -2179,15 +2179,21 @@ void J9::Options::preProcessTLHPrefetch(J9JavaVM *vm)
 #elif defined(TR_HOST_ARM64)
    preferTLHPrefetch = true;
 #else // TR_HOST_X86
-   preferTLHPrefetch =
-      (TR::Compiler->target.cpu.isGenuineIntel() &&
-       TR::Compiler->target.cpu.isAtMost(OMR_PROCESSOR_X86_INTEL_BROADWELL)) ||
-      !TR::Compiler->target.cpu.isGenuineIntel();
+   preferTLHPrefetch = !TR::Compiler->target.cpu.isGenuineIntel() ||
+       TR::Compiler->target.cpu.isAtMost(OMR_PROCESSOR_X86_INTEL_BROADWELL);
 
    // Disable TM on x86 because we cannot tell whether a Haswell chip supports
    // TM or not, plus it's killing the performance on dayTrader3
    self()->setOption(TR_DisableTM);
 #endif
+   // For portable AOT code we want to disable TLH prefetch
+   if (preferTLHPrefetch &&
+       J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PORTABLE_SHARED_CACHE) &&
+       self() == TR::Options::getAOTCmdLineOptions()
+      )
+      {
+      preferTLHPrefetch = false;
+      }
 
    IDATA notlhPrefetch = FIND_ARG_IN_VMARGS(EXACT_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::XnotlhPrefetch], 0);
    IDATA tlhPrefetch = FIND_ARG_IN_VMARGS(EXACT_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::XtlhPrefetch], 0);
