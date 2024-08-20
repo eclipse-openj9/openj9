@@ -1591,7 +1591,7 @@ InterpreterEmulator::visitInvokevirtual()
          {
          TR_J9MutableCallSite *inlinerMcs = new (comp()->trHeapMemory()) TR_J9MutableCallSite(_calltarget->_calleeMethod, callNodeTreeTop,   parent,
                                                       callNode, interfaceMethod, _currentCallMethod->classOfMethod(),
-                                                      (int32_t) _currentCallMethod->virtualCallSelector(cpIndex), cpIndex, _currentCallMethod,
+                                                      -1, cpIndex, _currentCallMethod,
                                                       resolvedSymbol, isIndirectCall, isInterface, *_newBCInfo, comp(),
                                                       _recursionDepth, allconsts);
          if (_currentCallMethod->getRecognizedMethod() == TR::java_lang_invoke_MethodHandle_invokeBasic)
@@ -1621,7 +1621,7 @@ InterpreterEmulator::visitInvokevirtual()
          {
          callsite = new (comp()->trHeapMemory()) TR_J9VirtualCallSite(_calltarget->_calleeMethod, callNodeTreeTop, parent,
                                                                         callNode, interfaceMethod, _currentCallMethod->classOfMethod(),
-                                                                        (int32_t) _currentCallMethod->virtualCallSelector(cpIndex), cpIndex, _currentCallMethod,
+                                                                        (int32_t) _currentCallMethod->virtualCallSelector(), cpIndex, _currentCallMethod,
                                                                         resolvedSymbol, isIndirectCall, isInterface, *_newBCInfo, comp(),
                                                                         _recursionDepth, allconsts);
 
@@ -1736,7 +1736,7 @@ InterpreterEmulator::visitInvokestatic()
          {
          TR_J9MutableCallSite *mcs = new (comp()->trHeapMemory()) TR_J9MutableCallSite( _calltarget->_calleeMethod, callNodeTreeTop,   parent,
                callNode, interfaceMethod, receiverClass,
-               (int32_t) _currentCallMethod->virtualCallSelector(cpIndex), cpIndex, _currentCallMethod,
+               -1, cpIndex, _currentCallMethod,
                resolvedSymbol, isIndirectCall, isInterface, *_newBCInfo, comp(),
                _recursionDepth, allconsts);
          if (mcsIndex != TR::KnownObjectTable::UNKNOWN)
@@ -1751,7 +1751,7 @@ InterpreterEmulator::visitInvokestatic()
          int32_t noCPIndex = -1; // The method is not referenced via the constant pool
          callsite = new (comp()->trHeapMemory()) TR_J9VirtualCallSite(
                _calltarget->_calleeMethod, callNodeTreeTop, parent, callNode,
-               interfaceMethod, receiverClass, (int32_t) _currentCallMethod->virtualCallSelector(cpIndex), noCPIndex,
+               interfaceMethod, receiverClass, (int32_t) _currentCallMethod->virtualCallSelector(), noCPIndex,
                _currentCallMethod, resolvedSymbol, isIndirectCall, isInterface,
                *_newBCInfo, comp(), _recursionDepth, allconsts);
          }
@@ -1817,7 +1817,7 @@ InterpreterEmulator::visitInvokeinterface()
       {
       callsite = new (comp()->trHeapMemory()) TR_J9VirtualCallSite(
          _calltarget->_calleeMethod, callNodeTreeTop, parent, callNode,
-         interfaceMethod, _currentCallMethod->classOfMethod(), (int32_t) _currentCallMethod->virtualCallSelector(cpIndex), cpIndex,
+         interfaceMethod, _currentCallMethod->classOfMethod(), (int32_t) _currentCallMethod->virtualCallSelector(), cpIndex,
          _currentCallMethod, resolvedSymbol, isIndirectCall, isInterface,
          *_newBCInfo, comp(), _recursionDepth, allconsts);
       }

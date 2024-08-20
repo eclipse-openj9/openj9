@@ -1771,7 +1771,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
                case TR_ResolvedMethodType::VirtualFromCP:
                   {
                   resolvedMethod = static_cast<TR_ResolvedJ9Method *>(owningMethod->getResolvedPossiblyPrivateVirtualMethod(comp, cpIndex, true, &unresolvedInCP));
-                  vTableOffset = resolvedMethod ? resolvedMethod->vTableSlot(cpIndex) : 0;
+                  vTableOffset = resolvedMethod ? resolvedMethod->vTableSlot() : 0;
                   break;
                   }
                case TR_ResolvedMethodType::Static:
@@ -1787,7 +1787,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
                case TR_ResolvedMethodType::ImproperInterface:
                   {
                   resolvedMethod = static_cast<TR_ResolvedJ9Method *>(owningMethod->getResolvedImproperInterfaceMethod(comp, cpIndex));
-                  vTableOffset = resolvedMethod ? resolvedMethod->vTableSlot(cpIndex) : 0;
+                  vTableOffset = resolvedMethod ? resolvedMethod->vTableSlot() : 0;
                   break;
                   }
                default:
