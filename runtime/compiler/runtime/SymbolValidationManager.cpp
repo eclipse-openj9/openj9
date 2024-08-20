@@ -1321,10 +1321,10 @@ TR::SymbolValidationManager::validateDeclaringClassFromFieldOrStaticRecord(uint1
       {
       TR::VMAccessCriticalSection getDeclaringClassFromFieldOrStatic(_fej9);
 
-      int32_t fieldLen;
+      int32_t fieldLen = 0;
       char *field = cpIndex >= 0 ? utf8Data(J9ROMNAMEANDSIGNATURE_NAME(J9ROMFIELDREF_NAMEANDSIGNATURE(&romCPBase[cpIndex])), fieldLen) : 0;
 
-      int32_t sigLen;
+      int32_t sigLen = 0;
       char *sig = cpIndex >= 0 ? utf8Data(J9ROMNAMEANDSIGNATURE_SIGNATURE(J9ROMFIELDREF_NAMEANDSIGNATURE(&romCPBase[cpIndex])), sigLen) : 0;
 
       _vmThread->javaVM->internalVMFunctions->instanceFieldOffset(
