@@ -19,6 +19,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
+#include "JFRConstantPoolTypes.hpp"
 #include "j9protos.h"
 #include "omrlinkedlist.h"
 #include "ut_j9vm.h"
@@ -54,8 +55,6 @@ static void jfrVMInitialized(J9HookInterface **hook, UDATA eventNum, void *event
 static void initializeEventFields(J9VMThread *currentThread, J9JFREvent *jfrEvent, UDATA eventType);
 static int J9THREAD_PROC jfrSamplingThreadProc(void *entryArg);
 static void jfrExecutionSampleCallback(J9VMThread *currentThread, IDATA handlerKey, void *userData);
-static void initializeJFRConstantEvents(J9JavaVM *vm);
-static void freeJFRConstantEvents(J9JavaVM *vm);
 
 /**
  * Calculate the size in bytes of a JFR event.
@@ -130,16 +129,6 @@ writeOutGlobalBuffer(J9VMThread *currentThread, bool finalWrite)
 {
 	J9JavaVM *vm = currentThread->javaVM;
 
-	if (FALSE == vm->jfrState.isConstantEventsInitialized) {
-		omrthread_monitor_enter(vm->jfrState.isConstantEventsInitializedMutex);
-		if (FALSE == vm->jfrState.isConstantEventsInitialized) {
-			initializeJFRConstantEvents(vm);
-			/* Ensure that initialization is complete when the initialized variable is set to true */
-			VM_AtomicSupport::writeBarrier();
-			vm->jfrState.isConstantEventsInitialized = TRUE;
-		}
-		omrthread_monitor_exit(vm->jfrState.isConstantEventsInitializedMutex);
-	}
 #if defined(DEBUG)
 	PORT_ACCESS_FROM_VMC(currentThread);
 	j9tty_printf(PORTLIB, "\n!!! writing global buffer %p of size %p\n", currentThread, vm->jfrBuffer.bufferSize - vm->jfrBuffer.bufferRemaining);
@@ -594,6 +583,12 @@ initializeJFR(J9JavaVM *vm)
 		goto fail;
 	}
 
+	/* Allocate constantEvents */
+	vm->jfrState.constantEvents = j9mem_allocate_memory(sizeof(JFRConstantEvents), J9MEM_CATEGORY_VM);
+	if (NULL == vm->jfrState.constantEvents) {
+		goto fail;
+	}
+
 	/* Allocate global data */
 	buffer = (U_8*)j9mem_allocate_memory(J9JFR_GLOBAL_BUFFER_SIZE, OMRMEM_CATEGORY_VM);
 	if (NULL == buffer) {
@@ -666,7 +661,7 @@ tearDownJFR(J9JavaVM *vm)
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_INITIALIZED, jfrVMInitialized, NULL);
 
 	/* Free global data */
-	freeJFRConstantEvents(vm);
+	VM_JFRConstantPoolTypes::freeJFRConstantEvents(vm);
 
 	j9mem_free_memory((void*)vm->jfrBuffer.bufferStart);
 	memset(&vm->jfrBuffer, 0, sizeof(vm->jfrBuffer));
@@ -686,37 +681,6 @@ tearDownJFR(J9JavaVM *vm)
 		vm->jfrAsyncKey = -1;
 	}
 
-}
-
-/**
- * Initialize constantEvents.
- *
- * @param vm[in] the J9JavaVM
- */
-static void
-initializeJFRConstantEvents(J9JavaVM *vm)
-{
-
-	PORT_ACCESS_FROM_JAVAVM(vm);
-	/* Allocate constantEvents */
-	vm->jfrState.constantEvents = j9mem_allocate_memory(sizeof(JFRConstantEvents), J9MEM_CATEGORY_VM);
-
-	VM_JFRConstantPoolTypes::initializeJVMInformationEvent(vm);
-}
-
-/**
- * Free constantEvents.
- *
- * @param vm[in] the J9JavaVM
- */
-static void
-freeJFRConstantEvents(J9JavaVM *vm)
-{
-	PORT_ACCESS_FROM_JAVAVM(vm);
-
-	VM_JFRConstantPoolTypes::freeJVMInformationEvent(vm);
-
-	j9mem_free_memory(vm->jfrState.constantEvents);
 }
 
 /**
