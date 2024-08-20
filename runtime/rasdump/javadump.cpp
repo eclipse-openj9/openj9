@@ -1477,7 +1477,8 @@ JavaCoreDumpWriter::writeEnvUserArgsHelper(J9VMInitArgs *vmArgs)
 		 * 1. If -Xjit is followed by -Xint or -Xnojit,
 		 *    then any -Xjit:optionString beforehand appears as ignored.
 		 * 2. If -XX:+MergeCompilerOptions is present,
-		 *    then all -Xjit options after -Xint or -Xnojit should not be ignored.
+		 *    then none of the -Xjit options should be ignored, as long as
+		 *    at least one of them appears after all -Xint and -Xnojit
 		 * 3. If multiple -Xjit strings appear, all but the last one will appear as ignored.
 		 *
 		 * Similar rules apply for -Xaot.
@@ -1531,16 +1532,16 @@ JavaCoreDumpWriter::writeEnvUserArgsHelper(J9VMInitArgs *vmArgs)
 
 			if ((0 == strncmp(optionString, "-Xjit", 5))
 				&& (('\0' == optionString[5]) || (':' == optionString[5]))
+				&& !(hasXXMerge && (lastXjit > lastXnojitOrXint)) /* case 2 */
+				&& ((i < lastXnojitOrXint) || (i < lastXjit)) /* case 1 and 3 */
 			) {
-				if ((i < lastXnojitOrXint) || ((i < lastXjit) && !hasXXMerge)) {
-					optionIgnored = true;
-				}
+				optionIgnored = true;
 			} else if ((0 == strncmp(optionString, "-Xaot", 5))
 				&& (('\0' == optionString[5]) || (':' == optionString[5]))
+				&& !(hasXXMerge && (lastXaot > lastXnoaotOrXint)) /* case 2 */
+				&& ((i < lastXnoaotOrXint) || (i < lastXaot)) /* case 1 and 3 */
 			) {
-				if ((i < lastXnoaotOrXint) || ((i < lastXaot) && !hasXXMerge)) {
-					optionIgnored = true;
-				}
+				optionIgnored = true;
 			}
 
 			if (optionIgnored
