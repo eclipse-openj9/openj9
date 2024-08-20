@@ -7724,8 +7724,9 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 					if(jfroptionBuffer == NULL) {
 						arg =(*env1)->NewStringUTF(env1,"dumponexit=false");
 					}
-					else 
+					else {
 						arg = (*env1)->NewStringUTF(env1,jfroptionBuffer);
+					}
 					jchar delimiter = ',';
 					jobjectArray stringArray = (jobjectArray)(*env1)->CallObjectMethod(env1,dcmdStartInstance, executeMethod, source, arg, delimiter);
 					if (stringArray != NULL){
