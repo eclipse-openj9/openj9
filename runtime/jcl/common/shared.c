@@ -560,7 +560,7 @@ isPathTypeJimage(const char *pathChars, jsize pathLen)
 	return FALSE;
 }
 
-/* THREADING: Can be called multi-threaded */
+/* THREADING: Must be protected by jclCacheMutex */
 static UDATA
 getCpeTypeForProtocol(JNIEnv *env, const char *protocol, jsize protocolLen, const char *urlPathChars, jsize urlPathLen, char **correctedPathPtr)
 {
