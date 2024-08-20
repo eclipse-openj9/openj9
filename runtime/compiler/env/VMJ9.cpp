@@ -7930,8 +7930,17 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
                }
 
             // Generate reference symbol
-            TR::SymbolReference * symRefField = comp->getSymRefTab()->findOrCreateJavaLangReferenceReferentShadowSymbol(callerSymRef->getOwningMethodSymbol(comp),
-                                                                                                              true, TR::Address, offset, false);
+            TR::SymbolReference * symRefField =
+               comp->getSymRefTab()->findOrFabricateShadowSymbol(
+                  ReferenceClass,
+                  TR::Address,
+                  offset,
+                  /* isVolatile */ false,
+                  /* isPrivate */ true,
+                  /* isFinal */ false,
+                  REFERENCEFIELD,
+                  REFERENCERETURNTYPE);
+
             if (methodID == TR::java_lang_ref_Reference_getImpl)
                {
                // Generate indirect load of referent into the callNode
