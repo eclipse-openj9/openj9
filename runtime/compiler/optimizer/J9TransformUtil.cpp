@@ -2788,15 +2788,6 @@ J9::TransformUtil::refineMethodHandleLinkTo(TR::Compilation* comp, TR::TreeTop* 
 
       vTableSlot = (uint32_t)info.vmindex;
       jitVTableOffset = fej9->vTableSlotToVirtualCallOffset(vTableSlot);
-
-      // For private virtual methods and java/lang/Object; type virtual methods, there is no corresponding
-      // entry in the vtable, and for such methods the interpreter vtable index is 0.
-      // The dispatch is not performed through the vtable entry, but directly dispatched to the J9Method
-      // in Membername.vmtarget. In such cases, we can refine a linkToVirtual call similar to linkToStatic.
-      // jitVTableOffset is obtained using sizeof(J9Class) - interpreter vtable offset, resulting in a positive
-      // value when the interpreter vtable index we get (from MemberName.vmindex.vtableoffset) is set as 0.
-      if (jitVTableOffset > 0)
-         callKind = TR::MethodSymbol::Special;
       }
 
    if (!performTransformation(comp, "O^O Refine %s with known MemberName\n", nodeStr))
