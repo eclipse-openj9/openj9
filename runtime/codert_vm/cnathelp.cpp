@@ -467,7 +467,7 @@ buildJITResolveFrameForRuntimeCheck(J9VMThread *currentThread)
 	void *oldPC = currentThread->jitReturnAddress;
 #if defined(J9VM_ARCH_X86)
 	U_8 *pc = (U_8*)oldPC;
-	I_32 offset = *(U_32*)pc;
+	I_32 offset = *(I_32*)pc;
 	pc -= offset; /* compute addr of throwing instruction */
 	pc += 1; /* move forward by a byte as codegen uses the beginning of instructions */
 	oldPC = (void*)pc;
