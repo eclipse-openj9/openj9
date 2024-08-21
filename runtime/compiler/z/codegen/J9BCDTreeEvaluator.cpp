@@ -5522,7 +5522,7 @@ TR::Register *
 J9::Z::TreeEvaluator::pddivremVectorEvaluatorHelper(TR::Node * node, TR::CodeGenerator * cg)
    {
    TR::Register* vTargetReg = NULL;
-   TR::InstOpCode::Mnemonic opCode;
+   TR::InstOpCode::Mnemonic opCode = TR::InstOpCode::bad;
    switch(node->getOpCodeValue())
       {
       case TR::pddiv:
