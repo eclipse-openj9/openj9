@@ -6491,7 +6491,6 @@ TR_ResolvedJ9Method::vTableSlot(U_32 cpIndex)
    {
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
    //UDATA vTableSlot = ((J9RAMVirtualMethodRef *)literals())[cpIndex].methodIndexAndArgCount >> 8;
-   TR_ASSERT(_vTableSlot, "vTableSlot called for unresolved method");
    return _vTableSlot;
    }
 
