@@ -74,10 +74,16 @@ public:
                     TR::Compilation *comp, bool &usesSVM);
 
    void onClassLoad(J9Class *ramClass, J9VMThread *vmThread);
-   // Invalidation functions called from class and class loader unload JIT hooks to invalidate RAMClass
-   // and class loader pointers cached by the deserializer.
+   // Invalidation function called from the class unload JIT hook to invalidate class loader pointers
+   // cached by the deserializer
    virtual void invalidateClassLoader(J9VMThread *vmThread, J9ClassLoader *loader) = 0;
-   virtual void invalidateClass(J9VMThread *vmThread, J9Class *ramClass) = 0;
+   // Invalidation function called from class unload and redefinition JIT hooks
+   // to invalidate RAMClass pointers cached by the deserializer. The oldClass
+   // is the class to be invalidated; the newClass is its replacement if the
+   // invalidation is due to redefinition. The newClass is used to ensure that
+   // the invalidated class's RAM methods are also all invalidated, if
+   // applicable.
+   virtual void invalidateClass(J9VMThread *vmThread, J9Class *oldClass, J9Class *newClass = NULL) = 0;
 
    // Invalidates all cached serialization records. Must be called when the client
    // connects to a new server instance (e.g. upon receving a VM_getVMInfo message),
@@ -242,7 +248,7 @@ public:
    JITServerLocalSCCAOTDeserializer(TR_PersistentClassLoaderTable *loaderTable, J9JITConfig *jitConfig);
 
    virtual void invalidateClassLoader(J9VMThread *vmThread, J9ClassLoader *loader) override;
-   virtual void invalidateClass(J9VMThread *vmThread, J9Class *ramClass) override;
+   virtual void invalidateClass(J9VMThread *vmThread, J9Class *oldClass, J9Class *newClass = NULL) override;
 
    virtual J9Class *getGeneratedClass(J9ClassLoader *loader, uintptr_t romClassSccOffset, TR::Compilation *comp) override;
 
@@ -319,7 +325,7 @@ public:
    JITServerNoSCCAOTDeserializer(TR_PersistentClassLoaderTable *loaderTable, J9JITConfig *jitConfig);
 
    virtual void invalidateClassLoader(J9VMThread *vmThread, J9ClassLoader *loader) override;
-   virtual void invalidateClass(J9VMThread *vmThread, J9Class *ramClass) override;
+   virtual void invalidateClass(J9VMThread *vmThread, J9Class *oldClass, J9Class *newClass = NULL) override;
    void invalidateMethod(J9Method *method);
 
    virtual J9Class *getGeneratedClass(J9ClassLoader *loader, uintptr_t romClassSccOffset, TR::Compilation *comp) override;

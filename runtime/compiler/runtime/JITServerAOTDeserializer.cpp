@@ -597,18 +597,21 @@ JITServerLocalSCCAOTDeserializer::invalidateClassLoader(J9VMThread *vmThread, J9
    }
 
 void
-JITServerLocalSCCAOTDeserializer::invalidateClass(J9VMThread *vmThread, J9Class *ramClass)
+JITServerLocalSCCAOTDeserializer::invalidateClass(J9VMThread *vmThread, J9Class *oldClass, J9Class *newClass)
    {
+   // The oldClass will always be the RAM class that needs to be invalidated. Since we do not
+   // need to deal with cached RAM method pointers when not ignoring the local SCC, the
+   // newClass parameter is unused here.
    assertExclusiveVmAccess(vmThread);
 
-   if (invalidateGeneratedClass(ramClass))
+   if (invalidateGeneratedClass(oldClass))
       {
       uintptr_t offset;
-      if (_sharedCache->isROMClassInSharedCache(ramClass->romClass, &offset))
-         _generatedClassesSccMap.erase({ ramClass->classLoader, offset });
+      if (_sharedCache->isROMClassInSharedCache(oldClass->romClass, &offset))
+         _generatedClassesSccMap.erase({ oldClass->classLoader, offset });
       }
 
-   auto p_it = _classPtrMap.find(ramClass);
+   auto p_it = _classPtrMap.find(oldClass);
    if (p_it == _classPtrMap.end())// Not cached
       return;
 
@@ -630,7 +633,7 @@ JITServerLocalSCCAOTDeserializer::invalidateClass(J9VMThread *vmThread, J9Class 
 
    _classPtrMap.erase(p_it);
    if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Invalidated RAMClass %p ID %zu", ramClass, id);
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Invalidated RAMClass %p ID %zu", oldClass, id);
    }
 
 
@@ -1211,13 +1214,13 @@ JITServerNoSCCAOTDeserializer::invalidateClassLoader(J9VMThread *vmThread, J9Cla
    }
 
 void
-JITServerNoSCCAOTDeserializer::invalidateClass(J9VMThread *vmThread, J9Class *ramClass)
+JITServerNoSCCAOTDeserializer::invalidateClass(J9VMThread *vmThread, J9Class *oldClass, J9Class *newClass)
    {
    assertExclusiveVmAccess(vmThread);
 
-   invalidateGeneratedClass(ramClass);
+   invalidateGeneratedClass(oldClass);
 
-   auto p_it = _classPtrMap.find(ramClass);
+   auto p_it = _classPtrMap.find(oldClass);
    if (p_it == _classPtrMap.end()) // Not cached or already marked invalid
       return;
 
@@ -1239,13 +1242,21 @@ JITServerNoSCCAOTDeserializer::invalidateClass(J9VMThread *vmThread, J9Class *ra
 
    _classPtrMap.erase(p_it);
 
-   // Invalidate any methods that might have this RAM class recorded as
-   // their defining class.
-   for (uint32_t i = 0; i < ramClass->romClass->romMethodCount; i++)
-      invalidateMethod(&ramClass->ramMethods[i]);
+   // Invalidate any methods that might have this RAM class recorded as their
+   // defining class. If the class is being invalidated because of an in-place
+   // class redefinition, then these invalid methods could be in newClass, so we
+   // invalidate both classes' methods to make sure we get them all.
+   for (uint32_t i = 0; i < oldClass->romClass->romMethodCount; i++)
+      invalidateMethod(&oldClass->ramMethods[i]);
+
+   if (newClass)
+      {
+      for (uint32_t i = 0; i < newClass->romClass->romMethodCount; i++)
+         invalidateMethod(&newClass->ramMethods[i]);
+      }
 
    if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Invalidated RAMClass %p ID %zu in the deserializer cache", ramClass, id);
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Invalidated RAMClass %p ID %zu in the deserializer cache", oldClass, id);
    }
 
 void
