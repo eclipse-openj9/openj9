@@ -244,7 +244,7 @@ J9::Z::CodeGenerator::callUsesHelperImplementation(TR::Symbol *sym)
 TR::Linkage *
 J9::Z::CodeGenerator::createLinkage(TR_LinkageConventions lc)
    {
-   TR::Linkage * linkage;
+   TR::Linkage * linkage = NULL;
    switch (lc)
       {
       case TR_CHelper:

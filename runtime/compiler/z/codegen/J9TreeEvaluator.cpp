@@ -3533,7 +3533,7 @@ generateTestBitFlag(
       int32_t size,
       uint64_t bitFlag)
    {
-   TR::MemoryReference * tempMR;
+   TR::MemoryReference * tempMR = NULL;
    int shiftForFlag = TR::TreeEvaluator::checkNonNegativePowerOfTwo((int64_t) bitFlag);
    TR_ASSERT(shiftForFlag > 0, "generateTestBitFlag: flag is assumed to be power of 2\n");
 
@@ -3822,7 +3822,7 @@ VMCardCheckEvaluator(
          uintptr_t cardSize = comp->getOptions()->getGcCardSize();
          int32_t shiftValue = TR::TreeEvaluator::checkNonNegativePowerOfTwo((int32_t) cardSize);
 
-         TR::Register * cardOffReg;
+         TR::Register * cardOffReg = NULL;
          TR::Register * mdReg = cg->getMethodMetaDataRealRegister();
 
          if (!clobberDstReg)
@@ -10689,7 +10689,7 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    bool isArray = false, isDoubleArray = false;
    bool isVariableLen;
    int32_t litPoolRegTotalUse, temp2RegTotalUse;
-   int32_t elementSize;
+   int32_t elementSize = 0;
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = comp->fej9();
 
