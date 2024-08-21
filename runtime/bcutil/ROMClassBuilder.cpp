@@ -773,7 +773,7 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 					 * Make note that the laydown is occurring in SharedClasses
 					 */
 
-					romClassBuffer->extraModifiers |= J9AccClassIsStoredInSCC;
+					extraModifiers |= J9AccClassIsShared;
 
 					romSize = finishPrepareAndLaydown(
 							(U_8*)sharedStoreClassTransaction.getRomClass(),
@@ -1219,7 +1219,7 @@ ROMClassBuilder::finishPrepareAndLaydown(
  *                                    + UNUSED
  *
  *                                  + UNUSED
- *                                 + UNUSED
+ *                                 + J9AccClassIsShared
  *                                + J9AccClassIsValueBased
  *                               + J9AccClassHiddenOptionNestmate
  *
@@ -1489,6 +1489,10 @@ ROMClassBuilder::compareROMClassForEquality(
 {
 	bool ret = false;
 
+	if (romClassIsShared) {
+		extraModifiers |= J9AccClassIsShared;
+	}
+
 #if JAVA_SPEC_VERSION < 21
 	if (context->isLambdaClass()) {
 		/*
@@ -1498,7 +1502,7 @@ ROMClassBuilder::compareROMClassForEquality(
 		 * between the number of digits of the index number. The same lambda class might have a
 		 * different index number from run to run and when the number of digits of the index number
 		 * increases by 1, classFileSize also increases by 1. The indexNumber is the counter for the number of
-		 * lambda classes defined so far. It is an int in the JCL side. So the it cannot vary more than max
+		 * lambda classes defined so far. It is an int in the JCL side. So the int cannot vary more than max
 		 * integer vs 0, which is maxVariance (9 bytes). This check is different than the romSize check because
 		 * when the number of digits of the index number increases by 1, classFileSize also increases by 1 but
 		 * romSize increases by 2.

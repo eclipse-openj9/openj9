@@ -61,7 +61,7 @@
 #define OSCACHE_LOWEST_ACTIVE_GEN 1
 
 /* Always increment this value by 2. For testing we use the (current generation - 1) and expect the cache contents to be compatible. */
-#define OSCACHE_CURRENT_CACHE_GEN 43
+#define OSCACHE_CURRENT_CACHE_GEN 45
 #define OSCACHE_CURRENT_LAYER_LAYER 0
 
 #define J9SH_VERSION(versionMajor, versionMinor) (versionMajor*100 + versionMinor)
