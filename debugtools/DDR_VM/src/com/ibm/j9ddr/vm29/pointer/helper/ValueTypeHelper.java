@@ -235,11 +235,6 @@ public class ValueTypeHelper {
 		}
 
 		@Override
-		public boolean isJ9ClassAPrimitiveValueType(J9ClassPointer clazz) throws CorruptDataException {
-			return clazz.classFlags().allBitsIn(J9JavaClassFlags.J9ClassIsPrimitiveValueType);
-		}
-
-		@Override
 		public boolean isFieldInClassFlattened(J9ClassPointer clazz, J9ROMFieldShapePointer fieldShape) throws CorruptDataException {
 			boolean result = false;
 
@@ -404,17 +399,6 @@ public class ValueTypeHelper {
 	 * @throws CorruptDataException
 	 */
 	public boolean isJ9ClassAValueType(J9ClassPointer clazz) throws CorruptDataException {
-		return false;
-	}
-
-	/**
-	 * Queries if J9Class is a primitive value type
-	 *
-	 * @param clazz clazz to query
-	 * @return true if class is a primitive value type, false otherwise
-	 * @throws CorruptDataException
-	 */
-	public boolean isJ9ClassAPrimitiveValueType(J9ClassPointer clazz) throws CorruptDataException {
 		return false;
 	}
 
