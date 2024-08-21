@@ -363,7 +363,7 @@ J9::Z::PrivateLinkage::mapCompactedStack(TR::ResolvedMethodSymbol * method)
       if (localCursor->getGCMapIndex() >= 0)
          {
          TR_IGNode *igNode;
-         if (igNode = cg()->getLocalsIG()->getIGNodeForEntity(localCursor))
+         if ((igNode = cg()->getLocalsIG()->getIGNodeForEntity(localCursor)))
             {
             IGNodeColour colour = igNode->getColour();
 
@@ -448,7 +448,7 @@ J9::Z::PrivateLinkage::mapCompactedStack(TR::ResolvedMethodSymbol * method)
       if (localCursor->getGCMapIndex() < 0)
          {
          TR_IGNode *igNode;
-         if (igNode = cg()->getLocalsIG()->getIGNodeForEntity(localCursor))
+         if ((igNode = cg()->getLocalsIG()->getIGNodeForEntity(localCursor)))
             {
             IGNodeColour colour = igNode->getColour();
 
@@ -521,7 +521,7 @@ J9::Z::PrivateLinkage::mapCompactedStack(TR::ResolvedMethodSymbol * method)
       if (localCursor->getGCMapIndex() < 0)
          {
          TR_IGNode *igNode;
-         if (igNode = cg()->getLocalsIG()->getIGNodeForEntity(localCursor))
+         if ((igNode = cg()->getLocalsIG()->getIGNodeForEntity(localCursor)))
             {
             IGNodeColour colour = igNode->getColour();
 
@@ -3119,6 +3119,8 @@ J9::Z::PrivateLinkage::addSpecialRegDepsForBuildArgs(TR::Node * callNode, TR::Re
       case TR::java_lang_invoke_ComputedCalls_dispatchVirtual:
       case TR::com_ibm_jit_JITHelpers_dispatchVirtual:
          specialArgReg = getVTableIndexArgumentRegister();
+         break;
+      default:
          break;
       }
 
