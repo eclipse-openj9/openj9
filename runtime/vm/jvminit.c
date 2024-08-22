@@ -7096,6 +7096,120 @@ computeG1HeapRegionSize(size_t maxHeapSize)
 	return result;
 }
 
+int stackdepth = 0;
+UDATA maxchunksize = 0;
+char* repository = NULL;
+
+uintptr_t getUDATAValue(char *option, uintptr_t *outputValue)
+{
+	char buffer[256];
+	int count = 0;
+	size_t optionLength = strlen(option);
+
+	/* make sure not to buffer overflow */
+	if (optionLength > (256 - 1)) {
+		return -1;
+	}
+
+	while (TRUE) {
+		char current = option[count];
+		if (('0' <= current) && ('9' >= current)) {
+			buffer[count] = current;
+		} else {
+			break;
+		}
+		count += 1;
+	}
+	buffer[count] = '\0';
+	*outputValue = (uintptr_t) atoi(buffer);
+	return count;
+}
+
+
+BOOLEAN getUDATAMemoryValue(char *option, uintptr_t *convertedValue) {
+	size_t count = 0;
+	size_t optionLength = strlen(option);
+	uintptr_t actualValue = 0;
+
+	count = getUDATAValue(option, &actualValue);
+
+	/* if there was not at least one numeric value return failure */
+	if (count < 1) {
+		return FALSE;
+	}
+
+	/* if there is more than one character after the last numeric value
+	then this is a malformed option */
+	if (optionLength > (count + 1)) {
+		return FALSE;
+	}
+	switch (option[count]) {
+	case 'm':
+	case 'M':
+		/* intentional fall through */
+		actualValue *= 1024 * 1024;
+		break;
+	case 'g':
+	case 'G':
+		/* intentional fall through */
+		actualValue *= 1024 * 1024 * 1024;
+		break;
+	case 'k':
+	case 'K':
+		/* intentional fall through */
+		actualValue *= 1024;
+		break;
+	}
+	*convertedValue = actualValue;
+	return TRUE;
+}
+
+void initializeJFRFromOptions(J9JavaVM* vm, char* jfroptionBuffer, UDATA bufferSize) {
+	char* jfrlogBufferPtr = NULL;
+	char* key = NULL;
+	jfrlogBufferPtr = jfroptionBuffer;
+	while('\0' != *jfrlogBufferPtr) {
+		key = strUpToDelimiter(&jfrlogBufferPtr, '=');
+		if(strcmp(key, "maxchunksize") == 0) {
+			if('\0' != *jfrlogBufferPtr) {
+				if(!getUDATAMemoryValue(jfrlogBufferPtr, &maxchunksize)) {
+					maxchunksize = 0;
+				}
+			}
+		}
+		else if(strcmp(key, "stackdepth") == 0) {
+			if('\0' != *jfrlogBufferPtr) {
+				stackdepth = atoi(jfrlogBufferPtr);
+			}
+		}
+		else if(strcmp(key, "repository") == 0) {
+			if('\0' != *jfrlogBufferPtr) {
+				repository = jfrlogBufferPtr;
+			}
+		}
+		jfrlogBufferPtr += strlen(jfrlogBufferPtr) + 1;
+	}
+}
+void initializeJFRoptions(J9JavaVM* vm, IDATA jfroptionIndex, J9VMInitArgs* args) {
+	char* jfroptionBuffer = NULL;
+	UDATA bufferSize = 128;
+	PORT_ACCESS_FROM_JAVAVM(vm);
+
+	do {
+		bufferSize *= 2;
+		j9mem_free_memory(jfroptionBuffer);
+		jfroptionBuffer = (char*) j9mem_allocate_memory(bufferSize, OMRMEM_CATEGORY_VM);
+		if (NULL == jfroptionBuffer) {
+			return;
+		}
+	} while (OPTION_OUTOFRANGE == GET_OPTION_VALUES_ARGS(args, jfroptionIndex, '=', ',', &jfroptionBuffer, bufferSize));
+
+	initializeJFRFromOptions(vm, jfroptionBuffer, bufferSize);
+
+	j9mem_free_memory(jfroptionBuffer);
+
+}
+
 static UDATA
 protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 {
@@ -7705,6 +7819,64 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 	TRIGGER_J9HOOK_VM_STARTED(vm->hookInterface, env);
 
 	env->gpProtected = FALSE;
+
+	{
+		J9VMInitArgs* args = vm->vmArgsArray;
+		JNIEnv *env1 = (JNIEnv*)env;
+		IDATA flightRecorder1 = FIND_AND_CONSUME_ARG(args, OPTIONAL_LIST_MATCH_USING_EQUALS, VMOPT_XXFLIGHTRECORDEROPTIONS, NULL);
+		if(flightRecorder1 >= 0) {
+			initializeJFRoptions(vm, flightRecorder1, args);
+			jboolean verbose = JNI_FALSE;
+			jstring repositoryPath = NULL;
+			jstring dumpPath = NULL;
+			jobject stackDepth = NULL;
+			jobject globalBufferCount = NULL;
+			jobject globalBufferSize = NULL;
+			jobject threadBufferSize = NULL;
+			jobject memorySize = NULL;
+			jobject maxChunkSize = NULL;
+			jobject sampleThreads = NULL;
+
+			jclass dcmdConfigureClass = (*env1)->FindClass(env1,"jdk/jfr/internal/dcmd/DCmdConfigure");
+			if (dcmdConfigureClass != NULL) {
+				jmethodID executeMethod = (*env1)->GetMethodID(env1,dcmdConfigureClass, "execute", "(ZLjava/lang/String;Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Long;Ljava/lang/Boolean;)[Ljava/lang/String;");
+				if (executeMethod != NULL) {
+					if(maxchunksize >= 1048576){
+						maxChunkSize = (*env1)->NewObject(env1, (*env1)->FindClass(env1, "java/lang/Long"), (*env1)->GetMethodID(env1, (*env1)->FindClass(env1, "java/lang/Long"), "<init>", "(J)V"), maxchunksize);
+					}
+					if(stackdepth <= 2048){
+						stackDepth = (*env1)->NewObject(env1, (*env1)->FindClass(env1, "java/lang/Integer"), (*env1)->GetMethodID(env1, (*env1)->FindClass(env1, "java/lang/Integer"), "<init>", "(I)V"), stackdepth);
+					}
+					if(repository != NULL){
+						repositoryPath = (*env1)->NewStringUTF(env1,repository);
+					}
+					jmethodID constructor = (*env1)->GetMethodID(env1,dcmdConfigureClass, "<init>", "()V");
+					jobject dcmdConfigureInstance = (*env1)->NewObject(env1,dcmdConfigureClass, constructor);
+					jobjectArray stringArray = (jobjectArray)(*env1)->CallObjectMethod(env1, dcmdConfigureInstance, executeMethod,
+												verbose,
+												repositoryPath,
+												dumpPath,
+												stackDepth,
+												globalBufferCount,
+												globalBufferSize,
+												threadBufferSize,
+												memorySize,
+												maxChunkSize,
+												sampleThreads);
+
+					if (stringArray != NULL) {
+						jsize arrayLength = (*env1)->GetArrayLength(env1, stringArray);
+						for (jsize i = 0; i < arrayLength; i++) {
+							jstring stringElement = (jstring)(*env1)->GetObjectArrayElement(env1, stringArray, i);
+							const char *rawString = (*env1)->GetStringUTFChars(env1, stringElement, 0);
+							j9tty_printf(PORTLIB, "%s\n", rawString);
+							(*env1)->ReleaseStringUTFChars(env1, stringElement, rawString);
+						}
+					}
+				}
+			}
+		}
+	}
 
 #ifdef J9OS_I5
 	/* debug code */

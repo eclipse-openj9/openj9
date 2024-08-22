@@ -585,6 +585,7 @@ enum INIT_STAGE {
 
 #define VMOPT_XXFLIGHTRECORDER "-XX:+FlightRecorder"
 #define VMOPT_XXNOFLIGHTRECORDER "-XX:-FlightRecorder"
+#define VMOPT_XXFLIGHTRECORDEROPTIONS "-XX:FlightRecorderOptions"
 
 #define VMOPT_XXCONTINUATIONCACHE "-XX:ContinuationCache:"
 
