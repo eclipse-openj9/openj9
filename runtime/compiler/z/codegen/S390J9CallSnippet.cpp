@@ -201,7 +201,7 @@ TR::S390J9CallSnippet::generateInvokeExactJ2IThunk(TR::Node * callNode, int32_t 
       *(uint32_t *) cursor = 0xe3000006 + finalCallLength + (rEP << 12) + (rEP << 20);  // LG      rEP,8(,rEP)
       cursor += 4;
       *(uint16_t *) cursor = 0x0004;
-      cursor += 2;sizeof(int16_t);
+      cursor += sizeof(int16_t);
       }
    else
       {
