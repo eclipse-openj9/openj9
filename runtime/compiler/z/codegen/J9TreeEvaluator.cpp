@@ -5304,6 +5304,8 @@ J9::Z::TreeEvaluator::DIVCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          case TR::irem:
             iDivRemGenericEvaluator(node->getFirstChild(), cg, false, divisorMr);
             break;
+         default:
+            break;
          }
       divisorMr->stopUsingMemRefRegister(cg);
       }
@@ -11647,6 +11649,8 @@ J9::Z::TreeEvaluator::VMinlineCallEvaluator(TR::Node * node, bool indirect, TR::
             callWasInlined = inlineIsAssignableFrom(node, cg);
             break;
             }
+         default:
+            break;
          }
       }
 
@@ -12457,6 +12461,8 @@ J9::Z::TreeEvaluator::inlineAtomicOps(TR::Node *node, TR::CodeGenerator *cg, int
          delta = (int64_t)-1;
          break;
          }
+      default:
+         break;
       }
 
    //Determine the offset of the value field
@@ -12778,6 +12784,8 @@ J9::Z::TreeEvaluator::inlineAtomicFieldUpdater(TR::Node *node, TR::CodeGenerator
          isArgConstant = true;
       case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_addAndGet:
          isGetAndOp = false;
+         break;
+      default:
          break;
       }
 

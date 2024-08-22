@@ -3120,6 +3120,8 @@ J9::Z::PrivateLinkage::addSpecialRegDepsForBuildArgs(TR::Node * callNode, TR::Re
       case TR::com_ibm_jit_JITHelpers_dispatchVirtual:
          specialArgReg = getVTableIndexArgumentRegister();
          break;
+      default:
+         break;
       }
 
    if (specialArgReg != TR::RealRegister::NoReg)
