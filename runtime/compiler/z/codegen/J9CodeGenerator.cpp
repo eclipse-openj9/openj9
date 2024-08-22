@@ -3263,9 +3263,9 @@ J9::Z::CodeGenerator::checkFieldAlignmentForAtomicLong()
    if (!classBlock)
       return false;
 
-   char* fieldName = "value";
+   const char * fieldName = "value";
    int32_t fieldNameLen = 5;
-   char * fieldSig = "J";
+   const char * fieldSig = "J";
    int32_t fieldSigLen = 1;
    int32_t intOrBoolOffset = self()->fe()->getObjectHeaderSizeInBytes() + self()->fej9()->getInstanceFieldOffset(classBlock, fieldName, fieldNameLen, fieldSig, fieldSigLen);
    return (intOrBoolOffset & 0x3) == 0;
