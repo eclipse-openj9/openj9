@@ -210,7 +210,7 @@ TraceEntry=Trc_JCL_com_ibm_oti_shared_getCachedToken_Entry Overhead=1 Level=1 Te
 TraceExit=Trc_JCL_com_ibm_oti_shared_getCachedToken_ExitFound Overhead=1 Level=1 Template="JCL: com.ibm.oti.shared getCachedToken: Exiting with found cached token"
 TraceExit=Trc_JCL_com_ibm_oti_shared_getCachedToken_ExitNull Overhead=1 Level=1 Template="JCL: com.ibm.oti.shared getCachedToken: Exiting with NULL"
 
-TraceEntry=Trc_JCL_com_ibm_oti_shared_getCachedURL_Entry Overhead=1 Level=2 Template="JCL: com.ibm.oti.shared getCachedURL: Entering for helperID=%d, cpeType=%d"
+TraceEntry=Trc_JCL_com_ibm_oti_shared_getCachedURL_Entry Obsolete Overhead=1 Level=2 Template="JCL: com.ibm.oti.shared getCachedURL: Entering for helperID=%d, cpeType=%d"
 TraceExit=Trc_JCL_com_ibm_oti_shared_getCachedURL_ExitFound Overhead=1 Level=2 Template="JCL: com.ibm.oti.shared getCachedURL: Exiting with found cached URL"
 TraceExit=Trc_JCL_com_ibm_oti_shared_getCachedURL_ExitNull Overhead=1 Level=2 Template="JCL: com.ibm.oti.shared getCachedURL: Exiting with NULL"
 
@@ -245,7 +245,7 @@ TraceExit=Trc_JCL_com_ibm_oti_shared_releaseStringPair_Exit Obsolete Overhead=1 
 
 TraceEntry=Trc_JCL_com_ibm_oti_shared_urlHashEqualFn_Entry Noenv Overhead=1 Level=6 Template="JCL: com.ibm.oti.shared urlHashEqualFn: Entering with left=%p, right=%p"
 TraceExit=Trc_JCL_com_ibm_oti_shared_urlHashEqualFn_Exit1 Noenv Overhead=1 Level=6 Template="JCL: com.ibm.oti.shared urlHashEqualFn: Exiting as helper IDs don't match"
-TraceExit=Trc_JCL_com_ibm_oti_shared_urlHashEqualFn_Exit2 Noenv Overhead=1 Level=6 Template="JCL: com.ibm.oti.shared urlHashEqualFn: Exiting as cpeTypes don't match"
+TraceExit=Trc_JCL_com_ibm_oti_shared_urlHashEqualFn_Exit2 Obsolete Noenv Overhead=1 Level=6 Template="JCL: com.ibm.oti.shared urlHashEqualFn: Exiting as cpeTypes don't match"
 TraceExit=Trc_JCL_com_ibm_oti_shared_urlHashEqualFn_Exit3 Noenv Overhead=1 Level=6 Template="JCL: com.ibm.oti.shared urlHashEqualFn: Exiting as partition lengths don't match"
 TraceExit=Trc_JCL_com_ibm_oti_shared_urlHashEqualFn_Exit4 Noenv Overhead=1 Level=6 Template="JCL: com.ibm.oti.shared urlHashEqualFn: Exiting as partitions don't match"
 TraceExit=Trc_JCL_com_ibm_oti_shared_urlHashEqualFn_ExitResult Noenv Overhead=1 Level=6 Template="JCL: com.ibm.oti.shared urlHashEqualFn: Exiting with result=%d"
@@ -711,3 +711,5 @@ TraceEvent=Trc_JCL_memoryManagement_verifyMemoryUsageAfterGC_memoryUsage Test No
 TraceExit=Trc_JCL_com_ibm_oti_shared_getCpeTypeForProtocol_ExitFail1 Noenv Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared getCpeTypeForProtocol: Protocol is NULL"
 TraceExit=Trc_JCL_com_ibm_oti_shared_getCpeTypeForProtocol_ExitFail2 Noenv Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared getCpeTypeForProtocol: Call to correctURLPath failed"
 TraceExit=Trc_JCL_com_ibm_oti_shared_getCpeTypeForProtocol_ExitFail3 Noenv Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared getCpeTypeForProtocol: Attempt to determine path type resulted in error code %d"
+
+TraceEntry=Trc_JCL_com_ibm_oti_shared_getCachedURL_Entry_1 Overhead=1 Level=2 Template="JCL: com.ibm.oti.shared getCachedURL: Entering for helperID=%d"
