@@ -362,8 +362,8 @@ J9::Z::PrivateLinkage::mapCompactedStack(TR::ResolvedMethodSymbol * method)
       {
       if (localCursor->getGCMapIndex() >= 0)
          {
-         TR_IGNode *igNode;
-         if (igNode = cg()->getLocalsIG()->getIGNodeForEntity(localCursor))
+         TR_IGNode *igNode = cg()->getLocalsIG()->getIGNodeForEntity(localCursor);
+         if (NULL != igNode)
             {
             IGNodeColour colour = igNode->getColour();
 
@@ -447,8 +447,8 @@ J9::Z::PrivateLinkage::mapCompactedStack(TR::ResolvedMethodSymbol * method)
    for (localCursor = automaticIterator.getFirst(); localCursor; localCursor = automaticIterator.getNext())
       if (localCursor->getGCMapIndex() < 0)
          {
-         TR_IGNode *igNode;
-         if (igNode = cg()->getLocalsIG()->getIGNodeForEntity(localCursor))
+         TR_IGNode *igNode = cg()->getLocalsIG()->getIGNodeForEntity(localCursor);
+         if (NULL != igNode)
             {
             IGNodeColour colour = igNode->getColour();
 
@@ -520,8 +520,8 @@ J9::Z::PrivateLinkage::mapCompactedStack(TR::ResolvedMethodSymbol * method)
    for (localCursor = automaticIterator.getFirst(); localCursor; localCursor = automaticIterator.getNext())
       if (localCursor->getGCMapIndex() < 0)
          {
-         TR_IGNode *igNode;
-         if (igNode = cg()->getLocalsIG()->getIGNodeForEntity(localCursor))
+         TR_IGNode *igNode = igNode = cg()->getLocalsIG()->getIGNodeForEntity(localCursor);
+         if (NULL != igNode)
             {
             IGNodeColour colour = igNode->getColour();
 
