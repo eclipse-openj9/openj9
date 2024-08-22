@@ -3032,6 +3032,17 @@ J9::Options::fePostProcessAOT(void * base)
 bool
 J9::Options::isFSDNeeded(J9JavaVM *javaVM, J9HookInterface **vmHooks)
    {
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+   J9VMThread * vmThread = javaVM->internalVMFunctions->currentVMThread(javaVM);
+   if (javaVM->internalVMFunctions->isCheckpointAllowed(vmThread))
+      {
+      if (javaVM->internalVMFunctions->isDebugOnRestoreEnabled(vmThread))
+         {
+         return false;
+         }
+      }
+#endif
+
    return
 #if defined(J9VM_JIT_FULL_SPEED_DEBUG)
       (javaVM->requiredDebugAttributes & J9VM_DEBUG_ATTRIBUTE_CAN_ACCESS_LOCALS) ||
