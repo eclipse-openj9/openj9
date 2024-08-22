@@ -5613,6 +5613,9 @@ typedef struct JFRState {
 	IDATA blobFileDescriptor;
 	void *jfrWriter;
 	UDATA jfrChunkCount;
+	void *constantEvents;
+	BOOLEAN isConstantEventsInitialized;
+	omrthread_monitor_t isConstantEventsInitializedMutex;
 } JFRState;
 
 typedef struct J9ReflectFunctionTable {

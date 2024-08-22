@@ -195,6 +195,20 @@ struct StackTraceEntry {
 	StackTraceEntry *next;
 };
 
+struct JVMInformationEntry {
+	const char *jvmName;
+	const char *jvmVersion;
+	char *jvmArguments;
+	const char *jvmFlags;
+	const char *javaArguments;
+	I_64 jvmStartTime;
+	I_64 pid;
+};
+
+struct JFRConstantEvents {
+	JVMInformationEntry JVMInfoEntry;
+};
+
 class VM_JFRConstantPoolTypes {
 		/*
 	 * Data members
@@ -449,6 +463,22 @@ done:
 		return;
 	}
 
+	/**
+	* Helper to get the value of a system property.
+	*
+	* @param vm[in] the J9JavaVM
+	* @param propName[in] the system property name
+	*/
+	static const char *getSystemProp(J9JavaVM *vm, const char *propName) {
+		J9VMSystemProperty *jvmInfoProperty = NULL;
+		const char *value = "";
+		UDATA getPropertyResult = vm->internalVMFunctions->getSystemProperty(vm, propName, &jvmInfoProperty);
+		if (J9SYSPROP_ERROR_NOT_FOUND != getPropertyResult) {
+			value = jvmInfoProperty->value;
+		}
+		return value;
+	}
+
 protected:
 
 public:
@@ -667,6 +697,65 @@ public:
 
 done:
 		return index;
+	}
+
+	/**
+	* Initialize JVMInformationEntry.
+	*
+	* @param vm[in] the J9JavaVM
+	*/
+	static void initializeJVMInformationEvent(J9JavaVM *vm) {
+		PORT_ACCESS_FROM_JAVAVM(vm);
+		/* Initialize JVM Information */
+		JVMInformationEntry *jvmInformation = &(((JFRConstantEvents *)(vm->jfrState.constantEvents))->JVMInfoEntry);
+
+		/* Set JVM name */
+		jvmInformation->jvmName = getSystemProp(vm, "java.vm.name");
+
+		/* Set JVM version */
+		jvmInformation->jvmVersion = getSystemProp(vm, "java.vm.info");
+
+		/* Set Java arguments */
+		jvmInformation->javaArguments = getSystemProp(vm, "sun.java.command");
+
+		/* Set JVM arguments by concatenating actualVMArgs */
+		JavaVMInitArgs *vmArgs = vm->vmArgsArray->actualVMArgs;
+		UDATA vmArgsLen = vmArgs->nOptions;
+		for (IDATA i = 0; i < vmArgs->nOptions; i++) {
+			vmArgsLen += strlen(vmArgs->options[i].optionString);
+		}
+
+		jvmInformation->jvmArguments = (char *)j9mem_allocate_memory(sizeof(char) * vmArgsLen, OMRMEM_CATEGORY_VM);
+		char *cursor = jvmInformation->jvmArguments;
+
+		for (IDATA i = 0; i < vmArgs->nOptions; i++) {
+			UDATA len = strlen(vmArgs->options[i].optionString);
+			memcpy(cursor, vmArgs->options[i].optionString, len);
+			cursor += len;
+
+			if (i == vmArgs->nOptions - 1) {
+				*cursor = '\0';
+			} else {
+				*cursor = ' ';
+			}
+			cursor += 1;
+		}
+
+		/* Ignoring jvmFlags for now */
+		jvmInformation->jvmFlags = NULL;
+		jvmInformation->jvmStartTime = vm->j9ras->startTimeMillis;
+		jvmInformation->pid = vm->j9ras->pid;
+	}
+
+	/**
+	* Free JVMInfoEntry.
+	*
+	* @param vm[in] the J9JavaVM
+	*/
+	static void freeJVMInformationEvent(J9JavaVM *vm)
+	{
+		PORT_ACCESS_FROM_JAVAVM(vm);
+		j9mem_free_memory(((JFRConstantEvents *)(vm->jfrState.constantEvents))->JVMInfoEntry.jvmArguments);
 	}
 
 	VM_JFRConstantPoolTypes(J9VMThread *currentThread)
