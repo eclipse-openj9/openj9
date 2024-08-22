@@ -219,6 +219,33 @@ class VM_BufferWriter {
 	}
 
 	void
+	writeLEB128PaddedU72(U_8 *cursor, U_64 val)
+	{
+		U_8 *old = _cursor;
+		_cursor = cursor;
+		writeLEB128PaddedU72(val);
+		_cursor = old;
+	}
+
+	void
+	writeLEB128PaddedU72(U_64 val)
+	{
+		U_64 newVal = val;
+		if (!_isLE) {
+			newVal = byteSwap(val);
+		}
+		writeU8((newVal & 0x7F) | 0x80);
+		writeU8(((newVal >> 7) & 0x7F) | 0x80);
+		writeU8(((newVal >> 14) & 0x7F) | 0x80);
+		writeU8(((newVal >> 21) & 0x7F) | 0x80);
+		writeU8(((newVal >> 28) & 0x7F) | 0x80);
+		writeU8(((newVal >> 35) & 0x7F) | 0x80);
+		writeU8(((newVal >> 42) & 0x7F) | 0x80);
+		writeU8(((newVal >> 49) & 0x7F) | 0x80);
+		writeU8(((newVal >> 56) & 0x7F));
+	}
+
+	void
 	writeLEB128PaddedU64(U_8 *cursor, U_64 val)
 	{
 		U_8 *old = _cursor;
@@ -328,7 +355,12 @@ class VM_BufferWriter {
 
 		if (J9_ARE_ALL_BITS_SET(*start, 0x80)) {
 			start++;
-			val |= (U_64)(*start & 0X7F) << 59;
+			val |= (U_64)(*start & 0X7F) << 49;
+		}
+
+		if (J9_ARE_ALL_BITS_SET(*start, 0x80)) {
+			start++;
+			val |= (U_64)(*start & 0X7F) << 56;
 		}
 		if (!_isLE) {
 			val = byteSwap(val);

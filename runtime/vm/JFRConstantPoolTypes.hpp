@@ -180,6 +180,7 @@ struct ThreadEndEntry {
 struct ThreadSleepEntry {
 	I_64 time;
 	I_64 duration;
+	I_64 sleepTime;
 	U_32 threadIndex;
 	U_32 eventThreadIndex;
 	U_32 stackTraceIndex;
@@ -459,7 +460,7 @@ public:
 
 	U_32 addThreadEndEntry(J9JFREvent *threadEndData);
 
-	U_32 addThreadSleepEntry(J9JFRThreadSleep *threadSleepData);
+	U_32 addThreadSleepEntry(J9JFRThreadSlept *threadSleepData);
 
 	J9Pool *getExecutionSampleTable()
 	{
@@ -627,7 +628,7 @@ public:
 				addThreadEndEntry((J9JFREvent*) event);
 				break;
 			case J9JFR_EVENT_TYPE_THREAD_SLEEP:
-				addThreadSleepEntry((J9JFRThreadSleep*) event);
+				addThreadSleepEntry((J9JFRThreadSlept*) event);
 				break;
 			default:
 				Assert_VM_unreachable();

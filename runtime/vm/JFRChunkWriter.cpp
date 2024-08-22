@@ -55,8 +55,8 @@ VM_JFRChunkWriter::writeJFRHeader()
 	/* start ticks */
 	_bufferWriter->writeU64(0); // 48
 
-	/* ticks per second */
-	_bufferWriter->writeU64(1); // 56 // TODO ???
+	/* ticks per second - 1000_000_000 ticks per second means that we are reporting nanosecond timestamps */
+	_bufferWriter->writeU64(1000000000); // 56
 
 	/* file state or generation */
 	_bufferWriter->writeU8(0); // 64 // TODO ???

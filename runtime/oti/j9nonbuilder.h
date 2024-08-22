@@ -393,12 +393,13 @@ typedef struct J9JFRThreadStart {
 #define J9JFRTHREADSTART_STACKTRACE(jfrEvent) ((UDATA*)(((J9JFRThreadStart*)(jfrEvent)) + 1))
 
 /* Variable-size structure - stackTraceSize worth of UDATA follow the fixed portion */
-typedef struct J9JFRThreadSleep {
+typedef struct J9JFRThreadSlept {
 	J9JFR_EVENT_WITH_STACKTRACE_FIELDS
 	I_64 time;
-} J9JFRThreadSleep;
+	I_64 duration;
+} J9JFRThreadSlept;
 
-#define J9JFRTHREADSLEEP_STACKTRACE(jfrEvent) ((UDATA*)(((J9JFRThreadSleep*)(jfrEvent)) + 1))
+#define J9JFRTHREADSLEPT_STACKTRACE(jfrEvent) ((UDATA*)(((J9JFRThreadSlept*)(jfrEvent)) + 1))
 
 #endif /* defined(J9VM_OPT_JFR) */
 

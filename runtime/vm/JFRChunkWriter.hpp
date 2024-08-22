@@ -408,7 +408,7 @@ done:
 		/* write start time */
 		_bufferWriter->writeLEB128(entry->time);
 
-		/* write duration time */
+		/* write duration time which is always in ticks, in our case nanos */
 		_bufferWriter->writeLEB128(entry->duration);
 
 		/* write event thread index */
@@ -417,11 +417,8 @@ done:
 		/* stacktrace index */
 		_bufferWriter->writeLEB128(entry->stackTraceIndex);
 
-		/* write thread index */
-		_bufferWriter->writeLEB128(entry->threadIndex);
-
-		/* write time */
-		_bufferWriter->writeLEB128(entry->duration);
+		/* write sleep time which is always in millis */
+		_bufferWriter->writeLEB128(entry->sleepTime/1000000);
 
 		/* write size */
 		_bufferWriter->writeLEB128PaddedU32(dataStart, _bufferWriter->getCursor() - dataStart);
