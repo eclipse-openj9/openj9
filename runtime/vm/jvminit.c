@@ -4380,6 +4380,20 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 			}
 		}
 	}
+	{
+		IDATA jfrConfigOptionIndex = FIND_AND_CONSUME_VMARG(STARTSWITH_MATCH, VMOPT_XXOPENJ9EXPERIMENTALFLIGHTRECORDEROPTIONS, NULL);
+		if (0 <= jfrConfigOptionIndex) {
+			char* jfrConfigOptionBuffer = NULL;
+			if (0 <= FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, VMOPT_XXOPENJ9EXPERIMENTALFLIGHTRECORDEROPTIONS_EQUALS, NULL)) {
+				GET_OPTION_VALUE(jfrConfigOptionIndex, '=', &jfrConfigOptionBuffer);
+			} else if (0 <= FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, VMOPT_XXOPENJ9EXPERIMENTALFLIGHTRECORDEROPTIONS_COLON, NULL)) {
+				GET_OPTION_OPTION(jfrConfigOptionIndex, ':', ':', &jfrConfigOptionBuffer);
+			}
+			if (NULL != jfrConfigOptionBuffer) {
+				vm->jfrState.jfrConfigCMDLineOption = jfrConfigOptionBuffer;
+			}
+		}
+	}
 #endif /* defined(J9VM_OPT_JFR) */
 
 #if JAVA_SPEC_VERSION >= 24

@@ -5932,6 +5932,7 @@ typedef struct J9VMThread {
 typedef struct JFRState {
 	char *jfrFileName;
 	char *jfrCMDLineOption;
+	char *jfrConfigCMDLineOption;
 	U_8 *metaDataBlobFile;
 	UDATA metaDataBlobFileSize;
 	IDATA blobFileDescriptor;

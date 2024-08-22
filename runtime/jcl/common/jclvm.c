@@ -581,4 +581,15 @@ Java_com_ibm_oti_vm_VM_getjfrCMDLineOption(JNIEnv *env, jclass clazz)
 	}
 	return jfrOption;
 }
+
+jstring JNICALL
+Java_com_ibm_oti_vm_VM_getjfrConfigCMDLineOption(JNIEnv *env, jclass clazz)
+{
+	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
+	jstring jfrConfigOption = NULL;
+	if (NULL != javaVM->jfrState.jfrConfigCMDLineOption) {
+		jfrConfigOption = (*env)->NewStringUTF(env, javaVM->jfrState.jfrConfigCMDLineOption);
+	}
+	return jfrConfigOption;
+}
 #endif /* defined(J9VM_OPT_JFR) */
