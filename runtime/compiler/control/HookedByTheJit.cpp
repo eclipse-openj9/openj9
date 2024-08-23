@@ -4268,61 +4268,6 @@ static void jitHookAboutToRunMain(J9HookInterface * * hook, UDATA eventNum, void
    }
 
 
-#if defined(J9VM_INTERP_PROFILING_BYTECODES)
-// Below, options and jitConfig are guaranteed to be not null
-void printIprofilerStats(TR::Options *options, J9JITConfig * jitConfig, TR_IProfiler *iProfiler)
-   {
-   if (!options->getOption(TR_DisableInterpreterProfiling))
-      {
-      PORT_ACCESS_FROM_JITCONFIG(jitConfig);
-      if (TR::Options::getCmdLineOptions()->getOption(TR_VerboseInterpreterProfiling))
-         {
-         j9tty_printf(PORTLIB, "VM shutdown event received.\n");
-         j9tty_printf(PORTLIB, "Total events: %d\n", TEST_events);
-         j9tty_printf(PORTLIB, "Total records: %d\n", TEST_records);
-         j9tty_printf(PORTLIB, "Total method persistence opportunities: %d\n", TR_IProfiler::_STATS_methodPersistenceAttempts);
-         j9tty_printf(PORTLIB, "Total jitprofile entries: %d\n", TR_IProfiler::_STATS_methodPersisted);
-         j9tty_printf(PORTLIB, "Total IProfiler persistence aborted due to locked entry:                %d\n", TR_IProfiler::_STATS_abortedPersistence);
-         j9tty_printf(PORTLIB, "Total IProfiler persistence failed:                                     %d\n", TR_IProfiler::_STATS_persistError);
-         j9tty_printf(PORTLIB, "Total IProfiler persistence aborted because SCC full:                   %d\n", TR_IProfiler::_STATS_methodNotPersisted_SCCfull);
-         j9tty_printf(PORTLIB, "Total IProfiler persistence aborted because ROM class in not in SCC:    %d\n", TR_IProfiler::_STATS_methodNotPersisted_classNotInSCC);
-         j9tty_printf(PORTLIB, "Total IProfiler persistence aborted due to other reasons:               %d\n", TR_IProfiler::_STATS_methodNotPersisted_other);
-         j9tty_printf(PORTLIB, "Total IProfiler persistence aborted because already stored:             %d\n", TR_IProfiler::_STATS_methodNotPersisted_alreadyStored);
-         j9tty_printf(PORTLIB, "Total IProfiler persistence aborted because nothing needs to be stored: %d\n", TR_IProfiler::_STATS_methodNotPersisted_noEntries);
-         j9tty_printf(PORTLIB, "Total IProfiler persisted delayed:                                      %d\n", TR_IProfiler::_STATS_methodNotPersisted_delayed);
-         j9tty_printf(PORTLIB, "Total records persisted:                        %d\n", TR_IProfiler::_STATS_entriesPersisted);
-         j9tty_printf(PORTLIB, "Total records not persisted_NotInSCC:           %d\n", TR_IProfiler::_STATS_entriesNotPersisted_NotInSCC);
-         j9tty_printf(PORTLIB, "Total records not persisted_unloaded:           %d\n", TR_IProfiler::_STATS_entriesNotPersisted_Unloaded);
-         j9tty_printf(PORTLIB, "Total records not persisted_noInfo in bc table: %d\n", TR_IProfiler::_STATS_entriesNotPersisted_NoInfo);
-         j9tty_printf(PORTLIB, "Total records not persisted_Other:              %d\n", TR_IProfiler::_STATS_entriesNotPersisted_Other);
-         j9tty_printf(PORTLIB, "IP Total Persistent Read Failed Attempts:          %d\n", TR_IProfiler::_STATS_persistedIPReadFail);
-
-         j9tty_printf(PORTLIB, "IP Total Persistent Reads with Bad Data:           %d\n", TR_IProfiler::_STATS_persistedIPReadHadBadData);
-         j9tty_printf(PORTLIB, "IP Total Persistent Read Success:                  %d\n", TR_IProfiler::_STATS_persistedIPReadSuccess);
-         j9tty_printf(PORTLIB, "IP Total Persistent vs Current Data Differ:        %d\n", TR_IProfiler::_STATS_persistedAndCurrentIPDataDiffer);
-         j9tty_printf(PORTLIB, "IP Total Persistent vs Current Data Match:         %d\n", TR_IProfiler::_STATS_persistedAndCurrentIPDataMatch);
-         j9tty_printf(PORTLIB, "IP Total Current Read Fail:                        %d\n", TR_IProfiler::_STATS_currentIPReadFail);
-         j9tty_printf(PORTLIB, "IP Total Current Read Success:                     %d\n", TR_IProfiler::_STATS_currentIPReadSuccess);
-         j9tty_printf(PORTLIB, "IP Total Current Read Bad Data:                    %d\n", TR_IProfiler::_STATS_currentIPReadHadBadData);
-         j9tty_printf(PORTLIB, "Total records read: %d\n", TR_IProfiler::_STATS_IPEntryRead);
-         j9tty_printf(PORTLIB, "Total records choose persistent: %d\n", TR_IProfiler::_STATS_IPEntryChoosePersistent);
-         }
-      if (TR_IProfiler::_STATS_abortedPersistence > 0)
-         {
-         TR_ASSERT(TR_IProfiler::_STATS_methodPersisted / TR_IProfiler::_STATS_abortedPersistence > 20 ||
-            TR_IProfiler::_STATS_methodPersisted < 200,
-            "too many aborted persistence attempts due to locked entries (%d aborted, %d total methods persisted)",
-            TR_IProfiler::_STATS_abortedPersistence, TR_IProfiler::_STATS_methodPersisted);
-         }
-      if (TR::Options::getCmdLineOptions()->getOption(TR_EnableNewAllocationProfiling))
-         iProfiler->printAllocationReport();
-      if (TEST_verbose || TR::Options::getCmdLineOptions()->getOption(TR_VerboseInterpreterProfiling))
-         iProfiler->outputStats();
-      }
-   }
-#endif
-
-
 /// JIT cleanup code
 void JitShutdown(J9JITConfig * jitConfig)
    {
@@ -4365,7 +4310,7 @@ void JitShutdown(J9JITConfig * jitConfig)
    // so the fact that this option is true doesn't mean that IProfiler structures were not allocated
    if (options /* && !options->getOption(TR_DisableInterpreterProfiling) */ && iProfiler)
       {
-      printIprofilerStats(options, jitConfig, iProfiler);
+      printIprofilerStats(options, jitConfig, iProfiler, "Shutdown");
       // Prevent the interpreter to accumulate more info
       // stopInterpreterProfiling is stronger than turnOff... because it prevents the reactivation
       // by setting TR_DisableInterpreterProfiling option to false
@@ -5168,7 +5113,12 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
    if (IProfilerOffSinceStartup &&
        !TR::Options::getCmdLineOptions()->getOption(TR_DisableInterpreterProfiling) &&
        TR::Options::getCmdLineOptions()->getOption(TR_NoIProfilerDuringStartupPhase) &&
-       interpreterProfilingState == IPROFILING_STATE_OFF)
+       interpreterProfilingState == IPROFILING_STATE_OFF
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+       && (!jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(compInfo->getSamplerThread())
+           || compInfo->getCRRuntime()->allowStateChange())
+#endif
+      )
       {
        // Should we turn it ON?
       TR_IProfiler *iProfiler = TR_J9VMBase::get(jitConfig, 0)->getIProfiler();
@@ -5231,7 +5181,12 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
                if (compInfo->isInZOSSupervisorState())
                   waitTime = waitTime * 2;
 #endif
-               if (crtElapsedTime - lastTimeInStartupMode > waitTime)
+               if (crtElapsedTime - lastTimeInStartupMode > waitTime
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+                   && (!jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(compInfo->getSamplerThread())
+                       || compInfo->getCRRuntime()->allowStateChange())
+#endif
+                  )
                   {
                   javaVM->internalVMFunctions->jvmPhaseChange(javaVM, J9VM_PHASE_NOT_STARTUP);
                   }
@@ -5246,8 +5201,15 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
             // Exit startup when the 'endOfStartup' arrives
             // The case where the 'endOfStartup' hint arrived, but don't want to follow strictly
             // is implemented above in the IF block
-            if (persistentInfo->getExternalStartupEndedSignal())
+            if (persistentInfo->getExternalStartupEndedSignal()
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+                && (!jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(compInfo->getSamplerThread())
+                    || compInfo->getCRRuntime()->allowStateChange())
+#endif
+               )
+               {
                javaVM->internalVMFunctions->jvmPhaseChange(javaVM, J9VM_PHASE_NOT_STARTUP);
+               }
             }
          }
       else // javaVM->phase == J9VM_PHASE_EARLY_STARTUP
@@ -5261,14 +5223,42 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
             {
             // Normal gracePeriod rules apply
             if (crtElapsedTime >= (uint64_t)persistentInfo->getClassLoadingPhaseGracePeriod()) // grace period has ended
-               javaVM->internalVMFunctions->jvmPhaseChange(javaVM, (newState == STARTUP_STATE) ? J9VM_PHASE_STARTUP : J9VM_PHASE_NOT_STARTUP);
+               {
+               if (newState == STARTUP_STATE)
+                  {
+                  javaVM->internalVMFunctions->jvmPhaseChange(javaVM, J9VM_PHASE_STARTUP);
+                  }
+               else
+                  {
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+                  if (!jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(compInfo->getSamplerThread())
+                      || compInfo->getCRRuntime()->allowStateChange())
+#endif
+                     {
+                     javaVM->internalVMFunctions->jvmPhaseChange(javaVM, J9VM_PHASE_NOT_STARTUP);
+                     }
+                  }
+               }
             }
          else
             {
             // 'beginningOfStartup' hint was seen
             // If 'endOfStartup' was not seen, move to STARTUP, otherwise, following hints strictly,
             // we have to exit STARTUP
-            javaVM->internalVMFunctions->jvmPhaseChange(javaVM, !persistentInfo->getExternalStartupEndedSignal() ? J9VM_PHASE_STARTUP : J9VM_PHASE_NOT_STARTUP);
+            if (!persistentInfo->getExternalStartupEndedSignal())
+               {
+               javaVM->internalVMFunctions->jvmPhaseChange(javaVM, J9VM_PHASE_STARTUP);
+               }
+            else
+               {
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+               if (!jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(compInfo->getSamplerThread())
+                   || compInfo->getCRRuntime()->allowStateChange())
+#endif
+                  {
+                  javaVM->internalVMFunctions->jvmPhaseChange(javaVM, J9VM_PHASE_NOT_STARTUP);
+                  }
+               }
             }
          }
       if (javaVM->phase == J9VM_PHASE_NOT_STARTUP)
@@ -7760,6 +7750,58 @@ int32_t waitJITServerTermination(J9JITConfig *jitConfig)
 } /* extern "C" */
 
 #if defined(J9VM_INTERP_PROFILING_BYTECODES)
+// Below, options and jitConfig are guaranteed to be not null
+void printIprofilerStats(TR::Options *options, J9JITConfig * jitConfig, TR_IProfiler *iProfiler, const char *event)
+   {
+   if (!options->getOption(TR_DisableInterpreterProfiling))
+      {
+      PORT_ACCESS_FROM_JITCONFIG(jitConfig);
+      if (options->getOption(TR_VerboseInterpreterProfiling))
+         {
+         j9tty_printf(PORTLIB, "VM %s event received.\n", event);
+         j9tty_printf(PORTLIB, "Total events: %d\n", TEST_events);
+         j9tty_printf(PORTLIB, "Total records: %d\n", TEST_records);
+         j9tty_printf(PORTLIB, "Total method persistence opportunities: %d\n", TR_IProfiler::_STATS_methodPersistenceAttempts);
+         j9tty_printf(PORTLIB, "Total jitprofile entries: %d\n", TR_IProfiler::_STATS_methodPersisted);
+         j9tty_printf(PORTLIB, "Total IProfiler persistence aborted due to locked entry:                %d\n", TR_IProfiler::_STATS_abortedPersistence);
+         j9tty_printf(PORTLIB, "Total IProfiler persistence failed:                                     %d\n", TR_IProfiler::_STATS_persistError);
+         j9tty_printf(PORTLIB, "Total IProfiler persistence aborted because SCC full:                   %d\n", TR_IProfiler::_STATS_methodNotPersisted_SCCfull);
+         j9tty_printf(PORTLIB, "Total IProfiler persistence aborted because ROM class in not in SCC:    %d\n", TR_IProfiler::_STATS_methodNotPersisted_classNotInSCC);
+         j9tty_printf(PORTLIB, "Total IProfiler persistence aborted due to other reasons:               %d\n", TR_IProfiler::_STATS_methodNotPersisted_other);
+         j9tty_printf(PORTLIB, "Total IProfiler persistence aborted because already stored:             %d\n", TR_IProfiler::_STATS_methodNotPersisted_alreadyStored);
+         j9tty_printf(PORTLIB, "Total IProfiler persistence aborted because nothing needs to be stored: %d\n", TR_IProfiler::_STATS_methodNotPersisted_noEntries);
+         j9tty_printf(PORTLIB, "Total IProfiler persisted delayed:                                      %d\n", TR_IProfiler::_STATS_methodNotPersisted_delayed);
+         j9tty_printf(PORTLIB, "Total records persisted:                        %d\n", TR_IProfiler::_STATS_entriesPersisted);
+         j9tty_printf(PORTLIB, "Total records not persisted_NotInSCC:           %d\n", TR_IProfiler::_STATS_entriesNotPersisted_NotInSCC);
+         j9tty_printf(PORTLIB, "Total records not persisted_unloaded:           %d\n", TR_IProfiler::_STATS_entriesNotPersisted_Unloaded);
+         j9tty_printf(PORTLIB, "Total records not persisted_noInfo in bc table: %d\n", TR_IProfiler::_STATS_entriesNotPersisted_NoInfo);
+         j9tty_printf(PORTLIB, "Total records not persisted_Other:              %d\n", TR_IProfiler::_STATS_entriesNotPersisted_Other);
+         j9tty_printf(PORTLIB, "IP Total Persistent Read Failed Attempts:          %d\n", TR_IProfiler::_STATS_persistedIPReadFail);
+
+         j9tty_printf(PORTLIB, "IP Total Persistent Reads with Bad Data:           %d\n", TR_IProfiler::_STATS_persistedIPReadHadBadData);
+         j9tty_printf(PORTLIB, "IP Total Persistent Read Success:                  %d\n", TR_IProfiler::_STATS_persistedIPReadSuccess);
+         j9tty_printf(PORTLIB, "IP Total Persistent vs Current Data Differ:        %d\n", TR_IProfiler::_STATS_persistedAndCurrentIPDataDiffer);
+         j9tty_printf(PORTLIB, "IP Total Persistent vs Current Data Match:         %d\n", TR_IProfiler::_STATS_persistedAndCurrentIPDataMatch);
+         j9tty_printf(PORTLIB, "IP Total Current Read Fail:                        %d\n", TR_IProfiler::_STATS_currentIPReadFail);
+         j9tty_printf(PORTLIB, "IP Total Current Read Success:                     %d\n", TR_IProfiler::_STATS_currentIPReadSuccess);
+         j9tty_printf(PORTLIB, "IP Total Current Read Bad Data:                    %d\n", TR_IProfiler::_STATS_currentIPReadHadBadData);
+         j9tty_printf(PORTLIB, "Total records read: %d\n", TR_IProfiler::_STATS_IPEntryRead);
+         j9tty_printf(PORTLIB, "Total records choose persistent: %d\n", TR_IProfiler::_STATS_IPEntryChoosePersistent);
+         }
+      if (TR_IProfiler::_STATS_abortedPersistence > 0)
+         {
+         TR_ASSERT(TR_IProfiler::_STATS_methodPersisted / TR_IProfiler::_STATS_abortedPersistence > 20 ||
+            TR_IProfiler::_STATS_methodPersisted < 200,
+            "too many aborted persistence attempts due to locked entries (%d aborted, %d total methods persisted)",
+            TR_IProfiler::_STATS_abortedPersistence, TR_IProfiler::_STATS_methodPersisted);
+         }
+      if (options->getOption(TR_EnableNewAllocationProfiling))
+         iProfiler->printAllocationReport();
+      if (TEST_verbose || options->getOption(TR_VerboseInterpreterProfiling))
+         iProfiler->outputStats();
+      }
+   }
+
 void turnOffInterpreterProfiling(J9JITConfig *jitConfig)
    {
    // Turn off interpreter profiling

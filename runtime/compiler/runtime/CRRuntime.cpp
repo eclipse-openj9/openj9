@@ -90,7 +90,8 @@ TR::CRRuntime::CRRuntime(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo) 
    _failedComps(),
    _forcedRecomps(),
    _impMethodForCR(),
-   _proactiveCompEnv()
+   _proactiveCompEnv(),
+   _restoreTime(0)
    {
    // TR::CompilationInfo is initialized in the JIT_INITIALIZED bootstrap
    // stage, whereas J9_EXTENDED_RUNTIME_METHOD_TRACE_ENABLED is set in the
@@ -606,7 +607,7 @@ TR::CRRuntime::resumeJITThreadsForRestore(J9VMThread *vmThread)
 void
 TR::CRRuntime::resetStartTime()
    {
-   PORT_ACCESS_FROM_JAVAVM(jitConfig->javaVM);
+   PORT_ACCESS_FROM_JAVAVM(getJITConfig()->javaVM);
    TR::PersistentInfo *persistentInfo = getCompInfo()->getPersistentInfo();
 
    if (TR::Options::isAnyVerboseOptionSet())
@@ -619,6 +620,8 @@ TR::CRRuntime::resetStartTime()
    if (TR::Options::isAnyVerboseOptionSet())
       TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Reset start and elapsed time: startTime=%6u, elapsedTime=%6u",
                                        (uint32_t)persistentInfo->getStartTime(), (uint32_t)persistentInfo->getElapsedTime());
+
+   _restoreTime = persistentInfo->getElapsedTime();
    }
 
 void
@@ -679,6 +682,18 @@ TR::CRRuntime::prepareForCheckpoint()
       }
 
    setReadyForCheckpointRestore();
+
+   char * printPersistentMem = feGetEnv("TR_PrintPersistentMem");
+   if (printPersistentMem)
+      {
+      if (trPersistentMemory)
+         trPersistentMemory->printMemStats();
+      }
+
+   printIprofilerStats(TR::Options::getCmdLineOptions(),
+                       _jitConfig,
+                       TR_J9VMBase::get(_jitConfig, NULL)->getIProfiler(),
+                       "Checkpoint");
    }
 
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
@@ -748,6 +763,13 @@ TR::CRRuntime::recompileMethodsCompiledPreCheckpoint()
       setCRRuntimeThreadLifetimeState(TR_CRRuntimeThreadLifetimeStates::CR_THR_TRIGGER_RECOMP);
       getCRRuntimeMonitor()->notifyAll();
       }
+   }
+
+bool
+TR::CRRuntime::allowStateChange()
+   {
+   TR::PersistentInfo *persistentInfo = getCompInfo()->getPersistentInfo();
+   return (_restoreTime != 0) && ((persistentInfo->getElapsedTime() - _restoreTime) > TR::Options::_delayBeforeStateChange);
    }
 
 void

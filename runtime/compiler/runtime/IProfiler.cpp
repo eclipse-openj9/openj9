@@ -598,7 +598,7 @@ TR_IProfiler::TR_IProfiler(J9JITConfig *jitConfig)
    : _isIProfilingEnabled(true),
      _valueProfileMethod(NULL), _lightHashTableMonitor(0), _allowedToGiveInlinedInformation(true),
      _globalAllocationCount (0), _maxCallFrequency(0), _iprofilerThread(0), _iprofilerOSThread(NULL),
-     _workingBufferTail(NULL), _numOutstandingBuffers(0), _numRequests(1), _numRequestsSkipped(0),
+     _workingBufferTail(NULL), _numOutstandingBuffers(0), _numRequests(1), _numRequestsDropped(0), _numRequestsSkipped(0),
      _numRequestsHandedToIProfilerThread(0), _iprofilerMonitor(NULL),
      _crtProfilingBuffer(NULL), _iprofilerNumRecords(0), _numMethodHashEntries(0),
      _iprofilerThreadLifetimeState(TR_IprofilerThreadLifetimeStates::IPROF_THR_NOT_CREATED)
@@ -2613,6 +2613,7 @@ TR_IProfiler::outputStats()
    if (options && !options->getOption(TR_DisableIProfilerThread))
       {
       fprintf(stderr, "IProfiler: Number of buffers to be processed           =%" OMR_PRIu64 "\n", _numRequests);
+      fprintf(stderr, "IProfiler: Number of buffers to be dropped             =%" OMR_PRIu64 "\n", _numRequestsDropped);
       fprintf(stderr, "IProfiler: Number of buffers discarded                 =%" OMR_PRIu64 "\n", _numRequestsSkipped);
       fprintf(stderr, "IProfiler: Number of buffers handed to iprofiler thread=%" OMR_PRIu64 "\n", _numRequestsHandedToIProfilerThread);
       }
@@ -4186,6 +4187,20 @@ UDATA TR_IProfiler::parseBuffer(J9VMThread * vmThread, const U_8* dataStart, UDA
       return 0;
       }
 
+   J9JavaVM *javaVM = _compInfo->getJITConfig()->javaVM;
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+   if (javaVM->internalVMFunctions->isDebugOnRestoreEnabled(vmThread) && javaVM->internalVMFunctions->isCheckpointAllowed(vmThread))
+      {
+      int32_t dropRate = (int32_t)((((float)(_numRequestsDropped + _numRequestsSkipped)) / ((float)_numRequests)) * 1000);
+      if (TR::Options::_IprofilerPreCheckpointDropRate >= 1000 || dropRate <= TR::Options::_IprofilerPreCheckpointDropRate)
+         {
+         _numRequestsDropped++;
+         return 0;
+         }
+      }
+#endif
+
    if (numUnloadedClasses > 0)
       ratio = numLoadedClasses/numUnloadedClasses;
 
@@ -4200,8 +4215,6 @@ UDATA TR_IProfiler::parseBuffer(J9VMThread * vmThread, const U_8* dataStart, UDA
       }
 
    bool isClassLoadPhase = _compInfo->getPersistentInfo()->isClassLoadingPhase();
-
-   J9JavaVM * javaVM = _compInfo->getJITConfig()->javaVM;
 
    int32_t skipCountMain = 20+(rand()%10); // TODO: Use the main TR_RandomGenerator from jitconfig?
    int32_t skipCount = skipCountMain;

@@ -74,6 +74,7 @@
 
 class TR_BlockFrequencyInfo;
 namespace TR { class CompilationInfo; }
+namespace TR { class Options; }
 class TR_FrontEnd;
 class TR_IPBCDataPointer;
 class TR_IPBCDataCallGraph;
@@ -733,6 +734,7 @@ private:
    TR::Monitor                    *_iprofilerMonitor;
    volatile int32_t                _numOutstandingBuffers;
    uint64_t                        _numRequests;
+   uint64_t                        _numRequestsDropped;
    uint64_t                        _numRequestsSkipped;
    uint64_t                        _numRequestsHandedToIProfilerThread;
    uint64_t                        _iprofilerNumRecords; // info stats only
@@ -781,6 +783,7 @@ private:
    static int32_t                  _STATS_IPEntryChoosePersistent;
    };
 
+void printIprofilerStats(TR::Options *options, J9JITConfig * jitConfig, TR_IProfiler *iProfiler, const char *event);
 void turnOffInterpreterProfiling(J9JITConfig *jitConfig);
 
 #endif

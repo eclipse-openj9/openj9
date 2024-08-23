@@ -183,6 +183,7 @@ int32_t J9::Options::_iProfilerMethodHashTableSize = 32707; // 32707 could be an
 int32_t J9::Options::_IprofilerOffSubtractionFactor = 500;
 int32_t J9::Options::_IprofilerOffDivisionFactor = 16;
 
+int32_t J9::Options::_IprofilerPreCheckpointDropRate = 0;
 
 
 int32_t J9::Options::_maxIprofilingCount = TR_DEFAULT_INITIAL_COUNT; // 3000
@@ -223,6 +224,7 @@ int32_t J9::Options::_waitTimeToExitStartupMode = DEFAULT_WAIT_TIME_TO_EXIT_STAR
 int32_t J9::Options::_waitTimeToGCR = 10000; // ms
 int32_t J9::Options::_waitTimeToStartIProfiler = 1000; // ms
 int32_t J9::Options::_compilationDelayTime = 0; // sec; 0 means disabled
+int32_t J9::Options::_delayBeforeStateChange = 500; // ms
 
 int32_t J9::Options::_invocationThresholdToTriggerLowPriComp = 250;
 
@@ -937,6 +939,8 @@ TR::OptionTable OMR::Options::_feOptions[] = {
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_dataCacheQuantumSize, 0, "F%d", NOT_IN_SUBSET},
    {"datatotal=",              "C<nnn>\ttotal data memory limit, in KB",
         TR::Options::setJitConfigNumericValue, offsetof(J9JITConfig, dataCacheTotalKB), 0, "F%d (KB)"},
+   {"delayBeforeStateChange=",                 "M<nnn>\tTime (ms) after restore before allowing the JIT to change states.",
+        TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_delayBeforeStateChange, 0, "F%d", NOT_IN_SUBSET},
    {"disableIProfilerClassUnloadThreshold=",      "R<nnn>\tNumber of classes that can be unloaded before we disable the IProfiler",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_disableIProfilerClassUnloadThreshold, 0, "F%d", NOT_IN_SUBSET},
    {"dltPostponeThreshold=",      "M<nnn>\tNumber of dlt attempts inv. count for a method is seen not advancing",
@@ -1055,6 +1059,8 @@ TR::OptionTable OMR::Options::_feOptions[] = {
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_IprofilerOffDivisionFactor, 0, "F%d", NOT_IN_SUBSET},
    {"iprofilerOffSubtractionFactor=", "O<nnn>\tCounts Subtraction factor when IProfiler is Off",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_IprofilerOffSubtractionFactor, 0, "F%d", NOT_IN_SUBSET},
+   {"iprofilerPreCheckpointDropRate=", "O<nnn>\tPercent*10 of buffers to drop precheckpoint",
+        TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_IprofilerPreCheckpointDropRate, 0, "F%d", NOT_IN_SUBSET},
    {"iprofilerSamplesBeforeTurningOff=", "O<nnn>\tnumber of interpreter profiling samples "
                                 "needs to be taken after the profiling starts going off to completely turn it off. "
                                 "Specify a very large value to disable this optimization",
