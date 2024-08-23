@@ -65,6 +65,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	<xi:include href="uma/se9_objects.xml"></xi:include>
 	<xi:include href="uma/se16_objects.xml"></xi:include>
 	<xi:include href="uma/se19_objects.xml"></xi:include>
+	<xi:include href="uma/jfr_objects.xml"></xi:include>
 
 	<!-- vendor_jcl.xml can contain vendor specific configuration -->
 	<xi:include href="uma/vendor_jcl.xml">
@@ -216,6 +217,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			</group>
 
 			<group name="vendor_jcl"/>
+
+			<group name="jfr">
+				<include-if condition="spec.flags.opt_jfr"/>
+			</group>
 
 			<!-- Groups must be before Objects -->
 			<object name="j9vmconstantpool"/>
