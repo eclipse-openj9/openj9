@@ -649,7 +649,7 @@ BYTE8R1  DS 0H               Struct goes in R1
 
 BYTE8R2  DS 0H               Struct goes in R2
          CFI 0,2             is R2 available?
-         BH BYTE8R3
+         BNL BYTE8R3
 
          LG 2,0(6,13)
 
