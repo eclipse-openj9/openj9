@@ -4085,9 +4085,9 @@ JVM_LoadLibrary(const char *libName, jboolean throwOnFailure)
 			char *errMsg = errBuf;
 			int bufSize = sizeof(errBuf);
 			const char *portMsg =
-#if defined(WIN32)
+#if defined(WIN32) && (JAVA_SPEC_VERSION >= 17)
 				!attemptedLoad ? "" :
-#endif /* defined(WIN32) */
+#endif /* defined(WIN32) && (JAVA_SPEC_VERSION >= 17) */
 				j9error_last_error_message();
 			const char *space = ('\0' == *portMsg) ? "" : " ";
 			bufSize = jio_snprintf(errMsg, bufSize, "Failed to load library (\"%s\")%s%s", libName, space, portMsg);
