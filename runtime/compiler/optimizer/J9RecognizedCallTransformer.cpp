@@ -287,10 +287,11 @@ void J9::RecognizedCallTransformer::process_java_lang_StringUTF16_toBytes(TR::Tr
 
    // The implementation of java.lang.StringUTF16.toBytes(char[],int,int) will
    // throw a NegativeArraySizeException or OutOfMemoryError if the specified
-   // length is outside the range [0,0x3fffffff].  In order to avoid deciding
-   // which to throw in the IL, fall back to the out-of-line call if the length
-   // is negative or too great.  Otherwise, create the byte array and copy the
-   // input char array to it with java.lang.String.decompressedArrayCopy
+   // length is outside the range [0,0x3fffffff] or [0,0x3ffffffe], depending on
+   // the JDK level.  In order to avoid deciding which to throw in the IL, fall
+   // back to the out-of-line call if the length is negative or greater than or
+   // equal to 0x3fffffff.  Otherwise, create the byte array and copy the input
+   // char array to it with java.lang.String.decompressedArrayCopy
    //
    // Before:
    //
@@ -312,7 +313,7 @@ void J9::RecognizedCallTransformer::process_java_lang_StringUTF16_toBytes(TR::Tr
    // |   iload  off                           |
    // | istore lenTemp                         |
    // |   iload  len                           |
-   // | ifiucmpgt --> fallbackPathBlock  -----------------+
+   // | ifiucmpge --> fallbackPathBlock  -----------------+
    // |   iload lenTemp                        |          |
    // |   iconst 0x3fffffff                    |          |
    // +--------------------+-------------------+          |
@@ -355,7 +356,7 @@ void J9::RecognizedCallTransformer::process_java_lang_StringUTF16_toBytes(TR::Tr
    // +----------------------------------------+
    //
    TR::Node *upperBoundConstNode = TR::Node::iconst(node, TR::getMaxSigned<TR::Int32>() >> 1);
-   TR::Node *ifCmpNode = TR::Node::createif(TR::ifiucmpgt, lenNode, upperBoundConstNode);
+   TR::Node *ifCmpNode = TR::Node::createif(TR::ifiucmpge, lenNode, upperBoundConstNode);
    TR::TreeTop *ifCmpTreeTop = TR::TreeTop::create(comp(), treetop->getPrevTreeTop(), ifCmpNode);
 
    // Create temporary variable that will be used to hold result
@@ -410,7 +411,7 @@ void J9::RecognizedCallTransformer::process_java_lang_StringUTF16_toBytes(TR::Tr
    TR::Node::recreate(node, comp()->il.opCodeForDirectLoad(resultDataType));
    node->setSymbolReference(resultSymRef);
 
-   // Split the current block right after the ifuicmpgt
+   // Split the current block right after the ifiucmpge
    TR::Block *ifCmpBlock = ifCmpTreeTop->getEnclosingBlock();
 
    // Then split the inline version of the code into its own block
@@ -429,7 +430,7 @@ void J9::RecognizedCallTransformer::process_java_lang_StringUTF16_toBytes(TR::Tr
    fallThroughPathBlock->getExit()->insertBefore(gotoTree);
 
    // Now we have fall-through block, fallback block and tail/merge block.
-   // Set the ifuicmp's destination to the fallback block and update the CFG as well.
+   // Set the ifiucmp's destination to the fallback block and update the CFG as well.
    ifCmpNode->setBranchDestination(fallbackPathBlock->getEntry());
    cfg->addEdge(ifCmpBlock, fallbackPathBlock);
    cfg->addEdge(fallThroughPathBlock, tailBlock);
