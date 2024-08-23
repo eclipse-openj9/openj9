@@ -938,7 +938,7 @@ TR_RelocationRuntime::generateFeatureFlags(TR_FrontEnd *fe)
    if (TR::Options::getCmdLineOptions()->getOption(TR_DisableTraps))
       featureFlags |= TR_FeatureFlag_DisableTraps;
 
-   if (TR::Options::getCmdLineOptions()->getOption(TR_TLHPrefetch))
+   if (TR::Options::getAOTCmdLineOptions()->getOption(TR_TLHPrefetch))
       featureFlags |= TR_FeatureFlag_TLHPrefetch;
 
    if (TR::CodeCacheManager::instance()->codeCacheConfig().needsMethodTrampolines())
