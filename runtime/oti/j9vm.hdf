@@ -1206,7 +1206,7 @@ typedef UDATA (* lookupNativeAddressCallback)(struct J9VMThread *currentThread, 
 		<struct>J9VMSleepEvent</struct>
 		<data type="struct J9VMThread *" name="currentThread" description="current thread" />
 		<data type="I_64" name="millis" description="milliseconds to sleep for" />
-		<data type="IDATA" name="nanos" description="nanoseconds to sleep for" />
+		<data type="I_32" name="nanos" description="nanoseconds to sleep for" />
 	</event>
 
 	<event>
@@ -1217,8 +1217,8 @@ typedef UDATA (* lookupNativeAddressCallback)(struct J9VMThread *currentThread, 
 		<struct>J9VMSleptEvent</struct>
 		<data type="struct J9VMThread *" name="currentThread" description="current thread" />
 		<data type="I_64" name="millis" description="milliseconds to sleep for" />
-		<data type="IDATA" name="nanos" description="nanoseconds to sleep for" />
-		<data type="IDATA" name="startNanos" description="current time in nanos when sleep began" />
+		<data type="I_32" name="nanos" description="nanoseconds to sleep for" />
+		<data type="I_64" name="startNanos" description="current time in nanos when sleep began" />
 	</event>
 
 	<event>
