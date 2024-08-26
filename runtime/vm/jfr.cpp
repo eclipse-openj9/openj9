@@ -36,7 +36,7 @@ extern "C" {
 // TODO: allow configureable values
 #define J9JFR_THREAD_BUFFER_SIZE (1024*1024)
 #define J9JFR_GLOBAL_BUFFER_SIZE (10 * J9JFR_THREAD_BUFFER_SIZE)
-#define J9JFR_SAMPLING_RATE 1000
+#define J9JFR_SAMPLING_RATE 10
 
 static UDATA jfrEventSize(J9JFREvent *jfrEvent);
 static void tearDownJFR(J9JavaVM *vm);
@@ -53,6 +53,7 @@ static void jfrThreadEnd(J9HookInterface **hook, UDATA eventNum, void *eventData
 static void jfrVMInitialized(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
 static void initializeEventFields(J9VMThread *currentThread, J9JFREvent *jfrEvent, UDATA eventType);
 static int J9THREAD_PROC jfrSamplingThreadProc(void *entryArg);
+static void jfrExecutionSampleCallback(J9VMThread *currentThread, IDATA handlerKey, void *userData);
 static void initializeJFRConstantEvents(J9JavaVM *vm);
 static void freeJFRConstantEvents(J9JavaVM *vm);
 
@@ -556,6 +557,12 @@ initializeJFR(J9JavaVM *vm)
 	J9HookInterface **vmHooks = getVMHookInterface(vm);
 	U_8 *buffer = NULL;
 
+	/* Register async handler for execution samples */
+	vm->jfrAsyncKey = J9RegisterAsyncEvent(vm, jfrExecutionSampleCallback, NULL);
+	if (vm->jfrAsyncKey < 0) {
+		goto fail;
+	}
+
 	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_THREAD_CREATED, jfrThreadCreated, OMR_GET_CALLSITE(), NULL)) {
 		goto fail;
 	}
@@ -668,6 +675,11 @@ tearDownJFR(J9JavaVM *vm)
 	j9mem_free_memory(vm->jfrState.metaDataBlobFile);
 	vm->jfrState.metaDataBlobFile = NULL;
 	vm->jfrState.metaDataBlobFileSize = 0;
+	if (vm->jfrAsyncKey >= 0) {
+		J9UnregisterAsyncEvent(vm, vm->jfrAsyncKey);
+		vm->jfrAsyncKey = -1;
+	}
+
 }
 
 /**
@@ -732,6 +744,12 @@ jfrExecutionSample(J9VMThread *currentThread, J9VMThread *sampleThread)
 	}
 }
 
+static void
+jfrExecutionSampleCallback(J9VMThread *currentThread, IDATA handlerKey, void *userData)
+{
+	jfrExecutionSample(currentThread, currentThread);
+}
+
 static int J9THREAD_PROC
 jfrSamplingThreadProc(void *entryArg)
 {
@@ -743,19 +761,7 @@ jfrSamplingThreadProc(void *entryArg)
 		vm->jfrSamplerState = J9JFR_SAMPLER_STATE_RUNNING;
 		omrthread_monitor_notify_all(vm->jfrSamplerMutex);
 		while (J9JFR_SAMPLER_STATE_STOP != vm->jfrSamplerState) {
-			omrthread_monitor_exit(vm->jfrSamplerMutex);
-			internalEnterVMFromJNI(currentThread);
-			acquireExclusiveVMAccess(currentThread);
-			J9VMThread *walkThread = J9_LINKED_LIST_START_DO(vm->mainThread);
-			while (NULL != walkThread) {
-				if (VM_VMHelpers::threadCanRunJavaCode(walkThread)) {
-					jfrExecutionSample(currentThread, walkThread);
-				}
-				walkThread = J9_LINKED_LIST_NEXT_DO(vm->mainThread, walkThread);
-			}
-			releaseExclusiveVMAccess(currentThread);
-			internalExitVMToJNI(currentThread);
-			omrthread_monitor_enter(vm->jfrSamplerMutex);
+			J9SignalAsyncEvent(vm, NULL, vm->jfrAsyncKey);
 			omrthread_monitor_wait_timed(vm->jfrSamplerMutex, J9JFR_SAMPLING_RATE, 0);
 		}
 		omrthread_monitor_exit(vm->jfrSamplerMutex);
