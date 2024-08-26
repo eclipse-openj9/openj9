@@ -1002,7 +1002,7 @@ done:
 }
 
 U_32
-VM_JFRConstantPoolTypes::addThreadSleepEntry(J9JFRThreadSleep *threadSleepData)
+VM_JFRConstantPoolTypes::addThreadSleepEntry(J9JFRThreadSlept *threadSleepData)
 {
 	ThreadSleepEntry *entry = (ThreadSleepEntry*)pool_newElement(_threadSleepTable);
 	U_32 index = U_32_MAX;
@@ -1013,7 +1013,8 @@ VM_JFRConstantPoolTypes::addThreadSleepEntry(J9JFRThreadSleep *threadSleepData)
 	}
 
 	entry->time = threadSleepData->startTime;
-	entry->duration = threadSleepData->time;
+	entry->duration = threadSleepData->duration;
+	entry->sleepTime = threadSleepData->time;
 
 	entry->threadIndex = addThreadEntry(threadSleepData->vmThread);
 	if (isResultNotOKay()) goto done;

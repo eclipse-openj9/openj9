@@ -79,7 +79,7 @@ jfrEventSize(J9JFREvent *jfrEvent)
 		size = sizeof(J9JFREvent);
 		break;
 	case J9JFR_EVENT_TYPE_THREAD_SLEEP:
-		size = sizeof(J9JFRThreadSleep) + (((J9JFRThreadSleep*)jfrEvent)->stackTraceSize * sizeof(UDATA));
+		size = sizeof(J9JFRThreadSlept) + (((J9JFRThreadSlept*)jfrEvent)->stackTraceSize * sizeof(UDATA));
 		break;
 	default:
 		Assert_VM_unreachable();
@@ -497,20 +497,26 @@ jfrThreadEnd(J9HookInterface **hook, UDATA eventNum, void *eventData, void *user
  * @param userData[in] the registered user data
  */
 static void
-jfrVMSleep(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData)
+jfrVMSlept(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData)
 {
-	J9VMSleepEvent *event = (J9VMSleepEvent *)eventData;
+	J9VMSleptEvent *event = (J9VMSleptEvent *)eventData;
 	J9VMThread *currentThread = event->currentThread;
+	PORT_ACCESS_FROM_VMC(currentThread);
 
 #if defined(DEBUG)
-	PORT_ACCESS_FROM_VMC(currentThread);
 	j9tty_printf(PORTLIB, "\n!!! thread sleep %p\n", currentThread);
 #endif /* defined(DEBUG) */
 
-	J9JFRThreadSleep *jfrEvent = (J9JFRThreadSleep*)reserveBufferWithStackTrace(currentThread, currentThread, J9JFR_EVENT_TYPE_THREAD_SLEEP, sizeof(*jfrEvent));
+	J9JFRThreadSlept *jfrEvent = (J9JFRThreadSlept*)reserveBufferWithStackTrace(currentThread, currentThread, J9JFR_EVENT_TYPE_THREAD_SLEEP, sizeof(*jfrEvent));
 	if (NULL != jfrEvent) {
 		// TODO: worry about overflow?
-		jfrEvent->time = (event->millis * 1000) + event->nanos;
+		jfrEvent->time = (event->millis * 1000000) + event->nanos;
+		jfrEvent->duration = 0;
+		UDATA result = 0;
+		I_64 currentNanos = j9time_current_time_nanos(&result);
+		if (0 != result) {
+			jfrEvent->duration = currentNanos - event->startNanos;
+		}
 	}
 }
 
@@ -581,7 +587,7 @@ initializeJFR(J9JavaVM *vm)
 	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_THREAD_END, jfrThreadEnd, OMR_GET_CALLSITE(), NULL)) {
 		goto fail;
 	}
-	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_SLEEP, jfrVMSleep, OMR_GET_CALLSITE(), NULL)) {
+	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_SLEPT, jfrVMSlept, OMR_GET_CALLSITE(), NULL)) {
 		goto fail;
 	}
 	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_INITIALIZED, jfrVMInitialized, OMR_GET_CALLSITE(), NULL)) {
@@ -656,7 +662,7 @@ tearDownJFR(J9JavaVM *vm)
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_SHUTTING_DOWN, jfrVMShutdown, NULL);
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_THREAD_STARTING, jfrThreadStarting, NULL);
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_THREAD_END, jfrThreadEnd, NULL);
-	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_SLEEP, jfrVMSleep, NULL);
+	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_SLEPT, jfrVMSlept, NULL);
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_INITIALIZED, jfrVMInitialized, NULL);
 
 	/* Free global data */

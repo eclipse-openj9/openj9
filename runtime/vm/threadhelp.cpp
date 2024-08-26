@@ -49,12 +49,12 @@ validateTimeouts(J9VMThread *vmThread, I_64 millis, I_32 nanos)
 
 	if (millis < 0) {
 		setCurrentExceptionNLS(
-			vmThread, 
+			vmThread,
 			J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION,
 			J9NLS_JCL_TIMEOUT_VALUE_IS_NEGATIVE);
 	} else if (nanos < 0 || nanos >= 1000000) {
 		setCurrentExceptionNLS(
-			vmThread, 
+			vmThread,
 			J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION,
 			J9NLS_JCL_NANOSECOND_TIMEOUT_VALUE_OUT_OF_RANGE);
 	} else {
@@ -162,15 +162,24 @@ threadSleepImpl(J9VMThread *vmThread, I_64 millis, I_32 nanos)
 		/* An IllegalArgumentException has been set. */
 		rc = -1;
 	} else {
+		PORT_ACCESS_FROM_JAVAVM(javaVM);
+		UDATA result = 0;
+		I_64 startNanos = (U_64) j9time_current_time_nanos(&result);
+		if (0 == result){
+			setCurrentException(vmThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
+			rc = -1;
+		}
 #ifdef J9VM_OPT_SIDECAR
 		/* Increment the wait count even if the deadline is past. */
 		vmThread->mgmtWaitedCount++;
 #endif
-		TRIGGER_J9HOOK_VM_SLEEP(javaVM->hookInterface, vmThread, millis, nanos);
-		internalReleaseVMAccessSetStatus(vmThread, J9_PUBLIC_FLAGS_THREAD_SLEEPING);
-		rc = timeCompensationHelper(vmThread, HELPER_TYPE_THREAD_SLEEP, NULL, millis, nanos);
-		internalAcquireVMAccessClearStatus(vmThread, J9_PUBLIC_FLAGS_THREAD_SLEEPING);
-		TRIGGER_J9HOOK_VM_SLEPT(javaVM->hookInterface, vmThread);
+		if (0 == rc) {
+			TRIGGER_J9HOOK_VM_SLEEP(javaVM->hookInterface, vmThread, millis, nanos);
+			internalReleaseVMAccessSetStatus(vmThread, J9_PUBLIC_FLAGS_THREAD_SLEEPING);
+			rc = timeCompensationHelper(vmThread, HELPER_TYPE_THREAD_SLEEP, NULL, millis, nanos);
+			internalAcquireVMAccessClearStatus(vmThread, J9_PUBLIC_FLAGS_THREAD_SLEEPING);
+			TRIGGER_J9HOOK_VM_SLEPT(javaVM->hookInterface, vmThread, millis, nanos, startNanos);
+		}
 
 		if (0 == rc) {
 			/* Trc_JCL_sleep_Exit(vmThread); */
@@ -225,7 +234,7 @@ getMonitorForWait(J9VMThread* vmThread, j9object_t object)
 			return NULL;
 		}
 		lockEA = &objectMonitor->alternateLockword;
-	} 
+	}
 	else {
 		lockEA = J9OBJECT_MONITOR_EA(vmThread, object);
 	}
@@ -233,7 +242,7 @@ getMonitorForWait(J9VMThread* vmThread, j9object_t object)
 
 	if (J9_LOCK_IS_INFLATED(lock)) {
 		objectMonitor = J9_INFLLOCK_OBJECT_MONITOR(lock);
-		
+
 		monitor = objectMonitor->monitor;
 //		Trc_JCL_foundMonitorInLockword(vmThread, monitor, object);
 
