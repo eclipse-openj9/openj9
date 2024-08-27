@@ -75,6 +75,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 	resolveKnownClass,
 	computeHashForUTF8,
 	getStringUTF8Length,
+	getStringUTF8LengthTruncated,
 	acquireExclusiveVMAccess,
 	releaseExclusiveVMAccess,
 	internalReleaseVMAccess,

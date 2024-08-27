@@ -3599,6 +3599,8 @@ typedef struct J9UTF8 {
 #pragma warning(pop)
 #endif /* defined(_MSC_VER) */
 
+#define J9UTF8_MAX_LENGTH U_16_MAX
+
 typedef struct J9ROMClass {
 	U_32 romSize;
 	U_32 singleScalarStaticCount;
@@ -4815,7 +4817,8 @@ typedef struct J9InternalVMFunctions {
 	struct J9Class*  ( *internalFindKnownClass)(struct J9VMThread *currentThread, UDATA index, UDATA flags) ;
 	struct J9Class*  ( *resolveKnownClass)(struct J9JavaVM * vm, UDATA index) ;
 	UDATA  ( *computeHashForUTF8)(const U_8 * string, UDATA size) ;
-	IDATA  ( *getStringUTF8Length)(struct J9VMThread *vmThread, j9object_t string) ;
+	UDATA  ( *getStringUTF8Length)(struct J9VMThread *vmThread, j9object_t string) ;
+	U_64  ( *getStringUTF8LengthTruncated)(struct J9VMThread *vmThread, j9object_t string, U_64 maxLength) ;
 	void  ( *acquireExclusiveVMAccess)(struct J9VMThread * vmThread) ;
 	void  ( *releaseExclusiveVMAccess)(struct J9VMThread * vmThread) ;
 	void  ( *internalReleaseVMAccess)(struct J9VMThread * currentThread) ;

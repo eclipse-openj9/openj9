@@ -410,7 +410,10 @@ getClassSignatureLength(J9VMThread *currentThread, J9Class *clazz)
 		j9object_t sigString = J9VMJAVALANGCLASS_CLASSNAMESTRING(currentThread, J9VM_J9CLASS_TO_HEAPCLASS(clazz));
 		if (NULL != sigString) {
 			/* +2 so that we can fit 'L' and ';' around the class name. */
-			signatureLength = vm->internalVMFunctions->getStringUTF8Length(currentThread, sigString) + 2;
+			signatureLength = vm->internalVMFunctions->getStringUTF8Length(currentThread, sigString);
+			if (signatureLength <= (UDATA_MAX - 2)) {
+				signatureLength += 2;
+			}
 		} else {
 			J9Class *myClass = clazz;
 			UDATA numDims = 0;
@@ -470,24 +473,27 @@ getClassSignatureInout(J9VMThread *currentThread, J9Class *clazz, LocalJ9UTF8Buf
 		j9object_t sigString = J9VMJAVALANGCLASS_CLASSNAMESTRING(currentThread, J9VM_J9CLASS_TO_HEAPCLASS(clazz));
 		if (NULL != sigString) {
 			/* +3 so that we can fit 'L' and ';' around the class name and add null-terminator. */
-			UDATA utfLength = vm->internalVMFunctions->getStringUTF8Length(currentThread, sigString) + 3;
-			if (utfLength <= stringBuffer->remaining()) {
-				if (J9ROMCLASS_IS_ARRAY(clazz->romClass)) {
-					vm->internalVMFunctions->copyStringToUTF8Helper(
-						currentThread, sigString, J9_STR_XLAT, 0, J9VMJAVALANGSTRING_LENGTH(currentThread, sigString),
-						stringBuffer->cursor, utfLength - 3);
-					/* Adjust cursor to account for the call to copyStringToUTF8Helper. */
-					stringBuffer->advanceN(utfLength - 3);
-				} else {
-					stringBuffer->putCharAtCursor('L');
-					vm->internalVMFunctions->copyStringToUTF8Helper(
-						currentThread, sigString, J9_STR_XLAT, 0, J9VMJAVALANGSTRING_LENGTH(currentThread, sigString),
-						stringBuffer->cursor, utfLength - 3);
-					/* Adjust cursor to account for the call to copyStringToUTF8Helper. */
-					stringBuffer->advanceN(utfLength - 3);
-					stringBuffer->putCharAtCursor(';');
+			UDATA utfLength = vm->internalVMFunctions->getStringUTF8Length(currentThread, sigString);
+			if (utfLength <= (UDATA_MAX - 3)) {
+				utfLength += 3;
+				if (utfLength <= stringBuffer->remaining()) {
+					if (J9ROMCLASS_IS_ARRAY(clazz->romClass)) {
+						vm->internalVMFunctions->copyStringToUTF8Helper(
+							currentThread, sigString, J9_STR_XLAT, 0, J9VMJAVALANGSTRING_LENGTH(currentThread, sigString),
+							stringBuffer->cursor, utfLength - 3);
+						/* Adjust cursor to account for the call to copyStringToUTF8Helper. */
+						stringBuffer->advanceN(utfLength - 3);
+					} else {
+						stringBuffer->putCharAtCursor('L');
+						vm->internalVMFunctions->copyStringToUTF8Helper(
+							currentThread, sigString, J9_STR_XLAT, 0, J9VMJAVALANGSTRING_LENGTH(currentThread, sigString),
+							stringBuffer->cursor, utfLength - 3);
+						/* Adjust cursor to account for the call to copyStringToUTF8Helper. */
+						stringBuffer->advanceN(utfLength - 3);
+						stringBuffer->putCharAtCursor(';');
+					}
+					result = true;
 				}
-				result = true;
 			}
 		} else {
 			J9Class *myClass = clazz;
@@ -557,20 +563,34 @@ getJ9UTF8SignatureFromMethodTypeWithMemAlloc(J9VMThread *currentThread, j9object
 	j9object_t ptypes = J9VMJAVALANGINVOKEMETHODTYPE_PTYPES(currentThread, typeObject);
 	U_32 numArgs = J9INDEXABLEOBJECT_SIZE(currentThread, ptypes);
 	UDATA signatureLength = 2; /* space for '(', ')' */
+	UDATA tempSignatureLength = 0;
+	UDATA signatureUtf8Size = 0;
+	J9UTF8 *result = NULL;
+	j9object_t rtype = NULL;
+	J9Class *rclass = NULL;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
 	/* Calculate total signature length, including all ptypes and rtype. */
 	for (U_32 i = 0; i < numArgs; i++) {
 		j9object_t pObject = J9JAVAARRAYOFOBJECT_LOAD(currentThread, ptypes, i);
 		J9Class *pclass = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, pObject);
-		signatureLength += getClassSignatureLength(currentThread, pclass);
+		tempSignatureLength = getClassSignatureLength(currentThread, pclass);
+		if (signatureLength > (J9UTF8_MAX_LENGTH - tempSignatureLength)) {
+			goto done;
+		}
+		signatureLength += tempSignatureLength;
 	}
-	j9object_t rtype = J9VMJAVALANGINVOKEMETHODTYPE_RTYPE(currentThread, typeObject);
-	J9Class *rclass = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, rtype);
-	signatureLength += getClassSignatureLength(currentThread, rclass);
+	rtype = J9VMJAVALANGINVOKEMETHODTYPE_RTYPE(currentThread, typeObject);
+	rclass = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, rtype);
+	tempSignatureLength = getClassSignatureLength(currentThread, rclass);
+	if (signatureLength > (J9UTF8_MAX_LENGTH - tempSignatureLength)) {
+		goto done;
+	}
+	signatureLength += tempSignatureLength;
 
-	UDATA signatureUtf8Size = signatureLength + sizeof(J9UTF8) + 1; /* +1 for a null-terminator */
-	J9UTF8 *result = reinterpret_cast<J9UTF8 *>(j9mem_allocate_memory(signatureUtf8Size, OMRMEM_CATEGORY_VM));
+	signatureUtf8Size = signatureLength + sizeof(J9UTF8) + 1; /* +1 for a null-terminator */
+	result = reinterpret_cast<J9UTF8 *>(j9mem_allocate_memory(signatureUtf8Size, OMRMEM_CATEGORY_VM));
+
 	if (NULL != result) {
 		LocalJ9UTF8Buffer stringBuffer(result, signatureUtf8Size);
 
@@ -588,6 +608,7 @@ getJ9UTF8SignatureFromMethodTypeWithMemAlloc(J9VMThread *currentThread, j9object
 		stringBuffer.commitLength();
 	}
 
+done:
 	return result;
 }
 
@@ -1036,12 +1057,21 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 				} else {
 					LocalJ9UTF8Buffer stringBuffer(reinterpret_cast<J9UTF8 *>(signatureBuffer), sizeof(signatureBuffer));
 					signature = getJ9UTF8SignatureFromMethodType(currentThread, typeObject, &stringBuffer);
+					if (NULL == signature) {
+						vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
+						goto done;
+					}
 				}
 			} else if (J9VMJAVALANGSTRING_OR_NULL(vm) == typeClass) {
 				signature = vmFuncs->copyStringToJ9UTF8WithMemAlloc(currentThread, typeObject, J9_STR_XLAT, "", 0, signatureBuffer, sizeof(signatureBuffer));
 			} else if (J9VMJAVALANGCLASS(vm) == typeClass) {
 				J9Class *rclass = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, typeObject);
-				UDATA signatureLength = getClassSignatureLength(currentThread, rclass) + sizeof(J9UTF8) + 1 /* null-terminator */;
+				UDATA signatureLength = getClassSignatureLength(currentThread, rclass);
+				if (signatureLength > J9UTF8_MAX_LENGTH) {
+					vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
+					goto done;
+				}
+				signatureLength += sizeof(J9UTF8) + 1 /* null-terminator */;
 				LocalJ9UTF8Buffer stringBuffer;
 				if (signatureLength <= sizeof(signatureBuffer)) {
 					stringBuffer = LocalJ9UTF8Buffer(reinterpret_cast<J9UTF8 *>(signatureBuffer), sizeof(signatureBuffer));
