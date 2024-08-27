@@ -65,6 +65,10 @@ import java.lang.reflect.Field;
 import jdk.internal.util.SystemProps;
 /*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 
+/*[IF JAVA_SPEC_VERSION >= 24]*/
+import java.net.URL;
+/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
+
 /**
  * Class System provides a standard place for programs
  * to find system related information. All System API
@@ -568,6 +572,13 @@ static void initGPUAssist() {
 	GPUAssistHolder.instance = AccessController.doPrivileged(finder);
 }
 /*[ENDIF] JAVA_SPEC_VERSION >= 9 */
+
+/*[IF JAVA_SPEC_VERSION >= 24]*/
+static URL codeSource(Class<?> callerClass) {
+	CodeSource codeSource = callerClass.getProtectionDomainInternal().getCodeSource();
+	return (codeSource == null) ? null : codeSource.getLocation();
+}
+/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 
 /**
  * Sets the value of the static slot "in" in the receiver
