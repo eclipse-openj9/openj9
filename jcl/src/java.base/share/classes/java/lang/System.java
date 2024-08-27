@@ -362,6 +362,32 @@ public final class System {
 	/*[ENDIF] Sidecar18-SE-OpenJ9 */
 	/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 
+	static void initJFR() {
+		String jfr = com.ibm.oti.vm.VM.getjfrCMDLineOption();
+		if (jfr != null) {
+			try {
+				Class<?> dcmdClass = Class.forName("jdk.jfr.internal.dcmd.DCmdStart");
+				Constructor<?> constructor = dcmdClass.getDeclaredConstructor();
+				constructor.setAccessible(true);
+				Object dcmdInstance = constructor.newInstance();
+
+				Method executeMethod = dcmdClass.getSuperclass().getDeclaredMethod("execute", String.class, String.class, char.class);
+				executeMethod.setAccessible(true);
+
+				String[] results = (String []) executeMethod.invoke(dcmdInstance, "internal", jfr, ',');
+				if (results != null) {
+					for (String result : results) {
+						System.out.println(result);
+					}
+				}
+			} catch (ClassNotFoundException e) {
+				// Assume this is a raw configuration and suppress the exception
+			} catch (Exception e) {
+				throw new InternalError(e.toString());
+			}
+		}
+	}
+
 	static void afterClinitInitialization() {
 		/*[PR CMVC 189091] Perf: EnumSet.allOf() is slow */
 		/*[PR CMVC 191554] Provide access to ClassLoader methods to improve performance */
@@ -532,6 +558,8 @@ static void completeInitialization() {
 		throw new InternalError(e.toString());
 	}
 	/*[ENDIF]*/	//!Sidecar19-SE_RAWPLUSJ9&!Sidecar18-SE-OpenJ9
+
+	initJFR();
 }
 
 /*[IF JAVA_SPEC_VERSION >= 9]*/
