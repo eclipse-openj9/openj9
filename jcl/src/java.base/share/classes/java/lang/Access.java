@@ -496,18 +496,24 @@ final class Access implements JavaLangAccess {
 		return String.join(prefix, suffix, delimiter, elements, size);
 	}
 
-/*[IF JAVA_SPEC_VERSION >= 20]*/
+/*[IF JAVA_SPEC_VERSION >= 24]*/
 	@Override
-/*[IF JAVA_SPEC_VERSION >= 22]*/
-	public void ensureNativeAccess(Module mod, Class<?> clsOwner, String methodName, Class<?> clsCaller) {
-		mod.ensureNativeAccess(clsOwner, methodName, clsCaller);
+	public void ensureNativeAccess(Module module, Class<?> ownerClass, String methodName, Class<?> callerClass, boolean isJNI) {
+		module.ensureNativeAccess(ownerClass, methodName, callerClass, isJNI);
 	}
-/*[ELSE] JAVA_SPEC_VERSION >= 22 */
-	public void ensureNativeAccess(Module mod, Class<?> clsOwner, String methodName) {
-		mod.ensureNativeAccess(clsOwner, methodName);
+/*[ELSEIF JAVA_SPEC_VERSION >= 22]*/
+	@Override
+	public void ensureNativeAccess(Module module, Class<?> ownerClass, String methodName, Class<?> callerClass) {
+		module.ensureNativeAccess(ownerClass, methodName, callerClass);
 	}
-/*[ENDIF] JAVA_SPEC_VERSION >= 22 */
+/*[ELSEIF JAVA_SPEC_VERSION >= 20]*/
+	@Override
+	public void ensureNativeAccess(Module module, Class<?> ownerClass, String methodName) {
+		module.ensureNativeAccess(ownerClass, methodName);
+	}
+/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 
+/*[IF JAVA_SPEC_VERSION >= 20]*/
 	public void addEnableNativeAccessToAllUnnamed() {
 		Module.implAddEnableNativeAccessToAllUnnamed();
 	}
