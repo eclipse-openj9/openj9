@@ -829,7 +829,12 @@ getStringUTFLength(JNIEnv *env, jstring string)
 
 	UDATA utfLength = getStringUTF8Length(currentThread, stringObject);
 	VM_VMAccess::inlineExitVMToJNI(currentThread);
-	return (jsize)utfLength;
+
+	jsize result = INT_MAX;
+	if (utfLength <= INT_MAX) {
+		result = (jsize)utfLength;
+	}
+	return result;
 }
 
 static const char*
