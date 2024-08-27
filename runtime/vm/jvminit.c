@@ -4219,6 +4219,18 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 		} else if (flightRecorder < noFlightRecorder) {
 			vm->extendedRuntimeFlags2 &= ~(UDATA)J9_EXTENDED_RUNTIME2_JFR_ENABLED;
 		}
+
+		IDATA jfrOptionIndex = FIND_AND_CONSUME_VMARG(OPTIONAL_LIST_MATCH_USING_EQUALS, VMOPT_XXSTARTFLIGHTRECORDING, NULL);
+		if (jfrOptionIndex >= 0) {
+			char* jfrOptionBuffer = NULL;
+			GET_OPTION_VALUE(jfrOptionIndex, '=', &jfrOptionBuffer);
+			if(jfrOptionBuffer == NULL) {
+				vm->jfrState.jfrCMDLineOption = (char*)"dumponexit=false";
+			}
+			else {
+				vm->jfrState.jfrCMDLineOption = jfrOptionBuffer;
+			}
+		}
 	}
 #endif /* defined(J9VM_OPT_JFR) */
 
@@ -7706,46 +7718,6 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 	TRIGGER_J9HOOK_VM_STARTED(vm->hookInterface, env);
 
 	env->gpProtected = FALSE;
-
-	{
-		J9VMInitArgs* args = vm->vmArgsArray;
-		JNIEnv *env1 = (JNIEnv*)env;
-		IDATA jfroptionIndex = FIND_AND_CONSUME_ARG(args, OPTIONAL_LIST_MATCH_USING_EQUALS, VMOPT_XXSTARTFLIGHTRECORDING, NULL);
-		char* jfroptionBuffer = NULL;
-		if (jfroptionIndex >= 0) {
-			GET_OPTION_VALUE(jfroptionIndex, '=', &jfroptionBuffer);
-			jclass dcmdStartClass = (*env1)->FindClass(env1,"jdk/jfr/internal/dcmd/DCmdStart");
-			if (dcmdStartClass != NULL) {
-				jmethodID executeMethod = (*env1)->GetMethodID(env1,dcmdStartClass, "execute", "(Ljava/lang/String;Ljava/lang/String;C)[Ljava/lang/String;");
-				if (executeMethod != NULL) {
-					jmethodID constructor = (*env1)->GetMethodID(env1,dcmdStartClass, "<init>", "()V");
-					jobject dcmdStartInstance = (*env1)->NewObject(env1,dcmdStartClass, constructor);
-					jstring source = (*env1)->NewStringUTF(env1,"internal");
-					jstring arg;
-					if(jfroptionBuffer == NULL) {
-						arg =(*env1)->NewStringUTF(env1,"dumponexit=false");
-					}
-					else {
-						arg = (*env1)->NewStringUTF(env1,jfroptionBuffer);
-					}
-					jchar delimiter = ',';
-					jobjectArray stringArray = (jobjectArray)(*env1)->CallObjectMethod(env1,dcmdStartInstance, executeMethod, source, arg, delimiter);
-					if (stringArray != NULL){
-						jsize arrayLength = (*env1)->GetArrayLength(env1, stringArray);
-						for (jsize i = 0; i < arrayLength; i++) {
-							jstring stringElement = (jstring)(*env1)->GetObjectArrayElement(env1, stringArray, i);
-							const char *rawString = (*env1)->GetStringUTFChars(env1, stringElement, 0);
-							j9tty_printf(PORTLIB, "%s\n", rawString);
-							(*env1)->ReleaseStringUTFChars(env1, stringElement, rawString);
-						}
-					}
-					(*env1)->DeleteLocalRef(env1,source);
-					(*env1)->DeleteLocalRef(env1,arg);
-					(*env1)->DeleteLocalRef(env1,dcmdStartInstance);
-				}
-			}
-		}
-	}
 
 #ifdef J9OS_I5
 	/* debug code */
