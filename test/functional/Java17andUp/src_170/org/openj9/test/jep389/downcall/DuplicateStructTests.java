@@ -246,7 +246,7 @@ public class DuplicateStructTests {
 		SequenceLayout boolArray = MemoryLayout.sequenceLayout(2, C_CHAR);
 		GroupLayout structLayout2 = MemoryLayout.structLayout(boolArray.withName("array_elem1"), C_CHAR.withName("elem2"));
 		FunctionDescriptor fd = FunctionDescriptor.of(structLayout2, structLayout1, structLayout2);
-		Addressable functionSymbol = nativeLibLookup.lookup("addBoolStruct1AndNestedBoolArrayStruct2WithXor_returnStruct1_dupStruct").get();
+		Addressable functionSymbol = nativeLibLookup.lookup("addBoolStruct1AndNestedBoolArrayStruct2WithXor_returnStruct2_dupStruct").get();
 
 		try (ResourceScope scope = ResourceScope.newConfinedScope()) {
 			SegmentAllocator allocator = SegmentAllocator.ofScope(scope);

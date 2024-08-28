@@ -224,7 +224,7 @@ public class DuplicateStructTests {
 		SequenceLayout boolArray = MemoryLayout.sequenceLayout(2, JAVA_BOOLEAN);
 		GroupLayout structLayout2 = MemoryLayout.structLayout(boolArray.withName("array_elem1"), JAVA_BOOLEAN.withName("elem2"));
 		FunctionDescriptor fd = FunctionDescriptor.of(structLayout2, structLayout1, structLayout2);
-		MemorySegment functionSymbol = nativeLibLookup.find("addBoolStruct1AndNestedBoolArrayStruct2WithXor_returnStruct1_dupStruct").get();
+		MemorySegment functionSymbol = nativeLibLookup.find("addBoolStruct1AndNestedBoolArrayStruct2WithXor_returnStruct2_dupStruct").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
 		try (Arena arena = Arena.ofConfined()) {
