@@ -1065,17 +1065,8 @@ TR_J9InlinerPolicy::genCodeForUnsafeGetPut(TR::Node* unsafeAddress,
       //SPECIAL CASE
       if (!directAccessWithConversionTreeTop && conversionNeeded)
          {
-         //Generating block for arrayDirectAccess (direct access with conversion)
-         arrayDirectAccessBlock = TR::Block::createEmptyBlock(callNodeTreeTop->getNode(), comp(),
-                                                              joinBlock->getFrequency());
-         arrayDirectAccessBlock->append(arrayDirectAccessTreeTop);
-         beforeCallBlock->getExit()->insertTreeTopsAfterMe(arrayDirectAccessBlock->getEntry(), arrayDirectAccessBlock->getExit());
-
-         //add arrayDirectAccessBlock to cfg
-         cfg->addNode(arrayDirectAccessBlock);
-         cfg->addEdge(TR::CFGEdge::createEdge(beforeCallBlock, arrayDirectAccessBlock, trMemory()));
-         cfg->addEdge(TR::CFGEdge::createEdge(arrayDirectAccessBlock, joinBlock, trMemory()));
-         cfg->removeEdge(beforeCallBlock, joinBlock);
+         //Since no runtime tests are being performed, we can simply append the arrayDirectAccessTreeTop to beforeCallBlock
+         beforeCallBlock->append(arrayDirectAccessTreeTop);
          }
       else
          {
@@ -1093,17 +1084,8 @@ TR_J9InlinerPolicy::genCodeForUnsafeGetPut(TR::Node* unsafeAddress,
       }
    else // CASE (6)
       {
-      //Generating block for direct access
-      directAccessBlock = TR::Block::createEmptyBlock(callNodeTreeTop->getNode(), comp(),
-                                                      joinBlock->getFrequency());
-      directAccessBlock->append(directAccessTreeTop);
-      beforeCallBlock->getExit()->insertTreeTopsAfterMe(directAccessBlock->getEntry(), directAccessBlock->getExit());
-
-      //add directAccessBlock to cfg
-      cfg->addNode(directAccessBlock);
-      cfg->addEdge(TR::CFGEdge::createEdge(beforeCallBlock, directAccessBlock, trMemory()));
-      cfg->addEdge(TR::CFGEdge::createEdge(directAccessBlock, joinBlock, trMemory()));
-      cfg->removeEdge(beforeCallBlock, joinBlock);
+      //Since no runtime tests are being performed, we can simply append the directAccessTreeTop to beforeCallBlock
+      beforeCallBlock->append(directAccessTreeTop);
       }
 
    if (directAccessBlock)
