@@ -3132,24 +3132,28 @@ j9bcutil_readClassFileBytes(J9PortLibrary *portLib,
 	}
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	/* Currently value type is built on JDK23, so compare with JDK23 for now. */
-	if ((flags & BCT_MajorClassFileVersionMask) < BCT_JavaMajorVersionShifted(23)) {
-		classfile->accessFlags &= ~CFR_ACC_IDENTITY;
-	} else if (J9_ARE_NO_BITS_SET(
+	if (J9_IS_CLASSFILE_OR_ROMCLASS_VALUETYPE_VERSION(classfile)) {
+		if (J9_ARE_NO_BITS_SET(
 				classfile->accessFlags,
-				CFR_ACC_INTERFACE | CFR_ACC_FINAL | CFR_ACC_IDENTITY | CFR_ACC_ABSTRACT)
-	) {
-		errorCode = J9NLS_CFR_ERR_CLASS_MUST_HAVE_AT_LEAST_ONE_FINAL_IDENTITY_ABSTRACT_FLAG__ID;
-		offset = index - data - 2;
-		goto _errorFound;
-	}
-
-	if (J9_IS_CLASSFILE_VALUETYPE(classfile)) {
-		if (J9_ARE_ANY_BITS_SET(classfile->accessFlags, CFR_ACC_IDENTITY | CFR_ACC_ENUM | CFR_ACC_MODULE)) {
-			errorCode = J9NLS_CFR_ERR_INCORRECT_FLAG_FOUND_ON_VALUE_CLASS__ID;
+				CFR_ACC_ABSTRACT | CFR_ACC_FINAL | CFR_ACC_IDENTITY | CFR_ACC_INTERFACE)
+		) {
+			errorCode = J9NLS_CFR_ERR_CLASS_MUST_HAVE_AT_LEAST_ONE_FINAL_IDENTITY_ABSTRACT_FLAG__ID;
 			offset = index - data - 2;
 			goto _errorFound;
 		}
+
+		if (J9_ARE_NO_BITS_SET((classfile)->accessFlags, CFR_ACC_IDENTITY | CFR_ACC_INTERFACE)) {
+			/* J9_IS_CLASSFILE_VALUETYPE() is equivalent to J9_IS_CLASSFILE_OR_ROMCLASS_VALUETYPE_VERSION(classfile)
+			 * && J9_ARE_NO_BITS_SET((classfile)->accessFlags, CFR_ACC_IDENTITY | CFR_ACC_INTERFACE).
+			 */
+			if (J9_ARE_ANY_BITS_SET(classfile->accessFlags, CFR_ACC_ENUM | CFR_ACC_MODULE)) {
+				errorCode = J9NLS_CFR_ERR_INCORRECT_FLAG_FOUND_ON_VALUE_CLASS__ID;
+				offset = index - data - 2;
+				goto _errorFound;
+			}
+		}
+	} else {
+		classfile->accessFlags &= ~CFR_ACC_IDENTITY;
 	}
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
