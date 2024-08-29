@@ -2547,7 +2547,7 @@ void jitClassesRedefined(J9VMThread * currentThread, UDATA classCount, J9JITRede
          {
          compInfo->getUnloadedClassesTempList()->push_back((TR_OpaqueClassBlock *) classPair->oldClass);
          if (auto deserializer = compInfo->getJITServerAOTDeserializer())
-            deserializer->invalidateClass(currentThread, classPair->oldClass);
+            deserializer->invalidateClass(currentThread, classPair->oldClass, classPair->newClass);
          }
 #endif
 
