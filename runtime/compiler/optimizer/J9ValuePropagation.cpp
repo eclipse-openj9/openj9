@@ -1273,7 +1273,7 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                      flagsForTransform.set(ValueTypesHelperCallTransform::RequiresStoreCheck);
                      }
 
-                   // If the value being stored is NULL and the destination array component is null restricted in runtime,
+                   // If the value being stored is NULL and the destination array component is null-restricted at runtime,
                    // a NPE is expected to throw. Therefore, when the array component type is not known to be identity type
                    // in compilation time, a NULLCHK on store value is required
                    if ((isCompTypePrimVT != TR_no) &&
@@ -2971,7 +2971,7 @@ TR_YesNoMaybe
 J9::ValuePropagation::isArrayCompTypePrimitiveValueType(TR::VPConstraint *arrayConstraint)
    {
    if (!TR::Compiler->om.areValueTypesEnabled() ||
-       !TR::Compiler->om.areFlattenableValueTypesEnabled()) // Only null restricted or primitive value type are flattenable
+       !TR::Compiler->om.areFlattenableValueTypesEnabled()) // Only null-restricted or primitive value type are flattenable
       {
       return TR_no;
       }

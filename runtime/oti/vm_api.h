@@ -2699,11 +2699,11 @@ BOOLEAN
 valueTypeCapableAcmp(J9VMThread *currentThread, j9object_t lhs, j9object_t rhs);
 
 /**
- * Determines if null restricted attribute is set on a field or not.
+ * Determines if null-restricted attribute is set on a field or not.
  *
  * @param[in] field The field to be checked
  *
- * @return TRUE if the field has null restricted attribute set, FALSE otherwise
+ * @return TRUE if the field has null-restricted attribute set, FALSE otherwise
  */
 BOOLEAN
 isFieldNullRestricted(J9ROMFieldShape *field);
@@ -2807,7 +2807,7 @@ getFlattenableFieldOffset(J9Class *fieldOwner, J9ROMFieldShape *field);
 
 /**
  * Returns if a field is flattened. `J9_IS_J9CLASS_FLATTENED` will be deprecated.
- * This helper assumes field is null restricted.
+ * This helper assumes field is null-restricted.
  *
  * @param[in] fieldOwner the J9class that defines the field
  * @param[in] field romfieldshape of the field
@@ -2819,7 +2819,7 @@ isFlattenableFieldFlattened(J9Class *fieldOwner, J9ROMFieldShape *field);
 
 /**
  * Returns the type of an instance field. `J9_IS_J9CLASS_FLATTENED` will be deprecated.
- * This helper assumes field is null restricted.
+ * This helper assumes field is null-restricted.
  *
  * @param[in] fieldOwner the J9class that defines the field
  * @param[in] field romfieldshape of the field
@@ -2831,7 +2831,7 @@ getFlattenableFieldType(J9Class *fieldOwner, J9ROMFieldShape *field);
 
 /**
  * Returns the size of an instance field. `J9_VALUETYPE_FLATTENED_SIZE` will be deprecated.
- * This helper assumes field is null restricted.
+ * This helper assumes field is null-restricted.
  *
  * @param[in] currentThread thread token
  * @param[in] fieldOwner the J9class that defines the field
@@ -2855,7 +2855,7 @@ arrayElementSize(J9ArrayClass* arrayClass);
 
 /**
  * Performs a getfield operation on an object. Handles flattened and non-flattened cases.
- * This helper assumes that the cpIndex points to a resolved null restricted fieldRef. This helper
+ * This helper assumes that the cpIndex points to a resolved null-restricted fieldRef. This helper
  * also assumes that the cpIndex points to an instance field.
  *
  * @param currentThread thread token
@@ -2885,7 +2885,7 @@ cloneValueType(J9VMThread *currentThread, J9Class *receiverClass, j9object_t ori
 
 /**
  * Performs a putfield operation on an object. Handles flattened and non-flattened cases.
- * This helper assumes that the cpIndex points to a resolved null restricted fieldRef. This helper
+ * This helper assumes that the cpIndex points to a resolved null-restricted fieldRef. This helper
  * also assumes that the cpIndex points to an instance field.
  *
  * @param currentThread thread token

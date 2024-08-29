@@ -8591,9 +8591,9 @@ retry:
 			}
 		}
 
-		/* In the future Valhalla checkcast needs to throw exception on
-		 * null restricted checkedType if obj is null,
-		 * see issue https://github.com/eclipse-openj9/openj9/issues/19764
+		/* In the future, Valhalla checkcast must throw an exception on
+		 * null-restricted checkedType if object is null.
+		 * See issue https://github.com/eclipse-openj9/openj9/issues/19764.
 		 */
 
 		_pc += 3;
