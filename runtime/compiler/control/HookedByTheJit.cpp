@@ -2910,8 +2910,6 @@ static void updateOverriddenFlag( J9VMThread *vm , J9Class *cl)
          J9ROMMethod *subROM   = J9_ROM_METHOD_FROM_RAM_METHOD(subMethod);
          J9ROMMethod *superROM = J9_ROM_METHOD_FROM_RAM_METHOD(superMethod);
 
-         bool methodModifiersAreSafe = (subROM->modifiers & J9AccForwarderMethod) && !((subROM->modifiers & J9AccSynchronized) || (subROM->modifiers & J9AccStrict) || (subROM->modifiers & J9AccNative)) ;
-
          if (traceIt)
             {
          char *classNameChars = (char *)J9UTF8_DATA(J9ROMCLASS_CLASSNAME(ROMCl));
@@ -2925,8 +2923,8 @@ static void updateOverriddenFlag( J9VMThread *vm , J9Class *cl)
          char *subName = (char*)J9UTF8_DATA(J9ROMMETHOD_NAME(J9_ROM_METHOD_FROM_RAM_METHOD(subMethod)));
          int32_t subNameLen = (int32_t)J9UTF8_LENGTH(J9ROMMETHOD_NAME(J9_ROM_METHOD_FROM_RAM_METHOD(subMethod)));
 
-         printf("class = %.*s superSignature = %.*s, superName = %.*s, supermodifers = %x , subSignature = %.*s, subName = %.*s, submodifiers = %x subMethod = %p methodModifiersAreSafe = %d\n"
-               ,classNameLen,classNameChars,superSigLen,superSignature,superNameLen,superName,(int)superROM->modifiers,subSigLen,subSignature,subNameLen,subName,(int)subROM->modifiers,subMethod,methodModifiersAreSafe );
+         printf("class = %.*s superSignature = %.*s, superName = %.*s, supermodifers = %x , subSignature = %.*s, subName = %.*s, submodifiers = %x subMethod = %p\n"
+               ,classNameLen,classNameChars,superSigLen,superSignature,superNameLen,superName,(int)superROM->modifiers,subSigLen,subSignature,subNameLen,subName,(int)subROM->modifiers,subMethod );
             printf("For subROM %p:\n",subROM);
 
             if(subROM->modifiers & J9AccAbstract)                       printf("\tsubMethod is J9AccAbstract (%x)\n",J9AccAbstract);
@@ -2934,7 +2932,6 @@ static void updateOverriddenFlag( J9VMThread *vm , J9Class *cl)
             if(subROM->modifiers & J9AccBridge)                         printf("\tsubMethod is J9AccBridge\n");
             if(subROM->modifiers & J9AccEmptyMethod)                    printf("\tsubMethod is J9AccEmptyMethod\n");
             if(subROM->modifiers & J9AccFinal)                          printf("\tsubMethod is J9AccFinal\n");
-            if(subROM->modifiers & J9AccForwarderMethod)                printf("\tsubMethod is J9AccForwarderMethod\n");
             if(subROM->modifiers & J9AccGetterMethod)                   printf("\tsubMethod is J9AccGetterMethod\n");
             if(subROM->modifiers & J9AccInterface)                      printf("\tsubMethod is J9AccInterface\n");
             if(subROM->modifiers & J9AccMethodCallerSensitive)          printf("\tsubMethod is J9AccMethodCallerSensitive\n");
@@ -2977,7 +2974,6 @@ static void updateOverriddenFlag( J9VMThread *vm , J9Class *cl)
             if(superROM->modifiers & J9AccBridge)                       printf("\tsuperMethod is J9AccBridge\n");
             if(superROM->modifiers & J9AccEmptyMethod)                  printf("\tsuperMethod is J9AccEmptyMethod\n");
             if(superROM->modifiers & J9AccFinal)                        printf("\tsuperMethod is J9AccFinal\n");
-            if(superROM->modifiers & J9AccForwarderMethod)              printf("\tsuperMethod is J9AccForwarderMethod\n");
             if(superROM->modifiers & J9AccGetterMethod)                 printf("\tsuperMethod is J9AccGetterMethod\n");
             if(superROM->modifiers & J9AccInterface)                    printf("\tsuperMethod is J9AccInterface\n");
             if(superROM->modifiers & J9AccMethodCallerSensitive)        printf("\tsuperMethod is J9AccMethodCallerSensitive\n");
@@ -3016,168 +3012,14 @@ static void updateOverriddenFlag( J9VMThread *vm , J9Class *cl)
             fflush(stdout);
             }
 
-         if((subMethod != superMethod) && methodModifiersAreSafe  && (J9_BYTECODE_END_FROM_ROM_METHOD(subROM) - J9_BYTECODE_START_FROM_ROM_METHOD(subROM))>0 )        //If the j9methods don't match, method has been overridden
-            {
-            if (traceIt)
-               {
-               printf("For submethod %p, trying to match signature for overridden bit\n",subMethod);
-               fflush(stdout);
-               }
-
-
-            const uint8_t * _code = subMethod->bytecodes;         //a pointer to bytecodes
-            bool matches=false;
-            bool finishedArgs = false;
-            int32_t curLocalSize;
-            int32_t i = 0;
-            uint16_t cpIndex = 0;
-            for (int32_t nextLocalIndex = 0; !matches && !finishedArgs && nextLocalIndex<255; nextLocalIndex += curLocalSize)
-               {
-               curLocalSize = 1;
-               switch (TR_J9ByteCodeIterator::convertOpCodeToByteCodeEnum(_code[i++]))
-                  {
-                  case J9BCaload0:
-                     finishedArgs = (nextLocalIndex != 0);
-                     break;
-                  case J9BClload1: case J9BCdload1:
-                     curLocalSize = 2;
-                     // fall through
-                  case J9BCiload1: case J9BCfload1: case J9BCaload1:
-                     finishedArgs = (nextLocalIndex != 1);
-                     break;
-                  case J9BClload2: case J9BCdload2:
-                     curLocalSize = 2;
-                     // fall through
-                  case J9BCiload2: case J9BCfload2: case J9BCaload2:
-                     finishedArgs = (nextLocalIndex != 2);
-                     break;
-                  case J9BClload3: case J9BCdload3:
-                     curLocalSize = 2;
-                     // fall through
-                  case J9BCiload3: case J9BCfload3: case J9BCaload3:
-                     finishedArgs = (nextLocalIndex != 3);
-                     break;
-                  case J9BClload: case J9BCdload:
-                     curLocalSize = 2;
-                     // fall through
-                  case J9BCiload: case J9BCfload: case J9BCaload:
-                     finishedArgs = (nextLocalIndex != _code[i++]);
-                     break;
-                  case J9BCinvokespecial:
-                      cpIndex = BC_OP_U16(&_code[i]); //will need to compare signature with superMethod.
-                      matches=true;
-                      break;
-                  case J9BCinvokespecialsplit:
-                     cpIndex = *(U_16*)(J9ROMCLASS_SPECIALSPLITMETHODREFINDEXES(ROMCl) + BC_OP_U16(&_code[i])); //will need to compare signature with superMethod.
-                     matches=true;
-                     break;
-                  default:
-                     finishedArgs = true;
-                     break;
-                  }
-               }
-
-            J9UTF8 * callSignature;
-            J9UTF8 * callName;
-            if(matches)   //so far we are matching our pattern
-               {
-               if (traceIt)
-                  {
-                  printf("For submethod %p, pattern matches after bc walk\n",subMethod);
-                  fflush(stdout);
-                  }
-
-
-               J9ROMFieldRef * ref1 = &(((J9ROMFieldRef *)((char *)ROMCl+sizeof(J9ROMClass)))[cpIndex]);
-               J9ROMNameAndSignature *nameAndSignature = J9ROMFIELDREF_NAMEANDSIGNATURE(ref1);      //this isn't a string its a struct.
-               callSignature = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSignature);
-               callName = J9ROMNAMEANDSIGNATURE_NAME(nameAndSignature);
-
-               J9UTF8 *superSignature = J9ROMMETHOD_SIGNATURE(J9_ROM_METHOD_FROM_RAM_METHOD(superMethod));
-               J9UTF8 *superName = J9ROMMETHOD_NAME(J9_ROM_METHOD_FROM_RAM_METHOD(superMethod));
-
-               if(   J9UTF8_LENGTH(superSignature) != J9UTF8_LENGTH(callSignature)
-                   || J9UTF8_LENGTH(superName) != J9UTF8_LENGTH(callName)
-                   || !(strncmp((char *)J9UTF8_DATA(superSignature),(char *)J9UTF8_DATA(callSignature),J9UTF8_LENGTH(superSignature))==0)
-                   || !(strncmp((char *)J9UTF8_DATA(superName),(char *)J9UTF8_DATA(callName),J9UTF8_LENGTH(superSignature))==0) )
-
-                  {
-                  if (traceIt)
-                     {
-                     printf("For submethod %p,signature compare fails after bc walk superSiglen = %d subsiglen = %d supernamelen = %d subnamelen =%d\n"
-                           ,subMethod,J9UTF8_LENGTH(superSignature),J9UTF8_LENGTH(callSignature),J9UTF8_LENGTH(superName),J9UTF8_LENGTH(callName));
-                     fflush(stdout);
-                     }
-                  matches=false;
-                  }
-               else
-                  {
-                  uint8_t opcode = _code[i+2];  //an invokespecial takes up 3 bytes.. we point at second byte after for loop, so increment by 2
-                  TR_J9ByteCode bc = TR_J9ByteCodeIterator::convertOpCodeToByteCodeEnum(opcode);
-                  if(bc != J9BCgenericReturn || &(_code[i+3]) != J9_BYTECODE_END_FROM_ROM_METHOD(subROM)) //second condition ensures that the return is the last bytecode. See defect 148222.
-                     {
-                     if (traceIt)
-                        {
-                        printf("For submethod %p,signature compare fails after bc walk bc !=genericReturn at i(%d)+2\n", subMethod, i);
-                        fflush(stdout);
-                        }
-                     matches=false;
-                     }
-                  }
-               }
-
-            if(!matches)        //matches is false if method is overridden.
-               {
-               jitUpdateMethodOverride(vm, cl, superMethod,subMethod);
-               vm->javaVM->internalVMFunctions->atomicOrIntoConstantPool(vm->javaVM, superMethod,J9_STARTPC_METHOD_IS_OVERRIDDEN);
-
-               if (traceIt)
-                  {
-                  printf("For submethod %p, pattern does not match after sig compares.\n",subMethod);
-                  fflush(stdout);
-                  }
-
-
-               //Updating all grandparent classes overridden bits
-               J9Class * tempsuperCl;
-               J9VTableHeader * tempsuperVTableHeader;
-               J9Method ** tempsuperVTable;
-               J9Method * tempsuperMethod;
-               intptr_t tempmethodCount;
-               for(int32_t k=classDepth-1;k>=0;k--)
-                  {
-
-                  tempsuperCl = cl->superclasses[k];
-                  tempsuperVTableHeader = J9VTABLE_HEADER_FROM_RAM_CLASS(tempsuperCl);
-                  tempmethodCount =  (intptr_t)tempsuperVTableHeader->size;
-
-                  if(methodIndex>= tempmethodCount)  //we are outside the grandparent's vft slots
-                     break;
-
-                  tempsuperVTable = J9VTABLE_FROM_HEADER(tempsuperVTableHeader);
-                  tempsuperVTable = tempsuperVTable + methodIndex;
-                  tempsuperMethod= *tempsuperVTable;
-                  jitUpdateMethodOverride(vm, cl, tempsuperMethod,subMethod);
-                  vm->javaVM->internalVMFunctions->atomicOrIntoConstantPool(vm->javaVM, tempsuperMethod,J9_STARTPC_METHOD_IS_OVERRIDDEN);
-                  }
-               }
-            else
-               {
-               if (traceIt)
-                  {
-                  printf("For submethod %p, determined it is not overridden by bytecode walk and signature compare\n",subMethod);
-                  fflush(stdout);
-                  }
-               }
-            }
-         else if (superMethod != subMethod)    // we don't have bytecodes, but the j9methods don't match, so set the overridden bit anyways
+         if (superMethod != subMethod)    // the j9methods don't match, so set the overridden bit
             {
             jitUpdateMethodOverride(vm, cl, superMethod,subMethod);
             vm->javaVM->internalVMFunctions->atomicOrIntoConstantPool(vm->javaVM, superMethod,J9_STARTPC_METHOD_IS_OVERRIDDEN);
 
             if (traceIt)
                {
-               printf("For submethod %p, j9methods don't match.  Setting overridden bit. endbc - startbc = %" OMR_PRIdPTR " methodmodifiersaresafe = %d\n",subMethod,(J9_BYTECODE_END_FROM_ROM_METHOD(subROM) - J9_BYTECODE_START_FROM_ROM_METHOD(subROM)),methodModifiersAreSafe);
+               printf("For submethod %p, j9methods don't match.  Setting overridden bit. endbc - startbc = %" OMR_PRIdPTR "\n",subMethod,(J9_BYTECODE_END_FROM_ROM_METHOD(subROM) - J9_BYTECODE_START_FROM_ROM_METHOD(subROM)));
                fflush(stdout);
                }
 

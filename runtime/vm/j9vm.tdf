@@ -237,10 +237,10 @@ TraceExit=Trc_VM_monitorTableAt_Exit Overhead=1 Level=3 Template="exit monitorTa
 
 TraceEvent=Trc_VM_JNI_native_translated Overhead=1 Level=1 Template="Looping due to JNI translation while running interpreted target --> method=%p"
 
-TraceEntry=Trc_VM_getForwardedMethod_Entry Overhead=1 Level=3 Template="getForwardedMethod(%p)"
-TraceExit=Trc_VM_getForwardedMethod_Exit Overhead=1 Level=3 Template="exit getForwardedMethod(%p) resultMethod %p"
-TraceExit=Trc_VM_getForwardedMethod_Exit_Debug Overhead=1 Level=3 Template="exit getForwardedMethod(%p) Debug Server in use"
-TraceExit=Trc_VM_getForwardedMethod_Exit_JVMPI Overhead=1 Level=3 Template="exit getForwardedMethod(%p) JVMPI enabled"
+TraceEntry=Trc_VM_getForwardedMethod_Entry Obsolete Overhead=1 Level=3 Template="getForwardedMethod(%p)"
+TraceExit=Trc_VM_getForwardedMethod_Exit Obsolete Overhead=1 Level=3 Template="exit getForwardedMethod(%p) resultMethod %p"
+TraceExit=Trc_VM_getForwardedMethod_Exit_Debug Obsolete Overhead=1 Level=3 Template="exit getForwardedMethod(%p) Debug Server in use"
+TraceExit=Trc_VM_getForwardedMethod_Exit_JVMPI Obsolete Overhead=1 Level=3 Template="exit getForwardedMethod(%p) JVMPI enabled"
 
 TraceEntry=Trc_VM_javaLookupMethod_Entry Overhead=1 Level=3 Template="javaLookupMethod(vmStruct %p, targetClass %p, nameAndSig %p, senderClass %p, lookupOptions %d)"
 TraceEvent=Trc_VM_javaLookupMethod_Name Overhead=1 Level=3 Template="javaLookupMethod - methodName %.*s"

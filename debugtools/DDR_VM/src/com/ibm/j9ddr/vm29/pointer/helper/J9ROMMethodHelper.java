@@ -84,10 +84,6 @@ public class J9ROMMethodHelper
 		return method.modifiers().allBitsIn(J9AccGetterMethod);
 	}
 		
-	public static boolean isForwarder(J9ROMMethodPointer method) throws CorruptDataException {
-		return method.modifiers().allBitsIn(J9AccForwarderMethod);
-	}
-	
 	public static boolean isEmpty(J9ROMMethodPointer method) throws CorruptDataException {
 		return method.modifiers().allBitsIn(J9AccEmptyMethod);
 	}
