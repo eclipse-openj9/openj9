@@ -362,6 +362,108 @@ public final class System {
 	/*[ENDIF] Sidecar18-SE-OpenJ9 */
 	/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 
+	private static Long convertToBytes(String size) {
+        char unit = Character.toLowerCase(size.charAt(size.length() - 1));
+        long multiplier = 1;
+
+        switch (unit) {
+            case 'g': /* intentional fall through */
+                multiplier = 1024L * 1024L * 1024L;
+                break;
+            case 'm': /* intentional fall through */
+                multiplier = 1024L * 1024L;
+                break;
+            case 'k': /* intentional fall through */
+                multiplier = 1024L;
+                break;
+        }
+
+        long value = Long.parseLong(size.substring(0, size.length() - 1));
+        return value * multiplier;
+    }
+
+	static void initJFR() {
+		String jfrConfigOption = com.ibm.oti.vm.VM.getjfrConfigCMDLineOption();
+		if(jfrConfigOption != null && !jfrConfigOption.isEmpty()) {
+			boolean verbose = false;
+            String repositoryPath = null;
+            String dumpPath = null;
+            Integer stackDepth = null;
+            Long globalBufferCount = null;
+            Long globalBufferSize = null;
+            Long threadBufferSize = null;
+            Long memorySize = null;
+            Long maxChunkSize = null;
+            Boolean sampleThreads = null;
+			String[] configPairs = jfrConfigOption.split(",");
+			for (String pair : configPairs) {
+				String[] configKeyValue = pair.split("=");
+				if(configKeyValue.length == 2) {
+					String key = configKeyValue[0];
+					String value = configKeyValue[1];
+					switch (key) {
+						case "maxchunksize":
+							maxChunkSize = convertToBytes(value);
+							break;
+						case "stackdepth":
+							stackDepth = Integer.parseInt(value);
+							if(stackDepth > 2048) {
+								// System.out.println("Warning: Maximum stackdepth allowed is 2048");
+								stackDepth = null;
+							}
+						case "repository":
+							repositoryPath = value;
+							break;
+					}
+				}
+			}
+			if(maxChunkSize != null || stackDepth != null || repositoryPath != null) {
+				try {
+					Class<?> dcmdConfigClass = Class.forName("jdk.jfr.internal.dcmd.DCmdConfigure");
+					Constructor<?> constructor = dcmdConfigClass.getDeclaredConstructor();
+					constructor.setAccessible(true);
+					Object dcmdConfigInstance = constructor.newInstance();
+					Method executeMethod = dcmdConfigClass.getDeclaredMethod(
+						"execute",
+						boolean.class,
+						String.class,
+						String.class,
+						Integer.class,
+						Long.class,
+						Long.class,
+						Long.class,
+						Long.class,
+						Long.class,
+						Boolean.class
+					);
+					executeMethod.setAccessible(true);
+					String[] results = (String []) executeMethod.invoke(
+						dcmdConfigInstance,
+						verbose,
+						repositoryPath,
+						dumpPath,
+						stackDepth,
+						globalBufferCount,
+						globalBufferSize,
+						threadBufferSize,
+						memorySize,
+						maxChunkSize,
+						sampleThreads
+					);
+					if (results != null) {
+						for (String result : results) {
+							System.out.println(result);
+						}
+					}
+				} catch (ClassNotFoundException e) {
+					// Assume this is a raw configuration and suppress the exception
+				} catch (Exception e) {
+					throw new InternalError(e.toString());
+				}
+			}
+		}
+	}
+
 	static void afterClinitInitialization() {
 		/*[PR CMVC 189091] Perf: EnumSet.allOf() is slow */
 		/*[PR CMVC 191554] Provide access to ClassLoader methods to improve performance */
@@ -532,6 +634,7 @@ static void completeInitialization() {
 		throw new InternalError(e.toString());
 	}
 	/*[ENDIF]*/	//!Sidecar19-SE_RAWPLUSJ9&!Sidecar18-SE-OpenJ9
+	initJFR();
 }
 
 /*[IF JAVA_SPEC_VERSION >= 9]*/
