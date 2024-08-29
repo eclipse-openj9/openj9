@@ -2188,7 +2188,17 @@ TR::Node * J9::TransformUtil::calculateOffsetFromIndexInContiguousArrayWithEleme
       shift = checkNonNegativePowerOfTwo(elementStride);
       }
 
-   int32_t headerSize = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
+   int32_t headerSize;
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+   if (TR::Compiler->om.isOffHeapAllocationEnabled())
+      {
+      headerSize = 0;
+      }
+   else
+#endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
+      {
+      headerSize = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
+      }
 
    TR::Node * offset = index;
 
