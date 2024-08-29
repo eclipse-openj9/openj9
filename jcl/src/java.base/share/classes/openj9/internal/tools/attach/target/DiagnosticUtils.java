@@ -29,7 +29,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
-
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import com.ibm.oti.vm.VM;
 
 /*[IF CRAC_SUPPORT]*/
@@ -66,6 +67,9 @@ public class DiagnosticUtils {
 			" <file path> is optional, otherwise a default path/name is used.%n"
 			+ " Relative paths are resolved to the target's working directory.%n"
 			+ " The dump agent may choose a different file path if the requested file exists.%n";
+
+	private static final String JFR_START_OPTION_HELP = printHelp("JFR.start");
+	private static final String JFR_STOP_OPTION_HELP = printHelp("JFR.stop");
 
 	/**
 	 * Command strings for executeDiagnosticCommand()
@@ -108,6 +112,12 @@ public class DiagnosticUtils {
 	private static final String DIAGNOSTICS_DUMP_SYSTEM = "Dump.system"; //$NON-NLS-1$
 
 	/**
+	 * Commands for  JFR start, stop,dump,check and configure
+	 */
+	private static final String DIAGNOSTICS_JFR_START = "JFR.start";
+	private static final String DIAGNOSTICS_JFR_STOP = "JFR.stop";
+
+	/**
 	 * Get JVM statistics
 	 */
 	private static final String DIAGNOSTICS_STAT_CLASS = "jstat.class"; //$NON-NLS-1$
@@ -124,6 +134,48 @@ public class DiagnosticUtils {
 	 * Use this to separate arguments in a diagnostic command string.
 	 */
 	public static final String DIAGNOSTICS_OPTION_SEPARATOR = ","; //$NON-NLS-1$
+
+	/**
+	 * Help information for JFR commands
+	 */
+	public static final String printHelp(String helpcommand) {
+		String helpMessageString = null;
+		try {
+		    Class<?> clazz;
+		    if (helpcommand.equals("JFR.start")) {
+			clazz = Class.forName("jdk.jfr.internal.dcmd.DCmdStart");
+		    } else if (helpcommand.equals("JFR.stop")) {
+			clazz = Class.forName("jdk.jfr.internal.dcmd.DCmdStop");
+		    } else {
+			System.out.println("JFR command is not correct.");
+			return null;
+		    }
+
+		    Constructor<?> constructor = clazz.getDeclaredConstructor();
+		    constructor.setAccessible(true);
+		    Object dcmdInstance = constructor.newInstance();
+
+		    // Get the printHelp method
+		    Method printHelpMethod = clazz.getSuperclass().getDeclaredMethod("printHelp");
+		    printHelpMethod.setAccessible(true);
+
+		    // Invoke the printHelp method and get the result
+		    String[] helpMessages = (String[]) printHelpMethod.invoke(dcmdInstance);
+
+		    // Escape % characters in each string element
+		    for (int i = 0; i < helpMessages.length; i++) {
+			helpMessages[i] = helpMessages[i].replace("%", "%%");
+		    }
+
+		    // Convert the String[] to a single String
+		    helpMessageString = String.join("\n", helpMessages);
+
+		} catch (Exception e) {
+	            System.out.println(e);
+		}
+
+		return helpMessageString;
+	}
 
 	/**
 	 * Report live or all heap objects.
@@ -348,6 +400,54 @@ public class DiagnosticUtils {
 		return result;
 	}
 
+	private static DiagnosticProperties doJFR(String diagnosticCommand) {
+		DiagnosticProperties result = null;
+
+		// Split the command and arguments
+		String[] parts = diagnosticCommand.split(DIAGNOSTICS_OPTION_SEPARATOR);
+		IPC.logMessage("doJFR: ", diagnosticCommand);
+
+		// Ensure there's at least one part for the command
+		if (parts.length == 0) {
+	            return DiagnosticProperties.makeErrorProperties("Error: No JFR command specified");
+		}
+
+		// Extract command and parameters
+		String command = parts[0].trim();
+		String[] parameters = Arrays.copyOfRange(parts, 1, parts.length);
+
+		try {
+	            Class<?> dcmdClass;
+		    if (command.equals("JFR.start")) {
+		        dcmdClass = Class.forName("jdk.jfr.internal.dcmd.DCmdStart");
+		    } else if (command.equals("JFR.stop")) {
+			dcmdClass = Class.forName("jdk.jfr.internal.dcmd.DCmdStop");
+		    } else {
+			System.out.println("Unknown JFR command");
+			return null;
+		    }
+
+		    Constructor<?> constructor = dcmdClass.getDeclaredConstructor();
+		    constructor.setAccessible(true);
+		    Object dcmdInstance = constructor.newInstance();
+
+		    Method executeMethod = dcmdClass.getSuperclass().getDeclaredMethod("execute", String.class, String.class, char.class);
+		    executeMethod.setAccessible(true);
+
+		    String jcmdarg = "attach";
+		    char delimiter = (parameters.length > 0) ? ',' : ' ';
+		    String[] returnedString = (String[]) executeMethod.invoke(dcmdInstance, jcmdarg, String.join(",", parameters), delimiter);
+
+		    // Convert the String[] to a single String
+		    String messageString = String.join("\n", returnedString);
+		    result = DiagnosticProperties.makeStringResult(messageString);
+		} catch (Exception e) {
+	            System.out.println(e);
+		}
+
+		return result;
+	}
+
 	private static native ThreadInfoBase[] dumpAllThreadsImpl(boolean lockedMonitors,
 			boolean lockedSynchronizers, int maxDepth);
 
@@ -472,6 +572,12 @@ public class DiagnosticUtils {
 			+ "          agentLibrary: the absolute path of the agent%n"
 			+ "          agent option: (Optional) the agent option string%n";
 
+	private static final String DIAGNOSTICS_JFR_START_HELP = "Starts a new Recording%n%n"
+		        + JFR_START_OPTION_HELP;
+
+	private static final String DIAGNOSTICS_JFR_STOP_HELP = "Stops a JFR recording%n%n"
+		        + JFR_STOP_OPTION_HELP;
+
 /*[IF CRAC_SUPPORT]*/
 	private static final String DIAGNOSTICS_JDK_CHECKPOINT_HELP = "Produce a JVM checkpoint via CRIUSupport.%n" //$NON-NLS-1$
 			+ FORMAT_PREFIX + DIAGNOSTICS_JDK_CHECKPOINT + "%n" //$NON-NLS-1$
@@ -516,6 +622,12 @@ public class DiagnosticUtils {
 
 		commandTable.put(DIAGNOSTICS_LOAD_JVMTI_AGENT, DiagnosticUtils::loadJVMTIAgent);
 		helpTable.put(DIAGNOSTICS_LOAD_JVMTI_AGENT, DIAGNOSTICS_LOAD_JVMTI_AGENT_HELP);
+
+		commandTable.put(DIAGNOSTICS_JFR_START, DiagnosticUtils::doJFR);
+		helpTable.put(DIAGNOSTICS_JFR_START, DIAGNOSTICS_JFR_START_HELP);
+
+		commandTable.put(DIAGNOSTICS_JFR_STOP, DiagnosticUtils::doJFR);
+		helpTable.put(DIAGNOSTICS_JFR_STOP, DIAGNOSTICS_JFR_STOP_HELP);
 
 /*[IF CRAC_SUPPORT]*/
 		if (InternalCRIUSupport.isCRaCSupportEnabled()) {
