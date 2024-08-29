@@ -323,6 +323,8 @@ static const struct { \
 #define J9_CLASS_DISALLOWS_LOCKING_FLAGS (J9ClassIsValueType | J9ClassIsValueBased)
 #define J9_CLASS_ALLOWS_LOCKING(clazz) J9_ARE_NO_BITS_SET((clazz)->classFlags, J9_CLASS_DISALLOWS_LOCKING_FLAGS)
 #define J9_IS_J9CLASS_VALUEBASED(clazz) J9_ARE_ALL_BITS_SET((clazz)->classFlags, J9ClassIsValueBased)
+/* Identity classes are not value types or interfaces. */
+#define J9_IS_J9CLASS_IDENTITY(clazz) J9_ARE_ALL_BITS_SET((clazz)->classFlags, J9ClassHasIdentity)
 #ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
 #define J9_IS_J9CLASS_VALUETYPE(clazz) J9_ARE_ALL_BITS_SET((clazz)->classFlags, J9ClassIsValueType)
 #else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
