@@ -188,20 +188,8 @@ findPrimitiveArrayClass(J9JavaVM* vm, jchar sigChar)
 	}
 }
 
-
-/**
- * @internal
- *
- * Allocates and fills in the relevant fields of an array class
- */
-J9Class *
-internalCreateArrayClass(J9VMThread *vmThread, J9ROMArrayClass *romClass, J9Class *elementClass)
-{
-	return internalCreateArrayClassWithOptions(vmThread, romClass, elementClass, 0);
-}
-
-J9Class *
-internalCreateArrayClassWithOptions(J9VMThread *vmThread, J9ROMArrayClass *romClass, J9Class *elementClass, UDATA options)
+static J9Class *
+internalCreateArrayClassHelper(J9VMThread *vmThread, J9ROMArrayClass *romClass, J9Class *elementClass, UDATA options)
 {
 	J9Class *result = NULL;
 	j9object_t heapClass = J9VM_J9CLASS_TO_HEAPCLASS(elementClass);
@@ -217,8 +205,12 @@ internalCreateArrayClassWithOptions(J9VMThread *vmThread, J9ROMArrayClass *romCl
 	 * creating an instance of the array. Element class init must be done
 	 * before the arrayClass is created so that in the case of an init failure
 	 * the arrayClass is not temporarily exposed.
+	 * Don't try to initialize class for null-restricted array creation since
+	 * the regular arrayClass will always be created first.
 	 */
-	if (J9_IS_J9CLASS_ALLOW_DEFAULT_VALUE(elementClass)) {
+	if (J9_IS_J9CLASS_ALLOW_DEFAULT_VALUE(elementClass)
+		&& J9_ARE_NO_BITS_SET(options, J9_FINDCLASS_FLAG_CLASS_OPTION_NULL_RESTRICTED_ARRAY)
+	) {
 		UDATA initStatus = elementClass->initializeStatus;
 		if ((J9ClassInitSucceeded != initStatus) && ((UDATA)vmThread != initStatus)) {
 			initializeClass(vmThread, elementClass);
@@ -265,6 +257,31 @@ internalCreateArrayClassWithOptions(J9VMThread *vmThread, J9ROMArrayClass *romCl
 	}
 
 	return result;
+}
+
+/**
+ * @internal
+ *
+ * Allocates and fills in the relevant fields of an array class
+ */
+J9Class *
+internalCreateArrayClass(J9VMThread *vmThread, J9ROMArrayClass *romClass, J9Class *elementClass)
+{
+	return internalCreateArrayClassHelper(vmThread, romClass, elementClass, 0);
+}
+
+J9Class *
+internalCreateArrayClassWithOptions(J9VMThread *vmThread, J9ROMArrayClass *romClass, J9Class *elementClass, UDATA options)
+{
+	/* Create elementClass's arrayClass as a prerequisite to nullRestrictedArrayClass */
+	if (J9_ARE_ALL_BITS_SET(options, J9_FINDCLASS_FLAG_CLASS_OPTION_NULL_RESTRICTED_ARRAY)
+		&& (NULL == elementClass->arrayClass)
+	) {
+		if (NULL == internalCreateArrayClassHelper(vmThread, romClass, elementClass, 0)) {
+			return NULL;
+		}
+	}
+	return internalCreateArrayClassHelper(vmThread, romClass, elementClass, options);
 }
 
 /**
