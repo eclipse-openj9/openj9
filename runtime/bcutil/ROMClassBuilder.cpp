@@ -277,16 +277,6 @@ ROMClassBuilder::handleAnonClassName(J9CfrClassFile *classfile, ROMClassCreation
 	PORT_ACCESS_FROM_PORT(_portLibrary);
 
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
-	/*
-	 * Prevent generated LambdaForm classes from MethodHandles to be stored to the shared cache.
-	 * When there are a large number of such classes in the shared cache, they trigger a lot of class comparisons.
-	 * Performance can be much worse (compared to shared cache turned off).
-	 */
-	if (isLambdaFormClassName(originalStringBytes, originalStringLength, NULL/*deterministicPrefixLength*/)) {
-		context->addFindClassFlags(J9_FINDCLASS_FLAG_DO_NOT_SHARE);
-		context->addFindClassFlags(J9_FINDCLASS_FLAG_LAMBDAFORM);
-	}
-
 #if JAVA_SPEC_VERSION >= 15
 	/* InjectedInvoker is a hidden class without the strong attribute set. It
 	 * is created by MethodHandleImpl.makeInjectedInvoker on the OpenJDK side.
@@ -416,22 +406,6 @@ ROMClassBuilder::handleAnonClassName(J9CfrClassFile *classfile, ROMClassCreation
 	 */
 	j9str_printf(PORTLIB, buf, ROM_ADDRESS_LENGTH + 1, ROM_ADDRESS_FORMAT, 0);
 	memcpy(constantPool[newUtfCPEntry].bytes + newHostPackageLength + originalStringLength + 1, buf, ROM_ADDRESS_LENGTH + 1);	
-
-	/* Mark if the class is a Lambda class. */
-#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
-	if (!context->isLambdaFormClass()
-		&& isLambdaClassName(reinterpret_cast<const char *>(_anonClassNameBuffer),
-		                     newAnonClassNameLength - 1, NULL/*deterministicPrefixLength*/)
-	) {
-		context->addFindClassFlags(J9_FINDCLASS_FLAG_LAMBDA);
-	}
-#else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
-	if (isLambdaClassName(reinterpret_cast<const char *>(_anonClassNameBuffer),
-	                      newAnonClassNameLength - 1, NULL/*deterministicPrefixLength*/)
-	) {
-		context->addFindClassFlags(J9_FINDCLASS_FLAG_LAMBDA);
-	}
-#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 	/* search constantpool for all other identical classRefs. We have not actually
 	 * tested this scenario as javac will not output more than one classRef or utfRef of the
@@ -590,18 +564,6 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 	getSizeInfo(context, &romClassWriter, &srpOffsetTable, &countDebugDataOutOfLine, &sizeInformation);
 
 	U_32 romSize = 0;
-#if JAVA_SPEC_VERSION < 21
-	U_32 sizeToCompareForLambda = 0;
-	if (context->isLambdaClass()) {
-		/* 
-		 * romSize calculated from getSizeInfo() does not involve StringInternManager. It is only accurate for string intern disabled classes. 
-		 * Lambda classes in java 15 and up are strong hidden classes (defined with Option.STONG), which has the same lifecycle as its
-		 * defining class loader. It is string intern enabled. So pass classFileSize instead of romSize to sizeToCompareForLambda.
-		 */
-		sizeToCompareForLambda = classFileOracle.getClassFileSize();
-	}
-#endif /* JAVA_SPEC_VERSION < 21 */
-
 	if (context->shouldCompareROMClassForEquality()) {
 		ROMClassVerbosePhase v(context, CompareHashtableROMClass);
 
@@ -624,9 +586,6 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 				modifiers,
 				extraModifiers,
 				optionalFlags,
-#if JAVA_SPEC_VERSION < 21
-				sizeToCompareForLambda,
-#endif /* JAVA_SPEC_VERSION < 21 */
 				context)
 		) {
 			return OK;
@@ -720,9 +679,6 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 						modifiers,
 						extraModifiers,
 						optionalFlags,
-#if JAVA_SPEC_VERSION < 21
-						sizeToCompareForLambda,
-#endif /* JAVA_SPEC_VERSION < 21 */
 						context)
 
 				) {
@@ -1479,55 +1435,19 @@ ROMClassBuilder::compareROMClassForEquality(
 		U_32 modifiers,
 		U_32 extraModifiers,
 		U_32 optionalFlags,
-#if JAVA_SPEC_VERSION < 21
-		U_32 sizeToCompareForLambda,
-#endif /* JAVA_SPEC_VERSION < 21 */
 		ROMClassCreationContext *context)
 {
 	bool ret = false;
+	ComparingCursor compareCursor(_javaVM, srpOffsetTable, srpKeyProducer, classFileOracle, romClass, romClassIsShared, context);
+	romClassWriter->writeROMClass(&compareCursor,
+			&compareCursor,
+			&compareCursor,
+			NULL,
+			NULL,
+			0, modifiers, extraModifiers, optionalFlags,
+			ROMClassWriter::WRITE);
 
-#if JAVA_SPEC_VERSION < 21
-	if (context->isLambdaClass()) {
-		/*
-		 * Lambda class names are in the format of HostClassName$$Lambda$<IndexNumber>/<zeroed out ROM_ADDRESS>.
-		 * When we reach this check, the host class names will be the same for both the classes because
-		 * of the earlier hash-key check. So, the only difference in the size will be the difference
-		 * between the number of digits of the index number. The same lambda class might have a
-		 * different index number from run to run and when the number of digits of the index number
-		 * increases by 1, classFileSize also increases by 1. The indexNumber is the counter for the number of
-		 * lambda classes defined so far. It is an int in the JCL side. So the it cannot vary more than max
-		 * integer vs 0, which is maxVariance (9 bytes). This check is different than the romSize check because
-		 * when the number of digits of the index number increases by 1, classFileSize also increases by 1 but
-		 * romSize increases by 2.
-		 */
-		int maxVariance = 9;
-		int variance = abs(static_cast<int>((sizeToCompareForLambda - reinterpret_cast<J9ROMClass *>(romClass)->classFileSize)));
-		if (variance <= maxVariance) {
-			ComparingCursor compareCursor(_javaVM, srpOffsetTable, srpKeyProducer, classFileOracle, romClass, romClassIsShared, context);
-			romClassWriter->writeROMClass(&compareCursor,
-					&compareCursor,
-					&compareCursor,
-					NULL,
-					NULL,
-					0, modifiers, extraModifiers, optionalFlags,
-					ROMClassWriter::WRITE);
-
-			ret = compareCursor.isEqual();
-		}
-	} else
-#endif /* JAVA_SPEC_VERSION < 21 */
-	{
-		ComparingCursor compareCursor(_javaVM, srpOffsetTable, srpKeyProducer, classFileOracle, romClass, romClassIsShared, context);
-		romClassWriter->writeROMClass(&compareCursor,
-				&compareCursor,
-				&compareCursor,
-				NULL,
-				NULL,
-				0, modifiers, extraModifiers, optionalFlags,
-				ROMClassWriter::WRITE);
-
-		ret = compareCursor.isEqual();
-	}
+	ret = compareCursor.isEqual();
 	J9UTF8* name = J9ROMCLASS_CLASSNAME((J9ROMClass *)romClass);
 	Trc_BCU_compareROMClassForEquality_event(ret, J9UTF8_LENGTH(name), J9UTF8_DATA(name));
 	return ret;
