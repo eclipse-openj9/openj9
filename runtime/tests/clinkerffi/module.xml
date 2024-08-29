@@ -347,7 +347,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<export name="addBoolStruct1AndNestedBoolStruct2WithXor_returnStruct2_dupStruct"/>
 		<export name="addNestedBoolArrayStructsWithXor_dupStruct"/>
 		<export name="addBoolStruct1AndNestedBoolArrayStruct2WithXor_returnStruct1_dupStruct"/>
-		<export name="addBoolStruct1AndNestedBoolArrayStruct2WithXor_returnStruct1_dupStruct"/>
+		<export name="addBoolStruct1AndNestedBoolArrayStruct2WithXor_returnStruct2_dupStruct"/>
 		<export name="addNestedBoolStructArrayStructsWithXor_dupStruct"/>
 		<export name="addBoolStruct1AndNestedBoolStructArrayStruct2WithXor_returnStruct1_dupStruct"/>
 		<export name="addBoolStruct1AndNestedBoolStructArrayStruct2WithXor_returnStruct2_dupStruct"/>
