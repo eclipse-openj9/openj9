@@ -193,7 +193,7 @@ public class ValueTypeTests {
 
 	/* fields */
 	static String typeWithSingleAlignmentFields[] = {
-		"tri:LTriangle2D;:NR", /* NR means null restricted */
+		"tri:LTriangle2D;:NR", /* NR means null-restricted */
 		"point:LPoint2D;:NR",
 		"line:LFlattenedLine2D;:NR",
 		"i:LValueInt;:NR",
@@ -1817,7 +1817,7 @@ public class ValueTypeTests {
 	 * Create a value type and read the fields before
 	 * they are set. The test should Verify that the
 	 * flattenable fields are set to the default values.
-	 * NULL should never be observed for null restricted fields.
+	 * NULL should never be observed for null-restricted fields.
 	 */
 	@Test(priority=4)
 	static public void testDefaultValues() throws Throwable {
@@ -2275,7 +2275,7 @@ public class ValueTypeTests {
 	 * Ensure that casting null to a value type class will throw a null pointer exception
 	 * This test is disabled since the latest spec from
 	 * https://cr.openjdk.org/~dlsmith/jep401/jep401-20230519/specs/types-cleanup-jvms.html
-	 * no longer requires null check on the objectref for null restricted value type class
+	 * no longer requires null check on the objectref for null-restricted value type class
 	 */
 	@Test(enabled=false, priority=1, expectedExceptions=NullPointerException.class)
 	static public void testCheckCastNullRestrictedTypeOnNull() throws Throwable {

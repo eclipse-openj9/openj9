@@ -172,8 +172,8 @@ public class NullRestrictedTypeOptTests {
 		}
 	}
 
-	/* A value class with an implicit constructor (eligible to be null restricted)
-	 * with null restricted value class fields.
+	/* A value class with an implicit constructor (eligible to be null-restricted)
+	 * with null-restricted value class fields.
 	 */
 	public value static class NestedFlattenablePair {
 		public final FlattenablePair! p1;

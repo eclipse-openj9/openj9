@@ -190,11 +190,11 @@ public:
 	}
 
 	/**
-	 * Determines if null restricted attribute is set on a field or not.
+	 * Determines if null-restricted attribute is set on a field or not.
 	 *
 	 * @param[in] field The field to be checked
 	 *
-	 * @return TRUE if the field has null restricted attribute set, FALSE otherwise
+	 * @return TRUE if the field has null-restricted attribute set, FALSE otherwise
 	 */
 	static VMINLINE bool
 	isFieldNullRestricted(J9ROMFieldShape *field)
