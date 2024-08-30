@@ -6286,6 +6286,11 @@ typedef struct J9JavaVM {
 /* Intended to compute the composition type from every 8 bytes of the composition type array */
 #define J9_FFI_UPCALL_COMPOSITION_TYPE_DWORD_SIZE 8
 
+/* Intended to compare the layout for struct {float, float} or its variants in upcall. */
+#define J9_FFI_UPCALL_STRUCT_FF_SIZE 8
+/* Intended to compare the layout for struct {double, double} or its variants in upcall. */
+#define J9_FFI_UPCALL_STRUCT_DD_SIZE 16
+
 typedef struct J9UpcallSigType {
 	U_8 type;
 	U_32 sizeInByte:24;

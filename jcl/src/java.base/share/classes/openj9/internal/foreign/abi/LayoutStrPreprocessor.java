@@ -312,8 +312,11 @@ final class LayoutStrPreprocessor {
 		/* Prefix "#" to denote the start of this layout string in the case of downcall. */
 		if (isDownCall) {
 			targetLayoutStr.append('#').append(1);
+			targetLayoutStr.append('[').append(elementLayoutStrs).append(']');
+		} else {
+			/* '{' and '}' are intended for a union in upcall. */
+			targetLayoutStr.append('{').append(elementLayoutStrs).append('}');
 		}
-		targetLayoutStr.append('[').append(elementLayoutStrs).append(']');
 
 		return targetLayoutStr;
 	}
