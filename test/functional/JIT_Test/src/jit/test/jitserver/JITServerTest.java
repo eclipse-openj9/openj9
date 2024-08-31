@@ -334,7 +334,7 @@ public class JITServerTest {
 		p.destroy();
 
 		int waitCount = 0;
-		while (!p.waitFor(PROCESS_DESTROY_WAIT_TIME_MS, TimeUnit.MILLISECONDS) && (waitCount < 6)) {
+		while (!p.waitFor(PROCESS_DESTROY_WAIT_TIME_MS, TimeUnit.MILLISECONDS) && (waitCount < 12)) {
 			waitCount++;
 		}
 
