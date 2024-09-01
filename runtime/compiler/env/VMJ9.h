@@ -1559,6 +1559,16 @@ public:
 
    virtual TR_OpaqueClassBlock * getComponentClassFromArrayClass(TR_OpaqueClassBlock * arrayClass);
    virtual TR_OpaqueClassBlock * getArrayClassFromComponentClass(TR_OpaqueClassBlock *componentClass);
+   /** \brief
+     *     Retrieves the nullRestrictedArrayClass from the array component class.
+     *
+     *  \param componentClass
+     *     The array component class
+     *
+     *  \return
+     *     A pointer to nullRestrictedArrayClass if it exists, otherwise NULL
+     */
+   virtual TR_OpaqueClassBlock * getNullRestrictedArrayClassFromComponentClass(TR_OpaqueClassBlock *componentClass);
    virtual TR_OpaqueClassBlock * getLeafComponentClassFromArrayClass(TR_OpaqueClassBlock * arrayClass);
    virtual int32_t               getNewArrayTypeFromClass(TR_OpaqueClassBlock *clazz);
    virtual TR_OpaqueClassBlock * getClassFromSignature(const char * sig, int32_t length, TR_ResolvedMethod *method, bool isVettedForAOT=false);
@@ -1685,6 +1695,16 @@ public:
    virtual bool               isPrimitiveClass(TR_OpaqueClassBlock *clazz);
    virtual TR_OpaqueClassBlock * getComponentClassFromArrayClass(TR_OpaqueClassBlock * arrayClass);
    virtual TR_OpaqueClassBlock * getArrayClassFromComponentClass(TR_OpaqueClassBlock *componentClass);
+   /** \brief
+     *     Retrieves the nullRestrictedArrayClass from the array component class.
+     *
+     *  \param componentClass
+     *     The array component class
+     *
+     *  \return
+     *     A pointer to nullRestrictedArrayClass if it exists, otherwise NULL
+     */
+   virtual TR_OpaqueClassBlock * getNullRestrictedArrayClassFromComponentClass(TR_OpaqueClassBlock *componentClass);
    virtual TR_OpaqueClassBlock * getLeafComponentClassFromArrayClass(TR_OpaqueClassBlock * arrayClass);
    virtual TR_OpaqueClassBlock * getBaseComponentClass(TR_OpaqueClassBlock * clazz, int32_t & numDims);
    virtual TR_OpaqueClassBlock * getClassFromNewArrayType(int32_t arrayType);
