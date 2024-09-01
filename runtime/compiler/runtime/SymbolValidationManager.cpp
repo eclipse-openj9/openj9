@@ -1255,8 +1255,7 @@ TR::SymbolValidationManager::validateArrayClassFromComponentClassRecord(uint16_t
       if (validateSymbol(arrayClassID, _fej9->getArrayClassFromComponentClass(componentClass)))
          return true;
 
-      TR_OpaqueClassBlock *nullRestrictedArray = TR::Compiler->om.areFlattenableValueTypesEnabled() ?
-                                                   _fej9->getNullRestrictedArrayClassFromComponentClass(componentClass) : NULL;
+      TR_OpaqueClassBlock *nullRestrictedArray = _fej9->getNullRestrictedArrayClassFromComponentClass(componentClass);
       return nullRestrictedArray ? validateSymbol(arrayClassID, nullRestrictedArray) : false;
       }
    else
