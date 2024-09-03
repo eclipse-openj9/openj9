@@ -829,6 +829,18 @@ JVM_IsContainerized(void)
 
 	return isContainerized;
 }
+
+/**
+ * @brief Determine if the JVM is statically linked, always returns JNI_FALSE.
+ *
+ * @return JNI_FALSE
+ */
+JNIEXPORT jboolean JNICALL
+JVM_IsStaticallyLinked(void)
+{
+	/* OpenJDK removed static builds using --enable-static-build. */
+	return JNI_FALSE;
+}
 #endif /* JAVA_SPEC_VERSION >= 24 */
 
 } /* extern "C" */
