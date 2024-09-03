@@ -190,3 +190,10 @@ J9NLS_VMUTIL_RECEIVERCLASS_NOT_SAME_OR_SUBTYPE_OF_CURRENTCLASS.explanation=NOTAG
 J9NLS_VMUTIL_RECEIVERCLASS_NOT_SAME_OR_SUBTYPE_OF_CURRENTCLASS.system_action=
 J9NLS_VMUTIL_RECEIVERCLASS_NOT_SAME_OR_SUBTYPE_OF_CURRENTCLASS.user_response=
 # END NON-TRANSLATABLE
+
+J9NLS_VMUTIL_OPENJ9_EXTENDED_HCR_DISABLED_WARNING=\uacbd\uace0: \ud655\uc7a5 HCR\uc774 \ube44\ud65c\uc131\ud654\ub418\uc5b4 \uc788\uc2b5\ub2c8\ub2e4. -XX:+EnableExtendedHCR\ub85c \ud65c\uc131\ud654\ud558\uc138\uc694. \uc774 \uae30\ub2a5\uc740 \ub354 \uc774\uc0c1 \uc0ac\uc6a9\ub418\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. \uc55e\uc73c\ub85c\ub294 \ud655\uc7a5\ub41c HCR \uae30\ub2a5\uacfc \uc774\ub97c \ud65c\uc131\ud654\ud558\ub294 \uc635\uc158\uc774 \ubaa8\ub4e0 \ubc84\uc804\uc5d0\uc11c \uc644\uc804\ud788 \uc81c\uac70\ub420 \uc608\uc815\uc785\ub2c8\ub2e4.
+# START NON-TRANSLATABLE
+J9NLS_VMUTIL_OPENJ9_EXTENDED_HCR_DISABLED_WARNING.explanation=This JVM disables extended HCR by default, this may cause JVMTI failures in extended capabilites are required.
+J9NLS_VMUTIL_OPENJ9_EXTENDED_HCR_DISABLED_WARNING.system_action=None
+J9NLS_VMUTIL_OPENJ9_EXTENDED_HCR_DISABLED_WARNING.user_response=Add -XX:+EnableExtendedHCR commandline option to enable extended HCR.
+# END NON-TRANSLATABLE
