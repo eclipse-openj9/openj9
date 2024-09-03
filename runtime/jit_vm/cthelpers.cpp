@@ -47,6 +47,8 @@ J9_DECLARE_CONSTANT_UTF8(ojdk_forceInline, "Ljava/lang/invoke/ForceInline;");
 J9_DECLARE_CONSTANT_UTF8(ojdk_dontInline, "Ljava/lang/invoke/DontInline;");
 #endif /* JAVA_SPEC_VERSION >= 11 */
 
+J9_DECLARE_CONSTANT_UTF8(ojdk_isPrimitiveArray, "Ljdk/internal/vm/annotation/IsPrimitiveArray;");
+
 void*
 jitGetCountingSendTarget(J9VMThread *vmThread, J9Method *ramMethod)
 {
@@ -271,6 +273,12 @@ jitIsMethodTaggedWithChangesCurrentThread(J9VMThread *currentThread, J9Method *m
 #else /* JAVA_SPEC_VERSION >= 21 */
 	return FALSE;
 #endif /* JAVA_SPEC_VERSION >= 21 */
+}
+
+BOOLEAN
+jitIsPrimitiveArray(J9VMThread *currentThread, J9Class *clazz, UDATA cpIndex)
+{
+	return fieldContainsRuntimeAnnotation(currentThread, clazz, cpIndex, (J9UTF8 *)&ojdk_isPrimitiveArray);
 }
 
 } /* extern "C" */
