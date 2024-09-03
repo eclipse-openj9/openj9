@@ -90,6 +90,7 @@ TR::CRRuntime::CRRuntime(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo) 
    _failedComps(),
    _forcedRecomps(),
    _impMethodForCR(),
+   _jniMethodAddr(),
    _proactiveCompEnv(),
    _restoreTime(0)
    {
@@ -164,22 +165,25 @@ TR::CRRuntime::waitOnCRRuntimeMonitor()
    _crRuntimeMonitor->wait();
    }
 
+template<typename T>
 void
-TR::CRRuntime::pushMemoizedCompilation(TR_MemoizedCompilations& list, J9Method *method)
+TR::CRRuntime::pushMemoizedCompilation(TR_MemoizedCompilations& list, J9Method *method, void *data)
    {
-   auto newEntry = new (_compInfo->persistentMemory()) TR_MemoizedComp(method);
+   auto newEntry = new (_compInfo->persistentMemory()) T(method, data);
    if (newEntry)
       list.add(newEntry);
    }
 
 J9Method *
-TR::CRRuntime::popMemoizedCompilation(TR_MemoizedCompilations& list)
+TR::CRRuntime::popMemoizedCompilation(TR_MemoizedCompilations& list, void **data)
    {
    J9Method *method = NULL;
    auto memComp = list.pop();
    if (memComp)
       {
       method = memComp->getMethod();
+      if (data)
+         *data = memComp->getData();
       jitPersistentFree(memComp);
       }
    return method;
@@ -263,6 +267,46 @@ TR::CRRuntime::purgeMemoizedCompilations()
    purgeMemoizedCompilation(_failedComps);
    purgeMemoizedCompilation(_forcedRecomps);
    purgeMemoizedCompilation(_impMethodForCR);
+   }
+
+void
+TR::CRRuntime::pushFailedCompilation(J9Method *method)
+   {
+   pushMemoizedCompilation<TR_MemoizedComp>(_failedComps, method);
+   }
+
+void
+TR::CRRuntime::pushForcedRecompilation(J9Method *method)
+   {
+   pushMemoizedCompilation<TR_MemoizedComp>(_forcedRecomps, method);
+   }
+
+void
+TR::CRRuntime::pushImportantMethodForCR(J9Method *method)
+   {
+   pushMemoizedCompilation<TR_MemoizedComp>(_impMethodForCR, method);
+   }
+
+void
+TR::CRRuntime::pushJNIAddr(J9Method *method, void *addr)
+   {
+   pushMemoizedCompilation<TR_JNIMethodAddr>(_jniMethodAddr, method, addr);
+   }
+
+void
+TR::CRRuntime::resetJNIAddr()
+   {
+   OMR::CriticalSection resetJNI(getCRRuntimeMonitor());
+   while (!_jniMethodAddr.isEmpty())
+      {
+      J9Method *method;
+      void *addr;
+      while ((method = popJNIAddr(&addr)))
+         {
+         TR_ASSERT_FATAL(addr, "JNI Address to be reset cannot be NULL!");
+         _compInfo->setJ9MethodExtra(method, reinterpret_cast<intptr_t>(addr));
+         }
+      }
    }
 
 void
