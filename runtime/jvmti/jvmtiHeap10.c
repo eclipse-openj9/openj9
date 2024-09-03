@@ -462,14 +462,14 @@ processObjectRef(J9JVMTIObjectIteratorData * data, J9JVMTIObjectTag * entry, jlo
 
 
 static jvmtiIterationControl
-processStackRoot(J9JVMTIObjectIteratorData * data, J9JVMTIObjectTag * entry, jlong size, jlong classTag, jvmtiHeapRootKind kind, J9MM_StackSlotDescriptor *stackSlotDescriptor)
+processStackRoot(J9JVMTIObjectIteratorData *data, J9JVMTIObjectTag *entry, jlong size, jlong classTag, jvmtiHeapRootKind kind, J9MM_StackSlotDescriptor *stackSlotDescriptor)
 {
 	jint slot = -1;
 	jint depth = -1;
 	J9Method *ramMethod = NULL;
 	jmethodID method = (jmethodID) -1;
-	J9JVMTIObjectTag search;
-	J9JVMTIObjectTag *result;
+	J9JVMTIObjectTag search = {NULL, 0};
+	J9JVMTIObjectTag *result = NULL;
 
 	if (NULL != stackSlotDescriptor->walkState) {
 		J9StackWalkState *walkState = stackSlotDescriptor->walkState;
@@ -477,23 +477,22 @@ processStackRoot(J9JVMTIObjectIteratorData * data, J9JVMTIObjectTag * entry, jlo
 		depth = (jint) walkState->framesWalked;
 		ramMethod = walkState->method;
 
-		/* Convert internal slot type to JVMTI type */
+		/* Convert internal slot type to JVMTI type. */
 
 		switch (walkState->slotType) {
-			case J9_STACKWALK_SLOT_TYPE_JNI_LOCAL:
-				kind = JVMTI_HEAP_ROOT_JNI_LOCAL;
-				break;
-			case J9_STACKWALK_SLOT_TYPE_METHOD_LOCAL:
-				kind = JVMTI_HEAP_ROOT_STACK_LOCAL;
-				break;
-			default:
-				kind = JVMTI_HEAP_ROOT_JNI_LOCAL;
-				ramMethod = NULL;
-				break;
+		case J9_STACKWALK_SLOT_TYPE_JNI_LOCAL:
+			kind = JVMTI_HEAP_ROOT_JNI_LOCAL;
+			break;
+		case J9_STACKWALK_SLOT_TYPE_METHOD_LOCAL:
+			kind = JVMTI_HEAP_ROOT_STACK_LOCAL;
+			break;
+		default:
+			kind = JVMTI_HEAP_ROOT_JNI_LOCAL;
+			ramMethod = NULL;
+			break;
 		}
 
 		/* If there's no method, slot, method and depth are set to -1 by default. */
-
 		if (NULL != ramMethod) {
 			/* Cheating here - should be current thread, but the walk thread will do. */
 			method = getCurrentMethodID(walkState->walkThread, ramMethod);

@@ -165,8 +165,8 @@ typedef struct J9MM_HeapRootSlotDescriptor {
 } J9MM_HeapRootSlotDescriptor;
 
 typedef struct J9MM_StackSlotDescriptor {
-	J9VMThread *vmThread; /**< Thread containing the stack slot. */
-	J9StackWalkState *walkState; /**< WalkState that found the slot, or null if found directly in thread local tables. */
+	J9VMThread *vmThread; /**< Thread containing the stack slot */
+	J9StackWalkState *walkState; /**< WalkState that found the slot, or null if found directly in thread local tables */
 } J9MM_StackSlotDescriptor;
 
 typedef jvmtiIterationControl (*rootIteratorCallBackFunc)(void* ptr, J9MM_HeapRootSlotDescriptor *rootDesc, void *userData);
