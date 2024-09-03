@@ -345,6 +345,8 @@ static const OptimizationStrategy warmStrategyOpts[] =
 #endif
    { OMR::localCSE,                                  OMR::IfLoopsAndNotProfiling     },
    { OMR::idiomRecognition,                          OMR::IfLoopsAndNotProfiling     },
+   { OMR::treeSimplification                                                    },
+   { OMR::redundantGotoElimination,                  OMR::IfEnabledAndNotJitProfiling     },
    { OMR::blockSplitter                                                         },
    { OMR::treeSimplification                                                    }, // revisit; not really required ?
    { OMR::virtualGuardHeadMerger                                                },
@@ -554,8 +556,9 @@ const OptimizationStrategy hotStrategyOpts[] =
    { OMR::earlyLocalGroup                                                 },
    { OMR::stripMiningGroup,                      OMR::IfLoops                  }, // strip mining in loops
    { OMR::loopReplicator,                        OMR::IfLoops                  }, // tail-duplication in loops
-   { OMR::blockSplitter,                         OMR::IfNews                   }, // treeSimplification + blockSplitter + VP => opportunity for EA
    { OMR::expensiveGlobalValuePropagationGroup                            },
+   { OMR::redundantGotoElimination,              OMR::IfEnabledAndNotJitProfiling     },
+   { OMR::blockSplitter,                         OMR::IfNews                   }, // treeSimplification + blockSplitter + VP => opportunity for EA
    { OMR::localCSE,                              OMR::IfVectorAPI },
    { OMR::loopCanonicalization,                  OMR::IfVectorAPI },
    { OMR::partialRedundancyEliminationGroup,     OMR::IfVectorAPI },
