@@ -214,6 +214,7 @@ J9JITFrame.returnPC = required
 J9JITHashTable.buckets = required
 J9JITHashTable.end = required
 J9JITHashTable.start = required
+J9JITGPRSpillArea.unused = void*
 J9JITStackAtlas.internalPointerMap = required
 J9JITStackAtlas.localBaseOffset = required
 J9JITStackAtlas.numberOfMapBytes = required
