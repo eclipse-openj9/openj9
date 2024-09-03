@@ -444,3 +444,5 @@ _IF([JAVA_SPEC_VERSION >= 23],
 	[_X(JVM_GetCDSConfigStatus, JNICALL, false, jint, void)])
 _IF([JAVA_SPEC_VERSION >= 24],
 	[_X(JVM_IsContainerized, JNICALL, false, jboolean, void)])
+_IF([JAVA_SPEC_VERSION >= 24],
+	[_X(JVM_IsStaticallyLinked, JNICALL, false, jboolean, void)])
