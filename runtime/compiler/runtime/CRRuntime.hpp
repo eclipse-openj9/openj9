@@ -131,12 +131,14 @@ class CRRuntime
    /* The following methods should be only be invoked with the CR Runtime
     * Monitor in hand.
     */
-   void pushFailedCompilation(J9Method *method)    { pushMemoizedCompilation(_failedComps, method);    }
-   J9Method * popFailedCompilation()               { return popMemoizedCompilation(_failedComps);      }
-   void pushForcedRecompilation(J9Method *method)  { pushMemoizedCompilation(_forcedRecomps, method);  }
-   J9Method * popForcedRecompilation()             { return popMemoizedCompilation(_forcedRecomps);    }
-   void pushImportantMethodForCR(J9Method *method) { pushMemoizedCompilation(_impMethodForCR, method); }
-   J9Method * popImportantMethodForCR()            { return popMemoizedCompilation(_impMethodForCR);   }
+   void pushFailedCompilation(J9Method *method);
+   void pushForcedRecompilation(J9Method *method);
+   void pushImportantMethodForCR(J9Method *method);
+   void pushJNIAddr(J9Method *method, void *addr);
+   J9Method * popFailedCompilation()    { return popMemoizedCompilation(_failedComps);         }
+   J9Method * popForcedRecompilation()  { return popMemoizedCompilation(_forcedRecomps);       }
+   J9Method * popImportantMethodForCR() { return popMemoizedCompilation(_impMethodForCR);      }
+   J9Method * popJNIAddr(void **addr)   { return popMemoizedCompilation(_jniMethodAddr, addr); }
 
    /**
     * @brief Remove appropriate methods from all of the memoized lists. This
@@ -153,6 +155,12 @@ class CRRuntime
     *        Runtime Monitor.
     */
    void purgeMemoizedCompilations();
+
+   /**
+    * @brief Reset JNI Addresses to what was set by the VM when they were
+    *        first initialized.
+    */
+   void resetJNIAddr();
 
    /**
     * @brief Processing method that the CR Runtime Thread executes.
@@ -189,13 +197,34 @@ class CRRuntime
       public:
       TR_PERSISTENT_ALLOC(TR_MemoryBase::CompilationInfo);
 
-      TR_MemoizedComp(J9Method *method) { _method = method; }
+      TR_MemoizedComp(J9Method *method, void *data = NULL)
+         : _method(method)
+         {}
+
       J9Method *getMethod() { return _method; }
+
+      virtual void *getData() { TR_ASSERT_FATAL(false, "Should not be called!\n"); return NULL; }
 
       private:
       J9Method *_method;
       };
    typedef TR_LinkHead0<TR_MemoizedComp> TR_MemoizedCompilations;
+
+   class TR_JNIMethodAddr : public TR_MemoizedComp
+      {
+      public:
+      TR_PERSISTENT_ALLOC(TR_MemoryBase::CompilationInfo);
+
+      TR_JNIMethodAddr(J9Method *method, void *data)
+         : TR_MemoizedComp(method),
+           _oldJNIAddr(data)
+         {}
+
+      virtual void *getData() { return _oldJNIAddr; }
+
+      private:
+      void *_oldJNIAddr;
+      };
 
    struct ProactiveCompEnv
       {
@@ -308,8 +337,10 @@ class CRRuntime
     *
     * @param list A reference to the TR_MemoizedCompilations list
     * @param method The method whose compilation should be memoized
+    * @param data The additional data to add for the J9Method
     */
-   void pushMemoizedCompilation(TR_MemoizedCompilations& list, J9Method *method);
+   template<typename T>
+   void pushMemoizedCompilation(TR_MemoizedCompilations& list, J9Method *method, void *data = NULL);
 
    /**
     * @brief Helper method to pop a J9Method from a list that is used to memoize
@@ -318,10 +349,11 @@ class CRRuntime
     *        Comp Monitor in hand.
     *
     * @param list A reference to the TR_MemoizedCompilations list
+    * @param data A pointer to memory to return the additional data (if it exists)
     *
     * @return the J9Method at the front of the list; NULL if the list is empty.
     */
-   J9Method * popMemoizedCompilation(TR_MemoizedCompilations& list);
+   J9Method * popMemoizedCompilation(TR_MemoizedCompilations& list, void **data = NULL);
 
    /**
     * @brief Helper method to remove a J9Method from a list that is used to
@@ -384,6 +416,7 @@ class CRRuntime
    TR_MemoizedCompilations _failedComps;
    TR_MemoizedCompilations _forcedRecomps;
    TR_MemoizedCompilations _impMethodForCR;
+   TR_MemoizedCompilations _jniMethodAddr;
 
    ProactiveCompEnv _proactiveCompEnv;
 
