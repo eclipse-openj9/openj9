@@ -335,7 +335,7 @@ static void setLibpath(const char *libpath);
 #ifdef DEBUG_TEST
 static void testBackupAndRestoreLibpath(void);
 #endif /* DEBUG_TEST */
-#endif  /* AIXPPC */
+#endif /* defined(AIXPPC) */
 
 /* Defined in j9memcategories.c */
 extern OMRMemCategorySet j9MainMemCategorySet;
@@ -1295,7 +1295,7 @@ preloadLibraries(void)
 #if defined(AIXPPC)
 	size_t origLibpathLen = 0;
 	const char *origLibpath = NULL;
-#endif /* AIXPPC */
+#endif /* defined(AIXPPC) */
 
 	if (j9vm_dllHandle != 0) {
 		return FALSE;
@@ -1310,7 +1310,7 @@ preloadLibraries(void)
 	if (NULL != origLibpath) {
 		origLibpathLen = strlen(origLibpath);
 	}
-#endif /* AIXPPC */
+#endif /* defined(AIXPPC) */
 
 	jvmDLLNameBuffer = getj9bin();
 	j9binBuffer = jvmBufferCat(NULL, jvmBufferData(jvmDLLNameBuffer));
@@ -1392,7 +1392,7 @@ preloadLibraries(void)
 
 #if defined(AIXPPC)
 	backupLibpath(&libpathBackup, origLibpathLen);
-#endif /* AIXPPC */
+#endif /* defined(AIXPPC) */
 
 	omrsigDLL = preloadLibrary("omrsig", TRUE);
 	if (NULL == omrsigDLL) {
@@ -1954,9 +1954,9 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 	UDATA argEncoding = ARG_ENCODING_DEFAULT;
 	UDATA altJavaHomeSpecified = 0; /* not used on non-Windows */
 	J9PortLibraryVersion portLibraryVersion;
-#if defined(AIXPPC)
+#if defined(AIXPPC) || (defined(J9ZOS390) && (JAVA_SPEC_VERSION >= 21))
 	char *origLibpath = NULL;
-#endif /* AIXPPC */
+#endif /* defined(AIXPPC) || (defined(J9ZOS390) && (JAVA_SPEC_VERSION >= 21)) */
 	I_32 portLibraryInitStatus;
 	UDATA expectedLibrarySize;
 	UDATA localVerboseLevel = 0;
@@ -1981,6 +1981,9 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 	 * See the discussion in https://github.com/eclipse-openj9/openj9/pull/14634.
 	 */
 	specialArgs.captureCommandLine = FALSE;
+#if JAVA_SPEC_VERSION >= 21
+	iconv_init();
+#endif /* JAVA_SPEC_VERSION >= 21 */
 #endif /* defined(J9ZOS390) */
 #ifdef J9ZTPF
 
@@ -2185,7 +2188,7 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 
 		/* restore LIBPATH to avoid polluting child processes */
 		setLibpath(origLibpath);
-#endif /* AIXPPC */
+#endif /* defined(AIXPPC) */
 		result = JNI_ERR;
 		goto exit;
 	}
@@ -2202,7 +2205,7 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 
 			/* restore LIBPATH to avoid polluting child processes */
 			setLibpath(origLibpath);
-#endif /* AIXPPC */
+#endif /* defined(AIXPPC) */
 			result = JNI_ERR;
 			goto exit;
 		}
@@ -2456,7 +2459,7 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 #ifdef DEBUG_TEST
 	testBackupAndRestoreLibpath();
 #endif /* DEBUG_TEST */
-#endif /* AIXPPC */
+#endif /* defined(AIXPPC) */
 
 	if (JNI_OK == result) {
 		J9JavaVM *env = (J9JavaVM *) BFUjavaVM;
@@ -2861,7 +2864,7 @@ preloadLibrary(char* dllName, BOOLEAN inJVMDir)
 			handle = (void*)dlopen(buffer->data, RTLD_NOW);
 		}
 	}
-#endif /* AIXPPC */
+#endif /* defined(AIXPPC) */
 	if (handle == NULL) {
 		fprintf(stderr,"libjvm.so preloadLibrary(%s): %s\n", buffer->data, dlerror());
 	}
@@ -2904,7 +2907,7 @@ setLibpath(const char *libpath)
 {
 	setenv("LIBPATH", libpath, 1);
 }
-#endif /* AIXPPC */
+#endif /* defined(AIXPPC) */
 
 static void
 addToLibpath(const char *dir, BOOLEAN isPrepend)
@@ -3011,7 +3014,7 @@ backupLibpath(J9LibpathBackup *libpathBackup, size_t origLibpathLen)
 		}
 	}
 }
-#endif /* AIXPPC */
+#endif /* defined(AIXPPC) */
 
 #if defined(AIXPPC)
 /**
@@ -3030,7 +3033,7 @@ freeBackupLibpath(J9LibpathBackup *libpathBackup)
 	}
 	libpathBackup->j9prefixLen = 0;
 }
-#endif /* AIXPPC */
+#endif /* defined(AIXPPC) */
 
 #if defined(AIXPPC)
 /**
@@ -3068,7 +3071,7 @@ restoreLibpath(J9LibpathBackup *libpathBackup)
 		libpathBackup->j9prefixLen = 0;
 	}
 }
-#endif /* AIXPPC */
+#endif /* defined(AIXPPC) */
 
 #if defined(AIXPPC)
 /**
@@ -3121,7 +3124,7 @@ findInLibpath(const char *libpath, const char *backupPath)
 	}
 	return NULL;
 }
-#endif /* AIXPPC */
+#endif /* defined(AIXPPC) */
 
 #if defined(AIXPPC)
 /**
@@ -3184,7 +3187,7 @@ deleteDirsFromLibpath(const char *const libpath, const char *const deleteStart, 
 
 	return newPath;
 }
-#endif /* AIXPPC */
+#endif /* defined(AIXPPC) */
 
 #if defined(AIXPPC) && defined(DEBUG_TEST)
 static void
@@ -3710,7 +3713,7 @@ testBackupAndRestoreLibpath(void)
 
 	setLibpath(origLibpath);
 }
-#endif /* AIXPPC and DEBUG_TEST */
+#endif /* defined(AIXPPC) && defined(DEBUG_TEST) */
 
 #if defined(WIN32)
 
