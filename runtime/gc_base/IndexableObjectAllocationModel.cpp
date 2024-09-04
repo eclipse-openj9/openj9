@@ -59,7 +59,7 @@ MM_IndexableObjectAllocationModel::initializeAllocateDescription(MM_EnvironmentB
 #endif /* defined (J9VM_GC_MODRON_COMPACTION) || defined (J9VM_GC_GENERATIONAL) */
 	spineBytes = extensions->objectModel.adjustSizeInBytes(spineBytes);
 
-	bool isAllIndexableDataContiguousEnabled = extensions->indexableObjectModel.isVirtualLargeObjectHeapEnabled();
+	bool isVirtualLargeObjectHeapEnabled = extensions->indexableObjectModel.isVirtualLargeObjectHeapEnabled();
 
 	/* determine size of layout overhead (additional to spine bytes) and finalize allocation description */
 	/* it is used to track amount of array bytes not included to spine and set final total number of bytes allocated for array */
@@ -72,7 +72,7 @@ MM_IndexableObjectAllocationModel::initializeAllocateDescription(MM_EnvironmentB
 
 	case GC_ArrayletObjectModel::InlineContiguous:
 		/* Check if we're dealing with a camouflaged discontiguous array - these arrays will require slow-path allocate */
-		if (isAllIndexableDataContiguousEnabled && (!extensions->indexableObjectModel.isArrayletDataAdjacentToHeader(_dataSize))) {
+		if (isVirtualLargeObjectHeapEnabled && (!extensions->indexableObjectModel.isArrayletDataAdjacentToHeader(_dataSize))) {
 			if (isGCAllowed()) {
 				layoutSizeInBytes = _dataSize;
 				setAllocatable(true);
@@ -99,7 +99,7 @@ MM_IndexableObjectAllocationModel::initializeAllocateDescription(MM_EnvironmentB
 		break;
 
 	case GC_ArrayletObjectModel::Hybrid:
-		if (isAllIndexableDataContiguousEnabled) {
+		if (isVirtualLargeObjectHeapEnabled) {
 			Assert_MM_unreachable();
 		}
 		Assert_MM_true(0 < _numberOfArraylets);
@@ -145,13 +145,13 @@ MM_IndexableObjectAllocationModel::initializeIndexableObject(MM_EnvironmentBase 
 	J9IndexableObject *spine = (J9IndexableObject*)initializeJavaObject(env, allocatedBytes);
 	_allocateDescription.setSpine(spine);
 	bool isArrayletDataAdjacentToHeader = false;
-	bool isAllIndexableDataContiguousEnabled = indexableObjectModel->isVirtualLargeObjectHeapEnabled();
+	bool isVirtualLargeObjectHeapEnabled = indexableObjectModel->isVirtualLargeObjectHeapEnabled();
 
 	if (NULL != spine) {
 		/* Set the array size */
 		if (getAllocateDescription()->isChunkedArray()) {
 			/* !off-heap or 0-length arrays */
-			Assert_MM_true((!isAllIndexableDataContiguousEnabled) || (0 == _numberOfIndexedFields));
+			Assert_MM_true((!isVirtualLargeObjectHeapEnabled) || (0 == _numberOfIndexedFields));
 			indexableObjectModel->setSizeInElementsForDiscontiguous(spine, _numberOfIndexedFields);
 #if defined(J9VM_ENV_DATA64)
 			if (((J9JavaVM *)env->getLanguageVM())->isIndexableDataAddrPresent) {
@@ -167,7 +167,7 @@ MM_IndexableObjectAllocationModel::initializeIndexableObject(MM_EnvironmentBase 
 					indexableObjectModel->setDataAddrForContiguous(spine);
 				}
 #endif /* defined(J9VM_ENV_DATA64) */
-			} else if (isAllIndexableDataContiguousEnabled) {
+			} else if (isVirtualLargeObjectHeapEnabled) {
 #if defined(J9VM_ENV_DATA64)
 				/* set NULL temporarily to avoid possible complication with GC occurring while the object is partially initialized? */
 				indexableObjectModel->setDataAddrForContiguous(spine, NULL);
@@ -181,7 +181,7 @@ MM_IndexableObjectAllocationModel::initializeIndexableObject(MM_EnvironmentBase 
 	switch (_layout) {
 	case GC_ArrayletObjectModel::InlineContiguous:
 #if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
-		if (isAllIndexableDataContiguousEnabled && !isArrayletDataAdjacentToHeader) {
+		if (isVirtualLargeObjectHeapEnabled && !isArrayletDataAdjacentToHeader) {
 			/* We still need to create leaves for discontiguous arrays that will be allocated at off-heap */
 			spine = getSparseAddressAndDecommitLeaves(env, spine);
 			if (NULL != spine) {
@@ -189,7 +189,7 @@ MM_IndexableObjectAllocationModel::initializeIndexableObject(MM_EnvironmentBase 
 			}
 		}
 #endif /* defined (J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
-		if ((!isAllIndexableDataContiguousEnabled) || isArrayletDataAdjacentToHeader) {
+		if ((!isVirtualLargeObjectHeapEnabled) || isArrayletDataAdjacentToHeader) {
 			Assert_MM_true(1 == _numberOfArraylets);
 		}
 		break;

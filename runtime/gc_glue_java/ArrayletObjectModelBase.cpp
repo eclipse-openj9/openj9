@@ -102,16 +102,16 @@ GC_ArrayletObjectModelBase::getSpineSizeWithoutHeader(ArrayLayout layout, uintpt
 			spineArrayoidSize = numberArraylets * slotSize;
 		}
 	}
-	bool isAllIndexableDataContiguousEnabled = extensions->indexableObjectModel.isVirtualLargeObjectHeapEnabled();
+	bool isVirtualLargeObjectHeapEnabled = extensions->indexableObjectModel.isVirtualLargeObjectHeapEnabled();
 
 	uintptr_t spineDataSize = 0;
 	if (InlineContiguous == layout) {
 		spineDataSize = dataSize; // All data in spine
-		if (isAllIndexableDataContiguousEnabled && (!extensions->indexableObjectModel.isArrayletDataAdjacentToHeader(dataSize))) {
+		if (isVirtualLargeObjectHeapEnabled && (!extensions->indexableObjectModel.isArrayletDataAdjacentToHeader(dataSize))) {
 			spineDataSize = 0;
 		}
 	} else if (Hybrid == layout) {
-		if (isAllIndexableDataContiguousEnabled) {
+		if (isVirtualLargeObjectHeapEnabled) {
 			extensions->indexableObjectModel.AssertContiguousArrayDataUnreachable();
 		}
 		/* Last arraylet in spine */
