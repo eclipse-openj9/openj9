@@ -358,19 +358,6 @@ J9Class*
 internalCreateArrayClass(J9VMThread* vmThread, J9ROMArrayClass* romClass, J9Class* elementClass);
 
 /**
- * @brief Create a new J9Class to represent an array of elementClass.
- *
- * @param vmThread current VM thread
- * @param romClass the ROM class associated with new RAM class (for arrays
- * this is always the object array ROM class "[L")
- * @param elementClass element or base class or array to be created
- * @param options creation options such as J9_FINDCLASS_FLAG_CLASS_OPTION_NULL_RESTRICTED_ARRAY
- * @return J9Class* J9Class of an elementClass array
- */
-J9Class *
-internalCreateArrayClassWithOptions(J9VMThread *vmThread, J9ROMArrayClass *romClass, J9Class *elementClass, UDATA options);
-
-/**
  * Load the class with the specified name in a given module
  *
  * @param currentThread Current VM thread

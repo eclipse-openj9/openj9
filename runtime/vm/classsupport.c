@@ -194,31 +194,24 @@ findPrimitiveArrayClass(J9JavaVM* vm, jchar sigChar)
  *
  * Allocates and fills in the relevant fields of an array class
  */
-J9Class *
-internalCreateArrayClass(J9VMThread *vmThread, J9ROMArrayClass *romClass, J9Class *elementClass)
-{
-	return internalCreateArrayClassWithOptions(vmThread, romClass, elementClass, 0);
-}
-
-J9Class *
-internalCreateArrayClassWithOptions(J9VMThread *vmThread, J9ROMArrayClass *romClass, J9Class *elementClass, UDATA options)
+J9Class* 
+internalCreateArrayClass(J9VMThread* vmThread, J9ROMArrayClass* romClass, J9Class* elementClass)
 {
 	J9Class *result = NULL;
 	j9object_t heapClass = J9VM_J9CLASS_TO_HEAPCLASS(elementClass);
 	j9object_t protectionDomain = NULL;
-	J9ROMClass *arrayRomClass = (J9ROMClass *)romClass;
+	J9ROMClass* arrayRomClass = (J9ROMClass*) romClass;
 	J9JavaVM *const javaVM = vmThread->javaVM;
+	UDATA options = 0;
 	BOOLEAN elementInitSuccess = TRUE;
 
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-	/* When creating an array of implicitly constructible valuetype elements,
-	 * the array elements are initialized to the defaultValue of the element
-	 * type. As a result, the element type must be fully initialized before
-	 * creating an instance of the array. Element class init must be done
-	 * before the arrayClass is created so that in the case of an init failure
-	 * the arrayClass is not temporarily exposed.
+	/* When creating an array of valuetype elements, the array elements are initialized to the defaultValue of the
+	 * element type. As a result the element type must be fully initialized (if its a valuetype) before creating an
+	 * instance of the array. Element class init must be done before the arrayClass is created so that in the case
+	 * of an init failure the arrayClass is not temporarily exposed.
 	 */
-	if (J9_IS_J9CLASS_ALLOW_DEFAULT_VALUE(elementClass)) {
+	if (J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(elementClass)) {
 		UDATA initStatus = elementClass->initializeStatus;
 		if ((J9ClassInitSucceeded != initStatus) && ((UDATA)vmThread != initStatus)) {
 			initializeClass(vmThread, elementClass);

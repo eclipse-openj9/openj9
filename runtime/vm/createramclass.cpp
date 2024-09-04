@@ -197,19 +197,6 @@ static void initializeClassLinks(J9Class *ramClass, J9Class *superclass, J9Memor
 #define MAGIC_ACCESSOR_IMPL "jdk/internal/reflect/MagicAccessorImpl"
 #endif /* JAVA_SPEC_VERSION == 8 */
 
-static VMINLINE J9Class *
-getArrayClass(J9Class *elementClass, UDATA options)
-{
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-	if (J9_ARE_ALL_BITS_SET(options, J9_FINDCLASS_FLAG_CLASS_OPTION_NULL_RESTRICTED_ARRAY)) {
-		return elementClass->nullRestrictedArrayClass;
-	} else
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
-	{
-		return elementClass->arrayClass;
-	}
-}
-
 /**
  * Mark all of the interfaces supported by this class, including all interfaces
  * inherited by superinterfaces. Unmark all interfaces which are inherited from
@@ -2188,7 +2175,7 @@ internalCreateRAMClassDone(J9VMThread *vmThread, J9ClassLoader *classLoader, J9C
 			if (elementClass == NULL) {
 				alreadyLoadedClass = hashClassTableAt(classLoader, J9UTF8_DATA(className), J9UTF8_LENGTH(className));
 			} else {
-				alreadyLoadedClass = getArrayClass(elementClass, options);
+				alreadyLoadedClass = elementClass->arrayClass;
 			}
 			if (alreadyLoadedClass != NULL) {
 				/* We are discarding this class */
@@ -2387,7 +2374,7 @@ nativeOOM:
 					if (elementClass == NULL) {
 						alreadyLoadedClass = hashClassTableAt(classLoader, J9UTF8_DATA(className), J9UTF8_LENGTH(className));
 					} else {
-						alreadyLoadedClass = getArrayClass(elementClass, options);
+						alreadyLoadedClass = elementClass->arrayClass;
 					}
 					if (alreadyLoadedClass != NULL) {
 						goto alreadyLoaded;
@@ -2401,20 +2388,7 @@ nativeOOM:
 			}
 		} else {
 			if (J9ROMCLASS_IS_ARRAY(romClass)) {
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-				if (J9_ARE_ALL_BITS_SET(options, J9_FINDCLASS_FLAG_CLASS_OPTION_NULL_RESTRICTED_ARRAY)) {
-					elementClass->nullRestrictedArrayClass = state->ramClass;
-				} else
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
-				{
-					((J9ArrayClass *)elementClass)->arrayClass = state->ramClass;
-				}
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-				if ((NULL != elementClass->nullRestrictedArrayClass) && (NULL != elementClass->arrayClass)) {
-					((J9ArrayClass *)elementClass->arrayClass)->companionArray = elementClass->nullRestrictedArrayClass;
-					((J9ArrayClass *)elementClass->nullRestrictedArrayClass)->companionArray = elementClass->arrayClass;
-				}
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+				((J9ArrayClass *)elementClass)->arrayClass = state->ramClass;
 				/* Assigning into the arrayClass field creates an implicit reference to the class from its class loader */
 				javaVM->memoryManagerFunctions->j9gc_objaccess_postStoreClassToClassLoader(vmThread, classLoader, state->ramClass);
 			}
@@ -2870,7 +2844,7 @@ fail:
 		if (elementClass == NULL) {
 			ramClass = hashClassTableAt(classLoader, J9UTF8_DATA(className), J9UTF8_LENGTH(className));
 		} else {
-			ramClass = getArrayClass(elementClass, options);
+			ramClass = elementClass->arrayClass;
 		}
 		state->ramClass = ramClass;
 
@@ -3215,7 +3189,7 @@ fail:
 			 *           + J9ClassAllowsNonAtomicCreation
 			 *
 			 *         + J9ClassNeedToPruneMemberNames
-			 *        + J9ClassArrayIsNullRestricted
+			 *        + Unused
 			 *       + Unused
 			 *      + Unused
 			 *
@@ -3445,7 +3419,14 @@ fail:
 					arity = elementArrayClass->arity + 1;
 					leafComponentType = elementArrayClass->leafComponentType;
 				} else {
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+					U_32 arrayFlags = J9ClassLargestAlignmentConstraintReference | J9ClassLargestAlignmentConstraintDouble;
+
+					if (J9_ARE_ALL_BITS_SET(javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_VT_ARRAY_FLATTENING)) {
+						arrayFlags |= J9ClassIsFlattened;
+					}
+
+					arity = 1;
+					leafComponentType = elementClass;
 					/* For arrays of valueType elements (where componentType is a valuetype), the arrays themselves are not
 					 * valuetypes but they should inherit the layout characteristics (ie. flattenable, etc.)
 					 * of the valuetype elements. A 2D (or more) array of valuetype elements (where leafComponentType is a Valuetype but
@@ -3453,20 +3434,7 @@ fail:
 					 * properties from the leafComponentType. A 2D array is an array of references so it can never be flattened, however, its
 					 * elements may be flattened arrays.
 					 */
-					U_32 arrayFlags = J9ClassLargestAlignmentConstraintReference | J9ClassLargestAlignmentConstraintDouble;
-					if (J9_ARE_ALL_BITS_SET(javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_VT_ARRAY_FLATTENING)) {
-						/* TODO restrict this flag to be set only for null-restricted
-						 * arrays once value type command line tests are updated.
-						 */
-						arrayFlags |= J9ClassIsFlattened;
-					}
 					ramArrayClass->classFlags |= (elementClass->classFlags & arrayFlags);
-					if (J9_ARE_ALL_BITS_SET(options, J9_FINDCLASS_FLAG_CLASS_OPTION_NULL_RESTRICTED_ARRAY)) {
-						ramArrayClass->classFlags |= J9ClassArrayIsNullRestricted;
-					}
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
-					arity = 1;
-					leafComponentType = elementClass;
 				}
 				ramArrayClass->classFlags |= J9ClassHasIdentity;
 				ramArrayClass->leafComponentType = leafComponentType;
@@ -3490,7 +3458,7 @@ fail:
 						J9ARRAYCLASS_SET_STRIDE(ramClass, J9_VALUETYPE_FLATTENED_SIZE(elementClass));
 					}
 				} else {
-					if (J9_IS_J9CLASS_ALLOW_DEFAULT_VALUE(elementClass)) {
+					if (J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(elementClass)) {
 						ramArrayClass->classFlags |= J9ClassContainsUnflattenedFlattenables;
 					}
 					J9ARRAYCLASS_SET_STRIDE(ramClass, (((UDATA) 1) << (((J9ROMArrayClass*)romClass)->arrayShape & 0x0000FFFF)));
@@ -3683,7 +3651,7 @@ retry:
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 	) {
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-		if (flattenedClassCache != (J9FlattenedClassCache *)flattenedClassCacheBuffer) {
+		if (flattenedClassCache != (J9FlattenedClassCache *) flattenedClassCacheBuffer) {
 			j9mem_free_memory(flattenedClassCache);
 		}
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */

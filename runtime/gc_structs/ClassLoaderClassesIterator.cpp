@@ -36,15 +36,12 @@ GC_ClassLoaderClassesIterator::GC_ClassLoaderClassesIterator(MM_GCExtensionsBase
 	,_vmSegmentIterator(classLoader, MEMORY_TYPE_RAM_CLASS)
 	,_vmClassSlotIterator((J9JavaVM* )extensions->getOmrVM()->_language_vm)
 	,_mode(TABLE_CLASSES)
-	,_iterateArrayClazz(NULL)
-	,_arrayState(STATE_VALUETYPEARRAY)
 {
 
 	if ((classLoader->flags & J9CLASSLOADER_ANON_CLASS_LOADER) != 0) {
 		_mode = ANONYMOUS_CLASSES;
 	}
 	_nextClass = firstClass();
-	_startingClass = _nextClass;
 }
 
 J9Class *
@@ -103,58 +100,6 @@ GC_ClassLoaderClassesIterator::switchToSystemMode()
 }
 
 J9Class *
-GC_ClassLoaderClassesIterator::nextArrayClass()
-{
-	while (_arrayState != STATE_DONE) {
-		switch (_arrayState) {
-		case STATE_VALUETYPEARRAY:
-			{
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-				J9Class *nullRestrictedArray = J9CLASS_GET_NULLRESTRICTED_ARRAY(_startingClass);
-				if (NULL != nullRestrictedArray) {
-					_iterateArrayClazz = nullRestrictedArray;
-					_arrayState = STATE_VALUETYPEARRAYLIST;
-				} else
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
-				{
-					_arrayState = STATE_ARRAY;
-				}
-			}
-			break;
-		case STATE_VALUETYPEARRAYLIST:
-			if (NULL != _iterateArrayClazz) {
-				_iterateArrayClazz = _iterateArrayClazz->arrayClass;
-			} else {
-				_arrayState = STATE_ARRAY;
-			}
-			break;
-		case STATE_ARRAY:
-			if (NULL != _startingClass->arrayClass) {
-				_iterateArrayClazz = _startingClass->arrayClass;
-				_arrayState = STATE_ARRAYLIST;
-			} else {
-				_arrayState = STATE_DONE;
-			}
-			break;
-		case STATE_ARRAYLIST:
-			if (NULL != _iterateArrayClazz) {
-				_iterateArrayClazz = _iterateArrayClazz->arrayClass;
-			} else {
-				_arrayState = STATE_DONE;
-			}
-			break;
-		case STATE_DONE:
-		default:
-			break;
-		}
-		if (NULL != _iterateArrayClazz) {
-			break;
-		}
-	}
-	return _iterateArrayClazz;
-}
-
-J9Class *
 GC_ClassLoaderClassesIterator::nextClass()
 {
 	J9Class * result = _nextClass;
@@ -163,18 +108,13 @@ GC_ClassLoaderClassesIterator::nextClass()
 		if (ANONYMOUS_CLASSES == _mode) {
 			_nextClass = nextAnonymousClass();
 		} else {
-			J9Class *array = nextArrayClass();
-			if ((result->classLoader == _classLoader) && (NULL != array)) {
+			if ( (result->classLoader == _classLoader) && (NULL != result->arrayClass) ) {
 				/* this class is defined in the loader, so follow its array classes */
-				_nextClass = array;
+				_nextClass = result->arrayClass;
 			} else if (TABLE_CLASSES == _mode) {
 				_nextClass = nextTableClass();
-				_startingClass = _nextClass;
-				_arrayState = STATE_VALUETYPEARRAY;
 			} else {
 				_nextClass = nextSystemClass();
-				_startingClass = _nextClass;
-				_arrayState = STATE_VALUETYPEARRAY;
 			}
 		}
 	}

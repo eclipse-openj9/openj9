@@ -71,7 +71,6 @@ J9AVLTreeNode.leftChild = required
 J9AVLTreeNode.rightChild = required
 J9AbstractThread.library = required
 J9ArrayClass.arity = required
-J9ArrayClass.companionArray = J9Class*
 J9ArrayClass.componentType = required
 J9ArrayClass.flattenedElementSize = UDATA
 J9ArrayClass.leafComponentType = required

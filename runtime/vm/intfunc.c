@@ -81,7 +81,6 @@ J9InternalVMFunctions J9InternalFunctions = {
 	sendInit,
 	internalAcquireVMAccessNoMutex,
 	internalCreateArrayClass,
-	internalCreateArrayClassWithOptions,
 	attachSystemDaemonThread,
 	internalAcquireVMAccessClearStatus,
 #if defined(J9VM_OPT_REFLECT)
