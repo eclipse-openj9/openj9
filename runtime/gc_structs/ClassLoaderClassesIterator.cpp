@@ -133,6 +133,7 @@ GC_ClassLoaderClassesIterator::nextArrayClass()
 				_iterateArrayClazz = _startingClass->arrayClass;
 				_arrayState = STATE_ARRAYLIST;
 			} else {
+				_iterateArrayClazz = NULL;
 				_arrayState = STATE_DONE;
 			}
 			break;
