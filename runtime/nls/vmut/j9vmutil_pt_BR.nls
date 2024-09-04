@@ -190,3 +190,10 @@ J9NLS_VMUTIL_RECEIVERCLASS_NOT_SAME_OR_SUBTYPE_OF_CURRENTCLASS.explanation=NOTAG
 J9NLS_VMUTIL_RECEIVERCLASS_NOT_SAME_OR_SUBTYPE_OF_CURRENTCLASS.system_action=
 J9NLS_VMUTIL_RECEIVERCLASS_NOT_SAME_OR_SUBTYPE_OF_CURRENTCLASS.user_response=
 # END NON-TRANSLATABLE
+
+J9NLS_VMUTIL_OPENJ9_EXTENDED_HCR_DISABLED_WARNING=Aviso: O HCR estendido est\u00e1 desativado, ative-o com -XX:+EnableExtendedHCR. Este recurso est\u00e1 descontinuado. No futuro, o recurso HCR estendido e a op\u00e7\u00e3o de ativ\u00e1-lo ser\u00e3o completamente removidos de todas as vers\u00f5es.
+# START NON-TRANSLATABLE
+J9NLS_VMUTIL_OPENJ9_EXTENDED_HCR_DISABLED_WARNING.explanation=This JVM disables extended HCR by default, this may cause JVMTI failures in extended capabilites are required.
+J9NLS_VMUTIL_OPENJ9_EXTENDED_HCR_DISABLED_WARNING.system_action=None
+J9NLS_VMUTIL_OPENJ9_EXTENDED_HCR_DISABLED_WARNING.user_response=Add -XX:+EnableExtendedHCR commandline option to enable extended HCR.
+# END NON-TRANSLATABLE
