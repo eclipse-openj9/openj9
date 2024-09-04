@@ -6860,6 +6860,14 @@ TR_ResolvedJ9Method::getResolvedPossiblyPrivateVirtualMethod(TR::Compilation * c
          TR_AOTInliningStats *aotStats = NULL;
          if (comp->getOption(TR_EnableAOTStats))
             aotStats = & (((TR_JitPrivateConfig *)_fe->_jitConfig->privateConfig)->aotStats->virtualMethods);
+
+         if (isInvokePrivateVTableOffset(vTableOffset))
+            {
+            // This method is private and therefore not in the vtable, so pass
+            // zero as the vtable slot when creating the TR_ResolvedMethod.
+            vTableOffset = 0;
+            }
+
          if (createResolvedMethod)
             resolvedMethod = createResolvedMethodFromJ9Method(comp, cpIndex, vTableOffset, ramMethod, unresolvedInCP, aotStats);
          }
