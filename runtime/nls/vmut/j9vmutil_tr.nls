@@ -190,3 +190,10 @@ J9NLS_VMUTIL_RECEIVERCLASS_NOT_SAME_OR_SUBTYPE_OF_CURRENTCLASS.explanation=NOTAG
 J9NLS_VMUTIL_RECEIVERCLASS_NOT_SAME_OR_SUBTYPE_OF_CURRENTCLASS.system_action=
 J9NLS_VMUTIL_RECEIVERCLASS_NOT_SAME_OR_SUBTYPE_OF_CURRENTCLASS.user_response=
 # END NON-TRANSLATABLE
+
+J9NLS_VMUTIL_OPENJ9_EXTENDED_HCR_DISABLED_WARNING=Uyar\u0131: Geni\u015fletilmi\u015f HCR devre d\u0131\u015f\u0131d\u0131r, -XX:+EnableExtendedHCR ile etkinle\u015ftirin. Bu \u00f6zellik kullan\u0131mdan kald\u0131r\u0131ld\u0131. Gelecekte, geni\u015fletilmi\u015f HCR yetene\u011fi ve bunu etkinle\u015ftirme se\u00e7ene\u011fi t\u00fcm s\u00fcr\u00fcmlerden tamamen kald\u0131r\u0131lacak.
+# START NON-TRANSLATABLE
+J9NLS_VMUTIL_OPENJ9_EXTENDED_HCR_DISABLED_WARNING.explanation=This JVM disables extended HCR by default, this may cause JVMTI failures in extended capabilites are required.
+J9NLS_VMUTIL_OPENJ9_EXTENDED_HCR_DISABLED_WARNING.system_action=None
+J9NLS_VMUTIL_OPENJ9_EXTENDED_HCR_DISABLED_WARNING.user_response=Add -XX:+EnableExtendedHCR commandline option to enable extended HCR.
+# END NON-TRANSLATABLE
