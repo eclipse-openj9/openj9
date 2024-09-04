@@ -6888,12 +6888,22 @@ done:
 				if (false == VM_VMHelpers::objectArrayStoreAllowed(_currentThread, arrayref, value)) {
 					rc = THROW_ARRAY_STORE;
 				} else {
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+					J9ArrayClass *arrayrefClass = (J9ArrayClass *) J9OBJECT_CLAZZ(_currentThread, arrayref);
+					if (J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(arrayrefClass->componentType) && (NULL == value)) {
+						rc = THROW_NPE;
+						goto done;
+					}
+#endif /* if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 					VM_ValueTypeHelpers::storeFlattenableArrayElement(_currentThread, _objectAccessBarrier, arrayref, index, value);
 					_pc += 1;
 					_sp += 3;
 				}
 			}
 		}
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+done:
+#endif /* if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 		return rc;
 	}
 
