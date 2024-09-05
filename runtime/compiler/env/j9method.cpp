@@ -1024,15 +1024,6 @@ TR_ResolvedRelocatableJ9Method::TR_ResolvedRelocatableJ9Method(TR_OpaqueMethodBl
          setRecognizedMethod(TR::unknownMethod);
          }
       }
-
-
-   }
-
-int32_t
-TR_ResolvedRelocatableJ9Method::virtualCallSelector(U_32 cpIndex)
-   {
-   return TR_ResolvedJ9Method::virtualCallSelector(cpIndex);
-   //return -1;
    }
 
 bool
@@ -5487,9 +5478,9 @@ TR_ResolvedJ9Method::getExistingJittedBodyInfo()
    }
 
 int32_t
-TR_ResolvedJ9Method::virtualCallSelector(U_32 cpIndex)
+TR_ResolvedJ9Method::virtualCallSelector()
    {
-   return -(int32_t)(vTableSlot(cpIndex) - TR::Compiler->vm.getInterpreterVTableOffset());
+   return -(int32_t)(vTableSlot() - TR::Compiler->vm.getInterpreterVTableOffset());
    }
 
 bool
@@ -6487,10 +6478,8 @@ TR_ResolvedJ9Method::startAddressForJNIMethod(TR::Compilation * comp)
    }
 
 U_32
-TR_ResolvedJ9Method::vTableSlot(U_32 cpIndex)
+TR_ResolvedJ9Method::vTableSlot()
    {
-   TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
-   //UDATA vTableSlot = ((J9RAMVirtualMethodRef *)literals())[cpIndex].methodIndexAndArgCount >> 8;
    return _vTableSlot;
    }
 
