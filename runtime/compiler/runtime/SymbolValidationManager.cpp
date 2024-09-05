@@ -1596,11 +1596,16 @@ TR::SymbolValidationManager::assertionsAreFatal()
    // Look for the env var even in debug builds so that it's always acknowledged.
    static const bool fatal = feGetEnv("TR_svmAssertionsAreFatal") != NULL;
 
+   if (fatal)
+      return true;
+
 #if defined(DEBUG) || defined(PROD_WITH_ASSUMES) || defined(SVM_ASSERTIONS_ARE_FATAL)
-   return true;
+   TR::Compilation *comp = TR::comp();
+   // TR_IgnoreAssert: ignore nonfatal assertion failures.
+   return !comp || !comp->getOption(TR_IgnoreAssert);
 #else
-   return fatal;
-#endif
+   return false;
+#endif /* defined(DEBUG) || defined(PROD_WITH_ASSUMES) || defined(SVM_ASSERTIONS_ARE_FATAL) */
    }
 
 static void printClass(TR_OpaqueClassBlock *clazz)
