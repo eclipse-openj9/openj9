@@ -179,6 +179,11 @@ public:
             {
             return getArgsRaw<T...>(_cMsg);
             }
+         case MessageType::AOTCacheMap_request:
+            {
+            std::string cacheName = std::get<0>(getArgsRaw<std::string>(_cMsg));
+            throw StreamAotCacheMapRequest(cacheName);
+            }
          default:
             {
             throw StreamMessageTypeMismatch(MessageType::compilationRequest, _cMsg.type());
