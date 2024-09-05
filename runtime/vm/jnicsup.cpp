@@ -1427,10 +1427,10 @@ struct JNINativeInterface_ EsJNIFunctions = {
 
 	getFieldID,
 	getObjectField,
- 	getBooleanField,
- 	getByteField,
- 	getCharField,
- 	getShortField,
+	getBooleanField,
+	getByteField,
+	getCharField,
+	getShortField,
 	getIntField,
 	getLongField,
 	getFloatField,
@@ -1480,10 +1480,10 @@ struct JNINativeInterface_ EsJNIFunctions = {
 
 	getStaticFieldID,
 	getStaticObjectField,
- 	(jboolean (JNICALL *)(JNIEnv *env, jclass clazzj, jfieldID fieldID))getStaticIntField,
- 	(jbyte (JNICALL *)(JNIEnv *env, jclass clazzj, jfieldID fieldID))getStaticIntField,
- 	(jchar (JNICALL *)(JNIEnv *env, jclass clazzj, jfieldID fieldID))getStaticIntField,
- 	(jshort (JNICALL *)(JNIEnv *env, jclass clazzj, jfieldID fieldID))getStaticIntField,
+	(jboolean (JNICALL *)(JNIEnv *env, jclass clazzj, jfieldID fieldID))getStaticIntField,
+	(jbyte (JNICALL *)(JNIEnv *env, jclass clazzj, jfieldID fieldID))getStaticIntField,
+	(jchar (JNICALL *)(JNIEnv *env, jclass clazzj, jfieldID fieldID))getStaticIntField,
+	(jshort (JNICALL *)(JNIEnv *env, jclass clazzj, jfieldID fieldID))getStaticIntField,
 	getStaticIntField,
 	getStaticLongField,
 	getStaticFloatField,
@@ -1573,6 +1573,9 @@ struct JNINativeInterface_ EsJNIFunctions = {
 #if JAVA_SPEC_VERSION >= 19
 	isVirtualThread,
 #endif /* JAVA_SPEC_VERSION >= 19 */
+#if JAVA_SPEC_VERSION >= 24
+	getStringUTFLengthAsLong,
+#endif /* JAVA_SPEC_VERSION >= 24 */
 };
 
 void  initializeJNITable(J9JavaVM *vm)
@@ -2604,10 +2607,10 @@ defineClass(JNIEnv *env, const char *name, jobject loader, const jbyte *buf, jsi
 
 			classLoader = J9VMJAVALANGCLASSLOADER_VMREF(currentThread, loaderObject);
 			if (NULL == classLoader) {
-			  classLoader = internalAllocateClassLoader(vm, loaderObject);
-			  if (NULL == classLoader) {
-				  goto done;
-			  }
+				classLoader = internalAllocateClassLoader(vm, loaderObject);
+				if (NULL == classLoader) {
+					goto done;
+				}
 			}
 		}
 

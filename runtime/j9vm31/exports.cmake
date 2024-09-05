@@ -267,3 +267,7 @@ endif()
 if(NOT JAVA_SPEC_VERSION LESS 19)
 	omr_add_exports(jvm31 IsVirtualThread)
 endif()
+
+if(NOT JAVA_SPEC_VERSION LESS 24)
+	omr_add_exports(jvm31 GetStringUTFLengthAsLong)
+endif()

@@ -3051,7 +3051,7 @@ checkNewStringUTF(JNIEnv *env, const char *utf)
 static jsize JNICALL
 checkGetStringUTFLength(JNIEnv *env, jstring str)
 {
-	jsize actualResult;
+	jsize actualResult = 0;
 	J9JniCheckLocalRefState refTracking;
 	static const U_32 argDescriptor[] = { JNIC_JSTRING, 0 };
 	static const char function[] = "GetStringUTFLength";
@@ -4090,6 +4090,59 @@ checkGetObjectRefType(JNIEnv *env, jobject obj)
 	return actualResult;
 }
 
+#if JAVA_SPEC_VERSION >= 9
+static jobject JNICALL
+checkGetModule(JNIEnv *env, jclass clazz)
+{
+	jobject actualResult = NULL;
+	J9JniCheckLocalRefState refTracking;
+	static const U_32 argDescriptor[] = { JNIC_JCLASS, 0 };
+	static const char function[] = "GetModule";
+
+	jniCheckArgs(function, 0, CRITICAL_WARN, &refTracking, argDescriptor, env, clazz);
+	actualResult = globalJavaVM->EsJNIFunctions->GetModule(env, clazz);
+	jniCheckLocalRefTracking(env, function, &refTracking);
+	jniCheckFlushJNICache(env);
+
+	return actualResult;
+}
+#endif /* JAVA_SPEC_VERSION >= 9 */
+
+#if JAVA_SPEC_VERSION >= 19
+static jboolean JNICALL
+checkIsVirtualThread(JNIEnv *env, jobject obj)
+{
+	jboolean actualResult = JNI_FALSE;
+	J9JniCheckLocalRefState refTracking;
+	static const U_32 argDescriptor[] = { JNIC_JOBJECT, 0 };
+	static const char function[] = "IsVirtualThread";
+
+	jniCheckArgs(function, 0, CRITICAL_WARN, &refTracking, argDescriptor, env, obj);
+	actualResult = globalJavaVM->EsJNIFunctions->IsVirtualThread(env, obj);
+	jniCheckLocalRefTracking(env, function, &refTracking);
+	jniCheckFlushJNICache(env);
+
+	return actualResult;
+}
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
+#if JAVA_SPEC_VERSION >= 24
+static jlong JNICALL
+checkGetStringUTFLengthAsLong(JNIEnv *env, jstring str)
+{
+	jlong actualResult = 0;
+	J9JniCheckLocalRefState refTracking;
+	static const U_32 argDescriptor[] = { JNIC_JSTRING, 0 };
+	static const char function[] = "GetStringUTFLengthAsLong";
+
+	jniCheckArgs(function, 0, CRITICAL_WARN, &refTracking, argDescriptor, env, str);
+	actualResult = globalJavaVM->EsJNIFunctions->GetStringUTFLengthAsLong(env, str);
+	jniCheckLocalRefTracking(env, function, &refTracking);
+	jniCheckFlushJNICache(env);
+
+	return actualResult;
+}
+#endif /* JAVA_SPEC_VERSION >= 24 */
 
 const struct JNINativeInterface_ JNICheckTable = {
 	NULL,
@@ -4324,5 +4377,14 @@ const struct JNINativeInterface_ JNICheckTable = {
 	checkNewDirectByteBuffer,
 	checkGetDirectBufferAddress,
 	checkGetDirectBufferCapacity,
-	checkGetObjectRefType
+	checkGetObjectRefType,
+#if JAVA_SPEC_VERSION >= 9
+	checkGetModule,
+#endif /* JAVA_SPEC_VERSION >= 9 */
+#if JAVA_SPEC_VERSION >= 19
+	checkIsVirtualThread,
+#endif /* JAVA_SPEC_VERSION >= 19 */
+#if JAVA_SPEC_VERSION >= 24
+	checkGetStringUTFLengthAsLong,
+#endif /* JAVA_SPEC_VERSION >= 24 */
 };
