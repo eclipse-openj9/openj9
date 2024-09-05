@@ -317,8 +317,7 @@ static void addToLibpath(const char *, BOOLEAN isPrepend);
  * PMR56610: allow CL to permanently add directories to LIBPATH during JVM initialization,
  * while still removing directories added by the VM
  */
-
-#if defined(AIXPPC) || (defined(J9ZOS390) && (JAVA_SPEC_VERSION >= 21))
+#if defined(AIXPPC)
 typedef struct J9LibpathBackup {
 	char *fullpath; /* the whole libpath */
 	size_t j9prefixLen; /* length of the j9 prefix, including trailing ':' when needed */
@@ -336,7 +335,7 @@ static void setLibpath(const char *libpath);
 #ifdef DEBUG_TEST
 static void testBackupAndRestoreLibpath(void);
 #endif /* DEBUG_TEST */
-#endif  /* defined(AIXPPC) || (defined(J9ZOS390) && (JAVA_SPEC_VERSION >= 21)) */
+#endif /* defined(AIXPPC) */
 
 /* Defined in j9memcategories.c */
 extern OMRMemCategorySet j9MainMemCategorySet;
@@ -1293,10 +1292,10 @@ preloadLibraries(void)
 	void *javaDLL;
 #endif
 
-#if defined(AIXPPC) || (defined(J9ZOS390) && (JAVA_SPEC_VERSION >= 21))
+#if defined(AIXPPC)
 	size_t origLibpathLen = 0;
 	const char *origLibpath = NULL;
-#endif /* defined(AIXPPC) || (defined(J9ZOS390) && (JAVA_SPEC_VERSION >= 21)) */
+#endif /* defined(AIXPPC) */
 
 	if (j9vm_dllHandle != 0) {
 		return FALSE;
@@ -1306,12 +1305,12 @@ preloadLibraries(void)
 	iconv_init();
 #endif
 
-#if defined(AIXPPC) || (defined(J9ZOS390) && (JAVA_SPEC_VERSION >= 21))
+#if defined(AIXPPC)
 	origLibpath = getenv("LIBPATH");
 	if (NULL != origLibpath) {
 		origLibpathLen = strlen(origLibpath);
 	}
-#endif /* defined(AIXPPC) || (defined(J9ZOS390) && (JAVA_SPEC_VERSION >= 21)) */
+#endif /* defined(AIXPPC) */
 
 	jvmDLLNameBuffer = getj9bin();
 	j9binBuffer = jvmBufferCat(NULL, jvmBufferData(jvmDLLNameBuffer));
@@ -1391,9 +1390,9 @@ preloadLibraries(void)
 
 	addToLibpath(jvmBufferData(jrebinBuffer), TRUE);
 
-#if defined(AIXPPC) || (defined(J9ZOS390) && (JAVA_SPEC_VERSION >= 21))
+#if defined(AIXPPC)
 	backupLibpath(&libpathBackup, origLibpathLen);
-#endif /* defined(AIXPPC) || (defined(J9ZOS390) && (JAVA_SPEC_VERSION >= 21)) */
+#endif /* defined(AIXPPC) */
 
 	omrsigDLL = preloadLibrary("omrsig", TRUE);
 	if (NULL == omrsigDLL) {
@@ -1982,6 +1981,9 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 	 * See the discussion in https://github.com/eclipse-openj9/openj9/pull/14634.
 	 */
 	specialArgs.captureCommandLine = FALSE;
+#if JAVA_SPEC_VERSION >= 21
+	iconv_init();
+#endif /* JAVA_SPEC_VERSION >= 21 */
 #endif /* defined(J9ZOS390) */
 #ifdef J9ZTPF
 
@@ -2180,13 +2182,13 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 		/* need this to handle legacy port libraries */
 		}
 
-#if defined(AIXPPC) || (defined(J9ZOS390) && (JAVA_SPEC_VERSION >= 21))
+#if defined(AIXPPC)
 		/* Release memory if allocated by strdup() in backupLibpath() previously */
 		freeBackupLibpath(&libpathBackup);
 
 		/* restore LIBPATH to avoid polluting child processes */
 		setLibpath(origLibpath);
-#endif /* defined(AIXPPC) || (defined(J9ZOS390) && (JAVA_SPEC_VERSION >= 21)) */
+#endif /* defined(AIXPPC) */
 		result = JNI_ERR;
 		goto exit;
 	}
@@ -2197,13 +2199,13 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 
 		if (threadCategoryResult) {
 			fprintf(stderr,"Error: Couldn't get memory categories from thread library.\n");
-#if defined(AIXPPC) || (defined(J9ZOS390) && (JAVA_SPEC_VERSION >= 21))
+#if defined(AIXPPC)
 			/* Release memory if allocated by strdup() in backupLibpath() previously */
 			freeBackupLibpath(&libpathBackup);
 
 			/* restore LIBPATH to avoid polluting child processes */
 			setLibpath(origLibpath);
-#endif /* defined(AIXPPC) || (defined(J9ZOS390) && (JAVA_SPEC_VERSION >= 21)) */
+#endif /* defined(AIXPPC) */
 			result = JNI_ERR;
 			goto exit;
 		}
@@ -2451,13 +2453,13 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 		}
 	}
 
-#if defined(AIXPPC) || (defined(J9ZOS390) && (JAVA_SPEC_VERSION >= 21))
+#if defined(AIXPPC)
 	/* restore LIBPATH to avoid polluting child processes */
 	restoreLibpath(&libpathBackup);
 #ifdef DEBUG_TEST
 	testBackupAndRestoreLibpath();
 #endif /* DEBUG_TEST */
-#endif /* defined(AIXPPC) || (defined(J9ZOS390) && (JAVA_SPEC_VERSION >= 21)) */
+#endif /* defined(AIXPPC) */
 
 	if (JNI_OK == result) {
 		J9JavaVM *env = (J9JavaVM *) BFUjavaVM;
@@ -2862,7 +2864,7 @@ preloadLibrary(char* dllName, BOOLEAN inJVMDir)
 			handle = (void*)dlopen(buffer->data, RTLD_NOW);
 		}
 	}
-#endif /* AIXPPC */
+#endif /* defined(AIXPPC) */
 	if (handle == NULL) {
 		fprintf(stderr,"libjvm.so preloadLibrary(%s): %s\n", buffer->data, dlerror());
 	}
@@ -2899,13 +2901,13 @@ post_block() {
 	return 0;
 }
 
-#if defined(AIXPPC) || (defined(J9ZOS390) && (JAVA_SPEC_VERSION >= 21))
+#if defined(AIXPPC)
 static void
 setLibpath(const char *libpath)
 {
 	setenv("LIBPATH", libpath, 1);
 }
-#endif /* defined(AIXPPC) || (defined(J9ZOS390) && (JAVA_SPEC_VERSION >= 21)) */
+#endif /* defined(AIXPPC) */
 
 static void
 addToLibpath(const char *dir, BOOLEAN isPrepend)
@@ -2978,7 +2980,7 @@ addToLibpath(const char *dir, BOOLEAN isPrepend)
 #endif
 }
 
-#if defined(AIXPPC) || (defined(J9ZOS390) && (JAVA_SPEC_VERSION >= 21))
+#if defined(AIXPPC)
 /**
  * Backup the entire LIBPATH after we have prepended VM directory.
  *
@@ -3012,7 +3014,9 @@ backupLibpath(J9LibpathBackup *libpathBackup, size_t origLibpathLen)
 		}
 	}
 }
+#endif /* defined(AIXPPC) */
 
+#if defined(AIXPPC)
 /**
  * Release memory if allocated by strdup() in backupLibpath().
  *
@@ -3029,7 +3033,9 @@ freeBackupLibpath(J9LibpathBackup *libpathBackup)
 	}
 	libpathBackup->j9prefixLen = 0;
 }
+#endif /* defined(AIXPPC) */
 
+#if defined(AIXPPC)
 /**
  * We allow CL (Class Library) to prepend or append to the existing LIBPATH,
  * but it can't change the original one.
@@ -3065,7 +3071,9 @@ restoreLibpath(J9LibpathBackup *libpathBackup)
 		libpathBackup->j9prefixLen = 0;
 	}
 }
+#endif /* defined(AIXPPC) */
 
+#if defined(AIXPPC)
 /**
  * Search the current LIBPATH for the backup LIBPATH.
  *
@@ -3116,7 +3124,9 @@ findInLibpath(const char *libpath, const char *backupPath)
 	}
 	return NULL;
 }
+#endif /* defined(AIXPPC) */
 
+#if defined(AIXPPC)
 /**
  * Copy a libpath and delete a section from it.
  *
@@ -3177,9 +3187,9 @@ deleteDirsFromLibpath(const char *const libpath, const char *const deleteStart, 
 
 	return newPath;
 }
-#endif /* defined(AIXPPC) || (defined(J9ZOS390) && (JAVA_SPEC_VERSION >= 21)) */
+#endif /* defined(AIXPPC) */
 
-#if (defined(AIXPPC) || (defined(J9ZOS390) && (JAVA_SPEC_VERSION >= 21))) && defined(DEBUG_TEST)
+#if defined(AIXPPC) && defined(DEBUG_TEST)
 static void
 testBackupAndRestoreLibpath(void)
 {
@@ -3703,7 +3713,7 @@ testBackupAndRestoreLibpath(void)
 
 	setLibpath(origLibpath);
 }
-#endif /* (defined(AIXPPC) || (defined(J9ZOS390) && (JAVA_SPEC_VERSION >= 21))) && defined(DEBUG_TEST) */
+#endif /* defined(AIXPPC) && defined(DEBUG_TEST) */
 
 #if defined(WIN32)
 
