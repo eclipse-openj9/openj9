@@ -530,7 +530,10 @@ J9::OptionsPostRestore::invalidateCompiledMethodsIfNeeded(bool invalidateAll)
       javaVM->internalVMFunctions->allClassesEndDo(&classWalkState);
 
       if (invalidateAll)
+         {
          _compInfo->getCRRuntime()->purgeMemoizedCompilations();
+         _compInfo->getCRRuntime()->resetJNIAddr();
+         }
 
       j9nls_printf(PORTLIB, (UDATA) J9NLS_WARNING, J9NLS_JIT_CHECKPOINT_RESTORE_CODE_INVALIDATED);
       }
