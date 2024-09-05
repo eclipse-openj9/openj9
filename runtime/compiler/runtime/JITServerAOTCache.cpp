@@ -20,6 +20,8 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
+#include <string.h>
+#include <string>
 #include <cstdio> // for rename()
 #include "control/CompilationRuntime.hpp"
 #include "env/J9SegmentProvider.hpp"
@@ -415,22 +417,26 @@ AOTCacheThunkRecord::create(uintptr_t id, const uint8_t *signature, uint32_t sig
 
 
 SerializedAOTMethod::SerializedAOTMethod(uintptr_t definingClassChainId, uint32_t index,
-                                         TR_Hotness optLevel, uintptr_t aotHeaderId, size_t numRecords,
-                                         const void *code, size_t codeSize, const void *data, size_t dataSize) :
-   _size(size(numRecords, codeSize, dataSize)),
+                                         TR_Hotness optLevel, uintptr_t aotHeaderId,
+                                         size_t numRecords,
+                                         const void *code, size_t codeSize,
+                                         const void *data, size_t dataSize,
+                                         const char *signature, size_t signatureSize) :
+   _size(size(numRecords, codeSize, dataSize, signatureSize)),
    _definingClassChainId(definingClassChainId), _index(index),
    _optLevel(optLevel), _aotHeaderId(aotHeaderId),
-   _numRecords(numRecords), _codeSize(codeSize), _dataSize(dataSize)
+   _numRecords(numRecords), _codeSize(codeSize), _dataSize(dataSize), _signatureSize(signatureSize)
    {
    memcpy((void *)this->code(), code, codeSize);
    memcpy((void *)this->data(), data, dataSize);
+   memcpy((void *)this->signature(), signature, signatureSize);
    }
 
 SerializedAOTMethod::SerializedAOTMethod() :
    _size(0),
    _definingClassChainId(0), _index(0),
    _optLevel(TR_Hotness::numHotnessLevels), _aotHeaderId(0),
-   _numRecords(0), _codeSize(0), _dataSize(0)
+   _numRecords(0), _codeSize(0), _dataSize(0), _signatureSize(0)
    {
    }
 
@@ -444,13 +450,18 @@ SerializedAOTMethod::isValidHeader(const JITServerAOTCacheReadContext &context) 
           context._aotHeaderRecords[aotHeaderId()];
    }
 
-CachedAOTMethod::CachedAOTMethod(const AOTCacheClassChainRecord *definingClassChainRecord, uint32_t index,
-                                 TR_Hotness optLevel, const AOTCacheAOTHeaderRecord *aotHeaderRecord,
+CachedAOTMethod::CachedAOTMethod(const AOTCacheClassChainRecord *definingClassChainRecord,
+                                 uint32_t index,
+                                 TR_Hotness optLevel,
+                                 const AOTCacheAOTHeaderRecord *aotHeaderRecord,
                                  const Vector<std::pair<const AOTCacheRecord *, uintptr_t>> &records,
-                                 const void *code, size_t codeSize, const void *data, size_t dataSize) :
+                                 const void *code, size_t codeSize,
+                                 const void *data, size_t dataSize,
+                                 const char *signature, size_t signatureSize) :
    _nextRecord(NULL),
    _data(definingClassChainRecord->data().id(), index, optLevel,
-         aotHeaderRecord->data().id(), records.size(), code, codeSize, data, dataSize),
+         aotHeaderRecord->data().id(), records.size(), code, codeSize, data, dataSize,
+         signature, signatureSize),
    _definingClassChainRecord(definingClassChainRecord)
    {
    for (size_t i = 0; i < records.size(); ++i)
@@ -471,11 +482,14 @@ CachedAOTMethod *
 CachedAOTMethod::create(const AOTCacheClassChainRecord *definingClassChainRecord, uint32_t index,
                         TR_Hotness optLevel, const AOTCacheAOTHeaderRecord *aotHeaderRecord,
                         const Vector<std::pair<const AOTCacheRecord *, uintptr_t>> &records,
-                        const void *code, size_t codeSize, const void *data, size_t dataSize)
+                        const void *code, size_t codeSize,
+                        const void *data, size_t dataSize,
+                        const char * signature, size_t signatureSize)
    {
-   void *ptr = AOTCacheRecord::allocate(size(records.size(), codeSize, dataSize));
+   void *ptr = AOTCacheRecord::allocate(size(records.size(), codeSize, dataSize, signatureSize));
    return new (ptr) CachedAOTMethod(definingClassChainRecord, index, optLevel, aotHeaderRecord,
-                                    records, code, codeSize, data, dataSize);
+                                    records, code, codeSize, data, dataSize,
+                                    signature, signatureSize);
    }
 
 bool
@@ -1090,9 +1104,11 @@ JITServerAOTCache::createAndStoreThunk(const uint8_t *signature, uint32_t signat
 bool
 JITServerAOTCache::storeMethod(const AOTCacheClassChainRecord *definingClassChainRecord, uint32_t index,
                                TR_Hotness optLevel, const AOTCacheAOTHeaderRecord *aotHeaderRecord,
-                               const Vector<std::pair<const AOTCacheRecord *, uintptr_t/*reloDataOffset*/>> &records,
+                               const Vector<std::pair<const AOTCacheRecord *,
+                               uintptr_t/*reloDataOffset*/>> &records,
                                const void *code, size_t codeSize, const void *data, size_t dataSize,
-                               const char *signature, uint64_t clientUID, const CachedAOTMethod *&methodRecord)
+                               const char *signature, uint64_t clientUID,
+                               const CachedAOTMethod *&methodRecord)
    {
    uintptr_t definingClassId = definingClassChainRecord->records()[0]->data().id();
    const char *levelName = TR::Compilation::getHotnessName(optLevel);
@@ -1125,7 +1141,8 @@ JITServerAOTCache::storeMethod(const AOTCacheClassChainRecord *definingClassChai
       }
 
    auto method = CachedAOTMethod::create(definingClassChainRecord, index, optLevel, aotHeaderRecord,
-                                         records, code, codeSize, data, dataSize);
+                                         records, code, codeSize, data, dataSize,
+                                         signature, strlen(signature));
    methodRecord = method;
    addToMap(_cachedMethodMap, _cachedMethodHead, _cachedMethodTail, it, key, method);
 

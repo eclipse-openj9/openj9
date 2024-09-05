@@ -20,6 +20,9 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
+#include <string>
+#include <unordered_set>
+
 #include <algorithm>
 #include <limits.h>
 #ifdef LINUX
@@ -425,6 +428,42 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
          }
       }
 
+#if defined(J9VM_OPT_JITSERVER)
+   bool methodCachedAtServer = false;
+   if (TR::Options::getCmdLineOptions()->getOption(TR_RequestJITServerCachedMethods))
+      {
+      std::unordered_set<std::string> *serverAOTMethodSet = (std::unordered_set<std::string> *) jitConfig->javaVM->serverAOTMethodSet;
+
+      if (serverAOTMethodSet != NULL)
+         {
+         // Construct a signature
+         J9UTF8 *className;
+         J9UTF8 *name;
+         J9UTF8 *signature;
+         getClassNameSignatureFromMethod(method, className, name, signature);
+         int32_t sigLen = J9UTF8_LENGTH(className) + J9UTF8_LENGTH(name) +
+            J9UTF8_LENGTH(signature) + 2;
+
+         char *sigC = (char *) TR_Memory::jitPersistentAlloc(sizeof(char) * (sigLen + 1));
+         sigLen = sprintf(sigC, "%.*s.%.*s%.*s",
+                           J9UTF8_LENGTH(className), utf8Data(className),
+                           J9UTF8_LENGTH(name), utf8Data(name),
+                           J9UTF8_LENGTH(signature), utf8Data(signature));
+
+         // contains
+         methodCachedAtServer = (serverAOTMethodSet->count(std::string(sigC)) > 0);
+
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            if (methodCachedAtServer)
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+                                              "Method %s was cached at the server",
+                                              sigC);
+
+         TR_Memory::jitPersistentFree(sigC);
+         }
+      }
+#endif // J9VM_OPT_JITSERVER
+
    if (TR::Options::getAOTCmdLineOptions()->anOptionSetContainsACountValue())
       {
       TR::OptionSet * optionSet = findOptionSet(method, true);
@@ -475,6 +514,15 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
                      TR::Options::getHighCodeCacheOccupancyBCount() :
                      TR::Options::getHighCodeCacheOccupancyCount();
          }
+#if defined(J9VM_OPT_JITSERVER)
+      else if (TR::Options::getCmdLineOptions()->getOption(TR_RequestJITServerCachedMethods) &&
+         methodCachedAtServer) // Higher priority than SCC
+         {
+         int32_t scount= std::min(getCount(romMethod, optionsJIT, optionsAOT),
+                                  optionsAOT->getInitialSCount());
+         count = scount;
+         }
+#endif // J9VM_OPT_JITSERVER
       else if (sccCounts)
          {
          // The default FE may not have TR_J9SharedCache object because the FE may have
@@ -4393,6 +4441,9 @@ void JitShutdown(J9JITConfig * jitConfig)
 #endif // J9VM_INTERP_PROFILING_BYTECODES
 
    TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
+
+   if (javaVM->serverAOTMethodSet)
+      TR_Memory::jitPersistentFree((void *)javaVM->serverAOTMethodSet);
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
    if (jitConfig->javaVM->internalVMFunctions->isCRaCorCRIUSupportEnabled(vmThread))

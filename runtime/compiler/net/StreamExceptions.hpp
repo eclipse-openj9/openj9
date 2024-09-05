@@ -81,6 +81,25 @@ private:
    uint64_t _clientId;
    };
 
+
+class StreamAotCacheMapRequest: public virtual std::exception
+   {
+public:
+   StreamAotCacheMapRequest(std::string cacheName) : _cacheName(cacheName)
+      {
+      }
+   virtual const char* what() const throw()
+      {
+      return "Requesting AOT cache content";
+      }
+   std::string getCacheName() const
+      {
+      return _cacheName;
+      }
+private:
+   std::string _cacheName;
+   };
+
 class StreamOOO : public virtual std::exception
    {
    public:

@@ -6159,6 +6159,9 @@ typedef struct J9JavaVM {
 	UDATA closeScopeNotifyCount;
 #endif /* JAVA_SPEC_VERSION >= 22 */
 	UDATA unsafeIndexableHeaderSize;
+
+	UDATA serverAOTMethodSet;
+	UDATA serverAOTQueryThread;
 } J9JavaVM;
 
 #define J9JFR_SAMPLER_STATE_UNINITIALIZED 0

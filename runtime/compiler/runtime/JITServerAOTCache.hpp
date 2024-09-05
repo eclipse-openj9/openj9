@@ -371,10 +371,14 @@ public:
    AOTCacheRecord **records() { return (AOTCacheRecord **)_data.end(); }
 
    static const char *getRecordName() { return "cached AOT method"; }
-   static CachedAOTMethod *create(const AOTCacheClassChainRecord *definingClassChainRecord, uint32_t index,
-                                  TR_Hotness optLevel, const AOTCacheAOTHeaderRecord *aotHeaderRecord,
+   static CachedAOTMethod *create(const AOTCacheClassChainRecord *definingClassChainRecord,
+                                  uint32_t index,
+                                  TR_Hotness optLevel,
+                                  const AOTCacheAOTHeaderRecord *aotHeaderRecord,
                                   const Vector<std::pair<const AOTCacheRecord *, uintptr_t>> &records,
-                                  const void *code, size_t codeSize, const void *data, size_t dataSize);
+                                  const void *code, size_t codeSize,
+                                  const void *data, size_t dataSize,
+                                  const char *signature, size_t signatureSize);
 
    CachedAOTMethod *getNextRecord() const { return _nextRecord; }
    void setNextRecord(CachedAOTMethod *record) { _nextRecord = record; }
@@ -387,18 +391,20 @@ private:
    CachedAOTMethod(const AOTCacheClassChainRecord *definingClassChainRecord, uint32_t index,
                    TR_Hotness optLevel, const AOTCacheAOTHeaderRecord *aotHeaderRecord,
                    const Vector<std::pair<const AOTCacheRecord *, uintptr_t>> &records,
-                   const void *code, size_t codeSize, const void *data, size_t dataSize);
+                   const void *code, size_t codeSize, const void *data, size_t dataSize,
+                   const char *signature, size_t signatureSize);
    CachedAOTMethod(const JITServerAOTCacheReadContext &context, const SerializedAOTMethod &header);
 
    SerializedAOTMethod *dataAddr() { return &_data; }
 
-   static size_t size(size_t numRecords, size_t codeSize, size_t dataSize)
+   static size_t size(size_t numRecords, size_t codeSize, size_t dataSize, size_t signatureSize)
       {
-      return offsetof(CachedAOTMethod, _data) + SerializedAOTMethod::size(numRecords, codeSize, dataSize) +
+      return offsetof(CachedAOTMethod, _data) +
+             SerializedAOTMethod::size(numRecords, codeSize, dataSize, signatureSize) +
              numRecords * sizeof(AOTCacheRecord *);
       }
 
-   static size_t size(const SerializedAOTMethod &header) { return size(header.numRecords(), header.codeSize(), header.dataSize()); }
+   static size_t size(const SerializedAOTMethod &header) { return size(header.numRecords(), header.codeSize(), header.dataSize(), header.signatureSize()); }
 
    bool setSubrecordPointers(const JITServerAOTCacheReadContext &context);
 
@@ -516,6 +522,8 @@ public:
       @return true if the in-memory cache is better than the one on file, false otherwise
    */
    bool isAOTCacheBetterThanSnapshot(const std::string &cacheFileName, size_t numExtraMethods);
+
+   CachedAOTMethod *getCachedMethodHead() { return _cachedMethodHead; }
 
 private:
    static StringKey getRecordKey(const AOTCacheClassLoaderRecord *record)

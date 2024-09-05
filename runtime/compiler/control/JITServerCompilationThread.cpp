@@ -20,6 +20,8 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
+#include <string.h>
+
 #include "control/JITServerCompilationThread.hpp"
 
 #include "codegen/CodeGenerator.hpp"
@@ -202,9 +204,15 @@ outOfProcessCompilationEnd(TR_MethodToBeCompiled *entry, TR::Compilation *comp)
       CachedAOTMethod *freshMethodRecord = NULL;
       if (!methodRecord)
          {
-         freshMethodRecord = CachedAOTMethod::create(compInfoPT->getDefiningClassChainRecord(), compInfoPT->getMethodIndex(),
-                                                     entry->_optimizationPlan->getOptLevel(), clientData->getAOTHeaderRecord(),
-                                                     comp->getSerializationRecords(), codeCacheHeader, codeSize, dataCacheHeader, dataSize);
+         freshMethodRecord = CachedAOTMethod::create(compInfoPT->getDefiningClassChainRecord(),
+                                                     compInfoPT->getMethodIndex(),
+                                                     entry->_optimizationPlan->getOptLevel(),
+                                                     clientData->getAOTHeaderRecord(),
+                                                     comp->getSerializationRecords(),
+                                                     codeCacheHeader, codeSize,
+                                                     dataCacheHeader, dataSize,
+                                                     comp->signature(),
+                                                     strlen(comp->signature()));
          methodRecord = freshMethodRecord;
          }
 
@@ -1100,6 +1108,43 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Server out of memory in processEntry: %s", e.what());
       stream->writeError(compilationLowPhysicalMemory, (uint64_t) computeServerMemoryState(getCompilationInfo()));
       abortCompilation = true;
+      }
+   catch (const JITServer::StreamAotCacheMapRequest &e)
+      {
+      std::string aotCacheName = e.getCacheName();
+
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         {
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+            "compThreadID=%d handling request for AOT cache list %s",
+            getCompThreadId(), aotCacheName.c_str());
+         }
+
+      auto aotCacheMap = compInfo->getJITServerAOTCacheMap();
+      bool pending = false;
+      auto aotCache = aotCacheMap->get(aotCacheName, 0, pending);
+      auto cachedAOTMethod = aotCache->getCachedMethodHead();
+
+      std::vector<std::string> methodSignaturesV;
+      for (;cachedAOTMethod != NULL;
+           cachedAOTMethod = cachedAOTMethod->getNextRecord())
+         {
+         const SerializedAOTMethod &serializedAOTMethod = cachedAOTMethod->data();
+         std::string sig = std::string(serializedAOTMethod.signature());
+         methodSignaturesV.push_back(sig);
+         }
+
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         {
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+                                        "Sending the list of AOT methods size %d",
+                                        methodSignaturesV.size());
+         }
+
+      stream->write(JITServer::MessageType::AOTCacheMap_reply, methodSignaturesV);
+
+      abortCompilation = true;
+      deleteStream = true;
       }
 
    // Acquire VM access
