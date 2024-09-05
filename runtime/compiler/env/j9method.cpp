@@ -6644,7 +6644,7 @@ TR_ResolvedJ9Method::getResolvedInterfaceMethod(TR::Compilation * comp, TR_Opaqu
       if (m)
          {
          c = m->classOfMethod();
-         if (c && !fej9->isInterfaceClass(c))
+         if (c)
             {
             TR::DebugCounter::incStaticDebugCounter(comp, "resources.resolvedMethods/interface");
             TR::DebugCounter::incStaticDebugCounter(comp, "resources.resolvedMethods/interface:#bytes", sizeof(TR_ResolvedJ9Method));
