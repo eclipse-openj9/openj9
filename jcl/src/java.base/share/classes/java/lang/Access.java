@@ -828,6 +828,11 @@ final class Access implements JavaLangAccess {
 	public Object stringConcat1(String[] constants) {
 		return new StringConcatHelper.Concat1(constants);
 	}
+
+	@Override
+	public String concat(String prefix, Object value, String suffix) {
+		return StringConcatHelper.concat(prefix, value, suffix);
+	}
 /*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 
 /*[ENDIF] JAVA_SPEC_VERSION >= 9 */
