@@ -34,6 +34,9 @@
 #include "j9modron.h"
 #include "omrutilbase.h"
 
+/* Align to 4K pages. */
+#define J9SEGMENT_ALIGNMENT 4096
+
 #define ROUND_TO(granularity, number) (((number) + (granularity) - 1) & ~((UDATA)(granularity) - 1))
 
 J9MemorySegment * allocateMemorySegment (J9JavaVM *javaVM, UDATA size, UDATA type, U_32 memoryCategory);
@@ -218,7 +221,6 @@ U_32 memorySegmentListSize (J9MemorySegmentList *segmentList)
 	return (U_32) pool_numElements(segmentList->segmentPool);
 }
 
-
 /*
  *	Allocates the memory for a segment.
  *	only 2 cases are delt with:
@@ -226,7 +228,7 @@ U_32 memorySegmentListSize (J9MemorySegmentList *segmentList)
  *	2.	Everything else.  Regardless of the type, it will be allocated
  */
 static void *
-allocateMemoryForSegment(J9JavaVM *javaVM,J9MemorySegment *segment, J9PortVmemParams *vmemParams, U_32 memoryCategory)
+allocateMemoryForSegment(J9JavaVM *javaVM, J9MemorySegment *segment, J9PortVmemParams *vmemParams, U_32 memoryCategory)
 {
 	void *tmpAddr;
 	PORT_ACCESS_FROM_GINFO(javaVM);
@@ -390,6 +392,9 @@ static J9MemorySegment * allocateVirtualMemorySegmentInListInternal(J9JavaVM *ja
 {
 	U_8 *allocatedBase;
 	J9MemorySegment *segment;
+#if defined(J9VM_OPT_CRIU_SUPPORT) && defined(LINUX)
+	J9JITConfig *jitConfig = javaVM->jitConfig;
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) && defined(LINUX) */
 
 	Trc_VM_allocateMemorySegmentInList_Entry(segmentList, size, type);
 
@@ -428,6 +433,19 @@ static J9MemorySegment * allocateVirtualMemorySegmentInListInternal(J9JavaVM *ja
 			}
 			segment->baseAddress = allocatedBase;
 			segment->heapBase = allocatedBase;
+#if defined(J9VM_OPT_CRIU_SUPPORT) && defined(LINUX)
+			if (J9_ARE_ANY_BITS_SET(segment->type, MEMORY_TYPE_RAM_CLASS | MEMORY_TYPE_ROM_CLASS)
+				&& J9_ARE_ALL_BITS_SET(javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_CRIU_DISCLAIM_CLASSES)
+			) {
+				/* Register the class with RSSReport. */
+				jitConfig->jitAddNewLowToHighRSSRegion(
+					J9_ARE_ANY_BITS_SET(segment->type, MEMORY_TYPE_RAM_CLASS) ? "RAM_CLASS" : "ROM_CLASS",
+					segment->heapBase,
+					segment->size,
+					J9SEGMENT_ALIGNMENT
+				);
+			}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) && defined(LINUX) */
 			segment->heapTop = (U_8 *)&(segment->heapBase)[size];
 			segment->heapAlloc = segment->heapBase;
 

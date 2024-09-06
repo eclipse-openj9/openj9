@@ -4492,7 +4492,10 @@ void memoryDisclaimLogic(TR::CompilationInfo *compInfo, uint64_t crtElapsedTime,
          if (TR_DataCacheManager::getManager()->numAllocatedCaches() > lastNumAllocatedDataCaches ||
              crtElapsedTime > lastDataCacheDisclaimTime + 12 * TR::Options::_minTimeBetweenMemoryDisclaims)
             {
+            PORT_ACCESS_FROM_JAVAVM(javaVM);
             disclaimDataCaches(crtElapsedTime);
+            j9mem_disclaimAllMem32();
+            jitConfig->generateRSSReport();
             lastDataCacheDisclaimTime = crtElapsedTime; // Update the time when disclaim was last performed
             lastNumAllocatedDataCaches = TR_DataCacheManager::getManager()->numAllocatedCaches();
             }
@@ -4510,6 +4513,7 @@ void memoryDisclaimLogic(TR::CompilationInfo *compInfo, uint64_t crtElapsedTime,
          if (TR::CodeCacheManager::instance()->getCurrentNumberOfCodeCaches() > lastNumAllocatedCodeCaches ||
              crtElapsedTime > lastCodeCacheDisclaimTime + 12 * TR::Options::_minTimeBetweenMemoryDisclaims)
             {
+            PORT_ACCESS_FROM_JAVAVM(javaVM);
             static OMR::RSSReport *rssReport = OMR::RSSReport::instance();
 
             if (rssReport)
@@ -4519,7 +4523,8 @@ void memoryDisclaimLogic(TR::CompilationInfo *compInfo, uint64_t crtElapsedTime,
                }
 
             disclaimCodeCaches(crtElapsedTime);
-
+            j9mem_disclaimAllMem32();
+            jitConfig->generateRSSReport();
             if (rssReport) rssReport->printRegions();
 
             lastCodeCacheDisclaimTime = crtElapsedTime; // Update the time when disclaim was last performed

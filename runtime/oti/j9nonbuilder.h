@@ -4263,6 +4263,7 @@ typedef struct J9JITConfig {
 	uint64_t serverUID;
 #endif /* J9VM_OPT_JITSERVER */
 	void (*jitAddNewLowToHighRSSRegion)(const char *name, uint8_t *start, uint32_t size, size_t pageSize);
+	void (*generateRSSReport)();
 } J9JITConfig;
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
@@ -5150,6 +5151,7 @@ typedef struct J9InternalVMFunctions {
 	BOOLEAN (*setupJNIFieldIDsAndCRIUAPI)(JNIEnv *env, jclass *currentExceptionClass, IDATA *systemReturnCode, const char **nlsMsgFormat);
 	void JNICALL (*criuCheckpointJVMImpl)(JNIEnv *env, jstring imagesDir, jboolean leaveRunning, jboolean shellJob, jboolean extUnixSupport, jint logLevel, jstring logFile,
 			jboolean fileLocks, jstring workDir, jboolean tcpEstablished, jboolean autoDedup, jboolean trackMemory, jboolean unprivileged, jstring optionsFile, jstring environmentFile, jlong ghostFileLimit);
+	I_32 (*disclaimAllClassMemory)(struct J9JavaVM *vm);
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 	j9object_t (*getClassNameString)(struct J9VMThread *currentThread, j9object_t classObject, jboolean internAndAssign);
 	j9object_t* (*getDefaultValueSlotAddress)(struct J9Class *clazz);

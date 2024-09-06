@@ -425,6 +425,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 	getRestoreSystemProperites,
 	setupJNIFieldIDsAndCRIUAPI,
 	criuCheckpointJVMImpl,
+	disclaimAllClassMemory,
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 	getClassNameString,
 	getDefaultValueSlotAddress,
