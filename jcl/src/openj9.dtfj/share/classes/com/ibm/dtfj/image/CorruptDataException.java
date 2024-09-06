@@ -38,13 +38,13 @@ public class CorruptDataException extends DTFJException {
 	 * @param data the corruptData
 	 */
 	public CorruptDataException(CorruptData data) {
-        super(data==null ? "" : data.toString());
+		super(data == null ? "" : data.toString());
 
-        if (data == null) {
-            throw new IllegalArgumentException("data must not be null");
-        }
-        corruptData = data;
-    }
+		if (data == null) {
+			throw new IllegalArgumentException("data must not be null");
+		}
+		corruptData = data;
+	}
 
 	/**
 	 * Get more info about the corrupted data
@@ -52,7 +52,7 @@ public class CorruptDataException extends DTFJException {
 	 * @return the CorruptData object
 	 */
 	public CorruptData getCorruptData() {
-        return corruptData;
-    }
+		return corruptData;
+	}
 
 }

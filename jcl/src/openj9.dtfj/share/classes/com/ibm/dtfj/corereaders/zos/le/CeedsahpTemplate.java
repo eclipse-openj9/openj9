@@ -29,17 +29,17 @@ import java.io.IOException;
 
 public interface CeedsahpTemplate {
 
-    public int length();
-    public long getCeedsahpr4(ImageInputStream inputStream, long address) throws IOException;
-    public int getCeedsahpr4$offset();
-    public int getCeedsahpr4$length();
-    public long getCeedsahpr6(ImageInputStream inputStream, long address) throws IOException;
-    public int getCeedsahpr6$offset();
-    public int getCeedsahpr6$length();
-    public long getCeedsahpr7(ImageInputStream inputStream, long address) throws IOException;
-    public int getCeedsahpr7$offset();
-    public int getCeedsahpr7$length();
-    public long getCeedsahptran(ImageInputStream inputStream, long address) throws IOException;
-    public int getCeedsahptran$offset();
-    public int getCeedsahptran$length();
+	public int length();
+	public long getCeedsahpr4(ImageInputStream inputStream, long address) throws IOException;
+	public int getCeedsahpr4$offset();
+	public int getCeedsahpr4$length();
+	public long getCeedsahpr6(ImageInputStream inputStream, long address) throws IOException;
+	public int getCeedsahpr6$offset();
+	public int getCeedsahpr6$length();
+	public long getCeedsahpr7(ImageInputStream inputStream, long address) throws IOException;
+	public int getCeedsahpr7$offset();
+	public int getCeedsahpr7$length();
+	public long getCeedsahptran(ImageInputStream inputStream, long address) throws IOException;
+	public int getCeedsahptran$offset();
+	public int getCeedsahptran$length();
 }

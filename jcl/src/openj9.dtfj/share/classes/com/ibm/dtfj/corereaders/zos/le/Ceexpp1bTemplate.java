@@ -29,28 +29,33 @@ import java.io.IOException;
 
 public final class Ceexpp1bTemplate {
 
-    public static int length() {
-        return 32;
-    }
+	public static int length() {
+		return 32;
+	}
 
-    public static long getPpa1_nmo(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 0);
-        return inputStream.readByte();
-    }
-    public static int getPpa1_nmo$offset() {
-        return 0;
-    }
-    public static int getPpa1_nmo$length() {
-        return 8;
-    }
-    public static long getPpa1_sig(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 1);
-        return inputStream.readByte();
-    }
-    public static int getPpa1_sig$offset() {
-        return 1;
-    }
-    public static int getPpa1_sig$length() {
-        return 8;
-    }
+	public static long getPpa1_nmo(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 0);
+		return inputStream.readByte();
+	}
+
+	public static int getPpa1_nmo$offset() {
+		return 0;
+	}
+
+	public static int getPpa1_nmo$length() {
+		return 8;
+	}
+
+	public static long getPpa1_sig(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 1);
+		return inputStream.readByte();
+	}
+
+	public static int getPpa1_sig$offset() {
+		return 1;
+	}
+
+	public static int getPpa1_sig$length() {
+		return 8;
+	}
 }

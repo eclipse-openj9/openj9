@@ -29,47 +29,58 @@ import java.io.IOException;
 
 public final class Ceexedb64Template implements CeexedbTemplate {
 
-    public int length() {
-        return 172;
-    }
+	public int length() {
+		return 172;
+	}
 
-    public long getCeeedbenvar(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 312);
-        return inputStream.readLong();
-    }
-    public int getCeeedbenvar$offset() {
-        return 312;
-    }
-    public int getCeeedbenvar$length() {
-        return 64;
-    }
-    public long getCeeedbdba(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 1272);
-        return inputStream.readLong();
-    }
-    public int getCeeedbdba$offset() {
-        return 1272;
-    }
-    public int getCeeedbdba$length() {
-        return 64;
-    }
-    public long getCeeedb_dlcb_first(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 1544);
-        return inputStream.readLong();
-    }
-    public int getCeeedb_dlcb_first$offset() {
-        return 1544;
-    }
-    public int getCeeedb_dlcb_first$length() {
-        return 64;
-    }
-    public long getCeeedb_ceeosigr(ImageInputStream inputStream, long address) throws IOException {
-        throw new Error("field ceeedb_ceeosigr does not exist in template Ceexedb64Template");
-    }
-    public int getCeeedb_ceeosigr$offset() {
-        throw new Error("field ceeedb_ceeosigr does not exist in template Ceexedb64Template");
-    }
-    public int getCeeedb_ceeosigr$length() {
-        throw new Error("field ceeedb_ceeosigr does not exist in template Ceexedb64Template");
-    }
+	public long getCeeedbenvar(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 312);
+		return inputStream.readLong();
+	}
+
+	public int getCeeedbenvar$offset() {
+		return 312;
+	}
+
+	public int getCeeedbenvar$length() {
+		return 64;
+	}
+
+	public long getCeeedbdba(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 1272);
+		return inputStream.readLong();
+	}
+
+	public int getCeeedbdba$offset() {
+		return 1272;
+	}
+
+	public int getCeeedbdba$length() {
+		return 64;
+	}
+
+	public long getCeeedb_dlcb_first(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 1544);
+		return inputStream.readLong();
+	}
+
+	public int getCeeedb_dlcb_first$offset() {
+		return 1544;
+	}
+
+	public int getCeeedb_dlcb_first$length() {
+		return 64;
+	}
+
+	public long getCeeedb_ceeosigr(ImageInputStream inputStream, long address) throws IOException {
+		throw new Error("field ceeedb_ceeosigr does not exist in template Ceexedb64Template");
+	}
+
+	public int getCeeedb_ceeosigr$offset() {
+		throw new Error("field ceeedb_ceeosigr does not exist in template Ceexedb64Template");
+	}
+
+	public int getCeeedb_ceeosigr$length() {
+		throw new Error("field ceeedb_ceeosigr does not exist in template Ceexedb64Template");
+	}
 }

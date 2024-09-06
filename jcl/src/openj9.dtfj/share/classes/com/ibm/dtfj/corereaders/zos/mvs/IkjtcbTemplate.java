@@ -29,68 +29,85 @@ import java.io.IOException;
 
 public final class IkjtcbTemplate {
 
-    public static int length() {
-        return 344;
-    }
+	public static int length() {
+		return 344;
+	}
 
-    public static long getTcbrbp(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 0);
-        return inputStream.readUnsignedInt() & 0xffffffffL;
-    }
-    public static int getTcbrbp$offset() {
-        return 0;
-    }
-    public static int getTcbrbp$length() {
-        return 32;
-    }
-    public static long getTcbgrs(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 48);
-        throw new Error("request for long value for field tcbgrs which has length of 64");
-    }
-    public static int getTcbgrs$offset() {
-        return 48;
-    }
-    public static int getTcbgrs$length() {
-        return 512;
-    }
-    public static long getTcbtcb(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 116);
-        return inputStream.readUnsignedInt() & 0xffffffffL;
-    }
-    public static int getTcbtcb$offset() {
-        return 116;
-    }
-    public static int getTcbtcb$length() {
-        return 32;
-    }
-    public static long getTcbrtwa(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 224);
-        return inputStream.readUnsignedInt() & 0xffffffffL;
-    }
-    public static int getTcbrtwa$offset() {
-        return 224;
-    }
-    public static int getTcbrtwa$length() {
-        return 32;
-    }
-    public static long getTcbstcb(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 312);
-        return inputStream.readUnsignedInt() & 0xffffffffL;
-    }
-    public static int getTcbstcb$offset() {
-        return 312;
-    }
-    public static int getTcbstcb$length() {
-        return 32;
-    }
-    public static long getTcbcelap(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 324);
-        return inputStream.readUnsignedInt() & 0xffffffffL;
-    }
-    public static int getTcbcelap$offset() {
-        return 324;
-    }
-    public static int getTcbcelap$length() {
-        return 32;
-    }
+	public static long getTcbrbp(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 0);
+		return inputStream.readUnsignedInt() & 0xffffffffL;
+	}
+
+	public static int getTcbrbp$offset() {
+		return 0;
+	}
+
+	public static int getTcbrbp$length() {
+		return 32;
+	}
+
+	public static long getTcbgrs(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 48);
+		throw new Error("request for long value for field tcbgrs which has length of 64");
+	}
+
+	public static int getTcbgrs$offset() {
+		return 48;
+	}
+
+	public static int getTcbgrs$length() {
+		return 512;
+	}
+
+	public static long getTcbtcb(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 116);
+		return inputStream.readUnsignedInt() & 0xffffffffL;
+	}
+
+	public static int getTcbtcb$offset() {
+		return 116;
+	}
+
+	public static int getTcbtcb$length() {
+		return 32;
+	}
+
+	public static long getTcbrtwa(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 224);
+		return inputStream.readUnsignedInt() & 0xffffffffL;
+	}
+
+	public static int getTcbrtwa$offset() {
+		return 224;
+	}
+
+	public static int getTcbrtwa$length() {
+		return 32;
+	}
+
+	public static long getTcbstcb(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 312);
+		return inputStream.readUnsignedInt() & 0xffffffffL;
+	}
+
+	public static int getTcbstcb$offset() {
+		return 312;
+	}
+
+	public static int getTcbstcb$length() {
+		return 32;
+	}
+
+	public static long getTcbcelap(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 324);
+		return inputStream.readUnsignedInt() & 0xffffffffL;
+	}
+
+	public static int getTcbcelap$offset() {
+		return 324;
+	}
+
+	public static int getTcbcelap$length() {
+		return 32;
+	}
 }

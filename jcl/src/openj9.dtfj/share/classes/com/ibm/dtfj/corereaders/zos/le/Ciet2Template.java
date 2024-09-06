@@ -29,58 +29,72 @@ import java.io.IOException;
 
 public final class Ciet2Template {
 
-    public static int length() {
-        return 36;
-    }
+	public static int length() {
+		return 36;
+	}
 
-    public static long getCiet2_version(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 8);
-        return inputStream.readByte();
-    }
-    public static int getCiet2_version$offset() {
-        return 8;
-    }
-    public static int getCiet2_version$length() {
-        return 8;
-    }
-    public static long getCiet2_func_addr(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 12);
-        return inputStream.readUnsignedInt() & 0xffffffffL;
-    }
-    public static int getCiet2_func_addr$offset() {
-        return 12;
-    }
-    public static int getCiet2_func_addr$length() {
-        return 32;
-    }
-    public static long getCiet2_func_count(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 16);
-        return inputStream.readInt();
-    }
-    public static int getCiet2_func_count$offset() {
-        return 16;
-    }
-    public static int getCiet2_func_count$length() {
-        return 32;
-    }
-    public static long getCiet2_var_addr(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 20);
-        return inputStream.readUnsignedInt() & 0xffffffffL;
-    }
-    public static int getCiet2_var_addr$offset() {
-        return 20;
-    }
-    public static int getCiet2_var_addr$length() {
-        return 32;
-    }
-    public static long getCiet2_var_count(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 24);
-        return inputStream.readInt();
-    }
-    public static int getCiet2_var_count$offset() {
-        return 24;
-    }
-    public static int getCiet2_var_count$length() {
-        return 32;
-    }
+	public static long getCiet2_version(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 8);
+		return inputStream.readByte();
+	}
+
+	public static int getCiet2_version$offset() {
+		return 8;
+	}
+
+	public static int getCiet2_version$length() {
+		return 8;
+	}
+
+	public static long getCiet2_func_addr(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 12);
+		return inputStream.readUnsignedInt() & 0xffffffffL;
+	}
+
+	public static int getCiet2_func_addr$offset() {
+		return 12;
+	}
+
+	public static int getCiet2_func_addr$length() {
+		return 32;
+	}
+
+	public static long getCiet2_func_count(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 16);
+		return inputStream.readInt();
+	}
+
+	public static int getCiet2_func_count$offset() {
+		return 16;
+	}
+
+	public static int getCiet2_func_count$length() {
+		return 32;
+	}
+
+	public static long getCiet2_var_addr(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 20);
+		return inputStream.readUnsignedInt() & 0xffffffffL;
+	}
+
+	public static int getCiet2_var_addr$offset() {
+		return 20;
+	}
+
+	public static int getCiet2_var_addr$length() {
+		return 32;
+	}
+
+	public static long getCiet2_var_count(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 24);
+		return inputStream.readInt();
+	}
+
+	public static int getCiet2_var_count$offset() {
+		return 24;
+	}
+
+	public static int getCiet2_var_count$length() {
+		return 32;
+	}
 }

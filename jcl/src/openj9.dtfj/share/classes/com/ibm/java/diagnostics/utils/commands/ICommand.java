@@ -53,9 +53,9 @@ public interface ICommand {
 	 */
 	public Collection<String> getCommandDescriptions();
 
-    /**
-     * @return Strings containing command names
-     */
+	/**
+	 * @return Strings containing command names
+	 */
 	public Collection<String> getCommandNames();
 
 	/**

@@ -29,48 +29,59 @@ import java.io.IOException;
 
 public final class CeexoepvTemplate {
 
-    public static int length() {
-        return 20;
-    }
+	public static int length() {
+		return 20;
+	}
 
-    public static long getOepv_oldep(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 0);
-        return inputStream.readInt();
-    }
-    public static int getOepv_oldep$offset() {
-        return 0;
-    }
-    public static int getOepv_oldep$length() {
-        return 32;
-    }
-    public static long getOepv_eyecatch(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 4);
-        return inputStream.readInt();
-    }
-    public static int getOepv_eyecatch$offset() {
-        return 4;
-    }
-    public static int getOepv_eyecatch$length() {
-        return 32;
-    }
-    public static long getOepv_cnameoffs(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 4);
-        return inputStream.readByte();
-    }
-    public static int getOepv_cnameoffs$offset() {
-        return 4;
-    }
-    public static int getOepv_cnameoffs$length() {
-        return 8;
-    }
-    public static long getOepv_ppa1offset(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 12);
-        return inputStream.readInt();
-    }
-    public static int getOepv_ppa1offset$offset() {
-        return 12;
-    }
-    public static int getOepv_ppa1offset$length() {
-        return 32;
-    }
+	public static long getOepv_oldep(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 0);
+		return inputStream.readInt();
+	}
+
+	public static int getOepv_oldep$offset() {
+		return 0;
+	}
+
+	public static int getOepv_oldep$length() {
+		return 32;
+	}
+
+	public static long getOepv_eyecatch(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 4);
+		return inputStream.readInt();
+	}
+
+	public static int getOepv_eyecatch$offset() {
+		return 4;
+	}
+
+	public static int getOepv_eyecatch$length() {
+		return 32;
+	}
+
+	public static long getOepv_cnameoffs(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 4);
+		return inputStream.readByte();
+	}
+
+	public static int getOepv_cnameoffs$offset() {
+		return 4;
+	}
+
+	public static int getOepv_cnameoffs$length() {
+		return 8;
+	}
+
+	public static long getOepv_ppa1offset(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 12);
+		return inputStream.readInt();
+	}
+
+	public static int getOepv_ppa1offset$offset() {
+		return 12;
+	}
+
+	public static int getOepv_ppa1offset$length() {
+		return 32;
+	}
 }

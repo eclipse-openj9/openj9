@@ -29,30 +29,34 @@ import java.io.IOException;
 
 public final class CeelcaTemplate {
 
-    public static int length() {
-        return 864;
-    }
+	public static int length() {
+		return 864;
+	}
 
-    public static long getCeelca_caa(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 8);
-        return inputStream.readLong();
-    }
-    public static int getCeelca_caa$offset() {
-        return 8;
-    }
-    public static int getCeelca_caa$length() {
-        return 64;
-    }
+	public static long getCeelca_caa(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 8);
+		return inputStream.readLong();
+	}
 
-    //CMVC 156864 : : updated code to fix traversal of native stacks
-    public static long getCeelca_savstack(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 32);
-        return inputStream.readLong();
-    }
-    public static int getCeelca_savstack$offset() {
-        return 32;
-    }
-    public static int getCeelca_savstack$length() {
-        return 64;
-    }
+	public static int getCeelca_caa$offset() {
+		return 8;
+	}
+
+	public static int getCeelca_caa$length() {
+		return 64;
+	}
+
+	//CMVC 156864 : : updated code to fix traversal of native stacks
+	public static long getCeelca_savstack(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 32);
+		return inputStream.readLong();
+	}
+
+	public static int getCeelca_savstack$offset() {
+		return 32;
+	}
+
+	public static int getCeelca_savstack$length() {
+		return 64;
+	}
 }

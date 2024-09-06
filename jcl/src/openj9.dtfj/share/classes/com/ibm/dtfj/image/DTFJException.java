@@ -36,13 +36,13 @@ public class DTFJException extends Exception {
 	 * @param description
 	 */
 	public DTFJException(String description) {
-        super(description);
-    }
+		super(description);
+	}
 
-    /**
-     * Build exception with no description
-     */
-    public DTFJException() {
-        super();
-    }
+	/**
+	 * Build exception with no description
+	 */
+	public DTFJException() {
+		super();
+	}
 }

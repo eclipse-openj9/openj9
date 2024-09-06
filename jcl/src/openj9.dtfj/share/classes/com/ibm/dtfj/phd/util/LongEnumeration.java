@@ -48,4 +48,3 @@ public interface LongEnumeration extends Enumeration {
 	 */
 	public int numberOfElements();
 }
-

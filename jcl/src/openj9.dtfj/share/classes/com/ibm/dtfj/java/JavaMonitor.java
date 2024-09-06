@@ -32,53 +32,53 @@ import com.ibm.dtfj.image.ImagePointer;
  */
 public interface JavaMonitor {
 
-    /**
-     * Get the object associated with this monitor.
-     * @return the object associated with this monitor, or null if this is a raw monitor or a valid object could not be retrieved.
-     */
-    public JavaObject getObject();
+	/**
+	 * Get the object associated with this monitor.
+	 * @return the object associated with this monitor, or null if this is a raw monitor or a valid object could not be retrieved.
+	 */
+	public JavaObject getObject();
 
-    /**
-     * Note that the name of a JavaMonitor is not necessarily meaningful but is provided here as it is
-     * usually present in the running VM.  If there is no name for the monitor a synthetic name will be
-     * created by DTFJ.
-     *
-     * @return the name of the monitor (never null)
-     * @throws CorruptDataException
-     */
-    public String getName() throws CorruptDataException;
+	/**
+	 * Note that the name of a JavaMonitor is not necessarily meaningful but is provided here as it is
+	 * usually present in the running VM.  If there is no name for the monitor a synthetic name will be
+	 * created by DTFJ.
+	 *
+	 * @return the name of the monitor (never null)
+	 * @throws CorruptDataException
+	 */
+	public String getName() throws CorruptDataException;
 
-    /**
-     * Get the thread which currently owns the monitor
-     * @return the owner of the monitor, or null if the monitor is unowned
-     * @throws CorruptDataException
-     */
-    public JavaThread getOwner() throws CorruptDataException;
+	/**
+	 * Get the thread which currently owns the monitor
+	 * @return the owner of the monitor, or null if the monitor is unowned
+	 * @throws CorruptDataException
+	 */
+	public JavaThread getOwner() throws CorruptDataException;
 
-    /**
-     * Get the set of threads waiting to enter the monitor
-     * @return an iterator over the collection of threads waiting to enter this monitor
-     *
-     * @see JavaThread
-     * @see com.ibm.dtfj.image.CorruptData
-     */
-    public Iterator getEnterWaiters();
+	/**
+	 * Get the set of threads waiting to enter the monitor
+	 * @return an iterator over the collection of threads waiting to enter this monitor
+	 *
+	 * @see JavaThread
+	 * @see com.ibm.dtfj.image.CorruptData
+	 */
+	public Iterator getEnterWaiters();
 
-    /**
-     * Get the set of threads waiting to be notified on the monitor (in the Object.wait method)
-     * @return an iterator over the collection of threads waiting to be notified on
-     * this monitor
-     *
-     * @see JavaThread
-     * @see com.ibm.dtfj.image.CorruptData
-     */
-    public Iterator getNotifyWaiters();
+	/**
+	 * Get the set of threads waiting to be notified on the monitor (in the Object.wait method)
+	 * @return an iterator over the collection of threads waiting to be notified on
+	 * this monitor
+	 *
+	 * @see JavaThread
+	 * @see com.ibm.dtfj.image.CorruptData
+	 */
+	public Iterator getNotifyWaiters();
 
-    /**
-     * Get the identifier for this monitor
-     * @return The pointer which uniquely identifies this monitor in memory.
-     */
-    public ImagePointer getID();
+	/**
+	 * Get the identifier for this monitor
+	 * @return The pointer which uniquely identifies this monitor in memory.
+	 */
+	public ImagePointer getID();
 
 	/**
 	 * @param obj

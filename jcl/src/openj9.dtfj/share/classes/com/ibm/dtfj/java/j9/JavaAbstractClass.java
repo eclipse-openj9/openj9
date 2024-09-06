@@ -232,18 +232,18 @@ public abstract class JavaAbstractClass implements JavaClass
 	}
 
 	protected void addClassObjectReference (Collection coll) {
-	    JavaReference jRef = null;
+		JavaReference jRef = null;
 
-	    try {
-	        com.ibm.dtfj.java.JavaObject classObject = this.getObject();
+		try {
+			com.ibm.dtfj.java.JavaObject classObject = this.getObject();
 
-	        if(null != classObject) {
-	            jRef = new JavaReference(_javaVM,this,classObject,"Class object",JavaReference.REFERENCE_CLASS_OBJECT,JavaReference.HEAP_ROOT_UNKNOWN, JavaReference.REACHABILITY_STRONG);
-	            coll.add(jRef);
-	        }
-	    } catch (CorruptDataException e) {
-	        coll.add(e.getCorruptData());
-	    }
+			if (null != classObject) {
+				jRef = new JavaReference(_javaVM,this,classObject,"Class object",JavaReference.REFERENCE_CLASS_OBJECT,JavaReference.HEAP_ROOT_UNKNOWN, JavaReference.REACHABILITY_STRONG);
+				coll.add(jRef);
+			}
+		} catch (CorruptDataException e) {
+			coll.add(e.getCorruptData());
+		}
 	}
 
 	private JavaField getProtectionDomainField(JavaClass clazz) throws CorruptDataException {

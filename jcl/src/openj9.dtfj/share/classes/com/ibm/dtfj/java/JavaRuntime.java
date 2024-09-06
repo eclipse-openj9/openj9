@@ -36,145 +36,145 @@ import com.ibm.dtfj.runtime.ManagedRuntime;
  */
 public interface JavaRuntime extends ManagedRuntime {
 
-    /**
-     * Get the object that represents the virtual machine
-     * @return the address of the JavaVM structure which represents this JVM instance in JNI
-     * @throws CorruptDataException
-     */
-    public ImagePointer getJavaVM() throws CorruptDataException;
+	/**
+	 * Get the object that represents the virtual machine
+	 * @return the address of the JavaVM structure which represents this JVM instance in JNI
+	 * @throws CorruptDataException
+	 */
+	public ImagePointer getJavaVM() throws CorruptDataException;
 
-    /**
-     * Get a system property of the virtual machine.
-     *
-     * @param key the name of the property to retrieve
-     * @return the value of the requested system property from this VM
-     * @throws DataUnavailable if the system properties are not available
-     * @throws CorruptDataException
-     */
-    public default String getSystemProperty(String key) throws DataUnavailable, CorruptDataException {
-        throw new DataUnavailable("System properties are not available for this runtime");
-    }
-
-    /**
-     * Fetch the JavaVMInitArgs which were used to create this VM.
-     * See JNI_CreateJavaVM in the JNI Specification for more details.
-     *
-     * @return the JavaVMInitArgs which were used to create this VM.
-     * @throws DataUnavailable if the arguments are not available
-     * @throws CorruptDataException
-     */
-    public JavaVMInitArgs getJavaVMInitArgs() throws DataUnavailable, CorruptDataException;
-
-    /**
-     * Get the set of class loaders active in this VM
-     * @return an iterator of all of the class loaders within this JavaVM
-     *
-     * @see JavaClassLoader
-     * @see com.ibm.dtfj.image.CorruptData
-     */
-    public Iterator getJavaClassLoaders();
-
-    /**
-     * Get the set of Java threads known by the VM
-     * @return an iterator of the JavaThreads in the runtime
-     *
-     * @see JavaThread
-     * @see com.ibm.dtfj.image.CorruptData
-     */
-    public Iterator getThreads();
-
-    /**
-     * This is short cut method. The same result can be found by iterating over all
-     * methods in all class loaders in all classes.
-     *
-     * @return an iterator over all of the JavaMethods in the JavaRuntime which
-     * have been compiled
-     *
-     * @see JavaMethod
-     * @see com.ibm.dtfj.image.CorruptData
-     */
-    public Iterator getCompiledMethods();
-
-    /**
-     * Provides access to the collection of monitors used in the JavaVM. This
-     * collection includes both monitors associated with managed objects (e.g. object
-     * monitors) and monitors associated with internal control structures (e.g.
-     * raw monitors)
-     *
-     * @return an iterator over the collection of monitors
-     *
-     * @see JavaMonitor
-     * @see com.ibm.dtfj.image.CorruptData
-     */
-    public Iterator getMonitors();
-
-    /**
-     * Get the set of heaps known by the VM
-     * @return an iterator for all of the Java heaps within this runtime. Heaps
-     * may be specific to this JavaVM instance, or may be shared between multiple
-     * JavaVM instances
-     *
-     * @see JavaHeap
-     * @see com.ibm.dtfj.image.CorruptData
-     */
-    public Iterator getHeaps();
-
-    /**
-     * Get the set of object and class roots known to the VM.
-     * Stack frame roots are not included in the set, they can be retrieved using JavaStackFrame.getHeapRoots().
+	/**
+	 * Get a system property of the virtual machine.
 	 *
-     * @return an iterator over the collection of JavaReferences representing the known global heap roots within this runtime.
-     *
-     * @see JavaReference
-     * @see JavaStackFrame
-     * @see com.ibm.dtfj.image.CorruptData
-     *
-     */
-    public Iterator getHeapRoots();
+	 * @param key the name of the property to retrieve
+	 * @return the value of the requested system property from this VM
+	 * @throws DataUnavailable if the system properties are not available
+	 * @throws CorruptDataException
+	 */
+	public default String getSystemProperty(String key) throws DataUnavailable, CorruptDataException {
+		throw new DataUnavailable("System properties are not available for this runtime");
+	}
 
-    /**
-     * Fetches implementation specific trace buffers, like the verbose GC buffer
-     * or the Universal Trace Engine (UTE) buffer
-     *
-     * @param bufferName a String naming the buffer to be fetched
-     * @param formatted true if formatting should be performed on the buffer, or
-     * false if the raw buffer contents should be returned
-     * @return an implementation specific result, depending on the parameters
-     * @throws CorruptDataException
-     */
-    public Object getTraceBuffer(String bufferName, boolean formatted) throws CorruptDataException;
+	/**
+	 * Fetch the JavaVMInitArgs which were used to create this VM.
+	 * See JNI_CreateJavaVM in the JNI Specification for more details.
+	 *
+	 * @return the JavaVMInitArgs which were used to create this VM.
+	 * @throws DataUnavailable if the arguments are not available
+	 * @throws CorruptDataException
+	 */
+	public JavaVMInitArgs getJavaVMInitArgs() throws DataUnavailable, CorruptDataException;
 
-    /**
-     * Gets the object located at address <code>address</code> in the heap.
-     * @param	address the <code>ImagePointer</code> instance representing the start address of object in the heap;
-     * @return	the <code>JavaObject</code> instance representing the located object.
-     * @throws 	IllegalArgumentException	if  <code>address</code> is outside the heap's boundaries, or if it doesn't point to the start location of an object;
-     * @throws 	MemoryAccessException 		if  <code>address</code> is in the heap but it's not accessible from the dump;
-     * @throws 	CorruptDataException 		if any data needed to build the returned instance of <code>JavaObject</code> is corrupt.
-     * @throws 	DataUnavailable	 			if any data needed to build the returned instance of <code>JavaObject</code> is not available.
-     * @see 	com.ibm.dtfj.java.JavaObject
-     */
-     public JavaObject getObjectAtAddress(ImagePointer address) throws CorruptDataException, IllegalArgumentException, MemoryAccessException, DataUnavailable;
+	/**
+	 * Get the set of class loaders active in this VM
+	 * @return an iterator of all of the class loaders within this JavaVM
+	 *
+	 * @see JavaClassLoader
+	 * @see com.ibm.dtfj.image.CorruptData
+	 */
+	public Iterator getJavaClassLoaders();
 
-     /**
-      * Returns iterator of the top-level memory categories used by this
-      * Java runtime.
-      *
-      * @return Iterator of memory categories
-      * @see JavaRuntimeMemoryCategory CorruptData
-      * @since 1.5
-      */
-     public Iterator getMemoryCategories() throws DataUnavailable;
+	/**
+	 * Get the set of Java threads known by the VM
+	 * @return an iterator of the JavaThreads in the runtime
+	 *
+	 * @see JavaThread
+	 * @see com.ibm.dtfj.image.CorruptData
+	 */
+	public Iterator getThreads();
 
-     /**
-      * Returns an iterator of JavaRuntimeMemorySection objects corresponding to the blocks of memory allocated by the JavaRuntime.
-      *
-      * @param includeFreed If true, iterator will iterate over blocks of memory that have been freed, but haven't been re-used yet.
-      * @return Iterator of memory sections.
-      * @see JavaRuntimeMemorySection CorruptData
-      * @since 1.5
-      */
-     public Iterator getMemorySections(boolean includeFreed) throws DataUnavailable;
+	/**
+	 * This is short cut method. The same result can be found by iterating over all
+	 * methods in all class loaders in all classes.
+	 *
+	 * @return an iterator over all of the JavaMethods in the JavaRuntime which
+	 * have been compiled
+	 *
+	 * @see JavaMethod
+	 * @see com.ibm.dtfj.image.CorruptData
+	 */
+	public Iterator getCompiledMethods();
+
+	/**
+	 * Provides access to the collection of monitors used in the JavaVM. This
+	 * collection includes both monitors associated with managed objects (e.g. object
+	 * monitors) and monitors associated with internal control structures (e.g.
+	 * raw monitors)
+	 *
+	 * @return an iterator over the collection of monitors
+	 *
+	 * @see JavaMonitor
+	 * @see com.ibm.dtfj.image.CorruptData
+	 */
+	public Iterator getMonitors();
+
+	/**
+	 * Get the set of heaps known by the VM
+	 * @return an iterator for all of the Java heaps within this runtime. Heaps
+	 * may be specific to this JavaVM instance, or may be shared between multiple
+	 * JavaVM instances
+	 *
+	 * @see JavaHeap
+	 * @see com.ibm.dtfj.image.CorruptData
+	 */
+	public Iterator getHeaps();
+
+	/**
+	 * Get the set of object and class roots known to the VM.
+	 * Stack frame roots are not included in the set, they can be retrieved using JavaStackFrame.getHeapRoots().
+	 *
+	 * @return an iterator over the collection of JavaReferences representing the known global heap roots within this runtime.
+	 *
+	 * @see JavaReference
+	 * @see JavaStackFrame
+	 * @see com.ibm.dtfj.image.CorruptData
+	 *
+	 */
+	public Iterator getHeapRoots();
+
+	/**
+	 * Fetches implementation specific trace buffers, like the verbose GC buffer
+	 * or the Universal Trace Engine (UTE) buffer
+	 *
+	 * @param bufferName a String naming the buffer to be fetched
+	 * @param formatted true if formatting should be performed on the buffer, or
+	 * false if the raw buffer contents should be returned
+	 * @return an implementation specific result, depending on the parameters
+	 * @throws CorruptDataException
+	 */
+	public Object getTraceBuffer(String bufferName, boolean formatted) throws CorruptDataException;
+
+	/**
+	 * Gets the object located at address <code>address</code> in the heap.
+	 * @param	address the <code>ImagePointer</code> instance representing the start address of object in the heap;
+	 * @return	the <code>JavaObject</code> instance representing the located object.
+	 * @throws 	IllegalArgumentException	if  <code>address</code> is outside the heap's boundaries, or if it doesn't point to the start location of an object;
+	 * @throws 	MemoryAccessException 		if  <code>address</code> is in the heap but it's not accessible from the dump;
+	 * @throws 	CorruptDataException 		if any data needed to build the returned instance of <code>JavaObject</code> is corrupt.
+	 * @throws 	DataUnavailable	 			if any data needed to build the returned instance of <code>JavaObject</code> is not available.
+	 * @see 	com.ibm.dtfj.java.JavaObject
+	 */
+	 public JavaObject getObjectAtAddress(ImagePointer address) throws CorruptDataException, IllegalArgumentException, MemoryAccessException, DataUnavailable;
+
+	 /**
+	  * Returns iterator of the top-level memory categories used by this
+	  * Java runtime.
+	  *
+	  * @return Iterator of memory categories
+	  * @see JavaRuntimeMemoryCategory CorruptData
+	  * @since 1.5
+	  */
+	 public Iterator getMemoryCategories() throws DataUnavailable;
+
+	 /**
+	  * Returns an iterator of JavaRuntimeMemorySection objects corresponding to the blocks of memory allocated by the JavaRuntime.
+	  *
+	  * @param includeFreed If true, iterator will iterate over blocks of memory that have been freed, but haven't been re-used yet.
+	  * @return Iterator of memory sections.
+	  * @see JavaRuntimeMemorySection CorruptData
+	  * @since 1.5
+	  */
+	 public Iterator getMemorySections(boolean includeFreed) throws DataUnavailable;
 
 	/**
 	 * @param obj

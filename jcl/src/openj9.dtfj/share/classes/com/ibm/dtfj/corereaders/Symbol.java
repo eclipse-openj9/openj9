@@ -49,18 +49,18 @@ public class Symbol {
 	final static int STB_GLOBAL = 1;
 	final static int STB_WEAK = 2;
 
-	   // values for st_info field
-    static final int STT_NOTYPE = 0;
-    static final int STT_OBJECT = 1;
-    static final int STT_FUNC = 2;
-    static final int STT_SECTION = 3;
-    static final int STT_FILE = 4;
-    static final int STT_COMMON = 5;
-    static final int STT_TLS = 6;
-    static final int STT_LOOS = 10;
-    static final int STT_HIOS = 12;
-    static final int STT_LOPROC = 13;
-    static final int STT_HIPROC = 15;
+	// values for st_info field
+	static final int STT_NOTYPE = 0;
+	static final int STT_OBJECT = 1;
+	static final int STT_FUNC = 2;
+	static final int STT_SECTION = 3;
+	static final int STT_FILE = 4;
+	static final int STT_COMMON = 5;
+	static final int STT_TLS = 6;
+	static final int STT_LOOS = 10;
+	static final int STT_HIOS = 12;
+	static final int STT_LOPROC = 13;
+	static final int STT_HIPROC = 15;
 
 	public Symbol(String name, long address, int extent, int type, int bind) {
 

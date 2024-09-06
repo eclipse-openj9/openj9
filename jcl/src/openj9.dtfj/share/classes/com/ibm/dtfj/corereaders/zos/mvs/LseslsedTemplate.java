@@ -29,22 +29,24 @@ import java.io.IOException;
 
 public final class LseslsedTemplate {
 
-    public static int length() {
-        return 8;
-    }
+	public static int length() {
+		return 8;
+	}
 
-    public static long getLsestyp7(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 0);
-        inputStream.setBitOffset(2);
-        long result = inputStream.readBits(6);
-        result <<= 58;
-        result >>= 58;
-        return result;
-    }
-    public static int getLsestyp7$offset() {
-        return 0;
-    }
-    public static int getLsestyp7$length() {
-        return 6;
-    }
+	public static long getLsestyp7(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 0);
+		inputStream.setBitOffset(2);
+		long result = inputStream.readBits(6);
+		result <<= 58;
+		result >>= 58;
+		return result;
+	}
+
+	public static int getLsestyp7$offset() {
+		return 0;
+	}
+
+	public static int getLsestyp7$length() {
+		return 6;
+	}
 }

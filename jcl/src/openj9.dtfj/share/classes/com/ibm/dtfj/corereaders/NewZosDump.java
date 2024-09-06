@@ -77,8 +77,8 @@ public class NewZosDump implements ICoreFileReader {
 	/** Maintains the list of Java address spaces */
 	private HashMap _javaAddressSpaces = new LinkedHashMap();
 
-    /** Logger */
-    private static Logger log = Logger.getLogger(NewZosDump.class.getName());
+	/** Logger */
+	private static Logger log = Logger.getLogger(NewZosDump.class.getName());
 
 	// Zebedee variables
 	private com.ibm.dtfj.corereaders.zos.dumpreader.Dump _dump;

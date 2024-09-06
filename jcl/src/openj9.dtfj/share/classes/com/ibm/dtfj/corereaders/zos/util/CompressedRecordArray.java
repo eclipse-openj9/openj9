@@ -75,427 +75,427 @@ import java.io.Serializable;
 
 public final class CompressedRecordArray implements Serializable {
 
-    /** Log2 of the size of each block */
-    private int blockSizeLog2;
-    /** Size of each block */
-    private int blockSize;
-    /** Size of each record array */
-    private int recordSize;
-    /** The index into bitStreamIndex */
-    private int index;
-    /** Index into the bit stream */
-    private int[] bitStreamIndex = new int[16];
-    /** The current block we are writing into */
-    private int[][] currentBlock;
-    /** Index of record in this block */
-    private int currentBlockIndex;
-    /** The bit stream where most of the data is actually stored */
-    private BitStream bits = new BitStream();
-    /*
-     * Following are all working variables that could be local but are made
-     * global to save on GC.
-     */
-    private boolean[][] isNegative;
-    private int[] lastValue;
-    private int[] maxDelta;
-    private boolean[] allSameDelta;
-    private boolean[] allPositive;
-    private byte[] encoding;
-    /** Set to true when closed and ready for reading */
-    private boolean closed = false;
-    /** Total number of records written */
-    private int numRecords;
-    /* Possible encoding types: */
-    private static final int GOLOMB2 = 0;
-    private static final int GOLOMB7 = 1;
-    private static final int GOLOMB8 = 2;
-    private static final int VARIABLE_BYTE = 3;
-    /* Following are for stat collecting only */
-    private static int numGolomb2;
-    private static int numGolomb7;
-    private static int numGolomb8;
-    private static int numVariableByte;
-    private static int numAllSameDelta;
-    private static int numNotAllSameDelta;
-    private static int numNegative;
-    private static int numAllPositive;
+	/** Log2 of the size of each block */
+	private int blockSizeLog2;
+	/** Size of each block */
+	private int blockSize;
+	/** Size of each record array */
+	private int recordSize;
+	/** The index into bitStreamIndex */
+	private int index;
+	/** Index into the bit stream */
+	private int[] bitStreamIndex = new int[16];
+	/** The current block we are writing into */
+	private int[][] currentBlock;
+	/** Index of record in this block */
+	private int currentBlockIndex;
+	/** The bit stream where most of the data is actually stored */
+	private BitStream bits = new BitStream();
+	/*
+	 * Following are all working variables that could be local but are made
+	 * global to save on GC.
+	 */
+	private boolean[][] isNegative;
+	private int[] lastValue;
+	private int[] maxDelta;
+	private boolean[] allSameDelta;
+	private boolean[] allPositive;
+	private byte[] encoding;
+	/** Set to true when closed and ready for reading */
+	private boolean closed = false;
+	/** Total number of records written */
+	private int numRecords;
+	/* Possible encoding types: */
+	private static final int GOLOMB2 = 0;
+	private static final int GOLOMB7 = 1;
+	private static final int GOLOMB8 = 2;
+	private static final int VARIABLE_BYTE = 3;
+	/* Following are for stat collecting only */
+	private static int numGolomb2;
+	private static int numGolomb7;
+	private static int numGolomb8;
+	private static int numVariableByte;
+	private static int numAllSameDelta;
+	private static int numNotAllSameDelta;
+	private static int numNegative;
+	private static int numAllPositive;
 
-    /**
-     * Create a new CompressedRecordArray. A size of 5 for blockSizeLog2 gives good results.
-     * @param blockSizeLog2 the number of records in each block expressed as a power of 2
-     * @param recordSize the number of ints in each record
-     */
-    public CompressedRecordArray(int blockSizeLog2, int recordSize) {
-        this.blockSizeLog2 = blockSizeLog2;
-        blockSize = 1 << blockSizeLog2;
-        this.recordSize = recordSize;
-        currentBlock = new int[blockSize][recordSize];
-        isNegative = new boolean[blockSize][recordSize];
-        lastValue = new int[recordSize];
-        maxDelta = new int[recordSize];
-        allSameDelta = new boolean[recordSize];
-        allPositive = new boolean[recordSize];
-        encoding = new byte[recordSize];
-    }
+	/**
+	 * Create a new CompressedRecordArray. A size of 5 for blockSizeLog2 gives good results.
+	 * @param blockSizeLog2 the number of records in each block expressed as a power of 2
+	 * @param recordSize the number of ints in each record
+	 */
+	public CompressedRecordArray(int blockSizeLog2, int recordSize) {
+		this.blockSizeLog2 = blockSizeLog2;
+		blockSize = 1 << blockSizeLog2;
+		this.recordSize = recordSize;
+		currentBlock = new int[blockSize][recordSize];
+		isNegative = new boolean[blockSize][recordSize];
+		lastValue = new int[recordSize];
+		maxDelta = new int[recordSize];
+		allSameDelta = new boolean[recordSize];
+		allPositive = new boolean[recordSize];
+		encoding = new byte[recordSize];
+	}
 
-    /**
-     * Add a new record. Data is copied from the given array.
-     * @param record an array of ints which forms the record to be added
-     */
-    public void add(int[] record) {
-        assert !closed;
-        for (int i = 0; i < recordSize; i++) {
-            currentBlock[currentBlockIndex][i] = record[i];
-        }
-        if (++currentBlockIndex == blockSize) {
-            flushCurrentBlock();
-            currentBlockIndex = 0;
-        }
-        numRecords++;
-    }
+	/**
+	 * Add a new record. Data is copied from the given array.
+	 * @param record an array of ints which forms the record to be added
+	 */
+	public void add(int[] record) {
+		assert !closed;
+		for (int i = 0; i < recordSize; i++) {
+			currentBlock[currentBlockIndex][i] = record[i];
+		}
+		if (++currentBlockIndex == blockSize) {
+			flushCurrentBlock();
+			currentBlockIndex = 0;
+		}
+		numRecords++;
+	}
 
-    /**
-     * Close this CompressedRecordArray. This must be called before any reading is done
-     * and no more records may be added afterwards.
-     */
-    public void close() {
-        flushCurrentBlock();
-        bits.rewind();
-        closed = true;
-    }
+	/**
+	 * Close this CompressedRecordArray. This must be called before any reading is done
+	 * and no more records may be added afterwards.
+	 */
+	public void close() {
+		flushCurrentBlock();
+		bits.rewind();
+		closed = true;
+	}
 
-    /**
-     * Flush the current block
-     */
-    private void flushCurrentBlock() {
-        /*
-         * Save the current index for this block
-         */
-        bitStreamIndex[index++] = bits.getIndex();
-        if (index == bitStreamIndex.length) {
-            int[] tmp = new int[index * 2];
-            System.arraycopy(bitStreamIndex, 0, tmp, 0, index);
-            bitStreamIndex = tmp;
-        }
-        /*
-         * Output the compressed block to the bit stream
-         */
-        compressBlock();
-        /*
-         * Realign bit stream at the next word
-         */
-        bits.nextWord();
-    }
+	/**
+	 * Flush the current block
+	 */
+	private void flushCurrentBlock() {
+		/*
+		 * Save the current index for this block
+		 */
+		bitStreamIndex[index++] = bits.getIndex();
+		if (index == bitStreamIndex.length) {
+			int[] tmp = new int[index * 2];
+			System.arraycopy(bitStreamIndex, 0, tmp, 0, index);
+			bitStreamIndex = tmp;
+		}
+		/*
+		 * Output the compressed block to the bit stream
+		 */
+		compressBlock();
+		/*
+		 * Realign bit stream at the next word
+		 */
+		bits.nextWord();
+	}
 
-    /**
-     * Compress the current block of records
-     */
-    private void compressBlock() {
-        /*
-         * Normalize data by converting to deltas and then making numbers absolute. We also
-         * gather some stats to help decide which encoding to use. We store deltas (ie the
-         * difference between consecutive values) rather than the values themselves because
-         * we are often storing structured data where a value is increasing (or decreasing)
-         * with each record. If this is not the case, it does no harm to store deltas anyway.
-         */
-        for (int recordIndex = 0; recordIndex < recordSize; recordIndex++) {
-            lastValue[recordIndex] = currentBlock[0][recordIndex];
-            maxDelta[recordIndex] = 0;
-            allSameDelta[recordIndex] = true;
-            allPositive[recordIndex] = true;
-            int lastDelta = 0;
-            for (int blockIndex = 1; blockIndex < currentBlockIndex; blockIndex++) {
-                int delta = currentBlock[blockIndex][recordIndex] - lastValue[recordIndex];
-                if (delta < 0) {
-                    /*
-                     * Found a negative delta. Make absolute and also set the allPositive
-                     * flag to indicate we need to store sign bits.
-                     */
-                    isNegative[blockIndex][recordIndex] = true;
-                    delta = -delta;
-                    allPositive[recordIndex] = false;
-                    numNegative++;
-                } else {
-                    isNegative[blockIndex][recordIndex] = false;
-                }
-                if (delta > maxDelta[recordIndex])
-                    maxDelta[recordIndex] = delta;
-                if (blockIndex > 1 && delta != lastDelta) {
-                    /*
-                     * Not all deltas are the same so reset the flag.
-                     */
-                    allSameDelta[recordIndex] = false;
-                    numNotAllSameDelta++;
-                }
-                /*
-                 * Save the last value and also replace the current value with its delta.
-                 */
-                lastValue[recordIndex] = currentBlock[blockIndex][recordIndex];
-                lastDelta = delta;
-                currentBlock[blockIndex][recordIndex] = delta;
-            }
-            if (allPositive[recordIndex])
-                numAllPositive++;
-            if (allSameDelta[recordIndex])
-                numAllSameDelta++;
-        }
-        /*
-         * Now figure out what encoding to use and output the block header.
-         */
-        for (int recordIndex = 0; recordIndex < recordSize; recordIndex++) {
-            /* We can skip the sign bit if all are positive */
-            bits.writeIntBits(allPositive[recordIndex] ? 1 : 0, 1);
-            /* We can skip most of the record altogether if all delta values are the same */
-            bits.writeIntBits(allSameDelta[recordIndex] ? 1 : 0, 1);
-            /* There's probably a more mathematical way but this will do for now */
-            if (maxDelta[recordIndex] < 24) {
-                encoding[recordIndex] = GOLOMB2;
-                numGolomb2++;
-            } else if (maxDelta[recordIndex] < 384) {
-                encoding[recordIndex] = GOLOMB7;
-                numGolomb7++;
-            } else if (maxDelta[recordIndex] < 2048) {
-                encoding[recordIndex] = GOLOMB8;
-                numGolomb8++;
-            } else {
-                encoding[recordIndex] = VARIABLE_BYTE;
-                numVariableByte++;
-            }
-            bits.writeIntBits(encoding[recordIndex], 2);
-        }
-        /*
-         * Ok, now we can output the block data itself.
-         */
-        for (int blockIndex = 0; blockIndex < currentBlockIndex; blockIndex++) {
-            for (int recordIndex = 0; recordIndex < recordSize; recordIndex++) {
-                /* The first record always uses variable byte */
-                if (blockIndex == 0) {
-                    bits.writeVariableByte(currentBlock[blockIndex][recordIndex]);
-                /* Only output remainder if not the same as first delta */
-                } else if (blockIndex == 1 || !allSameDelta[recordIndex]) {
-                    /* Output the sign bit if any */
-                    if (!allPositive[recordIndex]) {
-                        bits.writeIntBits(isNegative[blockIndex][recordIndex] ? 1 : 0, 1);
-                    }
-                    switch (encoding[recordIndex]) {
-                    case GOLOMB2:
-                        bits.writeGolombRice(currentBlock[blockIndex][recordIndex], 2);
-                        break;
-                    case GOLOMB7:
-                        bits.writeGolombRice(currentBlock[blockIndex][recordIndex], 7);
-                        break;
-                    case GOLOMB8:
-                        bits.writeGolombRice(currentBlock[blockIndex][recordIndex], 8);
-                        break;
-                    case VARIABLE_BYTE:
-                        bits.writeVariableByte(currentBlock[blockIndex][recordIndex]);
-                        break;
-                    }
-                }
-            }
-        }
-    }
+	/**
+	 * Compress the current block of records
+	 */
+	private void compressBlock() {
+		/*
+		 * Normalize data by converting to deltas and then making numbers absolute. We also
+		 * gather some stats to help decide which encoding to use. We store deltas (ie the
+		 * difference between consecutive values) rather than the values themselves because
+		 * we are often storing structured data where a value is increasing (or decreasing)
+		 * with each record. If this is not the case, it does no harm to store deltas anyway.
+		 */
+		for (int recordIndex = 0; recordIndex < recordSize; recordIndex++) {
+			lastValue[recordIndex] = currentBlock[0][recordIndex];
+			maxDelta[recordIndex] = 0;
+			allSameDelta[recordIndex] = true;
+			allPositive[recordIndex] = true;
+			int lastDelta = 0;
+			for (int blockIndex = 1; blockIndex < currentBlockIndex; blockIndex++) {
+				int delta = currentBlock[blockIndex][recordIndex] - lastValue[recordIndex];
+				if (delta < 0) {
+					/*
+					 * Found a negative delta. Make absolute and also set the allPositive
+					 * flag to indicate we need to store sign bits.
+					 */
+					isNegative[blockIndex][recordIndex] = true;
+					delta = -delta;
+					allPositive[recordIndex] = false;
+					numNegative++;
+				} else {
+					isNegative[blockIndex][recordIndex] = false;
+				}
+				if (delta > maxDelta[recordIndex])
+					maxDelta[recordIndex] = delta;
+				if (blockIndex > 1 && delta != lastDelta) {
+					/*
+					 * Not all deltas are the same so reset the flag.
+					 */
+					allSameDelta[recordIndex] = false;
+					numNotAllSameDelta++;
+				}
+				/*
+				 * Save the last value and also replace the current value with its delta.
+				 */
+				lastValue[recordIndex] = currentBlock[blockIndex][recordIndex];
+				lastDelta = delta;
+				currentBlock[blockIndex][recordIndex] = delta;
+			}
+			if (allPositive[recordIndex])
+				numAllPositive++;
+			if (allSameDelta[recordIndex])
+				numAllSameDelta++;
+		}
+		/*
+		 * Now figure out what encoding to use and output the block header.
+		 */
+		for (int recordIndex = 0; recordIndex < recordSize; recordIndex++) {
+			/* We can skip the sign bit if all are positive */
+			bits.writeIntBits(allPositive[recordIndex] ? 1 : 0, 1);
+			/* We can skip most of the record altogether if all delta values are the same */
+			bits.writeIntBits(allSameDelta[recordIndex] ? 1 : 0, 1);
+			/* There's probably a more mathematical way but this will do for now */
+			if (maxDelta[recordIndex] < 24) {
+				encoding[recordIndex] = GOLOMB2;
+				numGolomb2++;
+			} else if (maxDelta[recordIndex] < 384) {
+				encoding[recordIndex] = GOLOMB7;
+				numGolomb7++;
+			} else if (maxDelta[recordIndex] < 2048) {
+				encoding[recordIndex] = GOLOMB8;
+				numGolomb8++;
+			} else {
+				encoding[recordIndex] = VARIABLE_BYTE;
+				numVariableByte++;
+			}
+			bits.writeIntBits(encoding[recordIndex], 2);
+		}
+		/*
+		 * Ok, now we can output the block data itself.
+		 */
+		for (int blockIndex = 0; blockIndex < currentBlockIndex; blockIndex++) {
+			for (int recordIndex = 0; recordIndex < recordSize; recordIndex++) {
+				/* The first record always uses variable byte */
+				if (blockIndex == 0) {
+					bits.writeVariableByte(currentBlock[blockIndex][recordIndex]);
+				/* Only output remainder if not the same as first delta */
+				} else if (blockIndex == 1 || !allSameDelta[recordIndex]) {
+					/* Output the sign bit if any */
+					if (!allPositive[recordIndex]) {
+						bits.writeIntBits(isNegative[blockIndex][recordIndex] ? 1 : 0, 1);
+					}
+					switch (encoding[recordIndex]) {
+					case GOLOMB2:
+						bits.writeGolombRice(currentBlock[blockIndex][recordIndex], 2);
+						break;
+					case GOLOMB7:
+						bits.writeGolombRice(currentBlock[blockIndex][recordIndex], 7);
+						break;
+					case GOLOMB8:
+						bits.writeGolombRice(currentBlock[blockIndex][recordIndex], 8);
+						break;
+					case VARIABLE_BYTE:
+						bits.writeVariableByte(currentBlock[blockIndex][recordIndex]);
+						break;
+					}
+				}
+			}
+		}
+	}
 
-    /**
-     * Get the given record number. To save on GC overhead the user supplies the
-     * int array to copy the record into.
-     * @param recordNumber the sequential number of the record to read
-     * @param record the array to copy the record into
-     */
-    public void get(int recordNumber, int[] record) {
-        assert closed ;
-        assert recordNumber < numRecords;
-        /*
-         * First position the bit stream at the block header
-         */
-        index = recordNumber >> blockSizeLog2;
-        bits.setIndex(bitStreamIndex[index]);
+	/**
+	 * Get the given record number. To save on GC overhead the user supplies the
+	 * int array to copy the record into.
+	 * @param recordNumber the sequential number of the record to read
+	 * @param record the array to copy the record into
+	 */
+	public void get(int recordNumber, int[] record) {
+		assert closed ;
+		assert recordNumber < numRecords;
+		/*
+		 * First position the bit stream at the block header
+		 */
+		index = recordNumber >> blockSizeLog2;
+		bits.setIndex(bitStreamIndex[index]);
 
-        /* Get the index within the block */
-        int desiredBlockIndex = recordNumber & (blockSize - 1);
+		/* Get the index within the block */
+		int desiredBlockIndex = recordNumber & (blockSize - 1);
 
-        /*
-         * Read the block header containing flags plus the encoding.
-         */
-        for (int recordIndex = 0; recordIndex < recordSize; recordIndex++) {
-            allPositive[recordIndex] = (bits.readIntBits(1) == 1);
-            allSameDelta[recordIndex] = (bits.readIntBits(1) == 1);
-            encoding[recordIndex] = (byte)bits.readIntBits(2);
-        }
+		/*
+		 * Read the block header containing flags plus the encoding.
+		 */
+		for (int recordIndex = 0; recordIndex < recordSize; recordIndex++) {
+			allPositive[recordIndex] = (bits.readIntBits(1) == 1);
+			allSameDelta[recordIndex] = (bits.readIntBits(1) == 1);
+			encoding[recordIndex] = (byte)bits.readIntBits(2);
+		}
 
-        /*
-         * Now scan through decompressing as we go until we reach the desired record
-         */
-        for (int blockIndex = 0; blockIndex <= desiredBlockIndex; blockIndex++) {
-            for (int recordIndex = 0; recordIndex < recordSize; recordIndex++) {
-                /* The first record always uses variable byte */
-                if (blockIndex == 0) {
-                    currentBlock[blockIndex][recordIndex] = bits.readVariableByte();
-                /* Only read remainder if not the same as first delta */
-                } else if (blockIndex == 1 || !allSameDelta[recordIndex]) {
-                    int delta = 0;
-                    boolean isNegative = false;
-                    /* Input the sign bit if any */
-                    if (!allPositive[recordIndex]) {
-                        isNegative = (bits.readIntBits(1) == 1);
-                    }
-                    /*
-                     * Read the delta using the appropriate encoding.
-                     */
-                    switch (encoding[recordIndex]) {
-                    case GOLOMB2:
-                        delta = bits.readGolombRice(2);
-                        break;
-                    case GOLOMB7:
-                        delta = bits.readGolombRice(7);
-                        break;
-                    case GOLOMB8:
-                        delta = bits.readGolombRice(8);
-                        break;
-                    case VARIABLE_BYTE:
-                        delta = bits.readVariableByte();
-                        break;
-                    }
-                    /* Apply sign bit */
-                    if (isNegative)
-                        delta = -delta;
-                    /* Add delta to previous value to restore original value */
-                    currentBlock[blockIndex][recordIndex] = currentBlock[blockIndex-1][recordIndex] + delta;
-                    /* Reuse the lastValue array to hold the last delta */
-                    lastValue[recordIndex] = delta;
-                } else {
-                    /*
-                     * All the deltas are the same from the second record on so just reuse
-                     * the delta we saved in lastValue.
-                     */
-                    currentBlock[blockIndex][recordIndex] = currentBlock[blockIndex-1][recordIndex] + lastValue[recordIndex];
-                }
-            }
-        }
-        /*
-         * Finally copy the restored record into the supplied array.
-         */
-        for (int i = 0; i < recordSize; i++) {
-            record[i] = currentBlock[desiredBlockIndex][i];
-        }
-    }
+		/*
+		 * Now scan through decompressing as we go until we reach the desired record
+		 */
+		for (int blockIndex = 0; blockIndex <= desiredBlockIndex; blockIndex++) {
+			for (int recordIndex = 0; recordIndex < recordSize; recordIndex++) {
+				/* The first record always uses variable byte */
+				if (blockIndex == 0) {
+					currentBlock[blockIndex][recordIndex] = bits.readVariableByte();
+				/* Only read remainder if not the same as first delta */
+				} else if (blockIndex == 1 || !allSameDelta[recordIndex]) {
+					int delta = 0;
+					boolean isNegative = false;
+					/* Input the sign bit if any */
+					if (!allPositive[recordIndex]) {
+						isNegative = (bits.readIntBits(1) == 1);
+					}
+					/*
+					 * Read the delta using the appropriate encoding.
+					 */
+					switch (encoding[recordIndex]) {
+					case GOLOMB2:
+						delta = bits.readGolombRice(2);
+						break;
+					case GOLOMB7:
+						delta = bits.readGolombRice(7);
+						break;
+					case GOLOMB8:
+						delta = bits.readGolombRice(8);
+						break;
+					case VARIABLE_BYTE:
+						delta = bits.readVariableByte();
+						break;
+					}
+					/* Apply sign bit */
+					if (isNegative)
+						delta = -delta;
+					/* Add delta to previous value to restore original value */
+					currentBlock[blockIndex][recordIndex] = currentBlock[blockIndex-1][recordIndex] + delta;
+					/* Reuse the lastValue array to hold the last delta */
+					lastValue[recordIndex] = delta;
+				} else {
+					/*
+					 * All the deltas are the same from the second record on so just reuse
+					 * the delta we saved in lastValue.
+					 */
+					currentBlock[blockIndex][recordIndex] = currentBlock[blockIndex-1][recordIndex] + lastValue[recordIndex];
+				}
+			}
+		}
+		/*
+		 * Finally copy the restored record into the supplied array.
+		 */
+		for (int i = 0; i < recordSize; i++) {
+			record[i] = currentBlock[desiredBlockIndex][i];
+		}
+	}
 
-    /**
-     * Give a rough estimate of how many bytes of storage we use. This is the actual storage
-     * allocated so may be more that what is in use at any one time.
-     */
-    public int memoryUsage() {
-        return bits.memoryUsage() + (bitStreamIndex.length * 4) + (blockSize * recordSize * 4 * 2)
-               + (recordSize * (4 + 4 + 1 + 1 + 1));
-    }
+	/**
+	 * Give a rough estimate of how many bytes of storage we use. This is the actual storage
+	 * allocated so may be more that what is in use at any one time.
+	 */
+	public int memoryUsage() {
+		return bits.memoryUsage() + (bitStreamIndex.length * 4) + (blockSize * recordSize * 4 * 2)
+			   + (recordSize * (4 + 4 + 1 + 1 + 1));
+	}
 
-    /**
-     * This method is provided to test the CompressedRecordArray. We need to change this to use
-     * unit tests at some point.
-     * @exclude
-     * @throws Exception if anything bad happens
-     */
-    public static void main(String[] args) throws Exception {
-        if (args.length != 0) {
-            fpostest(args[0]);
-            return;
-        }
-        for (int blockSizeLog2 = 0; blockSizeLog2 < 10; blockSizeLog2++) {
-            int blockSize = 1 << blockSizeLog2;
-            for (int recordSize = 1; recordSize < 20; recordSize++) {
-                System.out.println("doing blockSize " + blockSize + " recordSize " + recordSize);
-                CompressedRecordArray ra = new CompressedRecordArray(blockSizeLog2, recordSize);
-                int[] record = new int[recordSize];
-                for (int i = 0; i < blockSize*10 + recordSize; i++) {
-                    for (int j = 0; j < recordSize; j++) {
-                        int value = i*i*j;
-                        if ((recordSize % 3) == 0 && (j % 3) == 0)
-                            // this should give all same deltas
-                            value = i * blockSize * recordSize;
-                        else if ((j % 5) == 0)
-                            value = -value;
-                        record[j] = value;
-                    }
-                    ra.add(record);
-                }
-                ra.close();
-                for (int i = 0; i < blockSize*10 + recordSize; i++) {
-                    ra.get(i, record);
-                    for (int j = 0; j < recordSize; j++) {
-                        int value = i*i*j;
-                        if ((recordSize % 3) == 0 && (j % 3) == 0)
-                            // this should give all same deltas
-                            value = i * blockSize * recordSize;
-                        else if ((j % 5) == 0)
-                            value = -value;
-                        if (record[j] != value)
-                            throw new Error("found " + record[j] + " expected " + value);
-                    }
-                }
-            }
-        }
-        System.out.println("numGolomb2 = " + numGolomb2);
-        System.out.println("numGolomb7 = " + numGolomb7);
-        System.out.println("numGolomb8 = " + numGolomb8);
-        System.out.println("numVariableByte = " + numVariableByte);
-        System.out.println("numAllSameDelta = " + numAllSameDelta);
-        System.out.println("numNotAllSameDelta = " + numNotAllSameDelta);
-        System.out.println("numNegative = " + numNegative);
-        System.out.println("numAllPositive = " + numAllPositive);
-    }
+	/**
+	 * This method is provided to test the CompressedRecordArray. We need to change this to use
+	 * unit tests at some point.
+	 * @exclude
+	 * @throws Exception if anything bad happens
+	 */
+	public static void main(String[] args) throws Exception {
+		if (args.length != 0) {
+			fpostest(args[0]);
+			return;
+		}
+		for (int blockSizeLog2 = 0; blockSizeLog2 < 10; blockSizeLog2++) {
+			int blockSize = 1 << blockSizeLog2;
+			for (int recordSize = 1; recordSize < 20; recordSize++) {
+				System.out.println("doing blockSize " + blockSize + " recordSize " + recordSize);
+				CompressedRecordArray ra = new CompressedRecordArray(blockSizeLog2, recordSize);
+				int[] record = new int[recordSize];
+				for (int i = 0; i < blockSize*10 + recordSize; i++) {
+					for (int j = 0; j < recordSize; j++) {
+						int value = i*i*j;
+						if ((recordSize % 3) == 0 && (j % 3) == 0)
+							// this should give all same deltas
+							value = i * blockSize * recordSize;
+						else if ((j % 5) == 0)
+							value = -value;
+						record[j] = value;
+					}
+					ra.add(record);
+				}
+				ra.close();
+				for (int i = 0; i < blockSize*10 + recordSize; i++) {
+					ra.get(i, record);
+					for (int j = 0; j < recordSize; j++) {
+						int value = i*i*j;
+						if ((recordSize % 3) == 0 && (j % 3) == 0)
+							// this should give all same deltas
+							value = i * blockSize * recordSize;
+						else if ((j % 5) == 0)
+							value = -value;
+						if (record[j] != value)
+							throw new Error("found " + record[j] + " expected " + value);
+					}
+				}
+			}
+		}
+		System.out.println("numGolomb2 = " + numGolomb2);
+		System.out.println("numGolomb7 = " + numGolomb7);
+		System.out.println("numGolomb8 = " + numGolomb8);
+		System.out.println("numVariableByte = " + numVariableByte);
+		System.out.println("numAllSameDelta = " + numAllSameDelta);
+		System.out.println("numNotAllSameDelta = " + numNotAllSameDelta);
+		System.out.println("numNegative = " + numNegative);
+		System.out.println("numAllPositive = " + numAllPositive);
+	}
 
-    /**
-     * This is the test method I wrote to measure the performance on some real life data.
-     * See the discussion in the class overview for more info.
-     * @throws Exception if the file can't be found
-     */
-    private static void fpostest(String filename) throws Exception {
-        File file = new File(filename);
-        byte[] bytes = new byte[(int)file.length()];
-        FileInputStream fis = new FileInputStream(file);
-        BufferedInputStream bis = new BufferedInputStream(fis);
-        DataInputStream dis = new DataInputStream(bis);
-        dis.readFully(bytes);
-        ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
-        dis = new DataInputStream(bais);
-        int[] record = new int[8];
-        for (int blockSizeLog2 = 0; blockSizeLog2 < 10; blockSizeLog2++) {
-            dis.reset();
-            final long then = System.nanoTime();
-            CompressedRecordArray ra = new CompressedRecordArray(blockSizeLog2, 8);
-            boolean eof = false;
-            for (int r = 0;; r++) {
-                for (int i = 0; i < 8; i++) {
-                    try {
-                        record[i] = dis.readInt();
-                    } catch (EOFException e) {
-                        eof = true;
-                        break;
-                    }
-                }
-                if (eof) break;
-                ra.add(record);
-            }
-            ra.close();
-            dis.reset();
-            eof = false;
-            for (int r = 0;; r++) {
-                for (int i = 0; i < 8; i++) {
-                    try {
-                        int n = dis.readInt();
-                        if (i == 0)
-                            ra.get(r, record);
-                        if (record[i] != n)
-                            throw new Error("data mismatch!");
-                    } catch (EOFException e) {
-                        eof = true;
-                        break;
-                    }
-                }
-                if (eof) break;
-            }
-            final long duration = System.nanoTime() - then;
-            System.out.println("block size " + (1 << blockSizeLog2) + " uses " + ra.memoryUsage() + " took " + duration + " ns");
-        }
-    }
+	/**
+	 * This is the test method I wrote to measure the performance on some real life data.
+	 * See the discussion in the class overview for more info.
+	 * @throws Exception if the file can't be found
+	 */
+	private static void fpostest(String filename) throws Exception {
+		File file = new File(filename);
+		byte[] bytes = new byte[(int)file.length()];
+		FileInputStream fis = new FileInputStream(file);
+		BufferedInputStream bis = new BufferedInputStream(fis);
+		DataInputStream dis = new DataInputStream(bis);
+		dis.readFully(bytes);
+		ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+		dis = new DataInputStream(bais);
+		int[] record = new int[8];
+		for (int blockSizeLog2 = 0; blockSizeLog2 < 10; blockSizeLog2++) {
+			dis.reset();
+			final long then = System.nanoTime();
+			CompressedRecordArray ra = new CompressedRecordArray(blockSizeLog2, 8);
+			boolean eof = false;
+			for (int r = 0;; r++) {
+				for (int i = 0; i < 8; i++) {
+					try {
+						record[i] = dis.readInt();
+					} catch (EOFException e) {
+						eof = true;
+						break;
+					}
+				}
+				if (eof) break;
+				ra.add(record);
+			}
+			ra.close();
+			dis.reset();
+			eof = false;
+			for (int r = 0;; r++) {
+				for (int i = 0; i < 8; i++) {
+					try {
+						int n = dis.readInt();
+						if (i == 0)
+							ra.get(r, record);
+						if (record[i] != n)
+							throw new Error("data mismatch!");
+					} catch (EOFException e) {
+						eof = true;
+						break;
+					}
+				}
+				if (eof) break;
+			}
+			final long duration = System.nanoTime() - then;
+			System.out.println("block size " + (1 << blockSizeLog2) + " uses " + ra.memoryUsage() + " took " + duration + " ns");
+		}
+	}
 }

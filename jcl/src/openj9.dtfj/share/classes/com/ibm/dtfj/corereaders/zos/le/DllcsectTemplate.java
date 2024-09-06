@@ -29,28 +29,33 @@ import java.io.IOException;
 
 public final class DllcsectTemplate {
 
-    public static int length() {
-        return 24;
-    }
+	public static int length() {
+		return 24;
+	}
 
-    public static long getDlloffexpfunc(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 16);
-        return inputStream.readInt();
-    }
-    public static int getDlloffexpfunc$offset() {
-        return 16;
-    }
-    public static int getDlloffexpfunc$length() {
-        return 32;
-    }
-    public static long getDlloffexpvar(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 20);
-        return inputStream.readInt();
-    }
-    public static int getDlloffexpvar$offset() {
-        return 20;
-    }
-    public static int getDlloffexpvar$length() {
-        return 32;
-    }
+	public static long getDlloffexpfunc(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 16);
+		return inputStream.readInt();
+	}
+
+	public static int getDlloffexpfunc$offset() {
+		return 16;
+	}
+
+	public static int getDlloffexpfunc$length() {
+		return 32;
+	}
+
+	public static long getDlloffexpvar(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 20);
+		return inputStream.readInt();
+	}
+
+	public static int getDlloffexpvar$offset() {
+		return 20;
+	}
+
+	public static int getDlloffexpvar$length() {
+		return 32;
+	}
 }

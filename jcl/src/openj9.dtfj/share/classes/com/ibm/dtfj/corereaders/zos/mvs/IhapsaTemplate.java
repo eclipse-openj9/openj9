@@ -29,28 +29,33 @@ import java.io.IOException;
 
 public final class IhapsaTemplate {
 
-    public static int length() {
-        return 4096;
-    }
+	public static int length() {
+		return 4096;
+	}
 
-    public static long getFlccvt(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 16);
-        return inputStream.readUnsignedInt() & 0xffffffffL;
-    }
-    public static int getFlccvt$offset() {
-        return 16;
-    }
-    public static int getFlccvt$length() {
-        return 32;
-    }
-    public static long getPsaaold(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 548);
-        return inputStream.readUnsignedInt() & 0xffffffffL;
-    }
-    public static int getPsaaold$offset() {
-        return 548;
-    }
-    public static int getPsaaold$length() {
-        return 32;
-    }
+	public static long getFlccvt(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 16);
+		return inputStream.readUnsignedInt() & 0xffffffffL;
+	}
+
+	public static int getFlccvt$offset() {
+		return 16;
+	}
+
+	public static int getFlccvt$length() {
+		return 32;
+	}
+
+	public static long getPsaaold(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 548);
+		return inputStream.readUnsignedInt() & 0xffffffffL;
+	}
+
+	public static int getPsaaold$offset() {
+		return 548;
+	}
+
+	public static int getPsaaold$length() {
+		return 32;
+	}
 }

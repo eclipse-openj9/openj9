@@ -29,32 +29,37 @@ import java.io.IOException;
 
 public final class BpxzotcbTemplate {
 
-    public static int length() {
-        return 352;
-    }
+	public static int length() {
+		return 352;
+	}
 
-    public static long getOtcbptregsinusta(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 30);
-        inputStream.setBitOffset(1);
-        long result = inputStream.readBits(1);
-        result <<= 63;
-        result >>= 63;
-        return result;
-    }
-    public static int getOtcbptregsinusta$offset() {
-        return 30;
-    }
-    public static int getOtcbptregsinusta$length() {
-        return 1;
-    }
-    public static long getOtcbcofptr(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 56);
-        return inputStream.readUnsignedInt() & 0xffffffffL;
-    }
-    public static int getOtcbcofptr$offset() {
-        return 56;
-    }
-    public static int getOtcbcofptr$length() {
-        return 32;
-    }
+	public static long getOtcbptregsinusta(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 30);
+		inputStream.setBitOffset(1);
+		long result = inputStream.readBits(1);
+		result <<= 63;
+		result >>= 63;
+		return result;
+	}
+
+	public static int getOtcbptregsinusta$offset() {
+		return 30;
+	}
+
+	public static int getOtcbptregsinusta$length() {
+		return 1;
+	}
+
+	public static long getOtcbcofptr(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 56);
+		return inputStream.readUnsignedInt() & 0xffffffffL;
+	}
+
+	public static int getOtcbcofptr$offset() {
+		return 56;
+	}
+
+	public static int getOtcbcofptr$length() {
+		return 32;
+	}
 }
