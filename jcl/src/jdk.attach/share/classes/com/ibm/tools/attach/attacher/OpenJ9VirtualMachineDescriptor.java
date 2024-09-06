@@ -67,7 +67,7 @@ final class OpenJ9VirtualMachineDescriptor extends VirtualMachineDescriptor {
 	OpenJ9VirtualMachineDescriptor(AttachProvider provider, String id,
 			String displayName) {
 		super(provider, id, displayName);
-		attachSyncFileValue = null;		
+		attachSyncFileValue = null;
 		replyFile = null;
 		processId = 0;
 		uid = 0;
@@ -80,7 +80,7 @@ final class OpenJ9VirtualMachineDescriptor extends VirtualMachineDescriptor {
 	 */
 	OpenJ9VirtualMachineDescriptor(AttachProvider provider, String id) {
 		super(provider, id);
-		attachSyncFileValue = null;		
+		attachSyncFileValue = null;
 		replyFile = null;
 		processId = 0;
 		uid = 0;
@@ -95,7 +95,7 @@ final class OpenJ9VirtualMachineDescriptor extends VirtualMachineDescriptor {
 	OpenJ9VirtualMachineDescriptor(AttachProvider provider,
 			Advertisement advert) {
 		super(provider, advert.getVmId(), advert.getDisplayName());
-		replyFile = advert.getReplyFile(); 
+		replyFile = advert.getReplyFile();
 		attachSyncFileValue = advert.getNotificationSync();
 		processId = advert.getProcessId();
 		uid = advert.getUid();
@@ -104,7 +104,7 @@ final class OpenJ9VirtualMachineDescriptor extends VirtualMachineDescriptor {
 	}
 
 	/**
-	 * 
+	 *
 	 * @return Operating system process ID for the target VM.
 	 */
 	long getProcessId() {
@@ -112,7 +112,7 @@ final class OpenJ9VirtualMachineDescriptor extends VirtualMachineDescriptor {
 	}
 
 	/**
-	 * 
+	 *
 	 * @return true if the target uses the global semaphore (Windows only)
 	 */
 	public boolean isGlobalSemaphore() {
@@ -160,6 +160,5 @@ final class OpenJ9VirtualMachineDescriptor extends VirtualMachineDescriptor {
 	long getUid() {
 		return uid;
 	}
-	
 
 }
