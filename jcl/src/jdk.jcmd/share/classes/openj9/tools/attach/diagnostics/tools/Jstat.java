@@ -66,7 +66,7 @@ public class Jstat {
 
 	/**
 	 * Print a list of Java processes and information about them.
-	 * 
+	 *
 	 * @param args
 	 *            Arguments to the application
 	 */

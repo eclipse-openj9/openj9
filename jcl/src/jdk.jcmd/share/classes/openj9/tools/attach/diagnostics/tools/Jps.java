@@ -66,7 +66,7 @@ public class Jps {
 		AttachProvider theProvider = null;
 		if (0 != providers.size()) {
 			theProvider = providers.get(0);
-		} 
+		}
 		if (null == theProvider) {
 			System.err.println("no attach providers available"); //$NON-NLS-1$
 			rc = 1;
@@ -75,7 +75,7 @@ public class Jps {
 			for (VirtualMachineDescriptor vmd : vmds) {
 				StringBuilder outputBuffer = new StringBuilder(vmd.id());
 				if (!vmidOnly) {
-					Util.getTargetInformation(theProvider, vmd, 
+					Util.getTargetInformation(theProvider, vmd,
 							printJvmArguments, noPackageName, printApplicationArguments, outputBuffer);
 				}
 				System.out.println(outputBuffer.toString());
@@ -83,7 +83,7 @@ public class Jps {
 		}
 		System.exit(rc);
 	}
-	
+
 	private static void parseArguments(String[] args) {
 		printApplicationArguments = false;
 		printJvmArguments = false;
