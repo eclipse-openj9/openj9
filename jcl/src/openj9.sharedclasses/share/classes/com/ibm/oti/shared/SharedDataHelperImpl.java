@@ -28,7 +28,7 @@ import java.nio.ByteBuffer;
 import com.ibm.oti.util.Msg;
 
 /**
- * Implementation of SharedDataHelper. 
+ * Implementation of SharedDataHelper.
  * <p>
  * @see SharedDataHelper
  * @see SharedAbstractHelper

@@ -82,7 +82,7 @@ public class SharedClassProviderImpl implements SharedClassProvider {
 					return null;
 				}
 			}
- 		} catch (HelperAlreadyDefinedException ex) {
+		} catch (HelperAlreadyDefinedException ex) {
 			return null;
 		}
 		return this;

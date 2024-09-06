@@ -23,7 +23,7 @@ package com.ibm.oti.shared;
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  */
 
-/** 
+/**
  * SharedClassFilter allows users of a Helper API to filter which classes are found and stored in the cache.
  * The user should provide a class that implements the interface in which the functions return <code>true</code> or <code>false</code>,
  * and then pass an instance of this class to setSharingFilter() in a shared class helper.

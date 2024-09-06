@@ -41,7 +41,7 @@ import java.net.URL;
  * <p>Classes can be stored only by using URLs that have file or jar protocols, and that refer to existing resources.
  * The presence of any other protocol in a URL prevents SharedClassURLClasspathHelper from locating and storing classes in the shared cache.</p>
  * <h2>Using classpaths</h2>
- * <p>When a findSharedClass request is made from a SharedClassURLClasspathHelper, the shared cache determines whether to return a class 
+ * <p>When a findSharedClass request is made from a SharedClassURLClasspathHelper, the shared cache determines whether to return a class
  * by comparing the caller's classpath to the classpath or URL that the class was stored against. Classpaths do not have to explicitly match.</p>
  * <p>
  * For example, a class c1 loaded from c.jar and stored using classpath a.jar;b.jar;c.jar;d.jar may be found by using the following classpaths:</p>
@@ -59,10 +59,10 @@ import java.net.URL;
  * <q>confirmed</q> entry. The definition of a confirmed entry is that it has been opened and read by the ClassLoader. Entries are confirmed by calling
  * storeSharedClass (every entry up to and including the index used is confirmed) or by calling confirmAllEntries(). The latter should only be used if
  * the classpath is guaranteed not to change (but can still be appended to).</p>
- * <p>Note that if findSharedClass returns null for whatever reason (even though the cache has the required class), calling storeSharedClass(...) 
+ * <p>Note that if findSharedClass returns null for whatever reason (even though the cache has the required class), calling storeSharedClass(...)
  * on the class loaded from disk is the correct thing to do. This confirms the classpath entry, and the cache does not store a duplicate class.</p>
  * <p>In this way, classes can be shared as effectively as possible between class loaders using different classpaths or URL helper types.</p>
- * <p>Note that two identical classes are never stored twice in the class cache, but many entries may exist for the same class. 
+ * <p>Note that two identical classes are never stored twice in the class cache, but many entries may exist for the same class.
  * For example, if class X is stored from a.jar and also from b.jar, the class will exist once in the cache, but will have two entries.</p>
  * <h2>Modifying classpaths</h2>
  * <p>It is possible that the classpath of a ClassLoader may change after it is initially set. There is a jar extension mechanism, for example,
@@ -74,7 +74,7 @@ import java.net.URL;
  * <p>After classpath entries are confirmed, they cannot be changed, so setClasspath may only make changes to parts of the classpath that are not yet confirmed.
  * For example in the given example, a.jar;b.jar;x.jar;c.jar is acceptable, whereas a.jar;x.jar;b.jar;c.jar;d.jar is not. If an attempt is made to make
  * changes to confirmed classpath entries, a CannotSetClasspathException is thrown.</p>
- * <h2>Dynamic cache updates</h2> 
+ * <h2>Dynamic cache updates</h2>
  * <p>Because the shared cache persists beyond the lifetime of a JVM, classes in the shared cache can become out of date (stale).
  * Classes in the cache are automatically kept up to date by default.</p>
  * <p>If findSharedClass is called for a class that exists in the cache but which has been updated on the filesystem since it was stored,
@@ -89,33 +89,33 @@ import java.net.URL;
  * <p>It is essential that findSharedClass does not then return the version of c1 in c.jar.
  * It will detect the change, return null and c1 from a.jar should then be stored.</p>
  * <p>(This behaviour can be disabled by using the correct command-line option, but this is not recommended. See -Xshareclasses:help.)</p>
- * <p>It is also assumed that after a jar/zip has been opened, the ClassLoader maintains a read lock on that file during its lifetime, 
+ * <p>It is also assumed that after a jar/zip has been opened, the ClassLoader maintains a read lock on that file during its lifetime,
  * preventing its modification. This prevents the cache from having to constantly check for updates.
  * However, it is understood that non-existent jars/zips on a classpath can only be locked if/when they exist. </p>
  * <h2>Partitions</h2>
- * <p>A partition can be used when finding or storing a class, which allows modified versions of the same class 
+ * <p>A partition can be used when finding or storing a class, which allows modified versions of the same class
  * to be stored in the cache, effectively creating <q>partitions</q> in the cache.</p>
- * <p>Partitions are designed for bytecode modification such as the use of Aspects. It is the responsibility of the ClassLoader 
+ * <p>Partitions are designed for bytecode modification such as the use of Aspects. It is the responsibility of the ClassLoader
  * to create partitions that describe the type of modification performed on the class bytes.</p>
- * <p>If a class is updated on the filesystem and automatic dynamic updates are enabled, then all versions of the class across 
+ * <p>If a class is updated on the filesystem and automatic dynamic updates are enabled, then all versions of the class across
  * all partitions will be marked stale.</p>
  * <h2>Class metadata</h2>
  * <p>A ClassLoader can create metadata when loading and defining classes, such as a jar manifest or security data.
- * None of this metadata can be stored in the cache, so if a ClassLoader is finding classes in the shared cache, it must load 
+ * None of this metadata can be stored in the cache, so if a ClassLoader is finding classes in the shared cache, it must load
  * any metadata that it needs from disk before defining the classes.</p>
  * <p>
  * Example:<br>
  * For static metadata specific to URL classpath entries (such as Manifest/CodeSource information), a suggested solution is to create
  * a local array to cache the metadata when it is loaded from disk. When findSharedClass is called and an index is returned, look to see
  * if metadata is already cached in the local array for that index. If it is, define the class. If not, load the class from disk to obtain
- * the metadata, cache it in the local array, define the class, and then call storeSharedClass on it (it doesn't matter if it is already in the cache). 
+ * the metadata, cache it in the local array, define the class, and then call storeSharedClass on it (it doesn't matter if it is already in the cache).
  * All future results from findSharedClass for that classpath entry can then use the cached metadata.</p>
  * <p>If findSharedClass returns null, then load the class from disk, cache the metadata from the entry anyway, define the class, and store it.</p>
  * <h2>Security</h2>
  * <p>A SharedClassHelper will only allow classes that were defined by the ClassLoader that owns the SharedClassHelper to be stored in the cache.</p>
  * <p>If a SecurityManager is installed, SharedClassPermissions must be used to permit read/write access to the shared class cache.
  * Permissions are granted by ClassLoader classname in the java.policy file and are fixed when the SharedClassHelper is created.</p>
- * <p>Note also that if the createClassLoader RuntimePermission is not granted, ClassLoaders cannot be created, 
+ * <p>Note also that if the createClassLoader RuntimePermission is not granted, ClassLoaders cannot be created,
  * which in turn means that SharedClassHelpers cannot be created.</p>
  * <h2>Efficient use of the SharedClassURLClasspathHelper</h2>
  * Here are some recommendations on using the SharedClassURLClasspathHelper:<br>
@@ -141,7 +141,7 @@ public interface SharedClassURLClasspathHelper extends SharedClassHelper {
 	public interface IndexHolder {
 		/**
 		 * Sets the index in the caller ClassLoader's classpath at which the class was found.
-		 * 
+		 *
 		 * @param index The index.
 		 */
 		public void setIndex(int index);
@@ -149,18 +149,18 @@ public interface SharedClassURLClasspathHelper extends SharedClassHelper {
 
 	/**
 	 * <p>Finds a class in the shared cache by using the class name given (implicitly using the caller's classpath).</p>
-	 * 
+	 *
 	 * <p>See <q>Using classpaths</q> for rules on when a class will be found.<br>
-	 * Null is returned if the class cannot be found, if it is stale (see <q>Dynamic cache updates</q>) 
+	 * Null is returned if the class cannot be found, if it is stale (see <q>Dynamic cache updates</q>)
 	 * or if it is found for an unconfirmed entry (see <q>Using classpaths</q>).</p>
-	 * 
+	 *
 	 * @param 		className String.
 	 * 					The name of the class to be found
-	 * 
+	 *
 	 * @param 		indexFoundAt IndexHolder.
 	 * 					The index in the caller ClassLoader's classpath at which the class was found.
 	 * 					This parameter can be null if this data is not needed.
-	 * 
+	 *
 	 * @return		byte[].
 	 * 					A byte array describing the class found, or null.
 	 */
@@ -169,25 +169,25 @@ public interface SharedClassURLClasspathHelper extends SharedClassHelper {
 	/**
 	 * <p>Finds a class in the shared cache by using the class name and partition given (implicitly using the caller's classpath).</p>
 	 * <p>See <q>Using classpaths</q> for rules on when a class will be found.<br>
-	 * Null is returned if the class cannot be found, if it is stale (see <q>Dynamic cache updates</q>) 
+	 * Null is returned if the class cannot be found, if it is stale (see <q>Dynamic cache updates</q>)
 	 * or if it is found for an unconfirmed entry (see <q>Using classpaths</q>).</p>
-	 * 
+	 *
 	 * @param 		partition String.
-	 * 					User-defined partition if finding modified bytecode (see <q>Partitions</q>). 
+	 * 					User-defined partition if finding modified bytecode (see <q>Partitions</q>).
 	 * 					Passing null is equivalent of calling non-partition findSharedClass call.
-	 * 
+	 *
 	 * @param 		className String.
 	 * 					The name of the class to be found
-	 * 
+	 *
 	 * @param 		indexFoundAt IndexHolder.
 	 * 					The index in the caller ClassLoader's classpath at which the class was found.
 	 * 					This parameter can be null if this data is not needed.
-	 * 
+	 *
 	 * @return		byte[].
 	 * 					A byte array describing the class found, or null.
 	 */
 	public byte[] findSharedClass(String partition, String className, IndexHolder indexFoundAt);
-	
+
 	/**
 	 * <p>Stores a class in the shared cache by using the caller's URL classpath.</p>
 	 * <p>The class being stored must have been defined by the caller ClassLoader and must exist in the URL location specified.</p>
@@ -208,12 +208,12 @@ public interface SharedClassURLClasspathHelper extends SharedClassHelper {
 
 	/**
 	 * <p>Stores a class in the shared cache by using the caller's URL classpath and with a user-defined partition.</p>
-	 * 
+	 *
 	 * <p>The class that is being stored must have been defined by the caller ClassLoader and must exist in the URL location specified.</p>
 	 * <p>Returns <code>true</code> if the class is stored successfully or <code>false</code> otherwise.</p>
 	 * <p>Will return <code>false</code> if the class that is being stored was not defined by the caller ClassLoader.</p>
 	 * <p>Also returns <code>false</code> if the URL at foundAtIndex is not a file URL or if the resource it refers to does not exist. </p>
-	 * 
+	 *
 	 * @param 		partition String.
 	 * 					User-defined partition if storing modified bytecode (see <q>Partitions</q>).
 	 * 					Passing null is equivalent of calling non-partition storeSharedClass call.
@@ -231,40 +231,40 @@ public interface SharedClassURLClasspathHelper extends SharedClassHelper {
 
 	/**
 	 * <p>Updates the helper's classpath by appending a URL (see <q>Usage</q>).</p>
-	 * 
+	 *
 	 * <p><b>Note:</b> It is <b>essential</b> that the helper's classpath is kept up-to-date with the classloader.</p>
-	 * 
+	 *
 	 * @param 		cpe URL.
 	 * 					The classpath entry to append to the classpath
 	 */
 	public void addClasspathEntry(URL cpe);
-	
+
 	/**
 	 * <p>Updates the helper's classpath with a new classpath.</p>
-	 * 
+	 *
 	 * <p>This function is useful for ClassLoaders that compute their classpath lazily. The initial classpath
 	 * is passed to the constructor optimistically, but if the classloader discovers a change while reading
 	 * an entry, it can update the classpath by using this function.</p>
 	 * <p><b>Note:</b> It is essential that the helper's classpath is kept up-to-date with the classloader.</p>
-	 * 
+	 *
 	 * <p>The classpath that is passed to this function must be exactly the same as the original
 	 * classpath up to and including the right-most entry that classes have been loaded from (the right-most <q>confirmed</q> entry).</p>
 	 * <p>Throws a CannotSetClasspathException if this is not the case (see <q>Modifying classpaths</q>).</p>
-	 * 
+	 *
 	 * <p>After the classpath has been updated, any indexes passed to storeSharedClass and returned from
 	 * findSharedClass correspond to the new classpath.</p>
-	 * 
+	 *
 	 * @param 		newClasspath
 	 * 					The new URL classpath array
-	 * 
+	 *
 	 * @throws 		CannotSetClasspathException when the class path cannot be set.
 	 */
 	public void setClasspath(URL[] newClasspath) throws CannotSetClasspathException;
-	
+
 	/**
-	 * <p>Confirms all entries in the current classpath. 
+	 * <p>Confirms all entries in the current classpath.
 	 * Any new entries added will not automatically be confirmed.</p>
-	 * 
+	 *
 	 * <p>Note that if all entries are confirmed, setClasspath cannot be used to modify the classpath, only to append new entries.
 	 * (see <q>Efficient use of the SharedClassURLClasspathHelper</q>).</p>
 	 */
