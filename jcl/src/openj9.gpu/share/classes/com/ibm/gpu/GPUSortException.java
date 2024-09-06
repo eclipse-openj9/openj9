@@ -32,7 +32,7 @@ public final class GPUSortException extends Exception {
 
 	/**
 	 * Creates a new GPUSortException with a provided message.
-	 * 
+	 *
 	 * @param message The message to be provided.
 	 */
 	public GPUSortException(String message) {
@@ -41,7 +41,7 @@ public final class GPUSortException extends Exception {
 
 	/**
 	 * Creates a new GPUSortException with a provided message and cause.
-	 * 
+	 *
 	 * @param message The message to be provided.
 	 * @param cause The cause of this exception.
 	 */
