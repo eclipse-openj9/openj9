@@ -29,10 +29,9 @@ import com.ibm.oti.util.Msg;
  * package private methods in the java.management module.
  */
 public class ManagementAccessControl {
-	
-	
+
 	private static ThreadInfoAccess threadInfoAccess;
-	
+
 	/**
 	 * Sets the access object for ThreadInfo. This should only be called once.
 	 */
@@ -45,7 +44,7 @@ public class ManagementAccessControl {
 	}
 
 	/**
-	 * Gets the access object for ThreadInfo. 
+	 * Gets the access object for ThreadInfo.
 	 */
 	public static ThreadInfoAccess getThreadInfoAccess() {
 		return threadInfoAccess;
