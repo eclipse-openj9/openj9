@@ -60,7 +60,7 @@ import com.ibm.jvm.dtfjview.spi.IOutputManager;
 /**
  * Wrapper class that takes an existing DTFJ context and augments
  * it with a DDR interactive context if one exists.
- * 
+ *
  * @author adam
  */
 public class CombinedContext extends DTFJContext implements ICombinedContext {
@@ -193,7 +193,7 @@ public class CombinedContext extends DTFJContext implements ICombinedContext {
 	/**
 	 * Starts a DDR interactive session using the loaded image. If the core file is not DDR enabled
 	 * this is recorded and future pling commands will not be available. In order to get access to the
-	 * DDR classes it uses the Image classloader which, if the core file is DDR enabled, can see the 
+	 * DDR classes it uses the Image classloader which, if the core file is DDR enabled, can see the
 	 * required classes.
 	 * @param image Image created from the core file
 	 */

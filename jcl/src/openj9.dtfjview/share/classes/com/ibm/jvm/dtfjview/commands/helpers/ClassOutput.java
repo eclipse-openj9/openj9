@@ -50,14 +50,14 @@ public class ClassOutput {
 		} catch (CorruptDataException cde) {
 			out.print("\t  <can't determine if class is array; assuming it's not>\n\n");
 		}
-		
+
 		String className;
 		try {
 			className = jc.getName();
 		} catch (CorruptDataException cde) {
 			className = null;
 		}
-		
+
 		// we've found a class, so we'll print out its static fields
 		boolean found = false;
 		Iterator itField = jc.getDeclaredFields();
@@ -65,7 +65,7 @@ public class ClassOutput {
 		{
 			JavaField jf = (JavaField)itField.next();
 			boolean isStatic;
-			
+
 			try {
 				isStatic = Modifier.isStatic(jf.getModifiers());
 			} catch (CorruptDataException e) {
@@ -78,7 +78,7 @@ public class ClassOutput {
 				out.print("\", " + Exceptions.getCorruptDataExceptionString() + ">");
 				isStatic = false;
 			}
-			
+
 			if (isStatic)
 			{
 				if (!found)
@@ -105,14 +105,14 @@ public class ClassOutput {
 		} catch (CorruptDataException cde) {
 			out.print("\t  <can't determine if class is array; assuming it's not>\n\n");
 		}
-		
+
 		String className;
 		try {
 			className = jc.getName();
 		} catch (CorruptDataException cde) {
 			className = null;
 		}
-		
+
 		// we've found a class, so we'll print out its static fields
 		boolean found = false;
 		Iterator itField = jc.getDeclaredFields();
@@ -120,7 +120,7 @@ public class ClassOutput {
 		{
 			JavaField jf = (JavaField)itField.next();
 			boolean isStatic;
-			
+
 			try {
 				isStatic = Modifier.isStatic(jf.getModifiers());
 			} catch (CorruptDataException e) {
@@ -133,7 +133,7 @@ public class ClassOutput {
 				out.print("\", " + Exceptions.getCorruptDataExceptionString() + ">");
 				isStatic = false;
 			}
-			
+
 			if (!isStatic)
 			{
 				if (!found)
@@ -149,11 +149,11 @@ public class ClassOutput {
 		else
 			out.print("\t  \"" + className + "\" has no non-static fields\n\n");
 	}
-	
+
 	public static void printFields(JavaObject jo, JavaClass jc, JavaRuntime jr, PrintStream out)
 	{
 		boolean array;
-		
+
 		try {
 			array = jo.isArray();
 		} catch (CorruptDataException e) {
@@ -167,7 +167,7 @@ public class ClassOutput {
 		{
 			String componentType;
 			int arraySize;
-			
+
 			try {
 				componentType = jc.getComponentType().getName();
 			} catch (CorruptDataException e) {
@@ -183,9 +183,7 @@ public class ClassOutput {
 						Exceptions.getCorruptDataExceptionString() + ")>\n");
 				return;
 			}
-			
-			
-			
+
 			Object dst = null;
 
 			if (componentType.equals("boolean")) {
@@ -207,7 +205,7 @@ public class ClassOutput {
 			} else {
 				dst = new JavaObject[arraySize];
 			}
-			
+
 			try {
 				jo.arraycopy(0, dst, 0, arraySize);
 			} catch (CorruptDataException e) {
@@ -218,12 +216,12 @@ public class ClassOutput {
 				out.print("\t   <cannot copy data from the array (" +
 					Exceptions.getMemoryAccessExceptionString() + ")>\n");
 				return;
-			} catch (UnsupportedOperationException e) { 
+			} catch (UnsupportedOperationException e) {
 				// Some artefacts e.g. phd do not support arraycopy so just put out what we can
 				out.print("\t    This is an array of size " + arraySize + " elements\n");
 				return;
 			}
-			
+
 			for (int i = 0; i < arraySize; i++)
 			{
 				out.print("\t   " + i + ":\t");
@@ -250,12 +248,12 @@ public class ClassOutput {
 			}
 		}
 		else
-		{	
-			
+		{
+
 			JavaClass initialJC = jc;
-			List<JavaClass> classList = new ArrayList<JavaClass>(); 
+			List<JavaClass> classList = new ArrayList<JavaClass>();
 			while (jc != null){
-				
+
 				classList.add(jc);
 				try {
 					jc = jc.getSuperclass();
@@ -264,10 +262,10 @@ public class ClassOutput {
 				}
 			}
 			for (int i = (classList.size()-1); i >=0 ; i--){
-				
+
 				jc = classList.get(i);
 				Iterator itField = jc.getDeclaredFields();
-				
+
 				if (itField.hasNext()){
 					if (jc.equals(initialJC)){
 						out.print("\t   declared fields:\n");
@@ -280,12 +278,12 @@ public class ClassOutput {
 						}
 					}
 				}
-				
+
 				while (itField.hasNext())
 				{
 					JavaField jf = (JavaField)itField.next();
 					boolean isStatic;
-					
+
 					try {
 						isStatic = Modifier.isStatic(jf.getModifiers());
 					} catch (CorruptDataException e) {
@@ -298,7 +296,7 @@ public class ClassOutput {
 						out.print("\", " + Exceptions.getCorruptDataExceptionString() + ">");
 						isStatic = true;
 					}
-					
+
 					if (!isStatic)
 					{
 						printNonStaticFieldData(jo, jf, out);
@@ -308,21 +306,21 @@ public class ClassOutput {
 		}
 		out.print("\n");
 	}
-	
+
 	private static void printStaticFieldData(JavaField jf, PrintStream out)
 	{
 		printFieldData(null, jf, out, true);
 	}
-	
+
 	private static void printNonStaticFieldData(JavaObject jo, JavaField jf, PrintStream out)
 	{
 		printFieldData(jo, jf, out, false);
 	}
-	
+
 	private static void printFieldData(JavaObject jo, JavaField jf, PrintStream out, boolean isStatic)
 	{
 		String signature;
-		
+
 		out.print("\t    ");
 
 		try {
@@ -347,22 +345,22 @@ public class ClassOutput {
 				out.print(name);
 			}
 		}
-		
+
 		out.print(" ");
-		
+
 		try {
 			out.print(jf.getName());
 		} catch (CorruptDataException e) {
 			out.print(Exceptions.getCorruptDataExceptionString());
 		}
-		
+
 		if (isStatic || null != jo) {
 			out.print(" = ");
 			out.print(Utils.getVal(jo, jf));
 		}
 		out.print("\n");
 	}
-	
+
 	public static void printMethods(Iterator methods, PrintStream out)
 	{
 		while(methods.hasNext()) {
@@ -383,10 +381,9 @@ public class ClassOutput {
 					firstSectionPassed = true;
 				}
 				out.print(":  ");
-				
-				
+
 				String signature;
-				
+
 				try {
 					out.print(Utils.getMethodModifierString(jMethod));
 				} catch (CorruptDataException e) {
@@ -408,7 +405,7 @@ public class ClassOutput {
 						out.print(name);
 					}
 				}
-				
+
 				out.print(" ");
 				out.print(jMethod.getName());
 
@@ -421,7 +418,7 @@ public class ClassOutput {
 						out.print(name);
 					}
 				}
-				
+
 				out.print("\n");
 			}catch (CorruptDataException cde){
 				out.print("N/A (CorruptDataException occurred)");

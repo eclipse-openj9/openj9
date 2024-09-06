@@ -47,9 +47,9 @@ import com.ibm.jvm.dtfjview.commands.helpers.Utils;
 @DTFJPlugin(version="1.*",runtime=false)
 public class DeadlockCommand extends BaseJdmpviewCommand {
 	{
-		addCommand("deadlock", "", "displays information about deadlocks if there are any");	
+		addCommand("deadlock", "", "displays information about deadlocks if there are any");
 	}
-	
+
 	public void run(String command, String[] args, IContext context, PrintStream out) throws CommandException {
 		if(initCommand(command, args, context, out)) {
 			return;		//processing already handled by super class
@@ -60,18 +60,18 @@ public class DeadlockCommand extends BaseJdmpviewCommand {
 		}
 		doCommand();
 	}
-	
+
 	public void doCommand()
 	{
 		SortedMap<Long, MonitorNode> monitorNodes = new TreeMap<>();
 		JavaRuntime jr = ctx.getRuntime();
 		Iterator<?> itMonitor = jr.getMonitors();
 		int nodeListNum = 0;
-		
+
 		out.print("\n  deadlocks for runtime \n");
-		
-		// Step 1. iterate over all monitors, creating a MonitorNode for each monitor that 
-		// contains the monitor (JavaMonitor) and some parameters and adding that MonitorNode 
+
+		// Step 1. iterate over all monitors, creating a MonitorNode for each monitor that
+		// contains the monitor (JavaMonitor) and some parameters and adding that MonitorNode
 		// to a Hashtable, indexed by owner (JavaThread object address)
 		// Note: defect 133638, this code used to use the ImageThread address as index, but
 		// JVM dumps on Linux don't have all the image threads, so we now use JavaThreads
@@ -80,7 +80,7 @@ public class DeadlockCommand extends BaseJdmpviewCommand {
 			MonitorNode node = new MonitorNode(monitor);
 			JavaThread owner = null;
 			Long id = null;
-			
+
 			try {
 				owner = monitor.getOwner();
 			} catch (CorruptDataException e) {
@@ -90,10 +90,10 @@ public class DeadlockCommand extends BaseJdmpviewCommand {
 			}
 
 			if (null == owner) {
-				// A monitor with no owner cannot be involved in a deadlock, according to the 
+				// A monitor with no owner cannot be involved in a deadlock, according to the
 				// algorithm used here anyway, because in order for a monitor to be in a deadlock,
-				// its owner must be in a deadlock or an owner somewhere down the chain of 
-				// ownership must own the given monitor. Since there is no owner, we can't get 
+				// its owner must be in a deadlock or an owner somewhere down the chain of
+				// ownership must own the given monitor. Since there is no owner, we can't get
 				// the monitor's owner or the next monitor in a potential deadlock chain.
 				continue;
 			} else {
@@ -107,7 +107,7 @@ public class DeadlockCommand extends BaseJdmpviewCommand {
 				}
 				id = Long.valueOf(threadObject.getID().getAddress());
 			}
-			
+
 			// Note: defect 133638, we used to give up here with an error if there was already
 			// a monitor node in the table with the same key (thread). This is very common (a
 			// thread owning multiple monitors). Longer term the intention is to replace this
@@ -115,7 +115,7 @@ public class DeadlockCommand extends BaseJdmpviewCommand {
 			// still find a deadlock, with some node(s) discarded.
 			monitorNodes.put(id, node);
 		}
-		
+
 		// Step 1.b
 		// Add the JUC locks, technically to find all of them you need to walk the whole
 		// heap. But the active ones can be found by walking the thread list and looking
@@ -163,13 +163,13 @@ public class DeadlockCommand extends BaseJdmpviewCommand {
 		}
 
 		Iterator<?> values = monitorNodes.values().iterator();
-		
+
 		// Step 2. iterate over Hashtable and for every MonitorNode, iterate over monitor m1's
-		// enter waiters (JavaMonitor.getEnterWaiters()), which are JavaThreads, and for each 
+		// enter waiters (JavaMonitor.getEnterWaiters()), which are JavaThreads, and for each
 		// enter waiter, set that waiter's MonitorNode's waitingOn to m1.
 		while (values.hasNext()) {
 			MonitorNode currNode = (MonitorNode)values.next();
-			
+
 			Iterator<?> itWaiters = currNode.getEnterWaiters();
 			while (itWaiters.hasNext()) {
 				Object o = itWaiters.next();
@@ -179,17 +179,17 @@ public class DeadlockCommand extends BaseJdmpviewCommand {
 				JavaThread waiter = (JavaThread)o;
 				JavaObject threadObject;
 				Long id = null;
-				
+
 				try {
 					threadObject = waiter.getObject();
 				} catch (CorruptDataException e) {
 					out.println("exception encountered while getting waiter's ImageThread: " +
 							Exceptions.getCorruptDataExceptionString());
 					return;
-				} 
-				
-				id = Long.valueOf(threadObject.getID().getAddress());					
-				
+				}
+
+				id = Long.valueOf(threadObject.getID().getAddress());
+
 				MonitorNode waiterNode = (MonitorNode)monitorNodes.get(id);
 				if (null != waiterNode) {
 					waiterNode.waitingOn = currNode;
@@ -200,7 +200,7 @@ public class DeadlockCommand extends BaseJdmpviewCommand {
 		values = monitorNodes.values().iterator();
 		int visit = 1;
 		Vector<NodeList> lists = new Vector<>();
-		
+
 		// Step 3. iterate over Hashtable and for every MonitorNode m1:
 		// Step 3a. set a unique visit number, visit > 0 (visit++ would work)
 		// Step 3b. iterate over waitingOns, setting visit number, until a null
@@ -213,7 +213,7 @@ public class DeadlockCommand extends BaseJdmpviewCommand {
 
 		// note: Step 4* are not laid out precisely as specified; the instructions
 		//  listed for Step 4* are integrated into Step 3
-		
+
 		// Step 4. for each MonitorNode m1 where inList == false and m1 is part
 		//  of a deadlock loop *, create a new list and push it on the list
 		//  stack right away:
@@ -226,34 +226,34 @@ public class DeadlockCommand extends BaseJdmpviewCommand {
 		// Step 4d. if there is more than one enter waiter, continue creating
 		//  current list and start a new list, pushing it on the list stack
 		//  right away
-		
+
 		while (values.hasNext())
 		{
 			MonitorNode startNode = (MonitorNode)values.next();
 			MonitorNode currNode = startNode;
 			MonitorNode endNode;
-			
+
 			if (0 != startNode.visit)
 			{
 				continue;
 			}
-			
+
 			while (true)
 			{
 				currNode.visit = visit;
-				
+
 				if (null == currNode.waitingOn)
 				{
 					currNode.deadlock = MonitorNode.NO_DEADLOCK;
 					break;
 				}
-				
+
 				if (isDeadlocked(currNode.waitingOn))
 				{
 					// we've encountered a deadlocked node in the chain;
 					//  set branch deadlock for all nodes between startNode
 					//  and currNode
-					
+
 					endNode = currNode.waitingOn;
 					currNode = startNode;
 					NodeList branchList = null;
@@ -269,7 +269,7 @@ public class DeadlockCommand extends BaseJdmpviewCommand {
 						if (currNode != endNode)
 							currNode.inList = branchList;
 					}
-					
+
 					if (endNode.inList.isLoop())
 					{
 						lists.insertElementAt(branchList, lists.indexOf(endNode.inList));
@@ -277,7 +277,7 @@ public class DeadlockCommand extends BaseJdmpviewCommand {
 					else
 					{
 						NodeList oldList = endNode.inList;
-						
+
 						// FIXME: the below line will cause problems with at least
 						//  one case that was not considered when attachOrSplit was
 						//  coded: if a NodeList n1 has already been split and another
@@ -293,19 +293,19 @@ public class DeadlockCommand extends BaseJdmpviewCommand {
 					}
 					break;
 				}
-				
+
 				if (currNode.waitingOn.visit == visit)
 				{
 					// we've encountered a node in the same visit as the current
 					//  visit, ie. we've found a loop; first flag the whole loop
 					//  with a loop deadlock flag, then flag the rest of the nodes
 					//  in the chain with a branch deadlock
-					
+
 					endNode = currNode.waitingOn;
 					currNode = endNode;
 					NodeList loopList = new NodeList(currNode, nodeListNum++);
 					lists.insertElementAt(loopList, 0);
-					
+
 					do
 					{
 						currNode.deadlock = MonitorNode.LOOP_DEADLOCK;
@@ -313,7 +313,7 @@ public class DeadlockCommand extends BaseJdmpviewCommand {
 						loopList.add(currNode);
 						currNode.inList = loopList;
 					} while (currNode != endNode);
-					
+
 					currNode = startNode;
 					NodeList branchList = null;
 					while (currNode != endNode)
@@ -331,10 +331,10 @@ public class DeadlockCommand extends BaseJdmpviewCommand {
 					}
 					break;
 				}
-				
+
 				currNode = currNode.waitingOn;
 			}
-			
+
 			visit++;
 		}
 
@@ -345,7 +345,7 @@ public class DeadlockCommand extends BaseJdmpviewCommand {
 			out.print("\n");
 			return;
 		}
-		
+
 		boolean lastListWasLoop = true;
 		Iterator<NodeList> itList = lists.iterator();
 
@@ -353,7 +353,7 @@ public class DeadlockCommand extends BaseJdmpviewCommand {
 		while (itList.hasNext())
 		{
 			NodeList list = (NodeList)itList.next();
-			
+
 			if (list.isLoop()) {
 				out.print("\n    deadlock loop:\n");
 				lastListWasLoop = true;
@@ -361,14 +361,14 @@ public class DeadlockCommand extends BaseJdmpviewCommand {
 				out.print("\n\n    deadlock branch(es):\n");
 				lastListWasLoop = false;
 			}
-			
+
 			out.print("\t  " + list.toString());
 			out.print("\n");
 		}
 		out.print("\n");
 
 	}
-	
+
 	private boolean isDeadlocked(MonitorNode node)
 	{
 		return MonitorNode.LOOP_DEADLOCK == node.deadlock ||

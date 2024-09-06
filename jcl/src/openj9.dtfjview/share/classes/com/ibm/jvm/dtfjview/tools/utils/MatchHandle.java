@@ -37,7 +37,7 @@ public class MatchHandle implements IMatchHandle {
 	public MatchHandle(String [] matchStringList, boolean ignoreCase) {
 		this(matchStringList, ignoreCase, false, false);
 	}
-	
+
 	public MatchHandle(String [] matchStringList, boolean ignoreCase, boolean negated, boolean isFixedString) {
 		this.matchStringList = matchStringList;
 		this.ignoreCase = ignoreCase;
@@ -61,7 +61,7 @@ public class MatchHandle implements IMatchHandle {
 		}
 		return false;
 	}
-	
+
 	/**
 	 * To process the string.
 	 * <p>
@@ -81,7 +81,7 @@ public class MatchHandle implements IMatchHandle {
 		if (isFixedString) {
 			return matchFixedStrings(s, new String[] {match});
 		}
-		
+
 		StringTokenizer st = new StringTokenizer(match, "*");
 		List<String> ls = new ArrayList<String>();
 		while (st.hasMoreTokens()) {
@@ -110,8 +110,8 @@ public class MatchHandle implements IMatchHandle {
 		}
 		return true;
 	}
-	
-	private final String [] matchStringList;
+
+	private final String[] matchStringList;
 	private final boolean ignoreCase;
 	private final boolean negated;
 	private final boolean isFixedString;

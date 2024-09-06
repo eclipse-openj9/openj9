@@ -45,21 +45,21 @@ public class OutFileTool extends Tool implements IPipe
 	public static final String ARGUMENT_DESCRIPTION = "<targetFilePath>";
 	public static final String HELP_DESCRIPTION = "to be used at the end of a command to redirect messages to a file (overwrite|append).";
 	public static final String USAGE = COMMAND_OVERWRITE + "|" + COMMAND_APPEND + "\t" + ARGUMENT_DESCRIPTION + "\t" + HELP_DESCRIPTION;
-	
+
 	/**
 	 * Determines if a command is accepted by current tool.
 	 * <p>
 	 * @param command	The command
 	 * @param args		The arguments taken by the command.
 	 * <p>
-	 * @return		<code>true</code> if this is the correct tool for this command; 
+	 * @return		<code>true</code> if this is the correct tool for this command;
 	 * 				<code>false</code> otherwise.
 	 */
 	public boolean accept(String command, String[] args) {
-		return command.equalsIgnoreCase(COMMAND_OVERWRITE) 
+		return command.equalsIgnoreCase(COMMAND_OVERWRITE)
 				|| command.equalsIgnoreCase(COMMAND_APPEND);
 	}
-	
+
 	/**
 	 * Processes the command.
 	 * <p>
@@ -115,7 +115,7 @@ public class OutFileTool extends Tool implements IPipe
 	public String getCommandName() {
 		return COMMAND_OVERWRITE + "|" + COMMAND_APPEND;
 	}
-	
+
 	/**
 	 * To gets the tool's argument description.
 	 * <p>
@@ -124,7 +124,7 @@ public class OutFileTool extends Tool implements IPipe
 	public String getArgumentDescription() {
 		return ARGUMENT_DESCRIPTION;
 	}
-	
+
 	/**
 	 * To gets the tool's help description.
 	 * <p>
@@ -153,7 +153,7 @@ public class OutFileTool extends Tool implements IPipe
 				throw new IOException("Could not create some of the requested directories: " + parentDirectories);
 			}
 		}
-		
+
 		if (attributes.append && outFile.exists()) {
 			// in this case do not create a new file, but use the existing one
 			outStream = new PrintStream(new FileOutputStream(outFile, true));
@@ -161,7 +161,7 @@ public class OutFileTool extends Tool implements IPipe
 			outStream = new PrintStream(outFile); // this will create a new file
 		}
 
-		return outStream; 
+		return outStream;
 	}
 
 	private Attributes readAttributes(String command, String[] args) {
@@ -182,10 +182,10 @@ public class OutFileTool extends Tool implements IPipe
 		}
 		return new Attributes(filePath, ddrCommand, ddrCommandArgs, command.equalsIgnoreCase(COMMAND_APPEND));
 	}
-	
-	private class Attributes 
+
+	private class Attributes
 	{
-		public Attributes(String filePath,String ddrCommand,String [] ddrCommandArgs, boolean append) 
+		public Attributes(String filePath,String ddrCommand,String [] ddrCommandArgs, boolean append)
 		{
 			this.filePath = filePath;
 			this.nextCommand = ddrCommand;

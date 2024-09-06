@@ -32,9 +32,9 @@ import com.ibm.jvm.dtfjview.heapdump.ReferenceIterator;
 
 /**
  * A formatter for classic heap dumps.
- * 
+ *
  * Format specification is in the diagnostic guide.
- * 
+ *
  * @author andhall
  *
  */
@@ -43,7 +43,7 @@ public class ClassicHeapDumpFormatter extends HeapDumpFormatter
 	private static final String EOF_HEADER = "// EOF: Total 'Objects',Refs(null) :";
 	private static final String BREAKDOWN_HEADER = "// Breakdown - Classes:";
 	private static final String VERSION_HEADER = "// Version: ";
-	
+
 	// Using a BufferedWriter rather than a PrintWriter because a BufferedWriter preserves IOExceptions while providing newLine().
 	private final BufferedWriter _out;
 	private int _classCount = 0;
@@ -54,18 +54,18 @@ public class ClassicHeapDumpFormatter extends HeapDumpFormatter
 	private int _referenceCount = 0;
 	private int _nullReferenceCount = 0;
 	private boolean _closed = false;
-	
+
 	private boolean is64bit = false;
-	
+
 	public ClassicHeapDumpFormatter(Writer out,String version,boolean is64bit) throws IOException
 	{
 		super(version,is64bit);
 		_out = new BufferedWriter(out);
 		this.is64bit = is64bit;
-		
+
 		writeHeader();
 	}
-	
+
 	private void writeHeader() throws IOException
 	{
 		_out.write(VERSION_HEADER + _version);
@@ -83,59 +83,59 @@ public class ClassicHeapDumpFormatter extends HeapDumpFormatter
 			_out.newLine();
 			return;
 		}
-		
+
 		StringBuffer referenceString = new StringBuffer();
 		referenceString.append("\t");
-		
+
 		boolean first = true;
-		
+
 		while(references.hasNext()) {
 			Long thisRef = references.next();
-			
+
 			if(first) {
 				first = false;
 			} else {
 				referenceString.append(" ");
 			}
-			
+
 			referenceString.append(toHexString(thisRef.longValue()));
-			
+
 			_referenceCount++;
 			if(thisRef.longValue() == 0) {
 				_nullReferenceCount++;
 			}
 		}
-		
-		referenceString.append(" "); // the classic heapdump from the JVM has a blank on the end of each line 
+
+		referenceString.append(" "); // the classic heapdump from the JVM has a blank on the end of each line
 		_out.write(referenceString.toString());
 		_out.newLine();
 	}
-	
+
 	private String toHexString(long value)
 	{
 		//Fast-path for 0
 		if(value == 0) {
 			return "0x0";
 		}
-		
-		if (is64bit) {			
+
+		if (is64bit) {
 			return "0x" + String.format("%016X",value);
-		} else {			
+		} else {
 			return "0x" + String.format("%08X",value);
 		}
 	}
-	
+
 	public void addClass(long address, String name, long superClassAddress,
 			int size, long instanceSize, int hashCode, ReferenceIterator references)
 			throws IOException
 	{
 		checkClosed();
-		
+
 		_out.write(toHexString(address) + " [" + size + "] CLS " + name);
 		_out.newLine();
-		
+
 		writeReferences(references);
-		
+
 		_classCount++;
 		_allObjectCount++;
 	}
@@ -153,16 +153,16 @@ public class ClassicHeapDumpFormatter extends HeapDumpFormatter
 		_out.newLine();
 
 		writeReferences(references);
-		
+
 		_allObjectCount++;
 	}
-	
+
 	public void addObject(long address, long classAddress, String className,
 			int size, int hashCode, ReferenceIterator references)
 			throws IOException
 	{
 		checkClosed();
-				
+
 		writeEntry(address,size,className,references);
 	}
 
@@ -171,11 +171,11 @@ public class ClassicHeapDumpFormatter extends HeapDumpFormatter
 	 */
 	private static ReferenceIterator addReference(final ReferenceIterator original,
 			final long extra)
-	{   
-		return new ReferenceIterator(){
+	{
+		return new ReferenceIterator() {
 
 			private boolean _returnedExtra = false;
-			
+
 			public boolean hasNext()
 			{
 				if(_returnedExtra) {
@@ -208,9 +208,9 @@ public class ClassicHeapDumpFormatter extends HeapDumpFormatter
 			int hashCode, ReferenceIterator references) throws IOException
 	{
 		checkClosed();
-		
+
 		writeEntry(address,size,arrayClassName,references);
-		
+
 		_objectArraysCount++;
 	}
 
@@ -219,11 +219,11 @@ public class ClassicHeapDumpFormatter extends HeapDumpFormatter
 			IllegalArgumentException
 	{
 		checkClosed();
-		
+
 		ReferenceIterator references = new LongArrayReferenceIterator(new long[]{});
-		
+
 		writeEntry(address,size,getPrimitiveArrayName(type),references);
-		
+
 		_primitiveArraysCount++;
 	}
 
@@ -252,27 +252,27 @@ public class ClassicHeapDumpFormatter extends HeapDumpFormatter
 	}
 
 	public void close() throws IOException
-	{        
+	{
 		printBreakdown();
-		
+
 		printEOFSummary();
-		
+
 		_out.close();
-		
+
 		_closed = true;
 	}
 
 	private void printEOFSummary() throws IOException
 	{
 		StringBuffer buffer = new StringBuffer(EOF_HEADER);
-		
+
 		buffer.append(_allObjectCount);
 		buffer.append(",");
 		buffer.append(_referenceCount);
 		buffer.append("(");
 		buffer.append(_nullReferenceCount);
 		buffer.append(")");
-		
+
 		_out.write(buffer.toString());
 		_out.newLine();
 	}
@@ -280,19 +280,19 @@ public class ClassicHeapDumpFormatter extends HeapDumpFormatter
 	private void printBreakdown() throws IOException
 	{
 		int objectsCount = ((_allObjectCount - _primitiveArraysCount) - _objectArraysCount) - _classCount;
-		
+
 		StringBuffer buffer = new StringBuffer(BREAKDOWN_HEADER);
 		buffer.append(_classCount);
-		
+
 		buffer.append(", Objects:");
 		buffer.append(objectsCount);
-		
+
 		buffer.append(", ObjectArrays:");
 		buffer.append(_objectArraysCount);
-		
+
 		buffer.append(", PrimitiveArrays:");
 		buffer.append(_primitiveArraysCount);
-		
+
 		_out.write(buffer.toString());
 		_out.newLine();
 	}

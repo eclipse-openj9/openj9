@@ -34,9 +34,9 @@ import com.ibm.jvm.dtfjview.commands.setcommands.SetLoggingCommand;
 public class ShowLoggingCommand extends BaseJdmpviewCommand {
 
 	{
-		addCommand("show logging", "", "shows the current logging options");	
+		addCommand("show logging", "", "shows the current logging options");
 	}
-	
+
 	public void run(String command, String[] args, IContext context, PrintStream out) throws CommandException {
 		if(initCommand(command, args, context, out)) {
 			return;		//processing already handled by super class
@@ -50,7 +50,7 @@ public class ShowLoggingCommand extends BaseJdmpviewCommand {
 		}
 		doCommand();
 	}
-	
+
 	public void doCommand(){
 		out.print("Logging is currently turned ");
 		String value = (String)ctx.getProperties().get(SetLoggingCommand.LOG_STATE_LOGGING);
@@ -73,7 +73,7 @@ public class ShowLoggingCommand extends BaseJdmpviewCommand {
 			out.println(value);
 		}
 	}
-	
+
 	@Override
 	public void printDetailedHelp(PrintStream out) {
 		out.println("displays the current values of logging settings\n\n" +

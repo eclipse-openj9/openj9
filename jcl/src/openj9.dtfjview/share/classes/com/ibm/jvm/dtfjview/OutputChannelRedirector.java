@@ -33,7 +33,7 @@ import com.ibm.jvm.dtfjview.spi.IOutputChannel;
 public class OutputChannelRedirector implements IOutputChannel {
 
 	private PrintStream redirector;
-	
+
 	public OutputChannelRedirector(PrintStream redirector) {
 		if (null == redirector) {
 			this.redirector = System.out;
@@ -41,7 +41,7 @@ public class OutputChannelRedirector implements IOutputChannel {
 			this.redirector = redirector;
 		}
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.jvm.dtfjview.spi.IOutputChannel#print(java.lang.String)
 	 */

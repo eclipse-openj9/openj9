@@ -32,16 +32,16 @@ import com.ibm.java.diagnostics.utils.commands.BaseCommand;
 import com.ibm.java.diagnostics.utils.commands.CommandException;
 
 /**
- * This the base command for all jdmpview commands. It ensures consistent 
+ * This the base command for all jdmpview commands. It ensures consistent
  * behaviour with the legacy commands without breaking the generic command
  * encapsulation.
- * 
+ *
  * There are a number of methods which allow DTFJ objects to be consistently
  * displayed across different plugins e.g. getClassInfo(). Where the method
- * name starts with getXYZ the output will be returned for further processing, 
- * however where the method starts with writeXYZ then the output is written 
+ * name starts with getXYZ the output will be returned for further processing,
+ * however where the method starts with writeXYZ then the output is written
  * immediately to the command's print stream.
- * 
+ *
  * @author adam
  *
  */
@@ -53,18 +53,18 @@ public abstract class BaseJdmpviewCommand extends BaseCommand {
 	protected IDTFJContext ctx = null;			//the context within which to run
 	protected Logger logger = Logger.getLogger("com.ibm.jvm.dtfjview.logger.command");
 	protected String hexfmt = "0x%016x";		//default 64bit format for hex strings
-	
+
 	/**
 	 * Print detailed help for a given command
-	 * 
+	 *
 	 * @param out stream to write the output to
 	 */
 	public abstract void printDetailedHelp(PrintStream out);
 
 	/**
-	 * Common processing to initialize the command and make the porting of 
+	 * Common processing to initialize the command and make the porting of
 	 * existing jdmpview commands easier.
-	 * 
+	 *
 	 * @param command	the command being executed
 	 * @param args		the supplied arguments
 	 * @param context	the context within which it is operating
@@ -87,12 +87,12 @@ public abstract class BaseJdmpviewCommand extends BaseCommand {
 		}
 		return false;
 	}
-	
+
 	/**
 	 * Typically used when an extension takes a numeric argument, and wants to
 	 * accept a variety of formats. Currently it will support decimal or
 	 * hexadecimal formats.
-	 * 
+	 *
 	 * @param number
 	 *            String representation of the number to parse
 	 * @return the numeric value
@@ -104,23 +104,23 @@ public abstract class BaseJdmpviewCommand extends BaseCommand {
 			return Long.parseLong(number);
 		}
 	}
-	
+
 	/**
 	 * Enum for identifying the type of artifact that is currently being analyzed.
-	 * 
+	 *
 	 * @author adam
 	 *
 	 */
 	protected enum ArtifactType {
 		core, phd, javacore, unknown
 	}
-	
+
 	/*
 	 * This will be changed internally when the DTFJ Image.getType() call is implemented
 	 */
 	/**
 	 * Determine the type of artifact currently being operated on.
-	 * 
+	 *
 	 * @return artifact type
 	 */
 	protected ArtifactType getArtifactType() {
@@ -146,7 +146,7 @@ public abstract class BaseJdmpviewCommand extends BaseCommand {
 
 	/**
 	 * Format an address as hex padded with zeros according to the size of the process.
-	 * e.g. 17 would be formatted as 0x00000011 for 32 bit and 0x0000000000000011 for 64 bit 
+	 * e.g. 17 would be formatted as 0x00000011 for 32 bit and 0x0000000000000011 for 64 bit
 	 * @param num the number to format
 	 * @return formatted number
 	 */
@@ -157,21 +157,21 @@ public abstract class BaseJdmpviewCommand extends BaseCommand {
 	/**
 	 * Lots of DTFJ methods will throw a standard set of exceptions such as corrupt data
 	 * or data unavailable. This method provides a central point for handling these exceptions
-	 * and attempts to provide more context as to whether or not this is an expected occurrence 
+	 * and attempts to provide more context as to whether or not this is an expected occurrence
 	 * for the artifact type under analysis.
-	 * 
+	 *
 	 * @param cause the exception returned from a call to the DTFJ API
 	 * @return formatted string for displaying to the user
 	 */
 	public String handleException(Throwable cause) {
 		return ExceptionHandler.handleException(this, cause);
 	}
-	
+
 	/**
 	 * Textual description of a thread state.
-	 * 
+	 *
 	 * @param state state to convert
-	 * @return cumulative description of the states 
+	 * @return cumulative description of the states
 	 */
 	public String decodeThreadState(int state) {
 		int[] states = { JavaThread.STATE_ALIVE,
@@ -202,11 +202,11 @@ public abstract class BaseJdmpviewCommand extends BaseCommand {
 		}
 		return sb.toString();
 	}
-	
+
 	/**
 	 * Enumeration for the various formats that can be applied to the
 	 * output strings.
-	 * 
+	 *
 	 * @author adam
 	 *
 	 */
@@ -217,20 +217,20 @@ public abstract class BaseJdmpviewCommand extends BaseCommand {
 		HEX_INT("0x%08x"),
 		DEC_FLOAT("%e"),
 		DEC_DOUBLE("%e");
-		
+
 		FormatEnum(String format) {
 			this.format = format;
 		}
-		
+
 		private final String format;
-		
+
 		public String getFormat() {
 			return format;
 		}
 	}
-	
+
 	/**
-	 * Format a number with the correct number of zeros as padding according 
+	 * Format a number with the correct number of zeros as padding according
 	 * to the data type passed in.
 	 * @param num the number to format
 	 * @return formatted number
@@ -238,9 +238,9 @@ public abstract class BaseJdmpviewCommand extends BaseCommand {
 	public String toHexString(long num) {
 		return String.format(FormatEnum.HEX_LONG.getFormat(), num);
 	}
-	
+
 	/**
-	 * Format a number with the correct number of zeros as padding according 
+	 * Format a number with the correct number of zeros as padding according
 	 * to the data type passed in.
 	 * @param num the number to format
 	 * @return formatted number
@@ -250,7 +250,7 @@ public abstract class BaseJdmpviewCommand extends BaseCommand {
 	}
 
 	/**
-	 * Format a number with the correct number of zeros as padding according 
+	 * Format a number with the correct number of zeros as padding according
 	 * to the data type passed in.
 	 * @param num the number to format
 	 * @return formatted number
@@ -258,9 +258,9 @@ public abstract class BaseJdmpviewCommand extends BaseCommand {
 	public String toHexString(int num) {
 		return String.format(FormatEnum.HEX_INT.getFormat(), num);
 	}
-	
+
 	/**
-	 * Format a number with the correct number of zeros as padding according 
+	 * Format a number with the correct number of zeros as padding according
 	 * to the data type passed in.
 	 * @param num the number to format
 	 * @return formatted number

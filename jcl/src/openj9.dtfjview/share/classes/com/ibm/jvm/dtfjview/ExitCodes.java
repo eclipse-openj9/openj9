@@ -25,7 +25,7 @@ package com.ibm.jvm.dtfjview;
 /**
  * Exit codes which can be returned by jdmpview.
  * see Jazz Design 46749
- * 
+ *
  * @author adam
  *
  */
@@ -34,33 +34,32 @@ public interface ExitCodes {
 	 *	Processing completed normally without error
 	 */
 	public static final int JDMPVIEW_SUCCESS = 0;
-	
+
 	/**
 	 * One of the supplied commands could not be executed, or had a syntax error, processing continued afterwards.
 	 */
 	public static final int JDMPVIEW_SYNTAX_ERROR = 1;
-	
+
 	/**
 	 * The core file could not be found
 	 */
 	public static final int JDMPVIEW_FILE_ERROR	= 2;
-	
+
 	/**
 	 * 	There were no jvm's found in the core file
 	 */
 	public static final int JDMPVIEW_NOJVM_ERROR = 3;
-	
-	
+
 	/**
-	 * An internal error occurred and processing was aborted 
+	 * An internal error occurred and processing was aborted
 	 */
 	public static final int JDMPVIEW_INTERNAL_ERROR	= 4;
-	
+
 	/**
 	 * 	An output file already exists and the overwrite option was not set
 	 */
 	public static final int JDMPVIEW_OUTFILE_EXISTS	= 5;
-	
+
 	/**
 	 * Option -append and Option -overwrite can not co-exist.
 	 */

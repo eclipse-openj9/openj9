@@ -46,15 +46,15 @@ import com.ibm.jvm.dtfjview.tools.utils.StringReceiver;
  */
 public class ToolsRegistry {
 	public static void initialize(Session session) {
-		
+
 		ToolsRegistryOutputChannels.initialize(session.getCharset());
-		
+
 		if (null == registry) {
 			registry = new ToolsRegistry(session);
 			registry.initializeTools();
 		}
 	}
-	
+
 	/**
 	 * To record the command in the history and then execute it.
 	 * This method is called only right after the command is typed in from the console.
@@ -88,7 +88,7 @@ public class ToolsRegistry {
 		ParsedCommand parsedCommand = ParsedCommand.parse(command);
 		execute(parsedCommand.getCommand(), parsedCommand.getArguments());
 	}
-	
+
 	/**
 	 * To execute a command with its arguments.
 	 * Note: Default print stream will be used.
@@ -107,7 +107,7 @@ public class ToolsRegistry {
 		}
 		executeJdmpviewCommand(new ParsedCommand(command, args).getCombinedCommandLine(), out);
 	}
-	
+
 	/**
 	 * To execute a command.
 	 * Note:  this method should not be called directly by any DDR/Jdmpview commands;
@@ -122,7 +122,7 @@ public class ToolsRegistry {
 		ParsedCommand parsedCommand = ParsedCommand.parse(command);
 		process(parsedCommand.getCommand(), parsedCommand.getArguments(), out);
 	}
-	
+
 	/**
 	 * To execute a command.
 	 * <p>
@@ -134,7 +134,7 @@ public class ToolsRegistry {
 		ParsedCommand parsedCommand = ParsedCommand.parse(command);
 		return process(parsedCommand.getCommand(), parsedCommand.getArguments());
 	}
-	
+
 	/**
 	 * To execute a command.
 	 * Note:  this method should not be called directly by any DDR/Jdmpview commands;
@@ -155,7 +155,7 @@ public class ToolsRegistry {
 		}
 		executeJdmpviewCommand(new ParsedCommand(command, args).getCombinedCommandLine(), out);
 	}
-	
+
 	/**
 	 * To execute a command.
 	 * <p>
@@ -173,7 +173,7 @@ public class ToolsRegistry {
 			throw new CommandException(e);
 		}
 	}
-	
+
 	/**
 	 * To execute a Jdmpview command.
 	 * <p>
@@ -183,7 +183,7 @@ public class ToolsRegistry {
 	public static void executeJdmpviewCommand(String jdmpviewCommand, PrintStream out) {
 		registry.session.execute(jdmpviewCommand, out);
 	}
-	
+
 	/**
 	 * To check if a command is pipeline enabled.
 	 * <p>
@@ -201,7 +201,7 @@ public class ToolsRegistry {
 		}
 		return false;
 	}
-	
+
 	/**
 	 * To register a tool.
 	 * <p>
@@ -210,7 +210,7 @@ public class ToolsRegistry {
 	public static void registerTool(ITool tool) {
 		registry.toolList.add(tool);
 	}
-	
+
 	/**
 	 * To get all the registered tools.
 	 * <p>
@@ -219,7 +219,7 @@ public class ToolsRegistry {
 	public static List<ITool> getAllTools() {
 		return registry.toolList;
 	}
-	
+
 	/**
 	 * To initialize the Store object.
 	 */
@@ -228,10 +228,10 @@ public class ToolsRegistry {
 		this.toolList = new ArrayList<ITool>();
 		this.charsetName = session.getCharset();
 	}
-	
+
 	/**
 	 * This method is to instantiate all the tools (except the Jdmpview/DDR tool).
-	 * Note: 
+	 * Note:
 	 * (1) Individual tools have to call ToolsRegistry.registerTool() to register themselves
 	 * to the ToolsRegistry.
 	 * (2) If a tool such as the Grep tool extends com.ibm.jvm.dtfjview.tools.Tool, the tool
@@ -248,7 +248,7 @@ public class ToolsRegistry {
 		new CmdFileTool(this.charsetName);
 		new TokensTool();
 	}
-	
+
 	private List<ITool> toolList;
 	private HistoryTool history;
 	private Session session;

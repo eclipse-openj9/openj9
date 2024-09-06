@@ -37,13 +37,13 @@ public class FileUtils {
 	 * <p>
 	 * @return	content of the file.
 	 * <p>
-	 * @throws UnsupportedEncodingException		
+	 * @throws UnsupportedEncodingException
 	 * @throws IOException
 	 */
 	public static String [] read(File file) throws IOException, UnsupportedEncodingException {
 		return read(file, null);
 	}
-	
+
 	/**
 	 * To read a file.
 	 * <p>
@@ -52,7 +52,7 @@ public class FileUtils {
 	 * <p>
 	 * @return	content of the file.
 	 * <p>
-	 * @throws UnsupportedEncodingException		
+	 * @throws UnsupportedEncodingException
 	 * @throws IOException
 	 */
 	public static String [] read(File file, String charset) throws IOException, UnsupportedEncodingException {
@@ -72,7 +72,7 @@ public class FileUtils {
 				in.close();
 			}
 		}
-		return (charset == null ? new String(buffer) : new String(buffer, charset)).split("\n"); 
+		return (charset == null ? new String(buffer) : new String(buffer, charset)).split("\n");
 		// TODO needs to test "\n" if this works on zOS.
 	}
 }

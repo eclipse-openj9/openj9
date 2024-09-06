@@ -34,7 +34,7 @@ import com.ibm.jvm.dtfjview.spi.ISessionContextManager;
 
 public class CloseCommand extends BaseJdmpviewCommand {
 	private static final String CMD_NAME = "close";
-	
+
 	{
 		addCommand(CMD_NAME, "[context id]","closes the connection to a core file");
 	}

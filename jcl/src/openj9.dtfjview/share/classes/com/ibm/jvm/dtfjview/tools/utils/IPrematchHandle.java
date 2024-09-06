@@ -34,13 +34,13 @@ public interface IPrematchHandle {
 	 * This is for the prematch handle to process the incoming string (such
 	 * as cache it, trim it, etc).
 	 * <p>
-	 * @param s	
+	 * @param s
 	 */
 	public void process(String s);
-	
+
 	/**
-	 * This is to release the string.  Note, depending on the actual 
-	 * implementation of the pre-match handle, the released string 
+	 * This is to release the string.  Note, depending on the actual
+	 * implementation of the pre-match handle, the released string
 	 * can have multiple lines.
 	 * <p>
 	 * @return a String object.

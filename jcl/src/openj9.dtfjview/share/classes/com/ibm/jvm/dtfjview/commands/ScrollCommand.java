@@ -30,12 +30,12 @@ import com.ibm.java.diagnostics.utils.plugins.DTFJPlugin;
 import com.ibm.jvm.dtfjview.commands.helpers.Utils;
 
 @DTFJPlugin(version="1.*", runtime=false)
-public class ScrollCommand extends BaseJdmpviewCommand{
+public class ScrollCommand extends BaseJdmpviewCommand {
 	{
-		addCommand("+", "", "displays the next section of memory in hexdump-like format");	
+		addCommand("+", "", "displays the next section of memory in hexdump-like format");
 		addCommand("-", "", "displays the previous section of memory in hexdump-like format");
 	}
-	
+
 	public void run(String command, String[] args, IContext context, PrintStream out) throws CommandException {
 		if(initCommand(command, args, context, out)) {
 			return;		//processing already handled by super class
@@ -47,7 +47,7 @@ public class ScrollCommand extends BaseJdmpviewCommand{
 					"by running hexdump command");
 			return;
 		}
-		
+
 		long newMemAddress = 0;
 		if(command.equals("+")) {
 			newMemAddress = currentMemAddress.longValue() + currentNumBytesToPrint.intValue();
@@ -61,7 +61,7 @@ public class ScrollCommand extends BaseJdmpviewCommand{
 
 	@Override
 	public void printDetailedHelp(PrintStream out) {
-		out.println("displays the next section of memory in hexdump-like format\n\n" + 
+		out.println("displays the next section of memory in hexdump-like format\n\n" +
 				"parameters: none\n\n" +
 				"The + command is used in conjunction with the hexdump command \n" +
 				"to allow easy scrolling forwards through memory. It repeats the \n" +
@@ -72,5 +72,5 @@ public class ScrollCommand extends BaseJdmpviewCommand{
 				"before the previous one."
 				);
 	}
-	
+
 }

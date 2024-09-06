@@ -33,7 +33,7 @@ import java.util.ArrayList;
  * @author Manqing Li, IBM.
  *
  */
-public class ParsedCommand 
+public class ParsedCommand
 {
 	/**
 	 * This is a convenient method to parse a command line.
@@ -115,7 +115,7 @@ public class ParsedCommand
 		}
 		return sb.toString();
 	}
-	
+
 	private static String [] separateAndReorganizeTokens(final String line) {
 		ArrayList<String> alTokens = new ArrayList<String>();
 		StringBuffer sb = new StringBuffer();
@@ -124,14 +124,14 @@ public class ParsedCommand
 		while (i < length) {
 			char c = line.charAt(i++);
 			if ('"' == c || '\'' == c) {
-				// if the next char matches the quotation, we have an empty String here.  
+				// if the next char matches the quotation, we have an empty String here.
 				// We need add the empty String back.
 				if(i < line.length() && c == line.charAt(i)) {
 					sb.append(c).append(c);
 					i++;
 					continue;
 				}
-				
+
 				char quotation = c;
 				while(i < line.length()) {
 					c = line.charAt(i++);
@@ -147,7 +147,7 @@ public class ParsedCommand
 				}
 			} else if ( '|' == c) {
 				if(sb.length() > 0) {
-					alTokens.add(sb.toString());					
+					alTokens.add(sb.toString());
 					sb = new StringBuffer();
 				}
 				alTokens.add("|");
@@ -185,7 +185,7 @@ public class ParsedCommand
 				}
 				break;
 			}
-			
+
 			if (piped) {
 				if (ToolsRegistry.isPipeLineEnabled(token, null) == false) {
 					alNew.add("run");
@@ -199,12 +199,12 @@ public class ParsedCommand
 				}
 				piped = false;
 			}
-			
+
 			alNew.add(token);
 		}
 		return alNew;
 	}
-	
+
 	private String command;
 	private String [] arguments;
 }

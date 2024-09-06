@@ -26,7 +26,7 @@ import com.ibm.java.diagnostics.utils.commands.CommandException;
 
 /**
  * Represents a single jdmpview session which may contain multiple contexts.
- * 
+ *
  * @author adam
  *
  */
@@ -34,28 +34,28 @@ public interface ISession {
 
 	/**
 	 * The instance which is managing all registered output channels.
-	 * 
+	 *
 	 * @return the manager
 	 */
 	public IOutputManager getOutputManager();
 
 	/**
 	 * The currently selected context against which commands will be executed.
-	 * 
+	 *
 	 * @return the current context, it may or may not have DDR interactive support
 	 */
 	public ICombinedContext getCurrentContext();
 
 	/**
 	 * Get the manager which is managing this context within this session.
-	 * 
+	 *
 	 * @return the context manager
 	 */
 	public ISessionContextManager getContextManager();
 
 	/**
 	 * Set the context within which subsequent commands will be executed.
-	 * 
+	 *
 	 * @param id context ID
 	 * @throws CommandException thrown if an invalid context ID is specified
 	 */
@@ -63,7 +63,7 @@ public interface ISession {
 
 	/**
 	 * Set the context within which subsequent commands will be executed.
-	 * 
+	 *
 	 * @param switchTo the context to switch to
 	 * @throws CommandException thrown if the switch fails. The underlying reason will be in the logs.
 	 */
@@ -71,7 +71,7 @@ public interface ISession {
 
 	/**
 	 * Display the contexts which are present in the core file currently being analysed.
-	 * 
+	 *
 	 * @param shortFormat true for short format which just displays the first line of the java -version string
 	 */
 	public void showContexts(boolean shortFormat);
@@ -82,11 +82,11 @@ public interface ISession {
 	 * one it finds with a non-corrupt DTFJ JavaRuntime in it.
 	 */
 	public void findAndSetContextWithJVM();
-	
+
 	/**
-	 * Executes the supplied command. Output will be written via the IOutputManager to 
+	 * Executes the supplied command. Output will be written via the IOutputManager to
 	 * all registered channels.
-	 * 
+	 *
 	 * @param command the command and any parameters to execute.
 	 */
 	public void execute(String command);

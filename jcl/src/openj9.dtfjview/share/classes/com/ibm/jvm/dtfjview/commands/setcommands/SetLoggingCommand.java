@@ -43,13 +43,13 @@ public class SetLoggingCommand extends BaseJdmpviewCommand {
 	public static final String LOG_STATE_OVERWRITE = "set_logging_overwrite";		//indicates the current setting for overwriting log files
 	public static final String LOG_STATE_LOGGING = "set_logging";					//indicates if logging is on or off
 	public static final String LOG_STATE_FILE = "current_logging_file";				//file logging is being or will be written to
-	
+
 	private static final String CMD = "set logging";
 	private static final String SUBCMD_ON = "on";
 	private static final String SUBCMD_OFF = "off";
 	private static final String SUBCMD_FILE = "file";
 	private static final String SUBCMD_OVERWRITE = "overwrite";
-	
+
 	private boolean isOverwriteEnabled = false;
 	private boolean isLoggingEnabled = false;
 	private File logFile = null;
@@ -60,7 +60,7 @@ public class SetLoggingCommand extends BaseJdmpviewCommand {
 		off(SUBCMD_OFF, "", "turn off logging"),
 		file(SUBCMD_FILE, "", "turn on logging"),
 		overwrite(SUBCMD_OVERWRITE, "", "controls the overwriting of log files");
-		
+
 		private final String name;
 		private final String params;
 		private final String help;
@@ -70,11 +70,11 @@ public class SetLoggingCommand extends BaseJdmpviewCommand {
 			this.help = help;
 		}
 	}
-	
+
 	{
 		addCommand(CMD, "", "configures several logging-related parameters, starts/stops logging");
 		for(SubCommand sub : SubCommand.values()) {
-			addSubCommand(CMD, sub.name, sub.params, sub.help);	
+			addSubCommand(CMD, sub.name, sub.params, sub.help);
 		}
 	}
 
@@ -133,7 +133,7 @@ public class SetLoggingCommand extends BaseJdmpviewCommand {
 			out.println("\"" + args[0] + "\" is not a valid parameter for the \"set logging\" command");
 		}
 	}
-	
+
 	//restores the state of the logging command from the context property bag
 	private void restoreState() {
 		isOverwriteEnabled = parseBoolean(ctx.getProperties().get(LOG_STATE_OVERWRITE));
@@ -143,7 +143,7 @@ public class SetLoggingCommand extends BaseJdmpviewCommand {
 			logFile = Utils.absPath(ctx.getProperties(), file);
 		}
 	}
-	
+
 	//allows boolean 'true' to be either 'true' or 'on'
 	private boolean parseBoolean(Object obj) {
 		if(obj == null) {
@@ -167,7 +167,7 @@ public class SetLoggingCommand extends BaseJdmpviewCommand {
 		ctx.getProperties().put(LOG_STATE_OVERWRITE, state);
 		out.println("overwriting of log file option changed to \"" + state + "\"");
 	}
-	
+
 	private void setLogging(boolean enabled) {
 		if (!(isLoggingEnabled ^ enabled)) {
 			out.println("Command ignored : logging already has this setting");
@@ -188,7 +188,7 @@ public class SetLoggingCommand extends BaseJdmpviewCommand {
 		}
 		isLoggingEnabled = enabled;
 	}
-	
+
 	private boolean isLogFileValid() {
 		if(logFile.exists()) {
 			if(logFile.isDirectory()) {
@@ -209,7 +209,7 @@ public class SetLoggingCommand extends BaseJdmpviewCommand {
 		}
 		return true;
 	}
-	
+
 	private void setDefaultLogFile() {
 		Calendar cal = Calendar.getInstance();
 		String filename = String.format("jdmpview.%1$tY%1$tm%1$td.%1$tH%1$tM%1$tS.txt", cal);
@@ -217,8 +217,8 @@ public class SetLoggingCommand extends BaseJdmpviewCommand {
 		out.println("to change this type 'set logging off' then specify a file with 'set logging file <log file>'");
 		setLogFile(filename);
 	}
-	
-	private void setLogFile(String filename) {	
+
+	private void setLogFile(String filename) {
 		if (null != logFile) {
 			if(isLoggingEnabled) {
 				setLogging(false);
@@ -230,15 +230,15 @@ public class SetLoggingCommand extends BaseJdmpviewCommand {
 			// test whether the file name is an absolute path
 			File test = new File(filename);
 			if (test.isAbsolute()) {
-				logFile = new File(filename);				
+				logFile = new File(filename);
 			} else {
-				File pwd = (File)ctx.getProperties().get(SessionProperties.PWD_PROPERTY);				
-				logFile = new File(pwd.getPath() + File.separator + filename);				
+				File pwd = (File)ctx.getProperties().get(SessionProperties.PWD_PROPERTY);
+				logFile = new File(pwd.getPath() + File.separator + filename);
 			}
 			ctx.getProperties().put(LOG_STATE_FILE, logFile.getAbsolutePath());
 		}
 	}
-	
+
 	private void openLogFile() {
 		FileWriter f;
 		try {
@@ -253,7 +253,7 @@ public class SetLoggingCommand extends BaseJdmpviewCommand {
 		ToolsRegistryOutputChannels.addChannel(fileChannel);
 		out.println("logging turned on; outputting to \"" + logFile.getAbsolutePath() + "\"");
 	}
-	
+
 	private void closeLogFile() {
 		ToolsRegistryOutputChannels.removeChannel(fileChannel);
 		out.println("logging turned off; was logging to \"" + logFile + "\"");
@@ -264,7 +264,7 @@ public class SetLoggingCommand extends BaseJdmpviewCommand {
 	public void printDetailedHelp(PrintStream out) {
 		out.println("configures several logging-related parameters, " +
 				"starts/stops logging\n\n" +
-				
+
 				"parameters: [on|off], file <filename>, overwrite [on|off]\n" +
 				"- [on|off]           - turns logging on or off (default: off)\n" +
 				"- file <filename>    - sets the file to log to; this will be relative " +
@@ -277,7 +277,7 @@ public class SetLoggingCommand extends BaseJdmpviewCommand {
 				"this is on, the log file will be cleared every time \"set logging " +
 				"on\" is run (default: off)\n"
 		);
-		
+
 	}
 
 }

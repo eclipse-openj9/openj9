@@ -81,13 +81,13 @@ public class Session implements ISession {
 
 	public static final String LOGGER_PROPERTY = "com.ibm.jvm.dtfjview.logger";
 	private String factoryName;
-	
+
 	private IOutputManager out;
-	
+
 	private static final String PROMPT_FORMAT_DEFAULT = "> ";
 	private static final String PROMPT_FORMAT_MULTICONTEXT = "CTX:%d> ";
 	public static String prompt = "> ";
-	
+
 	private static final String ARG_CORE = "-core";
 	private static final String ARG_ZIP = "-zip";
 	private static final String ARG_VERSION = "-version";
@@ -99,7 +99,7 @@ public class Session implements ISession {
 	private static final String ARG_APPEND = "-append";
 	private static final String ARG_NOEXTRACT = "-notemp";
 	private static final String ARG_LEGACYZIP = "-legacyzip";
-	
+
 	private static enum CmdLineParseStateEnum {					//controls the parsing of the command line args
 		PARSE_SCAN,				//parsing is scanning the entries
 		PARSE_PAIR,				//parsing a name / value pair
@@ -107,20 +107,20 @@ public class Session implements ISession {
 		PARSE_CMDS,				//parsing any commands at the end of the line
 		PARSE_COMPLETE			//parsing is complete
 	};
-	
+
 	private CmdLineParseStateEnum parseState = CmdLineParseStateEnum.PARSE_SCAN;		//default parse state
-	
+
 	private final Map<String, String> args = new HashMap<String, String>();				//map for name/value pair args
 	private final Set<String> singleargs = new HashSet<String>();						//commands that are single args only e.g. -verbose
 	private final Set<String> pairedargs = new HashSet<String>();
- 	private final Queue<String> commands = new LinkedList<String>();					//commands that could be specified on the command line
- 	private final Set<String> sessioncommands = new HashSet<String>();					// commands which should execute against the session context
+	private final Queue<String> commands = new LinkedList<String>();					//commands that could be specified on the command line
+	private final Set<String> sessioncommands = new HashSet<String>();					// commands which should execute against the session context
 	private boolean isInteractiveSession = false;										//flag to indicated if running in batch or interactive mode
 	private boolean isVerboseEnabled = false;											//flag for verbose logging
 	private IOutputChannel defaultOutputChannel = null;
 	private FileOutputChannel foc = null;
-	private String charsetName = null; 
-	
+	private String charsetName = null;
+
 //	private final ArrayList<CombinedContext> contexts = new ArrayList<CombinedContext>();		//the contexts related to the runtimes from core files
 	private CombinedContext ctxroot = null;												//root context for console access
 
@@ -131,14 +131,14 @@ public class Session implements ISession {
 	private static final String CMD_CLOSE = "close";
 	private static final String CMD_CD = "cd";
 	private static final String CMD_PWD = "pwd";
-	private boolean isZOS = false;														//flag to control some formatting aspects													
-	
+	private boolean isZOS = false;														//flag to control some formatting aspects
+
 	private final HashMap<String, Object> variables = new HashMap<String, Object>();	//variables to propagate into contexts
-	
+
 	private final Logger logger = Logger.getLogger(LOGGER_PROPERTY);					//logger for verbose messages
-	
+
 	private final ISessionContextManager ctxmgr = new JdmpviewContextManager();
-	
+
 	{
 		//define the list of supported command line args
 		singleargs.add(ARG_VERBOSE);
@@ -152,7 +152,7 @@ public class Session implements ISession {
 		pairedargs.add(ARG_OUTFILE);
 		pairedargs.add(ARG_CHARSET);
 		pairedargs.add(ARG_ZIP);
-		
+
 		// define the list of session commands - ones which run against the session context, not the per-image context
 		// set logging and show logging are also session commands but are dealt with separately
 		sessioncommands.add(CMD_CLOSE);
@@ -161,17 +161,17 @@ public class Session implements ISession {
 		sessioncommands.add(CMD_PWD);
 
 	}
-	
+
 	/**
 	 * Factory method for creating new sessions.
-	 * 
+	 *
 	 * @param args any session arguments
 	 * @return the session
 	 */
 	public static ISession getInstance(String[] args) {
 		return new Session(args);
 	}
-	
+
 	private Session(String[] args) {
 		sessionInit(args);
 	}
@@ -182,7 +182,7 @@ public class Session implements ISession {
 	public IOutputManager getOutputManager() {
 		return out;
 	}
-	
+
 	public String getCharset() {
 		return charsetName;
 	}
@@ -216,10 +216,10 @@ public class Session implements ISession {
 		ctxroot = new CombinedContext(0, 0, null, null, null, null, -1);
 		initializeContext(ctxroot);
 		currentContext = ctxroot;			//default to the root context at startup
-	
+
 		// Set system property to switch off additional DDR processing for Node.JS
 		System.setProperty("com.ibm.j9ddr.noextrasearchfornode","true");
-		
+
 		if(args.containsKey(ARG_CORE) || args.containsKey(ARG_ZIP) || args.containsKey(ARG_VERSION)) {
 			//file to open has been specified on the command line
 			// Note that although -version is not really an "open" action we pass it to the "open" action because
@@ -227,7 +227,7 @@ public class Session implements ISession {
 			imageFromCommandLine();
 		}
 	}
-	
+
 	//initializes the supplied context with its starting parameters and property values
 	private void initializeContext(IDTFJContext ctx) {
 		ctx.refresh();
@@ -236,7 +236,7 @@ public class Session implements ISession {
 			ctx.getProperties().put(key, variables.get(key));	//populate the context properties
 		}
 	}
-	
+
 	private void setPrompt() {
 		if(ctxmgr.hasMultipleContexts()) {
 			prompt = String.format(PROMPT_FORMAT_MULTICONTEXT, ctxid);
@@ -244,21 +244,21 @@ public class Session implements ISession {
 			prompt = String.format(PROMPT_FORMAT_DEFAULT);
 		}
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.jvm.dtfjview.spi.ISession#getCurrentContext()
 	 */
 	public ICombinedContext getCurrentContext() {
 		return currentContext;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.jvm.dtfjview.spi.ISession#getCtxManager()
 	 */
 	public ISessionContextManager getContextManager() {
 		return ctxmgr;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.jvm.dtfjview.spi.ISession#setContext(int)
 	 */
@@ -269,7 +269,7 @@ public class Session implements ISession {
 		}
 		setContext(switchTo);
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.jvm.dtfjview.spi.ISession#setContext(com.ibm.jvm.dtfjview.CombinedContext)
 	 */
@@ -281,7 +281,7 @@ public class Session implements ISession {
 			setPrompt();			//the prompt may reflect the currently selected context
 		}
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.jvm.dtfjview.spi.ISession#showContexts(boolean)
 	 */
@@ -300,7 +300,7 @@ public class Session implements ISession {
 			}
 			for(ICombinedContext context : contexts.get(source)) {
 				if(context == currentContext) {
-				 out.print("\t*");	
+				 out.print("\t*");
 				} else {
 					out.print("\t ");
 				}
@@ -309,7 +309,7 @@ public class Session implements ISession {
 		}
 		out.print("\n");
 	}
-		
+
 	//stops the current processing and exits with and optional code
 	private void exit(String msg, int exitCode) {
 		if(System.getProperty(SYSPROP_NOSYSTEMEXIT) == null) {
@@ -326,7 +326,7 @@ public class Session implements ISession {
 			throw new JdmpviewInitException(exitCode, msg);
 		}
 	}
-	
+
 	//checks to see if the specified flag has been set, this will be a single arg command line parameter
 	private boolean hasFlagBeenSet(String name) {
 		if(singleargs.contains(name)) {
@@ -341,15 +341,15 @@ public class Session implements ISession {
 			return false;
 		}
 	}
-		
-	//state machine which parses all the command line arguments. It validates the correct use of single and 
+
+	//state machine which parses all the command line arguments. It validates the correct use of single and
 	//paired arguments. It will regard the first item without a - as the start of any jdmpview cmds to run
 	private void parseCommandLineArgs(String[] cmdargs) {
 		if(cmdargs.length == 0) {
 			//check at least one argument was supplied
 			exit("No parameters were supplied", JDMPVIEW_SYNTAX_ERROR);
 		}
-		
+
 		// Quotation marks are removed by the shell and that can cause filenames containing spaces to be split into several arguments.
 		// This is rather crude, but if there is a quotation mark or an apostrophe in the parameter, quote it with the other (apostrophe or quotation mark)
 		// If there isn't any, just surround it with "s.
@@ -371,7 +371,7 @@ public class Session implements ISession {
 				cmdargs[i] = "\"" + cmdargs[i] + "\"";
 			}
 		}
-		
+
 		StringBuilder line = new StringBuilder();
 		int index = 0;
 		while((index < cmdargs.length) && (parseState != CmdLineParseStateEnum.PARSE_COMPLETE)) {
@@ -434,7 +434,7 @@ public class Session implements ISession {
 			exit("Internal error occurred whilst processing the command line args", JDMPVIEW_INTERNAL_ERROR);
 		}
 	}
-	
+
 	//checks that a specified command line arg is recognised
 	private void checkArgIsRecognised(String cmdarg) {
 		if(pairedargs.contains(cmdarg) || singleargs.contains(cmdarg)){
@@ -442,7 +442,7 @@ public class Session implements ISession {
 		}
 		exit("The command " + cmdarg + " was not recognised", JDMPVIEW_SYNTAX_ERROR);
 	}
-	
+
 	//if verbose is specified write out how the command line args have been interpreted
 	private void logCommandLineArgs() {
 		if(!isVerboseEnabled) {
@@ -459,19 +459,19 @@ public class Session implements ISession {
 		}
 		out.println("Batch mode commands: " + commands.toString());
 	}
-	
+
 	//print some help for the user
 	private void printHelp() {
 		String launcher = System.getProperty(SYSPROP_LAUNCHER, "jdmpview");
-		
+
 		out.print(
 				"Usage: \"" + launcher + " -core <core_file> [-verbose]\" or \n" +
 				"       \"" + launcher + " -zip <zip_file> [-verbose]\" or \n" +
 				"       \"" + launcher + " -version\"\n\n" +
-				"To analyze dumps from DDR-enabled JVMs, " + launcher + " only requires a core file.\n\n" + 
+				"To analyze dumps from DDR-enabled JVMs, " + launcher + " only requires a core file.\n\n" +
 				"The default ImageFactory is " + factoryName + ". To change the ImageFactory use: \n" +
-				"\t -J-D" + SYSPROP_FACTORY + "=<classname> \n\n");	
-		
+				"\t -J-D" + SYSPROP_FACTORY + "=<classname> \n\n");
+
 		out.print(launcher + " can also be used in 'batch mode' whereby commands can be issued without entering an interactive prompt.\n" +
 				"This processing is controlled via the following command line options :\n"+
 				"        -cmdfile <path to command file> : will read and sequentially execute\n" +
@@ -484,11 +484,11 @@ public class Session implements ISession {
 				"of the command line which executes " + launcher + "\n" +
 				"e.g. " + launcher + " -core mycore.dmp info class\n\n" +
 				"Finally, some commands which take the * parameter will need to have that specified on the command line as ALL\n" +
-				"This is to ensure correct processing by the OS " + 
+				"This is to ensure correct processing by the OS " +
 				"e.g. " + launcher + " -core mycore.dmp info thread ALL\n"
 			);
 	}
-	
+
 	//if the -outfile param has been specified do some checking on the supplied file
 	private void processOutfile() {
 		if(!args.containsKey(ARG_OUTFILE)) {
@@ -520,13 +520,13 @@ public class Session implements ISession {
 		}
 		try {
 			FileWriter writer = null;
-			
+
 			if(file.exists() && append) {
 				writer = new FileWriter(file, true);
 			} else {
 				writer = new FileWriter(file);
 			}
-			
+
 			foc = new FileOutputChannel(writer, file);
 			out.addChannel(foc);
 			ToolsRegistryOutputChannels.addChannel(foc);
@@ -535,7 +535,7 @@ public class Session implements ISession {
 			exit("Unexpected error creating the output file " + file.getAbsolutePath(), JDMPVIEW_INTERNAL_ERROR);
 		}
 	}
-	
+
 	private String stripQuotesFromFilename(String name) {
 		if((name.length() > 0) && (name.charAt(0) == '"')) {
 			//strip out any initial quote
@@ -547,7 +547,7 @@ public class Session implements ISession {
 		}
 		return name;
 	}
-	
+
 	//if the -cmdfile option has been specified then process it and place them on the internal queue
 	private void processCommandFile() {
 		if (!args.containsKey(ARG_CMDFILE)) {
@@ -558,7 +558,7 @@ public class Session implements ISession {
 			commands.addAll(cmds);
 		}
 	}
-	
+
 	//read any commands from the specified file, there is no validation of the commands at this point
 	private List<String> parseCommandsFromFile() {
 		String name = stripQuotesFromFilename(args.get(ARG_CMDFILE));
@@ -642,7 +642,7 @@ public class Session implements ISession {
 					if(context.getRuntime() != null) {
 						setContext(context);
 						return;
-					}	
+					}
 				}
 			}
 			setContext(defaultContext);
@@ -650,7 +650,7 @@ public class Session implements ISession {
 			out.print("ERROR : Unable to set current context");
 		}
 	}
-	
+
 	//start point for running the session
 	/* (non-Javadoc)
 	 * @see com.ibm.jvm.dtfjview.spi.ISession#run()
@@ -681,7 +681,7 @@ public class Session implements ISession {
 			out.println("Error closing contexts: " + e.getMessage());
 		}
 	}
-	
+
 	//run in batch and exit after the last command is executed
 	private void runBatch() {
 		findAndSetContextWithJVM();
@@ -695,16 +695,16 @@ public class Session implements ISession {
 			} catch (com.ibm.jvm.dtfjview.tools.CommandException e) {
 				out.println(e.getMessage());
 			}
-		}	
+		}
 		out.close();
 	}
-	
+
 	//run in interactive mode with a prompt etc.
 	private void runInteractive(){
 		BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
 		String input = "";
 		String quit = "";
-		
+
 		out.println("For a list of commands, type \"help\"; " +
 				"for how to use \"help\", type \"help help\"");
 
@@ -725,14 +725,14 @@ public class Session implements ISession {
 				setPrompt();
 			}
 			out.printPrompt(prompt);
-			
+
 			try {
 				input = stdin.readLine();
 			} catch (IOException e) {
 				out.print("IOException encountered while reading input; exiting program...");
 				break;
 			}
-			
+
 			if (null == input)
 			{
 				out.print("End of input stream has been reached; exiting program...");
@@ -745,13 +745,13 @@ public class Session implements ISession {
 			}
 			quit = (String)currentContext.getProperties().get("quit");
 		}
-		
+
 		// "out" MUST be closed here, otherwise the file deletions in the below
 		//  code block will not work
 		out.close();
-		
+
 	}
-	
+
 	/**
 	 * Execute a command line.
 	 * <p>
@@ -772,13 +772,13 @@ public class Session implements ISession {
 		}
 		out.addChannel(defaultOutputChannel);
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.jvm.dtfjview.spi.ISession#execute(java.lang.String)
 	 */
 	public void execute(String line) {
 		String trimmedInput = line.trim();
-		
+
 		if (!trimmedInput.equals(""))
 		{
 			try {
@@ -788,11 +788,11 @@ public class Session implements ISession {
 				// There is special processing in what follows for "set logging" and "show logging"
 				// We cannot just pass the logic through to a secondary handler like we can with "info"
 				// because when we see "set" or "show" we need to distinguish here and now which context to pass
-				// - "set logging" requires the session context 
+				// - "set logging" requires the session context
 				// - "set heapdump" requires the per-image context.
-				// For both "set logging" and "show logging" remove the word "logging" from the arguments and make it 
+				// For both "set logging" and "show logging" remove the word "logging" from the arguments and make it
 				// part of the command.
-				
+
 				if(cmd.equals(CMD_CONTEXT)) {
 					switchContext(trimmedInput.toLowerCase());
 				} else if (cmd.equals("set") && parser.getArguments().length > 0 && parser.getArguments()[0].equals("logging")) {
@@ -805,11 +805,11 @@ public class Session implements ISession {
 					String[] newargs = new String[oldargs.length-1]; // remove the first argument "logging"
 					System.arraycopy(oldargs, 1, newargs, 0, newargs.length);
 					ctxroot.execute("show logging", newargs, out.getPrintStream());
-				} else if(sessioncommands.contains(cmd)) { 
+				} else if(sessioncommands.contains(cmd)) {
 					// if command is in the remaining list of session commands
-					// at the time of writing this is quit, help, open, close, pwd, cd 
-					ctxroot.execute(parser, out.getPrintStream()); 
-				} else { 
+					// at the time of writing this is quit, help, open, close, pwd, cd
+					ctxroot.execute(parser, out.getPrintStream());
+				} else {
 					// not a session command, execute against the per-image context
 					currentContext.execute(parser, out.getPrintStream());
 				}
@@ -820,7 +820,7 @@ public class Session implements ISession {
 			}
 		}
 	}
-	
+
 	//switch contexts either by sequential ID or by ASID for z/OS cores
 	private void switchContext(String input) {
 		String[] args = input.trim().split(" ");
@@ -837,7 +837,7 @@ public class Session implements ISession {
 					if(radix == 16) {
 						id = Integer.parseInt(args[1].substring(2), radix);
 					} else {
-						id = Integer.parseInt(args[1], radix);	
+						id = Integer.parseInt(args[1], radix);
 					}
 					if((radix == 16) && isZOS) {		//if context is in hex and on z/OS then see if this matches an ASID
 						if(switchContextByASID(args[1])) {
@@ -854,7 +854,7 @@ public class Session implements ISession {
 						if(isZOS) {
 							if(!switchContextByASID(args[2])) {
 								out.println("The specified context ASID : " + args[2] + " is not a valid ASID");
-							}	
+							}
 						} else {
 							out.println("Switching context by ASID is not supported for this core file");
 						}
@@ -871,8 +871,8 @@ public class Session implements ISession {
 		} catch (Exception e) {
 			out.println(e.getMessage());
 		}
-	} 
-	
+	}
+
 	private boolean switchContextByASID(String asid) throws Exception {
 		int radix = asid.startsWith("0x") ? 16 : 10;
 		if((radix == 16) && isZOS) {
@@ -888,11 +888,11 @@ public class Session implements ISession {
 		}
 		return false;
 	}
-	
+
 	/**
 	 * Enables console logger for the supplied logger. Typically used to surface
 	 * log commands generated by internal components
-	 * 
+	 *
 	 * @param log the logger to enable
 	 */
 	private void enableConsoleLogging(Logger log) {
@@ -906,7 +906,7 @@ public class Session implements ISession {
 			out.println("Console logging is now enabled for " + log.getName());
 		}
 	}
-	
+
 	/**
 	 * Logs an exception to the DTFJView logger or creates an anonymous logger if this
 	 * one is not available.

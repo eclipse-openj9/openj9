@@ -48,7 +48,7 @@ public class CharsFromTool extends Tool implements IPipe {
 	 * @param command	The command
 	 * @param args		The arguments taken by the command.
 	 * <p>
-	 * @return		<code>true</code> if this is the correct tool for this command; 
+	 * @return		<code>true</code> if this is the correct tool for this command;
 	 * 				<code>false</code> otherwise.
 	 */
 	public boolean accept(String command, String[] args) {
@@ -126,7 +126,7 @@ public class CharsFromTool extends Tool implements IPipe {
 		boolean includeToken = true;
 		boolean keepMismatchedLines = false;
 		boolean ignoreCase = false;
-		
+
 		int x = 0;
 		for (;x < args.length; ++x) {
 			if(args[x].equalsIgnoreCase("-e") || args[x].equalsIgnoreCase("-exclude")) {
@@ -139,26 +139,26 @@ public class CharsFromTool extends Tool implements IPipe {
 				break;
 			}
 		}
-		
+
 		if (x >= args.length) {
 			return null;
 		}
 		String searchToken = args[x];
 		++x;
-		
+
 		if (x >= args.length) {
 			return null;
 		}
-		
+
 		String command = args[x];
 		++x;
-		
+
 		String [] commandArgs = new String[args.length - x];
 		System.arraycopy(args, x, commandArgs, 0, args.length - x);
 
 		return new Arguments(searchToken, includeToken, keepMismatchedLines, ignoreCase, command, commandArgs);
 	}
-	
+
 	private static final class Arguments {
 		Arguments(String searchToken, boolean includeToken, boolean keepMismatchedLines, boolean ignoreCase, String command, String [] commandArgs) {
 			this.searchToken = ignoreCase ? searchToken.toLowerCase() : searchToken;

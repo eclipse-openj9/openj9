@@ -73,7 +73,7 @@ public class Utils {
 		  "................" +
 		  "................"
 		 ;
-	
+
 	public static final String byteToEbcdic =
 		  "................" +
 		  "................" +
@@ -92,13 +92,13 @@ public class Utils {
 		  "\\.STUVWXYZ......"+
 		  "0123456789......"
 		 ;
-	
-	//List of keys used by HashMap object associated with each session 
+
+	//List of keys used by HashMap object associated with each session
 	public static final String CURRENT_MEM_ADDRESS = "currentMemPtrAddress";
 	public static final String CURRENT_NUM_BYTES_TO_PRINT = "currentNumBytes";
 	public static final String RootCommand_OBJECT = "RootCommandObject";
 	public static final String FIND_ATTRIBUTES = "FindAttributes";
-	
+
 	private static final int CLASS_MODIFIERS_MASK = 0xc1f;
 	private static final int INTERFACE_MODIFIERS_MASK = 0xe0f;
 	private static final int CONSTRUCTOR_MODIFIERS_MASK = 0x7;
@@ -111,7 +111,7 @@ public class Utils {
 	public static final String SORT_BY_COUNT_FLAG = "-sort:count";
 	public static final String REVERSE_SORT_FLAG = "-sort:reverse";
 	public static final String VERBOSE_FLAG = "-verbose";
-	
+
 	public static Iterator getRuntimes(Image loadedImage)
 	{
 		Vector runtimes = new Vector();
@@ -121,7 +121,7 @@ public class Utils {
 		ManagedRuntime mr;
 		ImageAddressSpace ias;
 		ImageProcess ip;
-		
+
 		itAddressSpace = loadedImage.getAddressSpaces();
 		while (itAddressSpace.hasNext()) {
 			ias = (ImageAddressSpace)itAddressSpace.next();
@@ -144,12 +144,12 @@ public class Utils {
 			}
 		}
 		return runtimes.iterator();
-	}	
+	}
 
 	/**
 	 * Format an ImagePointer for printing.
 	 * Get the address and format it as a hex string with 0x at the front
-	 * 
+	 *
 	 * @param p the ImagePointer
 	 * @return p.getAddress() as a hex string
 	 */
@@ -157,17 +157,17 @@ public class Utils {
 	{
 		return toHex(p.getAddress());
 	}
-	
+
 	public static String toHex(long l)
 	{
 		return "0x" + Long.toHexString(l);
 	}
-	
+
 	public static String toHex(int i)
 	{
 		return "0x" + Integer.toHexString(i);
 	}
-	
+
 	public static String toHex(short s)
 	{
 		// bit-wise AND is done to cancel the sign-extension that int casting does;
@@ -176,7 +176,7 @@ public class Utils {
 		//  representation before the short is cast to an int, which the bit-wise AND does
 		return "0x" + Integer.toHexString(s & 0x0000ffff);
 	}
-	
+
 	public static String toHex(byte b)
 	{
 		// bit-wise AND is done to cancel the sign-extension that int casting does;
@@ -185,17 +185,17 @@ public class Utils {
 		//  representation before the byte is cast to an int, which the bit-wise AND does
 		return "0x" + Integer.toHexString(b & 0x000000ff);
 	}
-	
+
 	public static String toFixedWidthHex(long l)
 	{
 		return Utils.padWithZeroes(Long.toHexString(l), 16);
 	}
-	
+
 	public static String toFixedWidthHex(int i)
 	{
 		return Utils.padWithZeroes(Integer.toHexString(i), 8);
 	}
-	
+
 	public static String toFixedWidthHex(short s)
 	{
 		// bit-wise AND is done to cancel the sign-extension that int casting does;
@@ -204,7 +204,7 @@ public class Utils {
 		//  representation before the short is cast to an int, which the bit-wise AND does
 		return Utils.padWithZeroes(Integer.toHexString(s & 0x0000ffff), 4);
 	}
-	
+
 	public static String toFixedWidthHex(byte b)
 	{
 		// bit-wise AND is done to cancel the sign-extension that int casting does;
@@ -213,13 +213,13 @@ public class Utils {
 		//  representation before the byte is cast to an int, which the bit-wise AND does
 		return Utils.padWithZeroes(Integer.toHexString(b & 0x000000ff), 2);
 	}
-	
+
 	public static Stack<String> constructStackFromString(String args)
 	{
 		String[] argsArray = args.split("\\s+");
 		return constructStackFromStringArray(argsArray);
 	}
-	
+
 	public static Stack<String> constructStackFromStringArray(String[] argsArray){
 		Stack<String> s = new Stack<String>();
 		for (int i = argsArray.length - 1; i >= 0; i--){
@@ -227,7 +227,7 @@ public class Utils {
 		}
 		return s;
 	}
-	
+
 	public static String concatArgsFromStack(Stack<String> args){
 		String s = "";
 		while(!args.empty()){
@@ -235,14 +235,14 @@ public class Utils {
 		}
 		return s;
 	}
-	
+
 	//CMVC 175488 : fixed so that this function returns an address space which contains a process
 	//rather than the first address space it finds.
 	public static ImageAddressSpace _extractAddressSpace(Image loadedImage)
 	{
 		ImageAddressSpace space = null;
 		Iterator spaces = loadedImage.getAddressSpaces();
-		
+
 		Object obj = null;			//object returned through DTFJ iterators
 		while (spaces.hasNext()) {
 			obj = spaces.next();
@@ -260,11 +260,11 @@ public class Utils {
 		//failed to find an address space which contains a process.
 		return null;
 	}
-	
+
 	public static Long longFromString(String value)
 	{
 		Long translated = null;
-		
+
 		if (null != value) {
 			if (value.startsWith("0x")) {
 				value = value.substring(2);
@@ -285,24 +285,24 @@ public class Utils {
 		}
 		return translated;
 	}
-	
+
 	public static Long longFromStringWithPrefix(String value)
 	{
 		Long translated = null;
-		
+
 		if (value.startsWith("0x"))
 		{
 			translated = longFromString(value);
 		}
-		
+
 		return translated;
 	}
-	
+
 	public static String getSignatureName(String signature)
 	{
 		Hashtable table = new Hashtable();
 		String retval = null;
-		
+
 		table.put("Z", "boolean");
 		table.put("B", "byte");
 		table.put("C", "char");
@@ -312,7 +312,7 @@ public class Utils {
 		table.put("F", "float");
 		table.put("D", "double");
 		table.put("V", "void");
-		
+
 		if (signature.startsWith("L"))
 		{
 			StringTokenizer st = new StringTokenizer(signature.substring(1), ";");
@@ -333,28 +333,28 @@ public class Utils {
 		{
 			String currSig = new String(signature);
 			String arraySuffix = "";
-			
+
 			while (currSig.startsWith("["))
 			{
 				arraySuffix += "[]";
 				currSig = currSig.substring(1);
 			}
-			
+
 			retval = Utils.getSignatureName(currSig) + arraySuffix;
 		}
 		else
 		{
 			retval = (String)table.get(signature.substring(0,1));
 		}
-		
+
 		return retval;
 	}
-	
+
 	public static String getMethodSignatureName(String signature)
 	{
 		Hashtable table = new Hashtable();
 		String retval = "";
-		
+
 		table.put("Z", "boolean");
 		table.put("B", "byte");
 		table.put("C", "char");
@@ -363,7 +363,7 @@ public class Utils {
 		table.put("J", "long");
 		table.put("F", "float");
 		table.put("D", "double");
-		
+
 		if (signature.startsWith("("))
 		{
 			StringTokenizer st = new StringTokenizer(signature.substring(1), ")");
@@ -405,13 +405,13 @@ public class Utils {
 		{
 			String currSig = new String(signature);
 			String arraySuffix = "";
-			
+
 			while (currSig.startsWith("["))
 			{
 				arraySuffix += "[]";
 				currSig = currSig.substring(1);
 			}
-			
+
 			if (currSig.startsWith("L")) {
 				if (currSig.indexOf(';') + 1 == currSig.length()) {
 					retval = Utils.getSignatureName(currSig) + arraySuffix;
@@ -441,10 +441,10 @@ public class Utils {
 				retval += ", " + Utils.getMethodSignatureName(signature.substring(1));
 			}
 		}
-		
+
 		return retval;
 	}
-	
+
 	public static String getReturnValueName(String signature)
 	{
 		if (signature.startsWith("("))
@@ -475,7 +475,7 @@ public class Utils {
 			return null;
 		}
 	}
-	
+
 	public static String toString(String s)
 	{
 		if (null == s)
@@ -483,7 +483,7 @@ public class Utils {
 		else
 			return s;
 	}
-	
+
 	public static File absPath(Properties properties, String path)
 	{
 		File oldPwd = (File)properties.get("pwd");
@@ -495,17 +495,17 @@ public class Utils {
 		try {
 			newPwd = newPwd.getCanonicalFile();
 		} catch (IOException e) {
-		
+
 		}
-		
+
 		return newPwd;
 	}
-	
+
 	public static String getVal(Object o)
 	{
 		return Utils.getVal(o, null, null);
 	}
-	
+
 	// note: this method lets you pass in a null JavaObject, but it _will_ throw a
 	//  NullPointerException if the JavaField is not a static field when you pass it
 	//  a null JavaObject; this is the behavior of jf.get() and jf.getString()
@@ -513,7 +513,7 @@ public class Utils {
 	{
 		Object o;
 		String s;
-		
+
 		if (null == jf)
 		{
 			o = jo;
@@ -529,7 +529,7 @@ public class Utils {
 			} catch (NumberFormatException nfe) {
 				return "<invalid number>";
 			}
-			
+
 			try {
 				s = jf.getString(jo);
 			} catch (CorruptDataException e) {
@@ -540,10 +540,10 @@ public class Utils {
 				s = null;
 			}
 		}
-		
+
 		return getVal(o, s, jf);
 	}
-	
+
 	public static String getVal(Object o, String str, JavaField jf)
 	{
 		String val = "";
@@ -597,7 +597,7 @@ public class Utils {
 			} else {
 				// FIXME
 			}
-			
+
 			// why are we processing objects here?
 			//  because we want control over the exceptions that are thrown
 			if (object)
@@ -605,13 +605,13 @@ public class Utils {
 				JavaObject joField = (JavaObject)o;
 				JavaClass jcField;
 				String jcName;
-				
+
 				try {
 					jcField = joField.getJavaClass();
 				} catch (CorruptDataException e) {
 					jcField = null;
 				}
-				
+
 				try {
 					if (null != jcField) {
 						jcName = jcField.getName();
@@ -621,7 +621,7 @@ public class Utils {
 				} catch (CorruptDataException e) {
 					jcName = null;
 				}
-				
+
 				if (null != jcName && jcName.equals("java/lang/String"))
 				{
 					if (null == str) {
@@ -643,21 +643,21 @@ public class Utils {
 			val += Utils.toHex(value.longValue());
 			val += ")";
 		}
-		
+
 		return val;
 	}
-	
+
 	private static String getStringVal(JavaObject jo)
 	{
 		JavaClass jc;
-		
+
 		try {
 			jc = jo.getJavaClass();
 		} catch (CorruptDataException e) {
 			return "<cannot get String class from String object (" +
 				Exceptions.getCorruptDataExceptionString() + ")>";
 		}
-		
+
 		Iterator itJavaField = jc.getDeclaredFields();
 		JavaField jf = null;
 		while (itJavaField.hasNext())
@@ -667,14 +667,14 @@ public class Utils {
 				if (jf.getSignature().equals("[C") && !Modifier.isStatic(jf.getModifiers()))
 					break;
 			} catch (CorruptDataException e) {
-				// if we have an exception, do nothing and go onto the next field 
+				// if we have an exception, do nothing and go onto the next field
 			}
 		}
 		if (jf == null) {
 			// empty field iterator (occurs e.g. when reading PHD heapdumps), can't get the char array
 			return "<cannot get char array out of String>";
 		}
-		
+
 		JavaObject charArray = null;
 		try {
 			charArray = (JavaObject)jf.get(jo);
@@ -685,7 +685,7 @@ public class Utils {
 			return "<cannot get char array out of String (" +
 				Exceptions.getMemoryAccessExceptionString() + ")>";
 		}
-		
+
 		int arraySize;
 		try {
 			arraySize = charArray.getArraySize();
@@ -693,9 +693,9 @@ public class Utils {
 			return "<cannot determine the size of the array (" +
 					Exceptions.getCorruptDataExceptionString() + ")>";
 		}
-		
+
 		char[] dst = new char[arraySize];
-		
+
 		try {
 			charArray.arraycopy(0, dst, 0, arraySize);
 		} catch (CorruptDataException e) {
@@ -705,10 +705,9 @@ public class Utils {
 			return "<cannot copy data from the array (" +
 				Exceptions.getMemoryAccessExceptionString() + ")>";
 		}
-		
+
 		return "\"" + Utils.getPrintable(new String(dst)) + "\"";
 	}
-	
 
 	public static String getPrintable(char c)
 	{
@@ -716,7 +715,7 @@ public class Utils {
 		//  static char arrays of the String class; the memory addresses of these arrays
 		//  can be found by using the command "x/j java/lang/String" and looking at the
 		//  static fields printed at the top of the output
-		
+
 		switch (c)
 		{
 		// the following 8 cases were taken from Section 3.10.6 of the
@@ -762,24 +761,24 @@ public class Utils {
 			}
 		}
 	}
-	
+
 	public static String getPrintableWithQuotes(char c)
 	{
 		return "\'" + Utils.getPrintable(c) + "\'";
 	}
-	
+
 	public static String getPrintable(String s)
 	{
 		String retval = "";
-		
+
 		for (int i = 0; i < s.length(); i++)
 		{
 			retval += Utils.getPrintable(s.charAt(i));
 		}
-		
+
 		return retval;
 	}
-	
+
 	public static String padWithZeroes(String unpadded, int desiredLength)
 	{
 		String output = new String(unpadded);
@@ -802,25 +801,25 @@ public class Utils {
 		}
 		return vSections.iterator();
 	}
-	
+
 	public static String getFieldModifierString(JavaField jf) throws CorruptDataException{
 		int modifiers = jf.getModifiers();
 		int typeMask = FIELD_MODIFIERS_MASK;
 		return getModifierString(modifiers, typeMask);
 	}
-	
+
 	public static String getMethodModifierString(JavaMethod jm) throws CorruptDataException{
 		int modifiers = jm.getModifiers();
 		int typeMask = ("<init>".equals(jm.getName()))?CONSTRUCTOR_MODIFIERS_MASK:METHOD_MODIFIERS_MASK;
 		return getModifierString(modifiers, typeMask);
 	}
-	
+
 	public static String getClassModifierString(JavaClass jc) throws CorruptDataException{
 		int modifiers = jc.getModifiers();
 		int typeMask = Modifier.isInterface(modifiers)?INTERFACE_MODIFIERS_MASK|Modifier.INTERFACE:CLASS_MODIFIERS_MASK;
 		return getModifierString(modifiers, typeMask);
 	}
-	
+
 	private static String getModifierString(int modifiers, int typeMask){
 		if (modifiers == JavaClass.MODIFIERS_UNAVAILABLE) {
 			return "No modifiers available";
@@ -841,12 +840,12 @@ public class Utils {
 		if(Modifier.isStrict(modifiers)) retval += "strict ";
 		return retval;
 	}
-	
+
 	public static boolean isNull(JavaObject jo)
 	{
 		return jo.getID().getAddress() == 0;
 	}
-	
+
 	public static String padWithSpaces(String unpadded, int desiredLength)
 	{
 		String output = new String(unpadded);
@@ -856,7 +855,7 @@ public class Utils {
 		}
 		return output;
 	}
-	
+
 	public static String prePadWithSpaces(String unpadded, int desiredLength)
 	{
 		String output = "";
@@ -867,12 +866,12 @@ public class Utils {
 		output += unpadded;
 		return output;
 	}
-	
+
 	public static JavaClass[] getClassGivenName(String className, JavaRuntime jr, PrintStream out)
 	{
 		Iterator itJavaClassLoader = jr.getJavaClassLoaders();
 		List classes = new ArrayList();
-		
+
 		while (itJavaClassLoader.hasNext() )
 		{
 			Object nextCl = itJavaClassLoader.next();
@@ -911,11 +910,11 @@ public class Utils {
 			return null;
 		}
 	}
-	
+
 	public static JavaClass getClassGivenAddress(long address, JavaRuntime jr)
 	{
 		Iterator itJavaClassLoader = jr.getJavaClassLoaders();
-		
+
 		while (itJavaClassLoader.hasNext() )
 		{
 			Object nextCl = itJavaClassLoader.next();
@@ -926,7 +925,7 @@ public class Utils {
 			Iterator itJavaClass = jcl.getDefinedClasses();
 			while (itJavaClass.hasNext() )
 			{
-				
+
 				Object next = itJavaClass.next();
 				if( !(next instanceof JavaClass) ) {
 					continue;
@@ -945,10 +944,10 @@ public class Utils {
 
 		return null;
 	}
-	
+
 	/* Find the JavaThread that owns a blocking object by finding the java/lang/Thread
 	 * JavaObject of the owner and then looking through the list of JavaThreads to
-	 * see who that belongs to. 
+	 * see who that belongs to.
 	 */
 	public static JavaThread getParkBlockerOwner(JavaObject blocker, JavaRuntime r) throws CorruptDataException, MemoryAccessException {
 		JavaObject ownerObj = getParkBlockerOwnerObject(blocker, r);
@@ -964,10 +963,10 @@ public class Utils {
 					return thread;
 				}
 			}
-		}			
+		}
 		return null;
 	}
-	
+
 	/* Given an object that a parked thread has as it's blocker find the java/lang/Thread
 	 * object for it's owner. (Not the dtfj JavaThread!)
 	 */
@@ -994,7 +993,7 @@ public class Utils {
 		}
 		return null;
 	}
-	
+
 	public static String getThreadNameFromObject(JavaObject lockOwnerObj, JavaRuntime rt, PrintStream out) throws CorruptDataException, MemoryAccessException {
 		if( lockOwnerObj == null ) {
 			return null;

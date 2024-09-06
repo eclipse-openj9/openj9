@@ -33,9 +33,9 @@ import com.ibm.jvm.dtfjview.commands.helpers.Utils;
 @DTFJPlugin(version="1.*", runtime=false)
 public class CdCommand extends BaseJdmpviewCommand {
 	{
-		addCommand("cd", "", "changes the current working directory, used for log files");	
+		addCommand("cd", "", "changes the current working directory, used for log files");
 	}
-	
+
 	public void run(String command, String[] args, IContext context, PrintStream out) throws CommandException {
 		if(initCommand(command, args, context, out)) {
 			return;		//processing already handled by super class
@@ -50,9 +50,9 @@ public class CdCommand extends BaseJdmpviewCommand {
 			path += arg + " ";
 		}
 		path = path.substring(0, path.length() - 1);
-		
+
 		File newPwd = Utils.absPath(ctx.getProperties(), path);
-		
+
 		if (!newPwd.isDirectory()) {
 			if (newPwd.isFile()) {
 				out.println("cannot change to specified path because it specifies a file, not a directory");
@@ -76,6 +76,6 @@ public class CdCommand extends BaseJdmpviewCommand {
 				"absolute path when set.  Note: to see what the current working " +
 				"directory is set to, use the \"pwd\" command.\n"
 			);
-		
+
 	}
 }

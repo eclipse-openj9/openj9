@@ -37,14 +37,14 @@ import com.ibm.java.diagnostics.utils.plugins.DTFJPlugin;
  * command is a 'pseudo-command' in that it is what controls switching contexts and so
  * is never actually in the list of commands available for the current context. The help
  * entries for the context command are therefore added manually.
- * 
+ *
  * @author adam
  *
  */
 @DTFJPlugin(version=".*", runtime=false, image=false)
 public class HelpCommand extends BaseJdmpviewCommand {
 	private static final String CMD_NAME = "help";
-	
+
 	{
 		addCommand(CMD_NAME, "[command name]","displays list of commands or help for a specific command");
 	}
@@ -58,14 +58,14 @@ public class HelpCommand extends BaseJdmpviewCommand {
 		} else {
 			StringBuilder cmdline = new StringBuilder();
 			if(args[0].equalsIgnoreCase("context")) {
-				out.println("switches to another context when more than one context is available. For z/OS the ASID can be specified with" + 
+				out.println("switches to another context when more than one context is available. For z/OS the ASID can be specified with" +
 						" the 'asid' flag e.g. context asid <ID>. Execute 'context' to see the list of currently available contexts");
 			} else {
 				for(String arg : args) {
 					cmdline.append(arg);
 					cmdline.append(" ");
 				}
-				
+
 				if (!ctx.isCommandRecognised(cmdline.toString().trim())) {
 					out.println("Unrecognised command: " + cmdline.toString().trim());
 				} else {
@@ -75,7 +75,7 @@ public class HelpCommand extends BaseJdmpviewCommand {
 			}
 		}
 	}
-	
+
 	private void printHelpSummary() {
 		SortedSet<String> helpTable = new TreeSet<String>();
 
@@ -105,6 +105,6 @@ public class HelpCommand extends BaseJdmpviewCommand {
 				"otherwise, the command's complete description will be displayed.\n\n" +
 				"To view help on a command's sub-command, specify both the command " +
 				"name and the sub-command name.  For example, \"help info thread\" " +
-				"will display \"info thread\"'s description.");		
+				"will display \"info thread\"'s description.");
 	}
 }

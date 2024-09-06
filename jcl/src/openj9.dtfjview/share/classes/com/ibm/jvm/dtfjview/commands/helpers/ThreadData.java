@@ -26,7 +26,7 @@ import com.ibm.dtfj.java.JavaRuntime;
 import com.ibm.dtfj.java.JavaThread;
 
 public class ThreadData {
-	
+
 	private JavaThread jt;
 	private JavaRuntime jr;
 
@@ -34,11 +34,11 @@ public class ThreadData {
 		jt = _jt;
 		jr = _jr;
 	}
-	
+
 	public JavaThread getThread() {
 		return jt;
 	}
-	
+
 	public JavaRuntime getRuntime() {
 		return jr;
 	}

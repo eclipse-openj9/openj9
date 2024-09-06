@@ -50,9 +50,9 @@ import com.ibm.jvm.dtfjview.commands.helpers.Utils;
 @DTFJPlugin(version="1.*",runtime=false)
 public class InfoLockCommand extends BaseJdmpviewCommand{
 	{
-		addCommand("info lock", "", "outputs a list of system monitors and locked objects");	
+		addCommand("info lock", "", "outputs a list of system monitors and locked objects");
 	}
-	
+
 	public void run(String command, String[] args, IContext context, PrintStream out) throws CommandException {
 		if(initCommand(command, args, context, out)) {
 			return;		//processing already handled by super class
@@ -64,12 +64,12 @@ public class InfoLockCommand extends BaseJdmpviewCommand{
 		showSystemLocks();
 		showJavaUtilConcurrentLocks();
 	}
-	
+
 	private void showSystemLocks() {
 		Vector<JavaMonitor> vMonitorsWithLockedObjects = new Vector<>();
 		JavaRuntime jRuntime = ctx.getRuntime();
 		Iterator<?> monitors = jRuntime.getMonitors();
-		
+
 		out.println("\nSystem locks...");
 		while (monitors.hasNext()){
 			JavaMonitor jMonitor = (JavaMonitor)monitors.next();
@@ -91,9 +91,9 @@ public class InfoLockCommand extends BaseJdmpviewCommand{
 						logger.log(Level.FINE, Exceptions.getDataUnavailableString(), e);
 					}
 				}
-				
+
 				showWaiters(jMonitor);
-				
+
 			} catch(CorruptDataException cde) {
 				out.println("\nwarning, corrupt data encountered during scan for system locks...");
 			}
@@ -116,7 +116,7 @@ public class InfoLockCommand extends BaseJdmpviewCommand{
 			}
 			JavaThread jThread = (JavaThread)t;
 			try {
-				out.println("\twaiting thread id: " + jThread.getImageThread().getID() 
+				out.println("\twaiting thread id: " + jThread.getImageThread().getID()
 						+ " name: " + jThread.getName());
 			} catch (DataUnavailable dae) {
 				out.println("\twaiting thread id: <unknown>");
@@ -131,7 +131,7 @@ public class InfoLockCommand extends BaseJdmpviewCommand{
 			}
 			JavaThread jThread = (JavaThread)t;
 			try {
-				out.println("\twaiting thread id: " + jThread.getImageThread().getID() 
+				out.println("\twaiting thread id: " + jThread.getImageThread().getID()
 						+ " name: " + jThread.getName());
 			} catch (DataUnavailable dae) {
 				out.println("\twaiting thread id: <unknown>");
@@ -139,7 +139,7 @@ public class InfoLockCommand extends BaseJdmpviewCommand{
 			}
 		}
 	}
-	
+
 	private void showLockedObjects(Vector<JavaMonitor> vMonitorsWithLockedObjects) {
 		out.println("\nObject Locks in use...");
 		if (0 == vMonitorsWithLockedObjects.size()){
@@ -153,9 +153,9 @@ public class InfoLockCommand extends BaseJdmpviewCommand{
 			try{
 				JavaThread owner = jMonitor.getOwner();
 				String className = "<unknown class>";
-				JavaClass jClass = jObject.getJavaClass();	
+				JavaClass jClass = jObject.getJavaClass();
 				if (null != jClass) {
-				    className = jClass.getName();
+					className = jClass.getName();
 				}
 				String jObjectID = Long.toHexString(jObject.getID().getAddress());
 				if (null == owner) {
@@ -177,7 +177,7 @@ public class InfoLockCommand extends BaseJdmpviewCommand{
 			}
 		}
 	}
-	
+
 	private void showJavaUtilConcurrentLocks() {
 		// A map of lock objects and their waiting threads.
 		Map<JavaObject, List<JavaThread>> locksToThreads = new HashMap<>();
@@ -234,15 +234,15 @@ public class InfoLockCommand extends BaseJdmpviewCommand{
 				}
 				if( threads != null && threads.size() > 0) {
 					String lockID = Long.toHexString(lock.getID().getAddress());
-					
+
 					ImageThread imageThread = (lockOwnerThread!=null?lockOwnerThread.getImageThread():null);
-					
+
 					out.println(lock.getJavaClass().getName() + "@0x" + lockID + "\n\tlocked by java thread id: "
 							+ ((imageThread!=null)?imageThread.getID():"<null>") + " name: " + (threadName));
-					
+
 					for( Object t: threads) {
 						JavaThread waiter = (JavaThread) t;
-						out.println("\twaiting thread id: " + waiter.getImageThread().getID() 
+						out.println("\twaiting thread id: " + waiter.getImageThread().getID()
 								+ " name: " + waiter.getName());
 					}
 				}
@@ -258,12 +258,11 @@ public class InfoLockCommand extends BaseJdmpviewCommand{
 			}
 		}
 	}
-	
+
 	@Override
 	public void printDetailedHelp(PrintStream out) {
 		out.println("outputs a list of system monitors and locked objects\n\n" +
 				"parameters: none\n\n" +
 				"The info lock command outputs a list of system monitors and locked objects.");
-		
 	}
 }

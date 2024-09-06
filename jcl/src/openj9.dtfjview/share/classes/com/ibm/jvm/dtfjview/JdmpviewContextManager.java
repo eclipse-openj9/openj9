@@ -38,7 +38,7 @@ import com.ibm.jvm.dtfjview.spi.ISessionContextManager;
 /**
  * Class for managing jdmpview contexts as it is possible to add and remove contexts
  * without exiting the application.
- * 
+ *
  * @author adam
  *
  */
@@ -46,10 +46,10 @@ public class JdmpviewContextManager implements ISessionContextManager {
 	private Map<URI, ArrayList<ICombinedContext>> contextTracker = new LinkedHashMap<URI, ArrayList<ICombinedContext>>();
 	private int maxContextID = 0;
 	private boolean hasChanged = false;
-	
+
 	/**
 	 * Create a new context from DTFJ.
-	 * 
+	 *
 	 * @param image the DTFJ Image
 	 * @param major the DTFJ API major number
 	 * @param minor the DTFJ API minor number
@@ -72,14 +72,14 @@ public class JdmpviewContextManager implements ISessionContextManager {
 		hasChanged = true;
 		return combinedctx;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.jvm.dtfjview.spi.ISessionContextManager#removeContexts(com.ibm.dtfj.image.Image)
 	 */
 	public void removeContexts(Image image) {
 		removeContexts(image.getSource());
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.jvm.dtfjview.spi.ISessionContextManager#removeContexts(java.net.URI)
 	 */
@@ -92,7 +92,7 @@ public class JdmpviewContextManager implements ISessionContextManager {
 			hasChanged = true;
 		}
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.jvm.dtfjview.spi.ISessionContextManager#removeAllContexts()
 	 */
@@ -106,14 +106,14 @@ public class JdmpviewContextManager implements ISessionContextManager {
 			removeContexts(source);
 		}
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.jvm.dtfjview.spi.ISessionContextManager#getContexts()
 	 */
 	public Map<URI, ArrayList<ICombinedContext>> getContexts() {
 		return Collections.unmodifiableMap(contextTracker);
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.jvm.dtfjview.spi.ISessionContextManager#hasMultipleContexts()
 	 */
@@ -123,12 +123,12 @@ public class JdmpviewContextManager implements ISessionContextManager {
 				return false;
 			case 1:		//only one source, so need to look at contexts
 				return contextTracker.values().size() > 1;
-				
+
 			default : //two or more sources exist = multiple contexts
 				return true;
 		}
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.jvm.dtfjview.spi.ISessionContextManager#getContext(int)
 	 */
@@ -145,7 +145,7 @@ public class JdmpviewContextManager implements ISessionContextManager {
 		}
 		return null;		//couldn't find the context
 	}
-	
+
 	//indicates if the context list has changed since the last time this method was called
 	/* (non-Javadoc)
 	 * @see com.ibm.jvm.dtfjview.spi.ISessionContextManager#hasChanged()

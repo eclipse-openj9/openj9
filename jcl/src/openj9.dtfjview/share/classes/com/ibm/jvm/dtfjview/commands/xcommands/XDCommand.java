@@ -34,9 +34,9 @@ import com.ibm.jvm.dtfjview.commands.helpers.Utils;
 @DTFJPlugin(version="1.*", runtime=false)
 public class XDCommand extends XCommand {
 	{
-		addCommand("x/d", "<hex address>", "displays the integer at the specified address");	
+		addCommand("x/d", "<hex address>", "displays the integer at the specified address");
 	}
-	
+
 	@Override
 	public boolean recognises(String command, IContext context) {
 		if(super.recognises(command, context)) {
@@ -49,7 +49,7 @@ public class XDCommand extends XCommand {
 	{
 		String param = args[0];
 		Long address;
-		
+
 		address = Utils.longFromStringWithPrefix(param);
 		if (null == address)
 		{
@@ -60,19 +60,19 @@ public class XDCommand extends XCommand {
 
 		out.print("\n");
 		boolean found = false;
-		
+
 		for (int index = 0; index < argUnitNumber; index++)
 		{
-			
+
 			long currAddr = address.longValue() + (index * argUnitSize);
-			
+
 			out.print("\t");
 			out.print(Utils.toHex(currAddr));
 			out.print(": ");
-			
+
 			ImageAddressSpace ias = ctx.getAddressSpace();
 			ImagePointer ip = ias.getPointer(currAddr);
-			
+
 			byte b = 0;
 			short s = 0;
 			int i = 0;
@@ -93,7 +93,7 @@ public class XDCommand extends XCommand {
 					l = ip.getLongAt(0);
 					break;
 				}
-				
+
 				found = true;
 			} catch (CorruptDataException e) {
 				found = false;
@@ -121,7 +121,7 @@ public class XDCommand extends XCommand {
 			}
 			out.print("\n");
 		}
-		
+
 		if (!found)
 		{
 			out.print("<address not found in any address space>");
@@ -140,5 +140,5 @@ public class XDCommand extends XCommand {
 				"it by the \"x/\" command.\n"
 		);
 	}
-	
+
 }

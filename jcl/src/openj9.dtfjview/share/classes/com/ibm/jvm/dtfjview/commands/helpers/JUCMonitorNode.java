@@ -37,12 +37,12 @@ public class JUCMonitorNode extends MonitorNode {
 
 	private JavaObject lock;
 	private JavaRuntime jr;
-	
+
 	public JUCMonitorNode(JavaObject jucLock, JavaRuntime rt) {
 		this.lock = jucLock;
 		this.jr = rt;
 	}
-	
+
 	public Iterator getEnterWaiters() {
 		List waiters = new LinkedList();
 		Iterator itThread = jr.getThreads();
@@ -75,7 +75,7 @@ public class JUCMonitorNode extends MonitorNode {
 	public JavaObject getObject() {
 		return lock;
 	}
-	
+
 	public String getType() {
 		try {
 			return lock.getJavaClass().getName();

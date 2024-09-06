@@ -29,7 +29,7 @@ import com.ibm.jvm.dtfjview.spi.IOutputChannel;
 
 public class ConsoleOutputChannel implements IOutputChannel {
 	private PrintStream out = System.out;		//grab the print stream in case it gets redirected later on
-	
+
 	private boolean noPrint = false;
 
 	public void print(String outputString) {
@@ -50,7 +50,7 @@ public class ConsoleOutputChannel implements IOutputChannel {
 		System.err.print("\n");
 		System.err.print("ERROR: " + outputString + "\n");
 	}
-	
+
 	//logs an error to the specified output channel
 	public void error(String msg, Exception e) {
 		System.err.println(Utils.toString(msg));
@@ -61,11 +61,11 @@ public class ConsoleOutputChannel implements IOutputChannel {
 		// we don't need to output anything, but we could output the time the command was started
 		//System.out.println("<started at: " + (new Date(timestamp)).toString() + ">");
 	}
-	
+
 	public void close() {
 		// do nothing, because we don't need to close System.out or System.err
 	}
-	
+
 	public void setNoPrint(boolean b) {
 		noPrint = b;
 	}
