@@ -33,7 +33,7 @@ import java.security.PrivilegedAction;
 import java.util.List;
 /*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
-/* ReceiverBoundHandle is a DirectHandle subclass used to call methods 
+/* ReceiverBoundHandle is a DirectHandle subclass used to call methods
  * that have an exact known address and a bound first parameter.
  * <b>
  * The bound first parameter will be inserted into the stack prior to
@@ -41,7 +41,7 @@ import java.util.List;
  * receiver or null and the receiver parameter will be used to hammer
  * that slot.
  * <p>
- * This is use-able by both static and special methods as all stack 
+ * This is use-able by both static and special methods as all stack
  * shapes will have a free slot as their first slot.
  * <p>
  * It may be necessary to convert the "receiver" object into the right type.
@@ -54,7 +54,7 @@ import java.util.List;
 final class ReceiverBoundHandle extends DirectHandle {
 	final Object receiver;
 	final MethodHandle combinableVersion;
-	
+
 	public ReceiverBoundHandle(PrimitiveHandle toBind, Object receiver, MethodHandle combinableVersion) {
 		super(toBind, KIND_BOUND);
 		if (toBind instanceof DirectHandle) {
@@ -66,18 +66,18 @@ final class ReceiverBoundHandle extends DirectHandle {
 		}
 		this.combinableVersion = combinableVersion;
 	}
-	
+
 	private ReceiverBoundHandle(ReceiverBoundHandle originalHandle, MethodType newType) {
 		super(originalHandle, newType);
 		this.receiver = originalHandle.receiver;
 		this.combinableVersion = originalHandle.combinableVersion.cloneWithNewType(newType);
 	}
-	
+
 	@Override
 	MethodHandle cloneWithNewType(MethodType newType) {
 		return new ReceiverBoundHandle(this, newType);
 	}
-	
+
 	/*
 	 * MethodType is same as incoming handle minus the first
 	 * argument.
@@ -116,20 +116,20 @@ final class ReceiverBoundHandle extends DirectHandle {
 		VMLangAccess vma = Lookup.getVMLangAccess();
 		ClassLoader rawLoader = vma.getClassloader(receiver.getClass());
 		Class<?> injectedSecurityFrame = null;
-		
+
 		synchronized (SecurityFrameInjector.loaderLock) {
 			injectedSecurityFrame = SecurityFrameInjector.probeLoaderToSecurityFrameMap(rawLoader);
 		}
-		
+
 		if ((injectedSecurityFrame == null) || !injectedSecurityFrame.isInstance(receiver)) {
-			/* Receiver object cannot be an instance of SecurityFrame as its classloader 
+			/* Receiver object cannot be an instance of SecurityFrame as its classloader
 			 * doesn't have an injected security frame class.
 			 */
 			return false;
 		}
-		
+
 		final Class<?> finalInjectedSecurityFrame = injectedSecurityFrame;
-		
+
 		MethodHandle target = AccessController.doPrivileged(new PrivilegedAction<MethodHandle>() {
 			public MethodHandle run() {
 				try {
@@ -141,12 +141,12 @@ final class ReceiverBoundHandle extends DirectHandle {
 				}
 			}
 		});
-		
+
 		if (target.type() == type()) {
 			relatedMHs.add(target);
 			return true;
 		}
-		
+
 		return false;
 	}
 /*[ENDIF] JAVA_SPEC_VERSION >= 15 */
@@ -154,19 +154,18 @@ final class ReceiverBoundHandle extends DirectHandle {
 	// {{{ JIT support
 	private static final ThunkTable _thunkTable = new ThunkTable();
 	protected final ThunkTable thunkTable(){ return _thunkTable; }
-	
+
 	@FrameIteratorSkip
 	private final void invokeExact_thunkArchetype_V(int argPlaceholder) {
 		nullCheckIfRequired(receiver);
 		if (ILGenMacros.isCustomThunk()) {
-			directCall_V(receiver, argPlaceholder); 
+			directCall_V(receiver, argPlaceholder);
 		} else if (isAlreadyCompiled(vmSlot))
-			ComputedCalls.dispatchDirect_V(compiledEntryPoint(vmSlot), receiver, argPlaceholder); 
+			ComputedCalls.dispatchDirect_V(compiledEntryPoint(vmSlot), receiver, argPlaceholder);
 		else
-			ComputedCalls.dispatchJ9Method_V(vmSlot, receiver, argPlaceholder); 
+			ComputedCalls.dispatchJ9Method_V(vmSlot, receiver, argPlaceholder);
 	}
 
-	
 	@FrameIteratorSkip
 	private final int invokeExact_thunkArchetype_I(int argPlaceholder) {
 		nullCheckIfRequired(receiver);
@@ -178,7 +177,6 @@ final class ReceiverBoundHandle extends DirectHandle {
 			return ComputedCalls.dispatchJ9Method_I(vmSlot, receiver, argPlaceholder);
 	}
 
-	
 	@FrameIteratorSkip
 	private final long invokeExact_thunkArchetype_J(int argPlaceholder) {
 		nullCheckIfRequired(receiver);
@@ -190,7 +188,6 @@ final class ReceiverBoundHandle extends DirectHandle {
 			return ComputedCalls.dispatchJ9Method_J(vmSlot, receiver, argPlaceholder);
 	}
 
-	
 	@FrameIteratorSkip
 	private final float invokeExact_thunkArchetype_F(int argPlaceholder) {
 		nullCheckIfRequired(receiver);
@@ -202,7 +199,6 @@ final class ReceiverBoundHandle extends DirectHandle {
 			return ComputedCalls.dispatchJ9Method_F(vmSlot, receiver, argPlaceholder);
 	}
 
-	
 	@FrameIteratorSkip
 	private final double invokeExact_thunkArchetype_D(int argPlaceholder) {
 		nullCheckIfRequired(receiver);
@@ -214,16 +210,15 @@ final class ReceiverBoundHandle extends DirectHandle {
 			return ComputedCalls.dispatchJ9Method_D(vmSlot, receiver, argPlaceholder);
 	}
 
-	
 	@FrameIteratorSkip
-	private final Object invokeExact_thunkArchetype_L(int argPlaceholder) { 
+	private final Object invokeExact_thunkArchetype_L(int argPlaceholder) {
 		nullCheckIfRequired(receiver);
 		if (ILGenMacros.isCustomThunk()) {
-			return directCall_L(receiver, argPlaceholder); 
+			return directCall_L(receiver, argPlaceholder);
 		} else if (isAlreadyCompiled(vmSlot))
-			return ComputedCalls.dispatchDirect_L(compiledEntryPoint(vmSlot), receiver, argPlaceholder); 
+			return ComputedCalls.dispatchDirect_L(compiledEntryPoint(vmSlot), receiver, argPlaceholder);
 		else
-			return ComputedCalls.dispatchJ9Method_L(vmSlot, receiver, argPlaceholder); 
+			return ComputedCalls.dispatchJ9Method_L(vmSlot, receiver, argPlaceholder);
 	}
 
 	// }}} JIT support

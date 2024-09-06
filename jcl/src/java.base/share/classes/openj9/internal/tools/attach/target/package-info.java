@@ -23,7 +23,7 @@
 
 /**
  * <h1>Implementation of the Attach API for the J9 Java VM.</h1>
- * 
+ *
  * <h2>Execution and Protocols</h2>
  * <p>The key aspects of this interface are:</p>
  * <ul>
@@ -31,14 +31,14 @@
  * 	<li>Notification. The API provides to initiate the attachment process from the attacher (e.g. JConsole) to the target (e.g. and application program).  This implements the com.sun.tools.attach.VirtualMachine.attach() method.</li>
  * 	<li>Communication. This is a simple mechanism for communicating status and control information. This is typically used to command the loading of libraries and getting information about the target.</li>
  * </ul>
- * 
- * 
+ *
+ *
  * <p>The API is implemented principally in Java as part of the boot classes, with help from port library natives.</p>
- * 
+ *
  * <h3>Discovery</h3>
  * <ol>
  * 	<li>At startup, the target creates an "AttachHandler" thread at boot time during the JCL initialization.<br/>
- * The AttachHandler thread creates an advertisement directory in a well-known location in the file system, by default 
+ * The AttachHandler thread creates an advertisement directory in a well-known location in the file system, by default
  * /tmp/.com.ibm.tools.attach.targets/&lt;VM ID&gt; (on Microsoft Windows, substitute C:\temp or C:\Documents and Settings\/&lt;user ID&gt;\Local Settings\Tempfor /tmp). The location of the directory is configurable by a command-line argument "com.ibm.tools.attach.directory".</li>
  * 	<li>AttachHandler opens a semaphore shared among all VMs.</li>
  * 	<li>AttachHandler creates an advertisement file and a reply file in the  in the advertisement directory. The advertisement file is a Java properties file containing:
@@ -51,7 +51,7 @@
  * 	<li>AttachHandler waits on the semaphore</li>
  * </ol>
  * <p>Creation and updating of the advertisement directory occurs under the protection of a common controller lock file.</p>
- * 
+ *
  * <h3>Notification</h3>
  * <p>The API uses the VM's port library shared semaphore mechanism.  </p>
  * <ol>
@@ -65,14 +65,14 @@
  * 	</ol>
  * 	</li>
  * 	<li>The target's AttachHandler wakes up and sees if it has a reply file in its advertisement directory. If so, it creates an "attachment " thread</li>
- * 
+ *
  * 	<li>The target waits until the all other VMs have been woken up (see "Notification protocol" below) and waits again on the semaphore.</li>
  * 	<li>The attachment thread reads the socket number from the reply file</li>
  * 	<li>The attachment thread opens the socket and writes an acknowledgment to the socket</li>
  * 	<li>The attacher's socket read completes.  The attach process is now complete.</li>
  * 	<li>The attacher deletes the reply file.</li>
  * </ol>
- * 
+ *
  * <h3>Communication</h3>
  * <ol>
  * 	<li>The attacher sends commands such as loadAgent() by writing text strings to the socket.</li>
@@ -81,7 +81,7 @@
  * 	<li>The attachment thread in the target reads the detach command, closes the socket, and terminates.
  * </ol>
  * <h3>Shutdown</h3>
- * 
+ *
  * <p>On shutdown, the attachHandler:</p>
  * <ol>
  * </li>
@@ -92,11 +92,11 @@
  * </ol>
  * <p>The target and attacher can have multiple concurrent attachments in progress.</p>
  * <h2>Security</h2>
- * <p>The advertisement directory and contained files have Unix owner read permissions and owner write permissions. 
+ * <p>The advertisement directory and contained files have Unix owner read permissions and owner write permissions.
  * On Windows, the directory and files are read-only permissions except when the attacher is writing the port number. <br/>
  * The attacher writes a "key" pass string to the reply file.  The target must echo this string when acknowledging the attachment.</p>
  * <h2>File system artifacts</h2>
- * <p>Attach API uses semaphore, files, and file locks to advertise, synchronize and communicate amongst VMs. 
+ * <p>Attach API uses semaphore, files, and file locks to advertise, synchronize and communicate amongst VMs.
  * File system permissions to provide security.
  * <h3>Common files</h3>
  * The common directory and its files has user, group, and world full permissions, but the sticky bit prevents interference between userids.</p>
@@ -113,10 +113,10 @@
  * </tr>
  * <tr> <td>_notifier<td>(none)<td>Provides inter-process wait/notify semantics </td> </tr>
  * <tr> <td>_attachlock<td>FileLockmanager<td>Provides inter-process wait/notify semantics</td> </tr>
- * </table>	
+ * </table>
  * <h3>Per-target files</h3>
  * <p>As JVM instances start up they create their own "target" directory using the virtual machine ID, usually the process id (PID)
- * as the directory name under protection of the controllerLock. 
+ * as the directory name under protection of the controllerLock.
  * The target has full owner permissions and execute permissions for group and world. </p>
  * <p>Inside the target's directory are the following files:</p>
  * <table border="1">

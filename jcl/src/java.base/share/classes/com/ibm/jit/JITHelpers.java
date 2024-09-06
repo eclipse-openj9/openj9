@@ -162,7 +162,6 @@ public final class JITHelpers {
 		return getJ9ClassFromClass32(clazz);
 	}
 
-
 	/*
 	 * To be recognized by the JIT and returns true if the hardware supports SIMD case conversion.
 	 */

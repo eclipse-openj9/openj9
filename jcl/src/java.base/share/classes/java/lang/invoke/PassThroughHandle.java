@@ -37,16 +37,16 @@ abstract class PassThroughHandle extends MethodHandle {
 	/**
 	 * Create a new PassThroughHandle that will call 'equivalent' MethodHandle
 	 * when invoked in the interpreter.
-	 * 
+	 *
 	 * @param equivalent the equivalent methodhandle, usually using the collect-operate-spread pattern
 	 * @param name subclass name
-	 * @param thunkArg extra thunkArg used in computeThunks.  
+	 * @param thunkArg extra thunkArg used in computeThunks.
 	 */
 	PassThroughHandle(MethodHandle equivalent, Object thunkArg) {
 		super(equivalent.type, KIND_PASSTHROUGH, thunkArg);
 		this.equivalent = equivalent;
 	}
-	
+
 	/**
 	 * Helper constructor.  Calls {@link #PassThroughHandle(MethodHandle, Object)} with null thunkArg
 	 */
@@ -61,7 +61,7 @@ abstract class PassThroughHandle extends MethodHandle {
 		super(originalHandle, newType);
 		this.equivalent = originalHandle.equivalent;
 	}
-	
+
 /*[IF JAVA_SPEC_VERSION >= 15]*/
 	@Override
 	boolean addRelatedMHs(List<MethodHandle> relatedMHs) {

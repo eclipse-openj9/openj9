@@ -60,7 +60,7 @@ public final class MsgHelp {
  *                  the formatted message.
  */
 public static String format (String format, Object[] args) {
-    return format(format, null, args);
+	return format(format, null, args);
 }
 
 /**
@@ -75,10 +75,10 @@ public static String format (String format, Object[] args) {
  *                  the formatted message.
  */
 public static String format (String format, Object arg) {
-    if(arg == null) {
-        arg = "<null>"; //$NON-NLS-1$
-    }
-    return format(format, arg, null);
+	if(arg == null) {
+		arg = "<null>"; //$NON-NLS-1$
+	}
+	return format(format, arg, null);
 }
 
 /**
@@ -95,23 +95,23 @@ public static String format (String format, Object arg) {
  * @return the formatted message
  */
 private static String format (String format, Object singleArg, Object[] multipleArgs) {
-    boolean hasSingleArg = singleArg != null;
-    int argLength = 0;
-    String argString = null;
-    String[] argStrings = null;
-    if(hasSingleArg) {
-        argLength = 1;
-        argString = singleArg.toString();
-    } else if(multipleArgs != null) {
-        argLength = multipleArgs.length;
-        argStrings = new String[argLength];
-        for (int i = 0; i < argLength; ++i) {
-            if (multipleArgs[i] == null)
-                argStrings[i] = "<null>"; //$NON-NLS-1$
-            else
-                argStrings[i] = multipleArgs[i].toString();
-        }
-    }
+	boolean hasSingleArg = singleArg != null;
+	int argLength = 0;
+	String argString = null;
+	String[] argStrings = null;
+	if(hasSingleArg) {
+		argLength = 1;
+		argString = singleArg.toString();
+	} else if(multipleArgs != null) {
+		argLength = multipleArgs.length;
+		argStrings = new String[argLength];
+		for (int i = 0; i < argLength; ++i) {
+			if (multipleArgs[i] == null)
+				argStrings[i] = "<null>"; //$NON-NLS-1$
+			else
+				argStrings[i] = multipleArgs[i].toString();
+		}
+	}
 	/*[PR 110011] StringBuffer not created with initial size */
 	StringBuilder answer = new StringBuilder(format.length() + (argLength * 20));
 
@@ -136,18 +136,18 @@ private static String format (String format, Object singleArg, Object[] multiple
 					answer.append(format.substring(lastI, i+1));
 					lastI = i+1;
 				} else {
-                    // Got a good one!
-                    String sub = format.substring(lastI, i);
-                    answer.append(sub);
-                    if (argnum >= argLength) {
+					// Got a good one!
+					String sub = format.substring(lastI, i);
+					answer.append(sub);
+					if (argnum >= argLength) {
 						answer.append("<missing argument>"); //$NON-NLS-1$
-                    } else if(hasSingleArg) {
-                        answer.append(argString);
-                    } else {
+					} else if(hasSingleArg) {
+						answer.append(argString);
+					} else {
 						answer.append(argStrings[argnum]);
-                    }
+					}
 					lastI = i + 3;
-                }
+				}
 			}
 		}
 	}

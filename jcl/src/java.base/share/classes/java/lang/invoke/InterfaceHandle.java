@@ -27,8 +27,8 @@ import java.lang.reflect.Method;
 import static java.lang.invoke.MethodHandleResolver.getJ9ClassFromClass;
 
 /*
- * InterfaceHandle is a MethodHandle that does interface dispatch 
- * on the receiver.  
+ * InterfaceHandle is a MethodHandle that does interface dispatch
+ * on the receiver.
  * <p>
  * The vmSlot holds the itable index for the correct method.
  * The type is the same as the method's except with the interface class prepended
@@ -48,21 +48,20 @@ final class InterfaceHandle extends IndirectHandle {
 		assert referenceClass.isInterface();
 		this.defc = finishMethodInitialization(null, type);
 	}
-	
-	
+
 	InterfaceHandle(Method method) throws IllegalAccessException {
 		super(indirectMethodType(method), method.getDeclaringClass(), method.getName(), KIND_INTERFACE, method.getModifiers());
-			
+
 		if (!referenceClass.isInterface()) {
 			throw new IllegalArgumentException();
 		}
-		
+
 		boolean succeed = setVMSlotAndRawModifiersFromMethod(this, referenceClass, method, this.kind, specialCaller);
 		if (!succeed) {
 			throw new IllegalAccessException();
 		}
 	}
-	
+
 	public InterfaceHandle(InterfaceHandle originalHandle, MethodType newType) {
 		super(originalHandle, newType);
 	}
@@ -146,4 +145,3 @@ final class InterfaceHandle extends IndirectHandle {
 		super.compareWithIndirect(left, c);
 	}
 }
-

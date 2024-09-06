@@ -1124,7 +1124,6 @@ public class MethodHandles {
 			return null;
 		}
 
-
 		/**
 		 * Return a MethodHandle that provides read access to a field.
 		 * The MethodHandle will have a MethodType taking a single
@@ -3175,7 +3174,6 @@ public class MethodHandles {
 		throw new IllegalArgumentException();
 	}
 
-
 	@SuppressWarnings("unused")
 	private static void voidExceptionThrower(Throwable t) throws Throwable {
 		throw t;
@@ -3404,8 +3402,8 @@ public class MethodHandles {
 	 * 	return original(a, e, c)
 	 * }
 	 *
-  	 * @param handle - the handle to call after preprocessing
- 	 * @param filterPosition - the starting position to filter arguments
+	 * @param handle - the handle to call after preprocessing
+	 * @param filterPosition - the starting position to filter arguments
 	 * @param preprocessor - a methodhandle that preprocesses some of the incoming arguments
 	 * @param argumentIndices - an array of indices mapping the handle's arguments to the preprocessors inputs
 	 * @return a MethodHandle that preprocesses some of the arguments to the handle
@@ -3770,7 +3768,6 @@ public class MethodHandles {
 		return true;
 	}
 
-
 	/*
 	 * Helper method to dropArguments(). This method must be called with cloned array Class<?>... valueType.
 	 */
@@ -3781,7 +3778,6 @@ public class MethodHandles {
 			/*[MSG "K039c", "Invalid parameters"]*/
 			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K039c")); //$NON-NLS-1$
 		}
-
 
 		MethodType permuteType = originalType.insertParameterTypes(location, valueTypes);
 		/* Build equivalent permute array */
@@ -3796,7 +3792,6 @@ public class MethodHandles {
 		assert(validatePermutationArray(permuteType, originalType, permute));
 		return originalHandle.permuteArguments(permuteType, permute);
 	}
-
 
 	/**
 	 * This method returns a method handle that delegates to the original method handle,
@@ -3813,7 +3808,6 @@ public class MethodHandles {
 		valueTypes = valueTypes.clone();
 		return dropArgumentsUnsafe(originalHandle, location, valueTypes);
 	}
-
 
 	/**
 	 * This method returns a method handle that delegates to the original method handle,

@@ -87,11 +87,11 @@ public Class<?> loadClass(String className) throws ClassNotFoundException {
 
 public static ClassLoader singleton() {
 	if (singleton == null)
-	 	singleton = new BootstrapClassLoader();
+		singleton = new BootstrapClassLoader();
 	 else
 /*[MSG "K0084", "can only instantiate one BootstrapClassLoader"]*/
-	 	throw new SecurityException(com.ibm.oti.util.Msg.getString("K0084")); //$NON-NLS-1$
- 	return singleton;
+		throw new SecurityException(com.ibm.oti.util.Msg.getString("K0084")); //$NON-NLS-1$
+	return singleton;
 }
 
 protected Package getPackage(String name) {

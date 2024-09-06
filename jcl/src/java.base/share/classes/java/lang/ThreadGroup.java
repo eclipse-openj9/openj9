@@ -704,7 +704,7 @@ private void list(int levels) {
 	}
 
 	/*[PR CMVC 114880] ThreadGroup is not notified when all threads complete */
-    if (isThreadGroupEmpty) {
+	if (isThreadGroupEmpty) {
 		synchronized (this) {
 			notifyAll();
 		}
@@ -938,7 +938,6 @@ private final boolean suspendHelper() {
 public String toString() {
 	return getClass().getName() + "[name=" + this.getName() + ",maxpri=" + this.getMaxPriority() + "]" ;  //$NON-NLS-1$//$NON-NLS-2$ //$NON-NLS-3$
 }
-
 
 /**
  * Any uncaught exception in any Thread has to be forwarded (by the VM) to the Thread's ThreadGroup

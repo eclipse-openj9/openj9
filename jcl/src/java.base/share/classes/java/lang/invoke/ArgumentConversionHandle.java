@@ -43,4 +43,3 @@ abstract class ArgumentConversionHandle extends ConvertHandle {
 	}
 	// }}} JIT support
 }
-

@@ -186,7 +186,6 @@ public interface VMLangAccess {
 	 */
 	public Thread createThread(Runnable runnable, String threadName, boolean isSystemThreadGroup, boolean inheritThreadLocals, boolean isDaemon, ClassLoader contextClassLoader);
 
-
 	/**
 	 * Prepare the passed in class
 	 *

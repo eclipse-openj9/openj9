@@ -30,14 +30,14 @@ import com.ibm.oti.util.Msg;
 
 final class SpreadHandle extends MethodHandle {
 	@VMCONSTANTPOOL_FIELD
- 	private final MethodHandle next;
+	private final MethodHandle next;
 	@VMCONSTANTPOOL_FIELD
 	private final Class<?> arrayClass;
 	@VMCONSTANTPOOL_FIELD
 	private final int spreadCount;
 	@VMCONSTANTPOOL_FIELD
 	private final int spreadPosition;  /* The starting position of spread arguments */
-	
+
 	protected SpreadHandle(MethodHandle next, MethodType collectType, Class<?> arrayClass, int spreadCount, int spreadPosition) {
 		super(collectType, KIND_SPREAD, infoAffectingThunks(arrayClass, spreadCount, spreadPosition));
 		this.arrayClass = arrayClass;

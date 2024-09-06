@@ -27,7 +27,7 @@ package java.lang;
 /**
  * This runtime exception is thrown when a program attempts to cast an object
  * to a type with which it is not compatible.
- * 
+ *
  * @version initial
  */
 public class ClassCastException extends RuntimeException {
@@ -35,7 +35,7 @@ public class ClassCastException extends RuntimeException {
 
 	/**
 	 * Constructs a new instance of this class with its walkback filled in.
-	 * 
+	 *
 	 * @version initial
 	 */
 	public ClassCastException() {
@@ -45,9 +45,9 @@ public class ClassCastException extends RuntimeException {
 	/**
 	 * Constructs a new instance of this class with its walkback and message
 	 * filled in.
-	 * 
+	 *
 	 * @version initial
-	 * 
+	 *
 	 * @param detailMessage
 	 *            String The detail message for the exception.
 	 */
@@ -58,12 +58,12 @@ public class ClassCastException extends RuntimeException {
 	/**
 	 * Constructs a new instance of this class with its walkback and message
 	 * filled in.
-	 * 
+	 *
 	 * @version initial
-	 * 
+	 *
 	 * @param instanceClass
 	 *            Class The class being cast from.
-	 * 
+	 *
 	 * @param castClass
 	 *            Class The class being cast to.
 	 */

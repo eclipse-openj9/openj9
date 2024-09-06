@@ -35,11 +35,11 @@ abstract class ConvertHandle extends MethodHandle {
 	final MethodHandle next;
 
 	ConvertHandle(MethodHandle handle, MethodType type, byte kind, Object thunkArg) {
-        	super(type, kind, thunkArg);
-        	if ((handle == null) || (type == null)) {
-                	throw new IllegalArgumentException();
-        	}
-        	this.next = handle;
+			super(type, kind, thunkArg);
+			if ((handle == null) || (type == null)) {
+					throw new IllegalArgumentException();
+			}
+			this.next = handle;
 	}
 
 	ConvertHandle(ConvertHandle originalHandle, MethodType newType) {
@@ -50,7 +50,7 @@ abstract class ConvertHandle extends MethodHandle {
 
 	@VMCONSTANTPOOL_FIELD
 	boolean requiresBoxing = false;
-	
+
 	/*
 	 * Determine if the arguments can be converted from the MethodType fromType to that of toType.
 	 * Return conversions are handled by FilterReturnHandle.
@@ -62,22 +62,22 @@ abstract class ConvertHandle extends MethodHandle {
 		if (toArgs.length != fromArgs.length) {
 			throwWrongMethodTypeException(fromType, toType, toArgs.length);
 		}
-		
+
 		boolean isExplicitCast = (kind == KIND_EXPLICITCAST);
-			
+
 		// Ensure argsToCollect can be converted to type of array
 		for (int i = 0; i < toArgs.length; i++ ) {
 			Class<?> toClass = toArgs[i];
 			Class<?> fromClass = fromArgs[i];
-			
+
 			// identity conversion
 			if (fromClass == toClass) {
 				continue;
 			}
-			
+
 			boolean toIsPrimitive = toClass.isPrimitive();
 			boolean fromIsPrimitive = fromClass.isPrimitive();
-			
+
 			// both are reference types, then apply a cast at runtime
 			if (!toIsPrimitive && !fromIsPrimitive) {
 				continue;
@@ -91,7 +91,7 @@ abstract class ConvertHandle extends MethodHandle {
 				}
 				throwWrongMethodTypeException(fromType, toType, i);
 			}
-			
+
 			// unbox + widening primitive conversion
 			if (toIsPrimitive) {
 				if (isExplicitCast) {
@@ -107,7 +107,7 @@ abstract class ConvertHandle extends MethodHandle {
 				}
 				throwWrongMethodTypeException(fromType, toType, i);
 			}
-		
+
 			// toClass is reference type
 			// primitive wrapper is subclass of fromClass
 			if (toClass.isAssignableFrom(MethodTypeHelper.wrapPrimitive(fromClass))) {
@@ -117,7 +117,7 @@ abstract class ConvertHandle extends MethodHandle {
 			throwWrongMethodTypeException(fromType, toType, i);
 		}
 	}
-	
+
 	static final void throwWrongMethodTypeException(MethodType fromType, MethodType toType, int index) throws WrongMethodTypeException {
 		/*[MSG "K05cb", "No conversion from '{0}' to '{1} at index ({2})"]*/
 		throw new WrongMethodTypeException(Msg.getString("K05cb", fromType.toString(), toType.toString(), Integer.toString(index))); //$NON-NLS-1$
@@ -136,7 +136,7 @@ abstract class ConvertHandle extends MethodHandle {
 
 		/* local cache of previously looked up filters */
 		static final ConcurrentHashMap<MethodType, MethodHandle> cachedReturnFilters = new ConcurrentHashMap<MethodType, MethodHandle>();
-		
+
 		/*
 		 * Return conversions: explicit vs asType handled by the boolean isExplicitCast
 		 */
@@ -180,8 +180,7 @@ abstract class ConvertHandle extends MethodHandle {
 				throw new Error(e);
 			}
 		}
-		
-		
+
 		/* JLSv3: 5.1.2: allowed widening primitive conversions
 		 * byte to short, int, long, float, or double
 		 * short to int, long, float, or double
@@ -200,11 +199,11 @@ abstract class ConvertHandle extends MethodHandle {
 
 			return primitiveIndex1(to) > primitiveIndex1(from);
 		}
-		
-		/* 
+
+		/*
 		 * doesn't handle boolean or non-primitive.  Also, can't widen to char.
 		 * so it's a widening conversion if primitiveIndex1(to) > primitiveIndex1(from)
-		 * 
+		 *
 		 */
 		private static int primitiveIndex1(Class<?> c) {
 			int ch = c.getName().charAt(0);
@@ -219,12 +218,12 @@ abstract class ConvertHandle extends MethodHandle {
 			6 - byte
 			*/
 			return (021230546 >> (3*shift)) & 7;	// octal value is 0x21230546 in hex
-		} 
+		}
 
 		static MethodHandle getPrimitiveReturnFilter(MethodType type, boolean isExplicitCast) throws IllegalAccessException, NoSuchMethodException {
 			Class<?> fromClass = type.parameterType(0);
 			Class<?> toClass = type.returnType();
-			
+
 			if (!isExplicitCast) {
 				if ((type.returnType() != void.class) && !checkIfWideningPrimitiveConversion(fromClass, toClass)) {
 					throw new WrongMethodTypeException();
@@ -242,12 +241,12 @@ abstract class ConvertHandle extends MethodHandle {
 			}
 			return filter;
 		}
-		
+
 		/*[IF ]*/
 		/* From 292 javadoc:
-		 * If T0 is a primitive and T1 a reference, a boxing conversion is applied if one exists, 
-		 * possibly followed by a reference conversion to a superclass. T1 must be a wrapper 
-		 * class or a supertype of one. 
+		 * If T0 is a primitive and T1 a reference, a boxing conversion is applied if one exists,
+		 * possibly followed by a reference conversion to a superclass. T1 must be a wrapper
+		 * class or a supertype of one.
 		 */
 		/*[ENDIF]*/
 		/*
@@ -271,11 +270,11 @@ abstract class ConvertHandle extends MethodHandle {
 			}
 			return filter;
 		}
-		
+
 		static MethodHandle getUnboxingReturnFilter(MethodType type, boolean isExplicitCast) throws IllegalAccessException, NoSuchMethodException {
 			Class<?> toUnbox = type.parameterType(0);
 			Class<?> returnType = type.returnType();
-			
+
 			if (toUnbox.equals(Object.class)) {
 				String methodName;
 				if (isExplicitCast) {
@@ -285,7 +284,7 @@ abstract class ConvertHandle extends MethodHandle {
 				}
 				methodName += MethodTypeHelper.getBytecodeStringName(returnType);
 				return privilegedLookup.findStatic(FilterHelpers.class, methodName, MethodType.methodType(returnType, Object.class));
-			
+
 			} else if (toUnbox.equals(Number.class)) {
 				/* Widening conversions need to validate the conversion at runtime */
 				if (!isExplicitCast) {
@@ -301,7 +300,7 @@ abstract class ConvertHandle extends MethodHandle {
 					String methodName = MethodTypeHelper.getBytecodeStringName(returnType) + "Value"; //$NON-NLS-1$
 					return privilegedLookup.findVirtual(Number.class, methodName, MethodType.methodType(returnType));
 				}
-			
+
 			} else if (toUnbox.equals(Boolean.class)) {
 				/* Boolean can be unboxed but there are no widening conversions */
 				MethodHandle filter = privilegedLookup.findVirtual(Boolean.class, "booleanValue", MethodType.methodType(boolean.class)); //$NON-NLS-1$
@@ -320,13 +319,13 @@ abstract class ConvertHandle extends MethodHandle {
 				}
 				/* widen the return if possible */
 				return MethodHandles.filterReturnValue(filter, getPrimitiveReturnFilter(MethodType.methodType(returnType, char.class), isExplicitCast));
-			
+
 			} else if (MethodTypeHelper.WRAPPER_SET.contains(toUnbox)) {
 				/* remaining wrappers may have widening conversions - can be handled by toUnbox#'type'Value() methods (ie: Number subclasses)*/
 				Class<?> unwrapped = MethodTypeHelper.unwrapPrimitive(toUnbox);
 				boolean justUnwrap = returnType.equals(unwrapped);
 				if (justUnwrap || isExplicitCast || checkIfWideningPrimitiveConversion(unwrapped, returnType)) {
-					
+
 					if (isExplicitCast && !justUnwrap) {
 						/* Special case Boolean/Character --> (!boolean/!char) as it requires a two-step filter */
 						if ((returnType == char.class) || (returnType == boolean.class)) {
@@ -336,14 +335,14 @@ abstract class ConvertHandle extends MethodHandle {
 							return MethodHandles.filterReturnValue(unbox, filter);
 						}
 					}
-					
+
 					return privilegedLookup.findVirtual(toUnbox, returnType.getName()+"Value", MethodType.methodType(returnType)); //$NON-NLS-1$;
 				}
 			}
 
 			throw new WrongMethodTypeException();
 		}
-		
+
 		/*
 		 * object to object conversion: use Class#cast(Object)
 		 */
@@ -361,7 +360,7 @@ abstract class ConvertHandle extends MethodHandle {
 		public static Object explicitCastInterfaceUnchecked(Object o) {
 			return o;
 		}
-		
+
 		public static boolean explicitObject2Z(Object o) {
 			if (o == null) {
 				return false;
@@ -374,7 +373,7 @@ abstract class ConvertHandle extends MethodHandle {
 				return (((Number)o).byteValue() & 1) == 1;
 			}
 		}
-		
+
 		public static byte explicitObject2B(Object o) {
 			if (o == null) {
 				return 0;
@@ -459,7 +458,7 @@ abstract class ConvertHandle extends MethodHandle {
 				return ((Number)o).doubleValue();
 			}
 		}
-		
+
 		public static boolean explicitNumber2Z(Number n) {
 			if (n == null) {
 				return false;
@@ -478,7 +477,7 @@ abstract class ConvertHandle extends MethodHandle {
 		private static final ClassCastException newClassCastException() {
 			return new ClassCastException();
 		}
-		
+
 		public static boolean object2Z(Object o) {
 			return ((Boolean)o).booleanValue();
 		}
@@ -527,17 +526,17 @@ abstract class ConvertHandle extends MethodHandle {
 			}
 			throw newClassCastException();
 		}
-		
+
 		public static byte number2B(Number n) {
 			/* Number can be { Byte, Short, Integer, Long, Float,  Double}
-			 * Number -> byte:  
+			 * Number -> byte:
 			 *		Byte -> byte
 			 */
 			return ((Byte)n).byteValue();	//Implicit nullcheck;
 		}
 		public static short number2S(Number n) {
 			/* Number can be { Byte, Short, Integer, Long, Float,  Double}
-			 * Number -> short:  
+			 * Number -> short:
 			 *		Byte -> byte -> short
 			 *		Short -> short
 			 */
@@ -549,7 +548,7 @@ abstract class ConvertHandle extends MethodHandle {
 		}
 		public static int number2I(Number n) {
 			/* Number can be { Byte, Short, Integer, Long, Float,  Double}
-			 * Number -> int:  
+			 * Number -> int:
 			 *		Byte -> byte -> int
 			 *		Short -> short -> int
 			 *		Integer-> int
@@ -562,7 +561,7 @@ abstract class ConvertHandle extends MethodHandle {
 		}
 		public static long number2J(Number n) {
 			/* Number can be { Byte, Short, Integer, Long, Float,  Double}
-			 * Number -> long:  
+			 * Number -> long:
 			 *		Byte -> byte -> long
 			 *		Short -> short -> long
 			 *		Integer-> int -> long
@@ -577,7 +576,7 @@ abstract class ConvertHandle extends MethodHandle {
 
 		public static float number2F(Number n) {
 			/* Number can be { Byte, Short, Integer, Long, Float,  Double}
-			 * Number -> float:  
+			 * Number -> float:
 			 *		Byte -> byte -> float
 			 *		Short -> short -> float
 			 *		Integer-> int -> float
@@ -592,7 +591,7 @@ abstract class ConvertHandle extends MethodHandle {
 		}
 		public static double number2D(Number n) {
 			/* Number can be { Byte, Short, Integer, Long, Float,  Double}
-			 * Number -> double:  
+			 * Number -> double:
 			 *		Byte -> byte -> double
 			 *		Short -> short -> double
 			 *		Integer-> int -> double
@@ -606,9 +605,9 @@ abstract class ConvertHandle extends MethodHandle {
 			n.getClass(); // implicit nullcheck.
 			throw newClassCastException();
 		}
-			
+
 		public static void popObject(Object o) { }
-		
+
 		public static double V2D() { return 0; }
 		public static long V2J() { return 0; }
 		public static float V2F() { return 0; }
@@ -618,7 +617,7 @@ abstract class ConvertHandle extends MethodHandle {
 		public static byte V2B() { return 0; }
 		public static boolean V2Z() { return false; }
 		public static Object V2object() { return null; }
-		
+
 		public static double Z2D(boolean j) { return j ? 1 : 0; }
 		public static long Z2J(boolean j) { return j ? 1 : 0; }
 		public static float Z2F(boolean j) { return j ? 1 : 0; }
@@ -628,7 +627,7 @@ abstract class ConvertHandle extends MethodHandle {
 		public static byte Z2B(boolean j) { return (byte)(j ? 1 : 0); }
 		public static void Z2V(boolean j) { }
 		public static Object Z2object(boolean j) { return Boolean.valueOf(j); }
-		
+
 		public static double B2D(byte j) { return j; }
 		public static long B2J(byte j) { return j; }
 		public static float B2F(byte j) { return j; }
@@ -638,7 +637,7 @@ abstract class ConvertHandle extends MethodHandle {
 		public static boolean B2Z(byte j) { return (byte)(j & 1) == 1; }
 		public static void B2V(byte j) { }
 		public static Object B2object(byte j) { return Byte.valueOf(j); }
-		
+
 		public static double S2D(short j) { return j; }
 		public static long S2J(short j) { return j; }
 		public static float S2F(short j) { return j; }
@@ -648,7 +647,7 @@ abstract class ConvertHandle extends MethodHandle {
 		public static boolean S2Z(short j) { return (((byte)j) & 1) == 1; }
 		public static void S2V(short j) { }
 		public static Object S2object(short j) { return Short.valueOf(j); }
-		
+
 		public static double C2D(char j) { return j; }
 		public static long C2J(char j) { return j; }
 		public static float C2F(char j) { return j; }
@@ -658,7 +657,7 @@ abstract class ConvertHandle extends MethodHandle {
 		public static boolean C2Z(char j) { return (((byte)j) & 1) == 1; }
 		public static void C2V(char j) { }
 		public static Object C2object(char j) { return Character.valueOf(j); }
-		
+
 		public static boolean I2Z(int i) {return (((byte)i) & 1) == 1; }
 		public static byte I2B(int i) { return (byte)i; }
 		public static short I2S(int i) { return (short)i; }
@@ -668,7 +667,7 @@ abstract class ConvertHandle extends MethodHandle {
 		public static double I2D(int i) { return i; }
 		public static void I2V(int j) { }
 		public static Object I2object(int j) { return Integer.valueOf(j); }
-		
+
 		public static float J2F(long j) { return j; }
 		public static double J2D(long j) { return j; }
 		public static int J2I(long j) { return (int)j; }
@@ -678,7 +677,7 @@ abstract class ConvertHandle extends MethodHandle {
 		public static boolean J2Z(long j) { return (((byte)j) & 1) == 1; }
 		public static void J2V(long j) { }
 		public static Object J2object(long j) { return Long.valueOf(j); }
-		
+
 		public static long F2J(float j) { return (long)j; }
 		public static double F2D(float j) { return j; }
 		public static int F2I(float j) { return (int)j; }
@@ -688,7 +687,7 @@ abstract class ConvertHandle extends MethodHandle {
 		public static boolean F2Z(float j) { return (((byte)j) & 1) == 1; }
 		public static void F2V(float j) { }
 		public static Object F2object(float j) { return Float.valueOf(j); }
-		
+
 		public static float D2F(double j) { return (float) j; }
 		public static long D2J(double j) { return (long) j; }
 		public static int D2I(double j) { return (int)j; }

@@ -34,8 +34,8 @@ import java.lang.reflect.Modifier;
 abstract class FieldHandle extends PrimitiveHandle {
 	final Class<?> fieldClass;
 	final boolean isVolatile;
-	
-	FieldHandle(MethodType type, Class<?> referenceClass, String fieldName, Class<?> fieldClass, byte kind, Class<?> accessClass) throws IllegalAccessException, NoSuchFieldException { 	
+
+	FieldHandle(MethodType type, Class<?> referenceClass, String fieldName, Class<?> fieldClass, byte kind, Class<?> accessClass) throws IllegalAccessException, NoSuchFieldException {
 		super(type, referenceClass, fieldName, kind, null);
 		this.fieldClass = fieldClass;
 		/* modifiers is set inside the native */
@@ -43,12 +43,12 @@ abstract class FieldHandle extends PrimitiveHandle {
 		isVolatile = Modifier.isVolatile(rawModifiers);
 		assert(isVMSlotCorrectlyTagged());
 	}
-	
+
 	FieldHandle(MethodType type, Field field, byte kind, boolean isStatic) throws IllegalAccessException {
 		super(type, field.getDeclaringClass(), field.getName(), kind, field.getModifiers(), null);
 		this.fieldClass = field.getType();
 		assert(isStatic == Modifier.isStatic(field.getModifiers()));
-		
+
 		boolean succeed = setVMSlotAndRawModifiersFromField(this, field);
 		if (!succeed) {
 			throw new IllegalAccessException();
@@ -56,7 +56,7 @@ abstract class FieldHandle extends PrimitiveHandle {
 		isVolatile = Modifier.isVolatile(rawModifiers);
 		assert(isVMSlotCorrectlyTagged());
 	}
-	
+
 	FieldHandle(FieldHandle originalHandle, MethodType newType) {
 		super(originalHandle, newType);
 		this.fieldClass = originalHandle.fieldClass;
@@ -67,13 +67,13 @@ abstract class FieldHandle extends PrimitiveHandle {
 	final Class<?> finishFieldInitialization(Class<?> accessClass) throws IllegalAccessException, NoSuchFieldException {
 		String signature = MethodTypeHelper.getBytecodeStringName(fieldClass);
 		try {
-			boolean isStaticLookup = ((KIND_GETSTATICFIELD == this.kind) || (KIND_PUTSTATICFIELD == this.kind)); 
+			boolean isStaticLookup = ((KIND_GETSTATICFIELD == this.kind) || (KIND_PUTSTATICFIELD == this.kind));
 			return lookupField(referenceClass, name, signature, isStaticLookup, accessClass);
 		} catch (NoSuchFieldError e) {
 			throw new NoSuchFieldException(e.getMessage());
 		} catch (LinkageError e) {
 			throw (IllegalAccessException) new IllegalAccessException(e.getMessage()).initCause(e);
-		} 
+		}
 	}
 
 	/* Ensure the vmSlot is low tagged if static */
@@ -81,14 +81,14 @@ abstract class FieldHandle extends PrimitiveHandle {
 		if ((KIND_PUTSTATICFIELD == this.kind) || (KIND_GETSTATICFIELD == this.kind)) {
 			return (vmSlot & 1) == 1;
 		}
-		return (vmSlot & 1) == 0;  
+		return (vmSlot & 1) == 0;
 	}
-	
+
 	@Override
 	boolean canRevealDirect() {
 		return true;
 	}
-		
+
 	final void compareWithField(FieldHandle left, Comparator c) {
 		c.compareStructuralParameter(left.referenceClass, this.referenceClass);
 		c.compareStructuralParameter(left.vmSlot, this.vmSlot);

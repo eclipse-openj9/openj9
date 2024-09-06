@@ -88,7 +88,6 @@ final class MethodHandleResolver {
 	 */
 	private static final native MethodHandle getCPMethodHandleAt(Object internalConstantPool, int index);
 
-
 	/**
 	 * Get the class name from a constant pool class element, which is located
 	 * at the specified <i>index</i> in <i>internalConstantPool</i>.
@@ -563,7 +562,6 @@ final class MethodHandleResolver {
 		return mt.parameterType(0);
 	}
 /*[ENDIF] !OPENJDK_METHODHANDLES*/
-
 
 	/**
 	 * Gets class object from RAM class address

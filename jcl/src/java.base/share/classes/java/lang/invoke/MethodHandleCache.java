@@ -52,7 +52,7 @@ class MethodHandleCache {
 	/**
 	 * Get the MethodHandle cache for a given class.
 	 * If one doesn't exist, it will be created.
-	 * 
+	 *
 	 * @param clazz the Class that MHs are being cached on
 	 * @return the MethodHandleCache object for that class
 	 */
@@ -68,8 +68,8 @@ class MethodHandleCache {
 
 	/**
 	 * @return a BoundMethodHandle that calls {@link Class#cast(Object)} on the passed in class
-	 * @throws NoSuchMethodException 
-	 * @throws IllegalAccessException 
+	 * @throws NoSuchMethodException
+	 * @throws IllegalAccessException
 	 */
 	/*[PR JAZZ 58955] Prevent duplicate RBH's of the same class on Class.cast() */
 	public MethodHandle getClassCastHandle() throws IllegalAccessException, NoSuchMethodException {
@@ -92,21 +92,21 @@ class MethodHandleCache {
 		}
 		return nullConstantObjectHandle;
 	}
-	
+
 	/**
 	 * Add a DirectHandle that needs to be updated upon redefinition of the Class that owns this cache.
 	 * The DirectHandle should reference a method in that Class.
-	 * 
+	 *
 	 * @param handle A DirectHandle to track for class redefinition
 	 */
 	public void addDirectHandle(DirectHandle handle) {
 		WeakReferenceNode<DirectHandle> ref = new WeakReferenceNode<>(handle, referenceQueue);
-		
+
 		synchronized (this) {
 			ref.addBefore(directHandlesHead);
 			directHandlesHead = ref;
 		}
-		
+
 		processReferenceQueue();
 	}
 

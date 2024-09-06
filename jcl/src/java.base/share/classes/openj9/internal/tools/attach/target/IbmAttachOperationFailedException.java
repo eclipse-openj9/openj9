@@ -29,19 +29,18 @@ import java.io.IOException;
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  */
 
-
 public class IbmAttachOperationFailedException extends IOException {
 
 	/**
-	 * Constructs a new instance of this class with its 
+	 * Constructs a new instance of this class with its
 	 * walkback filled in.
 	 */
 	public IbmAttachOperationFailedException() {
 		super("IbmAttachOperationFailedException"); //$NON-NLS-1$
 	}
-	
+
 	/**
-	 * Constructs a new instance of this class with its 
+	 * Constructs a new instance of this class with its
 	 * walkback and message filled in.
 	 * @param message
 	 *            details of exception
@@ -70,5 +69,5 @@ public class IbmAttachOperationFailedException extends IOException {
 		}
 		return result;
 	}
-	
+
 }

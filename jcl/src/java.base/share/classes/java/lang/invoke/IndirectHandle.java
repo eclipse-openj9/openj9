@@ -33,7 +33,7 @@ abstract class IndirectHandle extends PrimitiveHandle {
 	IndirectHandle(MethodType type, Class<?> referenceClass, String name, byte kind, int modifiers) {
 		super(type, referenceClass, name, kind, modifiers, null);
 	}
-	
+
 	IndirectHandle(MethodType type, Class<?> referenceClass, String name, byte kind) {
 		super(type, referenceClass, name, kind, null);
 	}
@@ -48,10 +48,10 @@ abstract class IndirectHandle extends PrimitiveHandle {
 
 	protected final long jittedMethodAddress(Object receiver) {
 		long receiverClass = getJ9ClassFromClass(receiver.getClass());
-		long result; 
+		long result;
 		if (VTABLE_ENTRY_SIZE == 4) {
 			result = UNSAFE.getInt(receiverClass - vtableOffset(receiver));
-		} else { 
+		} else {
 			result = UNSAFE.getLong(receiverClass - vtableOffset(receiver));
 		}
 		return result;
@@ -68,20 +68,20 @@ abstract class IndirectHandle extends PrimitiveHandle {
 		MethodType originalType = MethodType.methodType(method.getReturnType(), method.getParameterTypes());
 		return indirectMethodType(originalType, method.getDeclaringClass());
 	}
-	
-	/* Indirect MethodHandles have the receiver type inserted as 
+
+	/* Indirect MethodHandles have the receiver type inserted as
 	 * first argument of the MH's type.
 	 */
 	protected static final MethodType indirectMethodType(MethodType type, Class<?> referenceClazz) {
 		return type.insertParameterTypes(0, referenceClazz);
 	}
-	
+
 	@Override
 	public MethodHandle bindTo(Object value) throws IllegalArgumentException, ClassCastException {
 		if (null == value) {
 			return super.bindTo(value);
 		}
-		
+
 		/*
 		 * Check whether the first parameter has a reference type assignable from value. Note that MethodType.parameterType(0) will
 		 * throw an IllegalArgumentException if type has no parameters.
@@ -105,18 +105,18 @@ abstract class IndirectHandle extends PrimitiveHandle {
 			/*
 			 * An interface method must devirtualize to a public method. If the devirtualized method is not public,
 			 * an IllegalAccessError will be thrown when the MethodHandle is invoked. In order to enforce this behaviour,
-			 * we must preserve the original MethodHandle, i.e. not optimize to a ReceiverBoundHandle. 
+			 * we must preserve the original MethodHandle, i.e. not optimize to a ReceiverBoundHandle.
 			 */
-			if (this instanceof InterfaceHandle) { 
+			if (this instanceof InterfaceHandle) {
 				if ((result.getModifiers() & Modifier.PUBLIC) == 0) {
 					throw new IllegalAccessException();
 				}
 			}
-			
+
 			return result;
 		} catch (IllegalAccessException e) {
 			/*
-			 * Create a receiver bound MethodHandle by inserting the receiver object as an argument. This is done to 
+			 * Create a receiver bound MethodHandle by inserting the receiver object as an argument. This is done to
 			 * ensure that invocation is done using the original MethodHandle, which will result in an IllegalAccessError.
 			 */
 			return MethodHandles.insertArguments(this, 0, value);
@@ -124,10 +124,9 @@ abstract class IndirectHandle extends PrimitiveHandle {
 			throw new Error(e);
 		}
 	}
-	
+
 	final void compareWithIndirect(IndirectHandle left, Comparator c) {
 		c.compareStructuralParameter(left.referenceClass, this.referenceClass);
 		c.compareStructuralParameter(left.vmSlot, this.vmSlot);
 	}
 }
-

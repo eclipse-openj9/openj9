@@ -30,7 +30,7 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 
 /**
- * 
+ *
  * Manage socket communications between an attacher and a target VM.
  *
  */
@@ -46,19 +46,19 @@ public final class AttachmentConnection {
 	 * @return array of bytes, not including null termination
 	 * @throws IOException if file closed before null found or excessive data received
 	 */
-	
+
 	static byte[] streamReceiveBytes(InputStream channel, int dataLimit, boolean requireNull) throws IOException  {
 		final int bufferLen = 100; /* most messages are short */
 		byte [] msgBuff = new byte[bufferLen];
 		ByteArrayOutputStream msg = new ByteArrayOutputStream(bufferLen);
 		boolean unlimited = (0 == dataLimit);
-		
+
 		if (null == channel) {
 			/*[MSG "K0575", "channel is null"]*/
 			throw new IOException(com.ibm.oti.util.Msg.getString("K0575")); //$NON-NLS-1$
 		}
 		boolean done = false;
-		while (!done && (unlimited || (dataLimit > msg.size()))) {	
+		while (!done && (unlimited || (dataLimit > msg.size()))) {
 			int	nRead = channel.read(msgBuff, 0, bufferLen);
 			if (nRead > 0) {
 				if (msgBuff[nRead-1] == 0) { /* messages are terminated by a null */
@@ -87,7 +87,7 @@ public final class AttachmentConnection {
 	 * @return array of bytes, not including null termination
 	 * @throws IOException if file closed before null found or excessive data received
 	 */
-	
+
 	static byte[] streamReceiveBytes(InputStream channel, boolean requireNull) throws IOException  {
 		return streamReceiveBytes(channel, 0, requireNull);
 	}

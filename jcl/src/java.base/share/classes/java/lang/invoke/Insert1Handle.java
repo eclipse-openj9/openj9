@@ -24,12 +24,12 @@ package java.lang.invoke;
 
 final class Insert1Handle extends InsertHandle {
 	final Object value;
-	
+
 	Insert1Handle(MethodType type, MethodHandle next, int insertionIndex, Object values[]) {
 		super(type, next, insertionIndex, values);
 		this.value = values[0];
 	}
-	
+
 	Insert1Handle(Insert1Handle originalHandle, MethodType nextType) {
 		super(originalHandle, nextType);
 		this.value = originalHandle.value;
@@ -54,15 +54,14 @@ final class Insert1Handle extends InsertHandle {
 		}
 		return ILGenMacros.invokeExact_X(next, ILGenMacros.placeholder(
 				ILGenMacros.firstN(numPrefixArgs(), argPlaceholder),
-				value, 
+				value,
 				ILGenMacros.lastN(numSuffixArgs(), argPlaceholder)));
 	}
 
 	// }}} JIT support
-	
+
 	@Override
 	MethodHandle cloneWithNewType(MethodType newType) {
 		return new Insert1Handle(this, newType);
 	}
 }
-

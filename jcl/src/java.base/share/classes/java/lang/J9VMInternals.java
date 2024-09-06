@@ -602,7 +602,6 @@ final class J9VMInternals {
 	 */
 	public static native void dumpString(String str);
 
-
 	private static String[] getClassInfoStrings(final Class<?> clazz, String classPath){
 		String classLoaderStr = "<Bootstrap Loader>"; //$NON-NLS-1$
 		String cpResult = "<Unknown>"; //$NON-NLS-1$

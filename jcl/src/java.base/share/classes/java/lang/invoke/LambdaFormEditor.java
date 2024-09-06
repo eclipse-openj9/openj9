@@ -36,11 +36,11 @@ class LambdaFormEditor {
 	LambdaForm filterArgumentForm(int num, LambdaForm.BasicType by) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	
+
 	LambdaForm filterReturnForm(LambdaForm.BasicType bt, boolean flag) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	
+
 	LambdaForm noteLoopLocalTypesForm(int num, LambdaForm.BasicType[] bts) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}

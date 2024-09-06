@@ -32,11 +32,10 @@ import java.lang.reflect.Modifier;
  * Can be thought of as a special case of VirtualHandle.
  */
 final class InvokeGenericHandle extends PrimitiveHandle {
- 	/* MethodType that the first argument MethodHandle will be cast to using asType */
+	/* MethodType that the first argument MethodHandle will be cast to using asType */
 	@VMCONSTANTPOOL_FIELD
- 	final MethodType castType;
- 
-	
+	final MethodType castType;
+
 	InvokeGenericHandle(MethodType type) {
 		super(invokeGenericMethodType(type), MethodHandle.class, "invoke", KIND_INVOKEGENERIC, PUBLIC_FINAL_NATIVE, null); //$NON-NLS-1$
 		if (type == null) {
@@ -65,7 +64,7 @@ final class InvokeGenericHandle extends PrimitiveHandle {
 		/* This is invokevirtual of MethodHandle.invoke() */
 		return true;
 	}
-	
+
 	// {{{ JIT support
 
 	private static final ThunkTable _thunkTable = new ThunkTable();
@@ -79,7 +78,7 @@ final class InvokeGenericHandle extends PrimitiveHandle {
 	}
 
 	@FrameIteratorSkip
- 	private final int invokeExact_thunkArchetype_X(MethodHandle next, int argPlaceholder) throws Throwable {
+	private final int invokeExact_thunkArchetype_X(MethodHandle next, int argPlaceholder) throws Throwable {
 		if (ILGenMacros.isShareableThunk()) {
 			undoCustomizationLogic(next);
 		}
@@ -108,4 +107,3 @@ final class InvokeGenericHandle extends PrimitiveHandle {
 		// Nothing distinguishes InvokeGenericHandles except their type, which Comparator already deals with
 	}
 }
-

@@ -30,7 +30,7 @@ import java.util.List;
  * Stub class to compile OpenJDK j.l.i.MethodHandleImpl
  */
 final class SimpleMethodHandle extends BoundMethodHandle {
-	
+
 	private SimpleMethodHandle(MethodType type, LambdaForm form) {
 		super(type, form);
 		OpenJDKCompileStub.OpenJDKCompileStubThrowError();
@@ -39,11 +39,11 @@ final class SimpleMethodHandle extends BoundMethodHandle {
 	BoundMethodHandle copyWith(MethodType mt, LambdaForm lf) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	
+
 	static BoundMethodHandle make(MethodType mt, LambdaForm lf) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	
+
 	BoundMethodHandle copyWithExtendL(MethodType mt, LambdaForm lf, Object obj) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}

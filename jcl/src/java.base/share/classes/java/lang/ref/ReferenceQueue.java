@@ -34,13 +34,13 @@ import openj9.internal.criu.NotCheckpointSafe;
 
 /**
  * ReferenceQueue is the container on which reference objects
- * are enqueued when their reachability type is detected for 
+ * are enqueued when their reachability type is detected for
  * the referent.
  *
  * @author		OTI
  * @version		initial
  * @since		1.2
- */	
+ */
 
 public class ReferenceQueue<T> extends Object {
 	private Reference[] references;
@@ -63,10 +63,10 @@ public class ReferenceQueue<T> extends Object {
 			tmpClass = Class.forName("java.lang.Class$ReflectRef"); //$NON-NLS-1$
 		} catch (ClassNotFoundException e) {}
 		reflectRefClass = tmpClass;
-		
+
 		Class tmpClass2 = null;
 		try {
-			tmpClass2 = Class.forName("java.lang.ClassLoader$ClassNameLockRef"); //$NON-NLS-1$	
+			tmpClass2 = Class.forName("java.lang.ClassLoader$ClassNameLockRef"); //$NON-NLS-1$
 		} catch (ClassNotFoundException e) {}
 		classNameLockRefClass = tmpClass2;
 	}
@@ -78,13 +78,13 @@ public class ReferenceQueue<T> extends Object {
  *
  * @return		Reference
  *					next available Reference or NULL.
- */	
+ */
 /*[IF CRIU_SUPPORT]*/
 @NotCheckpointSafe
 /*[ENDIF] CRIU_SUPPORT */
-public Reference<? extends T> poll () {	
+public Reference<? extends T> poll () {
 	Reference ref;
-	
+
 	/* Optimization to return immediately and not synchronize if there is nothing in the queue */
 	if(empty) {
 		return null;
@@ -94,7 +94,7 @@ public Reference<? extends T> poll () {
 			return null;
 		}
 		ref = references[head];
-		/*[PR 115652] null References when removed */ 
+		/*[PR 115652] null References when removed */
 		references[head++] = null;
 		ref.dequeue();
 		if(head == references.length) {
@@ -108,7 +108,7 @@ public Reference<? extends T> poll () {
 }
 
 /**
- * Return the next available enqueued reference on the queue, blocking 
+ * Return the next available enqueued reference on the queue, blocking
  * indefinitely until one is available.
  *
  * @author		OTI
@@ -119,13 +119,13 @@ public Reference<? extends T> poll () {
  *                  null otherwise.
  * @exception	InterruptedException
  *					to interrupt the wait.
- */	
+ */
 public Reference<? extends T> remove() throws InterruptedException {
 	return remove(0L);
 }
 
 /**
- * Return the next available enqueued reference on the queue, blocking 
+ * Return the next available enqueued reference on the queue, blocking
  * up to the time given until one is available.  Return null if no
  * reference became available.
  *
@@ -142,7 +142,7 @@ public Reference<? extends T> remove() throws InterruptedException {
  *					if the wait period is negative.
  * @exception	InterruptedException
  *					to interrupt the wait.
- */	
+ */
 public Reference<? extends T> remove(long timeout) throws IllegalArgumentException, InterruptedException {
 	if (timeout < 0) throw new IllegalArgumentException();
 
@@ -153,7 +153,7 @@ public Reference<? extends T> remove(long timeout) throws IllegalArgumentExcepti
 			if(empty) return null;
 		}
 		ref = references[head];
-		/*[PR 115652] null References when removed */ 
+		/*[PR 115652] null References when removed */
 		references[head++] = null;
 		ref.dequeue();
 		if(head == references.length) {
@@ -259,6 +259,6 @@ ReferenceQueue(int value) {
 public ReferenceQueue() {
 	head = 0;
 	tail = 0;
-	empty = true;	
+	empty = true;
 }
 }

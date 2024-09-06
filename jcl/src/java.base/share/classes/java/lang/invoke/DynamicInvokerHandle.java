@@ -30,7 +30,7 @@ import java.util.List;
 class DynamicInvokerHandle extends MethodHandle {
 	@VMCONSTANTPOOL_FIELD
 	final CallSite site;
-	
+
 	DynamicInvokerHandle(CallSite site) {
 		super(site.type(), MethodHandle.KIND_DYNAMICINVOKER, null); //$NON-NLS-1$
 		this.site = site;
