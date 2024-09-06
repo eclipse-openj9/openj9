@@ -27,10 +27,10 @@ import java.lang.management.MemoryUsage;
 /**
  * The OpenJ9 interface for managing and monitoring the virtual machine's memory pools.
  *
- * The following list describes 4 common behavior changes for {@link MemoryPoolMXBean}. 
- * You can revert to the earlier implementation of {@link MemoryPoolMXBean} by setting the 
+ * The following list describes 4 common behavior changes for {@link MemoryPoolMXBean}.
+ * You can revert to the earlier implementation of {@link MemoryPoolMXBean} by setting the
  * <b>-XX:+HeapManagementMXBeanCompatibility</b> Java command line option.
- * 
+ *
  * <h2>1. More detailed heap memory pools can be obtained by calling {@link java.lang.management.ManagementFactory#getMemoryPoolMXBeans}</h2>
  * The following names are reported for heap memory pools, listed by garbage collection policy:
  * <br><br>
@@ -69,19 +69,19 @@ import java.lang.management.MemoryUsage;
  * <ul>
  * 	<li><b>Java heap</b>
  * </ul>
- * 
+ *
  * <h2>2. Memory Usage</h2>
  * Memory usage for each heap memory pool can be retrieved by using {@link java.lang.management.MemoryPoolMXBean#getUsage} or {@link java.lang.management.MemoryPoolMXBean#getCollectionUsage}.
- * In some cases the total sum of memory usage of all heap memory pools is more than the maximum heap size. 
+ * In some cases the total sum of memory usage of all heap memory pools is more than the maximum heap size.
  * This irregularity can be caused if data for each pool is collected between garbage collection cycles,
  * where objects have been moved or reclaimed.
- * If you want to collect memory usage data that is synchronized across the memory pools, use the 
+ * If you want to collect memory usage data that is synchronized across the memory pools, use the
  * {@link com.sun.management.GarbageCollectionNotificationInfo} or {@link com.sun.management.GarbageCollectorMXBean#getLastGcInfo} extensions.
- * 
+ *
  * <h2>3. Usage Threshold ({@link java.lang.management.MemoryPoolMXBean#getUsageThreshold}, {@link java.lang.management.MemoryPoolMXBean#setUsageThreshold}, {@link java.lang.management.MemoryPoolMXBean#isUsageThresholdExceeded})</h2>
  * The usage threshold attribute is designed for monitoring the increasing trend of memory usage and incurs only a low overhead.
  * This attribute is not appropriate for some memory pools.
- * Use the {@link java.lang.management.MemoryPoolMXBean#isUsageThresholdSupported} method to determine 
+ * Use the {@link java.lang.management.MemoryPoolMXBean#isUsageThresholdSupported} method to determine
  * if this functionality is supported by the memory pool to avoid an unexpected {@link java.lang.UnsupportedOperationException}.
  * <br>
  * The following names are reported for heap memory pools that support the usage threshold attribute:
@@ -93,11 +93,11 @@ import java.lang.management.MemoryUsage;
  *	<li><b>balanced-survivor</b>
  *	<li><b>balanced-old</b>
  * </ul>
- * 
+ *
  * <h2>4. Collection Usage Threshold ({@link java.lang.management.MemoryPoolMXBean#getCollectionUsageThreshold}, {@link java.lang.management.MemoryPoolMXBean#setCollectionUsageThreshold}, {@link java.lang.management.MemoryPoolMXBean#isCollectionUsageThresholdExceeded})</h2>
- * The collection usage threshold is a manageable attribute that is applicable only to some garbage-collected memory pools. 
- * This attribute reports the amount of memory taken up by objects that are still in use after a garbage collection cycle. 
- * Use the {@link java.lang.management.MemoryPoolMXBean#isCollectionUsageThresholdSupported} method to determine 
+ * The collection usage threshold is a manageable attribute that is applicable only to some garbage-collected memory pools.
+ * This attribute reports the amount of memory taken up by objects that are still in use after a garbage collection cycle.
+ * Use the {@link java.lang.management.MemoryPoolMXBean#isCollectionUsageThresholdSupported} method to determine
  * if this functionality is supported by the memory pool to avoid an unexpected {@link java.lang.UnsupportedOperationException}.
  * <br>
  * The following names are reported for heap memory pools that support the collection usage threshold attribute:
@@ -130,7 +130,7 @@ public interface MemoryPoolMXBean extends java.lang.management.MemoryPoolMXBean 
 	 * The return value will be mapped to a
 	 * {@link javax.management.openmbean.CompositeData} with attributes as
 	 * specified in {@link java.lang.management.MemoryUsage}.
-	 * 
+	 *
 	 * @return a {@link java.lang.management.MemoryUsage} containing the usage details for the memory
 	 *         pool just before the most recent collection occurred.
 	 */

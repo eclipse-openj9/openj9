@@ -76,7 +76,7 @@ final class OperatingSystemNotificationThread implements Runnable {
 
 	/**
 	 * Registers a signal handler for SIGRECONFIG, then processes notifications
-	 * on an internal VM queue until a shutdown request is received. 
+	 * on an internal VM queue until a shutdown request is received.
 	 */
 	private native void processNotificationLoop();
 

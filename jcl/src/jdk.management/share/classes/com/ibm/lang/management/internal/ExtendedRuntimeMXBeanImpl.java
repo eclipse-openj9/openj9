@@ -39,7 +39,7 @@ public final class ExtendedRuntimeMXBeanImpl extends RuntimeMXBeanImpl implement
 
 	/**
 	 * Singleton accessor method.
-	 * 
+	 *
 	 * @return the <code>RuntimeMXBeanImpl</code> singleton.
 	 */
 	public static RuntimeMXBean getInstance() {

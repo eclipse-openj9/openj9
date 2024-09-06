@@ -49,7 +49,7 @@ public final class HypervisorMXBeanImpl implements HypervisorMXBean {
 
 	/**
 	 * Singleton accessor method.
-	 * 
+	 *
 	 * @return the {@link HypervisorMXBeanImpl} singleton.
 	 */
 	public static HypervisorMXBeanImpl getInstance() {
@@ -91,7 +91,7 @@ public final class HypervisorMXBeanImpl implements HypervisorMXBean {
 
 	/**
 	 * Returns the object name of the MXBean.
-	 * 
+	 *
 	 * @return objectName representing the MXBean.
 	 */
 	@Override
@@ -106,14 +106,14 @@ public final class HypervisorMXBeanImpl implements HypervisorMXBean {
 
 	/**
 	 * Query whether the Environment is Virtual or not.
-	 * 
+	 *
 	 * @return true if Operating System is running on a Hypervisor Host.
 	 */
 	private native int isEnvironmentVirtualImpl();
 
 	/**
 	 * Query the Hypervisor Vendor Name.
-	 * 
+	 *
 	 * @return string identifying the vendor of the Hypervisor if running on a Hypervisor, null otherwise.
 	 */
 	private native String getVendorImpl();

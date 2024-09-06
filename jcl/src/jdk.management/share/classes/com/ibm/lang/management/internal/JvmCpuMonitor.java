@@ -38,7 +38,7 @@ import com.ibm.lang.management.JvmCpuMonitorMXBean;
 public class JvmCpuMonitor implements JvmCpuMonitorMXBean {
 
 	/**
-	 * This is the default thread category of every application thread 
+	 * This is the default thread category of every application thread
 	 */
 	private enum Category {
 		THREAD_CATEGORY_INVALID(-1, "Invalid"),							//$NON-NLS-1$
@@ -112,10 +112,10 @@ public class JvmCpuMonitor implements JvmCpuMonitorMXBean {
 	};
 
 	private static JvmCpuMonitor instance = new JvmCpuMonitor();
-	
+
 	/**
 	 * Singleton accessor method. Returns an instance of {@link JvmCpuMonitor}
-	 * 
+	 *
 	 * @return a static instance of {@link JvmCpuMonitor}
 	 */
 	public static JvmCpuMonitor getInstance() {
@@ -124,7 +124,7 @@ public class JvmCpuMonitor implements JvmCpuMonitorMXBean {
 
 	/**
 	 * Returns the object name of the MXBean
-	 * 
+	 *
 	 * @return objectName representing the MXBean
 	 */
 	public ObjectName getObjectName() {
@@ -135,7 +135,7 @@ public class JvmCpuMonitor implements JvmCpuMonitorMXBean {
 			return null;
 		}
 	}
-	
+
 	/**
 	 * {@inheritDoc}
 	 */
@@ -175,7 +175,7 @@ public class JvmCpuMonitor implements JvmCpuMonitorMXBean {
 		default:
 			throw new IllegalArgumentException();
 		}
-		
+
 		return setThreadCategoryImpl(id, catId.categoryValue());
 	}
 

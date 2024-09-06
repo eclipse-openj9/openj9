@@ -60,12 +60,12 @@ public final class GuestOSMemoryUsage {
 	 * @param memUsed		The current used snapshot of Memory in MB or -1 if undefined.
 	 * @param timestamp		The timestamp when the snapshot was taken in microseconds.
 	 * @param maxMemLimit	The Max Memory limit if any set for this Guest or -1 if undefined.
-	 * 
+	 *
 	 * @throws IllegalArgumentException if
 	 * <ul>
 	 *     <li>The values of cpuTime or cpuEntitlement or hostCpuClockSpeed are negative but not -1; or
 	 *     <li>memUsed is greater than maxMemLimit if defined.
-	 *     <li>The value of timestamp is negative. 
+	 *     <li>The value of timestamp is negative.
 	 * </ul>
 	 */
 	private GuestOSMemoryUsage(long memUsed, long timestamp, long maxMemLimit) throws IllegalArgumentException {
@@ -108,7 +108,7 @@ public final class GuestOSMemoryUsage {
 
 	/* (non-Javadoc)
 	 * Setter method for updating Guest Memory usage parameters for this instance.
-	 * 
+	 *
 	 * @param used	The current used snapshot of Memory in MB.
 	 * @param timestamp The timestamp when the snapshot was taken in microseconds.
 	 * @param limit The Max Memory limit if any set for this Guest.
@@ -123,9 +123,9 @@ public final class GuestOSMemoryUsage {
 	 * Receives a {@link javax.management.openmbean.CompositeData} representing a {@link GuestOSMemoryUsage}
 	 * object and attempts to return the root {@link GuestOSMemoryUsage} instance.
 	 *
-	 * @param cd	A {@link javax.management.openmbean.CompositeData} that represents a 
+	 * @param cd	A {@link javax.management.openmbean.CompositeData} that represents a
 	 *                {@link GuestOSMemoryUsage}.
-	 * 
+	 *
 	 * @return	if <code>cd</code> is non- <code>null</code>, returns a new instance of
 	 * 		{@link GuestOSMemoryUsage}, If <code>cd</code>
 	 * 		is <code>null</code>, returns <code>null</code>.

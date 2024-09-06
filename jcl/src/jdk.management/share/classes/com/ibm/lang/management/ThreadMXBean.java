@@ -31,57 +31,57 @@ package com.ibm.lang.management;
 public interface ThreadMXBean extends com.sun.management.ThreadMXBean
 {
 	/**
-     * Fetches an array of the native (operating system assigned) identifiers 
-     * corresponding to unique TIDs (as returned by java/lang/Thread.getId()) specified to it.
-     * @param threadIDs An array of thread identifiers that the user wishes to obtain
-     * native thread identifiers for.
-     * @return An array of operating system assigned native thread identifiers. If a thread among the
-     * 			given set of IDs is no longer alive or does not exist, a -1 is set in the corresponding
-     * 			element of the returned array. 
-     * @throws IllegalArgumentException is thrown if any of the thread identifiers passed is invalid (&lt;=0).
-     * @throws SecurityException is thrown if the caller does not have sufficient permissions 
-     * (ManagementPermission("monitor"))
-     */
-	public long[] getNativeThreadIds(long[] threadIDs) 
+	 * Fetches an array of the native (operating system assigned) identifiers
+	 * corresponding to unique TIDs (as returned by java/lang/Thread.getId()) specified to it.
+	 * @param threadIDs An array of thread identifiers that the user wishes to obtain
+	 * native thread identifiers for.
+	 * @return An array of operating system assigned native thread identifiers. If a thread among the
+	 * 			given set of IDs is no longer alive or does not exist, a -1 is set in the corresponding
+	 * 			element of the returned array.
+	 * @throws IllegalArgumentException is thrown if any of the thread identifiers passed is invalid (&lt;=0).
+	 * @throws SecurityException is thrown if the caller does not have sufficient permissions
+	 * (ManagementPermission("monitor"))
+	 */
+	public long[] getNativeThreadIds(long[] threadIDs)
 			throws IllegalArgumentException, SecurityException;
 
-    /**
-     * Find the native (operating system assigned) thread identifiers corresponding
-     * to a unique TID (as returned by java/lang/Thread.getId()). When querying multiple threadIDs, 
-     * consider using getNativeThreadIds(long[]) as it is more efficient than getNativeThreadId().
-     * @param threadId The Java runtime allocated thread identifier.
-     * @return Operating system assigned native thread identifier. If the thread corresponding to the
-     * 			ID is no longer alive or does not exist, -1 is returned.
-     * @throws IllegalArgumentException is thrown if the thread identifier passed is invalid (&lt;=0).
-     * @throws SecurityException is thrown if the caller does not have sufficient permissions 
-     * (ManagementPermission("monitor"))
-     */
-    public long getNativeThreadId(long threadId) 
-    		throws IllegalArgumentException, SecurityException;
+	/**
+	 * Find the native (operating system assigned) thread identifiers corresponding
+	 * to a unique TID (as returned by java/lang/Thread.getId()). When querying multiple threadIDs,
+	 * consider using getNativeThreadIds(long[]) as it is more efficient than getNativeThreadId().
+	 * @param threadId The Java runtime allocated thread identifier.
+	 * @return Operating system assigned native thread identifier. If the thread corresponding to the
+	 * 			ID is no longer alive or does not exist, -1 is returned.
+	 * @throws IllegalArgumentException is thrown if the thread identifier passed is invalid (&lt;=0).
+	 * @throws SecurityException is thrown if the caller does not have sufficient permissions
+	 * (ManagementPermission("monitor"))
+	 */
+	public long getNativeThreadId(long threadId)
+			throws IllegalArgumentException, SecurityException;
 
-    /**
-     * API method that fetches an array of ExtendedThreadInfo objects corresponding to
-     * threads in the virtual machine during the time it is invoked.
-     * Fetches an array of ExtendedThreadInfo objects that provide native thread
-     * identifiers along with java.lang.management.ThreadInfo object representing the thread.
-     * Consider using dumpAllExtendedThreads() in place of dumpAllThreads() as it provides 
-     * additional thread identification information in an efficient manner.
-     * @param lockedMonitors
-     * 					boolean indication of whether or not information on all
-     *					currently locked object monitors is to be included in the
-     *					returned array
-     * @param lockedSynchronizers
-     * 					boolean indication of whether or not information on all
-     *					currently locked ownable synchronizers is to be included in
-     *					the returned array
-     * @return  Array of ExtendedThreadInfo objects.
-     * @throws SecurityException is thrown if the caller does not have sufficient permissions 
-     * (ManagementPermission("monitor"))
-     * @throws UnsupportedOperationException is thrown if the JVM does not support monitoring
-     * object monitor usage or ownable synchronizer usage, even as it has been specified.
-     * @throws InternalError is thrown in case an error occurs while fetching thread information, 
-     * typically, an internal error resulting from an inconsistency in the class library. 
-     */
-    public ExtendedThreadInfo[] dumpAllExtendedThreads(boolean lockedMonitors, boolean lockedSynchronizers)
-    		throws SecurityException, UnsupportedOperationException, InternalError;
+	/**
+	 * API method that fetches an array of ExtendedThreadInfo objects corresponding to
+	 * threads in the virtual machine during the time it is invoked.
+	 * Fetches an array of ExtendedThreadInfo objects that provide native thread
+	 * identifiers along with java.lang.management.ThreadInfo object representing the thread.
+	 * Consider using dumpAllExtendedThreads() in place of dumpAllThreads() as it provides
+	 * additional thread identification information in an efficient manner.
+	 * @param lockedMonitors
+	 * 					boolean indication of whether or not information on all
+	 *					currently locked object monitors is to be included in the
+	 *					returned array
+	 * @param lockedSynchronizers
+	 * 					boolean indication of whether or not information on all
+	 *					currently locked ownable synchronizers is to be included in
+	 *					the returned array
+	 * @return  Array of ExtendedThreadInfo objects.
+	 * @throws SecurityException is thrown if the caller does not have sufficient permissions
+	 * (ManagementPermission("monitor"))
+	 * @throws UnsupportedOperationException is thrown if the JVM does not support monitoring
+	 * object monitor usage or ownable synchronizer usage, even as it has been specified.
+	 * @throws InternalError is thrown in case an error occurs while fetching thread information,
+	 * typically, an internal error resulting from an inconsistency in the class library.
+	 */
+	public ExtendedThreadInfo[] dumpAllExtendedThreads(boolean lockedMonitors, boolean lockedSynchronizers)
+			throws SecurityException, UnsupportedOperationException, InternalError;
 }

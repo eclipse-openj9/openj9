@@ -69,16 +69,16 @@ public class ProcessorUsage {
 	 * @param online	This Processor's online status (0 = offline, 1 = online)
 	 *         			or -1 for the global record or if not available.
 	 * @param timestamp The timestamp when usage statistics were last sampled in microseconds.
-	 * 
+	 *
 	 * @throws IllegalArgumentException if
 	 * <ul><li>The values of user or system or idle or wait or busy or id or online are negative but not -1; or
 	 * <li>The value of timestamp is negative; or
 	 * <li>The value of online is anything other than 0 or 1 or -1; or
-	 * <li>The sum of values of user, system and wait are greater than busy if defined.  
+	 * <li>The sum of values of user, system and wait are greater than busy if defined.
 	 * </ul>
 	 */
 	private ProcessorUsage(long user, long system, long idle, long wait,
-			       long busy, int id, int online, long timestamp) throws IllegalArgumentException {
+			long busy, int id, int online, long timestamp) throws IllegalArgumentException {
 		super();
 		if (user < -1) {
 			throw new IllegalArgumentException("For id(" + id + "), user(" + user + ") < -1"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
@@ -120,7 +120,7 @@ public class ProcessorUsage {
 
 	/**
 	 * The time spent in user mode in microseconds.
-	 * 
+	 *
 	 * @return The user times in microseconds or -1 if not available.
 	 */
 	public long getUser() {
@@ -129,7 +129,7 @@ public class ProcessorUsage {
 
 	/**
 	 * The time spent in system mode in microseconds.
-	 * 
+	 *
 	 * @return The system times in microseconds or -1 if not available.
 	 */
 	public long getSystem() {
@@ -138,7 +138,7 @@ public class ProcessorUsage {
 
 	/**
 	 * The time spent by the Processor sitting idle in microseconds.
-	 * 
+	 *
 	 * @return The idle times in microseconds or -1 if not available.
 	 */
 	public long getIdle() {
@@ -147,7 +147,7 @@ public class ProcessorUsage {
 
 	/**
 	 * The time spent by the Processor in Input/Output (IO) wait in microseconds.
-	 * 
+	 *
 	 * @return The wait times in microseconds or -1 if not available.
 	 */
 	public long getWait() {
@@ -156,7 +156,7 @@ public class ProcessorUsage {
 
 	/**
 	 * The time spent by the Processor executing a non-idle thread in microseconds.
-	 * 
+	 *
 	 * @return The busy times in microseconds or -1 if not available.
 	 */
 	public long getBusy() {
@@ -166,7 +166,7 @@ public class ProcessorUsage {
 	/**
 	 * A unique identifier assigned to the this Processor. This is -1 if method
 	 * invoked on the global Processor record.
-	 * 
+	 *
 	 * @return An identifier for this Processor or -1 for the global record or if not available.
 	 */
 	public int getId() {
@@ -182,7 +182,7 @@ public class ProcessorUsage {
 	 * even if it is currently offline. This is a limitation of the OS. Similarly offline
 	 * on AIX means that the Processor was never online.
 	 * </ul>
-	 * 
+	 *
 	 * @return This Processor's online status (0 = offline, 1 = online)
 	 *         or -1 for the global record or if not available.
 	 */
@@ -192,7 +192,7 @@ public class ProcessorUsage {
 
 	/**
 	 * The timestamp when usage statistics were last sampled in microseconds.
-	 * 
+	 *
 	 * @return Timestamp in microseconds.
 	 */
 	public long getTimestamp() {
@@ -200,9 +200,9 @@ public class ProcessorUsage {
 	}
 
 	/**
-	 * Setter method for updating the Processor usage parameters into fields 
+	 * Setter method for updating the Processor usage parameters into fields
 	 * of a {@link ProcessorUsage} instance.
-	 * 
+	 *
 	 * @param user Time spent in User mode in microseconds.
 	 * @param system Time spent in System (or kernel or privileged) mode in microseconds.
 	 * @param idle Time spent in Idle mode in microseconds.
@@ -237,7 +237,7 @@ public class ProcessorUsage {
 	 * instance.
 	 *
 	 * @param cd	A {@link javax.management.openmbean.CompositeData} that represents a {@link ProcessorUsage}
-	 * 
+	 *
 	 * @return	if <code>cd</code> is non- <code>null</code>, returns a new instance of
 	 * 		{@link ProcessorUsage}, If <code>cd</code>
 	 * 		is <code>null</code>, returns <code>null</code>.

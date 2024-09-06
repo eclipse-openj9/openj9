@@ -67,7 +67,7 @@ import java.lang.management.PlatformManagedObject;
  *	if (true != mbeanServer.isRegistered(mxbeanName)) {
  *	   // HypervisorMXBean not registered
  *	}
- *	HypervisorMXBean hypBean = JMX.newMXBeanProxy(mbeanServer, mxbeanName, HypervisorMXBean.class); 
+ *	HypervisorMXBean hypBean = JMX.newMXBeanProxy(mbeanServer, mxbeanName, HypervisorMXBean.class);
  *   } catch (Exception e) {
  *	// Exception Handling
  *   }
@@ -80,7 +80,7 @@ public interface HypervisorMXBean extends PlatformManagedObject {
 
 	/**
 	 * Indicates if the Operating System is running on a Hypervisor or not.
-	 * 
+	 *
 	 * @return true if running on a Hypervisor, false otherwise.
 
 	 * @throws UnsupportedOperationException if the underlying Hypervisor is unsupported.
@@ -90,7 +90,7 @@ public interface HypervisorMXBean extends PlatformManagedObject {
 
 	/**
 	 * Returns the vendor of the Hypervisor if running in a virtualized environment.
-	 * 
+	 *
 	 * @return string identifying the vendor of the Hypervisor if running under
 	 *         Hypervisor, null otherwise.
 	 */

@@ -63,7 +63,7 @@ import java.lang.management.*;
  *	if (true != mbeanServer.isRegistered(mxbeanName)) {
  *	   // GuestOSMXBean not registered
  *	}
- *	GuestOSMXBean guestBean = JMX.newMXBeanProxy(mbeanServer, mxbeanName, GuestOSMXBean.class); 
+ *	GuestOSMXBean guestBean = JMX.newMXBeanProxy(mbeanServer, mxbeanName, GuestOSMXBean.class);
  *   } catch (Exception e) {
  *	// Exception Handling
  *   }
@@ -94,7 +94,7 @@ public interface GuestOSMXBean extends PlatformManagedObject {
 
 	/**
 	 * Function instantiates a {@link GuestOSProcessorUsage} object and populates it with the
-	 * current snapshot of Processor Usage statistics of the Guest as seen by the Hypervisor. 
+	 * current snapshot of Processor Usage statistics of the Guest as seen by the Hypervisor.
 	 * The statistics are an aggregate across all physical CPUs assigned to the Guest by the Hypervisor.
 	 *
 	 * @return The new {@link GuestOSProcessorUsage} object.
@@ -129,9 +129,9 @@ public interface GuestOSMXBean extends PlatformManagedObject {
 	 * current snapshot of Memory Usage statistics of the Guest as seen by the Hypervisor.
 	 *
 	 * @return The new {@link GuestOSMemoryUsage} object.
-	 * 
+	 *
 	 * @throws GuestOSInfoRetrievalException if it failed to obtain usage statistics.
-	 * 
+	 *
 	 * <p>In case of an exception, the handler code can use toString() on the exception code
 	 * to obtain a description of the exception.
 	 */
