@@ -24,7 +24,7 @@ package com.ibm.jvm.format;
 
 import java.io.IOException;
 
-/** 
+/**
  * This exception is thrown when the beginning of a buffer (including spanned
  * record if any) is not the start of a record.
  * <p> An InvalidSpannedRecordException is thrown whenever an invalid spanned
@@ -35,11 +35,11 @@ import java.io.IOException;
  */
 public class InvalidSpannedRecordException extends IOException
 {
-    public InvalidSpannedRecordException() {
-        super();
-    }
+	public InvalidSpannedRecordException() {
+		super();
+	}
 
-    public InvalidSpannedRecordException(String s) {
-        super(s);
-    }
+	public InvalidSpannedRecordException(String s) {
+		super(s);
+	}
 }

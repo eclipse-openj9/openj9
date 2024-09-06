@@ -25,12 +25,12 @@ package com.ibm.jvm.trace.format.api;
 public class TracePointDebugInfo {
 	int record;
 	int offset;
-	
+
 	TracePointDebugInfo(int record, int offset) {
 		this.record = record;
 		this.offset = offset;
 	}
-	
+
 	public int compareTo(Object o) {
 		if (o instanceof TracePointDebugInfo) {
 			TracePointDebugInfo tpdi = (TracePointDebugInfo)o;
@@ -40,7 +40,7 @@ public class TracePointDebugInfo {
 				return offset - tpdi.offset;
 			}
 		}
-		
+
 		return 0;
 	}
 }

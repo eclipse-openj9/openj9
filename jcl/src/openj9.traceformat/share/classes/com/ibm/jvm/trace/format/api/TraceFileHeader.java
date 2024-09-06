@@ -27,7 +27,7 @@ import java.nio.ByteOrder;
 
 /**
  * Encapsulates the header for a trace file.
- * 
+ *
  * @author Tim Preece
  */
 final public class TraceFileHeader {
@@ -86,15 +86,15 @@ final public class TraceFileHeader {
 			default:
 				throw new IllegalArgumentException("Invalid endian signature in trace file header: " + Long.toString(endianSignature, 16));
 			}
-	
+
 			context.debug(this, 1, "Data is " + byteOrder.toString());
-	
+
 			/* set up the byte order for the rest of our accesses */
 			data.order(byteOrder);
-	
+
 			/* set up the basic header for this structure */
 			dataHeader = new DataHeader(context, data, "UTTH");
-	
+
 			/*
 			 * Check the eyecatcher to make sure this is a valid trace file.
 			 * Written as characters so no need to worry about endian-ness
@@ -106,10 +106,10 @@ final public class TraceFileHeader {
 				context.debug(this, 1, "Eyecatchers are in EBCDIC");
 				ascii = false;
 			}
-	
+
 			recordSize = data.getInt();
 			endianSignature = data.getInt();
-	
+
 			/*
 			 * get the offsets for the various sections within our data
 			 * buffer
@@ -119,29 +119,29 @@ final public class TraceFileHeader {
 			int startupStart = data.getInt();
 			int activeStart = data.getInt();
 			int processorStart = data.getInt();
-	
+
 			if (context.debugStream != null) {
 				context.debug(this, 1, summary());
 			}
-	
+
 			/* some of the other sections format time stamps which depends on the processor type so we read this first */
 			processorSection = new ProcessorSection(context, (ByteBuffer) data.position(processorStart + traceFileHeaderStart));
 			traceSection = new TraceSection(context, (ByteBuffer) data.position(traceStart + traceFileHeaderStart));
 			serviceSection = new ServiceSection(context, (ByteBuffer) data.position(serviceStart + traceFileHeaderStart));
 			startupSection = new StartupSection(context, (ByteBuffer) data.position(startupStart + traceFileHeaderStart));
 			activeSection = new ActiveSection(context, (ByteBuffer) data.position(activeStart + traceFileHeaderStart));
-	
+
 			/* now set up the context variables for other people to use */
 			context.version = (float) dataHeader.version + (((float) dataHeader.modification) / 10);
 		} catch (IndexOutOfBoundsException e) {
-			throw new IllegalArgumentException("Truncated trace file header"); 
+			throw new IllegalArgumentException("Truncated trace file header");
 		}
 	}
 
 	public String toString() {
 		return "Trace file header";
 	}
-	
+
 	public String summary() {
 		if (textSummary == null) {
 			StringBuilder s = new StringBuilder(toString()+":"+System.getProperty("line.separator"));
@@ -151,7 +151,7 @@ final public class TraceFileHeader {
 
 			textSummary = s.toString();
 		}
-		
+
 		return textSummary;
 	}
 }

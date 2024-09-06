@@ -26,173 +26,173 @@ import java.math.BigInteger;
 import java.util.Iterator;
 import java.util.Vector;
 
-/**  
+/**
  * Vector containing all trace records for a specific thread.
  *
  * @author Tim Preece
  */
 final public class TraceThread extends Vector implements com.ibm.jvm.trace.TraceThread {
 
-    protected                     long           threadID      =     0;
-    protected                     String         threadName;
+	protected                     long           threadID      =     0;
+	protected                     String         threadName;
 
-    private                       TracePoint     tp = null;
-    private                       boolean        primed = false;
+	private                       TracePoint     tp = null;
+	private                       boolean        primed = false;
 
-    private                       TraceRecord50  currentTraceRecord = null;
-    private                       int            currentIndent = 0;
-    /** construct a new trace thread vector
-     *
-     * @param   ID ( hex value of threadID )
-     * @param   threadName
-     */
-    protected TraceThread(long ID, String threadName)
-    {
-        super();
-        this.threadID = ID;
-        this.threadName = threadName;
-    }
+	private                       TraceRecord50  currentTraceRecord = null;
+	private                       int            currentIndent = 0;
+	/** construct a new trace thread vector
+	 *
+	 * @param   ID ( hex value of threadID )
+	 * @param   threadName
+	 */
+	protected TraceThread(long ID, String threadName)
+	{
+		super();
+		this.threadID = ID;
+		this.threadName = threadName;
+	}
 
-    public static int numBufs = 0;
+	public static int numBufs = 0;
 
-    public static int getBuffersProcessed(){
-        return numBufs;
-    }
+	public static int getBuffersProcessed(){
+		return numBufs;
+	}
 
-    private static synchronized void incrementBuffersProcessed(){
-        numBufs++;
-    }
+	private static synchronized void incrementBuffersProcessed(){
+		numBufs++;
+	}
 
-    private synchronized void prime(){
-        if (!primed) {
-            popTopTraceRecord();
-            primed = true;
-        }
-    }
+	private synchronized void prime(){
+		if (!primed) {
+			popTopTraceRecord();
+			primed = true;
+		}
+	}
 
-    private void popTopTraceRecord(){        
-        TraceRecord50 oldTraceRecord = currentTraceRecord;
-        if (isEmpty()){
-        	Util.Debug.println("last trace record popped from trace thread");
-            Util.Debug.println("TraceThread " + Util.formatAsHexString( threadID ) + " emptied");
-            currentTraceRecord = null;
-            return;
-        }
-        currentTraceRecord = (TraceRecord50) elementAt( 0 );
-        byte[] extraData = null;
-        BigInteger lastUpperWord = null;
-        if (oldTraceRecord != null) {
-            lastUpperWord = oldTraceRecord.getLastUpperWord();
-            extraData = oldTraceRecord.getExtraData();
-        }
-        while ( currentTraceRecord != null && currentTraceRecord.isMiddleOfTracePoint() ) {
-            byte[] temp = null;
-            byte[] current = extraData;
-            
-            Util.Debug.println("\nTraceThread has found a pure middle of tracepoint buffer\n");                
+	private void popTopTraceRecord(){
+		TraceRecord50 oldTraceRecord = currentTraceRecord;
+		if (isEmpty()){
+			Util.Debug.println("last trace record popped from trace thread");
+			Util.Debug.println("TraceThread " + Util.formatAsHexString( threadID ) + " emptied");
+			currentTraceRecord = null;
+			return;
+		}
+		currentTraceRecord = (TraceRecord50) elementAt( 0 );
+		byte[] extraData = null;
+		BigInteger lastUpperWord = null;
+		if (oldTraceRecord != null) {
+			lastUpperWord = oldTraceRecord.getLastUpperWord();
+			extraData = oldTraceRecord.getExtraData();
+		}
+		while ( currentTraceRecord != null && currentTraceRecord.isMiddleOfTracePoint() ) {
+			byte[] temp = null;
+			byte[] current = extraData;
 
-            temp = currentTraceRecord.getExtraData();
-            Util.Debug.println("It's on thread " + Util.formatAsHexString(currentTraceRecord.getThreadIDAsLong()) );
-            Util.printDump(temp, temp.length );
-            if (extraData == null) {
-                Util.Debug.println("Adding the middle in - temp.length " + temp.length);
-                extraData = new byte[temp.length];
-                System.arraycopy( temp, 0, extraData, 0, temp.length);
-            } else {
-                extraData = new byte[ current.length + temp.length];
-                Util.Debug.println("Adding the middle in - current " + current.length + " temp.length " + temp.length);
-                System.arraycopy(current, 0, extraData, 0, current.length );
-                System.arraycopy(temp, 0, extraData, current.length, temp.length);
-            }
+			Util.Debug.println("\nTraceThread has found a pure middle of tracepoint buffer\n");
 
-            if (size() > 1) {
-            	removeElementAt(0);
-            	incrementBuffersProcessed();
-            	currentTraceRecord = (TraceRecord50) elementAt( 0 );
-            } else {
-            	currentTraceRecord = null;
-            }
-        }
-        if ( currentTraceRecord != null ) {
-            if (extraData != null) {
-                currentTraceRecord.addOverspillData( extraData, lastUpperWord );
-            } 
-            tp = currentTraceRecord.getNextTracePoint();
-            while ((tp == null) && (size() > 1)) {
-                /* skip e.g. empty buffers or buffers containing only control points */                                    
-                removeElementAt( 0 );            
-                incrementBuffersProcessed();
-                currentTraceRecord = (TraceRecord50) elementAt( 0 );                    
-                if ( currentTraceRecord != null ) {
-                    tp = currentTraceRecord.getNextTracePoint();
-                }                    
-            }                
-        }
-        /* remove it so it can be taken off the heap - by this time it will have been heavily populated with data! */
-        removeElementAt( 0 );            
-        incrementBuffersProcessed();
-        return;        
-    }
+			temp = currentTraceRecord.getExtraData();
+			Util.Debug.println("It's on thread " + Util.formatAsHexString(currentTraceRecord.getThreadIDAsLong()) );
+			Util.printDump(temp, temp.length );
+			if (extraData == null) {
+				Util.Debug.println("Adding the middle in - temp.length " + temp.length);
+				extraData = new byte[temp.length];
+				System.arraycopy( temp, 0, extraData, 0, temp.length);
+			} else {
+				extraData = new byte[ current.length + temp.length];
+				Util.Debug.println("Adding the middle in - current " + current.length + " temp.length " + temp.length);
+				System.arraycopy(current, 0, extraData, 0, current.length );
+				System.arraycopy(temp, 0, extraData, current.length, temp.length);
+			}
 
-    public TracePoint getNextTracePoint(){
-        TracePoint ret = tp;
-        if (!primed) {
-            prime();
-        }
-        if (currentTraceRecord != null) {
-            tp = currentTraceRecord.getNextTracePoint();
-            if (tp == null) {
-                /* currentTraceRecord is exhausted */
-                popTopTraceRecord();
-            }
-        } else {
-            tp = null;
-        }
-        return ret;
-    }
+			if (size() > 1) {
+				removeElementAt(0);
+				incrementBuffersProcessed();
+				currentTraceRecord = (TraceRecord50) elementAt( 0 );
+			} else {
+				currentTraceRecord = null;
+			}
+		}
+		if ( currentTraceRecord != null ) {
+			if (extraData != null) {
+				currentTraceRecord.addOverspillData( extraData, lastUpperWord );
+			}
+			tp = currentTraceRecord.getNextTracePoint();
+			while ((tp == null) && (size() > 1)) {
+				/* skip e.g. empty buffers or buffers containing only control points */
+				removeElementAt( 0 );
+				incrementBuffersProcessed();
+				currentTraceRecord = (TraceRecord50) elementAt( 0 );
+				if ( currentTraceRecord != null ) {
+					tp = currentTraceRecord.getNextTracePoint();
+				}
+			}
+		}
+		/* remove it so it can be taken off the heap - by this time it will have been heavily populated with data! */
+		removeElementAt( 0 );
+		incrementBuffersProcessed();
+		return;
+	}
 
-    public int getIndent(){
-        return currentIndent;
-    }
+	public TracePoint getNextTracePoint(){
+		TracePoint ret = tp;
+		if (!primed) {
+			prime();
+		}
+		if (currentTraceRecord != null) {
+			tp = currentTraceRecord.getNextTracePoint();
+			if (tp == null) {
+				/* currentTraceRecord is exhausted */
+				popTopTraceRecord();
+			}
+		} else {
+			tp = null;
+		}
+		return ret;
+	}
 
-    public void indent(){
-        currentIndent++;
-    }
+	public int getIndent(){
+		return currentIndent;
+	}
 
-    public void outdent(){
-        currentIndent--;
-        if (currentIndent < 0) {
-            currentIndent = 0;
-        }
-    }
+	public void indent(){
+		currentIndent++;
+	}
 
-    /*
-     * return the timestamp of the next tracepoint in the buffer, or null if there is no tracepoint
-     */
-    public BigInteger getTimeOfNextTracePoint(){
-        if (!primed) {
-            prime();
-        }
-        if (tp != null) {
-            return tp.getRawTimeStamp();
-        } else {
-            /* occasionally we get duped by a corrupt or empty trace record
-               this clause will pick those instances up */
-            if (size() > 0) {
-                popTopTraceRecord();
-                if (tp != null) {
-                    return tp.getRawTimeStamp();
-                } /* else fall through to return null below */
-            }
-            return null;
-        }
-    }  
-    
-    /* methods implementing the com.ibm.jvm.trace.TraceThread interface */
-    public Iterator getChronologicalTracePointIterator(){
-    	return new com.ibm.jvm.trace.TracePointThreadChronologicalIterator(this);
-    }
-    
+	public void outdent(){
+		currentIndent--;
+		if (currentIndent < 0) {
+			currentIndent = 0;
+		}
+	}
+
+	/*
+	 * return the timestamp of the next tracepoint in the buffer, or null if there is no tracepoint
+	 */
+	public BigInteger getTimeOfNextTracePoint(){
+		if (!primed) {
+			prime();
+		}
+		if (tp != null) {
+			return tp.getRawTimeStamp();
+		} else {
+			/* occasionally we get duped by a corrupt or empty trace record
+			   this clause will pick those instances up */
+			if (size() > 0) {
+				popTopTraceRecord();
+				if (tp != null) {
+					return tp.getRawTimeStamp();
+				} /* else fall through to return null below */
+			}
+			return null;
+		}
+	}
+
+	/* methods implementing the com.ibm.jvm.trace.TraceThread interface */
+	public Iterator getChronologicalTracePointIterator(){
+		return new com.ibm.jvm.trace.TracePointThreadChronologicalIterator(this);
+	}
+
 	public String getThreadName(){
 		return threadName;
 	}

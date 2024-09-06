@@ -31,18 +31,18 @@ import java.util.Iterator;
 public class TracePointThreadChronologicalIterator<Type extends com.ibm.jvm.trace.TracePoint> implements Iterator {
 
 	private com.ibm.jvm.format.TraceThread thread = null;
-	
+
 	public TracePointThreadChronologicalIterator(com.ibm.jvm.format.TraceThread thread){
 		this.thread = thread;
 		updateNext();
 		/* prime */
 	}
-	
+
 	private com.ibm.jvm.trace.TracePoint next = null;
 	private synchronized void updateNext(){
 		next = thread.getNextTracePoint();
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see java.util.Iterator#hasNext()
 	 */
