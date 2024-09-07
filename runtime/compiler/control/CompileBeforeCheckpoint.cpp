@@ -53,6 +53,12 @@ TR::CompileBeforeCheckpoint::CompileBeforeCheckpoint(TR::Region &region, J9VMThr
 void
 TR::CompileBeforeCheckpoint::queueMethodForCompilationBeforeCheckpoint(J9Method *j9method, bool recomp)
    {
+   /* Do this before releasing the CRRuntime Monitor */
+   if (_compInfo->isJNINative(j9method))
+      {
+      _compInfo->getCRRuntime()->pushJNIAddr(j9method, j9method->extra);
+      }
+
    /* Release CR Runtime Monitor since compileMethod below will acquire the
     * Comp Monitor.
     */
