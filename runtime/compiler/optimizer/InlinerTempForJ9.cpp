@@ -2620,6 +2620,10 @@ TR_J9InlinerPolicy::inlineUnsafeCall(TR::ResolvedMethodSymbol *calleeSymbol, TR:
       case TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z:
          if (callNode->isSafeForCGToFastPathUnsafeCall())
             return false;
+#if defined (J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+         if(TR::Compiler->om.isOffHeapAllocationEnabled())
+            return createUnsafeCASCallDiamond(callNodeTreeTop, callNode);
+#endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
          switch (callerSymbol->castToMethodSymbol()->getRecognizedMethod())
             {
             case TR::java_util_concurrent_ConcurrentHashMap_addCount:
