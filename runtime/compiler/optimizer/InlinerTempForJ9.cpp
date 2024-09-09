@@ -1710,15 +1710,19 @@ TR_J9InlinerPolicy::createUnsafeCASCallDiamond( TR::TreeTop *callNodeTreeTop, TR
    // Codegens have a fast path for the compare and swaps, but cannot deal with the case where the offset value passed in to a the CAS is low tagged
    // (A low tagged offset value means the object being passed in is a java/lang/Class object, and we want a static field)
 
-   // Regarding which checks/diamonds get generated, there are three possible cases:
+   // Regarding which type checks/diamonds get generated, there are three possible cases:
    // 1.) Only the low tagged check is generated. This will occur either when gencon GC policy is being used, or under
    //     balanced GC policy with offheap allocation enabled if the object being operated on is known NOT to be an array
    //     at compile time.
-   // 2.) No checks are generated. This will occur under balanced GC policy with offheap allocation enabled if the object
+   // 2.) No type checks are generated. This will occur under balanced GC policy with offheap allocation enabled if the object
    //     being operated on is known to be an array at compile time (since if the object is an array, it can't also be a
    //     java/lang/Class object).
    // 3.) Both the array and low tagged checks are generated. This will occur under balanced GC policy with offheap allocation
    //     enabled if the type of the object being operated on is unknown at compile time.
+   //
+   // In addition to type checks, a NULL check on the object address is needed to ensure that we do not try to load dataAddr
+   // from a NULL reference. This is only a concern when offheap is enabled AND there is a possibility that the object is an array.
+   // so the NULL check will only be generated in cases (2) and (3).
 
    // This method assumes the offset node is of type long, and is the second child of the unsafe call.
    TR_InlinerDelimiter delimiter(tracer(),"createUnsafeCASCallDiamond");
@@ -1759,14 +1763,25 @@ TR_J9InlinerPolicy::createUnsafeCASCallDiamond( TR::TreeTop *callNodeTreeTop, TR
 
    TR::Node *offsetNode = callNode->getChild(2);
 
-   TR::TreeTop *compareTree;
+   TR::TreeTop *compareTree = NULL;
+   TR::TreeTop *lowTagAccessTreeTop = NULL;
 
-   //do not generate low tagged test in case (2)
-   if (!arrayTestNeeded && arrayBlockNeeded)
-      compareTree = NULL;
-   else
+   //generate low tagged test/access block in cases (1) and (3)
+   if (arrayTestNeeded || !arrayBlockNeeded)
+      {
+      //create lowtag test treetop
       compareTree = genClassCheckForUnsafeGetPut(offsetNode, /* branchIfLowTagged */ false );
 
+      //create lowtag access treetop
+      lowTagAccessTreeTop = TR::TreeTop::create(comp(),callNodeTreeTop->getNode()->duplicateTree());
+      lowTagAccessTreeTop->getNode()->getFirstChild()->setVisitCount(_inliner->getVisitCount());
+
+      debugTrace(tracer(),"lowTagAccessTreeTop = %p",lowTagAccessTreeTop->getNode());
+      }
+
+
+   TR::TreeTop *isNullTreeTop = NULL;
+   TR::TreeTop *nonNullAccessTreeTop = NULL;
    TR::TreeTop *isArrayTreeTop = NULL;
    TR::TreeTop *arrayAccessTreeTop = NULL;
    TR::TreeTop *nonArrayAccessTreeTop = NULL;
@@ -1824,31 +1839,19 @@ TR_J9InlinerPolicy::createUnsafeCASCallDiamond( TR::TreeTop *callNodeTreeTop, TR
 
       CASicallNode->setIsSafeForCGToFastPathUnsafeCall(true);
 
-      //if array test is being generated, need to create non-array access treetop (same as default)
-      if (isArrayTreeTop)
-         nonArrayAccessTreeTop = TR::TreeTop::create(comp(),callNodeTreeTop->getNode()->duplicateTree());
+      //create NULL test treetop
+      TR::Node *objAddr = callNodeTreeTop->getNode()->getChild(0)->getChild(1);
+      TR::Node *isNullNode = TR::Node::createif(TR::ifacmpeq, objAddr, TR::Node::create(objAddr, TR::aconst, 0, 0), NULL);
+      isNullTreeTop = TR::TreeTop::create(comp(), isNullNode);
       }
 #endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
 
-   TR::TreeTop *branchTargetTree;
-   TR::TreeTop *fallThroughTree;
+   //default access tree (non-array, non-lowtagged)
+   TR::TreeTop *defaultAccessTreeTop = TR::TreeTop::create(comp(),callNodeTreeTop->getNode()->duplicateTree());
+   defaultAccessTreeTop->getNode()->getFirstChild()->setIsSafeForCGToFastPathUnsafeCall(true);
+   defaultAccessTreeTop->getNode()->getFirstChild()->setVisitCount(_inliner->getVisitCount());
 
-   //only generate if and else trees for low tagged test in cases (1) and (3)
-   if (compareTree != NULL)
-      {
-      // genClassCheck generates a ifcmpne offset&mask 1, meaning if it is NOT
-      // lowtagged (ie offset&mask == 0), the branch will be taken
-      branchTargetTree = TR::TreeTop::create(comp(),callNodeTreeTop->getNode()->duplicateTree());
-      branchTargetTree->getNode()->getFirstChild()->setIsSafeForCGToFastPathUnsafeCall(true);
-
-      fallThroughTree = TR::TreeTop::create(comp(),callNodeTreeTop->getNode()->duplicateTree());
-
-
-      branchTargetTree->getNode()->getFirstChild()->setVisitCount(_inliner->getVisitCount());
-      fallThroughTree->getNode()->getFirstChild()->setVisitCount(_inliner->getVisitCount());
-
-      debugTrace(tracer(),"branchTargetTree = %p fallThroughTree = %p",branchTargetTree->getNode(),fallThroughTree->getNode());
-      }
+   debugTrace(tracer(),"defaultAccessTreeTop = %p", defaultAccessTreeTop->getNode());
 
 
    // the call itself may be commoned, so we need to create a temp for the callnode itself
@@ -1867,43 +1870,65 @@ TR_J9InlinerPolicy::createUnsafeCASCallDiamond( TR::TreeTop *callNodeTreeTop, TR
 
    TR::Block *callBlock = callNodeTreeTop->getEnclosingBlock();
 
-   if (arrayTestNeeded) //in case (3), we generate the array test diamond, followed by the low tagged check test
+   if (arrayTestNeeded) //in case (3), we generate the null test diamond, then the array test diamond, and then the low tagged test diamond
       {
-      callBlock->createConditionalBlocksBeforeTree(callNodeTreeTop, isArrayTreeTop, arrayAccessTreeTop, nonArrayAccessTreeTop, comp()->getFlowGraph(), false, false);
-      nonArrayAccessTreeTop->getEnclosingBlock()->createConditionalBlocksBeforeTree(nonArrayAccessTreeTop, compareTree, branchTargetTree, fallThroughTree, comp()->getFlowGraph(), false, false);
+      TR::TreeTop *nonNullAccessTreeTop = TR::TreeTop::create(comp(),callNodeTreeTop->getNode()->duplicateTree());
+
+      //add null test and array test
+      callBlock->createConditionalBlocksBeforeTree(callNodeTreeTop, isNullTreeTop, defaultAccessTreeTop, nonNullAccessTreeTop, comp()->getFlowGraph(), false, false);
+      TR::Block *joinBlock = nonNullAccessTreeTop->getEnclosingBlock()->createConditionalBlocksBeforeTree(nonNullAccessTreeTop, isArrayTreeTop, arrayAccessTreeTop, compareTree, comp()->getFlowGraph(), false, false);
+
+      TR::CFG *cfg = comp()->getFlowGraph();
+
+      //add lowtag test
+      TR::Block *isLowTaggedBlock = compareTree->getEnclosingBlock();
+      cfg->removeEdge(isLowTaggedBlock, joinBlock);
+
+      //add branch path (default access)
+      //note that genClassCheck generates a ifcmpne offset&mask 1, meaning if it is NOT
+      //lowtagged (ie offset&mask == 0), the branch will be taken
+      TR::Block *defaultAccessBlock = defaultAccessTreeTop->getEnclosingBlock();
+      compareTree->getNode()->setBranchDestination(defaultAccessBlock->getEntry());
+      cfg->addEdge(TR::CFGEdge::createEdge(isLowTaggedBlock, defaultAccessBlock, trMemory()));
+
+      //add fallthrough path (lowtag access)
+      TR::Block *lowTagAccessBlock = TR::Block::createEmptyBlock(compareTree->getNode(), comp(), isLowTaggedBlock->getFrequency(), isLowTaggedBlock);
+      lowTagAccessBlock->append(lowTagAccessTreeTop);
+      isLowTaggedBlock->getExit()->insertTreeTopsAfterMe(lowTagAccessBlock->getEntry(), lowTagAccessBlock->getExit());
+      cfg->addNode(lowTagAccessBlock);
+      cfg->addEdge(TR::CFGEdge::createEdge(isLowTaggedBlock, lowTagAccessBlock, trMemory()));
+      cfg->addEdge(TR::CFGEdge::createEdge(lowTagAccessBlock, joinBlock, trMemory()));
       }
-   else if (arrayBlockNeeded) //in case (2), no branching is needed: we simply need to replace the original CAS call with the modified array access block
+   else if (arrayBlockNeeded) //in case (2), we generate only the null test diamond
       {
-      callNodeTreeTop->insertAfter(arrayAccessTreeTop);
-      callNodeTreeTop->getPrevTreeTop()->join(callNodeTreeTop->getNextTreeTop());
-      callBlock->split(arrayAccessTreeTop->getNextTreeTop(), comp()->getFlowGraph(), true);
-      callBlock->split(arrayAccessTreeTop, comp()->getFlowGraph(), true);
+      callBlock->createConditionalBlocksBeforeTree(callNodeTreeTop, isNullTreeTop, defaultAccessTreeTop, arrayAccessTreeTop, comp()->getFlowGraph(), false, false);
       }
    else if (compareTree != NULL) //in case (1), we only generate the low tagged test diamond
-      callBlock->createConditionalBlocksBeforeTree(callNodeTreeTop, compareTree, branchTargetTree, fallThroughTree, comp()->getFlowGraph(), false, false);
-
+      {
+      callBlock->createConditionalBlocksBeforeTree(callNodeTreeTop, compareTree, defaultAccessTreeTop, lowTagAccessTreeTop, comp()->getFlowGraph(), false, false);
+      }
 
    // the original call will be deleted by createConditionalBlocksBeforeTree, but if the refcount was > 1, we need to insert stores.
    if (newSymbolReference)
       {
-      if (compareTree != NULL) //case (1) and (3) only
+      TR::Node *defaultAccessStoreNode = TR::Node::createWithSymRef(comp()->il.opCodeForDirectStore(dataType), 1, 1, defaultAccessTreeTop->getNode()->getFirstChild(), newSymbolReference);
+      TR::TreeTop *defaultAccessStoreTree = TR::TreeTop::create(comp(), defaultAccessStoreNode);
+
+      defaultAccessTreeTop->insertAfter(defaultAccessStoreTree);
+
+      debugTrace(tracer(),"Inserted store tree %p for branch target (taken) side of the diamond", defaultAccessStoreNode);
+
+      if (compareTree != NULL) //cases (1) and (3) only
          {
-         TR::Node *branchTargetStoreNode = TR::Node::createWithSymRef(comp()->il.opCodeForDirectStore(dataType), 1, 1, branchTargetTree->getNode()->getFirstChild(), newSymbolReference);
-         TR::TreeTop *branchTargetStoreTree = TR::TreeTop::create(comp(), branchTargetStoreNode);
+         TR::Node *lowTagAccessStoreNode = TR::Node::createWithSymRef(comp()->il.opCodeForDirectStore(dataType), 1, 1, lowTagAccessTreeTop->getNode()->getFirstChild(), newSymbolReference);
+         TR::TreeTop *lowTagAccessStoreTree = TR::TreeTop::create(comp(), lowTagAccessStoreNode);
 
-         branchTargetTree->insertAfter(branchTargetStoreTree);
+         lowTagAccessTreeTop->insertAfter(lowTagAccessStoreTree);
 
-         debugTrace(tracer(),"Inserted store tree %p for branch target (taken) side of the diamond", branchTargetStoreNode);
-
-         TR::Node *fallThroughStoreNode = TR::Node::createWithSymRef(comp()->il.opCodeForDirectStore(dataType), 1, 1, fallThroughTree->getNode()->getFirstChild(), newSymbolReference);
-         TR::TreeTop *fallThroughStoreTree = TR::TreeTop::create(comp(), fallThroughStoreNode);
-
-         fallThroughTree->insertAfter(fallThroughStoreTree);
-
-         debugTrace(tracer(),"Inserted store tree %p for fall-through side of the diamond", fallThroughStoreNode);
+         debugTrace(tracer(),"Inserted store tree %p for fall-through side of the diamond", lowTagAccessStoreNode);
          }
 
-      if (arrayAccessTreeTop != NULL) //case (1) only
+      if (arrayAccessTreeTop != NULL) //cases (2) and (3) only
          {
          TR::Node *arrayAccessStoreNode = TR::Node::createWithSymRef(comp()->il.opCodeForDirectStore(dataType), 1, 1, arrayAccessTreeTop->getNode()->getFirstChild(), newSymbolReference);
          TR::TreeTop *arrayAccessStoreTree = TR::TreeTop::create(comp(), arrayAccessStoreNode);
