@@ -25,12 +25,12 @@ import org.objectweb.asm.*;
 
 public class ValhallaUtils {
 	/**
-	 * Currently value type is built on JDK23, so use java file major version 67 for now.
+	 * Currently value type is built on JDK24, so use java file major version 68 for now.
 	 * If moved this needs to be incremented to the next class file version. The check in j9bcutil_readClassFileBytes()
 	 * against BCT_JavaMajorVersionShifted needs to be updated as well.
 	 * Minor version is in 16 most significant bits for asm.
 	 */
-	static final int VALUE_TYPE_CLASS_FILE_VERSION = (65535 << 16) | 67;
+	static final int VALUE_TYPE_CLASS_FILE_VERSION = (65535 << 16) | 68;
 
 	/* workaround till the new ASM is released */
 	static final int ACC_IDENTITY = 0x20;
