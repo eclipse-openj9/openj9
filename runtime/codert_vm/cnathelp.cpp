@@ -1001,7 +1001,7 @@ old_fast_jitLoadFlattenableArrayElement(J9VMThread *currentThread)
 	value = (j9object_t) currentThread->javaVM->internalVMFunctions->loadFlattenableArrayElement(currentThread, arrayObject, index, true);
 	if (NULL == value) {
 		J9ArrayClass *arrayObjectClass = (J9ArrayClass *)J9OBJECT_CLAZZ(currentThread, arrayObject);
-		if (J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(arrayObjectClass->componentType)) {
+		if (J9_IS_J9ARRAYCLASS_NULL_RESTRICTED(arrayObjectClass)) {
 			goto slow;
 		}
 	}
@@ -1065,10 +1065,6 @@ old_fast_jitStoreFlattenableArrayElement(J9VMThread *currentThread)
 		goto slow;
 	}
 	if (false == VM_VMHelpers::objectArrayStoreAllowed(currentThread, arrayref, value)) {
-		goto slow;
-	}
-	arrayrefClass = (J9ArrayClass *) J9OBJECT_CLAZZ(currentThread, arrayref);
-	if ((J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(arrayrefClass->componentType)) && (NULL == value)) {
 		goto slow;
 	}
 	currentThread->javaVM->internalVMFunctions->storeFlattenableArrayElement(currentThread, arrayref, index, value);
@@ -1474,11 +1470,10 @@ old_fast_jitCheckCast(J9VMThread *currentThread)
 			slowPath = (void*)old_slow_jitCheckCast;
 		}
 	}
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-	else if (J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(castClass)) {
-		slowPath = (void*)old_slow_jitThrowNullPointerException;
-	}
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+	/* In the future, Valhalla checkcast must throw an exception on
+	 * null-restricted checkedType if object is null.
+	 * See issue https://github.com/eclipse-openj9/openj9/issues/19764.
+	 */
 	return slowPath;
 }
 
@@ -3610,11 +3605,10 @@ fast_jitCheckCast(J9VMThread *currentThread, J9Class *castClass, j9object_t obje
 			slowPath = (void*)old_slow_jitCheckCast;
 		}
 	}
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-	else if (J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(castClass)) {
-		slowPath = (void*)old_slow_jitThrowNullPointerException;
-	}
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+	/* In the future, Valhalla checkcast must throw an exception on
+	 * null-restricted checkedType if object is null.
+	 * See issue https://github.com/eclipse-openj9/openj9/issues/19764.
+	 */
 	return slowPath;
 }
 

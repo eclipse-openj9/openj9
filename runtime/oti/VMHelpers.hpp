@@ -1786,9 +1786,10 @@ exit:
 	objectArrayStoreAllowed(J9VMThread const *currentThread, j9object_t array, j9object_t storeValue)
 	{
 		bool rc = true;
+		J9ArrayClass *arrayClass = (J9ArrayClass *)J9OBJECT_CLAZZ(currentThread, array);
 		if (NULL != storeValue) {
 			J9Class *valueClass = J9OBJECT_CLAZZ(currentThread, storeValue);
-			J9Class *componentType = ((J9ArrayClass*)J9OBJECT_CLAZZ(currentThread, array))->componentType;
+			J9Class *componentType = arrayClass->componentType;
 			/* quick check -- is this a store of a C into a C[]? */
 			if (valueClass != componentType) {
 				/* quick check -- is this a store of a C into a java.lang.Object[]? */
@@ -1796,6 +1797,10 @@ exit:
 					rc = inlineCheckCast(valueClass, componentType);
 				}
 			}
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+		} else if (J9_IS_J9ARRAYCLASS_NULL_RESTRICTED(arrayClass)) {
+			rc = FALSE;
+#endif /* if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 		}
 		return rc;
 	}

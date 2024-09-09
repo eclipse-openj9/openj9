@@ -50,6 +50,12 @@ GC_ClassArrayClassSlotIterator::nextSlot()
 				_state += 1;
 			}
 			break;
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+		case classArrayClassSlotIterator_state_companionArray:
+			classPtr = ((J9ArrayClass *)_iterateClazz)->companionArray;
+			_state += 1;
+			break;
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 		case classArrayClassSlotIterator_state_componentType:
 			classPtr = ((J9ArrayClass *)_iterateClazz)->componentType;
 			_state += 1;

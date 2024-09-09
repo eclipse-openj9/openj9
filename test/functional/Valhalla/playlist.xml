@@ -63,14 +63,14 @@
 		<variations>
 			<variation>-Xjit:count=0</variation>
 			<variation>-Xjit:count=1,disableAsyncCompilation -Xgcpolicy:optthruput</variation>
+			<variation>-Xjit:count=1,disableAsyncCompilation -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:-EnableArrayFlattening</variation>
 			<!-- issue to fix disabled tests is https://github.com/eclipse-openj9/openj9/issues/19708 -->
-			<!--<variation>-Xjit:count=1,disableAsyncCompilation -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:-EnableArrayFlattening</variation>
-			<variation>-Xjit:count=1,disableAsyncCompilation -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
+			<!--<variation>-Xjit:count=1,disableAsyncCompilation -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>-->
 			<variation>-Xjit:count=1,disableAsyncCompilation -Xgcpolicy:gencon -XX:ValueTypeFlatteningThreshold=12 -XX:-EnableArrayFlattening</variation>
 			<variation>-Xjit:count=1,disableAsyncCompilation -Xgcpolicy:gencon -XX:ValueTypeFlatteningThreshold=99999 -XX:-EnableArrayFlattening</variation>
-			<variation>-Xjit:count=1,disableAsyncCompilation -Xgcpolicy:gencon -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
-			<variation>-Xjit:count=1,disableAsyncCompilation -Xnocompressedrefs -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
-			<variation>-Xjit:count=1,disableAsyncCompilation -Xnocompressedrefs -Xgcpolicy:gencon -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>-->
+			<!--<variation>-Xjit:count=1,disableAsyncCompilation -Xgcpolicy:gencon -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>-->
+			<!--<variation>-Xjit:count=1,disableAsyncCompilation -Xnocompressedrefs -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>-->
+			<!--<variation>-Xjit:count=1,disableAsyncCompilation -Xnocompressedrefs -Xgcpolicy:gencon -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>-->
 			<variation>-Xjit:count=1,disableAsyncCompilation -Xnocompressedrefs -Xgcpolicy:gencon</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -98,11 +98,6 @@
 	</test>
 	<test>
 		<testCaseName>ValueTypeArrayTests</testCaseName>
-		<disables>
-			<disable>
-				<comment>https://github.com/eclipse-openj9/openj9/issues/19460</comment>
-			</disable>
-		</disables>
 		<variations>
 			<variation>-Xgcpolicy:optthruput</variation>
 			<variation>-Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:-EnableArrayFlattening</variation>
@@ -142,7 +137,7 @@
 		<testCaseName>ValueTypeArrayTestsJIT</testCaseName>
 		<disables>
 			<disable>
-				<comment>https://github.com/eclipse-openj9/openj9/issues/19460</comment>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/19913</comment>
 			</disable>
 		</disables>
 		<variations>
@@ -340,16 +335,12 @@
 	</test>
 	<test>
 		<testCaseName>ValueTypeSystemArraycopyTests</testCaseName>
-		<disables>
-			<disable>
-				<comment>https://github.com/eclipse-openj9/openj9/issues/19460</comment>
-			</disable>
-		</disables>
 		<variations>
 			<variation>-Xint</variation>
 			<variation>-Xint -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999</variation>
 			<variation>-Xint -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
-			<variation>-Xjit:count=0</variation>
+			<!-- https://github.com/eclipse-openj9/openj9/issues/19914 -->
+			<!--<variation>-Xjit:count=0</variation>
 			<variation>-Xjit:count=1,disableAsyncCompilation -Xgcpolicy:optthruput</variation>
 			<variation>-Xjit:count=1,disableAsyncCompilation -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:-EnableArrayFlattening</variation>
 			<variation>-Xjit:count=1,disableAsyncCompilation -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
@@ -358,9 +349,9 @@
 			<variation>-Xjit:count=1,disableAsyncCompilation -Xgcpolicy:gencon -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
 			<variation>-Xjit:count=1,disableAsyncCompilation -Xnocompressedrefs -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
 			<variation>-Xjit:count=1,disableAsyncCompilation -Xnocompressedrefs -Xgcpolicy:gencon -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
-			<variation>-Xjit:count=1,disableAsyncCompilation -Xnocompressedrefs -Xgcpolicy:gencon</variation>
+			<variation>-Xjit:count=1,disableAsyncCompilation -Xnocompressedrefs -Xgcpolicy:gencon</variation>-->
 			<!-- Test the above options with initialOptLevel=warm -->
-			<variation>-Xjit:count=1,disableAsyncCompilation,initialOptLevel=warm -Xgcpolicy:optthruput</variation>
+			<!--<variation>-Xjit:count=1,disableAsyncCompilation,initialOptLevel=warm -Xgcpolicy:optthruput</variation>
 			<variation>-Xjit:count=1,disableAsyncCompilation,initialOptLevel=warm -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:-EnableArrayFlattening</variation>
 			<variation>-Xjit:count=1,disableAsyncCompilation,initialOptLevel=warm -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
 			<variation>-Xjit:count=1,disableAsyncCompilation,initialOptLevel=warm -Xgcpolicy:gencon -XX:ValueTypeFlatteningThreshold=12 -XX:-EnableArrayFlattening</variation>
@@ -368,7 +359,7 @@
 			<variation>-Xjit:count=1,disableAsyncCompilation,initialOptLevel=warm -Xgcpolicy:gencon -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
 			<variation>-Xjit:count=1,disableAsyncCompilation,initialOptLevel=warm -Xnocompressedrefs -Xgcpolicy:optthruput -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
 			<variation>-Xjit:count=1,disableAsyncCompilation,initialOptLevel=warm -Xnocompressedrefs -Xgcpolicy:gencon -XX:ValueTypeFlatteningThreshold=99999 -XX:+EnableArrayFlattening</variation>
-			<variation>-Xjit:count=1,disableAsyncCompilation,initialOptLevel=warm -Xnocompressedrefs -Xgcpolicy:gencon</variation>
+			<variation>-Xjit:count=1,disableAsyncCompilation,initialOptLevel=warm -Xnocompressedrefs -Xgcpolicy:gencon</variation>-->
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 		--enable-preview \
