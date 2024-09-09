@@ -2587,4 +2587,10 @@ static void checkClassLoaderPermission(ClassLoader classLoader, Class<?> caller)
 	}
 }
 /*[ENDIF] JAVA_SPEC_VERSION >= 19 */
+
+/*[IF JAVA_SPEC_VERSION >= 24]*/
+static NativeLibraries nativeLibrariesFor(ClassLoader loader) {
+	return (loader == null) ? BootLoader.getNativeLibraries() : loader.nativelibs;
+}
+/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 }
