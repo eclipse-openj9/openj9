@@ -159,11 +159,15 @@ class NeedsPeekingHeuristic
          {
             if (_bci.bcIndex() - _loadIndices[i] <= _distance)
             {
-               _needsPeeking = true;
                heuristicTraceIfTracerIsNotNull(_tracer, "there is a parm load at %d which is within %d of a call at %d", _loadIndices[i], _distance, _bci.bcIndex());
             }
          }
       };
+
+      void setNeedsPeekingToTrue()
+      {
+      _needsPeeking = true;
+      }
 
       void processByteCode()
          {
@@ -1326,6 +1330,13 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
    bool inlineLambdaFormGeneratedMethod = comp()->fej9()->isLambdaFormGeneratedMethod(calltarget->_calleeMethod) &&
                                    (!disableMethodHandleInliningAfterFirstPass || _inliner->firstPass());
 
+   TR::Block * * blocks =
+         (TR::Block * *) comp()->trMemory()->allocateStackMemory(maxIndex
+               * sizeof(TR::Block *));
+   memset(blocks, 0, maxIndex * sizeof(TR::Block *));
+
+   TR::CFG &cfg = processBytecodeAndGenerateCFG(calltarget, cfgRegion, bci, nph, blocks, flags);
+
    // No need to peek LF methods, as we'll always interprete the method with state in order to propagate object info
    // through bytecodes to find call targets
    if (!inlineLambdaFormGeneratedMethod &&
@@ -1350,12 +1361,6 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
       methodSymbol->getResolvedMethod()->genMethodILForPeekingEvenUnderMethodRedefinition(methodSymbol, comp(), false, NULL);
       }
 
-   TR::Block * * blocks =
-         (TR::Block * *) comp()->trMemory()->allocateStackMemory(maxIndex
-               * sizeof(TR::Block *));
-   memset(blocks, 0, maxIndex * sizeof(TR::Block *));
-
-   TR::CFG &cfg = processBytecodeAndGenerateCFG(calltarget, cfgRegion, bci, nph, blocks, flags);
    int size = calltarget->_fullSize;
 
    // Adjust call frequency for unknown or direct calls, for which we don't get profiling information
