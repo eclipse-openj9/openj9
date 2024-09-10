@@ -83,16 +83,59 @@ private:
 protected:
 	virtual bool initialize(MM_EnvironmentBase *env);
 	virtual void tearDown(MM_EnvironmentBase *env);
+
+	/**
+	 * Copy array data to an allocated native memory.
+	 *
+	 * @param vmThread[in]  			the current J9VMThread.
+	 * @param indexableObjectModel[in]	GC_ArrayObjectModel.
+	 * @param functions[in]				J9InternalVMFunctions.
+	 * @param data[out] 				the pointer of copied Array Data address.
+	 * @param arrayObject[in] 			the array object
+	 * @param isCopy[out] 				if it true, the array is successfully copied.
+	 */
 	void copyArrayCritical(J9VMThread *vmThread, GC_ArrayObjectModel *indexableObjectModel,
 				J9InternalVMFunctions *functions, void **data,
 				J9IndexableObject *arrayObject, jboolean *isCopy);
+	/**
+	 * Copy back array data from the native memory and might free the native memory.
+	 *
+	 * @param vmThread[in]  			the current J9VMThread.
+	 * @param indexableObjectModel[in]	GC_ArrayObjectModel.
+	 * @param functions[in]				J9InternalVMFunctions.
+	 * @param elems[in] 				the pointer of native memory.
+	 * @param arrayObject[in] 			the pointer of array object
+	 * @param mode[in] 					JNIMode(JNI_COMMIT, JNI_ABORT...).
+	 */
 	void copyBackArrayCritical(J9VMThread *vmThread, GC_ArrayObjectModel *indexableObjectModel,
 				J9InternalVMFunctions *functions, void *elems,
 				J9IndexableObject **arrayObject, jint mode);
+
+	/**
+	 * Copy string bytes to the allocated native memory.
+	 *
+	 * @param vmThread[in]  			the current J9VMThread.
+	 * @param indexableObjectModel[in]	GC_ArrayObjectModel.
+	 * @param functions[in]				J9InternalVMFunctions.
+	 * @param data[in]	 				the pointer of native memory address.
+	 * @param javaVM[in]				J9JavaVM
+	 * @param valueObject[in] 			the pointer of array object
+	 * @param stringObject[in]			Java String
+	 * @param isCopy[out] 				if it true, the array is successfully copied.
+	 * @param isCompressed[in]			if it is compressed.
+	 */
 	void copyStringCritical(J9VMThread *vmThread, GC_ArrayObjectModel *indexableObjectModel,
 				J9InternalVMFunctions *functions, jchar **data, J9JavaVM *javaVM,
 				J9IndexableObject *valueObject, J9Object *stringObject,
 				jboolean *isCopy, bool isCompressed);
+
+	/**
+	 * Free the native memory for java char array.
+	 *
+	 * @param vmThread[in]  			the current J9VMThread.
+	 * @param functions[in]				J9InternalVMFunctions.
+	 * @param elems[in]	 				the pointer of native memory.
+	 */
 	void freeStringCritical(J9VMThread *vmThread, J9InternalVMFunctions *functions, const jchar *elems);
 
 	/**

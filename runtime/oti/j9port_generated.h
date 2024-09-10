@@ -600,7 +600,6 @@ extern J9_CFUNC int32_t j9port_isCompatible(struct J9PortLibraryVersion *expecte
 #define j9vmem_commit_memory(param1,param2,param3) OMRPORT_FROM_J9PORT(privatePortLibrary)->vmem_commit_memory(OMRPORT_FROM_J9PORT(privatePortLibrary),param1,param2,param3)
 #define j9vmem_decommit_memory(param1,param2,param3) OMRPORT_FROM_J9PORT(privatePortLibrary)->vmem_decommit_memory(OMRPORT_FROM_J9PORT(privatePortLibrary),param1,param2,param3)
 #define j9vmem_free_memory(param1,param2,param3) OMRPORT_FROM_J9PORT(privatePortLibrary)->vmem_free_memory(OMRPORT_FROM_J9PORT(privatePortLibrary),param1,param2,param3)
-#define j9vmem_release_double_mapped_region(param1,param2,param3) OMRPORT_FROM_J9PORT(privatePortLibrary)->vmem_release_double_mapped_region(OMRPORT_FROM_J9PORT(privatePortLibrary),param1,param2,param3)
 #define j9vmem_vmem_params_init(param1) OMRPORT_FROM_J9PORT(privatePortLibrary)->vmem_vmem_params_init(OMRPORT_FROM_J9PORT(privatePortLibrary),param1)
 #define j9vmem_reserve_memory(param1,param2,param3,param4,param5,param6) OMRPORT_FROM_J9PORT(privatePortLibrary)->vmem_reserve_memory(OMRPORT_FROM_J9PORT(privatePortLibrary),param1,param2,param3,param4,param5,param6)
 #define j9vmem_reserve_memory_ex(param1,param2) OMRPORT_FROM_J9PORT(privatePortLibrary)->vmem_reserve_memory_ex(OMRPORT_FROM_J9PORT(privatePortLibrary),param1,param2)

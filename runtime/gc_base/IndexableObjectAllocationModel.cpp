@@ -72,7 +72,7 @@ MM_IndexableObjectAllocationModel::initializeAllocateDescription(MM_EnvironmentB
 
 	case GC_ArrayletObjectModel::InlineContiguous:
 		/* Check if we're dealing with a camouflaged discontiguous array - these arrays will require slow-path allocate */
-		if (isVirtualLargeObjectHeapEnabled && (!extensions->indexableObjectModel.isArrayletDataAdjacentToHeader(_dataSize))) {
+		if (isVirtualLargeObjectHeapEnabled && (!extensions->indexableObjectModel.isDataAdjacentToHeader(_dataSize))) {
 			if (isGCAllowed()) {
 				layoutSizeInBytes = _dataSize;
 				setAllocatable(true);
@@ -84,7 +84,7 @@ MM_IndexableObjectAllocationModel::initializeAllocateDescription(MM_EnvironmentB
 
 	case GC_ArrayletObjectModel::Discontiguous:
 		/* If sparse heap is enabled, the only way to get here is through zero sized arrays. */
-		if (isAllIndexableDataContiguousEnabled) {
+		if (isVirtualLargeObjectHeapEnabled) {
 			Assert_MM_true((0 == _dataSize) && (0 == _numberOfArraylets));
 		}
 		/* non-empty discontiguous arrays require slow-path allocate */
@@ -144,7 +144,7 @@ MM_IndexableObjectAllocationModel::initializeIndexableObject(MM_EnvironmentBase 
 	GC_ArrayObjectModel *indexableObjectModel = &extensions->indexableObjectModel;
 	J9IndexableObject *spine = (J9IndexableObject*)initializeJavaObject(env, allocatedBytes);
 	_allocateDescription.setSpine(spine);
-	bool isArrayletDataAdjacentToHeader = false;
+	bool isDataAdjacentToHeader = false;
 	bool isVirtualLargeObjectHeapEnabled = indexableObjectModel->isVirtualLargeObjectHeapEnabled();
 
 	if (NULL != spine) {
@@ -160,8 +160,8 @@ MM_IndexableObjectAllocationModel::initializeIndexableObject(MM_EnvironmentBase 
 #endif /* defined(J9VM_ENV_DATA64) */
 		} else {
 			indexableObjectModel->setSizeInElementsForContiguous(spine, _numberOfIndexedFields);
-			isArrayletDataAdjacentToHeader = indexableObjectModel->isArrayletDataAdjacentToHeader(spine);
-			if (isArrayletDataAdjacentToHeader) {
+			isDataAdjacentToHeader = indexableObjectModel->isDataAdjacentToHeader(spine);
+			if (isDataAdjacentToHeader) {
 #if defined(J9VM_ENV_DATA64)
 				if (((J9JavaVM *)env->getLanguageVM())->isIndexableDataAddrPresent) {
 					indexableObjectModel->setDataAddrForContiguous(spine);
@@ -181,7 +181,7 @@ MM_IndexableObjectAllocationModel::initializeIndexableObject(MM_EnvironmentBase 
 	switch (_layout) {
 	case GC_ArrayletObjectModel::InlineContiguous:
 #if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
-		if (isVirtualLargeObjectHeapEnabled && !isArrayletDataAdjacentToHeader) {
+		if (isVirtualLargeObjectHeapEnabled && !isDataAdjacentToHeader) {
 			/* We still need to create leaves for discontiguous arrays that will be allocated at off-heap */
 			spine = getSparseAddressAndDecommitLeaves(env, spine);
 			if (NULL != spine) {
@@ -189,7 +189,7 @@ MM_IndexableObjectAllocationModel::initializeIndexableObject(MM_EnvironmentBase 
 			}
 		}
 #endif /* defined (J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
-		if ((!isVirtualLargeObjectHeapEnabled) || isArrayletDataAdjacentToHeader) {
+		if ((!isVirtualLargeObjectHeapEnabled) || isDataAdjacentToHeader) {
 			Assert_MM_true(1 == _numberOfArraylets);
 		}
 		break;
@@ -198,7 +198,6 @@ MM_IndexableObjectAllocationModel::initializeIndexableObject(MM_EnvironmentBase 
 	case GC_ArrayletObjectModel::Hybrid:
 		if (NULL != spine) {
 			/* The array size has been set earlier at line 163 */
-//			indexableObjectModel->setSizeInElementsForDiscontiguous(spine, _numberOfIndexedFields);
 			if(0 == _numberOfIndexedFields) {
 				/* Don't try to initialize the arrayoid for an empty NUA */
 				Trc_MM_allocateAndConnectNonContiguousArraylet_Exit(env->getLanguageVMThread(), spine);
@@ -314,18 +313,18 @@ MM_IndexableObjectAllocationModel::layoutDiscontiguousArraylet(MM_EnvironmentBas
 		arrayoidIndex += 1;
 	}
 
+	bool isVirtualLargeObjectHeapEnabled = indexableObjectModel->isVirtualLargeObjectHeapEnabled();
 	if (NULL != spine) {
 		switch (_layout) {
 		case GC_ArrayletObjectModel::Discontiguous:
 			indexableObjectModel->AssertArrayletIsDiscontiguous(spine);
 			Assert_MM_true(arrayoidIndex == _numberOfArraylets);
+			Assert_MM_false(isVirtualLargeObjectHeapEnabled);
 			break;
 
 		case GC_ArrayletObjectModel::Hybrid:
 			/* Unreachable if off-heap is enabled */
-			if (indexableObjectModel->isVirtualLargeObjectHeapEnabled()) {
-				Assert_MM_unreachable();
-			}
+			Assert_MM_false(isVirtualLargeObjectHeapEnabled);
 			/* last arrayoid points to end of arrayoid array in spine header (object-aligned if
 			 * required). (data size % leaf size) bytes of data are stored here (may be empty).
 			 */
@@ -361,16 +360,6 @@ MM_IndexableObjectAllocationModel::getSparseAddressAndDecommitLeaves(MM_Environm
 	const UDATA arrayletLeafSize = env->getOmrVM()->_arrayletLeafSize;
 	uintptr_t byteAmount = 0;
 	UDATA arrayletLeafCount = MM_Math::roundToCeiling(arrayletLeafSize, _dataSize) / arrayletLeafSize;
-#define ARRAYLET_ALLOC_THRESHOLD 64
-	void *leaves[ARRAYLET_ALLOC_THRESHOLD];
-	void **arrayletLeaveAddrs = leaves;
-	if (arrayletLeafCount > ARRAYLET_ALLOC_THRESHOLD) {
-		arrayletLeaveAddrs = (void **)env->getForge()->allocate(arrayletLeafCount * sizeof(uintptr_t), MM_AllocationCategory::GC_HEAP, J9_GET_CALLSITE());
-	}
-
-	if (NULL == arrayletLeaveAddrs) {
-		return NULL;
-	}
 
 	/* determine how many bytes to allocate outside of the spine (in arraylet leaves) */
 	Assert_MM_true(_allocateDescription.getBytesRequested() >= _allocateDescription.getContiguousBytes());
@@ -393,7 +382,6 @@ MM_IndexableObjectAllocationModel::getSparseAddressAndDecommitLeaves(MM_Environm
 			break;
 		}
 
-		arrayletLeaveAddrs[arrayoidIndex] = leaf;
 		if (0 == arrayoidIndex) {
 			MM_HeapRegionDescriptorVLHGC *firstLeafRegionDescriptor = (MM_HeapRegionDescriptorVLHGC *)extensions->getHeap()->getHeapRegionManager()->tableDescriptorForAddress(leaf);
 			firstLeafRegionDescriptor->_sparseHeapAllocation = true;
@@ -426,10 +414,10 @@ MM_IndexableObjectAllocationModel::getSparseAddressAndDecommitLeaves(MM_Environm
 		if (NULL != virtualLargeObjectHeapAddress) {
 			indexableObjectModel->setDataAddrForContiguous((J9IndexableObject *)spine, virtualLargeObjectHeapAddress);
 		}
-		/* Free arraylet leaf addresses if dynamically allocated */
-		if (arrayletLeafCount > ARRAYLET_ALLOC_THRESHOLD) {
-			env->getForge()->free((void *)arrayletLeaveAddrs);
-		}
+		/**
+		 * TODO:we might need a special state for this regions (different from just plain ARRAYLET),
+		 * such as ARRAYLET_DECOMMITED or just DECOMMITED
+		 */
 	}
 
 	Trc_MM_getSparseAddressAndDecommitLeaves_Exit(env->getLanguageVMThread(), spine, (void *)bytesRemaining);
