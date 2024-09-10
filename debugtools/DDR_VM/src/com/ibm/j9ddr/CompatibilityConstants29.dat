@@ -34,8 +34,6 @@
 
 CLimits.USHRT_MAX = 0xFFFF
 
-J9BuildFlags.gc_enableSparseHeapAllocation = 0
-
 J9CfrClassFile.CFR_METHOD_EXT_HAS_SCOPED_ANNOTATION = 0
 J9CfrClassFile.CFR_METHOD_EXT_NOT_CHECKPOINT_SAFE_ANNOTATION = 0
 

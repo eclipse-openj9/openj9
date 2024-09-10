@@ -976,38 +976,10 @@ public:
 	}
 
 	/**
-	 * Returns data pointer associated with a discontiguous Indexable object.
-	 * Data pointer will always be pointing at the arraylet data. In this
-	 * case the data pointer will be pointing to address immediately after
-	 * the header (the arrayoid), except when double mapping or sparse-heap
-	 * is enabled. In these cases, the data pointer will point to the
-	 * contiguous representation of the data; hence returning that pointer.
-	 *
-	 * @param arrayPtr      Pointer to the indexable object whose size is required
-	 * @return data address associated with the Indexable object
-	 */
-	MMINLINE void *
-	getDataAddrForDiscontiguous(J9IndexableObject *arrayPtr)
-	{
-		void *dataAddr = NULL;
-		if (_isIndexableDataAddrPresent) {
-			/* If double mapping is enabled only, arraylet will have a discontiguous layout.
-			 * If sparse-heap is enabled, arraylet will have a contiguous layout. For now we
-			 * Assert only the discontiguous case until sparse-heap is introduced. */
-			dataAddr = *dataAddrSlotForDiscontiguous(arrayPtr);
-		}
-
-		return dataAddr;
-	}
-
-	/**
 	 * Returns data pointer associated with the Indexable object.
 	 * Data pointer will always be pointing at the arraylet data. In all
 	 * cases the data pointer will be pointing to address immediately after
-	 * the header, except when double mapping is enabled. In this case,
-	 * if double mapping is enabled and arraylet was double mapped
-	 * successfully the data pointer will point to the contiguous
-	 * representation of the data; hence returning that pointer.
+	 * the header,
 	 *
 	 * @param arrayPtr      Pointer to the indexable object whose size is required
 	 * @return data address associated with the Indexable object
@@ -1017,11 +989,13 @@ public:
 	{
 		return (InlineContiguous == getArrayLayout(arrayPtr))
 			? getDataAddrForContiguous(arrayPtr)
-			: getDataAddrForDiscontiguous(arrayPtr);
+			/* DataAddr is only used for off-heap enabled case, return NULL for disContiguous layout */
+			: NULL;
 	}
 
 	/**
 	 * Checks that the dataAddr field of the indexable object is correct.
+	 * this method is supposed to be called only if offheap is enabled.
 	 *
 	 * @param arrayPtr      Pointer to the indexable object
 	 * @param isValidDataAddrForOffHeapObject	Boolean to determine whether the given indexable object is off heap
@@ -1040,6 +1014,7 @@ public:
 
 	/**
 	 * Checks that the dataAddr field of the indexable object is correct.
+	 * this method is supposed to be called only if offheap is enabled
 	 *
 	 * @param arrayPtr      Pointer to the indexable object
 	 * @param isValidDataAddrForOffHeapObject	Boolean to determine whether the given indexable object is off heap
@@ -1056,13 +1031,7 @@ public:
 		} else if (dataSizeInBytes < _omrVM->_arrayletLeafSize) {
 			isValidDataAddress = (dataAddr == (void *)((uintptr_t)arrayPtr + contiguousIndexableHeaderSize()));
 		} else {
-			if (isVirtualLargeObjectHeapEnabled()
-			 ) {
-				isValidDataAddress = isValidDataAddrForOffHeapObject;
-			}
-			else {
-				isValidDataAddress = (dataAddr == NULL);
-			}
+			isValidDataAddress = isValidDataAddrForOffHeapObject;
 		}
 
 		return isValidDataAddress;
@@ -1241,7 +1210,7 @@ public:
 	MMINLINE void *
 	getDataPointerForContiguous(J9IndexableObject *arrayPtr)
 	{
-		void *dataAddr = (void *)((uintptr_t)arrayPtr + contiguousIndexableHeaderSize());;
+		void *dataAddr = (void *)((uintptr_t)arrayPtr + contiguousIndexableHeaderSize());
 #if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
 		if (isVirtualLargeObjectHeapEnabled()) {
 			dataAddr = *dataAddrSlotForContiguous(arrayPtr);
@@ -1322,7 +1291,7 @@ public:
 	 * @param dataSizeInBytes the size of data in an indexable object, in bytes, including leaves and alignment padding
 	 * @return true if the arraylet data is adjacent to the header, false otherwise
 	 */
-	bool isArrayletDataAdjacentToHeader(J9IndexableObject *arrayPtr);
+	bool isDataAdjacentToHeader(J9IndexableObject *arrayPtr);
 
 	/**
 	 * Check if the arraylet data is adjacent to the header.
@@ -1331,7 +1300,7 @@ public:
 	 * @param dataSizeInBytes the size of data in an indexable object, in bytes, including leaves and alignment padding
 	 * @return true if based on the value of dataSizeInBytes, the arraylet data is adjacent to the header, false otherwise
 	 */
-	bool isArrayletDataAdjacentToHeader(uintptr_t dataSizeInBytes);
+	bool isDataAdjacentToHeader(uintptr_t dataSizeInBytes);
 
 	/**
 	 * Check if the data address for the contiguous indexable object should be fixed up.

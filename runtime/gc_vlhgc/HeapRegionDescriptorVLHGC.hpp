@@ -85,9 +85,6 @@ public:
 	uintptr_t _projectedLiveBytesPreviousPGC;   /**< _projectedLiveBytes value from previous PGC; updated just before we apply decay for this PGC */
 	IDATA _projectedLiveBytesDeviation;	/**< difference between actual live bytes and projected live bytes. Note: not always update to date and can be negative. */
 	MM_HeapRegionDescriptorVLHGC *_compactDestinationQueueNext; /**< pointer to next compact destination region in the queue */
-#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
-	J9PortVmemIdentifier _arrayletDoublemapID;	/**< Contiguous address identifier associate with double mapped region of arraylet */
-#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 #if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
 	bool _sparseHeapAllocation;		/**< indicates whether this region is related with sparse heap allocation(the first region has reserved for off-heap) */
 #endif /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */

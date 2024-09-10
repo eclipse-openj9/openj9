@@ -78,6 +78,9 @@ public:
 		,_unfinalizedObjectBuffer(NULL)
 		,_ownableSynchronizerObjectBuffer(NULL)
 		,_continuationObjectBuffer(NULL)
+#if defined(J9VM_ENV_DATA64)
+		,shouldFixupDataAddrForContiguous(false)
+#endif /* defined(J9VM_ENV_DATA64) */
 	{}
 };
 
@@ -204,7 +207,7 @@ public:
 #if defined(J9VM_ENV_DATA64)
 		if (objectModel->isIndexable(objectPtr)) {
 			GC_ArrayObjectModel *indexableObjectModel = &_extensions->indexableObjectModel;
-			if (_vmThread->isIndexableDataAddrPresent && indexableObjectModel->isInlineContiguousArraylet((J9IndexableObject *)objectPtr)) {
+			if (_vmThread->isVirtualLargeObjectHeapEnabled && indexableObjectModel->isInlineContiguousArraylet((J9IndexableObject *)objectPtr)) {
 				_gcEnv.shouldFixupDataAddrForContiguous = indexableObjectModel->shouldFixupDataAddrForContiguous((J9IndexableObject *)objectPtr);
 			} else {
 				_gcEnv.shouldFixupDataAddrForContiguous = false;

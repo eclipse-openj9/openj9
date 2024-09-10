@@ -1372,17 +1372,6 @@ private:
 		}
 	}
 
-#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
-	virtual void doDoubleMappedObjectSlot(J9Object *objectPtr, struct J9PortVmemIdentifier *identifier) {
-		MM_EnvironmentVLHGC::getEnvironment(_env)->_markVLHGCStats._offHeapRegionCandidates += 1;
-		if (!_markingScheme->isMarked(objectPtr)) {
-			MM_EnvironmentVLHGC::getEnvironment(_env)->_markVLHGCStats._offHeapRegionsCleared += 1;
-			OMRPORT_ACCESS_FROM_OMRVM(_javaVM->omrVM);
-			omrvmem_release_double_mapped_region(identifier->address, identifier->size, identifier);
-		}
-    }
-#endif /* defined(J9VM_GC_ENABLE_DOUBLE_MAP) */
-
 #if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
 	virtual void doObjectInVirtualLargeObjectHeap(J9Object *objectPtr, bool *sparseHeapAllocation) {
 		MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(_env);

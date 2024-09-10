@@ -113,6 +113,7 @@ GC_ArrayletObjectModel::getArrayletLayout(J9Class* clazz, uintptr_t numberOfElem
 		if (isVirtualLargeObjectHeapEnabled() && (0 < dataSizeInBytes)) {
 			layout = InlineContiguous;
 		} else if (lastArrayletBytes > 0) {
+			Assert_MM_false(isVirtualLargeObjectHeapEnabled());
 			/* determine how large the spine would be if this were a hybrid array */
 			uintptr_t numberArraylets = numArraylets(dataSizeInBytes);
 			bool align = shouldAlignSpineDataSection(clazz);
@@ -158,14 +159,14 @@ GC_ArrayletObjectModel::fixupInternalLeafPointersAfterCopy(J9IndexableObject *de
 }
 
 bool
-GC_ArrayletObjectModel::isArrayletDataAdjacentToHeader(J9IndexableObject *arrayPtr)
+GC_ArrayletObjectModel::isDataAdjacentToHeader(J9IndexableObject *arrayPtr)
 {
 	uintptr_t dataSizeInBytes = getDataSizeInBytes(arrayPtr);
-	return isArrayletDataAdjacentToHeader(dataSizeInBytes);
+	return isDataAdjacentToHeader(dataSizeInBytes);
 }
 
 bool
-GC_ArrayletObjectModel::isArrayletDataAdjacentToHeader(uintptr_t dataSizeInBytes)
+GC_ArrayletObjectModel::isDataAdjacentToHeader(uintptr_t dataSizeInBytes)
 {
 	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(_omrVM);
 	uintptr_t minimumSpineSizeAfterGrowing = extensions->getObjectAlignmentInBytes();

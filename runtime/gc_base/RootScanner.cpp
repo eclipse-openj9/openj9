@@ -239,14 +239,6 @@ MM_RootScanner::doStringTableSlot(J9Object **slotPtr, GC_StringTableIterator *st
 	doSlot(slotPtr);
 }
 
-#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
-void
-MM_RootScanner::doDoubleMappedObjectSlot(J9Object *objectPtr, struct J9PortVmemIdentifier *identifier)
-{
-	/* No need to call doSlot() here since there's nothing to update */
-}
-#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
-
 #if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
 void
 MM_RootScanner::doObjectInVirtualLargeObjectHeap(J9Object *objectPtr, bool *sparseHeapAllocation)
@@ -920,29 +912,6 @@ MM_RootScanner::scanJVMTIObjectTagTables(MM_EnvironmentBase *env)
 }
 #endif /* J9VM_OPT_JVMTI */
 
-#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
-void 
-MM_RootScanner::scanDoubleMappedObjects(MM_EnvironmentBase *env)
-{
-	if (_singleThread || J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
-		GC_HeapRegionIteratorVLHGC regionIterator(_extensions->heap->getHeapRegionManager());
-		MM_HeapRegionDescriptorVLHGC *region = NULL;
-		reportScanningStarted(RootScannerEntity_DoubleMappedOrVirtualLargeObjectHeapObjects);
-		while (NULL != (region = regionIterator.nextRegion())) {
-			if (region->isArrayletLeaf()) {
-				J9Object *spineObject = (J9Object *)region->_allocateData.getSpine();
-				Assert_MM_true(NULL != spineObject);
-				J9PortVmemIdentifier *arrayletDoublemapID = &region->_arrayletDoublemapID;
-				if (NULL != arrayletDoublemapID->address) {
-					doDoubleMappedObjectSlot(spineObject, arrayletDoublemapID);
-				}
-			}
-		}
-		reportScanningEnded(RootScannerEntity_DoubleMappedOrVirtualLargeObjectHeapObjects);
-	}
-}
-#endif /* defined(J9VM_GC_ENABLE_DOUBLE_MAP) */
-
 #if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
 void
 MM_RootScanner::scanObjectsInVirtualLargeObjectHeap(MM_EnvironmentBase *env)
@@ -950,7 +919,7 @@ MM_RootScanner::scanObjectsInVirtualLargeObjectHeap(MM_EnvironmentBase *env)
 	if (_singleThread || J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
 		GC_HeapRegionIteratorVLHGC regionIterator(_extensions->heap->getHeapRegionManager());
 		MM_HeapRegionDescriptorVLHGC *region = NULL;
-		reportScanningStarted(RootScannerEntity_DoubleMappedOrVirtualLargeObjectHeapObjects);
+		reportScanningStarted(RootScannerEntity_virtualLargeObjectHeapObjects);
 		while (NULL != (region = regionIterator.nextRegion())) {
 			if (region->isArrayletLeaf()) {
 				if (region->_sparseHeapAllocation) {
@@ -960,7 +929,7 @@ MM_RootScanner::scanObjectsInVirtualLargeObjectHeap(MM_EnvironmentBase *env)
 				}
 			}
 		}
-		reportScanningEnded(RootScannerEntity_DoubleMappedOrVirtualLargeObjectHeapObjects);
+		reportScanningEnded(RootScannerEntity_virtualLargeObjectHeapObjects);
 	}
 }
 #endif /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
@@ -1102,12 +1071,6 @@ MM_RootScanner::scanClearable(MM_EnvironmentBase *env)
 	}
 #endif /* J9VM_OPT_JVMTI */
 
-#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
-	if (_includeDoubleMap) {
-		scanDoubleMappedObjects(env);
-	}
-#endif /* defined(J9VM_GC_ENABLE_DOUBLE_MAP) */
-
 #if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
 	if (_includeVirtualLargeObjectHeap) {
 		scanObjectsInVirtualLargeObjectHeap(env);
@@ -1161,12 +1124,6 @@ MM_RootScanner::scanAllSlots(MM_EnvironmentBase *env)
 		scanJVMTIObjectTagTables(env);
 	}
 #endif /* J9VM_OPT_JVMTI */
-
-#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
-	if (_includeDoubleMap) {
-		scanDoubleMappedObjects(env);
-	}
-#endif /* defined(J9VM_GC_ENABLE_DOUBLE_MAP) */
 
 #if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
 	if (_includeVirtualLargeObjectHeap) {

@@ -125,24 +125,6 @@ public:
 	}
 
 	/**
-	 * Returns if a indexable object is discontiguous or contiguous.
-	 *
-	 * @param arrayPtr Pointer to the indexable object whose size is required
-	 * @return true if arraylet is discontiguous, false otherwise
-	 */
-	MMINLINE bool
-	isArrayletDiscontiguous(J9IndexableObject *arrayPtr)
-	{
-		uintptr_t size = 0;
-		if (compressObjectReferences()) {
-			size = ((J9IndexableObjectContiguousCompressed *)arrayPtr)->size;
-		} else {
-			size = ((J9IndexableObjectContiguousFull *)arrayPtr)->size;
-		}
-		return 0 == size;
-	}
-
-	/**
 	 * Sets size in elements of a contiguous indexable object .
 	 * @param arrayPtr Pointer to the indexable object whose size is required
 	 * @param size Size in elements to set.
