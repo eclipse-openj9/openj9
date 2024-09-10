@@ -127,6 +127,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<object name="javanextvmi">
 				<include-if condition="spec.java11"/>
 			</object>
+			<object name="valhallavmi">
+				<include-if condition="spec.flags.opt_valhallaValueTypes"/>
+			</object>
 		</objects>
 
 		<!--
