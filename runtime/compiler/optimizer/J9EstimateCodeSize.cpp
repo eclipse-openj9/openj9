@@ -841,6 +841,20 @@ TR_J9EstimateCodeSize::processBytecodeAndGenerateCFG(TR_CallTarget *calltarget, 
             break;
          case J9BCinvokeinterface:
             cpIndex = bci.next2Bytes();
+#if JAVA_SPEC_VERSION >= 21
+            {
+            TR::Method *meth = comp()->fej9()->createMethod(comp()->trMemory(), calltarget->_calleeMethod->containingClass(), cpIndex);
+            if (meth)
+               {
+               const char * sig = meth->signature(comp()->trMemory());
+               if (sig && !strncmp(sig, "java/lang/foreign/MemorySegment", 31))
+                  {
+                  nph.setNeedsPeekingToTrue();
+                  heuristicTrace(tracer(), "Depth %d: invokeinterface call at bc index %d has Signature %s, enabled peeking for caller to fold layout field load necessary for VarHandle operation inlining.", _recursionDepth, i, sig);
+                  }
+               }
+            }
+#endif // JAVA_SPEC_VERSION >= 21
             flags[i].set(InterpreterEmulator::BytecodePropertyFlag::isUnsanitizeable);
             break;
          case J9BCgetfield:
@@ -1471,6 +1485,16 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
       {
       bci.prepareToFindAndCreateCallsites(blocks, flags, callSites, &cfg, &newBCInfo, _recursionDepth, &callStack);
       bool iteratorWithState = (inlineArchetypeSpecimen && !mhInlineWithPeeking) || inlineLambdaFormGeneratedMethod;
+
+// in JDK21+, iterating bytecodes of MemorySegment methods with state is necesssary to obtain the segment view
+// VarHandle object through folding ValueLayouts$AbstractValueLayout.accessHandle() if the VarHandle has been created
+#if JAVA_SPEC_VERSION >= 21
+      if (calltarget->_calleeMethod->getRecognizedMethod() == TR::java_lang_foreign_MemorySegment_method)
+         {
+         heuristicTrace(tracer(), "Callee method is a MemorySegment method. Setting iteratorWithState to true.\n");
+         iteratorWithState = true;
+         }
+#endif // JAVA_SPEC_VERSION >= 21
 
       if (!bci.findAndCreateCallsitesFromBytecodes(wasPeekingSuccessfull, iteratorWithState))
          {

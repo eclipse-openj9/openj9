@@ -5132,6 +5132,41 @@ TR_J9VMBase::getMemberNameFieldKnotIndexFromMethodHandleKnotIndex(TR::Compilatio
    }
 
 TR::KnownObjectTable::Index
+TR_J9VMBase::getLayoutVarHandle(TR::Compilation *comp, TR::KnownObjectTable::Index layoutIndex)
+   {
+   TR::VMAccessCriticalSection getLayoutVarHandle(this);
+   TR::KnownObjectTable::Index result = TR::KnownObjectTable::UNKNOWN;
+   TR::KnownObjectTable *knot = comp->getKnownObjectTable();
+   if (!knot) return result;
+
+   const char * const layoutClassName =
+      "jdk/internal/foreign/layout/ValueLayouts$AbstractValueLayout";
+   const int layoutClassNameLen = (int)strlen(layoutClassName);
+   TR_OpaqueClassBlock *layoutClass =
+      getSystemClassFromClassName(layoutClassName, layoutClassNameLen);
+
+   TR_OpaqueClassBlock *layoutObjClass =
+      getObjectClassFromKnownObjectIndex(comp, layoutIndex);
+
+   if (layoutClass == NULL ||
+       layoutObjClass == NULL ||
+       isInstanceOf(layoutObjClass, layoutClass, true, true) != TR_yes)
+      {
+      if (comp->getOption(TR_TraceOptDetails))
+         traceMsg(comp, "getLayoutVarHandle: failed ValueLayouts$AbstractValueLayout type check.\n");
+      return result;
+      }
+
+   uintptr_t layoutObj = knot->getPointer(layoutIndex);
+   uintptr_t vhObject = getReferenceField(layoutObj,
+                                 "handle",
+                                 "Ljava/lang/invoke/VarHandle;");
+   if (!vhObject) return result;
+   result = knot->getOrCreateIndex(vhObject);
+   return result;
+   }
+
+TR::KnownObjectTable::Index
 TR_J9VMBase::getMethodHandleTableEntryIndex(TR::Compilation *comp, TR::KnownObjectTable::Index vhIndex, TR::KnownObjectTable::Index adIndex)
    {
    TR::VMAccessCriticalSection getMethodHandleTableEntryIndex(this);

@@ -678,6 +678,8 @@ bool J9::TransformUtil::foldFinalFieldsIn(TR_OpaqueClassBlock *clazz, const char
       return true; // We can ONLY do this opt to fields that are never victimized by setAccessible
    else if (classNameLength >= 18 && !strncmp(className, "java/lang/reflect/", 18))
       return true;
+   else if (classNameLength >= 18 && !strncmp(className, "java/lang/foreign/", 18))
+      return true;
    else if (classNameLength >= 30 && !strncmp(className, "java/lang/String$UnsafeHelpers", 30))
       return true;
 
