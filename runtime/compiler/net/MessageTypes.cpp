@@ -191,6 +191,7 @@ const char *messageNames[] =
    "VM_inSnapshotMode",
    "VM_isInvokeCacheEntryAnArray",
    "VM_getMethodHandleTableEntryIndex",
+   "VM_getLayoutVarHandle",
    "CompInfo_isCompiled",
    "CompInfo_getPCIfCompiled",
    "CompInfo_getInvocationCount",
