@@ -4075,24 +4075,6 @@ private:
 		}
 	}
 
-#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
-	virtual void doDoubleMappedObjectSlot(J9Object *objectPtr, struct J9PortVmemIdentifier *identifier) {
-		MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(_env);
-		env->_copyForwardStats._offHeapRegionCandidates += 1;
-		if (!_copyForwardScheme->isLiveObject(objectPtr)) {
-			Assert_MM_true(_copyForwardScheme->isObjectInEvacuateMemory(objectPtr));
-			MM_ForwardedHeader forwardedHeader(objectPtr, _extensions->compressObjectReferences());
-			objectPtr = forwardedHeader.getForwardedObject();
-			if (NULL == objectPtr) {
-				Assert_MM_mustBeClass(_extensions->objectModel.getPreservedClass(&forwardedHeader));
-				env->_copyForwardStats._offHeapRegionsCleared += 1;
-				OMRPORT_ACCESS_FROM_OMRVM(_javaVM->omrVM);
-				omrvmem_release_double_mapped_region(identifier->address, identifier->size, identifier);
-			}
-		}
-	}
-#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
-
 #if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
 	virtual void doObjectInVirtualLargeObjectHeap(J9Object *objectPtr, bool *sparseHeapAllocation) {
 		MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(_env);

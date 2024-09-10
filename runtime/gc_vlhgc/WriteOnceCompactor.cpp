@@ -1390,7 +1390,7 @@ MM_WriteOnceCompactor::fixupPointerArrayObject(MM_EnvironmentVLHGC* env, J9Objec
 		 * (its dataAddr field will still be NULL), with offheap heap we will fixup camouflaged discontiguous arrays) - DM, like default
 		 * balanced, wants to fixup only truly contiguous arrays
 		 */
-		if (indexableObjectModel->isArrayletDataAdjacentToHeader((J9IndexableObject *)objectPtr)
+		if (indexableObjectModel->isDataAdjacentToHeader((J9IndexableObject *)objectPtr)
 #if defined(J9VM_ENV_DATA64)
 		 || (indexableObjectModel->isVirtualLargeObjectHeapEnabled() && (NULL != indexableObjectModel->getDataAddrForContiguous((J9IndexableObject *)objectPtr)))
 #endif /* defined(J9VM_ENV_DATA64) */
@@ -1661,12 +1661,6 @@ public:
 #if defined(J9VM_OPT_JVMTI)
 		scanJVMTIObjectTagTables(env);
 #endif /* J9VM_OPT_JVMTI */
-
-#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
-	if (_includeDoubleMap) {
-		scanDoubleMappedObjects(env);
-	}
-#endif /* defined(J9VM_GC_ENABLE_DOUBLE_MAP) */
 
 #if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
 	if (_includeVirtualLargeObjectHeap) {

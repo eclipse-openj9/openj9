@@ -295,7 +295,6 @@ public abstract class AbstractPointer extends DataType {
 	public String toString() {
 		String pointerType = getClass().getName();
 		try {
-<<<<<<< Upstream, based on Upstream/master
 			if ((this instanceof J9ObjectPointer)
 				|| (this instanceof J9IndexableObjectPointer)
 				|| (this instanceof J9IndexableObjectContiguousPointer)
@@ -303,11 +302,6 @@ public abstract class AbstractPointer extends DataType {
 				|| (this instanceof J9IndexableObjectWithDataAddressContiguousPointer)
 				|| (this instanceof J9IndexableObjectWithDataAddressDiscontiguousPointer)
 			) {
-=======
-			if ((this instanceof J9ObjectPointer)||(this instanceof J9IndexableObjectPointer) ||
-				(this instanceof J9IndexableObjectContiguousPointer) || (this instanceof J9IndexableObjectDiscontiguousPointer) ||
-				(this instanceof J9IndexableObjectWithDataAddressContiguousPointer) || (this instanceof J9IndexableObjectWithDataAddressDiscontiguousPointer) ) {
->>>>>>> 10b2a40 1, DDR Changes for Off-Heap
 				pointerType = J9ObjectHelper.getClassName(J9ObjectPointer.cast(this));
 			}
 			if (this instanceof J9ROMFieldShapePointer) {

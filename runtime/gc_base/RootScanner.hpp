@@ -91,9 +91,6 @@ protected:
 #endif /* J9VM_GC_MODRON_SCAVENGER */	 	
 	bool _classDataAsRoots; /**< Should all classes (and class loaders) be treated as roots. Default true, should set to false when class unloading */
 	bool _includeJVMTIObjectTagTables; /**< Should the iterator include the JVMTIObjectTagTables. Default true, should set to false when doing JVMTI object walks */
-#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
-	bool _includeDoubleMap; /**< Enables doublemap should the GC policy be balanced. Default is false. */
-#endif /* defined(J9VM_GC_ENABLE_DOUBLE_MAP) */
 #if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
 	bool _includeVirtualLargeObjectHeap; /**< Enables scanning of objects that has been allocated at sparse heap. Default is false */
 #endif /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
@@ -319,9 +316,6 @@ public:
 #endif /* J9VM_GC_MODRON_SCAVENGER */
 		, _classDataAsRoots(true)
 		, _includeJVMTIObjectTagTables(true)
-#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
-		, _includeDoubleMap(_extensions->indexableObjectModel.isDoubleMappingEnabled())
-#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 #if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
 		, _includeVirtualLargeObjectHeap(_extensions->indexableObjectModel.isVirtualLargeObjectHeapEnabled())
 #endif /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
@@ -473,19 +467,6 @@ public:
 	void scanJVMTIObjectTagTables(MM_EnvironmentBase *env);
 #endif /* J9VM_OPT_JVMTI */
 
-#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
-	/**
-	 * Scans each heap region for arraylet leaves that contains a non-NULL contiguous address
-	 * due to arraylet double mapping. This address points to the contiguous representation
-	 * of the arraylet associated with this leaf. Only arraylets that have been off-heap
-	 * allocated or double-mapped will contain such a contiguous address, otherwise the
-	 * address will be NULL.
-	 * 
-	 * @param env thread GC Environment
-	 */
-	void scanDoubleMappedObjects(MM_EnvironmentBase *env);
-#endif /* defined(J9VM_GC_ENABLE_DOUBLE_MAP) */
-
 #if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
 	/**
 	 * Scans each heap region for arraylet leaves that contains a non-NULL
@@ -559,17 +540,6 @@ public:
 	virtual void doStringCacheTableSlot(J9Object **slotPtr);
 	virtual void doVMClassSlot(J9Class *classPtr);
 	virtual void doVMThreadSlot(J9Object **slotPtr, GC_VMThreadIterator *vmThreadIterator);
-#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
-	/**
-	 * Frees double mapped region associated to the objectPtr (arraylet spine) if the objectPtr
-	 * is not live.
-	 *
-	 * @param objectPtr[in] indexable object's spine
-	 * @param identifier[in/out] identifier associated with object's spine, which contains the
-	 * double mapped address and size
-	 */
-	virtual void doDoubleMappedObjectSlot(J9Object *objectPtr, struct J9PortVmemIdentifier *identifier);
-#endif /* defined(J9VM_GC_ENABLE_DOUBLE_MAP) */
 
 #if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
 	/**
