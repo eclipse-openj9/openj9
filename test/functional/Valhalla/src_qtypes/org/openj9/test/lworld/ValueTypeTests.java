@@ -2804,6 +2804,7 @@ public class ValueTypeTests {
 	@Test(priority=1)
 	static public void testIsValueClassOnInterface() throws Throwable {
 		assertFalse(TestInterface.class.isValue());
+		assertFalse(TestInterface.class.isIdentity());
 	}
 
 	private interface TestInterface {

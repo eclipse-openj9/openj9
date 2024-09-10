@@ -2313,7 +2313,7 @@ nativeOOM:
 			classFlags |= J9ClassIsValueType;
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 			/* superclass can be NULL if primitive classes are changed to value typess in the future. */
-			if ((NULL != superclass) && J9_ARE_ALL_BITS_SET(superclass->classFlags, J9ClassHasIdentity)) {
+			if ((NULL != superclass) && J9_IS_J9CLASS_IDENTITY(superclass)) {
 				J9UTF8 *superclassName = J9ROMCLASS_SUPERCLASSNAME(romClass);
 				if (!J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(superclassName), J9UTF8_LENGTH(superclassName), "java/lang/Object")) {
 					J9UTF8* className = J9ROMCLASS_CLASSNAME(romClass);
@@ -2345,7 +2345,8 @@ nativeOOM:
 			}
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-		} else {
+		} else if (!(J9_IS_CLASSFILE_OR_ROMCLASS_VALUETYPE_VERSION(romClass) && J9ROMCLASS_IS_INTERFACE(romClass))) {
+			/* All classes before value type version are identity. */
 			classFlags |= J9ClassHasIdentity;
 		}
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)

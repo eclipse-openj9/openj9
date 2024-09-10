@@ -2925,8 +2925,7 @@ done:
 	inlClassIsIdentity(REGISTER_ARGS_LIST)
 	{
 		J9Class *receiverClazz = J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, *(j9object_t*)_sp);
-		bool isValue = J9ROMCLASS_IS_VALUE(receiverClazz->romClass);
-		returnSingleFromINL(REGISTER_ARGS, (isValue ? 0 : 1), 1);
+		returnSingleFromINL(REGISTER_ARGS, J9_IS_J9CLASS_IDENTITY(receiverClazz), 1);
 		return EXECUTE_BYTECODE;
 	}
 
