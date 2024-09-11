@@ -4552,7 +4552,11 @@ TR_J9VMBase::lookupArchetype(TR_OpaqueClassBlock *clazz, const char *name, const
    // placeholder argument.  findClosestArchetype will progressively truncate
    // the other arguments until the best match is found.
    //
-   char *truncatedSignature = (char*)alloca(strlen(signature)+2); // + 'I' + null terminator
+   #if defined(__open_xl__)
+      char *truncatedSignature = (char*)__builtin_alloca(strlen(signature)+2); // + 'I' + null terminator
+   #else
+      char *truncatedSignature = (char*)alloca(strlen(signature)+2); // + 'I' + null terminator
+   #endif
    strcpy(truncatedSignature, signature);
    char toInsert = 'I';
    char *cur;
@@ -4575,10 +4579,18 @@ TR_J9VMBase::lookupMethodHandleThunkArchetype(uintptr_t methodHandle)
    //
    uintptr_t thunkableSignatureString = methodHandle_thunkableSignature((uintptr_t)methodHandle);
    intptr_t  thunkableSignatureLength = getStringUTF8Length(thunkableSignatureString);
-   char *thunkSignature = (char*)alloca(thunkableSignatureLength+1);
+   #if defined(__open_xl__)
+      char *thunkSignature = (char*)__builtin_alloca(thunkableSignatureLength+1);
+   #else
+      char *thunkSignature = (char*)alloca(thunkableSignatureLength+1);
+   #endif
    getStringUTF8(thunkableSignatureString, thunkSignature, thunkableSignatureLength+1);
 
-   char *archetypeSpecimenSignature = (char*)alloca(thunkableSignatureLength+20);
+   #if defined(__open_xl__)
+      char *archetypeSpecimenSignature = (char*)__builtin_alloca(thunkableSignatureLength+20);
+   #else
+      char *archetypeSpecimenSignature = (char*)alloca(thunkableSignatureLength+20);
+   #endif
    strcpy(archetypeSpecimenSignature, thunkSignature);
    char *returnType = (1+strchr(archetypeSpecimenSignature, ')'));
    switch (returnType[0])
@@ -9815,7 +9827,11 @@ void JNICALL Java_java_lang_invoke_MutableCallSite_invalidate
       return;
       }
 
-   jlong *cookies = (jlong*)alloca(numSites * sizeof(cookies[0]));
+   #if defined(__open_xl__)
+      jlong *cookies = (jlong*)__builtin_alloca(numSites * sizeof(cookies[0]));
+   #else
+      jlong *cookies = (jlong*)alloca(numSites * sizeof(cookies[0]));
+   #endif
    env->GetLongArrayRegion(cookieArrayObject, 0, numSites, cookies);
    if (!env->ExceptionCheck())
       {
