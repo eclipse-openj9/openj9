@@ -533,7 +533,7 @@ public class J9ClassHelper
 	 * @param firstChar the first character of the signature being checked
 	 * @return true if the character indicates the beginning of a reference or value signature, false otherwise
 	 */
-	public static boolean isRefOrValSignature(char firstChar) {
+	public static boolean isClassSignature(char firstChar) {
 		return firstChar == 'L';
 	}
 }

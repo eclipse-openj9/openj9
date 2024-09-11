@@ -48,7 +48,7 @@ public class SendSlot
 				/* skip all '['s */
 				for (i++; J9UTF8Helper.stringValue(signature).charAt(i) == '['; i++);
 				char charAti = J9UTF8Helper.stringValue(signature).charAt(i);
-				if (J9ClassHelper.isRefOrValSignature(charAti)) {
+				if (J9ClassHelper.isClassSignature(charAti)) {
 					/* FALL THRU */
 				} else {
 					sendArgs = sendArgs.add(1);

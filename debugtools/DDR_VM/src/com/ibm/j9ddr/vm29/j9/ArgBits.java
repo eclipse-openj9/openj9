@@ -50,7 +50,7 @@ public class ArgBits
 		/* Parse the signature inside the ()'s */
 		char thisChar;
 		while ((thisChar = signature.charAt(++stringPtr)) != ')') {
-			if ((thisChar == '[') || J9ClassHelper.isRefOrValSignature(thisChar)) {
+			if ((thisChar == '[') || J9ClassHelper.isClassSignature(thisChar)) {
 				/* Mark a bit for objects or arrays */
 				resultArray[writePtr] |= argBit;
 				
@@ -59,7 +59,7 @@ public class ArgBits
 					stringPtr++;
 				}
 
-				if (J9ClassHelper.isRefOrValSignature(thisChar)) {
+				if (J9ClassHelper.isClassSignature(thisChar)) {
 					/* Walk past the name of the object class */
 					while ((thisChar = signature.charAt(stringPtr)) != ';') {
 						stringPtr++;

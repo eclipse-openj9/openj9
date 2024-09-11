@@ -502,7 +502,7 @@ public class StackMap
 						utf8Signature = J9ROMFieldRefPointer.cast(pool.add(index)).nameAndSignature().signature();
 						
 						signature = J9UTF8Helper.stringValue(utf8Signature).charAt(0);
-						if (J9ClassHelper.isRefOrValSignature(signature) || (signature == '[')) {
+						if (J9ClassHelper.isClassSignature(signature) || (signature == '[')) {
 							PUSH(OBJ);
 						} else {
 							PUSH(INT);
@@ -515,7 +515,7 @@ public class StackMap
 						utf8Signature = J9ROMFieldRefPointer.cast(pool.add(index)).nameAndSignature().signature();
 						
 						signature = J9UTF8Helper.stringValue(utf8Signature).charAt(0);
-						if (J9ClassHelper.isRefOrValSignature(signature) || (signature == '[')) {
+						if (J9ClassHelper.isClassSignature(signature) || (signature == '[')) {
 							PUSH(OBJ);
 						} else {
 							PUSH(INT);
@@ -574,7 +574,7 @@ public class StackMap
 							while (args[i] == '[') {
 								i += 1;
 							}
-							if (J9ClassHelper.isRefOrValSignature(args[i])) {
+							if (J9ClassHelper.isClassSignature(args[i])) {
 								do {
 									i += 1;
 								} while (args[i] != ';');
@@ -583,7 +583,7 @@ public class StackMap
 
 						signature = args[i + 1];
 						if (signature != 'V') {
-							if (J9ClassHelper.isRefOrValSignature(signature) || (signature == '[')) {
+							if (J9ClassHelper.isClassSignature(signature) || (signature == '[')) {
 								PUSH(OBJ);
 							} else {
 								PUSH(INT);
