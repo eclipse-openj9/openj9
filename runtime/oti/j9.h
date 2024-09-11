@@ -359,7 +359,7 @@ static const struct { \
 #define J9_IS_J9ARRAYCLASS_NULL_RESTRICTED(clazz) FALSE
 #define J9CLASS_GET_NULLRESTRICTED_ARRAY(clazz) NULL
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
-#define IS_REF_OR_VAL_SIGNATURE(firstChar) ('L' == (firstChar))
+#define IS_CLASS_SIGNATURE(firstChar) ('L' == (firstChar))
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 #define J9_IS_CRIU_OR_CRAC_CHECKPOINT_ENABLED(vm) (J9_ARE_ANY_BITS_SET(vm->checkpointState.flags, J9VM_CRAC_IS_CHECKPOINT_ENABLED | J9VM_CRIU_IS_CHECKPOINT_ENABLED))

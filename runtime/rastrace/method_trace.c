@@ -500,7 +500,7 @@ traceMethodArguments(J9VMThread* thr, J9UTF8* signature, UDATA* arg0EA, char* bu
 			while (*sigChar == '[') {
 				sigChar++;
 			}
-			if (IS_REF_OR_VAL_SIGNATURE(*sigChar)) {
+			if (IS_CLASS_SIGNATURE(*sigChar)) {
 				while (*sigChar != ';') {
 					sigChar++;
 				}

@@ -2628,11 +2628,11 @@ j9rtv_verifyArguments (J9BytecodeVerificationData *verifyData, J9UTF8 * utf8stri
 		}
 
 		/* Object or array */
-		if (IS_REF_OR_VAL_SIGNATURE(*signature) || arity) {
+		if (IS_CLASS_SIGNATURE(*signature) || arity) {
 			IDATA reasonCode = 0;
 
 			/* Object array */
-			if (IS_REF_OR_VAL_SIGNATURE(*signature)) {
+			if (IS_CLASS_SIGNATURE(*signature)) {
 				signature++;
 				string = signature;	/* remember the start of the string */
 				while (*signature++ != ';');

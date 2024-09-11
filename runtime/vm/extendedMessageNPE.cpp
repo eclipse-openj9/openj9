@@ -258,7 +258,7 @@ convertMethodSignature(J9VMThread *vmThread, J9UTF8 *methodSig)
 				i += 1;
 			}
 			const char *elementType = NULL;
-			if (IS_REF_OR_VAL_SIGNATURE(string[i])) {
+			if (IS_CLASS_SIGNATURE(string[i])) {
 				i += 1;
 
 				UDATA objSize = 0;

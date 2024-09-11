@@ -282,7 +282,7 @@ buildStackFromMethodSignature( J9BytecodeVerificationData *verifyData, UDATA **s
 			arity++;
 		}
 
-		if (IS_REF_OR_VAL_SIGNATURE(args[i])) {
+		if (IS_CLASS_SIGNATURE(args[i])) {
 			U_8 *string;
 			U_16 length = 0;
 
@@ -684,7 +684,7 @@ static UDATA *
 pushType(J9BytecodeVerificationData *verifyData, U_8 * signature, UDATA * stackTop)
 {
 	if (*signature != 'V') {
-		if ((*signature == '[') || IS_REF_OR_VAL_SIGNATURE(*signature)) {
+		if ((*signature == '[') || IS_CLASS_SIGNATURE(*signature)) {
 			PUSH(parseObjectOrArrayName(verifyData, signature));
 		} else {
 			UDATA baseType = (UDATA) argTypeCharConversion[*signature - 'A'];
@@ -1197,7 +1197,7 @@ parseObjectOrArrayName(J9BytecodeVerificationData *verifyData, U_8 *signature)
 		signature++;
 	}
 	arity = (UDATA) (signature - string);
-	if (IS_REF_OR_VAL_SIGNATURE(*signature)) {
+	if (IS_CLASS_SIGNATURE(*signature)) {
 		U_16 length = 0;
 		UDATA classIndex = 0;
 

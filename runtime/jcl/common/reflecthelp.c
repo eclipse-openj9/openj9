@@ -247,7 +247,7 @@ computeArgCount(J9ROMMethod *method)
 			while ((index < count) && ('[' == bytes[index])) {
 				index += 1;
 			}
-			if (!IS_REF_OR_VAL_SIGNATURE(bytes[index])) {
+			if (!IS_CLASS_SIGNATURE(bytes[index])) {
 				break;
 			}
 			/* fall through */
@@ -537,7 +537,7 @@ getArgCountFromSignature(J9UTF8* signature)
 			i++;
 		}
 		/* skip class name */
-		if (IS_REF_OR_VAL_SIGNATURE(sigData[i])) {
+		if (IS_CLASS_SIGNATURE(sigData[i])) {
 			while (';' != sigData[i]) {
 				i++;
 			}
