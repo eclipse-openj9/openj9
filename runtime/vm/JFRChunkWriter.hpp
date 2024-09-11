@@ -24,6 +24,7 @@
 
 #include "j9cfg.h"
 #include "j9.h"
+#include "omrformatconsts.h"
 #include "omrlinkedlist.h"
 #include "vm_api.h"
 
@@ -234,7 +235,7 @@ public:
 		UDATA written = 0;
 		const size_t fileNameLen = sizeof(intermediateChunkFileName) + 16 + sizeof(".jfr");
 		char fileName[fileNameLen];
-		snprintf(fileName, fileNameLen, "%s%lX.jfr", intermediateChunkFileName, _vm->jfrState.jfrChunkCount);
+		snprintf(fileName, fileNameLen, "%s%" OMR_PRIXPTR ".jfr", intermediateChunkFileName, _vm->jfrState.jfrChunkCount);
 		UDATA len = _bufferWriter->getSize();
 		IDATA fd = j9file_open(fileName, EsOpenWrite | EsOpenCreate | EsOpenTruncate, 0666);
 
@@ -411,7 +412,7 @@ done:
 		_bufferWriter->writeLEB128(RUNNABLE);
 
 		/* write size */
-		_bufferWriter->writeLEB128PaddedU32(dataStart, _bufferWriter->getCursor() - dataStart);
+		_bufferWriter->writeLEB128PaddedU32(dataStart, (U_32)(_bufferWriter->getCursor() - dataStart));
 	}
 
 	static void
@@ -442,7 +443,7 @@ done:
 		_bufferWriter->writeLEB128(entry->parentThreadIndex);
 
 		/* write size */
-		_bufferWriter->writeLEB128PaddedU32(dataStart, _bufferWriter->getCursor() - dataStart);
+		_bufferWriter->writeLEB128PaddedU32(dataStart, (U_32)(_bufferWriter->getCursor() - dataStart));
 	}
 
 	static void
@@ -467,7 +468,7 @@ done:
 		_bufferWriter->writeLEB128(entry->threadIndex);
 
 		/* write size */
-		_bufferWriter->writeLEB128PaddedU32(dataStart, _bufferWriter->getCursor() - dataStart);
+		_bufferWriter->writeLEB128PaddedU32(dataStart, (U_32)(_bufferWriter->getCursor() - dataStart));
 	}
 
 	static void
@@ -500,7 +501,7 @@ done:
 		_bufferWriter->writeLEB128(entry->sleepTime/1000000);
 
 		/* write size */
-		_bufferWriter->writeLEB128PaddedU32(dataStart, _bufferWriter->getCursor() - dataStart);
+		_bufferWriter->writeLEB128PaddedU32(dataStart, (U_32)(_bufferWriter->getCursor() - dataStart));
 	}
 
 	static void
@@ -545,7 +546,7 @@ done:
 		_bufferWriter->writeLEB128(entry->monitorAddress);
 
 		/* write size */
-		_bufferWriter->writeLEB128PaddedU32(dataStart, _bufferWriter->getCursor() - dataStart);
+		_bufferWriter->writeLEB128PaddedU32(dataStart, (U_32)(_bufferWriter->getCursor() - dataStart));
 	}
 
 	static void
@@ -573,7 +574,7 @@ done:
 		_bufferWriter->writeFloat(entry->machineTotal);
 
 		/* write size */
-		_bufferWriter->writeLEB128PaddedU32(dataStart, _bufferWriter->getCursor() - dataStart);
+		_bufferWriter->writeLEB128PaddedU32(dataStart, (U_32)(_bufferWriter->getCursor() - dataStart));
 	}
 
 	static void
@@ -601,7 +602,7 @@ done:
 		_bufferWriter->writeFloat(entry->system);
 
 		/* write size */
-		_bufferWriter->writeLEB128PaddedU32(dataStart, _bufferWriter->getCursor() - dataStart);
+		_bufferWriter->writeLEB128PaddedU32(dataStart, (U_32)(_bufferWriter->getCursor() - dataStart));
 	}
 
 	void
