@@ -150,12 +150,6 @@
 			<variation>-Xgcpolicy:gencon -Xgcthreads1</variation>
 			<variation>-XX:+DebugOnRestore</variation>
 		</variations>
-		<disables>
-			<disable>
-				<comment>https://github.com/eclipse-openj9/openj9/issues/18468</comment>
-				<platform>ppc64le.*</platform>
-			</disable>
-		</disables>
 		<command>
 			$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -Xdump \
 			-DSCRIPPATH=$(TEST_RESROOT)$(D)cracScript.sh -DTEST_RESROOT=$(TEST_RESROOT) \
