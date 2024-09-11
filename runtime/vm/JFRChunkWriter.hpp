@@ -220,7 +220,7 @@ public:
 	{
 		UDATA written = 0;
 		char fileName[sizeof(intermediateChunkFileName) + 16 + sizeof(".jfr")];
-		sprintf(fileName, "%s%lX.jfr", intermediateChunkFileName, _vm->jfrState.jfrChunkCount);
+		sprintf(fileName, "%s%lX.jfr", intermediateChunkFileName, (long int)_vm->jfrState.jfrChunkCount);
 		UDATA len = _bufferWriter->getSize();
 		IDATA fd = j9file_open(fileName, EsOpenWrite | EsOpenCreate | EsOpenTruncate , 0666);
 
@@ -379,7 +379,7 @@ done:
 		_bufferWriter->writeLEB128(RUNNABLE);
 
 		/* write size */
-		_bufferWriter->writeLEB128PaddedU32(dataStart, _bufferWriter->getCursor() - dataStart);
+		_bufferWriter->writeLEB128PaddedU32(dataStart, U_32(_bufferWriter->getCursor() - dataStart));
 	}
 
 	static void
@@ -410,7 +410,7 @@ done:
 		_bufferWriter->writeLEB128(entry->parentThreadIndex);
 
 		/* write size */
-		_bufferWriter->writeLEB128PaddedU32(dataStart, _bufferWriter->getCursor() - dataStart);
+		_bufferWriter->writeLEB128PaddedU32(dataStart, U_32(_bufferWriter->getCursor() - dataStart));
 	}
 
 	static void
@@ -435,7 +435,7 @@ done:
 		_bufferWriter->writeLEB128(entry->threadIndex);
 
 		/* write size */
-		_bufferWriter->writeLEB128PaddedU32(dataStart, _bufferWriter->getCursor() - dataStart);
+		_bufferWriter->writeLEB128PaddedU32(dataStart, U_32(_bufferWriter->getCursor() - dataStart));
 	}
 
 	static void
@@ -466,7 +466,7 @@ done:
 		_bufferWriter->writeLEB128(entry->sleepTime/1000000);
 
 		/* write size */
-		_bufferWriter->writeLEB128PaddedU32(dataStart, _bufferWriter->getCursor() - dataStart);
+		_bufferWriter->writeLEB128PaddedU32(dataStart, U_32(_bufferWriter->getCursor() - dataStart));
 	}
 
 	void
