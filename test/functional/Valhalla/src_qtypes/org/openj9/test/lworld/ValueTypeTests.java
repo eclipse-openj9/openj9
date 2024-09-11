@@ -32,6 +32,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
+import jdk.internal.value.ValueClass;
 import org.testng.Assert;
 import static org.testng.Assert.*;
 import org.testng.annotations.Test;
@@ -309,92 +310,92 @@ public class ValueTypeTests {
 		int x1 = 0xFFEEFFEE;
 		int y1 = 0xAABBAABB;
 		Object point2D = makePoint2D.invoke(x1, y1);
-		Object arrayObject = Array.newInstance(point2DClass, 8);
+		Object[] array = ValueClass.newNullRestrictedArray(point2DClass, 8);
 
 		for (int i = 0; i < 8; i++) {
-			Array.set(arrayObject, i, point2D);
+			array[i] = point2D;
 		}
 
 		System.gc();
 
-		Object value = Array.get(arrayObject, 0);
+		Object value = array[0];
 	}
 
 	@Test(priority=5)
 	static public void testGCFlattenedValueArrayWithSingleAlignment() throws Throwable {
-		Object array = Array.newInstance(assortedValueWithSingleAlignmentClass, 4);
+		Object[] array = ValueClass.newNullRestrictedArray(assortedValueWithSingleAlignmentClass, 4);
 		
 		for (int i = 0; i < 4; i++) {
 			Object object = createAssorted(makeAssortedValueWithSingleAlignment, typeWithSingleAlignmentFields);
-			Array.set(array, i, object);
+			array[i] = object;
 		}
 
 		System.gc();
 
 		for (int i = 0; i < 4; i++) {
-			checkFieldAccessMHOfAssortedType(assortedValueWithSingleAlignmentGetterList, Array.get(array, i), typeWithSingleAlignmentFields, true);
+			checkFieldAccessMHOfAssortedType(assortedValueWithSingleAlignmentGetterList, array[i], typeWithSingleAlignmentFields, true);
 		}
 	}
 
 	@Test(priority=5)
 	static public void testGCFlattenedValueArrayWithObjectAlignment() throws Throwable {
-		Object array = Array.newInstance(assortedValueWithObjectAlignmentClass, 4);
+		Object[] array = ValueClass.newNullRestrictedArray(assortedValueWithObjectAlignmentClass, 4);
 		
 		for (int i = 0; i < 4; i++) {
 			Object object = createAssorted(makeAssortedValueWithObjectAlignment, typeWithObjectAlignmentFields);
-			Array.set(array, i, object);
+			array[i] = object;
 		}
 
 		System.gc();
 
 		for (int i = 0; i < 4; i++) {
-			checkFieldAccessMHOfAssortedType(assortedValueWithObjectAlignmentGetterList, Array.get(array, i), typeWithObjectAlignmentFields, true);
+			checkFieldAccessMHOfAssortedType(assortedValueWithObjectAlignmentGetterList, array[i], typeWithObjectAlignmentFields, true);
 		}
 	}
 
 	@Test(priority=5)
 	static public void testGCFlattenedValueArrayWithLongAlignment() throws Throwable {
-		Object array = Array.newInstance(assortedValueWithLongAlignmentClass, genericArraySize);
+		Object[] array = ValueClass.newNullRestrictedArray(assortedValueWithLongAlignmentClass, genericArraySize);
 		
 		for (int i = 0; i < genericArraySize; i++) {
 			Object object = createAssorted(makeAssortedValueWithLongAlignment, typeWithLongAlignmentFields);
-			Array.set(array, i, object);
+			array[i] = object;
 		}
 
 		System.gc();
 
 		for (int i = 0; i < genericArraySize; i++) {
-			checkFieldAccessMHOfAssortedType(assortedValueWithLongAlignmentGetterList, Array.get(array, i), typeWithLongAlignmentFields, true);
+			checkFieldAccessMHOfAssortedType(assortedValueWithLongAlignmentGetterList, array[i], typeWithLongAlignmentFields, true);
 		}
 	}
 
 	@Test(priority=5)
 	static public void testGCFlattenedLargeObjectArray() throws Throwable {
-		Object arrayObject = Array.newInstance(largeObjectValueClass, 4);
+		Object[] array = ValueClass.newNullRestrictedArray(largeObjectValueClass, 4);
 		Object largeObjectRef = createLargeObject(new Object());
 
 		for (int i = 0; i < 4; i++) {
-			Array.set(arrayObject, i, largeObjectRef);
+			array[i] = largeObjectRef;
 		}
 
 		System.gc();
 
-		Object value = Array.get(arrayObject, 0);
+		Object value = array[0];
 	}
 
 	@Test(priority=5)
 	static public void testGCFlattenedMegaObjectArray() throws Throwable {
-		Object arrayObject = Array.newInstance(megaObjectValueClass, 4);
+		Object[] array = ValueClass.newNullRestrictedArray(megaObjectValueClass, 4);
 		Object megaObjectRef = createMegaObject(new Object());
 
 		System.gc();
 
 		for (int i = 0; i < 4; i++) {
-			Array.set(arrayObject, i, megaObjectRef);
+			array[i] = megaObjectRef;
 		}
 		System.gc();
 
-		Object value = Array.get(arrayObject, 0);
+		Object value = array[0];
 	}
 
 
