@@ -630,15 +630,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, fe->stackWalkerMaySkipFrames(method, clazz));
          }
          break;
-      case MessageType::VM_getStringUTF8Length:
-         {
-         uintptr_t string = std::get<0>(client->getRecvData<uintptr_t>());
-            {
-            TR::VMAccessCriticalSection getStringUTF8Length(fe);
-            client->write(response, fe->getStringUTF8Length(string));
-            }
-         }
-         break;
       case MessageType::VM_classInitIsFinished:
          {
          TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
@@ -2351,7 +2342,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             "next",             "Ljava/lang/invoke/MethodHandle;"),
             "type",             "Ljava/lang/invoke/MethodType;"),
             "methodDescriptor", "Ljava/lang/String;");
-         size_t methodDescriptorLength = fe->getStringUTF8Length(methodDescriptorRef);
+         intptr_t methodDescriptorLength = fe->getStringUTF8Length(methodDescriptorRef);
          char *methodDescriptor = (char*)alloca(methodDescriptorLength+1);
          fe->getStringUTF8(methodDescriptorRef, methodDescriptor, methodDescriptorLength+1);
          client->write(response, std::string(methodDescriptor, methodDescriptorLength));
@@ -2504,7 +2495,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          int32_t numArgsPassToFinallyTarget = (int32_t)fe->getArrayLengthInElements(arguments);
 
          uintptr_t methodDescriptorRef = fe->getReferenceField(finallyType, "methodDescriptor", "Ljava/lang/String;");
-         int methodDescriptorLength = fe->getStringUTF8Length(methodDescriptorRef);
+         intptr_t methodDescriptorLength = fe->getStringUTF8Length(methodDescriptorRef);
          char *methodDescriptor = (char*)alloca(methodDescriptorLength+1);
          fe->getStringUTF8(methodDescriptorRef, methodDescriptor, methodDescriptorLength+1);
          client->write(response, numArgsPassToFinallyTarget, std::string(methodDescriptor, methodDescriptorLength));

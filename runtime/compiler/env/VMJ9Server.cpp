@@ -1073,12 +1073,16 @@ TR_J9ServerVM::getHostClass(TR_OpaqueClassBlock *clazz)
    return hostClass;
    }
 
-intptr_t
+int32_t
 TR_J9ServerVM::getStringUTF8Length(uintptr_t objectPointer)
    {
-   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITServer::MessageType::VM_getStringUTF8Length, objectPointer);
-   return std::get<0>(stream->read<intptr_t>());
+   TR_ASSERT_FATAL(false, "getStringUTF8Length(uintptr_t) should not be called by JITServer");
+   }
+
+uint64_t
+TR_J9ServerVM::getStringUTF8UnabbreviatedLength(uintptr_t objectPointer)
+   {
+   TR_ASSERT_FATAL(false, "getStringUTF8UnabbreviatedLength(uintptr_t) should not be called by JITServer");
    }
 
 bool
