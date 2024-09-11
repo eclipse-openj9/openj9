@@ -86,6 +86,7 @@ import sun.reflect.ConstantPool;
 import sun.nio.ch.Interruptible;
 import sun.reflect.annotation.AnnotationType;
 /*[IF (JAVA_SPEC_VERSION >= 24) & !INLINE-TYPES]*/
+import java.util.concurrent.Executor;
 import jdk.internal.loader.NativeLibraries;
 /*[ENDIF] (JAVA_SPEC_VERSION >= 24) & !INLINE-TYPES */
 
@@ -849,8 +850,18 @@ final class Access implements JavaLangAccess {
 	}
 
 	@Override
+	public byte stringCoder(String string) {
+		return string.coder();
+	}
+
+	@Override
 	public byte stringInitCoder() {
 		return String.COMPACT_STRINGS ? String.LATIN1 : String.UTF16;
+	}
+
+	@Override
+	public Executor virtualThreadDefaultScheduler() {
+		return VirtualThread.defaultScheduler();
 	}
 /*[ENDIF] !INLINE-TYPES */
 /*[ENDIF] JAVA_SPEC_VERSION >= 24 */
