@@ -362,6 +362,7 @@ static const struct { \
 #define J9_IS_NULL_RESTRICTED_FIELD_FLATTENED(fieldClazz, romFieldShape) FALSE
 #define J9_VALUETYPE_FLATTENED_SIZE(clazz)((UDATA) 0) /* It is not possible for this macro to be used since we always check J9_IS_J9CLASS_FLATTENED before ever using it. */
 #define J9_IS_J9ARRAYCLASS_NULL_RESTRICTED(clazz) FALSE
+#define J9CLASS_GET_NULLRESTRICTED_ARRAY(clazz) NULL
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 #define IS_REF_OR_VAL_SIGNATURE(firstChar) ('L' == (firstChar))
 

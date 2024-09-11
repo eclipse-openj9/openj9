@@ -2404,18 +2404,14 @@ nativeOOM:
 			if (J9ROMCLASS_IS_ARRAY(romClass)) {
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 				if (J9_ARE_ALL_BITS_SET(options, J9_FINDCLASS_FLAG_CLASS_OPTION_NULL_RESTRICTED_ARRAY)) {
+					((J9ArrayClass *)state->ramClass)->companionArray = elementClass->arrayClass;
 					elementClass->nullRestrictedArrayClass = state->ramClass;
+					((J9ArrayClass *)elementClass->arrayClass)->companionArray = elementClass->nullRestrictedArrayClass;
 				} else
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 				{
 					((J9ArrayClass *)elementClass)->arrayClass = state->ramClass;
 				}
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-				if ((NULL != elementClass->nullRestrictedArrayClass) && (NULL != elementClass->arrayClass)) {
-					((J9ArrayClass *)elementClass->arrayClass)->companionArray = elementClass->nullRestrictedArrayClass;
-					((J9ArrayClass *)elementClass->nullRestrictedArrayClass)->companionArray = elementClass->arrayClass;
-				}
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 				/* Assigning into the arrayClass field creates an implicit reference to the class from its class loader */
 				javaVM->memoryManagerFunctions->j9gc_objaccess_postStoreClassToClassLoader(vmThread, classLoader, state->ramClass);
 			}
