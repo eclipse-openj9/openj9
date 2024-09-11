@@ -29,39 +29,47 @@ import java.io.IOException;
 
 public final class IharbTemplate {
 
-    public static int length() {
-        return 176;
-    }
+	public static int length() {
+		return 176;
+	}
 
-    public static long getRbopsw(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 16);
-        return inputStream.readLong();
-    }
-    public static int getRbopsw$offset() {
-        return 16;
-    }
-    public static int getRbopsw$length() {
-        return 64;
-    }
-    public static long getRblinkXrblnkRblinkb(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 29);
-        long result = inputStream.readBits(24);
-        return result;
-    }
-    public static int getRblinkXrblnkRblinkb$offset() {
-        return 29;
-    }
-    public static int getRblinkXrblnkRblinkb$length() {
-        return 24;
-    }
-    public static long getRbgrsave(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 32);
-        throw new Error("request for long value for field rbgrsave which has length of 64");
-    }
-    public static int getRbgrsave$offset() {
-        return 32;
-    }
-    public static int getRbgrsave$length() {
-        return 512;
-    }
+	public static long getRbopsw(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 16);
+		return inputStream.readLong();
+	}
+
+	public static int getRbopsw$offset() {
+		return 16;
+	}
+
+	public static int getRbopsw$length() {
+		return 64;
+	}
+
+	public static long getRblinkXrblnkRblinkb(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 29);
+		long result = inputStream.readBits(24);
+		return result;
+	}
+
+	public static int getRblinkXrblnkRblinkb$offset() {
+		return 29;
+	}
+
+	public static int getRblinkXrblnkRblinkb$length() {
+		return 24;
+	}
+
+	public static long getRbgrsave(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 32);
+		throw new Error("request for long value for field rbgrsave which has length of 64");
+	}
+
+	public static int getRbgrsave$offset() {
+		return 32;
+	}
+
+	public static int getRbgrsave$length() {
+		return 512;
+	}
 }

@@ -47,55 +47,55 @@ class PHDJavaReference implements JavaReference {
 		this.ref = ref;
 		this.root = root;
 		switch (ref) {
-	     /** Unknown reference type */
+		/** Unknown reference type */
 		case REFERENCE_UNKNOWN:
 			desc = "Unknown reference";
 			break;
-	    /** Reference from an object to its class */
+		/** Reference from an object to its class */
 		case REFERENCE_CLASS:
 			desc = "Class reference";
 			break;
-	    /** Reference from an object to the value of one of its instance fields */
+		/** Reference from an object to the value of one of its instance fields */
 		case REFERENCE_FIELD:
 			desc = "Field reference";
 			break;
-	    /** Reference from an array to one of its elements */
+		/** Reference from an array to one of its elements */
 		case REFERENCE_ARRAY_ELEMENT:
 			desc = "Array element reference";
 			break;
-	    /** Reference from a class to its class loader */
+		/** Reference from a class to its class loader */
 		case REFERENCE_CLASS_LOADER:
 			desc = "Class loader reference";
 			break;
-	    /** Reference from a class to its signers array */
+		/** Reference from a class to its signers array */
 		case REFERENCE_SIGNERS:
 			desc = "Signers reference";
 			break;
-	    /** Reference from a class to its protection domain */
+		/** Reference from a class to its protection domain */
 		case REFERENCE_PROTECTION_DOMAIN:
 			desc = "Protection domain reference";
 			break;
-	    /** Reference from a class to one of its interfaces */
+		/** Reference from a class to one of its interfaces */
 		case REFERENCE_INTERFACE:
 			desc = "Interface reference";
 			break;
-	    /** Reference from a class to the value of one of its static fields */
+		/** Reference from a class to the value of one of its static fields */
 		case REFERENCE_STATIC_FIELD:
 			desc = "Static field reference";
 			break;
-	    /** Reference from a class to a resolved entry in the constant pool */
+		/** Reference from a class to a resolved entry in the constant pool */
 		case REFERENCE_CONSTANT_POOL:
 			desc = "Constant pool reference";
 			break;
-	    /** Reference from a class to its superclass */
+		/** Reference from a class to its superclass */
 		case REFERENCE_SUPERCLASS:
 			desc = "Superclass reference";
 			break;
-	    /** Reference from a classloader object to its loaded classes */
+		/** Reference from a classloader object to its loaded classes */
 		case REFERENCE_LOADED_CLASS:
 			desc = "Loaded class reference";
 			break;
-	    /** Reference from a class to its java.lang.Class instance */
+		/** Reference from a class to its java.lang.Class instance */
 		case REFERENCE_CLASS_OBJECT:
 			desc = "Class object reference";
 			break;

@@ -32,14 +32,14 @@ import static java.lang.invoke.MethodHandleResolver.UNSAFE;
  * an instance field.
  * <p>
  * vmSlot will hold the field offset in the instance.
- * 
+ *
  */
 final class FieldGetterHandle extends FieldHandle {
-	
+
 	FieldGetterHandle(Class<?> referenceClass, String fieldName, Class<?> fieldClass, Class<?> accessClass) throws IllegalAccessException, NoSuchFieldException {
 		super(fieldMethodType(fieldClass, referenceClass), referenceClass, fieldName, fieldClass, KIND_GETFIELD, accessClass);
 	}
-	
+
 	FieldGetterHandle(Field field) throws IllegalAccessException {
 		super(fieldMethodType(field.getType(), field.getDeclaringClass()), field, KIND_GETFIELD, false);
 	}
@@ -120,4 +120,3 @@ final class FieldGetterHandle extends FieldHandle {
 		compareWithField(left, c);
 	}
 }
-

@@ -29,48 +29,59 @@ import java.io.IOException;
 
 public final class Ceexedb32Template implements CeexedbTemplate {
 
-    public int length() {
-        return 1216;
-    }
+	public int length() {
+		return 1216;
+	}
 
-    public long getCeeedbenvar(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 88);
-        return inputStream.readUnsignedInt() & 0xffffffffL;
-    }
-    public int getCeeedbenvar$offset() {
-        return 88;
-    }
-    public int getCeeedbenvar$length() {
-        return 32;
-    }
-    public long getCeeedb_ceeosigr(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 96);
-        return inputStream.readUnsignedInt() & 0xffffffffL;
-    }
-    public int getCeeedb_ceeosigr$offset() {
-        return 96;
-    }
-    public int getCeeedb_ceeosigr$length() {
-        return 32;
-    }
-    public long getCeeedbdba(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 924);
-        return inputStream.readUnsignedInt() & 0xffffffffL;
-    }
-    public int getCeeedbdba$offset() {
-        return 924;
-    }
-    public int getCeeedbdba$length() {
-        return 32;
-    }
-    public long getCeeedb_dlcb_first(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 1096);
-        return inputStream.readUnsignedInt() & 0xffffffffL;
-    }
-    public int getCeeedb_dlcb_first$offset() {
-        return 1096;
-    }
-    public int getCeeedb_dlcb_first$length() {
-        return 32;
-    }
+	public long getCeeedbenvar(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 88);
+		return inputStream.readUnsignedInt() & 0xffffffffL;
+	}
+
+	public int getCeeedbenvar$offset() {
+		return 88;
+	}
+
+	public int getCeeedbenvar$length() {
+		return 32;
+	}
+
+	public long getCeeedb_ceeosigr(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 96);
+		return inputStream.readUnsignedInt() & 0xffffffffL;
+	}
+
+	public int getCeeedb_ceeosigr$offset() {
+		return 96;
+	}
+
+	public int getCeeedb_ceeosigr$length() {
+		return 32;
+	}
+
+	public long getCeeedbdba(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 924);
+		return inputStream.readUnsignedInt() & 0xffffffffL;
+	}
+
+	public int getCeeedbdba$offset() {
+		return 924;
+	}
+
+	public int getCeeedbdba$length() {
+		return 32;
+	}
+
+	public long getCeeedb_dlcb_first(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 1096);
+		return inputStream.readUnsignedInt() & 0xffffffffL;
+	}
+
+	public int getCeeedb_dlcb_first$offset() {
+		return 1096;
+	}
+
+	public int getCeeedb_dlcb_first$length() {
+		return 32;
+	}
 }

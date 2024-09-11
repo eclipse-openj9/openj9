@@ -36,5 +36,5 @@ public class InvalidDumpOptionExceptionBase extends Exception {
 	public InvalidDumpOptionExceptionBase(String message) {
 		super(message);
 	}
-	
+
 }

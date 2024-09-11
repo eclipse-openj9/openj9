@@ -23,6 +23,6 @@
 
 /**
  * The OpenJ9 shared classes API, a persistent share which can contain classes, precompiled code (AOT),
- * JIT data, and other data used to improve start up performance and reduce memory footprint. 
+ * JIT data, and other data used to improve start up performance and reduce memory footprint.
  */
 package com.ibm.oti.shared;

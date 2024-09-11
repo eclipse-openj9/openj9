@@ -36,27 +36,27 @@ import java.lang.reflect.Constructor;
  * The vmSlot will hold a J9Method address of the <init> method.
  */
 final class ConstructorHandle extends PrimitiveHandle {
-	
+
 	static {
 		//Making sure DirectHandle is loaded before the ConstructorHandle is loaded. Therefore, to secure a correct thunk.
 		DirectHandle.load();
 	}
-		
+
 	public ConstructorHandle(Class<?> referenceClass, MethodType type) throws NoSuchMethodException, IllegalAccessException {
 		super(constructorMethodType(type, referenceClass), referenceClass, "<init>", KIND_CONSTRUCTOR, null); //$NON-NLS-1$
 		/* Pass referenceClass as SpecialToken as KIND_SPECIAL & KIND_CONSTRUCTOR share lookup code */
 		this.defc = finishMethodInitialization(referenceClass, type);
 	}
-	
+
 	public ConstructorHandle(Constructor<?> ctor) throws IllegalAccessException {
 		super(constructorMethodType(ctor), ctor.getDeclaringClass(), "<init>", KIND_CONSTRUCTOR, ctor.getModifiers(), ctor.getDeclaringClass()); //$NON-NLS-1$
-		
+
 		boolean succeed = setVMSlotAndRawModifiersFromConstructor(this, ctor);
 		if (!succeed) {
 			throw new IllegalAccessException();
 		}
 	}
-	
+
 	ConstructorHandle(ConstructorHandle originalHandle, MethodType newType) {
 		super(originalHandle, newType);
 	}
@@ -67,7 +67,7 @@ final class ConstructorHandle extends PrimitiveHandle {
 	private static final MethodType constructorMethodType(MethodType type, Class<?> referenceClazz) {
 		return type.changeReturnType(referenceClazz);
 	}
-	
+
 	/*
 	 * Constructors have type (constructor.getParameterType)constructor.getDeclaringCLass.
 	 */
@@ -75,7 +75,7 @@ final class ConstructorHandle extends PrimitiveHandle {
 		Class<?> declaringClass = constructor.getDeclaringClass();
 		return MethodType.methodType(declaringClass, constructor.getParameterTypes());
 	}
-	
+
 	@Override
 	boolean canRevealDirect() {
 		return true;
@@ -103,7 +103,7 @@ final class ConstructorHandle extends PrimitiveHandle {
 	MethodHandle cloneWithNewType(MethodType newType) {
 		return new ConstructorHandle(this, newType);
 	}
-	
+
 	final void compareWith(MethodHandle right, Comparator c) {
 		if (right instanceof ConstructorHandle) {
 			((ConstructorHandle)right).compareWithConstructor(this, c);
@@ -116,4 +116,3 @@ final class ConstructorHandle extends PrimitiveHandle {
 		c.compareStructuralParameter(left.referenceClass, this.referenceClass);
 	}
 }
-

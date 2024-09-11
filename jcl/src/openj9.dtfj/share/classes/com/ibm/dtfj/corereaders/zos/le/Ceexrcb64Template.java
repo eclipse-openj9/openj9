@@ -29,28 +29,33 @@ import java.io.IOException;
 
 public final class Ceexrcb64Template implements CeexrcbTemplate {
 
-    public int length() {
-        return 256;
-    }
+	public int length() {
+		return 256;
+	}
 
-    public long getCeercb_ceeosigx(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 168);
-        return inputStream.readLong();
-    }
-    public int getCeercb_ceeosigx$offset() {
-        return 168;
-    }
-    public int getCeercb_ceeosigx$length() {
-        return 64;
-    }
-    public long getCeercb_ppa1tabl(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 176);
-        return inputStream.readLong();
-    }
-    public int getCeercb_ppa1tabl$offset() {
-        return 176;
-    }
-    public int getCeercb_ppa1tabl$length() {
-        return 64;
-    }
+	public long getCeercb_ceeosigx(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 168);
+		return inputStream.readLong();
+	}
+
+	public int getCeercb_ceeosigx$offset() {
+		return 168;
+	}
+
+	public int getCeercb_ceeosigx$length() {
+		return 64;
+	}
+
+	public long getCeercb_ppa1tabl(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 176);
+		return inputStream.readLong();
+	}
+
+	public int getCeercb_ppa1tabl$offset() {
+		return 176;
+	}
+
+	public int getCeercb_ppa1tabl$length() {
+		return 64;
+	}
 }

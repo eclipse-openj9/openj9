@@ -29,7 +29,7 @@ import java.io.OutputStream;
 /**
  * This class works with the class OutputStream and class IStringModifier.
  * It first caches the bytes from the OutputStream.  If a new line char is
- * encountered or if the output stream is closed, it will ask the string 
+ * encountered or if the output stream is closed, it will ask the string
  * modifier to modify it first before it sends the line to the output stream.
  * <p>
  * @author Manqing Li

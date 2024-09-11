@@ -32,4 +32,3 @@ import java.lang.annotation.Target;
 @interface VMCONSTANTPOOL_METHOD {
 
 }
-

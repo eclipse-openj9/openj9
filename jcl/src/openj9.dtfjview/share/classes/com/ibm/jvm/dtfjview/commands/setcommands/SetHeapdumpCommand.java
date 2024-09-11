@@ -35,7 +35,7 @@ public class SetHeapdumpCommand extends BaseJdmpviewCommand
 {
 	private static final String SHORT_DESCRIPTION = "configures heapdump format, filename and multiple heap support";
 	private static final String COMMAND_NAME = "set heapdump";
-	private static final String LONG_DESCRIPTION = "parameters: [phd|txt], [file <filename>], [multiplefiles on|off]\n\n" 
+	private static final String LONG_DESCRIPTION = "parameters: [phd|txt], [file <filename>], [multiplefiles on|off]\n\n"
 		+ "[phd|txt] - the format for the heapdump. Default: phd.\n"
 		+ "[file <filename>] - the file to write the heapdump to. Default: <core file name>.phd or <core file name>.txt.\n\n"
 		+ "[multiplefiles on|off] - if set to on, multiple heaps are written to separate heapdumps. If set to off, multiple heaps are written " +
@@ -43,9 +43,9 @@ public class SetHeapdumpCommand extends BaseJdmpviewCommand
 		+ "Use \"show heapdump\" to see current settings.\n";
 
 	{
-		addCommand(COMMAND_NAME, "", SHORT_DESCRIPTION);	
+		addCommand(COMMAND_NAME, "", SHORT_DESCRIPTION);
 	}
-	
+
 	public void run(String command, String[] args, IContext context, PrintStream out) throws CommandException {
 		if(initCommand(command, args, context, out)) {
 			return;		//processing already handled by super class
@@ -54,48 +54,48 @@ public class SetHeapdumpCommand extends BaseJdmpviewCommand
 			out.println("\"set heapdump\" requires at least one parameter\n");
 			return;
 		}
-	
+
 		String arg1 = args[0];
-		
+
 		if(arg1.equalsIgnoreCase("phd")) {
 			HeapDumpSettings.setPHDHeapDumps(ctx.getProperties());
-			
+
 			out.print("Heapdump format set to PHD\n");
 		} else if (arg1.equalsIgnoreCase("txt")){
 			HeapDumpSettings.setClassicHeapDumps(ctx.getProperties());
-			
+
 			out.print("Heapdump format set to classic (TXT)\n");
 		} else if (arg1.equalsIgnoreCase("file")) {
 			if(args.length == 1) {
 				out.println("\"set heapdump file\" requires at least one parameter\n");
 				return;
 			}
-			
+
 			if(args.length > 2) {
 				out.println("\"set heapdump file\" accepts 1 parameter. You supplied " + (args.length - 1) + ".\n");
 				return;
 			}
-			
+
 			String filename = args[1];
-			
+
 			String originalFileName = HeapDumpSettings.getFileName(ctx.getProperties());
-			
+
 			HeapDumpSettings.setFileName(filename, ctx.getProperties());
-			
+
 			out.print("Heapdump file changed from " + originalFileName + " to " + filename + "\n");
 		} else if (arg1.equalsIgnoreCase("multiplefiles")) {
 			if(args.length == 1) {
 				out.println("\"set heapdump multiplefiles\" requires one parameter: on or off\n");
 				return;
 			}
-			
+
 			if(args.length > 2) {
 				out.println("\"set heapdump multiplefiles\" requires one parameter: on or off. You suppled " + (args.length - 1) + " parameters\n");
 				return;
 			}
-			
+
 			String setting = args[1];
-			
+
 			if(setting.equalsIgnoreCase("on")) {
 				out.println("Multiple heaps will be dumped into multiple heapdumps");
 				HeapDumpSettings.setMultipleHeapsMultipleFiles(ctx.getProperties());

@@ -134,10 +134,10 @@ public class HeapdumpWriter extends Base {
 
 	void addToCache(int classAddress) {
 		/* May consider this as a future change to the spec...
-        for (int i = 0; i < 4; i++) {
-            if (classAddressCache[i] == classAddress)
-                return;
-        }
+		for (int i = 0; i < 4; i++) {
+			if (classAddressCache[i] == classAddress)
+				return;
+		}
 		 */
 		classAddressCache[classAddressCacheIndex] = classAddress;
 		classAddressCacheIndex = (classAddressCacheIndex + 1) % 4;

@@ -29,28 +29,33 @@ import java.io.IOException;
 
 public final class Ceexrcb32Template implements CeexrcbTemplate {
 
-    public int length() {
-        return 168;
-    }
+	public int length() {
+		return 168;
+	}
 
-    public long getCeercb_ceeosigx(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 152);
-        return inputStream.readUnsignedInt() & 0xffffffffL;
-    }
-    public int getCeercb_ceeosigx$offset() {
-        return 152;
-    }
-    public int getCeercb_ceeosigx$length() {
-        return 32;
-    }
-    public long getCeercb_ppa1tabl(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 156);
-        return inputStream.readUnsignedInt() & 0xffffffffL;
-    }
-    public int getCeercb_ppa1tabl$offset() {
-        return 156;
-    }
-    public int getCeercb_ppa1tabl$length() {
-        return 32;
-    }
+	public long getCeercb_ceeosigx(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 152);
+		return inputStream.readUnsignedInt() & 0xffffffffL;
+	}
+
+	public int getCeercb_ceeosigx$offset() {
+		return 152;
+	}
+
+	public int getCeercb_ceeosigx$length() {
+		return 32;
+	}
+
+	public long getCeercb_ppa1tabl(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 156);
+		return inputStream.readUnsignedInt() & 0xffffffffL;
+	}
+
+	public int getCeercb_ppa1tabl$offset() {
+		return 156;
+	}
+
+	public int getCeercb_ppa1tabl$length() {
+		return 32;
+	}
 }

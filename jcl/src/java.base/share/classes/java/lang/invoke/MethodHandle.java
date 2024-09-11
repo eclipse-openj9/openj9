@@ -214,7 +214,7 @@ public abstract class MethodHandle
 	final static int VTABLE_ENTRY_SIZE = VM.ADDRESS_SIZE;
 	final static int VTABLE_ENTRY_SHIFT = 31 - Integer.numberOfLeadingZeros(VTABLE_ENTRY_SIZE);
 	final static int J9CLASS_OFFSET = vmRefFieldOffset(Class.class);
-  	final static long INTRP_VTABLE_OFFSET = VM.J9CLASS_SIZE;
+	final static long INTRP_VTABLE_OFFSET = VM.J9CLASS_SIZE;
 	final static int HEADER_SIZE = VM.OBJECT_HEADER_SIZE;
 
 	static {
@@ -419,7 +419,6 @@ public abstract class MethodHandle
 		return new SpreadHandle(adapted, collectType, arrayClass, spreadCount, spreadPosition);
 	}
 
-
 	/**
 	 * Returns a MethodHandle that collects the requested incoming arguments, which must match the
 	 * types in MethodType incomingArgs, into an array of <i>arrayClass</i>, called T.
@@ -527,7 +526,6 @@ public abstract class MethodHandle
 
 	/* Unused class parameter is necessary to work around a javac bug */
 	private static final native int vmRefFieldOffset(Class<?> unused);
-
 
 	/**
 	 * Invoke the MethodHandle using an Object[] of arguments.  The array must contain at exactly type().parameterCount() arguments.
@@ -852,7 +850,6 @@ public abstract class MethodHandle
 		 */
 		return MethodHandles.insertArguments(this, 0, value);
 	}
-
 
 	/**
 	 * Check if a permutation is unnecessary
@@ -1238,7 +1235,6 @@ final class ComputedCalls {
 	public static native double   dispatchJ9Method_D(long j9method, Object objectArg, int argPlaceholder);
 	public static native Object   dispatchJ9Method_L(long j9method, Object objectArg, int argPlaceholder);
 
-
 	public static void load(){}
 }
 
@@ -1474,10 +1470,10 @@ final class ThunkTuple {
 		return new ThunkTuple(thunkableType.toMethodDescriptorString(), invokeExactThunk);
 	}
 
- 	static ThunkTuple copyOf(ThunkTuple tt){
- 		ThunkTuple t = new ThunkTuple(tt.thunkableSignature, tt.invokeExactThunk);
- 		t.i2jInvokeExactThunk = tt.i2jInvokeExactThunk;
- 		return t;
+	static ThunkTuple copyOf(ThunkTuple tt){
+		ThunkTuple t = new ThunkTuple(tt.thunkableSignature, tt.invokeExactThunk);
+		t.i2jInvokeExactThunk = tt.i2jInvokeExactThunk;
+		return t;
 	}
 
 	private ThunkTuple(String thunkableSignature, long invokeExactThunk){
@@ -1620,7 +1616,6 @@ final class ILGenMacros {
 }
 
 // }}} JIT support
-
 
 // {{{ Comparator support
 

@@ -1683,7 +1683,6 @@ public final class Unsafe {
 		return allocateUninitializedArray0(c, length);
 	}
 
-
 	/**
 	 * Atomically sets the parameter value at offset in obj if the compare value
 	 * matches the existing value in the object.

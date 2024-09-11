@@ -31,7 +31,7 @@ import java.util.List;
 final class FilterReturnHandle extends ConvertHandle {
 	@VMCONSTANTPOOL_FIELD
 	final MethodHandle filter;
-	
+
 	FilterReturnHandle(MethodHandle next, MethodHandle filter) {
 		super(next, next.type.changeReturnType(filter.type.returnType()), KIND_FILTERRETURN, filter.type()); //$NON-NLS-1$
 		this.filter = filter;

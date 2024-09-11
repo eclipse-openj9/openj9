@@ -34,26 +34,26 @@ final class Cache extends ClassValue<Map<CacheKey, WeakReference<MethodHandle>>>
 	@Override
 	protected Map<CacheKey, WeakReference<MethodHandle>> computeValue(Class<?> arg0) {
 		return Collections.synchronizedMap(new WeakHashMap<CacheKey, WeakReference<MethodHandle>>());
-	}	
+	}
 }
 
 /* Cache key for mapping the methodName and MethodType to the actual MethodHandle */
 final class MethodCacheKey extends CacheKey {
 	private final MethodType type;
 	private final Class<?> specialCaller;
-	
+
 	public MethodCacheKey(String name, MethodType mt, Class<?> specialCaller) {
 		super(name, calculateHashcode(name, mt, specialCaller));
-		
+
 		this.type = mt;
-		this.specialCaller = specialCaller;		
+		this.specialCaller = specialCaller;
 	}
-	
+
 	private static int calculateHashcode(String name, MethodType mt, Class<?> specialCaller) {
 		/* Hash code based off MethodType.hashCode() */
 		int hash = 31 + mt.hashCode();
 		hash = 31 * hash + name.hashCode();
-		
+
 		if (specialCaller != null) {
 			hash = 31 * hash + specialCaller.hashCode();
 		}
@@ -75,20 +75,19 @@ final class MethodCacheKey extends CacheKey {
 
 final class FieldCacheKey extends CacheKey {
 	private final Class<?> fieldType;
-	
+
 	public FieldCacheKey(String fieldName, Class<?> fieldType) {
 		super(fieldName, calculateHashcode(fieldName, fieldType));
 		this.fieldType = fieldType;
 	}
-	
+
 	private static int calculateHashcode(String fieldName, Class<?> fieldType) {
 		/* Hash code based off MethodType.hashCode() */
 		int hash = 31 + fieldType.hashCode();
 		hash = 31 * hash + fieldName.hashCode();
 		return hash;
 	}
-	
-	
+
 	@Override
 	public boolean equals(Object o){
 		if ((o == null) || !(o instanceof FieldCacheKey)) {
@@ -149,7 +148,7 @@ final class HandleCache {
 	public static MethodHandle getMethodFromPerClassCache(Map<CacheKey, WeakReference<MethodHandle>> perClassCache, String name, MethodType type) {
 		return getMethodWithSpecialCallerFromPerClassCache(perClassCache, name, type, null);
 	}
-	
+
 	public static MethodHandle getMethodWithSpecialCallerFromPerClassCache(Map<CacheKey, WeakReference<MethodHandle>> perClassCache, String name, MethodType type, Class<?> specialCaller) {
 		WeakReference<MethodHandle> handleRef = perClassCache.get(new MethodCacheKey(name, type, specialCaller));
 		if (handleRef != null) {
@@ -157,7 +156,7 @@ final class HandleCache {
 		}
 		return null;
 	}
-	
+
 	public static MethodHandle getFieldFromPerClassCache(Map<CacheKey, WeakReference<MethodHandle>> perClassCache, String name, Class<?> fieldType) {
 		WeakReference<MethodHandle> handleRef = perClassCache.get(new FieldCacheKey(name, fieldType));
 		if (handleRef != null) {
@@ -170,17 +169,17 @@ final class HandleCache {
 	public static MethodHandle putMethodInPerClassCache(Map<CacheKey, WeakReference<MethodHandle>> perClassCache, String name, MethodType type, MethodHandle handle) {
 		return putMethodWithSpecialCallerInPerClassCache(perClassCache, name, type, handle, null);
 	}
-	
+
 	/* Update the cache to hold the <Name, Type, SpecialCaller> -> MethodHandle mapping */
 	public static MethodHandle putMethodWithSpecialCallerInPerClassCache(Map<CacheKey, WeakReference<MethodHandle>> perClassCache, String name, MethodType type, MethodHandle handle, Class<?> specialCaller) {
 		return cacheHandle(perClassCache, new MethodCacheKey(name, type, specialCaller), handle);
 	}
-	
+
 	/* Update the cache to hold the <Name, FieldType> -> MethodHandle mapping */
 	public static MethodHandle putFieldInPerClassCache(Map<CacheKey, WeakReference<MethodHandle>> perClassCache, String fieldName, Class<?> fieldType, MethodHandle handle) {
 		return cacheHandle(perClassCache, new FieldCacheKey(fieldName, fieldType), handle);
 	}
-	
+
 	private static MethodHandle cacheHandle(Map<CacheKey, WeakReference<MethodHandle>> perClassCache, CacheKey cacheKey, MethodHandle handle){
 		/* Keep a strong reference to the FieldCacheKey in the MH being cached so that it won't
 		 * be immediately collected.  Uses a WeakHashMap<FieldCacheKey, WeakRef<MH>> to cache.
@@ -193,4 +192,3 @@ final class HandleCache {
 	}
 
 }
-

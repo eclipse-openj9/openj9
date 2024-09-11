@@ -39,7 +39,7 @@ import com.ibm.jvm.dtfjview.commands.helpers.Utils;
 public class HexdumpCommand extends BaseJdmpviewCommand {
 
 	{
-		addCommand("hexdump", "<hex address> [<bytes_to_print>]", "outputs a section of memory in hexadecimal, ASCII and EBCDIC");	
+		addCommand("hexdump", "<hex address> [<bytes_to_print>]", "outputs a section of memory in hexadecimal, ASCII and EBCDIC");
 	}
 
 	@Override
@@ -182,8 +182,8 @@ public class HexdumpCommand extends BaseJdmpviewCommand {
 	@Override
 	public void printDetailedHelp(PrintStream out) {
 		out.format("outputs a section of memory in hexadecimal, ASCII and EBCDIC%n"
-				+ "%n" 
-				+ "parameters: <hex_address> [<bytes_to_print>]%n" 
+				+ "%n"
+				+ "parameters: <hex_address> [<bytes_to_print>]%n"
 				+ "%n"
 				+ "outputs <bytes_to_print> (default 256) bytes of memory contents starting from <hex_address>%n"
 				+ "EBCDIC output is also provided for z/OS dumps%n");

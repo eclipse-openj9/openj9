@@ -32,9 +32,8 @@ import com.ibm.jvm.dtfjview.commands.helpers.Utils;
 @DTFJPlugin(version="1.*", runtime=false)
 public class FindNextCommand extends BaseJdmpviewCommand{
 	{
-		addCommand("findnext", "", "finds the next instance of the last string passed to \"find\"");	
+		addCommand("findnext", "", "finds the next instance of the last string passed to \"find\"");
 	}
-	
 
 	public void run(String command, String[] args, IContext context, PrintStream out) throws CommandException {
 		if(initCommand(command, args, context, out)) {
@@ -45,11 +44,11 @@ public class FindNextCommand extends BaseJdmpviewCommand{
 			out.println("No find command has been executed.");
 			return;
 		}
-		
+
 		String startAddress = Long.toHexString((findAtt.lastMatch + 1));
 		String endAddress = Long.toHexString(findAtt.endAddress);
-		
-		ctx.execute("find" + " " 
+
+		ctx.execute("find" + " "
 				+ findAtt.pattern + "," + startAddress + ","
 				+ endAddress + "," + findAtt.boundary + ","
 				+ findAtt.numBytesToPrint + "," + findAtt.numMatchesToDisplay, out);

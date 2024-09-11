@@ -70,17 +70,17 @@ public final class FileLock {
 		String lockFileMsg = (blocking ? "locking file " : "non-blocking locking file ") //$NON-NLS-1$//$NON-NLS-2$
 				+ (useWatchdog ? "using watchdog" : "NOT using watchdog"); //$NON-NLS-1$//$NON-NLS-2$
 		IPC.logMessage(callSite + " : " + lockFileMsg, lockFilepath); //$NON-NLS-1$
-		
+
 		final int FILE_LOCK_TIMEOUT = 20 * 1000; /* time in milliseconds */
 		if (locked) {
 			/*[MSG "K0574", "file already locked"]*/
 			throw new IOException(com.ibm.oti.util.Msg.getString("K0574")); //$NON-NLS-1$
 		}
-		
+
 		/* lock will usually be uncontended, so don't start a watchdog unless necessary */
 		fileDescriptor = lockFileImpl(lockFilepath, fileMode, false);
 		locked = (0 <= fileDescriptor); /* negative values indicate error, non-negative values (including 0) are valid FDs */
-		
+
 		if (!locked && blocking) { /* try again, this time with a blocking lock and a timeout */
 			FileLockWatchdogTask wdog = null;
 			IPC.logMessage("lock failed, trying blocking lock, fileDescriptor = " + fileDescriptor); //$NON-NLS-1$
@@ -107,7 +107,7 @@ public final class FileLock {
 					}
 				}
 			}
-			
+
 			/*[PR 199171] native file locking is not interruptible from Java */
 			try {
 				IPC.logMessage("FileLock.lockFile() before RandomAccessFile creation"); //$NON-NLS-1$
@@ -193,7 +193,7 @@ public final class FileLock {
 	private static native long lockFileImpl(String filePath, int mode, boolean blocking);
 
 	private static native int unlockFileImpl(long fileDesc);
-	
+
 	final class FileLockWatchdogTask extends TimerTask {
 		@Override
 		/**
@@ -212,7 +212,7 @@ public final class FileLock {
 				/* retry once.  If it fails more than once, it's a systemic problem */
 			}
 			/* unlocks the file if this process, and closes the file descriptor to break the wait */
-			unlockFile("FileLock.FileLockWatchdogTask"); //$NON-NLS-1$ 
+			unlockFile("FileLock.FileLockWatchdogTask"); //$NON-NLS-1$
 			/* delete the file if it's there */
 			if (!theFile.delete()) {
 				IPC.logMessage("waitAndCheckLock could not delete ", theFile.getAbsolutePath()); //$NON-NLS-1$

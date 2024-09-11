@@ -85,4 +85,3 @@
  *		}
  */
 package com.ibm.jvm.trace.format.api;
-

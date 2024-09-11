@@ -56,7 +56,7 @@ public final class JvmCpuMonitorInfo {
 
 	/**
 	 * Create a new <code>JvmCpuMonitorInfo</code> instance with the given info.
-	 * 
+	 *
 	 * @param timestamp
 	 * @param applicationCpuTime
 	 * @param resourceMonitorCpuTime
@@ -93,9 +93,9 @@ public final class JvmCpuMonitorInfo {
 
 	/**
 	 * This method returns the total CPU usage for all application threads.
-	 * It includes the threads that are in the "Application" category as well as those in the user defined categories (Application-UserX).  
+	 * It includes the threads that are in the "Application" category as well as those in the user defined categories (Application-UserX).
 	 * This does not include information about "Resource-monitor" threads.
-	 * 
+	 *
 	 * @return	"Application" category CPU usage time in microseconds.
 	 */
 	public long getApplicationCpuTime() {
@@ -104,7 +104,7 @@ public final class JvmCpuMonitorInfo {
 
 	/**
 	 * This method returns the total CPU usage for all threads of the "Resource-Monitor" category.
-	 * "Resource-Monitor" thread is any thread, that the application has designated as a "Resource-Monitor". 
+	 * "Resource-Monitor" thread is any thread, that the application has designated as a "Resource-Monitor".
 	 *
 	 * @return	"Resource-Monitor" category CPU usage time in microseconds.
 	 */
@@ -159,14 +159,14 @@ public final class JvmCpuMonitorInfo {
 
 	/* (non-Javadoc)
 	 * Setter method for updating JVM CPU usage parameters for this instance.
-	 * 
+	 *
 	 * @param tstamp The time stamp when the snapshot was taken in microseconds.
 	 * @param appTime Total CPU usage of Application Threads.
 	 * @param resourceMonitorTime Total CPU usage of resource monitor Thread(s).
 	 * @param sysJvmTime Total CPU usage of System-JVM Threads.
 	 * @param gcTime Total CPU usage for GC activity.
 	 * @param jitTime Total CPU usage of JIT Threads.
-	 * @param appUserTime[] Array of CPU usage of user defined Application Threads. 
+	 * @param appUserTime[] Array of CPU usage of user defined Application Threads.
 	 */
 	void updateValues(long tstamp, long appTime, long rmonTime,
 					  long sysTime, long gcTime, long jitTime, long appUserTime[]) {
@@ -180,13 +180,13 @@ public final class JvmCpuMonitorInfo {
 	}
 
 	/**
-	 * Receives a {@link javax.management.openmbean.CompositeData} representing a 
+	 * Receives a {@link javax.management.openmbean.CompositeData} representing a
 	 * {@link JvmCpuMonitorInfo} object and attempts to return the root
 	 * {@link JvmCpuMonitorInfo} instance.
 	 *
-	 * @param cd	A {@link javax.management.openmbean.CompositeData} that represents a 
+	 * @param cd	A {@link javax.management.openmbean.CompositeData} that represents a
 	 * 		{@link JvmCpuMonitorInfo}.
-	 * 
+	 *
 	 * @return	if <code>cd</code> is non- <code>null</code>, returns a new instance of
 	 * 		{@link JvmCpuMonitorInfo},
 	 * 		 If <code>cd</code> is <code>null</code>, returns <code>null</code>.

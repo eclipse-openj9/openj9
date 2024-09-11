@@ -302,7 +302,6 @@ public class AttachHandler extends Thread {
 			}
 		}
 
-
 		synchronized (stateSync) {
 			if (isAttachApiTerminated()) {
 				IPC.logMessage("cancel initialize before prepareCommonDirectory"); //$NON-NLS-1$

@@ -25,7 +25,6 @@ package com.ibm.jvm.dtfjview.heapdump.portable;
 import java.io.DataOutput;
 import java.io.IOException;
 
-
 /**
  * @author andhall
  *
@@ -35,22 +34,22 @@ public class PortableHeapDumpHeader {
 	private final String _version;
 	private final boolean _is64Bit;
 	private final boolean _is32BitHash;
-	
-	public PortableHeapDumpHeader(String version, boolean is64Bit, boolean is32BitHash) 
+
+	public PortableHeapDumpHeader(String version, boolean is64Bit, boolean is32BitHash)
 	{
 		_version = version;
 		_is64Bit = is64Bit;
 		_is32BitHash = is32BitHash;
 	}
 
-	public int writeHeapDump(DataOutput dos) throws IOException 
+	public int writeHeapDump(DataOutput dos) throws IOException
 	{
-	    dos.writeUTF(PortableHeapDumpFormatter.MAGIC_STRING);
+		dos.writeUTF(PortableHeapDumpFormatter.MAGIC_STRING);
 		dos.writeInt(PortableHeapDumpFormatter.PHD_VERSION_NUMBER);
 
 		//Flags about dump
 		int headerFlag = 0;
-		
+
 		if (_is64Bit) {
 			headerFlag = PortableHeapDumpFormatter.IS_64_BIT_HEADER_FLAG;
 		}
@@ -66,10 +65,10 @@ public class PortableHeapDumpHeader {
 		dos.writeByte(PortableHeapDumpFormatter.START_OF_HEADER_TAG);
 		dos.writeByte(PortableHeapDumpFormatter.FULL_VERSION_TAG);
 		dos.writeUTF(_version);
-		
+
 		dos.writeByte(PortableHeapDumpFormatter.END_OF_HEADER_TAG);
 		dos.writeByte(PortableHeapDumpFormatter.START_OF_DUMP_TAG);
 		return 0;
 	}
-	
+
 }

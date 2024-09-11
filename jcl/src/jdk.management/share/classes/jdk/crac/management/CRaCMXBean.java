@@ -28,28 +28,28 @@ import java.lang.management.PlatformManagedObject;
  * A management interface of the CRaC functionality in the Java virtual machine.
  */
 public interface CRaCMXBean extends PlatformManagedObject {
-    public static final String CRAC_MXBEAN_NAME = "jdk.crac.management:type=CRaC"; //$NON-NLS-1$
+	public static final String CRAC_MXBEAN_NAME = "jdk.crac.management:type=CRaC"; //$NON-NLS-1$
 
-    /**
-     * Returns the time since the JVM restore was initiated. Returns -1 if restore has not occurred.
-     *
-     * @return the number of in millseconds since restore, returns -1 if restore has not occurred.
-     */
-    public long getUptimeSinceRestore();
+	/**
+	 * Returns the time since the JVM restore was initiated. Returns -1 if restore has not occurred.
+	 *
+	 * @return the number of in millseconds since restore, returns -1 if restore has not occurred.
+	 */
+	public long getUptimeSinceRestore();
 
-    /**
-     * Returns the time when the JVM restore was initiated. Returns -1 if restore has not occurred.
-     *
-     * @return the number of milliseconds since epoch, returns -1 if restore has not occurred.
-     */
-    public long getRestoreTime();
+	/**
+	 * Returns the time when the JVM restore was initiated. Returns -1 if restore has not occurred.
+	 *
+	 * @return the number of milliseconds since epoch, returns -1 if restore has not occurred.
+	 */
+	public long getRestoreTime();
 
-    /**
-     * Returns the implementation of CRaCMXBean.
-     *
-     * @return the implementation of CRaCMXBean.
-     */
-    public static CRaCMXBean getCRaCMXBean() {
-        return CRaCMXBeanImpl.getInstance();
-    }
+	/**
+	 * Returns the implementation of CRaCMXBean.
+	 *
+	 * @return the implementation of CRaCMXBean.
+	 */
+	public static CRaCMXBean getCRaCMXBean() {
+		return CRaCMXBeanImpl.getInstance();
+	}
 }

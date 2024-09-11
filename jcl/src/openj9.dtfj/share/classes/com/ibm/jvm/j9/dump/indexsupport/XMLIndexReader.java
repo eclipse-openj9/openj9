@@ -139,27 +139,27 @@ public class XMLIndexReader extends DefaultHandler implements IParserNode
 	}
 
 	public void startElement(String uri,
-            String localName,
-            String qName,
-            Attributes attributes)
-     throws SAXException
-     {
+			String localName,
+			String qName,
+			Attributes attributes)
+		throws SAXException
+	{
 		_checkScrapeBuffer();
 		IParserNode node = ((IParserNode)(_elements.peek())).nodeToPushAfterStarting(uri, localName, qName, attributes);
 		assert (null != node) : "Node should not be null when starting new tag: " + qName;
 		_elements.push(node);
-    }
+	}
 
 	public void endElement(String uri,
-            String localName,
-            String qName)
-     throws SAXException
-     {
+			String localName,
+			String qName)
+		throws SAXException
+	{
 		_checkScrapeBuffer();
 		// pop whatever we were parsing and notify them that we are discarding them
 		IParserNode formerTop = (IParserNode) _elements.pop();
 		formerTop.didFinishParsing();
-     }
+	}
 
 	private void _checkScrapeBuffer()
 	{
@@ -184,7 +184,7 @@ public class XMLIndexReader extends DefaultHandler implements IParserNode
 			next = NodeUnexpectedTag.unexpectedTag(qName, attributes);
 		}
 		return next;
-     }
+	}
 
 	public void stringWasParsed(String string)
 	{

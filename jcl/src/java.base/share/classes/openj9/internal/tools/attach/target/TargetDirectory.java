@@ -33,22 +33,22 @@ import static openj9.internal.tools.attach.target.IPC.loggingStatus;
 public final class TargetDirectory {
 
 	private static final int VARIANT_LIMIT = 100;
-	/* 
+	/*
 	 * allow owner or group to create, read directories, but only owner can delete.
-	 * Need to allow other processes to lock the sync file. 
+	 * Need to allow other processes to lock the sync file.
 	 */
 	static final int ADVERTISEMENT_FILE_PERMISSIONS = 0600;
 	static final String ATTACH_NOTIFICATION_SYNC_FILENAME = "attachNotificationSync"; //$NON-NLS-1$
 	/**
 	 * All users must have write access in order to get an exclusive (i.e write) lock on the file.
 	 */
-	public static final int SYNC_FILE_PERMISSIONS = 0666; 
+	public static final int SYNC_FILE_PERMISSIONS = 0666;
 	static final int TARGET_DIRECTORY_PERMISSIONS = 01711;
 
 	private volatile static  File targetDirectoryFileObject;
 	private volatile static  File syncFileObject;
 	private volatile static  File advertisementFileObject;
-	
+
 	/**
 	 * Create the directory and files specific to this VM.
 	 * @param myVmId proposed ID of this VM
@@ -127,9 +127,9 @@ public final class TargetDirectory {
 		}
 		return newId;
 	}
-	
+
 	/**
-	 * Remove this VM's target files 
+	 * Remove this VM's target files
 	 * @return true if the files were successfully deleted
 	 */
 	static boolean deleteMyFiles() {
@@ -139,7 +139,7 @@ public final class TargetDirectory {
 
 		if ((null != advertisementFileObject) && advertisementFileObject.delete()) {
 			IPC.logMessage("deleted ", advertisementFileObject.getAbsolutePath()); //$NON-NLS-1$
-			advertisementFileObject = null;		
+			advertisementFileObject = null;
 		} else {
 			return false;
 		}
@@ -222,7 +222,7 @@ public final class TargetDirectory {
 			IPC.logMessage("skip deleteTargetDirectory since the vmid was never set - we didn't create the directory"); //$NON-NLS-1$
 		}
 	}
-	
+
 	/**
 	 * Recreate this VM's target directory if it was accidentally deleted.
 	 * @param myVmId ID of this VM
@@ -230,11 +230,11 @@ public final class TargetDirectory {
 	 */
 	static boolean ensureMyAdvertisementExists(String myVmId) {
 		if (!AttachHandler.isAttachApiInitialized()) {
-			/* 
-			 * either initialization is in progress and sync file will be created, 
-			 * or initialization failed or was terminated so we cannot create the file 
+			/*
+			 * either initialization is in progress and sync file will be created,
+			 * or initialization failed or was terminated so we cannot create the file
 			 */
-			IPC.logMessage("ensureTargetDirectoryExists: attach API not initialized"); //$NON-NLS-1$	
+			IPC.logMessage("ensureTargetDirectoryExists: attach API not initialized"); //$NON-NLS-1$
 			return false;
 		}
 		if (!advertisementFileObject.exists()) { /* either the file or the enclosing directory is missing */
@@ -248,12 +248,12 @@ public final class TargetDirectory {
 				Advertisement.createAdvertisementFile(myVmId, AttachHandler.getMainHandler().getDisplayName());
 			} catch (IOException e) {
 				IPC.logMessage("ensureTargetDirectoryExists: IOException creating advertisement file"); //$NON-NLS-1$
-			 	return false;
+				return false;
 			}
 		}
 		return true;
 	}
-	
+
 	/**
 	 * create a lock file for this VM
 	 * @throws IOException if the file cannot be created
@@ -270,11 +270,11 @@ public final class TargetDirectory {
 				}
 				/* always do the chmod in case the file got changed accidentally */
 				IPC.chmod(syncFileCopy.getAbsolutePath(), TargetDirectory.SYNC_FILE_PERMISSIONS);
-				/* AttachHandler.terminate() will delete this file on shutdown */ 
+				/* AttachHandler.terminate() will delete this file on shutdown */
 			}
 		}
 	}
-	
+
 	/**
 	 * Create the File object for this VM's sync file
 	 * @param targetVmId ID of the VM
@@ -288,7 +288,7 @@ public final class TargetDirectory {
 		File syncFile=new File(tdp,ATTACH_NOTIFICATION_SYNC_FILENAME);
 		return syncFile;
 	}
-	
+
 	/**
 	 * Get the path to the target directory for a given VMID
 	 * @param vmId machine-friendly name of the VM
@@ -305,7 +305,7 @@ public final class TargetDirectory {
 
 	/**
 	 * Get the File object for this VM's target directory.
-	 * @return File object 
+	 * @return File object
 	 */
 	static File getTargetDirectoryFileObject() {
 		return targetDirectoryFileObject;
@@ -317,10 +317,10 @@ public final class TargetDirectory {
 	static File getSyncFileObject() {
 		return syncFileObject;
 	}
-	
+
 	/**
 	 * Get the File object for this VM's advertisement file.
-	 * @return File object 
+	 * @return File object
 	 */
 	static File getAdvertisementFileObject() {
 		return advertisementFileObject;

@@ -23,20 +23,20 @@ package java.lang;
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  */
- 
+
 /**
  * This exception is thrown when a program attempts
- * to access a constructor which is not accessible 
+ * to access a constructor which is not accessible
  * from the location where the reference is made.
  *
  * @author		OTI
  * @version		initial
  */
-public class InstantiationException extends ReflectiveOperationException { 
+public class InstantiationException extends ReflectiveOperationException {
 	private static final long serialVersionUID = -8441929162975509110L;
-	
+
 /**
- * Constructs a new instance of this class with its 
+ * Constructs a new instance of this class with its
  * walkback filled in.
  *
  * @author		OTI
@@ -46,7 +46,7 @@ public InstantiationException () {
 	super();
 }
 /**
- * Constructs a new instance of this class with its 
+ * Constructs a new instance of this class with its
  * walkback and message filled in.
  *
  * @author		OTI
@@ -60,7 +60,7 @@ public InstantiationException (String detailMessage) {
 }
 
 /**
- * Constructs a new instance of this class with its 
+ * Constructs a new instance of this class with its
  * walkback and message filled in.
  *
  * @author		OTI

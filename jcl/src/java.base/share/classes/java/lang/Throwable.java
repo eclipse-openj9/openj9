@@ -457,7 +457,6 @@ private void readObject(ObjectInputStream s)
 		}
 	}
 
-
 	if (suppressedExceptions != null) {
 		List<Throwable> newList = Collections.EMPTY_LIST;
 		try {

@@ -38,7 +38,7 @@ import jdk.internal.misc.Unsafe;
 
 public class TypeAnnotationParser {
 	private static final byte[] EMPTY_TYPE_ANNOTATIONS_ATTRIBUTE = new byte[] {0, 0}; /* just num_annotations=0 */
-	
+
 	/**
 	 * @param jlrConstructor constructor for which annotations are to be retrieved
 	 * @return annotation attribute bytes, not including the attribute_name_index and attribute_length fields, or null if jlrConstructor is null.
@@ -61,7 +61,7 @@ public class TypeAnnotationParser {
 		}
 		return result;
 	};
-	
+
 	/**
 	 * @param jlrField field for which annotations are to be retrieved
 	 * @return annotation attribute bytes, not including the attribute_name_index and attribute_length fields, or null if jlrField is null.
@@ -73,7 +73,7 @@ public class TypeAnnotationParser {
 		}
 		return result;
 	};
-	
+
 	/**
 	 * @param clazz class for which annotations are to be retrieved
 	 * @return annotation attribute bytes, not including the attribute_name_index and attribute_length fields, or null if clazz is null.
@@ -97,7 +97,7 @@ public class TypeAnnotationParser {
 		}
 		return attr;
 	}
-	
+
 	/**
 	 * @param clazz class  for which annotated interfaces are to be retrieved
 	 * @return array (possibly empty) of AnnotatedType objects for the interfaces.

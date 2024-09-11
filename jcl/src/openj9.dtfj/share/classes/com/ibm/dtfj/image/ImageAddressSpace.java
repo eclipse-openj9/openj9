@@ -34,23 +34,23 @@ import java.util.Properties;
  */
 public interface ImageAddressSpace {
 
-    /**
-     * Get the process within this address space that caused the image to be created.
-     * @return the process within this address space which caused
-     * the image to be created, if any. Return null if no individual
-     * process triggered the creation of the image.
-     */
-    public ImageProcess getCurrentProcess();
+	/**
+	 * Get the process within this address space that caused the image to be created.
+	 * @return the process within this address space which caused
+	 * the image to be created, if any. Return null if no individual
+	 * process triggered the creation of the image.
+	 */
+	public ImageProcess getCurrentProcess();
 
-    /**
-     * Get the set of processes within the address space.
-     * @return an iterator which provides all of the processes
-     * within a given address space.
-     *
-     * @see ImageProcess
-     * @see CorruptData
-     */
-    public Iterator getProcesses();
+	/**
+	 * Get the set of processes within the address space.
+	 * @return an iterator which provides all of the processes
+	 * within a given address space.
+	 *
+	 * @see ImageProcess
+	 * @see CorruptData
+	 */
+	public Iterator getProcesses();
 
 	/**
 	 * Return the byte order of this address space.
@@ -59,34 +59,34 @@ public interface ImageAddressSpace {
 	 */
 	public ByteOrder getByteOrder();
 
-    /**
-     * A factory method for creating pointers into this address space.
-     * @param address the address to point to.
-     * @return an ImagePointer for the specified address.
-     */
-    public ImagePointer getPointer(long address);
+	/**
+	 * A factory method for creating pointers into this address space.
+	 * @param address the address to point to.
+	 * @return an ImagePointer for the specified address.
+	 */
+	public ImagePointer getPointer(long address);
 
-    /**
-     * Get the raw memory in the address space.
-     *
-     * @return An iterator of all the ImageSections in the address.  Their union will be the total process address space.
-     * @see ImageSection
-     */
-    public Iterator getImageSections();
+	/**
+	 * Get the raw memory in the address space.
+	 *
+	 * @return An iterator of all the ImageSections in the address.  Their union will be the total process address space.
+	 * @see ImageSection
+	 */
+	public Iterator getImageSections();
 
-    /**
-     * Gets the system wide identifier for the address space
-     *
-     * @return address space ID
-     * @since 1.7
-     */
-    public String getID() throws DataUnavailable, CorruptDataException;
+	/**
+	 * Gets the system wide identifier for the address space
+	 *
+	 * @return address space ID
+	 * @since 1.7
+	 */
+	public String getID() throws DataUnavailable, CorruptDataException;
 
-    /**
-     * Gets the OS specific properties for this address space.
-     *
-     * @return a set of OS specific properties
-     * @since 1.7
-     */
-    public Properties getProperties();
+	/**
+	 * Gets the OS specific properties for this address space.
+	 *
+	 * @return a set of OS specific properties
+	 * @since 1.7
+	 */
+	public Properties getProperties();
 }

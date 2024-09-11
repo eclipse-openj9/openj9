@@ -29,17 +29,17 @@ public class IncompleteTracePoint{
 	public static final int INVALID_TYPE = -1;
 	public static final int START_TYPE = 1;
 	public static final int END_TYPE = 2;
-	
+
 	private int type = INVALID_TYPE;
 	private int bytesMissing = 0;
-	
+
 	public IncompleteTracePoint( byte[] data, int length, int type, long threadId ){
 		this.type = type;
-		this.threadId = threadId;		
+		this.threadId = threadId;
 		this.data = new byte[ length ];
 		System.arraycopy(data, 0, this.data, 0,	length);
 	}
-	
+
 	public int setBytesRequired(int bytes){
 		this.bytesMissing = bytes;
 		return bytes;
@@ -56,7 +56,7 @@ public class IncompleteTracePoint{
 	public long getThreadID(){
 		return threadId;
 	}
-	
+
 	public int getType(){
 		return type;
 	}

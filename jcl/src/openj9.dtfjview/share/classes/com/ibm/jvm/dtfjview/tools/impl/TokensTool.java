@@ -86,7 +86,7 @@ public class TokensTool extends Tool implements IPipe {
 	 * @param command	The command
 	 * @param args		The arguments taken by the command.
 	 * <p>
-	 * @return		<code>true</code> if this is the correct tool for this command; 
+	 * @return		<code>true</code> if this is the correct tool for this command;
 	 * 				<code>false</code> otherwise.
 	 */
 	public boolean accept(String command, String[] args) {
@@ -144,7 +144,7 @@ public class TokensTool extends Tool implements IPipe {
 			keep = true;
 			currentIndex++;
 		}
-		
+
 		StringTokenizer st = new StringTokenizer(args[currentIndex], ",");
 		while(st.hasMoreTokens()) {
 			Range range = TokensTool.parseRange(st.nextToken(), out);
@@ -155,7 +155,7 @@ public class TokensTool extends Tool implements IPipe {
 			}
 		}
 		currentIndex++;
-		
+
 		if (args[currentIndex].equalsIgnoreCase(OPTION_KEEP)) {
 			keep = true;
 			currentIndex++;
@@ -169,7 +169,7 @@ public class TokensTool extends Tool implements IPipe {
 		}
 		return new Arguments(keep, rangeList, ddrCommand, ddrCommandArgs);
 	}
-	
+
 	/**
 	 * To parse a range.
 	 * Note, a NULL object will be returned if the specified range is found to have any errors.
@@ -177,7 +177,7 @@ public class TokensTool extends Tool implements IPipe {
 	private static Range parseRange(String range, PrintStream out) {
 		int start = 1;
 		int end = -1;
-		
+
 		int index = range.indexOf(RANGE_INDICATOR);
 		try {
 			if (index < 0) {
@@ -197,7 +197,7 @@ public class TokensTool extends Tool implements IPipe {
 			out.println("Range must be numeric : " + range);
 			return null;
 		}
-		
+
 		// do some basic verification here.
 		// (1) start and end of the range can not be 0 because we start counting from 1 or -1.
 		// (2) if start and end are both positive or both negative, we need ensure start is not greater than end;
@@ -210,11 +210,11 @@ public class TokensTool extends Tool implements IPipe {
 		}
 		return new Range (start, end);
 	}
-	
+
 	private static final class Range {
 		final int start;
 		final int end;
-		
+
 		public Range(int start, int end) {
 			this.start = start;
 			this.end = end;
@@ -222,12 +222,12 @@ public class TokensTool extends Tool implements IPipe {
 		public int getStartIndex(int tokenSize) {
 			return Math.max(0, start < 0 ? tokenSize + start : start - 1);
 		}
-		
+
 		public int getEndIndex(int tokenSize) {
 			return Math.min(tokenSize - 1, end < 0 ? tokenSize + end : end - 1);
 		}
 	}
-	
+
 	private static final class Arguments {
 		public Arguments(boolean keep, List<Range> rangeList, String nextCommand, String [] nextCommandArgs) {
 			this.keep = keep;
@@ -238,14 +238,14 @@ public class TokensTool extends Tool implements IPipe {
 		public final String nextCommand;
 		public final String [] nextCommandArgs;
 		public final boolean keep;
-		public final List<Range> rangeList; 
+		public final List<Range> rangeList;
 	}
-	
+
 	private static final class StringModifier implements IStringModifier {
 		public StringModifier(Arguments arguments) {
 			this.arguments = arguments;
 		}
-		
+
 		public String modify(String s) {
 			StringBuilder sb = null;
 			List<String> tokenList = tokenize(s);
@@ -261,7 +261,7 @@ public class TokensTool extends Tool implements IPipe {
 					sb.append(tokenList.get(index));
 				}
 			}
-			
+
 			if(sb == null || sb.length() == 0) {
 				if (arguments.keep) {
 					return s.endsWith("\n") ? s : s + "\n";
@@ -271,7 +271,7 @@ public class TokensTool extends Tool implements IPipe {
 			}
 			return sb.toString() + "\n";
 		}
-		
+
 		private static List<String> tokenize(String s) {
 			List<String> tokenList = new ArrayList<String>();
 			StringTokenizer st = new StringTokenizer(s);
@@ -280,7 +280,7 @@ public class TokensTool extends Tool implements IPipe {
 			}
 			return tokenList;
 		}
-		
+
 		private final Arguments arguments;
 	}
 }

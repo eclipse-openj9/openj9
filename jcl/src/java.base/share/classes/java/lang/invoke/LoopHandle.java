@@ -49,7 +49,6 @@ final class LoopHandle extends PassThroughHandle {
 	@Override
 	protected final ThunkTable thunkTable(){ return _thunkTable; }
 
-
 	@SuppressWarnings("boxing")
 	private static Object infoAffectingThunks(int numLoopTargetArgs) {
 		// The number of arguments passed to the loop target affects the code generated in the thunks

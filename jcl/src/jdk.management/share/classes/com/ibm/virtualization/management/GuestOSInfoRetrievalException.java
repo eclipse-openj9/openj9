@@ -25,7 +25,7 @@ package com.ibm.virtualization.management;
  */
 
 /**
- * This exception class is thrown when retrieving 
+ * This exception class is thrown when retrieving
  * Guest (Virtual Machine(VM)/Logical Partition(LPAR)) usage statistics fails.
  * It could be trying to retrieve either {@link GuestOSProcessorUsage} or
  * {@link GuestOSMemoryUsage}.  For exact cause one needs to inspect the exception

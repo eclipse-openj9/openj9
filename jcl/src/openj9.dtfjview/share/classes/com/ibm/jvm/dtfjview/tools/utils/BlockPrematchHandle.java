@@ -26,8 +26,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * This class first caches all the lines.  The cache will be cleaned 
- * if it encounters an empty line and cache will be restarted. The 
+ * This class first caches all the lines.  The cache will be cleaned
+ * if it encounters an empty line and cache will be restarted. The
  * cached lines will be released once it is asked to do so.
  * <p>
  * @author Manqing Li, IBM.
@@ -38,7 +38,7 @@ public class BlockPrematchHandle implements IPrematchHandle {
 	public BlockPrematchHandle() {
 		this.cached = new LinkedList<String>();
 	}
-	
+
 	public void process(String s) {
 		if (null == s || 0 == s.trim().length()) {
 			cached = new LinkedList<String>();

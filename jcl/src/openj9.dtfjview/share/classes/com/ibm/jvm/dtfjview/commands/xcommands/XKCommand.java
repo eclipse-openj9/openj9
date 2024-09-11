@@ -43,9 +43,9 @@ import com.ibm.jvm.dtfjview.commands.helpers.Utils;
 @DTFJPlugin(version="1.*", runtime=false)
 public class XKCommand extends XCommand {
 	{
-		addCommand("x/k", "<hex address>", "displays the specified memory section as if it were a stack frame parameters");	
+		addCommand("x/k", "<hex address>", "displays the specified memory section as if it were a stack frame parameters");
 	}
-	
+
 	@Override
 	public boolean recognises(String command, IContext context) {
 		if(super.recognises(command, context)) {
@@ -53,37 +53,37 @@ public class XKCommand extends XCommand {
 		}
 		return false;
 	}
-	
+
 	public void doCommand(String[] args)
 	{
 		String param = args[0];
-		
+
 		Long address = Utils.longFromStringWithPrefix(param);
-		
+
 		if (null == address)
 		{
 			out.println("invalid hex address specified; address must be specified as "
 					+ "\"0x<hex_address>\"");
 			return;
 		}
-		
+
 		ImageAddressSpace ias = ctx.getAddressSpace();
 		int pointerSize = getIASPointerSize(ias);
 		int unitSize;
-		
+
 		if (pointerSize > 32)
 			unitSize = 8;
 		else
 			unitSize = 4;
-		
+
 		out.print("\n");
-		
+
 		for (int index = 0; index < argUnitNumber; index++)
 		{
 			boolean found = false;
 			long currAddr = address.longValue() + (index * unitSize);
 			ImagePointer ip = ias.getPointer(currAddr);
-			
+
 			out.print("\t");
 			out.print(Utils.toHex(currAddr));
 			out.print("   ");
@@ -100,14 +100,14 @@ public class XKCommand extends XCommand {
 
 			if (found) {
 				long pointer = l;
-				
+
 				out.print(toAdjustedHex(l, pointerSize));
 				out.print("   ");
 
 				if (31 == pointerSize) {
 					pointer = (int)(pointer & (((long)1) << pointerSize) - 1);
 				}
-				
+
 				if (printSymbol(pointer, l - currAddr, pointerSize)) {
 				} else if (printStackPointer(pointer, l - currAddr, pointerSize, ias)) {
 				}
@@ -116,10 +116,10 @@ public class XKCommand extends XCommand {
 				out.print("<address not found in any address space or exception occurred>\n");
 			}
 		}
-		
+
 		out.print("\n");
 	}
-	
+
 	private boolean printSymbol(long pointer, long diff, int pointerSize)
 	{
 		ImageProcess ip = ctx.getProcess();
@@ -140,7 +140,7 @@ public class XKCommand extends XCommand {
 				ImageSection is = (ImageSection)itImageSection.next();
 				long startAddr = is.getBaseAddress().getAddress();
 				long endAddr = startAddr + is.getSize();
-				
+
 				if (pointer >= startAddr && pointer < endAddr) {
 					/* can we find a matching symbol? */
 					long maxDifference = pointer - startAddr;
@@ -156,7 +156,7 @@ public class XKCommand extends XCommand {
 							bestSymbol = symbol;
 						}
 					}
-	
+
 					try {
 						out.print(im.getName());
 					} catch (CorruptDataException e) {
@@ -170,7 +170,7 @@ public class XKCommand extends XCommand {
 					}
 					out.print("+");
 					out.print(Long.toString(maxDifference));
-					
+
 					// if we find the address in the symbols, there's no need to continue
 					//  trying to find it elsewhere in the address space
 					return true;
@@ -180,10 +180,10 @@ public class XKCommand extends XCommand {
 		}
 		return false;
 	}
-	
+
 	private boolean printStackPointer(long pointer, long diff, int pointerSize, ImageAddressSpace ias)
 	{
-		if (Math.abs(diff) <= 4096) {	
+		if (Math.abs(diff) <= 4096) {
 			if (diff < 0) {
 				out.print(" .");
 				out.print(Long.toString(diff));
@@ -195,7 +195,7 @@ public class XKCommand extends XCommand {
 		}
 		return false;
 	}
-	
+
 	private int getIASPointerSize(ImageAddressSpace ias)
 	{
 		return ((ImageProcess)ias.getProcesses().next()).getPointerSize();
@@ -233,6 +233,5 @@ public class XKCommand extends XCommand {
 				"Note: This command uses the number of items passed to " +
 				"it by the \"x/\" command, but ignores the unit size.\n");
 	}
-
 
 }

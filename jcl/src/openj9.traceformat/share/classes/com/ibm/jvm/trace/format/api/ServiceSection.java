@@ -29,13 +29,13 @@ import java.nio.ByteBuffer;
 
 /**
  * Service section of a file header.
- * 
+ *
  * @author Tim Preece
  */
 public class ServiceSection {
 	TraceContext context;
 	String serviceString;
-	
+
 	String textSummary;
 
 	public ServiceSection(TraceContext context, ByteBuffer data) throws IllegalArgumentException {
@@ -64,7 +64,7 @@ public class ServiceSection {
 	public String toString() {
 		return "Service level";
 	}
-	
+
 	public String summary() {
 		if (textSummary == null) {
 			StringBuilder s = new StringBuilder(toString()+":"+System.getProperty("line.separator"));
@@ -74,7 +74,7 @@ public class ServiceSection {
 
 			textSummary = s.toString();
 		}
-		
+
 		return textSummary;
 	}
 }

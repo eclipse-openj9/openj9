@@ -38,14 +38,14 @@ import com.ibm.oti.util.Msg;
 /*
  * VarargsCollectorHandle is a MethodHandle subclass used to implement
  * MethodHandle.asVarargsCollector(Class<?> arrayType)
- * 
+ *
  * Type of VarargsCollectorHandle and its 'next' handle will always match
  */
 final class VarargsCollectorHandle extends MethodHandle {
 	final MethodHandle next;
 	final Class<?> arrayType;
 	final boolean isPrimitiveVarargs;
-	
+
 	VarargsCollectorHandle(MethodHandle next, Class<?> arrayType, boolean isPrimitiveVarargs) {
 		super(varargsCollectorType(next.type, arrayType), KIND_VARARGSCOLLECT, null);
 		this.next = next;
@@ -55,14 +55,14 @@ final class VarargsCollectorHandle extends MethodHandle {
 		this.arrayType = arrayType;
 		this.isPrimitiveVarargs = isPrimitiveVarargs;
 	}
-	
+
 	VarargsCollectorHandle(VarargsCollectorHandle originalHandle, MethodType newType) {
 		super(originalHandle, newType);
 		this.next = originalHandle.next;
 		this.arrayType = originalHandle.arrayType;
 		this.isPrimitiveVarargs = originalHandle.isPrimitiveVarargs;
 	}
-	
+
 	@Override
 	Class<?> getDefc() throws InternalError {
 		if (isPrimitiveVarargs) {
@@ -70,7 +70,7 @@ final class VarargsCollectorHandle extends MethodHandle {
 		}
 		return super.getDefc();
 	}
-	
+
 	@Override
 	Class<?> getReferenceClass() throws InternalError {
 		if (isPrimitiveVarargs) {
@@ -78,7 +78,7 @@ final class VarargsCollectorHandle extends MethodHandle {
 		}
 		return super.getReferenceClass();
 	}
-	
+
 	@Override
 	Class<?> getSpecialCaller() throws InternalError {
 		if (isPrimitiveVarargs) {
@@ -86,7 +86,7 @@ final class VarargsCollectorHandle extends MethodHandle {
 		}
 		return super.getSpecialCaller();
 	}
-	
+
 	@Override
 	String getMethodName() throws InternalError {
 		if (isPrimitiveVarargs) {
@@ -94,7 +94,7 @@ final class VarargsCollectorHandle extends MethodHandle {
 		}
 		return super.getMethodName();
 	}
-	
+
 	@Override
 	int getModifiers() throws InternalError {
 		if (isPrimitiveVarargs) {
@@ -102,7 +102,7 @@ final class VarargsCollectorHandle extends MethodHandle {
 		}
 		return super.getModifiers();
 	}
-	
+
 	static MethodType varargsCollectorType(MethodType nextType, Class<?> arrayType) {
 		return nextType.changeParameterType(nextType.parameterCount() - 1, arrayType);
 	}
@@ -144,21 +144,21 @@ final class VarargsCollectorHandle extends MethodHandle {
 		{
 			if (argsLength < 253) {
 				MethodHandle mh = IWAContainer.getMH(argsLength);
-				return mh.invokeExact((MethodHandle) this, args); 
+				return mh.invokeExact((MethodHandle) this, args);
 			}
 			MethodHandle mh = this.asType(MethodType.genericMethodType(argsLength));
 			mh = mh.asSpreader(Object[].class, argsLength);
 			return mh.invokeExact(args);
 		}
 	}
-	
+
 	private CollectHandle previousCollector = null;
-	
+
 	private WrongMethodTypeException throwNewWMTE(IllegalArgumentException iae) {
 		/*[MSG "K0681", "Failed to build collector"]*/
 		throw new WrongMethodTypeException(com.ibm.oti.util.Msg.getString("K0681"), iae); //$NON-NLS-1$
 	}
-	
+
 	@Override
 	public MethodHandle asType(MethodType newType) throws ClassCastException {
 		if (type == newType)  {
@@ -199,7 +199,7 @@ final class VarargsCollectorHandle extends MethodHandle {
 		}
 		return collector.asType(newType);
 	}
-	
+
 	@Override
 	public MethodHandle	asVarargsCollector(Class<?> arrayParameter) throws IllegalArgumentException {
 		if (arrayType == arrayParameter) {
@@ -222,7 +222,7 @@ final class VarargsCollectorHandle extends MethodHandle {
 		// asType will return 'this' if type is the same
 		return fixedArity.asType(type());
 	}
-	
+
 	@Override
 	boolean canRevealDirect() {
 		return isPrimitiveVarargs;
@@ -240,7 +240,7 @@ final class VarargsCollectorHandle extends MethodHandle {
 
 	private static final ThunkTable _thunkTable = new ThunkTable();
 	protected final ThunkTable thunkTable(){ return _thunkTable; }
-	
+
 	@FrameIteratorSkip
 	private final int invokeExact_thunkArchetype_X(int argPlaceholder) throws Throwable {
 		/*[IF ]*/

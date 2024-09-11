@@ -27,16 +27,16 @@ import java.math.BigInteger;
 import java.util.*;
 
 /**
- * Main routine for formatting the trace file. Reads raw trace data and formats 
+ * Main routine for formatting the trace file. Reads raw trace data and formats
  * in a platform independent manner
- * 
+ *
  * @author Tim Preece
  */
 final public class TraceFormat
 {
 	protected static final int traceFormatMajorVersion = 1;
 	protected static final int traceFormatMinorVersion = 0;
-	
+
 	private TraceArgs traceArgs = null;
 
 	private Vector traceFiles = new Vector();
@@ -81,7 +81,7 @@ final public class TraceFormat
 	protected static int expectedRecords;
 
 	private boolean traceFileIsTruncatedOrCorrupt = false;
-	
+
 	private boolean primed = false;
 
 	// constants
@@ -131,7 +131,7 @@ final public class TraceFormat
 			+ "\t           -overridetimezone -4\n"
 			+ "\tindent = specify indentation at Entry/Exit trace points.\n"
 			+ "\t      Default is not to indent.\n"
-    		+"\thelp 	= display this message and stop.";
+			+"\thelp 	= display this message and stop.";
 
 	protected static final String header = "                Trace Formatted Data ";
 
@@ -145,7 +145,7 @@ final public class TraceFormat
 
 	/**
 	 * Main entry point for running the formatter.
-	 * 
+	 *
 	 * @param args
 	 */
 	public static void main(String[] args)
@@ -156,7 +156,7 @@ final public class TraceFormat
 
 	/**
 	 * Null constructor for the formatter.
-	 * 
+	 *
 	 * @param None
 	 *            <p>
 	 *            This is the version used when you run TraceFormat from the
@@ -172,7 +172,7 @@ final public class TraceFormat
 
 	/**
 	 * Constructor used to instantiate the formatter programmatically.
-	 * 
+	 *
 	 * @param args -
 	 *            the same as you would specify on the command line.
 	 *            <p>
@@ -226,17 +226,17 @@ final public class TraceFormat
 		TraceRecord.initStatics();
 		MessageFile.initStatics();
 	}
-	
+
 	/**
 	 * parses command-line args, if in command-line mode, reads the input
 	 * file(s) and outputs the result
-	 * 
+	 *
 	 * @param args
 	 *            the command line arguments
 	 * @param processFully
 	 * 			  if true, the formatter will read the trace file and format the tracepoints into a file
 	 * 			  if false, the formatter will prime the trace file so that an external program can iterate
-	 * 					over the tracepoints. 
+	 * 					over the tracepoints.
 	 * @see main
 	 */
 	public void readAndFormat(String[] args, boolean processFully)
@@ -250,17 +250,17 @@ final public class TraceFormat
 			return;
 		}
 
-        /* Catch the -help option and terminate. */
-        if (TraceArgs.isHelpOnly)
-        {
-            TraceFormat.outStream.println("TraceFormat " + usageMessage);
-            return;
-        }
+		/* Catch the -help option and terminate. */
+		if (TraceArgs.isHelpOnly)
+		{
+			TraceFormat.outStream.println("TraceFormat " + usageMessage);
+			return;
+		}
 
-        if (TraceArgs.verbose) {
-        	errStream = System.err;
-        }
-        
+		if (TraceArgs.verbose) {
+			errStream = System.err;
+		}
+
 		userVMIdentifier = TraceArgs.userVMIdentifier;
 
 		try {
@@ -268,7 +268,7 @@ final public class TraceFormat
 			if (getTraceFiles() != 0) {
 				return;
 			}
-			
+
 			if (verMod >= 0.0) { // check that the header was parsed correctly.
 				out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(TraceArgs.outputFile)));
 
@@ -371,7 +371,7 @@ final public class TraceFormat
 		}
 
 	}
-	
+
 	private MessageFile tryMessageFileInstantiation(String fileName){
 		if (fileName != null){
 			try {
@@ -385,7 +385,7 @@ final public class TraceFormat
 	}
 
 	/**
-	 * find the most applicable dat file available to this formatter, using the 
+	 * find the most applicable dat file available to this formatter, using the
 	 * dirsToSearch list of locations.
 	 * @param dirsToSearch - a non null list of directories to search, in the order
 	 * to search (i.e. index zero is first location to search).
@@ -414,14 +414,14 @@ final public class TraceFormat
 
 		return datfile;
 	}
-	
+
 	private void instantiateMessageFiles(String lowestPriorityDefault)
 	{
 		String dirsToSearch[];
 		final String legacyJVMFormatFileName = traceFile.formatFileName();
-		
+
 		TraceFormat.outStream.println("*** Locating formatting template files");
-		
+
 		if (TraceArgs.datFileDirectory == null) {
 			/* give current directory preference */
 			dirsToSearch = new String[]{".", lowestPriorityDefault};
@@ -438,16 +438,16 @@ final public class TraceFormat
 			 */
 			jvmFormatFilePath = findDatFile(dirsToSearch, "J9TraceFormat.dat");
 		}
-		
+
 		if (jvmFormatFilePath != null) {
 			/* we found a suitable dat file */
 			messageFile = tryMessageFileInstantiation(jvmFormatFilePath);
 		}
-		
+
 		if( messageFile == null ) {
 			TraceFormat.outStream.println("*** Could not find a J9TraceFormat.dat file. JVM trace points may be formatted incorrectly.");
 		}
-		
+
 		/*
 		 * Now load OMRTraceFormat.dat if available.
 		 */
@@ -471,7 +471,7 @@ final public class TraceFormat
 				messageFile = messageFileBase;
 			}
 		}
-				
+
 		if (messageFile == null)
 		{
 			TraceFormat.outStream.println("Could not find a dat file. No trace point parameters will be formatted.");
@@ -505,10 +505,10 @@ final public class TraceFormat
 		tracedThreads = null;
 		numberOfThreads = 0;
 		timeStamps = null;
-		
+
 		/* process trace files from a 5.0 vm or above */
 		long numberOfBuffers = 0;
-	
+
 		int bufferSize = 0;
 
 		Hashtable listOfThreadBuffers = new Hashtable();
@@ -588,7 +588,7 @@ final public class TraceFormat
 			TraceFormat.first = overallStartPlatform;
 			TraceFormat.last = overallStartPlatform;
 		}
-		
+
 		TraceFormat.outStream.println("*** Sorting buffers");
 		TraceThread traceThread;
 		for (Iterator i = threads.iterator(); i.hasNext();) {
@@ -609,7 +609,7 @@ final public class TraceFormat
 				// return;
 			}
 		}
-		
+
 		// write out the header info
 		TraceFormat.outStream
 				.println("*** Starting formatting of entries into text file "
@@ -617,14 +617,14 @@ final public class TraceFormat
 		out.write(header, 0, header.length());
 		out.newLine();
 		out.newLine();
-		
+
 		int ptrWidth = Integer.valueOf(Util.getProperty("POINTER_SIZE")).intValue();
-		
+
 		StringBuffer blanks = new StringBuffer("");
 		for (int i = 0; userVMIdentifier!= null && i <= userVMIdentifier.length(); i++) {
 			blanks.append(" ");
 		}
-			
+
 		if (ptrWidth == 4) {
 			headings = blanks
 					+ "  ThreadID       TP id     Type        TraceEntry ";
@@ -646,7 +646,7 @@ final public class TraceFormat
 		populateTimeStamps(tracedThreads, timeStamps, numberOfThreads);
 		primed = true;
 	}
-	
+
 	private void readAndFormatNewStyle() throws IOException
 	{
 		if (!primed){
@@ -660,14 +660,14 @@ final public class TraceFormat
 		TraceThread tthread;
 		int tracePointsFormatted = 0;
 		StringBuffer tempTPString;
-		
+
 		while ((tp = findNextTracePoint(tracedThreads, timeStamps,
 				numberOfThreads)) != null) {
 			if (!tp.isNormalTracepoint()) {
 				/* let the tracepoint give us it's text */
 				out.write(tp.toString());
 				out.newLine();
-				
+
 				continue;
 			}
 
@@ -725,7 +725,7 @@ final public class TraceFormat
 
 					String formattedData = tp.getFormattedParameters();
 					tempTPString.append(formattedData);
-					
+
 					if (TraceArgs.debug){
 						/* tie the formatted tracepoint to the binary file location */
 						tempTPString.append(" " + tp.from());
@@ -792,7 +792,7 @@ final public class TraceFormat
 		tf.traceFileHeader.summarize(out);
 		out.write("Active Threads :");
 		out.newLine();
-		
+
 		// Write out list of threads in trace files
 		for (Iterator i = threads.iterator(); i.hasNext();) {
 			traceThread = (TraceThread) i.next();
@@ -823,7 +823,7 @@ final public class TraceFormat
 			} else {
 				timeConversion = BigInteger.ONE;
 			}
-			
+
 			Util.Debug.println("timeConversion:         " + timeConversion);
 
 			out.write("JVM started      : "
@@ -965,11 +965,11 @@ final public class TraceFormat
 			return tracedThreads[tracedThreadWithNewestTracePoint];
 		}
 	}
-	
+
 	public com.ibm.jvm.trace.TraceThread[] getTraceThreads(){
 		return tracedThreads;
 	}
-	
+
 	/* allow external iterators access to the next tracepoint */
 	public com.ibm.jvm.trace.TracePoint getNextTracePoint(){
 		TracePoint tp = findNextTracePoint(tracedThreads, timeStamps, numberOfThreads);
@@ -1012,7 +1012,7 @@ final public class TraceFormat
 					.getNextTracePoint();
 		}
 	}
-	
+
 	public com.ibm.jvm.trace.TraceFileHeader getTraceFileHeader(){
 		TraceFile tf = (TraceFile)traceFiles.firstElement();
 		if (tf == null){

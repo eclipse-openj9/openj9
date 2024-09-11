@@ -33,19 +33,19 @@ public class PrimitiveArrayRecord extends PortableHeapDumpRecord
 	private final boolean _is64Bit;
 	private final long _instanceSize;
 	private final boolean _is32BitHash;
-	
+
 	public PrimitiveArrayRecord(long address, long previousAddress, int type, int numberOfElements,
 			int hashCode, boolean is64Bit, long instanceSize, boolean is32BitHash)
 	{
 		super(address,previousAddress,null);
-		
+
 		this._type = type;
 		this._numberOfElements = numberOfElements;
 		this._hashCode = hashCode;
 		this._is64Bit = is64Bit;
 		this._instanceSize = instanceSize;
 		this._is32BitHash = is32BitHash;
-		
+
 		if(type < 0 || type > 7) {
 			throw new IllegalArgumentException("Unrecognised type code: " + type);
 		}
@@ -55,27 +55,27 @@ public class PrimitiveArrayRecord extends PortableHeapDumpRecord
 	{
 		byte tagAndFlag = PortableHeapDumpFormatter.PRIMITIVE_ARRAY_RECORD_TAG;
 		tagAndFlag |= _type << 2;
-		
+
 		byte arrayLengthSize = PortableHeapDumpRecord.sizeofReference(_numberOfElements);
 		// Array length size and gap size in this record have to be the same, so use the larger
 		byte fieldSize = arrayLengthSize > _gapSize ? arrayLengthSize : _gapSize;
 		tagAndFlag |= fieldSize;
-		
+
 		out.writeByte(tagAndFlag);
-		
+
 		// Write the address delta (gap)
 		writeReference(out, fieldSize,_gapPreceding);
 		// Write the array length
 		writeReference(out, fieldSize, arrayLengthSize);
-		
+
 		// JVMs prior to 2.6 have a 16-bit hashcode for all objects, which is added to all PHD records
 		if (!_is32BitHash) {
 			out.writeShort(_hashCode);
 		}
 		// Note: JVM 2.6 and later have optional 32-bit hashcodes. We use a LongPrimitiveArrayRecord if the hashcode was set
-		
-		// Instance size is held in the PHD since PHD version 6     
-		// divide the size by 4 and write into the datastream as an 
+
+		// Instance size is held in the PHD since PHD version 6
+		// divide the size by 4 and write into the datastream as an
 		// unsigned int to make it possible to encode up to 16GB
 		out.writeInt((int)(_instanceSize / 4));
 	}

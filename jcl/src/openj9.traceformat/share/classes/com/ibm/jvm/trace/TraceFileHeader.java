@@ -45,7 +45,7 @@ public interface TraceFileHeader {
 	 */
 	public String[] getTraceParameters();
 	/**
-	 * @return a String array representation of the system on which the JVM that produced 
+	 * @return a String array representation of the system on which the JVM that produced
 	 * the current TraceFile was run, null if no valid data.
 	 */
 	public String[] getSysProcessorInfo();
@@ -55,8 +55,8 @@ public interface TraceFileHeader {
 	 */
 	public long getJVMStartedMillis();
 	/**
-	 * @return the millisecond time at which the JVM that produced the current TraceFile wrote 
-	 * its most recent TracePoint before the production of the current TraceFile. Returns -1 if 
+	 * @return the millisecond time at which the JVM that produced the current TraceFile wrote
+	 * its most recent TracePoint before the production of the current TraceFile. Returns -1 if
 	 * no valid data.
 	 */
 	public long getLastBufferWriteMillis();
@@ -71,4 +71,3 @@ public interface TraceFileHeader {
 	 */
 	public long getLastTracePointMillis();
 }
-

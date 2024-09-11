@@ -31,11 +31,11 @@ abstract class BoundMethodHandle extends MethodHandle {
 		super(mt, lf);
 		OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	
+
 	LambdaFormEditor editor() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	
+
 	static SpeciesData speciesData(LambdaForm lf) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
@@ -54,7 +54,7 @@ abstract class BoundMethodHandle extends MethodHandle {
 	static SpeciesData speciesData_LLLLL() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	
+
 	LambdaForm.NamedFunction getterFunction(int num) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
@@ -73,7 +73,7 @@ abstract class BoundMethodHandle extends MethodHandle {
 		MethodHandle constructor() {
 			throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 		}
-		
+
 		LambdaForm.NamedFunction getterFunction(int num) {
 			throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 		}
@@ -84,8 +84,8 @@ abstract class BoundMethodHandle extends MethodHandle {
 		}
 		/*[ENDIF] JAVA_SPEC_VERSION >= 10 */
 	}
-	
+
 	abstract BoundMethodHandle copyWithExtendL(MethodType mt, LambdaForm lf, Object obj);
-	
+
 	abstract BoundMethodHandle copyWith(MethodType mt, LambdaForm lf);
 }

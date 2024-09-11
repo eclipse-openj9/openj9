@@ -24,7 +24,7 @@ package com.ibm.jvm.dtfjview;
 
 /**
  * Interface which lists all of the property names which are part of the DTFJ context property bag.
- * 
+ *
  * @author adam
  *
  */
@@ -33,41 +33,40 @@ public interface SessionProperties {
 	 * If jdmpview was started with -verbose then this property is present and has the value "true".
 	 */
 	public static final String VERBOSE_MODE_PROPERTY = "verbose.mode";
-	
+
 	/**
 	 * Controls if files are extracted from archives or not
 	 */
 	public static final String EXTRACT_PROPERTY = "extract.mode";
-	
+
 	/**
 	 * The path to the core file which is providing the current context
 	 */
 	public static final String CORE_FILE_PATH_PROPERTY = "core_file_path";
-		
+
 	/**
 	 * Contains the DTFJ image factory
 	 */
 	public static final String IMAGE_FACTORY_PROPERTY = "image.factory";
-	
+
 	/**
 	 * Name of the logger to use
 	 */
 	public static final String LOGGER_PROPERTY = "com.ibm.jvm.dtfjview.logger";
-	
+
 	/**
 	 * Holds the value of the users current working directory
 	 */
 	public static final String PWD_PROPERTY = "pwd";
-	
+
 	/**
 	 * A reference to the jdmpview session which is currently being executed
 	 */
 	public static final String SESSION_PROPERTY = "session";
-	
+
 	/**
-	 * Set if zip files are to be treated as in legacy implementations 
+	 * Set if zip files are to be treated as in legacy implementations
 	 * which will call ImageFactory.getImage(File)
 	 */
 	public static final String LEGACY_ZIP_MODE_PROPERTY = "zip.mode.legacy";
 }
-

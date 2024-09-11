@@ -29,18 +29,20 @@ import java.io.IOException;
 
 public final class CeexcvtTemplate {
 
-    public static int length() {
-        return 1270;
-    }
+	public static int length() {
+		return 1270;
+	}
 
-    public static long getCvtoslv3(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 1267);
-        return inputStream.readByte();
-    }
-    public static int getCvtoslv3$offset() {
-        return 1267;
-    }
-    public static int getCvtoslv3$length() {
-        return 8;
-    }
+	public static long getCvtoslv3(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 1267);
+		return inputStream.readByte();
+	}
+
+	public static int getCvtoslv3$offset() {
+		return 1267;
+	}
+
+	public static int getCvtoslv3$length() {
+		return 8;
+	}
 }

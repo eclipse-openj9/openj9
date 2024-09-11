@@ -45,10 +45,10 @@ import com.ibm.jvm.dtfjview.commands.helpers.Utils;
 @DTFJPlugin(version="1.*", runtime=false)
 public class InfoProcCommand extends BaseJdmpviewCommand {
 	{
-		addCommand("info process", "", "displays threads, command line arguments, environment");				
+		addCommand("info process", "", "displays threads, command line arguments, environment");
 		addCommand("info proc", "", "shortened form of info process");
 	}
-	
+
 	public void run(String command, String[] args, IContext context, PrintStream out) throws CommandException {
 		if(initCommand(command, args, context, out)) {
 			return;		//processing already handled by super class
@@ -59,7 +59,7 @@ public class InfoProcCommand extends BaseJdmpviewCommand {
 		}
 		printAddressSpaceInfo();
 	}
-	
+
 	private void printAddressSpaceInfo()
 	{
 		ImageAddressSpace ias = ctx.getAddressSpace();
@@ -72,7 +72,7 @@ public class InfoProcCommand extends BaseJdmpviewCommand {
 		}
 		out.print("\n");
 	}
-	
+
 	private void printProcessInfo()
 	{
 		out.print("\n");
@@ -98,11 +98,11 @@ public class InfoProcCommand extends BaseJdmpviewCommand {
 			out.print(Exceptions.getDataUnavailableString());
 		} catch (CorruptDataException e) {
 			out.print(Exceptions.getCorruptDataExceptionString());
-			
+
 		}
 		out.print("\n");
 	}
-	
+
 	private void printJITOptions() {
 		try {
 			if(ctx.getRuntime().isJITEnabled()) {
@@ -122,7 +122,7 @@ public class InfoProcCommand extends BaseJdmpviewCommand {
 			out.println("\t JIT options not supported by this implementation of DTFJ");
 		}
 	}
-	
+
 	private void printThreads()
 	{
 		ImageProcess ip = ctx.getProcess();
@@ -137,9 +137,9 @@ public class InfoProcCommand extends BaseJdmpviewCommand {
 		{
 			Object next = itThread.next();
 			if (next instanceof CorruptData) {
-		        out.print("\n\t  <corrupt data>");
-		        continue;
-		    }
+				out.print("\n\t  <corrupt data>");
+				continue;
+			}
 			ImageThread it = (ImageThread)next;
 
 			try {
@@ -163,7 +163,7 @@ public class InfoProcCommand extends BaseJdmpviewCommand {
 	{
 		ImageProcess ip = ctx.getProcess();
 		out.print("\t Command line:\n\t  ");
-		
+
 		try {
 			String commandLine = ip.getCommandLine();
 			if (null == commandLine)
@@ -203,13 +203,13 @@ public class InfoProcCommand extends BaseJdmpviewCommand {
 		}
 		out.print("\n");
 	}
-	
+
 	private void printEnvironmentVariables()
 	{
 		ImageProcess ip = ctx.getProcess();
 		out.print("\t Environment variables:");
 		out.print("\n");
-		
+
 		Properties variables;
 		try {
 			variables = ip.getEnvironment();
@@ -220,7 +220,7 @@ public class InfoProcCommand extends BaseJdmpviewCommand {
 			out.print("\t  " + Exceptions.getDataUnavailableString() + "\n");
 			return;
 		}
-		
+
 		Enumeration<?> keys = variables.propertyNames();
 		while (keys.hasMoreElements())
 		{
@@ -228,24 +228,23 @@ public class InfoProcCommand extends BaseJdmpviewCommand {
 			printVariableInfo(key, variables.getProperty(key));
 		}
 	}
-	
+
 	private void printVariableInfo(String key, String value)
 	{
 		out.print("\t  " + key + "=" + value + "\n");
 	}
-	
+
 	@Override
 	public void printDetailedHelp(PrintStream out) {
 		out.println("displays process ID, threads, command line arguments and environment " +
-		"variables for the current process\n\n" +
-
-		"parameters: none\n\n" +
-		"prints the following information about the current process\n\n" +
-		"  - process ID for the process and thread IDs for all its threads\n" +
-		"  - the command line arguments and JVM init arguments it's using\n" +
-		"  - its environment variables\n\n" +
-		"note: to view the shared libraries used by a process, use the " +
-		"\"info mod\" command\n"
-);
+				"variables for the current process\n\n" +
+				"parameters: none\n\n" +
+				"prints the following information about the current process\n\n" +
+				"  - process ID for the process and thread IDs for all its threads\n" +
+				"  - the command line arguments and JVM init arguments it's using\n" +
+				"  - its environment variables\n\n" +
+				"note: to view the shared libraries used by a process, use the " +
+				"\"info mod\" command\n"
+				);
 	}
 }

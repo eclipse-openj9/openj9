@@ -43,7 +43,7 @@ import com.sun.tools.attach.spi.AttachProvider;
 
 /**
  * Concrete subclass of the class that lists the available target VMs
- * 
+ *
  */
 /*[IF JAVA_SPEC_VERSION >= 17]*/
 @SuppressWarnings("removal")
@@ -68,12 +68,12 @@ public class OpenJ9AttachProvider extends AttachProvider {
 			vm.attachTarget();
 			return vm;
 		} catch (NullPointerException e) {
-		/* constructor throws an NPE if the ID or name is not set. 
+		/* constructor throws an NPE if the ID or name is not set.
 		Turn this into an exception the  application is expecting */
 			/*[MSG "K0554", "Virtual machine ID or display name is null"]*/
 			AttachNotSupportedException exc = new AttachNotSupportedException(com.ibm.oti.util.Msg.getString("K0554")); //$NON-NLS-1$
 			exc.initCause(e);
-			throw exc; 
+			throw exc;
 		}
 	}
 
@@ -134,10 +134,10 @@ public class OpenJ9AttachProvider extends AttachProvider {
 			/*[PR 164751 avoid scanning the directory when an attach API is launching ]*/
 			CommonDirectory.obtainControllerLock("OpenJ9AttachProvider.listVirtualMachinesImp"); //$NON-NLS-1$
 		} catch (IOException e) { /*[PR 164751 avoid scanning the directory when an attach API is launching ]*/
-			/* 
+			/*
 			 * IOException is thrown if we already have the lock. The only other cases where we lock this file are during startup and shutdown.
-			 * The attach API startup is complete, thanks to waitForAttachApiInitialization() and threads using this method terminate before shutdown. 
-			 */ 
+			 * The attach API startup is complete, thanks to waitForAttachApiInitialization() and threads using this method terminate before shutdown.
+			 */
 			IPC.logMessage("listVirtualMachines() IOError on controller lock : ", e.toString()); //$NON-NLS-1$
 			return descriptors; /* An error has occurred. Since the attach API is not working correctly, be conservative and don't list and targets */
 		}
@@ -172,7 +172,7 @@ public class OpenJ9AttachProvider extends AttachProvider {
 					}
 					/*[PR Jazz 30110 advertisement is from an older version or is corrupt.  get the owner via file stat ]*/
 					if ((myUid != 0) && (0 == uid)) {
-						/* 
+						/*
 						 * If this process's UID is 0, then it is root and should ignore file ownership and clean up everyone's files.
 						 * If getFileOwner fails, the uid will appear to be -1, and non-root users will ignore it.
 						 * CommonDirectory.deleteStaleDirectories() will handle the case of a target directory which does not have an advertisement directory.

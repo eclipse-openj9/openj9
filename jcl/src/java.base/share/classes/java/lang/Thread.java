@@ -258,7 +258,6 @@ public Thread(Runnable runnable, String threadName) {
 	this(null, runnable, threadName, null, true);
 }
 
-
 /**
  * Constructs a new Thread with no runnable object and the name provided.
  * The new Thread will belong to the same ThreadGroup as the Thread calling
@@ -397,7 +396,6 @@ private Thread(ThreadGroup group, Runnable runnable, String threadName, AccessCo
 		// Same group as Thread that created us
 		group = currentThread.getThreadGroup();
 
-
 	/*[PR 1FEVFSU] The rest of the configuration/initialization is shared between this constructor and the private one */
 	initialize(false, group, currentThread, acc, inheritThreadLocals);
 
@@ -423,11 +421,9 @@ private void initialize(boolean booting, ThreadGroup threadGroup, Thread parentT
 	/*[PR 96408]*/
 	this.group = threadGroup;
 
-
 	if (booting) {
 		System.afterClinitInitialization();
 	}
-
 
 	// initialize the thread local storage before making other calls
 	if (parentThread != null) { // Non-main thread
@@ -525,7 +521,6 @@ public static int activeCount(){
 	return currentThread().getThreadGroup().activeCount();
 }
 
-
 /**
  * This method is used for operations that require approval from
  * a SecurityManager. If there's none installed, this method is a no-op.
@@ -620,7 +615,6 @@ public static int enumerate(Thread[] threads) {
 	return currentThread().getThreadGroup().enumerate(threads, true);
 }
 
-
 /**
  * Returns the context ClassLoader for the receiver.
  *
@@ -677,7 +671,6 @@ public final ThreadGroup getThreadGroup() {
 	return group;
 }
 
-
 /**
  * Posts an interrupt request to the receiver
  *
@@ -711,7 +704,6 @@ public void interrupt() {
 		}
 	}
 }
-
 
 /**
  * Answers a <code>boolean</code> indicating whether the current Thread
@@ -809,7 +801,6 @@ public boolean isInterrupted() {
 }
 
 private native boolean isInterruptedImpl();
-
 
 /**
  * Blocks the current Thread (<code>Thread.currentThread()</code>) until the
@@ -1333,7 +1324,6 @@ void blockedOn(Interruptible interruptible) {
 		currentThread.blockOn = interruptible;
 	}
 }
-
 
 private native Throwable getStackTraceImpl();
 

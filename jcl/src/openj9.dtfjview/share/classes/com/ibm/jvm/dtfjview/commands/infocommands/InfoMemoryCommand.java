@@ -42,13 +42,13 @@ import com.ibm.jvm.dtfjview.commands.helpers.Exceptions;
 
 @DTFJPlugin(version="1.*", runtime=false)
 public class InfoMemoryCommand extends BaseJdmpviewCommand {
-		
+
 	private static final String COM_IBM_DBGMALLOC_PROPERTY = "-Dcom.ibm.dbgmalloc=true";
 
 	{
-		addCommand("info memory", "", "Provides information about the native memory usage in the Java Virtual Machine");	
+		addCommand("info memory", "", "Provides information about the native memory usage in the Java Virtual Machine");
 	}
-	
+
 	public void run(String command, String[] args, IContext context, PrintStream out) throws CommandException {
 		if (initCommand(command, args, context, out)) {
 			return; // processing already handled by super class
@@ -123,7 +123,7 @@ public class InfoMemoryCommand extends BaseJdmpviewCommand {
 	 * Print a category and any of it's children. The stack argument is a list of how many children
 	 * each parent category has so we can work out how to print the ascii art lines from parents
 	 * to children.
-	 * 
+	 *
 	 * @param category
 	 * @param stack
 	 * @param out
@@ -142,14 +142,14 @@ public class InfoMemoryCommand extends BaseJdmpviewCommand {
 				/* Actually print out the interesting data */
 				out.printf("%s: %d bytes / %d allocations\n",
 						category.getName(), category.getDeepBytes(),
-						category.getDeepAllocations());			
-		
+						category.getDeepAllocations());
+
 				/* Only descend if there's really more data in sub categories unaccounted for. */
 				if( category.getDeepBytes() > category.getShallowBytes() ) {
-					
+
 					Iterator<?> memoryCategories = category.getChildren();
 					JavaRuntimeMemoryCategory other = getOtherCategory(category);
-					
+
 					while (memoryCategories.hasNext()) {
 						int parentCount = stack.get(depth);
 						parentCount--;
@@ -176,10 +176,10 @@ public class InfoMemoryCommand extends BaseJdmpviewCommand {
 			logger.log(Level.FINE, Exceptions.getCorruptDataExceptionString(), cde);
 		}
 	}
-	
+
 	/**
 	 * Count how many children a given category will print out.
-	 * 
+	 *
 	 * @param category
 	 * @return
 	 * @throws CorruptDataException
@@ -204,17 +204,17 @@ public class InfoMemoryCommand extends BaseJdmpviewCommand {
 		}
 		return children;
 	}
-	
+
 	/**
 	 * Build an "Other" category for Memory Categories that have children that don't account for
 	 * all their allocations.
-	 * 
+	 *
 	 * Possibly overkill but it saves having lots of special cases for if there is an "Other"
 	 * when printing the ascii art tree.
-	 * 
+	 *
 	 * @param category
 	 * @return the "Other" category containing left over memory or null.
-	 * @throws CorruptDataException 
+	 * @throws CorruptDataException
 	 */
 	private static JavaRuntimeMemoryCategory getOtherCategory(final JavaRuntimeMemoryCategory category) throws CorruptDataException {
 		if (category.getShallowAllocations() == 0) {
@@ -267,7 +267,7 @@ public class InfoMemoryCommand extends BaseJdmpviewCommand {
 		};
 		return other;
 	}
-	
+
 	private static void indentToDepth(String[] indents, LinkedList<Integer> stack,
 			PrintStream out, int depth) {
 		for (int i = 0; i < depth; i++) {

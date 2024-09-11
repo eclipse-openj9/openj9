@@ -26,7 +26,7 @@ package java.lang;
 /*
  * InternalAnonymousClassLoader cannot directly load classes.
  * This ClassLoader "owns" the native memory for classes that
- * have been loaded using sun.misc.Unsafe.defineAnonymousClass.   
+ * have been loaded using sun.misc.Unsafe.defineAnonymousClass.
  */
 final class InternalAnonymousClassLoader extends ClassLoader {
 
@@ -36,11 +36,11 @@ final class InternalAnonymousClassLoader extends ClassLoader {
 
 	 @Override
 	 protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-	 		 throw new ClassNotFoundException();
+			 throw new ClassNotFoundException();
 	 }
 
 	 @Override
 	 protected Class<?> findClass(String name) throws ClassNotFoundException {
-	 		 throw new ClassNotFoundException();
+			 throw new ClassNotFoundException();
 	 }
 }

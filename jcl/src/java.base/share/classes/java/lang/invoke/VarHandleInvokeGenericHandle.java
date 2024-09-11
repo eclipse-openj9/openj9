@@ -77,4 +77,3 @@ final class VarHandleInvokeGenericHandle extends VarHandleInvokeHandle {
 	}
 	// }}} JIT support
 }
-

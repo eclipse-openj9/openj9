@@ -28,36 +28,36 @@ import java.io.IOException;
 import com.ibm.jvm.dtfjview.heapdump.ReferenceIterator;
 
 public class LongObjectRecord extends ObjectRecord
-{    
+{
 	private final byte _tag;
 	private final boolean _is64Bit;
-	
+
 	public LongObjectRecord(long address, long previousAddress,
 			long classAddress, int hashCode,
 			ReferenceIterator references, boolean is64Bit, boolean is32BitHash)
 	{
 		this(PortableHeapDumpFormatter.LONG_OBJECT_RECORD_TAG,address,previousAddress,classAddress,hashCode,references,is64Bit,is32BitHash);
 	}
-	
+
 	/**
 	 * Alternative constructor for use by object array record - the structure of that record is
-	 * essentially identical with a different tag. 
+	 * essentially identical with a different tag.
 	 */
 	protected LongObjectRecord(byte tag,long address, long previousAddress,
 			long classAddress, int hashCode,
 			ReferenceIterator references, boolean is64Bit, boolean is32BitHash)
 	{
 		super(address,previousAddress,classAddress,hashCode,references,is32BitHash);
-		
+
 		_tag = tag;
-		
+
 		_is64Bit = is64Bit;
 	}
 
 	protected void writeHeapDump(DataOutput out) throws IOException
 	{
 		out.writeByte(_tag);
-		
+
 		byte flag = 0;
 		flag |= _gapSize << 6;
 		flag |= _referenceFieldSize << 4;
@@ -68,17 +68,17 @@ public class LongObjectRecord extends ObjectRecord
 		} else { // JVM prior to 2.6, all objects have a 16-bit hashcode
 			flag |= (byte) 0x01;
 		}
-		
+
 		out.writeByte(flag);
-		
+
 		writeReference(out,_gapSize,_gapPreceding);
-		
+
 		if(_is64Bit){
 			out.writeLong(_classAddress);
 		} else {
 			out.writeInt((int)_classAddress);
 		}
-		
+
 		if (_is32BitHash) { // JVM 2.6 and later, optional 32-bit hashcode
 			if (_hashCode != 0) {
 				out.writeInt(_hashCode);
@@ -86,10 +86,10 @@ public class LongObjectRecord extends ObjectRecord
 		} else { // JVM prior to 2.6 VM, all objects have a 16-bit hashcode
 			out.writeShort(_hashCode);
 		}
-		
+
 		out.writeInt(_numberOfReferences);
-		
+
 		writeReferences(out);
 	}
-   
+
 }

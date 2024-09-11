@@ -59,7 +59,7 @@ public class DataHeader {
 	public DataHeader(TraceContext context, ByteBuffer data, String signature) throws IllegalArgumentException {
 		this(context, data, signature, true);
 	}
-	
+
 	protected DataHeader(TraceContext context, ByteBuffer data, String signature, boolean confirmBody) throws IllegalArgumentException {
 		/* check there's enough data to reconstruct the UtDataHeader */
 		if (data.remaining() < DATAHEADER_SIZE) {
@@ -105,7 +105,7 @@ public class DataHeader {
 		version = data.getInt();
 		modification = data.getInt();
 		this.signature = signature;
-		
+
 		if (confirmBody) {
 			/* check there's sufficient data available to read the structure */
 			if (data.remaining() < length - DATAHEADER_SIZE) {

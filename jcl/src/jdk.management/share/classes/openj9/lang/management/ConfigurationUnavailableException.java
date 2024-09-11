@@ -37,5 +37,5 @@ public class ConfigurationUnavailableException extends Exception {
 
 	public ConfigurationUnavailableException(String message, Throwable cause) {
 		super(message, cause);
-	}	
+	}
 }

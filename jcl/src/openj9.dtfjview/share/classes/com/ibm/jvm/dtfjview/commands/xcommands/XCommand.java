@@ -30,26 +30,26 @@ import com.ibm.java.diagnostics.utils.commands.CommandException;
 import com.ibm.jvm.dtfjview.commands.BaseJdmpviewCommand;
 
 /**
- * Abstract superclass for all x/ commands 
+ * Abstract superclass for all x/ commands
  */
 public abstract class XCommand extends BaseJdmpviewCommand {
 	protected int argUnitSize = 1;
 	protected int argUnitNumber = 1;
 	protected String argDisplayFormat = "";
-		
+
 		// note: do NOT add any of the following:
 		//  - XBCommand
 		//  - XHCommand
 		//  - XWCommand
 		//  - XGCommand
-		
+
 		// why not?  because 'b', 'h', 'w', and 'g' represent unit sizes and
 		//  the parser won't know whether you mean a unit size or a display format
 		//  if you use any of the above characters for a display format
 
 	/* (non-Javadoc)
 	 * @see com.ibm.java.diagnostics.commands.BaseCommand#recognises(java.lang.String, com.ibm.java.diagnostics.IContext)
-	 * 
+	 *
 	 * Override this because this command needs to implement wild card matching of any command that starts x/
 	 */
 	@Override
@@ -71,16 +71,16 @@ public abstract class XCommand extends BaseJdmpviewCommand {
 		}
 		doCommand(args);
 	}
-	
+
 	protected abstract void doCommand(String[] args);
-	
+
 	protected void parseArgs(String arg)
 	{
-				
+
 		int n;
 		Character unitSize;
 		Character displayFormat;
-		
+
 		if (null == arg || arg.equals(""))
 		{
 			// user didn't specify any parameters; use the defaults
@@ -95,15 +95,15 @@ public abstract class XCommand extends BaseJdmpviewCommand {
 			for (i = 0; i < arg.length() && Character.isDigit(arg.charAt(i)); i++)
 			{
 				n *= 10;
-				n += Character.getNumericValue(arg.charAt(i)); 
+				n += Character.getNumericValue(arg.charAt(i));
 			}
-		
+
 			if (0 == n)
 				n = 1;
-			
+
 			displayFormat = null;
 			unitSize = null;
-			
+
 			if (i < arg.length())
 			{
 				char currChar = arg.charAt(i);
@@ -121,7 +121,7 @@ public abstract class XCommand extends BaseJdmpviewCommand {
 				}
 				i++;
 			}
-			
+
 			if (i < arg.length())
 			{
 				char currChar = arg.charAt(i);
@@ -159,7 +159,7 @@ public abstract class XCommand extends BaseJdmpviewCommand {
 				}
 				i++;
 			}
-			
+
 			if (arg.length() != i)
 			{
 				out.println("too many letters after \"x/\"; the \"x/\" command accepts at " +
@@ -167,28 +167,28 @@ public abstract class XCommand extends BaseJdmpviewCommand {
 						"size character");
 				return;
 			}
-			
+
 			// we now have all the necessary information to put on the stack (except
 			//  for the unspecified parameters that assume use of defaults) so let's
 			//  get the required default values and push some parameters back on to
 			//  the argument stack
-			
+
 			if (null == unitSize) {
 				unitSize = getDefaultUnitSize(ctx.getProperties());
 			} else {
 				setDefaultUnitSize(ctx.getProperties(), unitSize);
 			}
-			
+
 			if (null == displayFormat) {
 				displayFormat = getDefaultDisplayFormat(ctx.getProperties());
 			} else {
 				setDefaultDisplayFormat(ctx.getProperties(), displayFormat);
 			}
 		}
-		
+
 		int nUnitSize = 1;
 		char cUnitSize = unitSize.charValue();
-		
+
 		switch (cUnitSize)
 		{
 		case 'b':
@@ -208,8 +208,8 @@ public abstract class XCommand extends BaseJdmpviewCommand {
 
 		argUnitSize = nUnitSize;			// add the unit size to the stack
 		argUnitNumber = n;					// add the number of units to print to the stack
-		argDisplayFormat = displayFormat.toString();	// add the display format as a String	
-		
+		argDisplayFormat = displayFormat.toString();	// add the display format as a String
+
 	}
 
 	private Character getDefaultUnitSize(Properties properties)
@@ -220,7 +220,7 @@ public abstract class XCommand extends BaseJdmpviewCommand {
 		else
 			return defaultUnitSize;
 	}
-	
+
 	private Character getDefaultDisplayFormat(Properties properties)
 	{
 		Character defaultDisplayFormat = (Character)properties.get("x_default_display_format");
@@ -229,12 +229,12 @@ public abstract class XCommand extends BaseJdmpviewCommand {
 		else
 			return defaultDisplayFormat;
 	}
-	
+
 	private void setDefaultUnitSize(Properties properties, Character defaultUnitSize)
 	{
 		properties.put("x_default_unit_size", defaultUnitSize);
 	}
-	
+
 	private void setDefaultDisplayFormat(Properties properties, Character defaultDisplayFormat)
 	{
 		properties.put("x_default_display_format", defaultDisplayFormat);

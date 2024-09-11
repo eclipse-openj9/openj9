@@ -29,28 +29,33 @@ import java.io.IOException;
 
 public final class BpxzustaTemplate {
 
-    public static int length() {
-        return 256;
-    }
+	public static int length() {
+		return 256;
+	}
 
-    public static long getUstapswg(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 16);
-        throw new Error("request for long value for field ustapswg which has length of 16");
-    }
-    public static int getUstapswg$offset() {
-        return 16;
-    }
-    public static int getUstapswg$length() {
-        return 128;
-    }
-    public static long getUstagrs(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 32);
-        throw new Error("request for long value for field ustagrs which has length of 64");
-    }
-    public static int getUstagrs$offset() {
-        return 32;
-    }
-    public static int getUstagrs$length() {
-        return 512;
-    }
+	public static long getUstapswg(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 16);
+		throw new Error("request for long value for field ustapswg which has length of 16");
+	}
+
+	public static int getUstapswg$offset() {
+		return 16;
+	}
+
+	public static int getUstapswg$length() {
+		return 128;
+	}
+
+	public static long getUstagrs(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 32);
+		throw new Error("request for long value for field ustagrs which has length of 64");
+	}
+
+	public static int getUstagrs$offset() {
+		return 32;
+	}
+
+	public static int getUstagrs$length() {
+		return 512;
+	}
 }

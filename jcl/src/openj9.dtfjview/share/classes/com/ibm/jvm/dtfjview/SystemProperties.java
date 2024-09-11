@@ -24,7 +24,7 @@ package com.ibm.jvm.dtfjview;
 
 /**
  * Interface which lists all the system properties which are recognised by jdmpview.
- * 
+ *
  * @author adam
  *
  */
@@ -33,16 +33,16 @@ public interface SystemProperties {
 	 * The DTFJ factory used to create an Image from
 	 */
 	public static final String SYSPROP_FACTORY = "com.ibm.dtfj.image.factoryclass";
-	
+
 	/**
-	 * Launcher to use 
+	 * Launcher to use
 	 */
 	public static final String SYSPROP_LAUNCHER = "com.ibm.jvm.dtfjview.launcher";
-	
+
 	/**
 	 * Normally jdmpview will terminate with System.exit if an error is encountered when starting up.
 	 * This allows batch / scripts to detect abnormal terminations. However for interactive sessions
-	 * setting this property changes this behaviour so that a runtime exception can be raised and 
+	 * setting this property changes this behaviour so that a runtime exception can be raised and
 	 * handled by the invoking process.
 	 */
 	public static final String SYSPROP_NOSYSTEMEXIT = "com.ibm.jvm.dtfjview.nosystemexit";

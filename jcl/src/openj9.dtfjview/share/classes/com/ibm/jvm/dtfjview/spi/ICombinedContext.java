@@ -26,9 +26,9 @@ import com.ibm.java.diagnostics.utils.IDTFJContext;
 
 /**
  * A combined context is an extended DTFJ context which also contains a DDR context.
- * This is to allow commands to be passed down the stack starting with DTFJ and then 
+ * This is to allow commands to be passed down the stack starting with DTFJ and then
  * moving to DDR if necessary.
- * 
+ *
  * @author adam
  *
  */
@@ -38,7 +38,7 @@ public interface ICombinedContext extends IDTFJContext {
 	 * Contexts have a unique positive numeric identifier within a session. This number always
 	 * increases if new contexts are created via the open command rather than attempting to re-use
 	 * any already used IDs.
-	 *  
+	 *
 	 * @return the ID for this context
 	 */
 	public int getID();
@@ -47,38 +47,38 @@ public interface ICombinedContext extends IDTFJContext {
 	 * Sets the numeric ID for this context. This setter is provided so as to allow context creation
 	 * before assigning the ID. However once set it should not be changed. Later implementations may
 	 * enforce this.
-	 * 
+	 *
 	 * @param id the context ID
 	 */
 	public void setID(int id);
 
 	/**
 	 * A handle to the underlying DDR interactive session
-	 * 
+	 *
 	 * @return a valid session or null if the core file is not DDR enabled
 	 */
 	public Object getDDRIObject();
 
 	/**
 	 * Get the exception which was thrown when trying to start a DDR interactive session.
-	 * 
+	 *
 	 * @return the exception or null if the session started without error.
 	 */
 	public Throwable getDDRStartupException();
 
 	/**
 	 * Display the contexts which are present in the core file currently being analysed.
-	 * 
+	 *
 	 * @param shortFormat true for short format which just displays the first line of the java -version string
 	 */
 	public void displayContext(IOutputManager out, boolean shortFormat);
 
 	/**
 	 * Called when this context becomes the current context to allow
-	 * any initialisation to take place. 
+	 * any initialisation to take place.
 	 */
 	public void setAsCurrent();
-	
+
 	/**
 	 * Flag to indicate if an associated DDR context is available as well as the DTFJ one.
 	 * @return true if DDR is available

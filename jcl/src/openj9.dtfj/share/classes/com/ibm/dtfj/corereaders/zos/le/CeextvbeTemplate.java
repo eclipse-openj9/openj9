@@ -29,28 +29,33 @@ import java.io.IOException;
 
 public final class CeextvbeTemplate {
 
-    public static int length() {
-        return 8;
-    }
+	public static int length() {
+		return 8;
+	}
 
-    public static long getCeetvbekey(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 0);
-        return inputStream.readUnsignedInt() & 0xffffffffL;
-    }
-    public static int getCeetvbekey$offset() {
-        return 0;
-    }
-    public static int getCeetvbekey$length() {
-        return 32;
-    }
-    public static long getCeetvbevalue(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 4);
-        return inputStream.readUnsignedInt() & 0xffffffffL;
-    }
-    public static int getCeetvbevalue$offset() {
-        return 4;
-    }
-    public static int getCeetvbevalue$length() {
-        return 32;
-    }
+	public static long getCeetvbekey(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 0);
+		return inputStream.readUnsignedInt() & 0xffffffffL;
+	}
+
+	public static int getCeetvbekey$offset() {
+		return 0;
+	}
+
+	public static int getCeetvbekey$length() {
+		return 32;
+	}
+
+	public static long getCeetvbevalue(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 4);
+		return inputStream.readUnsignedInt() & 0xffffffffL;
+	}
+
+	public static int getCeetvbevalue$offset() {
+		return 4;
+	}
+
+	public static int getCeetvbevalue$length() {
+		return 32;
+	}
 }

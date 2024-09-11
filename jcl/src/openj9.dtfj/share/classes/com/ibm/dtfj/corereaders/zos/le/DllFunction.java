@@ -27,26 +27,26 @@ package com.ibm.dtfj.corereaders.zos.le;
  */
 public class DllFunction {
 
-    /** The name of the function */
-    public String name;
-    /** The address of the function */
-    public long address;
-    /** XXX */
-    public String module;
-    /** Pointer to the WSA environment for this function (as typically passed in R5) */
-    public long env;
+	/** The name of the function */
+	public String name;
+	/** The address of the function */
+	public long address;
+	/** XXX */
+	public String module;
+	/** Pointer to the WSA environment for this function (as typically passed in R5) */
+	public long env;
 
-    /**
-     * Create a new DllFunction.
-     * @param name the name of the function
-     * @param address the address of the function
-     * @param module XXX tbc
-     * @param env pointer to the WSA environment for this function
-     */
-    public DllFunction(String name, long address, String module, long env) {
-        this.name = name;
-        this.address = address;
-        this.module = module;
-        this.env = env;
-    }
+	/**
+	 * Create a new DllFunction.
+	 * @param name the name of the function
+	 * @param address the address of the function
+	 * @param module XXX tbc
+	 * @param env pointer to the WSA environment for this function
+	 */
+	public DllFunction(String name, long address, String module, long env) {
+		this.name = name;
+		this.address = address;
+		this.module = module;
+		this.env = env;
+	}
 }

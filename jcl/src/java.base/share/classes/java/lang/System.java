@@ -667,7 +667,6 @@ private static void arraycopy(Object[] A1, int offset1, Object[] A2, int offset2
 	} else throw new ArrayIndexOutOfBoundsException();
 }
 
-
 /**
  * Answers the current time expressed as milliseconds since
  * the time 00:00:00 UTC on January 1, 1970.
@@ -1612,7 +1611,7 @@ private static void simpleMultiLeafArrayCopy(Object src, int srcPos,
 			 if (isFwd)
 				iterLength = numOfElemsPerLeaf - destLeafPos;
 			 else
-		  		iterLength = destLeafPos + 1;
+				iterLength = destLeafPos + 1;
 		 }
 
 		 if (length - count < iterLength)
@@ -1621,7 +1620,7 @@ private static void simpleMultiLeafArrayCopy(Object src, int srcPos,
 		 if (isFwd)
 			offset = 0;
 		 else
-		  	offset = iterLength - 1;
+			offset = iterLength - 1;
 
 		 System.arraycopy(src, newSrcPos - offset, dest, newDestPos - offset, iterLength);
 
@@ -1694,7 +1693,7 @@ private static void multiLeafArrayCopy(Object src, int srcPos, Object dest,
 		if (isFwd)
 			iterLength1 = numOfElemsPerLeaf - firstPos;
 		else
-		  	iterLength1 = firstPos + 1;
+			iterLength1 = firstPos + 1;
 
 		if (length - count < iterLength1)
 			iterLength1 = length - count;
@@ -1743,7 +1742,6 @@ private static void multiLeafArrayCopy(Object src, int srcPos, Object dest,
 		count += iterLength1 + iterLength2;
 	}
 }
-
 
 /**
  * Return platform specific line separator character(s).

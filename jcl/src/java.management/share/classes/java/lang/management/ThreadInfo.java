@@ -58,7 +58,6 @@ public class ThreadInfo {
 	private final ThreadInfoBase baseInfo;
 	private static final LockInfo[] EMPTY_LOCKINFO_ARRAY = new LockInfo[0];
 
-
 	/**
 	 * Used by from().
 	 * @param threadIdVal

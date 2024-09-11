@@ -29,7 +29,7 @@ import com.ibm.jvm.dtfjview.heapdump.ReferenceIterator;
 
 /**
  * Object representing a PHD ClassRecord
- * 
+ *
  * @author andhall
  *
  */
@@ -37,19 +37,19 @@ public class ClassRecord extends PortableHeapDumpRecord
 {
 	private final String _className;
 	private final long _superClassAddress;
-	private final long _instanceSize;    
+	private final long _instanceSize;
 	private final int _hashCode;
 	private final boolean _is64Bit;
 	private final boolean _is32BitHash;
-	
+
 	protected ClassRecord(long address, long previousAddress, String className, long superClassAddress, long instanceSize, int hashCode, boolean is64Bit,
 			ReferenceIterator references, boolean is32BitHash)
 	{
 		super(address, previousAddress, references);
-		
+
 		this._className = className;
 		this._superClassAddress = superClassAddress;
-		
+
 		this._instanceSize = instanceSize;
 		this._is64Bit = is64Bit;
 		this._hashCode = hashCode;
@@ -59,38 +59,38 @@ public class ClassRecord extends PortableHeapDumpRecord
 	protected void writeHeapDump(DataOutput out) throws IOException
 	{
 		out.writeByte(PortableHeapDumpFormatter.CLASS_RECORD_TAG);
-		
+
 		byte flag = 0;
 		flag |= _gapSize << 6;
 		flag |= _referenceFieldSize << 4;
 		if (_is32BitHash && _hashCode != 0) { // JVM 2.6 and later, 32-bit optional hashcodes
 			flag |= (byte) 0x08; // set 0x08 flag if the class record includes a hashcode
 		}
-		
+
 		out.writeByte(flag);
-		
+
 		writeReference(out,_gapSize,_gapPreceding);
 		out.writeInt((int)_instanceSize); // instance size became a long for defect 176753, when DTFJ interface changed to 1.6
-		
+
 		if (_is32BitHash) { // JVM 2.6 and later, write optional 32-bit hashcode
 			if (_hashCode != 0) {
 				out.writeInt(_hashCode);
 			}
-		} else { // JVM prior to 2.6, all objects have a 16-bit hashcode 
+		} else { // JVM prior to 2.6, all objects have a 16-bit hashcode
 			out.writeShort(_hashCode);
 		}
-		
+
 		if(_is64Bit) {
 			out.writeLong(_superClassAddress);
 		} else {
 			out.writeInt((int)_superClassAddress);
 		}
-		
+
 		out.writeUTF(_className);
-		
+
 		out.writeInt(_numberOfReferences);
-		
+
 		writeReferences(out);
 	}
-	
+
 }

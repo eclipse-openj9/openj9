@@ -1483,7 +1483,6 @@ protected Object getClassLoadingLock(final String className) {
 	return lock;
 }
 
-
 /**
  * Forces a class to be linked (initialized).  If the class has
  * already been linked this operation has no effect.
@@ -1559,7 +1558,6 @@ final boolean isAncestorOf (ClassLoader child) {
 	}
 	return false;
 }
-
 
 /**
  * A class loader 'callerClassLoader' can access class loader 'requested' without permission check
@@ -2250,7 +2248,6 @@ private boolean getClassAssertionStatusHelper(String cname) {
 	}
 	return getDefaultAssertionStatus();
 }
-
 
 /**
  * Answers the assertion status of the named package

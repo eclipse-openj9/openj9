@@ -40,11 +40,11 @@ import com.ibm.jvm.dtfjview.commands.helpers.Utils;
 
 @DTFJPlugin(version="1.*", runtime=false)
 public class InfoJitmCommand extends BaseJdmpviewCommand {
-	
+
 	{
-		addCommand("info jitm", "", "Displays JIT'ed methods and their addresses");	
+		addCommand("info jitm", "", "Displays JIT'ed methods and their addresses");
 	}
-	
+
 	public void run(String command, String[] args, IContext context, PrintStream out) throws CommandException {
 		if(initCommand(command, args, context, out)) {
 			return;		//processing already handled by super class
@@ -55,7 +55,7 @@ public class InfoJitmCommand extends BaseJdmpviewCommand {
 		}
 		showJITdMethods();
 	}
-	
+
 	private void showJITdMethods() {
 		JavaRuntime jr = ctx.getRuntime();
 		Iterator<?> itJavaClassLoader = jr.getJavaClassLoaders();
@@ -63,31 +63,31 @@ public class InfoJitmCommand extends BaseJdmpviewCommand {
 		{
 			JavaClassLoader jcl = (JavaClassLoader)itJavaClassLoader.next();
 			Iterator<?> itJavaClass = jcl.getDefinedClasses();
-			
+
 			while (itJavaClass.hasNext())
 			{
 				JavaClass jc = (JavaClass)itJavaClass.next();
 				Iterator<?> itJavaMethod = jc.getDeclaredMethods();
-				
+
 				String jcName;
 				try {
 					jcName = jc.getName();
 				} catch (CorruptDataException e) {
 					jcName = Exceptions.getCorruptDataExceptionString();
 				}
-				
+
 				while (itJavaMethod.hasNext())
 				{
 					JavaMethod jm = (JavaMethod)itJavaMethod.next();
 					String name;
 					String sig;
-					
+
 					try {
 						name = jm.getName();
 					} catch (CorruptDataException e) {
 						name = Exceptions.getCorruptDataExceptionString();
 					}
-					
+
 					try {
 						sig = jm.getSignature();
 					} catch (CorruptDataException e) {
@@ -103,7 +103,7 @@ public class InfoJitmCommand extends BaseJdmpviewCommand {
 							long startAddr = is.getBaseAddress().getAddress();
 							long size = is.getSize();
 							long endAddr = startAddr + size;
-							
+
 							out.print("\n\t" + "start=" + Utils.toHex(startAddr) +
 									"  " + "end=" + Utils.toHex(endAddr) +
 									"   " + jcName + "::" + name + sig);
@@ -118,12 +118,11 @@ public class InfoJitmCommand extends BaseJdmpviewCommand {
 	@Override
 	public void printDetailedHelp(PrintStream out) {
 		out.println("displays JIT'ed methods and their addresses\n\n" +
-		"parameters: none\n\n" +
-		"prints the following information about each JIT'ed method\n\n" +
-		"  - method name and signature\n" +
-		"  - method start address\n" +
-		"  - method end address\n"
-);
-		
+				"parameters: none\n\n" +
+				"prints the following information about each JIT'ed method\n\n" +
+				"  - method name and signature\n" +
+				"  - method start address\n" +
+				"  - method end address\n"
+				);
 	}
 }

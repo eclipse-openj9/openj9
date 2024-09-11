@@ -25,7 +25,7 @@ package com.ibm.lang.management;
 import java.lang.management.ThreadInfo;
 
 /**
- * Class encapsulates a ThreadInfo instance along with the corresponding native thread identification 
+ * Class encapsulates a ThreadInfo instance along with the corresponding native thread identification
  * information as assigned by the operating system.
  */
 public interface ExtendedThreadInfo {

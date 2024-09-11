@@ -23,7 +23,7 @@
 package com.ibm.jvm.dtfjview.tools.utils;
 
 public interface IMatchHandle {
-	
+
 	/**
 	 * To check if the string is matched.
 	 * <p>
@@ -33,7 +33,7 @@ public interface IMatchHandle {
 	 * 				<code>false</code> otherwise.
 	 */
 	public boolean matches(String s);
-	
+
 	/**
 	 * To process the string.
 	 * <p>

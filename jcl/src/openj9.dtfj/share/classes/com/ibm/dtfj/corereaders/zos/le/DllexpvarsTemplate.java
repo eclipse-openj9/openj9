@@ -29,48 +29,59 @@ import java.io.IOException;
 
 public final class DllexpvarsTemplate {
 
-    public static int length() {
-        return 12;
-    }
+	public static int length() {
+		return 12;
+	}
 
-    public static long getDllexpvarscount(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 0);
-        return inputStream.readInt();
-    }
-    public static int getDllexpvarscount$offset() {
-        return 0;
-    }
-    public static int getDllexpvarscount$length() {
-        return 32;
-    }
-    public static long getDllexpvarsarray(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 4);
-        return inputStream.readLong();
-    }
-    public static int getDllexpvarsarray$offset() {
-        return 4;
-    }
-    public static int getDllexpvarsarray$length() {
-        return 64;
-    }
-    public static long getDllexpvarsname(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 4);
-        return inputStream.readInt();
-    }
-    public static int getDllexpvarsname$offset() {
-        return 4;
-    }
-    public static int getDllexpvarsname$length() {
-        return 32;
-    }
-    public static long getDllexpvarsqcon(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 8);
-        return inputStream.readInt();
-    }
-    public static int getDllexpvarsqcon$offset() {
-        return 8;
-    }
-    public static int getDllexpvarsqcon$length() {
-        return 32;
-    }
+	public static long getDllexpvarscount(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 0);
+		return inputStream.readInt();
+	}
+
+	public static int getDllexpvarscount$offset() {
+		return 0;
+	}
+
+	public static int getDllexpvarscount$length() {
+		return 32;
+	}
+
+	public static long getDllexpvarsarray(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 4);
+		return inputStream.readLong();
+	}
+
+	public static int getDllexpvarsarray$offset() {
+		return 4;
+	}
+
+	public static int getDllexpvarsarray$length() {
+		return 64;
+	}
+
+	public static long getDllexpvarsname(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 4);
+		return inputStream.readInt();
+	}
+
+	public static int getDllexpvarsname$offset() {
+		return 4;
+	}
+
+	public static int getDllexpvarsname$length() {
+		return 32;
+	}
+
+	public static long getDllexpvarsqcon(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 8);
+		return inputStream.readInt();
+	}
+
+	public static int getDllexpvarsqcon$offset() {
+		return 8;
+	}
+
+	public static int getDllexpvarsqcon$length() {
+		return 32;
+	}
 }

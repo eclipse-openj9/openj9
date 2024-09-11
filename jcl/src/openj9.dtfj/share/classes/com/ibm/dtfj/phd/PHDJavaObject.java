@@ -374,7 +374,7 @@ public class PHDJavaObject implements JavaObject {
 					} else {
 						refType = PHDJavaReference.REFERENCE_FIELD;
 					}
-				    cls1 = heap.getJavaRuntime().findClass(ref);
+					cls1 = heap.getJavaRuntime().findClass(ref);
 				}
 				if (cls1 != null) {
 					return new PHDJavaReference(

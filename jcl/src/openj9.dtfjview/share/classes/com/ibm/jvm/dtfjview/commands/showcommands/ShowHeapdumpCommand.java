@@ -40,9 +40,9 @@ public class ShowHeapdumpCommand extends BaseJdmpviewCommand
 		+ "Use \"set heapdump\" to change settings\n";
 
 	{
-		addCommand(COMMAND_NAME, "", COMMAND_DESCRIPTION);	
+		addCommand(COMMAND_NAME, "", COMMAND_DESCRIPTION);
 	}
-	
+
 	public void run(String command, String[] args, IContext context, PrintStream out) throws CommandException {
 		if(initCommand(command, args, context, out)) {
 			return;		//processing already handled by super class
@@ -51,20 +51,19 @@ public class ShowHeapdumpCommand extends BaseJdmpviewCommand
 			out.println("\"show heapdump\" does not take any parameters.");
 			return;
 		}
-		
+
 		out.print("Heapdump Settings:\n\n");
-		
+
 		out.print("\tFormat: " + (HeapDumpSettings.areHeapDumpsPHD(ctx.getProperties()) ? "PHD" : "Classic (TXT)") + "\n");
 		out.print("\tFile Name: " + HeapDumpSettings.getFileName(ctx.getProperties()) + "\n");
-		out.print("\tMultiple heaps will be written to " 
-				+ (HeapDumpSettings.multipleHeapsInMultipleFiles(ctx.getProperties()) ? "multiple files":"a single file") 
+		out.print("\tMultiple heaps will be written to "
+				+ (HeapDumpSettings.multipleHeapsInMultipleFiles(ctx.getProperties()) ? "multiple files":"a single file")
 				+ "\n");
 	}
-
 
 	@Override
 	public void printDetailedHelp(PrintStream out) {
 		out.println(LONG_DESCRIPTION);
 	}
-	
+
 }

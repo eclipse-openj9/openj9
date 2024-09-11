@@ -29,28 +29,33 @@ import java.io.IOException;
 
 public final class IhaasxbTemplate {
 
-    public static int length() {
-        return 264;
-    }
+	public static int length() {
+		return 264;
+	}
 
-    public static long getAsxbftcb(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 4);
-        return inputStream.readUnsignedInt() & 0xffffffffL;
-    }
-    public static int getAsxbftcb$offset() {
-        return 4;
-    }
-    public static int getAsxbftcb$length() {
-        return 32;
-    }
-    public static long getAsxbltcb(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 8);
-        return inputStream.readUnsignedInt() & 0xffffffffL;
-    }
-    public static int getAsxbltcb$offset() {
-        return 8;
-    }
-    public static int getAsxbltcb$length() {
-        return 32;
-    }
+	public static long getAsxbftcb(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 4);
+		return inputStream.readUnsignedInt() & 0xffffffffL;
+	}
+
+	public static int getAsxbftcb$offset() {
+		return 4;
+	}
+
+	public static int getAsxbftcb$length() {
+		return 32;
+	}
+
+	public static long getAsxbltcb(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 8);
+		return inputStream.readUnsignedInt() & 0xffffffffL;
+	}
+
+	public static int getAsxbltcb$offset() {
+		return 8;
+	}
+
+	public static int getAsxbltcb$length() {
+		return 32;
+	}
 }

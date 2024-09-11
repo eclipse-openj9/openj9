@@ -29,17 +29,17 @@ import java.io.IOException;
 
 public interface CeexedbTemplate {
 
-    public int length();
-    public long getCeeedbenvar(ImageInputStream inputStream, long address) throws IOException;
-    public int getCeeedbenvar$offset();
-    public int getCeeedbenvar$length();
-    public long getCeeedbdba(ImageInputStream inputStream, long address) throws IOException;
-    public int getCeeedbdba$offset();
-    public int getCeeedbdba$length();
-    public long getCeeedb_dlcb_first(ImageInputStream inputStream, long address) throws IOException;
-    public int getCeeedb_dlcb_first$offset();
-    public int getCeeedb_dlcb_first$length();
-    public long getCeeedb_ceeosigr(ImageInputStream inputStream, long address) throws IOException;
-    public int getCeeedb_ceeosigr$offset();
-    public int getCeeedb_ceeosigr$length();
+	public int length();
+	public long getCeeedbenvar(ImageInputStream inputStream, long address) throws IOException;
+	public int getCeeedbenvar$offset();
+	public int getCeeedbenvar$length();
+	public long getCeeedbdba(ImageInputStream inputStream, long address) throws IOException;
+	public int getCeeedbdba$offset();
+	public int getCeeedbdba$length();
+	public long getCeeedb_dlcb_first(ImageInputStream inputStream, long address) throws IOException;
+	public int getCeeedb_dlcb_first$offset();
+	public int getCeeedb_dlcb_first$length();
+	public long getCeeedb_ceeosigr(ImageInputStream inputStream, long address) throws IOException;
+	public int getCeeedb_ceeosigr$offset();
+	public int getCeeedb_ceeosigr$length();
 }

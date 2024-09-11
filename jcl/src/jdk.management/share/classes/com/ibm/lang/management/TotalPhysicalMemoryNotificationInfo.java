@@ -42,7 +42,7 @@ public class TotalPhysicalMemoryNotificationInfo {
 
 	/**
 	 * Constructs a new instance of this object.
-	 * 
+	 *
 	 * @param newTotalPhysicalMemory
 	 *            the new total bytes of physical memory
 	 */
@@ -58,29 +58,29 @@ public class TotalPhysicalMemoryNotificationInfo {
 	 */
 	public long getNewTotalPhysicalMemory() {
 		return this.newTotalPhysicalMemory;
-    }
+	}
 
-    /**
-     * Receives a {@link CompositeData} representing a
-     * <code>TotalPhysicalMemoryNotificationInfo</code> object and attempts to
-     * return the root <code>TotalPhysicalMemoryNotificationInfo</code>
-     * instance.
-     * 
-     * @param cd
-     *            a <code>CompositeDate</code> that represents a
-     *            <code>TotalPhysicalMemoryNotificationInfo</code>.
-     * @return if <code>cd</code> is non- <code>null</code>, returns a new
-     *         instance of <code>TotalPhysicalMemoryNotificationInfo</code>.
-     *         If <code>cd</code> is <code>null</code>, returns
-     *         <code>null</code>.
-     * @throws IllegalArgumentException
-     *             if argument <code>cd</code> does not correspond to a
-     *             <code>TotalPhysicalMemoryNotificationInfo</code> with the
-     *             following attribute:
-     *             <ul>
-     *             <li><code>newTotalPhysicalMemory</code>( <code>java.lang.Long</code>)
-     *             </ul>
-     */
+	/**
+	 * Receives a {@link CompositeData} representing a
+	 * <code>TotalPhysicalMemoryNotificationInfo</code> object and attempts to
+	 * return the root <code>TotalPhysicalMemoryNotificationInfo</code>
+	 * instance.
+	 *
+	 * @param cd
+	 *            a <code>CompositeDate</code> that represents a
+	 *            <code>TotalPhysicalMemoryNotificationInfo</code>.
+	 * @return if <code>cd</code> is non- <code>null</code>, returns a new
+	 *         instance of <code>TotalPhysicalMemoryNotificationInfo</code>.
+	 *         If <code>cd</code> is <code>null</code>, returns
+	 *         <code>null</code>.
+	 * @throws IllegalArgumentException
+	 *             if argument <code>cd</code> does not correspond to a
+	 *             <code>TotalPhysicalMemoryNotificationInfo</code> with the
+	 *             following attribute:
+	 *             <ul>
+	 *             <li><code>newTotalPhysicalMemory</code>( <code>java.lang.Long</code>)
+	 *             </ul>
+	 */
 	public static TotalPhysicalMemoryNotificationInfo from(CompositeData cd) {
 		TotalPhysicalMemoryNotificationInfo result = null;
 
@@ -90,7 +90,7 @@ public class TotalPhysicalMemoryNotificationInfo {
 			// following method invocations will exit on an
 			// IllegalArgumentException...
 			ManagementUtils.verifyFieldNumber(cd, 1);
-			String[] attributeNames = { "newTotalPhysicalMemory" }; //$NON-NLS-1$ 
+			String[] attributeNames = { "newTotalPhysicalMemory" }; //$NON-NLS-1$
 			ManagementUtils.verifyFieldNames(cd, attributeNames);
 			String[] attributeTypes = { "java.lang.Long" }; //$NON-NLS-1$
 			ManagementUtils.verifyFieldTypes(cd, attributeNames, attributeTypes);

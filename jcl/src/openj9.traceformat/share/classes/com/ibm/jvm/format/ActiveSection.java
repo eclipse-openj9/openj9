@@ -25,64 +25,64 @@ package com.ibm.jvm.format;
 import java.io.BufferedWriter;
 import java.io.IOException;
 
-/** 
+/**
  * Active section of a file header.
  *
  * @author Tim Preece
  */
 public class ActiveSection {
-    private                String    eyecatcher_string;
-    private                int       length;
-    private                int       version;
-    private                int       modification;
-    private                long      active_offset;
-    private                long      active_end;
+	private                String    eyecatcher_string;
+	private                int       length;
+	private                int       version;
+	private                int       modification;
+	private                long      active_offset;
+	private                long      active_end;
 
-    private                TraceFile traceFile;
+	private                TraceFile traceFile;
 
-    public ActiveSection (TraceFile traceFile, int start ) throws IOException
-    {
-        // Version 1.1
-        this.traceFile = traceFile;
-        traceFile.seek((long)start);
-        eyecatcher_string  =  Util.convertAndCheckEyecatcher(traceFile.readI());
-        length        = traceFile.readI();
-        version       = traceFile.readI();
-        modification  = traceFile.readI();
-        active_offset = traceFile.getFilePointer();
-        active_end    = start + length;
+	public ActiveSection (TraceFile traceFile, int start ) throws IOException
+	{
+		// Version 1.1
+		this.traceFile = traceFile;
+		traceFile.seek((long)start);
+		eyecatcher_string  =  Util.convertAndCheckEyecatcher(traceFile.readI());
+		length        = traceFile.readI();
+		version       = traceFile.readI();
+		modification  = traceFile.readI();
+		active_offset = traceFile.getFilePointer();
+		active_end    = start + length;
 
-        Util.Debug.println("ActiveSection: eyecatcher:         " + eyecatcher_string);
-        Util.Debug.println("ActiveSection: length:             " + length);
-        Util.Debug.println("ActiveSection: version:            " + version);
-        Util.Debug.println("ActiveSection: modification:       " + modification);
+		Util.Debug.println("ActiveSection: eyecatcher:         " + eyecatcher_string);
+		Util.Debug.println("ActiveSection: length:             " + length);
+		Util.Debug.println("ActiveSection: version:            " + version);
+		Util.Debug.println("ActiveSection: modification:       " + modification);
 
-    }
+	}
 
-    protected void summary(BufferedWriter out) throws IOException
-    {
-        traceFile.seek(active_offset);
-        byte[] activeBuffer = new byte[(int)(active_end - active_offset)];
-        Util.Debug.println("ActiveSection: active_offset:        " + active_offset);
-        Util.Debug.println("ActiveSection: active_end:           " + active_end);
+	protected void summary(BufferedWriter out) throws IOException
+	{
+		traceFile.seek(active_offset);
+		byte[] activeBuffer = new byte[(int)(active_end - active_offset)];
+		Util.Debug.println("ActiveSection: active_offset:        " + active_offset);
+		Util.Debug.println("ActiveSection: active_end:           " + active_end);
 
-        out.write("Activation Info :");
-        out.newLine();
+		out.write("Activation Info :");
+		out.newLine();
 
-        StringBuffer buf;
-        traceFile.read(activeBuffer);
-        // Util.printDump(activeBuffer,activeBuffer.length);
-        for (int i=0, j=0; (i<activeBuffer.length) ; i++) {
-            for ( ; (activeBuffer[i]!=0) ; i++) {               // look for null terminator
-            }
-            if (i == j) {
-                break;                                          // a null terminates the list
-            }
-            out.write(Util.SUM_TAB);                            // indent the new string
-            out.write(new String(activeBuffer, j, i - j, "UTF-8"));
-            out.newLine();
-            j = i + 1;
-        }
-        out.newLine();
-    }
+		StringBuffer buf;
+		traceFile.read(activeBuffer);
+		// Util.printDump(activeBuffer,activeBuffer.length);
+		for (int i=0, j=0; (i<activeBuffer.length) ; i++) {
+			for ( ; (activeBuffer[i]!=0) ; i++) {               // look for null terminator
+			}
+			if (i == j) {
+				break;                                          // a null terminates the list
+			}
+			out.write(Util.SUM_TAB);                            // indent the new string
+			out.write(new String(activeBuffer, j, i - j, "UTF-8"));
+			out.newLine();
+			j = i + 1;
+		}
+		out.newLine();
+	}
 }

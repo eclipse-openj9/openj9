@@ -22,11 +22,11 @@
  */
 package com.ibm.jvm.dtfjview.heapdump;
 
-public class LongArrayReferenceIterator implements ReferenceIterator 
+public class LongArrayReferenceIterator implements ReferenceIterator
 {
 	private final long _fields[];
 	private int _index = 0;
-	
+
 	public LongArrayReferenceIterator(long[] fields) {
 		if(fields != null) {
 			_fields = fields;
@@ -34,7 +34,7 @@ public class LongArrayReferenceIterator implements ReferenceIterator
 			_fields = new long[0];
 		}
 	}
-	
+
 	public boolean hasNext()
 	{
 		return _index < (_fields.length);
@@ -43,9 +43,9 @@ public class LongArrayReferenceIterator implements ReferenceIterator
 	public Long next()
 	{
 		Long toReturn = Long.valueOf(_fields[_index]);
-		
+
 		_index++;
-		
+
 		return toReturn;
 	}
 
@@ -53,5 +53,5 @@ public class LongArrayReferenceIterator implements ReferenceIterator
 	{
 		_index = 0;
 	}
-	
+
 }

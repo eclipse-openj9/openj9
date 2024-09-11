@@ -38,7 +38,7 @@ public class Exceptions {
 	{
 		return "--";
 	}
-	
+
 	public static String getCorruptDataExceptionString()
 	{
 		return "<corrupt data encountered>";
@@ -53,7 +53,7 @@ public class Exceptions {
 	{
 		return "--";
 	}
-	
+
 	public static String getMemoryAccessExceptionString()
 	{
 		return "<cannot access memory>";
@@ -68,7 +68,7 @@ public class Exceptions {
 	{
 		return "--";
 	}
-	
+
 	public static String getIOExceptionString()
 	{
 		return "<I/O exception encountered>";

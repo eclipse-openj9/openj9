@@ -112,7 +112,7 @@ public abstract class CommonDirectory {
 		File cd = getCommonDirFileObject();
 		if (cd.exists()) {
 			if (!cd.canWrite()) {
-				IPC.logMessage("could not write ", cd.getAbsolutePath()); //$NON-NLS-1$				
+				IPC.logMessage("could not write ", cd.getAbsolutePath()); //$NON-NLS-1$
 				throw new IOException(cd.getAbsolutePath());
 			} else if (!cd.isDirectory()) {
 				if (!cd.delete()) { /* file where a directory should be */
@@ -155,7 +155,7 @@ public abstract class CommonDirectory {
 	}
 
 	/**
-	 * non-blocking lock the controller lockfile. 
+	 * non-blocking lock the controller lockfile.
 	 * Create the lockfile if necessary.
 	 * @param callSite caller info
 	 * @return true if lock obtained
@@ -176,7 +176,7 @@ public abstract class CommonDirectory {
 							+ " controllerLockCount=" +controllerLockCount, e); //$NON-NLS-1$
 				}
 			}
-			return controllerLockEntered;		
+			return controllerLockEntered;
 		}
 	}
 
@@ -203,7 +203,7 @@ public abstract class CommonDirectory {
 	 * @param callSite caller info
 	 * @throws IOException if file already locked
 	 */
-	 
+
 	public static void obtainAttachLock(String callSite) throws IOException {
 		getAttachLock().lockFile(true, callSite + "_obtainAttachLock", IPC.useFileLockWatchdog); //$NON-NLS-1$
 	}
@@ -233,7 +233,7 @@ public abstract class CommonDirectory {
 	}
 
 	/**
-	 * @param obtainLock 
+	 * @param obtainLock
 	 * @return name of semaphore
 	 * @throws IOException if mkdir fails
 	 * Caller is responsible for ensuring that the controller lockfile is held.
@@ -249,14 +249,14 @@ public abstract class CommonDirectory {
 	}
 
 	/**
-	 * close the semaphore and reopen it.  
+	 * close the semaphore and reopen it.
 	 * @return 0 if success
 	 */
 	static int reopenSemaphore() {
 		int status = 0;
 		IPC.logMessage("reopenSemaphore"); //$NON-NLS-1$
 		closeSemaphore();
-		status = IPC.openSemaphore(getCommonDirFileObject().getAbsolutePath(), CONTROLLER_NOTIFIER, true);		
+		status = IPC.openSemaphore(getCommonDirFileObject().getAbsolutePath(), CONTROLLER_NOTIFIER, true);
 		return status;
 	}
 
@@ -339,7 +339,7 @@ public abstract class CommonDirectory {
 	}
 
 	static private boolean isCommonControlFile(String dirMemberName) {
-		return (ATTACH_LOCK.equalsIgnoreCase(dirMemberName) || CONTROLLER_LOCKFILE.equalsIgnoreCase(dirMemberName) 
+		return (ATTACH_LOCK.equalsIgnoreCase(dirMemberName) || CONTROLLER_LOCKFILE.equalsIgnoreCase(dirMemberName)
 				|| CONTROLLER_NOTIFIER.equalsIgnoreCase(dirMemberName));
 	}
 
@@ -379,15 +379,15 @@ public abstract class CommonDirectory {
 					if (!dirMember.delete()) {
 						IPC.logMessage("error deleting ", dirMemberName); //$NON-NLS-1$
 					}
-				} 
+				}
 			} else { /* the member is a directory */
 				if (dirMemberName.equalsIgnoreCase(myId)) {
 					continue; /* Jazz 26865: no need to check myself */
-				} 
+				}
 				long pid;
 				if (Character.isDigit(dirMemberName.charAt(0))) {
-					/* 
-					 * directory name is probably numeric.  Doing a quick test and catching the exception 
+					/*
+					 * directory name is probably numeric.  Doing a quick test and catching the exception
 					 * is faster than doing a full regex match.
 					 */
 					try {
@@ -395,7 +395,7 @@ public abstract class CommonDirectory {
 						pid = Long.parseLong(dirMemberName);
 						uid = CommonDirectory.getFileOwner(dirMember.getAbsolutePath());
 						if (((0 != myUid) && (uid != myUid))) {
-							/* 
+							/*
 							 * If I am not running as root and the target is owned by another UID, then ignore the file.
 							 */
 							pid = 0;
@@ -403,7 +403,7 @@ public abstract class CommonDirectory {
 					} catch (NumberFormatException e) {
 						pid = getPidFromFile(dirMember, myUid);
 					}
-				} else { 			
+				} else {
 					pid = getPidFromFile(dirMember, myUid);
 				}
 				if ((0 != pid) /* the PID is valid and directory is owned by me or I am root */
@@ -418,15 +418,15 @@ public abstract class CommonDirectory {
 	/**
 	 * Check if the file is owned by the UID.  Note that UID 0 "owns" all files.
 	 * @param f File or directory
-	 * @param myUid user UID. 
+	 * @param myUid user UID.
 	 * @return true if the uid owns the file or uid == 0.
 	 */
 	public static boolean isFileOwnedByUid(File f, long myUid) {
 		return (0 == myUid) || (myUid == CommonDirectory.getFileOwner(f.getAbsolutePath()));
 	}
-	
+
 		/**
-		 * reads the process ID from the advertisement file. 
+		 * reads the process ID from the advertisement file.
 		 * Returns 0 (illegal PID) if the advertisement file does not exist
 		 * or the process is not owned by the current user.
 		 * @param dirMember directory which should hold an advertisement file
@@ -459,7 +459,7 @@ public abstract class CommonDirectory {
 			IPC.logMessage("getPidFromFile uid = ", (int) uid); //$NON-NLS-1$
 		}
 		if (((0 != myUid) && (uid != myUid))) {
-			/* 
+			/*
 			 * If I am not running as root and the target is owned by another UID, then ignore the file.
 			 */
 			pid = 0;
@@ -476,7 +476,7 @@ public abstract class CommonDirectory {
 		}
 		return attachLock;
 	}
-	
+
 	/**
 	 * Returns a FileLock object, creating it if necessary.
 	 * @return FileLock object
@@ -490,14 +490,14 @@ public abstract class CommonDirectory {
 		}
 		return controllerLock;
 	}
-	
+
 	/**
 	 * Get the UID of a file's owner
 	 * @param path file path
 	 * @return UID of file owner
 	 */
 	public static native long getFileOwner(String path);
-	
+
 	static final class DirectorySampler implements FileFilter {
 
 		private int acceptCount = 16;

@@ -28,7 +28,7 @@ import java.security.BasicPermission;
 /**
  * The permission class for operations on the com.ibm.jvm.Trace class.
  * Allowing code access to this permission will allow changes to be made
- * to system wide trace settings 
+ * to system wide trace settings
  */
 public class TracePermission extends BasicPermission {
 

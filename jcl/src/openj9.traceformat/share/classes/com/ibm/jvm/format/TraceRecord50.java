@@ -28,13 +28,13 @@ import java.util.Vector;
 
 /**
  * Extends Trace Record. Special processing needed for internal trace records.
- * 
+ *
  * @author Simon Rowland
  */
 public class TraceRecord50 implements Comparable {
 	public static final int INTERNAL_WRAP_SPLIT_TP = -1;
 	public static final int EXTERNAL_WRAP_SPLIT_TP = -2;
-	
+
 	/*
 	 * the following fields represent the UtTraceRecord struct's fields that
 	 * were written as the header to this file
@@ -99,9 +99,9 @@ public class TraceRecord50 implements Comparable {
 	private byte[] dataAtEndOfBuffer;
 
 	private boolean isMiddleOfTracePoint = false;
-	
+
 	private long lostRecordCount = 0;
-	
+
 	private BigInteger earliestTimeStamp = null;
 
 	public int processTraceBufferHeader(TraceFile traceFile, long start,
@@ -135,10 +135,10 @@ public class TraceRecord50 implements Comparable {
 			dataLength = bufferLength - dataStart;
 			Util.Debug.println("Found a middle section - dataLength == "
 					+ dataLength);
-		} else {			
+		} else {
 			dataLength = dataEnd - dataStart;
 		}
-		
+
 		if ( nextEntry >= 0 && (nextEntry < dataStart || nextEntry > bufferLength) ) {
 			dataLength = 0;
 			TraceFormat.invalidBuffers++;
@@ -167,7 +167,7 @@ public class TraceRecord50 implements Comparable {
 		if (timeStamp.compareTo(TraceFormat.last) > 0) {
 			TraceFormat.last = timeStamp;
 		}
-		
+
 		// If this is the latest record so far, update the file wrap point for this trace file
 		if (writeSystem.compareTo(traceFile.lastWriteSystem) > 0) {
 			traceFile.lastWriteSystem = writeSystem;
@@ -230,9 +230,9 @@ public class TraceRecord50 implements Comparable {
 		}
 	}
 
-	/** 
+	/**
 	 * read the bytes of this UtTraceRecord into a byte array.
-	 * 
+	 *
 	 * @param traceFile to read from.
 	 * @return an array of bytes that constitute this UtTraceRecord.
 	 * @throws IOException if there is a problem reading from the trace file
@@ -253,7 +253,7 @@ public class TraceRecord50 implements Comparable {
 			throw new IOException("Can't read record from tracefile");
 		}
 
-		/* A tracepoint runs straight through this buffer, 
+		/* A tracepoint runs straight through this buffer,
 		 * so save the data but don't format anything yet. This
 		 * formatting will be done by the TraceRecord that contains
 		 * the end of this tracepoint. */
@@ -275,7 +275,7 @@ public class TraceRecord50 implements Comparable {
 		if (dataLeftAtEndOfBufLength > 0) {
 			/* the data at the end of the tracepoint may be the beginning of a tracepoint
 			 * that runs into the next TraceRecord. We can't know until we format the next
-			 * TraceRecord, so we need to store the extra data for the next TraceRecord to 
+			 * TraceRecord, so we need to store the extra data for the next TraceRecord to
 			 * retrieve if it needs it. */
 			dataAtEndOfBuffer = new byte[dataLeftAtEndOfBufLength];
 			startOfExtraData = (long) dataEnd + offsetInFile;
@@ -298,17 +298,17 @@ public class TraceRecord50 implements Comparable {
 		}
 		return recordBytes;
 	}
-	
+
 	/**
 	 * primeRecord readies this UtTraceRecord to have its tracepoint data read.
-	 * 
+	 *
 	 * Each tracepoint's length field is at the end of the tracepoint, so the tracepoints are
-	 * formatted backwards out of the record. To enable forward iteration, the whole record 
+	 * formatted backwards out of the record. To enable forward iteration, the whole record
 	 * must be formatted into a queue, which is then iterated over in reverse order.
-	 * 
+	 *
 	 * The record should already have been primed with e.g. it's location in the tracefile
 	 * through it's constructor.
-	 * 
+	 *
 	 * @param traceFile
 	 * @return true if it works, false if any errors are encountered. Errors are reported
 	 * internally.
@@ -322,7 +322,7 @@ public class TraceRecord50 implements Comparable {
 		if (offset < 0){
 			return true;
 		}
-		
+
 		/* keep debug records of where the current tracepoint is and what it looks like */
 		long endOfCurrentTP = absolutePositionInFile + offset;
 		long startOfCurrentTP = -3;
@@ -331,7 +331,7 @@ public class TraceRecord50 implements Comparable {
 		/* allocate once, and allow for max normal size! */
 		byte[] tpdata = new byte[bufferLength];
 
-		boolean recordHasWrapped = false;		
+		boolean recordHasWrapped = false;
 		boolean longTPLen = false;
 
 		/* we determine here if this record starts with a lost record tracepoint.
@@ -342,13 +342,13 @@ public class TraceRecord50 implements Comparable {
 			/* possible lost record, check for signature but make sure we have enough bytes to construct an int */
 			if (traceRecordBytes[1] == 0x0 && traceRecordBytes[2] == 0x1 && traceRecordBytes[3] == 0x0 && traceRecordBytes.length >= 8) {
 				lostRecordCount = Util.constructUnsignedInt(traceRecordBytes, 4);
-				TraceFormat.lostRecordCount+= lostRecordCount; 
-				
+				TraceFormat.lostRecordCount+= lostRecordCount;
+
 				/* discard remainder data from previous buffer, it'll be invalid */
-				overspillData = null; 
+				overspillData = null;
 			}
 		}
-		
+
 		/* parse each tracepoint */
 		do {
 			if (!longTPLen) {
@@ -375,7 +375,7 @@ public class TraceRecord50 implements Comparable {
 			sp = null;
 
 			if (tplength > offset) {
-				/* 
+				/*
 				 * This tracepoint runs for longer than the available data. Therefore
 				 * it is the *end* of a tracepoint that is in more than one buffer.
 				 */
@@ -505,7 +505,7 @@ public class TraceRecord50 implements Comparable {
 				} else {
 					sp.setRawTimeStamp(timeStamp);
 				}
-				
+
 				if (tps.size() > 0) {
 					tps.insertElementAt(sp, tps.size() -1);
 				} else {
@@ -518,7 +518,7 @@ public class TraceRecord50 implements Comparable {
 				tps.add(sp);
 				earliestTimeStamp = sp.getRawTimeStamp();
 			} /* else it is an internal tracepoint so discard it */
-			
+
 			/* move pointers to next tracepoint */
 			endOfCurrentTP -= tplength;
 		} while ((tplength > 0) && (offset >= 0));
@@ -567,26 +567,26 @@ public class TraceRecord50 implements Comparable {
 
 	public int compareTo(Object other) {
 		/* CMVC 177932. Fix to use system write time for sorting trace records rather than the nanosecond tracepoint
-		 * timer, because the nanosecond timer is known to hop around across CPUs on some systems. The records for a 
+		 * timer, because the nanosecond timer is known to hop around across CPUs on some systems. The records for a
 		 * thread are always written FIFO, so sorting is only actually needed in case the trace file was wrapped, i.e.
 		 * if trace option -Xtrace:output={file,size} was used.
-		 * 
+		 *
 		 * The system write time is only millisecs precision. So adjacent trace records may have identical system times,
-		 * particularly in trace snap files. This is mostly OK, as the buffers are written FIFO, and Collections.sort will 
+		 * particularly in trace snap files. This is mostly OK, as the buffers are written FIFO, and Collections.sort will
 		 * not re-order if the times are identical. We do however need a tie-breaker for cases where we have wrapped from
 		 * the end of a trace file to the start.
-		 * 
-		 * Note that the new trace formatter (com.ibm.jvm.TraceFormat) does not sort records (it does not yet support 
+		 *
+		 * Note that the new trace formatter (com.ibm.jvm.TraceFormat) does not sort records (it does not yet support
 		 * wrapped or generation trace files).
-		 * 
+		 *
 		 * Invoked indirectly via call to Collections.sort() in com.ibm.jvm.format.TraceFormat.prime().
 		 */
-		
+
 		if (writeSystem == BigInteger.ZERO || ((TraceRecord50)other).writeSystem == BigInteger.ZERO) {
 			Util.Debug.println("TraceRecord50.compareTo() found trace record with a zero system write time");
 			return 0;
 		}
-		
+
 		int result = writeSystem.compareTo(((TraceRecord50)other).writeSystem);
 		if (result == 0) {
 			// record write times are the same, calculate tie-breaker for records in wrapped trace files
@@ -612,7 +612,7 @@ public class TraceRecord50 implements Comparable {
 	public BigInteger getLastUpperWord() {
 		return upperTimeWord;
 	}
-	
+
 	public String toString(){
 		StringBuffer sb = new StringBuffer();
 

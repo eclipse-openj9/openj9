@@ -31,29 +31,29 @@ import com.ibm.dtfj.image.ImagePointer;
  * Represents a frame on a Java thread stack.
  */
 public interface JavaStackFrame {
-    /**
-     * Get a pointer to the base of this stack frame
-     * @return the base pointer of the stack frame
-     * @throws CorruptDataException
-     */
-    public ImagePointer getBasePointer() throws CorruptDataException;
+	/**
+	 * Get a pointer to the base of this stack frame
+	 * @return the base pointer of the stack frame
+	 * @throws CorruptDataException
+	 */
+	public ImagePointer getBasePointer() throws CorruptDataException;
 
 	/**
-     * Get the location at which the method owning this frame is currently executing
-     * @return a location object describing where the frame
-     * is executing
+	 * Get the location at which the method owning this frame is currently executing
+	 * @return a location object describing where the frame
+	 * is executing
 	 * @throws CorruptDataException
-     *
-     * @see JavaLocation
-     *
-     */
-    public JavaLocation getLocation() throws CorruptDataException;
-
-    /**
-     * Get the set of object roots from this stack frame.
 	 *
-     * @return an iterator of JavaReferences
-     */
+	 * @see JavaLocation
+	 *
+	 */
+	public JavaLocation getLocation() throws CorruptDataException;
+
+	/**
+	 * Get the set of object roots from this stack frame.
+	 *
+	 * @return an iterator of JavaReferences
+	 */
 	public Iterator getHeapRoots();
 
 	/**

@@ -519,7 +519,7 @@ public class JavaRuntime implements com.ibm.dtfj.java.JavaRuntime
 	{
 		// CMVC 156226 - DTFJ exception: XML and core file pointer sizes differ (zOS)
 		int s = _containingProc.getPointerSize();
-	    int s2 = ((com.ibm.dtfj.image.j9.ImageAddressSpace)(_address.getAddressSpace())).bytesPerPointer();
+		int s2 = ((com.ibm.dtfj.image.j9.ImageAddressSpace)(_address.getAddressSpace())).bytesPerPointer();
 		if (s == 64 || s == 32 || s == 31) {
 			return (s + 7) / 8;
 		}

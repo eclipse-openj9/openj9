@@ -32,7 +32,7 @@ import com.ibm.jvm.dtfjview.tools.utils.IStringModifier;
 import com.ibm.jvm.dtfjview.tools.utils.OutputStreamModifier;
 
 public class CharsToTool extends Tool implements IPipe {
-	private static final String COMMAND = "charsTo"; 
+	private static final String COMMAND = "charsTo";
 	private static final String ARGUMENT_DESCRIPTION = "[options] <pattern>";
 	private static final String HELP_DESCRIPTION = "To be used after a pipeline to keep the characters from a line until a specific pattern is found.";
 	private static final String USAGE = COMMAND + "\t" + ARGUMENT_DESCRIPTION + "\t" + HELP_DESCRIPTION + "\n" +
@@ -47,7 +47,7 @@ public class CharsToTool extends Tool implements IPipe {
 	 * @param command	The command
 	 * @param args		The arguments taken by the command.
 	 * <p>
-	 * @return		<code>true</code> if this is the correct tool for this command; 
+	 * @return		<code>true</code> if this is the correct tool for this command;
 	 * 				<code>false</code> otherwise.
 	 */
 	public boolean accept(String command, String[] args) {
@@ -127,7 +127,7 @@ public class CharsToTool extends Tool implements IPipe {
 		boolean ignoreCase = false;
 
 		int x = 0;
-		
+
 		for (; x < args.length; ++x) {
 			if(args[x].equalsIgnoreCase("-include")) {
 				includeToken = true;
@@ -149,16 +149,16 @@ public class CharsToTool extends Tool implements IPipe {
 		if (x >= args.length) {
 			return null;
 		}
-		
+
 		String command = args[x];
 		++x;
-		
+
 		String [] commandArgs = new String[args.length - x];
 		System.arraycopy(args, x, commandArgs, 0, args.length - x);
 
 		return new Arguments(searchToken, includeToken, keepMismatchedLines, ignoreCase, command, commandArgs);
 	}
-	
+
 	private static final class Arguments {
 		Arguments(String searchToken, boolean includeToken, boolean keepMismatchedLines, boolean ignoreCase, String command, String [] commandArgs) {
 			this.searchToken = ignoreCase ? searchToken.toLowerCase() : searchToken;

@@ -26,10 +26,10 @@ import com.ibm.jvm.dtfjview.heapdump.ReferenceIterator;
 
 /**
  * Object record.
- * 
+ *
  * Base class for anything that looks like an object (has a classAddress, a size and a hashcode
  * in addition to the address, previousAddress and references required to be a PortableHeapDumpRecord).
- * 
+ *
  * @author andhall
  *
  */
@@ -38,13 +38,13 @@ public abstract class ObjectRecord extends PortableHeapDumpRecord
 	protected final int _hashCode;
 	protected final long _classAddress;
 	protected final boolean _is32BitHash;
-	
+
 	protected ObjectRecord(long address, long previousAddress,
 			long classAddress, int hashCode,
 			ReferenceIterator references, boolean is32BitHash)
 	{
 		super(address, previousAddress, references);
-		
+
 		this._hashCode = hashCode;
 		this._classAddress = classAddress;
 		this._is32BitHash = is32BitHash;
@@ -54,7 +54,7 @@ public abstract class ObjectRecord extends PortableHeapDumpRecord
 		long addressDifference = PortableHeapDumpRecord.getAddressDifference(current, previous);
 		return ( addressDifference < Short.MAX_VALUE && addressDifference > Short.MIN_VALUE );
 	}
-	
+
 	/**
 	 * Static factory method to pick the appropriate
 	 * factory method
@@ -64,7 +64,7 @@ public abstract class ObjectRecord extends PortableHeapDumpRecord
 			ReferenceIterator references, PortableHeapDumpClassCache cache, boolean is64Bit, boolean is32BitHash)
 	{
 		byte classCacheIndex = cache.getClassCacheIndex(classAddress);
-		
+
 		if (classCacheIndex == -1 || previousAddress == 0) {
 			cache.setClassCacheIndex(classAddress);
 			return new LongObjectRecord(address,previousAddress,classAddress,hashCode,references,is64Bit,is32BitHash);
@@ -74,8 +74,8 @@ public abstract class ObjectRecord extends PortableHeapDumpRecord
 			return new LongObjectRecord(address,previousAddress,classAddress,hashCode,references,is64Bit,is32BitHash);
 		} else if (isShortObjectEligible(address,previousAddress)) {
 			int numberOfReferences = countReferences(references);
-			
-			if (numberOfReferences <= 3) { 
+
+			if (numberOfReferences <= 3) {
 				//this is a short object
 				return new ShortObjectRecord(address,previousAddress,classAddress,hashCode,references,classCacheIndex,is32BitHash);
 			} else if (numberOfReferences < 8) {
@@ -86,7 +86,7 @@ public abstract class ObjectRecord extends PortableHeapDumpRecord
 				cache.setClassCacheIndex(classAddress);
 				return new LongObjectRecord(address,previousAddress,classAddress,hashCode,references,is64Bit,is32BitHash);
 			}
-		} else { 
+		} else {
 			//address difference is bigger than Short.MAX_VALUE doublewords.
 			cache.setClassCacheIndex(classAddress);
 			return new LongObjectRecord(address,previousAddress,classAddress,hashCode,references,is64Bit,is32BitHash);
@@ -96,14 +96,14 @@ public abstract class ObjectRecord extends PortableHeapDumpRecord
 	private static int countReferences(ReferenceIterator references)
 	{
 		int count = 0;
-		
+
 		references.reset();
-		
+
 		while(references.hasNext()) {
 			references.next();
 			count++;
 		}
-		
+
 		return count;
 	}
 }

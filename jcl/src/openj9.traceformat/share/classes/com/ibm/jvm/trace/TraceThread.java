@@ -32,7 +32,7 @@ public interface TraceThread {
 	/**
 	 * @return a TracePoint Iterator that can be used to walk each TracePoint on the
 	 * current TraceThread in chronological order. Note that the Iterator consumes data
-	 * as it walks, and as such each TraceThread can be Iterated over once only. 
+	 * as it walks, and as such each TraceThread can be Iterated over once only.
 	 * Subsequent attempts to Iterate will return an empty Iterator, as will an attempt
 	 * to iterate over an unpopulated TraceThread.
 	 */

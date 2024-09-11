@@ -29,56 +29,67 @@ import java.io.IOException;
 
 public final class CietExpEntryTemplate {
 
-    public static int length() {
-        return 28;
-    }
+	public static int length() {
+		return 28;
+	}
 
-    public static long getCiet_exp_offset(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 16);
-        return inputStream.readInt();
-    }
-    public static int getCiet_exp_offset$offset() {
-        return 16;
-    }
-    public static int getCiet_exp_offset$length() {
-        return 32;
-    }
-    public static long getCiet_exp_name_addr(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 20);
-        return inputStream.readUnsignedInt() & 0xffffffffL;
-    }
-    public static int getCiet_exp_name_addr$offset() {
-        return 20;
-    }
-    public static int getCiet_exp_name_addr$length() {
-        return 32;
-    }
-    public static long getCiet_is_function(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 24);
-        inputStream.setBitOffset(0);
-        long result = inputStream.readBits(1);
-        result <<= 63;
-        result >>= 63;
-        return result;
-    }
-    public static int getCiet_is_function$offset() {
-        return 24;
-    }
-    public static int getCiet_is_function$length() {
-        return 1;
-    }
-    public static long getCiet_is_addr(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 24);
-        inputStream.setBitOffset(1);
-        long result = inputStream.readBits(1);
-        result <<= 63;
-        result >>= 63;
-        return result;
-    }
-    public static int getCiet_is_addr$offset() {
-        return 24;
-    }
-    public static int getCiet_is_addr$length() {
-        return 1;
-    }
+	public static long getCiet_exp_offset(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 16);
+		return inputStream.readInt();
+	}
+
+	public static int getCiet_exp_offset$offset() {
+		return 16;
+	}
+
+	public static int getCiet_exp_offset$length() {
+		return 32;
+	}
+
+	public static long getCiet_exp_name_addr(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 20);
+		return inputStream.readUnsignedInt() & 0xffffffffL;
+	}
+
+	public static int getCiet_exp_name_addr$offset() {
+		return 20;
+	}
+
+	public static int getCiet_exp_name_addr$length() {
+		return 32;
+	}
+
+	public static long getCiet_is_function(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 24);
+		inputStream.setBitOffset(0);
+		long result = inputStream.readBits(1);
+		result <<= 63;
+		result >>= 63;
+		return result;
+	}
+
+	public static int getCiet_is_function$offset() {
+		return 24;
+	}
+
+	public static int getCiet_is_function$length() {
+		return 1;
+	}
+
+	public static long getCiet_is_addr(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 24);
+		inputStream.setBitOffset(1);
+		long result = inputStream.readBits(1);
+		result <<= 63;
+		result >>= 63;
+		return result;
+	}
+
+	public static int getCiet_is_addr$offset() {
+		return 24;
+	}
+
+	public static int getCiet_is_addr$length() {
+		return 1;
+	}
 }

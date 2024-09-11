@@ -24,7 +24,7 @@ package com.ibm.jvm.dtfjview.heapdump.portable;
 
 /**
  * @author schan
- * 
+ *
  * Object representing the PHD class cache. A compression mechanism
  * based around assigning numbers to the last 4 class addresses
  * written out in full.
@@ -32,7 +32,7 @@ package com.ibm.jvm.dtfjview.heapdump.portable;
 public class PortableHeapDumpClassCache
 {
 	public static final int CLASSCACHE_SIZE = 4;
-	
+
 	private final long _classCache[] = new long[CLASSCACHE_SIZE];
 	private byte _classIndex = 0;
 

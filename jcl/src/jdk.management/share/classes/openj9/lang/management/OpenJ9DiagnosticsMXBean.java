@@ -21,7 +21,6 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  */
 
-
 package openj9.lang.management;
 
 import java.lang.management.PlatformManagedObject;
@@ -57,8 +56,8 @@ import java.lang.management.PlatformManagedObject;
 public interface OpenJ9DiagnosticsMXBean extends PlatformManagedObject {
 	/**
 	 * Reset the JVM dump options to the settings specified when the JVM was started removing any additional
-	 * configuration done since then. This method may throw a ConfigurationUnavailableException if the dump 
-	 * configuration cannot be altered. If this occurs it will usually be because a dump event is currently being 
+	 * configuration done since then. This method may throw a ConfigurationUnavailableException if the dump
+	 * configuration cannot be altered. If this occurs it will usually be because a dump event is currently being
 	 * handled.
 	 *
 	 * @throws ConfigurationUnavailableException if the configuration cannot be changed because a dump is already in progress
@@ -78,8 +77,8 @@ public interface OpenJ9DiagnosticsMXBean extends PlatformManagedObject {
 
 	/**
 	 * This function sets options for the dump subsystem.
-	 * The dump option is passed in as a String. Use the same syntax as the -Xdump command-line option, with the 
-	 * initial -Xdump: omitted. See the -Xdump option section on dump agents in the 
+	 * The dump option is passed in as a String. Use the same syntax as the -Xdump command-line option, with the
+	 * initial -Xdump: omitted. See the -Xdump option section on dump agents in the
 	 * documentation for the OpenJ9 JVM. This method may throw a ConfigurationUnavailableException if the dump
 	 * configuration cannot be altered.
 	 *
@@ -96,7 +95,7 @@ public interface OpenJ9DiagnosticsMXBean extends PlatformManagedObject {
 	 * A java dump is in a human-readable format, and summarizes the state of the JVM.
 	 * The default heap dump format (a phd file) is not human-readable.
 	 * A system dump is a platform-specific file that contains information about the active processes, threads, and
-	 * system memory. System dumps are usually large. 
+	 * system memory. System dumps are usually large.
 	 * The snap dump format is not human-readable and must be processed using the trace formatting tool supplied  with the OpenJ9 JVM.
 	 *
 	 * @param dumpAgent the dump agent to be triggered
@@ -112,7 +111,7 @@ public interface OpenJ9DiagnosticsMXBean extends PlatformManagedObject {
 	 * The JVM will attempt to write the file to the specified file name. This may
 	 * include replacement tokens as documented in the section on dump agents
 	 * in the documentation for the OpenJ9 JVM.
-	 * 
+	 *
 	 * A string containing the actual filename written to is returned. This may not
 	 * be the same as the requested filename for several reasons:
 	 * <ul>
@@ -127,11 +126,11 @@ public interface OpenJ9DiagnosticsMXBean extends PlatformManagedObject {
 	 *  to write the dump to another location, unless -Xdump:nofailover was specified on
 	 *  the command line.</li>
 	 * </ul>
-	 * 
+	 *
 	 * If a security manager exists a permission check for com.ibm.jvm.DumpPermission will be
 	 * made, if this fails a SecurityException will be thrown.
 	 *
-	 * @return the file name that the dump was actually written to 
+	 * @return the file name that the dump was actually written to
 	 * @param dumpAgent the dump agent to be triggered
 	 * @param fileNamePattern the filename to write to, which may be null, empty or include replacement tokens
 	 * @throws InvalidOptionException if the fileNamePattern was invalid

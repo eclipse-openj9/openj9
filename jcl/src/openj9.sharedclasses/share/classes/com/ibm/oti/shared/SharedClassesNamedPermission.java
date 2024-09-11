@@ -47,7 +47,7 @@ import java.security.BasicPermission;
  * </table>
  */
 public final class SharedClassesNamedPermission extends BasicPermission {
-	
+
 	private static final long serialVersionUID = -4800623387760880313L;
 
 	/*
@@ -57,7 +57,7 @@ public final class SharedClassesNamedPermission extends BasicPermission {
 		public static final SharedClassesNamedPermission getSharedCacheInfo = new SharedClassesNamedPermission("getSharedCacheInfo"); //$NON-NLS-1$
 		public static final SharedClassesNamedPermission destroySharedCache = new SharedClassesNamedPermission("destroySharedCache"); //$NON-NLS-1$
 	}
-	
+
 	/**
 	 * Create a representation of the named permissions.
 	 *

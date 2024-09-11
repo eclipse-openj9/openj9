@@ -31,7 +31,7 @@ class InsertHandle extends MethodHandle {
 	final int           insertionIndex;
 	private final Object[]      values;
 
-	/* 
+	/*
 	 * next must be an appropriately typed handle to ensure that the bound parameters are typechecked
 	 * correctly.
 	 */

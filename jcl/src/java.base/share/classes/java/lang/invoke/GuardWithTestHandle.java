@@ -66,13 +66,13 @@ final class GuardWithTestHandle extends MethodHandle {
 	private static final ThunkTable _thunkTable = new ThunkTable();
 	protected final ThunkTable thunkTable(){ return _thunkTable; }
 
- 	protected final ThunkTuple computeThunks(Object guardType) {
- 		// Different thunks accommodate guards with different numbers of parameters
- 		return thunkTable().get(new ThunkKeyWithObject(ThunkKey.computeThunkableType(type()), ThunkKey.computeThunkableType((MethodType)guardType)));
- 	}
- 
- 	private static native int numGuardArgs();
- 
+	protected final ThunkTuple computeThunks(Object guardType) {
+		// Different thunks accommodate guards with different numbers of parameters
+		return thunkTable().get(new ThunkKeyWithObject(ThunkKey.computeThunkableType(type()), ThunkKey.computeThunkableType((MethodType)guardType)));
+	}
+
+	private static native int numGuardArgs();
+
 	@FrameIteratorSkip
 	private final int invokeExact_thunkArchetype_X(int argPlaceholder) {
 		if (ILGenMacros.isShareableThunk()) {

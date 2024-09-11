@@ -29,21 +29,23 @@ import java.io.IOException;
 
 public final class LsedTemplate {
 
-    public static int length() {
-        return 8;
-    }
+	public static int length() {
+		return 8;
+	}
 
-    public static long getLsednes(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 4);
-        long result = inputStream.readBits(16);
-        result <<= 48;
-        result >>= 48;
-        return result;
-    }
-    public static int getLsednes$offset() {
-        return 4;
-    }
-    public static int getLsednes$length() {
-        return 16;
-    }
+	public static long getLsednes(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 4);
+		long result = inputStream.readBits(16);
+		result <<= 48;
+		result >>= 48;
+		return result;
+	}
+
+	public static int getLsednes$offset() {
+		return 4;
+	}
+
+	public static int getLsednes$length() {
+		return 16;
+	}
 }

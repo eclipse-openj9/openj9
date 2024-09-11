@@ -651,9 +651,9 @@ public abstract class NewWinDump extends CoreReaderSupport {
 					long stackEnd = stackStart + stackSize;
 					Object section = builder.buildStackSection(addressSpace, stackStart, stackEnd);
 					List frames = readStackFrames(dump, builder, addressSpace, stackStart, stackEnd, stackRva, registers, memory, is64Bit);
-				    //TODO: find the signal number!
-				    int signalNumber = 0;
-				    Object thread = builder.buildThread(String.valueOf(threadId), registers.iterator(),
+					//TODO: find the signal number!
+					int signalNumber = 0;
+					Object thread = builder.buildThread(String.valueOf(threadId), registers.iterator(),
 														Collections.singletonList(section).iterator(),
 														frames.iterator(), properties, signalNumber);
 					threads.add(thread);

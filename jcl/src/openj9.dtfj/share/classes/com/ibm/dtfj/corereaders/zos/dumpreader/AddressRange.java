@@ -27,40 +27,40 @@ package com.ibm.dtfj.corereaders.zos.dumpreader;
  * a length.
  */
 public class AddressRange {
-    long startAddress;
-    long length;
+	long startAddress;
+	long length;
 
-    /**
-     * Create a new address range.
-     * @param startAddress the lower bound of the address range
-     * @param length the length of the address range
-     */
-    public AddressRange(long startAddress, long length) {
-        this.startAddress = startAddress;
-        this.length = length;
-    }
+	/**
+	 * Create a new address range.
+	 * @param startAddress the lower bound of the address range
+	 * @param length the length of the address range
+	 */
+	public AddressRange(long startAddress, long length) {
+		this.startAddress = startAddress;
+		this.length = length;
+	}
 
-    /**
-     * Get the lower bound of this address range.
-     * @return the start address
-     */
-    public long getStartAddress() {
-        return startAddress;
-    }
+	/**
+	 * Get the lower bound of this address range.
+	 * @return the start address
+	 */
+	public long getStartAddress() {
+		return startAddress;
+	}
 
-    /**
-     * Get the upper bound of this address range (inclusive).
-     * @return the end address
-     */
-    public long getEndAddress() {
-        return startAddress + length - 1;
-    }
+	/**
+	 * Get the upper bound of this address range (inclusive).
+	 * @return the end address
+	 */
+	public long getEndAddress() {
+		return startAddress + length - 1;
+	}
 
-    /**
-     * Get the length of this address range.
-     * @return the length
-     */
-    public long getLength() {
-        return length;
-    }
+	/**
+	 * Get the length of this address range.
+	 * @return the length
+	 */
+	public long getLength() {
+		return length;
+	}
 }

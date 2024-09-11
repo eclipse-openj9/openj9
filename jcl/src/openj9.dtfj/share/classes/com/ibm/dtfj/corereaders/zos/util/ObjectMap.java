@@ -30,70 +30,70 @@ package com.ibm.dtfj.corereaders.zos.util;
 
 public final class ObjectMap extends AbstractHashMap {
 
-    /** The array of values */
-    Object[] values = new Object[INITIAL_SIZE];
+	/** The array of values */
+	Object[] values = new Object[INITIAL_SIZE];
 
-    /**
-     * Overridden method to return values array.
-     */
-    Object getValuesArray() {
-        return values;
-    }
+	/**
+	 * Overridden method to return values array.
+	 */
+	Object getValuesArray() {
+		return values;
+	}
 
-    /**
-     * Overridden method to allocate new values array.
-     */
-    void allocNewValuesArray(int newSize) {
-        values = new Object[newSize];
-    }
+	/**
+	 * Overridden method to allocate new values array.
+	 */
+	void allocNewValuesArray(int newSize) {
+		values = new Object[newSize];
+	}
 
-    /**
-     * Overridden method to repopulate with key plus value at given offset.
-     */
-    void put(long key, Object oldvalues, int offset) {
-        Object[] v = (Object[])oldvalues;
-        put(key, v[offset]);
-    }
+	/**
+	 * Overridden method to repopulate with key plus value at given offset.
+	 */
+	void put(long key, Object oldvalues, int offset) {
+		Object[] v = (Object[])oldvalues;
+		put(key, v[offset]);
+	}
 
-    /**
-     * Returns the value mapped by the given key.
-     * @return the value or null if it cannot be found
-     */
-    public Object get(long key) {
-        int index = getIndex(key) ;
-        return index == -1 ? null : values[index];
-    }
+	/**
+	 * Returns the value mapped by the given key.
+	 * @return the value or null if it cannot be found
+	 */
+	public Object get(long key) {
+		int index = getIndex(key) ;
+		return index == -1 ? null : values[index];
+	}
 
-    /**
-     * Add the key/value pair to the map.
-     */
-    public void put(long key, Object value) {
-        values[putIndex(key)] = value;
-        checkRehash();
-    }
+	/**
+	 * Add the key/value pair to the map.
+	 */
+	public void put(long key, Object value) {
+		values[putIndex(key)] = value;
+		checkRehash();
+	}
 
-    /**
-     * Remove the key from the map and return the old value.
-     */
-    public Object remove(long key) {
-        int index = removeIndex(key) ;
-        return index == -1 ? null : values[index];
-    }
+	/**
+	 * Remove the key from the map and return the old value.
+	 */
+	public Object remove(long key) {
+		int index = removeIndex(key) ;
+		return index == -1 ? null : values[index];
+	}
 
-    /**
-     * Returns an array containing the values where the returned runtime array type is derived from
-     * the given array (or the given array is simply reused if there is room).
-     */
-    public Object[] toArray(Object[] a) {
-        if (a.length < slotsInUse)
-            a = (Object[])java.lang.reflect.Array.newInstance(a.getClass().getComponentType(), slotsInUse);
-        for (int i = 0, j = 0; i < tableSize; i++) {
-            if (state[i] == OCCUPIED) {
-                a[j++] = values[i];
-            }
-        }
-        if (a.length > slotsInUse)
-            a[slotsInUse] = null;
-        return a;
-    }
+	/**
+	 * Returns an array containing the values where the returned runtime array type is derived from
+	 * the given array (or the given array is simply reused if there is room).
+	 */
+	public Object[] toArray(Object[] a) {
+		if (a.length < slotsInUse)
+			a = (Object[])java.lang.reflect.Array.newInstance(a.getClass().getComponentType(), slotsInUse);
+		for (int i = 0, j = 0; i < tableSize; i++) {
+			if (state[i] == OCCUPIED) {
+				a[j++] = values[i];
+			}
+		}
+		if (a.length > slotsInUse)
+			a[slotsInUse] = null;
+		return a;
+	}
 }

@@ -30,67 +30,67 @@ import java.util.Properties;
 public interface ImageSection
 {
 
-    /**
-     * Gets the base address (the lowest) of memory in this section.
-     *
-     * @return Base address pointer.
-     */
-    public ImagePointer getBaseAddress();
+	/**
+	 * Gets the base address (the lowest) of memory in this section.
+	 *
+	 * @return Base address pointer.
+	 */
+	public ImagePointer getBaseAddress();
 
-    /**
-     * Gets the size of the memory section.
-     *
-     * @return Size of section in bytes.
-     */
-    public long getSize();
+	/**
+	 * Gets the size of the memory section.
+	 *
+	 * @return Size of section in bytes.
+	 */
+	public long getSize();
 
-    /**
-     * Gets the name of this section.
-     *
-     * Some memory sections are named. For example, the executable data in a module is typically called ".text".
-     *
-     * For memory sections without a specific name, a placeholder string will be returned. This method will never
-     * return null.
-     *
-     * @return non-null name String.
-     */
-    public String getName();
+	/**
+	 * Gets the name of this section.
+	 *
+	 * Some memory sections are named. For example, the executable data in a module is typically called ".text".
+	 *
+	 * For memory sections without a specific name, a placeholder string will be returned. This method will never
+	 * return null.
+	 *
+	 * @return non-null name String.
+	 */
+	public String getName();
 
-    /**
-     * Tests executable permission on memory section.
-     *
-     * @return true if the memory pages in this section are marked executable. False otherwise.
-     * @throws DataUnavailable
-     */
-    public boolean isExecutable() throws DataUnavailable;
+	/**
+	 * Tests executable permission on memory section.
+	 *
+	 * @return true if the memory pages in this section are marked executable. False otherwise.
+	 * @throws DataUnavailable
+	 */
+	public boolean isExecutable() throws DataUnavailable;
 
-    /**
-     * Tests read permission on memory section.
-     *
-     * @return true if the memory pages in this section are marked read-only. False otherwise.
-     * @throws DataUnavailable
-     */
-    public boolean isReadOnly() throws DataUnavailable;
+	/**
+	 * Tests read permission on memory section.
+	 *
+	 * @return true if the memory pages in this section are marked read-only. False otherwise.
+	 * @throws DataUnavailable
+	 */
+	public boolean isReadOnly() throws DataUnavailable;
 
-    /**
-     * Tests shared permission on memory section.
-     *
-     * @return true if this section is shared between processes. False otherwise.
-     * @throws DataUnavailable
-     */
-    public boolean isShared() throws DataUnavailable;
+	/**
+	 * Tests shared permission on memory section.
+	 *
+	 * @return true if this section is shared between processes. False otherwise.
+	 * @throws DataUnavailable
+	 */
+	public boolean isShared() throws DataUnavailable;
 
-    /**
-     * Get the OS-specific properties for this section.
-     * @return a table of OS-specific properties for this section.
-     * Values which are commonly available include
-     * <ul>
-     * <li>"readable" -- whether the memory section can be read from</li>
-     * <li>"writable" -- whether the memory section can be written to</li>
-     * <li>"executable" -- whether data in the memory section can be executed</li>
-     * </ul>
-     * @since 1.11
-     */
-    public Properties getProperties();
+	/**
+	 * Get the OS-specific properties for this section.
+	 * @return a table of OS-specific properties for this section.
+	 * Values which are commonly available include
+	 * <ul>
+	 * <li>"readable" -- whether the memory section can be read from</li>
+	 * <li>"writable" -- whether the memory section can be written to</li>
+	 * <li>"executable" -- whether data in the memory section can be executed</li>
+	 * </ul>
+	 * @since 1.11
+	 */
+	public Properties getProperties();
 
 }

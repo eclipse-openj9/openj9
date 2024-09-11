@@ -42,9 +42,9 @@ import com.ibm.jvm.dtfjview.commands.helpers.Utils;
 public class WhatisCommand extends BaseJdmpviewCommand {
 
 	{
-		addCommand("whatis", "[hex address]", "gives information about what is stored at the given memory address");	
+		addCommand("whatis", "[hex address]", "gives information about what is stored at the given memory address");
 	}
-	
+
 	public void run(String command, String[] args, IContext context, PrintStream out) throws CommandException {
 		if(initCommand(command, args, context, out)) {
 			return;		//processing already handled by super class
@@ -55,37 +55,37 @@ public class WhatisCommand extends BaseJdmpviewCommand {
 		}
 		Long lAddressInDecimal = Utils.longFromString(args[0]);
 		if (null == lAddressInDecimal){
-			out.println("cannot convert \"" + args[0] + "\" to numeric value"); 
+			out.println("cannot convert \"" + args[0] + "\" to numeric value");
 			return;
 		}
 		long addressInDecimal = lAddressInDecimal.longValue();
-		
+
 		findInRuntime(addressInDecimal);
-		
+
 		out.print("\n");
 	}
-	
+
 	private void findInRuntime(long address)
 	{
 		JavaHeap jh;
 		Iterator itHeap = ctx.getRuntime().getHeaps();
 		int count = 1;
-		
+
 		while (itHeap.hasNext()) {
 			jh = (JavaHeap)itHeap.next();
-			
+
 			out.print("\theap #" + count + " - name: ");
 			out.print(jh.getName() + "\n");
-			
+
 			findInHeap(jh, address);
 			count++;
 		}
 	}
-	
+
 	private void findInHeap(JavaHeap jh, long address)
 	{
 		//TODO: checkWithinValidMemRange(sb, ...);
-		
+
 		if (isWithinImageSections(jh.getSections(), null, false, address)){
 			//if it's start or within the range of an object
 			if (!isStartOfObj(jh.getObjects(), address)){
@@ -95,14 +95,13 @@ public class WhatisCommand extends BaseJdmpviewCommand {
 			}
 		} else {
 			out.print("\t\t0x" + Long.toHexString(address) + " is not within this heap.\n");
-			//TODO : function to indicate 16 or 32 bit 
+			//TODO : function to indicate 16 or 32 bit
 			long bound = 12; //bounds default to 16 for 32 bit system.
 			checkClassInRange(jh.getObjects(), bound, address);
 			checkMethodInRange(jh.getObjects(), address);
 		}
 	}
-	
-	
+
 	private void checkMethodInRange(Iterator objects, long address){
 		while(objects.hasNext()){
 			JavaObject jObject = (JavaObject)objects.next();
@@ -137,7 +136,7 @@ public class WhatisCommand extends BaseJdmpviewCommand {
 		}
 	}
 */
-	
+
 	private void checkClassInRange(Iterator objects, long bound, long address){
 		long startAddress, endAddress ;
 		while(objects.hasNext()){
@@ -159,13 +158,13 @@ public class WhatisCommand extends BaseJdmpviewCommand {
 				return;
 			}
 			if (isWithinRange(startAddress, endAddress, address)){
-				out.print("0x" + Long.toHexString(address) 
+				out.print("0x" + Long.toHexString(address)
 						+ " is within the java/lang/Class object for " + className);
 				return;
 			}
 		}
 	}
-	
+
 	private boolean isWithinObjectRange(Iterator objects, long address){
 		long startAddress, endAddress ;
 		String className;
@@ -180,7 +179,7 @@ public class WhatisCommand extends BaseJdmpviewCommand {
 				continue;
 			}
 			if (isWithinRange(startAddress, endAddress, address)){
-				out.print("\t\t0x" + Long.toHexString(address) + " is within an object on the heap:\n" + 
+				out.print("\t\t0x" + Long.toHexString(address) + " is within an object on the heap:\n" +
 						"\t\t\toffset " + (address - startAddress) + " within "+ className +
 						" instance @ 0x" + Long.toHexString(startAddress) + "\n");
 				return true;
@@ -188,15 +187,15 @@ public class WhatisCommand extends BaseJdmpviewCommand {
 		}
 		return false;
 	}
-	
+
 	private boolean isWithinRange(long startAddress, long endAddress, long address){
 		return (address <= endAddress && address > startAddress);
 	}
-	
+
 	private boolean isStartOfObj(Iterator objects, long address){
 		String className;
 		long corruptObjectCount = 0;
-		
+
 		while(objects.hasNext()){
 			Object obj = objects.next();
 			if (obj instanceof CorruptData) {
@@ -219,7 +218,7 @@ public class WhatisCommand extends BaseJdmpviewCommand {
 		}
 		return false;
 	}
-	
+
 	private boolean isWithinImageSections(Iterator heapImageSections, Object memType,
 	  boolean isMethodCompiled, long address)
 	{
@@ -228,10 +227,10 @@ public class WhatisCommand extends BaseJdmpviewCommand {
 			long baseAddress = imageSection.getBaseAddress().getAddress();
 			long size = imageSection.getSize();
 			long endAddress = baseAddress + size;
-			
+
 			if (address <= endAddress  && address >= baseAddress) {
 				if (null == memType) {
-					out.print("\t\t0x" + Long.toHexString(address) + " is within heap segment: " +  
+					out.print("\t\t0x" + Long.toHexString(address) + " is within heap segment: " +
 							Long.toHexString(baseAddress) + " -- " + Long.toHexString(endAddress) + "\n");
 					return true;
 				}
@@ -241,13 +240,13 @@ public class WhatisCommand extends BaseJdmpviewCommand {
 						methodName = ((JavaMethod)memType).getName();
 						methodSig = ((JavaMethod)memType).getSignature();
 						className = ((JavaMethod)memType).getDeclaringClass().getName();
-					}catch(CorruptDataException cde){				
+					}catch(CorruptDataException cde){
 					}catch(DataUnavailable du){
 					}
 					String codeType = isMethodCompiled ? "compiled code" : "byte code";
-					out.print("\t0x" + Long.toHexString(address) + " is within the " + codeType + " range: " +  
+					out.print("\t0x" + Long.toHexString(address) + " is within the " + codeType + " range: " +
 							Long.toHexString(baseAddress) + " -- " + Long.toHexString(endAddress) + "\n\t" +  "...of method " +
-							methodName + " with signature " + methodSig + "\n\t" + 
+							methodName + " with signature " + methodSig + "\n\t" +
 							"...in class " + className + "\n");
 					return true;
 				}

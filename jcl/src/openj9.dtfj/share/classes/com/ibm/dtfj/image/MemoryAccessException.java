@@ -31,30 +31,30 @@ public class MemoryAccessException extends DTFJException {
 
 	private ImagePointer badPointer;
 
-    /**
-     * Build exception for the given location and description
-     * @param badPointer		the location which caused the access exception
-     * @param description		text description
-     */
-    public MemoryAccessException(ImagePointer badPointer, String description) {
-        super(description);
-        this.badPointer = badPointer;
-    }
+	/**
+	 * Build exception for the given location and description
+	 * @param badPointer		the location which caused the access exception
+	 * @param description		text description
+	 */
+	public MemoryAccessException(ImagePointer badPointer, String description) {
+		super(description);
+		this.badPointer = badPointer;
+	}
 
-    /**
-     * Build exception for the given location and description
-     * @param badPointer		the location which caused the access exception
-     */
-    public MemoryAccessException(ImagePointer badPointer) {
-        super();
-        this.badPointer = badPointer;
-    }
+	/**
+	 * Build exception for the given location and description
+	 * @param badPointer		the location which caused the access exception
+	 */
+	public MemoryAccessException(ImagePointer badPointer) {
+		super();
+		this.badPointer = badPointer;
+	}
 
-    /**
-     * Get a pointer into the image where the access failed.
-     * @return The pointer into the image where the access failed
-     */
-    public ImagePointer getPointer() {
-        return badPointer;
-    }
+	/**
+	 * Get a pointer into the image where the access failed.
+	 * @return The pointer into the image where the access failed
+	 */
+	public ImagePointer getPointer() {
+		return badPointer;
+	}
 }

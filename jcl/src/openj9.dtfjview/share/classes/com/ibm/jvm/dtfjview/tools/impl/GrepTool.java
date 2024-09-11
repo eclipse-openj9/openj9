@@ -53,7 +53,7 @@ public class GrepTool extends Tool implements IPipe {
 	public static final String ARGUMENT_DESCRIPTION = "[options] <pattern>";
 	public static final String HELP_DESCRIPTION = "to be used after the pipeline to show lines which match a pattern.";
 
-	public static final String USAGE = COMMAND + "\t" + ARGUMENT_DESCRIPTION + "\t" + HELP_DESCRIPTION + "\n" + 
+	public static final String USAGE = COMMAND + "\t" + ARGUMENT_DESCRIPTION + "\t" + HELP_DESCRIPTION + "\n" +
 			"     Options :\n" +
 			"          -i : Ignore case.\n" +
 			"          -r, -G, --regex : Use regular expression as defined in the Java documentation of class java.utils.regex.Pattern.\n" +
@@ -65,15 +65,15 @@ public class GrepTool extends Tool implements IPipe {
 			"          -F, --fixed-strings : to treat character '*' not as a wide card. This option can not be used together with -r, -G or --regex.\n" +
 			"     Pattern : \n" +
 			"           Character '*' in a pattern will be treated as a wild card unless option -F or --fixed-strings is used.\n" +
-	        "           If a pattern contains any spaces, enclose the pattern in a pair of double quotation marks.\n" +
-	        "           If a pattern contains any double quotation marks, enclose the pattern in a pair of single quotation marks.\n" +
-	        "           The pattern can be in the following format to show lines which match any of the sub-patterns:\n" +
-	        "                    \"[<pattern1>|<pattern2>|...|<patternN>]\"\n" +
-	        "               This format has to start with \"[ and ends with ]\" and use character '|' as the sub-pattern separator.\n" + 
-	        "               No quotation marks and character '|' are allowed in any sub-patterns.\n" + 
-	        "               Spaces are allowed in the middle of a sub-patterns, but leading and trailing spaces will be trimmed.\n" +
-	        "               This format only works when option -r, -G, and --regex are not used.\n" +
-	        "     Use command " + COMMAND_NEGATE + " to show lines which do not match the pattern.";
+			"           If a pattern contains any spaces, enclose the pattern in a pair of double quotation marks.\n" +
+			"           If a pattern contains any double quotation marks, enclose the pattern in a pair of single quotation marks.\n" +
+			"           The pattern can be in the following format to show lines which match any of the sub-patterns:\n" +
+			"                    \"[<pattern1>|<pattern2>|...|<patternN>]\"\n" +
+			"               This format has to start with \"[ and ends with ]\" and use character '|' as the sub-pattern separator.\n" +
+			"               No quotation marks and character '|' are allowed in any sub-patterns.\n" +
+			"               Spaces are allowed in the middle of a sub-patterns, but leading and trailing spaces will be trimmed.\n" +
+			"               This format only works when option -r, -G, and --regex are not used.\n" +
+			"     Use command " + COMMAND_NEGATE + " to show lines which do not match the pattern.";
 
 	/**
 	 * Determines if a command is accepted by the current tool.
@@ -81,13 +81,13 @@ public class GrepTool extends Tool implements IPipe {
 	 * @param command	The command
 	 * @param args		The arguments taken by the command.
 	 * <p>
-	 * @return		<code>true</code> if this is the correct tool for this command; 
+	 * @return		<code>true</code> if this is the correct tool for this command;
 	 * 				<code>false</code> otherwise.
 	 */
 	public boolean accept(String command, String[] args) {
 		return command.equalsIgnoreCase(COMMAND) || command.equalsIgnoreCase(COMMAND_NEGATE);
 	}
-	
+
 	/**
 	 * Processes the command.
 	 * <p>
@@ -97,8 +97,8 @@ public class GrepTool extends Tool implements IPipe {
 	 * <p>
 	 * @throws CommandException
 	 */
-	public void process(String command, String[] args, PrintStream out) throws CommandException 
-	{	
+	public void process(String command, String[] args, PrintStream out) throws CommandException
+	{
 		Attributes attributes = null;
 		try {
 			attributes = readAttributes(command, args, command.equalsIgnoreCase(COMMAND_NEGATE), out);
@@ -109,7 +109,7 @@ public class GrepTool extends Tool implements IPipe {
 			out.println(USAGE);
 			return;
 		}
-		
+
 		IPrematchHandle prematchHandle = null;
 		if (attributes.matchBlock) {
 			prematchHandle = new BlockPrematchHandle();
@@ -123,29 +123,28 @@ public class GrepTool extends Tool implements IPipe {
 		} else {
 			matchHandle = new MatchHandle(attributes.normalStringsToGrep, attributes.caseInsensitive, attributes.negate, attributes.isFixedString);
 		}
-		
+
 		IPostmatchHandle postmatchHandle = null;
 		if (attributes.matchBlock) {
 			postmatchHandle = new BlockPostmatchHandle();
 		} else {
 			postmatchHandle = new MaxLinesPostmatchHandle(attributes.maxNextLines);
 		}
-		
-		ToolsRegistry.process(attributes.nextCommand, attributes.nextCommandArgs, 
+
+		ToolsRegistry.process(attributes.nextCommand, attributes.nextCommandArgs,
 				new PrintStream(
-						new OutputStreamModifier(out, 
+						new OutputStreamModifier(out,
 								new StringModifier(prematchHandle, matchHandle, postmatchHandle))));
-		
+
 	}
 
-	
 	/**
 	 * To print the detailed help message.
 	 */
 	public void printDetailedHelp(PrintStream out) {
 		out.println(USAGE);
 	}
-	
+
 	/**
 	 * To gets the tool's command name.
 	 * <p>
@@ -154,7 +153,7 @@ public class GrepTool extends Tool implements IPipe {
 	public String getCommandName() {
 		return COMMAND;
 	}
-	
+
 	/**
 	 * To gets the tool's argument description.
 	 * <p>
@@ -172,7 +171,7 @@ public class GrepTool extends Tool implements IPipe {
 	public String getHelpDescription() {
 		return HELP_DESCRIPTION;
 	}
-	
+
 	private Attributes readAttributes(String command, String [] args, boolean negate, PrintStream out) {
 		if (2 > args.length) {
 			return null;
@@ -193,15 +192,15 @@ public class GrepTool extends Tool implements IPipe {
 			if (false == grepOptionsEnded && args[i].equals("-i")) {
 				caseInsensitive = true;
 				continue;
-			} 
+			}
 			if (false == grepOptionsEnded && (args[i].equals("-b") || args[i].equals("--block"))) {
 				matchBlock = true;
 				continue;
-			} 
+			}
 			if (false == grepOptionsEnded && (args[i].equals("-r") || args[i].equals("-G") || args[i].equals("--regex"))) {
 				useRegularExpression = true;
 				continue;
-			} 
+			}
 			if (false == grepOptionsEnded && (args[i].equals("-F") || args[i].equals("--fixed-strings"))) {
 				isFixedString = true;
 				continue;
@@ -253,12 +252,12 @@ public class GrepTool extends Tool implements IPipe {
 					// This means the search string starts with "+" !
 				}
 			}
-			
+
 			if (false == grepOptionsEnded && (args[i].equals("-v") || args[i].equalsIgnoreCase("--invert-match"))) {
 				dashVUsed = true;
 				continue;
 			}
-			
+
 			if (false == grepOptionsEnded && args[i].equals("-B")) {
 				if (i < args.length - 1) {
 					i++;
@@ -273,7 +272,7 @@ public class GrepTool extends Tool implements IPipe {
 				out.println("Option -B is not followed by a number.");
 				return null;
 			}
-			
+
 			if (false == grepOptionsEnded && args[i].startsWith("-")) {
 				try {
 					maxPreviousLines = Integer.parseInt(args[i].substring(1));
@@ -282,7 +281,7 @@ public class GrepTool extends Tool implements IPipe {
 					// This means the search string starts with "-" !
 				}
 			}
-			
+
 			grepOptionsEnded = true;
 			if (stringToGrep == null) {
 				stringToGrep = args[i];
@@ -308,16 +307,16 @@ public class GrepTool extends Tool implements IPipe {
 			out.println("Option -F and --fixed-strings can not be used with option -r, -G, or --regex.");
 			return null;
 		}
-		return new Attributes(negate, useRegularExpression, 
+		return new Attributes(negate, useRegularExpression,
 				caseInsensitive, stringToGrep, nextCommand, nextCommandArgs.toArray(new String [nextCommandArgs.size()]),
 				maxPreviousLines, maxNextLines, matchBlock, isFixedString);
 	}
-	
-	private class Attributes 
+
+	private class Attributes
 	{
-		public Attributes(boolean negate, boolean useRegularExpression, boolean caseInsensitive, 
-				String stringToGrep, String nextCommand, String [] nextCommandArgs, 
-				int maxPreviousLines, int maxNextLines, boolean matchBlock, boolean isFixedString) 
+		public Attributes(boolean negate, boolean useRegularExpression, boolean caseInsensitive,
+				String stringToGrep, String nextCommand, String [] nextCommandArgs,
+				int maxPreviousLines, int maxNextLines, boolean matchBlock, boolean isFixedString)
 		{
 			this.negate = negate;
 			this.useRegularExpression = useRegularExpression;

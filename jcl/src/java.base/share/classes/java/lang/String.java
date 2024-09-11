@@ -8689,7 +8689,6 @@ written authorization of the copyright holder.
 			builder.append("\n");
 		}
 
-
 		if (!trailingNewLine) {
 			builder.setLength(builder.length() - 1);
 		}

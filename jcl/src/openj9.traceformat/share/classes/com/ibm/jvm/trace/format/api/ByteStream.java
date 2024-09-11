@@ -78,7 +78,7 @@ public class ByteStream {
 	/**
 	 * This method ensures that there is sufficient data to satisfy a
 	 * request
-	 * 
+	 *
 	 * @param bytes
 	 * @throws BufferUnderflowException
 	 */
@@ -105,7 +105,7 @@ public class ByteStream {
 		 * recover
 		 */
 		Slice slice = (Slice)rawData.get(0);
-		
+
 		/* if we can guard out of raw data and there's enough in the buffer */
 		if (buffer != null && buffer.remaining() >= bytes && slice.length >= guardBytes) {
 			return;
@@ -123,7 +123,7 @@ public class ByteStream {
 			 */
 			int remaining = buffer.remaining();
 			byte mergeData[];
-			
+
 			/* snip what's needed off the front of the next slice if the slice is big enough
 			 * for us to care about copying it */
 			if (slice.length > requiredBytes) {
@@ -133,7 +133,7 @@ public class ByteStream {
 				System.arraycopy(slice.data, slice.offset, mergeData, remaining, shortfall);
 				slice.offset+= shortfall;
 				slice.length-= shortfall;
-				
+
 				/* don't need to recurse here because the fact we're here says there's enough in place */
 				recurse = false;
 			} else {
@@ -171,7 +171,7 @@ public class ByteStream {
 		if (data == null) {
 			return;
 		}
-		
+
 		add(data, offset, data.length - offset);
 	}
 
@@ -343,7 +343,7 @@ public class ByteStream {
 				buffer.position(s+length);
 				return value;
 			}
-			
+
 			try {
 				commit(buffer.remaining() + 20);
 			} catch (BufferUnderflowException e) {
@@ -361,7 +361,7 @@ public class ByteStream {
 	/**
 	 * Constructs a string. This has a prerequisite that the string is
 	 * prefixed with a short specifying it's length.
-	 * 
+	 *
 	 * @return
 	 */
 	public String getUTF8String() throws UnsupportedEncodingException {
@@ -371,7 +371,6 @@ public class ByteStream {
 
 		commit(length);
 		get(data);
-
 
 		String s = new String(data, "UTF-8");
 
@@ -389,7 +388,7 @@ public class ByteStream {
 					}
 				}
 			}
-			
+
 			if (utf16) {
 				if (swap) {
 					/* swap bytes at odd/even indexes*/
@@ -410,7 +409,7 @@ public class ByteStream {
 	/**
 	 * reads the specified number of bytes and turns them in to a positive
 	 * BigInteger
-	 * 
+	 *
 	 * @param bytes
 	 * @return
 	 */
@@ -444,7 +443,7 @@ public class ByteStream {
 	/**
 	 * Default order is big endian and that's what you'll get if you pass
 	 * null in.
-	 * 
+	 *
 	 * @param order
 	 */
 	synchronized public void order(ByteOrder order) {
@@ -473,7 +472,7 @@ public class ByteStream {
 	 * beginning of the stream, then will throw an exception. If an
 	 * exception is thrown the stream will be completely empty, all data
 	 * discarded.
-	 * 
+	 *
 	 * @param bytes
 	 *                - the number of bytes to remove
 	 * @throws BufferUnderflowException
@@ -521,7 +520,7 @@ public class ByteStream {
 	 * will be placed into the provided array, filling from the end (i.e. if
 	 * there's insufficient data in the stream to fill the array then the
 	 * initial bytes in the array will be zero.
-	 * 
+	 *
 	 * @param bytes
 	 *                - the number of bytes to remove
 	 * @return - the number of bytes truncated
@@ -621,11 +620,11 @@ public class ByteStream {
 	 * indexes from the end of the data. This is primarily because it's hard
 	 * to be sure where the start of the data is in relation to the bytes we
 	 * know we can modify, i.e. those bytes that are guarded.
-	 * 
+	 *
 	 * put(data, -1) will insert the bytes in data in the last but one
 	 * position of the stream, moving the last byte in the stream out by
 	 * data.length and increase the count of guarded bytes by data.length
-	 * 
+	 *
 	 * @param data
 	 *                - the data to insert
 	 * @param index
@@ -704,7 +703,7 @@ public class ByteStream {
 	 * array allowing negative addressing. Positive indexes throw index out
 	 * of bounds. It is worth noting that an index of -1 means the last byte
 	 * present, i.e. we are not zero indexed.
-	 * 
+	 *
 	 * @param index
 	 * @param b
 	 *                - the original byte we're replacing

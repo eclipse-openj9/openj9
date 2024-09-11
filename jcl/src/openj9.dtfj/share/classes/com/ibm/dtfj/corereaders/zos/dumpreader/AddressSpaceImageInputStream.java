@@ -41,74 +41,74 @@ import javax.imageio.stream.ImageInputStreamImpl;
 
 public final class AddressSpaceImageInputStream extends ImageInputStreamImpl {
 
-    private AddressSpace space;
-    /** Logger */
-    private static Logger log = Logger.getLogger(AddressSpaceImageInputStream.class.getName());
+	private AddressSpace space;
+	/** Logger */
+	private static Logger log = Logger.getLogger(AddressSpaceImageInputStream.class.getName());
 
-    /**
-     * Create a new AddressSpaceImageInputStream for the given AddressSpace.
-     * @param space the AddressSpace which this stream reads
-     */
-    public AddressSpaceImageInputStream(AddressSpace space) {
-        this.space = space;
-    }
+	/**
+	 * Create a new AddressSpaceImageInputStream for the given AddressSpace.
+	 * @param space the AddressSpace which this stream reads
+	 */
+	public AddressSpaceImageInputStream(AddressSpace space) {
+		this.space = space;
+	}
 
-    /**
-     * Read a byte from the current position. Also increments streamPos.
-     */
-    public int read() throws IOException {
-        return space.read(streamPos++);
-    }
+	/**
+	 * Read a byte from the current position. Also increments streamPos.
+	 */
+	public int read() throws IOException {
+		return space.read(streamPos++);
+	}
 
-    /**
-     * Read some bytes from the current position and add len to streamPos.
-     */
-    public int read(byte[] b, int off, int len) throws IOException {
-        space.read(streamPos, b, off, len);
-        streamPos += len;
-        return len;
-    }
+	/**
+	 * Read some bytes from the current position and add len to streamPos.
+	 */
+	public int read(byte[] b, int off, int len) throws IOException {
+		space.read(streamPos, b, off, len);
+		streamPos += len;
+		return len;
+	}
 
-    public void seek(long pos) throws IOException {
-        pos = space.stripTopBit(pos);
-        if (pos <= 0)
-            throw new IOException("attempt to seek to invalid pos: 0x" + hex(pos));
-        super.seek(pos);
-        if (log.isLoggable(Level.FINER))
-            log.finer("seek to 0x" + hex(pos) + " streamPos now 0x" + hex(streamPos));
-    }
+	public void seek(long pos) throws IOException {
+		pos = space.stripTopBit(pos);
+		if (pos <= 0)
+			throw new IOException("attempt to seek to invalid pos: 0x" + hex(pos));
+		super.seek(pos);
+		if (log.isLoggable(Level.FINER))
+			log.finer("seek to 0x" + hex(pos) + " streamPos now 0x" + hex(streamPos));
+	}
 
-    /**
-     * Read an int from the current position. Also increments streamPos.
-     * For efficiency to avoid multiple reads via ImageInputStream
-     */
-    public int readInt() throws IOException {
-        int ret = space.readInt(streamPos);
-        streamPos += 4;
-        return ret;
-    }
+	/**
+	 * Read an int from the current position. Also increments streamPos.
+	 * For efficiency to avoid multiple reads via ImageInputStream
+	 */
+	public int readInt() throws IOException {
+		int ret = space.readInt(streamPos);
+		streamPos += 4;
+		return ret;
+	}
 
-    /**
-     * Read an unsigned int from the current position. Also increments streamPos.
-     * For efficiency to avoid multiple reads via ImageInputStream
-     */
-    public long readUnsignedInt() throws IOException {
-        long ret = space.readUnsignedInt(streamPos);
-        streamPos += 4;
-        return ret;
-    }
+	/**
+	 * Read an unsigned int from the current position. Also increments streamPos.
+	 * For efficiency to avoid multiple reads via ImageInputStream
+	 */
+	public long readUnsignedInt() throws IOException {
+		long ret = space.readUnsignedInt(streamPos);
+		streamPos += 4;
+		return ret;
+	}
 
-    /**
-     * Read a long from the current position. Also increments streamPos.
-     * For efficiency to avoid multiple reads via ImageInputStream
-     */
-    public long readLong() throws IOException {
-        long ret = space.readLong(streamPos);
-        streamPos += 8;
-        return ret;
-    }
+	/**
+	 * Read a long from the current position. Also increments streamPos.
+	 * For efficiency to avoid multiple reads via ImageInputStream
+	 */
+	public long readLong() throws IOException {
+		long ret = space.readLong(streamPos);
+		streamPos += 8;
+		return ret;
+	}
 
-    private static String hex(long i) {
-        return Long.toHexString(i);
-    }
+	private static String hex(long i) {
+		return Long.toHexString(i);
+	}
 }

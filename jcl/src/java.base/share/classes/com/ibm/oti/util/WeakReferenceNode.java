@@ -26,13 +26,13 @@ import java.lang.ref.*;
 
 /**
  * WeakReference that can be used as an element in a doubly linked list.
- * 
- * @param <T> The type of the referent 
+ *
+ * @param <T> The type of the referent
  */
 public class WeakReferenceNode<T> extends WeakReference<T> {
 	private WeakReferenceNode<T> previous;
 	private WeakReferenceNode<T> next;
-	
+
 	/**
 	 * Constructs a new WeakReferenceNode
 	 *
@@ -45,7 +45,7 @@ public class WeakReferenceNode<T> extends WeakReference<T> {
 
 	/**
 	 * Adds the current node before the specified node.
-	 * 
+	 *
 	 * @param after The node that will be after this node in the list (may be null)
 	 */
 	public void addBefore(WeakReferenceNode<T> after) {
@@ -58,9 +58,9 @@ public class WeakReferenceNode<T> extends WeakReference<T> {
 			after.previous = this;
 		}
 	}
-	
+
 	/**
-	 * Removes the current node from any list it may be part of. 
+	 * Removes the current node from any list it may be part of.
 	 */
 	public void remove() {
 		if (null != this.previous) {
@@ -70,14 +70,14 @@ public class WeakReferenceNode<T> extends WeakReference<T> {
 			this.next.previous = this.previous;
 		}
 	}
-	
+
 	/**
 	 * @return The node before this node in the list
 	 */
 	public WeakReferenceNode<T> previous() {
 		return previous;
 	}
-	
+
 	/**
 	 * @return The node after this node in the list
 	 */

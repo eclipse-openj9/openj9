@@ -104,7 +104,7 @@ public final class BitStream {
 	public void nextWord(boolean write) {
 		wordOffset++;
 		if (wordOffset >= bits.length) {
-            int[] tmp = new int[(bits.length * 3 + 1) / 2];
+			int[] tmp = new int[(bits.length * 3 + 1) / 2];
 			System.arraycopy(bits, 0, tmp, 0, bits.length);
 			bits = tmp;
 		} else if (write) {

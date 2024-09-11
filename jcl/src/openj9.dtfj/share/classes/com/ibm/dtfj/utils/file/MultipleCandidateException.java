@@ -68,4 +68,3 @@ public class MultipleCandidateException extends IOException {
 	}
 
 }
-

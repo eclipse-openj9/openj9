@@ -26,24 +26,24 @@ import java.util.Iterator;
 
 /**
  * This is a Cursor that thinks it's an Iterator really.
- * 
+ *
  * @author Simon Rowland
- *	
+ *
  */
 public class TracePointGlobalChronologicalIterator<Type extends com.ibm.jvm.trace.TracePoint> implements Iterator {
 	private com.ibm.jvm.format.TraceFormat formatter = null;
-	
+
 	protected TracePointGlobalChronologicalIterator(com.ibm.jvm.format.TraceFormat formatter){
 		this.formatter = formatter;
 		updateNext();
 		/* prime */
 	}
-	
+
 	private com.ibm.jvm.trace.TracePoint next = null;
 	private synchronized void updateNext(){
 		next = formatter.getNextTracePoint();
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see java.util.Iterator#hasNext()
 	 */

@@ -23,7 +23,7 @@
 package com.ibm.jvm.dtfjview.tools.utils;
 
 /**
- * This class will start cache lines once any match is found. It will 
+ * This class will start cache lines once any match is found. It will
  * release the cached lines once it encounters an empty line.
  * <p>
  * @author Manqing Li
@@ -48,6 +48,6 @@ public class BlockPostmatchHandle implements IPostmatchHandle {
 			return "";
 		}
 	}
-	
+
 	private boolean ended = false;
 }

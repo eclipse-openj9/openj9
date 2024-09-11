@@ -40,9 +40,9 @@ public class DataUnavailable extends DTFJException {
 		super(description);
 	}
 
-    /**
-     * Build exception with no description
-     */
+	/**
+	 * Build exception with no description
+	 */
 	public DataUnavailable() {
 		super();
 	}

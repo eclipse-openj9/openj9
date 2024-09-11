@@ -36,7 +36,7 @@ public class Output extends OutputStream implements IOutputManager {
 	private ByteArrayOutputStream bos = new ByteArrayOutputStream();		//used to internally buffer data
 	private PrintStream internalStream = new PrintStream(bos);
 	private boolean isBufferingEnabled = false;								//default of no buffering
-	
+
 	Vector outputChannels;
 	long lastTimestamp = 0;
 	String lastPrompt = "";
@@ -45,28 +45,28 @@ public class Output extends OutputStream implements IOutputManager {
 	public Output(){
 		outputChannels = new Vector();
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.jvm.dtfjview.spi.IOutput#clearBuffer()
 	 */
 	public void clearBuffer() {
 		bos.reset();
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.jvm.dtfjview.spi.IOutput#setBuffering(boolean)
 	 */
 	public void setBuffering(boolean enabled) {
 		isBufferingEnabled = enabled;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.jvm.dtfjview.spi.IOutput#getBuffer()
 	 */
 	public String getBuffer() {
 		return bos.toString();
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.jvm.dtfjview.spi.IOutput#print(java.lang.String)
 	 */
@@ -79,7 +79,7 @@ public class Output extends OutputStream implements IOutputManager {
 			}
 		}
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.jvm.dtfjview.spi.IOutput#printPrompt(java.lang.String)
 	 */
@@ -92,7 +92,7 @@ public class Output extends OutputStream implements IOutputManager {
 			}
 		}
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.jvm.dtfjview.spi.IOutput#println(java.lang.String)
 	 */
@@ -105,22 +105,21 @@ public class Output extends OutputStream implements IOutputManager {
 			}
 		}
 	}
-	
-		
+
 	/* (non-Javadoc)
 	 * @see com.ibm.jvm.dtfjview.spi.IOutput#addChannel(com.ibm.jvm.dtfjview.spi.OutputChannel)
 	 */
 	public void addChannel(IOutputChannel channel){
 		addChannel(channel, false);
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.jvm.dtfjview.spi.IOutput#addChannel(com.ibm.jvm.dtfjview.spi.OutputChannel, boolean)
 	 */
 	public void addChannel(IOutputChannel channel, boolean printLastInput){
 		outputChannels.add(channel);
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.jvm.dtfjview.spi.IOutput#removeChannel(java.lang.Class)
 	 */
@@ -148,7 +147,7 @@ public class Output extends OutputStream implements IOutputManager {
 	public void removeAllChannels() {
 		outputChannels.clear();
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.jvm.dtfjview.spi.IOutput#removeFileChannel()
 	 */
@@ -161,7 +160,7 @@ public class Output extends OutputStream implements IOutputManager {
 			}
 		}
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.jvm.dtfjview.spi.IOutput#setConsoleNoPrint(boolean)
 	 */
@@ -173,7 +172,7 @@ public class Output extends OutputStream implements IOutputManager {
 			}
 		}
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.jvm.dtfjview.spi.IOutput#close()
 	 */
@@ -207,7 +206,7 @@ public class Output extends OutputStream implements IOutputManager {
 		String msg = new String (chars);
 		print(msg);
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see com.ibm.jvm.dtfjview.spi.IOutput#flush()
 	 */

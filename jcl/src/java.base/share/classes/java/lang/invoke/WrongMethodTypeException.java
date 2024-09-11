@@ -25,14 +25,14 @@ package java.lang.invoke;
 /**
  * WrongMethodTypeException is thrown to indicate an attempt to invoke a MethodHandle with the wrong MethodType.
  * This exception can also be thrown when adapting a MethodHandle in a way that is incompatible with its MethodType.
- * 
+ *
  * @author		OTI
  * @version		initial
  * @since		1.7
  */
 @VMCONSTANTPOOL_CLASS
 public class WrongMethodTypeException extends RuntimeException {
-	
+
 	/**
 	 * Serialized version ID
 	 */
@@ -44,7 +44,7 @@ public class WrongMethodTypeException extends RuntimeException {
 	public WrongMethodTypeException() {
 		super();
 	}
-	
+
 	/**
 	 * Construct a WrongMethodTypeException with the supplied message.
 	 *
@@ -53,14 +53,13 @@ public class WrongMethodTypeException extends RuntimeException {
 	public WrongMethodTypeException(String message){
 		super(message);
 	}
-	
+
 	static WrongMethodTypeException newWrongMethodTypeException(MethodType oldType, MethodType newType) {
 		/*[MSG "K0632", "{0} is not compatible with {1}"]*/
 		return new WrongMethodTypeException(com.ibm.oti.util.Msg.getString("K0632", newType, oldType)); //$NON-NLS-1$
 	}
-	
+
 	WrongMethodTypeException(String message, Throwable throwable) {
 		super(message, throwable);
 	}
 }
-

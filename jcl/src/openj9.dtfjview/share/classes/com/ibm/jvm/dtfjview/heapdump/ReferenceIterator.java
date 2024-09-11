@@ -24,7 +24,7 @@ package com.ibm.jvm.dtfjview.heapdump;
 
 /**
  * Type-safe, resettable iterator for references.
- * 
+ *
  * @author andhall
  *
  */
@@ -32,20 +32,20 @@ public interface ReferenceIterator
 {
 
 	/**
-	 * 
+	 *
 	 * @return True if next() will return non-null,
 	 * false otherwise.
 	 */
 	public boolean hasNext();
-	
+
 	/**
-	 * 
+	 *
 	 * @return Next reference
 	 */
 	public Long next();
-	
+
 	/**
-	 * Resets the iterator back to the start of the 
+	 * Resets the iterator back to the start of the
 	 * structure it is iterating. Iterator will behave
 	 * as if it has just been constructed
 	 */

@@ -34,7 +34,7 @@ import com.ibm.java.lang.management.internal.ManagementUtils;
 import com.ibm.lang.management.JvmCpuMonitorInfo;
 
 /**
- * Support for the {@link JvmCpuMonitorInfo} class. 
+ * Support for the {@link JvmCpuMonitorInfo} class.
  */
 public final class JvmCpuMonitorInfoUtil {
 

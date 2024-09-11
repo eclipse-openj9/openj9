@@ -42,7 +42,7 @@ import com.ibm.jvm.dtfjview.commands.helpers.Utils;
 @DTFJPlugin(version="1.*", runtime=false)
 public class XJCommand extends XCommand {
 	{
-		addCommand("x/j", "<object address> | <class name>", "displays information about a particular object or all objects of a class");	
+		addCommand("x/j", "<object address> | <class name>", "displays information about a particular object or all objects of a class");
 	}
 
 	@Override
@@ -52,7 +52,7 @@ public class XJCommand extends XCommand {
 		}
 		return false;
 	}
-	
+
 	public void doCommand(String[] args)
 	{
 		boolean supers = false;
@@ -88,26 +88,26 @@ public class XJCommand extends XCommand {
 		}
 
 		printHeapObjects(objAddress, objName, out, supers);
-	
+
 	}
-	
+
 	private void printHeapObjects(Long objAddress, String objName,
 			PrintStream out, boolean supers)
 	{
-		JavaRuntime jr = ctx.getRuntime(); 
+		JavaRuntime jr = ctx.getRuntime();
 		JavaHeap jh;
 		Iterator<?> itHeap = jr.getHeaps();
 		int count = 1;
-		
+
 		while (itHeap.hasNext()) {
 			Object obj = itHeap.next();
 			if(obj instanceof JavaHeap) {
 				jh = (JavaHeap)obj;
-			
+
 				out.print("\t heap #" + count + " - name: ");
 				out.print(jh.getName());
 				out.print("\n\n");
-			
+
 				printObjects(jh, objAddress, objName, out, supers, jr);
 				count++;
 			} else {
@@ -115,7 +115,7 @@ public class XJCommand extends XCommand {
 			}
 		}
 	}
-	
+
 	private void printObjects(JavaHeap jh, Long objAddress, String objName, PrintStream out,
 			boolean supers, JavaRuntime jr) {
 		if( objName !=  null  ) {
@@ -124,7 +124,7 @@ public class XJCommand extends XCommand {
 			printObjectsFromAddress(jh, objAddress, out, jr);
 		}
 	}
-	
+
 	private void printObjectsFromName(JavaHeap jh, String objName, PrintStream out,
 			boolean supers, JavaRuntime jr)
 	{
@@ -132,10 +132,10 @@ public class XJCommand extends XCommand {
 		if (objName != null)
 		{
 			JavaClass[] classes = Utils.getClassGivenName(objName, jr, out);
-			
+
 			// if we couldn't find a class of that name, return; the passed in class name could
 			//  still be an array type or it might not exist
-			if( classes == null || classes.length == 0 ) {						
+			if( classes == null || classes.length == 0 ) {
 				out.print("\t  could not find class with name \"" + objName + "\"\n\n");
 				return;
 			}
@@ -154,7 +154,7 @@ public class XJCommand extends XCommand {
 					if(obj instanceof CorruptData) {
 						//skip the corrupt object
 						corruptObjectCount++;
-						continue;		
+						continue;
 					}
 					JavaObject jo = (JavaObject)obj;
 					String hierarchy = "";
@@ -196,7 +196,7 @@ public class XJCommand extends XCommand {
 							out.print(" @ ");
 							out.print(Utils.toHex(jo.getID().getAddress()));
 							out.print("\n");
-							
+
 							ClassOutput.printFields(jo, jc, jr, out);
 							printReferences(jo, out);
 						} else {
@@ -233,9 +233,9 @@ public class XJCommand extends XCommand {
 		JavaObject jo;
 		Iterator<?> itObject = jh.getObjects();
 		boolean found = false;
-	
+
 		boolean done = false;
-		
+
 		int corruptObjectCount = 0;
 		while (itObject.hasNext() && !done)
 		{
@@ -243,11 +243,10 @@ public class XJCommand extends XCommand {
 			if(obj instanceof CorruptData) {
 				//skip the corrupt object
 				corruptObjectCount++;
-				continue;		
+				continue;
 			}
-			
-			jo = (JavaObject)obj;
 
+			jo = (JavaObject)obj;
 
 			if (jo.getID().getAddress() == objAddress.longValue())
 			{
@@ -276,7 +275,7 @@ public class XJCommand extends XCommand {
 					out.print(" @ ");
 					out.print(Utils.toHex(objAddress.longValue()));
 					out.print("\n");
-					
+
 					ClassOutput.printFields(jo, jc, jr, out);
 					printReferences(jo, out);
 
@@ -295,14 +294,13 @@ public class XJCommand extends XCommand {
 			out.println("\t Warning : " + corruptObjectCount + " corrupt objects were skipped\n");
 		}
 	}
-	
-	
+
 	@Override
 	public void printDetailedHelp(PrintStream out) {
 		super.printDetailedHelp(out);
 		out.println("displays information about a particular object or all " +
 				"objects of a class\n\n" +
-				
+
 				"parameters: 0x<object_addr> | <class_name> [super | nosuper]\n\n" +
 				"If given class name, all static fields with their values will be " +
 				"printed, followed by all objects of that class with their fields " +
@@ -316,26 +314,26 @@ public class XJCommand extends XCommand {
 				"to it by the \"x/\" command.\n\n"
 		);
 	}
-	
+
 	/**
-	 * Print the references from the given object. Omit the first reference: this is always a reference to the 
-	 * object's class. 
+	 * Print the references from the given object. Omit the first reference: this is always a reference to the
+	 * object's class.
 	 */
 	public static void printReferences(JavaObject jo, PrintStream out) {
 		Iterator<?> references = jo.getReferences();
-		if (references.hasNext()) {			
+		if (references.hasNext()) {
 			references.next(); // reference to the class, ignore this one
 		}
 		if ( ! references.hasNext()) {
 			out.print("\t    references: <none>\n ");
-			out.print("\t     ");			
+			out.print("\t     ");
 		} else {
 			out.print("\t    references:\n ");
 			out.print("\t     ");
 			while (references.hasNext()) {
 				Object potential_reference = references.next();
 				if (potential_reference instanceof JavaReference) {
-					JavaReference reference = (JavaReference) potential_reference; 
+					JavaReference reference = (JavaReference) potential_reference;
 					try {
 						Object target = reference.getTarget();
 						if (target instanceof JavaObject) {

@@ -41,7 +41,7 @@ final public class Message {
 	private int id;
 	private int level;
 	private Properties statistics = new Properties();
-	
+
 	public Message(int type, String message, int id, int level, String component, String symbol, TraceContext context) {
 		this.context = context;
 		this.type = type;
@@ -54,12 +54,12 @@ final public class Message {
 		this.level = level;
 		this.statistics.put("component", component);
 	}
-	
+
 	private Message(String message, int pointerSize) {
 		this.message = message;
 		this.ptrSize = pointerSize;
 	}
-	
+
 	public void addStatistic(String key, long value) {
 		long total = 0;
 		if (statistics.containsKey(key)) {
@@ -68,11 +68,11 @@ final public class Message {
 		total+= value;
 		statistics.put(key, Long.valueOf(total));
 	}
-	
+
 	public Properties getStatistics() {
 		return statistics;
 	}
-	
+
 	public static Arg[] getArgumentDetails(String template, int bytesPerPointer, StringBuffer templateErrors) {
 		Message msg = new Message(template, bytesPerPointer);
 		Arg[] parameters = msg.parseMessageTemplate(templateErrors);
@@ -116,12 +116,12 @@ final public class Message {
 	/**
 	 * process all the percent sign directives in a string, much like a call
 	 * to printf
-	 * 
+	 *
 	 * @param str
 	 *                a string
 	 * @return the string with percent directive replaces by their
 	 *         associated values
-	 * 
+	 *
 	 */
 	protected StringBuilder processPercents(String str, byte[] buffer, int offset) {
 		int totalElems = parameterTypes.length;
@@ -149,11 +149,11 @@ final public class Message {
 	/**
 	 * process all the percent sign directives in a string, making them
 	 * "???"
-	 * 
+	 *
 	 * @param str
 	 *                a string
 	 * @return the string with percent directives replaced by "???"
-	 * 
+	 *
 	 */
 	protected StringBuilder skipPercents(String str, byte[] buffer, int offset) {
 		int totalElems = parameterTypes.length;
@@ -223,7 +223,7 @@ final public class Message {
 	/**
 	 * retrieve the text of the message, parsing any percent directives and
 	 * replacing them with data from the buffer
-	 * 
+	 *
 	 * @param buffer
 	 *                an array of bytes
 	 * @param offset
@@ -249,7 +249,7 @@ final public class Message {
 	/**
 	 * returns the component this message corresponds to, as determined by
 	 * the message file
-	 * 
+	 *
 	 * @return an String that is component from which this message came from
 	 */
 	protected String getComponent() {
@@ -259,7 +259,7 @@ final public class Message {
 	/**
 	 * returns the level of the component so it's possible to distinguish between the
 	 * default always on set and user enabled trace points
-	 * 
+	 *
 	 * @return the level of the trace point, -1 if not applicable
 	 */
 	protected int getLevel() {
@@ -269,7 +269,7 @@ final public class Message {
 	/**
 	 * returns the type of entry this message corresponds to, as determined
 	 * by the message file and TraceRecord
-	 * 
+	 *
 	 * @return an int that is one of the types defined in TraceRecord
 	 * @see com.ibm.jvm.format.TraceRecord
 	 */
@@ -283,13 +283,13 @@ final public class Message {
 
 	/**
 	 * parse the raw message into an array of the appropriate wrapped types.
-	 * 
+	 *
 	 * @param buffer
 	 *                an array of bytes that is the raw data to format
 	 * @param offset
 	 *                an int representing the offset into buffer to start.
 	 * @return an array of wrapped types representing the parsed raw data.
-	 * 
+	 *
 	 */
 	protected Object[] parseMessage(byte[] buffer, int offset) {
 		int totalElems = nonConstantParameterTypes.length;
@@ -440,14 +440,14 @@ final public class Message {
 				break;
 
 			case 'f':
-	        	 /* CMVC 164940 All %f tracepoints were promoted to double in runtime trace code.
-	        	  * Affects:
-	        	  *  TraceFormat  com/ibm/jvm/format/Message.java
-	        	  *  TraceFormat  com/ibm/jvm/trace/format/api/Message.java
-	        	  *  runtime    ute/ut_trace.c
-	        	  *  TraceGen     OldTrace.java
-	        	  * Intentional fall through to next case. 
-	        	  */
+				/* CMVC 164940 All %f tracepoints were promoted to double in runtime trace code.
+				 * Affects:
+				 *  TraceFormat  com/ibm/jvm/format/Message.java
+				 *  TraceFormat  com/ibm/jvm/trace/format/api/Message.java
+				 *  runtime    ute/ut_trace.c
+				 *  TraceGen     OldTrace.java
+				 * Intentional fall through to next case.
+				 */
 
 			case 'g':
 				str = str.substring(1, str.length());
@@ -533,11 +533,11 @@ final public class Message {
 		abstract Object getValue(ByteStream msg);
 
 		abstract void format(ByteStream msg, StringBuilder out);
-		
+
 		public int sizeof() {
 			return sizeof;
 		}
-		
+
 		public String signature() {
 			return signature;
 		}
@@ -665,7 +665,7 @@ final public class Message {
 			super(size);
 			if (size == TraceContext.SIZE_T) {
 				signature = "IDATA";
-				this.sizeof = ptrSize; 
+				this.sizeof = ptrSize;
 			} else {
 				signature = "I_32";
 			}
@@ -834,7 +834,7 @@ final public class Message {
 		public boolean needsOxPrefix() {
 			return addOxPrefix;
 		}
-		
+
 		public void setZeroPad(boolean pad) {
 			zeroPad = pad;
 		}

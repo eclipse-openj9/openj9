@@ -24,18 +24,17 @@ package com.ibm.jvm.dtfjview.spi;
 
 import java.io.PrintStream;
 
-
 /**
  * The output manager is responsible for managing a collection of registered
  * output channels. It provides methods to register and remove channels as
  * well as control buffering.  When text is written to the manager then it
  * is sent to all registered output channels.
- * 
+ *
  * This interface is an extension of IOutputChannel so as to enforce consistency
- * between the declarations for printing text to an output channel. The manager 
- * is in effect acting as a single proxy channel for all of it's individually 
+ * between the declarations for printing text to an output channel. The manager
+ * is in effect acting as a single proxy channel for all of it's individually
  * registered channels.
- * 
+ *
  * @author adam
  *
  */
@@ -46,13 +45,13 @@ public interface IOutputManager extends IOutputChannel {
 	 * to an internal buffer rather than immediately to the underlying output
 	 * channels. This is typically used by clients to inspect or intercept the results from
 	 * a command before carrying out further processing.
-	 * 
+	 *
 	 * By default buffering is not enabled.
-	 * 
+	 *
 	 * @param enabled true turns on buffering
 	 */
 	public void setBuffering(boolean enabled);
-	
+
 	/**
 	 * Clears the current buffer contents.
 	 */
@@ -60,14 +59,14 @@ public interface IOutputManager extends IOutputChannel {
 
 	/**
 	 * Gets the current buffer contents.
-	 * 
+	 *
 	 * @return buffer contents
 	 */
 	public String getBuffer();
 
 	/**
 	 * Adds a channel to the list of registered channels.
-	 * 
+	 *
 	 * @param channel channel to add.
 	 */
 	public void addChannel(IOutputChannel channel);

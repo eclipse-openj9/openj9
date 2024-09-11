@@ -29,7 +29,7 @@ package java.lang.ref;
  * @author		OTI
  * @version		initial
  * @since		1.2
- */	
+ */
 public
 /*[IF JAVA_SPEC_VERSION >= 19]*/
 non-sealed

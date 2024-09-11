@@ -45,7 +45,7 @@ final class CatchHandle extends PassThroughHandle {
 		return new CatchHandle(this, newType);
 	}
 
-	public static CatchHandle get(MethodHandle tryTarget, Class<? extends Throwable> exceptionClass, MethodHandle catchTarget, MethodHandle equivalent) { 
+	public static CatchHandle get(MethodHandle tryTarget, Class<? extends Throwable> exceptionClass, MethodHandle catchTarget, MethodHandle equivalent) {
 		return new CatchHandle(tryTarget, exceptionClass, catchTarget, equivalent);
 	}
 
@@ -100,4 +100,3 @@ final class CatchHandle extends PassThroughHandle {
 		c.compareChildHandle(left.catchTarget, this.catchTarget);
 	}
 }
-

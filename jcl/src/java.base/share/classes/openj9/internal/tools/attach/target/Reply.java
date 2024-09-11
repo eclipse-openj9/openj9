@@ -62,7 +62,7 @@ public final class Reply {
 	 */
 	Reply(String notificationDirectory) {
 		targetUid = 0;
-		replyFile = new File(notificationDirectory, REPLY_FILENAME);	
+		replyFile = new File(notificationDirectory, REPLY_FILENAME);
 	}
 
 	/**
@@ -121,7 +121,7 @@ public final class Reply {
 		}
 		return rply;
 	}
-	
+
 	private boolean fileDoesNotExist() {
 		return !replyFile.exists();
 	}
@@ -137,7 +137,7 @@ public final class Reply {
 	 */
 	synchronized String getKey() {
 		return key;
-	}	
+	}
 	/**
 	 * Delete the reply file
 	 */

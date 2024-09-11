@@ -42,21 +42,21 @@ import com.ibm.jvm.dtfjview.commands.helpers.Utils;
 
 @DTFJPlugin(version="1.*", runtime=false)
 public class InfoMmapCommand extends BaseJdmpviewCommand{
-	
+
 	{
-		addCommand("info mmap", "[address] [-verbose] [-sort:<size|address>]", "Outputs a list of all memory segments in the address space");	
+		addCommand("info mmap", "[address] [-verbose] [-sort:<size|address>]", "Outputs a list of all memory segments in the address space");
 	}
-	
+
 	public void run(String command, String[] args, IContext context, PrintStream out) throws CommandException {
-		
+
 		boolean verbose = false;
 		ImagePointer addressPointer = null;
 		Comparator<ImageSection> sortOrder = null;
-		
+
 		if(initCommand(command, args, context, out)) {
 			return;		//processing already handled by super class
 		}
-		
+
 		for( String arg: args) {
 			if (Utils.SORT_BY_SIZE_FLAG.equals(arg)) {
 				sortOrder = new SizeComparator();
@@ -85,7 +85,7 @@ public class InfoMmapCommand extends BaseJdmpviewCommand{
 		if( sortOrder != null ) {
 			Collections.sort(sortedSections, sortOrder);
 		}
-		
+
 		int addrSize = ctx.getProcess().getPointerSize() == 64 ? 16 : 8;
 		// Width for decimals can vary as we use the locales format (via %,d)
 		int decWidth = 0;
@@ -155,13 +155,13 @@ public class InfoMmapCommand extends BaseJdmpviewCommand{
 				String tableFormatString = "\t%-"+maxLen+"s\t%-"+maxLen+"s\n";
 				while( tableIterator.hasNext() ) {
 					out.printf(tableFormatString, tableIterator.next(), tableIterator.hasNext()?tableIterator.next():"");
-					
+
 				}
 				out.println();
 			} else {
 				out.println();
 			}
-				
+
 		}
 		if( addressPointer == null ) {
 			if( totalSizeRwx > 0 && totalSize != totalSizeRwx) {
@@ -169,7 +169,7 @@ public class InfoMmapCommand extends BaseJdmpviewCommand{
 			}
 			out.printf("Total size: 0x%1$x (%1$,d) bytes\n", totalSize);
 		}
-		
+
 	}
 
 	private static int cmp(long n1, long n2) {
@@ -181,7 +181,7 @@ public class InfoMmapCommand extends BaseJdmpviewCommand{
 			return -1;
 		}
 	}
-	
+
 	private class SizeComparator implements Comparator<ImageSection> {
 
 		public int compare(ImageSection o1, ImageSection o2) {
@@ -190,7 +190,7 @@ public class InfoMmapCommand extends BaseJdmpviewCommand{
 			return cmp(s1,s2);
 		}
 	}
-	
+
 	private class AddressComparator implements Comparator<ImageSection> {
 
 		public int compare(ImageSection o1, ImageSection o2) {
@@ -202,7 +202,7 @@ public class InfoMmapCommand extends BaseJdmpviewCommand{
 
 	@Override
 	public void printDetailedHelp(PrintStream out) {
-		out.println("outputs a list of all memory segments in the address space\n\n" + 
+		out.println("outputs a list of all memory segments in the address space\n\n" +
 				"parameters: none, an address in memory, sort flags, verbose output\n\n" +
 				"If no address is specified outputs a list all memory segments (ImageSections) " +
 				"in the address space with start address, size and properties\n" +
@@ -210,7 +210,6 @@ public class InfoMmapCommand extends BaseJdmpviewCommand{
 				" or " + Utils.SORT_BY_SIZE_FLAG + " flags.\n" +
 				"If " + Utils.VERBOSE_FLAG + " is specified then each memory segment is followed by any further detailed information." +
 				"If an address is specified then just the memory segment containing that address is output.\n"
-				 );
-		
+				);
 	}
 }

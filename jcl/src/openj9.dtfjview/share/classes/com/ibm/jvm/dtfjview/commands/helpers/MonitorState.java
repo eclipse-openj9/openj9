@@ -25,29 +25,29 @@ package com.ibm.jvm.dtfjview.commands.helpers;
 import com.ibm.dtfj.java.JavaMonitor;
 
 public class MonitorState {
-	
+
 	public static int WAITING_TO_ENTER = 1;
 	public static int WAITING_TO_BE_NOTIFIED_ON = 2;
 
 	private JavaMonitor jm;
 	private int status;
-	
+
 	public MonitorState(JavaMonitor _jm, int _status)
 	{
 		jm = _jm;
 		status = _status;
 	}
-	
+
 	public JavaMonitor getMonitor()
 	{
 		return jm;
 	}
-	
+
 	public int getStatus()
 	{
 		return status;
 	}
-	
+
 	public String getStatusString()
 	{
 		if (status == WAITING_TO_ENTER) {
@@ -58,7 +58,7 @@ public class MonitorState {
 			return "<unknown status>";
 		}
 	}
-	
+
 	public static String getStatusString(int statusToGet)
 	{
 		if (statusToGet == WAITING_TO_ENTER) {

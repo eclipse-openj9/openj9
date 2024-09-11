@@ -54,10 +54,10 @@ public class FileSniffer {
 	private static final int USERDUMP_2 = 0x44554D50;
 
 	//DR1 and DR2 are z/OS core file identifiers
-    private static final int DR1 = 0xc4d9f140;
-    private static final int DR2 = 0xc4d9f240;
+	private static final int DR1 = 0xc4d9f140;
+	private static final int DR2 = 0xc4d9f240;
 
-    //XCOFF identifiers
+	//XCOFF identifiers
 	private static final int CORE_DUMP_XX_VERSION = 0xFEEDDB2;
 	private static final int CORE_DUMP_X_VERSION = 0xFEEDDB1;
 
@@ -65,34 +65,34 @@ public class FileSniffer {
 	private static final int MACHO_64 = 0xFEEDFACF;
 	private static final int MACHO_64_REV = 0xCFFAEDFE;
 
-    private static int[] coreid = new int[]{ELF, MINIDUMP, DR1, DR2};
+	private static int[] coreid = new int[]{ELF, MINIDUMP, DR1, DR2};
 
-    //PHD identifier
-    private static final String PHD_HEADER = "portable heap dump";
-    private static final int PHD_HEADER_SIZE = PHD_HEADER.length() + 2;		//UTF-8 string so need to add 2 length bytes
+	//PHD identifier
+	private static final String PHD_HEADER = "portable heap dump";
+	private static final int PHD_HEADER_SIZE = PHD_HEADER.length() + 2;		//UTF-8 string so need to add 2 length bytes
 
-    //zip file identifier
-    private static final int ZIP_ID = 0x04034b50;
+	//zip file identifier
+	private static final int ZIP_ID = 0x04034b50;
 
-    //the format for a core file
-    public enum CoreFormatType {
-        ELF,
-        MINIDUMP,
-        MVS,
-        XCOFF,
-        USERDUMP,
-        MACHO,
-        UNKNOWN
-    }
+	//the format for a core file
+	public enum CoreFormatType {
+		ELF,
+		MINIDUMP,
+		MVS,
+		XCOFF,
+		USERDUMP,
+		MACHO,
+		UNKNOWN
+	}
 
-    /**
-     * Determine the format of the core file.
-     *
-     * @param iis stream to the core file
-     * @return format
-     * @throws IOException re-thrown
-     */
-    public static CoreFormatType getCoreFormat(ImageInputStream iis) throws IOException {
+	/**
+	 * Determine the format of the core file.
+	 *
+	 * @param iis stream to the core file
+	 * @return format
+	 * @throws IOException re-thrown
+	 */
+	public static CoreFormatType getCoreFormat(ImageInputStream iis) throws IOException {
 		try {
 			int header = iis.readInt();
 			int header2 = iis.readInt();
@@ -334,12 +334,12 @@ public class FileSniffer {
 	 *
 	 A.  Local file header:
 
-        local file header signature     4 bytes  (0x04034b50)
-        version needed to extract       2 bytes
-        general purpose bit flag        2 bytes
-        compression method              2 bytes
-        last mod file time              2 bytes
-        last mod file date              2 bytes
+		local file header signature     4 bytes  (0x04034b50)
+		version needed to extract       2 bytes
+		general purpose bit flag        2 bytes
+		compression method              2 bytes
+		last mod file time              2 bytes
+		last mod file date              2 bytes
 	 */
 	public static boolean isZipFile(ImageInputStream iis) throws IOException {
 		ByteOrder byteOrder = iis.getByteOrder();

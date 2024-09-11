@@ -35,34 +35,34 @@ public interface JavaMember {
 	/**
 	 * Get the set of modifiers for this field or method - a set of bits
 	 * @return the modifiers for this field or method. The values for the constants representing
-     * the modifiers can be obtained from java.lang.reflect.Modifier.
+	 * the modifiers can be obtained from java.lang.reflect.Modifier.
 	 * @throws CorruptDataException
-     *
-     */
-    public int getModifiers()  throws CorruptDataException;
+	 *
+	 */
+	public int getModifiers()  throws CorruptDataException;
 
-    /**
-     * Get the class which declares this field or method
-     * @return the JavaClass which declared this field or method
-     * @throws CorruptDataException
-     * @throws DataUnavailable
-     */
-    public JavaClass getDeclaringClass() throws CorruptDataException, DataUnavailable;
+	/**
+	 * Get the class which declares this field or method
+	 * @return the JavaClass which declared this field or method
+	 * @throws CorruptDataException
+	 * @throws DataUnavailable
+	 */
+	public JavaClass getDeclaringClass() throws CorruptDataException, DataUnavailable;
 
-    /**
-     * Get the name of the field or method
-     * @return the name of the field or method
-     * @throws CorruptDataException
-     */
-    public String getName()  throws CorruptDataException;
+	/**
+	 * Get the name of the field or method
+	 * @return the name of the field or method
+	 * @throws CorruptDataException
+	 */
+	public String getName()  throws CorruptDataException;
 
-    /**
-     * Get the signature of the field or method
-     * @return the signature of the field or method.
-     * e.g. "(Ljava/lang/String;)V"
-     * @throws CorruptDataException
-     */
-    public String getSignature()  throws CorruptDataException;
+	/**
+	 * Get the signature of the field or method
+	 * @return the signature of the field or method.
+	 * e.g. "(Ljava/lang/String;)V"
+	 * @throws CorruptDataException
+	 */
+	public String getSignature()  throws CorruptDataException;
 
 	/**
 	 * @param obj

@@ -28,7 +28,7 @@ import java.nio.ByteBuffer;
 
 /**
  * Processor section of a file header
- * 
+ *
  * @author Tim Preece
  */
 public class ProcessorSection {
@@ -43,7 +43,7 @@ public class ProcessorSection {
 	private final static String[] SubTypes = { "i486", "i586", "Pentium II", "Pentium III", "Merced", "McKinley",
 		"PowerRS", "PowerPC", "GigaProcessor", "ESA", "Pentium IV", "T-Rex", "Opteron", "RV64G", "Armv8-A" };
 	private final static String[] trCounter = { "Sequence Counter", "Special", "RDTSC Timer", "AIX Timer", "MFSPR Timer", "MFTB Timer", "STCK Timer", "J9 timer" };
-	
+
 	TraceContext context;
 
 	int arch;
@@ -52,7 +52,7 @@ public class ProcessorSection {
 	int procs;
 	int subType;
 	int counter;
-	
+
 	String textSummary;
 
 	public ProcessorSection(TraceContext context, ByteBuffer data) throws IllegalArgumentException {
@@ -68,7 +68,6 @@ public class ProcessorSection {
 		subType = data.getInt();
 		counter = data.getInt();
 
-
 		if (context.debugStream != null) {
 			context.debug(this, 1, summary());
 		}
@@ -77,7 +76,7 @@ public class ProcessorSection {
 	public String toString() {
 		return "Processor information";
 	}
-	
+
 	public String summary() {
 		if (textSummary == null) {
 			StringBuilder s = new StringBuilder(toString()+":"+System.getProperty("line.separator"));
@@ -90,7 +89,7 @@ public class ProcessorSection {
 
 			textSummary = s.toString();
 		}
-		
+
 		return textSummary;
 	}
 }

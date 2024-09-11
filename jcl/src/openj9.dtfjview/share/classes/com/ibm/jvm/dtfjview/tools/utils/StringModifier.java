@@ -22,10 +22,9 @@
  */
 package com.ibm.jvm.dtfjview.tools.utils;
 
-
 /**
- * This class is to be used together with pre-match handler, match handler 
- * and post-match handler. It receives strings from the OutputStreamModifier 
+ * This class is to be used together with pre-match handler, match handler
+ * and post-match handler. It receives strings from the OutputStreamModifier
  * and delegates them to the above handlers according to the matching status.
  * <p>
  * @author Manqing Li, IBM.
@@ -48,7 +47,7 @@ public class StringModifier implements IStringModifier {
 		} else if (false == matched && true == becomeMatched) {
 			matched = true;
 			postmatchHandle.justMatched();
-			return prematchHandle.release() + matchHandle.process(s); 
+			return prematchHandle.release() + matchHandle.process(s);
 		} else if (true == matched && false == becomeMatched) {
 			return postmatchHandle.process(s);
 		} else { // matched == true && becomeMatched == true

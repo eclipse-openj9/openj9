@@ -66,7 +66,7 @@ import com.ibm.jvm.dtfjview.heapdump.portable.PortableHeapDumpFormatter;
 
 /**
  * Command for dumping heapdumps from DTFJ.
- * 
+ *
  * Contains the heap-walking logic for building the reference tree. The code for writing the heapdumps
  * (both PHD and classic) is in the com.ibm.jvm.heapdump package.
  * @author andhall
@@ -82,7 +82,7 @@ public class HeapdumpCommand extends BaseJdmpviewCommand
 			+ "Writes a heapdump from the memory image.\n"
 			+ "The file name and format are controlled using the \"set heapdump\" command; the current settings "
 			+ "can be displayed using \"show heapdump\".\n";
-		
+
 	private static final String PROTECTION_DOMAIN_FIELD_NAME = "protectionDomain";
 	/**
 	 * Regexp pattern used to extract a subset of the versions string
@@ -98,9 +98,9 @@ public class HeapdumpCommand extends BaseJdmpviewCommand
 	private boolean _is32BitHash;
 
 	{
-		addCommand(COMMAND_NAME, "", DESCRIPTION);	
+		addCommand(COMMAND_NAME, "", DESCRIPTION);
 	}
-	
+
 	public void run(String command, String[] args, IContext context, PrintStream out) throws CommandException {
 		if(initCommand(command, args, context, out)) {
 			return;		//processing already handled by super class
@@ -111,17 +111,17 @@ public class HeapdumpCommand extends BaseJdmpviewCommand
 	public void doCommand(String[] args)
 	{
 		Set heapsToDump = new HashSet();
-		
+
 		_numberOfObjects = 0;
 		_numberOfErrors = 0;
 		_numberOfClasses = 0;
-		
+
 		if (ctx.hasPropertyBeenSet(VERBOSE_MODE_PROPERTY)) {
 			_verbose = true;
 		}
-		
+
 		JavaRuntime runtime = ctx.getRuntime();
-			
+
 		while( runtime != null ) {
 			ImageAddressSpace addressSpace = null;
 			try {
@@ -141,11 +141,11 @@ public class HeapdumpCommand extends BaseJdmpviewCommand
 			String version = getVersionString(runtime);
 			if (version.contains("IBM J9 2.3") || version.contains("IBM J9 2.4") || version.contains("IBM J9 2.5")) {
 				// J9 JVMs versions prior to 2.6 have 16-bit hashcodes, later JVMs have 32-bit hashcodes
-				_is32BitHash = false; 
+				_is32BitHash = false;
 			} else {
 				_is32BitHash = true;
 			}
-			
+
 			boolean is64Bit = addressSpace.getCurrentProcess().getPointerSize() == 64;
 
 			String filename = HeapDumpSettings.getFileName(ctx.getProperties());
@@ -161,12 +161,12 @@ public class HeapdumpCommand extends BaseJdmpviewCommand
 				if(_numberOfErrors == 0) {
 					out.print("\nSuccessfully wrote " + _numberOfObjects + " objects and " + _numberOfClasses + " classes\n");
 				} else {
-					out.print("\nWrote " 
-							+ _numberOfObjects 
-							+ " objects and " 
-							+ _numberOfClasses 
-							+ " classes and encountered " 
-							+ _numberOfErrors 
+					out.print("\nWrote "
+							+ _numberOfObjects
+							+ " objects and "
+							+ _numberOfClasses
+							+ " classes and encountered "
+							+ _numberOfErrors
 							+ " errors."
 							+ "\n");
 				}
@@ -177,11 +177,11 @@ public class HeapdumpCommand extends BaseJdmpviewCommand
 				ex.printStackTrace(new PrintWriter(writer));
 				out.println(writer.toString());
 			}
-			
+
 			runtime = null;
 		}
 	}
-	
+
 	/**
 	 * Checks the list of heaps to dump as specified by the user.
 	 * @param runtime Current java runtime
@@ -193,18 +193,18 @@ public class HeapdumpCommand extends BaseJdmpviewCommand
 		if(heapsToDump.size() == 0) {
 			return true;
 		}
-		
+
 		Set workingSet = new HashSet();
 		workingSet.addAll(heapsToDump);
-		
+
 		Iterator heapIt = runtime.getHeaps();
-		
+
 		while(heapIt.hasNext()) {
 			Object potential = heapIt.next();
-			
+
 			if(potential instanceof JavaHeap) {
 				JavaHeap thisHeap = (JavaHeap)potential;
-				
+
 				workingSet.remove(thisHeap.getName());
 			} else if (potential instanceof CorruptData) {
 				reportError("Corrupt heap found. Address = " + ((CorruptData)potential).getAddress(),null);
@@ -214,23 +214,23 @@ public class HeapdumpCommand extends BaseJdmpviewCommand
 				reportError("Unexpected type " + potential.getClass().getName() + " found in heap iterator",null);
 			}
 		}
-		
+
 		if(workingSet.isEmpty()) {
 			return true;
 		} else {
 			StringBuffer buffer = new StringBuffer();
 			buffer.append("These specified heaps do not exist:\n");
-			
+
 			Iterator nameIterator = workingSet.iterator();
-			
+
 			while(nameIterator.hasNext()) {
 				buffer.append("\t\t" + nameIterator.next() + "\n");
 			}
-			
+
 			buffer.append("\tUse \"info heap\" to see list of heap names");
-			
+
 			out.println(buffer.toString());
-			
+
 			return false;
 		}
 	}
@@ -245,10 +245,10 @@ public class HeapdumpCommand extends BaseJdmpviewCommand
 	{
 		try {
 			String rawVersion = runtime.getVersion();
-			
+
 			Matcher matcher = J9_VERSION_PATTERN.matcher(rawVersion);
-			
-			if(matcher.find()) { // dump prior to JVM 2.6, extract single line version string 
+
+			if(matcher.find()) { // dump prior to JVM 2.6, extract single line version string
 				String minimalVersion = matcher.group(1);
 				return minimalVersion;
 			} else { // dump from JVM 2.6 or later, return unchanged version string
@@ -262,48 +262,46 @@ public class HeapdumpCommand extends BaseJdmpviewCommand
 			return "*Corrupt*";
 		}
 	}
-	
+
 	private void dumpMultipleHeapsInOneFile(JavaRuntime runtime,
 			String version, boolean is64Bit, boolean phdFormat, String filename, Set heapsToDump) throws IOException
 	{
 		Iterator heapIterator = runtime.getHeaps();
-		
-		HeapDumpFormatter formatter = getFormatter(filename, version, is64Bit, phdFormat);
-		
-		out.println("Writing " + ( phdFormat ? "PHD" : "Classic") + " format heapdump into " + filename);
-		
 
-		
+		HeapDumpFormatter formatter = getFormatter(filename, version, is64Bit, phdFormat);
+
+		out.println("Writing " + ( phdFormat ? "PHD" : "Classic") + " format heapdump into " + filename);
+
 		while (heapIterator.hasNext()) {
 			Object thisHeapObj = heapIterator.next();
 
 			if (thisHeapObj instanceof CorruptData) {
-				out.println("Corrupt heap data found at: " 
+				out.println("Corrupt heap data found at: "
 						+ ((CorruptData) thisHeapObj).getAddress());
 				_numberOfErrors++;
 				continue;
 			}
 
 			JavaHeap thisHeap = (JavaHeap) thisHeapObj;
-			
+
 			if(heapsToDump.size() > 0 && ! heapsToDump.contains(thisHeap.getName())) {
 				continue;
 			}
-			
+
 			dumpHeap(formatter, thisHeap);
 		}
-		
+
 		dumpClasses(formatter,runtime);
-		
+
 		formatter.close();
 	}
 
 	private void dumpMultipleHeapsInSeparateFiles(JavaRuntime runtime,String version, boolean is64Bit, boolean phdFormat,String baseFileName, Set heapsToDump) throws IOException
 	{
 		Iterator heapIterator = runtime.getHeaps();
-		
+
 		HeapDumpFormatter formatter = null;
-		
+
 		while (heapIterator.hasNext()) {
 			Object thisHeapObj = heapIterator.next();
 
@@ -324,24 +322,24 @@ public class HeapdumpCommand extends BaseJdmpviewCommand
 			if(heapsToDump.size() > 0 && ! heapsToDump.contains(thisHeap.getName())) {
 				continue;
 			}
-			
+
 			String fileName = getFileNameForHeap(thisHeap,baseFileName);
 
-			out.print("Writing " 
-					+ ( phdFormat ? "PHD" : "Classic") 
-					+ " format heapdump for heap " 
-					+ thisHeap.getName() 
-					+ " into " 
+			out.print("Writing "
+					+ ( phdFormat ? "PHD" : "Classic")
+					+ " format heapdump for heap "
+					+ thisHeap.getName()
+					+ " into "
 					+ fileName + "\n");
-			
+
 			formatter = getFormatter(fileName, version, is64Bit, phdFormat);
-			
+
 			//We have to dump classes in every heapdump
 			dumpClasses(formatter,runtime);
-			
+
 			dumpHeap(formatter, thisHeap);
 		}
-		
+
 		if(formatter != null) {
 			formatter.close();
 		}
@@ -353,52 +351,52 @@ public class HeapdumpCommand extends BaseJdmpviewCommand
 	private void dumpClasses(HeapDumpFormatter formatter, JavaRuntime runtime) throws IOException
 	{
 		Iterator classLoaderIt = runtime.getJavaClassLoaders();
-		
+
 		int numberOfClasses = 0;
-		
+
 ITERATING_LOADERS:while(classLoaderIt.hasNext()) {
 			Object potential = classLoaderIt.next();
-			
+
 			if(potential instanceof CorruptData) {
 				_numberOfErrors++;
 				reportError("CorruptData found in classloader list at address: " + ((CorruptData)potential).getAddress(), null);
 				continue ITERATING_LOADERS;
 			}
-			
+
 			JavaClassLoader thisClassLoader = (JavaClassLoader)potential;
-			
+
 			Iterator classesIt = thisClassLoader.getDefinedClasses();
-			
+
 ITERATING_CLASSES:while(classesIt.hasNext()) {
 				potential = classesIt.next();
-				
+
 				numberOfClasses++;
-				
+
 				try {
-					
+
 					if(potential instanceof CorruptData) {
 						_numberOfErrors++;
 						reportError("CorruptData found in class list for classloader "
-								+ Long.toHexString(thisClassLoader.getObject().getID().getAddress()) 
+								+ Long.toHexString(thisClassLoader.getObject().getID().getAddress())
 								+ " at address: " + ((CorruptData)potential).getAddress(), null);
 						continue ITERATING_CLASSES;
 					}
 
 					JavaClass thisJavaClass = (JavaClass)potential;
-					
+
 					JavaClass superClass = thisJavaClass.getSuperclass();
-					
+
 					JavaObject classObject = thisJavaClass.getObject();
-					
+
 					long instanceSize;
 					if(thisJavaClass.isArray()) {
 						instanceSize = 0;
 					} else {
 						instanceSize = thisJavaClass.getInstanceSize();
 					}
-					
+
 					int hashcode = 0;
-					if (_is32BitHash) { // JVMs from 2.6 on, optional 32-bit hashcodes, if object was hashed 
+					if (_is32BitHash) { // JVMs from 2.6 on, optional 32-bit hashcodes, if object was hashed
 						try {
 							hashcode = classObject != null ? (int)classObject.getPersistentHashcode() : 0;
 						} catch (DataUnavailable ex) {
@@ -407,9 +405,9 @@ ITERATING_CLASSES:while(classesIt.hasNext()) {
 					} else { // JVMs prior to 2.6, all objects should have a 16-bit hashcode
 						hashcode = classObject != null ? (int)classObject.getHashcode() : 0;
 					}
-					
+
 					formatter.addClass(classObject.getID().getAddress(),
-								thisJavaClass.getName(), 
+								thisJavaClass.getName(),
 								superClass != null ? superClass.getID().getAddress() : 0,
 								classObject != null ? (int)classObject.getSize() : 0,
 								instanceSize,
@@ -423,11 +421,11 @@ ITERATING_CLASSES:while(classesIt.hasNext()) {
 				}
 			}
 		}
-		
-	   _numberOfClasses = numberOfClasses;
-	   if((pdSkipCount > 0) && _verbose) {
-		   out.println("Warning : The protection domain information was not available for " + pdSkipCount + " classes");
-	   }
+
+		_numberOfClasses = numberOfClasses;
+		if ((pdSkipCount > 0) && _verbose) {
+			out.println("Warning : The protection domain information was not available for " + pdSkipCount + " classes");
+		}
 	}
 
 	/**
@@ -453,12 +451,12 @@ ITERATING_CLASSES:while(classesIt.hasNext()) {
 				if (thisObject.getJavaClass().getName().equals("java/lang/Class")) {
 					// heap classes are handled separately, in dumpClasses()
 					continue;
-				}				
+				}
 				JavaClass thisClass = thisObject.getJavaClass();
 				JavaObject thisClassObject = thisClass.getObject();
 
 				int hashcode = 0;
-				if (_is32BitHash) { // JVMs from 2.6 on, optional 32-bit hashcodes, if object was hashed 
+				if (_is32BitHash) { // JVMs from 2.6 on, optional 32-bit hashcodes, if object was hashed
 					try {
 						hashcode = (int) thisObject.getPersistentHashcode();
 					} catch (DataUnavailable ex) {
@@ -475,30 +473,30 @@ ITERATING_CLASSES:while(classesIt.hasNext()) {
 
 				if (thisObject.isArray()) {
 					if (isPrimitive(thisClass.getComponentType())) {
-						formatter.addPrimitiveArray(thisObject.getID().getAddress(), 
+						formatter.addPrimitiveArray(thisObject.getID().getAddress(),
 													thisClassObject.getID().getAddress(),
 													getPrimitiveTypeCode(thisClass.getComponentType()),
-													thisObject.getSize(), 
+													thisObject.getSize(),
 													hashcode,
 													thisObject.getArraySize());
 					} else {
-						formatter.addObjectArray(thisObject.getID().getAddress(), 
-								thisClassObject.getID().getAddress(), 
-								thisClass.getName(), 
+						formatter.addObjectArray(thisObject.getID().getAddress(),
+								thisClassObject.getID().getAddress(),
+								thisClass.getName(),
 								thisClass.getComponentType().getObject().getID().getAddress(),
-								thisClass.getComponentType().getName(), 
+								thisClass.getComponentType().getName(),
 								thisObject.getSize(),
 								thisObject.getArraySize(),
-								hashcode, 
+								hashcode,
 								getObjectReferences(thisObject));
 					}
 				}
 				else {
-					formatter.addObject(thisObject.getID().getAddress(), 
-										thisClassObject.getID().getAddress(), 
-										thisClass.getName(), 
+					formatter.addObject(thisObject.getID().getAddress(),
+										thisClassObject.getID().getAddress(),
+										thisClass.getName(),
 										(int)thisObject.getSize(),
-										hashcode, 
+										hashcode,
 										getObjectReferences(thisObject));
 				}
 			}
@@ -517,21 +515,21 @@ ITERATING_CLASSES:while(classesIt.hasNext()) {
 
 	/**
 	 * Gets the references for the supplied class
-	 * 
-	 * @param thisJavaClass Class being examined 
+	 *
+	 * @param thisJavaClass Class being examined
 	 */
 	private ReferenceIterator getClassReferences(JavaClass thisJavaClass)
 	{
 		List references = new LinkedList();
-		
+
 		try {
 			// Class object instance references
 			addReferences(thisJavaClass.getObject(), references);
-			//Statics        
+			//Statics
 			addStaticReferences(thisJavaClass, references);
-			
+
 			addProtectionDomainReference(thisJavaClass,references);
-			
+
 			// Constant pool class references
 			Iterator constantPoolIt = thisJavaClass.getConstantPoolReferences();
 			while (constantPoolIt.hasNext()) {
@@ -542,17 +540,17 @@ ITERATING_CLASSES:while(classesIt.hasNext()) {
 					references.add(Long.valueOf(cpJavaClass.getObject().getID().getAddress()));
 				}
 			}
-					
+
 			// Superclass references
 			JavaClass superClass = thisJavaClass.getSuperclass();
 			while (null != superClass){
 				references.add(Long.valueOf(superClass.getObject().getID().getAddress()));
 				superClass = superClass.getSuperclass();
 			}
-			
+
 			//Classloader
 			JavaClassLoader loader = thisJavaClass.getClassLoader();
-			
+
 			if(loader != null) {
 				JavaObject loaderObject = loader.getObject();
 				if(loaderObject != null) {
@@ -565,20 +563,20 @@ ITERATING_CLASSES:while(classesIt.hasNext()) {
 				reportError("Null classloader returned for class: " + thisJavaClass.getName() + "(" + thisJavaClass.getID() + ")",null);
 				_numberOfErrors++;
 			}
-		
+
 		} catch(DTFJException ex) {
 			reportError(null,ex);
 			_numberOfErrors++;
 		}
-		
+
 		return new LongListReferenceIterator(references);
 	}
-	
+
 	private long pdSkipCount = 0;
-	
+
 	private void addProtectionDomainReference(JavaClass thisJavaClass,
 			List references) throws CorruptDataException, MemoryAccessException
-			
+
 	{
 		try {
 			JavaObject protectionDomain = thisJavaClass.getProtectionDomain();
@@ -600,10 +598,10 @@ ITERATING_CLASSES:while(classesIt.hasNext()) {
 			throws CorruptDataException, MemoryAccessException
 	{
 		Iterator fieldsIt = thisClass.getDeclaredFields();
-			
+
 		while(fieldsIt.hasNext()) {
 			Object potential = fieldsIt.next();
-				
+
 			if(potential instanceof CorruptData) {
 				reportError("Corrupt field found in class "
 						+ thisClass.getName()
@@ -613,15 +611,15 @@ ITERATING_CLASSES:while(classesIt.hasNext()) {
 				_numberOfErrors++;
 				continue;
 			}
-				
+
 			JavaField field = (JavaField) potential;
-				
+
 			if(! Modifier.isStatic(field.getModifiers())) {
 				continue;
 			}
-				
+
 			Object referent = field.get(thisClass.getObject());
-					
+
 			if(referent instanceof CorruptData) {
 				_numberOfErrors++;
 				reportError("Corrupt referent found in class "
@@ -633,17 +631,17 @@ ITERATING_CLASSES:while(classesIt.hasNext()) {
 						,null);
 			} else if (referent instanceof JavaObject) {
 				JavaObject referredObject = (JavaObject) referent;
-					
+
 				references.add(Long.valueOf(referredObject.getID().getAddress()));
 			} else if (referent == null) {
 				references.add(Long.valueOf(0));
 			} else if (referent instanceof Number || referent instanceof Boolean || referent instanceof Character) {
 				//Ignore
 			} else {
-				reportError("Unexpected type: " 
-						+ referent.getClass().getName() 
-						+ " returned from field " 
-						+ field.getName() 
+				reportError("Unexpected type: "
+						+ referent.getClass().getName()
+						+ " returned from field "
+						+ field.getName()
 						+ " from class "
 						+ thisClass.getName()
 						+ "(" + thisClass.getID()+ ")"
@@ -652,7 +650,7 @@ ITERATING_CLASSES:while(classesIt.hasNext()) {
 			}
 		}
 	}
-	
+
 	/**
 	 * Gets instance references for objects
 	 * @param thisObject Object being examined
@@ -668,12 +666,12 @@ ITERATING_CLASSES:while(classesIt.hasNext()) {
 				/**
 				 * Reverse the order of the elements for an object array.
 				 *
-				 * In a classic heapdump or portable heapdump from the vm, the array elements are always 
+				 * In a classic heapdump or portable heapdump from the vm, the array elements are always
 				 * in reverse order (i.e. the opposite of index order) because for historical reasons
-				 * that is the order in which the gc iterator returns them. 
+				 * that is the order in which the gc iterator returns them.
 				 * Therefore reverse the order before writing them out so that the heapdump
 				 * that we generate looks as close as possible to one from the vm.
-				 * <p>  
+				 * <p>
 				 * See CMVC 193691
 				 */
 				Long[] refsAsArray = references.toArray(new Long[0]); // Java idiom to dump a list to an array
@@ -681,7 +679,7 @@ ITERATING_CLASSES:while(classesIt.hasNext()) {
 
 				for (int i = refsAsArray.length - 1; i >= 0; i--) {
 					references.add(refsAsArray[i]);
-				}			    	
+				}
 			}
 		} catch(DTFJException ex) {
 			_numberOfErrors++;
@@ -703,23 +701,23 @@ ITERATING_CLASSES:while(classesIt.hasNext()) {
 	{
 		Iterator it = object.getReferences();
 		Object ref = null;
-		
+
 		// discard the first reference which is always to the class
 		if (it.hasNext()) { // test hasNext() to be on the safe side.
 			ref = it.next();
 		}
-		
-		while (it.hasNext()) {			
+
+		while (it.hasNext()) {
 			ref = it.next();
 			if(ref instanceof CorruptData) {
 				// can sometimes get a nasty surprise in the list - e.g. a J9DDRCorruptData
 				_numberOfErrors++;
-				reportError("Corrupt data found at address " 
-						+ ((CorruptData)ref).getAddress() 
+				reportError("Corrupt data found at address "
+						+ ((CorruptData)ref).getAddress()
 						+ " getting references from object at address: "
 						+ Long.toHexString(object.getID().getAddress())
 						+ " of class "
-						+ object.getJavaClass().getName() 
+						+ object.getJavaClass().getName()
 						+ "(" + object.getJavaClass().getID() + ")"
 						,null);
 				continue;
@@ -727,11 +725,11 @@ ITERATING_CLASSES:while(classesIt.hasNext()) {
 			if ( ! (ref instanceof JavaReference)) {
 				_numberOfErrors++;
 				reportError("Object of unexpected type "
-						+ ref.getClass() 
+						+ ref.getClass()
 						+ " found within references from object at address: "
 						+ object.getID().getAddress()
 						+ " of class "
-						+ object.getJavaClass().getName() 
+						+ object.getJavaClass().getName()
 						+ "(" + object.getJavaClass().getID() + ")"
 						,null);
 				continue;
@@ -748,13 +746,13 @@ ITERATING_CLASSES:while(classesIt.hasNext()) {
 				}
 				// the following ugliness is necessary as JavaObject and JavaClass both support getID() but do not inherit from a common parent
 				if (target instanceof JavaObject) {
-					references.add(Long.valueOf(((JavaObject) target).getID().getAddress()));				
+					references.add(Long.valueOf(((JavaObject) target).getID().getAddress()));
 				} else if (target instanceof JavaClass) {
 					references.add(Long.valueOf(((JavaClass) target).getID().getAddress()));
 				} else {
 					_numberOfErrors++;
 					reportError("Object of unexpected type "
-							+ target.getClass() 
+							+ target.getClass()
 							+ " returned from call to getTarget() on reference "
 							+ ref
 							,null);
@@ -765,7 +763,7 @@ ITERATING_CLASSES:while(classesIt.hasNext()) {
 
 	/**
 	 * Checks if class is primitive
-	 * 
+	 *
 	 * @param clazz
 	 *            Class under test
 	 * @return True if clazz represents a primitive type, false otherwise
@@ -790,7 +788,7 @@ ITERATING_CLASSES:while(classesIt.hasNext()) {
 	}
 
 	/**
-	 * Converts a class into a primitive type code (as used by the HeapdumpFormatter interface). 
+	 * Converts a class into a primitive type code (as used by the HeapdumpFormatter interface).
 	 * @param clazz
 	 * @return
 	 */
@@ -834,7 +832,7 @@ ITERATING_CLASSES:while(classesIt.hasNext()) {
 	private String getFileNameForHeap(JavaHeap thisHeap, String baseFileName)
 	{
 		int pointIndex = baseFileName.lastIndexOf(".");
-		
+
 		if(pointIndex != -1) {
 			return baseFileName.substring(0,pointIndex) + "." + thisHeap.getName() + baseFileName.substring(pointIndex);
 		} else {
@@ -845,27 +843,27 @@ ITERATING_CLASSES:while(classesIt.hasNext()) {
 	/**
 	 * Internal error handling routine that only reports the supplied message if verbose was supplied on the command line.
 	 */
-	private void reportError(String msg,Throwable t) 
+	private void reportError(String msg,Throwable t)
 	{
 		if(!_verbose) {
 			return;
 		}
-		
+
 		if(msg != null) {
 			out.println(msg);
 		}
-		
+
 		if(t != null) {
 			StringWriter writer = new StringWriter();
-			
+
 			t.printStackTrace(new PrintWriter(writer));
-			
+
 			out.println(writer.toString());
 		}
 	}
-	
+
 	@Override
 	public void printDetailedHelp(PrintStream out) {
-		out.println(LONG_DESCRIPTION);		
+		out.println(LONG_DESCRIPTION);
 	}
 }

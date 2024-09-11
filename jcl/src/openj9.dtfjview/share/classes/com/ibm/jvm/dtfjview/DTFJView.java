@@ -46,13 +46,13 @@ public class DTFJView {
 		DTFJView dtfjView = new DTFJView();
 		dtfjView.launch(args);
 	}
-	
+
 	public void launch(String[] args) {
 		setPluginsPath();
 		session = Session.getInstance(args);
 		((Session)session).run();
 	}
-	
+
 	/*
 	 * There is no longer a hard coded list of in-built jdmpview commands, instead the dynamic discovery mechanism
 	 * introduced by the introduction of support for DTFJ plugins is used. In order to do this the current class path
@@ -61,7 +61,7 @@ public class DTFJView {
 	 * set of commands. Prepending this path ensures that in the event of a namespace clash with a subsequently developed
 	 * plugin, the in-built command will take precedence.
 	 */
-	
+
 	private void setPluginsPath() {
 		ClassLoader loader = getClass().getClassLoader();
 		if(loader instanceof URLClassLoader) {
@@ -80,7 +80,7 @@ public class DTFJView {
 			}
 		}
 	}
-	
+
 	private void addSelfToPath(File jar) throws IOException {
 		String prop = System.getProperty(PluginConstants.PLUGIN_SYSTEM_PROPERTY);
 		if(prop == null) {

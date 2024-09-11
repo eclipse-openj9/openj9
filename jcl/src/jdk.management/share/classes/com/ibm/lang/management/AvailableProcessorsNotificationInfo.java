@@ -44,7 +44,7 @@ public class AvailableProcessorsNotificationInfo {
 
 	/**
 	 * Constructs a new instance of this object.
-	 * 
+	 *
 	 * @param newAvailableProcessors
 	 *            the new number of processors available
 	 */
@@ -56,7 +56,7 @@ public class AvailableProcessorsNotificationInfo {
 	/**
 	 * Returns the new number of available processors after the change that
 	 * initiated this notification.
-	 * 
+	 *
 	 * @return the number of available processors
 	 */
 	public int getNewAvailableProcessors() {
@@ -68,7 +68,7 @@ public class AvailableProcessorsNotificationInfo {
 	 * <code>AvailableProcessorsNotificationInfo</code> object and attempts to
 	 * return the root <code>AvailableProcessorsNotificationInfo</code>
 	 * instance.
-	 * 
+	 *
 	 * @param cd
 	 *            a <code>CompositeDate</code> that represents a
 	 *            <code>AvailableProcessorsNotificationInfo</code>.
@@ -94,7 +94,7 @@ public class AvailableProcessorsNotificationInfo {
 			// following method invocations will exit on an
 			// IllegalArgumentException...
 			ManagementUtils.verifyFieldNumber(cd, 1);
-			String[] attributeNames = { "newAvailableProcessors" }; //$NON-NLS-1$ 
+			String[] attributeNames = { "newAvailableProcessors" }; //$NON-NLS-1$
 			ManagementUtils.verifyFieldNames(cd, attributeNames);
 			String[] attributeTypes = { "java.lang.Integer" }; //$NON-NLS-1$
 			ManagementUtils.verifyFieldTypes(cd, attributeNames, attributeTypes);

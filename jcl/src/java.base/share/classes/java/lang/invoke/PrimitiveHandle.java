@@ -38,23 +38,23 @@ import static java.lang.invoke.MethodHandleResolver.UNSAFE;
 import static java.lang.invoke.MethodHandleResolver.JITHELPERS;
 
 /**
- * PrimitiveHandle is a subclass of MethodHandle used for grouping MethodHandles that directly refer a Java-level method. 
- * 
+ * PrimitiveHandle is a subclass of MethodHandle used for grouping MethodHandles that directly refer a Java-level method.
+ *
  */
 @VMCONSTANTPOOL_CLASS
 abstract class PrimitiveHandle extends MethodHandle {
 
-	@VMCONSTANTPOOL_FIELD 
+	@VMCONSTANTPOOL_FIELD
 	long vmSlot; /* Either the address of the method to be invoked or the {i,v}table index */
 
-	@VMCONSTANTPOOL_FIELD 
+	@VMCONSTANTPOOL_FIELD
 	int rawModifiers; /* Field/Method modifiers.  Currently only used by fields to determine if volatile */
 
-	@VMCONSTANTPOOL_FIELD 
+	@VMCONSTANTPOOL_FIELD
 	Class<?> defc; /* Used by security check. Class containing the method implementation or field. */
 
 	/* Used by staticFieldGetterDispatchTargets as the class passed to the readStatic object access barrier. */
-	@VMCONSTANTPOOL_FIELD 
+	@VMCONSTANTPOOL_FIELD
 	final Class<?> referenceClass; /* Lookup class for the method or field. */
 
 	final String name; /* Name used to look up method */
@@ -87,35 +87,35 @@ abstract class PrimitiveHandle extends MethodHandle {
 	Class<?> getDefc() {
 		return defc;
 	}
-	
+
 	@Override
 	Class<?> getReferenceClass() {
 		return referenceClass;
 	}
-	
+
 	@Override
 	Class<?> getSpecialCaller() {
 		return specialCaller;
 	}
-	
+
 	@Override
 	String getMethodName() {
 		return name;
 	}
-	
+
 	@Override
 	int getModifiers() {
 		return rawModifiers;
 	}
-	
+
 	/*
 	 * Wrapper on VM method lookup logic.
-	 * 
+	 *
 	 * 	referenceClazz - class that lookup is against
 	 *  name - method name
 	 *  signature - method signature
 	 *  specialCaller - class that invokespecial is against or null
-	 *  
+	 *
 	 *  Sets the vmSlot to hold the correct value for the kind of PrimitiveHandle:
 	 *  	KIND_STATIC			-	J9Method address
 	 *  	KIND_SPECIAL		-	J9Method address
@@ -127,12 +127,12 @@ abstract class PrimitiveHandle extends MethodHandle {
 
 	/*
 	 * Wrapper on VM field lookup logic.
-	 * 
+	 *
 	 *  referenceClazz - class that lookup is against
 	 *  name - field name
 	 *  signature - field signature
 	 *  accessClass is the MethodHandles.Lookup().lookupClass().
-	 *  
+	 *
 	 *  Sets the vmSlot to hold the correct value for the kind of PrimitiveHandle:
 	 *  	KIND_GETFEILD		-	field offset
 	 *  	KIND_GETSTATICFIELD	-	field address
@@ -140,30 +140,30 @@ abstract class PrimitiveHandle extends MethodHandle {
 	 *  	KIND_PUTSTATICFIELD	-	field address
 	 */
 	final native Class<?> lookupField(Class<?> referenceClazz, String name, String signature, boolean isStatic, Class<?> accessClass);
-	
+
 	/*
 	 * Rip apart a Field object that points to a field and fill in the
-	 * vmSlot of the PH.  The vmSlot for an instance field is the 
-	 * J9JNIFieldID->offset.  For a static field, its the 
+	 * vmSlot of the PH.  The vmSlot for an instance field is the
+	 * J9JNIFieldID->offset.  For a static field, its the
 	 * J9JNIField->offset + declaring classes ramStatics start address.
 	 */
 	static native boolean setVMSlotAndRawModifiersFromField(PrimitiveHandle handle, Field field);
-	
+
 	/*
-	 * Rip apart a Method object and fill in the vmSlot of the PH.  
+	 * Rip apart a Method object and fill in the vmSlot of the PH.
 	 * The vmSlot for a method depends on the kind of method:
 	 *  - J9Method address for static and special
 	 *  - vtable index for virtual
 	 *  - itable index for interface.
 	 */
 	static native boolean setVMSlotAndRawModifiersFromMethod(PrimitiveHandle handle, Class<?> declaringClass, Method method, byte kind, Class<?> specialToken);
-	
+
 	/*
-	 * Rip apart a Constructor object and fill in the vmSlot of the PH.  
+	 * Rip apart a Constructor object and fill in the vmSlot of the PH.
 	 * The vmSlot for an <init> method is the address of the J9Method.
 	 */
 	static native boolean setVMSlotAndRawModifiersFromConstructor(PrimitiveHandle handle, Constructor ctor);
-	
+
 	/*
 	 * Set the VMSlot for the VirtualHandle from the DirectHandle.  DirectHandle must be of KIND_SPECIAL.
 	 * Necessary to deal with MethodHandles#findVirtual() being allowed to look up private methods.
@@ -179,7 +179,7 @@ abstract class PrimitiveHandle extends MethodHandle {
 			}
 		}
 	}
-	
+
 	@Override
 	public MethodHandle asVarargsCollector(Class<?> arrayParameter) throws IllegalArgumentException {
 		if (!arrayParameter.isArray()) {
@@ -191,7 +191,7 @@ abstract class PrimitiveHandle extends MethodHandle {
 		}
 		return new VarargsCollectorHandle(this, arrayParameter, MethodHandles.Lookup.isVarargs(rawModifiers));
 	}
-	
+
 	/*
 	 * Finish initialization of the receiver and return the defining class of the method it represents.
 	 */
