@@ -46,14 +46,15 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9ArrayClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9BuildFlags;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9IndexableObjectPointer;
+import com.ibm.j9ddr.vm29.pointer.generated.J9JavaVMPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ObjectPointer;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ClassHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9IndexableObjectHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ObjectHelper;
+import com.ibm.j9ddr.vm29.pointer.helper.J9RASHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9UTF8Helper;
 import com.ibm.j9ddr.vm29.pointer.helper.PrintObjectFieldsHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.ValueTypeHelper;
-import com.ibm.j9ddr.vm29.pointer.helper.J9ObjectHelper;
 import com.ibm.j9ddr.vm29.types.U32;
 
 /**
@@ -146,6 +147,14 @@ public class J9ObjectStructureFormatter extends BaseStructureFormatter
 
 	private void formatArrayObject(PrintStream out, J9ClassPointer localClazz, U8Pointer dataStart, J9IndexableObjectPointer localObject, int begin, int end) throws CorruptDataException
 	{
+		boolean isIndexableDataAddrPresent;
+		try {
+			J9JavaVMPointer javaVM = J9RASHelper.getVM(DataType.getJ9RASPointer());
+			isIndexableDataAddrPresent = (J9BuildFlags.J9VM_ENV_DATA64 && !javaVM.isIndexableDataAddrPresent().isZero());
+		} catch (CorruptDataException | NoSuchFieldException e) {
+			isIndexableDataAddrPresent = false;
+		}
+
 		String className = J9IndexableObjectHelper.getClassName(localObject);
 
 		out.format("!J9IndexableObject %s {%n", localObject.getHexAddress());
@@ -160,6 +169,20 @@ public class J9ObjectStructureFormatter extends BaseStructureFormatter
 			out.format("    U_32 size = %s; // Size exceeds Integer.MAX_VALUE!%n", size.getHexValue());
 		} else {
 			out.format("    U_32 size = %s;%n", size.getHexValue());
+		}
+
+		/* if IndexableDataAddrPresent in header of ArrayObject, output DataAddr */
+		if (isIndexableDataAddrPresent) {
+			VoidPointer dataAddr;
+			try {
+				dataAddr = J9IndexableObjectHelper.getDataAddrForIndexable(localObject);
+				if (dataAddr.isNull()) {
+					dataAddr = null;
+				}
+			} catch (NoSuchFieldException e) {
+				dataAddr = null;
+			}
+			out.format("    U_64 DataAddr = %s;%n", (dataAddr == null) ? "NULL" : dataAddr.getHexAddress());
 		}
 
 		printSubArrayType(out, 1, localClazz, dataStart, begin, end, localObject);

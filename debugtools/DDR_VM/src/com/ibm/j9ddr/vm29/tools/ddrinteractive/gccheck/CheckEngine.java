@@ -101,7 +101,8 @@ class CheckEngine
 	private static final int UNINITIALIZED_SIZE = -1;
 	private int _ownableSynchronizerObjectCountOnList = UNINITIALIZED_SIZE; /**< the count of ownableSynchronizerObjects on the ownableSynchronizerLists, =UNINITIALIZED_SIZE indicates that the count has not been calculated */
 	private int _ownableSynchronizerObjectCountOnHeap = UNINITIALIZED_SIZE; /**< the count of ownableSynchronizerObjects on the heap, =UNINITIALIZED_SIZE indicates that the count has not been calculated */
-	private boolean _needVerifyOwnableSynchronizerConsistency = false;
+	private boolean _needVerifyOwnableSynchronizerConsistency;
+	private boolean _isVirtualLargeObjectHeapEnabled;
 
 	private GCHeapRegionManager _hrm;
 
@@ -110,11 +111,19 @@ class CheckEngine
 		_javaVM = vm;
 		_reporter = reporter;
 
+		MM_GCExtensionsPointer extensions =  MM_GCExtensionsPointer.cast(_javaVM.gcExtensions());
+
+		try {
+			_isVirtualLargeObjectHeapEnabled = extensions.isVirtualLargeObjectHeapEnabled();
+		} catch (NoSuchFieldException e) {
+			_isVirtualLargeObjectHeapEnabled = false;
+		}
+
 		/*
 		 * Even if hrm is null, all helpers that use it will null check it and
 		 * attempt to allocate it and handle the failure
 		 */
-		MM_HeapRegionManagerPointer hrmPtr = MM_GCExtensionsPointer.cast(_javaVM.gcExtensions()).heapRegionManager();
+		MM_HeapRegionManagerPointer hrmPtr = extensions.heapRegionManager();
 		_hrm = GCHeapRegionManager.fromHeapRegionManager(hrmPtr);
 	}
 
@@ -1190,34 +1199,12 @@ class CheckEngine
 			}
 		}
 
-		try {
-			if (J9BuildFlags.J9VM_ENV_DATA64 && isIndexableDataAddressFlagSet() && ObjectModel.isIndexable(object)) {
-				if (!_javaVM.isIndexableDataAddrPresent().isZero()) {
-					J9IndexableObjectPointer array = J9IndexableObjectPointer.cast(object);
-					UDATA dataSizeInBytes = ObjectModel.getDataSizeInBytes(array);
-					VoidPointer dataAddr = J9IndexableObjectHelper.getDataAddrForIndexable(array);
-					boolean isCorrectDataAddrPointer;
-					if (dataSizeInBytes.isZero()) {
-						VoidPointer discontiguousDataAddr = VoidPointer.cast(array.addOffset(J9IndexableObjectHelper.discontiguousHeaderSize()));
-						isCorrectDataAddrPointer = (dataAddr.isNull() || dataAddr.equals(discontiguousDataAddr));
-					} else if (dataSizeInBytes.lt(_javaVM.arrayletLeafSize())) {
-						VoidPointer contiguousDataAddr = VoidPointer.cast(array.addOffset(J9IndexableObjectHelper.contiguousHeaderSize()));
-						isCorrectDataAddrPointer = dataAddr.equals(contiguousDataAddr);
-					} else {
-						isCorrectDataAddrPointer = dataAddr.isNull();
-					}
-					if (false == isCorrectDataAddrPointer) {
-						return J9MODRON_GCCHK_RC_INVALID_INDEXABLE_DATA_ADDRESS;
-					}
-				}
+		if (_isVirtualLargeObjectHeapEnabled && ObjectModel.isIndexable(object)) {
+			J9IndexableObjectPointer array = J9IndexableObjectPointer.cast(object);
+
+			if (!J9IndexableObjectHelper.hasCorrectDataAddrPointer(array)) {
+				return J9MODRON_GCCHK_RC_INVALID_INDEXABLE_DATA_ADDRESS;
 			}
-		} catch (NoSuchFieldException e) {
-			/*
-			 * Do nothing - NoSuchFieldException from trying to access the indexable object field "dataAddr"
-			 * is due to the incorrect usage of gccheck misc option "indexabledataaddress"
-			 * on a core file that was generated from a build where the "dataAddr" field does not exists yet.
-			 */
-			_cycle.clearIndexableDataAddrCheckMiscFlag();
 		}
 
 		if ((checkFlags & J9MODRON_GCCHK_VERIFY_RANGE) != 0) {
