@@ -91,6 +91,7 @@ J9Class.instanceLeafDescription = required
 J9Class.lockOffset = required
 J9Class.module = required
 J9Class.nextClassInSegment = required
+J9Class.nullRestrictedArrayClass = J9Class*
 J9Class.ramConstantPool = required
 J9Class.ramMethods = required
 J9Class.ramStatics = required

@@ -186,7 +186,11 @@ public class ValueTypeHelper {
 			int index = 0;
 
 			if (Pattern.matches("\\[\\d+\\]", nestingHierarchy[0])) {
-				resultClasses[0] = containerClazz.arrayClass();
+				try {
+					resultClasses[0] = containerClazz.nullRestrictedArrayClass();
+				} catch (NoSuchFieldException e) {
+					throw new CorruptDataException("J9Class.nullRestrictedArrayClass field does not exist", e);
+				}
 				index = 1;
 			}
 			resultClasses[index] = containerClazz;

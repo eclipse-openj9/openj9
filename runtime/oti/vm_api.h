@@ -2819,7 +2819,7 @@ UDATA
 getFlattenableFieldOffset(J9Class *fieldOwner, J9ROMFieldShape *field);
 
 /**
- * Returns if a field is flattened. `J9_IS_J9CLASS_FLATTENED` will be deprecated.
+ * Returns if a field is flattened.
  * This helper assumes field is null-restricted.
  *
  * @param[in] fieldOwner the J9class that defines the field
@@ -2831,7 +2831,7 @@ BOOLEAN
 isFlattenableFieldFlattened(J9Class *fieldOwner, J9ROMFieldShape *field);
 
 /**
- * Returns the type of an instance field. `J9_IS_J9CLASS_FLATTENED` will be deprecated.
+ * Returns the type of an instance field.
  * This helper assumes field is null-restricted.
  *
  * @param[in] fieldOwner the J9class that defines the field
