@@ -1819,7 +1819,6 @@ criuCheckpointJVMImpl(JNIEnv *env,
 		if (JVMTI_ERROR_NONE != systemReturnCode) {
 			currentExceptionClass = vm->checkpointState.criuJVMCheckpointExceptionClass;
 			nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_JVMTI_COM_IBM_LOG_QUERY_OPT_ERROR, NULL);
-			j9mem_free_memory(syslogOptions);
 			goto wakeJavaThreadsWithExclusiveVMAccess;
 		}
 		Trc_VM_criu_checkpointJVMImpl_syslogOptions(currentThread, syslogOptions);
@@ -1864,7 +1863,6 @@ criuCheckpointJVMImpl(JNIEnv *env,
 				J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
 				J9NLS_VM_CRIU_J9_CURRENT_TIME_NANOS_FAILURE,
 				NULL);
-			j9mem_free_memory(syslogOptions);
 			restoreFailure = true;
 		}
 
@@ -1880,7 +1878,6 @@ criuCheckpointJVMImpl(JNIEnv *env,
 			j9port_control(J9PORT_CTLDATA_SYSLOG_OPEN, 0);
 			setLogOptions(vm, syslogOptions);
 		}
-		j9mem_free_memory(syslogOptions);
 
 		if (hasDumpSucceeded) {
 			/* Calculate restore time excluding `criu restore ...` for MXBean API. */
@@ -1892,7 +1889,6 @@ criuCheckpointJVMImpl(JNIEnv *env,
 					J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
 					J9NLS_VM_CRIU_J9_GET_PROCESS_START_TIME_FAILURE,
 					NULL);
-				j9mem_free_memory(syslogOptions);
 				restoreFailure = true;
 			}
 			vm->checkpointState.processRestoreStartTimeInNanoseconds = (I_64)restoreNanoUTCTime;
@@ -2087,6 +2083,8 @@ freeDir:
 		if (directoryBuf != directoryChars) {
 			j9mem_free_memory(directoryChars);
 		}
+
+		j9mem_free_memory(syslogOptions);
 
 		VM_VMHelpers::setVMState(currentThread, oldVMState);
 		internalExitVMToJNI(currentThread);
