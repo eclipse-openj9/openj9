@@ -19,11 +19,14 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
+#include <cstring>
 #if !defined(JFRCONSTANTPOOLTYPES_HPP_)
 #define JFRCONSTANTPOOLTYPES_HPP_
 
 #include "j9cfg.h"
+#include "j9hypervisor.h"
 #include "j9.h"
+#include "omr.h"
 #include "omrlinkedlist.h"
 #include "vm_api.h"
 #include "vm_internal.h"
@@ -206,8 +209,27 @@ struct JVMInformationEntry {
 	I_64 pid;
 };
 
+struct CPUInformationEntry {
+	const char *cpu;
+	char *description;
+	U_32 sockets;
+	U_32 cores;
+	U_32 hwThreads;
+};
+
+struct VirtualizationInformationEntry {
+	const char *name;
+};
+
+struct OSInformationEntry {
+	char *osVersion;
+};
+
 struct JFRConstantEvents {
 	JVMInformationEntry JVMInfoEntry;
+	CPUInformationEntry CPUInfoEntry;
+	VirtualizationInformationEntry VirtualizationInfoEntry;
+	OSInformationEntry OSInfoEntry;
 };
 
 class VM_JFRConstantPoolTypes {
@@ -470,7 +492,8 @@ done:
 	* @param vm[in] the J9JavaVM
 	* @param propName[in] the system property name
 	*/
-	static const char *getSystemProp(J9JavaVM *vm, const char *propName) {
+	static const char *getSystemProp(J9JavaVM *vm, const char *propName)
+	{
 		J9VMSystemProperty *jvmInfoProperty = NULL;
 		const char *value = "";
 		UDATA getPropertyResult = vm->internalVMFunctions->getSystemProperty(vm, propName, &jvmInfoProperty);
@@ -637,6 +660,17 @@ public:
 		return _stackFrameCount;
 	}
 
+	/**
+	* Helper to get JFR constantEvents field.
+	*
+	* @param vm[in] the J9JavaVM
+	*/
+	static JFRConstantEvents *getJFRConstantEvents(J9JavaVM *vm)
+	{
+		return (JFRConstantEvents *)vm->jfrState.constantEvents;
+	}
+
+
 	void printTables();
 
 	BuildResult getBuildResult() { return _buildResult; };
@@ -701,14 +735,44 @@ done:
 	}
 
 	/**
-	* Initialize JVMInformationEntry.
-	*
-	* @param vm[in] the J9JavaVM
-	*/
-	static void initializeJVMInformationEvent(J9JavaVM *vm) {
+	 * Initialize constantEvents.
+	 *
+	 * @param vm[in] the J9JavaVM
+	 */
+	static void initializeJFRConstantEvents(J9JavaVM *vm, J9VMThread *currentThread, BuildResult *result)
+	{
+		initializeJVMInformationEvent(vm, currentThread, result);
+		initializeCPUInformationEvent(vm, currentThread, result);
+		initializeVirtualizationInformation(vm);
+		initializeOSInformation(vm, result);
+	}
+
+	/**
+	 * Free constantEvents.
+	 *
+	 * @param vm[in] the J9JavaVM
+	 */
+	static void freeJFRConstantEvents(J9JavaVM *vm)
+	{
+		PORT_ACCESS_FROM_JAVAVM(vm);
+
+		freeJVMInformationEvent(vm);
+		freeCPUInformationEvent(vm);
+		freeOSInformation(vm);
+
+		j9mem_free_memory(vm->jfrState.constantEvents);
+	}
+
+	/**
+	 * Initialize JVMInformationEntry.
+	 *
+	 * @param vm[in] the J9JavaVM
+	 */
+	static void initializeJVMInformationEvent(J9JavaVM *vm, J9VMThread *currentThread, BuildResult *result)
+	{
 		PORT_ACCESS_FROM_JAVAVM(vm);
 		/* Initialize JVM Information */
-		JVMInformationEntry *jvmInformation = &(((JFRConstantEvents *)(vm->jfrState.constantEvents))->JVMInfoEntry);
+		JVMInformationEntry *jvmInformation = &(getJFRConstantEvents(vm)->JVMInfoEntry);
 
 		/* Set JVM name */
 		jvmInformation->jvmName = getSystemProp(vm, "java.vm.name");
@@ -729,19 +793,22 @@ done:
 		jvmInformation->jvmArguments = (char *)j9mem_allocate_memory(sizeof(char) * vmArgsLen, OMRMEM_CATEGORY_VM);
 		char *cursor = jvmInformation->jvmArguments;
 
-		for (IDATA i = 0; i < vmArgs->nOptions; i++) {
-			UDATA len = strlen(vmArgs->options[i].optionString);
-			memcpy(cursor, vmArgs->options[i].optionString, len);
-			cursor += len;
+		if (NULL != cursor) {
+			for (IDATA i = 0; i < vmArgs->nOptions; i++) {
+				UDATA len = strlen(vmArgs->options[i].optionString);
+				memcpy(cursor, vmArgs->options[i].optionString, len);
+				cursor += len;
 
-			if (i == vmArgs->nOptions - 1) {
-				*cursor = '\0';
-			} else {
-				*cursor = ' ';
+				if (i == vmArgs->nOptions - 1) {
+					*cursor = '\0';
+				} else {
+					*cursor = ' ';
+				}
+				cursor += 1;
 			}
-			cursor += 1;
+		} else {
+			*result = OutOfMemory;
 		}
-
 		/* Ignoring jvmFlags for now */
 		jvmInformation->jvmFlags = NULL;
 		jvmInformation->jvmStartTime = vm->j9ras->startTimeMillis;
@@ -749,14 +816,141 @@ done:
 	}
 
 	/**
-	* Free JVMInfoEntry.
-	*
-	* @param vm[in] the J9JavaVM
-	*/
+	 * Free JVMInfoEntry.
+	 *
+	 * @param vm[in] the J9JavaVM
+	 */
 	static void freeJVMInformationEvent(J9JavaVM *vm)
 	{
 		PORT_ACCESS_FROM_JAVAVM(vm);
-		j9mem_free_memory(((JFRConstantEvents *)(vm->jfrState.constantEvents))->JVMInfoEntry.jvmArguments);
+		j9mem_free_memory(getJFRConstantEvents(vm)->JVMInfoEntry.jvmArguments);
+	}
+
+	/**
+	 * Initialize CPUInformationEntry.
+	 *
+	 * @param vm[in] the J9JavaVM
+	 */
+	static void initializeCPUInformationEvent(J9JavaVM *vm, J9VMThread *currentThread, BuildResult *result)
+	{
+		PORT_ACCESS_FROM_JAVAVM(vm);
+		OMRPORT_ACCESS_FROM_J9PORT(privatePortLibrary);
+
+		CPUInformationEntry *cpuInformation = &(getJFRConstantEvents(vm)->CPUInfoEntry);
+
+		/* Set CPU type */
+		cpuInformation->cpu = j9sysinfo_get_CPU_architecture();
+
+		/* Set CPU description */
+		OMRProcessorDesc desc = {};
+		omrsysinfo_get_processor_description(&desc);
+		char buffer[512];
+		omrsysinfo_get_processor_feature_string(&desc, buffer, sizeof(buffer));
+		UDATA len = strlen(buffer) + 1;
+		cpuInformation->description = (char *)j9mem_allocate_memory(sizeof(char) * len, OMRMEM_CATEGORY_VM);
+		if (NULL != cpuInformation->description) {
+			memcpy(cpuInformation->description, buffer, len);
+		} else {
+			*result = OutOfMemory;
+		}
+
+		cpuInformation->cores = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_PHYSICAL);
+		/* Setting number of sockets to number of cores for now as there's no easy way to get this info.
+		 * TODO: fix this when we can query number of sockets from OMR
+		 */
+		cpuInformation->sockets = cpuInformation->cores;
+		cpuInformation->hwThreads = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_TARGET);
+	}
+
+	/**
+	 * Free CPUInfoEntry.
+	 *
+	 * @param vm[in] the J9JavaVM
+	 */
+	static void freeCPUInformationEvent(J9JavaVM *vm)
+	{
+		PORT_ACCESS_FROM_JAVAVM(vm);
+		j9mem_free_memory(getJFRConstantEvents(vm)->CPUInfoEntry.description);
+	}
+
+	/**
+	 * Initialize VirtualizationInformationEntry.
+	 *
+	 * @param vm[in] the J9JavaVM
+	 */
+	static void initializeVirtualizationInformation(J9JavaVM *vm)
+	{
+		PORT_ACCESS_FROM_JAVAVM(vm);
+
+		VirtualizationInformationEntry *virtualizationInfo = &(getJFRConstantEvents(vm)->VirtualizationInfoEntry);
+
+		intptr_t rc = j9hypervisor_hypervisor_present();
+		J9HypervisorVendorDetails vendorDetails = {0};
+
+		switch(rc) {
+		case J9HYPERVISOR_NOT_PRESENT:
+			virtualizationInfo->name = "No virtualization detected";
+			break;
+		case J9PORT_ERROR_HYPERVISOR_UNSUPPORTED:
+			virtualizationInfo->name = "Virtualization detection not supported";
+			break;
+		case J9HYPERVISOR_PRESENT:
+			j9hypervisor_get_hypervisor_info(&vendorDetails);
+			virtualizationInfo->name = vendorDetails.hypervisorName;
+			break;
+		default:
+			virtualizationInfo->name = "Error getting virtualization information";
+			break;
+		};
+	}
+
+	/**
+	 * Initialize OSInformationEntry.
+	 *
+	 * @param vm[in] the J9JavaVM
+	 */
+	static void initializeOSInformation(J9JavaVM *vm, BuildResult *result)
+	{
+		PORT_ACCESS_FROM_JAVAVM(vm);
+
+		/* Build OS Version string from os.name, os.version and os.arch properties */
+		const char *osName = getSystemProp(vm, "os.name");
+		const char *osVersion = j9sysinfo_get_OS_version();
+		const char *osArch = getSystemProp(vm, "os.arch");
+
+		UDATA len = 3 + strlen(osName) + strlen(osVersion) + strlen(osArch);
+
+		getJFRConstantEvents(vm)->OSInfoEntry.osVersion = (char *)j9mem_allocate_memory(sizeof(char) * len, OMRMEM_CATEGORY_VM);
+		char *buffer = getJFRConstantEvents(vm)->OSInfoEntry.osVersion;
+		if (NULL == buffer) {
+			*result = OutOfMemory;
+			return;
+		}
+
+		memcpy(buffer, osName, strlen(osName));
+		buffer += strlen(osName);
+		*buffer = ' ';
+		buffer++;
+
+		memcpy(buffer, osVersion, strlen(osVersion));
+		buffer += strlen(osVersion);
+		*buffer = ' ';
+		buffer++;
+
+		memcpy(buffer, osArch, strlen(osArch));
+		buffer += strlen(osArch);
+		*buffer = '\0';
+	}
+
+	/**
+	 * Free OSInformationEntry.
+	 *
+	 * @param vm[in] the J9JavaVM
+	 */
+	static void freeOSInformation(J9JavaVM *vm)
+	{
+		PORT_ACCESS_FROM_JAVAVM(vm);
+		j9mem_free_memory(getJFRConstantEvents(vm)->OSInfoEntry.osVersion);
 	}
 
 	VM_JFRConstantPoolTypes(J9VMThread *currentThread)
