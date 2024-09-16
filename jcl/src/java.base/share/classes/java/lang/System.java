@@ -362,9 +362,19 @@ public final class System {
 	/*[ENDIF] Sidecar18-SE-OpenJ9 */
 	/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 
+	/*[IF JFR_SUPPORT]*/
 	static void initJFR() {
-		String jfr = com.ibm.oti.vm.VM.getjfrCMDLineOption();
-		if (jfr != null) {
+		boolean enableJFRDebug = false;
+		String enableJFRDebugProp = internalGetProperties().getProperty("enable.j9internal.jfr.debug");
+		if (null != enableJFRDebugProp) {
+			if (enableJFRDebugProp.equalsIgnoreCase("no")) {
+				enableJFRDebug = false;
+			} else if (enableJFRDebugProp.equalsIgnoreCase("yes")) {
+				enableJFRDebug = true;
+			}
+		}
+		String jfrCMDLineOption = com.ibm.oti.vm.VM.getjfrCMDLineOption();
+		if (null != jfrCMDLineOption) {
 			try {
 				Class<?> dcmdClass = Class.forName("jdk.jfr.internal.dcmd.DCmdStart");
 				Constructor<?> constructor = dcmdClass.getDeclaredConstructor();
@@ -374,19 +384,20 @@ public final class System {
 				Method executeMethod = dcmdClass.getSuperclass().getDeclaredMethod("execute", String.class, String.class, char.class);
 				executeMethod.setAccessible(true);
 
-				String[] results = (String []) executeMethod.invoke(dcmdInstance, "internal", jfr, ',');
-				if (results != null) {
-					for (String result : results) {
-						System.out.println(result);
+				String[] results = (String []) executeMethod.invoke(dcmdInstance, "internal", jfrCMDLineOption, ',');
+				if (null != results) {
+					if (enableJFRDebug) {
+						for (String result : results) {
+							System.out.println(result);
+						}
 					}
 				}
-			} catch (ClassNotFoundException e) {
-				// Assume this is a raw configuration and suppress the exception
 			} catch (Exception e) {
-				throw new InternalError(e.toString());
+				throw new InternalError(e);
 			}
 		}
 	}
+	/*[ENDIF] JFR_SUPPORT */
 
 	static void afterClinitInitialization() {
 		/*[PR CMVC 189091] Perf: EnumSet.allOf() is slow */
@@ -559,7 +570,9 @@ static void completeInitialization() {
 	}
 	/*[ENDIF]*/	//!Sidecar19-SE_RAWPLUSJ9&!Sidecar18-SE-OpenJ9
 
+	/*[IF JFR_SUPPORT]*/
 	initJFR();
+	/*[ENDIF] JFR_SUPPORT */
 }
 
 /*[IF JAVA_SPEC_VERSION >= 9]*/

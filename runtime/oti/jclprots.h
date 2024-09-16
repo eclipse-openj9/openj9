@@ -722,7 +722,7 @@ Java_com_ibm_oti_vm_VM_setCommonData (JNIEnv * env, jclass unused, jobject strin
 jboolean JNICALL
 Java_com_ibm_oti_vm_VM_setDaemonThreadImpl (JNIEnv *env, jobject recv, jobject aThread);
 void JNICALL Java_com_ibm_oti_vm_VM_dumpString(JNIEnv * env, jclass clazz, jstring str);
-jstring JNICALL Java_com_ibm_oti_vm_VM_getjfrCMDLineOption(JNIEnv * env, jclass clazz);
+jstring JNICALL Java_com_ibm_oti_vm_VM_getjfrCMDLineOption(JNIEnv *env, jclass clazz);
 jboolean JNICALL Java_com_ibm_oti_vm_VM_appendToCPNativeImpl(JNIEnv * env, jclass clazz, jstring classPathAdditions, jstring newClassPath);
 jboolean JNICALL Java_com_ibm_oti_vm_VM_isApplicationClassLoaderPresent(JNIEnv * env, jclass clazz);
 jstring JNICALL Java_openj9_internal_tools_attach_target_DiagnosticUtils_getHeapClassStatisticsImpl(JNIEnv * env, jclass unused);

@@ -4220,10 +4220,10 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 		}
 
 		IDATA jfrOptionIndex = FIND_AND_CONSUME_VMARG(OPTIONAL_LIST_MATCH_USING_EQUALS, VMOPT_XXSTARTFLIGHTRECORDING, NULL);
-		if (jfrOptionIndex >= 0) {
+		if (0 <= jfrOptionIndex) {
 			char* jfrOptionBuffer = NULL;
 			GET_OPTION_VALUE(jfrOptionIndex, '=', &jfrOptionBuffer);
-			if(jfrOptionBuffer == NULL) {
+			if (NULL == jfrOptionBuffer) {
 				vm->jfrState.jfrCMDLineOption = (char*)"dumponexit=false";
 			}
 			else {
