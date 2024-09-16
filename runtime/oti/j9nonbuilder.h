@@ -1417,6 +1417,11 @@ typedef struct J9SharedClassConfig {
 	const char* cacheName;
 	I_8 layer;
 	U_64 readOnlyCacheRuntimeFlags;
+	/* This table is a cache for exceptiondescribe.c:findJ9ClassForROMClass
+	 * and does not contain mappings for every romClass to ramClass.
+	 */
+	struct J9HashTable *romToRamHashTable;
+	omrthread_rwmutex_t romToRamHashTableMutex;
 } J9SharedClassConfig;
 
 typedef struct J9SharedClassPreinitConfig {
