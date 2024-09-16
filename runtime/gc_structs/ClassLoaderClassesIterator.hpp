@@ -120,6 +120,17 @@ private:
 	 */
 	J9Class *nextArrayClass();
 	
+	/**
+	 * Initialize array class walk state machine.
+	 */
+	MMINLINE void
+	initArrayClassWalk()
+	{
+		_startingClass = _nextClass;
+		_arrayState = STATE_VALUETYPEARRAY;
+		_iterateArrayClazz = NULL;
+	}
+
 protected:
 	
 public:
