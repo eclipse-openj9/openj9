@@ -68,6 +68,7 @@ enum MetadataTypeID {
 	JVMInformationID = 86,
 	OSInformationID = 87,
 	VirtualizationInformationID = 88,
+	InitialSystemPropertyID = 89,
 	CPUInformationID = 92,
 	PhysicalMemoryID = 107,
 	ExecutionSampleID = 108,
@@ -153,6 +154,7 @@ private:
 	static constexpr int VIRTUALIZATION_INFORMATION_EVENT_SIZE = 50;
 	static constexpr int CPU_INFORMATION_EVENT_SIZE = 600;
 	static constexpr int OS_INFORMATION_EVENT_SIZE = 100;
+	static constexpr int INITIAL_SYSTEM_PROPERTY_EVENT_SIZE = 6000;
 
 	static constexpr int METADATA_ID = 1;
 
@@ -330,6 +332,8 @@ done:
 				writeVirtualizationInformationEvent();
 
 				writeOSInformationEvent();
+
+				writeInitialSystemPropertyEvents(_vm);
 			}
 
 			writePhysicalMemoryEvent();
@@ -531,6 +535,8 @@ done:
 
 	U_8 *writeOSInformationEvent();
 
+	void writeInitialSystemPropertyEvents(J9JavaVM *vm);
+
 	UDATA
 	calculateRequiredBufferSize()
 	{
@@ -579,6 +585,7 @@ done:
 
 		requireBufferSize += CPU_INFORMATION_EVENT_SIZE;
 
+		requireBufferSize += INITIAL_SYSTEM_PROPERTY_EVENT_SIZE;
 		return requireBufferSize;
 	}
 
