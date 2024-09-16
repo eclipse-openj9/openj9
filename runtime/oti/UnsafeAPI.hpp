@@ -99,10 +99,10 @@ private:
 		return 0 == ((offset - arrayBase(currentThread)) % ((UDATA)1 << logElementSize));
 	}
 
-	static VMINLINE I_32
+	static VMINLINE UDATA
 	convertOffsetToIndex(J9VMThread *currentThread, UDATA offset, UDATA logElementSize)
 	{
-		return (I_32)((offset - arrayBase(currentThread)) >> logElementSize);
+		return (UDATA)((offset - arrayBase(currentThread)) >> logElementSize);
 	}
 
 	static VMINLINE I_32
@@ -139,7 +139,7 @@ private:
 				/* Array access */
 				if (offsetIsAlignedArrayIndex(currentThread, offset, logElementSize)) {
 					/* Aligned array access */
-					I_32 index = convertOffsetToIndex(currentThread, offset, logElementSize);
+					UDATA index = convertOffsetToIndex(currentThread, offset, logElementSize);
 					switch (logElementSize) {
 					case 0:
 						if (isSigned) {
@@ -165,7 +165,7 @@ private:
 					}
 				} else {
 					/* Unaligned array access - unreachable for logElementSize == 0 */
-					I_32 index = convertOffsetToIndex(currentThread, offset, 0);
+					UDATA index = convertOffsetToIndex(currentThread, offset, 0);
 					if (1 == logElementSize) {
 						I_16 temp = 0;
 						VM_ArrayCopyHelpers::memcpyFromArray(currentThread, object, (UDATA)0, index, (I_32)sizeof(temp), (void*)&temp);
@@ -210,7 +210,7 @@ private:
 				/* Array access */
 				if (offsetIsAlignedArrayIndex(currentThread, offset, logElementSize)) {
 					/* Aligned array access */
-					I_32 index = convertOffsetToIndex(currentThread, offset, logElementSize);
+					UDATA index = convertOffsetToIndex(currentThread, offset, logElementSize);
 					switch (logElementSize) {
 					case 0:
 						if (isSigned) {
@@ -236,7 +236,7 @@ private:
 					}
 				} else {
 					/* Unaligned array access - unreachable for logElementSize == 0 */
-					I_32 index = convertOffsetToIndex(currentThread, offset, 0);
+					UDATA index = convertOffsetToIndex(currentThread, offset, 0);
 					if (1 == logElementSize) {
 						I_16 temp = (I_16)value;
 						VM_ArrayCopyHelpers::memcpyToArray(currentThread, object, (UDATA)0, index, (I_32)sizeof(temp), (void*)&temp);
@@ -272,11 +272,11 @@ private:
 				/* Array access */
 				if (offsetIsAlignedArrayIndex(currentThread, offset, logElementSize)) {
 					/* Aligned array access */
-					I_32 index = convertOffsetToIndex(currentThread, offset, logElementSize);
+					UDATA index = convertOffsetToIndex(currentThread, offset, logElementSize);
 					value = objectAccessBarrier->inlineIndexableObjectReadI64(currentThread, object, index, isVolatile);
 				} else {
 					/* Unaligned array access */
-					I_32 index = convertOffsetToIndex(currentThread, offset, 0);
+					UDATA index = convertOffsetToIndex(currentThread, offset, 0);
 					VM_ArrayCopyHelpers::memcpyFromArray(currentThread, object, (UDATA)0, index, (I_32)sizeof(value), (void*)&value);				}
 			} else if (offset & J9_SUN_STATIC_FIELD_OFFSET_TAG) {
 				/* Static field */
@@ -305,11 +305,11 @@ private:
 				/* Array access */
 				if (offsetIsAlignedArrayIndex(currentThread, offset, logElementSize)) {
 					/* Aligned array access */
-					I_32 index = convertOffsetToIndex(currentThread, offset, logElementSize);
+					UDATA index = convertOffsetToIndex(currentThread, offset, logElementSize);
 					objectAccessBarrier->inlineIndexableObjectStoreI64(currentThread, object, index, value, isVolatile);
 				} else {
 					/* Unaligned array access */
-					I_32 index = convertOffsetToIndex(currentThread, offset, 0);
+					UDATA index = convertOffsetToIndex(currentThread, offset, 0);
 					VM_ArrayCopyHelpers::memcpyToArray(currentThread, object, (UDATA)0, index, (I_32)sizeof(value), (void*)&value);
 				}
 			} else if (offset & J9_SUN_STATIC_FIELD_OFFSET_TAG) {
@@ -554,7 +554,7 @@ public:
 		} else {
 			if (VM_VMHelpers::objectIsArray(currentThread, object)) {
 				/* Aligned array access */
-				I_32 index = convertOffsetToIndex(currentThread, offset, logElementSize);
+				UDATA index = convertOffsetToIndex(currentThread, offset, logElementSize);
 				result = objectAccessBarrier->inlineIndexableObjectCompareAndSwapU64(currentThread, object, index, compareValue, swapValue, true);
 			} else if (offset & J9_SUN_STATIC_FIELD_OFFSET_TAG) {
 				/* Static field */
@@ -583,7 +583,7 @@ public:
 		} else {
 			if (VM_VMHelpers::objectIsArray(currentThread, object)) {
 				/* Aligned array access */
-				I_32 index = convertOffsetToIndex(currentThread, offset, logElementSize);
+				UDATA index = convertOffsetToIndex(currentThread, offset, logElementSize);
 				result = objectAccessBarrier->inlineIndexableObjectCompareAndSwapU32(currentThread, object, index, compareValue, swapValue, true);
 			} else if (offset & J9_SUN_STATIC_FIELD_OFFSET_TAG) {
 				/* Static field */
@@ -641,7 +641,7 @@ done:
 		} else {
 			if (VM_VMHelpers::objectIsArray(currentThread, object)) {
 				/* Aligned array access */
-				I_32 index = convertOffsetToIndex(currentThread, offset, logElementSize);
+				UDATA index = convertOffsetToIndex(currentThread, offset, logElementSize);
 				result = objectAccessBarrier->inlineIndexableObjectCompareAndExchangeU32(currentThread, object, index, compareValue, swapValue, true);
 			} else if (offset & J9_SUN_STATIC_FIELD_OFFSET_TAG) {
 				/* Static field */
@@ -672,7 +672,7 @@ done:
 		} else {
 			if (VM_VMHelpers::objectIsArray(currentThread, object)) {
 				/* Aligned array access */
-				I_32 index = convertOffsetToIndex(currentThread, offset, logElementSize);
+				UDATA index = convertOffsetToIndex(currentThread, offset, logElementSize);
 				result = objectAccessBarrier->inlineIndexableObjectCompareAndExchangeU64(currentThread, object, index, compareValue, swapValue, true);
 			} else if (offset & J9_SUN_STATIC_FIELD_OFFSET_TAG) {
 				/* Static field */
