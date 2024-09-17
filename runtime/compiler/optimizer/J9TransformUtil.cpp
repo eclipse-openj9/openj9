@@ -2126,6 +2126,12 @@ TR::Node * J9::TransformUtil::calculateElementAddress(TR::Compilation *comp, TR:
    offset->setIsNonNegative(true);
    // Calculate element address
    TR::Node *addrCalc = NULL;
+
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+   if (TR::Compiler->om.isOffHeapAllocationEnabled())
+      array = TR::TransformUtil::generateDataAddrLoadTrees(comp, array);
+#endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
+
    if (comp->target().is64Bit())
       addrCalc = TR::Node::create(TR::aladd, 2, array, offset);
    else
