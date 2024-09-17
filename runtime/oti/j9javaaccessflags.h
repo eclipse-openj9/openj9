@@ -99,6 +99,7 @@
  * See map in ROMClassBuilder::computeExtraModifiers for
  * available slots.
  */
+#define J9AccClassIsShared 0x20
 #define J9AccClassIsValueBased 0x40
 #define J9AccClassHiddenOptionNestmate 0x80
 #define J9AccClassHiddenOptionStrong 0x100
