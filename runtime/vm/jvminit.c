@@ -326,17 +326,11 @@ J9_DECLARE_CONSTANT_UTF8(j9_dispatch, "dispatch");
 /* The appropriate bytecodeLoop is selected based on interpreter mode */
 #if defined(OMR_GC_FULL_POINTERS)
 UDATA bytecodeLoopFull(J9VMThread *currentThread);
-#if defined(J9VM_OPT_CRIU_SUPPORT)
-UDATA criuBytecodeLoopFull(J9VMThread *currentThread);
-#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 UDATA debugBytecodeLoopFull(J9VMThread *currentThread);
 #endif /* defined(OMR_GC_FULL_POINTERS) */
 
 #if defined(OMR_GC_COMPRESSED_POINTERS)
 UDATA bytecodeLoopCompressed(J9VMThread *currentThread);
-#if defined(J9VM_OPT_CRIU_SUPPORT)
-UDATA criuBytecodeLoopCompressed(J9VMThread *currentThread);
-#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 UDATA debugBytecodeLoopCompressed(J9VMThread *currentThread);
 #endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
 
@@ -3009,21 +3003,7 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 					vm->bytecodeLoop = debugBytecodeLoopFull;
 #endif /* defined(OMR_GC_FULL_POINTERS) */
 				}
-			} else
-#if defined(J9VM_OPT_CRIU_SUPPORT)
-			if (J9_ARE_ALL_BITS_SET(vm->checkpointState.flags, J9VM_CRIU_IS_CHECKPOINT_ALLOWED)) {
-				if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
-#if defined(OMR_GC_COMPRESSED_POINTERS)
-					vm->bytecodeLoop = criuBytecodeLoopCompressed;
-#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
-				} else {
-#if defined(OMR_GC_FULL_POINTERS)
-					vm->bytecodeLoop = criuBytecodeLoopFull;
-#endif /* defined(OMR_GC_FULL_POINTERS) */
-				}
-			} else
-#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
-			{
+			} else {
 				if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
 #if defined(OMR_GC_COMPRESSED_POINTERS)
 					vm->bytecodeLoop = bytecodeLoopCompressed;
