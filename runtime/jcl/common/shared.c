@@ -585,8 +585,11 @@ getCpeTypeForProtocol(JNIEnv *env, const char *protocol, jsize protocolLen, cons
 	pathChars = *correctedPathPtr;
 	pathLen = (jsize)strlen(pathChars);
 	if (0 == strncmp(protocol, "file", 5)) {
-		if ((NULL != strstr(pathChars, "!/")) || (NULL != strstr(pathChars, "!\\"))) {
-			/* file is a fat jar */
+		char *endsWith = (char *)(pathChars + (pathLen-4));
+		if ((0 == strncmp(endsWith, ".jar", 4)) || (0 == strncmp(endsWith, ".zip", 4))
+			|| (NULL != strstr(pathChars,"!/")) || (NULL != strstr(pathChars,"!\\"))
+		) {
+			/* file is a jar or fat jar */
 			Trc_JCL_com_ibm_oti_shared_getCpeTypeForProtocol_ExitJAR();
 			return CPE_TYPE_JAR;
 		} else if (isPathTypeJimage(pathChars, pathLen)) {
