@@ -28,7 +28,8 @@
 			<variation>Mode150</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) -DEXE=$(SQ)$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS)$(SQ) -jar $(CMDLINETESTER_JAR) \
-	-config $(Q)$(TEST_RESROOT)$(D)XXArgumentTesting.xml$(Q); \
+	-config $(Q)$(TEST_RESROOT)$(D)XXArgumentTesting.xml$(Q) \
+	-nonZeroExitWhenError; \
 	$(TEST_STATUS)</command>
 		<levels>
 			<level>sanity</level>
