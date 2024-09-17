@@ -1463,7 +1463,7 @@ Java_java_lang_invoke_MethodHandleNatives_getMembers(
 					UDATA classDepth = 0;
 					if (J9_ARE_ANY_BITS_SET(matchFlags, MN_SEARCH_SUPERCLASSES)) {
 						/* walk superclasses */
-						J9CLASS_DEPTH(defClass);
+						classDepth = J9CLASS_DEPTH(defClass);
 					}
 					J9Class *currentClass = defClass;
 
@@ -1568,7 +1568,7 @@ Java_java_lang_invoke_MethodHandleNatives_getMembers(
 					UDATA classDepth = 0;
 					if (J9_ARE_ANY_BITS_SET(matchFlags, MN_SEARCH_SUPERCLASSES)) {
 						/* walk superclasses */
-						J9CLASS_DEPTH(defClass);
+						classDepth = J9CLASS_DEPTH(defClass);
 					}
 					J9Class *currentClass = defClass;
 
