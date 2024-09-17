@@ -308,7 +308,6 @@ public static native void dumpString(String str);
 public static native String getjfrCMDLineOption();
 /*[ENDIF] JFR_SUPPORT */
 
-
 /**
  * Native used to set the classpath for an OTI implemented classloader
  *

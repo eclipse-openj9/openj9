@@ -380,15 +380,15 @@ public final class System {
 		String jfrCMDLineOption = com.ibm.oti.vm.VM.getjfrCMDLineOption();
 		if (null != jfrCMDLineOption) {
 			try {
-				Class<?> dcmdClass = Class.forName("jdk.jfr.internal.dcmd.DCmdStart");
-				Constructor<?> constructor = dcmdClass.getDeclaredConstructor();
+				Class<?> dcmdStartClass = Class.forName("jdk.jfr.internal.dcmd.DCmdStart");
+				Constructor<?> constructor = dcmdStartClass.getDeclaredConstructor();
 				constructor.setAccessible(true);
-				Object dcmdInstance = constructor.newInstance();
-
-				Method executeMethod = dcmdClass.getSuperclass().getDeclaredMethod("execute", String.class, String.class, char.class);
+				Object dcmdStartInstance = constructor.newInstance();
+				/*[IF JAVA_SPEC_VERSION == 17]*/
+				Method executeMethod = dcmdStartClass.getSuperclass().getDeclaredMethod("execute", String.class, String.class, char.class);
 				executeMethod.setAccessible(true);
 
-				String[] results = (String []) executeMethod.invoke(dcmdInstance, "internal", jfrCMDLineOption, ',');
+				String[] results = (String []) executeMethod.invoke(dcmdStartInstance, "internal", jfrCMDLineOption, ',');
 				if (null != results) {
 					if (enableJFRDebug) {
 						for (String result : results) {
@@ -396,6 +396,7 @@ public final class System {
 						}
 					}
 				}
+				/*[ENDIF] JAVA_SPEC_VERSION == 17 */
 			} catch (Exception e) {
 				throw new InternalError(e);
 			}
