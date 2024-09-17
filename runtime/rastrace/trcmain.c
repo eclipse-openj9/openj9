@@ -1053,6 +1053,7 @@ initializeTrace(UtThreadData **thr, void **gbl,
 			} else {
 				/* the old utGlobal is still in use */
 				UT_DBGOUT(1, ("<UT> Error, utGlobal already in use.\n"));
+				*thr = NULL;
 				return OMR_ERROR_INTERNAL;
 			}
 		}
