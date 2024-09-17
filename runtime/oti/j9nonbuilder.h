@@ -1581,10 +1581,9 @@ typedef struct J9ExceptionHandler {
 	U_32 exceptionClassIndex;
 } J9ExceptionHandler;
 
-//JACKIE: not sure where defined(__open_xl__) condition should go
-#if defined(__xlC__) || defined(J9ZOS390) || defined(__open_xl__)  /* Covers: Z/OS, AIX, Linux PPC*/
+#if defined(__xlC__) || defined(J9ZOS390) || defined(__open_xl__)  /* Covers: AIX, Linux PPC and z/OS. */
 #pragma pack(1)
-#elif defined(__ibmxl__) || defined(__open_xl__) || defined(__GNUC__) || defined(_MSC_VER) /* Covers: Linux PPC LE, Windows, Linux x86 */
+#elif defined(__ibmxl__) || defined(__GNUC__) || defined(_MSC_VER) /* Covers: Linux PPC LE, Windows, Linux x86 */
 #pragma pack(push, 1)
 /* Above covers all the platform for J9 VM compile jobs. DDR is compiled with EDG compiler, there following is for DDR compile */
 #elif defined(LINUXPPC) || defined(AIXPPC)

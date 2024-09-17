@@ -21,6 +21,7 @@
  *******************************************************************************/
 
 #include "compile/Compilation.hpp"
+#include "env/alloca_openxl.h"
 #include "env/j9fieldsInfo.h"
 #include "env/KnownObjectTable.hpp"
 #include "env/StackMemoryRegion.hpp"
@@ -474,11 +475,7 @@ J9::KnownObjectTable::dumpTo(TR::FILE *file, TR::Compilation *comp)
             // Collect field info and determine which objects are reachable from other objects
             //
             TR_BitVector reachable(endIndex, comp->trMemory(), stackAlloc, notGrowable);
-            #if defined(__open_xl__)
-               TR_VMFieldsInfo **fieldsInfoByIndex = (TR_VMFieldsInfo**)__builtin_alloca(endIndex * sizeof(TR_VMFieldsInfo*));
-            #else
-               TR_VMFieldsInfo **fieldsInfoByIndex = (TR_VMFieldsInfo**)alloca(endIndex * sizeof(TR_VMFieldsInfo*));
-            #endif
+            TR_VMFieldsInfo **fieldsInfoByIndex = (TR_VMFieldsInfo**)alloca(endIndex * sizeof(TR_VMFieldsInfo*));
             for (i = 1; i < endIndex; i++)
                {
                uintptr_t    object = self()->getPointer(i);

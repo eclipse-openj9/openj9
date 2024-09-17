@@ -22,6 +22,7 @@
 
 #include <string.h>
 #include "env/VMJ9.h"
+#include "env/alloca_openxl.h"
 #include "env/ClassLoaderTable.hpp"
 #include "env/PersistentCHTable.hpp"
 #include "env/VMAccessCriticalSection.hpp"
@@ -1471,20 +1472,12 @@ TR::SymbolValidationManager::validateMethodFromClassAndSignatureRecord(uint16_t 
    TR_OpaqueClassBlock *beholder = getClassFromID(beholderID, SymOptional);
 
    J9UTF8 *methodNameData = J9ROMMETHOD_NAME(romMethod);
-   #if defined(__open_xl__)
-      char *methodName = (char *)__builtin_alloca(J9UTF8_LENGTH(methodNameData)+1);
-   #else
-      char *methodName = (char *)alloca(J9UTF8_LENGTH(methodNameData)+1);
-   #endif
+   char *methodName = (char *)alloca(J9UTF8_LENGTH(methodNameData)+1);
    strncpy(methodName, reinterpret_cast<const char *>(J9UTF8_DATA(methodNameData)), J9UTF8_LENGTH(methodNameData));
    methodName[J9UTF8_LENGTH(methodNameData)] = '\0';
 
    J9UTF8 *methodSigData = J9ROMMETHOD_SIGNATURE(romMethod);
-   #if defined(__open_xl__)
-      char *methodSig = (char *)__builtin_alloca(J9UTF8_LENGTH(methodSigData)+1);
-   #else
-      char *methodSig = (char *)alloca(J9UTF8_LENGTH(methodSigData)+1);
-   #endif
+   char *methodSig = (char *)alloca(J9UTF8_LENGTH(methodSigData)+1);
    strncpy(methodSig, reinterpret_cast<const char *>(J9UTF8_DATA(methodSigData)), J9UTF8_LENGTH(methodSigData));
    methodSig[J9UTF8_LENGTH(methodSigData)] = '\0';
 

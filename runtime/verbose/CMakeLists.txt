@@ -62,30 +62,52 @@ target_include_directories(j9vrb
 		${j9vm_SOURCE_DIR}/shared_common/include
 )
 
-target_link_libraries(j9vrb
-	PRIVATE
-		j9vm_interface
-		j9vm_gc_includes
-		j9vm_compiler_defines
+if(DEFINED OMR_OS_AIX AND DEFINED CMAKE_C_COMPILER_IS_OPENXL)
+	target_link_libraries(j9vrb
+		PRIVATE
+			j9vm_interface
+			j9vm_gc_includes
+			j9vm_compiler_defines
 
-		j9stackmap
-		j9verutil
-		j9pool
-		j9modronstartup
-		j9gcvrbjava
-		j9gcvrbold
-		j9gcvrbevents
-		j9gcvrbhdlrstandardjava
-		j9gcvrbhdlrrealtime
-		j9gcvrbhdlrvlhgc
-		j9zip
-		j9utilcore
-		j9gc
-		j9gctrc
-		j9gcapi
-		j9gctrcstandard
-		j9gctrcvlhgc
-)
+			j9stackmap
+			j9verutil
+			j9pool
+			j9modronstartup
+			j9gcvrbjava
+			j9gcvrbold
+			j9gcvrbevents
+			j9gcvrbhdlrstandardjava
+			j9gcvrbhdlrrealtime
+			j9gcvrbhdlrvlhgc
+			j9zip
+			j9utilcore
+			j9gc
+			j9gctrc
+			j9gcapi
+			j9gctrcstandard
+			j9gctrcvlhgc
+	)
+else()
+	target_link_libraries(j9vrb
+		PRIVATE
+			j9vm_interface
+			j9vm_gc_includes
+			j9vm_compiler_defines
+
+			j9stackmap
+			j9verutil
+			j9pool
+			j9modronstartup
+			j9gcvrbjava
+			j9gcvrbold
+			j9gcvrbevents
+			j9gcvrbhdlrstandardjava
+			j9gcvrbhdlrrealtime
+			j9gcvrbhdlrvlhgc
+			j9zip
+			j9utilcore
+	)
+endif()
 
 target_compile_definitions(j9vrb
 	PRIVATE
@@ -125,30 +147,52 @@ if(OMR_MIXED_REFERENCES_MODE_STATIC)
 			${j9vm_SOURCE_DIR}/shared_common/include
 	)
 
-	target_link_libraries(j9vrb_full
-		PRIVATE
-			j9vm_interface
-			j9vm_gc_includes
-			j9vm_compiler_defines
+	if(DEFINED OMR_OS_AIX AND DEFINED CMAKE_C_COMPILER_IS_OPENXL)
+		target_link_libraries(j9vrb_full
+			PRIVATE
+				j9vm_interface
+				j9vm_gc_includes
+				j9vm_compiler_defines
 
-			j9stackmap
-			j9verutil
-			j9pool
-			j9modronstartup_full
-			j9gcvrbjava_full
-			j9gcvrbold_full
-			j9gcvrbevents_full
-			j9gcvrbhdlrstandardjava_full
-			j9gcvrbhdlrrealtime_full
-			j9gcvrbhdlrvlhgc_full
-			j9zip
-			j9utilcore
-			j9gc
-			j9gctrc
-			j9gcapi
-			j9gctrcstandard
-			j9gctrcvlhgc
-	)
+				j9stackmap
+				j9verutil
+				j9pool
+				j9modronstartup_full
+				j9gcvrbjava_full
+				j9gcvrbold_full
+				j9gcvrbevents_full
+				j9gcvrbhdlrstandardjava_full
+				j9gcvrbhdlrrealtime_full
+				j9gcvrbhdlrvlhgc_full
+				j9zip
+				j9utilcore
+				j9gc
+				j9gctrc
+				j9gcapi
+				j9gctrcstandard
+				j9gctrcvlhgc
+		)
+	else()
+		target_link_libraries(j9vrb_full
+			PRIVATE
+				j9vm_interface
+				j9vm_gc_includes
+				j9vm_compiler_defines
+
+				j9stackmap
+				j9verutil
+				j9pool
+				j9modronstartup_full
+				j9gcvrbjava_full
+				j9gcvrbold_full
+				j9gcvrbevents_full
+				j9gcvrbhdlrstandardjava_full
+				j9gcvrbhdlrrealtime_full
+				j9gcvrbhdlrvlhgc_full
+				j9zip
+				j9utilcore
+		)
+	endif()
 
 	target_compile_definitions(j9vrb_full
 		PRIVATE

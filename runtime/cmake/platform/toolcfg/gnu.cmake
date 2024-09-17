@@ -34,8 +34,9 @@ list(APPEND OMR_PLATFORM_CXX_COMPILE_OPTIONS -fno-threadsafe-statics)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions -fno-rtti")
 
 # Raise an error if a shared library has any unresolved symbols.
-# This flag isn't supported on OSX, but it has this behaviour by default
-if(NOT OMR_OS_OSX)
+# This flag isn't supported on OSX and on AIX while using openxl compiler,
+# but it has this behaviour by default.
+if(NOT OMR_OS_OSX AND NOT OMR_OS_AIX AND NOT CMAKE_C_COMPILER_IS_OPENXL)
 	set(CMAKE_SHARED_LINKER_FLAGS "-Wl,-z,defs ${CMAKE_SHARED_LINKER_FLAGS}")
 endif()
 
