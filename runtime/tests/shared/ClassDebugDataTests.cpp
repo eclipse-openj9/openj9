@@ -213,7 +213,7 @@ DebugAreaUnitTests::debugmemtest1(J9JavaVM* vm)
 
 	ClassDebugDataProvider * debugarea = debugProviderMemalloc(vm);
 	
-	if (debugarea->Init(vm->mainThread, theca, NULL, 0, &runtimeFlags, false) == false) {
+	if (debugarea->Init(vm->mainThread, theca, NULL, 0, &runtimeFlags, theca->osPageSize, false) == false) {
 		ERRPRINTF("debugarea->Init(...) == false\n");
 		retval = TEST_ERROR;
 		goto done;
@@ -239,7 +239,7 @@ DebugAreaUnitTests::debugmemtest2(J9JavaVM* vm)
 
 	ClassDebugDataProvider * debugarea = debugProviderMemalloc(vm);
 
-	if (debugarea->Init(vm->mainThread, theca, NULL, 0, &runtimeFlags, false) == false) {
+	if (debugarea->Init(vm->mainThread, theca, NULL, 0, &runtimeFlags, theca->osPageSize, false) == false) {
 		ERRPRINTF("debugarea->Init(...) == false\n");
 		retval = TEST_ERROR;
 		goto done;
@@ -301,7 +301,7 @@ DebugAreaUnitTests::debugmemtest3(J9JavaVM* vm)
 
 	ClassDebugDataProvider * debugarea = debugProviderMemalloc(vm);
 
-	if (debugarea->Init(vm->mainThread, theca, NULL, 0, &runtimeFlags, false) == false) {
+	if (debugarea->Init(vm->mainThread, theca, NULL, 0, &runtimeFlags, theca->osPageSize, false) == false) {
 		ERRPRINTF("debugarea->Init(...) == false\n");
 		retval = TEST_ERROR;
 		goto done;
@@ -363,7 +363,7 @@ DebugAreaUnitTests::debugmemtest4(J9JavaVM* vm)
 
 	ClassDebugDataProvider * debugarea = debugProviderMemalloc(vm);
 
-	if (debugarea->Init(vm->mainThread, theca, NULL, 0, &runtimeFlags, false) == false) {
+	if (debugarea->Init(vm->mainThread, theca, NULL, 0, &runtimeFlags, theca->osPageSize, false) == false) {
 		ERRPRINTF("debugarea->Init(...) == false\n");
 		retval = TEST_ERROR;
 		goto done;
@@ -425,7 +425,7 @@ DebugAreaUnitTests::debugmemtest5(J9JavaVM* vm)
 
 	ClassDebugDataProvider * debugarea = debugProviderMemalloc(vm);
 
-	if (debugarea->Init(vm->mainThread, theca, NULL, 0, &runtimeFlags, false) == false) {
+	if (debugarea->Init(vm->mainThread, theca, NULL, 0, &runtimeFlags, theca->osPageSize, false) == false) {
 		ERRPRINTF("debugarea->Init(...) == false\n");
 		retval = TEST_ERROR;
 		goto done;
@@ -492,7 +492,7 @@ DebugAreaUnitTests::debugmemtest6(J9JavaVM* vm)
 
 	ClassDebugDataProvider * debugarea = debugProviderMemalloc(vm);
 
-	if (debugarea->Init(vm->mainThread, theca, NULL, 0, &runtimeFlags, false) == false) {
+	if (debugarea->Init(vm->mainThread, theca, NULL, 0, &runtimeFlags, theca->osPageSize, false) == false) {
 		ERRPRINTF("debugarea->Init(...) == false\n");
 		retval = TEST_ERROR;
 		goto done;
@@ -575,7 +575,7 @@ DebugAreaUnitTests::debugmemtest7(J9JavaVM* vm)
 
 	ClassDebugDataProvider * debugarea = debugProviderMemalloc(vm);
 
-	if (debugarea->Init(vm->mainThread, theca, NULL, 0, &runtimeFlags, false) == false) {
+	if (debugarea->Init(vm->mainThread, theca, NULL, 0, &runtimeFlags, theca->osPageSize, false) == false) {
 		ERRPRINTF("debugarea->Init(...) == false\n");
 		retval = TEST_ERROR;
 		goto done;
@@ -667,7 +667,7 @@ DebugAreaUnitTests::debugmemtest8(J9JavaVM* vm)
 
 	ClassDebugDataProvider * debugarea = debugProviderMemalloc(vm);
 
-	if (debugarea->Init(vm->mainThread, theca, NULL, 0, &runtimeFlags, false) == false) {
+	if (debugarea->Init(vm->mainThread, theca, NULL, 0, &runtimeFlags, theca->osPageSize, false) == false) {
 		ERRPRINTF("debugarea->Init(...) == false\n");
 		retval = TEST_ERROR;
 		goto done;
@@ -759,7 +759,7 @@ DebugAreaUnitTests::debugmemtest9(J9JavaVM* vm)
 
 	ClassDebugDataProvider * debugarea = debugProviderMemalloc(vm);
 
-	if (debugarea->Init(vm->mainThread, theca, NULL, 0, &runtimeFlags, false) == false) {
+	if (debugarea->Init(vm->mainThread, theca, NULL, 0, &runtimeFlags, theca->osPageSize, false) == false) {
 		ERRPRINTF("debugarea->Init(...) == false\n");
 		retval = TEST_ERROR;
 		goto done;
@@ -852,7 +852,7 @@ DebugAreaUnitTests::debugmemtest10(J9JavaVM* vm)
 
 	ClassDebugDataProvider * debugarea = debugProviderMemalloc(vm);
 
-	if (debugarea->Init(vm->mainThread, theca, NULL, 0, &runtimeFlags, false) == false) {
+	if (debugarea->Init(vm->mainThread, theca, NULL, 0, &runtimeFlags, theca->osPageSize, false) == false) {
 		ERRPRINTF("debugarea->Init(...) == false\n");
 		retval = TEST_ERROR;
 		goto done;
@@ -928,7 +928,7 @@ DebugAreaUnitTests::debugmemtest11(J9JavaVM* vm)
 
 	ClassDebugDataProvider * debugarea = debugProviderMemalloc(vm);
 
-	if (debugarea->Init(vm->mainThread, theca, NULL, 0, &runtimeFlags, false) == false) {
+	if (debugarea->Init(vm->mainThread, theca, NULL, 0, &runtimeFlags, theca->osPageSize, false) == false) {
 		ERRPRINTF("debugarea->Init(...) == false\n");
 		retval = TEST_ERROR;
 		goto done;
@@ -1038,7 +1038,7 @@ DebugAreaUnitTests::debugmemtest12(J9JavaVM* vm)
 	 */
 	j9tty_printf(PORTLIB, "%s: Test ::isOk() error checking math when cache is mapped to end of memory.\n", testName);
 
-	if (debugarea->Init(vm->mainThread, theca, NULL, 0, &runtimeFlags, false) == false) {
+	if (debugarea->Init(vm->mainThread, theca, NULL, 0, &runtimeFlags, theca->osPageSize, false) == false) {
 		ERRPRINTF("debugarea->Init(vm->mainThread, theca, NULL, 0) == false\n");
 		retval = TEST_ERROR;
 		goto done;
@@ -1103,7 +1103,7 @@ DebugAreaUnitTests::debugmemtest13(J9JavaVM* vm)
 	/* Disable Trc_SHR_Assert_False() in ClassDebugDataProvider::isOk() */
 	j9shr_UtActive[1013] = 0;
 
-	if (debugarea->Init(vm->mainThread, theca, NULL, 0, &runtimeFlags, false) == false) {
+	if (debugarea->Init(vm->mainThread, theca, NULL, 0, &runtimeFlags, theca->osPageSize, false) == false) {
 		ERRPRINTF("debugarea->Init(...) == false\n");
 		retval = TEST_ERROR;
 		goto done;
@@ -1323,7 +1323,7 @@ DebugAreaUnitTests::debugmemtest15(J9JavaVM* vm)
 
 	debugArea = debugProviderMemalloc(vm);
 
-	if (debugArea->Init(vm->mainThread, theca, NULL, 0, &runtimeFlags, false) == false) {
+	if (debugArea->Init(vm->mainThread, theca, NULL, 0, &runtimeFlags, pageSize, false) == false) {
 		ERRPRINTF("debugArea->Init(...) == false\n");
 		retval = TEST_ERROR;
 		goto done;

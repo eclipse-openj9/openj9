@@ -318,7 +318,8 @@ private :
 	void writeSharedClassSection(void);
 	void writeSharedClassSectionTopLayerStatsHelper(J9SharedClassJavacoreDataDescriptor* javacoreData, bool multiLayerStats);
 	void writeSharedClassSectionTopLayerStatsSummaryHelper(J9SharedClassJavacoreDataDescriptor* javacoreData);
-	void writeSharedClassSectionAllLayersStatsHelper(J9SharedClassJavacoreDataDescriptor* javacoreData);
+	void writeSharedClassSectionAllLayersStatsSummaryHelper(J9SharedClassJavacoreDataDescriptor* javacoreData);
+	void writeSharedClassSectionEachLayerStatsHelper(J9SharedClassJavacoreDataDescriptor* javacoreData);
 
 #endif
 	void writeTrailer(void);
@@ -3395,7 +3396,7 @@ JavaCoreDumpWriter::writeSharedClassSectionTopLayerStatsSummaryHelper(J9SharedCl
 }
 
 void
-JavaCoreDumpWriter::writeSharedClassSectionAllLayersStatsHelper(J9SharedClassJavacoreDataDescriptor* javacoreData)
+JavaCoreDumpWriter::writeSharedClassSectionAllLayersStatsSummaryHelper(J9SharedClassJavacoreDataDescriptor* javacoreData)
 {
 	_OutputStream.writeCharacters(
 			"2SCLTEXTRCB            ROMClass bytes                            = "
@@ -3541,6 +3542,44 @@ JavaCoreDumpWriter::writeSharedClassSectionAllLayersStatsHelper(J9SharedClassJav
 }
 
 void
+JavaCoreDumpWriter::writeSharedClassSectionEachLayerStatsHelper(J9SharedClassJavacoreDataDescriptor* javacoreData)
+{
+	if (NULL == javacoreData) {
+		return;
+	}
+	if (NULL == _VirtualMachine->sharedClassConfig) {
+		return;
+	}
+	J9SharedClassCacheDescriptor *curCache = _VirtualMachine->sharedClassConfig->cacheDescriptorList;
+	if (NULL == curCache) {
+		return;
+	}
+	UDATA currentOSPageSize = javacoreData->currentOSPageSize;
+	I_8 layer = javacoreData->topLayer;
+	bool headerPrinted = false;
+	do {
+		if (currentOSPageSize != curCache->osPageSizeInHeader) {
+			if (!headerPrinted) {
+				_OutputStream.writeCharacters(
+						"NULL\n"
+						"1SCLTEXTCISL   Cache Info for a single layer\n"
+						"NULL\n"
+						"1SCLTEXTCLYR       Cache Layer    Page Size in header    current OS page size\n"
+						"NULL\n"
+				);
+				headerPrinted = true;
+			}
+			_OutputStream.writeCharacters("1SCLTEXTOSPG       ");
+			_OutputStream.writeInteger(layer, "%-15d");
+			_OutputStream.writeInteger(curCache->osPageSizeInHeader, "%-23zu");
+			_OutputStream.writeInteger(currentOSPageSize, "%zu\n");
+		}
+		layer -= 1;
+		curCache = curCache->next;
+	} while ((curCache != _VirtualMachine->sharedClassConfig->cacheDescriptorList) && (NULL != curCache));
+}
+
+void
 JavaCoreDumpWriter::writeSharedClassSection(void)
 {
 	J9SharedClassJavacoreDataDescriptor javacoreData;
@@ -3575,12 +3614,14 @@ JavaCoreDumpWriter::writeSharedClassSection(void)
 				"1SCLTEXTCSAL   Cache Statistics for All Layers\n"
 				"NULL\n"
 			);
-			writeSharedClassSectionAllLayersStatsHelper(&javacoreData);
+			writeSharedClassSectionAllLayersStatsSummaryHelper(&javacoreData);
 		} else {
 			writeSharedClassSectionTopLayerStatsHelper(&javacoreData, multiLayerStats);
-			writeSharedClassSectionAllLayersStatsHelper(&javacoreData);
+			writeSharedClassSectionAllLayersStatsSummaryHelper(&javacoreData);
 			writeSharedClassSectionTopLayerStatsSummaryHelper(&javacoreData);
 		}
+
+		writeSharedClassSectionEachLayerStatsHelper(&javacoreData);
 
 		/* Write the section trailer */
 		_OutputStream.writeCharacters(

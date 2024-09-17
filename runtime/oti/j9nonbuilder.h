@@ -1220,6 +1220,7 @@ typedef struct J9SharedClassJavacoreDataDescriptor {
 	UDATA numStartupHints;
 	UDATA startupHintBytes;
 	UDATA nattach;
+	UDATA currentOSPageSize; /* memory page size of the current running OS */
 } J9SharedClassJavacoreDataDescriptor;
 
 typedef struct J9SharedStringFarm {
@@ -1318,6 +1319,7 @@ typedef struct J9SharedClassCacheDescriptor {
 	void* metadataStartAddress;
 	struct J9MemorySegment* metadataMemorySegment;
 	UDATA cacheSizeBytes;
+	UDATA osPageSizeInHeader;
 	void* deployedROMClassStartAddress;
 	struct J9SharedClassCacheDescriptor* next;
 	struct J9SharedClassCacheDescriptor* previous;
