@@ -26,7 +26,10 @@
 void *
 j9mem_allocate_portLibrary(uintptr_t byteAmount)
 {
-	return (void *)malloc(byteAmount);
+	void *mem = (void *)malloc(byteAmount);
+	printf(" !j9x 0x%p,0x%zX %s\n", mem, byteAmount, "j9mem_basic.c:30");
+
+	return mem;
 }
 
 void

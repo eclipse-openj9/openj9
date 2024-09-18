@@ -566,7 +566,7 @@ captureCommandLine(void)
 
 	if (bufferSize > 0) {
 		char *buffer = malloc(bufferSize);
-
+		printf(" !j9x 0x%p,0x%zX %s\n", buffer, bufferSize, "jvm.c:569");
 		if (NULL != buffer) {
 #if defined(J9VM_ENV_DATA64)
 			struct procsinfo64 info;
@@ -797,6 +797,8 @@ static J9StringBuffer* jvmBufferEnsure(J9StringBuffer* buffer, UDATA len) {
 	if (buffer == NULL) {
 		UDATA newSize = len > MIN_GROWTH ? len : MIN_GROWTH;
 		buffer = (J9StringBuffer*) malloc( newSize + 1 + sizeof(UDATA));	/* 1 for null terminator */
+		printf(" !j9x 0x%p,0x%zX %s\n", buffer, newSize + 1 + sizeof(UDATA), "jvm.c:800");
+
 		if (buffer != NULL) {
 			buffer->remaining = newSize;
 			buffer->data[0] = '\0';
@@ -807,6 +809,8 @@ static J9StringBuffer* jvmBufferEnsure(J9StringBuffer* buffer, UDATA len) {
 	if (len > buffer->remaining) {
 		UDATA newSize = len > MIN_GROWTH ? len : MIN_GROWTH;
 		J9StringBuffer* new = (J9StringBuffer*) malloc( strlen((const char*)buffer->data) + newSize + sizeof(UDATA) + 1 );
+				printf(" !j9x 0x%p,0x%zX %s\n", new, strlen((const char*)buffer->data) + newSize + sizeof(UDATA) + 1, "jvm.c:812");
+
 		if (new) {
 			new->remaining = newSize;
 			strcpy(new->data, (const char*)buffer->data);
@@ -2024,6 +2028,8 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 	if (NULL != ldLibraryPathValue) {
 		size_t pathLength = strlen(ldLibraryPathValue) +1;
 		char *envTemp = malloc(pathLength);
+						printf(" !j9x 0x%p,0x%zX %s\n", envTemp, pathLength, "jvm.c:2031");
+
 		if (NULL == envTemp) {
 			result = JNI_ERR;
 			goto exit;
@@ -2703,6 +2709,8 @@ int isFileInDir(char *dir, char *file){
 
 	length = dirLength + strlen(file) + 2; /* 2= '/' + null char */
 	fullpath = malloc(length);
+							printf(" !j9x 0x%p,0x%zX %s\n", fullpath, length, "jvm.c:2712");
+
 	if (NULL != fullpath) {
 		strcpy(fullpath, dir);
 		fullpath[dirLength] = DIR_SEPARATOR;
@@ -2929,6 +2937,8 @@ addToLibpath(const char *dir, BOOLEAN isPrepend)
 #endif
 	newSize = (oldPath ? strlen(oldPath) : 0) + strlen(dir) + 2;  /* 1 for :, 1 for \0 terminator */
 	newPath = malloc(newSize);
+								printf(" !j9x 0x%p,0x%zX %s\n", newPath, newSize, "jvm.c:2940");
+
 
 	if(!newPath) {
 		fprintf(stderr, "addToLibpath malloc(%d) 1 failed, aborting\n", newSize);
@@ -3173,6 +3183,8 @@ deleteDirsFromLibpath(const char *const libpath, const char *const deleteStart, 
 	}
 
 	newPath = malloc(preLen + delim + postLen + 1);
+									printf(" !j9x 0x%p,0x%zX %s\n", newPath, preLen + delim + postLen + 1, "jvm.c:3186");
+
 	if (NULL == newPath) {
 		fprintf(stderr, "deleteDirsFromLibpath: malloc(%zu) failed, aborting\n", preLen + delim + postLen + 1);
 		abort();
@@ -3835,6 +3847,8 @@ JVM_OnExit(void (*func)(void))
 	Trc_SC_OnExit_Entry(func);
 
 	newFunc = (J9SidecarExitFunction *) malloc(sizeof(J9SidecarExitFunction));
+										printf(" !j9x 0x%p,0x%zX %s\n", newFunc, sizeof(J9SidecarExitFunction), "jvm.c:3850");
+
 	if (newFunc) {
 		newFunc->func = func;
 
@@ -6015,6 +6029,8 @@ JVM_UcsOpen(const jchar* filename, jint flags, jint mode)
 	/*[CMVC 77501] Workaround for "\\.\" - reported length is off by 4 characters */
 	if (isDosDevices) fullPathLen += 4;
 	longFilename = malloc(sizeof(WCHAR) * (prefixLen+fullPathLen));
+											printf(" !j9x 0x%p,0x%zX %s\n", longFilename, sizeof(WCHAR) * (prefixLen+fullPathLen), "jvm.c:3850");
+
 
 	/* Prefix "\\?\" to allow for very long filenames */
 	wcscpy(longFilename, prefixStr);
