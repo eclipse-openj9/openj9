@@ -62,7 +62,9 @@ public class ReflectionMHTests {
 			cls = (Class<?>) method.invoke(null, new Object[0]);
 
 			boolean isClassNameExpected;
-			if (VersionCheck.major() >= 18) {
+			if ((VersionCheck.major() >= 18)
+					&& (Boolean.getBoolean("jdk.reflect.useDirectMethodHandle") || (VersionCheck.major() != 21))
+			) {
 				isClassNameExpected = isSecurityFrameOrInjectedInvoker(cls);
 			} else {
 				isClassNameExpected = (cls == ReflectionMHTests.class);
