@@ -363,6 +363,57 @@ public final class System {
 	/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 
 	/*[IF JFR_SUPPORT]*/
+	private static Long convertToBytes(String sizeValue) {
+		long sizeInBytes = 0L;
+		String numericPart = sizeValue.replaceAll("[^0-9]", "");
+		String sizeUnit = sizeValue.replaceAll("[0-9]", "").toLowerCase();
+		long size = Long.parseLong(numericPart);
+		switch (sizeUnit) {
+			case "k": /* intentional fall through - KiloBytes*/
+				sizeInBytes = size * 1_024L;
+				break;
+			case "m": /* intentional fall through - Megabytes*/
+				sizeInBytes = size * 1_024L * 1_024L;
+				break;
+			case "g": /* intentional fall through - GigaBytes */
+				sizeInBytes = size * 1_024L * 1_024L * 1_024L;
+				break;
+			default: /* No unit or unrecognized unit, assume bytes */
+				sizeInBytes = size;
+				break;
+		}
+		return sizeInBytes;
+	}
+	/*[ENDIF] JFR_SUPPORT */
+
+	/*[IF JFR_SUPPORT]*/
+	private static Long convertToNanoSeconds(String timeValue) {
+		long timeInNanos = 0L;
+		String numericPart = timeValue.replaceAll("[^0-9]", "");
+		String timeUnit = timeValue.replaceAll("[0-9]", "").toLowerCase();
+		long time = Long.parseLong(numericPart);
+		switch (timeUnit) {
+			case "d": /* intentional fall through - days*/
+				timeInNanos = time * 24 * 60 * 60 * 1_000_000_000L;
+				break;
+			case "h": /* intentional fall through - hours */
+				timeInNanos = time * 60 * 60 * 1_000_000_000L;
+				break;
+			case "m": /* intentional fall through - minutes */
+				timeInNanos = time * 60 * 1_000_000_000L;
+				break;
+			case "s": /* intentional fall through - seconds*/
+				timeInNanos = time * 1_000_000_000L;
+				break;
+			default: /* No unit or unrecognized unit, assume nanoseconds */
+				timeInNanos = time;
+				break;
+		}
+		return timeInNanos;
+	}
+	/*[ENDIF] JFR_SUPPORT */
+
+	/*[IF JFR_SUPPORT]*/
 	static void initJFR() {
 		boolean enableJFRDebug = false;
 		String enableJFRDebugProp = internalGetProperties().getProperty("enable.j9internal.jfr.debug");
@@ -380,6 +431,91 @@ public final class System {
 				Constructor<?> constructor = dcmdStartClass.getDeclaredConstructor();
 				constructor.setAccessible(true);
 				Object dcmdStartInstance = constructor.newInstance();
+
+				/*[IF JAVA_SPEC_VERSION == 11]*/
+				String fileName = null;
+				String settings = null;
+				Long delay = null;
+				Long duration = null;
+				Boolean disk = null;
+				Long maxAge = null;
+				Long maxSize = null;
+				Boolean dumpOnExit = null;
+				String[] jfrCMDLineOptionPairs = jfrCMDLineOption.split(",");
+				for (String pair : jfrCMDLineOptionPairs) {
+					String[] configKeyValue = pair.split("=");
+					if (configKeyValue.length == 2) {
+						String key = configKeyValue[0];
+						String value = configKeyValue[1];
+						switch (key) {
+							case "filename":
+								fileName = value;
+								break;
+							case "settings":
+								settings = value;
+								break;
+							case "delay":
+								delay = convertToNanoSeconds(value);
+								break;
+							case "duration":
+								duration = convertToNanoSeconds(value);
+								break;
+							case "maxage":
+								maxAge = convertToNanoSeconds(value);
+								break;
+							case "maxsize":
+								maxSize = convertToBytes(value);
+								break;
+							case "dumponexit":
+								dumpOnExit = Boolean.valueOf(value);
+								break;
+							case "disk":
+								disk = Boolean.valueOf(value);
+								break;
+						}
+					}
+				}
+				if (null == settings) {
+					settings = "default";
+				}
+				// Convert the string to a String array
+				String[] settingsArray = new String[] { settings };
+
+				Method executeMethod = dcmdStartClass.getDeclaredMethod(
+					"execute",
+					String.class, //name
+					String[].class, //settings
+					Long.class, //delay
+					Long.class, //duration
+					Boolean.class, //disk
+					String.class, //path
+					Long.class, //maxAge
+					Long.class, //maxSize
+					Boolean.class, //dumpOnExit
+					Boolean.class //pathToGcRoots
+				);
+
+				executeMethod.setAccessible(true);
+				String results = (String) executeMethod.invoke(
+					dcmdStartInstance,
+					null,
+					settingsArray,
+					delay,
+					duration,
+					disk,
+					fileName,
+					maxAge,
+					maxSize,
+					dumpOnExit,
+					null
+				);
+				if (null != results) {
+					if (enableJFRDebug) {
+						System.out.println(results);
+					}
+				}
+				/*[ENDIF] JAVA_SPEC_VERSION == 11 */
+
 				/*[IF JAVA_SPEC_VERSION == 17]*/
 				Method executeMethod = dcmdStartClass.getSuperclass().getDeclaredMethod("execute", String.class, String.class, char.class);
 				executeMethod.setAccessible(true);
