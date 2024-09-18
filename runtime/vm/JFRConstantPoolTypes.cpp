@@ -1031,6 +1031,51 @@ done:
 	return index;
 }
 
+U_32
+VM_JFRConstantPoolTypes::addCPULoadEntry(J9JFRCPULoad *cpuLoadData)
+{
+	CPULoadEntry *entry = (CPULoadEntry *)pool_newElement(_cpuLoadTable);
+	U_32 index = U_32_MAX;
+
+	if (NULL == entry) {
+		_buildResult = OutOfMemory;
+		goto done;
+	}
+
+	entry->ticks = cpuLoadData->startTicks;
+	entry->jvmUser = cpuLoadData->jvmUser;
+	entry->jvmSystem = cpuLoadData->jvmSystem;
+	entry->machineTotal = cpuLoadData->machineTotal;
+
+	index = _cpuLoadCount++;
+
+done:
+	return index;
+}
+
+U_32
+VM_JFRConstantPoolTypes::addThreadCPULoadEntry(J9JFRThreadCPULoad *threadCPULoadData)
+{
+	ThreadCPULoadEntry *entry = (ThreadCPULoadEntry *)pool_newElement(_threadCPULoadTable);
+	U_32 index = U_32_MAX;
+
+	if (NULL == entry) {
+		_buildResult = OutOfMemory;
+		goto done;
+	}
+
+	entry->ticks = threadCPULoadData->startTicks;
+	entry->user = threadCPULoadData->user;
+	entry->system = threadCPULoadData->system;
+
+	entry->threadIndex = addThreadEntry(threadCPULoadData->vmThread);
+	if (isResultNotOKay()) goto done;
+
+	index = _threadCPULoadCount++;
+
+done:
+	return index;
+}
 
 void
 VM_JFRConstantPoolTypes::printTables()
