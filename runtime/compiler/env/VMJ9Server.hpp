@@ -251,6 +251,8 @@ public:
    virtual bool inSnapshotMode() override;
    virtual bool isSnapshotModeEnabled() override;
    virtual bool isPortableRestoreModeEnabled() override;
+   virtual bool isIndexableDataAddrPresent();
+   virtual bool isOffHeapAllocationEnabled();
 
 private:
    bool instanceOfOrCheckCastHelper(J9Class *instanceClass, J9Class* castClass, bool cacheUpdate);
