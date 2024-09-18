@@ -1407,7 +1407,6 @@ typedef UDATA (* lookupNativeAddressCallback)(struct J9VMThread *currentThread, 
 	<event>
 		<name>J9HOOK_VM_CRIU_RESTORE</name>
 		<description>Triggered at the beginning of CRIU restore, just after runInternalJVMRestoreHooks()</description>
-		<once />
 		<struct>J9VMCRIURestoreEvent</struct>
 		<data type="struct J9VMThread*" name="vmThread" description="current thread" />
 	</event>
