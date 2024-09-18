@@ -78,7 +78,7 @@ void J9::ARM64::JNILinkage::releaseVMAccess(TR::Node *callNode, TR::Register *vm
    //    addimmx scratch0, vmThreadReg, #publicFlagsOffset
    //    movzx   scratch1, constReleaseVMAccessOutOfLineMask
    //
-   //    dmb ishst
+   //    dmb ish
    // loopHead:
    //    ldxrx   scratch2, [scratch0]
    //    tst     scratch2, scratch1
@@ -93,11 +93,11 @@ void J9::ARM64::JNILinkage::releaseVMAccess(TR::Node *callNode, TR::Register *vm
 
    generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::addimmx, callNode, scratchReg0, vmThreadReg, fej9->thisThreadGetPublicFlagsOffset());
    loadConstant64(cg(), callNode, fej9->constReleaseVMAccessOutOfLineMask(), scratchReg1);
-   // dmb ishst (Inner Shareable store barrier)
+   // dmb ish (Inner Shareable full barrier)
    // Arm Architecture Reference Manual states:
    // "This architecture assumes that all PEs that use the same operating system or hypervisor are in the same Inner Shareable shareability domain"
    // thus, inner shareable dmb suffices
-   generateSynchronizationInstruction(cg(), TR::InstOpCode::dmb, callNode, 0xb);
+   generateSynchronizationInstruction(cg(), TR::InstOpCode::dmb, callNode, TR::InstOpCode::ish);
 
    TR::LabelSymbol *loopHead = generateLabelSymbol(cg());
    generateLabelInstruction(cg(), TR::InstOpCode::label, callNode, loopHead);
@@ -165,7 +165,7 @@ void J9::ARM64::JNILinkage::acquireVMAccess(TR::Node *callNode, TR::Register *vm
    generateTrg1MemSrc1Instruction(cg(), TR::InstOpCode::stxrx, callNode, scratchReg2, TR::MemoryReference::createWithDisplacement(cg(), scratchReg0, 0), scratchReg1);
    generateCompareBranchInstruction(cg(), TR::InstOpCode::cbnzx, callNode, scratchReg2, loopHead);
    // dmb ishld (Inner Shareable load barrier)
-   generateSynchronizationInstruction(cg(), TR::InstOpCode::dmb, callNode, 0x9);
+   generateSynchronizationInstruction(cg(), TR::InstOpCode::dmb, callNode, TR::InstOpCode::ishld);
 
    generateLabelInstruction(cg(), TR::InstOpCode::label, callNode, reacquireVMAccessRestartLabel);
    }
@@ -230,7 +230,7 @@ void J9::ARM64::JNILinkage::acquireVMAccessAtomicFree(TR::Node *callNode, TR::Re
    static_assert(static_cast<uint64_t>(J9_PUBLIC_FLAGS_VM_ACCESS) < (1 << 12), "J9_PUBLIC_FLAGS_VM_ACCESS must fit in immediate");
    auto strInNativeInstr = generateMemSrc1Instruction(cg(), TR::InstOpCode::strimmx, callNode, TR::MemoryReference::createWithDisplacement(cg(), vmThreadReg, offsetof(J9VMThread, inNative)), zeroReg);
 #ifndef J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH
-   generateSynchronizationInstruction(cg(), TR::InstOpCode::dmb, callNode, 0xb);
+   generateSynchronizationInstruction(cg(), TR::InstOpCode::dmb, callNode, TR::InstOpCode::ish);
 #endif
    auto ldrPubliFlagsInstr = generateTrg1MemInstruction(cg(), TR::InstOpCode::ldrimmx, callNode, scratchReg0, TR::MemoryReference::createWithDisplacement(cg(), vmThreadReg, fej9->thisThreadGetPublicFlagsOffset()));
    if (debugObj)
