@@ -359,7 +359,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
 #ifdef TR_HOST_X86
             static char *enableBatchClear = feGetEnv2("TR_EnableBatchClear", (void *)vm);
 
-#else //ppc and s390
+#else//TR_HOST_X86
             static char *disableBatchClear = feGetEnv2("TR_DisableBatchClear", (void *)vm);
 #ifdef TR_HOST_POWER
             static char *disableDualTLH   = feGetEnv2("TR_DisableDualTLH", (void *)vm);
@@ -377,7 +377,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
             if (
 #ifdef TR_HOST_X86
                  enableBatchClear
-#else//ppc and s390
+#else//TR_HOST_X86
                  disableBatchClear==0
 #ifdef TR_HOST_POWER
                   &&!disableZeroedTLHPages
