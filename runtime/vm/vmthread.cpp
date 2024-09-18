@@ -298,6 +298,10 @@ allocateVMThread(J9JavaVM *vm, omrthread_t osThread, UDATA privateFlags, void *m
 	newThread->scopedValueCache = NULL;
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
+#if defined(J9VM_OPT_JFR)
+	newThread->threadJfrState.prevTimestamp = -1;
+#endif /* defined(J9VM_OPT_JFR) */
+
 	/* If an exclusive access request is in progress, mark this thread */
 
 	omrthread_monitor_enter(vm->exclusiveAccessMutex);

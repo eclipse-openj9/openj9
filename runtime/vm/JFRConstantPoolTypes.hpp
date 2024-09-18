@@ -212,6 +212,20 @@ struct StackTraceEntry {
 	StackTraceEntry *next;
 };
 
+struct CPULoadEntry {
+	I_64 ticks;
+	float jvmUser;
+	float jvmSystem;
+	float machineTotal;
+};
+
+struct ThreadCPULoadEntry {
+	I_64 ticks;
+	U_32 threadIndex;
+	float user;
+	float system;
+};
+
 struct JVMInformationEntry {
 	const char *jvmName;
 	const char *jvmVersion;
@@ -289,6 +303,10 @@ private:
 	UDATA _threadSleepCount;
 	J9Pool *_monitorWaitTable;
 	UDATA _monitorWaitCount;
+	J9Pool *_cpuLoadTable;
+	UDATA _cpuLoadCount;
+	J9Pool *_threadCPULoadTable;
+	UDATA _threadCPULoadCount;
 
 	/* Processing buffers */
 	StackFrame *_currentStackFrameBuffer;
@@ -535,6 +553,10 @@ public:
 
 	U_32 addMonitorWaitEntry(J9JFRMonitorWaited* threadWaitData);
 
+	U_32 addCPULoadEntry(J9JFRCPULoad *cpuLoadData);
+
+	U_32 addThreadCPULoadEntry(J9JFRThreadCPULoad *threadCPULoadData);
+
 	J9Pool *getExecutionSampleTable()
 	{
 		return _executionSampleTable;
@@ -560,6 +582,16 @@ public:
 		return _monitorWaitTable;
 	}
 
+	J9Pool *getCPULoadTable()
+	{
+		return _cpuLoadTable;
+	}
+
+	J9Pool *getThreadCPULoadTable()
+	{
+		return _threadCPULoadTable;
+	}
+
 	UDATA getExecutionSampleCount()
 	{
 		return _executionSampleCount;
@@ -583,6 +615,16 @@ public:
 	UDATA getMonitorWaitCount()
 	{
 		return _monitorWaitCount;
+	}
+
+	UDATA getCPULoadCount()
+	{
+		return _cpuLoadCount;
+	}
+
+	UDATA getThreadCPULoadCount()
+	{
+		return _threadCPULoadCount;
 	}
 
 	ClassloaderEntry *getClassloaderEntry()
@@ -727,9 +769,15 @@ public:
 			case J9JFR_EVENT_TYPE_OBJECT_WAIT:
 				addMonitorWaitEntry((J9JFRMonitorWaited*) event);
 				break;
+			case J9JFR_EVENT_TYPE_CPU_LOAD:
+				addCPULoadEntry((J9JFRCPULoad *)event);
+				break;
+			case J9JFR_EVENT_TYPE_THREAD_CPU_LOAD:
+				addThreadCPULoadEntry((J9JFRThreadCPULoad *)event);
+				break;
 			default:
 				Assert_VM_unreachable();
-			break;
+				break;
 			}
 			event = jfrBufferNextDo(&walkstate);
 		}
@@ -1029,6 +1077,10 @@ done:
 		, _threadSleepCount(0)
 		, _monitorWaitTable(NULL)
 		, _monitorWaitCount(0)
+		, _cpuLoadTable(NULL)
+		, _cpuLoadCount(0)
+		, _threadCPULoadTable(NULL)
+		, _threadCPULoadCount(0)
 		, _previousStackTraceEntry(NULL)
 		, _firstStackTraceEntry(NULL)
 		, _previousThreadEntry(NULL)
@@ -1131,6 +1183,18 @@ done:
 			goto done;
 		}
 
+		_cpuLoadTable = pool_new(sizeof(CPULoadEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		if (NULL == _cpuLoadTable) {
+			_buildResult = OutOfMemory;
+			goto done;
+		}
+
+		_threadCPULoadTable = pool_new(sizeof(ThreadCPULoadEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		if (NULL == _threadCPULoadTable) {
+			_buildResult = OutOfMemory;
+			goto done;
+		}
+
 		/* Add reserved index for default entries. For strings zero is the empty or NUll string.
 		 * For package zero is the deafult package, for Module zero is the unnamed module. ThreadGroup
 		 * zero is NULL threadGroup.
@@ -1216,6 +1280,8 @@ done:
 		pool_kill(_threadEndTable);
 		pool_kill(_threadSleepTable);
 		pool_kill(_monitorWaitTable);
+		pool_kill(_cpuLoadTable);
+		pool_kill(_threadCPULoadTable);
 		j9mem_free_memory(_globalStringTable);
 	}
 
