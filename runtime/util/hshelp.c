@@ -2643,9 +2643,9 @@ recreateRAMClasses(J9VMThread * currentThread, J9HashTable * classHashTable, J9H
 		if (!fastHCR) {
 			vmFuncs->hashClassTableDelete(classLoader, J9UTF8_DATA(className), J9UTF8_LENGTH(className));
 			if ((NULL != vm->sharedClassConfig) && (NULL != vm->sharedClassConfig->romToRamHashTable)) {
-				omrthread_rwmutex_enter_write(vm->sharedClassConfig->romToRamHashTableMutex);
 				RomToRamEntry entry;
 				entry.ramClass = originalRAMClass;
+				omrthread_rwmutex_enter_write(vm->sharedClassConfig->romToRamHashTableMutex);
 				hashTableRemove(vm->sharedClassConfig->romToRamHashTable, &entry);
 				omrthread_rwmutex_exit_write(vm->sharedClassConfig->romToRamHashTableMutex);
 			}
