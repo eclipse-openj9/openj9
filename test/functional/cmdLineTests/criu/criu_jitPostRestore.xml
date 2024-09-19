@@ -72,9 +72,8 @@
 		<output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
 		<output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
 		<output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
-		<!-- Following two failure conditions to be re-enabled with https://github.com/eclipse-openj9/openj9/pull/20047 -->
-		<!-- output type="failure" caseSensitive="yes" regex="no">Some or all compiled code in the code cache invalidated post restore.</output>
-		<output type="failure" caseSensitive="yes" regex="no">JIT compilation disabled post restore.</output -->
+		<output type="failure" caseSensitive="yes" regex="no">Some or all compiled code in the code cache invalidated post restore.</output>
+		<output type="failure" caseSensitive="yes" regex="no">JIT compilation disabled post restore.</output>
 		<output type="success" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore.</output>
 		<!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
 		<output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
@@ -91,9 +90,8 @@
 		<output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
 		<output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>
 		<output type="success" caseSensitive="yes" regex="no">Some or all compiled code in the code cache invalidated post restore.</output>
-		<!-- Following two failure conditions to be re-enabled with https://github.com/eclipse-openj9/openj9/pull/20047 -->
-		<!-- output type="failure" caseSensitive="yes" regex="no">JIT compilation disabled post restore.</output>
-		<output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore.</output -->
+		<output type="failure" caseSensitive="yes" regex="no">JIT compilation disabled post restore.</output>
+		<output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore.</output>
 		<!-- If CRIU can't acquire the original thread IDs, this test will fail. Nothing can be done about this failure. -->
 		<output type="success" caseSensitive="yes" regex="no">Thread pid mismatch</output>
 		<output type="success" caseSensitive="yes" regex="no">do not match expected</output>
