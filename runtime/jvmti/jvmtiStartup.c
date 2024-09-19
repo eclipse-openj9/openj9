@@ -47,6 +47,12 @@
 
 #define THIS_DLL_NAME J9_JVMTI_DLL_NAME
 
+typedef enum CreateAgentOption {
+	OPTION_AGENTLIB,
+	OPTION_AGENTPATH,
+	OPTION_XRUNJDWP
+} CreateAgentOption;
+
 static void shutDownJVMTI(J9JavaVM *vm);
 static jint createAgentLibrary(J9JavaVM *vm, const char *libraryName, UDATA libraryNameLength, const char *options, UDATA optionsLength, UDATA decorate, J9JVMTIAgentLibrary **result);
 static jint initializeJVMTI(J9JavaVM *vm);
@@ -57,7 +63,8 @@ static J9JVMTIAgentLibrary* findAgentLibrary(J9JavaVM *vm, const char *libraryAn
 static jint issueAgentOnLoadAttach(J9JavaVM *vm, J9JVMTIAgentLibrary *agentLibrary, const char *options, char *loadFunctionName, BOOLEAN *foundLoadFn);
 I_32 JNICALL loadAgentLibraryOnAttach(struct J9JavaVM *vm, const char *library, const char *options, UDATA decorate);
 static BOOLEAN isAgentLibraryLoaded(J9JavaVM *vm, const char *library, BOOLEAN decorate);
-static jint createAgentLibraryWithOption(J9JavaVM *vm, J9VMInitArgs *argsList, IDATA agentIndex, J9JVMTIAgentLibrary **agentLibrary, BOOLEAN isXrunjdwp, BOOLEAN *isJDWPagent);
+static jint createAgentLibraryWithOption(J9JavaVM *vm, J9VMInitArgs *argsList, IDATA agentIndex, J9JVMTIAgentLibrary **agentLibrary, CreateAgentOption createAgentOption, BOOLEAN *isJDWPagent);
+static BOOLEAN processAgentLibraryFromArgsList(J9JavaVM *vm, J9VMInitArgs *argsList, BOOLEAN loadLibrary, CreateAgentOption createAgentOption);
 
 #define INSTRUMENT_LIBRARY "instrument"
 
@@ -120,13 +127,15 @@ parseLibraryAndOptions(char *libraryAndOptions, UDATA *libraryLength, char **opt
  * @param[in] argsList a J9VMInitArgs
  * @param[in] agentIndex the option index for the agent library
  * @param[in/out] agentLibrary environment for the agent
- * @param[in] isXrunjdwp indicate if the agent option is MAPOPT_XRUNJDWP
+ * @param[in] createAgentOption the agent option is one of CreateAgentOption
  * @param[in/out] isJDWPagent indicate if DebugOnRestore is enabled and the agent is JDWP
  *
  * @return JNI_OK if succeeded, otherwise JNI_ERR/JNI_ENOMEM
  */
 static jint
-createAgentLibraryWithOption(J9JavaVM *vm, J9VMInitArgs *argsList, IDATA agentIndex, J9JVMTIAgentLibrary **agentLibrary, BOOLEAN isXrunjdwp, BOOLEAN *isJDWPagent)
+createAgentLibraryWithOption(
+	J9JavaVM *vm, J9VMInitArgs *argsList, IDATA agentIndex, J9JVMTIAgentLibrary **agentLibrary,
+	CreateAgentOption createAgentOption, BOOLEAN *isJDWPagent)
 {
 	jint result = JNI_OK;
 	char optionsBuf[OPTIONSBUFF_LEN];
@@ -151,9 +160,10 @@ createAgentLibraryWithOption(J9JavaVM *vm, J9VMInitArgs *argsList, IDATA agentIn
 		}
 	} while (OPTION_BUFFER_OVERFLOW == option_rc);
 	if (JNI_OK == result) {
+		BOOLEAN decorate = OPTION_AGENTPATH != createAgentOption;
 		UDATA libraryLength = 0;
 #define JDWP_AGENT "jdwp"
-		if (isXrunjdwp) {
+		if (OPTION_XRUNJDWP == createAgentOption) {
 			UDATA optionsLengthTmp = strlen(optionsPtr);
 			result = createAgentLibrary(vm, JDWP_AGENT, LITERAL_STRLEN(JDWP_AGENT), optionsPtr, optionsLengthTmp, TRUE, agentLibrary);
 			Trc_JVMTI_createAgentLibraryWithOption_Xrunjdwp_result(optionsPtr, optionsLengthTmp, *agentLibrary, result);
@@ -162,15 +172,32 @@ createAgentLibraryWithOption(J9JavaVM *vm, J9VMInitArgs *argsList, IDATA agentIn
 			UDATA optionsLength = 0;
 
 			parseLibraryAndOptions(optionsPtr, &libraryLength, &options, &optionsLength);
-			result = createAgentLibrary(vm, optionsPtr, libraryLength, options, optionsLength, TRUE, agentLibrary);
+			result = createAgentLibrary(vm, optionsPtr, libraryLength, options, optionsLength, decorate, agentLibrary);
 			Trc_JVMTI_createAgentLibraryWithOption_agentlib_result(optionsPtr, libraryLength, options, optionsLength, *agentLibrary, result);
 		}
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-		if ((JNI_OK == result)
-			&& (isXrunjdwp || (0 == strncmp(JDWP_AGENT, optionsPtr, libraryLength)))
-			&& (vm->internalVMFunctions->isDebugOnRestoreEnabled(vm))
-		) {
-			*isJDWPagent = TRUE;
+		if ((JNI_OK == result) && vm->internalVMFunctions->isDebugOnRestoreEnabled(vm)) {
+			/* 1. If createAgentOption is OPTION_XRUNJDWP, the agent option is MAPOPT_XRUNJDWP which implies a JDWP agent.
+			 * 2. If createAgentOption is OPTION_AGENTLIB, decorate is TRUE, the agent option is VMOPT_AGENTLIB_COLON,
+			 *    just compare the platform independent library name.
+			 * 3. If createAgentOption is OPTION_AGENTPATH, decorate is FALSE, the agent option is VMOPT_AGENTPATH_COLON,
+			 *    compare the actual platform-specific library name with libjdwp.so.
+			 *    CRIU only supports Linux OS flavours.
+			 */
+#if defined(LINUX)
+#define LIB_JDWP "lib" JDWP_AGENT ".so"
+#else /* defined(LINUX) */
+#error "CRIU is only supported on Linux"
+#endif /* defined(LINUX) */
+			if ((OPTION_XRUNJDWP == createAgentOption)
+				|| (decorate && (0 == strncmp(JDWP_AGENT, optionsPtr, libraryLength)))
+				|| (!decorate
+					&& (libraryLength >= LITERAL_STRLEN(LIB_JDWP))
+					&& (0 == strncmp(LIB_JDWP, optionsPtr + libraryLength - LITERAL_STRLEN(LIB_JDWP), LITERAL_STRLEN(LIB_JDWP))))
+			) {
+				*isJDWPagent = TRUE;
+			}
+#undef LIB_JDWP
 		}
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 #undef JDWP_AGENT
@@ -185,25 +212,35 @@ createAgentLibraryWithOption(J9JavaVM *vm, J9VMInitArgs *argsList, IDATA agentIn
 
 /**
  * Create an agent library from an option index.
+ * Three agent options are expected: VMOPT_AGENTLIB_COLON, VMOPT_AGENTPATH_COLON or MAPOPT_XRUNJDWP.
  *
  * @param[in] vm Java VM
  * @param[in] argsList a J9VMInitArgs
- * @param[in] agentColon the agent option, VMOPT_AGENTLIB_COLON, VMOPT_AGENTPATH_COLON or MAPOPT_XRUNJDWP
  * @param[in] loadLibrary indicate if the agent library created to be loaded or not
- * @param[in] isXrunjdwp indicate if the agent option is MAPOPT_XRUNJDWP
+ * @param[in] createAgentOption the agent option is one of CreateAgentOption
  *
  * @return TRUE if succeeded, otherwise FALSE
  */
 static BOOLEAN
-processAgentLibraryFromArgsList(J9JavaVM *vm, J9VMInitArgs *argsList, const char *agentColon, BOOLEAN loadLibrary, BOOLEAN isXrunjdwp)
+processAgentLibraryFromArgsList(J9JavaVM *vm, J9VMInitArgs *argsList, BOOLEAN loadLibrary, CreateAgentOption createAgentOption)
 {
-	IDATA agentIndex = FIND_AND_CONSUME_ARG_FORWARD(argsList, STARTSWITH_MATCH, agentColon, NULL);
+	IDATA agentIndex = 0;
 	BOOLEAN result = TRUE;
+	const char *agentColon = NULL;
 
+	if (OPTION_AGENTLIB == createAgentOption) {
+		agentColon = VMOPT_AGENTLIB_COLON;
+	} else if (OPTION_AGENTPATH == createAgentOption) {
+		agentColon = VMOPT_AGENTPATH_COLON;
+	} else {
+		/* only three options are expected */
+		agentColon = MAPOPT_XRUNJDWP;
+	}
+	agentIndex = FIND_AND_CONSUME_ARG_FORWARD(argsList, STARTSWITH_MATCH, agentColon, NULL);
 	while (agentIndex >= 0) {
 		J9JVMTIAgentLibrary *agentLibrary = NULL;
 		BOOLEAN isJDWPagent = FALSE;
-		if (JNI_OK != createAgentLibraryWithOption(vm, argsList, agentIndex, &agentLibrary, isXrunjdwp, &isJDWPagent)) {
+		if (JNI_OK != createAgentLibraryWithOption(vm, argsList, agentIndex, &agentLibrary, createAgentOption, &isJDWPagent)) {
 			result = FALSE;
 			break;
 		}
@@ -218,6 +255,10 @@ processAgentLibraryFromArgsList(J9JavaVM *vm, J9VMInitArgs *argsList, const char
 			}
 		}
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+		if (OPTION_XRUNJDWP == createAgentOption) {
+			/* no need to search more -Xrunjdwp: options */
+			break;
+		}
 
 		agentIndex = FIND_NEXT_ARG_IN_ARGS_FORWARD(argsList, STARTSWITH_MATCH, agentColon, NULL, agentIndex);
 	}
@@ -294,9 +335,9 @@ criuRestoreInitializeLib(J9JavaVM *vm, J9JVMTIEnv *j9env)
 {
 	J9VMInitArgs *criuRestoreArgsList = vm->checkpointState.restoreArgsList;
 
-	processAgentLibraryFromArgsList(vm, criuRestoreArgsList, VMOPT_AGENTLIB_COLON, FALSE, FALSE);
-	processAgentLibraryFromArgsList(vm, criuRestoreArgsList, VMOPT_AGENTPATH_COLON, FALSE, FALSE);
-	processAgentLibraryFromArgsList(vm, criuRestoreArgsList, MAPOPT_XRUNJDWP, FALSE, TRUE);
+	processAgentLibraryFromArgsList(vm, criuRestoreArgsList, FALSE, OPTION_AGENTLIB);
+	processAgentLibraryFromArgsList(vm, criuRestoreArgsList, FALSE, OPTION_AGENTPATH);
+	processAgentLibraryFromArgsList(vm, criuRestoreArgsList, FALSE, OPTION_XRUNJDWP);
 
 	if (J9_ARE_NO_BITS_SET(vm->checkpointState.flags, J9VM_CRIU_IS_JDWP_ENABLED)) {
 		J9JVMTIData * jvmtiData = vm->jvmtiData;
@@ -311,9 +352,9 @@ criuRestoreStartAgent(J9JavaVM *vm)
 {
 	J9VMInitArgs *criuRestoreArgsList = vm->checkpointState.restoreArgsList;
 
-	processAgentLibraryFromArgsList(vm, criuRestoreArgsList, VMOPT_AGENTLIB_COLON, TRUE, FALSE);
-	processAgentLibraryFromArgsList(vm, criuRestoreArgsList, VMOPT_AGENTPATH_COLON, TRUE, FALSE);
-	processAgentLibraryFromArgsList(vm, criuRestoreArgsList, MAPOPT_XRUNJDWP, TRUE, TRUE);
+	processAgentLibraryFromArgsList(vm, criuRestoreArgsList, TRUE, OPTION_AGENTLIB);
+	processAgentLibraryFromArgsList(vm, criuRestoreArgsList, TRUE, OPTION_AGENTPATH);
+	processAgentLibraryFromArgsList(vm, criuRestoreArgsList, TRUE, OPTION_XRUNJDWP);
 }
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
@@ -327,10 +368,10 @@ IDATA J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
 			if (JNI_OK != initializeJVMTI(vm)) {
 				goto _error;
 			}
-			if (FALSE == processAgentLibraryFromArgsList(vm, vm->vmArgsArray, VMOPT_AGENTLIB_COLON, FALSE, FALSE)) {
+			if (FALSE == processAgentLibraryFromArgsList(vm, vm->vmArgsArray, FALSE, OPTION_AGENTLIB)) {
 				goto _error;
 			}
-			if (FALSE == processAgentLibraryFromArgsList(vm, vm->vmArgsArray, VMOPT_AGENTPATH_COLON, FALSE, FALSE)) {
+			if (FALSE == processAgentLibraryFromArgsList(vm, vm->vmArgsArray, FALSE, OPTION_AGENTPATH)) {
 				goto _error;
 			}
 			/* -Xrun libraries that have an Agent_OnLoad are treated like -agentlib: */
