@@ -748,10 +748,6 @@ private static void ensureProperties(boolean isInitialization) {
 	initializedProperties.put("native.encoding", platformEncoding); //$NON-NLS-1$
 	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 
-	/*[IF JAVA_SPEC_VERSION == 21]*/
-	initializedProperties.putIfAbsent("jdk.reflect.useDirectMethodHandle", "false");
-	/*[ENDIF] JAVA_SPEC_VERSION == 21 */
-
 	/*[IF (JAVA_SPEC_VERSION >= 21) & (PLATFORM-mz31 | PLATFORM-mz64)]*/
 	initializedProperties.put("com.ibm.autocvt", zOSAutoConvert); //$NON-NLS-1$
 	/*[ENDIF] (JAVA_SPEC_VERSION >= 21) & (PLATFORM-mz31 | PLATFORM-mz64) */
