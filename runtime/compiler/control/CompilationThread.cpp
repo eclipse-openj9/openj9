@@ -2478,8 +2478,8 @@ bool TR::CompilationInfo::shouldRetryCompilation(J9VMThread *vmThread, TR_Method
    else if (entry->_compErrCode != compilationOK)
       {
       J9JavaVM *javaVM = compInfo->getJITConfig()->javaVM;
-      if (javaVM->internalVMFunctions->isDebugOnRestoreEnabled(vmThread)
-          && javaVM->internalVMFunctions->isCheckpointAllowed(vmThread)
+      if (javaVM->internalVMFunctions->isDebugOnRestoreEnabled(javaVM)
+          && javaVM->internalVMFunctions->isCheckpointAllowed(javaVM)
           && !compInfo->getCRRuntime()->isCheckpointInProgress()
           && !compInfo->isInShutdownMode())
          {
@@ -7219,7 +7219,7 @@ TR::CompilationInfoPerThreadBase::cannotPerformRemoteComp(
    {
    return
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-          (_jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(vmThread) && !_compInfo.getCRRuntime()->canPerformRemoteCompilationInCRIUMode()) ||
+          (_jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(_jitConfig->javaVM) && !_compInfo.getCRRuntime()->canPerformRemoteCompilationInCRIUMode()) ||
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
           !JITServer::ClientStream::isServerCompatible(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary)) ||
           (!JITServerHelpers::isServerAvailable() && !JITServerHelpers::shouldRetryConnection(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary))) ||
@@ -8993,7 +8993,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                           vm->isAOT_DEPRECATED_DO_NOT_USE() || // AOT compilations
 #if defined(J9VM_OPT_CRIU_SUPPORT)
                           (jitConfig->javaVM->internalVMFunctions->isNonPortableRestoreMode(vmThread) &&
-                          jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(vmThread)) ||
+                          jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(jitConfig->javaVM)) ||
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
                           TR::Options::getAggressivityLevel() == TR::Options::TR_AggresivenessLevel::AGGRESSIVE_THROUGHPUT;
                   if (enableExpensiveOptsAtWarm)
@@ -10585,8 +10585,8 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                {
                jitMethodTranslated(vmThread, method, startPC);
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-               if (jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(vmThread)
-                   && jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(vmThread)
+               if (jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(jitConfig->javaVM)
+                   && jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(jitConfig->javaVM)
                    && (!compInfo->getCRRuntime()->isCheckpointInProgress() || comp->getOption(TR_FullSpeedDebug)))
                   {
                   if (comp->getRecompilationInfo() && comp->getRecompilationInfo()->getJittedBodyInfo())

@@ -2421,7 +2421,7 @@ bool J9::Options::preProcessJitServer(J9JavaVM *vm, J9JITConfig *jitConfig)
          // Enable JITServer client mode if
          // 1) CRIU support is enabled
          // 2) client mode is not explicitly disabled
-         bool implicitClientMode = ifuncs->isCRaCorCRIUSupportEnabled(currentThread) && !useJitServerExplicitlyDisabled;
+         bool implicitClientMode = ifuncs->isCRaCorCRIUSupportEnabled(vm) && !useJitServerExplicitlyDisabled;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
          if (useJitServerExplicitlySpecified
@@ -3027,10 +3027,9 @@ bool
 J9::Options::isFSDNeeded(J9JavaVM *javaVM, J9HookInterface **vmHooks)
    {
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-   J9VMThread * vmThread = javaVM->internalVMFunctions->currentVMThread(javaVM);
-   if (javaVM->internalVMFunctions->isCheckpointAllowed(vmThread))
+   if (javaVM->internalVMFunctions->isCheckpointAllowed(javaVM))
       {
-      if (javaVM->internalVMFunctions->isDebugOnRestoreEnabled(vmThread))
+      if (javaVM->internalVMFunctions->isDebugOnRestoreEnabled(javaVM))
          {
          return false;
          }
@@ -3103,7 +3102,6 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
    J9JITConfig * jitConfig = (J9JITConfig*)base;
    J9JavaVM * javaVM = jitConfig->javaVM;
    J9HookInterface * * vmHooks = javaVM->internalVMFunctions->getVMHookInterface(javaVM);
-   J9VMThread * vmThread = javaVM->internalVMFunctions->currentVMThread(javaVM);
 
    TR_J9VMBase * vm = TR_J9VMBase::get(jitConfig, 0);
    TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
@@ -3139,7 +3137,7 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
       }
 #if defined(J9VM_OPT_CRIU_SUPPORT)
    else if (fsdStatus == FSDInitStatus::FSDInit_NotInitialized
-            && javaVM->internalVMFunctions->isDebugOnRestoreEnabled(vmThread))
+            && javaVM->internalVMFunctions->isDebugOnRestoreEnabled(javaVM))
       {
       self()->setOption(TR_FullSpeedDebug);
       self()->setOption(TR_DisableDirectToJNI);
@@ -3333,7 +3331,7 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
             }
          }
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-      else if (!javaVM->internalVMFunctions->isDebugOnRestoreEnabled(vmThread))
+      else if (!javaVM->internalVMFunctions->isDebugOnRestoreEnabled(javaVM))
 #else
       else
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
@@ -3830,8 +3828,8 @@ J9::Options::resetFSD(J9JavaVM *vm, J9VMThread *vmThread, bool &doAOT)
    TR_ASSERT_FATAL (fsdStatusJIT == fsdStatusAOT, "fsdStatusJIT=%d != fsdStatusAOT=%d!\n", fsdStatusJIT, fsdStatusAOT);
 
    if (fsdStatusJIT == TR::Options::FSDInitStatus::FSDInit_NotInitialized
-       && !vm->internalVMFunctions->isCheckpointAllowed(vmThread)
-       && vm->internalVMFunctions->isDebugOnRestoreEnabled(vmThread))
+       && !vm->internalVMFunctions->isCheckpointAllowed(vm)
+       && vm->internalVMFunctions->isDebugOnRestoreEnabled(vm))
       {
       getCmdLineOptions()->setFSDOptionsForAll(false);
       getAOTCmdLineOptions()->setFSDOptionsForAll(false);

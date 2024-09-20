@@ -464,7 +464,7 @@ jobject getPropertyList(JNIEnv *env)
 	 * https://github.com/eclipse-openj9/openj9/issues/15800
 	 */
 	result = -1;
-	if (!vmFuncs->isCheckpointAllowed(currentThread))
+	if (!vmFuncs->isCheckpointAllowed(javaVM))
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 	{
 		result = j9sysinfo_get_username(username, USERNAME_LENGTH);

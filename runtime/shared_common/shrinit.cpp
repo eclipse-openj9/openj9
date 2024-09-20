@@ -2675,8 +2675,7 @@ sysinfoGetUserNameHelper(J9JavaVM *vm, UDATA verboseFlags, char *buffer, UDATA l
 	} else if (rc < 0) {
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 		/* Skip j9sysinfo_get_username if a checkpoint can be taken. */
-		J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
-		if (!vmFuncs->isCheckpointAllowed(vmFuncs->currentVMThread(vm)))
+		if (!vm->internalVMFunctions->isCheckpointAllowed(vm))
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 		{
 			rc = j9sysinfo_get_username(buffer, length);

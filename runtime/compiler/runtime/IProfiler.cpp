@@ -4086,7 +4086,8 @@ TR_IProfiler::processWorkingQueue()
          {
 #if defined(J9VM_OPT_CRIU_SUPPORT)
          // Check if the IProfiler Thread should be suspended for checkpoint
-         if (_compInfo->getJITConfig()->javaVM->internalVMFunctions->isCheckpointAllowed(_iprofilerThread))
+         J9JavaVM *javaVM = _compInfo->getJITConfig()->javaVM;
+         if (javaVM->internalVMFunctions->isCheckpointAllowed(javaVM))
             {
             // The monitors must be acquired in the right order, therefore
             // release the IProfiler monitor prior to attempting to suspend
