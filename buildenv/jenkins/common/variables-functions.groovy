@@ -712,7 +712,11 @@ def set_test_targets() {
     if (TESTS_TARGETS != 'none') {
         for (target in TESTS_TARGETS.replaceAll("\\s","").toLowerCase().tokenize(',')) {
             switch (target) {
-                case ["sanity", "extended"]:
+                case ["sanity"]:
+                    TESTS["${target}.functional"] = [:]
+                    TESTS["${target}.openjdk"] = [:]
+                    break
+                case ["extended"]:
                     TESTS["${target}.functional"] = [:]
                     break
                 default:
