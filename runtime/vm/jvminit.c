@@ -4220,10 +4220,10 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 		}
 
 		IDATA jfrConfigOptionIndex = FIND_AND_CONSUME_VMARG(OPTIONAL_LIST_MATCH_USING_EQUALS, VMOPT_XXFLIGHTRECORDEROPTIONS, NULL);
-		if (jfrConfigOptionIndex >= 0) {
+		if (0 <= jfrConfigOptionIndex) {
 			char* jfrConfigOptionBuffer = NULL;
 			GET_OPTION_VALUE(jfrConfigOptionIndex, '=', &jfrConfigOptionBuffer);
-			if(jfrConfigOptionBuffer != NULL) {
+			if (NULL != jfrConfigOptionBuffer) {
 				vm->jfrState.jfrConfigCMDLineOption = jfrConfigOptionBuffer;
 			}
 		}

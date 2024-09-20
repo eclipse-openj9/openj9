@@ -571,10 +571,9 @@ Java_com_ibm_oti_vm_VM_dumpString(JNIEnv * env, jclass clazz, jstring str)
 }
 
 jstring JNICALL
-Java_com_ibm_oti_vm_VM_getjfrConfigCMDLineOption(JNIEnv * env, jclass clazz)
+Java_com_ibm_oti_vm_VM_getjfrConfigCMDLineOption(JNIEnv *env, jclass clazz)
 {
 	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
-	char* optionString = javaVM->jfrState.jfrConfigCMDLineOption;
-	jstring jfrConfigOption = (*env)->NewStringUTF(env, optionString);
+	jstring jfrConfigOption = (*env)->NewStringUTF(env, javaVM->jfrState.jfrConfigCMDLineOption);
 	return jfrConfigOption;
 }

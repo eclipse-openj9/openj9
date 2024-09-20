@@ -299,12 +299,14 @@ public static void ensureCalledFromBootstrapClass() {
  */
 public static native void dumpString(String str);
 
+/*[IF JFR_SUPPORT]*/
 /**
  * Native used to get a jfr configure option string
  *
  * @return a String which is jfr config option
  */
 public static native String getjfrConfigCMDLineOption();
+/*[ENDIF] JFR_SUPPORT */
 
 /**
  * Native used to set the classpath for an OTI implemented classloader

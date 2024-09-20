@@ -362,43 +362,48 @@ public final class System {
 	/*[ENDIF] Sidecar18-SE-OpenJ9 */
 	/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 
-	private static Long convertToBytes(String size) {
-        char unit = Character.toLowerCase(size.charAt(size.length() - 1));
-        long multiplier = 1;
+	/*[IF JFR_SUPPORT]*/
+	private static Long convertToBytes(String sizeValue) {
+		long sizeInBytes = 0L;
+		String numericPart = sizeValue.replaceAll("[^0-9]", "");
+		String sizeUnit = sizeValue.replaceAll("[0-9]", "").toLowerCase();
+		long size = Long.parseLong(numericPart);
+		switch (sizeUnit) {
+			case "k": /* intentional fall through - KiloBytes*/
+				sizeInBytes = size * 1_024L;
+				break;
+			case "m": /* intentional fall through - Megabytes*/
+				sizeInBytes = size * 1_024L * 1_024L;
+				break;
+			case "g": /* intentional fall through - GigaBytes */
+				sizeInBytes = size * 1_024L * 1_024L * 1_024L;
+				break;
+			default: /* No unit or unrecognized unit, assume bytes */
+				sizeInBytes = size;
+				break;
+		}
+		return sizeInBytes;
+	}
+	/*[ENDIF] JFR_SUPPORT */
 
-        switch (unit) {
-            case 'g': /* intentional fall through */
-                multiplier = 1024L * 1024L * 1024L;
-                break;
-            case 'm': /* intentional fall through */
-                multiplier = 1024L * 1024L;
-                break;
-            case 'k': /* intentional fall through */
-                multiplier = 1024L;
-                break;
-        }
-
-        long value = Long.parseLong(size.substring(0, size.length() - 1));
-        return value * multiplier;
-    }
-
+	/*[IF JFR_SUPPORT]*/
 	static void initJFR() {
 		String jfrConfigOption = com.ibm.oti.vm.VM.getjfrConfigCMDLineOption();
-		if(jfrConfigOption != null && !jfrConfigOption.isEmpty()) {
+		if ((null != jfrConfigOption) && !jfrConfigOption.isEmpty()) {
 			boolean verbose = false;
-            String repositoryPath = null;
-            String dumpPath = null;
-            Integer stackDepth = null;
-            Long globalBufferCount = null;
-            Long globalBufferSize = null;
-            Long threadBufferSize = null;
-            Long memorySize = null;
-            Long maxChunkSize = null;
-            Boolean sampleThreads = null;
+			String repositoryPath = null;
+			String dumpPath = null;
+			Integer stackDepth = null;
+			Long globalBufferCount = null;
+			Long globalBufferSize = null;
+			Long threadBufferSize = null;
+			Long memorySize = null;
+			Long maxChunkSize = null;
+			Boolean sampleThreads = null;
 			String[] configPairs = jfrConfigOption.split(",");
 			for (String pair : configPairs) {
 				String[] configKeyValue = pair.split("=");
-				if(configKeyValue.length == 2) {
+				if (2 == configKeyValue.length) {
 					String key = configKeyValue[0];
 					String value = configKeyValue[1];
 					switch (key) {
@@ -407,17 +412,18 @@ public final class System {
 							break;
 						case "stackdepth":
 							stackDepth = Integer.parseInt(value);
-							if(stackDepth > 2048) {
-								// System.out.println("Warning: Maximum stackdepth allowed is 2048");
+							if (2048 < stackDepth) {
+								/* Warning: Maximum stackdepth allowed is 2048 */
 								stackDepth = null;
 							}
+							break;
 						case "repository":
 							repositoryPath = value;
 							break;
 					}
 				}
 			}
-			if(maxChunkSize != null || stackDepth != null || repositoryPath != null) {
+			if (null != maxChunkSize || null != stackDepth || null != repositoryPath) {
 				try {
 					Class<?> dcmdConfigClass = Class.forName("jdk.jfr.internal.dcmd.DCmdConfigure");
 					Constructor<?> constructor = dcmdConfigClass.getDeclaredConstructor();
@@ -455,14 +461,13 @@ public final class System {
 							System.out.println(result);
 						}
 					}
-				} catch (ClassNotFoundException e) {
-					// Assume this is a raw configuration and suppress the exception
 				} catch (Exception e) {
-					throw new InternalError(e.toString());
+					throw new InternalError(e);
 				}
 			}
 		}
 	}
+	/*[ENDIF] JFR_SUPPORT */
 
 	static void afterClinitInitialization() {
 		/*[PR CMVC 189091] Perf: EnumSet.allOf() is slow */
@@ -634,7 +639,9 @@ static void completeInitialization() {
 		throw new InternalError(e.toString());
 	}
 	/*[ENDIF]*/	//!Sidecar19-SE_RAWPLUSJ9&!Sidecar18-SE-OpenJ9
+	/*[IF JFR_SUPPORT]*/
 	initJFR();
+	/*[ENDIF] JFR_SUPPORT */
 }
 
 /*[IF JAVA_SPEC_VERSION >= 9]*/
