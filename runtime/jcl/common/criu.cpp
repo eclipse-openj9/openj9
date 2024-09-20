@@ -57,10 +57,10 @@ Java_openj9_internal_criu_InternalCRIUSupport_getProcessRestoreStartTimeImpl(JNI
 jboolean JNICALL
 Java_openj9_internal_criu_InternalCRIUSupport_isCheckpointAllowedImpl(JNIEnv *env, jclass unused)
 {
-	J9VMThread *currentThread = (J9VMThread *)env;
+	J9JavaVM *vm = ((J9VMThread *)env)->javaVM;
 	jboolean res = JNI_FALSE;
 
-	if (currentThread->javaVM->internalVMFunctions->isCheckpointAllowed(currentThread)) {
+	if (vm->internalVMFunctions->isCheckpointAllowed(vm)) {
 		res = JNI_TRUE;
 	}
 

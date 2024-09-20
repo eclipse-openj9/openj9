@@ -547,11 +547,10 @@ mapCapabilitiesToEvents(J9JVMTIEnv * j9env, jvmtiCapabilities * capabilities, J9
 	IDATA rc = 0;
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-	J9JavaVM * vm = j9env->vm;
-	J9VMThread *mainThread = vm->mainThread;
+	J9JavaVM *vm = j9env->vm;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
-	BOOLEAN skipHookReserve = vmFuncs->isCheckpointAllowed(mainThread)
-			&& vmFuncs->isDebugOnRestoreEnabled(mainThread);
+	BOOLEAN skipHookReserve = vmFuncs->isCheckpointAllowed(vm)
+			&& vmFuncs->isDebugOnRestoreEnabled(vm);
 	/* Skip J9HookReserve for the events required by JDWP agent pre-checkpoint when DebugOnRestore is enabled,
 	 * these events will be registered post-restore if a JDWP agent is specified in the restore option file,
 	 * otherwise they are going to be unregistered by J9HookUnregister() which only clears J9HOOK_FLAG_HOOKED,

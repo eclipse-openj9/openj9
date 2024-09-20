@@ -97,7 +97,8 @@ jobject getPlatformPropertyList(JNIEnv *env, const char *strings[], int propInde
 	char home[EsMaxPath] = {0};
 	char *homeAlloc = NULL;
 	J9VMThread *currentThread = (J9VMThread*)env;
-	J9InternalVMFunctions *vmFuncs = currentThread->javaVM->internalVMFunctions;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 
 	/* Hard coded file/path separators and other values */
 
@@ -158,7 +159,7 @@ jobject getPlatformPropertyList(JNIEnv *env, const char *strings[], int propInde
 	/* Skip getpwuid if a checkpoint can be taken.
 	 * https://github.com/eclipse-openj9/openj9/issues/15800
 	 */
-	if (!vmFuncs->isCheckpointAllowed(currentThread))
+	if (!vmFuncs->isCheckpointAllowed(vm))
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 	{
 		/*[PR 101939] user.home not set correctly when j9 invoked via execve(x,y,null) */

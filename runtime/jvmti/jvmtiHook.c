@@ -2047,7 +2047,7 @@ hookGlobalEvents(J9JVMTIData * jvmtiData)
 	}
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-	if (vm->internalVMFunctions->isDebugOnRestoreEnabled(vm->mainThread)) {
+	if (vm->internalVMFunctions->isDebugOnRestoreEnabled(vm)) {
 		if ((*vmHook)->J9HookRegisterWithCallSite(vmHook, J9HOOK_TAG_AGENT_ID | J9HOOK_VM_PREPARING_FOR_RESTORE, jvmtiHookVMRestoreCRIUInit, OMR_GET_CALLSITE(), jvmtiData, J9HOOK_AGENTID_FIRST)) {
 			return 1;
 		}
