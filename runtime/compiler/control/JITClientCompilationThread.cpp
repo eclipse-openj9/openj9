@@ -1214,6 +1214,16 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, mhIndex, mhObj);
          }
          break;
+      case MessageType::VM_getLayoutVarHandle:
+         {
+         auto recv = client->getRecvData<TR::KnownObjectTable::Index>();
+         TR::KnownObjectTable::Index vhIndex = fe->getLayoutVarHandle(comp, std::get<0>(recv));
+         uintptr_t* vhObj = NULL;
+         if (vhIndex != TR::KnownObjectTable::UNKNOWN)
+            vhObj = knot->getPointerLocation(vhIndex);
+         client->write(response, vhIndex, vhObj);
+         }
+         break;
 #endif // J9VM_OPT_OPENJDK_METHODHANDLE
       case MessageType::VM_isStable:
          {

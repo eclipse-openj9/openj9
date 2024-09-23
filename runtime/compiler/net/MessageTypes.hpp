@@ -200,6 +200,7 @@ enum MessageType : uint16_t
    VM_inSnapshotMode,
    VM_isInvokeCacheEntryAnArray,
    VM_getMethodHandleTableEntryIndex,
+   VM_getLayoutVarHandle,
 
    // For static TR::CompilationInfo methods
    CompInfo_isCompiled,

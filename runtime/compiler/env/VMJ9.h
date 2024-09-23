@@ -455,6 +455,18 @@ public:
     */
    virtual TR::KnownObjectTable::Index getMethodHandleTableEntryIndex(TR::Compilation *comp, TR::KnownObjectTable::Index vhIndex, TR::KnownObjectTable::Index adIndex);
 
+   /**
+    * @brief Get the known object index of a cached MemorySegmentView VarHandle belonging to a value Layout object.
+    * When the Layout object is known, we can evaluate the result of
+    * jdk/internal/foreign/layout/ValueLayouts$AbstractValueLayout.accessHandle()Ljava/lang/invoke/VarHandle;
+    * as long as the layout object's handle field is not null.
+    *
+    * @param comp the compilation
+    * @param layoutIndex the ValueLayout$AbstractValueLayout object index
+    * @return TR::KnownObjectTable::Index the known object index of the MemorySegmentView VarHandle, TR::KnownObjectTable::UNKNOWN otherwise
+    */
+   virtual TR::KnownObjectTable::Index getLayoutVarHandle(TR::Compilation *comp, TR::KnownObjectTable::Index layoutIndex);
+
    virtual TR::Method * createMethod(TR_Memory *, TR_OpaqueClassBlock *, int32_t);
    virtual TR_ResolvedMethod * createResolvedMethod(TR_Memory *, TR_OpaqueMethodBlock *, TR_ResolvedMethod * = 0, TR_OpaqueClassBlock * = 0);
    virtual TR_ResolvedMethod * createResolvedMethodWithVTableSlot(TR_Memory *, uint32_t vTableSlot, TR_OpaqueMethodBlock * aMethod, TR_ResolvedMethod * owningMethod = 0, TR_OpaqueClassBlock * classForNewInstance = 0);

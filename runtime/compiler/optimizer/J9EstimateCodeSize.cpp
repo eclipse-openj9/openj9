@@ -159,11 +159,15 @@ class NeedsPeekingHeuristic
          {
             if (_bci.bcIndex() - _loadIndices[i] <= _distance)
             {
-               _needsPeeking = true;
                heuristicTraceIfTracerIsNotNull(_tracer, "there is a parm load at %d which is within %d of a call at %d", _loadIndices[i], _distance, _bci.bcIndex());
             }
          }
       };
+
+      void setNeedsPeekingToTrue()
+      {
+      _needsPeeking = true;
+      }
 
       void processByteCode()
          {
@@ -837,6 +841,20 @@ TR_J9EstimateCodeSize::processBytecodeAndGenerateCFG(TR_CallTarget *calltarget, 
             break;
          case J9BCinvokeinterface:
             cpIndex = bci.next2Bytes();
+#if JAVA_SPEC_VERSION >= 21
+            {
+            TR::Method *meth = comp()->fej9()->createMethod(comp()->trMemory(), calltarget->_calleeMethod->containingClass(), cpIndex);
+            if (meth)
+               {
+               const char * sig = meth->signature(comp()->trMemory());
+               if (sig && !strncmp(sig, "java/lang/foreign/MemorySegment", 31))
+                  {
+                  nph.setNeedsPeekingToTrue();
+                  heuristicTrace(tracer(), "Depth %d: invokeinterface call at bc index %d has Signature %s, enabled peeking for caller to fold layout field load necessary for VarHandle operation inlining.", _recursionDepth, i, sig);
+                  }
+               }
+            }
+#endif // JAVA_SPEC_VERSION >= 21
             flags[i].set(InterpreterEmulator::BytecodePropertyFlag::isUnsanitizeable);
             break;
          case J9BCgetfield:
@@ -1326,6 +1344,13 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
    bool inlineLambdaFormGeneratedMethod = comp()->fej9()->isLambdaFormGeneratedMethod(calltarget->_calleeMethod) &&
                                    (!disableMethodHandleInliningAfterFirstPass || _inliner->firstPass());
 
+   TR::Block * * blocks =
+         (TR::Block * *) comp()->trMemory()->allocateStackMemory(maxIndex
+               * sizeof(TR::Block *));
+   memset(blocks, 0, maxIndex * sizeof(TR::Block *));
+
+   TR::CFG &cfg = processBytecodeAndGenerateCFG(calltarget, cfgRegion, bci, nph, blocks, flags);
+
    // No need to peek LF methods, as we'll always interprete the method with state in order to propagate object info
    // through bytecodes to find call targets
    if (!inlineLambdaFormGeneratedMethod &&
@@ -1350,12 +1375,6 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
       methodSymbol->getResolvedMethod()->genMethodILForPeekingEvenUnderMethodRedefinition(methodSymbol, comp(), false, NULL);
       }
 
-   TR::Block * * blocks =
-         (TR::Block * *) comp()->trMemory()->allocateStackMemory(maxIndex
-               * sizeof(TR::Block *));
-   memset(blocks, 0, maxIndex * sizeof(TR::Block *));
-
-   TR::CFG &cfg = processBytecodeAndGenerateCFG(calltarget, cfgRegion, bci, nph, blocks, flags);
    int size = calltarget->_fullSize;
 
    // Adjust call frequency for unknown or direct calls, for which we don't get profiling information
@@ -1466,6 +1485,16 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
       {
       bci.prepareToFindAndCreateCallsites(blocks, flags, callSites, &cfg, &newBCInfo, _recursionDepth, &callStack);
       bool iteratorWithState = (inlineArchetypeSpecimen && !mhInlineWithPeeking) || inlineLambdaFormGeneratedMethod;
+
+// in JDK21+, iterating bytecodes of MemorySegment methods with state is necesssary to obtain the segment view
+// VarHandle object through folding ValueLayouts$AbstractValueLayout.accessHandle() if the VarHandle has been created
+#if JAVA_SPEC_VERSION >= 21
+      if (calltarget->_calleeMethod->getRecognizedMethod() == TR::java_lang_foreign_MemorySegment_method)
+         {
+         heuristicTrace(tracer(), "Callee method is a MemorySegment method. Setting iteratorWithState to true.\n");
+         iteratorWithState = true;
+         }
+#endif // JAVA_SPEC_VERSION >= 21
 
       if (!bci.findAndCreateCallsitesFromBytecodes(wasPeekingSuccessfull, iteratorWithState))
          {
