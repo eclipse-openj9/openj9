@@ -295,8 +295,8 @@ x86-64_linux:
     build:
       all: 'ci.role.build && hw.arch.x86 && sw.tool.docker'
     docker_image:
-      8: 'eclipseopenj9/jenkins-agent-x86-centos6:29'
-      11: 'eclipseopenj9/jenkins-agent-x86-centos6:29'
+      8: 'adoptopenjdk/centos6_build_image:latest'
+      11: 'adoptopenjdk/centos6_build_image:latest'
       all: 'adoptopenjdk/centos7_build_image:latest'
   build_env:
     vars:
