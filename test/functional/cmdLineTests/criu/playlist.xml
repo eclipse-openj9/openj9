@@ -243,7 +243,6 @@
 			<platformRequirements>os.linux,^arch.arm,bits.64,os.linux.cent.8+</platformRequirements>
 		</platformRequirementsList>
 		<features>
-			<feature>CRIU:required</feature>
 			<feature>JITAAS:nonapplicable</feature>
 		</features>
 		<levels>
