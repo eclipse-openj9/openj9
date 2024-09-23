@@ -52,8 +52,10 @@
 #include "ObjectModel.hpp"
 #include "ObjectAccessBarrier.hpp"
 #include "ScanFormatter.hpp"
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
 #include "SparseAddressOrderedFixedSizeDataPool.hpp"
 #include "SparseVirtualMemory.hpp"
+#endif /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
 #include "SublistPool.hpp"
 #include "SublistPuddle.hpp"
 
@@ -167,7 +169,7 @@ GC_CheckEngine::pushPreviousClass(J9Class* clazz)
 bool
 GC_CheckEngine::isPointerInSegment(void *pointer, J9MemorySegment *segment)
 {
-	return ( ((UDATA)pointer >= (UDATA)segment->heapBase) && ((UDATA)pointer < (UDATA)segment->heapAlloc) );
+	return (((UDATA)pointer >= (UDATA)segment->heapBase) && ((UDATA)pointer < (UDATA)segment->heapAlloc));
 }
 
 /**
@@ -359,7 +361,7 @@ GC_CheckEngine::checkJ9ObjectPointer(J9JavaVM *javaVM, J9Object *objectPtr, J9Ob
  * @see @ref findSegmentForClass
  */
 UDATA
-GC_CheckEngine::checkJ9ClassPointer(J9JavaVM *javaVM, J9Class *clazz, bool allowUndead )
+GC_CheckEngine::checkJ9ClassPointer(J9JavaVM *javaVM, J9Class *clazz, bool allowUndead)
 {
 	/* Short circuit if we've recently checked this class. 
 	 * In JLTF, this cache is about 94% effective (when its size is 19).
@@ -392,13 +394,13 @@ GC_CheckEngine::checkJ9ClassPointer(J9JavaVM *javaVM, J9Class *clazz, bool allow
 	/* Check to ensure J9Class header has the correct eyecatcher.
 	 */
 	UDATA result = checkJ9ClassHeader(javaVM, clazz);
-	if ( J9MODRON_GCCHK_RC_OK != result) {
+	if (J9MODRON_GCCHK_RC_OK != result) {
 		return result;
 	}
 
 	/* Check that class is not unloaded */
 	result = checkJ9ClassIsNotUnloaded(javaVM, clazz);
-	if ( J9MODRON_GCCHK_RC_OK != result) {
+	if (J9MODRON_GCCHK_RC_OK != result) {
 		return result;
 	}
 
@@ -462,7 +464,8 @@ GC_CheckEngine::checkJ9Object(J9JavaVM *javaVM, J9Object* objectPtr, J9MM_Iterat
 		}
 	}
 
-	if ( extensions->isVirtualLargeObjectHeapEnabled && extensions->objectModel.isIndexable(objectPtr)) {
+#if defined(J9VM_ENV_DATA64)
+	if (extensions->isVirtualLargeObjectHeapEnabled && extensions->objectModel.isIndexable(objectPtr)) {
 		/* Check that the indexable object has the correct data address pointer */
 		void *dataAddr = extensions->indexableObjectModel.getDataAddrForIndexableObject((J9IndexableObject *)objectPtr);
 		bool isValidDataAddr = extensions->largeObjectVirtualMemory->getSparseDataPool()->isValidDataPtr(dataAddr);
@@ -470,6 +473,7 @@ GC_CheckEngine::checkJ9Object(J9JavaVM *javaVM, J9Object* objectPtr, J9MM_Iterat
 			return J9MODRON_GCCHK_RC_INVALID_INDEXABLE_DATA_ADDRESS;
 		}
 	}
+#endif /* defined(J9VM_ENV_DATA64) */
 
 	if (checkFlags & J9MODRON_GCCHK_VERIFY_RANGE) {
 		UDATA regionEnd = ((UDATA)regionDesc->regionStart) + regionDesc->regionSize;
@@ -1184,8 +1188,8 @@ GC_CheckEngine::checkSlotRememberedSet(J9JavaVM *javaVM, J9Object **objectIndire
 
 	if (_cycle->getMiscFlags() & J9MODRON_GCCHK_MISC_MIDSCAVENGE) {
 		/* during a scavenge, some RS entries may be tagged -- remove the tag */
-		if ( DEFERRED_RS_REMOVE_FLAG == (((UDATA)objectPtr) & DEFERRED_RS_REMOVE_FLAG) ) {
-			objectPtr = (J9Object*)( ((UDATA)objectPtr) & ~(UDATA)DEFERRED_RS_REMOVE_FLAG );
+		if (DEFERRED_RS_REMOVE_FLAG == (((UDATA)objectPtr) & DEFERRED_RS_REMOVE_FLAG)) {
+			objectPtr = (J9Object*)(((UDATA)objectPtr) & ~(UDATA)DEFERRED_RS_REMOVE_FLAG);
 		}
 	}
 	
@@ -1216,7 +1220,7 @@ GC_CheckEngine::checkSlotRememberedSet(J9JavaVM *javaVM, J9Object **objectIndire
 		}
 
 		/* content of Remembered Set should be Old and Remembered */
-		if ( !(extensions->isOld(objectPtr) && extensions->objectModel.isRemembered(objectPtr))) {
+		if (!(extensions->isOld(objectPtr) && extensions->objectModel.isRemembered(objectPtr))) {
 			GC_CheckError error(puddle, objectIndirect, _cycle, _currentCheck, J9MODRON_GCCHK_RC_REMEMBERED_SET_FLAGS, _cycle->nextErrorCount());
 			_reporter->report(&error);
 			_reporter->reportObjectHeader(&error, objectPtr, NULL);

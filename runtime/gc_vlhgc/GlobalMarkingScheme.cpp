@@ -78,7 +78,9 @@
 #include "RegionBasedOverflowVLHGC.hpp"
 #include "RootScanner.hpp"
 #include "SegmentIterator.hpp"
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
 #include "SparseVirtualMemory.hpp"
+#endif /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
 #include "StackSlotValidator.hpp"
 #include "SublistIterator.hpp"
 #include "SublistPool.hpp"

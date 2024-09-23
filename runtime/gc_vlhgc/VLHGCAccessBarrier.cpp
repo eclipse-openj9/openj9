@@ -274,10 +274,8 @@ MM_VLHGCAccessBarrier::jniGetPrimitiveArrayCritical(J9VMThread* vmThread, jarray
 		/* off heap enabled and not adjacent */
 		data = (void *)indexableObjectModel->getDataPointerForContiguous(arrayObject);
 	} else {
-		/**
-		 *  adjacent for offheap enabled and contiguous for offheap disabled
-		 *  acquire access to prevent object being moved by GC access and return a direct pointer
-		 */
+		/* Adjacent for offheap enabled and contiguous for offheap disabled.
+		   acquire access to prevent object being moved by GC access and return a direct pointer. */
 		MM_JNICriticalRegion::enterCriticalRegion(vmThread, true);
 		Assert_MM_true(vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS);
 		arrayObject = (J9IndexableObject *)J9_JNI_UNWRAP_REFERENCE(array);

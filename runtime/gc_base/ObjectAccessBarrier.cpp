@@ -111,8 +111,7 @@ MM_ObjectAccessBarrier::tearDown(MM_EnvironmentBase *env)
 
 void
 MM_ObjectAccessBarrier::copyArrayCritical(J9VMThread *vmThread, GC_ArrayObjectModel *indexableObjectModel,
-	J9InternalVMFunctions *functions, void **data,
-	J9IndexableObject *arrayObject, jboolean *isCopy)
+	J9InternalVMFunctions *functions, void **data, J9IndexableObject *arrayObject, jboolean *isCopy)
 {
 	int32_t sizeInElements = (int32_t)indexableObjectModel->getSizeInElements(arrayObject);
 	uintptr_t sizeInBytes = indexableObjectModel->getDataSizeInBytes(arrayObject);
@@ -131,15 +130,14 @@ MM_ObjectAccessBarrier::copyArrayCritical(J9VMThread *vmThread, GC_ArrayObjectMo
 
 void
 MM_ObjectAccessBarrier::copyBackArrayCritical(J9VMThread *vmThread, GC_ArrayObjectModel *indexableObjectModel,
-					J9InternalVMFunctions *functions, void *elems,
-					J9IndexableObject **arrayObject, jint mode)
+	J9InternalVMFunctions *functions, void *elems, J9IndexableObject **arrayObject, jint mode)
 {
 	if (JNI_ABORT != mode) {
 		I_32 sizeInElements = (I_32)indexableObjectModel->getSizeInElements(*arrayObject);
 		indexableObjectModel->memcpyToArray(*arrayObject, 0, sizeInElements, elems);
 	}
 
-	/**
+	/*
 	 * Commit means copy the data but do not free the buffer.
 	 * All other modes free the buffer.
 	 */

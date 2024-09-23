@@ -21,6 +21,9 @@
 ################################################################################
 
 #TODO: Env vars should be auto detected by platform
+# Prevent CMake from automatically creating export lists for shared libraries
+set(CMAKE_XL_CreateExportList "" CACHE INTERNAL "")
+
 set(J9VM_ARCH_POWER ON CACHE BOOL "")
 set(J9VM_ENV_DATA64 ON CACHE BOOL "")
 set(J9VM_ENV_DLPAR ON CACHE BOOL "")
@@ -28,12 +31,9 @@ set(J9VM_ENV_HAS_FPU ON CACHE BOOL "")
 set(J9VM_ENV_SHARED_LIBS_CALLEE_GLOBAL_TABLE_SETUP OFF CACHE BOOL "")
 set(J9VM_ENV_SHARED_LIBS_USE_GLOBAL_TABLE ON CACHE BOOL "")
 
-# Prevent CMake from automatically creating export lists for shared libraries
-set(CMAKE_XL_CreateExportList "" CACHE INTERNAL "")
-
 set(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION ON CACHE BOOL "")
-set(J9VM_GC_TLH_PREFETCH_FTA OFF CACHE BOOL "")
 set(J9VM_GC_SUBPOOLS_ALIAS ON CACHE BOOL "")
+set(J9VM_GC_TLH_PREFETCH_FTA OFF CACHE BOOL "")
 set(J9VM_INTERP_ATOMIC_FREE_JNI ON CACHE BOOL "")
 set(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH ON CACHE BOOL "")
 set(J9VM_INTERP_TWO_PASS_EXCLUSIVE ON CACHE BOOL "")
