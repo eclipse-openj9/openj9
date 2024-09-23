@@ -240,6 +240,7 @@ private:
 	 * Check is ROM class possible to unload.
 	 * There are might be multiple checks:
 	 * - ROM class should not be NULL
+	 * - ROM class should not be stored in SCC
 	 * - ROM class for Indexable object can not be unloaded
 	 * @param clazz[in] class to check
 	 * @return true if class is possible to unload
@@ -250,6 +251,7 @@ private:
 		J9ROMClass *romClass = clazz->romClass;
 
 		return (NULL != romClass)
+				&& (0 == (romClass->extraModifiers & J9AccClassIsShared))
 				&& !_extensions->objectModel.isIndexable(clazz);
 	}
 
