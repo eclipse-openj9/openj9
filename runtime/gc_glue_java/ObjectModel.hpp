@@ -561,15 +561,6 @@ public:
 	fixupForwardedObject(MM_ForwardedHeader *forwardedHeader, omrobjectptr_t destinationObjectPtr, uintptr_t objectAge)
 	{
 		GC_ObjectModelBase::fixupForwardedObject(forwardedHeader, destinationObjectPtr, objectAge);
-
-#if defined(J9VM_ENV_DATA64)
-		if (_javaVM->isVirtualLargeObjectHeapEnabled) {
-			if (isIndexable(forwardedHeader)) {
-				_indexableObjectModel->fixupDataAddr(forwardedHeader, destinationObjectPtr);
-			}
-		}
-#endif /* defined(J9VM_ENV_DATA64) */
-
 		fixupHashFlagsAndSlot(forwardedHeader, destinationObjectPtr);
 	}
 

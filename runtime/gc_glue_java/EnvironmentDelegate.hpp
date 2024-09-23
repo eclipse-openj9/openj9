@@ -66,7 +66,7 @@ public:
 
 	struct GCmovedObjectHashCode movedObjectHashCodeCache; /**< Structure to aid on object movement and hashing */
 #if defined(J9VM_ENV_DATA64)
-	bool shouldFixupDataAddrForContiguous; /**< Boolean to check if dataAddr fixup is needed on contiguous indexable object movement */
+	bool _shouldFixupDataAddrForContiguous; /**< Boolean to check if dataAddr fixup is needed on contiguous indexable object movement */
 #endif /* defined(J9VM_ENV_DATA64) */
 
 	/* Function members */
@@ -79,7 +79,7 @@ public:
 		,_ownableSynchronizerObjectBuffer(NULL)
 		,_continuationObjectBuffer(NULL)
 #if defined(J9VM_ENV_DATA64)
-		,shouldFixupDataAddrForContiguous(false)
+		,_shouldFixupDataAddrForContiguous(false)
 #endif /* defined(J9VM_ENV_DATA64) */
 	{}
 };
@@ -208,9 +208,9 @@ public:
 		if (objectModel->isIndexable(objectPtr)) {
 			GC_ArrayObjectModel *indexableObjectModel = &_extensions->indexableObjectModel;
 			if (_vmThread->isVirtualLargeObjectHeapEnabled && indexableObjectModel->isInlineContiguousArraylet((J9IndexableObject *)objectPtr)) {
-				_gcEnv.shouldFixupDataAddrForContiguous = indexableObjectModel->shouldFixupDataAddrForContiguous((J9IndexableObject *)objectPtr);
+				_gcEnv._shouldFixupDataAddrForContiguous = indexableObjectModel->shouldFixupDataAddrForContiguous((J9IndexableObject *)objectPtr);
 			} else {
-				_gcEnv.shouldFixupDataAddrForContiguous = false;
+				_gcEnv._shouldFixupDataAddrForContiguous = false;
 			}
 		}
 #endif /* defined(J9VM_ENV_DATA64) */
@@ -231,13 +231,13 @@ public:
 		GC_ObjectModel *objectModel = &_extensions->objectModel;
 		GC_ArrayObjectModel *indexableObjectModel = &_extensions->indexableObjectModel;
 		if (_gcEnv.movedObjectHashCodeCache.hasBeenHashed && !_gcEnv.movedObjectHashCodeCache.hasBeenMoved) {
-			*(uint32_t*)((uintptr_t)destinationObjectPtr + objectModel->getHashcodeOffset(destinationObjectPtr)) = _gcEnv.movedObjectHashCodeCache.originalHashCode;
+			*(uint32_t *)((uintptr_t)destinationObjectPtr + objectModel->getHashcodeOffset(destinationObjectPtr)) = _gcEnv.movedObjectHashCodeCache.originalHashCode;
 			objectModel->setObjectHasBeenMoved(destinationObjectPtr);
 		}
 
 		if (objectModel->isIndexable(destinationObjectPtr)) {
 #if defined(J9VM_ENV_DATA64)
-			if (_gcEnv.shouldFixupDataAddrForContiguous) {
+			if (_gcEnv._shouldFixupDataAddrForContiguous) {
 				/**
 				 * Update the dataAddr internal field of the indexable object. The field being updated
 				 * points to the array data. In the case of contiguous data, it will point to the data

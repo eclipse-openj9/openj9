@@ -68,7 +68,6 @@ private:
 
 #if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
 	/**
-	 *
 	 * Output off-heap processing summary.
 	 * @param env GC thread used for output.
 	 * @param indent base level of indentation for the summary.

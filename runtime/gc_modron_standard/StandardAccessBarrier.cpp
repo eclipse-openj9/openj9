@@ -381,7 +381,7 @@ MM_StandardAccessBarrier::jniGetPrimitiveArrayCritical(J9VMThread* vmThread, jar
 		copyArrayCritical(vmThread, indexableObjectModel, functions, &data, arrayObject, isCopy);
 		VM_VMAccess::inlineExitVMToJNI(vmThread);
 	} else {
-		// acquire access and return a direct pointer
+		/* Acquire access and return a direct pointer. */
 		MM_JNICriticalRegion::enterCriticalRegion(vmThread, false);
 		J9IndexableObject *arrayObject = (J9IndexableObject *)J9_JNI_UNWRAP_REFERENCE(array);
 		data = (void *)indexableObjectModel->getDataPointerForContiguous(arrayObject);
@@ -464,7 +464,7 @@ MM_StandardAccessBarrier::jniGetStringCritical(J9VMThread* vmThread, jstring str
 
 		copyStringCritical(vmThread, &_extensions->indexableObjectModel, functions, &data, javaVM, valueObject, stringObject, isCopy, isCompressed);
 	} else {
-		// acquire access and return a direct pointer
+		/* Acquire access and return a direct pointer. */
 		MM_JNICriticalRegion::enterCriticalRegion(vmThread, hasVMAccess);
 		J9Object *stringObject = (J9Object*)J9_JNI_UNWRAP_REFERENCE(str);
 		J9IndexableObject *valueObject = (J9IndexableObject*)J9VMJAVALANGSTRING_VALUE(vmThread, stringObject);
@@ -506,8 +506,8 @@ MM_StandardAccessBarrier::jniReleaseStringCritical(J9VMThread* vmThread, jstring
 		/*
 		 * We have not put assertion here to check is elems valid for str similar way as in jniReleasePrimitiveArrayCritical
 		 * because of complexity of required code
+		 * Direct pointer, just drop access.
 		 */
-		// direct pointer, just drop access
 		MM_JNICriticalRegion::exitCriticalRegion(vmThread, hasVMAccess);
 	}
 
@@ -524,7 +524,7 @@ MM_StandardAccessBarrier::getJNICriticalRegionCount(MM_GCExtensions *extensions)
 	J9VMThread *walkThread;
 	UDATA activeCriticals = 0;
 
-	// TODO kmt : Should get public flags mutex here -- worst case is a false positive
+	/* TODO kmt : Should get public flags mutex here -- worst case is a false positive. */
 	while((walkThread = threadIterator.nextVMThread()) != NULL) {
 		activeCriticals += walkThread->jniCriticalDirectCount;
 	}

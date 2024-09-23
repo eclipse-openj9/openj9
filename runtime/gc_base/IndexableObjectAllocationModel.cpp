@@ -45,7 +45,7 @@ MM_IndexableObjectAllocationModel::initializeAllocateDescription(MM_EnvironmentB
 		return false;
 	}
 
-	/* continue, with reservations */
+	/* Continue, with reservations */
 	setAllocatable(false);
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
 	uintptr_t spineBytes = extensions->indexableObjectModel.getSpineSize(_class, _layout, _numberOfArraylets, _dataSize, _alignSpineDataSection);
@@ -61,8 +61,9 @@ MM_IndexableObjectAllocationModel::initializeAllocateDescription(MM_EnvironmentB
 
 	bool isVirtualLargeObjectHeapEnabled = extensions->indexableObjectModel.isVirtualLargeObjectHeapEnabled();
 
-	/* determine size of layout overhead (additional to spine bytes) and finalize allocation description */
-	/* it is used to track amount of array bytes not included to spine and set final total number of bytes allocated for array */
+	/* Determine size of layout overhead (additional to spine bytes) and finalize
+	   allocation description. It is used to track amount of array bytes not
+	   included to spine and set final total number of bytes allocated for array. */
 	uintptr_t layoutSizeInBytes = 0;
 	switch (_layout) {
 	case GC_ArrayletObjectModel::Illegal:
@@ -120,11 +121,11 @@ MM_IndexableObjectAllocationModel::initializeAllocateDescription(MM_EnvironmentB
 	}
 
 	if (isAllocatable()) {
-		/* set total request size and layout metadata to finalize the description */
-		/* This logic mimics out-of-spine behaviour for Discontiguous/Hybrid.
-		 * allocDescription->getBytesRequested() is used across the code as total amount of memory required for this allocation.
-		 * For example, it is used to report amount failed to be allocated in case of OOM.
-		 */
+		/* Set total request size and layout metadata to finalize the description.
+		   This logic mimics out-of-spine behaviour for Discontiguous/Hybrid.
+		   allocDescription->getBytesRequested() is used across the code as
+		   total amount of memory required for this allocation.
+		   For example, it is used to report amount failed to be allocated in case of OOM. */
 		_allocateDescription.setBytesRequested(spineBytes + layoutSizeInBytes);
 		_allocateDescription.setNumArraylets(_numberOfArraylets);
 		_allocateDescription.setSpineBytes(spineBytes);
@@ -148,10 +149,10 @@ MM_IndexableObjectAllocationModel::initializeIndexableObject(MM_EnvironmentBase 
 	bool isVirtualLargeObjectHeapEnabled = indexableObjectModel->isVirtualLargeObjectHeapEnabled();
 
 	if (NULL != spine) {
-		/* Set the array size */
+		/* Set the array size. */
 		if (getAllocateDescription()->isChunkedArray()) {
 			/* !off-heap or 0-length arrays */
-			Assert_MM_true((!isVirtualLargeObjectHeapEnabled) || (0 == _numberOfIndexedFields));
+			Assert_MM_true(!isVirtualLargeObjectHeapEnabled || (0 == _numberOfIndexedFields));
 			indexableObjectModel->setSizeInElementsForDiscontiguous(spine, _numberOfIndexedFields);
 #if defined(J9VM_ENV_DATA64)
 			if (((J9JavaVM *)env->getLanguageVM())->isIndexableDataAddrPresent) {
@@ -169,7 +170,7 @@ MM_IndexableObjectAllocationModel::initializeIndexableObject(MM_EnvironmentBase 
 #endif /* defined(J9VM_ENV_DATA64) */
 			} else if (isVirtualLargeObjectHeapEnabled) {
 #if defined(J9VM_ENV_DATA64)
-				/* set NULL temporarily to avoid possible complication with GC occurring while the object is partially initialized? */
+				/* Set NULL temporarily to avoid possible complication with GC occurring while the object is partially initialized? */
 				indexableObjectModel->setDataAddrForContiguous(spine, NULL);
 #endif /* defined(J9VM_ENV_DATA64) */
 			}
@@ -182,14 +183,14 @@ MM_IndexableObjectAllocationModel::initializeIndexableObject(MM_EnvironmentBase 
 	case GC_ArrayletObjectModel::InlineContiguous:
 #if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
 		if (isVirtualLargeObjectHeapEnabled && !isDataAdjacentToHeader) {
-			/* We still need to create leaves for discontiguous arrays that will be allocated at off-heap */
+			/* We still need to create leaves for discontiguous arrays that will be allocated at off-heap. */
 			spine = getSparseAddressAndDecommitLeaves(env, spine);
 			if (NULL != spine) {
 				Assert_MM_true(1 <= _numberOfArraylets);
 			}
 		}
 #endif /* defined (J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
-		if ((!isVirtualLargeObjectHeapEnabled) || isDataAdjacentToHeader) {
+		if (!isVirtualLargeObjectHeapEnabled || isDataAdjacentToHeader) {
 			Assert_MM_true(1 == _numberOfArraylets);
 		}
 		break;
@@ -197,9 +198,9 @@ MM_IndexableObjectAllocationModel::initializeIndexableObject(MM_EnvironmentBase 
 	case GC_ArrayletObjectModel::Discontiguous:
 	case GC_ArrayletObjectModel::Hybrid:
 		if (NULL != spine) {
-			/* The array size has been set earlier at line 163 */
+			/* The array size has been set earlier. */
 			if(0 == _numberOfIndexedFields) {
-				/* Don't try to initialize the arrayoid for an empty NUA */
+				/* Don't try to initialize the arrayoid for an empty NUA. */
 				Trc_MM_allocateAndConnectNonContiguousArraylet_Exit(env->getLanguageVMThread(), spine);
 				break;
 			}
@@ -218,7 +219,7 @@ MM_IndexableObjectAllocationModel::initializeIndexableObject(MM_EnvironmentBase 
 	}
 
 	if (NULL != spine) {
-		/* Initialize hashcode slot */
+		/* Initialize hashcode slot. */
 		if (getAllocateDescription()->getPreHashFlag()) {
 			env->getExtensions()->objectModel.initializeHashSlot((J9JavaVM*)env->getLanguageVM(), (omrobjectptr_t)spine);
 		}
@@ -277,14 +278,14 @@ MM_IndexableObjectAllocationModel::layoutDiscontiguousArraylet(MM_EnvironmentBas
 	GC_ArrayObjectModel *indexableObjectModel = &extensions->indexableObjectModel;
 	bool const compressed = env->compressObjectReferences();
 
-	/* determine how many bytes to allocate outside of the spine (in arraylet leaves) */
+	/* Determine how many bytes to allocate outside of the spine (in arraylet leaves). */
 	const uintptr_t arrayletLeafSize = env->getOmrVM()->_arrayletLeafSize;
 	Assert_MM_true(_allocateDescription.getBytesRequested() >= _allocateDescription.getContiguousBytes());
 	uintptr_t bytesRemaining = _allocateDescription.getBytesRequested() - _allocateDescription.getContiguousBytes();
 	Assert_MM_true((0 == (bytesRemaining % arrayletLeafSize)) || (GC_ArrayletObjectModel::Hybrid != _layout));
-	/* hybrid arraylets store _dataSize % arrayletLeafSize bytes in the spine, remainder in _numberOfArraylets-1 leaves */
+	/* Hybrid arraylets store _dataSize % arrayletLeafSize bytes in the spine, remainder in _numberOfArraylets-1 leaves. */
 
-	/* allocate leaf for each arraylet and attach it to its leaf pointer in the spine */
+	/* Allocate leaf for each arraylet and attach it to its leaf pointer in the spine. */
 	uintptr_t arrayoidIndex = 0;
 	fj9object_t *arrayoidPtr = indexableObjectModel->getArrayoidPointer(spine);
 	while (0 < bytesRemaining) {
@@ -292,20 +293,20 @@ MM_IndexableObjectAllocationModel::layoutDiscontiguousArraylet(MM_EnvironmentBas
 		void *leaf = env->_objectAllocationInterface->allocateArrayletLeaf(env, &_allocateDescription,
 				_allocateDescription.getMemorySpace(), true);
 
-		/* if leaf allocation failed set the result to NULL and return */
+		/* If leaf allocation failed set the result to NULL and return. */
 		if (NULL == leaf) {
-			/* spine and preceding arraylets are now floating garbage */
+			/* Spine and preceding arraylets are now floating garbage. */
 			Trc_MM_allocateAndConnectNonContiguousArraylet_leafFailure(env->getLanguageVMThread());
 			_allocateDescription.setSpine(NULL);
 			spine = NULL;
 			break;
 		}
 
-		/* refresh the spine -- it might move if we GC while allocating the leaf */
+		/* Refresh the spine -- it might move if we GC while allocating the leaf. */
 		spine = _allocateDescription.getSpine();
 		arrayoidPtr = indexableObjectModel->getArrayoidPointer(spine);
 
-		/* set the arrayoid pointer in the spine to point to the new leaf */
+		/* Set the arrayoid pointer in the spine to point to the new leaf. */
 		GC_SlotObject slotObject(env->getOmrVM(), GC_SlotObject::addToSlotAddress(arrayoidPtr, arrayoidIndex, compressed));
 		slotObject.writeReferenceToSlot((omrobjectptr_t)leaf);
 
@@ -323,18 +324,17 @@ MM_IndexableObjectAllocationModel::layoutDiscontiguousArraylet(MM_EnvironmentBas
 			break;
 
 		case GC_ArrayletObjectModel::Hybrid:
-			/* Unreachable if off-heap is enabled */
+			/* Unreachable if off-heap is enabled. */
 			Assert_MM_false(isVirtualLargeObjectHeapEnabled);
-			/* last arrayoid points to end of arrayoid array in spine header (object-aligned if
-			 * required). (data size % leaf size) bytes of data are stored here (may be empty).
-			 */
+			/* Last arrayoid points to end of arrayoid array in spine header (object-aligned if
+			   required). (data size % leaf size) bytes of data are stored here (may be empty). */
 			Assert_MM_true(arrayoidIndex == (_numberOfArraylets - 1));
 			{
 				uintptr_t leafOffset = (uintptr_t)GC_SlotObject::addToSlotAddress(arrayoidPtr, _numberOfArraylets, compressed);
 				if (_alignSpineDataSection) {
 					leafOffset = MM_Math::roundToCeiling(env->getObjectAlignmentInBytes(), leafOffset);
 				}
-				/* set the last arrayoid pointer to point to remainder data */
+				/* Set the last arrayoid pointer to point to remainder data. */
 				GC_SlotObject slotObject(env->getOmrVM(), GC_SlotObject::addToSlotAddress(arrayoidPtr, arrayoidIndex, compressed));
 				slotObject.writeReferenceToSlot((omrobjectptr_t)leafOffset);
 			}
@@ -361,21 +361,22 @@ MM_IndexableObjectAllocationModel::getSparseAddressAndDecommitLeaves(MM_Environm
 	uintptr_t byteAmount = 0;
 	UDATA arrayletLeafCount = MM_Math::roundToCeiling(arrayletLeafSize, _dataSize) / arrayletLeafSize;
 
-	/* determine how many bytes to allocate outside of the spine (in arraylet leaves) */
+	/* Determine how many bytes to allocate outside of the spine (in arraylet leaves). */
 	Assert_MM_true(_allocateDescription.getBytesRequested() >= _allocateDescription.getContiguousBytes());
 	uintptr_t bytesRemaining = _allocateDescription.getBytesRequested() - _allocateDescription.getContiguousBytes();
 
-	/* allocate leaf for each arraylet and attach it to its leaf pointer in the spine */
+	/* Allocate leaf for each arraylet and attach it to its leaf pointer in the spine. */
 	uintptr_t arrayoidIndex = 0;
 	Trc_MM_getSparseAddressAndDecommitLeaves_Entry(env->getLanguageVMThread(), spine, (void *)bytesRemaining, arrayletLeafCount, (void *)arrayletLeafSize);
 	while (0 < bytesRemaining) {
-		/* allocate the next arraylet leaf - leaves are allocated solely for the purpose of decommitting the memory later on in this function */
-		void *leaf = env->_objectAllocationInterface->allocateArrayletLeaf(env, &_allocateDescription,
-				_allocateDescription.getMemorySpace(), true);
+		/* Allocate the next arraylet leaf - leaves are allocated solely for the purpose of
+		   decommitting the memory later on in this function. */
+		void *leaf = env->_objectAllocationInterface->allocateArrayletLeaf(
+				env, &_allocateDescription, _allocateDescription.getMemorySpace(), true);
 
-		/* if leaf allocation failed set the result to NULL and return */
+		/* If leaf allocation failed set the result to NULL and return. */
 		if (NULL == leaf) {
-			/* spine and preceding arraylets are now floating garbage */
+			/* Spine and preceding arraylets are now floating garbage. */
 			Trc_MM_allocateAndConnectNonContiguousArraylet_leafFailure(env->getLanguageVMThread());
 			_allocateDescription.setSpine(NULL);
 			spine = NULL;
@@ -394,7 +395,7 @@ MM_IndexableObjectAllocationModel::getSparseAddressAndDecommitLeaves(MM_Environm
 			Trc_MM_VirtualMemory_decommitMemory_failure(leaf, arrayletLeafSize);
 		}
 
-		/* refresh the spine -- it might move if we GC while allocating the leaf */
+		/* Refresh the spine -- it might move if we GC while allocating the leaf */
 		spine = _allocateDescription.getSpine();
 
 		bytesRemaining -= OMR_MIN(bytesRemaining, arrayletLeafSize);
@@ -402,8 +403,7 @@ MM_IndexableObjectAllocationModel::getSparseAddressAndDecommitLeaves(MM_Environm
 	}
 
 
-	if ((NULL != spine)
-	) {
+	if (NULL != spine) {
 		Assert_MM_true(_layout == GC_ArrayletObjectModel::InlineContiguous);
 		Assert_MM_true(indexableObjectModel->isVirtualLargeObjectHeapEnabled());
 		/* Number of arraylet leaves in the iterator must match the number of leaves calculated */
@@ -414,7 +414,7 @@ MM_IndexableObjectAllocationModel::getSparseAddressAndDecommitLeaves(MM_Environm
 		if (NULL != virtualLargeObjectHeapAddress) {
 			indexableObjectModel->setDataAddrForContiguous((J9IndexableObject *)spine, virtualLargeObjectHeapAddress);
 		}
-		/**
+		/*
 		 * TODO:we might need a special state for this regions (different from just plain ARRAYLET),
 		 * such as ARRAYLET_DECOMMITED or just DECOMMITED
 		 */

@@ -30,8 +30,10 @@
 #include "EnvironmentBase.hpp"
 #include "GCExtensions.hpp"
 #include "MarkVLHGCStats.hpp"
-#include "SparseVirtualMemory.hpp"
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
 #include "SparseAddressOrderedFixedSizeDataPool.hpp"
+#include "SparseVirtualMemory.hpp"
+#endif /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
 #include "ReferenceStats.hpp"
 #include "VerboseManager.hpp"
 #include "VerboseWriterChain.hpp"
