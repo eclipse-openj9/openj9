@@ -191,9 +191,7 @@ MM_HeapRegionDataForAllocate::removeFromArrayletLeafList(MM_EnvironmentVLHGC *en
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
 
 	if (extensions->isVirtualLargeObjectHeapEnabled) {
-		/**
-		 * Restore/Recommit arraylet leaves that have been previously decommitted.
-		 */
+		/* Restore/Recommit arraylet leaves that have been previously decommitted. */
 		const UDATA arrayletLeafSize = env->getOmrVM()->_arrayletLeafSize;
 		void *leafAddress = _region->getLowAddress();
 		extensions->heap->commitMemory(leafAddress, arrayletLeafSize);

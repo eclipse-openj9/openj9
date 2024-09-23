@@ -1392,7 +1392,8 @@ MM_WriteOnceCompactor::fixupPointerArrayObject(MM_EnvironmentVLHGC* env, J9Objec
 		 */
 		if (indexableObjectModel->isDataAdjacentToHeader((J9IndexableObject *)objectPtr)
 #if defined(J9VM_ENV_DATA64)
-		 || (indexableObjectModel->isVirtualLargeObjectHeapEnabled() && (NULL != indexableObjectModel->getDataAddrForContiguous((J9IndexableObject *)objectPtr)))
+			|| (indexableObjectModel->isVirtualLargeObjectHeapEnabled()
+				&& (NULL != indexableObjectModel->getDataAddrForContiguous((J9IndexableObject *)objectPtr)))
 #endif /* defined(J9VM_ENV_DATA64) */
 		 ) {
 			uintptr_t elementsToWalk = indexableObjectModel->getSizeInElements((J9IndexableObject *)objectPtr);

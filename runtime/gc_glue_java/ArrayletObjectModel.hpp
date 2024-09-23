@@ -255,57 +255,6 @@ public:
 	}
 
 	/**
-	 * Checks if arraylet falls into corner case of discontiguous data
-	 * Arraylet possible cases:
-	 * 0: Empty arraylets, in this case the array is represented as
-	 *		an arraylet however it does not contain any data, but it
-	 *		does contain an arrayoid (leaf pointer) that points to NULL.
-	 *		Even though this case is represented as a discontiguous arraylet
-	 *		internally due to its implementation, it is actually a contiguous
-	 *		array with length zero.
-	 * 1: The total data size in arraylet is between 0 and region
-	 *		size. Small enough to make the arraylet layout contiguous,
-	 *		in which case this function is unreachable.
-	 * 2: The total data size in arraylet is exacly the same size
-	 *		of a region. In this case we do not need to double
-	 *		map since we already have a contiguous representation of the
-	 *		data at first leaf.
-	 * 3: Similar to first case, the data portion is slightly smaller than
-	 *		a region size, however not small enough to include header and data
-	 *		at the same region to make it contiguous. In which case we would
-	 *		have one leaf, where we also do not need to double map.
-	 * 4: The total data size in arraylet is stricly greater than one region;
-	 *		however, not multiple of region size. Since with enabled double map
-	 *		layout is always discontiguous, we would have 2 or more arraylet leaves
-	 *		therefore we always double map.
-	 * 5: The total data size in arraylet is stricly greater than one region and
-	 *		multiple of region size. Here we would have 2 or more arraylet leaves
-	 *		containing data. We always double map in this case.
-	 *
-	 * @param spine Pointer to an array indexable object spine
-	 * @return false in case corner cases 0, 2 or 3 are valid. On the other hand,
-	 *		if cases 4 or 5 are true, the function returns true.
-	 */
-	MMINLINE bool
-	isArrayletDataDiscontiguous(J9IndexableObject *spine)
-	{
-		return numArraylets(spine) > 1;
-	}
-
-	/**
-	 * Checks if arraylet falls into corner case of contiguous data
-	 * 
-	 * @param spine Pointer to an array indexable object spine
-	 * @return true in case corner cases 2 or 3 are valid. On the other hand,
-	 * 		if cases 0, 4 or 5 are true, the function returns false.
-	 */
-	MMINLINE bool
-	isArrayletDataContiguous(J9IndexableObject *spine)
-	{
-		return (1 == numArraylets(spine)) && (getSizeInElements(spine) > 0);
-	}
-
-	/**
 	 * We can't use memcpy because it may be not atomic for pointers, use this function instead
 	 * Copy data in uintptr_t words
 	 * If length is not times of uintptr_t one more word is copied
@@ -860,6 +809,7 @@ public:
 	MMINLINE void **
 	dataAddrSlotForContiguous(J9IndexableObject *arrayPtr)
 	{
+		AssertContiguousArrayletLayout(arrayPtr);
 		bool const compressed = compressObjectReferences();
 		void **dataAddrPtr = NULL;
 		if (compressed) {
@@ -1045,17 +995,19 @@ public:
 	 * object.
 	 *
 	 * @param forwardedHeader Forwarded header of arrayPtr
-	 * @param arrayPtr        Pointer to the indexable object whose size is required
+	 * @param destinationArray Pointer to the indexable object whose size is required
 	 */
 	MMINLINE void
-	fixupDataAddr(MM_ForwardedHeader *forwardedHeader, omrobjectptr_t arrayPtr)
+	fixupDataAddr(MM_ForwardedHeader *forwardedHeader, J9IndexableObject *destinationArray)
 	{
 #if defined(J9VM_ENV_DATA64)
-		J9IndexableObject *j9ArrayPtr = (J9IndexableObject *)arrayPtr;
+		AssertVirtualLargeObjectHeapEnabled();
 
 		if (InlineContiguous == getPreservedArrayLayout(forwardedHeader)) {
-			if (shouldFixupDataAddrForContiguous((J9IndexableObject *)forwardedHeader->getObject())) {
-				setDataAddrForContiguous(j9ArrayPtr);
+			void *dataAddr = getDataAddrForContiguous(destinationArray);
+			/* forwardedHeader should not be treated as an object (since it does not have valid class).*/
+			if (shouldFixupDataAddrForContiguous(forwardedHeader, dataAddr)) {
+				setDataAddrForContiguous(destinationArray);
 			}
 		}
 #endif /* defined(J9VM_ENV_DATA64) */
@@ -1286,7 +1238,7 @@ public:
 
 	/**
 	 * Check if the arraylet data is adjacent to the header.
-	 * Mostly used for the detection of camouflaged contiguous arrays that exist with doubleMapping or virtualLargeObjectHeap enabled.
+	 * Mostly used for the detection of camouflaged contiguous arrays that exist with virtualLargeObjectHeap enabled.
 	 *
 	 * @param dataSizeInBytes the size of data in an indexable object, in bytes, including leaves and alignment padding
 	 * @return true if the arraylet data is adjacent to the header, false otherwise
@@ -1295,7 +1247,7 @@ public:
 
 	/**
 	 * Check if the arraylet data is adjacent to the header.
-	 * Mostly used for the detection of camouflaged contiguous arrays that exist with doubleMapping or virtualLargeObjectHeap enabled.
+	 * Mostly used for the detection of camouflaged contiguous arrays that exist with virtualLargeObjectHeap enabled.
 	 *
 	 * @param dataSizeInBytes the size of data in an indexable object, in bytes, including leaves and alignment padding
 	 * @return true if based on the value of dataSizeInBytes, the arraylet data is adjacent to the header, false otherwise
@@ -1306,10 +1258,21 @@ public:
 	 * Check if the data address for the contiguous indexable object should be fixed up.
 	 *
 	 * @param extensions pointer to MM_GCExtensionsBase
-	 * @param forwardedHeader pointer to the MM_ForwardedHeader instance encapsulating the object
+	 * @param arrayPtr pointer to J9IndexableObject
 	 * @return true if we should fixup the data address of the indexable object
 	 */
 	bool shouldFixupDataAddrForContiguous(J9IndexableObject *arrayPtr);
+
+	/**
+	 * Check if the data address for the contiguous indexable object should be fixed up.
+	 *
+	 * @param extensions pointer to MM_GCExtensionsBase
+	 * @param forwardedHeader pointer to the MM_ForwardedHeader instance encapsulating the object
+	 * 		  forwardedHeader should not be treated as an object (since it does not have valid class).
+	 * @param dataAddr data address in the indexable object
+	 * @return true if we should fixup the data address of the indexable object
+	 */
+	bool shouldFixupDataAddrForContiguous(void *forwardedHeader, void *dataAddr);
 
 	/**
 	 * Initialize the receiver, a new instance of GC_ObjectModel
@@ -1342,5 +1305,10 @@ public:
 	 * Asserts unreachable code if either off-heap or double-mapping is enabled.
 	 */
 	void AssertContiguousArrayDataUnreachable();
+
+	/**
+	 * Asserts that off-heap is enabled.
+	 */
+	void AssertVirtualLargeObjectHeapEnabled();
 };
 #endif /* ARRAYLETOBJECTMODEL_ */

@@ -92,7 +92,9 @@
 #include "RegionBasedOverflowVLHGC.hpp"
 #include "RootScanner.hpp"
 #include "SlotObject.hpp"
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
 #include "SparseVirtualMemory.hpp"
+#endif /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
 #include "StackSlotValidator.hpp"
 #include "SublistFragment.hpp"
 #include "SublistIterator.hpp"
@@ -2033,7 +2035,9 @@ MM_CopyForwardScheme::copy(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *
 					 * points to the array data. In the case of contiguous data, it will point to the data
 					 * itself, and in case of discontiguous data, it will be NULL.
 					 */
-					indexableObjectModel->fixupDataAddr(forwardedHeader, destinationObjectPtr);
+					if (_extensions->isVirtualLargeObjectHeapEnabled) {
+						indexableObjectModel->fixupDataAddr(forwardedHeader, (J9IndexableObject *)destinationObjectPtr);
+					}
 #endif /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
 				}
 
@@ -4082,19 +4086,24 @@ private:
 
 		if (!_copyForwardScheme->isLiveObject(objectPtr)) {
 			Assert_MM_true(_copyForwardScheme->isObjectInEvacuateMemory(objectPtr));
-			void *dataAddr = _extensions->indexableObjectModel.getDataAddrForContiguous((J9IndexableObject *)objectPtr);
+
 			MM_ForwardedHeader forwardedHeader(objectPtr, _extensions->compressObjectReferences());
-			objectPtr = forwardedHeader.getForwardedObject();
+			Assert_MM_mustBeClass(_extensions->objectModel.getPreservedClass(&forwardedHeader));
+			J9Object *fwdOjectPtr = forwardedHeader.getForwardedObject();
 			/* If forwarded object is NULL, free the sparse region occupied by the data of the indexable object */
-			if (NULL == objectPtr) {
-				Assert_MM_mustBeClass(_extensions->objectModel.getPreservedClass(&forwardedHeader));
+			if (NULL == fwdOjectPtr) {
 				env->_copyForwardStats._offHeapRegionsCleared += 1;
+				void *dataAddr = _extensions->indexableObjectModel.getDataAddrForContiguous((J9IndexableObject *)objectPtr);
 				_extensions->largeObjectVirtualMemory->freeSparseRegionAndUnmapFromHeapObject(_env, dataAddr);
 				*sparseHeapAllocation = false;
-			} else if (NULL != dataAddr) {
-				/* There might be the case that GC finds a floating arraylet, which was a result of an allocation
-				 * failure (reason why this GC cycle is happening) */
-				_extensions->largeObjectVirtualMemory->updateSparseDataEntryAfterObjectHasMoved(dataAddr, objectPtr);
+			} else {
+				void *dataAddr = _extensions->indexableObjectModel.getDataAddrForContiguous((J9IndexableObject *)fwdOjectPtr);
+				if (NULL != dataAddr) {
+					/* There might be the case that GC finds a floating arraylet, which was a result of an allocation
+					 * failure (reason why this GC cycle is happening).
+					 */
+					_extensions->largeObjectVirtualMemory->updateSparseDataEntryAfterObjectHasMoved(dataAddr, fwdOjectPtr);
+				}
 			}
 		}
 	}

@@ -24,7 +24,7 @@
 #include "GCExtensionsBase.hpp"
 
 bool
-GC_ArrayletObjectModelBase::initialize(MM_GCExtensionsBase * extensions)
+GC_ArrayletObjectModelBase::initialize(MM_GCExtensionsBase *extensions)
 {
 #if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
 	_compressObjectReferences = extensions->compressObjectReferences();
@@ -50,7 +50,7 @@ GC_ArrayletObjectModelBase::initialize(MM_GCExtensionsBase * extensions)
 }
 
 void
-GC_ArrayletObjectModelBase::tearDown(MM_GCExtensionsBase * extensions)
+GC_ArrayletObjectModelBase::tearDown(MM_GCExtensionsBase *extensions)
 {
 
 	/* ensure that we catch any invalid uses during shutdown */
@@ -63,7 +63,7 @@ GC_ArrayletObjectModelBase::tearDown(MM_GCExtensionsBase * extensions)
 
 
 void
-GC_ArrayletObjectModelBase::expandArrayletSubSpaceRange(MM_MemorySubSpace * subSpace, void * rangeBase, void * rangeTop, uintptr_t largestDesirableArraySpineSize)
+GC_ArrayletObjectModelBase::expandArrayletSubSpaceRange(MM_MemorySubSpace *subSpace, void *rangeBase, void *rangeTop, uintptr_t largestDesirableArraySpineSize)
 {
 	/* Is this the first expand? */
 	if(NULL == _arrayletSubSpace) {
@@ -92,7 +92,7 @@ GC_ArrayletObjectModelBase::getSpineSizeWithoutHeader(ArrayLayout layout, uintpt
 	 * In hybrid specs, the spine may also include padding for a secondary size field in empty arrays
 	 */
 	uintptr_t const slotSize = J9GC_REFERENCE_SIZE(this);
-	MM_GCExtensionsBase* extensions = MM_GCExtensionsBase::getExtensions(_omrVM);
+	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(_omrVM);
 	uintptr_t spineArrayoidSize = 0;
 	uintptr_t spinePaddingSize = 0;
 	if (InlineContiguous != layout) {

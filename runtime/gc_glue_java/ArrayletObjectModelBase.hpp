@@ -195,6 +195,8 @@ public:
 #if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
 	/**
 	 * Set whether the virtual large object heap (off-heap) allocation for large objects is enabled.
+	 *
+	 * @param enableVirtualLargeObjectHeap[in] if true, off-heap is enabled.
 	 */
 	MMINLINE void
 	setEnableVirtualLargeObjectHeap(bool enableVirtualLargeObjectHeap)
@@ -206,6 +208,8 @@ public:
 #if defined(J9VM_ENV_DATA64)
 	/**
 	 * Set whether the indexable header field dataAddr is present in the header of the indexable object.
+	 *
+	 * @param isDataAddressPresent[in] if true, dataAddr is present.
 	 */
 	MMINLINE void
 	setIsDataAddressPresent(bool isDataAddressPresent)

@@ -2263,39 +2263,43 @@ MM_IncrementalGenerationalGC::exportStats(MM_EnvironmentVLHGC *env, MM_Collectio
 				}
 			}
 			if (region->isArrayletLeaf()) {
-				J9IndexableObject *spine = region->_allocateData.getSpine();
-
-				/* if we recently (end of GMP) unloaded classes, but have not done sweep yet (just about to do it),
-				 * there might be unswept arraylet leaf regions, for which we must not try to access class data (for scan type).
-				 * Therefore, we count these arraylets as 'unknown' type.
-				 */
-				if (classesPotentiallyUnloaded && !isMarked((J9Object *)spine)) {
-					stats->_arrayletUnknownLeaves += 1;
-					/* is this first arraylet leaf? */
-					GC_SlotObject firstArrayletLeafSlot(_javaVM->omrVM, _extensions->indexableObjectModel.getArrayoidPointer(spine));
-					if (region->getLowAddress() == firstArrayletLeafSlot.readReferenceFromSlot()) {
-						stats->_arrayletUnknownObjects += 1;
-					}
-				} else if (GC_ObjectModel::SCAN_POINTER_ARRAY_OBJECT == _extensions->objectModel.getScanType((J9Object *)spine)) {
-					stats->_arrayletReferenceLeaves += 1;
-					/* is this first arraylet leaf? */
-					GC_SlotObject firstArrayletLeafSlot(_javaVM->omrVM, _extensions->indexableObjectModel.getArrayoidPointer(spine));
-					if (region->getLowAddress() == firstArrayletLeafSlot.readReferenceFromSlot()) {
-						stats->_arrayletReferenceObjects += 1;
-						UDATA numExternalArraylets = _extensions->indexableObjectModel.numExternalArraylets(spine);
-						if (stats->_largestReferenceArraylet < numExternalArraylets) {
-							stats->_largestReferenceArraylet = numExternalArraylets;
+				J9IndexableObject *spine = NULL;
+				if (!_extensions->isVirtualLargeObjectHeapEnabled || region->_sparseHeapAllocation) {
+					spine = region->_allocateData.getSpine();
+				}
+				if (NULL != spine) {
+					/* if we recently (end of GMP) unloaded classes, but have not done sweep yet (just about to do it),
+					 * there might be unswept arraylet leaf regions, for which we must not try to access class data (for scan type).
+					 * Therefore, we count these arraylets as 'unknown' type.
+					 */
+					if (classesPotentiallyUnloaded && !isMarked((J9Object *)spine)) {
+						stats->_arrayletUnknownLeaves += 1;
+						/* is this first arraylet leaf? */
+						GC_SlotObject firstArrayletLeafSlot(_javaVM->omrVM, _extensions->indexableObjectModel.getArrayoidPointer(spine));
+						if (region->getLowAddress() == firstArrayletLeafSlot.readReferenceFromSlot()) {
+							stats->_arrayletUnknownObjects += 1;
 						}
-					}
-				} else {
-					Assert_MM_true(GC_ObjectModel::SCAN_PRIMITIVE_ARRAY_OBJECT == _extensions->objectModel.getScanType((J9Object *)spine));
-					stats->_arrayletPrimitiveLeaves += 1;
-					GC_SlotObject firstArrayletLeafSlot(_javaVM->omrVM, _extensions->indexableObjectModel.getArrayoidPointer(spine));
-					if (region->getLowAddress() == firstArrayletLeafSlot.readReferenceFromSlot()) {
-						stats->_arrayletPrimitiveObjects += 1;
-						UDATA numExternalArraylets = _extensions->indexableObjectModel.numExternalArraylets(spine);
-						if (stats->_largestPrimitiveArraylet < numExternalArraylets) {
-							stats->_largestPrimitiveArraylet = numExternalArraylets;
+					} else if (GC_ObjectModel::SCAN_POINTER_ARRAY_OBJECT == _extensions->objectModel.getScanType((J9Object *)spine)) {
+						stats->_arrayletReferenceLeaves += 1;
+						/* is this first arraylet leaf? */
+						GC_SlotObject firstArrayletLeafSlot(_javaVM->omrVM, _extensions->indexableObjectModel.getArrayoidPointer(spine));
+						if (region->getLowAddress() == firstArrayletLeafSlot.readReferenceFromSlot()) {
+							stats->_arrayletReferenceObjects += 1;
+							UDATA numExternalArraylets = _extensions->indexableObjectModel.numExternalArraylets(spine);
+							if (stats->_largestReferenceArraylet < numExternalArraylets) {
+								stats->_largestReferenceArraylet = numExternalArraylets;
+							}
+						}
+					} else {
+						Assert_MM_true(GC_ObjectModel::SCAN_PRIMITIVE_ARRAY_OBJECT == _extensions->objectModel.getScanType((J9Object *)spine));
+						stats->_arrayletPrimitiveLeaves += 1;
+						GC_SlotObject firstArrayletLeafSlot(_javaVM->omrVM, _extensions->indexableObjectModel.getArrayoidPointer(spine));
+						if (region->getLowAddress() == firstArrayletLeafSlot.readReferenceFromSlot()) {
+							stats->_arrayletPrimitiveObjects += 1;
+							UDATA numExternalArraylets = _extensions->indexableObjectModel.numExternalArraylets(spine);
+							if (stats->_largestPrimitiveArraylet < numExternalArraylets) {
+								stats->_largestPrimitiveArraylet = numExternalArraylets;
+							}
 						}
 					}
 				}
