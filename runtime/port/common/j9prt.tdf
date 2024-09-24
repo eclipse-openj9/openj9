@@ -1544,7 +1544,7 @@ TraceException=Trc_PRT_mem_advise_and_free_memory_basic_Pgser_Release_failed Obs
 TraceEvent=Trc_PRT_mem_advise_and_free_memory_basic_params Obsolete Overhead=1 Level=5 NoEnv Template="j9mem_advise_and_free_memory_basic : pagesize=%zu memoryPointer=%p memorySize=%zu"
 TraceEvent=Trc_PRT_mem_advise_and_free_memory_basic_oscall Obsolete Overhead=1 Level=10 NoEnv Template="j9mem_advise_and_free_memory_basic : memPtrPageRounded=%p memPtrSizePageRounded=%zu"
 
-TraceExit=Trc_PRT_j9hypervisor_vendor_init_exit Group=j9mem Overhead=1 Level=5 NoEnv Template="j9hypervisor_vendor_init exited with ret=%d"
+TraceExit=Trc_PRT_j9hypervisor_vendor_init_exit Group=j9hypervisor Overhead=1 Level=5 NoEnv Template="j9hypervisor_vendor_init exited with ret=%d"
 
 TraceException=Trc_PRT_vmem_j9vmem_reserve_memory_ex_UnableToReallocateWithLargePages Obsolete Group=j9mem Overhead=1 Level=3 NoEnv Template="j9vmem_reserve_memory_ex: unable to reallocate %u bytes at %p using large pages"
 
