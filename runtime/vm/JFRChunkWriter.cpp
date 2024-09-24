@@ -786,4 +786,33 @@ VM_JFRChunkWriter::writeOSInformationEvent()
 	return dataStart;
 }
 
+void
+VM_JFRChunkWriter::writeInitialSystemPropertyEvents(J9JavaVM *vm)
+{
+	pool_state walkState;
+
+	J9VMSystemProperty *property = (J9VMSystemProperty *)pool_startDo(vm->systemProperties, &walkState);
+	while (property != NULL) {
+		/* reserve size field */
+		U_8 *dataStart = _bufferWriter->getAndIncCursor(sizeof(U_32));
+
+		/* write event type */
+		_bufferWriter->writeLEB128(InitialSystemPropertyID);
+
+		/* write start time */
+		_bufferWriter->writeLEB128(j9time_current_time_millis());
+
+		/* write key */
+		writeStringLiteral(property->name);
+
+		/* write value */
+		writeStringLiteral(property->value);
+
+		/* write size */
+		_bufferWriter->writeLEB128PaddedU32(dataStart, _bufferWriter->getCursor() - dataStart);
+
+		property = (J9VMSystemProperty *)pool_nextDo(&walkState);
+	}
+}
+
 #endif /* defined(J9VM_OPT_JFR) */
