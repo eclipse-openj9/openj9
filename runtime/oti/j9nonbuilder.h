@@ -5152,14 +5152,13 @@ typedef struct J9InternalVMFunctions {
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 	BOOLEAN (*jvmCheckpointHooks)(struct J9VMThread *currentThread);
 	BOOLEAN (*jvmRestoreHooks)(struct J9VMThread *currentThread);
-	BOOLEAN (*isCRaCorCRIUSupportEnabled)(struct J9VMThread *currentThread);
-	BOOLEAN (*isCRaCorCRIUSupportEnabled_VM)(struct J9JavaVM *vm);
+	BOOLEAN (*isCRaCorCRIUSupportEnabled)(struct J9JavaVM *vm);
 	BOOLEAN (*isCRIUSupportEnabled)(struct J9VMThread *currentThread);
 	BOOLEAN (*enableCRIUSecProvider)(struct J9VMThread *currentThread);
-	BOOLEAN (*isCheckpointAllowed)(struct J9VMThread *currentThread);
+	BOOLEAN (*isCheckpointAllowed)(struct J9JavaVM *vm);
 	BOOLEAN (*isNonPortableRestoreMode)(struct J9VMThread *currentThread);
 	BOOLEAN (*isJVMInPortableRestoreMode)(struct J9VMThread *currentThread);
-	BOOLEAN (*isDebugOnRestoreEnabled)(struct J9VMThread *currentThread);
+	BOOLEAN (*isDebugOnRestoreEnabled)(struct J9JavaVM *vm);
 	void (*setRequiredGhostFileLimit)(struct J9VMThread *currentThread, U_32 ghostFileLimit);
 	BOOLEAN (*runInternalJVMCheckpointHooks)(struct J9VMThread *currentThread, const char **nlsMsgFormat);
 	BOOLEAN (*runInternalJVMRestoreHooks)(struct J9VMThread *currentThread, const char **nlsMsgFormat);

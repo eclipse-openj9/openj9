@@ -168,8 +168,8 @@ createAgentLibraryWithOption(J9JavaVM *vm, J9VMInitArgs *argsList, IDATA agentIn
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 		if ((JNI_OK == result)
 			&& (isXrunjdwp || (0 == strncmp(JDWP_AGENT, optionsPtr, libraryLength)))
-			&& (vm->internalVMFunctions->isDebugOnRestoreEnabled(vm->mainThread))
-		){
+			&& (vm->internalVMFunctions->isDebugOnRestoreEnabled(vm))
+		) {
 			*isJDWPagent = TRUE;
 		}
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
@@ -381,7 +381,7 @@ IDATA J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
 			 * Adding capabilities is required before checkpoint if JIT is enabled.
 			 * Following code can be removed when JIT allows capabilities to be added after restore.
 			 */
-			if (vm->internalVMFunctions->isDebugOnRestoreEnabled(vm->mainThread)) {
+			if (vm->internalVMFunctions->isDebugOnRestoreEnabled(vm)) {
 				Trc_JVMTI_criuAddCapabilities_invoked();
 				/* ignore the failure, it won't cause a problem if JDWP is not enabled later */
 				criuAddCapabilities(vm, NULL != vm->jitConfig);

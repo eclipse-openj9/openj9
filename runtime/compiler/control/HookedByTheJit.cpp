@@ -440,8 +440,8 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
       {
 #if defined(J9VM_OPT_CRIU_SUPPORT)
       bool cpAllowedAndDebugOnRestoreEnabled
-         = jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(vmThread)
-           && jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(vmThread);
+         = jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(jitConfig->javaVM)
+           && jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(jitConfig->javaVM);
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
       bool sccCounts =
@@ -1397,8 +1397,8 @@ static void jitMethodSampleInterrupt(J9VMThread* vmThread, IDATA handlerKey, voi
           && !compInfo->getCRRuntime()->shouldSuspendThreadsForCheckpoint()
 
           /* Don't sample methods for recompilation pre-checkpoint if Debug On Restore is enabled */
-          && (!jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(vmThread)
-              || !jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(vmThread))
+          && (!jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(jitConfig->javaVM)
+              || !jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(jitConfig->javaVM))
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
           && !compInfo->getPersistentInfo()->getDisableFurtherCompilation())
          {
@@ -1456,8 +1456,8 @@ static void jitMethodSampleInterrupt(J9VMThread* vmThread, IDATA handlerKey, voi
           && !compInfo->getCRRuntime()->shouldSuspendThreadsForCheckpoint()
 
           /* Don't sample methods for recompilation pre-checkpoint if Debug On Restore is enabled */
-          && (!jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(vmThread)
-              || !jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(vmThread))
+          && (!jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(jitConfig->javaVM)
+              || !jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(jitConfig->javaVM))
 #endif
           && !compInfo->getPersistentInfo()->getDisableFurtherCompilation())
          {
@@ -4182,7 +4182,7 @@ void JitShutdown(J9JITConfig * jitConfig)
    TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-   if (jitConfig->javaVM->internalVMFunctions->isCRaCorCRIUSupportEnabled(vmThread))
+   if (jitConfig->javaVM->internalVMFunctions->isCRaCorCRIUSupportEnabled(jitConfig->javaVM))
       {
       compInfo->getCRRuntime()->stopCRRuntimeThread();
       }
@@ -4957,7 +4957,7 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
        TR::Options::getCmdLineOptions()->getOption(TR_NoIProfilerDuringStartupPhase) &&
        interpreterProfilingState == IPROFILING_STATE_OFF
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-       && (!jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(compInfo->getSamplerThread())
+       && (!jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(jitConfig->javaVM)
            || compInfo->getCRRuntime()->allowStateChange())
 #endif
       )
@@ -5025,7 +5025,7 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
 #endif
                if (crtElapsedTime - lastTimeInStartupMode > waitTime
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-                   && (!jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(compInfo->getSamplerThread())
+                   && (!jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(jitConfig->javaVM)
                        || compInfo->getCRRuntime()->allowStateChange())
 #endif
                   )
@@ -5045,7 +5045,7 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
             // is implemented above in the IF block
             if (persistentInfo->getExternalStartupEndedSignal()
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-                && (!jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(compInfo->getSamplerThread())
+                && (!jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(jitConfig->javaVM)
                     || compInfo->getCRRuntime()->allowStateChange())
 #endif
                )
@@ -5073,7 +5073,7 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
                else
                   {
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-                  if (!jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(compInfo->getSamplerThread())
+                  if (!jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(jitConfig->javaVM)
                       || compInfo->getCRRuntime()->allowStateChange())
 #endif
                      {
@@ -5094,7 +5094,7 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
             else
                {
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-               if (!jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(compInfo->getSamplerThread())
+               if (!jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(jitConfig->javaVM)
                    || compInfo->getCRRuntime()->allowStateChange())
 #endif
                   {
@@ -6430,7 +6430,7 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
          crtTime += samplingPeriod;
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-         if (vm->internalVMFunctions->isCheckpointAllowed(samplerThread))
+         if (vm->internalVMFunctions->isCheckpointAllowed(vm))
             {
             /* It's ok to not acquire the comp monitor here. Even if at this
              * point a checkpoint isn't in progress but later it is, the
@@ -6446,7 +6446,7 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
             if (compInfo->getCRRuntime()->shouldSuspendThreadsForCheckpoint())
                suspendSamplerThreadForCheckpoint(samplerThread,jitConfig, compInfo);
             }
-         else if (vm->internalVMFunctions->isDebugOnRestoreEnabled(samplerThread))
+         else if (vm->internalVMFunctions->isDebugOnRestoreEnabled(vm))
             {
             if (!forcedRecompilations && jitConfig->javaVM->phase == J9VM_PHASE_NOT_STARTUP)
                {
@@ -6778,7 +6778,7 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
 
             // compute jit state
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-            if (!jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(samplerThread))
+            if (!jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(jitConfig->javaVM))
 #endif
                {
                jitStateLogic(jitConfig, compInfo, diffTime); // Update JIT state before going to sleep
@@ -7235,8 +7235,6 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
    J9HookInterface * * gcHooks = javaVM->memoryManagerFunctions->j9gc_get_hook_interface(javaVM);
    J9HookInterface * * gcOmrHooks = javaVM->memoryManagerFunctions->j9gc_get_omr_hook_interface(javaVM->omrVM);
 
-   J9VMThread *vmThread = javaVM->internalVMFunctions->currentVMThread(javaVM);
-
    PORT_ACCESS_FROM_JAVAVM(javaVM);
 
    if (TR::Options::getCmdLineOptions()->getOption(TR_noJitDuringBootstrap) ||
@@ -7393,7 +7391,7 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
 #endif // if defined (J9VM_INTERP_PROFILING_BYTECODES)
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-      if (jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(vmThread))
+      if (jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(jitConfig->javaVM))
          {
          compInfo->getCRRuntime()->startCRRuntimeThread(javaVM);
          }

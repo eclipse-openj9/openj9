@@ -817,8 +817,8 @@ TR_J9VMBase::TR_J9VMBase(
 #if defined(J9VM_OPT_CRIU_SUPPORT)
       || (vmThread
           && jitConfig->javaVM->sharedClassConfig
-          && jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(vmThread)
-          && jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(vmThread))
+          && jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(jitConfig->javaVM)
+          && jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(jitConfig->javaVM))
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
       )
       // shared classes and AOT must be enabled, or we should be on the JITServer with remote AOT enabled
@@ -9666,7 +9666,8 @@ bool
 TR_J9VMBase::inSnapshotMode()
    {
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-   return getJ9JITConfig()->javaVM->internalVMFunctions->isCheckpointAllowed(vmThread());
+   J9JavaVM *javaVM = getJ9JITConfig()->javaVM;
+   return javaVM->internalVMFunctions->isCheckpointAllowed(javaVM);
 #else /* defined(J9VM_OPT_CRIU_SUPPORT) */
    return false;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
@@ -9686,7 +9687,8 @@ bool
 TR_J9VMBase::isSnapshotModeEnabled()
    {
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-   return getJ9JITConfig()->javaVM->internalVMFunctions->isCRaCorCRIUSupportEnabled(vmThread());
+   J9JavaVM *javaVM = getJ9JITConfig()->javaVM;
+   return javaVM->internalVMFunctions->isCRaCorCRIUSupportEnabled(javaVM);
 #else /* defined(J9VM_OPT_CRIU_SUPPORT) */
    return false;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */

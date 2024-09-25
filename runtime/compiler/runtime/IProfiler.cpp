@@ -4087,7 +4087,8 @@ TR_IProfiler::processWorkingQueue()
          {
 #if defined(J9VM_OPT_CRIU_SUPPORT)
          // Check if the IProfiler Thread should be suspended for checkpoint
-         if (_compInfo->getJITConfig()->javaVM->internalVMFunctions->isCheckpointAllowed(_iprofilerThread))
+         J9JavaVM *javaVM = _compInfo->getJITConfig()->javaVM;
+         if (javaVM->internalVMFunctions->isCheckpointAllowed(javaVM))
             {
             // The monitors must be acquired in the right order, therefore
             // release the IProfiler monitor prior to attempting to suspend
@@ -4190,7 +4191,7 @@ UDATA TR_IProfiler::parseBuffer(J9VMThread * vmThread, const U_8* dataStart, UDA
    J9JavaVM *javaVM = _compInfo->getJITConfig()->javaVM;
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-   if (javaVM->internalVMFunctions->isDebugOnRestoreEnabled(vmThread) && javaVM->internalVMFunctions->isCheckpointAllowed(vmThread))
+   if (javaVM->internalVMFunctions->isDebugOnRestoreEnabled(javaVM) && javaVM->internalVMFunctions->isCheckpointAllowed(javaVM))
       {
       int32_t dropRate = (int32_t)((((float)(_numRequestsDropped + _numRequestsSkipped)) / ((float)_numRequests)) * 1000);
       if (TR::Options::_IprofilerPreCheckpointDropRate >= 1000 || dropRate <= TR::Options::_IprofilerPreCheckpointDropRate)
