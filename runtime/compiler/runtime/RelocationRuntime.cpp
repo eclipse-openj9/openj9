@@ -1326,7 +1326,15 @@ TR_SharedCacheRelocationRuntime::validateAOTHeader(TR_FrontEnd *fe, J9VMThread *
          {
          checkAOTHeaderFlags(hdrInCache, featureFlags);
          }
-      else if (hdrInCache->gcPolicyFlag != javaVM()->memoryManagerFunctions->j9gc_modron_getWriteBarrierType(javaVM()) )
+      else if (!((hdrInCache->gcPolicyFlag == javaVM()->memoryManagerFunctions->j9gc_modron_getWriteBarrierType(javaVM())) ||
+                 // it's safe to run AOT code with inline cardmark barrier even if runtime will not need it since the barrier
+                 // is only executed for active Concurrent Mark cycles (which won't ever happen with Concurrent Mark disabled
+                 // in runtime)
+                 ((hdrInCache->gcPolicyFlag == gc_modron_wrtbar_cardmark_and_oldcheck) &&
+                  (javaVM()->memoryManagerFunctions->j9gc_modron_getWriteBarrierType(javaVM()) == gc_modron_wrtbar_oldcheck)
+                 )
+                )
+              )
          {
          incompatibleCache(J9NLS_RELOCATABLE_CODE_WRONG_GC_POLICY,
                            "AOT header validation failed: incompatible gc write barrier type");
