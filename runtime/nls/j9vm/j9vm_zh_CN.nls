@@ -2164,7 +2164,7 @@ J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_PARAL
 J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_PARALLELISM_OFFSET.user_response=View CRIU documentation to determine how to resolve the exception.
 # END NON-TRANSLATABLE
 
-# NullRestricted/value/implicit is not translatable
+# NullRestricted is not translatable
 J9NLS_VM_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS=\u5177\u6709 NullRestricted \u5c5e\u6027\u7684\u5b9e\u4f8b\u5b57\u6bb5\u5fc5\u987b\u4f4d\u4e8e\u5177\u6709\u9690\u5f0f\u6784\u9020\u51fd\u6570\u7684\u503c\u7c7b\u4e2d
 # START NON-TRANSLATABLE
 J9NLS_VM_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
@@ -2172,7 +2172,7 @@ J9NLS_VM_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS.system_a
 J9NLS_VM_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
 
-# NullRestricted/value/implicit is not translatable
+# NullRestricted is not translatable
 J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS=\u5177\u6709 NullRestricted \u5c5e\u6027\u7684\u9759\u6001\u5b57\u6bb5\u5fc5\u987b\u4f4d\u4e8e\u5177\u6709\u9690\u5f0f\u6784\u9020\u51fd\u6570\u7684\u503c\u7c7b\u4e2d
 # START NON-TRANSLATABLE
 J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.

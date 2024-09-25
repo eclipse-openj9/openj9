@@ -2164,7 +2164,7 @@ J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_PARAL
 J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_PARALLELISM_OFFSET.user_response=View CRIU documentation to determine how to resolve the exception.
 # END NON-TRANSLATABLE
 
-# NullRestricted/value/implicit is not translatable
+# NullRestricted is not translatable
 J9NLS_VM_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS=NullRestricted \uc18d\uc131\uc774 \uc788\ub294 \uc778\uc2a4\ud134\uc2a4 \ud544\ub4dc\ub294 \uc554\uc2dc\uc801 \uc0dd\uc131\uc790\uac00 \uc788\ub294 \uac12 \ud074\ub798\uc2a4\uc5d0 \uc788\uc5b4\uc57c \ud569\ub2c8\ub2e4
 # START NON-TRANSLATABLE
 J9NLS_VM_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
@@ -2172,7 +2172,7 @@ J9NLS_VM_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS.system_a
 J9NLS_VM_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
 
-# NullRestricted/value/implicit is not translatable
+# NullRestricted is not translatable
 J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS=NullRestricted \uc18d\uc131\uc774 \uc788\ub294 \uc815\uc801 \ud544\ub4dc\ub294 \uc554\uc2dc\uc801 \uc0dd\uc131\uc790\uac00 \uc788\ub294 \uac12 \ud074\ub798\uc2a4\uc5d0 \uc788\uc5b4\uc57c \ud569\ub2c8\ub2e4
 # START NON-TRANSLATABLE
 J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
@@ -2181,7 +2181,7 @@ J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS.u
 # END NON-TRANSLATABLE
 
 # Note: -XX:Compatibility= is a command-line option and should not be translated.
-J9NLS_VM_COMPATIBILITY_REPEATED=\uba85\ub839\uc904 \uc635\uc158 -XX:\ud638\ud658\uc131=[\ubaa8\ub4dc]\ub294 \ucd5c\ub300 \ud55c \ubc88\ub9cc \ud5c8\uc6a9\ub429\ub2c8\ub2e4.
+J9NLS_VM_COMPATIBILITY_REPEATED=\uba85\ub839\uc904 \uc635\uc158 -XX:Compatibility=[\ubaa8\ub4dc]\ub294 \ucd5c\ub300 \ud55c \ubc88\ub9cc \ud5c8\uc6a9\ub429\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_VM_COMPATIBILITY_REPEATED.explanation=The specified command-line option may not be repeated.
 J9NLS_VM_COMPATIBILITY_REPEATED.system_action=The JVM will fail to start.
