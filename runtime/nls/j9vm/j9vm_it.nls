@@ -2164,7 +2164,7 @@ J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_PARAL
 J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_PARALLELISM_OFFSET.user_response=View CRIU documentation to determine how to resolve the exception.
 # END NON-TRANSLATABLE
 
-# NullRestricted/value/implicit is not translatable
+# NullRestricted is not translatable
 J9NLS_VM_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS=Un campo di istanza con un attributo NullRestricted deve essere in una classe di valori con un costruttore implicito
 # START NON-TRANSLATABLE
 J9NLS_VM_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
@@ -2172,7 +2172,7 @@ J9NLS_VM_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS.system_a
 J9NLS_VM_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
 
-# NullRestricted/value/implicit is not translatable
+# NullRestricted is not translatable
 J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS=Un campo statico con l'attributo NullRestricted deve essere in una classe di valori con un costruttore implicito
 # START NON-TRANSLATABLE
 J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
@@ -2181,7 +2181,7 @@ J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS.u
 # END NON-TRANSLATABLE
 
 # Note: -XX:Compatibility= is a command-line option and should not be translated.
-J9NLS_VM_COMPATIBILITY_REPEATED=L'opzione della riga di comando -XX:Compatibilit\u00e0=[modalit\u00e0] \u00e8 consentita al massimo una volta.
+J9NLS_VM_COMPATIBILITY_REPEATED=L'opzione della riga di comando -XX:Compatibility=[modalit\u00e0] \u00e8 consentita al massimo una volta.
 # START NON-TRANSLATABLE
 J9NLS_VM_COMPATIBILITY_REPEATED.explanation=The specified command-line option may not be repeated.
 J9NLS_VM_COMPATIBILITY_REPEATED.system_action=The JVM will fail to start.

@@ -275,7 +275,7 @@ J9NLS_VM_CHECK_JAVA_HOME.system_action=The JVM will terminate.
 J9NLS_VM_CHECK_JAVA_HOME.user_response=Check that JAVA_HOME environment variable is properly set.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_STACK_TRACE_EXCEPTION_IN=V\u00fdjimka ve vl\u00e1knu " %s "
+J9NLS_VM_STACK_TRACE_EXCEPTION_IN=V\u00fdjimka ve vl\u00e1knu "%s"
 # START NON-TRANSLATABLE
 J9NLS_VM_STACK_TRACE_EXCEPTION_IN.sample_input_1=main
 J9NLS_VM_STACK_TRACE_EXCEPTION_IN.explanation=NOTAG
@@ -2143,28 +2143,28 @@ J9NLS_VM_ILLEGAL_THREAD_STATE_UPCALL.system_action=The JVM will throw a IllegalT
 J9NLS_VM_ILLEGAL_THREAD_STATE_UPCALL.user_response=Ensure the specified linker options for downcall are valid.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_FORKJOINPOOL_CNF=JVM nemohl resetovat java.lang.VirtualThread.ForkJoinPool .parallelism kv\u016fli nenalezen\u00e9 t\u0159\u00edd\u011b java.util.concurrent.ForkJoinPool
+J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_FORKJOINPOOL_CNF=JVM nemohl resetovat java.lang.VirtualThread.ForkJoinPool.parallelism kv\u016fli nenalezen\u00e9 t\u0159\u00edd\u011b java.util.concurrent.ForkJoinPool
 # START NON-TRANSLATABLE
 J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_FORKJOINPOOL_CNF.explanation=CRIUSupport::checkpointJVM failed.
 J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_FORKJOINPOOL_CNF.system_action=The JVM will throw a JVMRestoreException.
 J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_FORKJOINPOOL_CNF.user_response=View CRIU documentation to determine how to resolve the exception.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_DEFAULT_SCHEDULER_ADDRESS=JVM nemohl resetovat java.lang.VirtualThread.ForkJoinPool .parallelism kv\u016fli neplatn\u00e9 adrese DEFAULT_SCHEDULER
+J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_DEFAULT_SCHEDULER_ADDRESS=JVM nemohl resetovat java.lang.VirtualThread.ForkJoinPool.parallelism kv\u016fli neplatn\u00e9 adrese DEFAULT_SCHEDULER
 # START NON-TRANSLATABLE
 J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_DEFAULT_SCHEDULER_ADDRESS.explanation=CRIUSupport::checkpointJVM failed.
 J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_DEFAULT_SCHEDULER_ADDRESS.system_action=The JVM will throw a JVMRestoreException.
 J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_DEFAULT_SCHEDULER_ADDRESS.user_response=View CRIU documentation to determine how to resolve the exception.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_PARALLELISM_OFFSET=JVM nemohl resetovat java.lang.VirtualThread.ForkJoinPool .parallelism kv\u016fli neplatn\u00e9mu offsetu paralelismu
+J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_PARALLELISM_OFFSET=JVM nemohl resetovat java.lang.VirtualThread.ForkJoinPool.parallelism kv\u016fli neplatn\u00e9mu offsetu paralelismu
 # START NON-TRANSLATABLE
 J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_PARALLELISM_OFFSET.explanation=CRIUSupport::checkpointJVM failed.
 J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_PARALLELISM_OFFSET.system_action=The JVM will throw a JVMRestoreException.
 J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_PARALLELISM_OFFSET.user_response=View CRIU documentation to determine how to resolve the exception.
 # END NON-TRANSLATABLE
 
-# NullRestricted/value/implicit is not translatable
+# NullRestricted is not translatable
 J9NLS_VM_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS=Pole instance s atributem NullRestricted mus\u00ed b\u00fdt v hodnotov\u00e9 t\u0159\u00edd\u011b s implicitn\u00edm konstruktorem
 # START NON-TRANSLATABLE
 J9NLS_VM_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
@@ -2172,7 +2172,7 @@ J9NLS_VM_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS.system_a
 J9NLS_VM_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
 
-# NullRestricted/value/implicit is not translatable
+# NullRestricted is not translatable
 J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS=Statick\u00e9 pole s atributem NullRestricted mus\u00ed b\u00fdt v hodnotov\u00e9 t\u0159\u00edd\u011b s implicitn\u00edm konstruktorem
 # START NON-TRANSLATABLE
 J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
@@ -2189,7 +2189,7 @@ J9NLS_VM_COMPATIBILITY_REPEATED.user_response=Remove the repetition of the optio
 # END NON-TRANSLATABLE
 
 # Note: -XX:Compatibility= is a command-line option and should not be translated.
-J9NLS_VM_COMPATIBILITY_UNSUPPORTED=Re\u017eim kompatibility uveden\u00fd v "-XX:Compatibility= %s " nen\u00ed podporov\u00e1n.
+J9NLS_VM_COMPATIBILITY_UNSUPPORTED=Re\u017eim kompatibility uveden\u00fd v "-XX:Compatibility=%s" nen\u00ed podporov\u00e1n.
 # START NON-TRANSLATABLE
 J9NLS_VM_COMPATIBILITY_UNSUPPORTED.sample_input_1=unsupported
 J9NLS_VM_COMPATIBILITY_UNSUPPORTED.explanation=The specified compatibility mode is not supported.
@@ -2322,7 +2322,7 @@ J9NLS_VM_CRIU_NEGATIVE_CHECKPOINT_RESTORE_TIME_DELTA.system_action=The JVM will 
 J9NLS_VM_CRIU_NEGATIVE_CHECKPOINT_RESTORE_TIME_DELTA.user_response=View CRIU documentation to determine how to resolve the error.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_CRIU_CRAC_INCOMPATIBLE_SETTING=Volby p\u0159\u00edkazov\u00e9ho \u0159\u00e1dku -XX:+EnableCRIUSupport a -XX:CRaCCheckpointTo=[DIR ] nejsou kompatibiln\u00ed.
+J9NLS_VM_CRIU_CRAC_INCOMPATIBLE_SETTING=Volby p\u0159\u00edkazov\u00e9ho \u0159\u00e1dku -XX:+EnableCRIUSupport a -XX:CRaCCheckpointTo=[DIR] nejsou kompatibiln\u00ed.
 # START NON-TRANSLATABLE
 J9NLS_VM_CRIU_CRAC_INCOMPATIBLE_SETTING.explanation=-XX:+EnableCRIUSupport and -XX:CRaCCheckpointTo=[DIR] are specified at the same time.
 J9NLS_VM_CRIU_CRAC_INCOMPATIBLE_SETTING.system_action=The JVM will fail to start.
@@ -2402,7 +2402,7 @@ J9NLS_VM_CRIU_CHECK_TRANSITION_TO_DEBUG_INTERPRETER_FAILED.system_action=The JVM
 J9NLS_VM_CRIU_CHECK_TRANSITION_TO_DEBUG_INTERPRETER_FAILED.user_response=View CRIU documentation to determine how to resolve the error.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_UNRECOGNISED_SUN_MISC_UNSAFE_MEMORY_ACCESS_VALUE=Hodnota ur\u010den\u00e1 pro --sun-misc-unsafe-memory-access nebyla rozpozn\u00e1na: ' %s '
+J9NLS_VM_UNRECOGNISED_SUN_MISC_UNSAFE_MEMORY_ACCESS_VALUE=Hodnota ur\u010den\u00e1 pro --sun-misc-unsafe-memory-access nebyla rozpozn\u00e1na: '%s'
 # START NON-TRANSLATABLE
 J9NLS_VM_UNRECOGNISED_SUN_MISC_UNSAFE_MEMORY_ACCESS_VALUE.sample_input_1=disallow
 J9NLS_VM_UNRECOGNISED_SUN_MISC_UNSAFE_MEMORY_ACCESS_VALUE.explanation=The value specified is not known.
@@ -2410,7 +2410,7 @@ J9NLS_VM_UNRECOGNISED_SUN_MISC_UNSAFE_MEMORY_ACCESS_VALUE.system_action=The JVM 
 J9NLS_VM_UNRECOGNISED_SUN_MISC_UNSAFE_MEMORY_ACCESS_VALUE.user_response=Change the value to one of "allow", "warn", "debug" or "deny".
 # END NON-TRANSLATABLE
 
-J9NLS_VM_OPENJ9_JFR_METADATA_FILE_NOT_FOUND=Bu\u010f nen\u00ed nastavena prom\u011bnn\u00e1 prost\u0159ed\u00ed %s , nebo soubor v zadan\u00e9m um\u00edst\u011bn\u00ed neexistuje.
+J9NLS_VM_OPENJ9_JFR_METADATA_FILE_NOT_FOUND=Bu\u010f nen\u00ed nastavena prom\u011bnn\u00e1 prost\u0159ed\u00ed %s, nebo soubor v zadan\u00e9m um\u00edst\u011bn\u00ed neexistuje.
 # START NON-TRANSLATABLE
 J9NLS_VM_OPENJ9_JFR_METADATA_FILE_NOT_FOUND.explanation=Couldn't find JFR metadata blob file.
 J9NLS_VM_OPENJ9_JFR_METADATA_FILE_NOT_FOUND.system_action=The JVM will not generate a JFR file.
