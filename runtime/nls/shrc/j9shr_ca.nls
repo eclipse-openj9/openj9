@@ -6909,7 +6909,7 @@ J9NLS_SHRC_OSCACHE_MMAP_STARTUP_JITSERVER_LAYER_FILE_DELETE_ERROR.system_action=
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_JITSERVER_LAYER_FILE_DELETE_ERROR.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1=La mida de p\u00e0gina ( %1$zu ) del sistema operatiu \u00e9s diferent de la mida de p\u00e0gina ( %2$zu ) del sistema en qu\u00e8 es crea la mem\u00f2ria cau de la capa %3$d .
+J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1=La mida de p\u00e0gina (%1$zu) del sistema operatiu \u00e9s diferent de la mida de p\u00e0gina (%2$zu) del sistema en qu\u00e8 es crea la mem\u00f2ria cau de la capa %3$d.
 # START NON-TRANSLATABLE
 J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1.sample_input_1=1024
 J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1.sample_input_2=4096
@@ -6919,7 +6919,7 @@ J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1.system_action=The JVM continues, but with memor
 J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1.user_response=No action required
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_PAGESIZEE=Mida de la p\u00e0gina de mem\u00f2ria = %zu (mida de la p\u00e0gina actual del sistema operatiu %zu)
+J9NLS_SHRC_CM_PRINTSTATS_PAGESIZEE=Mida de la p\u00e0gina de mem\u00f2ria        = %zu (mida de la p\u00e0gina actual del sistema operatiu %zu)
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_PAGESIZEE.sample_input_1=4096
 J9NLS_SHRC_CM_PRINTSTATS_PAGESIZEE.sample_input_2=4096

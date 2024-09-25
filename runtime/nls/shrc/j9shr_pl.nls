@@ -6909,7 +6909,7 @@ J9NLS_SHRC_OSCACHE_MMAP_STARTUP_JITSERVER_LAYER_FILE_DELETE_ERROR.system_action=
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_JITSERVER_LAYER_FILE_DELETE_ERROR.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1=Rozmiar strony ( %1$zu ) systemu operacyjnego r\u00f3\u017cni si\u0119 od rozmiaru strony ( %2$zu ) systemu, na kt\u00f3rym tworzona jest pami\u0119\u0107 podr\u0119czna warstwy %3$d .
+J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1=Rozmiar strony (%1$zu) systemu operacyjnego r\u00f3\u017cni si\u0119 od rozmiaru strony (%2$zu) systemu, na kt\u00f3rym tworzona jest pami\u0119\u0107 podr\u0119czna warstwy %3$d.
 # START NON-TRANSLATABLE
 J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1.sample_input_1=1024
 J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1.sample_input_2=4096
@@ -6919,7 +6919,7 @@ J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1.system_action=The JVM continues, but with memor
 J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1.user_response=No action required
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_PAGESIZEE=Rozmiar strony pami\u0119ci = %zu (bie\u017c\u0105cy rozmiar strony systemu operacyjnego %zu)
+J9NLS_SHRC_CM_PRINTSTATS_PAGESIZEE=Rozmiar strony pami\u0119ci               = %zu (bie\u017c\u0105cy rozmiar strony systemu operacyjnego %zu)
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_PAGESIZEE.sample_input_1=4096
 J9NLS_SHRC_CM_PRINTSTATS_PAGESIZEE.sample_input_2=4096
