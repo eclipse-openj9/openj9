@@ -6909,7 +6909,7 @@ J9NLS_SHRC_OSCACHE_MMAP_STARTUP_JITSERVER_LAYER_FILE_DELETE_ERROR.system_action=
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_JITSERVER_LAYER_FILE_DELETE_ERROR.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1=Az oper\u00e1ci\u00f3s rendszer oldalm\u00e9rete ( %1$zu ) elt\u00e9r annak a rendszernek az oldalm\u00e9ret\u00e9t\u0151l ( %2$zu ), amelyen %3$d gyors\u00edt\u00f3t\u00e1r l\u00e9trej\u00f6n.
+J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1=Az oper\u00e1ci\u00f3s rendszer oldalm\u00e9rete (%1$zu) elt\u00e9r annak a rendszernek az oldalm\u00e9ret\u00e9t\u0151l (%2$zu), amelyen %3$d gyors\u00edt\u00f3t\u00e1r l\u00e9trej\u00f6n.
 # START NON-TRANSLATABLE
 J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1.sample_input_1=1024
 J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1.sample_input_2=4096
@@ -6919,7 +6919,7 @@ J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1.system_action=The JVM continues, but with memor
 J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1.user_response=No action required
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_PAGESIZEE=Mem\u00f3ria oldalm\u00e9ret = %zu (Az oper\u00e1ci\u00f3s rendszer jelenlegi oldalm\u00e9rete %zu)
+J9NLS_SHRC_CM_PRINTSTATS_PAGESIZEE=Mem\u00f3ria oldalm\u00e9ret                        = %zu (Az oper\u00e1ci\u00f3s rendszer jelenlegi oldalm\u00e9rete %zu)
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_PAGESIZEE.sample_input_1=4096
 J9NLS_SHRC_CM_PRINTSTATS_PAGESIZEE.sample_input_2=4096

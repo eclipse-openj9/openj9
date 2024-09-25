@@ -6909,7 +6909,7 @@ J9NLS_SHRC_OSCACHE_MMAP_STARTUP_JITSERVER_LAYER_FILE_DELETE_ERROR.system_action=
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_JITSERVER_LAYER_FILE_DELETE_ERROR.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1=\u0130\u015fletim sisteminin sayfa boyutu ( %1$zu ), %3$d katman\u0131 \u00f6nbelle\u011finin olu\u015fturuldu\u011fu sistemin sayfa boyutundan ( %2$zu ) farkl\u0131d\u0131r.
+J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1=\u0130\u015fletim sisteminin sayfa boyutu (%1$zu), %3$d katman\u0131 \u00f6nbelle\u011finin olu\u015fturuldu\u011fu sistemin sayfa boyutundan (%2$zu) farkl\u0131d\u0131r.
 # START NON-TRANSLATABLE
 J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1.sample_input_1=1024
 J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1.sample_input_2=4096
@@ -6919,7 +6919,7 @@ J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1.system_action=The JVM continues, but with memor
 J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1.user_response=No action required
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_PAGESIZEE=Bellek Sayfa boyutu = %zu (Ge\u00e7erli \u0130\u015fletim Sistemi sayfa boyutu %zu)
+J9NLS_SHRC_CM_PRINTSTATS_PAGESIZEE=Bellek Sayfa boyutu                  = %zu (Ge\u00e7erli \u0130\u015fletim Sistemi sayfa boyutu %zu)
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_PAGESIZEE.sample_input_1=4096
 J9NLS_SHRC_CM_PRINTSTATS_PAGESIZEE.sample_input_2=4096

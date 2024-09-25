@@ -6909,7 +6909,7 @@ J9NLS_SHRC_OSCACHE_MMAP_STARTUP_JITSERVER_LAYER_FILE_DELETE_ERROR.system_action=
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_JITSERVER_LAYER_FILE_DELETE_ERROR.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1=Velikost strani ( %1$zu ) operacijskega sistema se razlikuje od velikosti strani ( %2$zu ) sistema, v katerem je ustvarjen predpomnilnik sloja %3$d .
+J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1=Velikost strani (%1$zu) operacijskega sistema se razlikuje od velikosti strani (%2$zu) sistema, v katerem je ustvarjen predpomnilnik sloja %3$d.
 # START NON-TRANSLATABLE
 J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1.sample_input_1=1024
 J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1.sample_input_2=4096
@@ -6919,7 +6919,7 @@ J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1.system_action=The JVM continues, but with memor
 J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1.user_response=No action required
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_PAGESIZEE=Velikost strani pomnilnika = %zu (trenutna velikost strani OS %zu)
+J9NLS_SHRC_CM_PRINTSTATS_PAGESIZEE=Velikost strani pomnilnika            = %zu (trenutna velikost strani OS %zu)
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_PAGESIZEE.sample_input_1=4096
 J9NLS_SHRC_CM_PRINTSTATS_PAGESIZEE.sample_input_2=4096

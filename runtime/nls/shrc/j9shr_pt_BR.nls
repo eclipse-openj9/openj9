@@ -6919,7 +6919,7 @@ J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1.system_action=The JVM continues, but with memor
 J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1.user_response=No action required
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_PAGESIZEE=Tamanho da p\u00e1gina da mem\u00f3ria = %zu (tamanho da p\u00e1gina do sistema operacional atual %zu)
+J9NLS_SHRC_CM_PRINTSTATS_PAGESIZEE=Tamanho da p\u00e1gina da mem\u00f3ria         = %zu (tamanho da p\u00e1gina do sistema operacional atual %zu)
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_PAGESIZEE.sample_input_1=4096
 J9NLS_SHRC_CM_PRINTSTATS_PAGESIZEE.sample_input_2=4096
