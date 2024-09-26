@@ -1395,7 +1395,8 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
    TR_OpaqueClassBlock *javaLangClass = comp()->getClassClassPointer(/* isVettedForAOT = */ true);
 
    int length;
-   const char *objTypeSig = unsafeCall->getChild(1)->getSymbolReference() ? unsafeCall->getChild(1)->getSymbolReference()->getTypeSignature(length) : NULL;
+   const char *objTypeSig = unsafeCall->getChild(1)->getOpCode().hasSymbolReference() ?
+         unsafeCall->getChild(1)->getSymbolReference()->getTypeSignature(length) : NULL;
 
    // There are four cases where we cannot be sure of the Object type at compile time:
    // 1.) The object's type signature is unavailable/unknown
@@ -1729,7 +1730,7 @@ TR_J9InlinerPolicy::createUnsafeCASCallDiamond( TR::TreeTop *callNodeTreeTop, TR
    debugTrace(tracer(),"Transforming unsafe callNode = %p",callNode);
 
    int length;
-   const char *objTypeSig = callNode->getChild(1)->getSymbolReference() ? callNode->getChild(1)->getSymbolReference()->getTypeSignature(length) : NULL;
+   const char *objTypeSig = callNode->getChild(1)->getOpCode().hasSymbolReference() ? callNode->getChild(1)->getSymbolReference()->getTypeSignature(length) : NULL;
 
    // There are four cases where we cannot be sure of the Object type at compile time:
    // 1.) The object's type signature is unavailable/unknown
@@ -1975,7 +1976,7 @@ TR_J9InlinerPolicy::createUnsafeGetWithOffset(TR::ResolvedMethodSymbol *calleeSy
    TR_OpaqueClassBlock *javaLangClass = comp()->getClassClassPointer(/* isVettedForAOT = */ true);
 
    int length;
-   const char *objTypeSig = unsafeAddress->getSymbolReference() ? unsafeAddress->getSymbolReference()->getTypeSignature(length) : NULL;
+   const char *objTypeSig = unsafeAddress->getOpCode().hasSymbolReference() ? unsafeAddress->getSymbolReference()->getTypeSignature(length) : NULL;
 
    // There are four cases where we cannot be sure of the Object type at compile time:
    // 1.) The object's type signature is unavailable/unknown
