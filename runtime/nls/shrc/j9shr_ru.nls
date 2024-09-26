@@ -2195,12 +2195,7 @@ J9NLS_SHRC_INFO_DESTROYING_FOR_CACHEDIR.system_action=None
 J9NLS_SHRC_INFO_DESTROYING_FOR_CACHEDIR.user_response=None
 # END NON-TRANSLATABLE
 
-J9NLS_CC_OSPAGE_SIZE_MISMATCH=\u0420\u0430\u0437\u043c\u0435\u0440 \u0441\u0442\u0440\u0430\u043d\u0438\u0446\u044b \u043e\u043f\u0435\u0440\u0430\u0446\u0438\u043e\u043d\u043d\u043e\u0439 \u0441\u0438\u0441\u0442\u0435\u043c\u044b \u043d\u0435\u0441\u043e\u0432\u043c\u0435\u0441\u0442\u0438\u043c \u0441 \u044d\u0442\u0438\u043c \u043a\u044d\u0448\u0435\u043c. \u041f\u043e\u0432\u0442\u043e\u0440\u043d\u043e\u0435 \u0441\u043e\u0437\u0434\u0430\u043d\u0438\u0435 \u043a\u044d\u0448\u0430.
-# START NON-TRANSLATABLE
-J9NLS_CC_OSPAGE_SIZE_MISMATCH.explanation=The cache is divided up on page boundaries. If there is a page size mismatch, the cache is unusable
-J9NLS_CC_OSPAGE_SIZE_MISMATCH.system_action=The JVM will try to destroy the incompatible cache and re-create it
-J9NLS_CC_OSPAGE_SIZE_MISMATCH.user_response=None
-# END NON-TRANSLATABLE
+J9NLS_CC_OSPAGE_SIZE_MISMATCH=
 
 J9NLS_SHRC_SHRINIT_HELPTEXT_READONLY=\u041e\u0442\u043a\u0440\u044b\u0442\u044c \u043a\u044d\u0448 \u0432 \u0440\u0435\u0436\u0438\u043c\u0435 \u0442\u043e\u043b\u044c\u043a\u043e \u0434\u043b\u044f \u0447\u0442\u0435\u043d\u0438\u044f
 # START NON-TRANSLATABLE
@@ -6941,4 +6936,37 @@ J9NLS_SHRC_OSCACHE_MMAP_STARTUP_JITSERVER_LAYER_FILE_DELETE_ERROR=\u041d\u0435 \
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_JITSERVER_LAYER_FILE_DELETE_ERROR.explanation=The JITServer AOT cache created a temporary shared class cache layer in order to function, but the underlying file could not be removed.
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_JITSERVER_LAYER_FILE_DELETE_ERROR.system_action=The JVM continues.
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_JITSERVER_LAYER_FILE_DELETE_ERROR.user_response=Contact your service representative.
+# END NON-TRANSLATABLE
+
+J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1=\u0420\u0430\u0437\u043c\u0435\u0440 \u0441\u0442\u0440\u0430\u043d\u0438\u0446\u044b (%1$zu) \u043e\u043f\u0435\u0440\u0430\u0446\u0438\u043e\u043d\u043d\u043e\u0439 \u0441\u0438\u0441\u0442\u0435\u043c\u044b \u043e\u0442\u043b\u0438\u0447\u0430\u0435\u0442\u0441\u044f \u043e\u0442 \u0440\u0430\u0437\u043c\u0435\u0440\u0430 \u0441\u0442\u0440\u0430\u043d\u0438\u0446\u044b (%2$zu) \u0441\u0438\u0441\u0442\u0435\u043c\u044b, \u043d\u0430 \u043a\u043e\u0442\u043e\u0440\u043e\u0439 \u0441\u043e\u0437\u0434\u0430\u043d \u043a\u044d\u0448 \u0441\u043b\u043e\u044f %3$d.
+# START NON-TRANSLATABLE
+J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1.sample_input_1=1024
+J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1.sample_input_2=4096
+J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1.sample_input_3=0
+J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1.explanation=The cache is divided up on page boundaries according to the page size of system on which it was created. If there is a page size mismatch, the data might not be page aligned anymore.
+J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1.system_action=The JVM continues, but with memory page protection disabled if data is not page aligned anymore.
+J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1.user_response=No action required
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CM_PRINTSTATS_PAGESIZEE=\u0420\u0430\u0437\u043c\u0435\u0440 \u0441\u0442\u0440\u0430\u043d\u0438\u0446\u044b \u043f\u0430\u043c\u044f\u0442\u0438               = %zu (\u0442\u0435\u043a\u0443\u0449\u0438\u0439 \u0440\u0430\u0437\u043c\u0435\u0440 \u0441\u0442\u0440\u0430\u043d\u0438\u0446\u044b \u041e\u0421 %zu)
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CM_PRINTSTATS_PAGESIZEE.sample_input_1=4096
+J9NLS_SHRC_CM_PRINTSTATS_PAGESIZEE.sample_input_2=4096
+J9NLS_SHRC_CM_PRINTSTATS_PAGESIZEE.explanation=NOTAG
+J9NLS_SHRC_CM_PRINTSTATS_PAGESIZEE.system_action=
+J9NLS_SHRC_CM_PRINTSTATS_PAGESIZEE.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_FAILURE_CREATE_ROMTORAMHASHTABLE=\u041d\u0435\u0432\u043e\u0437\u043c\u043e\u0436\u043d\u043e \u0432\u044b\u0434\u0435\u043b\u0438\u0442\u044c ROM \u0434\u043b\u044f \u0445\u044d\u0448-\u0442\u0430\u0431\u043b\u0438\u0446\u044b \u043a\u043b\u0430\u0441\u0441\u043e\u0432 RAM \u0432 shrinit
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_FAILURE_CREATE_ROMTORAMHASHTABLE.explanation=The system is unable to obtain sufficient native memory to allocate internal data structures.
+J9NLS_SHRC_SHRINIT_FAILURE_CREATE_ROMTORAMHASHTABLE.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM attempts to start up without using Shared Classes.
+J9NLS_SHRC_SHRINIT_FAILURE_CREATE_ROMTORAMHASHTABLE.user_response=System is running low on memory resource for the JVM to start up properly. Check system memory configuration. If the situation persists, contact your service representative.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_FAILURE_CREATE_ROMTORAMMUTEX=\u041d\u0435\u0432\u043e\u0437\u043c\u043e\u0436\u043d\u043e \u0432\u044b\u0434\u0435\u043b\u0438\u0442\u044c ROM \u0434\u043b\u044f RAM \u043a\u043b\u0430\u0441\u0441\u0430 mutex \u0432 shrinit
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_FAILURE_CREATE_ROMTORAMMUTEX.explanation=The system is unable to obtain sufficient native memory to allocate internal data structures.
+J9NLS_SHRC_SHRINIT_FAILURE_CREATE_ROMTORAMMUTEX.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM attempts to start up without using Shared Classes.
+J9NLS_SHRC_SHRINIT_FAILURE_CREATE_ROMTORAMMUTEX.user_response=System is running low on memory resource for the JVM to start up properly. Check system memory configuration. If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE
