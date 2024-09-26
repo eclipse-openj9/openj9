@@ -238,6 +238,14 @@ if(NOT JAVA_SPEC_VERSION LESS 19)
 	)
 endif()
 
+if(J9VM_OPT_JFR)
+	# JFR sources
+	target_sources(jclse
+		PRIVATE
+			${CMAKE_CURRENT_SOURCE_DIR}/common/jdk_jfr_internal_JVM.cpp
+	)
+endif()
+
 include(exports.cmake)
 
 target_enable_ddr(jclse)
