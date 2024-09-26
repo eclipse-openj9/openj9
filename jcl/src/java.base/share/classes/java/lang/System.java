@@ -1142,10 +1142,30 @@ public static void loadLibrary(String libName) {
 		smngr.checkLink(libName);
 	}
 /*[IF JAVA_SPEC_VERSION >= 15]*/
-	ClassLoader.loadLibrary(getCallerClass(), libName);
+	Class<?> callerClass = getCallerClass();
 /*[ELSE]*/
-	ClassLoader.loadLibraryWithClassLoader(libName, ClassLoader.callerClassLoader());
+	ClassLoader callerClassLoader = ClassLoader.callerClassLoader();
 /*[ENDIF] JAVA_SPEC_VERSION >= 15 */
+	try {
+/*[IF JAVA_SPEC_VERSION >= 15]*/
+		ClassLoader.loadLibrary(callerClass, libName);
+/*[ELSE]*/
+		ClassLoader.loadLibraryWithClassLoader(libName, callerClassLoader);
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
+	} catch (UnsatisfiedLinkError ule) {
+		String errorMessage = ule.getMessage();
+		if ((errorMessage != null) && errorMessage.contains("already loaded in another classloader")) { //$NON-NLS-1$
+			// attempt to unload the classloader, and retry
+			gc();
+/*[IF JAVA_SPEC_VERSION >= 15]*/
+			ClassLoader.loadLibrary(callerClass, libName);
+/*[ELSE]*/
+			ClassLoader.loadLibraryWithClassLoader(libName, callerClassLoader);
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
+		} else {
+			throw ule;
+		}
+	}
 }
 
 /**
