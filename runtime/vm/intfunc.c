@@ -240,6 +240,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 	setNegativeArraySizeException,
 	compareStrings,
 	compareStringToUTF8,
+	comparePartialStringToUTF8FromOffset,
 	prepareForExceptionThrow,
 	verifyQualifiedName,
 	copyStringToUTF8Helper,
