@@ -254,6 +254,9 @@
 		<impls>
 			<impl>openj9</impl>
 		</impls>
+		<versions>
+			<version>11+</version>
+		</versions>
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_criu_jitserverPostRestore</testCaseName>
