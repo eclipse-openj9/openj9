@@ -540,7 +540,7 @@ J9::OptionsPostRestore::invalidateCompiledMethodsIfNeeded(bool invalidateAll)
    }
 
 void
-J9::OptionsPostRestore::disableAOTCompilation()
+J9::OptionsPostRestore::disableAOTCompilation(bool disabledPreCheckpoint)
    {
    static bool aotDisabled = false;
    if (aotDisabled)
@@ -567,7 +567,14 @@ J9::OptionsPostRestore::disableAOTCompilation()
    aotDisabled = true;
    _disableAOTPostRestore = true;
 
-   j9nls_printf(PORTLIB, (UDATA) J9NLS_WARNING, J9NLS_JIT_CHECKPOINT_RESTORE_AOT_DISABLED);
+   if (disabledPreCheckpoint)
+      {
+      j9nls_printf(PORTLIB, (UDATA) J9NLS_WARNING, J9NLS_JIT_CHECKPOINT_RESTORE_AOT_DISABLED_PRE_CHECKPOINT);
+      }
+   else
+      {
+      j9nls_printf(PORTLIB, (UDATA) J9NLS_WARNING, J9NLS_JIT_CHECKPOINT_RESTORE_AOT_DISABLED);
+      }
    }
 
 void
@@ -834,8 +841,10 @@ J9::OptionsPostRestore::processCompilerOptions()
    J9JavaVM *vm = _jitConfig->javaVM;
    PORT_ACCESS_FROM_JAVAVM(vm);
 
+   bool aotEnabledPreCheckpoint = TR_J9SharedCache::aotHeaderValidationDelayed() ? true : TR::Options::sharedClassCache();
+
    bool jitEnabled = TR::Options::canJITCompile();
-   bool aotEnabled = TR_J9SharedCache::aotHeaderValidationDelayed() ? true : TR::Options::sharedClassCache();
+   bool aotEnabled = aotEnabledPreCheckpoint;
 
    _argIndexXjit = FIND_AND_CONSUME_RESTORE_ARG(OPTIONAL_LIST_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xjit], 0);
    _argIndexXnojit = FIND_AND_CONSUME_RESTORE_ARG(OPTIONAL_LIST_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xnojit], 0);
@@ -848,7 +857,7 @@ J9::OptionsPostRestore::processCompilerOptions()
    // If -Xnoaot was specified pre-checkpoint, there is a lot of infrastructure
    // that needs to be set up. For now, ignore -Xaot post-restore if -Xnoaot
    // was specified pre-checkpoint.
-   if (aotEnabled)
+   if (aotEnabledPreCheckpoint)
       aotEnabled = (_argIndexXaot >= _argIndexXnoaot);
 
    if (!aotEnabled)
@@ -859,7 +868,7 @@ J9::OptionsPostRestore::processCompilerOptions()
    if (_disableAOTPostRestore)
       {
       aotEnabled = false;
-      disableAOTCompilation();
+      disableAOTCompilation(!aotEnabledPreCheckpoint);
       }
 
    if (!jitEnabled)
