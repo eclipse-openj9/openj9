@@ -2164,7 +2164,7 @@ J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_PARAL
 J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_PARALLELISM_OFFSET.user_response=View CRIU documentation to determine how to resolve the exception.
 # END NON-TRANSLATABLE
 
-# NullRestricted/value/implicit is not translatable
+# NullRestricted is not translatable
 J9NLS_VM_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS=NullRestricted \u5c5e\u6027\u3092\u6301\u3064\u30a4\u30f3\u30b9\u30bf\u30f3\u30b9\u30fb\u30d5\u30a3\u30fc\u30eb\u30c9\u306f\u3001\u6697\u9ed9\u306e\u30b3\u30f3\u30b9\u30c8\u30e9\u30af\u30bf\u3092\u6301\u3064\u5024\u30af\u30e9\u30b9\u5185\u306b\u306a\u3051\u308c\u3070\u306a\u308a\u307e\u305b\u3093
 # START NON-TRANSLATABLE
 J9NLS_VM_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
@@ -2172,7 +2172,7 @@ J9NLS_VM_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS.system_a
 J9NLS_VM_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
 
-# NullRestricted/value/implicit is not translatable
+# NullRestricted is not translatable
 J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS=NullRestricted \u5c5e\u6027\u3092\u6301\u3064\u9759\u7684\u30d5\u30a3\u30fc\u30eb\u30c9\u306f\u3001\u6697\u9ed9\u306e\u30b3\u30f3\u30b9\u30c8\u30e9\u30af\u30bf\u3092\u6301\u3064\u5024\u30af\u30e9\u30b9\u5185\u306b\u306a\u3051\u308c\u3070\u306a\u308a\u307e\u305b\u3093
 # START NON-TRANSLATABLE
 J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
@@ -2189,7 +2189,7 @@ J9NLS_VM_COMPATIBILITY_REPEATED.user_response=Remove the repetition of the optio
 # END NON-TRANSLATABLE
 
 # Note: -XX:Compatibility= is a command-line option and should not be translated.
-J9NLS_VM_COMPATIBILITY_UNSUPPORTED=XX:Compatibility=%s" \u3067\u6307\u5b9a\u3055\u308c\u305f\u4e92\u63db\u30e2\u30fc\u30c9\u306f\u30b5\u30dd\u30fc\u30c8\u3055\u308c\u3066\u3044\u307e\u305b\u3093\u3002
+J9NLS_VM_COMPATIBILITY_UNSUPPORTED="-XX:Compatibility=%s" \u3067\u6307\u5b9a\u3055\u308c\u305f\u4e92\u63db\u30e2\u30fc\u30c9\u306f\u30b5\u30dd\u30fc\u30c8\u3055\u308c\u3066\u3044\u307e\u305b\u3093\u3002
 # START NON-TRANSLATABLE
 J9NLS_VM_COMPATIBILITY_UNSUPPORTED.sample_input_1=unsupported
 J9NLS_VM_COMPATIBILITY_UNSUPPORTED.explanation=The specified compatibility mode is not supported.
