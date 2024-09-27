@@ -26,7 +26,6 @@ import static org.testng.Assert.*;
 import org.testng.annotations.Test;
 import org.testng.annotations.BeforeClass;
 
-import jdk.internal.value.NullRestrictedCheckedType;
 import jdk.internal.value.ValueClass;
 import jdk.internal.vm.annotation.ImplicitlyConstructible;
 import jdk.internal.vm.annotation.NullRestricted;
@@ -60,6 +59,7 @@ public class ValueTypeSystemArraycopyTests {
 		}
 	}
 
+	@ImplicitlyConstructible
 	public value static class SomeValueClass implements SomeInterface {
 		double val1;
 		long val2;
@@ -117,12 +117,14 @@ public class ValueTypeSystemArraycopyTests {
 	public static SomeValueClass[] vtArrayDst = new SomeValueClass[ARRAY_SIZE];
 	public static SomeValueClass[] vtArraySrc = new SomeValueClass[ARRAY_SIZE];
 	public static SomePrimitiveValueClass[] primitiveVtArrayDst =
-		(SomePrimitiveValueClass[])ValueClass.newArrayInstance(
-			NullRestrictedCheckedType.of(SomePrimitiveValueClass.class), ARRAY_SIZE);
+		(SomePrimitiveValueClass[])ValueClass.newNullRestrictedArray(SomePrimitiveValueClass.class, ARRAY_SIZE);
 	public static SomePrimitiveValueClass[] primitiveVtArraySrc =
-			(SomePrimitiveValueClass[])ValueClass.newArrayInstance(
-				NullRestrictedCheckedType.of(SomePrimitiveValueClass.class), ARRAY_SIZE);
-
+			(SomePrimitiveValueClass[])ValueClass.newNullRestrictedArray(SomePrimitiveValueClass.class, ARRAY_SIZE);
+	/* These arrays should be used instead of primitiveVTArrayDst/Src once javac supports null-restricted classes. */
+	public static SomeValueClass[] nullRestrictedVtArraySrc =
+		(SomeValueClass[])ValueClass.newNullRestrictedArray(SomeValueClass.class, ARRAY_SIZE);
+	public static SomeValueClass[] nullRestrictedVtArrayDst =
+		(SomeValueClass[])ValueClass.newNullRestrictedArray(SomeValueClass.class, ARRAY_SIZE);
 	public static SomeInterface[] ifIdArrayDst = new SomeIdentityClass[ARRAY_SIZE];
 	public static SomeInterface[] ifIdArraySrc = new SomeIdentityClass[ARRAY_SIZE];
 	public static SomeInterface[] ifVtArrayDst = new SomeValueClass[ARRAY_SIZE];
@@ -135,8 +137,7 @@ public class ValueTypeSystemArraycopyTests {
 
 	public static SomeIdentityClass[] idArrayDstCheckForException = new SomeIdentityClass[ARRAY_SIZE];
 	public static SomePrimitiveValueClass[] primitiveVtArrayDstCheckForException =
-		(SomePrimitiveValueClass[])ValueClass.newArrayInstance(
-			NullRestrictedCheckedType.of(SomePrimitiveValueClass.class), ARRAY_SIZE);
+		(SomePrimitiveValueClass[])ValueClass.newNullRestrictedArray(SomePrimitiveValueClass.class, ARRAY_SIZE);
 
 	static private void initArrays() {
 		for (int i=0; i < ARRAY_SIZE; i++) {
@@ -162,6 +163,9 @@ public class ValueTypeSystemArraycopyTests {
 			ifArray1[i] = new SomeIdentityClass(i*13);
 			ifArray2[i] = new SomeValueClass(i*14);
 			ifArray3[i] = new SomePrimitiveValueClass(i*15);
+
+			nullRestrictedVtArrayDst[i] = new SomeValueClass(i*16);
+			nullRestrictedVtArraySrc[i] = new SomeValueClass(i*17);
 		}
 	}
 
@@ -194,6 +198,13 @@ public class ValueTypeSystemArraycopyTests {
 			idArrayDstCheckForException[i] = idArrayDst[i];
 			primitiveVtArrayDst[i] = new SomePrimitiveValueClass(i*5);
 			primitiveVtArrayDstCheckForException[i] = primitiveVtArrayDst[i];
+		}
+	}
+
+	static private void initArraysToCopyNullToNullRestrictedArray() {
+		for (int i=0; i < ARRAY_SIZE; i++) {
+			vtArraySrc[i] = null;
+			nullRestrictedVtArrayDst[i] = new SomeValueClass(i);
 		}
 	}
 
@@ -820,5 +831,23 @@ public class ValueTypeSystemArraycopyTests {
 		}
 
 		Assert.fail("Expect a ArrayStoreException. No exception or wrong kind of exception thrown");
+	}
+
+	@Test(priority=1)
+	static public void testSystemArrayCopy27() throws Throwable {
+		initArrays();
+		testVTVT(vtArraySrc, nullRestrictedVtArrayDst);
+	}
+
+	@Test(priority=1)
+	static public void testSystemArrayCopy28() throws Throwable {
+		initArrays();
+		testVTVT(nullRestrictedVtArraySrc, vtArrayDst);
+	}
+
+	@Test(priority=1, expectedExceptions=ArrayStoreException.class)
+	static public void testSystemArrayCopy29() throws Throwable {
+		initArraysToCopyNullToNullRestrictedArray();
+		testVTVT(vtArraySrc, nullRestrictedVtArrayDst);
 	}
 }
