@@ -8132,7 +8132,10 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
       }
 
    // 1 == vmThread
-   int32_t numDeps = 1;
+   int32_t numDeps = 2;
+
+   if (useRepInstruction)
+      numDeps += 2;
 
    if (sizeReg)
       numDeps++;
