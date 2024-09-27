@@ -8292,6 +8292,12 @@ static TR::Register *VMinlineCompareAndSetOrExchangeReference(TR::Node *node, TR
    oldVNode = node->getChild(3);
    newVNode = node->getChild(4);
 
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+   bool isObjOffHeapDataAddr = (gcMode == gc_modron_wrtbar_cardmark_incremental && TR::Compiler->om.isOffHeapAllocationEnabled() && objNode->isDataAddrPointer());
+   TR::Register *baseObjReg = NULL;
+   if (isObjOffHeapDataAddr)
+      TR::TreeEvaluator::stopUsingCopyReg(objNode->getFirstChild(), baseObjReg, cg);
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
    objReg = cg->evaluate(objNode);
 
    // VM helper chops off the value in 32bit, and we don't want the whole long value either
@@ -8619,7 +8625,13 @@ static TR::Register *VMinlineCompareAndSetOrExchangeReference(TR::Node *node, TR
       }
    else if (!doWrtBar && doCrdMrk)
       {
-      TR::Register *temp1Reg = cg->allocateRegister(), *temp2Reg = cg->allocateRegister(), *temp3Reg;
+      TR::Register *temp1Reg = cg->allocateRegister(), *temp2Reg, *temp3Reg;
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+      if (isObjOffHeapDataAddr)
+         temp2Reg = baseObjReg; // Use baseObjReg as temp2Reg
+      else
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
+         temp2Reg = cg->allocateRegister();
       TR::addDependency(conditions, objReg, TR::RealRegister::NoReg, TR_GPR, cg);
       conditions->getPostConditions()->getRegisterDependency(0)->setExcludeGPR0();
       TR::addDependency(conditions, temp1Reg, TR::RealRegister::NoReg, TR_GPR, cg);
@@ -8652,7 +8664,13 @@ static TR::Register *VMinlineCompareAndSetOrExchangeReference(TR::Node *node, TR
          TR::addDependency(conditions, temp3Reg, TR::RealRegister::NoReg, TR_GPR, cg);
          }
 
-      VMCardCheckEvaluator(node, objReg, cndReg, temp1Reg, temp2Reg, temp3Reg, conditions, cg);
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+      if (isObjOffHeapDataAddr)
+         // Given that baseObjReg is trash-able it can be used as the objReg and temp2Reg
+         VMCardCheckEvaluator(node, baseObjReg, cndReg, temp1Reg, temp2Reg, temp3Reg, conditions, cg);
+      else
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
+         VMCardCheckEvaluator(node, objReg, cndReg, temp1Reg, temp2Reg, temp3Reg, conditions, cg);
 
       cg->stopUsingRegister(temp1Reg);
       cg->stopUsingRegister(temp2Reg);
