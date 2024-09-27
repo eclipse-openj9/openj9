@@ -610,8 +610,7 @@ generateSoftwareReadBarrier(TR::Node *node, TR::CodeGenerator *cg, bool isArdbar
    if (needSync)
       {
       // Issue an Acquire barrier after volatile load
-      // dmb ishld
-      generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0x9);
+      generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, TR::InstOpCode::ishld);
       }
 
    tempMR->decNodeReferenceCounts(cg);
@@ -1235,16 +1234,14 @@ J9::ARM64::TreeEvaluator::awrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg
    TR::MemoryReference *tempMR = TR::MemoryReference::createWithRootLoadOrStore(cg, node);
 
    // Issue a StoreStore barrier before each volatile store.
-   // dmb ishst
    if (isVolatileMode || isOrderedMode)
-      generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xA);
+      generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, TR::InstOpCode::ishst);
 
    generateMemSrc1Instruction(cg, TR::InstOpCode::strimmx, node, tempMR, sourceRegister, NULL);
 
    // Issue a StoreLoad barrier after each volatile store.
-   // dmb ish
    if (isVolatileMode)
-      generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xB);
+      generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, TR::InstOpCode::ish);
 
    wrtbarEvaluator(node, sourceRegister, destinationRegister, firstChild->isNonNull(), cg);
 
@@ -1304,16 +1301,14 @@ J9::ARM64::TreeEvaluator::awrtbariEvaluator(TR::Node *node, TR::CodeGenerator *c
    TR::MemoryReference *tempMR = TR::MemoryReference::createWithRootLoadOrStore(cg, node);
 
    // Issue a StoreStore barrier before each volatile store.
-   // dmb ishst
    if (isVolatileMode || isOrderedMode)
-      generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xA);
+      generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, TR::InstOpCode::ishst);
 
    generateMemSrc1Instruction(cg, storeOp, node, tempMR, translatedSrcReg);
 
    // Issue a StoreLoad barrier after each volatile store.
-   // dmb ish
    if (isVolatileMode)
-      generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xB);
+      generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, TR::InstOpCode::ish);
 
    wrtbarEvaluator(node, sourceRegister, destinationRegister, secondChild->isNonNull(), cg);
 
@@ -1557,7 +1552,7 @@ J9::ARM64::TreeEvaluator::monexitEvaluator(TR::Node *node, TR::CodeGenerator *cg
       // If there is an AllocationFence directly above this monExit we will not have emitted a
       // dmb for the fence.
       if (comp->target().isSMP() && cg->getCurrentEvaluationTreeTop()->getPrevTreeTop()->getNode()->getOpCodeValue() == TR::allocationFence)
-         generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xB); // dmb ish (Inner Shareable full barrier)
+         generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, TR::InstOpCode::ish);
       return targetRegister;
       }
 
@@ -1636,7 +1631,7 @@ J9::ARM64::TreeEvaluator::monexitEvaluator(TR::Node *node, TR::CodeGenerator *cg
    static const bool useMemoryBarrierForMonitorExit = feGetEnv("TR_aarch64UseMemoryBarrierForMonitorExit") != NULL;
    if (useMemoryBarrierForMonitorExit)
       {
-      generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xB); // dmb ish (Inner Shareable full barrier)
+      generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, TR::InstOpCode::ish);
       op = fej9->generateCompressedLockWord() ? TR::InstOpCode::strimmw : TR::InstOpCode::strimmx;
       }
    else
@@ -2656,36 +2651,32 @@ J9::ARM64::TreeEvaluator::flushEvaluator(TR::Node *node, TR::CodeGenerator *cg)
             if (!volatileAccessFound)
                {
                // StoreStore barrier is required after publishing new object reference to other threads.
-               // dmb ishst (Inner Shareable store barrier)
-               generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xA);
+               generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, TR::InstOpCode::ishst);
                }
             }
          }
       }
    else
       {
-      uint32_t imm;
+      TR::InstOpCode::AArch64BarrierLimitation lim;
       if (op == TR::loadFence)
          {
          // TR::loadFence is used for both loadLoadFence and acquireFence.
          // Loads before the barrier are ordered before loads/stores after the barrier.
-         // dmb ishld (Inner Shareable load barrier)
-         imm = 0x9;
+         lim = TR::InstOpCode::ishld;
          }
       else if (op == TR::storeFence)
          {
          // TR::storeFence is used for both storeStoreFence and releaseFence.
          // Loads/Stores before the barrier are ordered before stores after the barrier.
-         // dmb ish (Inner Shareable full barrier)
-         imm = 0xB;
+         lim = TR::InstOpCode::ish;
          }
       else
          {
          // TR::fullFence is used for fullFence.
-         // dmb ish (Inner Shareable full barrier)
-         imm = 0xB;
+         lim = TR::InstOpCode::ish;
          }
-      generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, imm);
+      generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, lim);
       }
 
    return NULL;
@@ -3782,7 +3773,7 @@ J9::ARM64::TreeEvaluator::monentEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       generateTrg1MemSrc1Instruction(cg, op, node, tempReg, TR::MemoryReference::createWithDisplacement(cg, addrReg, 0), metaReg);
       generateCompareBranchInstruction(cg, TR::InstOpCode::cbnzx, node, tempReg, loopLabel);
 
-      generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xB); // dmb ish (Inner Shareable full barrier)
+      generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, TR::InstOpCode::ish);
 
       srm->reclaimScratchRegister(tempReg);
       }
@@ -4895,7 +4886,7 @@ genCAS(TR::Node *node, TR::CodeGenerator *cg, TR_ARM64ScratchRegisterManager *sr
       generateCompareBranchInstruction(cg, TR::InstOpCode::cbnzx, node, resultReg, loopLabel);
 
       if (!casWithoutSync)
-         generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xB); // dmb ish (Inner Shareable full barrier)
+         generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, TR::InstOpCode::ish);
 
       if (createDoneLabel)
          {
