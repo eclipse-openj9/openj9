@@ -91,15 +91,15 @@ class InMemoryLoadStoreMarking
    void clearAllLists();
    void clearLoadLists();
 
-   static char *getName(TR_NodeListTypes s)
+   static const char *getName(TR_NodeListTypes s)
       {
       if (s < NodeList_NumTypes)
          return _TR_NodeListTypeNames[s];
       else
-         return (char*)"UnknownNodeListType";
+         return "UnknownNodeListType";
       }
 
-   static char *_TR_NodeListTypeNames[NodeList_NumTypes];
+   static const char *_TR_NodeListTypeNames[NodeList_NumTypes];
    };
 
 #endif
