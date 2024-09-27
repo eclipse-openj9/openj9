@@ -431,3 +431,10 @@ J9NLS_JIT_OPTIONS_PERCENT_OUT_OF_RANGE.sample_input_1=-XX:codecachetotalMaxRAMPe
 J9NLS_JIT_OPTIONS_PERCENT_OUT_OF_RANGE.sample_input_2=0.8
 J9NLS_JIT_OPTIONS_PERCENT_OUT_OF_RANGE.sample_input_3=25
 # END NON-TRANSLATABLE
+
+J9NLS_JIT_CHECKPOINT_RESTORE_AOT_DISABLED_PRE_CHECKPOINT=AOT load and compilation disabled pre-checkpoint and post-restore.
+# START NON-TRANSLATABLE
+J9NLS_JIT_CHECKPOINT_RESTORE_AOT_DISABLED_PRE_CHECKPOINT.explanation=The JVM was running in a mode pre-checkpoint that prevents AOT load and compilation.
+J9NLS_JIT_CHECKPOINT_RESTORE_AOT_DISABLED_PRE_CHECKPOINT.system_action=The compiler will not generate AOT code. AOT code from the shared class cache will not be used.
+J9NLS_JIT_CHECKPOINT_RESTORE_AOT_DISABLED_PRE_CHECKPOINT.user_response=Remove any (pre-checkpoint) option that would have resulted in this behaviour.
+# END NON-TRANSLATABLE
