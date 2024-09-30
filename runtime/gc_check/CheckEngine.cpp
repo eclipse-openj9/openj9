@@ -877,7 +877,7 @@ GC_CheckEngine::checkClassStatics(J9JavaVM* vm, J9Class* clazz)
 				J9UTF8* sigUTF = J9ROMFIELDSHAPE_SIGNATURE(romFieldCursor);
 
 				/* interested in objects and all kinds of arrays */
-				if ((IS_REF_OR_VAL_SIGNATURE(J9UTF8_DATA(sigUTF)[0]))
+				if ((IS_CLASS_SIGNATURE(J9UTF8_DATA(sigUTF)[0]))
 					|| ('[' == J9UTF8_DATA(sigUTF)[0])
 				) {
 					numberOfReferences += 1;
@@ -897,7 +897,7 @@ GC_CheckEngine::checkClassStatics(J9JavaVM* vm, J9Class* clazz)
 						U_8* toSearchString = J9UTF8_DATA(sigUTF);
 						UDATA toSearchLength = J9UTF8_LENGTH(sigUTF);
 
-						if (IS_REF_OR_VAL_SIGNATURE(toSearchString[0])) {
+						if (IS_CLASS_SIGNATURE(toSearchString[0])) {
 							/*  Convert signature to class name:
 							 *  Entering 'L' as well as closing ';' must be removed to get a proper class name
 							 */

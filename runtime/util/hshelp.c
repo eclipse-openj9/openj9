@@ -518,7 +518,7 @@ iterateToNextArgument(U_32 sigIndex, U_32 sigLength, U_8* sigData)
 	if (sigIndex >= sigLength) return sigIndex;
 
 	/* check for object */
-	if (IS_REF_OR_VAL_SIGNATURE(sigData[sigIndex])) {
+	if (IS_CLASS_SIGNATURE(sigData[sigIndex])) {
 		while ((sigIndex < sigLength) && (';' != sigData[sigIndex])) {
 			sigIndex += 1;
 		}

@@ -882,7 +882,7 @@ mapDataTypeToUTF8String(J9UTF8Ref* dataType, StackMapFrame* stackMapFrame, Metho
 			dataType->bytes = methodInfo->signature.bytes + typeValue;
 			dataType->length = typeLength;
 			/* Ignore 'L' and ';' to get the full string of argument in signature */
-			if (IS_REF_OR_VAL_SIGNATURE(*dataType->bytes)) {
+			if (IS_CLASS_SIGNATURE(*dataType->bytes)) {
 				dataType->bytes += 1;
 				dataType->length -= 2;
 			}

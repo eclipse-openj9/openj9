@@ -377,7 +377,7 @@ ClassFileOracle::walkFields()
 					markStringAsReferenced(constantValueIndex);
 				}
 			}
-			if ((IS_REF_OR_VAL_SIGNATURE(fieldChar))
+			if ((IS_CLASS_SIGNATURE(fieldChar))
 				|| ('[' == fieldChar)
 			) {
 				_objectStaticCount++;
@@ -427,7 +427,7 @@ ClassFileOracle::walkFields()
 					}
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 					if (containsKnownAnnotation(foundAnnotations, NULLRESTRICTED_ANNOTATION)) {
-						if (!IS_REF_OR_VAL_SIGNATURE(fieldChar)) {
+						if (!IS_CLASS_SIGNATURE(fieldChar)) {
 							if ('[' == fieldChar) {
 								throwGenericErrorWithCustomMsg(J9NLS_CFR_NO_NULLRESTRICTED_IN_ARRAYFIELD__ID, fieldIndex);
 							} else { /* primitive type */
@@ -458,7 +458,7 @@ ClassFileOracle::walkFields()
 			case CFR_ATTRIBUTE_NullRestricted:
 				/* JVMS: There must not be a NullRestricted attribute in the attributes table of a field_info
 				 * structure whose descriptor_index references a primitive type or an array type.*/
-				if (!IS_REF_OR_VAL_SIGNATURE(fieldChar)) {
+				if (!IS_CLASS_SIGNATURE(fieldChar)) {
 					if ('[' == fieldChar) {
 						throwGenericErrorWithCustomMsg(J9NLS_CFR_NO_NULLRESTRICTED_IN_ARRAYFIELD__ID, fieldIndex);
 					} else { /* primitive type */
