@@ -11073,7 +11073,13 @@ void J9::X86::TreeEvaluator::VMwrtbarWithoutStoreEvaluator(
    TR::Register *owningObjectReg;
    TR::Register *tempReg = NULL;
 
-   owningObjectReg = cg->evaluate(destOwningObject);
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+   bool stopUsingCopyBaseReg;
+   if (gcMode == gc_modron_wrtbar_cardmark_incremental && TR::Compiler->om.isOffHeapAllocationEnabled() && destOwningObject->isDataAddrPointer())
+      owningObjectReg = cg->evaluate(destOwningObject->getFirstChild());
+   else
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
+      owningObjectReg = cg->evaluate(destOwningObject);
 
    if (doInternalControlFlow)
       {
