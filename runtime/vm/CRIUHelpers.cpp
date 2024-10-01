@@ -319,6 +319,8 @@ criuRestoreInitializeTrace(J9VMThread *currentThread, void *userData, const char
 				*nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
 						J9NLS_VM_CRIU_RESTORE_INITIALIZE_TRACE_FAILED, NULL);
 				result = FALSE;
+			} else {
+				vm->checkpointState.flags |= J9VM_CRIU_TRANSITION_TO_DEBUG_INTERPRETER;
 			}
 		}
 	}
@@ -425,6 +427,8 @@ criuRestoreInitializeDump(J9VMThread *currentThread, void *userData, const char 
 				*nlsMsgFormat = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
 						J9NLS_VM_CRIU_RESTORE_INITIALIZE_DUMP_FAILED, NULL);
 				result = FALSE;
+			} else {
+				vm->checkpointState.flags |= J9VM_CRIU_TRANSITION_TO_DEBUG_INTERPRETER;
 			}
 		}
 	}
@@ -1464,6 +1468,12 @@ done:
 	return result;
 }
 
+static VMINLINE BOOLEAN
+isTransitionToDebugInterpreterRequested(J9JavaVM *vm)
+{
+	return J9_ARE_ALL_BITS_SET(vm->checkpointState.flags, J9VM_CRIU_TRANSITION_TO_DEBUG_INTERPRETER);
+}
+
 static void
 transitionToDebugInterpreter(J9JavaVM *vm)
 {
@@ -1483,28 +1493,25 @@ transitionToDebugInterpreter(J9JavaVM *vm)
 	}
 }
 
-static BOOLEAN
+static void
 checkTransitionToDebugInterpreter(J9VMThread *currentThread)
 {
-	BOOLEAN result = TRUE;
 	J9JavaVM *vm = currentThread->javaVM;
-	if (NULL != vm->checkpointState.restoreArgsList) {
+
+	if (J9_ARE_ALL_BITS_SET(vm->checkpointState.flags, J9VM_CRIU_IS_JDWP_ENABLED)) {
+		vm->checkpointState.flags |= J9VM_CRIU_TRANSITION_TO_DEBUG_INTERPRETER;
+	} else if (NULL != vm->checkpointState.restoreArgsList) {
 		J9VMInitArgs *restoreArgsList = vm->checkpointState.restoreArgsList;
 		IDATA debugOn = FIND_AND_CONSUME_ARG(restoreArgsList, EXACT_MATCH, VMOPT_XXDEBUGINTERPRETER, NULL);
 		IDATA debugOff = FIND_AND_CONSUME_ARG(restoreArgsList, EXACT_MATCH, VMOPT_XXNODEBUGINTERPRETER, NULL);
 		if (debugOn > debugOff) {
-			/*
-			 * The transition to the debug interpreter currently only works with -Xint,
-			 * and the null check for vm->jitConfig will be removed when the jit changes are completed.
-			 */
-			if (isDebugOnRestoreEnabled(currentThread) && (NULL == vm->jitConfig)) {
-				transitionToDebugInterpreter(vm);
-			} else {
-				result = FALSE;
-			}
+			vm->checkpointState.flags |= J9VM_CRIU_TRANSITION_TO_DEBUG_INTERPRETER;
 		}
 	}
-	return result;
+
+	if (isTransitionToDebugInterpreterRequested(vm)) {
+		transitionToDebugInterpreter(vm);
+	}
 }
 
 void JNICALL
@@ -1908,15 +1915,6 @@ criuCheckpointJVMImpl(JNIEnv *env,
 			case RESTORE_ARGS_RETURN_OK:
 				break;
 			}
-
-			if (!checkTransitionToDebugInterpreter(currentThread)) {
-				currentExceptionClass = vm->checkpointState.criuJVMRestoreExceptionClass;
-				nlsMsgFormat = j9nls_lookup_message(
-					J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
-					J9NLS_VM_CRIU_CHECK_TRANSITION_TO_DEBUG_INTERPRETER_FAILED,
-					NULL);
-				goto wakeJavaThreadsWithExclusiveVMAccess;
-			}
 		}
 
 		if (hasDumpSucceeded) {
@@ -1929,6 +1927,9 @@ criuCheckpointJVMImpl(JNIEnv *env,
 		if (FALSE == runInternalJVMRestoreHooks(currentThread, &nlsMsgFormat)) {
 			currentExceptionClass = vm->checkpointState.criuJVMRestoreExceptionClass;
 			goto wakeJavaThreadsWithExclusiveVMAccess;
+		}
+		if (hasDumpSucceeded) {
+			checkTransitionToDebugInterpreter(currentThread);
 		}
 		if (J9_ARE_ANY_BITS_SET(vm->checkpointState.flags, J9VM_CRIU_IS_JDWP_ENABLED)) {
 			/* Resuming the threads marked with J9_PRIVATE_FLAGS2_DELAY_HALT_FOR_CHECKPOINT
