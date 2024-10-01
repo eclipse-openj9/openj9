@@ -4542,7 +4542,7 @@ TR::Register * J9::Power::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node *
          }
       }
 
-   if (testCache)
+   if (testCache && (!comp->compileRelocatableCode() || comp->getOption(TR_UseSymbolValidationManager)))
       {
       // The cached value could have been from a previously successful checkcast or instanceof.
       // An answer of 0 in the low order bit indicates 'success' (the cast or instanceof was successful).
@@ -4551,6 +4551,7 @@ TR::Register * J9::Power::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node *
       // must be off (success) from a previous checkcast or instanceof. If the low order bit is on, it is guaranteed not to
       // compare and we will take the slow path.
       // Generate inline test for instanceOf
+      // Don't inline test when AOT && non-SVM compilation
       genInlineTest(node, castClassAddr, guessClassArray, num_PICS, objClassReg, resultReg, crReg, scratch1Reg, scratch2Reg, false, needResult, res0Label, res1Label, doneLabel,
             callLabel, testCastClassIsSuper, iCursor, cg);
       }
