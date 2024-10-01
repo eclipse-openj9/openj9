@@ -1771,7 +1771,7 @@ TR_J9InlinerPolicy::createUnsafeCASCallDiamond( TR::TreeTop *callNodeTreeTop, TR
    if (arrayTestNeeded || !arrayBlockNeeded)
       {
       //create lowtag test treetop
-      compareTree = genClassCheckForUnsafeGetPut(offsetNode, /* branchIfLowTagged */ false );
+      compareTree = genClassCheckForUnsafeGetPut(offsetNode->duplicateTree(), /* branchIfLowTagged */ false );
 
       //create lowtag access treetop
       lowTagAccessTreeTop = TR::TreeTop::create(comp(),callNodeTreeTop->getNode()->duplicateTree());
@@ -1841,7 +1841,7 @@ TR_J9InlinerPolicy::createUnsafeCASCallDiamond( TR::TreeTop *callNodeTreeTop, TR
       CASicallNode->setIsSafeForCGToFastPathUnsafeCall(true);
 
       //create NULL test treetop
-      TR::Node *objAddr = callNodeTreeTop->getNode()->getChild(0)->getChild(1);
+      TR::Node *objAddr = callNodeTreeTop->getNode()->getChild(0)->getChild(1)->duplicateTree();
       TR::Node *isNullNode = TR::Node::createif(TR::ifacmpeq, objAddr, TR::Node::create(objAddr, TR::aconst, 0, 0), NULL);
       isNullTreeTop = TR::TreeTop::create(comp(), isNullNode);
       }
