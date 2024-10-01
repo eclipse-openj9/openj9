@@ -279,9 +279,9 @@ J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
 		break;
 	case TRACE_ENGINE_INITIALIZED:
 		if (NULL == tempRasGbl) {
-			 /* Storage for RasGlobalStorage not available, trace not enabled */
-			 j9nls_printf(PORTLIB, J9NLS_ERROR | J9NLS_STDERR, J9NLS_TRC_RAS_GLOBAL_STORAGE);
-			 return J9VMDLLMAIN_FAILED;
+			/* Storage for RasGlobalStorage not available, trace not enabled */
+			j9nls_printf(PORTLIB, J9NLS_ERROR | J9NLS_STDERR, J9NLS_TRC_RAS_GLOBAL_STORAGE);
+			return J9VMDLLMAIN_FAILED;
 		}
 		/*
 		 *  Ensure that method entry and exit hooks are honoured
@@ -444,9 +444,9 @@ J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
 			}
 		}
 
-		 /*
-		  * Set up an early version of trace header info
-		  */
+		/*
+		 * Set up an early version of trace header info
+		 */
 		if (OMR_ERROR_NONE != populateTraceHeaderInfo(vm)) {
 			return J9VMDLLMAIN_FAILED;
 		}
@@ -463,7 +463,6 @@ J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
 		break;
 
 	case VM_INITIALIZATION_COMPLETE:
-		tempThr = UT_THREAD_FROM_VM_THREAD(vm->mainThread);
 		{
 			/* Force loading of the Trace class. See defect 162723, this is required because of some nuance
 			 * in the early initialization of DB/2 (which uses the Trace class).
@@ -497,7 +496,6 @@ J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
 		break;
 
 	case INTERPRETER_SHUTDOWN:
-
 		thr = vmFuncs->currentVMThread(vm);
 
 		/* if command line argument parsing failed we don't want to try to use an uninitialized trace engine */
@@ -871,20 +869,20 @@ parseTraceOptions(J9JavaVM *vm, const char *optionString, IDATA optionsLength)
 	IDATA inBraces = 0;
 
 	for (length = 0; length < optionsLength; length++) {
-		 if (optionString[length] == '{') {
-			 inBraces++;
-			 continue;
-		 }
-		 if (optionString[length] == '}') {
-			 if (--inBraces < 0) {
-				 break;
-			 }
-			 continue;
-		 }
-		 if (inBraces == 0 &&
-			 optionString[length] == ',') {
-			 break;
-		 }
+		if (optionString[length] == '{') {
+			inBraces++;
+			continue;
+		}
+		if (optionString[length] == '}') {
+			if (--inBraces < 0) {
+				break;
+			}
+			continue;
+		}
+		if (inBraces == 0 &&
+				optionString[length] == ',') {
+			break;
+		}
 	}
 	return inBraces == 0 ? length : -1;
 }
