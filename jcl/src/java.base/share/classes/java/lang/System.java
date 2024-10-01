@@ -369,18 +369,22 @@ public final class System {
 		String sizeUnit = sizeValue.replaceAll("[0-9]", "").toLowerCase();
 		long size = Long.parseLong(numericPart);
 		switch (sizeUnit) {
-			case "k": /* intentional fall through - KiloBytes*/
-				sizeInBytes = size * 1_024L;
-				break;
-			case "m": /* intentional fall through - Megabytes*/
-				sizeInBytes = size * 1_024L * 1_024L;
-				break;
-			case "g": /* intentional fall through - GigaBytes */
-				sizeInBytes = size * 1_024L * 1_024L * 1_024L;
-				break;
-			default: /* No unit or unrecognized unit, assume bytes */
-				sizeInBytes = size;
-				break;
+		case "k":
+			/* KiloBytes */
+			sizeInBytes = size * 1_024L;
+			break;
+		case "m":
+			/* Megabytes */
+			sizeInBytes = size * 1_024L * 1_024L;
+			break;
+		case "g":
+			/* GigaBytes */
+			sizeInBytes = size * 1_024L * 1_024L * 1_024L;
+			break;
+		default:
+			/* No unit or unrecognized unit, assume bytes */
+			sizeInBytes = size;
+			break;
 		}
 		return sizeInBytes;
 	}
@@ -393,21 +397,26 @@ public final class System {
 		String timeUnit = timeValue.replaceAll("[0-9]", "").toLowerCase();
 		long time = Long.parseLong(numericPart);
 		switch (timeUnit) {
-			case "d": /* intentional fall through - days*/
-				timeInNanos = time * 24 * 60 * 60 * 1_000_000_000L;
-				break;
-			case "h": /* intentional fall through - hours */
-				timeInNanos = time * 60 * 60 * 1_000_000_000L;
-				break;
-			case "m": /* intentional fall through - minutes */
-				timeInNanos = time * 60 * 1_000_000_000L;
-				break;
-			case "s": /* intentional fall through - seconds*/
-				timeInNanos = time * 1_000_000_000L;
-				break;
-			default: /* No unit or unrecognized unit, assume nanoseconds */
-				timeInNanos = time;
-				break;
+		case "d":
+			/* days */
+			timeInNanos = time * 24 * 60 * 60 * 1_000_000_000L;
+			break;
+		case "h":
+			/* hours */
+			timeInNanos = time * 60 * 60 * 1_000_000_000L;
+			break;
+		case "m":
+			/* minutes */
+			timeInNanos = time * 60 * 1_000_000_000L;
+			break;
+		case "s":
+			/* seconds */
+			timeInNanos = time * 1_000_000_000L;
+			break;
+		default:
+			/* No unit or unrecognized unit, assume nanoseconds */
+			timeInNanos = time;
+			break;
 		}
 		return timeInNanos;
 	}
@@ -448,37 +457,37 @@ public final class System {
 						String key = configKeyValue[0];
 						String value = configKeyValue[1];
 						switch (key) {
-							case "filename":
-								fileName = value;
-								break;
-							case "settings":
-								settings = value;
-								break;
-							case "delay":
-								delay = convertToNanoSeconds(value);
-								break;
-							case "duration":
-								duration = convertToNanoSeconds(value);
-								break;
-							case "maxage":
-								maxAge = convertToNanoSeconds(value);
-								break;
-							case "maxsize":
-								maxSize = convertToBytes(value);
-								break;
-							case "dumponexit":
-								dumpOnExit = Boolean.valueOf(value);
-								break;
-							case "disk":
-								disk = Boolean.valueOf(value);
-								break;
+						case "filename":
+							fileName = value;
+							break;
+						case "settings":
+							settings = value;
+							break;
+						case "delay":
+							delay = convertToNanoSeconds(value);
+							break;
+						case "duration":
+							duration = convertToNanoSeconds(value);
+							break;
+						case "maxage":
+							maxAge = convertToNanoSeconds(value);
+							break;
+						case "maxsize":
+							maxSize = convertToBytes(value);
+							break;
+						case "dumponexit":
+							dumpOnExit = Boolean.valueOf(value);
+							break;
+						case "disk":
+							disk = Boolean.valueOf(value);
+							break;
 						}
 					}
 				}
 				if (null == settings) {
 					settings = "default";
 				}
-				// Convert the string to a String array
+				/* Convert the string to a String array */
 				String[] settingsArray = new String[] { settings };
 
 				Method executeMethod = dcmdStartClass.getDeclaredMethod(
