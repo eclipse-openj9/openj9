@@ -20,9 +20,22 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
+#include "j9.h"
 #include "jni.h"
 
+#include "ObjectAccessBarrierAPI.hpp"
+#include "VMHelpers.hpp"
+
 extern "C" {
+
+/* Make sure these logging levels lineup with jdk/jfr/internal/LogLevel.java */
+#define LOG_LEVEL_TRACE 1
+#define LOG_LEVEL_DEBUG 2
+#define LOG_LEVEL_INFO 3
+#define LOG_LEVEL_WARN 4
+#define LOG_LEVEL_ERROR 5
+
+#define JFR_STRING_BUFFER 256
 
 void JNICALL
 Java_jdk_jfr_internal_JVM_registerNatives(JNIEnv *env, jclass clazz)
@@ -118,22 +131,101 @@ Java_jdk_jfr_internal_JVM_getTicksFrequency(JNIEnv *env, jclass clazz)
 	return 0;
 }
 
+/**
+ * TODO Note this is a draft implementation.
+ */
+static void
+logJFRMessage(J9VMThread *currentThread, j9object_t stringMessage)
+{
+	PORT_ACCESS_FROM_VMC(currentThread);
+	J9InternalVMFunctions *vmFuncs = currentThread->javaVM->internalVMFunctions;
+	char buf[JFR_STRING_BUFFER];
+
+	J9UTF8* utf8Message = vmFuncs->copyStringToJ9UTF8WithMemAlloc(currentThread, stringMessage, J9_STR_NONE, "", 0, buf, JFR_STRING_BUFFER);
+	if (NULL == utf8Message) {
+		vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+	} else {
+		j9tty_printf(PORTLIB, "%.*s\n", J9UTF8_LENGTH(utf8Message), J9UTF8_DATA(utf8Message));
+		if (buf != (char*)utf8Message) {
+			j9mem_free_memory(utf8Message);
+		}
+	}
+}
+
+/**
+ * TODO Note this is a draft implementation.
+ */
 void JNICALL
 Java_jdk_jfr_internal_JVM_log(JNIEnv *env, jclass clazz, jint tagSetId, jint level, jstring message)
 {
-	// TODO: implementation
+	J9VMThread *currentThread = (J9VMThread*) env;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+
+	if (NULL == message) {
+		vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
+	} else {
+		j9object_t stringMessage = J9_JNI_UNWRAP_REFERENCE(message);
+		logJFRMessage(currentThread, stringMessage);
+	}
+
+	vmFuncs->internalExitVMToJNI(currentThread);
 }
 
+/**
+ * TODO Note this is a draft implementation.
+ */
 void JNICALL
 Java_jdk_jfr_internal_JVM_logEvent(JNIEnv *env, jclass clazz, jint level, jobjectArray lines, jboolean system)
 {
-	// TODO: implementation
+	J9VMThread *currentThread = (J9VMThread*) env;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+
+	if (NULL == lines) {
+		vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
+	} else {
+		j9object_t stringArray = J9_JNI_UNWRAP_REFERENCE(lines);
+		U_32 numOfLines = J9INDEXABLEOBJECT_SIZE(currentThread, stringArray);
+
+		for (U_32 i = 0; i < numOfLines; i++) {
+			logJFRMessage(currentThread, J9JAVAARRAYOFOBJECT_LOAD(currentThread, stringArray, i));
+		}
+	}
+
+	vmFuncs->internalExitVMToJNI(currentThread);
 }
 
+/**
+ * Note this is a draft implementation.
+ */
 void JNICALL
 Java_jdk_jfr_internal_JVM_subscribeLogLevel(JNIEnv *env, jclass clazz, jobject lt, jint tagSetId)
 {
-	// TODO: implementation
+	J9VMThread *currentThread = (J9VMThread*) env;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+
+	j9object_t logTagInstance = J9_JNI_UNWRAP_REFERENCE(lt);
+	J9Class *loggerClass = J9OBJECT_CLAZZ(currentThread, logTagInstance);
+	IDATA tagSetLevelOffset = VM_VMHelpers::findinstanceFieldOffset(currentThread, loggerClass, "tagSetLevel", "I");
+
+	if (-1 != tagSetLevelOffset) {
+		MM_ObjectAccessBarrierAPI objectAccessBarrier = MM_ObjectAccessBarrierAPI(currentThread);
+
+		/* TODO for now we will use warn as the default, in the future we will parse -Xlog to determine actual level */
+		objectAccessBarrier.inlineMixedObjectStoreI32(currentThread, logTagInstance, tagSetLevelOffset, LOG_LEVEL_WARN, TRUE);
+	} else {
+		vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
+	}
+
+	vmFuncs->internalExitVMToJNI(currentThread);
 }
 
 void JNICALL
@@ -412,6 +504,12 @@ Java_jdk_jfr_internal_JVM_setConfiguration(JNIEnv *env, jclass clazz, jobject ev
 {
 	// TODO: implementation
 	return JNI_FALSE;
+}
+
+void
+Java_jdk_jfr_internal_JVM_setSampleThreads(JNIEnv *env, jclass clazz, jboolean sampleThreads)
+{
+	// TODO: implementation
 }
 
 jobject JNICALL
