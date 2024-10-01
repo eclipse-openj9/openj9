@@ -1583,7 +1583,6 @@ criuCheckpointJVMImpl(JNIEnv *env,
 		I_32 syslogBufferSize = 0;
 		UDATA oldVMState = VM_VMHelpers::setVMState(currentThread, J9VMSTATE_CRIU_SUPPORT_CHECKPOINT_PHASE_START);
 		UDATA notSafeToCheckpoint = 0;
-		UDATA criuRestorePid = 0;
 		U_32 intGhostFileLimit = 0;
 		IDATA criuDumpReturnCode = 0;
 		bool restoreFailure = false;
@@ -1885,19 +1884,21 @@ criuCheckpointJVMImpl(JNIEnv *env,
 		}
 
 		if (hasDumpSucceeded) {
-			/* Calculate restore time excluding `criu restore ...` for MXBean API. */
-			criuRestorePid = j9sysinfo_get_ppid();
-			systemReturnCode = j9sysinfo_get_process_start_time(criuRestorePid, &restoreNanoUTCTime);
-			if (0 != systemReturnCode) {
-				currentExceptionClass = vm->checkpointState.criuSystemRestoreExceptionClass;
-				nlsMsgFormat = j9nls_lookup_message(
-					J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
-					J9NLS_VM_CRIU_J9_GET_PROCESS_START_TIME_FAILURE,
-					NULL);
-				restoreFailure = true;
+			/* Calculate restore time for CRaC MXBean API. */
+			if (J9_ARE_ALL_BITS_SET(vm->checkpointState.flags, J9VM_CRAC_IS_CHECKPOINT_ENABLED)) {
+				UDATA cracRestorePid = j9sysinfo_get_ppid();
+				systemReturnCode = j9sysinfo_get_process_start_time(cracRestorePid, &restoreNanoUTCTime);
+				if (0 != systemReturnCode) {
+					currentExceptionClass = vm->checkpointState.criuSystemRestoreExceptionClass;
+					nlsMsgFormat = j9nls_lookup_message(
+						J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+						J9NLS_VM_CRIU_J9_GET_PROCESS_START_TIME_FAILURE,
+						NULL);
+					restoreFailure = true;
+				}
+				vm->checkpointState.processRestoreStartTimeInNanoseconds = (I_64)restoreNanoUTCTime;
+				Trc_VM_criu_process_restore_start_after_dump(currentThread, cracRestorePid, vm->checkpointState.processRestoreStartTimeInNanoseconds);
 			}
-			vm->checkpointState.processRestoreStartTimeInNanoseconds = (I_64)restoreNanoUTCTime;
-			Trc_VM_criu_process_restore_start_after_dump(currentThread, criuRestorePid, vm->checkpointState.processRestoreStartTimeInNanoseconds);
 
 			/* Load restore arguments from restore file or env vars. */
 			switch (loadRestoreArguments(currentThread, optionsFileChars, envFileChars)) {
