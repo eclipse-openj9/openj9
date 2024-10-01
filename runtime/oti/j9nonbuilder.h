@@ -4318,6 +4318,7 @@ typedef struct J9DelayedLockingOpertionsRecord {
 #define J9VM_CRIU_ENABLE_CRIU_SEC_PROVIDER 0x40
 #define J9VM_CRAC_IS_CHECKPOINT_ENABLED 0x80
 #define J9VM_CRIU_SUPPORT_DEBUG_ON_RESTORE 0x100
+#define J9VM_CRIU_TRANSITION_TO_DEBUG_INTERPRETER 0x200
 
 /* matches maximum count defined by JDWP in threadControl.c */
 #define J9VM_CRIU_MAX_DEBUG_THREADS_STORED 10
