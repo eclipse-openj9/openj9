@@ -126,6 +126,10 @@
 #include "runtime/MetricsServer.hpp"
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+#include "runtime/CRRuntime.hpp"
+#endif
+
 extern "C" int32_t encodeCount(int32_t count);
 
 extern "C" {
@@ -2046,6 +2050,9 @@ aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
 #endif
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
+   if (compInfo->getCRRuntime())
+      compInfo->getCRRuntime()->cacheEventsStatus();
+
    bool debugOnRestoreEnabled = javaVM->internalVMFunctions->isDebugOnRestoreEnabled(curThread);
 
    /* If the JVM is in CRIU mode and checkpointing is allowed, then the JIT should be
