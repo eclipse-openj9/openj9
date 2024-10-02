@@ -683,3 +683,18 @@ TraceEntry=Trc_JVMTI_jvmtiHookVMCheckpoint_Entry Overhead=1 Level=2 Noenv Templa
 TraceExit=Trc_JVMTI_jvmtiHookVMCheckpoint_Exit Overhead=1 Level=2 Noenv Template="HookVMCheckpoint"
 TraceEntry=Trc_JVMTI_jvmtiHookVMRestore_Entry Overhead=1 Level=2 Noenv Template="HookVMRestore"
 TraceExit=Trc_JVMTI_jvmtiHookVMRestore_Exit Overhead=1 Level=2 Noenv Template="HookVMRestore"
+
+TraceEvent=Trc_JVMTI_jvmtiAddCapabilities_no_capability Overhead=1 Level=1 Template="jvmtiAddCapabilities() failed: ~(((U_8 *) &potentialCapabilities)[%zu] = %x, result (%x)"
+TraceEvent=Trc_JVMTI_jvmtiAddCapabilities_not_onload Overhead=1 Level=1 Template="jvmtiAddCapabilities() failed: not JVMTI_PHASE_ONLOAD"
+TraceEvent=Trc_JVMTI_jvmtiAddCapabilities_object_alloc_set_already Overhead=1 Level=1 Template="jvmtiAddCapabilities() failed: J9JVMTI_FLAG_SAMPLED_OBJECT_ALLOC_ENABLED was set"
+TraceEvent=Trc_JVMTI_jvmtiAddCapabilities_mapCapabilitiesToEvents_failed Overhead=1 Level=1 Template="jvmtiAddCapabilities() failed: mapCapabilitiesToEvents()"
+TraceEvent=Trc_JVMTI_jvmtiAddCapabilities_hookNonEventCapabilities_failed Overhead=1 Level=1 Template="jvmtiAddCapabilities() failed: hookNonEventCapabilities()"
+
+TraceEvent=Trc_JVMTI_criuAddCapabilities_invoked Noenv Overhead=1 Level=3 Template="CRIU adds capabilities before checkpoint"
+TraceEvent=Trc_JVMTI_createAgentLibraryWithOption_OOM Noenv Overhead=1 Level=3 Template="createAgentLibraryWithOption j9mem_allocate_memory OOM"
+TraceEvent=Trc_JVMTI_createAgentLibraryWithOption_Xrunjdwp_result Noenv Overhead=1 Level=3 Template="createAgentLibraryWithOption Xrunjdwp optionsPtr (%s) optionsLengthTmp (%zu) agentLibrary (%p) result (%d)"
+TraceEvent=Trc_JVMTI_createAgentLibraryWithOption_agentlib_result Noenv Overhead=1 Level=3 Template="createAgentLibraryWithOption optionsPtr (%s) libraryLength (%zu) options (%s) optionsLength (%zu) agentLibrary (%p) result (%d)"
+TraceEntry=Trc_JVMTI_jvmtiHookVMRestoreCRIUInit_Entry Overhead=1 Level=3 Noenv Template="jvmtiHookVMRestoreCRIUInit"
+TraceExit=Trc_JVMTI_jvmtiHookVMRestoreCRIUInit_Exit Overhead=1 Level=3 Noenv Template="jvmtiHookVMRestoreCRIUInit"
+TraceEntry=Trc_JVMTI_jvmtiHookVMRestoreStartAgent_Entry Overhead=1 Level=3 Noenv Template="jvmtiHookVMRestoreStartAgent"
+TraceExit=Trc_JVMTI_jvmtiHookVMRestoreStartAgent_Exit Overhead=1 Level=3 Noenv Template="jvmtiHookVMRestoreStartAgent"
