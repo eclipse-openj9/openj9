@@ -708,6 +708,26 @@ struct IsClassVisibleRecord : public SymbolValidationRecord
    bool _isVisible;
    };
 
+struct DynamicMethodFromCallsiteIndexRecord : public MethodValidationRecord
+   {
+   DynamicMethodFromCallsiteIndexRecord(TR_OpaqueMethodBlock *method,
+                                        TR_OpaqueMethodBlock *caller,
+                                        int32_t callsiteIndex,
+                                        bool appendixObjectNull)
+      : MethodValidationRecord(TR_ValidateDynamicMethodFromCallsiteIndex, method),
+      _caller(caller),
+      _callsiteIndex(callsiteIndex),
+      _appendixObjectNull(appendixObjectNull)
+      {}
+
+   virtual bool isLessThanWithinKind(SymbolValidationRecord *other);
+   virtual void printFields();
+
+   TR_OpaqueMethodBlock *_caller;
+   int32_t _callsiteIndex;
+   bool _appendixObjectNull;
+   };
+
 class SymbolValidationManager
    {
 public:
@@ -787,6 +807,7 @@ public:
                                           TR_OpaqueClassBlock *thisClass,
                                           int32_t vftSlot,
                                           TR_OpaqueMethodBlock *callerMethod);
+   bool addDynamicMethodFromCallsiteIndex(TR_OpaqueMethodBlock *method, TR_OpaqueMethodBlock *caller, int32_t callsiteIndex, bool appendixObjectNull);
 
    bool addStackWalkerMaySkipFramesRecord(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *methodClass, bool skipFrames);
    bool addClassInfoIsInitializedRecord(TR_OpaqueClassBlock *clazz, bool isInitialized);
@@ -834,6 +855,12 @@ public:
                                                uint16_t thisClassID,
                                                int32_t vftSlot,
                                                uint16_t callerMethodID);
+   bool validateDynamicMethodFromCallsiteIndex(uint16_t methodID,
+                                               uint16_t callerID,
+                                               int32_t callsiteIndex,
+                                               bool appendixObjectNull,
+                                               uint16_t definingClassID,
+                                               uint32_t methodIndex);
 
    bool validateStackWalkerMaySkipFramesRecord(uint16_t methodID, uint16_t methodClassID, bool couldSkipFrames);
    bool validateClassInfoIsInitializedRecord(uint16_t classID, bool wasInitialized);

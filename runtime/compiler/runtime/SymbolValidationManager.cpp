@@ -23,6 +23,7 @@
 #include <string.h>
 #include "env/VMJ9.h"
 #include "env/ClassLoaderTable.hpp"
+#include "env/JSR292Methods.h"
 #include "env/PersistentCHTable.hpp"
 #include "env/VMAccessCriticalSection.hpp"
 #include "exceptions/AOTFailure.hpp"
@@ -1055,6 +1056,16 @@ TR::SymbolValidationManager::addMethodFromSingleAbstractImplementerRecord(TR_Opa
    }
 
 bool
+TR::SymbolValidationManager::addDynamicMethodFromCallsiteIndex(TR_OpaqueMethodBlock *method,
+                                                               TR_OpaqueMethodBlock *caller,
+                                                               int32_t callsiteIndex,
+                                                               bool appendixObjectNull)
+   {
+   SVM_ASSERT_ALREADY_VALIDATED(this, caller);
+   return addMethodRecord(new (_region) DynamicMethodFromCallsiteIndexRecord(method, caller, callsiteIndex, appendixObjectNull));
+   }
+
+bool
 TR::SymbolValidationManager::addStackWalkerMaySkipFramesRecord(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *methodClass, bool skipFrames)
    {
    if (!method || !methodClass)
@@ -1547,6 +1558,54 @@ TR::SymbolValidationManager::validateMethodFromSingleAbstractImplementerRecord(u
    TR_OpaqueMethodBlock *method = calleeResolvedMethod->getPersistentIdentifier();
 
    return validateSymbol(methodID, definingClassID, method);
+   }
+
+bool
+TR::SymbolValidationManager::validateDynamicMethodFromCallsiteIndex(uint16_t methodID,
+                                                                    uint16_t callerID,
+                                                                    int32_t callsiteIndex,
+                                                                    bool appendixObjectNull,
+                                                                    uint16_t definingClassID,
+                                                                    uint32_t methodIndex)
+   {
+   bool valid = false;
+
+   TR_OpaqueMethodBlock *caller = getMethodFromID(callerID);
+   TR_ResolvedMethod *resolvedCaller = _fej9->createResolvedMethod(_trMemory, caller, NULL);
+
+   // If dispatch was resolved at compile time, it must also be resolved
+   // at load time.
+   if (!resolvedCaller->isUnresolvedCallSiteTableEntry(callsiteIndex))
+      {
+      uintptr_t * invokeCacheArray = (uintptr_t *)resolvedCaller->callSiteTableEntryAddress(callsiteIndex);
+      if (_fej9->isInvokeCacheEntryAnArray(invokeCacheArray))
+         {
+         bool invokeCacheAppendixNull = false;
+
+         TR_OpaqueMethodBlock *targetMethod =
+            static_cast<TR_ResolvedJ9Method *>(resolvedCaller)->getTargetMethodFromMemberName(
+               invokeCacheArray, &invokeCacheAppendixNull);
+
+         TR_OpaqueClassBlock *targetMethodClass =
+            reinterpret_cast<TR_OpaqueClassBlock *>(
+               J9_CLASS_FROM_METHOD(reinterpret_cast<J9Method *>(targetMethod)));
+
+         valid =
+            validateSymbol(methodID, definingClassID, targetMethod)
+
+            // The generated code is different depending on whether the
+            // appendix object was null or not.
+            && (appendixObjectNull == invokeCacheAppendixNull)
+
+            // Because the target method is not named, this (indirectly) ensures
+            // that the target method has the same name as in the compile run;
+            // the class chain validation of the defining class will ensure the
+            // bytecodes are the same.
+            && (methodIndex == _fej9->getMethodIndexInClass(targetMethodClass, targetMethod));
+         }
+      }
+
+   return valid;
    }
 
 bool
@@ -2173,4 +2232,23 @@ void TR::IsClassVisibleRecord::printFields()
    traceMsg(TR::comp(), "\t_destClass=0x%p\n", _destClass);
    printClass(_destClass);
    traceMsg(TR::comp(), "\t_isVisible=%s\n", _isVisible ? "true" : "false");
+   }
+
+bool TR::DynamicMethodFromCallsiteIndexRecord::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::DynamicMethodFromCallsiteIndexRecord *rhs = downcast(this, other);
+   return LexicalOrder::by(_method, rhs->_method)
+      .thenBy(_caller, rhs->_caller)
+      .thenBy(_callsiteIndex, rhs->_callsiteIndex)
+      .thenBy(_appendixObjectNull, rhs->_appendixObjectNull).less();
+   }
+
+void TR::DynamicMethodFromCallsiteIndexRecord::printFields()
+   {
+   traceMsg(TR::comp(), "DynamicMethodFromCallsiteIndexRecord\n");
+   traceMsg(TR::comp(), "\t_method=0x%p\n", _method);
+   traceMsg(TR::comp(), "\t_caller=0x%p\n", _caller);
+   traceMsg(TR::comp(), "\t_callsiteIndex=%d\n", _callsiteIndex);
+   traceMsg(TR::comp(), "\t_appendixObjectNull=%s\n", _appendixObjectNull ? "true" : "false");
    }

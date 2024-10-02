@@ -346,6 +346,16 @@ struct TR_RelocationRecordValidateMethodFromSingleAbstractImplBinaryTemplate : p
    int32_t _vftSlot;
    };
 
+struct TR_RelocationRecordValidateDynamicMethodFromCallsiteIndexBinaryTemplate : public TR_RelocationRecordBinaryTemplate
+   {
+   uint16_t _methodID;
+   uint16_t _callerID;
+   int32_t _callsiteIndex;
+   uint8_t _appendixObjectNull;
+   uint16_t _definingClassID;
+   uint32_t _methodIndex;
+   };
+
 struct TR_RelocationRecordValidateStackWalkerMaySkipFramesBinaryTemplate : public TR_RelocationRecordBinaryTemplate
    {
    uint16_t _methodID;
@@ -802,6 +812,9 @@ TR_RelocationRecord::create(TR_RelocationRecord *storage, TR_RelocationRuntime *
          break;
       case TR_ValidateMethodFromSingleAbstractImplementer:
          reloRecord = new (storage) TR_RelocationRecordValidateMethodFromSingleAbstractImpl(reloRuntime, record);
+         break;
+      case TR_ValidateDynamicMethodFromCallsiteIndex:
+         reloRecord = new (storage) TR_RelocationRecordValidateDynamicMethodFromCallsiteIndex(reloRuntime, record);
          break;
       case TR_SymbolFromManager:
          reloRecord = new (storage) TR_RelocationRecordSymbolFromManager(reloRuntime, record);
@@ -4911,6 +4924,119 @@ TR_RelocationRecordValidateMethodFromClassAndSig::romMethodOffsetInSCC(TR_Reloca
    }
 
 TR_RelocationErrorCode
+TR_RelocationRecordValidateDynamicMethodFromCallsiteIndex::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
+   {
+   bool valid = false;
+
+   uint16_t methodID = this->methodID(reloTarget);
+   uint16_t callerID = this->callerID(reloTarget);
+   int32_t callsiteIndex = this->callsiteIndex(reloTarget);
+   bool appendixObjectNull = this->appendixObjectNull(reloTarget);
+   uint16_t definingClassID = this->definingClassID(reloTarget);
+   uint32_t methodIndex = this->methodIndex(reloTarget);
+
+   valid =
+      reloRuntime->comp()->getSymbolValidationManager()->validateDynamicMethodFromCallsiteIndex(
+         methodID,
+         callerID,
+         callsiteIndex,
+         appendixObjectNull,
+         definingClassID,
+         methodIndex);
+
+   if (valid)
+      return TR_RelocationError::relocationOK;
+   else
+      return TR_RelocationError::dynamicMethodFromCallsiteIndexValidationFailure;
+   }
+
+void
+TR_RelocationRecordValidateDynamicMethodFromCallsiteIndex::print(TR_RelocationRuntime *reloRuntime)
+   {
+   TR_RelocationTarget *reloTarget = reloRuntime->reloTarget();
+   TR_RelocationRuntimeLogger *reloLogger = reloRuntime->reloLogger();
+   TR_RelocationRecord::print(reloRuntime);
+   reloLogger->printf("\tmethodID %d\n", methodID(reloTarget));
+   reloLogger->printf("\tcallerID %d\n", callerID(reloTarget));
+   reloLogger->printf("\tcallsiteIndex %d\n", callsiteIndex(reloTarget));
+   reloLogger->printf("\tappendixObjectNull %s\n", appendixObjectNull(reloTarget) ? "true" : "false");
+   reloLogger->printf("\tdefiningClassID %d\n", definingClassID(reloTarget));
+   reloLogger->printf("\tmethodIndex %d\n", methodIndex(reloTarget));
+   }
+
+void
+TR_RelocationRecordValidateDynamicMethodFromCallsiteIndex::setMethodID(TR_RelocationTarget *reloTarget, uint16_t methodID)
+   {
+   reloTarget->storeUnsigned16b(methodID, (uint8_t *) &((TR_RelocationRecordValidateDynamicMethodFromCallsiteIndexBinaryTemplate *)_record)->_methodID);
+   }
+
+uint16_t
+TR_RelocationRecordValidateDynamicMethodFromCallsiteIndex::methodID(TR_RelocationTarget *reloTarget)
+   {
+   return reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateDynamicMethodFromCallsiteIndexBinaryTemplate *)_record)->_methodID);
+   }
+
+void
+TR_RelocationRecordValidateDynamicMethodFromCallsiteIndex::setCallerID(TR_RelocationTarget *reloTarget, uint16_t callerID)
+   {
+   reloTarget->storeUnsigned16b(callerID, (uint8_t *) &((TR_RelocationRecordValidateDynamicMethodFromCallsiteIndexBinaryTemplate *)_record)->_callerID);
+   }
+
+uint16_t
+TR_RelocationRecordValidateDynamicMethodFromCallsiteIndex::callerID(TR_RelocationTarget *reloTarget)
+   {
+   return reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateDynamicMethodFromCallsiteIndexBinaryTemplate *)_record)->_callerID);
+   }
+
+void
+TR_RelocationRecordValidateDynamicMethodFromCallsiteIndex::setCallsiteIndex(TR_RelocationTarget *reloTarget, int32_t callsiteIndex)
+   {
+   reloTarget->storeSigned32b(callsiteIndex, (uint8_t *) &((TR_RelocationRecordValidateDynamicMethodFromCallsiteIndexBinaryTemplate *)_record)->_callsiteIndex);
+   }
+
+int32_t
+TR_RelocationRecordValidateDynamicMethodFromCallsiteIndex::callsiteIndex(TR_RelocationTarget *reloTarget)
+   {
+   return reloTarget->loadSigned32b((uint8_t *) &((TR_RelocationRecordValidateDynamicMethodFromCallsiteIndexBinaryTemplate *)_record)->_callsiteIndex);
+   }
+
+void
+TR_RelocationRecordValidateDynamicMethodFromCallsiteIndex::setAppendixObjectNull(TR_RelocationTarget *reloTarget, bool appendixObjectNull)
+   {
+   reloTarget->storeUnsigned8b((uint8_t)appendixObjectNull, (uint8_t *) &((TR_RelocationRecordValidateDynamicMethodFromCallsiteIndexBinaryTemplate *)_record)->_appendixObjectNull);
+   }
+
+bool
+TR_RelocationRecordValidateDynamicMethodFromCallsiteIndex::appendixObjectNull(TR_RelocationTarget *reloTarget)
+   {
+   return (bool)reloTarget->loadUnsigned8b((uint8_t *) &((TR_RelocationRecordValidateDynamicMethodFromCallsiteIndexBinaryTemplate *)_record)->_appendixObjectNull);
+   }
+
+void
+TR_RelocationRecordValidateDynamicMethodFromCallsiteIndex::setDefiningClassID(TR_RelocationTarget *reloTarget, uint16_t definingClassID)
+   {
+   reloTarget->storeUnsigned16b(definingClassID, (uint8_t *) &((TR_RelocationRecordValidateDynamicMethodFromCallsiteIndexBinaryTemplate *)_record)->_definingClassID);
+   }
+
+uint16_t
+TR_RelocationRecordValidateDynamicMethodFromCallsiteIndex::definingClassID(TR_RelocationTarget *reloTarget)
+   {
+   return reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateDynamicMethodFromCallsiteIndexBinaryTemplate *)_record)->_definingClassID);
+   }
+
+void
+TR_RelocationRecordValidateDynamicMethodFromCallsiteIndex::setMethodIndex(TR_RelocationTarget *reloTarget, uint32_t methodIndex)
+   {
+   reloTarget->storeUnsigned32b(methodIndex, (uint8_t *) &((TR_RelocationRecordValidateDynamicMethodFromCallsiteIndexBinaryTemplate *)_record)->_methodIndex);
+   }
+
+uint32_t
+TR_RelocationRecordValidateDynamicMethodFromCallsiteIndex::methodIndex(TR_RelocationTarget *reloTarget)
+   {
+   return reloTarget->loadUnsigned32b((uint8_t *) &((TR_RelocationRecordValidateDynamicMethodFromCallsiteIndexBinaryTemplate *)_record)->_methodIndex);
+   }
+
+TR_RelocationErrorCode
 TR_RelocationRecordValidateStackWalkerMaySkipFrames::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
    {
    uint16_t methodID = this->methodID(reloTarget);
@@ -6690,5 +6816,6 @@ uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRel
    sizeof(TR_RelocationRecordBinaryTemplate),                                        // TR_CatchBlockCounter                            = 113
    sizeof(TR_RelocationRecordBinaryTemplate),                                        // TR_StartPC                                      = 114
    sizeof(TR_RelocationRecordMethodEnterExitHookAddressBinaryTemplate),              // TR_MethodEnterExitHookAddress                   = 115
+   sizeof(TR_RelocationRecordValidateDynamicMethodFromCallsiteIndexBinaryTemplate),  // TR_ValidateDynamicMethodFromCallsiteIndex       = 116
    };
 // The _relocationRecordHeaderSizeTable table should be the last thing in this file
