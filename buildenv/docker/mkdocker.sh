@@ -555,7 +555,7 @@ if [ $version = 18.04 ] ; then
 elif [ $version = 20.04 ] ; then
   echo "    g++-10 \\"
   echo "    gcc-10 \\"
-else if [ $version = 22.04 ] ; then
+elif [ $version = 22.04 ] ; then
   echo "    g++-11 \\"
   echo "    gcc-11 \\"
 else
