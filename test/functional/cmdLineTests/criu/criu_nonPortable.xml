@@ -763,10 +763,9 @@
     <output type="failure" caseSensitive="yes" regex="no">org.eclipse.openj9.criu.JVMRestoreException</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
-
-  <test id="Test checkTransitionToDebugInterpreter with env var file">
+  <test id="Envvar test17">
     <!-- The transition to the debug interpreter currently only works with -Xint, which will be removed when the jit changes are completed. -->
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -XX:+DebugOnRestore -Xint" $MAINCLASS_ENVVAR_TEST$ testCheckTransitionToDebugInterpreterWithEnvVarFile 1 false false</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xint" $MAINCLASS_ENVVAR_TEST$ EnvVarFileTest17 1 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
     <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
@@ -926,9 +925,9 @@
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
   </test>
 
-  <test id="Test checkTransitionToDebugInterpreter with options file">
+  <test id="Test debug interpreter transition request via XX:+DebugInterpreter with options file">
     <!-- The transition to the debug interpreter currently only works with -Xint, which will be removed when the jit changes are completed. -->
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -XX:+DebugOnRestore -Xint" $MAINCLASS_OPTIONSFILE_TEST$ testCheckTransitionToDebugInterpreterWithOptionsFile 1 false false</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xint" $MAINCLASS_OPTIONSFILE_TEST$ testTransitionToDebugInterpreterViaXXDebugInterpreterWithOptionsFile 1 false false</command>
     <output type="success" caseSensitive="no" regex="no">Killed</output>
     <output type="required" caseSensitive="yes" regex="no">Pre-checkpoint</output>
     <output type="success" caseSensitive="yes" regex="no">Post-checkpoint</output>
