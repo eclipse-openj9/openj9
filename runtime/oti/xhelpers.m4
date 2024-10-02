@@ -93,7 +93,6 @@ define({SHORT_JMP},{short})
 
 define({FILE_START},{
 	.intel_syntax noprefix
-	.arch pentium4
 	.text
 })
 
@@ -111,7 +110,9 @@ define({START_PROC},{
 	GLOBAL_SYMBOL($1):
 })
 
-define({FILE_END})
+define({FILE_END},{ifdef({LINUX},{
+	.section .note.GNU-stack,"",@progbits
+})})
 
 define({END_PROC},{
 END_$1:
