@@ -2980,7 +2980,7 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 			}
 #endif /* defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH) */
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-			if (isDebugOnRestoreEnabled(vm->mainThread)) {
+			if (isDebugOnRestoreEnabled(vm)) {
 				Trc_VM_VMInitStages_isDebugOnRestoreEnabled();
 				/* enable jvmtiCapabilities.can_get_source_debug_extension */
 				vm->requiredDebugAttributes |= J9VM_DEBUG_ATTRIBUTE_SOURCE_DEBUG_EXTENSION;

@@ -105,7 +105,7 @@ mustReportEnterStepOrBreakpoint(J9JavaVM *vm)
 	UDATA hookedOrReserved = 0;
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-	if (isDebugOnRestoreEnabled(vm->mainThread)) {
+	if (isDebugOnRestoreEnabled(vm)) {
 		hookedOrReserved = J9_EVENT_IS_HOOKED_OR_RESERVED(vm->hookInterface, J9HOOK_VM_METHOD_ENTER)
 			|| J9_EVENT_IS_HOOKED_OR_RESERVED(vm->hookInterface, J9HOOK_VM_METHOD_RETURN)
 			|| J9_EVENT_IS_HOOKED_OR_RESERVED(vm->hookInterface, J9HOOK_VM_SINGLE_STEP)

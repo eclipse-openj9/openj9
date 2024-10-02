@@ -113,7 +113,7 @@ jvmRestoreHooks(J9VMThread *currentThread)
 	nas.name = (J9UTF8 *)&runPostRestoreHooks_name;
 	nas.signature = (J9UTF8 *)&runPostRestoreHooks_sig;
 
-	Assert_VM_true(isCRaCorCRIUSupportEnabled_VM(vm));
+	Assert_VM_true(isCRaCorCRIUSupportEnabled(vm));
 
 	/* make sure Java hooks are the last thing run before restore */
 	runStaticMethod(currentThread, J9UTF8_DATA(&j9InternalCheckpointHookAPI_name), &nas, 0, NULL);
@@ -126,13 +126,7 @@ jvmRestoreHooks(J9VMThread *currentThread)
 }
 
 BOOLEAN
-isCRaCorCRIUSupportEnabled(J9VMThread *currentThread)
-{
-	return isCRaCorCRIUSupportEnabled_VM(currentThread->javaVM);
-}
-
-BOOLEAN
-isCRaCorCRIUSupportEnabled_VM(J9JavaVM *vm)
+isCRaCorCRIUSupportEnabled(J9JavaVM *vm)
 {
 	return J9_IS_CRIU_OR_CRAC_CHECKPOINT_ENABLED(vm);
 }
@@ -144,12 +138,12 @@ isCRIUSupportEnabled(J9VMThread *currentThread)
 }
 
 BOOLEAN
-isCheckpointAllowed(J9VMThread *currentThread)
+isCheckpointAllowed(J9JavaVM *vm)
 {
 	BOOLEAN result = FALSE;
 
-	if (isCRaCorCRIUSupportEnabled(currentThread)) {
-		result = J9_ARE_ALL_BITS_SET(currentThread->javaVM->checkpointState.flags, J9VM_CRIU_IS_CHECKPOINT_ALLOWED);
+	if (isCRaCorCRIUSupportEnabled(vm)) {
+		result = J9_ARE_ALL_BITS_SET(vm->checkpointState.flags, J9VM_CRIU_IS_CHECKPOINT_ALLOWED);
 	}
 
 	return result;
@@ -159,9 +153,10 @@ BOOLEAN
 enableCRIUSecProvider(J9VMThread *currentThread)
 {
 	BOOLEAN result = FALSE;
+	J9JavaVM *vm = currentThread->javaVM;
 
-	if (isCRaCorCRIUSupportEnabled(currentThread)) {
-		result = J9_ARE_ANY_BITS_SET(currentThread->javaVM->checkpointState.flags, J9VM_CRIU_ENABLE_CRIU_SEC_PROVIDER);
+	if (isCRaCorCRIUSupportEnabled(vm)) {
+		result = J9_ARE_ANY_BITS_SET(vm->checkpointState.flags, J9VM_CRIU_ENABLE_CRIU_SEC_PROVIDER);
 	}
 
 	return result;
@@ -176,15 +171,16 @@ isNonPortableRestoreMode(J9VMThread *currentThread)
 BOOLEAN
 isJVMInPortableRestoreMode(J9VMThread *currentThread)
 {
-	return (!isNonPortableRestoreMode(currentThread) || J9_ARE_ALL_BITS_SET(currentThread->javaVM->checkpointState.flags, J9VM_CRIU_IS_PORTABLE_JVM_RESTORE_MODE)) && isCRaCorCRIUSupportEnabled(currentThread);
+	J9JavaVM *vm = currentThread->javaVM;
+	return (!isNonPortableRestoreMode(currentThread) || J9_ARE_ALL_BITS_SET(vm->checkpointState.flags, J9VM_CRIU_IS_PORTABLE_JVM_RESTORE_MODE)) && isCRaCorCRIUSupportEnabled(vm);
 }
 
 BOOLEAN
-isDebugOnRestoreEnabled(J9VMThread *currentThread)
+isDebugOnRestoreEnabled(J9JavaVM *vm)
 {
-	return J9_ARE_NO_BITS_SET(currentThread->javaVM->checkpointState.flags, J9VM_CRIU_IS_JDWP_ENABLED)
-			&& J9_ARE_ALL_BITS_SET(currentThread->javaVM->checkpointState.flags, J9VM_CRIU_SUPPORT_DEBUG_ON_RESTORE)
-			&& isCRaCorCRIUSupportEnabled(currentThread);
+	return J9_ARE_NO_BITS_SET(vm->checkpointState.flags, J9VM_CRIU_IS_JDWP_ENABLED)
+			&& J9_ARE_ALL_BITS_SET(vm->checkpointState.flags, J9VM_CRIU_SUPPORT_DEBUG_ON_RESTORE)
+			&& isCRaCorCRIUSupportEnabled(vm);
 }
 
 void
@@ -1554,7 +1550,7 @@ criuCheckpointJVMImpl(JNIEnv *env,
 
 	vm->checkpointState.checkpointThread = currentThread;
 
-	if (isCheckpointAllowed(currentThread) && setupCRIU) {
+	if (isCheckpointAllowed(vm) && setupCRIU) {
 #if defined(LINUX)
 		j9object_t cpDir = NULL;
 		j9object_t log = NULL;

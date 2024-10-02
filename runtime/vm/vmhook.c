@@ -144,7 +144,7 @@ hookAboutToBootstrapEvent(J9HookInterface **hook, UDATA eventNum, void *voidEven
 	}
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-	if (isDebugOnRestoreEnabled(vmThread)) {
+	if (isDebugOnRestoreEnabled(vm)) {
 		debugModeRequested = J9_EVENT_IS_HOOKED_OR_RESERVED(vm->hookInterface, J9HOOK_VM_METHOD_ENTER)
 			|| J9_EVENT_IS_HOOKED_OR_RESERVED(vm->hookInterface, J9HOOK_VM_METHOD_RETURN)
 			|| J9_EVENT_IS_HOOKED_OR_RESERVED(vm->hookInterface, J9HOOK_VM_FRAME_POP)

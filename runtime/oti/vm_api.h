@@ -501,21 +501,11 @@ internalCreateRAMClassFromROMClass(J9VMThread *vmThread, J9ClassLoader *classLoa
  * @brief Queries if CRaC or CRIU support is enabled. By default support
  * is not enabled, it can be enabled with -XX:CRaCCheckpointTo or -XX:+EnableCRIUSupport.
  *
- * @param currentThread vmthread token
- * @return TRUE if enabled, FALSE otherwise
- */
-BOOLEAN
-isCRaCorCRIUSupportEnabled(J9VMThread *currentThread);
-
-/**
- * @brief Queries if CRaC or CRIU support is enabled. By default support
- * is not enabled, it can be enabled with -XX:CRaCCheckpointTo or -XX:+EnableCRIUSupport.
- *
  * @param vm javaVM token
  * @return TRUE if enabled, FALSE otherwise
  */
 BOOLEAN
-isCRaCorCRIUSupportEnabled_VM(J9JavaVM *vm);
+isCRaCorCRIUSupportEnabled(J9JavaVM *vm);
 
 /**
  * @brief Queries if CRIU support is enabled. By default support
@@ -544,11 +534,11 @@ enableCRIUSecProvider(J9VMThread *currentThread);
  * will not be permitted after the JVM has been restored from a checkpoint
  * (checkpoint once mode).
  *
- * @param currentThread vmthread token
+ * @param vm javaVM token
  * @return TRUE if permitted, FALSE otherwise
  */
 BOOLEAN
-isCheckpointAllowed(J9VMThread *currentThread);
+isCheckpointAllowed(J9JavaVM *vm);
 
 /**
  * @brief Queries if non-portable restore mode (specified via
@@ -580,9 +570,12 @@ isJVMInPortableRestoreMode(J9VMThread *currentThread);
  * -XX:+DebugOnRestore) is supported. If so, the JVM
  * will run in FSD mode pre-checkpoint and will transition out
  * FSD mode on restore (unless debug is specified post restore).
+ *
+ * @param vm javaVM token
+ * @return TRUE if enabled, FALSE otherwise
  */
 BOOLEAN
-isDebugOnRestoreEnabled(J9VMThread *currentThread);
+isDebugOnRestoreEnabled(J9JavaVM *vm);
 
 /**
  * @brief Sets the maximum size for the CRIU ghost files.

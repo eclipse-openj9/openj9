@@ -408,7 +408,6 @@ J9InternalVMFunctions J9InternalFunctions = {
 	jvmCheckpointHooks,
 	jvmRestoreHooks,
 	isCRaCorCRIUSupportEnabled,
-	isCRaCorCRIUSupportEnabled_VM,
 	isCRIUSupportEnabled,
 	enableCRIUSecProvider,
 	isCheckpointAllowed,

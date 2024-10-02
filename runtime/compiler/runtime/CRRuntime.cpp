@@ -370,7 +370,7 @@ void
 TR::CRRuntime::setupEnvForProactiveCompilation(J9JavaVM *javaVM, J9VMThread *vmThread, TR_J9VMBase *fej9)
    {
    /* Proactive compilation should not be FSD compiles */
-   if (javaVM->internalVMFunctions->isDebugOnRestoreEnabled(vmThread))
+   if (javaVM->internalVMFunctions->isDebugOnRestoreEnabled(javaVM))
       {
       TR::Options::getCmdLineOptions()->setFSDOptionsForAll(false);
       TR::Options::getAOTCmdLineOptions()->setFSDOptionsForAll(false);
@@ -394,7 +394,7 @@ void
 TR::CRRuntime::teardownEnvForProactiveCompilation(J9JavaVM *javaVM, J9VMThread *vmThread, TR_J9VMBase *fej9)
    {
    /* Proactive compilation should not be FSD compiles */
-   if (javaVM->internalVMFunctions->isDebugOnRestoreEnabled(vmThread))
+   if (javaVM->internalVMFunctions->isDebugOnRestoreEnabled(javaVM))
       {
       TR::Options::getCmdLineOptions()->setFSDOptionsForAll(true);
       TR::Options::getAOTCmdLineOptions()->setFSDOptionsForAll(true);
@@ -618,8 +618,8 @@ void
 TR::CRRuntime::resumeJITThreadsForRestore(J9VMThread *vmThread)
    {
    // Allow heuristics to turn on the IProfiler
-   if (_jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(vmThread)
-       && !_jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(vmThread))
+   if (_jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(_jitConfig->javaVM)
+       && !_jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(_jitConfig->javaVM))
       {
       turnOffInterpreterProfiling(_jitConfig);
       TR::Options::getCmdLineOptions()->setOption(TR_NoIProfilerDuringStartupPhase);
