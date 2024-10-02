@@ -14257,6 +14257,12 @@ J9::Z::TreeEvaluator::referenceArraycopyEvaluator(TR::Node * node, TR::CodeGener
    TR::Node* byteDstNode    = node->getChild(3);
    TR::Node* byteLenNode    = node->getChild(4);
 
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+   if (TR::Compiler->om.isOffHeapAllocationEnabled())
+      // For correct card-marking calculation, the dstObjNode should be the baseObj not the dataAddrPointer
+      TR_ASSERT_FATAL(!byteDstObjNode->isDataAddrPointer(), "The byteDstObjNode child of arraycopy cannot be a dataAddrPointer");
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
+
    TR::Register* byteSrcObjReg = cg->evaluate(byteSrcObjNode);
    TR::Register* byteDstObjReg = cg->evaluate(byteDstObjNode);
 
