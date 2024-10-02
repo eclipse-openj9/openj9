@@ -1569,6 +1569,37 @@ class TR_RelocationRecordValidateDynamicMethodFromCallsiteIndex : public TR_Relo
       uint32_t methodIndex(TR_RelocationTarget *reloTarget);
    };
 
+class TR_RelocationRecordValidateHandleMethodFromCPIndex : public TR_RelocationRecord
+   {
+   public:
+      TR_RelocationRecordValidateHandleMethodFromCPIndex() {}
+      TR_RelocationRecordValidateHandleMethodFromCPIndex(TR_RelocationRuntime *reloRuntime, TR_RelocationRecordBinaryTemplate *record) : TR_RelocationRecord(reloRuntime, record) {}
+      virtual bool isValidationRecord() { return true; }
+      virtual const char *name() { return "TR_RelocationRecordValidateHandleMethodFromCPIndex"; }
+      virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget) {}
+      virtual TR_RelocationErrorCode applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
+
+      virtual void print(TR_RelocationRuntime *reloRuntime);
+
+      void setMethodID(TR_RelocationTarget *reloTarget, uint16_t methodID);
+      uint16_t methodID(TR_RelocationTarget *reloTarget);
+
+      void setCallerID(TR_RelocationTarget *reloTarget, uint16_t callerID);
+      uint16_t callerID(TR_RelocationTarget *reloTarget);
+
+      void setCpIndex(TR_RelocationTarget *reloTarget, int32_t cpIndex);
+      int32_t cpIndex(TR_RelocationTarget *reloTarget);
+
+      void setAppendixObjectNull(TR_RelocationTarget *reloTarget, bool appendixObjectNull);
+      bool appendixObjectNull(TR_RelocationTarget *reloTarget);
+
+      void setDefiningClassID(TR_RelocationTarget *reloTarget, uint16_t definingClassID);
+      uint16_t definingClassID(TR_RelocationTarget *reloTarget);
+
+      void setMethodIndex(TR_RelocationTarget *reloTarget, uint32_t methodIndex);
+      uint32_t methodIndex(TR_RelocationTarget *reloTarget);
+   };
+
 class TR_RelocationRecordValidateStackWalkerMaySkipFrames : public TR_RelocationRecord
    {
    public:

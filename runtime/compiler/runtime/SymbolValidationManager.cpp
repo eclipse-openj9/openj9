@@ -1066,6 +1066,16 @@ TR::SymbolValidationManager::addDynamicMethodFromCallsiteIndex(TR_OpaqueMethodBl
    }
 
 bool
+TR::SymbolValidationManager::addHandleMethodFromCPIndex(TR_OpaqueMethodBlock *method,
+                                                        TR_OpaqueMethodBlock *caller,
+                                                        int32_t cpIndex,
+                                                        bool appendixObjectNull)
+   {
+   SVM_ASSERT_ALREADY_VALIDATED(this, caller);
+   return addMethodRecord(new (_region) HandleMethodFromCPIndex(method, caller, cpIndex, appendixObjectNull));
+   }
+
+bool
 TR::SymbolValidationManager::addStackWalkerMaySkipFramesRecord(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *methodClass, bool skipFrames)
    {
    if (!method || !methodClass)
@@ -1603,6 +1613,51 @@ TR::SymbolValidationManager::validateDynamicMethodFromCallsiteIndex(uint16_t met
             // bytecodes are the same.
             && (methodIndex == _fej9->getMethodIndexInClass(targetMethodClass, targetMethod));
          }
+      }
+
+   return valid;
+   }
+
+bool
+TR::SymbolValidationManager::validateHandleMethodFromCPIndex(uint16_t methodID,
+                                                             uint16_t callerID,
+                                                             int32_t cpIndex,
+                                                             bool appendixObjectNull,
+                                                             uint16_t definingClassID,
+                                                             uint32_t methodIndex)
+   {
+   bool valid = false;
+
+   TR_OpaqueMethodBlock *caller = getMethodFromID(callerID);
+   TR_ResolvedMethod *resolvedCaller = _fej9->createResolvedMethod(_trMemory, caller, NULL);
+
+   // If dispatch was resolved at compile time, it must also be resolved
+   // at load time.
+   if (!resolvedCaller->isUnresolvedMethodTypeTableEntry(cpIndex))
+      {
+      uintptr_t * invokeCacheArray = (uintptr_t *)resolvedCaller->methodTypeTableEntryAddress(cpIndex);
+      bool invokeCacheAppendixNull = false;
+
+      TR_OpaqueMethodBlock *targetMethod =
+         static_cast<TR_ResolvedJ9Method *>(resolvedCaller)->getTargetMethodFromMemberName(
+            invokeCacheArray, &invokeCacheAppendixNull);
+
+      TR_OpaqueClassBlock *targetMethodClass =
+         reinterpret_cast<TR_OpaqueClassBlock *>(
+            J9_CLASS_FROM_METHOD(reinterpret_cast<J9Method *>(targetMethod)));
+
+      valid =
+         validateSymbol(methodID, definingClassID, targetMethod)
+
+         // The generated code is different depending on whether the
+         // appendix object was null or not.
+         && (appendixObjectNull == invokeCacheAppendixNull)
+
+         // Because the target method is not named, this (indirectly) ensures
+         // that the target method has the same name as in the compile run;
+         // the class chain validation of the defining class will ensure the
+         // bytecodes are the same.
+         && (methodIndex == _fej9->getMethodIndexInClass(targetMethodClass, targetMethod));
       }
 
    return valid;
@@ -2250,5 +2305,24 @@ void TR::DynamicMethodFromCallsiteIndexRecord::printFields()
    traceMsg(TR::comp(), "\t_method=0x%p\n", _method);
    traceMsg(TR::comp(), "\t_caller=0x%p\n", _caller);
    traceMsg(TR::comp(), "\t_callsiteIndex=%d\n", _callsiteIndex);
+   traceMsg(TR::comp(), "\t_appendixObjectNull=%s\n", _appendixObjectNull ? "true" : "false");
+   }
+
+bool TR::HandleMethodFromCPIndex::isLessThanWithinKind(
+   SymbolValidationRecord *other)
+   {
+   TR::HandleMethodFromCPIndex *rhs = downcast(this, other);
+   return LexicalOrder::by(_method, rhs->_method)
+      .thenBy(_caller, rhs->_caller)
+      .thenBy(_cpIndex, rhs->_cpIndex)
+      .thenBy(_appendixObjectNull, rhs->_appendixObjectNull).less();
+   }
+
+void TR::HandleMethodFromCPIndex::printFields()
+   {
+   traceMsg(TR::comp(), "HandleMethodFromCPIndex\n");
+   traceMsg(TR::comp(), "\t_method=0x%p\n", _method);
+   traceMsg(TR::comp(), "\t_caller=0x%p\n", _caller);
+   traceMsg(TR::comp(), "\t_cpIndex=%d\n", _cpIndex);
    traceMsg(TR::comp(), "\t_appendixObjectNull=%s\n", _appendixObjectNull ? "true" : "false");
    }

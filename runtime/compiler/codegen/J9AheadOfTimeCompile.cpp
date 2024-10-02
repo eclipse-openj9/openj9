@@ -1364,6 +1364,21 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          }
          break;
 
+      case TR_ValidateHandleMethodFromCPIndex:
+         {
+         auto *hmciRecord = reinterpret_cast<TR_RelocationRecordValidateHandleMethodFromCPIndex  *>(reloRecord);
+
+         TR::HandleMethodFromCPIndex *svmRecord = reinterpret_cast<TR::HandleMethodFromCPIndex *>(relocation->getTargetAddress());
+
+         hmciRecord->setMethodID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_method));
+         hmciRecord->setCallerID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_caller));
+         hmciRecord->setCpIndex(reloTarget, svmRecord->_cpIndex);
+         hmciRecord->setAppendixObjectNull(reloTarget, svmRecord->_appendixObjectNull);
+         hmciRecord->setDefiningClassID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_definingClass));
+         hmciRecord->setMethodIndex(reloTarget, fej9->getMethodIndexInClass(svmRecord->_definingClass, svmRecord->_method));
+         }
+         break;
+
       default:
          TR_ASSERT(false, "Unknown relo type %d!\n", kind);
          comp->failCompilation<J9::AOTRelocationRecordGenerationFailure>("Unknown relo type %d!\n", kind);
@@ -2323,6 +2338,26 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
                      dmciRecord->appendixObjectNull(reloTarget) ? "true" : "false",
                      (uint32_t)dmciRecord->definingClassID(reloTarget),
                      dmciRecord->methodIndex(reloTarget));
+            }
+         }
+         break;
+
+      case TR_ValidateHandleMethodFromCPIndex:
+         {
+         auto *hmciRecord = reinterpret_cast<TR_RelocationRecordValidateHandleMethodFromCPIndex  *>(reloRecord);
+
+         self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            traceMsg(
+               self()->comp(),
+               "\n Validate Handle Method From CP Index: methodID=%d, callerID=%d, cpIndex=%d, appendixObjectNull=%s, definingClassID=%d, methodIndex=%d ",
+                     (uint32_t)hmciRecord->methodID(reloTarget),
+                     (uint32_t)hmciRecord->callerID(reloTarget),
+                     hmciRecord->cpIndex(reloTarget),
+                     hmciRecord->appendixObjectNull(reloTarget) ? "true" : "false",
+                     (uint32_t)hmciRecord->definingClassID(reloTarget),
+                     hmciRecord->methodIndex(reloTarget));
             }
          }
          break;

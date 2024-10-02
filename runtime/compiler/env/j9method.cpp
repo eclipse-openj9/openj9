@@ -7112,6 +7112,19 @@ TR_ResolvedJ9Method::getResolvedHandleMethod(TR::Compilation * comp, I_32 cpInde
 
       TR_OpaqueMethodBlock * targetJ9MethodBlock = getTargetMethodFromMemberName(invokeCacheArray, &invokeCacheAppendixNull);
 
+      if (comp->compileRelocatableCode())
+         {
+         bool valid =
+            comp->getSymbolValidationManager()->addHandleMethodFromCPIndex(
+               targetJ9MethodBlock,
+               getNonPersistentIdentifier(),
+               cpIndex,
+               invokeCacheAppendixNull);
+
+         if (!valid)
+            comp->failCompilation<J9::AOTHasInvokeHandle>("Failed to add validation record for resolved handle method %p", targetJ9MethodBlock);
+         }
+
       result = fej9()->createResolvedMethod(comp->trMemory(), targetJ9MethodBlock, this);
       }
    else
