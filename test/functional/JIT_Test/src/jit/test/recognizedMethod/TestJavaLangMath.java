@@ -24,7 +24,13 @@ package jit.test.recognizedMethod;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 import java.util.Random;
+import org.testng.asserts.SoftAssert;
+import static jit.test.recognizedMethod.TestMathUtils.*;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Listeners;
 
+
+@Test(singleThreaded=true)
 public class TestJavaLangMath {
 
     /**
@@ -57,93 +63,85 @@ public class TestJavaLangMath {
         AssertJUnit.assertTrue(Double.isNaN(Math.sqrt(Double.NaN)));
     }
 
-    /**
-    * Tests all execution paths defined by the {@link Math.max} method, for float and double data types.
-    */
-    @Test(groups = {"level.sanity"}, invocationCount=2)
-    public void test_java_lang_Math_max() {
-        // Test Math.max for double type with NaN & +0/-0 values
-        AssertJUnit.assertTrue(Double.isNaN(Math.max(Double.NaN, Double.NaN)));
-        AssertJUnit.assertTrue(Double.isNaN(Math.max(Double.NaN, 0.0)));
-        AssertJUnit.assertTrue(Double.isNaN(Math.max(0.0, Double.NaN)));
-        AssertJUnit.assertTrue(Double.isNaN(Math.max(Double.NaN, -0.0)));
-        AssertJUnit.assertTrue(Double.isNaN(Math.max(-0.0, Double.NaN)));
-        AssertJUnit.assertEquals(0.0, Math.max(0.0, -0.0), 0.0);
-        AssertJUnit.assertEquals(0.0, Math.max(-0.0, 0.0), 0.0);
-
-        // Test Math.max for float type with NaN & +0/-0 values
-        AssertJUnit.assertTrue(Float.isNaN(Math.max(Float.NaN, Float.NaN)));
-        AssertJUnit.assertTrue(Float.isNaN(Math.max(Float.NaN, 0.0f)));
-        AssertJUnit.assertTrue(Float.isNaN(Math.max(0.0f, Float.NaN)));
-        AssertJUnit.assertTrue(Float.isNaN(Math.max(Float.NaN, -0.0f)));
-        AssertJUnit.assertTrue(Float.isNaN(Math.max(-0.0f, Float.NaN)));
-        AssertJUnit.assertEquals(0.0f, Math.max(0.0f, -0.0f), 0.0f);
-        AssertJUnit.assertEquals(0.0f, Math.max(-0.0f, 0.0f), 0.0f);
-
-        //Test Math.max with variation of random negative & positive doubles
-        Random random = new Random();
-        double d1 = -random.nextDouble() * 100; // ensures number is negative and within a reasonable range
-        double d2 = -random.nextDouble() * 100;
-        double d3 = random.nextDouble() * 100; // ensures number is positive and within a reasonable range
-        double d4 = random.nextDouble() * 100;
-        AssertJUnit.assertEquals(Math.max(d1, d2), (d1 > d2) ? d1 : d2, 0.0);
-        AssertJUnit.assertEquals(Math.max(d2, d3), (d2 > d3) ? d2 : d3, 0.0);
-        AssertJUnit.assertEquals(Math.max(d3, d4), (d3 > d4) ? d3 : d4, 0.0);
-        AssertJUnit.assertEquals(Math.max(d1, d4), (d1 > d4) ? d1 : d4, 0.0);
-
-        //Test Math.max with variation of random negative & positive floats
-        float f1 = -random.nextFloat() * 100; // ensures number is negative and within a reasonable range
-        float f2 = -random.nextFloat() * 100;
-        float f3 = random.nextFloat() * 100; // ensures number is positive and within a reasonable range
-        float f4 = random.nextFloat() * 100;
-        AssertJUnit.assertEquals(Math.max(f1, f2), (f1 > f2) ? f1 : f2, 0.0f);
-        AssertJUnit.assertEquals(Math.max(f2, f3), (f2 > f3) ? f2 : f3, 0.0f);
-        AssertJUnit.assertEquals(Math.max(f3, f4), (f3 > f4) ? f3 : f4, 0.0f);
-        AssertJUnit.assertEquals(Math.max(f1, f4), (f1 > f4) ? f1 : f4, 0.0f);
+    @Test(groups = {"level.sanity"}, invocationCount=2, dataProvider="zeroProvider", dataProviderClass=TestMathUtils.class)
+    public void test_java_lang_Math_min_zeros_float(Number a, Number b, boolean isFirstArg) {
+        if (a instanceof Float) {
+            float f1 = a.floatValue();
+            float f2 = b.floatValue();
+            assertEquals(Math.min(f1, f2), isFirstArg ? f1 : f2);
+        } else {
+            double f1 = a.doubleValue();
+            double f2 = b.doubleValue();
+            assertEquals(Math.min(f1, f2), isFirstArg ? f1 : f2);
+        }
     }
 
-    /**
-    * Tests all execution paths defined by the {@link Math.min} method, for float and double data types.
-    */
-    @Test(groups = {"level.sanity"}, invocationCount=2)
-    public void test_java_lang_Math_min() {
-        // Test Math.min for double type with NaN & +0/-0 values
-        AssertJUnit.assertTrue(Double.isNaN(Math.min(Double.NaN, Double.NaN)));
-        AssertJUnit.assertTrue(Double.isNaN(Math.min(Double.NaN, 0.0)));
-        AssertJUnit.assertTrue(Double.isNaN(Math.min(0.0, Double.NaN)));
-        AssertJUnit.assertTrue(Double.isNaN(Math.min(Double.NaN, -0.0)));
-        AssertJUnit.assertTrue(Double.isNaN(Math.min(-0.0, Double.NaN)));
-        AssertJUnit.assertEquals(-0.0, Math.min(0.0, -0.0), 0.0);
-        AssertJUnit.assertEquals(-0.0, Math.min(-0.0, 0.0), 0.0);
+    @Test(groups = {"level.sanity"}, invocationCount=2, dataProvider="zeroProvider", dataProviderClass=TestMathUtils.class)
+    public void test_java_lang_Math_max_zeros(Number a, Number b, boolean isFirstArg) {
+        if (a instanceof Float) {
+            float f1 = a.floatValue();
+            float f2 = b.floatValue();
+            assertEquals(Math.max(f1, f2), isFirstArg ? f2 : f1);
+        } else {
+            double f1 = a.doubleValue();
+            double f2 = b.doubleValue();
+            assertEquals(Math.max(f1, f2), isFirstArg ? f2 : f1);
+        }
+    }
 
-        // Test Math.min for float type with NaN & +0/-0 values
-        AssertJUnit.assertTrue(Float.isNaN(Math.min(Float.NaN, Float.NaN)));
-        AssertJUnit.assertTrue(Float.isNaN(Math.min(Float.NaN, 0.0f)));
-        AssertJUnit.assertTrue(Float.isNaN(Math.min(0.0f, Float.NaN)));
-        AssertJUnit.assertTrue(Float.isNaN(Math.min(Float.NaN, -0.0f)));
-        AssertJUnit.assertTrue(Float.isNaN(Math.min(-0.0f, Float.NaN)));
-        AssertJUnit.assertEquals(-0.0f, Math.min(0.0f, -0.0f), 0.0f);
-        AssertJUnit.assertEquals(-0.0f, Math.min(-0.0f, 0.0f), 0.0f);
+    @Test(groups = {"level.sanity"}, invocationCount=2, dataProvider="nanProvider", dataProviderClass=TestMathUtils.class)
+    public void test_java_lang_Math_min_nan(Number a, Number b, Number expected) {
+        if (a instanceof Float) {
+            float f1 = a.floatValue();
+            float f2 = b.floatValue();
+            int exp = expected.intValue();
+            assertEquals(Math.min(f1, f2), exp);
+        } else {
+            double f1 = a.doubleValue();
+            double f2 = b.doubleValue();
+            long exp = expected.longValue();
+            assertEquals(Math.min(f1, f2), exp);
+        }
+    }
 
-        //Test Math.min with variation of random negative & positive doubles
-        Random random = new Random();
-        double d1 = -random.nextDouble() * 100; // ensures number is negative and within a reasonable range
-        double d2 = -random.nextDouble() * 100;
-        double d3 = random.nextDouble() * 100; // ensures number is positive and within a reasonable range
-        double d4 = random.nextDouble() * 100;
-        AssertJUnit.assertEquals(Math.min(d1, d2), (d1 < d2) ? d1 : d2, 0.0);
-        AssertJUnit.assertEquals(Math.min(d2, d3), (d2 < d3) ? d2 : d3, 0.0);
-        AssertJUnit.assertEquals(Math.min(d3, d4), (d3 < d4) ? d3 : d4, 0.0);
-        AssertJUnit.assertEquals(Math.min(d1, d4), (d1 < d4) ? d1 : d4, 0.0);
+    @Test(groups = {"level.sanity"}, invocationCount=2, dataProvider="nanProvider", dataProviderClass=TestMathUtils.class)
+    public void test_java_lang_Math_max_nan(Number a, Number b, Number expected) {
+        if (a instanceof Float) {
+            float f1 = a.floatValue();
+            float f2 = b.floatValue();
+            int exp = expected.intValue();
+            assertEquals(Math.max(f1, f2), exp);
+        } else {
+            double f1 = a.doubleValue();
+            double f2 = b.doubleValue();
+            long exp = expected.longValue();
+            assertEquals(Math.max(f1, f2), exp);
+        }
+    }
 
-        //Test Math.min with variation of random negative & positive floats
-        float f1 = -random.nextFloat() * 100; // ensures number is negative and within a reasonable range
-        float f2 = -random.nextFloat() * 100;
-        float f3 = random.nextFloat() * 100; // ensures number is positive and within a reasonable range
-        float f4 = random.nextFloat() * 100;
-        AssertJUnit.assertEquals(Math.min(f1, f2), (f1 < f2) ? f1 : f2, 0.0f);
-        AssertJUnit.assertEquals(Math.min(f2, f3), (f2 < f3) ? f2 : f3, 0.0f);
-        AssertJUnit.assertEquals(Math.min(f3, f4), (f3 < f4) ? f3 : f4, 0.0f);
-        AssertJUnit.assertEquals(Math.min(f1, f4), (f1 < f4) ? f1 : f4, 0.0f);
+    @Test(groups = {"level.sanity"}, invocationCount=2, dataProvider="normalNumberProvider", dataProviderClass=TestMathUtils.class)
+    public void test_java_lang_Math_min_normal(Number a, Number b){
+        if (a instanceof Float) {
+            float f1 = a.floatValue();
+            float f2 = b.floatValue();
+            assertEquals(Math.min(f1, f2), f1 <= f2 ? f1 : f2);
+        } else {
+            double f1 = a.doubleValue();
+            double f2 = b.doubleValue();
+            assertEquals(Math.min(f1, f2), f1 <= f2 ? f1 : f2);
+        }
+    }
+
+    @Test(groups = {"level.sanity"}, invocationCount=2, dataProvider="normalNumberProvider", dataProviderClass=TestMathUtils.class)
+    public void test_java_lang_Math_max_normal(Number a, Number b){
+        if (a instanceof Float) {
+            float f1 = a.floatValue();
+            float f2 = b.floatValue();
+            assertEquals(Math.max(f1, f2), f1 >= f2 ? f1 : f2);
+        } else {
+            double f1 = a.doubleValue();
+            double f2 = b.doubleValue();
+            assertEquals(Math.max(f1, f2), f1 >= f2 ? f1 : f2);
+        }
     }
 }

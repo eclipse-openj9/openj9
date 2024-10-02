@@ -687,7 +687,7 @@ private:
       SavesNonVolatileGPRsForGC                           = 0x00000800,
       SupportsInlineVectorizedMismatch                    = 0x00001000,
       SupportsInlineVectorizedHashCode                    = 0x00002000,
-      SupportsInlineMath_MaxMin_FD                        = 0x00002000,
+      SupportsInlineMath_MaxMin_FD                        = 0x00004000,
       };
 
    flags32_t _j9Flags;
