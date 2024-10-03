@@ -4219,6 +4219,18 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 		} else if (flightRecorder < noFlightRecorder) {
 			vm->extendedRuntimeFlags2 &= ~(UDATA)J9_EXTENDED_RUNTIME2_JFR_ENABLED;
 		}
+
+		IDATA jfrOptionIndex = FIND_AND_CONSUME_VMARG(OPTIONAL_LIST_MATCH_USING_EQUALS, VMOPT_XXSTARTFLIGHTRECORDING, NULL);
+		if (0 <= jfrOptionIndex) {
+			char* jfrOptionBuffer = NULL;
+			GET_OPTION_VALUE(jfrOptionIndex, '=', &jfrOptionBuffer);
+			if (NULL == jfrOptionBuffer) {
+				vm->jfrState.jfrCMDLineOption = (char*)"dumponexit=false";
+			}
+			else {
+				vm->jfrState.jfrCMDLineOption = jfrOptionBuffer;
+			}
+		}
 	}
 #endif /* defined(J9VM_OPT_JFR) */
 
