@@ -638,6 +638,8 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
    TR::CFG*     cfg = comp()->getMethodSymbol()->getFlowGraph();
    TR::Node*    isObjectNullNode = NULL;
    TR::TreeTop* isObjectNullTreeTop = NULL;
+   TR::Node*    isObjectArrayNode = NULL;
+   TR::TreeTop* isObjectArrayTreeTop = NULL;
    TR::Node*    isNotLowTaggedNode = NULL;
    TR::TreeTop* isNotLowTaggedTreeTop = NULL;
 
@@ -691,6 +693,28 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
 
       if (enableTrace)
          traceMsg(comp(), "Created isObjectNull test node n%dn, non-null object will fall through to Block_%d\n", isObjectNullNode->getGlobalIndex(), treetop->getEnclosingBlock()->getNumber());
+
+      // Test if object is array - offheap only
+   #if defined (J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+      if (TR::Compiler->om.isOffHeapAllocationEnabled() && comp()->target().is64Bit())
+         {
+         //generate array check treetop
+         TR::Node *vftLoad = TR::Node::createWithSymRef(TR::aloadi, 1, 1,
+                                                        objectNode->duplicateTree(),
+                                                        comp()->getSymRefTab()->findOrCreateVftSymbolRef());
+
+         isObjectArrayNode = TR::Node::createif(TR::ificmpne,
+                                                comp()->fej9()->testIsClassArrayType(vftLoad),
+                                                TR::Node::create(TR::iconst, 0),
+                                                NULL);
+         isObjectArrayTreeTop = TR::TreeTop::create(comp(), isObjectArrayNode, NULL, NULL);
+         treetop->insertBefore(isObjectArrayTreeTop);
+         treetop->getEnclosingBlock()->split(treetop, cfg, fixupCommoning);
+
+         if (enableTrace)
+            traceMsg(comp(), "Created isObjectArray test node n%dn, array will branch to array access block\n", isObjectArrayNode->getGlobalIndex());
+         }
+   #endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
 
       // Test if low tag is set
       isNotLowTaggedNode = TR::Node::createif(TR::iflcmpne,
@@ -828,6 +852,50 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
 
       // Split the block that contains the original helper call into a separate block
       treetop->getEnclosingBlock()->split(treetop, cfg, fixupCommoning);
+
+      // Create another helper call for array access (offheap only)
+   #if defined (J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+      if (isObjectArrayTreeTop != NULL)
+         {
+         TR::TreeTop *arrayAccessTreeTop = treetop->duplicateTree();
+         TR::Node *addrToAccessNode = arrayAccessTreeTop->getNode()->getChild(0)->getChild(0);
+         TR::Block *arrayAccessBlock = TR::Block::createEmptyBlock(arrayAccessTreeTop->getNode(), comp(),
+                                                                   treetop->getEnclosingBlock()->getFrequency());
+         arrayAccessBlock->append(arrayAccessTreeTop);
+         arrayAccessBlock->append(TR::TreeTop::create(comp(), TR::Node::create(arrayAccessTreeTop->getNode(),
+                                                                               TR::Goto, 0,
+                                                                               returnBlock->getEntry())));
+
+         //load dataAddr
+         TR::Node *objBaseAddrNode = addrToAccessNode->getChild(0);
+         TR::Node *dataAddrNode = TR::TransformUtil::generateDataAddrLoadTrees(comp(), objBaseAddrNode);
+         addrToAccessNode->setChild(0, dataAddrNode);
+
+         //correct refcounts
+         objBaseAddrNode->decReferenceCount();
+         dataAddrNode->incReferenceCount();
+
+         //set as array test destination and insert array access into IL trees
+         // - if object is array, goto array access block
+         // - else, fall through to lowtag test
+         unsafeCallRamStaticsTT->getEnclosingBlock()->getExit()->insertTreeTopsAfterMe(arrayAccessBlock->getEntry(), arrayAccessBlock->getExit());
+         isObjectArrayNode->setBranchDestination(arrayAccessTreeTop->getEnclosingBlock()->getEntry());
+
+         cfg->addNode(arrayAccessBlock);
+         cfg->addEdge(TR::CFGEdge::createEdge(isObjectArrayTreeTop->getEnclosingBlock(), arrayAccessBlock, comp()->trMemory()));
+         cfg->addEdge(TR::CFGEdge::createEdge(arrayAccessBlock, returnBlock, comp()->trMemory()));
+
+         // Store the return value from the helper call for array access
+         if (storeReturnNode)
+            {
+            TR::Node *storeNode = TR::Node::createStore(unsafeCall, storeReturnNode->getSymbolReference(), arrayAccessTreeTop->getNode()->getFirstChild());
+            arrayAccessTreeTop->insertTreeTopsAfterMe(TR::TreeTop::create(comp(), storeNode));
+            }
+
+         if (enableTrace)
+            traceMsg(comp(), "Created array access helper block_%d that loads dataAddr pointer from array object address\n", arrayAccessBlock->getNumber());
+         }
+   #endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
 
       // Setup CFG edges
       cfg->addEdge(unsafeCallRamStaticsTT->getEnclosingBlock(), returnBlock);
