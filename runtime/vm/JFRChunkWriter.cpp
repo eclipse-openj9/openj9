@@ -24,6 +24,10 @@
 
 #if defined(J9VM_OPT_JFR)
 
+#if defined(LINUX)
+#include <link.h>
+#endif /* defined(LINUX) */
+
 #include "JFRChunkWriter.hpp"
 #include "JFRConstantPoolTypes.hpp"
 
@@ -813,6 +817,85 @@ VM_JFRChunkWriter::writeInitialSystemPropertyEvents(J9JavaVM *vm)
 
 		property = (J9VMSystemProperty *)pool_nextDo(&walkState);
 	}
+}
+
+U_8 *
+VM_JFRChunkWriter::writeThreadDumpEvent()
+{
+	/* reserve size field */
+	U_8 *dataStart = _bufferWriter->getAndIncCursor(sizeof(U_32));
+
+	_bufferWriter->writeLEB128(ThreadDumpID);
+
+	/* write start time */
+	_bufferWriter->writeLEB128(j9time_current_time_millis());
+
+	char *result = (char *)j9mem_allocate_memory(sizeof(char) * THREAD_DUMP_EVENT_SIZE, OMRMEM_CATEGORY_VM);
+
+	if (NULL != result) {
+		J9VMThread *walkThread = J9_LINKED_LIST_START_DO(_vm->mainThread);
+		UDATA numThreads = 0;
+		char *cursor = result;
+
+		while (NULL != walkThread) {
+			UDATA javaTID = J9VMJAVALANGTHREAD_TID(_currentThread, walkThread->threadObject);
+			UDATA osTID = ((J9AbstractThread *)walkThread->osThread)->tid;
+			cursor += sprintf(cursor, "%p javaTID: %zd osTID: %zd\n", walkThread, javaTID, osTID);
+			numThreads++;
+			walkThread = J9_LINKED_LIST_NEXT_DO(_vm->mainThread, walkThread);
+		}
+		sprintf(cursor, "Number of threads: %zd", numThreads);
+	}
+
+	/* write result */
+	writeStringLiteral(result);
+
+	/* write size */
+	_bufferWriter->writeLEB128PaddedU32(dataStart, _bufferWriter->getCursor() - dataStart);
+
+	j9mem_free_memory(result);
+
+	return dataStart;
+}
+
+void
+VM_JFRChunkWriter::writeNativeLibraryEvents()
+{
+#if defined(LINUX)
+	auto dlIterateCallback = [](struct dl_phdr_info *info, size_t size, void *data) -> int {
+		if (NULL == info->dlpi_name || info->dlpi_name[0] == '\0') {
+			return 0;
+		}
+
+		UDATA baseAddress = 0;
+		UDATA topAddress = 0;
+
+		for (int i = 0; i < info->dlpi_phnum; i++) {
+			const ElfW(Phdr) *phdr = info->dlpi_phdr + i;
+			if (PT_LOAD == phdr->p_type) {
+				UDATA phdrBase = info->dlpi_addr + phdr->p_vaddr;
+				UDATA phdrTop = phdrBase + phdr->p_memsz;
+
+				if (0 == baseAddress || phdrBase < baseAddress) {
+					baseAddress = phdrBase;
+				}
+
+				if (0 == topAddress || phdrTop > topAddress) {
+					topAddress = phdrTop;
+				}
+			}
+		}
+
+		VM_JFRChunkWriter *chunkWriter = (VM_JFRChunkWriter *)data;
+		chunkWriter->writeNativeLibraryEvent(baseAddress, topAddress, info->dlpi_name);
+
+		return 0;
+	};
+
+	dl_iterate_phdr(dlIterateCallback, this);
+#endif /* defined(LINUX) */
+
+/* TODO: add implementations for other platforms */
 }
 
 #endif /* defined(J9VM_OPT_JFR) */
