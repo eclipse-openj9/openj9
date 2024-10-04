@@ -8067,10 +8067,39 @@ void J9::Power::TreeEvaluator::genWrtbarForArrayCopy(TR::Node *node, TR::Registe
    }
 
 static TR::Register *genCAS(TR::Node *node, TR::CodeGenerator *cg, TR::Register *objReg, TR::Register *offsetReg, TR::Register *oldVReg, TR::Register *newVReg, TR::Register *cndReg,
-      TR::LabelSymbol *doneLabel, TR::Node *objNode, int32_t oldValue, bool oldValueInReg, bool isLong, bool casWithoutSync = false)
+      TR::LabelSymbol *doneLabel, TR::Node *objNode, int32_t oldValue, bool oldValueInReg, int32_t dataSize, bool isReference, bool isExchange, bool casWithoutSync)
    {
-   TR::Register *resultReg = cg->allocateRegister();
-   TR::Instruction *gcPoint;
+   TR::Compilation *comp = cg->comp();
+   TR::Register *resultReg;
+
+   if (isReference && isExchange)
+      {
+      resultReg = cg->allocateCollectedReferenceRegister();
+      }
+   else
+      {
+      resultReg = cg->allocateRegister();
+      }
+
+   TR::InstOpCode::Mnemonic reservedLoadOpCode, conditionalStoreOpCode, compareOpCode, compareImmOpCode;
+   switch (dataSize)
+      {
+      case 4:
+         reservedLoadOpCode = TR::InstOpCode::lwarx;
+         conditionalStoreOpCode = TR::InstOpCode::stwcx_r;
+         compareOpCode = TR::InstOpCode::cmp4;
+         compareImmOpCode = TR::InstOpCode::cmpi4;
+         break;
+      case 8:
+         reservedLoadOpCode = TR::InstOpCode::ldarx;
+         conditionalStoreOpCode = TR::InstOpCode::stdcx_r;
+         compareOpCode = TR::InstOpCode::cmp8;
+         compareImmOpCode = TR::InstOpCode::cmpi8;
+         break;
+      default:
+         TR_ASSERT_FATAL_WITH_NODE(node, false, "Unknown dataSize: %d\n", dataSize);
+         break;
+      }
 
    // Memory barrier --- NOTE: we should be able to do a test upfront to save this barrier,
    //                          but Hursley advised to be conservative due to lack of specification.
@@ -8079,75 +8108,107 @@ static TR::Register *genCAS(TR::Node *node, TR::CodeGenerator *cg, TR::Register 
    TR::LabelSymbol *loopLabel = generateLabelSymbol(cg);
    generateLabelInstruction(cg, TR::InstOpCode::label, node, loopLabel);
 
-   generateTrg1MemInstruction(cg, isLong ? TR::InstOpCode::ldarx : TR::InstOpCode::lwarx, node, resultReg, TR::MemoryReference::createWithIndexReg(cg, objReg, offsetReg, isLong ? 8 : 4));
+   generateTrg1MemInstruction(cg, reservedLoadOpCode, node, resultReg, TR::MemoryReference::createWithIndexReg(cg, objReg, offsetReg, dataSize));
    if (oldValueInReg)
-      generateTrg1Src2Instruction(cg, isLong ? TR::InstOpCode::cmp8 : TR::InstOpCode::cmp4, node, cndReg, resultReg, oldVReg);
+      generateTrg1Src2Instruction(cg, compareOpCode, node, cndReg, resultReg, oldVReg);
    else
-      generateTrg1Src1ImmInstruction(cg, isLong ? TR::InstOpCode::cmpi8 : TR::InstOpCode::cmpi4, node, cndReg, resultReg, oldValue);
-   generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, resultReg, 0);
+      generateTrg1Src1ImmInstruction(cg, compareImmOpCode, node, cndReg, resultReg, oldValue);
+
+   if (!isExchange)
+      {
+      generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, resultReg, 0);
+      }
+   else if (isReference && comp->target().is64Bit() && comp->useCompressedPointers())
+      {
+      genDecompressPointer(cg, node, resultReg);
+      }
 
    // We don't know how the compare will fare such that we don't dictate the prediction
    generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, doneLabel, cndReg);
 
-   generateMemSrc1Instruction(cg, isLong ? TR::InstOpCode::stdcx_r : TR::InstOpCode::stwcx_r, node, TR::MemoryReference::createWithIndexReg(cg, objReg, offsetReg, isLong ? 8 : 4), newVReg);
+   generateMemSrc1Instruction(cg, conditionalStoreOpCode, node, TR::MemoryReference::createWithIndexReg(cg, objReg, offsetReg, dataSize), newVReg);
    // We expect this store is usually successful, i.e., the following branch will not be taken
    generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, PPCOpProp_BranchUnlikely, node, loopLabel, cndReg);
 
    // We deviate from the VM helper here: no-store-no-barrier instead of always-barrier
    if (!casWithoutSync)
       generateInstruction(cg, TR::InstOpCode::sync, node);
-   generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, resultReg, 1);
+
+   if (!isExchange)
+      {
+      generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, resultReg, 1);
+      }
 
    node->setRegister(resultReg);
    return resultReg;
    }
 
-static TR::Register *VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *cg, bool isLong)
+static TR::Register *VMinlineCompareAndSetOrExchange(TR::Node *node, TR::CodeGenerator *cg, int32_t dataSize, bool isExchange)
    {
    TR::Compilation * comp = cg->comp();
    TR::Register *objReg, *offsetReg, *oldVReg, *newVReg, *resultReg, *cndReg;
-   TR::Node *firstChild, *secondChild, *thirdChild, *fourthChild, *fifthChild;
+   TR::Node *firstChild, *objNode, *offsetNode, *oldVNode, *newVNode;
    TR::RegisterDependencyConditions *conditions;
-   TR::LabelSymbol *doneLabel;
-   intptr_t offsetValue, oldValue;
+   TR::LabelSymbol *startLabel, *doneLabel;
+   int64_t offsetValue, oldValue;
    bool oldValueInReg = true, freeOffsetReg = false;
    TR_J9VMBase *fej9 = (TR_J9VMBase *) (cg->fe());
 
    firstChild = node->getFirstChild();
-   secondChild = node->getSecondChild();
-   thirdChild = node->getChild(2);
-   fourthChild = node->getChild(3);
-   fifthChild = node->getChild(4);
-   objReg = cg->evaluate(secondChild);
+   objNode = node->getSecondChild();
+   offsetNode = node->getChild(2);
+   oldVNode = node->getChild(3);
+   newVNode = node->getChild(4);
+
+   objReg = cg->evaluate(objNode);
 
    // VM helper chops off the value in 32bit, and we don't want the whole long value either
-   if (thirdChild->getOpCode().isLoadConst() && thirdChild->getRegister() == NULL && comp->target().is32Bit())
+   if (offsetNode->getOpCode().isLoadConst() && offsetNode->getRegister() == NULL && comp->target().is32Bit())
       {
-      offsetValue = thirdChild->getLongInt();
+      offsetValue = offsetNode->getLongInt();
       offsetReg = cg->allocateRegister();
       loadConstant(cg, node, (int32_t) offsetValue, offsetReg);
       freeOffsetReg = true;
       }
    else
       {
-      offsetReg = cg->evaluate(thirdChild);
+      offsetReg = cg->evaluate(offsetNode);
+      freeOffsetReg = false;
+
+      // Assume that the offset is positive and not pathologically large (i.e., > 2^31).
       if (comp->target().is32Bit())
          offsetReg = offsetReg->getLowOrder();
       }
 
-   if (fourthChild->getOpCode().isLoadConst() && fourthChild->getRegister() == NULL)
+   if (oldVNode->getOpCode().isLoadConst() && oldVNode->getRegister() == NULL)
       {
-      if (isLong)
-         oldValue = fourthChild->getLongInt();
-      else
-         oldValue = fourthChild->getInt();
+      switch (dataSize)
+         {
+         case 4:
+            oldValue = oldVNode->getInt();
+            break;
+         case 8:
+            oldValue = oldVNode->getLongInt();
+            break;
+         default:
+            TR_ASSERT_FATAL_WITH_NODE(node, false, "Unknown dataSize: %d\n", dataSize);
+            break;
+         }
+
       if (oldValue >= LOWER_IMMED && oldValue <= UPPER_IMMED)
+         {
          oldValueInReg = false;
+         }
       }
+
    if (oldValueInReg)
-      oldVReg = cg->evaluate(fourthChild);
-   newVReg = cg->evaluate(fifthChild);
+      {
+      oldVReg = cg->evaluate(oldVNode);
+      }
+
+   newVReg = cg->evaluate(newVNode);
    cndReg = cg->allocateRegister(TR_CCR);
+   startLabel = generateLabelSymbol(cg);
    doneLabel = generateLabelSymbol(cg);
 
    bool casWithoutSync = false;
@@ -8163,7 +8224,10 @@ static TR::Register *VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *c
          }
       }
 
-   resultReg = genCAS(node, cg, objReg, offsetReg, oldVReg, newVReg, cndReg, doneLabel, secondChild, oldValue, oldValueInReg, isLong, casWithoutSync);
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, startLabel);
+   startLabel->setStartInternalControlFlow();
+
+   resultReg = genCAS(node, cg, objReg, offsetReg, oldVReg, newVReg, cndReg, doneLabel, objNode, oldValue, oldValueInReg, dataSize, false, isExchange, casWithoutSync);
 
    conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(6, 6, cg->trMemory());
    TR::addDependency(conditions, objReg, TR::RealRegister::NoReg, TR_GPR, cg);
@@ -8176,35 +8240,46 @@ static TR::Register *VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *c
    TR::addDependency(conditions, cndReg, TR::RealRegister::cr0, TR_CCR, cg);
 
    generateDepLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, conditions);
+   doneLabel->setEndInternalControlFlow();
 
    cg->stopUsingRegister(cndReg);
    cg->recursivelyDecReferenceCount(firstChild);
-   cg->decReferenceCount(secondChild);
+   cg->decReferenceCount(objNode);
+
    if (freeOffsetReg)
       {
       cg->stopUsingRegister(offsetReg);
-      cg->recursivelyDecReferenceCount(thirdChild);
+      cg->recursivelyDecReferenceCount(offsetNode);
       }
    else
-      cg->decReferenceCount(thirdChild);
+      {
+      cg->decReferenceCount(offsetNode);
+      }
+
    if (oldValueInReg)
-      cg->decReferenceCount(fourthChild);
+      {
+      cg->decReferenceCount(oldVNode);
+      }
    else
-      cg->recursivelyDecReferenceCount(fourthChild);
-   cg->decReferenceCount(fifthChild);
+      {
+      cg->recursivelyDecReferenceCount(oldVNode);
+      }
+
+   cg->decReferenceCount(newVNode);
+
    return resultReg;
    }
 
-static TR::Register *VMinlineCompareAndSwapObject(TR::Node *node, TR::CodeGenerator *cg)
+static TR::Register *VMinlineCompareAndSetOrExchangeReference(TR::Node *node, TR::CodeGenerator *cg, bool isExchange)
    {
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *) (comp->fe());
    TR::Register *objReg, *offsetReg, *oldVReg, *newVReg, *resultReg, *cndReg;
-   TR::Node *firstChild, *secondChild, *thirdChild, *fourthChild, *fifthChild;
+   TR::Node *firstChild, *objNode, *offsetNode, *oldVNode, *newVNode;
    TR::RegisterDependencyConditions *conditions;
    TR::LabelSymbol *doneLabel, *storeLabel, *wrtBarEndLabel;
    intptr_t offsetValue;
-   bool freeOffsetReg = false;
+   bool freeOffsetReg;
    bool needDup = false;
 
    auto gcMode = TR::Compiler->om.writeBarrierType();
@@ -8213,42 +8288,46 @@ static TR::Register *VMinlineCompareAndSwapObject(TR::Node *node, TR::CodeGenera
    bool doCrdMrk = (gcMode == gc_modron_wrtbar_cardmark || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_cardmark_incremental);
 
    firstChild = node->getFirstChild();
-   secondChild = node->getSecondChild();
-   thirdChild = node->getChild(2);
-   fourthChild = node->getChild(3);
-   fifthChild = node->getChild(4);
-   objReg = cg->evaluate(secondChild);
+   objNode = node->getSecondChild();
+   offsetNode = node->getChild(2);
+   oldVNode = node->getChild(3);
+   newVNode = node->getChild(4);
+
+   objReg = cg->evaluate(objNode);
 
    // VM helper chops off the value in 32bit, and we don't want the whole long value either
-   if (thirdChild->getOpCode().isLoadConst() && thirdChild->getRegister() == NULL && comp->target().is32Bit())
+   if (offsetNode->getOpCode().isLoadConst() && offsetNode->getRegister() == NULL && comp->target().is32Bit())
       {
-      offsetValue = thirdChild->getLongInt();
+      offsetValue = offsetNode->getLongInt();
       offsetReg = cg->allocateRegister();
       loadConstant(cg, node, (int32_t) offsetValue, offsetReg);
       freeOffsetReg = true;
       }
    else
       {
-      offsetReg = cg->evaluate(thirdChild);
+      offsetReg = cg->evaluate(offsetNode);
+      freeOffsetReg = false;
+
+      /* Assume that the offset is positive and not pathologically large (i.e., > 2^31). */
       if (comp->target().is32Bit())
          offsetReg = offsetReg->getLowOrder();
       }
 
-   oldVReg = cg->evaluate(fourthChild);
+   oldVReg = cg->evaluate(oldVNode);
 
-   TR::Node *translatedNode = fifthChild;
+   TR::Node *translatedNode = newVNode;
    bool bumpedRefCount = false;
-   if (comp->useCompressedPointers() && (fifthChild->getDataType() != TR::Address))
+   if (comp->useCompressedPointers() && (newVNode->getDataType() != TR::Address))
       {
       bool useShiftedOffsets = (TR::Compiler->om.compressedReferenceShiftOffset() != 0);
 
-      translatedNode = fifthChild;
+      translatedNode = newVNode;
       if (translatedNode->getOpCode().isConversion())
          translatedNode = translatedNode->getFirstChild();
       if (translatedNode->getOpCode().isRightShift()) // optional
          translatedNode = translatedNode->getFirstChild();
 
-      translatedNode = fifthChild;
+      translatedNode = newVNode;
       if (useShiftedOffsets)
          {
          while ((translatedNode->getNumChildren() > 0) && (translatedNode->getOpCodeValue() != TR::a2l))
@@ -8264,7 +8343,7 @@ static TR::Register *VMinlineCompareAndSwapObject(TR::Node *node, TR::CodeGenera
          }
       }
 
-   newVReg = cg->evaluate(fifthChild);
+   newVReg = cg->evaluate(newVNode);
    if (objReg == newVReg)
       {
       newVReg = cg->allocateCollectedReferenceRegister();
@@ -8354,7 +8433,7 @@ static TR::Register *VMinlineCompareAndSwapObject(TR::Node *node, TR::CodeGenera
 #endif //OMR_GC_CONCURRENT_SCAVENGER
 
    if (!comp->getOptions()->realTimeGC())
-      resultReg = genCAS(node, cg, objReg, offsetReg, oldVReg, newVReg, cndReg, doneLabel, secondChild, 0, true, (comp->target().is64Bit() && !comp->useCompressedPointers()));
+      resultReg = genCAS(node, cg, objReg, offsetReg, oldVReg, newVReg, cndReg, doneLabel, objNode, 0, true, TR::Compiler->om.sizeofReferenceField(), true, isExchange, false);
 
    uint32_t numDeps = (doWrtBar || doCrdMrk) ? 13 : 11;
 
@@ -8368,7 +8447,7 @@ static TR::Register *VMinlineCompareAndSwapObject(TR::Node *node, TR::CodeGenera
       TR::Register *temp1Reg = cg->allocateRegister(), *temp2Reg = cg->allocateRegister(), *temp3Reg, *temp4Reg = cg->allocateRegister();
       TR::addDependency(conditions, objReg, TR::RealRegister::gr3, TR_GPR, cg);
       TR::Register *wrtbarSrcReg;
-      if (translatedNode != fifthChild)
+      if (translatedNode != newVNode)
          {
          TR::addDependency(conditions, newVReg, TR::RealRegister::NoReg, TR_GPR, cg);
          TR::addDependency(conditions, translatedNode->getRegister(), TR::RealRegister::gr4, TR_GPR, cg);
@@ -8395,7 +8474,7 @@ static TR::Register *VMinlineCompareAndSwapObject(TR::Node *node, TR::CodeGenera
          TR::addDependency(conditions, temp3Reg, TR::RealRegister::NoReg, TR_GPR, cg);
          }
 
-      if (!fifthChild->isNonNull())
+      if (!newVNode->isNonNull())
          {
          generateTrg1Src1ImmInstruction(cg,TR::InstOpCode::Op_cmpi, node, cndReg, newVReg, NULLVALUE);
          generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, doneLabel, cndReg);
@@ -8446,7 +8525,7 @@ static TR::Register *VMinlineCompareAndSwapObject(TR::Node *node, TR::CodeGenera
          TR::addDependency(conditions, offsetReg, TR::RealRegister::NoReg, TR_GPR, cg);
          }
 
-      if (!fifthChild->isNonNull())
+      if (!newVNode->isNonNull())
          {
          generateTrg1Src1ImmInstruction(cg,TR::InstOpCode::Op_cmpi, node, cndReg, newVReg, NULLVALUE);
          generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, wrtBarEndLabel, cndReg);
@@ -8514,7 +8593,7 @@ static TR::Register *VMinlineCompareAndSwapObject(TR::Node *node, TR::CodeGenera
    generateLabelInstruction(cg, TR::InstOpCode::label, node, storeLabel);
 
    if (comp->getOptions()->realTimeGC())
-      resultReg = genCAS(node, cg, objReg, offsetReg, oldVReg, newVReg, cndReg, doneLabel, secondChild, 0, true, (comp->target().is64Bit() && !comp->useCompressedPointers()));
+      resultReg = genCAS(node, cg, objReg, offsetReg, oldVReg, newVReg, cndReg, doneLabel, objNode, 0, true, TR::Compiler->om.sizeofReferenceField(), true, isExchange, false);
 
    TR::addDependency(conditions, resultReg, TR::RealRegister::NoReg, TR_GPR, cg);
    if (oldVReg != newVReg && oldVReg != objReg)
@@ -8525,18 +8604,24 @@ static TR::Register *VMinlineCompareAndSwapObject(TR::Node *node, TR::CodeGenera
 
    if (needDup)
       cg->stopUsingRegister(newVReg);
+
    cg->stopUsingRegister(cndReg);
    cg->recursivelyDecReferenceCount(firstChild);
-   cg->decReferenceCount(secondChild);
+   cg->decReferenceCount(objNode);
+
    if (freeOffsetReg)
       {
       cg->stopUsingRegister(offsetReg);
-      cg->recursivelyDecReferenceCount(thirdChild);
+      cg->recursivelyDecReferenceCount(offsetNode);
       }
    else
-      cg->decReferenceCount(thirdChild);
-   cg->decReferenceCount(fourthChild);
-   cg->decReferenceCount(fifthChild);
+      {
+      cg->decReferenceCount(offsetNode);
+      }
+
+   cg->decReferenceCount(oldVNode);
+   cg->decReferenceCount(newVNode);
+
    if (bumpedRefCount)
       cg->decReferenceCount(translatedNode);
 
@@ -11894,6 +11979,7 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
       }
    else if (methodSymbol)
       {
+      static bool disableCAEIntrinsic = feGetEnv("TR_DisableCAEIntrinsic") != NULL;
       switch (methodSymbol->getRecognizedMethod())
          {
       case TR::java_util_concurrent_ConcurrentLinkedQueue_tmOffer:
@@ -12196,7 +12282,7 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
 
         if ((node->isUnsafeGetPutCASCallOnNonArray() || !TR::Compiler->om.canGenerateArraylets()) && node->isSafeForCGToFastPathUnsafeCall())
             {
-            resultReg = VMinlineCompareAndSwap(node, cg, false);
+            resultReg = VMinlineCompareAndSetOrExchange(node, cg, 4, false);
             return true;
             }
          break;
@@ -12210,7 +12296,7 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
 
          if (comp->target().is64Bit() && (node->isUnsafeGetPutCASCallOnNonArray() || !TR::Compiler->om.canGenerateArraylets()) && node->isSafeForCGToFastPathUnsafeCall())
             {
-            resultReg = VMinlineCompareAndSwap(node, cg, true);
+            resultReg = VMinlineCompareAndSetOrExchange(node, cg, 8, false);
             return true;
             }
          else if ((node->isUnsafeGetPutCASCallOnNonArray() || !TR::Compiler->om.canGenerateArraylets()) && node->isSafeForCGToFastPathUnsafeCall())
@@ -12227,8 +12313,50 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
 
          if ((node->isUnsafeGetPutCASCallOnNonArray() || !TR::Compiler->om.canGenerateArraylets()) && node->isSafeForCGToFastPathUnsafeCall())
             {
-            resultReg = VMinlineCompareAndSwapObject(node, cg);
+            resultReg = VMinlineCompareAndSetOrExchangeReference(node, cg, false);
             return true;
+            }
+         break;
+
+      case TR::jdk_internal_misc_Unsafe_compareAndExchangeInt:
+        if ((node->isUnsafeGetPutCASCallOnNonArray() || !TR::Compiler->om.canGenerateArraylets()) && node->isSafeForCGToFastPathUnsafeCall())
+            {
+            if (!disableCAEIntrinsic)
+               {
+               resultReg = VMinlineCompareAndSetOrExchange(node, cg, 4, true);
+               return true;
+               }
+            }
+         break;
+
+      case TR::jdk_internal_misc_Unsafe_compareAndExchangeLong:
+        if (comp->target().is64Bit() && (node->isUnsafeGetPutCASCallOnNonArray() || !TR::Compiler->om.canGenerateArraylets()) && node->isSafeForCGToFastPathUnsafeCall())
+            {
+            if (!disableCAEIntrinsic)
+               {
+               resultReg = VMinlineCompareAndSetOrExchange(node, cg, 8, true);
+               return true;
+               }
+            }
+         break;
+
+      case TR::jdk_internal_misc_Unsafe_compareAndExchangeObject:
+         /*
+          * Starting from Java 12, compareAndExchangeObject was changed from a native call to a
+          * Java wrapper calling compareAndExchangeReference.
+          * We only want to inline the JNI native method, so add an explicit test for isNative().
+          */
+         if (!methodSymbol->isNative())
+            break;
+         /* If native, fall through. */
+      case TR::jdk_internal_misc_Unsafe_compareAndExchangeReference:
+         if ((node->isUnsafeGetPutCASCallOnNonArray() || !TR::Compiler->om.canGenerateArraylets()) && node->isSafeForCGToFastPathUnsafeCall())
+            {
+            if (!disableCAEIntrinsic)
+               {
+               resultReg = VMinlineCompareAndSetOrExchangeReference(node, cg, true);
+               return true;
+               }
             }
          break;
 
