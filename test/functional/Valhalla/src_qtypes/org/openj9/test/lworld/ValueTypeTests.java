@@ -2299,7 +2299,7 @@ public class ValueTypeTests {
 	static public void testValueWithLongAlignmentGCScanning() throws Throwable {
 		ArrayList<Object> longAlignmentArrayList = new ArrayList<Object>(objectGCScanningIterationCount);
 		for (int i = 0; i < objectGCScanningIterationCount; i++) {
-			Object newLongAlignmentArray = Array.newInstance(assortedValueWithLongAlignmentClass, genericArraySize);
+			Object newLongAlignmentArray = (Object)ValueClass.newNullRestrictedArray(assortedValueWithLongAlignmentClass, genericArraySize);
 			for (int j = 0; j < genericArraySize; j++) {
 				Object assortedValueWithLongAlignment = createAssorted(makeAssortedValueWithLongAlignment, typeWithLongAlignmentFields);
 				Array.set(newLongAlignmentArray, j, assortedValueWithLongAlignment);
@@ -2324,7 +2324,7 @@ public class ValueTypeTests {
 	static public void testValueWithObjectAlignmentGCScanning() throws Throwable {
 		ArrayList<Object> objectAlignmentArrayList = new ArrayList<Object>(objectGCScanningIterationCount);
 		for (int i = 0; i < objectGCScanningIterationCount; i++) {
-			Object newObjectAlignmentArray = Array.newInstance(assortedValueWithObjectAlignmentClass, genericArraySize);
+			Object newObjectAlignmentArray = (Object)ValueClass.newNullRestrictedArray(assortedValueWithObjectAlignmentClass, genericArraySize);
 			for (int j = 0; j < genericArraySize; j++) {
 				Object assortedValueWithObjectAlignment = createAssorted(makeAssortedValueWithObjectAlignment, typeWithObjectAlignmentFields);
 				Array.set(newObjectAlignmentArray, j, assortedValueWithObjectAlignment);
@@ -2349,7 +2349,7 @@ public class ValueTypeTests {
 	static public void testValueWithSingleAlignmentGCScanning() throws Throwable {
 		ArrayList<Object> singleAlignmentArrayList = new ArrayList<Object>(objectGCScanningIterationCount);
 		for (int i = 0; i < objectGCScanningIterationCount; i++) {
-			Object newSingleAlignmentArray = Array.newInstance(assortedValueWithSingleAlignmentClass, genericArraySize);
+			Object newSingleAlignmentArray = (Object)ValueClass.newNullRestrictedArray(assortedValueWithSingleAlignmentClass, genericArraySize);
 			for (int j = 0; j < genericArraySize; j++) {
 				Object assortedValueWithSingleAlignment = createAssorted(makeAssortedValueWithSingleAlignment, typeWithSingleAlignmentFields);
 				Array.set(newSingleAlignmentArray, j, assortedValueWithSingleAlignment);
