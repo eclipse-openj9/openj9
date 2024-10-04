@@ -652,11 +652,12 @@ J9::CodeGenerator::lowerTreesPreChildrenVisit(TR::Node *parent, TR::TreeTop *tre
       {
       // J9
       //
-      // Hiding compressedref logic from CodeGen doesn't seem a good practise, the evaluator always need the uncompressedref node for write barrier,
-      // therefore, this part is deprecated. It'll be removed once P and Z update their corresponding evaluators.
+      // Hiding compressedref logic from CodeGen isn't a good practice, and the evaluator still needs the uncompressedref node for write barriers.
+      // Therefore, this part is deprecated. It can only be activated on X, P or Z with the TR_UseOldCompareAndSwapObject envvar.
       static bool UseOldCompareAndSwapObject = (bool)feGetEnv("TR_UseOldCompareAndSwapObject");
       static bool disableCASInlining = feGetEnv("TR_DisableCASInlining") != NULL;
-      if (self()->comp()->useCompressedPointers() && ((UseOldCompareAndSwapObject && (self()->comp()->target().cpu.isARM64() || !disableCASInlining)) || !(self()->comp()->target().cpu.isX86() || self()->comp()->target().cpu.isARM64())))
+      if (((self()->comp()->target().cpu.isX86() && !disableCASInlining) || self()->comp()->target().cpu.isPower() || self()->comp()->target().cpu.isZ()) &&
+          self()->comp()->useCompressedPointers() && UseOldCompareAndSwapObject)
          {
          TR::MethodSymbol *methodSymbol = parent->getSymbol()->castToMethodSymbol();
          static bool disableCAEIntrinsic = feGetEnv("TR_DisableCAEIntrinsic") != NULL;
