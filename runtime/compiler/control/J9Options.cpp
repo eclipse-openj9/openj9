@@ -60,7 +60,9 @@
 #include "j9jitnls.h"
 #endif
 
-#define SET_OPTION_BIT(x)   TR::Options::setBit,   offsetof(OMR::Options,_options[(x)&TR_OWM]), ((x)&~TR_OWM)
+#define SET_OPTION_BIT(x)   TR::Options::setBit,   offsetof(J9::Options,_j9options[((x)&J9::TR_J9_OWM)>>32]), ((static_cast<uintptr_t>((x)&~J9::TR_J9_OWM))>>32)
+#define RESET_OPTION_BIT(x) TR::Options::resetBit, offsetof(J9::Options,_j9options[((x)&J9::TR_J9_OWM)>>32]), ((static_cast<uintptr_t>((x)&~J9::TR_J9_OWM))>>32)
+
 //Default code cache total max memory percentage set to 25% of physical RAM for low memory systems
 #define CODECACHE_DEFAULT_MAXRAMPERCENTAGE 25
 // For use with TPROF only, disable JVMPI hooks even if -Xrun is specified.

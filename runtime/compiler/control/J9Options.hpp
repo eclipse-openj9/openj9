@@ -133,11 +133,83 @@ enum ExternalOptions
    TR_NumExternalOptions                       = 77
    };
 
+enum CompilationOptions
+   {
+   TR_OMR_OWM                = 0x00000000FFFFFFFF,
+   // Option word mask - these bits identify which option word the option is
+   // in (words 0-31 << 32)
+   //
+   TR_J9_OWM                 = 0x0000001F00000000,
+
+   // Option word 0
+   //
+   // Available              = 0x0000002000000000,
+   // Available              = 0x0000004000000000,
+   // Available              = 0x0000008000000000,
+   // Available              = 0x0000010000000000,
+   // Available              = 0x0000020000000000,
+   // Available              = 0x0000040000000000,
+   // Available              = 0x0000080000000000,
+   // Available              = 0x0000100000000000,
+   // Available              = 0x0000200000000000,
+   // Available              = 0x0000400000000000,
+   // Available              = 0x0000800000000000,
+   // Available              = 0x0001000000000000,
+   // Available              = 0x0002000000000000,
+   // Available              = 0x0004000000000000,
+   // Available              = 0x0008000000000000,
+   // Available              = 0x0010000000000000,
+   // Available              = 0x0020000000000000,
+   // Available              = 0x0040000000000000,
+   // Available              = 0x0080000000000000,
+   // Available              = 0x0100000000000000,
+   // Available              = 0x0200000000000000,
+   // Available              = 0x0400000000000000,
+   // Available              = 0x0800000000000000,
+   // Available              = 0x1000000000000000,
+   // Available              = 0x2000000000000000,
+   // Available              = 0x4000000000000000,
+   // Available              = 0x8000000000000000,
+
+   // Option word 1
+   //
+   // Available              = 0x0000002000000000 + (1<<32),
+   // Available              = 0x0000004000000000 + (1<<32),
+   // Available              = 0x0000008000000000 + (1<<32),
+   // Available              = 0x0000010000000000 + (1<<32),
+   // Available              = 0x0000020000000000 + (1<<32),
+   // Available              = 0x0000040000000000 + (1<<32),
+   // Available              = 0x0000080000000000 + (1<<32),
+   // Available              = 0x0000100000000000 + (1<<32),
+   // Available              = 0x0000200000000000 + (1<<32),
+   // Available              = 0x0000400000000000 + (1<<32),
+   // Available              = 0x0000800000000000 + (1<<32),
+   // Available              = 0x0001000000000000 + (1<<32),
+   // Available              = 0x0002000000000000 + (1<<32),
+   // Available              = 0x0004000000000000 + (1<<32),
+   // Available              = 0x0008000000000000 + (1<<32),
+   // Available              = 0x0010000000000000 + (1<<32),
+   // Available              = 0x0020000000000000 + (1<<32),
+   // Available              = 0x0040000000000000 + (1<<32),
+   // Available              = 0x0080000000000000 + (1<<32),
+   // Available              = 0x0100000000000000 + (1<<32),
+   // Available              = 0x0200000000000000 + (1<<32),
+   // Available              = 0x0400000000000000 + (1<<32),
+   // Available              = 0x0800000000000000 + (1<<32),
+   // Available              = 0x1000000000000000 + (1<<32),
+   // Available              = 0x2000000000000000 + (1<<32),
+   // Available              = 0x4000000000000000 + (1<<32),
+   // Available              = 0x8000000000000000 + (1<<32),
+   };
+
 class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    {
    public:
 
-   Options() : OMR::OptionsConnector() {}
+   Options() : OMR::OptionsConnector()
+      {
+      memset(_j9options, 0, sizeof(_j9options));
+      }
 
    Options(TR_Memory * m,
            int32_t index,
@@ -215,6 +287,46 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
     *
     */
    static int32_t setMaxOnsiteCacheSlotForInstanceOf(int32_t m) {return _maxOnsiteCacheSlotForInstanceOf = m;}
+
+   bool getAnyOption(uint64_t mask)
+      {
+      if (mask & TR_OMR_OWM)
+         {
+         return OMR::OptionsConnector::getAnyOption(static_cast<uint32_t>(mask));
+         }
+      else
+         {
+         return (_j9options[(mask & TR_J9_OWM) >> 32] & ((mask & ~TR_J9_OWM) >> 32)) != 0;
+         }
+      }
+
+   bool getAllOptions(uint64_t mask)
+      {
+      if (mask & TR_OMR_OWM)
+         {
+         return OMR::OptionsConnector::getAllOptions(static_cast<uint32_t>(mask));
+         }
+      else
+         {
+         return (_j9options[(mask & TR_J9_OWM) >> 32] & ((mask & ~TR_J9_OWM) >> 32)) == mask;
+         }
+      }
+
+   bool getOption(uint64_t mask);
+   void setOption(uint64_t mask, bool b = true)
+      {
+      if (mask & TR_OMR_OWM)
+         {
+         OMR::OptionsConnector::setOption(static_cast<uint32_t>(mask), b);
+         }
+      else
+         {
+         if (b)
+            _j9options[(mask & TR_J9_OWM) >> 32] |= ((mask & ~TR_J9_OWM) >> 32);
+         else
+            _j9options[(mask & TR_J9_OWM) >> 32] &= (~(mask & ~TR_J9_OWM) >> 32);
+         }
+      }
 
    static int32_t _resetCountThreshold;
 
@@ -676,6 +788,8 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
     */
    void setFSDOptionsForAll(bool flag);
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
+   uint32_t                    _j9options[(TR_J9_OWM >> 32) + 1];
 
    private:
 
