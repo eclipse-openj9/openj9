@@ -5546,7 +5546,7 @@ TR_J9MethodBase::isUnsafeCAS(TR::Compilation * c)
     * The TR::Compilation parameter "c" is sometimes null. But, it is needed to perform a platform target check.
     * So, if it is null, this code goes and gets comp.
     */
-   if (nullptr == c)
+   if (NULL == c)
       {
       c = TR::comp();
       }
