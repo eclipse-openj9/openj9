@@ -9533,7 +9533,7 @@ static TR::Register* inlineCompareAndSwapObjectNative(TR::Node* node, TR::CodeGe
    TR::Register* offset   = cg->evaluate(offsetNode);
    TR::Register* oldValue = cg->evaluate(oldValueNode);
    TR::Register* newValue = cg->evaluate(newValueNode);
-   TR::Register* result   = isExchange ? nullptr : cg->allocateRegister();
+   TR::Register* result   = isExchange ? NULL : cg->allocateRegister();
    TR::Register* EAX      = cg->allocateRegister();
    TR::Register* tmp      = cg->allocateRegister();
 
