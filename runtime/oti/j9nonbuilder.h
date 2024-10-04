@@ -1271,7 +1271,7 @@ typedef struct J9SharedCacheHeader {
 	J9WSRP corruptFlagPtr;
 	J9SRP sharedStringHead;
 	J9SRP sharedStringTail;
-	J9SRP unused1;
+	U_32 extraStartupHints; /* Number of addtional startup hints allowed to be stored into the shared cache */
 	U_32 totalSharedStringNodes;
 	U_32 totalSharedStringWeight;
 	U_32 readWriteFlags;

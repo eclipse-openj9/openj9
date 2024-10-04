@@ -397,6 +397,10 @@ public:
 	
 	bool hasReadMutex(J9VMThread* currentThread) const;
 
+	U_32 getExtraStartupHints(void) const;
+	
+	void setExtraStartupHints(J9VMThread* currentThread, U_32 val);
+
 private:
 	J9SharedClassConfig* _sharedClassConfig;
 	SH_OSCache* _oscache;

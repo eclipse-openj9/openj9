@@ -3890,6 +3890,7 @@ SH_CacheMap::storeSharedData(J9VMThread* currentThread, const char* key, UDATA k
 	UDATA dataNotIndexed = (data != NULL) ? (data->flags & J9SHRDATA_NOT_INDEXED) : 0;
 	SH_ByteDataManager* localBDM;
 	bool overwrite = false;
+	U_32 extraStartupHints = 0;
 
 	PORT_ACCESS_FROM_VMC(currentThread);
 
@@ -3989,6 +3990,14 @@ SH_CacheMap::storeSharedData(J9VMThread* currentThread, const char* key, UDATA k
 	}
 
 _addData:
+	if (J9SHR_DATA_TYPE_STARTUP_HINTS == data->type) {
+		extraStartupHints = _ccHead->getExtraStartupHints();
+		if (0 == extraStartupHints) {
+			result = NULL;
+			Trc_SHR_CM_storeSharedData_NoMoreStartupHintsAllowed(currentThread);
+			goto _done;
+		}
+	}
 	/* If data is NULL or datalen <= 0, mark the original item(s) stale, but don't store anything */
 	if ((data != NULL) && (data->length > 0) && ((data->address != NULL) || (data->flags & J9SHRDATA_ALLOCATE_ZEROD_MEMORY))) {
 		const J9UTF8* tokenKey = NULL;
@@ -4021,6 +4030,12 @@ _addData:
 			}
 		}
 		result = (const U_8*)addByteDataToCache(currentThread, localBDM, tokenKey, data, NULL, false);
+		if (NULL != result) {
+			if (J9SHR_DATA_TYPE_STARTUP_HINTS == data->type) {
+				Trc_SHR_Assert_True(extraStartupHints > 0);
+				_ccHead->setExtraStartupHints(currentThread, extraStartupHints - 1);
+			}
+		}
 	}
 
 _done:
