@@ -28,39 +28,64 @@ import org.testng.Assert;
 @Test(groups = { "level.sanity" })
 public class ValhallaAttributeTests {
 
-	class MultiPreloadTest {}
+	class MultiLoadableDescriptorsTest {}
 
-	/* A class may have no more than one Preload attribute. */
-	@Test(expectedExceptions = java.lang.ClassFormatError.class, expectedExceptionsMessageRegExp = ".*Multiple Preload attributes.*")
-	static public void testMultiplePreloadAttributes() throws Throwable {
-		String className = MultiPreloadTest.class.getName();
-		ValhallaAttributeGenerator.generateClassWithTwoPreloadAttributes("MultiPreloadAttributes",
-			new String[]{className}, new String[]{className});
+	/* A class may have no more than one LoadableDescriptors attribute. */
+	@Test(expectedExceptions = java.lang.ClassFormatError.class,
+		expectedExceptionsMessageRegExp = ".*Multiple LoadableDescriptors attributes.*")
+	static public void testMultipleLoadableDescriptorsAttributes() throws Throwable {
+		String className = MultiLoadableDescriptorsTest.class.getName();
+		ValhallaAttributeGenerator.generateClassWithTwoLoadableDescriptorsAttributes(
+			"MultiLoadableDescriptorsAttributes",
+			new String[]{"L" + className + ";"}, new String[]{"L" + className + ";"}
+		);
 	}
 
-	class PreloadClass {}
+	class LoadableDescriptorsClass {}
 
 	@Test
-	static public void testPreloadBehavior() throws Throwable {
-		String className = PreloadClass.class.getName();
-		/* Verify PreloadClass is not loaded */
+	static public void testLoadableDescriptorsBehavior() throws Throwable {
+		String className = LoadableDescriptorsClass.class.getName();
+		/* Verify LoadableDescriptorsClass is not loaded */
 		Assert.assertNull(ValhallaAttributeGenerator.findLoadedTestClass(className));
-		/* Generate and load class that preloads PreloadClass */
-		ValhallaAttributeGenerator.generateClassWithPreloadAttribute("PreloadBehavior", new String[]{className});
-		/* Verify that PreloadClass is loaded */
+		/* Generate and load class that preloads LoadableDescriptorsClass */
+		ValhallaAttributeGenerator.generateClassWithLoadableDescriptorsAttribute(
+			"LoadableDescriptorsBehavior",
+			new String[]{"L" + className + ";"}
+		);
+		/* Verify that LoadableDescriptorsClass is loaded */
 		Assert.assertNotNull(ValhallaAttributeGenerator.findLoadedTestClass(className));
 	}
 
-	value class PreloadValueClass {}
+	value class LoadableDescriptorsValueClass {}
 
 	@Test
-	static public void testPreloadValueClassBehavior() throws Throwable {
-		String className = PreloadValueClass.class.getName();
-		/* Verify PreloadValueClass is not loaded */
+	static public void testLoadableDescriptorsValueClassBehavior() throws Throwable {
+		String className = LoadableDescriptorsValueClass.class.getName();
+		/* Verify LoadableDescriptorsValueClass is not loaded */
 		Assert.assertNull(ValhallaAttributeGenerator.findLoadedTestClass(className));
-		/* Generate and load class that preloads PreloadClass */
-		ValhallaAttributeGenerator.generateClassWithPreloadAttribute("PreloadValueClassBehavior", new String[]{className});
-		/* Verify that PreloadValueClass is loaded */
+		/* Generate and load class that preloads LoadableDescriptorsClass */
+		ValhallaAttributeGenerator.generateClassWithLoadableDescriptorsAttribute(
+			"LoadableDescriptorsValueClassBehavior",
+			new String[]{"L" + className + ";"}
+		);
+		/* Verify that LoadableDescriptorsValueClass is loaded */
+		Assert.assertNotNull(ValhallaAttributeGenerator.findLoadedTestClass(className));
+	}
+
+	class LoadableDescriptorsArrayClass {}
+
+	@Test
+	static public void testLoadableDescriptorsArrayBehavior() throws Throwable {
+		String className = LoadableDescriptorsArrayClass.class.getName();
+		/* Verify LoadableDescriptorsArrayClass is not loaded */
+		Assert.assertNull(ValhallaAttributeGenerator.findLoadedTestClass(className));
+		/* Generate and load class that preloads LoadableDescriptorsClass */
+		ValhallaAttributeGenerator.generateClassWithLoadableDescriptorsAttribute(
+			"testLoadableDescriptorsArrayBehavior",
+			new String[]{"[L" + className + ";"}
+		);
+		/* Verify that LoadableDescriptorsClass is loaded */
 		Assert.assertNotNull(ValhallaAttributeGenerator.findLoadedTestClass(className));
 	}
 

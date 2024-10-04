@@ -39,11 +39,11 @@ public class ValhallaUtils {
 	static final int ACC_DEFAULT = 0x1;
 	static final int ACC_NON_ATOMIC = 0x2;
 
-	final static class PreloadAttribute extends Attribute {
+	final static class LoadableDescriptorsAttribute extends Attribute {
 		private final String[] classes;
 
-		public PreloadAttribute(String[] classes) {
-			super("Preload");
+		public LoadableDescriptorsAttribute(String[] classes) {
+			super("LoadableDescriptors");
 			this.classes = classes;
 		}
 
@@ -65,8 +65,8 @@ public class ValhallaUtils {
 			b.putShort(classes.length);
 
 			int cpIndex;
-			for (int i = 0; i < classes.length; i++) {
-				cpIndex = cw.newClass(classes[i].replace('.', '/'));
+			for (String clazz : classes) {
+				cpIndex = cw.newUTF8(clazz.replace('.', '/'));
 				b.putShort(cpIndex);
 			}
 			return b;
