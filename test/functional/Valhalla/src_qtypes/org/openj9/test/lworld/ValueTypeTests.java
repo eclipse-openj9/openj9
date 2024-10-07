@@ -2291,6 +2291,17 @@ public class ValueTypeTests {
 		checkCastRefClassOnNull.invoke();
 	}
 
+	@Test(priority=1)
+	static public void testClassIsInstanceNullableArrays() throws Throwable {
+		ValueTypePoint2D[] nonNullableArray = (ValueTypePoint2D[]) ValueClass.newNullRestrictedArray(ValueTypePoint2D.class, 1);
+		ValueTypePoint2D[] nullableArray = new ValueTypePoint2D[1];
+
+		assertTrue(nonNullableArray.getClass().isInstance(nonNullableArray));
+		assertTrue(nullableArray.getClass().isInstance(nullableArray));
+		assertFalse(nonNullableArray.getClass().isInstance(nullableArray));
+		assertTrue(nullableArray.getClass().isInstance(nonNullableArray));
+	}
+
 	/*
 	 * Maintain a buffer of flattened arrays with long-aligned valuetypes while keeping a certain amount of classes alive at any
 	 * single time. This forces the GC to unload the classes.
