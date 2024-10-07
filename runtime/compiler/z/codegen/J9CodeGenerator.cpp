@@ -197,7 +197,7 @@ J9::Z::CodeGenerator::initialize()
       cg->setSupportsBigDecimalLongLookasideVersioning();
 
    // RI support
-   if (comp->getOption(TR_HWProfilerDisableRIOverPrivateLinkage)
+   if (comp->getOption(J9::TR_HWProfilerDisableRIOverPrivateLinkage)
        && comp->getPersistentInfo()->isRuntimeInstrumentationEnabled()
        && comp->target().cpu.isAtLeast(OMR_PROCESSOR_S390_ZEC12)
        && comp->target().cpu.supportsFeature(OMR_FEATURE_S390_RI))

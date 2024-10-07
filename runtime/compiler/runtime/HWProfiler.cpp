@@ -839,7 +839,7 @@ TR_HWProfiler::createRecords(TR::Compilation *comp)
          }
 
       TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fej9());
-      if (!TR::Options::getCmdLineOptions()->getOption(TR_HWProfilerDisableAOT) &&
+      if (!TR::Options::getCmdLineOptions()->getOption(J9::TR_HWProfilerDisableAOT) &&
           fej9->hardwareProfilingInstructionsNeedRelocation())
          {
          cg->addExternalRelocation(
