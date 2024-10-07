@@ -625,6 +625,25 @@ public:
    */
    void setSupportsIntegerToChars() {_j9Flags.set(SupportsIntegerToChars); }
 
+   /** \brief
+   *    Determines whether the code generator supports inlining of
+   *       - Integer.compress,
+   *       - Integer.expand,
+   *       - Long.compress,
+   *       - Long.expand,
+   */
+   bool getSupportsParallelBitOperations() { return _j9Flags.testAny(SupportsParallelBitOperations); }
+
+
+   /** \brief
+   *    The code generator supports inlining of
+   *       - Integer.compress,
+   *       - Integer.expand,
+   *       - Long.compress,
+   *       - Long.expand,
+   */
+   void setSupportsParallelBitOperations() {_j9Flags.set(SupportsParallelBitOperations); }
+
    /**
     * \brief Determine whether this code generator guarantees resolved direct
     * dispatch under AOT with SVM.
@@ -677,6 +696,7 @@ private:
       SavesNonVolatileGPRsForGC                           = 0x00000800,
       SupportsInlineVectorizedMismatch                    = 0x00001000,
       SupportsInlineVectorizedHashCode                    = 0x00002000,
+      SupportsParallelBitOperations                       = 0x00004000,
       };
 
    flags32_t _j9Flags;
