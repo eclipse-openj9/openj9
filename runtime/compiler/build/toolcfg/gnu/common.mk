@@ -135,7 +135,7 @@ CX_OPTFLAG?=$(CX_DEFAULTOPT)
 CX_FLAGS_PROD+=$(CX_OPTFLAG)
 
 ifeq ($(HOST_ARCH),x)
-    CX_FLAGS+=-mfpmath=sse -msse -msse2 -fno-math-errno -fno-trapping-math
+    CX_FLAGS+=-mfpmath=sse -msse -msse2 -mbmi2 -fno-math-errno -fno-trapping-math
 
     ifeq ($(HOST_BITS),32)
         CX_FLAGS+=-m32 -fpic
