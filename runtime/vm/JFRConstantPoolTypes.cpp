@@ -118,7 +118,7 @@ VM_JFRConstantPoolTypes::stackTraceHashFn(void *key, void *userData)
 {
 	StackTraceEntry *entry = (StackTraceEntry*) key;
 
-	return (U_64)(UDATA)entry->vmThread ^ (U_64)entry->time;
+	return (U_64)(UDATA)entry->vmThread ^ (U_64)entry->ticks;
 }
 
 UDATA
@@ -127,7 +127,7 @@ VM_JFRConstantPoolTypes::stackTraceHashEqualFn(void *tableNode, void *queryNode,
 	StackTraceEntry *tableEntry = (StackTraceEntry *) tableNode;
 	StackTraceEntry *queryEntry = (StackTraceEntry *) queryNode;
 
-	return tableEntry->vmThread == queryEntry->vmThread && tableEntry->time == queryEntry->time;
+	return tableEntry->vmThread == queryEntry->vmThread && tableEntry->ticks == queryEntry->ticks;
 }
 
 UDATA
@@ -303,7 +303,7 @@ VM_JFRConstantPoolTypes::walkStackTraceTablePrint(void *entry, void *userData)
 	J9VMThread *currentThread = (J9VMThread *)userData;
 	PORT_ACCESS_FROM_VMC(currentThread);
 
-	j9tty_printf(PORTLIB, "%u) time=%li numOfFrames=%u frames=%p curr=%p next=%p \n", tableEntry->index, tableEntry->time, tableEntry->numOfFrames, tableEntry->frames, tableEntry, tableEntry->next);
+	j9tty_printf(PORTLIB, "%u) time=%li numOfFrames=%u frames=%p curr=%p next=%p \n", tableEntry->index, tableEntry->ticks, tableEntry->numOfFrames, tableEntry->frames, tableEntry, tableEntry->next);
 
 	return FALSE;
 }
@@ -866,7 +866,7 @@ done:
 }
 
 U_32
-VM_JFRConstantPoolTypes::addStackTraceEntry(J9VMThread *vmThread, I_64 time, U_32 numOfFrames)
+VM_JFRConstantPoolTypes::addStackTraceEntry(J9VMThread *vmThread, I_64 ticks, U_32 numOfFrames)
 {
 	U_32 index = U_32_MAX;
 	StackTraceEntry *entry = NULL;
@@ -874,7 +874,7 @@ VM_JFRConstantPoolTypes::addStackTraceEntry(J9VMThread *vmThread, I_64 time, U_3
 
 	entry = &entryBuffer;
 	entry->vmThread = vmThread;
-	entry->time = time;
+	entry->ticks = ticks;
 	_buildResult = OK;
 
 	entry = (StackTraceEntry *) hashTableFind(_stackTraceTable, entry);
@@ -929,7 +929,7 @@ VM_JFRConstantPoolTypes::addExecutionSampleEntry(J9JFRExecutionSample *execution
 	}
 
 	entry->vmThread = executionSampleData->vmThread;
-	entry->time = executionSampleData->startTime;
+	entry->ticks = executionSampleData->startTicks;
 	entry->state = RUNNABLE; //TODO
 
 	entry->threadIndex = addThreadEntry(entry->vmThread);
@@ -956,7 +956,7 @@ VM_JFRConstantPoolTypes::addThreadStartEntry(J9JFRThreadStart *threadStartData)
 		goto done;
 	}
 
-	entry->time = threadStartData->startTime;
+	entry->ticks = threadStartData->startTicks;
 
 	entry->threadIndex = addThreadEntry(threadStartData->thread);
 	if (isResultNotOKay()) goto done;
@@ -987,7 +987,7 @@ VM_JFRConstantPoolTypes::addThreadEndEntry(J9JFREvent *threadEndData)
 		goto done;
 	}
 
-	entry->time = threadEndData->startTime;
+	entry->ticks = threadEndData->startTicks;
 
 	entry->threadIndex = addThreadEntry(threadEndData->vmThread);
 	if (isResultNotOKay()) goto done;
@@ -1012,7 +1012,7 @@ VM_JFRConstantPoolTypes::addThreadSleepEntry(J9JFRThreadSlept *threadSleepData)
 		goto done;
 	}
 
-	entry->time = threadSleepData->startTime;
+	entry->ticks = threadSleepData->startTicks;
 	entry->duration = threadSleepData->duration;
 	entry->sleepTime = threadSleepData->time;
 

@@ -360,7 +360,7 @@ typedef struct J9JFRBuffer {
 /* JFR event structures */
 
 #define J9JFR_EVENT_COMMON_FIELDS \
-	I_64 startTime; \
+	I_64 startTicks; \
 	UDATA eventType; \
 	struct J9VMThread *vmThread;
 
@@ -5635,6 +5635,8 @@ typedef struct JFRState {
 	IDATA blobFileDescriptor;
 	void *jfrWriter;
 	UDATA jfrChunkCount;
+	I_64 chunkStartTime;
+	I_64 chunkStartTicks;
 	void *constantEvents;
 	BOOLEAN isConstantEventsInitialized;
 	omrthread_monitor_t isConstantEventsInitializedMutex;
