@@ -11769,15 +11769,6 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
          callInlined = true;
          break;
 
-      case TR::java_lang_String_compress:
-         return TR::TreeEvaluator::compressStringEvaluator(node, cg, useJapaneseCompression);
-
-      case TR::java_lang_String_compressNoCheck:
-         return TR::TreeEvaluator::compressStringNoCheckEvaluator(node, cg, useJapaneseCompression);
-
-      case TR::java_lang_String_andOR:
-         return TR::TreeEvaluator::andORStringEvaluator(node, cg);
-
       default:
          break;
       }
@@ -12047,67 +12038,6 @@ J9::X86::TreeEvaluator::encodeUTF16Evaluator(TR::Node *node, TR::CodeGenerator *
    return resultReg;
    }
 
-
-TR::Register *
-J9::X86::TreeEvaluator::compressStringEvaluator(
-      TR::Node *node,
-      TR::CodeGenerator *cg,
-      bool japaneseMethod)
-   {
-   TR::Node *srcObjNode, *dstObjNode, *startNode, *lengthNode;
-   TR::Register *srcObjReg, *dstObjReg, *lengthReg, *startReg;
-   bool stopUsingCopyReg1, stopUsingCopyReg2, stopUsingCopyReg3, stopUsingCopyReg4;
-
-   srcObjNode = node->getChild(0);
-   dstObjNode = node->getChild(1);
-   startNode = node->getChild(2);
-   lengthNode = node->getChild(3);
-
-   stopUsingCopyReg1 = TR::TreeEvaluator::stopUsingCopyRegAddr(srcObjNode, srcObjReg, cg);
-   stopUsingCopyReg2 = TR::TreeEvaluator::stopUsingCopyRegAddr(dstObjNode, dstObjReg, cg);
-   stopUsingCopyReg3 = TR::TreeEvaluator::stopUsingCopyRegInteger(startNode, startReg, cg);
-   stopUsingCopyReg4 = TR::TreeEvaluator::stopUsingCopyRegInteger(lengthNode, lengthReg, cg);
-
-   uintptr_t hdrSize = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
-   generateRegImmInstruction(TR::InstOpCode::ADDRegImms(), node, srcObjReg, hdrSize, cg);
-   generateRegImmInstruction(TR::InstOpCode::ADDRegImms(), node, dstObjReg, hdrSize, cg);
-
-
-   // Now that we have all the registers, set up the dependencies
-   TR::RegisterDependencyConditions  *dependencies =
-      generateRegisterDependencyConditions((uint8_t)0, 6, cg);
-   TR::Register *resultReg = cg->allocateRegister();
-   TR::Register *dummy = cg->allocateRegister();
-   dependencies->addPostCondition(srcObjReg, TR::RealRegister::esi, cg);
-   dependencies->addPostCondition(dstObjReg, TR::RealRegister::edi, cg);
-   dependencies->addPostCondition(lengthReg, TR::RealRegister::ecx, cg);
-   dependencies->addPostCondition(startReg, TR::RealRegister::eax, cg);
-   dependencies->addPostCondition(resultReg, TR::RealRegister::edx, cg);
-   dependencies->addPostCondition(dummy, TR::RealRegister::ebx, cg);
-   dependencies->stopAddingConditions();
-
-   TR_RuntimeHelper helper;
-   if (cg->comp()->target().is64Bit())
-      helper = japaneseMethod ? TR_AMD64compressStringJ : TR_AMD64compressString;
-   else
-      helper = japaneseMethod ? TR_IA32compressStringJ : TR_IA32compressString;
-   generateHelperCallInstruction(node, helper, dependencies, cg);
-   cg->stopUsingRegister(dummy);
-
-   for (uint16_t i = 0; i < node->getNumChildren(); i++)
-     cg->decReferenceCount(node->getChild(i));
-
-   if (stopUsingCopyReg1)
-      cg->getLiveRegisters(TR_GPR)->registerIsDead(srcObjReg);
-   if (stopUsingCopyReg2)
-      cg->getLiveRegisters(TR_GPR)->registerIsDead(dstObjReg);
-   if (stopUsingCopyReg3)
-      cg->getLiveRegisters(TR_GPR)->registerIsDead(startReg);
-   if (stopUsingCopyReg4)
-      cg->getLiveRegisters(TR_GPR)->registerIsDead(lengthReg);
-   node->setRegister(resultReg);
-   return resultReg;
-   }
 
 /*
  * The CaseConversionManager is used to store info about the conversion. It defines the lower bound and upper bound value depending on
@@ -12494,113 +12424,6 @@ J9::X86::TreeEvaluator::stringCaseConversionHelper(TR::Node *node, TR::CodeGener
    return result;
    }
 
-TR::Register *
-J9::X86::TreeEvaluator::compressStringNoCheckEvaluator(
-      TR::Node *node,
-      TR::CodeGenerator *cg,
-      bool japaneseMethod)
-   {
-   TR::Node *srcObjNode, *dstObjNode, *startNode, *lengthNode;
-   TR::Register *srcObjReg, *dstObjReg, *lengthReg, *startReg;
-   bool stopUsingCopyReg1, stopUsingCopyReg2, stopUsingCopyReg3, stopUsingCopyReg4;
-
-   srcObjNode = node->getChild(0);
-   dstObjNode = node->getChild(1);
-   startNode = node->getChild(2);
-   lengthNode = node->getChild(3);
-
-   stopUsingCopyReg1 = TR::TreeEvaluator::stopUsingCopyRegAddr(srcObjNode, srcObjReg, cg);
-   stopUsingCopyReg2 = TR::TreeEvaluator::stopUsingCopyRegAddr(dstObjNode, dstObjReg, cg);
-   stopUsingCopyReg3 = TR::TreeEvaluator::stopUsingCopyRegInteger(startNode, startReg, cg);
-   stopUsingCopyReg4 = TR::TreeEvaluator::stopUsingCopyRegInteger(lengthNode, lengthReg, cg);
-
-   uintptr_t hdrSize = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
-   generateRegImmInstruction(TR::InstOpCode::ADDRegImms(), node, srcObjReg, hdrSize, cg);
-   generateRegImmInstruction(TR::InstOpCode::ADDRegImms(), node, dstObjReg, hdrSize, cg);
-
-
-   // Now that we have all the registers, set up the dependencies
-   TR::RegisterDependencyConditions  *dependencies =
-      generateRegisterDependencyConditions((uint8_t)0, 5, cg);
-   dependencies->addPostCondition(srcObjReg, TR::RealRegister::esi, cg);
-   dependencies->addPostCondition(dstObjReg, TR::RealRegister::edi, cg);
-   dependencies->addPostCondition(lengthReg, TR::RealRegister::ecx, cg);
-   dependencies->addPostCondition(startReg, TR::RealRegister::eax, cg);
-   TR::Register *dummy = cg->allocateRegister();
-   dependencies->addPostCondition(dummy, TR::RealRegister::ebx, cg);
-   dependencies->stopAddingConditions();
-
-   TR_RuntimeHelper helper;
-   if (cg->comp()->target().is64Bit())
-      helper = japaneseMethod ? TR_AMD64compressStringNoCheckJ : TR_AMD64compressStringNoCheck;
-   else
-      helper = japaneseMethod ? TR_IA32compressStringNoCheckJ : TR_IA32compressStringNoCheck;
-
-   generateHelperCallInstruction(node, helper, dependencies, cg);
-   cg->stopUsingRegister(dummy);
-
-   for (uint16_t i = 0; i < node->getNumChildren(); i++)
-     cg->decReferenceCount(node->getChild(i));
-
-   if (stopUsingCopyReg1)
-      cg->getLiveRegisters(TR_GPR)->registerIsDead(srcObjReg);
-   if (stopUsingCopyReg2)
-      cg->getLiveRegisters(TR_GPR)->registerIsDead(dstObjReg);
-   if (stopUsingCopyReg3)
-      cg->getLiveRegisters(TR_GPR)->registerIsDead(startReg);
-   if (stopUsingCopyReg4)
-      cg->getLiveRegisters(TR_GPR)->registerIsDead(lengthReg);
-   return NULL;
-   }
-
-
-TR::Register *
-J9::X86::TreeEvaluator::andORStringEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   TR::Node *srcObjNode, *startNode, *lengthNode;
-   TR::Register *srcObjReg, *lengthReg, *startReg;
-   bool stopUsingCopyReg1, stopUsingCopyReg2, stopUsingCopyReg3;
-
-   srcObjNode = node->getChild(0);
-   startNode = node->getChild(1);
-   lengthNode = node->getChild(2);
-
-   stopUsingCopyReg1 = TR::TreeEvaluator::stopUsingCopyRegAddr(srcObjNode, srcObjReg, cg);
-   stopUsingCopyReg2 = TR::TreeEvaluator::stopUsingCopyRegInteger(startNode, startReg, cg);
-   stopUsingCopyReg3 = TR::TreeEvaluator::stopUsingCopyRegInteger(lengthNode, lengthReg, cg);
-
-   uintptr_t hdrSize = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
-   generateRegImmInstruction(TR::InstOpCode::ADDRegImms(), node, srcObjReg, hdrSize, cg);
-
-   // Now that we have all the registers, set up the dependencies
-   TR::RegisterDependencyConditions  *dependencies =
-      generateRegisterDependencyConditions((uint8_t)0, 5, cg);
-   TR::Register *resultReg = cg->allocateRegister();
-   dependencies->addPostCondition(srcObjReg, TR::RealRegister::esi, cg);
-   dependencies->addPostCondition(lengthReg, TR::RealRegister::ecx, cg);
-   dependencies->addPostCondition(startReg, TR::RealRegister::eax, cg);
-   dependencies->addPostCondition(resultReg, TR::RealRegister::edx, cg);
-   TR::Register *dummy = cg->allocateRegister();
-   dependencies->addPostCondition(dummy, TR::RealRegister::ebx, cg);
-   dependencies->stopAddingConditions();
-
-   TR_RuntimeHelper helper =
-      cg->comp()->target().is64Bit() ? TR_AMD64andORString : TR_IA32andORString;
-   generateHelperCallInstruction(node, helper, dependencies, cg);
-   cg->stopUsingRegister(dummy);
-
-   for (uint16_t i = 0; i < node->getNumChildren(); i++)
-     cg->decReferenceCount(node->getChild(i));
-
-   if (stopUsingCopyReg1)
-      cg->getLiveRegisters(TR_GPR)->registerIsDead(srcObjReg);
-   if (stopUsingCopyReg2)
-      cg->getLiveRegisters(TR_GPR)->registerIsDead(startReg);
-   if (stopUsingCopyReg3)
-      cg->getLiveRegisters(TR_GPR)->registerIsDead(lengthReg);
-   node->setRegister(resultReg);
-   return resultReg;
-   }
 
 /*
  *
