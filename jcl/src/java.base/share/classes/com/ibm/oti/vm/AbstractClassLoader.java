@@ -49,8 +49,8 @@ public abstract class AbstractClassLoader extends ClassLoader {
 	/*[PR JAZZ 88959] Use URLStreamHandler when creating bootstrap resource URLs */
 	private static URLStreamHandler	urlJarStreamHandler;
 	private static URLStreamHandler	urlFileStreamHandler;
-	
-public AbstractClassLoader(){
+
+public AbstractClassLoader() {
 }
 
 void fillCache(final int i) {
@@ -116,7 +116,6 @@ private void setParsedPathElement(int i, String value) {
 	}
 }
 
-
 /**
  * Answers a string representing the URL which matches the
  * given filename. The argument should be specified using the
@@ -126,7 +125,7 @@ private void setParsedPathElement(int i, String value) {
  *
  * @param filename the filename String to convert to URL form
  * @param cpType an int which indicates type of the URL
- * 
+ *
  * @return the URL formatted filename
  */
 static String toURLString(String filename, int cpType) {
@@ -274,7 +273,7 @@ protected Enumeration findResources(final String res) throws IOException {
 		}
 		result = reduced;
 	}
-	
+
 	ConcurrentHashMap<String, Vector> resourceCache;
 	if (resourceCacheRef == null || (resourceCache = resourceCacheRef.get()) == null) {
 		synchronized(cacheLock) {

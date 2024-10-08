@@ -38,25 +38,25 @@ import java.util.Set;
  */
 public class GenerateJLIClassesPlugin implements Plugin
 {
- /**
-   * This method makes a copy of the ResourcePool.
-   * Since this plugin is intended to have no effect,
-   * it lacks any transformational logic.
-   * @param rp            Pool of resources
-   * @param rpb           Builder to create a copy of the pool of resources.
-   * @return ResourcePool Built copy of the pool of resources.
-   */
-   public ResourcePool transform(ResourcePool rp, ResourcePoolBuilder rpb){
-      return null;
-   }
+	/**
+	 * This method makes a copy of the ResourcePool.
+	 * Since this plugin is intended to have no effect,
+	 * it lacks any transformational logic.
+	 * @param rp            Pool of resources
+	 * @param rpb           Builder to create a copy of the pool of resources.
+	 * @return ResourcePool Built copy of the pool of resources.
+	 */
+	public ResourcePool transform(ResourcePool rp, ResourcePoolBuilder rpb){
+		return null;
+	}
 
-  /**
-   * This method tells the caller that this plugin is disabled,
-   * and should not be used.
-   * @return Set<State> State of the Plugin.
-   */
-   @Override
-   public Set<State> getState() {
-       return EnumSet.of(State.DISABLED, State.FUNCTIONAL);
-   }
+	/**
+	 * This method tells the caller that this plugin is disabled,
+	 * and should not be used.
+	 * @return Set<State> State of the Plugin.
+	 */
+	@Override
+	public Set<State> getState() {
+		return EnumSet.of(State.DISABLED, State.FUNCTIONAL);
+	}
 }

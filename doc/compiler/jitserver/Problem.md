@@ -67,7 +67,10 @@ because you often need to find the failing method and look at its trace log to f
 but by a series of them, which makes debugging even harder.
 
 Tracing method compilation is the same as for non-JITServer - use `-Xjit:{<method_name_regex>}(traceFull,log=<log_name>)` in the client options and both client
-and server will produce trace logs. Passing options for limit files and other tracing options also works in the same way.
+and server will produce trace logs. Passing options for limit files and other tracing options also works in the same way. In some cases (when the method is very large
+and compiled at a high optimization level) having the server generate these logs will slow down method compilation enough that timing-sensitive bugs will happen less frequently.
+If that happens, consider setting the environment variable `TR_JITServerShouldIgnoreLineNumbers=1` at the server. This has the downside of suppressing the line numbers in
+all the generated logs, but the resulting reduction in network overhead can improve the compilation times of traced methods enough to be worth it.
 
 To find if a problem is happening at the client side due to JITServer-specific issues in compiled code, remote compilation of the identified methods can be excluded by specifying `-Xjit:remoteCompileExclude={<method_name_regex>}`. Passing this option at the client side ensures that only local compilations will be performed on methods matching the specified regex pattern.
 

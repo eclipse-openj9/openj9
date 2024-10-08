@@ -28,15 +28,15 @@ import java.io.IOException;
 import com.ibm.jvm.dtfjview.heapdump.ReferenceIterator;
 
 public class ShortObjectRecord extends ObjectRecord
-{   
+{
 	private final byte _classCacheIndex;
-	
+
 	public ShortObjectRecord(long address, long previousAddress,
 			long classAddress, int hashCode,
 			ReferenceIterator references, byte classCacheIndex, boolean is32BitHash)
 	{
 		super(address,previousAddress,classAddress,hashCode,references,is32BitHash);
-		
+
 		_classCacheIndex = classCacheIndex;
 	}
 
@@ -47,17 +47,17 @@ public class ShortObjectRecord extends ObjectRecord
 		tagAndFlag |= _numberOfReferences << 3;
 		tagAndFlag |= _gapSize << 2;
 		tagAndFlag |= _referenceFieldSize;
-		
+
 		out.writeByte(tagAndFlag);
 		writeReference(out,_gapSize,_gapPreceding);
-		
+
 		// JVMs prior to 2.6 have a 16-bit hashcode for all objects, which is added to all PHD records.
 		if (!_is32BitHash) {
 			out.writeShort(_hashCode);
 		}
 		// Note: JVM 2.6 and later have optional 32-bit hashcodes. We use a LongObjectRecord if the hashcode was set.
-		
+
 		writeReferences(out);
 	}
-	
+
 }

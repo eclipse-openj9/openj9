@@ -23,6 +23,7 @@
 #if !defined(FFIUPCALLTHUNKGENHELPERS_HPP_)
 #define FFIUPCALLTHUNKGENHELPERS_HPP_
 
+#define R0 0
 #define R1 1
 #define R2 2
 #define R3 3
@@ -32,8 +33,54 @@
 #define R7 7
 #define R14 14
 #define R15 15
+#define FPR0 0
+#define FPR2 2
 #define MAX_MVC_COPY_LENGTH 256
 #define MAX_MVC_DISPLACEMENT 4096
+
+I_32
+XGR(I_8 *instructionPtr, I_32 register1, I_32 register2)
+{
+	I_32 opcode = 0xB9820000;
+	*((I_32 *)instructionPtr) = opcode | ((register1 & 0xF) << 4) | ((register2 & 0xF));
+	return 4;
+}
+
+/**
+ * Generates an instruction to load a double precision floating point value into an FPR.
+ * Format: "LD R1,D2(X2,B2)"
+ * R1 - destinationRegister
+ * D2 - displacementInteger
+ * X2 - offsetRegister
+ * B2 - baseRegister
+ *
+ * Returns: instruction size in bytes
+ */
+I_32
+LD(I_8 *instructionPtr, I_32 destinationRegister, I_32 offsetRegister, I_32 baseRegister, I_32 displacementInteger)
+{
+	I_32 opcode = 0x68000000;
+	*((I_32 *)instructionPtr) = opcode | ((destinationRegister & 0xF) << 20) | ((offsetRegister & 0xF) << 16) | ((baseRegister & 0xF) << 12) | ((displacementInteger & 0xFFF));
+	return 4;
+}
+
+/**
+ * Generates an instruction to load a single precision floating point value into an FPR.
+ * Format: "LE R1,D2(X2,B2)"
+ * R1 - destinationRegister
+ * D2 - displacementInteger
+ * X2 - offsetRegister
+ * B2 - baseRegister
+ *
+ * Returns: instruction size in bytes
+ */
+I_32
+LE(I_8 *instructionPtr, I_32 destinationRegister, I_32 offsetRegister, I_32 baseRegister, I_32 displacementInteger)
+{
+	I_32 opcode = 0x78000000;
+	*((I_32 *)instructionPtr) = opcode | ((destinationRegister & 0xF) << 20) | ((offsetRegister & 0xF) << 16) | ((baseRegister & 0xF) << 12) | ((displacementInteger & 0xFFF));
+	return 4;
+}
 
 /**
  * Generates an instruction to store a double precision floating point value to memory.
@@ -48,11 +95,11 @@
 I_32
 STDY(I_8 *instructionPtr, I_32 valueRegister, I_32 offsetRegister, I_32 baseRegister, I_32 displacementInteger)
 {
-    I_32 opcode = 0xED000000;
-    *((I_32 *)instructionPtr) = opcode | ((valueRegister & 0xF) << 20) | ((offsetRegister & 0xF) << 16) | ((baseRegister & 0xF) << 12) | (displacementInteger & 0xFFF);
-    instructionPtr[4] = ((displacementInteger & 0xFF000) >> 12);
-    instructionPtr[5] = 0x67;
-    return 6;
+	I_32 opcode = 0xED000000;
+	*((I_32 *)instructionPtr) = opcode | ((valueRegister & 0xF) << 20) | ((offsetRegister & 0xF) << 16) | ((baseRegister & 0xF) << 12) | (displacementInteger & 0xFFF);
+	instructionPtr[4] = ((displacementInteger & 0xFF000) >> 12);
+	instructionPtr[5] = 0x67;
+	return 6;
 }
 
 /**
@@ -66,8 +113,8 @@ STDY(I_8 *instructionPtr, I_32 valueRegister, I_32 offsetRegister, I_32 baseRegi
 I_32
 BCR(I_8 *instructionPtr, I_16 conditionMask, I_16 destinationRegister)
 {
-    *((I_16 *)instructionPtr) = 0x0700 | ((conditionMask & 0x000F) << 4) | (destinationRegister & 0x000F);
-    return 2;
+	*((I_16 *)instructionPtr) = 0x0700 | ((conditionMask & 0x000F) << 4) | (destinationRegister & 0x000F);
+	return 2;
 }
 
 /**
@@ -83,10 +130,10 @@ BCR(I_8 *instructionPtr, I_16 conditionMask, I_16 destinationRegister)
 I_32
 STEY(I_8 *instructionPtr, I_32 valueRegister, I_32 offsetRegister, I_32 baseRegister, I_32 displacementInteger)
 {
-    *((I_32 *)instructionPtr) = 0xED000000 | ((valueRegister & 0xF) << 20) | ((offsetRegister & 0xF) << 16) | ((baseRegister & 0xF) << 12) | (displacementInteger & 0xFFF);
-    instructionPtr[4] = ((displacementInteger & 0xFF000) >> 12);
-    instructionPtr[5] = 0x66;
-    return 6;
+	*((I_32 *)instructionPtr) = 0xED000000 | ((valueRegister & 0xF) << 20) | ((offsetRegister & 0xF) << 16) | ((baseRegister & 0xF) << 12) | (displacementInteger & 0xFFF);
+	instructionPtr[4] = ((displacementInteger & 0xFF000) >> 12);
+	instructionPtr[5] = 0x66;
+	return 6;
 }
 
 /**
@@ -102,10 +149,10 @@ STEY(I_8 *instructionPtr, I_32 valueRegister, I_32 offsetRegister, I_32 baseRegi
 I_32
 LAY(I_8 *instructionPtr, I_32 destinationRegister, I_32 offsetRegister, I_32 baseRegister, I_32 displacementInteger)
 {
-    *((I_32 *)instructionPtr) = 0xE3000000 | ((destinationRegister & 0xF) << 20) | ((offsetRegister & 0xF) << 16) | ((baseRegister & 0xF) << 12) | (displacementInteger & 0xFFF);
-    instructionPtr[4] = ((displacementInteger & 0xFF000) >> 12);
-    instructionPtr[5] = 0x71;
-    return 6;
+	*((I_32 *)instructionPtr) = 0xE3000000 | ((destinationRegister & 0xF) << 20) | ((offsetRegister & 0xF) << 16) | ((baseRegister & 0xF) << 12) | (displacementInteger & 0xFFF);
+	instructionPtr[4] = ((displacementInteger & 0xFF000) >> 12);
+	instructionPtr[5] = 0x71;
+	return 6;
 }
 
 /**
@@ -119,9 +166,9 @@ LAY(I_8 *instructionPtr, I_32 destinationRegister, I_32 offsetRegister, I_32 bas
 I_32
 BASR(I_8 *instructionPtr, I_32 returnAddressRegister, I_32 destinationRegister)
 {
-    I_16 opcode = 0x0D00;
-    *((I_16 *)instructionPtr) = (opcode | (((I_16)returnAddressRegister) << 4) | (((I_16)destinationRegister)));
-    return 2;
+	I_16 opcode = 0x0D00;
+	*((I_16 *)instructionPtr) = (opcode | (((I_16)returnAddressRegister) << 4) | (((I_16)destinationRegister)));
+	return 2;
 }
 
 /**
@@ -135,11 +182,11 @@ BASR(I_8 *instructionPtr, I_32 returnAddressRegister, I_32 destinationRegister)
 I_32
 IIHF(I_8 *instructionPtr, I_32 destinationRegister, I_32 integerConstant)
 {
-    I_32 opcode = 0xC008;
-    *((I_16 *)instructionPtr) = (opcode | (I_16)(destinationRegister << 4));
-    instructionPtr += 2;
-    *((I_32 *)instructionPtr) = integerConstant;
-    return 6;
+	I_32 opcode = 0xC008;
+	*((I_16 *)instructionPtr) = (opcode | (I_16)(destinationRegister << 4));
+	instructionPtr += 2;
+	*((I_32 *)instructionPtr) = integerConstant;
+	return 6;
 }
 
 /**
@@ -153,11 +200,11 @@ IIHF(I_8 *instructionPtr, I_32 destinationRegister, I_32 integerConstant)
 I_32
 IILF(I_8 *instructionPtr, I_32 destinationRegister, I_32 integerConstant)
 {
-    I_32 opcode = 0xC009;
-    *((I_16 *)instructionPtr) = (opcode | (I_16)(destinationRegister << 4));
-    instructionPtr += 2;
-    *((I_32 *)instructionPtr) = integerConstant;
-    return 6;
+	I_32 opcode = 0xC009;
+	*((I_16 *)instructionPtr) = (opcode | (I_16)(destinationRegister << 4));
+	instructionPtr += 2;
+	*((I_32 *)instructionPtr) = integerConstant;
+	return 6;
 }
 
 
@@ -174,11 +221,11 @@ IILF(I_8 *instructionPtr, I_32 destinationRegister, I_32 integerConstant)
 I_32
 STG(I_8 *instructionPtr, I_32 sourceRegister, I_32 offsetRegister, I_32 baseRegister, I_32 displacementInteger)
 {
-    I_32 opcode = 0xE3000000;
-    *((I_32 *)instructionPtr) = (opcode | (sourceRegister << 20) | (offsetRegister << 16) | (baseRegister << 12) | (displacementInteger & 0x00000FFF));
-    instructionPtr[4] = (I_8)((displacementInteger & 0x000FF000) >> 12);
-    instructionPtr[5] = 0x24;
-    return 6;
+	I_32 opcode = 0xE3000000;
+	*((I_32 *)instructionPtr) = (opcode | (sourceRegister << 20) | (offsetRegister << 16) | (baseRegister << 12) | (displacementInteger & 0x00000FFF));
+	instructionPtr[4] = (I_8)((displacementInteger & 0x000FF000) >> 12);
+	instructionPtr[5] = 0x24;
+	return 6;
 }
 
 /**
@@ -216,11 +263,11 @@ BC(I_8 *instructionPtr, I_32 mask1, I_32 offsetRegister, I_32 destinationRegiste
 I_32
 STMG(I_8 *instructionPtr, I_32 startRegister, I_32 endRegister, I_32 baseRegister, I_32 displacementInteger) // zos
 {
-    I_32 opcode = 0xEB000000;
-    *((I_32 *)instructionPtr) = opcode | ((startRegister & 0xF) << 20) | ((endRegister & 0xF) << 16) | ((baseRegister & 0xF) << 12) | (displacementInteger & 0xFFF);
-    instructionPtr[4] = ((displacementInteger & 0xFF000) >> 12);
-    instructionPtr[5] = 0x24;
-    return 6;
+	I_32 opcode = 0xEB000000;
+	*((I_32 *)instructionPtr) = opcode | ((startRegister & 0xF) << 20) | ((endRegister & 0xF) << 16) | ((baseRegister & 0xF) << 12) | (displacementInteger & 0xFFF);
+	instructionPtr[4] = ((displacementInteger & 0xFF000) >> 12);
+	instructionPtr[5] = 0x24;
+	return 6;
 }
 
 /**
@@ -237,11 +284,11 @@ STMG(I_8 *instructionPtr, I_32 startRegister, I_32 endRegister, I_32 baseRegiste
 I_32
 LMG(I_8 *instructionPtr, I_32 startRegister, I_32 endRegister, I_32 baseRegister, I_32 displacementInteger) // zos
 {
-    I_32 opcode = 0xEB000000;
-    *((I_32 *)instructionPtr) = opcode | ((startRegister & 0xF) << 20) | ((endRegister & 0xF) << 16) | ((baseRegister & 0xF) << 12) | (displacementInteger & 0xFFF);
-    instructionPtr[4] = ((displacementInteger & 0xFF000) >> 12);
-    instructionPtr[5] = 0x04;
-    return 6;
+	I_32 opcode = 0xEB000000;
+	*((I_32 *)instructionPtr) = opcode | ((startRegister & 0xF) << 20) | ((endRegister & 0xF) << 16) | ((baseRegister & 0xF) << 12) | (displacementInteger & 0xFFF);
+	instructionPtr[4] = ((displacementInteger & 0xFF000) >> 12);
+	instructionPtr[5] = 0x04;
+	return 6;
 }
 
 /**
@@ -257,11 +304,11 @@ LMG(I_8 *instructionPtr, I_32 startRegister, I_32 endRegister, I_32 baseRegister
 I_32
 LG(I_8 *instructionPtr, I_32 destinationRegister, I_32 offsetRegister, I_32 baseRegister, I_32 displacementInteger)
 {
-    I_32 opcode = 0xE3000000;
-    *((I_32 *)instructionPtr) = (opcode | (destinationRegister << 20) | (offsetRegister << 16) | (baseRegister << 12) | (displacementInteger & 0x00000FFF));
-    instructionPtr[4] = (I_8)((displacementInteger & 0x000FF000) >> 12);
-    instructionPtr[5] = 0x04;
-    return 6;
+	I_32 opcode = 0xE3000000;
+	*((I_32 *)instructionPtr) = (opcode | (destinationRegister << 20) | (offsetRegister << 16) | (baseRegister << 12) | (displacementInteger & 0x00000FFF));
+	instructionPtr[4] = (I_8)((displacementInteger & 0x000FF000) >> 12);
+	instructionPtr[5] = 0x04;
+	return 6;
 }
 
 /*
@@ -321,6 +368,95 @@ AFI(I_8 *instructionPtr, I_32 sourceRegister, I_32 immediateInteger)
 	instructionPtr[5] = (I_8)(immediateInteger & 0xFF);
 	return 6;
 
+}
+
+/*
+ * Generates a sequence of instructions to copy data from a Java MemorySegment Object to a C struct.
+ * The struct is smaller than or equal to 4096 bytes.
+ */
+I_32
+generateSmallStructCopyInstructions(I_8 *instructionPtr, I_32 structSize, I_32 offsetToParameterArea, I_32 sourceRegister, I_32 destinationRegister)
+{
+	I_32 totalInstructionSize = 0;
+
+	const I_32 numLargeCopies = structSize / MAX_MVC_COPY_LENGTH;
+	const I_32 residue = structSize % MAX_MVC_COPY_LENGTH;
+
+	// Generate upto 16 MVC instructions to copy up 4096 bytes. Each MVC instruction in this sequence will copy 256 bytes.
+	for(int i = 0; i < numLargeCopies; i++) {
+		// MVC D1(L,B1),D2(B2)
+		// The 'L' field is 0-based
+		totalInstructionSize += MVC(instructionPtr + totalInstructionSize, i * MAX_MVC_COPY_LENGTH, MAX_MVC_COPY_LENGTH - 1, destinationRegister, i * MAX_MVC_COPY_LENGTH, sourceRegister);
+	}
+	// Generate an instruction to copy the last set of bytes (less than 256).
+	if (residue != 0) {
+		// MVC D1(L,B1),D2(B2)
+		totalInstructionSize += MVC(instructionPtr + totalInstructionSize, numLargeCopies * MAX_MVC_COPY_LENGTH, residue - 1, destinationRegister, numLargeCopies * MAX_MVC_COPY_LENGTH, sourceRegister);
+	}
+	return totalInstructionSize;
+}
+
+/*
+ * Generates a sequence of instructions to copy data from a Java MemorySegment Object to a C struct.
+ * The struct is larger than 4096 bytes.
+ */
+I_32
+generateLargeStructCopyInstructions(I_8 *instructionPtr, I_32 structSize, I_32 offsetToParameterArea, I_32 sourceRegister, I_32 destinationRegister)
+{
+	I_32 totalInstructionSize = 0;
+
+	const I_32 numFullSlots = structSize / MAX_MVC_COPY_LENGTH;
+	const I_32 residue = structSize % MAX_MVC_COPY_LENGTH;
+	const I_32 maxMVCInstrPerIteration = MAX_MVC_DISPLACEMENT / MAX_MVC_COPY_LENGTH;
+
+	const I_32 loopResidue = numFullSlots % maxMVCInstrPerIteration;
+
+	I_32 destinationDisplacementInt = -1;
+	I_32 sourceDisplacementInt = -1;
+	I_32 currMVCLength = -1;
+
+	// Load loop counter into R3
+	totalInstructionSize += IILF(instructionPtr + totalInstructionSize, R0, numFullSlots - loopResidue);
+	I_32 totalSizeAtLoopStart = totalInstructionSize;
+
+	// Generate a loop that will copy 4096 bytes at a time (i.e. 16 MVC instructions). The loop concludes when there
+	// are less than 4096 bytes left to copy.
+	for (int i = 0; i < maxMVCInstrPerIteration; i++) {
+		// MVC D1(L,B1),D2(B2)
+		// The 'L' field is 0-based
+		destinationDisplacementInt = i * MAX_MVC_COPY_LENGTH;
+		currMVCLength = MAX_MVC_COPY_LENGTH - 1;
+		sourceDisplacementInt = i * MAX_MVC_COPY_LENGTH;
+		totalInstructionSize += MVC(instructionPtr + totalInstructionSize, destinationDisplacementInt, currMVCLength, destinationRegister, sourceDisplacementInt, sourceRegister);
+	}
+	totalInstructionSize += LAY(instructionPtr + totalInstructionSize, destinationRegister, 0, destinationRegister, MAX_MVC_DISPLACEMENT);
+	totalInstructionSize += LAY(instructionPtr + totalInstructionSize, sourceRegister, 0, sourceRegister, MAX_MVC_DISPLACEMENT);
+	totalInstructionSize += AFI(instructionPtr + totalInstructionSize, R0, -maxMVCInstrPerIteration);
+
+	const I_32 conditionMask = 7;
+	I_32 totalSizeAtLoopEnd = totalInstructionSize;
+	totalInstructionSize += BRCL(instructionPtr + totalInstructionSize, conditionMask, -((totalSizeAtLoopEnd - totalSizeAtLoopStart)/2));
+
+	// If numberOfBytesLeftToCopy > 256 && numberOfBytesLeftToCopy < 4096, then we generate the appropriate number of MVC instructions to copy them sequentially below.
+	if (loopResidue > 0) {
+		for (I_32 i = 0; i < loopResidue; i++) {
+			// MVC D1(L,B1),D2(B2)
+			destinationDisplacementInt = i * MAX_MVC_COPY_LENGTH;
+			currMVCLength = MAX_MVC_COPY_LENGTH - 1;
+			sourceDisplacementInt = i * MAX_MVC_COPY_LENGTH;
+			totalInstructionSize += MVC(instructionPtr + totalInstructionSize, destinationDisplacementInt, currMVCLength, destinationRegister, sourceDisplacementInt, sourceRegister);
+		}
+	}
+
+	// If numberOfBytesLeftToCopy < 256 then we generate an instruction here to copy those bytes over.
+	if (residue != 0) {
+		// MVC D1(L,B1),D2(B2)
+		destinationDisplacementInt = loopResidue > 0 ? loopResidue * MAX_MVC_COPY_LENGTH : 0; // (numFullSlots - maxMVCInstrPerIteration) * MAX_MVC_COPY_LENGTH;
+		currMVCLength = residue - 1;
+		sourceDisplacementInt = loopResidue > 0 ? loopResidue * MAX_MVC_COPY_LENGTH : 0;// (numFullSlots - maxMVCInstrPerIteration) * MAX_MVC_COPY_LENGTH;
+		totalInstructionSize += MVC(instructionPtr + totalInstructionSize, destinationDisplacementInt, currMVCLength, destinationRegister, sourceDisplacementInt, sourceRegister);
+	}
+	return totalInstructionSize;
 }
 
 #endif /* FFIUPCALLTHUNKGENHELPERS_HPP_ */

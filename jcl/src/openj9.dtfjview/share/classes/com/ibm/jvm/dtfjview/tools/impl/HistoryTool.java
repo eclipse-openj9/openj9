@@ -34,28 +34,28 @@ public class HistoryTool extends Tool {
 	public static final String COMMAND_SHORT = "his";
 	public static final int DEFAULT_DISPLAY_N = 20;
 	public static final String ARGUMENT_DESCRIPTION = "[-r] [N]";
-	public static final String HELP_DESCRIPTION = 
+	public static final String HELP_DESCRIPTION =
 			"     If option -r is used, the Nth history command (default to the last one) will be run;\n" +
 			"     otherwise, at most N (default " + DEFAULT_DISPLAY_N + ") history commands will be displayed.";
 	public static final String USAGE = COMMAND + "|" + COMMAND_SHORT + "\t" + ARGUMENT_DESCRIPTION + "\n" + HELP_DESCRIPTION;
-	
+
 	public HistoryTool() {
 		super();
 		history = new LinkedList<String>();
 		defaultExecutingIndex = -1;
 	}
-	
+
 	/**
 	 * To record a history command.
 	 * <p>
 	 * @param cmd	The command to be recorded.
 	 */
-	public void record(String cmd) 
+	public void record(String cmd)
 	{
 		history.add(cmd);
 		defaultExecutingIndex = history.size() - 1;
 	}
-	
+
 	/**
 	 * Processes the command.
 	 * <p>
@@ -65,7 +65,7 @@ public class HistoryTool extends Tool {
 	 * <p>
 	 * @throws CommandException
 	 */
-	public void process(String command, String[] args, PrintStream out) throws CommandException 
+	public void process(String command, String[] args, PrintStream out) throws CommandException
 	{
 		int n = DEFAULT_DISPLAY_N;
 		boolean executeCommand = false;
@@ -74,7 +74,7 @@ public class HistoryTool extends Tool {
 			showHistoryCommands(DEFAULT_DISPLAY_N, out);
 			return;
 		}
-		
+
 		if (args.length > 0) {
 			if (args[0].startsWith("-r")) {
 				executeCommand = true;
@@ -111,27 +111,27 @@ public class HistoryTool extends Tool {
 			showHistoryCommands(n, out);
 		}
 	}
-	
+
 	/**
 	 * Determines if a command is accepted by the current tool.
 	 * <p>
 	 * @param command	The command
 	 * @param args		The arguments taken by the command.
 	 * <p>
-	 * @return		<code>true</code> if this is the correct tool for this command; 
+	 * @return		<code>true</code> if this is the correct tool for this command;
 	 * 				<code>false</code> otherwise.
 	 */
 	public boolean accept(String command, String[] args) {
 		return command.equalsIgnoreCase(COMMAND_SHORT) || command.equalsIgnoreCase(COMMAND);
 	}
-	
+
 	/**
 	 * To print the detailed help message.
 	 */
 	public void printDetailedHelp(PrintStream out) {
 		out.println(USAGE);
 	}
-	
+
 	/**
 	 * To gets the tool's command name.
 	 * <p>
@@ -140,7 +140,7 @@ public class HistoryTool extends Tool {
 	public String getCommandName() {
 		return COMMAND;
 	}
-	
+
 	/**
 	 * To gets the tool's argument description.
 	 * <p>
@@ -158,7 +158,7 @@ public class HistoryTool extends Tool {
 	public String getHelpDescription() {
 		return HELP_DESCRIPTION;
 	}
-	
+
 	private void executeHistoryCommand(int n, PrintStream out) throws CommandException {
 		if (history.size() == 0) {
 			out.println("The history repository is empty.");
@@ -170,8 +170,8 @@ public class HistoryTool extends Tool {
 		}
 		ToolsRegistry.process(history.get(n), out);
 	}
-	
-	private void showHistoryCommands(int counter, PrintStream out) {		
+
+	private void showHistoryCommands(int counter, PrintStream out) {
 		if (counter <= 0) {
 			out.println("The number " + counter + " is not a valid counter.");
 			return;
@@ -180,7 +180,7 @@ public class HistoryTool extends Tool {
 			out.println("The history repository is empty.");
 			return;
 		}
-		counter = Math.min(counter, history.size()); 
+		counter = Math.min(counter, history.size());
 		for (int index = history.size() - counter; index < history.size(); index++) {
 			out.println(index + " : " + history.get(index));
 		}
@@ -189,4 +189,3 @@ public class HistoryTool extends Tool {
 	private LinkedList<String> history;
 	private int defaultExecutingIndex;
 }
-

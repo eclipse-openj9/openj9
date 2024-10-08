@@ -32,6 +32,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
+import jdk.internal.value.ValueClass;
 import org.testng.Assert;
 import static org.testng.Assert.*;
 import org.testng.annotations.Test;
@@ -193,7 +194,7 @@ public class ValueTypeTests {
 
 	/* fields */
 	static String typeWithSingleAlignmentFields[] = {
-		"tri:LTriangle2D;:NR", /* NR means null restricted */
+		"tri:LTriangle2D;:NR", /* NR means null-restricted */
 		"point:LPoint2D;:NR",
 		"line:LFlattenedLine2D;:NR",
 		"i:LValueInt;:NR",
@@ -309,92 +310,92 @@ public class ValueTypeTests {
 		int x1 = 0xFFEEFFEE;
 		int y1 = 0xAABBAABB;
 		Object point2D = makePoint2D.invoke(x1, y1);
-		Object arrayObject = Array.newInstance(point2DClass, 8);
+		Object[] array = ValueClass.newNullRestrictedArray(point2DClass, 8);
 
 		for (int i = 0; i < 8; i++) {
-			Array.set(arrayObject, i, point2D);
+			array[i] = point2D;
 		}
 
 		System.gc();
 
-		Object value = Array.get(arrayObject, 0);
+		Object value = array[0];
 	}
 
 	@Test(priority=5)
 	static public void testGCFlattenedValueArrayWithSingleAlignment() throws Throwable {
-		Object array = Array.newInstance(assortedValueWithSingleAlignmentClass, 4);
+		Object[] array = ValueClass.newNullRestrictedArray(assortedValueWithSingleAlignmentClass, 4);
 		
 		for (int i = 0; i < 4; i++) {
 			Object object = createAssorted(makeAssortedValueWithSingleAlignment, typeWithSingleAlignmentFields);
-			Array.set(array, i, object);
+			array[i] = object;
 		}
 
 		System.gc();
 
 		for (int i = 0; i < 4; i++) {
-			checkFieldAccessMHOfAssortedType(assortedValueWithSingleAlignmentGetterList, Array.get(array, i), typeWithSingleAlignmentFields, true);
+			checkFieldAccessMHOfAssortedType(assortedValueWithSingleAlignmentGetterList, array[i], typeWithSingleAlignmentFields, true);
 		}
 	}
 
 	@Test(priority=5)
 	static public void testGCFlattenedValueArrayWithObjectAlignment() throws Throwable {
-		Object array = Array.newInstance(assortedValueWithObjectAlignmentClass, 4);
+		Object[] array = ValueClass.newNullRestrictedArray(assortedValueWithObjectAlignmentClass, 4);
 		
 		for (int i = 0; i < 4; i++) {
 			Object object = createAssorted(makeAssortedValueWithObjectAlignment, typeWithObjectAlignmentFields);
-			Array.set(array, i, object);
+			array[i] = object;
 		}
 
 		System.gc();
 
 		for (int i = 0; i < 4; i++) {
-			checkFieldAccessMHOfAssortedType(assortedValueWithObjectAlignmentGetterList, Array.get(array, i), typeWithObjectAlignmentFields, true);
+			checkFieldAccessMHOfAssortedType(assortedValueWithObjectAlignmentGetterList, array[i], typeWithObjectAlignmentFields, true);
 		}
 	}
 
 	@Test(priority=5)
 	static public void testGCFlattenedValueArrayWithLongAlignment() throws Throwable {
-		Object array = Array.newInstance(assortedValueWithLongAlignmentClass, genericArraySize);
+		Object[] array = ValueClass.newNullRestrictedArray(assortedValueWithLongAlignmentClass, genericArraySize);
 		
 		for (int i = 0; i < genericArraySize; i++) {
 			Object object = createAssorted(makeAssortedValueWithLongAlignment, typeWithLongAlignmentFields);
-			Array.set(array, i, object);
+			array[i] = object;
 		}
 
 		System.gc();
 
 		for (int i = 0; i < genericArraySize; i++) {
-			checkFieldAccessMHOfAssortedType(assortedValueWithLongAlignmentGetterList, Array.get(array, i), typeWithLongAlignmentFields, true);
+			checkFieldAccessMHOfAssortedType(assortedValueWithLongAlignmentGetterList, array[i], typeWithLongAlignmentFields, true);
 		}
 	}
 
 	@Test(priority=5)
 	static public void testGCFlattenedLargeObjectArray() throws Throwable {
-		Object arrayObject = Array.newInstance(largeObjectValueClass, 4);
+		Object[] array = ValueClass.newNullRestrictedArray(largeObjectValueClass, 4);
 		Object largeObjectRef = createLargeObject(new Object());
 
 		for (int i = 0; i < 4; i++) {
-			Array.set(arrayObject, i, largeObjectRef);
+			array[i] = largeObjectRef;
 		}
 
 		System.gc();
 
-		Object value = Array.get(arrayObject, 0);
+		Object value = array[0];
 	}
 
 	@Test(priority=5)
 	static public void testGCFlattenedMegaObjectArray() throws Throwable {
-		Object arrayObject = Array.newInstance(megaObjectValueClass, 4);
+		Object[] array = ValueClass.newNullRestrictedArray(megaObjectValueClass, 4);
 		Object megaObjectRef = createMegaObject(new Object());
 
 		System.gc();
 
 		for (int i = 0; i < 4; i++) {
-			Array.set(arrayObject, i, megaObjectRef);
+			array[i] = megaObjectRef;
 		}
 		System.gc();
 
-		Object value = Array.get(arrayObject, 0);
+		Object value = array[0];
 	}
 
 
@@ -535,12 +536,11 @@ public class ValueTypeTests {
 		Object en2 = makePoint2D.invoke(x4, y4);
 		Object line2D_2 = makeFlattenedLine2D.invoke(st2, en2);
 
-		Object arrayObject = Array.newInstance(flattenedLine2DClass, 3);
-		Array.set(arrayObject, 1, line2D_1);
-		Array.set(arrayObject, 2, line2D_2);
-
-		Object line2D_1_check = Array.get(arrayObject, 1);
-		Object line2D_2_check = Array.get(arrayObject, 2);
+		Object[] arrayObject = ValueClass.newNullRestrictedArray(flattenedLine2DClass, 2);
+		arrayObject[0] = line2D_1;
+		arrayObject[1] = line2D_2;
+		Object line2D_1_check = arrayObject[0];
+		Object line2D_2_check = arrayObject[1];
 
 		assertEquals(getX.invoke(getFlatSt.invoke(line2D_1_check)), getX.invoke(getFlatSt.invoke(line2D_1)));
 		assertEquals(getX.invoke(getFlatSt.invoke(line2D_2_check)), getX.invoke(getFlatSt.invoke(line2D_2)));
@@ -570,22 +570,6 @@ public class ValueTypeTests {
 			makeDefaultValueWithNonValueType.invoke();
 			Assert.fail("should throw error. Default value must be used with ValueType");
 		} catch (IncompatibleClassChangeError e) {}
-	}
-	
-	@Test(priority=4, invocationCount=2)
-	static public void testNullWritesOnNonNullableArrays() throws Throwable {
-		Object arrayObject = Array.newInstance(point2DClass, 3);
-		try {
-			Array.set(arrayObject, 1, null);
-			Assert.fail("Should throw NPE. Cant write null to arrays of valuetypes");
-		} catch(NullPointerException e) {}
-
-		Object arrayObject2 = Array.newInstance(String.class, 3);
-		try {
-			Array.set(arrayObject2, 1, null);
-		} catch(NullPointerException e) {
-			Assert.fail("Should not throw NPE. Can write null to arrays of identity types");
-		}
 	}
 	
 	@Test(priority=2, invocationCount=2)
@@ -1817,7 +1801,7 @@ public class ValueTypeTests {
 	 * Create a value type and read the fields before
 	 * they are set. The test should Verify that the
 	 * flattenable fields are set to the default values.
-	 * NULL should never be observed for null restricted fields.
+	 * NULL should never be observed for null-restricted fields.
 	 */
 	@Test(priority=4)
 	static public void testDefaultValues() throws Throwable {
@@ -2275,7 +2259,7 @@ public class ValueTypeTests {
 	 * Ensure that casting null to a value type class will throw a null pointer exception
 	 * This test is disabled since the latest spec from
 	 * https://cr.openjdk.org/~dlsmith/jep401/jep401-20230519/specs/types-cleanup-jvms.html
-	 * no longer requires null check on the objectref for null restricted value type class
+	 * no longer requires null check on the objectref for null-restricted value type class
 	 */
 	@Test(enabled=false, priority=1, expectedExceptions=NullPointerException.class)
 	static public void testCheckCastNullRestrictedTypeOnNull() throws Throwable {
@@ -2315,7 +2299,7 @@ public class ValueTypeTests {
 	static public void testValueWithLongAlignmentGCScanning() throws Throwable {
 		ArrayList<Object> longAlignmentArrayList = new ArrayList<Object>(objectGCScanningIterationCount);
 		for (int i = 0; i < objectGCScanningIterationCount; i++) {
-			Object newLongAlignmentArray = Array.newInstance(assortedValueWithLongAlignmentClass, genericArraySize);
+			Object newLongAlignmentArray = (Object)ValueClass.newNullRestrictedArray(assortedValueWithLongAlignmentClass, genericArraySize);
 			for (int j = 0; j < genericArraySize; j++) {
 				Object assortedValueWithLongAlignment = createAssorted(makeAssortedValueWithLongAlignment, typeWithLongAlignmentFields);
 				Array.set(newLongAlignmentArray, j, assortedValueWithLongAlignment);
@@ -2340,7 +2324,7 @@ public class ValueTypeTests {
 	static public void testValueWithObjectAlignmentGCScanning() throws Throwable {
 		ArrayList<Object> objectAlignmentArrayList = new ArrayList<Object>(objectGCScanningIterationCount);
 		for (int i = 0; i < objectGCScanningIterationCount; i++) {
-			Object newObjectAlignmentArray = Array.newInstance(assortedValueWithObjectAlignmentClass, genericArraySize);
+			Object newObjectAlignmentArray = (Object)ValueClass.newNullRestrictedArray(assortedValueWithObjectAlignmentClass, genericArraySize);
 			for (int j = 0; j < genericArraySize; j++) {
 				Object assortedValueWithObjectAlignment = createAssorted(makeAssortedValueWithObjectAlignment, typeWithObjectAlignmentFields);
 				Array.set(newObjectAlignmentArray, j, assortedValueWithObjectAlignment);
@@ -2365,7 +2349,7 @@ public class ValueTypeTests {
 	static public void testValueWithSingleAlignmentGCScanning() throws Throwable {
 		ArrayList<Object> singleAlignmentArrayList = new ArrayList<Object>(objectGCScanningIterationCount);
 		for (int i = 0; i < objectGCScanningIterationCount; i++) {
-			Object newSingleAlignmentArray = Array.newInstance(assortedValueWithSingleAlignmentClass, genericArraySize);
+			Object newSingleAlignmentArray = (Object)ValueClass.newNullRestrictedArray(assortedValueWithSingleAlignmentClass, genericArraySize);
 			for (int j = 0; j < genericArraySize; j++) {
 				Object assortedValueWithSingleAlignment = createAssorted(makeAssortedValueWithSingleAlignment, typeWithSingleAlignmentFields);
 				Array.set(newSingleAlignmentArray, j, assortedValueWithSingleAlignment);
@@ -2820,6 +2804,7 @@ public class ValueTypeTests {
 	@Test(priority=1)
 	static public void testIsValueClassOnInterface() throws Throwable {
 		assertFalse(TestInterface.class.isValue());
+		assertFalse(TestInterface.class.isIdentity());
 	}
 
 	private interface TestInterface {

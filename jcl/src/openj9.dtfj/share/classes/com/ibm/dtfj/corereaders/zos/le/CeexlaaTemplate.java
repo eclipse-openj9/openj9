@@ -29,18 +29,20 @@ import java.io.IOException;
 
 public final class CeexlaaTemplate {
 
-    public static int length() {
-        return 384;
-    }
+	public static int length() {
+		return 384;
+	}
 
-    public static long getCeelaa_lca64(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 88);
-        return inputStream.readLong();
-    }
-    public static int getCeelaa_lca64$offset() {
-        return 88;
-    }
-    public static int getCeelaa_lca64$length() {
-        return 64;
-    }
+	public static long getCeelaa_lca64(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 88);
+		return inputStream.readLong();
+	}
+
+	public static int getCeelaa_lca64$offset() {
+		return 88;
+	}
+
+	public static int getCeelaa_lca64$length() {
+		return 64;
+	}
 }

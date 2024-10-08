@@ -42,51 +42,51 @@ public class ProcessingCapacityNotificationInfo {
 
 	private final int newProcessingCapacity;
 
-    /**
-     * Constructs a new instance of this object.
-     * 
-     * @param newProcessingCapacity
-     *            the new processing capacity in units of 1% of a physical
-     *            processor's capacity
-     */
+	/**
+	 * Constructs a new instance of this object.
+	 *
+	 * @param newProcessingCapacity
+	 *            the new processing capacity in units of 1% of a physical
+	 *            processor's capacity
+	 */
 	public ProcessingCapacityNotificationInfo(int newProcessingCapacity) {
 		super();
 		this.newProcessingCapacity = newProcessingCapacity;
-    }
+	}
 
-    /**
-     * Returns the new processing capacity after the change that this
-     * notification corresponds to.
-     * 
-     * @return the new processing capacity in units of 1% of a physical
-     *         processor's capacity.
-     */
-    public int getNewProcessingCapacity() {
-        return this.newProcessingCapacity;
-    }
+	/**
+	 * Returns the new processing capacity after the change that this
+	 * notification corresponds to.
+	 *
+	 * @return the new processing capacity in units of 1% of a physical
+	 *         processor's capacity.
+	 */
+	public int getNewProcessingCapacity() {
+		return this.newProcessingCapacity;
+	}
 
-    /**
-     * Receives a {@link CompositeData} representing a
-     * <code>ProcessingCapacityNotificationInfo</code> object and attempts to
-     * return the root <code>ProcessingCapacityNotificationInfo</code>
-     * instance.
-     * 
-     * @param cd
-     *            a <code>CompositeDate</code> that represents a
-     *            <code>ProcessingCapacityNotificationInfo</code>.
-     * @return if <code>cd</code> is non- <code>null</code>, returns a new
-     *         instance of <code>ProcessingCapacityNotificationInfo</code>.
-     *         If <code>cd</code> is <code>null</code>, returns
-     *         <code>null</code>.
-     * @throws IllegalArgumentException
-     *             if argument <code>cd</code> does not correspond to a
-     *             <code>ProcessingCapacityNotificationInfo</code> with the
-     *             following attribute:
-     *             <ul>
-     *             <li><code>newProcessingCapacity</code>(
-     *             <code>java.lang.Integer</code>)
-     *             </ul>
-     */
+	/**
+	 * Receives a {@link CompositeData} representing a
+	 * <code>ProcessingCapacityNotificationInfo</code> object and attempts to
+	 * return the root <code>ProcessingCapacityNotificationInfo</code>
+	 * instance.
+	 *
+	 * @param cd
+	 *            a <code>CompositeDate</code> that represents a
+	 *            <code>ProcessingCapacityNotificationInfo</code>.
+	 * @return if <code>cd</code> is non- <code>null</code>, returns a new
+	 *         instance of <code>ProcessingCapacityNotificationInfo</code>.
+	 *         If <code>cd</code> is <code>null</code>, returns
+	 *         <code>null</code>.
+	 * @throws IllegalArgumentException
+	 *             if argument <code>cd</code> does not correspond to a
+	 *             <code>ProcessingCapacityNotificationInfo</code> with the
+	 *             following attribute:
+	 *             <ul>
+	 *             <li><code>newProcessingCapacity</code>(
+	 *             <code>java.lang.Integer</code>)
+	 *             </ul>
+	 */
 	public static ProcessingCapacityNotificationInfo from(CompositeData cd) {
 		ProcessingCapacityNotificationInfo result = null;
 
@@ -96,7 +96,7 @@ public class ProcessingCapacityNotificationInfo {
 			// following method invocations will exit on an
 			// IllegalArgumentException...
 			ManagementUtils.verifyFieldNumber(cd, 1);
-			String[] attributeNames = { "newProcessingCapacity" }; //$NON-NLS-1$ 
+			String[] attributeNames = { "newProcessingCapacity" }; //$NON-NLS-1$
 			ManagementUtils.verifyFieldNames(cd, attributeNames);
 			String[] attributeTypes = { "java.lang.Integer" }; //$NON-NLS-1$
 			ManagementUtils.verifyFieldTypes(cd, attributeNames, attributeTypes);

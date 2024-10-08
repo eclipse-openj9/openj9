@@ -21,39 +21,39 @@
  */
 package j9vm.test.javahome;
 
-
 public class JavaHomeTestRunner extends j9vm.runner.Runner {
 
-public JavaHomeTestRunner(String className, String exeName, String bootClassPath, String userClassPath, String javaVersion) {
-	super(className, exeName, bootClassPath, userClassPath, javaVersion);
-}
+	public JavaHomeTestRunner(String className, String exeName, String bootClassPath, String userClassPath, String javaVersion) {
+		super(className, exeName, bootClassPath, userClassPath, javaVersion);
+	}
 
-public String getBootClassPathOption()  { return ""; }
+	public String getBootClassPathOption() {
+		return "";
+	}
 
-public boolean run()  {
-	boolean passed = true;
-	int rc = runCommandLine(getCommandLine() + "-Djava.home=" +
-			System.getProperty("java.home") + " " + className);
-	System.out.println("rc = " + rc + "\n");
-	if (0 != rc) {
-		passed = false;
+	public boolean run() {
+		boolean passed = true;
+		int rc = runCommandLine(getCommandLine() + " -Djava.home=" + System.getProperty("java.home") + " " + className);
+		System.out.println("rc = " + rc + "\n");
+		if (0 != rc) {
+			passed = false;
+		}
+
+		System.out.println("////// Failure starting VM expected here //////");
+		rc = runCommandLine(getCommandLine() + " -Djava.home=FooFooFoo! " + className);
+		System.out.println("rc = " + rc + "\n");
+		if (1 != rc) {
+			passed = false;
+		}
+
+		System.out.println("////// Failure starting VM expected here //////");
+		rc = runCommandLine(getCommandLine() + " -Djava.home= " + className);
+		System.out.println("rc = " + rc + "\n");
+		if (1 != rc) {
+			passed = false;
+		}
+
+		return passed;
 	}
-	
-	System.out.println("////// Failure starting VM expected here //////");
-	rc = runCommandLine(getCommandLine() + "-Djava.home=FooFooFoo! " + className);
-	System.out.println("rc = " + rc + "\n");
-	if (1 != rc) {
-		passed = false;
-	}
-	
-	System.out.println("////// Failure starting VM expected here //////");
-	rc = runCommandLine(getCommandLine() + "-Djava.home= " + className);
-	System.out.println("rc = " + rc + "\n");
-	if (1 != rc) {
-		passed = false;
-	}
-	
-	return passed;
-}
 
 }

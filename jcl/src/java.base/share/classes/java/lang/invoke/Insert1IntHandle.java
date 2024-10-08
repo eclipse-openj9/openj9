@@ -32,7 +32,7 @@ final class Insert1IntHandle extends InsertHandle {
 		if (values[0] instanceof Character) {
 			this.value = ((Character)values[0]).charValue();
 		} else {
-			this.value = ((Number)values[0]).intValue();	
+			this.value = ((Number)values[0]).intValue();
 		}
 		this.nextNoUnbox = nextNoUnbox;
 	}
@@ -43,12 +43,11 @@ final class Insert1IntHandle extends InsertHandle {
 		this.nextNoUnbox = originalHandle.nextNoUnbox;
 	}
 
-	
 	@Override
 	MethodHandle cloneWithNewType(MethodType newType) {
 		return new Insert1IntHandle(this, newType);
 	}
-	
+
 	// {{{ JIT support
 
 	private static final ThunkTable _thunkTable = new ThunkTable();
@@ -67,7 +66,6 @@ final class Insert1IntHandle extends InsertHandle {
 			value,
 			ILGenMacros.lastN(numSuffixArgs(), argPlaceholder)));
 	}
- 
+
 	// }}} JIT support
 }
-

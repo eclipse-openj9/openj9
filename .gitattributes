@@ -19,7 +19,12 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 
 # Binary files
-*.jpg git-encoding=BINARY working-tree-encoding=BINARY
-*.png git-encoding=BINARY working-tree-encoding=BINARY
-*.gif git-encoding=BINARY working-tree-encoding=BINARY
-*.zip git-encoding=BINARY working-tree-encoding=BINARY
+*.blob binary
+*.gif binary
+*.jar binary
+*.jpg binary
+*.png binary
+*.zip binary
+test/functional/cmdLineTests/jvmtitests/jars/test.fil binary
+test/functional/cmdLineTests/URLClassLoaderTests/SignedSealed/benKeyStore binary
+test/functional/cmdLineTests/URLClassLoaderTests/SignedSealed/benKeyStore.forMVS binary

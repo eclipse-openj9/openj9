@@ -77,7 +77,6 @@ ROMClassCreationContext::verbosePrintPhase(ROMClassCreationPhase phase, bool *pr
 		"ClassFileStackMapSlotsAnalysis",
 		"MethodIsFinalize",
 		"MethodIsEmpty",
-		"MethodIsForwarder",
 		"MethodIsGetter",
 		"MethodIsVirtual",
 		"MethodIsObjectConstructor",

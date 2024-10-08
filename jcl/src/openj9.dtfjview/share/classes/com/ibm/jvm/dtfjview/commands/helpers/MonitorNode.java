@@ -36,13 +36,13 @@ public class MonitorNode {
 	public static final int NO_DEADLOCK = 1;
 	public static final int LOOP_DEADLOCK = 2;
 	public static final int BRANCH_DEADLOCK = 3;
-	
+
 	private JavaMonitor monitor;
 	public int visit;
 	public MonitorNode waitingOn;
 	public int deadlock;
 	public NodeList inList;
-	
+
 	// For subclasses to call.
 	protected MonitorNode() {
 		visit = 0;
@@ -50,7 +50,7 @@ public class MonitorNode {
 		deadlock = UNKNOWN;
 		inList = null;
 	}
-	
+
 	public MonitorNode(JavaMonitor _monitor)
 	{
 		monitor = _monitor;
@@ -88,9 +88,9 @@ public class MonitorNode {
 			return "monitor";
 		}
 	}
-	
+
 	public long getMonitorAddress() {
 		return monitor.getID().getAddress();
 	}
-	
+
 }

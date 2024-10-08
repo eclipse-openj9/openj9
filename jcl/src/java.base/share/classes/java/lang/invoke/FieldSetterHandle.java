@@ -32,25 +32,25 @@ import static java.lang.invoke.MethodHandleResolver.UNSAFE;
  * an instance field.
  * <p>
  * vmSlot will hold the field offset in the instance.
- * 
+ *
  */
 final class FieldSetterHandle extends FieldHandle {
-	
+
 	FieldSetterHandle(Class<?> referenceClass, String fieldName, Class<?> fieldClass, Class<?> accessClass) throws IllegalAccessException, NoSuchFieldException {
 		super(fieldMethodType(referenceClass, fieldClass), referenceClass, fieldName, fieldClass, KIND_PUTFIELD, accessClass);
 	}
-	
+
 	FieldSetterHandle(Field field) throws IllegalAccessException {
 		super(fieldMethodType(field.getDeclaringClass(), field.getType()), field, KIND_PUTFIELD, false);
 	}
-	
+
 	FieldSetterHandle(FieldSetterHandle originalHandle, MethodType newType) {
 		super(originalHandle, newType);
 	}
 
 	/*
 	 * Create the MethodType to be passed to the constructor
-	 * MethodType of a field setter is (instanceType, fieldType)V. 
+	 * MethodType of a field setter is (instanceType, fieldType)V.
 	 */
 	private final static MethodType fieldMethodType(Class<?> referenceClass, Class<?> fieldClass) {
 		return MethodType.methodType(void.class, referenceClass, fieldClass);
@@ -65,7 +65,7 @@ final class FieldSetterHandle extends FieldHandle {
 			UNSAFE.putInt(receiver, vmSlot + HEADER_SIZE, newValue);
 		}
 	}
-	
+
 	@FrameIteratorSkip
 	private final void invokeExact_thunkArchetype_V(Object receiver, long   newValue, int argPlaceholder) {
 		if (isVolatile) {
@@ -123,4 +123,3 @@ final class FieldSetterHandle extends FieldHandle {
 		compareWithField(left, c);
 	}
 }
-

@@ -21,17 +21,17 @@
  */
 package org.openj9.test.jep389.downcall;
 
-import org.testng.annotations.Test;
 import org.testng.Assert;
-import org.testng.AssertJUnit;
+import org.testng.annotations.Test;
+
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 
 import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.CLinker;
-import static jdk.incubator.foreign.CLinker.*;
+import static jdk.incubator.foreign.CLinker.C_CHAR;
+import static jdk.incubator.foreign.CLinker.C_INT;
 import jdk.incubator.foreign.FunctionDescriptor;
-import jdk.incubator.foreign.ResourceScope;
 import jdk.incubator.foreign.SymbolLookup;
 
 /**
@@ -152,6 +152,7 @@ public class MultiThreadingTests5 implements Thread.UncaughtExceptionHandler {
 		thr4.setUncaughtExceptionHandler(this);
 		thr5.setUncaughtExceptionHandler(this);
 		thr6.setUncaughtExceptionHandler(this);
+		initException = null;
 
 		thr1.start();
 		thr2.start();

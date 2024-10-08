@@ -30,7 +30,7 @@ package com.ibm.jvm.trace;
 public interface TracePoint {
 	/**
 	 * @return the numeric sub-identifier of the current tracepoint within the current component.
-	 * A tracepoint is identified by componentName](containerCompName)].numericID, 
+	 * A tracepoint is identified by componentName](containerCompName)].numericID,
 	 * for example, comp1.14, or comp1(comp2).12.
 	 */
 	public int getID();
@@ -39,10 +39,10 @@ public interface TracePoint {
 	 * @return the GMT time in milliseconds at which this TracePoint was produced.
 	 */
 	public long getTimestampMillis();
-	/* this time is intended to be appended to the getTimeStampMillis time, i.e. it adds 
+	/* this time is intended to be appended to the getTimeStampMillis time, i.e. it adds
 	   resolution rather than being a formattable entity in its own right */
 	/**
-	 * @return the high resolution timer value stored at the time this tracepoint was 
+	 * @return the high resolution timer value stored at the time this tracepoint was
 	 * generated.
 	 */
 	public int getMicrosecondsCount();
@@ -58,14 +58,14 @@ public interface TracePoint {
 	public long getThreadID();
 	/**
 	 * @return the name of the component that produced this TracePoint.
-	 * A tracepoint is identified by componentName](containerCompName)].numericID, 
+	 * A tracepoint is identified by componentName](containerCompName)].numericID,
 	 * for example, comp1.14, or comp1(comp2).12.
 	 */
 	public String getComponent();
 	/**
 	 * @return the name of the container component that produced the current TracePoint,
 	 * or null if the TracePoint did not have a container component.
-	 * A tracepoint is identified by componentName](containerCompName)].numericID, 
+	 * A tracepoint is identified by componentName](containerCompName)].numericID,
 	 * for example, comp1.14, or comp1(comp2).12.
 	 */
 	public String getContainerComponent();
@@ -88,7 +88,7 @@ public interface TracePoint {
 	 */
 	public Object[] getParameters();
 	/**
-	 * @return a list of groups to which this TracePoint belongs, or none if it doesn't 
+	 * @return a list of groups to which this TracePoint belongs, or none if it doesn't
 	 * belong to any.
 	 */
 	public String[] getGroups();

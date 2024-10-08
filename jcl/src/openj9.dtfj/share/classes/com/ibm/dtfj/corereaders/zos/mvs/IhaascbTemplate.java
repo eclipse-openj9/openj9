@@ -29,18 +29,20 @@ import java.io.IOException;
 
 public final class IhaascbTemplate {
 
-    public static int length() {
-        return 384;
-    }
+	public static int length() {
+		return 384;
+	}
 
-    public static long getAscbasxb(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 108);
-        return inputStream.readUnsignedInt() & 0xffffffffL;
-    }
-    public static int getAscbasxb$offset() {
-        return 108;
-    }
-    public static int getAscbasxb$length() {
-        return 32;
-    }
+	public static long getAscbasxb(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 108);
+		return inputStream.readUnsignedInt() & 0xffffffffL;
+	}
+
+	public static int getAscbasxb$offset() {
+		return 108;
+	}
+
+	public static int getAscbasxb$length() {
+		return 32;
+	}
 }

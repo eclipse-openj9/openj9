@@ -29,22 +29,22 @@ import com.ibm.java.diagnostics.utils.commands.CommandException;
 
 /**
  * There are a number of jdmpview commands which just act as routing
- * commands onto other more specific commands. This class provides an 
+ * commands onto other more specific commands. This class provides an
  * abstract superclass for these commands to inherit from.
- * 
+ *
  * @author adam
  *
  */
 public abstract class SimpleRedirectorCommand extends BaseJdmpviewCommand {
 	protected static final String SUB_CMD_FORMAT = "%s %s";
-	
+
 	/**
 	 * Get the base command name which triggers this routing
-	 * 
+	 *
 	 * @return
 	 */
 	protected abstract String getCmdName();
-	
+
 	public void run(String command, String[] args, IContext context, PrintStream out) throws CommandException {
 		if(initCommand(command, args, context, out)) {
 			return;		//processing already handled by super class
@@ -56,7 +56,7 @@ public abstract class SimpleRedirectorCommand extends BaseJdmpviewCommand {
 				break;
 			case 1 :
 				String subcmd = String.format(SUB_CMD_FORMAT, getCmdName(), args[0]);
-				context.execute(subcmd, new String[0], out);			
+				context.execute(subcmd, new String[0], out);
 				break;
 			default :
 				String[] arguments = new String[args.length - 1];
@@ -66,7 +66,7 @@ public abstract class SimpleRedirectorCommand extends BaseJdmpviewCommand {
 				subcmd = String.format(SUB_CMD_FORMAT, getCmdName(), args[0]);
 				context.execute(subcmd, arguments, out);
 				break;
-				
+
 		}
 	}
 }

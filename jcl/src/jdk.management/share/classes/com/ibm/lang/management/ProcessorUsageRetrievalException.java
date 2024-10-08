@@ -27,7 +27,7 @@ package com.ibm.lang.management;
  * Exception class whose instance is thrown when Processor usage sampling fails. For exact
  * cause one needs to inspect the exception string message capturing the details by calling
  * the toString() method.
- * 
+ *
  * @author sonchakr
  * @since 1.7.1
  */

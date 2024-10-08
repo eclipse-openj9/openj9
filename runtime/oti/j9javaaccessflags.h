@@ -57,7 +57,7 @@
 #define J9AccStrict                        0x00000800 /* method */
 #define J9AccSynthetic                     0x00001000 /* class method field */
 #define J9AccAnnotation                    0x00002000 /* class */
-#define J9AccForwarderMethod               0x00002000 /* method */
+#define J9AccMethodUnused0x2000            0x00002000 /* method */
 #define J9AccEnum                          0x00004000 /* class field */
 #define J9AccEmptyMethod                   0x00004000 /* method */
 /* ACC_MODULE reserves 0x00008000 for classes */
@@ -99,6 +99,7 @@
  * See map in ROMClassBuilder::computeExtraModifiers for
  * available slots.
  */
+#define J9AccClassIsShared 0x20
 #define J9AccClassIsValueBased 0x40
 #define J9AccClassHiddenOptionNestmate 0x80
 #define J9AccClassHiddenOptionStrong 0x100

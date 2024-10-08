@@ -37,6 +37,6 @@ import java.lang.annotation.Target;
 @Retention(value = RUNTIME)
 public @interface ConstructorProperties {
 
-    public String[] value();
+	public String[] value();
 
 }

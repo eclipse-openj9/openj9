@@ -22,9 +22,9 @@
  */
 package java.lang.invoke;
 
-/* AsTypeHandle is a MethodHandle subclass used to convert the 
+/* AsTypeHandle is a MethodHandle subclass used to convert the
  * arguments and return type.
- * 
+ *
  */
 final class AsTypeHandle extends ArgumentConversionHandle {
 
@@ -69,4 +69,3 @@ final class AsTypeHandle extends ArgumentConversionHandle {
 		compareWithConvert(left, c);
 	}
 }
-

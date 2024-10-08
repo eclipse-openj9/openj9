@@ -29,18 +29,20 @@ import java.io.IOException;
 
 public final class SmcbTemplate {
 
-    public static int length() {
-        return 564;
-    }
+	public static int length() {
+		return 564;
+	}
 
-    public static long getSmcb_dsbos(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 364);
-        return inputStream.readUnsignedInt() & 0xffffffffL;
-    }
-    public static int getSmcb_dsbos$offset() {
-        return 364;
-    }
-    public static int getSmcb_dsbos$length() {
-        return 32;
-    }
+	public static long getSmcb_dsbos(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 364);
+		return inputStream.readUnsignedInt() & 0xffffffffL;
+	}
+
+	public static int getSmcb_dsbos$offset() {
+		return 364;
+	}
+
+	public static int getSmcb_dsbos$length() {
+		return 32;
+	}
 }

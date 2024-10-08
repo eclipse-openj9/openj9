@@ -35,15 +35,15 @@ public class RuntimePermissions {
 	/**
 	 * RuntimePermission "setContextClassLoader"
 	 */
-	public static final RuntimePermission permissionSetContextClassLoader = new RuntimePermission("setContextClassLoader");	//$NON-NLS-1$ 
+	public static final RuntimePermission permissionSetContextClassLoader = new RuntimePermission("setContextClassLoader");	//$NON-NLS-1$
 	/**
 	 * RuntimePermission "setDefaultUncaughtExceptionHandler"
 	 */
-	public static final RuntimePermission permissionSetDefaultUncaughtExceptionHandler = new RuntimePermission("setDefaultUncaughtExceptionHandler");	//$NON-NLS-1$ 
+	public static final RuntimePermission permissionSetDefaultUncaughtExceptionHandler = new RuntimePermission("setDefaultUncaughtExceptionHandler");	//$NON-NLS-1$
 	/**
 	 * RuntimePermission "setIO"
 	 */
-	public static final RuntimePermission permissionSetIO = new RuntimePermission("setIO");	//$NON-NLS-1$ 
+	public static final RuntimePermission permissionSetIO = new RuntimePermission("setIO");	//$NON-NLS-1$
 	/**
 	 * RuntimePermission "setSecurityManager"
 	 */

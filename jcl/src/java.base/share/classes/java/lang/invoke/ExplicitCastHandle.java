@@ -26,7 +26,7 @@ import java.lang.invoke.MethodHandle.FrameIteratorSkip;
 
 /* ExplicitCastHandle is a MethodHandle subclass used to implement
  * MethodHandles.explicitCastArgument()
- * 
+ *
  */
 final class ExplicitCastHandle extends ArgumentConversionHandle {
 
@@ -71,4 +71,3 @@ final class ExplicitCastHandle extends ArgumentConversionHandle {
 		compareWithConvert(left, c);
 	}
 }
-

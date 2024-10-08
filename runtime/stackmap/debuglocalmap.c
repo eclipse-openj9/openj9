@@ -662,7 +662,7 @@ validateLocalSlot(J9VMThread *currentThread, J9Method *ramMethod, U_32 offsetPC,
 					break;
 			}
 		} else {
-			if ((slotSignature == '[') || IS_REF_OR_VAL_SIGNATURE(slotSignature)) {
+			if ((slotSignature == '[') || IS_CLASS_SIGNATURE(slotSignature)) {
 				if ((localMap[slot / 32] & (1 << (slot % 32))) == 0) {
 					rc = J9_SLOT_VALIDATE_ERROR_LOCAL_MAP_MISMATCH;
 				}

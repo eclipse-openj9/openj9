@@ -732,50 +732,6 @@ JVM_VirtualThreadEnd(JNIEnv *env, jobject vthread)
 }
 #endif /* JAVA_SPEC_VERSION >= 21 */
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-JNIEXPORT jboolean JNICALL
-JVM_IsValhallaEnabled()
-{
-	return JNI_TRUE;
-}
-
-JNIEXPORT jboolean JNICALL
-JVM_IsImplicitlyConstructibleClass(JNIEnv *env, jclass cls)
-{
-	jboolean result = JNI_FALSE;
-	J9VMThread *currentThread = (J9VMThread *)env;
-	J9InternalVMFunctions const * const vmFuncs = currentThread->javaVM->internalVMFunctions;
-	vmFuncs->internalEnterVMFromJNI(currentThread);
-	if (NULL == cls) {
-		vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
-	} else {
-		J9Class *clazz = J9VM_J9CLASS_FROM_JCLASS(currentThread, cls);
-		J9ROMClass *romClass = clazz->romClass;
-		if (J9_ARE_ALL_BITS_SET(romClass->optionalFlags, J9_ROMCLASS_OPTINFO_IMPLICITCREATION_ATTRIBUTE)
-			&& J9_ARE_ALL_BITS_SET(getImplicitCreationFlags(romClass), J9AccImplicitCreateHasDefaultValue)
-		) {
-			result = JNI_TRUE;
-		}
-	}
-	vmFuncs->internalExitVMToJNI(currentThread);
-	return result;
-}
-
-JNIEXPORT jboolean JNICALL
-JVM_IsNullRestrictedArray(JNIEnv *env, jobject obj)
-{
-	// TODO implement this with https://github.com/eclipse-openj9/openj9/issues/19460
-	return JNI_FALSE;
-}
-
-JNIEXPORT jarray JNICALL
-JVM_NewNullRestrictedArray(JNIEnv *env, jclass cls, jint length)
-{
-	assert(!"JVM_NewNullRestrictedArray unimplemented");
-	return NULL;
-}
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-
 #if JAVA_SPEC_VERSION >= 22
 JNIEXPORT void JNICALL
 JVM_ExpandStackFrameInfo(JNIEnv *env, jobject object)
@@ -828,6 +784,18 @@ JVM_IsContainerized(void)
 	}
 
 	return isContainerized;
+}
+
+/**
+ * @brief Determine if the JVM is statically linked, always returns JNI_FALSE.
+ *
+ * @return JNI_FALSE
+ */
+JNIEXPORT jboolean JNICALL
+JVM_IsStaticallyLinked(void)
+{
+	/* OpenJDK removed static builds using --enable-static-build. */
+	return JNI_FALSE;
 }
 #endif /* JAVA_SPEC_VERSION >= 24 */
 

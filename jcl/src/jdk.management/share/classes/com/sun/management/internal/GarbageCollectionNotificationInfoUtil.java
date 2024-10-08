@@ -33,7 +33,7 @@ import com.ibm.java.lang.management.internal.ManagementUtils;
 import com.sun.management.GarbageCollectionNotificationInfo;
 
 /**
- * Support for the {@link GarbageCollectionNotificationInfo} class. 
+ * Support for the {@link GarbageCollectionNotificationInfo} class.
  */
 public final class GarbageCollectionNotificationInfoUtil {
 

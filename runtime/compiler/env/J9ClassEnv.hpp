@@ -129,7 +129,7 @@ public:
     *    the criteria that NO field is of
     *    - type double (D) or float (F)
     *    - nullable-class/interface type
-    *    - null restricted class type that are not both flattened and recursively
+    *    - null-restricted class type that are not both flattened and recursively
     *      compatible for direct memory comparison
     *
     *  \param clazz

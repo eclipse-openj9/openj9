@@ -36,50 +36,50 @@ public class TraceRecord implements Comparable<TraceRecord> {
 	/*
 	 * the following fields represent the UtTraceRecord struct's fields that
 	 * were written as the header to this file
-	 */	
+	 */
 	private BigInteger endTime = BigInteger.ZERO;
 	BigInteger wrapTime = BigInteger.ZERO;
 	BigInteger writePlatform = BigInteger.ZERO;
 	private byte endTimeBytes[] = new byte[8];
 	private byte wrapTimeBytes[] = new byte[8];
 	BigInteger writeSystem = BigInteger.ZERO;
-	
+
 	long threadID;
 	long threadSyn1;
 	long threadSyn2;
 	int firstEntry;
 	int nextEntry;
-	String threadName = "";	
+	String threadName = "";
 	/* end of UtTraceRecord struct - see ute_internal.h */
 
 	private byte[] data;
 	/* does the record start with a lostRecord. Valid once appendToStream has run */
 	boolean lostRecord = false;
-	
+
 	/* if a user discards records we can rely on lost record trace points so we record it here.
 	 * True means that data immediately prior to this record may have been discarded so we won't
 	 * try to merge with any partial data on the end of the stream
 	 */
 	boolean userDiscardedData = false;
-	
+
 	private static final byte userDiscardTracePoint[] = new byte[]{8, 0, 1, 0, 0, 0, 0, 0};
 
 	/* This is the size of the static portion of the tracerecord header, ie excluding the thread name */
 	public static final int TRACERECORD_HEADER_SIZE = 64;
-	
+
 	private static final int GUESSED_MAX_THREAD_NAME = 128;
-	
+
 	/* These fields are only used if this is a file backed trace record */
 	RandomAccessFile file;
 	long offset;
-	
+
 	/* a record of the offsets that we've preprocessed to aid in debugging */
 	List<Integer> debugOffsets = null;
 
 	/**
 	 * This will create a TraceRecord from a byte array. The byte array must be of the correct length
 	 * for a trace record in this context.
-	 * 
+	 *
 	 * @param data
 	 * @param context
 	 * @throws IllegalArgumentException
@@ -87,7 +87,7 @@ public class TraceRecord implements Comparable<TraceRecord> {
 	public TraceRecord(TraceContext context, byte[] data) throws IllegalArgumentException {
 		this.context = context;
 		this.data = data;
-		
+
 		if (data.length != context.getRecordSize()) {
 			throw new IllegalArgumentException();
 		}
@@ -95,10 +95,10 @@ public class TraceRecord implements Comparable<TraceRecord> {
 		if (context.debugLevel > 0) {
 			debugOffsets = new Vector<Integer>();
 		}
-		
+
 		parseHeader(data);
 	}
-	
+
 	public TraceRecord(TraceContext context, RandomAccessFile file, long offset) throws IOException, IllegalArgumentException {
 		this.context = context;
 		this.file = file;
@@ -109,13 +109,13 @@ public class TraceRecord implements Comparable<TraceRecord> {
 		if (context.debugLevel > 0) {
 			debugOffsets = new Vector<Integer>();
 		}
-		
+
 		while (required != 0) {
 			/* should only run twice at most, and only more than once with thread
 			 * names of more than GUESSED_MAX_THREAD_NAME chars.
 			 */
 			byte data[] = new byte[required];
-			
+
 			file.seek(offset);
 			if (file.read(data) != data.length) {
 				throw new IllegalArgumentException();
@@ -128,7 +128,7 @@ public class TraceRecord implements Comparable<TraceRecord> {
 			context.debug(this, 3, summary());
 		}
 	}
-	
+
 	private int parseHeader(byte[] data) throws IllegalArgumentException {
 		ByteStream stream = context.createByteStream(data);
 
@@ -138,14 +138,13 @@ public class TraceRecord implements Comparable<TraceRecord> {
 		wrapTime = stream.getBigInteger(8);
 		writePlatform = stream.getBigInteger(8);
 		writeSystem = stream.getBigInteger(8);
-		
+
 		threadID = stream.getLong();
 		threadSyn1 = stream.getLong();
 		threadSyn2 = stream.getLong();
 		firstEntry = stream.getInt();
 		nextEntry = stream.getInt();
 
-		
 		/* do some sanity checks */
 		String error = null;
 		if (error == null && firstEntry < TRACERECORD_HEADER_SIZE) {
@@ -176,7 +175,7 @@ public class TraceRecord implements Comparable<TraceRecord> {
 
 		return 0;
 	}
-	
+
 	/**
 	 * This method ensures that if the record is backed by data in a file that the data is present in memory.
 	 * If it's not backed by a file it will return the current size of the records data array.
@@ -191,13 +190,13 @@ public class TraceRecord implements Comparable<TraceRecord> {
 			}
 
 			int bytesRead = 0;
-			
+
 			try {
 				file.seek(offset);
 				bytesRead = file.read(data);
 				if (bytesRead != data.length) {
 					context.error(this, "couldn't read an entire record from the file");
-					
+
 					if (bytesRead <= nextEntry) {
 						return 0;
 					}
@@ -211,24 +210,24 @@ public class TraceRecord implements Comparable<TraceRecord> {
 					System.arraycopy(data, 0, shrunk, 0, bytesRead);
 					data = shrunk;
 				}
-				
+
 				return bytesRead;
 			} catch (IOException e) {
 				context.error(this, "IOException while reading record at offset "+offset);
 				context.error(this, e.getMessage());
-				
+
 				return 0;
 			}
 		}
-		
+
 		return data.length;
 	}
-	
+
 	/**
 	 * Appends the body of the data from this trace record to the stream IN
 	 * CHRONOLOGICAL ORDER. This means that if the buffer wrapped at all the
 	 * data will be reordered so that reading from the bytestream will return
-	 * data correctly ordered for reading as a continuous temporal stream. 
+	 * data correctly ordered for reading as a continuous temporal stream.
 	 * @param stream - the stream onto which the record should be appended
 	 * @param newThread - indicates whether this is the first record on a thread
 	 * @return the number of bytes appended
@@ -240,20 +239,20 @@ public class TraceRecord implements Comparable<TraceRecord> {
 		}
 
 		context.totalRecords++;
-		
+
 		/* does the lostRecord tracepoint get written into the record that wrapped or
 		 * the one after?
 		 * If it's the latter can we put it at the start of the one that wrapped and
 		 * then spin in the remainder of the buffer?
 		 */
-		
+
 		/* if we're spanning an entire record */
 		if (nextEntry == -1) {
 			if (context.getTraceType() == TraceContext.EXTERNAL) {
 				/* we can't yet fix up the length */
 				stream.setGuardBytes(stream.getGuardBytes() + data.length - firstEntry);
 				stream.add(data, firstEntry);
-				
+
 				return data.length - firstEntry;
 			} else {
 				/* we can't deal with this for internal trace, but it could happen */
@@ -261,14 +260,13 @@ public class TraceRecord implements Comparable<TraceRecord> {
 				return 0;
 			}
 		}
-		
+
 		/* if we've a perfect fit in the buffer then nextEntry will be == buffersize. We want it to
 		 * point to the last byte in the buffer
 		 */
 		if (nextEntry == context.getRecordSize()) {
 			nextEntry--;
 		}
-		
 
 		/* if this is an internal record that could have wrapped then glue it back together before we start fixing up trace points */
 		if (context.getTraceType() == TraceContext.INTERNAL) {
@@ -277,17 +275,17 @@ public class TraceRecord implements Comparable<TraceRecord> {
 
 			System.arraycopy(data, pivotIndex, tmp, firstEntry, data.length - pivotIndex);
 			System.arraycopy(data, firstEntry, tmp, data.length - pivotIndex + firstEntry, pivotIndex - firstEntry);
-			
+
 			nextEntry = data.length -1;
 
 			data = tmp;
 		}
-		
+
 		/* fix up the record, moving lengths to the front of the tracepoints */
 		int indexSource = nextEntry;
 		int indexTarget = nextEntry;
 		byte entryLengthSource = data[indexSource];
-		
+
 		/* defect workaround for 147869 - out-by-one nextEntry value when a sequence wrap trace point is
 		 * written by the non-fastpath section of the trace writing code.
 		 */
@@ -300,7 +298,7 @@ public class TraceRecord implements Comparable<TraceRecord> {
 					indexTarget--;
 					nextEntry--;
 					entryLengthSource = data[indexSource];
-					
+
 					context.warning(this, "Fixed up misaligned sequence wrap trace point from defect 147869");
 				}
 			}
@@ -313,7 +311,7 @@ public class TraceRecord implements Comparable<TraceRecord> {
 		 */
 		int leadin = 0;
 
-		/* number of bytes reserved from earlier buffers */		
+		/* number of bytes reserved from earlier buffers */
 		int guardBytes = stream.getGuardBytes();
 
 		/* controls whether we're keeping or discarding the last bytes of the previous buffer and the first
@@ -327,7 +325,7 @@ public class TraceRecord implements Comparable<TraceRecord> {
 		 * 3 bytes of id (0,0,0)
 		 * 4 bytes of timestamp
 		 *  */
-		byte startTimestamp[] = new byte[8]; 
+		byte startTimestamp[] = new byte[8];
 		startTimestamp[0] = 8;
 		startTimestamp[1] = 0;
 		startTimestamp[2] = 0;
@@ -336,10 +334,9 @@ public class TraceRecord implements Comparable<TraceRecord> {
 		if (context.metadata.byteOrder == ByteOrder.LITTLE_ENDIAN) {
 			System.arraycopy(endTimeBytes, 4, startTimestamp, 4, 4);
 		} else {
-			System.arraycopy(endTimeBytes, 0, startTimestamp, 4, 4);			
+			System.arraycopy(endTimeBytes, 0, startTimestamp, 4, 4);
 		}
-		
-		
+
 		/* if indexTarget == firstEntry then the length byte for the previous record is the first byte
 		 * in this and we need to do the fixup.
 		 */
@@ -368,7 +365,7 @@ public class TraceRecord implements Comparable<TraceRecord> {
 				/* this is a special tracepoint, indicating that the tracepoint preceding this in the
 				 * buffer has a length that can't be stored in a single byte. Instead the length is
 				 * a short that is constructed from two non-contiguous bytes.
-				 * 
+				 *
 				 * The length for this special tracepoint specifies that it's 4 bytes long, however it
 				 * is actually only 3bytes. Byte [0] is the length byte for the regular tracepoint that
 				 * it corresponds to and contains the low order bits, [1] and [2] are null, [3] contains
@@ -377,7 +374,7 @@ public class TraceRecord implements Comparable<TraceRecord> {
 				 */
 
 				byte longTPSize[] = new byte[4];
-				
+
 				/* is the entire special trace point in this record? */
 				if (indexTarget < firstEntry) {
 					/* nope, so retrieve what's missing */
@@ -399,7 +396,7 @@ public class TraceRecord implements Comparable<TraceRecord> {
 						discard = true;
 						break;
 					}
-					
+
 					System.arraycopy(missing, 0, longTPSize, 0, missing.length);
 					System.arraycopy(data, firstEntry, longTPSize, missing.length, 4 - missing.length);
 				} else {
@@ -412,10 +409,9 @@ public class TraceRecord implements Comparable<TraceRecord> {
 				/* what's the target index of the actual tracepoint? */
 				byte highBits = longTPSize[3];
 				byte lowBits = longTPSize[0];
-				
+
 				len = (((highBits & 0xff)<< 8) | (lowBits & 0xff));
-				
-				
+
 				/* sanity check the mid bytes */
 				if (longTPSize[1] != '\0' || longTPSize[2] != '\0') {
 					if (indexTarget < firstEntry) {
@@ -426,7 +422,7 @@ public class TraceRecord implements Comparable<TraceRecord> {
 					} else {
 						context.error(this, "center 2 bytes for long tracepoint are not null, discarding remaining data");
 					}
-					
+
 					/* we don't want to process any more no matter where we are because we'll just put
 					 * garbage into the stream
 					 */
@@ -443,7 +439,6 @@ public class TraceRecord implements Comparable<TraceRecord> {
 				 */
 				indexTarget = indexSource - 4 - len;
 
-				
 				/* if it fits in the buffer then we operate in place. We check against firstEntry -1 because if we're only one
 				 * over then it's just the length byte and we discard the trailing null from the previous buffer we when fall though
 				 * into the regular tracepoint processing
@@ -471,7 +466,7 @@ public class TraceRecord implements Comparable<TraceRecord> {
 						discard = true;
 						break;
 					}
-					
+
 					if (localLen > 0) {
 						/* move the data in this record up over the 4 bytes of the special */
 						System.arraycopy(data, firstEntry, data, firstEntry + 4, localLen);
@@ -499,7 +494,7 @@ public class TraceRecord implements Comparable<TraceRecord> {
 							System.arraycopy(startTimestamp, 1, data, indexTarget + 1, 7);
 
 							startTimestamp = timestamp;
-							
+
 							/* DEBUG accounting */
 							if (context.debugLevel > 0) {
 								debugOffsets.add(Integer.valueOf(indexTarget));
@@ -544,14 +539,13 @@ public class TraceRecord implements Comparable<TraceRecord> {
 						context.debug(this, 5, "fixing up special tracepoint, length "+len);
 					}
 				}
-				
-				
+
 				byte entryLengthTarget = data[indexTarget];
 				data[indexTarget] = entryLengthSource;
 				entryLengthSource = entryLengthTarget;
-				
+
 				indexSource = indexTarget;
-				
+
 				/* DEBUG accounting */
 				if (context.debugLevel > 0) {
 					debugOffsets.add(Integer.valueOf(indexTarget));
@@ -561,12 +555,12 @@ public class TraceRecord implements Comparable<TraceRecord> {
 				 * data. In the case we've flushed the record before hand there may be dangling data from the
 				 * preceding record that we want to discard.
 				 */
-				
+
 				/* this discards dangling data and also the trailing length byte which we no longer need */
 				if (guardBytes > 0) {
 					discard = true;
 				}
-				
+
 				/* we use that empty space at firstEntry to hold the length */
 				data[indexTarget] = entryLengthSource;
 				/* so that we add the first tracepoint */
@@ -583,25 +577,25 @@ public class TraceRecord implements Comparable<TraceRecord> {
 				 * spilled from the preceding buffer so we fix up the current tracepoint, then test this again
 				 * when indexTarget will be negative.
 				 */
-				
+
 				/* we do exactly the same here as we would for a tracepoint that fits entirely */
 				byte entryLengthTarget = data[indexTarget];
 				data[indexTarget] = entryLengthSource;
 				entryLengthSource = entryLengthTarget;
-				
+
 				indexSource = indexTarget;
 			} else {
 				/* indexTarget < firstEntry */
 				if (context.getTraceType() == TraceContext.EXTERNAL) {
-				
+
 					int negativeOffset = indexTarget - firstEntry - leadin;
 					if (context.debugStream != null) {
 						context.debug(this, 5, "Negative offset for fixup is "+negativeOffset);
 					}
-					
+
 					if (negativeOffset == -1) {
 						/* the tracepoint is entirely in this record, it's just the length we're trying to promote */
-						
+
 						if (guardBytes == 1) {
 							/* get rid of the 0'd length byte at the end of the stream that we're expecting */
 							stream.truncate(1);
@@ -610,16 +604,16 @@ public class TraceRecord implements Comparable<TraceRecord> {
 							/* we're discarding more data than anticipated */
 							discard = true;
 						}
-						
+
 						/* put the length into firstEntry -1 as we're done with the header data */
 						data[indexTarget] = entryLengthSource;
 						indexSource = indexTarget;
-						
+
 						/* DEBUG accounting */
 						if (context.debugLevel > 0) {
 							debugOffsets.add(Integer.valueOf(indexTarget));
 						}
-					} else {						
+					} else {
 						if (guardBytes + negativeOffset != 0 || userDiscardedData) {
 							discard = true;
 						} else {
@@ -628,7 +622,7 @@ public class TraceRecord implements Comparable<TraceRecord> {
 							}
 							try {
 								byte b = stream.put(entryLengthSource, negativeOffset);
-								
+
 								if (b != '\0') {
 									discard = true;
 								} else {
@@ -636,7 +630,7 @@ public class TraceRecord implements Comparable<TraceRecord> {
 										context.debug(this, 5, "successfully fixed up earlier buffer");
 									}
 									discard = false;
-									
+
 									/* DEBUG accounting */
 									if (context.debugLevel > 0) {
 										debugOffsets.add(Integer.valueOf(indexTarget));
@@ -655,7 +649,7 @@ public class TraceRecord implements Comparable<TraceRecord> {
 								stream.add(data, firstEntry + leadin, indexSource - firstEntry - leadin);
 							}
 						}
-						
+
 						/* we're done with this record */
 						break;
 					}
@@ -672,7 +666,7 @@ public class TraceRecord implements Comparable<TraceRecord> {
 					discard = true;
 				}
 			}
-			
+
 			context.totalTracePoints++;
 		}
 
@@ -682,7 +676,7 @@ public class TraceRecord implements Comparable<TraceRecord> {
 			 *   a. missing data inbetween the end of the stream and the start of this buffer
 			 *   b. corrupted trace data
 			 *   c. incorrect parsing
-			 *   
+			 *
 			 * We throw away the mismatched parts as they're inconsistent.
 			 */
 			long expected = Math.abs(indexTarget - firstEntry - leadin);
@@ -707,7 +701,7 @@ public class TraceRecord implements Comparable<TraceRecord> {
 				}
 			}
 		}
-		
+
 		/* figure out how many bytes at the end of the record could be the start of a spanning
 		 * tracepoint and guard them
 		 */
@@ -731,11 +725,11 @@ public class TraceRecord implements Comparable<TraceRecord> {
 	public String toString() {
 		return getIdentifier();
 	}
-	
+
 	private String getIdentifier() {
 		return (threadID + threadName).intern();
 	}
-	
+
 	public String summary() {
 		if (textSummary == null) {
 			StringBuilder s = new StringBuilder("TraceRecord:"+System.getProperty("line.separator"));
@@ -745,9 +739,9 @@ public class TraceRecord implements Comparable<TraceRecord> {
 			} else {
 				s.append("non file data").append(System.getProperty("line.separator"));
 			}
-			
+
 			s.append("internal id:    ").append(toString()).append(System.getProperty("line.separator"));
-			
+
 			s.append("endTime:        ").append(endTime).append(System.getProperty("line.separator"));
 			s.append("wrapTime:       ").append(wrapTime).append(System.getProperty("line.separator"));
 			s.append("writePlatform:  ").append(writePlatform).append(System.getProperty("line.separator"));

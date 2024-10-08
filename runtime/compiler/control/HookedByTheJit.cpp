@@ -440,8 +440,8 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
       {
 #if defined(J9VM_OPT_CRIU_SUPPORT)
       bool cpAllowedAndDebugOnRestoreEnabled
-         = jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(vmThread)
-           && jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(vmThread);
+         = jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(jitConfig->javaVM)
+           && jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(jitConfig->javaVM);
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
       bool sccCounts =
@@ -1397,8 +1397,8 @@ static void jitMethodSampleInterrupt(J9VMThread* vmThread, IDATA handlerKey, voi
           && !compInfo->getCRRuntime()->shouldSuspendThreadsForCheckpoint()
 
           /* Don't sample methods for recompilation pre-checkpoint if Debug On Restore is enabled */
-          && (!jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(vmThread)
-              || !jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(vmThread))
+          && (!jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(jitConfig->javaVM)
+              || !jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(jitConfig->javaVM))
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
           && !compInfo->getPersistentInfo()->getDisableFurtherCompilation())
          {
@@ -1456,8 +1456,8 @@ static void jitMethodSampleInterrupt(J9VMThread* vmThread, IDATA handlerKey, voi
           && !compInfo->getCRRuntime()->shouldSuspendThreadsForCheckpoint()
 
           /* Don't sample methods for recompilation pre-checkpoint if Debug On Restore is enabled */
-          && (!jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(vmThread)
-              || !jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(vmThread))
+          && (!jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(jitConfig->javaVM)
+              || !jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(jitConfig->javaVM))
 #endif
           && !compInfo->getPersistentInfo()->getDisableFurtherCompilation())
          {
@@ -2547,7 +2547,7 @@ void jitClassesRedefined(J9VMThread * currentThread, UDATA classCount, J9JITRede
          {
          compInfo->getUnloadedClassesTempList()->push_back((TR_OpaqueClassBlock *) classPair->oldClass);
          if (auto deserializer = compInfo->getJITServerAOTDeserializer())
-            deserializer->invalidateClass(currentThread, classPair->oldClass);
+            deserializer->invalidateClass(currentThread, classPair->oldClass, classPair->newClass);
          }
 #endif
 
@@ -2910,8 +2910,6 @@ static void updateOverriddenFlag( J9VMThread *vm , J9Class *cl)
          J9ROMMethod *subROM   = J9_ROM_METHOD_FROM_RAM_METHOD(subMethod);
          J9ROMMethod *superROM = J9_ROM_METHOD_FROM_RAM_METHOD(superMethod);
 
-         bool methodModifiersAreSafe = (subROM->modifiers & J9AccForwarderMethod) && !((subROM->modifiers & J9AccSynchronized) || (subROM->modifiers & J9AccStrict) || (subROM->modifiers & J9AccNative)) ;
-
          if (traceIt)
             {
          char *classNameChars = (char *)J9UTF8_DATA(J9ROMCLASS_CLASSNAME(ROMCl));
@@ -2925,8 +2923,8 @@ static void updateOverriddenFlag( J9VMThread *vm , J9Class *cl)
          char *subName = (char*)J9UTF8_DATA(J9ROMMETHOD_NAME(J9_ROM_METHOD_FROM_RAM_METHOD(subMethod)));
          int32_t subNameLen = (int32_t)J9UTF8_LENGTH(J9ROMMETHOD_NAME(J9_ROM_METHOD_FROM_RAM_METHOD(subMethod)));
 
-         printf("class = %.*s superSignature = %.*s, superName = %.*s, supermodifers = %x , subSignature = %.*s, subName = %.*s, submodifiers = %x subMethod = %p methodModifiersAreSafe = %d\n"
-               ,classNameLen,classNameChars,superSigLen,superSignature,superNameLen,superName,(int)superROM->modifiers,subSigLen,subSignature,subNameLen,subName,(int)subROM->modifiers,subMethod,methodModifiersAreSafe );
+         printf("class = %.*s superSignature = %.*s, superName = %.*s, supermodifers = %x , subSignature = %.*s, subName = %.*s, submodifiers = %x subMethod = %p\n"
+               ,classNameLen,classNameChars,superSigLen,superSignature,superNameLen,superName,(int)superROM->modifiers,subSigLen,subSignature,subNameLen,subName,(int)subROM->modifiers,subMethod );
             printf("For subROM %p:\n",subROM);
 
             if(subROM->modifiers & J9AccAbstract)                       printf("\tsubMethod is J9AccAbstract (%x)\n",J9AccAbstract);
@@ -2934,7 +2932,6 @@ static void updateOverriddenFlag( J9VMThread *vm , J9Class *cl)
             if(subROM->modifiers & J9AccBridge)                         printf("\tsubMethod is J9AccBridge\n");
             if(subROM->modifiers & J9AccEmptyMethod)                    printf("\tsubMethod is J9AccEmptyMethod\n");
             if(subROM->modifiers & J9AccFinal)                          printf("\tsubMethod is J9AccFinal\n");
-            if(subROM->modifiers & J9AccForwarderMethod)                printf("\tsubMethod is J9AccForwarderMethod\n");
             if(subROM->modifiers & J9AccGetterMethod)                   printf("\tsubMethod is J9AccGetterMethod\n");
             if(subROM->modifiers & J9AccInterface)                      printf("\tsubMethod is J9AccInterface\n");
             if(subROM->modifiers & J9AccMethodCallerSensitive)          printf("\tsubMethod is J9AccMethodCallerSensitive\n");
@@ -2977,7 +2974,6 @@ static void updateOverriddenFlag( J9VMThread *vm , J9Class *cl)
             if(superROM->modifiers & J9AccBridge)                       printf("\tsuperMethod is J9AccBridge\n");
             if(superROM->modifiers & J9AccEmptyMethod)                  printf("\tsuperMethod is J9AccEmptyMethod\n");
             if(superROM->modifiers & J9AccFinal)                        printf("\tsuperMethod is J9AccFinal\n");
-            if(superROM->modifiers & J9AccForwarderMethod)              printf("\tsuperMethod is J9AccForwarderMethod\n");
             if(superROM->modifiers & J9AccGetterMethod)                 printf("\tsuperMethod is J9AccGetterMethod\n");
             if(superROM->modifiers & J9AccInterface)                    printf("\tsuperMethod is J9AccInterface\n");
             if(superROM->modifiers & J9AccMethodCallerSensitive)        printf("\tsuperMethod is J9AccMethodCallerSensitive\n");
@@ -3016,168 +3012,14 @@ static void updateOverriddenFlag( J9VMThread *vm , J9Class *cl)
             fflush(stdout);
             }
 
-         if((subMethod != superMethod) && methodModifiersAreSafe  && (J9_BYTECODE_END_FROM_ROM_METHOD(subROM) - J9_BYTECODE_START_FROM_ROM_METHOD(subROM))>0 )        //If the j9methods don't match, method has been overridden
-            {
-            if (traceIt)
-               {
-               printf("For submethod %p, trying to match signature for overridden bit\n",subMethod);
-               fflush(stdout);
-               }
-
-
-            const uint8_t * _code = subMethod->bytecodes;         //a pointer to bytecodes
-            bool matches=false;
-            bool finishedArgs = false;
-            int32_t curLocalSize;
-            int32_t i = 0;
-            uint16_t cpIndex = 0;
-            for (int32_t nextLocalIndex = 0; !matches && !finishedArgs && nextLocalIndex<255; nextLocalIndex += curLocalSize)
-               {
-               curLocalSize = 1;
-               switch (TR_J9ByteCodeIterator::convertOpCodeToByteCodeEnum(_code[i++]))
-                  {
-                  case J9BCaload0:
-                     finishedArgs = (nextLocalIndex != 0);
-                     break;
-                  case J9BClload1: case J9BCdload1:
-                     curLocalSize = 2;
-                     // fall through
-                  case J9BCiload1: case J9BCfload1: case J9BCaload1:
-                     finishedArgs = (nextLocalIndex != 1);
-                     break;
-                  case J9BClload2: case J9BCdload2:
-                     curLocalSize = 2;
-                     // fall through
-                  case J9BCiload2: case J9BCfload2: case J9BCaload2:
-                     finishedArgs = (nextLocalIndex != 2);
-                     break;
-                  case J9BClload3: case J9BCdload3:
-                     curLocalSize = 2;
-                     // fall through
-                  case J9BCiload3: case J9BCfload3: case J9BCaload3:
-                     finishedArgs = (nextLocalIndex != 3);
-                     break;
-                  case J9BClload: case J9BCdload:
-                     curLocalSize = 2;
-                     // fall through
-                  case J9BCiload: case J9BCfload: case J9BCaload:
-                     finishedArgs = (nextLocalIndex != _code[i++]);
-                     break;
-                  case J9BCinvokespecial:
-                      cpIndex = BC_OP_U16(&_code[i]); //will need to compare signature with superMethod.
-                      matches=true;
-                      break;
-                  case J9BCinvokespecialsplit:
-                     cpIndex = *(U_16*)(J9ROMCLASS_SPECIALSPLITMETHODREFINDEXES(ROMCl) + BC_OP_U16(&_code[i])); //will need to compare signature with superMethod.
-                     matches=true;
-                     break;
-                  default:
-                     finishedArgs = true;
-                     break;
-                  }
-               }
-
-            J9UTF8 * callSignature;
-            J9UTF8 * callName;
-            if(matches)   //so far we are matching our pattern
-               {
-               if (traceIt)
-                  {
-                  printf("For submethod %p, pattern matches after bc walk\n",subMethod);
-                  fflush(stdout);
-                  }
-
-
-               J9ROMFieldRef * ref1 = &(((J9ROMFieldRef *)((char *)ROMCl+sizeof(J9ROMClass)))[cpIndex]);
-               J9ROMNameAndSignature *nameAndSignature = J9ROMFIELDREF_NAMEANDSIGNATURE(ref1);      //this isn't a string its a struct.
-               callSignature = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSignature);
-               callName = J9ROMNAMEANDSIGNATURE_NAME(nameAndSignature);
-
-               J9UTF8 *superSignature = J9ROMMETHOD_SIGNATURE(J9_ROM_METHOD_FROM_RAM_METHOD(superMethod));
-               J9UTF8 *superName = J9ROMMETHOD_NAME(J9_ROM_METHOD_FROM_RAM_METHOD(superMethod));
-
-               if(   J9UTF8_LENGTH(superSignature) != J9UTF8_LENGTH(callSignature)
-                   || J9UTF8_LENGTH(superName) != J9UTF8_LENGTH(callName)
-                   || !(strncmp((char *)J9UTF8_DATA(superSignature),(char *)J9UTF8_DATA(callSignature),J9UTF8_LENGTH(superSignature))==0)
-                   || !(strncmp((char *)J9UTF8_DATA(superName),(char *)J9UTF8_DATA(callName),J9UTF8_LENGTH(superSignature))==0) )
-
-                  {
-                  if (traceIt)
-                     {
-                     printf("For submethod %p,signature compare fails after bc walk superSiglen = %d subsiglen = %d supernamelen = %d subnamelen =%d\n"
-                           ,subMethod,J9UTF8_LENGTH(superSignature),J9UTF8_LENGTH(callSignature),J9UTF8_LENGTH(superName),J9UTF8_LENGTH(callName));
-                     fflush(stdout);
-                     }
-                  matches=false;
-                  }
-               else
-                  {
-                  uint8_t opcode = _code[i+2];  //an invokespecial takes up 3 bytes.. we point at second byte after for loop, so increment by 2
-                  TR_J9ByteCode bc = TR_J9ByteCodeIterator::convertOpCodeToByteCodeEnum(opcode);
-                  if(bc != J9BCgenericReturn || &(_code[i+3]) != J9_BYTECODE_END_FROM_ROM_METHOD(subROM)) //second condition ensures that the return is the last bytecode. See defect 148222.
-                     {
-                     if (traceIt)
-                        {
-                        printf("For submethod %p,signature compare fails after bc walk bc !=genericReturn at i(%d)+2\n", subMethod, i);
-                        fflush(stdout);
-                        }
-                     matches=false;
-                     }
-                  }
-               }
-
-            if(!matches)        //matches is false if method is overridden.
-               {
-               jitUpdateMethodOverride(vm, cl, superMethod,subMethod);
-               vm->javaVM->internalVMFunctions->atomicOrIntoConstantPool(vm->javaVM, superMethod,J9_STARTPC_METHOD_IS_OVERRIDDEN);
-
-               if (traceIt)
-                  {
-                  printf("For submethod %p, pattern does not match after sig compares.\n",subMethod);
-                  fflush(stdout);
-                  }
-
-
-               //Updating all grandparent classes overridden bits
-               J9Class * tempsuperCl;
-               J9VTableHeader * tempsuperVTableHeader;
-               J9Method ** tempsuperVTable;
-               J9Method * tempsuperMethod;
-               intptr_t tempmethodCount;
-               for(int32_t k=classDepth-1;k>=0;k--)
-                  {
-
-                  tempsuperCl = cl->superclasses[k];
-                  tempsuperVTableHeader = J9VTABLE_HEADER_FROM_RAM_CLASS(tempsuperCl);
-                  tempmethodCount =  (intptr_t)tempsuperVTableHeader->size;
-
-                  if(methodIndex>= tempmethodCount)  //we are outside the grandparent's vft slots
-                     break;
-
-                  tempsuperVTable = J9VTABLE_FROM_HEADER(tempsuperVTableHeader);
-                  tempsuperVTable = tempsuperVTable + methodIndex;
-                  tempsuperMethod= *tempsuperVTable;
-                  jitUpdateMethodOverride(vm, cl, tempsuperMethod,subMethod);
-                  vm->javaVM->internalVMFunctions->atomicOrIntoConstantPool(vm->javaVM, tempsuperMethod,J9_STARTPC_METHOD_IS_OVERRIDDEN);
-                  }
-               }
-            else
-               {
-               if (traceIt)
-                  {
-                  printf("For submethod %p, determined it is not overridden by bytecode walk and signature compare\n",subMethod);
-                  fflush(stdout);
-                  }
-               }
-            }
-         else if (superMethod != subMethod)    // we don't have bytecodes, but the j9methods don't match, so set the overridden bit anyways
+         if (superMethod != subMethod)    // the j9methods don't match, so set the overridden bit
             {
             jitUpdateMethodOverride(vm, cl, superMethod,subMethod);
             vm->javaVM->internalVMFunctions->atomicOrIntoConstantPool(vm->javaVM, superMethod,J9_STARTPC_METHOD_IS_OVERRIDDEN);
 
             if (traceIt)
                {
-               printf("For submethod %p, j9methods don't match.  Setting overridden bit. endbc - startbc = %" OMR_PRIdPTR " methodmodifiersaresafe = %d\n",subMethod,(J9_BYTECODE_END_FROM_ROM_METHOD(subROM) - J9_BYTECODE_START_FROM_ROM_METHOD(subROM)),methodModifiersAreSafe);
+               printf("For submethod %p, j9methods don't match.  Setting overridden bit. endbc - startbc = %" OMR_PRIdPTR "\n",subMethod,(J9_BYTECODE_END_FROM_ROM_METHOD(subROM) - J9_BYTECODE_START_FROM_ROM_METHOD(subROM)));
                fflush(stdout);
                }
 
@@ -4268,61 +4110,6 @@ static void jitHookAboutToRunMain(J9HookInterface * * hook, UDATA eventNum, void
    }
 
 
-#if defined(J9VM_INTERP_PROFILING_BYTECODES)
-// Below, options and jitConfig are guaranteed to be not null
-void printIprofilerStats(TR::Options *options, J9JITConfig * jitConfig, TR_IProfiler *iProfiler)
-   {
-   if (!options->getOption(TR_DisableInterpreterProfiling))
-      {
-      PORT_ACCESS_FROM_JITCONFIG(jitConfig);
-      if (TR::Options::getCmdLineOptions()->getOption(TR_VerboseInterpreterProfiling))
-         {
-         j9tty_printf(PORTLIB, "VM shutdown event received.\n");
-         j9tty_printf(PORTLIB, "Total events: %d\n", TEST_events);
-         j9tty_printf(PORTLIB, "Total records: %d\n", TEST_records);
-         j9tty_printf(PORTLIB, "Total method persistence opportunities: %d\n", TR_IProfiler::_STATS_methodPersistenceAttempts);
-         j9tty_printf(PORTLIB, "Total jitprofile entries: %d\n", TR_IProfiler::_STATS_methodPersisted);
-         j9tty_printf(PORTLIB, "Total IProfiler persistence aborted due to locked entry:                %d\n", TR_IProfiler::_STATS_abortedPersistence);
-         j9tty_printf(PORTLIB, "Total IProfiler persistence failed:                                     %d\n", TR_IProfiler::_STATS_persistError);
-         j9tty_printf(PORTLIB, "Total IProfiler persistence aborted because SCC full:                   %d\n", TR_IProfiler::_STATS_methodNotPersisted_SCCfull);
-         j9tty_printf(PORTLIB, "Total IProfiler persistence aborted because ROM class in not in SCC:    %d\n", TR_IProfiler::_STATS_methodNotPersisted_classNotInSCC);
-         j9tty_printf(PORTLIB, "Total IProfiler persistence aborted due to other reasons:               %d\n", TR_IProfiler::_STATS_methodNotPersisted_other);
-         j9tty_printf(PORTLIB, "Total IProfiler persistence aborted because already stored:             %d\n", TR_IProfiler::_STATS_methodNotPersisted_alreadyStored);
-         j9tty_printf(PORTLIB, "Total IProfiler persistence aborted because nothing needs to be stored: %d\n", TR_IProfiler::_STATS_methodNotPersisted_noEntries);
-         j9tty_printf(PORTLIB, "Total IProfiler persisted delayed:                                      %d\n", TR_IProfiler::_STATS_methodNotPersisted_delayed);
-         j9tty_printf(PORTLIB, "Total records persisted:                        %d\n", TR_IProfiler::_STATS_entriesPersisted);
-         j9tty_printf(PORTLIB, "Total records not persisted_NotInSCC:           %d\n", TR_IProfiler::_STATS_entriesNotPersisted_NotInSCC);
-         j9tty_printf(PORTLIB, "Total records not persisted_unloaded:           %d\n", TR_IProfiler::_STATS_entriesNotPersisted_Unloaded);
-         j9tty_printf(PORTLIB, "Total records not persisted_noInfo in bc table: %d\n", TR_IProfiler::_STATS_entriesNotPersisted_NoInfo);
-         j9tty_printf(PORTLIB, "Total records not persisted_Other:              %d\n", TR_IProfiler::_STATS_entriesNotPersisted_Other);
-         j9tty_printf(PORTLIB, "IP Total Persistent Read Failed Attempts:          %d\n", TR_IProfiler::_STATS_persistedIPReadFail);
-
-         j9tty_printf(PORTLIB, "IP Total Persistent Reads with Bad Data:           %d\n", TR_IProfiler::_STATS_persistedIPReadHadBadData);
-         j9tty_printf(PORTLIB, "IP Total Persistent Read Success:                  %d\n", TR_IProfiler::_STATS_persistedIPReadSuccess);
-         j9tty_printf(PORTLIB, "IP Total Persistent vs Current Data Differ:        %d\n", TR_IProfiler::_STATS_persistedAndCurrentIPDataDiffer);
-         j9tty_printf(PORTLIB, "IP Total Persistent vs Current Data Match:         %d\n", TR_IProfiler::_STATS_persistedAndCurrentIPDataMatch);
-         j9tty_printf(PORTLIB, "IP Total Current Read Fail:                        %d\n", TR_IProfiler::_STATS_currentIPReadFail);
-         j9tty_printf(PORTLIB, "IP Total Current Read Success:                     %d\n", TR_IProfiler::_STATS_currentIPReadSuccess);
-         j9tty_printf(PORTLIB, "IP Total Current Read Bad Data:                    %d\n", TR_IProfiler::_STATS_currentIPReadHadBadData);
-         j9tty_printf(PORTLIB, "Total records read: %d\n", TR_IProfiler::_STATS_IPEntryRead);
-         j9tty_printf(PORTLIB, "Total records choose persistent: %d\n", TR_IProfiler::_STATS_IPEntryChoosePersistent);
-         }
-      if (TR_IProfiler::_STATS_abortedPersistence > 0)
-         {
-         TR_ASSERT(TR_IProfiler::_STATS_methodPersisted / TR_IProfiler::_STATS_abortedPersistence > 20 ||
-            TR_IProfiler::_STATS_methodPersisted < 200,
-            "too many aborted persistence attempts due to locked entries (%d aborted, %d total methods persisted)",
-            TR_IProfiler::_STATS_abortedPersistence, TR_IProfiler::_STATS_methodPersisted);
-         }
-      if (TR::Options::getCmdLineOptions()->getOption(TR_EnableNewAllocationProfiling))
-         iProfiler->printAllocationReport();
-      if (TEST_verbose || TR::Options::getCmdLineOptions()->getOption(TR_VerboseInterpreterProfiling))
-         iProfiler->outputStats();
-      }
-   }
-#endif
-
-
 /// JIT cleanup code
 void JitShutdown(J9JITConfig * jitConfig)
    {
@@ -4365,7 +4152,7 @@ void JitShutdown(J9JITConfig * jitConfig)
    // so the fact that this option is true doesn't mean that IProfiler structures were not allocated
    if (options /* && !options->getOption(TR_DisableInterpreterProfiling) */ && iProfiler)
       {
-      printIprofilerStats(options, jitConfig, iProfiler);
+      printIprofilerStats(options, jitConfig, iProfiler, "Shutdown");
       // Prevent the interpreter to accumulate more info
       // stopInterpreterProfiling is stronger than turnOff... because it prevents the reactivation
       // by setting TR_DisableInterpreterProfiling option to false
@@ -4395,7 +4182,7 @@ void JitShutdown(J9JITConfig * jitConfig)
    TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-   if (jitConfig->javaVM->internalVMFunctions->isCRaCorCRIUSupportEnabled(vmThread))
+   if (jitConfig->javaVM->internalVMFunctions->isCRaCorCRIUSupportEnabled(jitConfig->javaVM))
       {
       compInfo->getCRRuntime()->stopCRRuntimeThread();
       }
@@ -5168,7 +4955,12 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
    if (IProfilerOffSinceStartup &&
        !TR::Options::getCmdLineOptions()->getOption(TR_DisableInterpreterProfiling) &&
        TR::Options::getCmdLineOptions()->getOption(TR_NoIProfilerDuringStartupPhase) &&
-       interpreterProfilingState == IPROFILING_STATE_OFF)
+       interpreterProfilingState == IPROFILING_STATE_OFF
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+       && (!jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(jitConfig->javaVM)
+           || compInfo->getCRRuntime()->allowStateChange())
+#endif
+      )
       {
        // Should we turn it ON?
       TR_IProfiler *iProfiler = TR_J9VMBase::get(jitConfig, 0)->getIProfiler();
@@ -5231,7 +5023,12 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
                if (compInfo->isInZOSSupervisorState())
                   waitTime = waitTime * 2;
 #endif
-               if (crtElapsedTime - lastTimeInStartupMode > waitTime)
+               if (crtElapsedTime - lastTimeInStartupMode > waitTime
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+                   && (!jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(jitConfig->javaVM)
+                       || compInfo->getCRRuntime()->allowStateChange())
+#endif
+                  )
                   {
                   javaVM->internalVMFunctions->jvmPhaseChange(javaVM, J9VM_PHASE_NOT_STARTUP);
                   }
@@ -5246,8 +5043,15 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
             // Exit startup when the 'endOfStartup' arrives
             // The case where the 'endOfStartup' hint arrived, but don't want to follow strictly
             // is implemented above in the IF block
-            if (persistentInfo->getExternalStartupEndedSignal())
+            if (persistentInfo->getExternalStartupEndedSignal()
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+                && (!jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(jitConfig->javaVM)
+                    || compInfo->getCRRuntime()->allowStateChange())
+#endif
+               )
+               {
                javaVM->internalVMFunctions->jvmPhaseChange(javaVM, J9VM_PHASE_NOT_STARTUP);
+               }
             }
          }
       else // javaVM->phase == J9VM_PHASE_EARLY_STARTUP
@@ -5261,14 +5065,42 @@ static void jitStateLogic(J9JITConfig * jitConfig, TR::CompilationInfo * compInf
             {
             // Normal gracePeriod rules apply
             if (crtElapsedTime >= (uint64_t)persistentInfo->getClassLoadingPhaseGracePeriod()) // grace period has ended
-               javaVM->internalVMFunctions->jvmPhaseChange(javaVM, (newState == STARTUP_STATE) ? J9VM_PHASE_STARTUP : J9VM_PHASE_NOT_STARTUP);
+               {
+               if (newState == STARTUP_STATE)
+                  {
+                  javaVM->internalVMFunctions->jvmPhaseChange(javaVM, J9VM_PHASE_STARTUP);
+                  }
+               else
+                  {
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+                  if (!jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(jitConfig->javaVM)
+                      || compInfo->getCRRuntime()->allowStateChange())
+#endif
+                     {
+                     javaVM->internalVMFunctions->jvmPhaseChange(javaVM, J9VM_PHASE_NOT_STARTUP);
+                     }
+                  }
+               }
             }
          else
             {
             // 'beginningOfStartup' hint was seen
             // If 'endOfStartup' was not seen, move to STARTUP, otherwise, following hints strictly,
             // we have to exit STARTUP
-            javaVM->internalVMFunctions->jvmPhaseChange(javaVM, !persistentInfo->getExternalStartupEndedSignal() ? J9VM_PHASE_STARTUP : J9VM_PHASE_NOT_STARTUP);
+            if (!persistentInfo->getExternalStartupEndedSignal())
+               {
+               javaVM->internalVMFunctions->jvmPhaseChange(javaVM, J9VM_PHASE_STARTUP);
+               }
+            else
+               {
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+               if (!jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(jitConfig->javaVM)
+                   || compInfo->getCRRuntime()->allowStateChange())
+#endif
+                  {
+                  javaVM->internalVMFunctions->jvmPhaseChange(javaVM, J9VM_PHASE_NOT_STARTUP);
+                  }
+               }
             }
          }
       if (javaVM->phase == J9VM_PHASE_NOT_STARTUP)
@@ -6598,7 +6430,7 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
          crtTime += samplingPeriod;
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-         if (vm->internalVMFunctions->isCheckpointAllowed(samplerThread))
+         if (vm->internalVMFunctions->isCheckpointAllowed(vm))
             {
             /* It's ok to not acquire the comp monitor here. Even if at this
              * point a checkpoint isn't in progress but later it is, the
@@ -6614,7 +6446,7 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
             if (compInfo->getCRRuntime()->shouldSuspendThreadsForCheckpoint())
                suspendSamplerThreadForCheckpoint(samplerThread,jitConfig, compInfo);
             }
-         else if (vm->internalVMFunctions->isDebugOnRestoreEnabled(samplerThread))
+         else if (vm->internalVMFunctions->isDebugOnRestoreEnabled(vm))
             {
             if (!forcedRecompilations && jitConfig->javaVM->phase == J9VM_PHASE_NOT_STARTUP)
                {
@@ -6946,7 +6778,7 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
 
             // compute jit state
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-            if (!jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(samplerThread))
+            if (!jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(jitConfig->javaVM))
 #endif
                {
                jitStateLogic(jitConfig, compInfo, diffTime); // Update JIT state before going to sleep
@@ -7403,8 +7235,6 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
    J9HookInterface * * gcHooks = javaVM->memoryManagerFunctions->j9gc_get_hook_interface(javaVM);
    J9HookInterface * * gcOmrHooks = javaVM->memoryManagerFunctions->j9gc_get_omr_hook_interface(javaVM->omrVM);
 
-   J9VMThread *vmThread = javaVM->internalVMFunctions->currentVMThread(javaVM);
-
    PORT_ACCESS_FROM_JAVAVM(javaVM);
 
    if (TR::Options::getCmdLineOptions()->getOption(TR_noJitDuringBootstrap) ||
@@ -7561,7 +7391,7 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
 #endif // if defined (J9VM_INTERP_PROFILING_BYTECODES)
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-      if (jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(vmThread))
+      if (jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(jitConfig->javaVM))
          {
          compInfo->getCRRuntime()->startCRRuntimeThread(javaVM);
          }
@@ -7760,6 +7590,58 @@ int32_t waitJITServerTermination(J9JITConfig *jitConfig)
 } /* extern "C" */
 
 #if defined(J9VM_INTERP_PROFILING_BYTECODES)
+// Below, options and jitConfig are guaranteed to be not null
+void printIprofilerStats(TR::Options *options, J9JITConfig * jitConfig, TR_IProfiler *iProfiler, const char *event)
+   {
+   if (!options->getOption(TR_DisableInterpreterProfiling))
+      {
+      PORT_ACCESS_FROM_JITCONFIG(jitConfig);
+      if (options->getOption(TR_VerboseInterpreterProfiling))
+         {
+         j9tty_printf(PORTLIB, "VM %s event received.\n", event);
+         j9tty_printf(PORTLIB, "Total events: %d\n", TEST_events);
+         j9tty_printf(PORTLIB, "Total records: %d\n", TEST_records);
+         j9tty_printf(PORTLIB, "Total method persistence opportunities: %d\n", TR_IProfiler::_STATS_methodPersistenceAttempts);
+         j9tty_printf(PORTLIB, "Total jitprofile entries: %d\n", TR_IProfiler::_STATS_methodPersisted);
+         j9tty_printf(PORTLIB, "Total IProfiler persistence aborted due to locked entry:                %d\n", TR_IProfiler::_STATS_abortedPersistence);
+         j9tty_printf(PORTLIB, "Total IProfiler persistence failed:                                     %d\n", TR_IProfiler::_STATS_persistError);
+         j9tty_printf(PORTLIB, "Total IProfiler persistence aborted because SCC full:                   %d\n", TR_IProfiler::_STATS_methodNotPersisted_SCCfull);
+         j9tty_printf(PORTLIB, "Total IProfiler persistence aborted because ROM class in not in SCC:    %d\n", TR_IProfiler::_STATS_methodNotPersisted_classNotInSCC);
+         j9tty_printf(PORTLIB, "Total IProfiler persistence aborted due to other reasons:               %d\n", TR_IProfiler::_STATS_methodNotPersisted_other);
+         j9tty_printf(PORTLIB, "Total IProfiler persistence aborted because already stored:             %d\n", TR_IProfiler::_STATS_methodNotPersisted_alreadyStored);
+         j9tty_printf(PORTLIB, "Total IProfiler persistence aborted because nothing needs to be stored: %d\n", TR_IProfiler::_STATS_methodNotPersisted_noEntries);
+         j9tty_printf(PORTLIB, "Total IProfiler persisted delayed:                                      %d\n", TR_IProfiler::_STATS_methodNotPersisted_delayed);
+         j9tty_printf(PORTLIB, "Total records persisted:                        %d\n", TR_IProfiler::_STATS_entriesPersisted);
+         j9tty_printf(PORTLIB, "Total records not persisted_NotInSCC:           %d\n", TR_IProfiler::_STATS_entriesNotPersisted_NotInSCC);
+         j9tty_printf(PORTLIB, "Total records not persisted_unloaded:           %d\n", TR_IProfiler::_STATS_entriesNotPersisted_Unloaded);
+         j9tty_printf(PORTLIB, "Total records not persisted_noInfo in bc table: %d\n", TR_IProfiler::_STATS_entriesNotPersisted_NoInfo);
+         j9tty_printf(PORTLIB, "Total records not persisted_Other:              %d\n", TR_IProfiler::_STATS_entriesNotPersisted_Other);
+         j9tty_printf(PORTLIB, "IP Total Persistent Read Failed Attempts:          %d\n", TR_IProfiler::_STATS_persistedIPReadFail);
+
+         j9tty_printf(PORTLIB, "IP Total Persistent Reads with Bad Data:           %d\n", TR_IProfiler::_STATS_persistedIPReadHadBadData);
+         j9tty_printf(PORTLIB, "IP Total Persistent Read Success:                  %d\n", TR_IProfiler::_STATS_persistedIPReadSuccess);
+         j9tty_printf(PORTLIB, "IP Total Persistent vs Current Data Differ:        %d\n", TR_IProfiler::_STATS_persistedAndCurrentIPDataDiffer);
+         j9tty_printf(PORTLIB, "IP Total Persistent vs Current Data Match:         %d\n", TR_IProfiler::_STATS_persistedAndCurrentIPDataMatch);
+         j9tty_printf(PORTLIB, "IP Total Current Read Fail:                        %d\n", TR_IProfiler::_STATS_currentIPReadFail);
+         j9tty_printf(PORTLIB, "IP Total Current Read Success:                     %d\n", TR_IProfiler::_STATS_currentIPReadSuccess);
+         j9tty_printf(PORTLIB, "IP Total Current Read Bad Data:                    %d\n", TR_IProfiler::_STATS_currentIPReadHadBadData);
+         j9tty_printf(PORTLIB, "Total records read: %d\n", TR_IProfiler::_STATS_IPEntryRead);
+         j9tty_printf(PORTLIB, "Total records choose persistent: %d\n", TR_IProfiler::_STATS_IPEntryChoosePersistent);
+         }
+      if (TR_IProfiler::_STATS_abortedPersistence > 0)
+         {
+         TR_ASSERT(TR_IProfiler::_STATS_methodPersisted / TR_IProfiler::_STATS_abortedPersistence > 20 ||
+            TR_IProfiler::_STATS_methodPersisted < 200,
+            "too many aborted persistence attempts due to locked entries (%d aborted, %d total methods persisted)",
+            TR_IProfiler::_STATS_abortedPersistence, TR_IProfiler::_STATS_methodPersisted);
+         }
+      if (options->getOption(TR_EnableNewAllocationProfiling))
+         iProfiler->printAllocationReport();
+      if (TEST_verbose || options->getOption(TR_VerboseInterpreterProfiling))
+         iProfiler->outputStats();
+      }
+   }
+
 void turnOffInterpreterProfiling(J9JITConfig *jitConfig)
    {
    // Turn off interpreter profiling

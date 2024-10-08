@@ -29,11 +29,11 @@ import com.ibm.jvm.dtfjview.heapdump.ReferenceIterator;
 
 /**
  * Base class for all PHD records.
- * 
+ *
  * Contains logic common to relative-addressed entities with references
- * 
+ *
  * @author andhall
- * 
+ *
  */
 public abstract class PortableHeapDumpRecord
 {
@@ -58,7 +58,7 @@ public abstract class PortableHeapDumpRecord
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param baseAddress
 	 *            The address to base the relative reference addresses from
 	 * @param references
@@ -68,7 +68,7 @@ public abstract class PortableHeapDumpRecord
 			ReferenceIterator references)
 	{
 		_baseAddress = address;
-		
+
 		if(references != null) {
 			_references = getDifferenceReferences(references, address);
 			_referenceFieldSize = calculateReferenceFieldSize(references);
@@ -76,7 +76,7 @@ public abstract class PortableHeapDumpRecord
 			_references = null;
 			_referenceFieldSize = 0;
 		}
-		
+
 		_gapPreceding = getAddressDifference(address,previousAddress);
 		_gapSize = sizeofReference(_gapPreceding);
 	}
@@ -84,11 +84,11 @@ public abstract class PortableHeapDumpRecord
 	private byte calculateReferenceFieldSize(ReferenceIterator references)
 	{
 		byte toReturn = ONE_BYTE_REF;
-		
+
 		references.reset();
-		
+
 		_numberOfReferences = 0;
-		
+
 		while (references.hasNext()) {
 			Long thisRef = references.next();
 
@@ -97,7 +97,7 @@ public abstract class PortableHeapDumpRecord
 			if (thisSize > toReturn) {
 				toReturn = thisSize;
 			}
-			
+
 			_numberOfReferences++;
 		}
 

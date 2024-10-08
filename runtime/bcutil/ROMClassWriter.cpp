@@ -1304,7 +1304,7 @@ ROMClassWriter::writeMethods(Cursor *cursor, Cursor *lineNumberCursor, Cursor *v
 			 *                          + AccStrict
 			 *
 			 *                        + AccSynthetic
-			 *                       + AccForwarderMethod * (Not currently used by specification)
+			 *                       + UNUSED
 			 *                      + AccEmptyMethod * (Not currently used by specification)
 			 *                     + UNUSED
 			 *
@@ -2221,7 +2221,7 @@ ROMClassWriter::writeNativeSignature(Cursor *cursor, U_8 *methodDescriptor, U_8 
 		} else {
 			cursor->writeU8(nativeArgCharConversion[methodDescriptor[index] - 'A'], Cursor::GENERIC);
 		}
-		if (IS_REF_OR_VAL_SIGNATURE(methodDescriptor[index])) {
+		if (IS_CLASS_SIGNATURE(methodDescriptor[index])) {
 			while (';' != methodDescriptor[index]) {
 				++index;
 			}

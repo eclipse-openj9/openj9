@@ -335,7 +335,7 @@ static void setLibpath(const char *libpath);
 #ifdef DEBUG_TEST
 static void testBackupAndRestoreLibpath(void);
 #endif /* DEBUG_TEST */
-#endif  /* AIXPPC */
+#endif /* defined(AIXPPC) */
 
 /* Defined in j9memcategories.c */
 extern OMRMemCategorySet j9MainMemCategorySet;
@@ -1295,7 +1295,7 @@ preloadLibraries(void)
 #if defined(AIXPPC)
 	size_t origLibpathLen = 0;
 	const char *origLibpath = NULL;
-#endif /* AIXPPC */
+#endif /* defined(AIXPPC) */
 
 	if (j9vm_dllHandle != 0) {
 		return FALSE;
@@ -1310,7 +1310,7 @@ preloadLibraries(void)
 	if (NULL != origLibpath) {
 		origLibpathLen = strlen(origLibpath);
 	}
-#endif /* AIXPPC */
+#endif /* defined(AIXPPC) */
 
 	jvmDLLNameBuffer = getj9bin();
 	j9binBuffer = jvmBufferCat(NULL, jvmBufferData(jvmDLLNameBuffer));
@@ -1392,7 +1392,7 @@ preloadLibraries(void)
 
 #if defined(AIXPPC)
 	backupLibpath(&libpathBackup, origLibpathLen);
-#endif /* AIXPPC */
+#endif /* defined(AIXPPC) */
 
 	omrsigDLL = preloadLibrary("omrsig", TRUE);
 	if (NULL == omrsigDLL) {
@@ -1954,9 +1954,9 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 	UDATA argEncoding = ARG_ENCODING_DEFAULT;
 	UDATA altJavaHomeSpecified = 0; /* not used on non-Windows */
 	J9PortLibraryVersion portLibraryVersion;
-#if defined(AIXPPC)
+#if defined(AIXPPC) || (defined(J9ZOS390) && (JAVA_SPEC_VERSION >= 21))
 	char *origLibpath = NULL;
-#endif /* AIXPPC */
+#endif /* defined(AIXPPC) || (defined(J9ZOS390) && (JAVA_SPEC_VERSION >= 21)) */
 	I_32 portLibraryInitStatus;
 	UDATA expectedLibrarySize;
 	UDATA localVerboseLevel = 0;
@@ -1981,6 +1981,9 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 	 * See the discussion in https://github.com/eclipse-openj9/openj9/pull/14634.
 	 */
 	specialArgs.captureCommandLine = FALSE;
+#if JAVA_SPEC_VERSION >= 21
+	iconv_init();
+#endif /* JAVA_SPEC_VERSION >= 21 */
 #endif /* defined(J9ZOS390) */
 #ifdef J9ZTPF
 
@@ -2045,7 +2048,7 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 	}
 #endif
 
-#if defined(AIXPPC)
+#if defined(AIXPPC) || (defined(J9ZOS390) && (JAVA_SPEC_VERSION >= 21))
 	/* CMVC 137180:
 	 * in some cases the LIBPATH does not contain /usr/lib, when
 	 * trying to load application native libraries that are linked against
@@ -2059,13 +2062,21 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 		 * Example libpath:
 		 * LIBPATH=/jre/lib/ppc64/j9vm:/jre/lib/ppc64:/jre/lib/ppc64/jli:/jre/../lib/ppc64:/usr/lib
 		 */
-
+#if defined(AIXPPC)
+		const char *usrLib = "/usr/lib";
+		const UDATA usrLibLength = LITERAL_STRLEN("/usr/lib");
+#else /* defined(AIXPPC) */
+		/*
+		 * Currently Java 21 and up on z/OS build with system zlib: /lib/libzz64.so. If /lib isn't
+		 * already present in LIBPATH, append it to the end, so that system zlib can be resolved.
+		 */
+		const char *usrLib = "/lib";
+		const UDATA usrLibLength = LITERAL_STRLEN("/lib");
+#endif /* defined(AIXPPC) */
 		const char *currentLibPath = getenv("LIBPATH");
 		BOOLEAN appendToLibPath = TRUE;
 		if (NULL != currentLibPath) {
 			const size_t currentLibPathLength = strlen(currentLibPath);
-			const char *usrLib = "/usr/lib";
-			const UDATA usrLibLength = LITERAL_STRLEN("/usr/lib");
 			const char *needle = strstr(currentLibPath, usrLib);
 			while (NULL != needle) {
 				/* Note, inside the loop we're guaranteed to have
@@ -2085,7 +2096,7 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 			}
 		}
 		if (appendToLibPath) {
-			addToLibpath("/usr/lib", FALSE);
+			addToLibpath(usrLib, FALSE);
 		}
 	}
 	/* CMVC 135358.
@@ -2095,7 +2106,7 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 	 * result from above.
 	 */
 	origLibpath = getenv("LIBPATH");
-#endif
+#endif /* defined(AIXPPC) || (defined(J9ZOS390) && (JAVA_SPEC_VERSION >= 21)) */
 
 	/* no tracing for this function, since it's unlikely to be used once the VM is running and the trace engine is initialized */
 	preloadLibraries();
@@ -2177,7 +2188,7 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 
 		/* restore LIBPATH to avoid polluting child processes */
 		setLibpath(origLibpath);
-#endif /* AIXPPC */
+#endif /* defined(AIXPPC) */
 		result = JNI_ERR;
 		goto exit;
 	}
@@ -2194,7 +2205,7 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 
 			/* restore LIBPATH to avoid polluting child processes */
 			setLibpath(origLibpath);
-#endif /* AIXPPC */
+#endif /* defined(AIXPPC) */
 			result = JNI_ERR;
 			goto exit;
 		}
@@ -2448,7 +2459,7 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 #ifdef DEBUG_TEST
 	testBackupAndRestoreLibpath();
 #endif /* DEBUG_TEST */
-#endif /* AIXPPC */
+#endif /* defined(AIXPPC) */
 
 	if (JNI_OK == result) {
 		J9JavaVM *env = (J9JavaVM *) BFUjavaVM;
@@ -2560,6 +2571,9 @@ jint JNICALL JNI_GetDefaultJavaVMInitArgs(void *vm_args)
 #if JAVA_SPEC_VERSION >= 21
 	case JNI_VERSION_21:
 #endif /* JAVA_SPEC_VERSION >= 21 */
+#if JAVA_SPEC_VERSION >= 24
+	case JNI_VERSION_24:
+#endif /* JAVA_SPEC_VERSION >= 24 */
 		return JNI_OK;
 	}
 
@@ -2853,7 +2867,7 @@ preloadLibrary(char* dllName, BOOLEAN inJVMDir)
 			handle = (void*)dlopen(buffer->data, RTLD_NOW);
 		}
 	}
-#endif /* AIXPPC */
+#endif /* defined(AIXPPC) */
 	if (handle == NULL) {
 		fprintf(stderr,"libjvm.so preloadLibrary(%s): %s\n", buffer->data, dlerror());
 	}
@@ -2896,7 +2910,7 @@ setLibpath(const char *libpath)
 {
 	setenv("LIBPATH", libpath, 1);
 }
-#endif /* AIXPPC */
+#endif /* defined(AIXPPC) */
 
 static void
 addToLibpath(const char *dir, BOOLEAN isPrepend)
@@ -3003,7 +3017,7 @@ backupLibpath(J9LibpathBackup *libpathBackup, size_t origLibpathLen)
 		}
 	}
 }
-#endif /* AIXPPC */
+#endif /* defined(AIXPPC) */
 
 #if defined(AIXPPC)
 /**
@@ -3022,7 +3036,7 @@ freeBackupLibpath(J9LibpathBackup *libpathBackup)
 	}
 	libpathBackup->j9prefixLen = 0;
 }
-#endif /* AIXPPC */
+#endif /* defined(AIXPPC) */
 
 #if defined(AIXPPC)
 /**
@@ -3060,7 +3074,7 @@ restoreLibpath(J9LibpathBackup *libpathBackup)
 		libpathBackup->j9prefixLen = 0;
 	}
 }
-#endif /* AIXPPC */
+#endif /* defined(AIXPPC) */
 
 #if defined(AIXPPC)
 /**
@@ -3113,7 +3127,7 @@ findInLibpath(const char *libpath, const char *backupPath)
 	}
 	return NULL;
 }
-#endif /* AIXPPC */
+#endif /* defined(AIXPPC) */
 
 #if defined(AIXPPC)
 /**
@@ -3176,7 +3190,7 @@ deleteDirsFromLibpath(const char *const libpath, const char *const deleteStart, 
 
 	return newPath;
 }
-#endif /* AIXPPC */
+#endif /* defined(AIXPPC) */
 
 #if defined(AIXPPC) && defined(DEBUG_TEST)
 static void
@@ -3702,7 +3716,7 @@ testBackupAndRestoreLibpath(void)
 
 	setLibpath(origLibpath);
 }
-#endif /* AIXPPC and DEBUG_TEST */
+#endif /* defined(AIXPPC) && defined(DEBUG_TEST) */
 
 #if defined(WIN32)
 
@@ -4074,7 +4088,7 @@ JVM_LoadLibrary(const char *libName, jboolean throwOnFailure)
 	}
 #endif /* defined(WIN32) */
 
-#if JAVA_SPEC_VERSION >= 17
+#if JAVA_SPEC_VERSION >= 11
 	if ((NULL == result) && throwOnFailure) {
 		JNIEnv *env = NULL;
 		JavaVM *vm = (JavaVM *)javaVM;
@@ -4084,9 +4098,9 @@ JVM_LoadLibrary(const char *libName, jboolean throwOnFailure)
 			char *errMsg = errBuf;
 			int bufSize = sizeof(errBuf);
 			const char *portMsg =
-#if defined(WIN32)
+#if defined(WIN32) && (JAVA_SPEC_VERSION >= 17)
 				!attemptedLoad ? "" :
-#endif /* defined(WIN32) */
+#endif /* defined(WIN32) && (JAVA_SPEC_VERSION >= 17) */
 				j9error_last_error_message();
 			const char *space = ('\0' == *portMsg) ? "" : " ";
 			bufSize = jio_snprintf(errMsg, bufSize, "Failed to load library (\"%s\")%s%s", libName, space, portMsg);
@@ -4106,7 +4120,7 @@ JVM_LoadLibrary(const char *libName, jboolean throwOnFailure)
 			}
 		}
 	}
-#endif /* JAVA_SPEC_VERSION >= 17 */
+#endif /* JAVA_SPEC_VERSION >= 11 */
 
 	Trc_SC_LoadLibrary_Exit(result);
 

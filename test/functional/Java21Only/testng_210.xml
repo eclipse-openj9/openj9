@@ -29,6 +29,8 @@
 	</listeners>
 	<test name="Jep442Tests_testLinkerFfi_DownCall">
 		<classes>
+			<class name="org.openj9.test.jep442.downcall.DuplicateMixedCallTests"/>
+			<class name="org.openj9.test.jep442.downcall.DuplicateStructTests"/>
 			<class name="org.openj9.test.jep442.downcall.InvalidDownCallTests"/>
 			<class name="org.openj9.test.jep442.downcall.MultiCallTests"/>
 			<class name="org.openj9.test.jep442.downcall.MultiThreadingTests1"/>
@@ -36,6 +38,7 @@
 			<class name="org.openj9.test.jep442.downcall.MultiThreadingTests3"/>
 			<class name="org.openj9.test.jep442.downcall.MultiThreadingTests4"/>
 			<class name="org.openj9.test.jep442.downcall.MultiThreadingTests5"/>
+			<class name="org.openj9.test.jep442.downcall.MultiThreadingTests6"/>
 			<class name="org.openj9.test.jep442.downcall.PrimitiveTypeTests1"/>
 			<class name="org.openj9.test.jep442.downcall.PrimitiveTypeTests2"/>
 			<class name="org.openj9.test.jep442.downcall.StructTests1"/>

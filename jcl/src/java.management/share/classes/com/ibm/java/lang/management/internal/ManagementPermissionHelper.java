@@ -26,7 +26,7 @@ import java.lang.management.ManagementPermission;
 
 /*
  * (non-Javadoc)
- * 
+ *
  * Helper class only loaded when the security manager is enabled via following code snippet
  * 	SecurityManager security = System.getSecurityManager();
  * 	if (security != null) {

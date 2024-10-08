@@ -637,9 +637,9 @@ public static Class<?> forName(Module module, String name)
 			sm.checkPermission(SecurityConstants.GET_CLASSLOADER_PERMISSION);
 		}
 		classLoader = AccessController.doPrivileged(new PrivilegedAction<ClassLoader>() {
-	        public ClassLoader run() {
+			public ClassLoader run() {
 				return module.getClassLoader();
-	        }
+			}
 		});
 	} else {
 		classLoader = module.getClassLoader();
@@ -698,9 +698,9 @@ private static Class<?> forNameHelper(Module module, String name, Class<?> calle
 			sm.checkPermission(SecurityConstants.GET_CLASSLOADER_PERMISSION);
 		}
 		classLoader = AccessController.doPrivileged(new PrivilegedAction<ClassLoader>() {
-	        public ClassLoader run() {
-	        	return module.getClassLoader();
-	        }
+			public ClassLoader run() {
+				return module.getClassLoader();
+			}
 		});
 	} else {
 		classLoader = module.getClassLoader();
@@ -747,8 +747,8 @@ private static Class<?> forNameHelper(Module module, String name, Class<?> calle
  * @see			java.lang.Class
  */
 private static native Class<?> forNameImpl(String className,
-                            boolean initializeBoolean,
-                            ClassLoader classLoader)
+							boolean initializeBoolean,
+							ClassLoader classLoader)
 	throws ClassNotFoundException;
 
 /**
@@ -837,7 +837,6 @@ ClassLoader getClassLoader0() {
 	ClassLoader loader = getClassLoaderImpl();
 	return loader;
 }
-
 
 /**
  * Return the ClassLoader for this Class without doing any security
@@ -2503,7 +2502,6 @@ private boolean useModularSearch(String absoluteResName, Module thisModule, Clas
 }
 /*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
-
 /**
  * Answers a String object which represents the class's
  * signature, as described in the class definition of
@@ -2720,7 +2718,6 @@ private Object newInstancePrototype(Class<?> callerClass) throws InstantiationEx
 	/*[PR 96623]*/
 	throw new InstantiationException(this);
 }
-
 
 /**
  * Answers a string describing a path to the receiver's appropriate
@@ -3054,7 +3051,6 @@ static final native Class<?> getStackClass(int depth);
  */
 @CallerSensitive
 static final native Class<?>[] getStackClasses(int maxDepth, boolean stopAtPrivileged);
-
 
 /**
  * Called from JVM_ClassDepth.
@@ -3392,43 +3388,43 @@ private MethodHandle getValueMethod(final Class<? extends Annotation> containedT
 	if (valueMethod == null) {
 		final MethodType methodType = MethodType.methodType(Array.newInstance(containedType, 0).getClass());
 		valueMethod = AccessController.doPrivileged(new PrivilegedAction<MethodHandle>() {
-		    @Override
-		    public MethodHandle run() {
-		    	try {
-		    		MethodHandles.Lookup localImplLookup = implLookup;
-		    		if (localImplLookup == null) {
-		    			Field privilegedLookupField = MethodHandles.Lookup.class.getDeclaredField("IMPL_LOOKUP"); //$NON-NLS-1$
-		    			privilegedLookupField.setAccessible(true);
-		    			localImplLookup = (MethodHandles.Lookup)privilegedLookupField.get(MethodHandles.Lookup.class);
-		    			Field implLookupField = Class.class.getDeclaredField("implLookup"); //$NON-NLS-1$
-		    			long implLookupOffset = getUnsafe().staticFieldOffset(implLookupField);
-			    		// Lazy initialization of a non-volatile field. Ensure the Object is initialized
-			    		// and flushed to memory before assigning to the implLookup field.
+			@Override
+			public MethodHandle run() {
+				try {
+					MethodHandles.Lookup localImplLookup = implLookup;
+					if (localImplLookup == null) {
+						Field privilegedLookupField = MethodHandles.Lookup.class.getDeclaredField("IMPL_LOOKUP"); //$NON-NLS-1$
+						privilegedLookupField.setAccessible(true);
+						localImplLookup = (MethodHandles.Lookup)privilegedLookupField.get(MethodHandles.Lookup.class);
+						Field implLookupField = Class.class.getDeclaredField("implLookup"); //$NON-NLS-1$
+						long implLookupOffset = getUnsafe().staticFieldOffset(implLookupField);
+						// Lazy initialization of a non-volatile field. Ensure the Object is initialized
+						// and flushed to memory before assigning to the implLookup field.
 						/*[IF JAVA_SPEC_VERSION >= 9]
 						getUnsafe().putObjectRelease(Class.class, implLookupOffset, localImplLookup);
 						/*[ELSE] JAVA_SPEC_VERSION >= 9 */
-		    			getUnsafe().putOrderedObject(Class.class, implLookupOffset, localImplLookup);
+						getUnsafe().putOrderedObject(Class.class, implLookupOffset, localImplLookup);
 						/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
-		    		}
-		    		MethodHandle handle = localImplLookup.findVirtual(Class.this, "value", methodType); //$NON-NLS-1$
-		    		if (AnnotationVars.valueMethodOffset == -1) {
-		    			Field valueMethodField = AnnotationVars.class.getDeclaredField("valueMethod"); //$NON-NLS-1$
-		    			AnnotationVars.valueMethodOffset = getUnsafe().objectFieldOffset(valueMethodField);
-		    		}
-		    		// Lazy initialization of a non-volatile field. Ensure the Object is initialized
-		    		// and flushed to memory before assigning to the valueMethod field.
+					}
+					MethodHandle handle = localImplLookup.findVirtual(Class.this, "value", methodType); //$NON-NLS-1$
+					if (AnnotationVars.valueMethodOffset == -1) {
+						Field valueMethodField = AnnotationVars.class.getDeclaredField("valueMethod"); //$NON-NLS-1$
+						AnnotationVars.valueMethodOffset = getUnsafe().objectFieldOffset(valueMethodField);
+					}
+					// Lazy initialization of a non-volatile field. Ensure the Object is initialized
+					// and flushed to memory before assigning to the valueMethod field.
 					/*[IF JAVA_SPEC_VERSION >= 9]
 					getUnsafe().putObjectRelease(localAnnotationVars, AnnotationVars.valueMethodOffset, handle);
 					/*[ELSE] JAVA_SPEC_VERSION >= 9 */
-		    		getUnsafe().putOrderedObject(localAnnotationVars, AnnotationVars.valueMethodOffset, handle);
+					getUnsafe().putOrderedObject(localAnnotationVars, AnnotationVars.valueMethodOffset, handle);
 					/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
-		    		return handle;
-		    	} catch (NoSuchMethodException e) {
-		    		return null;
-		    	} catch (IllegalAccessException | NoSuchFieldException e) {
-		    		throw newInternalError(e);
+					return handle;
+				} catch (NoSuchMethodException e) {
+					return null;
+				} catch (IllegalAccessException | NoSuchFieldException e) {
+					throw newInternalError(e);
 				}
-		    }
+			}
 		});
 	}
 	return valueMethod;
@@ -3624,7 +3620,6 @@ private AnnotationCache getAnnotationCache() {
 	}
 	return annotationCacheResult;
 }
-
 
 private native byte[] getDeclaredAnnotationsData();
 
@@ -3900,7 +3895,6 @@ private ClassRepositoryHolder getClassRepositoryHolder() {
 	}
 	return localClassRepositoryHolder;
 }
-
 
 /**
  * Answers an array of TypeVariable for the generic parameters declared

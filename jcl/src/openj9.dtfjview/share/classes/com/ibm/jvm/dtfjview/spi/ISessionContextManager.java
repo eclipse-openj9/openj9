@@ -30,7 +30,7 @@ import com.ibm.dtfj.image.Image;
 
 /**
  * Controls the creation and deletion of contexts within a session.
- * 
+ *
  * @author adam
  *
  */
@@ -40,7 +40,7 @@ public interface ISessionContextManager {
 	 * Remove all contexts which have been derived from an image source.
 	 * e.g. if there are multiple JVMs in a single core then closing the core
 	 * file would result in all images derived from that file also being closed.
-	 * 
+	 *
 	 * @param image the source image from which derived contexts should be closed.
 	 */
 	public void removeContexts(Image image);
@@ -48,7 +48,7 @@ public interface ISessionContextManager {
 	/**
 	 * Remove all contexts which have been defined as coming from a specified URI
 	 * (note that the URI may or may not be a file URI).
-	 *  
+	 *
 	 * @param URI the source URI from which derived contexts should be closed.
 	 */
 	public void removeContexts(URI source);
@@ -60,7 +60,7 @@ public interface ISessionContextManager {
 
 	/**
 	 * Lists all contexts keyed by the URI from which they were derived.
-	 * 
+	 *
 	 * @return map of URI's to contexts
 	 */
 	public Map<URI, ArrayList<ICombinedContext>> getContexts();
@@ -68,14 +68,14 @@ public interface ISessionContextManager {
 	/**
 	 * Convenience method for determining if more than one context is currently open. It
 	 * is a less expensive call than getContexts()
-	 * 
+	 *
 	 * @return true if more than one context is currently open and available
 	 */
 	public boolean hasMultipleContexts();
 
 	/**
 	 * Gets the context with the specified ID.
-	 * 
+	 *
 	 * @param id the context ID
 	 * @return the located context or null if it was not found
 	 */

@@ -29,20 +29,20 @@ import java.io.IOException;
 
 public interface CeexdlcbTemplate {
 
-    public int length();
-    public long getDlcbnextptr(ImageInputStream inputStream, long address) throws IOException;
-    public int getDlcbnextptr$offset();
-    public int getDlcbnextptr$length();
-    public long getDlcbwsaptr(ImageInputStream inputStream, long address) throws IOException;
-    public int getDlcbwsaptr$offset();
-    public int getDlcbwsaptr$length();
-    public long getDlcbnamelen(ImageInputStream inputStream, long address) throws IOException;
-    public int getDlcbnamelen$offset();
-    public int getDlcbnamelen$length();
-    public long getDlcbnameptr(ImageInputStream inputStream, long address) throws IOException;
-    public int getDlcbnameptr$offset();
-    public int getDlcbnameptr$length();
-    public long getDlcbiewbcie(ImageInputStream inputStream, long address) throws IOException;
-    public int getDlcbiewbcie$offset();
-    public int getDlcbiewbcie$length();
+	public int length();
+	public long getDlcbnextptr(ImageInputStream inputStream, long address) throws IOException;
+	public int getDlcbnextptr$offset();
+	public int getDlcbnextptr$length();
+	public long getDlcbwsaptr(ImageInputStream inputStream, long address) throws IOException;
+	public int getDlcbwsaptr$offset();
+	public int getDlcbwsaptr$length();
+	public long getDlcbnamelen(ImageInputStream inputStream, long address) throws IOException;
+	public int getDlcbnamelen$offset();
+	public int getDlcbnamelen$length();
+	public long getDlcbnameptr(ImageInputStream inputStream, long address) throws IOException;
+	public int getDlcbnameptr$offset();
+	public int getDlcbnameptr$length();
+	public long getDlcbiewbcie(ImageInputStream inputStream, long address) throws IOException;
+	public int getDlcbiewbcie$offset();
+	public int getDlcbiewbcie$length();
 }

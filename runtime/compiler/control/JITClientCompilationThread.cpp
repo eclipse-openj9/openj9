@@ -1214,6 +1214,16 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, mhIndex, mhObj);
          }
          break;
+      case MessageType::VM_getLayoutVarHandle:
+         {
+         auto recv = client->getRecvData<TR::KnownObjectTable::Index>();
+         TR::KnownObjectTable::Index vhIndex = fe->getLayoutVarHandle(comp, std::get<0>(recv));
+         uintptr_t* vhObj = NULL;
+         if (vhIndex != TR::KnownObjectTable::UNKNOWN)
+            vhObj = knot->getPointerLocation(vhIndex);
+         client->write(response, vhIndex, vhObj);
+         }
+         break;
 #endif // J9VM_OPT_OPENJDK_METHODHANDLE
       case MessageType::VM_isStable:
          {
@@ -1771,7 +1781,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
                case TR_ResolvedMethodType::VirtualFromCP:
                   {
                   resolvedMethod = static_cast<TR_ResolvedJ9Method *>(owningMethod->getResolvedPossiblyPrivateVirtualMethod(comp, cpIndex, true, &unresolvedInCP));
-                  vTableOffset = resolvedMethod ? resolvedMethod->vTableSlot(cpIndex) : 0;
+                  vTableOffset = resolvedMethod ? resolvedMethod->vTableSlot() : 0;
                   break;
                   }
                case TR_ResolvedMethodType::Static:
@@ -1787,7 +1797,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
                case TR_ResolvedMethodType::ImproperInterface:
                   {
                   resolvedMethod = static_cast<TR_ResolvedJ9Method *>(owningMethod->getResolvedImproperInterfaceMethod(comp, cpIndex));
-                  vTableOffset = resolvedMethod ? resolvedMethod->vTableSlot(cpIndex) : 0;
+                  vTableOffset = resolvedMethod ? resolvedMethod->vTableSlot() : 0;
                   break;
                   }
                default:
@@ -3746,15 +3756,51 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
          int compilationSequenceNumber = compiler->getOptions()->writeLogFileFromServer(logFileStr);
          if (compiler->getOption(TR_JITServerFollowRemoteCompileWithLocalCompile) && compilationSequenceNumber)
             {
-            intptr_t rtn = 0;
             compiler->getOptions()->setLogFileForClientOptions(compilationSequenceNumber);
-            releaseVMAccess(vmThread);
-            if ((rtn = compiler->compile()) != COMPILATION_SUCCEEDED)
+            bool compileWithoutVMAccess = !compiler->getOption(TR_DisableNoVMAccess);
+            if (compileWithoutVMAccess)
+               {
+               releaseVMAccess(vmThread);
+               TR::MonitorTable::get()->readAcquireClassUnloadMonitor(compInfoPT->getCompThreadId());
+               }
+            if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+               TR_VerboseLog::writeLineLocked(
+                  TR_Vlog_JITServer,
+                  "Client compiling method %s @ %s [metaData=%p, startPC=%p] locally following remote compilation",
+                  compiler->signature(),
+                  compiler->getHotnessName(),
+                  metaData, (metaData) ? (void *)metaData->startPC : NULL
+                  );
+            intptr_t rtn = 0;
+            try
+               {
+               rtn = compiler->compile();
+               }
+            catch(...)
+               {
+               // This compilation wasn't started from TR::CompilationInfoPerThreadBase::compile,
+               // so we need to make sure that we release the class unload monitor on exception.
+               if (compileWithoutVMAccess)
+                  TR::MonitorTable::get()->readReleaseClassUnloadMonitor(compInfoPT->getCompThreadId());
+               throw;
+               }
+            if (compileWithoutVMAccess)
+               TR::MonitorTable::get()->readReleaseClassUnloadMonitor(compInfoPT->getCompThreadId());
+            if (rtn != COMPILATION_SUCCEEDED)
                {
                TR_ASSERT(false, "Compiler returned non zero return code %d\n", rtn);
                compiler->failCompilation<TR::CompilationException>("Compilation Failure");
                }
-            acquireVMAccessNoSuspend(vmThread);
+            if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+               TR_VerboseLog::writeLineLocked(
+                  TR_Vlog_JITServer,
+                  "Client successfully recompiled method %s @ %s [metaData=%p, startPC=%p] locally following remote compilation",
+                  compiler->signature(),
+                  compiler->getHotnessName(),
+                  metaData, (metaData) ? (void *)metaData->startPC : NULL
+                  );
+            if (compileWithoutVMAccess)
+               acquireVMAccessNoSuspend(vmThread);
             compiler->getOptions()->closeLogFileForClientOptions();
             }
 

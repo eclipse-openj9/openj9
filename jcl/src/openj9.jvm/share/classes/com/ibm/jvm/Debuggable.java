@@ -29,8 +29,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-
-/** 
+/**
  * The Debuggable annotation applies to either classes or methods and provides
  * a hint to the VM that decorated entities must remain debuggable.  This facility
  * is intended for use by languages implemented in Java where portions of the program

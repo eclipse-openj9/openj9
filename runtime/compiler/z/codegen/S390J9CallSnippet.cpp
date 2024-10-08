@@ -50,7 +50,7 @@ TR::S390J9CallSnippet::generateVIThunk(TR::Node * callNode, int32_t argSize, TR:
    // make it double-word aligned
    codeSize = (codeSize + 7) / 8 * 8 + 8; // Additional 4 bytes to hold size of thunk
    uint8_t * thunk, * cursor, * returnValue;
-   TR::SymbolReference *dispatcherSymbol;
+   TR::SymbolReference *dispatcherSymbol = NULL;
 
    if (fej9->storeOffsetToArgumentsInVirtualIndirectThunks())
       thunk = (uint8_t *)comp->trMemory()->allocateMemory(codeSize, heapAlloc);
@@ -151,7 +151,7 @@ TR::S390J9CallSnippet::generateInvokeExactJ2IThunk(TR::Node * callNode, int32_t 
    TR_MHJ2IThunk      *thunk      = TR_MHJ2IThunk::allocate(codeSize, signature, cg, thunkTable);
    uint8_t          *cursor     = thunk->entryPoint();
 
-   TR::SymbolReference *dispatcherSymbol;
+   TR::SymbolReference *dispatcherSymbol = NULL;
    switch (callNode->getDataType())
       {
       case TR::NoType:
@@ -201,7 +201,7 @@ TR::S390J9CallSnippet::generateInvokeExactJ2IThunk(TR::Node * callNode, int32_t 
       *(uint32_t *) cursor = 0xe3000006 + finalCallLength + (rEP << 12) + (rEP << 20);  // LG      rEP,8(,rEP)
       cursor += 4;
       *(uint16_t *) cursor = 0x0004;
-      cursor += 2;sizeof(int16_t);
+      cursor += sizeof(int16_t);
       }
    else
       {

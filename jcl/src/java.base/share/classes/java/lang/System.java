@@ -65,6 +65,10 @@ import java.lang.reflect.Field;
 import jdk.internal.util.SystemProps;
 /*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 
+/*[IF JAVA_SPEC_VERSION >= 24]*/
+import java.net.URL;
+/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
+
 /**
  * Class System provides a standard place for programs
  * to find system related information. All System API
@@ -532,6 +536,10 @@ static void completeInitialization() {
 		throw new InternalError(e.toString());
 	}
 	/*[ENDIF]*/	//!Sidecar19-SE_RAWPLUSJ9&!Sidecar18-SE-OpenJ9
+
+	/*[IF JFR_SUPPORT]*/
+	JFRHelpers.initJFR();
+	/*[ENDIF] JFR_SUPPORT */
 }
 
 /*[IF JAVA_SPEC_VERSION >= 9]*/
@@ -568,6 +576,13 @@ static void initGPUAssist() {
 	GPUAssistHolder.instance = AccessController.doPrivileged(finder);
 }
 /*[ENDIF] JAVA_SPEC_VERSION >= 9 */
+
+/*[IF JAVA_SPEC_VERSION >= 24]*/
+static URL codeSource(Class<?> callerClass) {
+	CodeSource codeSource = callerClass.getProtectionDomainInternal().getCodeSource();
+	return (codeSource == null) ? null : codeSource.getLocation();
+}
+/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 
 /**
  * Sets the value of the static slot "in" in the receiver
@@ -656,7 +671,6 @@ private static void arraycopy(Object[] A1, int offset1, Object[] A2, int offset2
 	} else throw new ArrayIndexOutOfBoundsException();
 }
 
-
 /**
  * Answers the current time expressed as milliseconds since
  * the time 00:00:00 UTC on January 1, 1970.
@@ -717,6 +731,10 @@ private static void ensureProperties(boolean isInitialization) {
 	initializedProperties.put("org.eclipse.openj9.criu.isCRaCCapable", "true"); //$NON-NLS-1$ //$NON-NLS-2$
 	/*[ENDIF] CRAC_SUPPORT */
 	/*[ENDIF] CRIU_SUPPORT */
+
+	/*[IF JFR_SUPPORT]*/
+	initializedProperties.put("org.eclipse.openj9.jfr.isJFREnabled", "true"); //$NON-NLS-1$ //$NON-NLS-2$
+	/*[ENDIF] JFR_SUPPORT */
 
 	String[] list = getPropertyList();
 	for (int i = 0; i < list.length; i += 2) {
@@ -1138,10 +1156,30 @@ public static void loadLibrary(String libName) {
 		smngr.checkLink(libName);
 	}
 /*[IF JAVA_SPEC_VERSION >= 15]*/
-	ClassLoader.loadLibrary(getCallerClass(), libName);
+	Class<?> callerClass = getCallerClass();
 /*[ELSE]*/
-	ClassLoader.loadLibraryWithClassLoader(libName, ClassLoader.callerClassLoader());
+	ClassLoader callerClassLoader = ClassLoader.callerClassLoader();
 /*[ENDIF] JAVA_SPEC_VERSION >= 15 */
+	try {
+/*[IF JAVA_SPEC_VERSION >= 15]*/
+		ClassLoader.loadLibrary(callerClass, libName);
+/*[ELSE]*/
+		ClassLoader.loadLibraryWithClassLoader(libName, callerClassLoader);
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
+	} catch (UnsatisfiedLinkError ule) {
+		String errorMessage = ule.getMessage();
+		if ((errorMessage != null) && errorMessage.contains("already loaded in another classloader")) { //$NON-NLS-1$
+			// attempt to unload the classloader, and retry
+			gc();
+/*[IF JAVA_SPEC_VERSION >= 15]*/
+			ClassLoader.loadLibrary(callerClass, libName);
+/*[ELSE]*/
+			ClassLoader.loadLibraryWithClassLoader(libName, callerClassLoader);
+/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
+		} else {
+			throw ule;
+		}
+	}
 }
 
 /**
@@ -1597,7 +1635,7 @@ private static void simpleMultiLeafArrayCopy(Object src, int srcPos,
 			 if (isFwd)
 				iterLength = numOfElemsPerLeaf - destLeafPos;
 			 else
-		  		iterLength = destLeafPos + 1;
+				iterLength = destLeafPos + 1;
 		 }
 
 		 if (length - count < iterLength)
@@ -1606,7 +1644,7 @@ private static void simpleMultiLeafArrayCopy(Object src, int srcPos,
 		 if (isFwd)
 			offset = 0;
 		 else
-		  	offset = iterLength - 1;
+			offset = iterLength - 1;
 
 		 System.arraycopy(src, newSrcPos - offset, dest, newDestPos - offset, iterLength);
 
@@ -1679,7 +1717,7 @@ private static void multiLeafArrayCopy(Object src, int srcPos, Object dest,
 		if (isFwd)
 			iterLength1 = numOfElemsPerLeaf - firstPos;
 		else
-		  	iterLength1 = firstPos + 1;
+			iterLength1 = firstPos + 1;
 
 		if (length - count < iterLength1)
 			iterLength1 = length - count;
@@ -1728,7 +1766,6 @@ private static void multiLeafArrayCopy(Object src, int srcPos, Object dest,
 		count += iterLength1 + iterLength2;
 	}
 }
-
 
 /**
  * Return platform specific line separator character(s).

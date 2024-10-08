@@ -63,26 +63,26 @@ import com.sun.tools.attach.spi.AttachProvider;
 
 /**
  * Handles the initiator end of an attachment to a target VM
- * 
+ *
  */
 /*[IF JAVA_SPEC_VERSION >= 17]*/
 @SuppressWarnings("removal")
 /*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 public final class OpenJ9VirtualMachine extends VirtualMachine implements Response {
 
-	/* 
-	 * The expected string is "ATTACH_CONNECTED <32 bit hexadecimal key>". 
+	/*
+	 * The expected string is "ATTACH_CONNECTED <32 bit hexadecimal key>".
 	 * If the target replies with an error, we may expect a longer string.
 	 * Allow enough for ~100 40-character lines.
 	 */
 	private static final int ATTACH_CONNECTED_MESSAGE_LENGTH_LIMIT = 4000;
-	/* The units for timeouts are milliseconds, Set to 0 for no timeout. */	
+	/* The units for timeouts are milliseconds, Set to 0 for no timeout. */
 	private static final int DEFAULT_ATTACH_TIMEOUT = 120000;	/* should be ~2* the TCP timeout, i.e. /proc/sys/net/ipv4/tcp_fin_timeout on Linux */
 	private static final int DEFAULT_COMMAND_TIMEOUT = 0;
 
 	private static int MAXIMUM_ATTACH_TIMEOUT;
 	private static int COMMAND_TIMEOUT;
-	
+
 	private static final String INSTRUMENT_LIBRARY = "instrument"; //$NON-NLS-1$
 	private OutputStream commandStream;
 	private final OpenJ9VirtualMachineDescriptor descriptor;
@@ -94,7 +94,7 @@ public final class OpenJ9VirtualMachine extends VirtualMachine implements Respon
 	private FileLock[] targetLocks;
 	private ServerSocket targetServer;
 	private Socket targetSocket;
-	
+
 	static {
 		PrivilegedAction<Object> action = () -> {
 			MAXIMUM_ATTACH_TIMEOUT = Integer.getInteger("com.ibm.tools.attach.timeout", DEFAULT_ATTACH_TIMEOUT).intValue(); //$NON-NLS-1$
@@ -313,7 +313,7 @@ public final class OpenJ9VirtualMachine extends VirtualMachine implements Respon
 
 	/**
 	 * Execute a diagnostic command on a target VM.
-	 * 
+	 *
 	 * @param diagnosticCommand name of command to execute
 	 * @return properties object containing serialized result
 	 * @throws IOException in case of a communication error
@@ -365,7 +365,7 @@ public final class OpenJ9VirtualMachine extends VirtualMachine implements Respon
 
 	private static boolean parseResponse(String response) throws IOException,
 			AgentInitializationException, AgentLoadException, IllegalArgumentException
-			, AttachOperationFailedException 
+			, AttachOperationFailedException
 	{
 		if (response.startsWith(ERROR)) {
 			int responseLength = response.indexOf('\0');
@@ -408,7 +408,7 @@ public final class OpenJ9VirtualMachine extends VirtualMachine implements Respon
 	/**
 	 * parse the status value from the end of the response string: this will be a
 	 * numeric string at the end of the string.
-	 * 
+	 *
 	 * @param response
 	 * @return Integer value of status, or null if the string does not end in a
 	 *         number
@@ -427,7 +427,6 @@ public final class OpenJ9VirtualMachine extends VirtualMachine implements Respon
 		}
 		return ret;
 	}
-
 
 	private void tryAttachTarget(int timeout) throws IOException,
 			AttachNotSupportedException {
@@ -510,9 +509,9 @@ public final class OpenJ9VirtualMachine extends VirtualMachine implements Respon
 				commandStream = targetSocket.getOutputStream();
 				targetSocket.setSoTimeout(COMMAND_TIMEOUT);
 				responseStream = targetSocket.getInputStream();
-				
-				/* 
-				 * Limit data until the target is verified. 
+
+				/*
+				 * Limit data until the target is verified.
 				 */
 				String response = AttachmentConnection.streamReceiveString(responseStream, ATTACH_CONNECTED_MESSAGE_LENGTH_LIMIT);
 				/*[MSG "K0533", "key error: {0}"]*/
@@ -572,7 +571,7 @@ public final class OpenJ9VirtualMachine extends VirtualMachine implements Respon
 			throw new NullPointerException();
 		}
 		AttachmentConnection.streamSend(commandStream, Command.START_MANAGEMENT_AGENT);
-		IPC.sendProperties(agentProperties, commandStream);	
+		IPC.sendProperties(agentProperties, commandStream);
 		String response = AttachmentConnection.streamReceiveString(responseStream);
 		try {
 			parseResponse(response);
@@ -614,11 +613,11 @@ public final class OpenJ9VirtualMachine extends VirtualMachine implements Respon
 		return result;
 
 	}
-	
+
 	/**
 	 * Generate a text description of a target JVM's heap, including the number and
 	 * sizes of instances of each class.
-	 * 
+	 *
 	 * @param opts
 	 *            String options: "-live" for live object only, or "-all" for all
 	 *            objects. Default is "live".
@@ -670,23 +669,23 @@ public final class OpenJ9VirtualMachine extends VirtualMachine implements Respon
 	}
 
 	/**
-	 * 
+	 *
 	 * @note Public API, signature compatible with
 	 *       com.sun.tools.attach.spi.AttachProvider.
 	 */
 	@Override
 	public boolean equals(Object comparand) {
-	
+
 		if (!(comparand instanceof VirtualMachine)) {
 			return false;
 		}
-	
+
 		VirtualMachine otherVM = (VirtualMachine) comparand;
 		return id().equals(otherVM.id());
 	}
 
 	/**
-	 * 
+	 *
 	 * @note Public API, signature compatible with
 	 *       com.sun.tools.attach.spi.AttachProvider.
 	 */
@@ -696,7 +695,7 @@ public final class OpenJ9VirtualMachine extends VirtualMachine implements Respon
 	}
 
 	/**
-	 * 
+	 *
 	 * @note Public API, signature compatible with
 	 *       com.sun.tools.attach.spi.AttachProvider.
 	 */

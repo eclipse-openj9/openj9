@@ -57,7 +57,8 @@ protected:
 
 public:
 
-	static U_64 getCurrentTimeNanos(J9PortLibrary *privatePortLibrary, BuildResult &buildResult) {
+	static U_64 getCurrentTimeNanos(J9PortLibrary *privatePortLibrary, BuildResult &buildResult)
+	{
 		UDATA success = 0;
 		U_64 result = (U_64) j9time_current_time_nanos(&success);
 

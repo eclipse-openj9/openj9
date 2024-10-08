@@ -68,7 +68,6 @@ enum ROMClassCreationPhase {
 	ClassFileStackMapSlotsAnalysis,
 	MethodIsFinalize,
 	MethodIsEmpty,
-	MethodIsForwarder,
 	MethodIsGetter,
 	MethodIsVirtual,
 	MethodIsNonStaticNonAbstract,

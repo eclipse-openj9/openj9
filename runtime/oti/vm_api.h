@@ -358,6 +358,19 @@ J9Class*
 internalCreateArrayClass(J9VMThread* vmThread, J9ROMArrayClass* romClass, J9Class* elementClass);
 
 /**
+ * @brief Create a new J9Class to represent an array of elementClass.
+ *
+ * @param vmThread current VM thread
+ * @param romClass the ROM class associated with new RAM class (for arrays
+ * this is always the object array ROM class "[L")
+ * @param elementClass element or base class or array to be created
+ * @param options creation options such as J9_FINDCLASS_FLAG_CLASS_OPTION_NULL_RESTRICTED_ARRAY
+ * @return J9Class* J9Class of an elementClass array
+ */
+J9Class *
+internalCreateArrayClassWithOptions(J9VMThread *vmThread, J9ROMArrayClass *romClass, J9Class *elementClass, UDATA options);
+
+/**
  * Load the class with the specified name in a given module
  *
  * @param currentThread Current VM thread
@@ -501,21 +514,11 @@ internalCreateRAMClassFromROMClass(J9VMThread *vmThread, J9ClassLoader *classLoa
  * @brief Queries if CRaC or CRIU support is enabled. By default support
  * is not enabled, it can be enabled with -XX:CRaCCheckpointTo or -XX:+EnableCRIUSupport.
  *
- * @param currentThread vmthread token
- * @return TRUE if enabled, FALSE otherwise
- */
-BOOLEAN
-isCRaCorCRIUSupportEnabled(J9VMThread *currentThread);
-
-/**
- * @brief Queries if CRaC or CRIU support is enabled. By default support
- * is not enabled, it can be enabled with -XX:CRaCCheckpointTo or -XX:+EnableCRIUSupport.
- *
  * @param vm javaVM token
  * @return TRUE if enabled, FALSE otherwise
  */
 BOOLEAN
-isCRaCorCRIUSupportEnabled_VM(J9JavaVM *vm);
+isCRaCorCRIUSupportEnabled(J9JavaVM *vm);
 
 /**
  * @brief Queries if CRIU support is enabled. By default support
@@ -544,11 +547,11 @@ enableCRIUSecProvider(J9VMThread *currentThread);
  * will not be permitted after the JVM has been restored from a checkpoint
  * (checkpoint once mode).
  *
- * @param currentThread vmthread token
+ * @param vm javaVM token
  * @return TRUE if permitted, FALSE otherwise
  */
 BOOLEAN
-isCheckpointAllowed(J9VMThread *currentThread);
+isCheckpointAllowed(J9JavaVM *vm);
 
 /**
  * @brief Queries if non-portable restore mode (specified via
@@ -580,9 +583,12 @@ isJVMInPortableRestoreMode(J9VMThread *currentThread);
  * -XX:+DebugOnRestore) is supported. If so, the JVM
  * will run in FSD mode pre-checkpoint and will transition out
  * FSD mode on restore (unless debug is specified post restore).
+ *
+ * @param vm javaVM token
+ * @return TRUE if enabled, FALSE otherwise
  */
 BOOLEAN
-isDebugOnRestoreEnabled(J9VMThread *currentThread);
+isDebugOnRestoreEnabled(J9JavaVM *vm);
 
 /**
  * @brief Sets the maximum size for the CRIU ghost files.
@@ -2332,22 +2338,13 @@ javaLookupMethodImpl (J9VMThread *vmContext, J9Class *clazz, J9ROMNameAndSignatu
 /* ---------------- lookuphelper.c ---------------- */
 
 /**
-* @brief
-* @param currentThread
-* @param method
-* @return J9Method*
-*/
-J9Method*
-getForwardedMethod(J9VMThread* currentThread, J9Method* method);
-
-
-/**
-* @brief
-* @param vm
-* @return UDATA
+* @brief Disable hooks which must have been hooked by now if isDebugOnRestoreEnabled() returns false,
+*        otherwise, check if the events are hooked or reserved instead.
+* @param[in] vm pointer to the J9JavaVM
+* @return TRUE if EnterStep or Breakpoint must be reported, otherwise FALSE.
 */
 UDATA
-mustReportEnterStepOrBreakpoint(J9JavaVM * vm);
+mustReportEnterStepOrBreakpoint(J9JavaVM *vm);
 
 
 /* ---------------- monhelpers.c ---------------- */
@@ -2709,11 +2706,11 @@ BOOLEAN
 valueTypeCapableAcmp(J9VMThread *currentThread, j9object_t lhs, j9object_t rhs);
 
 /**
- * Determines if null restricted attribute is set on a field or not.
+ * Determines if null-restricted attribute is set on a field or not.
  *
  * @param[in] field The field to be checked
  *
- * @return TRUE if the field has null restricted attribute set, FALSE otherwise
+ * @return TRUE if the field has null-restricted attribute set, FALSE otherwise
  */
 BOOLEAN
 isFieldNullRestricted(J9ROMFieldShape *field);
@@ -2816,8 +2813,8 @@ UDATA
 getFlattenableFieldOffset(J9Class *fieldOwner, J9ROMFieldShape *field);
 
 /**
- * Returns if a field is flattened. `J9_IS_J9CLASS_FLATTENED` will be deprecated.
- * This helper assumes field is null restricted.
+ * Returns if a field is flattened.
+ * This helper assumes field is null-restricted.
  *
  * @param[in] fieldOwner the J9class that defines the field
  * @param[in] field romfieldshape of the field
@@ -2828,8 +2825,8 @@ BOOLEAN
 isFlattenableFieldFlattened(J9Class *fieldOwner, J9ROMFieldShape *field);
 
 /**
- * Returns the type of an instance field. `J9_IS_J9CLASS_FLATTENED` will be deprecated.
- * This helper assumes field is null restricted.
+ * Returns the type of an instance field.
+ * This helper assumes field is null-restricted.
  *
  * @param[in] fieldOwner the J9class that defines the field
  * @param[in] field romfieldshape of the field
@@ -2841,7 +2838,7 @@ getFlattenableFieldType(J9Class *fieldOwner, J9ROMFieldShape *field);
 
 /**
  * Returns the size of an instance field. `J9_VALUETYPE_FLATTENED_SIZE` will be deprecated.
- * This helper assumes field is null restricted.
+ * This helper assumes field is null-restricted.
  *
  * @param[in] currentThread thread token
  * @param[in] fieldOwner the J9class that defines the field
@@ -2865,7 +2862,7 @@ arrayElementSize(J9ArrayClass* arrayClass);
 
 /**
  * Performs a getfield operation on an object. Handles flattened and non-flattened cases.
- * This helper assumes that the cpIndex points to a resolved null restricted fieldRef. This helper
+ * This helper assumes that the cpIndex points to a resolved null-restricted fieldRef. This helper
  * also assumes that the cpIndex points to an instance field.
  *
  * @param currentThread thread token
@@ -2895,7 +2892,7 @@ cloneValueType(J9VMThread *currentThread, J9Class *receiverClass, j9object_t ori
 
 /**
  * Performs a putfield operation on an object. Handles flattened and non-flattened cases.
- * This helper assumes that the cpIndex points to a resolved null restricted fieldRef. This helper
+ * This helper assumes that the cpIndex points to a resolved null-restricted fieldRef. This helper
  * also assumes that the cpIndex points to an instance field.
  *
  * @param currentThread thread token

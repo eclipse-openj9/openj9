@@ -27,7 +27,7 @@ package com.ibm.le.conditionhandling;
 /**
  * A ConditionException is used to represent a z/OS Language Environment condition.
  * <p>
- * References 
+ * References
  * <ul>
  * <li>z/OS Language Environment Programming Reference: CEEDCOD-Decompose a condition token
  * <li>z/OS XL C/C++ Run-Time Library Reference: __le_condition_token_build()
@@ -36,7 +36,7 @@ package com.ibm.le.conditionhandling;
  */
 
 public class ConditionException extends RuntimeException {
-	
+
 	static final long serialVersionUID = -6740638630352857974L;
 	private String failingRoutine;
 	private long offset;
@@ -50,20 +50,20 @@ public class ConditionException extends RuntimeException {
 	private long iSInfo;
 
 	/**
-	 * 
+	 *
 	 * This constructor is intentionally not public so that only the JVM can instantiate a ConditionException
-	 * 
+	 *
 	 * @param failingRoutine	The routine that triggered the condition
 	 * @param offset			This offset into the routine where the condition was triggered
 	 * @param rawTokenBytes		The raw bytes representing the condition token
 	 * @param facilityID		The condition's facility ID
-	 * @param c1				c_1, as stored in the condition token 
+	 * @param c1				c_1, as stored in the condition token
 	 * @param c2				c_2, as stored in the condition token
 	 * @param caze				The condition's case
 	 * @param severity			The condition's severity
-	 * @param control			The condition's control field 
+	 * @param control			The condition's control field
 	 * @param iSInfo			The condition's ISI
-	 * 
+	 *
 	 */
 	ConditionException(String failingRoutine, long offset, byte []rawTokenBytes, String facilityID, int c1, int c2, int caze, int severity, int control, long iSInfo) {
 
@@ -76,75 +76,75 @@ public class ConditionException extends RuntimeException {
 		this.caze = caze;
 		this.severity = severity;
 		this.control = control;
-		this.iSInfo = iSInfo;		
+		this.iSInfo = iSInfo;
 	}
 
 	/**
 	 * Returns the condition's facility ID.
-	 * 
+	 *
 	 * @return the condition's facility ID
 	 */
 	public String getFacilityID() {
 		return facilityID;
 	}
-	
+
 	/**
 	 * Returns c_1, as stored in the condition token.
-	 * 
+	 *
 	 * @return c_1, as stored in the condition token
 	 */
 	public int getC1() {
 		return c1;
 	}
-	
+
 	/**
 	 * Returns c_2, as stored in the condition token.
-	 * 
+	 *
 	 * @return c_2, as stored in the condition token
 	 */
 	public int getC2() {
 		return c2;
 	}
-	
+
 	/**
 	 * Returns the format of c_1 and c_2.
-	 * 
-	 * @return the format of c_1 and c_2 
+	 *
+	 * @return the format of c_1 and c_2
 	 */
 	public int getCase() {
 		return caze;
 	}
-	
+
 	/**
 	 * Returns the condition's control field.
-	 * 
+	 *
 	 * @return the condition's control field
 	 */
 	public int getControl() {
 		return control;
 	}
-	
+
 	/**
 	 * Returns the condition's severity.
-	 * 
+	 *
 	 * @return the condition's severity
 	 */
 	public int getSeverity() {
 		return severity;
 	}
-	
+
 	/**
 	 * Returns the condition's ISI.
-	 * 
+	 *
 	 * @return the condition's ISI
 	 */
 	public long getISInfo() {
 		return iSInfo;
 	}
-	
+
 	/**
 	 * Returns the raw 12-byte representation of the condition.
-	 * 
+	 *
 	 * @return the raw 12-byte representation of the condition
 	 */
 	public byte[] getToken() {
@@ -153,7 +153,7 @@ public class ConditionException extends RuntimeException {
 
 	/**
 	 * Returns the condition's message number.
-	 * 
+	 *
 	 * @return the condition's message number
 	 */
 	public int getMessageNumber() {
@@ -162,16 +162,16 @@ public class ConditionException extends RuntimeException {
 
 	/**
 	 * Returns the routine that triggered the condition.
-	 * 
+	 *
 	 * @return the routine that triggered the condition
 	 */
 	public String getRoutine() {
 		return failingRoutine;
 	}
-	
+
 	/**
 	 * Returns the offset into the routine that triggered the condition.
-	 * 
+	 *
 	 * @return the offset into the routine that triggered the condition
 	 */
 	public long getOffsetInRoutine() {

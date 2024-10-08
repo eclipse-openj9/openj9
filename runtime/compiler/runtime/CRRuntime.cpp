@@ -90,7 +90,22 @@ TR::CRRuntime::CRRuntime(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo) 
    _failedComps(),
    _forcedRecomps(),
    _impMethodForCR(),
-   _proactiveCompEnv()
+   _jniMethodAddr(),
+   _proactiveCompEnv(),
+   _vmMethodTraceEnabled(false),
+   _vmExceptionEventsHooked(false),
+   _fsdEnabled(false),
+   _restoreTime(0)
+   {
+#if defined(J9VM_OPT_JITSERVER)
+   _canPerformRemoteCompilationInCRIUMode = false;
+   _remoteCompilationRequestedAtBootstrap = false;
+   _remoteCompilationExplicitlyDisabledAtBootstrap = false;
+#endif
+   }
+
+void
+TR::CRRuntime::cacheEventsStatus()
    {
    // TR::CompilationInfo is initialized in the JIT_INITIALIZED bootstrap
    // stage, whereas J9_EXTENDED_RUNTIME_METHOD_TRACE_ENABLED is set in the
@@ -108,11 +123,7 @@ TR::CRRuntime::CRRuntime(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo) 
         || J9_EVENT_IS_RESERVED(jitConfig->javaVM->hookInterface, J9HOOK_VM_EXCEPTION_THROW);
    _vmExceptionEventsHooked = exceptionCatchEventHooked || exceptionThrowEventHooked;
 
-#if defined(J9VM_OPT_JITSERVER)
-   _canPerformRemoteCompilationInCRIUMode = false;
-   _remoteCompilationRequestedAtBootstrap = false;
-   _remoteCompilationExplicitlyDisabledAtBootstrap = false;
-#endif
+   _fsdEnabled = J9::Options::_fsdInitStatus == J9::Options::FSDInit_Initialized;
    }
 
 void
@@ -163,22 +174,25 @@ TR::CRRuntime::waitOnCRRuntimeMonitor()
    _crRuntimeMonitor->wait();
    }
 
+template<typename T>
 void
-TR::CRRuntime::pushMemoizedCompilation(TR_MemoizedCompilations& list, J9Method *method)
+TR::CRRuntime::pushMemoizedCompilation(TR_MemoizedCompilations& list, J9Method *method, void *data)
    {
-   auto newEntry = new (_compInfo->persistentMemory()) TR_MemoizedComp(method);
+   auto newEntry = new (_compInfo->persistentMemory()) T(method, data);
    if (newEntry)
       list.add(newEntry);
    }
 
 J9Method *
-TR::CRRuntime::popMemoizedCompilation(TR_MemoizedCompilations& list)
+TR::CRRuntime::popMemoizedCompilation(TR_MemoizedCompilations& list, void **data)
    {
    J9Method *method = NULL;
    auto memComp = list.pop();
    if (memComp)
       {
       method = memComp->getMethod();
+      if (data)
+         *data = memComp->getData();
       jitPersistentFree(memComp);
       }
    return method;
@@ -265,6 +279,46 @@ TR::CRRuntime::purgeMemoizedCompilations()
    }
 
 void
+TR::CRRuntime::pushFailedCompilation(J9Method *method)
+   {
+   pushMemoizedCompilation<TR_MemoizedComp>(_failedComps, method);
+   }
+
+void
+TR::CRRuntime::pushForcedRecompilation(J9Method *method)
+   {
+   pushMemoizedCompilation<TR_MemoizedComp>(_forcedRecomps, method);
+   }
+
+void
+TR::CRRuntime::pushImportantMethodForCR(J9Method *method)
+   {
+   pushMemoizedCompilation<TR_MemoizedComp>(_impMethodForCR, method);
+   }
+
+void
+TR::CRRuntime::pushJNIAddr(J9Method *method, void *addr)
+   {
+   pushMemoizedCompilation<TR_JNIMethodAddr>(_jniMethodAddr, method, addr);
+   }
+
+void
+TR::CRRuntime::resetJNIAddr()
+   {
+   OMR::CriticalSection resetJNI(getCRRuntimeMonitor());
+   while (!_jniMethodAddr.isEmpty())
+      {
+      J9Method *method;
+      void *addr;
+      while ((method = popJNIAddr(&addr)))
+         {
+         TR_ASSERT_FATAL(addr, "JNI Address to be reset cannot be NULL!");
+         _compInfo->setJ9MethodExtra(method, reinterpret_cast<intptr_t>(addr));
+         }
+      }
+   }
+
+void
 TR::CRRuntime::triggerRecompilationForPreCheckpointGeneratedFSDBodies(J9VMThread *vmThread)
    {
    TR_J9VMBase *fe = TR_J9VMBase::get(getJITConfig(), vmThread);
@@ -317,7 +371,7 @@ void
 TR::CRRuntime::setupEnvForProactiveCompilation(J9JavaVM *javaVM, J9VMThread *vmThread, TR_J9VMBase *fej9)
    {
    /* Proactive compilation should not be FSD compiles */
-   if (javaVM->internalVMFunctions->isDebugOnRestoreEnabled(vmThread))
+   if (javaVM->internalVMFunctions->isDebugOnRestoreEnabled(javaVM))
       {
       TR::Options::getCmdLineOptions()->setFSDOptionsForAll(false);
       TR::Options::getAOTCmdLineOptions()->setFSDOptionsForAll(false);
@@ -341,7 +395,7 @@ void
 TR::CRRuntime::teardownEnvForProactiveCompilation(J9JavaVM *javaVM, J9VMThread *vmThread, TR_J9VMBase *fej9)
    {
    /* Proactive compilation should not be FSD compiles */
-   if (javaVM->internalVMFunctions->isDebugOnRestoreEnabled(vmThread))
+   if (javaVM->internalVMFunctions->isDebugOnRestoreEnabled(javaVM))
       {
       TR::Options::getCmdLineOptions()->setFSDOptionsForAll(true);
       TR::Options::getAOTCmdLineOptions()->setFSDOptionsForAll(true);
@@ -565,8 +619,8 @@ void
 TR::CRRuntime::resumeJITThreadsForRestore(J9VMThread *vmThread)
    {
    // Allow heuristics to turn on the IProfiler
-   if (_jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(vmThread)
-       && !_jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(vmThread))
+   if (_jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(_jitConfig->javaVM)
+       && !_jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(_jitConfig->javaVM))
       {
       turnOffInterpreterProfiling(_jitConfig);
       TR::Options::getCmdLineOptions()->setOption(TR_NoIProfilerDuringStartupPhase);
@@ -606,7 +660,7 @@ TR::CRRuntime::resumeJITThreadsForRestore(J9VMThread *vmThread)
 void
 TR::CRRuntime::resetStartTime()
    {
-   PORT_ACCESS_FROM_JAVAVM(jitConfig->javaVM);
+   PORT_ACCESS_FROM_JAVAVM(getJITConfig()->javaVM);
    TR::PersistentInfo *persistentInfo = getCompInfo()->getPersistentInfo();
 
    if (TR::Options::isAnyVerboseOptionSet())
@@ -619,6 +673,8 @@ TR::CRRuntime::resetStartTime()
    if (TR::Options::isAnyVerboseOptionSet())
       TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Reset start and elapsed time: startTime=%6u, elapsedTime=%6u",
                                        (uint32_t)persistentInfo->getStartTime(), (uint32_t)persistentInfo->getElapsedTime());
+
+   _restoreTime = persistentInfo->getElapsedTime();
    }
 
 void
@@ -679,6 +735,18 @@ TR::CRRuntime::prepareForCheckpoint()
       }
 
    setReadyForCheckpointRestore();
+
+   char * printPersistentMem = feGetEnv("TR_PrintPersistentMem");
+   if (printPersistentMem)
+      {
+      if (trPersistentMemory)
+         trPersistentMemory->printMemStats();
+      }
+
+   printIprofilerStats(TR::Options::getCmdLineOptions(),
+                       _jitConfig,
+                       TR_J9VMBase::get(_jitConfig, NULL)->getIProfiler(),
+                       "Checkpoint");
    }
 
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
@@ -748,6 +816,13 @@ TR::CRRuntime::recompileMethodsCompiledPreCheckpoint()
       setCRRuntimeThreadLifetimeState(TR_CRRuntimeThreadLifetimeStates::CR_THR_TRIGGER_RECOMP);
       getCRRuntimeMonitor()->notifyAll();
       }
+   }
+
+bool
+TR::CRRuntime::allowStateChange()
+   {
+   TR::PersistentInfo *persistentInfo = getCompInfo()->getPersistentInfo();
+   return (_restoreTime != 0) && ((persistentInfo->getElapsedTime() - _restoreTime) > TR::Options::_delayBeforeStateChange);
    }
 
 void

@@ -29,28 +29,33 @@ import java.io.IOException;
 
 public final class CeexcibTemplate {
 
-    public static int length() {
-        return 268;
-    }
+	public static int length() {
+		return 268;
+	}
 
-    public static long getCib_sv1(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 204);
-        return inputStream.readUnsignedInt() & 0xffffffffL;
-    }
-    public static int getCib_sv1$offset() {
-        return 204;
-    }
-    public static int getCib_sv1$length() {
-        return 32;
-    }
-    public static long getCib_int(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 208);
-        return inputStream.readUnsignedInt() & 0xffffffffL;
-    }
-    public static int getCib_int$offset() {
-        return 208;
-    }
-    public static int getCib_int$length() {
-        return 32;
-    }
+	public static long getCib_sv1(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 204);
+		return inputStream.readUnsignedInt() & 0xffffffffL;
+	}
+
+	public static int getCib_sv1$offset() {
+		return 204;
+	}
+
+	public static int getCib_sv1$length() {
+		return 32;
+	}
+
+	public static long getCib_int(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 208);
+		return inputStream.readUnsignedInt() & 0xffffffffL;
+	}
+
+	public static int getCib_int$offset() {
+		return 208;
+	}
+
+	public static int getCib_int$length() {
+		return 32;
+	}
 }

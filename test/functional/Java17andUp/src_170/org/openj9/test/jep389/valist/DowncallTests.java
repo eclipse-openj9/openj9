@@ -21,9 +21,8 @@
  */
 package org.openj9.test.jep389.valist;
 
-import org.testng.annotations.Test;
 import org.testng.Assert;
-import org.testng.AssertJUnit;
+import org.testng.annotations.Test;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
@@ -31,7 +30,15 @@ import java.lang.invoke.VarHandle;
 
 import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.CLinker;
-import static jdk.incubator.foreign.CLinker.*;
+import static jdk.incubator.foreign.CLinker.C_CHAR;
+import static jdk.incubator.foreign.CLinker.C_DOUBLE;
+import static jdk.incubator.foreign.CLinker.C_FLOAT;
+import static jdk.incubator.foreign.CLinker.C_INT;
+import static jdk.incubator.foreign.CLinker.C_LONG;
+import static jdk.incubator.foreign.CLinker.C_LONG_LONG;
+import static jdk.incubator.foreign.CLinker.C_POINTER;
+import static jdk.incubator.foreign.CLinker.C_SHORT;
+import jdk.incubator.foreign.CLinker.VaList;
 import jdk.incubator.foreign.FunctionDescriptor;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryAddress;
@@ -52,7 +59,6 @@ public class DowncallTests {
 	private static String arch = System.getProperty("os.arch").toLowerCase();
 	static boolean isX64 = arch.equals("amd64") || arch.equals("x86_64");
 	private static boolean isWinX64 = osName.contains("win") && isX64;
-	private static boolean isLinuxX64 = osName.contains("linux") && isX64;
 	private static boolean isLinuxAarch64 = osName.contains("linux") && arch.equals("aarch64");
 	/* The padding of struct is not required on Power in terms of VaList */
 	private static boolean isStructPaddingNotRequired = arch.startsWith("ppc64");
@@ -918,7 +924,6 @@ public class DowncallTests {
 			MethodHandle mh = clinker.downcallHandle(functionSymbol, mt, fd);
 
 			try (ResourceScope scope = ResourceScope.newConfinedScope()) {
-				SegmentAllocator allocator = SegmentAllocator.ofScope(scope);
 				MemorySegment formatSegmt = CLinker.toCString("%d * %d = %d\n", scope);
 				VaList vaList = VaList.make(vaListBuilder -> vaListBuilder.vargFromInt(C_INT, 7)
 						.vargFromInt(C_INT, 8)

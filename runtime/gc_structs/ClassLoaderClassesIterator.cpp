@@ -36,12 +36,15 @@ GC_ClassLoaderClassesIterator::GC_ClassLoaderClassesIterator(MM_GCExtensionsBase
 	,_vmSegmentIterator(classLoader, MEMORY_TYPE_RAM_CLASS)
 	,_vmClassSlotIterator((J9JavaVM* )extensions->getOmrVM()->_language_vm)
 	,_mode(TABLE_CLASSES)
+	,_iterateArrayClazz(NULL)
+	,_arrayState(STATE_VALUETYPEARRAY)
 {
 
 	if ((classLoader->flags & J9CLASSLOADER_ANON_CLASS_LOADER) != 0) {
 		_mode = ANONYMOUS_CLASSES;
 	}
 	_nextClass = firstClass();
+	_startingClass = _nextClass;
 }
 
 J9Class *
@@ -100,6 +103,66 @@ GC_ClassLoaderClassesIterator::switchToSystemMode()
 }
 
 J9Class *
+GC_ClassLoaderClassesIterator::nextArrayClass()
+{
+	while (_arrayState != STATE_DONE) {
+		switch (_arrayState) {
+		case STATE_VALUETYPEARRAY:
+			{
+			/* Setup null-restricted array list walk if it is not empty, switch to array list check otherwise */
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+				J9Class *nullRestrictedArray = J9CLASS_GET_NULLRESTRICTED_ARRAY(_startingClass);
+				if (NULL != nullRestrictedArray) {
+					_iterateArrayClazz = nullRestrictedArray;
+					_arrayState = STATE_VALUETYPEARRAYLIST;
+				} else
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+				{
+					_arrayState = STATE_ARRAY;
+				}
+			}
+			break;
+		case STATE_VALUETYPEARRAYLIST:
+			/* Continue to walk null-restricted array list until empty, switch to array list check if end of the list reached */
+			if (NULL != _iterateArrayClazz) {
+				_iterateArrayClazz = _iterateArrayClazz->arrayClass;
+			} else {
+				_arrayState = STATE_ARRAY;
+			}
+			break;
+		case STATE_ARRAY:
+			/* Setup array list walk if it is not empty, switch to "done" otherwise */
+			if (NULL != _startingClass->arrayClass) {
+				_iterateArrayClazz = _startingClass->arrayClass;
+				_arrayState = STATE_ARRAYLIST;
+			} else {
+				_arrayState = STATE_DONE;
+			}
+			break;
+		case STATE_ARRAYLIST:
+			/* Continue to walk array list until empty, switch to "done" if end of the list reached */
+			if (NULL != _iterateArrayClazz) {
+				_iterateArrayClazz = _iterateArrayClazz->arrayClass;
+			} else {
+				_arrayState = STATE_DONE;
+			}
+			break;
+		case STATE_DONE:
+		default:
+			break;
+		}
+
+		if ((NULL != _iterateArrayClazz) && (_iterateArrayClazz->classLoader == _classLoader)) {
+			break;
+		}
+
+		/* Cancel list iteration if it is switched to super classloader. */
+		_iterateArrayClazz = NULL;
+	}
+	return _iterateArrayClazz;
+}
+
+J9Class *
 GC_ClassLoaderClassesIterator::nextClass()
 {
 	J9Class * result = _nextClass;
@@ -108,13 +171,26 @@ GC_ClassLoaderClassesIterator::nextClass()
 		if (ANONYMOUS_CLASSES == _mode) {
 			_nextClass = nextAnonymousClass();
 		} else {
-			if ( (result->classLoader == _classLoader) && (NULL != result->arrayClass) ) {
-				/* this class is defined in the loader, so follow its array classes */
-				_nextClass = result->arrayClass;
+			/*
+			 * Classloader hash table doesn't include array classes.
+			 * However array classes can be reached by scanning lists of
+			 * array classes and null-restricted array classes.
+			 * Heads of such lists are stored in the mixed object j9class structure.
+			 * nextArrayClass() call walks such lists returning array classes one by one.
+			 * Returned NULL means lists are empty or walk reaches the end.
+			 */
+			J9Class *array = nextArrayClass();
+			if (NULL != array) {
+				/* this class is defined in the loader, so follow its array classes (regular and null-restricted) */
+				_nextClass = array;
 			} else if (TABLE_CLASSES == _mode) {
 				_nextClass = nextTableClass();
+				/* Setup array lists walk if any */
+				initArrayClassWalk();
 			} else {
 				_nextClass = nextSystemClass();
+				/* Setup array lists walk if any */
+				initArrayClassWalk();
 			}
 		}
 	}

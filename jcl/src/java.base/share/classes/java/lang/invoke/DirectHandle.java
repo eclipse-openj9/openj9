@@ -39,11 +39,11 @@ import java.lang.reflect.Modifier;
 class DirectHandle extends PrimitiveHandle {
 	final boolean isStatic;
 	final boolean originIsFindVirtual;
-	
+
 	DirectHandle(Class<?> referenceClass, String methodName, MethodType type, byte kind, Class<?> specialCaller) throws NoSuchMethodException, IllegalAccessException {
 		this(referenceClass, methodName, type, kind, specialCaller, false);
 	}
-	
+
 	DirectHandle(Class<?> referenceClass, String methodName, MethodType type, byte kind, Class<?> specialCaller, boolean originIsFindVirtual) throws NoSuchMethodException, IllegalAccessException {
 		super(directMethodType(type, kind, specialCaller), referenceClass, methodName, kind, null);
 		assert (kind != KIND_SPECIAL) || (specialCaller != null);
@@ -55,11 +55,11 @@ class DirectHandle extends PrimitiveHandle {
 		isStatic = Modifier.isStatic(rawModifiers);
 		this.originIsFindVirtual = originIsFindVirtual;
 	}
-	
+
 	public DirectHandle(Method method, byte kind, Class<?> specialCaller) throws IllegalAccessException {
 		this(method, kind, specialCaller, false);
 	}
-	
+
 	public DirectHandle(Method method, byte kind, Class<?> specialCaller, boolean originIsFindVirtual) throws IllegalAccessException {
 		super(directMethodType(MethodType.methodType(method.getReturnType(), method.getParameterTypes()), kind, specialCaller), method.getDeclaringClass(), method.getName(), kind, method.getModifiers(), null);
 		assert (kind != KIND_SPECIAL) || (specialCaller != null);
@@ -72,9 +72,9 @@ class DirectHandle extends PrimitiveHandle {
 		isStatic = Modifier.isStatic(rawModifiers);
 		this.originIsFindVirtual = originIsFindVirtual;
 	}
-	
+
 	/*
-	 * Create a new DirectHandle from another DirectHandle.  
+	 * Create a new DirectHandle from another DirectHandle.
 	 * This is used by ReceiverBoundHandle
 	 */
 	DirectHandle(PrimitiveHandle other, byte kind) {
@@ -89,7 +89,7 @@ class DirectHandle extends PrimitiveHandle {
 		isStatic = Modifier.isStatic(other.rawModifiers);
 		this.originIsFindVirtual = other.directHandleOriginatedInFindVirtual();
 	}
-	
+
 	DirectHandle(DirectHandle originalHandle, MethodType newType) {
 		super(originalHandle, newType);
 		isStatic = originalHandle.isStatic;
@@ -110,7 +110,7 @@ class DirectHandle extends PrimitiveHandle {
 		}
 		return existingType.insertParameterTypes(0, specialCaller);
 	}
-	
+
 	private void addHandleToClassCache() {
 		MethodHandleCache cache = MethodHandleCache.getCache(defc);
 		cache.addDirectHandle(this);
@@ -126,19 +126,19 @@ class DirectHandle extends PrimitiveHandle {
 	boolean canRevealDirect() {
 		return true;
 	}
-	
+
 	@Override
 	boolean directHandleOriginatedInFindVirtual() {
 		return originIsFindVirtual;
 	}
-	
+
 	// {{{ JIT support
 	private static final ThunkTable _thunkTable = new ThunkTable();
 	protected ThunkTable thunkTable(){ return _thunkTable; }
 
- 	// ILGen macros
- 	protected static native boolean isAlreadyCompiled(long j9method);
- 	protected static native long compiledEntryPoint(long j9method);
+	// ILGen macros
+	protected static native boolean isAlreadyCompiled(long j9method);
+	protected static native long compiledEntryPoint(long j9method);
 
 	protected static native void     directCall_V(int argPlaceholder);
 	protected static native int      directCall_I(int argPlaceholder);
@@ -160,9 +160,9 @@ class DirectHandle extends PrimitiveHandle {
 		if (ILGenMacros.isCustomThunk()) {
 			directCall_V(argPlaceholder);
 		} else if (isAlreadyCompiled(vmSlot)) {
-			ComputedCalls.dispatchDirect_V(compiledEntryPoint(vmSlot), argPlaceholder); 
+			ComputedCalls.dispatchDirect_V(compiledEntryPoint(vmSlot), argPlaceholder);
 		} else {
-			ComputedCalls.dispatchJ9Method_V(vmSlot, argPlaceholder); 
+			ComputedCalls.dispatchJ9Method_V(vmSlot, argPlaceholder);
 		}
 	}
 
@@ -171,11 +171,11 @@ class DirectHandle extends PrimitiveHandle {
 		nullCheckIfRequired(receiver);
 		initializeClassIfRequired();
 		if (ILGenMacros.isCustomThunk()) {
-			directCall_V(receiver, argPlaceholder); 
+			directCall_V(receiver, argPlaceholder);
 		} else if (isAlreadyCompiled(vmSlot)) {
 			ComputedCalls.dispatchDirect_V(compiledEntryPoint(vmSlot), receiver, argPlaceholder);
 		} else {
-			ComputedCalls.dispatchJ9Method_V(vmSlot, receiver, argPlaceholder); 
+			ComputedCalls.dispatchJ9Method_V(vmSlot, receiver, argPlaceholder);
 		}
 	}
 
@@ -183,11 +183,11 @@ class DirectHandle extends PrimitiveHandle {
 	private final int invokeExact_thunkArchetype_I(int argPlaceholder) {
 		initializeClassIfRequired();
 		if (ILGenMacros.isCustomThunk()) {
-			return directCall_I(argPlaceholder); 
+			return directCall_I(argPlaceholder);
 		} else if (isAlreadyCompiled(vmSlot)) {
 			return ComputedCalls.dispatchDirect_I(compiledEntryPoint(vmSlot), argPlaceholder);
 		} else {
-			return ComputedCalls.dispatchJ9Method_I(vmSlot, argPlaceholder); 
+			return ComputedCalls.dispatchJ9Method_I(vmSlot, argPlaceholder);
 		}
 	}
 
@@ -196,11 +196,11 @@ class DirectHandle extends PrimitiveHandle {
 		nullCheckIfRequired(receiver);
 		initializeClassIfRequired();
 		if (ILGenMacros.isCustomThunk()) {
-			return directCall_I(receiver, argPlaceholder); 
+			return directCall_I(receiver, argPlaceholder);
 		} else if (isAlreadyCompiled(vmSlot)) {
 			return ComputedCalls.dispatchDirect_I(compiledEntryPoint(vmSlot), receiver, argPlaceholder);
 		} else {
-			return ComputedCalls.dispatchJ9Method_I(vmSlot, receiver, argPlaceholder); 
+			return ComputedCalls.dispatchJ9Method_I(vmSlot, receiver, argPlaceholder);
 		}
 	}
 
@@ -208,11 +208,11 @@ class DirectHandle extends PrimitiveHandle {
 	private final long invokeExact_thunkArchetype_J(int argPlaceholder) {
 		initializeClassIfRequired();
 		if (ILGenMacros.isCustomThunk()) {
-			return directCall_J(argPlaceholder); 
+			return directCall_J(argPlaceholder);
 		} else if (isAlreadyCompiled(vmSlot)) {
 			return ComputedCalls.dispatchDirect_J(compiledEntryPoint(vmSlot), argPlaceholder);
 		} else {
-			return ComputedCalls.dispatchJ9Method_J(vmSlot, argPlaceholder); 
+			return ComputedCalls.dispatchJ9Method_J(vmSlot, argPlaceholder);
 		}
 	}
 
@@ -221,11 +221,11 @@ class DirectHandle extends PrimitiveHandle {
 		nullCheckIfRequired(receiver);
 		initializeClassIfRequired();
 		if (ILGenMacros.isCustomThunk()) {
-			return directCall_J(receiver, argPlaceholder);	 
+			return directCall_J(receiver, argPlaceholder);
 		} else if (isAlreadyCompiled(vmSlot)) {
 			return ComputedCalls.dispatchDirect_J(compiledEntryPoint(vmSlot), receiver, argPlaceholder);
 		} else {
-			return ComputedCalls.dispatchJ9Method_J(vmSlot, receiver, argPlaceholder);	 
+			return ComputedCalls.dispatchJ9Method_J(vmSlot, receiver, argPlaceholder);
 		}
 	}
 
@@ -233,11 +233,11 @@ class DirectHandle extends PrimitiveHandle {
 	private final float invokeExact_thunkArchetype_F(int argPlaceholder) {
 		initializeClassIfRequired();
 		if (ILGenMacros.isCustomThunk()) {
-			return directCall_F(argPlaceholder); 
+			return directCall_F(argPlaceholder);
 		} else if (isAlreadyCompiled(vmSlot)) {
 			return ComputedCalls.dispatchDirect_F(compiledEntryPoint(vmSlot), argPlaceholder);
 		} else {
-			return ComputedCalls.dispatchJ9Method_F(vmSlot, argPlaceholder); 
+			return ComputedCalls.dispatchJ9Method_F(vmSlot, argPlaceholder);
 		}
 	}
 
@@ -246,11 +246,11 @@ class DirectHandle extends PrimitiveHandle {
 		nullCheckIfRequired(receiver);
 		initializeClassIfRequired();
 		if (ILGenMacros.isCustomThunk()) {
-			return directCall_F(receiver, argPlaceholder); 
+			return directCall_F(receiver, argPlaceholder);
 		} else if (isAlreadyCompiled(vmSlot)) {
 			return ComputedCalls.dispatchDirect_F(compiledEntryPoint(vmSlot), receiver, argPlaceholder);
 		} else {
-			return ComputedCalls.dispatchJ9Method_F(vmSlot, receiver, argPlaceholder); 
+			return ComputedCalls.dispatchJ9Method_F(vmSlot, receiver, argPlaceholder);
 		}
 	}
 
@@ -258,11 +258,11 @@ class DirectHandle extends PrimitiveHandle {
 	private final double invokeExact_thunkArchetype_D(int argPlaceholder) {
 		initializeClassIfRequired();
 		if (ILGenMacros.isCustomThunk()) {
-			return directCall_D(argPlaceholder); 
+			return directCall_D(argPlaceholder);
 		} else if (isAlreadyCompiled(vmSlot)) {
 			return ComputedCalls.dispatchDirect_D(compiledEntryPoint(vmSlot), argPlaceholder);
 		} else {
-			return ComputedCalls.dispatchJ9Method_D(vmSlot, argPlaceholder); 
+			return ComputedCalls.dispatchJ9Method_D(vmSlot, argPlaceholder);
 		}
 	}
 
@@ -271,11 +271,11 @@ class DirectHandle extends PrimitiveHandle {
 		nullCheckIfRequired(receiver);
 		initializeClassIfRequired();
 		if (ILGenMacros.isCustomThunk()) {
-			return directCall_D(receiver, argPlaceholder); 
+			return directCall_D(receiver, argPlaceholder);
 		} else if (isAlreadyCompiled(vmSlot)) {
 			return ComputedCalls.dispatchDirect_D(compiledEntryPoint(vmSlot), receiver, argPlaceholder);
 		} else {
-			return ComputedCalls.dispatchJ9Method_D(vmSlot, receiver, argPlaceholder); 
+			return ComputedCalls.dispatchJ9Method_D(vmSlot, receiver, argPlaceholder);
 		}
 	}
 
@@ -283,11 +283,11 @@ class DirectHandle extends PrimitiveHandle {
 	private final Object invokeExact_thunkArchetype_L(int argPlaceholder) {
 		initializeClassIfRequired();
 		if (ILGenMacros.isCustomThunk()) {
-			return directCall_L(argPlaceholder); 
+			return directCall_L(argPlaceholder);
 		} else if (isAlreadyCompiled(vmSlot)) {
 			return ComputedCalls.dispatchDirect_L(compiledEntryPoint(vmSlot), argPlaceholder);
 		} else {
-			return ComputedCalls.dispatchJ9Method_L(vmSlot, argPlaceholder); 
+			return ComputedCalls.dispatchJ9Method_L(vmSlot, argPlaceholder);
 		}
 	}
 
@@ -296,11 +296,11 @@ class DirectHandle extends PrimitiveHandle {
 		nullCheckIfRequired(receiver);
 		initializeClassIfRequired();
 		if (ILGenMacros.isCustomThunk()) {
-			return directCall_L(receiver, argPlaceholder); 
+			return directCall_L(receiver, argPlaceholder);
 		} else if (isAlreadyCompiled(vmSlot)) {
 			return ComputedCalls.dispatchDirect_L(compiledEntryPoint(vmSlot), receiver, argPlaceholder);
 		} else {
-			return ComputedCalls.dispatchJ9Method_L(vmSlot, receiver, argPlaceholder); 
+			return ComputedCalls.dispatchJ9Method_L(vmSlot, receiver, argPlaceholder);
 		}
 	}
 
@@ -323,9 +323,8 @@ class DirectHandle extends PrimitiveHandle {
 	void compareWithDirect(DirectHandle left, Comparator c) {
 		c.compareStructuralParameter(left.vmSlot, this.vmSlot);
 	}
-	
+
 	//Used by ConstructorHandle
 	//Making sure the DirectHandle class is loaded before ConstructorHandle is loaded. Therefore, to secure a correct thunk.
 	public static void load() {}
 }
-

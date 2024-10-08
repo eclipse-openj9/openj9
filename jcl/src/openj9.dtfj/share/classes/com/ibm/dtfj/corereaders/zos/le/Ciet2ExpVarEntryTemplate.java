@@ -29,42 +29,50 @@ import java.io.IOException;
 
 public final class Ciet2ExpVarEntryTemplate {
 
-    public static int length() {
-        return 16;
-    }
+	public static int length() {
+		return 16;
+	}
 
-    public static long getCiet2_exp_var_offset(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 4);
-        return inputStream.readUnsignedInt() & 0xffffffffL;
-    }
-    public static int getCiet2_exp_var_offset$offset() {
-        return 4;
-    }
-    public static int getCiet2_exp_var_offset$length() {
-        return 32;
-    }
-    public static long getCiet2_exp_var_name_addr(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 8);
-        return inputStream.readUnsignedInt() & 0xffffffffL;
-    }
-    public static int getCiet2_exp_var_name_addr$offset() {
-        return 8;
-    }
-    public static int getCiet2_exp_var_name_addr$length() {
-        return 32;
-    }
-    public static long getCiet2_exp_var_is_addr(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 12);
-        inputStream.setBitOffset(1);
-        long result = inputStream.readBits(1);
-        result <<= 63;
-        result >>= 63;
-        return result;
-    }
-    public static int getCiet2_exp_var_is_addr$offset() {
-        return 12;
-    }
-    public static int getCiet2_exp_var_is_addr$length() {
-        return 1;
-    }
+	public static long getCiet2_exp_var_offset(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 4);
+		return inputStream.readUnsignedInt() & 0xffffffffL;
+	}
+
+	public static int getCiet2_exp_var_offset$offset() {
+		return 4;
+	}
+
+	public static int getCiet2_exp_var_offset$length() {
+		return 32;
+	}
+
+	public static long getCiet2_exp_var_name_addr(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 8);
+		return inputStream.readUnsignedInt() & 0xffffffffL;
+	}
+
+	public static int getCiet2_exp_var_name_addr$offset() {
+		return 8;
+	}
+
+	public static int getCiet2_exp_var_name_addr$length() {
+		return 32;
+	}
+
+	public static long getCiet2_exp_var_is_addr(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 12);
+		inputStream.setBitOffset(1);
+		long result = inputStream.readBits(1);
+		result <<= 63;
+		result >>= 63;
+		return result;
+	}
+
+	public static int getCiet2_exp_var_is_addr$offset() {
+		return 12;
+	}
+
+	public static int getCiet2_exp_var_is_addr$length() {
+		return 1;
+	}
 }

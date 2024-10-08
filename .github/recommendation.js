@@ -3,7 +3,6 @@ const core = require('@actions/core');
 const github = require('@actions/github');
 
 async function run() {
-    const sandboxIssueNumber = 19673;
     const sandboxOwner = 'eclipse-openj9';
     const sandboxRepo = 'openj9';
 
@@ -24,15 +23,16 @@ async function run() {
         });
 
         const issueComment = response.data;
-        predictedAssignees = issueComment.recommended_developers;
-        predictedLabels = issueComment.recommended_components;
+        let predictedAssignees = issueComment.recommended_developers;
+        let predictedLabels = issueComment.recommended_components;
 
+        let resultString = `Issue Number: ${process.env.ISSUE_NUMBER}\n`;
         resultString += 'Status: Open\n';
         resultString += `Recommended Components: ${predictedLabels.join(', ')}\n`;
         resultString += `Recommended Assignees: ${predictedAssignees.join(', ')}\n`;
 
         await octokit.rest.issues.createComment({
-            issue_number: sandboxIssueNumber,
+            issue_number: process.env.ISSUE_NUMBER,
             owner: sandboxOwner,
             repo: sandboxRepo,
             body: resultString
@@ -40,10 +40,10 @@ async function run() {
     } catch (error) {
         core.setFailed(`Action failed with error: ${error}`);
         await octokit.rest.issues.createComment({
-            issue_number: sandboxIssueNumber,
+            issue_number: process.env.ISSUE_NUMBER,
             owner: sandboxOwner,
             repo: sandboxRepo,
-            body: `The TriagerX model is currently not responding to the issue ${issueNumber}. Please try again later.`
+            body: `The TriagerX model is currently not responding to the issue ${process.env.ISSUE_NUMBER}. Please try again later.`
         });
     }
 }

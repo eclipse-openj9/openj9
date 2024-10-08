@@ -35,6 +35,11 @@
 #include "ObjectAccessBarrierAPI.hpp"
 #include "VMHelpers.hpp"
 
+static constexpr const char * const intermediateChunkFileName = "openj9ChunkFile";
+
+static constexpr const int JFR_HEADER_SPECIALFLAGS_COMPRESSED_INTS = 1;
+static constexpr const int JFR_HEADER_SPECIALFLAGS_LAST_CHUNK = 2;
+
 static constexpr const char * const threadStateNames[] = {
 	"STATE_NEW",
 	"STATE_TERMINATED",
@@ -60,6 +65,12 @@ enum MetadataTypeID {
 	ThreadStartID = 2,
 	ThreadEndID = 3,
 	ThreadSleepID = 4,
+	JVMInformationID = 86,
+	OSInformationID = 87,
+	VirtualizationInformationID = 88,
+	InitialSystemPropertyID = 89,
+	CPUInformationID = 92,
+	PhysicalMemoryID = 107,
 	ExecutionSampleID = 108,
 	ThreadID = 163,
 	ThreadGroupID = 164,
@@ -138,6 +149,12 @@ private:
 	static constexpr int THREAD_START_EVENT_SIZE = (6 * sizeof(U_64)) + sizeof(U_32);
 	static constexpr int THREAD_END_EVENT_SIZE = (4 * sizeof(U_64)) + sizeof(U_32);
 	static constexpr int THREAD_SLEEP_EVENT_SIZE = (7 * sizeof(U_64)) + sizeof(U_32);
+	static constexpr int JVM_INFORMATION_EVENT_SIZE = 3000;
+	static constexpr int PHYSICAL_MEMORY_EVENT_SIZE = (4 * sizeof(U_64)) + sizeof(U_32);
+	static constexpr int VIRTUALIZATION_INFORMATION_EVENT_SIZE = 50;
+	static constexpr int CPU_INFORMATION_EVENT_SIZE = 600;
+	static constexpr int OS_INFORMATION_EVENT_SIZE = 100;
+	static constexpr int INITIAL_SYSTEM_PROPERTY_EVENT_SIZE = 6000;
 
 	static constexpr int METADATA_ID = 1;
 
@@ -200,6 +217,34 @@ public:
 		return _buildResult;
 	}
 
+	void
+	writeIntermediateJFRChunkToFile()
+	{
+		UDATA written = 0;
+		char fileName[sizeof(intermediateChunkFileName) + 16 + sizeof(".jfr")];
+		sprintf(fileName, "%s%lX.jfr", intermediateChunkFileName, _vm->jfrState.jfrChunkCount);
+		UDATA len = _bufferWriter->getSize();
+		IDATA fd = j9file_open(fileName, EsOpenWrite | EsOpenCreate | EsOpenTruncate , 0666);
+
+		if (-1 == fd) {
+			_buildResult = FileIOError;
+			goto done;
+		}
+
+		written = j9file_write(fd, _bufferWriter->getBufferStart(), len);
+
+		if (len != written) {
+			_buildResult = FileIOError;
+		}
+
+		if (-1 != fd) {
+			j9file_close(fd);
+		}
+done:
+		return;
+
+	}
+
 	void writeJFRChunk()
 	{
 		U_8 *buffer = NULL;
@@ -212,6 +257,21 @@ public:
 
 		if (_debug) {
 			_constantPoolTypes.printTables();
+		}
+
+		if (FALSE == _vm->jfrState.isConstantEventsInitialized) {
+			omrthread_monitor_enter(_vm->jfrState.isConstantEventsInitializedMutex);
+			if (FALSE == _vm->jfrState.isConstantEventsInitialized) {
+				VM_JFRConstantPoolTypes::initializeJFRConstantEvents(_vm, _currentThread, &_buildResult);
+				if (isResultNotOKay()) {
+					VM_JFRConstantPoolTypes::freeJFRConstantEvents(_vm);
+					goto done;
+				}
+				/* Ensure that initialization is complete when the initialized variable is set to true */
+				VM_AtomicSupport::writeBarrier();
+				_vm->jfrState.isConstantEventsInitialized = TRUE;
+			}
+			omrthread_monitor_exit(_vm->jfrState.isConstantEventsInitializedMutex);
 		}
 
 		requiredBufferSize = calculateRequiredBufferSize();
@@ -263,12 +323,36 @@ public:
 
 			pool_do(_constantPoolTypes.getThreadSleepTable(), &writeThreadSleepEvent, _bufferWriter);
 
+			/* Only write constant events in first chunk */
+			if (0 == _vm->jfrState.jfrChunkCount) {
+				writeJVMInformationEvent();
+
+				writeCPUInformationEvent();
+
+				writeVirtualizationInformationEvent();
+
+				writeOSInformationEvent();
+
+				writeInitialSystemPropertyEvents(_vm);
+			}
+
+			writePhysicalMemoryEvent();
+
 			writeJFRHeader();
+
+			if (isResultNotOKay()) {
+				Trc_VM_jfr_ErrorWritingChunk(_currentThread, _buildResult);
+				goto freeBuffer;
+			}
 
 			writeJFRChunkToFile();
 
+			_vm->jfrState.jfrChunkCount += 1;
+
+freeBuffer:
 			_bufferWriter = NULL;
 			j9mem_free_memory(buffer);
+
 		}
 done:
 		return;
@@ -373,7 +457,7 @@ done:
 		/* write start time */
 		_bufferWriter->writeLEB128(entry->time);
 
-		/* write duration time */
+		/* write duration time which is always in ticks, in our case nanos */
 		_bufferWriter->writeLEB128(entry->duration);
 
 		/* write event thread index */
@@ -382,11 +466,8 @@ done:
 		/* stacktrace index */
 		_bufferWriter->writeLEB128(entry->stackTraceIndex);
 
-		/* write thread index */
-		_bufferWriter->writeLEB128(entry->threadIndex);
-
-		/* write time */
-		_bufferWriter->writeLEB128(entry->duration);
+		/* write sleep time which is always in millis */
+		_bufferWriter->writeLEB128(entry->sleepTime/1000000);
 
 		/* write size */
 		_bufferWriter->writeLEB128PaddedU32(dataStart, _bufferWriter->getCursor() - dataStart);
@@ -403,6 +484,10 @@ done:
 			_buildResult = FileIOError;
 		}
 
+		if (_debug) {
+			writeIntermediateJFRChunkToFile();
+		}
+
 		return;
 	}
 
@@ -415,6 +500,8 @@ done:
 	void writeUTF8String(J9UTF8* string);
 
 	void writeUTF8String(U_8 *data, UDATA len);
+
+	void writeStringLiteral(const char *string);
 
 	U_8 *writeThreadStateCheckpointEvent();
 
@@ -437,6 +524,18 @@ done:
 	U_8 *writeSymbolTableCheckpointEvent();
 
 	U_8 *writeStacktraceCheckpointEvent();
+
+	U_8 *writeJVMInformationEvent();
+
+	U_8 *writePhysicalMemoryEvent();
+
+	U_8 *writeCPUInformationEvent();
+
+	U_8 *writeVirtualizationInformationEvent();
+
+	U_8 *writeOSInformationEvent();
+
+	void writeInitialSystemPropertyEvents(J9JavaVM *vm);
 
 	UDATA
 	calculateRequiredBufferSize()
@@ -476,6 +575,17 @@ done:
 
 		requireBufferSize += _constantPoolTypes.getThreadSleepCount() * THREAD_SLEEP_EVENT_SIZE;
 
+		requireBufferSize += JVM_INFORMATION_EVENT_SIZE;
+
+		requireBufferSize += OS_INFORMATION_EVENT_SIZE;
+
+		requireBufferSize += PHYSICAL_MEMORY_EVENT_SIZE;
+
+		requireBufferSize += VIRTUALIZATION_INFORMATION_EVENT_SIZE;
+
+		requireBufferSize += CPU_INFORMATION_EVENT_SIZE;
+
+		requireBufferSize += INITIAL_SYSTEM_PROPERTY_EVENT_SIZE;
 		return requireBufferSize;
 	}
 

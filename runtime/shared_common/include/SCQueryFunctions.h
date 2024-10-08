@@ -130,6 +130,18 @@ j9shr_Query_PopulatePreinitConfigDefaults(J9JavaVM *vm, J9SharedClassPreinitConf
 }
 #endif
 
+typedef struct RomToRamEntry {
+	J9Class *ramClass;
+} RomToRamEntry;
+
+typedef struct RomToRamQueryEntry {
+	/* J9ROMClass address | ROM_TO_RAM_QUERY_TAG */
+	J9ROMClass *romClass;
+} RomToRamQueryEntry;
+
+/* Used to tell RomToRamQueryEntry apart from RomToRamEntry. */
+#define ROM_TO_RAM_QUERY_TAG 0x1
+
 #ifdef __cplusplus
 }/*extern "C"*/
 #endif

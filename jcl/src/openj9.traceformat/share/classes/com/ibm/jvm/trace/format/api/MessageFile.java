@@ -28,7 +28,7 @@ import java.util.Iterator;
 
 /**
  * Acts as a template for mapping trace ids to messages.
- * 
+ *
  * @author Jonathon Lee
  */
 final public class MessageFile {
@@ -54,11 +54,11 @@ final public class MessageFile {
 
 	public HashMap getStatistics() {
 		HashMap stats = new HashMap();
-		
+
 		Iterator mItr = messages.keySet().iterator();
 		while (mItr.hasNext()) {
 			Object mKey = mItr.next();
-			Message msg = (Message)messages.get(mKey);		
+			Message msg = (Message)messages.get(mKey);
 			if (msg != null) {
 				stats.put(mKey, msg.getStatistics());
 			}
@@ -153,7 +153,7 @@ final public class MessageFile {
 	 * the line has no spaces, it is determined to be a component; otherwise
 	 * it contains a trace id, an entry type, and a template string
 	 * (separated by spaces)
-	 * 
+	 *
 	 * @param messageLine
 	 *                a string
 	 */
@@ -166,7 +166,7 @@ final public class MessageFile {
 	 * the line has no spaces, it is determined to be a component; otherwise
 	 * it contains a trace id, an entry type, and a template string
 	 * (separated by spaces)
-	 * 
+	 *
 	 * @param messageLine
 	 *                a string
 	 */
@@ -235,7 +235,7 @@ final public class MessageFile {
 	 * the line has no spaces, it is determined to be a component; otherwise
 	 * it contains a trace id, an entry type, and a template string
 	 * (separated by spaces)
-	 * 
+	 *
 	 * @param messageLine
 	 *                a string
 	 */
@@ -271,7 +271,7 @@ final public class MessageFile {
 
 	/**
 	 * retrieve the message associated with a given traceID
-	 * 
+	 *
 	 * @param id
 	 *                an int that is a trace identifier
 	 * @return a message that contains the type of entry, the component for
@@ -288,7 +288,7 @@ final public class MessageFile {
 
 	/**
 	 * retrieve the message associated with a given traceID and component
-	 * 
+	 *
 	 * @param id
 	 *                an int that is a trace identifier
 	 * @return a message that contains the type of entry, the component for

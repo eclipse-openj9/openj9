@@ -528,12 +528,12 @@ public class J9ClassHelper
 
 	/**
 	 * Queries if a given char is the first character of a reference or value type signature.
-	 * Equivalent to J9's IS_REF_OR_VAL_SIGNATURE macro.
+	 * Equivalent to J9's IS_CLASS_SIGNATURE macro.
 	 *
 	 * @param firstChar the first character of the signature being checked
 	 * @return true if the character indicates the beginning of a reference or value signature, false otherwise
 	 */
-	public static boolean isRefOrValSignature(char firstChar) {
+	public static boolean isClassSignature(char firstChar) {
 		return firstChar == 'L';
 	}
 }

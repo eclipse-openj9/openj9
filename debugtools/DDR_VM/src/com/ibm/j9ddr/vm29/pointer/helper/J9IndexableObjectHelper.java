@@ -94,17 +94,37 @@ public class J9IndexableObjectHelper extends J9ObjectHelper
 
 	public static U32 rawSize(J9IndexableObjectPointer objPointer) throws CorruptDataException
 	{
-		if (mixedReferenceMode) {
-			try {
-				if (compressObjectReferences) {
-					return (U32) J9IndexableObjectContiguousCompressedPointer.cast(objPointer).size();
-				}
-				return (U32) J9IndexableObjectContiguousFullPointer.cast(objPointer).size();
-			} catch (NoSuchFieldException e) {
-				// the 'size' field should be present in a VM that supports mixed reference mode
-				throw new CorruptDataException(e);
-			}
+		boolean isIndexableDataAddrPresent;
+		try {
+			J9JavaVMPointer javaVM = J9RASHelper.getVM(DataType.getJ9RASPointer());
+			isIndexableDataAddrPresent = (J9BuildFlags.J9VM_ENV_DATA64 && !javaVM.isIndexableDataAddrPresent().isZero());
+		} catch (CorruptDataException | NoSuchFieldException e) {
+			isIndexableDataAddrPresent = false;
 		}
+
+		try {
+			if (mixedReferenceMode) {
+				if (compressObjectReferences) {
+					if (isIndexableDataAddrPresent) {
+						return (U32) J9IndexableObjectWithDataAddressContiguousCompressedPointer.cast(objPointer).size();
+					} else {
+						return (U32) J9IndexableObjectContiguousCompressedPointer.cast(objPointer).size();
+					}
+				}
+				if (isIndexableDataAddrPresent) {
+					return (U32) J9IndexableObjectWithDataAddressContiguousFullPointer.cast(objPointer).size();
+				} else {
+					return (U32) J9IndexableObjectContiguousFullPointer.cast(objPointer).size();
+				}
+			}
+			if (isIndexableDataAddrPresent) {
+				return (U32) J9IndexableObjectWithDataAddressContiguousPointer.cast(objPointer).size();
+			}
+		} catch (NoSuchFieldException e) {
+			// the 'size' field should be present in a VM that supports mixed reference mode
+			throw new CorruptDataException(e);
+		}
+
 		return (U32) J9IndexableObjectContiguousPointer.cast(objPointer).size();
 	}
 
@@ -112,19 +132,39 @@ public class J9IndexableObjectHelper extends J9ObjectHelper
 	{
 		U32 size = rawSize(objPointer);
 		if (size.isZero()) {
-			if (mixedReferenceMode) {
-				try {
+			boolean isIndexableDataAddrPresent;
+			try {
+				J9JavaVMPointer javaVM = J9RASHelper.getVM(DataType.getJ9RASPointer());
+				isIndexableDataAddrPresent = (J9BuildFlags.J9VM_ENV_DATA64 && !javaVM.isIndexableDataAddrPresent().isZero());
+			} catch (CorruptDataException | NoSuchFieldException e) {
+				isIndexableDataAddrPresent = false;
+			}
+
+			try {
+				if (mixedReferenceMode) {
 					if (compressObjectReferences) {
-						size = (U32) J9IndexableObjectDiscontiguousCompressedPointer.cast(objPointer).size();
+						if (isIndexableDataAddrPresent) {
+							size = (U32) J9IndexableObjectWithDataAddressDiscontiguousCompressedPointer.cast(objPointer).size();
+						} else {
+							size = (U32) J9IndexableObjectDiscontiguousCompressedPointer.cast(objPointer).size();
+						}
 					} else {
-						size = (U32) J9IndexableObjectDiscontiguousFullPointer.cast(objPointer).size();
+						if (isIndexableDataAddrPresent) {
+							size = (U32) J9IndexableObjectWithDataAddressDiscontiguousFullPointer.cast(objPointer).size();
+						} else {
+							size = (U32) J9IndexableObjectDiscontiguousFullPointer.cast(objPointer).size();
+						}
 					}
-				} catch (NoSuchFieldException e) {
-					// the 'size' field should be present in a VM that supports mixed reference mode
-					throw new CorruptDataException(e);
+				} else {
+					if (isIndexableDataAddrPresent) {
+						size = (U32) J9IndexableObjectWithDataAddressDiscontiguousPointer.cast(objPointer).size();
+					} else {
+						size = (U32) J9IndexableObjectDiscontiguousPointer.cast(objPointer).size();
+					}
 				}
-			} else {
-				size = (U32) J9IndexableObjectDiscontiguousPointer.cast(objPointer).size();
+			} catch (NoSuchFieldException e) {
+				// the 'size' field should be present in a VM that supports mixed reference mode
+				throw new CorruptDataException(e);
 			}
 		}
 		if (size.anyBitsIn(0x80000000)) {
@@ -295,6 +335,18 @@ public class J9IndexableObjectHelper extends J9ObjectHelper
 	public static VoidPointer getElementEA(J9IndexableObjectPointer objPointer, int index, int dataSize) throws CorruptDataException
 	{
 		return ObjectModel.getElementAddress(objPointer, index, dataSize);
+	}
+
+	/**
+	 * Determine the validity of the data address belonging to objPointer.
+	 *
+	 * @param objPointer array object who's data address validity we are checking
+	 * @throws CorruptDataException if there's a problem accessing the indexable object dataAddr field
+	 * @return true if the data address of objPointer is valid, false otherwise
+	 */
+	public static boolean hasCorrectDataAddrPointer(J9IndexableObjectPointer objPointer) throws CorruptDataException
+	{
+		return ObjectModel.hasCorrectDataAddrPointer(objPointer);
 	}
 
 	/**

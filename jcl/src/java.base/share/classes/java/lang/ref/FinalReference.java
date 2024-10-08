@@ -22,7 +22,7 @@ package java.lang.ref;
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  */
- 
+
 final class FinalReference<T> extends Reference<T> {
 
 	public FinalReference(T referent, ReferenceQueue<? super T> q) {

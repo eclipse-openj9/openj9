@@ -54,6 +54,7 @@ fi
   echo "  bash mkdocker.sh --tag=openj9/ub18  --dist=ubuntu --version=18 --build"
   echo "  bash mkdocker.sh --tag=openj9/ub20  --dist=ubuntu --version=20 --build"
   echo "  bash mkdocker.sh --tag=openj9/ub22  --dist=ubuntu --version=22 --build"
+  echo "  bash mkdocker.sh --tag=openj9/ub24  --dist=ubuntu --version=24 --build"
   exit 1
 }
 
@@ -190,10 +191,10 @@ validate_options() {
       ;;
     ubuntu)
       case $version in
-        18 | 20 | 22)
+        18 | 20 | 22 | 24)
           version=$version.04
           ;;
-        18.04 | 20.04 | 22.04)
+        18.04 | 20.04 | 22.04 | 24.04)
           ;;
         unspecified)
           echo "Unspecified Ubuntu version: use '--version' option" >&2
@@ -204,6 +205,10 @@ validate_options() {
           exit 1
           ;;
       esac
+      if [ $version = 24.04 ] ; then
+          # userid 1000 already exists in 24.04
+          userid=1001
+      fi
       ;;
     unspecified)
       echo "Unspecified distribution: use '--dist' option" >&2
@@ -255,7 +260,7 @@ validate_options() {
     esac
   fi
 
-  all_versions="8 11 17 21 22 next"
+  all_versions="8 11 17 21 23 next"
   local -A known_version
   local version
   for version in $all_versions ; do
@@ -264,6 +269,9 @@ validate_options() {
 
   if [ "$jdk_versions" = all ] ; then
     jdk_versions="$all_versions"
+  elif [ -z "$jdk_versions" ] ; then
+    echo "At least one JDK version must be specified" >&2
+    exit 1
   fi
 
   for version in ${jdk_versions} ; do
@@ -522,7 +530,7 @@ install_ubuntu_packages() {
   echo "ENV TZ=America/Toronto"
   echo ""
   echo "RUN apt-get update \\"
-if [ $version != 22.04 ] ; then
+if [ $version = 18.04 ] || [ $version = 20.04 ] ; then
   echo " && apt-get install -qq -y --no-install-recommends \\"
   echo "    software-properties-common \\"
   echo " && add-apt-repository ppa:ubuntu-toolchain-r/test \\"
@@ -547,9 +555,12 @@ if [ $version = 18.04 ] ; then
 elif [ $version = 20.04 ] ; then
   echo "    g++-10 \\"
   echo "    gcc-10 \\"
-else
+elif [ $version = 22.04 ] ; then
   echo "    g++-11 \\"
   echo "    gcc-11 \\"
+else
+  echo "    g++-13 \\"
+  echo "    gcc-13 \\"
 fi
   echo "    gdb \\"
   echo "    git \\"
@@ -681,7 +692,7 @@ bootjdk_dirs() {
 bootjdk_url() {
   local jdk_arch=${arch/x86_64/x64}
   local jdk_version=$1
-  if [ $jdk_version -lt 21 ] ; then
+  if [ $jdk_version -le 23 ] ; then
     echo https://api.adoptopenjdk.net/v3/binary/latest/$jdk_version/ga/linux/$jdk_arch/jdk/openj9/normal/adoptopenjdk
   else
     echo https://api.adoptium.net/v3/binary/latest/$jdk_version/ga/linux/$jdk_arch/jdk/hotspot/normal/eclipse
@@ -694,8 +705,11 @@ bootjdk_version() {
     8 | 11 | 17)
       echo $jdk_version
       ;;
-    21 | 22 | next)
-      echo "20"
+    21)
+      echo 21
+      ;;
+    23 | next)
+      echo 23
       ;;
     *)
       echo "Unsupported JDK version: '$jdk_version'" >&2
@@ -751,9 +765,7 @@ fi
   echo "    libnl-3-dev \\"
   echo "    libprotobuf-c-dev \\"
   echo "    libprotobuf-dev \\"
-if [ $version != 16.04 ] ; then
   echo "    python3-distutils \\"
-fi
   echo "    protobuf-c-compiler \\"
   echo "    protobuf-compiler"
 fi

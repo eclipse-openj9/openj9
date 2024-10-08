@@ -29,25 +29,52 @@ j9vm_add_library(j9gcchk SHARED
 	${gcchk_sources}
 )
 
-target_link_libraries(j9gcchk
-	PRIVATE
-		j9vm_interface
-		j9util
-		j9utilcore
-		j9avl
-		j9hashtable
-		j9thr
-		j9stackmap
-		j9pool
-		j9hookable
+if(DEFINED OMR_OS_AIX AND DEFINED CMAKE_C_COMPILER_IS_OPENXL)
+	target_link_libraries(j9gcchk
+		PRIVATE
+			j9vm_interface
+			j9util
+			j9utilcore
+			j9avl
+			j9hashtable
+			j9thr
+			j9stackmap
+			j9pool
+			j9hookable
+			j9modronstartup
 
-		#TODO do we just want to link against j9gc?
-		j9gcbase
-		j9gcstructs
-		j9gcstats
-		j9gccheck
-		omrgc
-)
+			#TODO do we just want to link against j9gc?
+			j9gcbase
+			j9gcstructs
+			j9gcstats
+			j9gccheck
+			omrgc
+			j9gctrc
+			j9gctrcstandard
+			j9gctrcvlhgc
+			j9gc
+	)
+else()
+	target_link_libraries(j9gcchk
+		PRIVATE
+			j9vm_interface
+			j9util
+			j9utilcore
+			j9avl
+			j9hashtable
+			j9thr
+			j9stackmap
+			j9pool
+			j9hookable
+
+			#TODO do we just want to link against j9gc?
+			j9gcbase
+			j9gcstructs
+			j9gcstats
+			j9gccheck
+			omrgc
+	)
+endif()
 
 omr_add_exports(j9gcchk J9VMDllMain)
 
@@ -63,25 +90,52 @@ if(OMR_MIXED_REFERENCES_MODE_STATIC)
 		${gcchk_sources}
 	)
 
-	target_link_libraries(j9gcchk_full
-		PRIVATE
-			j9vm_interface
-			j9util
-			j9utilcore
-			j9avl
-			j9hashtable
-			j9thr
-			j9stackmap
-			j9pool
-			j9hookable
+	if(DEFINED OMR_OS_AIX AND DEFINED CMAKE_C_COMPILER_IS_OPENXL)
+		target_link_libraries(j9gcchk_full
+			PRIVATE
+				j9vm_interface
+				j9util
+				j9utilcore
+				j9avl
+				j9hashtable
+				j9thr
+				j9stackmap
+				j9pool
+				j9hookable
+				j9modronstartup
 
-			#TODO do we just want to link against j9gc?
-			j9gcbase_full
-			j9gcstructs_full
-			j9gcstats_full
-			j9gccheck_full
-			omrgc_full
-	)
+				#TODO do we just want to link against j9gc?
+				j9gcbase_full
+				j9gcstructs_full
+				j9gcstats_full
+				j9gccheck_full
+				omrgc_full
+				j9gctrc_full
+				j9gctrcstandard_full
+				j9gctrcvlhgc_full
+				j9gc_full
+		)
+	else()
+		target_link_libraries(j9gcchk_full
+			PRIVATE
+				j9vm_interface
+				j9util
+				j9utilcore
+				j9avl
+				j9hashtable
+				j9thr
+				j9stackmap
+				j9pool
+				j9hookable
+
+				#TODO do we just want to link against j9gc?
+				j9gcbase_full
+				j9gcstructs_full
+				j9gcstats_full
+				j9gccheck_full
+				omrgc_full
+		)
+	endif()
 
 	omr_add_exports(j9gcchk_full J9VMDllMain)
 

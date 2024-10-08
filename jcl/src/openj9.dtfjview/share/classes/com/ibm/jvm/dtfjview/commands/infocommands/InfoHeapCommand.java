@@ -40,15 +40,15 @@ import com.ibm.jvm.dtfjview.commands.BaseJdmpviewCommand;
 @DTFJPlugin(version="1.*", runtime=false)
 public class InfoHeapCommand extends BaseJdmpviewCommand {
 	{
-		addCommand("info heap", "[*|heap name]", "Displays information about Java heaps");	
+		addCommand("info heap", "[*|heap name]", "Displays information about Java heaps");
 	}
-	
+
 	public void run(String command, String[] args, IContext context, PrintStream out) throws CommandException {
 		if(initCommand(command, args, context, out)) {
 			return;		//processing already handled by super class
 		}
 		out.print("\n");
-		
+
 		if (args.length == 0){
 			printHeapInfo(null,ctx.getRuntime(), out);
 			out.print("\nUse \"info heap *\" or \"info heap <heap_name>\" " +
@@ -60,7 +60,7 @@ public class InfoHeapCommand extends BaseJdmpviewCommand {
 			return;
 		} else {
 			boolean foundHeap = searchForHeap(args[0], ctx.getRuntime(), out);
-		
+
 			if (!foundHeap){
 				out.print("Unable to locate heap: \"" + args[0] +"\".");
 				out.print("\tAvailable heaps: \n");
@@ -68,13 +68,11 @@ public class InfoHeapCommand extends BaseJdmpviewCommand {
 			}
 		}
 	}
-	
-
 
 	private void printHeapInfo(String param, JavaRuntime runtime, PrintStream out){
 		Iterator<?> itHeaps = runtime.getHeaps();
 		int countheaps = 1;
-		
+
 		while (itHeaps.hasNext())
 		{
 			Object heap = itHeaps.next();
@@ -93,13 +91,13 @@ public class InfoHeapCommand extends BaseJdmpviewCommand {
 	private void printSectionInfo(JavaHeap theHeap, PrintStream out){
 		Iterator<?> itSections = theHeap.getSections();
 		int countSections = 1;
-		
+
 		while (itSections.hasNext()){
-			
+
 			ImageSection theSection = (ImageSection)itSections.next();
 			out.print("\t  Section #"+ countSections + ":  " + theSection.getName() + "\n");
 			out.print("\t   Size:        " + theSection.getSize() + " bytes\n");
-			try 
+			try
 			{
 				out.print("\t   Shared:      " + theSection.isShared() + "\n");
 				out.print("\t   Executable:  " + theSection.isExecutable() +"\n");
@@ -114,11 +112,11 @@ public class InfoHeapCommand extends BaseJdmpviewCommand {
 		}
 	}
 	private boolean searchForHeap(String param, JavaRuntime jr, PrintStream out){
-		
+
 		boolean foundHeap = false;
 		Iterator<?> itHeaps = jr.getHeaps();
 		int countheaps = 1;
-		
+
 		while (itHeaps.hasNext())
 		{
 			JavaHeap theHeap = (JavaHeap)itHeaps.next();
@@ -130,21 +128,21 @@ public class InfoHeapCommand extends BaseJdmpviewCommand {
 			}
 			countheaps++;
 		}
-		
+
 		return foundHeap;
 	}
 
 	private void printOccupancyInfo(JavaHeap theHeap, PrintStream out){
 		/*
-		 * This method takes a lot of time and hence this information is only included 
-		 * when using "info heap <heapname>". If this method was run for every heap 
+		 * This method takes a lot of time and hence this information is only included
+		 * when using "info heap <heapname>". If this method was run for every heap
 		 * when using "info heap *" the amount of time it would take would be astronomical.
 		 */
 		long size = 0;
 		long totalObjectSize = 0;
 		long totalObjects = 0;				//total number of objects on the heap
-		long totalCorruptObjects = 0;		//total number of corrupt objects 
-		
+		long totalCorruptObjects = 0;		//total number of corrupt objects
+
 		Iterator<?> itSections = theHeap.getSections();
 		Object obj = null;					//object returned from various iterators
 		CorruptData cdata = null;			//corrupt data
@@ -163,7 +161,7 @@ public class InfoHeapCommand extends BaseJdmpviewCommand {
 			}
 		}
 		out.print("\t  Size of heap: "+ size + " bytes\n");
-		
+
 		Iterator<?> itObjects = theHeap.getObjects();
 		try{
 			while (itObjects.hasNext()){
@@ -182,19 +180,18 @@ public class InfoHeapCommand extends BaseJdmpviewCommand {
 					totalObjectSize = totalObjectSize + theObject.getSize();
 				}
 			}
-			
-			float percentage = ((float)totalObjectSize/(float)size)*10000; 
+
+			float percentage = ((float)totalObjectSize/(float)size)*10000;
 			int trimmedPercent = ((int)percentage); // Sending this float through an int gets it down to 2 decimal places.
 			percentage = ((float)trimmedPercent)/100;
-			
+
 			out.print("\t  Occupancy               :   "+ totalObjectSize + " bytes  (" + percentage + "%)\n");
 			out.print("\t  Total objects           :   "+ totalObjects + "\n");
 			out.print("\t  Total corrupted objects :   "+ totalCorruptObjects + "\n");
-		
+
 		} catch (CorruptDataException e){
 			out.print("\t  Occupancy :   <unknown>\n");
 		}
-		
 	}
 
 	@Override
@@ -216,5 +213,5 @@ public class InfoHeapCommand extends BaseJdmpviewCommand {
 				"  - whether the section is read only\n"
 				);
 	}
-	
+
 }

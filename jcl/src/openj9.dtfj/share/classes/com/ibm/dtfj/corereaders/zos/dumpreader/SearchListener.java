@@ -28,19 +28,19 @@ package com.ibm.dtfj.corereaders.zos.dumpreader;
  */
 public interface SearchListener {
 
-    /**
-     * This method determines the pattern to be searched for. This is called before the
-     * search begins.
-     * @return the pattern of bytes to search for
-     */
-    public byte[] getPattern();
+	/**
+	 * This method determines the pattern to be searched for. This is called before the
+	 * search begins.
+	 * @return the pattern of bytes to search for
+	 */
+	public byte[] getPattern();
 
-    /**
-     * Called to report a match has been found. The listener must return true to continue
-     * the search.
-     * @param space the {@link AddressSpace} in which the match was found
-     * @param address the address where the match was found
-     * @return true if the search is to continue
-     */
-    public boolean foundMatch(AddressSpace space, long address);
+	/**
+	 * Called to report a match has been found. The listener must return true to continue
+	 * the search.
+	 * @param space the {@link AddressSpace} in which the match was found
+	 * @param address the address where the match was found
+	 * @return true if the search is to continue
+	 */
+	public boolean foundMatch(AddressSpace space, long address);
 }

@@ -29,11 +29,11 @@ import java.io.IOException;
 
 public interface CeexrcbTemplate {
 
-    public int length();
-    public long getCeercb_ceeosigx(ImageInputStream inputStream, long address) throws IOException;
-    public int getCeercb_ceeosigx$offset();
-    public int getCeercb_ceeosigx$length();
-    public long getCeercb_ppa1tabl(ImageInputStream inputStream, long address) throws IOException;
-    public int getCeercb_ppa1tabl$offset();
-    public int getCeercb_ppa1tabl$length();
+	public int length();
+	public long getCeercb_ceeosigx(ImageInputStream inputStream, long address) throws IOException;
+	public int getCeercb_ceeosigx$offset();
+	public int getCeercb_ceeosigx$length();
+	public long getCeercb_ppa1tabl(ImageInputStream inputStream, long address) throws IOException;
+	public int getCeercb_ppa1tabl$offset();
+	public int getCeercb_ppa1tabl$length();
 }

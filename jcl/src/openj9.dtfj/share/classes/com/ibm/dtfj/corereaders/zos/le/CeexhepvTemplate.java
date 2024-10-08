@@ -29,28 +29,33 @@ import java.io.IOException;
 
 public final class CeexhepvTemplate {
 
-    public static int length() {
-        return 16;
-    }
+	public static int length() {
+		return 16;
+	}
 
-    public static long getHepv_ppa1_offset_p(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 8);
-        return inputStream.readUnsignedInt() & 0xffffffffL;
-    }
-    public static int getHepv_ppa1_offset_p$offset() {
-        return 8;
-    }
-    public static int getHepv_ppa1_offset_p$length() {
-        return 32;
-    }
-    public static long getHepv_entry_point(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 16);
-        throw new Error("request for long value for field hepv_entry_point which has length of 0");
-    }
-    public static int getHepv_entry_point$offset() {
-        return 16;
-    }
-    public static int getHepv_entry_point$length() {
-        throw new Error("request for Hepv_entry_point$length which is zero");
-    }
+	public static long getHepv_ppa1_offset_p(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 8);
+		return inputStream.readUnsignedInt() & 0xffffffffL;
+	}
+
+	public static int getHepv_ppa1_offset_p$offset() {
+		return 8;
+	}
+
+	public static int getHepv_ppa1_offset_p$length() {
+		return 32;
+	}
+
+	public static long getHepv_entry_point(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 16);
+		throw new Error("request for long value for field hepv_entry_point which has length of 0");
+	}
+
+	public static int getHepv_entry_point$offset() {
+		return 16;
+	}
+
+	public static int getHepv_entry_point$length() {
+		throw new Error("request for Hepv_entry_point$length which is zero");
+	}
 }

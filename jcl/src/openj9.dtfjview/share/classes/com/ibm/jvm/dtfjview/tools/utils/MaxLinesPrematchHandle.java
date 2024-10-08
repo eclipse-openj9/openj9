@@ -36,14 +36,14 @@ public class MaxLinesPrematchHandle implements IPrematchHandle {
 		this.maxPrematchLines = maxPrematchLines > 0 ? maxPrematchLines : 0;
 		cached = new LinkedList<String>();
 	}
-	
+
 	public void process(String s) {
 		cached.addLast(s);
 		if (maxPrematchLines < cached.size()) {
 			cached.removeFirst();
 		}
 	}
-	
+
 	public String release() {
 		StringBuffer sb = new StringBuffer();
 		for (String line : cached) {

@@ -1024,15 +1024,6 @@ TR_ResolvedRelocatableJ9Method::TR_ResolvedRelocatableJ9Method(TR_OpaqueMethodBl
          setRecognizedMethod(TR::unknownMethod);
          }
       }
-
-
-   }
-
-int32_t
-TR_ResolvedRelocatableJ9Method::virtualCallSelector(U_32 cpIndex)
-   {
-   return TR_ResolvedJ9Method::virtualCallSelector(cpIndex);
-   //return -1;
    }
 
 bool
@@ -2984,10 +2975,10 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z, "compareAndSetObject", "(Ljava/lang/Object;JLjava/lang/Object;Ljava/lang/Object;)Z")},
       {x(TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z, "compareAndSetReference", "(Ljava/lang/Object;JLjava/lang/Object;Ljava/lang/Object;)Z")},
 
-      {x(TR::sun_misc_Unsafe_compareAndExchangeInt_jlObjectJII_Z,                  "compareAndExchangeInt",    "(Ljava/lang/Object;JII)I")},
-      {x(TR::sun_misc_Unsafe_compareAndExchangeLong_jlObjectJJJ_Z,                 "compareAndExchangeLong",   "(Ljava/lang/Object;JJJ)J")},
-      {x(TR::sun_misc_Unsafe_compareAndExchangeObject_jlObjectJjlObjectjlObject_Z, "compareAndExchangeObject", "(Ljava/lang/Object;JLjava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;")},
-      {x(TR::sun_misc_Unsafe_compareAndExchangeObject_jlObjectJjlObjectjlObject_Z, "compareAndExchangeReference", "(Ljava/lang/Object;JLjava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;")},
+      {x(TR::jdk_internal_misc_Unsafe_compareAndExchangeInt,       "compareAndExchangeInt",       "(Ljava/lang/Object;JII)I")},
+      {x(TR::jdk_internal_misc_Unsafe_compareAndExchangeLong,      "compareAndExchangeLong",      "(Ljava/lang/Object;JJJ)J")},
+      {x(TR::jdk_internal_misc_Unsafe_compareAndExchangeObject,    "compareAndExchangeObject",    "(Ljava/lang/Object;JLjava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;")},
+      {x(TR::jdk_internal_misc_Unsafe_compareAndExchangeReference, "compareAndExchangeReference", "(Ljava/lang/Object;JLjava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;")},
 
       {x(TR::sun_misc_Unsafe_staticFieldBase,               "staticFieldBase",   "(Ljava/lang/reflect/Field;)Ljava/lang/Object")},
       {x(TR::sun_misc_Unsafe_staticFieldOffset,             "staticFieldOffset", "(Ljava/lang/reflect/Field;)J")},
@@ -3687,6 +3678,12 @@ void TR_ResolvedJ9Method::construct()
       {  TR::unknownMethod}
       };
 
+   static X ValueLayoutsAbstractValueLayoutMethods[] =
+      {
+      {x(TR::jdk_internal_foreign_layout_ValueLayouts_AbstractValueLayout_accessHandle,        "accessHandle",    "()Ljava/lang/invoke/VarHandle;")},
+      {TR::unknownMethod}
+      };
+
    static X ILGenMacrosMethods[] =
       {
       {  TR::java_lang_invoke_ILGenMacros_placeholder ,      11, "placeholder",      (int16_t)-1, "*"},
@@ -4373,13 +4370,19 @@ void TR_ResolvedJ9Method::construct()
       { 0 }
       };
 
+   static Y class60[] =
+      {
+      { "jdk/internal/foreign/layout/ValueLayouts$AbstractValueLayout", ValueLayoutsAbstractValueLayoutMethods },
+      { 0 }
+      };
+
    static Y * recognizedClasses[] =
       {
       0, 0, 0, class13, class14, class15, class16, class17, class18, class19,
       class20, class21, class22, class23, class24, class25, 0, class27, class28, class29,
       class30, class31, class32, class33, class34, class35, class36, 0, class38, class39,
       class40, class41, class42, class43, class44, class45, class46, class47, class48, class49,
-      class50, 0, 0, class53, 0, class55
+      class50, 0, 0, class53, 0, class55, 0, 0, 0, 0, class60
       };
 
    const int32_t minRecognizedClassLength = 10;
@@ -4771,6 +4774,10 @@ void TR_ResolvedJ9Method::construct()
                setRecognizedMethodInfo(TR::java_lang_invoke_VarHandleByteArrayAsX_ByteBufferHandle_method);
                }
             }
+         else if ((classNameLen == 31) && !strncmp(className, "java/lang/foreign/MemorySegment", 31))
+            {
+            setRecognizedMethodInfo(TR::java_lang_foreign_MemorySegment_method);
+            }
 #endif
          else if ((classNameLen >= 59 + 3 && classNameLen <= 59 + 7) && !strncmp(className, "java/lang/invoke/ArrayVarHandle$ArrayVarHandleOperations$Op", 59))
             {
@@ -4989,6 +4996,11 @@ TR_ResolvedJ9Method::setRecognizedMethodInfo(TR::RecognizedMethod rm)
 
             // from bool TR::TreeEvaluator::VMinlineCallEvaluator(TR::Node *node, bool isIndirect, TR::CodeGenerator *cg)
             //case TR::sun_misc_Unsafe_copyMemory:
+
+            case TR::jdk_internal_misc_Unsafe_compareAndExchangeInt:
+            case TR::jdk_internal_misc_Unsafe_compareAndExchangeLong:
+            case TR::jdk_internal_misc_Unsafe_compareAndExchangeObject:
+            case TR::jdk_internal_misc_Unsafe_compareAndExchangeReference:
 
             case TR::sun_misc_Unsafe_loadFence:
             case TR::sun_misc_Unsafe_storeFence:
@@ -5487,9 +5499,9 @@ TR_ResolvedJ9Method::getExistingJittedBodyInfo()
    }
 
 int32_t
-TR_ResolvedJ9Method::virtualCallSelector(U_32 cpIndex)
+TR_ResolvedJ9Method::virtualCallSelector()
    {
-   return -(int32_t)(vTableSlot(cpIndex) - TR::Compiler->vm.getInterpreterVTableOffset());
+   return -(int32_t)(vTableSlot() - TR::Compiler->vm.getInterpreterVTableOffset());
    }
 
 bool
@@ -5530,9 +5542,26 @@ TR_ResolvedJ9Method::isJITInternalNative()
 bool
 TR_J9MethodBase::isUnsafeCAS(TR::Compilation * c)
    {
+   /*
+    * The TR::Compilation parameter "c" is sometimes null. But, it is needed to perform a platform target check.
+    * So, if it is null, this code goes and gets comp.
+    */
+   if (NULL == c)
+      {
+      c = TR::comp();
+      }
+
    TR::RecognizedMethod rm = getRecognizedMethod();
    switch (rm)
       {
+      case TR::jdk_internal_misc_Unsafe_compareAndExchangeInt:
+      case TR::jdk_internal_misc_Unsafe_compareAndExchangeLong:
+      case TR::jdk_internal_misc_Unsafe_compareAndExchangeObject:
+      case TR::jdk_internal_misc_Unsafe_compareAndExchangeReference:
+         {
+         TR_ASSERT_FATAL(c, "comp should not be NULL");
+         return (c->target().cpu.isPower() || c->target().cpu.isX86());
+         }
       case TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z:
       case TR::sun_misc_Unsafe_compareAndSwapLong_jlObjectJJJ_Z:
       case TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z:
@@ -5823,9 +5852,6 @@ TR_J9MethodBase::isUnsafePut(TR::RecognizedMethod rm)
    {
    switch (rm)
       {
-      case TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z:
-      case TR::sun_misc_Unsafe_compareAndSwapLong_jlObjectJJJ_Z:
-      case TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z:
       case TR::sun_misc_Unsafe_getAndAddInt:
       case TR::sun_misc_Unsafe_getAndAddLong:
       case TR::sun_misc_Unsafe_getAndSetInt:
@@ -6487,11 +6513,8 @@ TR_ResolvedJ9Method::startAddressForJNIMethod(TR::Compilation * comp)
    }
 
 U_32
-TR_ResolvedJ9Method::vTableSlot(U_32 cpIndex)
+TR_ResolvedJ9Method::vTableSlot()
    {
-   TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
-   //UDATA vTableSlot = ((J9RAMVirtualMethodRef *)literals())[cpIndex].methodIndexAndArgCount >> 8;
-   TR_ASSERT(_vTableSlot, "vTableSlot called for unresolved method");
    return _vTableSlot;
    }
 
@@ -6656,7 +6679,7 @@ TR_ResolvedJ9Method::getResolvedInterfaceMethod(TR::Compilation * comp, TR_Opaqu
       if (m)
          {
          c = m->classOfMethod();
-         if (c && !fej9->isInterfaceClass(c))
+         if (c)
             {
             TR::DebugCounter::incStaticDebugCounter(comp, "resources.resolvedMethods/interface");
             TR::DebugCounter::incStaticDebugCounter(comp, "resources.resolvedMethods/interface:#bytes", sizeof(TR_ResolvedJ9Method));
@@ -6861,6 +6884,14 @@ TR_ResolvedJ9Method::getResolvedPossiblyPrivateVirtualMethod(TR::Compilation * c
          TR_AOTInliningStats *aotStats = NULL;
          if (comp->getOption(TR_EnableAOTStats))
             aotStats = & (((TR_JitPrivateConfig *)_fe->_jitConfig->privateConfig)->aotStats->virtualMethods);
+
+         if (isInvokePrivateVTableOffset(vTableOffset))
+            {
+            // This method is private and therefore not in the vtable, so pass
+            // zero as the vtable slot when creating the TR_ResolvedMethod.
+            vTableOffset = 0;
+            }
+
          if (createResolvedMethod)
             resolvedMethod = createResolvedMethodFromJ9Method(comp, cpIndex, vTableOffset, ramMethod, unresolvedInCP, aotStats);
          }

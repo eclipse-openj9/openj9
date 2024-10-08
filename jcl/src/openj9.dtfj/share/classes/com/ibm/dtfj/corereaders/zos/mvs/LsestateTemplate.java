@@ -29,48 +29,59 @@ import java.io.IOException;
 
 public final class LsestateTemplate {
 
-    public static int length() {
-        return 168;
-    }
+	public static int length() {
+		return 168;
+	}
 
-    public static long getLsesgrs(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 0);
-        throw new Error("request for long value for field lsesgrs which has length of 64");
-    }
-    public static int getLsesgrs$offset() {
-        return 0;
-    }
-    public static int getLsesgrs$length() {
-        return 512;
-    }
-    public static long getLsespsw(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 136);
-        return inputStream.readLong();
-    }
-    public static int getLsespsw$offset() {
-        return 136;
-    }
-    public static int getLsespsw$length() {
-        return 64;
-    }
-    public static long getLsestarg(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 148);
-        return inputStream.readUnsignedInt() & 0xffffffffL;
-    }
-    public static int getLsestarg$offset() {
-        return 148;
-    }
-    public static int getLsestarg$length() {
-        return 32;
-    }
-    public static long getLses_ed(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 160);
-        return inputStream.readLong();
-    }
-    public static int getLses_ed$offset() {
-        return 160;
-    }
-    public static int getLses_ed$length() {
-        return 64;
-    }
+	public static long getLsesgrs(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 0);
+		throw new Error("request for long value for field lsesgrs which has length of 64");
+	}
+
+	public static int getLsesgrs$offset() {
+		return 0;
+	}
+
+	public static int getLsesgrs$length() {
+		return 512;
+	}
+
+	public static long getLsespsw(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 136);
+		return inputStream.readLong();
+	}
+
+	public static int getLsespsw$offset() {
+		return 136;
+	}
+
+	public static int getLsespsw$length() {
+		return 64;
+	}
+
+	public static long getLsestarg(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 148);
+		return inputStream.readUnsignedInt() & 0xffffffffL;
+	}
+
+	public static int getLsestarg$offset() {
+		return 148;
+	}
+
+	public static int getLsestarg$length() {
+		return 32;
+	}
+
+	public static long getLses_ed(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 160);
+		return inputStream.readLong();
+	}
+
+	public static int getLses_ed$offset() {
+		return 160;
+	}
+
+	public static int getLses_ed$length() {
+		return 64;
+	}
 }

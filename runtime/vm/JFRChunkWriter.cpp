@@ -19,11 +19,13 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
+#include "JFRUtils.hpp"
 #include "vm_internal.h"
 
 #if defined(J9VM_OPT_JFR)
 
 #include "JFRChunkWriter.hpp"
+#include "JFRConstantPoolTypes.hpp"
 
 void
 VM_JFRChunkWriter::writeJFRHeader()
@@ -55,8 +57,8 @@ VM_JFRChunkWriter::writeJFRHeader()
 	/* start ticks */
 	_bufferWriter->writeU64(0); // 48
 
-	/* ticks per second */
-	_bufferWriter->writeU64(1); // 56 // TODO ???
+	/* ticks per second - 1000_000_000 ticks per second means that we are reporting nanosecond timestamps */
+	_bufferWriter->writeU64(1000000000); // 56
 
 	/* file state or generation */
 	_bufferWriter->writeU8(0); // 64 // TODO ???
@@ -64,12 +66,11 @@ VM_JFRChunkWriter::writeJFRHeader()
 	/* pad */
 	_bufferWriter->writeU16(0); // 65
 
-	/* flags */
+	U_8 flags = JFR_HEADER_SPECIALFLAGS_COMPRESSED_INTS;
 	if (_finalWrite) {
-		_bufferWriter->writeU8(0x2); // 67 // final chunk bit?
-	} else {
-		_bufferWriter->writeU8(2);
+		flags |= JFR_HEADER_SPECIALFLAGS_LAST_CHUNK;
 	}
+	_bufferWriter->writeU8(flags);
 }
 
 U_8 *
@@ -175,6 +176,17 @@ VM_JFRChunkWriter::writeUTF8String(U_8 *data, UDATA len)
 	_bufferWriter->writeLEB128(UTF8);
 	_bufferWriter->writeLEB128(len);
 	_bufferWriter->writeData(data, len);
+}
+
+void
+VM_JFRChunkWriter::writeStringLiteral(const char *string)
+{
+	if (NULL == string) {
+		_bufferWriter->writeLEB128(NullString);
+	} else {
+		const UDATA length = strlen(string);
+		writeUTF8String((U_8 *)string, length);
+	}
 }
 
 U_8 *
@@ -597,7 +609,7 @@ VM_JFRChunkWriter::writeStacktraceCheckpointEvent()
 
 			/* number of stack frames */
 			UDATA framesCount = entry->numOfFrames;
-			_bufferWriter->writeU8(framesCount);
+			_bufferWriter->writeLEB128(framesCount);
 
 			for (UDATA i = 0; i < framesCount; i++) {
 				StackFrame *frame = entry->frames + i;
@@ -623,6 +635,184 @@ VM_JFRChunkWriter::writeStacktraceCheckpointEvent()
 	}
 
 	return dataStart;
+}
+
+U_8 *
+VM_JFRChunkWriter::writeJVMInformationEvent()
+{
+	JVMInformationEntry *jvmInfo= &(VM_JFRConstantPoolTypes::getJFRConstantEvents(_vm)->JVMInfoEntry);
+
+	/* reserve size field */
+	U_8 *dataStart = _bufferWriter->getAndIncCursor(sizeof(U_32));
+
+	/* write event type */
+	_bufferWriter->writeLEB128(JVMInformationID);
+
+	/* write start time */
+	_bufferWriter->writeLEB128(j9time_current_time_millis());
+
+	/* write JVM name */
+	writeStringLiteral(jvmInfo->jvmName);
+
+	/* write JVM version */
+	writeStringLiteral(jvmInfo->jvmVersion);
+
+	/* write JVM arguments */
+	writeStringLiteral(jvmInfo->jvmArguments);
+
+	/* write JVM flags */
+	writeStringLiteral(jvmInfo->jvmFlags);
+
+	/* write Java arguments */
+	writeStringLiteral(jvmInfo->javaArguments);
+
+	/* write JVM start time */
+	_bufferWriter->writeLEB128(jvmInfo->jvmStartTime);
+
+	/* write pid */
+	_bufferWriter->writeLEB128(jvmInfo->pid);
+
+	/* write size */
+	_bufferWriter->writeLEB128PaddedU32(dataStart, _bufferWriter->getCursor() - dataStart);
+
+	return dataStart;
+}
+
+U_8 *
+VM_JFRChunkWriter::writePhysicalMemoryEvent()
+{
+	/* reserve size field */
+	U_8 *dataStart = _bufferWriter->getAndIncCursor(sizeof(U_32));
+
+	_bufferWriter->writeLEB128(PhysicalMemoryID);
+
+	/* write start time */
+	_bufferWriter->writeLEB128(j9time_current_time_millis());
+
+	J9MemoryInfo memInfo = {0};
+	I_32 rc = j9sysinfo_get_memory_info(&memInfo);
+	if (0 == rc) {
+		/* write total size */
+		_bufferWriter->writeLEB128(memInfo.totalPhysical);
+		/* write used size */
+		_bufferWriter->writeLEB128(memInfo.totalPhysical - memInfo.availPhysical);
+	} else {
+		_buildResult = InternalVMError;
+	}
+	/* write size */
+	_bufferWriter->writeLEB128PaddedU32(dataStart, _bufferWriter->getCursor() - dataStart);
+
+	return dataStart;
+}
+
+U_8 *
+VM_JFRChunkWriter::writeCPUInformationEvent()
+{
+	CPUInformationEntry *cpuInfo= &(VM_JFRConstantPoolTypes::getJFRConstantEvents(_vm)->CPUInfoEntry);
+
+	/* reserve size field */
+	U_8 *dataStart = _bufferWriter->getAndIncCursor(sizeof(U_32));
+
+	/* write event type */
+	_bufferWriter->writeLEB128(CPUInformationID);
+
+	/* write start time */
+	_bufferWriter->writeLEB128(j9time_current_time_millis());
+
+	/* write CPU type */
+	writeStringLiteral(cpuInfo->cpu);
+
+	/* write CPU description */
+	writeStringLiteral(cpuInfo->description);
+
+	/* write CPU sockets */
+	_bufferWriter->writeLEB128(cpuInfo->sockets);
+
+	/* write CPU cores */
+	_bufferWriter->writeLEB128(cpuInfo->cores);
+
+	/* write CPU hardware threads */
+	_bufferWriter->writeLEB128(cpuInfo->hwThreads);
+
+	/* write size */
+	_bufferWriter->writeLEB128PaddedU32(dataStart, _bufferWriter->getCursor() - dataStart);
+
+	return dataStart;
+}
+
+U_8 *
+VM_JFRChunkWriter::writeVirtualizationInformationEvent()
+{
+	VirtualizationInformationEntry *virtualizationInfo= &(VM_JFRConstantPoolTypes::getJFRConstantEvents(_vm)->VirtualizationInfoEntry);
+
+	/* reserve size field */
+	U_8 *dataStart = _bufferWriter->getAndIncCursor(sizeof(U_32));
+
+	/* write event type */
+	_bufferWriter->writeLEB128(VirtualizationInformationID);
+
+	/* write start time */
+	_bufferWriter->writeLEB128(j9time_current_time_millis());
+
+	/* write virtualization name */
+	writeStringLiteral(virtualizationInfo->name);
+
+	/* write size */
+	_bufferWriter->writeLEB128PaddedU32(dataStart, _bufferWriter->getCursor() - dataStart);
+
+	return dataStart;
+}
+
+U_8 *
+VM_JFRChunkWriter::writeOSInformationEvent()
+{
+	OSInformationEntry *osInfo = &(VM_JFRConstantPoolTypes::getJFRConstantEvents(_vm)->OSInfoEntry);
+
+	/* reserve size field */
+	U_8 *dataStart = _bufferWriter->getAndIncCursor(sizeof(U_32));
+
+	/* write event type */
+	_bufferWriter->writeLEB128(OSInformationID);
+
+	/* write start time */
+	_bufferWriter->writeLEB128(j9time_current_time_millis());
+
+	/* write OS version */
+	writeStringLiteral(osInfo->osVersion);
+
+	/* write size */
+	_bufferWriter->writeLEB128PaddedU32(dataStart, _bufferWriter->getCursor() - dataStart);
+
+	return dataStart;
+}
+
+void
+VM_JFRChunkWriter::writeInitialSystemPropertyEvents(J9JavaVM *vm)
+{
+	pool_state walkState;
+
+	J9VMSystemProperty *property = (J9VMSystemProperty *)pool_startDo(vm->systemProperties, &walkState);
+	while (property != NULL) {
+		/* reserve size field */
+		U_8 *dataStart = _bufferWriter->getAndIncCursor(sizeof(U_32));
+
+		/* write event type */
+		_bufferWriter->writeLEB128(InitialSystemPropertyID);
+
+		/* write start time */
+		_bufferWriter->writeLEB128(j9time_current_time_millis());
+
+		/* write key */
+		writeStringLiteral(property->name);
+
+		/* write value */
+		writeStringLiteral(property->value);
+
+		/* write size */
+		_bufferWriter->writeLEB128PaddedU32(dataStart, _bufferWriter->getCursor() - dataStart);
+
+		property = (J9VMSystemProperty *)pool_nextDo(&walkState);
+	}
 }
 
 #endif /* defined(J9VM_OPT_JFR) */

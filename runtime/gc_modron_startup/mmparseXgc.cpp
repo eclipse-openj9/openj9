@@ -73,6 +73,7 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		if(!scan_udata_helper(javaVM, scan_start, &extensions->tlhMaximumSize, "tlhMaximumSize=")) {
 			goto _error;
 		}
+		extensions->tlhMaximumSizeSpecified = true;
 		goto _exit;
 	}
 	if(try_scan(scan_start, "tlhIncrementSize=")) {
@@ -1444,6 +1445,32 @@ gcParseXgcArguments(J9JavaVM *vm, char *optArg)
 				returnValue = JNI_EINVAL;
 				break;
 			}
+			continue;
+		}
+
+		/* Check if there is a request to set the suballocator reservation increment size. */
+		if (try_scan(&scan_start, "suballocatorIncrementSize=")) {
+			if (!scan_udata_memory_size_helper(vm, &scan_start, &extensions->suballocatorIncrementSize, "suballocatorIncrementSize=")) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			if (0 == extensions->suballocatorIncrementSize) {
+				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_VALUE_MUST_BE_ABOVE, "-Xgc:suballocatorIncrementSize=", (UDATA)0);
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			continue;
+		}
+
+		/* Check if there is a request to enable the mmap-based allocation for the suballocator (Linux only). */
+		if (try_scan(&scan_start, "suballocatorQuickAllocEnable")) {
+			extensions->suballocatorQuickAlloc = true;
+			continue;
+		}
+
+		/* Check if there is a request to disable the mmap-based allocation for the suballocator (Linux only). */
+		if (try_scan(&scan_start, "suballocatorQuickAllocDisable")) {
+			extensions->suballocatorQuickAlloc = false;
 			continue;
 		}
 

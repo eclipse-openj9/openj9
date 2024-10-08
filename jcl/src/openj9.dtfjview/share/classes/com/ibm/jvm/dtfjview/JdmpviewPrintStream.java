@@ -31,13 +31,13 @@ import java.io.UnsupportedEncodingException;
 /**
  * Jdmpview specific print stream which allows access to the underlying
  * Output class which controls an arbitrary number of write destinations
- * 
+ *
  * @author adam
  *
  */
 public class JdmpviewPrintStream extends PrintStream {
 	private OutputStream os = null;
-	
+
 	public JdmpviewPrintStream(OutputStream out) {
 		super(out);
 		os = out;
@@ -68,10 +68,10 @@ public class JdmpviewPrintStream extends PrintStream {
 		super(out, autoFlush, encoding);
 		os = out;
 	}
-	
+
 	/**
 	 * Returns the output stream that was used in the constructor.
-	 * 
+	 *
 	 * @return the stream or null if one wasn't used by the constructor
 	 */
 	public OutputStream getOutputStream() {

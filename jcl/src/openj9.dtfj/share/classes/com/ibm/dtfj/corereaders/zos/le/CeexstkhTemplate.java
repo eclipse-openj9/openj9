@@ -29,18 +29,20 @@ import java.io.IOException;
 
 public final class CeexstkhTemplate {
 
-    public static int length() {
-        return 24;
-    }
+	public static int length() {
+		return 24;
+	}
 
-    public static long getStkh_stackfloor(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 20);
-        return inputStream.readUnsignedInt() & 0xffffffffL;
-    }
-    public static int getStkh_stackfloor$offset() {
-        return 20;
-    }
-    public static int getStkh_stackfloor$length() {
-        return 32;
-    }
+	public static long getStkh_stackfloor(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 20);
+		return inputStream.readUnsignedInt() & 0xffffffffL;
+	}
+
+	public static int getStkh_stackfloor$offset() {
+		return 20;
+	}
+
+	public static int getStkh_stackfloor$length() {
+		return 32;
+	}
 }

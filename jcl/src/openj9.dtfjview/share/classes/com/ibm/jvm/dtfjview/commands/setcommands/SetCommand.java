@@ -29,7 +29,7 @@ import com.ibm.jvm.dtfjview.commands.SimpleRedirectorCommand;
 
 @DTFJPlugin(version="1.*", runtime=false)
 public class SetCommand extends SimpleRedirectorCommand {
-	private static final String CMD_NAME = "set";	
+	private static final String CMD_NAME = "set";
 
 	{
 		addCommand(CMD_NAME, "[logging|heapdump]", "Sets options for the specified command");
@@ -44,5 +44,5 @@ public class SetCommand extends SimpleRedirectorCommand {
 	protected String getCmdName() {
 		return CMD_NAME;
 	}
-	
+
 }

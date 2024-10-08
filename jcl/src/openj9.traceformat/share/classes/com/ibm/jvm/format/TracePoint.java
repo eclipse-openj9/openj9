@@ -40,10 +40,10 @@ public class TracePoint implements Comparable, com.ibm.jvm.trace.TracePoint
 	private static String compNamePadding = "          ";
 	private static String tpIDPadding = "    ";
 	private boolean isLongTracePoint = false;
-	private int longTracePointLength = 0; // if this is a long tracepoint, this number is the number of bytes in the 
+	private int longTracePointLength = 0; // if this is a long tracepoint, this number is the number of bytes in the
 
 	// buffer that constitute the actual tracepoint (will be the next previous
-	// block).	
+	// block).
 	private boolean isNormalTracepoint = true; //  means the same thing as isNotInternalTraceEngineTracePoint!
 	private boolean isInvalid = false; // a flag that is set if the tracepoint contains any surprises.
 	private boolean isLostRecord = false;
@@ -51,7 +51,7 @@ public class TracePoint implements Comparable, com.ibm.jvm.trace.TracePoint
 
 	// hopefully it will be possible to write a parser that takes a look
 	// at all the isInvalid tracepoints and makes a call about what was wrong with them
-	// or at least gives the debugger an idea of where they are in the tracefile.	
+	// or at least gives the debugger an idea of where they are in the tracefile.
 	private long startOffsetInTraceFile = -1; //
 	private long endOffsetInTraceFile = -1; //
 	private boolean fragmented = false; // if true, this tracepoint was created from non-contiguous data in the binary trace file.
@@ -60,7 +60,7 @@ public class TracePoint implements Comparable, com.ibm.jvm.trace.TracePoint
 	private long newTimerUpperWord = -1;
 	BigInteger upperWord = null;
 
-	/** 
+	/**
 	 *
 	 */
 	public TracePoint(byte[] rawTracePoint, int length, BigInteger upperWord,
@@ -121,8 +121,8 @@ public class TracePoint implements Comparable, com.ibm.jvm.trace.TracePoint
 		tracepointID = Util.constructTraceID(rawTracePoint, 1);
 		tracepointID &= 0x3FFF; /* work around for comp id coded into cmvc */
 
-		/* special lost record tracepoint == 0x0010nnnn8 == < 0 ^ UT_TRC_LOST_COUNT_ID ^ nnn ^ 8 > where nnn is 
-		 * the number of lost records they should always be the first tracepoint in a buffer too, but we can't 
+		/* special lost record tracepoint == 0x0010nnnn8 == < 0 ^ UT_TRC_LOST_COUNT_ID ^ nnn ^ 8 > where nnn is
+		 * the number of lost records they should always be the first tracepoint in a buffer too, but we can't
 		 * really check that here as we don't really know where we are in the buffer in this class */
 		if (rawTracePoint[0] == 0x0 && rawTracePoint[1] == 0x0
 				&& rawTracePoint[2] == 0x1 && rawTracePoint[3] == 0x0
@@ -151,7 +151,7 @@ public class TracePoint implements Comparable, com.ibm.jvm.trace.TracePoint
 				return this;
 			}
 			/* act on the sequence wrap */
-			long sequenceWrap = Util.constructUnsignedInt(rawTracePoint, 4); /* this is the new upper word for all 
+			long sequenceWrap = Util.constructUnsignedInt(rawTracePoint, 4); /* this is the new upper word for all
 			 tracepoints in the rest of this buffer */
 			isNormalTracepoint = false; /* although this is an internal tracepoint, it needs to end up in all the arrays as its location is important! */
 			isNewTimerUpperWord = true;
@@ -242,7 +242,7 @@ public class TracePoint implements Comparable, com.ibm.jvm.trace.TracePoint
 			String newComponentName = componentName.substring(0, openBracketIndex);
 			componentName = newComponentName;
 		}
-		
+
 		/* add the rest of the bytes as the parmData */
 		int parmDataStartsAt = 12 + (int) compNameLength;
 		int parmDataLength = tplen - parmDataStartsAt;
@@ -301,11 +301,11 @@ public class TracePoint implements Comparable, com.ibm.jvm.trace.TracePoint
 		}
 		tpFormatted.append(" ");
 		tpFormatted.append(componentName);
-		
+
 		if (containerComponentName != null){
 			tpFormatted.append("(" + containerComponentName + ")");
 		}
-		
+
 		tpFormatted.append(".");
 		tpFormatted.append(tracepointID);
 		if ((Integer.toString(tracepointID)).length() < tpIDPadding.length()) {
@@ -335,7 +335,7 @@ public class TracePoint implements Comparable, com.ibm.jvm.trace.TracePoint
 	{
 		return componentName;
 	}
-	
+
 	public String getContainerComponentName(){
 		return containerComponentName;
 	}
@@ -365,7 +365,7 @@ public class TracePoint implements Comparable, com.ibm.jvm.trace.TracePoint
 				formattedData = "FORMATTING PROBLEM OCCURRED WHILE PROCESSING THE RAW DATA FOR THIS TRACEPOINT - PARAMETER DATA UNAVAILABLE";
 			}
 		}
-		
+
 		return formattedData;
 	}
 
@@ -464,7 +464,7 @@ public class TracePoint implements Comparable, com.ibm.jvm.trace.TracePoint
 		Message msg = MessageFile.getMessageFromID(getComponentName(), getTPID());
 		return msg.getType();
 	}
-	
+
 	/* methods implementing the com.ibm.jvm.trace.TracePoint interface */
 	public int getID(){
 		return getTPID();
@@ -502,13 +502,13 @@ public class TracePoint implements Comparable, com.ibm.jvm.trace.TracePoint
 	public String from()
 	{
 		StringBuffer sb = new StringBuffer();
-		
+
 		sb.append("from: 0x");
 		sb.append(Long.toHexString(startOffsetInTraceFile));
 		sb.append("->0x");
 		sb.append(Long.toHexString(endOffsetInTraceFile));
 		sb.append(":" );
-		
+
 		if (fragmented){
 			sb.append("F");
 			if (startOffsetInTraceFile == TraceRecord50.INTERNAL_WRAP_SPLIT_TP){
@@ -518,12 +518,12 @@ public class TracePoint implements Comparable, com.ibm.jvm.trace.TracePoint
 			} else {
 				sb.append("X");
 			}
-		} 
+		}
 		sb.append(":" );
 		sb.append(nameOfTraceFile);
-		
+
 		return sb.toString();
-		
+
 	}
-	
+
 }

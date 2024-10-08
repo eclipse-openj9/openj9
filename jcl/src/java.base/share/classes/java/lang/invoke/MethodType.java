@@ -269,7 +269,6 @@ public final class MethodType implements Serializable
 		return methodType(rtype, Arrays.copyOfRange(ptypes, 1, ptypes.length), false);
 	}
 
-
 	/**
 	 * Compares the specified object with this type for equality.
 	 * That is, it returns true if and only if the specified object
@@ -307,7 +306,6 @@ public final class MethodType implements Serializable
 		}
 		return methodType(rtype.isPrimitive() ? rtype : Object.class, newParameters, false);
 	}
-
 
 	/**
 	 * Convenience Method to create a MethodType from bytecode-level method descriptor.
@@ -385,7 +383,6 @@ public final class MethodType implements Serializable
 		return genericMethodType(ptypes.length);
 	}
 
-
 	/**
 	 * Returns the MethodType's hash code, which is defined to be
 	 * the same as the hash code of a List composed of the return type
@@ -403,7 +400,6 @@ public final class MethodType implements Serializable
 		}
 		return hashcode;
 	}
-
 
 	/**
 	 * Helper method to determine if the return type or any of the parameter types
@@ -794,7 +790,6 @@ public final class MethodType implements Serializable
 		return sb.toString();
 	}
 
-
 	/**
 	 * Return a string representation of the MethodType in the form: '(A0,A2,A3...)R'.
 	 * The simple name of each class is used.
@@ -834,7 +829,6 @@ public final class MethodType implements Serializable
 		}
 		return methodType(unwrappedReturnType, args, false);
 	}
-
 
 	/**
 	 * Wrapper method on {@link #methodType(Class, Class[])}.  Replaces all primitive types with

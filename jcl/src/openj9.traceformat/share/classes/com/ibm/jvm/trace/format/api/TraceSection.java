@@ -27,7 +27,7 @@ import java.nio.ByteBuffer;
 
 /**
  * Trace section of a file header.
- * 
+ *
  * @author Tim Preece
  */
 public class TraceSection {
@@ -58,11 +58,11 @@ public class TraceSection {
 			context.debug(this, 1, summary());
 		}
 	}
-	
+
 	public String toString() {
 		return "Trace file header";
 	}
-	
+
 	public String summary() {
 		if (textSummary == null) {
 			StringBuilder s = new StringBuilder(toString()+":"+System.getProperty("line.separator"));

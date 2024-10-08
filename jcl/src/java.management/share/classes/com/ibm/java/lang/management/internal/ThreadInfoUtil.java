@@ -163,7 +163,6 @@ public final class ThreadInfoUtil {
 		return result;
 	}
 
-
 	private ThreadInfoUtil() {
 		super();
 	}

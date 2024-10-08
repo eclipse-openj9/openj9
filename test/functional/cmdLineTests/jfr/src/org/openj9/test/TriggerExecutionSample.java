@@ -1,5 +1,5 @@
-/*******************************************************************************
- * Copyright IBM Corp. and others 2023
+/*
+ * Copyright IBM Corp. and others 2024
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -18,14 +18,14 @@
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
- *******************************************************************************/
+ */
 
-#include "j9cfg.h"
+package org.openj9.test;
 
-#if defined(OMR_GC_FULL_POINTERS) && defined(J9VM_OPT_CRIU_SUPPORT)
-#define DO_HOOKS
-#define OMR_OVERRIDE_COMPRESS_OBJECT_REFERENCES 0
-#define LOOP_NAME criuBytecodeLoopFull
-#define INTERPRETER_CLASS VM_CRIUBytecodeInterpreterFull
-#include "BytecodeInterpreter.inc"
-#endif /* defined(OMR_GC_FULL_POINTERS) && defined(J9VM_OPT_CRIU_SUPPORT) */
+import com.ibm.oti.vm.VM;
+
+public class TriggerExecutionSample {
+	public static void main(String[] args) {
+		VM.triggerExecutionSample();
+	}
+}

@@ -50,7 +50,7 @@ public class CmdFileTool extends Tool {
 			"               Empty lines or lines starting with \"//\" or \"#\" will be ignored.\n" +
 			"     [charset] : the character set for the commands specified in the command file.\n" +
 			"          The character set name must be a supported charset as defined in java.nio.charset.Charset. For example, US-ASCII.";
-	
+
 	public CmdFileTool(String charset) {
 		this.defaultCharset = charset;
 	}
@@ -62,7 +62,7 @@ public class CmdFileTool extends Tool {
 	 * <p>
 	 * @return	The list of commands.
 	 * <p>
-	 * @throws UnsupportedEncodingException		
+	 * @throws UnsupportedEncodingException
 	 * @throws IOException
 	 */
 	public static List<String> parseCmdFile(File cmdFile, String charset) throws UnsupportedEncodingException, IOException {
@@ -73,21 +73,21 @@ public class CmdFileTool extends Tool {
 			cmd = cmd.trim();
 			if (cmd.length() > 0
 					&& cmd.startsWith("//") == false
-					&& cmd.startsWith("#") == false) 
+					&& cmd.startsWith("#") == false)
 			{
 				commands.add(cmd);
 			}
 		}
 		return commands;
 	}
-	
+
 	/**
 	 * Determines if a command is accepted by the current tool.
 	 * <p>
 	 * @param command	The command
 	 * @param args		The arguments taken by the command.
 	 * <p>
-	 * @return		<code>true</code> if this is the correct tool for this command; 
+	 * @return		<code>true</code> if this is the correct tool for this command;
 	 * 				<code>false</code> otherwise.
 	 */
 	public boolean accept(String command, String[] args) {
@@ -117,7 +117,7 @@ public class CmdFileTool extends Tool {
 			out.println("The specified command file " + file.getAbsolutePath() + " is too large to be read");
 			return;
 		}
-		
+
 		String charset = defaultCharset;
 		if (args.length == 2) {
 			charset = args[1];
@@ -125,7 +125,7 @@ public class CmdFileTool extends Tool {
 			out.println(USAGE);
 			return;
 		}
-		
+
 		try {
 			List<String> commands = parseCmdFile(file, charset);
 			for (String cmd : commands) {
@@ -151,7 +151,7 @@ public class CmdFileTool extends Tool {
 	public String getCommandName() {
 		return COMMAND;
 	}
-	
+
 	/**
 	 * To gets the tool's argument description.
 	 * <p>
@@ -176,6 +176,6 @@ public class CmdFileTool extends Tool {
 	public void printDetailedHelp(PrintStream out) {
 		out.println(USAGE);
 	}
-	
+
 	private String defaultCharset = null;
 }

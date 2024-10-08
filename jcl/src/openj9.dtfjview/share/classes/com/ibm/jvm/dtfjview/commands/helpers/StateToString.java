@@ -23,7 +23,7 @@
 package com.ibm.jvm.dtfjview.commands.helpers;
 
 public class StateToString {
-	
+
 	private static int JVMTI_THREAD_STATE_ALIVE						=     0x0001;
 	private static int JVMTI_THREAD_STATE_TERMINATED				=     0x0002;
 	private static int JVMTI_THREAD_STATE_RUNNABLE					=     0x0004;
@@ -40,7 +40,7 @@ public class StateToString {
 	private static int JVMTI_THREAD_STATE_VENDOR_1					= 0x10000000;
 	private static int JVMTI_THREAD_STATE_VENDOR_2					= 0x20000000;
 	private static int JVMTI_THREAD_STATE_VENDOR_3					= 0x40000000;
-	
+
 	private static int JVMTI_JAVA_LANG_THREAD_STATE_MASK =
 		JVMTI_THREAD_STATE_TERMINATED |
 		JVMTI_THREAD_STATE_ALIVE |
@@ -71,11 +71,11 @@ public class StateToString {
 	public static String getJVMTIStateString(int state)
 	{
 		String retval = "";
-		
+
 		if (0 == state) {
 			return "<new or terminated> ";
 		}
-		
+
 		if ((state & JVMTI_THREAD_STATE_ALIVE) == JVMTI_THREAD_STATE_ALIVE) {
 			retval += "ALIVE ";
 		}
@@ -124,20 +124,20 @@ public class StateToString {
 		if ((state & JVMTI_THREAD_STATE_VENDOR_3) == JVMTI_THREAD_STATE_VENDOR_3) {
 			retval += "VENDOR_3 ";
 		}
-		
+
 		if (retval.equals("")) {
 			retval = "<no matching state> ";
 		}
-		
+
 		return retval;
 	}
-	
+
 	public static String getThreadStateString(int state)
 	{
 		String retval = "";
-		
+
 		state &= JVMTI_JAVA_LANG_THREAD_STATE_MASK;
-		
+
 		if (state ==  JVMTI_JAVA_LANG_THREAD_STATE_NEW) {
 			return "NEW ";
 		}
@@ -156,11 +156,11 @@ public class StateToString {
 		if ((state & JVMTI_JAVA_LANG_THREAD_STATE_TIMED_WAITING) == JVMTI_JAVA_LANG_THREAD_STATE_TIMED_WAITING) {
 			retval += "TIMED_WAITING ";
 		}
-		
+
 		if (retval.equals("")) {
 			retval = "<no matching state> ";
 		}
-		
+
 		return retval;
 	}
 }

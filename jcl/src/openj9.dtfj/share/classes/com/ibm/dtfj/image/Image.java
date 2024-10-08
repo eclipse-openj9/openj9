@@ -43,7 +43,7 @@ public interface Image {
 	 * described by this Image
 	 *
 	 * @see ImageAddressSpace
-     * @see CorruptData
+	 * @see CorruptData
 	 */
 	public Iterator getAddressSpaces();
 
@@ -147,32 +147,32 @@ public interface Image {
 	 */
 	public Iterator getIPAddresses() throws DataUnavailable;
 
-	 /**
-	  * <p>Close this image and any associated resources.</p>
-	  *
-	  * <p>Some kinds of Image require the generation of temporary resources, for example temporary files created
-	  * when reading core files and libraries from .zip archives. Ordinarily, these resources are deleted at JVM shutdown,
-	  * but DTFJ applications may want to free them earlier. This method should only be called when the Image is no
-	  * longer needed. After this method has been called, any objects associated with the image will be in an invalid state.</p>
-	  *
-	  * @since 1.4
-	  */
-	 public void close();
+	/**
+	 * <p>Close this image and any associated resources.</p>
+	 *
+	 * <p>Some kinds of Image require the generation of temporary resources, for example temporary files created
+	 * when reading core files and libraries from .zip archives. Ordinarily, these resources are deleted at JVM shutdown,
+	 * but DTFJ applications may want to free them earlier. This method should only be called when the Image is no
+	 * longer needed. After this method has been called, any objects associated with the image will be in an invalid state.</p>
+	 *
+	 * @since 1.4
+	 */
+	public void close();
 
-	 /**
-      * Gets the OS specific properties for this image.
-      *
-      * @return a set of OS specific properties
-      * @since 1.7
-      */
-    public Properties getProperties();
+	/**
+	 * Gets the OS specific properties for this image.
+	 *
+	 * @return a set of OS specific properties
+	 * @since 1.7
+	 */
+	public Properties getProperties();
 
-    /**
-     * A unique identifier for the source of this image
-     * @return URI for this image or null if this was not used when the image was created.
-     * @since 1.10
-     */
-    public URI getSource();
+	/**
+	 * A unique identifier for the source of this image
+	 * @return URI for this image or null if this was not used when the image was created.
+	 * @since 1.10
+	 */
+	public URI getSource();
 
 	/**
 	 * Get the value of the JVM's high-resolution timer when the image was created.

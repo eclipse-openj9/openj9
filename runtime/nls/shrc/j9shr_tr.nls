@@ -2193,12 +2193,7 @@ J9NLS_SHRC_INFO_DESTROYING_FOR_CACHEDIR.system_action=None
 J9NLS_SHRC_INFO_DESTROYING_FOR_CACHEDIR.user_response=None
 # END NON-TRANSLATABLE
 
-J9NLS_CC_OSPAGE_SIZE_MISMATCH=\u0130\u015fletim sisteminin sayfa b\u00fcy\u00fckl\u00fc\u011f\u00fc bu \u00f6nbellekle uyumlu de\u011fil. \u00d6nbelle\u011fi yeniden yaratma giri\u015fiminde bulunuluyor.
-# START NON-TRANSLATABLE
-J9NLS_CC_OSPAGE_SIZE_MISMATCH.explanation=The cache is divided up on page boundaries. If there is a page size mismatch, the cache is unusable
-J9NLS_CC_OSPAGE_SIZE_MISMATCH.system_action=The JVM will try to destroy the incompatible cache and re-create it
-J9NLS_CC_OSPAGE_SIZE_MISMATCH.user_response=None
-# END NON-TRANSLATABLE
+J9NLS_CC_OSPAGE_SIZE_MISMATCH=
 
 J9NLS_SHRC_SHRINIT_HELPTEXT_READONLY=\u00d6nbellek salt okunur izinleriyle a\u00e7\u0131l\u0131r
 # START NON-TRANSLATABLE
@@ -6912,4 +6907,37 @@ J9NLS_SHRC_OSCACHE_MMAP_STARTUP_JITSERVER_LAYER_FILE_DELETE_ERROR=Ge\u00e7ici \u
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_JITSERVER_LAYER_FILE_DELETE_ERROR.explanation=The JITServer AOT cache created a temporary shared class cache layer in order to function, but the underlying file could not be removed.
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_JITSERVER_LAYER_FILE_DELETE_ERROR.system_action=The JVM continues.
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_JITSERVER_LAYER_FILE_DELETE_ERROR.user_response=Contact your service representative.
+# END NON-TRANSLATABLE
+
+J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1=\u0130\u015fletim sisteminin sayfa boyutu (%1$zu), %3$d katman\u0131 \u00f6nbelle\u011finin olu\u015fturuldu\u011fu sistemin sayfa boyutundan (%2$zu) farkl\u0131d\u0131r.
+# START NON-TRANSLATABLE
+J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1.sample_input_1=1024
+J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1.sample_input_2=4096
+J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1.sample_input_3=0
+J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1.explanation=The cache is divided up on page boundaries according to the page size of system on which it was created. If there is a page size mismatch, the data might not be page aligned anymore.
+J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1.system_action=The JVM continues, but with memory page protection disabled if data is not page aligned anymore.
+J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1.user_response=No action required
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CM_PRINTSTATS_PAGESIZEE=Bellek Sayfa boyutu                  = %zu (Ge\u00e7erli \u0130\u015fletim Sistemi sayfa boyutu %zu)
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CM_PRINTSTATS_PAGESIZEE.sample_input_1=4096
+J9NLS_SHRC_CM_PRINTSTATS_PAGESIZEE.sample_input_2=4096
+J9NLS_SHRC_CM_PRINTSTATS_PAGESIZEE.explanation=NOTAG
+J9NLS_SHRC_CM_PRINTSTATS_PAGESIZEE.system_action=
+J9NLS_SHRC_CM_PRINTSTATS_PAGESIZEE.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_FAILURE_CREATE_ROMTORAMHASHTABLE=Shrinit'te RAM s\u0131n\u0131f\u0131 karma tablosuna ROM tahsis edilemiyor
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_FAILURE_CREATE_ROMTORAMHASHTABLE.explanation=The system is unable to obtain sufficient native memory to allocate internal data structures.
+J9NLS_SHRC_SHRINIT_FAILURE_CREATE_ROMTORAMHASHTABLE.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM attempts to start up without using Shared Classes.
+J9NLS_SHRC_SHRINIT_FAILURE_CREATE_ROMTORAMHASHTABLE.user_response=System is running low on memory resource for the JVM to start up properly. Check system memory configuration. If the situation persists, contact your service representative.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_FAILURE_CREATE_ROMTORAMMUTEX=Shrinit'te RAM s\u0131n\u0131f\u0131 mutex'e ROM tahsis edilemiyor
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_FAILURE_CREATE_ROMTORAMMUTEX.explanation=The system is unable to obtain sufficient native memory to allocate internal data structures.
+J9NLS_SHRC_SHRINIT_FAILURE_CREATE_ROMTORAMMUTEX.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM attempts to start up without using Shared Classes.
+J9NLS_SHRC_SHRINIT_FAILURE_CREATE_ROMTORAMMUTEX.user_response=System is running low on memory resource for the JVM to start up properly. Check system memory configuration. If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE

@@ -3533,7 +3533,7 @@ generateTestBitFlag(
       int32_t size,
       uint64_t bitFlag)
    {
-   TR::MemoryReference * tempMR;
+   TR::MemoryReference * tempMR = NULL;
    int shiftForFlag = TR::TreeEvaluator::checkNonNegativePowerOfTwo((int64_t) bitFlag);
    TR_ASSERT(shiftForFlag > 0, "generateTestBitFlag: flag is assumed to be power of 2\n");
 
@@ -3822,7 +3822,7 @@ VMCardCheckEvaluator(
          uintptr_t cardSize = comp->getOptions()->getGcCardSize();
          int32_t shiftValue = TR::TreeEvaluator::checkNonNegativePowerOfTwo((int32_t) cardSize);
 
-         TR::Register * cardOffReg;
+         TR::Register * cardOffReg = NULL;
          TR::Register * mdReg = cg->getMethodMetaDataRealRegister();
 
          if (!clobberDstReg)
@@ -4770,8 +4770,8 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    TR::LabelSymbol *oolFailLabel = generateLabelSymbol(cg);
 
 #if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
-   bool isIndexableDataAddrPresent = TR::Compiler->om.isIndexableDataAddrPresent();
-   TR::LabelSymbol *populateFirstDimDataAddrSlot = isIndexableDataAddrPresent ? generateLabelSymbol(cg) : NULL;
+   bool isOffHeapAllocationEnabled = TR::Compiler->om.isOffHeapAllocationEnabled();
+   TR::LabelSymbol *populateFirstDimDataAddrSlot = isOffHeapAllocationEnabled ? generateLabelSymbol(cg) : NULL;
 #endif /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
 
    // oolJumpLabel is a common point that all branches will jump to. From this label, we branch to OOL code.
@@ -4851,7 +4851,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
       }
 
 #if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
-   if (isIndexableDataAddrPresent)
+   if (isOffHeapAllocationEnabled)
       {
       TR_ASSERT_FATAL_WITH_NODE(node,
          (TR::Compiler->om.compressObjectReferences()
@@ -4961,7 +4961,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    TR::Register *temp3Reg = cg->allocateRegister();
 
 #if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
-   if (isIndexableDataAddrPresent)
+   if (isOffHeapAllocationEnabled)
       {
       // Populate dataAddr slot for 2nd dimension zero size array.
       generateRXInstruction(cg,
@@ -5001,7 +5001,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CL, node, firstDimLenReg, 0, TR::InstOpCode::COND_BNE, loopLabel, false);
 
 #if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
-   if (isIndexableDataAddrPresent)
+   if (isOffHeapAllocationEnabled)
       {
       // No offset is needed since 1st dimension array is contiguous.
       generateRRInstruction(cg, TR::InstOpCode::getXORRegOpCode(), node, temp1Reg, temp1Reg);
@@ -5029,7 +5029,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, oolFailLabel);
 
 #if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
-   if (isIndexableDataAddrPresent)
+   if (isOffHeapAllocationEnabled)
       {
       /* Populate dataAddr slot of 1st dimension array. Arrays of non-zero size
        * use contiguous header layout while zero size arrays use discontiguous header layout.
@@ -5303,6 +5303,8 @@ J9::Z::TreeEvaluator::DIVCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
             break;
          case TR::irem:
             iDivRemGenericEvaluator(node->getFirstChild(), cg, false, divisorMr);
+            break;
+         default:
             break;
          }
       divisorMr->stopUsingMemRefRegister(cg);
@@ -5690,7 +5692,7 @@ J9::Z::TreeEvaluator::ArrayCopyBNDCHKEvaluator(TR::Node * node, TR::CodeGenerato
       }
 
    bool disableS390CompareAndTrap = comp->getOption(TR_DisableTraps);
-   static const char*disableS390CompareAndBranch = feGetEnv("TR_DISABLES390CompareAndBranch");
+   static const char * disableS390CompareAndBranch = feGetEnv("TR_DISABLES390CompareAndBranch");
    if (cg->getHasResumableTrapHandler() &&
        !disableS390CompareAndTrap &&
        arrayTargetLengthReg != NULL &&
@@ -9544,7 +9546,7 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       lockPreservingReg = cg->allocateRegister();
       conditions->addPostCondition(lockPreservingReg, TR::RealRegister::AssignAny);
       }
-   const char* debugCounterNamePrefix = normalLockWithReservationPreserving? "LockEnt/Preserving": "LockEnt/Normal";
+   const char * debugCounterNamePrefix = normalLockWithReservationPreserving? "LockEnt/Preserving": "LockEnt/Normal";
    // Opcodes:
    bool use64b = true;
    if (cg->comp()->target().is64Bit() && fej9->generateCompressedLockWord())
@@ -10689,7 +10691,7 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    bool isArray = false, isDoubleArray = false;
    bool isVariableLen;
    int32_t litPoolRegTotalUse, temp2RegTotalUse;
-   int32_t elementSize;
+   int32_t elementSize = 0;
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = comp->fej9();
 
@@ -11015,7 +11017,7 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
                   resReg, enumReg, dataSizeReg, litPoolBaseReg, conditions, cg);
 
 #ifdef J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION
-         if (TR::Compiler->om.isIndexableDataAddrPresent())
+         if (TR::Compiler->om.isOffHeapAllocationEnabled())
             {
             /* Here we'll update dataAddr slot for both fixed and variable length arrays. Fixed length arrays are
              * simple as we just need to check first child of the node for array size. For variable length arrays
@@ -11647,6 +11649,8 @@ J9::Z::TreeEvaluator::VMinlineCallEvaluator(TR::Node * node, bool indirect, TR::
             callWasInlined = inlineIsAssignableFrom(node, cg);
             break;
             }
+         default:
+            break;
          }
       }
 
@@ -12457,6 +12461,8 @@ J9::Z::TreeEvaluator::inlineAtomicOps(TR::Node *node, TR::CodeGenerator *cg, int
          delta = (int64_t)-1;
          break;
          }
+      default:
+         break;
       }
 
    //Determine the offset of the value field
@@ -12470,7 +12476,7 @@ J9::Z::TreeEvaluator::inlineAtomicOps(TR::Node *node, TR::CodeGenerator *cg, int
    if (!isArray)
       {
       TR_OpaqueClassBlock * bdClass;
-      char *className, *fieldSig;
+      const char * className, * fieldSig;
       int32_t classNameLen, fieldSigLen;
 
       fieldSigLen = 1;
@@ -12761,7 +12767,7 @@ J9::Z::TreeEvaluator::inlineAtomicFieldUpdater(TR::Node *node, TR::CodeGenerator
    bool isGetAndOp = true;
    bool isArgConstant = false;
    int32_t delta = 1;
-   char* className = "java/util/concurrent/atomic/AtomicIntegerFieldUpdater$AtomicIntegerFieldUpdaterImpl";
+   const char * className = "java/util/concurrent/atomic/AtomicIntegerFieldUpdater$AtomicIntegerFieldUpdaterImpl";
    int32_t classNameLen = 83;
 
    switch (currentMethod)
@@ -12778,6 +12784,8 @@ J9::Z::TreeEvaluator::inlineAtomicFieldUpdater(TR::Node *node, TR::CodeGenerator
          isArgConstant = true;
       case TR::java_util_concurrent_atomic_AtomicIntegerFieldUpdater_addAndGet:
          isGetAndOp = false;
+         break;
+      default:
          break;
       }
 

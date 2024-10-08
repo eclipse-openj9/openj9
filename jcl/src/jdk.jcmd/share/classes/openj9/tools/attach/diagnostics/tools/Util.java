@@ -162,7 +162,7 @@ public class Util {
 	 * Print an error message if it is not null or empty.
 	 * Print the help content.
 	 * Terminates JVM.
-	 * 
+	 *
 	 * @param error
 	 *            an error message to indicate the cause of the error
 	 * @param help
@@ -175,13 +175,13 @@ public class Util {
 		System.out.printf(help);
 		System.exit(1);
 	}
-	
+
 	@SuppressWarnings("nls")
 	private static final String[] HELP_OPTIONS = { "-h", "help", "-help", "--help" };
 
 	/**
 	 * Check if the option matches one of HELP_OPTIONS
-	 * 
+	 *
 	 * @param option
 	 *            the option to be checked
 	 * @return true if found a match, otherwise false

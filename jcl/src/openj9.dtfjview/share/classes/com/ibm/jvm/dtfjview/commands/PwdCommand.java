@@ -33,9 +33,9 @@ import com.ibm.jvm.dtfjview.SessionProperties;
 @DTFJPlugin(version=".*", runtime=false)
 public class PwdCommand extends BaseJdmpviewCommand {
 	{
-		addCommand("pwd", "", "displays the current working directory");	
+		addCommand("pwd", "", "displays the current working directory");
 	}
-	
+
 	public void run(String command, String[] args, IContext context, PrintStream out) throws CommandException {
 		if(initCommand(command, args, context, out)) {
 			return;		//processing already handled by super class
@@ -45,7 +45,7 @@ public class PwdCommand extends BaseJdmpviewCommand {
 			return;
 		}
 		File pwd = (File)ctx.getProperties().get(SessionProperties.PWD_PROPERTY);
-		
+
 		out.print("\n");
 		out.print("\t" + pwd.getPath());
 		out.print("\n\n");

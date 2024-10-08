@@ -186,7 +186,11 @@ public class ValueTypeHelper {
 			int index = 0;
 
 			if (Pattern.matches("\\[\\d+\\]", nestingHierarchy[0])) {
-				resultClasses[0] = containerClazz.arrayClass();
+				try {
+					resultClasses[0] = containerClazz.nullRestrictedArrayClass();
+				} catch (NoSuchFieldException e) {
+					throw new CorruptDataException("J9Class.nullRestrictedArrayClass field does not exist", e);
+				}
 				index = 1;
 			}
 			resultClasses[index] = containerClazz;
@@ -228,11 +232,6 @@ public class ValueTypeHelper {
 		@Override
 		public boolean isJ9ClassAValueType(J9ClassPointer clazz) throws CorruptDataException {
 			return clazz.classFlags().allBitsIn(J9JavaClassFlags.J9ClassIsValueType);
-		}
-
-		@Override
-		public boolean isJ9ClassAPrimitiveValueType(J9ClassPointer clazz) throws CorruptDataException {
-			return clazz.classFlags().allBitsIn(J9JavaClassFlags.J9ClassIsPrimitiveValueType);
 		}
 
 		@Override
@@ -400,17 +399,6 @@ public class ValueTypeHelper {
 	 * @throws CorruptDataException
 	 */
 	public boolean isJ9ClassAValueType(J9ClassPointer clazz) throws CorruptDataException {
-		return false;
-	}
-
-	/**
-	 * Queries if J9Class is a primitive value type
-	 *
-	 * @param clazz clazz to query
-	 * @return true if class is a primitive value type, false otherwise
-	 * @throws CorruptDataException
-	 */
-	public boolean isJ9ClassAPrimitiveValueType(J9ClassPointer clazz) throws CorruptDataException {
 		return false;
 	}
 

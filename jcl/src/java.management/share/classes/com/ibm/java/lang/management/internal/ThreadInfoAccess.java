@@ -29,15 +29,15 @@ import java.lang.management.ThreadInfo;
  * from outside the java.lang.management package.
  */
 public interface ThreadInfoAccess {
-	
+
 	/**
 	 * Returns the native thread ID for a given ThreadInfo object. Currently
 	 * used to give access to ExtendedThreadInfoImpl without opening
 	 * java.management for reflection.
-	 * 
-	 * @param threadinfo Object containing information about a snapshot of 
+	 *
+	 * @param threadinfo Object containing information about a snapshot of
 	 * the state of a thread.
-	 * 
+	 *
 	 * @return @{long} representing the native thread ID
 	 */
 	public long getNativeTId(ThreadInfo threadinfo);

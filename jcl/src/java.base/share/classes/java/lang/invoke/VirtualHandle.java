@@ -26,8 +26,8 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
 /*
- * VirtualHandle is a MethodHandle that does virtual dispatch 
- * on the receiver.  
+ * VirtualHandle is a MethodHandle that does virtual dispatch
+ * on the receiver.
  * <p>
  * The vmSlot holds the vtable index for the correct method.
  * The type is the same as the method's except with the receiver's class prepended
@@ -46,18 +46,18 @@ final class VirtualHandle extends IndirectHandle {
 			throw new IllegalAccessException();
 		}
 	}
-	
+
 	VirtualHandle(DirectHandle nonVirtualHandle) throws IllegalAccessException {
 		super(nonVirtualHandle.type(), nonVirtualHandle.referenceClass, nonVirtualHandle.name, KIND_VIRTUAL, nonVirtualHandle.rawModifiers);
 		this.defc = nonVirtualHandle.defc;
-		
+
 		// Set the vmSlot to an vtable index
 		boolean succeed = setVMSlotAndRawModifiersFromSpecialHandle(this, nonVirtualHandle);
 		if (!succeed) {
 			throw new IllegalAccessException();
 		}
 	}
-	
+
 	VirtualHandle(VirtualHandle originalHandle, MethodType newType) {
 		super(originalHandle, newType);
 	}
@@ -70,7 +70,7 @@ final class VirtualHandle extends IndirectHandle {
 	private static final ThunkTable _thunkTable = new ThunkTable();
 	protected final ThunkTable thunkTable(){ return _thunkTable; }
 
- 	// ILGen macros
+	// ILGen macros
 	protected static native void     virtualCall_V(Object receiver, int argPlaceholder);
 	protected static native int      virtualCall_I(Object receiver, int argPlaceholder);
 	protected static native long     virtualCall_J(Object receiver, int argPlaceholder);
@@ -151,4 +151,3 @@ final class VirtualHandle extends IndirectHandle {
 		super.compareWithIndirect(left, c);
 	}
 }
-

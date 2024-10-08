@@ -39,130 +39,130 @@ import com.ibm.dtfj.corereaders.zos.dumpreader.AddressSpaceImageInputStream;
 
 public class Edb {
 
-    /** The address of the EDB structure */
-    private long address;
-    /** The AddressSpace we belong to */
-    private AddressSpace space;
-    /** The AddressSpaceImageInputStream */
-    private AddressSpaceImageInputStream inputStream;
-    /** Environment variables for this enclave */
-    private Properties envVars;
-    /** Edb template - size depends on 32/64 bit mode */
-    /*static*/ CeexedbTemplate ceexedbTemplate;
-    /** Logger */
-    private static Logger log = Logger.getLogger(Edb.class.getName());
+	/** The address of the EDB structure */
+	private long address;
+	/** The AddressSpace we belong to */
+	private AddressSpace space;
+	/** The AddressSpaceImageInputStream */
+	private AddressSpaceImageInputStream inputStream;
+	/** Environment variables for this enclave */
+	private Properties envVars;
+	/** Edb template - size depends on 32/64 bit mode */
+	/*static*/ CeexedbTemplate ceexedbTemplate;
+	/** Logger */
+	private static Logger log = Logger.getLogger(Edb.class.getName());
 
-    /** Constructs a new Edb given the address of the edb structure */
-    public Edb(long address, AddressSpace space) {
-        this.address = address;
-        this.space = space;
-        inputStream = space.getImageInputStream();
-        /* Create any templates we need if not already created */
-        createTemplates(space);
-    }
+	/** Constructs a new Edb given the address of the edb structure */
+	public Edb(long address, AddressSpace space) {
+		this.address = address;
+		this.space = space;
+		inputStream = space.getImageInputStream();
+		/* Create any templates we need if not already created */
+		createTemplates(space);
+	}
 
-    /**
-     * Create any templates we need if not already created.
-     */
-    /*static*/ void createTemplates(AddressSpace space) {
-        if (ceexedbTemplate == null) {
-            if (space.is64bit()) {
-                ceexedbTemplate = new Ceexedb64Template();
-            } else {
-                ceexedbTemplate = new Ceexedb32Template();
-            }
-        }
-    }
+	/**
+	 * Create any templates we need if not already created.
+	 */
+	/*static*/ void createTemplates(AddressSpace space) {
+		if (ceexedbTemplate == null) {
+			if (space.is64bit()) {
+				ceexedbTemplate = new Ceexedb64Template();
+			} else {
+				ceexedbTemplate = new Ceexedb32Template();
+			}
+		}
+	}
 
-    /**
-     * Returns the address of this edb.
-     */
-    public long address() {
-        return address;
-    }
+	/**
+	 * Returns the address of this edb.
+	 */
+	public long address() {
+		return address;
+	}
 
-    /**
-     * Returns the ceeosigr address
-     * @throws IOException if an error occurred reading from the address space
-     */
-    public long ceeedb_ceeosigr() throws IOException {
-        return ceexedbTemplate.getCeeedb_ceeosigr(inputStream, address);
-    }
+	/**
+	 * Returns the ceeosigr address
+	 * @throws IOException if an error occurred reading from the address space
+	 */
+	public long ceeedb_ceeosigr() throws IOException {
+		return ceexedbTemplate.getCeeedb_ceeosigr(inputStream, address);
+	}
 
-    /**
-     * Returns the ceeedbdba
-     * @throws IOException if an error occurred reading from the address space
-     */
-    public long ceeedbdba() throws IOException {
-        return ceexedbTemplate.getCeeedbdba(inputStream, address);
-    }
+	/**
+	 * Returns the ceeedbdba
+	 * @throws IOException if an error occurred reading from the address space
+	 */
+	public long ceeedbdba() throws IOException {
+		return ceexedbTemplate.getCeeedbdba(inputStream, address);
+	}
 
-    /**
-     * Returns a "sample" Edb for the given address space. Note that for certain applications
-     * (CICS?) there can be more than one Edb per address space. Returns null if there is no Edb.
-     */
-    public static Edb getSampleEdb(AddressSpace space) {
-        Caa[] caas = Caa.getCaas(space);
-        /* XXX this needs fixing. The first couple of Caas can point to strange Edbs.
-         * Don't understand it yet. */
-        for (int i = 0; i < caas.length; i++) {
-            Edb edb = caas[i].getEdb();
-            log.fine("found edb " + edb + " for caa " + caas[i]);
-            try {
-                if (edb.getFirstDll() != null) {
-                    log.fine("edb has a dll: " + edb.getFirstDll());
-                    return edb;
-                }
-            } catch (IOException e) {
-                log.fine("caught exception: " + e);
-            }
-        }
-        log.fine("no sample edb found");
-        return null;
-    }
+	/**
+	 * Returns a "sample" Edb for the given address space. Note that for certain applications
+	 * (CICS?) there can be more than one Edb per address space. Returns null if there is no Edb.
+	 */
+	public static Edb getSampleEdb(AddressSpace space) {
+		Caa[] caas = Caa.getCaas(space);
+		/* XXX this needs fixing. The first couple of Caas can point to strange Edbs.
+		 * Don't understand it yet. */
+		for (int i = 0; i < caas.length; i++) {
+			Edb edb = caas[i].getEdb();
+			log.fine("found edb " + edb + " for caa " + caas[i]);
+			try {
+				if (edb.getFirstDll() != null) {
+					log.fine("edb has a dll: " + edb.getFirstDll());
+					return edb;
+				}
+			} catch (IOException e) {
+				log.fine("caught exception: " + e);
+			}
+		}
+		log.fine("no sample edb found");
+		return null;
+	}
 
-    /**
-     * Returns the first in the chain of Dlls (or null if there aren't any).
-     * @throws IOException if an error occurred reading from the address space
-     */
-    public Dll getFirstDll() throws IOException {
-        long ceeedb_dlcb_first = ceexedbTemplate.getCeeedb_dlcb_first(inputStream, address);
-        log.fine("ceeedb_dlcb_first = " + hex(ceeedb_dlcb_first));
-        return ceeedb_dlcb_first == 0 ? null : new Dll(ceeedb_dlcb_first, space);
-    }
+	/**
+	 * Returns the first in the chain of Dlls (or null if there aren't any).
+	 * @throws IOException if an error occurred reading from the address space
+	 */
+	public Dll getFirstDll() throws IOException {
+		long ceeedb_dlcb_first = ceexedbTemplate.getCeeedb_dlcb_first(inputStream, address);
+		log.fine("ceeedb_dlcb_first = " + hex(ceeedb_dlcb_first));
+		return ceeedb_dlcb_first == 0 ? null : new Dll(ceeedb_dlcb_first, space);
+	}
 
-    /**
-     * Return a java.util.Properties object containing the environment variables.
-     */
-    public Properties getEnvVars() throws IOException {
-        if (envVars != null)
-            return envVars;
-        envVars = new Properties();
-        long ceeedbenvar = ceexedbTemplate.getCeeedbenvar(inputStream, address);
-        for (long env = 0; (env = space.readWord(ceeedbenvar)) != 0; ceeedbenvar += space.getWordLength()) {
-            String name = space.readEbcdicCString(env);
-            int eq = name.indexOf('=');
-            if (eq > 0) {
-                String key = name.substring(0, eq);
-                String value = name.substring(eq + 1);
-                envVars.put(key, value);
-            } else {
-                // no equals sign, so not a complete property pair, just return the key
-                envVars.put(name, "");
-            }
-        }
-        return envVars;
-    }
+	/**
+	 * Return a java.util.Properties object containing the environment variables.
+	 */
+	public Properties getEnvVars() throws IOException {
+		if (envVars != null)
+			return envVars;
+		envVars = new Properties();
+		long ceeedbenvar = ceexedbTemplate.getCeeedbenvar(inputStream, address);
+		for (long env = 0; (env = space.readWord(ceeedbenvar)) != 0; ceeedbenvar += space.getWordLength()) {
+			String name = space.readEbcdicCString(env);
+			int eq = name.indexOf('=');
+			if (eq > 0) {
+				String key = name.substring(0, eq);
+				String value = name.substring(eq + 1);
+				envVars.put(key, value);
+			} else {
+				// no equals sign, so not a complete property pair, just return the key
+				envVars.put(name, "");
+			}
+		}
+		return envVars;
+	}
 
-    private static String hex(long i) {
-        return Long.toHexString(i);
-    }
+	private static String hex(long i) {
+		return Long.toHexString(i);
+	}
 
-    private static String hex(int i) {
-        return Integer.toHexString(i);
-    }
+	private static String hex(int i) {
+		return Integer.toHexString(i);
+	}
 
-    public String toString() {
-        return hex(address);
-    }
+	public String toString() {
+		return hex(address);
+	}
 }

@@ -558,7 +558,7 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 #endif /* J9VM_INTERP_CUSTOM_SPIN_OPTIONS */
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
-	cpus = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_ONLINE);
+	cpus = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_TARGET);
 
 	/* initialize defaults, first */
 	vm->thrMaxYieldsBeforeBlocking = 45;

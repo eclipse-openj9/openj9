@@ -24,22 +24,22 @@ package java.lang.invoke;
 
 @VMCONSTANTPOOL_CLASS
 final class MutableCallSiteDynamicInvokerHandle extends DynamicInvokerHandle {
-	/* mutableSite and the parent's site fields will always be sync.  This is 
+	/* mutableSite and the parent's site fields will always be sync.  This is
 	 * a redefinition as a MCS to enable the thunkArchetype to inline without
 	 * a guard
 	 */
 	final MutableCallSite mutableSite;
-	
+
 	MutableCallSiteDynamicInvokerHandle(MutableCallSite site) {
 		super(site);
 		this.mutableSite = site;
 	}
-	
+
 	MutableCallSiteDynamicInvokerHandle(MutableCallSiteDynamicInvokerHandle originalHandle, MethodType newType) {
 		super(originalHandle, newType);
 		this.mutableSite = originalHandle.mutableSite;
 	}
-	
+
 	@Override
 	MethodHandle cloneWithNewType(MethodType newType) {
 		return new MutableCallSiteDynamicInvokerHandle(this, newType);
@@ -67,4 +67,3 @@ final class MutableCallSiteDynamicInvokerHandle extends DynamicInvokerHandle {
 
 	// }}} JIT support
 }
-

@@ -29,48 +29,58 @@ import java.io.IOException;
 
 public final class Ceedsahp32Template implements CeedsahpTemplate {
 
-    public int length() {
-        return 2113;
-    }
+	public int length() {
+		return 2113;
+	}
 
-    public long getCeedsahpr4(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 2048);
-        return inputStream.readUnsignedInt() & 0xffffffffL;
-    }
-    public int getCeedsahpr4$offset() {
-        return 2048;
-    }
-    public int getCeedsahpr4$length() {
-        return 32;
-    }
-    public long getCeedsahpr6(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 2056);
-        return inputStream.readUnsignedInt() & 0xffffffffL;
-    }
-    public int getCeedsahpr6$offset() {
-        return 2056;
-    }
-    public int getCeedsahpr6$length() {
-        return 32;
-    }
-    public long getCeedsahpr7(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 2060);
-        return inputStream.readUnsignedInt() & 0xffffffffL;
-    }
-    public int getCeedsahpr7$offset() {
-        return 2060;
-    }
-    public int getCeedsahpr7$length() {
-        return 32;
-    }
-    public long getCeedsahptran(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 2104);
-        return inputStream.readUnsignedInt() & 0xffffffffL;
-    }
-    public int getCeedsahptran$offset() {
-        return 2104;
-    }
-    public int getCeedsahptran$length() {
-        return 32;
-    }
+	public long getCeedsahpr4(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 2048);
+		return inputStream.readUnsignedInt() & 0xffffffffL;
+	}
+
+	public int getCeedsahpr4$offset() {
+		return 2048;
+	}
+	public int getCeedsahpr4$length() {
+		return 32;
+	}
+
+	public long getCeedsahpr6(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 2056);
+		return inputStream.readUnsignedInt() & 0xffffffffL;
+	}
+
+	public int getCeedsahpr6$offset() {
+		return 2056;
+	}
+
+	public int getCeedsahpr6$length() {
+		return 32;
+	}
+
+	public long getCeedsahpr7(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 2060);
+		return inputStream.readUnsignedInt() & 0xffffffffL;
+	}
+
+	public int getCeedsahpr7$offset() {
+		return 2060;
+	}
+
+	public int getCeedsahpr7$length() {
+		return 32;
+	}
+
+	public long getCeedsahptran(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 2104);
+		return inputStream.readUnsignedInt() & 0xffffffffL;
+	}
+
+	public int getCeedsahptran$offset() {
+		return 2104;
+	}
+
+	public int getCeedsahptran$length() {
+		return 32;
+	}
 }

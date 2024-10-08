@@ -29,22 +29,24 @@ import java.io.IOException;
 
 public final class IkjrbTemplate {
 
-    public static int length() {
-        return 208;
-    }
+	public static int length() {
+		return 208;
+	}
 
-    public static long getRbftp(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 10);
-        inputStream.setBitOffset(0);
-        long result = inputStream.readBits(3);
-        result <<= 61;
-        result >>= 61;
-        return result;
-    }
-    public static int getRbftp$offset() {
-        return 10;
-    }
-    public static int getRbftp$length() {
-        return 3;
-    }
+	public static long getRbftp(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 10);
+		inputStream.setBitOffset(0);
+		long result = inputStream.readBits(3);
+		result <<= 61;
+		result >>= 61;
+		return result;
+	}
+
+	public static int getRbftp$offset() {
+		return 10;
+	}
+
+	public static int getRbftp$length() {
+		return 3;
+	}
 }

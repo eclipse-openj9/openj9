@@ -22,6 +22,9 @@
 
 #include "jvmti_test.h"
 #include <string.h>
+#if defined(J9ZOS390)
+#include <strings.h>
+#endif /* defined(J9ZOS390) */
 
 static agentEnv * env;
 static int imse = 0;

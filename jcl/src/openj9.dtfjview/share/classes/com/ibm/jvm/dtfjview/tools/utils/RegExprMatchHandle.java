@@ -66,7 +66,7 @@ public class RegExprMatchHandle implements IMatchHandle {
 	public String process(String s) {
 		return s;
 	}
-	
+
 	private final Pattern [] patternList;
 	private final boolean negated;
 }

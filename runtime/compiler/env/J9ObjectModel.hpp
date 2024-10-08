@@ -68,7 +68,7 @@ public:
    bool areValueTypesEnabled();
 
    /**
-    * @brief Whether or not flattenable value object (aka null restricted) type is enabled
+    * @brief Whether or not flattenable value object (aka null-restricted) type is enabled
     */
    bool areFlattenableValueTypesEnabled();
 

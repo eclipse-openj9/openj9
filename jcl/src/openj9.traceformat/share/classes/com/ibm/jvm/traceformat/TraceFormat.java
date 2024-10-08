@@ -654,11 +654,11 @@ class Timezone extends ProgramOption {
 			if (value.length() != 6) { // initial validation, string length must be 6
 				throw new NumberFormatException();
 			}
- 			int hours = Integer.parseInt(value.substring(1,3));
-			int minutes = Integer.parseInt(value.substring(4,6));
- 			if ((hours > 12) || (minutes > 60))  {
- 				throw new NumberFormatException();
- 			}
+			int hours = Integer.parseInt(value.substring(1, 3));
+			int minutes = Integer.parseInt(value.substring(4, 6));
+			if ((hours > 12) || (minutes > 60))  {
+				throw new NumberFormatException();
+			}
 			timezone = (hours * 60) + minutes;
 			if (value.substring(0,1).equals("-")) {
 				timezone = -timezone;
@@ -758,7 +758,6 @@ class Summary extends ProgramOption {
 		summary = false;
 	}
 }
-
 
 class InputFile extends ProgramOption {
 	List inputFiles = new LinkedList();
@@ -960,7 +959,6 @@ abstract class ProgramOption {
 		throw new IllegalArgumentException("Value must be specified for "+getName());
 	}
 
-
 	/* If an option is allowed but isn't specified on the command line the it is still added to the
 	 * options set, but with it's default value. If a subclass describes an optional argument then this
 	 * method should be overridden with a default value.
@@ -1000,7 +998,6 @@ abstract class ProgramOption {
 			AnonymousArgs.add(arg);
 			return;
 		}
-
 
 		/* fast path to check if help is specified */
 		if (key.equals("help")) {
@@ -1044,7 +1041,6 @@ abstract class ProgramOption {
 
 		throw new IllegalArgumentException("Usage error: unknown argument, \""+arg+"\""+System.getProperty("line.separator")+System.getProperty("line.separator")+help());
 	}
-
 
 	/* For all options that weren't specified in any way on the command line, add their default values. If
 	 * a required option was omitted this will throw an exception.

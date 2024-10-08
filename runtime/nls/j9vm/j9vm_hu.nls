@@ -275,7 +275,7 @@ J9NLS_VM_CHECK_JAVA_HOME.system_action=The JVM will terminate.
 J9NLS_VM_CHECK_JAVA_HOME.user_response=Check that JAVA_HOME environment variable is properly set.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_STACK_TRACE_EXCEPTION_IN=Kiv\u00e9tel a sz\u00e1l "%s" sz\u00e1l\u00e1ban
+J9NLS_VM_STACK_TRACE_EXCEPTION_IN=Kiv\u00e9tel a "%s" sz\u00e1lban
 # START NON-TRANSLATABLE
 J9NLS_VM_STACK_TRACE_EXCEPTION_IN.sample_input_1=main
 J9NLS_VM_STACK_TRACE_EXCEPTION_IN.explanation=NOTAG
@@ -1887,7 +1887,7 @@ J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE=rossz objektumt\u00edpus 
 J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE.sample_input_1=3
 J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE.sample_input_2=Foo
 J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE.explanation=The class has specified the bytecode monitorenter or monitorexit operation which cannot be performed on a value type but the object on stack is a value type.
-J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE.system_action=The JVM will throw an IllegalMonitorStateException.
+J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE.system_action=The JVM will throw an IdentityException.
 J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
 
@@ -2136,44 +2136,44 @@ J9NLS_VM_CRIU_RESTORE_INITIALIZE_DUMP_FAILED.system_action=The JVM will throw a 
 J9NLS_VM_CRIU_RESTORE_INITIALIZE_DUMP_FAILED.user_response=Check documentation for CRIUSupport restore options.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_ILLEGAL_THREAD_STATE_UPCALL=A JVM rossz sz\u00e1l\u00e1llapot miatt meghi\u00fasult a (z) h\u00edv\u00e1shoz.
+J9NLS_VM_ILLEGAL_THREAD_STATE_UPCALL=A JVM nem tudott tov\u00e1bbl\u00e9pni a felh\u00edv\u00e1s rossz sz\u00e1l\u00e1llapota miatt
 # START NON-TRANSLATABLE
 J9NLS_VM_ILLEGAL_THREAD_STATE_UPCALL.explanation=An error occurred when the JVM attempted to perform upcall in the trivial downcall
 J9NLS_VM_ILLEGAL_THREAD_STATE_UPCALL.system_action=The JVM will throw a IllegalThreadStateException.
 J9NLS_VM_ILLEGAL_THREAD_STATE_UPCALL.user_response=Ensure the specified linker options for downcall are valid.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_FORKJOINPOOL_CNF=A JVM nem tudta vissza\u00e1ll\u00edtani a java.lang.VirtualThread.ForkJoinPool.parallelism a java.util.concurrent.ForkJoinPool oszt\u00e1ly miatt.
+J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_FORKJOINPOOL_CNF=A JVM nem tudta vissza\u00e1ll\u00edtani java.lang.VirtualThread.ForkJoinPool.parallelism java.util.concurrent.ForkJoinPool oszt\u00e1ly nem tal\u00e1lhat\u00f3
 # START NON-TRANSLATABLE
 J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_FORKJOINPOOL_CNF.explanation=CRIUSupport::checkpointJVM failed.
 J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_FORKJOINPOOL_CNF.system_action=The JVM will throw a JVMRestoreException.
 J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_FORKJOINPOOL_CNF.user_response=View CRIU documentation to determine how to resolve the exception.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_DEFAULT_SCHEDULER_ADDRESS=A JVM nem tudta vissza\u00e1ll\u00edtani a java.lang.VirtualThread.ForkJoinPool.parallelism \u00e9rv\u00e9nytelen DEFAULT_SCHEDULER c\u00edm miatt
+J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_DEFAULT_SCHEDULER_ADDRESS=A JVM nem tudta vissza\u00e1ll\u00edtani java.lang.VirtualThread.ForkJoinPool.parallelism az \u00e9rv\u00e9nytelen DEFAULT_SCHEDULER c\u00edm miatt
 # START NON-TRANSLATABLE
 J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_DEFAULT_SCHEDULER_ADDRESS.explanation=CRIUSupport::checkpointJVM failed.
 J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_DEFAULT_SCHEDULER_ADDRESS.system_action=The JVM will throw a JVMRestoreException.
 J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_DEFAULT_SCHEDULER_ADDRESS.user_response=View CRIU documentation to determine how to resolve the exception.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_PARALLELISM_OFFSET=A JVM nem tudta alaphelyzetbe \u00e1ll\u00edtani a java.lang.VirtualThread.ForkJoinPool.parallelism az \u00e9rv\u00e9nytelen parallelizmus eltol\u00e1s miatt
+J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_PARALLELISM_OFFSET=A JVM nem tudta vissza\u00e1ll\u00edtani java.lang.VirtualThread.ForkJoinPool.parallelism az \u00e9rv\u00e9nytelen p\u00e1rhuzamoss\u00e1gi eltol\u00e1s miatt
 # START NON-TRANSLATABLE
 J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_PARALLELISM_OFFSET.explanation=CRIUSupport::checkpointJVM failed.
 J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_PARALLELISM_OFFSET.system_action=The JVM will throw a JVMRestoreException.
 J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_PARALLELISM_OFFSET.user_response=View CRIU documentation to determine how to resolve the exception.
 # END NON-TRANSLATABLE
 
-# NullRestricted/value/implicit is not translatable
-J9NLS_VM_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS=Egy NullRestricted attrib\u00fatummal rendelkez\u0151 p\u00e9ld\u00e1nymez\u0151nek egy implicit konstruktorral rendelkez\u0151 \u00e9rt\u00e9k oszt\u00e1lyban kell lennie
+# NullRestricted is not translatable
+J9NLS_VM_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS=A NullRestricted attrib\u00fatummal rendelkez\u0151 p\u00e9ld\u00e1nymez\u0151nek implicit konstruktorral rendelkez\u0151 \u00e9rt\u00e9koszt\u00e1lyban kell lennie
 # START NON-TRANSLATABLE
 J9NLS_VM_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_VM_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
 J9NLS_VM_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
 
-# NullRestricted/value/implicit is not translatable
-J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS=Egy NullRestricted attrib\u00fatummal rendelkez\u0151 statikus mez\u0151nek egy implicit konstruktorral rendelkez\u0151 \u00e9rt\u00e9k oszt\u00e1lyban kell lennie
+# NullRestricted is not translatable
+J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS=A NullRestricted attrib\u00fatummal rendelkez\u0151 statikus mez\u0151nek implicit konstruktorral rendelkez\u0151 \u00e9rt\u00e9koszt\u00e1lyban kell lennie
 # START NON-TRANSLATABLE
 J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
@@ -2181,7 +2181,7 @@ J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS.u
 # END NON-TRANSLATABLE
 
 # Note: -XX:Compatibility= is a command-line option and should not be translated.
-J9NLS_VM_COMPATIBILITY_REPEATED=A -XX:Compatibility = [m\u00f3d] parancssori param\u00e9ter legfeljebb egyszer enged\u00e9lyezett.
+J9NLS_VM_COMPATIBILITY_REPEATED=A -XX:Compatibility=[mode] parancssori kapcsol\u00f3 legfeljebb egyszer enged\u00e9lyezett.
 # START NON-TRANSLATABLE
 J9NLS_VM_COMPATIBILITY_REPEATED.explanation=The specified command-line option may not be repeated.
 J9NLS_VM_COMPATIBILITY_REPEATED.system_action=The JVM will fail to start.
@@ -2189,7 +2189,7 @@ J9NLS_VM_COMPATIBILITY_REPEATED.user_response=Remove the repetition of the optio
 # END NON-TRANSLATABLE
 
 # Note: -XX:Compatibility= is a command-line option and should not be translated.
-J9NLS_VM_COMPATIBILITY_UNSUPPORTED=A "-XX:Compatibility=%s" sor\u00e1n megadott kompatibilit\u00e1si m\u00f3d nem t\u00e1mogatott.
+J9NLS_VM_COMPATIBILITY_UNSUPPORTED=A "-XX:Compatibility=%s" param\u00e9terben megadott kompatibilit\u00e1si m\u00f3d nem t\u00e1mogatott.
 # START NON-TRANSLATABLE
 J9NLS_VM_COMPATIBILITY_UNSUPPORTED.sample_input_1=unsupported
 J9NLS_VM_COMPATIBILITY_UNSUPPORTED.explanation=The specified compatibility mode is not supported.
@@ -2322,14 +2322,14 @@ J9NLS_VM_CRIU_NEGATIVE_CHECKPOINT_RESTORE_TIME_DELTA.system_action=The JVM will 
 J9NLS_VM_CRIU_NEGATIVE_CHECKPOINT_RESTORE_TIME_DELTA.user_response=View CRIU documentation to determine how to resolve the error.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_CRIU_CRAC_INCOMPATIBLE_SETTING=A parancssori param\u00e9terek -XX: +EnableCRIUSupport \u00e9s -XX:CRaCCheckpointTo = [DIR] nem kompatibilis.
+J9NLS_VM_CRIU_CRAC_INCOMPATIBLE_SETTING=-XX:+EnableCRIUSupport \u00e9s -XX:CRaCCheckpointTo=[DIR] parancssori param\u00e9terek nem kompatibilisek.
 # START NON-TRANSLATABLE
 J9NLS_VM_CRIU_CRAC_INCOMPATIBLE_SETTING.explanation=-XX:+EnableCRIUSupport and -XX:CRaCCheckpointTo=[DIR] are specified at the same time.
 J9NLS_VM_CRIU_CRAC_INCOMPATIBLE_SETTING.system_action=The JVM will fail to start.
 J9NLS_VM_CRIU_CRAC_INCOMPATIBLE_SETTING.user_response=Remove one of the options from the command line.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_CRIU_J9_GET_PROCESS_START_TIME_FAILURE=A j9sysinfo_get_process_start_time a errno= %zi elemmel meghi\u00fasult
+J9NLS_VM_CRIU_J9_GET_PROCESS_START_TIME_FAILURE=j9sysinfo_get_process_start_time sikertelen volt az errno=%zi param\u00e9terrel
 # START NON-TRANSLATABLE
 J9NLS_VM_CRIU_J9_GET_PROCESS_START_TIME_FAILURE.sample_input_1=-34
 J9NLS_VM_CRIU_J9_GET_PROCESS_START_TIME_FAILURE.explanation=j9sysinfo_get_process_start_time failed.
@@ -2344,7 +2344,7 @@ J9NLS_VM_MODULARITY_GENERAL_FAILURE.system_action=The JVM will fail to start.
 J9NLS_VM_MODULARITY_GENERAL_FAILURE.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_MODULARITY_PACKAGE_ALREADY_DEFINED=M\u00e1r meg van adva egy csomag a list\u00e1ban
+J9NLS_VM_MODULARITY_PACKAGE_ALREADY_DEFINED=Egy csomag a list\u00e1ban m\u00e1r meghat\u00e1roz\u00e1sra ker\u00fclt
 # START NON-TRANSLATABLE
 J9NLS_VM_MODULARITY_PACKAGE_ALREADY_DEFINED.explanation=The specified module package has already been defined.
 J9NLS_VM_MODULARITY_PACKAGE_ALREADY_DEFINED.system_action=The JVM will fail to start.
@@ -2358,14 +2358,14 @@ J9NLS_VM_MODULARITY_MODULE_ALREADY_DEFINED.system_action=The JVM will fail to st
 J9NLS_VM_MODULARITY_MODULE_ALREADY_DEFINED.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_MODULARITY_HASH_OPERATION_FAILED=A modularit\u00e1s kivonat m\u0171velet meghi\u00fasult
+J9NLS_VM_MODULARITY_HASH_OPERATION_FAILED=A modularit\u00e1s hash m\u0171velete meghi\u00fasult
 # START NON-TRANSLATABLE
 J9NLS_VM_MODULARITY_HASH_OPERATION_FAILED.explanation=The modularity hash operation failed.
 J9NLS_VM_MODULARITY_HASH_OPERATION_FAILED.system_action=The JVM will fail to start.
 J9NLS_VM_MODULARITY_HASH_OPERATION_FAILED.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_MODULARITY_DUPLICATED_PACKAGE_FOUND=A lista t\u00f6bbsz\u00f6r szerepl\u0151 csomagokat tartalmaz
+J9NLS_VM_MODULARITY_DUPLICATED_PACKAGE_FOUND=A lista ism\u00e9tl\u0151d\u0151 csomagokat tartalmaz
 # START NON-TRANSLATABLE
 J9NLS_VM_MODULARITY_DUPLICATED_PACKAGE_FOUND.explanation=The list contains duplicate packages.
 J9NLS_VM_MODULARITY_DUPLICATED_PACKAGE_FOUND.system_action=The JVM will fail to start.
@@ -2386,7 +2386,7 @@ J9NLS_VM_MODULARITY_PACKAGE_NOT_FOUND.system_action=The JVM will fail to start.
 J9NLS_VM_MODULARITY_PACKAGE_NOT_FOUND.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_DEPRECATED_OPTION=%s figyelmeztet\u00e9s: A %s be\u00e1ll\u00edt\u00e1s elavult a JDK 22 v\u00e1ltozatban, \u00e9s val\u00f3sz\u00edn\u0171leg a k\u00e9s\u0151bbi kiad\u00e1sban elt\u00e1vol\u00edt\u00e1sra ker\u00fcl.
+J9NLS_VM_DEPRECATED_OPTION=%s figyelmeztet\u00e9s: %s opci\u00f3 elavult a JDK 22-ben, \u00e9s val\u00f3sz\u00edn\u0171leg elt\u00e1vol\u00edtjuk egy j\u00f6v\u0151beli kiad\u00e1sban.
 # START NON-TRANSLATABLE
 J9NLS_VM_DEPRECATED_OPTION.sample_input_1=Eclipse OpenJ9 VM
 J9NLS_VM_DEPRECATED_OPTION.sample_input_2=-Xdebug
@@ -2395,9 +2395,31 @@ J9NLS_VM_DEPRECATED_OPTION.system_action=The JVM will print a deprecation warnin
 J9NLS_VM_DEPRECATED_OPTION.user_response=Remove the command line option from the command line.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_CRIU_CHECK_TRANSITION_TO_DEBUG_INTERPRETER_FAILED=A hibakeres\u00e9si tolm\u00e1csra val\u00f3 \u00e1tmenet ellen\u0151rz\u00e9se meghi\u00fasult
+J9NLS_VM_CRIU_CHECK_TRANSITION_TO_DEBUG_INTERPRETER_FAILED=A hibakeres\u0151 \u00e9rtelmez\u0151re val\u00f3 \u00e1t\u00e1ll\u00e1s ellen\u0151rz\u00e9se nem siker\u00fclt
 # START NON-TRANSLATABLE
 J9NLS_VM_CRIU_CHECK_TRANSITION_TO_DEBUG_INTERPRETER_FAILED.explanation=checkTransitionToDebugInterpreter failed.
 J9NLS_VM_CRIU_CHECK_TRANSITION_TO_DEBUG_INTERPRETER_FAILED.system_action=The JVM will throw a JVMRestoreException.
 J9NLS_VM_CRIU_CHECK_TRANSITION_TO_DEBUG_INTERPRETER_FAILED.user_response=View CRIU documentation to determine how to resolve the error.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_UNRECOGNISED_SUN_MISC_UNSAFE_MEMORY_ACCESS_VALUE=--sun-misc-unsafe-memory-access nem ismeri fel a megadott \u00e9rt\u00e9ket: '%s'
+# START NON-TRANSLATABLE
+J9NLS_VM_UNRECOGNISED_SUN_MISC_UNSAFE_MEMORY_ACCESS_VALUE.sample_input_1=disallow
+J9NLS_VM_UNRECOGNISED_SUN_MISC_UNSAFE_MEMORY_ACCESS_VALUE.explanation=The value specified is not known.
+J9NLS_VM_UNRECOGNISED_SUN_MISC_UNSAFE_MEMORY_ACCESS_VALUE.system_action=The JVM will fail to start.
+J9NLS_VM_UNRECOGNISED_SUN_MISC_UNSAFE_MEMORY_ACCESS_VALUE.user_response=Change the value to one of "allow", "warn", "debug" or "deny".
+# END NON-TRANSLATABLE
+
+J9NLS_VM_OPENJ9_JFR_METADATA_FILE_NOT_FOUND=Vagy a %s k\u00f6rnyezeti v\u00e1ltoz\u00f3 nincs be\u00e1ll\u00edtva, vagy a f\u00e1jl nem l\u00e9tezik a megadott helyen.
+# START NON-TRANSLATABLE
+J9NLS_VM_OPENJ9_JFR_METADATA_FILE_NOT_FOUND.explanation=Couldn't find JFR metadata blob file.
+J9NLS_VM_OPENJ9_JFR_METADATA_FILE_NOT_FOUND.system_action=The JVM will not generate a JFR file.
+J9NLS_VM_OPENJ9_JFR_METADATA_FILE_NOT_FOUND.user_response=Set the required environment variables.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_CLASS_NAME_EXCEEDS_MAX_LENGTH=Az oszt\u00e1ly neve meghaladja a maxim\u00e1lis hosszt
+# START NON-TRANSLATABLE
+J9NLS_VM_CLASS_NAME_EXCEEDS_MAX_LENGTH.explanation=Class name cannot be longer than 65535 characters.
+J9NLS_VM_CLASS_NAME_EXCEEDS_MAX_LENGTH.system_action=The JVM will throw a ClassNotFoundException.
+J9NLS_VM_CLASS_NAME_EXCEEDS_MAX_LENGTH.user_response=Shorten the class name.
 # END NON-TRANSLATABLE

@@ -812,7 +812,7 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 			break;
 
 		case CFR_BC_areturn:
-			if (!IS_REF_OR_VAL_SIGNATURE(sigChar) && (sigChar != '[')) {
+			if (!IS_CLASS_SIGNATURE(sigChar) && (sigChar != '[')) {
 				/* fail, modify the bytecode to be incompatible in the second pass of verification */
 				if (sigChar != 'V') {
 					*(bcIndex - 1) = CFR_BC_return;
@@ -984,12 +984,6 @@ checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA len
 				goto _verifyError;
 			}
 			info = &(classfile->constantPool[classfile->constantPool[index].slot1]);
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-			if ((CFR_BC_new == bc) && bcvIsReferenceTypeDescriptor(info)) {
-				errorType = J9NLS_CFR_ERR_NEW_INVALID_REFERENCETYPE_DESCRIPTOR__ID;
-				goto _verifyError;
-			}
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 			break;
 
 		case CFR_BC_newarray:

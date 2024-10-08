@@ -36,21 +36,21 @@ public class Version {
 	private static int majorVersion = 4;
 	private static int minorVersion = 29;	// minor version is the VM stream
 	private static int buildVersion = 5;	// build version - historically the tag from RAS_Auto-Build/projects.psf - now just a number
-	
+
 	private static String name = "DTFJView";
-	
+
 	public static String getVersion()
 	{
 		return Integer.toString(majorVersion) + "." +
 			Integer.toString(minorVersion) + "." +
 			Integer.toString(buildVersion);
 	}
-	
+
 	public static String getName()
 	{
 		return name;
 	}
-	
+
 	public static String getAllVersionInfo(ImageFactory factory)
 	{
 		String DTFJViewVersion = getName() + " version " + getVersion();

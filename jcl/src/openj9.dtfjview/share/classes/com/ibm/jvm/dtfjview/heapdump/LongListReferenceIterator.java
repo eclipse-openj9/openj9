@@ -25,23 +25,22 @@ package com.ibm.jvm.dtfjview.heapdump;
 import java.util.Iterator;
 import java.util.List;
 
-
 /**
  * Reference iterator based on a list of Longs.
- * 
+ *
  * @author andhall
  */
 public class LongListReferenceIterator implements ReferenceIterator
 {
 	private final List _data;
 	private Iterator _currentIterator;
-	
-	public LongListReferenceIterator(List data) 
+
+	public LongListReferenceIterator(List data)
 	{
 		_data = data;
 		reset();
 	}
-	
+
 	public boolean hasNext()
 	{
 		return _currentIterator.hasNext();
@@ -56,5 +55,5 @@ public class LongListReferenceIterator implements ReferenceIterator
 	{
 		_currentIterator = _data.iterator();
 	}
-	
+
 }

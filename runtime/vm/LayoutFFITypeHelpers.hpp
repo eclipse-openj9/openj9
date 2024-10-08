@@ -43,23 +43,27 @@ private:
 public:
 	LayoutFFITypeHelpers(J9VMThread *currentThread)
 			: _currentThread(currentThread)
-			, _vm(_currentThread->javaVM)
-	{ };
+			, _vm(currentThread->javaVM)
+	{
+	}
 
 	/**
 	 * @brief Convert the preceding integer of a layout string from string to UDATA,
-	 * and put layout at the position after the integer
+	 * and put layout at the position after the integer.
 	 *
-	 * @param layout[in] A pointer to a c string describing the types of the struct elements. For example:
-	 * 		If layout is "16#2[#2[II]#2[II]]", it returns 16 in byte
+	 * @param layout[in/out] A pointer to a C string describing the types of the struct elements,
+	 * which points to the symbol of the struct/array upon return after computing the digits
+	 *
+	 * For example, if layout is "16#2[#2[II]#2[II]]", it returns 16 which represents
+	 * the size of the native struct in bytes.
 	 *
 	 * Note: it is also used to obtain the array count e.g. 5:I for an int array with 5 elements.
 	 * @return The preceding integer converted from string to UDATA
 	 */
 	static VMINLINE UDATA
-	getIntFromLayout(char **layout)
+	getIntFromLayout(const char **layout)
 	{
-		char *currentLayout = *layout;
+		const char *currentLayout = *layout;
 		UDATA sumBytes = 0;
 		while ('\0' != *currentLayout) {
 			char symb = *currentLayout;
@@ -75,7 +79,48 @@ public:
 	}
 
 	/**
-	 * @brief Convert argument or return type from the type of ffi_type to J9NativeTypeCode
+	 * @brief Get the length of the specified struct layout string by counting the bracket symbols
+	 * for the struct to compute the length.
+	 *
+	 * For example, if a struct layout string is "#2[II]", it returns 6.
+	 *
+	 * @param layout[in] A pointer to a C string describing the types of the struct elements
+	 * @return The length of the struct layout string
+	 */
+	static VMINLINE UDATA
+	getLengthOfStructLayout(const char *layout)
+	{
+		UDATA bracketCounter = 0;
+
+		for (const char *cursor = layout;; ++cursor) {
+			switch (*cursor) {
+			case '\0':
+				/* Malformed input. */
+				return 0;
+			case '[':
+				bracketCounter += 1;
+				break;
+			case ']':
+				if (0 == bracketCounter) {
+					/* Malformed input. */
+					return 0;
+				}
+				bracketCounter -= 1;
+				if (0 == bracketCounter) {
+					/* Return as we reach the boundary of the specified struct layout string. */
+					return cursor - layout + 1;
+				}
+				break;
+			default:
+				/* Do nothing. */
+				break;
+			}
+		}
+	}
+
+	/**
+	 * @brief Convert argument or return type from the type of ffi_type to J9NativeTypeCode.
+	 *
 	 * @param ffiType[in] The pointer to ff_type
 	 * @return The J9NativeTypeCode corresponding to the J9Class
 	 */
@@ -131,15 +176,15 @@ public:
 	}
 
 	/**
-	 * @brief obtain the ffi_type from the layout symbol (the preceding letter of the layout type. e.g. I for INT)
+	 * @brief Obtain the ffi_type from the layout symbol (the preceding letter of the layout type. e.g. I for INT).
 	 *
-	 * @param layoutSymb[in] The layout symbol describing the type of the layout
+	 * @param layoutSymb the layout symbol describing the type of the layout
 	 * @return The pointer to the ffi_type corresponding to the layout symbol
 	 */
-	static VMINLINE ffi_type*
+	static VMINLINE ffi_type *
 	getPrimitiveFFIType(char layoutSymb)
 	{
-		ffi_type* typeFFI = NULL;
+		ffi_type *typeFFI = NULL;
 
 		switch (layoutSymb) {
 		case 'V': /* VOID */
@@ -179,14 +224,14 @@ public:
 	}
 
 	/**
-	 * @brief Create a FFI type from a layout string object for both primitive and struct
+	 * @brief Create a FFI type from a layout string object for both primitive and struct.
 	 *
-	 * @param typeFFI[in] The custom FFI type to be created
-	 * @param layoutStringObject[in] An object containing the layout string describing the field types.
+	 * @param typeFFI[out] The custom FFI type to be created
+	 * @param layoutStringObject[in] An object containing the layout string describing the field types
 	 * @return The size of the layout, extracted from the layout string, UDATA_MAX if a failure occurs
 	 */
 	VMINLINE UDATA
-	getLayoutFFIType(ffi_type** typeFFI, j9object_t layoutStringObject)
+	getLayoutFFIType(ffi_type **typeFFI, j9object_t layoutStringObject)
 	{
 		PORT_ACCESS_FROM_JAVAVM(_vm);
 		*typeFFI = NULL;
@@ -197,12 +242,12 @@ public:
 		/* Preserve the original pointer for j9mem_free_memory() as
 		 * subsequent calls will modify the contents of this pointer.
 		 */
-		char *layoutTemp = layout;
+		const char *layoutTemp = layout;
 		if (NULL == layout) {
 			goto done;
 		}
 
-		/* Check the byte size of the layout's size which is prefixed to the layout string */
+		/* Check the byte size of the layout's size which is prefixed to the layout string. */
 		layoutSize = getIntFromLayout(&layoutTemp);
 		if (layoutSize >= UDATA_MAX) {
 			return layoutSize;
@@ -245,17 +290,22 @@ done:
 	}
 
 	/**
-	 * @brief Create an array of elements for a construct FFI type
+	 * @brief Create an array of elements for a construct FFI type.
 	 *
-	 * @param layout[in] A pointer to a c string describing the types of the struct elements
-	 * @return An array of ffi_type* which are the elements of the struct
+	 * @param layout[in/out] A pointer to a C string describing the types of the struct elements,
+	 * which points to the end of the struct layout string upon return
+	 * @return An array of ffi_type * which are the elements of the struct
 	 */
-	ffi_type**
-	getStructFFITypeElements(char **layout);
+	ffi_type **
+	getStructFFITypeElements(const char **layout);
 
 	/**
-	 * @brief Create a struct FFI type
-	 * @param layout[in] A pointer to a c string describing the types of the struct elements.
+	 * @brief Create a struct FFI type.
+	 *
+	 * @param layout[in/out] A pointer to a C string describing the types of the struct elements,
+	 * which points to the end of the struct layout string upon return
+	 * @return The ffi_type of type FFI_TYPE_STRUCT
+	 *
 	 * For example:
 	 * 1) "36#8[ (the padding bits (omitted here) are specified initially for each short-sized primitives to align with the longest one)
 	 *         C  (C_BOOL) (introduced since Java 18)
@@ -283,7 +333,7 @@ done:
 	 *        [4:   (an int array where ":" is the sign for array)
 	 *           I  (C_INT)
 	 *        ]
-	 *        [2:  (a strcut arrays where ":" is the sign for array)
+	 *        [2:  (a struct array where ":" is the sign for array)
 	 *          #2[
 	 *             I  (C_INT)
 	 *             I  (C_INT)
@@ -296,24 +346,23 @@ done:
 	 *    in ProgrammableInvoker/DowncallLinker in advance for easier parsing the layout string.
 	 * 2) A struct pointer is treated as a generic pointer (C_POINTER in C corresponds to MemoryAddress in Java)
 	 *    which is the same as a primitive pointer given there is no difference in terms of the layout string.
-	 *
-	 * @return The ffi_type of type FFI_TYPE_STRUCT
 	 */
-	ffi_type*
-	getStructFFIType(char **layout);
+	ffi_type *
+	getStructFFIType(const char **layout);
 
 	/**
-	 * @brief Create an array FFI type describing an array as a field in a struct
+	 * @brief Create an array FFI type describing an array as a field in a struct.
 	 *
-	 * @param layout[in] A c string describing the type of the array elements
+	 * @param layout[in/out] A C string describing the type of the array elements,
+	 * which points to the end of the array layout string upon return
 	 * @param nElements[in] The number of elements in the array
-	 * @return A ffi_type* describing the array
+	 * @return A ffi_type * describing the array
 	 */
-	ffi_type*
-	getArrayFFIType(char **layout, UDATA nElements);
+	ffi_type *
+	getArrayFFIType(const char **layout, UDATA nElements);
 
 	/**
-	 * @brief Free a struct FFI type
+	 * @brief Free a struct FFI type.
 	 *
 	 * @param ffi[in] A pointer to a ffi type
 	 */
@@ -321,7 +370,7 @@ done:
 	freeStructFFIType(ffi_type *ffi);
 
 	/**
-	 * @brief Free the elements of a struct FFI type
+	 * @brief Free the elements of a struct FFI type.
 	 *
 	 * @param elements[in] The elements of a struct FFI type
 	 */
@@ -333,16 +382,16 @@ done:
 	 *
 	 * @param cSignature[in] A pointer to a preprocessed signature string
 	 * @param sigType[in] A pointer to the J9UpcallSigType struct
-	 * @return void
 	 */
 	static void
-	encodeUpcallSignature(char *cSignature, J9UpcallSigType *sigType)
+	encodeUpcallSignature(const char *cSignature, J9UpcallSigType *sigType)
 	{
 		if ((*cSignature >= '0') && (*cSignature <= '9')) {
 			sigType->sizeInByte = (U_32)getIntFromLayout(&cSignature);
-			cSignature += 1; /* Skip over '#' to the signature */
+			cSignature += 1; /* Skip over '#' to the signature. */
 
-			if ('[' == *cSignature) { /* The start of a struct signature string */
+			/* The start of a struct/union signature string. */
+			if (('[' == *cSignature) || ('{' == *cSignature)) {
 				sigType->type = encodeOuterStruct(cSignature, sigType->sizeInByte);
 			} else {
 				sigType->type = encodeUpcallPrimitive(cSignature);
@@ -359,7 +408,7 @@ done:
 	 * @return An encoded type of the primitive signature
 	 */
 	static U_8
-	encodeUpcallPrimitive(char *cSignature)
+	encodeUpcallPrimitive(const char *cSignature)
 	{
 		U_8 primSigType = 0;
 
@@ -399,6 +448,57 @@ done:
 		return primSigType;
 	}
 
+	/* @brief Compare the struct (rather than the union) size and the specified layout ([FF]/[DD]) size
+	 * in bytes to determine whether they are identical on z/OS or not in the case of ALL_SP/ALL_DP.
+	 *
+	 * @param structSig[in] A pointer to the specified struct signature string
+	 * @param structSize[in] the struct size in bytes
+	 * @param layoutSize[in] the layout size in bytes
+	 * @return true if they are identical on z/OS; false otherwise
+	 */
+	static bool
+	isStructWithFFOrDD(const char *structSig, U_32 structSize, U_32 layoutSize)
+	{
+#if defined(J9ZOS390)
+		/* Check whether the specified signature is a union (starting from '{')
+		 * which must be excluded given a union is treated as a non-complex
+		 * type according to the z/OS ABI.
+		 *
+		 * Note:
+		 * [1] The following float/double related structs ('T' stands for float or double) are complex:
+		 * 1) struct {T a[1]; T b[1];} which is"[1:F1:F]" or "[1:D1:D]" in the signature string.
+		 * 2) struct {T a[1]; T b;} which is "[1:FF]" or "[1:DD]" in the signature string.
+		 * 3) struct {T a; T b[1];} which is "[F1:F]" or "[D1:D]" in the signature string.
+		 * [2] The following float/double related union/structs are non-complex even though they are
+		 * ALL_SP/ALL_DP with 8/16 bytes in size:
+		 * 1) union {T a[2]; T b;} which is "{2:F}" or "{2:D}" in the signature string.
+		 * 2) struct {T a[2];} which is "[2:F]" or "[2:D]" in the signature string.
+		 * 3) struct {struct {T a; T b;} c;} which is "[[FF]]" or "[[DD]]" in the signature string.
+		 */
+		return ((structSize == layoutSize) /* The struct must be 8-byte or 16-byte in size. */
+				&& '{' != structSig[0]) /* A union starts from '{'. */
+				&& !strstr(structSig, "[[FF]]") /* A struct nested by "[[FF]]" or its variant. */
+				&& !strstr(structSig, "[[DD]]") /* A struct nested by "[[DD]]" or its variant. */
+				&& !(('2' == structSig[1]) && (':' == structSig[2])); /* "[2:F]" or "[2:D]" contains "2:" from index 1. */
+#else /* defined(J9ZOS390) */
+		return true;
+#endif /* defined(J9ZOS390) */
+	}
+
+	/* @brief Determine whether the current platform is z/OS or not.
+	 *
+	 * @return true for z/OS; false otherwise
+	 */
+	static bool
+	isZos()
+	{
+#if defined(J9ZOS390)
+		return true;
+#else /* defined(J9ZOS390) */
+		return false;
+#endif /* defined(J9ZOS390) */
+	}
+
 	/* @brief This wrapper function invokes parseStruct() to determine
 	 * the AGGREGATE subtype of the specified struct.
 	 *
@@ -407,8 +507,9 @@ done:
 	 * @return An encoded type of the struct signature
 	 */
 	static U_8
-	encodeOuterStruct(char *structSig, U_32 sizeInByte)
+	encodeOuterStruct(const char *structSig, U_32 sizeInByte)
 	{
+		const char *initSig = structSig;
 		bool isAllSP = true;
 		bool isAllDP = true;
 		U_8 structSigType = 0;
@@ -420,11 +521,23 @@ done:
 		 */
 		parseStruct(&structSig, &isAllSP, &isAllDP, first16ByteComposTypes, &curIndex);
 
-		if (isAllSP) {
+		/* As per the z/OS ABI, ALL_SP/ALL_DP are only intended for struct {float, float} and
+		 * struct {double, double} or their variants as the complex type placed on FPRs given
+		 * the struct size is 8 bytes for [FF]/variant or 16 bytes for [DD]/variant; otherwise,
+		 * the non-complex types are categorized into AGGREGATE_OTHER placed on GPRs.
+		 *
+		 * e.g.
+		 * 1) struct {float, union {float, float}} belong to ALL_SP while
+		 *    struct {double, union {double, double}} belongs to ALL_DP.
+		 * 2) struct {float a[2]} ([2:F] in terms of the layout string)
+		 *    and struct {double b[2]} ([2:D] in terms of the layout string)
+		 *    belong to AGGREGATE_OTHER placed on GPRs.
+		 */
+		if (isAllSP && isStructWithFFOrDD(initSig, sizeInByte, J9_FFI_UPCALL_STRUCT_FF_SIZE)) {
 			structSigType = J9_FFI_UPCALL_SIG_TYPE_STRUCT_AGGREGATE_ALL_SP;
-		} else if (isAllDP) {
+		} else if (isAllDP && isStructWithFFOrDD(initSig, sizeInByte, J9_FFI_UPCALL_STRUCT_DD_SIZE)) {
 			structSigType = J9_FFI_UPCALL_SIG_TYPE_STRUCT_AGGREGATE_ALL_DP;
-		} else if (sizeInByte > J9_FFI_UPCALL_COMPOSITION_TYPE_ARRAY_LENGTH) {
+		} else if (isZos() || (sizeInByte > J9_FFI_UPCALL_COMPOSITION_TYPE_ARRAY_LENGTH)) {
 			/* AGGREGATE_OTHER (mix of different types without pure float/double) is
 			 * intended for the native signature greater than 16 bytes in size
 			 */
@@ -453,21 +566,21 @@ done:
 	 * Note:
 	 * This array is unused if the native signature is bigger than 16 bytes in size.
 	 *
-	 * @param currentStructSig[in] A pointer to the current location of a struct signature string
+	 * @param currentStructSig[in/out] A pointer to the current location of a struct signature string,
+	 * which points to the end of the struct signature string upon return
 	 * @param isAllSP[in] A pointer to boolean indicating whether the struct only contains floats
 	 * @param isAllDP[in] A pointer to boolean indicating whether the struct only contains doubles
 	 * @param first16ByteComposTypes[in] A pointer to a composition type array for the 1st 16bytes of the struct signature string
 	 * @param currentIndex[in] A pointer to the current index to the 16-byte composition type array
-	 * @return void
 	 */
 	static void
-	parseStruct(char **currentStructSig, bool *isAllSP, bool *isAllDP, U_8 *first16ByteComposTypes, UDATA *currentIndex)
+	parseStruct(const char **currentStructSig, bool *isAllSP, bool *isAllDP, U_8 *first16ByteComposTypes, UDATA *currentIndex)
 	{
 		UDATA arrayLength = 0;
 		UDATA paddingBytes = 0;
-		char *curStruSig = *currentStructSig;
+		const char *curStruSig = *currentStructSig;
 
-		curStruSig += 1; /* Skip over '[' to the 1st element type of struct */
+		curStruSig += 1; /* Skip over '[' to the 1st element type of struct. */
 		while ('\0' != *curStruSig) {
 			switch (*curStruSig) {
 #if JAVA_SPEC_VERSION >= 18
@@ -475,42 +588,44 @@ done:
 #endif /* JAVA_SPEC_VERSION >= 18 */
 			case 'C': /* C_CHAR in 1 byte */
 				setByteCellforPrimitive(isAllSP, isAllDP, first16ByteComposTypes, currentIndex, J9_FFI_UPCALL_COMPOSITION_TYPE_M, 1, arrayLength);
-				arrayLength = 0; /* Reset for the next array if exists */
+				arrayLength = 0; /* Reset for the next array if exists. */
 				break;
 			case 'S': /* C_SHORT in 2 bytes */
 				setByteCellforPrimitive(isAllSP, isAllDP, first16ByteComposTypes, currentIndex, J9_FFI_UPCALL_COMPOSITION_TYPE_M, 2, arrayLength);
-				arrayLength = 0; /* Reset for the next array if exists */
+				arrayLength = 0; /* Reset for the next array if exists. */
 				break;
 			case 'I': /* C_INT in 4 bytes */
 				setByteCellforPrimitive(isAllSP, isAllDP, first16ByteComposTypes, currentIndex, J9_FFI_UPCALL_COMPOSITION_TYPE_M, 4, arrayLength);
-				arrayLength = 0; /* Reset for the next array if exists */
+				arrayLength = 0; /* Reset for the next array if exists. */
 				break;
-			case 'J': /* C_LONG or C_LONG_LONG(Windows 64bit) in 8 bytes */
+			case 'J': /* C_LONG or C_LONG_LONG(Windows 64bit) in 8 bytes. */
 				setByteCellforPrimitive(isAllSP, isAllDP, first16ByteComposTypes, currentIndex, J9_FFI_UPCALL_COMPOSITION_TYPE_M, 8, arrayLength);
-				arrayLength = 0; /* Reset for the next array if exists */
+				arrayLength = 0; /* Reset for the next array if exists. */
 				break;
 			case 'P': /* C_POINTER in 8 bytes */
 				setByteCellforPrimitive(isAllSP, isAllDP, first16ByteComposTypes, currentIndex, J9_FFI_UPCALL_COMPOSITION_TYPE_M, 8, arrayLength);
-				arrayLength = 0; /* Reset for the next array if exists */
+				arrayLength = 0; /* Reset for the next array if exists. */
 				break;
 			case 'F': /* C_FLOAT in 4 bytes */
 				setByteCellforPrimitive(isAllSP, isAllDP, first16ByteComposTypes, currentIndex, J9_FFI_UPCALL_COMPOSITION_TYPE_F, 4, arrayLength);
-				arrayLength = 0; /* Reset for the next array if exists */
+				arrayLength = 0; /* Reset for the next array if exists. */
 				break;
 			case 'D': /* C_DOUBLE in 8 bytes */
 				setByteCellforPrimitive(isAllSP, isAllDP, first16ByteComposTypes, currentIndex, J9_FFI_UPCALL_COMPOSITION_TYPE_D, 8, arrayLength);
-				arrayLength = 0; /* Reset for the next array if exists */
+				arrayLength = 0; /* Reset for the next array if exists. */
 				break;
-			case '(': /* The start of the padding bytes explicitly specified by users */
-				curStruSig += 1; /* Skip over '(' to the padding bytes explicitly specified in java */
+			case '(': /* The start of the padding bytes explicitly specified by users. */
+				curStruSig += 1; /* Skip over '(' to the padding bytes explicitly specified in java. */
 				paddingBytes = getIntFromLayout(&curStruSig);
 				setByteCellforPrimitive(isAllSP, isAllDP, first16ByteComposTypes, currentIndex, J9_FFI_UPCALL_COMPOSITION_TYPE_E, paddingBytes, 0);
 				break;
-			case '[': /* The start of a nested struct signature */
+			case '[': /* The start of a nested struct signature. */
+			case '{': /* The start of a nested union signature. */
 				setByteCellforStruct(&curStruSig, isAllSP, isAllDP, first16ByteComposTypes, currentIndex, arrayLength);
-				arrayLength = 0; /* Reset for the next array if exists */
+				arrayLength = 0; /* Reset for the next array if exists. */
 				break;
-			case ']': /* The end of a struct signature */
+			case ']': /* The end of a struct signature. */
+			case '}': /* The end of a union signature. */
 				*currentStructSig = curStruSig;
 				return;
 			case '0':
@@ -524,7 +639,7 @@ done:
 			case '8':
 			case '9':
 			{
-				/* Get the array count followed by the array type */
+				/* Get the array count followed by the array type. */
 				arrayLength = getIntFromLayout(&curStruSig);
 				break;
 			}
@@ -551,24 +666,23 @@ done:
 	 * @param composType[in] The composition type for the primitive
 	 * @param primTypeSize[in] The primitive size in bytes
 	 * @param arrayLength[in] The length of the primitive array if exists
-	 * @return void
 	 */
 	static void
 	setByteCellforPrimitive(bool *isAllSP, bool *isAllDP, U_8 *first16ByteComposTypes, UDATA *currentIndex, U_8 composType, UDATA primTypeSize, UDATA arrayLength)
 	{
-		UDATA arrLen = (arrayLength > 0) ? arrayLength : 1; /* Set 1 for non-array by default */
+		UDATA arrLen = (arrayLength > 0) ? arrayLength : 1; /* Set 1 for non-array by default. */
 
 		switch (composType) {
-		case J9_FFI_UPCALL_COMPOSITION_TYPE_E: /* Part of padding bytes */
-		case J9_FFI_UPCALL_COMPOSITION_TYPE_M: /* Part of any integer byte */
-			/* It is neither  ALL_SP nor ALL_DP in the case of padding or any integer type */
+		case J9_FFI_UPCALL_COMPOSITION_TYPE_E: /* Part of padding bytes. */
+		case J9_FFI_UPCALL_COMPOSITION_TYPE_M: /* Part of any integer byte. */
+			/* It is neither  ALL_SP nor ALL_DP in the case of padding or any integer type. */
 			*isAllSP = false;
 			*isAllDP = false;
 			break;
-		case J9_FFI_UPCALL_COMPOSITION_TYPE_F: /* Part of a single-precision floating point */
+		case J9_FFI_UPCALL_COMPOSITION_TYPE_F: /* Part of a single-precision floating point. */
 			*isAllDP = false;
 			break;
-		case J9_FFI_UPCALL_COMPOSITION_TYPE_D: /* Part of a double-precision floating point */
+		case J9_FFI_UPCALL_COMPOSITION_TYPE_D: /* Part of a double-precision floating point. */
 			*isAllSP = false;
 			break;
 		default:
@@ -576,7 +690,7 @@ done:
 			break;
 		}
 
-		/* Only set the 16-byte composition type array with the first 16 bytes of the native signature */
+		/* Only set the 16-byte composition type array with the first 16 bytes of the native signature. */
 		while ((*currentIndex < J9_FFI_UPCALL_COMPOSITION_TYPE_ARRAY_LENGTH) && (arrLen > 0)) {
 			for (UDATA typeSize = primTypeSize; typeSize > 0; typeSize--) {
 				if (*currentIndex < J9_FFI_UPCALL_COMPOSITION_TYPE_ARRAY_LENGTH) {
@@ -591,25 +705,25 @@ done:
 	/* @brief Fill in the 16-byte composition type array with the specified composition type for struct and copy
 	 * the filled bytes of struct to the rest of the array in the case of a nested struct array.
 	 *
-	 * @param currentStructSig[in] A pointer to the current location of a struct signature string
+	 * @param currentStructSig[in/out] A pointer to the current location of a struct signature string,
+	 * which points to the end of the struct signature string upon return
 	 * @param isAllSP[in] A pointer to boolean indicating whether the struct only contains floats
 	 * @param isAllDP[in] A pointer to boolean indicating whether the struct only contains doubles
 	 * @param first16ByteComposTypes[in] A pointer to a composition type array for the 1st 16bytes of the struct signature string
 	 * @param currentIndex[in] A pointer to the current index to the 16-byte composition type array
 	 * @param arrayLength[in] The length of the struct array if exists
-	 * @return void
 	 */
 	static void
-	setByteCellforStruct(char **currentStructSig, bool *isAllSP, bool *isAllDP, U_8 *first16ByteComposTypes, UDATA *currentIndex, UDATA arrayLength)
+	setByteCellforStruct(const char **currentStructSig, bool *isAllSP, bool *isAllDP, U_8 *first16ByteComposTypes, UDATA *currentIndex, UDATA arrayLength)
 	{
-		/* Set 1 for non-array by default */
+		/* Set 1 for non-array by default. */
 		UDATA arrLen = (arrayLength > 0) ? arrayLength : 1;
-		/* The start of the struct bytes to be filled in the composition type array */
+		/* The start of the struct bytes to be filled in the composition type array. */
 		UDATA startIndex = *currentIndex;
 		UDATA composTypesSize = 0;
 
 		parseStruct(currentStructSig, isAllSP, isAllDP, first16ByteComposTypes, currentIndex);
-		/* The length of the filled bytes of struct in the composition type array */
+		/* The length of the filled bytes of struct in the composition type array. */
 		composTypesSize = *currentIndex - startIndex;
 		arrLen -= 1;
 
@@ -644,19 +758,19 @@ done:
 
 		switch (structSigComposType) {
 		case J9_FFI_UPCALL_STRU_COMPOSITION_TYPE_F_E_D:
-			/* The aggregate subtype is set for the struct {float, padding, double} */
+			/* The aggregate subtype is set for the struct {float, padding, double}. */
 			structSigType = J9_FFI_UPCALL_SIG_TYPE_STRUCT_AGGREGATE_SP_DP;
 			break;
 		case J9_FFI_UPCALL_STRU_COMPOSITION_TYPE_F_F_D:
-			/* The aggregate subtype is set for the struct {float, float, double} */
+			/* The aggregate subtype is set for the struct {float, float, double}. */
 			structSigType = J9_FFI_UPCALL_SIG_TYPE_STRUCT_AGGREGATE_SP_SP_DP;
 			break;
 		case J9_FFI_UPCALL_STRU_COMPOSITION_TYPE_D_F_E:
-			/* The aggregate subtype is set for the struct {double, float, padding} */
+			/* The aggregate subtype is set for the struct {double, float, padding}. */
 			structSigType = J9_FFI_UPCALL_SIG_TYPE_STRUCT_AGGREGATE_DP_SP;
 			break;
 		case J9_FFI_UPCALL_STRU_COMPOSITION_TYPE_D_F_F:
-			/* The aggregate subtype is set for the struct {double, float, float} */
+			/* The aggregate subtype is set for the struct {double, float, float}. */
 			structSigType = J9_FFI_UPCALL_SIG_TYPE_STRUCT_AGGREGATE_DP_SP_SP;
 			break;
 		case J9_FFI_UPCALL_STRU_COMPOSITION_TYPE_M_F_E:
@@ -717,11 +831,11 @@ done:
 		U_8 low4ByteComposType = 0;
 		U_8 high4ByteComposType = 0;
 
-		/* The specified index to the U_8[16] composition type array must be 0 or 8 */
+		/* The specified index to the U_8[16] composition type array must be 0 or 8. */
 		Assert_VM_true(arrayIndex < J9_FFI_UPCALL_COMPOSITION_TYPE_ARRAY_LENGTH);
 		Assert_VM_true(0 == (arrayIndex % J9_FFI_UPCALL_COMPOSITION_TYPE_DWORD_SIZE));
 
-		/* Merge the low 4 bytes of 8 bytes from the specified index to the composition type array */
+		/* Merge the low 4 bytes of 8 bytes from the specified index to the composition type array. */
 		low4ByteComposType = getComposTypeFrom4Bytes(first16ByteComposTypes, arrayIndex);
 		/* The first byte and the low 4 bytes of 8 bytes can't be padding bytes.
 		 * e.g. a struct {padding, int, ...} is invalid if specified in java code.
@@ -729,13 +843,13 @@ done:
 		Assert_VM_true(J9_FFI_UPCALL_COMPOSITION_TYPE_E != low4ByteComposType);
 		Assert_VM_true(J9_FFI_UPCALL_COMPOSITION_TYPE_E != first16ByteComposTypes[arrayIndex]);
 
-		/* Merge the high 4 bytes of 8 bytes from the specified index to the composition type array */
+		/* Merge the high 4 bytes of 8 bytes from the specified index to the composition type array. */
 		high4ByteComposType = getComposTypeFrom4Bytes(first16ByteComposTypes, arrayIndex + J9_FFI_UPCALL_COMPOSITION_TYPE_WORD_SIZE);
 
 		if ((J9_FFI_UPCALL_COMPOSITION_TYPE_F == low4ByteComposType)
 		&& (J9_FFI_UPCALL_COMPOSITION_TYPE_U == high4ByteComposType)
 		) {
-			composType = J9_FFI_UPCALL_COMPOSITION_TYPE_F_E; /* Unused cell slots are treated as padding */
+			composType = J9_FFI_UPCALL_COMPOSITION_TYPE_F_E; /* Unused cell slots are treated as padding. */
 		} else {
 			composType = low4ByteComposType | high4ByteComposType;
 		}
@@ -744,13 +858,13 @@ done:
 		Assert_VM_true(!J9_ARE_ALL_BITS_SET(composType, J9_FFI_UPCALL_COMPOSITION_TYPE_D_E));
 
 		switch (composType) {
-		case J9_FFI_UPCALL_COMPOSITION_TYPE_U: /* Undefined or unused */
-		case J9_FFI_UPCALL_COMPOSITION_TYPE_F: /* 8 bytes for single-precision floating point */
-		case J9_FFI_UPCALL_COMPOSITION_TYPE_F_E: /* 8 bytes for single-precision floating point (4 bytes) plus the padding bytes */
-		case J9_FFI_UPCALL_COMPOSITION_TYPE_D: /* 8 bytes for a double-precision floating point */
+		case J9_FFI_UPCALL_COMPOSITION_TYPE_U: /* Undefined or unused. */
+		case J9_FFI_UPCALL_COMPOSITION_TYPE_F: /* 8 bytes for single-precision floating point. */
+		case J9_FFI_UPCALL_COMPOSITION_TYPE_F_E: /* 8 bytes for single-precision floating point (4 bytes) plus the padding bytes. */
+		case J9_FFI_UPCALL_COMPOSITION_TYPE_D: /* 8 bytes for a double-precision floating point. */
 			break;
 		default:
-			composType = J9_FFI_UPCALL_COMPOSITION_TYPE_M; /* 8 bytes for the mix of integer types without pure float/double */
+			composType = J9_FFI_UPCALL_COMPOSITION_TYPE_M; /* 8 bytes for the mix of integer types without pure float/double. */
 			break;
 		}
 
@@ -769,7 +883,7 @@ done:
 	{
 		U_8 composType = 0;
 
-		/* The specified index to the 16-byte composition type array must be one of 0, 4, 8 and 12 */
+		/* The specified index to the 16-byte composition type array must be one of 0, 4, 8 and 12. */
 		Assert_VM_true(arrayIndex < J9_FFI_UPCALL_COMPOSITION_TYPE_ARRAY_LENGTH);
 		Assert_VM_true(0 == (arrayIndex % J9_FFI_UPCALL_COMPOSITION_TYPE_WORD_SIZE));
 
@@ -778,15 +892,15 @@ done:
 		}
 
 		switch (composType) {
-		case J9_FFI_UPCALL_COMPOSITION_TYPE_U: /* Undefined or unused */
-		case J9_FFI_UPCALL_COMPOSITION_TYPE_E: /* 4 padding bytes */
-		case J9_FFI_UPCALL_COMPOSITION_TYPE_F: /* 4 bytes for single-precision floating point */
-		case J9_FFI_UPCALL_COMPOSITION_TYPE_D: /* 4 bytes of a double-precision floating point */
+		case J9_FFI_UPCALL_COMPOSITION_TYPE_U: /* Undefined or unused. */
+		case J9_FFI_UPCALL_COMPOSITION_TYPE_E: /* 4 padding bytes. */
+		case J9_FFI_UPCALL_COMPOSITION_TYPE_F: /* 4 bytes for single-precision floating point. */
+		case J9_FFI_UPCALL_COMPOSITION_TYPE_D: /* 4 bytes of a double-precision floating point. */
 			break;
 		default:
-			/* It is impossible that 'F' or 'D' partially exits in 4 bytes */
+			/* It is impossible that 'F' or 'D' partially exits in 4 bytes. */
 			Assert_VM_true(J9_ARE_NO_BITS_SET(composType, (J9_FFI_UPCALL_COMPOSITION_TYPE_F | J9_FFI_UPCALL_COMPOSITION_TYPE_D)));
-			composType = J9_FFI_UPCALL_COMPOSITION_TYPE_M; /* 4 bytes for the mix of integer types */
+			composType = J9_FFI_UPCALL_COMPOSITION_TYPE_M; /* 4 bytes for the mix of integer types. */
 			break;
 		}
 

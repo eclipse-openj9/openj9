@@ -195,7 +195,7 @@ checkSignatureInlined (U_8* signatureBytes, UDATA signatureLength, UDATA *curren
 		}
 	}
 
-	if (IS_REF_OR_VAL_SIGNATURE(*cursor)) {
+	if (IS_CLASS_SIGNATURE(*cursor)) {
 		IDATA bytesConsumed = 0;
 
 		cursor += 1; /* skip the 'L' */

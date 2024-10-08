@@ -25,7 +25,7 @@ package com.ibm.lang.management;
 /**
  * Constants used by {@link com.ibm.lang.management.OperatingSystemMXBean#getProcessCpuLoad()} and
  * {@link com.ibm.lang.management.OperatingSystemMXBean#getSystemCpuLoad()} methods.
- * 
+ *
  * @author Sridevi
  *
  * @since 1.7.1
@@ -55,7 +55,7 @@ public interface CpuLoadCalculationConstants {
 	/**
 	 *  The minimum time between successive calls required
 	 *  to obtain a valid CPU load measurement.
-	 *  
+	 *
 	 *  10 ms in nanoseconds.
 	 */
 	long MINIMUM_INTERVAL = 10000000;

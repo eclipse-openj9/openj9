@@ -126,7 +126,11 @@ J9::Z::CodeGenerator::initialize()
       }
 
    static bool disableInlineVectorizedMismatch = feGetEnv("TR_disableInlineVectorizedMismatch") != NULL;
-   if (cg->getSupportsArrayCmpLen() && !disableInlineVectorizedMismatch)
+   if (cg->getSupportsArrayCmpLen() &&
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+         !TR::Compiler->om.isOffHeapAllocationEnabled() &&
+#endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
+         !disableInlineVectorizedMismatch)
       {
       cg->setSupportsInlineVectorizedMismatch();
       }
@@ -240,7 +244,7 @@ J9::Z::CodeGenerator::callUsesHelperImplementation(TR::Symbol *sym)
 TR::Linkage *
 J9::Z::CodeGenerator::createLinkage(TR_LinkageConventions lc)
    {
-   TR::Linkage * linkage;
+   TR::Linkage * linkage = NULL;
    switch (lc)
       {
       case TR_CHelper:
@@ -3259,9 +3263,9 @@ J9::Z::CodeGenerator::checkFieldAlignmentForAtomicLong()
    if (!classBlock)
       return false;
 
-   char* fieldName = "value";
+   const char * fieldName = "value";
    int32_t fieldNameLen = 5;
-   char * fieldSig = "J";
+   const char * fieldSig = "J";
    int32_t fieldSigLen = 1;
    int32_t intOrBoolOffset = self()->fe()->getObjectHeaderSizeInBytes() + self()->fej9()->getInstanceFieldOffset(classBlock, fieldName, fieldNameLen, fieldSig, fieldSigLen);
    return (intOrBoolOffset & 0x3) == 0;

@@ -35,31 +35,31 @@ import java.util.Iterator;
  */
 public interface JavaHeap {
 
-    /**
-     * Get the set of contiguous memory regions which form this heap.
-     * @return an iterator over the collection of contiguous memory regions
-     * which form this heap
-     *
-     * @see com.ibm.dtfj.image.ImageSection
-     * @see com.ibm.dtfj.image.CorruptData
-     */
-    public Iterator getSections();
+	/**
+	 * Get the set of contiguous memory regions which form this heap.
+	 * @return an iterator over the collection of contiguous memory regions
+	 * which form this heap
+	 *
+	 * @see com.ibm.dtfj.image.ImageSection
+	 * @see com.ibm.dtfj.image.CorruptData
+	 */
+	public Iterator getSections();
 
-    /**
-     * Get a brief textual description of this heap.
-     * @return a brief textual description of this heap
-     */
-    public String getName();
+	/**
+	 * Get a brief textual description of this heap.
+	 * @return a brief textual description of this heap
+	 */
+	public String getName();
 
-    /**
-     * Get the set of objects which are stored in this heap.
-     * @return an iterator over the collection of objects which
-     * are stored in this heap
-     *
-     * @see JavaObject
-     * @see com.ibm.dtfj.image.CorruptData
-     */
-    public Iterator getObjects();
+	/**
+	 * Get the set of objects which are stored in this heap.
+	 * @return an iterator over the collection of objects which
+	 * are stored in this heap
+	 *
+	 * @see JavaObject
+	 * @see com.ibm.dtfj.image.CorruptData
+	 */
+	public Iterator getObjects();
 
 	/**
 	 * @param obj

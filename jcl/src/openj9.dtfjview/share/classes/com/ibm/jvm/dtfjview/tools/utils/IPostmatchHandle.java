@@ -35,7 +35,7 @@ public interface IPostmatchHandle {
 	 * when a match was just found (by a match handle).
 	 */
 	public void justMatched();
-	
+
 	/**
 	 * This is for the post match handle to perform actions on the string
 	 * <p>

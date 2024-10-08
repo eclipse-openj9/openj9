@@ -77,7 +77,6 @@ J9JavaAccessFlags.J9StaticFieldRefTypeObject = 0
 J9JavaAccessFlags.J9StaticFieldRefTypeShort = 0
 
 J9JavaClassFlags.J9ClassIsFlattened = 0
-J9JavaClassFlags.J9ClassIsPrimitiveValueType = 0
 J9JavaClassFlags.J9ClassIsValueType = 0
 J9JavaClassFlags.J9ClassLargestAlignmentConstraintDouble = 0
 J9JavaClassFlags.J9ClassLargestAlignmentConstraintReference = 0

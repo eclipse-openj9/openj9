@@ -29,8 +29,8 @@ import com.ibm.lang.management.internal.MemoryUsageUtil;
 
 /**
  * This represents a snapshot of the Operating System level Memory usage statistics.
- * This is available on AIX, Linux, Windows and z/OS. 
- * 
+ * This is available on AIX, Linux, Windows and z/OS.
+ *
  * @author sonchakr, dgunigun
  * @since 1.7.1
  */
@@ -63,17 +63,17 @@ public class MemoryUsage {
 	 * @param cached The size of cache area in bytes; or -1 if undefined.
 	 * @param buffered The size of file buffer area in bytes; or -1 if undefined.
 	 * @param timestamp The timestamp when the snapshot was taken in microseconds.
-	 * 
+	 *
 	 * @throws IllegalArgumentException if
 	 * <ul><li>The values of total or free or timestamp are negative; or
 	 * <li>The values of swapTotal or swapFree or cached or buffered are negative but not -1; or
 	 * <li>The value of free is greater than total if defined; or
 	 * <li>The value of swapFree is greater than swapTotal if defined; or
-	 * <li>The sum of values of cached, buffered and free are greater than total if defined.  
+	 * <li>The sum of values of cached, buffered and free are greater than total if defined.
 	 * </ul>
 	 */
 	private MemoryUsage(long total, long free, long swapTotal, long swapFree,
-			    long cached, long buffered, long timestamp) throws IllegalArgumentException {
+			long cached, long buffered, long timestamp) throws IllegalArgumentException {
 		super();
 		if ((total < 0) || (free < 0) || (timestamp < 0) ||
 			((swapTotal < 0) && (swapTotal != -1)) ||
@@ -97,7 +97,7 @@ public class MemoryUsage {
 
 	/**
 	 * The total amount of usable physical memory in bytes.
-	 * 
+	 *
 	 * @return Total physical memory in bytes or -1 if info not available.
 	 */
 	public long getTotal() {
@@ -106,7 +106,7 @@ public class MemoryUsage {
 
 	/**
 	 * The total amount of free physical memory in bytes.
-	 * 
+	 *
 	 * @return Free physical memory in bytes or -1 if info not available.
 	 */
 	public long getFree() {
@@ -115,7 +115,7 @@ public class MemoryUsage {
 
 	/**
 	 * The amount of total swap space in bytes.
-	 * 
+	 *
 	 * @return Total swap space in bytes or -1 if info not available.
 	 */
 	public long getSwapTotal() {
@@ -124,7 +124,7 @@ public class MemoryUsage {
 
 	/**
 	 * The amount of free swap space in bytes.
-	 * 
+	 *
 	 * @return Free swap space in bytes or -1 if info not available.
 	 */
 	public long getSwapFree() {
@@ -147,7 +147,7 @@ public class MemoryUsage {
 	 * <ul>
 	 * <li>Buffered memory is not available on AIX and Windows.
 	 * </ul>
-	 * 
+	 *
 	 * @return Buffered memory in bytes or -1 if info not available.
 	 */
 	public long getBuffered() {
@@ -156,7 +156,7 @@ public class MemoryUsage {
 
 	/**
 	 * The timestamp when the usage statistics were last sampled in microseconds.
-	 * 
+	 *
 	 * @return Timestamp in microseconds.
 	 */
 	public long getTimestamp() {
@@ -164,9 +164,9 @@ public class MemoryUsage {
 	}
 
 	/* (non-Javadoc)
-	 * Setter method for updating the memory usage parameters into fields of a 
+	 * Setter method for updating the memory usage parameters into fields of a
 	 * {@link MemoryUsage} instance.
-	 * 
+	 *
 	 * @param total The total Memory installed on the system in bytes.
 	 * @param free The amount of free memory in bytes.
 	 * @param swapTotal The configured swap memory size in bytes.
@@ -240,7 +240,7 @@ public class MemoryUsage {
 				buffered = ((Long) cd.get("buffered")).longValue(); //$NON-NLS-1$
 				timestamp = ((Long) cd.get("timestamp")).longValue(); //$NON-NLS-1$
 			} catch (InvalidKeyException e) {
-	        	/*[MSG "K05E6", "CompositeData object does not contain expected key."]*/
+				/*[MSG "K05E6", "CompositeData object does not contain expected key."]*/
 				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K05E6")); //$NON-NLS-1$
 			}
 

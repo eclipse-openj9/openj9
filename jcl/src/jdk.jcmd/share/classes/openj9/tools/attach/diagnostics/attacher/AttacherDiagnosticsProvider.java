@@ -43,10 +43,9 @@ public class AttacherDiagnosticsProvider {
 
 	private OpenJ9VirtualMachine vm;
 
-
 	/**
 	 * Request thread information, including stack traces, from a target VM.
-	 * 
+	 *
 	 * @param diagnosticCommand name of command to execute
 	 * @return properties object containing serialized thread information
 	 * @throws IOException in case of a communication error
@@ -62,7 +61,7 @@ public class AttacherDiagnosticsProvider {
 
 	/**
 	 * Call equivalent com.sun.tools.attach.VirtualMachine method.
-	 * 
+	 *
 	 * @param vmid ID of target
 	 * @throws IOException on communication error
 	 */
@@ -80,7 +79,7 @@ public class AttacherDiagnosticsProvider {
 
 	/**
 	 * Call equivalent com.sun.tools.attach.VirtualMachine method.
-	 * 
+	 *
 	 * @throws IOException on communication error
 	 */
 	public void detach() throws IOException {
@@ -92,7 +91,7 @@ public class AttacherDiagnosticsProvider {
 
 	/**
 	 * Call equivalent com.sun.tools.attach.VirtualMachine method.
-	 * 
+	 *
 	 * @return properties from target VM
 	 * @throws IOException on communication error
 	 */
@@ -103,7 +102,7 @@ public class AttacherDiagnosticsProvider {
 
 	/**
 	 * Call equivalent com.sun.tools.attach.VirtualMachine method.
-	 * 
+	 *
 	 * @return properties from target VM
 	 * @throws IOException on communication error
 	 */

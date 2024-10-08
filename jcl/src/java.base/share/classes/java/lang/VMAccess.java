@@ -61,7 +61,6 @@ final class VMAccess implements VMLangAccess {
 		return VMAccess.findClassOrNull(className, classLoader);
 	}
 
-
 /*[IF JAVA_SPEC_VERSION >= 9]*/
 	/**
 	 * Answer the platform class loader.

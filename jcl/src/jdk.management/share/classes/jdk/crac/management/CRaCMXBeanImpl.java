@@ -31,51 +31,51 @@ import openj9.internal.criu.InternalCRIUSupport;
  * An implementation of the CRaCMXBean interface.
  */
 public class CRaCMXBeanImpl implements CRaCMXBean {
-    private final static CRaCMXBean INSTANCE = createInstance();
+	private final static CRaCMXBean INSTANCE = createInstance();
 
-    private CRaCMXBeanImpl() {
-    }
+	private CRaCMXBeanImpl() {
+	}
 
-    private static CRaCMXBeanImpl createInstance() {
-        return new CRaCMXBeanImpl();
-    }
+	private static CRaCMXBeanImpl createInstance() {
+		return new CRaCMXBeanImpl();
+	}
 
-    /**
-     * Returns an instance of {@link CRaCMXBeanImpl}.
-     *
-     * @return an instance of {@link CRaCMXBeanImpl}.
-     */
-    public static CRaCMXBean getInstance() {
-        return INSTANCE;
-    }
+	/**
+	 * Returns an instance of {@link CRaCMXBeanImpl}.
+	 *
+	 * @return an instance of {@link CRaCMXBeanImpl}.
+	 */
+	public static CRaCMXBean getInstance() {
+		return INSTANCE;
+	}
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public long getUptimeSinceRestore() {
-        long restoreTime = getRestoreTime();
-        return (restoreTime > 0) ? (System.currentTimeMillis() - restoreTime) : -1;
-    }
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public long getUptimeSinceRestore() {
+		long restoreTime = getRestoreTime();
+		return (restoreTime > 0) ? (System.currentTimeMillis() - restoreTime) : -1;
+	}
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public long getRestoreTime() {
-        long processRestoreStartTime = InternalCRIUSupport.getProcessRestoreStartTime();
-        return (processRestoreStartTime > 0) ? TimeUnit.NANOSECONDS.toMillis(processRestoreStartTime) : -1;
-    }
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public long getRestoreTime() {
+		long processRestoreStartTime = InternalCRIUSupport.getProcessRestoreStartTime();
+		return (processRestoreStartTime > 0) ? TimeUnit.NANOSECONDS.toMillis(processRestoreStartTime) : -1;
+	}
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public ObjectName getObjectName() {
-        try {
-            return ObjectName.getInstance(CRAC_MXBEAN_NAME);
-        } catch (MalformedObjectNameException e) {
-            throw new InternalError(e);
-        }
-    }
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public ObjectName getObjectName() {
+		try {
+			return ObjectName.getInstance(CRAC_MXBEAN_NAME);
+		} catch (MalformedObjectNameException e) {
+			throw new InternalError(e);
+		}
+	}
 }

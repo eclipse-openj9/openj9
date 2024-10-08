@@ -25,16 +25,16 @@ package com.ibm.jvm;
 import java.util.Objects;
 
 /**
- * 
+ *
  * The <code>Log</code> class contains methods for controlling system log options
  * This class cannot be instantiated.
  */
 public class Log {
 
 	private static final String LEGACY_LOG_PERMISSION_PROPERTY = "com.ibm.jvm.enableLegacyLogSecurity"; //$NON-NLS-1$
-		
+
 	private static final LogPermission LOG_PERMISSION = new LogPermission();
-	
+
 	/**
 	 * Query the log options. Returns a String representation of the log options.
 	 * @return The current log options
@@ -48,10 +48,10 @@ public class Log {
 	/**
 	 * Set the log options.
 	 * Use the same syntax as the -Xsyslog command-line option, with the initial -Xsyslog: omitted.
-	 * 
+	 *
 	 * @param options The command line log flags.
 	 * @return status 0 on success otherwise a RuntimeException is thrown
-	 * 
+	 *
 	 * @throws RuntimeException if there is a problem setting the log options
 	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to change the log settings
 	 */
@@ -87,7 +87,7 @@ public class Log {
 	/*
 	 * Log should not be instantiated.
 	 */
-	private Log() {	
+	private Log() {
 	}
 
 	private static native String QueryOptionsImpl();

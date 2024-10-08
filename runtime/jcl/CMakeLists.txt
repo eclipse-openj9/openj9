@@ -113,7 +113,7 @@ target_sources(jclse
 		${CMAKE_CURRENT_SOURCE_DIR}/common/bpinit.c
 		${CMAKE_CURRENT_SOURCE_DIR}/common/clsldr.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/common/com_ibm_jvm_Stats.c
-		${CMAKE_CURRENT_SOURCE_DIR}/common/com_ibm_oti_vm_VM.c
+		${CMAKE_CURRENT_SOURCE_DIR}/common/com_ibm_oti_vm_VM.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/common/compiler.c
 		${CMAKE_CURRENT_SOURCE_DIR}/common/dump.c
 		${CMAKE_CURRENT_SOURCE_DIR}/common/exhelp.c
@@ -235,6 +235,14 @@ if(NOT JAVA_SPEC_VERSION LESS 19)
 	target_sources(jclse
 		PRIVATE
 			${CMAKE_CURRENT_SOURCE_DIR}/common/jdk_internal_vm_Continuation.cpp
+	)
+endif()
+
+if(J9VM_OPT_JFR)
+	# JFR sources
+	target_sources(jclse
+		PRIVATE
+			${CMAKE_CURRENT_SOURCE_DIR}/common/jdk_jfr_internal_JVM.cpp
 	)
 endif()
 

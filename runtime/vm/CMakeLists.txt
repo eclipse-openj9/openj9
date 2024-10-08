@@ -52,15 +52,23 @@ if(OMR_ARCH_POWER AND OMR_OS_AIX)
 		]]
 	endif()
 elseif(OMR_OS_ZOS)
-	# TODO need to handle optimized debug info
-	list(APPEND interp_flags_to_remove "-O3" "-g" "-qdebug=nohook")
+	if(OMR_TOOLCONFIG STREQUAL "openxl")
+		# Hooks are not implemented in Open XL. The default debug compiles in Open XL will be NOHOOK
+		# equivalent.
+		list(APPEND interp_flags_to_remove "-O3" "-g")
 
-	list(APPEND interp_new_flags
-		-O2
-		"\"-Wc,TBYDBG(-qdebug=MRABIG)\""
-		"\"-Wc,TBYDBG(-qdebug=lincomm:ptranl:tfbagg)\""
-		"\"-Wc,FEDBG(-qxflag=InlineDespiteVolatileInArgs)\""
-	)
+		list(APPEND interp_new_flags -O2)
+	else()
+		# TODO need to handle optimized debug info
+		list(APPEND interp_flags_to_remove "-O3" "-g" "-qdebug=nohook")
+
+		list(APPEND interp_new_flags
+			-O2
+			"\"-Wc,TBYDBG(-qdebug=MRABIG)\""
+			"\"-Wc,TBYDBG(-qdebug=lincomm:ptranl:tfbagg)\""
+			"\"-Wc,FEDBG(-qxflag=InlineDespiteVolatileInArgs)\""
+		)
+	endif()
 endif()
 
 if(interp_flags_to_remove)
@@ -136,6 +144,7 @@ set(main_sources
 	jvmrisup.c
 	KeyHashTable.c
 	LayoutFFITypeHelpers.cpp
+	LayoutFFITypeTable.cpp
 	leconditionexceptionsup.c
 	linearswalk.c
 	lockwordconfig.c
@@ -215,13 +224,6 @@ set(interpreter_sources
 	DebugBytecodeInterpreterCompressed.cpp
 	DebugBytecodeInterpreterFull.cpp
 )
-
-if(J9VM_OPT_CRIU_SUPPORT)
-	list(APPEND interpreter_sources
-		CRIUBytecodeInterpreterCompressed.cpp
-		CRIUBytecodeInterpreterFull.cpp
-	)
-endif()
 
 if(J9VM_OPT_METHOD_HANDLE)
 	list(APPEND interpreter_sources

@@ -869,7 +869,7 @@ void
 InterpreterEmulator::maintainStackForCall()
    {
    TR_ASSERT_FATAL(_iteratorWithState, "has to be called when the iterator has state!");
-   int32_t numOfArgs = 0;
+   int32_t numOfArgs = -1;
    TR::DataType returnType = TR::NoType;
    Operand* result = NULL;
 
@@ -908,16 +908,41 @@ InterpreterEmulator::maintainStackForCall()
             isStatic = true;
             break;
          case J9BCinvokedynamic:
-         case J9BCinvokehandle:
-            TR_ASSERT_FATAL(false, "Can't maintain stack for unresolved invokehandle");
+            {
+            // Find the signature, which corresponds to the arguments on the stack.
+            // cpIndex is really the invokedynamic call site index
+            J9ROMClass *romClass = TR::Compiler->cls.romClassOf(method()->classOfMethod());
+            J9SRP *namesAndSigs = (J9SRP*)J9ROMCLASS_CALLSITEDATA(romClass);
+            J9ROMNameAndSignature *nameAndSig = NNSRP_GET(namesAndSigs[cpIndex], J9ROMNameAndSignature*);
+            J9UTF8 *sig = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSig);
+
+            // Parse the signature to determine the number of arguments and
+            // whether or not there is a return value.
+            U_8 sigTypes[256]; // signatures are limited to 255 params + 1 return type
+            UDATA numParams = 0;
+            UDATA numParamSlots = 0;
+            jitParseSignature(sig, sigTypes, &numParams, &numParamSlots);
+            numOfArgs = numParams;
+
+            // returnType is only used to distinguish void return (TR::NoType)
+            // from non-void return (any other value), so it's not necessary to
+            // get the correct non-void type here.
+            if (sigTypes[numParams] == J9_NATIVE_TYPE_VOID)
+               returnType = TR::NoType;
+            else
+               returnType = TR::Int32;
             break;
+            }
 
          default:
             break;
          }
-      TR::Method * calleeMethod = comp()->fej9()->createMethod(trMemory(), _calltarget->_calleeMethod->containingClass(), cpIndex);
-      numOfArgs = calleeMethod->numberOfExplicitParameters() + (isStatic ? 0 : 1);
-      returnType = calleeMethod->returnType();
+      if (numOfArgs < 0)
+         {
+         TR::Method * calleeMethod = comp()->fej9()->createMethod(trMemory(), _calltarget->_calleeMethod->containingClass(), cpIndex);
+         numOfArgs = calleeMethod->numberOfExplicitParameters() + (isStatic ? 0 : 1);
+         returnType = calleeMethod->returnType();
+         }
       }
    maintainStackForCall(result, numOfArgs, returnType);
    }
@@ -1089,6 +1114,19 @@ InterpreterEmulator::getReturnValue(TR_ResolvedMethod *callee)
             TR::KnownObjectTable::Index mhIndex = comp()->fej9()->getMethodHandleTableEntryIndex(comp(), vhIndex, adIndex);
             if (mhIndex != TR::KnownObjectTable::UNKNOWN)
                result = new (trStackMemory()) KnownObjOperand(mhIndex);
+            }
+         break;
+         }
+      case TR::jdk_internal_foreign_layout_ValueLayouts_AbstractValueLayout_accessHandle:
+         {
+         Operand* layoutOperand = top();
+         TR::KnownObjectTable::Index layoutIndex = layoutOperand->getKnownObjectIndex();
+         TR::KnownObjectTable *knot = comp()->getKnownObjectTable();
+         if (knot && layoutIndex != TR::KnownObjectTable::UNKNOWN && !knot->isNull(layoutIndex))
+            {
+            TR::KnownObjectTable::Index vhIndex = comp()->fej9()->getLayoutVarHandle(comp(), layoutIndex);
+            if (vhIndex != TR::KnownObjectTable::UNKNOWN)
+               result = new (trStackMemory()) KnownObjOperand(vhIndex);
             }
          break;
          }
@@ -1591,7 +1629,7 @@ InterpreterEmulator::visitInvokevirtual()
          {
          TR_J9MutableCallSite *inlinerMcs = new (comp()->trHeapMemory()) TR_J9MutableCallSite(_calltarget->_calleeMethod, callNodeTreeTop,   parent,
                                                       callNode, interfaceMethod, _currentCallMethod->classOfMethod(),
-                                                      (int32_t) _currentCallMethod->virtualCallSelector(cpIndex), cpIndex, _currentCallMethod,
+                                                      -1, cpIndex, _currentCallMethod,
                                                       resolvedSymbol, isIndirectCall, isInterface, *_newBCInfo, comp(),
                                                       _recursionDepth, allconsts);
          if (_currentCallMethod->getRecognizedMethod() == TR::java_lang_invoke_MethodHandle_invokeBasic)
@@ -1621,7 +1659,7 @@ InterpreterEmulator::visitInvokevirtual()
          {
          callsite = new (comp()->trHeapMemory()) TR_J9VirtualCallSite(_calltarget->_calleeMethod, callNodeTreeTop, parent,
                                                                         callNode, interfaceMethod, _currentCallMethod->classOfMethod(),
-                                                                        (int32_t) _currentCallMethod->virtualCallSelector(cpIndex), cpIndex, _currentCallMethod,
+                                                                        (int32_t) _currentCallMethod->virtualCallSelector(), cpIndex, _currentCallMethod,
                                                                         resolvedSymbol, isIndirectCall, isInterface, *_newBCInfo, comp(),
                                                                         _recursionDepth, allconsts);
 
@@ -1736,7 +1774,7 @@ InterpreterEmulator::visitInvokestatic()
          {
          TR_J9MutableCallSite *mcs = new (comp()->trHeapMemory()) TR_J9MutableCallSite( _calltarget->_calleeMethod, callNodeTreeTop,   parent,
                callNode, interfaceMethod, receiverClass,
-               (int32_t) _currentCallMethod->virtualCallSelector(cpIndex), cpIndex, _currentCallMethod,
+               -1, cpIndex, _currentCallMethod,
                resolvedSymbol, isIndirectCall, isInterface, *_newBCInfo, comp(),
                _recursionDepth, allconsts);
          if (mcsIndex != TR::KnownObjectTable::UNKNOWN)
@@ -1751,7 +1789,7 @@ InterpreterEmulator::visitInvokestatic()
          int32_t noCPIndex = -1; // The method is not referenced via the constant pool
          callsite = new (comp()->trHeapMemory()) TR_J9VirtualCallSite(
                _calltarget->_calleeMethod, callNodeTreeTop, parent, callNode,
-               interfaceMethod, receiverClass, (int32_t) _currentCallMethod->virtualCallSelector(cpIndex), noCPIndex,
+               interfaceMethod, receiverClass, (int32_t) _currentCallMethod->virtualCallSelector(), noCPIndex,
                _currentCallMethod, resolvedSymbol, isIndirectCall, isInterface,
                *_newBCInfo, comp(), _recursionDepth, allconsts);
          }
@@ -1817,7 +1855,7 @@ InterpreterEmulator::visitInvokeinterface()
       {
       callsite = new (comp()->trHeapMemory()) TR_J9VirtualCallSite(
          _calltarget->_calleeMethod, callNodeTreeTop, parent, callNode,
-         interfaceMethod, _currentCallMethod->classOfMethod(), (int32_t) _currentCallMethod->virtualCallSelector(cpIndex), cpIndex,
+         interfaceMethod, _currentCallMethod->classOfMethod(), (int32_t) _currentCallMethod->virtualCallSelector(), cpIndex,
          _currentCallMethod, resolvedSymbol, isIndirectCall, isInterface,
          *_newBCInfo, comp(), _recursionDepth, allconsts);
       }

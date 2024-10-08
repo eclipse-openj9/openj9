@@ -28,13 +28,13 @@ import java.util.*;
 
 /**
  * Startup section of a file header.
- * 
+ *
  * @author Tim Preece
  */
 public class StartupSection {
 	TraceContext context;
 	String textSummary = null;
-	
+
 	private Vector options = new Vector();
 
 	public StartupSection(TraceContext context, ByteBuffer data) throws IllegalArgumentException {
@@ -73,7 +73,7 @@ public class StartupSection {
 	public String toString() {
 		return "JVM startup options";
 	}
-	
+
 	public String summary() {
 		if (textSummary == null) {
 			StringBuilder s = new StringBuilder(toString()+":"+System.getProperty("line.separator"));
@@ -82,10 +82,10 @@ public class StartupSection {
 				s.append(options.get(i));
 				s.append(System.getProperty("line.separator"));
 			}
-		
+
 			textSummary = s.toString();
 		}
-		
+
 		return textSummary;
 	}
 }

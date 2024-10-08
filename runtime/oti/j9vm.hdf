@@ -278,7 +278,7 @@ typedef UDATA (* lookupNativeAddressCallback)(struct J9VMThread *currentThread, 
 		<struct>J9VMAcquireVMAccessEvent</struct>
 		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
 	</event>
-	
+
 	<event>
 		<name>J9HOOK_VM_RELEASEVMACCESS</name>
 		<description>
@@ -287,13 +287,13 @@ typedef UDATA (* lookupNativeAddressCallback)(struct J9VMThread *currentThread, 
 		<struct>J9VMReleaseVMAccessEvent</struct>
 		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
 	</event>
-	
+
 	<event>
 		<name>J9HOOK_VM_ACQUIRING_EXCLUSIVE_IN_NATIVE</name>
 		<description>
 				Triggered during acquire exclusive thread loop, when encountered a thread in native (which we did not count for exclusive).
 				This hook serves similar purpose as J9HOOK_VM_RELEASEVMACCESS, to ensure that required work for thread in native
-				is performed before exclusive access is obtained. 
+				is performed before exclusive access is obtained.
 		</description>
 		<struct>J9VMAcquringExclusiveInNativeEvent</struct>
 		<data type="struct J9VMThread*" name="currentThread" description="calling thread" />
@@ -608,7 +608,7 @@ typedef UDATA (* lookupNativeAddressCallback)(struct J9VMThread *currentThread, 
 		<description>
 			Triggered just before an instance field is read by the bytecode interpreter
 			or JNI.  If the listener allows a GC to occur, the object field in the hook
-			data must be kept up-to-date. 
+			data must be kept up-to-date.
 		</description>
 		<struct>J9VMGetFieldEvent</struct>
 		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
@@ -1206,7 +1206,7 @@ typedef UDATA (* lookupNativeAddressCallback)(struct J9VMThread *currentThread, 
 		<struct>J9VMSleepEvent</struct>
 		<data type="struct J9VMThread *" name="currentThread" description="current thread" />
 		<data type="I_64" name="millis" description="milliseconds to sleep for" />
-		<data type="IDATA" name="nanos" description="nanoseconds to sleep for" />
+		<data type="I_32" name="nanos" description="nanoseconds to sleep for" />
 	</event>
 
 	<event>
@@ -1216,6 +1216,9 @@ typedef UDATA (* lookupNativeAddressCallback)(struct J9VMThread *currentThread, 
 		</description>
 		<struct>J9VMSleptEvent</struct>
 		<data type="struct J9VMThread *" name="currentThread" description="current thread" />
+		<data type="I_64" name="millis" description="milliseconds to sleep for" />
+		<data type="I_32" name="nanos" description="nanoseconds to sleep for" />
+		<data type="I_64" name="startNanos" description="current time in nanos when sleep began" />
 	</event>
 
 	<event>
@@ -1404,7 +1407,6 @@ typedef UDATA (* lookupNativeAddressCallback)(struct J9VMThread *currentThread, 
 	<event>
 		<name>J9HOOK_VM_CRIU_RESTORE</name>
 		<description>Triggered at the beginning of CRIU restore, just after runInternalJVMRestoreHooks()</description>
-		<once />
 		<struct>J9VMCRIURestoreEvent</struct>
 		<data type="struct J9VMThread*" name="vmThread" description="current thread" />
 	</event>

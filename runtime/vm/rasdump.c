@@ -647,9 +647,11 @@ void
 J9RASCheckDump(J9JavaVM* javaVM)
 {
 #if defined(LINUX) || defined(AIXPPC)
-	IDATA rc;
-	U_64 limit;
+	IDATA rc = 0;
+	U_64 limit = 0;
+#if defined(LINUX)
 	IDATA fd = -1;
+#endif /* defined(LINUX) */
 
 	PORT_ACCESS_FROM_JAVAVM(javaVM);
 

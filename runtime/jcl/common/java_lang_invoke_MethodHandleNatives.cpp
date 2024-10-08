@@ -1114,7 +1114,7 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 						lookupOptions |= J9_LOOK_INTERFACE;
 						break;
 					case MH_REF_INVOKESPECIAL:
-						lookupOptions |= (J9_LOOK_VIRTUAL | J9_LOOK_ALLOW_FWD | J9_LOOK_HANDLE_DEFAULT_METHOD_CONFLICTS);
+						lookupOptions |= (J9_LOOK_VIRTUAL | J9_LOOK_HANDLE_DEFAULT_METHOD_CONFLICTS);
 						break;
 					case MH_REF_INVOKESTATIC:
 						lookupOptions |= J9_LOOK_STATIC;
@@ -1281,7 +1281,7 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 							while ('[' == J9UTF8_DATA(signature)[sigOffset]) {
 								sigOffset += 1;
 							}
-							if (IS_REF_OR_VAL_SIGNATURE(J9UTF8_DATA(signature)[sigOffset])) {
+							if (IS_CLASS_SIGNATURE(J9UTF8_DATA(signature)[sigOffset])) {
 								sigOffset += 1;
 								omrthread_monitor_enter(vm->classTableMutex);
 								UDATA clConstraintResult = verifyData->checkClassLoadingConstraintForNameFunction(
@@ -1463,7 +1463,7 @@ Java_java_lang_invoke_MethodHandleNatives_getMembers(
 					UDATA classDepth = 0;
 					if (J9_ARE_ANY_BITS_SET(matchFlags, MN_SEARCH_SUPERCLASSES)) {
 						/* walk superclasses */
-						J9CLASS_DEPTH(defClass);
+						classDepth = J9CLASS_DEPTH(defClass);
 					}
 					J9Class *currentClass = defClass;
 
@@ -1568,7 +1568,7 @@ Java_java_lang_invoke_MethodHandleNatives_getMembers(
 					UDATA classDepth = 0;
 					if (J9_ARE_ANY_BITS_SET(matchFlags, MN_SEARCH_SUPERCLASSES)) {
 						/* walk superclasses */
-						J9CLASS_DEPTH(defClass);
+						classDepth = J9CLASS_DEPTH(defClass);
 					}
 					J9Class *currentClass = defClass;
 

@@ -234,12 +234,33 @@ findJ9ClassForROMClass(J9VMThread *vmThread, J9ROMClass *romClass, J9ClassLoader
 {
 	J9UTF8 const *utfClassName = J9ROMCLASS_CLASSNAME(romClass);
 	J9JavaVM *vm = vmThread->javaVM;
+	J9SharedClassConfig *config = vm->sharedClassConfig;
 	J9Class* ret = NULL;
-	if (j9shr_Query_IsAddressInCache(vm, romClass, romClass->romSize)) {
+
+	if (_J9ROMCLASS_J9MODIFIER_IS_SET(romClass, J9AccClassAnonClass)) {
+		/* Anonymous classes are not allowed in any class loader hash table. */
+		return NULL;
+	}
+
+	if (j9shr_Query_IsAddressInCache(vm, romClass, romClass->romSize)
+		&& (NULL != config->romToRamHashTable)
+	) {
 		J9ClassLoaderWalkState walkState;
 		J9ClassLoader* classLoader = NULL;
 		BOOLEAN fastMode = J9_ARE_ALL_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_FAST_CLASS_HASH_TABLE);
 		J9Class* ramClass = NULL;
+		RomToRamEntry *resultEntry;
+		RomToRamQueryEntry searchEntry;
+		searchEntry.romClass = (J9ROMClass *)((UDATA)romClass | ROM_TO_RAM_QUERY_TAG);
+
+		omrthread_rwmutex_enter_read(config->romToRamHashTableMutex);
+		resultEntry = hashTableFind(config->romToRamHashTable, &searchEntry);
+		omrthread_rwmutex_exit_read(config->romToRamHashTableMutex);
+		if (NULL != resultEntry) {
+			ret = resultEntry->ramClass;
+			goto done;
+		}
+
 		if (!fastMode) {
 			omrthread_monitor_enter(vm->classTableMutex);
 		}
@@ -259,7 +280,7 @@ findJ9ClassForROMClass(J9VMThread *vmThread, J9ROMClass *romClass, J9ClassLoader
 			if (!fastMode) {
 				omrthread_monitor_exit(vm->classTableMutex);
 			}
-			goto done;
+			goto cacheresult;
 		}
 
 		ramClass = hashClassTableAt(vm->extensionClassLoader, J9UTF8_DATA(utfClassName), J9UTF8_LENGTH(utfClassName));
@@ -271,7 +292,7 @@ findJ9ClassForROMClass(J9VMThread *vmThread, J9ROMClass *romClass, J9ClassLoader
 			if (!fastMode) {
 				omrthread_monitor_exit(vm->classTableMutex);
 			}
-			goto done;
+			goto cacheresult;
 		}
 
 		ramClass = hashClassTableAt(vm->applicationClassLoader, J9UTF8_DATA(utfClassName), J9UTF8_LENGTH(utfClassName));
@@ -283,7 +304,7 @@ findJ9ClassForROMClass(J9VMThread *vmThread, J9ROMClass *romClass, J9ClassLoader
 			if (!fastMode) {
 				omrthread_monitor_exit(vm->classTableMutex);
 			}
-			goto done;
+			goto cacheresult;
 		}
 
 		classLoader = vm->internalVMFunctions->allClassLoadersStartDo(&walkState, vm, 0);
@@ -306,6 +327,14 @@ findJ9ClassForROMClass(J9VMThread *vmThread, J9ROMClass *romClass, J9ClassLoader
 		vm->internalVMFunctions->allClassLoadersEndDo(&walkState);
 		if (!fastMode) {
 			omrthread_monitor_exit(vm->classTableMutex);
+		}
+cacheresult:
+		if (NULL != ret) {
+			RomToRamEntry newEntry;
+			newEntry.ramClass = ret;
+			omrthread_rwmutex_enter_write(config->romToRamHashTableMutex);
+			hashTableAdd(config->romToRamHashTable, &newEntry);
+			omrthread_rwmutex_exit_write(config->romToRamHashTableMutex);
 		}
 	} else {
 		ret = peekClassHashTable(vmThread, *resultClassLoader, J9UTF8_DATA(utfClassName), J9UTF8_LENGTH(utfClassName));

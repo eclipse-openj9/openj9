@@ -96,6 +96,7 @@
 #define J9ClassAllowsInitialDefaultValue 0x400000
 #define J9ClassAllowsNonAtomicCreation 0x800000
 #define J9ClassNeedToPruneMemberNames 0x1000000
+#define J9ClassArrayIsNullRestricted 0x2000000
 
 /* @ddr_namespace: map_to_type=J9FieldFlags */
 
@@ -393,12 +394,13 @@ typedef struct J9JFRThreadStart {
 #define J9JFRTHREADSTART_STACKTRACE(jfrEvent) ((UDATA*)(((J9JFRThreadStart*)(jfrEvent)) + 1))
 
 /* Variable-size structure - stackTraceSize worth of UDATA follow the fixed portion */
-typedef struct J9JFRThreadSleep {
+typedef struct J9JFRThreadSlept {
 	J9JFR_EVENT_WITH_STACKTRACE_FIELDS
 	I_64 time;
-} J9JFRThreadSleep;
+	I_64 duration;
+} J9JFRThreadSlept;
 
-#define J9JFRTHREADSLEEP_STACKTRACE(jfrEvent) ((UDATA*)(((J9JFRThreadSleep*)(jfrEvent)) + 1))
+#define J9JFRTHREADSLEPT_STACKTRACE(jfrEvent) ((UDATA*)(((J9JFRThreadSlept*)(jfrEvent)) + 1))
 
 #endif /* defined(J9VM_OPT_JFR) */
 
@@ -1218,6 +1220,7 @@ typedef struct J9SharedClassJavacoreDataDescriptor {
 	UDATA numStartupHints;
 	UDATA startupHintBytes;
 	UDATA nattach;
+	UDATA currentOSPageSize; /* memory page size of the current running OS */
 } J9SharedClassJavacoreDataDescriptor;
 
 typedef struct J9SharedStringFarm {
@@ -1316,6 +1319,7 @@ typedef struct J9SharedClassCacheDescriptor {
 	void* metadataStartAddress;
 	struct J9MemorySegment* metadataMemorySegment;
 	UDATA cacheSizeBytes;
+	UDATA osPageSizeInHeader;
 	void* deployedROMClassStartAddress;
 	struct J9SharedClassCacheDescriptor* next;
 	struct J9SharedClassCacheDescriptor* previous;
@@ -1413,6 +1417,11 @@ typedef struct J9SharedClassConfig {
 	const char* cacheName;
 	I_8 layer;
 	U_64 readOnlyCacheRuntimeFlags;
+	/* This table is a cache for exceptiondescribe.c:findJ9ClassForROMClass
+	 * and does not contain mappings for every romClass to ramClass.
+	 */
+	struct J9HashTable *romToRamHashTable;
+	omrthread_rwmutex_t romToRamHashTableMutex;
 } J9SharedClassConfig;
 
 typedef struct J9SharedClassPreinitConfig {
@@ -2972,15 +2981,6 @@ typedef struct J9VMGCSegregatedAllocationCacheEntry {
 
 #if defined(J9VM_GC_THREAD_LOCAL_HEAP)
 
-typedef struct J9GCVMInfo {
-	UDATA tlhSize;
-	UDATA tlhThreshold;
-} J9GCVMInfo;
-
-typedef struct J9GCThreadInfo {
-	UDATA foobar;
-} J9GCThreadInfo;
-
 typedef struct J9ModronThreadLocalHeap {
 	U_8* heapBase;
 	U_8* realHeapTop;
@@ -3400,6 +3400,9 @@ typedef struct J9Class {
 	/* A linked list of weak global references to every resolved MemberName whose clazz is this class. */
 	J9MemberNameListNode *memberNames;
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+	struct J9Class *nullRestrictedArrayClass;
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 } J9Class;
 
 /* Interface classes can never be instantiated, so the following fields in J9Class will not be used:
@@ -3496,6 +3499,13 @@ typedef struct J9ArrayClass {
 	/* A linked list of weak global references to every resolved MemberName whose clazz is this class. */
 	J9MemberNameListNode *memberNames;
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+	/*
+	 * A nullable J9ArrayClass points to its null-restricted companion, if one exists.
+	 * A null-restricted J9ArrayClass points to its nullable companion, if one exists.
+	 */
+	struct J9Class *companionArray;
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 } J9ArrayClass;
 
 
@@ -4308,6 +4318,7 @@ typedef struct J9DelayedLockingOpertionsRecord {
 #define J9VM_CRIU_ENABLE_CRIU_SEC_PROVIDER 0x40
 #define J9VM_CRAC_IS_CHECKPOINT_ENABLED 0x80
 #define J9VM_CRIU_SUPPORT_DEBUG_ON_RESTORE 0x100
+#define J9VM_CRIU_TRANSITION_TO_DEBUG_INTERPRETER 0x200
 
 /* matches maximum count defined by JDWP in threadControl.c */
 #define J9VM_CRIU_MAX_DEBUG_THREADS_STORED 10
@@ -4365,6 +4376,8 @@ typedef struct J9CRIUCheckpointState {
 	/* the array of threads is updated by the JDWP agent */
 	jthread javaDebugThreads[J9VM_CRIU_MAX_DEBUG_THREADS_STORED];
 	UDATA javaDebugThreadCount;
+	jvmtiEnv *jvmtienv;
+	jvmtiCapabilities requiredCapabilities;
 } J9CRIUCheckpointState;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
@@ -4809,6 +4822,7 @@ typedef struct J9InternalVMFunctions {
 	void  (JNICALL *sendInit)(struct J9VMThread *vmContext, j9object_t object, struct J9Class *senderClass, UDATA lookupOptions) ;
 	void  ( *internalAcquireVMAccessNoMutex)(struct J9VMThread * vmThread) ;
 	struct J9Class*  ( *internalCreateArrayClass)(struct J9VMThread* vmThread, struct J9ROMArrayClass* romClass, struct J9Class* elementClass) ;
+	struct J9Class *(*internalCreateArrayClassWithOptions)(struct J9VMThread *vmThread, struct J9ROMArrayClass *romClass, struct J9Class *elementClass, UDATA options);
 	IDATA  ( *attachSystemDaemonThread)(struct J9JavaVM * vm, struct J9VMThread ** p_env, const char * threadName) ;
 	void  ( *internalAcquireVMAccessClearStatus)(struct J9VMThread * vmThread, UDATA flags) ;
 #if defined(J9VM_OPT_REFLECT)
@@ -5139,14 +5153,13 @@ typedef struct J9InternalVMFunctions {
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 	BOOLEAN (*jvmCheckpointHooks)(struct J9VMThread *currentThread);
 	BOOLEAN (*jvmRestoreHooks)(struct J9VMThread *currentThread);
-	BOOLEAN (*isCRaCorCRIUSupportEnabled)(struct J9VMThread *currentThread);
-	BOOLEAN (*isCRaCorCRIUSupportEnabled_VM)(struct J9JavaVM *vm);
+	BOOLEAN (*isCRaCorCRIUSupportEnabled)(struct J9JavaVM *vm);
 	BOOLEAN (*isCRIUSupportEnabled)(struct J9VMThread *currentThread);
 	BOOLEAN (*enableCRIUSecProvider)(struct J9VMThread *currentThread);
-	BOOLEAN (*isCheckpointAllowed)(struct J9VMThread *currentThread);
+	BOOLEAN (*isCheckpointAllowed)(struct J9JavaVM *vm);
 	BOOLEAN (*isNonPortableRestoreMode)(struct J9VMThread *currentThread);
 	BOOLEAN (*isJVMInPortableRestoreMode)(struct J9VMThread *currentThread);
-	BOOLEAN (*isDebugOnRestoreEnabled)(struct J9VMThread *currentThread);
+	BOOLEAN (*isDebugOnRestoreEnabled)(struct J9JavaVM *vm);
 	void (*setRequiredGhostFileLimit)(struct J9VMThread *currentThread, U_32 ghostFileLimit);
 	BOOLEAN (*runInternalJVMCheckpointHooks)(struct J9VMThread *currentThread, const char **nlsMsgFormat);
 	BOOLEAN (*runInternalJVMRestoreHooks)(struct J9VMThread *currentThread, const char **nlsMsgFormat);
@@ -5188,6 +5201,9 @@ typedef struct J9InternalVMFunctions {
 #if defined(J9VM_ZOS_3164_INTEROPERABILITY) && (JAVA_SPEC_VERSION >= 17)
 	I_32 (*invoke31BitJNI_OnXLoad)(struct J9JavaVM *vm, void *handle, jboolean isOnLoad, void *reserved);
 #endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) && (JAVA_SPEC_VERSION >= 17) */
+#if defined(J9VM_OPT_JFR)
+	void (*jfrExecutionSample)(struct J9VMThread *currentThread, struct J9VMThread *sampleThread);
+#endif /* defined(J9VM_OPT_JFR) */
 } J9InternalVMFunctions;
 
 /* Jazz 99339: define a new structure to replace JavaVM so as to pass J9NativeLibrary to JVMTIEnv  */
@@ -5619,6 +5635,9 @@ typedef struct JFRState {
 	IDATA blobFileDescriptor;
 	void *jfrWriter;
 	UDATA jfrChunkCount;
+	void *constantEvents;
+	BOOLEAN isConstantEventsInitialized;
+	omrthread_monitor_t isConstantEventsInitializedMutex;
 } JFRState;
 
 typedef struct J9ReflectFunctionTable {
@@ -5838,7 +5857,6 @@ typedef struct J9JavaVM {
 	void* codertOldVMShutdown;
 	void* jitOldAboutToBootstrap;
 	void* jitOldVMShutdown;
-	struct J9GCVMInfo gcInfo;
 	void* gcExtensions;
 	UDATA gcAllocationType;
 	UDATA gcWriteBarrierType;
@@ -6108,6 +6126,7 @@ typedef struct J9JavaVM {
 	omrthread_monitor_t cifArgumentTypesCacheMutex;
 	struct J9UpcallThunkHeapList *thunkHeapHead;
 	omrthread_monitor_t thunkHeapListMutex;
+	struct J9HashTable *layoutStrFFITypeTable;
 #endif /* JAVA_SPEC_VERSION >= 16 */
 	struct J9HashTable* ensureHashedClasses;
 #if JAVA_SPEC_VERSION >= 19
@@ -6123,14 +6142,19 @@ typedef struct J9JavaVM {
 	J9VMContinuation **continuationT2Cache;
 	U_32 continuationT1Size;
 	U_32 continuationT2Size;
-#if defined(J9VM_PROF_CONTINUATION_ALLOCATION)
 	volatile U_32 t1CacheHit;
 	volatile U_32 t2CacheHit;
+	volatile U_32 cacheMiss;
+	volatile U_32 t2store;
+	volatile U_32 cacheFree;
+	volatile U_64 totalContinuationStackSize;
+#if defined(J9VM_PROF_CONTINUATION_ALLOCATION)
 	volatile I_64 avgCacheLookupTime;
 	volatile U_32 fastAlloc;
 	volatile U_32 slowAlloc;
 	volatile I_64 fastAllocAvgTime;
 	volatile I_64 slowAllocAvgTime;
+	volatile I_64 avgCacheFreeTime;
 #endif /* defined(J9VM_PROF_CONTINUATION_ALLOCATION) */
 #endif /* JAVA_SPEC_VERSION >= 19 */
 #if defined(J9VM_OPT_CRIU_SUPPORT)
@@ -6149,6 +6173,10 @@ typedef struct J9JavaVM {
 	JFRState jfrState;
 	J9JFRBuffer jfrBuffer;
 	omrthread_monitor_t jfrBufferMutex;
+	omrthread_monitor_t jfrSamplerMutex;
+	omrthread_t jfrSamplerThread;
+	UDATA jfrSamplerState;
+	IDATA jfrAsyncKey;
 #endif /* defined(J9VM_OPT_JFR) */
 #if JAVA_SPEC_VERSION >= 22
 	omrthread_monitor_t closeScopeMutex;
@@ -6156,6 +6184,11 @@ typedef struct J9JavaVM {
 #endif /* JAVA_SPEC_VERSION >= 22 */
 	UDATA unsafeIndexableHeaderSize;
 } J9JavaVM;
+
+#define J9JFR_SAMPLER_STATE_UNINITIALIZED 0
+#define J9JFR_SAMPLER_STATE_RUNNING 1
+#define J9JFR_SAMPLER_STATE_STOP 2
+#define J9JFR_SAMPLER_STATE_DEAD 3
 
 #define J9VM_PHASE_STARTUP  1
 #define J9VM_PHASE_NOT_STARTUP  2
@@ -6274,6 +6307,11 @@ typedef struct J9JavaVM {
 /* Intended to compute the composition type from every 8 bytes of the composition type array */
 #define J9_FFI_UPCALL_COMPOSITION_TYPE_DWORD_SIZE 8
 
+/* Intended to compare the layout for struct {float, float} or its variants in upcall. */
+#define J9_FFI_UPCALL_STRUCT_FF_SIZE 8
+/* Intended to compare the layout for struct {double, double} or its variants in upcall. */
+#define J9_FFI_UPCALL_STRUCT_DD_SIZE 16
+
 typedef struct J9UpcallSigType {
 	U_8 type;
 	U_32 sizeInByte:24;
@@ -6312,6 +6350,12 @@ typedef struct J9UpcallMetaDataEntry {
 	UDATA thunkAddrValue;
 	J9UpcallMetaData *upcallMetaData;
 } J9UpcallMetaDataEntry;
+
+typedef struct J9LayoutStrFFITypeEntry {
+	U_8 *layoutStr;
+	UDATA layoutStrLength;
+	void *structFFIType;
+} J9LayoutStrFFITypeEntry;
 
 #endif /* JAVA_SPEC_VERSION >= 16 */
 

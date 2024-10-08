@@ -29,9 +29,8 @@ import java.util.Enumeration;
  * to enumerate integer values rather than incur the overhead of allocating Integer objects.
  */
 public interface IntEnumeration extends Enumeration {
-    /**
-     * Return the next integer value.
-     */
-    public long nextInt();
+	/**
+	 * Return the next integer value.
+	 */
+	public long nextInt();
 }
-

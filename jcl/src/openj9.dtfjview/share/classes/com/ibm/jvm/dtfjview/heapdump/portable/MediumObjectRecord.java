@@ -28,40 +28,40 @@ import java.io.IOException;
 import com.ibm.jvm.dtfjview.heapdump.ReferenceIterator;
 
 public class MediumObjectRecord extends ObjectRecord
-{ 
+{
 	private final boolean _is64Bit;
-	
+
 	public MediumObjectRecord(long address, long previousAddress,
 			long classAddress, int hashCode,
 			ReferenceIterator references, boolean is64Bit, boolean is32BitHash)
 	{
 		super(address,previousAddress,classAddress,hashCode,references,is32BitHash);
-		
+
 		_is64Bit = is64Bit;
 	}
-	
+
 	protected void writeHeapDump(DataOutput out) throws IOException
 	{
 		byte tagAndFlag = PortableHeapDumpFormatter.MEDIUM_OBJECT_RECORD_TAG;
 		tagAndFlag |= _numberOfReferences << 3;
 		tagAndFlag |= _gapSize << 2;
 		tagAndFlag |= _referenceFieldSize;
-		
+
 		out.writeByte(tagAndFlag);
 		writeReference(out,_gapSize,_gapPreceding);
-		
+
 		if(_is64Bit) {
 			out.writeLong(_classAddress);
-		} else { 
-			out.writeInt((int)_classAddress); 
+		} else {
+			out.writeInt((int)_classAddress);
 		}
-		
-		// JVMs prior to 2.6 have a 16-bit hashcode for all objects, which is added to all PHD records. 
-		if (!_is32BitHash) { 
+
+		// JVMs prior to 2.6 have a 16-bit hashcode for all objects, which is added to all PHD records.
+		if (!_is32BitHash) {
 			out.writeShort(_hashCode);
 		}
 		// Note: JVM 2.6 and later have optional 32-bit hashcodes. We use a LongObjectRecord if the hashcode was set.
-		
+
 		writeReferences(out);
 	}
 

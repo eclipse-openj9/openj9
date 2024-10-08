@@ -38,7 +38,7 @@ final class SharedClassTokenHelperImpl extends SharedClassAbstractHelper impleme
 		initializeShareableClassloader(loader);
 	}
 
-	private native boolean findSharedClassImpl2(int loaderId, String className, ClassLoader loader, String token, 
+	private native boolean findSharedClassImpl2(int loaderId, String className, ClassLoader loader, String token,
 			boolean doFind, boolean doStore, byte[] romClassCookie);
 
 	private native boolean storeSharedClassImpl2(int loaderId, ClassLoader loader, String token, Class<?> clazz, byte[] flags);
@@ -110,7 +110,7 @@ final class SharedClassTokenHelperImpl extends SharedClassAbstractHelper impleme
 		}
 		return storeSharedClassImpl2(this.id, actualLoader, token, clazz, nativeFlags);
 	}
-	
+
 	@Override
 	String getHelperType() {
 		return "SharedClassTokenHelper"; //$NON-NLS-1$

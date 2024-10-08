@@ -403,18 +403,41 @@ TR_J9InlinerPolicy::alwaysWorthInlining(TR_ResolvedMethod * calleeMethod, TR::No
       case TR::java_nio_ByteOrder_nativeOrder:
          return true;
 
-      // In Java9 the following enum values match both sun.misc.Unsafe and
-      // jdk.internal.misc.Unsafe The sun.misc.Unsafe methods are simple
-      // wrappers to call jdk.internal impls, and we want to inline them. Since
-      // the same code can run with Java8 classes where sun.misc.Unsafe has the
-      // JNI impl, we need to differentiate by testing with isNative(). If it is
-      // native, then we don't need to inline it as it will be handled
-      // elsewhere.
+      case TR::jdk_internal_misc_Unsafe_compareAndExchangeInt:
+      case TR::jdk_internal_misc_Unsafe_compareAndExchangeLong:
+      case TR::jdk_internal_misc_Unsafe_compareAndExchangeReference:
+         if (comp()->target().cpu.isPower() || comp()->target().cpu.isX86())
+            {
+            return false;
+            }
+         break;
+
+      /* In Java9 the compareAndSwap[Int|Long|Object] and copyMemory enums match
+       * both sun.misc.Unsafe and jdk.internal.misc.Unsafe. The sun.misc.Unsafe
+       * methods are simple wrappers to call jdk.internal impls, and we want to
+       * inline them. Since the same code can run with Java8 classes where
+       * sun.misc.Unsafe has the JNI impl, we need to differentiate by testing
+       * with isNative(). If it is native, then we don't need to inline it as it
+       * will be handled elsewhere.
+       *
+       * Starting from Java12, compareAndExchangeObject was changed from being a
+       * native to being a simple wrapper to call compareAndExchangeReference.
+       * The enum matches both cases and we only want to force inlining on the
+       * non-native case. If the native case reaches here, it means it already
+       * failed the isInlineableJNI check and should not be force inlined.
+       */
+      case TR::jdk_internal_misc_Unsafe_compareAndExchangeObject:
+         if (comp()->target().cpu.isPower() || comp()->target().cpu.isX86())
+            {
+            return !calleeMethod->isNative();
+            }
+         break;
       case TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z:
       case TR::sun_misc_Unsafe_compareAndSwapLong_jlObjectJJJ_Z:
       case TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z:
       case TR::sun_misc_Unsafe_copyMemory:
          return !calleeMethod->isNative();
+
       default:
          break;
       }
@@ -887,7 +910,7 @@ TR_J9InlinerPolicy::genCodeForUnsafeGetPut(TR::Node* unsafeAddress,
    //     - tests: NULL test
    //     - blocks: directAccess, directAccessWithConversion
    // 6.) !typeTestsNeeded && !arrayBlockNeeded && !conversionNeeded
-   //     (i.e.: object is known to be non-array at compnile time AND data element size >= 4 (int, long))
+   //     (i.e.: object is known to be non-array at compile time AND data element size >= 4 (int, long))
    //     - test: none
    //     - block: directAccess
 
@@ -1065,17 +1088,8 @@ TR_J9InlinerPolicy::genCodeForUnsafeGetPut(TR::Node* unsafeAddress,
       //SPECIAL CASE
       if (!directAccessWithConversionTreeTop && conversionNeeded)
          {
-         //Generating block for arrayDirectAccess (direct access with conversion)
-         arrayDirectAccessBlock = TR::Block::createEmptyBlock(callNodeTreeTop->getNode(), comp(),
-                                                              joinBlock->getFrequency());
-         arrayDirectAccessBlock->append(arrayDirectAccessTreeTop);
-         beforeCallBlock->getExit()->insertTreeTopsAfterMe(arrayDirectAccessBlock->getEntry(), arrayDirectAccessBlock->getExit());
-
-         //add arrayDirectAccessBlock to cfg
-         cfg->addNode(arrayDirectAccessBlock);
-         cfg->addEdge(TR::CFGEdge::createEdge(beforeCallBlock, arrayDirectAccessBlock, trMemory()));
-         cfg->addEdge(TR::CFGEdge::createEdge(arrayDirectAccessBlock, joinBlock, trMemory()));
-         cfg->removeEdge(beforeCallBlock, joinBlock);
+         //Since no runtime tests are being performed, we can simply append the arrayDirectAccessTreeTop to beforeCallBlock
+         beforeCallBlock->append(arrayDirectAccessTreeTop);
          }
       else
          {
@@ -1093,17 +1107,8 @@ TR_J9InlinerPolicy::genCodeForUnsafeGetPut(TR::Node* unsafeAddress,
       }
    else // CASE (6)
       {
-      //Generating block for direct access
-      directAccessBlock = TR::Block::createEmptyBlock(callNodeTreeTop->getNode(), comp(),
-                                                      joinBlock->getFrequency());
-      directAccessBlock->append(directAccessTreeTop);
-      beforeCallBlock->getExit()->insertTreeTopsAfterMe(directAccessBlock->getEntry(), directAccessBlock->getExit());
-
-      //add directAccessBlock to cfg
-      cfg->addNode(directAccessBlock);
-      cfg->addEdge(TR::CFGEdge::createEdge(beforeCallBlock, directAccessBlock, trMemory()));
-      cfg->addEdge(TR::CFGEdge::createEdge(directAccessBlock, joinBlock, trMemory()));
-      cfg->removeEdge(beforeCallBlock, joinBlock);
+      //Since no runtime tests are being performed, we can simply append the directAccessTreeTop to beforeCallBlock
+      beforeCallBlock->append(directAccessTreeTop);
       }
 
    if (directAccessBlock)
@@ -1413,7 +1418,8 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
    TR_OpaqueClassBlock *javaLangClass = comp()->getClassClassPointer(/* isVettedForAOT = */ true);
 
    int length;
-   const char *objTypeSig = unsafeCall->getChild(1)->getSymbolReference() ? unsafeCall->getChild(1)->getSymbolReference()->getTypeSignature(length) : NULL;
+   const char *objTypeSig = unsafeCall->getChild(1)->getOpCode().hasSymbolReference() ?
+         unsafeCall->getChild(1)->getSymbolReference()->getTypeSignature(length) : NULL;
 
    // There are four cases where we cannot be sure of the Object type at compile time:
    // 1.) The object's type signature is unavailable/unknown
@@ -1722,28 +1728,32 @@ TR_J9InlinerPolicy::createUnsafeMonitorOp(TR::ResolvedMethodSymbol *calleeSymbol
    }
 
 bool
-TR_J9InlinerPolicy::createUnsafeCASCallDiamond( TR::TreeTop *callNodeTreeTop, TR::Node *callNode)
+TR_J9InlinerPolicy::createUnsafeCASCallDiamond(TR::TreeTop *callNodeTreeTop, TR::Node *callNode)
    {
    // This method is used to create an if diamond around a call to any of the unsafe compare and swap methods
    // Codegens have a fast path for the compare and swaps, but cannot deal with the case where the offset value passed in to a the CAS is low tagged
    // (A low tagged offset value means the object being passed in is a java/lang/Class object, and we want a static field)
 
-   // Regarding which checks/diamonds get generated, there are three possible cases:
+   // Regarding which type checks/diamonds get generated, there are three possible cases:
    // 1.) Only the low tagged check is generated. This will occur either when gencon GC policy is being used, or under
    //     balanced GC policy with offheap allocation enabled if the object being operated on is known NOT to be an array
    //     at compile time.
-   // 2.) No checks are generated. This will occur under balanced GC policy with offheap allocation enabled if the object
+   // 2.) No type checks are generated. This will occur under balanced GC policy with offheap allocation enabled if the object
    //     being operated on is known to be an array at compile time (since if the object is an array, it can't also be a
    //     java/lang/Class object).
    // 3.) Both the array and low tagged checks are generated. This will occur under balanced GC policy with offheap allocation
    //     enabled if the type of the object being operated on is unknown at compile time.
+   //
+   // In addition to type checks, a NULL check on the object address is needed to ensure that we do not try to load dataAddr
+   // from a NULL reference. This is only a concern when offheap is enabled AND there is a possibility that the object is an array.
+   // so the NULL check will only be generated in cases (2) and (3).
 
    // This method assumes the offset node is of type long, and is the second child of the unsafe call.
    TR_InlinerDelimiter delimiter(tracer(),"createUnsafeCASCallDiamond");
    debugTrace(tracer(),"Transforming unsafe callNode = %p",callNode);
 
    int length;
-   const char *objTypeSig = callNode->getChild(1)->getSymbolReference() ? callNode->getChild(1)->getSymbolReference()->getTypeSignature(length) : NULL;
+   const char *objTypeSig = callNode->getChild(1)->getOpCode().hasSymbolReference() ? callNode->getChild(1)->getSymbolReference()->getTypeSignature(length) : NULL;
 
    // There are four cases where we cannot be sure of the Object type at compile time:
    // 1.) The object's type signature is unavailable/unknown
@@ -1777,14 +1787,25 @@ TR_J9InlinerPolicy::createUnsafeCASCallDiamond( TR::TreeTop *callNodeTreeTop, TR
 
    TR::Node *offsetNode = callNode->getChild(2);
 
-   TR::TreeTop *compareTree;
+   TR::TreeTop *compareTree = NULL;
+   TR::TreeTop *lowTagAccessTreeTop = NULL;
 
-   //do not generate low tagged test in case (2)
-   if (!arrayTestNeeded && arrayBlockNeeded)
-      compareTree = NULL;
-   else
-      compareTree = genClassCheckForUnsafeGetPut(offsetNode, /* branchIfLowTagged */ false );
+   //generate low tagged test/access block in cases (1) and (3)
+   if (arrayTestNeeded || !arrayBlockNeeded)
+      {
+      //create lowtag test treetop
+      compareTree = genClassCheckForUnsafeGetPut(offsetNode->duplicateTree(), /* branchIfLowTagged */ false );
 
+      //create lowtag access treetop
+      lowTagAccessTreeTop = TR::TreeTop::create(comp(),callNodeTreeTop->getNode()->duplicateTree());
+      lowTagAccessTreeTop->getNode()->getFirstChild()->setVisitCount(_inliner->getVisitCount());
+
+      debugTrace(tracer(),"lowTagAccessTreeTop = %p",lowTagAccessTreeTop->getNode());
+      }
+
+
+   TR::TreeTop *isNullTreeTop = NULL;
+   TR::TreeTop *nonNullAccessTreeTop = NULL;
    TR::TreeTop *isArrayTreeTop = NULL;
    TR::TreeTop *arrayAccessTreeTop = NULL;
    TR::TreeTop *nonArrayAccessTreeTop = NULL;
@@ -1842,31 +1863,19 @@ TR_J9InlinerPolicy::createUnsafeCASCallDiamond( TR::TreeTop *callNodeTreeTop, TR
 
       CASicallNode->setIsSafeForCGToFastPathUnsafeCall(true);
 
-      //if array test is being generated, need to create non-array access treetop (same as default)
-      if (isArrayTreeTop)
-         nonArrayAccessTreeTop = TR::TreeTop::create(comp(),callNodeTreeTop->getNode()->duplicateTree());
+      //create NULL test treetop
+      TR::Node *objAddr = callNodeTreeTop->getNode()->getChild(0)->getChild(1)->duplicateTree();
+      TR::Node *isNullNode = TR::Node::createif(TR::ifacmpeq, objAddr, TR::Node::create(objAddr, TR::aconst, 0, 0), NULL);
+      isNullTreeTop = TR::TreeTop::create(comp(), isNullNode);
       }
 #endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
 
-   TR::TreeTop *branchTargetTree;
-   TR::TreeTop *fallThroughTree;
+   //default access tree (non-array, non-lowtagged)
+   TR::TreeTop *defaultAccessTreeTop = TR::TreeTop::create(comp(),callNodeTreeTop->getNode()->duplicateTree());
+   defaultAccessTreeTop->getNode()->getFirstChild()->setIsSafeForCGToFastPathUnsafeCall(true);
+   defaultAccessTreeTop->getNode()->getFirstChild()->setVisitCount(_inliner->getVisitCount());
 
-   //only generate if and else trees for low tagged test in cases (1) and (3)
-   if (compareTree != NULL)
-      {
-      // genClassCheck generates a ifcmpne offset&mask 1, meaning if it is NOT
-      // lowtagged (ie offset&mask == 0), the branch will be taken
-      branchTargetTree = TR::TreeTop::create(comp(),callNodeTreeTop->getNode()->duplicateTree());
-      branchTargetTree->getNode()->getFirstChild()->setIsSafeForCGToFastPathUnsafeCall(true);
-
-      fallThroughTree = TR::TreeTop::create(comp(),callNodeTreeTop->getNode()->duplicateTree());
-
-
-      branchTargetTree->getNode()->getFirstChild()->setVisitCount(_inliner->getVisitCount());
-      fallThroughTree->getNode()->getFirstChild()->setVisitCount(_inliner->getVisitCount());
-
-      debugTrace(tracer(),"branchTargetTree = %p fallThroughTree = %p",branchTargetTree->getNode(),fallThroughTree->getNode());
-      }
+   debugTrace(tracer(),"defaultAccessTreeTop = %p", defaultAccessTreeTop->getNode());
 
 
    // the call itself may be commoned, so we need to create a temp for the callnode itself
@@ -1885,43 +1894,65 @@ TR_J9InlinerPolicy::createUnsafeCASCallDiamond( TR::TreeTop *callNodeTreeTop, TR
 
    TR::Block *callBlock = callNodeTreeTop->getEnclosingBlock();
 
-   if (arrayTestNeeded) //in case (3), we generate the array test diamond, followed by the low tagged check test
+   if (arrayTestNeeded) //in case (3), we generate the null test diamond, then the array test diamond, and then the low tagged test diamond
       {
-      callBlock->createConditionalBlocksBeforeTree(callNodeTreeTop, isArrayTreeTop, arrayAccessTreeTop, nonArrayAccessTreeTop, comp()->getFlowGraph(), false, false);
-      nonArrayAccessTreeTop->getEnclosingBlock()->createConditionalBlocksBeforeTree(nonArrayAccessTreeTop, compareTree, branchTargetTree, fallThroughTree, comp()->getFlowGraph(), false, false);
+      TR::TreeTop *nonNullAccessTreeTop = TR::TreeTop::create(comp(),callNodeTreeTop->getNode()->duplicateTree());
+
+      //add null test and array test
+      callBlock->createConditionalBlocksBeforeTree(callNodeTreeTop, isNullTreeTop, defaultAccessTreeTop, nonNullAccessTreeTop, comp()->getFlowGraph(), false, false);
+      TR::Block *joinBlock = nonNullAccessTreeTop->getEnclosingBlock()->createConditionalBlocksBeforeTree(nonNullAccessTreeTop, isArrayTreeTop, arrayAccessTreeTop, compareTree, comp()->getFlowGraph(), false, false);
+
+      TR::CFG *cfg = comp()->getFlowGraph();
+
+      //add lowtag test
+      TR::Block *isLowTaggedBlock = compareTree->getEnclosingBlock();
+      cfg->removeEdge(isLowTaggedBlock, joinBlock);
+
+      //add branch path (default access)
+      //note that genClassCheck generates a ifcmpne offset&mask 1, meaning if it is NOT
+      //lowtagged (ie offset&mask == 0), the branch will be taken
+      TR::Block *defaultAccessBlock = defaultAccessTreeTop->getEnclosingBlock();
+      compareTree->getNode()->setBranchDestination(defaultAccessBlock->getEntry());
+      cfg->addEdge(TR::CFGEdge::createEdge(isLowTaggedBlock, defaultAccessBlock, trMemory()));
+
+      //add fallthrough path (lowtag access)
+      TR::Block *lowTagAccessBlock = TR::Block::createEmptyBlock(compareTree->getNode(), comp(), isLowTaggedBlock->getFrequency(), isLowTaggedBlock);
+      lowTagAccessBlock->append(lowTagAccessTreeTop);
+      isLowTaggedBlock->getExit()->insertTreeTopsAfterMe(lowTagAccessBlock->getEntry(), lowTagAccessBlock->getExit());
+      cfg->addNode(lowTagAccessBlock);
+      cfg->addEdge(TR::CFGEdge::createEdge(isLowTaggedBlock, lowTagAccessBlock, trMemory()));
+      cfg->addEdge(TR::CFGEdge::createEdge(lowTagAccessBlock, joinBlock, trMemory()));
       }
-   else if (arrayBlockNeeded) //in case (2), no branching is needed: we simply need to replace the original CAS call with the modified array access block
+   else if (arrayBlockNeeded) //in case (2), we generate only the null test diamond
       {
-      callNodeTreeTop->insertAfter(arrayAccessTreeTop);
-      callNodeTreeTop->getPrevTreeTop()->join(callNodeTreeTop->getNextTreeTop());
-      callBlock->split(arrayAccessTreeTop->getNextTreeTop(), comp()->getFlowGraph(), true);
-      callBlock->split(arrayAccessTreeTop, comp()->getFlowGraph(), true);
+      callBlock->createConditionalBlocksBeforeTree(callNodeTreeTop, isNullTreeTop, defaultAccessTreeTop, arrayAccessTreeTop, comp()->getFlowGraph(), false, false);
       }
    else if (compareTree != NULL) //in case (1), we only generate the low tagged test diamond
-      callBlock->createConditionalBlocksBeforeTree(callNodeTreeTop, compareTree, branchTargetTree, fallThroughTree, comp()->getFlowGraph(), false, false);
-
+      {
+      callBlock->createConditionalBlocksBeforeTree(callNodeTreeTop, compareTree, defaultAccessTreeTop, lowTagAccessTreeTop, comp()->getFlowGraph(), false, false);
+      }
 
    // the original call will be deleted by createConditionalBlocksBeforeTree, but if the refcount was > 1, we need to insert stores.
    if (newSymbolReference)
       {
-      if (compareTree != NULL) //case (1) and (3) only
+      TR::Node *defaultAccessStoreNode = TR::Node::createWithSymRef(comp()->il.opCodeForDirectStore(dataType), 1, 1, defaultAccessTreeTop->getNode()->getFirstChild(), newSymbolReference);
+      TR::TreeTop *defaultAccessStoreTree = TR::TreeTop::create(comp(), defaultAccessStoreNode);
+
+      defaultAccessTreeTop->insertAfter(defaultAccessStoreTree);
+
+      debugTrace(tracer(),"Inserted store tree %p for branch target (taken) side of the diamond", defaultAccessStoreNode);
+
+      if (compareTree != NULL) //cases (1) and (3) only
          {
-         TR::Node *branchTargetStoreNode = TR::Node::createWithSymRef(comp()->il.opCodeForDirectStore(dataType), 1, 1, branchTargetTree->getNode()->getFirstChild(), newSymbolReference);
-         TR::TreeTop *branchTargetStoreTree = TR::TreeTop::create(comp(), branchTargetStoreNode);
+         TR::Node *lowTagAccessStoreNode = TR::Node::createWithSymRef(comp()->il.opCodeForDirectStore(dataType), 1, 1, lowTagAccessTreeTop->getNode()->getFirstChild(), newSymbolReference);
+         TR::TreeTop *lowTagAccessStoreTree = TR::TreeTop::create(comp(), lowTagAccessStoreNode);
 
-         branchTargetTree->insertAfter(branchTargetStoreTree);
+         lowTagAccessTreeTop->insertAfter(lowTagAccessStoreTree);
 
-         debugTrace(tracer(),"Inserted store tree %p for branch target (taken) side of the diamond", branchTargetStoreNode);
-
-         TR::Node *fallThroughStoreNode = TR::Node::createWithSymRef(comp()->il.opCodeForDirectStore(dataType), 1, 1, fallThroughTree->getNode()->getFirstChild(), newSymbolReference);
-         TR::TreeTop *fallThroughStoreTree = TR::TreeTop::create(comp(), fallThroughStoreNode);
-
-         fallThroughTree->insertAfter(fallThroughStoreTree);
-
-         debugTrace(tracer(),"Inserted store tree %p for fall-through side of the diamond", fallThroughStoreNode);
+         debugTrace(tracer(),"Inserted store tree %p for fall-through side of the diamond", lowTagAccessStoreNode);
          }
 
-      if (arrayAccessTreeTop != NULL) //case (1) only
+      if (arrayAccessTreeTop != NULL) //cases (2) and (3) only
          {
          TR::Node *arrayAccessStoreNode = TR::Node::createWithSymRef(comp()->il.opCodeForDirectStore(dataType), 1, 1, arrayAccessTreeTop->getNode()->getFirstChild(), newSymbolReference);
          TR::TreeTop *arrayAccessStoreTree = TR::TreeTop::create(comp(), arrayAccessStoreNode);
@@ -1968,7 +1999,7 @@ TR_J9InlinerPolicy::createUnsafeGetWithOffset(TR::ResolvedMethodSymbol *calleeSy
    TR_OpaqueClassBlock *javaLangClass = comp()->getClassClassPointer(/* isVettedForAOT = */ true);
 
    int length;
-   const char *objTypeSig = unsafeAddress->getSymbolReference() ? unsafeAddress->getSymbolReference()->getTypeSignature(length) : NULL;
+   const char *objTypeSig = unsafeAddress->getOpCode().hasSymbolReference() ? unsafeAddress->getSymbolReference()->getTypeSignature(length) : NULL;
 
    // There are four cases where we cannot be sure of the Object type at compile time:
    // 1.) The object's type signature is unavailable/unknown
@@ -2468,6 +2499,7 @@ TR_J9InlinerPolicy::inlineUnsafeCall(TR::ResolvedMethodSymbol *calleeSymbol, TR:
        !comp()->fej9()->traceableMethodsCanBeInlined()))
       return false;
 
+   static bool disableCAEIntrinsic = feGetEnv("TR_DisableCAEIntrinsic") != NULL;
    // I am not sure if having the same type between C/S and B/Z matters here.. ie. if the type is being used as the only distinguishing factor
    switch (callNode->getSymbol()->castToResolvedMethodSymbol()->getRecognizedMethod())
       {
@@ -2633,11 +2665,24 @@ TR_J9InlinerPolicy::inlineUnsafeCall(TR::ResolvedMethodSymbol *calleeSymbol, TR:
       case TR::sun_misc_Unsafe_objectFieldOffset:
          return false; // todo
 
+      case TR::jdk_internal_misc_Unsafe_compareAndExchangeInt:
+      case TR::jdk_internal_misc_Unsafe_compareAndExchangeLong:
+      case TR::jdk_internal_misc_Unsafe_compareAndExchangeObject:
+      case TR::jdk_internal_misc_Unsafe_compareAndExchangeReference:
+         if (disableCAEIntrinsic || !(comp()->target().cpu.isPower() || comp()->target().cpu.isX86()))
+            {
+            break;
+            }
+         // Fallthrough if previous if condition is not met.
       case TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z:
       case TR::sun_misc_Unsafe_compareAndSwapLong_jlObjectJJJ_Z:
       case TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z:
          if (callNode->isSafeForCGToFastPathUnsafeCall())
             return false;
+#if defined (J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+         if(TR::Compiler->om.isOffHeapAllocationEnabled())
+            return createUnsafeCASCallDiamond(callNodeTreeTop, callNode);
+#endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
          switch (callerSymbol->castToMethodSymbol()->getRecognizedMethod())
             {
             case TR::java_util_concurrent_ConcurrentHashMap_addCount:

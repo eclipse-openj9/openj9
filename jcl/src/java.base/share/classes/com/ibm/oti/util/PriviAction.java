@@ -1,5 +1,4 @@
 /*[INCLUDE-IF Sidecar16]*/
-
 package com.ibm.oti.util;
 
 /*
@@ -36,151 +35,151 @@ import com.ibm.oti.vm.MsgHelp;
  * Helper class to avoid multiple anonymous inner class for
  * <code>{@link java.security.AccessController#doPrivileged(PrivilegedAction)}</code>
  * calls.
- * 
+ *
  * @author OTI
  * @version initial
  */
 public class PriviAction implements PrivilegedAction {
 
-    // unique id for each possible action; used in switch statement in run()
-    private int action;
+	// unique id for each possible action; used in switch statement in run()
+	private int action;
 
-    private static final int GET_SYSTEM_PROPERTY = 1;
-    private static final int GET_SECURITY_POLICY = 2;
-    private static final int SET_ACCESSIBLE = 3;
-    private static final int GET_SECURITY_PROPERTY = 4;
-    private static final int LOAD_MESSAGES = 5;
-    private static final int GET_BUNDLE = 6;
+	private static final int GET_SYSTEM_PROPERTY = 1;
+	private static final int GET_SECURITY_POLICY = 2;
+	private static final int SET_ACCESSIBLE = 3;
+	private static final int GET_SECURITY_PROPERTY = 4;
+	private static final int LOAD_MESSAGES = 5;
+	private static final int GET_BUNDLE = 6;
 
-    // the possible argument types for all calls
-    //(using generic Object args and cast appropriately in run() is more expensive) 
-    private String stringArg1, stringArg2;
-    private AccessibleObject accessible;
-    private Locale locale;
+	// the possible argument types for all calls
+	//(using generic Object args and cast appropriately in run() is more expensive)
+	private String stringArg1, stringArg2;
+	private AccessibleObject accessible;
+	private Locale locale;
 
-    /**
-     * Creates a PrivilegedAction to get the security
-     * property with the given name. 
-     * 
-     * @param property	the name of the property
-     * 
-     * @see Security#getProperty
-     */
-    public static PrivilegedAction getSecurityProperty(String property) {
-        return new PriviAction(GET_SECURITY_PROPERTY, property);
-    }
+	/**
+	 * Creates a PrivilegedAction to get the security
+	 * property with the given name.
+	 *
+	 * @param property	the name of the property
+	 *
+	 * @see Security#getProperty
+	 */
+	public static PrivilegedAction getSecurityProperty(String property) {
+		return new PriviAction(GET_SECURITY_PROPERTY, property);
+	}
 
-   /**
-     * Creates a PrivilegedAction to load messages
-     * from the given name. 
-     * 
-     * @param resourceName	the name of the properties file
-     * 
-     * @see MsgHelp#loadMessages(String)
-     */
-    public static PrivilegedAction loadMessages(String resourceName) {
-    	return new PriviAction(LOAD_MESSAGES, resourceName);
-    }
+	/**
+	 * Creates a PrivilegedAction to load messages
+	 * from the given name.
+	 *
+	 * @param resourceName	the name of the properties file
+	 *
+	 * @see MsgHelp#loadMessages(String)
+	 */
+	public static PrivilegedAction loadMessages(String resourceName) {
+		return new PriviAction(LOAD_MESSAGES, resourceName);
+	}
 
-    private PriviAction(int action, String arg) {
-        this.action = action;
-        stringArg1 = arg;
-    }
+	private PriviAction(int action, String arg) {
+		this.action = action;
+		stringArg1 = arg;
+	}
 
-    /**
-     * Creates a PrivilegedAction to get the current security
-     * policy object. 
-     * 
-     * @see Policy#getPolicy
-     */
-    public PriviAction() {
-        action = GET_SECURITY_POLICY;
-    }
+	/**
+	 * Creates a PrivilegedAction to get the current security
+	 * policy object.
+	 *
+	 * @see Policy#getPolicy
+	 */
+	public PriviAction() {
+		action = GET_SECURITY_POLICY;
+	}
 
-    /**
-     * Creates a PrivilegedAction to disable the access
-     * checks to the given object. 
-     * 
-     * @param object	the object whose accessible flag
-     * 					will be set to <code>true</code>
-     * 
-     * @see AccessibleObject#setAccessible(boolean)
-     */
-    public PriviAction(AccessibleObject object) {
-        action = SET_ACCESSIBLE;
-        accessible = object;
-    }
-    
-    /**
-     * Creates a PrivilegedAction to return the value of
-     * the system property with the given key. 
-     * 
-     * @param property	the key of the system property
-     * 
-     * @see System#getProperty(String)
-     */
-    public PriviAction(String property) {
-        action = GET_SYSTEM_PROPERTY;
-        stringArg1 = property;
-    }
+	/**
+	 * Creates a PrivilegedAction to disable the access
+	 * checks to the given object.
+	 *
+	 * @param object	the object whose accessible flag
+	 * 					will be set to <code>true</code>
+	 *
+	 * @see AccessibleObject#setAccessible(boolean)
+	 */
+	public PriviAction(AccessibleObject object) {
+		action = SET_ACCESSIBLE;
+		accessible = object;
+	}
 
-    /**
-     * Creates a PrivilegedAction to return the value of
-     * the system property with the given key. 
-     * 
-     * @param property		the key of the system property
-     * @param defaultAnswer	the return value if the system property
-     * 						does not exist
-     * 
-     * @see System#getProperty(String, String)
-     */
-    public PriviAction(String property, String defaultAnswer) {
-        action = GET_SYSTEM_PROPERTY;
-        stringArg1 = property;
-        stringArg2 = defaultAnswer;
-    }
+	/**
+	 * Creates a PrivilegedAction to return the value of
+	 * the system property with the given key.
+	 *
+	 * @param property	the key of the system property
+	 *
+	 * @see System#getProperty(String)
+	 */
+	public PriviAction(String property) {
+		action = GET_SYSTEM_PROPERTY;
+		stringArg1 = property;
+	}
 
-   /**
-     * Creates a PrivilegedAction to load the resource bundle. 
-     * 
-     * @param bundleName	the name of the resource file
-     * @param locale		the locale
-     * 
-     * @see ResourceBundle#getBundle(String, Locale)
-     */
-    public PriviAction(String bundleName, Locale locale) {
-    	action = GET_BUNDLE;
-    	stringArg1 = bundleName;
-    	this.locale = locale;
-    }
+	/**
+	 * Creates a PrivilegedAction to return the value of
+	 * the system property with the given key.
+	 *
+	 * @param property		the key of the system property
+	 * @param defaultAnswer	the return value if the system property
+	 * 						does not exist
+	 *
+	 * @see System#getProperty(String, String)
+	 */
+	public PriviAction(String property, String defaultAnswer) {
+		action = GET_SYSTEM_PROPERTY;
+		stringArg1 = property;
+		stringArg2 = defaultAnswer;
+	}
 
-    /**
-     * Performs the actual privileged computation as defined
-     * by the constructor.
-     * 
-     * @see java.security.PrivilegedAction#run()
-     */
-    public Object run() {
-        switch (action) {
-        case GET_SYSTEM_PROPERTY:
-            return System.getProperty(stringArg1, stringArg2);
-        case GET_SECURITY_PROPERTY:
-            return Security.getProperty(stringArg1);
-        case GET_SECURITY_POLICY:
-            return Policy.getPolicy();
-        case LOAD_MESSAGES:
-            try {
-                return MsgHelp.loadMessages(stringArg1);
-            } catch (IOException e) {
-        		    e.printStackTrace();
-        	   }
-       		return null;
-        case GET_BUNDLE:
-        	   return ResourceBundle.getBundle(stringArg1, locale);
-        case SET_ACCESSIBLE:
-        	   accessible.setAccessible(true);
-        	   // fall through
-        }
-        return null;
-    }
+	/**
+	 * Creates a PrivilegedAction to load the resource bundle.
+	 *
+	 * @param bundleName	the name of the resource file
+	 * @param locale		the locale
+	 *
+	 * @see ResourceBundle#getBundle(String, Locale)
+	 */
+	public PriviAction(String bundleName, Locale locale) {
+		action = GET_BUNDLE;
+		stringArg1 = bundleName;
+		this.locale = locale;
+	}
+
+	/**
+	 * Performs the actual privileged computation as defined
+	 * by the constructor.
+	 *
+	 * @see java.security.PrivilegedAction#run()
+	 */
+	public Object run() {
+		switch (action) {
+		case GET_SYSTEM_PROPERTY:
+			return System.getProperty(stringArg1, stringArg2);
+		case GET_SECURITY_PROPERTY:
+			return Security.getProperty(stringArg1);
+		case GET_SECURITY_POLICY:
+			return Policy.getPolicy();
+		case LOAD_MESSAGES:
+			try {
+				return MsgHelp.loadMessages(stringArg1);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			return null;
+		case GET_BUNDLE:
+			return ResourceBundle.getBundle(stringArg1, locale);
+		case SET_ACCESSIBLE:
+			accessible.setAccessible(true);
+			// fall through
+		}
+		return null;
+	}
 }

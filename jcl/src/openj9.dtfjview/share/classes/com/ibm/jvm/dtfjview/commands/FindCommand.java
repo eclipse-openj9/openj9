@@ -99,7 +99,7 @@ public class FindCommand extends BaseJdmpviewCommand {
 			printLastMatchContent();
 		}
 
-		// prepend "0x" back to pattern for findnext command 
+		// prepend "0x" back to pattern for findnext command
 		restoreHexPrefix();
 	}
 
@@ -111,7 +111,7 @@ public class FindCommand extends BaseJdmpviewCommand {
 
 	private void printLastMatchContent() {
 		// forward onto the hexdump command
-		ctx.execute("hexdump" + " 0x" 
+		ctx.execute("hexdump" + " 0x"
 				+ Long.toHexString(findAtt.lastMatch) + " "
 				+ findAtt.numBytesToPrint, out);
 	}

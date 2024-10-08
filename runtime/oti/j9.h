@@ -323,6 +323,8 @@ static const struct { \
 #define J9_CLASS_DISALLOWS_LOCKING_FLAGS (J9ClassIsValueType | J9ClassIsValueBased)
 #define J9_CLASS_ALLOWS_LOCKING(clazz) J9_ARE_NO_BITS_SET((clazz)->classFlags, J9_CLASS_DISALLOWS_LOCKING_FLAGS)
 #define J9_IS_J9CLASS_VALUEBASED(clazz) J9_ARE_ALL_BITS_SET((clazz)->classFlags, J9ClassIsValueBased)
+/* Identity classes are not value types or interfaces. */
+#define J9_IS_J9CLASS_IDENTITY(clazz) J9_ARE_ALL_BITS_SET((clazz)->classFlags, J9ClassHasIdentity)
 #ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
 #define J9_IS_J9CLASS_VALUETYPE(clazz) J9_ARE_ALL_BITS_SET((clazz)->classFlags, J9ClassIsValueType)
 #else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
@@ -331,8 +333,12 @@ static const struct { \
 
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 #define J9CLASS_UNPADDED_INSTANCE_SIZE(clazz) J9_VALUETYPE_FLATTENED_SIZE(clazz)
-/* TODO replace with J9_IS_J9CLASS_ALLOW_DEFAULT_VALUE(clazz) J9_ARE_ALL_BITS_SET((clazz)->classFlags, J9ClassAllowsInitialDefaultValue)*/
+#define J9_IS_J9CLASS_ALLOW_DEFAULT_VALUE(clazz) J9_ARE_ALL_BITS_SET((clazz)->classFlags, J9ClassAllowsInitialDefaultValue)
 #define J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(clazz) J9_ARE_ALL_BITS_SET((clazz)->classFlags, J9ClassIsPrimitiveValueType)
+/**
+ * This macro can only be used to determine vm flattening for a J9ArrayClass.
+ * For non-array classes use J9_IS_FIELD_FLATTENED.
+ */
 #define J9_IS_J9CLASS_FLATTENED(clazz) J9_ARE_ALL_BITS_SET((clazz)->classFlags, J9ClassIsFlattened)
 
 #define J9ROMFIELD_IS_NULL_RESTRICTED(romField)	J9_ARE_ALL_BITS_SET((romField)->modifiers, J9FieldFlagIsNullRestricted)
@@ -340,24 +346,24 @@ static const struct { \
  * Disable flattening of volatile field that is > 8 bytes for now, as the current implementation of copyObjectFields() will tear this field.
  */
 #define J9_IS_FIELD_FLATTENED(fieldClazz, romFieldShape) \
-		(J9_IS_J9CLASS_FLATTENED(fieldClazz) && \
-		(J9_ARE_NO_BITS_SET((romFieldShape)->modifiers, J9AccVolatile) || (J9CLASS_UNPADDED_INSTANCE_SIZE(fieldClazz) <= sizeof(U_64))))
-/* This will replace J9_IS_FIELD_FLATTENED when QTypes are removed. J9_IS_J9CLASS_FLATTENED will return false since the current check requires a primitive value type. */
-#define J9_IS_NULL_RESTRICTED_FIELD_FLATTENED(fieldClazz, romFieldShape) \
 		(J9ROMFIELD_IS_NULL_RESTRICTED(romFieldShape) && \
 		J9_IS_J9CLASS_FLATTENED(fieldClazz) && \
 		(J9_ARE_NO_BITS_SET((romFieldShape)->modifiers, J9AccVolatile) || (J9CLASS_UNPADDED_INSTANCE_SIZE(fieldClazz) <= sizeof(U_64))))
 #define J9_VALUETYPE_FLATTENED_SIZE(clazz) (J9CLASS_HAS_4BYTE_PREPADDING((clazz)) ? ((clazz)->totalInstanceSize - sizeof(U_32)) : (clazz)->totalInstanceSize)
+#define J9_IS_J9ARRAYCLASS_NULL_RESTRICTED(clazz) J9_ARE_ALL_BITS_SET((clazz)->classFlags, J9ClassArrayIsNullRestricted)
+#define J9CLASS_GET_NULLRESTRICTED_ARRAY(clazz) (J9_IS_J9CLASS_VALUETYPE(clazz) ? (clazz)->nullRestrictedArrayClass : NULL)
 #else /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 #define J9CLASS_UNPADDED_INSTANCE_SIZE(clazz) ((clazz)->totalInstanceSize)
+#define J9_IS_J9CLASS_ALLOW_DEFAULT_VALUE(clazz) FALSE
 #define J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(clazz) FALSE
 #define J9_IS_J9CLASS_FLATTENED(clazz) FALSE
 #define J9ROMFIELD_IS_NULL_RESTRICTED(romField) FALSE
 #define J9_IS_FIELD_FLATTENED(fieldClazz, romFieldShape) FALSE
-#define J9_IS_NULL_RESTRICTED_FIELD_FLATTENED(fieldClazz, romFieldShape) FALSE
 #define J9_VALUETYPE_FLATTENED_SIZE(clazz)((UDATA) 0) /* It is not possible for this macro to be used since we always check J9_IS_J9CLASS_FLATTENED before ever using it. */
+#define J9_IS_J9ARRAYCLASS_NULL_RESTRICTED(clazz) FALSE
+#define J9CLASS_GET_NULLRESTRICTED_ARRAY(clazz) NULL
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
-#define IS_REF_OR_VAL_SIGNATURE(firstChar) ('L' == (firstChar))
+#define IS_CLASS_SIGNATURE(firstChar) ('L' == (firstChar))
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 #define J9_IS_CRIU_OR_CRAC_CHECKPOINT_ENABLED(vm) (J9_ARE_ANY_BITS_SET(vm->checkpointState.flags, J9VM_CRAC_IS_CHECKPOINT_ENABLED | J9VM_CRIU_IS_CHECKPOINT_ENABLED))
@@ -396,6 +402,8 @@ typedef struct {
 	char size;
 	char data[LITERAL_STRLEN(J9_UNMODIFIABLE_CLASS_ANNOTATION)];
 } J9_UNMODIFIABLE_CLASS_ANNOTATION_DATA;
+
+#define J9_EVENT_IS_HOOKED_OR_RESERVED(interface, event) (J9_EVENT_IS_HOOKED(interface, event) || J9_EVENT_IS_RESERVED(interface, event))
 
 #if defined(J9VM_ZOS_3164_INTEROPERABILITY)
 #define J9_IS_31BIT_INTEROP_TARGET(handle) J9_ARE_ALL_BITS_SET((UDATA)(handle), OMRPORT_SL_ZOS_31BIT_TARGET_HIGHTAG)

@@ -25,7 +25,7 @@ package com.ibm.jvm.dtfjview.tools;
 import java.io.PrintStream;
 
 public abstract class Tool implements ITool {
-	
+
 	public Tool() {
 		ToolsRegistry.registerTool(this);
 	}
@@ -39,8 +39,8 @@ public abstract class Tool implements ITool {
 	 * <p>
 	 * @throws CommandException
 	 */
-	public boolean start(String[] args, PrintStream out) 
-		throws CommandException 
+	public boolean start(String[] args, PrintStream out)
+		throws CommandException
 	{
 		return true;
 	}

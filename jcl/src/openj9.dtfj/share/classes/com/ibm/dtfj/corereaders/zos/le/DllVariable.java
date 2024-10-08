@@ -27,22 +27,22 @@ package com.ibm.dtfj.corereaders.zos.le;
  */
 public class DllVariable {
 
-    /** The name of the variable */
-    public String name;
-    /** The address of the variable */
-    public long address;
-    /** The value of the variable */
-    public long value;
+	/** The name of the variable */
+	public String name;
+	/** The address of the variable */
+	public long address;
+	/** The value of the variable */
+	public long value;
 
-    /**
-     * Create a new DllVariable.
-     * @param name the name of the variable
-     * @param address the address of the variable
-     * @param value the value of the variable
-     */
-    public DllVariable(String name, long address, long value) {
-        this.name = name;
-        this.address = address;
-        this.value = value;
-    }
+	/**
+	 * Create a new DllVariable.
+	 * @param name the name of the variable
+	 * @param address the address of the variable
+	 * @param value the value of the variable
+	 */
+	public DllVariable(String name, long address, long value) {
+		this.name = name;
+		this.address = address;
+		this.value = value;
+	}
 }

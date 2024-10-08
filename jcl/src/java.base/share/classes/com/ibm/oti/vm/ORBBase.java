@@ -27,11 +27,11 @@ import java.util.Map;
 public abstract class ORBBase {
 
 	// TODO: JIT Team to provide documentation
-    public abstract Object quickCopyIfPossible(Object fieldValue, Class type, ClassLoader targetCL, 
-	  			      Map map, Class itsType) throws Exception;
+	public abstract Object quickCopyIfPossible(Object fieldValue, Class type, ClassLoader targetCL,
+					  Map map, Class itsType) throws Exception;
 
 	// TODO: JIT Team to provide documentation
-    public abstract Object deepCopyIfRequired(Object fieldValue, Class type, ClassLoader targetCL, 
-				      Map map, Class itsType); 
+	public abstract Object deepCopyIfRequired(Object fieldValue, Class type, ClassLoader targetCL,
+					  Map map, Class itsType);
 
 }

@@ -64,22 +64,22 @@ class MethodHandleNatives {
 	static boolean refKindIsMethod(byte kind) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	
+
 	static boolean refKindIsField(byte kind) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	
+
 	static boolean refKindIsConstructor(byte kind) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	
+
 	private static final JavaLangAccess JLA = SharedSecrets.getJavaLangAccess();
 
 	/**
 	 * Returns the classData stored in the class.
-	 * 
+	 *
 	 * @param the class from where to retrieve the classData.
-	 * 
+	 *
 	 * @return the classData (Object).
 	 */
 	static Object classData(Class<?> c) {

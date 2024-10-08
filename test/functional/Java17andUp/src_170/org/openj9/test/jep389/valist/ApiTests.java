@@ -21,16 +21,18 @@
  */
 package org.openj9.test.jep389.valist;
 
-import org.testng.annotations.Test;
 import org.testng.Assert;
-import org.testng.AssertJUnit;
-import static org.testng.Assert.fail;
+import org.testng.annotations.Test;
 
-import java.nio.ByteOrder;
 import java.lang.invoke.VarHandle;
-import java.util.NoSuchElementException;
+import java.nio.ByteOrder;
 
-import static jdk.incubator.foreign.CLinker.*;
+import static jdk.incubator.foreign.CLinker.C_DOUBLE;
+import static jdk.incubator.foreign.CLinker.C_INT;
+import static jdk.incubator.foreign.CLinker.C_LONG;
+import static jdk.incubator.foreign.CLinker.C_LONG_LONG;
+import static jdk.incubator.foreign.CLinker.C_POINTER;
+import jdk.incubator.foreign.CLinker.VaList;
 import jdk.incubator.foreign.GroupLayout;
 import jdk.incubator.foreign.MemoryAddress;
 import jdk.incubator.foreign.MemoryHandles;

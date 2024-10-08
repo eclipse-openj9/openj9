@@ -20,137 +20,144 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  */
 package j9vm.runner;
-import java.io.*;
-import java.util.Properties;
-import java.util.Iterator;
+
+import java.io.BufferedInputStream;
 import java.util.Map;
-import java.lang.reflect.Method;
+import java.util.Properties;
 
 public class Runner {
-	
-	protected enum OSName {
+
+	protected static enum OSName {
 		AIX,
 		LINUX,
+		MAC,
 		WINDOWS,
 		ZOS,
-		MAC,
-		UNKNOWN
+		UNKNOWN;
+
+		public static OSName current() {
+			String osSpec = System.getProperty("os.name", "?").toLowerCase();
+
+			/* Get OS from the spec string. */
+			if (osSpec.contains("aix")) {
+				return AIX;
+			} else if (osSpec.contains("linux")) {
+				return LINUX;
+			} else if (osSpec.contains("mac")) {
+				return MAC;
+			} else if (osSpec.contains("windows")) {
+				return WINDOWS;
+			} else if (osSpec.contains("z/os")) {
+				return ZOS;
+			} else {
+				System.out.println("Runner couldn't determine underlying OS. Got OS Name:" + osSpec);
+				return UNKNOWN;
+			}
+		}
 	}
-	
-	protected enum OSArch {
+
+	protected static enum OSArch {
+		AARCH64,
 		PPC,
 		S390X,
 		X86,
-		UNKNOWN
+		UNKNOWN;
+
+		public static OSArch current() {
+			String archSpec = System.getProperty("os.arch", "?").toLowerCase();
+
+			/* Get arch from spec string. */
+			if (archSpec.contains("aarch64")) {
+				return AARCH64;
+			} else if (archSpec.contains("ppc")) {
+				return PPC;
+			} else if (archSpec.contains("s390")) {
+				return S390X;
+			} else if (archSpec.contains("amd64") || archSpec.contains("x86")) {
+				return X86;
+			} else {
+				System.out.println("Runner couldn't determine underlying architecture. Got OS Arch:" + archSpec);
+				return UNKNOWN;
+			}
+		}
 	}
-	
-	protected enum AddrMode {
+
+	protected static enum AddrMode {
 		BIT31,
 		BIT32,
 		BIT64,
-		UNKNOWN
+		UNKNOWN;
+
+		public static AddrMode current(OSArch osArch) {
+			String dataModel = System.getProperty("sun.arch.data.model", "?");
+
+			/* Get address mode. S390 31-Bit addressing mode should return 32. */
+			if (dataModel.contains("32")) {
+				return (osArch == OSArch.S390X) ? BIT31 : BIT32;
+			} else if (dataModel.contains("64")) {
+				return BIT64;
+			} else {
+				System.out.println("Runner couldn't determine underlying addressing mode. Got addressing mode:" + dataModel);
+				return UNKNOWN;
+			}
+		}
 	}
-	
+
 	public static final String systemPropertyPrefix = "j9vm.";
 
-	protected String className;
-	protected String exeName;
-	protected String bootClassPath;
-	protected String userClassPath;
-	protected String javaVersion;
+	private static final String heapOptions = "-Xms64m -Xmx64m";
+
+	protected final String className;
+	protected final String exeName;
+	protected final String bootClassPath;
+	protected final String userClassPath;
+	protected final String javaVersion;
+	protected final OSName osName;
+	protected final OSArch osArch;
+	protected final AddrMode addrMode;
 	protected OutputCollector inCollector;
 	protected OutputCollector errCollector;
-	protected OSName osName = OSName.UNKNOWN;
-	protected OSArch osArch = OSArch.UNKNOWN;
-	protected AddrMode addrMode = AddrMode.UNKNOWN;
 
-	private final String heapOptions = "-Xms64m -Xmx64m";
-
-	private void setPlatform() {
-		
-		String OSSpec = System.getProperty("os.name").toLowerCase();
-		if (OSSpec != null) {
-			/* Get OS from the spec string */
-			if (OSSpec.contains("aix")) {
-				osName = OSName.AIX;
-			} else if (OSSpec.contains("linux")) {
-				osName = OSName.LINUX;
-			} else if (OSSpec.contains("windows")) {
-				osName = OSName.WINDOWS;
-			} else if (OSSpec.contains("z/os")) {
-				osName = OSName.ZOS;
-			} else if (OSSpec.contains("mac")) {
-				osName = OSName.MAC;
-			} else {
-				System.out.println("Runner couldn't determine underlying OS. Got OS Name:" + OSSpec);
-				osName = OSName.UNKNOWN;
-			}
-		}
-		String archSpec = System.getProperty("os.arch").toLowerCase();
-		if (archSpec != null) {
-			/* Get arch from spec string */
-			if (archSpec.contains("ppc")) {
-				osArch = OSArch.PPC;
-			} else if (archSpec.contains("s390")) {
-				osArch = OSArch.S390X;
-			} else if (archSpec.contains("amd64") || archSpec.contains("x86")) {
-				osArch = OSArch.X86;
-			} else {
-				System.out.println("Runner couldn't determine underlying architecture. Got OS Arch:" + archSpec);
-				osArch = OSArch.UNKNOWN;
-			}
-		}
-
-		String addressingMode = System.getProperty("sun.arch.data.model");
-		if (addressingMode != null) {
-			/* Get address mode. S390 31-Bit addressing mode should return 32. */
-			if ((osArch == OSArch.S390X) && (addressingMode.contains("32"))) {
-				addrMode = AddrMode.BIT31;
-			} else if (addressingMode.contains("32")) {
-				addrMode = AddrMode.BIT32;
-			} else if (addressingMode.contains("64")) {
-				addrMode = AddrMode.BIT64;
-			} else {
-				System.out.println("Runner couldn't determine underlying addressing mode. Got addressingMode:" + addressingMode);
-				addrMode = AddrMode.UNKNOWN;
-			}
-		}
-	}
-	
-	public Runner(String className, String exeName, String bootClassPath, String userClassPath, String javaVersion)  {
+	public Runner(String className, String exeName, String bootClassPath, String userClassPath, String javaVersion) {
 		super();
 		this.className = className;
 		this.exeName = exeName;
 		this.bootClassPath = bootClassPath;
 		this.userClassPath = userClassPath;
 		this.javaVersion = javaVersion;
-		setPlatform();
+		this.osName = OSName.current();
+		this.osArch = OSArch.current();
+		this.addrMode = AddrMode.current(osArch);
 	}
 
-	public String getBootClassPathOption () {
-		if (bootClassPath == null)  return "";
+	public String getBootClassPathOption() {
+		if (bootClassPath == null) {
+			return "";
+		}
 		return "-Xbootclasspath:" + bootClassPath;
 	}
 
-	public String getUserClassPathOption () {
-		if (userClassPath == null)  return "";
+	public String getUserClassPathOption() {
+		if (userClassPath == null) {
+			return "";
+		}
 		return "-classpath " + userClassPath;
 	}
 
 	public String getJ9VMSystemPropertiesString() {
-		String result = "";
+		StringBuilder result = new StringBuilder();
 		Properties systemProperties = System.getProperties();
-		Iterator it = systemProperties.entrySet().iterator();
-		while(it.hasNext()) {
-			Map.Entry entry = (Map.Entry) it.next();
+		for (Map.Entry<?, ?> entry : systemProperties.entrySet()) {
 			String key = (String) entry.getKey();
-			if(key.startsWith(systemPropertyPrefix)) {
-				String value = (String) entry.getValue();
-				result += "-D" + key + "=" + value + " ";
+			if (key.startsWith(systemPropertyPrefix)) {
+				if (result.length() > 0) {
+					result.append(" ");
+				}
+				Object value = entry.getValue();
+				result.append("-D").append(key).append("=").append(value);
 			}
-
 		}
-		return result;
+		return result.toString();
 	}
 
 	public String getCustomCommandLineOptions() {
@@ -159,23 +166,38 @@ public class Runner {
 	}
 
 	public String getCommandLine() {
-		return exeName + " " + heapOptions + " " + getCustomCommandLineOptions() + " "
-			+ getJ9VMSystemPropertiesString() + " " + getBootClassPathOption() + " "
-			+ getUserClassPathOption() + " ";
+		StringBuilder command = new StringBuilder(exeName);
+
+		appendIfNonTrivial(command, heapOptions);
+		appendIfNonTrivial(command, getCustomCommandLineOptions());
+		appendIfNonTrivial(command, getJ9VMSystemPropertiesString());
+		appendIfNonTrivial(command, getBootClassPathOption());
+		appendIfNonTrivial(command, getUserClassPathOption());
+
+		return command.toString();
 	}
-	
+
+	private static void appendIfNonTrivial(StringBuilder buffer, String options) {
+		if (options != null) {
+			options = options.trim();
+			if (!options.isEmpty()) {
+				buffer.append(" ").append(options);
+			}
+		}
+	}
+
 	public String getTestClassArguments() {
 		/* For sub-classes to override, if desired. */
 		return "";
 	}
-	
-	public int runCommandLine(String commandLine)  {
+
+	public int runCommandLine(String commandLine) {
 		System.out.println("command: " + commandLine);
 		System.out.println();
 		Process process;
-		try  {
+		try {
 			process = Runtime.getRuntime().exec(commandLine);
-		} catch (Throwable e)  {
+		} catch (Throwable e) {
 			System.out.println("Exception starting process!");
 			System.out.println("(" + e.getMessage() + ")");
 			e.printStackTrace();
@@ -188,25 +210,25 @@ public class Runner {
 		errCollector = new OutputCollector(errStream);
 		inCollector.start();
 		errCollector.start();
-		try  {
+		try {
 			process.waitFor();
 			inCollector.join();
 			errCollector.join();
-		} catch (InterruptedException e)  {
+		} catch (InterruptedException e) {
 			/* Nothing. */
 		}
-		/* Must release process resources here, or wimpy platforms
-		   like Neutrino will run out of handles! */
+		/* Release process resources here, to avoid running out of handles. */
 		int retval = process.exitValue();
-		process.destroy(); process = null;
+		process.destroy();
+		process = null;
 		System.gc();
 		return retval;
 	}
 
-	public boolean run()  {
+	public boolean run() {
 		int retval = runCommandLine(getCommandLine() + " " + className + " " + getTestClassArguments());
-		if ( 0 != retval ) {
-			System.out.println("no-zero exit value: " + retval);
+		if (0 != retval) {
+			System.out.println("non-zero exit value: " + retval);
 			return false;
 		}
 		return true;

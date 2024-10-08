@@ -210,7 +210,7 @@ moduleLoaded(UtThreadData **thr, UtModuleInfo *modInfo)
 	}
 	UT_DBGOUT(1, ("<UT> ModuleLoaded: %s\n", modInfo->name));
 
-	if (modInfo->traceVersionInfo == NULL){
+	if (modInfo->traceVersionInfo == NULL) {
 		/* this is a pre 142 module - not compatible with this trace engine fail silently to register this module */
 		UT_DBGOUT(1, ("<UT> ModuleLoaded refusing registration to %s because it's version is less than the supported UT version %d\n", modInfo->name, UT_VERSION));
 		return OMR_ERROR_NONE;
@@ -254,7 +254,7 @@ static void
 omrTraceTerm(void* env, UtModuleInfo *modInfo)
 {
 	UtThreadData **thr = UT_THREAD_FROM_ENV(env);
-	if (thr == NULL){
+	if (thr == NULL) {
 		/* unloading a dead module - safe to ignore this */
 		return;
 	}
@@ -274,7 +274,7 @@ moduleUnLoading(UtThreadData **thr, UtModuleInfo *modInfo)
 	int32_t i;
 	omr_error_t rc = OMR_ERROR_NONE;
 
-	if (utGlobal == NULL || UT_GLOBAL(traceFinalized)){
+	if (utGlobal == NULL || UT_GLOBAL(traceFinalized)) {
 		return OMR_ERROR_INTERNAL;
 	}
 	/*
@@ -310,7 +310,7 @@ moduleUnLoading(UtThreadData **thr, UtModuleInfo *modInfo)
 	}
 	UT_DBGOUT(1, ("<UT> ModuleUnloading: %s\n", modInfo->name));
 
-	if (modInfo->traceVersionInfo == NULL){
+	if (modInfo->traceVersionInfo == NULL) {
 		/* this is a pre 142 module - not compatible with this trace engine fail silently to register this module */
 		UT_DBGOUT(1, ("<UT> ModuleLoaded refusing deregistration to %s because it's version is less than the supported UT version %d\n", modInfo->name, UT_VERSION));
 		return OMR_ERROR_NONE;
@@ -369,7 +369,7 @@ internalTraceSnapWithPriority(UtThreadData **thr, char *label, int32_t snapPrior
 	/* if trace has finalized the trace write thread will have gone away and any
 	 * attempt at a snap is futile. (there won't be anything to snap either).
 	 */
-	if (UT_GLOBAL(traceFinalized) == TRUE){
+	if (UT_GLOBAL(traceFinalized) == TRUE) {
 		UT_DBGOUT(1, ("<UT thr="UT_POINTER_SPEC"> not snapping because trace is terminated\n", thr));
 		*response = "{trace terminated - snap not available}";
 		return OMR_ERROR_INTERNAL;
@@ -543,7 +543,7 @@ threadStop(UtThreadData **thr)
 	UtTraceBuffer *trcBuf;
 	UtThreadData  *tempThr = *thr;
 	UtThreadData   savedThr;
-    UtThreadData  *stackThrP = &savedThr;
+	UtThreadData  *stackThrP = &savedThr;
 	uint32_t         oldCount;
 	uint32_t         newCount;
 	J9rasTLS * tls;
@@ -630,8 +630,8 @@ threadStop(UtThreadData **thr)
 	 */
 	savedThr = *tempThr;
 	savedThr.name = UT_NO_THREAD_NAME;
-    *thr = NULL;
-    thr = &stackThrP;
+	*thr = NULL;
+	thr = &stackThrP;
 
 	omrthread_monitor_exit(UT_GLOBAL(threadLock));
 
@@ -666,12 +666,12 @@ threadStop(UtThreadData **thr)
 	/*
 	 * Last thread out frees the UtGlobalData and the list of available trace buffers
 	 */
-	if ( newCount == 0 && UT_GLOBAL(traceFinalized) ){
+	if (newCount == 0 && UT_GLOBAL(traceFinalized)) {
 		UtTraceBuffer *next, *current;
 		UtGlobalData *global = utGlobal;
-		
+
 		omrthread_monitor_enter(global->freeQueueLock);
-		
+
 		current = UT_GLOBAL(freeQueue);
 
 		utGlobal = NULL;
@@ -681,7 +681,7 @@ threadStop(UtThreadData **thr)
 			j9tty_err_printf(PORTLIB, "<UT> ThreadStop entered for final thread " UT_POINTER_SPEC ", freeing buffers\n", thr);
 		}
 
-		while (current != NULL){
+		while (current != NULL) {
 			UtTraceBuffer *gNext = NULL;
 			if (global->traceDebug >= 2) {
 				j9tty_err_printf(PORTLIB, "<UT>   ThreadStop freeing buffer " UT_POINTER_SPEC "\n", current);
@@ -712,9 +712,9 @@ threadStop(UtThreadData **thr)
 			j9mem_free_memory( current);
 			current = next;
 		}
-		
+
 		global->freeQueue = NULL;
-		
+
 		omrthread_monitor_exit(global->freeQueueLock);
 
 		/* output anything left on global if running with debug */
@@ -854,7 +854,7 @@ utTerminateTrace(UtThreadData **thr, char** daemonThreadNames)
 	result = OMR_ERROR_NONE;
 
 out:
-	if ( UT_GLOBAL(traceCount) ){
+	if (UT_GLOBAL(traceCount)) {
 		listCounters();
 	}
 
@@ -889,14 +889,14 @@ freeTrace(UtThreadData **thr)
 	destroyQueue(&UT_GLOBAL(outputQueue));
 
 	config = UT_GLOBAL(config);
-	while ( config != NULL){
+	while ( config != NULL) {
 		tmpconfig = config;
 		config    = config->next;
 		j9mem_free_memory( tmpconfig);
 	}
 
-	if (UT_GLOBAL(ignore) != NULL){
-		for (i = 0; UT_GLOBAL(ignore[i]) != NULL; i++){
+	if (UT_GLOBAL(ignore) != NULL) {
+		for (i = 0; UT_GLOBAL(ignore[i]) != NULL; i++) {
 			j9mem_free_memory( UT_GLOBAL(ignore[i]));
 		}
 		j9mem_free_memory( UT_GLOBAL(ignore));
@@ -907,32 +907,32 @@ freeTrace(UtThreadData **thr)
 	freeComponentList(UT_GLOBAL(componentList));
 	freeComponentList(UT_GLOBAL(unloadedComponentList));
 
-	if (UT_GLOBAL(traceFormatSpec) != NULL){
+	if (UT_GLOBAL(traceFormatSpec) != NULL) {
 		j9mem_free_memory( UT_GLOBAL(traceFormatSpec));
 		UT_GLOBAL(traceFormatSpec) = NULL;
 	}
 
-	if (UT_GLOBAL(properties)  != NULL){
+	if (UT_GLOBAL(properties)  != NULL) {
 		j9mem_free_memory( UT_GLOBAL(properties));
 		UT_GLOBAL(properties) = NULL;
 	}
 
-	if (UT_GLOBAL(serviceInfo) != NULL){
+	if (UT_GLOBAL(serviceInfo) != NULL) {
 		j9mem_free_memory( UT_GLOBAL(serviceInfo));
 		UT_GLOBAL(serviceInfo) = NULL;
 	}
 
-	if (UT_GLOBAL(traceHeader) != NULL){
+	if (UT_GLOBAL(traceHeader) != NULL) {
 		j9mem_free_memory( UT_GLOBAL(traceHeader));
 		UT_GLOBAL(traceHeader) = NULL;
 	}
 
-	if (UT_GLOBAL(traceFilename) != NULL){
+	if (UT_GLOBAL(traceFilename) != NULL) {
 		j9mem_free_memory( UT_GLOBAL(traceFilename));
 		UT_GLOBAL(traceFilename) = NULL;
 	}
-	
-	if (UT_GLOBAL(exceptFilename) != NULL){
+
+	if (UT_GLOBAL(exceptFilename) != NULL) {
 		j9mem_free_memory( UT_GLOBAL(exceptFilename));
 		UT_GLOBAL(exceptFilename) = NULL;
 	}
@@ -1001,7 +1001,7 @@ threadStart(UtThreadData **thr, const void *threadId, const char *threadName, co
 		return OMR_ERROR_OUT_OF_NATIVE_MEMORY;
 	}
 	memcpy(newThr, &tempThr, sizeof(tempThr));
-	
+
 	if (NULL != threadName) {
 		/* Obtain storage, copy the thread name, and reference it off UtThreadData */
 		char *tempName = j9mem_allocate_memory(strlen(threadName) + 1, OMRMEM_CATEGORY_TRACE);
@@ -1022,11 +1022,10 @@ threadStart(UtThreadData **thr, const void *threadId, const char *threadName, co
 	return rc;
 }
 
-omr_error_t 
+omr_error_t
 initializeTrace(UtThreadData **thr, void **gbl,
 				 const char **opts, const OMR_VM *vm,
 				 const char ** ignore, const OMRTraceLanguageInterface *languageIntf)
-
 {
 	omr_error_t   rc = OMR_ERROR_NONE;
 	int           i;
@@ -1044,15 +1043,16 @@ initializeTrace(UtThreadData **thr, void **gbl,
 
 	*thr = &tempThr;
 
-	if (utGlobal != NULL){
-		if (UT_GLOBAL(traceEnabled) == TRUE){
-			if (UT_GLOBAL(traceFinalized) && UT_GLOBAL(traceInCore) == TRUE){
+	if (utGlobal != NULL) {
+		if (UT_GLOBAL(traceEnabled) == TRUE) {
+			if (UT_GLOBAL(traceFinalized) && UT_GLOBAL(traceInCore) == TRUE) {
 				/* we can get away with this as the old process no longer has any interest in
 				   the old (stale) trace engine */
 				utGlobal = NULL;
 			} else {
 				/* the old utGlobal is still in use */
 				UT_DBGOUT(1, ("<UT> Error, utGlobal already in use.\n"));
+				*thr = NULL;
 				return OMR_ERROR_INTERNAL;
 			}
 		}
@@ -1204,9 +1204,9 @@ initializeTrace(UtThreadData **thr, void **gbl,
 	}
 
 	memcpy(newGbl, &tempGbl, sizeof(UtGlobalData));
-	if( NULL != gbl ) {
+	if (NULL != gbl) {
 		*gbl = newGbl;
-	};
+	}
 	utGlobal = newGbl;
 
 	/*
@@ -1218,7 +1218,7 @@ initializeTrace(UtThreadData **thr, void **gbl,
 		rc = OMR_ERROR_OUT_OF_NATIVE_MEMORY;
 		goto fail;
 	}
-	
+
 	if (omrthread_tls_alloc(&j9uteTLSKey)) {
 		/* Unable to allocate UTE thread local storage key */
 		j9nls_printf(PORTLIB, J9NLS_ERROR | J9NLS_STDERR, J9NLS_TRC_UTE_TLS_ALLC_FAILED);
@@ -1245,7 +1245,7 @@ initializeTrace(UtThreadData **thr, void **gbl,
 	/* Enable fatal assertions by default */
 	UT_GLOBAL(fatalassert) = 1;
 
-	  /*
+	/*
 	 *  Process early options
 	 */
 	rc = processEarlyOptions(opts);
@@ -1402,16 +1402,16 @@ trcGetComponents(UtThreadData **thr, char ***list, int32_t *number)
 
 	PORT_ACCESS_FROM_PORT(UT_GLOBAL(portLibrary));
 
-	if (list == NULL){
+	if (list == NULL) {
 		UT_DBGOUT(1, ("<UT> trcGetComponents called with NULL list, should be valid pointer\n"));
 		return OMR_ERROR_ILLEGAL_ARGUMENT;
 	}
 
 	getTraceLock(thr);
 
-	while(tempCompData != NULL){
+	while (tempCompData != NULL) {
 		/* don;t count deferred config components */
-		if (tempCompData->moduleInfo != NULL){
+		if (tempCompData->moduleInfo != NULL) {
 			i++;
 		}
 		tempCompData = tempCompData->next;
@@ -1421,7 +1421,7 @@ trcGetComponents(UtThreadData **thr, char ***list, int32_t *number)
 	/* write the component names into the list */
 
 	tempList = (char **) j9mem_allocate_memory(sizeof(char *) * i, OMRMEM_CATEGORY_TRACE);
-	if (tempList == NULL){
+	if (tempList == NULL) {
 		UT_DBGOUT(1, ("<UT> trcGetComponents can't allocate list.\n"));
 		freeTraceLock(thr);
 		return OMR_ERROR_OUT_OF_NATIVE_MEMORY;
@@ -1429,10 +1429,10 @@ trcGetComponents(UtThreadData **thr, char ***list, int32_t *number)
 
 	tempCompData = UT_GLOBAL(componentList)->head;
 	i = 0;
-	while(tempCompData != NULL){
+	while (tempCompData != NULL) {
 		/* don;t count deferred config components */
-		if (tempCompData->moduleInfo != NULL){
-			if ( i > (*number)){
+		if (tempCompData->moduleInfo != NULL) {
+			if (i > (*number)) {
 				UT_DBGOUT(1, ("<UT> trcGetComponents internal error - state of component list changed.\n"));
 				freeTraceLock(thr);
 				return OMR_ERROR_INTERNAL;
@@ -1472,7 +1472,7 @@ trcGetComponent(char *name, unsigned char **bitMap,
 
 	UtComponentData *cd = getComponentData(name, UT_GLOBAL(componentList) );
 
-	if ( cd == NULL ){
+	if (cd == NULL) {
 		UT_DBGOUT(2, ("<UT> trcGetComponent requested data area for component: \"%s\"  that is not currently loaded\n", name));
 		*bitMap = NULL;
 		*first = 0;
@@ -1718,7 +1718,7 @@ trcDeregisterRecordSubscriber(UtThreadData **thr, UtSubscription *subscriptionID
 		 * destroyed itself, we can't pass the findRecordSubscriber() test above.
 		 */
 		subscription->state = UT_SUBSCRIPTION_KILLED;
-		
+
 		/* wake subscriptionHandler from waiting for next message */
 		result = unsubscribe(subscription->queueSubscription);
 
@@ -1935,7 +1935,7 @@ trcEnableTrace(int32_t type)
 		/* Re-enable all tracepoints via the trace engine global traceDisable flag */
 		UT_ATOMIC_DEC(&UT_GLOBAL(traceDisable));
 		break;
-		
+
 	case UT_ENABLE_THREAD:
 		/* Re-enable tracepoints for this thread only, via the UtThread recursion counter */
 		if (NULL != globalVM) {
@@ -1962,14 +1962,14 @@ trcRegisterTracePointSubscriber(UtThreadData **thr, char *description, utsSubscr
 
 	PORT_ACCESS_FROM_PORT(UT_GLOBAL(portLibrary));
 	UT_DBGOUT(1, ("<UT> trcRegisterTracePointSubscriber entered\n"));
-	
+
 	/* allocate a new subscription data structure */
 	newSubscription = (UtSubscription *)j9mem_allocate_memory(sizeof(UtSubscription), OMRMEM_CATEGORY_TRACE);
 	if (newSubscription == NULL) {
 		UT_DBGOUT(1, ("<UT> Out of memory in trcRegisterTracePointSubscriber\n"));
 		return OMR_ERROR_OUT_OF_NATIVE_MEMORY;
 	}
-	
+
 	/* initialize the new subscription data structure */
 	newSubscription->subscriber = subscriber;
 	newSubscription->userData = wrapper;
@@ -1987,7 +1987,7 @@ trcRegisterTracePointSubscriber(UtThreadData **thr, char *description, utsSubscr
 	} else {
 		newSubscription->description = NULL;
 	}
-	
+
 	getTraceLock(thr);
 	if (UT_GLOBAL(tracePointSubscribers) == NULL) {
 		/* no existing subscriptions in the linked list, simply add the new one */
@@ -2005,7 +2005,7 @@ trcRegisterTracePointSubscriber(UtThreadData **thr, char *description, utsSubscr
 	/* pass the new subscription pointer back to the user */
 	*subscriptionReference = newSubscription;
 	freeTraceLock(thr);
-	
+
 	UT_DBGOUT(1, ("<UT> trcRegisterTracePointSubscriber normal exit, wrapper = %p\n",newSubscription->userData));
 	return OMR_ERROR_NONE;
 }
@@ -2035,9 +2035,9 @@ trcDeregisterTracePointSubscriber(UtThreadData **thr, UtSubscription *subscripti
 		UT_DBGOUT(1, ("<UT> trcDeregisterTracePointSubscriber, failed to find subscriber to deregister\n"));
 		return OMR_ERROR_ILLEGAL_ARGUMENT;
 	}
-	
+
 	UT_DBGOUT(1, ("<UT> trcDeregisterTracePointSubscriber found subscription, wrapper is %p\n",subscription->userData));
-	
+
 	/* Remove the subscription data structure from the linked list */
 	if (subscription->prev != NULL) {
 		subscription->prev->next = subscription->next;

@@ -24,14 +24,14 @@ package com.ibm.jvm.dtfjview;
 
 /**
  * Indicates that jdmpview failed to initialize
- * 
+ *
  * @author adam
  *
  */
 public class JdmpviewInitException extends RuntimeException {
 	private static final long serialVersionUID = -5317431018607771062L;
 	private final int exitCode;
-	
+
 	public JdmpviewInitException(int exitCode) {
 		super();
 		this.exitCode = exitCode;

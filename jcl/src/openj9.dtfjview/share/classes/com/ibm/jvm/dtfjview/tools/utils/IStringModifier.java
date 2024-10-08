@@ -23,9 +23,9 @@
 package com.ibm.jvm.dtfjview.tools.utils;
 
 public interface IStringModifier {
-	
+
 	/**
-	 * This method is to be called by an OutputStreamModifier object 
+	 * This method is to be called by an OutputStreamModifier object
 	 * before the string is sent to the OutputStream.
 	 * <p>
 	 * @param s		The string to be modified.

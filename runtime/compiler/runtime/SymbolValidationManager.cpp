@@ -1321,10 +1321,10 @@ TR::SymbolValidationManager::validateDeclaringClassFromFieldOrStaticRecord(uint1
       {
       TR::VMAccessCriticalSection getDeclaringClassFromFieldOrStatic(_fej9);
 
-      int32_t fieldLen;
+      int32_t fieldLen = 0;
       char *field = cpIndex >= 0 ? utf8Data(J9ROMNAMEANDSIGNATURE_NAME(J9ROMFIELDREF_NAMEANDSIGNATURE(&romCPBase[cpIndex])), fieldLen) : 0;
 
-      int32_t sigLen;
+      int32_t sigLen = 0;
       char *sig = cpIndex >= 0 ? utf8Data(J9ROMNAMEANDSIGNATURE_SIGNATURE(J9ROMFIELDREF_NAMEANDSIGNATURE(&romCPBase[cpIndex])), sigLen) : 0;
 
       _vmThread->javaVM->internalVMFunctions->instanceFieldOffset(
@@ -1596,11 +1596,16 @@ TR::SymbolValidationManager::assertionsAreFatal()
    // Look for the env var even in debug builds so that it's always acknowledged.
    static const bool fatal = feGetEnv("TR_svmAssertionsAreFatal") != NULL;
 
+   if (fatal)
+      return true;
+
 #if defined(DEBUG) || defined(PROD_WITH_ASSUMES) || defined(SVM_ASSERTIONS_ARE_FATAL)
-   return true;
+   TR::Compilation *comp = TR::comp();
+   // TR_IgnoreAssert: ignore nonfatal assertion failures.
+   return !comp || !comp->getOption(TR_IgnoreAssert);
 #else
-   return fatal;
-#endif
+   return false;
+#endif /* defined(DEBUG) || defined(PROD_WITH_ASSUMES) || defined(SVM_ASSERTIONS_ARE_FATAL) */
    }
 
 static void printClass(TR_OpaqueClassBlock *clazz)

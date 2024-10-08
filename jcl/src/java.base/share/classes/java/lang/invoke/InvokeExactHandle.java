@@ -34,7 +34,7 @@ import java.lang.reflect.Modifier;
 final class InvokeExactHandle extends PrimitiveHandle {
 	/* MethodType that the first argument MethodHandle must match */
 	final MethodType nextType;
-	
+
 	InvokeExactHandle(MethodType type) {
 		super(invokeExactMethodType(type), MethodHandle.class, "invokeExact", KIND_INVOKEEXACT, PUBLIC_FINAL_NATIVE, null); //$NON-NLS-1$
 		nextType = type;
@@ -63,7 +63,7 @@ final class InvokeExactHandle extends PrimitiveHandle {
 		/* This is invokevirtual of MethodHandle.invokeExact() */
 		return true;
 	}
-	
+
 	// {{{ JIT support
 
 	private static final ThunkTable _thunkTable = new ThunkTable();
@@ -107,4 +107,3 @@ final class InvokeExactHandle extends PrimitiveHandle {
 		// Nothing distinguishes InvokeExactHandles except their type, which Comparator already deals with
 	}
 }
-

@@ -296,6 +296,8 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    static int32_t _IprofilerOffSubtractionFactor;
    static int32_t _IprofilerOffDivisionFactor;
 
+   static int32_t _IprofilerPreCheckpointDropRate;
+
    static int32_t _LoopyMethodSubtractionFactor;
    static int32_t _LoopyMethodDivisionFactor;
 
@@ -398,6 +400,7 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    static int32_t _waitTimeToGCR;
    static int32_t _waitTimeToStartIProfiler;
    static int32_t _compilationDelayTime;
+   static int32_t _delayBeforeStateChange;
 
    static int32_t _invocationThresholdToTriggerLowPriComp; // we trigger an LPQ comp req only if the method
                                                            // was invoked at least this many times

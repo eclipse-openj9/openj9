@@ -25,17 +25,17 @@ package java.lang.invoke;
 
 /**
  * Base class for CacheKeys used in the HandleCache.  There are two subclasses
- * FieldCacheKey and MethodCacheKey used by the HandleCache.  
+ * FieldCacheKey and MethodCacheKey used by the HandleCache.
  */
 abstract class CacheKey {
 	final String name;
 	private final int hashcode;
-	
+
 	public CacheKey(String name, int hashcode){
 		this.name = name;
 		this.hashcode = hashcode;
 	}
-	
+
 	@Override
 	public int hashCode() {
 		return hashcode;

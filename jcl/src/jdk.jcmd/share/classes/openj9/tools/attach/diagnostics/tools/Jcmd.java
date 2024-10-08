@@ -43,7 +43,7 @@ public class Jcmd {
 	@SuppressWarnings("nls")
 	private static final String HELPTEXT = "Usage : jcmd <vmid | display name | 0> <arguments>%n"
 			+ "%n"
-			+ "   -J : supply arguments to the Java VM running jcmd%n" 
+			+ "   -J : supply arguments to the Java VM running jcmd%n"
 			+ "   -l : list JVM processes on the local machine%n"
 			+ "   -h : print this help message%n"
 			+ "%n"
@@ -51,7 +51,7 @@ public class Jcmd {
 			+ "   <display name> : this argument is used to match (either fully or partially) the display name as shown in jcmd or other Attach API-based tools%n"
 			+ "   <0> : the jcmd command will be sent to all Java processes detected by this utility%n"
 			+ "%n"
-			+ "   arguments:%n" 
+			+ "   arguments:%n"
 			+ "      help : print the list of diagnostic commands%n"
 			+ "      help <command> : print help for the specific command%n"
 			+ "      <command> [command arguments] : command from the list returned by \"help\"%n"

@@ -1159,11 +1159,11 @@ _nextBranch:
 					stackError |= popStack (jsrData);
 					if (args[step] == '[') {
 						while (args[++step] == '[');
-						if (!IS_REF_OR_VAL_SIGNATURE(args[step])) {
+						if (!IS_CLASS_SIGNATURE(args[step])) {
 							continue;
 						}
 					}
-					if (IS_REF_OR_VAL_SIGNATURE(args[step])) {
+					if (IS_CLASS_SIGNATURE(args[step])) {
 						while (args[++step] != ';');
 						continue;
 					}

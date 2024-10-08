@@ -40,12 +40,12 @@ argBitsFromSignature(U_8 * signature, U_32 * resultArrayBase, UDATA resultArrayS
 	
 	/* Parse the signature inside the ()'s */
 	while (*(++signature) != ')') {
-		if ((*signature == '[') || IS_REF_OR_VAL_SIGNATURE(*signature)) {
+		if ((*signature == '[') || IS_CLASS_SIGNATURE(*signature)) {
 			*resultArrayBase |= argBit;
 			while (*signature == '[') {
 				signature++;
 			}
-			if (IS_REF_OR_VAL_SIGNATURE(*signature)) {
+			if (IS_CLASS_SIGNATURE(*signature)) {
 				while (*signature != ';') {
 					signature++;
 				}

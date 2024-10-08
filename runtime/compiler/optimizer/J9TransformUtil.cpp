@@ -678,6 +678,8 @@ bool J9::TransformUtil::foldFinalFieldsIn(TR_OpaqueClassBlock *clazz, const char
       return true; // We can ONLY do this opt to fields that are never victimized by setAccessible
    else if (classNameLength >= 18 && !strncmp(className, "java/lang/reflect/", 18))
       return true;
+   else if (classNameLength >= 18 && !strncmp(className, "java/lang/foreign/", 18))
+      return true;
    else if (classNameLength >= 30 && !strncmp(className, "java/lang/String$UnsafeHelpers", 30))
       return true;
 
@@ -2126,6 +2128,12 @@ TR::Node * J9::TransformUtil::calculateElementAddress(TR::Compilation *comp, TR:
    offset->setIsNonNegative(true);
    // Calculate element address
    TR::Node *addrCalc = NULL;
+
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+   if (TR::Compiler->om.isOffHeapAllocationEnabled())
+      array = TR::TransformUtil::generateDataAddrLoadTrees(comp, array);
+#endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
+
    if (comp->target().is64Bit())
       addrCalc = TR::Node::create(TR::aladd, 2, array, offset);
    else
@@ -2188,7 +2196,17 @@ TR::Node * J9::TransformUtil::calculateOffsetFromIndexInContiguousArrayWithEleme
       shift = checkNonNegativePowerOfTwo(elementStride);
       }
 
-   int32_t headerSize = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
+   int32_t headerSize;
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+   if (TR::Compiler->om.isOffHeapAllocationEnabled())
+      {
+      headerSize = 0;
+      }
+   else
+#endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
+      {
+      headerSize = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
+      }
 
    TR::Node * offset = index;
 
@@ -2788,15 +2806,6 @@ J9::TransformUtil::refineMethodHandleLinkTo(TR::Compilation* comp, TR::TreeTop* 
 
       vTableSlot = (uint32_t)info.vmindex;
       jitVTableOffset = fej9->vTableSlotToVirtualCallOffset(vTableSlot);
-
-      // For private virtual methods and java/lang/Object; type virtual methods, there is no corresponding
-      // entry in the vtable, and for such methods the interpreter vtable index is 0.
-      // The dispatch is not performed through the vtable entry, but directly dispatched to the J9Method
-      // in Membername.vmtarget. In such cases, we can refine a linkToVirtual call similar to linkToStatic.
-      // jitVTableOffset is obtained using sizeof(J9Class) - interpreter vtable offset, resulting in a positive
-      // value when the interpreter vtable index we get (from MemberName.vmindex.vtableoffset) is set as 0.
-      if (jitVTableOffset > 0)
-         callKind = TR::MethodSymbol::Special;
       }
 
    if (!performTransformation(comp, "O^O Refine %s with known MemberName\n", nodeStr))

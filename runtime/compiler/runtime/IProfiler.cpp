@@ -562,8 +562,7 @@ void *
 TR_IProfiler::operator new (size_t size) throw()
    {
    memoryConsumed += (int32_t)size;
-   void *alloc = _allocator->allocate(size, std::nothrow);
-   return alloc;
+   return _allocator->allocate(size, std::nothrow);
    }
 
 TR::PersistentAllocator *
@@ -599,7 +598,7 @@ TR_IProfiler::TR_IProfiler(J9JITConfig *jitConfig)
    : _isIProfilingEnabled(true),
      _valueProfileMethod(NULL), _lightHashTableMonitor(0), _allowedToGiveInlinedInformation(true),
      _globalAllocationCount (0), _maxCallFrequency(0), _iprofilerThread(0), _iprofilerOSThread(NULL),
-     _workingBufferTail(NULL), _numOutstandingBuffers(0), _numRequests(1), _numRequestsSkipped(0),
+     _workingBufferTail(NULL), _numOutstandingBuffers(0), _numRequests(1), _numRequestsDropped(0), _numRequestsSkipped(0),
      _numRequestsHandedToIProfilerThread(0), _iprofilerMonitor(NULL),
      _crtProfilingBuffer(NULL), _iprofilerNumRecords(0), _numMethodHashEntries(0),
      _iprofilerThreadLifetimeState(TR_IprofilerThreadLifetimeStates::IPROF_THR_NOT_CREATED)
@@ -1120,6 +1119,17 @@ TR_IProfiler::findOrCreateEntry(int32_t bucket, uintptr_t pc, bool addIt)
 
    if (!entry)
       return NULL;
+
+   // While the entry is being allocated, another thread could have added an entry with the same PC.
+   // If that happened, it's likely that the duplicate entry is at the head of this list.
+   // Check to see if that's the case. This technique does not eliminate the race completely
+   // but catches most of duplicate situations.
+   TR_IPBytecodeHashTableEntry *headEntry = _bcHashTable[bucket];
+   if (headEntry && headEntry->getPC() == pc)
+      {
+      delete entry; // Newly allocated entry is not needed
+      return headEntry;
+      }
 
    entry->setNext(_bcHashTable[bucket]);
    FLUSH_MEMORY(TR::Compiler->target.isSMP());
@@ -2603,6 +2613,7 @@ TR_IProfiler::outputStats()
    if (options && !options->getOption(TR_DisableIProfilerThread))
       {
       fprintf(stderr, "IProfiler: Number of buffers to be processed           =%" OMR_PRIu64 "\n", _numRequests);
+      fprintf(stderr, "IProfiler: Number of buffers to be dropped             =%" OMR_PRIu64 "\n", _numRequestsDropped);
       fprintf(stderr, "IProfiler: Number of buffers discarded                 =%" OMR_PRIu64 "\n", _numRequestsSkipped);
       fprintf(stderr, "IProfiler: Number of buffers handed to iprofiler thread=%" OMR_PRIu64 "\n", _numRequestsHandedToIProfilerThread);
       }
@@ -2612,33 +2623,17 @@ TR_IProfiler::outputStats()
    checkMethodHashTable();
    }
 
-void *
-TR_IPBytecodeHashTableEntry::alignedPersistentAlloc(size_t size)
-   {
-#if defined(TR_HOST_64BIT)
-   size += 4;
-   memoryConsumed += (int32_t)size;
-   void *address = (void *) TR_IProfiler::allocator()->allocate(size, std::nothrow);
 
-   return (void *)(((uintptr_t)address + 4) & ~0x7);
-#else
+void *
+TR_IPBytecodeHashTableEntry::operator new (size_t size) throw()
+   {
    memoryConsumed += (int32_t)size;
    return TR_IProfiler::allocator()->allocate(size, std::nothrow);
-#endif
    }
 
-
-
-void *
-TR_IPBCDataCallGraph::operator new (size_t size) throw()
+void TR_IPBytecodeHashTableEntry::operator delete(void *p) throw()
    {
-   return TR_IPBytecodeHashTableEntry::alignedPersistentAlloc(size);
-   }
-
-void *
-TR_IPBCDataFourBytes::operator new (size_t size) throw()
-   {
-   return TR_IPBytecodeHashTableEntry::alignedPersistentAlloc(size);
+   TR_IProfiler::allocator()->deallocate(p);
    }
 
 #if defined(J9VM_OPT_JITSERVER)
@@ -2694,18 +2689,6 @@ TR_IPBCDataFourBytes::getSumBranchCount()
    uint16_t fallThroughCount = (uint16_t)(data & 0x0000FFFF) | 0x1;
    uint16_t branchToCount = (uint16_t)((data & 0xFFFF0000)>>16) | 0x1;
    return (fallThroughCount + branchToCount);
-   }
-
-void *
-TR_IPBCDataAllocation::operator new (size_t size) throw()
-   {
-   return TR_IPBytecodeHashTableEntry::alignedPersistentAlloc(size);
-   }
-
-void *
-TR_IPBCDataEightWords::operator new (size_t size) throw()
-   {
-   return TR_IPBytecodeHashTableEntry::alignedPersistentAlloc(size);
    }
 
 void
@@ -2904,7 +2887,8 @@ TR_IPBCDataCallGraph::getData(TR::Compilation *comp)
 void *
 TR_IPMethodHashTableEntry::operator new (size_t size) throw()
    {
-   return TR_IPBytecodeHashTableEntry::alignedPersistentAlloc(size);
+   memoryConsumed += (int32_t)size;
+   return TR_IProfiler::allocator()->allocate(size, std::nothrow);
    }
 
 int32_t
@@ -4103,7 +4087,8 @@ TR_IProfiler::processWorkingQueue()
          {
 #if defined(J9VM_OPT_CRIU_SUPPORT)
          // Check if the IProfiler Thread should be suspended for checkpoint
-         if (_compInfo->getJITConfig()->javaVM->internalVMFunctions->isCheckpointAllowed(_iprofilerThread))
+         J9JavaVM *javaVM = _compInfo->getJITConfig()->javaVM;
+         if (javaVM->internalVMFunctions->isCheckpointAllowed(javaVM))
             {
             // The monitors must be acquired in the right order, therefore
             // release the IProfiler monitor prior to attempting to suspend
@@ -4203,6 +4188,20 @@ UDATA TR_IProfiler::parseBuffer(J9VMThread * vmThread, const U_8* dataStart, UDA
       return 0;
       }
 
+   J9JavaVM *javaVM = _compInfo->getJITConfig()->javaVM;
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+   if (javaVM->internalVMFunctions->isDebugOnRestoreEnabled(javaVM) && javaVM->internalVMFunctions->isCheckpointAllowed(javaVM))
+      {
+      int32_t dropRate = (int32_t)((((float)(_numRequestsDropped + _numRequestsSkipped)) / ((float)_numRequests)) * 1000);
+      if (TR::Options::_IprofilerPreCheckpointDropRate >= 1000 || dropRate <= TR::Options::_IprofilerPreCheckpointDropRate)
+         {
+         _numRequestsDropped++;
+         return 0;
+         }
+      }
+#endif
+
    if (numUnloadedClasses > 0)
       ratio = numLoadedClasses/numUnloadedClasses;
 
@@ -4217,8 +4216,6 @@ UDATA TR_IProfiler::parseBuffer(J9VMThread * vmThread, const U_8* dataStart, UDA
       }
 
    bool isClassLoadPhase = _compInfo->getPersistentInfo()->isClassLoadingPhase();
-
-   J9JavaVM * javaVM = _compInfo->getJITConfig()->javaVM;
 
    int32_t skipCountMain = 20+(rand()%10); // TODO: Use the main TR_RandomGenerator from jitconfig?
    int32_t skipCount = skipCountMain;
@@ -4532,8 +4529,7 @@ void *
 TR_IPHashedCallSite::operator new (size_t size) throw()
    {
    memoryConsumed += (int32_t)size;
-   void *alloc = TR_IProfiler::allocator()->allocate(size, std::nothrow);
-   return alloc;
+   return TR_IProfiler::allocator()->allocate(size, std::nothrow);
    }
 
 inline

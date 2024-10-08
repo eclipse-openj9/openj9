@@ -26,6 +26,8 @@
 <suite name="Java22+ test suite" parallel="none" verbose="2">
 	<test name="Jep454Tests_testLinkerFfi_DownCall">
 		<classes>
+			<class name="org.openj9.test.jep454.downcall.DuplicateMixedCallTests"/>
+			<class name="org.openj9.test.jep454.downcall.DuplicateStructTests"/>
 			<class name="org.openj9.test.jep454.downcall.InvalidDownCallTests"/>
 			<class name="org.openj9.test.jep454.downcall.MultiCallTests"/>
 			<class name="org.openj9.test.jep454.downcall.MultiThreadingTests1"/>
@@ -33,6 +35,7 @@
 			<class name="org.openj9.test.jep454.downcall.MultiThreadingTests3"/>
 			<class name="org.openj9.test.jep454.downcall.MultiThreadingTests4"/>
 			<class name="org.openj9.test.jep454.downcall.MultiThreadingTests5"/>
+			<class name="org.openj9.test.jep454.downcall.MultiThreadingTests6"/>
 			<class name="org.openj9.test.jep454.downcall.PrimitiveTypeTests1"/>
 			<class name="org.openj9.test.jep454.downcall.PrimitiveTypeTests2"/>
 			<class name="org.openj9.test.jep454.downcall.StructTests1"/>

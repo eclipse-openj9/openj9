@@ -396,7 +396,7 @@ void InMemoryLoadStoreMarking::clearLoadLists()
    _BCDConditionalCleanLoadList.deleteAll();
    }
 
-char *InMemoryLoadStoreMarking::_TR_NodeListTypeNames[NodeList_NumTypes] =
+const char *InMemoryLoadStoreMarking::_TR_NodeListTypeNames[NodeList_NumTypes] =
    {
    "LoadList",
    "ConditionalCleanLoadList",

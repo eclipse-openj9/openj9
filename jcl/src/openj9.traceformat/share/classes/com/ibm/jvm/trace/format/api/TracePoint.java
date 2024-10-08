@@ -26,9 +26,9 @@ import java.math.BigInteger;
 
 /**
  * Class to represent a tracepoint produced by IBM JVM's trace engine.
- * 
+ *
  * @author Simon Rowland
- * 
+ *
  */
 public interface TracePoint {
 	/* The types of tracepoints available */

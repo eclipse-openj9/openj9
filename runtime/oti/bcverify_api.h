@@ -151,16 +151,6 @@ bcvCheckMethodName (J9CfrConstantPoolInfo * info);
 I_32
 bcvIsInitOrClinit (J9CfrConstantPoolInfo * info);
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-/**
-* @brief
-* @param info
-* @return BOOLEAN
-*/
-BOOLEAN
-bcvIsReferenceTypeDescriptor(J9CfrConstantPoolInfo * info);
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-
 /* ---------------- clconstraints.c ---------------- */
 
 /**

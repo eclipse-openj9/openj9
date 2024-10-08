@@ -455,6 +455,18 @@ public:
     */
    virtual TR::KnownObjectTable::Index getMethodHandleTableEntryIndex(TR::Compilation *comp, TR::KnownObjectTable::Index vhIndex, TR::KnownObjectTable::Index adIndex);
 
+   /**
+    * @brief Get the known object index of a cached MemorySegmentView VarHandle belonging to a value Layout object.
+    * When the Layout object is known, we can evaluate the result of
+    * jdk/internal/foreign/layout/ValueLayouts$AbstractValueLayout.accessHandle()Ljava/lang/invoke/VarHandle;
+    * as long as the layout object's handle field is not null.
+    *
+    * @param comp the compilation
+    * @param layoutIndex the ValueLayout$AbstractValueLayout object index
+    * @return TR::KnownObjectTable::Index the known object index of the MemorySegmentView VarHandle, TR::KnownObjectTable::UNKNOWN otherwise
+    */
+   virtual TR::KnownObjectTable::Index getLayoutVarHandle(TR::Compilation *comp, TR::KnownObjectTable::Index layoutIndex);
+
    virtual TR::Method * createMethod(TR_Memory *, TR_OpaqueClassBlock *, int32_t);
    virtual TR_ResolvedMethod * createResolvedMethod(TR_Memory *, TR_OpaqueMethodBlock *, TR_ResolvedMethod * = 0, TR_OpaqueClassBlock * = 0);
    virtual TR_ResolvedMethod * createResolvedMethodWithVTableSlot(TR_Memory *, uint32_t vTableSlot, TR_OpaqueMethodBlock * aMethod, TR_ResolvedMethod * owningMethod = 0, TR_OpaqueClassBlock * classForNewInstance = 0);
@@ -1310,6 +1322,15 @@ public:
    TR::Node * testIsClassArrayType(TR::Node *j9ClassRefNode);
 
    /**
+    * \brief Generate IL to test whether the array's class is null-restricted
+    * \param j9ClassRefNode A node representing a reference to a \ref J9Class
+    * \return \ref TR::Node that tests whether the array's class flags has the
+    *         \ref J9ClassArrayIsNullRestricted flag set, yielding a non-zero result if the
+    *         flag is set, or zero otherwise.
+    */
+   TR::Node * testIsArrayClassNullRestrictedType(TR::Node *j9ClassRefNode);
+
+   /**
     * \brief Test whether any of the specified flags is set on the array's component class
     * \param arrayBaseAddressNode A node representing a reference to the array base address
     * \param ifCmpOp If comparison opCode such as ificmpeq or ificmpne
@@ -1325,14 +1346,6 @@ public:
     * \return \ref TR::Node that compares the array component class J9ClassIsValueType flag to a zero integer
     */
    TR::Node * checkArrayCompClassValueType(TR::Node *arrayBaseAddressNode, TR::ILOpCodes ifCmpOp);
-
-   /**
-    * \brief Check whether or not the array component class is a primitive value type
-    * \param arrayBaseAddressNode A node representing a reference to the array base address
-    * \param ifCmpOp If comparison opCode such as ificmpeq or ificmpne
-    * \return \ref TR::Node that compares the array component class J9ClassIsPrimitiveValueType flag to a zero integer
-    */
-   TR::Node * checkArrayCompClassPrimitiveValueType(TR::Node *arrayBaseAddressNode, TR::ILOpCodes ifCmpOp);
 
    virtual J9JITConfig *getJ9JITConfig() { return _jitConfig; }
 
@@ -1452,6 +1465,8 @@ public:
    virtual void markHotField( TR::Compilation *, TR::SymbolReference *, TR_OpaqueClassBlock *, bool);
    virtual void reportHotField(int32_t reducedCpuUtil, J9Class* clazz, uint8_t fieldOffset,  uint32_t reducedFrequency);
    virtual bool isHotReferenceFieldRequired();
+   virtual bool isIndexableDataAddrPresent();
+   virtual bool isOffHeapAllocationEnabled();
    virtual void markClassForTenuredAlignment( TR::Compilation *comp, TR_OpaqueClassBlock *opclazz, uint32_t alignFromStart);
 
    virtual bool shouldDelayAotLoad() { return false; }

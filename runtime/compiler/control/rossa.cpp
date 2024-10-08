@@ -126,6 +126,10 @@
 #include "runtime/MetricsServer.hpp"
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+#include "runtime/CRRuntime.hpp"
+#endif
+
 extern "C" int32_t encodeCount(int32_t count);
 
 extern "C" {
@@ -1609,7 +1613,7 @@ onLoadInternal(
 #endif // defined(J9VM_OPT_JITSERVER)
       {
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-      if (javaVM->internalVMFunctions->isCheckpointAllowed(curThread))
+      if (javaVM->internalVMFunctions->isCheckpointAllowed(javaVM))
          {
          if (TR::Options::_numAllocatedCompilationThreads > maxNumberOfCodeCaches)
             {
@@ -2046,7 +2050,10 @@ aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
 #endif
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-   bool debugOnRestoreEnabled = javaVM->internalVMFunctions->isDebugOnRestoreEnabled(curThread);
+   if (compInfo->getCRRuntime())
+      compInfo->getCRRuntime()->cacheEventsStatus();
+
+   bool debugOnRestoreEnabled = javaVM->internalVMFunctions->isDebugOnRestoreEnabled(javaVM);
 
    /* If the JVM is in CRIU mode and checkpointing is allowed, then the JIT should be
     * limited to the same processor features as those used in Portable AOT mode. This

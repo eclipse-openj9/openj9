@@ -318,7 +318,8 @@ private :
 	void writeSharedClassSection(void);
 	void writeSharedClassSectionTopLayerStatsHelper(J9SharedClassJavacoreDataDescriptor* javacoreData, bool multiLayerStats);
 	void writeSharedClassSectionTopLayerStatsSummaryHelper(J9SharedClassJavacoreDataDescriptor* javacoreData);
-	void writeSharedClassSectionAllLayersStatsHelper(J9SharedClassJavacoreDataDescriptor* javacoreData);
+	void writeSharedClassSectionAllLayersStatsSummaryHelper(J9SharedClassJavacoreDataDescriptor* javacoreData);
+	void writeSharedClassSectionEachLayerStatsHelper(J9SharedClassJavacoreDataDescriptor* javacoreData);
 
 #endif
 	void writeTrailer(void);
@@ -1468,11 +1469,85 @@ JavaCoreDumpWriter::writeEnvUserArgsHelper(J9VMInitArgs *vmArgs)
 	}
 
 	{
-		/* write ignored options */
-		bool anyIgnored = false;
+		/* Write ignored options.
+		 *
+		 * An option is printed as ignored if it has not been consumed or if
+		 * it is an -Xjit or -Xaot option that falls under the rules below.
+		 *
+		 * Ignored options for -Xjit and -Xaot follows these rules:
+		 * 1. If -Xjit is followed by -Xint or -Xnojit,
+		 *    then any -Xjit:optionString beforehand appears as ignored.
+		 * 2. If -XX:+MergeCompilerOptions is present,
+		 *    then none of the -Xjit options should be ignored, as long as
+		 *    at least one of them appears after all -Xint and -Xnojit
+		 * 3. If multiple -Xjit strings appear, all but the last one will appear as ignored.
+		 *
+		 * Similar rules apply for -Xaot.
+		 */
+
+		/* The indices for the relevant options in args->options. */
+		jint lastXjit = -1;
+		jint lastXaot = -1;
+		jint lastXnojitOrXint = -1; /* The last occurence of either -Xnojit or -Xint. */
+		jint lastXnoaotOrXint = -1; /* The last occurence of either -Xnoaot or -Xint. */
+		bool hasXXMerge = false;
 
 		for (jint i = 0; i < args->nOptions; i++) {
-			if (IS_CONSUMABLE(vmArgs, i) && !IS_CONSUMED(vmArgs, i)) {
+			const char *optionString = args->options[i].optionString;
+
+			if (0 == strncmp(optionString, "-Xint", 6)) {
+				/* Case 1: ignore all -Xjit or -Xaot options before. */
+				lastXnojitOrXint = i;
+				lastXnoaotOrXint = i;
+			} else if (0 == strncmp(optionString, "-Xnojit", 8)) {
+				/* Case 1: ignore all -Xjit options before. */
+				lastXnojitOrXint = i;
+			} else if (0 == strncmp(optionString, "-Xnoaot", 8)) {
+				/* Case 1: ignore all -Xaot options before. */
+				lastXnoaotOrXint = i;
+			} else if (0 == strncmp(optionString, "-XX:+MergeCompilerOptions", 26)) {
+				/* Case 2. */
+				hasXXMerge = true;
+			} else if (0 == strncmp(optionString, "-XX:-MergeCompilerOptions", 26)) {
+				/* If -XX:-MergeCompilerOptions is encountered after
+				 * -XX:+MergeCompilerOptions, the latter is overriden.
+				 */
+				hasXXMerge = false;
+			} else if ((0 == strncmp(optionString, "-Xjit", 5))
+				&& (('\0' == optionString[5]) || (':' == optionString[5]))
+			) {
+				/* Case 3. */
+				lastXjit = i;
+			} else if ((0 == strncmp(optionString, "-Xaot", 5))
+				&& (('\0' == optionString[5]) || (':' == optionString[5]))
+			) {
+				/* Case 3. */
+				lastXaot = i;
+			}
+		}
+
+		bool anyIgnored = false;
+		for (jint i = 0; i < args->nOptions; i++) {
+			bool optionIgnored = false;
+			const char *optionString = args->options[i].optionString;
+
+			if ((0 == strncmp(optionString, "-Xjit", 5))
+				&& (('\0' == optionString[5]) || (':' == optionString[5]))
+				&& !(hasXXMerge && (lastXjit > lastXnojitOrXint)) /* case 2 */
+				&& ((i < lastXnojitOrXint) || (i < lastXjit)) /* case 1 and 3 */
+			) {
+				optionIgnored = true;
+			} else if ((0 == strncmp(optionString, "-Xaot", 5))
+				&& (('\0' == optionString[5]) || (':' == optionString[5]))
+				&& !(hasXXMerge && (lastXaot > lastXnoaotOrXint)) /* case 2 */
+				&& ((i < lastXnoaotOrXint) || (i < lastXaot)) /* case 1 and 3 */
+			) {
+				optionIgnored = true;
+			}
+
+			if (optionIgnored
+				|| (IS_CONSUMABLE(vmArgs, i) && !IS_CONSUMED(vmArgs, i))
+			) {
 				if (!anyIgnored) {
 					_OutputStream.writeCharacters("NULL\n");
 					_OutputStream.writeCharacters(ignoredArgsHeader);
@@ -1480,7 +1555,7 @@ JavaCoreDumpWriter::writeEnvUserArgsHelper(J9VMInitArgs *vmArgs)
 				}
 
 				_OutputStream.writeCharacters(singleIgnoredArgHeader);
-				_OutputStream.writeCharacters(args->options[i].optionString);
+				_OutputStream.writeCharacters(optionString);
 				_OutputStream.writeCharacters("\n");
 			}
 		}
@@ -3321,7 +3396,7 @@ JavaCoreDumpWriter::writeSharedClassSectionTopLayerStatsSummaryHelper(J9SharedCl
 }
 
 void
-JavaCoreDumpWriter::writeSharedClassSectionAllLayersStatsHelper(J9SharedClassJavacoreDataDescriptor* javacoreData)
+JavaCoreDumpWriter::writeSharedClassSectionAllLayersStatsSummaryHelper(J9SharedClassJavacoreDataDescriptor* javacoreData)
 {
 	_OutputStream.writeCharacters(
 			"2SCLTEXTRCB            ROMClass bytes                            = "
@@ -3467,6 +3542,44 @@ JavaCoreDumpWriter::writeSharedClassSectionAllLayersStatsHelper(J9SharedClassJav
 }
 
 void
+JavaCoreDumpWriter::writeSharedClassSectionEachLayerStatsHelper(J9SharedClassJavacoreDataDescriptor* javacoreData)
+{
+	if (NULL == javacoreData) {
+		return;
+	}
+	if (NULL == _VirtualMachine->sharedClassConfig) {
+		return;
+	}
+	J9SharedClassCacheDescriptor *curCache = _VirtualMachine->sharedClassConfig->cacheDescriptorList;
+	if (NULL == curCache) {
+		return;
+	}
+	UDATA currentOSPageSize = javacoreData->currentOSPageSize;
+	I_8 layer = javacoreData->topLayer;
+	bool headerPrinted = false;
+	do {
+		if (currentOSPageSize != curCache->osPageSizeInHeader) {
+			if (!headerPrinted) {
+				_OutputStream.writeCharacters(
+						"NULL\n"
+						"1SCLTEXTCISL   Cache Info for a single layer\n"
+						"NULL\n"
+						"1SCLTEXTCLYR       Cache Layer    Page Size in header    current OS page size\n"
+						"NULL\n"
+				);
+				headerPrinted = true;
+			}
+			_OutputStream.writeCharacters("1SCLTEXTOSPG       ");
+			_OutputStream.writeInteger(layer, "%-15d");
+			_OutputStream.writeInteger(curCache->osPageSizeInHeader, "%-23zu");
+			_OutputStream.writeInteger(currentOSPageSize, "%zu\n");
+		}
+		layer -= 1;
+		curCache = curCache->next;
+	} while ((curCache != _VirtualMachine->sharedClassConfig->cacheDescriptorList) && (NULL != curCache));
+}
+
+void
 JavaCoreDumpWriter::writeSharedClassSection(void)
 {
 	J9SharedClassJavacoreDataDescriptor javacoreData;
@@ -3501,12 +3614,14 @@ JavaCoreDumpWriter::writeSharedClassSection(void)
 				"1SCLTEXTCSAL   Cache Statistics for All Layers\n"
 				"NULL\n"
 			);
-			writeSharedClassSectionAllLayersStatsHelper(&javacoreData);
+			writeSharedClassSectionAllLayersStatsSummaryHelper(&javacoreData);
 		} else {
 			writeSharedClassSectionTopLayerStatsHelper(&javacoreData, multiLayerStats);
-			writeSharedClassSectionAllLayersStatsHelper(&javacoreData);
+			writeSharedClassSectionAllLayersStatsSummaryHelper(&javacoreData);
 			writeSharedClassSectionTopLayerStatsSummaryHelper(&javacoreData);
 		}
+
+		writeSharedClassSectionEachLayerStatsHelper(&javacoreData);
 
 		/* Write the section trailer */
 		_OutputStream.writeCharacters(

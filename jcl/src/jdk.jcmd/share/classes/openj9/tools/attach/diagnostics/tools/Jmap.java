@@ -56,7 +56,7 @@ public class Jmap {
 
 	/**
 	 * Print a list of Java processes and information about them.
-	 * 
+	 *
 	 * @param args Arguments to the application
 	 */
 	public static void main(String[] args) {
@@ -143,7 +143,7 @@ public class Jmap {
 				} else {
 					invalidArg = true;
 				}
-				
+
 				if (invalidArg) {
 					errorMessage = "unrecognized option " + arg;
 					break;

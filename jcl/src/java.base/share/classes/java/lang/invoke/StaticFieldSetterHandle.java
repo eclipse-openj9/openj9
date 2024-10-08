@@ -32,14 +32,14 @@ import static java.lang.invoke.MethodHandleResolver.UNSAFE;
  * a static field.
  * <p>
  * vmSlot will hold the Unsafe field offset  + low tag.
- * 
+ *
  */
 final class StaticFieldSetterHandle extends FieldHandle {
-	
+
 	StaticFieldSetterHandle(Class<?> referenceClass, String fieldName, Class<?> fieldClass, Class<?> accessClass) throws IllegalAccessException, NoSuchFieldException {
 		super(fieldMethodType(fieldClass), referenceClass, fieldName, fieldClass, KIND_PUTSTATICFIELD, accessClass);
 	}
-	
+
 	StaticFieldSetterHandle(Field field) throws IllegalAccessException {
 		super(fieldMethodType(field.getType()), field, KIND_PUTSTATICFIELD, true);
 	}
@@ -125,4 +125,3 @@ final class StaticFieldSetterHandle extends FieldHandle {
 		compareWithField(left, c);
 	}
 }
-

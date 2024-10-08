@@ -250,8 +250,8 @@ findFieldSignatureClass(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA field
 	if ('[' == J9UTF8_DATA(signature)[0]) {
 		resolvedClass = internalFindClassUTF8(vmStruct, J9UTF8_DATA(signature), J9UTF8_LENGTH(signature), classLoader, J9_FINDCLASS_FLAG_THROW_ON_FAIL);
 	} else {
-		Assert_VM_true(IS_REF_OR_VAL_SIGNATURE(J9UTF8_DATA(signature)[0]));
-		/* skip fieldSignature's L/Q and ; to have only CLASSNAME required for internalFindClassUTF8 */
+		Assert_VM_true(IS_CLASS_SIGNATURE(J9UTF8_DATA(signature)[0]));
+		/* skip fieldSignature's L and ; to have only CLASSNAME required for internalFindClassUTF8 */
 		resolvedClass = internalFindClassUTF8(vmStruct, &J9UTF8_DATA(signature)[1], J9UTF8_LENGTH(signature)-2, classLoader, J9_FINDCLASS_FLAG_THROW_ON_FAIL);
 	}
 
@@ -1304,7 +1304,7 @@ resolveSpecialMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 	 * Special invocations (defender supersends) will not look at the receiver's vtable, but instead invoke the result of javaLookupMethod.
 	 * Default method conflicts must therefore be handled by the lookup code.
 	 */
-	lookupOptions |= (J9_LOOK_VIRTUAL | J9_LOOK_ALLOW_FWD | J9_LOOK_HANDLE_DEFAULT_METHOD_CONFLICTS);
+	lookupOptions |= (J9_LOOK_VIRTUAL | J9_LOOK_HANDLE_DEFAULT_METHOD_CONFLICTS);
 
 	if ((resolveFlags & J9_RESOLVE_FLAG_JCL_CONSTANT_POOL) != J9_RESOLVE_FLAG_JCL_CONSTANT_POOL) {
 		lookupOptions |= J9_LOOK_CLCONSTRAINTS;

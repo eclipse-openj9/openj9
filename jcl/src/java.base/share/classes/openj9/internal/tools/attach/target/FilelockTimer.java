@@ -28,7 +28,6 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Timer;
 
-
 /**
  * Allows us to ensure the timer thread is dead,
  *
@@ -68,7 +67,7 @@ final class FilelockTimer extends Timer {
 			try {
 				Thread timerThread = (Thread) timerThreadField.get(this);
 				if (null != timerThread) {
-					timerThread.join(10000);	/* timeout in ms*/	
+					timerThread.join(10000);	/* timeout in ms*/
 				}
 			} catch (Exception e) {
 				IPC.logMessage("Exception in FilelockTimer.cancel: ", e.getClass().getName()+":"+e.getMessage()); //$NON-NLS-1$ //$NON-NLS-2$
@@ -76,4 +75,3 @@ final class FilelockTimer extends Timer {
 		}
 	}
 }
-

@@ -29,12 +29,12 @@ import com.ibm.jvm.dtfjview.commands.SimpleRedirectorCommand;
 
 @DTFJPlugin(version="1.*", runtime=false)
 public class ShowCommand extends SimpleRedirectorCommand {
-	private static final String CMD_NAME = "show";	
+	private static final String CMD_NAME = "show";
 
 	{
 		addCommand(CMD_NAME, "[logging|heapdump]", "Displays the current set options for a command");
 	}
-	
+
 	@Override
 	public void printDetailedHelp(PrintStream out) {
 		out.println("Show the options for the specified command");
@@ -44,5 +44,5 @@ public class ShowCommand extends SimpleRedirectorCommand {
 	protected String getCmdName() {
 		return CMD_NAME;
 	}
-	
+
 }

@@ -63,7 +63,16 @@ extern void initializeVerboseFunctionTableWithDummies(J9MemoryManagerVerboseInte
 void
 allocateZeroedTLHPages(J9JavaVM *javaVM, UDATA flag)
 {
-	MM_GCExtensions::getExtensions(javaVM)->batchClearTLH = (flag != 0) ? 1 : 0;
+	MM_GCExtensions *ext = MM_GCExtensions::getExtensions(javaVM);
+
+	ext->batchClearTLH = (flag != 0) ? 1 : 0;
+
+	/* For batch clearing limit maximum size (since clearing too much may flush useful data from CPU data caches).
+	 * Apply the limit only if user did not specify another value.
+	 */
+	if ((1 == ext->batchClearTLH) && !ext->tlhMaximumSizeSpecified) {
+		ext->tlhMaximumSize = OMR_MIN(J9_MAXIMUM_TLH_SIZE_BATCH_CLEAR, ext->tlhMaximumSize);
+	}
 }
 
 /**

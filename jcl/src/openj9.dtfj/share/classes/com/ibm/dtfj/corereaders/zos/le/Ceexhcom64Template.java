@@ -29,28 +29,33 @@ import java.io.IOException;
 
 public final class Ceexhcom64Template implements CeexhcomTemplate {
 
-    public int length() {
-        return 10464;
-    }
+	public int length() {
+		return 10464;
+	}
 
-    public long getHcom_exit_stk(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 32);
-        return inputStream.readLong();
-    }
-    public int getHcom_exit_stk$offset() {
-        return 32;
-    }
-    public int getHcom_exit_stk$length() {
-        return 64;
-    }
-    public long getHcom_cibh(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 72);
-        return inputStream.readLong();
-    }
-    public int getHcom_cibh$offset() {
-        return 72;
-    }
-    public int getHcom_cibh$length() {
-        return 64;
-    }
+	public long getHcom_exit_stk(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 32);
+		return inputStream.readLong();
+	}
+
+	public int getHcom_exit_stk$offset() {
+		return 32;
+	}
+
+	public int getHcom_exit_stk$length() {
+		return 64;
+	}
+
+	public long getHcom_cibh(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 72);
+		return inputStream.readLong();
+	}
+
+	public int getHcom_cibh$offset() {
+		return 72;
+	}
+
+	public int getHcom_cibh$length() {
+		return 64;
+	}
 }

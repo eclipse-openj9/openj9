@@ -88,7 +88,7 @@ public class ImageBuilder extends AbstractBuilderComponent implements IImageBuil
 	 * @param osType
 	 */
 	public void setOSType(String osType) {
-	    fImage.setOSType(osType);
+		fImage.setOSType(osType);
 	}
 
 	/**

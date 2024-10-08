@@ -461,33 +461,33 @@ public abstract class NewAixDump extends CoreReaderSupport {
 			address = coreReadAddress();
 		}
 
-        // Get the environment variables
-        Properties environment = new Properties();
-        for (Iterator iter = addresses.iterator(); iter.hasNext();) {
-            Long varAddress = (Long)iter.next();
-            String pair = null;
-            try {
-                coreSeekVirtual(varAddress.longValue());
-                pair = readString();
-            } catch (MemoryAccessException e) {
-                // catch errors here, we can carry on getting other environment variables - unlikely to be missing only some of these
-                continue;
-            }
-            if (null != pair)
-            {
-                // Pair is the x=y string, now break it into key and value
-                int equalSignIndex = pair.indexOf('=');
-                if (equalSignIndex >= 0)
-                {
-                    String key = pair.substring(0, equalSignIndex);
-                    String value = pair.substring(equalSignIndex + 1);
-                    environment.put(key, value);
-                }
-            }
-         }
+		// Get the environment variables
+		Properties environment = new Properties();
+		for (Iterator iter = addresses.iterator(); iter.hasNext();) {
+			Long varAddress = (Long)iter.next();
+			String pair = null;
+			try {
+				coreSeekVirtual(varAddress.longValue());
+				pair = readString();
+			} catch (MemoryAccessException e) {
+				// catch errors here, we can carry on getting other environment variables - unlikely to be missing only some of these
+				continue;
+			}
+			if (null != pair)
+			{
+				// Pair is the x=y string, now break it into key and value
+				int equalSignIndex = pair.indexOf('=');
+				if (equalSignIndex >= 0)
+				{
+					String key = pair.substring(0, equalSignIndex);
+					String value = pair.substring(equalSignIndex + 1);
+					environment.put(key, value);
+				}
+			}
+		}
 
-         return environment;
- }
+		return environment;
+	}
 
 	private List readThreads(Builder builder, Object addressSpace) throws IOException {
 		List threads = new ArrayList();

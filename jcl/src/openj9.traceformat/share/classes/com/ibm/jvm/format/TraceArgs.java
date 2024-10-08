@@ -25,233 +25,231 @@ package com.ibm.jvm.format;
 import java.util.Vector;
 import java.math.BigInteger;
 
-/** 
+/**
  * Parses the arguments and make available to rest of the formatter
  *
  * @author Tim Preece
  */
 final public class TraceArgs {
 
-    public      static            String               traceFile;
-    public      static            String               outputFile;
-    public      static            boolean              indent;
-    public      static            boolean              summary;
-    public      static            boolean              debug;
-    public      static            boolean              symbolic;
-    public		static			  boolean			   isHelpOnly;
-    public      static            boolean              gui;
-    public      static            boolean              j9;
-    public      static            boolean              verbose;
-    public      static            String               userVMIdentifier;
-    public      static            BigInteger           timeZoneOffset = BigInteger.ZERO;
-    public      static            boolean              is50orNewer;
-    public      static            boolean              override;
-    public      static            String               datFileDirectory = null;
-    
-   /** Initializes static variables.
-    *
-    *  <p>This is called each time the TraceFormatter is started, from the initStatics()
-    *     method in TraceFormat.java</p>
-    */
-    final protected static void initStatics()
-    {
-        traceFile  = null;
-        outputFile = null;
-        indent     = false;
-        summary    = false;
-        debug      = false;
-        symbolic   = false;
-        gui        = false;
-        j9         = false;
-        userVMIdentifier = null;
-	is50orNewer = false;
-	override = false;
-    }
+	public      static            String               traceFile;
+	public      static            String               outputFile;
+	public      static            boolean              indent;
+	public      static            boolean              summary;
+	public      static            boolean              debug;
+	public      static            boolean              symbolic;
+	public		static			  boolean			   isHelpOnly;
+	public      static            boolean              gui;
+	public      static            boolean              j9;
+	public      static            boolean              verbose;
+	public      static            String               userVMIdentifier;
+	public      static            BigInteger           timeZoneOffset = BigInteger.ZERO;
+	public      static            boolean              is50orNewer;
+	public      static            boolean              override;
+	public      static            String               datFileDirectory = null;
 
-    /** parses the command line arguments
-     *
-     * @param   args      the arguments
-     * @throws  UsageException
-     */
-    public TraceArgs(String[] args) throws UsageException
-    {
-        if ( args.length > 0 ) {
-            int index;
+	/** Initializes static variables.
+	 *
+	 *  <p>This is called each time the TraceFormatter is started, from the initStatics()
+	 *     method in TraceFormat.java</p>
+	 */
+	final protected static void initStatics()
+	{
+		traceFile  = null;
+		outputFile = null;
+		indent     = false;
+		summary    = false;
+		debug      = false;
+		symbolic   = false;
+		gui        = false;
+		j9         = false;
+		userVMIdentifier = null;
+		is50orNewer = false;
+		override = false;
+	}
 
-            /* Catch a request for help in argument 0. */
-            if ( args[0].equals("-help") ) {
-                isHelpOnly=true;
-           } else {
-            
-            traceFile = args[0];
-           }
+	/** parses the command line arguments
+	 *
+	 * @param   args      the arguments
+	 * @throws  UsageException
+	 */
+	public TraceArgs(String[] args) throws UsageException
+	{
+		if ( args.length > 0 ) {
+			int index;
 
-            if ( args.length > 1 ) {
+			/* Catch a request for help in argument 0. */
+			if ( args[0].equals("-help") ) {
+				isHelpOnly=true;
+			} else {
 
-                if ( args[1].startsWith("-") ) {
-                    outputFile = args[0] + ".fmt";
-                    index       =  1;
-                } else {
-                    outputFile = args[1];
-                    index       =  2;
-                }
+				traceFile = args[0];
+			}
 
-                while ( index < args.length ) {
-                    if ( args[index].equals("-summary") ) {
-                        summary=true;
-                    } else if ( args[index].startsWith("-entries:") ) {
-                        parseComponentParameter(args[index]);
-                    } else if ( args[index].startsWith("-thread:") ) {
-                        parseThread(args[index]);
-                    } else if ( args[index].equals("-indent") ) {
-                        indent=true;
-                    } else if ( args[index].equals("-symbolic") ) {
-                        symbolic=true;
-                    } else if ( args[index].equals("-help") ) {
-                        isHelpOnly=true;
-                    } else if (args[index].equals("-version") ) {
-                    	System.out.println("TraceFormat Version " + TraceFormat.traceFormatMajorVersion + "." + TraceFormat.traceFormatMinorVersion);
-                    } else if ( args[index].equals("-debug") ) {
-                        debug=true;
-                        verbose=true;
-                    } else if ( args[index].equals("-j9") ) {
-                        j9=true;
-                    } else if (args[index].equals("-verbose")) {
-                    	verbose=true;
-                    } else if ( args[index].equalsIgnoreCase("-uservmid") ) {
-                        index++;
-                        if ( (index >= args.length) || (args[index].startsWith("-"))) {
-                            throw new UsageException("no uservmid string provided");
-                        }
-                        userVMIdentifier = args[index];
-                    } else if ( args[index].equalsIgnoreCase("-overridetimezone") ) {
-                        index++;
-                        if ( index >= args.length ) {
-                            throw new UsageException("no time provided with overridetimezone option");
-                        }                        
-                        try {
-                            int offset = Integer.parseInt( args[index] );
-                            System.out.println("All formatted tracepoints will be formatted with an offset to the hours field of " + offset + "hours.");
-                            timeZoneOffset = new BigInteger( args[index] );
-                        } catch ( NumberFormatException nfe ){
-                            System.err.println("Cannot format " + args[index] + " into an integer to use as an hour offset in Trace Formatter.");
-                            System.err.println( nfe );
-                            throw new UsageException("please specify an integer value after -overridetimezone that will be used as an offset for the formatted hour field");
-                        }                        
-                    } else if ( args[index].startsWith("-50") ){
-			/* this offers a manual override to enforce 50 behaviour when the trace file has a version number of
-			 * < 5.0. This could be useful if you have a development build that produced a snap but didn't yet have
-			 * the ute.h patch to upgrade the version number in the headers.
-			 */
-			is50orNewer = true;
-		    } else if ( args[index].startsWith("-11") ){
-			/* this offers a manual override to enforce 50 behaviour when the trace file has a version number of
-			 * < 5.0. This could be useful if you have a development build that produced a snap but didn't yet have
-			 * the ute.h patch to upgrade the version number in the headers.
-			 */
-			is50orNewer = false;
-			override = true;
+			if ( args.length > 1 ) {
 
-		    } else if ( args[index].startsWith("-datdir") ){
-			index++;
-                        if ( (index >= args.length) || (args[index].startsWith("-"))) {
-                            throw new UsageException("no dat file directory name provided");
-                        }
-			datFileDirectory = new String( args[index] );
-		    } else {
-                        throw new UsageException();
-                    }
-                    index++;
-                }
-            } else {
-                outputFile = args[0] + ".fmt";
-            }
-        } else {
-            throw new UsageException();
-        }
-        return;
-    }
+				if ( args[1].startsWith("-") ) {
+					outputFile = args[0] + ".fmt";
+					index       =  1;
+				} else {
+					outputFile = args[1];
+					index       =  2;
+				}
 
-    private void parseComponentParameter(String comp) throws UsageException
-    {
-        String compString = comp.substring("-entries:".length());
-        parseComponents(compString);
-    }
+				while ( index < args.length ) {
+					if ( args[index].equals("-summary") ) {
+						summary=true;
+					} else if ( args[index].startsWith("-entries:") ) {
+						parseComponentParameter(args[index]);
+					} else if ( args[index].startsWith("-thread:") ) {
+						parseThread(args[index]);
+					} else if ( args[index].equals("-indent") ) {
+						indent=true;
+					} else if ( args[index].equals("-symbolic") ) {
+						symbolic=true;
+					} else if ( args[index].equals("-help") ) {
+						isHelpOnly=true;
+					} else if (args[index].equals("-version") ) {
+						System.out.println("TraceFormat Version " + TraceFormat.traceFormatMajorVersion + "." + TraceFormat.traceFormatMinorVersion);
+					} else if ( args[index].equals("-debug") ) {
+						debug=true;
+						verbose=true;
+					} else if ( args[index].equals("-j9") ) {
+						j9=true;
+					} else if (args[index].equals("-verbose")) {
+						verbose=true;
+					} else if ( args[index].equalsIgnoreCase("-uservmid") ) {
+						index++;
+						if ( (index >= args.length) || (args[index].startsWith("-"))) {
+							throw new UsageException("no uservmid string provided");
+						}
+						userVMIdentifier = args[index];
+					} else if ( args[index].equalsIgnoreCase("-overridetimezone") ) {
+						index++;
+						if ( index >= args.length ) {
+							throw new UsageException("no time provided with overridetimezone option");
+						}
+						try {
+							int offset = Integer.parseInt( args[index] );
+							System.out.println("All formatted tracepoints will be formatted with an offset to the hours field of " + offset + "hours.");
+							timeZoneOffset = new BigInteger( args[index] );
+						} catch ( NumberFormatException nfe ){
+							System.err.println("Cannot format " + args[index] + " into an integer to use as an hour offset in Trace Formatter.");
+							System.err.println( nfe );
+							throw new UsageException("please specify an integer value after -overridetimezone that will be used as an offset for the formatted hour field");
+						}
+					} else if ( args[index].startsWith("-50") ) {
+						/* this offers a manual override to enforce 50 behaviour when the trace file has a version number of
+						 * < 5.0. This could be useful if you have a development build that produced a snap but didn't yet have
+						 * the ute.h patch to upgrade the version number in the headers.
+						 */
+						is50orNewer = true;
+					} else if ( args[index].startsWith("-11") ){
+						/* this offers a manual override to enforce 50 behaviour when the trace file has a version number of
+						 * < 5.0. This could be useful if you have a development build that produced a snap but didn't yet have
+						 * the ute.h patch to upgrade the version number in the headers.
+						 */
+						is50orNewer = false;
+						override = true;
 
-    private void parseComponents(String compString) throws UsageException
-    {
+					} else if ( args[index].startsWith("-datdir") ){
+						index++;
+						if ( (index >= args.length) || (args[index].startsWith("-"))) {
+							throw new UsageException("no dat file directory name provided");
+						}
+						datFileDirectory = new String( args[index] );
+					} else {
+						throw new UsageException();
+					}
+					index++;
+				}
+			} else {
+				outputFile = args[0] + ".fmt";
+			}
+		} else {
+			throw new UsageException();
+		}
+		return;
+	}
 
-        int paren   =  compString.indexOf("(");
-        int comma   =  compString.indexOf(",");
-        if ( comma != -1 ) {
-            if ( comma < paren ) {
-                parseComponent(compString.substring(0, comma));
-                parseComponents(compString.substring(comma + 1, compString.length()));
-            } else {
-                int closeParen = compString.indexOf(")");
-                parseComponent(compString.substring(0, closeParen+1));
-                int nextComma = compString.indexOf(",", closeParen);
-                if ( nextComma != -1 ) {
-                    parseComponents(compString.substring(nextComma + 1, compString.length()));
-                }
-            }
-        } else {
-            parseComponent(compString);
-        }
-    }
+	private void parseComponentParameter(String comp) throws UsageException
+	{
+		String compString = comp.substring("-entries:".length());
+		parseComponents(compString);
+	}
 
-    private void parseComponent(String component) throws UsageException
-    {
-        int open    =  component.indexOf("(");
-        int close   =  component.indexOf(")");
-        if ( close < open ) {
-            throw new UsageException();
-        } else if ( close == open ) { // only possible if both == -1
-            Util.putComponent(component);
-        } else {
-            Vector types   =  new Vector(10);
-            String temp    =  component.substring(open + 1, component.length()-1);
+	private void parseComponents(String compString) throws UsageException
+	{
 
-            int index;
-            while ( (index = temp.indexOf(",")) != -1 ) {
-                types.addElement(temp.substring(0, index));
-                temp = temp.substring(index+1, temp.length());
-            }
-            types.addElement(temp.substring(0, temp.length()));
-            Util.putComponent(component.substring(0, open), types);
-        }
-    }
+		int paren   =  compString.indexOf("(");
+		int comma   =  compString.indexOf(",");
+		if ( comma != -1 ) {
+			if ( comma < paren ) {
+				parseComponent(compString.substring(0, comma));
+				parseComponents(compString.substring(comma + 1, compString.length()));
+			} else {
+				int closeParen = compString.indexOf(")");
+				parseComponent(compString.substring(0, closeParen+1));
+				int nextComma = compString.indexOf(",", closeParen);
+				if ( nextComma != -1 ) {
+					parseComponents(compString.substring(nextComma + 1, compString.length()));
+				}
+			}
+		} else {
+			parseComponent(compString);
+		}
+	}
 
-    private void parseThread(String thread) throws UsageException
-    {
-        String id = null;
-       try {
-            String   temp  = thread.substring("-thread:".length());
-            int      index;
-             while ( (index = temp.indexOf(",")) != -1 ) {
-            	id = temp.substring(0, index);
-                Util.putThreadID(Long.decode(id));
-                temp = temp.substring(index+1, temp.length());
-            }
-            id = temp.substring(0, temp.length());
-            Util.putThreadID(Long.decode(id));
-        } catch ( NumberFormatException nfe ) {
-            throw new UsageException("Bad thread ID: " + id);
-        }
-    }
+	private void parseComponent(String component) throws UsageException
+	{
+		int open    =  component.indexOf("(");
+		int close   =  component.indexOf(")");
+		if ( close < open ) {
+			throw new UsageException();
+		} else if ( close == open ) { // only possible if both == -1
+			Util.putComponent(component);
+		} else {
+			Vector types   =  new Vector(10);
+			String temp    =  component.substring(open + 1, component.length()-1);
 
-    class UsageException extends Exception {
-        UsageException(String s)
-        {
-            super(s);
-        }
+			int index;
+			while ( (index = temp.indexOf(",")) != -1 ) {
+				types.addElement(temp.substring(0, index));
+				temp = temp.substring(index+1, temp.length());
+			}
+			types.addElement(temp.substring(0, temp.length()));
+			Util.putComponent(component.substring(0, open), types);
+		}
+	}
 
-        UsageException()
-        {
-            super();
-        }
-    }
+	private void parseThread(String thread) throws UsageException
+	{
+		String id = null;
+		try {
+			String   temp  = thread.substring("-thread:".length());
+			int      index;
+			while ( (index = temp.indexOf(",")) != -1 ) {
+				id = temp.substring(0, index);
+				Util.putThreadID(Long.decode(id));
+				temp = temp.substring(index+1, temp.length());
+			}
+			id = temp.substring(0, temp.length());
+			Util.putThreadID(Long.decode(id));
+		} catch ( NumberFormatException nfe ) {
+			throw new UsageException("Bad thread ID: " + id);
+		}
+	}
+
+	class UsageException extends Exception {
+		UsageException(String s)
+		{
+			super(s);
+		}
+
+		UsageException()
+		{
+			super();
+		}
+	}
 
 }
-
-

@@ -4812,3 +4812,1265 @@ addDoubleFromArrayPtrByOne(int size, double *heapPtr, double *nativePtr)
 		index += 1;
 	}
 }
+
+/**
+ * Get a new struct by adding each boolean element of two structs
+ * with the same boolean nested struct with the XOR (^) operator.
+ *
+ * @param arg1 the 1st struct with a nested boolean struct
+ * @param arg2 the 2nd struct with a nested boolean struct
+ * @return a struct with a nested boolean struct
+ */
+stru_NestedStruct_Bool
+addNestedBoolStructsWithXor_dupStruct(stru_NestedStruct_Bool arg1, stru_NestedStruct_Bool arg2)
+{
+	stru_NestedStruct_Bool boolStruct;
+	boolStruct.elem1.elem1 = arg1.elem1.elem1 ^ arg2.elem1.elem1;
+	boolStruct.elem1.elem2 = arg1.elem1.elem2 ^ arg2.elem1.elem2;
+	boolStruct.elem2 = arg1.elem2 ^ arg2.elem2;
+	return boolStruct;
+}
+
+/**
+ * Get a new struct by adding each boolean element of two structs with different elements
+ * with the XOR (^) operator.
+ *
+ * @param arg1 the 1st struct with two booleans
+ * @param arg2 the 2nd struct with a nested boolean struct
+ * @return a struct with two booleans
+ */
+stru_2_Bools
+addBoolStruct1AndNestedBoolStruct2WithXor_returnStruct1_dupStruct(stru_2_Bools arg1, stru_NestedStruct_Bool arg2)
+{
+	stru_2_Bools boolStruct;
+	boolStruct.elem1 = arg1.elem1 ^ arg2.elem1.elem1;
+	boolStruct.elem2 = arg1.elem2 ^ arg2.elem1.elem2 ^ arg2.elem2;
+	return boolStruct;
+}
+
+/**
+ * Get a new struct by adding each boolean element of two structs with different elements
+ * with the XOR (^) operator.
+ *
+ * @param arg1 the 1st struct with two booleans
+ * @param arg2 the 2nd struct with a nested boolean struct
+ * @return a struct with a nested boolean struct
+ */
+stru_NestedStruct_Bool
+addBoolStruct1AndNestedBoolStruct2WithXor_returnStruct2_dupStruct(stru_2_Bools arg1, stru_NestedStruct_Bool arg2)
+{
+	stru_NestedStruct_Bool boolStruct;
+	boolStruct.elem1.elem1 = arg1.elem1 ^ arg2.elem1.elem1;
+	boolStruct.elem1.elem2 = arg1.elem2 ^ arg2.elem1.elem2;
+	boolStruct.elem2 = arg1.elem2 ^ arg2.elem2;
+	return boolStruct;
+}
+
+/**
+ * Get a new struct by adding each boolean element of two structs
+ * with the same nested boolean array with the XOR (^) operator.
+ *
+ * @param arg1 the 1st struct with a nested boolean array
+ * @param arg2 the 2nd struct with a nested boolean array
+ * @return a struct with a nested boolean array
+ */
+stru_NestedBoolArray_Bool
+addNestedBoolArrayStructsWithXor_dupStruct(stru_NestedBoolArray_Bool arg1, stru_NestedBoolArray_Bool arg2)
+{
+	stru_NestedBoolArray_Bool boolStruct;
+	boolStruct.elem1[0] = arg1.elem1[0] ^ arg2.elem1[0];
+	boolStruct.elem1[1] = arg1.elem1[1] ^ arg2.elem1[1];
+	boolStruct.elem2 = arg1.elem2 ^ arg2.elem2;
+	return boolStruct;
+}
+
+/**
+ * Get a new struct by adding each boolean element of two structs with different elements
+ * with the XOR (^) operator.
+ *
+ * @param arg1 the 1st struct with two booleans
+ * @param arg2 the 2nd struct with a nested boolean array
+ * @return a struct with two booleans
+ */
+stru_2_Bools
+addBoolStruct1AndNestedBoolArrayStruct2WithXor_returnStruct1_dupStruct(stru_2_Bools arg1, stru_NestedBoolArray_Bool arg2)
+{
+	stru_2_Bools boolStruct;
+	boolStruct.elem1 = arg1.elem1 ^ arg2.elem1[0];
+	boolStruct.elem2 = arg1.elem2 ^ arg2.elem1[1] ^ arg2.elem2;
+	return boolStruct;
+}
+
+/**
+ * Get a new struct by adding each boolean element of two structs with different elements
+ * with the XOR (^) operator.
+ *
+ * @param arg1 the 1st struct with two booleans
+ * @param arg2 the 2nd struct with a nested boolean array
+ * @return a struct with a nested boolean array
+ */
+stru_NestedBoolArray_Bool
+addBoolStruct1AndNestedBoolArrayStruct2WithXor_returnStruct2_dupStruct(stru_2_Bools arg1, stru_NestedBoolArray_Bool arg2)
+{
+	stru_NestedBoolArray_Bool boolStruct;
+	boolStruct.elem1[0] = arg1.elem1 ^ arg2.elem1[0];
+	boolStruct.elem1[1] = arg1.elem2 ^ arg2.elem1[1];
+	boolStruct.elem2 = arg1.elem2 ^ arg2.elem2;
+	return boolStruct;
+}
+
+/**
+ * Get a new struct by adding each boolean element of two structs
+ * with the same nested boolean struct array with the XOR (^) operator.
+ *
+ * @param arg1 the 1st struct with a nested boolean struct array
+ * @param arg2 the 2nd struct with a nested boolean struct array
+ * @return a struct with a nested boolean struct array
+ */
+stru_NestedStruArray_Bool
+addNestedBoolStructArrayStructsWithXor_dupStruct(stru_NestedStruArray_Bool arg1, stru_NestedStruArray_Bool arg2)
+{
+	stru_NestedStruArray_Bool boolStruct;
+	boolStruct.elem1[0].elem1 = arg1.elem1[0].elem1 ^ arg2.elem1[0].elem1;
+	boolStruct.elem1[0].elem2 = arg1.elem1[0].elem2 ^ arg2.elem1[0].elem2;
+	boolStruct.elem1[1].elem1 = arg1.elem1[1].elem1 ^ arg2.elem1[1].elem1;
+	boolStruct.elem1[1].elem2 = arg1.elem1[1].elem2 ^ arg2.elem1[1].elem2;
+	boolStruct.elem2 = arg1.elem2 ^ arg2.elem2;
+	return boolStruct;
+}
+
+/**
+ * Get a new struct by adding each boolean element of two structs with different elements
+ * with the XOR (^) operator.
+ *
+ * @param arg1 the 1st struct with two booleans
+ * @param arg2 the 2nd struct with a nested boolean struct array
+ * @return a struct with two booleans
+ */
+stru_2_Bools
+addBoolStruct1AndNestedBoolStructArrayStruct2WithXor_returnStruct1_dupStruct(stru_2_Bools arg1, stru_NestedStruArray_Bool arg2)
+{
+	stru_2_Bools boolStruct;
+	boolStruct.elem1 = arg1.elem1 ^ arg2.elem1[0].elem1 ^ arg2.elem1[1].elem1;
+	boolStruct.elem2 = arg1.elem2 ^ arg2.elem1[0].elem2 ^ arg2.elem1[1].elem2 ^ arg2.elem2;
+	return boolStruct;
+}
+
+/**
+ * Get a new struct by adding each boolean element of two structs with different elements
+ * with the XOR (^) operator.
+ *
+ * @param arg1 the 1st struct with two booleans
+ * @param arg2 the 2nd struct with a nested boolean struct array
+ * @return a struct with a nested boolean struct array
+ */
+stru_NestedStruArray_Bool
+addBoolStruct1AndNestedBoolStructArrayStruct2WithXor_returnStruct2_dupStruct(stru_2_Bools arg1, stru_NestedStruArray_Bool arg2)
+{
+	stru_NestedStruArray_Bool boolStruct;
+	boolStruct.elem1[0].elem1 = arg1.elem1 ^ arg2.elem1[0].elem1;
+	boolStruct.elem1[0].elem2 = arg1.elem2 ^ arg2.elem1[0].elem2;
+	boolStruct.elem1[1].elem1 = arg1.elem1 ^ arg2.elem1[1].elem1;
+	boolStruct.elem1[1].elem2 = arg1.elem2 ^ arg2.elem1[1].elem2;
+	boolStruct.elem2 = arg1.elem2 ^ arg2.elem2;
+	return boolStruct;
+}
+
+/**
+ * Get a new struct by adding each byte element of two structs
+ * with the same nested byte struct.
+ *
+ * @param arg1 the 1st struct with a nested byte struct
+ * @param arg2 the 2nd struct with a nested byte struct
+ * @return a struct with a nested byte struct
+ */
+stru_NestedStruct_Byte
+addNestedByteStructs_dupStruct(stru_NestedStruct_Byte arg1, stru_NestedStruct_Byte arg2)
+{
+	stru_NestedStruct_Byte byteStruct;
+	byteStruct.elem1.elem1 = arg1.elem1.elem1 + arg2.elem1.elem1;
+	byteStruct.elem1.elem2 = arg1.elem1.elem2 + arg2.elem1.elem2;
+	byteStruct.elem2 = arg1.elem2 + arg2.elem2;
+	return byteStruct;
+}
+
+/**
+ * Get a new struct by adding each byte element of two structs with different elements.
+ *
+ * @param arg1 the 1st struct with two bytes
+ * @param arg2 the 2nd struct with a nested byte struct
+ * @return a struct with two bytes
+ */
+stru_2_Bytes
+addByteStruct1AndNestedByteStruct2_returnStruct1_dupStruct(stru_2_Bytes arg1, stru_NestedStruct_Byte arg2)
+{
+	stru_2_Bytes byteStruct;
+	byteStruct.elem1 = arg1.elem1 + arg2.elem1.elem1;
+	byteStruct.elem2 = arg1.elem2 + arg2.elem1.elem2 + arg2.elem2;
+	return byteStruct;
+}
+
+/**
+ * Get a new struct by adding each byte element of two structs with different elements.
+ *
+ * @param arg1 the 1st struct with two bytes
+ * @param arg2 the 2nd struct with a nested byte struct
+ * @return a struct with a nested byte struct
+ */
+stru_NestedStruct_Byte
+addByteStruct1AndNestedByteStruct2_returnStruct2_dupStruct(stru_2_Bytes arg1, stru_NestedStruct_Byte arg2)
+{
+	stru_NestedStruct_Byte byteStruct;
+	byteStruct.elem1.elem1 = arg1.elem1 + arg2.elem1.elem1;
+	byteStruct.elem1.elem2 = arg1.elem2 + arg2.elem1.elem2;
+	byteStruct.elem2 = arg1.elem2 + arg2.elem2;
+	return byteStruct;
+}
+
+/**
+ * Get a new struct by adding each byte element of two structs
+ * with the same nested byte array.
+ *
+ * @param arg1 the 1st struct with a nested byte array
+ * @param arg2 the 2nd struct with a nested byte array
+ * @return a struct with a nested byte array
+ */
+stru_NestedByteArray_Byte
+addNestedByteArrayStructs_dupStruct(stru_NestedByteArray_Byte arg1, stru_NestedByteArray_Byte arg2)
+{
+	stru_NestedByteArray_Byte byteStruct;
+	byteStruct.elem1[0] = arg1.elem1[0] + arg2.elem1[0];
+	byteStruct.elem1[1] = arg1.elem1[1] + arg2.elem1[1];
+	byteStruct.elem2 = arg1.elem2 + arg2.elem2;
+	return byteStruct;
+}
+
+/**
+ * Get a new struct by adding each byte element of two structs with different elements.
+ *
+ * @param arg1 the 1st struct with two bytes
+ * @param arg2 the 2nd struct with a nested byte array
+ * @return a struct with two bytes
+ */
+stru_2_Bytes
+addByteStruct1AndNestedByteArrayStruct2_returnStruct1_dupStruct(stru_2_Bytes arg1, stru_NestedByteArray_Byte arg2)
+{
+	stru_2_Bytes byteStruct;
+	byteStruct.elem1 = arg1.elem1 + arg2.elem1[0];
+	byteStruct.elem2 = arg1.elem2 + arg2.elem1[1] + arg2.elem2;
+	return byteStruct;
+}
+
+/**
+ * Get a new struct by adding each byte element of two structs with different elements.
+ *
+ * @param arg1 the 1st struct with two bytes
+ * @param arg2 the 2nd struct with a nested byte array
+ * @return a struct with a nested byte array
+ */
+stru_NestedByteArray_Byte
+addByteStruct1AndNestedByteArrayStruct2_returnStruct2_dupStruct(stru_2_Bytes arg1, stru_NestedByteArray_Byte arg2)
+{
+	stru_NestedByteArray_Byte byteStruct;
+	byteStruct.elem1[0] = arg1.elem1 + arg2.elem1[0];
+	byteStruct.elem1[1] = arg1.elem2 + arg2.elem1[1];
+	byteStruct.elem2 = arg1.elem2 + arg2.elem2;
+	return byteStruct;
+}
+
+/**
+ * Get a new struct by adding each byte element of two structs
+ * with the same nested byte struct array.
+ *
+ * @param arg1 the 1st struct with a nested byte struct array
+ * @param arg2 the 2nd struct with a nested byte struct array
+ * @return a struct with a nested byte struct array
+ */
+stru_NestedStruArray_Byte
+addNestedByteStructArrayStructs_dupStruct(stru_NestedStruArray_Byte arg1, stru_NestedStruArray_Byte arg2)
+{
+	stru_NestedStruArray_Byte byteStruct;
+	byteStruct.elem1[0].elem1 = arg1.elem1[0].elem1 + arg2.elem1[0].elem1;
+	byteStruct.elem1[0].elem2 = arg1.elem1[0].elem2 + arg2.elem1[0].elem2;
+	byteStruct.elem1[1].elem1 = arg1.elem1[1].elem1 + arg2.elem1[1].elem1;
+	byteStruct.elem1[1].elem2 = arg1.elem1[1].elem2 + arg2.elem1[1].elem2;
+	byteStruct.elem2 = arg1.elem2 + arg2.elem2;
+	return byteStruct;
+}
+
+/**
+ * Get a new struct by adding each byte element of two structs with different elements.
+ *
+ * @param arg1 the 1st struct with two bytes
+ * @param arg2 the 2nd struct with a nested byte struct array
+ * @return a struct with two bytes
+ */
+stru_2_Bytes
+addByteStruct1AndNestedByteStructArrayStruct2_returnStruct1_dupStruct(stru_2_Bytes arg1, stru_NestedStruArray_Byte arg2)
+{
+	stru_2_Bytes byteStruct;
+	byteStruct.elem1 = arg1.elem1 + arg2.elem1[0].elem1 + arg2.elem1[1].elem1;
+	byteStruct.elem2 = arg1.elem2 + arg2.elem1[0].elem2 + arg2.elem1[1].elem2 + arg2.elem2;
+	return byteStruct;
+}
+
+/**
+ * Get a new struct by adding each byte element of two structs with different elements.
+ *
+ * @param arg1 the 1st struct with two bytes
+ * @param arg2 the 2nd struct with a nested byte struct array
+ * @return a struct with a nested byte struct array
+ */
+stru_NestedStruArray_Byte
+addByteStruct1AndNestedByteStructArrayStruct2_returnStruct2_dupStruct(stru_2_Bytes arg1, stru_NestedStruArray_Byte arg2)
+{
+	stru_NestedStruArray_Byte byteStruct;
+	byteStruct.elem1[0].elem1 = arg1.elem1 + arg2.elem1[0].elem1;
+	byteStruct.elem1[0].elem2 = arg1.elem2 + arg2.elem1[0].elem2;
+	byteStruct.elem1[1].elem1 = arg1.elem1 + arg2.elem1[1].elem1;
+	byteStruct.elem1[1].elem2 = arg1.elem2 + arg2.elem1[1].elem2;
+	byteStruct.elem2 = arg1.elem2 + arg2.elem2;
+	return byteStruct;
+}
+
+/**
+ * Get a new struct by adding each char element of two structs
+ * with the same nested char struct.
+ *
+ * @param arg1 the 1st struct with a nested char struct
+ * @param arg2 the 2nd struct with a nested char struct
+ * @return a struct with a nested char struct
+ */
+stru_NestedStruct_Char
+addNestedCharStructs_dupStruct(stru_NestedStruct_Char arg1, stru_NestedStruct_Char arg2)
+{
+	stru_NestedStruct_Char charStruct;
+	charStruct.elem1.elem1 = arg1.elem1.elem1 + arg2.elem1.elem1 - 'A';
+	charStruct.elem1.elem2 = arg1.elem1.elem2 + arg2.elem1.elem2 - 'A';
+	charStruct.elem2 = arg1.elem2 + arg2.elem2 - 'A';
+	return charStruct;
+}
+
+/**
+ * Get a new struct by adding each char element of two structs with different elements.
+ *
+ * @param arg1 the 1st struct with two chars
+ * @param arg2 the 2nd struct with a nested char struct
+ * @return a struct with two chars
+ */
+stru_2_Chars
+addCharStruct1AndNestedCharStruct2_returnStruct1_dupStruct(stru_2_Chars arg1, stru_NestedStruct_Char arg2)
+{
+	stru_2_Chars charStruct;
+	charStruct.elem1 = arg1.elem1 + arg2.elem1.elem1 - 'A';
+	charStruct.elem2 = arg1.elem2 + arg2.elem1.elem2 + arg2.elem2 -  (2 * 'A');
+	return charStruct;
+}
+
+/**
+ * Get a new struct by adding each char element of two structs with different elements.
+ *
+ * @param arg1 the 1st struct with two chars
+ * @param arg2 the 2nd struct with a nested char struct
+ * @return a struct with a nested char struct
+ */
+stru_NestedStruct_Char
+addCharStruct1AndNestedCharStruct2_returnStruct2_dupStruct(stru_2_Chars arg1, stru_NestedStruct_Char arg2)
+{
+	stru_NestedStruct_Char charStruct;
+	charStruct.elem1.elem1 = arg1.elem1 + arg2.elem1.elem1 - 'A';
+	charStruct.elem1.elem2 = arg1.elem2 + arg2.elem1.elem2 - 'A';
+	charStruct.elem2 = arg1.elem2 + arg2.elem2 - 'A';
+	return charStruct;
+}
+
+/**
+ * Get a new struct by adding each char element of two structs
+ * with the same nested char array.
+ *
+ * @param arg1 the 1st struct with a nested char array
+ * @param arg2 the 2nd struct with a nested char array
+ * @return a struct with a nested char array
+ */
+stru_NestedCharArray_Char
+addNestedCharArrayStructs_dupStruct(stru_NestedCharArray_Char arg1, stru_NestedCharArray_Char arg2)
+{
+	stru_NestedCharArray_Char charStruct;
+	charStruct.elem1[0] = arg1.elem1[0] + arg2.elem1[0] - 'A';
+	charStruct.elem1[1] = arg1.elem1[1] + arg2.elem1[1] - 'A';
+	charStruct.elem2 = arg1.elem2 + arg2.elem2 - 'A';
+	return charStruct;
+}
+
+/**
+ * Get a new struct by adding each char element of two structs with different elements.
+ *
+ * @param arg1 the 1st struct with two chars
+ * @param arg2 the 2nd struct with a nested char array
+ * @return a struct with two chars
+ */
+stru_2_Chars
+addCharStruct1AndNestedCharArrayStruct2_returnStruct1_dupStruct(stru_2_Chars arg1, stru_NestedCharArray_Char arg2)
+{
+	stru_2_Chars charStruct;
+	charStruct.elem1 = arg1.elem1 + arg2.elem1[0] - 'A';
+	charStruct.elem2 = arg1.elem2 + arg2.elem1[1] + arg2.elem2 - (2 * 'A');
+	return charStruct;
+}
+
+/**
+ * Get a new struct by adding each char element of two structs with different elements.
+ *
+ * @param arg1 the 1st struct with two chars
+ * @param arg2 the 2nd struct with a nested char array
+ * @return a struct with a nested char array
+ */
+stru_NestedCharArray_Char
+addCharStruct1AndNestedCharArrayStruct2_returnStruct2_dupStruct(stru_2_Chars arg1, stru_NestedCharArray_Char arg2)
+{
+	stru_NestedCharArray_Char charStruct;
+	charStruct.elem1[0] = arg1.elem1 + arg2.elem1[0] - 'A';
+	charStruct.elem1[1] = arg1.elem2 + arg2.elem1[1] - 'A';
+	charStruct.elem2 = arg1.elem2 + arg2.elem2 - 'A';
+	return charStruct;
+}
+
+/**
+ * Get a new struct by adding each char element of two structs
+ * with the same nested char struct array.
+ *
+ * @param arg1 the 1st struct with a nested char struct array
+ * @param arg2 the 2nd struct with a nested char struct array
+ * @return a struct with a nested char struct array
+ */
+stru_NestedStruArray_Char
+addNestedCharStructArrayStructs_dupStruct(stru_NestedStruArray_Char arg1, stru_NestedStruArray_Char arg2)
+{
+	stru_NestedStruArray_Char charStruct;
+	charStruct.elem1[0].elem1 = arg1.elem1[0].elem1 + arg2.elem1[0].elem1 - 'A';
+	charStruct.elem1[0].elem2 = arg1.elem1[0].elem2 + arg2.elem1[0].elem2 - 'A';
+	charStruct.elem1[1].elem1 = arg1.elem1[1].elem1 + arg2.elem1[1].elem1 - 'A';
+	charStruct.elem1[1].elem2 = arg1.elem1[1].elem2 + arg2.elem1[1].elem2 - 'A';
+	charStruct.elem2 = arg1.elem2 + arg2.elem2 - 'A';
+	return charStruct;
+}
+
+/**
+ * Get a new struct by adding each char element of two structs with different elements.
+ *
+ * @param arg1 the 1st struct with two chars
+ * @param arg2 the 2nd struct with a nested char struct array
+ * @return a struct with two chars
+ */
+stru_2_Chars
+addCharStruct1AndNestedCharStructArrayStruct2_returnStruct1_dupStruct(stru_2_Chars arg1, stru_NestedStruArray_Char arg2)
+{
+	stru_2_Chars charStruct;
+	charStruct.elem1 = arg1.elem1 + arg2.elem1[0].elem1 + arg2.elem1[1].elem1 - (2 * 'A');
+	charStruct.elem2 = arg1.elem2 + arg2.elem1[0].elem2 + arg2.elem1[1].elem2 + arg2.elem2 - (3 * 'A');
+	return charStruct;
+}
+
+/**
+ * Get a new struct by adding each char element of two structs with different elements.
+ *
+ * @param arg1 the 1st struct with two chars
+ * @param arg2 the 2nd struct with a nested char struct array
+ * @return a struct with a nested char struct array
+ */
+stru_NestedStruArray_Char
+addCharStruct1AndNestedCharStructArrayStruct2_returnStruct2_dupStruct(stru_2_Chars arg1, stru_NestedStruArray_Char arg2)
+{
+	stru_NestedStruArray_Char charStruct;
+	charStruct.elem1[0].elem1 = arg1.elem1 + arg2.elem1[0].elem1 - 'A';
+	charStruct.elem1[0].elem2 = arg1.elem2 + arg2.elem1[0].elem2 - 'A';
+	charStruct.elem1[1].elem1 = arg1.elem1 + arg2.elem1[1].elem1 - 'A';
+	charStruct.elem1[1].elem2 = arg1.elem2 + arg2.elem1[1].elem2 - 'A';
+	charStruct.elem2 = arg1.elem2 + arg2.elem2 - 'A';
+	return charStruct;
+}
+
+/**
+ * Get a new struct by adding each short element of two structs
+ * with the same nested short struct.
+ *
+ * @param arg1 the 1st struct with a nested short struct
+ * @param arg2 the 2nd struct with a nested short struct
+ * @return a struct with a nested short struct
+ */
+stru_NestedStruct_Short
+addNestedShortStructs_dupStruct(stru_NestedStruct_Short arg1, stru_NestedStruct_Short arg2)
+{
+	stru_NestedStruct_Short shortStruct;
+	shortStruct.elem1.elem1 = arg1.elem1.elem1 + arg2.elem1.elem1;
+	shortStruct.elem1.elem2 = arg1.elem1.elem2 + arg2.elem1.elem2;
+	shortStruct.elem2 = arg1.elem2 + arg2.elem2;
+	return shortStruct;
+}
+
+/**
+ * Get a new struct by adding each short element of two structs with different elements.
+ *
+ * @param arg1 the 1st struct with two shorts
+ * @param arg2 the 2nd struct with a nested short struct
+ * @return a struct with two shorts
+ */
+stru_2_Shorts
+addShortStruct1AndNestedShortStruct2_returnStruct1_dupStruct(stru_2_Shorts arg1, stru_NestedStruct_Short arg2)
+{
+	stru_2_Shorts shortStruct;
+	shortStruct.elem1 = arg1.elem1 + arg2.elem1.elem1;
+	shortStruct.elem2 = arg1.elem2 + arg2.elem1.elem2 + arg2.elem2;
+	return shortStruct;
+}
+
+/**
+ * Get a new struct by adding each short element of two structs with different elements.
+ *
+ * @param arg1 the 1st struct with two shorts
+ * @param arg2 the 2nd struct with a nested short struct
+ * @return a struct with a nested short struct
+ */
+stru_NestedStruct_Short
+addShortStruct1AndNestedShortStruct2_returnStruct2_dupStruct(stru_2_Shorts arg1, stru_NestedStruct_Short arg2)
+{
+	stru_NestedStruct_Short shortStruct;
+	shortStruct.elem1.elem1 = arg1.elem1 + arg2.elem1.elem1;
+	shortStruct.elem1.elem2 = arg1.elem2 + arg2.elem1.elem2;
+	shortStruct.elem2 = arg1.elem2 + arg2.elem2;
+	return shortStruct;
+}
+
+/**
+ * Get a new struct by adding each short element of two structs
+ * with the same nested short array.
+ *
+ * @param arg1 the 1st struct with a nested short array
+ * @param arg2 the 2nd struct with a nested short array
+ * @return a struct with a nested short array
+ */
+stru_NestedShortArray_Short
+addNestedShortArrayStructs_dupStruct(stru_NestedShortArray_Short arg1, stru_NestedShortArray_Short arg2)
+{
+	stru_NestedShortArray_Short shortStruct;
+	shortStruct.elem1[0] = arg1.elem1[0] + arg2.elem1[0];
+	shortStruct.elem1[1] = arg1.elem1[1] + arg2.elem1[1];
+	shortStruct.elem2 = arg1.elem2 + arg2.elem2;
+	return shortStruct;
+}
+
+/**
+ * Get a new struct by adding each short element of two structs with different elements.
+ *
+ * @param arg1 the 1st struct with two shorts
+ * @param arg2 the 2nd struct with a nested short array
+ * @return a struct with two shorts
+ */
+stru_2_Shorts
+addShortStruct1AndNestedShortArrayStruct2_returnStruct1_dupStruct(stru_2_Shorts arg1, stru_NestedShortArray_Short arg2)
+{
+	stru_2_Shorts shortStruct;
+	shortStruct.elem1 = arg1.elem1 + arg2.elem1[0];
+	shortStruct.elem2 = arg1.elem2 + arg2.elem1[1] + arg2.elem2;
+	return shortStruct;
+}
+
+/**
+ * Get a new struct by adding each short element of two structs with different elements.
+ *
+ * @param arg1 the 1st struct with two shorts
+ * @param arg2 the 2nd struct with a nested short array
+ * @return a struct with a nested short array
+ */
+stru_NestedShortArray_Short
+addShortStruct1AndNestedShortArrayStruct2_returnStruct2_dupStruct(stru_2_Shorts arg1, stru_NestedShortArray_Short arg2)
+{
+	stru_NestedShortArray_Short shortStruct;
+	shortStruct.elem1[0] = arg1.elem1 + arg2.elem1[0];
+	shortStruct.elem1[1] = arg1.elem2 + arg2.elem1[1];
+	shortStruct.elem2 = arg1.elem2 + arg2.elem2;
+	return shortStruct;
+}
+
+/**
+ * Get a new struct by adding each short element of two structs
+ * with the same nested short struct array.
+ *
+ * @param arg1 the 1st struct with a nested short struct array
+ * @param arg2 the 2nd struct with a nested short struct array
+ * @return a struct with a nested short struct array
+ */
+stru_NestedStruArray_Short
+addNestedShortStructArrayStructs_dupStruct(stru_NestedStruArray_Short arg1, stru_NestedStruArray_Short arg2)
+{
+	stru_NestedStruArray_Short shortStruct;
+	shortStruct.elem1[0].elem1 = arg1.elem1[0].elem1 + arg2.elem1[0].elem1;
+	shortStruct.elem1[0].elem2 = arg1.elem1[0].elem2 + arg2.elem1[0].elem2;
+	shortStruct.elem1[1].elem1 = arg1.elem1[1].elem1 + arg2.elem1[1].elem1;
+	shortStruct.elem1[1].elem2 = arg1.elem1[1].elem2 + arg2.elem1[1].elem2;
+	shortStruct.elem2 = arg1.elem2 + arg2.elem2;
+	return shortStruct;
+}
+
+/**
+ * Get a new struct by adding each short element of two structs with different elements.
+ *
+ * @param arg1 the 1st struct with two shorts
+ * @param arg2 the 2nd struct with a nested short struct array
+ * @return a struct with two shorts
+ */
+stru_2_Shorts
+addShortStruct1AndNestedShortStructArrayStruct2_returnStruct1_dupStruct(stru_2_Shorts arg1, stru_NestedStruArray_Short arg2)
+{
+	stru_2_Shorts shortStruct;
+	shortStruct.elem1 = arg1.elem1 + arg2.elem1[0].elem1 + arg2.elem1[1].elem1;
+	shortStruct.elem2 = arg1.elem2 + arg2.elem1[0].elem2 + arg2.elem1[1].elem2 + arg2.elem2;
+	return shortStruct;
+}
+
+/**
+ * Get a new struct by adding each short element of two structs with different elements.
+ *
+ * @param arg1 the 1st struct with two shorts
+ * @param arg2 the 2nd struct with a nested short struct array
+ * @return a struct with a nested short struct array
+ */
+stru_NestedStruArray_Short
+addShortStruct1AndNestedShortStructArrayStruct2_returnStruct2_dupStruct(stru_2_Shorts arg1, stru_NestedStruArray_Short arg2)
+{
+	stru_NestedStruArray_Short shortStruct;
+	shortStruct.elem1[0].elem1 = arg1.elem1 + arg2.elem1[0].elem1;
+	shortStruct.elem1[0].elem2 = arg1.elem2 + arg2.elem1[0].elem2;
+	shortStruct.elem1[1].elem1 = arg1.elem1 + arg2.elem1[1].elem1;
+	shortStruct.elem1[1].elem2 = arg1.elem2 + arg2.elem1[1].elem2;
+	shortStruct.elem2 = arg1.elem2 + arg2.elem2;
+	return shortStruct;
+}
+
+/**
+ * Get a new struct by adding each integer element of two structs
+ * with the same nested integer struct.
+ *
+ * @param arg1 the 1st struct with a nested integer struct
+ * @param arg2 the 2nd struct with a nested integer struct
+ * @return a struct with a nested integer struct
+ */
+stru_NestedStruct_Int
+addNestedIntStructs_dupStruct(stru_NestedStruct_Int arg1, stru_NestedStruct_Int arg2)
+{
+	stru_NestedStruct_Int intStruct;
+	intStruct.elem1.elem1 = arg1.elem1.elem1 + arg2.elem1.elem1;
+	intStruct.elem1.elem2 = arg1.elem1.elem2 + arg2.elem1.elem2;
+	intStruct.elem2 = arg1.elem2 + arg2.elem2;
+	return intStruct;
+}
+
+/**
+ * Get a new struct by adding each integer element of two structs with different elements.
+ *
+ * @param arg1 the 1st struct with two integers
+ * @param arg2 the 2nd struct with a nested integer struct
+ * @return a struct with two integers
+ */
+stru_2_Ints
+addIntStruct1AndNestedIntStruct2_returnStruct1_dupStruct(stru_2_Ints arg1, stru_NestedStruct_Int arg2)
+{
+	stru_2_Ints intStruct;
+	intStruct.elem1 = arg1.elem1 + arg2.elem1.elem1;
+	intStruct.elem2 = arg1.elem2 + arg2.elem1.elem2 + arg2.elem2;
+	return intStruct;
+}
+
+/**
+ * Get a new struct by adding each integer element of two structs with different elements.
+ *
+ * @param arg1 the 1st struct with two integers
+ * @param arg2 the 2nd struct with a nested integer struct
+ * @return a struct with a nested integer struct
+ */
+stru_NestedStruct_Int
+addIntStruct1AndNestedIntStruct2_returnStruct2_dupStruct(stru_2_Ints arg1, stru_NestedStruct_Int arg2)
+{
+	stru_NestedStruct_Int intStruct;
+	intStruct.elem1.elem1 = arg1.elem1 + arg2.elem1.elem1;
+	intStruct.elem1.elem2 = arg1.elem2 + arg2.elem1.elem2;
+	intStruct.elem2 = arg1.elem2 + arg2.elem2;
+	return intStruct;
+}
+
+/**
+ * Get a new struct by adding each integer element of two structs
+ * with the same nested integer array.
+ *
+ * @param arg1 the 1st struct with a nested integer array
+ * @param arg2 the 2nd struct with a nested integer array
+ * @return a struct with a nested integer array
+ */
+stru_NestedIntArray_Int
+addNestedIntArrayStructs_dupStruct(stru_NestedIntArray_Int arg1, stru_NestedIntArray_Int arg2)
+{
+	stru_NestedIntArray_Int intStruct;
+	intStruct.elem1[0] = arg1.elem1[0] + arg2.elem1[0];
+	intStruct.elem1[1] = arg1.elem1[1] + arg2.elem1[1];
+	intStruct.elem2 = arg1.elem2 + arg2.elem2;
+	return intStruct;
+}
+
+/**
+ * Get a new struct by adding each integer element of two structs with different elements.
+ *
+ * @param arg1 the 1st struct with two integers
+ * @param arg2 the 2nd struct with a nested integer array
+ * @return a struct with two integers
+ */
+stru_2_Ints
+addIntStruct1AndNestedIntArrayStruct2_returnStruct1_dupStruct(stru_2_Ints arg1, stru_NestedIntArray_Int arg2)
+{
+	stru_2_Ints intStruct;
+	intStruct.elem1 = arg1.elem1 + arg2.elem1[0];
+	intStruct.elem2 = arg1.elem2 + arg2.elem1[1] + arg2.elem2;
+	return intStruct;
+}
+
+/**
+ * Get a new struct by adding each integer element of two structs with different elements.
+ *
+ * @param arg1 the 1st struct with two integers
+ * @param arg2 the 2nd struct with a nested integer array
+ * @return a struct with a nested integer array
+ */
+stru_NestedIntArray_Int
+addIntStruct1AndNestedIntArrayStruct2_returnStruct2_dupStruct(stru_2_Ints arg1, stru_NestedIntArray_Int arg2)
+{
+	stru_NestedIntArray_Int intStruct;
+	intStruct.elem1[0] = arg1.elem1 + arg2.elem1[0];
+	intStruct.elem1[1] = arg1.elem2 + arg2.elem1[1];
+	intStruct.elem2 = arg1.elem2 + arg2.elem2;
+	return intStruct;
+}
+
+/**
+ * Get a new struct by adding each integer element of two structs
+ * with the same nested integer struct array.
+ *
+ * @param arg1 the 1st struct with a nested integer struct array
+ * @param arg2 the 2nd struct with a nested integer struct array
+ * @return a struct with a nested integer struct array
+ */
+stru_NestedStruArray_Int
+addNestedIntStructArrayStructs_dupStruct(stru_NestedStruArray_Int arg1, stru_NestedStruArray_Int arg2)
+{
+	stru_NestedStruArray_Int intStruct;
+	intStruct.elem1[0].elem1 = arg1.elem1[0].elem1 + arg2.elem1[0].elem1;
+	intStruct.elem1[0].elem2 = arg1.elem1[0].elem2 + arg2.elem1[0].elem2;
+	intStruct.elem1[1].elem1 = arg1.elem1[1].elem1 + arg2.elem1[1].elem1;
+	intStruct.elem1[1].elem2 = arg1.elem1[1].elem2 + arg2.elem1[1].elem2;
+	intStruct.elem2 = arg1.elem2 + arg2.elem2;
+	return intStruct;
+}
+
+/**
+ * Get a new struct by adding each integer element of two structs with different elements.
+ *
+ * @param arg1 the 1st struct with two integers
+ * @param arg2 the 2nd struct with a nested integer struct array
+ * @return a struct with two integers
+ */
+stru_2_Ints
+addIntStruct1AndNestedIntStructArrayStruct2_returnStruct1_dupStruct(stru_2_Ints arg1, stru_NestedStruArray_Int arg2)
+{
+	stru_2_Ints intStruct;
+	intStruct.elem1 = arg1.elem1 + arg2.elem1[0].elem1 + arg2.elem1[1].elem1;
+	intStruct.elem2 = arg1.elem2 + arg2.elem1[0].elem2 + arg2.elem1[1].elem2 + arg2.elem2;
+	return intStruct;
+}
+
+/**
+ * Get a new struct by adding each integer element of two structs with different elements.
+ *
+ * @param arg1 the 1st struct with two integers
+ * @param arg2 the 2nd struct with a nested integer struct array
+ * @return a struct with a nested integer struct array
+ */
+stru_NestedStruArray_Int
+addIntStruct1AndNestedIntStructArrayStruct2_returnStruct2_dupStruct(stru_2_Ints arg1, stru_NestedStruArray_Int arg2)
+{
+	stru_NestedStruArray_Int intStruct;
+	intStruct.elem1[0].elem1 = arg1.elem1 + arg2.elem1[0].elem1;
+	intStruct.elem1[0].elem2 = arg1.elem2 + arg2.elem1[0].elem2;
+	intStruct.elem1[1].elem1 = arg1.elem1 + arg2.elem1[1].elem1;
+	intStruct.elem1[1].elem2 = arg1.elem2 + arg2.elem1[1].elem2;
+	intStruct.elem2 = arg1.elem2 + arg2.elem2;
+	return intStruct;
+}
+
+/**
+ * Get a new struct by adding each long element of two structs
+ * with the same nested long struct.
+ *
+ * @param arg1 the 1st struct with a nested long struct
+ * @param arg2 the 2nd struct with a nested long struct
+ * @return a struct with a nested long struct
+ */
+stru_NestedStruct_Long
+addNestedLongStructs_dupStruct(stru_NestedStruct_Long arg1, stru_NestedStruct_Long arg2)
+{
+	stru_NestedStruct_Long longStruct;
+	longStruct.elem1.elem1 = arg1.elem1.elem1 + arg2.elem1.elem1;
+	longStruct.elem1.elem2 = arg1.elem1.elem2 + arg2.elem1.elem2;
+	longStruct.elem2 = arg1.elem2 + arg2.elem2;
+	return longStruct;
+}
+
+/**
+ * Get a new struct by adding each long element of two structs with different elements.
+ *
+ * @param arg1 the 1st struct with two longs
+ * @param arg2 the 2nd struct with a nested long struct
+ * @return a struct with two longs
+ */
+stru_2_Longs
+addLongStruct1AndNestedLongStruct2_returnStruct1_dupStruct(stru_2_Longs arg1, stru_NestedStruct_Long arg2)
+{
+	stru_2_Longs longStruct;
+	longStruct.elem1 = arg1.elem1 + arg2.elem1.elem1;
+	longStruct.elem2 = arg1.elem2 + arg2.elem1.elem2 + arg2.elem2;
+	return longStruct;
+}
+
+/**
+ * Get a new struct by adding each long element of two structs with different elements.
+ *
+ * @param arg1 the 1st struct with two longs
+ * @param arg2 the 2nd struct with a nested long struct
+ * @return a struct with a nested long struct
+ */
+stru_NestedStruct_Long
+addLongStruct1AndNestedLongStruct2_returnStruct2_dupStruct(stru_2_Longs arg1, stru_NestedStruct_Long arg2)
+{
+	stru_NestedStruct_Long longStruct;
+	longStruct.elem1.elem1 = arg1.elem1 + arg2.elem1.elem1;
+	longStruct.elem1.elem2 = arg1.elem2 + arg2.elem1.elem2;
+	longStruct.elem2 = arg1.elem2 + arg2.elem2;
+	return longStruct;
+}
+
+/**
+ * Get a new struct by adding each long element of two structs
+ * with the same nested long array.
+ *
+ * @param arg1 the 1st struct with a nested long array
+ * @param arg2 the 2nd struct with a nested long array
+ * @return a struct with a nested long array
+ */
+stru_NestedLongArray_Long
+addNestedLongArrayStructs_dupStruct(stru_NestedLongArray_Long arg1, stru_NestedLongArray_Long arg2)
+{
+	stru_NestedLongArray_Long longStruct;
+	longStruct.elem1[0] = arg1.elem1[0] + arg2.elem1[0];
+	longStruct.elem1[1] = arg1.elem1[1] + arg2.elem1[1];
+	longStruct.elem2 = arg1.elem2 + arg2.elem2;
+	return longStruct;
+}
+
+/**
+ * Get a new struct by adding each long element of two structs with different elements.
+ *
+ * @param arg1 the 1st struct with two longs
+ * @param arg2 the 2nd struct with a nested long array
+ * @return a struct with two longs
+ */
+stru_2_Longs
+addLongStruct1AndNestedLongArrayStruct2_returnStruct1_dupStruct(stru_2_Longs arg1, stru_NestedLongArray_Long arg2)
+{
+	stru_2_Longs longStruct;
+	longStruct.elem1 = arg1.elem1 + arg2.elem1[0];
+	longStruct.elem2 = arg1.elem2 + arg2.elem1[1] + arg2.elem2;
+	return longStruct;
+}
+
+/**
+ * Get a new struct by adding each long element of two structs with different elements.
+ *
+ * @param arg1 the 1st struct with two longs
+ * @param arg2 the 2nd struct with a nested long array
+ * @return a struct with a nested long array
+ */
+stru_NestedLongArray_Long
+addLongStruct1AndNestedLongArrayStruct2_returnStruct2_dupStruct(stru_2_Longs arg1, stru_NestedLongArray_Long arg2)
+{
+	stru_NestedLongArray_Long longStruct;
+	longStruct.elem1[0] = arg1.elem1 + arg2.elem1[0];
+	longStruct.elem1[1] = arg1.elem2 + arg2.elem1[1];
+	longStruct.elem2 = arg1.elem2 + arg2.elem2;
+	return longStruct;
+}
+
+/**
+ * Get a new struct by adding each long element of two structs
+ * with the same nested long struct array.
+ *
+ * @param arg1 the 1st struct with a nested long struct array
+ * @param arg2 the 2nd struct with a nested long struct array
+ * @return a struct with a nested long struct array
+ */
+stru_NestedStruArray_Long
+addNestedLongStructArrayStructs_dupStruct(stru_NestedStruArray_Long arg1, stru_NestedStruArray_Long arg2)
+{
+	stru_NestedStruArray_Long longStruct;
+	longStruct.elem1[0].elem1 = arg1.elem1[0].elem1 + arg2.elem1[0].elem1;
+	longStruct.elem1[0].elem2 = arg1.elem1[0].elem2 + arg2.elem1[0].elem2;
+	longStruct.elem1[1].elem1 = arg1.elem1[1].elem1 + arg2.elem1[1].elem1;
+	longStruct.elem1[1].elem2 = arg1.elem1[1].elem2 + arg2.elem1[1].elem2;
+	longStruct.elem2 = arg1.elem2 + arg2.elem2;
+	return longStruct;
+}
+
+/**
+ * Get a new struct by adding each long element of two structs with different elements.
+ *
+ * @param arg1 the 1st struct with two longs
+ * @param arg2 the 2nd struct with a nested long struct array
+ * @return a struct with two longs
+ */
+stru_2_Longs
+addLongStruct1AndNestedLongStructArrayStruct2_returnStruct1_dupStruct(stru_2_Longs arg1, stru_NestedStruArray_Long arg2)
+{
+	stru_2_Longs longStruct;
+	longStruct.elem1 = arg1.elem1 + arg2.elem1[0].elem1 + arg2.elem1[1].elem1;
+	longStruct.elem2 = arg1.elem2 + arg2.elem1[0].elem2 + arg2.elem1[1].elem2 + arg2.elem2;
+	return longStruct;
+}
+
+/**
+ * Get a new struct by adding each long element of two structs with different elements.
+ *
+ * @param arg1 the 1st struct with two longs
+ * @param arg2 the 2nd struct with a nested long struct array
+ * @return a struct with a nested long struct array
+ */
+stru_NestedStruArray_Long
+addLongStruct1AndNestedLongStructArrayStruct2_returnStruct2_dupStruct(stru_2_Longs arg1, stru_NestedStruArray_Long arg2)
+{
+	stru_NestedStruArray_Long longStruct;
+	longStruct.elem1[0].elem1 = arg1.elem1 + arg2.elem1[0].elem1;
+	longStruct.elem1[0].elem2 = arg1.elem2 + arg2.elem1[0].elem2;
+	longStruct.elem1[1].elem1 = arg1.elem1 + arg2.elem1[1].elem1;
+	longStruct.elem1[1].elem2 = arg1.elem2 + arg2.elem1[1].elem2;
+	longStruct.elem2 = arg1.elem2 + arg2.elem2;
+	return longStruct;
+}
+
+/**
+ * Get a new struct by adding each float element of two structs
+ * with the same nested float struct.
+ *
+ * @param arg1 the 1st struct with a nested float struct
+ * @param arg2 the 2nd struct with a nested float struct
+ * @return a struct with a nested float struct
+ */
+stru_NestedStruct_Float
+addNestedFloatStructs_dupStruct(stru_NestedStruct_Float arg1, stru_NestedStruct_Float arg2)
+{
+	stru_NestedStruct_Float floatStruct;
+	floatStruct.elem1.elem1 = arg1.elem1.elem1 + arg2.elem1.elem1;
+	floatStruct.elem1.elem2 = arg1.elem1.elem2 + arg2.elem1.elem2;
+	floatStruct.elem2 = arg1.elem2 + arg2.elem2;
+	return floatStruct;
+}
+
+/**
+ * Get a new struct by adding each float element of two structs with different elements.
+ *
+ * @param arg1 the 1st struct with two floats
+ * @param arg2 the 2nd struct with a nested float struct
+ * @return a struct with two floats
+ */
+stru_2_Floats
+addFloatStruct1AndNestedFloatStruct2_returnStruct1_dupStruct(stru_2_Floats arg1, stru_NestedStruct_Float arg2)
+{
+	stru_2_Floats floatStruct;
+	floatStruct.elem1 = arg1.elem1 + arg2.elem1.elem1;
+	floatStruct.elem2 = arg1.elem2 + arg2.elem1.elem2 + arg2.elem2;
+	return floatStruct;
+}
+
+/**
+ * Get a new struct by adding each float element of two structs with different elements.
+ *
+ * @param arg1 the 1st struct with two floats
+ * @param arg2 the 2nd struct with a nested float struct
+ * @return a struct with a nested float struct
+ */
+stru_NestedStruct_Float
+addFloatStruct1AndNestedFloatStruct2_returnStruct2_dupStruct(stru_2_Floats arg1, stru_NestedStruct_Float arg2)
+{
+	stru_NestedStruct_Float floatStruct;
+	floatStruct.elem1.elem1 = arg1.elem1 + arg2.elem1.elem1;
+	floatStruct.elem1.elem2 = arg1.elem2 + arg2.elem1.elem2;
+	floatStruct.elem2 = arg1.elem2 + arg2.elem2;
+	return floatStruct;
+}
+
+/**
+ * Get a new struct by adding each float element of two structs
+ * with the same nested float array.
+ *
+ * @param arg1 the 1st struct with a nested float array
+ * @param arg2 the 2nd struct with a nested float array
+ * @return a struct with a nested float array
+ */
+stru_NestedFloatArray_Float
+addNestedFloatArrayStructs_dupStruct(stru_NestedFloatArray_Float arg1, stru_NestedFloatArray_Float arg2)
+{
+	stru_NestedFloatArray_Float floatStruct;
+	floatStruct.elem1[0] = arg1.elem1[0] + arg2.elem1[0];
+	floatStruct.elem1[1] = arg1.elem1[1] + arg2.elem1[1];
+	floatStruct.elem2 = arg1.elem2 + arg2.elem2;
+	return floatStruct;
+}
+
+/**
+ * Get a new struct by adding each float element of two structs with different elements.
+ *
+ * @param arg1 the 1st struct with two floats
+ * @param arg2 the 2nd struct with a nested float array
+ * @return a struct with two floats
+ */
+stru_2_Floats
+addFloatStruct1AndNestedFloatArrayStruct2_returnStruct1_dupStruct(stru_2_Floats arg1, stru_NestedFloatArray_Float arg2)
+{
+	stru_2_Floats floatStruct;
+	floatStruct.elem1 = arg1.elem1 + arg2.elem1[0];
+	floatStruct.elem2 = arg1.elem2 + arg2.elem1[1] + arg2.elem2;
+	return floatStruct;
+}
+
+/**
+ * Get a new struct by adding each float element of two structs with different elements.
+ *
+ * @param arg1 the 1st struct with two floats
+ * @param arg2 the 2nd struct with a nested float array
+ * @return a struct with a nested float array
+ */
+stru_NestedFloatArray_Float
+addFloatStruct1AndNestedFloatArrayStruct2_returnStruct2_dupStruct(stru_2_Floats arg1, stru_NestedFloatArray_Float arg2)
+{
+	stru_NestedFloatArray_Float floatStruct;
+	floatStruct.elem1[0] = arg1.elem1 + arg2.elem1[0];
+	floatStruct.elem1[1] = arg1.elem2 + arg2.elem1[1];
+	floatStruct.elem2 = arg1.elem2 + arg2.elem2;
+	return floatStruct;
+}
+
+/**
+ * Get a new struct by adding each float element of two structs
+ * with the same nested float struct array.
+ *
+ * @param arg1 the 1st struct with a nested float struct array
+ * @param arg2 the 2nd struct with a nested float struct array
+ * @return a struct with a nested float struct array
+ */
+stru_NestedStruArray_Float
+addNestedFloatStructArrayStructs_dupStruct(stru_NestedStruArray_Float arg1, stru_NestedStruArray_Float arg2)
+{
+	stru_NestedStruArray_Float floatStruct;
+	floatStruct.elem1[0].elem1 = arg1.elem1[0].elem1 + arg2.elem1[0].elem1;
+	floatStruct.elem1[0].elem2 = arg1.elem1[0].elem2 + arg2.elem1[0].elem2;
+	floatStruct.elem1[1].elem1 = arg1.elem1[1].elem1 + arg2.elem1[1].elem1;
+	floatStruct.elem1[1].elem2 = arg1.elem1[1].elem2 + arg2.elem1[1].elem2;
+	floatStruct.elem2 = arg1.elem2 + arg2.elem2;
+	return floatStruct;
+}
+
+/**
+ * Get a new struct by adding each float element of two structs with different elements.
+ *
+ * @param arg1 the 1st struct with two floats
+ * @param arg2 the 2nd struct with a nested float struct array
+ * @return a struct with two floats
+ */
+stru_2_Floats
+addFloatStruct1AndNestedFloatStructArrayStruct2_returnStruct1_dupStruct(stru_2_Floats arg1, stru_NestedStruArray_Float arg2)
+{
+	stru_2_Floats floatStruct;
+	floatStruct.elem1 = arg1.elem1 + arg2.elem1[0].elem1 + arg2.elem1[1].elem1;
+	floatStruct.elem2 = arg1.elem2 + arg2.elem1[0].elem2 + arg2.elem1[1].elem2 + arg2.elem2;
+	return floatStruct;
+}
+
+/**
+ * Get a new struct by adding each float element of two structs with different elements.
+ *
+ * @param arg1 the 1st struct with two floats
+ * @param arg2 the 2nd struct with a nested float struct array
+ * @return a struct with a nested float struct array
+ */
+stru_NestedStruArray_Float
+addFloatStruct1AndNestedFloatStructArrayStruct2_returnStruct2_dupStruct(stru_2_Floats arg1, stru_NestedStruArray_Float arg2)
+{
+	stru_NestedStruArray_Float floatStruct;
+	floatStruct.elem1[0].elem1 = arg1.elem1 + arg2.elem1[0].elem1;
+	floatStruct.elem1[0].elem2 = arg1.elem2 + arg2.elem1[0].elem2;
+	floatStruct.elem1[1].elem1 = arg1.elem1 + arg2.elem1[1].elem1;
+	floatStruct.elem1[1].elem2 = arg1.elem2 + arg2.elem1[1].elem2;
+	floatStruct.elem2 = arg1.elem2 + arg2.elem2;
+	return floatStruct;
+}
+
+/**
+ * Get a new struct by adding each double element of two structs
+ * with the same nested double struct.
+ *
+ * @param arg1 the 1st struct with a nested double struct
+ * @param arg2 the 2nd struct with a nested double struct
+ * @return a struct with a nested double struct
+ */
+stru_NestedStruct_Double
+addNestedDoubleStructs_dupStruct(stru_NestedStruct_Double arg1, stru_NestedStruct_Double arg2)
+{
+	stru_NestedStruct_Double doubleStruct;
+	doubleStruct.elem1.elem1 = arg1.elem1.elem1 + arg2.elem1.elem1;
+	doubleStruct.elem1.elem2 = arg1.elem1.elem2 + arg2.elem1.elem2;
+	doubleStruct.elem2 = arg1.elem2 + arg2.elem2;
+	return doubleStruct;
+}
+
+/**
+ * Get a new struct by adding each double element of two structs with different elements.
+ *
+ * @param arg1 the 1st struct with two doubles
+ * @param arg2 the 2nd struct with a nested double struct
+ * @return a struct with two doubles
+ */
+stru_2_Doubles
+addDoubleStruct1AndNestedDoubleStruct2_returnStruct1_dupStruct(stru_2_Doubles arg1, stru_NestedStruct_Double arg2)
+{
+	stru_2_Doubles doubleStruct;
+	doubleStruct.elem1 = arg1.elem1 + arg2.elem1.elem1;
+	doubleStruct.elem2 = arg1.elem2 + arg2.elem1.elem2 + arg2.elem2;
+	return doubleStruct;
+}
+
+/**
+ * Get a new struct by adding each double element of two structs with different elements.
+ *
+ * @param arg1 the 1st struct with two doubles
+ * @param arg2 the 2nd struct with a nested double struct
+ * @return a struct with a nested double struct
+ */
+stru_NestedStruct_Double
+addDoubleStruct1AndNestedDoubleStruct2_returnStruct2_dupStruct(stru_2_Doubles arg1, stru_NestedStruct_Double arg2)
+{
+	stru_NestedStruct_Double doubleStruct;
+	doubleStruct.elem1.elem1 = arg1.elem1 + arg2.elem1.elem1;
+	doubleStruct.elem1.elem2 = arg1.elem2 + arg2.elem1.elem2;
+	doubleStruct.elem2 = arg1.elem2 + arg2.elem2;
+	return doubleStruct;
+}
+
+/**
+ * Get a new struct by adding each double element of two structs
+ * with the same nested double array.
+ *
+ * @param arg1 the 1st struct with a nested double array
+ * @param arg2 the 2nd struct with a nested double array
+ * @return a struct with a nested double array
+ */
+stru_NestedDoubleArray_Double
+addNestedDoubleArrayStructs_dupStruct(stru_NestedDoubleArray_Double arg1, stru_NestedDoubleArray_Double arg2)
+{
+	stru_NestedDoubleArray_Double doubleStruct;
+	doubleStruct.elem1[0] = arg1.elem1[0] + arg2.elem1[0];
+	doubleStruct.elem1[1] = arg1.elem1[1] + arg2.elem1[1];
+	doubleStruct.elem2 = arg1.elem2 + arg2.elem2;
+	return doubleStruct;
+}
+
+/**
+ * Get a new struct by adding each double element of two structs with different elements.
+ *
+ * @param arg1 the 1st struct with two doubles
+ * @param arg2 the 2nd struct with a nested double array
+ * @return a struct with two doubles
+ */
+stru_2_Doubles
+addDoubleStruct1AndNestedDoubleArrayStruct2_returnStruct1_dupStruct(stru_2_Doubles arg1, stru_NestedDoubleArray_Double arg2)
+{
+	stru_2_Doubles doubleStruct;
+	doubleStruct.elem1 = arg1.elem1 + arg2.elem1[0];
+	doubleStruct.elem2 = arg1.elem2 + arg2.elem1[1] + arg2.elem2;
+	return doubleStruct;
+}
+
+/**
+ * Get a new struct by adding each double element of two structs with different elements.
+ *
+ * @param arg1 the 1st struct with two doubles
+ * @param arg2 the 2nd struct with a nested double array
+ * @return a struct with a nested double array
+ */
+stru_NestedDoubleArray_Double
+addDoubleStruct1AndNestedDoubleArrayStruct2_returnStruct2_dupStruct(stru_2_Doubles arg1, stru_NestedDoubleArray_Double arg2)
+{
+	stru_NestedDoubleArray_Double doubleStruct;
+	doubleStruct.elem1[0] = arg1.elem1 + arg2.elem1[0];
+	doubleStruct.elem1[1] = arg1.elem2 + arg2.elem1[1];
+	doubleStruct.elem2 = arg1.elem2 + arg2.elem2;
+	return doubleStruct;
+}
+
+/**
+ * Get a new struct by adding each double element of two structs
+ * with the same nested double struct array.
+ *
+ * @param arg1 the 1st struct with a nested double struct array
+ * @param arg2 the 2nd struct with a nested double struct array
+ * @return a struct with a nested double struct array
+ */
+stru_NestedStruArray_Double
+addNestedDoubleStructArrayStructs_dupStruct(stru_NestedStruArray_Double arg1, stru_NestedStruArray_Double arg2)
+{
+	stru_NestedStruArray_Double doubleStruct;
+	doubleStruct.elem1[0].elem1 = arg1.elem1[0].elem1 + arg2.elem1[0].elem1;
+	doubleStruct.elem1[0].elem2 = arg1.elem1[0].elem2 + arg2.elem1[0].elem2;
+	doubleStruct.elem1[1].elem1 = arg1.elem1[1].elem1 + arg2.elem1[1].elem1;
+	doubleStruct.elem1[1].elem2 = arg1.elem1[1].elem2 + arg2.elem1[1].elem2;
+	doubleStruct.elem2 = arg1.elem2 + arg2.elem2;
+	return doubleStruct;
+}
+
+/**
+ * Get a new struct by adding each double element of two structs with different elements.
+ *
+ * @param arg1 the 1st struct with two doubles
+ * @param arg2 the 2nd struct with a nested double struct array
+ * @return a struct with two doubles
+ */
+stru_2_Doubles
+addDoubleStruct1AndNestedDoubleStructArrayStruct2_returnStruct1_dupStruct(stru_2_Doubles arg1, stru_NestedStruArray_Double arg2)
+{
+	stru_2_Doubles doubleStruct;
+	doubleStruct.elem1 = arg1.elem1 + arg2.elem1[0].elem1 + arg2.elem1[1].elem1;
+	doubleStruct.elem2 = arg1.elem2 + arg2.elem1[0].elem2 + arg2.elem1[1].elem2 + arg2.elem2;
+	return doubleStruct;
+}
+
+/**
+ * Get a new struct by adding each double element of two structs with different elements.
+ *
+ * @param arg1 the 1st struct with two doubles
+ * @param arg2 the 2nd struct with a nested double struct array
+ * @return a struct with a nested double struct array
+ */
+stru_NestedStruArray_Double
+addDoubleStruct1AndNestedDoubleStructArrayStruct2_returnStruct2_dupStruct(stru_2_Doubles arg1, stru_NestedStruArray_Double arg2)
+{
+	stru_NestedStruArray_Double doubleStruct;
+	doubleStruct.elem1[0].elem1 = arg1.elem1 + arg2.elem1[0].elem1;
+	doubleStruct.elem1[0].elem2 = arg1.elem2 + arg2.elem1[0].elem2;
+	doubleStruct.elem1[1].elem1 = arg1.elem1 + arg2.elem1[1].elem1;
+	doubleStruct.elem1[1].elem2 = arg1.elem2 + arg2.elem1[1].elem2;
+	doubleStruct.elem2 = arg1.elem2 + arg2.elem2;
+	return doubleStruct;
+}

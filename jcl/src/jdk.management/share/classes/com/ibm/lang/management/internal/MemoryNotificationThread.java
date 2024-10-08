@@ -56,38 +56,38 @@ final class MemoryNotificationThread implements Runnable {
 	}
 
 	/**
-     * A helper used by processNotificationLoop to construct and dispatch
-     * garbage collection notification objects
-     *
-     * @param gcName
-     *            the name of garbage collector which we are sending notifications on behalf of
-     * @param gcAction
-     *            the action of the performed by the garbage collector
-     * @param gcCause
-     *            the cause the garbage collection
-     * @param index
-     *            the identifier of this garbage collection which is the number of collections that this collector has done
-     * @param startTime
-     *            the start time of this GC in milliseconds since the Java virtual machine was started
-     * @param endTime
-     *            the end time of this GC in milliseconds since the Java virtual machine was started
-     * @param initialSize
-     *            the initial amount of memory of all memory pools
-     * @param preUsed
-     *            the amounts of memory used of all memory pools before the garbage collection
-     * @param preCommitted
-     *            the amounts of all memory pools that is guaranteed to be available for use before the garbage collection
-     * @param preMax
-     *            the maximum amounts of memory pools that can be used before the garbage collection
-     * @param postUsed
-     *            the amounts of memory used of all memory pools after the garbage collection
-     * @param postCommitted
-     *            the amounts of all memory pools that is guaranteed to be available for use after the garbage collection
-     * @param postMax
-     *            the maximum amounts of memory pools that can be used after the garbage collection
-     * @param sequenceNumber
-     *            the sequence identifier of the current notification
-     */
+	 * A helper used by processNotificationLoop to construct and dispatch
+	 * garbage collection notification objects
+	 *
+	 * @param gcName
+	 *            the name of garbage collector which we are sending notifications on behalf of
+	 * @param gcAction
+	 *            the action of the performed by the garbage collector
+	 * @param gcCause
+	 *            the cause the garbage collection
+	 * @param index
+	 *            the identifier of this garbage collection which is the number of collections that this collector has done
+	 * @param startTime
+	 *            the start time of this GC in milliseconds since the Java virtual machine was started
+	 * @param endTime
+	 *            the end time of this GC in milliseconds since the Java virtual machine was started
+	 * @param initialSize
+	 *            the initial amount of memory of all memory pools
+	 * @param preUsed
+	 *            the amounts of memory used of all memory pools before the garbage collection
+	 * @param preCommitted
+	 *            the amounts of all memory pools that is guaranteed to be available for use before the garbage collection
+	 * @param preMax
+	 *            the maximum amounts of memory pools that can be used before the garbage collection
+	 * @param postUsed
+	 *            the amounts of memory used of all memory pools after the garbage collection
+	 * @param postCommitted
+	 *            the amounts of all memory pools that is guaranteed to be available for use after the garbage collection
+	 * @param postMax
+	 *            the maximum amounts of memory pools that can be used after the garbage collection
+	 * @param sequenceNumber
+	 *            the sequence identifier of the current notification
+	 */
 	private void dispatchGCNotificationHelper(String gcName, String gcAction, String gcCause, long index,
 			long startTime, long endTime, long[] initialSize, long[] preUsed,
 			long[] preCommitted, long[] preMax, long[] postUsed, long[] postCommitted, long[] postMax,
@@ -106,44 +106,44 @@ final class MemoryNotificationThread implements Runnable {
 				break;
 			}
 		}
-    }
+	}
 
 	/**
-     * A helper used by processNotificationLoop to construct and dispatch
-     * memory threshold notification objects
-     *
-     * @param poolName
-     *            the name of pool which we are sending notifications on behalf of
-     * @param min
-     *            the initial amount in bytes of memory that can be allocated by
-     *            this virtual machine
-     * @param used
-     *            the number of bytes currently used for memory
-     * @param committed
-     *            the number of bytes of committed memory
-     * @param max
-     *            the maximum number of bytes that can be used for memory
-     *            management purposes
-     * @param count
-     *            the number of times that the memory usage of the memory pool
-     *            in question has met or exceeded the relevant threshold
-     * @param sequenceNumber
-     *            the sequence identifier of the current notification
-     * @param isCollectionUsageNotification
-     *            a <code>boolean</code> indication of whether or not the new
-     *            notification is as a result of the collection threshold being
-     *            exceeded. If this value is <code>false</code> then the
-     *            implication is that a memory threshold has been exceeded.
-     */
+	 * A helper used by processNotificationLoop to construct and dispatch
+	 * memory threshold notification objects
+	 *
+	 * @param poolName
+	 *            the name of pool which we are sending notifications on behalf of
+	 * @param min
+	 *            the initial amount in bytes of memory that can be allocated by
+	 *            this virtual machine
+	 * @param used
+	 *            the number of bytes currently used for memory
+	 * @param committed
+	 *            the number of bytes of committed memory
+	 * @param max
+	 *            the maximum number of bytes that can be used for memory
+	 *            management purposes
+	 * @param count
+	 *            the number of times that the memory usage of the memory pool
+	 *            in question has met or exceeded the relevant threshold
+	 * @param sequenceNumber
+	 *            the sequence identifier of the current notification
+	 * @param isCollectionUsageNotification
+	 *            a <code>boolean</code> indication of whether or not the new
+	 *            notification is as a result of the collection threshold being
+	 *            exceeded. If this value is <code>false</code> then the
+	 *            implication is that a memory threshold has been exceeded.
+	 */
 	private void dispatchMemoryNotificationHelper(String poolName, long min, long used, long committed, long max,
 			long count, long sequenceNumber, boolean isCollectionUsageNotification) {
 		MemoryNotificationInfo info = new MemoryNotificationInfo(poolName, new MemoryUsage(min, used, committed, max), count);
-        Notification notification = new Notification(
-                isCollectionUsageNotification
-		                ? MemoryNotificationInfo.MEMORY_COLLECTION_THRESHOLD_EXCEEDED
-		                : MemoryNotificationInfo.MEMORY_THRESHOLD_EXCEEDED,
-                "java.lang:type=Memory", //$NON-NLS-1$
-                sequenceNumber);
+		Notification notification = new Notification(
+				isCollectionUsageNotification
+						? MemoryNotificationInfo.MEMORY_COLLECTION_THRESHOLD_EXCEEDED
+						: MemoryNotificationInfo.MEMORY_THRESHOLD_EXCEEDED,
+				"java.lang:type=Memory", //$NON-NLS-1$
+				sequenceNumber);
 		notification.setUserData(MemoryNotificationInfoUtil.toCompositeData(info));
 		memBean.sendNotification(notification);
 	}

@@ -101,7 +101,7 @@ public final class Advertisement {
 	 * @return Create the information to discover and notify this VM
 	 */
 	private static StringBuilder createAdvertContent(String vmId, String displayName) {
-		StringBuilder contentBuffer = new StringBuilder(512); 
+		StringBuilder contentBuffer = new StringBuilder(512);
 		addKeyAsciiValue(contentBuffer, KEY_VERSION, "0.1"); //$NON-NLS-1$
 		addKeyValue(contentBuffer, KEY_USER_ID, com.ibm.oti.vm.VM.internalGetProperties().getProperty("user.name")); //$NON-NLS-1$
 		/* CMVC 161414 - PIDs and UIDs are long */
@@ -113,11 +113,11 @@ public final class Advertisement {
 		addKeyValue(contentBuffer, GLOBAL_SEMAPHORE, Boolean.TRUE.toString());
 		File tmpTargetDirectoryFileObject = TargetDirectory.getTargetDirectoryFileObject();
 		File tmpSyncFileObject = TargetDirectory.getSyncFileObject();
-		
+
 		if (null != tmpTargetDirectoryFileObject && null != tmpSyncFileObject)	{
 			addKeyValue(contentBuffer, KEY_REPLY_FILE, (new File(tmpTargetDirectoryFileObject, Reply.REPLY_FILENAME)).getPath());
 			addKeyValue(contentBuffer, KEY_ATTACH_NOTIFICATION_SYNC, tmpSyncFileObject.getAbsolutePath());
-			
+
 			return contentBuffer;
 		} else {
 			return null;
@@ -201,7 +201,7 @@ public final class Advertisement {
 			return;
 		}
 		File advertFile = TargetDirectory.getAdvertisementFileObject();
-		/* AttachHandler.terminate() will delete this file on shutdown */ 
+		/* AttachHandler.terminate() will delete this file on shutdown */
 		IPC.createNewFileWithPermissions(advertFile, TargetDirectory.ADVERTISEMENT_FILE_PERMISSIONS);
 		/* we have a brand new, empty file with correct ownership and permissions */
 		try (FileOutputStream advertOutputStream = new FileOutputStream(advertFile);){
@@ -210,39 +210,39 @@ public final class Advertisement {
 				IPC.logMessage("createAdvertisementFile failed to create advertisement file : file object is null"); //$NON-NLS-1$
 				return;
 			}
-			
+
 			advertOutputStream.write(advertContent.toString().getBytes("ISO8859_1")); //$NON-NLS-1$
 			if (LOGGING_DISABLED != loggingStatus) {
 				IPC.logMessage("createAdvertisementFile ", advertFile.getAbsolutePath()); //$NON-NLS-1$
 			}
 		}
 	}
-	
+
 	/**
 	 * @return name of advertisement file, not including directory path
 	 */
 	public static String getFilename() {
 		return Advertisement.ADVERT_FILENAME;
 	}
-	
+
 	/**
 	 * @return Target virtual machine's display name
 	 */
 	public String getDisplayName() {
 		return props.getProperty(KEY_DISPLAY_NAME);
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @return Operating system process ID of the target VM
 	 */
 	public long getProcessId() {
-		
+
 		return pid;
 	}
 
 	/**
-	 * 
+	 *
 	 * @return machine-friendly identifier of the target VM
 	 */
 	public String getVmId() {
@@ -250,7 +250,7 @@ public final class Advertisement {
 	}
 
 	/**
-	 * 
+	 *
 	 * @return identifier of the semaphore used to notify the target
 	 */
 	String getNotifier() {
@@ -266,7 +266,7 @@ public final class Advertisement {
 	}
 
 	/**
-	 * 
+	 *
 	 * @return user identifier (numeric)
 	 */
 	public long getUid() {
@@ -274,7 +274,7 @@ public final class Advertisement {
 	}
 
 	/**
-	 * 
+	 *
 	 * @return true if the target uses the global semaphore (Windows only)
 	 */
 	public boolean isGlobalSemaphore() {
@@ -288,6 +288,5 @@ public final class Advertisement {
 	public String getNotificationSync() {
 		return props.getProperty(KEY_ATTACH_NOTIFICATION_SYNC);
 	}
-
 
 }

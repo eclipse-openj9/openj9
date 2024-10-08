@@ -30,9 +30,9 @@ import com.ibm.jvm.dtfjview.heapdump.ReferenceIterator;
 
 /**
  * A formatter for Portable heap dumps (PHDs).
- * 
+ *
  * Format documented here: http://w3.hursley.ibm.com/~dgriff/newphd.html
- * 
+ *
  * @author andhall
  *
  */
@@ -61,7 +61,7 @@ public class PortableHeapDumpFormatter extends HeapDumpFormatter
 	public static final byte OBJECT_ARRAY_RECORD_TAG = 8;
 	public static final byte PRIMITIVE_ARRAY_RECORD_TAG = (byte) 0x20;
 	public static final byte LONG_PRIMITIVE_ARRAY_RECORD_TAG = 7;
-	
+
 	private final DataOutputStream _out;
 	private final PortableHeapDumpClassCache _classCache = new PortableHeapDumpClassCache();
 	private final boolean _is32BitHash;
@@ -70,26 +70,26 @@ public class PortableHeapDumpFormatter extends HeapDumpFormatter
 	 */
 	private long _lastAddress = 0;
 	private boolean _closed = false;
-	
+
 	public PortableHeapDumpFormatter(DataOutputStream output,String version,boolean is64Bit, boolean is32BitHash) throws IOException
 	{
 		super(version,is64Bit);
-		
+
 		_out = output;
 		_is32BitHash = is32BitHash;
-		
+
 		writeHeader();
 	}
 
 	private void writeHeader() throws IOException
 	{
 		PortableHeapDumpHeader header = new PortableHeapDumpHeader(_version,_is64Bit,_is32BitHash);
-		
+
 		header.writeHeapDump(_out);
 	}
-	
+
 	private void checkClosed()
-	{   
+	{
 		if(_closed) {
 			throw new UnsupportedOperationException("Dump is closed");
 		}
@@ -99,11 +99,11 @@ public class PortableHeapDumpFormatter extends HeapDumpFormatter
 			int size, long instanceSize, int hashCode, ReferenceIterator references) throws IOException
 	{
 		checkClosed();
-		
+
 		ClassRecord record = new ClassRecord(address,_lastAddress, name,superClassAddress,instanceSize, hashCode, _is64Bit, filterNullReferences(references),_is32BitHash);
-		
+
 		record.writeHeapDump(_out);
-		
+
 		_lastAddress = address;
 	}
 
@@ -113,7 +113,7 @@ public class PortableHeapDumpFormatter extends HeapDumpFormatter
 		ObjectRecord record = ObjectRecord.getObjectRecord(address, _lastAddress, classAddress, hashCode, filterNullReferences(references), _classCache, _is64Bit,_is32BitHash);
 
 		record.writeHeapDump(_out);
-		
+
 		_lastAddress = address;
 	}
 
@@ -123,9 +123,9 @@ public class PortableHeapDumpFormatter extends HeapDumpFormatter
 			int hashCode, ReferenceIterator references) throws IOException
 	{
 		ObjectArrayRecord record = new ObjectArrayRecord(address,_lastAddress,elementClassAddress,hashCode,numberOfElements,filterNullReferences(references),_is64Bit,size,_is32BitHash);
-		
+
 		record.writeHeapDump(_out);
-		
+
 		_lastAddress = address;
 	}
 
@@ -145,53 +145,53 @@ public class PortableHeapDumpFormatter extends HeapDumpFormatter
 			record = new PrimitiveArrayRecord(address,_lastAddress,type,numberOfElements,hashCode,_is64Bit, size, _is32BitHash);
 		}
 		record.writeHeapDump(_out);
-		
+
 		_lastAddress = address;
 	}
 
 	public void close() throws IOException
 	{
 		_closed = true;
-		
+
 		_out.writeByte(END_OF_DUMP_TAG);
-		
+
 		_out.close();
 	}
-	
+
 	/**
 	 * Removes null references from the reference iterator - as required by PHD spec.
-	 * 
+	 *
 	 * Returned value wraps input, so operations on the returned value affect the state of input.
 	 */
-	private static ReferenceIterator filterNullReferences(final ReferenceIterator input) 
+	private static ReferenceIterator filterNullReferences(final ReferenceIterator input)
 	{
 		return new ReferenceIterator()
 		{
 
 			private Long next;
-			
+
 			public boolean hasNext()
 			{
 				while(next == null && input.hasNext()) {
 					Long potential = input.next();
-					
+
 					if(potential.longValue() != 0) {
 						next = potential;
 					}
 				}
-				
+
 				return next != null;
 			}
-			
+
 			public Long next()
 			{
 				if(! hasNext()) {
 					return null;
 				}
-				
+
 				Long toReturn = next;
 				next = null;
-				
+
 				return toReturn;
 			}
 
@@ -200,7 +200,7 @@ public class PortableHeapDumpFormatter extends HeapDumpFormatter
 				input.reset();
 				next = null;
 			}
-			
+
 		};
 	}
 }

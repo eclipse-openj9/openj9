@@ -46,6 +46,7 @@
 #include "j2sever.h"
 #include "vrfytbl.h"
 #include "bytecodewalk.h"
+#include "../shared_common/include/SCQueryFunctions.h"
 
 /* Static J9ITable used as a non-NULL iTable cache value by classes that don't implement any interfaces */
 const J9ITable invalidITable = { (J9Class *) (UDATA) 0xDEADBEEF, 0, (J9ITable *) NULL };
@@ -517,7 +518,7 @@ iterateToNextArgument(U_32 sigIndex, U_32 sigLength, U_8* sigData)
 	if (sigIndex >= sigLength) return sigIndex;
 
 	/* check for object */
-	if (IS_REF_OR_VAL_SIGNATURE(sigData[sigIndex])) {
+	if (IS_CLASS_SIGNATURE(sigData[sigIndex])) {
 		while ((sigIndex < sigLength) && (';' != sigData[sigIndex])) {
 			sigIndex += 1;
 		}
@@ -2641,6 +2642,13 @@ recreateRAMClasses(J9VMThread * currentThread, J9HashTable * classHashTable, J9H
 		/* Delete original class from defining loader's class table */
 		if (!fastHCR) {
 			vmFuncs->hashClassTableDelete(classLoader, J9UTF8_DATA(className), J9UTF8_LENGTH(className));
+			if ((NULL != vm->sharedClassConfig) && (NULL != vm->sharedClassConfig->romToRamHashTable)) {
+				RomToRamEntry entry;
+				entry.ramClass = originalRAMClass;
+				omrthread_rwmutex_enter_write(vm->sharedClassConfig->romToRamHashTableMutex);
+				hashTableRemove(vm->sharedClassConfig->romToRamHashTable, &entry);
+				omrthread_rwmutex_exit_write(vm->sharedClassConfig->romToRamHashTableMutex);
+			}
 		}
 
 		/* Create new RAM class */
@@ -4208,12 +4216,12 @@ hshelpUTRegister(J9JavaVM *vm)
  *
  * @param[in]     currentThread
  * @param[in]     jitEventData       event data describing redefined classes
- * @param[in]     extensionsEnabled  specifies if the extensions are enabled, always true if FSD is on
+ * @param[in]     extensionsEnabled  specifies if the extensions are enabled
  *
- * Notify the JIT of the changes. Enabled extensions mean that the JIT has
- * been initialized in FSD mode. We need to dump the whole code cache in such a case.
- * If the extensions have NOT been enabled we take the smarter code path and ask the
- * jit to patch the compiled code to account for the redefined classes.
+ * Notify the JIT of the changes. If FSD is enabled or there are HCR extensions, we
+ * need to dump the whole code cache.
+ * If neither is the case, we take the smarter code path and ask the jit to patch
+ * the compiled code to account for the redefined classes.
  */
 void
 jitClassRedefineEvent(J9VMThread * currentThread, J9JVMTIHCRJitEventData * jitEventData, UDATA extensionsEnabled, UDATA extensionsUsed)
@@ -4223,7 +4231,7 @@ jitClassRedefineEvent(J9VMThread * currentThread, J9JVMTIHCRJitEventData * jitEv
 
 	if (NULL != jitConfig) {
 		jitConfig->jitClassesRedefined(currentThread, jitEventData->classCount, (J9JITRedefinedClass*)jitEventData->data, extensionsUsed);
-		if (extensionsEnabled) {
+		if (extensionsEnabled || J9_FSD_ENABLED(vm)) {
 			/* Toss the whole code cache */
 			jitConfig->jitHotswapOccurred(currentThread);
 		}

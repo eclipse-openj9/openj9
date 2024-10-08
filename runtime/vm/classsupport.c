@@ -108,7 +108,7 @@ internalFindArrayClass(J9VMThread* vmThread, J9Module *j9module, UDATA arity, U_
 		/* the first level of arity is already present in the array class */
 		arity -= 1;
 
-	} else if (IS_REF_OR_VAL_SIGNATURE(firstChar) && lastChar == ';') {
+	} else if (IS_CLASS_SIGNATURE(firstChar) && lastChar == ';') {
 
 		name += arity + 1; /* 1 for 'L' */
 		length -= arity + 2; /* 2 for 'L and ';' */
@@ -188,30 +188,29 @@ findPrimitiveArrayClass(J9JavaVM* vm, jchar sigChar)
 	}
 }
 
-
-/**
- * @internal
- *
- * Allocates and fills in the relevant fields of an array class
- */
-J9Class* 
-internalCreateArrayClass(J9VMThread* vmThread, J9ROMArrayClass* romClass, J9Class* elementClass)
+static J9Class *
+internalCreateArrayClassHelper(J9VMThread *vmThread, J9ROMArrayClass *romClass, J9Class *elementClass, UDATA options)
 {
 	J9Class *result = NULL;
 	j9object_t heapClass = J9VM_J9CLASS_TO_HEAPCLASS(elementClass);
 	j9object_t protectionDomain = NULL;
-	J9ROMClass* arrayRomClass = (J9ROMClass*) romClass;
+	J9ROMClass *arrayRomClass = (J9ROMClass *)romClass;
 	J9JavaVM *const javaVM = vmThread->javaVM;
-	UDATA options = 0;
 	BOOLEAN elementInitSuccess = TRUE;
 
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-	/* When creating an array of valuetype elements, the array elements are initialized to the defaultValue of the
-	 * element type. As a result the element type must be fully initialized (if its a valuetype) before creating an
-	 * instance of the array. Element class init must be done before the arrayClass is created so that in the case
-	 * of an init failure the arrayClass is not temporarily exposed.
+	/* When creating an array of implicitly constructible valuetype elements,
+	 * the array elements are initialized to the defaultValue of the element
+	 * type. As a result, the element type must be fully initialized before
+	 * creating an instance of the array. Element class init must be done
+	 * before the arrayClass is created so that in the case of an init failure
+	 * the arrayClass is not temporarily exposed.
+	 * Don't try to initialize class for null-restricted array creation since
+	 * the regular arrayClass will always be created first.
 	 */
-	if (J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(elementClass)) {
+	if (J9_IS_J9CLASS_ALLOW_DEFAULT_VALUE(elementClass)
+		&& J9_ARE_NO_BITS_SET(options, J9_FINDCLASS_FLAG_CLASS_OPTION_NULL_RESTRICTED_ARRAY)
+	) {
 		UDATA initStatus = elementClass->initializeStatus;
 		if ((J9ClassInitSucceeded != initStatus) && ((UDATA)vmThread != initStatus)) {
 			initializeClass(vmThread, elementClass);
@@ -258,6 +257,31 @@ internalCreateArrayClass(J9VMThread* vmThread, J9ROMArrayClass* romClass, J9Clas
 	}
 
 	return result;
+}
+
+/**
+ * @internal
+ *
+ * Allocates and fills in the relevant fields of an array class
+ */
+J9Class *
+internalCreateArrayClass(J9VMThread *vmThread, J9ROMArrayClass *romClass, J9Class *elementClass)
+{
+	return internalCreateArrayClassHelper(vmThread, romClass, elementClass, 0);
+}
+
+J9Class *
+internalCreateArrayClassWithOptions(J9VMThread *vmThread, J9ROMArrayClass *romClass, J9Class *elementClass, UDATA options)
+{
+	/* Create elementClass's arrayClass as a prerequisite to nullRestrictedArrayClass */
+	if (J9_ARE_ALL_BITS_SET(options, J9_FINDCLASS_FLAG_CLASS_OPTION_NULL_RESTRICTED_ARRAY)
+		&& (NULL == elementClass->arrayClass)
+	) {
+		if (NULL == internalCreateArrayClassHelper(vmThread, romClass, elementClass, 0)) {
+			return NULL;
+		}
+	}
+	return internalCreateArrayClassHelper(vmThread, romClass, elementClass, options);
 }
 
 /**

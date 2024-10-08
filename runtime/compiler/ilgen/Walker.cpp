@@ -1630,9 +1630,6 @@ TR_J9ByteCodeIlGenerator::stashArgumentsForOSR(TR_J9ByteCode byteCode)
 
    TR::MethodSymbol *symbol = symRef->getSymbol()->castToMethodSymbol();
    int32_t numArgs = symbol->getMethod()->numberOfExplicitParameters() + (symbol->isStatic() ? 0 : 1);
-   // For OpenJDK MH implementation, some args for invokedynamic/invokehandle (details below)
-   // that are already pushed to stack must not be stashed
-   int32_t numArgsToNotStash = 0;
 
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
    // If the transition target is invokehandle/invokedynamic, the arguments to be
@@ -1671,6 +1668,7 @@ TR_J9ByteCodeIlGenerator::stashArgumentsForOSR(TR_J9ByteCode byteCode)
    // Notice that we always generate a resolved call, thus we use unresolvedInCP to tell
    // us whether the side table entry is resolved
    //
+   int32_t numArgsToNotStash = 0;
    if (byteCode == J9BCinvokedynamic ||
        byteCode == J9BCinvokehandle)
       {
@@ -1684,10 +1682,10 @@ TR_J9ByteCodeIlGenerator::stashArgumentsForOSR(TR_J9ByteCode byteCode)
       if (trace())
          traceMsg(comp(), "Original num args for invokedynamic/handle: %d, num args to not stash for OSR: %d, stack size: %d\n", numArgs, numArgsToNotStash, _stack->size());
       }
-#endif
+
    numArgs -= numArgsToNotStash;
-   // For OpenJDK MethodHandle implementation, there may be items on stack that we need to exclude
-   int32_t adjustedStackSize = _stack->size() - numArgsToNotStash;
+#endif
+
    TR_OSRMethodData *osrMethodData =
       comp()->getOSRCompilationData()->findOrCreateOSRMethodData(comp()->getCurrentInlinedSiteIndex(), _methodSymbol);
    osrMethodData->ensureArgInfoAt(_bcIndex, numArgs);
@@ -1696,10 +1694,10 @@ TR_J9ByteCodeIlGenerator::stashArgumentsForOSR(TR_J9ByteCode byteCode)
    // It is necessary to walk the whole stack to determine the slot numbers
    int32_t slot = 0;
    int arg = 0;
-   for (int32_t i = 0; i < adjustedStackSize; ++i)
+   for (int32_t i = 0; i < _stack->size(); ++i)
       {
       TR::Node * n = _stack->element(i);
-      if (adjustedStackSize - numArgs <= i)
+      if (_stack->size() - numArgs <= i)
          {
          TR::SymbolReference * symRef = symRefTab()->findOrCreatePendingPushTemporary(_methodSymbol, slot, getDataType(n));
          osrMethodData->addArgInfo(_bcIndex, arg, symRef->getReferenceNumber());
@@ -3342,8 +3340,6 @@ TR_J9ByteCodeIlGenerator::genInvokeHandle(int32_t cpIndex)
    bool isUnresolved = false;
    bool isInvokeCacheAppendixNull = false;
    TR::SymbolReference * targetMethodSymRef = symRefTab()->findOrCreateHandleMethodSymbol(_methodSymbol, cpIndex, &isUnresolved, &isInvokeCacheAppendixNull);
-   if (isUnresolved)
-      targetMethodSymRef->getSymbol()->setDummyResolvedMethod(); // linkToStatic is a dummy TR_ResolvedMethod
    TR::SymbolReference *methodTypeTableEntrySymRef = symRefTab()->findOrCreateMethodTypeTableEntrySymbol(_methodSymbol, cpIndex);
    TR_ResolvedJ9Method* owningMethod = static_cast<TR_ResolvedJ9Method *>(_methodSymbol->getResolvedMethod());
    uintptr_t * invokeCacheArray = (uintptr_t *) owningMethod->methodTypeTableEntryAddress(cpIndex);

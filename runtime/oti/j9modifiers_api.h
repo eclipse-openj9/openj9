@@ -82,13 +82,12 @@
 #define J9ROMCLASS_IS_CONTENDED(romClass)	_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccClassIsContended)
 
 #ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
-#define J9ROMCLASS_IS_VALUE(romClass)   (((romClass)->majorVersion >= VALUE_TYPES_MAJOR_VERSION) && (PREVIEW_MINOR_VERSION == (romClass)->minorVersion) && !_J9ROMCLASS_SUNMODIFIER_IS_ANY_SET((romClass), J9AccClassHasIdentity | J9AccInterface))
+#define J9ROMCLASS_IS_VALUE(romClass)   (J9_IS_CLASSFILE_OR_ROMCLASS_VALUETYPE_VERSION(romClass) && !_J9ROMCLASS_SUNMODIFIER_IS_ANY_SET((romClass), J9AccClassHasIdentity | J9AccInterface))
 #else /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 #define J9ROMCLASS_IS_VALUE(romClass)	FALSE
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 #define J9ROMMETHOD_IS_GETTER(romMethod)				_J9ROMMETHOD_J9MODIFIER_IS_SET((romMethod), J9AccGetterMethod)
-#define J9ROMMETHOD_IS_FORWARDER(romMethod)				_J9ROMMETHOD_J9MODIFIER_IS_SET((romMethod), J9AccForwarderMethod)
 #define J9ROMMETHOD_IS_EMPTY(romMethod)					_J9ROMMETHOD_J9MODIFIER_IS_SET((romMethod), J9AccEmptyMethod)
 #define J9ROMMETHOD_HAS_VTABLE(romMethod)				_J9ROMMETHOD_J9MODIFIER_IS_SET((romMethod), J9AccMethodVTable)
 #define J9ROMMETHOD_HAS_EXCEPTION_INFO(romMethod)		_J9ROMMETHOD_J9MODIFIER_IS_SET((romMethod), J9AccMethodHasExceptionInfo)

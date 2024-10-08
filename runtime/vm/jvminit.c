@@ -54,6 +54,10 @@
 #include <signal.h>
 #endif
 
+#if defined(J9ZOS390)
+#include "atoe.h"
+#endif
+
 #include "omrcfg.h"
 #include "jvminitcommon.h"
 #include "j9user.h"
@@ -326,17 +330,11 @@ J9_DECLARE_CONSTANT_UTF8(j9_dispatch, "dispatch");
 /* The appropriate bytecodeLoop is selected based on interpreter mode */
 #if defined(OMR_GC_FULL_POINTERS)
 UDATA bytecodeLoopFull(J9VMThread *currentThread);
-#if defined(J9VM_OPT_CRIU_SUPPORT)
-UDATA criuBytecodeLoopFull(J9VMThread *currentThread);
-#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 UDATA debugBytecodeLoopFull(J9VMThread *currentThread);
 #endif /* defined(OMR_GC_FULL_POINTERS) */
 
 #if defined(OMR_GC_COMPRESSED_POINTERS)
 UDATA bytecodeLoopCompressed(J9VMThread *currentThread);
-#if defined(J9VM_OPT_CRIU_SUPPORT)
-UDATA criuBytecodeLoopCompressed(J9VMThread *currentThread);
-#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 UDATA debugBytecodeLoopCompressed(J9VMThread *currentThread);
 #endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
 
@@ -661,6 +659,12 @@ freeJavaVM(J9JavaVM * vm)
 		}
 		pool_kill(vm->cifArgumentTypesCache);
 		vm->cifArgumentTypesCache = NULL;
+	}
+
+	/* Delete the layout string hashtable if exists. */
+	if (NULL != vm->layoutStrFFITypeTable) {
+		releaseLayoutStrFFITypeTable(vm->layoutStrFFITypeTable);
+		vm->layoutStrFFITypeTable = NULL;
 	}
 
 	/* Empty the thunk heap list if exists. */
@@ -1822,18 +1826,37 @@ processContinuationCacheOptions(J9JavaVM *vm)
 	IDATA argIndex = FIND_AND_CONSUME_VMARG(STARTSWITH_MATCH, VMOPT_XXCONTINUATIONCACHE, NULL);
 	if (-1 != argIndex) {
 		char *cursor = NULL;
+		char* scanEnd = NULL;
 		U_32 cacheSize = 0;
+
 		GET_OPTION_OPTION(argIndex, ':', ':', &cursor);
+		scanEnd = cursor + strlen(cursor);
 
-		if (try_scan(&cursor, "t1=") && (0 == omr_scan_u32(&cursor, &cacheSize))) {
-			vm->continuationT1Size = cacheSize;
+		while (cursor < scanEnd) {
+			if (try_scan(&cursor, "t1=") && (0 == omr_scan_u32(&cursor, &cacheSize))) {
+				vm->continuationT1Size = cacheSize;
 
-			if (try_scan(&cursor, ",t2=") && (0 == omr_scan_u32(&cursor, &cacheSize))){
-				vm->continuationT2Size = cacheSize;
+				if (try_scan(&cursor, ",t2=") && (0 == omr_scan_u32(&cursor, &cacheSize))){
+					vm->continuationT2Size = cacheSize;
+					rc = 0;
+				}
+			} else if (try_scan(&cursor, "printSummary")) {
+				/* Set VM flag. */
+				vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_ENABLE_CONTINUATION_CACHE_SUMMARY;
 				rc = 0;
+			} else {
+				rc = -1;
+				break;
+			}
+
+			/* Skip ',' delimiter. */
+			if (',' == *cursor) {
+				cursor++;
 			}
 		}
-	} else {
+	}
+	/* Set default cache size. */
+	if (0 == vm->continuationT1Size) {
 		PORT_ACCESS_FROM_JAVAVM(vm);
 		vm->continuationT1Size = 1;
 		vm->continuationT2Size = (U_32)(j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_TARGET) * 2);
@@ -2960,6 +2983,17 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 				goto _error;
 			}
 #endif /* defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH) */
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+			if (isDebugOnRestoreEnabled(vm)) {
+				Trc_VM_VMInitStages_isDebugOnRestoreEnabled();
+				/* enable jvmtiCapabilities.can_get_source_debug_extension */
+				vm->requiredDebugAttributes |= J9VM_DEBUG_ATTRIBUTE_SOURCE_DEBUG_EXTENSION;
+				/* enable jvmtiCapabilities.can_access_local_variables */
+				vm->requiredDebugAttributes |= J9VM_DEBUG_ATTRIBUTE_CAN_ACCESS_LOCALS;
+				/* enable jvmtiCapabilities.can_maintain_original_method_order */
+				vm->requiredDebugAttributes |= J9VM_DEBUG_ATTRIBUTE_MAINTAIN_ORIGINAL_METHOD_ORDER;
+			}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 			TRIGGER_J9HOOK_VM_ABOUT_TO_BOOTSTRAP(vm->hookInterface, vm->mainThread);
 			/* At this point, the decision about which interpreter to use has been made */
 
@@ -2973,21 +3007,7 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 					vm->bytecodeLoop = debugBytecodeLoopFull;
 #endif /* defined(OMR_GC_FULL_POINTERS) */
 				}
-			} else
-#if defined(J9VM_OPT_CRIU_SUPPORT)
-			if (J9_ARE_ALL_BITS_SET(vm->checkpointState.flags, J9VM_CRIU_IS_CHECKPOINT_ALLOWED)) {
-				if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
-#if defined(OMR_GC_COMPRESSED_POINTERS)
-					vm->bytecodeLoop = criuBytecodeLoopCompressed;
-#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
-				} else {
-#if defined(OMR_GC_FULL_POINTERS)
-					vm->bytecodeLoop = criuBytecodeLoopFull;
-#endif /* defined(OMR_GC_FULL_POINTERS) */
-				}
-			} else
-#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
-			{
+			} else {
 				if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
 #if defined(OMR_GC_COMPRESSED_POINTERS)
 					vm->bytecodeLoop = bytecodeLoopCompressed;
@@ -6530,22 +6550,32 @@ runExitStages(J9JavaVM* vm, J9VMThread* vmThread)
 		}
 	}
 #endif
-
-#if defined(J9VM_PROF_CONTINUATION_ALLOCATION)
-	if (0 < (vm->t1CacheHit + vm->t2CacheHit + vm->fastAlloc + vm->slowAlloc)) {
+#if JAVA_SPEC_VERSION >= 19
+	if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_CONTINUATION_CACHE_SUMMARY)
+	&& (0 < (vm->t1CacheHit + vm->t2CacheHit + vm->cacheMiss))
+	) {
 		PORT_ACCESS_FROM_JAVAVM(vm);
-		j9tty_printf(PORTLIB, "\nTotal Continuation entries: %u\n", vm->t1CacheHit + vm->t2CacheHit + vm->fastAlloc + vm->slowAlloc);
+		j9tty_printf(PORTLIB, "\nContinuation Cache Summary:");
+		j9tty_printf(PORTLIB, "\n    T1 size: %u    T2 size: %u\n", vm->continuationT1Size, vm->continuationT2Size);
+		j9tty_printf(PORTLIB, "\nTotal Continuation entries: %u\n", vm->t1CacheHit + vm->t2CacheHit + vm->cacheMiss);
 		j9tty_printf(PORTLIB, "\nCache Hits:                 %u", vm->t1CacheHit + vm->t2CacheHit);
 		j9tty_printf(PORTLIB, "\n     T1 Cache Hits:             %u", vm->t1CacheHit);
 		j9tty_printf(PORTLIB, "\n     T2 Cache Hits:             %u", vm->t2CacheHit);
-		j9tty_printf(PORTLIB, "\nCache Miss:                 %u", vm->fastAlloc + vm->slowAlloc);
+		j9tty_printf(PORTLIB, "\nCache Miss:                 %u", vm->cacheMiss);
+#if defined(J9VM_PROF_CONTINUATION_ALLOCATION)
 		j9tty_printf(PORTLIB, "\n     Fast Alloc (<10000ns):     %u", vm->fastAlloc);
-		j9tty_printf(PORTLIB, "\n     Avg Fast Alloc Time:       %lldns", (vm->fastAlloc > 0 ? (vm->fastAllocAvgTime / (I_64)vm->fastAlloc) : 0));
+		j9tty_printf(PORTLIB, "\n     Avg Fast Alloc Time:       %lld ns", (vm->fastAlloc > 0 ? (vm->fastAllocAvgTime / (I_64)vm->fastAlloc) : 0));
 		j9tty_printf(PORTLIB, "\n     Slow Alloc (>10000ns):     %u", vm->slowAlloc);
-		j9tty_printf(PORTLIB, "\n     Avg Slow Alloc Time:       %lldns", (vm->slowAlloc > 0 ? (vm->slowAllocAvgTime / (I_64)vm->slowAlloc) : 0));
-		j9tty_printf(PORTLIB, "\nAvg Cache Lookup Time:      %lldns\n", (vm->avgCacheLookupTime / (I_64)(vm->t1CacheHit + vm->t2CacheHit + vm->fastAlloc + vm->slowAlloc)));
-	}
+		j9tty_printf(PORTLIB, "\n     Avg Slow Alloc Time:       %lld ns", (vm->slowAlloc > 0 ? (vm->slowAllocAvgTime / (I_64)vm->slowAlloc) : 0));
+		j9tty_printf(PORTLIB, "\nAvg Cache Lookup Time:      %lld ns", (vm->avgCacheLookupTime / (I_64)(vm->t1CacheHit + vm->t2CacheHit + vm->fastAlloc + vm->slowAlloc)));
 #endif /* defined(J9VM_PROF_CONTINUATION_ALLOCATION) */
+		j9tty_printf(PORTLIB, "\n\nCache store:                %u", vm->t1CacheHit + vm->t2CacheHit + vm->cacheMiss - vm->cacheFree);
+		j9tty_printf(PORTLIB, "\n     T1 Cache store:            %u", vm->t1CacheHit + vm->t2CacheHit + vm->cacheMiss - vm->cacheFree - vm->t2store);
+		j9tty_printf(PORTLIB, "\n     T2 Cache store:            %u", vm->t2store);
+		j9tty_printf(PORTLIB, "\nCache Freed:                %u\n", vm->cacheFree);
+		j9tty_printf(PORTLIB, "\nAvg Cache Stack Size:       %.2f KB\n", (double)vm->totalContinuationStackSize / (vm->t1CacheHit + vm->t2CacheHit + vm->cacheMiss) / 1024);
+	}
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 	/* Unload before trace engine exits */
 	UT_MODULE_UNLOADED(J9_UTINTERFACE_FROM_VM(vm));

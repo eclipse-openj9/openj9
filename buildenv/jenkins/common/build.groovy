@@ -337,7 +337,7 @@ def build() {
 }
 
 def get_compile_command() {
-	return "make ${EXTRA_MAKE_OPTIONS} all"
+    return "make ${EXTRA_MAKE_OPTIONS} all"
 }
 
 def archive_sdk() {
@@ -817,7 +817,13 @@ def _build_all() {
 // TODO: remove this workaround when https://github.com/adoptium/infrastructure/issues/3597 resolved. related: infra 9292
 def create_docker_image_locally()
 {
-    new_image_name=DOCKER_IMAGE.split(':')[0]+'_cuda'
+    new_image_name = DOCKER_IMAGE.split(':')[0] + '_cuda'
+    // check and return if image is already exists on node
+    CUDA_DOCKER_IMAGE_ID = get_docker_image_id(new_image_name)
+    if (CUDA_DOCKER_IMAGE_ID) {
+        DOCKER_IMAGE = new_image_name
+        return
+    }
     sh '''
         echo 'ARG image
             ARG cuda_ver=12.2.0
@@ -844,9 +850,8 @@ def build_all() {
             node("${NODE}") {
                 timeout(time: 5, unit: 'HOURS') {
                     if ("${DOCKER_IMAGE}") {
-                        // TODO: remove this workaround when https://github.com/adoptium/infrastructure/issues/3597 resolved. related: infra 9292
-                        if ((PLATFORM ==~ /ppc64le_linux.*/) ||
-                            ((PLATFORM ==~ /x86-64_linux.*/) && ((SDK_VERSION.toLowerCase() == 'next') || (SDK_VERSION.toInteger() >= 17)))) {
+                        // TODO: Remove this workaround when https://github.com/adoptium/infrastructure/issues/3597 is resolved. Related: infra 9292.
+                        if ((PLATFORM ==~ /ppc64le_linux.*/) || (PLATFORM ==~ /x86-64_linux.*/)) {
                             create_docker_image_locally()
                         }
                         prepare_docker_environment()

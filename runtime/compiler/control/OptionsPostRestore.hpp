@@ -119,8 +119,11 @@ class OptionsPostRestore
 
    /**
     * \brief Helper method to disable further AOT compilation.
+    *
+    * \param disabledPreCheckpoint bool to indicate whther AOT was disable post
+    *                              restore or pre checkpoint.
     */
-   void disableAOTCompilation();
+   void disableAOTCompilation(bool disabledPreCheckpoint = false);
 
    /**
     * \brief Helper method to perform tasks prior to processing

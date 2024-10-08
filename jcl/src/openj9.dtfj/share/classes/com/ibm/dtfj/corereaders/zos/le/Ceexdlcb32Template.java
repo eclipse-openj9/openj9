@@ -29,61 +29,75 @@ import java.io.IOException;
 
 public final class Ceexdlcb32Template implements CeexdlcbTemplate {
 
-    public int length() {
-        return 96;
-    }
+	public int length() {
+		return 96;
+	}
 
-    public long getDlcbnextptr(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 0);
-        return inputStream.readUnsignedInt() & 0xffffffffL;
-    }
-    public int getDlcbnextptr$offset() {
-        return 0;
-    }
-    public int getDlcbnextptr$length() {
-        return 32;
-    }
-    public long getDlcbwsaptr(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 20);
-        return inputStream.readUnsignedInt() & 0xffffffffL;
-    }
-    public int getDlcbwsaptr$offset() {
-        return 20;
-    }
-    public int getDlcbwsaptr$length() {
-        return 32;
-    }
-    public long getDlcbnamelen(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 60);
-        long result = inputStream.readBits(16);
-        result <<= 48;
-        result >>= 48;
-        return result;
-    }
-    public int getDlcbnamelen$offset() {
-        return 60;
-    }
-    public int getDlcbnamelen$length() {
-        return 16;
-    }
-    public long getDlcbnameptr(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 64);
-        return inputStream.readUnsignedInt() & 0xffffffffL;
-    }
-    public int getDlcbnameptr$offset() {
-        return 64;
-    }
-    public int getDlcbnameptr$length() {
-        return 32;
-    }
-    public long getDlcbiewbcie(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 68);
-        return inputStream.readUnsignedInt() & 0xffffffffL;
-    }
-    public int getDlcbiewbcie$offset() {
-        return 68;
-    }
-    public int getDlcbiewbcie$length() {
-        return 32;
-    }
+	public long getDlcbnextptr(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 0);
+		return inputStream.readUnsignedInt() & 0xffffffffL;
+	}
+
+	public int getDlcbnextptr$offset() {
+		return 0;
+	}
+
+	public int getDlcbnextptr$length() {
+		return 32;
+	}
+
+	public long getDlcbwsaptr(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 20);
+		return inputStream.readUnsignedInt() & 0xffffffffL;
+	}
+
+	public int getDlcbwsaptr$offset() {
+		return 20;
+	}
+
+	public int getDlcbwsaptr$length() {
+		return 32;
+	}
+
+	public long getDlcbnamelen(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 60);
+		long result = inputStream.readBits(16);
+		result <<= 48;
+		result >>= 48;
+		return result;
+	}
+
+	public int getDlcbnamelen$offset() {
+		return 60;
+	}
+
+	public int getDlcbnamelen$length() {
+		return 16;
+	}
+
+	public long getDlcbnameptr(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 64);
+		return inputStream.readUnsignedInt() & 0xffffffffL;
+	}
+
+	public int getDlcbnameptr$offset() {
+		return 64;
+	}
+
+	public int getDlcbnameptr$length() {
+		return 32;
+	}
+
+	public long getDlcbiewbcie(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 68);
+		return inputStream.readUnsignedInt() & 0xffffffffL;
+	}
+
+	public int getDlcbiewbcie$offset() {
+		return 68;
+	}
+
+	public int getDlcbiewbcie$length() {
+		return 32;
+	}
 }

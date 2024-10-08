@@ -275,7 +275,7 @@ J9NLS_VM_CHECK_JAVA_HOME.system_action=The JVM will terminate.
 J9NLS_VM_CHECK_JAVA_HOME.user_response=Check that JAVA_HOME environment variable is properly set.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_STACK_TRACE_EXCEPTION_IN=V\u00fdjimka v podprocesu "%s"
+J9NLS_VM_STACK_TRACE_EXCEPTION_IN=V\u00fdjimka ve vl\u00e1knu "%s"
 # START NON-TRANSLATABLE
 J9NLS_VM_STACK_TRACE_EXCEPTION_IN.sample_input_1=main
 J9NLS_VM_STACK_TRACE_EXCEPTION_IN.explanation=NOTAG
@@ -1887,7 +1887,7 @@ J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE=chybn\u00fd typ objektu %
 J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE.sample_input_1=3
 J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE.sample_input_2=Foo
 J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE.explanation=The class has specified the bytecode monitorenter or monitorexit operation which cannot be performed on a value type but the object on stack is a value type.
-J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE.system_action=The JVM will throw an IllegalMonitorStateException.
+J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE.system_action=The JVM will throw an IdentityException.
 J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
 
@@ -2136,44 +2136,44 @@ J9NLS_VM_CRIU_RESTORE_INITIALIZE_DUMP_FAILED.system_action=The JVM will throw a 
 J9NLS_VM_CRIU_RESTORE_INITIALIZE_DUMP_FAILED.user_response=Check documentation for CRIUSupport restore options.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_ILLEGAL_THREAD_STATE_UPCALL=Prost\u0159ed\u00ed JVM se nezda\u0159ilo pokra\u010dovat kv\u016fli chybn\u00e9mu stavu podprocesu pro vol\u00e1n\u00ed upcall.
+J9NLS_VM_ILLEGAL_THREAD_STATE_UPCALL=JVM se nepoda\u0159ilo pokra\u010dovat kv\u016fli nespr\u00e1vn\u00e9mu stavu vl\u00e1kna pro upcall
 # START NON-TRANSLATABLE
 J9NLS_VM_ILLEGAL_THREAD_STATE_UPCALL.explanation=An error occurred when the JVM attempted to perform upcall in the trivial downcall
 J9NLS_VM_ILLEGAL_THREAD_STATE_UPCALL.system_action=The JVM will throw a IllegalThreadStateException.
 J9NLS_VM_ILLEGAL_THREAD_STATE_UPCALL.user_response=Ensure the specified linker options for downcall are valid.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_FORKJOINPOOL_CNF=Prost\u0159ed\u00ed JVM nemohlo resetovat java.lang.VirtualThread.ForkJoinPool.parallelism kv\u016fli t\u0159\u00edd\u011b java.util.concurrent.ForkJoinPool nebylo nalezeno.
+J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_FORKJOINPOOL_CNF=JVM nemohl resetovat java.lang.VirtualThread.ForkJoinPool.parallelism kv\u016fli nenalezen\u00e9 t\u0159\u00edd\u011b java.util.concurrent.ForkJoinPool
 # START NON-TRANSLATABLE
 J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_FORKJOINPOOL_CNF.explanation=CRIUSupport::checkpointJVM failed.
 J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_FORKJOINPOOL_CNF.system_action=The JVM will throw a JVMRestoreException.
 J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_FORKJOINPOOL_CNF.user_response=View CRIU documentation to determine how to resolve the exception.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_DEFAULT_SCHEDULER_ADDRESS=Prost\u0159ed\u00ed JVM se nepoda\u0159ilo resetovat java.lang.VirtualThread.ForkJoinPool.parallelism kv\u016fli neplatn\u00e9 adrese DEFAULT_SCHEDULER.
+J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_DEFAULT_SCHEDULER_ADDRESS=JVM nemohl resetovat java.lang.VirtualThread.ForkJoinPool.parallelism kv\u016fli neplatn\u00e9 adrese DEFAULT_SCHEDULER
 # START NON-TRANSLATABLE
 J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_DEFAULT_SCHEDULER_ADDRESS.explanation=CRIUSupport::checkpointJVM failed.
 J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_DEFAULT_SCHEDULER_ADDRESS.system_action=The JVM will throw a JVMRestoreException.
 J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_DEFAULT_SCHEDULER_ADDRESS.user_response=View CRIU documentation to determine how to resolve the exception.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_PARALLELISM_OFFSET=Prost\u0159ed\u00ed JVM nemohlo resetovat java.lang.VirtualThread.ForkJoinPool.parallelism kv\u016fli neplatn\u00e9mu posunut\u00ed paralelizmu.
+J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_PARALLELISM_OFFSET=JVM nemohl resetovat java.lang.VirtualThread.ForkJoinPool.parallelism kv\u016fli neplatn\u00e9mu offsetu paralelismu
 # START NON-TRANSLATABLE
 J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_PARALLELISM_OFFSET.explanation=CRIUSupport::checkpointJVM failed.
 J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_PARALLELISM_OFFSET.system_action=The JVM will throw a JVMRestoreException.
 J9NLS_VM_CRIU_RESTORE_RESET_VIRTUALTHREAD_FORKJOINPOOL_PARALLELISM_INVALID_PARALLELISM_OFFSET.user_response=View CRIU documentation to determine how to resolve the exception.
 # END NON-TRANSLATABLE
 
-# NullRestricted/value/implicit is not translatable
-J9NLS_VM_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS=Pole instance s atributem NullRestricted mus\u00ed b\u00fdt ve t\u0159\u00edd\u011b hodnot s implicitn\u00edm konstruktorem.
+# NullRestricted is not translatable
+J9NLS_VM_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS=Pole instance s atributem NullRestricted mus\u00ed b\u00fdt v hodnotov\u00e9 t\u0159\u00edd\u011b s implicitn\u00edm konstruktorem
 # START NON-TRANSLATABLE
 J9NLS_VM_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_VM_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
 J9NLS_VM_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
 
-# NullRestricted/value/implicit is not translatable
-J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS=Statick\u00e9 pole s atributem NullRestricted mus\u00ed b\u00fdt ve t\u0159\u00edd\u011b hodnot s implicitn\u00edm konstruktorem.
+# NullRestricted is not translatable
+J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS=Statick\u00e9 pole s atributem NullRestricted mus\u00ed b\u00fdt v hodnotov\u00e9 t\u0159\u00edd\u011b s implicitn\u00edm konstruktorem
 # START NON-TRANSLATABLE
 J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
@@ -2181,7 +2181,7 @@ J9NLS_VM_STATIC_NULLRESTRICTED_MUST_BE_IN_DEFAULT_IMPLICITCREATION_VALUE_CLASS.u
 # END NON-TRANSLATABLE
 
 # Note: -XX:Compatibility= is a command-line option and should not be translated.
-J9NLS_VM_COMPATIBILITY_REPEATED=Volba p\u0159\u00edkazov\u00e9ho \u0159\u00e1dku -XX:Compatibility = [ mode] je povolena nejv\u00fd\u0161e jednou.
+J9NLS_VM_COMPATIBILITY_REPEATED=Volba p\u0159\u00edkazov\u00e9ho \u0159\u00e1dku -XX:Compatibility=[re\u017eim] je povolena maxim\u00e1ln\u011b jednou.
 # START NON-TRANSLATABLE
 J9NLS_VM_COMPATIBILITY_REPEATED.explanation=The specified command-line option may not be repeated.
 J9NLS_VM_COMPATIBILITY_REPEATED.system_action=The JVM will fail to start.
@@ -2189,7 +2189,7 @@ J9NLS_VM_COMPATIBILITY_REPEATED.user_response=Remove the repetition of the optio
 # END NON-TRANSLATABLE
 
 # Note: -XX:Compatibility= is a command-line option and should not be translated.
-J9NLS_VM_COMPATIBILITY_UNSUPPORTED=Re\u017eim kompatibility ur\u010den\u00fd v parametru "-XX:Compatibility=%s" nen\u00ed podporov\u00e1n.
+J9NLS_VM_COMPATIBILITY_UNSUPPORTED=Re\u017eim kompatibility uveden\u00fd v "-XX:Compatibility=%s" nen\u00ed podporov\u00e1n.
 # START NON-TRANSLATABLE
 J9NLS_VM_COMPATIBILITY_UNSUPPORTED.sample_input_1=unsupported
 J9NLS_VM_COMPATIBILITY_UNSUPPORTED.explanation=The specified compatibility mode is not supported.
@@ -2322,14 +2322,14 @@ J9NLS_VM_CRIU_NEGATIVE_CHECKPOINT_RESTORE_TIME_DELTA.system_action=The JVM will 
 J9NLS_VM_CRIU_NEGATIVE_CHECKPOINT_RESTORE_TIME_DELTA.user_response=View CRIU documentation to determine how to resolve the error.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_CRIU_CRAC_INCOMPATIBLE_SETTING=Volby p\u0159\u00edkazov\u00e9ho \u0159\u00e1dku -XX: +EnableCRIUSupport a -XX:CRaCCheckpointTo = [ DIR] nejsou kompatibiln\u00ed.
+J9NLS_VM_CRIU_CRAC_INCOMPATIBLE_SETTING=Volby p\u0159\u00edkazov\u00e9ho \u0159\u00e1dku -XX:+EnableCRIUSupport a -XX:CRaCCheckpointTo=[DIR] nejsou kompatibiln\u00ed.
 # START NON-TRANSLATABLE
 J9NLS_VM_CRIU_CRAC_INCOMPATIBLE_SETTING.explanation=-XX:+EnableCRIUSupport and -XX:CRaCCheckpointTo=[DIR] are specified at the same time.
 J9NLS_VM_CRIU_CRAC_INCOMPATIBLE_SETTING.system_action=The JVM will fail to start.
 J9NLS_VM_CRIU_CRAC_INCOMPATIBLE_SETTING.user_response=Remove one of the options from the command line.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_CRIU_J9_GET_PROCESS_START_TIME_FAILURE=j9sysinfo_get_process_start_time selhalo s \u010d\u00edslem chyby= %zi
+J9NLS_VM_CRIU_J9_GET_PROCESS_START_TIME_FAILURE=j9sysinfo_get_process_start_time se nezda\u0159ilo s errno=%zi
 # START NON-TRANSLATABLE
 J9NLS_VM_CRIU_J9_GET_PROCESS_START_TIME_FAILURE.sample_input_1=-34
 J9NLS_VM_CRIU_J9_GET_PROCESS_START_TIME_FAILURE.explanation=j9sysinfo_get_process_start_time failed.
@@ -2344,7 +2344,7 @@ J9NLS_VM_MODULARITY_GENERAL_FAILURE.system_action=The JVM will fail to start.
 J9NLS_VM_MODULARITY_GENERAL_FAILURE.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_MODULARITY_PACKAGE_ALREADY_DEFINED=Bal\u00edk v seznamu ji\u017e byl definov\u00e1n
+J9NLS_VM_MODULARITY_PACKAGE_ALREADY_DEFINED=Bal\u00ed\u010dek v seznamu ji\u017e byl definov\u00e1n
 # START NON-TRANSLATABLE
 J9NLS_VM_MODULARITY_PACKAGE_ALREADY_DEFINED.explanation=The specified module package has already been defined.
 J9NLS_VM_MODULARITY_PACKAGE_ALREADY_DEFINED.system_action=The JVM will fail to start.
@@ -2358,35 +2358,35 @@ J9NLS_VM_MODULARITY_MODULE_ALREADY_DEFINED.system_action=The JVM will fail to st
 J9NLS_VM_MODULARITY_MODULE_ALREADY_DEFINED.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_MODULARITY_HASH_OPERATION_FAILED=Operace ha\u0161ov\u00e1n\u00ed modularity se nezda\u0159ila.
+J9NLS_VM_MODULARITY_HASH_OPERATION_FAILED=Operace ha\u0161ov\u00e1n\u00ed modularity se nezda\u0159ila
 # START NON-TRANSLATABLE
 J9NLS_VM_MODULARITY_HASH_OPERATION_FAILED.explanation=The modularity hash operation failed.
 J9NLS_VM_MODULARITY_HASH_OPERATION_FAILED.system_action=The JVM will fail to start.
 J9NLS_VM_MODULARITY_HASH_OPERATION_FAILED.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_MODULARITY_DUPLICATED_PACKAGE_FOUND=Seznam obsahuje duplicitn\u00ed bal\u00edky
+J9NLS_VM_MODULARITY_DUPLICATED_PACKAGE_FOUND=Seznam obsahuje duplicitn\u00ed bal\u00ed\u010dky
 # START NON-TRANSLATABLE
 J9NLS_VM_MODULARITY_DUPLICATED_PACKAGE_FOUND.explanation=The list contains duplicate packages.
 J9NLS_VM_MODULARITY_DUPLICATED_PACKAGE_FOUND.system_action=The JVM will fail to start.
 J9NLS_VM_MODULARITY_DUPLICATED_PACKAGE_FOUND.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_MODULARITY_MODULE_NOT_FOUND=Ur\u010den\u00fd modul nebyl nalezen.
+J9NLS_VM_MODULARITY_MODULE_NOT_FOUND=Zadan\u00fd modul nebyl nalezen
 # START NON-TRANSLATABLE
 J9NLS_VM_MODULARITY_MODULE_NOT_FOUND.explanation=The specified module was not found.
 J9NLS_VM_MODULARITY_MODULE_NOT_FOUND.system_action=The JVM will fail to start.
 J9NLS_VM_MODULARITY_MODULE_NOT_FOUND.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_MODULARITY_PACKAGE_NOT_FOUND=Uveden\u00fd bal\u00edk nebyl nalezen
+J9NLS_VM_MODULARITY_PACKAGE_NOT_FOUND=Zadan\u00fd bal\u00ed\u010dek nebyl nalezen
 # START NON-TRANSLATABLE
 J9NLS_VM_MODULARITY_PACKAGE_NOT_FOUND.explanation=The specified package was not found.
 J9NLS_VM_MODULARITY_PACKAGE_NOT_FOUND.system_action=The JVM will fail to start.
 J9NLS_VM_MODULARITY_PACKAGE_NOT_FOUND.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_DEPRECATED_OPTION=%s varov\u00e1n\u00ed: Volba %s byla zam\u00edtnuta v sad\u011b JDK 22 a bude pravd\u011bpodobn\u011b odebr\u00e1na v budouc\u00edm vyd\u00e1n\u00ed.
+J9NLS_VM_DEPRECATED_OPTION=Upozorn\u011bn\u00ed %s : Mo\u017enost %s byla v JDK 22 zastaral\u00e1 a bude pravd\u011bpodobn\u011b odstran\u011bna v budouc\u00ed verzi.
 # START NON-TRANSLATABLE
 J9NLS_VM_DEPRECATED_OPTION.sample_input_1=Eclipse OpenJ9 VM
 J9NLS_VM_DEPRECATED_OPTION.sample_input_2=-Xdebug
@@ -2395,9 +2395,31 @@ J9NLS_VM_DEPRECATED_OPTION.system_action=The JVM will print a deprecation warnin
 J9NLS_VM_DEPRECATED_OPTION.user_response=Remove the command line option from the command line.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_CRIU_CHECK_TRANSITION_TO_DEBUG_INTERPRETER_FAILED=Kontrola p\u0159echodu na interpreta\u010dn\u00ed program lad\u011bn\u00ed se nezda\u0159ila.
+J9NLS_VM_CRIU_CHECK_TRANSITION_TO_DEBUG_INTERPRETER_FAILED=Kontrola p\u0159echodu na interpret lad\u011bn\u00ed se nezda\u0159ila
 # START NON-TRANSLATABLE
 J9NLS_VM_CRIU_CHECK_TRANSITION_TO_DEBUG_INTERPRETER_FAILED.explanation=checkTransitionToDebugInterpreter failed.
 J9NLS_VM_CRIU_CHECK_TRANSITION_TO_DEBUG_INTERPRETER_FAILED.system_action=The JVM will throw a JVMRestoreException.
 J9NLS_VM_CRIU_CHECK_TRANSITION_TO_DEBUG_INTERPRETER_FAILED.user_response=View CRIU documentation to determine how to resolve the error.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_UNRECOGNISED_SUN_MISC_UNSAFE_MEMORY_ACCESS_VALUE=Hodnota ur\u010den\u00e1 pro --sun-misc-unsafe-memory-access nebyla rozpozn\u00e1na: '%s'
+# START NON-TRANSLATABLE
+J9NLS_VM_UNRECOGNISED_SUN_MISC_UNSAFE_MEMORY_ACCESS_VALUE.sample_input_1=disallow
+J9NLS_VM_UNRECOGNISED_SUN_MISC_UNSAFE_MEMORY_ACCESS_VALUE.explanation=The value specified is not known.
+J9NLS_VM_UNRECOGNISED_SUN_MISC_UNSAFE_MEMORY_ACCESS_VALUE.system_action=The JVM will fail to start.
+J9NLS_VM_UNRECOGNISED_SUN_MISC_UNSAFE_MEMORY_ACCESS_VALUE.user_response=Change the value to one of "allow", "warn", "debug" or "deny".
+# END NON-TRANSLATABLE
+
+J9NLS_VM_OPENJ9_JFR_METADATA_FILE_NOT_FOUND=Bu\u010f nen\u00ed nastavena prom\u011bnn\u00e1 prost\u0159ed\u00ed %s, nebo soubor v zadan\u00e9m um\u00edst\u011bn\u00ed neexistuje.
+# START NON-TRANSLATABLE
+J9NLS_VM_OPENJ9_JFR_METADATA_FILE_NOT_FOUND.explanation=Couldn't find JFR metadata blob file.
+J9NLS_VM_OPENJ9_JFR_METADATA_FILE_NOT_FOUND.system_action=The JVM will not generate a JFR file.
+J9NLS_VM_OPENJ9_JFR_METADATA_FILE_NOT_FOUND.user_response=Set the required environment variables.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_CLASS_NAME_EXCEEDS_MAX_LENGTH=N\u00e1zev t\u0159\u00eddy p\u0159esahuje maxim\u00e1ln\u00ed d\u00e9lku
+# START NON-TRANSLATABLE
+J9NLS_VM_CLASS_NAME_EXCEEDS_MAX_LENGTH.explanation=Class name cannot be longer than 65535 characters.
+J9NLS_VM_CLASS_NAME_EXCEEDS_MAX_LENGTH.system_action=The JVM will throw a ClassNotFoundException.
+J9NLS_VM_CLASS_NAME_EXCEEDS_MAX_LENGTH.user_response=Shorten the class name.
 # END NON-TRANSLATABLE

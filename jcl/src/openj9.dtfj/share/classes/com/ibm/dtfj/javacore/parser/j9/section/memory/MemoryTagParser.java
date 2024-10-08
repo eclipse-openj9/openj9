@@ -75,4 +75,3 @@ public class MemoryTagParser extends TagParser implements IMemoryTypes {
 		addTag(T_1STSEGMENT, lineRule);
 	}
 }
-

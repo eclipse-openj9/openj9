@@ -38,7 +38,7 @@ public class HelpTool extends Tool
 	public static final String COMMAND = "help";
 	public static final String HELP_DESCRIPTION = "to display command help messages";
 	public static final String USAGE = COMMAND + ":\t" + HELP_DESCRIPTION;
-	public static final String JDMPVIEW_HELP_COMMAND = COMMAND;	
+	public static final String JDMPVIEW_HELP_COMMAND = COMMAND;
 	public static final String COMMAND_FORMAT = "%-25s %-20s %s";
 
 	/**
@@ -47,13 +47,13 @@ public class HelpTool extends Tool
 	 * @param command	The command
 	 * @param args		The arguments taken by the command.
 	 * <p>
-	 * @return		<code>true</code> if this is the correct tool for this command; 
+	 * @return		<code>true</code> if this is the correct tool for this command;
 	 * 				<code>false</code> otherwise.
 	 */
 	public boolean accept(String command, String[] args) {
 		return command.equalsIgnoreCase(COMMAND);
 	}
-	
+
 	/**
 	 * Processes the command.
 	 * <p>
@@ -75,7 +75,7 @@ public class HelpTool extends Tool
 			printHelpMessages(commandToBeHelped, newArgs, redirector);
 		}
 	}
-	
+
 	/**
 	 * To print the detailed help message.
 	 */
@@ -91,7 +91,7 @@ public class HelpTool extends Tool
 	public String getCommandName() {
 		return COMMAND;
 	}
-	
+
 	/**
 	 * To gets the tool's argument description.
 	 * <p>
@@ -100,7 +100,7 @@ public class HelpTool extends Tool
 	public String getArgumentDescription() {
 		return "";
 	}
-	
+
 	/**
 	 * To gets the tool's help description.
 	 * <p>
@@ -109,7 +109,7 @@ public class HelpTool extends Tool
 	public String getHelpDescription() {
 		return null;
 	}
-	
+
 	/**
 	 * To print help messages for all commands.
 	 * <p>
@@ -123,7 +123,7 @@ public class HelpTool extends Tool
 			}
 		}
 	}
-	
+
 	/**
 	 * To print the help message for a specific command.
 	 * <p>
@@ -131,16 +131,16 @@ public class HelpTool extends Tool
 	 * @param arguments	The arguments.
 	 * @param out	The PrintStream to print the messages.
 	 */
-	private void printHelpMessages(String commandToBeHelped, String[] arguments, PrintStream out) 
+	private void printHelpMessages(String commandToBeHelped, String[] arguments, PrintStream out)
 	{
 		for (ITool aTool : ToolsRegistry.getAllTools()) {
-			if ((aTool instanceof HelpTool == false) && aTool.accept(commandToBeHelped, arguments)) 
+			if ((aTool instanceof HelpTool == false) && aTool.accept(commandToBeHelped, arguments))
 			{
 				aTool.printDetailedHelp(out);
 				return;
 			}
 		}
-		
+
 		StringBuffer sb = new StringBuffer(JDMPVIEW_HELP_COMMAND);
 		sb.append(" ").append(commandToBeHelped);
 		for (String arg : arguments) {

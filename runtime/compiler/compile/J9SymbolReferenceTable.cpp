@@ -482,6 +482,8 @@ J9::SymbolReferenceTable::findOrCreateHandleMethodSymbol(TR::ResolvedMethodSymbo
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
    TR_ResolvedMethod  * method = owningMethodSymbol->getResolvedMethod()->getResolvedHandleMethod(comp(), cpIndex, unresolvedInCP, isInvokeCacheAppendixNull);
    TR::SymbolReference * symRef = findOrCreateMethodSymbol(owningMethodSymbol->getResolvedMethodIndex(), cpIndex, method, TR::MethodSymbol::Static);
+   if (*unresolvedInCP)
+      symRef->getSymbol()->setDummyResolvedMethod(); // linkToStatic is a dummy TR_ResolvedMethod
 #else
    TR_ResolvedMethod  * method = owningMethodSymbol->getResolvedMethod()->getResolvedHandleMethod(comp(), cpIndex, unresolvedInCP);
    TR::SymbolReference * symRef = findOrCreateMethodSymbol(owningMethodSymbol->getResolvedMethodIndex(), cpIndex, method, TR::MethodSymbol::ComputedVirtual);
@@ -694,25 +696,6 @@ J9::SymbolReferenceTable::findOrCreateArrayClassRomPtrSymbolRef()
          sym->setNotCollected();
       }
    return element(arrayClassRomPtrSymbol);
-   }
-
-
-TR::SymbolReference *
-J9::SymbolReferenceTable::findOrCreateJavaLangReferenceReferentShadowSymbol(
-      TR::ResolvedMethodSymbol * owningMethodSymbol,
-      bool isResolved,
-      TR::DataType type,
-      uint32_t offset, bool isUnresolvedInCP)
-   {
-   TR_ResolvedMethod * owningMethod = owningMethodSymbol->getResolvedMethod();
-
-   TR::SymbolReference * symRef = NULL;
-   symRef = findJavaLangReferenceReferentShadowSymbol(owningMethod, TR::Address, offset);
-   if (!symRef)
-      {
-      symRef = createShadowSymbolWithoutCpIndex(owningMethodSymbol, true, TR::Address, offset, false);
-      }
-   return symRef;
    }
 
 

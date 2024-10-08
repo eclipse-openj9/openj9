@@ -110,7 +110,7 @@ public class GarbageCollectionNotificationInfo implements CompositeDataView {
 	private final GcInfo gcInfo;
 
 	private CompositeData cdata;
-	
+
 	private CompositeData getCompositeData() {
 		if (null == cdata) {
 			cdata = GarbageCollectionNotificationInfoUtil.toCompositeData(this);
@@ -121,21 +121,21 @@ public class GarbageCollectionNotificationInfo implements CompositeDataView {
 	private void setCompositeData(CompositeData cd) {
 		cdata = cd;
 	}
-	
+
 	/**
 	 * Creates a new <code>GarbageCollectionNotificationInfo</code> instance.
-	 * 
+	 *
 	 * @param gcName
 	 *			   the name of the garbage collector used to perform the collection
 	 * @param gcAction
 	 *            the action of the performed by the garbage collector
 	 * @param gcCause
 	 *            the cause the garbage collection
-	 * @param gcInfo  
+	 * @param gcInfo
 	 * 			  a GcInfo object providing statistics about the GC cycle
-	 * 
+	 *
 	 */
-    public GarbageCollectionNotificationInfo(String gcName, String gcAction, String gcCause, GcInfo gcInfo) {
+	public GarbageCollectionNotificationInfo(String gcName, String gcAction, String gcCause, GcInfo gcInfo) {
 		super();
 		this.gcName = gcName;
 		this.gcAction = gcAction;
@@ -214,8 +214,8 @@ public class GarbageCollectionNotificationInfo implements CompositeDataView {
 	public static GarbageCollectionNotificationInfo from(CompositeData cd) {
 		GarbageCollectionNotificationInfo result = null;
 
-        if (cd != null) {
-            /* Does cd meet the necessary criteria to create a new
+		if (cd != null) {
+			/* Does cd meet the necessary criteria to create a new
 			 * GarbageCollectionNotificationInfo?
 			 * If not then exit on an IllegalArgumentException.
 			 */
@@ -226,7 +226,7 @@ public class GarbageCollectionNotificationInfo implements CompositeDataView {
 					"java.lang.String", //$NON-NLS-1$
 					"java.lang.String", //$NON-NLS-1$
 					CompositeData.class.getName() };
-			ManagementUtils.verifyFieldTypes(cd, attributeNames, attributeTypes); 
+			ManagementUtils.verifyFieldTypes(cd, attributeNames, attributeTypes);
 
 			/* Extract the values of the attributes and use them to construct
 			 * a new GarbageCollectionNotificationInfo.
@@ -245,10 +245,10 @@ public class GarbageCollectionNotificationInfo implements CompositeDataView {
 	}
 
 	/* Implementation of the CompositeDataView interface */
-	
+
 	/**
 	 * <p>Return the {@code CompositeData} representation of this
-	 * {@code GarbageCollectionNotificationInfo}.  
+	 * {@code GarbageCollectionNotificationInfo}.
 	 *
 	 * @param ct the {@code CompositeType} that the caller expects.
 	 * This parameter is ignored and can be null.

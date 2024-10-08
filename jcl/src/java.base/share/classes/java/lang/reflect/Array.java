@@ -22,7 +22,7 @@ package java.lang.reflect;
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  */
- 
+
 /**
  * This class provides methods to dynamically create and access arrays.
  *
@@ -101,11 +101,11 @@ public static Object get(Object array, int index) throws IllegalArgumentExceptio
  *					if the index is out of bounds -- negative or greater than or equal to the array length
  */
 public static boolean getBoolean(Object array, int index) throws IllegalArgumentException, ArrayIndexOutOfBoundsException {
-    try {
-        return ((boolean[])array)[index];
-    } catch (ClassCastException e) {
-        throw new IllegalArgumentException(e.getMessage());
-    }
+	try {
+		return ((boolean[])array)[index];
+	} catch (ClassCastException e) {
+		throw new IllegalArgumentException(e.getMessage());
+	}
 }
 
 /**
@@ -124,11 +124,11 @@ public static boolean getBoolean(Object array, int index) throws IllegalArgument
  *					if the index is out of bounds -- negative or greater than or equal to the array length
  */
 public static byte getByte(Object array, int index) throws IllegalArgumentException, ArrayIndexOutOfBoundsException {
-    try {
-        return ((byte[])array)[index];
-    } catch (ClassCastException e) {
-        throw new IllegalArgumentException(e.getMessage());
-    }
+	try {
+		return ((byte[])array)[index];
+	} catch (ClassCastException e) {
+		throw new IllegalArgumentException(e.getMessage());
+	}
 }
 
 /**
@@ -147,11 +147,11 @@ public static byte getByte(Object array, int index) throws IllegalArgumentExcept
  *					if the index is out of bounds -- negative or greater than or equal to the array length
  */
 public static char getChar(Object array, int index) throws IllegalArgumentException, ArrayIndexOutOfBoundsException {
-    try {
-        return ((char[])array)[index];
-    } catch (ClassCastException e) {
-        throw new IllegalArgumentException(e.getMessage());
-    }
+	try {
+		return ((char[])array)[index];
+	} catch (ClassCastException e) {
+		throw new IllegalArgumentException(e.getMessage());
+	}
 }
 
 /**
@@ -170,11 +170,11 @@ public static char getChar(Object array, int index) throws IllegalArgumentExcept
  *					if the index is out of bounds -- negative or greater than or equal to the array length
  */
 public static double getDouble(Object array, int index) throws IllegalArgumentException, ArrayIndexOutOfBoundsException {
-    if (array.getClass() == double[].class) {
-        return ((double[])array)[index];
-    } else {
-    	return getFloat(array, index);
-    }
+	if (array.getClass() == double[].class) {
+		return ((double[])array)[index];
+	} else {
+		return getFloat(array, index);
+	}
 }
 
 /**
@@ -193,11 +193,11 @@ public static double getDouble(Object array, int index) throws IllegalArgumentEx
  *					if the index is out of bounds -- negative or greater than or equal to the array length
  */
 public static float getFloat(Object array, int index) throws IllegalArgumentException, ArrayIndexOutOfBoundsException {
-    if (array.getClass() == float[].class) {
-        return ((float[])array)[index];
-    } else {
-    	return getLong(array, index);
-    }
+	if (array.getClass() == float[].class) {
+		return ((float[])array)[index];
+	} else {
+		return getLong(array, index);
+	}
 }
 
 /**
@@ -216,14 +216,14 @@ public static float getFloat(Object array, int index) throws IllegalArgumentExce
  *					if the index is out of bounds -- negative or greater than or equal to the array length
  */
 public static int getInt(Object array, int index) throws IllegalArgumentException, ArrayIndexOutOfBoundsException {
-    Class<?> arrayClass = array.getClass();
+	Class<?> arrayClass = array.getClass();
 	if (arrayClass == int[].class) {
-        return ((int[])array)[index];
-    } else if (arrayClass == char[].class) {
-        return ((char[])array)[index];
-    } else {
-    	return getShort(array, index);
-    }
+		return ((int[])array)[index];
+	} else if (arrayClass == char[].class) {
+		return ((char[])array)[index];
+	} else {
+		return getShort(array, index);
+	}
 }
 
 /**
@@ -239,29 +239,29 @@ public static int getInt(Object array, int index) throws IllegalArgumentExceptio
  */
 public static int getLength(Object array) throws IllegalArgumentException {
 	Class<?> arrayClass = array.getClass();
-    if (arrayClass == int[].class) {
-        return ((int[])array).length;
-    } else if (arrayClass == boolean[].class) {
-        return ((boolean[])array).length;
-    } else if (arrayClass == float[].class) {
-        return ((float[])array).length;
-    } else if (arrayClass == char[].class) {
-        return ((char[])array).length;
-    } else if (arrayClass == double[].class) {
-        return ((double[])array).length;
-    } else if (arrayClass == long[].class) {
-        return ((long[])array).length;
-    } else if (arrayClass == short[].class) {
-        return ((short[])array).length;
-    } else if (arrayClass == byte[].class) {
-        return ((byte[])array).length;
-    } else {
-	    try {
-	        return ((Object[])array).length;
-	    } catch (ClassCastException e) {
-	    	throw new IllegalArgumentException(e.getMessage());
-	    }
-    }
+	if (arrayClass == int[].class) {
+		return ((int[])array).length;
+	} else if (arrayClass == boolean[].class) {
+		return ((boolean[])array).length;
+	} else if (arrayClass == float[].class) {
+		return ((float[])array).length;
+	} else if (arrayClass == char[].class) {
+		return ((char[])array).length;
+	} else if (arrayClass == double[].class) {
+		return ((double[])array).length;
+	} else if (arrayClass == long[].class) {
+		return ((long[])array).length;
+	} else if (arrayClass == short[].class) {
+		return ((short[])array).length;
+	} else if (arrayClass == byte[].class) {
+		return ((byte[])array).length;
+	} else {
+		try {
+			return ((Object[])array).length;
+		} catch (ClassCastException e) {
+			throw new IllegalArgumentException(e.getMessage());
+		}
+	}
 }
 
 /**
@@ -280,11 +280,11 @@ public static int getLength(Object array) throws IllegalArgumentException {
  *					if the index is out of bounds -- negative or greater than or equal to the array length
  */
 public static long getLong(Object array, int index) throws IllegalArgumentException, ArrayIndexOutOfBoundsException {
-    if (array.getClass() == long[].class) {
-        return ((long[])array)[index];
-    } else {
-    	return getInt(array, index);
-    }
+	if (array.getClass() == long[].class) {
+		return ((long[])array)[index];
+	} else {
+		return getInt(array, index);
+	}
 }
 
 /**
@@ -303,15 +303,15 @@ public static long getLong(Object array, int index) throws IllegalArgumentExcept
  *					if the index is out of bounds -- negative or greater than or equal to the array length
  */
 public static short getShort(Object array, int index) throws IllegalArgumentException, ArrayIndexOutOfBoundsException {
-    if (array.getClass() == short[].class) {
-        return ((short[])array)[index];
-    } else {
-    	return getByte(array, index);
-    }
+	if (array.getClass() == short[].class) {
+		return ((short[])array)[index];
+	} else {
+		return getByte(array, index);
+	}
 }
 
 private static native Object multiNewArrayImpl(Class componentType, int dimensions, int[] dimensionsArray);
-private static native Object newArrayImpl(Class componentType, int dimension); 
+private static native Object newArrayImpl(Class componentType, int dimension);
 
 /**
  * Return a new multidimensional array of the specified component type and dimensions.
@@ -334,15 +334,15 @@ public static Object newInstance(Class<?> componentType, int... dimensions) thro
 	if (componentType == null) {
 		throw new NullPointerException();
 	}
-	
+
 	int length = dimensions.length;
 	if ((length < 1) || (length > 255) || (componentType == Void.TYPE)) {
 		throw new IllegalArgumentException();
 	}
-		
+
 	// Native is stack-oriented. Reverse the dimensions.
 	int[] reversed = new int[length];
-	
+
 	for (int i = 0; i < length; i++) {
 		if (dimensions[i] < 0) {
 			throw new NegativeArraySizeException(String.valueOf(dimensions[i]));
@@ -373,7 +373,7 @@ public static Object newInstance(Class<?> componentType, int size) throws Negati
 	if (componentType == null) {
 		throw new NullPointerException();
 	}
-	if (size < 0) { 
+	if (size < 0) {
 		throw new NegativeArraySizeException(String.valueOf(size));
 	}
 	if (componentType == Void.TYPE) {
@@ -391,7 +391,7 @@ public static Object newInstance(Class<?> componentType, int size) throws Negati
  * @param	array	the array
  * @param	index	the index
  * @param	value	the new value
- * 
+ *
  * @exception	java.lang.NullPointerException
  *					if the array is null
  * @exception	java.lang.IllegalArgumentException
@@ -411,33 +411,33 @@ public static void set(Object array, int index, Object value) throws IllegalArgu
 		}
 		Class<?> valueClass = value.getClass();
 		if (valueClass == Integer.class) {
-            setInt(array, index, ((Integer)value).intValue());
-        } else if (valueClass == Float.class) {
-            setFloat(array, index, ((Float)value).floatValue());
-        } else if (valueClass == Double.class) {
-            setDouble(array, index, ((Double)value).doubleValue());
-        } else if (valueClass == Long.class) {
-            setLong(array, index, ((Long)value).longValue());
-        } else if (valueClass == Short.class) {
-            setShort(array, index, ((Short)value).shortValue());
-        } else if (valueClass == Byte.class) {
-            setByte(array, index, ((Byte)value).byteValue());
-	    } else if (valueClass == Boolean.class) {
-	        setBoolean(array, index, ((Boolean)value).booleanValue());
-	    } else if (valueClass == Character.class) {
-	        setChar(array, index, ((Character)value).charValue());
-	    } else {
-	    	/* value is not primitive type */
-	    	throw new IllegalArgumentException();
-	    }
+			setInt(array, index, ((Integer)value).intValue());
+		} else if (valueClass == Float.class) {
+			setFloat(array, index, ((Float)value).floatValue());
+		} else if (valueClass == Double.class) {
+			setDouble(array, index, ((Double)value).doubleValue());
+		} else if (valueClass == Long.class) {
+			setLong(array, index, ((Long)value).longValue());
+		} else if (valueClass == Short.class) {
+			setShort(array, index, ((Short)value).shortValue());
+		} else if (valueClass == Byte.class) {
+			setByte(array, index, ((Byte)value).byteValue());
+		} else if (valueClass == Boolean.class) {
+			setBoolean(array, index, ((Boolean)value).booleanValue());
+		} else if (valueClass == Character.class) {
+			setChar(array, index, ((Character)value).charValue());
+		} else {
+			/* value is not primitive type */
+			throw new IllegalArgumentException();
+		}
 	} else {
-	    try {
-	        ((Object[])array)[index] = value;
-	    } catch (ClassCastException e) {
-	        throw new IllegalArgumentException(e.getMessage());
-	    } catch (ArrayStoreException e) {
-	        throw new IllegalArgumentException(e.getMessage());
-	    }
+		try {
+			((Object[])array)[index] = value;
+		} catch (ClassCastException e) {
+			throw new IllegalArgumentException(e.getMessage());
+		} catch (ArrayStoreException e) {
+			throw new IllegalArgumentException(e.getMessage());
+		}
 	}
 }
 
@@ -456,11 +456,11 @@ public static void set(Object array, int index, Object value) throws IllegalArgu
  *					if the index is out of bounds -- negative or greater than or equal to the array length
  */
 public static void setBoolean(Object array, int index, boolean value) throws IllegalArgumentException, ArrayIndexOutOfBoundsException {
-    try {
-        ((boolean[])array)[index] = value;
-    } catch (ClassCastException e) {
-        throw new IllegalArgumentException(e.getMessage());
-    }
+	try {
+		((boolean[])array)[index] = value;
+	} catch (ClassCastException e) {
+		throw new IllegalArgumentException(e.getMessage());
+	}
 }
 
 /**
@@ -478,11 +478,11 @@ public static void setBoolean(Object array, int index, boolean value) throws Ill
  *					if the index is out of bounds -- negative or greater than or equal to the array length
  */
 public static void setByte(Object array, int index, byte value) throws IllegalArgumentException, ArrayIndexOutOfBoundsException {
-    if (array.getClass() == byte[].class) {
-        ((byte[])array)[index] = value;
-    } else {
-    	setShort(array, index, value);
-    }
+	if (array.getClass() == byte[].class) {
+		((byte[])array)[index] = value;
+	} else {
+		setShort(array, index, value);
+	}
 }
 
 /**
@@ -500,11 +500,11 @@ public static void setByte(Object array, int index, byte value) throws IllegalAr
  *					if the index is out of bounds -- negative or greater than or equal to the array length
  */
 public static void setChar(Object array, int index, char value) throws IllegalArgumentException, ArrayIndexOutOfBoundsException {
-    if (array.getClass() == char[].class) {
-        ((char[])array)[index] = value;
-    } else {
-    	setInt(array, index, value);
-    }
+	if (array.getClass() == char[].class) {
+		((char[])array)[index] = value;
+	} else {
+		setInt(array, index, value);
+	}
 }
 
 /**
@@ -522,11 +522,11 @@ public static void setChar(Object array, int index, char value) throws IllegalAr
  *					if the index is out of bounds -- negative or greater than or equal to the array length
  */
 public static void setDouble(Object array, int index, double value) throws IllegalArgumentException, ArrayIndexOutOfBoundsException {
-    try {
-        ((double[])array)[index] = value;
-    } catch (ClassCastException e) {
-        throw new IllegalArgumentException(e.getMessage());
-    }
+	try {
+		((double[])array)[index] = value;
+	} catch (ClassCastException e) {
+		throw new IllegalArgumentException(e.getMessage());
+	}
 }
 
 /**
@@ -544,11 +544,11 @@ public static void setDouble(Object array, int index, double value) throws Illeg
  *					if the index is out of bounds -- negative or greater than or equal to the array length
  */
 public static void setFloat(Object array, int index, float value) throws IllegalArgumentException, ArrayIndexOutOfBoundsException {
-    if (array.getClass() == float[].class) {
-        ((float[])array)[index] = value;
-    } else {
-    	setDouble(array, index, value);
-    }
+	if (array.getClass() == float[].class) {
+		((float[])array)[index] = value;
+	} else {
+		setDouble(array, index, value);
+	}
 }
 
 /**
@@ -566,11 +566,11 @@ public static void setFloat(Object array, int index, float value) throws Illegal
  *					if the index is out of bounds -- negative or greater than or equal to the array length
  */
 public static void setInt(Object array, int index, int value) throws IllegalArgumentException, ArrayIndexOutOfBoundsException {
-    if (array.getClass() == int[].class) {
-        ((int[])array)[index] = value;
-    } else {
-    	setLong(array, index, value);
-    }
+	if (array.getClass() == int[].class) {
+		((int[])array)[index] = value;
+	} else {
+		setLong(array, index, value);
+	}
 }
 
 /**
@@ -588,11 +588,11 @@ public static void setInt(Object array, int index, int value) throws IllegalArgu
  *					if the index is out of bounds -- negative or greater than or equal to the array length
  */
 public static void setLong(Object array, int index, long value) throws IllegalArgumentException, ArrayIndexOutOfBoundsException {
-    if (array.getClass() == long[].class) {
-        ((long[])array)[index] = value;
-    } else {
-    	setFloat(array, index, value);
-    }
+	if (array.getClass() == long[].class) {
+		((long[])array)[index] = value;
+	} else {
+		setFloat(array, index, value);
+	}
 }
 
 /**
@@ -610,10 +610,10 @@ public static void setLong(Object array, int index, long value) throws IllegalAr
  *					if the index is out of bounds -- negative or greater than or equal to the array length
  */
 public static void setShort(Object array, int index, short value) throws IllegalArgumentException, ArrayIndexOutOfBoundsException {
-    if (array.getClass() == short[].class) {
-        ((short[])array)[index] = value;
-    } else {
-    	setInt(array, index, value);
-    }
+	if (array.getClass() == short[].class) {
+		((short[])array)[index] = value;
+	} else {
+		setInt(array, index, value);
+	}
 }
 }

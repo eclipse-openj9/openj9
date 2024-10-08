@@ -25,28 +25,28 @@ package com.ibm.lang.management;
 /**
  * Interface provides platform-specific management utilities on Unix and Unix-like
  * operating systems.
- * 
+ *
  * @since 1.8
  */
 public interface UnixOperatingSystemMXBean extends com.sun.management.UnixOperatingSystemMXBean, OperatingSystemMXBean {
 
 	/**
 	 * Returns the maximum number of file descriptors that can be opened in a process.
-	 * 
+	 *
 	 * @return The maximum number of file descriptors that can be opened in a process or
-	 * -1, if an error occurred while obtaining this. If the operating system doesn't have 
+	 * -1, if an error occurred while obtaining this. If the operating system doesn't have
 	 * any limits configured, Long.MAX_VALUE is returned.
-	 * 
+	 *
 	 * @since   1.8
 	 */
 	public long getMaxFileDescriptorCount();
 
 	/**
 	 * Returns the current number of file descriptors that are in opened state.
-	 * 
+	 *
 	 * @return The current number of file descriptors that are in opened state or
 	 * -1, if an error occurred while obtaining this.
-	 * 
+	 *
 	 * @since   1.8
 	 */
 	public long getOpenFileDescriptorCount();

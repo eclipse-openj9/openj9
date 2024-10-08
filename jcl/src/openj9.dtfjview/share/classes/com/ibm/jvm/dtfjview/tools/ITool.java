@@ -35,23 +35,23 @@ public interface ITool {
 	 * @throws CommandException
 	 */
 	public boolean start(String [] args, PrintStream out) throws CommandException;
-	
+
 	/**
 	 * Closes the tool.
 	 */
 	public void close();
-	
+
 	/**
 	 * Determines if a command is accepted by current tool.
 	 * <p>
 	 * @param command	The command
 	 * @param args		The arguments taken by the command.
 	 * <p>
-	 * @return		<code>true</code> if this is the correct tool for this command; 
+	 * @return		<code>true</code> if this is the correct tool for this command;
 	 * 				<code>false</code> otherwise.
 	 */
 	public boolean accept(String command, String [] args);
-	
+
 	/**
 	 * Processes the command.
 	 * <p>
@@ -62,26 +62,26 @@ public interface ITool {
 	 * @throws CommandException
 	 */
 	public void process(String command, String [] args, PrintStream out) throws CommandException;
-	
+
 	/**
 	 * To print the detailed help message.
 	 */
-	public void printDetailedHelp(PrintStream out);	
-	
+	public void printDetailedHelp(PrintStream out);
+
 	/**
 	 * To gets the tool's command name.
 	 * <p>
 	 * @return	The tool's command name.
 	 */
 	public String getCommandName();
-	
+
 	/**
 	 * To gets the tool's argument description.
 	 * <p>
 	 * @return	The tool's argument description.
 	 */
 	public String getArgumentDescription();
-	
+
 	/**
 	 * To gets the tool's help description.
 	 * <p>

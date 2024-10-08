@@ -28,7 +28,7 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 
 /**
- * This is a kind of OutputStream which caches the incoming bytes (instead if printing them out) 
+ * This is a kind of OutputStream which caches the incoming bytes (instead if printing them out)
  * and releases them as a string whenever it is asked to.
  * <p>
  * @author Manqing Li, IBM.

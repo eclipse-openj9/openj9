@@ -23,8 +23,8 @@
 package java.lang.invoke;
 
 /**
- * A VolatileCallSite acts as though its target MethodHandle were a volatile variable.  
- * This CallSite sub-class should be used if the changes to the target are frequent or if 
+ * A VolatileCallSite acts as though its target MethodHandle were a volatile variable.
+ * This CallSite sub-class should be used if the changes to the target are frequent or if
  * changes must be immediately observed by all threads, even if the {@link #setTarget(MethodHandle)}
  * occurs in a different thread.
  * <p>
@@ -36,11 +36,11 @@ package java.lang.invoke;
  */
 public class VolatileCallSite extends CallSite {
 	private volatile MethodHandle target;
-	
+
 	/**
-	 * Create a VolatileCallSite with the same type as the volatileTarget 
+	 * Create a VolatileCallSite with the same type as the volatileTarget
 	 * and the initial target set to volatileTarget.
-	 * 
+	 *
 	 * @param volatileTarget - the target MethodHandle of the CallSite
 	 * @throws NullPointerException - if the <i>volatileTarget</i> is null.
 	 */
@@ -49,11 +49,11 @@ public class VolatileCallSite extends CallSite {
 		super(volatileTarget.type());
 		target = volatileTarget;
 	}
-	
+
 	/**
 	 * Create a VolatileCallSite with the MethodType <i>type</i> and an
 	 * initial target that throws IllegalStateException.
-	 * 
+	 *
 	 * @param type - the permanent type of this CallSite.
 	 * @throws NullPointerException - if the type is null.
 	 */
@@ -62,7 +62,7 @@ public class VolatileCallSite extends CallSite {
 		// install a target that throws IllegalStateException
 		target = CallSite.initialTarget(type);
 	}
-	
+
 	@Override
 	public final MethodHandle dynamicInvoker() {
 		return new DynamicInvokerHandle(this);
@@ -89,6 +89,5 @@ public class VolatileCallSite extends CallSite {
 		}
 		target = nextTarget;
 	}
-	
-}
 
+}

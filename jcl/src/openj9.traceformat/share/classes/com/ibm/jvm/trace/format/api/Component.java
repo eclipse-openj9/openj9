@@ -26,7 +26,7 @@ import java.util.ArrayList;
 
 /*
  * represents a trace component (eg: j9vm) and is responsible for holding on to
- * all known trace messages for the component. 
+ * all known trace messages for the component.
  */
 public class Component {
 

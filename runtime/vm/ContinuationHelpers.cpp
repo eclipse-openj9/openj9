@@ -52,9 +52,7 @@ createContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 			if (NULL != currentThread->continuationT1Cache[i]) {
 				continuation = currentThread->continuationT1Cache[i];
 				currentThread->continuationT1Cache[i] = NULL;
-#if defined(J9VM_PROF_CONTINUATION_ALLOCATION)
 				vm->t1CacheHit += 1;
-#endif /* defined(J9VM_PROF_CONTINUATION_ALLOCATION) */
 				break;
 			}
 		}
@@ -69,9 +67,7 @@ createContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 																		(uintptr_t)continuation,
 																		(uintptr_t)NULL))
 			) {
-#if defined(J9VM_PROF_CONTINUATION_ALLOCATION)
 				vm->t2CacheHit += 1;
-#endif /* defined(J9VM_PROF_CONTINUATION_ALLOCATION) */
 				break;
 			}
 			continuation = NULL;
@@ -120,6 +116,7 @@ createContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 			vm->fastAllocAvgTime += totalTime;
 		}
 #endif /* defined(J9VM_PROF_CONTINUATION_ALLOCATION) */
+		vm->cacheMiss += 1;
 	} else {
 		/* Reset and reuse the stack in the recycled continuation. */
 		stack = continuation->stackObject;
@@ -363,6 +360,7 @@ recycleContinuation(J9JavaVM *vm, J9VMThread *vmThread, J9VMContinuation* contin
 {
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	bool cached = false;
+	vm->totalContinuationStackSize += continuation->stackObject->size;
 
 	if (!skipLocalCache && (0 < vm->continuationT1Size)) {
 		/* If called by carrier thread (not global), try to store in local cache first.
@@ -396,11 +394,13 @@ T2:
 													(uintptr_t)continuation))
 			) {
 				cached = true;
+				vm->t2store += 1;
 				break;
 			}
 		}
 
 		if (!cached) {
+			vm->cacheFree += 1;
 			/* Caching failed, free the J9VMContinuation struct. */
 			freeJavaStack(vm, continuation->stackObject);
 			j9mem_free_memory(continuation);

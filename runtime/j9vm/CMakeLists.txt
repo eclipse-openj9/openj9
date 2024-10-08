@@ -37,6 +37,7 @@ target_sources(jvm_common INTERFACE
 	${CMAKE_CURRENT_SOURCE_DIR}/jvm.c
 	${CMAKE_CURRENT_SOURCE_DIR}/vmi.c
 	${CMAKE_CURRENT_SOURCE_DIR}/javanextvmi.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/valhallavmi.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/asgct.cpp
 )
 

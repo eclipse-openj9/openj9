@@ -1232,8 +1232,15 @@ obj:
 						} else {
 							rc = THROW_ARRAY_STORE;
 						}
-					} else if (J9_IS_J9CLASS_FLATTENED(srcClazz) || J9_IS_J9CLASS_FLATTENED(destClazz) || J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(destComponentClass)) {
-						/* VM_ArrayCopyHelpers::referenceArrayCopy cannot handle flattened arrays or null elements being copied into arrays of primitive value types, so for those cases use copyFlattenableArray instead */
+					} else if (J9_IS_J9CLASS_FLATTENED(srcClazz)
+						|| J9_IS_J9CLASS_FLATTENED(destClazz)
+						|| J9_IS_J9ARRAYCLASS_NULL_RESTRICTED(destClazz)
+					) {
+						/* VM_ArrayCopyHelpers::referenceArrayCopy cannot handle
+						 * flattened arrays or null elements being copied into
+						 * arrays of null-restricted value types, so for those
+						 * cases use copyFlattenableArray instead.
+						 */
 						updateVMStruct(REGISTER_ARGS);
 						I_32 value = VM_ValueTypeHelpers::copyFlattenableArray(_currentThread, _objectAccessBarrier, _objectAllocate, srcObject, destObject, srcStart, destStart, elementCount);
 						VMStructHasBeenUpdated(REGISTER_ARGS);
@@ -2925,8 +2932,7 @@ done:
 	inlClassIsIdentity(REGISTER_ARGS_LIST)
 	{
 		J9Class *receiverClazz = J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, *(j9object_t*)_sp);
-		bool isValue = J9ROMCLASS_IS_VALUE(receiverClazz->romClass);
-		returnSingleFromINL(REGISTER_ARGS, (isValue ? 0 : 1), 1);
+		returnSingleFromINL(REGISTER_ARGS, J9_IS_J9CLASS_IDENTITY(receiverClazz), 1);
 		return EXECUTE_BYTECODE;
 	}
 
@@ -5297,7 +5303,9 @@ done:
 		for (U_8 i = 0; i < ffiArgCount; i++) {
 			U_8 argType = LayoutFFITypeHelpers::getJ9NativeTypeCodeFromFFIType(cif->arg_types[i]);
 
-			if (J9NtcPointer == argType) {
+			if ((0 == ffiArgs[i]) && (J9NtcPointer != argType)) {
+				values[i] = &(ffiArgs[i]);
+			} else if (J9NtcPointer == argType) {
 				/* ffi_call expects the address of the pointer is the address of the stackslot. */
 				pointerValues[i] = (U_64)ffiArgs[i];
 #if JAVA_SPEC_VERSION >= 22
@@ -5348,15 +5356,13 @@ done:
 			} else {
 				values[i] = &(ffiArgs[i]);
 #if !defined(J9VM_ENV_LITTLE_ENDIAN)
-				if (0 != ffiArgs[i]) {
-					/* Note: A float number is converted to int by Float.floatToIntBits() in InternalDowncallHandler. */
-					if ((J9NtcInt == argType) || (J9NtcFloat == argType)) {
-						values[i] = (void *)((U_64)values[i] + extraBytesOfInt);
-					} else if ((J9NtcShort == argType) || (J9NtcChar == argType)) {
-						values[i] = (void *)((U_64)values[i] + extraBytesOfShortAndChar);
-					} else if ((J9NtcBoolean == argType) || (J9NtcByte == argType)) {
-						values[i] = (void *)((U_64)values[i] + extraBytesOfBoolAndByte);
-					}
+				/* Note: A float number is converted to int by Float.floatToIntBits() in InternalDowncallHandler. */
+				if ((J9NtcInt == argType) || (J9NtcFloat == argType)) {
+					values[i] = (void *)((U_64)values[i] + extraBytesOfInt);
+				} else if ((J9NtcShort == argType) || (J9NtcChar == argType)) {
+					values[i] = (void *)((U_64)values[i] + extraBytesOfShortAndChar);
+				} else if ((J9NtcBoolean == argType) || (J9NtcByte == argType)) {
+					values[i] = (void *)((U_64)values[i] + extraBytesOfBoolAndByte);
 				}
 #endif /*J9VM_ENV_LITTLE_ENDIAN */
 			}
@@ -6888,22 +6894,12 @@ done:
 				if (false == VM_VMHelpers::objectArrayStoreAllowed(_currentThread, arrayref, value)) {
 					rc = THROW_ARRAY_STORE;
 				} else {
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-					J9ArrayClass *arrayrefClass = (J9ArrayClass *) J9OBJECT_CLAZZ(_currentThread, arrayref);
-					if (J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(arrayrefClass->componentType) && (NULL == value)) {
-						rc = THROW_NPE;
-						goto done;
-					}
-#endif /* if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 					VM_ValueTypeHelpers::storeFlattenableArrayElement(_currentThread, _objectAccessBarrier, arrayref, index, value);
 					_pc += 1;
 					_sp += 3;
 				}
 			}
 		}
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-done:
-#endif /* if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 		return rc;
 	}
 
@@ -8591,9 +8587,9 @@ retry:
 			}
 		}
 
-		/* In the future Valhalla checkcast needs to throw exception on
-		 * null restricted checkedType if obj is null,
-		 * see issue https://github.com/eclipse-openj9/openj9/issues/19764
+		/* In the future, Valhalla checkcast must throw an exception on
+		 * null-restricted checkedType if object is null.
+		 * See issue https://github.com/eclipse-openj9/openj9/issues/19764.
 		 */
 
 		_pc += 3;

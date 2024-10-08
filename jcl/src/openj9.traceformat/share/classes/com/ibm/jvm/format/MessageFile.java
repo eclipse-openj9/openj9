@@ -27,7 +27,7 @@ import java.util.Hashtable;
 
 /**
  * Acts as a template for mapping trace ids to messages.
- * 
+ *
  * @author Jonathon Lee
  */
 final public class MessageFile extends File
@@ -43,7 +43,7 @@ final public class MessageFile extends File
 	private static boolean first;
 
 	private static Hashtable messages;
-	
+
 	private static final String fromDATFile = ".definedInDatFile";
 
 	public MessageFile(String s) throws IOException
@@ -63,7 +63,7 @@ final public class MessageFile extends File
 
 	/**
 	 * Initializes static variables.
-	 * 
+	 *
 	 * <p>
 	 * This is called each time the TraceFormatter is started, from the
 	 * initStatics() method in TraceFormat.java
@@ -94,7 +94,7 @@ final public class MessageFile extends File
 	 * line has no spaces, it is determined to be a component; otherwise it
 	 * contains a trace id, an entry type, and a template string (separated by
 	 * spaces)
-	 * 
+	 *
 	 * @param messageLine
 	 *            a string
 	 */
@@ -117,7 +117,7 @@ final public class MessageFile extends File
 				} else {
 					verMod = Float.valueOf(messageLine).floatValue();
 				}
-				
+
 				if (MessageFile.verMod < TraceFormat.verMod) {
 					// Defect 101265 - suppress warnings
 					if (!TraceFormat.SUPPRESS_VERSION_WARNINGS) {
@@ -136,8 +136,8 @@ final public class MessageFile extends File
 		if (verMod >= 5.0F) {
 			int fourthSpace = messageLine.indexOf(" ", thirdSpace + 1);
 			componentName = new String(messageLine.substring(0, firstSpace));
-			
-			/* 
+
+			/*
 			 * version 5.1 and above contain the component and trace id together as
 			 * a period separated pair: e.g. j9vm.123
 			 */
@@ -152,7 +152,7 @@ final public class MessageFile extends File
 					componentName = compName;
 				}
 			}
-			
+
 			if (MessageFile.messages == null) {
 				MessageFile.messages = new Hashtable();
 			}
@@ -217,7 +217,7 @@ final public class MessageFile extends File
 
 	/**
 	 * retrieve the message associated with a given traceID
-	 * 
+	 *
 	 * @param id
 	 *            an int that is a trace identifier
 	 * @return a message that contains the type of entry, the component for the
@@ -241,7 +241,7 @@ final public class MessageFile extends File
 
 	/**
 	 * retrieve the message associated with a given traceID and component
-	 * 
+	 *
 	 * @param id
 	 *            an int that is a trace identifier
 	 * @return a message that contains the type of entry, the component for the
@@ -265,7 +265,7 @@ final public class MessageFile extends File
 
 		if (message == null) {
 			if (componentIsFromDATFile(compName)){
-				/* this means the component exists, but the dat files in use do not contain the 
+				/* this means the component exists, but the dat files in use do not contain the
 				 * format specification for this tracepoint in that component. The almost certain
 				 * cause is that the tracepoint was introduced into a newer level of VM than the
 				 * current dat file came from.
@@ -277,7 +277,7 @@ final public class MessageFile extends File
 				 * will still proceed, but all new tracepoints will have catch all error message below. User should
 				 * rerun with newer dat files to get full tracepoint info. Those just needing some trace info will
 				 * get a complete tracefile, with errors flagged inline.
-				 */ 
+				 */
 				message = new Message(TraceRecord.ERROR_TYPE ,"This tracepoint's format string was not available in dat file.", compName, " ") ;
 			} else {
 				/* this is almost certainly an AppTrace tracepoint */
@@ -288,7 +288,7 @@ final public class MessageFile extends File
 
 		return message;
 	}
-	
+
 	static public boolean componentIsFromDATFile(String componentName){
 		String componentCameFromDATFileEntry = componentName + fromDATFile;
 		if (MessageFile.messages != null && MessageFile.messages.containsKey(componentCameFromDATFileEntry)){

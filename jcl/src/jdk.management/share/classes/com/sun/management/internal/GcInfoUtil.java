@@ -39,7 +39,7 @@ import com.ibm.java.lang.management.internal.MemoryUsageUtil;
 import com.sun.management.GcInfo;
 
 /**
- * Support for the {@link GcInfo} class. 
+ * Support for the {@link GcInfo} class.
  */
 public final class GcInfoUtil {
 
@@ -127,16 +127,16 @@ public final class GcInfoUtil {
 	}
 
 	/**
-     * @param index
-     * 			  the identifier of this garbage collection which is the number of collections that this collector has done
-     * @param startTime
-     * 			  the start time of the collection in milliseconds since the Java virtual machine was started.
-     * @param endTime
-     * 			  the end time of the collection in milliseconds since the Java virtual machine was started.
-     * @param usageBeforeGc
-     * 			  the memory usage of all memory pools at the beginning of this GC.
-     * @param usageAfterGc
-     * 			  the memory usage of all memory pools at the end of this GC.
+	 * @param index
+	 * 			  the identifier of this garbage collection which is the number of collections that this collector has done
+	 * @param startTime
+	 * 			  the start time of the collection in milliseconds since the Java virtual machine was started.
+	 * @param endTime
+	 * 			  the end time of the collection in milliseconds since the Java virtual machine was started.
+	 * @param usageBeforeGc
+	 * 			  the memory usage of all memory pools at the beginning of this GC.
+	 * @param usageAfterGc
+	 * 			  the memory usage of all memory pools at the end of this GC.
 	 * @return a <code>GcInfo</code> object
 	 */
 	public static GcInfo newGcInfoInstance(long index, long startTime, long endTime, Map<String,MemoryUsage> usageBeforeGc, Map<String,MemoryUsage> usageAfterGc) {

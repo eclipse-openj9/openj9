@@ -45,9 +45,9 @@ private:
 protected:
 
 public:
-	static constexpr const char* METADATA_BLOB_FILE_EMVVAR = "OPENJ9_METADATA_BLOB_FILE_PATH";
+	static constexpr const char *METADATA_BLOB_FILE_ENVVAR = "OPENJ9_METADATA_BLOB_FILE_PATH";
 
-	static constexpr const char* DEFAULT_JFR_FILE_NAME = "defaultJ9recording.jfr";
+	static constexpr const char *DEFAULT_JFR_FILE_NAME = "defaultJ9recording.jfr";
 
 	/*
 	 * Function members
@@ -76,7 +76,7 @@ private:
 		IDATA fileDescriptor = 0;
 		bool result = false;
 
-		char *blobDir = getenv(METADATA_BLOB_FILE_EMVVAR);
+		char *blobDir = getenv(METADATA_BLOB_FILE_ENVVAR);
 		if (NULL == blobDir) {
 			goto done;
 		}
@@ -145,7 +145,7 @@ public:
 
 		if (!loadJFRMetadataBlob(vm)) {
 			PORT_ACCESS_FROM_JAVAVM(vm);
-			j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_VM_OPENJ9_JFR_METADATA_FILE_NOT_FOUND, METADATA_BLOB_FILE_EMVVAR);
+			j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_VM_OPENJ9_JFR_METADATA_FILE_NOT_FOUND, METADATA_BLOB_FILE_ENVVAR);
 		}
 done:
 		return result;

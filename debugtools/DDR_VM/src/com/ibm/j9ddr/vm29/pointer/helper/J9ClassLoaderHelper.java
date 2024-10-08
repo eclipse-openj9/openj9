@@ -70,7 +70,7 @@ public class J9ClassLoaderHelper
 		
 		int arity = calculateClassArity(signature);
 
-		if ((arity > 0) && !J9ClassHelper.isRefOrValSignature(signature.charAt(arity))) {
+		if ((arity > 0) && !J9ClassHelper.isClassSignature(signature.charAt(arity))) {
 			return PRIMITIVE_TO_CLASS.get(signature.charAt(arity));			
 		} else {		
 			while (classIterator.hasNext()) {

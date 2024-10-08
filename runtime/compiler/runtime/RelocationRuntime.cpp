@@ -938,7 +938,7 @@ TR_RelocationRuntime::generateFeatureFlags(TR_FrontEnd *fe)
    if (TR::Options::getCmdLineOptions()->getOption(TR_DisableTraps))
       featureFlags |= TR_FeatureFlag_DisableTraps;
 
-   if (TR::Options::getCmdLineOptions()->getOption(TR_TLHPrefetch))
+   if (TR::Options::getAOTCmdLineOptions()->getOption(TR_TLHPrefetch))
       featureFlags |= TR_FeatureFlag_TLHPrefetch;
 
    if (TR::CodeCacheManager::instance()->codeCacheConfig().needsMethodTrampolines())
@@ -1120,7 +1120,18 @@ TR_SharedCacheRelocationRuntime::allocateSpaceInCodeCache(UDATA codeSize)
       }
 
    uint8_t *coldCode;
-   U_8 *codeStart = manager->allocateCodeMemory(codeSize, 0, &_codeCache, &coldCode, false);
+   U_8 *codeStart;
+   bool installIntoCold = TR::Options::getCmdLineOptions()->getOption(TR_InstallAOTToColdCode);
+
+   if (!installIntoCold)
+      {
+      codeStart = manager->allocateCodeMemory(codeSize, 0, &_codeCache, &coldCode, false);
+      }
+   else
+      {
+      codeStart = manager->allocateCodeMemory(0, codeSize, &_codeCache, &coldCode, false);
+      }
+
    // FIXME: the GC may unload classes if code caches have been switched
    if (compThreadID >= 0 && fej9->getCompilationShouldBeInterruptedFlag())
       {
@@ -1129,7 +1140,8 @@ TR_SharedCacheRelocationRuntime::allocateSpaceInCodeCache(UDATA codeSize)
       //*returnCode = compilationInterrupted; // allow retrial
       return NULL; // fail this AOT load
       }
-   return codeStart;
+
+   return installIntoCold ? coldCode : codeStart;
    }
 
 
@@ -1314,7 +1326,15 @@ TR_SharedCacheRelocationRuntime::validateAOTHeader(TR_FrontEnd *fe, J9VMThread *
          {
          checkAOTHeaderFlags(hdrInCache, featureFlags);
          }
-      else if (hdrInCache->gcPolicyFlag != javaVM()->memoryManagerFunctions->j9gc_modron_getWriteBarrierType(javaVM()) )
+      else if (!((hdrInCache->gcPolicyFlag == javaVM()->memoryManagerFunctions->j9gc_modron_getWriteBarrierType(javaVM())) ||
+                 // it's safe to run AOT code with inline cardmark barrier even if runtime will not need it since the barrier
+                 // is only executed for active Concurrent Mark cycles (which won't ever happen with Concurrent Mark disabled
+                 // in runtime)
+                 ((hdrInCache->gcPolicyFlag == gc_modron_wrtbar_cardmark_and_oldcheck) &&
+                  (javaVM()->memoryManagerFunctions->j9gc_modron_getWriteBarrierType(javaVM()) == gc_modron_wrtbar_oldcheck)
+                 )
+                )
+              )
          {
          incompatibleCache(J9NLS_RELOCATABLE_CODE_WRONG_GC_POLICY,
                            "AOT header validation failed: incompatible gc write barrier type");

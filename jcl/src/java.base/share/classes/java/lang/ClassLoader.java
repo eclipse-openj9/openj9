@@ -72,6 +72,10 @@ import jdk.internal.loader.NativeLibrary;
 import jdk.internal.reflect.CallerSensitiveAdapter;
 /*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 
+/*[IF CRIU_SUPPORT]*/
+import openj9.internal.criu.NotCheckpointSafe;
+/*[ENDIF] CRIU_SUPPORT*/
+
 /**
  * ClassLoaders are used to dynamically load, link and install
  * classes into a running image.
@@ -1460,6 +1464,9 @@ private static boolean registerAsParallelCapable(Class<?> callerCls) {
  * @see			java.lang.ClassLoader
  *
  */
+/*[IF CRIU_SUPPORT]*/
+@NotCheckpointSafe
+/*[ENDIF] CRIU_SUPPORT */
 protected Object getClassLoadingLock(final String className) {
 	Object lock = this;
 	if (isParallelCapable)	{
@@ -1482,7 +1489,6 @@ protected Object getClassLoadingLock(final String className) {
 	}
 	return lock;
 }
-
 
 /**
  * Forces a class to be linked (initialized).  If the class has
@@ -1559,7 +1565,6 @@ final boolean isAncestorOf (ClassLoader child) {
 	}
 	return false;
 }
-
 
 /**
  * A class loader 'callerClassLoader' can access class loader 'requested' without permission check
@@ -2251,7 +2256,6 @@ private boolean getClassAssertionStatusHelper(String cname) {
 	return getDefaultAssertionStatus();
 }
 
-
 /**
  * Answers the assertion status of the named package
  *
@@ -2587,4 +2591,10 @@ static void checkClassLoaderPermission(ClassLoader classLoader, Class<?> caller)
 	}
 }
 /*[ENDIF] JAVA_SPEC_VERSION >= 19 */
+
+/*[IF JAVA_SPEC_VERSION >= 24]*/
+static NativeLibraries nativeLibrariesFor(ClassLoader loader) {
+	return (loader == null) ? BootLoader.getNativeLibraries() : loader.nativelibs;
+}
+/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 }

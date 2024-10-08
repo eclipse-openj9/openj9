@@ -541,6 +541,7 @@ UDATA initializeExclusiveAccess(J9JavaVM *vm);
 void shutDownExclusiveAccess(J9JavaVM *vm);
 
 #if JAVA_SPEC_VERSION >= 16
+
 /* ------------------- LayoutFFITypeHelpers.cpp ----------------- */
 
 /**
@@ -551,6 +552,45 @@ void shutDownExclusiveAccess(J9JavaVM *vm);
  */
 void
 freeAllStructFFITypes(J9VMThread *currentThread, void *cifNode);
+
+/* ------------------- LayoutFFITypeTable.cpp ----------------- */
+
+/**
+ * @brief Create the layout string hashtable.
+ *
+ * @param vm a pointer to J9JavaVM
+ * @return the hasthable
+ */
+J9HashTable *
+createLayoutStrFFITypeTable(J9JavaVM *vm);
+
+/**
+ * @brief Release the layout string hashtable.
+ *
+ * @param hashtable a pointer to J9HashTable
+ */
+void
+releaseLayoutStrFFITypeTable(J9HashTable *hashtable);
+
+/**
+ * @brief Search the layout string hashtable for the entry with the specified key.
+ *
+ * @param hashtable a pointer to J9HashTable
+ * @param entry a pointer to J9LayoutStrFFITypeEntry
+ * @return the requested entry if found; NULL otherwise
+ */
+J9LayoutStrFFITypeEntry *
+findLayoutStrFFIType(J9HashTable *hashtable, J9LayoutStrFFITypeEntry *entry);
+
+/**
+ * @brief Add the entry with the populated key & value to the layout string hashtable.
+ *
+ * @param hashtable a pointer to J9HashTable
+ * @param entry a pointer to J9LayoutStrFFITypeEntry
+ * @return the same entry if done successfully; NULL otherwise
+ */
+J9LayoutStrFFITypeEntry *
+addLayoutStrFFIType(J9HashTable *hashtable, J9LayoutStrFFITypeEntry *entry);
 
 /* ------------------- UpcallThunkMem.cpp ----------------- */
 

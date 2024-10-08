@@ -362,9 +362,6 @@
    sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z,
    sun_misc_Unsafe_compareAndSwapLong_jlObjectJJJ_Z,
    sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z,
-   sun_misc_Unsafe_compareAndExchangeInt_jlObjectJII_Z,
-   sun_misc_Unsafe_compareAndExchangeLong_jlObjectJJJ_Z,
-   sun_misc_Unsafe_compareAndExchangeObject_jlObjectJjlObjectjlObject_Z,
 
    sun_misc_Unsafe_putBoolean_jlObjectJZ_V,
    sun_misc_Unsafe_putByte_jlObjectJB_V,
@@ -458,6 +455,11 @@
    sun_misc_Unsafe_ensureClassInitialized,
    sun_misc_Unsafe_allocateInstance,
    sun_misc_Unsafe_allocateUninitializedArray0,
+
+   jdk_internal_misc_Unsafe_compareAndExchangeInt,
+   jdk_internal_misc_Unsafe_compareAndExchangeLong,
+   jdk_internal_misc_Unsafe_compareAndExchangeObject,
+   jdk_internal_misc_Unsafe_compareAndExchangeReference,
 
    jdk_internal_misc_Unsafe_copyMemory0,
    jdk_internal_loader_NativeLibraries_load,
@@ -1164,6 +1166,9 @@
 
    java_lang_invoke_VarHandleByteArrayAsX_ArrayHandle_method,
    java_lang_invoke_VarHandleByteArrayAsX_ByteBufferHandle_method,
+
+   jdk_internal_foreign_layout_ValueLayouts_AbstractValueLayout_accessHandle,
+   java_lang_foreign_MemorySegment_method,
 
    // Clone and Deep Copy
    java_lang_J9VMInternals_is32Bit,

@@ -267,7 +267,6 @@ public class TraceContext {
 		messageStream = stream;
 	}
 
-	
 	/**
 	 * @return
 	 */
@@ -302,7 +301,7 @@ public class TraceContext {
 
 	/**
 	 * Returns the size of the meta-data. This allows a file processor to skip to the
-	 * offset of the first record. 
+	 * offset of the first record.
 	 * @return the length of the meta-data
 	 */
 	public int getHeaderSize() {
@@ -311,7 +310,7 @@ public class TraceContext {
 
 	/**
 	 * Constructs a temporary TraceFileHeader from the supplied data and returns it's size
-	 * offset of the first record. 
+	 * offset of the first record.
 	 * @return the length of the meta-data
 	 */
 	public int getHeaderSize(ByteBuffer data) {
@@ -335,17 +334,17 @@ public class TraceContext {
 	public int getTraceType() {
 		return metadata.traceSection.type;
 	}
-	
+
 	/**
 	 * This forces the trace to a given type. This should only be necessary if you have metadata from
 	 * a VM when no subscribers were attached and data from a subscriber that was registered afterwards.
 	 * The inverted case could be true as well, but is much less likely to occur.
-	 * 
+	 *
 	 * If you're calling this then you should think about altering the sequence of calls used to get the
 	 * metadata and trace data.
-	 * 
+	 *
 	 * @param type - the type of the trace data to process, either TraceContext.INTERNAL or TraceContext.EXTERNAL
-	 * 
+	 *
 	 * @deprecated this method is deprecated as it's use implies a problem elsewhere
 	 */
 	@Deprecated
@@ -374,7 +373,7 @@ public class TraceContext {
 			if (metadata == null || metadata.traceSection == null) {
 				this.error(this, "Unable to set trace type due to incomplete trace context");
 			} else {
-				this.error(this, "Unable to set trace type to invalid type "+type);				
+				this.error(this, "Unable to set trace type to invalid type "+type);
 			}
 		}
 	}
@@ -481,7 +480,7 @@ public class TraceContext {
 	/**
 	 * This method constructs a context that can be used to format trace records produced by the VM instance that created the meta-data provided.
 	 * The message file is used to format trace points into a human readable form and the print streams provided are where messages of that type are written to
-	 * @param data - trace meta-data 
+	 * @param data - trace meta-data
 	 * @param length - the length of the meta-data in the array
 	 * @param messageFile - a file containing format strings
 	 * @param message - informational message destination
@@ -498,7 +497,7 @@ public class TraceContext {
 	/**
 	 * This method constructs a context that can be used to format trace records produced by the VM instance that created the meta-data provided.
 	 * The message file is used to format trace points into a human readable form and the print streams provided are where messages of that type are written to
-	 * @param data - trace meta-data 
+	 * @param data - trace meta-data
 	 * @param messageFile - a file containing format strings
 	 * @param message - informational message destination
 	 * @param error - error message destination
@@ -514,7 +513,7 @@ public class TraceContext {
 	/**
 	 * This method constructs a context that can be used to format trace records produced by the VM instance that created the meta-data provided.
 	 * The message file is used to format trace points into a human readable form and the print streams provided are where messages of that type are written to
-	 * @param data - trace meta-data 
+	 * @param data - trace meta-data
 	 * @param messageFile - an input stream providing access to format strings
 	 * @param message - informational message destination
 	 * @param error - error message destination
@@ -557,7 +556,7 @@ public class TraceContext {
 	/**
 	 * Constructs a ByteStream with an endian representation suitable for use with data related
 	 * to the context creating it.
-	 * 
+	 *
 	 * @param data - initial contents of the stream
 	 * @param offset - offset into the data for the first byte of the stream
 	 * @param length - length past the offset for the last byte of data in the stream
@@ -573,10 +572,10 @@ public class TraceContext {
 	/**
 	 * This method is called to inform the context that we think the specified thread has
 	 * terminated. This allows us to tidy up after dead threads so we don't leak memory.
-	 * 
+	 *
 	 * If the thread has been re-used later on then we do not remove it as there will still be
 	 * more data available.
-	 * 
+	 *
 	 * @param thread - the terminated thread
 	 * @param moreData - true if the thread has more trace points after this one, false otherwise.
 	 */
@@ -602,7 +601,7 @@ public class TraceContext {
 	 */
 	private synchronized TraceThread addData(TraceRecord record) {
 		TraceThread thread;
-		
+
 		/* which thread does it belong to? */
 		// Use the J9VMThread pointer as the unique id.
 		Long ident = Long.valueOf(record.threadID);
@@ -626,7 +625,7 @@ public class TraceContext {
 				knownThreads.put(ident, names);
 			}
 		}
-		
+
 		thread = (TraceThread)threadMap.get(ident);
 		if (thread == null || thread.stream == null) {
 			thread = new TraceThread(this, record.threadID, record.threadSyn1, record.threadName);
@@ -648,7 +647,7 @@ public class TraceContext {
 			 * have created a context with metadata from before they subscribed.
 			 * If we've got multiple buffers from a single thread then we're external
 			 * regardless of what the metadata said.
-			 * 
+			 *
 			 * TODO: create a proper heuristic for TraceRecord to determine the wrapping style
 			 */
 			metadata.traceSection.type = TraceContext.EXTERNAL;
@@ -684,7 +683,7 @@ public class TraceContext {
 
 	/**
 	 * @see com.ibm.jvm.trace.format.api.TraceContext#addData(TraceRecord)
-	 * @param file - file containing trace data 
+	 * @param file - file containing trace data
 	 * @param offset - the offset in the file of the buffer
 	 * @return - the thread that generated the buffer
 	 * @throws IOException
@@ -708,22 +707,22 @@ public class TraceContext {
 	 * that are awaiting data for completion across all threads. When a trace point iterator
 	 * encounters one of the locations where data was discarded it will throw a MissingDataException
 	 * as for records discarded by the trace engine.
-	 * 
-	 * This makes the assumption that the records are being supplied chronologically. 
+	 *
+	 * This makes the assumption that the records are being supplied chronologically.
 	 */
 	public synchronized void discardedData() {
 		Iterator itr = threads.iterator();
 		while (itr.hasNext()) {
 			TraceThread thread = (TraceThread)itr.next();
-			
+
 			thread.userDiscardedData();
 		}
 	}
-	
+
 	/**
 	 * The time of trace initialization in the traced JVM in high precision format
 	 * This should be used in conjunction with the system start time
-	 * 
+	 *
 	 * @return - high precision start time
 	 */
 	public BigInteger getStartPlatform() {
@@ -773,19 +772,19 @@ public class TraceContext {
 					if (threadCursor == null) {
 						threadCursor = iterator.next();
 					}
-	
+
 					obj = threadCursor;
 					threadCursor = iterator.next();
-	
+
 					return obj;
 				} catch (ConcurrentModificationException e) {
 					if (threadCursor != null) {
-						Iterator itr = threads.iterator(); 
-						
+						Iterator itr = threads.iterator();
+
 						/* skip to our cursor again - use object equality as threads can recur*/
 						while (itr.hasNext() && itr.next() != threadCursor);
 						iterator = itr;
-						
+
 						return next();
 					} else {
 						throw e;
@@ -909,7 +908,7 @@ public class TraceContext {
 	 * This method provides an iterator to walk the set of known threads; those that have not
 	 * returned trace points that indicate the thread is exiting. This iterator may be invalidated
 	 * by adding new trace data to the context.
-	 *  
+	 *
 	 * @return - iterator over non-dead threads
 	 */
 	public Iterator getThreads() {
@@ -926,7 +925,7 @@ public class TraceContext {
 	public Iterator getTracepoints() {
 		return new SortedTracepointIterator();
 	}
-	
+
 	/**
 	 * This method adds a thread id to the thread filter. Only those threads in the filter will have data
 	 * returned via any of the iterators.
@@ -936,7 +935,7 @@ public class TraceContext {
 		if (filteredThreads == null) {
 			filteredThreads = new TreeSet();
 		}
-		
+
 		filteredThreads.add(threadID);
 	}
 
@@ -947,7 +946,7 @@ public class TraceContext {
 	public void setTimeZoneOffset(int minutes) {
 		timezoneOffset = minutes;
 	}
-	
+
 	/**
 	 * Formats a time stamp into a human readable form to nanosecond precision (not accuracy)
 	 * @param time - 64bit time stamp
@@ -1070,7 +1069,7 @@ public class TraceContext {
 			/* we don't want to append an additional zero to the end when value is 0 */
 			sb.append(Long.toHexString(value));
 		}
-		
+
 		return sb.toString();
 	}
 
@@ -1127,25 +1126,25 @@ public class TraceContext {
 		int nameWidth = 0;
 		long hitMax = 0;
 		long bytesMax = 0;
-		
+
 		HashMap stats = this.messageFile.getStatistics();
 		for (int i = 0; i < this.auxiliaryMessageFiles.size(); i++) {
 			stats.putAll(((MessageFile)this.auxiliaryMessageFiles.get(i)).getStatistics());
 		}
-		
+
 		TreeMap componentByteTotals = new TreeMap();
 		List componentTotals = new Vector();
 		TreeMap hitCount = new TreeMap();
 		List tracePointCounts = new Vector();
 		List tracePointBytes = new Vector();
-	
+
 		/* generate totals per component and trace point */
 		Iterator itr = stats.keySet().iterator();
 		long totalBytes = 0;
 		while (itr.hasNext()) {
 			String tp = (String)itr.next();
 			Properties props = (Properties)stats.get(tp);
-		
+
 			String component = props.getProperty("component", "");
 			int width = tp.length();
 			if (width > nameWidth) {
@@ -1157,9 +1156,9 @@ public class TraceContext {
 				if (count > hitMax) {
 					hitMax = count;
 				}
-				
+
 				hitCount.put(tp, Long.valueOf(count));
-				tracePointCounts.add(new NameValueTuple(tp, (Long)props.get("count"))); 
+				tracePointCounts.add(new NameValueTuple(tp, (Long)props.get("count")));
 			}
 			if (props.containsKey("bytes")) {
 				Long l = (Long)props.get("bytes");
@@ -1170,7 +1169,7 @@ public class TraceContext {
 					}
 					totalBytes+= bytes;
 					tracePointBytes.add(new NameValueTuple(tp, (Long)props.get("bytes")));
-	
+
 					long total = 0;
 					if (componentByteTotals.containsKey(component)) {
 						total = ((Long)componentByteTotals.get(component)).longValue();
@@ -1179,10 +1178,9 @@ public class TraceContext {
 				}
 			}
 		}
-		
+
 		StringBuffer sb = new StringBuffer();
 		String nl = System.getProperty("line.separator");
-
 
 		/* Write out the component byte totals */
 		sb.append("Component totals (bytes)"+nl);
@@ -1191,7 +1189,7 @@ public class TraceContext {
 			String component = (String)itr.next();
 			componentTotals.add(new NameValueTuple(component, (Long)componentByteTotals.get(component)));
 		}
-		
+
 		Collections.sort(componentTotals);
 		itr = componentTotals.iterator();
 		while (itr.hasNext()) {
@@ -1201,7 +1199,6 @@ public class TraceContext {
 		sb.append("Total bytes: "+totalBytes).append(nl);
 		sb.append(nl);
 
-		
 		/* Write out the trace point hit count totals */
 		sb.append("Trace point counts:"+nl);
 		Collections.sort(tracePointCounts);
@@ -1213,7 +1210,7 @@ public class TraceContext {
 			sb.append(String.format("%-"+nameWidth+"s %d (level: %2d)%n", tuple.name()+":", tuple.value(), msg.getLevel()));
 		}
 		sb.append(nl);
-		
+
 		/* Write out the trace point byte totals */
 		sb.append("Trace point totals (bytes):"+nl);
 		Collections.sort(tracePointBytes);
@@ -1232,7 +1229,7 @@ public class TraceContext {
 class NameValueTuple implements Comparable {
 	String name;
 	Comparable value;
-	
+
 	NameValueTuple(String name, Comparable value) {
 		this.name = name;
 		this.value = value;
@@ -1242,18 +1239,18 @@ class NameValueTuple implements Comparable {
 		if (o instanceof NameValueTuple) {
 			return value.compareTo(((NameValueTuple)o).value);
 		}
-		
+
 		return 0;
 	}
-	
+
 	public String name() {
 		return name;
 	}
-	
+
 	public Comparable value() {
 		return value;
 	}
-	
+
 	public void setValue(Comparable value) {
 		this.value = value;
 	}

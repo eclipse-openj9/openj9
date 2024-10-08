@@ -47,7 +47,7 @@ public class FileOutputChannel implements IOutputChannel {
 			fw.write(Utils.toString(outputString));
 			fw.flush();
 		} catch (IOException e) {
-			
+
 		}
 	}
 
@@ -60,7 +60,7 @@ public class FileOutputChannel implements IOutputChannel {
 			fw.write(Utils.toString(outputString) + "\n");
 			fw.flush();
 		} catch (IOException e) {
-			
+
 		}
 	}
 
@@ -71,10 +71,10 @@ public class FileOutputChannel implements IOutputChannel {
 			fw.write("\n");
 			fw.flush();
 		} catch (IOException e) {
-			
+
 		}
 	}
-	
+
 	//logs an error to the specified output channel
 	public void error(String msg, Exception e) {
 		try {
@@ -85,7 +85,7 @@ public class FileOutputChannel implements IOutputChannel {
 			e.printStackTrace(writer);
 			fw.flush();
 		} catch (IOException ioe) {
-			
+
 		}
 	}
 
@@ -95,15 +95,15 @@ public class FileOutputChannel implements IOutputChannel {
 					prompt + Utils.toString(outputString) + "\n");
 			fw.flush();
 		} catch (IOException e) {
-			
+
 		}
 	}
-	
+
 	public void close() {
 		try {
 			fw.close();
 		} catch (IOException e) {
-			
+
 		}
 	}
 
@@ -111,7 +111,7 @@ public class FileOutputChannel implements IOutputChannel {
 		try {
 			fw.flush();
 		} catch (IOException e) {
-			
+
 		}
 	}
 
@@ -132,6 +132,5 @@ public class FileOutputChannel implements IOutputChannel {
 	public int hashCode() {
 		return file.hashCode();
 	}
-	
-	
+
 }

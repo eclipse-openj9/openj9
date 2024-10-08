@@ -29,42 +29,50 @@ import java.io.IOException;
 
 public final class CeexcibhTemplate {
 
-    public static int length() {
-        return 2816;
-    }
+	public static int length() {
+		return 2816;
+	}
 
-    public static long getCibh_back(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 4);
-        return inputStream.readUnsignedInt() & 0xffffffffL;
-    }
-    public static int getCibh_back$offset() {
-        return 4;
-    }
-    public static int getCibh_back$length() {
-        return 32;
-    }
-    public static long getCibh_ptr_cib(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 16);
-        return inputStream.readUnsignedInt() & 0xffffffffL;
-    }
-    public static int getCibh_ptr_cib$offset() {
-        return 16;
-    }
-    public static int getCibh_ptr_cib$length() {
-        return 32;
-    }
-    public static long getCibh_in_use(ImageInputStream inputStream, long address) throws IOException {
-        inputStream.seek(address + 20);
-        inputStream.setBitOffset(1);
-        long result = inputStream.readBits(1);
-        result <<= 63;
-        result >>= 63;
-        return result;
-    }
-    public static int getCibh_in_use$offset() {
-        return 20;
-    }
-    public static int getCibh_in_use$length() {
-        return 1;
-    }
+	public static long getCibh_back(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 4);
+		return inputStream.readUnsignedInt() & 0xffffffffL;
+	}
+
+	public static int getCibh_back$offset() {
+		return 4;
+	}
+
+	public static int getCibh_back$length() {
+		return 32;
+	}
+
+	public static long getCibh_ptr_cib(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 16);
+		return inputStream.readUnsignedInt() & 0xffffffffL;
+	}
+
+	public static int getCibh_ptr_cib$offset() {
+		return 16;
+	}
+
+	public static int getCibh_ptr_cib$length() {
+		return 32;
+	}
+
+	public static long getCibh_in_use(ImageInputStream inputStream, long address) throws IOException {
+		inputStream.seek(address + 20);
+		inputStream.setBitOffset(1);
+		long result = inputStream.readBits(1);
+		result <<= 63;
+		result >>= 63;
+		return result;
+	}
+
+	public static int getCibh_in_use$offset() {
+		return 20;
+	}
+
+	public static int getCibh_in_use$length() {
+		return 1;
+	}
 }

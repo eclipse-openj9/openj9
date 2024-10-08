@@ -29,11 +29,11 @@ import java.io.IOException;
 
 public interface CeexhcomTemplate {
 
-    public int length();
-    public long getHcom_exit_stk(ImageInputStream inputStream, long address) throws IOException;
-    public int getHcom_exit_stk$offset();
-    public int getHcom_exit_stk$length();
-    public long getHcom_cibh(ImageInputStream inputStream, long address) throws IOException;
-    public int getHcom_cibh$offset();
-    public int getHcom_cibh$length();
+	public int length();
+	public long getHcom_exit_stk(ImageInputStream inputStream, long address) throws IOException;
+	public int getHcom_exit_stk$offset();
+	public int getHcom_exit_stk$length();
+	public long getHcom_cibh(ImageInputStream inputStream, long address) throws IOException;
+	public int getHcom_cibh$offset();
+	public int getHcom_cibh$length();
 }

@@ -28,13 +28,13 @@ import java.util.Vector;
 
 /**
  * Active section of a file header.
- * 
+ *
  * @author Tim Preece
  */
 public class ActiveSection {
 	TraceContext context;
 	String textSummary;
-	
+
 	private Vector options = new Vector();
 
 	public ActiveSection(TraceContext context, ByteBuffer data) throws IllegalArgumentException {
@@ -44,7 +44,7 @@ public class ActiveSection {
 		if (context.debugStream != null) {
 			context.debug(this, 1, dataHeader);
 		}
-		
+
 		byte activationData[] = new byte[dataHeader.length - DataHeader.DATAHEADER_SIZE];
 		data.get(activationData);
 		splitActivationData(activationData);
@@ -69,7 +69,7 @@ public class ActiveSection {
 				j = i + 1;
 			}
 		}
-		
+
 		if (context.debugStream != null) {
 			context.debug(this, 1, summary());
 		}
@@ -78,19 +78,19 @@ public class ActiveSection {
 	public String toString() {
 		return "Trace activation information:";
 	}
-	
+
 	public String summary() {
 		if (textSummary == null) {
 			StringBuilder s = new StringBuilder(toString()+":"+System.getProperty("line.separator"));
-	
+
 			for (int i = 0; i < options.size(); i++) {
 				s.append("        "); /* indent the options */
 				s.append(options.get(i)).append(System.getProperty("line.separator"));
 			}
-			
+
 			textSummary = s.toString();
 		}
-		
+
 		return textSummary;
 	}
 }

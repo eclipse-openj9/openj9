@@ -817,8 +817,8 @@ TR_J9VMBase::TR_J9VMBase(
 #if defined(J9VM_OPT_CRIU_SUPPORT)
       || (vmThread
           && jitConfig->javaVM->sharedClassConfig
-          && jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(vmThread)
-          && jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(vmThread))
+          && jitConfig->javaVM->internalVMFunctions->isDebugOnRestoreEnabled(jitConfig->javaVM)
+          && jitConfig->javaVM->internalVMFunctions->isCheckpointAllowed(jitConfig->javaVM))
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
       )
       // shared classes and AOT must be enabled, or we should be on the JITServer with remote AOT enabled
@@ -2440,6 +2440,27 @@ TR_J9VMBase::isHotReferenceFieldRequired()
    }
 
 bool
+TR_J9VMBase::isIndexableDataAddrPresent()
+   {
+#if defined(J9VM_ENV_DATA64)
+   return FALSE != _jitConfig->javaVM->isIndexableDataAddrPresent;
+#else
+   return false;
+#endif /* defined(J9VM_ENV_DATA64) */
+   }
+
+/**
+ * Query if off-heap large array allocation is enabled
+ *
+ * @return true if off-heap large array allocation is enabled, false otherwise
+ */
+bool
+TR_J9VMBase::isOffHeapAllocationEnabled()
+   {
+   return TR::Compiler->om.isOffHeapAllocationEnabled();
+   }
+
+bool
 TR_J9VMBase::scanReferenceSlotsInClassForOffset(TR::Compilation * comp, TR_OpaqueClassBlock * classPointer, int32_t offset)
    {
    if (isAOT_DEPRECATED_DO_NOT_USE())
@@ -2917,6 +2938,12 @@ TR_J9VMBase::testIsClassArrayType(TR::Node *j9ClassRefNode)
    }
 
 TR::Node *
+TR_J9VMBase::testIsArrayClassNullRestrictedType(TR::Node *j9ClassRefNode)
+   {
+   return testAreSomeClassFlagsSet(j9ClassRefNode, J9ClassArrayIsNullRestricted);
+   }
+
+TR::Node *
 TR_J9VMBase::loadArrayClassComponentType(TR::Node *j9ClassRefNode)
    {
    TR::SymbolReference *arrayCompSymRef = TR::comp()->getSymRefTab()->findOrCreateArrayComponentTypeSymbolRef();
@@ -2936,12 +2963,6 @@ TR_J9VMBase::checkSomeArrayCompClassFlags(TR::Node *arrayBaseAddressNode, TR::IL
    TR::Node *ifNode = TR::Node::createif(ifCmpOp, maskedFlagsNode, TR::Node::iconst(arrayBaseAddressNode, 0));
 
    return ifNode;
-   }
-
-TR::Node *
-TR_J9VMBase::checkArrayCompClassPrimitiveValueType(TR::Node *arrayBaseAddressNode, TR::ILOpCodes ifCmpOp)
-   {
-   return checkSomeArrayCompClassFlags(arrayBaseAddressNode, ifCmpOp, J9ClassIsPrimitiveValueType);
    }
 
 TR::Node *
@@ -4084,7 +4105,7 @@ TR_J9VMBase::initializeLocalArrayHeader(TR::Compilation * comp, TR::Node * alloc
    prevTree = TR::TreeTop::create(comp, prevTree, node);
 
 #if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
-   if (TR::Compiler->om.isIndexableDataAddrPresent())
+   if (TR::Compiler->om.isOffHeapAllocationEnabled())
       {
       // -----------------------------------------------------------------------------------
       // Initialize data address field
@@ -5108,6 +5129,41 @@ TR_J9VMBase::getMemberNameFieldKnotIndexFromMethodHandleKnotIndex(TR::Compilatio
    uintptr_t mhObject = knot->getPointer(mhIndex);
    uintptr_t mnObject = getReferenceField(mhObject, fieldName, "Ljava/lang/invoke/MemberName;");
    return knot->getOrCreateIndex(mnObject);
+   }
+
+TR::KnownObjectTable::Index
+TR_J9VMBase::getLayoutVarHandle(TR::Compilation *comp, TR::KnownObjectTable::Index layoutIndex)
+   {
+   TR::VMAccessCriticalSection getLayoutVarHandle(this);
+   TR::KnownObjectTable::Index result = TR::KnownObjectTable::UNKNOWN;
+   TR::KnownObjectTable *knot = comp->getKnownObjectTable();
+   if (!knot) return result;
+
+   const char * const layoutClassName =
+      "jdk/internal/foreign/layout/ValueLayouts$AbstractValueLayout";
+   const int layoutClassNameLen = (int)strlen(layoutClassName);
+   TR_OpaqueClassBlock *layoutClass =
+      getSystemClassFromClassName(layoutClassName, layoutClassNameLen);
+
+   TR_OpaqueClassBlock *layoutObjClass =
+      getObjectClassFromKnownObjectIndex(comp, layoutIndex);
+
+   if (layoutClass == NULL ||
+       layoutObjClass == NULL ||
+       isInstanceOf(layoutObjClass, layoutClass, true, true) != TR_yes)
+      {
+      if (comp->getOption(TR_TraceOptDetails))
+         traceMsg(comp, "getLayoutVarHandle: failed ValueLayouts$AbstractValueLayout type check.\n");
+      return result;
+      }
+
+   uintptr_t layoutObj = knot->getPointer(layoutIndex);
+   uintptr_t vhObject = getReferenceField(layoutObj,
+                                 "handle",
+                                 "Ljava/lang/invoke/VarHandle;");
+   if (!vhObject) return result;
+   result = knot->getOrCreateIndex(vhObject);
+   return result;
    }
 
 TR::KnownObjectTable::Index
@@ -7930,8 +7986,17 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
                }
 
             // Generate reference symbol
-            TR::SymbolReference * symRefField = comp->getSymRefTab()->findOrCreateJavaLangReferenceReferentShadowSymbol(callerSymRef->getOwningMethodSymbol(comp),
-                                                                                                              true, TR::Address, offset, false);
+            TR::SymbolReference * symRefField =
+               comp->getSymRefTab()->findOrFabricateShadowSymbol(
+                  ReferenceClass,
+                  TR::Address,
+                  offset,
+                  /* isVolatile */ false,
+                  /* isPrivate */ true,
+                  /* isFinal */ false,
+                  REFERENCEFIELD,
+                  REFERENCERETURNTYPE);
+
             if (methodID == TR::java_lang_ref_Reference_getImpl)
                {
                // Generate indirect load of referent into the callNode
@@ -9601,7 +9666,8 @@ bool
 TR_J9VMBase::inSnapshotMode()
    {
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-   return getJ9JITConfig()->javaVM->internalVMFunctions->isCheckpointAllowed(vmThread());
+   J9JavaVM *javaVM = getJ9JITConfig()->javaVM;
+   return javaVM->internalVMFunctions->isCheckpointAllowed(javaVM);
 #else /* defined(J9VM_OPT_CRIU_SUPPORT) */
    return false;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
@@ -9621,7 +9687,8 @@ bool
 TR_J9VMBase::isSnapshotModeEnabled()
    {
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-   return getJ9JITConfig()->javaVM->internalVMFunctions->isCRaCorCRIUSupportEnabled(vmThread());
+   J9JavaVM *javaVM = getJ9JITConfig()->javaVM;
+   return javaVM->internalVMFunctions->isCRaCorCRIUSupportEnabled(javaVM);
 #else /* defined(J9VM_OPT_CRIU_SUPPORT) */
    return false;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
