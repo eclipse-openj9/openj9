@@ -689,6 +689,9 @@ endif()
 
 if(J9VM_OPT_JFR)
 	omr_add_exports(jclse
+		Java_com_ibm_oti_vm_VM_setJFRRecordingFileName
+		Java_com_ibm_oti_vm_VM_startJFR
+		Java_com_ibm_oti_vm_VM_stopJFR
 		Java_com_ibm_oti_vm_VM_triggerExecutionSample
 		Java_jdk_jfr_internal_JVM_registerNatives
 		Java_jdk_jfr_internal_JVM_markChunkFinal
