@@ -2653,8 +2653,9 @@ J9::ValuePropagation::transformFlattenedArrayElementStore(TR_OpaqueClassBlock *a
    // The value that is being stored into the array element has to be non null.
    if (needsNullValueCheck)
       {
-      TR::Node *passThru  = TR::Node::create(callNode, TR::PassThrough, 1, valueNode);
-      TR::Node *nullCheck = TR::Node::createWithSymRef(callNode, TR::NULLCHK, 1, passThru, comp()->getSymRefTab()->findOrCreateNullCheckSymbolRef(comp()->getMethodSymbol()));
+      TR::Node *isNonNull = TR::Node::create(callNode, TR::acmpne, 2, valueNode, TR::Node::aconst(0));
+      TR::Node *nullCheck = TR::Node::createWithSymRef(callNode, TR::ZEROCHK, 1, isNonNull,
+                                  comp()->getSymRefTab()->findOrCreateArrayStoreExceptionSymbolRef(comp()->getMethodSymbol()));
       callTree->insertBefore(TR::TreeTop::create(comp(), nullCheck));
       if (trace())
          {
