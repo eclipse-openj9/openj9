@@ -656,25 +656,6 @@ javaOffloadSwitchOffWithReason(J9VMThread *currentThread, UDATA reason);
 /* ------------------- jfr.cpp ------------------- */
 
 /**
- * Initialize JFR.
- *
- * @param vm[in] the J9JavaVM
- *
- * @returns JNI_OK on success, JNI error code on failure
- */
-jint
-initializeJFR(J9JavaVM *vm);
-
-/**
- * Take an execution sample of the current thread.
- *
- * @param currentThread[in] the current J9VMThread
- * @param currentThread[in] the thread being walked
- */
-void
-jfrExecutionSample(J9VMThread *currentThread, J9VMThread *sampleThread);
-
-/**
  * Begin event iteration in a JFR buffer.
  *
  * @param buffer[in] pointer to the buffer
