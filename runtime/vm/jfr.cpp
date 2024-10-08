@@ -551,6 +551,7 @@ initializeJFR(J9JavaVM *vm)
 	jint rc = JNI_ERR;
 	J9HookInterface **vmHooks = getVMHookInterface(vm);
 	U_8 *buffer = NULL;
+	UDATA timeSuccess = 0;
 
 	/* Register async handler for execution samples */
 	vm->jfrAsyncKey = J9RegisterAsyncEvent(vm, jfrExecutionSampleCallback, NULL);
@@ -600,6 +601,14 @@ initializeJFR(J9JavaVM *vm)
 	vm->jfrBuffer.bufferRemaining = J9JFR_GLOBAL_BUFFER_SIZE;
 	vm->jfrState.jfrChunkCount = 0;
 	vm->jfrState.isConstantEventsInitialized = FALSE;
+
+	vm->jfrState.chunkStartTime = (I_64) j9time_current_time_nanos(&timeSuccess);
+	vm->jfrState.chunkStartTicks = j9time_nano_time();
+
+	if (0 == timeSuccess) {
+		goto fail;
+	}
+
 	if (omrthread_monitor_init_with_name(&vm->jfrBufferMutex, 0, "JFR global buffer mutex")) {
 		goto fail;
 	}
@@ -694,7 +703,7 @@ static void
 initializeEventFields(J9VMThread *currentThread, J9JFREvent *event, UDATA eventType)
 {
 	PORT_ACCESS_FROM_VMC(currentThread);
-	event->startTime = j9time_current_time_millis();
+	event->startTicks = j9time_nano_time();
 	event->eventType = eventType;
 	event->vmThread = currentThread;
 }
