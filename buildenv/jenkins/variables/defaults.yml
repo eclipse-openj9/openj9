@@ -40,10 +40,6 @@ openjdk:
     default:
       repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk21.git'
       branch: 'openj9'
-  22:
-    default:
-      repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk22.git'
-      branch: 'openj9'
   23:
     default:
       repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk23.git'
@@ -114,7 +110,6 @@ build_discarder:
     OpenJDK11: 5
     OpenJDK17: 10
     OpenJDK21: 10
-    OpenJDK22: 10
     OpenJDK23: 10
     OpenJDK: 10
     Personal: 30
@@ -162,7 +157,6 @@ boot_jdk_default:
       11: '11'
       17: '17'
       21: '21'
-      22: '21'
       23: '21'
       next: '21'
     dir_strip:
@@ -188,7 +182,6 @@ disable_javac_server:
     11: '--disable-javac-server'
     17: '--disable-javac-server'
     21: '--disable-javac-server'
-    22: '--disable-javac-server'
     23: '--disable-javac-server'
     next: '--disable-javac-server'
 #========================================#
@@ -273,7 +266,6 @@ ppc64_aix:
     11: '--disable-warnings-as-errors'
     17: '--disable-warnings-as-errors'
     21: '--disable-warnings-as-errors'
-    22: '--disable-warnings-as-errors'
     23: '--disable-warnings-as-errors'
     next: '--disable-warnings-as-errors'
   build_env:
@@ -305,7 +297,6 @@ x86-64_linux:
     11: '!sw.os.cent.6'
     17: '!sw.os.cent.6'
     21: '!sw.os.cent.6'
-    22: '!sw.os.cent.6'
     23: '!sw.os.cent.6'
     next: '!sw.os.cent.6'
 #========================================#
@@ -397,7 +388,6 @@ x86-64_mac:
   build_env:
     vars: 'OPENJ9_JAVA_OPTIONS=-Xdump:system+java:events=systhrow,filter=java/lang/ClassCastException,request=exclusive+prepwalk+preempt'
   extra_test_labels:
-    22: '!sw.os.mac.10_15'
     23: '!sw.os.mac.10_15'
     next: '!sw.os.mac.10_15'
   fail_pattern: 'IOException caught during compilation: Resource deadlock avoided'
