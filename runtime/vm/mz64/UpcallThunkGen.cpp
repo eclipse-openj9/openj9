@@ -269,11 +269,11 @@ createUpcallThunk(J9UpcallMetaData *metaData)
 	}
 	metaData->thunkAddress = (void *)thunkMem;
 
-	I_32 gprIndex = 1;
-	const I_32 maxGPRIndex = 3;
-	I_32 fprIndex = 0;
-	const I_32 maxFPRIndex = 6;
-	I_32 currStackSlotIndex = 0;
+	U_32 gprIndex = 1;
+	const U_32 maxGPRIndex = 3;
+	U_32 fprIndex = 0;
+	const U_32 maxFPRIndex = 6;
+	U_32 currStackSlotIndex = 0;
 
 	// Now we loop through the arguments and generate the actual instructions to store any register arguments in the caller frame.
 	const I_32 numRegsToPreserve = 10;
@@ -287,7 +287,8 @@ createUpcallThunk(J9UpcallMetaData *metaData)
 	}
 	for (I_32 i = 0; i < lastSigIdx; i++) {
 		U_32 argSizeInBytes = sigArray[i].sizeInByte;
-		switch(sigArray[i].type) {
+		const U_32 totalStackSlotsReq = (argSizeInBytes + 7) / 8;
+		switch (sigArray[i].type) {
 		case J9_FFI_UPCALL_SIG_TYPE_CHAR:    /* Fall through */
 		case J9_FFI_UPCALL_SIG_TYPE_SHORT:   /* Fall through */
 		case J9_FFI_UPCALL_SIG_TYPE_INT32:   /* Fall through */
@@ -328,7 +329,6 @@ createUpcallThunk(J9UpcallMetaData *metaData)
 				if (fprIndex <= maxFPRIndex - 2) {
 					thunkMem += STEY(thunkMem, fprIndex, 0, R4, argAreaOffsetFromSP + (currStackSlotIndex * 8));
 					thunkMem += STEY(thunkMem, fprIndex + 2, 0, R4, argAreaOffsetFromSP + (currStackSlotIndex * 8) + 4);
-					currStackSlotIndex += 1;
 					fprIndex += 4;
 					if (i < 3) {
 						gprIndex += 2;
@@ -336,25 +336,21 @@ createUpcallThunk(J9UpcallMetaData *metaData)
 				}
 				else if (fprIndex <= maxFPRIndex) {
 					thunkMem += STEY(thunkMem, fprIndex, 0, R4, argAreaOffsetFromSP + (currStackSlotIndex * 8));
-					currStackSlotIndex += 1;
 					fprIndex += 2;
 				}
 			}
 			else { // All other pure float structs are passed in GPR (if there's space)
 				if (gprIndex <= maxGPRIndex) {
-					int totalStackSlotsReq = ((argSizeInBytes - 1) / 8) + 1;
-					int numGPRsAvailable = maxGPRIndex - gprIndex + 1;
-					int tempArgIndex = currStackSlotIndex;
-						for (int i = 1; i <= std::min(numGPRsAvailable, totalStackSlotsReq); i++) {
+					U_32 numGPRsAvailable = maxGPRIndex - gprIndex + 1;
+					U_32 tempArgIndex = currStackSlotIndex;
+						for (U_32 i = 1; i <= std::min(numGPRsAvailable, totalStackSlotsReq); i++) {
 							thunkMem += STG(thunkMem, gprIndex, 0, R4, argAreaOffsetFromSP + (tempArgIndex * 8));
 							tempArgIndex += 1;
 							gprIndex++;
 						}
-
-					// increase currStackSlotIndex by the number of slots this struct takes in memory
-					currStackSlotIndex += totalStackSlotsReq;
 				}
 			}
+			currStackSlotIndex += totalStackSlotsReq;
 			break;
 		case J9_FFI_UPCALL_SIG_TYPE_STRUCT_AGGREGATE_ALL_DP:
 			if (argSizeInBytes == 2 * sizeof(double)) {
@@ -364,9 +360,7 @@ createUpcallThunk(J9UpcallMetaData *metaData)
 				// argument area.
 				if (fprIndex <= maxFPRIndex - 2) {
 					thunkMem += STDY(thunkMem, fprIndex, 0, R4, argAreaOffsetFromSP + (currStackSlotIndex * 8));
-					currStackSlotIndex += 1;
-					thunkMem += STDY(thunkMem, fprIndex + 2, 0, R4, argAreaOffsetFromSP + (currStackSlotIndex * 8));
-					currStackSlotIndex += 1;
+					thunkMem += STDY(thunkMem, fprIndex + 2, 0, R4, argAreaOffsetFromSP + ((currStackSlotIndex + 1) * 8));
 					fprIndex += 4;
 					if (i < 3) {
 						gprIndex += 2;
@@ -374,24 +368,22 @@ createUpcallThunk(J9UpcallMetaData *metaData)
 				}
 				else if (fprIndex <= maxFPRIndex) {
 					thunkMem += STDY(thunkMem, fprIndex, 0, R4, argAreaOffsetFromSP + (currStackSlotIndex * 8));
-					currStackSlotIndex += 1;
 					fprIndex += 2;
 				}
 			}
-		else { // This is for all other pure double structs (they will be passed in GPRs if there's space)
-			if (gprIndex <= maxGPRIndex) {
-				int totalStackSlotsReq = argSizeInBytes / 8; // the size in bytes for a struct with only doubles will always be a multiple of 8.
-				int numGPRsAvailable = maxGPRIndex - gprIndex + 1;
-				int tempArgIndex = currStackSlotIndex;
-				for (int i = 1; i <= std::min(numGPRsAvailable, totalStackSlotsReq); i++) {
-					thunkMem += STG(thunkMem, gprIndex, 0, R4, argAreaOffsetFromSP + (tempArgIndex * 8));
-					tempArgIndex += 1;
-					gprIndex++;
+			else { // This is for all other pure double structs (they will be passed in GPRs if there's space)
+				if (gprIndex <= maxGPRIndex) {
+					U_32 numGPRsAvailable = maxGPRIndex - gprIndex + 1;
+					U_32 tempArgIndex = currStackSlotIndex;
+					for (U_32 i = 1; i <= std::min(numGPRsAvailable, totalStackSlotsReq); i++) {
+						thunkMem += STG(thunkMem, gprIndex, 0, R4, argAreaOffsetFromSP + (tempArgIndex * 8));
+						tempArgIndex += 1;
+						gprIndex++;
+					}
+					// increase currStackSlotIndex by the number of slots this struct takes in memory
 				}
-				// increase currStackSlotIndex by the number of slots this struct takes in memory
-				currStackSlotIndex += totalStackSlotsReq;
 			}
-		}
+			currStackSlotIndex += totalStackSlotsReq;
 			break;
 		case J9_FFI_UPCALL_SIG_TYPE_STRUCT_AGGREGATE_SP_DP:
 		case J9_FFI_UPCALL_SIG_TYPE_STRUCT_AGGREGATE_SP_SP_DP:
@@ -404,17 +396,15 @@ createUpcallThunk(J9UpcallMetaData *metaData)
 		case J9_FFI_UPCALL_SIG_TYPE_STRUCT_AGGREGATE_OTHER:
 		case J9_FFI_UPCALL_SIG_TYPE_STRUCT_AGGREGATE_MISC:
 			if (gprIndex <= maxGPRIndex) {
-				int totalStackSlotsReq = ((argSizeInBytes - 1) / 8) + 1;
-				int numGPRsAvailable = maxGPRIndex - gprIndex + 1;
-				int tempArgIndex = currStackSlotIndex;
-				for (int i = 1; i <= std::min(numGPRsAvailable, totalStackSlotsReq); i++) {
+				U_32 numGPRsAvailable = maxGPRIndex - gprIndex + 1;
+				U_32 tempArgIndex = currStackSlotIndex;
+				for (U_32 i = 1; i <= std::min(numGPRsAvailable, totalStackSlotsReq); i++) {
 					thunkMem += STG(thunkMem, gprIndex, 0, R4, argAreaOffsetFromSP + (tempArgIndex * 8));
 					tempArgIndex += 1;
 					gprIndex++;
 				}
-				// increase currStackSlotIndex by the number of slots this struct takes in memory
-				currStackSlotIndex += totalStackSlotsReq;
 			}
+			currStackSlotIndex += totalStackSlotsReq;
 			break;
 		default:
 			Assert_VM_unreachable();
