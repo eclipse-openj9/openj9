@@ -1392,10 +1392,22 @@ Unsafe.getShort.
 */
 
 bool
-TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSymbol, TR::ResolvedMethodSymbol *callerSymbol, TR::TreeTop * callNodeTreeTop, TR::Node * unsafeCall, TR::DataType type, bool isVolatile, bool needNullCheck, bool isOrdered)
+TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSymbol,
+                                              TR::ResolvedMethodSymbol *callerSymbol,
+                                              TR::TreeTop * callNodeTreeTop,
+                                              TR::Node * unsafeCall,
+                                              TR::DataType type,
+                                              bool isVolatile,
+                                              bool needNullCheck,
+                                              bool isOrdered,
+                                              bool isUnaligned)
    {
    if (isVolatile && type == TR::Int64 && comp()->target().is32Bit() && !comp()->cg()->getSupportsInlinedAtomicLongVolatiles())
       return false;
+
+   if (isUnaligned && comp()->cg()->getSupportsAlignedAccessOnly())
+      return false;
+
    if (debug("traceUnsafe"))
       printf("createUnsafePutWithOffset %d in %s\n", type.getDataType(), comp()->signature());
 
@@ -1971,9 +1983,19 @@ TR_J9InlinerPolicy::createUnsafeCASCallDiamond(TR::TreeTop *callNodeTreeTop, TR:
 
 
 bool
-TR_J9InlinerPolicy::createUnsafeGetWithOffset(TR::ResolvedMethodSymbol *calleeSymbol, TR::ResolvedMethodSymbol *callerSymbol, TR::TreeTop * callNodeTreeTop, TR::Node * unsafeCall, TR::DataType type, bool isVolatile, bool needNullCheck)
+TR_J9InlinerPolicy::createUnsafeGetWithOffset(TR::ResolvedMethodSymbol *calleeSymbol,
+                                              TR::ResolvedMethodSymbol *callerSymbol,
+                                              TR::TreeTop * callNodeTreeTop,
+                                              TR::Node * unsafeCall,
+                                              TR::DataType type,
+                                              bool isVolatile,
+                                              bool needNullCheck,
+                                              bool isUnaligned)
    {
    if (isVolatile && type == TR::Int64 && comp()->target().is32Bit() && !comp()->cg()->getSupportsInlinedAtomicLongVolatiles())
+      return false;
+
+   if (isUnaligned && comp()->cg()->getSupportsAlignedAccessOnly())
       return false;
 
    if (debug("traceUnsafe"))
@@ -2583,6 +2605,24 @@ TR_J9InlinerPolicy::inlineUnsafeCall(TR::ResolvedMethodSymbol *calleeSymbol, TR:
          return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Double, false, false, true);
       case TR::sun_misc_Unsafe_putObjectOrdered_jlObjectJjlObject_V:
          return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Address, false, true, true);
+
+      // FIXME: Update createUnsafePutWithOffset signature to have isVolatile, isOrdered, isUnaligned as enum
+      case TR::jdk_internal_misc_Unsafe_getCharUnaligned:
+         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int16, /*isVolatile*/false, /*needsNullCheck*/false, /*isUnaligned*/true);
+      case TR::jdk_internal_misc_Unsafe_getShortUnaligned:
+         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int16, /*isVolatile*/false, /*needsNullCheck*/false, /*isUnaligned*/true);
+      case TR::jdk_internal_misc_Unsafe_getIntUnaligned:
+         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int32, /*isVolatile*/false, /*needsNullCheck*/false, /*isUnaligned*/true);
+      case TR::jdk_internal_misc_Unsafe_getLongUnaligned:
+         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int64, /*isVolatile*/false, /*needsNullCheck*/false, /*isUnaligned*/true);
+      case TR::jdk_internal_misc_Unsafe_putCharUnaligned:
+         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int8, /*isVolatile*/false, /*needsNullCheck*/false, /*isOrdered*/false, /*isUnaligned*/true);
+      case TR::jdk_internal_misc_Unsafe_putShortUnaligned:
+         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int16, /*isVolatile*/false, /*needsNullCheck*/false, /*isOrdered*/false, /*isUnaligned*/true);
+      case TR::jdk_internal_misc_Unsafe_putIntUnaligned:
+         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int32, /*isVolatile*/false, /*needsNullCheck*/false, /*isOrdered*/false, /*isUnaligned*/true);
+      case TR::jdk_internal_misc_Unsafe_putLongUnaligned:
+         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int64, /*isVolatile*/false, /*needsNullCheck*/false, /*isOrdered*/false, /*isUnaligned*/true);
 
       case TR::sun_misc_Unsafe_getBooleanVolatile_jlObjectJ_Z:
          return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int8, true);
