@@ -1343,7 +1343,10 @@ TR_ResolvedJ9JITServerMethod::createResolvedMethodMirror(TR_ResolvedJ9JITServerM
    if (!((TR_J9VMBase *) fe)->isAOT_DEPRECATED_DO_NOT_USE())
       resolvedMethod = new (trMemory->trHeapMemory()) TR_ResolvedJ9Method(method, fe, trMemory, owningMethod, vTableSlot);
    else
+      {
+      printf("Creating aMethod %p 5\n", method);
       resolvedMethod = new (trMemory->trHeapMemory()) TR_ResolvedRelocatableJ9Method(method, fe, trMemory, owningMethod, vTableSlot);
+      }
    if (!resolvedMethod) throw std::bad_alloc();
 
    packMethodInfo(methodInfo, resolvedMethod, fe);
@@ -1398,6 +1401,7 @@ TR_ResolvedJ9JITServerMethod::createResolvedMethodFromJ9MethodMirror(TR_Resolved
                 (sameLoaders = fej9->sameClassLoaders(clazzOfInlinedMethod, clazzOfCompiledMethod)) ||
                 isSystemClassLoader)
                {
+               printf("Creating aMethod %p 6\n", j9method);
                resolvedMethod = new (comp->trHeapMemory()) TR_ResolvedRelocatableJ9Method((TR_OpaqueMethodBlock *) j9method, fe, comp->trMemory(), owningMethod, vTableSlot);
                if (!resolvedMethod) throw std::bad_alloc();
                }
