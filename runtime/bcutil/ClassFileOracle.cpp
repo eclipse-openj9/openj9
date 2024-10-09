@@ -636,7 +636,7 @@ ClassFileOracle::walkAttributes()
 			_preloadAttribute = (J9CfrAttributePreload *)attrib;
 			for (U_16 numberOfClasses = 0; numberOfClasses < _preloadAttribute->numberOfClasses; numberOfClasses++) {
 				U_16 classCpIndex = _preloadAttribute->classes[numberOfClasses];
-				markClassAsReferenced(classCpIndex);
+				markConstantUTF8AsReferenced(classCpIndex);
 			}
 			break;
 		}

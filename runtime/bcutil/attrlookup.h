@@ -89,7 +89,7 @@ attributeHash (register const char *str, register size_t len)
       51, 51, 51, 51, 51, 51, 51, 51, 51, 51,
       51, 51, 51, 51, 51, 51, 51, 51, 51, 51,
       51, 31, 51, 51, 51, 15, 51, 51, 51,  5,
-       0,  0, 51, 51,  0, 51, 15,  0, 51, 51,
+       0,  0, 51, 51, 51, 51, 15,  0, 51, 51,
       25,  0, 51, 51, 51, 51, 51, 51, 51, 51,
       51, 51, 51, 51, 51, 51, 51, 51, 51, 51,
       51, 51, 51, 51, 51, 51, 51, 51, 51, 51,
@@ -121,8 +121,6 @@ lookupKnownAttribute (register const char *str, register size_t len)
     {
 #line 47 "attrlookup.gperf"
       {"Code", CFR_ATTRIBUTE_Code, CFR_ATTRIBUTE_Code},
-#line 76 "attrlookup.gperf"
-      {"Preload", CFR_ATTRIBUTE_Preload, CFR_ATTRIBUTE_Preload},
 #line 49 "attrlookup.gperf"
       {"Synthetic", CFR_ATTRIBUTE_Synthetic, CFR_ATTRIBUTE_Synthetic},
 #line 53 "attrlookup.gperf"
@@ -141,6 +139,8 @@ lookupKnownAttribute (register const char *str, register size_t len)
       {"AnnotationDefault", CFR_ATTRIBUTE_AnnotationDefault, CFR_ATTRIBUTE_AnnotationDefault},
 #line 61 "attrlookup.gperf"
       {"LocalVariableTable", CFR_ATTRIBUTE_LocalVariableTable, CFR_ATTRIBUTE_StrippedLocalVariableTable},
+#line 76 "attrlookup.gperf"
+      {"LoadableDescriptors", CFR_ATTRIBUTE_Preload, CFR_ATTRIBUTE_Preload},
 #line 62 "attrlookup.gperf"
       {"SourceDebugExtension", CFR_ATTRIBUTE_SourceDebugExtension, CFR_ATTRIBUTE_StrippedSourceDebugExtension},
 #line 75 "attrlookup.gperf"
@@ -185,8 +185,8 @@ lookupKnownAttribute (register const char *str, register size_t len)
 
   static const signed char lookup[] =
     {
-      -1, -1, -1, -1,  0, -1, -1,  1, -1,  2,  3, -1,  4,  5,
-       6,  7,  8,  9, 10, -1, 11, 12, 13, 14, 15, 16, -1, 17,
+      -1, -1, -1, -1,  0, -1, -1, -1, -1,  1,  2, -1,  3,  4,
+       5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16, -1, 17,
       18, 19, 20, 21, -1, -1, 22, 23, 24, 25, -1, 26, -1, 27,
       28, -1, -1, -1, -1, 29, -1, -1, 30
     };

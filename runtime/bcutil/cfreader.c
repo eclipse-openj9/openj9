@@ -936,7 +936,7 @@ readAttributes(J9CfrClassFile * classfile, J9CfrAttribute *** pAttributes, U_32 
 		case CFR_ATTRIBUTE_Preload:
 			/* JVMS: There may be at most one Preload attribute in the attributes table of a ClassFile structure... */
 			if (preloadAttributeRead) {
-				errorCode = J9NLS_CFR_ERR_MULTIPLE_PRELOAD_ATTRIBUTES__ID;
+				errorCode = J9NLS_CFR_ERR_MULTIPLE_LOADABLEDESCRIPTORS_ATTRIBUTES__ID;
 				offset = address;
 				goto _errorFound;
 			}
@@ -2558,7 +2558,7 @@ checkAttributes(J9PortLibrary* portLib, J9CfrClassFile* classfile, J9CfrAttribut
 				break;
 			}
 			if ((0 != value) && (cpBase[value].tag != CFR_CONSTANT_Utf8)) {
-				errorCode = J9NLS_CFR_ERR_PRELOAD_NAME_NOT_UTF8__ID;
+				errorCode = J9NLS_CFR_ERR_LOADABLEDESCRIPTORS_NAME_NOT_UTF8__ID;
 				goto _errorFound;
 				break;
 			}
@@ -2570,8 +2570,8 @@ checkAttributes(J9PortLibrary* portLib, J9CfrClassFile* classfile, J9CfrAttribut
 					goto _errorFound;
 					break;
 				}
-				if ((0 != value) && (cpBase[value].tag != CFR_CONSTANT_Class)) {
-					errorCode = J9NLS_CFR_ERR_PRELOAD_CLASS_ENTRY_NOT_CLASS_TYPE__ID;
+				if ((0 != value) && (cpBase[value].tag != CFR_CONSTANT_Utf8)) {
+					errorCode = J9NLS_CFR_ERR_LOADABLEDESCRIPTORS_ENTRY_NOT_UTF8_TYPE__ID;
 					goto _errorFound;
 					break;
 				}

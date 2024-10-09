@@ -2048,10 +2048,21 @@ loadFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *class
 
 		for (U_32 i = 0; i < *numberOfPreloadClassesPtr; i++) {
 			J9UTF8 *preloadClassNameUtf8 = preloadClassNameAtIndex(numberOfPreloadClassesPtr, i);
-
+			/* Use the full descriptor name for array or base type */
 			U_8 *preloadClassName = J9UTF8_DATA(preloadClassNameUtf8);
 			U_16 preloadClassLength = J9UTF8_LENGTH(preloadClassNameUtf8);
-			internalFindClassUTF8(currentThread, preloadClassName, preloadClassLength, classLoader, classPreloadFlags & ~J9_FINDCLASS_FLAG_THROW_ON_FAIL);
+			if (IS_CLASS_SIGNATURE(J9UTF8_DATA(preloadClassNameUtf8)[0])) {
+				/* Strip L/; from object type descriptors */
+				preloadClassName = &preloadClassName[1];
+				preloadClassLength = preloadClassLength - 2;
+
+			}
+			internalFindClassUTF8(
+					currentThread,
+					preloadClassName, 
+					preloadClassLength,
+					classLoader,
+					classPreloadFlags & ~J9_FINDCLASS_FLAG_THROW_ON_FAIL);
 		}
 	}
 done:

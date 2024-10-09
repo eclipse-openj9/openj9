@@ -65,7 +65,7 @@ DECLARE_UTF8_ATTRIBUTE_NAME(BOOTSTRAP_METHODS, "BootstrapMethods");
 DECLARE_UTF8_ATTRIBUTE_NAME(RECORD, "Record");
 DECLARE_UTF8_ATTRIBUTE_NAME(PERMITTED_SUBCLASSES, "PermittedSubclasses");
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-DECLARE_UTF8_ATTRIBUTE_NAME(PRELOAD, "Preload");
+DECLARE_UTF8_ATTRIBUTE_NAME(PRELOAD, "LoadableDescriptors");
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 DECLARE_UTF8_ATTRIBUTE_NAME(IMPLICITCREATION, "ImplicitCreation");
@@ -1232,19 +1232,7 @@ ClassFileWriter::writeAttributes()
 
 		for (U_32 i = 0; i < numberPreloadClasses; i++) {
 			J9UTF8* preloadClassNameUtf8 = preloadClassNameAtIndex(preloadInfoPtr, i);
-			/* CONSTANT_Class_info index should be written. Find class entry that references the preload class name in constant pool. */
-			J9HashTableState hashTableState;
-			HashTableEntry * entry = (HashTableEntry *) hashTableStartDo(_cpHashTable, &hashTableState);
-			while (NULL != entry) {
-				if (CFR_CONSTANT_Class == entry->cpType) {
-					J9UTF8* classNameCandidate = (J9UTF8*)entry->address;
-					if (J9UTF8_EQUALS(classNameCandidate, preloadClassNameUtf8)) {
-						writeU16(entry->cpIndex);
-						break;
-					}
-				}
-				entry = (HashTableEntry *) hashTableNextDo(&hashTableState);
-			}
+			writeU16(indexForUTF8(preloadClassNameUtf8));
 		}
 	}
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */

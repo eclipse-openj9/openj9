@@ -1024,8 +1024,7 @@ class RecordComponentIterator
 	U_16 getPreloadClassNameAtIndex(U_16 index) const {
 		U_16 result = 0;
 		if (hasPreloadClasses()) {
-			U_16 classCpIndex = _preloadAttribute->classes[index];
-			result = _classFile->constantPool[classCpIndex].slot1;
+			result = _preloadAttribute->classes[index];
 		}
 		return result;
 	}

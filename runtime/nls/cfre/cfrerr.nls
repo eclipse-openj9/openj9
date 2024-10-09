@@ -1809,3 +1809,27 @@ J9NLS_CFR_ERR_STRICT_FIELD_MUST_BE_FINAL.explanation=Please consult the Java Vir
 J9NLS_CFR_ERR_STRICT_FIELD_MUST_BE_FINAL.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_STRICT_FIELD_MUST_BE_FINAL.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
+
+# LoadableDescriptors is not translatable
+J9NLS_CFR_ERR_MULTIPLE_LOADABLEDESCRIPTORS_ATTRIBUTES=Multiple LoadableDescriptors attributes
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_MULTIPLE_LOADABLEDESCRIPTORS_ATTRIBUTES.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_MULTIPLE_LOADABLEDESCRIPTORS_ATTRIBUTES.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_MULTIPLE_LOADABLEDESCRIPTORS_ATTRIBUTES.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# LoadableDescriptors is not translatable
+J9NLS_CFR_ERR_LOADABLEDESCRIPTORS_NAME_NOT_UTF8=LoadableDescriptors name must be a string
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_LOADABLEDESCRIPTORS_NAME_NOT_UTF8.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_LOADABLEDESCRIPTORS_NAME_NOT_UTF8.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_LOADABLEDESCRIPTORS_NAME_NOT_UTF8.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# LoadableDescriptors is not translatable
+J9NLS_CFR_ERR_LOADABLEDESCRIPTORS_ENTRY_NOT_UTF8_TYPE=descriptor in LoadableDescriptors attribute is not a UTF8 type
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_LOADABLEDESCRIPTORS_ENTRY_NOT_UTF8_TYPE.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_LOADABLEDESCRIPTORS_ENTRY_NOT_UTF8_TYPE.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_LOADABLEDESCRIPTORS_ENTRY_NOT_UTF8_TYPE.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
