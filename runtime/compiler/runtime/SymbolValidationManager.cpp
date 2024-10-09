@@ -561,8 +561,10 @@ TR::SymbolValidationManager::appendNewRecord(void *value, TR::SymbolValidationRe
    SVM_ASSERT(!inHeuristicRegion(), "Attempted to appendNewRecord in a heuristic region");
    TR_ASSERT(!recordExists(record), "record is not new");
 
+   printf("Appending new record value %p", value);
    if (!isAlreadyValidated(value))
       {
+      printf("Appending new record value %p 2", value);
       _valueToSymbolMap.insert(std::make_pair(value, getNewSymbolID()));
       }
    _symbolValidationRecords.push_front(record);
