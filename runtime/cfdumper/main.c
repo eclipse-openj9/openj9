@@ -931,13 +931,13 @@ static void dumpAttribute(J9CfrClassFile* classfile, J9CfrAttribute* attrib, U_3
 			break;
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-		case CFR_ATTRIBUTE_Preload:
-			for(i = 0; i < ((J9CfrAttributePreload*)attrib)->numberOfClasses; i++) {
-				U_16 descriptorIndex = ((J9CfrAttributePreload*)attrib)->classes[i];
-				for(j = 0; j < tabLevel + 1; j++) {
+		case CFR_ATTRIBUTE_LoadableDescriptors:
+			for (i = 0; i < ((J9CfrAttributeLoadableDescriptors *)attrib)->numberOfDescriptors; i++) {
+				U_16 descriptorIndex = ((J9CfrAttributeLoadableDescriptors *)attrib)->descriptors[i];
+				for (j = 0; j < tabLevel + 1; j++) {
 					j9tty_printf(PORTLIB, "  ");
 				}
-				j9tty_printf(PORTLIB, "Preload class index, name: %i -> %s\n", descriptorIndex, classfile->constantPool[descriptorIndex].bytes);
+				j9tty_printf(PORTLIB, "Loadable descriptor index, name: %i -> %s\n", descriptorIndex, classfile->constantPool[descriptorIndex].bytes);
 			}
 			break;
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */

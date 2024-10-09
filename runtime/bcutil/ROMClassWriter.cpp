@@ -321,7 +321,7 @@ ROMClassWriter::ROMClassWriter(BufferManager *bufferManager, ClassFileOracle *cl
 #endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	_injectedInterfaceInfoSRPKey(srpKeyProducer->generateKey()),
-	_preloadInfoSRPKey(srpKeyProducer->generateKey()),
+	_loadableDescriptorsInfoSRPKey(srpKeyProducer->generateKey()),
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	_implicitCreationSRPKey(srpKeyProducer->generateKey()),
@@ -460,7 +460,7 @@ ROMClassWriter::writeROMClass(Cursor *cursor,
 	writePermittedSubclasses(cursor, markAndCountOnly);
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	writeInjectedInterfaces(cursor, markAndCountOnly);
-	writePreload(cursor, markAndCountOnly);
+	writeloadableDescriptors(cursor, markAndCountOnly);
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	writeImplicitCreation(cursor, markAndCountOnly);
@@ -1913,30 +1913,30 @@ ROMClassWriter::writeImplicitCreation(Cursor *cursor, bool markAndCountOnly)
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 /*
- * Preload ROM class layout:
- * 4 bytes for number of classes (actually takes up two, but use 4 for alignment)
- * for number of classes:
- *   4 byte SRP to class name
+ * LoadableDescriptors ROM class layout:
+ * 4 bytes for number of descriptors (actually takes up two, but use 4 for alignment)
+ * for number of descriptors:
+ *   4 byte SRP to descriptor
  */
 void
-ROMClassWriter::writePreload(Cursor *cursor, bool markAndCountOnly)
+ROMClassWriter::writeloadableDescriptors(Cursor *cursor, bool markAndCountOnly)
 {
-	if (_classFileOracle->hasPreloadClasses()) {
-		cursor->mark(_preloadInfoSRPKey);
+	if (_classFileOracle->hasLoadableDescriptors()) {
+		cursor->mark(_loadableDescriptorsInfoSRPKey);
 
-		U_16 classCount = _classFileOracle->getPreloadClassCount();
+		U_16 descriptorCount = _classFileOracle->getLoadableDescriptorsCount();
 		if (markAndCountOnly) {
 			cursor->skip(sizeof(U_32));
 		} else {
-			cursor->writeU32(classCount, Cursor::GENERIC);
+			cursor->writeU32(descriptorCount, Cursor::GENERIC);
 		}
 
-		for (U_16 index = 0; index < classCount; index++) {
+		for (U_16 index = 0; index < descriptorCount; index++) {
 			if (markAndCountOnly) {
 				cursor->skip(sizeof(J9SRP));
 			} else {
-				U_16 classNameCpIndex = _classFileOracle->getPreloadClassNameAtIndex(index);
-				cursor->writeSRP(_srpKeyProducer->mapCfrConstantPoolIndexToKey(classNameCpIndex), Cursor::SRP_TO_UTF8);
+				U_16 descriptorCpIndex = _classFileOracle->getLoadableDescriptorAtIndex(index);
+				cursor->writeSRP(_srpKeyProducer->mapCfrConstantPoolIndexToKey(descriptorCpIndex), Cursor::SRP_TO_UTF8);
 			}
 		}
 	}
@@ -1993,7 +1993,7 @@ ROMClassWriter::writeOptionalInfo(Cursor *cursor)
 	 * SRP to record class component attributes
 	 * SRP to PermittedSubclasses attribute
 	 * SRP to injected interfaces info
-	 * SRP to Preload attribute
+	 * SRP to LoadableDescriptors attribute
 	 * SRP to ImplicitCreation attribute
 	 */
 	cursor->mark(_optionalInfoSRPKey);
@@ -2040,8 +2040,8 @@ ROMClassWriter::writeOptionalInfo(Cursor *cursor)
 	if (_interfaceInjectionInfo->numOfInterfaces > 0) {
 		cursor->writeSRP(_injectedInterfaceInfoSRPKey, Cursor::SRP_TO_GENERIC);
 	}
-	if (_classFileOracle->hasPreloadClasses()) {
-		cursor->writeSRP(_preloadInfoSRPKey, Cursor::SRP_TO_GENERIC);
+	if (_classFileOracle->hasLoadableDescriptors()) {
+		cursor->writeSRP(_loadableDescriptorsInfoSRPKey, Cursor::SRP_TO_GENERIC);
 	}
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)

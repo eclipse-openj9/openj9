@@ -639,13 +639,13 @@ public class J9BCUtil {
 			}
 		}
 
-		if (J9ROMClassHelper.hasPreloadAttribute(romClass)) {
-			int preloadClassCount = OptInfo.getPreloadClassCount(romClass);
-			out.format("Preload classes (%d):%n", preloadClassCount);
+		if (J9ROMClassHelper.hasLoadableDescriptorsAttribute(romClass)) {
+			int loadableDescriptorsCount = OptInfo.getLoadableDescriptorsCount(romClass);
+			out.format("Loadable Descriptors (%d):%n", loadableDescriptorsCount);
 
-			for (int i = 0; i < preloadClassCount; i++) {
-				J9UTF8Pointer preloadClassName = OptInfo.getPreloadClassNameAtIndex(romClass, i);
-				out.format("   %s%n", J9UTF8Helper.stringValue(preloadClassName));
+			for (int i = 0; i < loadableDescriptorsCount; i++) {
+				J9UTF8Pointer loadableDescriptor = OptInfo.getLoadableDescriptorAtIndex(romClass, i);
+				out.format("   %s%n", J9UTF8Helper.stringValue(loadableDescriptor));
 			}
 		}
 

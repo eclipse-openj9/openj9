@@ -1018,13 +1018,13 @@ class RecordComponentIterator
 	U_16 getPermittedSubclassesClassCount() const { return _isSealed ? _permittedSubclassesAttribute->numberOfClasses : 0; }
 	bool isValueBased() const { return _isClassValueBased; }
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	bool hasPreloadClasses() const { return NULL != _preloadAttribute; }
-	U_16 getPreloadClassCount() const { return  hasPreloadClasses() ? _preloadAttribute->numberOfClasses : 0; }
+	bool hasLoadableDescriptors() const { return NULL != _loadableDescriptorsAttribute; }
+	U_16 getLoadableDescriptorsCount() const { return  hasLoadableDescriptors() ? _loadableDescriptorsAttribute->numberOfDescriptors : 0; }
 
-	U_16 getPreloadClassNameAtIndex(U_16 index) const {
+	U_16 getLoadableDescriptorAtIndex(U_16 index) const {
 		U_16 result = 0;
-		if (hasPreloadClasses()) {
-			result = _preloadAttribute->classes[index];
+		if (hasLoadableDescriptors()) {
+			result = _loadableDescriptorsAttribute->descriptors[index];
 		}
 		return result;
 	}
@@ -1162,7 +1162,7 @@ private:
 	J9CfrAttributeBootstrapMethods *_bootstrapMethodsAttribute;
 	J9CfrAttributePermittedSubclasses *_permittedSubclassesAttribute;
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	J9CfrAttributePreload *_preloadAttribute;
+	J9CfrAttributeLoadableDescriptors *_loadableDescriptorsAttribute;
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	bool _hasImplicitCreationAttribute;

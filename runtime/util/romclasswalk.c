@@ -853,31 +853,31 @@ allSlotsInPermittedSubclassesDo(J9ROMClass* romClass, U_32* permittedSubclassesP
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 static void
-allSlotsInPreloadAttributeDo(J9ROMClass* romClass, U_32* preloadAttributePointer, J9ROMClassWalkCallbacks* callbacks, void* userData)
+allSlotsInloadableDescriptorsAttributeDo(J9ROMClass *romClass, U_32 *loadableDescriptorsAttributePointer, J9ROMClassWalkCallbacks *callbacks, void *userData)
 {
 	BOOLEAN rangeValid = FALSE;
-	U_32 *cursor = preloadAttributePointer;
-	U_32 preloadAttributeCount = 0;
+	U_32 *cursor = loadableDescriptorsAttributePointer;
+	U_32 loadableDescriptorsAttributeCount = 0;
 
 	rangeValid = callbacks->validateRangeCallback(romClass, cursor, sizeof(U_32), userData);
 	if (FALSE == rangeValid) {
 		return;
 	}
 
-	callbacks->slotCallback(romClass, J9ROM_U32, cursor, "preloadAttributeCount", userData);
+	callbacks->slotCallback(romClass, J9ROM_U32, cursor, "loadableDescriptorsAttributeCount", userData);
 	cursor += 1;
-	preloadAttributeCount = *preloadAttributePointer;
+	loadableDescriptorsAttributeCount = *loadableDescriptorsAttributePointer;
 
-	for (; preloadAttributeCount > 0; preloadAttributeCount--) {
+	for (; loadableDescriptorsAttributeCount > 0; loadableDescriptorsAttributeCount--) {
 		rangeValid = callbacks->validateRangeCallback(romClass, cursor, sizeof(U_32), userData);
 		if (FALSE == rangeValid) {
 			return;
 		}
-		callbacks->slotCallback(romClass, J9ROM_UTF8, cursor, "className", userData);
+		callbacks->slotCallback(romClass, J9ROM_UTF8, cursor, "descriptorName", userData);
 		cursor += 1;
 	}
 
-	callbacks->sectionCallback(romClass, preloadAttributePointer, (UDATA)cursor - (UDATA)preloadAttributePointer, "preloadAttributeInfo", userData);
+	callbacks->sectionCallback(romClass, loadableDescriptorsAttributePointer, (UDATA)cursor - (UDATA)loadableDescriptorsAttributePointer, "loadableDescriptorsAttributeInfo", userData);
 }
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
@@ -997,11 +997,11 @@ allSlotsInOptionalInfoDo(J9ROMClass* romClass, J9ROMClassWalkCallbacks* callback
 		cursor++;
 	}
 
-	if (J9_ARE_ANY_BITS_SET(romClass->optionalFlags, J9_ROMCLASS_OPTINFO_PRELOAD_ATTRIBUTE)) {
+	if (J9_ARE_ANY_BITS_SET(romClass->optionalFlags, J9_ROMCLASS_OPTINFO_LOADABLEDESCRIPTORS_ATTRIBUTE)) {
 		rangeValid = callbacks->validateRangeCallback(romClass, cursor, sizeof(J9SRP), userData);
 		if (rangeValid) {
-			callbacks->slotCallback(romClass, J9ROM_SRP, cursor, "preloadAttributeSRP", userData);
-			allSlotsInPreloadAttributeDo(romClass, SRP_PTR_GET(cursor, U_32*), callbacks, userData);
+			callbacks->slotCallback(romClass, J9ROM_SRP, cursor, "loadableDescriptorsAttributeSRP", userData);
+			allSlotsInloadableDescriptorsAttributeDo(romClass, SRP_PTR_GET(cursor, U_32*), callbacks, userData);
 		}
 		cursor++;
 	}

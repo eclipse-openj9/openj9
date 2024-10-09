@@ -80,7 +80,7 @@ static I_32 dumpPermittedSubclasses(J9PortLibrary *portLib, J9ROMClass *romClass
 static I_32 dumpNest (J9PortLibrary *portLib, J9ROMClass *romClass, U_32 flags);
 #endif /* JAVA_SPEC_VERSION >= 11 */
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-static I_32 dumpPreloadClasses (J9PortLibrary *portLib, J9ROMClass *romClass);
+static I_32 dumpLoadableDescriptors(J9PortLibrary *portLib, J9ROMClass *romClass);
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 static I_32 dumpImplicitCreationFlags (J9PortLibrary *portLib, J9ROMClass *romClass);
@@ -197,8 +197,8 @@ IDATA j9bcutil_dumpRomClass( J9ROMClass *romClass, J9PortLibrary *portLib, J9Tra
 #endif /* JAVA_SPEC_VERSION >= 11 */
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	if (J9_ARE_ALL_BITS_SET(romClass->optionalFlags, J9_ROMCLASS_OPTINFO_PRELOAD_ATTRIBUTE)) {
-		dumpPreloadClasses(portLib, romClass);
+	if (J9_ARE_ALL_BITS_SET(romClass->optionalFlags, J9_ROMCLASS_OPTINFO_LOADABLEDESCRIPTORS_ATTRIBUTE)) {
+		dumpLoadableDescriptors(portLib, romClass);
 	}
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
@@ -891,17 +891,17 @@ dumpNest(J9PortLibrary *portLib, J9ROMClass *romClass, U_32 flags)
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 static I_32
-dumpPreloadClasses(J9PortLibrary *portLib, J9ROMClass *romClass)
+dumpLoadableDescriptors(J9PortLibrary *portLib, J9ROMClass *romClass)
 {
 	PORT_ACCESS_FROM_PORT(portLib);
-	U_32* preloadInfoPtr = getPreloadInfoPtr(romClass);
-	U_32 preloadClassCount = *preloadInfoPtr;
+	U_32 *loadableDescriptorsInfoPtr = getLoadableDescriptorsInfoPtr(romClass);
+	U_32 loadableDescriptorsCount = *loadableDescriptorsInfoPtr;
 	U_16 i = 0;
 
-	j9tty_printf(PORTLIB, "Preload classes (%i):\n", preloadClassCount);
-	for (; i < preloadClassCount; i++) {
-		J9UTF8* preloadClassNameUtf8 = preloadClassNameAtIndex(preloadInfoPtr, i);
-		j9tty_printf(PORTLIB, "  %.*s\n", J9UTF8_LENGTH(preloadClassNameUtf8), J9UTF8_DATA(preloadClassNameUtf8));
+	j9tty_printf(PORTLIB, "Loadable descriptors (%i):\n", loadableDescriptorsCount);
+	for (; i < loadableDescriptorsCount; i++) {
+		J9UTF8 *loadableDescriptorUtf8 = loadableDescriptorAtIndex(loadableDescriptorsInfoPtr, i);
+		j9tty_printf(PORTLIB, "  %.*s\n", J9UTF8_LENGTH(loadableDescriptorUtf8), J9UTF8_DATA(loadableDescriptorUtf8));
 	}
 	return BCT_ERR_NO_ERROR;
 }
