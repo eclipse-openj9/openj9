@@ -241,7 +241,7 @@ typedef struct J9CfrAttribute {
 #define CFR_ATTRIBUTE_NestHost 26
 #define CFR_ATTRIBUTE_Record 27
 #define CFR_ATTRIBUTE_PermittedSubclasses 28
-#define CFR_ATTRIBUTE_Preload 29
+#define CFR_ATTRIBUTE_LoadableDescriptors 29
 #define CFR_ATTRIBUTE_ImplicitCreation 30
 #define CFR_ATTRIBUTE_NullRestricted 31
 #define CFR_ATTRIBUTE_StrippedLocalVariableTypeTable  122
@@ -535,14 +535,14 @@ typedef struct J9CfrAttributePermittedSubclasses {
 } J9CfrAttributePermittedSubclasses;
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-typedef struct J9CfrAttributePreload {
+typedef struct J9CfrAttributeLoadableDescriptors {
     U_8 tag;
     U_16 nameIndex;
     U_32 length;
     UDATA romAddress;
-    U_16 numberOfClasses;
-    U_16* classes;
-} J9CfrAttributePreload;
+    U_16 numberOfDescriptors;
+    U_16 *descriptors;
+} J9CfrAttributeLoadableDescriptors;
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 typedef struct J9CfrAttributeImplicitCreation {

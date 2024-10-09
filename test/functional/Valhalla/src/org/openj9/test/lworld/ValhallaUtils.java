@@ -39,7 +39,7 @@ public class ValhallaUtils {
 	static final int ACC_DEFAULT = 0x1;
 	static final int ACC_NON_ATOMIC = 0x2;
 
-	final static class LoadableDescriptorsAttribute extends Attribute {
+	static final class LoadableDescriptorsAttribute extends Attribute {
 		private final String[] classes;
 
 		public LoadableDescriptorsAttribute(String[] classes) {
@@ -73,7 +73,7 @@ public class ValhallaUtils {
 		}
 	}
 
-	final static class ImplicitCreationAttribute extends Attribute {
+	static final class ImplicitCreationAttribute extends Attribute {
 		private final int flags;
 
 		public ImplicitCreationAttribute() {
@@ -106,7 +106,7 @@ public class ValhallaUtils {
 		}
 	}
 
-	final static class NullRestrictedAttribute extends Attribute {
+	static final class NullRestrictedAttribute extends Attribute {
 		public NullRestrictedAttribute() {
 			super("NullRestricted");
 		}

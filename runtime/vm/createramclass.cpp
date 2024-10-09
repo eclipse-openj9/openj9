@@ -1938,7 +1938,7 @@ checkSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J
  * class type (NullRestricted attribute) that are not both flattened
  * and recursively compatible for the fast substitutability optimization.
  *
- * 5. Speculatively preload classes with a preload class attribute. No class loading
+ * 5. Speculatively load classes with a LoadableDescriptors attribute. No class loading
  * errors will be thrown if loading fails at this stage.
  *
  * Caller must not hold the classTableMutex.
@@ -2039,28 +2039,26 @@ loadFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *class
 		*valueTypeFlags |= (J9ClassHasReferences & superClazz->classFlags);
 	}
 
-	/* Speculatively load classes with a preload attribute.
+	/* Speculatively load classes listed in the LoadableDescriptors attribute.
 	 * By this point classes of fields that may be eligible for
 	 * flattening have already been loaded.
 	 */
-	if (J9_ARE_ALL_BITS_SET(romClass->optionalFlags, J9_ROMCLASS_OPTINFO_PRELOAD_ATTRIBUTE)) {
-		U_32 *numberOfPreloadClassesPtr = getPreloadInfoPtr(romClass);
-
-		for (U_32 i = 0; i < *numberOfPreloadClassesPtr; i++) {
-			J9UTF8 *preloadClassNameUtf8 = preloadClassNameAtIndex(numberOfPreloadClassesPtr, i);
-			/* Use the full descriptor name for array or base type */
-			U_8 *preloadClassName = J9UTF8_DATA(preloadClassNameUtf8);
-			U_16 preloadClassLength = J9UTF8_LENGTH(preloadClassNameUtf8);
-			if (IS_CLASS_SIGNATURE(J9UTF8_DATA(preloadClassNameUtf8)[0])) {
-				/* Strip L/; from object type descriptors */
-				preloadClassName = &preloadClassName[1];
-				preloadClassLength = preloadClassLength - 2;
-
+	if (J9_ARE_ALL_BITS_SET(romClass->optionalFlags, J9_ROMCLASS_OPTINFO_LOADABLEDESCRIPTORS_ATTRIBUTE)) {
+		U_32 *numberOfLoadableDescriptorsPtr = getLoadableDescriptorsInfoPtr(romClass);
+		for (U_32 i = 0; i < *numberOfLoadableDescriptorsPtr; i++) {
+			J9UTF8 *loadableDescriptorUtf8 = loadableDescriptorAtIndex(numberOfLoadableDescriptorsPtr, i);
+			/* Use the full descriptor name for array or base type. */
+			U_8 *loadableDescriptorName = J9UTF8_DATA(loadableDescriptorUtf8);
+			U_16 loadableDescriptorLength = J9UTF8_LENGTH(loadableDescriptorUtf8);
+			if (IS_CLASS_SIGNATURE(loadableDescriptorName[0])) {
+				/* Strip L/; from object type descriptors. */
+				loadableDescriptorName = &loadableDescriptorName[1];
+				loadableDescriptorLength -= 2;
 			}
 			internalFindClassUTF8(
 					currentThread,
-					preloadClassName, 
-					preloadClassLength,
+					loadableDescriptorName,
+					loadableDescriptorLength,
 					classLoader,
 					classPreloadFlags & ~J9_FINDCLASS_FLAG_THROW_ON_FAIL);
 		}

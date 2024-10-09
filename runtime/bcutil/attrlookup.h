@@ -140,7 +140,7 @@ lookupKnownAttribute (register const char *str, register size_t len)
 #line 61 "attrlookup.gperf"
       {"LocalVariableTable", CFR_ATTRIBUTE_LocalVariableTable, CFR_ATTRIBUTE_StrippedLocalVariableTable},
 #line 76 "attrlookup.gperf"
-      {"LoadableDescriptors", CFR_ATTRIBUTE_Preload, CFR_ATTRIBUTE_Preload},
+      {"LoadableDescriptors", CFR_ATTRIBUTE_LoadableDescriptors, CFR_ATTRIBUTE_LoadableDescriptors},
 #line 62 "attrlookup.gperf"
       {"SourceDebugExtension", CFR_ATTRIBUTE_SourceDebugExtension, CFR_ATTRIBUTE_StrippedSourceDebugExtension},
 #line 75 "attrlookup.gperf"

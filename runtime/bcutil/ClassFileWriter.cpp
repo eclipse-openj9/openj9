@@ -65,7 +65,7 @@ DECLARE_UTF8_ATTRIBUTE_NAME(BOOTSTRAP_METHODS, "BootstrapMethods");
 DECLARE_UTF8_ATTRIBUTE_NAME(RECORD, "Record");
 DECLARE_UTF8_ATTRIBUTE_NAME(PERMITTED_SUBCLASSES, "PermittedSubclasses");
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-DECLARE_UTF8_ATTRIBUTE_NAME(PRELOAD, "LoadableDescriptors");
+DECLARE_UTF8_ATTRIBUTE_NAME(LOADABLEDESCRIPTORS, "LoadableDescriptors");
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 DECLARE_UTF8_ATTRIBUTE_NAME(IMPLICITCREATION, "ImplicitCreation");
@@ -118,14 +118,14 @@ ClassFileWriter::analyzeROMClass()
 	}
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	if (J9_ARE_ALL_BITS_SET(_romClass->optionalFlags, J9_ROMCLASS_OPTINFO_PRELOAD_ATTRIBUTE)) {
-		addEntry((void*) &PRELOAD, 0, CFR_CONSTANT_Utf8);
+	if (J9_ARE_ALL_BITS_SET(_romClass->optionalFlags, J9_ROMCLASS_OPTINFO_LOADABLEDESCRIPTORS_ATTRIBUTE)) {
+		addEntry((void *) &LOADABLEDESCRIPTORS, 0, CFR_CONSTANT_Utf8);
 
-		U_32 *preloadInfoPtr = getPreloadInfoPtr(_romClass);
-		U_32 numberOfPreloadClasses = *preloadInfoPtr;
-		for (U_32 i = 0; i < numberOfPreloadClasses; i++) {
-			J9UTF8* preloadClassNameUtf8 = preloadClassNameAtIndex(preloadInfoPtr, i);
-			addEntry(preloadClassNameUtf8, 0, CFR_CONSTANT_Utf8);
+		U_32 *loadableDescriptorsInfoPtr = getLoadableDescriptorsInfoPtr(_romClass);
+		U_32 numberOfLoadableDescriptors = *loadableDescriptorsInfoPtr;
+		for (U_32 i = 0; i < numberOfLoadableDescriptors; i++) {
+			J9UTF8 *loadableDescriptorUtf8 = loadableDescriptorAtIndex(loadableDescriptorsInfoPtr, i);
+			addEntry(loadableDescriptorUtf8, 0, CFR_CONSTANT_Utf8);
 		}
 	}
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
@@ -1044,7 +1044,7 @@ ClassFileWriter::writeAttributes()
 	}
 #endif /* JAVA_SPEC_VERSION >= 11 */
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	if (J9_ARE_ALL_BITS_SET(_romClass->optionalFlags, J9_ROMCLASS_OPTINFO_PRELOAD_ATTRIBUTE)) {
+	if (J9_ARE_ALL_BITS_SET(_romClass->optionalFlags, J9_ROMCLASS_OPTINFO_LOADABLEDESCRIPTORS_ATTRIBUTE)) {
 		attributesCount += 1;
 	}
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
@@ -1222,17 +1222,17 @@ ClassFileWriter::writeAttributes()
 	}
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	/* write Preload attribute */
-	if (J9_ARE_ALL_BITS_SET(_romClass->optionalFlags, J9_ROMCLASS_OPTINFO_PRELOAD_ATTRIBUTE)) {
-		U_32 *preloadInfoPtr = getPreloadInfoPtr(_romClass);
-		/* The first 32 bits of preloadInfoPtr contain the number of preload classes */
-		U_32 numberPreloadClasses = *preloadInfoPtr;
-		writeAttributeHeader((J9UTF8 *) &PRELOAD, sizeof(U_16) + (numberPreloadClasses * sizeof(U_16)));
-		writeU16(numberPreloadClasses);
+	/* write LoadableDescriptors attribute */
+	if (J9_ARE_ALL_BITS_SET(_romClass->optionalFlags, J9_ROMCLASS_OPTINFO_LOADABLEDESCRIPTORS_ATTRIBUTE)) {
+		U_32 *loadableDescriptorsInfoPtr = getLoadableDescriptorsInfoPtr(_romClass);
+		/* The first 32 bits of loadableDescriptorsInfoPtr contain the number of descriptors */
+		U_32 numberLoadableDescriptors = *loadableDescriptorsInfoPtr;
+		writeAttributeHeader((J9UTF8 *) &LOADABLEDESCRIPTORS, sizeof(U_16) + (numberLoadableDescriptors * sizeof(U_16)));
+		writeU16(numberLoadableDescriptors);
 
-		for (U_32 i = 0; i < numberPreloadClasses; i++) {
-			J9UTF8* preloadClassNameUtf8 = preloadClassNameAtIndex(preloadInfoPtr, i);
-			writeU16(indexForUTF8(preloadClassNameUtf8));
+		for (U_32 i = 0; i < numberLoadableDescriptors; i++) {
+			J9UTF8 *loadableDescriptorUtf8 = loadableDescriptorAtIndex(loadableDescriptorsInfoPtr, i);
+			writeU16(indexForUTF8(loadableDescriptorUtf8));
 		}
 	}
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */

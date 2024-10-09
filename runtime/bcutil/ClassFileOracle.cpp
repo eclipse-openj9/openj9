@@ -231,7 +231,7 @@ ClassFileOracle::ClassFileOracle(BufferManager *bufferManager, J9CfrClassFile *c
 	_isRecord(false),
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	_hasNonStaticSynchronizedMethod(false),
-	_preloadAttribute(NULL),
+	_loadableDescriptorsAttribute(NULL),
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	_hasImplicitCreationAttribute(false),
@@ -632,11 +632,11 @@ ClassFileOracle::walkAttributes()
 			break;
 		}
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-		case CFR_ATTRIBUTE_Preload: {
-			_preloadAttribute = (J9CfrAttributePreload *)attrib;
-			for (U_16 numberOfClasses = 0; numberOfClasses < _preloadAttribute->numberOfClasses; numberOfClasses++) {
-				U_16 classCpIndex = _preloadAttribute->classes[numberOfClasses];
-				markConstantUTF8AsReferenced(classCpIndex);
+		case CFR_ATTRIBUTE_LoadableDescriptors: {
+			_loadableDescriptorsAttribute = (J9CfrAttributeLoadableDescriptors *)attrib;
+			for (U_16 numberOfDescriptors = 0; numberOfDescriptors < _loadableDescriptorsAttribute->numberOfDescriptors; numberOfDescriptors++) {
+				U_16 descriptorCpIndex = _loadableDescriptorsAttribute->descriptors[numberOfDescriptors];
+				markConstantUTF8AsReferenced(descriptorCpIndex);
 			}
 			break;
 		}
