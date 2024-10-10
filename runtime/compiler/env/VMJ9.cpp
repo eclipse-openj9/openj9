@@ -5200,7 +5200,7 @@ TR_J9VMBase::getMethodHandleTableEntryIndex(TR::Compilation *comp, TR::KnownObje
                                  "methodTypeTable",
                                  "[Ljava/lang/invoke/MethodType;");
 #endif // JAVA_SPEC_VERSION <= 17
-   if (!mhTable || !mtTable) return result;
+   if (!mhTable) return result;
 
 #if JAVA_SPEC_VERSION >= 17
    // if the VarHandle has invokeExact behaviour, then the MethodType in
@@ -5212,6 +5212,7 @@ TR_J9VMBase::getMethodHandleTableEntryIndex(TR::Compilation *comp, TR::KnownObje
    int32_t varHandleHasInvokeExactBehaviour = getInt32FieldAt(varHandleObj, varHandleExactFieldOffset);
    if (varHandleHasInvokeExactBehaviour)
       {
+      if (!mtTable) return result;
       int32_t mtEntryIndex = getInt32Field(accessDescriptorObj, "type");
       uintptr_t methodTypeTableEntryObj = getReferenceElement(mtTable, mtEntryIndex);
       if (!methodTypeTableEntryObj) return result;
