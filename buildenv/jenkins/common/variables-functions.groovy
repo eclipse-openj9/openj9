@@ -709,8 +709,9 @@ def get_date() {
 def set_test_targets() {
     // Map of Maps
     TESTS = [:]
+    echo "In set_test_targets - JOB_TYPE:'${params.JOB_TYPE}'"
     if (TESTS_TARGETS != 'none') {
-        hasValhallaSpec = SPECS.any{SPEC, target -> SPEC.contains("valhalla")}
+        // hasValhallaSpec = SPECS.any{SPEC, target -> SPEC.contains("valhalla")}
 
         for (target in TESTS_TARGETS.replaceAll("\\s","").toLowerCase().tokenize(',')) {
             switch (target) {
@@ -718,7 +719,7 @@ def set_test_targets() {
                     TESTS["${target}.functional"] = [:]
                     // Valhalla-specific testing does not yet support sanity.openjdk
                     // Only expand sanity to sanity.functional if any SPEC is valhalla
-                    if (!hasValhallaSpec)
+                    // if (!hasValhallaSpec)
                         TESTS["${target}.openjdk"] = [:]
                     break
                 case ["extended"]:
