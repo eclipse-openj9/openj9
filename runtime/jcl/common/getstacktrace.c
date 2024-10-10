@@ -80,9 +80,16 @@ getStackTraceForThread(J9VMThread *currentThread, J9VMThread *targetThread, UDAT
 		 */
 		walkState.skipCount = 0;
 		rc = vmfns->walkContinuationStackFrames(currentThread, targetThread->currentContinuation, threadObject, &walkState);
-	} else if (isVirtual && (threadObject != targetThread->threadObject)) {
+	} else if (isVirtual
+	&& ((threadObject != targetThread->threadObject)
+		|| (-1 == J9OBJECT_I64_LOAD(currentThread, threadObject, vm->virtualThreadInspectorCountOffset)))
+	) {
 		/* If the virtual thread object doesn't match the current thread object, it must have unmounted
 		 * from this carrier thread, return NULL and the JCL code will handle the retry.
+		 *
+		 * If inspectorCount is -1, then the virtual thread is in an unsteady state (mounting or unmounting).
+		 * In such cases, NULL should be returned and the JCL code should retry in order to avoid unexpected
+		 * behavior.
 		 */
 		vmfns->resumeThreadForInspection(currentThread, targetThread);
 		goto done;

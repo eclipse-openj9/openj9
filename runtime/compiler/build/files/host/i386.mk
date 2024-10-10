@@ -20,6 +20,5 @@
 
 JIT_PRODUCT_SOURCE_FILES+=\
     compiler/x/i386/runtime/IA32Recompilation.nasm \
-    compiler/x/i386/runtime/J9IA32CompressString.nasm \
     compiler/x/i386/runtime/J9IA32Math64.nasm
 

@@ -536,6 +536,10 @@ static void completeInitialization() {
 		throw new InternalError(e.toString());
 	}
 	/*[ENDIF]*/	//!Sidecar19-SE_RAWPLUSJ9&!Sidecar18-SE-OpenJ9
+
+	/*[IF JFR_SUPPORT]*/
+	JFRHelpers.initJFR();
+	/*[ENDIF] JFR_SUPPORT */
 }
 
 /*[IF JAVA_SPEC_VERSION >= 9]*/

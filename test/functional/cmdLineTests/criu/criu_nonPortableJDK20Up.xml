@@ -45,6 +45,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
   </test>
 
   <test id="Test if j.l.VirtualThread.ForkJoinPool.parallelism matches jdk.virtualThreadScheduler.parallelism set at vm startup V1">
@@ -62,6 +63,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
   </test>
 
   <test id="Test if j.l.VirtualThread.ForkJoinPool.parallelism matches jdk.virtualThreadScheduler.parallelism set at vm startup V2">
@@ -79,6 +81,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
   </test>
 
   <test id="Test if j.l.VirtualThread.ForkJoinPool.parallelism matches jdk.virtualThreadScheduler.parallelism set at restore V1">
@@ -96,6 +99,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
   </test>
 
   <test id="Test if j.l.VirtualThread.ForkJoinPool.parallelism matches jdk.virtualThreadScheduler.parallelism set at restore V2">
@@ -113,5 +117,6 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
   </test>
 </suite>

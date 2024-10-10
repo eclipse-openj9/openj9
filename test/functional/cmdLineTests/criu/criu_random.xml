@@ -39,6 +39,7 @@
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
   </test>
 
   <test id="First Restore of Criu Checkpoint Image">
@@ -55,6 +56,7 @@
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
   </test>
 
   <test id="Second Restore of Criu Checkpoint Image">
@@ -72,6 +74,7 @@
     <!-- In the past, the failure below was caused by an issue where CRIU can't be found on the PATH. -->
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
   </test>
 
 </suite>

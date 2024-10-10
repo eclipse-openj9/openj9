@@ -2791,9 +2791,6 @@ void TR_ResolvedJ9Method::construct()
       {  TR::java_lang_String_regionMatchesInternal, 21, "regionMatchesInternal", (int16_t)-1, "*"},
       {x(TR::java_lang_String_equalsIgnoreCase,    "equalsIgnoreCase",    "(Ljava/lang/String;)Z")},
       {x(TR::java_lang_String_compareToIgnoreCase, "compareToIgnoreCase", "(Ljava/lang/String;)I")},
-      {x(TR::java_lang_String_compress,            "compress",            "([C[BII)I")},
-      {x(TR::java_lang_String_compressNoCheck,     "compressNoCheck",     "([C[BII)V")},
-      {x(TR::java_lang_String_andOR,               "andOR",               "([CII)I")},
       {x(TR::java_lang_String_unsafeCharAt,        "unsafeCharAt",        "(I)C")},
       {x(TR::java_lang_String_split_str_int,       "split",               "(Ljava/lang/String;I)[Ljava/lang/String;")},
       {x(TR::java_lang_String_getChars_charArray,  "getChars",            "(II[CI)V")},
@@ -2985,10 +2982,10 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z, "compareAndSetObject", "(Ljava/lang/Object;JLjava/lang/Object;Ljava/lang/Object;)Z")},
       {x(TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z, "compareAndSetReference", "(Ljava/lang/Object;JLjava/lang/Object;Ljava/lang/Object;)Z")},
 
-      {x(TR::sun_misc_Unsafe_compareAndExchangeInt_jlObjectJII_Z,                  "compareAndExchangeInt",    "(Ljava/lang/Object;JII)I")},
-      {x(TR::sun_misc_Unsafe_compareAndExchangeLong_jlObjectJJJ_Z,                 "compareAndExchangeLong",   "(Ljava/lang/Object;JJJ)J")},
-      {x(TR::sun_misc_Unsafe_compareAndExchangeObject_jlObjectJjlObjectjlObject_Z, "compareAndExchangeObject", "(Ljava/lang/Object;JLjava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;")},
-      {x(TR::sun_misc_Unsafe_compareAndExchangeObject_jlObjectJjlObjectjlObject_Z, "compareAndExchangeReference", "(Ljava/lang/Object;JLjava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;")},
+      {x(TR::jdk_internal_misc_Unsafe_compareAndExchangeInt,       "compareAndExchangeInt",       "(Ljava/lang/Object;JII)I")},
+      {x(TR::jdk_internal_misc_Unsafe_compareAndExchangeLong,      "compareAndExchangeLong",      "(Ljava/lang/Object;JJJ)J")},
+      {x(TR::jdk_internal_misc_Unsafe_compareAndExchangeObject,    "compareAndExchangeObject",    "(Ljava/lang/Object;JLjava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;")},
+      {x(TR::jdk_internal_misc_Unsafe_compareAndExchangeReference, "compareAndExchangeReference", "(Ljava/lang/Object;JLjava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;")},
 
       {x(TR::sun_misc_Unsafe_staticFieldBase,               "staticFieldBase",   "(Ljava/lang/reflect/Field;)Ljava/lang/Object")},
       {x(TR::sun_misc_Unsafe_staticFieldOffset,             "staticFieldOffset", "(Ljava/lang/reflect/Field;)J")},
@@ -5007,6 +5004,11 @@ TR_ResolvedJ9Method::setRecognizedMethodInfo(TR::RecognizedMethod rm)
             // from bool TR::TreeEvaluator::VMinlineCallEvaluator(TR::Node *node, bool isIndirect, TR::CodeGenerator *cg)
             //case TR::sun_misc_Unsafe_copyMemory:
 
+            case TR::jdk_internal_misc_Unsafe_compareAndExchangeInt:
+            case TR::jdk_internal_misc_Unsafe_compareAndExchangeLong:
+            case TR::jdk_internal_misc_Unsafe_compareAndExchangeObject:
+            case TR::jdk_internal_misc_Unsafe_compareAndExchangeReference:
+
             case TR::sun_misc_Unsafe_loadFence:
             case TR::sun_misc_Unsafe_storeFence:
             case TR::sun_misc_Unsafe_fullFence:
@@ -5547,9 +5549,26 @@ TR_ResolvedJ9Method::isJITInternalNative()
 bool
 TR_J9MethodBase::isUnsafeCAS(TR::Compilation * c)
    {
+   /*
+    * The TR::Compilation parameter "c" is sometimes null. But, it is needed to perform a platform target check.
+    * So, if it is null, this code goes and gets comp.
+    */
+   if (NULL == c)
+      {
+      c = TR::comp();
+      }
+
    TR::RecognizedMethod rm = getRecognizedMethod();
    switch (rm)
       {
+      case TR::jdk_internal_misc_Unsafe_compareAndExchangeInt:
+      case TR::jdk_internal_misc_Unsafe_compareAndExchangeLong:
+      case TR::jdk_internal_misc_Unsafe_compareAndExchangeObject:
+      case TR::jdk_internal_misc_Unsafe_compareAndExchangeReference:
+         {
+         TR_ASSERT_FATAL(c, "comp should not be NULL");
+         return (c->target().cpu.isPower() || c->target().cpu.isX86());
+         }
       case TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z:
       case TR::sun_misc_Unsafe_compareAndSwapLong_jlObjectJJJ_Z:
       case TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z:
@@ -5840,9 +5859,6 @@ TR_J9MethodBase::isUnsafePut(TR::RecognizedMethod rm)
    {
    switch (rm)
       {
-      case TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z:
-      case TR::sun_misc_Unsafe_compareAndSwapLong_jlObjectJJJ_Z:
-      case TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z:
       case TR::sun_misc_Unsafe_getAndAddInt:
       case TR::sun_misc_Unsafe_getAndAddLong:
       case TR::sun_misc_Unsafe_getAndSetInt:

@@ -2291,6 +2291,17 @@ public class ValueTypeTests {
 		checkCastRefClassOnNull.invoke();
 	}
 
+	@Test(priority=1)
+	static public void testClassIsInstanceNullableArrays() throws Throwable {
+		ValueTypePoint2D[] nonNullableArray = (ValueTypePoint2D[]) ValueClass.newNullRestrictedArray(ValueTypePoint2D.class, 1);
+		ValueTypePoint2D[] nullableArray = new ValueTypePoint2D[1];
+
+		assertTrue(nonNullableArray.getClass().isInstance(nonNullableArray));
+		assertTrue(nullableArray.getClass().isInstance(nullableArray));
+		assertFalse(nonNullableArray.getClass().isInstance(nullableArray));
+		assertTrue(nullableArray.getClass().isInstance(nonNullableArray));
+	}
+
 	/*
 	 * Maintain a buffer of flattened arrays with long-aligned valuetypes while keeping a certain amount of classes alive at any
 	 * single time. This forces the GC to unload the classes.
@@ -2299,7 +2310,7 @@ public class ValueTypeTests {
 	static public void testValueWithLongAlignmentGCScanning() throws Throwable {
 		ArrayList<Object> longAlignmentArrayList = new ArrayList<Object>(objectGCScanningIterationCount);
 		for (int i = 0; i < objectGCScanningIterationCount; i++) {
-			Object newLongAlignmentArray = Array.newInstance(assortedValueWithLongAlignmentClass, genericArraySize);
+			Object newLongAlignmentArray = ValueClass.newNullRestrictedArray(assortedValueWithLongAlignmentClass, genericArraySize);
 			for (int j = 0; j < genericArraySize; j++) {
 				Object assortedValueWithLongAlignment = createAssorted(makeAssortedValueWithLongAlignment, typeWithLongAlignmentFields);
 				Array.set(newLongAlignmentArray, j, assortedValueWithLongAlignment);
@@ -2324,7 +2335,7 @@ public class ValueTypeTests {
 	static public void testValueWithObjectAlignmentGCScanning() throws Throwable {
 		ArrayList<Object> objectAlignmentArrayList = new ArrayList<Object>(objectGCScanningIterationCount);
 		for (int i = 0; i < objectGCScanningIterationCount; i++) {
-			Object newObjectAlignmentArray = Array.newInstance(assortedValueWithObjectAlignmentClass, genericArraySize);
+			Object newObjectAlignmentArray = ValueClass.newNullRestrictedArray(assortedValueWithObjectAlignmentClass, genericArraySize);
 			for (int j = 0; j < genericArraySize; j++) {
 				Object assortedValueWithObjectAlignment = createAssorted(makeAssortedValueWithObjectAlignment, typeWithObjectAlignmentFields);
 				Array.set(newObjectAlignmentArray, j, assortedValueWithObjectAlignment);
@@ -2349,7 +2360,7 @@ public class ValueTypeTests {
 	static public void testValueWithSingleAlignmentGCScanning() throws Throwable {
 		ArrayList<Object> singleAlignmentArrayList = new ArrayList<Object>(objectGCScanningIterationCount);
 		for (int i = 0; i < objectGCScanningIterationCount; i++) {
-			Object newSingleAlignmentArray = Array.newInstance(assortedValueWithSingleAlignmentClass, genericArraySize);
+			Object newSingleAlignmentArray = ValueClass.newNullRestrictedArray(assortedValueWithSingleAlignmentClass, genericArraySize);
 			for (int j = 0; j < genericArraySize; j++) {
 				Object assortedValueWithSingleAlignment = createAssorted(makeAssortedValueWithSingleAlignment, typeWithSingleAlignmentFields);
 				Array.set(newSingleAlignmentArray, j, assortedValueWithSingleAlignment);

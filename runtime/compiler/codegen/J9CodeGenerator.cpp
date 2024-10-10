@@ -655,13 +655,17 @@ J9::CodeGenerator::lowerTreesPreChildrenVisit(TR::Node *parent, TR::TreeTop *tre
       // Hiding compressedref logic from CodeGen doesn't seem a good practise, the evaluator always need the uncompressedref node for write barrier,
       // therefore, this part is deprecated. It'll be removed once P and Z update their corresponding evaluators.
       static bool UseOldCompareAndSwapObject = (bool)feGetEnv("TR_UseOldCompareAndSwapObject");
-      if (self()->comp()->useCompressedPointers() && (UseOldCompareAndSwapObject || !(self()->comp()->target().cpu.isX86() || self()->comp()->target().cpu.isARM64())))
+      static bool disableCASInlining = feGetEnv("TR_DisableCASInlining") != NULL;
+      if (self()->comp()->useCompressedPointers() && ((UseOldCompareAndSwapObject && (self()->comp()->target().cpu.isARM64() || !disableCASInlining)) || !(self()->comp()->target().cpu.isX86() || self()->comp()->target().cpu.isARM64())))
          {
          TR::MethodSymbol *methodSymbol = parent->getSymbol()->castToMethodSymbol();
+         static bool disableCAEIntrinsic = feGetEnv("TR_DisableCAEIntrinsic") != NULL;
          // In Java9 Unsafe could be the jdk.internal JNI method or the sun.misc ordinary method wrapper,
          // while in Java8 it can only be the sun.misc package which will itself contain the JNI method.
          // Test for isNative to distinguish between them.
-         if ((methodSymbol->getRecognizedMethod() == TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z) &&
+         if (((methodSymbol->getRecognizedMethod() == TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z) ||
+              ((methodSymbol->getRecognizedMethod() == TR::jdk_internal_misc_Unsafe_compareAndExchangeObject) && !disableCAEIntrinsic) ||
+              ((methodSymbol->getRecognizedMethod() == TR::jdk_internal_misc_Unsafe_compareAndExchangeReference) && !disableCAEIntrinsic)) &&
                methodSymbol->isNative() &&
                (!TR::Compiler->om.canGenerateArraylets() || parent->isUnsafeGetPutCASCallOnNonArray()) && parent->isSafeForCGToFastPathUnsafeCall())
             {

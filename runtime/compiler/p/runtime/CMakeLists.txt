@@ -41,7 +41,6 @@ j9jit_files(
 	p/runtime/J9PPCArrayCopy.spp
 	p/runtime/J9PPCArrayTranslate.spp
 	p/runtime/J9PPCEncodeUTF16.spp
-	p/runtime/J9PPCCompressString.spp
 	p/runtime/J9PPCCRC32.spp
 	p/runtime/J9PPCCRC32_wrapper.c
 	p/runtime/CodeSync.cpp

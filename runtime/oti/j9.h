@@ -335,6 +335,10 @@ static const struct { \
 #define J9CLASS_UNPADDED_INSTANCE_SIZE(clazz) J9_VALUETYPE_FLATTENED_SIZE(clazz)
 #define J9_IS_J9CLASS_ALLOW_DEFAULT_VALUE(clazz) J9_ARE_ALL_BITS_SET((clazz)->classFlags, J9ClassAllowsInitialDefaultValue)
 #define J9_IS_J9CLASS_PRIMITIVE_VALUETYPE(clazz) J9_ARE_ALL_BITS_SET((clazz)->classFlags, J9ClassIsPrimitiveValueType)
+/**
+ * This macro can only be used to determine vm flattening for a J9ArrayClass.
+ * For non-array classes use J9_IS_FIELD_FLATTENED.
+ */
 #define J9_IS_J9CLASS_FLATTENED(clazz) J9_ARE_ALL_BITS_SET((clazz)->classFlags, J9ClassIsFlattened)
 
 #define J9ROMFIELD_IS_NULL_RESTRICTED(romField)	J9_ARE_ALL_BITS_SET((romField)->modifiers, J9FieldFlagIsNullRestricted)

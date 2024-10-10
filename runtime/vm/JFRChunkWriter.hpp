@@ -348,6 +348,8 @@ done:
 			writeJFRChunkToFile();
 
 			_vm->jfrState.jfrChunkCount += 1;
+			_vm->jfrState.chunkStartTime = VM_JFRUtils::getCurrentTimeNanos(privatePortLibrary, _buildResult);
+			_vm->jfrState.chunkStartTicks = j9time_nano_time();
 
 freeBuffer:
 			_bufferWriter = NULL;
@@ -371,7 +373,7 @@ done:
 		_bufferWriter->writeLEB128(ExecutionSampleID);
 
 		/* write start time */
-		_bufferWriter->writeLEB128(entry->time);
+		_bufferWriter->writeLEB128(entry->ticks);
 
 		/* write sampling thread index */
 		_bufferWriter->writeLEB128(entry->threadIndex);
@@ -399,7 +401,7 @@ done:
 		_bufferWriter->writeLEB128(ThreadStartID);
 
 		/* write start time */
-		_bufferWriter->writeLEB128(entry->time);
+		_bufferWriter->writeLEB128(entry->ticks);
 
 		/* write event thread index */
 		_bufferWriter->writeLEB128(entry->eventThreadIndex);
@@ -430,7 +432,7 @@ done:
 		_bufferWriter->writeLEB128(ThreadEndID);
 
 		/* write start time */
-		_bufferWriter->writeLEB128(entry->time);
+		_bufferWriter->writeLEB128(entry->ticks);
 
 		/* write event thread index */
 		_bufferWriter->writeLEB128(entry->eventThreadIndex);
@@ -454,8 +456,10 @@ done:
 		/* write event type */
 		_bufferWriter->writeLEB128(ThreadSleepID);
 
-		/* write start time */
-		_bufferWriter->writeLEB128(entry->time);
+		/* write start time - this is when the sleep started not when it ended so we
+		 * need to subtract the duration since the event is emitted when the sleep ends.
+		 */
+		_bufferWriter->writeLEB128(entry->ticks - entry->duration);
 
 		/* write duration time which is always in ticks, in our case nanos */
 		_bufferWriter->writeLEB128(entry->duration);

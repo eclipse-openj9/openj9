@@ -1322,6 +1322,15 @@ public:
    TR::Node * testIsClassArrayType(TR::Node *j9ClassRefNode);
 
    /**
+    * \brief Generate IL to test whether the array's class is null-restricted
+    * \param j9ClassRefNode A node representing a reference to a \ref J9Class
+    * \return \ref TR::Node that tests whether the array's class flags has the
+    *         \ref J9ClassArrayIsNullRestricted flag set, yielding a non-zero result if the
+    *         flag is set, or zero otherwise.
+    */
+   TR::Node * testIsArrayClassNullRestrictedType(TR::Node *j9ClassRefNode);
+
+   /**
     * \brief Test whether any of the specified flags is set on the array's component class
     * \param arrayBaseAddressNode A node representing a reference to the array base address
     * \param ifCmpOp If comparison opCode such as ificmpeq or ificmpne
@@ -1337,14 +1346,6 @@ public:
     * \return \ref TR::Node that compares the array component class J9ClassIsValueType flag to a zero integer
     */
    TR::Node * checkArrayCompClassValueType(TR::Node *arrayBaseAddressNode, TR::ILOpCodes ifCmpOp);
-
-   /**
-    * \brief Check whether or not the array component class is a primitive value type
-    * \param arrayBaseAddressNode A node representing a reference to the array base address
-    * \param ifCmpOp If comparison opCode such as ificmpeq or ificmpne
-    * \return \ref TR::Node that compares the array component class J9ClassIsPrimitiveValueType flag to a zero integer
-    */
-   TR::Node * checkArrayCompClassPrimitiveValueType(TR::Node *arrayBaseAddressNode, TR::ILOpCodes ifCmpOp);
 
    virtual J9JITConfig *getJ9JITConfig() { return _jitConfig; }
 

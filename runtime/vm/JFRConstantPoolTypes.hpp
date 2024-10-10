@@ -159,7 +159,7 @@ struct StackFrame {
 
 struct ExecutionSampleEntry {
 	J9VMThread *vmThread;
-	I_64 time;
+	I_64 ticks;
 	ThreadState state;
 	U_32 stackTraceIndex;
 	U_32 threadIndex;
@@ -167,7 +167,7 @@ struct ExecutionSampleEntry {
 };
 
 struct ThreadStartEntry {
-	I_64 time;
+	I_64 ticks;
 	U_32 stackTraceIndex;
 	U_32 threadIndex;
 	U_32 eventThreadIndex;
@@ -175,13 +175,13 @@ struct ThreadStartEntry {
 };
 
 struct ThreadEndEntry {
-	I_64 time;
+	I_64 ticks;
 	U_32 threadIndex;
 	U_32 eventThreadIndex;
 };
 
 struct ThreadSleepEntry {
-	I_64 time;
+	I_64 ticks;
 	I_64 duration;
 	I_64 sleepTime;
 	U_32 threadIndex;
@@ -191,7 +191,7 @@ struct ThreadSleepEntry {
 
 struct StackTraceEntry {
 	J9VMThread *vmThread;
-	I_64 time;
+	I_64 ticks;
 	U_32 numOfFrames;
 	U_32 index;
 	StackFrame *frames;
@@ -417,7 +417,7 @@ private:
 
 	U_32 addThreadGroupEntry(j9object_t threadGroup);
 
-	U_32 addStackTraceEntry(J9VMThread *vmThread, I_64 time, U_32 numOfFrames);
+	U_32 addStackTraceEntry(J9VMThread *vmThread, I_64 ticks, U_32 numOfFrames);
 
 	void printMergedStringTables();
 
@@ -726,7 +726,7 @@ public:
 
 		iterateStackTraceImpl(_currentThread, (j9object_t*)walkStateCache, &stackTraceCallback, this, FALSE, FALSE, numberOfFrames, FALSE);
 
-		index = addStackTraceEntry(walkThread, VM_JFRUtils::getCurrentTimeNanos(privatePortLibrary, _buildResult), _currentFrameCount);
+		index = addStackTraceEntry(walkThread, j9time_nano_time(), _currentFrameCount);
 		_stackFrameCount += expandedStackTraceCount;
 		_currentStackFrameBuffer = NULL;
 

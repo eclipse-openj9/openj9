@@ -72,6 +72,10 @@ import jdk.internal.loader.NativeLibrary;
 import jdk.internal.reflect.CallerSensitiveAdapter;
 /*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 
+/*[IF CRIU_SUPPORT]*/
+import openj9.internal.criu.NotCheckpointSafe;
+/*[ENDIF] CRIU_SUPPORT*/
+
 /**
  * ClassLoaders are used to dynamically load, link and install
  * classes into a running image.
@@ -1460,6 +1464,9 @@ private static boolean registerAsParallelCapable(Class<?> callerCls) {
  * @see			java.lang.ClassLoader
  *
  */
+/*[IF CRIU_SUPPORT]*/
+@NotCheckpointSafe
+/*[ENDIF] CRIU_SUPPORT */
 protected Object getClassLoadingLock(final String className) {
 	Object lock = this;
 	if (isParallelCapable)	{

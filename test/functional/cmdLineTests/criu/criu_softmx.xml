@@ -41,6 +41,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
     <output type="success" caseSensitive="yes" regex="no">The proposed softmx equals the actual one</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
@@ -62,6 +63,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
     <output type="success" caseSensitive="yes" regex="no">SoftMX value is 0 as expected</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
@@ -83,6 +85,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
     <output type="success" caseSensitive="yes" regex="no">SoftMX value is 0 as expected</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
@@ -104,6 +107,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
     <output type="success" caseSensitive="yes" regex="no">The proposed softmx equals the actual one</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
@@ -126,6 +130,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
     <output type="success" caseSensitive="yes" regex="no">The proposed softmx equals the actual one</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
@@ -148,6 +153,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
     <output type="success" caseSensitive="yes" regex="no">The proposed softmx equals the actual one</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
@@ -170,6 +176,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
     <output type="success" caseSensitive="yes" regex="no">The proposed softmx equals the actual one</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
@@ -192,6 +199,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
     <output type="success" caseSensitive="yes" regex="no">SoftMX value is 0 as expected</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
@@ -214,6 +222,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
     <output type="success" caseSensitive="yes" regex="no">SoftMX value is 0 as expected</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
@@ -235,6 +244,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
     <output type="success" caseSensitive="yes" regex="no">The proposed softmx equals the actual one</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
@@ -256,6 +266,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
     <output type="success" caseSensitive="yes" regex="no">The proposed softmx equals the actual one</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
@@ -278,6 +289,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
     <output type="success" caseSensitive="yes" regex="no">The proposed softmx equals the actual one</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
@@ -299,6 +311,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
     <output type="success" caseSensitive="yes" regex="no">The proposed softmx equals the actual one</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
@@ -320,6 +333,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
     <output type="success" caseSensitive="yes" regex="no">SoftMX value is 0 as expected</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
@@ -342,6 +356,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
     <output type="success" caseSensitive="yes" regex="no">SoftMX value is 0 as expected</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
@@ -364,6 +379,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
     <output type="success" caseSensitive="yes" regex="no">The proposed softmx equals the actual one</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
@@ -386,6 +402,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
     <output type="success" caseSensitive="yes" regex="no">SoftMX value is 0 as expected</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
@@ -407,6 +424,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
     <output type="success" caseSensitive="yes" regex="no">SoftMX value is 0 as expected</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
@@ -428,6 +446,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
     <output type="success" caseSensitive="yes" regex="no">The proposed softmx equals the actual one</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
@@ -450,6 +469,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
     <output type="success" caseSensitive="yes" regex="no">SoftMX value is 0 as expected</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
@@ -471,6 +491,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
     <output type="success" caseSensitive="yes" regex="no">SoftMX value is 0 as expected</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
@@ -492,6 +513,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
     <output type="success" caseSensitive="yes" regex="no">The proposed softmx equals the actual one</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
@@ -513,6 +535,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
     <output type="success" caseSensitive="yes" regex="no">SoftMX value is 0 as expected</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
@@ -534,6 +557,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
     <output type="success" caseSensitive="yes" regex="no">SoftMX value is 0 as expected</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
@@ -555,6 +579,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
     <output type="success" caseSensitive="yes" regex="no">The proposed softmx equals the actual one</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
@@ -576,6 +601,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
     <output type="success" caseSensitive="yes" regex="no">SoftMX value is 0 as expected</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
@@ -597,6 +623,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
     <output type="success" caseSensitive="yes" regex="no">SoftMX value is 0 as expected</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
@@ -619,6 +646,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
     <output type="success" caseSensitive="yes" regex="no">SoftMX value is 0 as expected</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
@@ -641,6 +669,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
     <output type="success" caseSensitive="yes" regex="no">SoftMX value is 0 as expected</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
@@ -663,6 +692,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
     <output type="success" caseSensitive="yes" regex="no">SoftMX value is 0 as expected</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
@@ -685,6 +715,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
     <output type="success" caseSensitive="yes" regex="no">The proposed softmx equals the actual one</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
@@ -707,6 +738,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
     <output type="success" caseSensitive="yes" regex="no">SoftMX value is 0 as expected</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
@@ -729,6 +761,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
     <output type="success" caseSensitive="yes" regex="no">SoftMX value is 0 as expected</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
@@ -751,6 +784,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
     <output type="success" caseSensitive="yes" regex="no">SoftMX value is 0 as expected</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
@@ -773,6 +807,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
     <output type="success" caseSensitive="yes" regex="no">SoftMX value is 0 as expected</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
@@ -795,6 +830,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
     <output type="success" caseSensitive="yes" regex="no">SoftMX value is 0 as expected</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
@@ -817,6 +853,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
     <output type="success" caseSensitive="yes" regex="no">The proposed softmx equals the actual one</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
@@ -839,6 +876,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
     <output type="success" caseSensitive="yes" regex="no">SoftMX value is 0 as expected</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
@@ -861,6 +899,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
     <output type="success" caseSensitive="yes" regex="no">SoftMX value is 0 as expected</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
@@ -883,6 +922,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
     <output type="success" caseSensitive="yes" regex="no">The proposed softmx equals the actual one</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
@@ -905,6 +945,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
     <output type="success" caseSensitive="yes" regex="no">The proposed softmx equals the actual one</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
@@ -927,6 +968,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
     <output type="success" caseSensitive="yes" regex="no">The proposed softmx equals the actual one</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
@@ -949,6 +991,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
     <output type="success" caseSensitive="yes" regex="no">The proposed softmx equals the actual one</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
@@ -971,6 +1014,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
     <output type="success" caseSensitive="yes" regex="no">The proposed softmx equals the actual one</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
@@ -993,6 +1037,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
     <output type="success" caseSensitive="yes" regex="no">The proposed softmx equals the actual one</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
@@ -1015,6 +1060,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
     <output type="success" caseSensitive="yes" regex="no">The proposed softmx equals the actual one</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
@@ -1037,6 +1083,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
     <output type="success" caseSensitive="yes" regex="no">The proposed softmx equals the actual one</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>
@@ -1058,6 +1105,7 @@
     <output type="success" caseSensitive="yes" regex="no">Unable to create a thread:</output>
     <output type="failure" caseSensitive="yes" regex="no">Could not dump the JVM processes, err=-70</output>
     <output type="failure" caseSensitive="yes" regex="no">User requested Java dump using</output>
+    <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
     <output type="success" caseSensitive="yes" regex="no">The proposed softmx equals the actual one</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: softMX value should be 0 but it's not</output>
     <output type="failure" caseSensitive="yes" regex="no">Error condition: the proposed softmx doesn't equal the actual one</output>

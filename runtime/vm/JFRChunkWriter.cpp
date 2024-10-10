@@ -49,13 +49,13 @@ VM_JFRChunkWriter::writeJFRHeader()
 	_bufferWriter->writeU64(_bufferWriter->getFileOffsetFromStart(_metadataOffset)); // 24
 
 	/* start time */
-	_bufferWriter->writeU64(VM_JFRUtils::getCurrentTimeNanos(privatePortLibrary, _buildResult)); // 32
+	_bufferWriter->writeU64(_vm->jfrState.chunkStartTime); // 32
 
 	/* duration */
 	_bufferWriter->writeU64(0); // 40
 
 	/* start ticks */
-	_bufferWriter->writeU64(0); // 48
+	_bufferWriter->writeU64(_vm->jfrState.chunkStartTicks); // 48
 
 	/* ticks per second - 1000_000_000 ticks per second means that we are reporting nanosecond timestamps */
 	_bufferWriter->writeU64(1000000000); // 56
@@ -138,7 +138,7 @@ VM_JFRChunkWriter::writeCheckpointEventHeader(CheckpointTypeMask typeMask, U_32 
 	_bufferWriter->writeU8(EventCheckpoint);
 
 	/* start time */
-	_bufferWriter->writeLEB128(VM_JFRUtils::getCurrentTimeNanos(privatePortLibrary, _buildResult));
+	_bufferWriter->writeLEB128(j9time_nano_time());
 
 	/* duration */
 	_bufferWriter->writeLEB128((U_64)0);
@@ -649,7 +649,7 @@ VM_JFRChunkWriter::writeJVMInformationEvent()
 	_bufferWriter->writeLEB128(JVMInformationID);
 
 	/* write start time */
-	_bufferWriter->writeLEB128(j9time_current_time_millis());
+	_bufferWriter->writeLEB128(j9time_nano_time());
 
 	/* write JVM name */
 	writeStringLiteral(jvmInfo->jvmName);
@@ -687,7 +687,7 @@ VM_JFRChunkWriter::writePhysicalMemoryEvent()
 	_bufferWriter->writeLEB128(PhysicalMemoryID);
 
 	/* write start time */
-	_bufferWriter->writeLEB128(j9time_current_time_millis());
+	_bufferWriter->writeLEB128(j9time_nano_time());
 
 	J9MemoryInfo memInfo = {0};
 	I_32 rc = j9sysinfo_get_memory_info(&memInfo);
@@ -717,7 +717,7 @@ VM_JFRChunkWriter::writeCPUInformationEvent()
 	_bufferWriter->writeLEB128(CPUInformationID);
 
 	/* write start time */
-	_bufferWriter->writeLEB128(j9time_current_time_millis());
+	_bufferWriter->writeLEB128(j9time_nano_time());
 
 	/* write CPU type */
 	writeStringLiteral(cpuInfo->cpu);
@@ -752,7 +752,7 @@ VM_JFRChunkWriter::writeVirtualizationInformationEvent()
 	_bufferWriter->writeLEB128(VirtualizationInformationID);
 
 	/* write start time */
-	_bufferWriter->writeLEB128(j9time_current_time_millis());
+	_bufferWriter->writeLEB128(j9time_nano_time());
 
 	/* write virtualization name */
 	writeStringLiteral(virtualizationInfo->name);
@@ -775,7 +775,7 @@ VM_JFRChunkWriter::writeOSInformationEvent()
 	_bufferWriter->writeLEB128(OSInformationID);
 
 	/* write start time */
-	_bufferWriter->writeLEB128(j9time_current_time_millis());
+	_bufferWriter->writeLEB128(j9time_nano_time());
 
 	/* write OS version */
 	writeStringLiteral(osInfo->osVersion);
@@ -800,7 +800,7 @@ VM_JFRChunkWriter::writeInitialSystemPropertyEvents(J9JavaVM *vm)
 		_bufferWriter->writeLEB128(InitialSystemPropertyID);
 
 		/* write start time */
-		_bufferWriter->writeLEB128(j9time_current_time_millis());
+		_bufferWriter->writeLEB128(j9time_nano_time());
 
 		/* write key */
 		writeStringLiteral(property->name);

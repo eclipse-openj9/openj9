@@ -9517,7 +9517,7 @@ static TR::Register* inlineIntrinsicIndexOf(TR::Node* node, TR::CodeGenerator* c
  *   The Code Generator
  *
  */
-static TR::Register* inlineCompareAndSwapObjectNative(TR::Node* node, TR::CodeGenerator* cg)
+static TR::Register* inlineCompareAndSwapObjectNative(TR::Node* node, TR::CodeGenerator* cg, bool isExchange)
    {
    TR::Compilation *comp = cg->comp();
 
@@ -9533,7 +9533,7 @@ static TR::Register* inlineCompareAndSwapObjectNative(TR::Node* node, TR::CodeGe
    TR::Register* offset   = cg->evaluate(offsetNode);
    TR::Register* oldValue = cg->evaluate(oldValueNode);
    TR::Register* newValue = cg->evaluate(newValueNode);
-   TR::Register* result   = cg->allocateRegister();
+   TR::Register* result   = isExchange ? NULL : cg->allocateRegister();
    TR::Register* EAX      = cg->allocateRegister();
    TR::Register* tmp      = cg->allocateRegister();
 
@@ -9613,8 +9613,21 @@ static TR::Register* inlineCompareAndSwapObjectNative(TR::Node* node, TR::CodeGe
    deps->addPreCondition(EAX, TR::RealRegister::eax, cg);
    deps->addPostCondition(EAX, TR::RealRegister::eax, cg);
    generateMemRegInstruction(use64BitClasses ? TR::InstOpCode::LCMPXCHG8MemReg : TR::InstOpCode::LCMPXCHG4MemReg, node, generateX86MemoryReference(object, offset, 0, cg), tmp, deps, cg);
-   generateRegInstruction(TR::InstOpCode::SETE1Reg, node, result, cg);
-   generateRegRegInstruction(TR::InstOpCode::MOVZXReg4Reg1, node, result, result, cg);
+
+   if (isExchange)
+      {
+      result = EAX;
+      result->setContainsCollectedReference();
+      if (TR::Compiler->om.compressedReferenceShiftOffset() != 0)
+         {
+         generateRegImmInstruction(TR::InstOpCode::SHLRegImm1(), node, EAX, TR::Compiler->om.compressedReferenceShiftOffset(), cg);
+         }
+      }
+   else
+      {
+      generateRegInstruction(TR::InstOpCode::SETE1Reg, node, result, cg);
+      generateRegRegInstruction(TR::InstOpCode::MOVZXReg4Reg1, node, result, result, cg);
+      }
 
    // Non-realtime: Generate a write barrier for this kind of object.
    //
@@ -9636,7 +9649,10 @@ static TR::Register* inlineCompareAndSwapObjectNative(TR::Node* node, TR::CodeGe
       }
 
    cg->stopUsingRegister(tmp);
-   cg->stopUsingRegister(EAX);
+   if (!isExchange)
+      {
+      cg->stopUsingRegister(EAX);
+      }
    node->setRegister(result);
    for (int32_t i = 1; i < node->getNumChildren(); i++)
       {
@@ -9656,6 +9672,7 @@ inlineCompareAndSwapNative(
       TR::Node *node,
       int8_t size,
       bool isObject,
+      bool isExchange,
       TR::CodeGenerator *cg)
    {
    TR::Node *firstChild    = node->getFirstChild();
@@ -9683,20 +9700,28 @@ inlineCompareAndSwapNative(
    //
    // Do this early so we can return early without additional evaluations.
    //
-   if (size == 4)
+   switch (size)
       {
-      op = TR::InstOpCode::LCMPXCHG4MemReg;
-      }
-   else if (size == 8 && comp->target().is64Bit())
-      {
-      op = TR::InstOpCode::LCMPXCHG8MemReg;
-      }
-   else
-      {
-      if (!comp->target().cpu.supportsFeature(OMR_FEATURE_X86_CX8))
+      case 4:
+         op = TR::InstOpCode::LCMPXCHG4MemReg;
+         break;
+      case 8:
+         if (comp->target().is64Bit())
+            {
+            op = TR::InstOpCode::LCMPXCHG8MemReg;
+            }
+         else if (comp->target().cpu.supportsFeature(OMR_FEATURE_X86_CX8))
+            {
+            op = TR::InstOpCode::LCMPXCHG8BMem;
+            }
+         else
+            {
+            return false;
+            }
+         break;
+      default:
+         TR_ASSERT_FATAL_WITH_NODE(node, false, "Unknown dataSize: %d\n", size);
          return false;
-
-      op = TR::InstOpCode::LCMPXCHG8BMem;
       }
 
    // In Java9 the sun.misc.Unsafe JNI methods have been moved to jdk.internal,
@@ -9731,7 +9756,6 @@ inlineCompareAndSwapNative(
       if (comp->target().is32Bit())
          offsetReg = offsetReg->getLowOrder();
       }
-   cg->decReferenceCount(offsetChild);
 
    TR::MemoryReference *mr;
 
@@ -9773,10 +9797,20 @@ inlineCompareAndSwapNative(
 
    TR::Register *newValueRegister = cg->evaluate(newValueChild);
 
-   TR::Register *oldValueRegister = (size == 8) ?
-                                      cg->longClobberEvaluate(oldValueChild) : cg->intClobberEvaluate(oldValueChild);
+   TR::Register *oldValueRegister;
+   switch (size)
+      {
+      case 4:
+         oldValueRegister = cg->intClobberEvaluate(oldValueChild);
+         break;
+      case 8:
+         oldValueRegister = cg->longClobberEvaluate(oldValueChild);
+         break;
+      default:
+         TR_ASSERT_FATAL_WITH_NODE(node, false, "Unknown dataSize: %d\n", size);
+         break;
+      }
    bool killOldValueRegister = (oldValueChild->getReferenceCount() > 1) ? true : false;
-   cg->decReferenceCount(oldValueChild);
 
    TR::RegisterDependencyConditions  *deps;
    TR_X86ScratchRegisterManager *scratchRegisterManagerForRealTime = NULL;
@@ -9818,6 +9852,7 @@ inlineCompareAndSwapNative(
 
    TR::MemoryReference *cmpxchgMR = mr;
 
+   TR::Register *resultReg;
    if (op == TR::InstOpCode::LCMPXCHG8BMem)
       {
       int numDeps = 4;
@@ -9871,15 +9906,32 @@ inlineCompareAndSwapNative(
       generateMemRegInstruction(op, node, cmpxchgMR, newValueRegister, deps, cg);
       }
 
+   if (isExchange)
+      {
+      killOldValueRegister = false;
+      resultReg = oldValueRegister;
+      if (isObject)
+         {
+         resultReg->setContainsCollectedReference();
+         if (TR::Compiler->om.compressedReferenceShiftOffset() != 0)
+            {
+            generateRegImmInstruction(TR::InstOpCode::SHLRegImm1(), node, resultReg, TR::Compiler->om.compressedReferenceShiftOffset(), cg);
+            }
+         }
+      }
+
    if (killOldValueRegister)
       cg->stopUsingRegister(oldValueRegister);
 
    if (storeAddressRegForRealTime)
       scratchRegisterManagerForRealTime->reclaimScratchRegister(storeAddressRegForRealTime);
 
-   TR::Register *resultReg = cg->allocateRegister();
-   generateRegInstruction(TR::InstOpCode::SETE1Reg, node, resultReg, cg);
-   generateRegRegInstruction(TR::InstOpCode::MOVZXReg4Reg1, node, resultReg, resultReg, cg);
+   if (!isExchange)
+      {
+      resultReg = cg->allocateRegister();
+      generateRegInstruction(TR::InstOpCode::SETE1Reg, node, resultReg, cg);
+      generateRegRegInstruction(TR::InstOpCode::MOVZXReg4Reg1, node, resultReg, resultReg, cg);
+      }
 
    // Non-realtime: Generate a write barrier for this kind of object.
    //
@@ -9905,8 +9957,17 @@ inlineCompareAndSwapNative(
 
    node->setRegister(resultReg);
 
-   cg->decReferenceCount(newValueChild);
    cg->decReferenceCount(objectChild);
+   if (offsetReg)
+      {
+      cg->decReferenceCount(offsetChild);
+      }
+   else
+      {
+      cg->recursivelyDecReferenceCount(offsetChild);
+      }
+   cg->decReferenceCount(oldValueChild);
+   cg->decReferenceCount(newValueChild);
    if (bumpedRefCount)
       cg->decReferenceCount(translatedNode);
 
@@ -9932,6 +9993,8 @@ bool J9::X86::TreeEvaluator::VMinlineCallEvaluator(
 
    bool callWasInlined = false;
    TR::Compilation *comp = cg->comp();
+
+   static bool disableCAEIntrinsic = feGetEnv("TR_DisableCAEIntrinsic") != NULL;
 
    if (methodSymbol)
       {
@@ -10014,26 +10077,54 @@ bool J9::X86::TreeEvaluator::VMinlineCallEvaluator(
             return false; // Call the native version of NativeThread.current()
          case TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z:
             {
-            if(node->isSafeForCGToFastPathUnsafeCall())
-               return inlineCompareAndSwapNative(node, 4, false, cg);
+            if (node->isSafeForCGToFastPathUnsafeCall())
+               return inlineCompareAndSwapNative(node, 4, false, false, cg);
             }
             break;
          case TR::sun_misc_Unsafe_compareAndSwapLong_jlObjectJJJ_Z:
             {
-            if(node->isSafeForCGToFastPathUnsafeCall())
-               return inlineCompareAndSwapNative(node, 8, false, cg);
+            if (node->isSafeForCGToFastPathUnsafeCall())
+               return inlineCompareAndSwapNative(node, 8, false, false, cg);
             }
             break;
          case TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z:
             {
             static bool UseOldCompareAndSwapObject = (bool)feGetEnv("TR_UseOldCompareAndSwapObject");
-            if(node->isSafeForCGToFastPathUnsafeCall())
+            if (node->isSafeForCGToFastPathUnsafeCall())
                {
                if (UseOldCompareAndSwapObject)
-                  return inlineCompareAndSwapNative(node, (comp->target().is64Bit() && !comp->useCompressedPointers()) ? 8 : 4, true, cg);
+                  return inlineCompareAndSwapNative(node, TR::Compiler->om.sizeofReferenceField(), true, false, cg);
                else
                   {
-                  inlineCompareAndSwapObjectNative(node, cg);
+                  inlineCompareAndSwapObjectNative(node, cg, false);
+                  return true;
+                  }
+               }
+            }
+            break;
+         case TR::jdk_internal_misc_Unsafe_compareAndExchangeInt:
+            {
+            if (!disableCAEIntrinsic && node->isSafeForCGToFastPathUnsafeCall())
+               return inlineCompareAndSwapNative(node, 4, false, true, cg);
+            }
+            break;
+         case TR::jdk_internal_misc_Unsafe_compareAndExchangeLong:
+            {
+            if (!disableCAEIntrinsic && node->isSafeForCGToFastPathUnsafeCall())
+               return inlineCompareAndSwapNative(node, 8, false, true, cg);
+            }
+            break;
+         case TR::jdk_internal_misc_Unsafe_compareAndExchangeObject:
+         case TR::jdk_internal_misc_Unsafe_compareAndExchangeReference:
+            {
+            static bool UseOldCompareAndSwapObject = (bool)feGetEnv("TR_UseOldCompareAndSwapObject");
+            if (!disableCAEIntrinsic && node->isSafeForCGToFastPathUnsafeCall())
+               {
+               if (UseOldCompareAndSwapObject)
+                  return inlineCompareAndSwapNative(node, TR::Compiler->om.sizeofReferenceField(), true, true, cg);
+               else
+                  {
+                  inlineCompareAndSwapObjectNative(node, cg, true);
                   return true;
                   }
                }
@@ -10529,11 +10620,17 @@ void J9::X86::TreeEvaluator::VMwrtbarWithoutStoreEvaluator(
        (gcMode == gc_modron_wrtbar_cardmark
        || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck
        || gcMode == gc_modron_wrtbar_cardmark_incremental) &&
-       (node->getOpCodeValue()==TR::icall)) {
-       TR::MethodSymbol *symbol = node->getSymbol()->castToMethodSymbol();
-       if (symbol != NULL && symbol->getRecognizedMethod())
-          unsafeCallBarrier = true;
-   }
+       node->getOpCode().isCall())
+      {
+      TR::MethodSymbol *symbol = node->getSymbol()->castToMethodSymbol();
+      if (symbol &&
+          (symbol->getRecognizedMethod() == TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z ||
+           symbol->getRecognizedMethod() == TR::jdk_internal_misc_Unsafe_compareAndExchangeObject ||
+           symbol->getRecognizedMethod() == TR::jdk_internal_misc_Unsafe_compareAndExchangeReference))
+         {
+         unsafeCallBarrier = true;
+         }
+      }
 
    bool doCheckConcurrentMarkActive =
          (gcMode == gc_modron_wrtbar_cardmark
@@ -11672,15 +11769,6 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
          callInlined = true;
          break;
 
-      case TR::java_lang_String_compress:
-         return TR::TreeEvaluator::compressStringEvaluator(node, cg, useJapaneseCompression);
-
-      case TR::java_lang_String_compressNoCheck:
-         return TR::TreeEvaluator::compressStringNoCheckEvaluator(node, cg, useJapaneseCompression);
-
-      case TR::java_lang_String_andOR:
-         return TR::TreeEvaluator::andORStringEvaluator(node, cg);
-
       default:
          break;
       }
@@ -11950,67 +12038,6 @@ J9::X86::TreeEvaluator::encodeUTF16Evaluator(TR::Node *node, TR::CodeGenerator *
    return resultReg;
    }
 
-
-TR::Register *
-J9::X86::TreeEvaluator::compressStringEvaluator(
-      TR::Node *node,
-      TR::CodeGenerator *cg,
-      bool japaneseMethod)
-   {
-   TR::Node *srcObjNode, *dstObjNode, *startNode, *lengthNode;
-   TR::Register *srcObjReg, *dstObjReg, *lengthReg, *startReg;
-   bool stopUsingCopyReg1, stopUsingCopyReg2, stopUsingCopyReg3, stopUsingCopyReg4;
-
-   srcObjNode = node->getChild(0);
-   dstObjNode = node->getChild(1);
-   startNode = node->getChild(2);
-   lengthNode = node->getChild(3);
-
-   stopUsingCopyReg1 = TR::TreeEvaluator::stopUsingCopyRegAddr(srcObjNode, srcObjReg, cg);
-   stopUsingCopyReg2 = TR::TreeEvaluator::stopUsingCopyRegAddr(dstObjNode, dstObjReg, cg);
-   stopUsingCopyReg3 = TR::TreeEvaluator::stopUsingCopyRegInteger(startNode, startReg, cg);
-   stopUsingCopyReg4 = TR::TreeEvaluator::stopUsingCopyRegInteger(lengthNode, lengthReg, cg);
-
-   uintptr_t hdrSize = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
-   generateRegImmInstruction(TR::InstOpCode::ADDRegImms(), node, srcObjReg, hdrSize, cg);
-   generateRegImmInstruction(TR::InstOpCode::ADDRegImms(), node, dstObjReg, hdrSize, cg);
-
-
-   // Now that we have all the registers, set up the dependencies
-   TR::RegisterDependencyConditions  *dependencies =
-      generateRegisterDependencyConditions((uint8_t)0, 6, cg);
-   TR::Register *resultReg = cg->allocateRegister();
-   TR::Register *dummy = cg->allocateRegister();
-   dependencies->addPostCondition(srcObjReg, TR::RealRegister::esi, cg);
-   dependencies->addPostCondition(dstObjReg, TR::RealRegister::edi, cg);
-   dependencies->addPostCondition(lengthReg, TR::RealRegister::ecx, cg);
-   dependencies->addPostCondition(startReg, TR::RealRegister::eax, cg);
-   dependencies->addPostCondition(resultReg, TR::RealRegister::edx, cg);
-   dependencies->addPostCondition(dummy, TR::RealRegister::ebx, cg);
-   dependencies->stopAddingConditions();
-
-   TR_RuntimeHelper helper;
-   if (cg->comp()->target().is64Bit())
-      helper = japaneseMethod ? TR_AMD64compressStringJ : TR_AMD64compressString;
-   else
-      helper = japaneseMethod ? TR_IA32compressStringJ : TR_IA32compressString;
-   generateHelperCallInstruction(node, helper, dependencies, cg);
-   cg->stopUsingRegister(dummy);
-
-   for (uint16_t i = 0; i < node->getNumChildren(); i++)
-     cg->decReferenceCount(node->getChild(i));
-
-   if (stopUsingCopyReg1)
-      cg->getLiveRegisters(TR_GPR)->registerIsDead(srcObjReg);
-   if (stopUsingCopyReg2)
-      cg->getLiveRegisters(TR_GPR)->registerIsDead(dstObjReg);
-   if (stopUsingCopyReg3)
-      cg->getLiveRegisters(TR_GPR)->registerIsDead(startReg);
-   if (stopUsingCopyReg4)
-      cg->getLiveRegisters(TR_GPR)->registerIsDead(lengthReg);
-   node->setRegister(resultReg);
-   return resultReg;
-   }
 
 /*
  * The CaseConversionManager is used to store info about the conversion. It defines the lower bound and upper bound value depending on
@@ -12397,113 +12424,6 @@ J9::X86::TreeEvaluator::stringCaseConversionHelper(TR::Node *node, TR::CodeGener
    return result;
    }
 
-TR::Register *
-J9::X86::TreeEvaluator::compressStringNoCheckEvaluator(
-      TR::Node *node,
-      TR::CodeGenerator *cg,
-      bool japaneseMethod)
-   {
-   TR::Node *srcObjNode, *dstObjNode, *startNode, *lengthNode;
-   TR::Register *srcObjReg, *dstObjReg, *lengthReg, *startReg;
-   bool stopUsingCopyReg1, stopUsingCopyReg2, stopUsingCopyReg3, stopUsingCopyReg4;
-
-   srcObjNode = node->getChild(0);
-   dstObjNode = node->getChild(1);
-   startNode = node->getChild(2);
-   lengthNode = node->getChild(3);
-
-   stopUsingCopyReg1 = TR::TreeEvaluator::stopUsingCopyRegAddr(srcObjNode, srcObjReg, cg);
-   stopUsingCopyReg2 = TR::TreeEvaluator::stopUsingCopyRegAddr(dstObjNode, dstObjReg, cg);
-   stopUsingCopyReg3 = TR::TreeEvaluator::stopUsingCopyRegInteger(startNode, startReg, cg);
-   stopUsingCopyReg4 = TR::TreeEvaluator::stopUsingCopyRegInteger(lengthNode, lengthReg, cg);
-
-   uintptr_t hdrSize = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
-   generateRegImmInstruction(TR::InstOpCode::ADDRegImms(), node, srcObjReg, hdrSize, cg);
-   generateRegImmInstruction(TR::InstOpCode::ADDRegImms(), node, dstObjReg, hdrSize, cg);
-
-
-   // Now that we have all the registers, set up the dependencies
-   TR::RegisterDependencyConditions  *dependencies =
-      generateRegisterDependencyConditions((uint8_t)0, 5, cg);
-   dependencies->addPostCondition(srcObjReg, TR::RealRegister::esi, cg);
-   dependencies->addPostCondition(dstObjReg, TR::RealRegister::edi, cg);
-   dependencies->addPostCondition(lengthReg, TR::RealRegister::ecx, cg);
-   dependencies->addPostCondition(startReg, TR::RealRegister::eax, cg);
-   TR::Register *dummy = cg->allocateRegister();
-   dependencies->addPostCondition(dummy, TR::RealRegister::ebx, cg);
-   dependencies->stopAddingConditions();
-
-   TR_RuntimeHelper helper;
-   if (cg->comp()->target().is64Bit())
-      helper = japaneseMethod ? TR_AMD64compressStringNoCheckJ : TR_AMD64compressStringNoCheck;
-   else
-      helper = japaneseMethod ? TR_IA32compressStringNoCheckJ : TR_IA32compressStringNoCheck;
-
-   generateHelperCallInstruction(node, helper, dependencies, cg);
-   cg->stopUsingRegister(dummy);
-
-   for (uint16_t i = 0; i < node->getNumChildren(); i++)
-     cg->decReferenceCount(node->getChild(i));
-
-   if (stopUsingCopyReg1)
-      cg->getLiveRegisters(TR_GPR)->registerIsDead(srcObjReg);
-   if (stopUsingCopyReg2)
-      cg->getLiveRegisters(TR_GPR)->registerIsDead(dstObjReg);
-   if (stopUsingCopyReg3)
-      cg->getLiveRegisters(TR_GPR)->registerIsDead(startReg);
-   if (stopUsingCopyReg4)
-      cg->getLiveRegisters(TR_GPR)->registerIsDead(lengthReg);
-   return NULL;
-   }
-
-
-TR::Register *
-J9::X86::TreeEvaluator::andORStringEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   TR::Node *srcObjNode, *startNode, *lengthNode;
-   TR::Register *srcObjReg, *lengthReg, *startReg;
-   bool stopUsingCopyReg1, stopUsingCopyReg2, stopUsingCopyReg3;
-
-   srcObjNode = node->getChild(0);
-   startNode = node->getChild(1);
-   lengthNode = node->getChild(2);
-
-   stopUsingCopyReg1 = TR::TreeEvaluator::stopUsingCopyRegAddr(srcObjNode, srcObjReg, cg);
-   stopUsingCopyReg2 = TR::TreeEvaluator::stopUsingCopyRegInteger(startNode, startReg, cg);
-   stopUsingCopyReg3 = TR::TreeEvaluator::stopUsingCopyRegInteger(lengthNode, lengthReg, cg);
-
-   uintptr_t hdrSize = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
-   generateRegImmInstruction(TR::InstOpCode::ADDRegImms(), node, srcObjReg, hdrSize, cg);
-
-   // Now that we have all the registers, set up the dependencies
-   TR::RegisterDependencyConditions  *dependencies =
-      generateRegisterDependencyConditions((uint8_t)0, 5, cg);
-   TR::Register *resultReg = cg->allocateRegister();
-   dependencies->addPostCondition(srcObjReg, TR::RealRegister::esi, cg);
-   dependencies->addPostCondition(lengthReg, TR::RealRegister::ecx, cg);
-   dependencies->addPostCondition(startReg, TR::RealRegister::eax, cg);
-   dependencies->addPostCondition(resultReg, TR::RealRegister::edx, cg);
-   TR::Register *dummy = cg->allocateRegister();
-   dependencies->addPostCondition(dummy, TR::RealRegister::ebx, cg);
-   dependencies->stopAddingConditions();
-
-   TR_RuntimeHelper helper =
-      cg->comp()->target().is64Bit() ? TR_AMD64andORString : TR_IA32andORString;
-   generateHelperCallInstruction(node, helper, dependencies, cg);
-   cg->stopUsingRegister(dummy);
-
-   for (uint16_t i = 0; i < node->getNumChildren(); i++)
-     cg->decReferenceCount(node->getChild(i));
-
-   if (stopUsingCopyReg1)
-      cg->getLiveRegisters(TR_GPR)->registerIsDead(srcObjReg);
-   if (stopUsingCopyReg2)
-      cg->getLiveRegisters(TR_GPR)->registerIsDead(startReg);
-   if (stopUsingCopyReg3)
-      cg->getLiveRegisters(TR_GPR)->registerIsDead(lengthReg);
-   node->setRegister(resultReg);
-   return resultReg;
-   }
 
 /*
  *

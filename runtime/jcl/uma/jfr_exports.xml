@@ -58,7 +58,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	<export name="Java_jdk_jfr_internal_JVM_destroyJFR" />
 	<export name="Java_jdk_jfr_internal_JVM_isAvailable" />
 	<export name="Java_jdk_jfr_internal_JVM_getTimeConversionFactor" />
-	<export name="Java_jdk_jfr_internal_JVM_getTypeId" />
+	<export name="Java_jdk_jfr_internal_JVM_getTypeId__Ljava_lang_Class_2" />
 	<export name="Java_jdk_jfr_internal_JVM_getEventWriter" />
 	<export name="Java_jdk_jfr_internal_JVM_newEventWriter" />
 	<export name="Java_jdk_jfr_internal_JVM_flush__Ljava_lang_Object_2II" />
@@ -81,8 +81,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	<export name="Java_jdk_jfr_internal_JVM_isInstrumented" />
 	<export name="Java_jdk_jfr_internal_JVM_getChunkStartNanos" />
 	<export name="Java_jdk_jfr_internal_JVM_setConfiguration" />
+	<export name="Java_jdk_jfr_internal_JVM_setSampleThreads" />
 	<export name="Java_jdk_jfr_internal_JVM_getConfiguration" />
-	<export name="Java_jdk_jfr_internal_JVM_getTypeId" />
+	<export name="Java_jdk_jfr_internal_JVM_getTypeId__Ljava_lang_String_2" />
 	<export name="Java_jdk_jfr_internal_JVM_isContainerized" />
 	<export name="Java_jdk_jfr_internal_JVM_hostTotalMemory" />
 	<export name="java_jdk_jfr_internal_JVM_emitDataLoss" />
