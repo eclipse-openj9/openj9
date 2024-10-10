@@ -256,6 +256,7 @@ static bool isVarHandleOperationMethodOnNonStaticField(TR::RecognizedMethod rm)
 bool TR_UnsafeFastPath::tryTransformUnsafeAtomicCallInVarHandleAccessMethod(TR::TreeTop* callTree, TR::RecognizedMethod callerMethod, TR::RecognizedMethod calleeMethod)
    {
    TR::Node* node = callTree->getNode()->getFirstChild();
+   TR::Node* unsafeAddress = NULL;
 
    // Give up on arraylet
    //
@@ -279,6 +280,20 @@ bool TR_UnsafeFastPath::tryTransformUnsafeAtomicCallInVarHandleAccessMethod(TR::
       if (isVarHandleOperationMethodOnNonStaticField(callerMethod) &&
          performTransformation(comp(), "%s transforming Unsafe.CAS [" POINTER_PRINTF_FORMAT "] into codegen inlineable\n", optDetailString(), node))
          {
+      #if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+         if (isUnsafeCallerAccessingArrayElement(callerMethod) && TR::Compiler->om.isOffHeapAllocationEnabled() && comp()->target().is64Bit())
+            {
+            TR::Node *object = node->getChild(1);
+
+            TR::Node *baseAddr = TR::TransformUtil::generateDataAddrLoadTrees(comp(), object);
+            node->setChild(1, baseAddr);
+
+            //correct refcounts
+            object->decReferenceCount();
+            baseAddr->incReferenceCount();
+            }
+      #endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
+
          node->setIsSafeForCGToFastPathUnsafeCall(true);
          if (!isVarHandleOperationMethodOnArray(callerMethod))
             {
@@ -310,7 +325,6 @@ bool TR_UnsafeFastPath::tryTransformUnsafeAtomicCallInVarHandleAccessMethod(TR::
    if (!performTransformation(comp(), "%s turning the call [" POINTER_PRINTF_FORMAT "] into atomic intrinsic\n", optDetailString(), node))
       return false;
 
-   TR::Node* unsafeAddress = NULL;
    if (isUnsafeCallerAccessingStaticField(callerMethod))
       {
       TR::Node *jlClass = node->getChild(1);
@@ -326,10 +340,19 @@ bool TR_UnsafeFastPath::tryTransformUnsafeAtomicCallInVarHandleAccessMethod(TR::
       }
    else
       {
-      TR::Node* object = node->getChild(1);
-      TR::Node* offset = node->getChild(2);
-      unsafeAddress = comp()->target().is32Bit() ? TR::Node::create(node, TR::aiadd, 2, object, TR::Node::create(node, TR::l2i, 1, offset)) :
-                                                       TR::Node::create(node, TR::aladd, 2, object, offset);
+      TR::Node *object = node->getChild(1);
+      TR::Node *offset = node->getChild(2);
+
+      TR::Node *baseAddr = object;
+
+      //load dataAddr only if offheap is enabled and object is array
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+      if (isUnsafeCallerAccessingArrayElement(callerMethod) && TR::Compiler->om.isOffHeapAllocationEnabled() && comp()->target().is64Bit())
+         baseAddr = TR::TransformUtil::generateDataAddrLoadTrees(comp(), object);
+#endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
+
+      unsafeAddress = comp()->target().is32Bit() ? TR::Node::create(node, TR::aiadd, 2, baseAddr, TR::Node::create(node, TR::l2i, 1, offset)) :
+                                                   TR::Node::create(node, TR::aladd, 2, baseAddr, offset);
       unsafeAddress->setIsInternalPointer(true);
       }
 
