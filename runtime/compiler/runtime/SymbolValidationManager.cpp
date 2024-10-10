@@ -961,6 +961,7 @@ TR::SymbolValidationManager::addStaticMethodFromCPRecord(TR_OpaqueMethodBlock *m
    {
    TR_OpaqueClassBlock *beholder = _fej9->getClassFromCP(cp);
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
+   printf("adding new method record %p 1\n", method);
    return addMethodRecord(new (_region) StaticMethodFromCPRecord(method, beholder, cpIndex));
    }
 
@@ -969,6 +970,7 @@ TR::SymbolValidationManager::addSpecialMethodFromCPRecord(TR_OpaqueMethodBlock *
    {
    TR_OpaqueClassBlock *beholder = _fej9->getClassFromCP(cp);
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
+   printf("adding new method record %p 2\n", method);
    return addMethodRecord(new (_region) SpecialMethodFromCPRecord(method, beholder, cpIndex));
    }
 
@@ -977,6 +979,7 @@ TR::SymbolValidationManager::addVirtualMethodFromCPRecord(TR_OpaqueMethodBlock *
    {
    TR_OpaqueClassBlock *beholder = _fej9->getClassFromCP(cp);
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
+   printf("adding new method record %p 3\n", method);
    return addMethodRecord(new (_region) VirtualMethodFromCPRecord(method, beholder, cpIndex));
    }
 
@@ -991,6 +994,7 @@ TR::SymbolValidationManager::addVirtualMethodFromOffsetRecord(TR_OpaqueMethodBlo
    if (virtualCallOffset != (int32_t)(int16_t)virtualCallOffset)
       return false; // not enough space in the record
 
+   printf("adding new method record %p 4\n", method);
    return addMethodRecord(new (_region) VirtualMethodFromOffsetRecord(method, beholder, virtualCallOffset, ignoreRtResolve));
    }
 
@@ -999,6 +1003,7 @@ TR::SymbolValidationManager::addInterfaceMethodFromCPRecord(TR_OpaqueMethodBlock
    {
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
    SVM_ASSERT_ALREADY_VALIDATED(this, lookup);
+   printf("adding new method record %p 5\n", method);
    return addMethodRecord(new (_region) InterfaceMethodFromCPRecord(method, beholder, lookup, cpIndex));
    }
 
@@ -1007,6 +1012,7 @@ TR::SymbolValidationManager::addImproperInterfaceMethodFromCPRecord(TR_OpaqueMet
    {
    TR_OpaqueClassBlock *beholder = _fej9->getClassFromCP(cp);
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
+   printf("adding new method record %p 6\n", method);
    return addMethodRecord(new (_region) ImproperInterfaceMethodFromCPRecord(method, beholder, cpIndex));
    }
 
@@ -1019,6 +1025,8 @@ TR::SymbolValidationManager::addMethodFromClassAndSignatureRecord(TR_OpaqueMetho
 
    SVM_ASSERT_ALREADY_VALIDATED(this, lookupClass);
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
+
+   printf("adding new method record %p 7\n", method);
    return addMethodRecord(new (_region) MethodFromClassAndSigRecord(method, lookupClass, beholder));
    }
 
@@ -1031,6 +1039,7 @@ TR::SymbolValidationManager::addMethodFromSingleImplementerRecord(TR_OpaqueMetho
    {
    SVM_ASSERT_ALREADY_VALIDATED(this, thisClass);
    SVM_ASSERT_ALREADY_VALIDATED(this, callerMethod);
+   printf("adding new method record %p 8\n", method);
    return addMethodRecord(new (_region) MethodFromSingleImplementer(method, thisClass, cpIndexOrVftSlot, callerMethod, useGetResolvedInterfaceMethod));
    }
 
@@ -1042,6 +1051,7 @@ TR::SymbolValidationManager::addMethodFromSingleInterfaceImplementerRecord(TR_Op
    {
    SVM_ASSERT_ALREADY_VALIDATED(this, thisClass);
    SVM_ASSERT_ALREADY_VALIDATED(this, callerMethod);
+   printf("adding new method record %p 9\n", method);
    return addMethodRecord(new (_region) MethodFromSingleInterfaceImplementer(method, thisClass, cpIndex, callerMethod));
    }
 
@@ -1053,6 +1063,7 @@ TR::SymbolValidationManager::addMethodFromSingleAbstractImplementerRecord(TR_Opa
    {
    SVM_ASSERT_ALREADY_VALIDATED(this, thisClass);
    SVM_ASSERT_ALREADY_VALIDATED(this, callerMethod);
+   printf("adding new method record %p a\n", method);
    return addMethodRecord(new (_region) MethodFromSingleAbstractImplementer(method, thisClass, vftSlot, callerMethod));
    }
 
