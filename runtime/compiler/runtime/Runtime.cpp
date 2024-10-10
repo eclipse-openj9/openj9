@@ -596,6 +596,7 @@ JIT_HELPER(__forwardArrayCopy);
 JIT_HELPER(__backwardArrayCopy);
 JIT_HELPER(_patchGCRHelper);
 JIT_HELPER(_fieldWatchHelper);
+JIT_HELPER(__arrayTranslateTRTO255);
 
 #elif defined(TR_HOST_S390)
 JIT_HELPER(__double2Long);
@@ -1580,6 +1581,7 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
 #else
    SET(TR_ARM64fieldWatchHelper,                  (void *) 0,                                TR_Helper);
 #endif
+   SET(TR_ARM64arrayTranslateTRTO255,             (void *) __arrayTranslateTRTO255,          TR_Helper);
 
 #elif defined(TR_HOST_S390)
    SET(TR_S390double2Long,                                (void *) 0,                                              TR_Helper);
