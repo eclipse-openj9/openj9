@@ -1,0 +1,131 @@
+/*******************************************************************************
+ * Copyright IBM Corp. and others 2024
+ *
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License 2.0 which accompanies this
+ * distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+ * or the Apache License, Version 2.0 which accompanies this distribution and
+ * is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * This Source Code may also be made available under the following
+ * Secondary Licenses when the conditions for such availability set
+ * forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+ * General Public License, version 2 with the GNU Classpath
+ * Exception [1] and GNU General Public License, version 2 with the
+ * OpenJDK Assembly Exception [2].
+ *
+ * [1] https://www.gnu.org/software/classpath/license.html
+ * [2] https://openjdk.org/legal/assembly-exception.html
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
+ *******************************************************************************/
+
+#include "aarch64/runtime/arm64asmdefs.inc"
+
+	.file "ArrayTranslate.s"
+
+	.globl	FUNC_LABEL(__arrayTranslateTRTO255)
+
+	.text
+	.align	2
+
+// ----
+// arrayTranslateTRTO255
+// ----
+// TO stands for Two bytes to One byte
+//
+// uint16 input[];
+// uint8  output[];
+// int32  len;
+//
+// int32 i = 0;
+// for (i < len) {
+//     uint16 ch = input[i];
+//     if (ch > 0xFF) break;
+//     output[i] = ch & 0xFF;
+//     i++;
+// }
+// return i;
+//
+// in:  x0: input
+//      x1: output
+//      x2: len
+// out: x0: num of translated elements
+// trash: x4-x6, v0-v2
+
+FUNC_LABEL(__arrayTranslateTRTO255):
+	// preserve output address
+	mov	x6, x1
+	cmp	w2, #16
+	b.cc	atTRTO255_15
+	lsr	w4, w2, #4
+atTRTO255_16Loop:
+	// load 16 elements
+	ldp	q0, q1, [x0]
+	// collect upper 8 bits
+	uzp2	v2.16b, v0.16b, v1.16b
+	// fail when any one of them is non-zero
+	umaxp	v2.4s, v2.4s, v2.4s
+	mov	x5, v2.D[0]
+	cbnz	x5, atTRTO255_Fail
+	// collect lower 8 bits
+	uzp1	v2.16b, v0.16b, v1.16b
+	add	x0, x0, #32
+	subs	w4, w4, #1
+	// store 16 elements
+	str	q2, [x1], #16
+	b.ne	atTRTO255_16Loop
+atTRTO255_15:
+	// 15 elements or less remaining
+	tst	w2, #8
+	b.eq	atTRTO255_7
+	// load 8 elements
+	ldr	q0, [x0]
+	// collect upper 8 bits
+	trn2	v2.16b, v0.16b, v0.16b
+	// fail when any one of them is non-zero
+	umaxp	v2.4s, v2.4s, v2.4s
+	mov	x5, v2.D[0]
+	cbnz	x5, atTRTO255_Fail
+	// collect lower 8 bits
+	xtn	v2.8b, v0.8h
+	add	x0, x0, #16
+	// store 8 elements
+	str	d2, [x1], #8
+atTRTO255_7:
+	// 7 elements or less remaining
+	tst	w2, #4
+	b.eq	atTRTO255_3
+	// load 4 elements
+	ldr	d0, [x0]
+	// collect upper 8 bits
+	trn2	v2.8b, v0.8b, v0.8b
+	// fail when any one of them is non-zero
+	mov	x5, v2.D[0]
+	cbnz	x5, atTRTO255_Fail
+	// collect lower 8 bits
+	xtn	v2.8b, v0.8h
+	add	x0, x0, #8
+	// store 4 elements
+	str	s2, [x1], #4
+atTRTO255_3:
+	// 3 elements or less remaining
+	ands	w4, w2, #3
+atTRTO255_1Loop:
+	b.eq	atTRTO255_Done
+	ldrh	w5, [x0], #2
+	cmp	w5, #256
+	b.cs	atTRTO255_Done
+	subs	w4, w4, #1
+	strb	w5, [x1], #1
+	b	atTRTO255_1Loop
+atTRTO255_Fail:
+	ldrh	w5, [x0], #2
+	cmp	w5, #256
+	b.cs	atTRTO255_Done
+	strb	w5, [x1], #1
+	b	atTRTO255_Fail
+atTRTO255_Done:
+	// number of translated elements
+	sub	x0, x1, x6
+	ret
