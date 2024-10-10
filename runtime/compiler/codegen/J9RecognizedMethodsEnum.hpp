@@ -458,6 +458,7 @@
    jdk_internal_misc_Unsafe_compareAndExchangeObject,
    jdk_internal_misc_Unsafe_compareAndExchangeReference,
 
+   jdk_internal_misc_Unsafe_storeStoreFence,
    jdk_internal_misc_Unsafe_copyMemory0,
    jdk_internal_loader_NativeLibraries_load,
    jdk_internal_util_ArraysSupport_vectorizedMismatch,
