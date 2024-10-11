@@ -44,7 +44,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	<xi:include href="uma/se19only_exports.xml"></xi:include>
 	<xi:include href="uma/se19_exports.xml"></xi:include>
 	<xi:include href="uma/se20_exports.xml"></xi:include>
-	<xi:include href="uma/jfr_exports.xml"></xi:include>
+	<xi:include href="uma/jfr_jdk11_exports.xml"></xi:include>
+	<xi:include href="uma/jfr_jdk17_exports.xml"></xi:include>
+	<xi:include href="uma/jfr_jdk21_exports.xml"></xi:include>
+	<xi:include href="uma/jfr_jdk23_exports.xml"></xi:include>
 
 	<xi:include href="uma/vendor_jcl_exports.xml">
 		<xi:fallback/>
@@ -142,8 +145,24 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<group name="se20">
 				<include-if condition="spec.java20"/>
 			</group>
-			<group name="jfr">
+			<group name="jfr_jdk11">
 				<include-if condition="spec.flags.opt_jfr"/>
+				<include-if condition="spec.java11"/>
+				<exclude-if condition="spec.java12"/>
+			</group>
+			<group name="jfr_jdk17">
+				<include-if condition="spec.flags.opt_jfr"/>
+				<include-if condition="spec.java17"/>
+				<exclude-if condition="spec.java18"/>
+			</group>
+			<group name="jfr_jdk21">
+				<include-if condition="spec.flags.opt_jfr"/>
+				<include-if condition="spec.java21"/>
+				<exclude-if condition="spec.java22"/>
+			</group>
+			<group name="jfr_jdk23">
+				<include-if condition="spec.flags.opt_jfr"/>
+				<include-if condition="spec.java23"/>
 			</group>
 		</exports>
 

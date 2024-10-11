@@ -44,26 +44,7 @@ Java_jdk_jfr_internal_JVM_registerNatives(JNIEnv *env, jclass clazz)
 }
 
 void JNICALL
-Java_jdk_jfr_internal_JVM_markChunkFinal(JNIEnv *env, jclass clazz)
-{
-	// TODO: implementation
-}
-
-void JNICALL
-Java_jdk_jfr_internal_JVM_beginRecording(JNIEnv *env, jclass clazz)
-{
-	// TODO: implementation
-}
-
-jboolean JNICALL
-Java_jdk_jfr_internal_JVM_isRecording(JNIEnv *env, jclass clazz)
-{
-	// TODO: implementation
-	return JNI_FALSE;
-}
-
-void JNICALL
-Java_jdk_jfr_internal_JVM_endRecording(JNIEnv *env, jclass clazz)
+Java_jdk_jfr_internal_JVM_beginRecording(JNIEnv *env, jobject obj)
 {
 	// TODO: implementation
 }
@@ -76,56 +57,68 @@ Java_jdk_jfr_internal_JVM_counterTime(JNIEnv *env, jclass clazz)
 }
 
 jboolean JNICALL
-Java_jdk_jfr_internal_JVM_emitEvent(JNIEnv *env, jclass clazz, jlong eventTypeId, jlong timestamp, jlong periodicType)
+Java_jdk_jfr_internal_JVM_emitEvent(JNIEnv *env, jobject obj, jlong eventTypeId, jlong timestamp,
+#if JAVA_SPEC_VERSION <= 17
+		jlong when
+#else /* JAVA_SPEC_VERSION <= 17 */
+		jlong periodicType
+#endif /* JAVA_SPEC_VERSION <= 17 */
+)
 {
 	// TODO: implementation
 	return JNI_FALSE;
 }
 
+void JNICALL
+Java_jdk_jfr_internal_JVM_endRecording(JNIEnv *env, jobject obj)
+{
+	// TODO: implementation
+}
+
 jobject JNICALL
-Java_jdk_jfr_internal_JVM_getAllEventClasses(JNIEnv *env, jclass clazz)
+Java_jdk_jfr_internal_JVM_getAllEventClasses(JNIEnv *env, jobject obj)
 {
 	// TODO: implementation
 	return NULL;
 }
 
 jlong JNICALL
-Java_jdk_jfr_internal_JVM_getUnloadedEventClassCount(JNIEnv *env, jclass clazz)
+Java_jdk_jfr_internal_JVM_getUnloadedEventClassCount(JNIEnv *env, jobject obj)
 {
 	// TODO: implementation
 	return 0;
 }
 
 jlong JNICALL
-Java_jdk_jfr_internal_JVM_getClassId(JNIEnv *env, jclass clz, jobject clazz)
+Java_jdk_jfr_internal_JVM_getClassId(JNIEnv *env, jclass clazz, jclass targetClass)
 {
 	// TODO: implementation
 	return 0;
 }
 
 jstring JNICALL
-Java_jdk_jfr_internal_JVM_getPid(JNIEnv *env, jclass clazz)
+Java_jdk_jfr_internal_JVM_getPid(JNIEnv *env, jobject obj)
 {
 	// TODO: implementation
 	return NULL;
 }
 
 jlong JNICALL
-Java_jdk_jfr_internal_JVM_getStackTraceId(JNIEnv *env, jclass clazz, jint skipCount)
+Java_jdk_jfr_internal_JVM_getStackTraceId(JNIEnv *env, jobject obj, jint skipCount)
 {
 	// TODO: implementation
 	return 0;
 }
 
 jlong JNICALL
-Java_jdk_jfr_internal_JVM_getThreadId(JNIEnv *env, jclass clazz, jobject t)
+Java_jdk_jfr_internal_JVM_getThreadId(JNIEnv *env, jobject obj, jobject thread)
 {
 	// TODO: implementation
 	return 0;
 }
 
 jlong JNICALL
-Java_jdk_jfr_internal_JVM_getTicksFrequency(JNIEnv *env, jclass clazz)
+Java_jdk_jfr_internal_JVM_getTicksFrequency(JNIEnv *env, jobject obj)
 {
 	// TODO: implementation
 	return 0;
@@ -174,6 +167,7 @@ Java_jdk_jfr_internal_JVM_log(JNIEnv *env, jclass clazz, jint tagSetId, jint lev
 	vmFuncs->internalExitVMToJNI(currentThread);
 }
 
+#if JAVA_SPEC_VERSION >= 17
 /**
  * TODO Note this is a draft implementation.
  */
@@ -199,6 +193,7 @@ Java_jdk_jfr_internal_JVM_logEvent(JNIEnv *env, jclass clazz, jint level, jobjec
 
 	vmFuncs->internalExitVMToJNI(currentThread);
 }
+#endif /* JAVA_SPEC_VERSION >= 17 */
 
 /**
  * Note this is a draft implementation.
@@ -229,133 +224,131 @@ Java_jdk_jfr_internal_JVM_subscribeLogLevel(JNIEnv *env, jclass clazz, jobject l
 }
 
 void JNICALL
-Java_jdk_jfr_internal_JVM_retransformClasses(JNIEnv *env, jclass clazz, jobjectArray classes)
+Java_jdk_jfr_internal_JVM_retransformClasses(JNIEnv *env, jobject obj, jobjectArray classes)
 {
 	// TODO: implementation
 }
 
 void JNICALL
-Java_jdk_jfr_internal_JVM_setEnabled(JNIEnv *env, jclass clazz, jlong eventTypeId, jboolean enabled)
+Java_jdk_jfr_internal_JVM_setEnabled(JNIEnv *env, jobject obj, jlong eventTypeId, jboolean enabled)
 {
 	// TODO: implementation
 }
 
 void JNICALL
-Java_jdk_jfr_internal_JVM_setFileNotification(JNIEnv *env, jclass clazz, jlong delta)
+Java_jdk_jfr_internal_JVM_setFileNotification(JNIEnv *env, jobject obj, jlong delta)
 {
 	// TODO: implementation
 }
 
 void JNICALL
-Java_jdk_jfr_internal_JVM_setGlobalBufferCount(JNIEnv *env, jclass clazz, jlong count)
+Java_jdk_jfr_internal_JVM_setGlobalBufferCount(JNIEnv *env, jobject obj, jlong count)
 {
 	// TODO: implementation
 }
 
 void JNICALL
-Java_jdk_jfr_internal_JVM_setGlobalBufferSize(JNIEnv *env, jclass clazz, jlong size)
+Java_jdk_jfr_internal_JVM_setGlobalBufferSize(JNIEnv *env, jobject obj, jlong size)
 {
 	// TODO: implementation
 }
 
 void JNICALL
-Java_jdk_jfr_internal_JVM_setMemorySize(JNIEnv *env, jclass clazz, jlong size)
+Java_jdk_jfr_internal_JVM_setMemorySize(JNIEnv *env, jobject obj, jlong size)
 {
 	// TODO: implementation
 }
 
 void JNICALL
-Java_jdk_jfr_internal_JVM_setMethodSamplingPeriod(JNIEnv *env, jclass clazz, jlong type, jlong periodMillis)
+Java_jdk_jfr_internal_JVM_setOutput(JNIEnv *env, jobject obj, jstring file)
 {
 	// TODO: implementation
 }
 
 void JNICALL
-Java_jdk_jfr_internal_JVM_setOutput(JNIEnv *env, jclass clazz, jstring file)
+Java_jdk_jfr_internal_JVM_setForceInstrumentation(JNIEnv *env, jobject obj, jboolean force)
 {
 	// TODO: implementation
 }
 
 void JNICALL
-Java_jdk_jfr_internal_JVM_setForceInstrumentation(JNIEnv *env, jclass clazz, jboolean force)
+Java_jdk_jfr_internal_JVM_setCompressedIntegers(JNIEnv *env, jobject obj, jboolean compressed)
 {
 	// TODO: implementation
 }
 
 void JNICALL
-Java_jdk_jfr_internal_JVM_setCompressedIntegers(JNIEnv *env, jclass clazz, jboolean compressed)
+Java_jdk_jfr_internal_JVM_setStackDepth(JNIEnv *env, jobject obj, jint depth)
 {
 	// TODO: implementation
 }
 
 void JNICALL
-Java_jdk_jfr_internal_JVM_setStackDepth(JNIEnv *env, jclass clazz, jint depth)
+Java_jdk_jfr_internal_JVM_setStackTraceEnabled(JNIEnv *env, jobject obj, jlong eventTypeId, jboolean enabled)
 {
 	// TODO: implementation
 }
 
 void JNICALL
-Java_jdk_jfr_internal_JVM_setStackTraceEnabled(JNIEnv *env, jclass clazz, jlong eventTypeId, jboolean enabled)
-{
-	// TODO: implementation
-}
-
-void JNICALL
-Java_jdk_jfr_internal_JVM_setThreadBufferSize(JNIEnv *env, jclass clazz, jlong size)
+Java_jdk_jfr_internal_JVM_setThreadBufferSize(JNIEnv *env, jobject obj, jlong size)
 {
 	// TODO: implementation
 }
 
 jboolean JNICALL
-Java_jdk_jfr_internal_JVM_setThreshold(JNIEnv *env, jclass clazz, jlong eventTypeId, jlong ticks)
+Java_jdk_jfr_internal_JVM_setThreshold(JNIEnv *env, jobject obj, jlong eventTypeId, jlong ticks)
 {
 	// TODO: implementation
 	return JNI_FALSE;
 }
 
 void JNICALL
-Java_jdk_jfr_internal_JVM_storeMetadataDescriptor(JNIEnv *env, jclass clazz, jbyteArray bytes)
+Java_jdk_jfr_internal_JVM_storeMetadataDescriptor(JNIEnv *env, jobject obj, jbyteArray bytes)
 {
 	// TODO: implementation
 }
 
 jboolean JNICALL
-Java_jdk_jfr_internal_JVM_getAllowedToDoEventRetransforms(JNIEnv *env, jclass clazz)
-{
-	// TODO: implementation
-	return JNI_FALSE;
-}
-
-jboolean JNICALL
-Java_jdk_jfr_internal_JVM_createJFR(JNIEnv *env, jclass clazz, jboolean simulateFailure)
+Java_jdk_jfr_internal_JVM_getAllowedToDoEventRetransforms(JNIEnv *env, jobject obj)
 {
 	// TODO: implementation
 	return JNI_FALSE;
 }
 
 jboolean JNICALL
-Java_jdk_jfr_internal_JVM_destroyJFR(JNIEnv *env, jclass clazz)
+Java_jdk_jfr_internal_JVM_createJFR(JNIEnv *env, jobject obj, jboolean simulateFailure)
 {
 	// TODO: implementation
 	return JNI_FALSE;
 }
 
 jboolean JNICALL
-Java_jdk_jfr_internal_JVM_isAvailable(JNIEnv *env, jclass clazz)
+Java_jdk_jfr_internal_JVM_destroyJFR(JNIEnv *env, jobject obj)
+{
+	// TODO: implementation
+	return JNI_FALSE;
+}
+
+jboolean JNICALL
+Java_jdk_jfr_internal_JVM_isAvailable(JNIEnv *env, jobject obj)
 {
 	// TODO: implementation
 	return JNI_FALSE;
 }
 
 jdouble JNICALL
-Java_jdk_jfr_internal_JVM_getTimeConversionFactor(JNIEnv *env, jclass clazz)
+Java_jdk_jfr_internal_JVM_getTimeConversionFactor(JNIEnv *env, jobject obj)
 {
 	// TODO: implementation
-	return 0;
+	return 0.0;
 }
 
 jlong JNICALL
-Java_jdk_jfr_internal_JVM_getTypeId__Ljava_lang_Class_2(JNIEnv *env, jclass clazz, jobject clazz2)
+#if JAVA_SPEC_VERSION == 11
+Java_jdk_jfr_internal_JVM_getTypeId(JNIEnv *env, jobject obj, jclass clazz)
+#else /* JAVA_SPEC_VERSION == 11 */
+Java_jdk_jfr_internal_JVM_getTypeId__Ljava_lang_Class_2(JNIEnv *env, jobject obj, jclass clazz)
+#endif /* JAVA_SPEC_VERSION == 11 */
 {
 	// TODO: implementation
 	return 0;
@@ -376,45 +369,25 @@ Java_jdk_jfr_internal_JVM_newEventWriter(JNIEnv *env, jclass clazz)
 }
 
 void JNICALL
-Java_jdk_jfr_internal_JVM_flush__Ljava_lang_Object_2II(JNIEnv *env, jclass clazz, jobject writer, jint uncommittedSize, jint requestedSize)
-{
-	// TODO: implementation
-}
-
-jlong JNICALL
-Java_jdk_jfr_internal_JVM_commit(JNIEnv *env, jclass clazz, jlong nextPosition)
-{
-	// TODO: implementation
-	return 0;
-}
-
-void JNICALL
-Java_jdk_jfr_internal_JVM_flush__(JNIEnv *env, jclass clazz)
+#if JAVA_SPEC_VERSION == 11
+Java_jdk_jfr_internal_JVM_flush(JNIEnv *env, jclass clazz, jobject writer, jint uncommittedSize, jint requestedSize)
+#elif JAVA_SPEC_VERSION == 17 /* JAVA_SPEC_VERSION == 11 */
+Java_jdk_jfr_internal_JVM_flush__Ljdk_jfr_internal_EventWriter_2II(JNIEnv *env, jclass clazz, jobject writer, jint uncommittedSize, jint requestedSize)
+#else /* JAVA_SPEC_VERSION == 17 */
+Java_jdk_jfr_internal_JVM_flush__Ljdk_jfr_internal_event_EventWriter_2II(JNIEnv *env, jclass clazz, jobject writer, jint uncommittedSize, jint requestedSize)
+#endif /* JAVA_SPEC_VERSION == 11 */
 {
 	// TODO: implementation
 }
 
 void JNICALL
-Java_jdk_jfr_internal_JVM_setRepositoryLocation(JNIEnv *env, jclass clazz, jstring dirText)
+Java_jdk_jfr_internal_JVM_setRepositoryLocation(JNIEnv *env, jobject obj, jstring dirText)
 {
 	// TODO: implementation
 }
 
 void JNICALL
-Java_jdk_jfr_internal_JVM_setDumpPath(JNIEnv *env, jclass clazz, jstring dumpPathText)
-{
-	// TODO: implementation
-}
-
-jstring JNICALL
-Java_jdk_jfr_internal_JVM_getDumpPath(JNIEnv *env, jclass clazz)
-{
-	// TODO: implementation
-	return NULL;
-}
-
-void JNICALL
-Java_jdk_jfr_internal_JVM_abort(JNIEnv *env, jclass clazz, jstring errorMsg)
+Java_jdk_jfr_internal_JVM_abort(JNIEnv *env, jobject obj, jstring errorMsg)
 {
 	// TODO: implementation
 }
@@ -427,123 +400,29 @@ Java_jdk_jfr_internal_JVM_addStringConstant(JNIEnv *env, jclass clazz, jlong id,
 }
 
 void JNICALL
-Java_jdk_jfr_internal_JVM_uncaughtException(JNIEnv *env, jclass clazz, jobject thread, jthrowable t)
+Java_jdk_jfr_internal_JVM_uncaughtException(JNIEnv *env, jobject obj, jobject thread, jobject t)
 {
 	// TODO: implementation
 }
 
 jboolean JNICALL
-Java_jdk_jfr_internal_JVM_setCutoff(JNIEnv *env, jclass clazz, jlong eventTypeId, jlong cutoffTicks)
-{
-	// TODO: implementation
-	return JNI_FALSE;
-}
-
-jboolean JNICALL
-Java_jdk_jfr_internal_JVM_setThrottle(JNIEnv *env, jclass clazz, jlong eventTypeId, jlong eventSampleSize, jlong period_ms)
+Java_jdk_jfr_internal_JVM_setCutoff(JNIEnv *env, jobject obj, jlong eventTypeId, jlong cutoffTicks)
 {
 	// TODO: implementation
 	return JNI_FALSE;
 }
 
 void JNICALL
-Java_jdk_jfr_internal_JVM_emitOldObjectSamples(JNIEnv *env, jclass clazz, jlong cutoff, jboolean emitAll, jboolean skipBFS)
+Java_jdk_jfr_internal_JVM_emitOldObjectSamples(JNIEnv *env, jobject obj, jlong cutoff, jboolean emitAll)
 {
 	// TODO: implementation
 }
 
 jboolean JNICALL
-Java_jdk_jfr_internal_JVM_shouldRotateDisk(JNIEnv *env, jclass clazz)
+Java_jdk_jfr_internal_JVM_shouldRotateDisk(JNIEnv *env, jobject obj)
 {
 	// TODO: implementation
 	return JNI_FALSE;
 }
 
-void JNICALL
-Java_jdk_jfr_internal_JVM_exclude(JNIEnv *env, jclass clazz, jobject thread)
-{
-	// TODO: implementation
-}
-
-void JNICALL
-Java_jdk_jfr_internal_JVM_include(JNIEnv *env, jclass clazz, jobject thread)
-{
-	// TODO: implementation
-}
-
-jboolean JNICALL
-Java_jdk_jfr_internal_JVM_isExcluded__Ljava_lang_Thread_2(JNIEnv *env, jclass clazz, jobject thread)
-{
-	// TODO: implementation
-	return JNI_FALSE;
-}
-
-jboolean JNICALL
-Java_jdk_jfr_internal_JVM_isExcluded__Ljava_lang_Class_2(JNIEnv *env, jclass clazz, jobject eventClass)
-{
-	// TODO: implementation
-	return JNI_FALSE;
-}
-
-jboolean JNICALL
-Java_jdk_jfr_internal_JVM_isInstrumented(JNIEnv *env, jclass clazz, jobject eventClass)
-{
-	// TODO: implementation
-	return JNI_FALSE;
-}
-
-jlong JNICALL
-Java_jdk_jfr_internal_JVM_getChunkStartNanos(JNIEnv *env, jclass clazz)
-{
-	// TODO: implementation
-	return 0;
-}
-
-jboolean JNICALL
-Java_jdk_jfr_internal_JVM_setConfiguration(JNIEnv *env, jclass clazz, jobject eventClass, jobject configuration)
-{
-	// TODO: implementation
-	return JNI_FALSE;
-}
-
-void
-Java_jdk_jfr_internal_JVM_setSampleThreads(JNIEnv *env, jclass clazz, jboolean sampleThreads)
-{
-	// TODO: implementation
-}
-
-jobject JNICALL
-Java_jdk_jfr_internal_JVM_getConfiguration(JNIEnv *env, jclass clazz, jobject eventClass)
-{
-	// TODO: implementation
-	return NULL;
-}
-
-jlong JNICALL
-Java_jdk_jfr_internal_JVM_getTypeId__Ljava_lang_String_2(JNIEnv *env, jclass clazz, jstring name)
-{
-	// TODO: implementation
-	return 0;
-}
-
-jboolean JNICALL
-Java_jdk_jfr_internal_JVM_isContainerized(JNIEnv *env, jclass clazz)
-{
-	// TODO: implementation
-	return JNI_FALSE;
-}
-
-jlong JNICALL
-Java_jdk_jfr_internal_JVM_hostTotalMemory(JNIEnv *env, jclass clazz)
-{
-	// TODO: implementation
-	return 0;
-}
-
-void JNICALL
-java_jdk_jfr_internal_JVM_emitDataLoss(JNIEnv *env, jclass clazz, jlong bytes)
-{
-	// TODO: implementation
-}
-
-}
+} /* extern "C" */
