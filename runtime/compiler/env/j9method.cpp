@@ -1007,6 +1007,13 @@ TR_ResolvedRelocatableJ9Method::TR_ResolvedRelocatableJ9Method(TR_OpaqueMethodBl
       return;
    else
 #endif /* defined(J9VM_OPT_JITSERVER) */
+   printf("Creating RRJ9M %p conds %p %d %d %d\n",
+          aMethod,
+          comp,
+          this->TR_ResolvedMethod::getRecognizedMethod() != TR::unknownMethod,
+          fej9->sharedCache()->rememberClass(containingClass()),
+          comp->getOption(TR_UseSymbolValidationManager));
+
    if (comp && this->TR_ResolvedMethod::getRecognizedMethod() != TR::unknownMethod)
       {
       if (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET != fej9->sharedCache()->rememberClass(containingClass()))
