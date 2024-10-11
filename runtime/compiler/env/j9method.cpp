@@ -1002,15 +1002,15 @@ TR_ResolvedRelocatableJ9Method::TR_ResolvedRelocatableJ9Method(TR_OpaqueMethodBl
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)fe;
    TR::Compilation *comp = TR::comp();
-   printf("Creating RRJ9M %p conds %d %p %d %d %d\n",
+   printf("Creating RRJ9M %p conds %p %d %d %d\n",
           aMethod,
-          fej9->_compInfoPT->getMethodBeingCompiled()->_useAOTCacheCompilation,
           comp,
           this->TR_ResolvedMethod::getRecognizedMethod() != TR::unknownMethod,
           fej9->sharedCache()->rememberClass(containingClass()),
           comp->getOption(TR_UseSymbolValidationManager));
 #if defined(J9VM_OPT_JITSERVER)
-   printf("jitserver on\n");
+   printf("jitserver on %d\n",
+          fej9->_compInfoPT->getMethodBeingCompiled()->_useAOTCacheCompilation);
    if (fej9->_compInfoPT->getMethodBeingCompiled()->_useAOTCacheCompilation)
       return;
    else
