@@ -1015,6 +1015,8 @@ TR_ResolvedRelocatableJ9Method::TR_ResolvedRelocatableJ9Method(TR_OpaqueMethodBl
             {
             TR::SymbolValidationManager *svm = comp->getSymbolValidationManager();
 
+            printf("Validating %p %d\n", aMethod, svm->isAlreadyValidated(aMethod));
+
             if (!svm->isAlreadyValidated(aMethod))
                {
                   printf("Failure Checking %p\n", aMethod);
