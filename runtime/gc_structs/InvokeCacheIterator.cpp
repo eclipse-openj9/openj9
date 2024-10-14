@@ -30,7 +30,7 @@
 #include "j9cfg.h"
 #include "j9cp.h"
 
-#include "MethodTypesIterator.hpp"
+#include "InvokeCacheIterator.hpp"
 
 
 
