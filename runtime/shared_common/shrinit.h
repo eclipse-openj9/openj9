@@ -198,6 +198,7 @@ typedef struct J9SharedClassesOptions {
 #define OPTION_MAP31 "map31"
 #define OPTION_TEST_DOUBLE_PAGESIZE "testDoublePageSize"
 #define OPTION_TEST_HALF_PAGESIZE "testHalfPageSize"
+#define OPTION_EXTRA_STARTUPHINTS_EQUALS "extraStartupHints="
 
 /* public options for printallstats= and printstats=  */
 #define SUB_OPTION_PRINTSTATS_ALL "all"
@@ -279,6 +280,7 @@ typedef struct J9SharedClassesOptions {
 #define RESULT_DO_PRINT_TOP_LAYER_STATS 53
 #define RESULT_DO_PRINT_TOP_LAYER_STATS_EQUALS 54
 #define RESULT_DO_ADD_RUNTIMEFLAG2 55
+#define RESULT_DO_SET_EXTRA_STARTUPHINTS 56
 
 #define PARSE_TYPE_EXACT 1
 #define PARSE_TYPE_STARTSWITH 2
@@ -311,6 +313,7 @@ typedef struct J9SharedClassesOptions {
 #define HELPTEXT_ADJUST_MINJITDATA_EQUALS OPTION_ADJUST_MINJITDATA_EQUALS"<size>"
 #define HELPTEXT_ADJUST_MAXJITDATA_EQUALS OPTION_ADJUST_MAXJITDATA_EQUALS"<size>"
 #define HELPTEXT_LAYER_EQUALS OPTION_LAYER_EQUALS "<number>"
+#define HELPTEXT_OPTION_EXTRA_STARTUPHINTS_EQUALS OPTION_EXTRA_STARTUPHINTS_EQUALS"<number>"
 
 #define HELPTEXT_NEWLINE {"", 0, 0, 0, 0}
 

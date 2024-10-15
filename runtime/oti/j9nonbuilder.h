@@ -1221,6 +1221,7 @@ typedef struct J9SharedClassJavacoreDataDescriptor {
 	UDATA startupHintBytes;
 	UDATA nattach;
 	UDATA currentOSPageSize; /* memory page size of the current running OS */
+	U_32 extraStartupHints;
 } J9SharedClassJavacoreDataDescriptor;
 
 typedef struct J9SharedStringFarm {
@@ -1354,6 +1355,7 @@ typedef struct J9SharedCacheAPI {
 #if defined(J9VM_OPT_JITSERVER)
 	U_8 usingJITServerAOTCacheLayer;
 #endif /* defined(J9VM_OPT_JITSERVER) */
+	I_32 newStartupHints;
 } J9SharedCacheAPI;
 
 typedef struct J9SharedClassConfig {

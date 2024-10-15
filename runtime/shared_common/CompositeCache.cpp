@@ -4490,6 +4490,7 @@ SH_CompositeCacheImpl::getJavacoreData(J9JavaVM *vm, J9SharedClassJavacoreDataDe
 		descriptor->maxJIT = _theca->maxJIT;
 		descriptor->softMaxBytes = (UDATA)((U_32)-1 == _theca->softMaxBytes ? descriptor->cacheSize : _theca->softMaxBytes);
 		descriptor->currentOSPageSize = getOSPageSize();
+		descriptor->extraStartupHints = getExtraStartupHints();
 #if defined(J9VM_OPT_JITSERVER)
 		descriptor->usingJITServerAOTCacheLayer = vm->sharedCacheAPI->usingJITServerAOTCacheLayer;
 #endif /* defined(J9VM_OPT_JITSERVER) */

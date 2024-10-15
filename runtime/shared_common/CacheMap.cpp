@@ -5058,7 +5058,11 @@ SH_CacheMap::printCacheStatsTopLayerStatsHelper(J9VMThread* currentThread, UDATA
 	if (J9_ARE_ALL_BITS_SET(runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_DETAILED_STATS)) {
 		CACHEMAP_FMTPRINT1(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_METADATA_STARTADDRESS, javacoreData->metadataStart);
 		CACHEMAP_FMTPRINT1(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_SHRC_CM_PRINTSTATS_RUNTIME_FLAGS, javacoreData->runtimeFlags);
+		CACHEMAP_FMTPRINT1(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS, javacoreData->extraStartupHints);
 		CACHEMAP_FMTPRINT1(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_SHRC_CM_PRINTSTATS_CACHE_GEN, javacoreData->cacheGen);
+	} else if (J9_ARE_ALL_BITS_SET(showFlags, PRINTSTATS_SHOW_STARTUPHINT)) {
+		CACHEMAP_FMTPRINT1(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS, javacoreData->extraStartupHints);
+		j9tty_printf(_portlib, "\n");
 	}
 
 	CACHEMAP_FMTPRINT1(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER, javacoreData->topLayer);
@@ -7103,3 +7107,19 @@ SH_CacheMap::getDataFromByteDataWrapper(const ByteDataWrapper* bdw)
 	}
 	return ret;
 }
+
+void
+SH_CacheMap::setExtraStartupHints(J9VMThread* currentThread)
+{
+	PORT_ACCESS_FROM_PORT(_portlib);
+	const char* fnName = "setExtraStartupHints";
+	U_32 val = (U_32)currentThread->javaVM->sharedCacheAPI->newStartupHints;
+	if (_ccHead->enterWriteMutex(currentThread, false, fnName) != 0) {
+		CACHEMAP_TRACE(J9SHR_VERBOSEFLAG_ENABLE_VERBOSE_DEFAULT, J9NLS_ERROR, J9NLS_SHRC_CM_FAILED_ENTER_WRITE_MUTEX);
+		return;
+	}
+	_ccHead->setExtraStartupHints(currentThread, val);
+	CACHEMAP_TRACE1(J9SHR_VERBOSEFLAG_ENABLE_VERBOSE_DEFAULT, J9NLS_INFO, J9NLS_SHRC_CC_EXTRA_STARTUPHINTS_SET, val);
+	_ccHead->exitWriteMutex(currentThread, fnName);
+}
+

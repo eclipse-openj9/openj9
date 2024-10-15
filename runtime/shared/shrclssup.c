@@ -184,6 +184,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 		vm->sharedCacheAPI->minJIT = -1;
 		vm->sharedCacheAPI->maxJIT = -1;
 		vm->sharedCacheAPI->layer = -1;
+		vm->sharedCacheAPI->newStartupHints = -1;
 		if (index >= 0) {
 			/* -Xshareclasses is specified */
 			char optionsBuffer[SHR_SUBOPT_BUFLEN];
