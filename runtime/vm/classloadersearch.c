@@ -254,7 +254,7 @@ addZipToLoader(J9JavaVM * vm, const char * filename, J9ClassLoader * classLoader
 				vmModule = (*env)->CallStaticObjectMethod(env, jimModules, loadModule, moduleNameString);
 				(*env)->DeleteLocalRef(env, vmModule);
 				(*env)->DeleteLocalRef(env, moduleNameString);
-				if ((*env)->ExceptionOccurred(env)) {
+				if ((*env)->ExceptionCheck(env)) {
 					rc = CLS_ERROR_INTERNAL;
 					goto cleanup;
 				}
