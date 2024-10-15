@@ -28,7 +28,7 @@ This folder contains Jenkins pipeline scripts that are used in the OpenJ9 Jenkin
 
 - You can request a PR build to do compile or compile & test
 - Current supported test levels are sanity & extended
-- Current supported test groups are functional & system
+- Current supported test groups are functional, openjdk & system
 - Current available platforms are
     - Linux on x86-64
         - Spec: x86-64_linux
@@ -89,12 +89,12 @@ This folder contains Jenkins pipeline scripts that are used in the OpenJ9 Jenkin
     - Format: `Jenkins <build type> <level>.<group>[+<test_flag>] <platform>[,<platform>,...,<platform>] jdk<version>[,jdk<version>,...,jdk<version>]`
     - `<build type>` is compile | test
     - `<level>` is sanity | extended (required only for "test" `<build type>`)
-    - `<group>` is functional | system
+    - `<group>` is functional | openjdk | system
     - `<test_flag>` Optional: any TEST_FLAG is supported. See notes below.
     - `<platform>` is one of the (short or full) platform names above
     - `<version>` is the number of the supported release, e.g. 8 | 11 | next
 - Note: You can use keyword `all` for platform but not for test level/type or JDK versions.
-- Note: For backward compatibility `<level>.<test type>` equal to `sanity` or `extended` is acceptable and will map to `sanity.functional` and `extended.functional` respectively.
+- Note: For backward compatibility `<level>.<test type>` equal to `sanity` or `extended` is acceptable; `sanity` will map to `sanity.functional,sanity.openjdk`, and `extended` will map to `extended.functional`.
 - Note: TEST_FLAG is an optional argument to the test target. It is recommended to only launch 1 test target with 1 TEST_FLAG per comment/build. At the time of writing, the two supported test flags are `+jitaas` and `+aot`. Ex. `Jenkins test sanity.functional+jitaas xlinux jdk8`. Also note JITServer specs set the TEST_FLAG via the variable file so it is unnecessary to add it to the test target.
 
 ###### Examples
@@ -104,9 +104,9 @@ This folder contains Jenkins pipeline scripts that are used in the OpenJ9 Jenkin
     - `Jenkins test sanity.functional zlinux jdk8,jdk11`
 - Request an extended functional and system build on pLinux for a single version
     - `Jenkins test extended.functional,extended.system plinux jdk8`
-- Request a sanity build on z,p Linux for multiple versions
+- Request a sanity functional and openjdk build on z,p Linux for multiple versions
     - `Jenkins test sanity zlinux,plinux jdk8,jdk11`
-- Request sanity.system test on all platforms and multiple versions
+- Request a sanity system test on all platforms and multiple versions
     - `Jenkins test sanity.system all jdk8,jdk11`
 
 You can request a Pull Request build from the Eclipse OpenJ9 repository - [openj9](https://github.com/eclipse-openj9/openj9) - or the Extensions OpenJDK\* for Eclipse OpenJ9 repositories:
@@ -195,7 +195,7 @@ Pipelines for all platforms and versions are available [**here**](https://openj9
         - Compile Eclipse OpenJ9 on `<platform>` for Extensions OpenJDK`<version>` and run sanity & extended test suites
         - Triggers:
             - Build-JDK`<version>`-`<platform>`
-            - Test-`<sanity|extended>.<functional|system>`-JDK`<version>`-`<platform>`
+            - Test-`<sanity|extended>.<functional|openjdk|system>`-JDK`<version>`-`<platform>`
     - Trigger:
         - build periodically, @midnight
 
@@ -227,7 +227,7 @@ Build pipelines for all platforms and versions are available [**here**](https://
 Test pipelines for all platforms and versions are available [**here**](https://openj9-jenkins.osuosl.org/view/Test/).
 
 - Any platform and version build pipeline:
-    - Name: Test-`<sanity|extended>.<functional|system>`-JDK`<version>`-`<platform>`
+    - Name: Test-`<sanity|extended>.<functional|openjdk|system>`-JDK`<version>`-`<platform>`
     - Description:
         - Runs sanity or extended tests
     - Trigger:
