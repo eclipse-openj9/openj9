@@ -627,9 +627,17 @@ TR::CompilationInfo::isMethodIneligibleForAot(J9Method *method)
    const J9ROMClass *romClass = J9_CLASS_FROM_METHOD(method)->romClass;
    J9UTF8 *className = J9ROMCLASS_CLASSNAME(romClass);
 
-   // Don't AOT-compile anything in j/l/i for now
-   if (strncmp(utf8Data(className), "java/lang/invoke/", sizeof("java/lang/invoke/") - 1) == 0)
-      return true;
+   bool disableJLI = true;
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   disableJLI = !TR::Options::getAOTCmdLineOptions()->getOption(TR_EnableMHRelocatableCompile);
+#endif
+
+   if (disableJLI)
+      {
+      // Don't AOT-compile anything in j/l/i for now
+      if (strncmp(utf8Data(className), "java/lang/invoke/", sizeof("java/lang/invoke/") - 1) == 0)
+         return true;
+      }
 
    if (J9UTF8_LENGTH(className) == 36 &&
       0 == memcmp(utf8Data(className), "com/ibm/rmi/io/FastPathForCollocated", 36))
@@ -8961,8 +8969,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                // Disable AOT w/ SVM during startup
                if (jitConfig->javaVM->phase != J9VM_PHASE_NOT_STARTUP)
                   {
-                  static char *dontDisableSVMDuringStartup = feGetEnv("TR_DontDisableSVMDuringStartup");
-                  if (!dontDisableSVMDuringStartup)
+                  if (TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableSVMDuringStartup))
                      options->setOption(TR_UseSymbolValidationManager, false);
                   }
 

@@ -2643,15 +2643,6 @@ public native boolean isValue();
  * @return	true if receiver is an identity class, and false otherwise.
  */
 public native boolean isIdentity();
-
-/**
- * Returns the Null-Restricted type of this class.
- *
- * @return Null-Restricted class
- */
-public Class<?> asNullRestrictedType() {
-	return this;
-}
 /*[ENDIF] INLINE-TYPES */
 
 /**

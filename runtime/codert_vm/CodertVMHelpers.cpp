@@ -207,6 +207,8 @@ jitMethodTranslated(J9VMThread *currentThread, J9Method *method, void *jitStartA
 			}
 			UDATA initialClassDepth = VM_VMHelpers::getClassDepth(currentClass);
 			void *j2jAddress = VM_VMHelpers::jitToJitStartAddress(jitStartAddress);
+
+			omrthread_monitor_enter(vm->classTableMutex);
 			do {
 				J9VTableHeader* vTableHeader = J9VTABLE_HEADER_FROM_RAM_CLASS(currentClass);
 
@@ -228,6 +230,7 @@ jitMethodTranslated(J9VMThread *currentThread, J9Method *method, void *jitStartA
 				}
 				currentClass = currentClass->subclassTraversalLink;
 			} while (VM_VMHelpers::getClassDepth(currentClass) > initialClassDepth);
+			omrthread_monitor_exit(vm->classTableMutex);
 		}
 	}
 }
