@@ -4377,7 +4377,8 @@ UDATA TR_IProfiler::parseBuffer(J9VMThread * vmThread, const U_8* dataStart, UDA
             cursor += sizeof(switchOperand);
 
             data = switchOperand;
-            addSample = (profileFlag && !isClassLoadPhase) || TR::Options::_profileAllTheTime;
+            // switches are rare compared to branches, so we can afford to profile them all
+            addSample = true;
 
 
             //bytecodeType = SWITCH_BYTECODE;
