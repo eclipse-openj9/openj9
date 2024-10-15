@@ -3757,6 +3757,10 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
          if (compiler->getOption(TR_JITServerFollowRemoteCompileWithLocalCompile) && compilationSequenceNumber)
             {
             compiler->getOptions()->setLogFileForClientOptions(compilationSequenceNumber);
+            auto logFile = compiler->getOptions()->getLogFile();
+            auto debug = compiler->getDebug();
+            if (logFile && debug)
+               debug->setFile(logFile);
             bool compileWithoutVMAccess = !compiler->getOption(TR_DisableNoVMAccess);
             if (compileWithoutVMAccess)
                {
