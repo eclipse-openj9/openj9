@@ -1294,6 +1294,30 @@ TR_ResolvedRelocatableJ9Method::isUnresolvedMethodHandle(I_32 cpIndex)
    return true;
    }
 
+bool
+TR_ResolvedRelocatableJ9Method::isUnresolvedCallSiteTableEntry(int32_t callSiteIndex)
+   {
+   bool unresolved = true;
+   J9JavaVM * javaVM = fej9()->_jitConfig->javaVM;
+   if (J9_ARE_ALL_BITS_SET(javaVM->sharedClassConfig->runtimeFlags2, J9SHR_RUNTIMEFLAG2_SHARE_LAMBDAFORM))
+      {
+      unresolved = TR_ResolvedJ9Method::isUnresolvedCallSiteTableEntry(callSiteIndex);
+      }
+   return unresolved;
+   }
+
+bool
+TR_ResolvedRelocatableJ9Method::isUnresolvedMethodTypeTableEntry(int32_t cpIndex)
+   {
+   bool unresolved = true;
+   J9JavaVM * javaVM = fej9()->_jitConfig->javaVM;
+   if (J9_ARE_ALL_BITS_SET(javaVM->sharedClassConfig->runtimeFlags2, J9SHR_RUNTIMEFLAG2_SHARE_LAMBDAFORM))
+      {
+      unresolved = TR_ResolvedJ9Method::isUnresolvedMethodTypeTableEntry(cpIndex);
+      }
+   return unresolved;
+   }
+
 TR_ResolvedMethod *
 TR_ResolvedRelocatableJ9Method::getResolvedPossiblyPrivateVirtualMethod(
    TR::Compilation *comp,
