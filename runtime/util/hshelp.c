@@ -2574,13 +2574,15 @@ swapClassesForFastHCR(J9Class *originalClass, J9Class *obsoleteClass)
 	SWAP_MEMBER(specialSplitMethodTable, J9Method **, originalClass, obsoleteClass);
 	/* Force invokedynamics to be re-resolved as we can't map from the old callsite index to the new one */
 	SWAP_MEMBER(callSites, j9object_t*, originalClass, obsoleteClass);
-	/* Force varhanles to be re-resolved as we can't map from the old varhandle MTs index to the new one */
-	SWAP_MEMBER(varHandleMethodTypes, j9object_t*, originalClass, obsoleteClass);
 	/* Force methodTypes to be re-resolved as indexes are assigned in CP order, no mapping from old to new. */
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
 	SWAP_MEMBER(invokeCache, j9object_t*, originalClass, obsoleteClass);
 #else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	SWAP_MEMBER(methodTypes, j9object_t*, originalClass, obsoleteClass);
+	/* Force varhandles to be re-resolved because we cannot map from the old varhandle
+	 * MTs index to the new one.
+	 */
+	SWAP_MEMBER(varHandleMethodTypes, j9object_t*, originalClass, obsoleteClass);
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 	J9CLASS_EXTENDED_FLAGS_SET(obsoleteClass, J9ClassReusedStatics);
