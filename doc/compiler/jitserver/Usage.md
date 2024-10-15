@@ -145,13 +145,14 @@ of network communication is larger than resources required to compile locally.
 With heuristics enabled, client will try to maximize benefits of using JITServer while
 minimizing overheads.
 
-### JITServer AOT cache (experimental)
+### JITServer AOT cache
 
 The server-side option `-XX:+JITServerUseAOTCache` enables storing AOT methods
 on the server. This allows the server to send AOT method bodies to clients that
 do not have pre-populated Shared Class Caches, improving startup time.
 
-This is currently an experimental feature and it is not fully supported.
+The option `-XX:+JITServerUseAOTCache` can then be enabled on the client side so the
+client can use the server's AOT cache.
 
 ## Logging
 
