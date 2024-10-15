@@ -72,6 +72,8 @@ enum MetadataTypeID {
 	CPUInformationID = 92,
 	PhysicalMemoryID = 107,
 	ExecutionSampleID = 108,
+	ThreadDumpID = 110,
+	NativeLibraryID = 111,
 	ThreadID = 163,
 	ThreadGroupID = 164,
 	ClassID = 165,
@@ -155,6 +157,8 @@ private:
 	static constexpr int CPU_INFORMATION_EVENT_SIZE = 600;
 	static constexpr int OS_INFORMATION_EVENT_SIZE = 100;
 	static constexpr int INITIAL_SYSTEM_PROPERTY_EVENT_SIZE = 6000;
+	static constexpr int THREAD_DUMP_EVENT_SIZE = 3000;
+	static constexpr int NATIVE_LIBRARY_EVENT_SIZE = 3000;
 
 	static constexpr int METADATA_ID = 1;
 
@@ -338,6 +342,10 @@ done:
 
 			writePhysicalMemoryEvent();
 
+			writeThreadDumpEvent();
+
+			writeNativeLibraryEvents();
+
 			writeJFRHeader();
 
 			if (isResultNotOKay()) {
@@ -477,6 +485,23 @@ done:
 		_bufferWriter->writeLEB128PaddedU32(dataStart, _bufferWriter->getCursor() - dataStart);
 	}
 
+	void writeNativeLibraryEvent(UDATA baseAddress, UDATA topAddress, const char *name) {
+		/* reserve size field */
+		U_8 *dataStart = _bufferWriter->getAndIncCursor(sizeof(U_32));
+
+		_bufferWriter->writeLEB128(NativeLibraryID);
+
+		/* write start time */
+		_bufferWriter->writeLEB128(j9time_current_time_millis());
+
+		writeStringLiteral(name);
+
+		_bufferWriter->writeLEB128(baseAddress);
+		_bufferWriter->writeLEB128(topAddress);
+		/* write size */
+		_bufferWriter->writeLEB128PaddedU32(dataStart, _bufferWriter->getCursor() - dataStart);
+	}
+
 	void
 	writeJFRChunkToFile()
 	{
@@ -539,6 +564,10 @@ done:
 
 	U_8 *writeOSInformationEvent();
 
+	U_8 *writeThreadDumpEvent();
+
+	void writeNativeLibraryEvents();
+
 	void writeInitialSystemPropertyEvents(J9JavaVM *vm);
 
 	UDATA
@@ -590,6 +619,11 @@ done:
 		requireBufferSize += CPU_INFORMATION_EVENT_SIZE;
 
 		requireBufferSize += INITIAL_SYSTEM_PROPERTY_EVENT_SIZE;
+
+		requireBufferSize += THREAD_DUMP_EVENT_SIZE;
+
+		requireBufferSize += NATIVE_LIBRARY_EVENT_SIZE;
+
 		return requireBufferSize;
 	}
 
