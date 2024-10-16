@@ -789,8 +789,12 @@ JVM_DefineModule(JNIEnv * env, jobject module, jboolean isOpen, jstring version,
 			j9array_t array = (j9array_t)J9_JNI_UNWRAP_REFERENCE(packageArray);
 			j9object_t stringObject = J9JAVAARRAYOFOBJECT_LOAD(currentThread, array, pkgIndex);
 			if (NULL != stringObject) {
-				UDATA utfLength = vmFuncs->getStringUTF8Length(currentThread, stringObject) + 1;
-				char *packageName = (char*)j9mem_allocate_memory(utfLength, OMRMEM_CATEGORY_VM);
+				UDATA utfLength = vmFuncs->getStringUTF8Length(currentThread, stringObject);
+				char *packageName = NULL;
+				if (utfLength < UDATA_MAX) {
+					utfLength += 1;
+					packageName = (char *)j9mem_allocate_memory(utfLength, OMRMEM_CATEGORY_VM);
+				}
 				if (NULL == packageName) {
 					oom = TRUE;
 					break;
@@ -992,8 +996,12 @@ JVM_AddModuleExports(JNIEnv * env, jobject fromModule, const char *package, jobj
 #if JAVA_SPEC_VERSION >= 15
 	if (NULL != packageObj) {
 		j9object_t stringObject = J9_JNI_UNWRAP_REFERENCE(packageObj);
-		UDATA utfLength = vmFuncs->getStringUTF8Length(currentThread, stringObject) + 1;
-		char* packageName = (char *)j9mem_allocate_memory(utfLength, OMRMEM_CATEGORY_VM);
+		UDATA utfLength = vmFuncs->getStringUTF8Length(currentThread, stringObject);
+		char *packageName = NULL;
+		if (utfLength < UDATA_MAX) {
+			utfLength += 1;
+			packageName = (char *)j9mem_allocate_memory(utfLength, OMRMEM_CATEGORY_VM);
+		}
 		if (NULL == packageName) {
 			vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
 			goto done;
@@ -1066,8 +1074,12 @@ JVM_AddModuleExportsToAll(JNIEnv * env, jobject fromModule, const char *package)
 #if JAVA_SPEC_VERSION >= 15
 	if (NULL != packageObj) {
 		j9object_t stringObject = J9_JNI_UNWRAP_REFERENCE(packageObj);
-		UDATA utfLength = vmFuncs->getStringUTF8Length(currentThread, stringObject) + 1;
-		char* packageName = (char *)j9mem_allocate_memory(utfLength, OMRMEM_CATEGORY_VM);
+		UDATA utfLength = vmFuncs->getStringUTF8Length(currentThread, stringObject);
+		char *packageName = NULL;
+		if (utfLength < UDATA_MAX) {
+			utfLength += 1;
+			packageName = (char *)j9mem_allocate_memory(utfLength, OMRMEM_CATEGORY_VM);
+		}
 		if (NULL == packageName) {
 			vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
 			goto done;
@@ -1306,8 +1318,12 @@ JVM_AddModuleExportsToAllUnnamed(JNIEnv * env, jobject fromModule, const char *p
 #if JAVA_SPEC_VERSION >= 15
 	if (NULL != packageObj) {
 		j9object_t stringObject = J9_JNI_UNWRAP_REFERENCE(packageObj);
-		UDATA utfLength = vmFuncs->getStringUTF8Length(currentThread, stringObject) + 1;
-		char* packageName = (char *)j9mem_allocate_memory(utfLength, OMRMEM_CATEGORY_VM);
+		UDATA utfLength = vmFuncs->getStringUTF8Length(currentThread, stringObject);
+		char *packageName = NULL;
+		if (utfLength < UDATA_MAX) {
+			utfLength += 1;
+			packageName = (char *)j9mem_allocate_memory(utfLength, OMRMEM_CATEGORY_VM);
+		}
 		if (NULL == packageName) {
 			vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
 			goto done;

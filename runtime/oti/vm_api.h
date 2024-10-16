@@ -3583,13 +3583,30 @@ copyStringToUTF8Helper(J9VMThread *vmThread, j9object_t string, UDATA stringFlag
 
 
 /**
-* @brief
-* @param *vm
-* @param *string
-* @return IDATA
-*/
-IDATA
-getStringUTF8Length(J9VMThread *vmThread,j9object_t string);
+ * @brief Find the length of the string object when it is converted to UTF-8.
+ *
+ * Note: On 32-bit platforms, the length may be truncated.
+ *
+ * @param vm a pointer to J9JavaVM
+ * @param string a string object
+ *
+ * @return the length of the string in UTF-8
+ */
+UDATA
+getStringUTF8Length(J9VMThread *vmThread, j9object_t string);
+
+/**
+ * @brief Find the length of the string object when it is converted to UTF-8, but truncate it
+ * using maxLength as the upper bound.
+ *
+ * @param vm a pointer to J9JavaVM
+ * @param string a string object
+ * @param maxLength the upper bound of the length used for truncation
+ *
+ * @return the length of the string in UTF-8
+ */
+U_64
+getStringUTF8LengthTruncated(J9VMThread *vmThread, j9object_t string, U_64 maxLength);
 
 
 /**

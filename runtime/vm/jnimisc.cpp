@@ -829,7 +829,7 @@ getStringUTFLength(JNIEnv *env, jstring string)
 	VM_VMAccess::inlineEnterVMFromJNI(currentThread);
 	j9object_t stringObject = J9_JNI_UNWRAP_REFERENCE(string);
 
-	UDATA utfLength = getStringUTF8Length(currentThread, stringObject);
+	U_64 utfLength = getStringUTF8LengthTruncated(currentThread, stringObject, INT32_MAX);
 	VM_VMAccess::inlineExitVMToJNI(currentThread);
 	return (jsize)utfLength;
 }
@@ -840,14 +840,17 @@ getStringUTFCharsImpl(JNIEnv *env, jstring string, jboolean *isCopy, jboolean en
 	J9VMThread *currentThread = (J9VMThread*)env;
 	VM_VMAccess::inlineEnterVMFromJNI(currentThread);
 	j9object_t stringObject = J9_JNI_UNWRAP_REFERENCE(string);
-	/* Add 1 for null terminator */
-	UDATA utfLength = getStringUTF8Length(currentThread, stringObject) + 1;
 
+	UDATA utfLength = getStringUTF8Length(currentThread, stringObject);
 	U_8 *utfChars = NULL;
-	if (ensureMem32) {
-		utfChars = (U_8*)jniArrayAllocateMemory32FromThread(currentThread, utfLength);
-	} else {
-		utfChars = (U_8*)jniArrayAllocateMemoryFromThread(currentThread, utfLength);
+	if (utfLength < UDATA_MAX) {
+		/* Add 1 for a null terminator. */
+		utfLength += 1;
+		if (ensureMem32) {
+			utfChars = (U_8 *)jniArrayAllocateMemory32FromThread(currentThread, utfLength);
+		} else {
+			utfChars = (U_8 *)jniArrayAllocateMemoryFromThread(currentThread, utfLength);
+		}
 	}
 
 	if (NULL == utfChars) {
