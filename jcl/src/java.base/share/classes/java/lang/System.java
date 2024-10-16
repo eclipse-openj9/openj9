@@ -35,6 +35,9 @@ import java.security.*;
 import java.lang.reflect.Method;
 import java.lang.reflect.Constructor;
 
+/*[IF JAVA_SPEC_VERSION >= 24]*/
+import jdk.internal.javac.Restricted;
+/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 /*[IF JAVA_SPEC_VERSION >= 9]*/
 import jdk.internal.misc.Unsafe;
 /*[IF JAVA_SPEC_VERSION > 11]*/
@@ -1107,6 +1110,9 @@ public static int identityHashCode(Object anObject) {
  * @param 		pathName	the path of the file to be loaded
  */
 @CallerSensitive
+/*[IF JAVA_SPEC_VERSION >= 24]*/
+@Restricted
+/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 public static void load(String pathName) {
 	@SuppressWarnings("removal")
 	SecurityManager smngr = System.getSecurityManager();
@@ -1138,6 +1144,9 @@ public static void load(String pathName) {
  * @throws		SecurityException 		if the library was not allowed to be loaded
  */
 @CallerSensitive
+/*[IF JAVA_SPEC_VERSION >= 24]*/
+@Restricted
+/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 public static void loadLibrary(String libName) {
 	if (libName.indexOf(File.pathSeparator) >= 0) {
 		/*[MSG "K0B01", "Library name must not contain a file path: {0}"]*/
