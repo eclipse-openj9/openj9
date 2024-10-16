@@ -1003,9 +1003,10 @@ TR_ResolvedRelocatableJ9Method::TR_ResolvedRelocatableJ9Method(TR_OpaqueMethodBl
    TR_J9VMBase *fej9 = (TR_J9VMBase *)fe;
    TR::Compilation *comp = TR::comp();
    printf("Creating RRJ9M %p ", aMethod);
-   printf("conds %p ", comp);
-   printf("1 %d ", this->TR_ResolvedMethod::getRecognizedMethod() != TR::unknownMethod);
-   printf("2 %d\n", fej9->sharedCache()->rememberClass(containingClass()));
+   printf("conds %p %d %d\n",
+          comp,
+          this->TR_ResolvedMethod::getRecognizedMethod() != TR::unknownMethod,
+          fej9->sharedCache()->rememberClass(containingClass()));
    if (comp)
       printf("UseSVM %d\n", comp->getOption(TR_UseSymbolValidationManager));
 #if defined(J9VM_OPT_JITSERVER)
