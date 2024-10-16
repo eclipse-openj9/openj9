@@ -464,7 +464,7 @@ extractAndProcessFormatStrings(JNIEnv *env, jarray templates, char ***const form
 
 	*tracePointCount = (*env)->GetArrayLength(env, templates);
 
-	if (NULL != (*env)->ExceptionOccurred(env)) {
+	if ((*env)->ExceptionCheck(env)) {
 		return 1;
 	}
 
@@ -493,7 +493,7 @@ extractAndProcessFormatStrings(JNIEnv *env, jarray templates, char ***const form
 		jobject thisString = (*env)->GetObjectArrayElement(env, templates, (jsize)i);
 		const char *jniStringCharacters = NULL;
 
-		if (NULL != (*env)->ExceptionOccurred(env)) {
+		if ((*env)->ExceptionCheck(env)) {
 			rc = 3;
 			goto fail;
 		}
