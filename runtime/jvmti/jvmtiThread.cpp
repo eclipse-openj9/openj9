@@ -510,7 +510,7 @@ done:
 
 			jniEnv->CallObjectMethod(thread, vm->vThreadInterrupt);
 
-			if (jniEnv->ExceptionOccurred()) {
+			if (jniEnv->ExceptionCheck()) {
 				rc = JVMTI_ERROR_INTERNAL;
 			}
 		}

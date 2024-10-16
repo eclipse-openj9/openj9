@@ -137,7 +137,7 @@ addModuleExportsOrOpens(jvmtiEnv* jvmtiEnv, jobject fromModule, const char* pkgN
 										!exports,
 										JNI_TRUE);
 			}
-			if ((*env)->ExceptionOccurred(env)) {
+			if ((*env)->ExceptionCheck(env)) {
 				rc = JVMTI_ERROR_INTERNAL;
 			}
 		}
@@ -399,7 +399,7 @@ jvmtiAddModuleReads(jvmtiEnv* jvmtiEnv, jobject fromModule, jobject toModule)
 				vm->addReads = addReads;
 			}
 			(*env)->CallObjectMethod(env, fromModule, vm->addReads, toModule, JNI_TRUE);
-			if ((*env)->ExceptionOccurred(env)) {
+			if ((*env)->ExceptionCheck(env)) {
 				rc = JVMTI_ERROR_INTERNAL;
 			}
 		}
@@ -509,7 +509,7 @@ jvmtiAddModuleUses(jvmtiEnv* jvmtiEnv, jobject module, jclass service)
 				vm->addUses = addUses;
 			}
 			(*env)->CallObjectMethod(env, module, vm->addUses, service);
-			if ((*env)->ExceptionOccurred(env)) {
+			if ((*env)->ExceptionCheck(env)) {
 				rc = JVMTI_ERROR_INTERNAL;
 			}
 		}

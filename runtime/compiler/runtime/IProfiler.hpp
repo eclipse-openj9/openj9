@@ -203,6 +203,7 @@ public:
    void setNext(TR_IPBytecodeHashTableEntry *n) { _next = n; }
    int32_t getLastSeenClassUnloadID() const { return _lastSeenClassUnloadID; }
    void setLastSeenClassUnloadID(int32_t v) { _lastSeenClassUnloadID = v; }
+   virtual bool hasData() = 0;
    virtual uintptr_t getData(TR::Compilation *comp = NULL) = 0;
    virtual uint32_t* getDataReference() { return NULL; }
    virtual int32_t setData(uintptr_t value, uint32_t freq = 1) = 0;
@@ -305,8 +306,9 @@ public:
    TR_IPBCDataFourBytes(uintptr_t pc) : TR_IPBytecodeHashTableEntry(pc), data(0) {}
 
    static const uint32_t IPROFILING_INVALID = ~0;
-   virtual uintptr_t getData(TR::Compilation *comp = NULL) { return (uint32_t)data; }
-   virtual uint32_t* getDataReference() { static uint32_t data_copy = (uint32_t)data; return &data_copy; }
+   virtual bool hasData() { return data != 0; }
+   virtual uintptr_t getData(TR::Compilation *comp = NULL) { return data; }
+   virtual uint32_t* getDataReference() { static uint32_t data_copy = data; return &data_copy; }
 
    virtual int32_t setData(uintptr_t value, uint32_t freq = 1) { data = (uint32_t)value; return 0;}
    virtual bool isCompact() { return true; }
@@ -331,7 +333,8 @@ class TR_IPBCDataAllocation : public TR_IPBytecodeHashTableEntry
 public:
    TR_IPBCDataAllocation(uintptr_t pc) : TR_IPBytecodeHashTableEntry(pc), clazz(0), method(0), data(0) {}
    static const uint32_t IPROFILING_INVALID = ~0;
-   virtual uintptr_t getData(TR::Compilation *comp = NULL) { return (uint32_t)data; }
+   virtual bool hasData() { return data != 0; }
+   virtual uintptr_t getData(TR::Compilation *comp = NULL) { return data; }
    virtual uint32_t* getDataReference() { return &data; }
    virtual int32_t setData(uintptr_t value, uint32_t freq = 1) { data = (uint32_t)value; return 0;}
    virtual bool isCompact() { return true; }
@@ -359,6 +362,7 @@ public:
          data[i] = 0;
       };
    static const uint64_t IPROFILING_INVALID = ~0;
+   virtual bool hasData() { return getSumSwitchCount() > 1; } // Note: getSumSwitchCount() artificially adds one to the count
    virtual uintptr_t getData(TR::Compilation *comp = NULL) { /*TR_ASSERT(0, "Don't call me, I'm empty"); */return 0;}
    virtual int32_t setData(uintptr_t value, uint32_t freq = 1) { /*TR_ASSERT(0, "Don't call me, I'm empty");*/ return 0;}
    uint64_t* getDataPointer() { return data; }
@@ -373,7 +377,7 @@ public:
 #endif
    virtual void createPersistentCopy(TR_J9SharedCache *sharedCache, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info);
    virtual void loadFromPersistentCopy(TR_IPBCDataStorageHeader *storage, TR::Compilation *comp);
-   virtual int32_t getSumSwitchCount();
+   int32_t getSumSwitchCount();
    virtual void copyFromEntry(TR_IPBytecodeHashTableEntry * originalEntry, TR::Compilation *comp);
 
 private:
@@ -399,6 +403,7 @@ public:
    static const uintptr_t IPROFILING_INVALID_COMPRESSED = 0x00000000FFFFFFFF;
    static const uintptr_t IPROFILING_INVALID = ~0;
 
+   virtual bool hasData() { return getData(NULL) != 0; }
    virtual uintptr_t getData(TR::Compilation *comp = NULL);
    virtual CallSiteProfileInfo* getCGData() { return &_csInfo; } // overloaded
    virtual int32_t setData(uintptr_t v, uint32_t freq = 1);

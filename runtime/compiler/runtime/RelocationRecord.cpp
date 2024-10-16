@@ -2171,8 +2171,6 @@ TR_RelocationRecordClassAddress::computeNewClassAddress(TR_RelocationRuntime *re
 TR_RelocationErrorCode
 TR_RelocationRecordClassAddress::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
    {
-   uintptr_t oldAddress = (uintptr_t) reloTarget->loadAddress(reloLocation);
-
    uintptr_t newConstantPool = computeNewConstantPool(reloRuntime, reloTarget, constantPool(reloTarget));
    TR_OpaqueClassBlock *newAddress = computeNewClassAddress(reloRuntime, newConstantPool, inlinedSiteIndex(reloTarget), cpIndex(reloTarget));
 
@@ -2185,8 +2183,7 @@ TR_RelocationRecordClassAddress::applyRelocation(TR_RelocationRuntime *reloRunti
 TR_RelocationErrorCode
 TR_RelocationRecordClassAddress::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocationHigh, uint8_t *reloLocationLow)
    {
-   uintptr_t oldValue = (uintptr_t) reloTarget->loadAddress(reloLocationHigh, reloLocationLow);
-   uintptr_t newConstantPool = computeNewConstantPool(reloRuntime, reloTarget, oldValue);
+   uintptr_t newConstantPool = computeNewConstantPool(reloRuntime, reloTarget, constantPool(reloTarget));
    TR_OpaqueClassBlock *newAddress = computeNewClassAddress(reloRuntime, newConstantPool, inlinedSiteIndex(reloTarget), cpIndex(reloTarget));
 
    if (!newAddress) return TR_RelocationErrorCode::classValidationFailure;

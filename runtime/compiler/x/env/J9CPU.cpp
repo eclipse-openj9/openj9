@@ -160,6 +160,29 @@ J9::X86::CPU::supportsFeature(uint32_t feature)
       TR_ASSERT_FATAL(TRUE == omrsysinfo_processor_has_feature(&_supportedFeatureMasks, feature), "New processor feature usage detected, please add feature %d to _supportedFeatureMasks via TR::CPU::enableFeatureMasks()\n", feature);
       }
 
+   static bool disableAVX512 = feGetEnv("TR_DisableAVX512");
+
+   if (disableAVX512)
+      {
+      switch (feature)
+         {
+         case OMR_FEATURE_X86_AVX512F:
+         case OMR_FEATURE_X86_AVX512VL:
+         case OMR_FEATURE_X86_AVX512BW:
+         case OMR_FEATURE_X86_AVX512DQ:
+         case OMR_FEATURE_X86_AVX512CD:
+         case OMR_FEATURE_X86_AVX512ER:
+         case OMR_FEATURE_X86_AVX512PF:
+         case OMR_FEATURE_X86_AVX512_BITALG:
+         case OMR_FEATURE_X86_AVX512_IFMA:
+         case OMR_FEATURE_X86_AVX512_VBMI:
+         case OMR_FEATURE_X86_AVX512_VBMI2:
+         case OMR_FEATURE_X86_AVX512_VNNI:
+         case OMR_FEATURE_X86_AVX512_VPOPCNTDQ:
+            return false;
+         }
+      }
+
    return TRUE == omrsysinfo_processor_has_feature(&_processorDescription, feature);
    }
 
