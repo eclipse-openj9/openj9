@@ -969,29 +969,27 @@ TR_IProfiler::addSampleData(TR_IPBytecodeHashTableEntry *entry, uintptr_t data, 
 
          if (data)
             {
-            if (((entry->getData()) & 0xFFFF0000)==0xFFFF0000)
+            uintptr_t existingData = entry->getData();
+            if ((existingData & 0xFFFF0000) == 0xFFFF0000)
                {
-               size_t data = entry->getData();
-               data >>= 1;
-               data &= 0x7FFF7FFF;
-
-               entry->setData(data);
+               // Overflow detected; divide both counters by 2
+               existingData >>= 1;
+               existingData &= 0x7FFF7FFF;
                }
 
-            entry->setData(entry->getData() + (1<<16));
+            entry->setData(existingData + (1<<16));
             }
          else
             {
-            if (((entry->getData()) & 0x0000FFFF)==0x0000FFFF)
+            uintptr_t existingData = entry->getData();
+            if ((existingData & 0x0000FFFF) == 0x0000FFFF)
                {
-               size_t data = entry->getData();
-               data >>= 1;
-               data &= 0x7FFF7FFF;
-
-               entry->setData(data);
+               // Overflow detected; divide both counters by 2
+               existingData >>= 1;
+               existingData &= 0x7FFF7FFF;
                }
 
-            entry->setData(entry->getData()+1);
+            entry->setData(existingData + 1);
             }
          return true;
       case JBinvokestatic:
