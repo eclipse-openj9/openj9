@@ -6813,5 +6813,3 @@ SH_CompositeCacheImpl::setExtraStartupHints(J9VMThread* currentThread, U_32 val)
 	_theca->extraStartupHints = val;
 	Trc_SHR_CC_setExtraStartupHints_Event(currentThread, val);
 }
-
-

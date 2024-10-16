@@ -398,7 +398,7 @@ public:
 	bool hasReadMutex(J9VMThread* currentThread) const;
 
 	U_32 getExtraStartupHints(void) const;
-	
+
 	void setExtraStartupHints(J9VMThread* currentThread, U_32 val);
 
 private:
@@ -585,4 +585,3 @@ private:
 };
 
 #endif /* !defined(COMPOSITECACHEIMPL_H_INCLUDED) */
-

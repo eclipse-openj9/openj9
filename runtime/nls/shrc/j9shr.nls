@@ -6965,7 +6965,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_EXTRA_STARTUPHINTS_EQUALS.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_EXTRA_STARTUPHINTS_EQUALS.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_OPTION_INVALID_PARAM=Invalid parameter passed to option \"%s\". 
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_PARAM=Invalid parameter passed to option \"%s\".
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_OPTION_INVALID_PARAM.sample_input_1=extraStartupHints=
 J9NLS_SHRC_SHRINIT_OPTION_INVALID_PARAM.explanation=An incorrect parameter has been used in the command-line option

@@ -976,7 +976,7 @@
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
+
 	<test id="Test 208-c: use option extraStartupHints=0 to prevent more startup hints to be stored" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,extraStartupHints=0</command>
 		<output type="success" caseSensitive="yes" regex="no">JVMSHRC864I The number of additional startup hints that can be stored into the shared cache is set to 0</output>
@@ -995,7 +995,7 @@
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
+
 	<test id="Test 208-e: Check no more new startup hints are stored" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,printStats=startuphint</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">STARTUP HINTS KEY:</output>
@@ -1009,7 +1009,7 @@
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-	
+
 	<test id="Test 208-f: use option extraStartupHints=32 to allow more startup hints to be stored" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,extraStartupHints=32</command>
 		<output type="success" caseSensitive="yes" regex="no">JVMSHRC864I The number of additional startup hints that can be stored into the shared cache is set to 32</output>

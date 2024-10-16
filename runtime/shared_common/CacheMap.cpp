@@ -7122,4 +7122,3 @@ SH_CacheMap::setExtraStartupHints(J9VMThread* currentThread)
 	CACHEMAP_TRACE1(J9SHR_VERBOSEFLAG_ENABLE_VERBOSE_DEFAULT, J9NLS_INFO, J9NLS_SHRC_CC_EXTRA_STARTUPHINTS_SET, val);
 	_ccHead->exitWriteMutex(currentThread, fnName);
 }
-
