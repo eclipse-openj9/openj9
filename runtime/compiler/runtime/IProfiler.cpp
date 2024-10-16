@@ -781,7 +781,7 @@ bool isSpecialOrStatic(U_8 byteCode)
 static void
 getSwitchSegmentDataAndCount(uint64_t segment, uint32_t *segmentData, uint32_t *segmentCount)
    {
-   // each segment is 2 bytes long and contains
+   // each segment is 8 bytes long and contains
    // switch data   count
    // | 0000000 | 00000000 |
    *segmentData = (uint32_t)((segment >> 32) & 0xFFFFFFFF);
@@ -1527,7 +1527,7 @@ TR_IProfiler::profilingSample (TR_OpaqueMethodBlock *method, uint32_t byteCodeIn
 #ifdef PERSISTENCE_VERBOSE
                fprintf(stderr, "Entry from SCC\n");
 #endif
-               if (!entry->getData())
+               if (!entry->hasData())
                   {
                   _STATS_persistedIPReadHadBadData++;
                   }
@@ -1580,9 +1580,9 @@ TR_IProfiler::profilingSample (TR_OpaqueMethodBlock *method, uint32_t byteCodeIn
       if (!preferHashtableData)
          {
          // If I don't have data in IProfiler HT, choose the persistent source
-         if(!currentEntry || (currentEntry->getData() == (uintptr_t)NULL))
+         if(!currentEntry || !currentEntry->hasData())
             {
-            if (persistentEntry && (persistentEntry->getData()))
+            if (persistentEntry && persistentEntry->hasData())
                {
                _STATS_IPEntryChoosePersistent++;
                currentEntry = findOrCreateEntry(bcHash(pc), pc, true);
@@ -1593,7 +1593,7 @@ TR_IProfiler::profilingSample (TR_OpaqueMethodBlock *method, uint32_t byteCodeIn
                }
             }
          // If I don't have relevant data in the SCC, choose the data from IProfiler HT
-         else if(!persistentEntry || (persistentEntry->getData() == (uintptr_t)NULL))
+         else if(!persistentEntry || !persistentEntry->hasData())
             {
             // Remember that we already looked into the SCC for this PC
             currentEntry->setPersistentEntryRead();
