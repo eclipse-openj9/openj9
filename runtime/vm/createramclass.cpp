@@ -67,8 +67,8 @@ enum J9ClassFragments {
 	RAM_INVOKE_CACHE_FRAGMENT,
 #else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	RAM_METHOD_TYPES_FRAGMENT,
-#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	RAM_VARHANDLE_METHOD_TYPES_FRAGMENT,
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	RAM_STATIC_SPLIT_TABLE_FRAGMENT,
 	RAM_SPECIAL_SPLIT_TABLE_FRAGMENT,
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
@@ -2950,17 +2950,12 @@ fail:
 			allocationRequests[RAM_METHOD_TYPES_FRAGMENT].alignment = sizeof(UDATA);
 			allocationRequests[RAM_METHOD_TYPES_FRAGMENT].alignedSize = romClass->methodTypeCount * sizeof(UDATA);
 			allocationRequests[RAM_METHOD_TYPES_FRAGMENT].address = NULL;
-#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
-
 			/* varhandle method types fragment */
 			allocationRequests[RAM_VARHANDLE_METHOD_TYPES_FRAGMENT].prefixSize = 0;
 			allocationRequests[RAM_VARHANDLE_METHOD_TYPES_FRAGMENT].alignment = sizeof(UDATA);
-#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
-			allocationRequests[RAM_VARHANDLE_METHOD_TYPES_FRAGMENT].alignedSize = 0;
-#else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 			allocationRequests[RAM_VARHANDLE_METHOD_TYPES_FRAGMENT].alignedSize = romClass->varHandleMethodTypeCount * sizeof(UDATA);
-#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 			allocationRequests[RAM_VARHANDLE_METHOD_TYPES_FRAGMENT].address = NULL;
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 			/* static split table fragment */
 			allocationRequests[RAM_STATIC_SPLIT_TABLE_FRAGMENT].prefixSize = 0;
@@ -3030,8 +3025,8 @@ fail:
 				ramClass->invokeCache = (j9object_t *) allocationRequests[RAM_INVOKE_CACHE_FRAGMENT].address;
 #else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 				ramClass->methodTypes = (j9object_t *) allocationRequests[RAM_METHOD_TYPES_FRAGMENT].address;
-#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 				ramClass->varHandleMethodTypes = (j9object_t *) allocationRequests[RAM_VARHANDLE_METHOD_TYPES_FRAGMENT].address;
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 				ramClass->staticSplitMethodTable = (J9Method **) allocationRequests[RAM_STATIC_SPLIT_TABLE_FRAGMENT].address;
 				for (U_16 i = 0; i < romClass->staticSplitMethodRefCount; ++i) {
 					ramClass->staticSplitMethodTable[i] = (J9Method*)javaVM->initialMethods.initialStaticMethod;
