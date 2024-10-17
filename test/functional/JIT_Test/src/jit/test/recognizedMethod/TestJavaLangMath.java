@@ -23,7 +23,14 @@
 package jit.test.recognizedMethod;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
+import java.util.Random;
+import org.testng.asserts.SoftAssert;
+import static jit.test.recognizedMethod.TestMathUtils.*;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Listeners;
 
+
+@Test(singleThreaded=true)
 public class TestJavaLangMath {
 
     /**
@@ -54,5 +61,87 @@ public class TestJavaLangMath {
         AssertJUnit.assertEquals(7.5d, Math.sqrt(56.25d));
         AssertJUnit.assertEquals(Double.POSITIVE_INFINITY, Math.sqrt(Double.POSITIVE_INFINITY));
         AssertJUnit.assertTrue(Double.isNaN(Math.sqrt(Double.NaN)));
+    }
+
+    @Test(groups = {"level.sanity"}, invocationCount=2, dataProvider="zeroProvider", dataProviderClass=TestMathUtils.class)
+    public void test_java_lang_Math_min_zeros_float(Number a, Number b, boolean isFirstArg) {
+        if (a instanceof Float) {
+            float f1 = a.floatValue();
+            float f2 = b.floatValue();
+            assertEquals(Math.min(f1, f2), isFirstArg ? f1 : f2);
+        } else {
+            double f1 = a.doubleValue();
+            double f2 = b.doubleValue();
+            assertEquals(Math.min(f1, f2), isFirstArg ? f1 : f2);
+        }
+    }
+
+    @Test(groups = {"level.sanity"}, invocationCount=2, dataProvider="zeroProvider", dataProviderClass=TestMathUtils.class)
+    public void test_java_lang_Math_max_zeros(Number a, Number b, boolean isFirstArg) {
+        if (a instanceof Float) {
+            float f1 = a.floatValue();
+            float f2 = b.floatValue();
+            assertEquals(Math.max(f1, f2), isFirstArg ? f2 : f1);
+        } else {
+            double f1 = a.doubleValue();
+            double f2 = b.doubleValue();
+            assertEquals(Math.max(f1, f2), isFirstArg ? f2 : f1);
+        }
+    }
+
+    @Test(groups = {"level.sanity"}, invocationCount=2, dataProvider="nanProvider", dataProviderClass=TestMathUtils.class)
+    public void test_java_lang_Math_min_nan(Number a, Number b, Number expected) {
+        if (a instanceof Float) {
+            float f1 = a.floatValue();
+            float f2 = b.floatValue();
+            int exp = expected.intValue();
+            assertEquals(Math.min(f1, f2), exp);
+        } else {
+            double f1 = a.doubleValue();
+            double f2 = b.doubleValue();
+            long exp = expected.longValue();
+            assertEquals(Math.min(f1, f2), exp);
+        }
+    }
+
+    @Test(groups = {"level.sanity"}, invocationCount=2, dataProvider="nanProvider", dataProviderClass=TestMathUtils.class)
+    public void test_java_lang_Math_max_nan(Number a, Number b, Number expected) {
+        if (a instanceof Float) {
+            float f1 = a.floatValue();
+            float f2 = b.floatValue();
+            int exp = expected.intValue();
+            assertEquals(Math.max(f1, f2), exp);
+        } else {
+            double f1 = a.doubleValue();
+            double f2 = b.doubleValue();
+            long exp = expected.longValue();
+            assertEquals(Math.max(f1, f2), exp);
+        }
+    }
+
+    @Test(groups = {"level.sanity"}, invocationCount=2, dataProvider="normalNumberProvider", dataProviderClass=TestMathUtils.class)
+    public void test_java_lang_Math_min_normal(Number a, Number b){
+        if (a instanceof Float) {
+            float f1 = a.floatValue();
+            float f2 = b.floatValue();
+            assertEquals(Math.min(f1, f2), f1 <= f2 ? f1 : f2);
+        } else {
+            double f1 = a.doubleValue();
+            double f2 = b.doubleValue();
+            assertEquals(Math.min(f1, f2), f1 <= f2 ? f1 : f2);
+        }
+    }
+
+    @Test(groups = {"level.sanity"}, invocationCount=2, dataProvider="normalNumberProvider", dataProviderClass=TestMathUtils.class)
+    public void test_java_lang_Math_max_normal(Number a, Number b){
+        if (a instanceof Float) {
+            float f1 = a.floatValue();
+            float f2 = b.floatValue();
+            assertEquals(Math.max(f1, f2), f1 >= f2 ? f1 : f2);
+        } else {
+            double f1 = a.doubleValue();
+            double f2 = b.doubleValue();
+            assertEquals(Math.max(f1, f2), f1 >= f2 ? f1 : f2);
+        }
     }
 }
