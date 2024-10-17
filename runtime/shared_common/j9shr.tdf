@@ -3006,3 +3006,5 @@ TraceEvent=Trc_SHR_OSC_Mmap_startup_jitserverlayergooddelete NoEnv Overhead=1 Le
 TraceException=Trc_SHR_OSC_Mmap_startup_jitserverlayerbaddelete NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::startup: deleteCacheFile failed for cache path name = %s, file handle %zd"
 
 TraceEvent=Trc_SHR_CC_OSPAGE_SIZE_MISMATCH_V1 Overhead=1 Level=1 Template="Mismatch in layer %d composite cache osPageSize value. CompositeCache = %p, _theca->osPageSize = %zu, _osPageSize = %zu, _theca->roundedPagesFlag is %u, _readOnlyOSCache is %d"
+TraceEvent=Trc_SHR_CC_setExtraStartupHints_Event Overhead=1 Level=6 Template="CC setExtraStartupHints: set extraStartupHints in the header to %u"
+TraceEvent=Trc_SHR_CM_storeSharedData_NoMoreStartupHintsAllowed Overhead=1 Level=1 Template="CM storeSharedData: No more startup hints are allowed to be stored"

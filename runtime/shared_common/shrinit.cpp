@@ -250,6 +250,7 @@ J9SharedClassesHelpText J9SHAREDCLASSESHELPTEXT[] = {
 	{HELPTEXT_ADJUST_MAXAOT_EQUALS, J9NLS_SHRC_SHRINIT_HELPTEXT_ADJUST_MAXAOT_EQUALS, 0, 0},
 	{HELPTEXT_ADJUST_MINJITDATA_EQUALS, J9NLS_SHRC_SHRINIT_HELPTEXT_ADJUST_MINJIT_EQUALS, 0, 0},
 	{HELPTEXT_ADJUST_MAXJITDATA_EQUALS, J9NLS_SHRC_SHRINIT_HELPTEXT_ADJUST_MAXJIT_EQUALS, 0, 0},
+	{HELPTEXT_OPTION_EXTRA_STARTUPHINTS_EQUALS, J9NLS_SHRC_SHRINIT_HELPTEXT_EXTRA_STARTUPHINTS_EQUALS, 0, 0},
 #if defined(J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE)
 	HELPTEXT_NEWLINE,
 	{HELPTEXT_LAYER_EQUALS,J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS, 0, 0},
@@ -385,6 +386,7 @@ J9SharedClassesOptions J9SHAREDCLASSESOPTIONS[] = {
 #endif /* defined(J9ZOS39064) */
 	{ OPTION_TEST_DOUBLE_PAGESIZE, PARSE_TYPE_EXACT, RESULT_DO_ADD_RUNTIMEFLAG2, J9SHR_RUNTIMEFLAG2_TEST_DOUBLE_PAGESIZE},
 	{ OPTION_TEST_HALF_PAGESIZE, PARSE_TYPE_EXACT, RESULT_DO_ADD_RUNTIMEFLAG2, J9SHR_RUNTIMEFLAG2_TEST_HALF_PAGESIZE},
+	{ OPTION_EXTRA_STARTUPHINTS_EQUALS, PARSE_TYPE_STARTSWITH, RESULT_DO_SET_EXTRA_STARTUPHINTS, 0},
 	{ NULL, 0, 0 }
 };
 
@@ -705,6 +707,26 @@ parseArgs(J9JavaVM* vm, char* options, U_64* runtimeFlags, U_64* runtimeFlags2, 
 				return RESULT_PARSE_FAILED;
 			}
 			options += strlen(OPTION_LAYER_EQUALS)+ (cursor - layerString) +1;
+			continue;
+		}
+		case RESULT_DO_SET_EXTRA_STARTUPHINTS:
+		{
+			UDATA temp = 0;
+			char* optString = options + strlen(OPTION_EXTRA_STARTUPHINTS_EQUALS);
+			char* cursor = optString;
+			if (J9_ARE_ALL_BITS_SET(*runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_READONLY)) {
+				*runtimeFlags &= ~J9SHR_RUNTIMEFLAG_ENABLE_READONLY;
+				SHRINIT_WARNING_TRACE3(verboseFlags, J9NLS_SHRC_SHRINIT_OPTION_IGNORED_WARNING, OPTION_READONLY, OPTION_EXTRA_STARTUPHINTS_EQUALS, OPTION_READONLY);
+			}
+			if (scan_udata(&cursor, &temp) == 0) {
+				vm->sharedCacheAPI->newStartupHints = (I_32)temp;
+			} else {
+				SHRINIT_ERR_TRACE1(1, J9NLS_SHRC_SHRINIT_OPTION_INVALID_PARAM, OPTION_EXTRA_STARTUPHINTS_EQUALS);
+				return RESULT_PARSE_FAILED;
+			}
+			options += strlen(OPTION_EXTRA_STARTUPHINTS_EQUALS) + (cursor - optString) + 1;
+			returnAction = J9SHAREDCLASSESOPTIONS[i].action;
+			*runtimeFlags |= J9SHR_RUNTIMEFLAG_DO_NOT_CREATE_CACHE;
 			continue;
 		}
 		case RESULT_DO_CREATE_LAYER:
@@ -2641,6 +2663,7 @@ performSharedClassesCommandLineAction(J9JavaVM* vm, J9SharedClassConfig* sharedC
 	case RESULT_DO_ADJUST_MAXAOT_EQUALS:
 	case RESULT_DO_ADJUST_MINJITDATA_EQUALS:
 	case RESULT_DO_ADJUST_MAXJITDATA_EQUALS:
+	case RESULT_DO_SET_EXTRA_STARTUPHINTS:
 		if (1 == checkIfCacheExists(vm, sharedClassConfig->ctrlDirName, cacheDirName, cacheName, &versionData, cacheType, layer)) {
 			return J9VMDLLMAIN_OK;
 		}
@@ -3869,10 +3892,12 @@ j9shr_init(J9JavaVM *vm, UDATA loadFlags, UDATA* nonfatal)
  		 * will be printed out inside tryAdjustMinMaxSizes() no matter whether the softmx/minAOT/maxAOT/minJIT/maxJIT has been adjusted as requested */
 		cm->tryAdjustMinMaxSizes(currentThread);
 		returnVal = J9VMDLLMAIN_SILENT_EXIT_VM;
+	} else if (RESULT_DO_SET_EXTRA_STARTUPHINTS == parseResult) {
+		cm->setExtraStartupHints(currentThread);
+		returnVal = J9VMDLLMAIN_SILENT_EXIT_VM;
 	}
 
 	return returnVal;
-
 _error:
 	/* This needs to be done before freeing vm->sharedClassConfig */
 	if ((doPrintStats) && (-2 == rcStartup)) {

@@ -967,6 +967,8 @@
 		<command>$JAVA_EXE$ $currentMode$,printStats=startuphint</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">STARTUP HINTS KEY:</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes"># Startup hints[\s]*= 1</output>
+		<!--  DEFAULT_STARTUPHINTS is 64, so there are 63 more startup hints that can be stored into this cache -->
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">additional startup hints allowed[\s]*= 63</output>
 
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Startup hint bytes[\s]*= 0</output>
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes"># Startup hints[\s]*= 0</output>
@@ -975,8 +977,17 @@
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
 
+	<test id="Test 208-c: use option extraStartupHints=0 to prevent more startup hints to be stored" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,extraStartupHints=0</command>
+		<output type="success" caseSensitive="yes" regex="no">JVMSHRC864I The number of additional startup hints that can be stored into the shared cache is set to 0</output>
+
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
 	<!-- Since running Hanoi with -Xjit option does not store the startup hint to the shared chache, we use -Xint here -->
-	<test id="Test 208-c: Run the test again with a different argument" timeout="600" runPath=".">
+	<test id="Test 208-d: Run the test again with a different argument" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$ -Xint $CP_HANOI$ $PROGRAM_HANOI_2$</command>
 		<output type="success" caseSensitive="yes" regex="no">Puzzle solved!</output>
 
@@ -985,10 +996,44 @@
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
 
-	<test id="Test 208-d: Make sure -Xshareclasses:printStats=startuphint still works properly for another test" timeout="600" runPath=".">
+	<test id="Test 208-e: Check no more new startup hints are stored" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,printStats=startuphint</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">STARTUP HINTS KEY:</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes"># Startup hints[\s]*= 1</output>
+		<!--  DEFAULT_STARTUPHINTS is 64, so there are 63 more startup hints that can be stored into this cache -->
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">additional startup hints allowed[\s]*= 0</output>
+
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Startup hint bytes[\s]*= 0</output>
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes"># Startup hints[\s]*= 0</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="Test 208-f: use option extraStartupHints=32 to allow more startup hints to be stored" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,extraStartupHints=32</command>
+		<output type="success" caseSensitive="yes" regex="no">JVMSHRC864I The number of additional startup hints that can be stored into the shared cache is set to 32</output>
+
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<!-- Since running Hanoi with -Xjit option does not store the startup hint to the shared chache, we use -Xint here -->
+	<test id="Test 208-g: Run the test again with a different argument" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ -Xint $CP_HANOI$ $PROGRAM_HANOI_2$</command>
+		<output type="success" caseSensitive="yes" regex="no">Puzzle solved!</output>
+
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="Test 208-h: Make sure new startup hints are stored into the cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,printStats=startuphint</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">STARTUP HINTS KEY:</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes"># Startup hints[\s]*= 2</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">additional startup hints allowed[\s]*= 31</output>
 
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Startup hint bytes[\s]*= 0</output>
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes"># Startup hints[\s]*= 0</output>

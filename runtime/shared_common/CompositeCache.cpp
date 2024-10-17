@@ -38,6 +38,7 @@
 #include "CompositeCacheImpl.hpp"
 
 #define SEMSUFFIX "SHSEM"
+#define DEFAULT_STARTUPHINTS 64
 
 /**
  * CACHE AREAS
@@ -157,6 +158,7 @@ SH_CompositeCacheImpl::SH_SharedCacheHeaderInit::init(BlockPtr data, U_32 len, I
 	ca->writerCount = 0;
 	ca->softMaxBytes = softMaxBytes;
 	ca->cacheFullFlags = 0;
+	ca->extraStartupHints = DEFAULT_STARTUPHINTS;
 	ca->unused8 = 0;
 	ca->unused9 = 0;
 	ca->unused10 = 0;
@@ -4488,6 +4490,7 @@ SH_CompositeCacheImpl::getJavacoreData(J9JavaVM *vm, J9SharedClassJavacoreDataDe
 		descriptor->maxJIT = _theca->maxJIT;
 		descriptor->softMaxBytes = (UDATA)((U_32)-1 == _theca->softMaxBytes ? descriptor->cacheSize : _theca->softMaxBytes);
 		descriptor->currentOSPageSize = getOSPageSize();
+		descriptor->extraStartupHints = getExtraStartupHints();
 #if defined(J9VM_OPT_JITSERVER)
 		descriptor->usingJITServerAOTCacheLayer = vm->sharedCacheAPI->usingJITServerAOTCacheLayer;
 #endif /* defined(J9VM_OPT_JITSERVER) */
@@ -6784,3 +6787,29 @@ SH_CompositeCacheImpl::updateMsyncRuntimeFlags(void)
 	}
 }
 #endif /* defined(J9VM_OPT_SHR_MSYNC_SUPPORT) */
+
+U_32
+SH_CompositeCacheImpl::getExtraStartupHints(void) const
+{
+	if (!_started) {
+		Trc_SHR_Assert_ShouldNeverHappen();
+		return 0;
+	}
+	return _theca->extraStartupHints;
+}
+
+void
+SH_CompositeCacheImpl::setExtraStartupHints(J9VMThread* currentThread, U_32 val)
+{
+	if (!_started) {
+		Trc_SHR_Assert_ShouldNeverHappen();
+		return;
+	}
+	if (_readOnlyOSCache) {
+		Trc_SHR_Assert_ShouldNeverHappen();
+		return;
+	}
+	Trc_SHR_Assert_True(hasWriteMutex(currentThread));
+	_theca->extraStartupHints = val;
+	Trc_SHR_CC_setExtraStartupHints_Event(currentThread, val);
+}

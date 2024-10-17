@@ -281,6 +281,8 @@ public:
 	
 	bool isAddressInCache(const void *address, UDATA length, bool includeHeaderReadWriteArea, bool useCcHeadOnly) const;
 
+	void setExtraStartupHints(J9VMThread* currentThread);
+
 private:
 	SH_CompositeCacheImpl* _cc;					/* current cache */
 

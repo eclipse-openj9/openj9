@@ -3890,6 +3890,7 @@ SH_CacheMap::storeSharedData(J9VMThread* currentThread, const char* key, UDATA k
 	UDATA dataNotIndexed = (data != NULL) ? (data->flags & J9SHRDATA_NOT_INDEXED) : 0;
 	SH_ByteDataManager* localBDM;
 	bool overwrite = false;
+	U_32 extraStartupHints = 0;
 
 	PORT_ACCESS_FROM_VMC(currentThread);
 
@@ -3989,6 +3990,14 @@ SH_CacheMap::storeSharedData(J9VMThread* currentThread, const char* key, UDATA k
 	}
 
 _addData:
+	if (J9SHR_DATA_TYPE_STARTUP_HINTS == data->type) {
+		extraStartupHints = _ccHead->getExtraStartupHints();
+		if (0 == extraStartupHints) {
+			result = NULL;
+			Trc_SHR_CM_storeSharedData_NoMoreStartupHintsAllowed(currentThread);
+			goto _done;
+		}
+	}
 	/* If data is NULL or datalen <= 0, mark the original item(s) stale, but don't store anything */
 	if ((data != NULL) && (data->length > 0) && ((data->address != NULL) || (data->flags & J9SHRDATA_ALLOCATE_ZEROD_MEMORY))) {
 		const J9UTF8* tokenKey = NULL;
@@ -4021,6 +4030,12 @@ _addData:
 			}
 		}
 		result = (const U_8*)addByteDataToCache(currentThread, localBDM, tokenKey, data, NULL, false);
+		if (NULL != result) {
+			if (J9SHR_DATA_TYPE_STARTUP_HINTS == data->type) {
+				Trc_SHR_Assert_True(extraStartupHints > 0);
+				_ccHead->setExtraStartupHints(currentThread, extraStartupHints - 1);
+			}
+		}
 	}
 
 _done:
@@ -5043,7 +5058,11 @@ SH_CacheMap::printCacheStatsTopLayerStatsHelper(J9VMThread* currentThread, UDATA
 	if (J9_ARE_ALL_BITS_SET(runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_DETAILED_STATS)) {
 		CACHEMAP_FMTPRINT1(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_METADATA_STARTADDRESS, javacoreData->metadataStart);
 		CACHEMAP_FMTPRINT1(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_SHRC_CM_PRINTSTATS_RUNTIME_FLAGS, javacoreData->runtimeFlags);
+		CACHEMAP_FMTPRINT1(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS, javacoreData->extraStartupHints);
 		CACHEMAP_FMTPRINT1(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_SHRC_CM_PRINTSTATS_CACHE_GEN, javacoreData->cacheGen);
+	} else if (J9_ARE_ALL_BITS_SET(showFlags, PRINTSTATS_SHOW_STARTUPHINT)) {
+		CACHEMAP_FMTPRINT1(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS, javacoreData->extraStartupHints);
+		j9tty_printf(_portlib, "\n");
 	}
 
 	CACHEMAP_FMTPRINT1(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_SHRC_CM_PRINTSTATS_CACHE_LAYER, javacoreData->topLayer);
@@ -7087,4 +7106,19 @@ SH_CacheMap::getDataFromByteDataWrapper(const ByteDataWrapper* bdw)
 		ret = (U_8*)getAddressFromJ9ShrOffset(&(bdw->externalBlockOffset));
 	}
 	return ret;
+}
+
+void
+SH_CacheMap::setExtraStartupHints(J9VMThread* currentThread)
+{
+	PORT_ACCESS_FROM_PORT(_portlib);
+	const char* fnName = "setExtraStartupHints";
+	U_32 val = (U_32)currentThread->javaVM->sharedCacheAPI->newStartupHints;
+	if (_ccHead->enterWriteMutex(currentThread, false, fnName) != 0) {
+		CACHEMAP_TRACE(J9SHR_VERBOSEFLAG_ENABLE_VERBOSE_DEFAULT, J9NLS_ERROR, J9NLS_SHRC_CM_FAILED_ENTER_WRITE_MUTEX);
+		return;
+	}
+	_ccHead->setExtraStartupHints(currentThread, val);
+	CACHEMAP_TRACE1(J9SHR_VERBOSEFLAG_ENABLE_VERBOSE_DEFAULT, J9NLS_INFO, J9NLS_SHRC_CC_EXTRA_STARTUPHINTS_SET, val);
+	_ccHead->exitWriteMutex(currentThread, fnName);
 }
