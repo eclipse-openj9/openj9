@@ -12101,11 +12101,16 @@ J9::Z::TreeEvaluator::VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *
       resultReg = oldVReg;
       if (isObj)
          {
-         resultReg->setContainsCollectedReference();
-         if (TR::Compiler->om.compressedReferenceShiftOffset() != 0)
+         if (comp->target().is64Bit() && comp->useCompressedPointers())
             {
-            generateRSInstruction(cg, TR::InstOpCode::SLLG, node, resultReg, resultReg, TR::Compiler->om.compressedReferenceShiftOffset());
+            generateRRInstruction(cg, TR::InstOpCode::LLGFR, node, resultReg, resultReg);
+
+            if (TR::Compiler->om.compressedReferenceShiftOffset() != 0)
+               {
+               generateRSInstruction(cg, TR::InstOpCode::SLLG, node, resultReg, resultReg, TR::Compiler->om.compressedReferenceShiftOffset());
+               }
             }
+         resultReg->setContainsCollectedReference();
          }
       }
    else
