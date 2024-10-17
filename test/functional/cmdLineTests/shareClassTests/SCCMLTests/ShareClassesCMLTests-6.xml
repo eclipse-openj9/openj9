@@ -968,7 +968,7 @@
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">STARTUP HINTS KEY:</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes"># Startup hints[\s]*= 1</output>
 		<!--  DEFAULT_STARTUPHINTS is 64, so there are 63 more startup hints that can be stored into this cache -->
-		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">additional startup hints allowed[\s]*= 63</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes"># Additional startup hints allowed[\s]*= 63</output>
 
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Startup hint bytes[\s]*= 0</output>
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes"># Startup hints[\s]*= 0</output>
@@ -1001,7 +1001,7 @@
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">STARTUP HINTS KEY:</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes"># Startup hints[\s]*= 1</output>
 		<!--  DEFAULT_STARTUPHINTS is 64, so there are 63 more startup hints that can be stored into this cache -->
-		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">additional startup hints allowed[\s]*= 0</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes"># Additional startup hints allowed[\s]*= 0</output>
 
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Startup hint bytes[\s]*= 0</output>
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes"># Startup hints[\s]*= 0</output>
@@ -1033,7 +1033,7 @@
 		<command>$JAVA_EXE$ $currentMode$,printStats=startuphint</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">STARTUP HINTS KEY:</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes"># Startup hints[\s]*= 2</output>
-		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">additional startup hints allowed[\s]*= 31</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes"># Additional startup hints allowed[\s]*= 31</output>
 
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Startup hint bytes[\s]*= 0</output>
 		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes"># Startup hints[\s]*= 0</output>
