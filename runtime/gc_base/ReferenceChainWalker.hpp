@@ -74,10 +74,15 @@ private:
 	bool _isProcessingOverflow; /**< Set when the queue is currently processing the overflow */
 	bool _isTerminating; /**< Set when no more callbacks should be queued */
 	bool _shouldPreindexInterfaceFields; /**< if true, indexes interface fields of the class being visited before class and superclass fields, otherwise, returns them in the order they appear in an object instance (CMVC 142897) */
+#if JAVA_SPEC_VERSION >= 19
+	bool _includeVThreadObject; /**< Set when VirtualThread object is needed by callback function */
+	J9Object *_vThreadObject; /**< Cached object ref of VirtualThread object */
+#endif /* JAVA_SPEC_VERSION >= 19 */
 	MM_ReferenceChainWalkerMarkMap *_markMap;	/**< Mark Map created for Reference Chain Walker */
 	MM_Heap *_heap; /**< Cached pointer to the heap */
 	void *_heapBase; /**< Cached value of the heap base */
 	void *_heapTop; /**< Cached value of the heap top */
+
 
 	void clearQueue();
 	void pushObject(J9Object *obj);
@@ -235,6 +240,10 @@ public:
 		_isProcessingOverflow(false),
 		_isTerminating(false),
 		_shouldPreindexInterfaceFields(true),	/* default to behaviour required for Java6/heap11 */
+#if JAVA_SPEC_VERSION >= 19
+		_includeVThreadObject(false),
+		_vThreadObject(NULL),
+#endif /* JAVA_SPEC_VERSION >= 19 */
 		_markMap(NULL),
 		_heap(NULL),
 		_heapBase(NULL),
@@ -259,6 +268,10 @@ public:
 		completeScan();
 	}
 	
+#if JAVA_SPEC_VERSION >= 19
+	void includeVThreadObject() { _includeVThreadObject = true; }
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
 	/**
 	 * Added to support bi-modal interface indexing in JVMTI (CMVC 142897).
 	 * Detail:  heap10 requires no pre-indexing in order to preserve Java5 behaviour but heap11 requires pre-indexing to pass a Java6 JCK

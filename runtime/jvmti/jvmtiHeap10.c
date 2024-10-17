@@ -59,7 +59,7 @@ typedef struct J9JVMTIHeapEvent {
 } J9JVMTIHeapEvent;
 
 static jvmtiIterationControl processHeapRoot (J9JVMTIObjectIteratorData * data, J9JVMTIObjectTag * entry, jlong size, jlong classTag, jvmtiHeapRootKind kind);
-static jvmtiIterationControl processStackRoot (J9JVMTIObjectIteratorData * data, J9JVMTIObjectTag * entry, jlong size, jlong classTag, J9StackWalkState * walkState);
+static jvmtiIterationControl processStackRoot (J9JVMTIObjectIteratorData * data, J9JVMTIObjectTag * entry, jlong size, jlong classTag, jvmtiHeapRootKind kind, J9MM_StackSlotDescriptor * walkState);
 static jvmtiIterationControl wrapHeapIterationCallback(J9JavaVM * vm, J9MM_IterateObjectDescriptor *objectDesc, void * userData);
 static J9JVMTIHeapEvent mapEventType (J9VMThread *vmThread, J9JVMTIObjectIteratorData * data, IDATA type, IDATA index, j9object_t referrer, j9object_t object);
 static jvmtiIterationControl wrapObjectIterationCallback (j9object_t *slotPtr, j9object_t referrer, void *userData, IDATA type, IDATA referrerIndex, IDATA wasReportedBefore);
@@ -309,7 +309,7 @@ mapEventType(J9VMThread *vmThread, J9JVMTIObjectIteratorData * data, IDATA type,
 			break;
 
 		case J9GC_ROOT_TYPE_JNI_LOCAL:
-			event.type = J9JVMTI_HEAP_EVENT_ROOT;
+			event.type = J9JVMTI_HEAP_EVENT_STACK;
 			event.rootKind = JVMTI_HEAP_ROOT_JNI_LOCAL;
 			break;
 
@@ -462,19 +462,24 @@ processObjectRef(J9JVMTIObjectIteratorData * data, J9JVMTIObjectTag * entry, jlo
 
 
 static jvmtiIterationControl
-processStackRoot(J9JVMTIObjectIteratorData * data, J9JVMTIObjectTag * entry, jlong size, jlong classTag, J9StackWalkState * walkState)
+processStackRoot(J9JVMTIObjectIteratorData *data, J9JVMTIObjectTag *entry, jlong size, jlong classTag, jvmtiHeapRootKind kind, J9MM_StackSlotDescriptor *stackSlotDescriptor)
 {
-	jvmtiHeapRootKind kind;
-	jint slot = (jint) walkState->slotIndex;
-	jint depth = (jint) walkState->framesWalked;
-	J9Method * ramMethod = walkState->method;
-	jmethodID method;
-	J9JVMTIObjectTag search;
-	J9JVMTIObjectTag * result;
+	jint slot = -1;
+	jint depth = -1;
+	J9Method *ramMethod = NULL;
+	jmethodID method = (jmethodID) -1;
+	J9JVMTIObjectTag search = {NULL, 0};
+	J9JVMTIObjectTag *result = NULL;
 
-	/* Convert internal slot type to JVMTI type */
+	if (NULL != stackSlotDescriptor->walkState) {
+		J9StackWalkState *walkState = stackSlotDescriptor->walkState;
+		slot = (jint) walkState->slotIndex;
+		depth = (jint) walkState->framesWalked;
+		ramMethod = walkState->method;
 
-	switch (walkState->slotType) {
+		/* Convert internal slot type to JVMTI type. */
+
+		switch (walkState->slotType) {
 		case J9_STACKWALK_SLOT_TYPE_JNI_LOCAL:
 			kind = JVMTI_HEAP_ROOT_JNI_LOCAL;
 			break;
@@ -485,27 +490,21 @@ processStackRoot(J9JVMTIObjectIteratorData * data, J9JVMTIObjectTag * entry, jlo
 			kind = JVMTI_HEAP_ROOT_JNI_LOCAL;
 			ramMethod = NULL;
 			break;
-	}
+		}
 
-	/* If there's no method, set slot, method and depth to -1 */
-
-	if (ramMethod == NULL) {
-		slot = -1;
-		depth = -1;
-		method = (jmethodID) -1;
-	} else {
-		/* Cheating here - should be current thread, but the walk thread will do */
-		method = getCurrentMethodID(walkState->walkThread, ramMethod);
-		if (method == NULL) {
-			slot = -1;
-			depth = -1;
-			method = (jmethodID) -1;
+		/* If there's no method, slot, method and depth are set to -1 by default. */
+		if (NULL != ramMethod) {
+			/* Cheating here - should be current thread, but the walk thread will do. */
+			method = getCurrentMethodID(walkState->walkThread, ramMethod);
+			if (NULL == method) {
+				method = (jmethodID) -1;
+			}
 		}
 	}
 
 	/* Find thread tag */
 
-	search.ref = (j9object_t) walkState->walkThread->threadObject;
+	search.ref = (j9object_t)stackSlotDescriptor->vmThread->threadObject;
 	result = hashTableFind(data->env->objectTagTable, &search);
 	
 	/* Call the callback */
@@ -639,7 +638,7 @@ wrapObjectIterationCallback(j9object_t *slotPtr, j9object_t referrer, void *user
 				returnCode = processHeapRoot(iteratorData, result, objectSize, classTag, event.rootKind);
 				break;
 			case J9JVMTI_HEAP_EVENT_STACK:
-				returnCode = processStackRoot(iteratorData, result, objectSize, classTag, (J9StackWalkState *)  referrer);
+				returnCode = processStackRoot(iteratorData, result, objectSize, classTag, event.rootKind, (J9MM_StackSlotDescriptor *)referrer);
 				break;
 			case J9JVMTI_HEAP_EVENT_OBJECT:
 				returnCode = processObjectRef(iteratorData, result, objectSize, classTag, event.refKind, referrerTag, (jint)event.index);
