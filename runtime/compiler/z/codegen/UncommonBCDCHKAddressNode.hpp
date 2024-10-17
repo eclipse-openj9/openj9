@@ -28,6 +28,7 @@
 #include "env/TRMemory.hpp"
 #include "il/Node.hpp"
 #include "infra/List.hpp"
+#include "optimizer/TransformUtil.hpp"
 
 /**
  * \brief The Uncommon BCDCHK Address Node codegen phase is designed to cope with incorrect OOL PD copy problem
