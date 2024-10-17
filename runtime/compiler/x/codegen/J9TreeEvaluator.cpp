@@ -9317,6 +9317,411 @@ static TR::Register* inlineStringHashCode(TR::Node* node, bool isCompressed, TR:
    return hash;
    }
 
+TR::Register* J9::X86::TreeEvaluator::inlineVectorizedHashCode(TR::Node* node, TR::CodeGenerator* cg)
+   {
+   TR::Node *fromIndexNode = node->getChild(1);
+   TR::Node *initialValueNode = node->getChild(3);
+   TR::Node *elementTypeNode = node->getChild(4);
+   TR::Register* registerHash = NULL;
+
+   if (!(fromIndexNode->getOpCodeValue() == TR::iconst && fromIndexNode->getInt() == 0))
+      return NULL; // only supporting offset of const 0
+
+   switch (elementTypeNode->getConstValue())
+      {
+      case 4:  // T_BOOLEAN
+         registerHash = vectorizedHashCodeHelper(node, TR::Int8, initialValueNode, false, cg);
+         break;
+      case 8:  // T_BYTE
+         registerHash = vectorizedHashCodeHelper(node, TR::Int8, initialValueNode, true, cg);
+         break;
+      case 5:  // T_CHAR
+         registerHash = vectorizedHashCodeHelper(node, TR::Int16, initialValueNode, false, cg);
+         break;
+      case 9:  // T_SHORT
+         registerHash = vectorizedHashCodeHelper(node, TR::Int16, initialValueNode, true, cg);
+         break;
+      case 10: // T_INT
+         registerHash = vectorizedHashCodeHelper(node, TR::Int32, initialValueNode, true, cg);
+         break;
+      default:
+         return NULL;
+      }
+
+   if (registerHash != NULL)
+      cg->decReferenceCount(elementTypeNode);
+
+   node->setRegister(registerHash);
+
+   return registerHash;
+   }
+
+TR::Register *
+J9::X86::TreeEvaluator::vectorizedHashCodeReductionHelper(TR::Node* node, TR::Register *vectorReg, TR::Register *tmpVectorReg, TR::Register *result, TR::VectorLength vl, TR::DataType dt, TR::CodeGenerator* cg)
+   {
+   TR::InstOpCode opcode = TR::InstOpCode::PADDDRegReg;
+   // Reduce lanes -> horizontally add all vector elements together
+   // Store the result in a GPR
+
+   switch (vl)
+      {
+      case TR::VectorLength512:
+         // extract 256-bits from zmm and store in ymm, then perform vertical operation
+         generateRegRegImmInstruction(TR::InstOpCode::VEXTRACTF64X4YmmZmmImm1, node, tmpVectorReg, vectorReg, 0xFF, cg);
+         generateRegRegInstruction(opcode.getMnemonic(), node, vectorReg, tmpVectorReg, cg, opcode.getSIMDEncoding(&cg->comp()->target().cpu, TR::VectorLength256));
+         // Fallthrough to treat remaining result as 256-bit vector
+      case TR::VectorLength256:
+          // extract 128 bits from ymm and store in xmm, then perform vertical operation
+         generateRegRegImmInstruction(TR::InstOpCode::VEXTRACTF128RegRegImm1, node, tmpVectorReg, vectorReg, 0xFF, cg);
+         generateRegRegInstruction(opcode.getMnemonic(), node, vectorReg, tmpVectorReg, cg, opcode.getSIMDEncoding(&cg->comp()->target().cpu, TR::VectorLength128));
+         // Fallthrough to treat remaining result as 128-bit vector
+      case TR::VectorLength128:
+         generateRegRegImmInstruction(TR::InstOpCode::PSHUFDRegRegImm1, node, tmpVectorReg, vectorReg, 0x0e, cg);
+         generateRegRegInstruction(TR::InstOpCode::PADDDRegReg, node, vectorReg, tmpVectorReg, cg);
+         generateRegRegImmInstruction(TR::InstOpCode::PSHUFDRegRegImm1, node, tmpVectorReg, vectorReg, 0x01, cg);
+         generateRegRegInstruction(TR::InstOpCode::PADDDRegReg, node, vectorReg, tmpVectorReg, cg);
+         break;
+      default:
+         TR_ASSERT_FATAL(false, "Unsupported vector length");
+      }
+
+   generateRegRegInstruction(TR::InstOpCode::MOVDReg4Reg, node, result, vectorReg, cg);
+   return result;
+   }
+
+struct VectorHashCodeMetaData
+   {
+   OMR::X86::Encoding vectorEncoding;    /* SIMD instruction encoding method (such as SSE, VEX, EVEX) */
+   TR::VectorLength vl;                  /* Size of vector (128, 256 or 512) */
+   size_t numElements;                   /* Number of elements that fit in the vector */
+   int32_t thirtyOnePowVL;               /* 31 to the power of the number of elements in the vector length */
+   int32_t finalizationMultiplier[16];   /* 31^(n-1), 31^(n-2) ... 31^0 */
+   size_t finalizationMultiplierSize;    /* Size of finalizationMultiplier in bytes */
+   int32_t reductionMultiplier[16];      /* 31^n, ... 31^n */
+   size_t reductionMultiplierSize;       /* Size of reductionMultiplier in bytes */
+   uint64_t i32Mask[16];                 /* Mask to prepend zeros for residual element handling of 32-bit elements */
+   size_t i32Size;                       /* Size of i32Mask in bytes */
+   uint64_t i16Mask[8];                  /* Mask to prepend zeros for residual element handling of 32-bit elements */
+   size_t i16Size;                       /* Size of i16Mask in bytes */
+   uint64_t i8Mask[8];                   /* Mask to prepend zeros for residual element handling of 32-bit elements */
+   size_t i8Size;                        /* Size of i8Mask in bytes */
+   };
+
+
+static VectorHashCodeMetaData v128Data {
+      OMR::X86::Default,                 /* vectorEncoding */
+      TR::VectorLength128, 4,            /* vl, numElements */
+      923521,                            /* thirtyOnePowVL; 31^4 = 923521 */
+      { 31*31*31, 31*31, 31, 1 }, 16,    /* finalizationMultiplier, reductionMultiplierSize; */
+      { 31*31*31*31, 31*31*31*31, 31*31*31*31, 31*31*31*31 }, 16, /* reductionMultiplier, reductionMultiplierSize */
+      { 0x0000000000000000ULL, 0x0000000000000000ULL, 0xffffffffffffffffULL, 0xffffffffffffffffULL }, 32, /* i32Mask, i32Size (32 bytes) */
+      { 0x0000000000000000ULL, 0xffffffffffffffffULL }, 16, /* i16Mask, i16Size (16 bytes) */
+      { 0xffffffff00000000ULL, 0x0000000000000000ULL }, 16  /* i8Mask, i8Size (16 bytes) */
+};
+static VectorHashCodeMetaData v256Data {
+      OMR::X86::VEX_L256,                /* vectorEncoding */
+      TR::VectorLength256, 8,            /* vl, numElements */
+      -1807454463,                       /* thirtyOnePowVL; 31^4 = 923521 */
+      { 1742810335, 31*31*31*31*31*31, 31*31*31*31*31, 31*31*31*31, 31*31*31, 31*31, 31, 1 }, 32, /* finalizationMultiplier, reductionMultiplierSize; */
+      { -1807454463, -1807454463, -1807454463, -1807454463, -1807454463, -1807454463, -1807454463, -1807454463 }, 32, /* reductionMultiplier, reductionMultiplierSize */
+      { 0x0000000000000000ULL, 0x0000000000000000ULL, 0x0000000000000000ULL, 0x0000000000000000ULL, 0xffffffffffffffffULL, 0xffffffffffffffffULL, 0xffffffffffffffffULL, 0xffffffffffffffffULL }, 64, /* i32Mask, i32Size (64 bytes) */
+      { 0x0000000000000000ULL, 0x0000000000000000ULL, 0xffffffffffffffffULL, 0xffffffffffffffffULL }, 32, /* i16Mask, i16Size (16 bytes) */
+      { 0x0000000000000000ULL, 0xffffffffffffffffULL, 0xffffffffffffffffULL, 0xffffffffffffffffULL }, 32  /* i8Mask, i8Size (16 bytes) */
+};
+static VectorHashCodeMetaData v512Data {
+      OMR::X86::EVEX_L512,               /* vectorEncoding */
+      TR::VectorLength512, 16,           /* vl, numElements */
+      1353309697,                        /* thirtyOnePowVL; 31^16 = 1353309697 (overflowed) */
+      { -510534177, 1507551809, -505558625, -293403007, 129082719, -1796951359, -196513505, -1807454463, 1742810335, 31*31*31*31*31*31, 31*31*31*31*31, 31*31*31*31, 31*31*31, 31*31, 31, 1 }, 64,           /* finalizationMultiplier, reductionMultiplierSize; */
+      { 1353309697, 1353309697, 1353309697, 1353309697, 1353309697, 1353309697, 1353309697, 1353309697, 1353309697, 1353309697, 1353309697, 1353309697, 1353309697, 1353309697, 1353309697, 1353309697}, 64, /* reductionMultiplier, reductionMultiplierSize */
+      { 0x0000000000000000ULL, 0x0000000000000000ULL, 0x0000000000000000ULL, 0x0000000000000000ULL, 0x0000000000000000ULL, 0x0000000000000000ULL, 0x0000000000000000ULL, 0x0000000000000000ULL, 0xffffffffffffffffULL, 0xffffffffffffffffULL, 0xffffffffffffffffULL, 0xffffffffffffffffULL, 0xffffffffffffffffULL, 0xffffffffffffffffULL, 0xffffffffffffffffULL, 0xffffffffffffffffULL }, 128, /* i32Mask, i32Size (128 bytes) */
+      { 0x0000000000000000ULL, 0x0000000000000000ULL, 0x0000000000000000ULL, 0x0000000000000000ULL, 0xffffffffffffffffULL, 0xffffffffffffffffULL, 0xffffffffffffffffULL, 0xffffffffffffffffULL }, 64, /* i16Mask, i16Size (64 bytes) */
+      { 0x0000000000000000ULL, 0x0000000000000000ULL, 0xffffffffffffffffULL, 0xffffffffffffffffULL, 0xffffffffffffffffULL, 0xffffffffffffffffULL, 0xffffffffffffffffULL, 0xffffffffffffffffULL }, 64  /* i8Mask, i8Size (64 bytes) */
+};
+
+// Implement vectorizedHashCode computation with SIMD. This implementation supports multiple processor microarchitectures,
+// supporting vectorization with 128, 256, and 512 bit vectors. It also supports signed and unsigned integer element types
+// of 8-bit, 16-bit and 32-bits in size. Elements are processed iteratively as 32-bit integers and smaller element types
+// are sign/zero extended into 32-bit integers.
+//
+//
+// Conversion process example (128-bit) with initial hash of 0:
+//    The constants used in this example (and for all other element types / vector lengths) are stored as metadata.
+//
+//    str[8] = example string representing 8 characters (compressed or decompressed)
+//
+//    The serial method for creating the hash:
+//          hash = 0, offset = 0, count = 8
+//          for (int i = offset; i < offset+count; ++i) {
+//                hash = (hash << 5) - hash + str[i];
+//          }
+//
+//    Note that ((hash << 5) - hash) is equivalent to hash * 31
+//
+//    Expanding out the for loop:
+//          hash = ((((((((0*31+str[0])*31+str[1])*31+str[2])*31+str[3])*31+str[4])*31+str[5])*31+str[6])*31+str[7])
+//
+//    Simplified:
+//          hash =        (31^7)*str[0] + (31^6)*str[1] + (31^5)*str[2] + (31^4)*str[3]
+//                      + (31^3)*str[4] + (31^2)*str[5] + (31^1)*str[6] + (31^0)*str[7]
+//
+//    Rearranged:
+//          hash =        (31^7)*str[0] + (31^3)*str[4]
+//                      + (31^6)*str[1] + (31^2)*str[5]
+//                      + (31^5)*str[2] + (31^1)*str[6]
+//                      + (31^4)*str[3] + (31^0)*str[7]
+//
+//    Factor out [31^3, 31^2, 31^1, 31^0]:
+//          hash =        31^3*((31^4)*str[0] + str[4])           Vector[0]
+//                      + 31^2*((31^4)*str[1] + str[5])           Vector[1]
+//                      + 31^1*((31^4)*str[2] + str[6])           Vector[2]
+//                      + 31^0*((31^4)*str[3] + str[7])           Vector[3]
+//
+//    Keep factoring out any 31^4 if possible (this example has no such case). If the string was 12 characters long then:
+//          31^3*((31^8)*str[0] + (31^4)*str[4] + (31^0)*str[8]) would become 31^3*(31^4((31^4)*str[0] + str[4]) + (31^0)*str[8])
+//
+//    Vectorization is done by simultaneously calculating the four sums that hash is made of (each -> is a successive step):
+//          Vector[0] = str[0] -> multiply 31^4 -> add str[4] -> multiply 31^3
+//          Vector[1] = str[1] -> multiply 31^4 -> add str[5] -> multiply 31^2
+//          Vector[2] = str[2] -> multiply 31^4 -> add str[6] -> multiply 31^1
+//          Vector[3] = str[3] -> multiply 31^4 -> add str[7] -> multiply 1
+//
+//    Adding these four vectorized values together produces the required hash.
+//
+//    In this example, the initial hash was 0, however, this algorithm needs to accommodate an arbitrary initial hash.
+//    The following calculation is used to support any initial hash value.
+//
+//          hash = hash + 31^n * initialHash
+//
+//    We compute 31^n in a loop.
+//
+//
+TR::Register *
+J9::X86::TreeEvaluator::vectorizedHashCodeHelper(TR::Node *node, TR::DataType dt, TR::Node *nodeHash, bool isSigned,
+                                                 TR::CodeGenerator *cg)
+   {
+   TR_ASSERT_FATAL(node->getChild(1)->getOpCodeValue() == TR::iconst && node->getChild(1)->getInt() == 0, "String hashcode offset can only be const zero.");
+
+   int shift;
+   switch (dt)
+      {
+      case TR::Int8:
+         shift = 0;
+         break;
+      case TR::Int16:
+         shift = 1;
+         break;
+      case TR::Int32:
+         shift = 2;
+         break;
+      default:
+         TR_ASSERT_FATAL(false, "Unsupported datatype for vectorized hashcode");
+      }
+
+   TR::Compilation *comp = cg->comp();
+   VectorHashCodeMetaData metaData;
+
+   if (comp->target().cpu.supportsFeature(OMR_FEATURE_X86_AVX512F))
+      {
+      metaData = v512Data;
+      }
+   else if (comp->target().cpu.supportsFeature(OMR_FEATURE_X86_AVX2))
+      {
+      metaData = v256Data;
+      }
+   else
+      {
+      metaData = v128Data;
+      }
+
+   TR::Register *address = cg->evaluate(node->getChild(0));
+   TR::Register *length = cg->evaluate(node->getChild(2));
+   TR::Register *initHash = cg->evaluate(nodeHash);
+   TR::Register *index = cg->allocateRegister();
+   TR::Register *result = cg->allocateRegister();
+   TR::Register *tmp = cg->allocateRegister();
+   TR::Register *eaxReg = cg->allocateRegister();
+   TR::Register *remReg = cg->allocateRegister();
+   TR::Register *hashXMM = cg->allocateRegister(TR_VRF);
+   TR::Register *tmpXMM = cg->allocateRegister(TR_VRF);
+   TR::Register *multiplierXMM = cg->allocateRegister(TR_VRF);
+
+   TR::LabelSymbol *begLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *endLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *loopLabel = generateLabelSymbol(cg);
+   TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions((uint8_t)8, (uint8_t)10, cg);
+
+   begLabel->setStartInternalControlFlow();
+   endLabel->setEndInternalControlFlow();
+   deps->addPreCondition(address, TR::RealRegister::NoReg, cg);
+   deps->addPreCondition(index, TR::RealRegister::NoReg, cg);
+   deps->addPreCondition(initHash, TR::RealRegister::NoReg, cg);
+   deps->addPreCondition(tmp, TR::RealRegister::NoReg, cg);
+   deps->addPreCondition(length, TR::RealRegister::NoReg, cg);
+   deps->addPreCondition(multiplierXMM, TR::RealRegister::NoReg, cg);
+   deps->addPreCondition(tmpXMM, TR::RealRegister::NoReg, cg);
+   deps->addPreCondition(hashXMM, TR::RealRegister::NoReg, cg);
+
+   deps->addPostCondition(address, TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(index, TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(tmp, TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(initHash, TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(length, TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(multiplierXMM, TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(tmpXMM, TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(hashXMM, TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(eaxReg, TR::RealRegister::eax, cg);
+   deps->addPostCondition(remReg, TR::RealRegister::edx, cg);
+
+   generateRegRegInstruction(TR::InstOpCode::MOV4RegReg, node, index, length, cg);
+   generateRegImmInstruction(TR::InstOpCode::AND4RegImms, node, index, metaData.numElements - 1, cg); // mod size
+   generateRegMemInstruction(TR::InstOpCode::CMOVE4RegMem, node, index, generateX86MemoryReference(cg->findOrCreate4ByteConstant(node, metaData.numElements), cg), cg);
+
+   // Prepend zeros
+   {
+   if (dt == TR::Int32)
+      {
+      generateRegMemInstruction(TR::InstOpCode::MOVDQURegMem, node, hashXMM, generateX86MemoryReference(address, index, shift, -(metaData.numElements << shift) + TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cg, metaData.vectorEncoding);
+      TR::X86ConstantDataSnippet *maskSnippet = cg->findOrCreateConstantDataSnippet(node, metaData.i32Mask, metaData.i32Size);
+      generateRegMemInstruction(TR::InstOpCode::LEARegMem(), node, tmp, generateX86MemoryReference(maskSnippet, cg), cg);
+      }
+   else if (dt == TR::Int16)
+      {
+      if (metaData.vl == TR::VectorLength512)
+         generateRegMemInstruction(TR::InstOpCode::MOVDQURegMem, node, hashXMM, generateX86MemoryReference(address, index, shift, -(metaData.numElements << shift) + TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cg, OMR::X86::EVEX_L256);
+      else if (metaData.vl == TR::VectorLength256)
+         generateRegMemInstruction(TR::InstOpCode::MOVDQURegMem, node, hashXMM, generateX86MemoryReference(address, index, shift, -(metaData.numElements << shift) + TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cg, OMR::X86::VEX_L128);
+      else
+         generateRegMemInstruction(TR::InstOpCode::MOVQRegMem, node, hashXMM, generateX86MemoryReference(address, index, shift, -(metaData.numElements << shift) + TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cg);
+
+      TR::X86ConstantDataSnippet *maskSnippet = cg->findOrCreateConstantDataSnippet(node, metaData.i16Mask, metaData.i16Size);
+      generateRegMemInstruction(TR::InstOpCode::LEARegMem(), node, tmp, generateX86MemoryReference(maskSnippet, cg), cg);
+      }
+   else if (dt == TR::Int8)
+      {
+      if (metaData.vl == TR::VectorLength512)
+         generateRegMemInstruction(TR::InstOpCode::MOVDQURegMem, node, hashXMM, generateX86MemoryReference(address, index, shift, -(metaData.numElements << shift) + TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cg, OMR::X86::EVEX_L128);
+      else
+         generateRegMemInstruction(TR::InstOpCode::MOVQRegMem, node, hashXMM, generateX86MemoryReference(address, index, shift, -(metaData.numElements << shift) + TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cg);
+
+      TR::X86ConstantDataSnippet *maskSnippet = cg->findOrCreateConstantDataSnippet(node, metaData.i8Mask, metaData.i8Size);
+      generateRegMemInstruction(TR::InstOpCode::LEARegMem(), node, tmp, generateX86MemoryReference(maskSnippet, cg), cg);
+      }
+
+   auto mr = generateX86MemoryReference(tmp, index, shift, 0, cg);
+   if (comp->target().cpu.supportsAVX())
+      {
+      generateRegMemInstruction(TR::InstOpCode::PANDRegMem, node, hashXMM, mr, cg, metaData.vectorEncoding);
+      }
+   else
+      {
+      generateRegMemInstruction(TR::InstOpCode::MOVDQURegMem, node, tmpXMM, mr, cg, metaData.vectorEncoding);
+      generateRegRegInstruction(TR::InstOpCode::PANDRegReg, node, hashXMM, tmpXMM, cg, metaData.vectorEncoding);
+      }
+
+   switch (dt)
+      {
+      case TR::Int8:
+         generateRegRegInstruction(isSigned ? TR::InstOpCode::PMOVSXBDRegReg : TR::InstOpCode::PMOVZXBDRegReg, node, hashXMM, hashXMM, cg, metaData.vectorEncoding);
+         break;
+      case TR::Int16:
+         generateRegRegInstruction(isSigned ? TR::InstOpCode::PMOVSXWDRegReg : TR::InstOpCode::PMOVZXWDRegReg, node, hashXMM, hashXMM, cg, metaData.vectorEncoding);
+         break;
+      default:
+         break;
+      }
+   }
+
+   {
+   // increment multiplier by 31^n for residual elements, where n is the number of elements in the vector
+   // tmp = if (length mod n) == 0 -> 31^n
+   //       else 31 ^ (length mod n)
+
+   auto loopStart = generateLabelSymbol(cg);
+   auto endIfLabel = generateLabelSymbol(cg);
+   loopStart->setStartInternalControlFlow();
+   endIfLabel->setEndInternalControlFlow();
+
+   generateRegImmInstruction(TR::InstOpCode::MOV4RegImm4, node, tmp, metaData.numElements, cg);
+   generateRegRegInstruction(TR::InstOpCode::MOV4RegReg, node, eaxReg, length, cg);
+   generateInstruction(TR::InstOpCode::CDQAcc, node, cg);
+
+   generateRegRegInstruction(TR::InstOpCode::IDIV4AccReg, node, eaxReg, tmp, cg);
+
+   generateRegImmInstruction(TR::InstOpCode::MOV4RegImm4, node, tmp, 1, cg);
+   generateLabelInstruction(TR::InstOpCode::label, node, loopStart, cg);
+   generateRegRegInstruction(TR::InstOpCode::TESTRegReg(), node, remReg, remReg, cg);
+   generateLabelInstruction(TR::InstOpCode::JE4, node, endIfLabel, cg);
+
+   generateRegRegImmInstruction(TR::InstOpCode::IMULRegRegImm4(false), node, tmp, tmp, 31, cg);
+   generateRegInstruction(TR::InstOpCode::DECReg(false), node, remReg, cg);
+   generateLabelInstruction(TR::InstOpCode::JMP4, node, loopStart, cg);
+
+   generateLabelInstruction(TR::InstOpCode::label, node, endIfLabel, cg);
+   }
+
+
+   // Reduction Loop
+   {
+   generateLabelInstruction(TR::InstOpCode::label, node, begLabel, cg);
+   generateRegRegInstruction(TR::InstOpCode::CMP4RegReg, node, index, length, cg);
+   generateLabelInstruction(TR::InstOpCode::JGE4, node, endLabel, cg);
+   generateRegMemInstruction(TR::InstOpCode::MOVDQURegMem, node, multiplierXMM, generateX86MemoryReference(cg->findOrCreateConstantDataSnippet(node, metaData.reductionMultiplier, metaData.reductionMultiplierSize), cg), cg, metaData.vectorEncoding);
+   generateLabelInstruction(TR::InstOpCode::label, node, loopLabel, cg);
+   generateRegRegInstruction(TR::InstOpCode::PMULLDRegReg, node, hashXMM, multiplierXMM, cg, metaData.vectorEncoding);
+
+   switch (dt)
+      {
+      case TR::Int8:
+         generateRegMemInstruction(isSigned ? TR::InstOpCode::PMOVSXBDRegMem  : TR::InstOpCode::PMOVZXBDRegMem, node, tmpXMM, generateX86MemoryReference(address, index, shift, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cg, metaData.vectorEncoding);
+         break;
+      case TR::Int16:
+         generateRegMemInstruction(isSigned ? TR::InstOpCode::PMOVSXWDRegMem : TR::InstOpCode::PMOVZXWDRegMem, node, tmpXMM, generateX86MemoryReference(address, index, shift, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cg, metaData.vectorEncoding);
+         break;
+      case TR::Int32:
+         generateRegMemInstruction(TR::InstOpCode::MOVDQURegMem, node, tmpXMM, generateX86MemoryReference(address, index, shift, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cg, metaData.vectorEncoding);
+         break;
+      default:
+         break;
+      }
+
+   generateRegImmInstruction(TR::InstOpCode::ADD4RegImms, node, index, metaData.numElements, cg);
+   generateRegRegInstruction(TR::InstOpCode::PADDDRegReg, node, hashXMM, tmpXMM, cg, metaData.vectorEncoding);
+
+   // Multiply tmp by 31^n, where n is the number of elements in the vector
+   generateRegRegImmInstruction(TR::InstOpCode::IMULRegRegImm4(false), node, tmp, tmp, metaData.thirtyOnePowVL, cg);
+
+   generateRegRegInstruction(TR::InstOpCode::CMP4RegReg, node, index, length, cg);
+   generateLabelInstruction(TR::InstOpCode::JL4, node, loopLabel, cg);
+   generateLabelInstruction(TR::InstOpCode::label, node, endLabel, deps, cg);
+   }
+
+   // Finalization
+   {
+   generateRegMemInstruction(TR::InstOpCode::PMULLDRegMem, node, hashXMM, generateX86MemoryReference(cg->findOrCreateConstantDataSnippet(node, metaData.finalizationMultiplier, metaData.finalizationMultiplierSize), cg), cg, metaData.vectorEncoding);
+   vectorizedHashCodeReductionHelper(node, hashXMM, tmpXMM, result, metaData.vl, dt, cg);
+
+   generateRegRegInstruction(TR::InstOpCode::IMULRegReg(false), node, tmp, initHash, cg);
+   generateRegRegInstruction(TR::InstOpCode::ADD4RegReg, node, result, tmp, cg);
+   }
+
+   cg->stopUsingRegister(index);
+   cg->stopUsingRegister(tmp);
+   cg->stopUsingRegister(hashXMM);
+   cg->stopUsingRegister(tmpXMM);
+   cg->stopUsingRegister(multiplierXMM);
+   cg->stopUsingRegister(eaxReg);
+   cg->stopUsingRegister(remReg);
+   cg->stopUsingRegister(initHash);
+
+   node->setRegister(result);
+   cg->decReferenceCount(node->getChild(0));
+   cg->recursivelyDecReferenceCount(node->getChild(1));
+   cg->decReferenceCount(node->getChild(2));
+   cg->decReferenceCount(node->getChild(3));
+   return result;
+   }
+
 static bool
 getNodeIs64Bit(
       TR::Node *node,
@@ -11753,6 +12158,12 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
             return TR::TreeEvaluator::inlineStringLatin1Inflate(node, cg);
             }
          break;
+      case TR::jdk_internal_util_ArraysSupport_vectorizedHashCode:
+         {
+         TR::Register *result = inlineVectorizedHashCode(node, cg);
+         if (result)
+            return result;
+         }
       case TR::java_lang_Math_sqrt:
       case TR::java_lang_StrictMath_sqrt:
       case TR::java_lang_System_nanoTime:
