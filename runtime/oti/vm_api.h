@@ -5315,6 +5315,50 @@ BOOLEAN
 hasMemoryScope(J9VMThread *walkThread, j9object_t scope);
 #endif /* JAVA_SPEC_VERSION >= 16 */
 
+/* ------------------- jfr.cpp ------------------- */
+
+#if defined(J9VM_OPT_JFR)
+/**
+ * Initialize JFR.
+ *
+ * @param vm[in] the J9JavaVM
+ * @param lateInit[in] indicate if JFR is initialized late after startup
+ *
+ * @returns JNI_OK on success, JNI error code on failure
+ */
+jint
+initializeJFR(J9JavaVM *vm, BOOLEAN lateInit);
+
+/**
+ * Take an execution sample of the current thread.
+ *
+ * @param currentThread[in] the current J9VMThread
+ * @param sampleThread[in] the thread being walked
+ */
+void
+jfrExecutionSample(J9VMThread *currentThread, J9VMThread *sampleThread);
+
+/**
+ * Set JFR recording file name.
+ *
+ * @param vm[in] the J9JavaVM
+ * @param fileName[in] the file name for new JFR recording
+ *
+ * @returns JNI_TRUE on success, JNI_FALSE on failure
+ */
+jboolean
+setJFRRecordingFileName(J9JavaVM *vm, char *fileName);
+
+/**
+ * Shut down JFR.
+ *
+ * @param vm[in] the J9JavaVM
+ */
+void
+tearDownJFR(J9JavaVM *vm);
+
+#endif /* defined(J9VM_OPT_JFR) */
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

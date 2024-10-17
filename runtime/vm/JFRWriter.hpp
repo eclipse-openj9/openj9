@@ -47,26 +47,14 @@ protected:
 public:
 	static constexpr const char *METADATA_BLOB_FILE_ENVVAR = "OPENJ9_METADATA_BLOB_FILE_PATH";
 
-	static constexpr const char *DEFAULT_JFR_FILE_NAME = "defaultJ9recording.jfr";
-
 	/*
 	 * Function members
 	 */
 private:
-	static void
-	closeJFRFile(J9JavaVM *vm)
-	{
-		PORT_ACCESS_FROM_JAVAVM(vm);
-		if (-1 != vm->jfrState.blobFileDescriptor) {
-			j9file_close(vm->jfrState.blobFileDescriptor);
-			vm->jfrState.blobFileDescriptor = -1;
-		}
-	}
-
 	/**
-	 * Long term plan is to package this file in the JDK at a known location.
-	 * For the time being, search for the env var and try to open the file. If
-	 * there is any failure, then metadata blob variables should remain NULL.
+	 * First search for the env var and try to open the file.
+	 * If no env var was set, search $java.home/lib/metadata.blob.
+	 * If there is any failure, then metadata blob variables should remain NULL.
 	 */
 	static bool
 	loadJFRMetadataBlob(J9JavaVM *vm)
@@ -75,26 +63,47 @@ private:
 		I_64 fileLength = 0;
 		IDATA fileDescriptor = 0;
 		bool result = false;
+		bool freeRequired = false;
 
 		char *blobDir = getenv(METADATA_BLOB_FILE_ENVVAR);
 		if (NULL == blobDir) {
-			goto done;
+			J9VMSystemProperty *javaHomePath = NULL;
+			UDATA rc = getSystemProperty(vm, "java.home", &javaHomePath);
+
+			if (J9SYSPROP_ERROR_NONE != rc) {
+				Trc_VM_loadJFRMetadataBlob_getSystemProperty_fail(rc);
+				goto done;
+			}
+
+#define METADATA_BLOB "metadata.blob"
+			IDATA blobDirLen = strlen(javaHomePath->value) + LITERAL_STRLEN(DIR_SEPARATOR_STR) + LITERAL_STRLEN(DIR_LIB_STR) + LITERAL_STRLEN(DIR_SEPARATOR_STR) + LITERAL_STRLEN(METADATA_BLOB) + 1;
+			blobDir = (char*)j9mem_allocate_memory(blobDirLen, OMRMEM_CATEGORY_VM);
+			if (NULL == blobDir) {
+				Trc_VM_loadJFRMetadataBlob_blobDir_OOM();
+				goto done;
+			}
+			strcpy(blobDir, javaHomePath->value);
+			strcpy(blobDir + strlen(blobDir), DIR_SEPARATOR_STR DIR_LIB_STR DIR_SEPARATOR_STR METADATA_BLOB);
+			freeRequired = true;
+#undef METADATA_BLOB
 		}
 
 		fileLength = j9file_length(blobDir);
-		/* Restrict file size to < 2G */
+		/* Restrict file size to < 2G. */
 		if (fileLength > J9CONST64(0x7FFFFFFF)) {
+			Trc_VM_loadJFRMetadataBlob_fileLength_too_large(fileLength);
 			goto done;
 		}
-
 		vm->jfrState.metaDataBlobFileSize = fileLength;
-
-		vm->jfrState.metaDataBlobFile = (U_8*) j9mem_allocate_memory(vm->jfrState.metaDataBlobFileSize, OMRMEM_CATEGORY_VM);
+		vm->jfrState.metaDataBlobFile = (U_8*)j9mem_allocate_memory(vm->jfrState.metaDataBlobFileSize, OMRMEM_CATEGORY_VM);
 		if (NULL == vm->jfrState.metaDataBlobFile) {
+			Trc_VM_loadJFRMetadataBlob_metaDataBlobFile_OOM();
 			goto done;
 		}
 
-		if ((fileDescriptor = j9file_open(blobDir, EsOpenRead, 0)) == -1) {
+		fileDescriptor = j9file_open(blobDir, EsOpenRead, 0);
+		if (-1 == fileDescriptor) {
+			Trc_VM_loadJFRMetadataBlob_bad_fileDescriptor();
 			goto done;
 		}
 
@@ -108,7 +117,25 @@ private:
 		result = true;
 
 done:
+		if (freeRequired) {
+			j9mem_free_memory(blobDir);
+		}
 		return result;
+	}
+
+
+protected:
+
+public:
+
+	static void
+	closeJFRFile(J9JavaVM *vm)
+	{
+		PORT_ACCESS_FROM_JAVAVM(vm);
+		if (-1 != vm->jfrState.blobFileDescriptor) {
+			j9file_close(vm->jfrState.blobFileDescriptor);
+			vm->jfrState.blobFileDescriptor = -1;
+		}
 	}
 
 	static bool
@@ -126,16 +153,13 @@ done:
 		return result;
 	}
 
-protected:
-
-public:
 	static bool
 	initializaJFRWriter(J9JavaVM *vm)
 	{
 		bool result = true;
 
 		if (NULL == vm->jfrState.jfrFileName) {
-			vm->jfrState.jfrFileName = (char*)"defaultJ9recording.jfr";
+			vm->jfrState.jfrFileName = (char*)DEFAULT_JFR_FILE_NAME;
 		}
 
 		if (!openJFRFile(vm)) {

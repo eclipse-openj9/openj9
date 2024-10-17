@@ -1270,6 +1270,12 @@ jboolean JNICALL
 Java_com_ibm_oti_vm_VM_isJVMInSingleThreadedMode(JNIEnv *env, jclass unused);
 
 #if defined(J9VM_OPT_JFR)
+jboolean JNICALL
+Java_com_ibm_oti_vm_VM_setJFRRecordingFileName(JNIEnv *env, jclass unused, jstring fileNameString);
+jint JNICALL
+Java_com_ibm_oti_vm_VM_startJFR(JNIEnv *env, jclass unused);
+void JNICALL
+Java_com_ibm_oti_vm_VM_stopJFR(JNIEnv *env, jclass unused);
 void JNICALL
 Java_com_ibm_oti_vm_VM_triggerExecutionSample(JNIEnv *env, jclass unused);
 #endif /* defined(J9VM_OPT_JFR) */
