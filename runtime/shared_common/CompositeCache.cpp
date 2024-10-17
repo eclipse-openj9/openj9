@@ -6792,7 +6792,6 @@ U_32
 SH_CompositeCacheImpl::getExtraStartupHints(void) const
 {
 	if (!_started) {
-		Trc_SHR_Assert_ShouldNeverHappen();
 		return 0;
 	}
 	return _theca->extraStartupHints;
