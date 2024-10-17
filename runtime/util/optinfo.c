@@ -713,26 +713,26 @@ getNumberOfInjectedInterfaces(J9ROMClass *romClass) {
 
 	Assert_VMUtil_true(ptr != NULL);
 
-	return *SRP_PTR_GET(ptr, U_32*);
+	return *SRP_PTR_GET(ptr, U_32 *);
 }
 
-U_32*
-getPreloadInfoPtr(J9ROMClass *romClass)
+U_32 *
+getLoadableDescriptorsInfoPtr(J9ROMClass *romClass)
 {
-	U_32 *ptr = getSRPPtr(J9ROMCLASS_OPTIONALINFO(romClass), romClass->optionalFlags, J9_ROMCLASS_OPTINFO_PRELOAD_ATTRIBUTE);
+	U_32 *ptr = getSRPPtr(J9ROMCLASS_OPTIONALINFO(romClass), romClass->optionalFlags, J9_ROMCLASS_OPTINFO_LOADABLEDESCRIPTORS_ATTRIBUTE);
 
 	Assert_VMUtil_true(ptr != NULL);
 
-	return SRP_PTR_GET(ptr, U_32*);
+	return SRP_PTR_GET(ptr, U_32 *);
 }
 
-J9UTF8*
-preloadClassNameAtIndex(U_32* preloadInfoPtr, U_32 index)
+J9UTF8 *
+loadableDescriptorAtIndex(U_32 *loadableDescriptorsInfoPtr, U_32 index)
 {
-	/* SRPs to Preload name constant pool entries start after the preloadClassesCountPtr */
-	U_32* preloadClassesPtr = preloadInfoPtr + 1 + index;
+	/* SRPs to loadable descriptors constant pool entries start after the count. */
+	U_32 *loadableDescriptorsPtr = loadableDescriptorsInfoPtr + 1 + index;
 
-	return NNSRP_PTR_GET(preloadClassesPtr, J9UTF8*);
+	return NNSRP_PTR_GET(loadableDescriptorsPtr, J9UTF8 *);
 }
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
