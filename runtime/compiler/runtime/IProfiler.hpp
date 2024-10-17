@@ -565,7 +565,9 @@ public:
    void setupEntriesInHashTable(TR_IProfiler *ip);
 
    TR_IPMethodHashTableEntry *findOrCreateMethodEntry(J9Method *, J9Method *, bool addIt, uint32_t pcIndex =  ~0);
-   uint32_t releaseAllEntries();
+   // Returns the number of entries released, and also stores the number of
+   // entries that were not expected to be locked in unexpectedLockedEntries
+   uint32_t releaseAllEntries(uint32_t &unexpectedLockedEntries);
    uint32_t countEntries();
    void advanceEpochForHistoryBuffer() { _readSampleRequestsHistory->advanceEpoch(); }
    uint32_t getReadSampleFailureRate() const { return _readSampleRequestsHistory->getReadSampleFailureRate(); }

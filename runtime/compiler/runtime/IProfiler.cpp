@@ -3493,7 +3493,7 @@ TR_IProfiler::printAllocationReport()
    }
 
 uint32_t
-TR_IProfiler::releaseAllEntries()
+TR_IProfiler::releaseAllEntries(uint32_t &unexpectedLockedEntries)
    {
    uint32_t count = 0;
    for (int32_t bucket = 0; bucket < TR::Options::_iProfilerBcHashTableSize; bucket++)
@@ -3502,6 +3502,13 @@ TR_IProfiler::releaseAllEntries()
          {
          if (entry->asIPBCDataCallGraph() && entry->asIPBCDataCallGraph()->isLocked())
             {
+            // Because there is a known race in findOrCreateEntry(), there is a
+            // chance that this entry is still locked because another entry for
+            // the same PC was added after it. These should not contribute to
+            // the number of unexpectedly locked entries.
+            auto otherEntry = profilingSample(entry->getPC(), 0, false);
+            if (entry == otherEntry)
+               unexpectedLockedEntries++;
             count++;
             entry->asIPBCDataCallGraph()->releaseEntry();
             }
