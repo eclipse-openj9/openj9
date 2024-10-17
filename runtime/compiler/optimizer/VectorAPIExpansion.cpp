@@ -657,20 +657,30 @@ TR_VectorAPIExpansion::getJ9ClassFromClassNode(TR::Compilation *comp, TR::Node *
       return NULL;
 
    TR::SymbolReference *symRef = classNode->getSymbolReference();
-   if (symRef)
+
+   TR::KnownObjectTable::Index knownObjectIndex = TR::KnownObjectTable::UNKNOWN;
+
+   if (symRef && symRef->hasKnownObjectIndex())
       {
-      if (symRef->hasKnownObjectIndex())
-         {
-         TR_J9VMBase *fej9 = comp->fej9();
-
-         TR::VMAccessCriticalSection getDataTypeFromClassNodeSection(fej9);
-
-         uintptr_t javaLangClass = comp->getKnownObjectTable()->getPointer(symRef->getKnownObjectIndex());
-         J9Class *j9class = (J9Class *)(intptr_t)fej9->getInt64Field(javaLangClass, "vmRef");
-
-         return j9class;
-         }
+      knownObjectIndex = symRef->getKnownObjectIndex();
       }
+   else if (classNode->hasKnownObjectIndex())
+      {
+      knownObjectIndex = classNode->getKnownObjectIndex();
+      }
+
+   if (knownObjectIndex != TR::KnownObjectTable::UNKNOWN)
+      {
+      TR_J9VMBase *fej9 = comp->fej9();
+
+      TR::VMAccessCriticalSection getDataTypeFromClassNodeSection(fej9);
+
+      uintptr_t javaLangClass = comp->getKnownObjectTable()->getPointer(knownObjectIndex);
+      J9Class *j9class = (J9Class *)(intptr_t)fej9->getInt64Field(javaLangClass, "vmRef");
+
+      return j9class;
+      }
+
    return NULL;
    }
 
