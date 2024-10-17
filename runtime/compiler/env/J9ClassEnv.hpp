@@ -96,6 +96,7 @@ public:
    bool isPrimitiveValueTypeClass(TR_OpaqueClassBlock *);
    bool isValueTypeClassFlattened(TR_OpaqueClassBlock *clazz);
    bool isValueBasedOrValueTypeClass(TR_OpaqueClassBlock *);
+   bool isArrayNullRestricted(TR::Compilation *comp, TR_OpaqueClassBlock *arrayClass);
 
    /** \brief
     *    Returns the size of the flattened array element

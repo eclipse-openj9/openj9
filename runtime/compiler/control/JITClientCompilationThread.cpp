@@ -617,6 +617,12 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, fe->getArrayClassFromComponentClass(clazz));
          }
          break;
+      case MessageType::VM_getNullRestrictedArrayClassFromComponentClass:
+         {
+         auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
+         client->write(response, fe->getNullRestrictedArrayClassFromComponentClass(clazz));
+         }
+         break;
       case MessageType::VM_matchRAMclassFromROMclass:
          {
          J9ROMClass *clazz = std::get<0>(client->getRecvData<J9ROMClass *>());

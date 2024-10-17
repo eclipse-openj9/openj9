@@ -122,6 +122,7 @@ const char *messageNames[] =
    "VM_classInitIsFinished",
    "VM_getClassFromNewArrayType",
    "VM_getArrayClassFromComponentClass",
+   "VM_getNullRestrictedArrayClassFromComponentClass",
    "VM_matchRAMclassFromROMclass",
    "VM_getInt32FieldAt",
    "VM_getInt64FieldAt",
