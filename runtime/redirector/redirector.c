@@ -121,6 +121,7 @@ typedef enum gc_policy{
 #endif /* defined(AIXPPC) */
 
 #if defined(J9ZOS390)
+#include <dlfcn.h>
 #include <dll.h>
 #include "atoe.h"
 #include <stdlib.h>

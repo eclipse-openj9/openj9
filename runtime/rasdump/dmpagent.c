@@ -30,6 +30,7 @@
 #ifdef J9ZOS390
 #include <spawn.h>
 #include <errno.h>
+#include <sys/wait.h>
 #include "atoe.h"
 #endif
 #ifdef AIXPPC

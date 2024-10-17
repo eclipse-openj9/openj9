@@ -204,7 +204,7 @@ Java_openj9_internal_tools_attach_target_IPC_isUsingDefaultUid(JNIEnv *env, jcla
 	/* all offsets are byte offsets */
 	U_32* PSATOLD_ADDR = (U_32 *)(UDATA) 0x21c;  /* z/OS Pointer to current TCB or zero if in SRB mode. Field fixed by architecture. */
 	U_32 tcbBase; /* base of the z/OS Task Control Block */
-	const TCBSENV_OFFSET = 0x154; /* offset of the TCBSENV field in the TCB.  This field contains a pointer to the ACEE. */
+	const U_32 TCBSENV_OFFSET = 0x154; /* offset of the TCBSENV field in the TCB.  This field contains a pointer to the ACEE. */
 	U_32 aceeBaseAddr; /* Address of a control block field which contains a pointer to the base of the RACF Accessor Environment Element (ACEE) */
 	U_32 aceeBase; /* absolute address of the start of the ACEE */
 	U_32 aceeflg3Addr; /* address of the "Miscellaneous flags" byte of the ACEE */
