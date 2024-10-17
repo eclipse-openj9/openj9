@@ -258,6 +258,7 @@ findJ9ClassForROMClass(J9VMThread *vmThread, J9ROMClass *romClass, J9ClassLoader
 		omrthread_rwmutex_exit_read(config->romToRamHashTableMutex);
 		if (NULL != resultEntry) {
 			ret = resultEntry->ramClass;
+			*resultClassLoader = ret->classLoader;
 			goto done;
 		}
 
