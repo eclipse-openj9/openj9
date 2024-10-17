@@ -35,6 +35,7 @@ target_link_libraries(constgen
 		j9vm_interface
 		omrport
 		j9thr
+		j9util
 )
 
 # Add command and target to generate jilconsts.inc/jilvalues.m4 via the constgen program.

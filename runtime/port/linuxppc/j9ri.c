@@ -33,7 +33,7 @@
 #define MMCR0_PMAE      0x04000000
 
 /* Please keep this definition in sync with the one in PPCHWProfilerPrivate.hpp. */
-#if defined(__xlC__) || defined(__ibmxl__)
+#if defined(__xlC__) || defined(__ibmxl__) || defined(__open_xl__)
 #define MTSPR(spr, src) __mtspr(spr, src)
 #elif defined(__GNUC__)
 #define MTSPR(spr, src) asm("mtspr %0,%1\n\t" : : "i" (spr), "r" (src))

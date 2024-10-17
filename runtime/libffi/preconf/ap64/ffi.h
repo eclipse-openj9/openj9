@@ -102,7 +102,7 @@ extern "C" {
 #  endif
 #  ifdef _AIX /* AIX 5.1 and earlier have LONGLONG_MAX */
 #   ifndef __PPC64__
-#    if defined (__IBMC__) || defined (__IBMCPP__)
+#    if defined (__IBMC__) || defined (__IBMCPP__) || defind(__open_xl__)
 #     define FFI_LONG_LONG_MAX LONGLONG_MAX
 #    endif
 #   endif /* __PPC64__ */
