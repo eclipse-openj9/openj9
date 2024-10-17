@@ -345,6 +345,12 @@ struct J9VMContinuation;
 
 #if defined(J9VM_OPT_JFR)
 
+typedef struct J9VMThreadJFRState {
+	U_64 prevUserTime;
+	U_64 prevSysTime;
+	I_64 prevTimestamp;
+} ThreadJFRState;
+
 typedef struct J9JFRBufferWalkState {
 	U_8 *current;
 	U_8 *end;
@@ -401,6 +407,19 @@ typedef struct J9JFRThreadSlept {
 } J9JFRThreadSlept;
 
 #define J9JFRTHREADSLEPT_STACKTRACE(jfrEvent) ((UDATA*)(((J9JFRThreadSlept*)(jfrEvent)) + 1))
+
+typedef struct J9JFRCPULoad {
+	J9JFR_EVENT_COMMON_FIELDS
+	float jvmUser;
+	float jvmSystem;
+	float machineTotal;
+} J9JFRCPULoad;
+
+typedef struct J9JFRThreadCPULoad {
+	J9JFR_EVENT_COMMON_FIELDS
+	float user;
+	float system;
+} J9JFRThreadCPULoad;
 
 #endif /* defined(J9VM_OPT_JFR) */
 
@@ -5574,6 +5593,9 @@ typedef struct J9VMThread {
 	j9object_t closeScopeObj;
 #endif /* JAVA_SPEC_VERSION >= 22 */
 	UDATA unsafeIndexableHeaderSize;
+#if defined(J9VM_OPT_JFR)
+	ThreadJFRState threadJfrState;
+#endif /* defined(J9VM_OPT_JFR) */
 } J9VMThread;
 
 #define J9VMTHREAD_ALIGNMENT  0x100
@@ -5651,6 +5673,9 @@ typedef struct JFRState {
 	void *constantEvents;
 	BOOLEAN isConstantEventsInitialized;
 	omrthread_monitor_t isConstantEventsInitializedMutex;
+	J9SysinfoCPUTime prevSysCPUTime;
+	omrthread_process_time_t prevProcCPUTime;
+	I_64 prevProcTimestamp;
 } JFRState;
 
 typedef struct J9ReflectFunctionTable {
@@ -6190,6 +6215,7 @@ typedef struct J9JavaVM {
 	omrthread_t jfrSamplerThread;
 	UDATA jfrSamplerState;
 	IDATA jfrAsyncKey;
+	IDATA jfrThreadCPULoadAsyncKey;
 #endif /* defined(J9VM_OPT_JFR) */
 #if JAVA_SPEC_VERSION >= 22
 	omrthread_monitor_t closeScopeMutex;
