@@ -36,9 +36,11 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * The {@code Cuda} class provides general CUDA utilities.
  */
-/*[IF JAVA_SPEC_VERSION >= 17]*/
+/*[IF JAVA_SPEC_VERSION >= 24]*/
+@SuppressWarnings({"removal", "restricted"})
+/*[ELSEIF JAVA_SPEC_VERSION >= 17]*/
 @SuppressWarnings("removal")
-/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 public final class Cuda {
 
 	private static final class Cleaner implements Runnable {
