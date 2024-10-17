@@ -2865,6 +2865,7 @@ void TR_ResolvedJ9Method::construct()
    static X ThreadMethods[] =
       {
       {x(TR::java_lang_Thread_currentThread,     "currentThread",   "()Ljava/lang/Thread;")},
+      {x(TR::java_lang_Thread_onSpinWait,     "onSpinWait",   "()V")},
       {  TR::java_lang_Thread_runWith,       7,  "runWith",         (int16_t)-1, "*"},
       {  TR::unknownMethod}
       };

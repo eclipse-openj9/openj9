@@ -316,6 +316,13 @@ J9::Node::processJNICall(TR::TreeTop *callNodeTreeTop, TR::ResolvedMethodSymbol 
       return self();
       }
 
+   if (methodSymbol->getRecognizedMethod() == TR::java_lang_Thread_onSpinWait)
+      {
+      static char *disableOSW = feGetEnv("TR_noPauseOnSpinWait");
+      if (!disableOSW)
+         return self();
+      }
+
    if (methodSymbol->canReplaceWithHWInstr())
       return self();
 
