@@ -22,6 +22,7 @@
 
 #include "env/j9method.h"
 
+#include <stdio.h>
 #include <stddef.h>
 #include "bcnames.h"
 #include "fastJNI.h"
@@ -222,11 +223,15 @@ TR_J9VMBase::createResolvedMethodWithSignature(TR_Memory * trMemory, TR_OpaqueMe
 #if defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
 #if defined(J9VM_OPT_JITSERVER)
       if (_compInfoPT->getMethodBeingCompiled()->_useAOTCacheCompilation)
+         {
+         printf("Creating aMethod %p 1\n", aMethod);
          result = new (trMemory->trHeapMemory()) TR_ResolvedRelocatableJ9Method(aMethod, this, trMemory, owningMethod, vTableSlot);
+         }
       else
 #endif /* defined(J9VM_OPT_JITSERVER) */
       if (TR::Options::sharedClassCache())
          {
+         printf("Creating aMethod %p 2\n", aMethod);
          result = new (trMemory->trHeapMemory()) TR_ResolvedRelocatableJ9Method(aMethod, this, trMemory, owningMethod, vTableSlot);
          TR::Compilation *comp = TR::comp();
          if (comp && comp->getOption(TR_UseSymbolValidationManager))
@@ -997,7 +1002,16 @@ TR_ResolvedRelocatableJ9Method::TR_ResolvedRelocatableJ9Method(TR_OpaqueMethodBl
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)fe;
    TR::Compilation *comp = TR::comp();
+   printf("Creating RRJ9M %p ", aMethod);
+   printf("conds %p %d %d\n",
+          comp,
+          this->TR_ResolvedMethod::getRecognizedMethod() != TR::unknownMethod,
+          fej9->sharedCache()->rememberClass(containingClass()));
+   if (comp)
+      printf("UseSVM %d\n", comp->getOption(TR_UseSymbolValidationManager));
 #if defined(J9VM_OPT_JITSERVER)
+   printf("jitserver on %d\n",
+          fej9->_compInfoPT->getMethodBeingCompiled()->_useAOTCacheCompilation);
    if (fej9->_compInfoPT->getMethodBeingCompiled()->_useAOTCacheCompilation)
       return;
    else
@@ -1009,7 +1023,16 @@ TR_ResolvedRelocatableJ9Method::TR_ResolvedRelocatableJ9Method(TR_OpaqueMethodBl
          if (comp->getOption(TR_UseSymbolValidationManager))
             {
             TR::SymbolValidationManager *svm = comp->getSymbolValidationManager();
+
+            printf("Validating %p %d\n", aMethod, svm->isAlreadyValidated(aMethod));
+
+            if (!svm->isAlreadyValidated(aMethod))
+               {
+                  printf("Failure Checking %p\n", aMethod);
+               }
+
             SVM_ASSERT_ALREADY_VALIDATED(svm, aMethod);
+
             SVM_ASSERT_ALREADY_VALIDATED(svm, containingClass());
             }
          else if (owner)
@@ -1867,6 +1890,7 @@ TR_ResolvedRelocatableJ9Method::createResolvedMethodFromJ9Method(TR::Compilation
              (sameLoaders = fej9->sameClassLoaders(clazzOfInlinedMethod, clazzOfCompiledMethod)) ||
              isSystemClassLoader)
             {
+            printf("Creating aMethod %p 3\n", j9method);
             resolvedMethod = new (comp->trHeapMemory()) TR_ResolvedRelocatableJ9Method((TR_OpaqueMethodBlock *) j9method, _fe, comp->trMemory(), this, vTableSlot);
             if (!ignoringLocalSCC && comp->getOption(TR_UseSymbolValidationManager))
                {
@@ -7132,6 +7156,7 @@ TR_ResolvedJ9Method::getResolvedVirtualMethod(TR::Compilation * comp, TR_OpaqueC
    TR_ResolvedMethod *m;
    if (_fe->isAOT_DEPRECATED_DO_NOT_USE())
       {
+      printf("Creating aMethod %p 4\n", ramMethod);
       m = ramMethod ? new (comp->trHeapMemory()) TR_ResolvedRelocatableJ9Method((TR_OpaqueMethodBlock *) ramMethod, _fe, comp->trMemory(), this) : 0;
       }
    else
