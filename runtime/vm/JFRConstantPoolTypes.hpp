@@ -822,8 +822,11 @@ done:
 	 */
 	static void freeJVMInformationEvent(J9JavaVM *vm)
 	{
-		PORT_ACCESS_FROM_JAVAVM(vm);
-		j9mem_free_memory(getJFRConstantEvents(vm)->JVMInfoEntry.jvmArguments);
+		JFRConstantEvents *jfrConstantEvents = getJFRConstantEvents(vm);
+		if (NULL != jfrConstantEvents) {
+			PORT_ACCESS_FROM_JAVAVM(vm);
+			j9mem_free_memory(jfrConstantEvents->JVMInfoEntry.jvmArguments);
+		}
 	}
 
 	/**
@@ -869,8 +872,11 @@ done:
 	 */
 	static void freeCPUInformationEvent(J9JavaVM *vm)
 	{
-		PORT_ACCESS_FROM_JAVAVM(vm);
-		j9mem_free_memory(getJFRConstantEvents(vm)->CPUInfoEntry.description);
+		JFRConstantEvents *jfrConstantEvents = getJFRConstantEvents(vm);
+		if (NULL != jfrConstantEvents) {
+			PORT_ACCESS_FROM_JAVAVM(vm);
+			j9mem_free_memory(jfrConstantEvents->CPUInfoEntry.description);
+		}
 	}
 
 	/**
@@ -949,8 +955,11 @@ done:
 	 */
 	static void freeOSInformation(J9JavaVM *vm)
 	{
-		PORT_ACCESS_FROM_JAVAVM(vm);
-		j9mem_free_memory(getJFRConstantEvents(vm)->OSInfoEntry.osVersion);
+		JFRConstantEvents *jfrConstantEvents = getJFRConstantEvents(vm);
+		if (NULL != jfrConstantEvents) {
+			PORT_ACCESS_FROM_JAVAVM(vm);
+			j9mem_free_memory(jfrConstantEvents->OSInfoEntry.osVersion);
+		}
 	}
 
 	VM_JFRConstantPoolTypes(J9VMThread *currentThread)

@@ -986,3 +986,12 @@ TraceException=Trc_VM_jfr_ErrorWritingChunk Overhead=1 Level=1 Template="Error w
 TraceEvent=Trc_VM_VMInitStages_isDebugOnRestoreEnabled NoEnv Overhead=1 Level=3 Template="VMInitStages(ABOUT_TO_BOOTSTRAP) isDebugOnRestoreEnabled returns TRUE"
 TraceEvent=Trc_VM_hookAboutToBootstrapEvent_debugModeRequested Overhead=1 Level=3 Template="hookAboutToBootstrapEvent() debugModeRequested is TRUE"
 TraceEvent=Trc_VM_mustReportEnterStepOrBreakpoint_hookedOrReserved NoEnv Overhead=1 Level=5 Template="mustReportEnterStepOrBreakpoint() hookedOrReserved(%zu)"
+
+TraceEvent=Trc_VM_isJFRInitialized_true NoEnv Overhead=1 Level=2 Template="the JFR has been initialized"
+TraceEvent=Trc_VM_jfrStartSamplingThread_samplerStateDead NoEnv Overhead=1 Level=2 Template="jfrStartSamplingThread jfrSamplerState is J9JFR_SAMPLER_STATE_DEAD"
+TraceException=Trc_VM_jfrStartSamplingThread_omrthread_create_failed NoEnv Overhead=1 Level=1 Template="omrthread_create(jfrSamplingThreadProc) failed with retVal(%zd)"
+TraceException=Trc_VM_loadJFRMetadataBlob_getSystemProperty_fail NoEnv Overhead=1 Level=1 Template="JFR loadJFRMetadataBlob getSystemProperty failed with rc(%zu)"
+TraceException=Trc_VM_loadJFRMetadataBlob_blobDir_OOM NoEnv Overhead=1 Level=1 Template="JFR loadJFRMetadataBlob j9mem_allocate_memory failed for blobDir"
+TraceException=Trc_VM_loadJFRMetadataBlob_fileLength_too_large NoEnv Overhead=1 Level=1 Template="JFR loadJFRMetadataBlob fileLength(%llx) not less than 2G"
+TraceException=Trc_VM_loadJFRMetadataBlob_metaDataBlobFile_OOM NoEnv Overhead=1 Level=1 Template="JFR loadJFRMetadataBlob j9mem_allocate_memory failed for metaDataBlobFile"
+TraceException=Trc_VM_loadJFRMetadataBlob_bad_fileDescriptor NoEnv Overhead=1 Level=1 Template="JFR loadJFRMetadataBlob j9file_open returns fileDescriptor(-1)"
