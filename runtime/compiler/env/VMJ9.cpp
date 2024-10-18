@@ -27,6 +27,7 @@
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
 #include "env/VMJ9.h"
+#include "env/alloca_openxl.h"
 
 #include <algorithm>
 #include <ctype.h>

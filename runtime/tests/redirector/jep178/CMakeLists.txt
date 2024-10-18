@@ -34,7 +34,11 @@ if(OMR_OS_LINUX)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -rdynamic")
     endif()
 elseif(OMR_OS_AIX)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -qpic -brtl -bexpall")
+    if(CMAKE_C_COMPILER_IS_OPENXL)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fpic -brtl -bexpall")
+    else()
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -qpic -brtl -bexpall")
+    endif()
 endif()
 
 j9vm_add_executable(testjep178_static
