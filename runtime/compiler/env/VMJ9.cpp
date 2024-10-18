@@ -7108,6 +7108,13 @@ TR_J9VM::getArrayClassFromComponentClass(TR_OpaqueClassBlock * componentClass)
    }
 
 TR_OpaqueClassBlock *
+TR_J9VM::getNullRestrictedArrayClassFromComponentClass(TR_OpaqueClassBlock * componentClass)
+   {
+   J9Class *clazz = TR::Compiler->cls.convertClassOffsetToClassPtr(componentClass);
+   return convertClassPtrToClassOffset(J9CLASS_GET_NULLRESTRICTED_ARRAY(clazz));
+   }
+
+TR_OpaqueClassBlock *
 TR_J9VM::getLeafComponentClassFromArrayClass(TR_OpaqueClassBlock * arrayClass)
    {
    return convertClassPtrToClassOffset(((J9ArrayClass*)TR::Compiler->cls.convertClassOffsetToClassPtr(arrayClass))->leafComponentType);
@@ -9283,6 +9290,27 @@ TR_J9SharedCacheVM::getArrayClassFromComponentClass(TR_OpaqueClassBlock * compon
       return arrayClass;
    else
       return NULL;
+   }
+
+TR_OpaqueClassBlock *
+TR_J9SharedCacheVM::getNullRestrictedArrayClassFromComponentClass(TR_OpaqueClassBlock * componentClass)
+   {
+   TR::Compilation* comp = _compInfoPT->getCompilation();
+   TR_ASSERT(comp, "Should be called only within a compilation");
+
+   bool validated = false;
+   TR_OpaqueClassBlock *nullRestrictedArrayClass = TR_J9VM::getNullRestrictedArrayClassFromComponentClass(componentClass);
+
+   if (comp->getOption(TR_UseSymbolValidationManager))
+      {
+      validated = comp->getSymbolValidationManager()->addArrayClassFromComponentClassRecord(nullRestrictedArrayClass, componentClass);
+      }
+   else
+      {
+      validated = ((TR_ResolvedRelocatableJ9Method *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) componentClass);
+      }
+
+   return validated ? nullRestrictedArrayClass : NULL;
    }
 
 TR_OpaqueClassBlock *

@@ -969,6 +969,7 @@ JITServerHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Cl
    classInfoStruct._classNameIdentifyingLoader = std::get<22>(classInfoTuple);
    classInfoStruct._arrayElementSize = std::get<23>(classInfoTuple);
    classInfoStruct._defaultValueSlotAddress = std::get<24>(classInfoTuple);
+   classInfoStruct._nullRestrictedArrayClass = std::get<26>(classInfoTuple);
 
    auto result = clientSessionData->getROMClassMap().insert({ clazz, classInfoStruct });
 
@@ -1031,6 +1032,7 @@ JITServerHelpers::packRemoteROMClassInfo(J9Class *clazz, J9VMThread *vmThread, T
    TR_OpaqueClassBlock *hostClass = fe->convertClassPtrToClassOffset(clazz->hostClass);
    TR_OpaqueClassBlock *componentClass = fe->getComponentClassFromArrayClass((TR_OpaqueClassBlock *)clazz);
    TR_OpaqueClassBlock *arrayClass = fe->getArrayClassFromComponentClass((TR_OpaqueClassBlock *)clazz);
+   TR_OpaqueClassBlock *nullRestrictedArrayClass = fe->getNullRestrictedArrayClassFromComponentClass((TR_OpaqueClassBlock *)clazz);
    uintptr_t totalInstanceSize = clazz->totalInstanceSize;
    uintptr_t cp = fe->getConstantPoolFromClass((TR_OpaqueClassBlock *)clazz);
    uintptr_t classFlags = fe->getClassFlagsValue((TR_OpaqueClassBlock *)clazz);
@@ -1082,7 +1084,7 @@ JITServerHelpers::packRemoteROMClassInfo(J9Class *clazz, J9VMThread *vmThread, T
       classHasFinalFields, classDepthAndFlags, classInitialized, byteOffsetToLockword, leafComponentClass,
       classLoader, hostClass, componentClass, arrayClass, totalInstanceSize, clazz->romClass,
       cp, classFlags, classChainOffsetIdentifyingLoader, origROMMethods, classNameIdentifyingLoader, arrayElementSize,
-      defaultValueSlotAddress, romClassHash
+      defaultValueSlotAddress, romClassHash, nullRestrictedArrayClass
    );
    }
 
@@ -1260,6 +1262,9 @@ JITServerHelpers::getROMClassData(const ClientSessionData::ClassInfo &classInfo,
          break;
       case CLASSINFO_DEFAULT_VALUE_SLOT_ADDRESS:
          *(j9object_t **)data = classInfo._defaultValueSlotAddress;
+         break;
+      case CLASSINFO_NULLRESTRICTED_ARRAY_CLASS :
+         *(TR_OpaqueClassBlock **)data = classInfo._nullRestrictedArrayClass;
          break;
       default:
          TR_ASSERT(false, "Class Info not supported %u\n", dataType);

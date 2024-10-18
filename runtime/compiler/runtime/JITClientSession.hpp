@@ -203,6 +203,7 @@ public:
       TR_OpaqueClassBlock *_hostClass;
       TR_OpaqueClassBlock *_componentClass; // caching the componentType of the J9ArrayClass
       TR_OpaqueClassBlock *_arrayClass;
+      TR_OpaqueClassBlock *_nullRestrictedArrayClass;
       uintptr_t _totalInstanceSize;
       J9ConstantPool *_constantPool;
       uintptr_t _classFlags;
