@@ -204,17 +204,17 @@ public class ValueTypeArrayTests {
 	/**
 	 * Convenient constant reference to the <code>ArrayIndexOutOfBoundsException</code> class
 	 */
-	static final Class AIOOBE = ArrayIndexOutOfBoundsException.class;
+	static final Class<?> AIOOBE = ArrayIndexOutOfBoundsException.class;
 
 	/**
 	 * Convenient constant reference to the <code>ArrayStoreException</code> class
 	 */
-	static final Class ASE = ArrayStoreException.class;
+	static final Class<?> ASE = ArrayStoreException.class;
 
 	/**
 	 * Convenient constant reference to the <code>NullPointerException</code> class
 	 */
-	static final Class NPE = NullPointerException.class;
+	static final Class<?> NPE = NullPointerException.class;
 
 	/**
 	 * The expected kind of exception that will be thrown, if any, for an
@@ -224,13 +224,13 @@ public class ValueTypeArrayTests {
 	 *
 	 * <p><code>expectedAssignmentExceptions[actualArrayKind][actualSourceKind]</code>
 	 */
-	static Class expectedAssignmentExceptions[][] =
-		new Class[][] {
+	static Class<?>[][] expectedAssignmentExceptions =
+		new Class<?>[][] {
 						null,									// NULL_REF for array is not a possibility
-						new Class[] {null, null, null, null, null}, // All values can be assigned to Object[]
-						new Class[] {null, ASE,  null, null, null}, // ASE for SomeIface[] = Object
-						new Class[] {null, ASE,  ASE,  null, ASE},  // ASE for PointV[] = PointPV, SomeIface
-						new Class[] {ASE,  ASE,  ASE,  ASE,  null}, // ASE for PointPV[] = null; ASE for PointPV[] = PointV
+						new Class<?>[] {null, null, null, null, null}, // All values can be assigned to Object[]
+						new Class<?>[] {null, ASE,  null, null, null}, // ASE for SomeIface[] = Object
+						new Class<?>[] {null, ASE,  ASE,  null, ASE},  // ASE for PointV[] = PointPV, SomeIface
+						new Class<?>[] {ASE,  ASE,  ASE,  ASE,  null}, // ASE for PointPV[] = null; ASE for PointPV[] = PointV
 					};
 
 	/**
@@ -242,7 +242,7 @@ public class ValueTypeArrayTests {
 	 *
 	 * <p><code>permittedCast[actual][static]</code>
 	 */
-	static boolean permittedCast[][] =
+	static boolean[][] permittedCast =
 		new boolean[][] {
 						new boolean[] { false, true, true,  true,  false },	// NULL_REF cannot be cast to primitive value
 						new boolean[] { false, true, false, false, false },	// OBJ_TYPE to Object
@@ -287,7 +287,7 @@ public class ValueTypeArrayTests {
 			return;
 		}
 
-		Class expectedExceptionClass = expectedAssignmentExceptions[actualArrayKind][actualSourceKind];
+		Class<?> expectedExceptionClass = expectedAssignmentExceptions[actualArrayKind][actualSourceKind];
 
 		try {
 			assignDispatch(arr, 1, sourceVal, staticArrayKind, staticSourceKind);

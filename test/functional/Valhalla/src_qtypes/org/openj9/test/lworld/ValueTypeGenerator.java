@@ -239,7 +239,7 @@ public class ValueTypeGenerator extends ClassLoader {
 		String makeValueSig = "";
 		String makeValueGenericSig = "";
 		for (String s : fields) {
-			String nameAndSigValue[] = s.split(":");
+			String[] nameAndSigValue = s.split(":");
 			final int fieldModifiers;
 			if (isRef) {
 				fieldModifiers = ACC_PUBLIC;
@@ -360,11 +360,11 @@ public class ValueTypeGenerator extends ClassLoader {
 	}
 	
 
-	 /* 
-	  * This function should only be called in the
-	  * TestMonitorExitOnValueType test and
-	  * TestMonitorExitWithRefType test
-	  */
+	/*
+	 * This function should only be called in the
+	 * TestMonitorExitOnValueType test and
+	 * TestMonitorExitWithRefType test
+	 */
 	private static void testMonitorExitOnObject(ClassWriter cw, String className, String[] fields) {
 		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "testMonitorExitOnObject", "(Ljava/lang/Object;)V", null, null);
 		mv.visitCode();
@@ -375,10 +375,10 @@ public class ValueTypeGenerator extends ClassLoader {
 		mv.visitEnd();
 	}
 
-	 /* 
-	  * This function should only be called in the
-	  * TestMonitorEnterAndExitWithRefType test
-	  */
+	/*
+	 * This function should only be called in the
+	 * TestMonitorEnterAndExitWithRefType test
+	 */
 	private static void testMonitorEnterAndExitWithRefType(ClassWriter cw, String className, String[] fields) {
 		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "testMonitorEnterAndExitWithRefType", "(Ljava/lang/Object;)V", null, null);
 		mv.visitCode();
@@ -398,7 +398,7 @@ public class ValueTypeGenerator extends ClassLoader {
 		mv.visitCode();
 		for (int i = 0, count = 1; i < fields.length; i++) {
 			mv.visitVarInsn(ALOAD, 0);
-			String nameAndSigValue[] = fields[i].split(":");
+			String[] nameAndSigValue = fields[i].split(":");
 			if ((nameAndSigValue.length < 3) ||  !(nameAndSigValue[2].equals("static"))) {
 				switch (nameAndSigValue[1]) {
 				case "D":
@@ -519,7 +519,7 @@ public class ValueTypeGenerator extends ClassLoader {
 		}
 		mv.visitTableSwitchInsn(0, fieldCount-1, defaultLabel, caseLabels);
 		for (int i = 0; i < fieldCount; i++) {
-			String nameAndSigValue[] = containerFields[i].split(":");
+			String[] nameAndSigValue = containerFields[i].split(":");
 			mv.visitLabel(caseLabels[i]);
 			mv.visitFrame(F_SAME, 3, new Object[] {INTEGER, containerClassName, "java/lang/Object"}, 0, new Object[]{});
 			mv.visitVarInsn(ALOAD, 1);
@@ -549,7 +549,7 @@ public class ValueTypeGenerator extends ClassLoader {
 		}
 		mv.visitTableSwitchInsn(0, fieldCount-1, defaultLabel, caseLabels);
 		for (int i = 0; i < fieldCount; i++) {
-			String nameAndSigValue[] = containerFields[i].split(":");
+			String[] nameAndSigValue = containerFields[i].split(":");
 			mv.visitLabel(caseLabels[i]);
 			mv.visitFrame(F_SAME, 3, new Object[] {INTEGER, containerClassName, "java/lang/Object"}, 0, new Object[]{});
 			mv.visitVarInsn(ALOAD, 1);
@@ -593,7 +593,7 @@ public class ValueTypeGenerator extends ClassLoader {
 		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC  + ACC_STATIC, methodName, "(" + makeValueGenericSig + ")Ljava/lang/Object;", null, new String[] {"java/lang/Exception"});
 		mv.visitCode();
 		for (int i = 0; i <  fields.length; i++) {
-			String nameAndSigValue[] = fields[i].split(":");
+			String[] nameAndSigValue = fields[i].split(":");
 			if ((nameAndSigValue.length < 3) ||  !(nameAndSigValue[2].equals("static"))) {
 				mv.visitVarInsn(ALOAD, i);
 				switch (nameAndSigValue[1]) {
@@ -658,7 +658,7 @@ public class ValueTypeGenerator extends ClassLoader {
 		mv.visitTypeInsn(NEW, className);
 		mv.visitInsn(DUP);
 		for (int i = 0; i < fields.length; i++) {
-			String nameAndSigValue[] = fields[i].split(":");
+			String[] nameAndSigValue = fields[i].split(":");
 			if ((nameAndSigValue.length < 3) ||  !(nameAndSigValue[2].equals("static"))) {
 				switch (nameAndSigValue[1]) {
 				case "D":
