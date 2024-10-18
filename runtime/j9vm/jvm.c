@@ -1553,6 +1553,9 @@ typedef struct J9SpecialArguments {
 	IDATA *ibmMallocTraceSet;
 	const char *executableJarPath;
 	BOOLEAN captureCommandLine;
+#if defined(J9VM_OPT_SNAPSHOTS)
+	const char *ramCache;
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 } J9SpecialArguments;
 /**
  * Look for special options:
@@ -1603,6 +1606,11 @@ initialArgumentScan(JavaVMInitArgs *args, J9SpecialArguments *specialArgs)
 		} else if (0 == strcmp(args->options[argCursor].optionString, VMOPT_XXNOOPENJ9COMMANDLINEENV)) {
 			specialArgs->captureCommandLine = FALSE;
 		}
+#if defined(J9VM_OPT_SNAPSHOTS)
+		else if (0 == strncmp(args->options[argCursor].optionString, VMOPT_XSNAPSHOT, strlen(VMOPT_XSNAPSHOT))) {
+			specialArgs->ramCache = args->options[argCursor].optionString + strlen(VMOPT_XSNAPSHOT);
+		}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 	}
 
 	if ((NULL != classPathValue) && (NULL != javaCommandValue) && (strcmp(javaCommandValue, classPathValue) == 0)) {
@@ -1975,6 +1983,9 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 	specialArgs.executableJarPath = NULL;
 	specialArgs.ibmMallocTraceSet = &ibmMallocTraceSet;
 	specialArgs.captureCommandLine = TRUE;
+#if defined(J9VM_OPT_SNAPSHOTS)
+	specialArgs.ramCache = NULL;
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 #if defined(J9ZOS390)
 	/*
 	 * Temporarily disable capturing the command line on z/OS.
@@ -2231,6 +2242,14 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 	args = (JavaVMInitArgs *)vm_args;
 	launcherArgumentsSize = initialArgumentScan(args, &specialArgs);
 	localVerboseLevel = specialArgs.localVerboseLevel;
+
+#if defined(J9VM_OPT_SNAPSHOTS)
+	if (NULL != specialArgs.ramCache) {
+		createParams.flags |= J9_CREATEJAVAVM_RAM_CACHE;
+		createParams.ramCache = specialArgs.ramCache;
+
+	}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 
 	if (VERBOSE_INIT == localVerboseLevel) {
 		createParams.flags |= J9_CREATEJAVAVM_VERBOSE_INIT;
