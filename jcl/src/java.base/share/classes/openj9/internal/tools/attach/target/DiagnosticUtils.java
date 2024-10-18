@@ -54,7 +54,7 @@ public class DiagnosticUtils {
 	private static final String FORMAT_PREFIX = " Format: "; //$NON-NLS-1$
 
 /*[IF JFR_SUPPORT]*/
-	private static final String JFR_FORMAT_PREFIX = "Syntax : "; //$NON-NLS-1$
+	private static final String JFR_FORMAT_PREFIX = "Syntax: ";
 /*[ENDIF] JFR_SUPPORT */
 
 	@SuppressWarnings("nls")
@@ -76,7 +76,6 @@ public class DiagnosticUtils {
 			+ " The dump agent may choose a different file path if the requested file exists.%n";
 
 /*[IF JFR_SUPPORT]*/
-/*[IF JAVA_SPEC_VERSION == 11]*/
 	@SuppressWarnings("nls")
 	private static final String JFR_START_OPTION_HELP =
 			" [options]%n"
@@ -185,15 +184,6 @@ public class DiagnosticUtils {
 			+ "$ jcmd <pid> JFR.dump name=1 filename=/recordings/recording.jfr%n"
 			+ "$ jcmd <pid> JFR.dump maxage=1h%n"
 			+ "$ jcmd <pid> JFR.dump maxage=1h maxsize=50M%n";
-/*[ENDIF] JAVA_SPEC_VERSION == 11 */
-/*[ENDIF] JFR_SUPPORT */
-
-/*[IF JFR_SUPPORT]*/
-/*[IF JAVA_SPEC_VERSION == 17]*/
-	private static final String JFR_START_OPTION_HELP = printJFRHelp("JFR.start");
-	private static final String JFR_STOP_OPTION_HELP = printJFRHelp("JFR.stop");
-	private static final String JFR_DUMP_OPTION_HELP = printJFRHelp("JFR.dump");
-/*[ENDIF] JAVA_SPEC_VERSION == 17 */
 /*[ENDIF] JFR_SUPPORT */
 
 	/**
@@ -262,52 +252,6 @@ public class DiagnosticUtils {
 	 * Use this to separate arguments in a diagnostic command string.
 	 */
 	public static final String DIAGNOSTICS_OPTION_SEPARATOR = ","; //$NON-NLS-1$
-
-/*[IF JFR_SUPPORT]*/
-	/**
-	 * Help information for JFR Java 17 commands
-	 */
-/*[IF JAVA_SPEC_VERSION == 17]*/
-	public static final String printJFRHelp(String helpcommand) {
-		String helpMessageString = null;
-		try {
-			Class<?> clazz;
-			if (helpcommand.equals("JFR.start")) {
-				clazz = Class.forName("jdk.jfr.internal.dcmd.DCmdStart");
-			} else if (helpcommand.equals("JFR.stop")) {
-				clazz = Class.forName("jdk.jfr.internal.dcmd.DCmdStop");
-			} else if (helpcommand.equals("JFR.dump")) {
-				clazz = Class.forName("jdk.jfr.internal.dcmd.DCmdDump");
-			} else {
-				System.out.println("JFR command is not correct.");
-				return null;
-			}
-
-			Constructor<?> constructor = clazz.getDeclaredConstructor();
-			constructor.setAccessible(true);
-			Object dcmdInstance = constructor.newInstance();
-
-			/* Get the printHelp method */
-			Method printHelpMethod = clazz.getSuperclass().getDeclaredMethod("printHelp");
-			printHelpMethod.setAccessible(true);
-
-			/* Invoke the printHelp method and get the result */
-			String[] helpMessages = (String[]) printHelpMethod.invoke(dcmdInstance);
-
-			/* Escape % characters in each string element */
-			for (int i = 0; i < helpMessages.length; i++) {
-				helpMessages[i] = helpMessages[i].replace("%", "%%");
-			}
-
-			/* Convert the String[] to a single String */
-			helpMessageString = String.join("\n", helpMessages);
-		} catch (Exception e) {
-			System.out.println(e);
-		}
-		return helpMessageString;
-	}
-/*[ENDIF] JAVA_SPEC_VERSION == 17 */
-/*[ENDIF] JFR_SUPPORT */
 
 	/**
 	 * Report live or all heap objects.
@@ -609,10 +553,9 @@ public class DiagnosticUtils {
 /*[IF JAVA_SPEC_VERSION == 11]*/
 	private static Boolean parseBooleanParameter(String paramName, String[] parameters) {
 		for (String param : parameters) {
-			/* Split only on the first "=" */
-			String[] splitParam = param.split("=", 2);
-			if (splitParam.length == 2 && splitParam[0].equals(paramName)) {
-				return Boolean.parseBoolean(splitParam[1]);
+			int index = param.indexOf('=');
+			if (index != -1 && param.substring(0, index).equals(paramName)) {
+				return Boolean.parseBoolean(param.substring(index + 1));
 			}
 		}
 		return null;
@@ -624,8 +567,9 @@ public class DiagnosticUtils {
 /*[IF JAVA_SPEC_VERSION == 11]*/
 	private static Long parseMemorySizeParameter(String paramName, String[] parameters) {
 		for (String param : parameters) {
-			if (param.startsWith(paramName + "=")) {
-				String value = param.split("=")[1];
+			int index = param.indexOf(paramName + "=");
+			if (index == 0) {
+				String value = param.substring(paramName.length() + 1);
 				return convertToBytes(value);
 			}
 		}
@@ -638,8 +582,9 @@ public class DiagnosticUtils {
 /*[IF JAVA_SPEC_VERSION == 11]*/
 	private static Long parseTimeParameter(String paramName, String[] parameters) {
 		for (String param : parameters) {
-			if (param.startsWith(paramName + "=")) {
-				String value = param.split("=")[1];
+			int index = param.indexOf(paramName + "=");
+			if (index == 0) {
+				String value = param.substring(paramName.length() + 1);
 				return convertToNanoseconds(value);
 			}
 		}
@@ -652,8 +597,9 @@ public class DiagnosticUtils {
 /*[IF JAVA_SPEC_VERSION == 11]*/
 	private static String parseStringParameter(String paramName, String[] parameters, String defaultValue) {
 		for (String param : parameters) {
-			if (param.startsWith(paramName + "=")) {
-				return param.split("=")[1];
+			int index = param.indexOf(paramName + "=");
+			if (index == 0) {
+				return param.substring(index + paramName.length() + 1);
 			}
 		}
 		return defaultValue;
@@ -662,8 +608,8 @@ public class DiagnosticUtils {
 /*[ENDIF] JFR_SUPPORT */
 
 /*[IF JFR_SUPPORT]*/
-/*[IF JAVA_SPEC_VERSION == 17]*/
-	private static String invokeJava17JFR(Method executeMethod, Object dcmdInstance, String[] parameters) throws Exception {
+/*[IF JAVA_SPEC_VERSION >= 17]*/
+	private static String invokeJavaJFR(Method executeMethod, Object dcmdInstance, String[] parameters) throws Exception {
 		String jcmdarg = "attach";
 		char delimiter = (parameters.length > 0) ? ',' : ' ';
 		String[] returnedStringArray = (String[]) executeMethod.invoke(dcmdInstance, jcmdarg, String.join(",", parameters), delimiter);
@@ -672,7 +618,7 @@ public class DiagnosticUtils {
 		String messageString = String.join("\n", returnedStringArray);
 		return messageString;
 	}
-/*[ENDIF] JAVA_SPEC_VERSION == 17 */
+/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 /*[ENDIF] JFR_SUPPORT */
 
 /*[IF JFR_SUPPORT]*/
@@ -721,7 +667,7 @@ public class DiagnosticUtils {
 			Object dcmdInstance;
 			String returnedString;
 
-			if (command.equals("JFR.start")) {
+			if (command.equals(DIAGNOSTICS_JFR_START)) {
 				dcmdClass = Class.forName("jdk.jfr.internal.dcmd.DCmdStart");
 				dcmdInstance = createInstance(dcmdClass);
 
@@ -737,15 +683,15 @@ public class DiagnosticUtils {
 					delay, duration, disk, path, maxAge, maxSize, dumpOnExit, pathToGcRoots);
 /*[ENDIF] JAVA_SPEC_VERSION == 11 */
 
-/*[IF JAVA_SPEC_VERSION == 17]*/
-				/* DCmdStart execute method for Java 17 JFR.start */
+/*[IF JAVA_SPEC_VERSION >= 17]*/
+				/* DCmdStart execute method for Java 17 and later, handling the JFR.start */
 				executeMethod = dcmdClass.getSuperclass().getDeclaredMethod("execute", String.class, String.class, char.class);
 				executeMethod.setAccessible(true);
-				returnedString = invokeJava17JFR(executeMethod, dcmdInstance, parameters);
-/*[ENDIF] JAVA_SPEC_VERSION == 17 */
+				returnedString = invokeJavaJFR(executeMethod, dcmdInstance, parameters);
+/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 
 				result = DiagnosticProperties.makeStringResult(returnedString);
-			} else if (command.equals("JFR.stop")) {
+			} else if (command.equals(DIAGNOSTICS_JFR_STOP)) {
 				dcmdClass = Class.forName("jdk.jfr.internal.dcmd.DCmdStop");
 				dcmdInstance = createInstance(dcmdClass);
 
@@ -756,15 +702,15 @@ public class DiagnosticUtils {
 				returnedString = (String) executeMethod.invoke(dcmdInstance, name, path);
 /*[ENDIF] JAVA_SPEC_VERSION == 11 */
 
-/*[IF JAVA_SPEC_VERSION == 17]*/
-				/* DCmdStop execute method for Java 17 JFR.stop */
+/*[IF JAVA_SPEC_VERSION >= 17]*/
+				/* DCmdStop execute method for Java 17 and later , handling the JFR.stop */
 				executeMethod = dcmdClass.getSuperclass().getDeclaredMethod("execute", String.class, String.class, char.class);
 				executeMethod.setAccessible(true);
-				returnedString = invokeJava17JFR(executeMethod, dcmdInstance, parameters);
-/*[ENDIF] JAVA_SPEC_VERSION == 17 */
+				returnedString = invokeJavaJFR(executeMethod, dcmdInstance, parameters);
+/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 
 				result = DiagnosticProperties.makeStringResult(returnedString);
-			} else if (command.equals("JFR.dump")) {
+			} else if (command.equals(DIAGNOSTICS_JFR_DUMP)) {
 				dcmdClass = Class.forName("jdk.jfr.internal.dcmd.DCmdDump");
 				dcmdInstance = createInstance(dcmdClass);
 
@@ -777,19 +723,19 @@ public class DiagnosticUtils {
 				returnedString = (String) executeMethod.invoke(dcmdInstance, name, path, maxAge, maxSize, begin, end, pathToGcRoots);
 /*[ENDIF] JAVA_SPEC_VERSION == 11 */
 
-/*[IF JAVA_SPEC_VERSION == 17]*/
-				/* DCmdDump execute method for Java 17 JFR.dump */
+/*[IF JAVA_SPEC_VERSION >= 17]*/
+				/* DCmdDump execute method for Java 17 and later, handling the JFR.dump */
 				executeMethod = dcmdClass.getSuperclass().getDeclaredMethod("execute", String.class, String.class, char.class);
 				executeMethod.setAccessible(true);
-				returnedString = invokeJava17JFR(executeMethod, dcmdInstance, parameters);
-/*[ENDIF] JAVA_SPEC_VERSION == 17 */
+				returnedString = invokeJavaJFR(executeMethod, dcmdInstance, parameters);
+/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 
 				result = DiagnosticProperties.makeStringResult(returnedString);
 			} else {
 				return DiagnosticProperties.makeErrorProperties("Error: Unknown JFR command");
 			}
 		} catch (Exception e) {
-			return DiagnosticProperties.makeErrorProperties("Error in JFR: " + e.getMessage());
+			return DiagnosticProperties.makeErrorProperties("Error in JFR command: " + e.getMessage());
 		}
 		return result;
 	}
@@ -920,29 +866,14 @@ public class DiagnosticUtils {
 			+ "          agent option: (Optional) the agent option string%n";
 
 /*[IF JFR_SUPPORT]*/
-/*[IF JAVA_SPEC_VERSION == 11]*/
 	private static final String DIAGNOSTICS_JFR_START_HELP = "Starts a new Recording%n%n"
 			+ JFR_FORMAT_PREFIX + DIAGNOSTICS_JFR_START + JFR_START_OPTION_HELP;
 
 	private static final String DIAGNOSTICS_JFR_STOP_HELP = "Stops a JFR recording%n%n"
-			+ JFR_FORMAT_PREFIX + FORMAT_PREFIX + DIAGNOSTICS_JFR_STOP + JFR_STOP_OPTION_HELP;
+			+ JFR_FORMAT_PREFIX + DIAGNOSTICS_JFR_STOP + JFR_STOP_OPTION_HELP;
 
 	private static final String DIAGNOSTICS_JFR_DUMP_HELP = "Copies contents of a JFR recording to file. Either the name or the recording id must be specified.%n%n"
 			+ JFR_FORMAT_PREFIX + DIAGNOSTICS_JFR_DUMP + JFR_DUMP_OPTION_HELP;
-/*[ENDIF] JAVA_SPEC_VERSION == 11 */
-/*[ENDIF] JFR_SUPPORT */
-
-/*[IF JFR_SUPPORT]*/
-/*[IF JAVA_SPEC_VERSION == 17]*/
-	private static final String DIAGNOSTICS_JFR_START_HELP = "Starts a new Recording%n%n"
-			+ JFR_START_OPTION_HELP;
-
-	private static final String DIAGNOSTICS_JFR_STOP_HELP = "Stops a JFR recording%n%n"
-			+ JFR_STOP_OPTION_HELP;
-
-	private static final String DIAGNOSTICS_JFR_DUMP_HELP = "Copies contents of a JFR recording to file. Either the name or the recording id must be specified.%n%n"
-			+ JFR_DUMP_OPTION_HELP;
-/*[ENDIF] JAVA_SPEC_VERSION == 17 */
 /*[ENDIF] JFR_SUPPORT */
 
 /*[IF CRAC_SUPPORT]*/
