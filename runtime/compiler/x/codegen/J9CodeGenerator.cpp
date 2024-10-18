@@ -126,6 +126,8 @@ J9::X86::CodeGenerator::initialize()
       cg->setSupportsStackAllocationOfArraylets();
       }
 
+   cg->setSupportsInlineVectorizedHashCode();
+
    if (!comp->getOption(TR_FullSpeedDebug))
       cg->setSupportsDirectJNICalls();
 
