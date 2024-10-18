@@ -24,6 +24,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <vector>
+#include <string>
+
 #ifdef WINDOWS
 // Undefine the winsockapi because winsock2 defines it. Removes warnings.
 #if defined(_WINSOCKAPI_) && !defined(_WINSOCK2API_)
@@ -1921,6 +1924,83 @@ onLoadInternal(
    return 0;
    }
 
+#if defined(J9VM_OPT_JITSERVER)
+static int32_t J9THREAD_PROC fetchServerCachedAOTMethods(void * entryarg)
+   {
+   J9JITConfig *jitConfig = (J9JITConfig *) entryarg;
+   J9JavaVM *vm = jitConfig->javaVM;
+   TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
+   TR::PersistentInfo *persistentInfo = compInfo->getPersistentInfo();
+
+   j9thread_t osThread = (j9thread_t) jitConfig->serverAOTQueryThread;
+   J9VMThread *vmThread = NULL;
+
+   int rc = vm->internalVMFunctions->internalAttachCurrentThread(vm, &vmThread, NULL,
+                              J9_PRIVATE_FLAGS_DAEMON_THREAD | J9_PRIVATE_FLAGS_NO_OBJECT |
+                              J9_PRIVATE_FLAGS_SYSTEM_THREAD | J9_PRIVATE_FLAGS_ATTACHED_THREAD,
+                              osThread);
+
+   if (rc != JNI_OK)
+   {
+      return rc;
+   }
+
+   try
+      {
+      JITServer::ClientStream *client = new (PERSISTENT_NEW) JITServer::ClientStream(persistentInfo);
+      client->write(JITServer::MessageType::AOTCacheMap_request,
+                     persistentInfo->getJITServerAOTCacheName());
+
+      client->read();
+      auto result = client->getRecvData<std::vector<std::string>>();
+
+      std::vector<std::string> &cachedMethods = std::get<0>(result);
+
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Received %d methods",
+                                       cachedMethods.size());
+
+      PersistentUnorderedSet<std::string> *serverAOTMethodSet =
+         new (PERSISTENT_NEW) PersistentUnorderedSet<std::string>(
+            PersistentUnorderedSet<std::string>::allocator_type
+               (TR::Compiler->persistentAllocator()));
+
+      for (const auto &methodSig : cachedMethods)
+         {
+         serverAOTMethodSet->insert(methodSig);
+         }
+
+      client->~ClientStream();
+      TR_Memory::jitPersistentFree(client);
+
+      FLUSH_MEMORY(TR::Compiler->target.isSMP());
+      jitConfig->serverAOTMethodSet = (void *) serverAOTMethodSet;
+      }
+   catch (const JITServer::StreamFailure &e)
+      {
+      if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITServer, TR_VerboseCompilationDispatch))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE,
+            "JITServer::StreamFailure: %s",
+            e.what());
+
+      JITServerHelpers::postStreamFailure(
+         OMRPORT_FROM_J9PORT(vm->portLibrary),
+         compInfo, e.retryConnectionImmediately(), true);
+      }
+   catch (const std::bad_alloc &e)
+      {
+      if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITServer, TR_VerboseCompilationDispatch))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE,
+            "std::bad_alloc: %s",
+            e.what());
+      }
+
+   vm->internalVMFunctions->DetachCurrentThread((JavaVM *) vm);
+   j9thread_exit(NULL);
+
+   return 0;
+   }
+#endif // J9VM_OPT_JITSERVER
 
 extern "C" int32_t
 aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
@@ -2191,6 +2271,47 @@ aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
    UT_MODULE_LOADED(J9_UTINTERFACE_FROM_VM(javaVM));
    Trc_JIT_VMInitStages_Event1(curThread);
    Trc_JIT_portableSharedCache_enabled_or_disabled(curThread, J9_ARE_ANY_BITS_SET(javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PORTABLE_SHARED_CACHE) ? 1 : 0);
+
+#if defined(J9VM_OPT_JITSERVER)
+   if (!persistentInfo->getJITServerUseAOTCache())
+      {
+      TR::Options::getCmdLineOptions()->setOption(TR_RequestJITServerCachedMethods, false);
+      }
+
+   jitConfig->serverAOTMethodSet = NULL;
+   if (TR::Options::getCmdLineOptions()->getOption(TR_RequestJITServerCachedMethods))
+      {
+      // Ask the server for its cached methods
+      if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
+         {
+         if (JITServerHelpers::isServerAvailable())
+            {
+            if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+                  "Creating a thread to ask the server for its cached methods");
+
+            IDATA result = javaVM->internalVMFunctions->createThreadWithCategory(
+               (omrthread_t *) &(jitConfig->serverAOTQueryThread),
+               javaVM->defaultOSStackSize,
+               J9THREAD_PRIORITY_NORMAL,
+               0,
+               &fetchServerCachedAOTMethods,
+               (void *) jitConfig,
+               J9THREAD_CATEGORY_SYSTEM_JIT_THREAD
+            );
+
+            if (result != J9THREAD_SUCCESS)
+               {
+               if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+                  TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+                                                "Query thread not created");
+               }
+            }
+         }
+      }
+#endif // J9VM_OPT_JITSERVER
+
+
    return 0;
    }
 

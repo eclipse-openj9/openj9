@@ -285,6 +285,9 @@ enum MessageType : uint16_t
 
    AOTCache_getROMClassBatch,
 
+   AOTCacheMap_request,
+   AOTCacheMap_reply,
+
    MessageType_MAXTYPE
    };
    extern const char *messageNames[];
