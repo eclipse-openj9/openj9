@@ -406,7 +406,7 @@ TR_J9InlinerPolicy::alwaysWorthInlining(TR_ResolvedMethod * calleeMethod, TR::No
       case TR::jdk_internal_misc_Unsafe_compareAndExchangeInt:
       case TR::jdk_internal_misc_Unsafe_compareAndExchangeLong:
       case TR::jdk_internal_misc_Unsafe_compareAndExchangeReference:
-         if (comp()->target().cpu.isPower() || comp()->target().cpu.isX86())
+         if (comp()->target().cpu.isPower() || comp()->target().cpu.isX86() || comp()->target().cpu.isZ())
             {
             return false;
             }
@@ -427,7 +427,7 @@ TR_J9InlinerPolicy::alwaysWorthInlining(TR_ResolvedMethod * calleeMethod, TR::No
        * failed the isInlineableJNI check and should not be force inlined.
        */
       case TR::jdk_internal_misc_Unsafe_compareAndExchangeObject:
-         if (comp()->target().cpu.isPower() || comp()->target().cpu.isX86())
+         if (comp()->target().cpu.isPower() || comp()->target().cpu.isX86() || comp()->target().cpu.isZ())
             {
             return !calleeMethod->isNative();
             }
@@ -2669,7 +2669,7 @@ TR_J9InlinerPolicy::inlineUnsafeCall(TR::ResolvedMethodSymbol *calleeSymbol, TR:
       case TR::jdk_internal_misc_Unsafe_compareAndExchangeLong:
       case TR::jdk_internal_misc_Unsafe_compareAndExchangeObject:
       case TR::jdk_internal_misc_Unsafe_compareAndExchangeReference:
-         if (disableCAEIntrinsic || !(comp()->target().cpu.isPower() || comp()->target().cpu.isX86()))
+         if (disableCAEIntrinsic || !(comp()->target().cpu.isPower() || comp()->target().cpu.isX86() || comp()->target().cpu.isZ()))
             {
             break;
             }
