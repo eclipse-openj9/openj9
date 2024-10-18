@@ -478,8 +478,8 @@ j9localmap_LocalBitsForPC(J9PortLibrary * portLib, J9ROMClass * romClass, J9ROMM
 
 	mapAllLocals(portLib, romMethod, (PARALLEL_TYPE *) scratch, pc, resultArrayBase);
 
-	/* Ensure that the receiver is marked for all <init>()V methods */
-	if ((J9_ARE_NO_BITS_SET(romMethod->modifiers, J9AccStatic)) && ('<' == J9UTF8_DATA(J9ROMMETHOD_NAME(romMethod))[0])) {
+	/* Ensure that the receiver is marked for all instance methods. */
+	if (J9_ARE_NO_BITS_SET(romMethod->modifiers, J9AccStatic)) {
 		*resultArrayBase |= 1;
 	}
 
