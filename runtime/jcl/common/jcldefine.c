@@ -26,6 +26,7 @@
 #include "j9protos.h"
 #include "j9jclnls.h"
 #include "j9vmnls.h"
+#include "vm_api.h"
 
 jclass 
 defineClassCommon(JNIEnv *env, jobject classLoaderObject,
@@ -160,7 +161,26 @@ retry:
 			/* Bad, we have already defined this class - fail */
 			omrthread_monitor_exit(vm->classTableMutex);
 			if (J9_ARE_NO_BITS_SET(*options, J9_FINDCLASS_FLAG_NAME_IS_INVALID)) {
-				vmFuncs->setCurrentExceptionNLSWithArgs(currentThread, J9NLS_JCL_DUPLICATE_CLASS_DEFINITION, J9VMCONSTANTPOOL_JAVALANGLINKAGEERROR, utf8Length, utf8Name);
+#if defined(J9VM_OPT_SNAPSHOTS)
+				/* TODO: This path is taken if Classloader.findClass is called on a persisted class.
+				 * Once class objects are persisted, reaching this point is an error.
+				 */
+				if (IS_RESTORE_RUN(vm)) {
+					clazz = vmFuncs->hashClassTableAt(classLoader, utf8Name, utf8Length);
+
+					if (!vmFuncs->loadWarmClass(currentThread, classLoader, clazz)) {
+						clazz = NULL;
+					}
+
+					clazz = vmFuncs->initializeImageClassObject(currentThread, classLoader, clazz);
+					if (NULL != protectionDomain) {
+						J9VMJAVALANGCLASS_SET_PROTECTIONDOMAIN(currentThread, clazz->classObject, J9_JNI_UNWRAP_REFERENCE(protectionDomain));
+					}
+				} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+				{
+					vmFuncs->setCurrentExceptionNLSWithArgs(currentThread, J9NLS_JCL_DUPLICATE_CLASS_DEFINITION, J9VMCONSTANTPOOL_JAVALANGLINKAGEERROR, utf8Length, utf8Name);
+				}
 			}
 			goto done;
 		}

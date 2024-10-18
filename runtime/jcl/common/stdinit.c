@@ -123,7 +123,11 @@ standardInit(J9JavaVM *vm, char *dllName)
 		}
 	}
 	/* Now create the classPathEntries */
-	if (initializeBootstrapClassPath(vm)) {
+	if (initializeBootstrapClassPath(vm)
+#if defined(J9VM_OPT_SNAPSHOTS)
+		&& !IS_RESTORE_RUN(vm)
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+	) {
 		goto _fail;
 	}
 #endif
@@ -453,14 +457,28 @@ internalInitializeJavaLangClassLoader(JNIEnv * env)
 
 	vmFuncs->internalEnterVMFromJNI(vmThread);
 
-	vm->applicationClassLoader = J9VMJAVALANGCLASSLOADER_VMREF(vmThread, J9_JNI_UNWRAP_REFERENCE(appClassLoader));
+#if defined(J9VM_OPT_SNAPSHOTS)
+	/* always use persisted version in restore run */
+	if (!IS_RESTORE_RUN(vm))
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+	{
+		vm->applicationClassLoader = J9VMJAVALANGCLASSLOADER_VMREF(vmThread, J9_JNI_UNWRAP_REFERENCE(appClassLoader));
+	}
 
 	if (NULL == vm->applicationClassLoader) {
 		/* CMVC 201518
 		 * applicationClassLoader may be null due to lazy classloader initialization. Initialize
 		 * the applicationClassLoader now or vm will start throwing NoClassDefFoundException.
 		 */
-		vm->applicationClassLoader = (void*) (UDATA)(vmFuncs->internalAllocateClassLoader(vm, J9_JNI_UNWRAP_REFERENCE(appClassLoader)));
+#if defined(J9VM_OPT_SNAPSHOTS)
+		if (IS_RESTORE_RUN(vm)) {
+			vmFuncs->initializeImageClassLoaderObject(vm, vm->applicationClassLoader, J9_JNI_UNWRAP_REFERENCE(appClassLoader));
+		} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+		{
+			vm->applicationClassLoader = (void*)(UDATA)(vmFuncs->internalAllocateClassLoader(vm, J9_JNI_UNWRAP_REFERENCE(appClassLoader)));
+		}
+
 		if (NULL != vmThread->currentException) {
 			/* while this exception check and return statement seem un-necessary, it is added to prevent
 			 * oversights if anybody adds more code in the future.
@@ -479,10 +497,25 @@ internalInitializeJavaLangClassLoader(JNIEnv * env)
 			classLoaderParentObject = J9VMJAVALANGCLASSLOADER_PARENT(vmThread, classLoaderObject);
 		}
 
-		vm->extensionClassLoader = J9VMJAVALANGCLASSLOADER_VMREF(vmThread, classLoaderObject);
+#if defined(J9VM_OPT_SNAPSHOTS)
+		/* Restore runs use the persisted extensionClassLoader. */
+		if (!IS_RESTORE_RUN(vm))
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+		{
+			vm->extensionClassLoader = J9VMJAVALANGCLASSLOADER_VMREF(vmThread, classLoaderObject);
+		}
 
 		if (NULL == vm->extensionClassLoader) {
-			vm->extensionClassLoader = (void*) (UDATA)(vmFuncs->internalAllocateClassLoader(vm, classLoaderObject));
+#if defined(J9VM_OPT_SNAPSHOTS)
+			if (IS_RESTORE_RUN(vm)) {
+				vmFuncs->initializeImageClassLoaderObject(vm, vm->extensionClassLoader, classLoaderObject);
+			} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+			{
+				vm->extensionClassLoader = (void*)(UDATA)(vmFuncs->internalAllocateClassLoader(vm, classLoaderObject));
+			}
+
+
 			if (NULL != vmThread->currentException) {
 				/* while this exception check and return statement seem un-necessary, it is added to prevent
 				 * oversights if anybody adds more code in the future.
