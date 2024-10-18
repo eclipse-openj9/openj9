@@ -196,7 +196,6 @@ addJarToSystemClassLoaderClassPathEntries(J9JavaVM *vm, const char *filename)
 {
 	J9ClassLoader *classLoader = vm->systemClassLoader;
 	UDATA newCount = 0;
-	J9ClassPathEntry *newEntry = NULL;
 	UDATA jarPathSize = strlen(filename);
 	UDATA classPathLength = jarPathSize + 1; /* add space for a terminating null character */
 	UDATA newMemSize = sizeof(J9ClassPathEntry) + classPathLength;
