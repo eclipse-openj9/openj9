@@ -540,3 +540,8 @@ aarch64_linux_gcc11:
   extends: ['aarch64_linux']
   build_env:
     vars: 'CC=/usr/local/gcc11/bin/gcc-11.2 CXX=/usr/local/gcc11/bin/g++-11.2 LD_LIBRARY_PATH=/usr/local/gcc11/lib64:/usr/local/gcc11/lib'
+#========================================#
+# RAM Persistence
+#========================================#
+snapshots:
+  extra_configure_options: '--enable-snapshots'

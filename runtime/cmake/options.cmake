@@ -147,6 +147,8 @@ option(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES "Enables support for Project Va
 option(J9VM_OPT_ROM_IMAGE_SUPPORT "Controls if the VM includes basic support for linked rom images")
 option(J9VM_OPT_SHARED_CLASSES "Support for class sharing")
 
+option(J9VM_OPT_SNAPSHOTS "Support for RAM class snapshot images")
+
 option(J9VM_OPT_ZIP_SUPPORT "Controls if the VM includes zip reading and caching support. (implies dynamic loading)")
 option(J9VM_OPT_ZLIB_COMPRESSION "Controls if the compression routines in zlib are included.")
 option(J9VM_OPT_ZLIB_SUPPORT "Controls if the VM includes the zlib compression library.")

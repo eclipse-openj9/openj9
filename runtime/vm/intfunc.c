@@ -458,4 +458,9 @@ J9InternalVMFunctions J9InternalFunctions = {
 #if defined(J9VM_OPT_JFR)
 	jfrExecutionSample,
 #endif /* defined(J9VM_OPT_JFR) */
+#if defined(J9VM_OPT_SNAPSHOTS)
+	initializeSnapshotClassLoaderObject,
+	initializeSnapshotClassObject,
+	loadWarmClassFromSnapshot,
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 };
