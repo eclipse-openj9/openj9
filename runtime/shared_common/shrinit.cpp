@@ -387,6 +387,7 @@ J9SharedClassesOptions J9SHAREDCLASSESOPTIONS[] = {
 	{ OPTION_TEST_DOUBLE_PAGESIZE, PARSE_TYPE_EXACT, RESULT_DO_ADD_RUNTIMEFLAG2, J9SHR_RUNTIMEFLAG2_TEST_DOUBLE_PAGESIZE},
 	{ OPTION_TEST_HALF_PAGESIZE, PARSE_TYPE_EXACT, RESULT_DO_ADD_RUNTIMEFLAG2, J9SHR_RUNTIMEFLAG2_TEST_HALF_PAGESIZE},
 	{ OPTION_EXTRA_STARTUPHINTS_EQUALS, PARSE_TYPE_STARTSWITH, RESULT_DO_SET_EXTRA_STARTUPHINTS, 0},
+	{ OPTION_SHARE_LAMBDAFORM, PARSE_TYPE_EXACT, RESULT_DO_ADD_RUNTIMEFLAG2, J9SHR_RUNTIMEFLAG2_SHARE_LAMBDAFORM},
 	{ NULL, 0, 0 }
 };
 
@@ -1278,7 +1279,7 @@ j9shr_dump_help(J9JavaVM* vm, UDATA more)
 
 	tmpcstr = j9nls_lookup_message((J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG), J9NLS_EXELIB_INTERNAL_HELP_XXDISABLESHAREUNSAFECLASSES, NULL);
 	j9file_printf(PORTLIB, J9PORT_TTY_OUT, "%s", tmpcstr);
-	
+
 	tmpcstr = j9nls_lookup_message((J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG), J9NLS_EXELIB_INTERNAL_HELP_XXENABLESHAREORPAH, NULL);
 	j9file_printf(PORTLIB, J9PORT_TTY_OUT, "%s", tmpcstr);
 
@@ -1374,7 +1375,7 @@ void
 registerStoreFilter(J9JavaVM* vm, J9ClassLoader* classloader, const char* fixedName, UDATA fixedNameSize, J9Pool** filterPoolPtr)
 {
 	PORT_ACCESS_FROM_JAVAVM(vm);
-	
+
 	Trc_SHR_Assert_ShouldHaveLocalMutex(vm->classMemorySegments->segmentMutex);
 
 	if (*filterPoolPtr == NULL) {
@@ -2448,13 +2449,13 @@ reportUtilityNotApplicable(J9JavaVM* vm, const char* ctrlDirName, const char* ca
 static void j9shr_printStats_dump_help(J9JavaVM* vm, bool moreHelp, UDATA command)
 {
 	PORT_ACCESS_FROM_JAVAVM(vm);
-	
+
 	const char* option = OPTION_PRINTSTATS_EQUALS;
 	if (RESULT_DO_PRINTALLSTATS_EQUALS == command) {
 		option = OPTION_PRINTALLSTATS_EQUALS;
 	} else if (RESULT_DO_PRINT_TOP_LAYER_STATS_EQUALS == command) {
 		option = OPTION_PRINT_TOP_LAYER_STATS_EQUALS;
-	} 
+	}
 
 	SHRINIT_TRACE2_NOTAG(1, J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP_V1, option, option);
 
@@ -4058,7 +4059,7 @@ j9shr_getCacheSizeBytes(J9JavaVM *vm)
  * @param [in] vm Pointer to the VM structure for the JVM
  *
  * @return J9SharedClassCacheMode enum that indicates the Shared Class Cache that is in effect
- * 
+ *
  */
 J9SharedClassCacheMode
 j9shr_getSharedClassCacheMode(J9JavaVM *vm)
@@ -4457,7 +4458,7 @@ getDefaultRuntimeFlags(void)
 			J9SHR_RUNTIMEFLAG_ENABLE_TIMESTAMP_CHECKS |
 			J9SHR_RUNTIMEFLAG_ENABLE_REDUCE_STORE_CONTENTION |
 			J9SHR_RUNTIMEFLAG_ENABLE_SHAREANONYMOUSCLASSES |
-			J9SHR_RUNTIMEFLAG_ENABLE_SHAREUNSAFECLASSES |			
+			J9SHR_RUNTIMEFLAG_ENABLE_SHAREUNSAFECLASSES |
 			J9SHR_RUNTIMEFLAG_ENABLE_ROUND_TO_PAGE_SIZE |
 			J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT |
 #if !defined(J9ZOS390) && !defined(AIXPPC)
