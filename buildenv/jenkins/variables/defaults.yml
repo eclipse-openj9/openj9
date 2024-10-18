@@ -201,6 +201,11 @@ valhalla_standard:
 ojdk292:
   extra_configure_options: '--enable-openjdk-methodhandles'
 #========================================#
+# RAM Persistence
+#========================================#
+snapshots:
+  extra_configure_options: '--enable-snapshots'
+#========================================#
 # Linux PPCLE 64bits
 #========================================#
 ppc64le_linux:

@@ -804,6 +804,38 @@ extern J9_CFUNC int32_t j9port_isCompatible(struct J9PortLibraryVersion *expecte
 #define j9gs_isEnabled(param1,param2,param3,param4) privatePortLibrary->gs_isEnabled(privatePortLibrary,param1,param2,param3,param4)
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
 
+#if defined(J9VM_OPT_SNAPSHOTS)
+/*
+* OMR port library wrapper.
+* VMSnapshotImpl instance to access VM snapshot functions
+*/
+typedef struct VMSnapshotImplPortLibrary {
+	/* portLibrary must be the first member of J9PortLibrary. */
+	OMRPortLibrary portLibrary;
+	/* portLibrary redirects to vmSnapshotImpl for allocations. */
+	void *vmSnapshotImpl;
+} VMSnapshotImplPortLibrary;
+
+/* Snapshot macros for snapshot port library access. */
+#define VMSNAPSHOTIMPLPORT_FROM_PORT(_portLibrary) ((VMSnapshotImplPortLibrary *)(_portLibrary))
+#define VMSNAPSHOTIMPLPORT_FROM_JAVAVM(javaVM) ((VMSnapshotImplPortLibrary *)((javaVM)->vmSnapshotImplPortLibrary))
+#define VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(javaVM) VMSnapshotImplPortLibrary *privateImagePortLibrary = VMSNAPSHOTIMPLPORT_FROM_JAVAVM(javaVM)
+
+/* Snapshot macros for OMR port library access. */
+#define VMSNAPSHOTIMPL_OMRPORT_FROM_JAVAVM(javaVM) ((OMRPortLibrary *)((javaVM)->vmSnapshotImplPortLibrary))
+#define VMSNAPSHOTIMPL_OMRPORT_FROM_VMSNAPSHOTIMPLPORT(vmSnapshotImplPortLibrary) ((OMRPortLibrary *)(vmSnapshotImplPortLibrary))
+
+/* Standard allocation and free functions for the snapshot heap suballocator. */
+#define vmsnapshot_allocate_memory(param1, category) \
+		VMSNAPSHOTIMPL_OMRPORT_FROM_VMSNAPSHOTIMPLPORT(privateImagePortLibrary)->mem_allocate_memory(VMSNAPSHOTIMPL_OMRPORT_FROM_VMSNAPSHOTIMPLPORT(privateImagePortLibrary), param1, J9_GET_CALLSITE(), category)
+#define vmsnapshot_free_memory(param1) \
+		VMSNAPSHOTIMPL_OMRPORT_FROM_VMSNAPSHOTIMPLPORT(privateImagePortLibrary)->mem_free_memory(VMSNAPSHOTIMPL_OMRPORT_FROM_VMSNAPSHOTIMPLPORT(privateImagePortLibrary), param1)
+#define vmsnapshot_allocate_memory32(param1, category) \
+		VMSNAPSHOTIMPL_OMRPORT_FROM_VMSNAPSHOTIMPLPORT(privateImagePortLibrary)->mem_allocate_memory32(VMSNAPSHOTIMPL_OMRPORT_FROM_VMSNAPSHOTIMPLPORT(privateImagePortLibrary), param1, J9_GET_CALLSITE(), category)
+#define vmsnapshot_free_memory32(param1) \
+		VMSNAPSHOTIMPL_OMRPORT_FROM_VMSNAPSHOTIMPLPORT(privateImagePortLibrary)->mem_free_memory32(VMSNAPSHOTIMPL_OMRPORT_FROM_VMSNAPSHOTIMPLPORT(privateImagePortLibrary), param1)
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+
 #if defined(OMR_OPT_CUDA)
 
 #define j9cuda_startup() \

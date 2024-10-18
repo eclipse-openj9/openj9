@@ -2368,6 +2368,11 @@ nativeOOM:
 		}
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
+		if (IS_RESTORE_RUN(javaVM)) {
+			/* This flag is needed to ensure class hooks are run only once. */
+			classFlags |= J9ClassIsLoadedFromSnapshot;
+		}
+
 		state->ramClass->classFlags = classFlags;
 
 		/* Ensure all previous writes have completed before making the new class visible. */

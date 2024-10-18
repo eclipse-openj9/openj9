@@ -725,8 +725,10 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 	 */
 	vm->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_CLASS_OBJECT_ASSIGNED;
 
-	if (vmFuncs->internalCreateBaseTypePrimitiveAndArrayClasses(vmThread) != 0) {
-		return 1;
+	if (!IS_RESTORE_RUN(vm)) {
+		if (0 != vmFuncs->internalCreateBaseTypePrimitiveAndArrayClasses(vmThread)) {
+			return 1;
+		}
 	}
 
 	/* Initialize early since sendInitialize() uses this */ 

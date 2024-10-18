@@ -274,11 +274,14 @@ gcCleanupHeapStructures(J9JavaVM * vm)
 		gam->flushAllocationContextsForShutdown(&env);
 	}
 
-	if (vm->memorySegments) {
-		vm->internalVMFunctions->freeMemorySegmentList(vm, vm->memorySegments);
-	}
-	if (vm->classMemorySegments) {
-		vm->internalVMFunctions->freeMemorySegmentList(vm, vm->classMemorySegments);
+	if (!IS_RESTORE_RUN(vm)) {
+		if (NULL != vm->memorySegments) {
+			vm->internalVMFunctions->freeMemorySegmentList(vm, vm->memorySegments);
+		}
+
+		if (NULL != vm->classMemorySegments) {
+			vm->internalVMFunctions->freeMemorySegmentList(vm, vm->classMemorySegments);
+		}
 	}
 
 #if defined(J9VM_GC_FINALIZATION)
@@ -555,30 +558,37 @@ gcInitializeHeapStructures(J9JavaVM *vm)
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(vm);
 	J9VMDllLoadInfo *loadInfo = getGCDllLoadInfo(vm);
 
-	/* For now, number of segments to default in pool */
-	if ((vm->memorySegments = vm->internalVMFunctions->allocateMemorySegmentList(vm, 10, OMRMEM_CATEGORY_VM)) == NULL) {
-		vm->internalVMFunctions->setErrorJ9dll(
-			PORTLIB,
-			loadInfo,
-			j9nls_lookup_message(
-				J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
-				J9NLS_GC_FAILED_TO_ALLOCATE_VM_MEMORY_SEGMENTS,
-				"Failed to allocate VM memory segments."),
-			FALSE);
-		goto error;
-	}
+	/* By this point during a restore run, the memory segments are already allocated
+	 * and initialized.
+	 */
+	if (!IS_RESTORE_RUN(vm)) {
+		/* For now, set the number of segments to a default (= 10) in the pool. */
+		U_32 defaultSegments = 10;
+		vm->memorySegments = vm->internalVMFunctions->allocateMemorySegmentList(vm, defaultSegments, OMRMEM_CATEGORY_VM);
+		if (NULL == vm->memorySegments) {
+			vm->internalVMFunctions->setErrorJ9dll(
+				PORTLIB,
+				loadInfo,
+				j9nls_lookup_message(
+					J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+					J9NLS_GC_FAILED_TO_ALLOCATE_VM_MEMORY_SEGMENTS,
+					"Failed to allocate VM memory segments."),
+				FALSE);
+			goto error;
+		}
 
-	/* For now, number of segments to default in pool */
-	if ((vm->classMemorySegments = vm->internalVMFunctions->allocateMemorySegmentListWithFlags(vm, 10, MEMORY_SEGMENT_LIST_FLAG_SORT, J9MEM_CATEGORY_CLASSES)) == NULL) {
-		vm->internalVMFunctions->setErrorJ9dll(
-			PORTLIB,
-			loadInfo,
-			j9nls_lookup_message(
-				J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
-				J9NLS_GC_FAILED_TO_ALLOCATE_VM_CLASS_MEMORY_SEGMENTS,
-				"Failed to allocate VM class memory segments."),
-			FALSE);
-		goto error;
+		vm->classMemorySegments = vm->internalVMFunctions->allocateMemorySegmentListWithFlags(vm, defaultSegments, MEMORY_SEGMENT_LIST_FLAG_SORT, J9MEM_CATEGORY_CLASSES);
+		if (NULL == vm->classMemorySegments) {
+			vm->internalVMFunctions->setErrorJ9dll(
+				PORTLIB,
+				loadInfo,
+				j9nls_lookup_message(
+					J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE,
+					J9NLS_GC_FAILED_TO_ALLOCATE_VM_CLASS_MEMORY_SEGMENTS,
+					"Failed to allocate VM class memory segments."),
+				FALSE);
+			goto error;
+		}
 	}
 
 	/* j9gc_initialize_heap is now called from gcInitializeDefaults */

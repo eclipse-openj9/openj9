@@ -268,6 +268,7 @@ enum INIT_STAGE {
 #define VMOPT_XFASTRESOLVE "-Xfastresolve"
 #define VMOPT_XSHARECLASSES "-Xshareclasses"
 #define VMOPT_XSHARECLASSES_COLON "-Xshareclasses:"
+#define VMOPT_XSNAPSHOT "-Xsnapshot="
 #define VMOPT_XSERVICE_EQUALS "-Xservice="
 #define VMOPT_XISS "-Xiss"
 #define VMOPT_XSSI "-Xssi"
