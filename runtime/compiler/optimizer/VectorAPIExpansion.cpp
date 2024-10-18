@@ -1245,9 +1245,9 @@ void TR_VectorAPIExpansion::anchorOldChildren(TR_VectorAPIExpansion *opt, TR::Tr
 
 
 TR::Node *
-TR_VectorAPIExpansion::generateAddressNode(TR::Compilation *comp, TR::Node *array, TR::Node *arrayIndex, int32_t elementSize)
+TR_VectorAPIExpansion::generateArrayElementAddressNode(TR::Compilation *comp, TR::Node *array, TR::Node *arrayIndex, int32_t elementSize)
    {
-   TR_ASSERT_FATAL_WITH_NODE(array, comp->target().is64Bit(), "TR_VectorAPIExpansion::generateAddressNode supports 64 bit vm only.");
+   TR_ASSERT_FATAL_WITH_NODE(array, comp->target().is64Bit(), "TR_VectorAPIExpansion::generateArrayElementAddressNode supports 64 bit vm only.");
 
    int32_t shiftAmount = 0;
    while ((elementSize = (elementSize >> 1)))
@@ -1267,6 +1267,13 @@ TR_VectorAPIExpansion::generateAddressNode(TR::Compilation *comp, TR::Node *arra
    return aladdNode;
    }
 
+TR::Node *
+TR_VectorAPIExpansion::generateAddressNode(TR::Node *base, TR::Node *offset)
+   {
+   TR::Node *aladdNode = TR::Node::create(TR::aladd, 2, base, offset);
+   aladdNode->setIsInternalPointer(true);
+   return aladdNode;
+   }
 
 void TR_VectorAPIExpansion::aloadHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
                                          TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes, handlerMode mode)
@@ -1436,27 +1443,22 @@ TR::Node *TR_VectorAPIExpansion::loadIntrinsicHandler(TR_VectorAPIExpansion *opt
    if (opt->_trace)
       traceMsg(comp, "loadIntrinsicHandler for node %p\n", node);
 
-#if JAVA_SPEC_VERSION <= 21
-   TR::Node *array = node->getChild(5);
-   TR::Node *arrayIndex = node->getChild(6);
-#else
-   TR::Node *array = node->getChild(6);
-   TR::Node *arrayIndex = node->getChild(7);
-#endif
+   TR::Node *base = node->getChild(3);
+   TR::Node *offset = node->getChild(4);
 
-   return transformLoadFromArray(opt, treeTop, node, elementType, vectorLength, numLanes, mode, array, arrayIndex, objType);
+   return transformLoadFromArray(opt, treeTop, node, elementType, vectorLength, numLanes, mode, base, offset, objType);
    }
 
 TR::Node *TR_VectorAPIExpansion::transformLoadFromArray(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
                                                         TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes,
                                                         handlerMode mode,
-                                                        TR::Node *array, TR::Node *arrayIndex, vapiObjType objType)
+                                                        TR::Node *base, TR::Node *offset, vapiObjType objType)
 
    {
    TR::Compilation *comp = opt->comp();
 
    int32_t elementSize = OMR::DataType::getSize(elementType);
-   TR::Node *aladdNode = generateAddressNode(comp, array, arrayIndex, objType == Mask ? 1 : elementSize);
+   TR::Node *aladdNode = generateAddressNode(base, offset);
 
    anchorOldChildren(opt, treeTop, node);
 
@@ -1650,30 +1652,28 @@ TR::Node *TR_VectorAPIExpansion::storeIntrinsicHandler(TR_VectorAPIExpansion *op
    if (opt->_trace)
       traceMsg(comp, "storeIntrinsicHandler for node %p\n", node);
 
+   TR::Node *base = node->getChild(3);
+   TR::Node *offset = node->getChild(4);
 #if JAVA_SPEC_VERSION <= 21
    TR::Node *valueToWrite = node->getChild(5);
-   TR::Node *array = node->getChild(6);
-   TR::Node *arrayIndex = node->getChild(7);
-#else
+#elif
    TR::Node *valueToWrite = node->getChild(6);
-   TR::Node *array = node->getChild(7);
-   TR::Node *arrayIndex = node->getChild(8);
 #endif
 
-   return transformStoreToArray(opt, treeTop, node, elementType, vectorLength, numLanes, mode, valueToWrite, array, arrayIndex, objType);
+   return transformStoreToArray(opt, treeTop, node, elementType, vectorLength, numLanes, mode, valueToWrite, base, offset, objType);
    }
 
 
 TR::Node *TR_VectorAPIExpansion::transformStoreToArray(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
                                                        TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes,
                                                        handlerMode mode,
-                                                       TR::Node *valueToWrite, TR::Node *array, TR::Node *arrayIndex, vapiObjType objType)
+                                                       TR::Node *valueToWrite, TR::Node *base, TR::Node *offset, vapiObjType objType)
 
    {
    TR::Compilation *comp = opt->comp();
 
    int32_t  elementSize = OMR::DataType::getSize(elementType);
-   TR::Node *aladdNode = generateAddressNode(comp, array, arrayIndex, objType == Mask ? 1 : elementSize);
+   TR::Node *aladdNode = generateAddressNode(base, offset);
 
    anchorOldChildren(opt, treeTop, node);
    node->setAndIncChild(0, aladdNode);

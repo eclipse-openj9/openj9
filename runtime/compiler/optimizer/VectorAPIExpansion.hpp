@@ -643,7 +643,22 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *  \return
    *     Address node
    */
-   static TR::Node *generateAddressNode(TR::Compilation *comp, TR::Node *array, TR::Node *arrayIndex, int32_t elementSize);
+   static TR::Node *generateArrayElementAddressNode(TR::Compilation *comp, TR::Node *array, TR::Node *arrayIndex, int32_t elementSize);
+
+
+  /** \brief
+   *     Generates address node based on the base node and offset
+   *
+   * \param base
+   *     Node pointing to the base of the array or memory segment
+   *
+   *  \param offset
+   *     Offset from the base
+   *
+   *  \return
+   *     Address node
+   */
+   static TR::Node *generateAddressNode(TR::Node *base, TR::Node *offset);
 
 
   /** \brief
