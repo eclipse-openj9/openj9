@@ -37,7 +37,7 @@
 #include "ConstantPoolObjectSlotIterator.hpp"
 #include "EnvironmentBase.hpp"
 #include "GCExtensionsBase.hpp"
-#include "MethodTypesIterator.hpp"
+#include "InvokeCacheIterator.hpp"
 #include "ValueTypesIterator.hpp"
 
 /**
@@ -74,9 +74,9 @@ protected:
 	GC_ClassStaticsIterator _classStaticsIterator;
 	GC_ConstantPoolObjectSlotIterator _constantPoolObjectSlotIterator;
 	GC_CallSitesIterator _callSitesIterator;
-	GC_MethodTypesIterator _methodTypesIterator;
+	GC_InvokeCacheIterator _invokeCacheIterator;
 #if defined(J9VM_OPT_METHOD_HANDLE)
-	GC_MethodTypesIterator _varHandlesMethodTypesIterator;
+	GC_InvokeCacheIterator _varHandlesInvokeCacheIterator;
 #endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 	GC_ValueTypesIterator _valueTypesIterator;
 	const bool _shouldScanClassObject; /**< Boolean needed for balanced GC to prevent ClassObject from being scanned twice  */
@@ -90,10 +90,10 @@ public:
 		, _constantPoolObjectSlotIterator((J9JavaVM *)env->getLanguageVM(), clazz)
 		, _callSitesIterator(clazz)
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
-		, _methodTypesIterator(clazz->romClass->invokeCacheCount, clazz->invokeCache)
+		, _invokeCacheIterator(clazz->romClass->invokeCacheCount, clazz->invokeCache)
 #else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
-		, _methodTypesIterator(clazz->romClass->methodTypeCount, clazz->methodTypes)
-		, _varHandlesMethodTypesIterator(clazz->romClass->varHandleMethodTypeCount, clazz->varHandleMethodTypes)
+		, _invokeCacheIterator(clazz->romClass->methodTypeCount, clazz->methodTypes)
+		, _varHandlesInvokeCacheIterator(clazz->romClass->varHandleMethodTypeCount, clazz->varHandleMethodTypes)
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 		, _valueTypesIterator(clazz)
 		, _shouldScanClassObject(shouldScanClassObject)
@@ -107,10 +107,10 @@ public:
 		, _constantPoolObjectSlotIterator((J9JavaVM *)extensions->getOmrVM()->_language_vm, clazz)
 		, _callSitesIterator(clazz)
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
-		, _methodTypesIterator(clazz->romClass->invokeCacheCount, clazz->invokeCache)
+		, _invokeCacheIterator(clazz->romClass->invokeCacheCount, clazz->invokeCache)
 #else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
-		, _methodTypesIterator(clazz->romClass->methodTypeCount, clazz->methodTypes)
-		, _varHandlesMethodTypesIterator(clazz->romClass->varHandleMethodTypeCount, clazz->varHandleMethodTypes)
+		, _invokeCacheIterator(clazz->romClass->methodTypeCount, clazz->methodTypes)
+		, _varHandlesInvokeCacheIterator(clazz->romClass->varHandleMethodTypeCount, clazz->varHandleMethodTypes)
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 		, _valueTypesIterator(clazz)
 		, _shouldScanClassObject(true)
