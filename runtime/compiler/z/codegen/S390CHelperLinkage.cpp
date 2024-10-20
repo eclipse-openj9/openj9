@@ -268,7 +268,7 @@ TR::Register * J9::Z::CHelperLinkage::buildDirectDispatch(TR::Node * callNode, T
    traceMsg(comp(),"%s: Internal Control Flow in OOL : %s\n",callNode->getOpCode().getName(),isHelperCallWithinICF  ? "true" : "false" );
    for (int i = TR::RealRegister::FirstGPR; i < TR::RealRegister::NumRegisters; i++)
       {
-      if (!self()->getPreserved(REGNUM(i)) && cg()->machine()->getRealRegister(i)->getState() != TR::RealRegister::Locked)
+      if (!getPreserved(REGNUM(i)) && cg()->machine()->getRealRegister(i)->getState() != TR::RealRegister::Locked)
          {
          RealRegisters.use((TR::RealRegister::RegNum)i);
          }
@@ -282,7 +282,7 @@ TR::Register * J9::Z::CHelperLinkage::buildDirectDispatch(TR::Node * callNode, T
    // TODO For Time Being, it is expected that param number won't increase beyond 3 need to fix this when support for stack is there
    for (int i=0; i< callNode->getNumChildren(); i++)
       {
-      if (i < self()->getNumIntegerArgumentRegisters()-1)
+      if (i < getNumIntegerArgumentRegisters()-1)
          preDeps->addPreCondition(cg()->gprClobberEvaluate(callNode->getChild(i)), getIntegerArgumentRegister(i+1));
       else
          TR_ASSERT(false,"Parameters on Stack not supported yet");
@@ -294,7 +294,7 @@ TR::Register * J9::Z::CHelperLinkage::buildDirectDispatch(TR::Node * callNode, T
    * Following line will use the System linkage's return address register for fast path
    * And for regular dual mode helper, private linkage's return address register
    */
-   TR::RealRegister::RegNum regRANum = isFastPathOnly ? self()->getReturnAddressRegister() : cg()->getReturnAddressRegister();
+   TR::RealRegister::RegNum regRANum = isFastPathOnly ? getReturnAddressRegister() : cg()->getReturnAddressRegister();
    TR::Register *regRA = RealRegisters.use(regRANum);
 #if defined(J9ZOS390)
    TR::Register *DSAPointerReg = NULL;
