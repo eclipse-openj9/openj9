@@ -293,6 +293,7 @@
 		<testCaseName>TestJavaUtilZipCRC32C</testCaseName>
 		<variations>
 			<variation>-Xjit:'disableAsyncCompilation,{*testCRC32C*}(count=1,optlevel=scorching)'</variation>
+			<variation>-Xjit:'disableAsyncCompilation,{*testCRC32CArraylets*}(count=1,optlevel=scorching)' -Xgcpolicy:balanced</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 			-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
@@ -301,7 +302,10 @@
 			-excludegroups $(DEFAULT_EXCLUDE); \
 			$(TEST_STATUS)
 		</command>
-		<platformRequirements>arch.390</platformRequirements>
+		<platformRequirementsList>
+			<platformRequirements>arch.390</platformRequirements>
+			<platformRequirements>arch.ppc</platformRequirements>
+		</platformRequirementsList>
 		<levels>
 			<level>sanity</level>
 		</levels>
