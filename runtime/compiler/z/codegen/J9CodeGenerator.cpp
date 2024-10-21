@@ -3802,6 +3802,7 @@ J9::Z::CodeGenerator::inlineDirectCall(
       }
 
    static const char * enableTRTRE = feGetEnv("TR_enableTRTRE");
+   static bool disableCAEIntrinsic = feGetEnv("TR_DisableCAEIntrinsic") != NULL;
    switch (methodSymbol->getRecognizedMethod())
       {
       case TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z:
@@ -3816,22 +3817,23 @@ J9::Z::CodeGenerator::inlineDirectCall(
             resultReg = TR::TreeEvaluator::VMinlineCompareAndSwap(node, cg, TR::InstOpCode::CS, IS_NOT_OBJ);
             return true;
             }
+         break;
 
       case TR::sun_misc_Unsafe_compareAndSwapLong_jlObjectJJJ_Z:
-         // As above, we only want to inline the JNI methods, so add an explicit test for isNative()
+         // As above, we only want to inline the JNI methods, so add an explicit test for isNative().
          if (!methodSymbol->isNative())
             break;
 
+         // Too risky to do Long-31bit version now.
          if (comp->target().is64Bit() && (!TR::Compiler->om.canGenerateArraylets() || node->isUnsafeGetPutCASCallOnNonArray()) && node->isSafeForCGToFastPathUnsafeCall())
             {
             resultReg = TR::TreeEvaluator::VMinlineCompareAndSwap(node, cg, TR::InstOpCode::CSG, IS_NOT_OBJ);
             return true;
             }
-         // Too risky to do Long-31bit version now.
          break;
 
       case TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z:
-         // As above, we only want to inline the JNI methods, so add an explicit test for isNative()
+         // As above, we only want to inline the JNI methods, so add an explicit test for isNative().
          if (!methodSymbol->isNative())
             break;
 
@@ -3839,6 +3841,49 @@ J9::Z::CodeGenerator::inlineDirectCall(
             {
             resultReg = TR::TreeEvaluator::VMinlineCompareAndSwap(node, cg, (comp->useCompressedPointers() ? TR::InstOpCode::CS : TR::InstOpCode::getCmpAndSwapOpCode()), IS_OBJ);
             return true;
+            }
+         break;
+
+      case TR::jdk_internal_misc_Unsafe_compareAndExchangeInt:
+         if ((!TR::Compiler->om.canGenerateArraylets() || node->isUnsafeGetPutCASCallOnNonArray()) && node->isSafeForCGToFastPathUnsafeCall())
+            {
+            if (!disableCAEIntrinsic)
+               {
+               resultReg = TR::TreeEvaluator::VMinlineCompareAndSwap(node, cg, TR::InstOpCode::CS, IS_NOT_OBJ, true);
+               return true;
+               }
+            }
+         break;
+
+      case TR::jdk_internal_misc_Unsafe_compareAndExchangeLong:
+         // Too risky to do Long-31bit version now.
+         if (comp->target().is64Bit() && (!TR::Compiler->om.canGenerateArraylets() || node->isUnsafeGetPutCASCallOnNonArray()) && node->isSafeForCGToFastPathUnsafeCall())
+            {
+            if (!disableCAEIntrinsic)
+               {
+               resultReg = TR::TreeEvaluator::VMinlineCompareAndSwap(node, cg, TR::InstOpCode::CSG, IS_NOT_OBJ, true);
+               return true;
+               }
+            }
+         break;
+
+      case TR::jdk_internal_misc_Unsafe_compareAndExchangeObject:
+         /*
+          * Starting from Java 12, compareAndExchangeObject was changed from a native call to a
+          * Java wrapper calling compareAndExchangeReference.
+          * We only want to inline the JNI native method, so add an explicit test for isNative().
+          */
+         if (!methodSymbol->isNative())
+            break;
+         // If native, fall through.
+      case TR::jdk_internal_misc_Unsafe_compareAndExchangeReference:
+         if ((!TR::Compiler->om.canGenerateArraylets() || node->isUnsafeGetPutCASCallOnNonArray()) && node->isSafeForCGToFastPathUnsafeCall())
+            {
+            if (!disableCAEIntrinsic)
+               {
+               resultReg = TR::TreeEvaluator::VMinlineCompareAndSwap(node, cg, (comp->useCompressedPointers() ? TR::InstOpCode::CS : TR::InstOpCode::getCmpAndSwapOpCode()), IS_OBJ, true);
+               return true;
+               }
             }
          break;
 

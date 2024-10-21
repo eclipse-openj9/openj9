@@ -5572,7 +5572,7 @@ TR_J9MethodBase::isUnsafeCAS(TR::Compilation * c)
       case TR::jdk_internal_misc_Unsafe_compareAndExchangeReference:
          {
          TR_ASSERT_FATAL(c, "comp should not be NULL");
-         return (c->target().cpu.isPower() || c->target().cpu.isX86());
+         return (c->target().cpu.isPower() || c->target().cpu.isX86() || c->target().cpu.isZ());
          }
       case TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z:
       case TR::sun_misc_Unsafe_compareAndSwapLong_jlObjectJJJ_Z:
