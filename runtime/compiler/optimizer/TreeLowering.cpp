@@ -871,7 +871,7 @@ static bool skipBoundChecks(TR::Compilation *comp, TR::Node *node)
  * LoadArrayElementTransformer transforms the block that contains the jitLoadFlattenableArrayElement helper call into three blocks:
  *   1. The merge block (blockAfterHelperCall) that contains the tree tops after the helper call
  *   2. The helper call block (helperCallBlock) that contains the helper call and is moved to the end of the tree top list
- *   3. The new non-primitive VT array load block (arrayElementLoadBlock) which is an extended block of the original block
+ *   3. The new nullable array load block (arrayElementLoadBlock) which is an extended block of the original block
  *
  *      originalBlock----------+
  *      arrayElementLoadBlock  |
@@ -996,7 +996,7 @@ LoadArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
    // 1. Anchor helper call node after the helper call
    //    Anchor elementIndex and arrayBaseAddress before the helper call
 
-   // Anchoring the helper call ensures that the return value from the helper call or from the non-primitive VT array element load
+   // Anchoring the helper call ensures that the return value from the helper call or from the nullable array element load
    // will be saved to a register or a temp.
    TR::TreeTop *anchoredCallTT = TR::TreeTop::create(comp, tt, TR::Node::create(TR::treetop, 1, node));
    TR::TreeTop *anchoredElementIndexTT = TR::TreeTop::create(comp, tt->getPrevTreeTop(), TR::Node::create(TR::treetop, 1, elementIndexNode));
@@ -1206,7 +1206,7 @@ static bool skipArrayStoreChecks(TR::Compilation *comp, TR::Node *node)
  * StoreArrayElementTransformer transforms the block that contains the jitStoreFlattenableArrayElement helper call into three blocks:
  *   1. The merge block that contains the tree tops after the helper call
  *   2. The helper call block that contains the helper call and is moved to the end of the tree top list
- *   3. The new non-primitive VT array store block which is an extended block of the original block
+ *   3. The new nullable array store block which is an extended block of the original block
  *
  *      originalBlock ----------+
  *      arrayElementStoreBlock  |
@@ -1372,7 +1372,7 @@ StoreArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
    ///////////////////////////////////////
    // 5. Split (2) at the helper call node into its own helperCallBlock
 
-   // Insert NULLCHK for Primitive VT
+   // Insert NULLCHK for null-restricted VT
    TR::Node *anchoredValueNode = anchoredValueTT->getNode()->getFirstChild();
    TR::TreeTop *ttForHelperCallBlock = tt;
 

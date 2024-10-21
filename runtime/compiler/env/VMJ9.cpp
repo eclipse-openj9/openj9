@@ -6324,7 +6324,7 @@ TR_J9VMBase::canAllocateInlineClass(TR_OpaqueClassBlock *clazzOffset)
       return false;
 
    // Cannot inline the allocation if the class is an interface, abstract,
-   // or if it is a class with identityless primitive value type fields that
+   // or if it is a class with identityless null-restricted fields that
    // aren't flattened, because they have to be made to refer to their type's
    // default values
    if ((clazz->romClass->modifiers & (J9AccAbstract | J9AccInterface))

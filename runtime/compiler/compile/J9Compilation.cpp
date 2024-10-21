@@ -703,7 +703,7 @@ J9::Compilation::canAllocateInline(TR::Node* node, TR_OpaqueClassBlock* &classIn
       }
    else if (node->getOpCodeValue() == TR::anewarray)
       {
-      classRef      = node->getSecondChild();
+      classRef = node->getSecondChild();
 
       // In the case of dynamic array allocation, return 0 indicating variable dynamic array allocation,
       // unless value types are enabled, in which case return -1 to prevent inline allocation
@@ -727,20 +727,15 @@ J9::Compilation::canAllocateInline(TR::Node* node, TR_OpaqueClassBlock* &classIn
             }
          }
 
-      classSymRef   = classRef->getSymbolReference();
+      classSymRef = classRef->getSymbolReference();
       // Can't skip the allocation if the class is unresolved
       //
       clazz = self()->fej9vm()->getClassForAllocationInlining(self(), classSymRef);
       if (clazz == NULL)
          return -1;
 
-      // Arrays of null-restricted (a.k.a, primitive value type) classes must have all their elements initialized
-      // with the default value of the component type.  For now, prevent inline allocation of them.
-      //
-      if (areValueTypesEnabled && TR::Compiler->cls.isPrimitiveValueTypeClass(reinterpret_cast<TR_OpaqueClassBlock*>(clazz)))
-         {
-         return -1;
-         }
+      // TODO-VALUETYPE: If null-restricted arrays are ever allocated using TR::anewarray,
+      // the JIT will need to handle the inline initialization or prevent inline allocation.
 
       auto classOffset = self()->fej9()->getArrayClassFromComponentClass(TR::Compiler->cls.convertClassPtrToClassOffset(clazz));
       clazz = TR::Compiler->cls.convertClassOffsetToClassPtr(classOffset);

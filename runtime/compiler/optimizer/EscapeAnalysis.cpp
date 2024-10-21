@@ -1187,12 +1187,14 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
          continue;
          }
 
+      // TODO-VALUETYPE: Need to handle allocation of null-restricted arrays if
+      // null-restricted arrays are ever allocated using TR::anewarray and we
+      // want to allow for stack allocation of null-restricted arrays
       if (candidate->_kind == TR::anewarray)
          {
          // Array Candidates for contiguous allocation that have unresolved
          // base classes must be rejected, since we cannot initialize the array
-         // header.  If the component type is a primitive value type, reject the array
-         // as we can't initialize the elements to the default value yet.
+         // header.
          //
          if (candidate->isContiguousAllocation())
             {
@@ -1204,18 +1206,6 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
                   traceMsg(comp(), "   Fail [%p] because base class is unresolved\n", candidate->_node);
                rememoize(candidate);
                _candidates.remove(candidate);
-               }
-            else
-               {
-               TR_OpaqueClassBlock *clazz = (TR_OpaqueClassBlock*)classNode->getSymbol()->castToStaticSymbol()->getStaticAddress();
-
-               if (TR::Compiler->cls.isPrimitiveValueTypeClass(clazz))
-                  {
-                  if (trace())
-                     traceMsg(comp(), "   Fail [%p] because array has primitive value type elements\n", candidate->_node);
-                  rememoize(candidate);
-                  _candidates.remove(candidate);
-                  }
                }
             }
          }
