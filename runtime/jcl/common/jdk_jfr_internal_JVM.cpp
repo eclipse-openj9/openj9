@@ -500,6 +500,20 @@ Java_jdk_jfr_internal_JVM_getChunkStartNanos(JNIEnv *env, jclass clazz)
 }
 
 jboolean JNICALL
+Java_jdk_jfr_internal_JVM_setHandler(JNIEnv *env, jclass clazz, jobject eventClass, jobject handler)
+{
+	// TODO: implementation
+	return JNI_FALSE;
+}
+
+jobject JNICALL
+Java_jdk_jfr_internal_JVM_getHandler(JNIEnv *env, jclass clazz, jobject eventClass)
+{
+	// TODO: implementation
+	return NULL;
+}
+
+jboolean JNICALL
 Java_jdk_jfr_internal_JVM_setConfiguration(JNIEnv *env, jclass clazz, jobject eventClass, jobject configuration)
 {
 	// TODO: implementation

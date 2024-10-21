@@ -749,6 +749,8 @@ if(J9VM_OPT_JFR)
 		Java_jdk_jfr_internal_JVM_isExcluded
 		Java_jdk_jfr_internal_JVM_isInstrumented
 		Java_jdk_jfr_internal_JVM_getChunkStartNanos
+		Java_jdk_jfr_internal_JVM_setHandler
+		Java_jdk_jfr_internal_JVM_getHandler
 		Java_jdk_jfr_internal_JVM_setConfiguration
 		Java_jdk_jfr_internal_JVM_setSampleThreads
 		Java_jdk_jfr_internal_JVM_getConfiguration
