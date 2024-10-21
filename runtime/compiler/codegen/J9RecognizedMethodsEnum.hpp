@@ -483,6 +483,9 @@
    LastVectorMethod = LastVectorIntrinsicMethod,
 
    java_lang_reflect_Array_getLength,
+   jdk_internal_value_ValueClass_newArrayInstance,
+   jdk_internal_value_ValueClass_newNullRestrictedArray,
+   jdk_internal_value_NullRestrictedCheckedType_of,
    java_lang_reflect_Method_invoke,
    java_util_Arrays_fill,
    java_util_Arrays_equals,
