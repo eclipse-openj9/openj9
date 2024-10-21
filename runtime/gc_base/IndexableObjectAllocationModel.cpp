@@ -189,35 +189,6 @@ MM_IndexableObjectAllocationModel::initializeIndexableObject(MM_EnvironmentBase 
 }
 
 /**
- * For contiguous arraylet all data is in the spine but arrayoid pointers must still be laid down.
- *
- * @return initialized arraylet spine with its arraylet pointers initialized.
- */
-MMINLINE J9IndexableObject *
-MM_IndexableObjectAllocationModel::layoutContiguousArraylet(MM_EnvironmentBase *env, J9IndexableObject *spine)
-{
-	Assert_MM_true(_numberOfArraylets == _allocateDescription.getNumArraylets());
-	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
-	bool const compressed = env->compressObjectReferences();
-
-	/* set arraylet pointers in the spine. these all point into the data part of the spine */
-	fj9object_t *arrayoidPtr = extensions->indexableObjectModel.getArrayoidPointer(spine);
-	uintptr_t leafOffset = (uintptr_t)GC_SlotObject::addToSlotAddress(arrayoidPtr, _numberOfArraylets, compressed);
-	if (_alignSpineDataSection) {
-		leafOffset = MM_Math::roundToCeiling(sizeof(uint64_t), leafOffset);
-	}
-	uintptr_t arrayletLeafSize = env->getOmrVM()->_arrayletLeafSize;
-	for (uintptr_t i = 0; i < _numberOfArraylets; i++) {
-		GC_SlotObject slotObject(env->getOmrVM(), arrayoidPtr);
-		slotObject.writeReferenceToSlot((omrobjectptr_t)leafOffset);
-		leafOffset += arrayletLeafSize;
-		arrayoidPtr = GC_SlotObject::addToSlotAddress(arrayoidPtr, 1, compressed);
-	}
-
-	return spine;
-}
-
-/**
  * For discontiguous or hybrid arraylet spine is allocated first and leaves are sequentially
  * allocated and attached to the spine. The allocation description saves and restores the
  * spine pointer in case a GC occurs while allocating the leaves.
