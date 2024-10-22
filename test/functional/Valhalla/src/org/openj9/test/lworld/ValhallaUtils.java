@@ -39,11 +39,11 @@ public class ValhallaUtils {
 	static final int ACC_DEFAULT = 0x1;
 	static final int ACC_NON_ATOMIC = 0x2;
 
-	final static class PreloadAttribute extends Attribute {
+	static final class LoadableDescriptorsAttribute extends Attribute {
 		private final String[] classes;
 
-		public PreloadAttribute(String[] classes) {
-			super("Preload");
+		public LoadableDescriptorsAttribute(String[] classes) {
+			super("LoadableDescriptors");
 			this.classes = classes;
 		}
 
@@ -65,15 +65,15 @@ public class ValhallaUtils {
 			b.putShort(classes.length);
 
 			int cpIndex;
-			for (int i = 0; i < classes.length; i++) {
-				cpIndex = cw.newClass(classes[i].replace('.', '/'));
+			for (String clazz : classes) {
+				cpIndex = cw.newUTF8(clazz.replace('.', '/'));
 				b.putShort(cpIndex);
 			}
 			return b;
 		}
 	}
 
-	final static class ImplicitCreationAttribute extends Attribute {
+	static final class ImplicitCreationAttribute extends Attribute {
 		private final int flags;
 
 		public ImplicitCreationAttribute() {
@@ -106,7 +106,7 @@ public class ValhallaUtils {
 		}
 	}
 
-	final static class NullRestrictedAttribute extends Attribute {
+	static final class NullRestrictedAttribute extends Attribute {
 		public NullRestrictedAttribute() {
 			super("NullRestricted");
 		}

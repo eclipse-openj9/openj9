@@ -750,9 +750,9 @@ public class RomClassWalker extends ClassWalker {
 				cursor = cursor.add(1);
 			}
 
-			if (J9ROMClassHelper.hasPreloadAttribute(romClass)) {
-				classWalkerCallback.addSlot(clazz, SlotType.J9_SRP, cursor, "preloadAttributeSRP");
-				preloadAttributeDo(U32Pointer.cast(cursor.get()));
+			if (J9ROMClassHelper.hasLoadableDescriptorsAttribute(romClass)) {
+				classWalkerCallback.addSlot(clazz, SlotType.J9_SRP, cursor, "loadableDescriptorsAttributeSRP");
+				loadableDescriptorsAttributeDo(U32Pointer.cast(cursor.get()));
 				cursor = cursor.add(1);
 			}
 		}
@@ -1018,19 +1018,21 @@ public class RomClassWalker extends ClassWalker {
 		classWalkerCallback.addSection(clazz, attributeStart, attribute.getAddress() - attributeStart.getAddress(), "permittedSubclass", true);
 	}
 
-	void preloadAttributeDo(U32Pointer attribute) throws CorruptDataException
+	void loadableDescriptorsAttributeDo(U32Pointer attribute) throws CorruptDataException
 	{
 		if (attribute.isNull()) {
 			return;
 		}
 		U32Pointer attributeStart = attribute;
-		classWalkerCallback.addSlot(clazz, SlotType.J9_U32, attribute, "numberPreloadClasses");
-		for (int i = 0, numPreloadClasses = attribute.at(0).intValue(); i < numPreloadClasses; i++) {
+		classWalkerCallback.addSlot(clazz, SlotType.J9_U32, attribute, "numberLoadableDescriptors");
+		for (int i = 0, numLoadableDescriptors = attribute.at(0).intValue(); i < numLoadableDescriptors; i++) {
 			attribute = attribute.add(1);
-			classWalkerCallback.addSlot(clazz, SlotType.J9_ROM_UTF8, attribute, "preloadClassName");
+			classWalkerCallback.addSlot(clazz, SlotType.J9_ROM_UTF8, attribute, "loadableDescriptorName");
 		}
 		attribute = attribute.add(1);
-		classWalkerCallback.addSection(clazz, attributeStart, attribute.getAddress() - attributeStart.getAddress(), "preloadAttribute", true);
+		classWalkerCallback.addSection(clazz, attributeStart,
+			attribute.getAddress() - attributeStart.getAddress(),
+			"loadableDescriptorsAttribute", true);
 	}
 
 	void implicitCreationAttributeDo(U32Pointer attribute) throws CorruptDataException

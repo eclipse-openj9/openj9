@@ -27,8 +27,8 @@ import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPT
 import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_ENCLOSING_METHOD;
 import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_GENERIC_SIGNATURE;
 import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_IMPLICITCREATION_ATTRIBUTE;
+import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_LOADABLEDESCRIPTORS_ATTRIBUTE;
 import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_PERMITTEDSUBCLASSES_ATTRIBUTE;
-import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_PRELOAD_ATTRIBUTE;
 import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_SIMPLE_NAME;
 import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_SOURCE_DEBUG_EXTENSION;
 import static com.ibm.j9ddr.vm29.structure.J9NonbuilderConstants.J9_ROMCLASS_OPTINFO_SOURCE_FILE_NAME;
@@ -268,28 +268,28 @@ public class OptInfo {
 		return J9UTF8Pointer.NULL;
 	}
 
-	public static int getPreloadClassCount(J9ROMClassPointer romClass) throws CorruptDataException {
-		U32Pointer preloadClassInfoPointer = getPreloadClassInfoPointer(romClass);
-		if (preloadClassInfoPointer.notNull()) {
-			return preloadClassInfoPointer.at(0).intValue();
+	public static int getLoadableDescriptorsCount(J9ROMClassPointer romClass) throws CorruptDataException {
+		U32Pointer loadableDescriptorsInfoPointer = getLoadableDescriptorsInfoPointer(romClass);
+		if (loadableDescriptorsInfoPointer.notNull()) {
+			return loadableDescriptorsInfoPointer.at(0).intValue();
 		}
 		return 0;
 	}
 
-	private static U32Pointer getPreloadClassInfoPointer(J9ROMClassPointer romClass) throws CorruptDataException {
+	private static U32Pointer getLoadableDescriptorsInfoPointer(J9ROMClassPointer romClass) throws CorruptDataException {
 		SelfRelativePointer srpPtr = getSRPPtr(J9ROMClassHelper.optionalInfo(romClass), romClass.optionalFlags(),
-			J9_ROMCLASS_OPTINFO_PRELOAD_ATTRIBUTE);
+			J9_ROMCLASS_OPTINFO_LOADABLEDESCRIPTORS_ATTRIBUTE);
 		if (srpPtr.notNull()) {
 			return U32Pointer.cast(srpPtr.get());
 		}
 		return U32Pointer.NULL;
 	}
 
-	public static J9UTF8Pointer getPreloadClassNameAtIndex(J9ROMClassPointer romClass, int index) throws CorruptDataException {
-		U32Pointer preloadClassInfoPointer = getPreloadClassInfoPointer(romClass);
-		if (preloadClassInfoPointer.notNull()) {
-			/* extra 1 is to move past the preload class count */
-			SelfRelativePointer nameSrp = SelfRelativePointer.cast(preloadClassInfoPointer.add(index + 1));
+	public static J9UTF8Pointer getLoadableDescriptorAtIndex(J9ROMClassPointer romClass, int index) throws CorruptDataException {
+		U32Pointer loadableDescriptorsInfoPointer = getLoadableDescriptorsInfoPointer(romClass);
+		if (loadableDescriptorsInfoPointer.notNull()) {
+			/* extra 1 is to move past the descriptors count */
+			SelfRelativePointer nameSrp = SelfRelativePointer.cast(loadableDescriptorsInfoPointer.add(index + 1));
 			return J9UTF8Pointer.cast(nameSrp.get());
 		}
 		return J9UTF8Pointer.NULL;

@@ -28,15 +28,15 @@ import static org.objectweb.asm.Opcodes.*;
 public class ValhallaAttributeGenerator extends ClassLoader {
 	private static ValhallaAttributeGenerator generator = new ValhallaAttributeGenerator();
 
-	public static Class<?> generateClassWithTwoPreloadAttributes(String name, String[] classList1, String[] classList2) throws Throwable {
+	public static Class<?> generateClassWithTwoLoadableDescriptorsAttributes(String name, String[] classList1, String[] classList2) throws Throwable {
 		byte[] bytes = generateClass(name, ValhallaUtils.ACC_IDENTITY, new Attribute[] {
-			new ValhallaUtils.PreloadAttribute(classList1),
-			new ValhallaUtils.PreloadAttribute(classList2)});
+			new ValhallaUtils.LoadableDescriptorsAttribute(classList1),
+			new ValhallaUtils.LoadableDescriptorsAttribute(classList2)});
 		return generator.defineClass(name, bytes, 0, bytes.length);
 	}
 
-	public static Class<?> generateClassWithPreloadAttribute(String name, String[] classList) throws Throwable {
-		byte[] bytes = generateClass(name, ValhallaUtils.ACC_IDENTITY, new Attribute[] {new ValhallaUtils.PreloadAttribute(classList)});
+	public static Class<?> generateClassWithLoadableDescriptorsAttribute(String name, String[] classList) throws Throwable {
+		byte[] bytes = generateClass(name, ValhallaUtils.ACC_IDENTITY, new Attribute[] {new ValhallaUtils.LoadableDescriptorsAttribute(classList)});
 		return generator.defineClass(name, bytes, 0, bytes.length);
 	}
 
