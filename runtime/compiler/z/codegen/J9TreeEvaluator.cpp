@@ -13056,28 +13056,29 @@ J9::Z::TreeEvaluator::inlineConcurrentLinkedQueueTMOffer(TR::Node *node, TR::Cod
 
    bool usesCompressedrefs = comp->useCompressedPointers();
    int32_t shiftAmount = TR::Compiler->om.compressedReferenceShift();
-   static char * disableTMOfferenv = feGetEnv("TR_DisableTMOffer");
-   bool disableTMOffer = (disableTMOfferenv != NULL);
+   static bool disableTMOffer = feGetEnv("TR_DisableTMOffer") != NULL;
 
    classBlock1 = fej9->getClassFromSignature("Ljava/util/concurrent/ConcurrentLinkedQueue$Node;", 49, comp->getCurrentMethod(), true);
    classBlock2 = fej9->getClassFromSignature("Ljava/util/concurrent/ConcurrentLinkedQueue;", 44, comp->getCurrentMethod(), true);
 
-
-   if (classBlock1 && classBlock2)
+   bool canInlineTMOffer = !disableTMOffer;
+   if (classBlock1 != NULL && classBlock2 != NULL)
       {
       offsetNext = fej9->getObjectHeaderSizeInBytes() + fej9->getInstanceFieldOffset(classBlock1, "next", 4, "Ljava/util/concurrent/ConcurrentLinkedQueue$Node;", 49);
       offsetTail = fej9->getObjectHeaderSizeInBytes() + fej9->getInstanceFieldOffset(classBlock2, "tail", 4, "Ljava/util/concurrent/ConcurrentLinkedQueue$Node;", 49);
       }
    else
-      disableTMOffer = true;
+      {
+      canInlineTMOffer = false;
+      }
 
    cursor = generateRIInstruction(cg, TR::InstOpCode::LHI, node, rReturn, 1);
 
-   static char * debugTM= feGetEnv("TR_DebugTM");
+   static bool debugTM= feGetEnv("TR_DebugTM") != NULL;
 
    if (debugTM)
       {
-      if (disableTMOffer)
+      if (!canInlineTMOffer)
          {
          printf ("\nTM: disabling TM CLQ.Offer in %s (%s)", comp->signature(), comp->getHotnessName(comp->getMethodHotness()));
          fflush(stdout);
@@ -13088,14 +13089,16 @@ J9::Z::TreeEvaluator::inlineConcurrentLinkedQueueTMOffer(TR::Node *node, TR::Cod
          fflush(stdout);
          }
       }
+   static bool generateNonConstrainedTMEnvSeq = feGetEnv("TR_UseNonConstrainedTM") != NULL;
 
-   static char * useNonConstrainedTM = feGetEnv("TR_UseNonConstrainedTM");
-   static char * disableNIAI = feGetEnv("TR_DisableNIAI");
+   bool useNonConstrainedTM = generateNonConstrainedTMEnvSeq && comp->target().cpu.supportsFeature(OMR_FEATURE_S390_TRANSACTIONAL_EXECUTION_FACILITY);
+
+   static bool disableNIAI = feGetEnv("TR_DisableNIAI") != NULL;
 
    // the Transaction Diagnostic Block (TDB) is a memory location for the OS to write state info in the event of an abort
    TR::MemoryReference* TDBmemRef = generateS390MemoryReference(cg->getMethodMetaDataRealRegister(), fej9->thisThreadGetTDBOffset(), cg);
 
-   if (!disableTMOffer)
+   if (canInlineTMOffer)
       {
       if (useNonConstrainedTM)
          {
@@ -13197,7 +13200,7 @@ J9::Z::TreeEvaluator::inlineConcurrentLinkedQueueTMOffer(TR::Node *node, TR::Cod
       cursor = generateSInstruction(cg, TR::InstOpCode::TEND, node, generateS390MemoryReference(cg->machine()->getRealRegister(TR::RealRegister::GPR0),0,cg));
       }
 
-   if (useNonConstrainedTM || disableTMOffer)
+   if (useNonConstrainedTM || !canInlineTMOffer)
       cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, failLabel, deps);
 
    genWrtBarForTM(node, cg, rP, rN, rReturn, true);
@@ -13248,28 +13251,33 @@ J9::Z::TreeEvaluator::inlineConcurrentLinkedQueueTMPoll(TR::Node *node, TR::Code
       deps->addPostCondition(rTmp, TR::RealRegister::AssignAny);
       }
 
-   static char * disableTMPollenv = feGetEnv("TR_DisableTMPoll");
-   bool disableTMPoll = disableTMPollenv;
+   static bool disableTMPoll = feGetEnv("TR_DisableTMPoll") != NULL;
 
    classBlock1 = fej9->getClassFromSignature("Ljava/util/concurrent/ConcurrentLinkedQueue;", 44, comp->getCurrentMethod(), true);
    classBlock2 = fej9->getClassFromSignature("Ljava/util/concurrent/ConcurrentLinkedQueue$Node;", 49, comp->getCurrentMethod(), true);
 
-   if (classBlock1 && classBlock2)
+   bool canInlineTMPoll = !disableTMPoll;
+   if (classBlock1 != NULL && classBlock2 != NULL)
       {
       offsetHead = fej9->getObjectHeaderSizeInBytes() + fej9->getInstanceFieldOffset(classBlock1, "head", 4, "Ljava/util/concurrent/ConcurrentLinkedQueue$Node;", 49);
       offsetNext = fej9->getObjectHeaderSizeInBytes() + fej9->getInstanceFieldOffset(classBlock2, "next", 4, "Ljava/util/concurrent/ConcurrentLinkedQueue$Node;", 49);
       offsetItem = fej9->getObjectHeaderSizeInBytes() + fej9->getInstanceFieldOffset(classBlock2, "item", 4, "Ljava/lang/Object;", 18);
       }
    else
-      disableTMPoll = true;
+      {
+      // If we can not get Class object fo ConcurrentLinkedQueue /
+      // ConcurrentLinkedQueue$Node, then we can not inline the intrinsic
+      // operation.
+      canInlineTMPoll = false;
+      }
 
    cursor = generateRRInstruction(cg, TR::InstOpCode::getXORRegOpCode(), node, rE, rE);
 
-   static char * debugTM= feGetEnv("TR_DebugTM");
+   static bool debugTM= feGetEnv("TR_DebugTM") != NULL;
 
    if (debugTM)
       {
-      if (disableTMPoll)
+      if (!canInlineTMPoll)
          {
          printf ("\nTM: disabling TM CLQ.Poll in %s (%s)", comp->signature(), comp->getHotnessName(comp->getMethodHotness()));
          fflush(stdout);
@@ -13281,13 +13289,16 @@ J9::Z::TreeEvaluator::inlineConcurrentLinkedQueueTMPoll(TR::Node *node, TR::Code
          }
       }
 
-   static char * useNonConstrainedTM = feGetEnv("TR_UseNonConstrainedTM");
-   static char * disableNIAI = feGetEnv("TR_DisableNIAI");
+   static bool generateNonConstrainedTMEnvSeq = feGetEnv("TR_UseNonConstrainedTM") != NULL;
+
+   bool useNonConstrainedTM = generateNonConstrainedTMEnvSeq && comp->target().cpu.supportsFeature(OMR_FEATURE_S390_TRANSACTIONAL_EXECUTION_FACILITY);
+
+   static bool disableNIAI = feGetEnv("TR_DisableNIAI") != NULL;
 
    // the Transaction Diagnostic Block (TDB) is a memory location for the OS to write state info in the event of an abort
    TR::MemoryReference* TDBmemRef = generateS390MemoryReference(cg->getMethodMetaDataRealRegister(), fej9->thisThreadGetTDBOffset(), cg);
 
-   if (!disableTMPoll)
+   if (canInlineTMPoll)
       {
       if (useNonConstrainedTM)
          {
@@ -13379,7 +13390,7 @@ J9::Z::TreeEvaluator::inlineConcurrentLinkedQueueTMPoll(TR::Node *node, TR::Code
       cursor = generateSInstruction(cg, TR::InstOpCode::TEND, node, generateS390MemoryReference(cg->machine()->getRealRegister(TR::RealRegister::GPR0),0,cg));
       }
 
-   if (useNonConstrainedTM || disableTMPoll)
+   if (useNonConstrainedTM || !canInlineTMPoll)
       cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, failLabel, deps);
 
    if (usesCompressedrefs)
