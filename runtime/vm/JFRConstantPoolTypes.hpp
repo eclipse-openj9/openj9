@@ -189,6 +189,19 @@ struct ThreadSleepEntry {
 	U_32 stackTraceIndex;
 };
 
+struct MonitorWaitEntry {
+	I_64 ticks;
+	I_64 duration;
+	I_64 timeOut;
+	I_64 monitorAddress;
+	U_32 monitorClass;
+	U_32 notifierThread;
+	U_32 threadIndex;
+	U_32 eventThreadIndex;
+	U_32 stackTraceIndex;
+	BOOLEAN timedOut;
+};
+
 struct StackTraceEntry {
 	J9VMThread *vmThread;
 	I_64 ticks;
@@ -274,6 +287,8 @@ private:
 	UDATA _threadEndCount;
 	J9Pool *_threadSleepTable;
 	UDATA _threadSleepCount;
+	J9Pool *_monitorWaitTable;
+	UDATA _monitorWaitCount;
 
 	/* Processing buffers */
 	StackFrame *_currentStackFrameBuffer;
@@ -515,6 +530,8 @@ public:
 
 	U_32 addThreadSleepEntry(J9JFRThreadSlept *threadSleepData);
 
+	U_32 addMonitorWaitEntry(J9JFRMonitorWaited* threadWaitData);
+
 	J9Pool *getExecutionSampleTable()
 	{
 		return _executionSampleTable;
@@ -535,6 +552,11 @@ public:
 		return _threadSleepTable;
 	}
 
+	J9Pool *getMonitorWaitTable()
+	{
+		return _monitorWaitTable;
+	}
+
 	UDATA getExecutionSampleCount()
 	{
 		return _executionSampleCount;
@@ -553,6 +575,11 @@ public:
 	UDATA getThreadSleepCount()
 	{
 		return _threadSleepCount;
+	}
+
+	UDATA getMonitorWaitCount()
+	{
+		return _monitorWaitCount;
 	}
 
 	ClassloaderEntry *getClassloaderEntry()
@@ -694,13 +721,15 @@ public:
 			case J9JFR_EVENT_TYPE_THREAD_SLEEP:
 				addThreadSleepEntry((J9JFRThreadSlept*) event);
 				break;
+			case J9JFR_EVENT_TYPE_OBJECT_WAIT:
+				addMonitorWaitEntry((J9JFRMonitorWaited*) event);
+				break;
 			default:
 				Assert_VM_unreachable();
 			break;
 			}
 			event = jfrBufferNextDo(&walkstate);
 		}
-
 
 		hashTableForEachDo(_classTable, &fixupShallowEntries, this);
 		mergeStringTables();
@@ -986,6 +1015,8 @@ done:
 		, _threadEndCount(0)
 		, _threadSleepTable(NULL)
 		, _threadSleepCount(0)
+		, _monitorWaitTable(NULL)
+		, _monitorWaitCount(0)
 		, _previousStackTraceEntry(NULL)
 		, _firstStackTraceEntry(NULL)
 		, _previousThreadEntry(NULL)
@@ -1082,6 +1113,12 @@ done:
 			goto done;
 		}
 
+		_monitorWaitTable = pool_new(sizeof(MonitorWaitEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		if (NULL == _monitorWaitTable) {
+			_buildResult = OutOfMemory;
+			goto done;
+		}
+
 		/* Add reserved index for default entries. For strings zero is the empty or NUll string.
 		 * For package zero is the deafult package, for Module zero is the unnamed module. ThreadGroup
 		 * zero is NULL threadGroup.
@@ -1139,6 +1176,9 @@ done:
 		_defaultStackTraceEntry = {0};
 		_firstStackTraceEntry = &_defaultStackTraceEntry;
 		_previousStackTraceEntry = _firstStackTraceEntry;
+
+		/* Leave index 0 as a NULL entry for unknown notifier thread. */
+		_threadCount += 1;
 
 done:
 		return;
