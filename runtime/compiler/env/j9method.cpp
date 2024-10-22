@@ -1294,6 +1294,30 @@ TR_ResolvedRelocatableJ9Method::isUnresolvedMethodHandle(I_32 cpIndex)
    return true;
    }
 
+bool
+TR_ResolvedRelocatableJ9Method::isUnresolvedCallSiteTableEntry(int32_t callSiteIndex)
+   {
+   bool unresolved = true;
+   J9JavaVM * javaVM = fej9()->_jitConfig->javaVM;
+   if (J9_ARE_ALL_BITS_SET(javaVM->sharedClassConfig->runtimeFlags2, J9SHR_RUNTIMEFLAG2_SHARE_LAMBDAFORM))
+      {
+      unresolved = TR_ResolvedJ9Method::isUnresolvedCallSiteTableEntry(callSiteIndex);
+      }
+   return unresolved;
+   }
+
+bool
+TR_ResolvedRelocatableJ9Method::isUnresolvedMethodTypeTableEntry(int32_t cpIndex)
+   {
+   bool unresolved = true;
+   J9JavaVM * javaVM = fej9()->_jitConfig->javaVM;
+   if (J9_ARE_ALL_BITS_SET(javaVM->sharedClassConfig->runtimeFlags2, J9SHR_RUNTIMEFLAG2_SHARE_LAMBDAFORM))
+      {
+      unresolved = TR_ResolvedJ9Method::isUnresolvedMethodTypeTableEntry(cpIndex);
+      }
+   return unresolved;
+   }
+
 TR_ResolvedMethod *
 TR_ResolvedRelocatableJ9Method::getResolvedPossiblyPrivateVirtualMethod(
    TR::Compilation *comp,
@@ -7018,6 +7042,7 @@ TR_ResolvedJ9Method::getResolvedDynamicMethod(TR::Compilation * comp, I_32 callS
 
    if (!isUnresolvedEntry)
       {
+      uintptr_t appendixObject = 0;
       TR_OpaqueMethodBlock * targetJ9MethodBlock = NULL;
       uintptr_t * invokeCacheArray = (uintptr_t *) callSiteTableEntryAddress(callSiteIndex);
       // invokedynamic resolution can either result in a valid entry in the corresponding CallSite table slot if successful,
@@ -7035,9 +7060,23 @@ TR_ResolvedJ9Method::getResolvedDynamicMethod(TR::Compilation * comp, I_32 callS
          targetJ9MethodBlock = fej9()->targetMethodFromMemberName((uintptr_t) fej9()->getReferenceElement(*invokeCacheArray, JSR292_invokeCacheArrayMemberNameIndex)); // this will not work in AOT or JITServer
          // if the callSite table entry is resolved, we can check if the appendix object is null,
          // in which case the appendix object must not be pushed to stack
-         uintptr_t appendixObject = (uintptr_t) fej9()->getReferenceElement(*invokeCacheArray, JSR292_invokeCacheArrayAppendixIndex);
+         appendixObject = (uintptr_t) fej9()->getReferenceElement(*invokeCacheArray, JSR292_invokeCacheArrayAppendixIndex);
          if (isInvokeCacheAppendixNull && !appendixObject) *isInvokeCacheAppendixNull = true;
          }
+
+      if (comp->compileRelocatableCode())
+         {
+         bool valid =
+            comp->getSymbolValidationManager()->addDynamicMethodFromCallsiteIndex(
+               targetJ9MethodBlock,
+               getNonPersistentIdentifier(),
+               callSiteIndex,
+               !appendixObject);
+
+         if (!valid)
+            comp->failCompilation<J9::AOTHasInvokeHandle>("Failed to add valiation rcord for resolved dynamic method %p", targetJ9MethodBlock);
+         }
+
       result = fej9()->createResolvedMethod(comp->trMemory(), targetJ9MethodBlock, this);
       }
    else
@@ -7095,12 +7134,27 @@ TR_ResolvedJ9Method::getResolvedHandleMethod(TR::Compilation * comp, I_32 cpInde
       {
       uintptr_t * invokeCacheArray = (uintptr_t *) methodTypeTableEntryAddress(cpIndex);
       TR_OpaqueMethodBlock * targetJ9MethodBlock = NULL;
+      uintptr_t appendixObject = 0;
          {
          TR::VMAccessCriticalSection getResolvedHandleMethod(fej9());
          targetJ9MethodBlock = fej9()->targetMethodFromMemberName((uintptr_t) fej9()->getReferenceElement(*invokeCacheArray, JSR292_invokeCacheArrayMemberNameIndex)); // this will not work in AOT or JITServer
-         uintptr_t appendixObject = (uintptr_t) fej9()->getReferenceElement(*invokeCacheArray, JSR292_invokeCacheArrayAppendixIndex);
+         appendixObject = (uintptr_t) fej9()->getReferenceElement(*invokeCacheArray, JSR292_invokeCacheArrayAppendixIndex);
          if (isInvokeCacheAppendixNull && !appendixObject) *isInvokeCacheAppendixNull = true;
          }
+
+      if (comp->compileRelocatableCode())
+         {
+         bool valid =
+            comp->getSymbolValidationManager()->addHandleMethodFromCPIndex(
+               targetJ9MethodBlock,
+               getNonPersistentIdentifier(),
+               cpIndex,
+               !appendixObject);
+
+         if (!valid)
+            comp->failCompilation<J9::AOTHasInvokeHandle>("Failed to add valiation rcord for resolved handle method %p", targetJ9MethodBlock);
+         }
+
       result = fej9()->createResolvedMethod(comp->trMemory(), targetJ9MethodBlock, this);
       }
    else
