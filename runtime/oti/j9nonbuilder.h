@@ -5213,7 +5213,10 @@ typedef struct J9InternalVMFunctions {
 	I_32 (*invoke31BitJNI_OnXLoad)(struct J9JavaVM *vm, void *handle, jboolean isOnLoad, void *reserved);
 #endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) && (JAVA_SPEC_VERSION >= 17) */
 #if defined(J9VM_OPT_JFR)
+	jint (*initializeJFR)(struct J9JavaVM *vm, BOOLEAN lateInit);
 	void (*jfrExecutionSample)(struct J9VMThread *currentThread, struct J9VMThread *sampleThread);
+	jboolean (*setJFRRecordingFileName)(struct J9JavaVM *vm, char *fileName);
+	void (*tearDownJFR)(struct J9JavaVM *vm);
 #endif /* defined(J9VM_OPT_JFR) */
 } J9InternalVMFunctions;
 

@@ -194,8 +194,58 @@ Java_com_ibm_oti_vm_VM_isJVMInSingleThreadedMode(JNIEnv *env, jclass unused)
 }
 
 #if defined(J9VM_OPT_JFR)
+jboolean JNICALL
+Java_com_ibm_oti_vm_VM_setJFRRecordingFileName(JNIEnv *env, jclass unused, jstring fileNameString)
+{
+	J9VMThread *currentThread = (J9VMThread *)env;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	jboolean result = JNI_FALSE;
+
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+	j9object_t fileNameObject = J9_JNI_UNWRAP_REFERENCE(fileNameString);
+	char *fileName = vmFuncs->copyStringToUTF8WithMemAlloc(currentThread, fileNameObject, J9_STR_NULL_TERMINATE_RESULT, "", 0, NULL, 0, NULL);
+	if (NULL == fileName) {
+		vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+	} else {
+		result = vmFuncs->setJFRRecordingFileName(vm, fileName);
+	}
+	vmFuncs->internalExitVMToJNI(currentThread);
+
+	return result;
+}
+
+jint JNICALL
+Java_com_ibm_oti_vm_VM_startJFR(JNIEnv *env, jclass unused)
+{
+	jint rc = JNI_OK;
+	J9VMThread *currentThread = (J9VMThread *)env;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+	/* this is to initalize JFR late after VM startup */
+	rc = vmFuncs->initializeJFR(vm, TRUE);
+	vmFuncs->internalExitVMToJNI(currentThread);
+
+	return rc;
+}
+
 void JNICALL
-Java_com_ibm_oti_vm_VM_triggerExecutionSample(JNIEnv *env, jclass unused) {
+Java_com_ibm_oti_vm_VM_stopJFR(JNIEnv *env, jclass unused)
+{
+	J9VMThread *currentThread = (J9VMThread *)env;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+	vmFuncs->tearDownJFR(vm);
+	vmFuncs->internalExitVMToJNI(currentThread);
+}
+
+void JNICALL
+Java_com_ibm_oti_vm_VM_triggerExecutionSample(JNIEnv *env, jclass unused)
+{
 	J9VMThread *currentThread = (J9VMThread *)env;
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
