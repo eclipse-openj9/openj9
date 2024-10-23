@@ -2904,7 +2904,7 @@ public class ValueTypeTests {
 	}
 
 	/* Each field of a value class must have exactly one of its ACC_STATIC or ACC_STRICT flags set */
-	@Test(expectedExceptions = java.lang.ClassFormatError.class, expectedExceptionsMessageRegExp = ".*Fields of value classes must have either ACC_STATIC or ACC_FINAL flags set.*")
+	@Test(expectedExceptions = java.lang.ClassFormatError.class, expectedExceptionsMessageRegExp = ".*Value class fields must have either ACC_STATIC or ACC_STRICT set.*")
 	static public void testValueClassFieldMustHaveAccStaticOrAccStrict() {
 		ValueTypeGenerator.generateTestValueClassFieldMustHaveAccStaticOrAccStrict();
 	}
