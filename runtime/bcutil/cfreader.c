@@ -1727,16 +1727,18 @@ checkFields(J9PortLibrary* portLib, J9CfrClassFile * classfile, U_8 * segment, U
 			}
 		}
 
-		/* A field must not have set both ACC_STRICT and ACC_STATIC. */
-		if (J9_ARE_ALL_BITS_SET(value, CFR_ACC_STRICT | CFR_ACC_STATIC)) {
-			errorCode = J9NLS_CFR_ERR_FIELD_CANT_BE_STRICT_AND_STATIC__ID;
-			goto _errorFound;
-		}
+		if (J9_IS_CLASSFILE_OR_ROMCLASS_VALUETYPE_VERSION(classfile)) {
+			/* A field must not have set both ACC_STRICT and ACC_STATIC. */
+			if (J9_ARE_ALL_BITS_SET(value, CFR_ACC_STRICT | CFR_ACC_STATIC)) {
+				errorCode = J9NLS_CFR_ERR_FIELD_CANT_BE_STRICT_AND_STATIC__ID;
+				goto _errorFound;
+			}
 
-		/* A field that has set ACC_STRICT must also have set ACC_FINAL. */
-		if (J9_ARE_ALL_BITS_SET(value, CFR_ACC_STRICT) && J9_ARE_NO_BITS_SET(value, CFR_ACC_FINAL)) {
-			errorCode = J9NLS_CFR_ERR_STRICT_FIELD_MUST_BE_FINAL__ID;
-			goto _errorFound;
+			/* A field that has set ACC_STRICT must also have set ACC_FINAL. */
+			if (J9_ARE_ALL_BITS_SET(value, CFR_ACC_STRICT) && J9_ARE_NO_BITS_SET(value, CFR_ACC_FINAL)) {
+				errorCode = J9NLS_CFR_ERR_STRICT_FIELD_MUST_BE_FINAL__ID;
+				goto _errorFound;
+			}
 		}
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
