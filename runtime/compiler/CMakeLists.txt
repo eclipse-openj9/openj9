@@ -354,6 +354,8 @@ create_omr_compiler_library(NAME j9jit
 if(OMR_OS_ZOS)
 	# Workaround a compile problem on z/OS by appending "-O" (to override "-O3").
 	set_property(SOURCE "optimizer/VectorAPIExpansion.cpp" APPEND PROPERTY COMPILE_FLAGS "-O")
+	# Workaround a Open XL compile problem on z/OS by appending "-O0" (to override "-O3").
+	set_property(SOURCE "runtime/codertinit.cpp" APPEND PROPERTY COMPILE_FLAGS "-O0")
 endif()
 
 add_dependencies(j9jit
