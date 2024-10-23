@@ -20,27 +20,64 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
+#include "j9.h"
 #include "jni.h"
 
 extern "C" {
 
 jlong JNICALL
-Java_jdk_jfr_internal_JVM_getClassIdNonIntrinsic(JNIEnv *env, jclass cls, jclass clazz)
+Java_jdk_jfr_internal_JVM_commit(JNIEnv *env, jclass cls, jlong nextPosition)
 {
 	// TODO: implementation
 	return 0;
 }
-
 void JNICALL
-Java_jdk_jfr_internal_JVM_setMethodSamplingInterval(JNIEnv *env, jobject obj, jlong type, jlong intervalMillis)
+Java_jdk_jfr_internal_JVM_setDumpPath(JNIEnv *env, jobject obj, jstring dumpPathText)
 {
 	// TODO: implementation
 }
 
-void JNICALL
-Java_jdk_jfr_internal_JVM_setSampleThreads(JNIEnv *env, jobject obj, jboolean sampleThreads)
+jstring JNICALL
+Java_jdk_jfr_internal_JVM_getDumpPath(JNIEnv *env, jobject obj)
 {
 	// TODO: implementation
+	return NULL;
+}
+jboolean JNICALL
+Java_jdk_jfr_internal_JVM_isExcluded__Ljava_lang_Class_2(JNIEnv *env, jobject obj, jclass eventClass)
+{
+	// TODO: implementation
+	return JNI_FALSE;
+}
+jboolean JNICALL
+Java_jdk_jfr_internal_JVM_isInstrumented(JNIEnv *env, jobject obj, jclass eventClass)
+{
+	// TODO: implementation
+	return JNI_FALSE;
+}
+jboolean JNICALL
+Java_jdk_jfr_internal_JVM_setConfiguration(JNIEnv *env, jobject obj, jclass eventClass, jobject configuration)
+{
+	// TODO: implementation
+	return JNI_FALSE;
+}
+jobject JNICALL
+Java_jdk_jfr_internal_JVM_getConfiguration(JNIEnv *env, jobject obj, jclass eventClass)
+{
+	// TODO: implementation
+	return NULL;
+}
+jboolean JNICALL
+Java_jdk_jfr_internal_JVM_isContainerized(JNIEnv *env, jobject obj)
+{
+	// TODO: implementation
+	return JNI_FALSE;
+}
+jlong JNICALL
+Java_jdk_jfr_internal_JVM_hostTotalMemory(JNIEnv *env, jobject obj)
+{
+	// TODO: implementation
+	return 0;
 }
 
 }
