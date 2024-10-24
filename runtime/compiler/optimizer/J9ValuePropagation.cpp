@@ -1096,7 +1096,7 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
             }
 
          if (!canTransformIdentityArrayElementLoadStoreUseTypeHint &&
-             TR::Compiler->cls.isPrimitiveValueTypeClass(hintComponentClass))
+             TR::Compiler->cls.isArrayNullRestricted(comp(), typeHintClass)) //TODO-VALUETYPE: typeHintClass eventually should be the null-restricted array class
             {
             if (TR::Compiler->cls.isValueTypeClassFlattened(hintComponentClass))
                {
@@ -1719,8 +1719,9 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
             // (ii) The operand is definitely a non-null instance of java.lang.Class.  In that case, load the
             //      J9Class from the java.lang.Class by way of <classFromJavaLangClass>
             //
-            // The result of Class.isValueType(), Class.isPrimitiveValueType() or Class.isIdentity() can then
-            // be determined by checking the corresponding bit in the classFlags field.
+            // The result of Class.isValueType() and Class.isIdentity() can then be determined by checking
+            // the corresponding bit in the classFlags field.
+            //
             TR::SymbolReference *symRef = classChild->getOpCode().hasSymbolReference() ? classChild->getSymbolReference() : NULL;
             TR::Node *classOperand = NULL;
 
