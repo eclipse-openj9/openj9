@@ -1292,12 +1292,6 @@ J9::SymbolReferenceTable::findOrCreateClassFlagsSymbolRef()
 
 
 TR::SymbolReference *
-J9::SymbolReferenceTable::findOrCreateClassAndDepthFlagsSymbolRef()
-   {
-   return self()->findOrCreateClassDepthAndFlagsSymbolRef();
-   }
-
-TR::SymbolReference *
 J9::SymbolReferenceTable::findOrCreateClassDepthAndFlagsSymbolRef()
    {
    if (!element(isClassDepthAndFlagsSymbol))
