@@ -29,6 +29,8 @@
 #include "omrthread.h"
 #include "ut_j9vm.h"
 
+#include "VMHelpers.hpp"
+
 #include <string.h>
 
 extern "C" {
@@ -80,6 +82,12 @@ monitorWaitImpl(J9VMThread *vmThread, j9object_t object, I_64 millis, I_32 nanos
 	} else {
 		UDATA thrstate = 0;
 		J9JavaVM *javaVM = vmThread->javaVM;
+		PORT_ACCESS_FROM_JAVAVM(javaVM);
+		J9Class *monitorClass = NULL;
+		I_64 startTicks = j9time_nano_time();
+
+		monitorClass = J9OBJECT_CLAZZ(vmThread, object);
+
 		if ((millis > 0) || (nanos > 0)) {
 			thrstate = J9_PUBLIC_FLAGS_THREAD_WAITING | J9_PUBLIC_FLAGS_THREAD_TIMED;
 		} else {
@@ -104,7 +112,7 @@ monitorWaitImpl(J9VMThread *vmThread, j9object_t object, I_64 millis, I_32 nanos
 		internalAcquireVMAccessClearStatus(vmThread, thrstate);
 		J9VMTHREAD_SET_BLOCKINGENTEROBJECT(vmThread, vmThread, NULL);
 		omrthread_monitor_unpin(monitor, vmThread->osThread);
-		TRIGGER_J9HOOK_VM_MONITOR_WAITED(javaVM->hookInterface, vmThread, monitor, millis, nanos, rc);
+		TRIGGER_J9HOOK_VM_MONITOR_WAITED(javaVM->hookInterface, vmThread, monitor, millis, nanos, rc, startTicks, (UDATA) monitor, VM_VMHelpers::currentClass(monitorClass));
 
 		switch (rc) {
 		case 0:
@@ -163,12 +171,8 @@ threadSleepImpl(J9VMThread *vmThread, I_64 millis, I_32 nanos)
 		rc = -1;
 	} else {
 		PORT_ACCESS_FROM_JAVAVM(javaVM);
-		UDATA result = 0;
-		I_64 startNanos = (U_64) j9time_current_time_nanos(&result);
-		if (0 == result){
-			setCurrentException(vmThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
-			rc = -1;
-		}
+		I_64 startTicks = (U_64) j9time_nano_time();
+
 #ifdef J9VM_OPT_SIDECAR
 		/* Increment the wait count even if the deadline is past. */
 		vmThread->mgmtWaitedCount++;
@@ -178,7 +182,7 @@ threadSleepImpl(J9VMThread *vmThread, I_64 millis, I_32 nanos)
 			internalReleaseVMAccessSetStatus(vmThread, J9_PUBLIC_FLAGS_THREAD_SLEEPING);
 			rc = timeCompensationHelper(vmThread, HELPER_TYPE_THREAD_SLEEP, NULL, millis, nanos);
 			internalAcquireVMAccessClearStatus(vmThread, J9_PUBLIC_FLAGS_THREAD_SLEEPING);
-			TRIGGER_J9HOOK_VM_SLEPT(javaVM->hookInterface, vmThread, millis, nanos, startNanos);
+			TRIGGER_J9HOOK_VM_SLEPT(javaVM->hookInterface, vmThread, millis, nanos, startTicks);
 		}
 
 		if (0 == rc) {
