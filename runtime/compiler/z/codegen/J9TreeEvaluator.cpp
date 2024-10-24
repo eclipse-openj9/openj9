@@ -11952,7 +11952,7 @@ TR::Register*
 J9::Z::TreeEvaluator::VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *cg, TR::InstOpCode::Mnemonic casOp, bool isObj, bool isExchange)
    {
    TR::Register *scratchReg = NULL;
-   TR::Register *objReg, *oldVReg, *newVReg, *decompressedValueRegister;
+   TR::Register *objReg = NULL, *oldVReg = NULL, *newVReg = NULL, *decompressedValueRegister = NULL;
    TR::Register *resultReg = isExchange ? NULL : cg->allocateRegister();
    TR::MemoryReference* casMemRef = NULL;
 
@@ -11969,10 +11969,10 @@ J9::Z::TreeEvaluator::VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *
    // compression sequence.
    bool isValueCompressedReference = false;
 
-   static bool UseOldCompareAndSwapObject = (bool)feGetEnv("TR_UseOldCompareAndSwapObject");
+   static bool useOldCompareAndSwapObject = (bool)feGetEnv("TR_UseOldCompareAndSwapObject");
 
    TR::Node* decompressedValueNode = newVNode;
-   if (UseOldCompareAndSwapObject && isObj && comp->useCompressedPointers() && decompressedValueNode->getOpCodeValue() == TR::l2i)
+   if (useOldCompareAndSwapObject && isObj && comp->useCompressedPointers() && decompressedValueNode->getOpCodeValue() == TR::l2i)
       {
       // Pattern match the sequence:
       //
@@ -12027,7 +12027,7 @@ J9::Z::TreeEvaluator::VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *
       {
       decompressedValueRegister = cg->evaluate(decompressedValueNode);
       }
-   else if (!UseOldCompareAndSwapObject &&
+   else if (!useOldCompareAndSwapObject &&
             isObj &&
             comp->target().is64Bit() &&
             (TR::Compiler->om.compressedReferenceShiftOffset() != 0))

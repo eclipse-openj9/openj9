@@ -8313,8 +8313,8 @@ static TR::Register *VMinlineCompareAndSetOrExchangeReference(TR::Node *node, TR
       }
 
 
-   static bool UseOldCompareAndSwapObject = (bool)feGetEnv("TR_UseOldCompareAndSwapObject");
-   if (!UseOldCompareAndSwapObject &&
+   static bool useOldCompareAndSwapObject = (bool)feGetEnv("TR_UseOldCompareAndSwapObject");
+   if (!useOldCompareAndSwapObject &&
        comp->target().is64Bit() &&
        (TR::Compiler->om.compressedReferenceShiftOffset() != 0) &&
        ((oldVNode->getOpCodeValue() != TR::aconst) || (oldVNode->getAddress() != 0)))
@@ -8329,7 +8329,7 @@ static TR::Register *VMinlineCompareAndSetOrExchangeReference(TR::Node *node, TR
 
    TR::Node *translatedNode = newVNode;
    bool bumpedRefCount = false;
-   if (UseOldCompareAndSwapObject && comp->useCompressedPointers() && (newVNode->getDataType() != TR::Address))
+   if (useOldCompareAndSwapObject && comp->useCompressedPointers() && (newVNode->getDataType() != TR::Address))
       {
       bool useShiftedOffsets = (TR::Compiler->om.compressedReferenceShiftOffset() != 0);
 
@@ -8355,7 +8355,7 @@ static TR::Register *VMinlineCompareAndSetOrExchangeReference(TR::Node *node, TR
          }
       }
 
-   if (!UseOldCompareAndSwapObject)
+   if (!useOldCompareAndSwapObject)
       {
       uncompressedNewVReg = cg->evaluate(newVNode);
       if (comp->target().is64Bit() &&
@@ -8479,7 +8479,7 @@ static TR::Register *VMinlineCompareAndSetOrExchangeReference(TR::Node *node, TR
       TR::addDependency(conditions, objReg, TR::RealRegister::gr3, TR_GPR, cg);
       TR::Register *wrtbarSrcReg;
 
-      if (!UseOldCompareAndSwapObject)
+      if (!useOldCompareAndSwapObject)
          {
          if (uncompressedNewVReg != newVReg)
             {
@@ -8539,7 +8539,7 @@ static TR::Register *VMinlineCompareAndSetOrExchangeReference(TR::Node *node, TR
       TR::addDependency(conditions, objReg, TR::RealRegister::gr3, TR_GPR, cg);
       TR::Register *wrtbarSrcReg;
 
-      if (!UseOldCompareAndSwapObject)
+      if (!useOldCompareAndSwapObject)
          {
          if (newVReg != uncompressedNewVReg)
             {
@@ -8625,7 +8625,7 @@ static TR::Register *VMinlineCompareAndSetOrExchangeReference(TR::Node *node, TR
       TR::addDependency(conditions, temp1Reg, TR::RealRegister::NoReg, TR_GPR, cg);
       conditions->getPostConditions()->getRegisterDependency(1)->setExcludeGPR0();
 
-      if (!UseOldCompareAndSwapObject)
+      if (!useOldCompareAndSwapObject)
          {
          if (newVReg != uncompressedNewVReg)
             {
@@ -8664,7 +8664,7 @@ static TR::Register *VMinlineCompareAndSetOrExchangeReference(TR::Node *node, TR
       TR::addDependency(conditions, objReg, TR::RealRegister::NoReg, TR_GPR, cg);
       conditions->getPostConditions()->getRegisterDependency(0)->setExcludeGPR0();
       TR::addDependency(conditions, offsetReg, TR::RealRegister::NoReg, TR_GPR, cg);
-      if (!UseOldCompareAndSwapObject)
+      if (!useOldCompareAndSwapObject)
          {
          if (newVReg != uncompressedNewVReg)
             TR::addDependency(conditions, newVReg, TR::RealRegister::NoReg, TR_GPR, cg);
@@ -8690,7 +8690,7 @@ static TR::Register *VMinlineCompareAndSetOrExchangeReference(TR::Node *node, TR
 
    generateDepLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, conditions);
 
-   if (!UseOldCompareAndSwapObject)
+   if (!useOldCompareAndSwapObject)
       {
       cg->stopUsingRegister(oldVReg);
       }
