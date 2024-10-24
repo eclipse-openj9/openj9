@@ -19,7 +19,7 @@ OpenJDK Assembly Exception [2].
 
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 -->
-<exports group="jfr">
+<exports group="jfr_jdk21">
 	<export name="Java_com_ibm_oti_vm_VM_triggerExecutionSample" />
 	<export name="Java_jdk_jfr_internal_JVM_registerNatives" />
 	<export name="Java_jdk_jfr_internal_JVM_markChunkFinal" />
@@ -61,7 +61,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	<export name="Java_jdk_jfr_internal_JVM_getTypeId__Ljava_lang_Class_2" />
 	<export name="Java_jdk_jfr_internal_JVM_getEventWriter" />
 	<export name="Java_jdk_jfr_internal_JVM_newEventWriter" />
-	<export name="Java_jdk_jfr_internal_JVM_flush__Ljava_lang_Object_2II" />
+	<export name="Java_jdk_jfr_internal_JVM_flush__Ljdk_jfr_internal_event_EventWriter_2II" />
 	<export name="Java_jdk_jfr_internal_JVM_commit" />
 	<export name="Java_jdk_jfr_internal_JVM_flush__" />
 	<export name="Java_jdk_jfr_internal_JVM_setRepositoryLocation" />
@@ -76,8 +76,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	<export name="Java_jdk_jfr_internal_JVM_shouldRotateDisk" />
 	<export name="Java_jdk_jfr_internal_JVM_exclude" />
 	<export name="Java_jdk_jfr_internal_JVM_include" />
-	<export name="Java_jdk_jfr_internal_JVM_isExcluded" />
-	<export name="Java_jdk_jfr_internal_JVM_isExcluded" />
+	<export name="Java_jdk_jfr_internal_JVM_isExcluded__Ljava_lang_Thread_2" />
+	<export name="Java_jdk_jfr_internal_JVM_isExcluded__Ljava_lang_Class_2" />
 	<export name="Java_jdk_jfr_internal_JVM_isInstrumented" />
 	<export name="Java_jdk_jfr_internal_JVM_getChunkStartNanos" />
 	<export name="Java_jdk_jfr_internal_JVM_setConfiguration" />
@@ -86,5 +86,5 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	<export name="Java_jdk_jfr_internal_JVM_getTypeId__Ljava_lang_String_2" />
 	<export name="Java_jdk_jfr_internal_JVM_isContainerized" />
 	<export name="Java_jdk_jfr_internal_JVM_hostTotalMemory" />
-	<export name="java_jdk_jfr_internal_JVM_emitDataLoss" />
+	<export name="Java_jdk_jfr_internal_JVM_emitDataLoss" />
 </exports>
