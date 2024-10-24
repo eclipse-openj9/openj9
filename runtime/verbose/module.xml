@@ -137,6 +137,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<library name="j9modronstartup"/>
 			<library name="omrgcstartup" type="external"/>
 			<library name="omrgcverbose" type="external"/>
+			<library name="j9gc"/>
 			<library name="j9gcvrbjava"/>
 			<library name="j9gcvrbold"/>
 			<library name="j9gcvrbevents"/>

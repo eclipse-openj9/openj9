@@ -64,7 +64,7 @@
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
 // TODO: move this someplace common for RuntimeAssumptions.cpp and here
-#if defined(__IBMCPP__) && !defined(AIXPPC) && !defined(LINUXPPC)
+#if (defined(__IBMCPP__) || defined(__open_xl__) && defined(__cplusplus)) && !defined(AIXPPC) && !defined(LINUXPPC)
 #define ASM_CALL __cdecl
 #else
 #define ASM_CALL

@@ -28,7 +28,7 @@ extern "C" {
 #endif
 
 
-#if (defined(__IBMCPP__) || defined(__IBMC__) && !defined(MVS)) && !defined(J9ZOS390) && !defined(LINUXPPC64)
+#if (defined(__IBMCPP__) || defined(__IBMC__) && !defined(MVS)) && !defined(J9ZOS390) && !defined(LINUXPPC64) || defined(__open_xl__)
 #if defined(AIXPPC)
 #define JIT_HELPER(x) extern "C" void * x
 #else
