@@ -2487,14 +2487,14 @@ static TR::Register *genDecompressPointerNonNull2RegsWithTempReg(TR::CodeGenerat
       }
    }
 
-static void genCompressPointerWithTempReg(TR::CodeGenerator *cg, TR::Node *node, TR::Register *ptrReg, TR::Register *tempReg, TR::Register *condReg = NULL, bool nullCheck = true)
+static void genCompressPointerWithTempReg(TR::CodeGenerator *cg, TR::Node *node, TR::Register *tempReg, TR::Register *ptrReg, TR::Register *condReg = NULL, bool nullCheck = true)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *) (cg->comp()->fe());
    int32_t shiftAmount = TR::Compiler->om.compressedReferenceShift();
 
    if (shiftAmount != 0)
       {
-      generateShiftRightLogicalImmediateLong(cg, node, ptrReg, ptrReg, shiftAmount);
+      generateShiftRightLogicalImmediateLong(cg, node, tempReg, ptrReg, shiftAmount);
       }
    }
 
@@ -8274,13 +8274,12 @@ static TR::Register *VMinlineCompareAndSetOrExchangeReference(TR::Node *node, TR
    {
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *) (comp->fe());
-   TR::Register *objReg, *offsetReg, *oldVReg, *newVReg, *resultReg, *cndReg;
+   TR::Register *objReg, *offsetReg, *oldVReg, *newVReg, *uncompressedNewVReg, *resultReg, *cndReg;
    TR::Node *firstChild, *objNode, *offsetNode, *oldVNode, *newVNode;
    TR::RegisterDependencyConditions *conditions;
    TR::LabelSymbol *doneLabel, *storeLabel, *wrtBarEndLabel;
    intptr_t offsetValue;
    bool freeOffsetReg;
-   bool needDup = false;
 
    auto gcMode = TR::Compiler->om.writeBarrierType();
    bool doWrtBar = (gcMode == gc_modron_wrtbar_satb || gcMode == gc_modron_wrtbar_oldcheck || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_always
@@ -8313,11 +8312,24 @@ static TR::Register *VMinlineCompareAndSetOrExchangeReference(TR::Node *node, TR
          offsetReg = offsetReg->getLowOrder();
       }
 
-   oldVReg = cg->evaluate(oldVNode);
+
+   static bool useOldCompareAndSwapObject = (bool)feGetEnv("TR_UseOldCompareAndSwapObject");
+   if (!useOldCompareAndSwapObject &&
+       comp->target().is64Bit() &&
+       (TR::Compiler->om.compressedReferenceShiftOffset() != 0) &&
+       ((oldVNode->getOpCodeValue() != TR::aconst) || (oldVNode->getAddress() != 0)))
+      {
+      oldVReg = cg->gprClobberEvaluate(oldVNode);
+      genCompressPointer(cg, node, oldVReg);
+      }
+   else
+      {
+      oldVReg = cg->evaluate(oldVNode);
+      }
 
    TR::Node *translatedNode = newVNode;
    bool bumpedRefCount = false;
-   if (comp->useCompressedPointers() && (newVNode->getDataType() != TR::Address))
+   if (useOldCompareAndSwapObject && comp->useCompressedPointers() && (newVNode->getDataType() != TR::Address))
       {
       bool useShiftedOffsets = (TR::Compiler->om.compressedReferenceShiftOffset() != 0);
 
@@ -8343,12 +8355,31 @@ static TR::Register *VMinlineCompareAndSetOrExchangeReference(TR::Node *node, TR
          }
       }
 
-   newVReg = cg->evaluate(newVNode);
+   if (!useOldCompareAndSwapObject)
+      {
+      uncompressedNewVReg = cg->evaluate(newVNode);
+      if (comp->target().is64Bit() &&
+          (TR::Compiler->om.compressedReferenceShiftOffset() != 0) &&
+          ((newVNode->getOpCodeValue() != TR::aconst) || (newVNode->getAddress() != 0)))
+         {
+         newVReg = cg->allocateRegister();
+         genCompressPointerWithTempReg(cg, node, newVReg, uncompressedNewVReg);
+         }
+      else
+         {
+         newVReg = uncompressedNewVReg;
+         }
+      }
+   else
+      {
+      newVReg = cg->evaluate(newVNode);
+      uncompressedNewVReg = nullptr;
+      }
+
    if (objReg == newVReg)
       {
       newVReg = cg->allocateCollectedReferenceRegister();
       generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, newVReg, objReg);
-      needDup = true;
       }
    cndReg = cg->allocateRegister(TR_CCR);
    doneLabel = generateLabelSymbol(cg);
@@ -8447,16 +8478,29 @@ static TR::Register *VMinlineCompareAndSetOrExchangeReference(TR::Node *node, TR
       TR::Register *temp1Reg = cg->allocateRegister(), *temp2Reg = cg->allocateRegister(), *temp3Reg, *temp4Reg = cg->allocateRegister();
       TR::addDependency(conditions, objReg, TR::RealRegister::gr3, TR_GPR, cg);
       TR::Register *wrtbarSrcReg;
-      if (translatedNode != newVNode)
+
+      if (!useOldCompareAndSwapObject)
          {
-         TR::addDependency(conditions, newVReg, TR::RealRegister::NoReg, TR_GPR, cg);
-         TR::addDependency(conditions, translatedNode->getRegister(), TR::RealRegister::gr4, TR_GPR, cg);
-         wrtbarSrcReg = translatedNode->getRegister();
+         if (uncompressedNewVReg != newVReg)
+            {
+            TR::addDependency(conditions, newVReg, TR::RealRegister::NoReg, TR_GPR, cg);
+            }
+         TR::addDependency(conditions, uncompressedNewVReg, TR::RealRegister::gr4, TR_GPR, cg);
+         wrtbarSrcReg = uncompressedNewVReg;
          }
       else
          {
-         TR::addDependency(conditions, newVReg, TR::RealRegister::gr4, TR_GPR, cg);
-         wrtbarSrcReg = newVReg;
+         if (translatedNode != newVNode)
+            {
+            TR::addDependency(conditions, newVReg, TR::RealRegister::NoReg, TR_GPR, cg);
+            TR::addDependency(conditions, translatedNode->getRegister(), TR::RealRegister::gr4, TR_GPR, cg);
+            wrtbarSrcReg = translatedNode->getRegister();
+            }
+         else
+            {
+            TR::addDependency(conditions, newVReg, TR::RealRegister::gr4, TR_GPR, cg);
+            wrtbarSrcReg = newVReg;
+            }
          }
 
       TR::addDependency(conditions, temp1Reg, TR::RealRegister::gr11, TR_GPR, cg);
@@ -8493,21 +8537,44 @@ static TR::Register *VMinlineCompareAndSetOrExchangeReference(TR::Node *node, TR
       {
       TR::Register *temp1Reg = cg->allocateRegister(), *temp2Reg;
       TR::addDependency(conditions, objReg, TR::RealRegister::gr3, TR_GPR, cg);
+      TR::Register *wrtbarSrcReg;
 
-      if (newVReg != translatedNode->getRegister())
+      if (!useOldCompareAndSwapObject)
          {
-         TR::addDependency(conditions, newVReg, TR::RealRegister::NoReg, TR_GPR, cg);
+         if (newVReg != uncompressedNewVReg)
+            {
+            TR::addDependency(conditions, newVReg, TR::RealRegister::NoReg, TR_GPR, cg);
+            }
+
          if (comp->getOptions()->realTimeGC())
-            TR::addDependency(conditions, translatedNode->getRegister(), TR::RealRegister::gr5, TR_GPR, cg);
+            {
+            TR::addDependency(conditions, uncompressedNewVReg, TR::RealRegister::gr5, TR_GPR, cg);
+            }
          else
-            TR::addDependency(conditions, translatedNode->getRegister(), TR::RealRegister::gr4, TR_GPR, cg);
+            {
+            TR::addDependency(conditions, uncompressedNewVReg, TR::RealRegister::gr4, TR_GPR, cg);
+            }
+
+         wrtbarSrcReg = uncompressedNewVReg;
          }
       else
          {
-         if (comp->getOptions()->realTimeGC())
-            TR::addDependency(conditions, newVReg, TR::RealRegister::gr5, TR_GPR, cg);
+         if (newVReg != translatedNode->getRegister())
+            {
+            TR::addDependency(conditions, newVReg, TR::RealRegister::NoReg, TR_GPR, cg);
+            if (comp->getOptions()->realTimeGC())
+               TR::addDependency(conditions, translatedNode->getRegister(), TR::RealRegister::gr5, TR_GPR, cg);
+            else
+               TR::addDependency(conditions, translatedNode->getRegister(), TR::RealRegister::gr4, TR_GPR, cg);
+            }
          else
-            TR::addDependency(conditions, newVReg, TR::RealRegister::gr4, TR_GPR, cg);
+            {
+            if (comp->getOptions()->realTimeGC())
+               TR::addDependency(conditions, newVReg, TR::RealRegister::gr5, TR_GPR, cg);
+            else
+               TR::addDependency(conditions, newVReg, TR::RealRegister::gr4, TR_GPR, cg);
+            }
+         wrtbarSrcReg = translatedNode->getRegister();
          }
 
       TR::addDependency(conditions, temp1Reg, TR::RealRegister::NoReg, TR_GPR, cg);
@@ -8540,7 +8607,7 @@ static TR::Register *VMinlineCompareAndSetOrExchangeReference(TR::Node *node, TR
          generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, dstAddrReg, objReg, offsetReg);
          }
 
-      VMnonNullSrcWrtBarCardCheckEvaluator(node, comp->useCompressedPointers() ? translatedNode->getRegister() : newVReg, objReg, cndReg, temp1Reg, temp2Reg, dstAddrReg, NULL,
+      VMnonNullSrcWrtBarCardCheckEvaluator(node, comp->useCompressedPointers() ? wrtbarSrcReg : newVReg, objReg, cndReg, temp1Reg, temp2Reg, dstAddrReg, NULL,
             wrtBarEndLabel, conditions, comp->useCompressedPointers(), cg);
 
       if (comp->getOptions()->realTimeGC())
@@ -8557,9 +8624,21 @@ static TR::Register *VMinlineCompareAndSetOrExchangeReference(TR::Node *node, TR
       conditions->getPostConditions()->getRegisterDependency(0)->setExcludeGPR0();
       TR::addDependency(conditions, temp1Reg, TR::RealRegister::NoReg, TR_GPR, cg);
       conditions->getPostConditions()->getRegisterDependency(1)->setExcludeGPR0();
-      if (newVReg != translatedNode->getRegister())
-         TR::addDependency(conditions, newVReg, TR::RealRegister::NoReg, TR_GPR, cg);
-      TR::addDependency(conditions, translatedNode->getRegister(), TR::RealRegister::NoReg, TR_GPR, cg);
+
+      if (!useOldCompareAndSwapObject)
+         {
+         if (newVReg != uncompressedNewVReg)
+            {
+            TR::addDependency(conditions, newVReg, TR::RealRegister::NoReg, TR_GPR, cg);
+            }
+         TR::addDependency(conditions, uncompressedNewVReg, TR::RealRegister::NoReg, TR_GPR, cg);
+         }
+      else
+         {
+         if (newVReg != translatedNode->getRegister())
+            TR::addDependency(conditions, newVReg, TR::RealRegister::NoReg, TR_GPR, cg);
+         TR::addDependency(conditions, translatedNode->getRegister(), TR::RealRegister::NoReg, TR_GPR, cg);
+         }
 
       TR::addDependency(conditions, temp2Reg, TR::RealRegister::NoReg, TR_GPR, cg);
       TR::addDependency(conditions, offsetReg, TR::RealRegister::NoReg, TR_GPR, cg);
@@ -8585,9 +8664,18 @@ static TR::Register *VMinlineCompareAndSetOrExchangeReference(TR::Node *node, TR
       TR::addDependency(conditions, objReg, TR::RealRegister::NoReg, TR_GPR, cg);
       conditions->getPostConditions()->getRegisterDependency(0)->setExcludeGPR0();
       TR::addDependency(conditions, offsetReg, TR::RealRegister::NoReg, TR_GPR, cg);
-      if (newVReg != translatedNode->getRegister())
-         TR::addDependency(conditions, newVReg, TR::RealRegister::NoReg, TR_GPR, cg);
-      TR::addDependency(conditions, translatedNode->getRegister(), TR::RealRegister::NoReg, TR_GPR, cg);
+      if (!useOldCompareAndSwapObject)
+         {
+         if (newVReg != uncompressedNewVReg)
+            TR::addDependency(conditions, newVReg, TR::RealRegister::NoReg, TR_GPR, cg);
+         TR::addDependency(conditions, uncompressedNewVReg, TR::RealRegister::NoReg, TR_GPR, cg);
+         }
+      else
+         {
+         if (newVReg != translatedNode->getRegister())
+            TR::addDependency(conditions, newVReg, TR::RealRegister::NoReg, TR_GPR, cg);
+         TR::addDependency(conditions, translatedNode->getRegister(), TR::RealRegister::NoReg, TR_GPR, cg);
+         }
       }
 
    generateLabelInstruction(cg, TR::InstOpCode::label, node, storeLabel);
@@ -8602,10 +8690,14 @@ static TR::Register *VMinlineCompareAndSetOrExchangeReference(TR::Node *node, TR
 
    generateDepLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, conditions);
 
-   if (needDup)
-      cg->stopUsingRegister(newVReg);
+   if (!useOldCompareAndSwapObject)
+      {
+      cg->stopUsingRegister(oldVReg);
+      }
 
+   cg->stopUsingRegister(newVReg);
    cg->stopUsingRegister(cndReg);
+
    cg->recursivelyDecReferenceCount(firstChild);
    cg->decReferenceCount(objNode);
 
