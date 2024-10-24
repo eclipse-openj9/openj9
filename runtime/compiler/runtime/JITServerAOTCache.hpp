@@ -371,10 +371,14 @@ public:
    AOTCacheRecord **records() { return (AOTCacheRecord **)_data.end(); }
 
    static const char *getRecordName() { return "cached AOT method"; }
-   static CachedAOTMethod *create(const AOTCacheClassChainRecord *definingClassChainRecord, uint32_t index,
-                                  TR_Hotness optLevel, const AOTCacheAOTHeaderRecord *aotHeaderRecord,
+   static CachedAOTMethod *create(const AOTCacheClassChainRecord *definingClassChainRecord,
+                                  uint32_t index,
+                                  TR_Hotness optLevel,
+                                  const AOTCacheAOTHeaderRecord *aotHeaderRecord,
                                   const Vector<std::pair<const AOTCacheRecord *, uintptr_t>> &records,
-                                  const void *code, size_t codeSize, const void *data, size_t dataSize);
+                                  const void *code, size_t codeSize,
+                                  const void *data, size_t dataSize,
+                                  const char *signature);
 
    CachedAOTMethod *getNextRecord() const { return _nextRecord; }
    void setNextRecord(CachedAOTMethod *record) { _nextRecord = record; }
@@ -387,18 +391,20 @@ private:
    CachedAOTMethod(const AOTCacheClassChainRecord *definingClassChainRecord, uint32_t index,
                    TR_Hotness optLevel, const AOTCacheAOTHeaderRecord *aotHeaderRecord,
                    const Vector<std::pair<const AOTCacheRecord *, uintptr_t>> &records,
-                   const void *code, size_t codeSize, const void *data, size_t dataSize);
+                   const void *code, size_t codeSize, const void *data, size_t dataSize,
+                   const char *signature, size_t signatureSize);
    CachedAOTMethod(const JITServerAOTCacheReadContext &context, const SerializedAOTMethod &header);
 
    SerializedAOTMethod *dataAddr() { return &_data; }
 
-   static size_t size(size_t numRecords, size_t codeSize, size_t dataSize)
+   static size_t size(size_t numRecords, size_t codeSize, size_t dataSize, size_t signatureSize)
       {
-      return offsetof(CachedAOTMethod, _data) + SerializedAOTMethod::size(numRecords, codeSize, dataSize) +
+      return offsetof(CachedAOTMethod, _data) +
+             SerializedAOTMethod::size(numRecords, codeSize, dataSize, signatureSize) +
              numRecords * sizeof(AOTCacheRecord *);
       }
 
-   static size_t size(const SerializedAOTMethod &header) { return size(header.numRecords(), header.codeSize(), header.dataSize()); }
+   static size_t size(const SerializedAOTMethod &header) { return size(header.numRecords(), header.codeSize(), header.dataSize(), header.signatureSize()); }
 
    bool setSubrecordPointers(const JITServerAOTCacheReadContext &context);
 
@@ -517,6 +523,19 @@ public:
    */
    bool isAOTCacheBetterThanSnapshot(const std::string &cacheFileName, size_t numExtraMethods);
 
+   CachedAOTMethod *getCachedMethodHead() { return _cachedMethodHead; }
+   TR::Monitor *getCachedMethodMonitor() { return _cachedMethodMonitor; }
+
+   //NOTE: Current implementation doesn't support compatible differences in AOT headers.
+   //      A cached method can only be sent to a client with the exact same AOT header.
+   using CachedMethodKey = std::tuple<const AOTCacheClassChainRecord *, uint32_t/*index*/,
+                                      TR_Hotness, const AOTCacheAOTHeaderRecord *>;
+
+   const PersistentUnorderedMap<CachedMethodKey, CachedAOTMethod *>& getCachedMethodMap()
+   {
+      return _cachedMethodMap;
+   }
+
 private:
    static StringKey getRecordKey(const AOTCacheClassLoaderRecord *record)
       { return { record->data().name(), record->data().nameLength() }; }
@@ -576,11 +595,6 @@ private:
 
    static StringKey getRecordKey(const AOTCacheThunkRecord *record)
       { return { record->data().signature(), record->data().signatureSize() }; }
-
-   //NOTE: Current implementation doesn't support compatible differences in AOT headers.
-   //      A cached method can only be sent to a client with the exact same AOT header.
-   using CachedMethodKey = std::tuple<const AOTCacheClassChainRecord *, uint32_t/*index*/,
-                                      TR_Hotness, const AOTCacheAOTHeaderRecord *>;
 
    // Helper method used in getSerializationRecords()
    void addRecord(const AOTCacheRecord *record, Vector<const AOTSerializationRecord *> &result,

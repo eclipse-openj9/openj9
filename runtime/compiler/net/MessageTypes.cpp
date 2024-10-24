@@ -259,6 +259,8 @@ const char *messageNames[] =
    "KnownObjectTable_getReferenceField",
    "KnownObjectTable_getKnownObjectTableDumpInfo",
    "AOTCache_getROMClassBatch",
+   "AOTCacheMap_request",
+   "AOTCacheMap_reply"
    };
 
    static_assert(sizeof(messageNames) / sizeof(messageNames[0]) == MessageType_MAXTYPE,

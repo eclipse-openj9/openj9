@@ -20,6 +20,9 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
+#include <string>
+#include <unordered_set>
+
 #include <algorithm>
 #include <limits.h>
 #ifdef LINUX
@@ -385,6 +388,27 @@ static uint32_t initializeSendTargetHelperFuncHashValueForSpreading(J9Method* me
 
 static bool highCodeCacheOccupancyThresholdReached = false;
 
+#if defined(J9VM_OPT_JITSERVER)
+static int32_t calculateCountForMethodCachedAtServer(J9ROMMethod * romMethod,
+                                                     TR::Options * optionsJIT,
+                                                     TR::Options * optionsAOT)
+   {
+   int32_t scount = TR_INITIAL_SCOUNT;
+   if (optionsAOT)
+      {
+      scount = optionsAOT->getInitialSCount();
+      if ((scount == TR_QUICKSTART_INITIAL_SCOUNT) || (scount == TR_INITIAL_SCOUNT))
+         {
+         // If scount is not user specified (coarse way due to info being lost
+         // from options parsing)
+         scount= std::min(getCount(romMethod, optionsJIT, optionsAOT),
+                                 optionsAOT->getInitialSCount());
+         }
+      }
+   return scount;
+   }
+#endif // J9VM_OPT_JITSERVER
+
 static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum, void * eventData, void * userData)
    {
    J9VMInitializeSendTargetEvent * event = (J9VMInitializeSendTargetEvent *)eventData;
@@ -424,6 +448,44 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
          countInOptionSet = true;
          }
       }
+
+#if defined(J9VM_OPT_JITSERVER)
+   bool methodCachedAtServer = false;
+   PersistentUnorderedSet<std::string> *serverAOTMethodSet =
+      (PersistentUnorderedSet<std::string> *) jitConfig->serverAOTMethodSet;
+
+   if (serverAOTMethodSet != NULL)
+      {
+      // Construct a signature
+      J9UTF8 *className;
+      J9UTF8 *name;
+      J9UTF8 *signature;
+      getClassNameSignatureFromMethod(method, className, name, signature);
+      // SigLen calculation as used in TRJ9VMBase::printTruncatedSignature
+      int32_t sigLen = J9UTF8_LENGTH(className) + J9UTF8_LENGTH(name) +
+         J9UTF8_LENGTH(signature) + 2;
+
+      if (sigLen < 1024)
+         {
+         char sigC[1024];
+         sigLen = sprintf(sigC, "%.*s.%.*s%.*s",
+                           J9UTF8_LENGTH(className), utf8Data(className),
+                           J9UTF8_LENGTH(name), utf8Data(name),
+                           J9UTF8_LENGTH(signature), utf8Data(signature));
+
+         // contains
+         methodCachedAtServer =
+            (serverAOTMethodSet->find(std::string(sigC)) != serverAOTMethodSet->end());
+
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer)
+            && TR::Options::getVerboseOption(TR_VerboseCounts))
+            if (methodCachedAtServer)
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+                                             "Method %s was cached at the server",
+                                             sigC);
+         }
+      }
+#endif // J9VM_OPT_JITSERVER
 
    if (TR::Options::getAOTCmdLineOptions()->anOptionSetContainsACountValue())
       {
@@ -628,6 +690,21 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
             }
 #endif // defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
          } // if (TR::Options::sharedClassCache())
+
+#if defined(J9VM_OPT_JITSERVER)
+      // If the method is cached at the server side, set the count to the lower number
+      // regardless of whether the count has been set before
+      if (methodCachedAtServer)
+         {
+         int32_t serverCount =
+            calculateCountForMethodCachedAtServer(romMethod, optionsJIT, optionsAOT);
+         if (count == -1)
+            count = serverCount;
+         else
+            count = std::min(count, serverCount);
+         }
+#endif // J9VM_OPT_JITSERVER
+
       if (count == -1) // count didn't change yet
          {
          if (!TR::Options::getCountsAreProvidedByUser() &&
@@ -4180,6 +4257,16 @@ void JitShutdown(J9JITConfig * jitConfig)
 #endif // J9VM_INTERP_PROFILING_BYTECODES
 
    TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
+
+#if defined(J9VM_OPT_JITSERVER)
+   PersistentUnorderedSet<std::string> *serverAOTMethodSet =
+      (PersistentUnorderedSet<std::string> *) jitConfig->serverAOTMethodSet;
+   if (serverAOTMethodSet)
+      {
+      serverAOTMethodSet->~unordered_set();
+      TR_Memory::jitPersistentFree((void *)serverAOTMethodSet);
+      }
+#endif // J9VM_OPT_JITSERVER
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
    if (jitConfig->javaVM->internalVMFunctions->isCRaCorCRIUSupportEnabled(jitConfig->javaVM))
