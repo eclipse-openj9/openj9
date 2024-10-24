@@ -33,8 +33,9 @@ ifeq (win_x86-64_cmprssptrs, $(SPEC))
 		--enable-OMR_ARCH_X86 \
 		--enable-OMR_ENV_DATA64 \
 		--enable-OMR_ENV_LITTLE_ENDIAN \
-		--enable-OMR_GC_TLH_PREFETCH_FTA \
 		--enable-OMR_GC_CONCURRENT_SCAVENGER \
+		--enable-OMR_GC_SPARSE_HEAP_ALLOCATION \
+		--enable-OMR_GC_TLH_PREFETCH_FTA \
 		--enable-OMR_PORT_ALLOCATE_TOP_DOWN \
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
 		OMR_GC_POINTER_MODE=compressed
@@ -46,8 +47,9 @@ ifeq (win_x86-64, $(SPEC))
 		--enable-OMR_ARCH_X86 \
 		--enable-OMR_ENV_DATA64 \
 		--enable-OMR_ENV_LITTLE_ENDIAN \
-		--enable-OMR_GC_TLH_PREFETCH_FTA \
 		--enable-OMR_GC_CONCURRENT_SCAVENGER \
+		--enable-OMR_GC_SPARSE_HEAP_ALLOCATION \
+		--enable-OMR_GC_TLH_PREFETCH_FTA \
 		--enable-OMR_PORT_ALLOCATE_TOP_DOWN \
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
 		OMR_GC_POINTER_MODE=full

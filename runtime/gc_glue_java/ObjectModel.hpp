@@ -561,7 +561,6 @@ public:
 	fixupForwardedObject(MM_ForwardedHeader *forwardedHeader, omrobjectptr_t destinationObjectPtr, uintptr_t objectAge)
 	{
 		GC_ObjectModelBase::fixupForwardedObject(forwardedHeader, destinationObjectPtr, objectAge);
-
 		fixupHashFlagsAndSlot(forwardedHeader, destinationObjectPtr);
 	}
 
