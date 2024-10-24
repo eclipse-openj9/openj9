@@ -406,11 +406,7 @@ TR_J9InlinerPolicy::alwaysWorthInlining(TR_ResolvedMethod * calleeMethod, TR::No
       case TR::jdk_internal_misc_Unsafe_compareAndExchangeInt:
       case TR::jdk_internal_misc_Unsafe_compareAndExchangeLong:
       case TR::jdk_internal_misc_Unsafe_compareAndExchangeReference:
-         if (comp()->target().cpu.isPower() || comp()->target().cpu.isX86() || comp()->target().cpu.isZ())
-            {
-            return false;
-            }
-         break;
+         return false;
 
       /* In Java9 the compareAndSwap[Int|Long|Object] and copyMemory enums match
        * both sun.misc.Unsafe and jdk.internal.misc.Unsafe. The sun.misc.Unsafe
@@ -427,11 +423,6 @@ TR_J9InlinerPolicy::alwaysWorthInlining(TR_ResolvedMethod * calleeMethod, TR::No
        * failed the isInlineableJNI check and should not be force inlined.
        */
       case TR::jdk_internal_misc_Unsafe_compareAndExchangeObject:
-         if (comp()->target().cpu.isPower() || comp()->target().cpu.isX86() || comp()->target().cpu.isZ())
-            {
-            return !calleeMethod->isNative();
-            }
-         break;
       case TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z:
       case TR::sun_misc_Unsafe_compareAndSwapLong_jlObjectJJJ_Z:
       case TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z:
@@ -2669,7 +2660,7 @@ TR_J9InlinerPolicy::inlineUnsafeCall(TR::ResolvedMethodSymbol *calleeSymbol, TR:
       case TR::jdk_internal_misc_Unsafe_compareAndExchangeLong:
       case TR::jdk_internal_misc_Unsafe_compareAndExchangeObject:
       case TR::jdk_internal_misc_Unsafe_compareAndExchangeReference:
-         if (disableCAEIntrinsic || !(comp()->target().cpu.isPower() || comp()->target().cpu.isX86() || comp()->target().cpu.isZ()))
+         if (disableCAEIntrinsic)
             {
             break;
             }
@@ -2744,7 +2735,7 @@ TR_J9InlinerPolicy::isInlineableJNI(TR_ResolvedMethod *method,TR::Node *callNode
         !comp->fej9()->traceableMethodsCanBeInlined()))
       return false;
 
-   if (method->convertToMethod()->isUnsafeWithObjectArg(comp) || method->convertToMethod()->isUnsafeCAS(comp))
+   if (method->convertToMethod()->isUnsafeWithObjectArg() || method->convertToMethod()->isUnsafeCAS())
       {
       // In Java9 sun/misc/Unsafe methods are simple Java wrappers to JNI
       // methods in jdk.internal, and the enum values above match both. Only
