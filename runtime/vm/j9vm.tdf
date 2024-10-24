@@ -986,3 +986,11 @@ TraceException=Trc_VM_jfr_ErrorWritingChunk Overhead=1 Level=1 Template="Error w
 TraceEvent=Trc_VM_VMInitStages_isDebugOnRestoreEnabled NoEnv Overhead=1 Level=3 Template="VMInitStages(ABOUT_TO_BOOTSTRAP) isDebugOnRestoreEnabled returns TRUE"
 TraceEvent=Trc_VM_hookAboutToBootstrapEvent_debugModeRequested Overhead=1 Level=3 Template="hookAboutToBootstrapEvent() debugModeRequested is TRUE"
 TraceEvent=Trc_VM_mustReportEnterStepOrBreakpoint_hookedOrReserved NoEnv Overhead=1 Level=5 Template="mustReportEnterStepOrBreakpoint() hookedOrReserved(%zu)"
+
+TraceEvent=Trc_VM_simulateStack_RTVSEND_bcIndex Overhead=1 Level=5 Template="simulateStack RTV_SEND starts currentBytecode(%zu) bcIndex(%p)"
+TraceEvent=Trc_VM_simulateStack_RTVSEND_bcIndex2 Overhead=1 Level=5 Template="simulateStack RTV_SEND bcIndex2(%p)"
+TraceEvent=Trc_VM_simulateStack_RTVSEND_index Overhead=1 Level=5 Template="simulateStack RTV_SEND index(%zu)"
+TraceEvent=Trc_VM_simulateStack_RTVSEND_JBinvokestaticsplit_index Overhead=1 Level=3 Template="simulateStack RTV_SEND JBinvokestaticsplit index(%zu)"
+TraceEvent=Trc_VM_simulateStack_RTVSEND_JBinvokespecialsplit_index Overhead=1 Level=3 Template="simulateStack RTV_SEND JBinvokespecialsplit index(%zu)"
+TraceEvent=Trc_VM_simulateStack_RTVSEND_JBinvokedynamic_classSig Overhead=1 Level=5 Template="simulateStack RTV_SEND JBinvokedynamic classSig(%.*s)"
+TraceEvent=Trc_VM_simulateStack_RTVSEND_others_classSig Overhead=1 Level=5 Template="simulateStack RTV_SEND others classSig(%.*s)"
