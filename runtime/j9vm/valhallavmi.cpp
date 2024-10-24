@@ -87,7 +87,7 @@ JVM_NewNullRestrictedArray(JNIEnv *env, jclass componentType, jint length)
 	ramClass = J9VMJAVALANGCLASS_VMREF(currentThread, J9_JNI_UNWRAP_REFERENCE(componentType));
 
 	if (length < 0) {
-		vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGNEGATIVEARRAYSIZEEXCEPTION, NULL);
+		vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, NULL);
 		goto done;
 	}
 
