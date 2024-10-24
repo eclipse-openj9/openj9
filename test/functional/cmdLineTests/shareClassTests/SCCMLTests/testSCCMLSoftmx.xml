@@ -89,7 +89,8 @@
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ROMClasses\s+= 0</output>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Cache is 100% soft full</output>
 
-		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">#(.)*= [^0][0-9]*</output>
+		<!-- Everything else except # Additional startup hints allowed should be 0 -->
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">#(?!\s*Additional startup hints allowed\s*=\s*\d+)(\s+\w+.*?)\s*= [^0][0-9]*</output>
 		<output type="failure" caseSensitive="yes" regex="no">error</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
