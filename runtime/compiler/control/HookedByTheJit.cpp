@@ -4160,8 +4160,9 @@ void JitShutdown(J9JITConfig * jitConfig)
       if (!options->getOption(TR_DisableIProfilerThread))
          iProfiler->stopIProfilerThread();
 #ifdef DEBUG
-      uint32_t lockedEntries = iProfiler->releaseAllEntries();
-      TR_ASSERT(lockedEntries == 0, "some entries were still locked on shutdown");
+      uint32_t unexpectedLockedEntries = 0;
+      iProfiler->releaseAllEntries(unexpectedLockedEntries);
+      TR_ASSERT(unexpectedLockedEntries == 0, "some entries were still locked on shutdown");
 #endif
       // Dump all IProfiler related to virtual/interface invokes and instanceof/checkcasts
       // to track possible performance issues
