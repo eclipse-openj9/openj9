@@ -10089,10 +10089,10 @@ bool J9::X86::TreeEvaluator::VMinlineCallEvaluator(
             break;
          case TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z:
             {
-            static bool UseOldCompareAndSwapObject = (bool)feGetEnv("TR_UseOldCompareAndSwapObject");
+            static bool useOldCompareAndSwapObject = (bool)feGetEnv("TR_UseOldCompareAndSwapObject");
             if (node->isSafeForCGToFastPathUnsafeCall())
                {
-               if (UseOldCompareAndSwapObject)
+               if (useOldCompareAndSwapObject)
                   return inlineCompareAndSwapNative(node, TR::Compiler->om.sizeofReferenceField(), true, false, cg);
                else
                   {
@@ -10117,10 +10117,10 @@ bool J9::X86::TreeEvaluator::VMinlineCallEvaluator(
          case TR::jdk_internal_misc_Unsafe_compareAndExchangeObject:
          case TR::jdk_internal_misc_Unsafe_compareAndExchangeReference:
             {
-            static bool UseOldCompareAndSwapObject = (bool)feGetEnv("TR_UseOldCompareAndSwapObject");
+            static bool useOldCompareAndSwapObject = (bool)feGetEnv("TR_UseOldCompareAndSwapObject");
             if (!disableCAEIntrinsic && node->isSafeForCGToFastPathUnsafeCall())
                {
-               if (UseOldCompareAndSwapObject)
+               if (useOldCompareAndSwapObject)
                   return inlineCompareAndSwapNative(node, TR::Compiler->om.sizeofReferenceField(), true, true, cg);
                else
                   {

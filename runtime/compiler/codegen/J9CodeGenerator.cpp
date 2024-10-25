@@ -652,11 +652,22 @@ J9::CodeGenerator::lowerTreesPreChildrenVisit(TR::Node *parent, TR::TreeTop *tre
       {
       // J9
       //
-      // Hiding compressedref logic from CodeGen doesn't seem a good practise, the evaluator always need the uncompressedref node for write barrier,
-      // therefore, this part is deprecated. It'll be removed once P and Z update their corresponding evaluators.
-      static bool UseOldCompareAndSwapObject = (bool)feGetEnv("TR_UseOldCompareAndSwapObject");
+      /* Hiding compressedref logic from CodeGen isn't a good practice, and the evaluator still needs the uncompressedref node for write barriers.
+       * Therefore, this part is deprecated. It can only be activated on X, P or Z with the TR_UseOldCompareAndSwapObject envvar.
+       *
+       * If TR_DisableCAEIntrinsic is set to disable inlining of compareAndExchange, compressedref logic will not be hidden for compareAndExchange
+       * calls even if TR_UseOldCompareAndSwapObject is set. The reason is that TR_DisableCAEIntrinsic takes priority over TR_UseOldCompareAndSwapObject
+       * so neither the old nor new version of the inlined compareAndExchange are used and the non-inlined version expects that the compressedrefs are
+       * not hidden.
+       *
+       * Similarly, TR_DisableCASInlining (which is only supported on X) can be used to disable inlining on both compareAndSwap and compareAndExchange.
+       * This also takes priority over TR_UseOldCompareAndSwapObject. Once again, the compressedrefs logic will not be hidden since it is expected by
+       * the non-inlined version.
+       */
+      static bool useOldCompareAndSwapObject = (bool)feGetEnv("TR_UseOldCompareAndSwapObject");
       static bool disableCASInlining = feGetEnv("TR_DisableCASInlining") != NULL;
-      if (self()->comp()->useCompressedPointers() && ((UseOldCompareAndSwapObject && (self()->comp()->target().cpu.isARM64() || !disableCASInlining)) || !(self()->comp()->target().cpu.isX86() || self()->comp()->target().cpu.isARM64())))
+      if (((self()->comp()->target().cpu.isX86() && !disableCASInlining) || self()->comp()->target().cpu.isPower() || self()->comp()->target().cpu.isZ()) &&
+          self()->comp()->useCompressedPointers() && useOldCompareAndSwapObject)
          {
          TR::MethodSymbol *methodSymbol = parent->getSymbol()->castToMethodSymbol();
          static bool disableCAEIntrinsic = feGetEnv("TR_DisableCAEIntrinsic") != NULL;

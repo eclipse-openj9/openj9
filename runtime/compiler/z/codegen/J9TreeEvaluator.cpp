@@ -11952,7 +11952,7 @@ TR::Register*
 J9::Z::TreeEvaluator::VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *cg, TR::InstOpCode::Mnemonic casOp, bool isObj, bool isExchange)
    {
    TR::Register *scratchReg = NULL;
-   TR::Register *objReg, *oldVReg, *newVReg;
+   TR::Register *objReg = NULL, *oldVReg = NULL, *newVReg = NULL, *decompressedValueRegister = NULL;
    TR::Register *resultReg = isExchange ? NULL : cg->allocateRegister();
    TR::MemoryReference* casMemRef = NULL;
 
@@ -11969,9 +11969,10 @@ J9::Z::TreeEvaluator::VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *
    // compression sequence.
    bool isValueCompressedReference = false;
 
-   TR::Node* decompressedValueNode = newVNode;
+   static bool useOldCompareAndSwapObject = (bool)feGetEnv("TR_UseOldCompareAndSwapObject");
 
-   if (isObj && comp->useCompressedPointers() && decompressedValueNode->getOpCodeValue() == TR::l2i)
+   TR::Node* decompressedValueNode = newVNode;
+   if (useOldCompareAndSwapObject && isObj && comp->useCompressedPointers() && decompressedValueNode->getOpCodeValue() == TR::l2i)
       {
       // Pattern match the sequence:
       //
@@ -12020,14 +12021,28 @@ J9::Z::TreeEvaluator::VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *
    oldVReg = cg->gprClobberEvaluate(oldVNode);  //  CS oldReg, newReg, OFF(objReg)
    newVReg = cg->evaluate(newVNode);                    //    oldReg is clobbered
 
-   TR::Register* decompressedValueRegister = newVReg;
+   decompressedValueRegister = newVReg;
 
    if (isValueCompressedReference)
       {
       decompressedValueRegister = cg->evaluate(decompressedValueNode);
       }
+   else if (!useOldCompareAndSwapObject &&
+            isObj &&
+            comp->target().is64Bit() &&
+            (TR::Compiler->om.compressedReferenceShiftOffset() != 0))
+      {
+      if ((oldVNode->getOpCodeValue() != TR::aconst) || (oldVNode->getAddress() != 0))
+         {
+         generateRSInstruction(cg, TR::InstOpCode::SRLG, node, oldVReg, oldVReg, TR::Compiler->om.compressedReferenceShiftOffset());
+         }
 
-   bool needsDup = false;
+      if ((newVNode->getOpCodeValue() != TR::aconst) || (newVNode->getAddress() != 0))
+         {
+         newVReg = cg->allocateRegister();
+         generateRSInstruction(cg, TR::InstOpCode::SRLG, node, newVReg, decompressedValueRegister, TR::Compiler->om.compressedReferenceShiftOffset());
+         }
+      }
 
    if (objReg == newVReg)
       {
@@ -12036,8 +12051,6 @@ J9::Z::TreeEvaluator::VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *
       generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, newVReg, objReg);
       if (!isValueCompressedReference)
          decompressedValueRegister = newVReg;
-
-      needsDup = true;
       }
 
    if (!isExchange)
@@ -12188,10 +12201,8 @@ J9::Z::TreeEvaluator::VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *
       cg->stopUsingRegister(oldVReg);
       }
 
-   if (needsDup)
-      {
-      cg->stopUsingRegister(newVReg);
-      }
+   cg->stopUsingRegister(newVReg);
+
    if (scratchReg)
       {
       cg->stopUsingRegister(scratchReg);
