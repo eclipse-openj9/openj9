@@ -217,8 +217,17 @@ request_MonitorJlmDump(jvmtiEnv * env, J9VMJlmDump * jlmd, jint dump_format)
 
 			GetMonitorName(vmThread, monitor, monitor_name);
 			strcpy(dump, monitor_name);
-
 			dump += strlen((const char *)dump) + 1;
+
+			/* Calculate hashcode */
+			jint hash_code = 0;
+			if (monitor->flags & J9THREAD_MONITOR_OBJECT) {
+				j9object_t object = J9WEAKROOT_OBJECT_LOAD(vmThread, &monitor->userData);
+				if (object != NULL) {
+					hash_code = (jint)objectHashCode(jvm, object);
+				}
+			}
+			WRITE_4BYTES(hash_code);
 		}
 	}
 
@@ -253,6 +262,8 @@ request_MonitorJlmDump(jvmtiEnv * env, J9VMJlmDump * jlmd, jint dump_format)
 
 		strcpy(dump, lnrl_lock->monitor_name);
 		dump += strlen(lnrl_lock->monitor_name) + 1;
+
+		WRITE_4BYTES(0); /* hashcode */
 	}
 	return (jint) JLM_SUCCESS;
 #else
@@ -421,7 +432,7 @@ jint request_MonitorJlmDumpSize(J9JavaVM * jvm, UDATA * dump_size, jint dump_for
 	while ( NULL != (monitor = (J9ThreadAbstractMonitor *) omrthread_monitor_walk_no_locking(&walkState)) ) {
 		if (monitor->tracing) {
 				GetMonitorName(vmThread, monitor, monitor_name);
-				*dump_size += JLM_DUMP_COUNT_FIELD_SIZE + objIDfieldSize + strlen(monitor_name)+1;
+				*dump_size += JLM_DUMP_COUNT_FIELD_SIZE + objIDfieldSize + strlen(monitor_name) + 1 + 4;
 		}
 	}
 
@@ -430,7 +441,7 @@ jint request_MonitorJlmDumpSize(J9JavaVM * jvm, UDATA * dump_size, jint dump_for
 	 * @note omrgc_walkLWNRLockTracePool locks the pool and unlocks it after iterating all elements.
 	 */
 	while (NULL != (lnrl_lock = memoryManagerFunctions->omrgc_walkLWNRLockTracePool(jvm->omrVM, &j9gc_LWNRLock_walk_state))) {
-		*dump_size += JLM_DUMP_COUNT_FIELD_SIZE + objIDfieldSize + strlen(lnrl_lock->monitor_name) + 1;
+		*dump_size += JLM_DUMP_COUNT_FIELD_SIZE + objIDfieldSize + strlen(lnrl_lock->monitor_name) + 1 + 4;
 	}
 
 	return rc;
