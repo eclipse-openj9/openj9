@@ -52,6 +52,7 @@ static void jfrVMShutdown(J9HookInterface **hook, UDATA eventNum, void *eventDat
 static void jfrThreadStarting(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
 static void jfrThreadEnd(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
 static void jfrVMInitialized(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
+static void jfrVMMonitorWaited(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
 static void initializeEventFields(J9VMThread *currentThread, J9JFREvent *jfrEvent, UDATA eventType);
 static int J9THREAD_PROC jfrSamplingThreadProc(void *entryArg);
 static void jfrExecutionSampleCallback(J9VMThread *currentThread, IDATA handlerKey, void *userData);
@@ -79,6 +80,9 @@ jfrEventSize(J9JFREvent *jfrEvent)
 		break;
 	case J9JFR_EVENT_TYPE_THREAD_SLEEP:
 		size = sizeof(J9JFRThreadSlept) + (((J9JFRThreadSlept*)jfrEvent)->stackTraceSize * sizeof(UDATA));
+		break;
+	case J9JFR_EVENT_TYPE_OBJECT_WAIT:
+		size = sizeof(J9JFRMonitorWaited) + (((J9JFRMonitorWaited*)jfrEvent)->stackTraceSize * sizeof(UDATA));
 		break;
 	default:
 		Assert_VM_unreachable();
@@ -501,11 +505,8 @@ jfrVMSlept(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userDa
 		// TODO: worry about overflow?
 		jfrEvent->time = (event->millis * 1000000) + event->nanos;
 		jfrEvent->duration = 0;
-		UDATA result = 0;
-		I_64 currentNanos = j9time_current_time_nanos(&result);
-		if (0 != result) {
-			jfrEvent->duration = currentNanos - event->startNanos;
-		}
+		I_64 currentNanos = j9time_nano_time();
+		jfrEvent->duration = currentNanos - event->startTicks;
 	}
 }
 
@@ -541,6 +542,35 @@ jfrVMInitialized(J9HookInterface **hook, UDATA eventNum, void *eventData, void *
 		}
 	} else {
 		// TODO: tracepoint?
+	}
+}
+
+/**
+ * Hook for VM monitor waited. Called without VM access.
+ *
+ * @param hook[in] the VM hook interface
+ * @param eventNum[in] the event number
+ * @param eventData[in] the event data
+ * @param userData[in] the registered user data
+ */
+static void
+jfrVMMonitorWaited(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData)
+{
+	J9VMMonitorWaitedEvent *event = (J9VMMonitorWaitedEvent*) eventData;
+	J9VMThread *currentThread = event->currentThread;
+	PORT_ACCESS_FROM_VMC(currentThread);
+
+#if defined(DEBUG)
+	j9tty_printf(PORTLIB, "\n!!! VM monitor waited %p\n", currentThread);
+#endif /* defined(DEBUG) */
+
+	J9JFRMonitorWaited *jfrEvent = (J9JFRMonitorWaited*)reserveBufferWithStackTrace(currentThread, currentThread, J9JFR_EVENT_TYPE_OBJECT_WAIT, sizeof(*jfrEvent));
+	if (NULL != jfrEvent) {
+		jfrEvent->time = (event->millis * 1000000) + event->nanos;
+		jfrEvent->duration = j9time_nano_time() - event->startTicks;
+		jfrEvent->monitorClass = event->monitorClass;
+		jfrEvent->monitorAddress = event->monitorAddress;
+		jfrEvent->timedOut = (J9THREAD_TIMED_OUT == event->reason);
 	}
 }
 
@@ -581,6 +611,9 @@ initializeJFR(J9JavaVM *vm)
 		goto fail;
 	}
 	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_INITIALIZED, jfrVMInitialized, OMR_GET_CALLSITE(), NULL)) {
+		goto fail;
+	}
+	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_MONITOR_WAITED, jfrVMMonitorWaited, OMR_GET_CALLSITE(), NULL)) {
 		goto fail;
 	}
 
@@ -668,6 +701,7 @@ tearDownJFR(J9JavaVM *vm)
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_THREAD_END, jfrThreadEnd, NULL);
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_SLEPT, jfrVMSlept, NULL);
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_INITIALIZED, jfrVMInitialized, NULL);
+	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_MONITOR_WAITED, jfrVMMonitorWaited, NULL);
 
 	/* Free global data */
 	VM_JFRConstantPoolTypes::freeJFRConstantEvents(vm);

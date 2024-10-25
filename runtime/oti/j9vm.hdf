@@ -519,6 +519,9 @@ typedef UDATA (* lookupNativeAddressCallback)(struct J9VMThread *currentThread, 
 		<data type="I_64" name="millis" description="milliseconds to wait for" />
 		<data type="I_32" name="nanos" description="nanoseconds to wait for" />
 		<data type="IDATA" name="reason" description="reason why the wait has finished" />
+		<data type="I_64" name="startTicks" description="current ticks when wait began" />
+		<data type="UDATA" name="monitorAddress" description="object monitor address" />
+		<data type="struct J9Class*" name="monitorClass" description="monitor class" />
 	</event>
 
 	<event>
@@ -1218,7 +1221,7 @@ typedef UDATA (* lookupNativeAddressCallback)(struct J9VMThread *currentThread, 
 		<data type="struct J9VMThread *" name="currentThread" description="current thread" />
 		<data type="I_64" name="millis" description="milliseconds to sleep for" />
 		<data type="I_32" name="nanos" description="nanoseconds to sleep for" />
-		<data type="I_64" name="startNanos" description="current time in nanos when sleep began" />
+		<data type="I_64" name="startTicks" description="current ticks when sleep began" />
 	</event>
 
 	<event>

@@ -402,6 +402,19 @@ typedef struct J9JFRThreadSlept {
 
 #define J9JFRTHREADSLEPT_STACKTRACE(jfrEvent) ((UDATA*)(((J9JFRThreadSlept*)(jfrEvent)) + 1))
 
+/* Variable-size structure - stackTraceSize worth of UDATA follow the fixed portion */
+typedef struct J9JFRMonitorWaited {
+	J9JFR_EVENT_WITH_STACKTRACE_FIELDS
+	I_64 time;
+	I_64 duration;
+	struct J9Class *monitorClass;
+	struct J9VMThread *notifierThread;
+	BOOLEAN timedOut;
+	UDATA monitorAddress;
+} J9JFRMonitorWaited;
+
+#define J9JFRMonitorWaitedED_STACKTRACE(jfrEvent) ((UDATA*)(((J9JFRMonitorWaited*)(jfrEvent)) + 1))
+
 #endif /* defined(J9VM_OPT_JFR) */
 
 /* @ddr_namespace: map_to_type=J9CfrError */

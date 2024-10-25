@@ -935,7 +935,7 @@ VM_JFRConstantPoolTypes::addExecutionSampleEntry(J9JFRExecutionSample *execution
 	entry->threadIndex = addThreadEntry(entry->vmThread);
 	if (isResultNotOKay()) goto done;
 
-	entry->stackTraceIndex = consumeStackTrace(entry->vmThread, (UDATA*) (executionSampleData + 1), executionSampleData->stackTraceSize);
+	entry->stackTraceIndex = consumeStackTrace(entry->vmThread, J9JFREXECUTIONSAMPLE_STACKTRACE(executionSampleData), executionSampleData->stackTraceSize);
 	if (isResultNotOKay()) goto done;
 
 	index = _executionSampleCount++;
@@ -967,7 +967,7 @@ VM_JFRConstantPoolTypes::addThreadStartEntry(J9JFRThreadStart *threadStartData)
 	entry->parentThreadIndex = addThreadEntry(threadStartData->parentThread);
 	if (isResultNotOKay()) goto done;
 
-	entry->stackTraceIndex = consumeStackTrace(threadStartData->parentThread, (UDATA*)(threadStartData + 1), threadStartData->stackTraceSize);
+	entry->stackTraceIndex = consumeStackTrace(threadStartData->parentThread, J9JFRTHREADSTART_STACKTRACE(threadStartData), threadStartData->stackTraceSize);
 	if (isResultNotOKay()) goto done;
 
 	index = _threadStartCount++;
@@ -1022,8 +1022,45 @@ VM_JFRConstantPoolTypes::addThreadSleepEntry(J9JFRThreadSlept *threadSleepData)
 	entry->eventThreadIndex = addThreadEntry(threadSleepData->vmThread);
 	if (isResultNotOKay()) goto done;
 
-	entry->stackTraceIndex = consumeStackTrace(threadSleepData->vmThread, (UDATA*)(threadSleepData + 1), threadSleepData->stackTraceSize);
+	entry->stackTraceIndex = consumeStackTrace(threadSleepData->vmThread, J9JFRTHREADSLEPT_STACKTRACE(threadSleepData), threadSleepData->stackTraceSize);
 	if (isResultNotOKay()) goto done;
+
+	index = _threadEndCount++;
+
+done:
+	return index;
+}
+
+U_32
+VM_JFRConstantPoolTypes::addMonitorWaitEntry(J9JFRMonitorWaited* threadWaitData)
+{
+	MonitorWaitEntry *entry = (MonitorWaitEntry*)pool_newElement(_monitorWaitTable);
+	U_32 index = U_32_MAX;
+
+	if (NULL == entry) {
+		_buildResult = OutOfMemory;
+		goto done;
+	}
+
+	entry->ticks = threadWaitData->startTicks;
+	entry->duration = threadWaitData->duration;
+	entry->timeOut = threadWaitData->time;
+	entry->monitorAddress = (I_64)(U_64)threadWaitData->monitorAddress;
+	entry->timedOut = threadWaitData->timedOut;
+
+	entry->threadIndex = addThreadEntry(threadWaitData->vmThread);
+	if (isResultNotOKay()) goto done;
+
+	entry->eventThreadIndex = addThreadEntry(threadWaitData->vmThread);
+	if (isResultNotOKay()) goto done;
+
+	entry->stackTraceIndex = consumeStackTrace(threadWaitData->vmThread, J9JFRMonitorWaitedED_STACKTRACE(threadWaitData), threadWaitData->stackTraceSize);
+	if (isResultNotOKay()) goto done;
+
+	entry->monitorClass = getClassEntry(threadWaitData->monitorClass);
+	if (isResultNotOKay()) goto done;
+
+	entry->notifierThread = 0; //Need a way to find the notifiying thread
 
 	index = _threadEndCount++;
 
