@@ -65,12 +65,12 @@ Fast_java_lang_Thread_interruptedImpl(J9VMThread *currentThread)
 	jboolean rc = JNI_FALSE;
 #if defined(WIN32)
 	/* Synchronize on the thread lock around interrupted() on windows */
-	j9object_t threadLock = J9VMJAVALANGTHREAD_LOCK(currentThread, currentThread->threadObject);
-	threadLock = (j9object_t)objectMonitorEnter(currentThread, threadLock);
-	if (J9_OBJECT_MONITOR_ENTER_FAILED(threadLock)) {
-		setNativeOutOfMemoryError(currentThread, J9NLS_VM_FAILED_TO_ALLOCATE_MONITOR);
-		goto done;
-	}
+	// j9object_t threadLock = J9VMJAVALANGTHREAD_LOCK(currentThread, currentThread->threadObject);
+	// threadLock = (j9object_t)objectMonitorEnter(currentThread, threadLock);
+	// if (J9_OBJECT_MONITOR_ENTER_FAILED(threadLock)) {
+	// 	setNativeOutOfMemoryError(currentThread, J9NLS_VM_FAILED_TO_ALLOCATE_MONITOR);
+	// 	goto done;
+	// }
 	/* This field is only initialized on windows */
 	J9JavaVM * const vm = currentThread->javaVM;
 	if (NULL != vm->sidecarClearInterruptFunction) {
@@ -81,8 +81,8 @@ Fast_java_lang_Thread_interruptedImpl(J9VMThread *currentThread)
 		rc = JNI_TRUE;
 	}
 #if defined(WIN32)
-	objectMonitorExit(currentThread, threadLock);
-done:
+	// objectMonitorExit(currentThread, threadLock);
+// done:
 #endif /* WIN32 */
 	return rc;
 }
