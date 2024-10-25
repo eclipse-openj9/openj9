@@ -906,7 +906,7 @@ isFieldAccessCompatible(J9BytecodeVerificationData *verifyData, J9ROMFieldRef *f
 		J9BranchTargetStack *liveStack = (J9BranchTargetStack *)verifyData->liveStack;
 		J9ROMFieldShape *field = findFieldFromCurrentRomClass(romClass, fieldRef);
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-		IDATA isStrictField = (NULL != field) && J9_ARE_ALL_BITS_SET(field->modifiers, J9AccStrict);
+		IDATA isStrictField = (NULL != field) && J9ROMFIELD_IS_STRICT(romClass, field->modifiers);
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 		if (J9_ARE_ALL_BITS_SET(receiver, BCV_SPECIAL_INIT)) {
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
