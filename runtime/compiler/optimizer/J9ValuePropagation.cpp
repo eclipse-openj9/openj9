@@ -3782,9 +3782,28 @@ bool J9::ValuePropagation::isUnreliableSignatureType(
       return false;
 
    int32_t numDims = 0;
+   TR_OpaqueClassBlock *originClass = klass;
    klass = comp()->fej9()->getBaseComponentClass(klass, numDims);
+
    if (!TR::Compiler->cls.isInterfaceClass(comp(), klass))
-      return false;
+      {
+      // If the original class is an array class and it is not a null-restricted array,
+      // we can not trust its type as a nullable array because it can either be a nullable
+      // array class type or a null-restricted array type.
+      // TODO-VALUETYPE: However, if in the future Value Propagation constraints are able
+      // to distinguish between nullable and null-restricted arrays, this test can change.
+      if (TR::Compiler->om.areFlattenableValueTypesEnabled() &&
+         (numDims > 0) &&
+         TR::Compiler->cls.isValueTypeClass(klass) &&
+         !TR::Compiler->cls.isArrayNullRestricted(comp(), originClass))
+         {
+         // Do nothing here and will be handled next like an interface array
+         }
+      else
+         {
+         return false;
+         }
+      }
 
    // Find the best array type that we can guarantee based on an
    // array-of-interface signature.
