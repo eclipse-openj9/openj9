@@ -1193,6 +1193,11 @@ notCheckpointSafeOrClinitFrameWalkFunction(J9VMThread *vmThread, J9StackWalkStat
 
 		/* we only enforce this in methods loaded by the bootloader */
 		if (methodLoader == vmThread->javaVM->systemClassLoader) {
+			if (J9_ARE_ALL_BITS_SET(romMethod->modifiers, J9AccSynchronized)) {
+				*(UDATA*)walkState->userData1 = J9VM_DELAYCHECKPOINT_NOTCHECKPOINTSAFE;
+				goto fail;
+			}
+
 			if (J9ROMMETHOD_HAS_EXTENDED_MODIFIERS(romMethod)) {
 				U_32 extraModifiers = getExtendedModifiersDataFromROMMethod(romMethod);
 				if (J9ROMMETHOD_HAS_NOT_CHECKPOINT_SAFE_ANNOTATION(extraModifiers)) {
