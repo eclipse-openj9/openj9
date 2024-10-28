@@ -284,11 +284,16 @@ enum MessageType : uint16_t
    KnownObjectTable_createSymRefWithKnownObject,
    KnownObjectTable_getReferenceField,
    KnownObjectTable_getKnownObjectTableDumpInfo,
+   // for getting a J9Class from KnownObjectTable
+   KnownObjectTable_getJ9Class,
+   // for getting a vectorBitSize from KnownObjectTable
+   KnownObjectTable_getVectorBitSize,
 
    AOTCache_getROMClassBatch,
 
    AOTCacheMap_request,
    AOTCacheMap_reply,
+
 
    MessageType_MAXTYPE
    };
