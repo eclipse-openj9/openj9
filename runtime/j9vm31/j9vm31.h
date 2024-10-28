@@ -84,7 +84,7 @@ typedef struct JNIEnv31 {
  * the parameters interpretation require understanding of the specifiers from the
  * method signature.
  */
-typedef char  *___valist64[4];    // 64-bit uses char *[2].
+typedef char  *___valist64[4]; /* 64-bit uses char *[2]. */
 typedef ___valist64  va_list_64;
 
 /**

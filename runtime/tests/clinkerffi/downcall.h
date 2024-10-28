@@ -685,7 +685,7 @@ typedef struct stru_2_Floats_Long {
 
 typedef struct stru_3_Shorts_Char {
 	short elem1[3];
-	short elem2; // intended for the char type in java
+	short elem2; /* intended for the char type in java */
 } stru_3_Shorts_Char;
 
 typedef struct stru_Int_Float_Int_Float {
