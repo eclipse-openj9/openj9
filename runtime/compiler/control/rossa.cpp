@@ -23,9 +23,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#if defined(J9VM_OPT_JITSERVER)
 #include <vector>
 #include <string>
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
 #ifdef WINDOWS
 // Undefine the winsockapi because winsock2 defines it. Removes warnings.
