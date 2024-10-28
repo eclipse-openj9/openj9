@@ -4399,7 +4399,7 @@ JVM_Available(jint descriptor, jlong* bytes)
 		return JNI_FALSE;
 	}
 
-#if defined(WIN32) && !defined(__IBMC__) && !(defined(__open_xl__) && !defined(__cplusplus))
+#if defined(WIN32) && !defined(__IBMC__) && !defined(__open_xl__)
 	curr = _lseeki64(descriptor, 0, SEEK_CUR);
 	if (curr==-1L) {
 		if (descriptor == 0) {
@@ -4542,11 +4542,11 @@ JVM_Lseek(jint descriptor, jlong bytesToSeek, jint origin)
 	}
 
 #if defined(WIN32)
-#if defined(__IBMC__) || defined(__open_xl__) && !defined(__cplusplus)
+#if defined(__IBMC__) || defined(__open_xl__)
 	result = lseek(descriptor, (long) bytesToSeek, origin);
-#else
+#else /* defined(__IBMC__) || defined(__open_xl__) */
 	result = _lseeki64(descriptor, bytesToSeek, origin);
-#endif
+#endif /* defined(__IBMC__) || defined(__open_xl__) */
 #elif defined(J9UNIX) || defined(J9ZOS390) /* defined(WIN32) */
 #if defined(LINUX) && !defined(J9VM_ENV_DATA64)
 
