@@ -81,7 +81,7 @@ extern "C" {
 
 #define FFI_64_BIT_MAX 9223372036854775807
 
-//HACK for compiling on MinGW /w MSVC headers
+/* HACK for compiling on MinGW /w MSVC headers */
 #ifdef __GNUC__
 #   define LONG_LONG_MAX __LONG_LONG_MAX__
 #endif
