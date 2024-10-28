@@ -994,3 +994,12 @@ TraceEvent=Trc_VM_simulateStack_RTVSEND_JBinvokestaticsplit_index Overhead=1 Lev
 TraceEvent=Trc_VM_simulateStack_RTVSEND_JBinvokespecialsplit_index Overhead=1 Level=3 Template="simulateStack RTV_SEND JBinvokespecialsplit index(%zu)"
 TraceEvent=Trc_VM_simulateStack_RTVSEND_JBinvokedynamic_classSig Overhead=1 Level=5 Template="simulateStack RTV_SEND JBinvokedynamic classSig(%.*s)"
 TraceEvent=Trc_VM_simulateStack_RTVSEND_others_classSig Overhead=1 Level=5 Template="simulateStack RTV_SEND others classSig(%.*s)"
+
+TraceEvent=Trc_VM_initializeJFR_isStarted NoEnv Overhead=1 Level=2 Template="The JFR has been initialized already"
+TraceEvent=Trc_VM_jfrStartSamplingThread_jfrSamplerState NoEnv Overhead=1 Level=2 Template="jfrStartSamplingThread vm->jfrSamplerState(%zu)"
+TraceException=Trc_VM_jfrStartSamplingThread_omrthread_create_failed NoEnv Overhead=1 Level=1 Template="omrthread_create(jfrSamplingThreadProc) failed with retVal(%zd)"
+TraceException=Trc_VM_loadJFRMetadataBlob_getSystemProperty_fail NoEnv Overhead=1 Level=1 Template="JFR loadJFRMetadataBlob getSystemProperty failed with rc(%zu)"
+TraceException=Trc_VM_loadJFRMetadataBlob_blobDir_OOM NoEnv Overhead=1 Level=1 Template="JFR loadJFRMetadataBlob j9mem_allocate_memory failed for blobDir"
+TraceException=Trc_VM_loadJFRMetadataBlob_fileLength_too_large NoEnv Overhead=1 Level=1 Template="JFR loadJFRMetadataBlob fileLength(%llx) not less than 2G"
+TraceException=Trc_VM_loadJFRMetadataBlob_metaDataBlobFile_OOM NoEnv Overhead=1 Level=1 Template="JFR loadJFRMetadataBlob j9mem_allocate_memory failed for metaDataBlobFile"
+TraceException=Trc_VM_loadJFRMetadataBlob_bad_fileDescriptor NoEnv Overhead=1 Level=1 Template="JFR loadJFRMetadataBlob j9file_open returns fileDescriptor(-1)"

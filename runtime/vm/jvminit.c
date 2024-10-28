@@ -7478,7 +7478,7 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 
 #if defined(J9VM_OPT_JFR)
 	if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_JFR_ENABLED)) {
-		if (JNI_OK != initializeJFR(vm) ) {
+		if (JNI_OK != initializeJFR(vm, FALSE)) {
 			goto error;
 		}
 	}

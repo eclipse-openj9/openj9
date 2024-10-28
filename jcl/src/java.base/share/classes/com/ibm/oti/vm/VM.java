@@ -640,6 +640,41 @@ public static Properties internalGetProperties() {
 
 /*[IF JFR_SUPPORT]*/
 /**
+ * Check if a JFR recording has been started.
+ *
+ * @return true if a JFR recording is in progress, false otherwise
+ */
+public static native boolean isJFRRecordingStarted();
+
+/**
+ * JFR.dump - Flush all the thread buffers and write out the global buffer.
+ *
+ */
+public static native void jfrDump();
+
+/**
+ * Set JFR recording file name.
+ *
+ * @param fileName the file name for new JFR recording
+ *
+ * @return true on success, false on failure
+ */
+public static native boolean setJFRRecordingFileName(String fileName);
+
+/**
+ * Start JFR assuming this is after VM startup.
+ *
+ * @return 0 on success, -1 on failure
+ */
+public static native int startJFR();
+
+/**
+ * Shut down JFR.
+ *
+ */
+public static native void stopJFR();
+
+/**
  * Trigger ExecutionSample JFR event on all Java threads.
  */
 public static native void triggerExecutionSample();
