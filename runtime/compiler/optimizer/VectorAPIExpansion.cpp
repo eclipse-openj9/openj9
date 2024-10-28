@@ -637,12 +637,32 @@ TR_VectorAPIExpansion::getVectorSizeFromVectorSpecies(TR::Node *vectorSpeciesNod
       {
       if (vSpeciesSymRef->hasKnownObjectIndex())
          {
-         TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp()->fe());
-         TR::VMAccessCriticalSection getVectorSizeFromVectorSpeciesSection(fej9);
+         int32_t vectorBitSize = 0;
+#if defined(J9VM_OPT_JITSERVER)
+         if (comp()->isOutOfProcessCompilation()) /* In server mode */
+            {
+            auto stream = comp()->getStream();
+            stream->write(JITServer::MessageType::KnownObjectTable_getVectorBitSize,
+                          vSpeciesSymRef->getKnownObjectIndex());
+            vectorBitSize = std::get<0>(stream->read<int32_t>());
+            }
+         else
+#endif /* defined(J9VM_OPT_JITSERVER) */
+            {
+            TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp()->fe());
 
-         uintptr_t vectorSpeciesLocation = comp()->getKnownObjectTable()->getPointer(vSpeciesSymRef->getKnownObjectIndex());
-         uintptr_t vectorShapeLocation = fej9->getReferenceField(vectorSpeciesLocation, "vectorShape", "Ljdk/incubator/vector/VectorShape;");
-         int32_t vectorBitSize = fej9->getInt32Field(vectorShapeLocation, "vectorBitSize");
+            TR::VMAccessCriticalSection getVectorSizeFromVectorSpeciesSection(fej9);
+
+            uintptr_t vectorSpeciesLocation =
+               comp()->getKnownObjectTable()->getPointer(vSpeciesSymRef->getKnownObjectIndex());
+            uintptr_t vectorShapeLocation =
+               fej9->getReferenceField(vectorSpeciesLocation,
+                                       "vectorShape",
+                                       "Ljdk/incubator/vector/VectorShape;");
+            vectorBitSize = fej9->getInt32Field(vectorShapeLocation, "vectorBitSize");
+            }
+
+
          return (vec_sz_t)vectorBitSize;
          }
       }
@@ -661,12 +681,28 @@ TR_VectorAPIExpansion::getJ9ClassFromClassNode(TR::Compilation *comp, TR::Node *
       {
       if (symRef->hasKnownObjectIndex())
          {
-         TR_J9VMBase *fej9 = comp->fej9();
 
-         TR::VMAccessCriticalSection getDataTypeFromClassNodeSection(fej9);
+         J9Class *j9class = NULL;
+#if defined(J9VM_OPT_JITSERVER)
+         if (comp->isOutOfProcessCompilation()) /* In server mode */
+            {
+            auto stream = comp->getStream();
+            stream->write(JITServer::MessageType::KnownObjectTable_getJ9Class,
+                          symRef->getKnownObjectIndex());
+            j9class = (J9Class *)std::get<0>(stream->read<uintptr_t>());
+            }
+         else
+#endif /* defined(J9VM_OPT_JITSERVER) */
+            {
+            TR_J9VMBase *fej9 = comp->fej9();
 
-         uintptr_t javaLangClass = comp->getKnownObjectTable()->getPointer(symRef->getKnownObjectIndex());
-         J9Class *j9class = (J9Class *)(intptr_t)fej9->getInt64Field(javaLangClass, "vmRef");
+            TR::VMAccessCriticalSection getDataTypeFromClassNodeSection(fej9);
+
+            uintptr_t javaLangClass =
+               comp->getKnownObjectTable()->getPointer(symRef->getKnownObjectIndex());
+
+            j9class = (J9Class *)(intptr_t)fej9->getInt64Field(javaLangClass, "vmRef");
+            }
 
          return j9class;
          }

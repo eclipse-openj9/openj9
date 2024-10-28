@@ -2868,6 +2868,41 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, knownObjectTableDumpInfoList);
          }
          break;
+      case MessageType::KnownObjectTable_getJ9Class:
+         {
+         TR::KnownObjectTable::Index knotIndex =
+            std::get<0>(client->getRecvData<TR::KnownObjectTable::Index>());
+
+         uintptr_t j9class = 0;
+            {
+            TR::VMAccessCriticalSection getJ9ClassFromKnownObjectIndex(fe);
+
+            uintptr_t javaLangClass = knot->getPointer(knotIndex);
+            j9class = (uintptr_t)fe->getInt64Field(javaLangClass, "vmRef");
+            }
+
+         client->write(response, j9class);
+         }
+         break;
+      case MessageType::KnownObjectTable_getVectorBitSize:
+         {
+         TR::KnownObjectTable::Index knotIndex =
+            std::get<0>(client->getRecvData<TR::KnownObjectTable::Index>());
+
+         int32_t vectorBitSize = 0;
+            {
+            TR::VMAccessCriticalSection getVBSFromKnownObjectIndex(fe);
+
+            uintptr_t vectorSpeciesLocation = knot->getPointer(knotIndex);
+            uintptr_t vectorShapeLocation = fe->getReferenceField(vectorSpeciesLocation,
+                                                            "vectorShape",
+                                                            "Ljdk/incubator/vector/VectorShape;");
+            vectorBitSize = fe->getInt32Field(vectorShapeLocation, "vectorBitSize");
+            }
+
+         client->write(response, vectorBitSize);
+         }
+         break;
       case MessageType::AOTCache_getROMClassBatch:
          {
          auto recv = client->getRecvData<std::vector<J9Class *>>();
