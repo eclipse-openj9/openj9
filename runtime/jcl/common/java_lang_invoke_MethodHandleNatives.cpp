@@ -1304,7 +1304,6 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 #endif
 					) {
 						if (callerClass->classLoader != declaringClass->classLoader) {
-							J9BytecodeVerificationData *verifyData = vm->bytecodeVerificationData;
 							U_16 sigOffset = 0;
 
 							/* Skip the '[' or 'L' prefix */
@@ -1313,19 +1312,22 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 							}
 							if (IS_CLASS_SIGNATURE(J9UTF8_DATA(signature)[sigOffset])) {
 								sigOffset += 1;
-								omrthread_monitor_enter(vm->classTableMutex);
-								UDATA clConstraintResult = verifyData->checkClassLoadingConstraintForNameFunction(
-																currentThread,
-																declaringClass->classLoader,
-																callerClass->classLoader,
-																J9UTF8_DATA(signature) + sigOffset,
-																J9UTF8_DATA(signature) + sigOffset,
-																J9UTF8_LENGTH(signature) - sigOffset - 1, /* -1 to remove the trailing ;*/
-																true);
-								omrthread_monitor_exit(vm->classTableMutex);
-								if (0 != clConstraintResult) {
-									vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGLINKAGEERROR, NULL);
-									goto done;
+								J9BytecodeVerificationData *verifyData = vm->bytecodeVerificationData;
+								if (NULL != verifyData) {
+									omrthread_monitor_enter(vm->classTableMutex);
+									UDATA clConstraintResult = verifyData->checkClassLoadingConstraintForNameFunction(
+																	currentThread,
+																	declaringClass->classLoader,
+																	callerClass->classLoader,
+																	J9UTF8_DATA(signature) + sigOffset,
+																	J9UTF8_DATA(signature) + sigOffset,
+																	J9UTF8_LENGTH(signature) - sigOffset - 1, /* -1 to remove the trailing ;*/
+																	true);
+									omrthread_monitor_exit(vm->classTableMutex);
+									if (0 != clConstraintResult) {
+										vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGLINKAGEERROR, NULL);
+										goto done;
+									}
 								}
 							}
 						}
