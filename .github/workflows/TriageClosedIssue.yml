@@ -67,7 +67,8 @@ jobs:
             }
 
             if (prAssignees.length > 0) {
-              resultString += `PR Assignees: ${prAssignees.join(', ')}`;
+              let prUniqueAssignees = [...new Set(prAssignees)];
+              resultString += `PR Assignees: ${prUniqueAssignees.join(', ')}`;
             } else {
               resultString += `PR Assignees: No one :(`;
             }
