@@ -4160,10 +4160,11 @@ void genInstanceOfOrCheckcastArrayOfJavaLangObjectTest(TR::Node *node, TR::CodeG
 /**   \brief Generates Superclass Test for both checkcast and instanceof nodes.
  *    \details
  *    It will generate pseudocode as follows.
- *    if (objectClassDepth <= castClassDepth) call Helper
+ *    if (objectClassDepth <= castClassDepth)
+ *       call Helper
  *    else
- *    load superClassArrReg,superClassOfObjectClass
- *    cmp superClassArrReg[castClassDepth], castClass
+ *       load superClassArrReg,superClassOfObjectClass
+ *       cmp superClassArrReg[castClassDepth], castClass
  *    Here It sets up the condition code for callee to react on.
  */
 static
@@ -8060,8 +8061,9 @@ reservationLockEnter(TR::Node *node, int32_t lwOffset, TR::Register *objectClass
    //    CRJ   valReg,     monitorReg, MASK6, callLabel
    //    AHI   monitorReg, INC_DEC_VALUE
    //    ST    monitorReg, #lwOffset(objectReg)
-   //    # IF 64-Bit and JAVA_VERSION >= 19
+   //    #IF 64-Bit and JAVA_VERSION >= 19
    //       AGSI #ownedMonitorCountOffset(J9VMThread), 1
+   //    #ENDIF
 
    // load monitor reg
    generateRXInstruction(cg, loadOp, node, monitorReg, generateS390MemoryReference(objReg, lwOffset, cg));
@@ -8139,7 +8141,7 @@ reservationLockEnter(TR::Node *node, int32_t lwOffset, TR::Register *objectClass
       // BRC   returnLabel
       // callHelper:
       // BRASL R14, jitMonitorEntry
-      //returnLabel:
+      // ßreturnLabel:
 
       // Avoid CAS in case lock value is not zero
       generateS390CompareAndBranchInstruction(cg, compareImmOp, node, monitorReg, 0, TR::InstOpCode::COND_BNE, reserved_checkLabel, false);
@@ -8976,7 +8978,7 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node * node, TR::CodeGene
             if (comp->getOption(TR_TraceCG))
                traceMsg(comp, "%s: Emitting Class Equality Test\n", node->getOpCode().getName());
             cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "instanceOfStats/(%s)/Equality", comp->signature()),1,TR::DebugCounter::Undetermined);
-             /*   #IF NextTest = GoToFalse
+             /*   #IF NextTest == GoToFalse
               *      branchCond = ifInstanceOf ? (!trueFallThrough ? COND_BE : COND_BNE ) : (init=true ? COND_BE : COND_BNE )
               *      branchLabel = ifInstanceOf ? (!trueFallThrough ? trueLabel : falseLabel ) : doneLabel
               *      CGRJ castClassReg, objClassReg, branchCond, branchLabel
