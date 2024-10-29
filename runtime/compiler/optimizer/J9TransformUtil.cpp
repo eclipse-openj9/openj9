@@ -2919,7 +2919,7 @@ TR::Block* J9::TransformUtil::insertUnsafeCopyMemoryArgumentChecksAndAdjustForOf
     *    ificmpeq --> newCallBlock           // jumps if not an array
     *      iand
     *        l2i
-    *          lloadi  <isClassAndDepthFlags>
+    *          lloadi  <isClassDepthAndFlags>
     *            aloadi  <vft-symbol>
     *              aload  src/dest
     *        iconst 0x10000                  // array flag
@@ -2948,11 +2948,10 @@ TR::Block* J9::TransformUtil::insertUnsafeCopyMemoryArgumentChecksAndAdjustForOf
       TR::Block* arrayCheckBlock = callBlock->split(callBlock->getExit(), cfg);
 
       TR::Node *vftLoad = TR::Node::createWithSymRef(TR::aloadi, 1, 1, node->duplicateTree(), comp->getSymRefTab()->findOrCreateVftSymbolRef());
-      TR::Node *isArrayField = TR::Node::createWithSymRef(TR::lloadi, 1, 1, vftLoad, comp->getSymRefTab()->findOrCreateClassAndDepthFlagsSymbolRef());
-      isArrayField = TR::Node::create(TR::l2i, 1, isArrayField);
-      TR::Node *andConstNode = TR::Node::create(isArrayField, TR::iconst, 0, TR::Compiler->cls.flagValueForArrayCheck(comp));
-      TR::Node *andNode = TR::Node::create(TR::iand, 2, isArrayField, andConstNode);
-      TR::Node *arrayCheckNode = TR::Node::createif(TR::ificmpeq, andNode, TR::Node::create(node, TR::iconst, 0), newCallBlock->getEntry());
+      TR::Node *maskedIsArrayClassNode = comp->fej9()->testIsClassArrayType(vftLoad);
+      TR::Node *arrayCheckNode = TR::Node::createif(TR::ificmpeq, maskedIsArrayClassNode,
+                                                    TR::Node::create(node, TR::iconst, 0),
+                                                    newCallBlock->getEntry());
 
       arrayCheckBlock->append(TR::TreeTop::create(comp, arrayCheckNode, NULL, NULL));
       cfg->addEdge(callBlock, newCallBlock);
