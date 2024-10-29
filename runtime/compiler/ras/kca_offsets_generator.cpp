@@ -63,7 +63,7 @@ J9::Options::kcaOffsets(const char *option, void *, TR::OptionTable *entry)
    szRT[0]='\0';
 
    // The generated file looks like this: kca_offsets_gen_R#_#[_CMPRSS][_RT].h
-   sprintf( szFileName, "kca_offsets_gen_R%d_%d%s%s.h", EsVersionMajor, EsVersionMinor, szCMPRSS, szRT );
+   snprintf( szFileName, sizeof(szFileName), "kca_offsets_gen_R%d_%d%s%s.h", EsVersionMajor, EsVersionMinor, szCMPRSS, szRT );
    TR_ASSERT( strlen(szFileName)<40, "szFileName array needs to be increased" );
 
    auto file = fopen( szFileName, "wt" );

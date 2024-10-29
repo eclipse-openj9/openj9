@@ -3435,9 +3435,10 @@ TR_PCISCGraph *
 makeCopyingTROxGraph(TR::Compilation *c, int32_t ctrl, int pattern)
    {
    TR_ASSERT(pattern == 0 || pattern == 1, "not implemented");
-   char *name = (char *)TR_MemoryBase::jitPersistentAlloc(16);
-   sprintf(name, "CopyingTROx(%d)",pattern);
-   TR_PCISCGraph *tgt = new (PERSISTENT_NEW) TR_PCISCGraph(c->trMemory(), name, 0, 16);
+   size_t nameSize = 16;
+   char *name = (char *)TR_MemoryBase::jitPersistentAlloc(nameSize);
+   snprintf(name, nameSize, "CopyingTROx(%d)",pattern);
+   TR_PCISCGraph *tgt = new (PERSISTENT_NEW) TR_PCISCGraph(c->trMemory(), name, 0, nameSize);
    /****************************************************************************    opc               id        dagId #cfg #child other/pred/children */
    TR_PCISCNode *byteArray  = new (PERSISTENT_NEW) TR_PCISCNode(c->trMemory(), TR_arraybase, TR::NoType,  tgt->incNumNodes(),16,   0,   0,    0);
    tgt->addNode(byteArray); // src array base
@@ -3542,9 +3543,10 @@ TR_PCISCGraph *
 makeCopyingTROTInduction1Graph(TR::Compilation *c, int32_t ctrl, int32_t pattern)
    {
    TR_ASSERT(pattern == 0 || pattern == 1, "not implemented");
-   char *name = (char *)TR_MemoryBase::jitPersistentAlloc(26);
-   sprintf(name, "CopyingTROTInduction1(%d)",pattern);
-   TR_PCISCGraph *tgt = new (PERSISTENT_NEW) TR_PCISCGraph(c->trMemory(), name, 0, 16);
+   size_t nameSize = 26;
+   char *name = (char *)TR_MemoryBase::jitPersistentAlloc(nameSize);
+   snprintf(name, nameSize, "CopyingTROTInduction1(%d)",pattern);
+   TR_PCISCGraph *tgt = new (PERSISTENT_NEW) TR_PCISCGraph(c->trMemory(), name, 0, nameSize);
    /*********************************************************************    opc               id        dagId #cfg #child other/pred/children */
    TR_PCISCNode *v0  = new (PERSISTENT_NEW) TR_PCISCNode(c->trMemory(), TR_arraybase, TR::NoType, tgt->incNumNodes(), 13,   0,   0,    0);  tgt->addNode(v0); // src array base
    TR_PCISCNode *v1  = new (PERSISTENT_NEW) TR_PCISCNode(c->trMemory(), TR_variable, TR::NoType,  tgt->incNumNodes(), 12,   0,   0,    0);  tgt->addNode(v1); // src array index
@@ -4612,9 +4614,10 @@ TR_PCISCGraph *
 makeCopyingTRTxGraph(TR::Compilation *c, int32_t ctrl, int pattern)
    {
    TR_ASSERT(pattern == 0 || pattern == 1 || pattern == 2, "not implemented");
-   char *name = (char *)TR_MemoryBase::jitPersistentAlloc(16);
-   sprintf(name, "CopyingTRTx(%d)",pattern);
-   TR_PCISCGraph *tgt = new (PERSISTENT_NEW) TR_PCISCGraph(c->trMemory(), name, 0, 16);
+   size_t nameSize = 16;
+   char *name = (char *)TR_MemoryBase::jitPersistentAlloc(nameSize);
+   snprintf(name, nameSize, "CopyingTRTx(%d)",pattern);
+   TR_PCISCGraph *tgt = new (PERSISTENT_NEW) TR_PCISCGraph(c->trMemory(), name, 0, nameSize);
    /***************************************************************************    opc               id        dagId #cfg #child other/pred/children */
    TR_PCISCNode *charArray  = new (PERSISTENT_NEW) TR_PCISCNode(c->trMemory(), TR_arraybase, TR::NoType, tgt->incNumNodes(), 15,   0,   0,    0);
    tgt->addNode(charArray); // src array base
@@ -4856,9 +4859,10 @@ TR_PCISCGraph *
 makeCopyingTRTOInduction1Graph(TR::Compilation *c, int32_t ctrl, int32_t pattern)
    {
    TR_ASSERT(pattern == 0 || pattern == 1 || pattern == 2, "not implemented");
-   char *name = (char *)TR_MemoryBase::jitPersistentAlloc(26);
-   sprintf(name, "CopyingTRTOInduction1(%d)",pattern);
-   TR_PCISCGraph *tgt = new (PERSISTENT_NEW) TR_PCISCGraph(c->trMemory(), name, 0, 16);
+   size_t nameSize = 26;
+   char *name = (char *)TR_MemoryBase::jitPersistentAlloc(nameSize);
+   snprintf(name, nameSize, "CopyingTRTOInduction1(%d)",pattern);
+   TR_PCISCGraph *tgt = new (PERSISTENT_NEW) TR_PCISCGraph(c->trMemory(), name, 0, nameSize);
    /*********************************************************************    opc               id        dagId #cfg #child other/pred/children */
    TR_PCISCNode *v0  = new (PERSISTENT_NEW) TR_PCISCNode(c->trMemory(), TR_arraybase, TR::NoType, tgt->incNumNodes(), 13,   0,   0,    0);  tgt->addNode(v0); // src array base
    TR_PCISCNode *v1  = new (PERSISTENT_NEW) TR_PCISCNode(c->trMemory(), TR_variable, TR::NoType,  tgt->incNumNodes(), 12,   0,   0,    0);  tgt->addNode(v1); // src array index

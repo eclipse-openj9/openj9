@@ -641,7 +641,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
                   continue;
 
                //char threadName[32]; // make sure the name below does not exceed 32 chars
-               //sprintf(threadName, "JIT Compilation Thread-%d", curCompThreadInfoPT->getCompThreadId());
+               //snprintf(threadName, sizeof(threadName), "JIT Compilation Thread-%d", curCompThreadInfoPT->getCompThreadId());
 
                char *threadName = (
                   curCompThreadInfoPT->compilationThreadIsActive() ?
