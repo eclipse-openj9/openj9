@@ -2947,32 +2947,62 @@ public Package getPackage() {
 	}
 }
 
-static Class<?> getPrimitiveClass(String name) {
-	if (name.equals("float")) //$NON-NLS-1$
-		return new float[0].getClass().getComponentType();
-	if (name.equals("double")) //$NON-NLS-1$
-		return new double[0].getClass().getComponentType();
-	if (name.equals("int")) //$NON-NLS-1$
-		return new int[0].getClass().getComponentType();
-	if (name.equals("long")) //$NON-NLS-1$
-		return new long[0].getClass().getComponentType();
-	if (name.equals("char")) //$NON-NLS-1$
-		return new char[0].getClass().getComponentType();
-	if (name.equals("byte")) //$NON-NLS-1$
-		return new byte[0].getClass().getComponentType();
-	if (name.equals("boolean")) //$NON-NLS-1$
-		return new boolean[0].getClass().getComponentType();
-	if (name.equals("short")) //$NON-NLS-1$
-		return new short[0].getClass().getComponentType();
+/*[IF JAVA_SPEC_VERSION >= 24]*/
+@SuppressWarnings("unchecked")
+static <T> Class<T> getPrimitiveClass(String name)
+/*[ELSE] JAVA_SPEC_VERSION >= 24 */
+static Class<?> getPrimitiveClass(String name)
+/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
+{
+	Class<?> type;
+
 	if (name.equals("void")) { //$NON-NLS-1$
 		try {
-			java.lang.reflect.Method method = Runnable.class.getMethod("run", EmptyParameters); //$NON-NLS-1$
-			return method.getReturnType();
+			type = Runnable.class.getMethod("run").getReturnType(); //$NON-NLS-1$
 		} catch (Exception e) {
 			com.ibm.oti.vm.VM.dumpString("Cannot initialize Void.TYPE\n"); //$NON-NLS-1$
+			throw new Error("Cannot initialize Void.TYPE", e); //$NON-NLS-1$
 		}
+	} else {
+		Object array;
+
+		switch (name) {
+		case "boolean": //$NON-NLS-1$
+			array = new boolean[0];
+			break;
+		case "byte": //$NON-NLS-1$
+			array = new byte[0];
+			break;
+		case "char": //$NON-NLS-1$
+			array = new char[0];
+			break;
+		case "double": //$NON-NLS-1$
+			array = new double[0];
+			break;
+		case "float": //$NON-NLS-1$
+			array = new float[0];
+			break;
+		case "int": //$NON-NLS-1$
+			array = new int[0];
+			break;
+		case "long": //$NON-NLS-1$
+			array = new long[0];
+			break;
+		case "short": //$NON-NLS-1$
+			array = new short[0];
+			break;
+		default:
+			throw new Error("Unknown primitive type: " + name); //$NON-NLS-1$
+		}
+
+		type = array.getClass().getComponentType();
 	}
-	throw new Error("Unknown primitive type: " + name); //$NON-NLS-1$
+
+	/*[IF JAVA_SPEC_VERSION >= 24]*/
+	return (Class<T>) type;
+	/*[ELSE] JAVA_SPEC_VERSION >= 24 */
+	return type;
+	/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 }
 
 /**
