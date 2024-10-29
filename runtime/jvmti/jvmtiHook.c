@@ -570,13 +570,12 @@ jvmtiHookVMRestoreStartAgent(J9HookInterface **hook, UDATA eventNum, void *event
 {
 	J9VMThread *currentThread = ((J9RestoreEvent *)eventData)->currentThread;
 	J9JavaVM *vm = currentThread->javaVM;
-	Trc_JVMTI_jvmtiHookVMRestoreStartAgent_Entry();
-	if (J9_ARE_ANY_BITS_SET(vm->checkpointState.flags, J9VM_CRIU_IS_JDWP_ENABLED)) {
-		J9InternalVMFunctions const * const vmFuncs = vm->internalVMFunctions;
+	J9InternalVMFunctions const * const vmFuncs = vm->internalVMFunctions;
 
-		vmFuncs->internalExitVMToJNI(currentThread);
+	Trc_JVMTI_jvmtiHookVMRestoreStartAgent_Entry();
+	vmFuncs->internalExitVMToJNI(currentThread);
+	if (J9_ARE_ANY_BITS_SET(vm->checkpointState.flags, J9VM_CRIU_IS_JDWP_ENABLED)) {
 		criuRestoreStartAgent(vm);
-		vmFuncs->internalEnterVMFromJNI(currentThread);
 	} else {
 		/* Last part of cleanup if there was no JDWP agent specified.
 		 * This releases VM access hence can't be invoked within criuDisableHooks() from
@@ -585,6 +584,7 @@ jvmtiHookVMRestoreStartAgent(J9HookInterface **hook, UDATA eventNum, void *event
 		jvmtiEnv *jvmti_env = vm->checkpointState.jvmtienv;
 		(*jvmti_env)->DisposeEnvironment(jvmti_env);
 	}
+	vmFuncs->internalEnterVMFromJNI(currentThread);
 	TRACE_JVMTI_EVENT_RETURN(jvmtiHookVMRestoreStartAgent);
 }
 
