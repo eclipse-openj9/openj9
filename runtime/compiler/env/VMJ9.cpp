@@ -2628,7 +2628,7 @@ TR_J9VMBase::printTruncatedSignature(char *sigBuf, int32_t bufLen, J9UTF8 *class
    int32_t sigLen = J9UTF8_LENGTH(className) + J9UTF8_LENGTH(name) + J9UTF8_LENGTH(signature)+2;
    if (sigLen < bufLen)
       {
-      sigLen = sprintf(sigBuf, "%.*s.%.*s%.*s", J9UTF8_LENGTH(className), utf8Data(className),
+      sigLen = snprintf(sigBuf, (size_t)bufLen, "%.*s.%.*s%.*s", J9UTF8_LENGTH(className), utf8Data(className),
                        J9UTF8_LENGTH(name), utf8Data(name),
                        J9UTF8_LENGTH(signature), utf8Data(signature));
       }
@@ -2636,7 +2636,7 @@ TR_J9VMBase::printTruncatedSignature(char *sigBuf, int32_t bufLen, J9UTF8 *class
       {
       if (sigLen - bufLen < J9UTF8_LENGTH(signature)) // classname and methodname can fit
          {
-         sigLen = sprintf(sigBuf, "%.*s.%.*s%.*s", J9UTF8_LENGTH(className), utf8Data(className),
+         sigLen = snprintf(sigBuf, (size_t)bufLen, "%.*s.%.*s%.*s", J9UTF8_LENGTH(className), utf8Data(className),
                           J9UTF8_LENGTH(name), utf8Data(name),
                           (J9UTF8_LENGTH(signature) - (sigLen-bufLen)), utf8Data(signature));
          }
@@ -2644,9 +2644,9 @@ TR_J9VMBase::printTruncatedSignature(char *sigBuf, int32_t bufLen, J9UTF8 *class
          {
          int32_t nameLen = std::min<int32_t>(bufLen-3, J9UTF8_LENGTH(name));
          if (nameLen == bufLen-3) // not even the method name can be printed entirely
-            sigLen = sprintf(sigBuf, "*.%.*s", nameLen, utf8Data(name));
+            sigLen = snprintf(sigBuf, (size_t)bufLen, "*.%.*s", nameLen, utf8Data(name));
          else
-            sigLen = sprintf(sigBuf, "%.*s.%.*s", std::min<int32_t>(bufLen-2 - nameLen, J9UTF8_LENGTH(className)), utf8Data(className), nameLen, utf8Data(name));
+            sigLen = snprintf(sigBuf, (size_t)bufLen, "%.*s.%.*s", std::min<int32_t>(bufLen-2 - nameLen, J9UTF8_LENGTH(className)), utf8Data(className), nameLen, utf8Data(name));
          }
       }
    return sigLen;
@@ -3627,7 +3627,7 @@ TR_J9VMBase::compileMethods(TR::OptionSet *optionSet, void *config)
                      }
                   }
 
-               sprintf(fullMethodName, "%.*s.%.*s%.*s",
+               snprintf(fullMethodName, maxMethodNameLen, "%.*s.%.*s%.*s",
                   J9UTF8_LENGTH(className), J9UTF8_DATA(className),
                   J9UTF8_LENGTH(name), J9UTF8_DATA(name),
                   J9UTF8_LENGTH(signature), J9UTF8_DATA(signature));
@@ -4239,9 +4239,10 @@ TR_J9VMBase::unknownByteCode(TR::Compilation * comp, U_8 opcode)
 char*
 TR_J9VMBase::printAdditionalInfoOnAssertionFailure(TR::Compilation *comp)
    {
-   char *c = (char *)comp->trMemory()->allocateHeapMemory(20);
+   size_t cSize = 20;
+   char *c = (char *)comp->trMemory()->allocateHeapMemory(cSize);
 
-   sprintf(c, "VMState: %#010" OMR_PRIxPTR, vmThread()->omrVMThread->vmState);
+   snprintf(c, cSize, "VMState: %#010" OMR_PRIxPTR, vmThread()->omrVMThread->vmState);
 
    return c;
    }
@@ -4343,8 +4344,9 @@ getJ2IThunkSignature(char *invokeHandleSignature, uint32_t signatureLength, int 
       argsToCopy = nextSignatureArgument(argsToCopy);
    uint32_t lengthToCopy = signatureLength - (argsToCopy - invokeHandleSignature);
 
-   char *resultBuf = (char*)comp->trMemory()->allocateMemory(2+lengthToCopy, stackAlloc);
-   sprintf(resultBuf, "(%.*s", lengthToCopy, argsToCopy);
+   size_t resultLen = 2 + lengthToCopy;
+   char *resultBuf = (char*)comp->trMemory()->allocateMemory(resultLen, stackAlloc);
+   snprintf(resultBuf, resultLen, "(%.*s", lengthToCopy, argsToCopy);
 
    if (comp->getOption(TR_TraceCG))
       traceMsg(comp, "JSR292: j2i-thunk signature for %s of '%.*s' is '%s'\n", description, signatureLength, invokeHandleSignature, resultBuf);
@@ -4581,6 +4583,7 @@ TR_J9VMBase::lookupMethodHandleThunkArchetype(uintptr_t methodHandle)
    char *archetypeSpecimenSignature = (char*)alloca(thunkableSignatureLength+20);
    strcpy(archetypeSpecimenSignature, thunkSignature);
    char *returnType = (1+strchr(archetypeSpecimenSignature, ')'));
+   size_t maxSize = (thunkableSignatureLength + 20) - (returnType - archetypeSpecimenSignature);
    switch (returnType[0])
       {
       case '[':
@@ -4588,11 +4591,11 @@ TR_J9VMBase::lookupMethodHandleThunkArchetype(uintptr_t methodHandle)
          // The thunkable signature might return some other class, but archetypes
          // returning a reference are always declared to return Object.
          //
-         sprintf(returnType, "Ljava/lang/Object;");
+         snprintf(returnType, maxSize, "Ljava/lang/Object;");
          break;
       }
    char methodName[50];
-   sprintf(methodName, "invokeExact_thunkArchetype_%c", returnType[0]);
+   snprintf(methodName, sizeof(methodName), "invokeExact_thunkArchetype_%c", returnType[0]);
 
    TR_OpaqueMethodBlock *result = lookupArchetype(getObjectClass((uintptr_t)methodHandle), methodName, archetypeSpecimenSignature);
    if (!result)
@@ -7051,7 +7054,7 @@ TR_J9VM::sampleSignature(TR_OpaqueMethodBlock * aMethod, char *buf, int32_t bufL
    int32_t len = J9UTF8_LENGTH(className)+J9UTF8_LENGTH(name)+J9UTF8_LENGTH(signature)+3;
    char * s = len <= bufLen ? buf : (memory ? (char*)memory->allocateHeapMemory(len) : NULL);
    if (s)
-      sprintf(s, "%.*s.%.*s%.*s", J9UTF8_LENGTH(className), utf8Data(className), J9UTF8_LENGTH(name), utf8Data(name), J9UTF8_LENGTH(signature), utf8Data(signature));
+      snprintf(s, (size_t)len, "%.*s.%.*s%.*s", J9UTF8_LENGTH(className), utf8Data(className), J9UTF8_LENGTH(name), utf8Data(name), J9UTF8_LENGTH(signature), utf8Data(signature));
    return s;
    }
 

@@ -126,7 +126,7 @@ static void printStack(TR::Compilation *comp, TR_Stack<TR::Node*> *stack, const 
          {
          TR::Node *node = stack->element(i);
          traceMsg(comp, "\n");
-         sprintf(buf, "   @%-2d", i);
+         snprintf(buf, sizeof(buf), "   @%-2d", i);
          comp->getDebug()->printWithFixedPrefix(comp->getOutFile(), node, 1, false, true, buf);
          if (!nodesAlreadyPrinted.isSet(node->getGlobalIndex()))
             {
@@ -781,7 +781,7 @@ TR_J9ByteCodeIlGenerator::symRefWithArtificialSignature(TR::SymbolReference *ori
    return result;
    }
 
-static int32_t processArtificialSignature(char *result, const char *format, va_list args)
+static int32_t processArtificialSignature(char *result, size_t maxResult, const char *format, va_list args)
    {
    int32_t resultLength = 0;
    char *cur = result;
@@ -869,10 +869,19 @@ static int32_t processArtificialSignature(char *result, const char *format, va_l
       TR_ASSERT(length >= 0, "assertion failure");
       TR_ASSERT(startChar != NULL, "assertion failure");
 
-      resultLength += length;
       if (result)
-         cur += sprintf(cur, "%.*s", length, startChar);
-
+         {
+         int len = snprintf(cur, maxResult - resultLength, "%.*s", length, startChar);
+         if ((0 < len) && ((size_t)len <= (maxResult - resultLength)))
+            {
+            cur += len;
+            resultLength += len;
+            }
+         }
+      else
+         {
+         resultLength += length;
+         }
       }
 
    return resultLength;
@@ -893,13 +902,13 @@ char *TR_J9ByteCodeIlGenerator::vartificialSignature(TR_AllocationKind allocKind
    //
    va_list argsCopy;
    va_copy(argsCopy, args);
-   int32_t resultLength = processArtificialSignature(NULL, format, argsCopy);
+   int32_t resultLength = processArtificialSignature(NULL, 0, format, argsCopy);
    va_copy_end(argsCopy);
 
    // Produce formatted signature
    //
    char *result = (char*)trMemory()->allocateMemory(resultLength+1, allocKind);
-   processArtificialSignature(result, format, args);
+   processArtificialSignature(result, resultLength + 1, format, args);
    return result;
    }
 
@@ -3187,7 +3196,7 @@ static char *suffixedName(char *baseName, char typeSuffix, char *buf, int32_t bu
    int32_t methodNameLength = strlen(baseName) + 2;
    if (methodNameLength >= bufSize)
       methodName = (char*)comp->trMemory()->allocateStackMemory(methodNameLength+1, TR_MemoryBase::IlGenerator);
-   sprintf(methodName, "%s%c", baseName, typeSuffix);
+   snprintf(methodName, methodNameLength + 1, "%s%c", baseName, typeSuffix);
    return methodName;
    }
 
@@ -5059,7 +5068,8 @@ TR_J9ByteCodeIlGenerator::runMacro(TR::SymbolReference * symRef)
             char *secondArgType = nextSignatureArgument(arrayElementType);
             int arrayElementTypeLength = secondArgType - arrayElementType;
 
-            char *expandedArgsSignature = (char*)comp()->trMemory()->allocateStackMemory(numElements * arrayElementTypeLength + 1);
+            size_t argsLen = (numElements * arrayElementTypeLength) + 1;
+            char *expandedArgsSignature = (char*)comp()->trMemory()->allocateStackMemory(argsLen);
 
             TR::DataType arrayElementDataType = TR::NoType;
             TR::ILOpCodes convertOp = TR::BadILOp;
@@ -5109,7 +5119,16 @@ TR_J9ByteCodeIlGenerator::runMacro(TR::SymbolReference * symRef)
                loadArrayElement(arrayElementDataType);
                if (convertOp != TR::BadILOp)
                   genUnary(convertOp);
-               cursor += sprintf(cursor, "%.*s", arrayElementTypeLength, arrayElementType);
+               int len = snprintf(cursor, argsLen, "%.*s", arrayElementTypeLength, arrayElementType);
+               if ((0 < len) && ((size_t)len <= argsLen))
+                  {
+                  cursor += len;
+                  argsLen -= len;
+                  }
+               else
+                  {
+                  argsLen = 0;
+                  }
                }
 
             // Create placeholder with signature that reflects the expansion of arguments.

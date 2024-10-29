@@ -1113,7 +1113,7 @@ static bool loadKernel(CudaInfo *cudaInfo, GpuMetaData* gpuMetaData, int kernelI
    static bool disableModuleCaching = feGetEnv("TR_disableCUmoduleCaching") ? true : false;
 
    char functionName[16]; // 16 is max length of decimal string of ptxSourceID
-   sprintf(functionName, "test%d", kernelId);
+   snprintf(functionName, sizeof(functionName), "test%d", kernelId);
 
    int numPtxKernels = gpuMetaData->numPtxKernels;
    int maxNumCachedDevices = gpuMetaData->maxNumCachedDevices;
@@ -1349,8 +1349,9 @@ generatePTX(int tracing, const char *programSource, int deviceId, TR::Persistent
    if (detailsTrace) TR_VerboseLog::writeLine(TR_Vlog_GPU, "\tAdded NVVM module size=%d", strlen(programSource));
 
 #define OPTIONLENGTH    6
+#define OPTIONMAXSIZE   24
 
-   char optionStr[OPTIONLENGTH][24] = {"-opt=0", "-ftz=1", "-prec-sqrt=1", "-prec-div=1", "-fma=0", "-arch=compute_MMMMmmmm"};
+   char optionStr[OPTIONLENGTH][OPTIONMAXSIZE] = {"-opt=0", "-ftz=1", "-prec-sqrt=1", "-prec-div=1", "-fma=0", "-arch=compute_MMMMmmmm"};
    char *options[OPTIONLENGTH];
    int optionLength = (computeMajor == 256 && computeMinor == 256) ? OPTIONLENGTH - 1 : OPTIONLENGTH;
 
@@ -1359,7 +1360,7 @@ generatePTX(int tracing, const char *programSource, int deviceId, TR::Persistent
       options[i] = (char *)optionStr[i];
       }
 
-   sprintf(options[OPTIONLENGTH-1], "-arch=compute_%d%d", computeMajor, computeMinor);
+   snprintf(options[OPTIONLENGTH-1], OPTIONMAXSIZE, "-arch=compute_%d%d", computeMajor, computeMinor);
 
    //nvvm version 1.0 works with -opt=3
    //nvvm version 1.1 is untested. -opt=0 is used since it might have the same problem as version 1.2
@@ -1369,7 +1370,7 @@ generatePTX(int tracing, const char *programSource, int deviceId, TR::Persistent
    checkNVVMError(jitNvvmVersion(&nvvmVersionMajor, &nvvmVersionMinor), tracing);
    if (detailsTrace) TR_VerboseLog::writeLine(TR_Vlog_GPU, "\tNVVM Version: %d.%d", nvvmVersionMajor, nvvmVersionMinor);
    if ( (nvvmVersionMajor == 1) && (nvvmVersionMinor == 0) )
-      sprintf(options[0], "-opt=3");
+      snprintf(options[0], OPTIONMAXSIZE, "-opt=3");
 
    if (enableMath)
       {

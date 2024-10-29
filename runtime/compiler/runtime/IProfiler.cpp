@@ -4774,7 +4774,7 @@ void TR_AggregationHT::sortByNameAndPrint(TR_J9VMBase *fe)
             fprintf(stderr, "Cannot allocate memory. Incomplete data will be printed.\n");
             break;
             }
-         sprintf(wholeName, "%.*s.%.*s%.*s",
+         snprintf(wholeName, len, "%.*s.%.*s%.*s",
             J9UTF8_LENGTH(className), utf8Data(className),
             J9UTF8_LENGTH(name), utf8Data(name),
             J9UTF8_LENGTH(signature), utf8Data(signature));
