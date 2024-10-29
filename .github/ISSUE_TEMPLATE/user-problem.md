@@ -18,7 +18,13 @@ Put the problem summary here.
 Diagnostic files
 ----------------
 
-If a crash (gpf, assert, abort, etc) or OutOfMemory condition, please provide the diagnostic files produced (javacore, Snap, jitdump, core). The smaller files can be attached to this Issue. The core should be compressed and made available via a file sharing service (Box, Google Drive, etc). If there are privacy concerns please direct email the files to an OpenJ9 committer.
+If you experience a crash (GPF, assert, abort, etc.) or OutOfMemory condition, please provide the diagnostic files produced (core, javacore, jitdump, Snap). The smaller files can be attached to this Issue.
+
+The system core, which is different from the javacore and an important source of diagnostic information, should be first processed with `jpackcore` (except on Windows), see https://eclipse.dev/openj9/docs/tool_jextract/#dump-extractor-jpackcore. The system core, which is likely quite large, should be compressed (`jpackcore` does this), and made available via a file sharing service (Box, Google Drive, OneDrive, etc.). If there are privacy concerns please directly email or Slack the files or link/password to an OpenJ9 committer.
+
+The following articles are helpful for finding core files:
+- https://community.ibm.com/community/user/wasdevops/blogs/kevin-grigorenko1/2022/11/14/lessons-from-the-field-23-linux-core-dumps
+- https://community.ibm.com/community/user/wasdevops/blogs/kevin-grigorenko1/2023/09/19/lessons-from-the-field-33-capturing-core-dumps-on
 
 FYI the stderr console will contain messages which describe the location of the diagnostic dump files, similar to the following.
 ```
@@ -37,6 +43,6 @@ JVMDUMP013I Processed dump event "abort", detail "".
 OutOfMemoryError: Java Heap Space
 ---------------------------------
 
-For a repeatable OutOfMemory condition showing `Java heap space`, enable verbose GC collection and provide the log. 
+For a repeatable OutOfMemory condition showing `Java heap space`, enable verbose GC collection and provide the log.
 -`-verbose:gc` writes the logging to stderr
 - [-Xverbosegclog](https://www.eclipse.org/openj9/docs/xverbosegclog/) writes the logging to a single or multiple files
