@@ -247,10 +247,8 @@ Java_com_ibm_oti_vm_VM_startJFR(JNIEnv *env, jclass unused)
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 
-	vmFuncs->internalEnterVMFromJNI(currentThread);
 	/* this is to initalize JFR late after VM startup */
 	rc = vmFuncs->initializeJFR(vm, TRUE);
-	vmFuncs->internalExitVMToJNI(currentThread);
 
 	return rc;
 }

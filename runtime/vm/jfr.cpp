@@ -675,7 +675,7 @@ initializeJFR(J9JavaVM *vm, BOOLEAN lateInit)
 		J9VMThread *walkThread = J9_LINKED_LIST_START_DO(vm->mainThread);
 		while (NULL != walkThread) {
 			/* only initialize a thread once */
-			if (NULL != walkThread->jfrBuffer.bufferStart) {
+			if (NULL == walkThread->jfrBuffer.bufferStart) {
 				U_8 *buffer = (U_8*)j9mem_allocate_memory(J9JFR_THREAD_BUFFER_SIZE, OMRMEM_CATEGORY_VM);
 				if (NULL == buffer) {
 					goto fail;
