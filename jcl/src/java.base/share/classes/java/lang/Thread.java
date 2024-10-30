@@ -746,15 +746,8 @@ private native void interruptImpl();
  * @see			Thread#start
  */
 public final boolean isAlive() {
-<<<<<<< HEAD
 	/*[PR CMVC 88976] the Thread is alive until cleanup() is called */
 	return threadRef != NO_REF;
-=======
-	//synchronized (lock) {
-		/*[PR CMVC 88976] the Thread is alive until cleanup() is called */
-		return threadRef != NO_REF;
-	//}
->>>>>>> 57117bc3e7 (Stop acquiring ThreadLock in some j.l.Thread methods)
 }
 
 /**
@@ -768,15 +761,8 @@ public final boolean isAlive() {
  * @see			Thread#isAlive
  */
 private boolean isDead() {
-<<<<<<< HEAD
 	/* Has already started and is not alive anymore. */
 	return (started && (threadRef == NO_REF));
-=======
-	// Has already started, is not alive anymore, and has been removed from the ThreadGroup
-//	synchronized(lock) {
-		return started && threadRef == NO_REF;
-//	}
->>>>>>> 57117bc3e7 (Stop acquiring ThreadLock in some j.l.Thread methods)
 }
 
 /**
