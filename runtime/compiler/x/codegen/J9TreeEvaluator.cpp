@@ -9664,8 +9664,8 @@ static TR::Register* inlineCompareAndSwapObjectNative(TR::Node* node, TR::CodeGe
 /** Replaces a call to an Unsafe CAS method with inline instructions.
    @return true if the call was replaced, false if it was not.
 
-   Note that this function must have behaviour consistent with the OMR function
-   willNotInlineCompareAndSwapNative in omr/compiler/x/codegen/OMRCodeGenerator.cpp
+   Note that this function must have behaviour consistent with the function
+   willNotInlineCompareAndSwapNative in openj9/runtime/compiler/x/codegen/J9CodeGenerator.cpp
 */
 static bool
 inlineCompareAndSwapNative(
