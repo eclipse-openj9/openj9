@@ -408,7 +408,6 @@
 		</groups>
 		<versions>
 			<version>11</version>
-			<version>16</version>
 		</versions>
 		<impls>
 			<impl>openj9</impl>
