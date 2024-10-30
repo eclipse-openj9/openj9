@@ -39,7 +39,7 @@ extern "C" {
  * Hook "J9HOOK_VM_RUNTIME_STATE_CHANGED" callback function
  * Manages Heap Free Pages If Current Runtime State is IDLE
  */
-void idleGCManagerVMStateHook(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
+void idleGCManagerVMStateHook(J9HookInterface **hook, uintptr_t eventNum, void *eventData, void *userData);
 }
 
 /**
@@ -51,7 +51,7 @@ private:
 	/*
 	 * reference to the language runtime
 	 */
-	J9JavaVM* _javaVM;
+	J9JavaVM *_javaVM;
 
 protected:
 public:
@@ -61,31 +61,31 @@ protected:
 	/**
 	 * Initialize the object of this class and registers for Runtime State hook
 	 */
-	bool initialize(MM_EnvironmentBase* env);
+	bool initialize(MM_EnvironmentBase *env);
 	/**
 	 * cleanup the object & unregisters registered hook
 	 */
-	void tearDown(MM_EnvironmentBase* env);
+	void tearDown(MM_EnvironmentBase *env);
 public:
 	/**
 	 * creates the object
 	 */
-	static MM_IdleGCManager* newInstance(MM_EnvironmentBase* env);
+	static MM_IdleGCManager* newInstance(MM_EnvironmentBase *env);
 	/**
 	 * deallocates the object
 	 */
-	void kill(MM_EnvironmentBase* env);
+	void kill(MM_EnvironmentBase *env);
 	/**
 	  * Whenever JVM becomes idle, uses the opportunity to free up pages of free java heap
 	  */
-	void manageFreeHeap(J9VMThread* currentThread);
+	void manageFreeHeap(J9VMThread *currentThread);
 
 	/**
 	 * construct the object
 	 */
-	MM_IdleGCManager(MM_EnvironmentBase* env)
+	MM_IdleGCManager(MM_EnvironmentBase *env)
 		: MM_BaseNonVirtual()
-		, _javaVM((J9JavaVM*)env->getOmrVM()->_language_vm)
+		, _javaVM((J9JavaVM *)env->getOmrVM()->_language_vm)
 	{
 		_typeId = __FUNCTION__;
 	}
