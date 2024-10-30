@@ -4521,8 +4521,8 @@ void disclaimDataCaches(uint64_t crtElapsedTime)
    int numDisclaimed = TR_DataCacheManager::getManager()->disclaimAllDataCaches();
    size_t rssAfter = getRSS_Kb();
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%u JIT disclaimed %d Data Cache segments  RSS before=%zu KB, RSS after=%zu KB, delta=%zu KB",
-                                     (uint32_t)crtElapsedTime, numDisclaimed, rssBefore, rssAfter, rssBefore - rssAfter);
+      TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%u JIT disclaimed %d Data Cache segments  RSS before=%zu KB, RSS after=%zu KB, delta=%zd KB = %5.2f%%",
+                                     (uint32_t)crtElapsedTime, numDisclaimed, rssBefore, rssAfter, rssBefore - rssAfter, ((long)(rssAfter - rssBefore) * 100.0 / rssBefore));
    }
 
 void disclaimIProfilerSegments(uint64_t crtElapsedTime)
@@ -4535,8 +4535,8 @@ void disclaimIProfilerSegments(uint64_t crtElapsedTime)
       int numSegDisclaimed = iprofilerAllocator->disclaimAllSegments();
       size_t rssAfter = getRSS_Kb();
       if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%u JIT disclaimed %d IProfiler segments out of %d. RSS before=%zu KB, RSS after=%zu KB, delta=%zu KB",
-                                        (uint32_t)crtElapsedTime, numSegDisclaimed, iprofilerAllocator->getNumSegments(), rssBefore, rssAfter, rssBefore - rssAfter);
+         TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%u JIT disclaimed %d IProfiler segments out of %d. RSS before=%zu KB, RSS after=%zu KB, delta=%zd KB = %5.2f%%",
+                                        (uint32_t)crtElapsedTime, numSegDisclaimed, iprofilerAllocator->getNumSegments(), rssBefore, rssAfter, rssBefore - rssAfter, ((long)(rssAfter - rssBefore) * 100.0 / rssBefore));
       }
    }
 
@@ -4546,7 +4546,7 @@ void disclaimCodeCaches(uint64_t crtElapsedTime)
    int numDisclaimed = TR::CodeCacheManager::instance()->disclaimAllCodeCaches();
    size_t rssAfter = getRSS_Kb();
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%u JIT disclaimed %d Code Caches RSS before=%zu KB, RSS after=%zu KB, delta=%zu KB = %5.2f%%",
+      TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%u JIT disclaimed %d Code Caches RSS before=%zu KB, RSS after=%zu KB, delta=%zd KB = %5.2f%%",
                                      (uint32_t)crtElapsedTime, numDisclaimed, rssBefore, rssAfter, rssBefore - rssAfter, ((long)(rssAfter - rssBefore) * 100.0 / rssBefore));
    }
 
