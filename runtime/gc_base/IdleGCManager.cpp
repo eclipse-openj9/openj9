@@ -35,9 +35,9 @@
 #include "VMAccess.hpp"
 
 MM_IdleGCManager *
-MM_IdleGCManager::newInstance(MM_EnvironmentBase* env)
+MM_IdleGCManager::newInstance(MM_EnvironmentBase *env)
 {
-	MM_IdleGCManager* idleGCMgr = (MM_IdleGCManager*)env->getForge()->allocate(sizeof(MM_IdleGCManager), MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
+	MM_IdleGCManager *idleGCMgr = (MM_IdleGCManager *)env->getForge()->allocate(sizeof(MM_IdleGCManager), MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
 	if (idleGCMgr) {
 		new(idleGCMgr) MM_IdleGCManager(env);
 		if (!idleGCMgr->initialize(env)) {
@@ -49,25 +49,25 @@ MM_IdleGCManager::newInstance(MM_EnvironmentBase* env)
 }
 
 void
-MM_IdleGCManager::kill(MM_EnvironmentBase* env)
+MM_IdleGCManager::kill(MM_EnvironmentBase *env)
 {
 	tearDown(env);
 	env->getForge()->free(this);
 }
 
 void
-MM_IdleGCManager::tearDown(MM_EnvironmentBase* env)
+MM_IdleGCManager::tearDown(MM_EnvironmentBase *env)
 {
-	J9HookInterface** hookInterface = _javaVM->internalVMFunctions->getVMHookInterface(_javaVM);
+	J9HookInterface **hookInterface = _javaVM->internalVMFunctions->getVMHookInterface(_javaVM);
 	if (NULL != hookInterface) {
 		(*hookInterface)->J9HookUnregister(hookInterface, J9HOOK_VM_RUNTIME_STATE_CHANGED, idleGCManagerVMStateHook, this);
 	}
 }
 
 bool
-MM_IdleGCManager::initialize(MM_EnvironmentBase* env)
+MM_IdleGCManager::initialize(MM_EnvironmentBase *env)
 {
-	J9HookInterface** hookInterface = _javaVM->internalVMFunctions->getVMHookInterface(_javaVM);
+	J9HookInterface **hookInterface = _javaVM->internalVMFunctions->getVMHookInterface(_javaVM);
 	if (NULL != hookInterface && (*hookInterface)->J9HookRegister(hookInterface, J9HOOK_VM_RUNTIME_STATE_CHANGED, idleGCManagerVMStateHook, this)) {
 		return false;
 	}
@@ -75,26 +75,27 @@ MM_IdleGCManager::initialize(MM_EnvironmentBase* env)
 }
 
 void
-MM_IdleGCManager::manageFreeHeap(J9VMThread* currentThread)
+MM_IdleGCManager::manageFreeHeap(J9VMThread *currentThread)
 {
-	MM_EnvironmentBase* env = MM_EnvironmentBase::getEnvironment(currentThread->omrVMThread);
-	MM_GCExtensions* _extensions = MM_GCExtensions::getExtensions(env);
+	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(currentThread->omrVMThread);
+	MM_GCExtensions *ext = MM_GCExtensions::getExtensions(env);
 
 	_javaVM->internalVMFunctions->internalAcquireVMAccess(currentThread);
 	VM_VMAccess::setPublicFlags(currentThread, J9_PUBLIC_FLAGS_NOT_AT_SAFE_POINT);
-	_extensions->heap->systemGarbageCollect(env, J9MMCONSTANT_EXPLICIT_GC_IDLE_GC);
+	ext->heap->systemGarbageCollect(env, J9MMCONSTANT_EXPLICIT_GC_IDLE_GC);
 	VM_VMAccess::clearPublicFlags(currentThread, J9_PUBLIC_FLAGS_NOT_AT_SAFE_POINT);
 	_javaVM->internalVMFunctions->internalReleaseVMAccess(currentThread);
 }
 
 extern "C" {
-void idleGCManagerVMStateHook(J9HookInterface** hook, uintptr_t eventNum, void* eventData, void* userData)
+void
+idleGCManagerVMStateHook(J9HookInterface **hook, uintptr_t eventNum, void *eventData, void *userData)
 {
-	J9VMRuntimeStateChanged* j9VMState = (J9VMRuntimeStateChanged*)eventData;
-	MM_IdleGCManager* idleMgr = (MM_IdleGCManager*)userData;
+	J9VMRuntimeStateChanged *j9VMState = (J9VMRuntimeStateChanged *)eventData;
+	MM_IdleGCManager *idleMgr = (MM_IdleGCManager *)userData;
 
-	/* idle gc manager currently handles only ACTIVE -> IDLE transition*/
-	if (j9VMState->state == J9VM_RUNTIME_STATE_IDLE) {
+	/* idle gc manager currently handles only ACTIVE -> IDLE transition */
+	if (J9VM_RUNTIME_STATE_IDLE == j9VMState->state) {
 		idleMgr->manageFreeHeap(j9VMState->vmThread);
 	}
 }
