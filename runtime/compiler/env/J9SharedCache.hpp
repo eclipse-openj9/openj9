@@ -105,6 +105,34 @@ public:
 
    static void validateAOTHeader(J9JITConfig *jitConfig, J9VMThread *vmThread, TR::CompilationInfo *compInfo);
 
+#if defined(LINUX)
+   /**
+    * \brief Returns whether SCC disclaiming is enabled.
+    *
+    * This function returns a boolean that represents whether SCC disclaiming is enabled or not.
+    * SCC disclaiming may be enabled or disabled via an option, and if enabled, may later be
+    * disabled due to an error.
+    *
+    * \return True if SCC disclaiming is enabled, false otherwise.
+    */
+   virtual bool isDisclaimEnabled() { return _disclaimEnabled; }
+
+   /**
+    * \brief Disclaims SCC memory pages, causing them to be paged out of the resident set.
+    *
+    * This function causes the occupied parts of the SCC to be disclaimed. For each layer
+    * the ROM class area which starts at the beginning of the layer and extends forward,
+    * and the metadata area which starts at the end of the layer and extends backwards,
+    * are both disclaimed, causing the underlying memory pages to be paged out of the
+    * resident set.
+    *
+    * This function does nothing if SCC disclaiming is disabled.
+    *
+    * \return The number of areas disclaimed.
+    */
+   virtual int32_t disclaimSharedCaches();
+#endif
+
    /**
     * \brief Converts a shared cache offset, calculated from the end of the SCC, into the
     *        metadata section of the SCC into a pointer.
@@ -421,6 +449,8 @@ public:
    virtual J9SharedClassCacheDescriptor *getCacheDescriptorList();
 
 protected:
+   static bool disclaim(const uint8_t *start, const uint8_t *end, UDATA pageSize, bool trace);
+
    /**
     * \brief Helper method; used to check if a pointer is within the SCC
     *
@@ -619,6 +649,10 @@ private:
 
    uint32_t _logLevel;
    bool _verboseHints;
+
+#if defined(LINUX)
+   bool _disclaimEnabled;
+#endif
 
    static TR_J9SharedCacheDisabledReason _sharedCacheState;
    static TR_YesNoMaybe                  _sharedCacheDisabledBecauseFull;
