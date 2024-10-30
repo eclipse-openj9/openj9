@@ -4838,10 +4838,14 @@ genCAS(TR::Node *node, TR::CodeGenerator *cg, TR_ARM64ScratchRegisterManager *sr
       {
       TR_ASSERT_FATAL(oldValueInReg, "Expecting oldValue is in register if LSE is enabled");
       /*
-       * movx   resultReg, oldVReg
-       * casal  resultReg, newVReg, [addrReg]
-       * cmp    resultReg, oldReg
-       * cset   resultReg, eq
+       *    mov   resultReg, oldVReg
+       *    casal resultReg, newVReg, [addrReg]
+       *    cmp   resultReg, oldVReg
+       * #if (!isExchange)
+       *    cset  resultReg, eq
+       * #else if (isReference && comp->useCompressedPointers())
+       *    lslx  resultReg, resultReg, TR::Compiler->om.compressedReferenceShift()
+       * #endif
        */
       generateMovInstruction(cg, node, resultReg, oldVReg, is64bit);
       op = casWithoutSync ? (is64bit ? TR::InstOpCode::casx : TR::InstOpCode::casw) : (is64bit ? TR::InstOpCode::casalx : TR::InstOpCode::casalw);
@@ -4852,7 +4856,7 @@ genCAS(TR::Node *node, TR::CodeGenerator *cg, TR_ARM64ScratchRegisterManager *sr
          {
          generateCSetInstruction(cg, node, resultReg, TR::CC_EQ);
          }
-      else if (isReference && comp->target().is64Bit() && comp->useCompressedPointers())
+      else if (isReference && comp->useCompressedPointers())
          {
          genDecompressPointer(cg, node, resultReg);
          }
@@ -4873,16 +4877,30 @@ genCAS(TR::Node *node, TR::CodeGenerator *cg, TR_ARM64ScratchRegisterManager *sr
       /*
        * Generating the same instruction sequence as __sync_bool_compare_and_swap
        *
-       * loop:
-       *    ldxrx   resultReg, [addrReg]
-       *    cmpx    resultReg, oldVReg
-       *    bne     done
-       *    stlxrx  resultReg, newVReg, [addrReg]
-       *    cbnz    resultReg, loop
-       *    dmb     ish
-       * done:
-       *    cset    resultReg, eq
-       *
+       * loopLabel:
+       *    ldxr  resultReg, [addrReg]
+       *    cmp   resultReg, oldVreg/oldValue
+       * #if (!createDoneLabel)
+       * #if (!isExchange)
+       *    movzx resultReg, 0
+       * #else if (isReference && comp->useCompressedPointers())
+       *    lslx  resultReg, resultReg, TR::Compiler->om.compressedReferenceShift()
+       * #endif
+       * #endif
+       *    bne   doneLabel
+       *    stlxr tempReg, newVReg, [addrReg]
+       *    cbnz  tempReg, loopLabel
+       *    dmb   ish
+       * #if (createDoneLabel)
+       * doneLabel:
+       * #if (!isExchange)
+       *    cset  resultReg, eq
+       * #else if (isReference && comp->useCompressedPointers())
+       *    lslx  resultReg, resultReg, TR::Compiler->om.compressedReferenceShift()
+       * #endif
+       * #else if (!isExchange)
+       *    movzx resultReg, 0
+       * #endif
        */
       op = is64bit ? TR::InstOpCode::ldxrx : TR::InstOpCode::ldxrw;
       generateTrg1MemInstruction(cg, op, node, resultReg, TR::MemoryReference::createWithDisplacement(cg, addrReg, 0));
@@ -4896,7 +4914,7 @@ genCAS(TR::Node *node, TR::CodeGenerator *cg, TR_ARM64ScratchRegisterManager *sr
             {
             generateTrg1ImmInstruction(cg, TR::InstOpCode::movzx, node, resultReg, 0); // failure
             }
-         else if (isReference && comp->target().is64Bit() && comp->useCompressedPointers())
+         else if (isReference && comp->useCompressedPointers())
             {
             genDecompressPointer(cg, node, resultReg);
             }
@@ -4924,17 +4942,14 @@ genCAS(TR::Node *node, TR::CodeGenerator *cg, TR_ARM64ScratchRegisterManager *sr
             {
             generateCSetInstruction(cg, node, resultReg, TR::CC_EQ);
             }
-         else if (isReference && comp->target().is64Bit() && comp->useCompressedPointers())
+         else if (isReference && comp->useCompressedPointers())
             {
             genDecompressPointer(cg, node, resultReg);
             }
          }
-      else
+      else if (!isExchange)
          {
-         if (!isExchange)
-            {
-            generateTrg1ImmInstruction(cg, TR::InstOpCode::movzx, node, resultReg, 1); // success
-            }
+         generateTrg1ImmInstruction(cg, TR::InstOpCode::movzx, node, resultReg, 1); // success
          }
       }
    srm->reclaimScratchRegister(addrReg);
