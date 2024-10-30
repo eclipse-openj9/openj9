@@ -2427,6 +2427,7 @@ j9bcv_verifyBytecodes (J9PortLibrary * portLib, J9Class * clazz, J9ROMClass * ro
 
 	verifyData->romClass = romClass;
 	verifyData->errorPC = 0;
+	verifyData->errorDetailCode = 0;
 
 	verifyData->romClassInSharedClasses = j9shr_Query_IsAddressInCache(verifyData->javaVM, romClass, romClass->romSize);
 
