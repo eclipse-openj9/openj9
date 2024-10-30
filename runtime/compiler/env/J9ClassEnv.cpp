@@ -888,7 +888,7 @@ J9::ClassEnv::isArrayNullRestricted(TR::Compilation *comp,TR_OpaqueClassBlock *a
       uintptr_t classFlags = 0;
       JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)arrayClass, TR::compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_CLASS_FLAGS, (void *)&classFlags);
 #ifdef DEBUG
-      stream->write(JITServer::MessageType::ClassEnv_classFlagsValue, clazz);
+      stream->write(JITServer::MessageType::ClassEnv_classFlagsValue, arrayClass);
       uintptr_t classFlagsRemote = std::get<0>(stream->read<uintptr_t>());
       // Check that class flags from remote call is equal to the cached ones
       classFlags = classFlags & J9ClassArrayIsNullRestricted;
