@@ -3425,7 +3425,7 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
    // The exploitation of idle time is done by a tracking mechanism done
    // on the IProfiler thread. If this thread does not exist, then we
    // must turn this feature off to avoid allocating a useless hashtable
-   if (self()->getOption(TR_DisableIProfilerThread))
+   if (true || self()->getOption(TR_DisableIProfilerThread)) // Disable UseIdleTime temporarily
       self()->setOption(TR_UseIdleTime, false);
 
    // If NoResumableTrapHandler is set, disable packed decimal intrinsics inlining because
