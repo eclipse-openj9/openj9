@@ -906,48 +906,76 @@ allocateWriteBarrierInternalPointerRegister(TR::CodeGenerator * cg, TR::Node * s
    }
 
 
-TR::Register *
-J9::Z::TreeEvaluator::dmaxEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+extern TR::Register *
+doubleMaxMinHelper(TR::Node *node, TR::CodeGenerator *cg, bool isMaxOp)
    {
-   if (cg->getSupportsVectorRegisters())
-      {
-      cg->generateDebugCounter("z13/simd/doubleMax", 1, TR::DebugCounter::Free);
-      return OMR::Z::TreeEvaluator::fpMinMaxVectorHelper(node, cg);
-      }
-   return OMR::Z::TreeEvaluator::xmaxxminHelper(node, cg);
-   }
+   TR_ASSERT(node->getNumChildren() >= 1  || node->getNumChildren() <= 2, "node has incorrect number of children");
 
-TR::Register *
-J9::Z::TreeEvaluator::dminEvaluator(TR::Node * node, TR::CodeGenerator * cg)
-   {
-   if (cg->getSupportsVectorRegisters())
-      {
-      cg->generateDebugCounter("z13/simd/doubleMin", 1, TR::DebugCounter::Free);
-      return OMR::Z::TreeEvaluator::fpMinMaxVectorHelper(node, cg);
-      }
-   return OMR::Z::TreeEvaluator::xmaxxminHelper(node, cg);
-   }
+   /* ===================== Allocating Registers  ===================== */
 
-TR::Register *
-J9::Z::TreeEvaluator::fmaxEvaluator(TR::Node * node, TR::CodeGenerator * cg)
-   {
-   if (cg->getSupportsVectorRegisters())
-      {
-      cg->generateDebugCounter("z13/simd/floatMax", 1, TR::DebugCounter::Free);
-      return OMR::Z::TreeEvaluator::fpMinMaxVectorHelper(node, cg);
-      }
-   return OMR::Z::TreeEvaluator::xmaxxminHelper(node, cg);
-   }
+   TR::Register      * v16           = cg->allocateRegister(TR_VRF);
+   TR::Register      * v17           = cg->allocateRegister(TR_VRF);
+   TR::Register      * v18           = cg->allocateRegister(TR_VRF);
 
-TR::Register *
-J9::Z::TreeEvaluator::fminEvaluator(TR::Node * node, TR::CodeGenerator * cg)
-   {
-   if (cg->getSupportsVectorRegisters())
+   /* ===================== Generating instructions  ===================== */
+
+   /* ====== LD FPR0,16(GPR5)       Load a ====== */
+   TR::Register      * v0      = cg->fprClobberEvaluate(node->getFirstChild());
+
+   /* ====== LD FPR2, 0(GPR5)       Load b ====== */
+   TR::Register      * v2      = cg->evaluate(node->getSecondChild());
+
+   /* ====== WFTCIDB V16,V0,X'F'     a == NaN ====== */
+   generateVRIeInstruction(cg, TR::InstOpCode::VFTCI, node, v16, v0, 0xF, 8, 3);
+
+   /* ====== For Max: WFCHE V17,V0,V2     Compare a >= b ====== */
+   if(isMaxOp)
       {
-      cg->generateDebugCounter("z13/simd/floatMin", 1, TR::DebugCounter::Free);
-      return OMR::Z::TreeEvaluator::fpMinMaxVectorHelper(node, cg);
+      generateVRRcInstruction(cg, TR::InstOpCode::VFCH, node, v17, v0, v2, 0, 8, 3);
       }
-   return OMR::Z::TreeEvaluator::xmaxxminHelper(node, cg);
+   /* ====== For Min: WFCHE V17,V0,V2     Compare a <= b ====== */
+   else
+      {
+      generateVRRcInstruction(cg, TR::InstOpCode::VFCH, node, v17, v2, v0, 0, 8, 3);
+      }
+
+   /* ====== VO V16,V16,V17     (a >= b) || (a == NaN) ====== */
+   generateVRRcInstruction(cg, TR::InstOpCode::VO, node, v16, v16, v17, 0, 0, 0);
+
+   /* ====== For Max: WFTCIDB V17,V0,X'800'     a == +0 ====== */
+   if(isMaxOp)
+    {
+       generateVRIeInstruction(cg, TR::InstOpCode::VFTCI, node, v17, v0, 0x800, 8, 3);
+    }
+   /* ====== For Min: WFTCIDB V17,V0,X'400'     a == -0 ====== */
+   else
+    {
+       generateVRIeInstruction(cg, TR::InstOpCode::VFTCI, node, v17, v0, 0x400, 8, 3);
+    }
+   /* ====== WFTCIDB V18,V2,X'C00'       b == 0 ====== */
+   generateVRIeInstruction(cg, TR::InstOpCode::VFTCI, node, v18, v2, 0xC00, 8, 3);
+
+   /* ====== VN V17,V17,V18     (a == -0) && (b == 0) ====== */
+   generateVRRcInstruction(cg, TR::InstOpCode::VN, node, v17, v17, v18, 0, 0, 0);
+
+   /* ====== VO V16,V16,V17     (a >= b) || (a == NaN) || ((a == -0) && (b == 0)) ====== */
+   generateVRRcInstruction(cg, TR::InstOpCode::VO, node, v16, v16, v17, 0, 0, 0);
+
+   /* ====== VSEL V0,V0,V2,V16 ====== */
+   generateVRReInstruction(cg, TR::InstOpCode::VSEL, node, v0, v0, v2, v16);
+
+   /* ===================== Deallocating Registers  ===================== */
+   cg->stopUsingRegister(v2);
+   cg->stopUsingRegister(v16);
+   cg->stopUsingRegister(v17);
+   cg->stopUsingRegister(v18);
+
+   node->setRegister(v0);
+
+   cg->decReferenceCount(node->getFirstChild());
+   cg->decReferenceCount(node->getSecondChild());
+
+   return node->getRegister();
    }
 
 TR::Register*
@@ -2917,7 +2945,19 @@ J9::Z::TreeEvaluator::toLowerIntrinsic(TR::Node *node, TR::CodeGenerator *cg, bo
    return caseConversionHelper(node, cg, false, isCompressedString);
    }
 
+TR::Register*
+J9::Z::TreeEvaluator::inlineDoubleMax(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   cg->generateDebugCounter("z13/simd/doubleMax", 1, TR::DebugCounter::Free);
+   return doubleMaxMinHelper(node, cg, true);
+   }
 
+TR::Register*
+J9::Z::TreeEvaluator::inlineDoubleMin(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   cg->generateDebugCounter("z13/simd/doubleMin", 1, TR::DebugCounter::Free);
+   return doubleMaxMinHelper(node, cg, false);
+   }
 
 TR::Register *
 J9::Z::TreeEvaluator::inlineMathFma(TR::Node *node, TR::CodeGenerator *cg)

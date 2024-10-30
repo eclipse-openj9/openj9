@@ -126,10 +126,8 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
     */
    static TR::Register *inlineVectorizedStringIndexOf(TR::Node *node, TR::CodeGenerator *cg, bool isCompressed);
    static TR::Register *inlineIntrinsicIndexOf(TR::Node *node, TR::CodeGenerator *cg, bool isLatin1);
-   static TR::Register *fminEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *dminEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *fmaxEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *dmaxEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *inlineDoubleMax(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *inlineDoubleMin(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *inlineMathFma(TR::Node *node, TR::CodeGenerator *cg);
 
    /* This Evaluator generates the SIMD routine for methods
