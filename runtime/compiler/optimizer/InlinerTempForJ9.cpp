@@ -5487,6 +5487,7 @@ TR_J9InlinerPolicy::supressInliningRecognizedInitialCallee(TR_CallSite* callsite
             }
          break;
       case TR::java_lang_Thread_onSpinWait:
+         {
          static char *disableOSW = feGetEnv("TR_noPauseOnSpinWait");
          if (!disableOSW)
             {
@@ -5499,6 +5500,7 @@ TR_J9InlinerPolicy::supressInliningRecognizedInitialCallee(TR_CallSite* callsite
             return true;
             }
          break;
+         }
       case TR::sun_misc_Unsafe_allocateInstance:
          // VP transforms this into a plain new if it can get a non-null
          // known object java/lang/Class representing an initialized class
