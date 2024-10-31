@@ -550,26 +550,6 @@ public class ValueTypeTests {
 		assertEquals(getX.invoke(getFlatEn.invoke(line2D_2_check)), getX.invoke(getFlatEn.invoke(line2D_2)));
 		assertEquals(getY.invoke(getFlatEn.invoke(line2D_1_check)), getY.invoke(getFlatEn.invoke(line2D_1)));
 		assertEquals(getY.invoke(getFlatEn.invoke(line2D_2_check)), getY.invoke(getFlatEn.invoke(line2D_2)));
-	}	
-	
-	/*
-	 * Test defaultValue with ref type
-	 *
-	 * class DefaultValueWithNoneValueType {
-	 * 	Object f1;
-	 * 	Object f1;
-	 * }
-	 *
-	 */
-	@Test(enabled=false, priority=3)
-	static public void testDefaultValueWithNonValueType() throws Throwable {
-		String[] fields = {"f1:Ljava/lang/Object;:NR", "f2:Ljava/lang/Object;:NR"};
-		Class<?> defaultValueWithNonValueType = ValueTypeGenerator.generateRefClass("DefaultValueWithNonValueType", fields);
-		MethodHandle makeDefaultValueWithNonValueType = lookup.findStatic(defaultValueWithNonValueType, "makeDefaultValue", MethodType.methodType(Object.class));
-		try {
-			makeDefaultValueWithNonValueType.invoke();
-			Assert.fail("should throw error. Default value must be used with ValueType");
-		} catch (IncompatibleClassChangeError e) {}
 	}
 	
 	@Test(priority=2, invocationCount=2)
