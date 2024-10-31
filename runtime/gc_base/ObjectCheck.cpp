@@ -39,8 +39,8 @@ extern "C" {
  * @return one of J9OBJECTCHECK_* depending if the class is valid, invalid or looks like a forwarded pointer
  * @ingroup GC_Base
  */
-static UDATA
-isValidClass(J9JavaVM *javaVM, J9Class *ptr, UDATA flags) {
+static uintptr_t
+isValidClass(J9JavaVM *javaVM, J9Class *ptr, uintptr_t flags) {
 	GC_SegmentIterator segmentIterator(javaVM->classMemorySegments, MEMORY_TYPE_RAM_CLASS);
 	J9MemorySegment *segment;
 
@@ -50,7 +50,7 @@ isValidClass(J9JavaVM *javaVM, J9Class *ptr, UDATA flags) {
 	}
 
 	/* check alignment */
-	if (0 != ((UDATA)ptr & (sizeof(UDATA) - 1))) {
+	if (0 != ((uintptr_t)ptr & (sizeof(uintptr_t) - 1))) {
 		return J9OBJECTCHECK_INVALID;
 	}
 
@@ -62,9 +62,9 @@ isValidClass(J9JavaVM *javaVM, J9Class *ptr, UDATA flags) {
 #endif /* J9VM_THR_PREEMPTIVE */
 
 	/* try to find the segment that this class starts in */
-	while(NULL != (segment = segmentIterator.nextSegment())) {
+	while (NULL != (segment = segmentIterator.nextSegment())) {
 		/* is the pointer in this segment? */
-		if ((segment->heapBase <= (U_8 *)ptr) && ((U_8 *)ptr < segment->heapAlloc)) {
+		if ((segment->heapBase <= (uint8_t *)ptr) && ((uint8_t *)ptr < segment->heapAlloc)) {
 			break;
 		}
 	}
@@ -79,7 +79,7 @@ isValidClass(J9JavaVM *javaVM, J9Class *ptr, UDATA flags) {
 	}
 
 	/* ensure that the class header fits into the segment */
-	if ((segment->heapAlloc - (U_8 *)ptr) < (ptrdiff_t)sizeof(J9Class)) {
+	if ((segment->heapAlloc - (uint8_t *)ptr) < (ptrdiff_t)sizeof(J9Class)) {
 		return J9OBJECTCHECK_INVALID;
 	}
 
@@ -94,26 +94,26 @@ isValidClass(J9JavaVM *javaVM, J9Class *ptr, UDATA flags) {
  * @return one of J9OBJECTCHECK_* depending if the object is valid, invalid or looks like it was forwarded.
  * @ingroup GC_Base
  */
-UDATA
-j9gc_ext_check_is_valid_heap_object(J9JavaVM *javaVM, J9Object *ptr, UDATA flags)
+uintptr_t
+j9gc_ext_check_is_valid_heap_object(J9JavaVM *javaVM, J9Object *ptr, uintptr_t flags)
 {
 	/* check alignment */
-	if (0 != ((UDATA)ptr & (sizeof(UDATA) - 1) )) {
+	if (0 != ((uintptr_t)ptr & (sizeof(uintptr_t) - 1) )) {
 		return J9OBJECTCHECK_INVALID;
 	}
 
-	UDATA retVal = 0;
+	uintptr_t retVal = 0;
 	void *lowAddress = NULL;
 	void *highAddress = NULL;
 	/* look up the region containing the object for checking that it is correctly contained */
-	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(javaVM);
-	MM_Heap *heap = extensions->heap;
+	MM_GCExtensions *ext = MM_GCExtensions::getExtensions(javaVM);
+	MM_Heap *heap = ext->heap;
 	MM_HeapRegionManager *regionManager = heap->getHeapRegionManager();
 	GC_HeapRegionIterator regionIterator(regionManager);
 	MM_HeapRegionDescriptor *region = NULL;
 
 	/* try to find the region that this class starts in */
-	while(NULL != (region = regionIterator.nextRegion())) {
+	while (NULL != (region = regionIterator.nextRegion())) {
 		/* is the pointer in this segment? */
 		lowAddress = region->getLowAddress();
 		highAddress = region->getHighAddress();
@@ -128,7 +128,7 @@ j9gc_ext_check_is_valid_heap_object(J9JavaVM *javaVM, J9Object *ptr, UDATA flags
 	}
 
 	/* ensure that the object header fits into the segment */
-	if (((UDATA)highAddress - (UDATA)ptr) < J9JAVAVM_OBJECT_HEADER_SIZE(javaVM)) {
+	if (((uintptr_t)highAddress - (uintptr_t)ptr) < J9JAVAVM_OBJECT_HEADER_SIZE(javaVM)) {
 		return J9OBJECTCHECK_INVALID;
 	}
 	
@@ -144,14 +144,14 @@ j9gc_ext_check_is_valid_heap_object(J9JavaVM *javaVM, J9Object *ptr, UDATA flags
 	}
 
 	/* ensure that the shape is correct */
-	if (!extensions->objectModel.checkIndexableFlag(ptr)) {
+	if (!ext->objectModel.checkIndexableFlag(ptr)) {
 		return J9OBJECTCHECK_INVALID;
 	}
 
-	if (extensions->objectModel.isObjectArray(ptr)
-		|| extensions->objectModel.isPrimitiveArray(ptr)) {
+	if (ext->objectModel.isObjectArray(ptr)
+		|| ext->objectModel.isPrimitiveArray(ptr)) {
 		/* ensure that the array size fits into the segment */
-		if (((UDATA)highAddress - (UDATA)ptr) < J9JAVAVM_CONTIGUOUS_INDEXABLE_HEADER_SIZE(javaVM)) {
+		if (((uintptr_t)highAddress - (uintptr_t)ptr) < J9JAVAVM_CONTIGUOUS_INDEXABLE_HEADER_SIZE(javaVM)) {
 			return J9OBJECTCHECK_INVALID;
 		}
 	}
@@ -165,7 +165,7 @@ j9gc_ext_check_is_valid_heap_object(J9JavaVM *javaVM, J9Object *ptr, UDATA flags
 	 *   since checking it to be valid, however the size itself within the class memory may have changed. Since
 	 *   this is a range check it "does not matter", we know we will be able to dereference the memory.
 	 */
-	if (((UDATA)highAddress - (UDATA)ptr) < extensions->objectModel.getSizeInBytesWithHeader(ptr)) {
+	if (((uintptr_t)highAddress - (uintptr_t)ptr) < ext->objectModel.getSizeInBytesWithHeader(ptr)) {
 		return J9OBJECTCHECK_INVALID;
 	}
 
