@@ -119,7 +119,7 @@ validated; fail otherwise
 Class Chains are a core component of AOT validation; they ensure that
 the shape of a class is the same as that during the compile run. For
 technical details about Class Chains, see
-[AOT Class Chains](https://github.com/eclipse-openj9/openj9/blob/master/doc/compiler/aot/AOTClassChains.md).
+[AOT Class Chains](ClassChains.md).
 Thus, for every validation record involving classes, a Class Chain
 Validation Record is also created (unless a record for that class
 already exists).
