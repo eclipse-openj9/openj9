@@ -4030,6 +4030,12 @@ void TR_ResolvedJ9Method::construct()
       {  TR::unknownMethod},
       };
 
+   static X AbstractMemorySegmentImplMethods [] =
+      {
+      {  TR::jdk_internal_foreign_AbstractMemorySegmentImpl_reinterpret, 11, "reinterpret", (int16_t)-1, "*"},
+      {  TR::unknownMethod},
+      };
+
    static X ArraysSupportMethods [] =
       {
       {x(TR::jdk_internal_util_ArraysSupport_vectorizedMismatch, "vectorizedMismatch", "(Ljava/lang/Object;JLjava/lang/Object;JII)I")},
@@ -4343,6 +4349,7 @@ void TR_ResolvedJ9Method::construct()
       { "java/util/concurrent/atomic/AtomicIntegerArray", JavaUtilConcurrentAtomicIntegerArrayMethods },
       { "java/util/concurrent/ConcurrentHashMap$TreeBin", JavaUtilConcurrentConcurrentHashMapTreeBinMethods },
       { "java/io/ObjectInputStream$BlockDataInputStream", ObjectInputStream_BlockDataInputStreamMethods },
+      { "jdk/internal/foreign/AbstractMemorySegmentImpl", AbstractMemorySegmentImplMethods },
       { 0 }
       };
 

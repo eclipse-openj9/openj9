@@ -1169,6 +1169,7 @@
    java_lang_invoke_VarHandleByteArrayAsX_ByteBufferHandle_method,
 
    jdk_internal_foreign_layout_ValueLayouts_AbstractValueLayout_accessHandle,
+   jdk_internal_foreign_AbstractMemorySegmentImpl_reinterpret,
    java_lang_foreign_MemorySegment_method,
 
    // Clone and Deep Copy
