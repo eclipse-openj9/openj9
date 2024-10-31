@@ -46,8 +46,8 @@ class MM_FrequentObjectsStats : public MM_Base
 {
 /* Data Members */
 public:
-	OMRSpaceSaving * _spaceSaving;
-	U_32 _topKFrequent;
+	OMRSpaceSaving *_spaceSaving;
+	uint32_t _topKFrequent;
 private:
 	J9PortLibrary *_portLibrary;
 
@@ -58,9 +58,9 @@ private:
 	 * Derived from a sample run of Eclipse, which showed that the size necessary to have accurately report the top k
 	 * elements was approximately linear.
 	 */
-	U_32 getSizeForTopKFrequent(U_32 topKFrequent)
+	uint32_t getSizeForTopKFrequent(uint32_t topKFrequent)
 	{
-		return topKFrequent*K_TO_SIZE_RATIO;
+		return topKFrequent * K_TO_SIZE_RATIO;
 	}
 
 /* Function Members */
@@ -92,7 +92,7 @@ public:
 	 * @param portLibrary the port library
 	 * @param k the number of frequent objects we'd like to accurately report
 	 */
-	MM_FrequentObjectsStats(J9PortLibrary *portLibrary, U_32 k=TOPK_FREQUENT_DEFAULT)
+	MM_FrequentObjectsStats(J9PortLibrary *portLibrary, uint32_t k = TOPK_FREQUENT_DEFAULT)
 		: _spaceSaving(0)
 		, _topKFrequent(k)
 		,_portLibrary(portLibrary)
@@ -100,7 +100,7 @@ public:
 
 
 	/* Merges a FrequentObjectStats structures together with this one*/
-	void merge(MM_FrequentObjectsStats* frequentObjectsStats);
+	void merge(MM_FrequentObjectsStats *frequentObjectsStats);
 
 	void traceStats(MM_EnvironmentBase *env);
 

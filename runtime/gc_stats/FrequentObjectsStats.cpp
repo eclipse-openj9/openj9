@@ -36,16 +36,16 @@ MM_FrequentObjectsStats::newInstance(MM_EnvironmentBase *env)
 {
 	PORT_ACCESS_FROM_ENVIRONMENT(env);
 	MM_FrequentObjectsStats *frequentObjectsStats;
-	U_32 frequentObjectAllocationSamplingDepth = MM_GCExtensions::getExtensions(env)->frequentObjectAllocationSamplingDepth;
+	uint32_t frequentObjectAllocationSamplingDepth = MM_GCExtensions::getExtensions(env)->frequentObjectAllocationSamplingDepth;
 
 	frequentObjectsStats = (MM_FrequentObjectsStats *)env->getForge()->allocate(sizeof(MM_FrequentObjectsStats), MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
-	if(NULL != frequentObjectsStats) {
+	if (NULL != frequentObjectsStats) {
 		if (0 != frequentObjectAllocationSamplingDepth) {
 			new(frequentObjectsStats) MM_FrequentObjectsStats(PORTLIB, frequentObjectAllocationSamplingDepth);
 		} else {
 			new(frequentObjectsStats) MM_FrequentObjectsStats(PORTLIB);
 		}
-		if(!frequentObjectsStats->initialize(env)) {
+		if (!frequentObjectsStats->initialize(env)) {
 			frequentObjectsStats->kill(env);
 			return NULL;
 		}
@@ -65,7 +65,7 @@ MM_FrequentObjectsStats::initialize(MM_EnvironmentBase *env)
 void
 MM_FrequentObjectsStats::tearDown(MM_EnvironmentBase *env)
 {
-	if(NULL != _spaceSaving){
+	if (NULL != _spaceSaving) {
 		spaceSavingFree(_spaceSaving);
 	}
 }
@@ -81,23 +81,23 @@ MM_FrequentObjectsStats::kill(MM_EnvironmentBase *env)
 void
 MM_FrequentObjectsStats::traceStats(MM_EnvironmentBase *env)
 {
-	UDATA i;
+	uintptr_t i = 0;
 	J9VMThread *vmThread = (J9VMThread *)env->getOmrVMThread()->_language_vmthread;
 	MM_GCExtensionsBase *extensions = env->getExtensions();
-	/* Should convert easily as frequentObjectAllocationSamplingRate is a UDATA representing a percentage*/
-	float sampleFreq = 100/((float) extensions->frequentObjectAllocationSamplingRate);
+	/* Should convert easily as frequentObjectAllocationSamplingRate is a uintptr_t representing a percentage */
+	float sampleFreq = 100 / ((float) extensions->frequentObjectAllocationSamplingRate);
 
-	for(i=0; i < spaceSavingGetCurSize(_spaceSaving) && i < _topKFrequent; i++){
-		J9Class * clazz = (J9Class *) spaceSavingGetKthMostFreq(_spaceSaving,i+1);
-		UDATA count = spaceSavingGetKthMostFreqCount(_spaceSaving,i+1);
+	for (i = 0; i < spaceSavingGetCurSize(_spaceSaving) && i < _topKFrequent; i++) {
+		J9Class *clazz = (J9Class *) spaceSavingGetKthMostFreq(_spaceSaving, i + 1);
+		uintptr_t count = spaceSavingGetKthMostFreqCount(_spaceSaving, i + 1);
 
-		if(J9ROMCLASS_IS_ARRAY(clazz->romClass)){
+		if (J9ROMCLASS_IS_ARRAY(clazz->romClass)) {
 			J9ArrayClass* arrayClass = (J9ArrayClass*) clazz;
-			UDATA arity = arrayClass->arity;
-			J9UTF8* utf;
+			uintptr_t arity = arrayClass->arity;
+			J9UTF8 *utf = NULL;
 
 			/* Max arity is 255, so define a bracket array of size 255*2 */
-			static const char * brackets =
+			static const char *brackets =
 				"[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]"
 				"[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]"
 				"[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]"
@@ -106,24 +106,23 @@ MM_FrequentObjectsStats::traceStats(MM_EnvironmentBase *env)
 
 			utf = J9ROMCLASS_CLASSNAME(arrayClass->leafComponentType->romClass);
 			Trc_MM_FrequentObjectStats_AllocationCacheIndexableObjectAllocation(
-					vmThread, clazz, J9UTF8_LENGTH(utf), J9UTF8_DATA(utf), arity*2, brackets, count, (UDATA) (((float)count)*sampleFreq));
-		}else{
+					vmThread, clazz, J9UTF8_LENGTH(utf), J9UTF8_DATA(utf), arity * 2, brackets, count, (uintptr_t) (((float)count) * sampleFreq));
+		} else {
 			Trc_MM_FrequentObjectStats_AllocationCacheObjectAllocation(
-					vmThread, clazz, J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(clazz->romClass)), J9UTF8_DATA(J9ROMCLASS_CLASSNAME(clazz->romClass)), clazz->totalInstanceSize, count, (UDATA) (((float)count)*sampleFreq));
+					vmThread, clazz, J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(clazz->romClass)), J9UTF8_DATA(J9ROMCLASS_CLASSNAME(clazz->romClass)), clazz->totalInstanceSize, count, (uintptr_t) (((float)count) * sampleFreq));
 		}
 	}
 	return;
 }
 
 void
-MM_FrequentObjectsStats::merge(MM_FrequentObjectsStats* frequentObjectsStats)
+MM_FrequentObjectsStats::merge(MM_FrequentObjectsStats *frequentObjectsStats)
 {
-	UDATA i;
-	OMRSpaceSaving* spaceSaving = frequentObjectsStats->_spaceSaving;
+	uintptr_t i = 0;
+	OMRSpaceSaving *spaceSaving = frequentObjectsStats->_spaceSaving;
 
-	for(i = 0; i < spaceSavingGetCurSize(spaceSaving); i++ ){
-		spaceSavingUpdate(_spaceSaving, spaceSavingGetKthMostFreq(spaceSaving,i+1), spaceSavingGetKthMostFreqCount(spaceSaving,i+1));
+	for (i = 0; i < spaceSavingGetCurSize(spaceSaving); i++) {
+		spaceSavingUpdate(_spaceSaving, spaceSavingGetKthMostFreq(spaceSaving, i + 1), spaceSavingGetKthMostFreqCount(spaceSaving, i + 1));
 	}
-
 }
 
