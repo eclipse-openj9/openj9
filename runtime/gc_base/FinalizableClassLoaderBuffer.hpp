@@ -38,7 +38,7 @@ class GC_FinalizableClassLoaderBuffer
 private:
 	J9ClassLoader *_head; /**< the head of the linked list of J9ClassLoader */
 	J9ClassLoader *_tail; /**< the tail of the linked list of J9ClassLoader */
-	UDATA _count; /**< the number of buffered J9ClassLoader */
+	uintptr_t _count; /**< the number of buffered J9ClassLoader */
 	MM_GCExtensions * const _extensions; /**< a cached pointer to the extensions structure */
 protected:
 public:
@@ -51,7 +51,7 @@ public:
 	 * @param env[in] the current thread
 	 * @param object[in] the object to add
 	 */
-	void add(MM_EnvironmentBase* env, J9ClassLoader *loader)
+	void add(MM_EnvironmentBase *env, J9ClassLoader *loader)
 	{
 		if (NULL == _head) {
 			Assert_MM_true(NULL == _tail);
@@ -69,7 +69,7 @@ public:
 		}
 	}
 
-	void flush(MM_EnvironmentBase* env)
+	void flush(MM_EnvironmentBase *env)
 	{
 		if (NULL != _head) {
 			Assert_MM_true(NULL != _tail);
@@ -88,9 +88,9 @@ public:
 	 */
 	GC_FinalizableClassLoaderBuffer(MM_GCExtensions *extensions) :
 		_head(NULL)
-		,_tail(NULL)
-		,_count(0)
-		,_extensions(extensions)
+		, _tail(NULL)
+		, _count(0)
+		, _extensions(extensions)
 	{}
 };
 #endif /* FINALIZABLECLASSLOADERBUFFER_HPP_ */

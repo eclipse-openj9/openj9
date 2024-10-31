@@ -39,7 +39,7 @@ class GC_FinalizableReferenceBuffer
 private:
 	j9object_t _head; /**< the head of the linked list of reference objects */
 	j9object_t _tail; /**< the tail of the linked list of reference objects */
-	UDATA _count; /**< the number of buffered objects */
+	uintptr_t _count; /**< the number of buffered objects */
 	MM_GCExtensions * const _extensions; /**< a cached pointer to the extensions structure */
 protected:
 public:
@@ -52,7 +52,7 @@ public:
 	 * @param env[in] the current thread
 	 * @param object[in] the object to add
 	 */
-	void add(MM_EnvironmentBase* env, j9object_t object)
+	void add(MM_EnvironmentBase *env, j9object_t object)
 	{
 		if (NULL == _head) {
 			Assert_MM_true(NULL == _tail);
@@ -70,7 +70,7 @@ public:
 		}
 	}
 
-	void flush(MM_EnvironmentBase* env)
+	void flush(MM_EnvironmentBase *env)
 	{
 		if (NULL != _head) {
 			Assert_MM_true(NULL != _tail);
@@ -89,9 +89,9 @@ public:
 	 */
 	GC_FinalizableReferenceBuffer(MM_GCExtensions *extensions) :
 		_head(NULL)
-		,_tail(NULL)
-		,_count(0)
-		,_extensions(extensions)
+		, _tail(NULL)
+		, _count(0)
+		, _extensions(extensions)
 	{}
 };
 #endif /* FINALIZABLEREFERENCEBUFFER_HPP_ */
