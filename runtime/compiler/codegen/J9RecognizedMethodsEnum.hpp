@@ -134,6 +134,7 @@
    java_lang_ref_Reference_refersTo,
    java_lang_ref_SoftReference_get,
    java_lang_Thread_currentThread,
+   java_lang_Thread_onSpinWait,
    java_lang_Thread_runWith,
    java_lang_VirtualThread_runWith,
    java_lang_ScopedValue_runWith,

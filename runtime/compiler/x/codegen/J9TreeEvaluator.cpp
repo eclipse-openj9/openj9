@@ -11702,6 +11702,25 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
 
    switch (symbol->getRecognizedMethod())
       {
+      case TR::java_lang_Thread_onSpinWait:
+         {
+         static char *disableOSW = feGetEnv("TR_noPauseOnSpinWait");
+         if (!disableOSW)
+            {
+            generateInstruction(TR::InstOpCode::PAUSE, node, cg);
+
+            static char *printIt = feGetEnv("TR_showPauseOnSpinWait");
+            if (printIt && comp->getOption(TR_TraceCG))
+               {
+               traceMsg(comp, "insert PAUSE for onSpinWait : node=%p, %s\n", node, comp->signature());
+               }
+
+            return NULL;
+            }
+         else
+            break;
+         }
+
       case TR::java_nio_Bits_keepAlive:
       case TR::java_lang_ref_Reference_reachabilityFence:
          {
