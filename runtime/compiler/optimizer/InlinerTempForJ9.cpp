@@ -366,6 +366,9 @@ TR_J9InlinerPolicy::alwaysWorthInlining(TR_ResolvedMethod * calleeMethod, TR::No
       case TR::java_lang_Class_newInstance:
       case TR::jdk_internal_util_Preconditions_checkIndex:
 
+      // AbstractMemorySegmentImpl.reinterpret methods call Reflection.getCallerClass
+      case TR::jdk_internal_foreign_AbstractMemorySegmentImpl_reinterpret:
+
       // we rely on inlining compareAndSwap so we see the inner native call and can special case it
       case TR::com_ibm_jit_JITHelpers_compareAndSwapIntInObject:
       case TR::com_ibm_jit_JITHelpers_compareAndSwapLongInObject:
