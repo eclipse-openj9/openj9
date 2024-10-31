@@ -32,7 +32,7 @@
 
 extern "C" {
 
-UDATA j9gc_ext_check_is_valid_heap_object(J9JavaVM *javaVM, J9Object *ptr, UDATA flags);
+uintptr_t j9gc_ext_check_is_valid_heap_object(J9JavaVM *javaVM, J9Object *ptr, uintptr_t flags);
 
 } /* extern "C" */
 
