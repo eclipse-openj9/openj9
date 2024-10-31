@@ -158,7 +158,7 @@ ASM (9.0)
 asmtools (7.0)
 
 * License: GPL-2.0-only WITH Classpath-exception-2.0
-* Project: http://openjdk.java.net/projects/code-tools/
+* Project: https://openjdk.org/projects/code-tools/
 * Source: https://github.com/openjdk/asmtools/
 
 java assist (3.20)
