@@ -3849,11 +3849,11 @@ jvmtiHookVmDumpEnd(J9HookInterface** hook, UDATA eventNum, void* eventData, void
 }
 
 /**
- * Check if a JVMTI event should be dispatched by checking the flag set by
- * notifyJvmtiHideFrames() and the presence of the JvmtiMountTransition
- * annotation.
+ * Check if a JVMTI event should be dispatched by checking the flag set
+ * by VM_VMHelpers::virtualThreadHideFrames() and the presence of the
+ * JvmtiMountTransition annotation.
  *
- * Note that the method should only be checked for Method Entry and Method Exit event.
+ * Note that the method should only be checked for Method Entry and Method Exit events.
  *
  * @param currentThread the current thread to be checked
  * @param method the method to be checked
