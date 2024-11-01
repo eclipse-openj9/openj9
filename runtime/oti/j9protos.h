@@ -1234,6 +1234,9 @@ extern J9_CFUNC void  JNICALL releaseArrayElements (JNIEnv *env, jarray array, v
 extern J9_CFUNC void  JNICALL setStaticObjectField (JNIEnv *env, jclass clazz, jfieldID fieldID, jobject value);
 extern J9_CFUNC jobject  JNICALL getStaticObjectField (JNIEnv *env, jclass clazz, jfieldID fieldID);
 extern J9_CFUNC jsize  JNICALL getStringUTFLength (JNIEnv *env, jstring string);
+#if JAVA_SPEC_VERSION >= 24
+extern J9_CFUNC jlong  JNICALL getStringUTFLengthAsLong(JNIEnv *env, jstring string);
+#endif /* JAVA_SPEC_VERSION >= 24 */
 extern J9_CFUNC jint  JNICALL registerNatives (JNIEnv *env, jclass clazz, const JNINativeMethod *methods, jint nMethods);
 extern J9_CFUNC jdouble  JNICALL getStaticDoubleField (JNIEnv *env, jclass clazz, jfieldID fieldID);
 extern J9_CFUNC jobject  JNICALL allocObject (JNIEnv *env, jclass clazz);

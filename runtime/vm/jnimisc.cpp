@@ -834,6 +834,20 @@ getStringUTFLength(JNIEnv *env, jstring string)
 	return (jsize)utfLength;
 }
 
+#if JAVA_SPEC_VERSION >= 24
+jlong JNICALL
+getStringUTFLengthAsLong(JNIEnv *env, jstring string)
+{
+	J9VMThread *currentThread = (J9VMThread *)env;
+	VM_VMAccess::inlineEnterVMFromJNI(currentThread);
+	j9object_t stringObject = J9_JNI_UNWRAP_REFERENCE(string);
+
+	U_64 utfLength = getStringUTF8LengthTruncated(currentThread, stringObject, I_64_MAX);
+	VM_VMAccess::inlineExitVMToJNI(currentThread);
+	return (jlong)utfLength;
+}
+#endif /* JAVA_SPEC_VERSION >= 24 */
+
 static const char*
 getStringUTFCharsImpl(JNIEnv *env, jstring string, jboolean *isCopy, jboolean ensureMem32)
 {

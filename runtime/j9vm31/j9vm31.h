@@ -339,6 +339,9 @@ jobject JNICALL GetModule(JNIEnv *env, jclass clazz);
 #if JAVA_SPEC_VERSION >= 19
 jboolean JNICALL IsVirtualThread(JNIEnv *env, jobject obj);
 #endif /* JAVA_SPEC_VERSION >= 19 */
+#if JAVA_SPEC_VERSION >= 24
+jlong JNICALL GetStringUTFLengthAsLong(JNIEnv *env, jstring string);
+#endif /* JAVA_SPEC_VERSION >= 24 */
 
 /* The JNI convert functions that the shim library will implement. */
 jint JNICALL GetStringPlatform(JNIEnv* env, jstring instr, char* outstr, jint outlen, const char* encoding);

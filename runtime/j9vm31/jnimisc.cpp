@@ -173,11 +173,25 @@ GetStringUTFLength(JNIEnv *env, jstring string)
 	const jint NUM_ARGS = 2;
 	J9_CEL4RO64_ArgType argTypes[NUM_ARGS] = { CEL4RO64_type_JNIEnv64, CEL4RO64_type_jstring };
 	uint64_t argValues[NUM_ARGS] = { JNIENV64_FROM_JNIENV31(env), string };
-	jsize returnValue = NULL;
+	jsize returnValue = 0;
 	FUNCTION_DESCRIPTOR_FROM_JNIENV31(env, GetStringUTFLength);
 	j9_cel4ro64_call_function(functionDescriptor, argTypes, argValues, NUM_ARGS, CEL4RO64_type_jsize, &returnValue);
 	return returnValue;
 }
+
+#if JAVA_SPEC_VERSION >= 24
+jlong JNICALL
+GetStringUTFLengthAsLong(JNIEnv *env, jstring string)
+{
+	const jint NUM_ARGS = 2;
+	J9_CEL4RO64_ArgType argTypes[NUM_ARGS] = { CEL4RO64_type_JNIEnv64, CEL4RO64_type_jstring };
+	uint64_t argValues[NUM_ARGS] = { JNIENV64_FROM_JNIENV31(env), string };
+	jlong returnValue = 0;
+	FUNCTION_DESCRIPTOR_FROM_JNIENV31(env, GetStringUTFLengthAsLong);
+	j9_cel4ro64_call_function(functionDescriptor, argTypes, argValues, NUM_ARGS, CEL4RO64_type_jlong, &returnValue);
+	return returnValue;
+}
+#endif /* JAVA_SPEC_VERSION >= 24 */
 
 const char* JNICALL
 GetStringUTFChars(JNIEnv *env, jstring string, jboolean *isCopy)

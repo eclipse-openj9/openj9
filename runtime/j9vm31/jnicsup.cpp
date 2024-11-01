@@ -316,6 +316,9 @@ struct JNINativeInterface_ EsJNIFunctions = {
 #if JAVA_SPEC_VERSION >= 19
 	IsVirtualThread,
 #endif /* JAVA_SPEC_VERSION >= 19 */
+#if JAVA_SPEC_VERSION >= 24
+	GetStringUTFLengthAsLong,
+#endif /* JAVA_SPEC_VERSION >= 24 */
 };
 
 static void initializeJNIEnv31(JNIEnv31 * jniEnv31, jlong jniEnv64);
