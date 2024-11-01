@@ -47,7 +47,7 @@ class GC_ClassStaticsDeclarationOrderIterator
 	J9ROMFieldShape *_fieldShape;
 	J9JavaVM *_javaVM;
 	J9Class *_clazz;
-	IDATA _index;
+	intptr_t _index;
 
 public:
 	GC_ClassStaticsDeclarationOrderIterator(J9JavaVM *jvm, J9Class *clazz, bool shouldPreindexInterfaceFields) 
@@ -55,7 +55,7 @@ public:
 		, _clazz(clazz)
 		, _index(-1)
 	{
-		U_32 flags = J9VM_FIELD_OFFSET_WALK_INCLUDE_STATIC | J9VM_FIELD_OFFSET_WALK_ONLY_OBJECT_SLOTS;
+		uint32_t flags = J9VM_FIELD_OFFSET_WALK_INCLUDE_STATIC | J9VM_FIELD_OFFSET_WALK_ONLY_OBJECT_SLOTS;
 		if (shouldPreindexInterfaceFields) {
 			flags |= J9VM_FIELD_OFFSET_WALK_PREINDEX_INTERFACE_FIELDS;
 		}
@@ -71,7 +71,7 @@ public:
 	 * @return static slot index of the entry returned by the last call of nextSlot.
 	 * @return -1 if nextSlot has yet to be called.
 	 */
-	MMINLINE IDATA getIndex() {
+	MMINLINE intptr_t getIndex() {
 		return _index;
 	}
 };
