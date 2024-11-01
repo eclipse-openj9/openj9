@@ -5553,17 +5553,8 @@ TR_ResolvedJ9Method::isJITInternalNative()
    }
 
 bool
-TR_J9MethodBase::isUnsafeCAS(TR::Compilation * c)
+TR_J9MethodBase::isUnsafeCAS()
    {
-   /*
-    * The TR::Compilation parameter "c" is sometimes null. But, it is needed to perform a platform target check.
-    * So, if it is null, this code goes and gets comp.
-    */
-   if (NULL == c)
-      {
-      c = TR::comp();
-      }
-
    TR::RecognizedMethod rm = getRecognizedMethod();
    switch (rm)
       {
@@ -5571,10 +5562,6 @@ TR_J9MethodBase::isUnsafeCAS(TR::Compilation * c)
       case TR::jdk_internal_misc_Unsafe_compareAndExchangeLong:
       case TR::jdk_internal_misc_Unsafe_compareAndExchangeObject:
       case TR::jdk_internal_misc_Unsafe_compareAndExchangeReference:
-         {
-         TR_ASSERT_FATAL(c, "comp should not be NULL");
-         return (c->target().cpu.isPower() || c->target().cpu.isX86() || c->target().cpu.isZ());
-         }
       case TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z:
       case TR::sun_misc_Unsafe_compareAndSwapLong_jlObjectJJJ_Z:
       case TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z:
@@ -5588,10 +5575,8 @@ TR_J9MethodBase::isUnsafeCAS(TR::Compilation * c)
    }
 
 bool
-//TR_ResolvedJ9Method::isUnsafeWithObjectArg(TR::Compilation * c)
-TR_J9MethodBase::isUnsafeWithObjectArg(TR::Compilation * c)
+TR_J9MethodBase::isUnsafeWithObjectArg()
    {
-   //TR::RecognizedMethod rm = TR_ResolvedMethod::getRecognizedMethod();
    TR::RecognizedMethod rm = getRecognizedMethod();
    switch (rm)
       {
@@ -5937,7 +5922,7 @@ TR_J9MethodBase::isVarHandleOperationMethod(TR::RecognizedMethod rm)
    }
 
 bool
-TR_J9MethodBase::isVarHandleAccessMethod(TR::Compilation * comp)
+TR_J9MethodBase::isVarHandleAccessMethod()
    {
    TR::RecognizedMethod rm = getMandatoryRecognizedMethod();
    switch (rm)
@@ -5982,9 +5967,9 @@ TR_J9MethodBase::isVarHandleAccessMethod(TR::Compilation * comp)
    }
 
 bool
-TR_J9MethodBase::isSignaturePolymorphicMethod(TR::Compilation * comp)
+TR_J9MethodBase::isSignaturePolymorphicMethod()
    {
-   if (isVarHandleAccessMethod(comp)) return true;
+   if (isVarHandleAccessMethod()) return true;
 
    TR::RecognizedMethod rm = getMandatoryRecognizedMethod();
    switch (rm)

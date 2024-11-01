@@ -2171,7 +2171,6 @@ J9::Node::isUnsafeGetPutCASCallOnNonArray()
    if (!symbol)
       return false;
 
-   //TR_ASSERT(symbol->castToResolvedMethodSymbol()->getResolvedMethod()->isUnsafeWithObjectArg(), "Attempt to check flag on a method that is not JNI Unsafe that needs special care for arraylets\n");
    TR_ASSERT(symbol->getMethod()->isUnsafeWithObjectArg() || symbol->getMethod()->isUnsafeCAS(),"Attempt to check flag on a method that is not JNI Unsafe that needs special care for arraylets\n");
    return _flags.testAny(unsafeGetPutOnNonArray);
    }

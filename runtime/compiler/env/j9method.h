@@ -123,11 +123,11 @@ public:
    static TR::DataType             unsafeDataTypeForArray(TR::RecognizedMethod rm);
    static TR::DataType             unsafeDataTypeForObject(TR::RecognizedMethod rm);
    static bool                     isVarHandleOperationMethod(TR::RecognizedMethod rm);
-   virtual bool                    isVarHandleAccessMethod(TR::Compilation * = NULL);
-   virtual bool                    isSignaturePolymorphicMethod(TR::Compilation * = NULL);
+   virtual bool                    isVarHandleAccessMethod();
+   virtual bool                    isSignaturePolymorphicMethod();
 
-   virtual bool                    isUnsafeWithObjectArg( TR::Compilation * comp = NULL);
-   virtual bool                    isUnsafeCAS(TR::Compilation * = NULL);
+   virtual bool                    isUnsafeWithObjectArg();
+   virtual bool                    isUnsafeCAS();
    virtual uint32_t                numberOfExplicitParameters();
    virtual TR::DataType            parmType(uint32_t parmNumber); // returns the type of the parmNumber'th parameter (0-based)
 
