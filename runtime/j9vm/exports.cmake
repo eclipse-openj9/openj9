@@ -428,8 +428,12 @@ if(JAVA_SPEC_VERSION LESS 20)
 else()
 	jvm_add_exports(jvm
 		JVM_GetClassFileVersion
-		JVM_VirtualThreadHideFrames
 	)
+	if(JAVA_SPEC_VERSION LESS 24)
+		jvm_add_exports(jvm
+			JVM_VirtualThreadHideFrames
+		)
+	endif()
 endif()
 
 if(NOT JAVA_SPEC_VERSION LESS 21)
