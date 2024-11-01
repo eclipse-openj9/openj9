@@ -115,8 +115,8 @@ public:
 	 * Construct a new buffer.
 	 * @param extensions[in] the GC extensions
 	 */
-	GC_FinalizableObjectBuffer(MM_GCExtensions *extensions) :
-		_systemHead(NULL)
+	GC_FinalizableObjectBuffer(MM_GCExtensions *extensions)
+		: _systemHead(NULL)
 		, _systemTail(NULL)
 		, _systemObjectCount(0)
 		, _defaultHead(NULL)

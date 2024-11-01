@@ -86,8 +86,8 @@ public:
 	 * Construct a new buffer.
 	 * @param extensions[in] the GC extensions
 	 */
-	GC_FinalizableClassLoaderBuffer(MM_GCExtensions *extensions) :
-		_head(NULL)
+	GC_FinalizableClassLoaderBuffer(MM_GCExtensions *extensions)
+		: _head(NULL)
 		, _tail(NULL)
 		, _count(0)
 		, _extensions(extensions)
