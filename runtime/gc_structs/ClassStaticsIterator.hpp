@@ -44,7 +44,7 @@
  */
 class GC_ClassStaticsIterator
 {
-	U_32 _objectStaticCount;
+	uint32_t _objectStaticCount;
 	j9object_t *_staticPtr;
 	
 public:
@@ -104,13 +104,12 @@ public:
 	volatile j9object_t *
 	nextSlot()
 	{
-		j9object_t *slotPtr;
+		j9object_t *slotPtr = NULL;
 		
-		if (0 == _objectStaticCount) {
-			return NULL;
+		if (0 != _objectStaticCount) {
+			_objectStaticCount -= 1;
+			slotPtr = _staticPtr++;
 		}
-		_objectStaticCount -= 1;
-		slotPtr = _staticPtr++;
 
 		return slotPtr;
 	}
