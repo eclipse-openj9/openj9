@@ -497,13 +497,10 @@
    sun_io_ByteToCharSingleByte_JITintrinsicConvert,
    sun_nio_cs_ISO_8859_1_Encoder_encodeArrayLoop,
    sun_nio_cs_ISO_8859_1_Encoder_encodeISOArray,
-   sun_nio_cs_ISO_8859_1_Decoder_decodeISO8859_1,
    sun_nio_cs_US_ASCII_Encoder_encodeASCII,
    sun_nio_cs_US_ASCII_Decoder_decodeASCII,
    sun_nio_cs_ext_SBCS_Encoder_encodeSBCS,
    sun_nio_cs_ext_SBCS_Decoder_decodeSBCS,
-   sun_nio_cs_UTF_8_Decoder_decodeUTF_8,
-   sun_nio_cs_UTF_8_Encoder_encodeUTF_8,
    sun_nio_cs_ext_IBM1388_Encoder_encodeArrayLoop,
 
    sun_nio_cs_UTF_16_Encoder_encodeUTF16Big,
