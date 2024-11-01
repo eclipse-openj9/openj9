@@ -539,9 +539,9 @@ J9::Z::CodeGenerator::lowerTreeIfNeeded(
 
    // J9, Z
    //
-   if (comp->target().cpu.isZ() && node->getOpCodeValue() == TR::aloadi && node->isUnneededIALoad())
+   if (comp->target().cpu.isZ() && node->getOpCodeValue() == TR::aloadi && node->isUnneededAloadi())
       {
-      ListIterator<TR_Pair<TR::Node, int32_t> > listIter(&_ialoadUnneeded);
+      ListIterator<TR_Pair<TR::Node, int32_t> > listIter(&_aloadiUnneeded);
       TR_Pair<TR::Node, int32_t> *ptr;
       uintptr_t temp;
       int32_t updatedTemp;
@@ -551,7 +551,7 @@ J9::Z::CodeGenerator::lowerTreeIfNeeded(
          updatedTemp = (int32_t) temp;
          if (ptr->getKey() == node && temp != node->getReferenceCount())
             {
-            node->setUnneededIALoad(false);
+            node->setUnneededAloadi(false);
             break;
             }
          }

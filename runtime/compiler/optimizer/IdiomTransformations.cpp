@@ -1390,12 +1390,12 @@ checkByteToChar(TR::Compilation *comp, TR::Node *iorNode, TR::Node *&inputNode, 
       //       if index is i then inputNode = bloadi child of imul
       //       else fail
       //
-      TR::Node *ibloadNode = imulNode->getFirstChild()->skipConversions();
+      TR::Node *bloadiNode = imulNode->getFirstChild()->skipConversions();
       bool plusOne = false;
       bool matchPattern = false;
-      if (ibloadNode->getOpCodeValue() == TR::bloadi)
+      if (bloadiNode->getOpCodeValue() == TR::bloadi)
          {
-         TR::Node *subNode = ibloadNode->getFirstChild()->getSecondChild();
+         TR::Node *subNode = bloadiNode->getFirstChild()->getSecondChild();
          int32_t hdrSize = TR::Compiler->om.contiguousArrayHeaderSizeInBytes() + 1;
          if (subNode->getOpCode().isSub() &&
                subNode->getSecondChild()->getOpCode().isLoadConst())
@@ -1425,7 +1425,7 @@ checkByteToChar(TR::Compilation *comp, TR::Node *iorNode, TR::Node *&inputNode, 
                   {
                   if (!plusOne)
                      {
-                     inputNode = ibloadNode->getFirstChild();
+                     inputNode = bloadiNode->getFirstChild();
                      return true;
                      }
                   else
@@ -5947,13 +5947,13 @@ CISCTransform2ArrayCopySub(TR_CISCTransformer *trans, TR::Node *indexRepNode, TR
       return false;
       }
 
-   TR::Node *optionalIistore = NULL;
+   TR::Node *optionalIstorei = NULL;
    if (P->getImportantNode(4))
       {
-      TR_CISCNode *optionalCISCIistore = trans->getP2TInLoopIfSingle(P->getImportantNode(4));
-      if (!optionalCISCIistore)
+      TR_CISCNode *optionalCISCIstorei = trans->getP2TInLoopIfSingle(P->getImportantNode(4));
+      if (!optionalCISCIstorei)
          return false;
-      optionalIistore = optionalCISCIistore->getHeadOfTrNode()->duplicateTree();
+      optionalIstorei = optionalCISCIstorei->getHeadOfTrNode()->duplicateTree();
       }
 
    TR::Node * exitVarNode = createLoad(exitVarRepNode);
@@ -6112,11 +6112,11 @@ CISCTransform2ArrayCopySub(TR_CISCTransformer *trans, TR::Node *indexRepNode, TR
       block->append(theOtherVarUpdateTreeTop);
       }
 
-   if (optionalIistore)
+   if (optionalIstorei)
       {
       TR_ASSERT(theOtherVarUpdateNode != NULL, "error!");
-      optionalIistore->setAndIncChild(1, theOtherVarUpdateNode->getChild(0));
-      block->append(TR::TreeTop::create(comp, optionalIistore));
+      optionalIstorei->setAndIncChild(1, theOtherVarUpdateNode->getChild(0));
+      block->append(TR::TreeTop::create(comp, optionalIstorei));
       }
 
    trans->insertAfterNodes(block);

@@ -7649,7 +7649,7 @@ J9::Z::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(TR::Node * node, bool n
 
    // determine if an explicit check is needed
    if (cg->getSupportsImplicitNullChecks()
-         && !firstChild->isUnneededIALoad())
+         && !firstChild->isUnneededAloadi())
       {
       if (opCode.isLoadVar()
             || (cg->comp()->target().is64Bit() && opCode.getOpCodeValue()==TR::l2i)

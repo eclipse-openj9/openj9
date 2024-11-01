@@ -275,7 +275,7 @@ J9::Z::MemoryReference::createUnresolvedDataSnippet(TR::Node * node, TR::CodeGen
    }
 
 TR::UnresolvedDataSnippet *
-J9::Z::MemoryReference::createUnresolvedDataSnippetForiaload(TR::Node * node, TR::CodeGenerator * cg, TR::SymbolReference * symRef, TR::Register * tempReg, bool & isStore)
+J9::Z::MemoryReference::createUnresolvedDataSnippetForAloadi(TR::Node * node, TR::CodeGenerator * cg, TR::SymbolReference * symRef, TR::Register * tempReg, bool & isStore)
    {
    // Have to catch the case where, on first glance, a putstatic looks
    // like a 'read' since the unresolved ref is on the aloadi, not the
