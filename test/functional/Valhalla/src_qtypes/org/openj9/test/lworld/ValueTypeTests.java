@@ -2256,6 +2256,9 @@ public class ValueTypeTests {
 	}
 
 	/*
+	 * Re-enable when CheckedType support is available.
+	 * https://github.com/eclipse-openj9/openj9/issues/19764
+	 *
 	 * Ensure that casting null to a value type class will throw a null pointer exception
 	 * This test is disabled since the latest spec from
 	 * https://cr.openjdk.org/~dlsmith/jep401/jep401-20230519/specs/types-cleanup-jvms.html
