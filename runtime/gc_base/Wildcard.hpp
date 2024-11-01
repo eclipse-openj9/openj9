@@ -43,24 +43,24 @@ public:
 	class MM_Wildcard *_next; /**< A pointer which can be used to build a linked list of WildCards */
 protected:
 private:
-	const U_32 _matchFlag; /**< a matchflag argument for wildcardMatch() */
-	const char* const _needle; /**< a needle argument for wildcardMatch() */
-	const UDATA _needleLength; /**< the length of the needle argument for wildcardMatch() */
-	char* const _pattern; /**< a block of memory which contains needle and which must be freed by the receiver */
+	const uint32_t _matchFlag; /**< a matchflag argument for wildcardMatch() */
+	const char * const _needle; /**< a needle argument for wildcardMatch() */
+	const uintptr_t _needleLength; /**< the length of the needle argument for wildcardMatch() */
+	char * const _pattern; /**< a block of memory which contains needle and which must be freed by the receiver */
 	
 /* member functions */
 public:
-	static MM_Wildcard *newInstance(MM_GCExtensions *extensions, U_32 matchFlag, const char* needle, UDATA needleLength, char* pattern);
+	static MM_Wildcard *newInstance(MM_GCExtensions *extensions, uint32_t matchFlag, const char *needle, uintptr_t needleLength, char *pattern);
 	void kill(MM_GCExtensions *extensions);
 
-	bool match(const char* haystack, UDATA haystackLength);
+	bool match(const char *haystack, uintptr_t haystackLength);
 		
 protected:
 	bool initialize(MM_GCExtensions *extensions);
 	void tearDown(MM_GCExtensions *extensions);
 
 private:
-	MM_Wildcard(U_32 matchFlag, const char* needle, UDATA needleLength, char* pattern);
+	MM_Wildcard(uint32_t matchFlag, const char *needle, uintptr_t needleLength, char *pattern);
 };
 
 #endif /* WILDCARD_HPP_ */
