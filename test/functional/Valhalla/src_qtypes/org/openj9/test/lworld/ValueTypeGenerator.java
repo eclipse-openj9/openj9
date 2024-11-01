@@ -1051,7 +1051,7 @@ public class ValueTypeGenerator extends ClassLoader {
 		return generator.defineClass(name, bytes, 0, bytes.length);
 	}
 	
-	public static Class<?> generateIllegalValueClassWithSychMethods(String name, String[] fields) throws Throwable {
+	public static Class<?> generateIllegalValueClassWithSynchMethods(String name, String[] fields) throws Throwable {
 		ClassConfiguration classConfig = new ClassConfiguration(name, fields);
 		classConfig.setHasNonStaticSynchronizedMethods(true);
 		byte[] bytes = generateClass(classConfig);
