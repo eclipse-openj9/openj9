@@ -44,9 +44,9 @@ class GC_CallSitesIterator
 	j9object_t *_callSitePtr;
 	
 public:
-	GC_CallSitesIterator(J9Class *clazz) :
-		_callSiteCount(clazz->romClass->callSiteCount),
-		_callSitePtr(clazz->callSites)
+	GC_CallSitesIterator(J9Class *clazz)
+		: _callSiteCount(clazz->romClass->callSiteCount)
+		, _callSitePtr(clazz->callSites)
 	{
 		/* check if the class's call sites have been abandoned due to hot
 		 * code replace. If so, this class has no call sites of its own
@@ -55,7 +55,7 @@ public:
 			_callSiteCount = 0;
 		}
 		_callSiteTotal = _callSiteCount;
-	};
+	}
 
 	/**
 	 * @return the next call site slot in the class containing an object reference
@@ -81,7 +81,9 @@ public:
 	 * @return zero based call site index of the entry returned by the last call of nextSlot.
 	 * @return -1 if nextSlot has yet to be called.
 	 */
-	MMINLINE IDATA getIndex() {
+	MMINLINE intptr_t
+	getIndex()
+	{
 		return _callSiteTotal - _callSiteCount - 1;
 	}
 };
