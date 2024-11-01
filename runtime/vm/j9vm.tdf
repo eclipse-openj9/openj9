@@ -1003,3 +1003,5 @@ TraceException=Trc_VM_loadJFRMetadataBlob_blobDir_OOM NoEnv Overhead=1 Level=1 T
 TraceException=Trc_VM_loadJFRMetadataBlob_fileLength_too_large NoEnv Overhead=1 Level=1 Template="JFR loadJFRMetadataBlob fileLength(%llx) not less than 2G"
 TraceException=Trc_VM_loadJFRMetadataBlob_metaDataBlobFile_OOM NoEnv Overhead=1 Level=1 Template="JFR loadJFRMetadataBlob j9mem_allocate_memory failed for metaDataBlobFile"
 TraceException=Trc_VM_loadJFRMetadataBlob_bad_fileDescriptor NoEnv Overhead=1 Level=1 Template="JFR loadJFRMetadataBlob j9file_open returns fileDescriptor(-1)"
+
+TraceException=Trc_VM_Class_Found_Has_Diff_Name Overhead=1 Level=1 Template="Expected class name: %.*s, found class name: %.*s, fromClassTable=%d"
