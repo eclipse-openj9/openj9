@@ -172,7 +172,7 @@ openCommunicationSocket(uint32_t port, uint32_t &boundPort)
          close(sockfd);
          return retCode;
          }
-      boundPort = sock_desc.sin_port;
+      boundPort = ntohs(sock_desc.sin_port);
       }
    else
       {
