@@ -47,11 +47,11 @@ GC_ConstantPoolClassSlotIterator::nextSlot()
 			_cpDescriptionIndex = J9_CP_DESCRIPTIONS_PER_U32;
 		}
 
-		U_32 slotType = _cpDescription & J9_CP_DESCRIPTION_MASK;
+		uint32_t slotType = _cpDescription & J9_CP_DESCRIPTION_MASK;
 		J9Object **slotPtr = _cpEntry;
 
 		/* Adjust the CP slot and description information */
-		_cpEntry = (J9Object **)( ((U_8 *)_cpEntry) + sizeof(J9RAMConstantPoolItem) );
+		_cpEntry = (J9Object **)(((uint8_t *)_cpEntry) + sizeof(J9RAMConstantPoolItem));
 		_cpEntryCount -= 1;
 
 		_cpDescription >>= J9_CP_BITS_PER_DESCRIPTION;
