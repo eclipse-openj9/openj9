@@ -1565,7 +1565,7 @@ J9::SymbolReferenceTable::findOrCreateStringSymbol(TR::ResolvedMethodSymbol * ow
    else if (!sym->isConstString() &&
             !sym->isNonSpecificConstObject())
       {
-      TR::VMAccessCriticalSection constantCriticalSection(comp()->fej9());
+      // getObjectClassAt will acquire/release VMAccess internally when needed
       TR_OpaqueClassBlock *clazz = comp()->fej9()->getObjectClassAt((uintptr_t)stringConst);
       if (comp()->fej9()->isString(clazz))
          {
