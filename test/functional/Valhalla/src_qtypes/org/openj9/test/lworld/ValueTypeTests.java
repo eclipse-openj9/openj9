@@ -978,19 +978,16 @@ public class ValueTypeTests {
 	}
 
 
-	@Test(enabled=false, priority=2)
-	static public void testSynchMethodsOnValueTypes() throws Throwable {
+	/* The non-static synchronized method case is covered by
+	 * ValueTypeTests.testValueTypeHasSynchMethods.
+	 */
+	@Test(priority=2)
+	static public void testStaticSynchMethodsOnValueTypes() throws Throwable {
 		int x = 1;
 		int y = 1;
 		Object valueType = makePoint2D.invoke(x, y);
-		MethodHandle syncMethod = lookup.findVirtual(point2DClass, "synchronizedMethodReturnInt", MethodType.methodType(int.class));
 		MethodHandle staticSyncMethod = lookup.findStatic(point2DClass, "staticSynchronizedMethodReturnInt", MethodType.methodType(int.class));
-		
-		try {
-			syncMethod.invoke(valueType);
-			Assert.fail("should throw exception. Synchronized methods cannot be used with ValueType");
-		} catch (IllegalMonitorStateException e) {}
-		
+
 		try {
 			staticSyncMethod.invoke();
 		} catch (IllegalMonitorStateException e) {
