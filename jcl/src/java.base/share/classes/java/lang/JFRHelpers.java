@@ -22,6 +22,8 @@
  */
 package java.lang;
 
+import java.lang.reflect.InvocationTargetException;
+
 import java.lang.reflect.Method;
 
 import jdk.internal.misc.Unsafe;
@@ -269,9 +271,11 @@ final class JFRHelpers {
 					}
 				}
 				/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
-			} catch (ReflectiveOperationException e) {
-				e.printStackTrace();
-				throw new RuntimeException(e);
+			} catch (InvocationTargetException e) {
+				Throwable cause = e.getCause();
+				logJFR(cause.getMessage(), 0, 4);
+			} catch (Exception e) {
+				throw new InternalError(e);
 			}
 		}
 	}

@@ -4220,10 +4220,15 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 			vm->extendedRuntimeFlags2 &= ~(UDATA)J9_EXTENDED_RUNTIME2_JFR_ENABLED;
 		}
 
-		IDATA jfrOptionIndex = FIND_AND_CONSUME_VMARG(OPTIONAL_LIST_MATCH_USING_EQUALS, VMOPT_XXSTARTFLIGHTRECORDING, NULL);
+		IDATA jfrOptionIndex = FIND_AND_CONSUME_VMARG(STARTSWITH_MATCH, VMOPT_XXSTARTFLIGHTRECORDING, NULL);
 		if (0 <= jfrOptionIndex) {
 			char* jfrOptionBuffer = NULL;
-			GET_OPTION_VALUE(jfrOptionIndex, '=', &jfrOptionBuffer);
+			if (0 <= FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, VMOPT_XXSTARTFLIGHTRECORDING_EQUALS, NULL)) {
+				GET_OPTION_VALUE(jfrOptionIndex, '=', &jfrOptionBuffer);
+			}
+			else if (0 <= FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, VMOPT_XXSTARTFLIGHTRECORDING_COLON, NULL)) {
+				GET_OPTION_OPTION(jfrOptionIndex, ':', ':', &jfrOptionBuffer);
+			}
 			if (NULL == jfrOptionBuffer) {
 				vm->jfrState.jfrCMDLineOption = (char*)"dumponexit=false";
 			}
