@@ -528,6 +528,13 @@ all data is stored in their own region. It additionaly reduces footprint, mainly
 		<description>Enable Segregated Heap model.</description>
 		<ifRemoved>The Segregated Heap model will not be used</ifRemoved>
 	</flag>
+	<flag id="gc_sparseHeapAllocation">
+		<description>Allows large arrays to be allocated off-heap</description>
+		<ifRemoved></ifRemoved>
+		<requires>
+			<require flag="env_data64"/>
+		</requires>
+	</flag>
 	<flag id="gc_strictOmr">
 		<description>Enable Strict OMR compile and link for testing</description>
 		<ifRemoved>Compile for JAVA</ifRemoved>
