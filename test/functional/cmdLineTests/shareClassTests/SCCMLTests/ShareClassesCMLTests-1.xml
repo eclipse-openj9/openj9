@@ -187,7 +187,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	</test>
 
 	<test id="Test 4 - d: Build a new cache with -Xnolinenumbers and mprotect=all" timeout="600" runPath=".">
-		<command>$JAVA_EXE$ -Xnolinenumbers $currentMode$,reset,mprotect=all -version</command>
+		<command>$JAVA_EXE$ -Xnolinenumbers $currentMode$,reset,mprotect=all,verbose -version</command>
 		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
