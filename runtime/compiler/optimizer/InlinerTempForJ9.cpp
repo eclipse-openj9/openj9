@@ -1366,19 +1366,19 @@ The functions used to construct the trees for all the cases outlined above are a
 Note that in case (2), i.e., when the conversion is needed, we generate code like the
 following for the "direct access with conversion" for Unsafe.getByte
     b2i
-      ibload
+      bloadi
         aiadd
 while the direct access code looks like
-    iiload
+    iloadi
       aiadd
-We will replace b2i and ibload by c2iu and icload for Unsafe.getChar, by
-s2i and isload for Unsafe.getShort, and by bu2i and ibload for Unsafe.getBoolean
+We will replace b2i and bloadi by c2iu and icload for Unsafe.getChar, by
+s2i and isload for Unsafe.getShort, and by bu2i and bloadi for Unsafe.getBoolean
 
 For Unsafe.putByte and Unsafe.putBoolean, we generate
-   ibstore
+   bstorei
      i2b
        <some load node>
-We replace i2b and ibstore by i2c and icstore for Unsafe.getChar, and by i2s and isstore for
+We replace i2b and bstorei by i2c and icstore for Unsafe.getChar, and by i2s and isstore for
 Unsafe.getShort.
 */
 

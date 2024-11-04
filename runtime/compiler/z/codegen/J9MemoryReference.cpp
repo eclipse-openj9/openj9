@@ -278,8 +278,8 @@ TR::UnresolvedDataSnippet *
 J9::Z::MemoryReference::createUnresolvedDataSnippetForiaload(TR::Node * node, TR::CodeGenerator * cg, TR::SymbolReference * symRef, TR::Register * tempReg, bool & isStore)
    {
    // Have to catch the case where, on first glance, a putstatic looks
-   // like a 'read' since the unresolved ref is on the iaload, not the
-   // iistore. The 'right' fix is to set a bit on the sym instead
+   // like a 'read' since the unresolved ref is on the aloadi, not the
+   // istorei. The 'right' fix is to set a bit on the sym instead
    //
    TR::Node * rootNode = cg->getCurrentEvaluationTreeTop()->getNode();
    if (rootNode->getOpCode().isResolveCheck() &&

@@ -1866,7 +1866,7 @@ TR::Node* TR_arraycopySequentialStores::constValNode()
 // Transform a set of sequential stores into increasing storage from an integral type into
 // an arraycopy call
 // Order varies depending if on Big Endian or Little Endian target hardware
-// ibstore <array element>
+// bstorei <array element>
 //   aiadd
 //     aload <arr>
 //     isub
@@ -1939,7 +1939,7 @@ static TR::TreeTop* generateArraycopyFromSequentialStores(TR::Compilation* comp,
    symRef->setOffset(arraycopy.getTreeTop()->getNode()->getSymbolReference()->getOffset());
 
    //
-   // delete the ibstore trees and replace them with a new, improved iXstore tree
+   // delete the bstorei trees and replace them with a new, improved iXstore tree
    //
    arraycopy.removeTrees(symRef);
 
@@ -3229,7 +3229,7 @@ static TR::TreeTop* generateArraysetFromSequentialStores(TR::Compilation* comp, 
    //traceMsg(comp, " First store in sequence %p Load Ref:%p Number of bytes: %d. Offset range:%d to %d. Byte Value:%d\n", istoreNode, arrayset.getALoadRef(), numBytes, arrayset.getBaseOffset(), arrayset.getBaseOffset() + numBytes - 1, arrayset.getConstant());
 
    //
-   // break the iistore trees into tree_tops of the aload and const
+   // break the istorei trees into tree_tops of the aload and const
    // so that it can be subsequently deleted by simplifier phase
    //
    TR_arraysetSequentialStores arraysetUpdate = TR_arraysetSequentialStores(comp);
@@ -3324,7 +3324,7 @@ static TR::TreeTop* generateArraysetFromSequentialStores(TR::Compilation* comp, 
       TR::Node *topNode = TR::Node::create(TR::treetop, 1, arraysetNode);
       arraysetTreeTop = TR::TreeTop::create(comp, topNode);
 
-      // delete all the old iistore trees by eliminating them from the tree list
+      // delete all the old istorei trees by eliminating them from the tree list
       prevTreeTop->join(arraysetTreeTop);
       arraysetTreeTop->join(curTreeTop);
       }
@@ -3332,7 +3332,7 @@ static TR::TreeTop* generateArraysetFromSequentialStores(TR::Compilation* comp, 
       {
       TR_ASSERT((numBytes <= 8), "Number of bytes is more than expected\n");
       //
-      // delete the ibstore trees and replace them with a new, improved iXstore tree
+      // delete the bstorei trees and replace them with a new, improved iXstore tree
       //
       //dumpOptDetails(comp, " Remove trees %p to %p\n", istoreTreeTop->getNode(), curTreeTop->getNode());
       //TR::TreeTop::removeDeadTrees(comp, istoreTreeTop, curTreeTop);
@@ -4108,7 +4108,7 @@ TR_SequentialStoreSimplifier::optDetailString() const throw()
 /*
  * Seen in atmstac0.cbl after removing the reassociation opts from Simplifier:
  *
- * [0x2A0A5874]   ibstore #182[id=42:"WS-ATM-ACCT-ENTRY-USED-F"][0x29201614]  Shadow[<refined-array-shadow>] <intPrec=2>
+ * [0x2A0A5874]   bstorei #182[id=42:"WS-ATM-ACCT-ENTRY-USED-F"][0x29201614]  Shadow[<refined-array-shadow>] <intPrec=2>
  *                  ==>aiadd at [0x2A0A561C]
  * [0x2A0A58B4]     buconst -16 <intPrec=2>    <flags:"0x204" (X!=0 X<=0 )/>
  * [0x2A0A5A94]   astore #201[id=305:"Subscr-AddrTemp"][0x2A08552C]  Auto[<auto slot 84>]

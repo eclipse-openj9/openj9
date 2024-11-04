@@ -2603,7 +2603,7 @@ TR::Register *J9::Power::TreeEvaluator::BNDCHKwithSpineCHKEvaluator(TR::Node *no
       TR_ASSERT(
             arrayLengthChild->getOpCode().isConversion() || arrayLengthChild->getOpCodeValue() == TR::iloadi || arrayLengthChild->getOpCodeValue() == TR::iload
                   || arrayLengthChild->getOpCodeValue() == TR::iRegLoad || arrayLengthChild->getOpCode().isLoadConst(),
-            "Expecting array length child under BNDCHKwithSpineCHK to be a conversion, iiload, iload, iRegLoad or iconst");
+            "Expecting array length child under BNDCHKwithSpineCHK to be a conversion, iloadi, iload, iRegLoad or iconst");
 
       TR::Register *condReg = srm->findOrCreateScratchRegister(TR_CCR);
 
@@ -6963,7 +6963,7 @@ static bool simpleReadMonitor(TR::Node *node, TR::CodeGenerator *cg, TR::Node *o
    // look for the special case of a read monitor sequence that protects
    // a single fixed-point load, ie:
    //   monenter (object)
-   //   a simple form of iaload or iiload
+   //   a simple form of aloadi or iloadi
    //   monexit (object)
 
    // note: before we make the following checks it is important that the
@@ -7026,8 +7026,8 @@ static bool simpleReadMonitor(TR::Node *node, TR::CodeGenerator *cg, TR::Node *o
       return false;
       }
    // possible TODO: expand the complexity of loads we can handle
-   // iaload and iiload are indirect and have a child
-   // if we don't need to evaluate that child then the iaload or iiload
+   // aloadi and iloadi are indirect and have a child
+   // if we don't need to evaluate that child then the aloadi or iloadi
    // consists of a single hardware instruction and satisfies our current
    // constraint of simple
    if (!nextTopNode->getFirstChild()->getRegister())
@@ -7152,7 +7152,7 @@ static bool simpleReadMonitor(TR::Node *node, TR::CodeGenerator *cg, TR::Node *o
    TR::addDependency(conditions, offsetReg, TR::RealRegister::NoReg, TR_GPR, cg);
    TR::addDependency(conditions, cndReg, TR::RealRegister::cr0, TR_CCR, cg);
 
-   // the following code is derived from the iaload and iiload evaluators
+   // the following code is derived from the aloadi and iloadi evaluators
    TR::Register *loadResultReg;
    OMR::Power::NodeMemoryReference tempMR;
    if (nextTopNode->getOpCodeValue() == TR::aloadi)
@@ -7184,7 +7184,7 @@ static bool simpleReadMonitor(TR::Node *node, TR::CodeGenerator *cg, TR::Node *o
       tempMR = TR::LoadStoreHandler::generateSimpleLoadMemoryReference(cg, nextTopNode, 4);
       loadOpCode = TR::InstOpCode::lwz;
       }
-   // end of code derived from the iaload and iiload evaluators
+   // end of code derived from the aloadi and iloadi evaluators
 
    TR::addDependency(conditions, loadResultReg, TR::RealRegister::NoReg, TR_GPR, cg);
    if (tempMR.getMemoryReference()->getBaseRegister() != objReg)

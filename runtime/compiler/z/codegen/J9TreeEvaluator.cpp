@@ -5217,7 +5217,7 @@ J9::Z::TreeEvaluator::DIVCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       // [0x000002000752262c] (  1)      iand   <flags:"0x1100" (X>=0 cannotOverflow )/>
       //                      (  3)        ==>icall at [0x00000200075223f8] (in GPR_0049)   <flags:"0x30" (arithmeticPreference invalid8BitGlobalRegister)/>
       // [0x00000200075225f4] (  1)        iconst 0x7fffffff   <flags:"0x104" (X!=0 X>=0 )/>
-      // [0x00000200075228cc] (  1)      iiload #251[0x000002000745c940]+12  Shadow[<array-size>]   <flags:"0x1100" (X>=0 cannotOverflow )/>
+      // [0x00000200075228cc] (  1)      iloadi #251[0x000002000745c940]+12  Shadow[<array-size>]   <flags:"0x1100" (X>=0 cannotOverflow )/>
       // [0x00000200074665d0] (  1)        l2a
       // [0x000002000745c908] (  1)          lshl   <flags:"0x800" (compressionSequence )/>
       //                      (  2)            ==>iu2l at [0x000002000745c8d0] (in GPR_0072)   <flags:"0x4" (X!=0 )/>
@@ -7613,7 +7613,7 @@ J9::Z::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(TR::Node * node, bool n
 
    // NULLCHK has a special case with compressed pointers.
    // In the scenario where the first child is TR::l2a, the
-   // node to be null checked is not the iiload, but its child.
+   // node to be null checked is not the iloadi, but its child.
    // i.e. aload, aRegLoad, etc.
    if (comp->useCompressedPointers()
          && firstChild->getOpCodeValue() == TR::l2a)
@@ -7672,7 +7672,7 @@ J9::Z::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(TR::Node * node, bool n
             // the generation of the explicit check below.
             needLateEvaluation = false;
 
-            // at this point, n is the raw iiload (created by lowerTrees) and
+            // at this point, n is the raw iloadi (created by lowerTrees) and
             // reference is the aload of the object. node->getFirstChild is the
             // l2a sequence; as a result, n's refCount will always be 1
             // and node->getFirstChild's refCount will be at least 2 (one under the nullchk
@@ -7690,7 +7690,7 @@ J9::Z::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(TR::Node * node, bool n
             {
             needExplicitCheck = false;
 
-            // If the child is an arraylength which has been reduced to an iiload,
+            // If the child is an arraylength which has been reduced to an iloadi,
             // and is only going to be used immediately in a BNDCHK, combine the checks.
             //
             TR::TreeTop *nextTreeTop = cg->getCurrentEvaluationTreeTop()->getNextTreeTop();

@@ -2789,7 +2789,7 @@ TR_CISCTransformer::renumberDagId(TR_CISCGraph *graph, int32_t tempMaxDagId, int
    //  2L isub        [] [40 41]
    //  2L aiadd       [] [39 42]
    //  0L bconst 1    [] []
-   //  2L ibstore     [] [43 44]
+   //  2L bstorei     [] [43 44]
    //  2L iadd        [] [40 22]
    //  2L istore      [] [46 4]
    //  2L ificmpge    [] [4 6]
