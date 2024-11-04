@@ -978,19 +978,16 @@ public class ValueTypeTests {
 	}
 
 
-	@Test(enabled=false, priority=2)
-	static public void testSynchMethodsOnValueTypes() throws Throwable {
+	/* The non-static synchronized method case is covered by
+	 * ValueTypeTests.testValueTypeHasSynchMethods.
+	 */
+	@Test(priority=2)
+	static public void testStaticSynchMethodsOnValueTypes() throws Throwable {
 		int x = 1;
 		int y = 1;
 		Object valueType = makePoint2D.invoke(x, y);
-		MethodHandle syncMethod = lookup.findVirtual(point2DClass, "synchronizedMethodReturnInt", MethodType.methodType(int.class));
 		MethodHandle staticSyncMethod = lookup.findStatic(point2DClass, "staticSynchronizedMethodReturnInt", MethodType.methodType(int.class));
-		
-		try {
-			syncMethod.invoke(valueType);
-			Assert.fail("should throw exception. Synchronized methods cannot be used with ValueType");
-		} catch (IllegalMonitorStateException e) {}
-		
+
 		try {
 			staticSyncMethod.invoke();
 		} catch (IllegalMonitorStateException e) {
@@ -2256,6 +2253,9 @@ public class ValueTypeTests {
 	}
 
 	/*
+	 * Re-enable when CheckedType support is available.
+	 * https://github.com/eclipse-openj9/openj9/issues/19764
+	 *
 	 * Ensure that casting null to a value type class will throw a null pointer exception
 	 * This test is disabled since the latest spec from
 	 * https://cr.openjdk.org/~dlsmith/jep401/jep401-20230519/specs/types-cleanup-jvms.html
@@ -2793,9 +2793,9 @@ public class ValueTypeTests {
 	}
 
 	@Test(priority=1, expectedExceptions=ClassFormatError.class)
-	static public void testValueTypeHasSychMethods() throws Throwable {
+	static public void testValueTypeHasSynchMethods() throws Throwable {
 		String[] fields = {"longField:J"};
-		Class<?> valueClass = ValueTypeGenerator.generateIllegalValueClassWithSychMethods("testValueTypeHasSychMethods", fields);
+		Class<?> valueClass = ValueTypeGenerator.generateIllegalValueClassWithSynchMethods("testValueTypeHasSynchMethods", fields);
 	}
 
 	@Test(priority = 1)

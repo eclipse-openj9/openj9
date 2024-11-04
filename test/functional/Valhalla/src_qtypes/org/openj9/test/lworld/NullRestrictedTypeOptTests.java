@@ -365,6 +365,10 @@ public class NullRestrictedTypeOptTests {
 		}
 	}
 
+	/* This test cannot be expressed without lw5 level javac.
+	 * The test will be enabled when tests are migrated to src_lw5.
+	 * https://github.com/eclipse-openj9/openj9/issues/20268
+	 */
 	@Test(enabled = false)
 	static public void testStoreNullValueToNullRestrictedInstanceField() throws Throwable {
 		TestStoreToNullRestrictedField storeFieldObj = new TestStoreToNullRestrictedField();
@@ -379,6 +383,10 @@ public class NullRestrictedTypeOptTests {
 		Assert.fail("Expect a NullPointerException. No exception or wrong kind of exception thrown");
 	}
 
+	/* This test cannot be expressed without lw5 level javac.
+	 * The test will be enabled when tests are migrated to src_lw5.
+	 * https://github.com/eclipse-openj9/openj9/issues/20268
+	 */
 	@Test(enabled = false)
 	static public void testStoreNullValueToNullRestrictedStaticField() throws Throwable {
 		TestStoreToNullRestrictedField.replaceStaticField(new PrimPair(1, 2));
@@ -392,6 +400,10 @@ public class NullRestrictedTypeOptTests {
 		Assert.fail("Expect a NullPointerException. No exception or wrong kind of exception thrown");
 	}
 
+	/* This test cannot be expressed without lw5 level javac.
+	 * The test will be enabled when tests are migrated to src_lw5.
+	 * https://github.com/eclipse-openj9/openj9/issues/20268
+	 */
 	@Test(enabled = false)
 	static public void testWithFieldStoreToNullRestrictedField() throws Throwable {
 		TestWithFieldStoreToNullRestrictedField withFieldObj = new TestWithFieldStoreToNullRestrictedField(new PrimPair(1, 2));
