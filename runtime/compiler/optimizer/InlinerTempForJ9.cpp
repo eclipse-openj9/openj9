@@ -1474,15 +1474,6 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
    TR::SymbolReference * symRef = comp()->getSymRefTab()->findOrCreateUnsafeSymbolRef(type, true, false, ordering);
    TR::Node *orderedCallNode = NULL;
 
-   if (accessMode == TR::Symbol::AcquireReleaseSemantics)
-      {
-      symRef->getSymbol()->setAcquireRelease();
-      orderedCallNode = callNodeTreeTop->getNode()->duplicateTree();
-      orderedCallNode->getFirstChild()->setDontInlinePutOrderedCall(comp());
-
-      debugTrace(tracer(), "\t Duplicate Tree for ordered call, orderedCallNode = %p\n", orderedCallNode);
-      }
-
    static char *disableIllegalWriteReport = feGetEnv("TR_DisableIllegalWriteReport");
    TR::TreeTop* reportFinalFieldModification = NULL;
    if (!disableIllegalWriteReport && !comp()->getOption(TR_DisableGuardedStaticFinalFieldFolding))
@@ -2826,14 +2817,6 @@ TR_J9InlinerPolicy::isInlineableJNI(TR_ResolvedMethod *method,TR::Node *callNode
    //
    if (comp->getOption(TR_DisableUnsafe))
       return false;
-
-   // If this put ordered call node has already been inlined, do not inline it again (JTC-JAT 71313)
-   if (callNode && callNode->isUnsafePutOrderedCall() && callNode->isDontInlinePutOrderedCall())
-      {
-      debugTrace(tracer(), "Unsafe Inlining: Unsafe Call %p already inlined\n", callNode);
-
-      return false;
-      }
 
    if ((TR::Compiler->vm.canAnyMethodEventsBeHooked(comp) && !comp->fej9()->methodsCanBeInlinedEvenIfEventHooksEnabled(comp)) ||
        (comp->fej9()->isAnyMethodTracingEnabled(method->getPersistentIdentifier()) &&

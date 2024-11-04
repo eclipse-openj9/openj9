@@ -936,18 +936,6 @@ J9::CodeGenerator::lowerTreeIfNeeded(
       }
 
    // J9
-   if (node->getOpCode().isCall() &&
-       node->isUnsafePutOrderedCall() &&
-       node->isDontInlinePutOrderedCall())
-      {
-      // Remove this treetop
-      tt->getPrevTreeTop()->setNextTreeTop(tt->getNextTreeTop());
-      tt->getNextTreeTop()->setPrevTreeTop(tt->getPrevTreeTop());
-      tt->getNode()->recursivelyDecReferenceCount();
-      return;
-      }
-
-   // J9
    if (!self()->comp()->getOption(TR_DisableUnsafe) &&
        node->getOpCode().isCall() &&
        node->getOpCodeValue() == TR::call &&
