@@ -483,5 +483,6 @@ if(J9VM_OPT_VALHALLA_VALUE_TYPES)
 		JVM_IsImplicitlyConstructibleClass
 		JVM_IsNullRestrictedArray
 		JVM_NewNullRestrictedArray
+		JVM_VirtualThreadHideFrames
 	)
 endif()
