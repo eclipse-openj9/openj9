@@ -219,9 +219,9 @@ private:
    void         storeArrayElement(TR::DataType dt, TR::ILOpCodes opCode, bool checks = true);
 
    void         calculateElementAddressInContiguousArray(int32_t, int32_t);
-#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
    void         calculateElementAddressInContiguousArrayUsingDataAddrField(int32_t);
-#endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
+#endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
    void         calculateIndexFromOffsetInContiguousArray(int32_t, int32_t);
    void         calculateArrayElementAddress(TR::DataType, bool checks);
 

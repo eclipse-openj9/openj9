@@ -577,14 +577,14 @@ bool J9::ValuePropagation::transformUnsafeCopyMemoryCall(TR::Node *arraycopyNode
       TR::TreeTop *tt = _curTree;
       TR::Node *ttNode = tt->getNode();
 
-#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
       if (TR::Compiler->om.isOffHeapAllocationEnabled()
             && (ttNode->getOpCodeValue() == TR::treetop || ttNode->getOpCode().isResolveOrNullCheck()))
          {
          _offHeapCopyMemory.add(new (comp()->trStackMemory()) J9::ValuePropagation::TR_TreeTopNodePair(tt, arraycopyNode));
          return true;
          }
-#endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
+#endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
 
       if ((ttNode->getOpCodeValue() == TR::treetop || ttNode->getOpCode().isResolveOrNullCheck())
             && performTransformation(comp(), "%sChanging call Unsafe.copyMemory [%p] to arraycopy\n", OPT_DETAILS, arraycopyNode))
@@ -3270,7 +3270,7 @@ J9::ValuePropagation::doDelayedTransformations()
       }
    _callsToBeFoldedToNode.deleteAll();
 
-#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
    // Transform Unsafe.copyMemory in OffHeap
    if (TR::Compiler->om.isOffHeapAllocationEnabled())
       {
@@ -3284,7 +3284,7 @@ J9::ValuePropagation::doDelayedTransformations()
          }
       _offHeapCopyMemory.deleteAll();
       }
-#endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
+#endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
 
    // Process transformations for calls to value types helpers or non-helpers
    ListIterator<ValueTypesHelperCallTransform> valueTypesHelperCallsToBeFolded(&_valueTypesHelperCallsToBeFolded);

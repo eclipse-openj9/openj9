@@ -79,9 +79,9 @@ J9::ARM64::CodeGenerator::initialize()
 
    static bool disableInlineVectorizedMismatch = feGetEnv("TR_disableInlineVectorizedMismatch") != NULL;
    if (cg->getSupportsArrayCmpLen() &&
-#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
          !TR::Compiler->om.isOffHeapAllocationEnabled() &&
-#endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
+#endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
          !disableInlineVectorizedMismatch)
       {
       cg->setSupportsInlineVectorizedMismatch();

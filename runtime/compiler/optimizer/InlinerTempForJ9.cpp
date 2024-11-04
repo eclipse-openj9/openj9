@@ -1587,7 +1587,7 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
       }
 
 
-#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
    //adjust arguments if object is array and offheap is being used by changing
    //object base address (second child) to dataAddr
 
@@ -1619,7 +1619,7 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
       objBaseAddrNode->decReferenceCount();
       dataAddrNode->incReferenceCount();
       }
-#endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
+#endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
 
    genCodeForUnsafeGetPut(unsafeAddress, offset, type, callNodeTreeTop,
                           prevTreeTop, newSymbolReferenceForAddress,
@@ -1804,7 +1804,7 @@ TR_J9InlinerPolicy::createUnsafeCASCallDiamond(TR::TreeTop *callNodeTreeTop, TR:
    TR::TreeTop *arrayAccessTreeTop = NULL;
    TR::TreeTop *nonArrayAccessTreeTop = NULL;
 
-#if defined (J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
    if (arrayTestNeeded)
       {
       //create array test treetop
@@ -1862,7 +1862,7 @@ TR_J9InlinerPolicy::createUnsafeCASCallDiamond(TR::TreeTop *callNodeTreeTop, TR:
       TR::Node *isNullNode = TR::Node::createif(TR::ifacmpeq, objAddr, TR::Node::create(objAddr, TR::aconst, 0, 0), NULL);
       isNullTreeTop = TR::TreeTop::create(comp(), isNullNode);
       }
-#endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
+#endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
 
    //default access tree (non-array, non-lowtagged)
    TR::TreeTop *defaultAccessTreeTop = TR::TreeTop::create(comp(),callNodeTreeTop->getNode()->duplicateTree());
@@ -2142,7 +2142,7 @@ TR_J9InlinerPolicy::createUnsafeGetWithOffset(TR::ResolvedMethodSymbol *calleeSy
       genIndirectAccessCodeForUnsafeGetPut(callNodeTreeTop->getNode(), unsafeAddress);
 
 
-#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
    //adjust arguments if object is array and offheap is being used by changing
    //object base address (second child) to dataAddr
 
@@ -2179,7 +2179,7 @@ TR_J9InlinerPolicy::createUnsafeGetWithOffset(TR::ResolvedMethodSymbol *calleeSy
       objBaseAddrNode->decReferenceCount();
       dataAddrNode->incReferenceCount();
       }
-#endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
+#endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
 
    genCodeForUnsafeGetPut(unsafeAddress, offset, type, callNodeTreeTop,
                           prevTreeTop, newSymbolReferenceForAddress,
@@ -2673,10 +2673,10 @@ TR_J9InlinerPolicy::inlineUnsafeCall(TR::ResolvedMethodSymbol *calleeSymbol, TR:
       case TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z:
          if (callNode->isSafeForCGToFastPathUnsafeCall())
             return false;
-#if defined (J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
          if(TR::Compiler->om.isOffHeapAllocationEnabled())
             return createUnsafeCASCallDiamond(callNodeTreeTop, callNode);
-#endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
+#endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
          switch (callerSymbol->castToMethodSymbol()->getRecognizedMethod())
             {
             case TR::java_util_concurrent_ConcurrentHashMap_addCount:

@@ -891,11 +891,11 @@ J9::CodeGenerator::lowerTreeIfNeeded(
             performTransformation(self()->comp(), "O^O Call arraycopy instead of Unsafe.copyMemory: %s\n", self()->getDebug()->getName(node)))
          {
 
-#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
          if (TR::Compiler->om.isOffHeapAllocationEnabled())
             TR::TransformUtil::transformUnsafeCopyMemorytoArrayCopyForOffHeap(self()->comp(), tt, node);
          else
-#endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
+#endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
          {
             TR::Node *src = node->getChild(1);
             TR::Node *srcOffset = node->getChild(2);

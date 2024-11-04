@@ -971,7 +971,7 @@ int32_t TR_UnsafeFastPath::perform()
                TR::Node *addrCalc = NULL;
 
                // Calculate element address
-#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
                if (isArrayOperation && TR::Compiler->om.isOffHeapAllocationEnabled())
                   {
                   TR::Node *baseNodeForAdd = TR::TransformUtil::generateDataAddrLoadTrees(comp(), base);
@@ -980,7 +980,7 @@ int32_t TR_UnsafeFastPath::perform()
                else if (comp()->target().is64Bit())
 #else
                if (comp()->target().is64Bit())
-#endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
+#endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
                   addrCalc = TR::Node::create(TR::aladd, 2, base, offset);
                else
                   addrCalc = TR::Node::create(TR::aiadd, 2, base, TR::Node::create(TR::l2i, 1, offset));
