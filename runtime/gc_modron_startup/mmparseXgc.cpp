@@ -57,27 +57,39 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 	PORT_ACCESS_FROM_JAVAVM(javaVM);
 
 #if defined(J9VM_GC_THREAD_LOCAL_HEAP)
-	if(try_scan(scan_start, "tlhInitialSize=")) {
-		if(!scan_udata_helper(javaVM, scan_start, &extensions->tlhInitialSize, "tlhInitialSize=")) {
+	if (try_scan(scan_start, "tlhInitialSize=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &extensions->tlhInitialSize, "tlhInitialSize=")) {
+			goto _error;
+		}
+		if (MINIMUM_TLH_SIZE > extensions->tlhInitialSize) {
+			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_VALUE_MUST_BE_ABOVE, "tlhInitialSize=", (UDATA)MINIMUM_TLH_SIZE);
 			goto _error;
 		}
 		goto _exit;
 	}
-	if(try_scan(scan_start, "tlhMinimumSize=")) {
-		if(!scan_udata_helper(javaVM, scan_start, &extensions->tlhMinimumSize, "tlhMinimumSize=")) {
+	if (try_scan(scan_start, "tlhMinimumSize=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &extensions->tlhMinimumSize, "tlhMinimumSize=")) {
+			goto _error;
+		}
+		if (MINIMUM_TLH_SIZE > extensions->tlhMinimumSize) {
+			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_VALUE_MUST_BE_ABOVE, "tlhMinimumSize=", (UDATA)MINIMUM_TLH_SIZE);
 			goto _error;
 		}
 		goto _exit;
 	}
-	if(try_scan(scan_start, "tlhMaximumSize=")) {
-		if(!scan_udata_helper(javaVM, scan_start, &extensions->tlhMaximumSize, "tlhMaximumSize=")) {
+	if (try_scan(scan_start, "tlhMaximumSize=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &extensions->tlhMaximumSize, "tlhMaximumSize=")) {
+			goto _error;
+		}
+		if (MINIMUM_TLH_SIZE > extensions->tlhMaximumSize) {
+			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_VALUE_MUST_BE_ABOVE, "tlhMaximumSize=", (UDATA)MINIMUM_TLH_SIZE);
 			goto _error;
 		}
 		extensions->tlhMaximumSizeSpecified = true;
 		goto _exit;
 	}
-	if(try_scan(scan_start, "tlhIncrementSize=")) {
-		if(!scan_udata_helper(javaVM, scan_start, &extensions->tlhIncrementSize, "tlhIncrementSize=")) {
+	if (try_scan(scan_start, "tlhIncrementSize=")) {
+		if (!scan_udata_helper(javaVM, scan_start, &extensions->tlhIncrementSize, "tlhIncrementSize=")) {
 			goto _error;
 		}
 		goto _exit;
