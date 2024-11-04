@@ -1152,5 +1152,31 @@ VM_JFRConstantPoolTypes::freeStackStraceEntries(void *entry, void *userData)
 	return FALSE;
 }
 
+UDATA
+VM_JFRConstantPoolTypes::freeThreadNameEntries(void *entry, void *userData)
+{
+	ThreadEntry *tableEntry = (ThreadEntry *) entry;
+	J9VMThread *currentThread = (J9VMThread *)userData;
+	PORT_ACCESS_FROM_VMC(currentThread);
+
+	j9mem_free_memory(tableEntry->javaThreadName);
+	tableEntry->javaThreadName = NULL;
+
+	return FALSE;
+}
+
+UDATA
+VM_JFRConstantPoolTypes::freeThreadGroupNameEntries(void *entry, void *userData)
+{
+	ThreadGroupEntry *tableEntry = (ThreadGroupEntry *) entry;
+	J9VMThread *currentThread = (J9VMThread *)userData;
+	PORT_ACCESS_FROM_VMC(currentThread);
+
+	j9mem_free_memory(tableEntry->name);
+	tableEntry->name = NULL;
+
+	return FALSE;
+}
+
 
 #endif /* defined(J9VM_OPT_JFR) */
