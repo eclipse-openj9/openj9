@@ -66,15 +66,15 @@ typedef enum
    TR_ahconst,          // constant for array header
    TR_variableORconst,
    TR_quasiConst,       // Currently, variable or constant or arraylength
-   TR_quasiConst2,      // Currently, variable or constant, arraylength, or *iiload* (for non-array)
-                        // We shouldn't use it in an idiom including iistore to *non-array* variable.
+   TR_quasiConst2,      // Currently, variable or constant, arraylength, or *iloadi* (for non-array)
+                        // We shouldn't use it in an idiom including istorei to *non-array* variable.
    TR_iaddORisub,       // addition or subtraction
    TR_conversion,       // all data conversions, such as b2i, c2i, i2l, ...
    TR_ifcmpall,         // all if instructions
    TR_ishrall,          // ishr and iushr
    TR_bitop1,           // AND, OR, and XOR
    TR_arrayindex,       // variable or addition
-   TR_arraybase,        // variable or iaload
+   TR_arraybase,        // variable or aloadi
    TR_inbload,          // indirect non-byte load
    TR_inbstore,         // indirect non-byte store
    TR_indload,          // indirect load

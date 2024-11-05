@@ -748,7 +748,7 @@ J9::Simplifier::simplifyiOrPatterns(TR::Node *node)
    //   ior
    //     imul
    //       bu2i
-   //         ibload #245[0x107AF564] Shadow[<Unsafe shadow sym>]
+   //         bloadi #245[0x107AF564] Shadow[<Unsafe shadow sym>]
    //           isub
    //             l2i
    //               lload #202[0x107A1050] Parm[<parm 1 J>]
@@ -757,20 +757,20 @@ J9::Simplifier::simplifyiOrPatterns(TR::Node *node)
    //     ior
    //       imul
    //         bu2i
-   //           ibload #245[0x107AF564] Shadow[<Unsafe shadow sym>]
+   //           bloadi #245[0x107AF564] Shadow[<Unsafe shadow sym>]
    //             isub
    //               ==>l2i at [0x107AE8F4]
    //               iconst -3
    //         iconst 16777216
    //       imul
    //         bu2i
-   //           ibload #245[0x107AF564] Shadow[<Unsafe shadow sym>]
+   //           bloadi #245[0x107AF564] Shadow[<Unsafe shadow sym>]
    //             isub
    //               ==>l2i at [0x107AE8F4]
    //               iconst -2
    //         iconst 65536
    //   bu2i
-   //     ibload #245[0x107AF564] Shadow[<Unsafe shadow sym>]
+   //     bloadi #245[0x107AF564] Shadow[<Unsafe shadow sym>]
    //       ==>l2i at [0x107AE8F4]
    //
 
@@ -792,7 +792,7 @@ J9::Simplifier::simplifyiOrPatterns(TR::Node *node)
       if ((addr = getUnsafeBaseAddr(byte2, -1)) && addr == byte1 &&
           (addr = getUnsafeBaseAddr(byte3, -2)) && addr == byte1 &&
           (addr = getUnsafeBaseAddr(byte4, -3)) && addr == byte1 &&
-          performTransformation(comp(), "%sconvert ior to iiload node [" POINTER_PRINTF_FORMAT "]\n", optDetailString(), node))
+          performTransformation(comp(), "%sconvert ior to iloadi node [" POINTER_PRINTF_FORMAT "]\n", optDetailString(), node))
          {
          TR::Node::recreate(node, TR::iloadi);
          node->setNumChildren(1);
@@ -986,11 +986,11 @@ J9::Simplifier::getOrOfTwoConsecutiveBytes(TR::Node * ior)
    // ior
    //   imul
    //     b2i
-   //       ibload #231[0x10D06670] Shadow[unknown field]
+   //       bloadi #231[0x10D06670] Shadow[unknown field]
    //         address
    //     iconst 256
    //   bu2i
-   //     ibload #231[0x10D06670] Shadow[unknown field]
+   //     bloadi #231[0x10D06670] Shadow[unknown field]
    //       isub
    //         ==>address
    //         iconst -1
@@ -999,13 +999,13 @@ J9::Simplifier::getOrOfTwoConsecutiveBytes(TR::Node * ior)
    // ior
    //   imul
    //     b2i
-   //       ibload #231[0x10D06670] Shadow[unknown field]
+   //       bloadi #231[0x10D06670] Shadow[unknown field]
    //         isub
    //           address
    //           iconst -1
    //     iconst 256
    //   bu2i
-   //     ibload #231[0x10D06670] Shadow[unknown field]
+   //     bloadi #231[0x10D06670] Shadow[unknown field]
    //       ==>address
    //
    TR::Node *byte1, *byte2, *temp, *addr;

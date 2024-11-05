@@ -388,17 +388,17 @@ J9::Z::CodeGenerator::lowerTreeIfNeeded(
       // Looking for trees that look like this:
 
       // BNDCHK / BNDCHKwithSpineCHK
-      //   iiload
+      //   iloadi
       //     ==>aRegLoad
-      //   iiload
+      //   iloadi
       //     ==>aRegLoad
 
-      // iaload
+      // aloadi
       //   aiadd    <=====  You are here
       //     ==>aRegLoad
       //     isub
       //       imul   <=== Find this node and anchor it up above the BNDCHK
-      //         ==>iiload
+      //         ==>iloadi
       //         iconst 4
       //       iconst -16
 
@@ -423,7 +423,7 @@ J9::Z::CodeGenerator::lowerTreeIfNeeded(
          {
          // The general tree that we are matching is:
          //  aladd        <=====  You are here
-         //    ==>iaload
+         //    ==>aloadi
          //    lsub
          //      lmul     <=====  Find this node and anchor it up above the ArrayStoreCHK
          //        i2l
@@ -433,7 +433,7 @@ J9::Z::CodeGenerator::lowerTreeIfNeeded(
          //  arrayheader isub/lsub, we will see a tree as such:
          //
          //  aladd (internal ptr)       <=====  You are here
-         //    ==>iaload
+         //    ==>aloadi
          //    lshl     <=====  Find this node and anchor it up above the ArrayStoreCHK
          //      i2l
          //        ==>iRegLoad
@@ -460,7 +460,7 @@ J9::Z::CodeGenerator::lowerTreeIfNeeded(
          {
          // The general tree that we are matching is:
          //  aladd        <=====  You are here
-         //    ==>iaload
+         //    ==>aloadi
          //    lsub
          //      lmul     <=====  Find this node and anchor it up above the BNDCHK
          //        i2l
@@ -470,7 +470,7 @@ J9::Z::CodeGenerator::lowerTreeIfNeeded(
          //  arrayheader isub/lsub, we will see a tree as such:
          //
          //  aladd (internal ptr)       <=====  You are here
-         //    ==>iaload
+         //    ==>aloadi
          //    lshl     <=====  Find this node and anchor it up above the BNDCHK
          //      i2l
          //        ==>iRegLoad
@@ -512,7 +512,7 @@ J9::Z::CodeGenerator::lowerTreeIfNeeded(
 
    // J9, Z
    //
-   // On zseries, convert aconst to iaload of aconst 0 and move it to its own new treetop
+   // On zseries, convert aconst to aloadi of aconst 0 and move it to its own new treetop
    if (comp->target().cpu.isZ() && !self()->profiledPointersRequireRelocation() &&
          node->getOpCodeValue() == TR::aconst && node->isClassUnloadingConst())
       {

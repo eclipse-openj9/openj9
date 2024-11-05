@@ -257,11 +257,11 @@ J9::CodeGenerator::lowerCompressedRefs(
     and compression:
     compress = actual - heap_base
 
-    iaload f      l2a
+    aloadi f      l2a
       aload O       ladd
                       lshl
                         i2l
-                          iiload f
+                          iloadi f
                             aload O
                         iconst shftKonst
                       lconst HB
@@ -269,11 +269,11 @@ J9::CodeGenerator::lowerCompressedRefs(
     -or- if the field is known to be null
     l2a
       i2l
-        iiload f
+        iloadi f
           aload O
 
 
-    iastore f     iistore f
+    astorei f     istorei f
       aload O       aload O
       value         l2i
                       lshr
@@ -284,7 +284,7 @@ J9::CodeGenerator::lowerCompressedRefs(
                         iconst shftKonst
 
     -or- if the field is known to be null
-    iistore f
+    istorei f
       aload O
       l2i
         a2l      <- nop on most platforms
@@ -297,16 +297,16 @@ J9::CodeGenerator::lowerCompressedRefs(
     compress = actual - heapBase + shadowBase = actual + disp
     actual = compress - disp
 
-    iaload f     i2a
+    aloadi f     i2a
        aload O      isub
-                      iiload f
+                      iloadi f
                        aload O
                       iconst HB
 
-    iastore f    iistore f
+    astorei f    istorei f
        aload O      aload O
                    iushr            // iushr only there to distinguish between
-                     iadd           // real iistores with iadds as the value
+                     iadd           // real istoreis with iadds as the value
                        a2i
                          value
                        iconst HB

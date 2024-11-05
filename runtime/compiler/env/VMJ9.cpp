@@ -7537,10 +7537,10 @@ TR_J9VM::transformJavaLangClassIsArrayOrIsPrimitive(TR::Compilation * comp, TR::
    //   i2b                      <= callNode
    //     ishr                   <= shiftNode
    //       iand                 <= andNode
-   //         iiload             <= isArrayField
-   //           iaload
+   //         iloadi             <= isArrayField
+   //           aloadi
    // if (generateClassesOnHeap())
-   //             iaload
+   //             aloadi
    // endif
    //               aload <parm 1> <= vftField
    //         iconst <andMask>   <= andConstNode

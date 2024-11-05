@@ -747,7 +747,7 @@ IANDSpecialNodeTransformer(TR_CISCTransformer *trans)
 static void
 findIndexLoad(TR::Node *aiaddNode, TR::Node *&index1, TR::Node *&index2, TR::Node *&topLevelIndex)
    {
-   // iiload
+   // iloadi
    //      aiadd              <-- aiaddNode
    //           aload
    //           isub
@@ -757,7 +757,7 @@ findIndexLoad(TR::Node *aiaddNode, TR::Node *&index1, TR::Node *&index2, TR::Nod
    //              iconst -16
    //
    // -or-
-   // iiload
+   // iloadi
    //      aiadd
    //           aload
    //           isub
@@ -765,7 +765,7 @@ findIndexLoad(TR::Node *aiaddNode, TR::Node *&index1, TR::Node *&index2, TR::Nod
    //              iconst
    //
    // -or-
-   // iiload
+   // iloadi
    //      aiadd              <-- aiaddNode
    //           aload
    //           isub
@@ -777,7 +777,7 @@ findIndexLoad(TR::Node *aiaddNode, TR::Node *&index1, TR::Node *&index2, TR::Nod
    //              iconst -16
    //
    // -or-
-   // iiload
+   // iloadi
    //      aiadd
    //           aload
    //           isub
@@ -1348,7 +1348,7 @@ checkByteToChar(TR::Compilation *comp, TR::Node *iorNode, TR::Node *&inputNode, 
    //   ior
    //     imul
    //        bu2i
-   //          ibload #261  Shadow[<array-shadow>]
+   //          bloadi #261  Shadow[<array-shadow>]
    //            aiadd   <flags:"0x8000" (internalPtr )/>
    //              aload #523  Auto[<temp slot 10>]
    //              isub
@@ -1356,7 +1356,7 @@ checkByteToChar(TR::Compilation *comp, TR::Node *iorNode, TR::Node *&inputNode, 
    //                iconst -17
    //        iconst 256
    //      bu2i
-   //        ibload #261  Shadow[<array-shadow>]
+   //        bloadi #261  Shadow[<array-shadow>]
    //          aiadd   <flags:"0x8000" (internalPtr )/>
    //            ==>aload at #523
    //            isub
@@ -1384,10 +1384,10 @@ checkByteToChar(TR::Compilation *comp, TR::Node *iorNode, TR::Node *&inputNode, 
       {
       // find the index to be either i, i+1
       // if (le)
-      //       if index is i+1 then inputNode = other ibload of the ior
+      //       if index is i+1 then inputNode = other bloadi of the ior
       //       else fail
       // if (be)
-      //       if index is i then inputNode = ibload child of imul
+      //       if index is i then inputNode = bloadi child of imul
       //       else fail
       //
       TR::Node *ibloadNode = imulNode->getFirstChild()->skipConversions();
@@ -5825,7 +5825,7 @@ namespace
 //        ImportantNode(1) - array store
 //        ImportantNode(2) - the size of elements (NULL for the byte array)
 //        ImportantNode(3) - exit if node
-//        ImportantNode(4) - optional iistore
+//        ImportantNode(4) - optional istorei
 //*****************************************************************************************
 static bool
 CISCTransform2ArrayCopySub(TR_CISCTransformer *trans, TR::Node *indexRepNode, TR::Node *dstIndexRepNode,

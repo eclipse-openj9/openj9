@@ -2149,7 +2149,7 @@ TR::Register *J9::X86::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(
          {
          needExplicitCheck = false;
 
-         // If the child is an arraylength which has been reduced to an iiload,
+         // If the child is an arraylength which has been reduced to an iloadi,
          // and is only going to be used immediately in a bound check then combine the checks.
          //
          TR::TreeTop *nextTreeTop = cg->getCurrentEvaluationTreeTop()->getNextTreeTop();
@@ -2210,7 +2210,7 @@ TR::Register *J9::X86::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(
          //
          needLateEvaluation = false;
 
-         // at this point, firstChild is the raw iiload (created by lowerTrees) and
+         // at this point, firstChild is the raw iloadi (created by lowerTrees) and
          // reference is the aload of the object. node->getFirstChild is the
          // l2a sequence; as a result, firstChild's refCount will always be 1
          // and node->getFirstChild's refCount will be at least 2 (one under the nullchk
