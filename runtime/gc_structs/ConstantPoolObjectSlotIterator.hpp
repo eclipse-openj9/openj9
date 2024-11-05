@@ -29,11 +29,11 @@
 #if !defined(CONSTANTPOOLOBJECTSLOTITERATOR_HPP_)
 #define CONSTANTPOOLOBJECTSLOTITERATOR_HPP_
 
+#include "j2sever.h"
 #include "j9.h"
 #include "j9cfg.h"
 #include "j9cp.h"
 #include "modron.h"
-#include "j2sever.h"
 #include "ModronAssertions.h"
 
 
@@ -48,26 +48,26 @@
 class GC_ConstantPoolObjectSlotIterator
 {
 	j9object_t *_cpEntry;
-	U_32 _cpEntryCount;
-	U_32 _cpEntryTotal;
-	U_32 *_cpDescriptionSlots;
-	U_32 _cpDescription;
-	UDATA _cpDescriptionIndex;
+	uint32_t _cpEntryCount;
+	uint32_t _cpEntryTotal;
+	uint32_t *_cpDescriptionSlots;
+	uint32_t _cpDescription;
+	uintptr_t _cpDescriptionIndex;
 	GC_ConstantDynamicSlotIterator _constantDynamicSlotIterator;
 
 public:
 
-	GC_ConstantPoolObjectSlotIterator(J9JavaVM *vm, J9Class *clazz) :
-		_cpEntry((j9object_t *)J9_CP_FROM_CLASS(clazz)),
-		_cpEntryCount(clazz->romClass->ramConstantPoolCount),
-		_constantDynamicSlotIterator()
+	GC_ConstantPoolObjectSlotIterator(J9JavaVM *vm, J9Class *clazz)
+		: _cpEntry((j9object_t *)J9_CP_FROM_CLASS(clazz))
+		, _cpEntryCount(clazz->romClass->ramConstantPoolCount)
+		, _constantDynamicSlotIterator()
 	{
 		_cpEntryTotal = _cpEntryCount;
-		if(_cpEntryCount) {
-			_cpDescriptionSlots = SRP_PTR_GET(&clazz->romClass->cpShapeDescription, U_32 *);
+		if (0 != _cpEntryCount) {
+			_cpDescriptionSlots = SRP_PTR_GET(&clazz->romClass->cpShapeDescription, uint32_t *);
 			_cpDescriptionIndex = 0;
 		}
-	};
+	}
 
 	/**
 	 * Gets the current constant pool index.
