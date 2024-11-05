@@ -2947,12 +2947,12 @@ public Package getPackage() {
 	}
 }
 
-/*[IF (JAVA_SPEC_VERSION >= 24) & !INLINE-TYPES]*/
+/*[IF JAVA_SPEC_VERSION >= 24]*/
 @SuppressWarnings("unchecked")
 static <T> Class<T> getPrimitiveClass(String name)
-/*[ELSE] (JAVA_SPEC_VERSION >= 24) & !INLINE-TYPES */
+/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 static Class<?> getPrimitiveClass(String name)
-/*[ENDIF] (JAVA_SPEC_VERSION >= 24) & !INLINE-TYPES */
+/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 {
 	Class<?> type;
 
@@ -2998,11 +2998,11 @@ static Class<?> getPrimitiveClass(String name)
 		type = array.getClass().getComponentType();
 	}
 
-	/*[IF (JAVA_SPEC_VERSION >= 24) & !INLINE-TYPES]*/
+	/*[IF JAVA_SPEC_VERSION >= 24]*/
 	return (Class<T>) type;
-	/*[ELSE] (JAVA_SPEC_VERSION >= 24) & !INLINE-TYPES */
+	/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 	return type;
-	/*[ENDIF] (JAVA_SPEC_VERSION >= 24) & !INLINE-TYPES */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 }
 
 /**
