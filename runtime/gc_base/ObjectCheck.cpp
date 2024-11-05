@@ -49,8 +49,8 @@ isValidClass(J9JavaVM *javaVM, J9Class *ptr, uintptr_t flags) {
 		return J9OBJECTCHECK_INVALID;
 	}
 
-	/* check alignment */
-	if (0 != ((uintptr_t)ptr & (sizeof(uintptr_t) - 1))) {
+	/* check alignment - none of flag bits should be set */
+	if (0 != ((uintptr_t)ptr & J9GC_J9OBJECT_CLAZZ_FLAGS_MASK)) {
 		return J9OBJECTCHECK_INVALID;
 	}
 
@@ -97,8 +97,10 @@ isValidClass(J9JavaVM *javaVM, J9Class *ptr, uintptr_t flags) {
 uintptr_t
 j9gc_ext_check_is_valid_heap_object(J9JavaVM *javaVM, J9Object *ptr, uintptr_t flags)
 {
-	/* check alignment */
-	if (0 != ((uintptr_t)ptr & (sizeof(uintptr_t) - 1) )) {
+	MM_GCExtensions *ext = MM_GCExtensions::getExtensions(javaVM);
+
+	/* check heap object alignment */
+	if (0 != ((uintptr_t)ptr & (ext->getObjectAlignmentInBytes() - 1))) {
 		return J9OBJECTCHECK_INVALID;
 	}
 
@@ -106,7 +108,6 @@ j9gc_ext_check_is_valid_heap_object(J9JavaVM *javaVM, J9Object *ptr, uintptr_t f
 	void *lowAddress = NULL;
 	void *highAddress = NULL;
 	/* look up the region containing the object for checking that it is correctly contained */
-	MM_GCExtensions *ext = MM_GCExtensions::getExtensions(javaVM);
 	MM_Heap *heap = ext->heap;
 	MM_HeapRegionManager *regionManager = heap->getHeapRegionManager();
 	GC_HeapRegionIterator regionIterator(regionManager);
