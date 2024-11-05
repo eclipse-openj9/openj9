@@ -107,6 +107,8 @@ public:
    // See J9::CodeGenerator::guaranteesResolvedVirtualDispatchForSVM
    bool guaranteesResolvedVirtualDispatchForSVM() { return true; }
 
+   bool willBeEvaluatedAsCallByCodeGen(TR::Node *node, TR::Compilation *comp);
+
 private:
    TR::SymbolReference *_nanoTimeTemp;
    };
