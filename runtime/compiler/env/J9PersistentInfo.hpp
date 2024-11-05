@@ -42,6 +42,7 @@ class TR_FrontEnd;
 class TR_PersistentMemory;
 class TR_PersistentCHTable;
 class TR_PersistentClassLoaderTable;
+class TR_AOTDependencyTable;
 class TR_MHJ2IThunkTable;
 namespace J9 { class Options; }
 
@@ -159,6 +160,8 @@ class PersistentInfo : public OMR::PersistentInfoConnector
          _gpuInitMonitor(NULL),
          _runtimeInstrumentationEnabled(false),
          _runtimeInstrumentationRecompilationEnabled(false),
+         _aotDependencyTable(NULL),
+         _trackAOTDependencies(false),
 #if defined(J9VM_OPT_JITSERVER)
          _JITServerAddress("localhost"),
          _JITServerPort(38400),
@@ -185,6 +188,9 @@ class PersistentInfo : public OMR::PersistentInfoConnector
 
    void setPersistentClassLoaderTable(TR_PersistentClassLoaderTable *table) { _persistentClassLoaderTable = table; }
    TR_PersistentClassLoaderTable *getPersistentClassLoaderTable() { return _persistentClassLoaderTable; }
+
+   void setAOTDependencyTable(TR_AOTDependencyTable *table) { _aotDependencyTable = table; }
+   TR_AOTDependencyTable *getAOTDependencyTable() const { return _aotDependencyTable; }
 
    TR_OpaqueClassBlock **getVisitedSuperClasses() { return _visitedSuperClasses; }
    void clearVisitedSuperClasses() { _tooManySuperClasses = false; _numVisitedSuperClasses = 0; }
@@ -343,6 +349,9 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    uint8_t _paddingBefore[128];
    int32_t _countForRecompile;
 
+  void setTrackAOTDependencies(bool b) { _trackAOTDependencies = b;}
+  bool getTrackAOTDependencies() const { return _trackAOTDependencies; }
+
 #if defined(J9VM_OPT_JITSERVER)
    static JITServer::RemoteCompilationModes _remoteCompilationMode; // JITServer::NONE, JITServer::CLIENT, JITServer::SERVER
 
@@ -395,6 +404,8 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    TR_PersistentCHTable *_persistentCHTable;
 
    TR_PersistentClassLoaderTable *_persistentClassLoaderTable;
+
+   TR_AOTDependencyTable *_aotDependencyTable;
 
    // these fields are RW
 
@@ -468,6 +479,8 @@ class PersistentInfo : public OMR::PersistentInfoConnector
                                    ///< May need adjustment if sampling thread goes to sleep
 
    int32_t _numLoadedClasses; ///< always increasing
+
+   bool _trackAOTDependencies;
 
 #if defined(J9VM_OPT_JITSERVER)
    std::string _JITServerAddress;

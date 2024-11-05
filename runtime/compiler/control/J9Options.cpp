@@ -393,7 +393,9 @@ const char * J9::Options::_externalOptionStrings[J9::ExternalOptions::TR_NumExte
    "-XX:+JITServerHealthProbes",          // = 74
    "-XX:-JITServerHealthProbes",          // = 75
    "-XX:JITServerHealthProbePort=",       // = 76
-   // TR_NumExternalOptions                  = 77
+   "-XX:+TrackAOTDependencies",           // = 77
+   "-XX:-TrackAOTDependencies"            // = 78
+   // TR_NumExternalOptions                  = 79
    };
 
 //************************************************************************
@@ -2601,6 +2603,13 @@ J9::Options::fePreProcess(void * base)
          {
          compInfo->getPersistentInfo()->setLateSCCDisclaimTime(((uint64_t) disclaimMs) * 1000000);
          }
+      }
+
+   int32_t xxEnableTrackAOTDependenciesArgIndex  = FIND_ARG_IN_VMARGS(EXACT_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::XXplusTrackAOTDependencies], 0);
+   int32_t xxDisableTrackAOTDependenciesArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::XXminusTrackAOTDependencies], 0);
+   if (xxEnableTrackAOTDependenciesArgIndex > xxDisableTrackAOTDependenciesArgIndex)
+      {
+      compInfo->getPersistentInfo()->setTrackAOTDependencies(true);
       }
 
   /* Using traps on z/OS for NullPointerException and ArrayIndexOutOfBound checks instead of the

@@ -24,6 +24,7 @@
 
 #include "control/Options.hpp"
 #include "env/ClassLoaderTable.hpp"
+#include "env/DependencyTable.hpp"
 #include "env/annotations/AnnotationBase.hpp"
 #include "env/ut_j9jit.h"
 #include "control/CompilationRuntime.hpp"
@@ -513,9 +514,18 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
             if (sharedCache != NULL)
                {
                TR_PersistentMemory *persistentMemory = (TR_PersistentMemory *)(vm->jitConfig->scratchSegment);
-               TR_PersistentClassLoaderTable *loaderTable = persistentMemory->getPersistentInfo()->getPersistentClassLoaderTable();
+               auto persistentInfo = persistentMemory->getPersistentInfo();
+               TR_PersistentClassLoaderTable *loaderTable = persistentInfo->getPersistentClassLoaderTable();
                sharedCache->setPersistentClassLoaderTable(loaderTable);
                loaderTable->setSharedCache(sharedCache);
+
+#if !defined(PERSISTENT_COLLECTIONS_UNSUPPORTED)
+               if (persistentInfo->getTrackAOTDependencies() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts))
+                  {
+                  TR_AOTDependencyTable *dependencyTable = new (PERSISTENT_NEW) TR_AOTDependencyTable(sharedCache);
+                  persistentInfo->setAOTDependencyTable(dependencyTable);
+                  }
+#endif /* !defined(PERSISTENT_COLLECTIONS_UNSUPPORTED) */
                }
             }
          else

@@ -130,7 +130,9 @@ enum ExternalOptions
    XXplusHealthProbes                          = 74,
    XXminusHealthProbes                         = 75,
    XXJITServerHealthProbePortOption            = 76,
-   TR_NumExternalOptions                       = 77
+   XXplusTrackAOTDependencies                  = 77,
+   XXminusTrackAOTDependencies                 = 78,
+   TR_NumExternalOptions                       = 79
    };
 
 class OMR_EXTENSIBLE Options : public OMR::OptionsConnector

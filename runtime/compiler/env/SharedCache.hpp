@@ -84,6 +84,8 @@ public:
    // and related methods.
    static const uintptr_t INVALID_ROM_METHOD_OFFSET = 1;
 
+   static const uintptr_t INVALID_ROM_CLASS_OFFSET = 1;
+
 private:
 
    TR_PersistentClassLoaderTable *_persistentClassLoaderTable;

@@ -292,6 +292,7 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/control/rossa.cpp \
     compiler/env/ClassLoaderTable.cpp \
     compiler/env/CpuUtilization.cpp \
+    compiler/env/DependencyTable.cpp \
     compiler/env/FilePointer.cpp \
     compiler/env/J2IThunk.cpp \
     compiler/env/J9ArithEnv.cpp \
