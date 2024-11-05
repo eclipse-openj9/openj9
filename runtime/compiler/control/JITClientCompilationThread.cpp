@@ -486,6 +486,11 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          // These offsets are initialized later on
          vmInfo._vmtargetOffset = 0;
          vmInfo._vmindexOffset = 0;
+         auto sharedCacheConfig = fe->sharedCache() ? fe->sharedCache()->sharedCacheConfig() : NULL;
+         if (sharedCacheConfig)
+            vmInfo._shareLambdaForm = J9_ARE_ALL_BITS_SET(sharedCacheConfig->runtimeFlags2, J9SHR_RUNTIMEFLAG2_SHARE_LAMBDAFORM);
+         else
+            vmInfo._shareLambdaForm = false;
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
          }
 

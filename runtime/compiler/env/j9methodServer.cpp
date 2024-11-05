@@ -2336,6 +2336,34 @@ TR_ResolvedRelocatableJ9JITServerMethod::isUnresolvedMethodHandle(I_32 cpIndex)
    return true;
    }
 
+bool
+TR_ResolvedRelocatableJ9JITServerMethod::isUnresolvedMethodTypeTableEntry(int32_t cpIndex)
+   {
+   bool unresolved = true;
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   auto *vmInfo = _fe->_compInfoPT->getClientData()->getOrCacheVMInfo(_stream);
+   if (vmInfo->_shareLambdaForm)
+      {
+      unresolved = TR_ResolvedJ9JITServerMethod::isUnresolvedMethodTypeTableEntry(cpIndex);
+      }
+#endif // defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   return unresolved;
+   }
+
+bool
+TR_ResolvedRelocatableJ9JITServerMethod::isUnresolvedCallSiteTableEntry(int32_t callSiteIndex)
+   {
+   bool unresolved = true;
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   auto *vmInfo = _fe->_compInfoPT->getClientData()->getOrCacheVMInfo(_stream);
+   if (vmInfo->_shareLambdaForm)
+      {
+      unresolved = TR_ResolvedJ9JITServerMethod::isUnresolvedCallSiteTableEntry(callSiteIndex);
+      }
+#endif // defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   return unresolved;
+   }
+
 TR_OpaqueClassBlock *
 TR_ResolvedRelocatableJ9JITServerMethod::getDeclaringClassFromFieldOrStatic(TR::Compilation *comp, int32_t cpIndex)
    {

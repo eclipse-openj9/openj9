@@ -448,6 +448,8 @@ public:
 
    virtual J9SharedClassCacheDescriptor *getCacheDescriptorList();
 
+   J9SharedClassConfig *sharedCacheConfig() { return _sharedCacheConfig; }
+
 protected:
    static bool disclaim(const uint8_t *start, const uint8_t *end, UDATA pageSize, bool trace);
 
@@ -503,7 +505,6 @@ private:
 
    J9JITConfig *jitConfig() { return _jitConfig; }
    J9JavaVM *javaVM() { return _javaVM; }
-   J9SharedClassConfig *sharedCacheConfig() { return _sharedCacheConfig; }
 
    TR_AOTStats *aotStats() { return _aotStats; }
 

@@ -306,8 +306,8 @@ class TR_ResolvedRelocatableJ9JITServerMethod : public TR_ResolvedJ9JITServerMet
    virtual bool                  isUnresolvedMethodType(int32_t cpIndex) override;
    virtual void *                methodHandleConstant(int32_t cpIndex) override;
    virtual bool                  isUnresolvedMethodHandle(int32_t cpIndex) override;
-   virtual bool                  isUnresolvedMethodTypeTableEntry(int32_t cpIndex) override { return true; }
-   virtual bool                  isUnresolvedCallSiteTableEntry(int32_t callSiteIndex) override { return true; }
+   virtual bool                  isUnresolvedMethodTypeTableEntry(int32_t cpIndex) override;
+   virtual bool                  isUnresolvedCallSiteTableEntry(int32_t callSiteIndex) override;
    virtual TR_OpaqueClassBlock * classOfStatic(int32_t cpIndex, bool returnClassForAOT = false) override;
    virtual TR_ResolvedMethod *   getResolvedPossiblyPrivateVirtualMethod(TR::Compilation *, int32_t cpIndex, bool ignoreRtResolve, bool * unresolvedInCP) override;
    virtual bool                  getUnresolvedFieldInCP(I_32 cpIndex) override;
