@@ -121,6 +121,11 @@ J9::X86::CodeGenerator::initialize()
       cg->setSupportsInlineStringHashCode();
       }
 
+   if (comp->target().cpu.supportsFeature(OMR_FEATURE_X86_BMI2))
+      {
+      cg->setSupportsParallelBitOperations();
+      }
+
    if (comp->generateArraylets() && !comp->getOptions()->realTimeGC())
       {
       cg->setSupportsStackAllocationOfArraylets();
