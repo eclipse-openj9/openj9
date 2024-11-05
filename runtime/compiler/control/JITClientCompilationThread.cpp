@@ -1915,6 +1915,18 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, mirror->isFieldFlattened(comp, cpIndex, isStatic));
          }
          break;
+      case MessageType::ResolvedMethod_getTargetMethodFromMemberName:
+         {
+         auto recv = client->getRecvData<TR_ResolvedJ9Method *, uintptr_t *>();
+         TR_ResolvedJ9Method *owningMethod = std::get<0>(recv);
+         uintptr_t * invokeCacheArray = std::get<1>(recv);
+
+         bool isInvokeCacheAppendixNull;
+         TR_OpaqueMethodBlock *targetMethod = owningMethod->getTargetMethodFromMemberName(invokeCacheArray, &isInvokeCacheAppendixNull);
+
+         client->write(response, targetMethod, isInvokeCacheAppendixNull);
+         }
+         break;
       case MessageType::ResolvedRelocatableMethod_createResolvedRelocatableJ9Method:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, J9Method *, int32_t, uint32_t>();

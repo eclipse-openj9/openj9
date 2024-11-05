@@ -1055,6 +1055,18 @@ TR_ResolvedJ9JITServerMethod::isSubjectToPhaseChange(TR::Compilation *comp)
       }
    }
 
+TR_OpaqueMethodBlock *
+TR_ResolvedJ9JITServerMethod::getTargetMethodFromMemberName(uintptr_t * invokeCacheArray, bool * isInvokeCacheAppendixNull)
+   {
+   _stream->write(JITServer::MessageType::ResolvedMethod_getTargetMethodFromMemberName, _remoteMirror, invokeCacheArray);
+   auto recv = _stream->read<TR_OpaqueMethodBlock *, bool>();
+   auto targetMethod = std::get<0>(recv);
+   auto invokeCacheAppendixNull = std::get<1>(recv);
+   if (isInvokeCacheAppendixNull)
+      *isInvokeCacheAppendixNull = invokeCacheAppendixNull;
+   return targetMethod;
+   }
+
 TR_ResolvedMethod *
 TR_ResolvedJ9JITServerMethod::getResolvedHandleMethod(TR::Compilation *comp, I_32 cpIndex, bool *unresolvedInCP,
                                                       bool *isInvokeCacheAppendixNull)

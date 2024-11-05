@@ -195,6 +195,7 @@ public:
    virtual TR_ResolvedMethod *getResolvedVirtualMethod(TR::Compilation * comp, TR_OpaqueClassBlock * classObject, I_32 virtualCallOffset , bool ignoreRtResolve) override;
    virtual bool isSubjectToPhaseChange(TR::Compilation *comp) override;
    virtual void * stringConstant(int32_t cpIndex) override;
+   virtual TR_OpaqueMethodBlock *  getTargetMethodFromMemberName(uintptr_t * invokeCacheArray, bool * isInvokeCacheAppendixNull) override;
    virtual TR_ResolvedMethod *getResolvedHandleMethod(TR::Compilation *, int32_t cpIndex, bool * unresolvedInCP, bool * isInvokeCacheAppendixNull = 0) override;
    virtual bool isUnresolvedMethodTypeTableEntry(int32_t cpIndex) override;
    virtual void * methodTypeTableEntryAddress(int32_t cpIndex) override;
