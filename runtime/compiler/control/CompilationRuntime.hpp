@@ -457,7 +457,8 @@ public:
    static bool canRelocateMethod(TR::Compilation * comp);
    static int computeCompilationThreadPriority(J9JavaVM *vm);
    static void *compilationEnd(J9VMThread *context, TR::IlGeneratorMethodDetails & details, J9JITConfig *jitConfig, void * startPC,
-                               void *oldStartPC, TR_FrontEnd *vm=0, TR_MethodToBeCompiled *entry=NULL, TR::Compilation *comp=NULL);
+                               void *oldStartPC, bool preventFutureMethodCountingOnFailure = true, TR_FrontEnd *vm=0,
+                               TR_MethodToBeCompiled *entry=NULL, TR::Compilation *comp=NULL);
 #if defined(J9VM_OPT_JITSERVER)
    static JITServer::ServerStream *getStream();
 #endif /* defined(J9VM_OPT_JITSERVER) */

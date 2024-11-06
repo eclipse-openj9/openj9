@@ -2536,7 +2536,7 @@ void TR::CompilationInfo::purgeMethodQueue(TR_CompilationErrorCode errorCode)
       // fail the compilation
       void *startPC = 0;
 
-      startPC = compilationEnd(vmThread, cur->getMethodDetails(), _jitConfig, NULL, cur->_oldStartPC);
+      startPC = compilationEnd(vmThread, cur->getMethodDetails(), _jitConfig, NULL, cur->_oldStartPC, false/*preventFutureMethodCountingOnFailure*/);
       cur->_newStartPC = startPC;
       cur->_compErrCode = errorCode;
 
@@ -8023,6 +8023,7 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
          jitConfig,
          metaData ? reinterpret_cast<void *>(metaData->startPC) : 0,
          entry->_oldStartPC,
+         true, /*preventFutureMethodCountingOnFailure */
          _vm,
          entry,
          _compiler);
@@ -10135,10 +10136,29 @@ extern J9_CFUNC void  jitMethodHandleTranslated (J9VMThread *currentThread, j9ob
 #endif
 
 
-// static method
+/**
+   @brief Method called at the end of a successful or unsucessful compilation attempt
+
+   This is a static method that has many side-effects.
+   Its main purpose if to overwrite the j9method->extra with the startPC of the
+   native compiled body (if compilation is successful) or with special code for
+   unsuccessful compilations. It also releases any reserved data caches.
+
+   @param vmThread   The VM thread that is currently running the compilatuionEnd() method
+   @param details    The IlGeneratorMethodDetails of the method subject to compilation
+   @param jitConfig  Pointer to J9JITConfig
+   @param startPC    The start of the code for the newly compiled body (if compilation is successful)
+   @param oldStartPC The current entry point for the method being compiled (0 for interpreted methods)
+   @param preventFutureMethodCountingOnFailure Boolean indicating whether a VM helper should be called on
+                     compilation failure to prevent future invocation counting of the method (default is true)
+   @param fe         The frontend used to compile the method (default NULL)
+   @param entry      The compilation request entry for the method being compiled (default NULL)
+   @param comp       The compilation object that was created for the method being compiled (default NULL)
+*/
 void *
 TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethodDetails & details, J9JITConfig *jitConfig, void *startPC,
-                                   void *oldStartPC, TR_FrontEnd *fe, TR_MethodToBeCompiled *entry, TR::Compilation *comp)
+                                   void *oldStartPC, bool preventFutureMethodCountingOnFailure,TR_FrontEnd *fe,
+                                   TR_MethodToBeCompiled *entry, TR::Compilation *comp)
    {
    // This method is only called with both VMAccess and CompilationMutex in hand.
    // Performs some necessary updates once a compilation has been attempted
@@ -10639,7 +10659,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
       {
       // Tell the VM that a non-compiled method failed translation
       //
-      if (vmThread && entry && !entry->isOutOfProcessCompReq())
+      if (vmThread && !isJITServerMode && preventFutureMethodCountingOnFailure)
          jitMethodFailedTranslation(vmThread, method);
 #if defined(J9VM_OPT_JITSERVER)
       if (entry && isJITServerMode) // failure at the JITServer
