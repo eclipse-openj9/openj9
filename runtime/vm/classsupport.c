@@ -317,6 +317,7 @@ internalFindClassString(J9VMThread* currentThread, j9object_t moduleName, j9obje
 	J9Class *result = NULL;
 	J9JavaVM* vm = currentThread->javaVM;
 	BOOLEAN fastMode = J9_ARE_ALL_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_FAST_CLASS_HASH_TABLE);
+	PORT_ACCESS_FROM_JAVAVM(vm);
 
 	/* If -XX:+FastClassHashTable is enabled, do not lock anything to do the initial table peek */
 	if (!fastMode) {
@@ -334,7 +335,6 @@ internalFindClassString(J9VMThread* currentThread, j9object_t moduleName, j9obje
 		U_8 *utf8Name = NULL;
 		UDATA utf8Length = 0;
 		UDATA stringFlags = J9_STR_NULL_TERMINATE_RESULT;
-		PORT_ACCESS_FROM_JAVAVM(vm);
 
 		if (CLASSNAME_INVALID == allowedBitsForClassName) {
 			stringFlags |= J9_STR_XLAT;
@@ -378,10 +378,42 @@ internalFindClassString(J9VMThread* currentThread, j9object_t moduleName, j9obje
 
 			result = internalFindClassInModule(currentThread, j9module, utf8Name, utf8Length, classLoader, options);
 		}
+
+		for (int i = 0; i < utf8Length; i++) {
+			if (utf8Name[i] == '.') {
+				utf8Name[i] = '/';
+			}
+		}
+		
+		if (NULL != result) {
+			J9UTF8 *romClassName = J9ROMCLASS_CLASSNAME(result->romClass);
+			if (!J9CLASS_IS_ARRAY(result) && !J9UTF8_DATA_EQUALS(
+							J9UTF8_DATA(romClassName), J9UTF8_LENGTH(romClassName),
+							utf8Name, utf8Length)) {
+				printf("find class\n");
+				Trc_VM_Class_Found_Has_Diff_Name(currentThread, utf8Name, utf8Length, J9UTF8_DATA(romClassName), J9UTF8_LENGTH(romClassName), 0);
+				Assert_VM_true(0);
+			}
+		}
 		if (utf8Name != localBuf) {
 			j9mem_free_memory(utf8Name);
 		}
+	} else {
+		if (!J9CLASS_IS_ARRAY(result)) {
+			J9UTF8 *romClassName = J9ROMCLASS_CLASSNAME(result->romClass);
+			if (!compareStringToUTF8(currentThread, className, 1, J9UTF8_DATA(romClassName), J9UTF8_LENGTH(romClassName))) {
+				printf("find class\n");
+				U_8 *utf8Name = NULL;
+				UDATA utf8Length = 0;
+				U_8 localBuf[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
+
+				utf8Name = (U_8*)copyStringToUTF8WithMemAlloc(currentThread, className, J9_STR_NULL_TERMINATE_RESULT, "", 0, (char *)localBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, &utf8Length);
+				Trc_VM_Class_Found_Has_Diff_Name(currentThread, utf8Name, utf8Length, J9UTF8_DATA(romClassName), J9UTF8_LENGTH(romClassName), 1);
+				Assert_VM_true(0);
+			}
+		}
 	}
+
 	return result;
 }
 
