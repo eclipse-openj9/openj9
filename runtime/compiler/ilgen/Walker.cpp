@@ -4927,7 +4927,7 @@ TR_J9ByteCodeIlGenerator::runMacro(TR::SymbolReference * symRef)
                push(array);
                loadConstant(TR::iconst, i);
                push(arg);
-               storeArrayElement(arg->getDataType()); // TODO:JSR292: use isstore for char arguments
+               storeArrayElement(arg->getDataType()); // TODO:JSR292: use sstorei for char arguments
                }
             argShepherd->removeAllChildren();
             push(array);

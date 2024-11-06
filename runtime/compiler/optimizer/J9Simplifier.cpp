@@ -1034,7 +1034,7 @@ J9::Simplifier::simplifyi2sPatterns(TR::Node *node)
    if (firstChild->getOpCodeValue() == TR::ior && 
        firstChild->getReferenceCount() == 1 &&
        (address = getOrOfTwoConsecutiveBytes(firstChild)) &&
-       performTransformation(comp(), "%sconvert ior to isload node [" POINTER_PRINTF_FORMAT "]\n", optDetailString(), node))
+       performTransformation(comp(), "%sconvert ior to sloadi node [" POINTER_PRINTF_FORMAT "]\n", optDetailString(), node))
       {
       TR::Node::recreate(node, TR::sloadi);
       node->setSymbolReference(getSymRefTab()->findOrCreateUnsafeSymbolRef(TR::Int16));
