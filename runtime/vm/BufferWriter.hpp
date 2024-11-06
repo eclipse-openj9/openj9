@@ -34,8 +34,9 @@ class VM_BufferWriter {
 	U_8 *_buffer;
 	U_8 *_cursor;
 	UDATA _size;
-
+	U_8 *_bufferEnd;
 	U_8 *_maxCursor;
+	bool _overflow;
 
 #if defined(J9VM_ENV_LITTLE_ENDIAN)
 	static const bool _isLE = true;
@@ -94,8 +95,26 @@ class VM_BufferWriter {
 		: _buffer(buffer)
 		, _cursor(buffer)
 		, _size(size)
+		, _bufferEnd(buffer + size)
 		, _maxCursor(NULL)
+		, _overflow(false)
 	{
+	}
+
+	bool
+	checkBounds(UDATA size)
+	{
+		if ((_cursor + size) >= _bufferEnd) {
+			_overflow = true;
+		}
+
+		return !_overflow;
+	}
+
+	bool
+	overflowOccurred()
+	{
+		return _overflow;
 	}
 
 	U_64
@@ -123,50 +142,66 @@ class VM_BufferWriter {
 	}
 
 	void
-	writeU8(U_8 val)
+	writeU8NoCheck(U_8 val)
 	{
 		*_cursor = val;
 		_cursor += sizeof(U_8);
 	}
 
 	void
+	writeU8(U_8 val)
+	{
+		if (checkBounds(sizeof(U_8))) {
+			writeU8NoCheck(val);
+		}
+	}
+
+	void
 	writeU16(U_16 val)
 	{
-		U_16 newVal = val;
-		if (_isLE) {
-			newVal = byteSwap(val);
+		if (checkBounds(sizeof(U_16))) {
+			U_16 newVal = val;
+			if (_isLE) {
+				newVal = byteSwap(val);
+			}
+			*(U_16 *)_cursor = newVal;
+			_cursor += sizeof(U_16);
 		}
-		*(U_16 *)_cursor = newVal;
-		_cursor += sizeof(U_16);
 	}
 
 	void
 	writeU32(U_32 val)
 	{
-		U_32 newVal = val;
-		if (_isLE) {
-			newVal = byteSwap(val);
+		if (checkBounds(sizeof(U_32))) {
+			U_32 newVal = val;
+			if (_isLE) {
+				newVal = byteSwap(val);
+			}
+			*(U_32 *)_cursor = newVal;
+			_cursor += sizeof(U_32);
 		}
-		*(U_32 *)_cursor = newVal;
-		_cursor += sizeof(U_32);
 	}
 
 	void
 	writeU64(U_64 val)
 	{
-		U_64 newVal = val;
-		if (_isLE) {
-			newVal = byteSwap(val);
+		if (checkBounds(sizeof(U_64))) {
+			U_64 newVal = val;
+			if (_isLE) {
+				newVal = byteSwap(val);
+			}
+			*(U_64 *)_cursor = newVal;
+			_cursor += sizeof(U_64);
 		}
-		*(U_64 *)_cursor = newVal;
-		_cursor += sizeof(U_64);
 	}
 
 	void
 	writeData(U_8 *data, UDATA size)
 	{
-		memcpy(_cursor, data, size);
-		_cursor += size;
+		if (checkBounds(size)) {
+			memcpy(_cursor, data, size);
+			_cursor += size;
+		}
 	}
 
 	U_8 *
@@ -203,19 +238,21 @@ class VM_BufferWriter {
 	void
 	writeLEB128(U_64 val)
 	{
-		U_64 newVal = val;
-		if (!_isLE) {
-			newVal = byteSwap(val);
-		}
-		do {
-			U_8 byte = newVal & 0x7F;
-			newVal >>= 7;
-
-			if (newVal > 0) {
-				byte |= 0x80;
+		if (checkBounds(9)) {
+			U_64 newVal = val;
+			if (!_isLE) {
+				newVal = byteSwap(val);
 			}
-			writeU8(byte);
-		} while (newVal > 0);
+			do {
+				U_8 byte = newVal & 0x7F;
+				newVal >>= 7;
+
+				if (newVal > 0) {
+					byte |= 0x80;
+				}
+				writeU8NoCheck(byte);
+			} while (newVal > 0);
+		}
 	}
 
 	void
@@ -230,19 +267,21 @@ class VM_BufferWriter {
 	void
 	writeLEB128PaddedU72(U_64 val)
 	{
-		U_64 newVal = val;
-		if (!_isLE) {
-			newVal = byteSwap(val);
+		if (checkBounds(9)) {
+			U_64 newVal = val;
+			if (!_isLE) {
+				newVal = byteSwap(val);
+			}
+			writeU8NoCheck((newVal & 0x7F) | 0x80);
+			writeU8NoCheck(((newVal >> 7) & 0x7F) | 0x80);
+			writeU8NoCheck(((newVal >> 14) & 0x7F) | 0x80);
+			writeU8NoCheck(((newVal >> 21) & 0x7F) | 0x80);
+			writeU8NoCheck(((newVal >> 28) & 0x7F) | 0x80);
+			writeU8NoCheck(((newVal >> 35) & 0x7F) | 0x80);
+			writeU8NoCheck(((newVal >> 42) & 0x7F) | 0x80);
+			writeU8NoCheck(((newVal >> 49) & 0x7F) | 0x80);
+			writeU8NoCheck(((newVal >> 56) & 0x7F));
 		}
-		writeU8((newVal & 0x7F) | 0x80);
-		writeU8(((newVal >> 7) & 0x7F) | 0x80);
-		writeU8(((newVal >> 14) & 0x7F) | 0x80);
-		writeU8(((newVal >> 21) & 0x7F) | 0x80);
-		writeU8(((newVal >> 28) & 0x7F) | 0x80);
-		writeU8(((newVal >> 35) & 0x7F) | 0x80);
-		writeU8(((newVal >> 42) & 0x7F) | 0x80);
-		writeU8(((newVal >> 49) & 0x7F) | 0x80);
-		writeU8(((newVal >> 56) & 0x7F));
 	}
 
 	void
@@ -257,18 +296,20 @@ class VM_BufferWriter {
 	void
 	writeLEB128PaddedU64(U_64 val)
 	{
-		U_64 newVal = val;
-		if (!_isLE) {
-			newVal = byteSwap(val);
+		if (checkBounds(sizeof(U_64))) {
+			U_64 newVal = val;
+			if (!_isLE) {
+				newVal = byteSwap(val);
+			}
+			writeU8NoCheck((newVal & 0x7F) | 0x80);
+			writeU8NoCheck(((newVal >> 7) & 0x7F) | 0x80);
+			writeU8NoCheck(((newVal >> 14) & 0x7F) | 0x80);
+			writeU8NoCheck(((newVal >> 21) & 0x7F) | 0x80);
+			writeU8NoCheck(((newVal >> 28) & 0x7F) | 0x80);
+			writeU8NoCheck(((newVal >> 35) & 0x7F) | 0x80);
+			writeU8NoCheck(((newVal >> 42) & 0x7F) | 0x80);
+			writeU8NoCheck(((newVal >> 49) & 0x7F));
 		}
-		writeU8((newVal & 0x7F) | 0x80);
-		writeU8(((newVal >> 7) & 0x7F) | 0x80);
-		writeU8(((newVal >> 14) & 0x7F) | 0x80);
-		writeU8(((newVal >> 21) & 0x7F) | 0x80);
-		writeU8(((newVal >> 28) & 0x7F) | 0x80);
-		writeU8(((newVal >> 35) & 0x7F) | 0x80);
-		writeU8(((newVal >> 42) & 0x7F) | 0x80);
-		writeU8(((newVal >> 49) & 0x7F));
 	}
 
 	void
@@ -283,14 +324,16 @@ class VM_BufferWriter {
 	void
 	writeLEB128PaddedU32(U_32 val)
 	{
-		U_64 newVal = val;
-		if (!_isLE) {
-			newVal = byteSwap(val);
+		if (checkBounds(sizeof(U_32))) {
+			U_64 newVal = val;
+			if (!_isLE) {
+				newVal = byteSwap(val);
+			}
+			writeU8NoCheck((newVal & 0x7F) | 0x80);
+			writeU8NoCheck(((newVal >> 7) & 0x7F) | 0x80);
+			writeU8NoCheck(((newVal >> 14) & 0x7F) | 0x80);
+			writeU8NoCheck(((newVal >> 21) & 0x7F));
 		}
-		writeU8((newVal & 0x7F) | 0x80);
-		writeU8(((newVal >> 7) & 0x7F) | 0x80);
-		writeU8(((newVal >> 14) & 0x7F) | 0x80);
-		writeU8(((newVal >> 21) & 0x7F));
 	}
 
 	static U_32

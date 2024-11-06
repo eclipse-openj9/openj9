@@ -406,6 +406,10 @@ private:
 
 	static UDATA freeStackStraceEntries(void *entry, void *userData);
 
+	static UDATA freeThreadNameEntries(void *entry, void *userData);
+
+	static UDATA freeThreadGroupNameEntries(void *entry, void *userData);
+
 	U_32 getMethodEntry(J9ROMMethod *romMethod, J9Class *ramClass);
 
 	U_32 getClassEntry(J9Class *clazz);
@@ -451,12 +455,8 @@ private:
 		VM_JFRConstantPoolTypes *cp = (VM_JFRConstantPoolTypes*) userData;
 		StackFrame *frame = &cp->_currentStackFrameBuffer[cp->_currentFrameCount];
 
-		cp->_currentFrameCount++;
-
 		if ((NULL == ramClass) || (NULL == romMethod)) {
-			/* unknown native method */
-			frame->methodIndex = 0;
-			frame->frameType = Native;
+			goto skipFrame;
 		} else {
 			frame->methodIndex = cp->getMethodEntry(romMethod, ramClass);
 			frame->frameType = Interpreted; /* TODO need a way to know if its JIT'ed and inlined */
@@ -474,6 +474,9 @@ private:
 			frame->lineNumber = lineNumber;
 		}
 
+		cp->_currentFrameCount++;
+
+skipFrame:
 		return J9_STACKWALK_KEEP_ITERATING;
 	}
 
@@ -1197,6 +1200,8 @@ done:
 	{
 		hashTableForEachDo(_stringUTF8Table, &freeUTF8Strings, _currentThread);
 		hashTableForEachDo(_stackTraceTable, &freeStackStraceEntries, _currentThread);
+		hashTableForEachDo(_threadTable, &freeThreadNameEntries, _currentThread);
+		hashTableForEachDo(_threadGroupTable, &freeThreadGroupNameEntries, _currentThread);
 		hashTableFree(_classTable);
 		hashTableFree(_packageTable);
 		hashTableFree(_moduleTable);
@@ -1210,6 +1215,7 @@ done:
 		pool_kill(_threadStartTable);
 		pool_kill(_threadEndTable);
 		pool_kill(_threadSleepTable);
+		pool_kill(_monitorWaitTable);
 		j9mem_free_memory(_globalStringTable);
 	}
 

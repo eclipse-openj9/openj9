@@ -135,6 +135,7 @@ private:
 	/* conservative sizing for JFR chunk */
 	static constexpr int STRING_HEADER_LENGTH = sizeof(U_64);
 	static constexpr int CHECKPOINT_EVENT_HEADER_AND_FOOTER = 68;
+	static constexpr int STRING_CONSTANT_SIZE = 128;
 	static constexpr int THREADSTATE_ENTRY_LENGTH = CHECKPOINT_EVENT_HEADER_AND_FOOTER + sizeof(threadStateNames) + (THREADSTATE_COUNT * STRING_HEADER_LENGTH);
 	static constexpr int CLASS_ENTRY_ENTRY_SIZE = (5 * sizeof(U_64)) + sizeof(U_8);
 	static constexpr int CLASSLOADER_ENTRY_SIZE = 3 * sizeof(U_64);
@@ -150,6 +151,7 @@ private:
 	static constexpr int THREAD_START_EVENT_SIZE = (6 * sizeof(U_64)) + sizeof(U_32);
 	static constexpr int THREAD_END_EVENT_SIZE = (4 * sizeof(U_64)) + sizeof(U_32);
 	static constexpr int THREAD_SLEEP_EVENT_SIZE = (7 * sizeof(U_64)) + sizeof(U_32);
+	static constexpr int MONITOR_WAIT_EVENT_SIZE = (9 * sizeof(U_64)) + sizeof(U_32);
 	static constexpr int JVM_INFORMATION_EVENT_SIZE = 3000;
 	static constexpr int PHYSICAL_MEMORY_EVENT_SIZE = (4 * sizeof(U_64)) + sizeof(U_32);
 	static constexpr int VIRTUALIZATION_INFORMATION_EVENT_SIZE = 50;
@@ -342,6 +344,10 @@ done:
 			writePhysicalMemoryEvent();
 
 			writeJFRHeader();
+
+			if (_bufferWriter->overflowOccurred()) {
+				_buildResult = OutOfMemory;
+			}
 
 			if (isResultNotOKay()) {
 				Trc_VM_jfr_ErrorWritingChunk(_currentThread, _buildResult);
@@ -592,53 +598,57 @@ done:
 	UDATA
 	calculateRequiredBufferSize()
 	{
-		UDATA requireBufferSize = _constantPoolTypes.getRequiredBufferSize();
-		requireBufferSize += JFR_CHUNK_HEADER_SIZE;
+		UDATA requiredBufferSize = _constantPoolTypes.getRequiredBufferSize();
+		requiredBufferSize += JFR_CHUNK_HEADER_SIZE;
 
-		requireBufferSize += METADATA_HEADER_SIZE;
+		requiredBufferSize += METADATA_HEADER_SIZE;
 
-		requireBufferSize += _vm->jfrState.metaDataBlobFileSize;
+		requiredBufferSize += _vm->jfrState.metaDataBlobFileSize;
 
-		requireBufferSize += THREADSTATE_ENTRY_LENGTH;
+		requiredBufferSize += THREADSTATE_ENTRY_LENGTH;
 
-		requireBufferSize += CHECKPOINT_EVENT_HEADER_AND_FOOTER + (_constantPoolTypes.getClassCount() * CLASS_ENTRY_ENTRY_SIZE);
+		requiredBufferSize += (CHECKPOINT_EVENT_HEADER_AND_FOOTER + (_constantPoolTypes.getClassCount() * CLASS_ENTRY_ENTRY_SIZE));
 
-		requireBufferSize += CHECKPOINT_EVENT_HEADER_AND_FOOTER + (_constantPoolTypes.getClassloaderCount() * CLASSLOADER_ENTRY_SIZE);
+		requiredBufferSize += (CHECKPOINT_EVENT_HEADER_AND_FOOTER + (_constantPoolTypes.getClassloaderCount() * CLASSLOADER_ENTRY_SIZE));
 
-		requireBufferSize += CHECKPOINT_EVENT_HEADER_AND_FOOTER + (_constantPoolTypes.getPackageCount() * PACKAGE_ENTRY_SIZE);
+		requiredBufferSize += (CHECKPOINT_EVENT_HEADER_AND_FOOTER + ((_constantPoolTypes.getPackageCount() + _constantPoolTypes.getStringUTF8Count()) * STRING_CONSTANT_SIZE));
 
-		requireBufferSize += CHECKPOINT_EVENT_HEADER_AND_FOOTER + (_constantPoolTypes.getMethodCount() * METHOD_ENTRY_SIZE);
+		requiredBufferSize += (CHECKPOINT_EVENT_HEADER_AND_FOOTER + (_constantPoolTypes.getPackageCount() * PACKAGE_ENTRY_SIZE));
 
-		requireBufferSize += CHECKPOINT_EVENT_HEADER_AND_FOOTER + (_constantPoolTypes.getThreadCount() * THREAD_ENTRY_SIZE);
+		requiredBufferSize += (CHECKPOINT_EVENT_HEADER_AND_FOOTER + (_constantPoolTypes.getMethodCount() * METHOD_ENTRY_SIZE));
 
-		requireBufferSize += CHECKPOINT_EVENT_HEADER_AND_FOOTER + (_constantPoolTypes.getThreadGroupCount() * THREADGROUP_ENTRY_SIZE);
+		requiredBufferSize += (CHECKPOINT_EVENT_HEADER_AND_FOOTER + (_constantPoolTypes.getThreadCount() * THREAD_ENTRY_SIZE));
 
-		requireBufferSize += CHECKPOINT_EVENT_HEADER_AND_FOOTER + (_constantPoolTypes.getModuleCount() * MODULE_ENTRY_SIZE);
+		requiredBufferSize += (CHECKPOINT_EVENT_HEADER_AND_FOOTER + (_constantPoolTypes.getThreadGroupCount() * THREADGROUP_ENTRY_SIZE));
 
-		requireBufferSize += CHECKPOINT_EVENT_HEADER_AND_FOOTER + (_constantPoolTypes.getStackTraceCount() * STACKTRACE_ENTRY_SIZE);
+		requiredBufferSize += (CHECKPOINT_EVENT_HEADER_AND_FOOTER + (_constantPoolTypes.getModuleCount() * MODULE_ENTRY_SIZE));
 
-		requireBufferSize += CHECKPOINT_EVENT_HEADER_AND_FOOTER + (_constantPoolTypes.getStackFrameCount() * STACKFRAME_ENTRY_SIZE);
+		requiredBufferSize += (CHECKPOINT_EVENT_HEADER_AND_FOOTER + (_constantPoolTypes.getStackTraceCount() * STACKTRACE_ENTRY_SIZE));
 
-		requireBufferSize += _constantPoolTypes.getExecutionSampleCount() * EXECUTION_SAMPLE_EVENT_SIZE;
+		requiredBufferSize += (CHECKPOINT_EVENT_HEADER_AND_FOOTER + (_constantPoolTypes.getStackFrameCount() * STACKFRAME_ENTRY_SIZE));
 
-		requireBufferSize += _constantPoolTypes.getThreadStartCount() * THREAD_START_EVENT_SIZE;
+		requiredBufferSize += (_constantPoolTypes.getExecutionSampleCount() * EXECUTION_SAMPLE_EVENT_SIZE);
 
-		requireBufferSize += _constantPoolTypes.getThreadEndCount() * THREAD_END_EVENT_SIZE;
+		requiredBufferSize += (_constantPoolTypes.getThreadStartCount() * THREAD_START_EVENT_SIZE);
 
-		requireBufferSize += _constantPoolTypes.getThreadSleepCount() * THREAD_SLEEP_EVENT_SIZE;
+		requiredBufferSize += (_constantPoolTypes.getThreadEndCount() * THREAD_END_EVENT_SIZE);
 
-		requireBufferSize += JVM_INFORMATION_EVENT_SIZE;
+		requiredBufferSize += (_constantPoolTypes.getThreadSleepCount() * THREAD_SLEEP_EVENT_SIZE);
 
-		requireBufferSize += OS_INFORMATION_EVENT_SIZE;
+		requiredBufferSize += (_constantPoolTypes.getMonitorWaitCount() * MONITOR_WAIT_EVENT_SIZE);
 
-		requireBufferSize += PHYSICAL_MEMORY_EVENT_SIZE;
+		requiredBufferSize += JVM_INFORMATION_EVENT_SIZE;
 
-		requireBufferSize += VIRTUALIZATION_INFORMATION_EVENT_SIZE;
+		requiredBufferSize += OS_INFORMATION_EVENT_SIZE;
 
-		requireBufferSize += CPU_INFORMATION_EVENT_SIZE;
+		requiredBufferSize += PHYSICAL_MEMORY_EVENT_SIZE;
 
-		requireBufferSize += INITIAL_SYSTEM_PROPERTY_EVENT_SIZE;
-		return requireBufferSize;
+		requiredBufferSize += VIRTUALIZATION_INFORMATION_EVENT_SIZE;
+
+		requiredBufferSize += CPU_INFORMATION_EVENT_SIZE;
+
+		requiredBufferSize += INITIAL_SYSTEM_PROPERTY_EVENT_SIZE;
+		return requiredBufferSize;
 	}
 
 	~VM_JFRChunkWriter()
