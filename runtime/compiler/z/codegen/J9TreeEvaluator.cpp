@@ -858,6 +858,117 @@ J9::Z::TreeEvaluator::pdclearSetSignEvaluator(TR::Node *node, TR::CodeGenerator 
    return TR::TreeEvaluator::pdclearEvaluator(node, cg);
    }
 
+TR::Register *
+J9::Z::TreeEvaluator::inlineStringCodingHasNegatives(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   /*
+   @IntrinsicCandidate
+    public static boolean hasNegatives(byte[] ba, int off, int len) {
+        for (int i = off; i < off + len; i++) {
+            if (ba[i] < 0) {
+                return true;
+            }
+        }
+        return false;
+    } *
+    */
+
+   TR::Register *inputPtrReg = cg->gprClobberEvaluate(node->getChild(0));
+   TR::Register *offsetReg = cg->evaluate(node->getChild(1));
+   TR::Register *lengthReg = cg->evaluate(node->getChild(2));
+
+   TR::LabelSymbol *processMultiple16CharsStart = generateLabelSymbol(cg);
+   TR::LabelSymbol *processMultiple16CharsEnd = generateLabelSymbol(cg);
+   TR::LabelSymbol *cFlowRegionEnd = generateLabelSymbol(cg);
+   TR::LabelSymbol *processOutOfRangeChar = generateLabelSymbol(cg);
+
+   TR::Register *vInput = cg->allocateRegister(TR_VRF);
+   TR::Register *vUpperLimit = cg->allocateRegister(TR_VRF);
+   TR::Register *vComparison = cg->allocateRegister(TR_VRF);
+   TR::Register *numCharsLeftToProcess = cg->allocateRegister(); // off + len
+   TR::Register *outOfRangeCharIndex = cg->allocateRegister(TR_VRF);
+
+   TR::Register *returnReg = cg->allocateRegister();
+   generateRILInstruction(cg, TR::InstOpCode::LGFI, node, returnReg, 0);
+
+   generateRRRInstruction(cg, TR::InstOpCode::getAddThreeRegOpCode(), node, numCharsLeftToProcess, offsetReg, lengthReg);
+
+   uint32_t upperLimit = 127;
+   uint8_t rangeComparison = 0x20; // > comparison
+
+   generateVRIaInstruction(cg, TR::InstOpCode::VREPI, node, vUpperLimit, upperLimit, 0);
+   generateVRIaInstruction(cg, TR::InstOpCode::VREPI, node, vComparison, rangeComparison, 0);
+
+   generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::C, node, numCharsLeftToProcess, 16, TR::InstOpCode::COND_BL, processMultiple16CharsEnd, false, false);
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::label, node, processMultiple16CharsStart);
+   processMultiple16CharsStart->setStartInternalControlFlow();
+
+   // Load bytes and search for out of range character
+   generateVRXInstruction(cg, TR::InstOpCode::VL, node, vInput, generateS390MemoryReference(inputPtrReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg));
+
+   generateVRRdInstruction(cg, TR::InstOpCode::VSTRC, node, outOfRangeCharIndex, vInput, vUpperLimit, vComparison, 0x1, 0);
+
+   // process bad character by setting return register to true and exiting
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC1, node, processOutOfRangeChar);
+
+   // Update the counters
+   generateRXInstruction(cg, TR::InstOpCode::getLoadAddressOpCode(), node, inputPtrReg, generateS390MemoryReference(inputPtrReg, 16, cg));
+   generateRILInstruction(cg, TR::InstOpCode::SLFI, node, numCharsLeftToProcess, 16);
+
+   // Branch back up if we still have more than 16 characters to process.
+   generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::C, node, numCharsLeftToProcess, 15, TR::InstOpCode::COND_BH, processMultiple16CharsStart, false, false);
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::label, node, processMultiple16CharsEnd);
+
+   // Branch to end if there's no residue
+   generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::C, node, numCharsLeftToProcess, 0, TR::InstOpCode::COND_BE, cFlowRegionEnd, false, false);
+
+   // Zero out the input register to avoid invalid VSTRC result
+   generateVRIaInstruction(cg, TR::InstOpCode::VGBM, node, vInput, 0, 0 /*unused*/);
+
+   // VLL and VSTL work on indices so we subtract 1
+   TR::Register *numCharsLeftToProcessMinus1 = cg->allocateRegister();
+
+   generateRIEInstruction(cg, TR::InstOpCode::AHIK, node, numCharsLeftToProcessMinus1, numCharsLeftToProcess, -1);
+   // Load residue bytes and check for out of range character
+   generateVRSbInstruction(cg, TR::InstOpCode::VLL, node, vInput, numCharsLeftToProcessMinus1, generateS390MemoryReference(inputPtrReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg));
+
+   generateVRRdInstruction(cg, TR::InstOpCode::VSTRC, node, outOfRangeCharIndex, vInput, vUpperLimit, vComparison, 0x1, 0);
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC1, node, processOutOfRangeChar);
+
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, cFlowRegionEnd);
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::label, node, processOutOfRangeChar);
+   generateRILInstruction(cg, TR::InstOpCode::LGFI, node, returnReg, 1);
+
+   TR::RegisterDependencyConditions* dependencies = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 8, cg);
+   dependencies->addPostConditionIfNotAlreadyInserted(vInput, TR::RealRegister::AssignAny);
+   dependencies->addPostConditionIfNotAlreadyInserted(outOfRangeCharIndex, TR::RealRegister::AssignAny);
+   dependencies->addPostConditionIfNotAlreadyInserted(vUpperLimit, TR::RealRegister::AssignAny);
+   dependencies->addPostConditionIfNotAlreadyInserted(vComparison, TR::RealRegister::AssignAny);
+   dependencies->addPostConditionIfNotAlreadyInserted(inputPtrReg, TR::RealRegister::AssignAny);
+   dependencies->addPostConditionIfNotAlreadyInserted(numCharsLeftToProcess, TR::RealRegister::AssignAny);
+   dependencies->addPostConditionIfNotAlreadyInserted(numCharsLeftToProcessMinus1, TR::RealRegister::AssignAny);
+   dependencies->addPostConditionIfNotAlreadyInserted(returnReg, TR::RealRegister::AssignAny);
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::label, node, cFlowRegionEnd, dependencies);
+   cFlowRegionEnd->setEndInternalControlFlow();
+
+   cg->decReferenceCount(node->getChild(0));
+   cg->decReferenceCount(node->getChild(1));
+   cg->decReferenceCount(node->getChild(2));
+
+   cg->stopUsingRegister(vInput);
+   cg->stopUsingRegister(outOfRangeCharIndex);
+   cg->stopUsingRegister(vUpperLimit);
+   cg->stopUsingRegister(vComparison);
+   cg->stopUsingRegister(numCharsLeftToProcess);
+   cg->stopUsingRegister(numCharsLeftToProcessMinus1);
+   node->setRegister(returnReg);
+   return returnReg;
+   }
+
 /* Moved from Codegen to FE */
 ///////////////////////////////////////////////////////////////////////////////////
 // Generate code to perform a comparison and branch to a snippet.
