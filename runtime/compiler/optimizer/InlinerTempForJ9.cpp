@@ -1399,8 +1399,7 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
    if (isVolatile && type == TR::Int64 && comp()->target().is32Bit() && !comp()->cg()->getSupportsInlinedAtomicLongVolatiles())
       return false;
 
-   // In general, Z does not permit unaligned accesses
-   if (isUnaligned && comp()->target().cpu.isZ())
+   if (isUnaligned && comp()->cg()->getSupportsAlignedAccessOnly())
       return false;
 
    if (debug("traceUnsafe"))
@@ -1990,7 +1989,7 @@ TR_J9InlinerPolicy::createUnsafeGetWithOffset(TR::ResolvedMethodSymbol *calleeSy
    if (isVolatile && type == TR::Int64 && comp()->target().is32Bit() && !comp()->cg()->getSupportsInlinedAtomicLongVolatiles())
       return false;
 
-   if (isUnaligned && comp()->target().cpu.isZ())
+   if (isUnaligned && comp()->cg()->getSupportsAlignedAccessOnly())
       return false;
 
    if (debug("traceUnsafe"))
@@ -2605,13 +2604,13 @@ TR_J9InlinerPolicy::inlineUnsafeCall(TR::ResolvedMethodSymbol *calleeSymbol, TR:
 
       // FIXME: Update createUnsafePutWithOffset signature to have isVolatile, isOrdered, isUnaligned as enum
       case TR::jdk_internal_misc_Unsafe_getCharUnaligned:
-         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int8, /*needsNullCheck*/false, /*isUnaligned*/true);
+         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int16, /*isVolatile*/false, /*needsNullCheck*/false, /*isUnaligned*/true);
       case TR::jdk_internal_misc_Unsafe_getShortUnaligned:
-         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int16, /*needsNullCheck*/false, /*isUnaligned*/true);
+         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int16, /*isVolatile*/false, /*needsNullCheck*/false, /*isUnaligned*/true);
       case TR::jdk_internal_misc_Unsafe_getIntUnaligned:
-         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int32, /*needsNullCheck*/false, /*isUnaligned*/true);
+         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int32, /*isVolatile*/false, /*needsNullCheck*/false, /*isUnaligned*/true);
       case TR::jdk_internal_misc_Unsafe_getLongUnaligned:
-         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int64, /*needsNullCheck*/false, /*isUnaligned*/true);
+         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int64, /*isVolatile*/false, /*needsNullCheck*/false, /*isUnaligned*/true);
       case TR::jdk_internal_misc_Unsafe_putCharUnaligned:
          return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int16, /*isVolatile*/false, /*needsNullCheck*/false, /*isOrdered*/false, /*isUnaligned*/true);
       case TR::jdk_internal_misc_Unsafe_putShortUnaligned:
@@ -2786,8 +2785,12 @@ TR_J9InlinerPolicy::isInlineableJNI(TR_ResolvedMethod *method,TR::Node *callNode
       // In Java9 sun/misc/Unsafe methods are simple Java wrappers to JNI
       // methods in jdk.internal, and the enum values above match both. Only
       // return true for the methods that are native.
+      // In the case of Unsafe_getXUnaligned methods, which are also wrappers to
+      // native methods that contain some runtime checks, we benefit from directly
+      // inlining them in inlineUnsafeCall as if they were their underlying native
+      // methods, if we can determine that it is safe to do so.
       if (!TR::Compiler->om.canGenerateArraylets() || (callNode && callNode->isUnsafeGetPutCASCallOnNonArray()))
-         return method->isNative();
+         return method->isNative() || isSimpleWrapperForInlineableUnsafeNativeMethod(method);
       else
          return false;
       }
@@ -6033,6 +6036,28 @@ bool TR_J9InlinerPolicy::isJSR292SmallGetterMethod(TR_ResolvedMethod *resolvedMe
       case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_lengthC:
       case TR::java_lang_invoke_MethodHandleImpl_ArrayAccessor_lengthL:
       case TR::java_lang_invoke_VarHandle_asDirect:
+         return true;
+
+      default:
+         break;
+      }
+   return false;
+   }
+
+bool
+TR_J9InlinerPolicy::isSimpleWrapperForInlineableUnsafeNativeMethod(TR_ResolvedMethod *resolvedMethod)
+   {
+   TR::RecognizedMethod method =  resolvedMethod->getRecognizedMethod();
+   switch (method)
+      {
+      case TR::jdk_internal_misc_Unsafe_getCharUnaligned:
+      case TR::jdk_internal_misc_Unsafe_getShortUnaligned:
+      case TR::jdk_internal_misc_Unsafe_getIntUnaligned:
+      case TR::jdk_internal_misc_Unsafe_getLongUnaligned:
+      case TR::jdk_internal_misc_Unsafe_putCharUnaligned:
+      case TR::jdk_internal_misc_Unsafe_putShortUnaligned:
+      case TR::jdk_internal_misc_Unsafe_putIntUnaligned:
+      case TR::jdk_internal_misc_Unsafe_putLongUnaligned:
          return true;
 
       default:
