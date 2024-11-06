@@ -462,6 +462,16 @@ public:
    void setSupportsInlineStringHashCode() { _j9Flags.set(SupportsInlineStringHashCode); }
 
    /** \brief
+   *    Determines whether the code generator supports inlining of java/lang/StringCoding.hasNegatives
+   */
+   bool getSupportsInlineStringCodingHasNegatives() { return _j9Flags.testAny(SupportsInlineStringCodingHasNegatives); }
+
+   /** \brief
+   *    The code generator supports inlining of java/lang/StringCoding.hasNegatives
+   */
+   void setSupportsInlineStringCodingHasNegatives() { _j9Flags.set(SupportsInlineStringCodingHasNegatives); }
+
+   /** \brief
    *    Determines whether the code generator supports inlining of java/lang/StringLatin1.inflate
    */
    bool getSupportsInlineStringLatin1Inflate() { return _j9Flags.testAny(SupportsInlineStringLatin1Inflate); }
@@ -677,6 +687,7 @@ private:
       SavesNonVolatileGPRsForGC                           = 0x00000800,
       SupportsInlineVectorizedMismatch                    = 0x00001000,
       SupportsInlineVectorizedHashCode                    = 0x00002000,
+      SupportsInlineStringCodingHasNegatives              = 0x00004000,
       };
 
    flags32_t _j9Flags;
