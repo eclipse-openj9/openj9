@@ -4515,14 +4515,26 @@ size_t getRSS_Kb()
    return rss;
    }
 
+#if defined(J9VM_OPT_SHARED_CLASSES) && defined(LINUX)
+void disclaimSharedClassCache(TR_J9SharedCache *sharedCache, uint64_t crtElapsedTime)
+   {
+   size_t rssBefore = getRSS_Kb();
+   int32_t numDisclaimed = sharedCache->disclaimSharedCaches();
+   size_t rssAfter = getRSS_Kb();
+   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%u JIT disclaimed %d SCC segments  RSS before=%zu KB, RSS after=%zu KB, delta=%zd KB = %5.2f%%",
+                                     (uint32_t)crtElapsedTime, numDisclaimed, rssBefore, rssAfter, rssBefore - rssAfter, ((long)(rssAfter - rssBefore) * 100.0 / rssBefore));
+   }
+#endif // defined(J9VM_OPT_SHARED_CLASSES) && defined(LINUX)
+
 void disclaimDataCaches(uint64_t crtElapsedTime)
    {
    size_t rssBefore = getRSS_Kb();
    int numDisclaimed = TR_DataCacheManager::getManager()->disclaimAllDataCaches();
    size_t rssAfter = getRSS_Kb();
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%u JIT disclaimed %d Data Cache segments  RSS before=%zu KB, RSS after=%zu KB, delta=%zu KB",
-                                     (uint32_t)crtElapsedTime, numDisclaimed, rssBefore, rssAfter, rssBefore - rssAfter);
+      TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%u JIT disclaimed %d Data Cache segments  RSS before=%zu KB, RSS after=%zu KB, delta=%zd KB = %5.2f%%",
+                                     (uint32_t)crtElapsedTime, numDisclaimed, rssBefore, rssAfter, rssBefore - rssAfter, ((long)(rssAfter - rssBefore) * 100.0 / rssBefore));
    }
 
 void disclaimIProfilerSegments(uint64_t crtElapsedTime)
@@ -4535,8 +4547,8 @@ void disclaimIProfilerSegments(uint64_t crtElapsedTime)
       int numSegDisclaimed = iprofilerAllocator->disclaimAllSegments();
       size_t rssAfter = getRSS_Kb();
       if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%u JIT disclaimed %d IProfiler segments out of %d. RSS before=%zu KB, RSS after=%zu KB, delta=%zu KB",
-                                        (uint32_t)crtElapsedTime, numSegDisclaimed, iprofilerAllocator->getNumSegments(), rssBefore, rssAfter, rssBefore - rssAfter);
+         TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%u JIT disclaimed %d IProfiler segments out of %d. RSS before=%zu KB, RSS after=%zu KB, delta=%zd KB = %5.2f%%",
+                                        (uint32_t)crtElapsedTime, numSegDisclaimed, iprofilerAllocator->getNumSegments(), rssBefore, rssAfter, rssBefore - rssAfter, ((long)(rssAfter - rssBefore) * 100.0 / rssBefore));
       }
    }
 
@@ -4546,7 +4558,7 @@ void disclaimCodeCaches(uint64_t crtElapsedTime)
    int numDisclaimed = TR::CodeCacheManager::instance()->disclaimAllCodeCaches();
    size_t rssAfter = getRSS_Kb();
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%u JIT disclaimed %d Code Caches RSS before=%zu KB, RSS after=%zu KB, delta=%zu KB = %5.2f%%",
+      TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%u JIT disclaimed %d Code Caches RSS before=%zu KB, RSS after=%zu KB, delta=%zd KB = %5.2f%%",
                                      (uint32_t)crtElapsedTime, numDisclaimed, rssBefore, rssAfter, rssBefore - rssAfter, ((long)(rssAfter - rssBefore) * 100.0 / rssBefore));
    }
 
@@ -4557,6 +4569,7 @@ void memoryDisclaimLogic(TR::CompilationInfo *compInfo, uint64_t crtElapsedTime,
    static uint64_t lastCodeCacheDisclaimTime = 0;
    static int32_t  lastNumAllocatedCodeCaches = 0;
    static uint64_t lastIProfilerDisclaimTime = 0;
+   static uint64_t lastSCCDisclaimTime = 0;
    static uint32_t lastNumCompilationsDuringIProfilerDisclaim = 0;
 
    J9JITConfig *jitConfig = compInfo->getJITConfig();
@@ -4570,6 +4583,20 @@ void memoryDisclaimLogic(TR::CompilationInfo *compInfo, uint64_t crtElapsedTime,
 
    if (javaVM->phase != J9VM_PHASE_NOT_STARTUP || jitState == STARTUP_STATE)
       return;
+
+#if defined(J9VM_OPT_SHARED_CLASSES) && defined(LINUX)
+   TR_J9VMBase *fej9 = TR_J9VMBase::get(jitConfig, compInfo->getSamplerThread(), TR_J9VMBase::AOT_VM);
+   TR_J9SharedCache *sharedCache = fej9->sharedCache();
+   if (sharedCache && sharedCache->isDisclaimEnabled())
+      {
+      // Disclaim if there was a large time interval since the last disclaim
+      if (crtElapsedTime > lastSCCDisclaimTime + 12 * TR::Options::_minTimeBetweenMemoryDisclaims)
+         {
+         disclaimSharedClassCache(sharedCache, crtElapsedTime);
+         lastSCCDisclaimTime = crtElapsedTime;
+         }
+      }
+#endif // defined(J9VM_OPT_SHARED_CLASSES) && defined(LINUX)
 
    if (TR_DataCacheManager::getManager()->isDisclaimEnabled())
       {

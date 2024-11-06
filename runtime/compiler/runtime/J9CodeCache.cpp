@@ -918,7 +918,7 @@ J9::CodeCache::disclaim(TR::CodeCacheManager *manager, bool canDisclaimOnSwap)
       if (trace)
          TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "WARNING: Failed to use madvise to disclaim memory for code cache");
 
-      if (ret == EINVAL)
+      if (errno != EAGAIN)
          {
          manager->setDisclaimEnabled(false); // Don't try to disclaim again, since support seems to be missing
          if (trace)

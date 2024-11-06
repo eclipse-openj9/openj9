@@ -2929,7 +2929,8 @@ J9::Options::fePostProcessJIT(void * base)
 
    if (!self()->getOption(TR_DisableDataCacheDisclaiming) ||
        !self()->getOption(TR_DisableIProfilerDataDisclaiming) ||
-       self()->getOption(TR_EnableCodeCacheDisclaiming))
+       self()->getOption(TR_EnableCodeCacheDisclaiming) ||
+       self()->getOption(TR_EnableSharedCacheDisclaiming))
       {
       // Check requirements for memory disclaiming (Linux kernel and default page size)
       TR::Options::disableMemoryDisclaimIfNeeded(jitConfig);
@@ -3002,6 +3003,7 @@ J9::Options::disableMemoryDisclaimIfNeeded(J9JITConfig *jitConfig)
       TR::Options::getCmdLineOptions()->setOption(TR_DisableDataCacheDisclaiming);
       TR::Options::getCmdLineOptions()->setOption(TR_DisableIProfilerDataDisclaiming);
       TR::Options::getCmdLineOptions()->setOption(TR_EnableCodeCacheDisclaiming, false);
+      TR::Options::getCmdLineOptions()->setOption(TR_EnableSharedCacheDisclaiming, false);
       }
    return shouldDisableMemoryDisclaim;
    }

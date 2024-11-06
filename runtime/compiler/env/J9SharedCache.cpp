@@ -48,6 +48,17 @@
 #include "runtime/JITServerAOTDeserializer.hpp"
 #endif
 
+// for madvise
+#ifdef LINUX
+#include <sys/mman.h>
+#ifndef MADV_NOHUGEPAGE
+#define MADV_NOHUGEPAGE  15
+#endif // MADV_NOHUGEPAGE
+#ifndef MADV_PAGEOUT
+#define MADV_PAGEOUT     21
+#endif // MADV_PAGEOUT
+#endif
+
 #define LOG(logLevel, format, ...)               \
    if (_logLevel >= logLevel)                    \
       {                                          \
@@ -55,6 +66,8 @@
       }
 
 // From CompositeCache.cpp
+#define RWUPDATEPTR(ca) (((uint8_t *)(ca)) + (ca)->readWriteSRP)
+#define CAEND(ca) (((uint8_t *)(ca)) + (ca)->totalBytes)
 #define UPDATEPTR(ca) (((uint8_t *)(ca)) + (ca)->updateSRP)
 #define SEGUPDATEPTR(ca) (((uint8_t *)(ca)) + (ca)->segmentSRP)
 
@@ -104,6 +117,67 @@ TR_J9SharedCache::validateAOTHeader(J9JITConfig *jitConfig, J9VMThread *vmThread
       jitConfig->relocatableTargetProcessor = TR::Compiler->relocatableTarget.cpu.getProcessorDescription();
       }
    }
+
+#if defined(LINUX)
+bool TR_J9SharedCache::disclaim(const uint8_t *start, const uint8_t *end, UDATA pageSize, bool trace)
+   {
+   uint8_t *nextPage = (uint8_t *)(((UDATA)start + (pageSize - 1)) & ~(pageSize - 1));
+   if (nextPage < end)
+      {
+      int ret = madvise(nextPage, end - nextPage, MADV_PAGEOUT);
+      if (ret == 0)
+         return true;
+      if (trace)
+         TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "WARNING: Failed to use madvise to disclaim memory for shared class cache; errno: %d", errno);
+      // Temporary failure, don't disable disclaim permanently if this happens.
+      if (errno == EAGAIN)
+         return true;
+      }
+   return false;
+   }
+
+int32_t TR_J9SharedCache::disclaimSharedCaches()
+   {
+   int32_t numDisclaimed = 0;
+
+   if (!_disclaimEnabled)
+      return numDisclaimed;
+
+   J9SharedClassCacheDescriptor *scHead = getCacheDescriptorList();
+   J9SharedClassCacheDescriptor *scCur = scHead;
+   PORT_ACCESS_FROM_JAVAVM(_javaVM); // for j9vmem_supported_page_sizes
+   UDATA pageSize = j9vmem_supported_page_sizes()[0];
+   bool trace = TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance);
+
+   do
+      {
+      uint8_t *rwStart = RWUPDATEPTR(scCur->cacheStartAddress);
+      uint8_t *rwEnd = SEGUPDATEPTR(scCur->cacheStartAddress);
+      if (!disclaim(rwStart, rwEnd, pageSize, trace))
+         {
+         if (trace)
+            TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "WARNING: Disabling shared class cache disclaiming from now on");
+         _disclaimEnabled = false;
+         break;
+         }
+      numDisclaimed++;
+      uint8_t *updateStart = UPDATEPTR(scCur->cacheStartAddress);
+      uint8_t *updateEnd = CAEND(scCur->cacheStartAddress);
+      if (!disclaim(updateStart, updateEnd, pageSize, trace))
+         {
+         if (trace)
+            TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "WARNING: Disabling shared class cache disclaiming from now on");
+         _disclaimEnabled = false;
+         break;
+         }
+      numDisclaimed++;
+      scCur = scCur->next;
+      }
+   while (scCur != scHead);
+
+   return numDisclaimed;
+   }
+#endif // defined(LINUX)
 
 TR_YesNoMaybe TR_J9SharedCache::isSharedCacheDisabledBecauseFull(TR::CompilationInfo *compInfo)
    {
@@ -186,6 +260,9 @@ TR_J9SharedCache::TR_J9SharedCache(TR_J9VMBase *fe)
    _aotStats = fe->getPrivateConfig()->aotStats;
    _sharedCacheConfig = _javaVM->sharedClassConfig;
    _numDigitsForCacheOffsets = 8;
+#if defined(LINUX)
+   _disclaimEnabled = TR::Options::getCmdLineOptions()->getOption(TR_EnableSharedCacheDisclaiming);
+#endif
 
 #if defined(J9VM_OPT_JITSERVER)
    TR_ASSERT_FATAL(_sharedCacheConfig || _compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER
