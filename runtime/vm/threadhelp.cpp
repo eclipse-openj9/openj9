@@ -436,9 +436,9 @@ IDATA
 timeCompensationHelper(J9VMThread *vmThread, U_8 threadHelperType, omrthread_monitor_t monitor, I_64 millis, I_32 nanos)
 {
 	IDATA rc = 0;
+	J9JavaVM *vm = vmThread->javaVM;
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-	J9JavaVM *vm = vmThread->javaVM;
 	/* Time compensation only supports CRIURestoreNonPortableMode which is default mode. */
 	bool waitTimed = (millis > 0) || (nanos > 0);
 	bool compensationMightBeRequired = waitTimed && !J9_IS_CRIU_RESTORED(vm) && isTimeCompensationEnabled(vmThread);
@@ -461,8 +461,76 @@ continueTimeCompensation:
 		rc = omrthread_monitor_wait_timed(monitor, millis, nanos);
 		break;
 	case HELPER_TYPE_THREAD_PARK:
-		rc = omrthread_park(millis, nanos);
-		break;
+		{
+			PORT_ACCESS_FROM_VMC(vmThread);
+			UDATA policy = 0;
+			BOOLEAN earlyBreak = false;
+			I_64 currentTime = j9time_nano_time();
+
+			vmThread->prePark = 1;
+
+			if ((vm->prevProcTimestamp == 0)
+			|| ((UDATA)(currentTime - vm->prevProcTimestamp) > vm->recalcThresholdNanos)
+			) {
+
+				J9SysinfoCPUTime currentSysCPUTime = {0};
+				j9sysinfo_get_CPU_utilization(&currentSysCPUTime);
+
+				UDATA numberOfCpus = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_TARGET);
+
+				if (vm->prevSysCPUTime.timestamp == 0) {
+					// first run
+				} else {
+					vm->machineTotal = OMR_MIN((currentSysCPUTime.cpuTime - vm->prevSysCPUTime.cpuTime) / ((double)numberOfCpus * (currentSysCPUTime.timestamp - vm->prevSysCPUTime.timestamp)), 1.0);
+					Trc_VM_ThreadHelp_timeCompensationHelper_parkMachine(vmThread, currentSysCPUTime.cpuTime, vm->prevSysCPUTime.cpuTime, numberOfCpus, currentTime, vm->prevProcTimestamp);
+				}
+				vm->prevProcTimestamp = currentTime;
+				vm->prevSysCPUTime = currentSysCPUTime;
+
+				Trc_VM_ThreadHelp_timeCompensationHelper_parkWait(vmThread, vm->machineTotal, currentTime);
+			}
+
+			if (vm->machineTotal != 0) {
+				if (vm->machineTotal > (float)vm->thresholdHigh) {
+					policy = 2;
+				} else if (vm->machineTotal > (float)vm->thresholdMedium) {
+					policy = 1;
+				} else {
+					policy = 0;
+				}
+			}
+
+			UDATA count = 0;
+
+			if (0 != policy) {
+
+				if (1 == policy) {
+					/* spin */
+					for (IDATA spinCount1 = vm->thrParkSpinCount1; spinCount1 > 0; --spinCount1) {
+						VM_AtomicSupport::yieldCPU();
+						count++;
+						if (vmThread->prePark == 0) {
+							earlyBreak = TRUE;
+							break;
+						}
+					}
+				} else if (2 == policy) {
+					for (IDATA spinCount2 = vm->thrParkSpinCount2; spinCount2 > 0; --spinCount2) {
+						count++;
+						usleep(((spinCount2 * vm->parkSleepMultiplier) + 1) * vm->yieldUsleepMultiplier);
+						if (vmThread->prePark == 0) {
+							earlyBreak = TRUE;
+							break;
+						}
+					}
+				}
+				rc = omrthread_park(millis, nanos);
+			} else {
+				rc = omrthread_park(millis, nanos);
+			}
+			Trc_VM_ThreadHelp_timeCompensationHelper_parkWaited(vmThread, j9time_nano_time()-currentTime, policy, earlyBreak, count);
+			break;
+		}
 	case HELPER_TYPE_THREAD_SLEEP:
 		/* Returns 0 when the timeout specified passed.
 		 * A timeout of 0 (0ms, 0ns) indicates an immediate return.

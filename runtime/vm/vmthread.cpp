@@ -300,6 +300,10 @@ allocateVMThread(J9JavaVM *vm, omrthread_t osThread, UDATA privateFlags, void *m
 #if defined(J9VM_OPT_JFR)
 	newThread->threadJfrState.prevTimestamp = -1;
 #endif /* defined(J9VM_OPT_JFR) */
+	newThread->parkWaitSlidingWindow = (U_64*) j9mem_allocate_memory(vm->parkWaitSlidingWindowSize * sizeof(U_64), OMRMEM_CATEGORY_VM);
+	if (NULL == newThread->parkWaitSlidingWindow) {
+		goto fail;
+	}
 
 	/* If an exclusive access request is in progress, mark this thread */
 
@@ -591,6 +595,24 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 	{
 		vm->thrDeflationPolicy = J9VM_DEFLATION_POLICY_ASAP;
 	}
+	vm->thrDeflationPolicy = J9VM_DEFLATION_POLICY_ASAP;
+	vm->thrParkSpinCount1 = 0;
+	vm->thrParkSpinCount2 = 0;
+	vm->parkSpinWaitThreshold = 0;
+	vm->parkWaitSlidingWindowSize = 0;
+	vm->parkSpinRatioOfAvgWait = 0.95;
+	vm->parkLock = 0;
+	vm->parkYield = 0;
+	vm->parkSleepMultiplier = 0;
+	vm->yieldUsleepMultiplier = 0;
+	vm->machineTotal = 0.0f;
+	vm->jvmUser = 0.0f;
+	vm->prevSysCPUTime = {0};
+	vm->prevProcCPUTimes = {0};
+	vm->prevProcTimestamp = 0;
+	vm->thresholdHigh = 0.9f;
+	vm->thresholdMedium = 0.6f;
+	vm->recalcThresholdNanos = 500*1000*1000;
 
 	if (cpus > 1) {
 #if (defined(LINUXPPC)) && !defined(J9VM_ENV_LITTLE_ENDIAN)
@@ -852,6 +874,72 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 			continue;
 		}
 
+		if (try_scan(&scan_start, "parkSpinCount1=")) {
+			if (scan_udata(&scan_start, &vm->thrParkSpinCount1)) {
+				goto _error;
+			}
+			continue;
+		}
+		if (try_scan(&scan_start, "parkSpinCount2=")) {
+			if (scan_udata(&scan_start, &vm->thrParkSpinCount2)) {
+				goto _error;
+			}
+			continue;
+		}
+		if (try_scan(&scan_start, "parkSpinWaitThreshold=")) {
+			if (scan_udata(&scan_start, &vm->parkSpinWaitThreshold)) {
+				goto _error;
+			}
+			continue;
+		}
+		if (try_scan(&scan_start, "parkWaitSlidingWindowSize=")) {
+			if (scan_udata(&scan_start, &vm->parkWaitSlidingWindowSize)) {
+				goto _error;
+			}
+			continue;
+		}
+		if (try_scan(&scan_start, "parkSpinRatioOfAvgWait=")) {
+			if (scan_double(&scan_start, &vm->parkSpinRatioOfAvgWait)) {
+				goto _error;
+			}
+			continue;
+		}
+		if (try_scan(&scan_start, "parkYield=")) {
+			if (scan_udata(&scan_start, &vm->parkYield)) {
+				goto _error;
+			}
+			continue;
+		}
+		if (try_scan(&scan_start, "parkLock=")) {
+			if (scan_udata(&scan_start, &vm->parkLock)) {
+				goto _error;
+			}
+			continue;
+		}
+		if (try_scan(&scan_start, "parkSleepMultiplier=")) {
+			if (scan_udata(&scan_start, &vm->parkSleepMultiplier)) {
+				goto _error;
+			}
+			continue;
+		}
+		if (try_scan(&scan_start, "thresholdHigh=")) {
+			if (scan_double(&scan_start, &vm->thresholdHigh)) {
+				goto _error;
+			}
+			continue;
+		}
+		if (try_scan(&scan_start, "thresholdMedium=")) {
+			if (scan_double(&scan_start, &vm->thresholdMedium)) {
+				goto _error;
+			}
+			continue;
+		}
+		if (try_scan(&scan_start, "recalcThresholdNanos=")) {
+			if (scan_udata(&scan_start, &vm->recalcThresholdNanos)) {
+				goto _error;
+			}
+			continue;
+		}
 #if !defined(WIN32) && defined(OMR_NOTIFY_POLICY_CONTROL)
 		if (try_scan(&scan_start, "notifyPolicy=")) {
 			char *oldScanStart = scan_start;
@@ -1233,6 +1321,8 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 				goto _error;
 			}
 			**(UDATA**)omrthread_global((char*)"yieldUsleepMultiplier") = yieldUsleepMultiplier;
+
+			vm->yieldUsleepMultiplier = yieldUsleepMultiplier;
 			continue;
 		}
 
