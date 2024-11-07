@@ -126,6 +126,8 @@ void freeVMThread(J9JavaVM *vm, J9VMThread *vmThread)
 		/* Free J9RIParameters. */
 		j9mem_free_memory(vmThread->riParameters);
 	}
+	j9mem_free_memory(vmThread->parkWaitSlidingWindow);
+
 #endif /* defined(J9VM_PORT_RUNTIME_INSTRUMENTATION) */
 	if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
 		j9mem_free_memory32(vmThread->startOfMemoryBlock);

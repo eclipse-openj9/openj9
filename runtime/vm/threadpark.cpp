@@ -28,6 +28,7 @@
 #include "omrthread.h"
 #include "ut_j9vm.h"
 
+#include "AtomicSupport.hpp"
 #include "VMHelpers.hpp"
 
 #include <string.h>
@@ -140,6 +141,7 @@ threadUnparkImpl(J9VMThread *vmThread, j9object_t threadObject)
 		 * we will have the updated value if the object is moved */
 		PUSH_OBJECT_IN_SPECIAL_FRAME(vmThread, threadObject);
 		threadLock = (j9object_t)objectMonitorEnter(vmThread, threadLock);
+
 		if (J9_OBJECT_MONITOR_ENTER_FAILED(threadLock)) {
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 			if (J9_OBJECT_MONITOR_CRIU_SINGLE_THREAD_MODE_THROW == (UDATA)threadLock) {
@@ -160,6 +162,8 @@ threadUnparkImpl(J9VMThread *vmThread, j9object_t threadObject)
 			if (NULL != otherVmThread) {
 				/* in this case the thread is already dead so we don't need to unpark */
 				omrthread_unpark(otherVmThread->osThread);
+				VM_AtomicSupport::writeBarrier();
+				otherVmThread->prePark = 0;
 			}
 			objectMonitorExit(vmThread, threadLock);
 			/*Trc_JCL_unpark_Exit(vmThread);*/
