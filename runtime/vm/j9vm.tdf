@@ -1017,3 +1017,7 @@ TraceEntry=Trc_VM_getTypeIdUTF8_Entry Overhead=1 Level=5 Template="getTypeIdUTF8
 TraceExit=Trc_VM_getTypeIdUTF8_Exit Overhead=1 Level=5 Template="getTypeIdUTF8 className %.*s clazz=%p result=%lli"
 TraceEntry=Trc_VM_getTypeId_Entry Overhead=1 Level=5 Template="getTypeId clazz=%p"
 TraceExit=Trc_VM_getTypeId_Exit Overhead=1 Level=5 Template="getTypeId clazz=%p result=%lli"
+
+TraceEvent=Trc_VM_ThreadHelp_timeCompensationHelper_parkWait Env Overhead=1 Level=5 Template="Park machineTotal=%f currentTime=%llu"
+TraceEvent=Trc_VM_ThreadHelp_timeCompensationHelper_parkWaited Env Overhead=1 Level=5 Template="Park waited waittime=%llu policy=%llu earlybreak=%d count=%llu"
+TraceEvent=Trc_VM_ThreadHelp_timeCompensationHelper_parkMachine Env Overhead=1 Level=5 Template="Park cpu calc currentCPUtime=%llu prevCPUtime=%llu numCPus=%d currentTime=%llu prevTime=%llu"
