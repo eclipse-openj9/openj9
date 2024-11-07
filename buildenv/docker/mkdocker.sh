@@ -40,6 +40,7 @@ usage() {
   echo "  --print               write the Dockerfile to stdout (default; overrides '--build')"
   echo "  --tag=...             specify a name for the docker image (may be repeated, default: none)"
   echo "  --user=...            specify the user name (default: 'jenkins')"
+  echo "  --uid=...             specify the user id (default: system-dependent, typically >=1000)"
   echo "  --version=...         specify the distribution version (e.g. 6, 18.04)"
   echo ""
   local arch="$(uname -m)"
@@ -120,6 +121,9 @@ parse_options() {
         ;;
       --user=*)
         user="${arg#*=}"
+        ;;
+      --uid=*)
+        userid="${arg#*=}"
         ;;
       --version=*)
         version="${arg#*=}"
