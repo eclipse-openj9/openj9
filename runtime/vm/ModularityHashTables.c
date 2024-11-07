@@ -40,56 +40,59 @@ static UDATA moduleExtraInfoHashEqualFn(void *tableNode, void *queryNode, void *
 static j9object_t
 moduleHashGetName(const void *entry)
 {
-	const J9Module** const modulePtr = (const J9Module**)entry;
-	const J9Module* const module = *modulePtr;
+	const J9Module **const modulePtr = (const J9Module **)entry;
+	const J9Module *const module = *modulePtr;
 	j9object_t moduleName = module->moduleName;
 
 	return moduleName;
 }
-static UDATA 
-moduleNameHashFn(void *key, void *userData) 
+
+static UDATA
+moduleNameHashFn(void *key, void *userData)
 {
-	J9JavaVM *javaVM = (J9JavaVM*) userData;
+	J9JavaVM *javaVM = (J9JavaVM *)userData;
 	j9object_t name = moduleHashGetName(key);
 
 	return javaVM->memoryManagerFunctions->j9gc_stringHashFn(&name, userData);
 }
-static UDATA  
+
+static UDATA
 moduleNameHashEqualFn(void *tableNode, void *queryNode, void *userData)
 {
-	J9JavaVM *javaVM = (J9JavaVM*) userData;
+	J9JavaVM *javaVM = (J9JavaVM *)userData;
 
-	const J9Module* const tableNodeModule = *((J9Module**)tableNode);
+	const J9Module *const tableNodeModule = *(J9Module **)tableNode;
 	j9object_t tableNodeModuleName = tableNodeModule->moduleName;
 
-	const J9Module* const queryNodeModule = *((J9Module**)queryNode);
+	const J9Module *const queryNodeModule = *(J9Module **)queryNode;
 	j9object_t queryNodeModuleName = queryNodeModule->moduleName;
 
 	Assert_VM_true(tableNodeModule->classLoader == queryNodeModule->classLoader);
-	
+
 	return javaVM->memoryManagerFunctions->j9gc_stringHashEqualFn(&tableNodeModuleName, &queryNodeModuleName, userData);
 }
 
-static UDATA 
-modulePointerHashFn(void *key, void *userData) 
+static UDATA
+modulePointerHashFn(void *key, void *userData)
 {
-	const J9Module** const modulePtr = (const J9Module**)key;
-	
-	return (UDATA)(*modulePtr);
+	const J9Module **const modulePtr = (const J9Module **)key;
+
+	return (UDATA)*modulePtr;
 }
-static UDATA  
+
+static UDATA
 modulePointerHashEqualFn(void *tableNode, void *queryNode, void *userData)
 {
-	const J9Module* const tableNodeModule = *((J9Module**)tableNode);
-	const J9Module* const queryNodeModule = *((J9Module**)queryNode);
+	const J9Module *const tableNodeModule = *(J9Module **)tableNode;
+	const J9Module *const queryNodeModule = *(J9Module **)queryNode;
 
 	return tableNodeModule == queryNodeModule;
 }
 
-static UDATA 
-packageHashFn(void *key, void *userData) 
+static UDATA
+packageHashFn(void *key, void *userData)
 {
-	J9Package *entry = *(J9Package**) key;
+	J9Package *entry = *(J9Package **)key;
 
 	return computeHashForUTF8(J9UTF8_DATA(entry->packageName), J9UTF8_LENGTH(entry->packageName));
 }
@@ -102,13 +105,14 @@ moduleExtraInfoHashFn(void *key, void *userData)
 	return (UDATA)entry->j9module;
 }
 
-static UDATA  
+static UDATA
 packageHashEqualFn(void *tableNode, void *queryNode, void *userData)
 {
-	const J9Package* const tableNodePackage = *((J9Package**)tableNode);
-	const J9Package* const queryNodePackage = *((J9Package**)queryNode);
+	const J9Package *const tableNodePackage = *(J9Package **)tableNode;
+	const J9Package *const queryNodePackage = *(J9Package **)queryNode;
 
-	return J9UTF8_EQUALS(tableNodePackage->packageName, queryNodePackage->packageName) && (tableNodePackage->classLoader == queryNodePackage->classLoader);
+	return J9UTF8_EQUALS(tableNodePackage->packageName, queryNodePackage->packageName)
+			&& (tableNodePackage->classLoader == queryNodePackage->classLoader);
 }
 
 static UDATA
@@ -151,7 +155,18 @@ hashModulePointerTableNew(J9JavaVM *javaVM, U_32 initialSize)
 {
 	U_32 flags = J9HASH_TABLE_ALLOW_SIZE_OPTIMIZATION;
 
-	return hashTableNew(OMRPORT_FROM_J9PORT(javaVM->portLibrary), J9_GET_CALLSITE(), initialSize, sizeof(void*), sizeof(void*), flags, J9MEM_CATEGORY_MODULES, modulePointerHashFn, modulePointerHashEqualFn, NULL, javaVM);
+	return hashTableNew(
+			OMRPORT_FROM_J9PORT(javaVM->portLibrary),
+			J9_GET_CALLSITE(),
+			initialSize,
+			sizeof(void *),
+			sizeof(void *),
+			flags,
+			J9MEM_CATEGORY_MODULES,
+			modulePointerHashFn,
+			modulePointerHashEqualFn,
+			NULL,
+			javaVM);
 }
 
 J9HashTable *
@@ -185,7 +200,18 @@ hashModuleExtraInfoTableNew(J9JavaVM *javaVM, U_32 initialSize)
 {
 	U_32 flags = J9HASH_TABLE_ALLOW_SIZE_OPTIMIZATION;
 
-	return hashTableNew(OMRPORT_FROM_J9PORT(javaVM->portLibrary), J9_GET_CALLSITE(), initialSize, sizeof(J9ModuleExtraInfo), sizeof(char *), flags, J9MEM_CATEGORY_MODULES, moduleExtraInfoHashFn, moduleExtraInfoHashEqualFn, NULL, javaVM);
+	return hashTableNew(
+			OMRPORT_FROM_J9PORT(javaVM->portLibrary),
+			J9_GET_CALLSITE(),
+			initialSize,
+			sizeof(J9ModuleExtraInfo),
+			sizeof(char *),
+			flags,
+			J9MEM_CATEGORY_MODULES,
+			moduleExtraInfoHashFn,
+			moduleExtraInfoHashEqualFn,
+			NULL,
+			javaVM);
 }
 
 J9Module *
@@ -213,14 +239,14 @@ J9Module *
 findModuleForPackage(J9VMThread *currentThread, J9ClassLoader *classLoader, U_8 *packageName, U_32 packageNameLen)
 {
 	U_8 buf[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
-	J9UTF8 *packageNameUTF8 = (J9UTF8 *) buf;
+	J9UTF8 *packageNameUTF8 = (J9UTF8 *)buf;
 	J9Module *foundModule = NULL;
 	J9JavaVM *javaVM = currentThread->javaVM;
 
 	PORT_ACCESS_FROM_JAVAVM(javaVM);
 
 	if ((packageNameLen + sizeof(J9UTF8) + 1) > sizeof(buf)) {
-		packageNameUTF8 = (J9UTF8 *) j9mem_allocate_memory(packageNameLen + 1 + sizeof(J9UTF8), J9MEM_CATEGORY_CLASSES);
+		packageNameUTF8 = (J9UTF8 *)j9mem_allocate_memory(packageNameLen + 1 + sizeof(J9UTF8), J9MEM_CATEGORY_CLASSES);
 	}
 	if (NULL != packageNameUTF8) {
 		memcpy(J9UTF8_DATA(packageNameUTF8), packageName, packageNameLen);
