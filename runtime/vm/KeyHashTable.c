@@ -23,6 +23,9 @@
 #include <stdlib.h>
 #include "j9.h"
 #include "j9consts.h"
+#if defined(J9VM_OPT_SNAPSHOTS)
+#include "j9port_generated.h"
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 #include "j9protos.h"
 #include "vm_internal.h"
 #include "ut_j9vm.h"
@@ -310,13 +313,31 @@ J9HashTable *
 hashClassTableNew(J9JavaVM *javaVM, U_32 initialSize)
 {
 	U_32 flags = J9HASH_TABLE_ALLOW_SIZE_OPTIMIZATION;
+	OMRPORT_ACCESS_FROM_J9PORT(javaVM->portLibrary);
 
 	/* If -XX:+FastClassHashTable is enabled, do not allow hash tables to grow automatically */
 	if (J9_ARE_ALL_BITS_SET(javaVM->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_FAST_CLASS_HASH_TABLE)) {
 		flags |= J9HASH_TABLE_DO_NOT_GROW;
 	}
 
-	return hashTableNew(OMRPORT_FROM_J9PORT(javaVM->portLibrary), J9_GET_CALLSITE(), initialSize, sizeof(KeyHashTableClassEntry), sizeof(char *), flags, J9MEM_CATEGORY_CLASSES, classHashFn, classHashEqualFn, NULL, javaVM);
+#if defined(J9VM_OPT_SNAPSHOTS)
+	if (IS_SNAPSHOTTING_ENABLED(javaVM)) {
+		OMRPORTLIB = VMSNAPSHOTIMPL_OMRPORT_FROM_JAVAVM(javaVM);
+	}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+
+	return hashTableNew(
+			OMRPORTLIB,
+			J9_GET_CALLSITE(),
+			initialSize,
+			sizeof(KeyHashTableClassEntry),
+			sizeof(char *),
+			flags,
+			J9MEM_CATEGORY_CLASSES,
+			classHashFn,
+			classHashEqualFn,
+			NULL,
+			javaVM);
 }
 
 J9Class *
@@ -501,7 +522,6 @@ hashClassTableStartDo(J9ClassLoader *classLoader, J9HashTableState *walkState, U
 	} else {
 		continueToNext = FALSE;
 	}
-
 	
 	while (continueToNext) {
 		first = hashTableNextDo(walkState);
@@ -710,8 +730,26 @@ J9HashTable *
 hashClassLocationTableNew(J9JavaVM *javaVM, U_32 initialSize)
 {
 	U_32 flags = J9HASH_TABLE_ALLOW_SIZE_OPTIMIZATION;
+	OMRPORT_ACCESS_FROM_J9PORT(javaVM->portLibrary);
 
-	return hashTableNew(OMRPORT_FROM_J9PORT(javaVM->portLibrary), J9_GET_CALLSITE(), initialSize, sizeof(J9ClassLocation), sizeof(char *), flags, J9MEM_CATEGORY_CLASSES, classLocationHashFn, classLocationHashEqualFn, NULL, javaVM);
+#if defined(J9VM_OPT_SNAPSHOTS)
+	if (IS_SNAPSHOTTING_ENABLED(javaVM)) {
+		OMRPORTLIB = VMSNAPSHOTIMPL_OMRPORT_FROM_JAVAVM(javaVM);
+	}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+
+	return hashTableNew(
+			OMRPORTLIB,
+			J9_GET_CALLSITE(),
+			initialSize,
+			sizeof(J9ClassLocation),
+			sizeof(char *),
+			flags,
+			J9MEM_CATEGORY_CLASSES,
+			classLocationHashFn,
+			classLocationHashEqualFn,
+			NULL,
+			javaVM);
 }
 
 static UDATA
