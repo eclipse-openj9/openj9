@@ -177,14 +177,6 @@ GetStringPlatformLength(JNIEnv* env, jstring instr, jint* outlen, const char* en
 
 /**
 * @brief
-* @param *dir
-* @param *file
-* @return int
-*/
-int isFileInDir(char *dir, char *file);
-
-/**
-* @brief
 * @param stream
 * @param format
 * @param ...

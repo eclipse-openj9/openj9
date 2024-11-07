@@ -148,6 +148,9 @@ static void chooseJVM(JavaVMInitArgs *args, char *retBuffer, size_t bufferLength
 static void addToLibpath(const char *dir);
 static J9StringBuffer *findDir(const char *libraryDir);
 
+#if defined(J9ZOS390) || defined(J9ZTPF)
+static BOOLEAN isFileInDir(const char *dir, const char *file);
+#endif /* defined(J9ZOS390) || defined(J9ZTPF) */
 static J9StringBuffer* jvmBufferCat(J9StringBuffer* buffer, const char* string);
 static J9StringBuffer* jvmBufferEnsure(J9StringBuffer* buffer, UDATA len);
 static char* jvmBufferData(J9StringBuffer* buffer);
@@ -1365,34 +1368,38 @@ getjvmBin(BOOLEAN removeSubdir)
 
 #if defined(J9ZOS390) || defined(J9ZTPF)
 
-/* Moved from jvm.c
- * TODO: Move into a util library
- */
-int
-isFileInDir(char *dir, char *file)
+static BOOLEAN
+isFileInDir(const char *dir, const char *file)
 {
-	int   l;
-	char *fullpath;
-	FILE *f;
+	BOOLEAN foundFile = FALSE;
+	size_t dirLen = strlen(dir);
+	size_t pathLen = 0;
+	char *path = NULL;
+	FILE *handle = NULL;
 
-	/* Construct 'full' path */
-	if (dir[strlen(dir)-1] == DIR_SLASH_CHAR) {
-		/* remove trailing DIR_SLASH_CHAR */
-		dir[strlen(dir)-1] = '\0';
+	/* Remove trailing DIR_SEPARATOR. */
+	if ((dirLen > 0) && (DIR_SEPARATOR == dir[dirLen - 1])) {
+		dirLen -= 1;
 	}
 
-	l = strlen(dir) + strlen(file) + 2; /* 2= '/' + null char */
-	fullpath = malloc(l);
-	strcpy(fullpath, dir);
-	fullpath[strlen(dir)] = DIR_SLASH_CHAR;
-	strcpy(fullpath+strlen(dir)+1, file);
+	/* Construct 'full' path. */
+	pathLen = dirLen + strlen(file) + 2; /* +2 for DIR_SEPARATOR and null-terminator. */
+	path = malloc(pathLen);
+	if (NULL != path) {
+		memcpy(path, dir, dirLen);
+		path[dirLen] = DIR_SEPARATOR;
+		strcpy(&path[dirLen + 1], file);
 
-	/* See if file exists - use fopen() for portability */
-	f = fopen(fullpath, "rb");
-	if (f) {
-		fclose(f);
+		/* See if file exists - use fopen() for portability. */
+		handle = fopen(path, "rb");
+		free(path);
+		if (NULL != handle) {
+			foundFile = TRUE;
+			fclose(handle);
+		}
 	}
-	return f!=0;
+
+	return foundFile;
 }
 
 J9StringBuffer*
