@@ -482,5 +482,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<!-- Additions for Java 24 (General) -->
 		<export name="JVM_IsContainerized"/>
 		<export name="JVM_IsStaticallyLinked"/>
+
+		<!-- Additions for Java 24 (VirtualThread JEP491) -->
+		<export name="JVM_VirtualThreadPinnedEvent"/>
+		<export name="JVM_TakeVirtualThreadListToUnblock"/>
 	</exports>
 </exportlists>
