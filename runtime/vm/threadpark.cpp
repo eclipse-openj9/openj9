@@ -28,6 +28,7 @@
 #include "omrthread.h"
 #include "ut_j9vm.h"
 
+#include "AtomicSupport.hpp"
 #include "VMHelpers.hpp"
 
 #include <string.h>
@@ -127,6 +128,7 @@ void
 threadUnparkImpl(J9VMThread *vmThread, j9object_t threadObject)
 {
 	j9object_t threadLock = J9VMJAVALANGTHREAD_LOCK(vmThread, threadObject);
+	J9JavaVM *vm = vmThread->javaVM;
 
 	if (NULL == threadLock) {
 		/* thread not fully set up yet so we cannot really need to unpark, just return */
@@ -136,8 +138,10 @@ threadUnparkImpl(J9VMThread *vmThread, j9object_t threadObject)
 		 * the enter and the gc could move the targetThreadObject we have to push/pop on a special frame so that
 		 * we will have the updated value if the object is moved */
 		PUSH_OBJECT_IN_SPECIAL_FRAME(vmThread, threadObject);
-		threadLock = (j9object_t)objectMonitorEnter(vmThread, threadLock);
-		if (J9_OBJECT_MONITOR_ENTER_FAILED(threadLock)) {
+		if (vm->parkLock == 1) {
+			threadLock = (j9object_t)objectMonitorEnter(vmThread, threadLock);
+		}
+		if ((vm->parkLock == 1) && J9_OBJECT_MONITOR_ENTER_FAILED(threadLock)) {
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 			if (J9_OBJECT_MONITOR_CRIU_SINGLE_THREAD_MODE_THROW == (UDATA)threadLock) {
 				setCRIUSingleThreadModeJVMCRIUException(vmThread, 0, 0);
@@ -157,8 +161,12 @@ threadUnparkImpl(J9VMThread *vmThread, j9object_t threadObject)
 			if (NULL != otherVmThread) {
 				/* in this case the thread is already dead so we don't need to unpark */
 				omrthread_unpark(otherVmThread->osThread);
+				VM_AtomicSupport::writeBarrier();
+				otherVmThread->prePark = 0;
 			}
-			objectMonitorExit(vmThread, threadLock);
+			if (vm->parkLock == 1) {
+				objectMonitorExit(vmThread, threadLock);
+			}
 			/*Trc_JCL_unpark_Exit(vmThread);*/
 		}
 	}

@@ -1012,3 +1012,7 @@ TraceEntry=Trc_VM_snapshot_subAllocateSnapshotMemory_Entry NoEnv Overhead=1 Leve
 TraceExit=Trc_VM_snapshot_subAllocateSnapshotMemory_Exit NoEnv Overhead=1 Level=1 Template="subAllocateMemory() Memory allocated = %p."
 TraceEvent=Trc_VM_snapshot_loadWarmClassFromSnapshot_ClassLoadHookFailed Overhead=1 Level=1 Template="loadWarmClassFromSnapshot() Warm class load hook failed class=%p, %s"
 TraceEvent=Trc_VM_snapshot_loadWarmClassFromSnapshot_ClassInfo Overhead=1 Level=1 Template="loadWarmClassFromSnapshot() LoadClass clazz=%p, %s"
+
+TraceEvent=Trc_VM_ThreadHelp_timeCompensationHelper_parkWait Env Overhead=1 Level=5 Template="Park early break average=%zu spinTime=%zu osYield=%zu cpuYield=%zu data=%zu parkWait=%zu vmthread=%p"
+TraceEvent=Trc_VM_ThreadHelp_timeCompensationHelper_parkWaitSpinElapsed Env Overhead=1 Level=5 Template="Park spin elapsed average=%zu spinTime=%zu parkWait=%zu osYield=%zu cpuYield=%zu vmthread=%p"
+TraceEvent=Trc_VM_ThreadHelp_timeCompensationHelper_parkWaitNoSpin Env Overhead=1 Level=5 Template="After park no spin average=%zu average=%zu parkWait=%zu vmthread=%p"
