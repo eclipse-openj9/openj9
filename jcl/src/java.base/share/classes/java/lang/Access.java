@@ -85,10 +85,10 @@ import sun.reflect.ConstantPool;
 /*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 import sun.nio.ch.Interruptible;
 import sun.reflect.annotation.AnnotationType;
-/*[IF (JAVA_SPEC_VERSION >= 24) & !INLINE-TYPES]*/
+/*[IF JAVA_SPEC_VERSION >= 24]*/
 import java.util.concurrent.Executor;
 import jdk.internal.loader.NativeLibraries;
-/*[ENDIF] (JAVA_SPEC_VERSION >= 24) & !INLINE-TYPES */
+/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 
 /**
  * Helper class to allow privileged access to classes
@@ -833,7 +833,6 @@ final class Access implements JavaLangAccess {
 		return new StringConcatHelper.Concat1(constants);
 	}
 
-/*[IF !INLINE-TYPES]*/
 	@Override
 	public String concat(String prefix, Object value, String suffix) {
 		return StringConcatHelper.concat(prefix, value, suffix);
@@ -863,7 +862,6 @@ final class Access implements JavaLangAccess {
 	public Executor virtualThreadDefaultScheduler() {
 		return VirtualThread.defaultScheduler();
 	}
-/*[ENDIF] !INLINE-TYPES */
 /*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 
 /*[ENDIF] JAVA_SPEC_VERSION >= 9 */

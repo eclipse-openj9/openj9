@@ -40,10 +40,10 @@ import com.sun.management.internal.ExtendedHotSpotDiagnostic;
 import com.sun.management.HotSpotDiagnosticMXBean;
 /*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 
-/*[IF (JAVA_SPEC_VERSION >= 24) & !INLINE-TYPES]*/
+/*[IF JAVA_SPEC_VERSION >= 24]*/
 import com.sun.management.internal.VirtualThreadSchedulerImpls;
 import jdk.management.VirtualThreadSchedulerMXBean;
-/*[ENDIF] (JAVA_SPEC_VERSION >= 24) & !INLINE-TYPES */
+/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 
 /**
  * This class implements the service-provider interface to make OpenJ9-specific
@@ -123,11 +123,11 @@ public final class PlatformMBeanProvider extends sun.management.spi.PlatformMBea
 			.register(allComponents);
 		/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 
-		/*[IF (JAVA_SPEC_VERSION >= 24) & !INLINE-TYPES]*/
+		/*[IF JAVA_SPEC_VERSION >= 24]*/
 		ComponentBuilder.create("jdk.management:type=VirtualThreadScheduler", VirtualThreadSchedulerImpls.create()) //$NON-NLS-1$
 			.addInterface(VirtualThreadSchedulerMXBean.class)
 			.register(allComponents);
-		/*[ENDIF] (JAVA_SPEC_VERSION >= 24) & !INLINE-TYPES */
+		/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 
 		// register beans with zero or more instances
 
