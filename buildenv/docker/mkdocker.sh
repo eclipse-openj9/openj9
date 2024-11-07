@@ -72,7 +72,7 @@ jdk_versions=all
 registry=
 tags=()
 user=jenkins
-userid=1000
+userid=
 version=unspecified
 
 # Frequently used commands.
@@ -203,10 +203,6 @@ validate_options() {
           exit 1
           ;;
       esac
-      if [ $version = 24.04 ] ; then
-          # userid 1000 already exists in 24.04
-          userid=1001
-      fi
       ;;
     unspecified)
       echo "Unspecified distribution: use '--dist' option" >&2
@@ -660,7 +656,7 @@ prepare_user() {
 create_user() {
   echo ""
   echo "# Add user home and copy authorized_keys and known_hosts."
-  echo "RUN useradd -ms /bin/bash --uid $userid $user --home-dir /home/$user \\"
+  echo "RUN useradd -ms /bin/bash ${userid:+--uid $userid} $user --home-dir /home/$user \\"
   echo " && mkdir /home/$user/.ssh \\"
   echo " && chmod 700 /home/$user/.ssh"
   echo "COPY authorized_keys known_hosts /home/$user/.ssh/"
