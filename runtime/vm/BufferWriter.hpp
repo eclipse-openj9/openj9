@@ -240,9 +240,7 @@ class VM_BufferWriter {
 	{
 		if (checkBounds(9)) {
 			U_64 newVal = val;
-			if (!_isLE) {
-				newVal = byteSwap(val);
-			}
+
 			do {
 				U_8 byte = newVal & 0x7F;
 				newVal >>= 7;
@@ -269,9 +267,7 @@ class VM_BufferWriter {
 	{
 		if (checkBounds(9)) {
 			U_64 newVal = val;
-			if (!_isLE) {
-				newVal = byteSwap(val);
-			}
+
 			writeU8NoCheck((newVal & 0x7F) | 0x80);
 			writeU8NoCheck(((newVal >> 7) & 0x7F) | 0x80);
 			writeU8NoCheck(((newVal >> 14) & 0x7F) | 0x80);
@@ -298,9 +294,7 @@ class VM_BufferWriter {
 	{
 		if (checkBounds(sizeof(U_64))) {
 			U_64 newVal = val;
-			if (!_isLE) {
-				newVal = byteSwap(val);
-			}
+
 			writeU8NoCheck((newVal & 0x7F) | 0x80);
 			writeU8NoCheck(((newVal >> 7) & 0x7F) | 0x80);
 			writeU8NoCheck(((newVal >> 14) & 0x7F) | 0x80);
@@ -326,9 +320,7 @@ class VM_BufferWriter {
 	{
 		if (checkBounds(sizeof(U_32))) {
 			U_64 newVal = val;
-			if (!_isLE) {
-				newVal = byteSwap(val);
-			}
+
 			writeU8NoCheck((newVal & 0x7F) | 0x80);
 			writeU8NoCheck(((newVal >> 7) & 0x7F) | 0x80);
 			writeU8NoCheck(((newVal >> 14) & 0x7F) | 0x80);
@@ -355,9 +347,7 @@ class VM_BufferWriter {
 			start++;
 			val |= (*start & 0X7F) << 21;
 		}
-		if (!_isLE) {
-			val = byteSwap(val);
-		}
+
 		return val;
 	}
 
@@ -405,9 +395,7 @@ class VM_BufferWriter {
 			start++;
 			val |= (U_64)(*start & 0X7F) << 56;
 		}
-		if (!_isLE) {
-			val = byteSwap(val);
-		}
+
 		return val;
 	}
 
