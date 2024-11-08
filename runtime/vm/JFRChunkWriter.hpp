@@ -172,6 +172,7 @@ private:
 	static constexpr int CLASS_LOADING_STATISTICS_EVENT_SIZE = 5 * sizeof(I_64);
 	static constexpr int THREAD_CONTEXT_SWITCH_RATE_SIZE = sizeof(float) + (3 * sizeof(I_64));
 	static constexpr int THREAD_STATISTICS_EVENT_SIZE = (6 * sizeof(U_64)) + sizeof(U_32);
+	static constexpr int THREAD_DUMP_EVENT_SIZE = 10000;
 
 	static constexpr int METADATA_ID = 1;
 
@@ -263,7 +264,7 @@ done:
 
 	}
 
-	void writeJFRChunk()
+	void writeJFRChunk(bool isExclusivePermited)
 	{
 		U_8 *buffer = NULL;
 		UDATA requiredBufferSize = 0;
@@ -371,6 +372,10 @@ done:
 			}
 
 			writePhysicalMemoryEvent();
+
+			if (isExclusivePermited) {
+				writeThreadDumpEvent();
+			}
 
 			writeJFRHeader();
 
@@ -722,6 +727,8 @@ done:
 
 	U_8 *writeOSInformationEvent();
 
+	U_8 *writeThreadDumpEvent();
+
 	void writeInitialSystemPropertyEvents(J9JavaVM *vm);
 
 	void writeInitialEnvironmentVariableEvents();
@@ -796,9 +803,13 @@ done:
 
 		requiredBufferSize += _constantPoolTypes.getClassLoadingStatisticsCount() * CLASS_LOADING_STATISTICS_EVENT_SIZE;
 
+<<<<<<< HEAD
 		requiredBufferSize += _constantPoolTypes.getThreadContextSwitchRateCount() * THREAD_CONTEXT_SWITCH_RATE_SIZE;
 
 		requiredBufferSize += (_constantPoolTypes.getThreadStatisticsCount() * THREAD_STATISTICS_EVENT_SIZE);
+=======
+		requiredBufferSize += THREAD_DUMP_EVENT_SIZE;
+>>>>>>> 00ba5e9edd (Add JFR ThreadDump support)
 
 		return requiredBufferSize;
 	}
