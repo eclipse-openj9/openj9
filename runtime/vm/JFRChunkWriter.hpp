@@ -29,6 +29,10 @@
 
 #if defined(J9VM_OPT_JFR)
 
+#if defined(LINUX)
+#include <link.h>
+#endif /* defined(LINUX) */
+
 #include "BufferWriter.hpp"
 #include "JFRConstantPoolTypes.hpp"
 #include "JFRUtils.hpp"
@@ -77,6 +81,7 @@ enum MetadataTypeID {
 	ClassLoadingStatisticsID = 99,
 	PhysicalMemoryID = 107,
 	ExecutionSampleID = 108,
+	NativeLibraryID = 111,
 	ThreadID = 163,
 	ThreadGroupID = 164,
 	ClassID = 165,
@@ -166,6 +171,7 @@ private:
 	static constexpr int THREAD_CPU_LOAD_EVENT_SIZE = (2 * sizeof(float)) + (4 * sizeof(I_64));
 	static constexpr int INITIAL_ENVIRONMENT_VARIABLE_EVENT_SIZE = 6000;
 	static constexpr int CLASS_LOADING_STATISTICS_EVENT_SIZE = 5 * sizeof(I_64);
+	static constexpr int NATIVE_LIBRARY_EVENT_SIZE = 3000;
 
 	static constexpr int METADATA_ID = 1;
 
@@ -186,6 +192,40 @@ private:
 		}
 		return false;
 	}
+
+#if defined(LINUX)
+	static int
+	dlIterateCallback(struct dl_phdr_info *info, size_t size, void *data)
+	{
+		if ((NULL == info->dlpi_name) || ('\0' == info->dlpi_name[0])) {
+			return 0;
+		}
+
+		UDATA baseAddress = 0;
+		UDATA topAddress = 0;
+
+		for (int i = 0; i < info->dlpi_phnum; i++) {
+			const ElfW(Phdr) *phdr = info->dlpi_phdr + i;
+			if (PT_LOAD == phdr->p_type) {
+				UDATA phdrBase = info->dlpi_addr + phdr->p_vaddr;
+				UDATA phdrTop = phdrBase + phdr->p_memsz;
+
+				if ((0 == baseAddress) || (phdrBase < baseAddress)) {
+					baseAddress = phdrBase;
+				}
+
+				if ((0 == topAddress) || (phdrTop > topAddress)) {
+					topAddress = phdrTop;
+				}
+			}
+		}
+
+		VM_JFRChunkWriter *chunkWriter = (VM_JFRChunkWriter *)data;
+		chunkWriter->writeNativeLibraryEvent(baseAddress, topAddress, info->dlpi_name);
+
+		return 0;
+	}
+#endif /* defined(LINUX) */
 
 protected:
 
@@ -359,6 +399,8 @@ done:
 			}
 
 			writePhysicalMemoryEvent();
+
+			writeNativeLibraryEvents();
 
 			writeJFRHeader();
 
@@ -605,6 +647,30 @@ done:
 	}
 
 	void
+	writeNativeLibraryEvent(UDATA baseAddress, UDATA topAddress, const char *name)
+	{
+		/* reserve size field */
+		U_8 *dataStart = _bufferWriter->getAndIncCursor(sizeof(U_32));
+
+		_bufferWriter->writeLEB128(NativeLibraryID);
+
+		/* write start time */
+		_bufferWriter->writeLEB128(j9time_current_time_millis());
+
+		/* write name */
+		writeStringLiteral(name);
+
+		/* write base address */
+		_bufferWriter->writeLEB128(baseAddress);
+
+		/* write top address */
+		_bufferWriter->writeLEB128(topAddress);
+
+		/* write size */
+		_bufferWriter->writeLEB128PaddedU32(dataStart, _bufferWriter->getCursor() - dataStart);
+	}
+
+	void
 	writeJFRChunkToFile()
 	{
 		UDATA len = _bufferWriter->getSize();
@@ -667,6 +733,8 @@ done:
 	U_8 *writeVirtualizationInformationEvent();
 
 	U_8 *writeOSInformationEvent();
+
+	void writeNativeLibraryEvents();
 
 	void writeInitialSystemPropertyEvents(J9JavaVM *vm);
 
@@ -735,6 +803,8 @@ done:
 		requiredBufferSize += _constantPoolTypes.getThreadCPULoadCount() * THREAD_CPU_LOAD_EVENT_SIZE;
 
 		requiredBufferSize += _constantPoolTypes.getClassLoadingStatisticsCount() * CLASS_LOADING_STATISTICS_EVENT_SIZE;
+
+		requiredBufferSize += NATIVE_LIBRARY_EVENT_SIZE;
 
 		return requiredBufferSize;
 	}

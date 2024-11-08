@@ -19,13 +19,13 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
-#include "JFRUtils.hpp"
 #include "vm_internal.h"
 
 #if defined(J9VM_OPT_JFR)
-
 #include "JFRChunkWriter.hpp"
+
 #include "JFRConstantPoolTypes.hpp"
+#include "JFRUtils.hpp"
 
 void
 VM_JFRChunkWriter::writeJFRHeader()
@@ -888,4 +888,14 @@ VM_JFRChunkWriter::writeClassLoadingStatisticsEvent(void *anElement, void *userD
 	/* write size */
 	_bufferWriter->writeLEB128PaddedU32(dataStart, _bufferWriter->getCursor() - dataStart);
 }
+
+void
+VM_JFRChunkWriter::writeNativeLibraryEvents()
+{
+#if defined(LINUX)
+	dl_iterate_phdr(dlIterateCallback, this);
+#endif /* defined(LINUX) */
+/* TODO: add implementations for other platforms */
+}
+
 #endif /* defined(J9VM_OPT_JFR) */
