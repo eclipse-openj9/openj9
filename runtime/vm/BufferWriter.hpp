@@ -31,6 +31,7 @@ class VM_BufferWriter {
 	 * Data members
 	 */
 	private:
+	J9PortLibrary *_portLibrary;
 	U_8 *_buffer;
 	U_8 *_cursor;
 	U_8 *_bufferEnd;
@@ -90,8 +91,9 @@ class VM_BufferWriter {
 
 	public:
 
-	VM_BufferWriter(U_8 *buffer, UDATA size)
-		: _buffer(buffer)
+	VM_BufferWriter(J9PortLibrary *portLibrary, U_8 *buffer, UDATA size)
+		: _portLibrary(portLibrary)
+		, _buffer(buffer)
 		, _cursor(buffer)
 		, _bufferEnd(buffer + size)
 		, _maxCursor(NULL)
@@ -340,6 +342,20 @@ class VM_BufferWriter {
 	void writeBoolean(BOOLEAN val)
 	{
 		writeU8(val ? 1 : 0);
+	}
+
+	void
+	writeFormattedString(const char *format, ...)
+	{
+		OMRPORT_ACCESS_FROM_J9PORT(_portLibrary);
+		va_list args;
+		va_start(args, format);
+		uintptr_t totalLength = omrstr_vprintf(NULL, 0, format, args);
+		if (checkBounds(totalLength)) {
+			omrstr_vprintf((char *)_cursor, _bufferEnd - _cursor, format, args);
+			_cursor += totalLength;
+		}
+		va_end(args);
 	}
 
 	static U_32
