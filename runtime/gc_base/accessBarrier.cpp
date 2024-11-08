@@ -341,6 +341,24 @@ j9gc_objaccess_staticStoreU64Split(J9VMThread *vmThread, J9Class *clazz, U_64 *d
 	barrier->staticStoreU64(vmThread, clazz, destSlot, value64, 0 != isVolatile);
 }
 
+/**
+ * Returns the displacement for the data of moved array object.
+ * Used by the JIT, should only be called for off heap enabled cases,
+ * For adjacent Array, displacement = dst - src
+ * For Off-heap Array, displacement = 0.
+ *
+ * @param vmThread Pointer to the current J9VMThread
+ * @param src Pointer to the array object before moving
+ * @param dst Pointer to the array object after moving
+ * @return displacement
+ */
+IDATA
+j9gc_objaccess_indexableDataDisplacement(J9VMThread *vmThread, J9IndexableObject *src, J9IndexableObject *dst)
+{
+	MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(vmThread)->accessBarrier;
+	return barrier->indexableDataDisplacement(vmThread, src, dst);
+
+}
 
 /* TODO: After all array accesses in the VM have been made arraylet safe, 
  * it should be possible to delete this method + its associated ENVY and 
