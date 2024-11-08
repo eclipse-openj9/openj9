@@ -23,6 +23,7 @@
 #include <string.h>
 #include "env/VMJ9.h"
 #include "env/ClassLoaderTable.hpp"
+#include "env/DependencyTable.hpp"
 #include "env/PersistentCHTable.hpp"
 #include "env/VMAccessCriticalSection.hpp"
 #include "exceptions/AOTFailure.hpp"
@@ -850,7 +851,7 @@ TR::SymbolValidationManager::addStaticClassFromCPRecord(TR_OpaqueClassBlock *cla
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
    if (skipFieldRefClassRecord(clazz, beholder, cpIndex))
        return true;
-    else
+   else
       return addClassRecord(clazz, new (_region) StaticClassFromCPRecord(clazz, beholder, cpIndex));
    }
 
@@ -1210,7 +1211,7 @@ TR::SymbolValidationManager::validateClassByNameRecord(uint16_t classID, uint16_
 
 bool
 TR::SymbolValidationManager::validateProfiledClassRecord(uint16_t classID, void *classChainIdentifyingLoader,
-                                                         void *classChainForClassBeingValidated)
+                                                         void *classChainForClassBeingValidated, uintptr_t classChainOffsetForClassBeingValidated)
    {
    J9ClassLoader *classLoader = (J9ClassLoader *)_fej9->sharedCache()->lookupClassLoaderAssociatedWithClassChain(classChainIdentifyingLoader);
    if (classLoader == NULL)
@@ -1219,6 +1220,11 @@ TR::SymbolValidationManager::validateProfiledClassRecord(uint16_t classID, void 
    TR_OpaqueClassBlock *clazz = _fej9->sharedCache()->lookupClassFromChainAndLoader(
       static_cast<uintptr_t *>(classChainForClassBeingValidated), classLoader, _comp
    );
+   if (!clazz)
+      {
+      if (auto dependencyTable = _fej9->_compInfo->getPersistentInfo()->getAOTDependencyTable())
+         clazz = dependencyTable->findCandidateFromChainOffset(_comp, classChainOffsetForClassBeingValidated);
+      }
    return validateSymbol(classID, clazz);
    }
 

@@ -80,9 +80,9 @@ public:
    // Invalidate a redefined class
    void invalidateRedefinedClass(TR_PersistentCHTable *table, TR_J9VMBase *fej9, TR_OpaqueClassBlock *oldClass, TR_OpaqueClassBlock *freshClass);
 
-   // Given a ROM class offset, return an initialized class with a valid class
-   // chain starting with that offset.
-   TR_OpaqueClassBlock *findClassCandidate(uintptr_t offset);
+   // Given a class chain offset in the local SCC, return an initialized class
+   // with a valid class chain starting with that offset.
+   TR_OpaqueClassBlock *findCandidateFromChainOffset(TR::Compilation *comp, uintptr_t chainOffset);
 
 private:
    bool isActive() const { return _isActive; }

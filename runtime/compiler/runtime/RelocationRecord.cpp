@@ -39,6 +39,7 @@
 #include "control/Options_inlines.hpp"
 #include "env/CHTable.hpp"
 #include "env/ClassLoaderTable.hpp"
+#include "env/DependencyTable.hpp"
 #include "env/PersistentCHTable.hpp"
 #include "env/jittypes.h"
 #include "env/VMAccessCriticalSection.hpp"
@@ -3303,6 +3304,7 @@ TR_RelocationRecordProfiledInlinedMethod::preparePrivateData(TR_RelocationRuntim
                classChainIdentifyingLoader);
       J9ClassLoader *classLoader = (J9ClassLoader *)sharedCache->lookupClassLoaderAssociatedWithClassChain(classChainIdentifyingLoader);
       RELO_LOG(reloRuntime->reloLogger(), 6, "\tpreparePrivateData: classLoader %p\n", classLoader);
+      auto compInfo = TR::CompilationInfo::get();
 
       if (classLoader)
          {
@@ -3316,11 +3318,19 @@ TR_RelocationRecordProfiledInlinedMethod::preparePrivateData(TR_RelocationRuntim
          // class is runtime-generated (e.g., a lambda). Try to look it up in the AOT deserializer cache instead.
          if (!inlinedCodeClass && reloRuntime->comp()->isDeserializedAOTMethod())
             {
-            auto deserializer = TR::CompilationInfo::get()->getJITServerAOTDeserializer();
+            auto deserializer = compInfo->getJITServerAOTDeserializer();
             inlinedCodeClass = (TR_OpaqueClassBlock *)deserializer->getGeneratedClass(classLoader, romClassOffset,
                                                                                       reloRuntime->comp());
             }
 #endif /* defined(J9VM_OPT_JITSERVER) */
+         }
+      if (!inlinedCodeClass)
+         {
+         // TODO: if we get a candidate class from the dependency table, we
+         // already know it has a valid chain, so we can skip some later chain
+         // lookups/validation. This applies to other dependency table lookups.
+         if (auto dependencyTable = compInfo->getPersistentInfo()->getAOTDependencyTable())
+            inlinedCodeClass = dependencyTable->findCandidateFromChainOffset(reloRuntime->comp(), classChainForInlinedMethod(reloTarget));
          }
       }
 
@@ -3823,17 +3833,24 @@ TR_RelocationRecordValidateArbitraryClass::applyRelocation(TR_RelocationRuntime 
    J9ClassLoader *classLoader = (J9ClassLoader *)sharedCache->lookupClassLoaderAssociatedWithClassChain(classChainIdentifyingLoader);
    RELO_LOG(reloRuntime->reloLogger(), 6, "\t\tpreparePrivateData: classLoader %p\n", classLoader);
 
+   TR_OpaqueClassBlock *clazz = NULL;
    if (classLoader)
       {
       uintptr_t *classChainForClassBeingValidated = (uintptr_t *)sharedCache->pointerFromOffsetInSharedCache(
                                                     classChainOffsetForClassBeingValidated(reloTarget));
-      TR_OpaqueClassBlock *clazz = sharedCache->lookupClassFromChainAndLoader(classChainForClassBeingValidated,
-                                                                              classLoader, reloRuntime->comp());
-      RELO_LOG(reloRuntime->reloLogger(), 6, "\t\tpreparePrivateData: clazz %p\n", clazz);
-
-      if (clazz)
-         return TR_RelocationErrorCode::relocationOK;
+      clazz = sharedCache->lookupClassFromChainAndLoader(classChainForClassBeingValidated,
+                                                         classLoader, reloRuntime->comp());
       }
+
+   if (!clazz)
+      {
+      if (auto dependencyTable = TR::CompilationInfo::get()->getPersistentInfo()->getAOTDependencyTable())
+         clazz = dependencyTable->findCandidateFromChainOffset(reloRuntime->comp(), classChainIdentifyingLoaderOffset(reloTarget));
+      }
+
+   RELO_LOG(reloRuntime->reloLogger(), 6, "\t\tpreparePrivateData: clazz %p\n", clazz);
+   if (clazz)
+      return TR_RelocationErrorCode::relocationOK;
 
    if (aotStats)
       aotStats->numClassValidationsFailed++;
@@ -3920,7 +3937,7 @@ TR_RelocationRecordValidateProfiledClass::applyRelocation(TR_RelocationRuntime *
    uintptr_t classChainOffset = this->classChainOffset(reloTarget);
    void *classChain = reloRuntime->fej9()->sharedCache()->pointerFromOffsetInSharedCache(classChainOffset);
 
-   if (reloRuntime->comp()->getSymbolValidationManager()->validateProfiledClassRecord(classID, classChainForCL, classChain))
+   if (reloRuntime->comp()->getSymbolValidationManager()->validateProfiledClassRecord(classID, classChainForCL, classChain, classChainOffset))
       return TR_RelocationErrorCode::relocationOK;
    else
       return TR_RelocationErrorCode::profiledClassValidationFailure;
@@ -5664,8 +5681,15 @@ TR_RelocationRecordPointer::preparePrivateData(TR_RelocationRuntime *reloRuntime
          uintptr_t *classChain = (uintptr_t *)sharedCache->pointerFromOffsetInSharedCache(classChainForInlinedMethod(reloTarget));
          RELO_LOG(reloRuntime->reloLogger(), 6,"\tpreparePrivateData: classChain %p\n", classChain);
          classPointer = (J9Class *)sharedCache->lookupClassFromChainAndLoader(classChain, (void *) classLoader, reloRuntime->comp());
-         RELO_LOG(reloRuntime->reloLogger(), 6,"\tpreparePrivateData: classPointer %p\n", classPointer);
          }
+
+      if (classPointer == NULL)
+         {
+         if (auto dependencyTable = TR::CompilationInfo::get()->getPersistentInfo()->getAOTDependencyTable())
+            classPointer = (J9Class *)dependencyTable->findCandidateFromChainOffset(reloRuntime->comp(), classChainForInlinedMethod(reloTarget));
+         }
+
+      RELO_LOG(reloRuntime->reloLogger(), 6,"\tpreparePrivateData: classPointer %p\n", classPointer);
       }
    else
       RELO_LOG(reloRuntime->reloLogger(), 6,"\tpreparePrivateData: inlined site invalid\n");
