@@ -1743,7 +1743,7 @@ J9NLS_CFR_ERR_IMPLICITCREATION_NAME_NOT_UTF8.user_response=Contact the provider 
 # END NON-TRANSLATABLE
 
 # NullRestricted is not translatable
-J9NLS_CFR_ERR_MULTIPLE_NULLRESTRICTED_ATTRIBUTES=Je p\u0159\u00edtomno v\u00edce atribut\u016f NullRestricted .
+J9NLS_CFR_ERR_MULTIPLE_NULLRESTRICTED_ATTRIBUTES=Je p\u0159\u00edtomno v\u00edce atribut\u016f NullRestricted.
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_MULTIPLE_NULLRESTRICTED_ATTRIBUTES.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_MULTIPLE_NULLRESTRICTED_ATTRIBUTES.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
@@ -1808,4 +1808,28 @@ J9NLS_CFR_ERR_STRICT_FIELD_MUST_BE_FINAL=Pole s nastaven\u00fdm ACC_STRICT mus\u
 J9NLS_CFR_ERR_STRICT_FIELD_MUST_BE_FINAL.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
 J9NLS_CFR_ERR_STRICT_FIELD_MUST_BE_FINAL.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_STRICT_FIELD_MUST_BE_FINAL.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# LoadableDescriptors is not translatable
+J9NLS_CFR_ERR_MULTIPLE_LOADABLEDESCRIPTORS_ATTRIBUTES=Bylo zji\u0161t\u011bno v\u00edce atribut\u016f LoadableDescriptors, v souboru t\u0159\u00eddy m\u016f\u017ee b\u00fdt maxim\u00e1ln\u011b jeden
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_MULTIPLE_LOADABLEDESCRIPTORS_ATTRIBUTES.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_MULTIPLE_LOADABLEDESCRIPTORS_ATTRIBUTES.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_MULTIPLE_LOADABLEDESCRIPTORS_ATTRIBUTES.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# LoadableDescriptors is not translatable
+J9NLS_CFR_ERR_LOADABLEDESCRIPTORS_NAME_NOT_UTF8=N\u00e1zev LoadableDescriptors mus\u00ed b\u00fdt \u0159et\u011bzec
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_LOADABLEDESCRIPTORS_NAME_NOT_UTF8.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_LOADABLEDESCRIPTORS_NAME_NOT_UTF8.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_LOADABLEDESCRIPTORS_NAME_NOT_UTF8.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+# LoadableDescriptors is not translatable
+J9NLS_CFR_ERR_LOADABLEDESCRIPTORS_ENTRY_NOT_UTF8_TYPE=Deskriptor v atributu LoadableDescriptors nen\u00ed typ UTF8
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_LOADABLEDESCRIPTORS_ENTRY_NOT_UTF8_TYPE.explanation=Please consult the Java Virtual Machine Specification for a detailed explanation.
+J9NLS_CFR_ERR_LOADABLEDESCRIPTORS_ENTRY_NOT_UTF8_TYPE.system_action=The JVM will throw a verification or classloading related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_LOADABLEDESCRIPTORS_ENTRY_NOT_UTF8_TYPE.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE

@@ -2423,3 +2423,10 @@ J9NLS_VM_CLASS_NAME_EXCEEDS_MAX_LENGTH.explanation=Class name cannot be longer t
 J9NLS_VM_CLASS_NAME_EXCEEDS_MAX_LENGTH.system_action=The JVM will throw a ClassNotFoundException.
 J9NLS_VM_CLASS_NAME_EXCEEDS_MAX_LENGTH.user_response=Shorten the class name.
 # END NON-TRANSLATABLE
+
+J9NLS_VM_OPENJ9_JFR_METADATA_FILE_NOT_LOAD=$java.home/lib/metadata.blob\u304c\u5b58\u5728\u3057\u306a\u3044\u304b\u3001\u30d5\u30a1\u30a4\u30eb\u3092\u30ed\u30fc\u30c9\u3067\u304d\u307e\u305b\u3093\u3002
+# START NON-TRANSLATABLE
+J9NLS_VM_OPENJ9_JFR_METADATA_FILE_NOT_LOAD.explanation=Couldn't find or load JFR metadata blob file.
+J9NLS_VM_OPENJ9_JFR_METADATA_FILE_NOT_LOAD.system_action=The JVM will not generate a JFR file.
+J9NLS_VM_OPENJ9_JFR_METADATA_FILE_NOT_LOAD.user_response=Contact your service representative.
+# END NON-TRANSLATABLE

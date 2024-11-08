@@ -6941,3 +6941,36 @@ J9NLS_SHRC_SHRINIT_FAILURE_CREATE_ROMTORAMMUTEX.explanation=The system is unable
 J9NLS_SHRC_SHRINIT_FAILURE_CREATE_ROMTORAMMUTEX.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM attempts to start up without using Shared Classes.
 J9NLS_SHRC_SHRINIT_FAILURE_CREATE_ROMTORAMMUTEX.user_response=System is running low on memory resource for the JVM to start up properly. Check system memory configuration. If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_HELPTEXT_EXTRA_STARTUPHINTS_EQUALS=Passen Sie die Anzahl der zus\u00e4tzlichen Starthinweise, die im gemeinsamen Klassen-Cache gespeichert werden d\u00fcrfen, auf <Anzahl> an.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_HELPTEXT_EXTRA_STARTUPHINTS_EQUALS.explanation=NOTAG
+J9NLS_SHRC_SHRINIT_HELPTEXT_EXTRA_STARTUPHINTS_EQUALS.system_action=
+J9NLS_SHRC_SHRINIT_HELPTEXT_EXTRA_STARTUPHINTS_EQUALS.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_PARAM=Ung\u00fcltiger Parameter, der an die Option "%s" \u00fcbergeben wurde.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_PARAM.sample_input_1=extraStartupHints=
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_PARAM.explanation=An incorrect parameter has been used in the command-line option
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_PARAM.system_action=The JVM terminates.
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_PARAM.user_response=Correct or remove the invalid command-line option and rerun.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CC_EXTRA_STARTUPHINTS_SET=Die Anzahl der zus\u00e4tzlichen Starttipps, die im gemeinsamen Cache gespeichert werden k\u00f6nnen, wird auf %u festgelegt.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CC_EXTRA_STARTUPHINTS_SET.sample_input_1=64
+J9NLS_SHRC_CC_EXTRA_STARTUPHINTS_SET.explanation=The number of additional startup hints allowed to be stored to the shared classes cache has been adjusted.
+J9NLS_SHRC_CC_EXTRA_STARTUPHINTS_SET.system_action=The JVM continues.
+J9NLS_SHRC_CC_EXTRA_STARTUPHINTS_SET.user_response=No action required. This message is for information only.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CM_PRINTSTATS_NUM_EXTRA_STARTUP_HINTS=# Zus\u00e4tzliche Starthinweise erlaubt %*.c= %u
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CM_PRINTSTATS_NUM_EXTRA_STARTUP_HINTS.sample_input_1=0
+J9NLS_SHRC_CM_PRINTSTATS_NUM_EXTRA_STARTUP_HINTS.sample_input_2=
+J9NLS_SHRC_CM_PRINTSTATS_NUM_EXTRA_STARTUP_HINTS.sample_input_3=8
+J9NLS_SHRC_CM_PRINTSTATS_NUM_EXTRA_STARTUP_HINTS.explanation=NOTAG
+J9NLS_SHRC_CM_PRINTSTATS_NUM_EXTRA_STARTUP_HINTS.system_action=
+J9NLS_SHRC_CM_PRINTSTATS_NUM_EXTRA_STARTUP_HINTS.user_response=
+# END NON-TRANSLATABLE

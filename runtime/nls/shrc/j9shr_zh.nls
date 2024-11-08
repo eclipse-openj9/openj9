@@ -6909,7 +6909,7 @@ J9NLS_SHRC_OSCACHE_MMAP_STARTUP_JITSERVER_LAYER_FILE_DELETE_ERROR.system_action=
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_JITSERVER_LAYER_FILE_DELETE_ERROR.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1=\u64cd\u4f5c\u7cfb\u7edf\u7684\u9875\u9762\u5927\u5c0f\uff08%1$zu\uff09\u4e0e\u521b\u5efa\u5c42 %3$d \u7f13\u5b58\u7684\u7cfb\u7edf\u7684\u9875\u9762\u5927\u5c0f\uff08%2$zu\uff09\u4e0d\u540c\u3002
+J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1=\u64cd\u4f5c\u7cfb\u7edf\u7684\u9875\u9762\u5927\u5c0f (%1$zu) \u4e0e\u521b\u5efa\u5c42%3$d\u7f13\u5b58\u7684\u7cfb\u7edf\u7684\u9875\u9762\u5927\u5c0f (%2$zu) \u4e0d\u540c\u3002
 # START NON-TRANSLATABLE
 J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1.sample_input_1=1024
 J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1.sample_input_2=4096
@@ -6940,4 +6940,37 @@ J9NLS_SHRC_SHRINIT_FAILURE_CREATE_ROMTORAMMUTEX=\u5728 shrinit \u4e2d\u65e0\u6cd
 J9NLS_SHRC_SHRINIT_FAILURE_CREATE_ROMTORAMMUTEX.explanation=The system is unable to obtain sufficient native memory to allocate internal data structures.
 J9NLS_SHRC_SHRINIT_FAILURE_CREATE_ROMTORAMMUTEX.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM attempts to start up without using Shared Classes.
 J9NLS_SHRC_SHRINIT_FAILURE_CREATE_ROMTORAMMUTEX.user_response=System is running low on memory resource for the JVM to start up properly. Check system memory configuration. If the situation persists, contact your service representative.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_HELPTEXT_EXTRA_STARTUPHINTS_EQUALS=\u5c06\u5141\u8bb8\u5b58\u50a8\u5230\u5171\u4eab\u7c7b\u7f13\u5b58\u4e2d\u7684\u989d\u5916\u542f\u52a8\u63d0\u793a\u6570\u91cf\u8c03\u6574\u4e3a <number>\u3002
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_HELPTEXT_EXTRA_STARTUPHINTS_EQUALS.explanation=NOTAG
+J9NLS_SHRC_SHRINIT_HELPTEXT_EXTRA_STARTUPHINTS_EQUALS.system_action=
+J9NLS_SHRC_SHRINIT_HELPTEXT_EXTRA_STARTUPHINTS_EQUALS.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_PARAM=\u4f20\u9012\u7ed9\u9009\u9879%s"\u7684\u53c2\u6570\u65e0\u6548\u3002
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_PARAM.sample_input_1=extraStartupHints=
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_PARAM.explanation=An incorrect parameter has been used in the command-line option
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_PARAM.system_action=The JVM terminates.
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_PARAM.user_response=Correct or remove the invalid command-line option and rerun.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CC_EXTRA_STARTUPHINTS_SET=\u53ef\u5b58\u50a8\u5230\u5171\u4eab\u7f13\u5b58\u4e2d\u7684\u989d\u5916\u542f\u52a8\u63d0\u793a\u6570\u91cf\u8bbe\u7f6e\u4e3a%u\u3002
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CC_EXTRA_STARTUPHINTS_SET.sample_input_1=64
+J9NLS_SHRC_CC_EXTRA_STARTUPHINTS_SET.explanation=The number of additional startup hints allowed to be stored to the shared classes cache has been adjusted.
+J9NLS_SHRC_CC_EXTRA_STARTUPHINTS_SET.system_action=The JVM continues.
+J9NLS_SHRC_CC_EXTRA_STARTUPHINTS_SET.user_response=No action required. This message is for information only.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CM_PRINTSTATS_NUM_EXTRA_STARTUP_HINTS=# \u5141\u8bb8\u989d\u5916\u7684\u542f\u52a8\u63d0\u793a %*.c=%u
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CM_PRINTSTATS_NUM_EXTRA_STARTUP_HINTS.sample_input_1=0
+J9NLS_SHRC_CM_PRINTSTATS_NUM_EXTRA_STARTUP_HINTS.sample_input_2=
+J9NLS_SHRC_CM_PRINTSTATS_NUM_EXTRA_STARTUP_HINTS.sample_input_3=8
+J9NLS_SHRC_CM_PRINTSTATS_NUM_EXTRA_STARTUP_HINTS.explanation=NOTAG
+J9NLS_SHRC_CM_PRINTSTATS_NUM_EXTRA_STARTUP_HINTS.system_action=
+J9NLS_SHRC_CM_PRINTSTATS_NUM_EXTRA_STARTUP_HINTS.user_response=
 # END NON-TRANSLATABLE
