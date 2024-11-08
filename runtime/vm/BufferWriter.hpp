@@ -36,6 +36,7 @@ class VM_BufferWriter {
 	U_8 *_bufferEnd;
 	U_8 *_maxCursor;
 	bool _overflow;
+	J9PortLibrary *privatePortLibrary;
 
 #if defined(J9VM_ENV_LITTLE_ENDIAN)
 	static const bool _isLE = true;
@@ -90,12 +91,13 @@ class VM_BufferWriter {
 
 	public:
 
-	VM_BufferWriter(U_8 *buffer, UDATA size)
+	VM_BufferWriter(J9PortLibrary *privatePortLibrary, U_8 *buffer, UDATA size)
 		: _buffer(buffer)
 		, _cursor(buffer)
 		, _bufferEnd(buffer + size)
 		, _maxCursor(NULL)
 		, _overflow(false)
+		, privatePortLibrary(privatePortLibrary)
 	{
 	}
 
@@ -340,6 +342,20 @@ class VM_BufferWriter {
 	void writeBoolean(BOOLEAN val)
 	{
 		writeU8(val ? 1 : 0);
+	}
+
+	void
+	writeFormattedString(const char *format, ...)
+	{
+		OMRPORT_ACCESS_FROM_J9PORT(privatePortLibrary);
+		va_list args;
+		va_start(args, format);
+		uintptr_t totalLength = omrstr_vprintf(NULL, 0, format, args);
+		if (checkBounds(totalLength)) {
+			omrstr_vprintf((char *)_cursor, _bufferEnd - _cursor, format, args);
+			_cursor += totalLength;
+		}
+		va_end(args);
 	}
 
 	static U_32
