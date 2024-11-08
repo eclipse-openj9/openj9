@@ -2033,7 +2033,7 @@ TR_J9ByteCodeIlGenerator::calculateElementAddressInContiguousArray(int32_t width
       }
    }
 
-#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
 void
 TR_J9ByteCodeIlGenerator::calculateElementAddressInContiguousArrayUsingDataAddrField(int32_t width)
    {
@@ -2063,7 +2063,7 @@ TR_J9ByteCodeIlGenerator::calculateElementAddressInContiguousArrayUsingDataAddrF
    // stack is now ...,firstArrayElement,shift/index<===
    genBinary(TR::aladd);
    }
-#endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
+#endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
 
 // Helper to calculate the index of the array element in a contiguous array
 // Stack: ..., offset for array element index
@@ -2148,7 +2148,7 @@ TR_J9ByteCodeIlGenerator::calculateArrayElementAddress(TR::DataType dataType, bo
    }
 
    // Stack is now ...,aryRef,index<===
-#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
    if (fej9()->isOffHeapAllocationEnabled())
       {
       // stack is now ...,aryRef,index<===
@@ -2159,7 +2159,7 @@ TR_J9ByteCodeIlGenerator::calculateArrayElementAddress(TR::DataType dataType, bo
    else if (comp()->generateArraylets())
 #else
    if (comp()->generateArraylets())
-#endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
+#endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
       {
       // shift the index on the current stack to get index into array spine
       loadConstant(TR::iconst, fej9()->getArraySpineShift(width));

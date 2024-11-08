@@ -6484,7 +6484,7 @@ TR::Register *J9::Power::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeG
             genInitArrayHeader(node, iCursor, isVariableLen, clazz, NULL, resReg, zeroReg, condReg, enumReg, dataSizeReg,
                   tmp5Reg, tmp4Reg, conditions, needZeroInit, cg);
 
-#ifdef J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION
+#ifdef J9VM_GC_SPARSE_HEAP_ALLOCATION
          if (TR::Compiler->om.isOffHeapAllocationEnabled())
             {
             /* Here we'll update dataAddr slot for both fixed and variable length arrays. Fixed length arrays are
@@ -6554,7 +6554,7 @@ TR::Register *J9::Power::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeG
             // store the first data element address to dataAddr slot
             iCursor = generateMemSrc1Instruction(cg, TR::InstOpCode::std, node, dataAddrSlotMR, firstDataElementReg, iCursor);
             }
-#endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
+#endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
          if (generateArraylets)
             {
             //write arraylet pointer to object header
@@ -11302,13 +11302,13 @@ static bool inlineIntrinsicInflate(TR::Node *node, TR::CodeGenerator *cg)
     * Determine the address of the first byte to read either by loading from dataAddr or adding the header size.
     * This is followed by adding in the offset.
     */
-#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
    if (TR::Compiler->om.isOffHeapAllocationEnabled())
       {
       generateTrg1MemInstruction(cg, TR::InstOpCode::ld, node, inputAddressReg, TR::MemoryReference::createWithDisplacement(cg, inputAddressReg, TR::Compiler->om.offsetOfContiguousDataAddrField(), 8));
       }
    else
-#endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
+#endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
       {
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, inputAddressReg, inputAddressReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
       }
@@ -11319,13 +11319,13 @@ static bool inlineIntrinsicInflate(TR::Node *node, TR::CodeGenerator *cg)
     * Determine the address of the first char to store either by loading from dataAddr or adding the header size.
     * This is followed by adding in the offset twice due to being char data.
     */
-#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
    if (TR::Compiler->om.isOffHeapAllocationEnabled())
       {
       generateTrg1MemInstruction(cg, TR::InstOpCode::ld, node, outputAddressReg, TR::MemoryReference::createWithDisplacement(cg, outputAddressReg, TR::Compiler->om.offsetOfContiguousDataAddrField(), 8));
       }
    else
-#endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
+#endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
       {
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, outputAddressReg, outputAddressReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
       }
@@ -11936,7 +11936,7 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
             bool loadDataAddr = false;
             bool separateDestAndOffset = false;
 
-         #if defined (J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+         #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
             if (TR::Compiler->om.isOffHeapAllocationEnabled() && comp->target().is64Bit() && (!dest->isNull()))
                {
                if (dest->getSymbolReference() != NULL)
@@ -11988,7 +11988,7 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
                   separateDestAndOffset = true;
                   }
             }
-         #endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
+         #endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
 
             TR::Node *copyMemNode;
 
@@ -12000,7 +12000,7 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
                }
             else // CASE (1) and (2): dest += destoffset, then pass in to evaluator
                {
-            #if defined (J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+            #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
 
                if (loadDataAddr) // CASE (2) only
                   {
@@ -12009,7 +12009,7 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
                   dest = dataAddrNode;
                   }
 
-            #endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
+            #endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
 
                //destOffset is a long, so on 32 bit systems we need a conversion before we can add it to dest
                if (comp->target().is32Bit())

@@ -646,12 +646,12 @@ void J9FASTCALL _jitProfileStringValue(uintptr_t value, int32_t charsOffset, int
       readValues = true;
 
       uintptr_t startOfData = value;
-#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
       if (TR::Compiler->om.isOffHeapAllocationEnabled())
          {
          startOfData = *((uintptr_t *) (value + TR::Compiler->om.offsetOfContiguousDataAddrField()));
          }
-#endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
+#endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
 
       if (TR::Compiler->om.compressObjectReferences())
          {
@@ -668,9 +668,9 @@ void J9FASTCALL _jitProfileStringValue(uintptr_t value, int32_t charsOffset, int
       else
          chars = *((char **) (startOfData + charsOffset));
 
-#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
       if (!TR::Compiler->om.isOffHeapAllocationEnabled())
-#endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
+#endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
       {
       chars = chars + (TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
       }

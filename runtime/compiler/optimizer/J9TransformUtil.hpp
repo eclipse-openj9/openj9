@@ -360,7 +360,7 @@ public:
       TR::Symbol::RecognizedField recField,
       TR::AnyConst *outValue);
 
-#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
    /**
     * \brief
     *    Converts Unsafe.copyMemory call into arraycopy node replacing
@@ -388,7 +388,7 @@ public:
     *    Return true if call is converted
     */
    static void transformUnsafeCopyMemorytoArrayCopyForOffHeap(TR::Compilation *comp, TR::TreeTop *arrayCopyTT, TR::Node *arraycopyNode);
-#endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
+#endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
 
 protected:
    /**
