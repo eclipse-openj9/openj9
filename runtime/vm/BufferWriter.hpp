@@ -342,6 +342,19 @@ class VM_BufferWriter {
 		writeU8(val ? 1 : 0);
 	}
 
+	void
+	writeFormattedString(const char *format, ...)
+	{
+		va_list args;
+		va_start(args, format);
+		int totalLength = vsnprintf(NULL, 0, format, args);
+		if (checkBounds(totalLength)) {
+			vsnprintf((char *)_cursor, _bufferEnd - _cursor, format, args);
+			_cursor += totalLength;
+		}
+		va_end(args);
+	}
+
 	static U_32
 	convertFromLEB128ToU32(U_8 *start)
 	{

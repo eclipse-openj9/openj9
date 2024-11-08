@@ -175,7 +175,7 @@ done:
 	}
 
 	static bool
-	flushJFRDataToFile(J9VMThread *currentThread, bool finalWrite)
+	flushJFRDataToFile(J9VMThread *currentThread, bool finalWrite, bool dumpCalled)
 	{
 		bool result = true;
 		VM_JFRChunkWriter chunkWriter(currentThread, finalWrite);
@@ -191,7 +191,7 @@ done:
 			goto fail;
 		}
 
-		chunkWriter.writeJFRChunk();
+		chunkWriter.writeJFRChunk(dumpCalled);
 		if (!chunkWriter.isOkay()) {
 			result = false;
 			goto fail;
