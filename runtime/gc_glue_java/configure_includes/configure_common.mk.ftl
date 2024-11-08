@@ -30,6 +30,9 @@ CONFIGURE_ARGS += \
 <#if uma.spec.flags.port_omrsigSupport.enabled>
   --enable-OMRPORT_OMRSIG_SUPPORT \
 </#if>
+<#if uma.spec.flags.gc_sparseHeapAllocation.enabled>
+  --enable-OMR_GC_SPARSE_HEAP_ALLOCATION \
+</#if>
   --enable-OMR_GC \
   --enable-OMR_PORT \
   --enable-OMR_THREAD \
