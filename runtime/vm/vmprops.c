@@ -1084,7 +1084,14 @@ initializeSystemProperties(J9JavaVM * vm)
 	}
 #endif /* JAVA_SPEC_VERSION >= 23 */
 
-	/* If we get here all is good */
+#if defined(JDK_DEBUG_LEVEL)
+	rc = addSystemProperty(vm, "jdk.debug", JDK_DEBUG_LEVEL, 0);
+	if (J9SYSPROP_ERROR_NONE != rc) {
+		goto fail;
+	}
+#endif /* defined(JDK_DEBUG_LEVEL) */
+
+	/* If we get here, all is good. */
 	rc = J9SYSPROP_ERROR_NONE;
 
 fail:
