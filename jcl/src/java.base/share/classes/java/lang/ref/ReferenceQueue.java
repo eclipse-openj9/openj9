@@ -28,6 +28,11 @@ import jdk.internal.ref.Cleaner;
 import sun.misc.Cleaner;
 /*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
+/*[IF JAVA_SPEC_VERSION >= 24]*/
+import jdk.internal.vm.Continuation;
+
+/*[ENDIF] JAVA_SPEC_VERSION >= 24*/
+
 /*[IF CRIU_SUPPORT]*/
 import openj9.internal.criu.NotCheckpointSafe;
 /*[ENDIF] CRIU_SUPPORT */
@@ -89,6 +94,14 @@ public Reference<? extends T> poll () {
 	if(empty) {
 		return null;
 	}
+
+	/*[IF JAVA_SPEC_VERSION >= 24]*/
+	boolean isVirtual = false;
+	if (Thread.currentThread().isVirtual()) {
+		isVirtual = true;
+		Continuation.pin();
+	}
+	/*[ENDIF] JAVA_SPEC_VERSION >= 24*/
 	synchronized(this) {
 		if(empty) {
 			return null;
@@ -104,6 +117,11 @@ public Reference<? extends T> poll () {
 			empty = true;
 		}
 	}
+	/*[IF JAVA_SPEC_VERSION >= 24]*/
+	if (isVirtual) {
+		Continuation.unpin();
+	}
+	/*[ENDIF] JAVA_SPEC_VERSION >= 24*/
 	return ref;
 }
 
