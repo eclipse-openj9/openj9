@@ -6911,7 +6911,7 @@ J9NLS_SHRC_OSCACHE_MMAP_STARTUP_JITSERVER_LAYER_FILE_DELETE_ERROR.system_action=
 J9NLS_SHRC_OSCACHE_MMAP_STARTUP_JITSERVER_LAYER_FILE_DELETE_ERROR.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
 
-J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1=\u30aa\u30da\u30ec\u30fc\u30c6\u30a3\u30f3\u30b0\u30fb\u30b7\u30b9\u30c6\u30e0\u306e\u30da\u30fc\u30b8\u30fb\u30b5\u30a4\u30ba (%1$zu) \u306f\u3001\u30ec\u30a4\u30e4 %3$d \u30ad\u30e3\u30c3\u30b7\u30e5\u304c\u4f5c\u6210\u3055\u308c\u305f\u30b7\u30b9\u30c6\u30e0\u306e\u30da\u30fc\u30b8\u30fb\u30b5\u30a4\u30ba (%2$zu) \u3068\u7570\u306a\u308a\u307e\u3059\u3002
+J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1=\u30aa\u30da\u30ec\u30fc\u30c6\u30a3\u30f3\u30b0\u30fb\u30b7\u30b9\u30c6\u30e0\u306e\u30da\u30fc\u30b8\u30fb\u30b5\u30a4\u30ba%1$zu \u306f\u3001\u30ec\u30a4\u30e4%3$d\u30ad\u30e3\u30c3\u30b7\u30e5\u304c\u4f5c\u6210\u3055\u308c\u305f\u30b7\u30b9\u30c6\u30e0\u306e\u30da\u30fc\u30b8\u30fb\u30b5\u30a4\u30ba%2$zu \u3068\u7570\u306a\u308a\u307e\u3059\u3002
 # START NON-TRANSLATABLE
 J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1.sample_input_1=1024
 J9NLS_CC_OSPAGE_SIZE_MISMATCH_V1.sample_input_2=4096
@@ -6942,4 +6942,37 @@ J9NLS_SHRC_SHRINIT_FAILURE_CREATE_ROMTORAMMUTEX=shrinit\u3067ROM\u3092RAM\u30af\
 J9NLS_SHRC_SHRINIT_FAILURE_CREATE_ROMTORAMMUTEX.explanation=The system is unable to obtain sufficient native memory to allocate internal data structures.
 J9NLS_SHRC_SHRINIT_FAILURE_CREATE_ROMTORAMMUTEX.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM attempts to start up without using Shared Classes.
 J9NLS_SHRC_SHRINIT_FAILURE_CREATE_ROMTORAMMUTEX.user_response=System is running low on memory resource for the JVM to start up properly. Check system memory configuration. If the situation persists, contact your service representative.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_HELPTEXT_EXTRA_STARTUPHINTS_EQUALS=\u5171\u6709\u30af\u30e9\u30b9\u30fb\u30ad\u30e3\u30c3\u30b7\u30e5\u306b\u4fdd\u5b58\u3067\u304d\u308b\u8ffd\u52a0\u306e\u8d77\u52d5\u30d2\u30f3\u30c8\u306e\u6570\u3092<number>\u306b\u8abf\u6574\u3059\u308b\u3002
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_HELPTEXT_EXTRA_STARTUPHINTS_EQUALS.explanation=NOTAG
+J9NLS_SHRC_SHRINIT_HELPTEXT_EXTRA_STARTUPHINTS_EQUALS.system_action=
+J9NLS_SHRC_SHRINIT_HELPTEXT_EXTRA_STARTUPHINTS_EQUALS.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_PARAM=\u30aa\u30d7\u30b7\u30e7\u30f3%s" \u306b\u6e21\u3055\u308c\u305f\u30d1\u30e9\u30e1\u30fc\u30bf\u304c\u7121\u52b9\u3067\u3059\u3002
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_PARAM.sample_input_1=extraStartupHints=
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_PARAM.explanation=An incorrect parameter has been used in the command-line option
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_PARAM.system_action=The JVM terminates.
+J9NLS_SHRC_SHRINIT_OPTION_INVALID_PARAM.user_response=Correct or remove the invalid command-line option and rerun.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CC_EXTRA_STARTUPHINTS_SET=\u5171\u6709\u30ad\u30e3\u30c3\u30b7\u30e5\u306b\u4fdd\u5b58\u3067\u304d\u308b\u8ffd\u52a0\u306e\u8d77\u52d5\u30d2\u30f3\u30c8\u306e\u6570\u306f%u\u306b\u8a2d\u5b9a\u3055\u308c\u308b\u3002
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CC_EXTRA_STARTUPHINTS_SET.sample_input_1=64
+J9NLS_SHRC_CC_EXTRA_STARTUPHINTS_SET.explanation=The number of additional startup hints allowed to be stored to the shared classes cache has been adjusted.
+J9NLS_SHRC_CC_EXTRA_STARTUPHINTS_SET.system_action=The JVM continues.
+J9NLS_SHRC_CC_EXTRA_STARTUPHINTS_SET.user_response=No action required. This message is for information only.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CM_PRINTSTATS_NUM_EXTRA_STARTUP_HINTS=# \u8ffd\u52a0\u8d77\u52d5\u30d2\u30f3\u30c8\u3092\u8a31\u53ef %*.c=%u
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CM_PRINTSTATS_NUM_EXTRA_STARTUP_HINTS.sample_input_1=0
+J9NLS_SHRC_CM_PRINTSTATS_NUM_EXTRA_STARTUP_HINTS.sample_input_2=
+J9NLS_SHRC_CM_PRINTSTATS_NUM_EXTRA_STARTUP_HINTS.sample_input_3=8
+J9NLS_SHRC_CM_PRINTSTATS_NUM_EXTRA_STARTUP_HINTS.explanation=NOTAG
+J9NLS_SHRC_CM_PRINTSTATS_NUM_EXTRA_STARTUP_HINTS.system_action=
+J9NLS_SHRC_CM_PRINTSTATS_NUM_EXTRA_STARTUP_HINTS.user_response=
 # END NON-TRANSLATABLE
