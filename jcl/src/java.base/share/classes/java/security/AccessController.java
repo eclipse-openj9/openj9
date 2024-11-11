@@ -1088,21 +1088,17 @@ public static <T> T doPrivilegedWithCombiner(PrivilegedExceptionAction<T> action
 /**
  * Helper method to construct an AccessControlContext for doPrivilegedWithCombiner methods.
  *
- * @param   context an AccessControlContext, if it is null, use getContextHelper() to construct a context.
+ * @param   acc an AccessControlContext, if it is null, use getContextHelper() to construct a context.
  *
  * @return  An AccessControlContext to be applied to the doPrivileged(action, context, perms).
  */
 @CallerSensitive
-private static AccessControlContext doPrivilegedWithCombinerHelper(AccessControlContext context) {
+private static AccessControlContext doPrivilegedWithCombinerHelper(AccessControlContext acc) {
 	ProtectionDomain domain = getCallerPD(2);
-	ProtectionDomain[] pdArray = (domain == null) ? null : new ProtectionDomain[] { domain };
-	AccessControlContext fixedContext = new AccessControlContext(context, pdArray, getNewAuthorizedState(context, domain));
-	if (context == null) {
-		AccessControlContext parentContext = getContextHelper(true);
-		fixedContext.domainCombiner = parentContext.domainCombiner;
-		fixedContext.nextStackAcc = parentContext;
-	}
-	return fixedContext;
+	ProtectionDomain[] context = (domain == null) ? null : new ProtectionDomain[] { domain };
+	AccessControlContext parentAcc = getContextHelper(acc == null);
+
+	return new AccessControlContext(context, parentAcc, acc, getNewAuthorizedState(acc, domain));
 }
 /*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
