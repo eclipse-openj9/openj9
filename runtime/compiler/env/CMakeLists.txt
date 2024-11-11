@@ -31,6 +31,7 @@ j9jit_files(
 	env/CHTable.cpp
 	env/ClassLoaderTable.cpp
 	env/CpuUtilization.cpp
+	env/DependencyTable.cpp
 	env/FilePointer.cpp
 	env/J2IThunk.cpp
 	env/J9ArithEnv.cpp
@@ -68,4 +69,3 @@ if(J9VM_OPT_JITSERVER)
 		env/VMJ9Server.cpp
 	)
 endif()
-

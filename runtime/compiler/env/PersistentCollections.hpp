@@ -23,6 +23,12 @@
 #ifndef PERSISTENT_COLLECTIONS_H
 #define PERSISTENT_COLLECTIONS_H
 
+// Some of these container types are unsupported on certain XLC/C++ build
+// configurations
+#if defined(__IBMCPP__) && !defined(__IBMCPP_TR1__)
+#define PERSISTENT_COLLECTIONS_UNSUPPORTED
+#else
+
 #include <list>
 #include <unordered_map>
 #include <unordered_set>
@@ -130,4 +136,5 @@ namespace std
    }
 
 
+#endif /* defined(__IBMCPP__) && !defined(__IBMCPP_TR1__) */
 #endif /* PERSISTENT_COLLECTIONS_H */

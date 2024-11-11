@@ -57,6 +57,7 @@
 #include "control/CompilationStrategy.hpp"
 #include "env/ClassLoaderTable.hpp"
 #include "env/CompilerEnv.hpp"
+#include "env/DependencyTable.hpp"
 #include "env/IO.hpp"
 #include "env/J2IThunk.hpp"
 #include "env/PersistentCHTable.hpp"
@@ -2316,6 +2317,8 @@ static void jitHookClassUnload(J9HookInterface * * hookInterface, UDATA eventNum
          deserializer->invalidateClass(vmThread, j9clazz);
       }
 #endif
+   if (auto dependencyTable = compInfo->getPersistentInfo()->getAOTDependencyTable())
+      dependencyTable->invalidateUnloadedClass(clazz);
    }
 #endif /* defined (J9VM_GC_DYNAMIC_CLASS_UNLOADING)*/
 
@@ -2632,6 +2635,9 @@ void jitClassesRedefined(J9VMThread * currentThread, UDATA classCount, J9JITRede
       setElaboratedClassPair(&elaboratedPair, classPair); // affects oldClass, etc.
       methodCount = classPair->methodCount;
       methodList = classPair->methodList;
+
+      if (auto dependencyTable = compInfo->getPersistentInfo()->getAOTDependencyTable())
+         dependencyTable->invalidateRedefinedClass(table, fe, oldClass, freshClass);
 
       // Do this before modifying the CHTable
       if (table && table->isActive() && TR::Options::sharedClassCache() && TR::Options::getCmdLineOptions()->getOption(TR_EnableClassChainValidationCaching))
@@ -3804,6 +3810,19 @@ void jitHookClassLoadHelper(J9VMThread *vmThread,
       deserializer->onClassLoad(cl, vmThread);
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
+   if (auto dependencyTable = compInfo->getPersistentInfo()->getAOTDependencyTable())
+      {
+      getClassNameIfNecessary(vm, clazz, className, classNameLen);
+      // These two classes and java/lang/J9VMInternals$ClassInitializationLock are
+      // the only ones that are marked initialized without going through the normal
+      // hooks (see initializeRequiredClasses() in jclcinit.c), and that last class
+      // is never stored in the SCC. For these two, this is both a load and an
+      // initialization.
+      bool isClassInitialization = (classNameLen == 17 && !memcmp(className, "com/ibm/oti/vm/VM", classNameLen)) ||
+                                   (classNameLen == 23 && !memcmp(className, "java/lang/J9VMInternals", classNameLen));
+      dependencyTable->classLoadEvent(clazz, true, isClassInitialization);
+      }
+
    // Update the count for the newInstance
    //
    TR::Options * options = TR::Options::getCmdLineOptions();
@@ -3959,6 +3978,10 @@ static void jitHookClassInitialize(J9HookInterface * * hookInterface, UDATA even
    J9JITConfig * jitConfig = vmThread->javaVM->jitConfig;
    if (jitConfig == 0)
       return; // if a hook gets called after freeJitConfig then not much else we can do
+
+   TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
+   if (auto dependencyTable = compInfo->getPersistentInfo()->getAOTDependencyTable())
+      dependencyTable->classLoadEvent((TR_OpaqueClassBlock *)cl, false, true);
 
    loadingClasses = false;
    }
