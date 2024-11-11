@@ -47,7 +47,7 @@ TR_AOTDependencyTable::classLoadEvent(TR_OpaqueClassBlock *clazz, bool isClassLo
 
    // We only need to check if clazz matches its cached version on load; on
    // initialization, it will be in the _offsetMap if it did match.
-   if (isClassLoad && !_sharedCache->classMatchesCachedVersion(ramClass, NULL))
+   if (isClassLoad && (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET == _sharedCache->rememberClass(ramClass)))
       return;
 
    OMR::CriticalSection cs(_tableMonitor);
@@ -127,7 +127,7 @@ TR_AOTDependencyTable::recheckSubclass(J9Class *ramClass, uintptr_t offset, bool
    if (invalidateClassAtOffset(ramClass, offset))
       return;
 
-   if (shouldRevalidate && _sharedCache->classMatchesCachedVersion(ramClass, NULL))
+   if (shouldRevalidate && (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET != _sharedCache->rememberClass(ramClass)))
       {
       bool initialized = J9ClassInitSucceeded == ramClass->initializeStatus;
       classLoadEventAtOffset(ramClass, offset, true, initialized);
