@@ -5976,7 +5976,7 @@ public final class Unsafe {
 	 * memory blocks
 	 */
 	private void compareAndExchange16BitsOffsetChecks(long offset) {
-		if ((IS_BIG_ENDIAN) && (BYTE_OFFSET_MASK == (BYTE_OFFSET_MASK & offset))) {
+		if (BYTE_OFFSET_MASK == (BYTE_OFFSET_MASK & offset)) {
 			/*[MSG "K0700", "Update spans the word, not supported"]*/
 			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0700")); //$NON-NLS-1$
 		}
