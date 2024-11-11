@@ -135,6 +135,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<flag id="gc_debugAsserts" value="true"/>
 		<flag id="gc_inlinedAllocFields" value="true"/>
 		<flag id="gc_minimumObjectSize" value="true"/>
+		<flag id="gc_sparseHeapAllocation" value="true"/>
 		<flag id="gc_subpoolsAlias" value="true"/>
 		<flag id="graph_cmdLineTester" value="true"/>
 		<flag id="graph_compile" value="true"/>
