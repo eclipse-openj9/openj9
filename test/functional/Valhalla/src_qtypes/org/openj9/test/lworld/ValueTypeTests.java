@@ -2857,6 +2857,7 @@ public class ValueTypeTests {
 		assertNotEquals(h1, h3);
 		assertNotEquals(h1, h4);
 		assertNotEquals(h1, h5);
+		assertEquals(h1, System.identityHashCode(p1));
 	}
 
 	@Test(priority = 1, expectedExceptions = ClassFormatError.class,
