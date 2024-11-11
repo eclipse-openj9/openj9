@@ -1052,13 +1052,9 @@ public static <T> T doPrivilegedWithCombiner(PrivilegedExceptionAction<T> action
 private static AccessControlContext doPrivilegedWithCombinerHelper(AccessControlContext context) {
 	ProtectionDomain domain = getCallerPD(2);
 	ProtectionDomain[] pdArray = (domain == null) ? null : new ProtectionDomain[] { domain };
-	AccessControlContext fixedContext = new AccessControlContext(context, pdArray, getNewAuthorizedState(context, domain));
-	if (context == null) {
-		AccessControlContext parentContext = getContextHelper(true);
-		fixedContext.domainCombiner = parentContext.domainCombiner;
-		fixedContext.nextStackAcc = parentContext;
-	}
-	return fixedContext;
+	AccessControlContext parentContext = getContextHelper(context == null);
+
+	return new AccessControlContext(pdArray, parentContext, context, getNewAuthorizedState(context, domain));
 }
 
 }

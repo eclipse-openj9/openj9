@@ -22,7 +22,6 @@
  */
 package java.security;
 
-import com.ibm.oti.util.Msg;
 import java.io.IOException;
 import java.io.StreamTokenizer;
 import java.io.StringReader;
@@ -353,6 +352,36 @@ AccessControlContext(AccessControlContext acc, ProtectionDomain[] context, int a
 	this.containPrivilegedContext = true;
 }
 
+AccessControlContext(ProtectionDomain[] pdArray, AccessControlContext parent, AccessControlContext acc, int authorizeState) {
+	super();
+	switch (authorizeState) {
+	default:
+		// authorizeState can't be STATE_UNKNOWN, callerPD always is NULL
+		throw new IllegalArgumentException();
+	case STATE_AUTHORIZED:
+		if (null != acc) {
+			// when parent combiner is not null, use parent combiner to combine the current context
+			if (parent.getCombiner() != null) {
+				this.context = parent.getCombiner().combine(pdArray, acc.context);
+				this.domainCombiner = parent.getCombiner();
+			} else {
+				this.context = combinePDObjs(pdArray, acc.context);
+				this.domainCombiner = acc.domainCombiner;
+			}
+		} else {
+			this.domainCombiner = parent.domainCombiner;
+			this.context = pdArray;
+			this.nextStackAcc = parent;
+		}
+		break;
+	case STATE_NOT_AUTHORIZED:
+		break;
+	}
+	this.doPrivilegedAcc = acc;
+	this.authorizeState = authorizeState;
+	this.containPrivilegedContext = true;
+}
+
 /**
  * Constructs a new instance of this class given a context
  * and a DomainCombiner
@@ -501,7 +530,6 @@ static Permission[] combinePermObjs(Permission[] checked, Permission[] toBeCombi
 	return (Permission[]) combineObjs(false, checked, toBeCombined, start, len, justCombine);
 }
 
-/*[IF JAVA_SPEC_VERSION < 24]*/
 /**
  * Perform ProtectionDomain.implies(permission) with known ProtectionDomain objects already implied
  *
@@ -667,7 +695,7 @@ static boolean checkPermissionWithCache(
 				}
 			}
 			/*[MSG "K002c", "Access denied {0}"]*/
-			throw new AccessControlException(Msg.getString("K002c", perm), perm); //$NON-NLS-1$
+			throw new AccessControlException(com.ibm.oti.util.Msg.getString("K002c", perm), perm); //$NON-NLS-1$
 		}
 	}
 	if (null != accCurrent
@@ -703,7 +731,6 @@ static boolean checkPermissionWithCache(
 	}
 	return true;
 }
-/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 /**
  * Helper to print debug information for checkPermission().
@@ -737,10 +764,6 @@ private boolean debugHelper(Permission perm) {
  *                  if perm is null
  */
 public void checkPermission(Permission perm) throws AccessControlException {
-/*[IF JAVA_SPEC_VERSION >= 24]*/
-	/*[MSG "K002e", "checking permissions is not supported"]*/
-	throw new AccessControlException(Msg.getString("K002e")); //$NON-NLS-1$
-/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 	if (perm == null) throw new NullPointerException();
 	if (null != context && (STATE_AUTHORIZED != authorizeState) && containPrivilegedContext && null != System.getSecurityManager()) {
 		// only check SecurityPermission "createAccessControlContext" when context is not null, not authorized and containPrivilegedContext.
@@ -754,7 +777,7 @@ public void checkPermission(Permission perm) throws AccessControlException {
 		}
 		if (STATE_NOT_AUTHORIZED == authorizeState) {
 			/*[MSG "K002d", "Access denied {0} due to untrusted AccessControlContext since {1} is denied"]*/
-			throw new AccessControlException(Msg.getString("K002d", perm, SecurityConstants.CREATE_ACC_PERMISSION), perm); //$NON-NLS-1$
+			throw new AccessControlException(com.ibm.oti.util.Msg.getString("K002d", perm, SecurityConstants.CREATE_ACC_PERMISSION), perm); //$NON-NLS-1$
 		}
 	}
 
@@ -763,7 +786,6 @@ public void checkPermission(Permission perm) throws AccessControlException {
 		debug = debugHelper(perm);
 	}
 	checkPermissionWithCache(perm, null, this.context, debug ? DEBUG_ENABLED | DEBUG_ACCESS_DENIED : DEBUG_DISABLED, this.doPrivilegedAcc,this.isLimitedContext, this.limitedPerms, this.nextStackAcc, new AccessCache());
-/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 }
 
 /**
