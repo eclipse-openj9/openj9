@@ -1023,7 +1023,7 @@ public void test_getModifiers_classTypes() {
 		0x0000 | IDENTITY, // (Identity)
 		0x0410,            // static
 		0x0400 | IDENTITY, // abstract (Identity)
-		0x1001 | IDENTITY, // public synthetic (Identity)
+		0x1001,            // public synthetic
 		0x2608,            // static abstract interface annotation
 		0x4018 | IDENTITY, // static final enum (Identity)
 	};
