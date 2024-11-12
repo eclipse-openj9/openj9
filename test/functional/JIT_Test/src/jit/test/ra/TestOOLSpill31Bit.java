@@ -45,7 +45,7 @@ public class TestOOLSpill31Bit {
 	 * On 31-bit platforms when using 64-bit registers we can encounter problems in this path if the register allocator
 	 * fails to properly spill 64-bit values across an OOL code section.
 	 *
-	 * @see eclipse/omr#3337
+	 * @see eclipse-omr/omr#3337
 	 */
 	@Test
 	public static void testOOLSpill31Bit() {

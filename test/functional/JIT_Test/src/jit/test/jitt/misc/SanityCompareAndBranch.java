@@ -30,11 +30,11 @@ public class SanityCompareAndBranch extends jit.test.jitt.Test {
    /**
     * Following method when JIT compiled deterministically (Fix optimization level), contains a tree
     * that compares two VFT pointers, one of which is stored on temporary java stack slots while other
-    * from the object. 
+    * from the object.
     * On 64-Bit platform with Compressed references, this will test the code path to generate instruction
     * for `if` tree where one child is 8 byte memory load while other child is 4 byte memory load.
     *
-    * For more details see eclipse/omr#4763
+    * For more details see eclipse-omr/omr#4763
     */
    private int testAddressCompare(Object obj1, Object obj2) {
       int retVal = 0;

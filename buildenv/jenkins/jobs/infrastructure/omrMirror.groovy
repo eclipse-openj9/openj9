@@ -23,7 +23,7 @@
 timestamps {
     timeout(time: 1, unit: 'HOURS') {
         def HTTP = 'https://'
-        def SRC_REPO = 'github.com/eclipse/omr.git'
+        def SRC_REPO = 'github.com/eclipse-omr/omr.git'
         def TARGET_REPO = 'github.com/eclipse-openj9/openj9-omr.git'
         def ARCHIVE_FILE = "OMR_COMMIT"
 

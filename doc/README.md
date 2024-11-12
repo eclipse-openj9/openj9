@@ -34,6 +34,6 @@ This directory contains the following types of documentation:
 | `processes`          | Process documentation for the OpenJ9 project.                                |
 | `release-notes`      | OpenJ9 release notes.                                                        |
 
-:pencil: Developer documentation about OpenJ9 technology or components is best considered in tandem with the [documentation from Eclipse OMR](https://github.com/eclipse/omr/tree/master/doc), as OpenJ9 is built upon the foundational technologies provided by OMR.
+:pencil: Developer documentation about OpenJ9 technology or components is best considered in tandem with the [documentation from Eclipse OMR](https://github.com/eclipse-omr/omr/tree/master/doc), as OpenJ9 is built upon the foundational technologies provided by OMR.
 
 :pencil: User documentation for OpenJ9 is published at the [OpenJ9 website](https://www.eclipse.org/openj9/docs/)

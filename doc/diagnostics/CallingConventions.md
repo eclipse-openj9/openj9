@@ -20,9 +20,9 @@ OpenJDK Assembly Exception [2].
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 -->
 
-This document describes the calling conventions for the JIT Private 
+This document describes the calling conventions for the JIT Private
 Linkage. The System Linkage info can be found in the
-[Eclipse OMR Project](https://github.com/eclipse/omr/blob/master/doc/diagnostics/CallingConventions.md).
+[Eclipse OMR Project](https://github.com/eclipse-omr/omr/blob/master/doc/diagnostics/CallingConventions.md).
 
 # x86
 
@@ -69,12 +69,12 @@ Linkage. The System Linkage info can be found in the
 
 ## IA32
 
-The IA32 calling convention in the private linkage pushes all arguments on to the 
-stack in left-to-right order, i.e. in the case of an indirect call, the receiver 
-object is furthest away from the top of the Java stack. The callee is responsible 
-for cleaning up the pushed arguments. The return value is placed in EAX, or 
-EDX:EAX for a long value. If SSE2 support is not available, the x87 floating-point 
-stack is used for passing floating-point arguments and returning floating-point 
+The IA32 calling convention in the private linkage pushes all arguments on to the
+stack in left-to-right order, i.e. in the case of an indirect call, the receiver
+object is furthest away from the top of the Java stack. The callee is responsible
+for cleaning up the pushed arguments. The return value is placed in EAX, or
+EDX:EAX for a long value. If SSE2 support is not available, the x87 floating-point
+stack is used for passing floating-point arguments and returning floating-point
 results. Otherwise, XMM registers are used.
 
 # POWER

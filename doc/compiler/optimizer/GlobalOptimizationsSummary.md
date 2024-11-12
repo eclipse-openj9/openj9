@@ -22,7 +22,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 
 # Global Optimizations
 
-## Global [Value Propagation](https://github.com/eclipse/omr/blob/master/doc/compiler/optimizer/ValuePropagation.md)
+## Global [Value Propagation](https://github.com/eclipse-omr/omr/blob/master/doc/compiler/optimizer/ValuePropagation.md)
 Global Value Propagation (GVP) performs propagation of types, constants, ranges, nullness
 etc. for value numbers. It requires global value numbering to have been done.
 GVP performs de-virtualization (followed by inlining in some cases), check removal, branch
@@ -133,7 +133,7 @@ tries to find explicit definitions of fields (e.g. in constructors) that occur b
 any use of the field. In these cases the zero initialization of fields (required according
 to Java spec) can be skipped.
 
-Note that for reference fields, the presence of a [Garbage Collection (GC) point](https://github.com/eclipse/omr/blob/81b79405da6c7c960e611a8b2b12fd5861543330/compiler/il/OMRNode.cpp#L2298)
+Note that for reference fields, the presence of a [Garbage Collection (GC) point](https://github.com/eclipse-omr/omr/blob/81b79405da6c7c960e611a8b2b12fd5861543330/compiler/il/OMRNode.cpp#L2298)
 before any user-specified definition means that the field must be zero initialized.
 The reason why a reference field must be zero initialized before the object is visible
 to the GC is to prevent the GC from potentially chasing an uninitialized non-zero value
@@ -166,7 +166,7 @@ added on ‘cold’ paths to avoid some `monenters/monexits` on ‘hot’ paths.
 ## Global Register Allocator (GRA)
 GRA is a solution for achieving the effect of global register assignment, even though
 the underlying code generators have local register allocators. The basic idea
-is that [global register dependencies](https://github.com/eclipse/omr/blob/master/doc/compiler/il/GlRegDeps.md)
+is that [global register dependencies](https://github.com/eclipse-omr/omr/blob/master/doc/compiler/il/GlRegDeps.md)
 are introduced in the IL trees; these dependencies
 (when evaluated by the code generators) ensure that a certain value is in a certain
 register on all control flow paths into a basic block. Stores/loads from memory are
@@ -185,7 +185,7 @@ graph-coloring allocator.
 ## Live Variables for GC
 Live Variables for GC attempts to minimize the number of reference locals that need to be zero
 initialized upon method entry. The basic idea is to perform liveness analysis and find
-out if any reference locals are live at any [GC point](https://github.com/eclipse/omr/blob/81b79405da6c7c960e611a8b2b12fd5861543330/compiler/il/OMRNode.cpp#L2298)
+out if any reference locals are live at any [GC point](https://github.com/eclipse-omr/omr/blob/81b79405da6c7c960e611a8b2b12fd5861543330/compiler/il/OMRNode.cpp#L2298)
 that is not dominated by (user defined) stores on all control flow paths. If a reference local
 is uninitialized at a GC point, explicit zero initialization must be inserted at the method entry.
 Note that this situation is fairly rare. Another function of this analysis is to minimize the

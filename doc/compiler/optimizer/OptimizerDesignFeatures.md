@@ -100,7 +100,7 @@ and the mid-invocation transition from compiled code to interpreter is called [O
 They are valuable tools that can be essential when building JIT compilers for highly dynamic languages.
 
 Another aspect of performance is application responsiveness, which is the reason why initial compilations in
-the compiler are typically done at [lower optimization levels](https://github.com/eclipse/omr/blob/cf8ddbd1adcd87e388cad6be1fd0e0c085285a29/compiler/compile/CompilationTypes.hpp#L45)
+the compiler are typically done at [lower optimization levels](https://github.com/eclipse-omr/omr/blob/cf8ddbd1adcd87e388cad6be1fd0e0c085285a29/compiler/compile/CompilationTypes.hpp#L45)
 (that are cheaper to do from a compile-time perspective) whereas recompilations are done at higher optimization
 levels on a more selective basis to avoid paying a high compile-time penalty for every compiled method.
 
@@ -112,9 +112,9 @@ be several times slower than compiled code even at lowest optimization level).
 
 The compiler has several optimizations that become more selective depending on the execution
 frequency of the code it is optimizing. For example, since
-[loop versioning](https://github.com/eclipse/omr/blob/master/doc/compiler/optimizer/IntroLoopOptimizations.md#2-loop-versioner)
-and [specialization](https://github.com/eclipse/omr/blob/master/doc/compiler/optimizer/IntroLoopOptimizations.md#4-loop-specializer),
-loop unrolling, [inlining](https://github.com/eclipse/omr/blob/master/doc/compiler/optimizer/Inliner.md),
+[loop versioning](https://github.com/eclipse-omr/omr/blob/master/doc/compiler/optimizer/IntroLoopOptimizations.md#2-loop-versioner)
+and [specialization](https://github.com/eclipse-omr/omr/blob/master/doc/compiler/optimizer/IntroLoopOptimizations.md#4-loop-specializer),
+loop unrolling, [inlining](https://github.com/eclipse-omr/omr/blob/master/doc/compiler/optimizer/Inliner.md),
 and tail splitting are optimizations that cause code growth,
 care must be taken that the code growth and subsequent compile-time increase in optimizations that
 run later are worth the runtime benefit.
@@ -180,7 +180,7 @@ There are also other forms of speculation done by the compiler, especially aroun
 Higher level semantic knowledge that exceptions are rarely expected to be raised in most well-behaved
 programs is used to drive optimization.
 
-The [loop versioner](https://github.com/eclipse/omr/blob/master/doc/compiler/optimizer/IntroLoopOptimizations.md#2-loop-versioner)
+The [loop versioner](https://github.com/eclipse-omr/omr/blob/master/doc/compiler/optimizer/IntroLoopOptimizations.md#2-loop-versioner)
 clones a loop and eliminates all the exception checks that are loop invariant or on induction variables
 from inside the good version of the loop based on a series of tests it emits before the loop is entered
 by checking the equivalent conditions (more efficient since the checking is done once outside the loop
@@ -251,7 +251,7 @@ particularly convenient for doing local optimizations.
 
 The DAG representation is less expensive from a memory footprint viewpoint since a single value within an
 extended basic block is represented by a single node regardless of how many consumers (parent nodes in the
-OpenJ9 JIT [IL representation](https://github.com/eclipse/omr/blob/master/doc/compiler/il/IntroToTrees.md))
+OpenJ9 JIT [IL representation](https://github.com/eclipse-omr/omr/blob/master/doc/compiler/il/IntroToTrees.md))
 of the value there are in that extended basic block.
 
 It also makes the concept of "value equality" trivial for most local analyses, since this basically just
@@ -269,7 +269,7 @@ exception catch block (if there exists one in the method) and exception edges re
 
 Crucially this is done without ending the basic block every time an exception check is encountered, and the
 "special" nature of exception checks and edges is known to the compiler's generic
-[dataflow analysis](https://github.com/eclipse/omr/blob/master/doc/compiler/optimizer/DataFlowEngine.md) framework,
+[dataflow analysis](https://github.com/eclipse-omr/omr/blob/master/doc/compiler/optimizer/DataFlowEngine.md) framework,
 so that it does the right operations every time those special idioms are encountered.
 
 This decreases the complexity of the CFG in general and makes the control flow look largely like it would have

@@ -20,7 +20,7 @@ OpenJDK Assembly Exception [2].
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 -->
 
-# [Loop Optimizations](https://github.com/eclipse/omr/blob/master/doc/compiler/optimizer/IntroLoopOptimizations.md)
+# [Loop Optimizations](https://github.com/eclipse-omr/omr/blob/master/doc/compiler/optimizer/IntroLoopOptimizations.md)
 
 ## Loop Canonicalization
 Loop Canonicalization transforms `while` loops to if-guarded `do-while` loops
@@ -44,7 +44,7 @@ also eliminates bound checks where the range of values of the index inside
 the loop is discovered (if it is a compile time constant) and checks are
 inserted outside the loop so that no bound checks fail inside the loop.
 
-This analysis uses induction variable information found by [Value Propagation](https://github.com/eclipse/omr/blob/master/doc/compiler/optimizer/ValuePropagation.md).
+This analysis uses induction variable information found by [Value Propagation](https://github.com/eclipse-omr/omr/blob/master/doc/compiler/optimizer/ValuePropagation.md).
 Another versioning test that is emitted ensures the loop will not run for a
 very long period of time (in which case the async check inside the loop can
 be removed). This special versioning test depends on the number of trees
@@ -61,7 +61,7 @@ tests done after each iteration (loop) body. Async checks (yield points)
 are eliminated from u-1 (u is the unroll factor) unrolled bodies and only
 one remains. Unroll factors and code growth thresholds are arrived at based
 on profiling information when available.
-This analysis uses induction variable information found by [Value Propagation](https://github.com/eclipse/omr/blob/master/doc/compiler/optimizer/ValuePropagation.md).
+This analysis uses induction variable information found by [Value Propagation](https://github.com/eclipse-omr/omr/blob/master/doc/compiler/optimizer/ValuePropagation.md).
 
 ## Loop Invariant Code Motion
 Done as part of [Partial Redundancy Elimination (PRE)](optimizer/GlobalOptimizationsSummary.md)
@@ -111,7 +111,7 @@ The algorithm for minimizing the async checks in a given loop attempts to
 achieve its goal by adopting two distinct methods:
 
 - Check if the loop is known to be short running (either based on induction
-variable information obtained from [Value Propagation](https://github.com/eclipse/omr/blob/master/doc/compiler/optimizer/ValuePropagation.md))
+variable information obtained from [Value Propagation](https://github.com/eclipse-omr/omr/blob/master/doc/compiler/optimizer/ValuePropagation.md))
 or if the special versioning test for short running loops (mentioned earlier)
 is found. In either case, since the loop is probably not long running, it does
 not require an async check at all.

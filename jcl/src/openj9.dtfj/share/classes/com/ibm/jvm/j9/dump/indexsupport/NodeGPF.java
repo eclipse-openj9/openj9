@@ -68,7 +68,7 @@ public class NodeGPF extends NodeAbstract
 	// These ultimately came from omr/include_core/omrport.h (passed through
 	// runtime/oti/j9port.h). NodeGPF is for processing older core dump
 	// jextract XMLs, so although some of these constants changed with
-	// https://github.com/eclipse/omr/pull/3921, the following should be fixed
+	// https://github.com/eclipse-omr/omr/pull/3921, the following should be fixed
 	// in time.
 	private final static int J9PORT_SIG_FLAG_SIGSEGV 	= 4;
 	private final static int J9PORT_SIG_FLAG_SIGBUS 	= 8;

@@ -37,7 +37,7 @@ can be followed with the following modifications:
   - removing the `--with-free-marker-jar=` argument
   - adding `--with-cmake`
 
-:pencil: For more CMake info see [OMR CMake documentation](https://github.com/eclipse/omr/blob/master/doc/BuildingWithCMake.md)
+:pencil: For more CMake info see [OMR CMake documentation](https://github.com/eclipse-omr/omr/blob/master/doc/BuildingWithCMake.md)
 
 ## FAQ
 

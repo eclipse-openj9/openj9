@@ -254,9 +254,9 @@ def checkout_pullrequest() {
     if (omr_bool) {
         dir ('omr') {
             if (omr_upstream) {
-                sh "git config remote.origin.url https://github.com/eclipse/omr.git"
+                sh "git config remote.origin.url https://github.com/eclipse-omr/omr.git"
             }
-            checkout_pullrequest(OMR_PR, 'eclipse/omr')
+            checkout_pullrequest(OMR_PR, 'eclipse-omr/omr')
         }
     }
 }

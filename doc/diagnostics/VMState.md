@@ -30,7 +30,7 @@ which compilation phase the compiler is in. If the VM crashes for any
 reason, the VM state is reported via standard error and in the
 javacore dump (in which it is referred to as "VM flags"), and serves
 as a first-order indicator of the failing component during problem
-determination. 
+determination.
 
 [1]: https://github.com/eclipse-openj9/openj9/blob/master/runtime/oti/j9nonbuilder.h
 
@@ -79,7 +79,7 @@ If the entire low-order half of the VM state is 0xFFFF, then the
 active component is likely to be in the compiler initialization or
 the IL generator.
 
-[2]: https://github.com/eclipse/omr/blob/master/compiler/optimizer/Optimizations.hpp
+[2]: https://github.com/eclipse-omr/omr/blob/master/compiler/optimizer/Optimizations.hpp
 [3]: https://github.com/eclipse-openj9/openj9/blob/master/runtime/compiler/codegen/J9CodeGenPhaseEnum.hpp
 
 ## Finding the VM state examples
@@ -101,11 +101,11 @@ R12=0000040001BA7050 R13=0000040000CE9920 R14=000000001028E570 R15=00000000100A9
 In a javacore dump search for the `HFLAGS` to find the VM state.
 
 ```
-2XHREGISTER      ...           
+2XHREGISTER      ...
 1XHEXCPMODULE  Compiling method: javax/naming/NameImpl.<init>(Ljava/util/Properties;)V
-NULL           
+NULL
 1XHFLAGS       VM flags:0000000000051AFF
-NULL    
+NULL
 NULL           ------------------------------------------------------------------------
 0SECTION       ENVINFO subcomponent dump routine
 NULL           =================================
