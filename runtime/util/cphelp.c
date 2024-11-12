@@ -67,7 +67,7 @@ getClassLocation(J9VMThread * currentThread, J9Class * clazz, UDATA *length)
 
 	if (NULL != classLoader->classLocationHashTable) {
 		J9ClassLocation *classLocation = vmFuncs->findClassLocationForClass(currentThread, clazz);
-	
+
 		if (NULL != classLocation) {
 			switch(classLocation->locationType) {
 			case LOAD_LOCATION_PATCH_PATH_NON_GENERATED:
@@ -86,7 +86,7 @@ getClassLocation(J9VMThread * currentThread, J9Class * clazz, UDATA *length)
 
 			case LOAD_LOCATION_CLASSPATH_NON_GENERATED:
 			case LOAD_LOCATION_CLASSPATH:
-				rc = getClassPathEntry(currentThread, classLoader, classLocation->entryIndex, &entry); 
+				rc = getClassPathEntry(currentThread, classLoader, classLocation->entryIndex, &entry);
 				if (0 == rc) {
 					*length = entry.pathLength;
 					path = entry.path;
@@ -149,7 +149,9 @@ getModuleJRTURL(J9VMThread *currentThread, J9ClassLoader *classLoader, J9Module 
 	if (NULL == jrtURL) {
 		if (J9_ARE_ALL_BITS_SET(javaVM->runtimeFlags, J9_RUNTIME_JAVA_BASE_MODULE_CREATED)) {
 			/* set jrt URL for the module */
-			jrtURL = vmFuncs->copyStringToJ9UTF8WithMemAlloc(currentThread, module->moduleName, J9_STR_NONE, "jrt:/", 5, NULL, 0);
+			if (NULL != module->moduleName) {
+				jrtURL = vmFuncs->copyStringToJ9UTF8WithMemAlloc(currentThread, module->moduleName, J9_STR_NONE, "jrt:/", 5, NULL, 0);
+			}
 
 			if (NULL == jrtURL) {
 				goto _exit;
@@ -162,7 +164,7 @@ getModuleJRTURL(J9VMThread *currentThread, J9ClassLoader *classLoader, J9Module 
 			if (NULL == jrtURL) {
 				goto _exit;
 			}
-			memcpy(J9UTF8_DATA(jrtURL), J9UTF8_DATA(&jrtJavaBaseUrl), length); 
+			memcpy(J9UTF8_DATA(jrtURL), J9UTF8_DATA(&jrtJavaBaseUrl), length);
 			J9UTF8_SET_LENGTH(jrtURL, length);
 		}
 		moduleInfo->jrtURL = jrtURL;
@@ -219,9 +221,9 @@ addJarToSystemClassLoaderClassPathEntries(J9JavaVM *vm, const char *filename)
 
 #if defined(J9VM_OPT_SHARED_CLASSES)
 		if (J9_ARE_ALL_BITS_SET(classLoader->flags, J9CLASSLOADER_SHARED_CLASSES_ENABLED)) {
-			/* 
+			/*
 			 * Warm up the classpath entry so that the Classpath stored in the cache has the correct info.
-			 * This is required because when we are finding classes in the cache, initializeClassPathEntry is not called 
+			 * This is required because when we are finding classes in the cache, initializeClassPathEntry is not called
 			 * */
 			if (vm->internalVMFunctions->initializeClassPathEntry(vm, cpEntry) != CPE_TYPE_JAR) {
 				goto done;

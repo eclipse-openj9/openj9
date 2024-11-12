@@ -50,7 +50,7 @@ VM_JFRConstantPoolTypes::jfrPackageHashFn(void *key, void *userData)
 {
 	PackageEntry *packageEntry = (PackageEntry *) key;
 
-	return *(UDATA*)&packageEntry->pkgID;
+	return *(UDATA*)&packageEntry->romClass;
 }
 
 UDATA
@@ -59,7 +59,7 @@ VM_JFRConstantPoolTypes::jfrPackageHashEqualFn(void *tableNode, void *queryNode,
 	PackageEntry *tableEntry = (PackageEntry *) tableNode;
 	PackageEntry *queryEntry = (PackageEntry *) queryNode;
 
-	return tableEntry->pkgID == queryEntry->pkgID;
+	return tableEntry->romClass == queryEntry->romClass;
 }
 
 UDATA
@@ -308,15 +308,26 @@ VM_JFRConstantPoolTypes::walkStackTraceTablePrint(void *entry, void *userData)
 	return FALSE;
 }
 
+
 UDATA
-VM_JFRConstantPoolTypes::fixupShallowEntries(void *entry, void *userData)
+VM_JFRConstantPoolTypes::findShallowEntries(void *entry, void *userData)
 {
 	ClassEntry *tableEntry = (ClassEntry *) entry;
+	J9Pool *shallowEntries = (J9Pool*) userData;
+
+	ClassEntry **newEntry = (ClassEntry**)pool_newElement(shallowEntries);
+	*newEntry = tableEntry;
+
+	return FALSE;
+}
+
+void
+VM_JFRConstantPoolTypes::fixupShallowEntries(void *entry, void *userData)
+{
+	ClassEntry *tableEntry = *(ClassEntry **) entry;
 	VM_JFRConstantPoolTypes *cp = (VM_JFRConstantPoolTypes*) userData;
 
 	cp->getClassEntry(tableEntry->clazz);
-
-	return FALSE;
 }
 
 UDATA
@@ -335,11 +346,9 @@ VM_JFRConstantPoolTypes::mergePackageEntriesToGlobalTable(void *entry, void *use
 {
 	PackageEntry *tableEntry = (PackageEntry *) entry;
 	VM_JFRConstantPoolTypes *cp = (VM_JFRConstantPoolTypes*) userData;
-	UDATA packageNameLength = 0;
 
-	getPackageName(tableEntry->pkgID, &packageNameLength);
 	cp->_globalStringTable[tableEntry->index + cp->_stringUTF8Count] = tableEntry;
-	cp->_requiredBufferSize += packageNameLength;
+	cp->_requiredBufferSize += tableEntry->packageNameLength;
 	return FALSE;
 }
 
@@ -472,7 +481,8 @@ VM_JFRConstantPoolTypes::addPackageEntry(J9Class *clazz)
 	_buildResult = OK;
 
 	pkgID = hashPkgTableAt(clazz->classLoader, clazz->romClass);
-	entry->pkgID = pkgID;
+	entry->romClass = clazz->romClass;
+	entry->ramClass = clazz;
 
 	if (NULL == pkgID) {
 		/* default pacakge */
@@ -491,7 +501,7 @@ VM_JFRConstantPoolTypes::addPackageEntry(J9Class *clazz)
 	entry->moduleIndex = addModuleEntry(clazz->module);
 	if (isResultNotOKay()) goto done;
 
-	packageName = (const char *) getPackageName(entry->pkgID, &packageNameLength);
+	packageName = (const char *) getPackageName(pkgID, &packageNameLength);
 	if (NULL == packageName) {
 		_buildResult = InternalVMError;
 		goto done;
