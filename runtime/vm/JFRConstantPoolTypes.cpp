@@ -970,7 +970,8 @@ VM_JFRConstantPoolTypes::addThreadStartEntry(J9JFRThreadStart *threadStartData)
 	entry->stackTraceIndex = consumeStackTrace(threadStartData->parentThread, J9JFRTHREADSTART_STACKTRACE(threadStartData), threadStartData->stackTraceSize);
 	if (isResultNotOKay()) goto done;
 
-	index = _threadStartCount++;
+	index = _threadStartCount;
+	_threadStartCount += 1;
 
 done:
 	return index;
@@ -995,7 +996,8 @@ VM_JFRConstantPoolTypes::addThreadEndEntry(J9JFREvent *threadEndData)
 	entry->eventThreadIndex = addThreadEntry(threadEndData->vmThread);
 	if (isResultNotOKay()) goto done;
 
-	index = _threadEndCount++;
+	index = _threadEndCount;
+	_threadEndCount += 1;
 
 done:
 	return index;
@@ -1025,7 +1027,8 @@ VM_JFRConstantPoolTypes::addThreadSleepEntry(J9JFRThreadSlept *threadSleepData)
 	entry->stackTraceIndex = consumeStackTrace(threadSleepData->vmThread, J9JFRTHREADSLEPT_STACKTRACE(threadSleepData), threadSleepData->stackTraceSize);
 	if (isResultNotOKay()) goto done;
 
-	index = _threadEndCount++;
+	index = _threadEndCount;
+	_threadEndCount += 1;
 
 done:
 	return index;
@@ -1062,12 +1065,62 @@ VM_JFRConstantPoolTypes::addMonitorWaitEntry(J9JFRMonitorWaited* threadWaitData)
 
 	entry->notifierThread = 0; //Need a way to find the notifiying thread
 
-	index = _threadEndCount++;
+	index = _threadEndCount;
+	_threadEndCount += 1;
 
 done:
 	return index;
 }
 
+U_32
+VM_JFRConstantPoolTypes::addCPULoadEntry(J9JFRCPULoad *cpuLoadData)
+{
+	CPULoadEntry *entry = (CPULoadEntry *)pool_newElement(_cpuLoadTable);
+	U_32 index = U_32_MAX;
+
+	if (NULL == entry) {
+		_buildResult = OutOfMemory;
+		goto done;
+	}
+
+	entry->ticks = cpuLoadData->startTicks;
+	entry->jvmUser = cpuLoadData->jvmUser;
+	entry->jvmSystem = cpuLoadData->jvmSystem;
+	entry->machineTotal = cpuLoadData->machineTotal;
+
+	index = _cpuLoadCount;
+	_cpuLoadCount += 1;
+
+done:
+	return index;
+}
+
+U_32
+VM_JFRConstantPoolTypes::addThreadCPULoadEntry(J9JFRThreadCPULoad *threadCPULoadData)
+{
+	ThreadCPULoadEntry *entry = (ThreadCPULoadEntry *)pool_newElement(_threadCPULoadTable);
+	U_32 index = U_32_MAX;
+
+	if (NULL == entry) {
+		_buildResult = OutOfMemory;
+		goto done;
+	}
+
+	entry->ticks = threadCPULoadData->startTicks;
+	entry->user = threadCPULoadData->user;
+	entry->system = threadCPULoadData->system;
+
+	entry->threadIndex = addThreadEntry(threadCPULoadData->vmThread);
+	if (isResultNotOKay()) {
+		goto done;
+	}
+
+	index = _threadCPULoadCount;
+	_threadCPULoadCount += 1;
+
+done:
+	return index;
+}
 
 void
 VM_JFRConstantPoolTypes::printTables()

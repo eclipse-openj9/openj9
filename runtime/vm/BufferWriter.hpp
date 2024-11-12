@@ -328,6 +328,13 @@ class VM_BufferWriter {
 		}
 	}
 
+	void
+	writeFloat(float val)
+	{
+		U_32 newVal = *(U_32 *)&val;
+		writeU32(newVal);
+	}
+
 	static U_32
 	convertFromLEB128ToU32(U_8 *start)
 	{
