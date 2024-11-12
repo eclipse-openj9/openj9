@@ -858,20 +858,25 @@ J9::Z::TreeEvaluator::pdclearSetSignEvaluator(TR::Node *node, TR::CodeGenerator 
    return TR::TreeEvaluator::pdclearEvaluator(node, cg);
    }
 
-TR::Register *
+/*
+ * This method inlines the Java API StringCoding.hasNegatives(byte src, int off, int len) using
+ * SIMD instructions (it will only be invoked on supported processors).
+ * The method looks like below on Java 17:
+ *
+ *   @IntrinsicCandidate
+ *   public static boolean hasNegatives(byte[] ba, int off, int len) {
+ *       for (int i = off; i < off + len; i++) {
+ *           if (ba[i] < 0) {
+ *               return true;
+ *           }
+ *       }
+ *       return false;
+ *   }
+ * This routine behaves similarly on Java 11 and 21 as well and so is supported on those platforms too.
+ */
+TR::Register*
 J9::Z::TreeEvaluator::inlineStringCodingHasNegatives(TR::Node *node, TR::CodeGenerator *cg)
    {
-   /*
-   @IntrinsicCandidate
-    public static boolean hasNegatives(byte[] ba, int off, int len) {
-        for (int i = off; i < off + len; i++) {
-            if (ba[i] < 0) {
-                return true;
-            }
-        }
-        return false;
-    } *
-    */
 
    TR::Register *inputPtrReg = cg->gprClobberEvaluate(node->getChild(0));
    TR::Register *offsetReg = cg->evaluate(node->getChild(1));
@@ -893,8 +898,8 @@ J9::Z::TreeEvaluator::inlineStringCodingHasNegatives(TR::Node *node, TR::CodeGen
 
    generateRRRInstruction(cg, TR::InstOpCode::getAddThreeRegOpCode(), node, numCharsLeftToProcess, offsetReg, lengthReg);
 
-   uint32_t upperLimit = 127;
-   uint8_t rangeComparison = 0x20; // > comparison
+   const uint8_t upperLimit = 127;
+   const uint8_t rangeComparison = 0x20; // > comparison
 
    generateVRIaInstruction(cg, TR::InstOpCode::VREPI, node, vUpperLimit, upperLimit, 0);
    generateVRIaInstruction(cg, TR::InstOpCode::VREPI, node, vComparison, rangeComparison, 0);
