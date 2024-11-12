@@ -96,6 +96,7 @@ enum MessageType : uint16_t
    ResolvedMethod_getResolvedImplementorMethods,
    ResolvedMethod_isFieldNullRestricted,
    ResolvedMethod_isFieldFlattened,
+   ResolvedMethod_getTargetMethodFromMemberName,
 
    ResolvedRelocatableMethod_createResolvedRelocatableJ9Method,
    ResolvedRelocatableMethod_fieldAttributes,

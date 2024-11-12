@@ -319,6 +319,7 @@ public:
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
       UDATA _vmtargetOffset;
       UDATA _vmindexOffset;
+      bool _shareLambdaForm;
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
       bool _useAOTCache;
       // Should we use server offsets (idAndType of AOT cache serialization records) instead of

@@ -457,6 +457,8 @@ public:
    virtual TR_ResolvedMethod *     getResolvedPossiblyPrivateVirtualMethod( TR::Compilation *, int32_t cpIndex, bool ignoreRtResolve, bool * unresolvedInCP);
    virtual TR_OpaqueClassBlock *   getResolvedInterfaceMethod(int32_t cpIndex, uintptr_t * pITableIndex);
 
+   virtual TR_OpaqueMethodBlock *  getTargetMethodFromMemberName(uintptr_t * invokeCacheArray, bool * isInvokeCacheAppendixNull);
+
    virtual TR_ResolvedMethod *     getResolvedDynamicMethod( TR::Compilation *, int32_t cpIndex, bool * unresolvedInCP, bool * isInvokeCacheAppendixNull = 0);
    virtual TR_ResolvedMethod *     getResolvedHandleMethod( TR::Compilation *, int32_t cpIndex, bool * unresolvedInCP, bool * isInvokeCacheAppendixNull = 0);
    virtual TR_ResolvedMethod *     getResolvedHandleMethodWithSignature( TR::Compilation *, int32_t cpIndex, char *signature);
@@ -604,8 +606,8 @@ public:
    virtual bool                    isUnresolvedMethodType(int32_t cpIndex);
    virtual void *                  methodHandleConstant(int32_t cpIndex);
    virtual bool                    isUnresolvedMethodHandle(int32_t cpIndex);
-   virtual bool                    isUnresolvedCallSiteTableEntry(int32_t callSiteIndex) { return true; }
-   virtual bool                    isUnresolvedMethodTypeTableEntry(int32_t cpIndex) { return true; }
+   virtual bool                    isUnresolvedCallSiteTableEntry(int32_t callSiteIndex);
+   virtual bool                    isUnresolvedMethodTypeTableEntry(int32_t cpIndex);
 
    virtual bool                    fieldAttributes ( TR::Compilation *, int32_t cpIndex, uint32_t * fieldOffset, TR::DataType * type, bool * volatileP, bool * isFinal, bool *isPrivate, bool isStore, bool * unresolvedInCP, bool needsAOTValidation);
 

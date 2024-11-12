@@ -486,6 +486,11 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          // These offsets are initialized later on
          vmInfo._vmtargetOffset = 0;
          vmInfo._vmindexOffset = 0;
+         auto sharedCacheConfig = fe->sharedCache() ? fe->sharedCache()->sharedCacheConfig() : NULL;
+         if (sharedCacheConfig)
+            vmInfo._shareLambdaForm = J9_ARE_ALL_BITS_SET(sharedCacheConfig->runtimeFlags2, J9SHR_RUNTIMEFLAG2_SHARE_LAMBDAFORM);
+         else
+            vmInfo._shareLambdaForm = false;
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
          }
 
@@ -1913,6 +1918,18 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          int32_t cpIndex = std::get<1>(recv);
          bool isStatic = std::get<2>(recv);
          client->write(response, mirror->isFieldFlattened(comp, cpIndex, isStatic));
+         }
+         break;
+      case MessageType::ResolvedMethod_getTargetMethodFromMemberName:
+         {
+         auto recv = client->getRecvData<TR_ResolvedJ9Method *, uintptr_t *>();
+         TR_ResolvedJ9Method *owningMethod = std::get<0>(recv);
+         uintptr_t * invokeCacheArray = std::get<1>(recv);
+
+         bool isInvokeCacheAppendixNull;
+         TR_OpaqueMethodBlock *targetMethod = owningMethod->getTargetMethodFromMemberName(invokeCacheArray, &isInvokeCacheAppendixNull);
+
+         client->write(response, targetMethod, isInvokeCacheAppendixNull);
          }
          break;
       case MessageType::ResolvedRelocatableMethod_createResolvedRelocatableJ9Method:

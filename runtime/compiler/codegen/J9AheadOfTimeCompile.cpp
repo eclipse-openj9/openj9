@@ -1349,6 +1349,67 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          }
          break;
 
+      case TR_ValidateDynamicMethodFromCallsiteIndex:
+         {
+         auto *dmciRecord = reinterpret_cast<TR_RelocationRecordValidateDynamicMethodFromCallsiteIndex *>(reloRecord);
+
+         TR::DynamicMethodFromCallsiteIndexRecord *svmRecord = reinterpret_cast<TR::DynamicMethodFromCallsiteIndexRecord *>(relocation->getTargetAddress());
+
+         dmciRecord->setMethodID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_method));
+         dmciRecord->setCallerID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_caller));
+         dmciRecord->setCallsiteIndex(reloTarget, svmRecord->_callsiteIndex);
+         dmciRecord->setAppendixObjectNull(reloTarget, svmRecord->_appendixObjectNull);
+         dmciRecord->setDefiningClassID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_definingClass));
+         dmciRecord->setMethodIndex(reloTarget, fej9->getMethodIndexInClass(svmRecord->_definingClass, svmRecord->_method));
+         }
+         break;
+
+      case TR_ValidateHandleMethodFromCPIndex:
+         {
+         auto *hmciRecord = reinterpret_cast<TR_RelocationRecordValidateHandleMethodFromCPIndex  *>(reloRecord);
+
+         TR::HandleMethodFromCPIndex *svmRecord = reinterpret_cast<TR::HandleMethodFromCPIndex *>(relocation->getTargetAddress());
+
+         hmciRecord->setMethodID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_method));
+         hmciRecord->setCallerID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_caller));
+         hmciRecord->setCpIndex(reloTarget, svmRecord->_cpIndex);
+         hmciRecord->setAppendixObjectNull(reloTarget, svmRecord->_appendixObjectNull);
+         hmciRecord->setDefiningClassID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_definingClass));
+         hmciRecord->setMethodIndex(reloTarget, fej9->getMethodIndexInClass(svmRecord->_definingClass, svmRecord->_method));
+         }
+         break;
+
+      case TR_CallsiteTableEntryAddress:
+         {
+         auto *cteaRecord = reinterpret_cast<TR_RelocationRecordCallsiteTableEntryAddress *>(reloRecord);
+
+         TR::SymbolReference *symRef = reinterpret_cast<TR::SymbolReference *>(relocation->getTargetAddress());
+         uint8_t flags = static_cast<uint8_t>(reinterpret_cast<uintptr_t>(relocation->getTargetAddress2()));
+
+         TR_OpaqueMethodBlock *method = symRef->getOwningMethod(comp)->getNonPersistentIdentifier();
+
+         cteaRecord->setReloFlags(reloTarget, flags);
+         cteaRecord->setMethodID(reloTarget, symValManager->getSymbolIDFromValue(method));
+         cteaRecord->setCallsiteIndex(reloTarget, symRef->getSymbol()->getStaticSymbol()->getCallSiteIndex());
+         }
+         break;
+
+
+      case TR_MethodTypeTableEntryAddress:
+         {
+         auto *mteaRecord = reinterpret_cast<TR_RelocationRecordMethodTypeTableEntryAddress *>(reloRecord);
+
+         TR::SymbolReference *symRef = reinterpret_cast<TR::SymbolReference *>(relocation->getTargetAddress());
+         uint8_t flags = static_cast<uint8_t>(reinterpret_cast<uintptr_t>(relocation->getTargetAddress2()));
+
+         TR_OpaqueMethodBlock *method = symRef->getOwningMethod(comp)->getNonPersistentIdentifier();
+
+         mteaRecord->setReloFlags(reloTarget, flags);
+         mteaRecord->setMethodID(reloTarget, symValManager->getSymbolIDFromValue(method));
+         mteaRecord->setCpIndex(reloTarget, symRef->getSymbol()->getStaticSymbol()->getMethodTypeIndex());
+         }
+         break;
+
       default:
          TR_ASSERT(false, "Unknown relo type %d!\n", kind);
          comp->failCompilation<J9::AOTRelocationRecordGenerationFailure>("Unknown relo type %d!\n", kind);
@@ -2288,6 +2349,78 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
                self()->comp(),
                "\n Method Enter/Exit Hook Address: isEnterHookAddr=%s ",
                mehaRecord->isEnterHookAddr(reloTarget) ? "true" : "false");
+            }
+         }
+         break;
+
+      case TR_ValidateDynamicMethodFromCallsiteIndex:
+         {
+         auto *dmciRecord = reinterpret_cast<TR_RelocationRecordValidateDynamicMethodFromCallsiteIndex *>(reloRecord);
+
+         self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            traceMsg(
+               self()->comp(),
+               "\n Validate Dynamic Method From Callsite Index: methodID=%d, callerID=%d, callsiteIndex=%d, appendixObjectNull=%s, definingClassID=%d, methodIndex=%d ",
+                     (uint32_t)dmciRecord->methodID(reloTarget),
+                     (uint32_t)dmciRecord->callerID(reloTarget),
+                     dmciRecord->callsiteIndex(reloTarget),
+                     dmciRecord->appendixObjectNull(reloTarget) ? "true" : "false",
+                     (uint32_t)dmciRecord->definingClassID(reloTarget),
+                     dmciRecord->methodIndex(reloTarget));
+            }
+         }
+         break;
+
+      case TR_ValidateHandleMethodFromCPIndex:
+         {
+         auto *hmciRecord = reinterpret_cast<TR_RelocationRecordValidateHandleMethodFromCPIndex  *>(reloRecord);
+
+         self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            traceMsg(
+               self()->comp(),
+               "\n Validate Handle Method From CP Index: methodID=%d, callerID=%d, cpIndex=%d, appendixObjectNull=%s, definingClassID=%d, methodIndex=%d ",
+                     (uint32_t)hmciRecord->methodID(reloTarget),
+                     (uint32_t)hmciRecord->callerID(reloTarget),
+                     hmciRecord->cpIndex(reloTarget),
+                     hmciRecord->appendixObjectNull(reloTarget) ? "true" : "false",
+                     (uint32_t)hmciRecord->definingClassID(reloTarget),
+                     hmciRecord->methodIndex(reloTarget));
+            }
+         }
+         break;
+
+      case TR_CallsiteTableEntryAddress:
+         {
+         auto *cteaRecord = reinterpret_cast<TR_RelocationRecordCallsiteTableEntryAddress *>(reloRecord);
+
+         self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            traceMsg(
+               self()->comp(),
+               "\n Callsite Table Entry Address: methodID=%d, callsiteIndex=%d ",
+               (uint32_t)cteaRecord->methodID(reloTarget),
+               cteaRecord->callsiteIndex(reloTarget));
+            }
+         }
+         break;
+
+      case TR_MethodTypeTableEntryAddress:
+         {
+         auto *mteaRecord = reinterpret_cast<TR_RelocationRecordMethodTypeTableEntryAddress *>(reloRecord);
+
+         self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            traceMsg(
+               self()->comp(),
+               "\n Method Type Table Entry Address: methodID=%d, cpIndex=%d ",
+                     (uint32_t)mteaRecord->methodID(reloTarget),
+                     mteaRecord->cpIndex(reloTarget));
             }
          }
          break;

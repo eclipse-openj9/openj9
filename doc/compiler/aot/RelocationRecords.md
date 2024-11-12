@@ -137,3 +137,7 @@ exact type of the API class for each relocation kind can be found in
 |`TR_CatchBlockCounter`|Relocates the address of the catch block counter in the `TR_PersistentMethodInfo` of the method being compiled.|
 |`TR_StartPC`|Relocates the startPC of the method being compiled. Only implemented and used on Power.|
 |`TR_MethodEnterExitHookAddress`|Relocates the address of the method enter or exit hook.|
+|`TR_ValidateDynamicMethodFromCallsiteIndex`|Validates the target method of an `invokeDynamic` invocation.|
+|`TR_ValidateHandleMethodFromCPIndex`|Validates the target method of an `invokeHandle` invocation.|
+|`TR_CallsiteTableEntryAddress`|Relocates the callsite table entry address.|
+|`TR_MethodTypeTableEntryAddress`|Relocates the method type table entry address.|

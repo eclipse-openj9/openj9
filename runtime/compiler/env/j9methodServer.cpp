@@ -1055,6 +1055,18 @@ TR_ResolvedJ9JITServerMethod::isSubjectToPhaseChange(TR::Compilation *comp)
       }
    }
 
+TR_OpaqueMethodBlock *
+TR_ResolvedJ9JITServerMethod::getTargetMethodFromMemberName(uintptr_t * invokeCacheArray, bool * isInvokeCacheAppendixNull)
+   {
+   _stream->write(JITServer::MessageType::ResolvedMethod_getTargetMethodFromMemberName, _remoteMirror, invokeCacheArray);
+   auto recv = _stream->read<TR_OpaqueMethodBlock *, bool>();
+   auto targetMethod = std::get<0>(recv);
+   auto invokeCacheAppendixNull = std::get<1>(recv);
+   if (isInvokeCacheAppendixNull)
+      *isInvokeCacheAppendixNull = invokeCacheAppendixNull;
+   return targetMethod;
+   }
+
 TR_ResolvedMethod *
 TR_ResolvedJ9JITServerMethod::getResolvedHandleMethod(TR::Compilation *comp, I_32 cpIndex, bool *unresolvedInCP,
                                                       bool *isInvokeCacheAppendixNull)
@@ -2322,6 +2334,34 @@ TR_ResolvedRelocatableJ9JITServerMethod::isUnresolvedMethodHandle(I_32 cpIndex)
    {
    TR_ASSERT(false, "should be unreachable");
    return true;
+   }
+
+bool
+TR_ResolvedRelocatableJ9JITServerMethod::isUnresolvedMethodTypeTableEntry(int32_t cpIndex)
+   {
+   bool unresolved = true;
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   auto *vmInfo = _fe->_compInfoPT->getClientData()->getOrCacheVMInfo(_stream);
+   if (vmInfo->_shareLambdaForm)
+      {
+      unresolved = TR_ResolvedJ9JITServerMethod::isUnresolvedMethodTypeTableEntry(cpIndex);
+      }
+#endif // defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   return unresolved;
+   }
+
+bool
+TR_ResolvedRelocatableJ9JITServerMethod::isUnresolvedCallSiteTableEntry(int32_t callSiteIndex)
+   {
+   bool unresolved = true;
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   auto *vmInfo = _fe->_compInfoPT->getClientData()->getOrCacheVMInfo(_stream);
+   if (vmInfo->_shareLambdaForm)
+      {
+      unresolved = TR_ResolvedJ9JITServerMethod::isUnresolvedCallSiteTableEntry(callSiteIndex);
+      }
+#endif // defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   return unresolved;
    }
 
 TR_OpaqueClassBlock *

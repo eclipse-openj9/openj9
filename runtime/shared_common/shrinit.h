@@ -199,6 +199,7 @@ typedef struct J9SharedClassesOptions {
 #define OPTION_TEST_DOUBLE_PAGESIZE "testDoublePageSize"
 #define OPTION_TEST_HALF_PAGESIZE "testHalfPageSize"
 #define OPTION_EXTRA_STARTUPHINTS_EQUALS "extraStartupHints="
+#define OPTION_SHARE_LAMBDAFORM "shareLambdaForm" /* internal option for dev/testing */
 
 /* public options for printallstats= and printstats=  */
 #define SUB_OPTION_PRINTSTATS_ALL "all"
