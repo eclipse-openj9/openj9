@@ -4024,17 +4024,13 @@ J9::Z::CodeGenerator::inlineDirectCall(
             resultReg = TR::TreeEvaluator::inlineStringLatin1Inflate(node, cg);
             return resultReg != NULL;
             }
-      break;
+         break;
       case TR::java_lang_StringCoding_hasNegatives:
          if (cg->getSupportsInlineStringCodingHasNegatives())
             {
             resultReg = TR::TreeEvaluator::inlineStringCodingHasNegatives(node, cg);
             return true;
             }
-      break;
-      case TR::com_ibm_jit_JITHelpers_transformedEncodeUTF16Big:
-         return resultReg = comp->getOption(TR_DisableUTF16BEEncoder) ? TR::TreeEvaluator::inlineUTF16BEEncodeSIMD(node, cg)
-                                                                      : TR::TreeEvaluator::inlineUTF16BEEncode    (node, cg);
          break;
       case TR::java_lang_Integer_stringSize:
       case TR::java_lang_Long_stringSize:

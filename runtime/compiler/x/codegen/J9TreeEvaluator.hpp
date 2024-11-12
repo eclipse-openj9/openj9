@@ -132,7 +132,6 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
     */
    static void generateFillInDataBlockSequenceForUnresolvedField (TR::CodeGenerator *cg, TR::Node *node, TR::Snippet *dataSnippet, bool isWrite, TR::Register *sideEffectRegister, TR::Register *dataSnippetRegister);
    static TR::Register *directCallEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *encodeUTF16Evaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *toUpperIntrinsicUTF16Evaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *toLowerIntrinsicUTF16Evaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *toUpperIntrinsicLatin1Evaluator(TR::Node *node, TR::CodeGenerator *cg);

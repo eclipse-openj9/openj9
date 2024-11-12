@@ -449,8 +449,6 @@ J9::Compilation::isConverterMethod(TR::RecognizedMethod rm)
       case TR::sun_nio_cs_ext_SBCS_Decoder_decodeSBCS:
       case TR::sun_nio_cs_UTF_8_Encoder_encodeUTF_8:
       case TR::sun_nio_cs_UTF_8_Decoder_decodeUTF_8:
-      case TR::sun_nio_cs_UTF_16_Encoder_encodeUTF16Big:
-      case TR::sun_nio_cs_UTF_16_Encoder_encodeUTF16Little:
          return true;
       default:
          return false;
@@ -496,14 +494,6 @@ J9::Compilation::canTransformConverterMethod(TR::RecognizedMethod rm)
 
       case TR::sun_nio_cs_ext_SBCS_Decoder_decodeSBCS:
          return genTRxx;
-
-      // devinmp: I'm not sure whether these could be transformed in AOT, but
-      // they haven't been so far.
-      case TR::sun_nio_cs_UTF_16_Encoder_encodeUTF16Little:
-         return !aot && self()->cg()->getSupportsEncodeUtf16LittleWithSurrogateTest();
-
-      case TR::sun_nio_cs_UTF_16_Encoder_encodeUTF16Big:
-         return !aot && self()->cg()->getSupportsEncodeUtf16BigWithSurrogateTest();
 
       default:
           return false;

@@ -342,9 +342,6 @@ JIT_HELPER(icallVMprJavaSendVirtualL);
 JIT_HELPER(icallVMprJavaSendVirtualF);
 JIT_HELPER(icallVMprJavaSendVirtualD);
 
-JIT_HELPER(encodeUTF16Big);
-JIT_HELPER(encodeUTF16Little);
-
 #ifdef J9VM_OPT_JAVA_CRYPTO_ACCELERATION
 JIT_HELPER(doAESENCEncrypt);
 JIT_HELPER(doAESENCDecrypt);
@@ -368,9 +365,6 @@ JIT_HELPER(X87floatRemainder);
 JIT_HELPER(SSEfloatRemainderIA32Thunk);
 JIT_HELPER(SSEdoubleRemainderIA32Thunk);
 JIT_HELPER(SSEdouble2LongIA32);
-
-JIT_HELPER(encodeUTF16Big);
-JIT_HELPER(encodeUTF16Little);
 
 JIT_HELPER(SMPVPicInit);
 #endif /* TR_HOST_64BIT */
@@ -438,8 +432,6 @@ JIT_HELPER(__forwardWordArrayCopy_dp);
 JIT_HELPER(__forwardHalfWordArrayCopy_dp);
 JIT_HELPER(__referenceArrayCopy);
 JIT_HELPER(__generalArrayCopy);
-JIT_HELPER(__encodeUTF16Big);
-JIT_HELPER(__encodeUTF16Little);
 
 JIT_HELPER(__quadWordArrayCopy_vsx);
 JIT_HELPER(__forwardQuadWordArrayCopy_vsx);
@@ -1225,8 +1217,6 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_AMD64arrayTranslateTRTO,                    (void *)arrayTranslateTRTO,        TR_Helper);
    SET(TR_AMD64arrayTranslateTROTNoBreak,             (void *)arrayTranslateTROTNoBreak, TR_Helper);
    SET(TR_AMD64arrayTranslateTROT,                    (void *)arrayTranslateTROT,        TR_Helper);
-   SET(TR_AMD64encodeUTF16Big,                        (void *)encodeUTF16Big,            TR_Helper);
-   SET(TR_AMD64encodeUTF16Little,                     (void *)encodeUTF16Little,         TR_Helper);
 #ifdef J9VM_OPT_JAVA_CRYPTO_ACCELERATION
    SET(TR_AMD64doAESENCEncrypt,                       (void *)doAESENCEncrypt,           TR_Helper);
    SET(TR_AMD64doAESENCDecrypt,                       (void *)doAESENCDecrypt,           TR_Helper);
@@ -1273,8 +1263,6 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_IA32arrayTranslateTRTO,                     (void *)arrayTranslateTRTO,        TR_Helper);
    SET(TR_IA32arrayTranslateTROTNoBreak,              (void *)arrayTranslateTROTNoBreak, TR_Helper);
    SET(TR_IA32arrayTranslateTROT,                     (void *)arrayTranslateTROT,        TR_Helper);
-   SET(TR_IA32encodeUTF16Big,                         (void *)encodeUTF16Big,            TR_Helper);
-   SET(TR_IA32encodeUTF16Little,                      (void *)encodeUTF16Little,         TR_Helper);
 
    SET(TR_jitAddPicToPatchOnClassUnload,              (void *)jitAddPicToPatchOnClassUnload, TR_Helper);
 
@@ -1390,8 +1378,6 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_PPCarrayTranslateTRTO255,    (void *) __arrayTranslateTRTO255, TR_Helper);
    SET(TR_PPCarrayTranslateTROT255,    (void *) __arrayTranslateTROT255, TR_Helper);
    SET(TR_PPCarrayTranslateTROT,       (void *) __arrayTranslateTROT,    TR_Helper);
-   SET(TR_PPCencodeUTF16Big,           (void *) __encodeUTF16Big,        TR_Helper);
-   SET(TR_PPCencodeUTF16Little,        (void *) __encodeUTF16Little,     TR_Helper);
 
 #elif defined(TR_HOST_ARM)
    SET(TR_ARMdouble2Long,                                (void *) __double2Long,                                  TR_Helper);

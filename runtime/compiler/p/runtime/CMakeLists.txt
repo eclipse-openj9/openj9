@@ -40,7 +40,6 @@ j9jit_files(
 	${omr_SOURCE_DIR}/compiler/p/runtime/OMRCodeCacheConfig.cpp
 	p/runtime/J9PPCArrayCopy.spp
 	p/runtime/J9PPCArrayTranslate.spp
-	p/runtime/J9PPCEncodeUTF16.spp
 	p/runtime/J9PPCCRC32.spp
 	p/runtime/J9PPCCRC32_wrapper.c
 	p/runtime/CodeSync.cpp

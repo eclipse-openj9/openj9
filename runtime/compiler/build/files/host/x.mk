@@ -26,7 +26,6 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/x/runtime/X86RelocationTarget.cpp \
     compiler/x/runtime/X86ArrayTranslate.nasm \
     compiler/x/runtime/X86Codert.nasm \
-    compiler/x/runtime/X86EncodeUTF16.nasm \
     compiler/x/runtime/X86LockReservation.nasm \
     compiler/x/runtime/X86PicBuilder.nasm \
     compiler/x/runtime/X86Unresolveds.nasm

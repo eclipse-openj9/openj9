@@ -29,7 +29,6 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/p/runtime/J9PPCArrayTranslate.spp \
     compiler/p/runtime/J9PPCCRC32.spp \
     compiler/p/runtime/J9PPCCRC32_wrapper.c \
-    compiler/p/runtime/J9PPCEncodeUTF16.spp \
     compiler/p/runtime/Math.spp \
     compiler/p/runtime/PPCHWProfiler.cpp \
     compiler/p/runtime/PPCRelocationTarget.cpp \

@@ -138,8 +138,6 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
     */
    static TR::Register *inlineStringHashCode(TR::Node *node, TR::CodeGenerator *cg, bool isCompressed);
    static TR::Register *inlineVectorizedHashCode(TR::Node* node, TR::CodeGenerator* cg);
-   static TR::Register *inlineUTF16BEEncodeSIMD(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register* inlineUTF16BEEncode    (TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *inlineCRC32CUpdateBytes(TR::Node *node, TR::CodeGenerator *cg, bool isDirectBuffer);
 
    static TR::Register *zdloadEvaluator(TR::Node *node, TR::CodeGenerator *cg);
