@@ -502,8 +502,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          fieldRecord->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
          fieldRecord->setConstantPool(reloTarget, reinterpret_cast<uintptr_t>(aotCI->_constantPool));
          fieldRecord->setCpIndex(reloTarget, static_cast<uintptr_t>(aotCI->_cpIndex));
-         fieldRecord->setClassChainOffsetInSharedCache(reloTarget, aotCI->_classChainOffset,
-                                                       self(), aotCI->getAOTCacheClassChainRecord());
+         fieldRecord->setClassChainOffsetInSharedCache(reloTarget, aotCI, self());
          }
          break;
 
@@ -601,8 +600,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          vsfRecord->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
          vsfRecord->setConstantPool(reloTarget, reinterpret_cast<uintptr_t>(aotCI->_constantPool));
          vsfRecord->setCpIndex(reloTarget, aotCI->_cpIndex);
-         vsfRecord->setRomClassOffsetInSharedCache(reloTarget, romClassOffsetInSharedCache,
-                                                   self(), aotCI->getAOTCacheClassChainRecord());
+         vsfRecord->setRomClassOffsetInSharedCache(reloTarget, romClassOffsetInSharedCache, self(), aotCI);
          }
          break;
 
@@ -616,8 +614,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          vcRecord->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
          vcRecord->setConstantPool(reloTarget, reinterpret_cast<uintptr_t>(aotCI->_constantPool));
          vcRecord->setCpIndex(reloTarget, aotCI->_cpIndex);
-         vcRecord->setClassChainOffsetInSharedCache(reloTarget, aotCI->_classChainOffset,
-                                                    self(), aotCI->getAOTCacheClassChainRecord());
+         vcRecord->setClassChainOffsetInSharedCache(reloTarget, aotCI, self());
          }
          break;
 
@@ -671,7 +668,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          pRecord->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
          pRecord->setConstantPool(reloTarget, reinterpret_cast<uintptr_t>(owningMethod->constantPool()));
          pRecord->setCpIndex(reloTarget, cpIndexOrData);
-         pRecord->setRomClassOffsetInSharedCache(reloTarget, romClassOffsetInSharedCache, self(), classChainRecord);
+         pRecord->setRomClassOffsetInSharedCache(reloTarget, romClassOffsetInSharedCache, self(), inlinedCodeClass, classChainRecord);
          pRecord->setClassChainIdentifyingLoaderOffsetInSharedCache(reloTarget, classChainIdentifyingLoaderOffsetInSharedCache,
                                                                     self(), classChainRecord);
          pRecord->setClassChainForInlinedMethod(reloTarget, classChainOffsetInSharedCache, self(), classChainRecord);
@@ -758,8 +755,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
 
          vacRecord->setClassChainIdentifyingLoaderOffset(reloTarget, classChainOffsetInSharedCacheForCL,
                                                          self(), aotCI->getAOTCacheClassChainRecord());
-         vacRecord->setClassChainOffsetForClassBeingValidated(reloTarget, aotCI->_classChainOffset,
-                                                              self(), aotCI->getAOTCacheClassChainRecord());
+         vacRecord->setClassChainOffsetForClassBeingValidated(reloTarget, aotCI, self());
          }
          break;
 
@@ -783,8 +779,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
 
          cbnRecord->setClassID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_class));
          cbnRecord->setBeholderID(reloTarget, symValManager->getSymbolIDFromValue(svmRecord->_beholder));
-         cbnRecord->setClassChainOffset(reloTarget, svmRecord->_classChainOffset,
-                                        self(), svmRecord->getAOTCacheClassChainRecord());
+         cbnRecord->setClassChainOffset(reloTarget, svmRecord, self());
          }
          break;
 
@@ -801,8 +796,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
 
          pcRecord->setClassID(reloTarget, symValManager->getSymbolIDFromValue(classToValidate));
          //store the classchain's offset for the class that needs to be validated in the second run
-         pcRecord->setClassChainOffset(reloTarget, svmRecord->_classChainOffset,
-                                       self(), svmRecord->getAOTCacheClassChainRecord());
+         pcRecord->setClassChainOffset(reloTarget, svmRecord, self());
          pcRecord->setClassChainOffsetForClassLoader(reloTarget, classChainOffsetInSharedCacheForCL,
                                                      self(), svmRecord->getAOTCacheClassChainRecord());
          }
@@ -892,8 +886,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          scmRecord->setSystemClassID(reloTarget, symValManager->getSymbolIDFromValue(classToValidate));
          // Store class chain to get name of class. Checking the class chain for
          // this record eliminates the need for a separate class chain validation.
-         scmRecord->setClassChainOffset(reloTarget, svmRecord->_classChainOffset,
-                                        self(), svmRecord->getAOTCacheClassChainRecord());
+         scmRecord->setClassChainOffset(reloTarget, svmRecord, self());
          }
          break;
 
@@ -943,8 +936,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          ccRecord->setClassID(reloTarget, symValManager->getSymbolIDFromValue(classToValidate));
          // Store class chain to get name of class. Checking the class chain for
          // this record eliminates the need for a separate class chain validation.
-         ccRecord->setClassChainOffset(reloTarget, svmRecord->_classChainOffset,
-                                       self(), svmRecord->getAOTCacheClassChainRecord());
+         ccRecord->setClassChainOffset(reloTarget, svmRecord, self());
          }
          break;
 
