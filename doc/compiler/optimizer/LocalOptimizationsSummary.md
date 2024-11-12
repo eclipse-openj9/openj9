@@ -38,7 +38,7 @@ evaluated and the resulting register is used at each use of the stored value).
 Commoning is done on syntactic equivalence.
 
 ## Local Value Propagation
-Local [Value Propagation](https://github.com/eclipse/omr/blob/master/doc/compiler/optimizer/ValuePropagation.md)
+Local [Value Propagation](https://github.com/eclipse-omr/omr/blob/master/doc/compiler/optimizer/ValuePropagation.md)
 performs constant, type and relational propagation within a block.
 It propagates constants and types based on assignments and performs removal
 of subsumed checks and compares. It also performs devirtualization

@@ -321,7 +321,7 @@ target_link_libraries(j9vm_main_wrapper
 ###
 
 # set up glue library target names
-# See https://github.com/eclipse/omr/blob/master/doc/BuildingWithCMake.md
+# See https://github.com/eclipse-omr/omr/blob/master/doc/BuildingWithCMake.md
 set(OMR_GC_GLUE_TARGET "j9vm_gc_glue" CACHE INTERNAL "")
 set(OMR_GC_GLUE_FULL_TARGET "j9vm_gc_glue_full" CACHE INTERNAL "")
 set(OMR_RAS_GLUE_TARGET "j9vm_ras_glue" CACHE INTERNAL "")

@@ -26,7 +26,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 
 When there is a call to a method, the call can be executed in a cheaper way rather than making a call out to the target
 method. The inlined fast path converts a recognized call into a cheaper sequence of IL trees. One example is a call to a
-`java.lang.Math.abs()`. It can be converted into an `iabs` (absolute value of integer) [opcode](https://github.com/eclipse/omr/blob/e3a15a993c8aba80582aa1d6f3071e122acbd4c4/compiler/il/OMROpcodes.enum#L1911). The call to `java.lang.Math.abs()` can be eliminated because there is a better
+`java.lang.Math.abs()`. It can be converted into an `iabs` (absolute value of integer) [opcode](https://github.com/eclipse-omr/omr/blob/e3a15a993c8aba80582aa1d6f3071e122acbd4c4/compiler/il/OMROpcodes.enum#L1911). The call to `java.lang.Math.abs()` can be eliminated because there is a better
 representation of the execution in IL, which is cheaper. This is a basic pattern of taking a call, recognizing them
 in a certain way, and optimizing it, sometimes using opcode, sometimes using a sequence of IL trees etc.
 
@@ -34,8 +34,8 @@ in a certain way, and optimizing it, sometimes using opcode, sometimes using a s
 There are multiple locations in our code where we do inline fast path optimizations:
 
 1. [IL Generator](https://github.com/eclipse-openj9/openj9/tree/master/runtime/compiler/ilgen)
-2. [Inliner](https://github.com/eclipse/omr/blob/master/compiler/optimizer/Inliner.cpp)
-3. [RecognizedCallTransformer](https://github.com/eclipse/omr/blob/master/compiler/optimizer/OMRRecognizedCallTransformer.cpp)
+2. [Inliner](https://github.com/eclipse-omr/omr/blob/master/compiler/optimizer/Inliner.cpp)
+3. [RecognizedCallTransformer](https://github.com/eclipse-omr/omr/blob/master/compiler/optimizer/OMRRecognizedCallTransformer.cpp)
 4. [UnsafeFastPath](https://github.com/eclipse-openj9/openj9/blob/master/runtime/compiler/optimizer/UnsafeFastPath.cpp)
 
 ## Inlining Fast Path Optimization In ILGen
@@ -45,7 +45,7 @@ in Java bytecodes. It must track how many things are on the stack. It is not a v
 transformations. It is easier to do the transformation on well-formed trees rather than during the trees are being generated.
 
 ILGen should be kept as simple as possible. The task of optimizations should not be mixed with the task of generating IL.
-After IL is generated, [ilgenStrategyOpts](https://github.com/eclipse/omr/blob/e3a15a993c8aba80582aa1d6f3071e122acbd4c4/compiler/optimizer/OMROptimizer.cpp#L535-L544) will run before other optimizations see the IL.
+After IL is generated, [ilgenStrategyOpts](https://github.com/eclipse-omr/omr/blob/e3a15a993c8aba80582aa1d6f3071e122acbd4c4/compiler/optimizer/OMROptimizer.cpp#L535-L544) will run before other optimizations see the IL.
 `ilgenStrategyOpts` always runs as soon as IL is generated. For example for normal inlining, after ILGen runs to produce the IL
 for the callee method, `ilgenStrategyOpts` also runs on the generated IL before the method is inlined into the caller.
 
@@ -102,7 +102,7 @@ call in `ConcurrentHashMap` will never see a `NULL` array object. It will be gua
 Things like this can be determined during the compilation. Therefore, all the checking can be skipped. We could just do
 the load or store.
 
-`UnsafeFastPath` also [runs as a part of](https://github.com/eclipse/omr/blob/e3a15a993c8aba80582aa1d6f3071e122acbd4c4/compiler/optimizer/OMROptimizer.cpp#L543) `ilgenStrategyOpts` before `recognizedCallTransformer`.
+`UnsafeFastPath` also [runs as a part of](https://github.com/eclipse-omr/omr/blob/e3a15a993c8aba80582aa1d6f3071e122acbd4c4/compiler/optimizer/OMROptimizer.cpp#L543) `ilgenStrategyOpts` before `recognizedCallTransformer`.
 It does a relatively simple substitution of certain calls very early without adding control flow before the inliner even
 runs (so it never sees these calls in the IL trees).
 

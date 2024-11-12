@@ -46,7 +46,7 @@ What is Eclipse OpenJ9?
 
 Eclipse OpenJ9 is an independent implementation of a Java Virtual Machine. "Independent implementation"
 means it was built using the Java Virtual Machine specification without using any code from any other Java
-Virtual Machine. 
+Virtual Machine.
 
 The OpenJ9 JVM combines with the Java Class libraries from OpenJDK to create a complete JDK tuned for
 footprint, performance, and reliability that is well suited for cloud deployments.
@@ -54,7 +54,7 @@ footprint, performance, and reliability that is well suited for cloud deployment
 The original source contribution to OpenJ9 came from the IBM "J9" JVM which has been used in production
 by thousands of Java applications for the last two decades.  In September 2017, IBM completed open sourcing
 the J9 JVM as "Eclipse OpenJ9" at the Eclipse Foundation. Significant parts of J9 are also open source
-at the [Eclipse OMR project](https://github.com/eclipse/omr). OpenJ9 has a permissive license (Apache
+at the [Eclipse OMR project](https://github.com/eclipse-omr/omr). OpenJ9 has a permissive license (Apache
 License 2.0 or Eclipse Public License 2.0 with a secondary compatibility license for the OpenJDK project's
 GPLv2 license) that is designed to allow OpenJDK to be built with the OpenJ9 JVM.  Please see our
 [LICENSE file](https://github.com/eclipse-openj9/openj9/blob/master/LICENSE) for more details.

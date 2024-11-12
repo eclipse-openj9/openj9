@@ -116,11 +116,11 @@ You can request a Pull Request build from the Eclipse OpenJ9 repository - [openj
 
 ##### Dependent Changes
 
-- If you have dependent change(s) in either eclipse/omr, eclipse-openj9/openj9-omr, or ibmruntimes/openj9-openjdk-jdk\*, you can build & test with all needed changes
+- If you have dependent change(s) in either eclipse-omr/omr, eclipse-openj9/openj9-omr, or ibmruntimes/openj9-openjdk-jdk\*, you can build & test with all needed changes
 - Request a build by including the PR ref or branch name in your trigger comment
 - Ex. Dependent change in OMR Pull Request `#123`
     - `Jenkins test sanity xlinux jdk8 depends eclipse/omr#123`
-- Ex. Dependent change in eclipse/omr master branch (useful if a dependent OMR PR is already merged)
+- Ex. Dependent change in eclipse-omr/omr master branch (useful if a dependent OMR PR is already merged)
     - `Jenkins test sanity xlinux jdk8 depends eclipse/omr#master`
 - Ex. Dependent change in OpenJ9-OMR Pull Request `#456`
     - `Jenkins test sanity xlinux jdk8 depends eclipse-openj9/openj9-omr#456`
@@ -243,7 +243,7 @@ Infrastructure pipelines are available [**here**](https://openj9-jenkins.osuosl.
 - Mirror-OMR-to-OpenJ9-OMR
     - [![Build Status](https://openj9-jenkins.osuosl.org/buildStatus/icon?job=Mirror-OMR-to-OpenJ9-OMR)](https://openj9-jenkins.osuosl.org/job/Mirror-OMR-to-OpenJ9-OMR)
     - Description:
-        - Mirrors [eclipse/omr/master](https://github.com/eclipse/omr/tree/master) to [eclipse-openj9/openj9-omr/master](https://github.com/eclipse-openj9/openj9-omr/tree/master)
+        - Mirrors [eclipse-omr/omr/master](https://github.com/eclipse-omr/omr/tree/master) to [eclipse-openj9/openj9-omr/master](https://github.com/eclipse-openj9/openj9-omr/tree/master)
         - Triggers `Pipeline-OMR-Acceptance` when there is new content
     - Trigger:
         - Build periodically, 15 minutes

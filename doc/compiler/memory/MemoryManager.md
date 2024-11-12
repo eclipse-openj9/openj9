@@ -23,23 +23,23 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 # OpenJ9 Compiler Memory Manager
 
 The JIT Compiler in OpenJ9 extends the OMR Compiler. Therefore, it
-also extendes the OMR Compiler's Memory Manager, consequently 
-managing its own memory for the same reasons as the OMR Compiler. 
-However, in order to ensure that all memory in the JVM is accounted 
+also extendes the OMR Compiler's Memory Manager, consequently
+managing its own memory for the same reasons as the OMR Compiler.
+However, in order to ensure that all memory in the JVM is accounted
 for, as well as to minimize the likelihood of memory leaks,
-the OpenJ9 Compiler Memory Manager uses JVM APIs instead 
+the OpenJ9 Compiler Memory Manager uses JVM APIs instead
 of OS APIs directly.
 
-Some parts of the memory manager override the OMR implementations, while 
-others either extend or directly use them. For information on any terms 
-not documented here, refer to the documentation found in 
-[eclipse/omr](https://github.com/eclipse/omr/blob/master/doc/compiler/memory/MemoryManager.md).
+Some parts of the memory manager override the OMR implementations, while
+others either extend or directly use them. For information on any terms
+not documented here, refer to the documentation found in
+[eclipse-omr/omr](https://github.com/eclipse-omr/omr/blob/master/doc/compiler/memory/MemoryManager.md).
 
 ## Compiler Memory Manager Hierarchy
 
 ### Low Level Allocators
-Low Level Allocators cannot be used by STL containers. They are 
-generally used by High Level Allocators as the underlying 
+Low Level Allocators cannot be used by STL containers. They are
+generally used by High Level Allocators as the underlying
 provider of memory.
 
 ```
@@ -88,17 +88,17 @@ provider of memory.
 ```
 
 #### J9::SystemSegmentProvider
-`J9::SystemSegmentProvider` implements `TR::SegmentAllocator`. 
-It uses `J9::J9SegmentProvider` (see below) in order to allocate 
-`TR::MemorySegment`s and uses `TR::RawAllocator` for all its 
+`J9::SystemSegmentProvider` implements `TR::SegmentAllocator`.
+It uses `J9::J9SegmentProvider` (see below) in order to allocate
+`TR::MemorySegment`s and uses `TR::RawAllocator` for all its
 internal memory management requirements. As part of its initialization, it
-preallocates a segment of memory. This is the default Low 
+preallocates a segment of memory. This is the default Low
 Level Allocator used by the Compiler. However, the compiler will
-use `OMR::DebugSegmentProvider` instead of `J9::SystemSegmentProvider` 
+use `OMR::DebugSegmentProvider` instead of `J9::SystemSegmentProvider`
 when the `TR_EnableScratchMemoryDebugging` option is enabled.
 
 #### J9::DebugSegmentProvider
-`J9::DebugSegmentProvider` implements `TR::SegmentProvider`. 
+`J9::DebugSegmentProvider` implements `TR::SegmentProvider`.
 This object exists specifically for the Debugger Extensions. It
 uses `dbgMalloc`/`dbgFree` to allocate and free memory.
 
@@ -115,7 +115,7 @@ Library provides APIs to allocate/deallocate segments of memory. These
 segments show up in the `Internal Memory` section of a javacore. They
 allow the Compiler to minimize the number of times it needs to request
 memory from the Port Library (an expensive operation for the allocation
-patterns exhibited by the Compiler). Therefore, in some sense, 
+patterns exhibited by the Compiler). Therefore, in some sense,
 `J9::J9SegmentProvider` is the truest allocator of segments as defined by
 the Port Library. It should only be used as the backing provider of
 other Allocators.
@@ -134,24 +134,24 @@ deallocation between compilations.
 
 ### High level Allocators
 High Level Allocators can be used by STL containers by wrapping them
-in a `TR::typed_allocator` (see below). They generally use a Low 
+in a `TR::typed_allocator` (see below). They generally use a Low
 Level Allocator as their underlying provider of memory.
 
 #### TR::PersistentAllocator
-`TR::PersistentAllocator` is used to allocate memory that persists 
-for the lifetime of the JVM. This class overrides `OMR::PersistentAllocator`. 
-It uses `J9::SegmentAllocator` to allocate memory and `TR::RawAllocator` 
-for all its internal memory management requirements. It receives these 
-allocators via the `TR::PersistentAllocatorKit`. All allocations/deallocations 
-are thread safe. Therefore, there is extra overhead due to the need to 
-acquire a lock before each allocation/dellocation. It also contains an automatic 
-conversion (which wraps it in a `TR::typed_allocator`) for ease of use with 
+`TR::PersistentAllocator` is used to allocate memory that persists
+for the lifetime of the JVM. This class overrides `OMR::PersistentAllocator`.
+It uses `J9::SegmentAllocator` to allocate memory and `TR::RawAllocator`
+for all its internal memory management requirements. It receives these
+allocators via the `TR::PersistentAllocatorKit`. All allocations/deallocations
+are thread safe. Therefore, there is extra overhead due to the need to
+acquire a lock before each allocation/dellocation. It also contains an automatic
+conversion (which wraps it in a `TR::typed_allocator`) for ease of use with
 STL containers.
 
 #### TR::RawAllocator
-`TR::RawAllocator` uses `j9mem_allocate_memory`/`j9mem_free_memory` to allocate 
-and free memory. This class overrides `TR::RawAllocator` defined in OMR. It also 
-contains an automatic conversion (which wraps it in a 
+`TR::RawAllocator` uses `j9mem_allocate_memory`/`j9mem_free_memory` to allocate
+and free memory. This class overrides `TR::RawAllocator` defined in OMR. It also
+contains an automatic conversion (which wraps it in a
 `TR::typed_allocator`) for ease of use with STL containers.
 
 
@@ -164,22 +164,22 @@ The Compiler deals with two categories of allocations:
 ### Allocations only useful during a compilation
 Before a Compilation Thread begins going through the list of methods to
 be compiled, it initializes a `J9::SegmentCache` local object. As stated
-above, this will preallocate a segment. Then, it goes through the list. 
-At the start of a compilation, it initializes a `J9::SystemSegmentProvider`, 
-passing in the `J9::SegmentCache` as the backing provider (technically it is 
+above, this will preallocate a segment. Then, it goes through the list.
+At the start of a compilation, it initializes a `J9::SystemSegmentProvider`,
+passing in the `J9::SegmentCache` as the backing provider (technically it is
 passed a reference to a `J9::J9SegmentProvider`, the reason for which is described
 below). As stated above, `J9::SystemSegmentProvider` will allocate a
 segment as part of its initialization. However, the size of the segment it
 allocates is the same as the size of the segment preallocated by
-`J9::SegmentCache`. Therefore, this operation becomes very inexpensive. If 
+`J9::SegmentCache`. Therefore, this operation becomes very inexpensive. If
 `TR_EnableScratchMemoryDebugging` is enabled then
-`OMR::DebugSegmentProvider` is used instead. The rest of the process is similar 
-to that of OMR; it initializes a local `TR::Region` object, and a local 
-`TR_Memory` object which uses the `TR::Region` for general allocations 
-(and sub Regions), as well as for the first `TR::StackMemoryRegion`. 
+`OMR::DebugSegmentProvider` is used instead. The rest of the process is similar
+to that of OMR; it initializes a local `TR::Region` object, and a local
+`TR_Memory` object which uses the `TR::Region` for general allocations
+(and sub Regions), as well as for the first `TR::StackMemoryRegion`.
 
-At the end of the compilation, the `TR::Region` and `J9::SystemSegmentProvider` 
-(or `OMR::DebugSegmentProvider`) go out of scope, invoking their 
+At the end of the compilation, the `TR::Region` and `J9::SystemSegmentProvider`
+(or `OMR::DebugSegmentProvider`) go out of scope, invoking their
 destructors and freeing all the memory. However, when
 `J9::SystemSegmentProvider` releases its memory via `J9::SegmentCache`, the
 latter will free all memory **EXCEPT** the initial segment it preallocated.
@@ -192,20 +192,20 @@ memory.
 
 The reason why `J9::SystemSegmentProvider` is passed in a reference to
 `J9::J9SegmentProvider` and not `J9::SegmentCache` is because the code that
-instantiates `J9::SystemSegmentProvider` is common for both compilations on 
-Compilation Threads AND compilations on Application Threads. When a compilation 
+instantiates `J9::SystemSegmentProvider` is common for both compilations on
+Compilation Threads AND compilations on Application Threads. When a compilation
 occurs on an Application Thread, `J9::SegmentAllocator` is instantiated instead.
 
-There are a lot of places (thanks to `TR_ALLOC` and related macros) 
-where memory is explicity allocated. However, `TR::Region` 
+There are a lot of places (thanks to `TR_ALLOC` and related macros)
+where memory is explicity allocated. However, `TR::Region`
 should be the allocator used for all new code as much as possible.
 
 ### Allocations that persist for the lifetime of the JVM
-The Compiler initializes a `TR::PeristentAllocator` object when 
-it is first initialized (close to bootstrap time). For the most 
-part it allocates persistent memory either directly using the global 
-`jitPersistentAlloc`/`jitPersistentFree` or via the object methods 
-added through `TR_ALLOC` (and related macros). `TR::PersistentAllocator` 
+The Compiler initializes a `TR::PeristentAllocator` object when
+it is first initialized (close to bootstrap time). For the most
+part it allocates persistent memory either directly using the global
+`jitPersistentAlloc`/`jitPersistentFree` or via the object methods
+added through `TR_ALLOC` (and related macros). `TR::PersistentAllocator`
 should be the allocator used for all new code as much as possible.
 
 
@@ -221,23 +221,23 @@ copy-constructable. The objects die in LIFO order when the Region is destroyed.:
 to create a `TR::Region` that used `TR::PersistentAllocator` as its backing
 provider, they would simply need to extend `TR::SegmentProvider`, perhaps
 calling it `TR::PersistentSegmentProvider`, and have it use
-`TR::PersistentAllocator`. The `TR::Region` would then be provided this 
+`TR::PersistentAllocator`. The `TR::Region` would then be provided this
 `TR::PersistentSegmentProvider` object.
 
 The mechanism for limiting the memory usage during compilation can be summarized as:
 
-Default size of system segments allocatd by `J9::SystemSegmentProvider` is 16 MB. 
+Default size of system segments allocatd by `J9::SystemSegmentProvider` is 16 MB.
 These system segments are then carved into smaller segments based on the size requested
-which is rounded up to 64 KB. The cumulative memory usage of these system segments is limited 
+which is rounded up to 64 KB. The cumulative memory usage of these system segments is limited
 by the value of the option `scratchSpaceLimit`. When the scratch space limit is not a multiple
 of system segment size, it is possible that the total memory allocated using system segments
 would go beyond the scratch space limit. However, the logic in `J9::SystemSegmentProvider::request`
 would ensures that the compiler does not touch memory beyond the scratch space limit.
-So the physical memory usage due to scratch space stays with the limit specified. 
+So the physical memory usage due to scratch space stays with the limit specified.
 If a request is made that would cause physical memory usage to go beyond the limit,
 then `J9::SystemSegmentProvider::request` would throw `std::bad_alloc`.
 
 When allocating a new system segment `J9::SegmentAllocator::allocate` also checks that the system
 has enough free physical memory. This is done by verifying that the free physical memory is more
-than the system segment size (=16 MB) plus an additional buffer, which is governed by the 
+than the system segment size (=16 MB) plus an additional buffer, which is governed by the
 option `safeReservePhysicalMemoryValue`. If this condition fails, then the compilation thread is suspended.

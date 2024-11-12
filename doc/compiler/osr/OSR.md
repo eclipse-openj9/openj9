@@ -1,7 +1,7 @@
 
 # Introduction
 
-This document describes several OpenJ9 optimizations that use the OSR mechanism described in [OMR OSR document](https://github.com/eclipse/omr/blob/master/doc/compiler/osr/OSR.md). These optimizations include:
+This document describes several OpenJ9 optimizations that use the OSR mechanism described in [OMR OSR document](https://github.com/eclipse-omr/omr/blob/master/doc/compiler/osr/OSR.md). These optimizations include:
 
 * Full Speed Debug (FSD)
 * Next Generation Hot Code Replacement (nextGenHCR)
@@ -43,7 +43,7 @@ The guard would be patched if the method it protected was redefined - this stops
 The control-flow diamond this would create is the reason for the throughput performance overhead mentioned previously -
 the cold call on the taken side of the guard causes most analyses to become very conservative due to the arbitrary nature of the code the call may run.
 
-Unlike traditional HCR, nextGenHCR implements HCR using OSR. OSR is described in detail in [OMR OSR document](https://github.com/eclipse/omr/blob/master/doc/compiler/osr/OSR.md). NextGenHCR will transition back to the VM when
+Unlike traditional HCR, nextGenHCR implements HCR using OSR. OSR is described in detail in [OMR OSR document](https://github.com/eclipse-omr/omr/blob/master/doc/compiler/osr/OSR.md). NextGenHCR will transition back to the VM when
 a redefinition occurs, rather than simply calling the redefined method. This eliminates the control-flow diamond
 and allows more optimizations to happen on the inlined path.
 
