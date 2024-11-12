@@ -369,6 +369,8 @@ public:
 
    J9ROMClass *startingROMClassOfClassChain(UDATA *classChain);
 
+   uintptr_t startingROMClassOffsetOfClassChain(void *chain);
+
    virtual uintptr_t getClassChainOffsetIdentifyingLoader(TR_OpaqueClassBlock *clazz, uintptr_t **classChain = NULL);
 
 #if defined(J9VM_OPT_JITSERVER)
