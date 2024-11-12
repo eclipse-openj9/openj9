@@ -250,6 +250,18 @@ class RealRegisterManager
    TR::CodeGenerator*   _cg;
    };
 
+bool J9::Z::CHelperLinkage::getIsFastPathOnly(TR::Node * callNode)
+   {
+   auto opCode = callNode->getOpCodeValue();
+   if (opCode == TR::instanceof)
+      {
+      return true;
+      }
+
+   TR::SymbolReference * ref = callNode->getSymbolReference();
+   return ref == cg()->comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_checkAssignable);
+   }
+
 /**   \brief Build a JIT helper call.
  *    \details
  *    It generates sequence that prepares parameters for the JIT helper function and generate a helper call.
@@ -264,7 +276,7 @@ TR::Register * J9::Z::CHelperLinkage::buildDirectDispatch(TR::Node * callNode, T
    RealRegisterManager RealRegisters(cg());
    bool isHelperCallWithinICF = deps != NULL;
    // TODO: Currently only jitInstanceOf is fast path helper. Need to modify following condition if we add support for other fast path only helpers
-   bool isFastPathOnly = callNode->getOpCodeValue() == TR::instanceof;
+   bool isFastPathOnly = getIsFastPathOnly(callNode);
    traceMsg(comp(),"%s: Internal Control Flow in OOL : %s\n",callNode->getOpCode().getName(),isHelperCallWithinICF  ? "true" : "false" );
    for (int i = TR::RealRegister::FirstGPR; i < TR::RealRegister::NumRegisters; i++)
       {

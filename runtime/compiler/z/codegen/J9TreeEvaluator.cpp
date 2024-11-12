@@ -11627,6 +11627,42 @@ static bool inlineIsAssignableFrom(TR::Node *node, TR::CodeGenerator *cg)
    return true;
    }
 
+TR::Register *J9::Z::TreeEvaluator::inlineCheckAssignableFromEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::Register *thisClassReg = cg->evaluate(node->getFirstChild());
+   TR::Register *checkClassReg = cg->evaluate(node->getSecondChild());
+
+   TR::Register *resultReg = cg->allocateRegister();
+   TR::LabelSymbol *helperCallLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
+
+   TR::RegisterDependencyConditions* deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 3, cg);
+   deps->addPostCondition(thisClassReg, TR::RealRegister::AssignAny);
+   deps->addPostConditionIfNotAlreadyInserted(checkClassReg, TR::RealRegister::AssignAny);
+   deps->addPostCondition(resultReg, TR::RealRegister::AssignAny);
+
+   /*
+    * TODO: add inlined tests (classEqualityTest, SuperclassTest, etc)
+    * Inlined tests will be used when possible, or will jump to the OOL section
+    * and perform the tests using the CHelper when not possible
+   */
+
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, helperCallLabel);
+   TR_S390OutOfLineCodeSection *outlinedSlowPath = new (cg->trHeapMemory()) TR_S390OutOfLineCodeSection(helperCallLabel, doneLabel, cg);
+   cg->getS390OutOfLineCodeSectionList().push_front(outlinedSlowPath);
+   outlinedSlowPath->swapInstructionListsWithCompilation();
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::label, node, helperCallLabel);
+   resultReg = TR::TreeEvaluator::performCall(node, false, cg);
+
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, doneLabel); // exit OOL section
+   outlinedSlowPath->swapInstructionListsWithCompilation();
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, deps);
+   node->setRegister(resultReg);
+
+   return resultReg;
+   }
 
 bool
 J9::Z::TreeEvaluator::VMinlineCallEvaluator(TR::Node * node, bool indirect, TR::CodeGenerator * cg)
