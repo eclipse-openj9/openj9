@@ -301,6 +301,7 @@ public:
 
    // replacing calls to isAOT
    virtual bool       canUseSymbolValidationManager() override                 { return true; }
+   virtual bool       canTrackAOTDependencies() override                       { return true; }
    virtual bool       supportsCodeCacheSnippets() override                     { return false; }
    virtual bool       needClassAndMethodPointerRelocations() override          { return true; }
    virtual bool       inlinedAllocationsMustBeVerified() override              { return true; }
