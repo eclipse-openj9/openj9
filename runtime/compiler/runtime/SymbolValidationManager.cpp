@@ -1580,6 +1580,7 @@ TR::SymbolValidationManager::validateDynamicMethodFromCallsiteIndex(uint16_t met
    {
    bool valid = false;
 
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
    TR_OpaqueMethodBlock *caller = getMethodFromID(callerID);
    TR_ResolvedMethod *resolvedCaller = _fej9->createResolvedMethod(_trMemory, caller, NULL);
 
@@ -1614,6 +1615,7 @@ TR::SymbolValidationManager::validateDynamicMethodFromCallsiteIndex(uint16_t met
             && (methodIndex == _fej9->getMethodIndexInClass(targetMethodClass, targetMethod));
          }
       }
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
    return valid;
    }
@@ -1628,6 +1630,7 @@ TR::SymbolValidationManager::validateHandleMethodFromCPIndex(uint16_t methodID,
    {
    bool valid = false;
 
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
    TR_OpaqueMethodBlock *caller = getMethodFromID(callerID);
    TR_ResolvedMethod *resolvedCaller = _fej9->createResolvedMethod(_trMemory, caller, NULL);
 
@@ -1659,6 +1662,7 @@ TR::SymbolValidationManager::validateHandleMethodFromCPIndex(uint16_t methodID,
          // bytecodes are the same.
          && (methodIndex == _fej9->getMethodIndexInClass(targetMethodClass, targetMethod));
       }
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
    return valid;
    }

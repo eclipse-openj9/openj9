@@ -1926,7 +1926,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          TR_ResolvedJ9Method *owningMethod = std::get<0>(recv);
          uintptr_t * invokeCacheArray = std::get<1>(recv);
 
-         bool isInvokeCacheAppendixNull;
+         bool isInvokeCacheAppendixNull = false;
          TR_OpaqueMethodBlock *targetMethod = owningMethod->getTargetMethodFromMemberName(invokeCacheArray, &isInvokeCacheAppendixNull);
 
          client->write(response, targetMethod, isInvokeCacheAppendixNull);
