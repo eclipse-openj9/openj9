@@ -1172,7 +1172,7 @@ initializeJavaVM(void * osMainThread, J9JavaVM ** vmPtr, J9CreateJavaVMParams *c
 	vm->reserved1_identifier = (void*)J9VM_IDENTIFIER;
 	vm->internalVMFunctions = GLOBAL_TABLE(J9InternalFunctions);
 	vm->portLibrary = portLibrary;
-	vm->localMapFunction = j9localmap_DebugLocalBitsForPC;
+	vm->localMapFunction = j9localmap_LocalBitsForPC;
 
 	vm->internalVMLabels = (J9InternalVMLabels*)-1001;
 	vm->cInterpreter = J9_BUILDER_SYMBOL(cInterpreter);
