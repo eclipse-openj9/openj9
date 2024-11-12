@@ -4020,13 +4020,12 @@ J9::Z::CodeGenerator::inlineDirectCall(
             return resultReg != NULL;
             }
       break;
-
       case TR::java_lang_StringCoding_hasNegatives:
          if (cg->getSupportsInlineStringCodingHasNegatives())
             {
             resultReg = TR::TreeEvaluator::inlineStringCodingHasNegatives(node, cg);
-           return resultReg != NULL;
-           }
+            return true;
+            }
       break;
       case TR::com_ibm_jit_JITHelpers_transformedEncodeUTF16Big:
          return resultReg = comp->getOption(TR_DisableUTF16BEEncoder) ? TR::TreeEvaluator::inlineUTF16BEEncodeSIMD(node, cg)
