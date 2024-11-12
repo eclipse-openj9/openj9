@@ -5587,6 +5587,7 @@ TR_J9InlinerPolicy::supressInliningRecognizedInitialCallee(TR_CallSite* callsite
             {
             return true;
             }
+         break;
       case TR::java_lang_Integer_stringSize:
       case TR::java_lang_Long_stringSize:
          if (comp->cg()->getSupportsIntegerStringSize())
