@@ -6997,14 +6997,19 @@ TR_ResolvedJ9Method::handleUnresolvedVirtualMethodInCP(int32_t cpIndex, bool * u
 TR_OpaqueMethodBlock *
 TR_ResolvedJ9Method::getTargetMethodFromMemberName(uintptr_t * invokeCacheArray, bool * isInvokeCacheAppendixNull)
    {
+   TR_OpaqueMethodBlock *targetJ9MethodBlock = NULL;
+
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
    TR::VMAccessCriticalSection getTargetMethodCS(fej9());
-   TR_OpaqueMethodBlock *targetJ9MethodBlock = fej9()->targetMethodFromMemberName((uintptr_t) fej9()->getReferenceElement(*invokeCacheArray, JSR292_invokeCacheArrayMemberNameIndex));
+   targetJ9MethodBlock = fej9()->targetMethodFromMemberName((uintptr_t) fej9()->getReferenceElement(*invokeCacheArray, JSR292_invokeCacheArrayMemberNameIndex));
    // if the callSite table entry / method type table entry is resolved,
    // we can check if the appendix object is null,
    // in which case the appendix object must not be pushed to stack
    auto appendixObject = fej9()->getReferenceElement(*invokeCacheArray, JSR292_invokeCacheArrayAppendixIndex);
    if (isInvokeCacheAppendixNull && !appendixObject)
       *isInvokeCacheAppendixNull = true;
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+
    return targetJ9MethodBlock;
    }
 
