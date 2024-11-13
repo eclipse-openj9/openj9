@@ -22,6 +22,7 @@
  */
 package java.security;
 
+import com.ibm.oti.util.Msg;
 import sun.security.util.SecurityConstants;
 
 /*[IF JAVA_SPEC_VERSION >= 9]
@@ -47,6 +48,11 @@ public final class AccessController {
 		// Initialize vm-internal caches
 		initializeInternal();
 	}
+
+/*[IF JAVA_SPEC_VERSION >= 24]*/
+	private static AccessControlContext ACC_NO_PERM = new AccessControlContext(
+			new ProtectionDomain[] { new ProtectionDomain(null, null) });
+/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 
 	static final int OBJS_INDEX_ACC = 0;
 	static final int OBJS_INDEX_PDS = 1;
@@ -179,13 +185,14 @@ private static void throwACE(boolean debug, Permission perm, ProtectionDomain pD
 	}
 	if (createACCdenied) {
 		/*[MSG "K002d", "Access denied {0} due to untrusted AccessControlContext since {1} is denied"]*/
-		throw new AccessControlException(com.ibm.oti.util.Msg.getString("K002d", perm, SecurityConstants.CREATE_ACC_PERMISSION), perm); //$NON-NLS-1$
+		throw new AccessControlException(Msg.getString("K002d", perm, SecurityConstants.CREATE_ACC_PERMISSION), perm); //$NON-NLS-1$
 	} else {
 		/*[MSG "K002c", "Access denied {0}"]*/
-		throw new AccessControlException(com.ibm.oti.util.Msg.getString("K002c", perm), perm); //$NON-NLS-1$
+		throw new AccessControlException(Msg.getString("K002c", perm), perm); //$NON-NLS-1$
 	}
 }
 
+/*[IF JAVA_SPEC_VERSION < 24]*/
 /**
  * Helper method to check whether the running program is allowed to access the resource
  * being guarded by the given Permission argument
@@ -268,6 +275,7 @@ private static boolean checkPermissionHelper(Permission perm, AccessControlConte
 	}
 	return limitedPermImplied;
 }
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 /**
  * Helper to print debug stack information for checkPermission().
@@ -368,6 +376,10 @@ private static boolean debugHelperJEP140(Object[] objects, Permission perm) {
  *              NullPointerException if perm is null
  */
 public static void checkPermission(Permission perm) throws AccessControlException {
+/*[IF JAVA_SPEC_VERSION >= 24]*/
+	/*[MSG "K002e", "checking permissions is not supported"]*/
+	throw new AccessControlException(Msg.getString("K002e")); //$NON-NLS-1$
+/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 	if (perm == null) {
 		throw new NullPointerException();
 	}
@@ -421,6 +433,7 @@ public static void checkPermission(Permission perm) throws AccessControlExceptio
 		System.err.println("access allowed " + perm); //$NON-NLS-1$
 		DebugRecursionDetection.getTlDebug().remove();
 	}
+/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 }
 
 /**
@@ -452,7 +465,11 @@ private static void keepalive(Permission... perms) {
  * @see         AccessControlContext
  */
 public static AccessControlContext getContext() {
+/*[IF JAVA_SPEC_VERSION >= 24]*/
+	return ACC_NO_PERM;
+/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 	return getContextHelper(false);
+/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 }
 
 /**

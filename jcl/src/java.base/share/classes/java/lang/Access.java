@@ -290,14 +290,12 @@ final class Access implements JavaLangAccess {
 		return classLoader.createOrGetClassLoaderValueMap();
 	}
 
+/*[IF (JAVA_SPEC_VERSION >= 11) & (JAVA_SPEC_VERSION < 24)]*/
 	@SuppressWarnings("removal")
 	public void invalidatePackageAccessCache() {
-/*[IF JAVA_SPEC_VERSION >= 10]*/
-		java.lang.SecurityManager.invalidatePackageAccessCache();
-/*[ELSE] JAVA_SPEC_VERSION >= 10 */
-		return;
-/*[ENDIF] JAVA_SPEC_VERSION >= 10 */
+		SecurityManager.invalidatePackageAccessCache();
 	}
+/*[ENDIF] (JAVA_SPEC_VERSION >= 11) & (JAVA_SPEC_VERSION < 24) */
 
 	public Class<?> defineClass(ClassLoader classLoader, String className, byte[] classRep, ProtectionDomain protectionDomain, String str) {
 		ClassLoader targetClassLoader = (null == classLoader) ? ClassLoader.bootstrapClassLoader : classLoader;
@@ -352,10 +350,12 @@ final class Access implements JavaLangAccess {
 		return ml.getServicesCatalog();
 	}
 
+/*[IF JAVA_SPEC_VERSION < 24]*/
 	@SuppressWarnings("removal")
 	public void addNonExportedPackages(ModuleLayer ml) {
 		SecurityManager.addNonExportedPackages(ml);
 	}
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 	public List<Method> getDeclaredPublicMethods(Class<?> clz, String name, Class<?>... types) {
 		return clz.getDeclaredPublicMethods(name, types);
@@ -542,11 +542,6 @@ final class Access implements JavaLangAccess {
 	}
 
 	@Override
-	public boolean allowSecurityManager() {
-		return System.allowSecurityManager();
-	}
-
-	@Override
 	public int getCharsLatin1(long i, int index, byte[] buf) {
 		return StringLatin1.getChars(i, index, buf);
 	}
@@ -562,6 +557,11 @@ final class Access implements JavaLangAccess {
 	}
 
 /*[IF JAVA_SPEC_VERSION < 24]*/
+	@Override
+	public boolean allowSecurityManager() {
+		return System.allowSecurityManager();
+	}
+
 	@Override
 	public long stringConcatHelperPrepend(long indexCoder, byte[] buf, String value) {
 		return StringConcatHelper.prepend(indexCoder, buf, value);
