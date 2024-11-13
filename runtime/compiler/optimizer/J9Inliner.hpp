@@ -230,13 +230,13 @@ class TR_J9InlinerPolicy : public OMR_InlinerPolicy
        *         after executing either \c branchTargetTree or \c fallThroughTree
        */
       TR::Block * createUnsafeGetPutCallDiamond(TR::TreeTop* callNodeTreeTop, TR::TreeTop* comparisonTree, TR::TreeTop* branchTargetTree, TR::TreeTop* fallThroughTree);
-      bool createUnsafePutWithOffset(TR::ResolvedMethodSymbol *, TR::ResolvedMethodSymbol *, TR::TreeTop *, TR::Node *, TR::DataType, bool, bool needNullCheck = false, bool isOrdered = false);
+      bool createUnsafePutWithOffset(TR::ResolvedMethodSymbol *, TR::ResolvedMethodSymbol *, TR::TreeTop *, TR::Node *, TR::DataType, bool, bool needNullCheck = false, bool isOrdered = false, bool isUnaligned = false);
       TR::TreeTop* genDirectAccessCodeForUnsafeGetPut(TR::Node* callNode, bool conversionNeeded, bool isUnsafeGet);
       void createTempsForUnsafePutGet(TR::Node*& unsafeAddress, TR::Node* unsafeCall, TR::TreeTop* callNodeTreeTop, TR::Node*& offset, TR::SymbolReference*& newSymbolReferenceForAddress, bool isUnsafeGet);
       bool         createUnsafeGet(TR::ResolvedMethodSymbol *, TR::ResolvedMethodSymbol *, TR::TreeTop *, TR::Node *, TR::DataType, bool compress = true);
       bool         createUnsafePut(TR::ResolvedMethodSymbol *, TR::ResolvedMethodSymbol *, TR::TreeTop *, TR::Node *, TR::DataType, bool compress = true);
       TR::Node *    createUnsafeAddress(TR::Node *);
-      bool         createUnsafeGetWithOffset(TR::ResolvedMethodSymbol *, TR::ResolvedMethodSymbol *, TR::TreeTop *, TR::Node *, TR::DataType, bool, bool needNullCheck = false);
+      bool         createUnsafeGetWithOffset(TR::ResolvedMethodSymbol *, TR::ResolvedMethodSymbol *, TR::TreeTop *, TR::Node *, TR::DataType, bool, bool needNullCheck = false, bool isUnaligned = false);
       TR::Node *    createUnsafeAddressWithOffset(TR::Node *);
       bool         createUnsafeFence(TR::TreeTop *, TR::Node *, TR::ILOpCodes);
 
@@ -357,6 +357,22 @@ class TR_J9InlinerPolicy : public OMR_InlinerPolicy
        *     This query defines a group of methods that are small helpers in the java/lang/invoke package
        */
       static bool isJSR292SmallHelperMethod(TR_ResolvedMethod *resolvedMethod);
+
+      /**
+       * \brief
+       *    This query answers whether the method is a simple non-native Unsafe method that contain a call to
+       *    a native Unsafe method that would normally be handled in TR_J9InlinerPolicy::inlineUnsafeCall. If
+       *    we can determine that the runtime checks in the wrapper method can be determined at compile time,
+       *    it may be possible to treat the wrapper method as its underlying native Unsafe method and have it
+       *    inlined in TR_J9InlinerPolicy::inlineUnsafeCall.
+       *
+       * \param
+       *    resolvedMethod the TR_ResolvedMethod
+       * \return
+       *    true if the method is a simple wrapper method for a native unsafe method, false otherwise
+       */
+      static bool isSimpleWrapperForInlineableUnsafeNativeMethod(TR_ResolvedMethod *resolvedMethod);
+
    };
 
 class TR_J9JSR292InlinerPolicy : public TR_J9InlinerPolicy
