@@ -89,7 +89,10 @@ void LXAEmulator::emulate(mcontext_t *cpu)
       }
 
    addr <<= shift;
-   addr += cpu->gregs[b2];
+   if (b2 != 0)
+      {
+      addr += cpu->gregs[b2];
+      }
    cpu->gregs[r1] = addr;
    }
 
@@ -104,9 +107,9 @@ class BDEPGEmulator : public InstEmulator
 
 BDEPGEmulator::BDEPGEmulator(uint8_t *start)
    {
-   r1 = (start[3]&0xF0) >> 4;
-   r2 = start[3]&0x0F;
-   r3 = (start[2]&0xF0) >> 4;
+   r1 = (start[3] & 0xF0) >> 4;
+   r2 = start[3] & 0x0F;
+   r3 = (start[2] & 0xF0) >> 4;
    }
 
 void BDEPGEmulator::emulate(mcontext_t *cpu)
@@ -139,9 +142,9 @@ class BEXTGEmulator : public InstEmulator
 
 BEXTGEmulator::BEXTGEmulator(uint8_t *start)
    {
-   r1 = (start[3]&0xF0) >> 4;
-   r2 = start[3]&0x0F;
-   r3 = (start[2]&0xF0) >> 4;
+   r1 = (start[3] & 0xF0) >> 4;
+   r2 = start[3] & 0x0F;
+   r3 = (start[2] & 0xF0) >> 4;
    }
 
 void BEXTGEmulator::emulate(mcontext_t *cpu)
@@ -152,9 +155,9 @@ void BEXTGEmulator::emulate(mcontext_t *cpu)
 
    for (int k = 0; mask; mask <<= 1, val <<= 1)
       {
-      if (mask & (1ULL<<63))
+      if (mask & (1ULL << 63))
          {
-         res |= (val & (1ULL<<63)) >> k;
+         res |= (val & (1ULL << 63)) >> k;
          k++;
          }
       }
@@ -173,8 +176,8 @@ class CLZGEmulator : public InstEmulator
 
 CLZGEmulator::CLZGEmulator(uint8_t *start)
    {
-   r1 = (start[3]&0xF0) >> 4;
-   r2 = start[3]&0x0F;
+   r1 = (start[3] & 0xF0) >> 4;
+   r2 = start[3] & 0x0F;
    }
 
 void CLZGEmulator::emulate(mcontext_t *cpu)
@@ -193,8 +196,8 @@ class CTZGEmulator : public InstEmulator
 
 CTZGEmulator::CTZGEmulator(uint8_t *start)
    {
-   r1 = (start[3]&0xF0) >> 4;
-   r2 = start[3]&0x0F;
+   r1 = (start[3] & 0xF0) >> 4;
+   r2 = start[3] & 0x0F;
    }
 
 void CTZGEmulator::emulate(mcontext_t *cpu)
@@ -204,7 +207,9 @@ void CTZGEmulator::emulate(mcontext_t *cpu)
 
 InstEmulator *InstEmulator::decode(uint8_t *pc)
    {
-   if (pc[-6] == 0xE3 && (pc[-1]&0xF0) == 0x60 && (pc[-1]&0x0F) < 10)
+   // Checking the optcode in the first byte and last byte of the instruction to
+   // see if it is LXA/LLXA instructions (Op-codes '0xE360' to '0xE369')
+   if ((pc[-6] == 0xE3) && ((pc[-1] & 0xF0) == 0x60) && ((pc[-1] & 0x0F) < 10))
       {
       return new LXAEmulator(pc-6);
       }
