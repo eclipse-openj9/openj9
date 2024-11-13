@@ -106,8 +106,16 @@ J9::Z::CodeGenerator::initialize()
       cg->setSupportsInlineStringLatin1Inflate();
       }
 
-   // See comment in `handleHardwareReadBarrier` implementation as to why we cannot support CTX under CS
-   if (cg->getSupportsTM() && TR::Compiler->om.readBarrierType() == gc_modron_readbar_none)
+   // For IBM Java 8 ConcurrentLinkedQueue.poll and offer has been accelerated
+   // using constrained transactional execution instructions.
+   // If CTX feature is supported on processor, and JIT has not disabled it
+   // using TR_DisableTM option, then inlining of ConcurrentLinkedQueue.poll/offer
+   // is supported.
+   // See comment in `handleHardwareReadBarrier` implementation as to why we
+   // cannot support CTX under CS
+   if ((comp->target().cpu.supportsFeature(OMR_FEATURE_S390_CONSTRAINED_TRANSACTIONAL_EXECUTION_FACILITY)
+         && !comp->getOption(TR_DisableTM))
+      && TR::Compiler->om.readBarrierType() == gc_modron_readbar_none)
       {
       cg->setSupportsInlineConcurrentLinkedQueue();
       }
