@@ -6813,7 +6813,8 @@ bool
 J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&resultReg)
    {
    TR::CodeGenerator *cg = self();
-   TR::MethodSymbol * methodSymbol = node->getSymbol()->getMethodSymbol();
+   TR::Compilation *comp = cg->comp();
+   TR::MethodSymbol *methodSymbol = node->getSymbol()->getMethodSymbol();
    static const bool disableCRC32 = feGetEnv("TR_aarch64DisableCRC32") != NULL;
 
    if (OMR::CodeGeneratorConnector::inlineDirectCall(node, resultReg))
@@ -6865,6 +6866,21 @@ J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
       static bool disableCAEIntrinsic = feGetEnv("TR_DisableCAEIntrinsic") != NULL;
       switch (methodSymbol->getRecognizedMethod())
          {
+         case TR::java_lang_Thread_onSpinWait:
+            {
+            static char *disableOSW = feGetEnv("TR_noYieldOnSpinWait");
+            if (!disableOSW)
+               {
+               generateInstruction(cg, TR::InstOpCode::yield, node);
+               if (comp->getOption(TR_TraceCG))
+                  {
+                  traceMsg(comp, "insert YIELD for onSpinWait: node=%p, %s\n", node, comp->signature());
+                  }
+               return true;
+               }
+            break;
+            }
+
          case TR::java_nio_Bits_keepAlive:
          case TR::java_lang_ref_Reference_reachabilityFence:
             {
