@@ -1982,7 +1982,7 @@ static TR::TreeTop* generateArraycopyFromSequentialStores(TR::Compilation* comp,
    return treeTop;
    }
 
-static TR::TreeTop* generateArraycopyFromSequentialLoadsDEPRECATED(TR::Compilation* comp, TR::TreeTop* currentTreeTop, TR::Node* ibloadNode)
+static TR::TreeTop* generateArraycopyFromSequentialLoadsDEPRECATED(TR::Compilation* comp, TR::TreeTop* currentTreeTop, TR::Node* bloadiNode)
    {
 
    static const char * disableSeqLoadOpt = feGetEnv("TR_DisableSeqLoadOpt");
@@ -2000,7 +2000,7 @@ static TR::TreeTop* generateArraycopyFromSequentialLoadsDEPRECATED(TR::Compilati
    TR::Node* rootNode;
 
    //checking the number of bytes
-   while ( !((currentNode->getFirstChild() == ibloadNode) && (currentNode->getOpCodeValue() == TR::bu2i)) )
+   while ( !((currentNode->getFirstChild() == bloadiNode) && (currentNode->getOpCodeValue() == TR::bu2i)) )
       {
       if ( (currentNode->getOpCodeValue() == TR::iadd) || (currentNode->getOpCodeValue() == TR::ior))
          {
@@ -2039,7 +2039,7 @@ static TR::TreeTop* generateArraycopyFromSequentialLoadsDEPRECATED(TR::Compilati
 
    // Need to make sure these loads are not under spine checks.
    //
-   if (comp->requiresSpineChecks() && ibloadNode->getReferenceCount() > 1)
+   if (comp->requiresSpineChecks() && bloadiNode->getReferenceCount() > 1)
       {
       TR::TreeTop *tt = currentTreeTop;
       TR::TreeTop *lastTreeTop = currentTreeTop->getEnclosingBlock()->startOfExtendedBlock()->getFirstRealTreeTop()->getPrevTreeTop();
@@ -2054,7 +2054,7 @@ static TR::TreeTop* generateArraycopyFromSequentialLoadsDEPRECATED(TR::Compilati
             node = node->getFirstChild();
             while (node->getOpCode().isConversion())
                node = node->getFirstChild();
-            if (node == ibloadNode)
+            if (node == bloadiNode)
                {
                dumpOptDetails(comp, " Sequential Load to spine checked array not reducible\n");
                return currentTreeTop;
