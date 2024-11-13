@@ -460,7 +460,12 @@
 	   <class name="jit.test.tr.BNDCHKSimplify.BNDCHKSimplifyTest" />
 	 </classes>
   </test>
-	<test name="StringPeepholeTest">
+  <test name="ArrayTranslateTest">
+    <classes>
+      <class name="jit.test.tr.arrayTranslate.ArrayTranslateTest" />
+    </classes>
+  </test>
+  <test name="StringPeepholeTest">
     <classes>
       <class name="jit.test.tr.stringPeephole.BigDecimalToStringTest" />
     </classes>
