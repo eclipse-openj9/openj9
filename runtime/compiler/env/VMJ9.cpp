@@ -1307,31 +1307,64 @@ TR_J9VMBase::getReferenceElement(uintptr_t objectPointer, intptr_t elementIndex)
    return (uintptr_t)J9JAVAARRAYOFOBJECT_LOAD(vmThread(), objectPointer, elementIndex);
    }
 
-TR_arrayTypeCode TR_J9VMBase::getPrimitiveArrayTypeCode(TR_OpaqueClassBlock* clazz)
+TR_arrayTypeCode
+TR_J9VMBase::getPrimitiveArrayTypeCode(TR_OpaqueClassBlock* clazz)
    {
    TR_ASSERT(isPrimitiveClass(clazz), "Expect primitive class in TR_J9VMBase::getPrimitiveArrayType");
 
    J9Class* j9clazz = (J9Class*)clazz;
-   if (j9clazz == jitConfig->javaVM->booleanReflectClass)
-      return atype_boolean;
-   else if (j9clazz == jitConfig->javaVM->charReflectClass)
-      return atype_char;
-   else if (j9clazz == jitConfig->javaVM->floatReflectClass)
-      return atype_float;
-   else if (j9clazz == jitConfig->javaVM->doubleReflectClass)
-      return atype_double;
-   else if (j9clazz == jitConfig->javaVM->byteReflectClass)
-      return atype_byte;
-   else if (j9clazz == jitConfig->javaVM->shortReflectClass)
-      return atype_short;
-   else if (j9clazz == jitConfig->javaVM->intReflectClass)
-      return atype_int;
-   else if (j9clazz == jitConfig->javaVM->longReflectClass)
-      return atype_long;
-   else
+#if defined(J9VM_OPT_JITSERVER)
+   if (_compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
+      /* In server mode */
       {
-      TR_ASSERT(false, "TR_arrayTypeCode is not defined for the j9clazz");
-      return (TR_arrayTypeCode)0;
+      auto stream = _compInfoPT->getStream();
+      auto vmInfo = _compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+      if (j9clazz == vmInfo->_booleanReflectClassPtr)
+         return atype_boolean;
+      else if (j9clazz == vmInfo->_charReflectClassPtr)
+         return atype_char;
+      else if (j9clazz == vmInfo->_floatReflectClassPtr)
+         return atype_float;
+      else if (j9clazz == vmInfo->_doubleReflectClassPtr)
+         return atype_double;
+      else if (j9clazz == vmInfo->_byteReflectClassPtr)
+         return atype_byte;
+      else if (j9clazz == vmInfo->_shortReflectClassPtr)
+         return atype_short;
+      else if (j9clazz == vmInfo->_intReflectClassPtr)
+         return atype_int;
+      else if (j9clazz == vmInfo->_longReflectClassPtr)
+         return atype_long;
+      else
+         {
+         TR_ASSERT(false, "TR_arrayTypeCode is not defined for the j9clazz");
+         return (TR_arrayTypeCode)0;
+         }
+      }
+   else
+#endif /* defined(J9VM_OPT_JITSERVER) */
+      {
+      if (j9clazz == jitConfig->javaVM->booleanReflectClass)
+         return atype_boolean;
+      else if (j9clazz == jitConfig->javaVM->charReflectClass)
+         return atype_char;
+      else if (j9clazz == jitConfig->javaVM->floatReflectClass)
+         return atype_float;
+      else if (j9clazz == jitConfig->javaVM->doubleReflectClass)
+         return atype_double;
+      else if (j9clazz == jitConfig->javaVM->byteReflectClass)
+         return atype_byte;
+      else if (j9clazz == jitConfig->javaVM->shortReflectClass)
+         return atype_short;
+      else if (j9clazz == jitConfig->javaVM->intReflectClass)
+         return atype_int;
+      else if (j9clazz == jitConfig->javaVM->longReflectClass)
+         return atype_long;
+      else
+         {
+         TR_ASSERT(false, "TR_arrayTypeCode is not defined for the j9clazz");
+         return (TR_arrayTypeCode)0;
+         }
       }
    }
 

@@ -550,6 +550,16 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
 #else
          vmInfo._isNonPortableRestoreMode = false;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+         vmInfo._voidReflectClassPtr = javaVM->voidReflectClass;
+         vmInfo._booleanReflectClassPtr = javaVM->booleanReflectClass;
+         vmInfo._charReflectClassPtr = javaVM->charReflectClass;
+         vmInfo._floatReflectClassPtr = javaVM->floatReflectClass;
+         vmInfo._doubleReflectClassPtr = javaVM->doubleReflectClass;
+         vmInfo._byteReflectClassPtr = javaVM->byteReflectClass;
+         vmInfo._shortReflectClassPtr = javaVM->shortReflectClass;
+         vmInfo._intReflectClassPtr = javaVM->intReflectClass;
+         vmInfo._longReflectClassPtr = javaVM->longReflectClass;
+
          client->write(response, vmInfo, listOfCacheDescriptors, comp->getPersistentInfo()->getJITServerAOTCacheName());
          }
          break;

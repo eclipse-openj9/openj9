@@ -718,23 +718,47 @@ TR_VectorAPIExpansion::getDataTypeFromClassNode(TR::Compilation *comp, TR::Node 
 
    if (!j9class) return TR::NoType;
 
-   TR_J9VMBase *fej9 = comp->fej9();
-   J9JavaVM *vm = fej9->getJ9JITConfig()->javaVM;
+#if defined(J9VM_OPT_JITSERVER)
+   if (comp->isOutOfProcessCompilation()) /* In server mode */
+      {
+      auto vmInfo = comp->getClientData()->getOrCacheVMInfo(comp->getStream());
 
-   if (j9class == vm->floatReflectClass)
-      return TR::Float;
-   else if (j9class == vm->doubleReflectClass)
-      return TR::Double;
-   else if (j9class == vm->byteReflectClass)
-      return TR::Int8;
-   else if (j9class == vm->shortReflectClass)
-      return TR::Int16;
-   else if (j9class == vm->intReflectClass)
-      return TR::Int32;
-   else if (j9class == vm->longReflectClass)
-      return TR::Int64;
+      if (j9class == vmInfo->_floatReflectClassPtr)
+         return TR::Float;
+      else if (j9class == vmInfo->_doubleReflectClassPtr)
+         return TR::Double;
+      else if (j9class == vmInfo->_byteReflectClassPtr)
+         return TR::Int8;
+      else if (j9class == vmInfo->_shortReflectClassPtr)
+         return TR::Int16;
+      else if (j9class == vmInfo->_intReflectClassPtr)
+         return TR::Int32;
+      else if (j9class == vmInfo->_longReflectClassPtr)
+         return TR::Int64;
+      else
+         return TR::NoType;
+      }
    else
-      return TR::NoType;
+#endif /* defined(J9VM_OPT_JITSERVER) */
+      {
+      TR_J9VMBase *fej9 = comp->fej9();
+      J9JavaVM *vm = fej9->getJ9JITConfig()->javaVM;
+
+      if (j9class == vm->floatReflectClass)
+         return TR::Float;
+      else if (j9class == vm->doubleReflectClass)
+         return TR::Double;
+      else if (j9class == vm->byteReflectClass)
+         return TR::Int8;
+      else if (j9class == vm->shortReflectClass)
+         return TR::Int16;
+      else if (j9class == vm->intReflectClass)
+         return TR::Int32;
+      else if (j9class == vm->longReflectClass)
+         return TR::Int64;
+      else
+         return TR::NoType;
+      }
    }
 
 
