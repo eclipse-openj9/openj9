@@ -96,9 +96,11 @@ public abstract sealed class Reference<T> extends Object permits PhantomReferenc
 			/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 
 			/*[IF JAVA_SPEC_VERSION >= 19]*/
+			/*[IF JAVA_SPEC_VERSION < 24] */
 			public <T> ReferenceQueue<T> newNativeReferenceQueue() {
 				return new NativeReferenceQueue<>();
 			}
+			/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 			public void startThreads() {
 				throw new UnsupportedOperationException();

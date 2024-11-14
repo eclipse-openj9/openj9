@@ -799,6 +799,20 @@ JVM_IsStaticallyLinked(void)
 	/* OpenJDK removed static builds using --enable-static-build. */
 	return JNI_FALSE;
 }
+
+JNIEXPORT void JNICALL
+JVM_VirtualThreadPinnedEvent(JNIEnv* env, jclass clazz, jstring op)
+{
+	// TODO: emit JFR Event
+	return;
+}
+
+JNIEXPORT jobject JNICALL
+JVM_TakeVirtualThreadListToUnblock(JNIEnv* env, jclass ignored)
+{
+	// TODO: return the unblocked list
+	return NULL;
+}
 #endif /* JAVA_SPEC_VERSION >= 24 */
 
 } /* extern "C" */

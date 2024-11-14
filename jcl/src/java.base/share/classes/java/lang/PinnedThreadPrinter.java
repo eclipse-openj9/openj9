@@ -1,4 +1,4 @@
-/*[INCLUDE-IF JAVA_SPEC_VERSION >= 21]*/
+/*[INCLUDE-IF (JAVA_SPEC_VERSION >= 21) & (JAVA_SPEC_VERSION < 24)]*/
 /*
  * Copyright IBM Corp. and others 2023
  *

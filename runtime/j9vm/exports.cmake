@@ -468,6 +468,8 @@ if(NOT JAVA_SPEC_VERSION LESS 24)
 	jvm_add_exports(jvm
 		JVM_IsContainerized
 		JVM_IsStaticallyLinked
+		JVM_VirtualThreadPinnedEvent
+		JVM_TakeVirtualThreadListToUnblock
 	)
 endif()
 

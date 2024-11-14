@@ -446,3 +446,7 @@ _IF([JAVA_SPEC_VERSION >= 24],
 	[_X(JVM_IsContainerized, JNICALL, false, jboolean, void)])
 _IF([JAVA_SPEC_VERSION >= 24],
 	[_X(JVM_IsStaticallyLinked, JNICALL, false, jboolean, void)])
+_IF([JAVA_SPEC_VERSION >= 24],
+	[_X(JVM_VirtualThreadPinnedEvent, JNICALL, false, void, JNIEnv* env, jclass clazz, jstring op)])
+_IF([JAVA_SPEC_VERSION >= 24],
+	[_X(JVM_TakeVirtualThreadListToUnblock, JNICALL, false, jobject, JNIEnv* env, jclass ignored)])

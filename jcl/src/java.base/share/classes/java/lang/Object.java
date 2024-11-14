@@ -22,9 +22,9 @@
  */
 package java.lang;
 
-/*[IF JAVA_SPEC_VERSION >= 19]*/
+/*[IF (JAVA_SPEC_VERSION >= 19) & (JAVA_SPEC_VERSION < 24)]*/
 import jdk.internal.misc.Blocker;
-/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
+/*[ENDIF] (JAVA_SPEC_VERSION >= 19) & (JAVA_SPEC_VERSION < 24) */
 
 /**
  * Object is the root of the java class hierarchy. All non-base types
@@ -283,7 +283,7 @@ public final void wait(long time, int frac) throws InterruptedException {
 	} finally {
 		Blocker.end(blockerRC);
 	}
-/*[ELSE] JAVA_SPEC_VERSION < 23 */
+/*[ELSEIF JAVA_SPEC_VERSION < 24] */
 	if (!Thread.currentThread().isVirtual()) {
 		waitImpl(time, frac);
 	} else {
@@ -292,6 +292,21 @@ public final void wait(long time, int frac) throws InterruptedException {
 			waitImpl(time, frac);
 		} finally {
 			Blocker.end(blocking);
+		}
+	}
+/*[ELSE] JAVA_SPEC_VERSION < 24 */
+	if ((time < 0) || (frac < 0)) {
+		throw new IllegalArgumentException("timeout value is negative");
+	}
+	if (!Thread.currentThread().isVirtual()) {
+		waitImpl(time, frac);
+	} else {
+		try {
+			waitImpl(time, frac);
+		} catch (InterruptedException e) {
+			// Clear virtual thread's interrupt status
+			Thread.currentThread().getAndClearInterrupt();
+			throw e;
 		}
 	}
 /*[ENDIF] JAVA_SPEC_VERSION < 19 */
