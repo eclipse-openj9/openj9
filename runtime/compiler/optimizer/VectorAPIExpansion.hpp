@@ -584,7 +584,8 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *  \param classNode
    *     Node that loads \c java/lang/Class
    */
-   static J9Class *getJ9ClassFromClassNode(TR::Compilation *comp, TR::Node *classNode);
+   static TR_OpaqueClassBlock *getOpaqueClassBlockFromClassNode(TR::Compilation *comp,
+                                                                TR::Node *classNode);
 
 
   /** \brief
