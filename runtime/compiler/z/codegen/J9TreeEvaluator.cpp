@@ -860,7 +860,7 @@ J9::Z::TreeEvaluator::pdclearSetSignEvaluator(TR::Node *node, TR::CodeGenerator 
 
 /*
  * This method inlines the Java API StringCoding.hasNegatives(byte src, int off, int len) using
- * SIMD instructions (it will only be invoked on supported processors).
+ * SIMD instructions.
  * The method looks like below on Java 17:
  *
  *   @IntrinsicCandidate
@@ -877,7 +877,6 @@ J9::Z::TreeEvaluator::pdclearSetSignEvaluator(TR::Node *node, TR::CodeGenerator 
 TR::Register*
 J9::Z::TreeEvaluator::inlineStringCodingHasNegatives(TR::Node *node, TR::CodeGenerator *cg)
    {
-
    TR::Register *inputPtrReg = cg->gprClobberEvaluate(node->getChild(0));
    TR::Register *offsetReg = cg->evaluate(node->getChild(1));
    TR::Register *lengthReg = cg->evaluate(node->getChild(2));
@@ -894,9 +893,9 @@ J9::Z::TreeEvaluator::inlineStringCodingHasNegatives(TR::Node *node, TR::CodeGen
    TR::Register *outOfRangeCharIndex = cg->allocateRegister(TR_VRF);
 
    TR::Register *returnReg = cg->allocateRegister();
-   generateRILInstruction(cg, TR::InstOpCode::LGFI, node, returnReg, 0);
+   generateRIInstruction(cg, TR::InstOpCode::LGHI, node, returnReg, 0);
 
-   generateRRRInstruction(cg, TR::InstOpCode::getAddThreeRegOpCode(), node, numCharsLeftToProcess, offsetReg, lengthReg);
+   generateRRRInstruction(cg, TR::InstOpCode::ARK, node, numCharsLeftToProcess, offsetReg, lengthReg);
 
    const uint8_t upperLimit = 127;
    const uint8_t rangeComparison = 0x20; // > comparison
@@ -904,7 +903,7 @@ J9::Z::TreeEvaluator::inlineStringCodingHasNegatives(TR::Node *node, TR::CodeGen
    generateVRIaInstruction(cg, TR::InstOpCode::VREPI, node, vUpperLimit, upperLimit, 0);
    generateVRIaInstruction(cg, TR::InstOpCode::VREPI, node, vComparison, rangeComparison, 0);
 
-   generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::C, node, numCharsLeftToProcess, 16, TR::InstOpCode::COND_BL, processMultiple16CharsEnd, false, false);
+   generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::C, node, numCharsLeftToProcess, 16, TR::InstOpCode::COND_BNH, processMultiple16CharsEnd, false, false);
 
    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, processMultiple16CharsStart);
    processMultiple16CharsStart->setStartInternalControlFlow();
@@ -919,25 +918,20 @@ J9::Z::TreeEvaluator::inlineStringCodingHasNegatives(TR::Node *node, TR::CodeGen
 
    // Update the counters
    generateRXInstruction(cg, TR::InstOpCode::getLoadAddressOpCode(), node, inputPtrReg, generateS390MemoryReference(inputPtrReg, 16, cg));
-   generateRILInstruction(cg, TR::InstOpCode::SLFI, node, numCharsLeftToProcess, 16);
+   generateRIInstruction(cg, TR::InstOpCode::AHI, node, numCharsLeftToProcess, -16);
 
    // Branch back up if we still have more than 16 characters to process.
-   generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::C, node, numCharsLeftToProcess, 15, TR::InstOpCode::COND_BH, processMultiple16CharsStart, false, false);
+   generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::C, node, numCharsLeftToProcess, 16, TR::InstOpCode::COND_BH, processMultiple16CharsStart, false, false);
 
    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, processMultiple16CharsEnd);
-
-   // Branch to end if there's no residue
-   generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::C, node, numCharsLeftToProcess, 0, TR::InstOpCode::COND_BE, cFlowRegionEnd, false, false);
 
    // Zero out the input register to avoid invalid VSTRC result
    generateVRIaInstruction(cg, TR::InstOpCode::VGBM, node, vInput, 0, 0 /*unused*/);
 
    // VLL and VSTL work on indices so we subtract 1
-   TR::Register *numCharsLeftToProcessMinus1 = cg->allocateRegister();
-
-   generateRIEInstruction(cg, TR::InstOpCode::AHIK, node, numCharsLeftToProcessMinus1, numCharsLeftToProcess, -1);
+   generateRIInstruction(cg, TR::InstOpCode::AHI, node, numCharsLeftToProcess, -1);
    // Load residue bytes and check for out of range character
-   generateVRSbInstruction(cg, TR::InstOpCode::VLL, node, vInput, numCharsLeftToProcessMinus1, generateS390MemoryReference(inputPtrReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg));
+   generateVRSbInstruction(cg, TR::InstOpCode::VLL, node, vInput, numCharsLeftToProcess, generateS390MemoryReference(inputPtrReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg));
 
    generateVRRdInstruction(cg, TR::InstOpCode::VSTRC, node, outOfRangeCharIndex, vInput, vUpperLimit, vComparison, 0x1, 0);
    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC1, node, processOutOfRangeChar);
@@ -945,31 +939,30 @@ J9::Z::TreeEvaluator::inlineStringCodingHasNegatives(TR::Node *node, TR::CodeGen
    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, cFlowRegionEnd);
 
    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, processOutOfRangeChar);
-   generateRILInstruction(cg, TR::InstOpCode::LGFI, node, returnReg, 1);
+   generateRIInstruction(cg, TR::InstOpCode::LGHI, node, returnReg, 1);
 
-   TR::RegisterDependencyConditions* dependencies = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 8, cg);
+   TR::RegisterDependencyConditions* dependencies = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 7, cg);
    dependencies->addPostConditionIfNotAlreadyInserted(vInput, TR::RealRegister::AssignAny);
    dependencies->addPostConditionIfNotAlreadyInserted(outOfRangeCharIndex, TR::RealRegister::AssignAny);
    dependencies->addPostConditionIfNotAlreadyInserted(vUpperLimit, TR::RealRegister::AssignAny);
    dependencies->addPostConditionIfNotAlreadyInserted(vComparison, TR::RealRegister::AssignAny);
    dependencies->addPostConditionIfNotAlreadyInserted(inputPtrReg, TR::RealRegister::AssignAny);
    dependencies->addPostConditionIfNotAlreadyInserted(numCharsLeftToProcess, TR::RealRegister::AssignAny);
-   dependencies->addPostConditionIfNotAlreadyInserted(numCharsLeftToProcessMinus1, TR::RealRegister::AssignAny);
    dependencies->addPostConditionIfNotAlreadyInserted(returnReg, TR::RealRegister::AssignAny);
 
    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, cFlowRegionEnd, dependencies);
    cFlowRegionEnd->setEndInternalControlFlow();
 
-   cg->decReferenceCount(node->getChild(0));
-   cg->decReferenceCount(node->getChild(1));
-   cg->decReferenceCount(node->getChild(2));
+   for (int i = 0; i < node->getNumChildren(); i++)
+      {
+      cg->decReferenceCount(node->getChild(i));
+      }
 
    cg->stopUsingRegister(vInput);
    cg->stopUsingRegister(outOfRangeCharIndex);
    cg->stopUsingRegister(vUpperLimit);
    cg->stopUsingRegister(vComparison);
    cg->stopUsingRegister(numCharsLeftToProcess);
-   cg->stopUsingRegister(numCharsLeftToProcessMinus1);
    node->setRegister(returnReg);
    return returnReg;
    }
