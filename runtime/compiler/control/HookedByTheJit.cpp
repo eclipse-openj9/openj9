@@ -566,20 +566,37 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
                )
                {
-               int32_t scount = optionsAOT->getInitialSCount();
-               uint16_t newScount = 0;
-               if (sc && sc->isHint(method, TR_HintFailedValidation, &newScount))
+               if (auto dependencyTable = compInfo->getPersistentInfo()->getAOTDependencyTable())
                   {
-                  if ((scount == TR_QUICKSTART_INITIAL_SCOUNT) || (scount == TR_INITIAL_SCOUNT))
-                     { // If scount is not user specified (coarse way due to info being lost from options parsing)
-                     // TODO: Is casting the best thing to do here?
-                     scount= std::min(getCount(romMethod, optionsJIT, optionsAOT), static_cast<int32_t>(newScount) ); // Find what would've been normal count for this method and
-                     // make sure new scount isn't larger than that
-                     if (optionsAOT->getVerboseOption(TR_VerboseSCHints) || optionsJIT->getVerboseOption(TR_VerboseSCHints))
-                        TR_VerboseLog::writeLineLocked(TR_Vlog_SCHINTS,"Found hint in sc, increase scount to: %d, wanted scount: %d", scount, newScount);
-                     }
+                  bool dependenciesSatisfied = false;
+                  // TODO: Obey user counts if they are set for this method
+                  //
+                  // TODO: The initial count for unsatisfied dependencies should
+                  // be revisited. It can likely be lower, particularly if AOT
+                  // loads are suppressed if dependencies are unsatisfied,
+                  // though remember that counts can decrease faster in the warm
+                  // run due to sampling.
+                  if (dependencyTable->trackMethod(vmThread, method, romMethod, dependenciesSatisfied))
+                     count = dependenciesSatisfied ? 0 : TR_DEFAULT_INITIAL_COUNT;
                   }
-               count = scount;
+
+               if (count == -1)
+                  {
+                  int32_t scount = optionsAOT->getInitialSCount();
+                  uint16_t newScount = 0;
+                  if (sc && sc->isHint(method, TR_HintFailedValidation, &newScount))
+                     {
+                     if ((scount == TR_QUICKSTART_INITIAL_SCOUNT) || (scount == TR_INITIAL_SCOUNT))
+                        { // If scount is not user specified (coarse way due to info being lost from options parsing)
+                        // TODO: Is casting the best thing to do here?
+                        scount= std::min(getCount(romMethod, optionsJIT, optionsAOT), static_cast<int32_t>(newScount) ); // Find what would've been normal count for this method and
+                        // make sure new scount isn't larger than that
+                        if (optionsAOT->getVerboseOption(TR_VerboseSCHints) || optionsJIT->getVerboseOption(TR_VerboseSCHints))
+                           TR_VerboseLog::writeLineLocked(TR_Vlog_SCHINTS,"Found hint in sc, increase scount to: %d, wanted scount: %d", scount, newScount);
+                        }
+                     }
+                  count = scount;
+                  }
                compInfo->incrementNumMethodsFoundInSharedCache();
                }
             // AOT Body not in SCC, so scount was not set
