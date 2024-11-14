@@ -3775,12 +3775,8 @@ void TR_ResolvedJ9Method::construct()
       {
       {x(TR::sun_nio_cs_ISO_8859_1_Encoder_encodeArrayLoop,       "encodeArrayLoop", "(Ljava/nio/CharBuffer;Ljava/nio/ByteBuffer;)Ljava/nio/charset/CoderResult;")},
       {x(TR::sun_nio_cs_ISO_8859_1_Encoder_encodeISOArray,        "encodeISOArray",         "([CI[BII)I")},
-      {x(TR::sun_nio_cs_ISO_8859_1_Decoder_decodeISO8859_1,       "decodeISO8859_1",      "([BII[CI)I")},
       {x(TR::sun_nio_cs_US_ASCII_Encoder_encodeASCII,             "encodeASCII",             "([CII[BI)I")},
       {x(TR::sun_nio_cs_US_ASCII_Decoder_decodeASCII,             "decodeASCII",             "([BII[CI)I")},
-      {x(TR::sun_nio_cs_ext_SBCS_Encoder_encodeSBCS,              "encodeSBCS",              "([CII[BI[B)I")},
-      {x(TR::sun_nio_cs_ext_SBCS_Decoder_decodeSBCS,              "decodeSBCS",           "([BII[CI[C)I")},
-      {x(TR::sun_nio_cs_UTF_8_Encoder_encodeUTF_8,                "encodeUTF_8",     "([CII[BI)I")},
       {x(TR::sun_nio_cs_UTF_8_Decoder_decodeUTF_8,                "decodeUTF_8",          "([BII[CI)I")},
       {x(TR::sun_nio_cs_UTF16_Encoder_encodeUTF16Big,             "encodeUTF16Big",       "([CII[BI)I")},
       {x(TR::sun_nio_cs_UTF16_Encoder_encodeUTF16Little,          "encodeUTF16Little",    "([CII[BI)I")},
@@ -4210,8 +4206,6 @@ void TR_ResolvedJ9Method::construct()
       { "java/util/GregorianCalendar", GregorianCalendarMethods },
       { "sun/nio/cs/US_ASCII$Encoder", EncodeMethods },
       { "sun/nio/cs/US_ASCII$Decoder", EncodeMethods },
-      { "sun/nio/cs/ext/SBCS_Encoder", EncodeMethods },
-      { "sun/nio/cs/ext/SBCS_Decoder", EncodeMethods },
       { "java/lang/invoke/FoldHandle", FoldHandleMethods },
       { "java/lang/ref/SoftReference", JavaLangRefSoftReferenceMethods },
       { 0 }
