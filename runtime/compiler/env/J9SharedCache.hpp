@@ -368,6 +368,7 @@ public:
    virtual bool isOffsetOfPtrToROMClassesSectionInSharedCache(uintptr_t offset, void **ptr = NULL);
 
    J9ROMClass *startingROMClassOfClassChain(UDATA *classChain);
+   uintptr_t startingROMClassOffsetOfClassChain(void *chain);
 
    virtual uintptr_t getClassChainOffsetIdentifyingLoader(TR_OpaqueClassBlock *clazz, uintptr_t **classChain = NULL);
 
@@ -421,11 +422,14 @@ public:
     /**
     * \brief Store the dependencies of an AOT method in the SCC
     *
-    * The dependencies of an AOT method are encoded as an array of uintptr_t values. The first entry is the number
-    * of elements in the entire array. The subsequent entries are encoded offsets to the class chains of classes that
-    * need to be loaded or initialized before the compiled body can be loaded. If the class must be initialized, the
-    * entry will be the offset itself (which necessarily has a set low bit), and if the class only needs to be loaded
-    * it will be the offset with the low bit cleared.    *
+    * The dependencies of an AOT method are encoded as an array of uintptr_t
+    * values. The first entry is the number of entries after the first, the
+    * number of dependencies in the array. The subsequent entries are encoded
+    * offsets to the class chains of classes that need to be loaded or
+    * initialized before the compiled body can be loaded. If the class must be
+    * initialized, the entry will be the offset itself (which necessarily has a
+    * set low bit), and if the class only needs to be loaded it will be the
+    * offset with the low bit cleared.
     *
     * \param[in] vmThread VM thread
     * \param[in] methodDependencies The dependencies of the AOT compilation
