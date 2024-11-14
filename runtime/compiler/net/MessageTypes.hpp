@@ -285,7 +285,7 @@ enum MessageType : uint16_t
    KnownObjectTable_getReferenceField,
    KnownObjectTable_getKnownObjectTableDumpInfo,
    // for getting a J9Class from KnownObjectTable
-   KnownObjectTable_getJ9Class,
+   KnownObjectTable_getOpaqueClass,
    // for getting a vectorBitSize from KnownObjectTable
    KnownObjectTable_getVectorBitSize,
 

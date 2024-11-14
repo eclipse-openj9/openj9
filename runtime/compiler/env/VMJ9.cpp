@@ -1307,11 +1307,13 @@ TR_J9VMBase::getReferenceElement(uintptr_t objectPointer, intptr_t elementIndex)
    return (uintptr_t)J9JAVAARRAYOFOBJECT_LOAD(vmThread(), objectPointer, elementIndex);
    }
 
-TR_arrayTypeCode TR_J9VMBase::getPrimitiveArrayTypeCode(TR_OpaqueClassBlock* clazz)
+TR_arrayTypeCode
+TR_J9VMBase::getPrimitiveArrayTypeCode(TR_OpaqueClassBlock* clazz)
    {
    TR_ASSERT(isPrimitiveClass(clazz), "Expect primitive class in TR_J9VMBase::getPrimitiveArrayType");
 
    J9Class* j9clazz = (J9Class*)clazz;
+
    if (j9clazz == jitConfig->javaVM->booleanReflectClass)
       return atype_boolean;
    else if (j9clazz == jitConfig->javaVM->charReflectClass)
@@ -1333,6 +1335,31 @@ TR_arrayTypeCode TR_J9VMBase::getPrimitiveArrayTypeCode(TR_OpaqueClassBlock* cla
       TR_ASSERT(false, "TR_arrayTypeCode is not defined for the j9clazz");
       return (TR_arrayTypeCode)0;
       }
+   }
+
+TR::DataType
+TR_J9VMBase::getClassPrimitiveDataType(TR_OpaqueClassBlock* clazz)
+   {
+   J9Class *j9class = TR::Compiler->cls.convertClassOffsetToClassPtr(clazz);
+   if (!j9class)
+      return TR::NoType;
+
+   J9JavaVM *vm = getJ9JITConfig()->javaVM;
+
+   if (j9class == vm->floatReflectClass)
+      return TR::Float;
+   else if (j9class == vm->doubleReflectClass)
+      return TR::Double;
+   else if (j9class == vm->byteReflectClass)
+      return TR::Int8;
+   else if (j9class == vm->shortReflectClass)
+      return TR::Int16;
+   else if (j9class == vm->intReflectClass)
+      return TR::Int32;
+   else if (j9class == vm->longReflectClass)
+      return TR::Int64;
+   else
+      return TR::NoType;
    }
 
 TR_OpaqueClassBlock *

@@ -265,6 +265,9 @@ public:
    virtual bool isIndexableDataAddrPresent() override;
    virtual bool isOffHeapAllocationEnabled() override;
 
+   virtual TR_arrayTypeCode       getPrimitiveArrayTypeCode(TR_OpaqueClassBlock* clazz) override;
+   virtual TR::DataType           getClassPrimitiveDataType(TR_OpaqueClassBlock* clazz) override;
+
 private:
    bool instanceOfOrCheckCastHelper(J9Class *instanceClass, J9Class* castClass, bool cacheUpdate);
    bool checkCHTableIfClassInfoExistsAndHasBeenExtended(TR_OpaqueClassBlock *clazz, bool &bClassHasBeenExtended);
