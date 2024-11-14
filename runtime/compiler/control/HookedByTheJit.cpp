@@ -4613,7 +4613,7 @@ void memoryDisclaimLogic(TR::CompilationInfo *compInfo, uint64_t crtElapsedTime,
    if (sharedCache && sharedCache->isDisclaimEnabled())
       {
       // Disclaim if there was a large time interval since the last disclaim
-      if (crtElapsedTime > lastSCCDisclaimTime + 12 * TR::Options::_minTimeBetweenMemoryDisclaims)
+      if (crtElapsedTime > lastSCCDisclaimTime + TR::Options::_minTimeBetweenMemoryDisclaims)
          {
          disclaimSharedClassCache(sharedCache, crtElapsedTime);
          lastSCCDisclaimTime = crtElapsedTime;
@@ -4624,12 +4624,12 @@ void memoryDisclaimLogic(TR::CompilationInfo *compInfo, uint64_t crtElapsedTime,
    if (TR_DataCacheManager::getManager()->isDisclaimEnabled())
       {
       // Ensure we don't do it too often
-      if (crtElapsedTime > lastDataCacheDisclaimTime + TR::Options::_minTimeBetweenMemoryDisclaims)
+      if (crtElapsedTime > lastDataCacheDisclaimTime + 10 * TR::Options::_minTimeBetweenMemoryDisclaims)
          {
          // Disclaim if at least one data cache has been allocated since the last disclaim
          // or if there was a large time interval since the last disclaim
          if (TR_DataCacheManager::getManager()->numAllocatedCaches() > lastNumAllocatedDataCaches ||
-             crtElapsedTime > lastDataCacheDisclaimTime + 12 * TR::Options::_minTimeBetweenMemoryDisclaims)
+             crtElapsedTime > lastDataCacheDisclaimTime + 120 * TR::Options::_minTimeBetweenMemoryDisclaims)
             {
             disclaimDataCaches(crtElapsedTime);
             lastDataCacheDisclaimTime = crtElapsedTime; // Update the time when disclaim was last performed
@@ -4642,12 +4642,12 @@ void memoryDisclaimLogic(TR::CompilationInfo *compInfo, uint64_t crtElapsedTime,
    if (TR::CodeCacheManager::instance()->isDisclaimEnabled())
       {
       // Ensure we don't do it too often
-      if (crtElapsedTime > lastCodeCacheDisclaimTime + TR::Options::_minTimeBetweenMemoryDisclaims)
+      if (crtElapsedTime > lastCodeCacheDisclaimTime + 10 * TR::Options::_minTimeBetweenMemoryDisclaims)
          {
          // Disclaim if at least one code cache has been allocated since the last disclaim
          // or if there was a large time interval since the last disclaim
          if (TR::CodeCacheManager::instance()->getCurrentNumberOfCodeCaches() > lastNumAllocatedCodeCaches ||
-             crtElapsedTime > lastCodeCacheDisclaimTime + 12 * TR::Options::_minTimeBetweenMemoryDisclaims)
+             crtElapsedTime > lastCodeCacheDisclaimTime + 120 * TR::Options::_minTimeBetweenMemoryDisclaims)
             {
             static OMR::RSSReport *rssReport = OMR::RSSReport::instance();
 
@@ -4673,7 +4673,7 @@ void memoryDisclaimLogic(TR::CompilationInfo *compInfo, uint64_t crtElapsedTime,
       TR::PersistentAllocator * iprofilerAllocator = TR_IProfiler::allocator();
       if (iprofilerAllocator->isDisclaimEnabled())
          {
-         if (crtElapsedTime > lastIProfilerDisclaimTime + TR::Options::_minTimeBetweenMemoryDisclaims &&
+         if (crtElapsedTime > lastIProfilerDisclaimTime + 10 * TR::Options::_minTimeBetweenMemoryDisclaims &&
              // Avoid disclaiming IProfiler segments if IProfiler is still active
              returnIprofilerState() == IPROFILING_STATE_OFF &&
              // Avoid disclaiming if compilations are still to pe performed

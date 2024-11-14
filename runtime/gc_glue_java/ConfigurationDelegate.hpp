@@ -117,6 +117,22 @@ public:
 		if (!_extensions->dynamicClassUnloadingKickoffThresholdForced) {
 			_extensions->dynamicClassUnloadingKickoffThreshold = DYNAMIC_CLASS_UNLOADING_KICKOFF_THRESHOLD;
 		}
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+		/* Favour reduced memory consumption over pause times when checkpointing is enabled by
+		 * scaling the default min and max DNSS expected ratios by a constant factor, unless
+		 * at least one ratio was directly specified by the user.
+		 */
+		if (javaVM->internalVMFunctions->isCRaCorCRIUSupportEnabled(javaVM)) {
+			const double scaleFactor = 2;
+			if (!_extensions->dnssExpectedRatioMaximum._wasSpecified &&
+			    !_extensions->dnssExpectedRatioMinimum._wasSpecified) {
+				_extensions->dnssExpectedRatioMaximum._valueSpecified *= scaleFactor;
+				_extensions->dnssExpectedRatioMinimum._valueSpecified *= scaleFactor;
+			}
+		}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+
 		return true;
 	}
 
