@@ -815,4 +815,52 @@ VM_JFRChunkWriter::writeInitialSystemPropertyEvents(J9JavaVM *vm)
 	}
 }
 
+void
+VM_JFRChunkWriter::writeInitialEnvironmentVariableEvents()
+{
+	J9SysinfoEnvIteratorState envState;
+	memset(&envState, 0, sizeof(envState));
+
+	/* Call init with zero length buffer to get the required buffer size */
+	int32_t result = j9sysinfo_env_iterator_init(&envState, NULL, 0);
+
+	if (result >= 0) {
+		int32_t bufferSize = result;
+		void *buffer = j9mem_allocate_memory(bufferSize, OMRMEM_CATEGORY_VM);
+
+		if (NULL != buffer) {
+			J9SysinfoEnvElement envElement = {NULL};
+
+			result = j9sysinfo_env_iterator_init(&envState, buffer, bufferSize);
+
+			if (result >= 0) {
+				while (j9sysinfo_env_iterator_hasNext(&envState)) {
+					result = j9sysinfo_env_iterator_next(&envState, &envElement);
+
+					if (0 == result) {
+						/* reserve size field */
+						U_8 *dataStart = _bufferWriter->getAndIncCursor(sizeof(U_32));
+						const char *equalChar = strchr(envElement.nameAndValue, '=');
+
+						/* write event type */
+						_bufferWriter->writeLEB128(InitialEnvironmentVariableID);
+
+						/* write start time */
+						_bufferWriter->writeLEB128(j9time_nano_time());
+						/* write key */
+						writeUTF8String((U_8 *)envElement.nameAndValue, equalChar - envElement.nameAndValue);
+
+						/* write value */
+						writeStringLiteral(equalChar + 1);
+
+						/* write size */
+						_bufferWriter->writeLEB128PaddedU32(dataStart, _bufferWriter->getCursor() - dataStart);
+					}
+				}
+			}
+
+			j9mem_free_memory(buffer);
+		}
+	}
+}
 #endif /* defined(J9VM_OPT_JFR) */
