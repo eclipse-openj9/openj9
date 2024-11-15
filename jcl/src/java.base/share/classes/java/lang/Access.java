@@ -169,11 +169,13 @@ final class Access implements JavaLangAccess {
 		return arg0.getInternalStackTrace()[arg1];
 	}
 
+/*[IF JAVA_SPEC_VERSION < 24]*/
 	/*[PR CMVC 199693] Prevent trusted method chain attack. */
 	@SuppressWarnings("removal")
 	public Thread newThreadWithAcc(Runnable runnable, AccessControlContext acc) {
 		return new Thread(runnable, acc);
 	}
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 	/**
 	 * Returns a directly present annotation instance of annotationClass type from clazz.
