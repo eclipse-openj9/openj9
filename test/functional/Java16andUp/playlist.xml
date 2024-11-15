@@ -21,6 +21,7 @@
   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 -->
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../TestConfig/playlist.xsd">
+	<include>java16andUpSettings.mk</include>
 	<test>
 		<testCaseName>Jep397Tests</testCaseName>
 		<disables>
@@ -55,7 +56,7 @@
 				<impl>hotspot</impl>
 			</disable>
 		</disables>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+		<command>$(JAVA_COMMAND) $(ENABLE_PREVIEW) $(JVM_OPTIONS) \
 			-cp $(Q)$(LIB_DIR)$(D)asm.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 			-cp $(Q)$(TEST_RESROOT)$(D)module_bin$(D)org.openj9test.modularity.moduleX$(Q) \
 			-cp $(Q)$(TEST_RESROOT)$(D)module_bin$(D)org.openj9test.modularity.moduleY$(Q) \
@@ -89,7 +90,7 @@
 				<impl>hotspot</impl>
 			</disable>
 		</disables>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+		<command>$(JAVA_COMMAND) $(ENABLE_PREVIEW) $(JVM_OPTIONS) \
 			-cp $(Q)$(LIB_DIR)$(D)asm.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testSubClassOfSealedSuperFromDifferentPackageInSameUnnamedModule.xml$(Q) -testnames Jep397Tests_testSubClassOfSealedSuperFromDifferentPackageInSameUnnamedModule \
 			-groups $(TEST_GROUP) \
