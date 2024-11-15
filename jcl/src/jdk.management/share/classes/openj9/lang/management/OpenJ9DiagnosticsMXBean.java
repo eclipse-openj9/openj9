@@ -71,9 +71,23 @@ public interface OpenJ9DiagnosticsMXBean extends PlatformManagedObject {
 	 * with the initial -Xdump: omitted. See the -Xdump option section on dump agents in
 	 * the documentation for the OpenJ9 JVM.
 	 *
+	 * @return the dump configuration as an array of Strings
 	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to read the dump settings
 	 */
 	public String[] queryDumpOptions();
+
+	/**
+	 * Returns the current dump configuration as a String, with multiple options separated by
+	 * a vertical bar, or null if an internal error occurs.
+	 * The syntax of the option String is the same as the -Xdump command-line option,
+	 * with the initial -Xdump: omitted. See the -Xdump option section on dump agents in
+	 * the documentation for the OpenJ9 JVM.
+	 *
+	 * @return the dump configuration as a String, with multiple options separated by
+	 * a vertical bar
+	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to read the dump settings
+	 */
+	public String getDumpOptions();
 
 	/**
 	 * This function sets options for the dump subsystem.
@@ -143,7 +157,7 @@ public interface OpenJ9DiagnosticsMXBean extends PlatformManagedObject {
 	/**
 	 * This function triggers the heap dump agent and requests for a heap dump in CLASSIC format.
 	 *
-	 * @return The file name of the dump that was created
+	 * @return the file name of the dump that was created
 	 * @throws InvalidOptionException if the dump operation fails
 	 * @throws RuntimeException if the JVM does not contain RAS dump support
 	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to trigger this dump
