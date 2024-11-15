@@ -418,6 +418,40 @@ public:
     */
    static void buildWellKnownClassesSCCKey(char *buffer, size_t size, unsigned int includedClasses);
 
+    /**
+    * \brief Store the dependencies of an AOT method in the SCC
+    *
+    * The dependencies of an AOT method are encoded as an array of uintptr_t values. The first entry is the number
+    * of elements in the entire array. The subsequent entries are encoded offsets to the class chains of classes that
+    * need to be loaded or initialized before the compiled body can be loaded. If the class must be initialized, the
+    * entry will be the offset itself (which necessarily has a set low bit), and if the class only needs to be loaded
+    * it will be the offset with the low bit cleared.    *
+    *
+    * \param[in] vmThread VM thread
+    * \param[in] methodDependencies The dependencies of the AOT compilation
+    * \param[in] methodDependenciesSize The number of elements in methodDependencies
+    * \return Pointer to the method dependencies in the local SCC, or INVALID_CLASS_CHAIN_OFFSET if the method
+    *         dependencies could not be stored
+    */
+   virtual const void *storeAOTMethodDependencies(J9VMThread *vmThread, TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *definingClass,
+                                                  uintptr_t *methodDependencies, size_t methodDependenciesSize);
+
+    /**
+    * \brief Check if the given method has a compiled body in the SCC that tracked its dependencies
+    *
+    * This method also returns the dependencies of the method if they were
+    * stored in the local SCC. Note that if the method has zero dependencies
+    * then we skip storing the dependency chain in the SCC entirely. If this is
+    * the case, methodHasAOTBodyWithDependencies will return true and also
+    * return NULL through methodDependencies.
+    *
+    * \param[in] vmThread VM thread
+    * \param[in] method J9ROMMethod to check
+    * \param[out] methodDependencies The dependencies of compiled body associated to method if they were stored in the SCC
+    * \return Whether or not the method has a body in the SCC that was compiled with dependency tracking
+    */
+   virtual bool methodHasAOTBodyWithDependencies(J9VMThread *vmThread, J9ROMMethod *method, const uintptr_t * &methodDependencies);
+
    enum TR_J9SharedCacheDisabledReason
       {
       UNINITIALIZED,
@@ -490,6 +524,16 @@ protected:
     * \return True if the pointer points into the shared cache, false otherwise.
     */
    bool isROMStructureInSharedCache(void *romStructure, uintptr_t *cacheOffset = NULL);
+
+   /**
+    * \brief Fill the given buffer of size at least dependencyKeyBufferLength with the method dependency key
+    *        corresponding to the given ROM method offset.
+    *
+    * \param[in] offset The offset to the ROM method
+    * \param[out] buffer The buffer to fill with the SCC key
+    * \param[out] keyLength The length of the resulting key, including NULL terminator.
+    */
+   void buildAOTMethodDependenciesKey(uintptr_t offset, char *buffer, size_t &keyLength);
 
 private:
    // This class is intended to be a POD; keep it simple.
@@ -715,6 +759,9 @@ public:
    static TR_YesNoMaybe isSharedCacheDisabledBecauseFull(TR::CompilationInfo *compInfo) { TR_ASSERT_FATAL(false, "called"); return TR_no;}
    static void setStoreSharedDataFailedLength(UDATA length) { TR_ASSERT_FATAL(false, "called"); }
 
+   virtual bool methodHasAOTBodyWithDependencies(J9VMThread *vmThread, J9ROMMethod *method, const uintptr_t * &methodDependencies) override
+      { TR_ASSERT_FATAL(false, "called"); return false; }
+
    virtual uintptr_t getClassChainOffsetIdentifyingLoader(TR_OpaqueClassBlock *clazz, uintptr_t **classChain = NULL) override;
 
    virtual J9SharedClassCacheDescriptor *getCacheDescriptorList() override;
@@ -813,6 +860,9 @@ public:
    virtual bool isOffsetOfPtrToROMClassesSectionInSharedCache(uintptr_t offset, void **ptr = NULL) override { TR_ASSERT_FATAL(false, "called"); return false; }
    virtual uintptr_t getClassChainOffsetIdentifyingLoader(TR_OpaqueClassBlock *clazz, uintptr_t **classChain = NULL) override { TR_ASSERT_FATAL(false, "called"); return 0; }
    virtual const void *storeSharedData(J9VMThread *vmThread, const char *key, const J9SharedDataDescriptor *descriptor) override { TR_ASSERT_FATAL(false, "called"); return NULL; }
+
+   virtual bool methodHasAOTBodyWithDependencies(J9VMThread *vmThread, J9ROMMethod *method, const uintptr_t * &methodDependencies) override
+      { TR_ASSERT_FATAL(false, "called"); return false; }
 
    virtual J9SharedClassCacheDescriptor *getCacheDescriptorList() override { TR_ASSERT_FATAL(false, "called"); return NULL; }
 

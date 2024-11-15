@@ -199,6 +199,7 @@ typedef struct TR_AOTMethodHeader {
 #define TR_AOTMethodHeader_UsesOSR                                   0x00000200
 #define TR_AOTMethodHeader_MethodTracingEnabled                      0x00000400
 #define TR_AOTMethodHeader_UsesFSD                                   0x00000800
+#define TR_AOTMethodHeader_TracksDependencies                        0x00001000
 
 
 typedef struct TR_AOTInliningStats

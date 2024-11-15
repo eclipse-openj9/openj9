@@ -25,6 +25,7 @@
 #include <algorithm>
 #include "j9cfg.h"
 #include "control/CompilationRuntime.hpp"
+#include "control/CompilationThread.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "compile/ResolvedMethod.hpp"
@@ -74,6 +75,10 @@
 // Used by TR_J9SharedCache::rememberClass() to communicate that a class has not been recorded in the SCC but could have been recorded.
 #define COULD_CREATE_CLASS_CHAIN 1
 static_assert(TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET != COULD_CREATE_CLASS_CHAIN, "These values must be distinct");
+
+static const char dependencyKeyPrefix[] = "MethodDependencies:";
+static const size_t dependencyKeyPrefixLength = sizeof(dependencyKeyPrefix) - 1; // exclude NULL terminator
+static const size_t dependencyKeyBufferLength = sizeof(dependencyKeyPrefix) + 16;
 
 TR_J9SharedCache::TR_J9SharedCacheDisabledReason TR_J9SharedCache::_sharedCacheState = TR_J9SharedCache::UNINITIALIZED;
 TR_YesNoMaybe TR_J9SharedCache::_sharedCacheDisabledBecauseFull = TR_maybe;
@@ -1539,6 +1544,81 @@ TR_J9SharedCache::storeWellKnownClasses(J9VMThread *vmThread, uintptr_t *classCh
    dataDescriptor.flags = 0;
 
    return storeSharedData(vmThread, key, &dataDescriptor);
+   }
+
+void
+TR_J9SharedCache::buildAOTMethodDependenciesKey(uintptr_t offset, char *buffer, size_t &keyLength)
+   {
+   auto cursor = buffer;
+
+   memcpy(cursor, dependencyKeyPrefix, dependencyKeyPrefixLength);
+   cursor += dependencyKeyPrefixLength;
+
+   convertUnsignedOffsetToASCII(offset, cursor);
+   keyLength = (cursor - buffer) + _numDigitsForCacheOffsets + 1; // NULL terminator not included in _numDigitsForCacheOffsets
+   }
+
+const void *
+TR_J9SharedCache::storeAOTMethodDependencies(J9VMThread *vmThread,
+                                             TR_OpaqueMethodBlock *method,
+                                             TR_OpaqueClassBlock *definingClass,
+                                             uintptr_t *methodDependencies,
+                                             size_t methodDependenciesSize)
+   {
+   LOG(1, "storeAOTMethodDependencies class %p method %p\n", definingClass, method);
+   uintptr_t methodOffset = 0;
+   if (!isMethodInSharedCache(method, definingClass, &methodOffset))
+      return NULL;
+
+   LOG(3, "\toffset %lu\n", methodOffset);
+
+   char key[dependencyKeyBufferLength];
+   size_t keyLength = 0;
+   buildAOTMethodDependenciesKey(methodOffset, key, keyLength);
+
+   LOG(3, "\tkey created: %.*s\n", keyLength, key);
+
+   J9SharedDataDescriptor dataDescriptor;
+   dataDescriptor.address = (uint8_t *)methodDependencies;
+   dataDescriptor.length = methodDependenciesSize * sizeof(methodDependencies[0]);
+   dataDescriptor.type = J9SHR_DATA_TYPE_JITHINT;
+   dataDescriptor.flags = 0;
+
+   return storeSharedData(vmThread, key, &dataDescriptor);
+   }
+
+bool
+TR_J9SharedCache::methodHasAOTBodyWithDependencies(J9VMThread *vmThread, J9ROMMethod *method, const uintptr_t * &methodDependencies)
+   {
+   methodDependencies = NULL;
+#if defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
+   char key[dependencyKeyBufferLength];
+   uintptr_t methodOffset = INVALID_ROM_METHOD_OFFSET;
+   if (!isROMMethodInSharedCache(method, &methodOffset))
+      return false;
+
+   auto aotBody = TR::CompilationInfoPerThreadBase::findAotBodyInSCC(vmThread, method);
+   if (!aotBody)
+      return false;
+
+   auto dataCacheHeader = static_cast<const J9JITDataCacheHeader *>(aotBody);
+   auto aotMethodHeader = (TR_AOTMethodHeader *)(dataCacheHeader + 1); // skip the data cache header to get to the AOT method header
+   if (!(aotMethodHeader->flags & TR_AOTMethodHeader_TracksDependencies))
+      return false;
+
+   size_t keyLength = 0;
+   buildAOTMethodDependenciesKey(methodOffset, key, keyLength);
+
+   J9SharedDataDescriptor dataDescriptor;
+   dataDescriptor.address = NULL;
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
+
+   if (sharedCacheConfig()->findSharedData(vmThread, key, keyLength, J9SHR_DATA_TYPE_JITHINT, FALSE, &dataDescriptor, NULL) > 0)
+      methodDependencies = (uintptr_t *)dataDescriptor.address;
+   return true;
+#else
+   return false;
+#endif /*  defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64)) */
    }
 
 #if defined(J9VM_OPT_JITSERVER)

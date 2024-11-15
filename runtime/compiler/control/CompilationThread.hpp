@@ -181,7 +181,7 @@ class CompilationInfoPerThreadBase
                               bool canDoRelocatableCompile,
                               bool eligibleForRelocatableCompile,
                               TR_RelocationRuntime *reloRuntime);
-   const void* findAotBodyInSCC(J9VMThread *vmThread, const J9ROMMethod *romMethod);
+   static const void* findAotBodyInSCC(J9VMThread *vmThread, const J9ROMMethod *romMethod);
 
 #if defined(J9VM_OPT_SHARED_CLASSES) && defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT)
    TR_MethodMetaData *installAotCachedMethod(
