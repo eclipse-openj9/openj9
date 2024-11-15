@@ -2618,4 +2618,30 @@ void J9::AheadOfTimeCompile::processRelocations()
          relocationDataCursor += s->getSizeOfRelocationData();
          }
       }
+#if !defined(PERSISTENT_COLLECTIONS_UNSUPPORTED)
+      if (!comp->getOption(TR_DisableDependencyTracking))
+         {
+         auto method = comp->getMethodBeingCompiled()->getPersistentIdentifier();
+         auto definingClass = comp->fe()->getClassOfMethod(method);
+
+         Vector<uintptr_t> dependencies(comp->trMemory()->currentStackRegion());
+         uintptr_t totalDependencies = comp->populateAOTMethodDependencies(definingClass, dependencies);
+
+         if (totalDependencies == 0)
+            {
+            // If there are zero dependencies, we skip storing the chain. This
+            // flag must still be set to distinguish methods with zero
+            // dependencies from methods with untracked dependencies.
+            comp->getAotMethodHeaderEntry()->flags |= TR_AOTMethodHeader_TracksDependencies;
+            }
+         else
+            {
+            auto sharedCache = fej9->sharedCache();
+            auto vmThread = fej9->getCurrentVMThread();
+            auto dependencyChain = sharedCache->storeAOTMethodDependencies(vmThread, method, definingClass, dependencies.data(), dependencies.size());
+            if (dependencyChain)
+               comp->getAotMethodHeaderEntry()->flags |= TR_AOTMethodHeader_TracksDependencies;
+            }
+         }
+#endif /* !defined(PERSISTENT_COLLECTIONS_UNSUPPORTED) */
    }
