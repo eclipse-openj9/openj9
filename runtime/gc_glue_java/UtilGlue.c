@@ -39,7 +39,7 @@ OMR_Glue_GetVMDirectoryToken(void **token)
  * Provides the thread name to be used when no name is given.
  */
 char *
-OMR_Glue_GetThreadNameForUnamedThread(OMR_VMThread *vmThread)
+OMR_Glue_GetThreadNameForUnnamedThread(OMR_VMThread *vmThread)
 {
 	OMRPORT_ACCESS_FROM_OMRVMTHREAD(vmThread);
 	return (char *)omrnls_lookup_message(
