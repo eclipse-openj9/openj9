@@ -1423,11 +1423,13 @@ Java_java_security_AccessController_getAccSnapshot(JNIEnv* env, jclass jsAccessC
 	if (NULL != vmThread->currentException) {
 		goto _walkStateUninitialized;
 	}
+#if JAVA_SPEC_VERSION < 24
 	/* AccessControlContext is allocated in the same space as the thread, so no exception can occur */
 	contextObject = vmThread->threadObject;
 	if (NULL != contextObject) {
 		contextObject = J9VMJAVALANGTHREAD_INHERITEDACCESSCONTROLCONTEXT(vmThread, contextObject);
 	}
+#endif /* JAVA_SPEC_VERSION < 24 */
 	/* Walk the stack, caching the constant pools of the frames. */
 	walkState.skipCount = startingFrame + 1; /* skip this JNI frame as well */
 	walkState.userData1 = STACK_WALK_STATE_MAGIC;	/* set to NULL when a limited doPrivileged frame is discovered */
