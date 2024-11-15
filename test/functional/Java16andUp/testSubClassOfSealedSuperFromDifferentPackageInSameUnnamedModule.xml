@@ -24,7 +24,7 @@
 
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
 <suite name="Java16andUp suite" parallel="none" verbose="2">
-	<test name="Jep397Tests_testSubClassOfSealedSuperFromDifferentPackageInSameUnamedModule">
+	<test name="Jep397Tests_testSubClassOfSealedSuperFromDifferentPackageInSameUnnamedModule">
 		<classes>
 			<class name="org.openj9.test.java.lang.Test_SubClass"/>
 		</classes>

@@ -2470,7 +2470,7 @@ trcModulesSettingPackage(J9VMThread *vmThread, J9Class *ramClass, J9ClassLoader 
 	char classLoaderNameBuf[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
 	char *classLoaderNameUTF = NULL;
 
-	if (javaVM->unamedModuleForSystemLoader == ramClass->module) {
+	if (javaVM->unnamedModuleForSystemLoader == ramClass->module) {
 #define SYSTEMLOADER_UNNAMED_NAMED_MODULE   "unnamed module for system loader"
 		memcpy(moduleNameBuf, SYSTEMLOADER_UNNAMED_NAMED_MODULE, sizeof(SYSTEMLOADER_UNNAMED_NAMED_MODULE));
 #undef SYSTEMLOADER_UNNAMED_NAMED_MODULE
@@ -3603,9 +3603,9 @@ retry:
 				 * Therefore J9Class.module should be NULL for classes loaded from classpath by non-bootloaders.
 				 * The call to findModuleForPackage() should correctly set J9Class.module as it would return
 				 * NULL for classes loaded from classpath.
-				 * For bootloader, unnamed module is represented by J9JavaVM.unamedModuleForSystemLoader.
+				 * For bootloader, unnamed module is represented by J9JavaVM.unnamedModuleForSystemLoader.
 				 * Therefore for classes loaded by bootloader from boot classpath,
-				 * J9Class.module should be set to J9JavaVM.unamedModuleForSystemLoader.
+				 * J9Class.module should be set to J9JavaVM.unnamedModuleForSystemLoader.
 				 */
 				bool findModule = false;
 				J9ClassLoader *findModuleClassLoader = classLoader;
@@ -3647,7 +3647,7 @@ retry:
 					}
 
 					if (!findModule) {
-						module = javaVM->unamedModuleForSystemLoader;
+						module = javaVM->unnamedModuleForSystemLoader;
 					}
 				}
 				if (findModule) {
@@ -3657,7 +3657,7 @@ retry:
 					module = findModuleForPackage(vmThread, findModuleClassLoader, J9UTF8_DATA(className), pkgNameLength);
 					omrthread_monitor_exit(classLoaderModuleAndLocationMutex);
 				} else {
-					Assert_VM_true((module == javaVM->unamedModuleForSystemLoader) || (module == hostClass->module));
+					Assert_VM_true((module == javaVM->unnamedModuleForSystemLoader) || (module == hostClass->module));
 				}
 			} else {
 				/* Ignore locationType and assign all classes created before the java.base module is created to java.base.

@@ -6104,7 +6104,7 @@ typedef struct J9JavaVM {
 	omrthread_monitor_t classLoaderModuleAndLocationMutex;
 	struct J9Pool* modularityPool;
 	struct J9Module *javaBaseModule;
-	struct J9Module *unamedModuleForSystemLoader;
+	struct J9Module *unnamedModuleForSystemLoader;
 	J9ClassPathEntry *modulesPathEntry;
 	jclass jimModules;
 	jmethodID addReads;

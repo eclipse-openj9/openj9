@@ -287,7 +287,7 @@ static const struct { \
 #define internalExitVMToJNI internalReleaseVMAccess
 #endif /* !J9VM_INTERP_ATOMIC_FREE_JNI */
 
-#define J9_IS_J9MODULE_UNNAMED(vm, module) ((NULL == module) || (module == vm->unamedModuleForSystemLoader))
+#define J9_IS_J9MODULE_UNNAMED(vm, module) ((NULL == module) || (module == vm->unnamedModuleForSystemLoader))
 
 #define J9_IS_J9MODULE_OPEN(module) (TRUE == module->isOpen)
 

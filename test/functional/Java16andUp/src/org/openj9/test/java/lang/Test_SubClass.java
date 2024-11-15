@@ -35,7 +35,7 @@ import org.openj9.test.java.lang.SuperClassInSamePkg;
  * 
  * Verify whether IncompatibleClassChangeError is thrown out when
  * the specified non-public subclass is in a different package from
- * the sealed super class/interface within the same unamed module.
+ * the sealed super class/interface within the same unnamed module.
  */
 @Test(groups = { "level.sanity" })
 public class Test_SubClass {

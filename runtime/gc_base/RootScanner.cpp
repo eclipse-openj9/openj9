@@ -102,7 +102,7 @@ MM_RootScanner::scanModularityObjects(J9ClassLoader * classLoader)
 		}
 
 		if (classLoader == _javaVM->systemClassLoader) {
-			doSlot(&_javaVM->unamedModuleForSystemLoader->moduleObject);
+			doSlot(&_javaVM->unnamedModuleForSystemLoader->moduleObject);
 		}
 	}
 }

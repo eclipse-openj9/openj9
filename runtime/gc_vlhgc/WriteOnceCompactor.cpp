@@ -1359,7 +1359,7 @@ MM_WriteOnceCompactor::fixupClassLoaderObject(MM_EnvironmentVLHGC* env, J9Object
 			}
 
 			if (classLoader == _javaVM->systemClassLoader) {
-				slotPtr = &_javaVM->unamedModuleForSystemLoader->moduleObject;
+				slotPtr = &_javaVM->unnamedModuleForSystemLoader->moduleObject;
 
 				originalObject = *slotPtr;
 				J9Object* forwardedObject = getForwardWrapper(env, originalObject, cache);

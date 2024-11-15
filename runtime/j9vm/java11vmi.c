@@ -71,7 +71,7 @@ static UDATA addModuleDefinition(J9VMThread * currentThread, J9Module * fromModu
 static BOOLEAN isPackageDefined(J9VMThread * currentThread, J9ClassLoader * classLoader, const char *packageName);
 static BOOLEAN areNoPackagesDefined(J9VMThread * currentThread, J9ClassLoader * classLoader, const char* const* packages, U_32 numPackages);
 static UDATA exportPackageToAll(J9VMThread * currentThread, J9Module * fromModule, const char *package);
-static UDATA exportPackageToAllUnamed(J9VMThread * currentThread, J9Module * fromModule, const char *package);
+static UDATA exportPackageToAllUnnamed(J9VMThread *currentThread, J9Module *fromModule, const char *package);
 static UDATA exportPackageToModule(J9VMThread * currentThread, J9Module * fromModule, const char *package, J9Module * toModule);
 static void trcModulesCreationPackage(J9VMThread * currentThread, J9Module * fromModule, const char *package);
 static void trcModulesAddModuleExportsToAll(J9VMThread * currentThread, J9Module * fromModule, const char *package);
@@ -281,7 +281,7 @@ createModule(J9VMThread * currentThread, j9object_t moduleObject, J9ClassLoader 
 	} else {
 		if (NULL == moduleName) {
 			/* moduleName is passed as NULL for the unnamed module for bootloader created by JVM_SetBootLoaderUnnamedModule() */
-			j9mod = vm->unamedModuleForSystemLoader;
+			j9mod = vm->unnamedModuleForSystemLoader;
 		} else {
 			j9mod = vm->javaBaseModule;
 			j9mod->isLoose = TRUE;
@@ -561,7 +561,7 @@ trcModulesAddModuleExportsToAllUnnamed(J9VMThread * currentThread, J9Module * fr
 }
 
 static UDATA
-exportPackageToAllUnamed(J9VMThread * currentThread, J9Module * fromModule, const char *package)
+exportPackageToAllUnnamed(J9VMThread * currentThread, J9Module * fromModule, const char *package)
 {
 	UDATA retval = ERRCODE_GENERAL_FAILURE;
 	J9Package * const j9package = getPackageDefinition(currentThread, fromModule, package, &retval);
@@ -914,9 +914,9 @@ JVM_DefineModule(JNIEnv * env, jobject module, jboolean isOpen, jstring version,
 							}
 
 #if JAVA_SPEC_VERSION >= 21
-							/* vm->unamedModuleForSystemLoader->moduleObject was saved by JVM_SetBootLoaderUnnamedModule */
+							/* vm->unnamedModuleForSystemLoader->moduleObject was saved by JVM_SetBootLoaderUnnamedModule */
 							{
-								j9object_t moduleObject = vm->unamedModuleForSystemLoader->moduleObject;
+								j9object_t moduleObject = vm->unnamedModuleForSystemLoader->moduleObject;
 								Assert_SC_notNull(moduleObject);
 								J9VMJAVALANGCLASSLOADER_SET_UNNAMEDMODULE(currentThread, systemClassLoader->classLoaderObject, moduleObject);
 								Trc_MODULE_defineModule_setBootloaderUnnamedModule(currentThread);
@@ -1022,7 +1022,7 @@ JVM_AddModuleExports(JNIEnv * env, jobject fromModule, const char *package, jobj
 		J9Module * const j9ToMod = getJ9Module(currentThread, toModule);
 
 		if (isModuleUnnamed(currentThread, J9_JNI_UNWRAP_REFERENCE(toModule))) {
-			rc = exportPackageToAllUnamed(currentThread, j9FromMod, package);
+			rc = exportPackageToAllUnnamed(currentThread, j9FromMod, package);
 		} else {
 			rc = exportPackageToModule(currentThread, j9FromMod, package, j9ToMod);
 		}
@@ -1339,9 +1339,9 @@ JVM_AddModuleExportsToAllUnnamed(JNIEnv * env, jobject fromModule, const char *p
 	{
 		UDATA rc = ERRCODE_GENERAL_FAILURE;
 
-		J9Module * const j9FromMod = getJ9Module(currentThread, fromModule);
+		J9Module *const j9FromMod = getJ9Module(currentThread, fromModule);
 
-		rc = exportPackageToAllUnamed(currentThread, j9FromMod, package);
+		rc = exportPackageToAllUnnamed(currentThread, j9FromMod, package);
 
 		if (ERRCODE_SUCCESS != rc) {
 			throwExceptionHelper(currentThread, rc);
@@ -1501,7 +1501,7 @@ JVM_WaitForReferencePendingList(JNIEnv *env)
 
 /**
  * Adds an unnamed module to the bootLoader
- * JDK21+ saves it to J9JavaVM->unamedModuleForSystemLoader->moduleObject,
+ * JDK21+ saves it to J9JavaVM->unnamedModuleForSystemLoader->moduleObject,
  * and delays bootclassloader.unnamedModule setting until java.base module is created.
  *
  * @param module module
@@ -1539,16 +1539,16 @@ JVM_SetBootLoaderUnnamedModule(JNIEnv *env, jobject module)
 				vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, "module was not loaded by the bootclassloader");
 			} else {
 #if JAVA_SPEC_VERSION >= 21
-				J9Module *unamedModuleForSystemLoader = vm->unamedModuleForSystemLoader;
+				J9Module *unnamedModuleForSystemLoader = vm->unnamedModuleForSystemLoader;
 				/* can't set bootclassloader.unnamedModule since bootclassloader hasn't finished the initialization yet */
-				if (NULL == unamedModuleForSystemLoader) {
-					vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, "unamedModuleForSystemLoader was not initialized");
-				} else if (NULL != unamedModuleForSystemLoader->moduleObject) {
-					vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, "module is already set in the unamedModuleForSystemLoader");
+				if (NULL == unnamedModuleForSystemLoader) {
+					vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, "unnamedModuleForSystemLoader was not initialized");
+				} else if (NULL != unnamedModuleForSystemLoader->moduleObject) {
+					vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, "module is already set in the unnamedModuleForSystemLoader");
 				} else {
 					J9Module *j9mod = createModule(currentThread, modObj, systemClassLoader, NULL /* NULL name field */);
-					unamedModuleForSystemLoader->moduleObject = modObj;
-					Trc_MODULE_setUnamedModuleForSystemLoaderModuleObject(currentThread, j9mod, unamedModuleForSystemLoader);
+					unnamedModuleForSystemLoader->moduleObject = modObj;
+					Trc_MODULE_setUnnamedModuleForSystemLoaderModuleObject(currentThread, j9mod, unnamedModuleForSystemLoader);
 				}
 #else /* JAVA_SPEC_VERSION >= 21 */
 				if (NULL == J9VMJAVALANGCLASSLOADER_UNNAMEDMODULE(currentThread, systemClassLoader->classLoaderObject)) {
