@@ -29,7 +29,8 @@ async function run() {
         let resultString = `Issue Number: ${process.env.ISSUE_NUMBER}\n`;
         resultString += 'Status: Open\n';
         resultString += `Recommended Components: ${predictedLabels.join(', ')}\n`;
-        resultString += `Recommended Assignees: ${predictedAssignees.join(', ')}\n`;
+        // Temporarily disable assignees predicition due to https://github.com/eclipse-openj9/openj9/issues/20489
+        // resultString += `Recommended Assignees: ${predictedAssignees.join(', ')}\n`;
 
         await octokit.rest.issues.createComment({
             issue_number: process.env.ISSUE_NUMBER,
