@@ -1666,7 +1666,7 @@ TR::Node *TR_VectorAPIExpansion::storeIntrinsicHandler(TR_VectorAPIExpansion *op
    TR::Node *offset = node->getChild(4);
 #if JAVA_SPEC_VERSION <= 21
    TR::Node *valueToWrite = node->getChild(5);
-#elif
+#else
    TR::Node *valueToWrite = node->getChild(6);
 #endif
 
