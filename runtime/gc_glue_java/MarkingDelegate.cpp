@@ -425,7 +425,7 @@ MM_MarkingDelegate::completeMarking(MM_EnvironmentBase *env)
 									}
 
 									if (classLoader == javaVM->systemClassLoader) {
-										_markingScheme->markObjectNoCheck(env, (omrobjectptr_t )javaVM->unamedModuleForSystemLoader->moduleObject);
+										_markingScheme->markObjectNoCheck(env, (omrobjectptr_t )javaVM->unnamedModuleForSystemLoader->moduleObject);
 									}
 								}
 							}

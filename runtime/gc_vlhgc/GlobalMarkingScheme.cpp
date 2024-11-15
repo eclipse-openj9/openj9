@@ -908,9 +908,9 @@ MM_GlobalMarkingScheme::scanClassLoaderObject(MM_EnvironmentVLHGC *env, J9Object
 			}
 
 			if (classLoader == _javaVM->systemClassLoader) {
-				Assert_MM_true(NULL != _javaVM->unamedModuleForSystemLoader->moduleObject);
-				markObject(env, _javaVM->unamedModuleForSystemLoader->moduleObject);
-				rememberReferenceIfRequired(env, classLoaderObject, _javaVM->unamedModuleForSystemLoader->moduleObject);
+				Assert_MM_true(NULL != _javaVM->unnamedModuleForSystemLoader->moduleObject);
+				markObject(env, _javaVM->unnamedModuleForSystemLoader->moduleObject);
+				rememberReferenceIfRequired(env, classLoaderObject, _javaVM->unnamedModuleForSystemLoader->moduleObject);
 			}
 		}
 	}

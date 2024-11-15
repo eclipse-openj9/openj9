@@ -2705,7 +2705,7 @@ MM_CopyForwardScheme::scanClassLoaderObjectSlots(MM_EnvironmentVLHGC *env, MM_Al
 				}
 
 				if (success && (classLoader == _javaVM->systemClassLoader)) {
-					success = copyAndForward(env, reservingContext, classLoaderObject, (J9Object **)&(_javaVM->unamedModuleForSystemLoader->moduleObject));
+					success = copyAndForward(env, reservingContext, classLoaderObject, (J9Object **)&(_javaVM->unnamedModuleForSystemLoader->moduleObject));
 				}
 			}
 		}
@@ -4455,7 +4455,7 @@ MM_CopyForwardScheme::scanRoots(MM_EnvironmentVLHGC* env)
 									}
 
 									if (success && (classLoader == _javaVM->systemClassLoader)) {
-										success = copyAndForward(env, getContextForHeapAddress(_javaVM->unamedModuleForSystemLoader->moduleObject), (J9Object **)&(_javaVM->unamedModuleForSystemLoader->moduleObject));
+										success = copyAndForward(env, getContextForHeapAddress(_javaVM->unnamedModuleForSystemLoader->moduleObject), (J9Object **)&(_javaVM->unnamedModuleForSystemLoader->moduleObject));
 									}
 								}
 							}

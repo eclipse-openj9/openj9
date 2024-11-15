@@ -780,9 +780,9 @@ freeJavaVM(J9JavaVM * vm)
 		vm->modulesPathEntry = NULL;
 	}
 
-	if (NULL != vm->unamedModuleForSystemLoader) {
-		vm->internalVMFunctions->freeJ9Module(vm, vm->unamedModuleForSystemLoader);
-		vm->unamedModuleForSystemLoader = NULL;
+	if (NULL != vm->unnamedModuleForSystemLoader) {
+		vm->internalVMFunctions->freeJ9Module(vm, vm->unnamedModuleForSystemLoader);
+		vm->unnamedModuleForSystemLoader = NULL;
 	}
 
 	if (NULL != vm->modularityPool) {
@@ -2944,12 +2944,12 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 				}
 				vm->javaBaseModule->classLoader = vm->systemClassLoader;
 
-				vm->unamedModuleForSystemLoader = pool_newElement(vm->modularityPool);
-				if (NULL == vm->unamedModuleForSystemLoader) {
+				vm->unnamedModuleForSystemLoader = pool_newElement(vm->modularityPool);
+				if (NULL == vm->unnamedModuleForSystemLoader) {
 					setErrorJ9dll(PORTLIB, loadInfo, "cannot allocate unnamed module for bootloader", FALSE);
 					goto _error;
 				}
-				vm->unamedModuleForSystemLoader->classLoader = vm->systemClassLoader;
+				vm->unnamedModuleForSystemLoader->classLoader = vm->systemClassLoader;
 
 				patchPathResult = setBootLoaderModulePatchPaths(vm, vm->javaBaseModule, JAVA_BASE_MODULE);
 				if (FALSE == patchPathResult) {

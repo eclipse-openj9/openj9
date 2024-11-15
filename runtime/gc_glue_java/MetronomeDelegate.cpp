@@ -1046,7 +1046,7 @@ MM_MetronomeDelegate::doClassTracing(MM_EnvironmentRealtime *env)
 						}
 
 						if (classLoader == _javaVM->systemClassLoader) {
-							didWork |= _markingScheme->markObject(env, _javaVM->unamedModuleForSystemLoader->moduleObject);
+							didWork |= _markingScheme->markObject(env, _javaVM->unnamedModuleForSystemLoader->moduleObject);
 						}
 					}
 				}

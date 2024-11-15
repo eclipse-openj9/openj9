@@ -439,7 +439,7 @@ MM_ConcurrentMarkingDelegate::concurrentClassMark(MM_EnvironmentBase *env, bool 
 					}
 
 					if (classLoader == _javaVM->systemClassLoader) {
-						_markingScheme->markObject(env, _javaVM->unamedModuleForSystemLoader->moduleObject);
+						_markingScheme->markObject(env, _javaVM->unnamedModuleForSystemLoader->moduleObject);
 					}
 				}
 

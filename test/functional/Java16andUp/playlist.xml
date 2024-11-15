@@ -82,7 +82,7 @@
 	</test>
 
 	<test>
-		<testCaseName>Jep397Tests_testSubClassOfSealedSuperFromDifferentPackageInSameUnamedModule</testCaseName>
+		<testCaseName>Jep397Tests_testSubClassOfSealedSuperFromDifferentPackageInSameUnnamedModule</testCaseName>
 		<disables>
 			<disable>
 				<comment>https://github.com/eclipse-openj9/openj9/issues/14028#issuecomment-988225623</comment>
@@ -91,7 +91,7 @@
 		</disables>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 			-cp $(Q)$(LIB_DIR)$(D)asm.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
-			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testSubClassOfSealedSuperFromDifferentPackageInSameUnamedModule.xml$(Q) -testnames Jep397Tests_testSubClassOfSealedSuperFromDifferentPackageInSameUnamedModule \
+			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testSubClassOfSealedSuperFromDifferentPackageInSameUnnamedModule.xml$(Q) -testnames Jep397Tests_testSubClassOfSealedSuperFromDifferentPackageInSameUnnamedModule \
 			-groups $(TEST_GROUP) \
 			-excludegroups $(DEFAULT_EXCLUDE); \
 			$(TEST_STATUS)
