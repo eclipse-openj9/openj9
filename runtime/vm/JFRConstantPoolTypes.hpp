@@ -54,10 +54,10 @@ enum JFRStringConstants {
 };
 
 enum FrameType {
-	Interpreted = 0,
-	JIT,
-	JIT_Inline,
-	Native,
+	Interpreted = J9VM_STACK_FRAME_INTERPRETER,
+	JIT = J9VM_STACK_FRAME_JIT,
+	JIT_Inline = J9VM_STACK_FRAME_JIT_INLINE,
+	Native = J9VM_STACK_FRAME_NATIVE,
 	FrameTypeCount,
 };
 
@@ -471,7 +471,7 @@ private:
 		return false;
 	}
 
-	static UDATA stackTraceCallback(J9VMThread *vmThread, void *userData, UDATA bytecodeOffset, J9ROMClass *romClass, J9ROMMethod *romMethod, J9UTF8 *fileName, UDATA lineNumber, J9ClassLoader *classLoader, J9Class *ramClass)
+	static UDATA stackTraceCallback(J9VMThread *vmThread, void *userData, UDATA bytecodeOffset, J9ROMClass *romClass, J9ROMMethod *romMethod, J9UTF8 *fileName, UDATA lineNumber, J9ClassLoader *classLoader, J9Class *ramClass, UDATA frameType)
 	{
 		VM_JFRConstantPoolTypes *cp = (VM_JFRConstantPoolTypes*) userData;
 		StackFrame *frame = &cp->_currentStackFrameBuffer[cp->_currentFrameCount];

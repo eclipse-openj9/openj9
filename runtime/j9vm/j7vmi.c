@@ -500,16 +500,16 @@ done:
 }
 
 /**
- * Find the specified class in given class loader 
+ * Find the specified class in given class loader
  *
  * @param env
  * @param className    null-terminated class name string.
  * @param init         initialize the class when set
- * @param classLoader  classloader of the class 
+ * @param classLoader  classloader of the class
  * @param throwError   set to true in order to throw errors
  * @return Assumed to be a jclass.
  *
- * Note: this call is implemented from info provided via CMVC 154874. 
+ * Note: this call is implemented from info provided via CMVC 154874.
  */
 jobject JNICALL
 JVM_FindClassFromClassLoader(JNIEnv* env, char* className, jboolean init, jobject classLoader, jboolean throwError)
@@ -1425,7 +1425,7 @@ typedef struct GetStackTraceElementUserData {
 
 /* Return TRUE to keep iterating, FALSE to halt the walk. */
 static UDATA
-getStackTraceElementIterator(J9VMThread * vmThread, void * voidUserData, UDATA bytecodeOffset, J9ROMClass * romClass, J9ROMMethod * romMethod, J9UTF8 * fileName, UDATA lineNumber, J9ClassLoader* classLoader, J9Class* ramClass)
+getStackTraceElementIterator(J9VMThread * vmThread, void * voidUserData, UDATA bytecodeOffset, J9ROMClass * romClass, J9ROMMethod * romMethod, J9UTF8 * fileName, UDATA lineNumber, J9ClassLoader* classLoader, J9Class* ramClass, UDATA frameType)
 {
 	GetStackTraceElementUserData * userData = voidUserData;
 
@@ -1784,7 +1784,7 @@ JVM_NewMultiArray(JNIEnv *env, jclass eltClass, jintArray dim)
 			vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, NULL);
 		} else {
 			j9object_t componentTypeClassObject = J9_JNI_UNWRAP_REFERENCE(eltClass);
-	
+
 			if (NULL != componentTypeClassObject) {
 				J9Class *componentTypeClass = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, componentTypeClassObject);
 
@@ -1792,25 +1792,25 @@ JVM_NewMultiArray(JNIEnv *env, jclass eltClass, jintArray dim)
 				UDATA count = dimensions;
 				J9Class *componentArrayClass = componentTypeClass;
 				BOOLEAN exceptionIsPending = FALSE;
-	
+
 				while ((count > 0) && (!exceptionIsPending)) {
 					componentArrayClass = fetchArrayClass(currentThread, componentArrayClass);
 					exceptionIsPending = (NULL != currentThread->currentException);
 					count -= 1;
 				}
-				
+
 				if (!exceptionIsPending) {
 					/* make a copy of the dimensions array in non-object memory */
 					I_32 onStackDimensions[MAX_DIMENSIONS];
 					j9object_t directObject = NULL;
 					UDATA i = 0;
-					
+
 					memset(onStackDimensions, 0, sizeof(onStackDimensions));
 					dimensionsArrayObject = J9_JNI_UNWRAP_REFERENCE(dim);
 					for (i = 0; i < dimensions; i++) {
 						onStackDimensions[i] = J9JAVAARRAYOFINT_LOAD(currentThread, dimensionsArrayObject, i);
 					}
-	
+
 					directObject = vmFuncs->helperMultiANewArray(currentThread, (J9ArrayClass *)componentArrayClass, (UDATA)dimensions, onStackDimensions, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
 					if (NULL != directObject) {
 						result = vmFuncs->j9jni_createLocalRef(env, directObject);
@@ -2435,11 +2435,11 @@ JVM_GetHostName(char* name, int namelen)
  *  sun.jvm.args =
  */
 /*
- * Notes: 
- * 	Redirector has an implementation of JVM_InitAgentProperties. 
- * 	This method is still kept within the actual jvm dll in case that a launcher uses this jvm dll directly without going through the redirector. 
- * 	If this method need to be modified, the changes have to be synchronized for both versions. 
- */ 
+ * Notes:
+ * 	Redirector has an implementation of JVM_InitAgentProperties.
+ * 	This method is still kept within the actual jvm dll in case that a launcher uses this jvm dll directly without going through the redirector.
+ * 	If this method need to be modified, the changes have to be synchronized for both versions.
+ */
 jobject JNICALL
 JVM_InitAgentProperties(JNIEnv *env, jobject agent_props)
 {

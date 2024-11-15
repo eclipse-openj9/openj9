@@ -927,6 +927,12 @@ extern "C" {
 #define J9_JAVA_NATIVE 0x100
 #define J9_JAVA_STATIC 0x8
 
+/* Stack walker frame Types */
+#define J9VM_STACK_FRAME_INTERPRETER 0
+#define J9VM_STACK_FRAME_JIT 1
+#define J9VM_STACK_FRAME_JIT_INLINE 2
+#define J9VM_STACK_FRAME_NATIVE 3
+
 /* JFR event types */
 
 #define J9JFR_EVENT_TYPE_EXECUTION_SAMPLE 0
