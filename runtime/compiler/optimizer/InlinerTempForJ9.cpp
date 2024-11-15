@@ -1375,13 +1375,13 @@ while the direct access code looks like
     iloadi
       aiadd
 We will replace b2i and bloadi by c2iu and icload for Unsafe.getChar, by
-s2i and isload for Unsafe.getShort, and by bu2i and bloadi for Unsafe.getBoolean
+s2i and sloadi for Unsafe.getShort, and by bu2i and bloadi for Unsafe.getBoolean
 
 For Unsafe.putByte and Unsafe.putBoolean, we generate
    bstorei
      i2b
        <some load node>
-We replace i2b and bstorei by i2c and icstore for Unsafe.getChar, and by i2s and isstore for
+We replace i2b and bstorei by i2c and icstore for Unsafe.getChar, and by i2s and sstorei for
 Unsafe.getShort.
 */
 
