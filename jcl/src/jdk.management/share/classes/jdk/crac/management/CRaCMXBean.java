@@ -23,6 +23,7 @@
 package jdk.crac.management;
 
 import java.lang.management.PlatformManagedObject;
+import jdk.crac.management.internal.CRaCMXBeanImpl;
 
 /**
  * A management interface of the CRaC functionality in the Java virtual machine.

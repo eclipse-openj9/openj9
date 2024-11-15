@@ -775,7 +775,7 @@ public final class ManagementUtils {
 				.validateAndRegister();
 
 /*[IF CRAC_SUPPORT]*/
-			create(jdk.crac.management.CRaCMXBean.CRAC_MXBEAN_NAME, jdk.crac.management.CRaCMXBeanImpl.getInstance())
+			create(jdk.crac.management.CRaCMXBean.CRAC_MXBEAN_NAME, jdk.crac.management.internal.CRaCMXBeanImpl.getInstance())
 				.addInterface(jdk.crac.management.CRaCMXBean.class)
 				.validateAndRegister();
 /*[ENDIF] CRAC_SUPPORT */

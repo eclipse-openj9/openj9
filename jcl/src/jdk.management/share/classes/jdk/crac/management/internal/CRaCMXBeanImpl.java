@@ -20,11 +20,12 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  */
-package jdk.crac.management;
+package jdk.crac.management.internal;
 
 import java.util.concurrent.TimeUnit;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
+import jdk.crac.management.CRaCMXBean;
 import openj9.internal.criu.InternalCRIUSupport;
 
 /**
