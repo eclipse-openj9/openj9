@@ -35,7 +35,7 @@
 #include "jvminit.h"
 #include "SCQueryFunctions.h"
 
-typedef UDATA (*callback_func_t) (J9VMThread * vmThread, void * userData, UDATA bytecodeOffset, J9ROMClass * romClass, J9ROMMethod * romMethod, J9UTF8 * fileName, UDATA lineNumber, J9ClassLoader* classLoader, J9Class* ramClass);
+typedef UDATA (*callback_func_t) (J9VMThread * vmThread, void * userData, UDATA bytecodeOffset, J9ROMClass * romClass, J9ROMMethod * romMethod, J9UTF8 * fileName, UDATA lineNumber, J9ClassLoader* classLoader, J9Class* ramClass, UDATA frameType);
 
 static void printExceptionInThread (J9VMThread* vmThread);
 static UDATA isSubclassOfThreadDeath (J9VMThread *vmThread, j9object_t exception);
@@ -102,7 +102,7 @@ printExceptionMessage(J9VMThread* vmThread, j9object_t exception) {
 
 /* assumes VM access */
 static UDATA
-printStackTraceEntry(J9VMThread * vmThread, void * voidUserData, UDATA bytecodeOffset, J9ROMClass *romClass, J9ROMMethod * romMethod, J9UTF8 * sourceFile, UDATA lineNumber, J9ClassLoader* classLoader, J9Class* ramClass) {
+printStackTraceEntry(J9VMThread * vmThread, void * voidUserData, UDATA bytecodeOffset, J9ROMClass *romClass, J9ROMMethod * romMethod, J9UTF8 * sourceFile, UDATA lineNumber, J9ClassLoader* classLoader, J9Class* ramClass, UDATA frameType) {
 	const char* format = NULL;
 	J9JavaVM *vm = vmThread->javaVM;
 	J9InternalVMFunctions * vmFuncs = vm->internalVMFunctions;
@@ -407,6 +407,7 @@ iterateStackTraceImpl(J9VMThread * vmThread, j9object_t* exception, callback_fun
 			J9UTF8 * fileName = NULL;
 			J9ClassLoader *classLoader = NULL;
 			J9Class *ramClass = NULL;
+			UDATA frameType = J9VM_STACK_FRAME_INTERPRETER;
 #ifdef J9VM_INTERP_NATIVE_SUPPORT
 			J9JITExceptionTable * metaData = NULL;
 			UDATA inlineDepth = 0;
@@ -456,9 +457,11 @@ inlinedEntry:
 							methodPC = jitConfig->getCurrentByteCodeIndexAndIsSameReceiver(metaData, inlineMap, NULL, &isSameReceiver);
 						}
 						ramMethod = metaData->ramMethod;
+						frameType = J9VM_STACK_FRAME_JIT;
 					} else {
 						methodPC = jitConfig->getCurrentByteCodeIndexAndIsSameReceiver(metaData, inlineMap , inlinedCallSite, &isSameReceiver);
 						ramMethod = jitConfig->getInlinedMethod(inlinedCallSite);
+						frameType = J9VM_STACK_FRAME_JIT_INLINE;
 					}
 					if (pruneConstructors) {
 						if (isSameReceiver) {
@@ -522,6 +525,9 @@ foundROMMethod: ;
 				}
 #ifdef J9VM_OPT_DEBUG_INFO_SERVER
 				if (romMethod != NULL) {
+					if (J9_ARE_ALL_BITS_SET(romMethod->modifiers, J9AccNative)) {
+						frameType = J9VM_STACK_FRAME_NATIVE;
+					}
 					lineNumber = getLineNumberForROMClassFromROMMethod(vm, romMethod, romClass, classLoader, methodPC);
 					fileName = getSourceFileNameForROMClass(vm, classLoader, romClass);
 				}
@@ -531,7 +537,7 @@ foundROMMethod: ;
 
 				if (callback != NULL) {
 					/* The methodPC is the bytecode offset within the romMethod. */
-					callbackResult = callback(vmThread, userData, methodPC, romClass, romMethod, fileName, lineNumber, classLoader, ramClass);
+					callbackResult = callback(vmThread, userData, methodPC, romClass, romMethod, fileName, lineNumber, classLoader, ramClass, frameType);
 				}
 
 #ifdef J9VM_OPT_DEBUG_INFO_SERVER

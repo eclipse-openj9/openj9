@@ -78,7 +78,7 @@ typedef struct GetStackTraceElementUserData {
 } GetStackTraceElementUserData;
 
 static UDATA
-getStackTraceElementIterator(J9VMThread *vmThread, void *voidUserData, UDATA bytecodeOffset, J9ROMClass *romClass, J9ROMMethod *romMethod, J9UTF8 *fileName, UDATA lineNumber, J9ClassLoader *classLoader, J9Class* ramClass)
+getStackTraceElementIterator(J9VMThread *vmThread, void *voidUserData, UDATA bytecodeOffset, J9ROMClass *romClass, J9ROMMethod *romMethod, J9UTF8 *fileName, UDATA lineNumber, J9ClassLoader *classLoader, J9Class* ramClass, UDATA frameType)
 {
 	UDATA result = J9_STACKWALK_STOP_ITERATING;
 
