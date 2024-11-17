@@ -774,6 +774,7 @@ VM_JFRConstantPoolTypes::addThreadEntry(J9VMThread *vmThread)
 	entry->vmThread = vmThread;
 	_buildResult = OK;
 	omrthread_t osThread = vmThread->osThread;
+	j9object_t threadObject = vmThread->threadObject;
 
 	entry = (ThreadEntry *) hashTableFind(_threadTable, entry);
 	if (NULL != entry) {
@@ -784,19 +785,22 @@ VM_JFRConstantPoolTypes::addThreadEntry(J9VMThread *vmThread)
 	}
 
 	entry->osTID = ((J9AbstractThread*)osThread)->tid;
-	entry->javaTID = J9VMJAVALANGTHREAD_TID(_currentThread, vmThread->threadObject);
+	if (NULL != threadObject) {
+		entry->javaTID = J9VMJAVALANGTHREAD_TID(_currentThread, threadObject);
 
-	entry->javaThreadName = copyStringToJ9UTF8WithMemAlloc(_currentThread, J9VMJAVALANGTHREAD_NAME(_currentThread, vmThread->threadObject), J9_STR_NONE, "", 0, NULL, 0);
+		entry->javaThreadName = copyStringToJ9UTF8WithMemAlloc(_currentThread, J9VMJAVALANGTHREAD_NAME(_currentThread, threadObject), J9_STR_NONE, "", 0, NULL, 0);
+
+		if (isResultNotOKay()) goto done;
+#if JAVA_SPEC_VERSION >= 19
+		entry->threadGroupIndex = addThreadGroupEntry(J9VMJAVALANGTHREADFIELDHOLDER_GROUP(_currentThread, (J9VMJAVALANGTHREAD_HOLDER(_currentThread, threadObject))));
+#else /* JAVA_SPEC_VERSION >= 19 */
+		entry->threadGroupIndex = addThreadGroupEntry(J9VMJAVALANGTHREAD_GROUP(_currentThread, threadObject));
+#endif /* JAVA_SPEC_VERSION >= 19 */
+		if (isResultNotOKay()) goto done;
+	}
 
 	/* TODO is this always true? */
 	entry->osThreadName = entry->javaThreadName;
-	if (isResultNotOKay()) goto done;
-#if JAVA_SPEC_VERSION >= 19
-	entry->threadGroupIndex = addThreadGroupEntry(J9VMJAVALANGTHREADFIELDHOLDER_GROUP(_currentThread, (J9VMJAVALANGTHREAD_HOLDER(_currentThread, vmThread->threadObject))));
-#else /* JAVA_SPEC_VERSION >= 19 */
-	entry->threadGroupIndex = addThreadGroupEntry(J9VMJAVALANGTHREAD_GROUP(_currentThread, vmThread->threadObject));
-#endif /* JAVA_SPEC_VERSION >= 19 */
-	if (isResultNotOKay()) goto done;
 
 	entry->index = _threadCount;
 	_threadCount++;
