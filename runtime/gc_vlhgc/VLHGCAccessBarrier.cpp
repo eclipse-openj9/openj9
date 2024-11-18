@@ -271,6 +271,19 @@ MM_VLHGCAccessBarrier::copyArrayCritical(J9VMThread *vmThread, GC_ArrayObjectMod
 	}
 }
 
+IDATA
+MM_VLHGCAccessBarrier::indexableDataDisplacement(J9VMThread *vmThread, J9IndexableObject *src, J9IndexableObject *dst)
+{
+	IDATA displacement = 0;
+
+	Assert_MM_true(vmThread->isVirtualLargeObjectHeapEnabled);
+	/* Adjacency check against dst object since src object may be overwritten during sliding compaction. */
+	if (_extensions->indexableObjectModel.isDataAdjacentToHeader(dst)) {
+		displacement = MM_ObjectAccessBarrier::indexableDataDisplacement(vmThread, src, dst);
+	}
+	return displacement;
+}
+
 void*
 MM_VLHGCAccessBarrier::jniGetPrimitiveArrayCritical(J9VMThread* vmThread, jarray array, jboolean *isCopy)
 {

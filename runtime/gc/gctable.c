@@ -143,6 +143,7 @@ J9MemoryManagerFunctions MemoryManagerFunctions = {
 #endif /* !J9VM_ENV_DATA64 */
 	j9gc_objaccess_indexableStoreObject,
 	j9gc_objaccess_indexableStoreAddress,
+	j9gc_objaccess_indexableDataDisplacement,
 	j9gc_objaccess_mixedObjectReadI32,
 	j9gc_objaccess_mixedObjectReadU32,
 	j9gc_objaccess_mixedObjectReadI64,
