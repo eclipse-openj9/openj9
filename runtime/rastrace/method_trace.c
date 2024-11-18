@@ -477,10 +477,19 @@ traceMethodArgObject(J9VMThread *thr, UDATA* arg0EA, char* cursor, UDATA length)
 		J9Class* clazz = J9OBJECT_CLAZZ(thr, object);
 		J9ROMClass * romClass = clazz->romClass;
 		J9UTF8* className = J9ROMCLASS_CLASSNAME(romClass);
+        J9JavaVM *vm = thr->javaVM;
 
+        if (clazz == J9VMJAVALANGSTRING_OR_NULL(vm)) {
+            /* string arg */
+            char stringArgBuffer[J9_ARRAY_DIMENSION_LIMIT];
+
+            J9InternalVMFunctions const * const vmFuncs = thr->javaVM->internalVMFunctions;
+            char *stringArgUTF8 = vmFuncs->copyStringToUTF8WithMemAlloc(thr, object, J9_STR_NULL_TERMINATE_RESULT, "  ", 2, stringArgBuffer, J9_ARRAY_DIMENSION_LIMIT, NULL);
+            j9str_printf(PORTLIB, cursor, length, "%.*s@%.*s", (U_32)J9UTF8_LENGTH(className), J9UTF8_DATA(className), J9UTF8_LENGTH(stringArgUTF8), J9UTF8_DATA(stringArgUTF8));
+        }
 		/* TODO: handle arrays */
 
-		j9str_printf(PORTLIB, cursor, length, "%.*s@%p", (U_32)J9UTF8_LENGTH(className), J9UTF8_DATA(className), object);
+		//j9str_printf(PORTLIB, cursor, length, "%.*s@%p", (U_32)J9UTF8_LENGTH(className), J9UTF8_DATA(className), object);
 	}
 }
 
