@@ -112,7 +112,7 @@ public final class PlatformMBeanProvider extends sun.management.spi.PlatformMBea
 		}
 
 /*[IF CRAC_SUPPORT]*/
-		ComponentBuilder.create(jdk.crac.management.CRaCMXBean.CRAC_MXBEAN_NAME, jdk.crac.management.CRaCMXBeanImpl.getInstance()) // $NON-NLS-1$
+		ComponentBuilder.create(jdk.crac.management.CRaCMXBean.CRAC_MXBEAN_NAME, jdk.crac.management.internal.CRaCMXBeanImpl.getInstance()) // $NON-NLS-1$
 			.addInterface(jdk.crac.management.CRaCMXBean.class)
 			.register(allComponents);
 /*[ENDIF] CRAC_SUPPORT */
