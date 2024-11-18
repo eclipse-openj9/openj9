@@ -259,6 +259,8 @@ const char *messageNames[] =
    "KnownObjectTable_createSymRefWithKnownObject",
    "KnownObjectTable_getReferenceField",
    "KnownObjectTable_getKnownObjectTableDumpInfo",
+   "KnownObjectTable_getOpaqueClass",
+   "KnownObjectTable_getVectorBitSize",
    "AOTCache_getROMClassBatch",
    "AOTCacheMap_request",
    "AOTCacheMap_reply"

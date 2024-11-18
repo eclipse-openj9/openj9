@@ -2616,6 +2616,65 @@ TR_J9ServerVM::isOffHeapAllocationEnabled()
    return vmInfo->_isOffHeapAllocationEnabled;
    }
 
+
+TR_arrayTypeCode
+TR_J9ServerVM::getPrimitiveArrayTypeCode(TR_OpaqueClassBlock* clazz)
+   {
+   TR_ASSERT(isPrimitiveClass(clazz), "Expect primitive class in TR_J9VMBase::getPrimitiveArrayType");
+
+   J9Class* j9clazz = (J9Class*)clazz;
+
+   auto stream = _compInfoPT->getStream();
+   auto vmInfo = _compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+   if (j9clazz == vmInfo->_booleanReflectClassPtr)
+      return atype_boolean;
+   else if (j9clazz == vmInfo->_charReflectClassPtr)
+      return atype_char;
+   else if (j9clazz == vmInfo->_floatReflectClassPtr)
+      return atype_float;
+   else if (j9clazz == vmInfo->_doubleReflectClassPtr)
+      return atype_double;
+   else if (j9clazz == vmInfo->_byteReflectClassPtr)
+      return atype_byte;
+   else if (j9clazz == vmInfo->_shortReflectClassPtr)
+      return atype_short;
+   else if (j9clazz == vmInfo->_intReflectClassPtr)
+      return atype_int;
+   else if (j9clazz == vmInfo->_longReflectClassPtr)
+      return atype_long;
+   else
+      {
+      TR_ASSERT(false, "TR_arrayTypeCode is not defined for the j9clazz");
+      return (TR_arrayTypeCode)0;
+      }
+   }
+
+TR::DataType
+TR_J9ServerVM::getClassPrimitiveDataType(TR_OpaqueClassBlock* clazz)
+   {
+   J9Class *j9class = TR::Compiler->cls.convertClassOffsetToClassPtr(clazz);
+
+   if (!j9class) return TR::NoType;
+
+   auto vmInfo = _compInfoPT->getClientData()->getOrCacheVMInfo(_compInfoPT->getStream());
+
+   if (j9class == vmInfo->_floatReflectClassPtr)
+      return TR::Float;
+   else if (j9class == vmInfo->_doubleReflectClassPtr)
+      return TR::Double;
+   else if (j9class == vmInfo->_byteReflectClassPtr)
+      return TR::Int8;
+   else if (j9class == vmInfo->_shortReflectClassPtr)
+      return TR::Int16;
+   else if (j9class == vmInfo->_intReflectClassPtr)
+      return TR::Int32;
+   else if (j9class == vmInfo->_longReflectClassPtr)
+      return TR::Int64;
+   else
+      return TR::NoType;
+   }
+
+
 bool
 TR_J9SharedCacheServerVM::isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT)
    {

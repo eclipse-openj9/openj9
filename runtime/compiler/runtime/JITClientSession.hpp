@@ -335,6 +335,16 @@ public:
       bool _isPortableRestoreMode;
       bool _isSnapshotModeEnabled;
       bool _isNonPortableRestoreMode;
+      // The reflect class pointers for the server to identify the classes
+      void *_voidReflectClassPtr;
+      void *_booleanReflectClassPtr;
+      void *_charReflectClassPtr;
+      void *_floatReflectClassPtr;
+      void *_doubleReflectClassPtr;
+      void *_byteReflectClassPtr;
+      void *_shortReflectClassPtr;
+      void *_intReflectClassPtr;
+      void *_longReflectClassPtr;
       }; // struct VMInfo
 
    /**

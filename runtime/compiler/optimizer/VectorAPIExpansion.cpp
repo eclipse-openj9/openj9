@@ -637,12 +637,32 @@ TR_VectorAPIExpansion::getVectorSizeFromVectorSpecies(TR::Node *vectorSpeciesNod
       {
       if (vSpeciesSymRef->hasKnownObjectIndex())
          {
-         TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp()->fe());
-         TR::VMAccessCriticalSection getVectorSizeFromVectorSpeciesSection(fej9);
+         int32_t vectorBitSize = 0;
+#if defined(J9VM_OPT_JITSERVER)
+         if (comp()->isOutOfProcessCompilation()) /* In server mode */
+            {
+            auto stream = comp()->getStream();
+            stream->write(JITServer::MessageType::KnownObjectTable_getVectorBitSize,
+                          vSpeciesSymRef->getKnownObjectIndex());
+            vectorBitSize = std::get<0>(stream->read<int32_t>());
+            }
+         else
+#endif /* defined(J9VM_OPT_JITSERVER) */
+            {
+            TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp()->fe());
 
-         uintptr_t vectorSpeciesLocation = comp()->getKnownObjectTable()->getPointer(vSpeciesSymRef->getKnownObjectIndex());
-         uintptr_t vectorShapeLocation = fej9->getReferenceField(vectorSpeciesLocation, "vectorShape", "Ljdk/incubator/vector/VectorShape;");
-         int32_t vectorBitSize = fej9->getInt32Field(vectorShapeLocation, "vectorBitSize");
+            TR::VMAccessCriticalSection getVectorSizeFromVectorSpeciesSection(fej9);
+
+            uintptr_t vectorSpeciesLocation =
+               comp()->getKnownObjectTable()->getPointer(vSpeciesSymRef->getKnownObjectIndex());
+            uintptr_t vectorShapeLocation =
+               fej9->getReferenceField(vectorSpeciesLocation,
+                                       "vectorShape",
+                                       "Ljdk/incubator/vector/VectorShape;");
+            vectorBitSize = fej9->getInt32Field(vectorShapeLocation, "vectorBitSize");
+            }
+
+
          return (vec_sz_t)vectorBitSize;
          }
       }
@@ -650,8 +670,8 @@ TR_VectorAPIExpansion::getVectorSizeFromVectorSpecies(TR::Node *vectorSpeciesNod
    }
 
 
-J9Class *
-TR_VectorAPIExpansion::getJ9ClassFromClassNode(TR::Compilation *comp, TR::Node *classNode)
+TR_OpaqueClassBlock *
+TR_VectorAPIExpansion::getOpaqueClassBlockFromClassNode(TR::Compilation *comp, TR::Node *classNode)
    {
    if (!classNode->getOpCode().hasSymbolReference())
       return NULL;
@@ -671,14 +691,27 @@ TR_VectorAPIExpansion::getJ9ClassFromClassNode(TR::Compilation *comp, TR::Node *
 
    if (knownObjectIndex != TR::KnownObjectTable::UNKNOWN)
       {
-      TR_J9VMBase *fej9 = comp->fej9();
+      TR_OpaqueClassBlock *clazz = NULL;
+#if defined(J9VM_OPT_JITSERVER)
+      if (comp->isOutOfProcessCompilation()) /* In server mode */
+         {
+         auto stream = comp->getStream();
+         stream->write(JITServer::MessageType::KnownObjectTable_getOpaqueClass,
+                        symRef->getKnownObjectIndex());
+         clazz = (TR_OpaqueClassBlock *)std::get<0>(stream->read<uintptr_t>());
+         }
+      else
+#endif /* defined(J9VM_OPT_JITSERVER) */
+         {
+         TR_J9VMBase *fej9 = comp->fej9();
 
-      TR::VMAccessCriticalSection getDataTypeFromClassNodeSection(fej9);
+         TR::VMAccessCriticalSection getDataTypeFromClassNodeSection(fej9);
 
-      uintptr_t javaLangClass = comp->getKnownObjectTable()->getPointer(knownObjectIndex);
-      J9Class *j9class = (J9Class *)(intptr_t)fej9->getInt64Field(javaLangClass, "vmRef");
+         uintptr_t javaLangClass = comp->getKnownObjectTable()->getPointer(knownObjectIndex);
+         clazz = (TR_OpaqueClassBlock *)(intptr_t)fej9->getInt64Field(javaLangClass, "vmRef");
+         }
 
-      return j9class;
+      return clazz;
       }
 
    return NULL;
@@ -688,38 +721,24 @@ TR_VectorAPIExpansion::getJ9ClassFromClassNode(TR::Compilation *comp, TR::Node *
 TR::DataType
 TR_VectorAPIExpansion::getDataTypeFromClassNode(TR::Compilation *comp, TR::Node *classNode)
    {
-   J9Class *j9class = getJ9ClassFromClassNode(comp, classNode);
+   TR_OpaqueClassBlock *clazz = getOpaqueClassBlockFromClassNode(comp, classNode);
 
-   if (!j9class) return TR::NoType;
+   if (!clazz) return TR::NoType;
 
    TR_J9VMBase *fej9 = comp->fej9();
-   J9JavaVM *vm = fej9->getJ9JITConfig()->javaVM;
-
-   if (j9class == vm->floatReflectClass)
-      return TR::Float;
-   else if (j9class == vm->doubleReflectClass)
-      return TR::Double;
-   else if (j9class == vm->byteReflectClass)
-      return TR::Int8;
-   else if (j9class == vm->shortReflectClass)
-      return TR::Int16;
-   else if (j9class == vm->intReflectClass)
-      return TR::Int32;
-   else if (j9class == vm->longReflectClass)
-      return TR::Int64;
-   else
-      return TR::NoType;
+   return fej9->getClassPrimitiveDataType(clazz);
    }
 
 
 TR_VectorAPIExpansion::vapiObjType
 TR_VectorAPIExpansion::getObjectTypeFromClassNode(TR::Compilation *comp, TR::Node *classNode)
    {
-   J9Class *j9class = getJ9ClassFromClassNode(comp, classNode);
+   TR_OpaqueClassBlock *clazz = getOpaqueClassBlockFromClassNode(comp, classNode);
 
-   if (!j9class) return Unknown;
+   if (!clazz) return Unknown;
 
-   J9UTF8 *className = J9ROMCLASS_CLASSNAME(j9class->romClass);
+   J9ROMClass *romClass = TR::Compiler->cls.romClassOf(clazz);
+   J9UTF8 *className = J9ROMCLASS_CLASSNAME(romClass);
    int32_t length = J9UTF8_LENGTH(className);
    char *classNameChars = (char*)J9UTF8_DATA(className);
 

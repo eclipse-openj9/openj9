@@ -555,6 +555,16 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
 #else
          vmInfo._isNonPortableRestoreMode = false;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+         vmInfo._voidReflectClassPtr = javaVM->voidReflectClass;
+         vmInfo._booleanReflectClassPtr = javaVM->booleanReflectClass;
+         vmInfo._charReflectClassPtr = javaVM->charReflectClass;
+         vmInfo._floatReflectClassPtr = javaVM->floatReflectClass;
+         vmInfo._doubleReflectClassPtr = javaVM->doubleReflectClass;
+         vmInfo._byteReflectClassPtr = javaVM->byteReflectClass;
+         vmInfo._shortReflectClassPtr = javaVM->shortReflectClass;
+         vmInfo._intReflectClassPtr = javaVM->intReflectClass;
+         vmInfo._longReflectClassPtr = javaVM->longReflectClass;
+
          client->write(response, vmInfo, listOfCacheDescriptors, comp->getPersistentInfo()->getJITServerAOTCacheName());
          }
          break;
@@ -2883,6 +2893,41 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          knot->getKnownObjectTableDumpInfo(knownObjectTableDumpInfoList);
 
          client->write(response, knownObjectTableDumpInfoList);
+         }
+         break;
+      case MessageType::KnownObjectTable_getOpaqueClass:
+         {
+         TR::KnownObjectTable::Index knotIndex =
+            std::get<0>(client->getRecvData<TR::KnownObjectTable::Index>());
+
+         uintptr_t clazz = 0;
+            {
+            TR::VMAccessCriticalSection getJ9ClassFromKnownObjectIndex(fe);
+
+            uintptr_t javaLangClass = knot->getPointer(knotIndex);
+            clazz = (uintptr_t)fe->getInt64Field(javaLangClass, "vmRef");
+            }
+
+         client->write(response, clazz);
+         }
+         break;
+      case MessageType::KnownObjectTable_getVectorBitSize:
+         {
+         TR::KnownObjectTable::Index knotIndex =
+            std::get<0>(client->getRecvData<TR::KnownObjectTable::Index>());
+
+         int32_t vectorBitSize = 0;
+            {
+            TR::VMAccessCriticalSection getVBSFromKnownObjectIndex(fe);
+
+            uintptr_t vectorSpeciesLocation = knot->getPointer(knotIndex);
+            uintptr_t vectorShapeLocation = fe->getReferenceField(vectorSpeciesLocation,
+                                                            "vectorShape",
+                                                            "Ljdk/incubator/vector/VectorShape;");
+            vectorBitSize = fe->getInt32Field(vectorShapeLocation, "vectorBitSize");
+            }
+
+         client->write(response, vectorBitSize);
          }
          break;
       case MessageType::AOTCache_getROMClassBatch:
