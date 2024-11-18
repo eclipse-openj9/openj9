@@ -198,7 +198,7 @@ flushBufferToGlobal(J9VMThread *currentThread, J9VMThread *flushThread)
 	UDATA bufferSize = flushThread->jfrBuffer.bufferCurrent - flushThread->jfrBuffer.bufferStart;
 	bool success = true;
 
-	if (areJFRBuffersReadyForWrite(currentThread)) {
+	if (!areJFRBuffersReadyForWrite(currentThread)) {
 		goto done;
 	}
 
@@ -302,7 +302,7 @@ reserveBuffer(J9VMThread *currentThread, UDATA size)
 	Assert_VM_true(((currentThread)->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS)
 	|| ((J9_XACCESS_EXCLUSIVE == vm->exclusiveAccessState) || (J9_XACCESS_EXCLUSIVE == vm->safePointState)));
 
-	if (areJFRBuffersReadyForWrite(currentThread)) {
+	if (!areJFRBuffersReadyForWrite(currentThread)) {
 		goto done;
 	}
 
