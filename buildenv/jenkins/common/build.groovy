@@ -828,7 +828,7 @@ def create_docker_image_locally()
         echo 'ARG image
             ARG cuda_ver=12.2.0
             ARG cuda_distro=ubi8
-            FROM nvidia/cuda:${cuda_ver}-devel-${cuda_distro} as cuda
+            FROM nvcr.io/nvidia/cuda:${cuda_ver}-devel-${cuda_distro} as cuda
             FROM $image
             RUN mkdir -p /usr/local/cuda/nvvm
             COPY --from=cuda /usr/local/cuda/include         /usr/local/cuda/include
