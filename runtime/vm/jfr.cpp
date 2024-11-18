@@ -979,9 +979,11 @@ jfrSamplingThreadProc(void *entryArg)
 		while (J9JFR_SAMPLER_STATE_STOP != vm->jfrSamplerState) {
 			J9SignalAsyncEvent(vm, NULL, vm->jfrAsyncKey);
 			if (0 == (count % 100)) { // 1 second
+				omrthread_monitor_exit(vm->jfrSamplerMutex);
 				internalAcquireVMAccess(currentThread);
 				jfrCPULoad(currentThread);
 				internalReleaseVMAccess(currentThread);
+				omrthread_monitor_enter(vm->jfrSamplerMutex);
 				if (0 == (count % 1000)) { // 10 seconds
 					J9SignalAsyncEvent(vm, NULL, vm->jfrThreadCPULoadAsyncKey);
 				}
