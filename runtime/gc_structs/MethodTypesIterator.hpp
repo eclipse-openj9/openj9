@@ -39,23 +39,23 @@
  */
 class GC_MethodTypesIterator
 {
-	U_32 _methodTypeTotal;
-	U_32 _methodTypeCount;
+	uint32_t _methodTypeTotal;
+	uint32_t _methodTypeCount;
 	j9object_t *_methodTypePtr;
 	
 public:
-	GC_MethodTypesIterator(U_32 methodTypeCount, j9object_t *methodTypes) :
-		_methodTypeCount(methodTypeCount),
-		_methodTypePtr(methodTypes)
+	GC_MethodTypesIterator(uint32_t methodTypeCount, j9object_t *methodTypes)
+		: _methodTypeCount(methodTypeCount)
+		, _methodTypePtr(methodTypes)
 	{
 		/* check if the class's MethodTypes have been abandoned due to hot
 		 * code replace. If so, this class has no MethodTypes of its own
 		 */
-		if (_methodTypePtr == NULL) {
+		if (NULL == _methodTypePtr) {
 			_methodTypeCount = 0;
 		}
 		_methodTypeTotal = _methodTypeCount;
-	};
+	}
 
 	/**
 	 * @return the next MethodType slot in the class containing an object reference
@@ -64,14 +64,12 @@ public:
 	j9object_t *
 	nextSlot()
 	{
-		j9object_t *slotPtr;
+		j9object_t *slotPtr = NULL;
 		
-		if(0 == _methodTypeCount) {
-			return NULL;
+		if (0 != _methodTypeCount) {
+			_methodTypeCount -= 1;
+			slotPtr = _methodTypePtr++;
 		}
-
-		_methodTypeCount -= 1;
-		slotPtr = _methodTypePtr++;
 
 		return slotPtr;
 	}
@@ -81,7 +79,7 @@ public:
 	 * @return zero based MethodType index of the entry returned by the last call of nextSlot.
 	 * @return -1 if nextSlot has yet to be called.
 	 */
-	MMINLINE IDATA getIndex() {
+	MMINLINE intptr_t getIndex() {
 		return _methodTypeTotal - _methodTypeCount - 1;
 	}
 };
