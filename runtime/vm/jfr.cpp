@@ -58,7 +58,7 @@ static void initializeEventFields(J9VMThread *currentThread, J9JFREvent *jfrEven
 static int J9THREAD_PROC jfrSamplingThreadProc(void *entryArg);
 static void jfrExecutionSampleCallback(J9VMThread *currentThread, IDATA handlerKey, void *userData);
 static void jfrThreadCPULoadCallback(J9VMThread *currentThread, IDATA handlerKey, void *userData);
-
+static bool areJFRBuffersReadyForWrite(J9VMThread *currentThread);
 /**
  * Calculate the size in bytes of a JFR event.
  *
@@ -129,6 +129,22 @@ jfrBufferNextDo(J9JFRBufferWalkState *walkState)
 	return (J9JFREvent*)next;
 }
 
+static bool
+areJFRBuffersReadyForWrite(J9VMThread *currentThread)
+{
+	bool result = true;
+	J9JavaVM *vm = currentThread->javaVM;
+
+	if ((!vm->jfrState.isStarted)
+	|| (NULL == currentThread->jfrBuffer.bufferStart)
+	|| (NULL == vm->jfrBuffer.bufferCurrent)
+	) {
+		result = false;
+	}
+
+	return result;
+}
+
 /**
  * Write out the contents of the global JFR buffer.
  *
@@ -148,16 +164,18 @@ writeOutGlobalBuffer(J9VMThread *currentThread, bool finalWrite)
 	j9tty_printf(PORTLIB, "\n!!! writing global buffer %p of size %p\n", currentThread, vm->jfrBuffer.bufferSize - vm->jfrBuffer.bufferRemaining);
 #endif /* defined(DEBUG) */
 
-	VM_JFRWriter::flushJFRDataToFile(currentThread, finalWrite);
+	if (areJFRBuffersReadyForWrite(currentThread)) {
+		VM_JFRWriter::flushJFRDataToFile(currentThread, finalWrite);
 
-	/* Reset the buffer */
-	vm->jfrBuffer.bufferRemaining = vm->jfrBuffer.bufferSize;
-	vm->jfrBuffer.bufferCurrent = vm->jfrBuffer.bufferStart;
+		/* Reset the buffer */
+		vm->jfrBuffer.bufferRemaining = vm->jfrBuffer.bufferSize;
+		vm->jfrBuffer.bufferCurrent = vm->jfrBuffer.bufferStart;
 
 
 #if defined(DEBUG)
-	memset(vm->jfrBuffer.bufferStart, 0, J9JFR_GLOBAL_BUFFER_SIZE);
+		memset(vm->jfrBuffer.bufferStart, 0, J9JFR_GLOBAL_BUFFER_SIZE);
 #endif /* defined(DEBUG) */
+	}
 
 	return true;
 }
@@ -180,7 +198,7 @@ flushBufferToGlobal(J9VMThread *currentThread, J9VMThread *flushThread)
 	UDATA bufferSize = flushThread->jfrBuffer.bufferCurrent - flushThread->jfrBuffer.bufferStart;
 	bool success = true;
 
-	if (NULL == flushThread->jfrBuffer.bufferStart) {
+	if (areJFRBuffersReadyForWrite(currentThread)) {
 		goto done;
 	}
 
@@ -284,7 +302,9 @@ reserveBuffer(J9VMThread *currentThread, UDATA size)
 	Assert_VM_true(((currentThread)->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS)
 	|| ((J9_XACCESS_EXCLUSIVE == vm->exclusiveAccessState) || (J9_XACCESS_EXCLUSIVE == vm->safePointState)));
 
-
+	if (areJFRBuffersReadyForWrite(currentThread)) {
+		goto done;
+	}
 
 	/* If the event is larger than the buffer, fail without attemptiong to flush */
 	if (size <= currentThread->jfrBuffer.bufferSize) {
