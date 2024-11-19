@@ -615,9 +615,8 @@ MM_MetronomeDelegate::updateClassUnloadStats(MM_EnvironmentBase *env, UDATA clas
 	MM_ClassUnloadStats *classUnloadStats = &_extensions->globalGCStats.classUnloadStats;
 
 	/* TODO CRGTMP move global stats into super class implementation once it is created */
-	classUnloadStats->_classesUnloadedCount = classUnloadCount;
-	classUnloadStats->_anonymousClassesUnloadedCount = anonymousClassUnloadCount;
-	classUnloadStats->_classLoaderUnloadedCount = classLoaderUnloadCount;
+	classUnloadStats->updateUnloadedCounters(anonymousClassUnloadCount, classUnloadCount, classLoaderUnloadCount);
+
 
 	/* Record increment stats */
 	_extensions->globalGCStats.metronomeStats.classesUnloadedCount = classUnloadCount;

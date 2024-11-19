@@ -294,6 +294,7 @@ extern BOOLEAN j9gc_stringHashEqualFn (void *leftKey, void *rightKey, void *user
 /* modronapi.cpp */
 extern J9_CFUNC UDATA j9gc_get_bytes_allocated_by_thread(J9VMThread* vmThread);
 extern J9_CFUNC BOOLEAN j9gc_get_cumulative_bytes_allocated_by_thread(J9VMThread *vmThread, UDATA *cumulativeValue);
+extern J9_CFUNC BOOLEAN j9gc_get_cumulative_class_unloading_stats(J9VMThread *vmThread, UDATA *anonymous, UDATA *classes, UDATA *classloaders);
 
 #ifdef __cplusplus
 }
