@@ -30,6 +30,9 @@
 #undef UT_MODULE_UNLOADED
 #include "ut_mt.h"
 
+#define DEFAULT_BUFFER_LENGTH 128
+#define DEFAULT_STRING_LENGTH 32
+
 static void hookRAMClassLoad(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
 static void traceMethodArgInt (J9VMThread *thr, UDATA* arg0EA, char* cursor, UDATA length, char* type); 
 static void traceMethodArgDouble (J9VMThread *thr, UDATA* arg0EA, char* cursor, UDATA length);
@@ -477,10 +480,28 @@ traceMethodArgObject(J9VMThread *thr, UDATA* arg0EA, char* cursor, UDATA length)
 		J9Class* clazz = J9OBJECT_CLAZZ(thr, object);
 		J9ROMClass * romClass = clazz->romClass;
 		J9UTF8* className = J9ROMCLASS_CLASSNAME(romClass);
+		J9JavaVM *vm = thr->javaVM;
 
-		/* TODO: handle arrays */
+		if (clazz == J9VMJAVALANGSTRING_OR_NULL(vm)) {
+			/* string arg */
+			char stringArgBuffer[DEFAULT_BUFFER_LENGTH];
 
-		j9str_printf(PORTLIB, cursor, length, "%.*s@%p", (U_32)J9UTF8_LENGTH(className), J9UTF8_DATA(className), object);
+			J9InternalVMFunctions const * const vmFuncs = thr->javaVM->internalVMFunctions;
+			char *stringArgUTF8 = vmFuncs->copyStringToUTF8WithMemAlloc(thr, object, J9_STR_NULL_TERMINATE_RESULT, "  ", 2, stringArgBuffer, DEFAULT_BUFFER_LENGTH, NULL);
+
+			if(DEFAULT_STRING_LENGTH < strlen(stringArgUTF8)) {
+				j9str_printf(PORTLIB, cursor, length, "(String)%.*s...", (U_32)DEFAULT_STRING_LENGTH, J9UTF8_DATA(stringArgUTF8));
+			} else {
+				j9str_printf(PORTLIB, cursor, length, "(String)%.*s", (U_32)J9UTF8_LENGTH(stringArgUTF8), J9UTF8_DATA(stringArgUTF8));
+			}
+
+			if ((char*)stringArgBuffer != stringArgUTF8) {
+				j9mem_free_memory(stringArgUTF8);
+			}
+		} else {
+			/* TODO: handle arrays */
+			j9str_printf(PORTLIB, cursor, length, "%.*s@%p", (U_32)J9UTF8_LENGTH(className), J9UTF8_DATA(className), object);
+		}
 	}
 }
 
