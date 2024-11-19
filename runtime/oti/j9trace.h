@@ -63,11 +63,18 @@ typedef struct RasGlobalStorage {
 	void *  traceMethodTable;
 	int     stackdepth;
 	unsigned int    stackCompressionLevel;
+	unsigned int    maxStringLength;
 	ConfigureTraceFunction configureTraceEngine;
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 	CRIURestoreInitializeTrace criuRestoreInitializeTrace;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 } RasGlobalStorage;
+
+/*
+ * Default and maximum values for RasGlobalStorage.maxStringLength.
+ */
+#define RAS_MAX_STRING_LENGTH_DEFAULT  32
+#define RAS_MAX_STRING_LENGTH_LIMIT   128
 
 #define RAS_GLOBAL(x) ((RasGlobalStorage *)thr->javaVM->j9rasGlobalStorage)->x 
 
