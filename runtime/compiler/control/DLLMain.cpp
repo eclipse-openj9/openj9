@@ -526,6 +526,8 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void * reserved)
                   persistentInfo->setAOTDependencyTable(dependencyTable);
                   }
 #endif /* !defined(PERSISTENT_COLLECTIONS_UNSUPPORTED) */
+               if (!persistentInfo->getAOTDependencyTable())
+                  persistentInfo->setTrackAOTDependencies(false);
                }
             }
          else

@@ -986,11 +986,16 @@ TR_J9SharedCache::isPtrToROMClassesSectionInSharedCache(void *ptr, uintptr_t *ca
 J9ROMClass *
 TR_J9SharedCache::startingROMClassOfClassChain(UDATA *classChain)
    {
-   UDATA lengthInBytes = classChain[0];
-   TR_ASSERT_FATAL(lengthInBytes >= 2 * sizeof (UDATA), "class chain is too short!");
+   return romClassFromOffsetInSharedCache(startingROMClassOffsetOfClassChain(classChain));
+   }
 
-   UDATA romClassOffset = classChain[1];
-   return romClassFromOffsetInSharedCache(romClassOffset);
+uintptr_t
+TR_J9SharedCache::startingROMClassOffsetOfClassChain(void *chain)
+   {
+   auto classChain = (uintptr_t *)chain;
+   uintptr_t lengthInBytes = classChain[0];
+   TR_ASSERT_FATAL(lengthInBytes >= 2 * sizeof (UDATA), "class chain is too short!");
+   return classChain[1];
    }
 
 // convert an offset into a string of 8 characters
@@ -1555,7 +1560,7 @@ TR_J9SharedCache::buildAOTMethodDependenciesKey(uintptr_t offset, char *buffer, 
    cursor += dependencyKeyPrefixLength;
 
    convertUnsignedOffsetToASCII(offset, cursor);
-   keyLength = (cursor - buffer) + _numDigitsForCacheOffsets + 1; // NULL terminator not included in _numDigitsForCacheOffsets
+   keyLength = (cursor - buffer) + _numDigitsForCacheOffsets;
    }
 
 const void *
@@ -1613,8 +1618,9 @@ TR_J9SharedCache::methodHasAOTBodyWithDependencies(J9VMThread *vmThread, J9ROMMe
    dataDescriptor.address = NULL;
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
 
-   if (sharedCacheConfig()->findSharedData(vmThread, key, keyLength, J9SHR_DATA_TYPE_JITHINT, FALSE, &dataDescriptor, NULL) > 0)
-      methodDependencies = (uintptr_t *)dataDescriptor.address;
+   sharedCacheConfig()->findSharedData(vmThread, key, keyLength, J9SHR_DATA_TYPE_JITHINT, FALSE, &dataDescriptor, NULL);
+   methodDependencies = (uintptr_t *)dataDescriptor.address;
+
    return true;
 #else
    return false;
