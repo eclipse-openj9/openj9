@@ -30,6 +30,9 @@
 #undef UT_MODULE_UNLOADED
 #include "ut_mt.h"
 
+#define DEFAULT_BUFFER_LENGTH 128
+#define DEFAULT_STRING_LENGTH 32
+
 static void hookRAMClassLoad(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
 static void traceMethodArgInt (J9VMThread *thr, UDATA* arg0EA, char* cursor, UDATA length, char* type); 
 static void traceMethodArgDouble (J9VMThread *thr, UDATA* arg0EA, char* cursor, UDATA length);
@@ -476,12 +479,16 @@ traceMethodArgObject(J9VMThread *thr, UDATA* arg0EA, char* cursor, UDATA length)
 	} else {
 		J9Class *clazz = J9OBJECT_CLAZZ(thr, object);
 		J9JavaVM *vm = thr->javaVM;
+		const unsigned int methodStrArgLength = ((RasGlobalStorage *)thr->javaVM->j9rasGlobalStorage)->methodStrArgLength;
+		unsigned int strArgLength = methodStrArgLength == 0 ? DEFAULT_STRING_LENGTH : methodStrArgLength;
 
 		if (clazz == J9VMJAVALANGSTRING_OR_NULL(vm)) {
 			/* string argument */
 #define DEFAULT_STRING_LENGTH 32
 			char utf8Buffer[128];
 			UDATA utf8Length = 0;
+			const unsigned int methodStrArgLength = ((RasGlobalStorage *)thr->javaVM->j9rasGlobalStorage)->methodStrArgLength;
+			unsigned int strArgLength = methodStrArgLength == 0 ? DEFAULT_STRING_LENGTH : methodStrArgLength;
 
 			char *utf8String = vm->internalVMFunctions->copyStringToUTF8WithMemAlloc(
 					thr,
