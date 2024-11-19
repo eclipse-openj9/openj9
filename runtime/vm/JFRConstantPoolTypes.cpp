@@ -853,6 +853,15 @@ VM_JFRConstantPoolTypes::addThreadGroupEntry(j9object_t threadGroup)
 	entry->parentIndex = addThreadGroupEntry(J9VMJAVALANGTHREADGROUP_PARENT(_currentThread, threadGroup));
 	if (isResultNotOKay()) goto done;
 
+	/* Check again to see if the Threadgroup was added recursively. */
+	entry = (ThreadGroupEntry *) hashTableFind(_threadGroupTable, entry);
+	if (NULL != entry) {
+		index = entry->index;
+		goto done;
+	} else {
+		entry = &entryBuffer;
+	}
+
 	entry->name = copyStringToJ9UTF8WithMemAlloc(_currentThread, J9VMJAVALANGTHREADGROUP_NAME(_currentThread, threadGroup), J9_STR_NONE, "", 0, NULL, 0);
 
 	entry->index = _threadGroupCount;
