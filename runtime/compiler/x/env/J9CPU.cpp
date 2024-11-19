@@ -116,15 +116,6 @@ J9::X86::CPU::getProcessorSignature()
    }
 
 bool
-J9::X86::CPU::hasPopulationCountInstruction()
-   {
-   if ((self()->getX86ProcessorFeatureFlags2() & TR_POPCNT) != 0x00000000)
-      return true;
-   else
-      return false;
-   }
-
-bool
 J9::X86::CPU::isCompatible(const OMRProcessorDesc& processorDescription)
    {
    for (int i = 0; i < OMRPORT_SYSINFO_FEATURES_SIZE; i++)
