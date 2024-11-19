@@ -276,9 +276,12 @@ MM_VLHGCAccessBarrier::indexableDataDisplacement(J9VMThread *vmThread, J9Indexab
 {
 	IDATA displacement = 0;
 
+#if defined(J9VM_ENV_DATA64)
 	Assert_MM_true(vmThread->isVirtualLargeObjectHeapEnabled);
 	/* Adjacency check against dst object since src object may be overwritten during sliding compaction. */
-	if (_extensions->indexableObjectModel.isDataAdjacentToHeader(dst)) {
+	if (_extensions->indexableObjectModel.isDataAdjacentToHeader(dst))
+#endif /* defined(J9VM_ENV_DATA64) */
+	{
 		displacement = MM_ObjectAccessBarrier::indexableDataDisplacement(vmThread, src, dst);
 	}
 	return displacement;
