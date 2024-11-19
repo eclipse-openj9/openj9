@@ -749,8 +749,10 @@ J9::CodeCache::resetTrampolines()
       }
 
    //reset the trampoline marks back to their starting positions
-   _trampolineAllocationMark = _trampolineBase;
-   _trampolineReservationMark = _trampolineBase;
+   // Note that permanent trampolines are allocated from _tempTrampolineBase downwards
+   // see initialize in OMRCodeCache.cpp
+   _trampolineAllocationMark = _tempTrampolineBase;
+   _trampolineReservationMark = _tempTrampolineBase;
 
    OMR::CodeCacheTempTrampolineSyncBlock *syncBlock;
    if (!_tempTrampolinesMax)
