@@ -736,7 +736,10 @@ private static void ensureProperties(boolean isInitialization) {
 	/*[ENDIF] CRIU_SUPPORT */
 
 	/*[IF JFR_SUPPORT]*/
+	/* Enables openj9 JFR tests. */
 	initializedProperties.put("org.eclipse.openj9.jfr.isJFREnabled", "true"); //$NON-NLS-1$ //$NON-NLS-2$
+	/* TODO disable JFR JCL APIs until JFR natives are implemented. */
+	initializedProperties.put("jfr.unsupported.vm", "true"); //$NON-NLS-1$ //$NON-NLS-2$
 	/*[ENDIF] JFR_SUPPORT */
 
 	String[] list = getPropertyList();
