@@ -251,6 +251,7 @@ J9MemoryManagerFunctions MemoryManagerFunctions = {
 #endif /* J9VM_GC_OBJECT_ACCESS_BARRIER */
 	j9gc_get_bytes_allocated_by_thread,
 	j9gc_get_cumulative_bytes_allocated_by_thread,
+	j9gc_get_cumulative_class_unloading_stats,
 	j9mm_iterate_all_ownable_synchronizer_objects,
 	j9mm_iterate_all_continuation_objects,
 	ownableSynchronizerObjectCreated,
