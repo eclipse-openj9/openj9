@@ -67,7 +67,14 @@ uintptr_t
 J9::VMMethodEnv::startPC(TR_OpaqueMethodBlock *method)
    {
    J9Method *j9method = reinterpret_cast<J9Method *>(method);
-   return reinterpret_cast<uintptr_t>(TR::CompilationInfo::getJ9MethodStartPC(j9method));
+   uintptr_t returnStartPC = reinterpret_cast<uintptr_t>(TR::CompilationInfo::getJ9MethodStartPC(j9method));
+
+   if ((returnStartPC & J9_STARTPC_NOT_TRANSLATED) == J9_STARTPC_NOT_TRANSLATED)
+      {
+      returnStartPC = 0;
+      }
+
+   return returnStartPC;
    }
 
 
