@@ -54,7 +54,9 @@ typedef jobject (JNICALL *JVM_GetCallerClass_Type)(JNIEnv *env);
 typedef jobject (JNICALL *JVM_GetCallerClass_Type)(JNIEnv *env, jint depth);
 #endif /* JAVA_SPEC_VERSION >= 11 */
 typedef jint (JNICALL *JVM_GetClassAccessFlags_Type)(JNIEnv * env, jclass clazzRef);
+#if JAVA_SPEC_VERSION < 24
 typedef jobject (JNICALL *JVM_GetClassContext_Type)(JNIEnv *env);
+#endif /* JAVA_SPEC_VERSION < 24 */
 typedef jobject (JNICALL *JVM_GetClassLoader_Type)(JNIEnv *env, jobject obj);
 
 
@@ -95,7 +97,9 @@ JNIEXPORT jobject JNICALL JVM_GetCallerClass_Impl(JNIEnv *env, jint depth);
 JNIEXPORT jobject JNICALL JVM_NewInstanceFromConstructor_Impl(JNIEnv * env, jobject c, jobjectArray args);
 JNIEXPORT jobject JNICALL JVM_InvokeMethod_Impl(JNIEnv * env, jobject method, jobject obj, jobjectArray args);
 JNIEXPORT jint JNICALL JVM_GetClassAccessFlags_Impl(JNIEnv * env, jclass clazzRef);
+#if JAVA_SPEC_VERSION < 24
 JNIEXPORT jobject JNICALL JVM_GetClassContext_Impl(JNIEnv *env);
+#endif /* JAVA_SPEC_VERSION < 24 */
 JNIEXPORT void JNICALL JVM_Halt_Impl(jint exitCode);
 JNIEXPORT void JNICALL JVM_GCNoCompact_Impl(void);
 JNIEXPORT void JNICALL JVM_GC_Impl(void);
@@ -118,7 +122,7 @@ JNIEXPORT jobjectArray JNICALL JVM_GetMethodParameters_Impl(JNIEnv *env, jobject
 
 
 
-/* 
+/*
  * Structure which contains all of the VMI functions.
  */
 typedef struct SunVMI {
@@ -130,7 +134,9 @@ typedef struct SunVMI {
 	JVM_GCNoCompact_Type JVM_GCNoCompact;
 	JVM_GetCallerClass_Type JVM_GetCallerClass;
 	JVM_GetClassAccessFlags_Type JVM_GetClassAccessFlags;
+#if JAVA_SPEC_VERSION < 24
 	JVM_GetClassContext_Type JVM_GetClassContext;
+#endif /* JAVA_SPEC_VERSION < 24 */
 	JVM_GetClassLoader_Type JVM_GetClassLoader;
 	JVM_GetSystemPackage_Type JVM_GetSystemPackage;
 	JVM_GetSystemPackages_Type JVM_GetSystemPackages;

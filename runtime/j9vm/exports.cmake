@@ -78,7 +78,6 @@ jvm_add_exports(jvm
 	_JVM_GetClassAccessFlags@8
 	_JVM_GetClassAnnotations@8
 	_JVM_GetClassConstantPool@8
-	_JVM_GetClassContext@4
 	_JVM_GetClassLoader@8
 	_JVM_GetClassSignature@8
 	_JVM_GetEnclosingMethodInfo@8
@@ -464,7 +463,11 @@ if(NOT JAVA_SPEC_VERSION LESS 23)
 	)
 endif()
 
-if(NOT JAVA_SPEC_VERSION LESS 24)
+if(JAVA_SPEC_VERSION LESS 24)
+	jvm_add_exports(jvm
+		_JVM_GetClassContext@4
+	)
+else()
 	jvm_add_exports(jvm
 		JVM_IsContainerized
 		JVM_IsStaticallyLinked
