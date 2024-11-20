@@ -1,4 +1,4 @@
-/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
+/*[INCLUDE-IF (JAVA_SPEC_VERSION == 8) & !Sidecar18-SE-OpenJ9]*/
 /*
  * Copyright IBM Corp. and others 2010
  *
@@ -28,13 +28,8 @@ import java.util.Map;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
-/*[IF JAVA_SPEC_VERSION >= 9]
-import jdk.internal.misc.Unsafe;
-import jdk.internal.reflect.CallerSensitive;
-/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 import sun.reflect.CallerSensitive;
 import sun.misc.Unsafe;
-/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 public class ORBVMHelpers {
 
