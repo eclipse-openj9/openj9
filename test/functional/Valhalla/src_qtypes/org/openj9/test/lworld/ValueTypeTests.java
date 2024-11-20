@@ -1007,8 +1007,7 @@ public class ValueTypeTests {
 	 */
 	@Test(priority=1)
 	static public void testMonitorExitWithRefType() throws Throwable {
-		int x = 1;
-		Object refType = (Object) x;
+		Object refType = new Object();
 		
 		String[] fields = {"longField:J"};
 		Class<?> testMonitorExitWithRefType = ValueTypeGenerator.generateRefClass("TestMonitorExitWithRefType", fields);
@@ -1028,8 +1027,7 @@ public class ValueTypeTests {
 	 */
 	@Test(priority=1)
 	static public void testMonitorEnterAndExitWithRefType() throws Throwable {
-		int x = 2;
-		Object refType = (Object) x;
+		Object refType = new Object();
 		
 		String[] fields = {"longField:J"};
 		Class<?> testMonitorEnterAndExitWithRefType = ValueTypeGenerator.generateRefClass("TestMonitorEnterAndExitWithRefType", fields);
