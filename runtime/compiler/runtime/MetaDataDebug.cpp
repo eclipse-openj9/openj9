@@ -538,7 +538,7 @@ extern "C" void jitBytecodePrintFunction(void *userData, char *format, ...)
    char outputBuffer[512];
 
    va_start(args, format);
-   vsprintf(outputBuffer, format, args);
+   vsnprintf(outputBuffer, sizeof(outputBuffer), format, args);
    va_end(args);
    TR_Debug *dbg = (TR_Debug*)userData;
 

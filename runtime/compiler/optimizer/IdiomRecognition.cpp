@@ -240,11 +240,11 @@ TR_CISCNode::dump(TR::FILE *pOutFile, TR::Compilation * comp)
    const char *name = getName((TR_CISCOps)_opcode, comp);
    if (isValidOtherInfo())
       {
-      sprintf(buf, "%s %d", name, _otherInfo);
+      snprintf(buf, sizeof(buf), "%s %d", name, _otherInfo);
       }
    else
       {
-      sprintf(buf, "%s", name);
+      snprintf(buf, sizeof(buf), "%s", name);
       }
    traceMsg(comp, "[%p] %3d %2d%c %-11s", this, _id, _dagId, isOutsideOfLoop() ? ' ' : 'L', buf);
    traceMsg(comp, " [");
@@ -345,11 +345,11 @@ TR_CISCNode::printStdout()
    char buf[256];
    if (isValidOtherInfo())
       {
-      sprintf(buf, "%d %d", _opcode, _otherInfo);
+      snprintf(buf, sizeof(buf), "%d %d", _opcode, _otherInfo);
       }
    else
       {
-      sprintf(buf, "%d", _opcode);
+      snprintf(buf, sizeof(buf), "%d", _opcode);
       }
    printf("[%p] %3d %2d%c %-11s", this, _id, _dagId, isOutsideOfLoop() ? ' ' : 'L', buf);
    printf(" [");
@@ -7677,7 +7677,7 @@ TR_CISCTransformer::computeTopologicalEmbedding(TR_CISCGraph *P, TR_CISCGraph *T
       bool inlined = getBCIndexMinMax(_candidateRegion, &minIndex, &maxIndex, &minLN, &maxLN, true);
       if (minIndex <= maxIndex)
          {
-         sprintf(tmpbuf, ", bcindex %" OMR_PRIu32 " - %" OMR_PRIu32 " linenumber %" OMR_PRIu32 " - %" OMR_PRIu32 "%s.", minIndex, maxIndex, minLN, maxLN, inlined ? " (inlined)" : "");
+         snprintf(tmpbuf, sizeof(tmpbuf), ", bcindex %" OMR_PRIu32 " - %" OMR_PRIu32 " linenumber %" OMR_PRIu32 " - %" OMR_PRIu32 "%s.", minIndex, maxIndex, minLN, maxLN, inlined ? " (inlined)" : "");
          bcinfo = tmpbuf;
          }
 #endif

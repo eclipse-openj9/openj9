@@ -1129,8 +1129,8 @@ TR::CompilationInfoPerThread::CompilationInfoPerThread(TR::CompilationInfo &comp
       // NOTE:
       //       the (char *) casts are done because on Z, sprintf expects
       //       a (char *) instead of a (const char *)
-      sprintf(_activeThreadName,    (char *) selectedActiveThreadName,    getCompThreadId());
-      sprintf(_suspendedThreadName, (char *) selectedSuspendedThreadName, getCompThreadId());
+      snprintf(_activeThreadName,    activeThreadNameLength,    (char *) selectedActiveThreadName,    getCompThreadId());
+      snprintf(_suspendedThreadName, suspendedThreadNameLength, (char *) selectedSuspendedThreadName, getCompThreadId());
 
       _initializationSucceeded = true;
       }

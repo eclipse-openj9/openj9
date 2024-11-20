@@ -636,7 +636,7 @@ J9::SymbolReferenceTable::methodSymRefWithSignature(TR::SymbolReference *origina
 
    int32_t fullSignatureLength = originalMethod->classNameLength() + 1 + originalMethod->nameLength() + effectiveSignatureLength;
    char *fullSignature = (char*)trMemory()->allocateMemory(1 + fullSignatureLength, stackAlloc);
-   sprintf(fullSignature, "%.*s.%.*s%.*s", originalMethod->classNameLength(), originalMethod->classNameChars(), originalMethod->nameLength(), originalMethod->nameChars(), effectiveSignatureLength, effectiveSignature);
+   snprintf(fullSignature, 1 + fullSignatureLength, "%.*s.%.*s%.*s", originalMethod->classNameLength(), originalMethod->classNameChars(), originalMethod->nameLength(), originalMethod->nameChars(), effectiveSignatureLength, effectiveSignature);
    TR_ASSERT(strlen(fullSignature) == fullSignatureLength, "Computed fullSignatureLength must match actual length of fullSignature");
    CS2::HashIndex hashIndex = 0;
    static char *ignoreMBSCache = feGetEnv("TR_ignoreMBSCache");

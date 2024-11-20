@@ -478,7 +478,7 @@ J9::OptionsPostRestore::shouldInvalidateCompiledMethod(J9Method *method, TR_J9VM
 
       if (methodSignature)
          {
-         sprintf(methodSignature, "%.*s.%.*s%.*s",
+         snprintf(methodSignature, len, "%.*s.%.*s%.*s",
                J9UTF8_LENGTH(className), utf8Data(className),
                J9UTF8_LENGTH(name), utf8Data(name),
                J9UTF8_LENGTH(signature), utf8Data(signature));

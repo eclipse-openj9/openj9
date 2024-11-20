@@ -461,15 +461,14 @@ int main_runJavaMain(JNIEnv * env, char *mainClassName, int nameIsUTF, int java_
 
 char * main_vmVersionString(void)
 {
-	U_32 minorVersion;
-	char *native = "";
+	U_32 minorVersion = EsVersionMinor;
 	char *versionStringPtr = GLOBAL_DATA(versionString);
-	minorVersion = EsVersionMinor;
 
-	if ((minorVersion % 10) == 0)
+	if (0 == (minorVersion % 10)) {
 		minorVersion /= 10;
-	sprintf (versionStringPtr, "%d.%d%s,%s %s", 
-		EsVersionMajor, minorVersion, EsExtraVersionString, native, EsBuildVersionString);
+	}
+	snprintf(versionStringPtr, sizeof(versionString), "%d.%d%s, %s",
+		EsVersionMajor, minorVersion, EsExtraVersionString, EsBuildVersionString);
 	return versionStringPtr;
 }
 

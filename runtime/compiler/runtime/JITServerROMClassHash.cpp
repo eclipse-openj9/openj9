@@ -84,8 +84,20 @@ JITServerROMClassHash::toString(char *buffer, size_t size) const
    TR_ASSERT(size > sizeof(_data) * 2, "Buffer too small");
 
    char *s = buffer;
+   size_t len = size;
    for (size_t i = 0; i < sizeof(_data); ++i)
-      s += sprintf(s, "%02x", ((uint8_t *)_data)[i]);
+      {
+      int amt = snprintf(s, len, "%02x", ((uint8_t *)_data)[i]);
+      if ((0 < amt) && ((size_t)amt < len))
+         {
+         s += amt;
+         len -= amt;
+         }
+      else
+         {
+         break;
+         }
+      }
    return buffer;
    }
 

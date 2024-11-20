@@ -32,7 +32,7 @@
 
 
 
-static const char * getFrameName(J9SWFrame * frame, char * name);
+static const char * getFrameName(J9SWFrame * frame, char * name, size_t nameSize);
 static const char * getFrameTypeName(UDATA frameType);
 static const char * getResolveFrameType(UDATA resolveFrameType);
 static char * lswStrDup(J9SlotWalker * slotWalker, char * str);
@@ -396,23 +396,29 @@ lswRecordSlot(J9StackWalkState * walkState, const void * slotAddress, UDATA slot
 
 
 static char *
-lswDescribeObject(J9VMThread * vmThread, char * dataPtr, J9Class ** class, J9Object * object)
+lswDescribeObject(J9VMThread * vmThread, char * dataPtr, size_t dataSize, J9Class ** class, J9Object * object)
 {
 	J9JavaVM *vm = vmThread->javaVM;
+	int len = 0;
 	if (J9VMJAVALANGCLASS_OR_NULL(vm) == *class) {
 		/* Heap class, get the class */
 		*class = J9VM_J9CLASS_FROM_HEAPCLASS(vmThread, object);
-		dataPtr += sprintf(dataPtr, "jlC: "); 
+		len = snprintf(dataPtr, dataSize, "jlC: ");
 	} else {
-		dataPtr += sprintf(dataPtr, "obj: ");
-	} 
+		len = snprintf(dataPtr, dataSize, "obj: ");
+	}
+	if ((0 < len) && ((size_t)len < dataSize)) {
+		dataPtr += len;
+	} else {
+		dataPtr += dataSize;
+	}
 
 	return dataPtr; 
 }
 
 
 static void
-lswDescribeSlot(J9VMThread * vmThread, J9StackWalkState * walkState, J9SWSlot * slot, char * data, UDATA dataSize)
+lswDescribeSlot(J9VMThread * vmThread, J9StackWalkState * walkState, J9SWSlot * slot, char * data, size_t dataSize)
 {	
 	J9Class * class; 
 	J9Object * object; 
@@ -427,10 +433,17 @@ lswDescribeSlot(J9VMThread * vmThread, J9StackWalkState * walkState, J9SWSlot * 
 		case LSW_TYPE_INDIRECT_O_SLOT:
 		case LSW_TYPE_O_SLOT:
 			if (slot->data) {
-			
+				char *newPtr = NULL;
 				if (slot->type == LSW_TYPE_INDIRECT_O_SLOT) {
+					int len = 0;
 					object = (J9Object *) *((UDATA *) (slot->data & ~1));
-					dataPtr += sprintf(dataPtr, "%p -> ", object);
+					len = snprintf(dataPtr, dataSize, "%p -> ", object);
+					if ((0 < len) && ((size_t)len <= dataSize)) {
+						dataPtr += len;
+						dataSize -= len;
+					} else {
+						dataSize = 0;
+					}
 				} else {
 					object = (J9Object *) slot->data;
 				}
@@ -438,12 +451,16 @@ lswDescribeSlot(J9VMThread * vmThread, J9StackWalkState * walkState, J9SWSlot * 
 				object = (J9Object *) object;
 				class = J9OBJECT_CLAZZ(vmThread, object);
 				
-				dataPtr = lswDescribeObject(vmThread, dataPtr, &class, object);
+				newPtr = lswDescribeObject(vmThread, dataPtr, dataSize, &class, object);
+				dataSize -= newPtr - dataPtr;
+				dataPtr = newPtr;
 
-				className = J9ROMCLASS_CLASSNAME(class->romClass);
-				copySize = (J9UTF8_LENGTH(className) <= dataSize) ? J9UTF8_LENGTH(className) : LSW_STRING_MAX - 1;
-				memcpy(dataPtr, J9UTF8_DATA(className), copySize);
-				dataPtr[copySize] = 0;
+				if (dataSize > 0) {
+					className = J9ROMCLASS_CLASSNAME(class->romClass);
+					copySize = (J9UTF8_LENGTH(className) < dataSize) ? J9UTF8_LENGTH(className) : (dataSize - 1);
+					memcpy(dataPtr, J9UTF8_DATA(className), copySize);
+					dataPtr[copySize] = 0;
+				}
 			}
 			break;
 	}
@@ -531,13 +548,13 @@ lswPrintFrames(J9VMThread * vmThread, J9StackWalkState * walkState)
 			J9UTF8 * className = J9ROMCLASS_CLASSNAME(UNTAGGED_METHOD_CP(method)->ramClass->romClass);
 
 			lswPrintf(privatePortLibrary, "[%s%-20s%s] j9method 0x%x  %s%.*s.%.*s%.*s%s\n", 
-				   CYAN, getFrameName(frame, frameName), COL_RESET,
+				   CYAN, getFrameName(frame, frameName, sizeof(frameName)), COL_RESET,
 				   frame->method, CYAN,
 				   (U_32) J9UTF8_LENGTH(className), J9UTF8_DATA(className), (U_32) J9UTF8_LENGTH(name), J9UTF8_DATA(name),
 				   (U_32) J9UTF8_LENGTH(sig), J9UTF8_DATA(sig),
 				   COL_RESET);
 		} else {
-			lswPrintf(privatePortLibrary, "[%s%-20s%s]\n", CYAN, getFrameName(frame, frameName), COL_RESET);
+			lswPrintf(privatePortLibrary, "[%s%-20s%s]\n", CYAN, getFrameName(frame, frameName, sizeof(frameName)), COL_RESET);
 		}
 
 		switch (frame->type) {
@@ -602,12 +619,12 @@ lswSanityCheck(J9JavaVM * vm, J9StackWalkState * walkState)
 
 
 static const char *
-getFrameName(J9SWFrame * frame, char * name)
+getFrameName(J9SWFrame * frame, char * name, size_t nameSize)
 {
 	if (frame->type != LSW_FRAME_TYPE_JIT_RESOLVE) {
 		return frame->name ? frame->name : (char *) getFrameTypeName(frame->type);
 	} else {
-		sprintf(name, "JIT Resolve (%s)", getResolveFrameType(frame->ftd.resolve.type));
+		snprintf(name, nameSize, "JIT Resolve (%s)", getResolveFrameType(frame->ftd.resolve.type));
 	}
 
 	return name;

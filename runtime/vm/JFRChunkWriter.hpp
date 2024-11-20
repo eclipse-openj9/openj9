@@ -228,10 +228,11 @@ public:
 	writeIntermediateJFRChunkToFile()
 	{
 		UDATA written = 0;
-		char fileName[sizeof(intermediateChunkFileName) + 16 + sizeof(".jfr")];
-		sprintf(fileName, "%s%lX.jfr", intermediateChunkFileName, _vm->jfrState.jfrChunkCount);
+		const size_t fileNameLen = sizeof(intermediateChunkFileName) + 16 + sizeof(".jfr");
+		char fileName[fileNameLen];
+		snprintf(fileName, fileNameLen, "%s%lX.jfr", intermediateChunkFileName, _vm->jfrState.jfrChunkCount);
 		UDATA len = _bufferWriter->getSize();
-		IDATA fd = j9file_open(fileName, EsOpenWrite | EsOpenCreate | EsOpenTruncate , 0666);
+		IDATA fd = j9file_open(fileName, EsOpenWrite | EsOpenCreate | EsOpenTruncate, 0666);
 
 		if (-1 == fd) {
 			_buildResult = FileIOError;

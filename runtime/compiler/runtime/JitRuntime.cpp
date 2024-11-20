@@ -927,7 +927,7 @@ void dumpAllClasses(J9VMThread *vmThread)
    char fileName[256];
    J9Class * clazz = NULL;
 
-   sprintf(fileName, "tracer-classdump-%p.txt", vmThread);
+   snprintf(fileName, sizeof(fileName), "tracer-classdump-%p.txt", vmThread);
 
    if (!(fp = fopen(fileName, "at")))
       {
@@ -935,7 +935,7 @@ void dumpAllClasses(J9VMThread *vmThread)
       return;
       }
 
-   sprintf(fileName, "tracer-methoddump-%p.txt", vmThread);
+   snprintf(fileName, sizeof(fileName), "tracer-methoddump-%p.txt", vmThread);
 
    if (!(methodFP = fopen(fileName, "at")))
       {
@@ -943,7 +943,7 @@ void dumpAllClasses(J9VMThread *vmThread)
       return;
       }
 
-   sprintf(fileName, "tracer-fielddump-%p.txt", vmThread);
+   snprintf(fileName, sizeof(fileName), "tracer-fielddump-%p.txt", vmThread);
 
    if (!(fieldFP = fopen(fileName, "at")))
       {
@@ -951,7 +951,7 @@ void dumpAllClasses(J9VMThread *vmThread)
       return;
       }
 
-   sprintf(fileName, "tracer-staticsdump-%p.txt", vmThread);
+   snprintf(fileName, sizeof(fileName), "tracer-staticsdump-%p.txt", vmThread);
 
    if (!(staticsFP = fopen(fileName, "at")))
       {

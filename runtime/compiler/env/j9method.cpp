@@ -398,8 +398,9 @@ TR_J9MethodBase::signature(TR_Memory * trMemory, TR_AllocationKind allocKind)
    {
    if( !_fullSignature )
       {
-   char * s = (char *)trMemory->allocateMemory(classNameLength() + nameLength() + signatureLength() + 3, allocKind);
-   sprintf(s, "%.*s.%.*s%.*s", classNameLength(), classNameChars(), nameLength(), nameChars(), signatureLength(), signatureChars());
+   size_t len = classNameLength() + nameLength() + signatureLength() + 3;
+   char * s = (char *)trMemory->allocateMemory(len, allocKind);
+   snprintf(s, len, "%.*s.%.*s%.*s", classNameLength(), classNameChars(), nameLength(), nameChars(), signatureLength(), signatureChars());
 
       if ( allocKind == heapAlloc)
         _fullSignature = s;
@@ -690,7 +691,7 @@ TR_ResolvedJ9MethodBase::fieldOrStaticName(I_32 cpIndex, int32_t & len, TR_Memor
    len = J9UTF8_LENGTH(declName) + J9UTF8_LENGTH(J9ROMNAMEANDSIGNATURE_NAME(nameAndSignature)) + J9UTF8_LENGTH(J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSignature)) +3;
 
    char * s = (char *)trMemory->allocateMemory(len, kind);
-   sprintf(s, "%.*s.%.*s %.*s",
+   snprintf(s, len, "%.*s.%.*s %.*s",
            J9UTF8_LENGTH(declName), utf8Data(declName),
            J9UTF8_LENGTH(J9ROMNAMEANDSIGNATURE_NAME(nameAndSignature)), utf8Data(J9ROMNAMEANDSIGNATURE_NAME(nameAndSignature)),
            J9UTF8_LENGTH(J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSignature)), utf8Data(J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSignature)));
@@ -5320,10 +5321,7 @@ bool TR_ResolvedJ9Method::isSubjectToPhaseChange(TR::Compilation *comp)
 
             if (J9UTF8_LENGTH(name) == 13)
                {
-               char s[15];
-               sprintf(s, "%.*s",
-                    J9UTF8_LENGTH(name), J9UTF8_DATA(name));
-               if (strncmp(s, "specInstance$", 13) == 0)
+               if (0 == strncmp((const char *)J9UTF8_DATA(name), "specInstance$", 13))
                   return true;
                }
             }
@@ -6537,8 +6535,9 @@ TR_ResolvedJ9Method::newInstancePrototypeSignature(TR_Memory * m, TR_AllocationK
    TR_ASSERT(_j9classForNewInstance, "Must have the class for newInstance");
    J9Class * clazz = _j9classForNewInstance; //((J9Class*)((uintptr_t)(ramMethod()->extra) & ~J9_STARTPC_NOT_TRANSLATED);
    char    * className = fej9()->getClassNameChars(_fe->convertClassPtrToClassOffset(clazz), clen);
-   char    * s = (char *)m->allocateMemory(clen+nameLength()+signatureLength()+3, allocKind);
-   sprintf(s, "%.*s.%.*s%.*s", clen, className, nameLength(), nameChars(), signatureLength(), signatureChars());
+   size_t    len = clen + nameLength() + signatureLength() + 3;
+   char    * s = (char *)m->allocateMemory(len, allocKind);
+   snprintf(s, len, "%.*s.%.*s%.*s", clen, className, nameLength(), nameChars(), signatureLength(), signatureChars());
    return s;
    }
 
@@ -8148,7 +8147,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                   sourceType = "Ljava/lang/Object;";
                   break;
                default:
-                  sprintf(sourceBuf, "%c", sourceSig[0]);
+                  snprintf(sourceBuf, sizeof(sourceBuf), "%c", sourceSig[0]);
                   break;
                }
             switch (targetSig[0])
@@ -8159,7 +8158,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                   targetType = "Ljava/lang/Object;";
                   break;
                default:
-                  sprintf(targetBuf, "%c", targetSig[0]);
+                  snprintf(targetBuf, sizeof(targetBuf), "%c", targetSig[0]);
                   break;
                }
 
@@ -8169,10 +8168,10 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                {
                char methodName[30], methodSignature[50];
                if ((sourceType[0] == 'L') && isExplicit)
-                  sprintf(methodName, "explicitObject2%s", targetName);
+                  snprintf(methodName, sizeof(methodName), "explicitObject2%s", targetName);
                else
-                  sprintf(methodName, "%s2%s", sourceName, targetName);
-               sprintf(methodSignature, "(%s)%s", sourceType, targetType);
+                  snprintf(methodName, sizeof(methodName), "%s2%s", sourceName, targetName);
+               snprintf(methodSignature, sizeof(methodSignature), "(%s)%s", sourceType, targetType);
                TR::SymbolReference *methodSymRef = comp()->getSymRefTab()->methodSymRefFromName(_methodSymbol,
                                                                                                 "java/lang/invoke/ConvertHandle$FilterHelpers",
                                                                                                 methodName,
@@ -8493,11 +8492,11 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                      {
                      case 'L':
                      case '[':
-                        sprintf(extraName, "extra_L");
+                        snprintf(extraName, sizeof(extraName), "extra_L");
                         extraSignature = artificialSignature(stackAlloc, "(L" JSR292_ArgumentMoverHandle ";I)Ljava/lang/Object;");
                         break;
                      default:
-                        sprintf(extraName, "extra_%c", argType[0]);
+                        snprintf(extraName, sizeof(extraName), "extra_%c", argType[0]);
                         extraSignature = artificialSignature(stackAlloc, "(L" JSR292_ArgumentMoverHandle ";I).@", nextHandleSignature, i);
                         break;
                      }
@@ -8576,11 +8575,11 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                      {
                      case 'L':
                      case '[':
-                        sprintf(extraName, "extra_L");
+                        snprintf(extraName, sizeof(extraName), "extra_L");
                         extraSignature = artificialSignature(stackAlloc, "(L" JSR292_ArgumentMoverHandle ";I)Ljava/lang/Object;");
                         break;
                      default:
-                        sprintf(extraName, "extra_%c", argType[0]);
+                        snprintf(extraName, sizeof(extraName), "extra_%c", argType[0]);
                         extraSignature = artificialSignature(stackAlloc, "(L" JSR292_ArgumentMoverHandle ";I).@", nextHandleSignature, i);
                         break;
                      }
@@ -8916,11 +8915,11 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             int32_t arrayRomClassNameLength;
             char *arrayRomClassNameChars = fej9->getClassNameChars((TR_OpaqueClassBlock*)arrayJ9Class, arrayRomClassNameLength);
             TR_ASSERT(arrayRomClassNameLength == 2, "Every array romclass '%.*s' should be of the form [X where X is a single character", arrayRomClassNameLength, arrayRomClassNameChars);
-            sprintf(arrayClassSignature+arity-1, "%.*s", arrayRomClassNameLength, arrayRomClassNameChars);
+            snprintf(arrayClassSignature+arity-1, leafClassNameLength + 4, "%.*s", arrayRomClassNameLength, arrayRomClassNameChars);
             }
          else
             {
-            sprintf(arrayClassSignature+arity, "L%.*s;", leafClassNameLength, leafClassNameChars);
+            snprintf(arrayClassSignature+arity, leafClassNameLength + 3, "L%.*s;", leafClassNameLength, leafClassNameChars);
             }
 
          if (comp()->getOption(TR_TraceILGen))

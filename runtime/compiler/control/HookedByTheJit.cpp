@@ -200,7 +200,7 @@ TR::OptionSet *findOptionSet(J9Method *method, bool isAOT)
 
    if (methodSignature)
       {
-      sprintf(methodSignature, "%.*s.%.*s%.*s", J9UTF8_LENGTH(className), utf8Data(className), J9UTF8_LENGTH(name), utf8Data(name), J9UTF8_LENGTH(signature), utf8Data(signature));
+      snprintf(methodSignature, len, "%.*s.%.*s%.*s", J9UTF8_LENGTH(className), utf8Data(className), J9UTF8_LENGTH(name), utf8Data(name), J9UTF8_LENGTH(signature), utf8Data(signature));
 
       TR_FilterBST * filter = 0;
       if (TR::Options::getDebug() && TR::Options::getDebug()->getCompilationFilters())
@@ -470,7 +470,7 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
       if (sigLen < 1024)
          {
          char sigC[1024];
-         sigLen = sprintf(sigC, "%.*s.%.*s%.*s",
+         snprintf(sigC, sizeof(sigC), "%.*s.%.*s%.*s",
                            J9UTF8_LENGTH(className), utf8Data(className),
                            J9UTF8_LENGTH(name), utf8Data(name),
                            J9UTF8_LENGTH(signature), utf8Data(signature));
@@ -764,7 +764,7 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
       J9UTF8 * className = J9ROMCLASS_CLASSNAME(J9_CLASS_FROM_METHOD(method)->romClass);
       J9UTF8 * name      = J9ROMMETHOD_NAME(J9_ROM_METHOD_FROM_RAM_METHOD(method));
       J9UTF8 * signature = J9ROMMETHOD_SIGNATURE(J9_ROM_METHOD_FROM_RAM_METHOD(method));
-      int32_t sigLen = sprintf(buf, "%.*s.%.*s%.*s", J9UTF8_LENGTH(className), utf8Data(className), J9UTF8_LENGTH(name), utf8Data(name), J9UTF8_LENGTH(signature), utf8Data(signature));
+      snprintf(buf, sizeof(buf), "%.*s.%.*s%.*s", J9UTF8_LENGTH(className), utf8Data(className), J9UTF8_LENGTH(name), utf8Data(name), J9UTF8_LENGTH(signature), utf8Data(signature));
       printf("Initial: Signature %s Count %d isLoopy %d isAOT %" OMR_PRIuPTR " is in SCC %d SCCContainsProfilingInfo %d \n",buf,TR::CompilationInfo::getInvocationCount(method),J9ROMMETHOD_HAS_BACKWARDS_BRANCHES(romMethod),
             TR::Options::sharedClassCache() ? jitConfig->javaVM->sharedClassConfig->existsCachedCodeForROMMethod(vmThread, romMethod) : 0,
             TR::Options::sharedClassCache() ? TR_J9VMBase::get(jitConfig, vmThread, TR_J9VMBase::AOT_VM)->sharedCache()->isClassInSharedCache(J9_CLASS_FROM_METHOD(method)) : 0,containsInfo) ; fflush(stdout);
@@ -1758,7 +1758,7 @@ static void initThreadAfterCreation(J9VMThread *vmThread)
          char fileName[64];
          IDATA tracefp= -1;
 
-         sprintf(fileName, "%s_" POINTER_PRINTF_FORMAT, pJitConfig->itraceFileNamePrefix, vmThread);
+         snprintf(fileName, sizeof(fileName), "%s_" POINTER_PRINTF_FORMAT, pJitConfig->itraceFileNamePrefix, vmThread);
 
          if ((tracefp = j9file_open(fileName, EsOpenWrite | EsOpenAppend | EsOpenCreate, 0644)) == -1)
             {

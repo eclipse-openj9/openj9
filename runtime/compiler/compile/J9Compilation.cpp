@@ -325,7 +325,7 @@ J9::Compilation::allocateCompYieldStatsMatrix()
       for (int32_t j=0; j < (int32_t)LAST_CONTEXT; j++)
          {
          char buffer[128];
-         sprintf(buffer, "%d-%d", i,j);
+         snprintf(buffer, sizeof(buffer), "%d-%d", i,j);
          _compYieldStatsMatrix[i][j].setName(buffer);
          }
       }
