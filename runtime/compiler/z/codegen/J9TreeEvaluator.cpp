@@ -884,6 +884,7 @@ J9::Z::TreeEvaluator::inlineStringCodingHasNegatives(TR::Node *node, TR::CodeGen
    TR::LabelSymbol *processMultiple16CharsStart = generateLabelSymbol(cg);
    TR::LabelSymbol *processMultiple16CharsEnd = generateLabelSymbol(cg);
    TR::LabelSymbol *cFlowRegionEnd = generateLabelSymbol(cg);
+   TR::LabelSymbol *cFlowRegionStart = generateLabelSymbol(cg);
    TR::LabelSymbol *processOutOfRangeChar = generateLabelSymbol(cg);
 
    TR::Register *vInput = cg->allocateRegister(TR_VRF);
@@ -895,7 +896,10 @@ J9::Z::TreeEvaluator::inlineStringCodingHasNegatives(TR::Node *node, TR::CodeGen
    TR::Register *returnReg = cg->allocateRegister();
    generateRIInstruction(cg, TR::InstOpCode::LGHI, node, returnReg, 0);
 
-   generateRRRInstruction(cg, TR::InstOpCode::ARK, node, numCharsLeftToProcess, offsetReg, lengthReg);
+   generateS390LabelInstruction(cg, TR::InstOpCode::label, node, cFlowRegionStart);
+   generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::C, node, lengthReg, 0, TR::InstOpCode::COND_BE, cFlowRegionEnd, false, false);
+   generateRRInstruction(cg, TR::InstOpCode::AGFR, node, inputPtrReg, offsetReg);
+   generateRRInstruction(cg, TR::InstOpCode::LR, node, numCharsLeftToProcess, lengthReg);
 
    const uint8_t upperLimit = 127;
    const uint8_t rangeComparison = 0x20; // > comparison
