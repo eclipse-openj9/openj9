@@ -1077,6 +1077,14 @@ public class ValueTypeGenerator extends ClassLoader {
 		return generator.defineClass(name, bytes, 0, bytes.length);
 	}
 
+	public static Class<?> generateRefClass(String name) throws Throwable {
+		ClassConfiguration classConfig = new ClassConfiguration(name, new String[0]);
+		classConfig.setIsReference(true);
+
+		byte[] bytes = generateClass(classConfig);
+		return generator.defineClass(name, bytes, 0, bytes.length);
+	}
+
 	public static Class<?> generateRefClass(String name, String[] fields) throws Throwable {
 		ClassConfiguration classConfig = new ClassConfiguration(name, fields);
 		classConfig.setIsReference(true);

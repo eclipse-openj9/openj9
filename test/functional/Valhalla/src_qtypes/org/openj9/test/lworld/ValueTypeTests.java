@@ -1039,6 +1039,33 @@ public class ValueTypeTests {
 		}
 	}
 
+	@Test(priority=1)
+	static public void testMigratedValueClasses() {
+		Integer a = new Integer(1);
+		Integer b = new Integer(1);
+
+		Assert.assertTrue(a.getClass().isValue(),
+			"java/lang/Integer should be migrated to a value class.");
+		Assert.assertTrue(a.hashCode() == b.hashCode(),
+			"Two objects of value type classes with the same values should have the same hash code.");
+		Assert.assertTrue(a == b,
+			"Two objects of value type classes with the same values should be equal.");
+	}
+
+	@Test(priority=1)
+	static public void testMigratedValueClassesMonitorEnterAndExit() throws Throwable {
+		Integer i = new Integer(1);
+		Object refType = (Object)i;
+
+		Class<?> testMigratedValueClassesMonitorEnterAndExit = ValueTypeGenerator.generateRefClass("TestMigratedValueClassesMonitorEnterAndExit");
+		MethodHandle monitorEnterAndExitWithRefType = lookup.findStatic(testMigratedValueClassesMonitorEnterAndExit, "testMonitorEnterAndExitWithRefType", MethodType.methodType(void.class, Object.class));
+		try {
+			monitorEnterAndExitWithRefType.invoke(refType);
+			fail("Synchronization attempts on migrated value classes should fail.");
+		} catch (IdentityException e) {
+		}
+	}
+
 	/*	
 	 * Create a valueType with three valueType members
 	 *
