@@ -64,7 +64,8 @@ _IF([JAVA_SPEC_VERSION < 11],
 _X(JVM_GetClassAccessFlags,JNICALL,true,jint,JNIEnv *env, jclass clazzRef)
 _X(JVM_GetClassAnnotations,JNICALL,true,jbyteArray,JNIEnv *env, jclass target)
 _X(JVM_GetClassConstantPool,JNICALL,true,jobject,JNIEnv *env, jclass target)
-_X(JVM_GetClassContext,JNICALL,true,jobject,JNIEnv *env)
+_IF([JAVA_SPEC_VERSION < 24],
+	[_X(JVM_GetClassContext,JNICALL,true,jobject,JNIEnv *env)])
 _X(JVM_GetClassLoader,JNICALL,true,jobject,JNIEnv *env, jobject obj)
 _IF([JAVA_SPEC_VERSION < 11],
 	[_X(JVM_GetClassName,JNICALL,true,jstring, JNIEnv *env, jclass theClass)],
@@ -168,10 +169,12 @@ _X(JVM_GetClassSigners,JNICALL,true,jobject,jint arg0, jint arg1)
 _X(JVM_GetComponentType,JNICALL,true,jobject,JNIEnv *env, jclass cls)
 _X(JVM_GetDeclaredClasses,JNICALL,true,jobject,jint arg0, jint arg1)
 _X(JVM_GetDeclaringClass,JNICALL,true,jobject,jint arg0, jint arg1)
-_X(JVM_GetInheritedAccessControlContext,JNICALL,true,jobject,jint arg0, jint arg1)
+_IF([JAVA_SPEC_VERSION < 24],
+	[_X(JVM_GetInheritedAccessControlContext,JNICALL,true,jobject,jint arg0, jint arg1)])
 _X(JVM_GetPrimitiveArrayElement,JNICALL,true,jvalue,JNIEnv *env, jobject arr, jint index, jint wCode)
 _X(JVM_GetProtectionDomain,JNICALL,true,jobject,jint arg0, jint arg1)
-_X(JVM_GetStackAccessControlContext,JNICALL,true,jobject,JNIEnv *env, jclass java_security_AccessController)
+_IF([JAVA_SPEC_VERSION < 24],
+	[_X(JVM_GetStackAccessControlContext,JNICALL,true,jobject,JNIEnv *env, jclass java_security_AccessController)])
 _X(JVM_GetStackTraceDepth,JNICALL,true,jint,JNIEnv *env, jobject throwable)
 _X(JVM_GetStackTraceElement,JNICALL,true,jobject,JNIEnv *env, jobject throwable, jint index)
 _X(JVM_HoldsLock,JNICALL,true,jobject,jint arg0, jint arg1, jint arg2)

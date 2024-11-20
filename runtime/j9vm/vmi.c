@@ -106,14 +106,14 @@ JVM_GetClassAccessFlags(JNIEnv * env, jclass clazzRef)
 	return g_VMI->JVM_GetClassAccessFlags(env, clazzRef);
 }
 
-
+#if JAVA_SPEC_VERSION < 24
 jobject JNICALL
 JVM_GetClassContext(JNIEnv *env)
 {
 	ENSURE_VMI();
 	return g_VMI->JVM_GetClassContext(env);
 }
-
+#endif /* JAVA_SPEC_VERSION < 24 */
 
 void JNICALL
 JVM_Halt(jint exitCode)

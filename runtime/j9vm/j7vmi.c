@@ -1152,14 +1152,14 @@ JVM_GetDeclaringClass(jint arg0, jint arg1)
 }
 
 
-
+#if JAVA_SPEC_VERSION < 24
 jobject JNICALL
 JVM_GetInheritedAccessControlContext(jint arg0, jint arg1)
 {
 	assert(!"JVM_GetInheritedAccessControlContext() stubbed!");
 	return NULL;
 }
-
+#endif /* JAVA_SPEC_VERSION < 24 */
 
 
 /**
@@ -1350,11 +1350,13 @@ JVM_GetProtectionDomain(jint arg0, jint arg1)
 	return NULL;
 }
 
+#if JAVA_SPEC_VERSION < 24
 jobject JNICALL
-JVM_GetStackAccessControlContext(JNIEnv* env, jclass java_security_AccessController)
+JVM_GetStackAccessControlContext(JNIEnv *env, jclass java_security_AccessController)
 {
 	return NULL;
 }
+#endif /* JAVA_SPEC_VERSION < 24 */
 
 jint JNICALL
 JVM_GetStackTraceDepth(JNIEnv* env, jobject throwable)
