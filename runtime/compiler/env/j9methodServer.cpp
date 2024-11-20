@@ -387,7 +387,14 @@ TR_ResolvedJ9JITServerMethod::getResolvedPossiblyPrivateVirtualMethod(TR::Compil
          if (createResolvedMethod)
             {
             resolvedMethod = createResolvedMethodFromJ9Method(comp, cpIndex, vTableIndex, ramMethod, unresolvedInCP, aotStats, methodInfo);
-            compInfoPT->cacheResolvedMethod(compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::VirtualFromCP, (TR_OpaqueClassBlock *) _ramClass, cpIndex), (TR_OpaqueMethodBlock *) ramMethod, (uint32_t) vTableIndex, methodInfo);
+            compInfoPT->cacheResolvedMethod(
+               compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::VirtualFromCP,
+                                                (TR_OpaqueClassBlock *) _ramClass, cpIndex),
+               (TR_OpaqueMethodBlock *) ramMethod,
+               (uint32_t) vTableIndex,
+               methodInfo,
+               *unresolvedInCP
+               );
             }
          }
       }
@@ -694,7 +701,14 @@ TR_ResolvedJ9JITServerMethod::getResolvedStaticMethod(TR::Compilation * comp, I_
       }
    else
       {
-      compInfoPT->cacheResolvedMethod(compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::Static, (TR_OpaqueClassBlock *) _ramClass, cpIndex), (TR_OpaqueMethodBlock *) ramMethod, 0, methodInfo);
+      compInfoPT->cacheResolvedMethod(
+         compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::Static,
+                                          (TR_OpaqueClassBlock *) _ramClass, cpIndex),
+         (TR_OpaqueMethodBlock *) ramMethod,
+         0,
+         methodInfo,
+         *unresolvedInCP
+         );
       }
 
    return resolvedMethod;
@@ -751,7 +765,13 @@ TR_ResolvedJ9JITServerMethod::getResolvedSpecialMethod(TR::Compilation * comp, I
       }
    else
       {
-      compInfoPT->cacheResolvedMethod(compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::Special, clazz, cpIndex), (TR_OpaqueMethodBlock *) ramMethod, 0, methodInfo);
+      compInfoPT->cacheResolvedMethod(
+         compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::Special, clazz, cpIndex),
+         (TR_OpaqueMethodBlock *) ramMethod,
+         0,
+         methodInfo,
+         *unresolvedInCP
+         );
       }
 
    return resolvedMethod;
@@ -882,7 +902,14 @@ TR_ResolvedJ9JITServerMethod::getResolvedInterfaceMethod(TR::Compilation * comp,
    // to uniquely identify it.
    if (resolvedMethod)
       {
-      compInfoPT->cacheResolvedMethod(compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::Interface, clazz, cpIndex, classObject), (TR_OpaqueMethodBlock *) ramMethod, 0, methodInfo);
+      compInfoPT->cacheResolvedMethod(
+         compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::Interface,
+                                          clazz, cpIndex, classObject),
+         (TR_OpaqueMethodBlock *) ramMethod,
+         0,
+         methodInfo,
+         true
+         );
       return resolvedMethod;
       }
 
@@ -932,8 +959,14 @@ TR_ResolvedJ9JITServerMethod::getResolvedImproperInterfaceMethod(TR::Compilation
             j9method = NULL;
          }
 
-      compInfoPT->cacheResolvedMethod(compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::ImproperInterface, (TR_OpaqueClassBlock *) _ramClass, cpIndex),
-                                     (TR_OpaqueMethodBlock *) j9method, vtableOffset, methodInfo);
+      compInfoPT->cacheResolvedMethod(
+         compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::ImproperInterface,
+                                          (TR_OpaqueClassBlock *) _ramClass, cpIndex),
+         (TR_OpaqueMethodBlock *) j9method,
+         vtableOffset,
+         methodInfo,
+         true
+         );
       if (j9method == NULL)
          return NULL;
       else
@@ -997,7 +1030,14 @@ TR_ResolvedJ9JITServerMethod::getResolvedVirtualMethod(TR::Compilation * comp, T
       resolvedMethod = ramMethod ? new (comp->trHeapMemory()) TR_ResolvedJ9JITServerMethod((TR_OpaqueMethodBlock *) ramMethod, _fe, comp->trMemory(), methodInfo, this) : 0;
       }
    if (resolvedMethod)
-      compInfoPT->cacheResolvedMethod(compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::VirtualFromOffset, clazz, virtualCallOffset, classObject), ramMethod, 0, methodInfo);
+      compInfoPT->cacheResolvedMethod(
+         compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::VirtualFromOffset,
+                                          clazz, virtualCallOffset, classObject),
+         (TR_OpaqueMethodBlock *) ramMethod,
+         0,
+         methodInfo,
+         true
+         );
    return resolvedMethod;
    }
 
@@ -1664,12 +1704,13 @@ TR_ResolvedJ9JITServerMethod::cacheResolvedMethodsCallees(int32_t ttlForUnresolv
 
    // 2. Send a remote query to mirror all uncached resolved methods
    _stream->write(JITServer::MessageType::ResolvedMethod_getMultipleResolvedMethods, (TR_ResolvedJ9Method *) _remoteMirror, methodTypes, cpIndices);
-   auto recv = _stream->read<std::vector<TR_OpaqueMethodBlock *>, std::vector<uint32_t>, std::vector<TR_ResolvedJ9JITServerMethodInfo>>();
+   auto recv = _stream->read<std::vector<TR_OpaqueMethodBlock *>, std::vector<uint32_t>, std::vector<TR_ResolvedJ9JITServerMethodInfo>, std::vector<char>>();
 
    // 3. Cache all received resolved methods
    auto &ramMethods = std::get<0>(recv);
    auto &vTableOffsets = std::get<1>(recv);
    auto &methodInfos = std::get<2>(recv);
+   auto &unresolvedInCPs = std::get<3>(recv);
    TR_ASSERT(numMethods == ramMethods.size(), "Number of received methods does not match the number of requested methods");
    for (int32_t i = 0; i < numMethods; ++i)
       {
@@ -1686,6 +1727,7 @@ TR_ResolvedJ9JITServerMethod::cacheResolvedMethodsCallees(int32_t ttlForUnresolv
             ramMethods[i],
             vTableOffsets[i],
             methodInfos[i],
+            (bool) unresolvedInCPs[i],
             ttlForUnresolved
             );
          }
@@ -1806,7 +1848,9 @@ TR_ResolvedJ9JITServerMethod::collectImplementorsCapped(
             (TR_OpaqueMethodBlock *) ramMethods[i],
             cpIndexOrOffset,
             methodInfos[i],
-            0); // all received methods should be resolved
+            true,
+            0
+            ); // all received methods should be resolved
          success = compInfoPT->getCachedResolvedMethod(key, this, &resolvedMethod);
          }
 

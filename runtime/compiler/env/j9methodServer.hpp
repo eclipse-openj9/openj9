@@ -128,6 +128,7 @@ TR_ResolvedMethodCacheEntry
    TR_PersistentMethodInfo *persistentMethodInfo;
    TR_ContiguousIPMethodHashTableEntry *IPMethodInfo;
    int32_t ttlForUnresolved;
+   bool isUnresolvedInCP;
    };
 
 using TR_ResolvedMethodInfoCache = UnorderedMap<TR_ResolvedMethodKey, TR_ResolvedMethodCacheEntry>;

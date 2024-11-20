@@ -1477,12 +1477,18 @@ TR::CompilationInfoPerThreadRemote::getCachedIProfilerInfo(TR_OpaqueMethodBlock 
  * @param key Identifier used to identify a resolved method in resolved methods cache
  * @param method The resolved method of interest
  * @param vTableSlot The vTableSlot for the resolved method of interest
+ * @param isUnresolvedInCP The unresolvedInCP boolean value of interest
  * @param methodInfo Additional method info about the resolved method of interest
  * @return returns void
  */
 void
-TR::CompilationInfoPerThreadRemote::cacheResolvedMethod(TR_ResolvedMethodKey key, TR_OpaqueMethodBlock *method,
-                                                        uint32_t vTableSlot, const TR_ResolvedJ9JITServerMethodInfo &methodInfo, int32_t ttlForUnresolved)
+TR::CompilationInfoPerThreadRemote::cacheResolvedMethod(TR_ResolvedMethodKey key,
+                                                        TR_OpaqueMethodBlock *method,
+                                                        uint32_t vTableSlot,
+                                                        const TR_ResolvedJ9JITServerMethodInfo
+                                                            &methodInfo,
+                                                        bool isUnresolvedInCP,
+                                                        int32_t ttlForUnresolved)
    {
    static bool useCaching = !feGetEnv("TR_DisableResolvedMethodsCaching");
    if (!useCaching)
@@ -1518,6 +1524,7 @@ TR::CompilationInfoPerThreadRemote::cacheResolvedMethod(TR_ResolvedMethodKey key
    cacheEntry.persistentBodyInfo = bodyInfo;
    cacheEntry.persistentMethodInfo = pMethodInfo;
    cacheEntry.IPMethodInfo = entry;
+   cacheEntry.isUnresolvedInCP = isUnresolvedInCP;
 
    // time-to-live for cached unresolved methods.
    // Irrelevant for resolved methods.
@@ -1599,7 +1606,7 @@ TR::CompilationInfoPerThreadRemote::getCachedResolvedMethod(TR_ResolvedMethodKey
       if (*resolvedMethod)
          {
          if (unresolvedInCP)
-            *unresolvedInCP = false;
+            *unresolvedInCP = methodCacheEntry.isUnresolvedInCP;
          return true;
          }
       else
