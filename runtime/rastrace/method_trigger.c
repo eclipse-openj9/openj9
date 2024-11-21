@@ -567,7 +567,7 @@ setMethodStrArgLength(J9JavaVM *vm, const char *str, BOOLEAN atRuntime)
 
     p = getPositionalParm(1, str, &length);
 
-    if (length > 3) {
+    if (length > 1) {
         goto err;
     }
 
@@ -585,7 +585,7 @@ setMethodStrArgLength(J9JavaVM *vm, const char *str, BOOLEAN atRuntime)
     return OMR_ERROR_NONE;
 
 err:
-    vaReportJ9VMCommandLineError(PORTLIB, "methodstrarglen takes an unsigned integer value from 0 to %d", MAX_STRING_LENGTH);
+    vaReportJ9VMCommandLineError(PORTLIB, "methodstrarglen takes an unsigned integer value from 1 to %d", MAX_STRING_LENGTH);
     return OMR_ERROR_INTERNAL;
 }
 
