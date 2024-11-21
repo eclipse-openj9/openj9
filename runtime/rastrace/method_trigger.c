@@ -567,7 +567,7 @@ setMethodStrArgLength(J9JavaVM *vm, const char *str, BOOLEAN atRuntime)
 
     p = getPositionalParm(1, str, &length);
 
-    if (length > 1) {
+    if (length > 3) {
         goto err;
     }
 
