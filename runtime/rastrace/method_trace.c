@@ -481,6 +481,8 @@ traceMethodArgObject(J9VMThread *thr, UDATA* arg0EA, char* cursor, UDATA length)
 		J9ROMClass * romClass = clazz->romClass;
 		J9UTF8* className = J9ROMCLASS_CLASSNAME(romClass);
 		J9JavaVM *vm = thr->javaVM;
+		const unsigned int methodStrArgLength = ((RasGlobalStorage *)thr->javaVM->j9rasGlobalStorage)->methodStrArgLength;
+		unsigned int strArgLength = methodStrArgLength == 0 ? DEFAULT_STRING_LENGTH : methodStrArgLength;
 
 		if (clazz == J9VMJAVALANGSTRING_OR_NULL(vm)) {
 			/* string arg */
@@ -490,7 +492,7 @@ traceMethodArgObject(J9VMThread *thr, UDATA* arg0EA, char* cursor, UDATA length)
 			char *stringArgUTF8 = vmFuncs->copyStringToUTF8WithMemAlloc(thr, object, J9_STR_NULL_TERMINATE_RESULT, "  ", 2, stringArgBuffer, DEFAULT_BUFFER_LENGTH, NULL);
 
 			if(DEFAULT_STRING_LENGTH < strlen(stringArgUTF8)) {
-				j9str_printf(PORTLIB, cursor, length, "(String)%.*s...", (U_32)DEFAULT_STRING_LENGTH, J9UTF8_DATA(stringArgUTF8));
+				j9str_printf(PORTLIB, cursor, length, "(String)%.*s...", (U_32)strArgLength, J9UTF8_DATA(stringArgUTF8));
 			} else {
 				j9str_printf(PORTLIB, cursor, length, "(String)%.*s", (U_32)J9UTF8_LENGTH(stringArgUTF8), J9UTF8_DATA(stringArgUTF8));
 			}

@@ -117,6 +117,7 @@ const struct traceOption TRACE_OPTIONS[] =
 	{RAS_METHODS_KEYWORD, FALSE, setMethod},
 	{RAS_STACKDEPTH_KEYWORD, TRUE, setStackDepth},
 	{RAS_COMPRESSION_LEVEL_KEYWORD, TRUE, setStackCompressionLevel},
+	{RAS_METHOD_STRING_LENGTH_KEYWORD, FALSE, setMethodStrArgLength},
 };
 
 #define NUMBER_OF_TRACE_OPTIONS ( sizeof(TRACE_OPTIONS) / sizeof(struct traceOption))
