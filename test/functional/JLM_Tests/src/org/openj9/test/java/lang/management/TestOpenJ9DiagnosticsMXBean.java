@@ -62,11 +62,11 @@ public class TestOpenJ9DiagnosticsMXBean {
 	private static Logger logger = Logger.getLogger(TestOpenJ9DiagnosticsMXBean.class);
 	private static String os = System.getProperty("os.name");
 	private static Process remoteServer;
-	private ObjectName mxbeanName = null;
-	private OpenJ9DiagnosticsMXBean diagBean = null;
-	private OpenJ9DiagnosticsMXBean diagBeanRemote = null;
-	List<String> initialDumpOptions = new ArrayList<String>();
-	private JMXConnector connector = null;
+	private ObjectName mxbeanName;
+	private OpenJ9DiagnosticsMXBean diagBean;
+	private OpenJ9DiagnosticsMXBean diagBeanRemote;
+	private String initialDumpOptions;
+	private JMXConnector connector;
 	private static ProcessLocking lock;
 	private static String tmpFileName;
 
@@ -80,31 +80,11 @@ public class TestOpenJ9DiagnosticsMXBean {
 			Assert.fail("MalformedObjectNameException!");
 		}
 
-		initialDumpOptions = getDumpOptions();
-
 		getLocalMXBean();
 
 		getRemoteMXBean();
-	}
 
-	/**
-	 * Function to get the dump options. 
-	 *
-	 */
-	private List<String> getDumpOptions() throws IOException {
-		List<String> list = new ArrayList<String>();
-		String javaExec = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
-		ProcessBuilder builder = new ProcessBuilder(javaExec, "-Xdump:what", "-version");
-		Process process = builder.start();
-		builder.redirectErrorStream(true);
-	
-		BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-		String line;
-		while(null != (line = reader.readLine())) {
-			logger.info(line);
-			list.add(line);
-		}
-		return list;
+		initialDumpOptions = diagBean.getDumpOptions();
 	}
 
 	private void getLocalMXBean() {
@@ -114,7 +94,7 @@ public class TestOpenJ9DiagnosticsMXBean {
 		Assert.assertTrue(registered, "OpenJ9DiagnosticsMXBean is not registered. Cannot Proceed.");
 
 		diagBean = JMX.newMXBeanProxy(mbeanServer, mxbeanName, OpenJ9DiagnosticsMXBean.class);
-	} 
+	}
 
 	private void getRemoteMXBean() throws IOException, InterruptedException {
 		int retryCounter = 0;
@@ -148,7 +128,7 @@ public class TestOpenJ9DiagnosticsMXBean {
 				 * name for the class OpenJ9DiagnosticsMXBean.
 				 */
 				diagBeanRemote = JMX.newMXBeanProxy(mbsc, mxbeanName, OpenJ9DiagnosticsMXBean.class);
-				boolean registered = mbsc.isRegistered(mxbeanName); 
+				boolean registered = mbsc.isRegistered(mxbeanName);
 				Assert.assertTrue(registered, "OpenJ9DiagnosticsMXBean is not registered. Cannot Proceed.");
 
 				/*
@@ -175,7 +155,7 @@ public class TestOpenJ9DiagnosticsMXBean {
 		}
 		Assert.assertNotNull(diagBeanRemote, "OpenJ9DiagnosticsMXBean instance on a remote server could not be obtained");
 	}
-		
+
 	@AfterClass
 	public void tearDown() throws Exception {
 		try {
@@ -211,7 +191,7 @@ public class TestOpenJ9DiagnosticsMXBean {
 	 * Function to test if the requested dumps are triggered on a local application.
 	 *
 	 */
-	@Test	
+	@Test
 	private void testLocal_triggerDump() throws FileNotFoundException, IOException {
 		triggerDump(diagBean);
 	}
@@ -219,7 +199,7 @@ public class TestOpenJ9DiagnosticsMXBean {
 	/**
 	 * Function to test if the requested dumps are triggered to the specified file names.
 	 *
-	 */	
+	 */
 	@Test
 	private void testLocal_triggerDumpToFile() throws InvalidOptionException, FileNotFoundException, IOException {
 		triggerDumpToFile(diagBean, "local");
@@ -230,7 +210,7 @@ public class TestOpenJ9DiagnosticsMXBean {
 	 * Function to test if the dump options were reset to what it was at JVM initialization on a local application.
 	 *
 	 */
-	@Test	
+	@Test
 	private void testLocal_resetDumpOptions() throws IOException, InvalidOptionException, ConfigurationUnavailableException {
 		resetDumpOptions(diagBean);
 	}
@@ -238,7 +218,7 @@ public class TestOpenJ9DiagnosticsMXBean {
 	/**
 	 * Function to test if a classic heap dump is created.
 	 *
-	 */	
+	 */
 	@Test
 	private void testLocal_triggerClassicHeapDump() throws InvalidOptionException, FileNotFoundException, IOException {
 		triggerClassicHeapDump(diagBean);
@@ -247,7 +227,7 @@ public class TestOpenJ9DiagnosticsMXBean {
 	/**
 	 * Function to test if dump options can be set dynamically on a local process
 	 *
-	 */	
+	 */
 	@Test
 	private void testLocal_setDumpOptions() throws InvalidOptionException, ConfigurationUnavailableException, FileNotFoundException, IOException {
 		boolean found = false;
@@ -347,15 +327,15 @@ public class TestOpenJ9DiagnosticsMXBean {
 	 * Function to test if the dump options were reset to what it was at JVM initialization on a remote application.
 	 *
 	 */
-	@Test	
+	@Test
 	private void testRemote_resetDumpOptions() throws IOException, InvalidOptionException, ConfigurationUnavailableException, FileNotFoundException {
-		resetDumpOptions(diagBeanRemote);			
+		resetDumpOptions(diagBeanRemote);
 	}
 
 	/**
 	 * Function to test if a classic heap dump is created.
 	 *
-	 */	
+	 */
 	@Test
 	private void testRemote_triggerClassicHeapDump() throws InvalidOptionException, FileNotFoundException, IOException {
 		triggerClassicHeapDump(diagBeanRemote);
@@ -364,7 +344,7 @@ public class TestOpenJ9DiagnosticsMXBean {
 	/**
 	 * Function to test if dump options can be set dynamically on a remote application
 	 *
-	 */	
+	 */
 	@Test
 	private void testRemote_setDumpOptions() throws InvalidOptionException, ConfigurationUnavailableException, InterruptedException, FileNotFoundException, IOException {
 		boolean found = false;
@@ -468,7 +448,7 @@ public class TestOpenJ9DiagnosticsMXBean {
 	 *
 	 * @param diagBean OpenJ9DiagnosticsMXBean instance that has already been initialized.
 	 * @param test indicates if it is a local or remote test
-	 */	
+	 */
 	private void triggerDumpToFile(OpenJ9DiagnosticsMXBean diagBean, String test) throws InvalidOptionException, FileNotFoundException, IOException {
 		boolean found = false;
 		String[] dumpAgents = { "java", "heap", "snap", "system", "stack" };
@@ -493,7 +473,7 @@ public class TestOpenJ9DiagnosticsMXBean {
 						found = findAndDeleteFile(dir, dumpFile.getName());
 						Assert.assertTrue(found, fileName + " not found");
 					}
-				} 
+				}
 			} catch (java.lang.IllegalArgumentException e) {
 				/* stack agent is not supported by the trigger method */
 				if (agent.equals("stack")) {
@@ -510,27 +490,26 @@ public class TestOpenJ9DiagnosticsMXBean {
 	 * Function to test if a classic heap dump is created.
 	 *
 	 * @param diagBean OpenJ9DiagnosticsMXBean instance that has already been initialized.
-	 */	
+	 */
 	private void triggerClassicHeapDump(OpenJ9DiagnosticsMXBean diagBean) throws InvalidOptionException, FileNotFoundException, IOException {
 		boolean found = false;
 		String fileName = diagBean.triggerClassicHeapDump();
 		found = findAndDeleteFile(".", new File(fileName).getName());
 		Assert.assertTrue(found, fileName + " not found");
-	}	
+	}
 
 	/**
 	 * Function to test if the dump options were reset to what it was at JVM initialization.
 	 *
 	 * @param diagBean OpenJ9DiagnosticsMXBean instance that has already been initialized.
-	 */	
+	 */
 	private void resetDumpOptions(OpenJ9DiagnosticsMXBean diagBean) throws IOException, InvalidOptionException, ConfigurationUnavailableException {
 		diagBean.setDumpOptions("java+heap+system:events=vmstop");
 		diagBean.resetDumpOptions();
 
-		List<String> newDumpOptions = getDumpOptions();
-		boolean res = initialDumpOptions.equals(newDumpOptions);
-		
-		Assert.assertTrue(res, "Reset Dump Options failed");
+		String newDumpOptions = diagBean.getDumpOptions();
+
+		Assert.assertEquals(newDumpOptions, initialDumpOptions, "Reset Dump Options failed");
 	}
 
 	/**
@@ -539,7 +518,7 @@ public class TestOpenJ9DiagnosticsMXBean {
 	 * @param dirPath Directory path where dumps are created.
 	 * @param fileName Dump file name.
 	 * @return a boolean indicating if the file was found or not.
-	 */	
+	 */
 	private static boolean findAndDeleteFile(String dirPath, String fileName) throws FileNotFoundException, IOException {
 		BufferedReader reader = null;
 		boolean found = false;
@@ -611,7 +590,7 @@ public class TestOpenJ9DiagnosticsMXBean {
 
 		lock.waitForEvent("child started");
 		logger.info("Starting remote server finished");
-	} 
+	}
 
 	/**
 	 * Internal function: Stops a remote server.
@@ -619,6 +598,6 @@ public class TestOpenJ9DiagnosticsMXBean {
 	private static void stopRemoteServer() throws InterruptedException {
 		remoteServer.destroy();
 		remoteServer.waitFor();
-	} 
+	}
 }
 
