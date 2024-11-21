@@ -164,10 +164,6 @@ typedef struct J9PortLibrary {
 	void  ( *sysinfo_shutdown)(struct J9PortLibrary *portLibrary) ;
 	/** see @ref j9sysinfo.c::j9sysinfo_get_classpathSeparator "j9sysinfo_get_classpathSeparator"*/
 	uint16_t  ( *sysinfo_get_classpathSeparator)(struct J9PortLibrary *portLibrary ) ;
-	/** see @ref j9sysinfo.c::j9sysinfo_get_processor_description "j9sysinfo_get_processor_description"*/
-	intptr_t  ( *sysinfo_get_processor_description)(struct J9PortLibrary *portLibrary, J9ProcessorDesc *desc) ;
-	/** see @ref j9sysinfo.c::j9sysinfo_processor_has_feature "j9sysinfo_processor_has_feature"*/
-	BOOLEAN  ( *sysinfo_processor_has_feature)(struct J9PortLibrary *portLibrary, J9ProcessorDesc *desc, uint32_t feature) ;
 	/** see @ref j9sysinfo.c::j9sysinfo_get_hw_info "j9sysinfo_get_hw_info"*/
 	int32_t  ( *sysinfo_get_hw_info)(struct J9PortLibrary *portLibrary, uint32_t infoType, char * buf, uint32_t bufLen);
 	/** see @ref j9sysinfo.c::j9sysinfo_get_cache_info "j9sysinfo_get_cache_info"*/
@@ -518,8 +514,6 @@ extern J9_CFUNC int32_t j9port_isCompatible(struct J9PortLibraryVersion *expecte
 #define j9sysinfo_env_iterator_init(param1,param2,param3) OMRPORT_FROM_J9PORT(privatePortLibrary)->sysinfo_env_iterator_init(OMRPORT_FROM_J9PORT(privatePortLibrary),param1,param2,param3)
 #define j9sysinfo_env_iterator_hasNext(param1) OMRPORT_FROM_J9PORT(privatePortLibrary)->sysinfo_env_iterator_hasNext(OMRPORT_FROM_J9PORT(privatePortLibrary),param1)
 #define j9sysinfo_env_iterator_next(param1,param2) OMRPORT_FROM_J9PORT(privatePortLibrary)->sysinfo_env_iterator_next(OMRPORT_FROM_J9PORT(privatePortLibrary),param1,param2)
-#define j9sysinfo_get_processor_description(param1) privatePortLibrary->sysinfo_get_processor_description(privatePortLibrary,param1)
-#define j9sysinfo_processor_has_feature(param1,param2) privatePortLibrary->sysinfo_processor_has_feature(privatePortLibrary,param1,param2)
 #define j9sysinfo_get_hw_info(param1,param2,param3) privatePortLibrary->sysinfo_get_hw_info(privatePortLibrary,param1,param2,param3)
 #define j9sysinfo_get_cache_info(param1) privatePortLibrary->sysinfo_get_cache_info(privatePortLibrary,param1)
 #define j9file_startup() OMRPORT_FROM_J9PORT(privatePortLibrary)->file_startup(OMRPORT_FROM_J9PORT(privatePortLibrary))

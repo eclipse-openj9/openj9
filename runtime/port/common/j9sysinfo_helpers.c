@@ -27,7 +27,7 @@
  */
 
 #include "j9sysinfo_helpers.h"
- 
+
 #include "j9port.h"
 #include "j9porterror.h"
 #include "portnls.h"
@@ -38,134 +38,8 @@
 #include <intrin.h>
 #endif /* defined(WIN32) */
 
-/* defines for the CPUID instruction */
-#define CPUID_VENDOR_INFO						0
-#define CPUID_FAMILY_INFO						1
-#define CPUID_STRUCTURED_EXTENDED_FEATURE_INFO	7
-
-#define CPUID_VENDOR_INTEL		"GenuineIntel"
-#define CPUID_VENDOR_AMD		"AuthenticAMD"
-#define CPUID_VENDOR_LENGTH		12
-
-#define CPUID_SIGNATURE_FAMILY			0x00000F00
-#define CPUID_SIGNATURE_MODEL			0x000000F0
-#define CPUID_SIGNATURE_EXTENDEDMODEL	0x000F0000
-
-#define CPUID_SIGNATURE_FAMILY_SHIFT		8
-#define CPUID_SIGNATURE_MODEL_SHIFT			4
-#define CPUID_SIGNATURE_EXTENDEDMODEL_SHIFT	12
-
-#define CPUID_FAMILYCODE_INTELPENTIUM	0x05
-#define CPUID_FAMILYCODE_INTELCORE		0x06
-#define CPUID_FAMILYCODE_INTELPENTIUM4	0x0F
-
-#define CPUID_MODELCODE_INTELHASWELL	0x3A
-#define CPUID_MODELCODE_SANDYBRIDGE		0x2A
-#define CPUID_MODELCODE_INTELWESTMERE	0x25
-#define CPUID_MODELCODE_INTELNEHALEM	0x1E
-#define CPUID_MODELCODE_INTELCORE2		0x0F
-
-#define CPUID_FAMILYCODE_AMDKSERIES		0x05
-#define CPUID_FAMILYCODE_AMDATHLON		0x06
-#define CPUID_FAMILYCODE_AMDOPTERON		0x0F
-
-#define CPUID_MODELCODE_AMDK5			0x04
 /**
- * @internal
- * Populates J9ProcessorDesc *desc on Windows and Linux (x86)
- *
- * @param[in] desc pointer to the struct that will contain the CPU type and features.
- *
- * @return 0 on success, -1 on failure
- */
-intptr_t
-getX86Description(struct J9PortLibrary *portLibrary, J9ProcessorDesc *desc)
-{
-	uint32_t CPUInfo[4] = {0};
-	char vendor[12];
-	uint32_t familyCode = 0;
-	uint32_t processorSignature = 0;
-
-	desc->processor = PROCESSOR_X86_UNKNOWN;
-
-	/* vendor */
-	getX86CPUID(CPUID_VENDOR_INFO, CPUInfo);
-	memcpy(vendor + 0, &CPUInfo[1], sizeof(uint32_t));
-	memcpy(vendor + 4, &CPUInfo[3], sizeof(uint32_t));
-	memcpy(vendor + 8, &CPUInfo[2], sizeof(uint32_t));
-
-	/* family and model */
-	getX86CPUID(CPUID_FAMILY_INFO, CPUInfo);
-	processorSignature = CPUInfo[0];
-	familyCode = (processorSignature & CPUID_SIGNATURE_FAMILY) >> CPUID_SIGNATURE_FAMILY_SHIFT;
-	if (0 == strncmp(vendor, CPUID_VENDOR_INTEL, CPUID_VENDOR_LENGTH)) {
-		switch (familyCode) {
-		case CPUID_FAMILYCODE_INTELPENTIUM:
-			desc->processor = PROCESSOR_X86_INTELPENTIUM;
-			break;
-		case CPUID_FAMILYCODE_INTELCORE:
-		{
-			uint32_t modelCode  = (processorSignature & CPUID_SIGNATURE_MODEL) >> CPUID_SIGNATURE_MODEL_SHIFT;
-			uint32_t extendedModelCode = (processorSignature & CPUID_SIGNATURE_EXTENDEDMODEL) >> CPUID_SIGNATURE_EXTENDEDMODEL_SHIFT;
-			uint32_t totalModelCode = modelCode + extendedModelCode;
-
-			if (totalModelCode > CPUID_MODELCODE_INTELHASWELL) {
-				desc->processor = PROCESSOR_X86_INTELHASWELL;
-			} else if (totalModelCode >= CPUID_MODELCODE_SANDYBRIDGE) {
-				desc->processor = PROCESSOR_X86_INTELSANDYBRIDGE;
-			} else if (totalModelCode >= CPUID_MODELCODE_INTELWESTMERE) {
-				desc->processor = PROCESSOR_X86_INTELWESTMERE;
-			} else if (totalModelCode >= CPUID_MODELCODE_INTELNEHALEM) {
-				desc->processor = PROCESSOR_X86_INTELNEHALEM;
-			} else if (totalModelCode == CPUID_MODELCODE_INTELCORE2) {
-				desc->processor = PROCESSOR_X86_INTELCORE2;
-			} else {
-				desc->processor = PROCESSOR_X86_INTELP6;
-			}
-			break;
-		}
-		case CPUID_FAMILYCODE_INTELPENTIUM4:
-			desc->processor = PROCESSOR_X86_INTELPENTIUM4;
-			break;
-		}
-	} else if (0 == strncmp(vendor, CPUID_VENDOR_AMD, CPUID_VENDOR_LENGTH)) {
-		switch (familyCode) {
-		case CPUID_FAMILYCODE_AMDKSERIES:
-		{
-			uint32_t modelCode  = (processorSignature & CPUID_SIGNATURE_FAMILY) >> CPUID_SIGNATURE_MODEL_SHIFT;
-			if (modelCode < CPUID_MODELCODE_AMDK5) {
-				desc->processor = PROCESSOR_X86_AMDK5;
-			}
-			desc->processor = PROCESSOR_X86_AMDK6;
-			break;
-		}
-		case CPUID_FAMILYCODE_AMDATHLON:
-			desc->processor = PROCESSOR_X86_AMDATHLONDURON;
-			break;
-		case CPUID_FAMILYCODE_AMDOPTERON:
-			desc->processor = PROCESSOR_X86_AMDOPTERON;
-			break;
-		}
-	}
-
-	desc->physicalProcessor = desc->processor;
-
-	/* features */
-	desc->features[0] = CPUInfo[3]; /* Feature info flags in EDX */
-	desc->features[1] = CPUInfo[2];	/* Feature info flags in ECX */
-	desc->features[2] = CPUInfo[1]; /* EBX register, cache line size info in bits 8-15 */
-
-	/* extended features */
-	getX86CPUIDext(CPUID_STRUCTURED_EXTENDED_FEATURE_INFO, 0, CPUInfo); /* 0x0 is the only valid subleaf value for this leaf */
-	desc->features[3] = CPUInfo[1]; /* Structured Extended Feature Flags in EBX */
-
-	desc->features[4] = 0; /* reserved for future expansion */
-
-	return 0;
-}
-
-/**
- * Assembly code to get the register data from CPUID instruction
+ * Assembly code to get the register data from CPUID instruction.
  * This function executes the CPUID instruction based on which we can detect
  * if the environment is virtualized or not, and also get the Hypervisor Vendor
  * Name based on the same instruction. The leaf value specifies what information
@@ -175,13 +49,13 @@ getX86Description(struct J9PortLibrary *portLibrary, J9ProcessorDesc *desc)
  * 							in EAX when CPUID is called. A value of 0x1 returns basic
  * 							information including feature support.
  * @param[out]	cpuInfo 	Reference to the an integer array which holds the data
- * 							of EAX,EBX,ECX and EDX registers.
+ * 							of EAX, EBX, ECX and EDX registers.
  *              cpuInfo[0]	To hold the EAX register data, value in this register at
  *							the time of CPUID tells what information to return
- *							EAX=0x1,returns the processor Info and feature bits
- *							in EBX,ECX,EDX registers.
- *							EAX=0x40000000 returns the Hypervisor Vendor Names
- * 							in the EBX,ECX,EDX registers.
+ *							EAX = 0x1, returns the processor Info and feature bits
+ *							in EBX, ECX, EDX registers.
+ *							EAX = 0x40000000 returns the Hypervisor Vendor Names
+ * 							in the EBX, ECX, EDX registers.
  *              cpuInfo[1]  For EAX = 0x40000000 hold first 4 characters of the
  *							Hypervisor Vendor String
  *              cpuInfo[2] 	For EAX = 0x1, the 31st bit of ECX tells if its
@@ -189,76 +63,32 @@ getX86Description(struct J9PortLibrary *portLibrary, J9ProcessorDesc *desc)
  *							4 characters of the Hypervisor Vendor String
  *              cpuInfo[3]	For EAX = 0x40000000 hold the last 4 characters of the
  *              			Hypervisor Vendor String
- *
  */
 void
 getX86CPUID(uint32_t leaf, uint32_t *cpuInfo)
 {
 	cpuInfo[0] = leaf;
 
-/* Implemented for x86 & x86_64 bit platforms */
+/* Implement for x86 & x86_64 platforms. */
 #if defined(WIN32)
-	/* Specific CPUID instruction available in Windows */
+	/* Specific CPUID instruction available on Windows. */
 	__cpuid(cpuInfo, cpuInfo[0]);
-
-#elif defined(LINUX) || defined(OSX)
+#elif defined(LINUX) || defined(OSX) /* defined(WIN32) */
 #if defined(J9X86)
-	__asm volatile
-	("mov %%ebx, %%edi;"
+	__asm volatile(
+			"mov %%ebx, %%edi;"
 			"cpuid;"
 			"mov %%ebx, %%esi;"
 			"mov %%edi, %%ebx;"
-			:"+a" (cpuInfo[0]), "=S" (cpuInfo[1]), "=c" (cpuInfo[2]), "=d" (cpuInfo[3])
-			 : :"edi");
+			: "+a" (cpuInfo[0]), "=S" (cpuInfo[1]), "=c" (cpuInfo[2]), "=d" (cpuInfo[3])
+			:
+			: "edi");
 
-#elif defined(J9HAMMER)
-  __asm volatile(
-     "cpuid;"
-     :"+a" (cpuInfo[0]), "=b" (cpuInfo[1]), "=c" (cpuInfo[2]), "=d" (cpuInfo[3])
-        );
-#endif
-#endif
-}
-
-/**
- * Similar to getX86CPUID() above, but with a second subleaf parameter for the
- * leaves returned by the 'cpuid' instruction which are further divided into
- * subleaves.
- * 
- * @param[in]	leaf		Value in EAX when cpuid is called to determine what info
- * 							is returned.
- * 				subleaf		Value in ECX when cpuid is called which is needed by some
- * 							leafs returned in order to further specify what is returned
- * @param[out]	cpuInfo		Reference to the an integer array which holds the data
- * 							of EAX,EBX,ECX and EDX registers returned by cpuid.
- * 							cpuInfo[0] holds EAX and cpuInfo[4] holds EDX.
- */
-void
-getX86CPUIDext(uint32_t leaf, uint32_t subleaf, uint32_t *cpuInfo)
-{
-	cpuInfo[0] = leaf;
-	cpuInfo[2] = subleaf;
-
-/* Implemented for x86 & x86_64 bit platforms */
-#if defined(WIN32)
-	/* Specific CPUID instruction available in Windows */
-	__cpuidex(cpuInfo, cpuInfo[0], cpuInfo[2]);
-
-#elif defined(LINUX) || defined(OSX)
-#if defined(J9X86)
-	__asm volatile
-	("mov %%ebx, %%edi;"
+#elif defined(J9HAMMER) /* defined(J9X86) */
+	__asm volatile(
 			"cpuid;"
-			"mov %%ebx, %%esi;"
-			"mov %%edi, %%ebx;"
-			:"+a" (cpuInfo[0]), "=S" (cpuInfo[1]), "+c" (cpuInfo[2]), "=d" (cpuInfo[3])
-			 : :"edi");
-
-#elif defined(J9HAMMER)
-  __asm volatile(
-     "cpuid;"
-     :"+a" (cpuInfo[0]), "=b" (cpuInfo[1]), "+c" (cpuInfo[2]), "=d" (cpuInfo[3])
-        );
-#endif
-#endif
+			: "+a" (cpuInfo[0]), "=b" (cpuInfo[1]), "=c" (cpuInfo[2]), "=d" (cpuInfo[3])
+	);
+#endif /* defined(J9X86) */
+#endif /* defined(WIN32) */
 }

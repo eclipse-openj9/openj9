@@ -20,7 +20,6 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
-
 /*
  * $RCSfile: si.c,v $
  * $Revision: 1.64 $
@@ -929,58 +928,6 @@ int j9sysinfo_test_sysinfo_get_limit_FILE_DESCRIPTORS(J9PortLibrary* portLibrary
 	return reportTestExit(portLibrary, testName);
 }
 #endif /* !(defined(WIN32) || defined(WIN64)) */
-
-/**
- *
- * Test j9sysinfo_test_sysinfo_get_processor_description
- *
- */
-int j9sysinfo_test_sysinfo_get_processor_description(J9PortLibrary* portLibrary)
-{
-	PORT_ACCESS_FROM_PORT(portLibrary);
-	const char* testName = "j9sysinfo_test_sysinfo_get_processor_description";
-	IDATA rc = 0;
-	int i = 0;
-
-	J9ProcessorDesc desc;
-
-	rc = j9sysinfo_get_processor_description(&desc);
-
-#if (defined(J9X86) || defined(J9HAMMER))
-	if (desc.processor < PROCESSOR_X86_UNKNOWN) {
-		outputErrorMessage(PORTTEST_ERROR_ARGS, "j9sysinfo_test_sysinfo_get_processor_description() processor detection failed.\n");
-	}
-	if (desc.physicalProcessor < PROCESSOR_X86_UNKNOWN) {
-		outputErrorMessage(PORTTEST_ERROR_ARGS, "j9sysinfo_test_sysinfo_get_processor_description() physical processor detection failed.\n");
-	}
-#elif (defined(AIXPPC) || defined(LINUXPPC))
-	if ((desc.processor < PROCESSOR_PPC_UNKNOWN) || (desc.processor >= PROCESSOR_X86_UNKNOWN)) {
-		outputErrorMessage(PORTTEST_ERROR_ARGS, "j9sysinfo_test_sysinfo_get_processor_description() processor detection failed.\n");
-	}
-	if ((desc.physicalProcessor < PROCESSOR_PPC_UNKNOWN) || (desc.physicalProcessor >= PROCESSOR_X86_UNKNOWN)) {
-		outputErrorMessage(PORTTEST_ERROR_ARGS, "j9sysinfo_test_sysinfo_get_processor_description() physical processor detection failed.\n");
-	}
-#elif (defined(S390) || defined(J9ZOS390))
-	if (desc.processor >= (PROCESSOR_PPC_UNKNOWN)) {
-		outputErrorMessage(PORTTEST_ERROR_ARGS, "j9sysinfo_test_sysinfo_get_processor_description() processor detection failed.\n");
-	}
-	if (desc.physicalProcessor >= (PROCESSOR_PPC_UNKNOWN)) {
-		outputErrorMessage(PORTTEST_ERROR_ARGS, "j9sysinfo_test_sysinfo_get_processor_description() physical processor detection failed.\n");
-	}
-#endif
-	
-	for (i = 0; i < J9PORT_SYSINFO_FEATURES_SIZE * 32; i++) {
-		BOOLEAN feature = j9sysinfo_processor_has_feature(&desc, i);
-		if ((TRUE != feature)
-		&& (FALSE != feature)) {
-			outputErrorMessage(PORTTEST_ERROR_ARGS, "j9sysinfo_test_sysinfo_get_processor_description() feature %d detection failed: %d\n", i, feature);
-		}
-	}
-
-	return reportTestExit(portLibrary, testName);
-}
-
-
 
 /* Since the processor and memory usage port library APIs are not available on zOS (neither
  * 31-bit not 64-bit) yet, so we exclude these tests from running on zOS. When the zOS
@@ -2319,7 +2266,6 @@ j9sysinfo_runTests(struct J9PortLibrary *portLibrary, char *argv0)
 	rc |= j9sysinfo_get_OS_type_test(portLibrary);
 	rc |= j9sysinfo_test_sysinfo_ulimit_iterator(portLibrary);
 	rc |= j9sysinfo_test_sysinfo_env_iterator(portLibrary);
-	rc |= j9sysinfo_test_sysinfo_get_processor_description(portLibrary);
 #if !(defined(WIN32) || defined(WIN64))
 #if !(defined(AIXPPC) || defined(J9ZOS390) || defined(OSX))
 	/* unable to set RLIMIT_AS on AIX, z/OS, OSX */
@@ -2378,6 +2324,6 @@ j9sysinfo_runTests(struct J9PortLibrary *portLibrary, char *argv0)
 	/* Output results */
 	j9tty_printf(PORTLIB, "\nSysinfo test done%s\n\n", rc == TEST_PASS ? "." : ", failures detected.");
 	return TEST_PASS == rc ? 0 : -1;
-	
+
 	return 0;
 }

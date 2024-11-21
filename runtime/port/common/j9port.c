@@ -46,8 +46,6 @@ static J9PortLibrary MainPortLibraryTable = {
 	j9sysinfo_startup,
 	j9sysinfo_shutdown,
 	j9sysinfo_get_classpathSeparator, /* sysinfo_get_classpathSeparator */
-	j9sysinfo_get_processor_description, /* sysinfo_get_processor_description */
-	j9sysinfo_processor_has_feature, /* sysinfo_processor_has_feature */
 	j9sysinfo_get_hw_info, /* sysinfo_get_hw_info */
 	j9sysinfo_get_cache_info, /* sysinfo_get_cache_info */
 	j9sock_startup, /* sock_startup */
