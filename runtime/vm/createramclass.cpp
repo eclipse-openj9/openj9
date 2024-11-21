@@ -2061,6 +2061,8 @@ loadFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *class
 					loadableDescriptorLength,
 					classLoader,
 					classPreloadFlags & ~J9_FINDCLASS_FLAG_THROW_ON_FAIL);
+			/* Ignore exceptions that may have been set from failed class loading. */
+			currentThread->currentException = NULL;
 		}
 	}
 done:
