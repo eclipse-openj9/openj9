@@ -491,7 +491,7 @@ traceMethodArgObject(J9VMThread *thr, UDATA* arg0EA, char* cursor, UDATA length)
 			J9InternalVMFunctions const * const vmFuncs = thr->javaVM->internalVMFunctions;
 			char *stringArgUTF8 = vmFuncs->copyStringToUTF8WithMemAlloc(thr, object, J9_STR_NULL_TERMINATE_RESULT, "  ", 2, stringArgBuffer, DEFAULT_BUFFER_LENGTH, NULL);
 
-			if(DEFAULT_STRING_LENGTH < strlen(stringArgUTF8)) {
+			if(strArgLength < strlen(stringArgUTF8)) {
 				j9str_printf(PORTLIB, cursor, length, "(String)%.*s...", (U_32)strArgLength, J9UTF8_DATA(stringArgUTF8));
 			} else {
 				j9str_printf(PORTLIB, cursor, length, "(String)%.*s", (U_32)J9UTF8_LENGTH(stringArgUTF8), J9UTF8_DATA(stringArgUTF8));
