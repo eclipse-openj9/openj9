@@ -240,10 +240,35 @@ endif()
 
 if(J9VM_OPT_JFR)
 	# JFR sources
-	target_sources(jclse
-		PRIVATE
-			${CMAKE_CURRENT_SOURCE_DIR}/common/jdk_jfr_internal_JVM.cpp
-	)
+	if(JAVA_SPEC_VERSION EQUAL 11)
+		target_sources(jclse
+			PRIVATE
+				${CMAKE_CURRENT_SOURCE_DIR}/common/jdk_jfr_internal_JVM_common.cpp
+				${CMAKE_CURRENT_SOURCE_DIR}/common/jdk_jfr_internal_JVM_jdk11.cpp
+		)
+	elseif(JAVA_SPEC_VERSION EQUAL 17)
+		target_sources(jclse
+			PRIVATE
+				${CMAKE_CURRENT_SOURCE_DIR}/common/jdk_jfr_internal_JVM_common.cpp
+				${CMAKE_CURRENT_SOURCE_DIR}/common/jdk_jfr_internal_JVM_jdk17.cpp
+				${CMAKE_CURRENT_SOURCE_DIR}/common/jdk_jfr_internal_JVM_jdk17andUp.cpp
+		)
+	elseif(JAVA_SPEC_VERSION EQUAL 21)
+		target_sources(jclse
+			PRIVATE
+				${CMAKE_CURRENT_SOURCE_DIR}/common/jdk_jfr_internal_JVM_common.cpp
+				${CMAKE_CURRENT_SOURCE_DIR}/common/jdk_jfr_internal_JVM_jdk17andUp.cpp
+				${CMAKE_CURRENT_SOURCE_DIR}/common/jdk_jfr_internal_JVM_jdk21andUp.cpp
+		)
+	elseif(NOT JAVA_SPEC_VERSION LESS 23)
+		target_sources(jclse
+			PRIVATE
+				${CMAKE_CURRENT_SOURCE_DIR}/common/jdk_jfr_internal_JVM_common.cpp
+				${CMAKE_CURRENT_SOURCE_DIR}/common/jdk_jfr_internal_JVM_jdk17andUp.cpp
+				${CMAKE_CURRENT_SOURCE_DIR}/common/jdk_jfr_internal_JVM_jdk21andUp.cpp
+				${CMAKE_CURRENT_SOURCE_DIR}/common/jdk_jfr_internal_JVM_jdk23.cpp
+		)
+	endif()
 endif()
 
 include(exports.cmake)

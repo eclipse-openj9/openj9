@@ -1,0 +1,82 @@
+<!--
+Copyright IBM Corp. and others 2024
+
+This program and the accompanying materials are made available under
+the terms of the Eclipse Public License 2.0 which accompanies this
+distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+or the Apache License, Version 2.0 which accompanies this distribution and
+is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+This Source Code may also be made available under the following
+Secondary Licenses when the conditions for such availability set
+forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+General Public License, version 2 with the GNU Classpath
+Exception [1] and GNU General Public License, version 2 with the
+OpenJDK Assembly Exception [2].
+
+[1] https://www.gnu.org/software/classpath/license.html
+[2] https://openjdk.org/legal/assembly-exception.html
+
+SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
+-->
+<exports group="jfr_jdk17">
+	<export name="Java_jdk_jfr_internal_JVM_abort" />
+	<export name="Java_jdk_jfr_internal_JVM_addStringConstant" />
+	<export name="Java_jdk_jfr_internal_JVM_beginRecording" />
+	<export name="Java_jdk_jfr_internal_JVM_counterTime" />
+	<export name="Java_jdk_jfr_internal_JVM_createJFR" />
+	<export name="Java_jdk_jfr_internal_JVM_destroyJFR" />
+	<export name="Java_jdk_jfr_internal_JVM_emitDataLoss" />
+	<export name="Java_jdk_jfr_internal_JVM_emitEvent" />
+	<export name="Java_jdk_jfr_internal_JVM_emitOldObjectSamples" />
+	<export name="Java_jdk_jfr_internal_JVM_endRecording" />
+	<export name="Java_jdk_jfr_internal_JVM_exclude" />
+	<export name="Java_jdk_jfr_internal_JVM_flush__" />
+	<export name="Java_jdk_jfr_internal_JVM_flush__Ljdk_jfr_internal_EventWriter_2II" />
+	<export name="Java_jdk_jfr_internal_JVM_getAllEventClasses" />
+	<export name="Java_jdk_jfr_internal_JVM_getAllowedToDoEventRetransforms" />
+	<export name="Java_jdk_jfr_internal_JVM_getChunkStartNanos" />
+	<export name="Java_jdk_jfr_internal_JVM_getClassId" />
+	<export name="Java_jdk_jfr_internal_JVM_getEventWriter" />
+	<export name="Java_jdk_jfr_internal_JVM_getHandler" />
+	<export name="Java_jdk_jfr_internal_JVM_getPid" />
+	<export name="Java_jdk_jfr_internal_JVM_getStackTraceId" />
+	<export name="Java_jdk_jfr_internal_JVM_getThreadId" />
+	<export name="Java_jdk_jfr_internal_JVM_getTicksFrequency" />
+	<export name="Java_jdk_jfr_internal_JVM_getTimeConversionFactor" />
+	<export name="Java_jdk_jfr_internal_JVM_getTypeId__Ljava_lang_Class_2" />
+	<export name="Java_jdk_jfr_internal_JVM_getTypeId__Ljava_lang_String_2" />
+	<export name="Java_jdk_jfr_internal_JVM_getUnloadedEventClassCount" />
+	<export name="Java_jdk_jfr_internal_JVM_include" />
+	<export name="Java_jdk_jfr_internal_JVM_isAvailable" />
+	<export name="Java_jdk_jfr_internal_JVM_isExcluded" />
+	<export name="Java_jdk_jfr_internal_JVM_isRecording" />
+	<export name="Java_jdk_jfr_internal_JVM_log" />
+	<export name="Java_jdk_jfr_internal_JVM_logEvent" />
+	<export name="Java_jdk_jfr_internal_JVM_markChunkFinal" />
+	<export name="Java_jdk_jfr_internal_JVM_newEventWriter" />
+	<export name="Java_jdk_jfr_internal_JVM_registerNatives" />
+	<export name="Java_jdk_jfr_internal_JVM_retransformClasses" />
+	<export name="Java_jdk_jfr_internal_JVM_setCompressedIntegers" />
+	<export name="Java_jdk_jfr_internal_JVM_setCutoff" />
+	<export name="Java_jdk_jfr_internal_JVM_setEnabled" />
+	<export name="Java_jdk_jfr_internal_JVM_setFileNotification" />
+	<export name="Java_jdk_jfr_internal_JVM_setForceInstrumentation" />
+	<export name="Java_jdk_jfr_internal_JVM_setGlobalBufferCount" />
+	<export name="Java_jdk_jfr_internal_JVM_setGlobalBufferSize" />
+	<export name="Java_jdk_jfr_internal_JVM_setHandler" />
+	<export name="Java_jdk_jfr_internal_JVM_setMemorySize" />
+	<export name="Java_jdk_jfr_internal_JVM_setMethodSamplingPeriod" />
+	<export name="Java_jdk_jfr_internal_JVM_setOutput" />
+	<export name="Java_jdk_jfr_internal_JVM_setRepositoryLocation" />
+	<export name="Java_jdk_jfr_internal_JVM_setSampleThreads" />
+	<export name="Java_jdk_jfr_internal_JVM_setStackDepth" />
+	<export name="Java_jdk_jfr_internal_JVM_setStackTraceEnabled" />
+	<export name="Java_jdk_jfr_internal_JVM_setThreadBufferSize" />
+	<export name="Java_jdk_jfr_internal_JVM_setThreshold" />
+	<export name="Java_jdk_jfr_internal_JVM_setThrottle" />
+	<export name="Java_jdk_jfr_internal_JVM_shouldRotateDisk" />
+	<export name="Java_jdk_jfr_internal_JVM_storeMetadataDescriptor" />
+	<export name="Java_jdk_jfr_internal_JVM_subscribeLogLevel" />
+	<export name="Java_jdk_jfr_internal_JVM_uncaughtException" />
+</exports>
