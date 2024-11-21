@@ -56,6 +56,13 @@ target_link_libraries(jvm_common
 		${OMR_PLATFORM_THREAD_LIBRARY}
 )
 
+if(NOT JAVA_SPEC_VERSION LESS 24)
+	target_link_libraries(jvm_common
+		INTERFACE
+			j9thr
+	)
+endif()
+
 target_include_directories(jvm_common
 	INTERFACE
 		${CMAKE_CURRENT_BINARY_DIR}
