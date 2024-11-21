@@ -38,6 +38,10 @@ public class Continuation {
 	private long vmRef; /* J9VMContinuation */
 	protected Thread vthread; /* Parent VirtualThread */
 
+/*[IF JAVA_SPEC_VERSION >= 24]*/
+	private Object blocker;
+/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
+
 	/* The live thread's scopedValueCache is always kept in J9VMThread->scopedValueCache
 	 * whereas the unmounted thread's scopedValueCache is stored in this field. This
 	 * field is modified in ContinuationHelpers.hpp::swapFieldsWithContinuation. This
@@ -71,7 +75,13 @@ public class Continuation {
 		/** Holding monitor(s) */
 		MONITOR(2),
 		/** In critical section */
+/*[IF JAVA_SPEC_VERSION >= 24]*/
+		CRITICAL_SECTION(3),
+		/** Exception */
+		EXCEPTION(4);
+/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 		CRITICAL_SECTION(3);
+/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 
 		private final int errorCode;
 
@@ -250,6 +260,10 @@ public class Continuation {
 				reason = Pinned.MONITOR;
 			} else if (rcPinned == Pinned.NATIVE.errorCode()) {
 				reason = Pinned.NATIVE;
+/*[IF JAVA_SPEC_VERSION >= 24]*/
+			} else if (rcPinned == Pinned.EXCEPTION.errorCode()) {
+				reason = Pinned.EXCEPTION;
+/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 			} else {
 				throw new AssertionError("Unknown pinned error code: " + rcPinned);
 			}
