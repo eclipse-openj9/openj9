@@ -542,7 +542,7 @@ protected:
    virtual TR_J9MethodBase *       asJ9Method(){ return this; }
    TR_ResolvedJ9Method(TR_FrontEnd *, TR_ResolvedMethod * owningMethod = 0);
    virtual void construct();
-   virtual TR_ResolvedMethod *     createResolvedMethodFromJ9Method( TR::Compilation *comp, int32_t cpIndex, uint32_t vTableSlot, J9Method *j9Method, bool * unresolvedInCP, TR_AOTInliningStats *aotStats);
+   virtual TR_ResolvedMethod *     createResolvedMethodFromJ9Method( TR::Compilation *comp, int32_t cpIndex, uint32_t vTableSlot, J9Method *j9Method, TR_AOTInliningStats *aotStats);
    virtual void                    handleUnresolvedStaticMethodInCP(int32_t cpIndex, bool * unresolvedInCP);
    virtual void                    handleUnresolvedSpecialMethodInCP(int32_t cpIndex, bool * unresolvedInCP);
    virtual void                    handleUnresolvedVirtualMethodInCP(int32_t cpIndex, bool * unresolvedInCP);
@@ -638,7 +638,7 @@ public:
 
    static void                     setAttributeResult(bool, bool, uintptr_t, int32_t, int32_t, int32_t, TR::DataType *, bool *, bool *, bool *, void ** );
 protected:
-   virtual TR_ResolvedMethod *     createResolvedMethodFromJ9Method(TR::Compilation *comp, int32_t cpIndex, uint32_t vTableSlot, J9Method *j9Method, bool * unresolvedInCP, TR_AOTInliningStats *aotStats);
+   virtual TR_ResolvedMethod *     createResolvedMethodFromJ9Method(TR::Compilation *comp, int32_t cpIndex, uint32_t vTableSlot, J9Method *j9Method, TR_AOTInliningStats *aotStats);
 
    virtual void                    handleUnresolvedStaticMethodInCP(int32_t cpIndex, bool * unresolvedInCP);
    virtual void                    handleUnresolvedSpecialMethodInCP(int32_t cpIndex, bool * unresolvedInCP);
