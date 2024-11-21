@@ -557,36 +557,36 @@ omr_error_t
 setMethodStrArgLength(J9JavaVM *vm, const char *str, BOOLEAN atRuntime)
 {
 	PORT_ACCESS_FROM_JAVAVM(vm);
-	int value, length;
-	omr_error_t rc = OMR_ERROR_NONE;
-	const char *p;
+    int value, length;
+    omr_error_t rc = OMR_ERROR_NONE;
+    const char *p;
 
-	if (getParmNumber(str) != 1) {
-		goto err;
-	}
+    if (getParmNumber(str) != 1) {
+        goto err;
+    }
 
-	p = getPositionalParm(1, str, &length);
+    p = getPositionalParm(1, str, &length);
 
-	if (length > 3) {
-		goto err;
-	}
+    if (length > 3) {
+        goto err;
+    }
 
-	value = decimalString2Int(PORTLIB, p, FALSE, &rc);
-	if (OMR_ERROR_NONE != rc) {
-		goto err;
-	}
+    value = decimalString2Int(PORTLIB, p, FALSE, &rc);
+    if (OMR_ERROR_NONE != rc) {
+        goto err;
+    }
 
-	if ((0 > value) ||
-			(MAX_STRING_LENGTH < value)) {
-		goto err;
-	}
+    if ((0 > value) ||
+            (MAX_STRING_LENGTH < value)) {
+        goto err;
+    }
 
-	RAS_GLOBAL_FROM_JAVAVM(methodStrArgLength,vm) = (unsigned int)value;
-	return OMR_ERROR_NONE;
+    RAS_GLOBAL_FROM_JAVAVM(methodStrArgLength,vm) = (unsigned int)value;
+    return OMR_ERROR_NONE;
 
 err:
-	vaReportJ9VMCommandLineError(PORTLIB, takes an unsigned integer value from 1 to %d", MAX_STRING_LENGTH);
-	return OMR_ERROR_INTERNAL;
+    vaReportJ9VMCommandLineError(PORTLIB, "methodstrarglen takes an unsigned integer value from 0 to %d", MAX_STRING_LENGTH);
+    return OMR_ERROR_INTERNAL;
 }
 
 /**************************************************************************
@@ -696,12 +696,12 @@ addTriggeredMethodSpec(J9VMThread *thr, const char *ptrMethodSpec, const struct 
 		}
 
 		if (methodRule->entryAction != NULL && methodRule->entryAction->name != NULL
-			&& j9_cmdla_stricmp((char *)methodRule->entryAction->name, "jstacktrace") == 0) {
+		    && j9_cmdla_stricmp((char *)methodRule->entryAction->name, "jstacktrace") == 0) {
 			/* set up the current method spec to be enabled for trace */
 			setMethod(thr->javaVM, ptrMethodSpec, FALSE);
 		}
 		if (methodRule->exitAction != NULL && methodRule->exitAction->name != NULL
-			&& j9_cmdla_stricmp((char *)methodRule->exitAction->name, "jstacktrace") == 0) {
+		    && j9_cmdla_stricmp((char *)methodRule->exitAction->name, "jstacktrace") == 0) {
 			/* set up the current method spec to be enabled for trace */
 			setMethod(thr->javaVM, ptrMethodSpec, FALSE);
 		}
