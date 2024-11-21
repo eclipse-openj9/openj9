@@ -1145,6 +1145,28 @@ done:
 	return index;
 }
 
+U_32
+VM_JFRConstantPoolTypes::addClassLoadingStatisticsEntry(J9JFRClassLoadingStatistics *classLoadingStatisticsData)
+{
+	ClassLoadingStatisticsEntry *entry = (ClassLoadingStatisticsEntry *)pool_newElement(_classLoadingStatisticsTable);
+	U_32 index = U_32_MAX;
+
+	if (NULL == entry) {
+		_buildResult = OutOfMemory;
+		goto done;
+	}
+
+	entry->ticks = classLoadingStatisticsData->startTicks;
+	entry->loadedClassCount = classLoadingStatisticsData->loadedClassCount;
+	entry->unloadedClassCount = classLoadingStatisticsData->unloadedClassCount;
+
+	index = _classLoadingStatisticsCount;
+	_classLoadingStatisticsCount += 1;
+
+done:
+	return index;
+}
+
 void
 VM_JFRConstantPoolTypes::printTables()
 {

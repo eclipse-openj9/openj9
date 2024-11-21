@@ -2163,6 +2163,10 @@ internalCreateRAMClassDone(J9VMThread *vmThread, J9ClassLoader *classLoader, J9C
 			javaVM->anonClassCount += 1;
 		}
 
+#if defined(J9VM_OPT_JFR)
+		hostClassLoader->loadedClassCount += 1;
+#endif /* defined(J9VM_OPT_JFR) */
+
 		/* Create all the method IDs if class load is hooked */
 		if (J9_EVENT_IS_HOOKED(javaVM->hookInterface, J9HOOK_VM_CLASS_LOAD)) {
 			U_32 count = romClass->romMethodCount;
