@@ -40,8 +40,8 @@
  */
 j9object_t *
 GC_ConstantPoolObjectSlotIterator::nextSlot() {
-	U_32 slotType;
-	j9object_t *slotPtr;
+	uint32_t slotType = 0;
+	j9object_t *slotPtr = NULL;
 	j9object_t *result = NULL;
 
 	while (_cpEntryCount) {
@@ -58,13 +58,13 @@ GC_ConstantPoolObjectSlotIterator::nextSlot() {
 		switch (slotType) {
 		case J9CPTYPE_STRING: /* fall through */
 		case J9CPTYPE_ANNOTATION_UTF8:
-			result = &(((J9RAMStringRef *) slotPtr)->stringObject);
+			result = &(((J9RAMStringRef *)slotPtr)->stringObject);
 			break;
 		case J9CPTYPE_METHOD_TYPE:
-			result = &(((J9RAMMethodTypeRef *) slotPtr)->type);
+			result = &(((J9RAMMethodTypeRef *)slotPtr)->type);
 			break;
 		case J9CPTYPE_METHODHANDLE:
-			result = &(((J9RAMMethodHandleRef *) slotPtr)->methodHandle);
+			result = &(((J9RAMMethodHandleRef *)slotPtr)->methodHandle);
 			break;
 		case J9CPTYPE_CONSTANT_DYNAMIC:
 			if (NULL != (result = _constantDynamicSlotIterator.nextSlot(slotPtr))) {
@@ -78,7 +78,7 @@ GC_ConstantPoolObjectSlotIterator::nextSlot() {
 		}
 
 		/* Adjust the CP slot and description information */
-		_cpEntry = (j9object_t *) (((U_8 *) _cpEntry)
+		_cpEntry = (j9object_t *)(((uint8_t *)_cpEntry)
 				+ sizeof(J9RAMConstantPoolItem));
 		_cpEntryCount -= 1;
 
