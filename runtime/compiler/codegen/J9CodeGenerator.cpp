@@ -1052,7 +1052,8 @@ J9::CodeGenerator::lowerTreeIfNeeded(
       {
       TR::SymbolReference *symRef = node->getSymbolReference();
       TR::Symbol *symbol = symRef->getSymbol();
-      if (symbol->isVolatile() && node->getDataType() == TR::Int64 && !symRef->isUnresolved() && self()->comp()->target().is32Bit() &&
+      // bitwise atomicity is required for opaque or stronger memory semantics
+      if (symbol->isAtLeastOrStrongerThanOpaque() && node->getDataType() == TR::Int64 && !symRef->isUnresolved() && self()->comp()->target().is32Bit() &&
           !self()->getSupportsInlinedAtomicLongVolatiles())
          {
          bool isLoad = false;
@@ -1384,7 +1385,7 @@ J9::CodeGenerator::lowerTreeIfNeeded(
       {
       if ((node->getFirstChild()->getReferenceCount() == 1) &&
           node->getFirstChild()->getOpCode().isLoadVar() &&
-          !node->getFirstChild()->getSymbolReference()->getSymbol()->isVolatile())
+          node->getFirstChild()->getSymbolReference()->getSymbol()->isTransparent())
          {
          TR::Node::recreate(node->getFirstChild(), TR::PassThrough);
          }

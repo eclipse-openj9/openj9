@@ -607,10 +607,10 @@ generateSoftwareReadBarrier(TR::Node *node, TR::CodeGenerator *cg, bool isArdbar
 
    generateLabelInstruction(cg, TR::InstOpCode::label, node, endLabel, deps);
 
-   bool needSync = (node->getSymbolReference()->getSymbol()->isSyncVolatile() && comp->target().isSMP());
-   if (needSync)
+   if (node->getSymbolReference()->getSymbol()->isAtLeastOrStrongerThanAcquireRelease() &&
+       comp->target().isSMP())
       {
-      // Issue an Acquire barrier after volatile load
+      // Issue an Acquire barrier after acquire load
       generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, TR::InstOpCode::ishld);
       }
 
@@ -1218,8 +1218,6 @@ J9::ARM64::TreeEvaluator::awrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg
 
    TR::Register *sourceRegister;
    bool killSource = false;
-   bool isVolatileMode = (node->getSymbolReference()->getSymbol()->isSyncVolatile() && cg->comp()->target().isSMP());
-   bool isOrderedMode = (node->getSymbolReference()->getSymbol()->isShadow() && node->getSymbolReference()->getSymbol()->isOrdered() && cg->comp()->target().isSMP());
 
    if (firstChild->getReferenceCount() > 1 && firstChild->getRegister() != NULL)
       {
@@ -1239,14 +1237,15 @@ J9::ARM64::TreeEvaluator::awrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg
 
    TR::MemoryReference *tempMR = TR::MemoryReference::createWithRootLoadOrStore(cg, node);
 
-   // Issue a StoreStore barrier before each volatile store.
-   if (isVolatileMode || isOrderedMode)
+   // Issue a StoreStore barrier before each release store.
+   if (node->getSymbolReference()->getSymbol()->isAtLeastOrStrongerThanAcquireRelease() &&
+       cg->comp()->target().isSMP())
       generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, TR::InstOpCode::ishst);
 
    generateMemSrc1Instruction(cg, TR::InstOpCode::strimmx, node, tempMR, sourceRegister, NULL);
 
    // Issue a StoreLoad barrier after each volatile store.
-   if (isVolatileMode)
+   if (node->getSymbolReference()->getSymbol()->isVolatile() && cg->comp()->target().isSMP())
       generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, TR::InstOpCode::ish);
 
    wrtbarEvaluator(node, sourceRegister, destinationRegister, firstChild->isNonNull(), cg);
@@ -1271,8 +1270,6 @@ J9::ARM64::TreeEvaluator::awrtbariEvaluator(TR::Node *node, TR::CodeGenerator *c
    TR::Register *sourceRegister;
    bool killSource = false;
    bool usingCompressedPointers = TR::TreeEvaluator::getIndirectWrtbarValueNode(cg, node, secondChild, true);
-   bool isVolatileMode = (node->getSymbolReference()->getSymbol()->isSyncVolatile() && cg->comp()->target().isSMP());
-   bool isOrderedMode = (node->getSymbolReference()->getSymbol()->isShadow() && node->getSymbolReference()->getSymbol()->isOrdered() && cg->comp()->target().isSMP());
 
    if (secondChild->getReferenceCount() > 1 && secondChild->getRegister() != NULL)
       {
@@ -1306,14 +1303,15 @@ J9::ARM64::TreeEvaluator::awrtbariEvaluator(TR::Node *node, TR::CodeGenerator *c
 
    TR::MemoryReference *tempMR = TR::MemoryReference::createWithRootLoadOrStore(cg, node);
 
-   // Issue a StoreStore barrier before each volatile store.
-   if (isVolatileMode || isOrderedMode)
+   // Issue a StoreStore barrier before each release store.
+   if (node->getSymbolReference()->getSymbol()->isAtLeastOrStrongerThanAcquireRelease() &&
+       cg->comp()->target().isSMP())
       generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, TR::InstOpCode::ishst);
 
    generateMemSrc1Instruction(cg, storeOp, node, tempMR, translatedSrcReg);
 
    // Issue a StoreLoad barrier after each volatile store.
-   if (isVolatileMode)
+   if (node->getSymbolReference()->getSymbol()->isVolatile() && cg->comp()->target().isSMP())
       generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, TR::InstOpCode::ish);
 
    wrtbarEvaluator(node, sourceRegister, destinationRegister, secondChild->isNonNull(), cg);
@@ -2641,20 +2639,25 @@ J9::ARM64::TreeEvaluator::flushEvaluator(TR::Node *node, TR::CodeGenerator *cg)
          TR::Node *child = (node->getNumChildren() >= 1) ? node->getFirstChild() : NULL;
          if (!child || (node->getOpCodeValue() != TR::monexit && child->getOpCodeValue() != TR::monexit))
             {
-            // Iterate the next tree to see if there is a resolved volatile load/store node that has yet to be evaluated
-            // An unresolved volatile might not actually be a volatile access, and therefore can not replace the AllocationFence
-            // An node that is already evaluated will not actually emit a 'dmb' so it can not replace the AllocationFence
-            bool volatileAccessFound = false;
+            // Iterate the next tree to see if there is a resolved acquire/release load/store node that has yet to be evaluated
+            // An unresolved acquire/release might not actually be an acquire/release access, and therefore can not replace the AllocationFence
+            // A node that is already evaluated will not actually emit a 'dmb' so it can not replace the AllocationFence
+            // NOTE: As things currently stand, we won't ever encounter an unresolved symref that is strictly acquire/release,
+            // but the following code will handle unresolved volatile symrefs as well
+            bool fencedAccessFound = false;
             for (TR::PreorderNodeIterator it(tt, cg->comp()); it.currentTree() == tt; ++it)
                {
                node = it.currentNode();
-               if (node->getOpCode().hasSymbolReference() && !node->hasUnresolvedSymbolReference() && node->getSymbolReference()->getSymbol()->isVolatile() && !node->getRegister())
+               if (node->getOpCode().hasSymbolReference() &&
+                   !node->hasUnresolvedSymbolReference() &&
+                   node->getSymbolReference()->getSymbol()->isAtLeastOrStrongerThanAcquireRelease()
+                   && !node->getRegister())
                   {
-                  volatileAccessFound = true;
+                  fencedAccessFound = true;
                   break;
                   }
                }
-            if (!volatileAccessFound)
+            if (!fencedAccessFound)
                {
                // StoreStore barrier is required after publishing new object reference to other threads.
                generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, TR::InstOpCode::ishst);
