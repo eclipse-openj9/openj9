@@ -814,7 +814,7 @@ TR_J9InlinerPolicy::genIndirectAccessCodeForUnsafeGetPut(TR::Node* directAccessO
       indirectAccessNode = indirectAccessOrTempStoreNode->getFirstChild();
       }
 
-   TR::SymbolReference* indirectSymRef = comp()->getSymRefTab()->findOrCreateUnsafeSymbolRef(directSymbol->getDataType(), true, true, directSymbol->isVolatile());
+   TR::SymbolReference* indirectSymRef = comp()->getSymRefTab()->findOrCreateUnsafeSymbolRef(directSymbol->getDataType(), true, true, directSymbol->isOpaque());
 
    indirectAccessNode->setSymbolReference(indirectSymRef);
 
@@ -1477,7 +1477,7 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
 
    if (isOrdered)
       {
-      symRef->getSymbol()->setOrdered();
+      symRef->getSymbol()->setAcquireRelease();
       orderedCallNode = callNodeTreeTop->getNode()->duplicateTree();
       orderedCallNode->getFirstChild()->setDontInlinePutOrderedCall(comp());
 
