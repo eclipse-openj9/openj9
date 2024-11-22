@@ -2295,7 +2295,7 @@ J9::TransformUtil::fieldShouldBeCompressed(TR::Node *node, TR::Compilation *comp
          !symRefTab->isVtableEntrySymbolRef(symRef) &&
          (symRef != symRefTab->findClassFromJavaLangClassSymbolRef()) &&
          (symRef != symRefTab->findAddressOfClassOfMethodSymbolRef()) &&
-         (symRef != symRefTab->findUnsafeSymbolRef(TR::Address, true, true, symbol->isOpaque())) &&
+         (symRef != symRefTab->findUnsafeSymbolRef(TR::Address, true, true, symbol->getMemoryOrdering())) &&
          !symbol->isStatic() &&
          (symbol->isCollectedReference() || symbol->isArrayletShadowSymbol() || symbol == symRefTab->findGenericIntShadowSymbol()) &&
          !(symbol->isUnsafeShadowSymbol() && symbol->getDataType() != TR::Address))

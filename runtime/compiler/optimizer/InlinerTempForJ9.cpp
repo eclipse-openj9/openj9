@@ -814,7 +814,7 @@ TR_J9InlinerPolicy::genIndirectAccessCodeForUnsafeGetPut(TR::Node* directAccessO
       indirectAccessNode = indirectAccessOrTempStoreNode->getFirstChild();
       }
 
-   TR::SymbolReference* indirectSymRef = comp()->getSymRefTab()->findOrCreateUnsafeSymbolRef(directSymbol->getDataType(), true, true, directSymbol->isOpaque());
+   TR::SymbolReference* indirectSymRef = comp()->getSymRefTab()->findOrCreateUnsafeSymbolRef(directSymbol->getDataType(), true, true, directSymbol->getMemoryOrdering());
 
    indirectAccessNode->setSymbolReference(indirectSymRef);
 
@@ -1391,12 +1391,11 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
                                               TR::TreeTop * callNodeTreeTop,
                                               TR::Node * unsafeCall,
                                               TR::DataType type,
-                                              bool isVolatile,
+                                              TR::Symbol::MemoryOrdering ordering,
                                               bool needNullCheck,
-                                              bool isOrdered,
                                               bool isUnaligned)
    {
-   if (isVolatile && type == TR::Int64 && comp()->target().is32Bit() && !comp()->cg()->getSupportsInlinedAtomicLongVolatiles())
+   if (ordering != TR::Symbol::MemoryOrdering::Transparent && type == TR::Int64 && comp()->target().is32Bit() && !comp()->cg()->getSupportsInlinedAtomicLongVolatiles())
       return false;
 
    if (isUnaligned && comp()->cg()->getSupportsAlignedAccessOnly())
@@ -1405,7 +1404,7 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
    if (debug("traceUnsafe"))
       printf("createUnsafePutWithOffset %d in %s\n", type.getDataType(), comp()->signature());
 
-   debugTrace(tracer(), "\tcreateUnsafePutWithOffset.  call tree %p offset(datatype) %d isvolatile %d needNullCheck %d isOrdered %d\n", callNodeTreeTop, type.getDataType(), isVolatile, needNullCheck, isOrdered);
+   debugTrace(tracer(), "\tcreateUnsafePutWithOffset.  call tree %p offset(datatype) %d ordering %s needNullCheck %d\n", callNodeTreeTop, type.getDataType(), TR::Symbol::getMemoryOrderingName(ordering), needNullCheck);
 
    // Truncate the value before inlining the call
    if (TR_J9MethodBase::isUnsafeGetPutBoolean(calleeSymbol->getRecognizedMethod()))
@@ -1472,10 +1471,10 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
    TR::Node *offset = unsafeCall->getChild(2);
    TR::TreeTop *prevTreeTop = callNodeTreeTop->getPrevTreeTop();
    TR::SymbolReference *newSymbolReferenceForAddress = unsafeCall->getChild(1)->getSymbolReference();
-   TR::SymbolReference * symRef = comp()->getSymRefTab()->findOrCreateUnsafeSymbolRef(type, true, false, isVolatile);
+   TR::SymbolReference * symRef = comp()->getSymRefTab()->findOrCreateUnsafeSymbolRef(type, true, false, ordering);
    TR::Node *orderedCallNode = NULL;
 
-   if (isOrdered)
+   if (accessMode == TR::Symbol::AcquireReleaseSemantics)
       {
       symRef->getSymbol()->setAcquireRelease();
       orderedCallNode = callNodeTreeTop->getNode()->duplicateTree();
@@ -1982,11 +1981,11 @@ TR_J9InlinerPolicy::createUnsafeGetWithOffset(TR::ResolvedMethodSymbol *calleeSy
                                               TR::TreeTop * callNodeTreeTop,
                                               TR::Node * unsafeCall,
                                               TR::DataType type,
-                                              bool isVolatile,
+                                              TR::Symbol::MemoryOrdering ordering,
                                               bool needNullCheck,
                                               bool isUnaligned)
    {
-   if (isVolatile && type == TR::Int64 && comp()->target().is32Bit() && !comp()->cg()->getSupportsInlinedAtomicLongVolatiles())
+   if (ordering != TR::Symbol::MemoryOrdering::Transparent && type == TR::Int64 && comp()->target().is32Bit() && !comp()->cg()->getSupportsInlinedAtomicLongVolatiles())
       return false;
 
    if (isUnaligned && comp()->cg()->getSupportsAlignedAccessOnly())
@@ -2065,7 +2064,7 @@ TR_J9InlinerPolicy::createUnsafeGetWithOffset(TR::ResolvedMethodSymbol *calleeSy
       unsafeCall->getChild(j)->recursivelyDecReferenceCount();
    unsafeCall->setNumChildren(1);
 
-   TR::SymbolReference* symRef = comp()->getSymRefTab()->findOrCreateUnsafeSymbolRef(type, true, false, isVolatile);
+   TR::SymbolReference* symRef = comp()->getSymRefTab()->findOrCreateUnsafeSymbolRef(type, true, false, ordering);
    TR_ASSERT(unsafeCall == callNodeTreeTop->getNode()->getFirstChild(), "assumption not valid\n");
    TR::Node* unsafeCallWithConversion = NULL;
    TR::Node* callNodeWithConversion = NULL;
@@ -2523,61 +2522,80 @@ TR_J9InlinerPolicy::inlineUnsafeCall(TR::ResolvedMethodSymbol *calleeSymbol, TR:
    switch (callNode->getSymbol()->castToResolvedMethodSymbol()->getRecognizedMethod())
       {
       case TR::sun_misc_Unsafe_putByte_jlObjectJB_V:
-         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int8, false);
+         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int8);
       case TR::sun_misc_Unsafe_putBoolean_jlObjectJZ_V:
-         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int8, false);
+         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int8);
       case TR::sun_misc_Unsafe_putChar_jlObjectJC_V:
-         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int16, false);
+         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int16);
       case TR::sun_misc_Unsafe_putShort_jlObjectJS_V:
-         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int16, false);
+         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int16);
       case TR::sun_misc_Unsafe_putInt_jlObjectJI_V:
-         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int32, false);
+         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int32);
       case TR::sun_misc_Unsafe_putLong_jlObjectJJ_V:
-         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int64, false);
+         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int64);
       case TR::sun_misc_Unsafe_putFloat_jlObjectJF_V:
-         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Float, false);
+         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Float);
       case TR::sun_misc_Unsafe_putDouble_jlObjectJD_V:
-         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Double, false);
+         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Double);
       case TR::sun_misc_Unsafe_putObject_jlObjectJjlObject_V:
-         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Address, false, true);
+         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Address, TR::Symbol::MemoryOrdering::Transparent, true);
 
       case TR::sun_misc_Unsafe_getBoolean_jlObjectJ_Z:
-         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int8, false);
+         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int8);
       case TR::sun_misc_Unsafe_getByte_jlObjectJ_B:
-         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int8, false);
+         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int8);
       case TR::sun_misc_Unsafe_getChar_jlObjectJ_C:
-         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int16, false);
+         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int16);
       case TR::sun_misc_Unsafe_getShort_jlObjectJ_S:
-         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int16, false);
+         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int16);
       case TR::sun_misc_Unsafe_getInt_jlObjectJ_I:
-         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int32, false);
+         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int32);
       case TR::sun_misc_Unsafe_getLong_jlObjectJ_J:
-         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int64, false);
+         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int64);
       case TR::sun_misc_Unsafe_getFloat_jlObjectJ_F:
-         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Float, false);
+         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Float);
       case TR::sun_misc_Unsafe_getDouble_jlObjectJ_D:
-         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Double, false);
+         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Double);
       case TR::sun_misc_Unsafe_getObject_jlObjectJ_jlObject:
-         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Address, false, true);
+         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Address, TR::Symbol::MemoryOrdering::Transparent, true);
 
       case TR::sun_misc_Unsafe_putByteVolatile_jlObjectJB_V:
-         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int8, true);
+         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int8, TR::Symbol::MemoryOrdering::Volatile);
       case TR::sun_misc_Unsafe_putBooleanVolatile_jlObjectJZ_V:
-         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int8, true);
+         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int8, TR::Symbol::MemoryOrdering::Volatile);
       case TR::sun_misc_Unsafe_putCharVolatile_jlObjectJC_V:
-         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int16, true);
+         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int16, TR::Symbol::MemoryOrdering::Volatile);
       case TR::sun_misc_Unsafe_putShortVolatile_jlObjectJS_V:
-         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int16, true);
+         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int16, TR::Symbol::MemoryOrdering::Volatile);
       case TR::sun_misc_Unsafe_putIntVolatile_jlObjectJI_V:
-         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int32, true);
+         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int32, TR::Symbol::MemoryOrdering::Volatile);
       case TR::sun_misc_Unsafe_putLongVolatile_jlObjectJJ_V:
-         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int64, true);
+         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int64, TR::Symbol::MemoryOrdering::Volatile);
       case TR::sun_misc_Unsafe_putFloatVolatile_jlObjectJF_V:
-         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Float, true);
+         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Float, TR::Symbol::MemoryOrdering::Volatile);
       case TR::sun_misc_Unsafe_putDoubleVolatile_jlObjectJD_V:
-         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Double, true);
+         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Double, TR::Symbol::MemoryOrdering::Volatile);
       case TR::sun_misc_Unsafe_putObjectVolatile_jlObjectJjlObject_V:
-         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Address, true, true);
+         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Address, TR::Symbol::MemoryOrdering::Volatile, true);
+
+      case TR::sun_misc_Unsafe_getBooleanVolatile_jlObjectJ_Z:
+         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int8, TR::Symbol::MemoryOrdering::Volatile);
+      case TR::sun_misc_Unsafe_getByteVolatile_jlObjectJ_B:
+         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int8, TR::Symbol::MemoryOrdering::Volatile);
+      case TR::sun_misc_Unsafe_getCharVolatile_jlObjectJ_C:
+         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int16, TR::Symbol::MemoryOrdering::Volatile);
+      case TR::sun_misc_Unsafe_getShortVolatile_jlObjectJ_S:
+         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int16, TR::Symbol::MemoryOrdering::Volatile);
+      case TR::sun_misc_Unsafe_getIntVolatile_jlObjectJ_I:
+         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int32, TR::Symbol::MemoryOrdering::Volatile);
+      case TR::sun_misc_Unsafe_getLongVolatile_jlObjectJ_J:
+         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int64, TR::Symbol::MemoryOrdering::Volatile);
+      case TR::sun_misc_Unsafe_getFloatVolatile_jlObjectJ_F:
+         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Float, TR::Symbol::MemoryOrdering::Volatile);
+      case TR::sun_misc_Unsafe_getDoubleVolatile_jlObjectJ_D:
+         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Double, TR::Symbol::MemoryOrdering::Volatile);
+      case TR::sun_misc_Unsafe_getObjectVolatile_jlObjectJ_jlObject:
+         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Address, TR::Symbol::MemoryOrdering::Volatile, true);
 
       case TR::sun_misc_Unsafe_monitorEnter_jlObject_V:
          return createUnsafeMonitorOp(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, true);
@@ -2585,60 +2603,98 @@ TR_J9InlinerPolicy::inlineUnsafeCall(TR::ResolvedMethodSymbol *calleeSymbol, TR:
          return createUnsafeMonitorOp(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, false);
 
       case TR::sun_misc_Unsafe_putByteOrdered_jlObjectJB_V:
-         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int8, false, false, true);
+         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int8, TR::Symbol::MemoryOrdering::AcquireRelease);
       case TR::sun_misc_Unsafe_putBooleanOrdered_jlObjectJZ_V:
-         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int8, false, false, true);
+         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int8, TR::Symbol::MemoryOrdering::AcquireRelease);
       case TR::sun_misc_Unsafe_putCharOrdered_jlObjectJC_V:
-         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int16, false, false, true);
+         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int16, TR::Symbol::MemoryOrdering::AcquireRelease);
       case TR::sun_misc_Unsafe_putShortOrdered_jlObjectJS_V:
-         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int16, false, false, true);
+         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int16, TR::Symbol::MemoryOrdering::AcquireRelease);
       case TR::sun_misc_Unsafe_putIntOrdered_jlObjectJI_V:
-         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int32, false, false, true);
+         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int32, TR::Symbol::MemoryOrdering::AcquireRelease);
       case TR::sun_misc_Unsafe_putLongOrdered_jlObjectJJ_V:
-         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int64, false, false, true);
+         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int64, TR::Symbol::MemoryOrdering::AcquireRelease);
       case TR::sun_misc_Unsafe_putFloatOrdered_jlObjectJF_V:
-         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Float, false, false, true);
+         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Float, TR::Symbol::MemoryOrdering::AcquireRelease);
       case TR::sun_misc_Unsafe_putDoubleOrdered_jlObjectJD_V:
-         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Double, false, false, true);
+         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Double, TR::Symbol::MemoryOrdering::AcquireRelease);
       case TR::sun_misc_Unsafe_putObjectOrdered_jlObjectJjlObject_V:
-         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Address, false, true, true);
+         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Address, TR::Symbol::MemoryOrdering::AcquireRelease, true);
 
       // FIXME: Update createUnsafePutWithOffset signature to have isVolatile, isOrdered, isUnaligned as enum
       case TR::jdk_internal_misc_Unsafe_getCharUnaligned:
-         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int16, /*isVolatile*/false, /*needsNullCheck*/false, /*isUnaligned*/true);
+         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int16, TR::Symbol::MemoryOrdering::Transparent, /*needsNullCheck*/false, /*isUnaligned*/true);
       case TR::jdk_internal_misc_Unsafe_getShortUnaligned:
-         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int16, /*isVolatile*/false, /*needsNullCheck*/false, /*isUnaligned*/true);
+         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int16, TR::Symbol::MemoryOrdering::Transparent, /*needsNullCheck*/false, /*isUnaligned*/true);
       case TR::jdk_internal_misc_Unsafe_getIntUnaligned:
-         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int32, /*isVolatile*/false, /*needsNullCheck*/false, /*isUnaligned*/true);
+         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int32, TR::Symbol::MemoryOrdering::Transparent, /*needsNullCheck*/false, /*isUnaligned*/true);
       case TR::jdk_internal_misc_Unsafe_getLongUnaligned:
-         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int64, /*isVolatile*/false, /*needsNullCheck*/false, /*isUnaligned*/true);
+         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int64, TR::Symbol::MemoryOrdering::Transparent, /*needsNullCheck*/false, /*isUnaligned*/true);
       case TR::jdk_internal_misc_Unsafe_putCharUnaligned:
-         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int16, /*isVolatile*/false, /*needsNullCheck*/false, /*isOrdered*/false, /*isUnaligned*/true);
+         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int16, TR::Symbol::MemoryOrdering::Transparent, /*needsNullCheck*/false, /*isUnaligned*/true);
       case TR::jdk_internal_misc_Unsafe_putShortUnaligned:
-         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int16, /*isVolatile*/false, /*needsNullCheck*/false, /*isOrdered*/false, /*isUnaligned*/true);
+         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int16, TR::Symbol::MemoryOrdering::Transparent, /*needsNullCheck*/false, /*isUnaligned*/true);
       case TR::jdk_internal_misc_Unsafe_putIntUnaligned:
-         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int32, /*isVolatile*/false, /*needsNullCheck*/false, /*isOrdered*/false, /*isUnaligned*/true);
+         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int32, TR::Symbol::MemoryOrdering::Transparent, /*needsNullCheck*/false, /*isUnaligned*/true);
       case TR::jdk_internal_misc_Unsafe_putLongUnaligned:
-         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int64, /*isVolatile*/false, /*needsNullCheck*/false, /*isOrdered*/false, /*isUnaligned*/true);
+         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int64, TR::Symbol::MemoryOrdering::Transparent, /*needsNullCheck*/false, /*isUnaligned*/true);
 
-      case TR::sun_misc_Unsafe_getBooleanVolatile_jlObjectJ_Z:
-         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int8, true);
-      case TR::sun_misc_Unsafe_getByteVolatile_jlObjectJ_B:
-         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int8, true);
-      case TR::sun_misc_Unsafe_getCharVolatile_jlObjectJ_C:
-         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int16, true);
-      case TR::sun_misc_Unsafe_getShortVolatile_jlObjectJ_S:
-         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int16, true);
-      case TR::sun_misc_Unsafe_getIntVolatile_jlObjectJ_I:
-         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int32, true);
-      case TR::sun_misc_Unsafe_getLongVolatile_jlObjectJ_J:
-         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int64, true);
-      case TR::sun_misc_Unsafe_getFloatVolatile_jlObjectJ_F:
-         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Float, true);
-      case TR::sun_misc_Unsafe_getDoubleVolatile_jlObjectJ_D:
-         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Double, true);
-      case TR::sun_misc_Unsafe_getObjectVolatile_jlObjectJ_jlObject:
-         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Address, true, true);
+      case TR::jdk_internal_misc_Unsafe_getBooleanAcquire_jlObjectJ_Z:
+         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int8, TR::Symbol::MemoryOrdering::AcquireRelease);
+      case TR::jdk_internal_misc_Unsafe_getByteAcquire_jlObjectJ_B:
+         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int8, TR::Symbol::MemoryOrdering::AcquireRelease);
+      case TR::jdk_internal_misc_Unsafe_getCharAcquire_jlObjectJ_C:
+         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int16, TR::Symbol::MemoryOrdering::AcquireRelease);
+      case TR::jdk_internal_misc_Unsafe_getShortAcquire_jlObjectJ_S:
+         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int16, TR::Symbol::MemoryOrdering::AcquireRelease);
+      case TR::jdk_internal_misc_Unsafe_getIntAcquire_jlObjectJ_I:
+         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int32, TR::Symbol::MemoryOrdering::AcquireRelease);
+      case TR::jdk_internal_misc_Unsafe_getLongAcquire_jlObjectJ_J:
+         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int64, TR::Symbol::MemoryOrdering::AcquireRelease);
+      case TR::jdk_internal_misc_Unsafe_getFloatAcquire_jlObjectJ_F:
+         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Float, TR::Symbol::MemoryOrdering::AcquireRelease);
+      case TR::jdk_internal_misc_Unsafe_getDoubleAcquire_jlObjectJ_D:
+         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Double, TR::Symbol::MemoryOrdering::AcquireRelease);
+      case TR::jdk_internal_misc_Unsafe_getReferenceAcquire_jlObjectJ_jlObject:
+         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Address, TR::Symbol::MemoryOrdering::AcquireRelease, true);
+
+      case TR::jdk_internal_misc_Unsafe_getBooleanOpaque_jlObjectJ_Z:
+         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int8, TR::Symbol::MemoryOrdering::Opaque);
+      case TR::jdk_internal_misc_Unsafe_getByteOpaque_jlObjectJ_B:
+         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int8, TR::Symbol::MemoryOrdering::Opaque);
+      case TR::jdk_internal_misc_Unsafe_getCharOpaque_jlObjectJ_C:
+         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int16, TR::Symbol::MemoryOrdering::Opaque);
+      case TR::jdk_internal_misc_Unsafe_getShortOpaque_jlObjectJ_S:
+         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int16, TR::Symbol::MemoryOrdering::Opaque);
+      case TR::jdk_internal_misc_Unsafe_getIntOpaque_jlObjectJ_I:
+         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int32, TR::Symbol::MemoryOrdering::Opaque);
+      case TR::jdk_internal_misc_Unsafe_getLongOpaque_jlObjectJ_J:
+         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int64, TR::Symbol::MemoryOrdering::Opaque);
+      case TR::jdk_internal_misc_Unsafe_getFloatOpaque_jlObjectJ_F:
+         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Float, TR::Symbol::MemoryOrdering::Opaque);
+      case TR::jdk_internal_misc_Unsafe_getDoubleOpaque_jlObjectJ_D:
+         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Double, TR::Symbol::MemoryOrdering::Opaque);
+      case TR::jdk_internal_misc_Unsafe_getReferenceOpaque_jlObjectJ_jlObject:
+         return createUnsafeGetWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Address, TR::Symbol::MemoryOrdering::Opaque, true);
+
+      case TR::jdk_internal_misc_Unsafe_putBooleanOpaque_jlObjectJZ_V:
+         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int8, TR::Symbol::MemoryOrdering::Opaque);
+      case TR::jdk_internal_misc_Unsafe_putByteOpaque_jlObjectJB_V:
+         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int8, TR::Symbol::MemoryOrdering::Opaque);
+      case TR::jdk_internal_misc_Unsafe_putCharOpaque_jlObjectJC_V:
+         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int16, TR::Symbol::MemoryOrdering::Opaque);
+      case TR::jdk_internal_misc_Unsafe_putShortOpaque_jlObjectJS_V:
+         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int16, TR::Symbol::MemoryOrdering::Opaque);
+      case TR::jdk_internal_misc_Unsafe_putIntOpaque_jlObjectJI_V:
+         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int32, TR::Symbol::MemoryOrdering::Opaque);
+      case TR::jdk_internal_misc_Unsafe_putLongOpaque_jlObjectJJ_V:
+         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int64, TR::Symbol::MemoryOrdering::Opaque);
+      case TR::jdk_internal_misc_Unsafe_putFloatOpaque_jlObjectJF_V:
+         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Float, TR::Symbol::MemoryOrdering::Opaque);
+      case TR::jdk_internal_misc_Unsafe_putDoubleOpaque_jlObjectJD_V:
+         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Double, TR::Symbol::MemoryOrdering::Opaque);
+      case TR::jdk_internal_misc_Unsafe_putReferenceOpaque_jlObjectJjlObject_V:
+         return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Address, TR::Symbol::MemoryOrdering::Opaque, true);
 
       case TR::sun_misc_Unsafe_putByte_JB_V:
       case TR::org_apache_harmony_luni_platform_OSMemory_putByte_JB_V:
@@ -2789,10 +2845,11 @@ TR_J9InlinerPolicy::isInlineableJNI(TR_ResolvedMethod *method,TR::Node *callNode
       // In Java9 sun/misc/Unsafe methods are simple Java wrappers to JNI
       // methods in jdk.internal, and the enum values above match both. Only
       // return true for the methods that are native.
-      // In the case of Unsafe_getXUnaligned methods, which are also wrappers to
-      // native methods that contain some runtime checks, we benefit from directly
-      // inlining them in inlineUnsafeCall as if they were their underlying native
-      // methods, if we can determine that it is safe to do so.
+      // In the case of Unsafe_getX and Unsafe_setX methods, which are also
+      // wrappers to native methods that contain some runtime checks, we
+      // benefit from directly inlining them in inlineUnsafeCall as if they
+      // were their underlying native methods, if we can determine that it is
+      // safe to do so.
       if (!TR::Compiler->om.canGenerateArraylets() || (callNode && callNode->isUnsafeGetPutCASCallOnNonArray()))
          return method->isNative() || isSimpleWrapperForInlineableUnsafeNativeMethod(method);
       else
@@ -6148,6 +6205,42 @@ TR_J9InlinerPolicy::isSimpleWrapperForInlineableUnsafeNativeMethod(TR_ResolvedMe
       case TR::jdk_internal_misc_Unsafe_putShortUnaligned:
       case TR::jdk_internal_misc_Unsafe_putIntUnaligned:
       case TR::jdk_internal_misc_Unsafe_putLongUnaligned:
+      case TR::jdk_internal_misc_Unsafe_getBooleanAcquire_jlObjectJ_Z:
+      case TR::sun_misc_Unsafe_putBooleanOrdered_jlObjectJZ_V:
+      case TR::jdk_internal_misc_Unsafe_getByteAcquire_jlObjectJ_B:
+      case TR::sun_misc_Unsafe_putByteOrdered_jlObjectJB_V:
+      case TR::jdk_internal_misc_Unsafe_getCharAcquire_jlObjectJ_C:
+      case TR::sun_misc_Unsafe_putCharOrdered_jlObjectJC_V:
+      case TR::jdk_internal_misc_Unsafe_getShortAcquire_jlObjectJ_S:
+      case TR::sun_misc_Unsafe_putShortOrdered_jlObjectJS_V:
+      case TR::jdk_internal_misc_Unsafe_getIntAcquire_jlObjectJ_I:
+      case TR::sun_misc_Unsafe_putIntOrdered_jlObjectJI_V:
+      case TR::jdk_internal_misc_Unsafe_getLongAcquire_jlObjectJ_J:
+      case TR::sun_misc_Unsafe_putLongOrdered_jlObjectJJ_V:
+      case TR::jdk_internal_misc_Unsafe_getFloatAcquire_jlObjectJ_F:
+      case TR::sun_misc_Unsafe_putFloatOrdered_jlObjectJF_V:
+      case TR::jdk_internal_misc_Unsafe_getDoubleAcquire_jlObjectJ_D:
+      case TR::sun_misc_Unsafe_putDoubleOrdered_jlObjectJD_V:
+      case TR::jdk_internal_misc_Unsafe_getReferenceAcquire_jlObjectJ_jlObject:
+      case TR::sun_misc_Unsafe_putObjectOrdered_jlObjectJjlObject_V:
+      case TR::jdk_internal_misc_Unsafe_getBooleanOpaque_jlObjectJ_Z:
+      case TR::jdk_internal_misc_Unsafe_putBooleanOpaque_jlObjectJZ_V:
+      case TR::jdk_internal_misc_Unsafe_getByteOpaque_jlObjectJ_B:
+      case TR::jdk_internal_misc_Unsafe_putByteOpaque_jlObjectJB_V:
+      case TR::jdk_internal_misc_Unsafe_getCharOpaque_jlObjectJ_C:
+      case TR::jdk_internal_misc_Unsafe_putCharOpaque_jlObjectJC_V:
+      case TR::jdk_internal_misc_Unsafe_getShortOpaque_jlObjectJ_S:
+      case TR::jdk_internal_misc_Unsafe_putShortOpaque_jlObjectJS_V:
+      case TR::jdk_internal_misc_Unsafe_getIntOpaque_jlObjectJ_I:
+      case TR::jdk_internal_misc_Unsafe_putIntOpaque_jlObjectJI_V:
+      case TR::jdk_internal_misc_Unsafe_getLongOpaque_jlObjectJ_J:
+      case TR::jdk_internal_misc_Unsafe_putLongOpaque_jlObjectJJ_V:
+      case TR::jdk_internal_misc_Unsafe_getFloatOpaque_jlObjectJ_F:
+      case TR::jdk_internal_misc_Unsafe_putFloatOpaque_jlObjectJF_V:
+      case TR::jdk_internal_misc_Unsafe_getDoubleOpaque_jlObjectJ_D:
+      case TR::jdk_internal_misc_Unsafe_putDoubleOpaque_jlObjectJD_V:
+      case TR::jdk_internal_misc_Unsafe_getReferenceOpaque_jlObjectJ_jlObject:
+      case TR::jdk_internal_misc_Unsafe_putReferenceOpaque_jlObjectJjlObject_V:
          return true;
 
       default:
