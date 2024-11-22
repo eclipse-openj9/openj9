@@ -536,7 +536,7 @@ int32_t TR_UnsafeFastPath::perform()
          TR::Node *object = NULL; // the owning object to be written to or read from in original unsafe call
          TR::Node *base = NULL; // the base used to calcluate address for the new store / load
          TR::DataType type = TR::NoType;
-         bool isVolatile = false;
+         TR::Symbol::MemoryOrdering ordering = TR::Symbol::TransparentSemantics;
          bool isArrayOperation = false;
          bool isByIndex = false;
          int32_t objectChild = 1;
@@ -607,7 +607,7 @@ int32_t TR_UnsafeFastPath::perform()
          switch (symbol->getRecognizedMethod())
             {
             case TR::sun_misc_Unsafe_putObjectVolatile_jlObjectJjlObject_V:
-               isVolatile = true;
+               ordering = TR::Symbol::VolatileSemantics;
             case TR::sun_misc_Unsafe_putObject_jlObjectJjlObject_V:
                switch (comp()->getMethodSymbol()->getRecognizedMethod())
                   {
@@ -626,7 +626,7 @@ int32_t TR_UnsafeFastPath::perform()
                type = TR::Int8;
                break;
             case TR::com_ibm_jit_JITHelpers_getByteFromArrayVolatile:
-               isVolatile = true;
+               ordering = TR::Symbol::VolatileSemantics;
             case TR::com_ibm_jit_JITHelpers_getByteFromArray:
                type = TR::Int8;
                break;
@@ -636,12 +636,12 @@ int32_t TR_UnsafeFastPath::perform()
                type = TR::Int16;
                break;
             case TR::com_ibm_jit_JITHelpers_getCharFromArrayVolatile:
-               isVolatile = true;
+               ordering = TR::Symbol::VolatileSemantics;
             case TR::com_ibm_jit_JITHelpers_getCharFromArray:
                type = TR::Int16;
                break;
             case TR::sun_misc_Unsafe_getObjectVolatile_jlObjectJ_jlObject:
-               isVolatile = true;
+               ordering = TR::Symbol::VolatileSemantics;
             case TR::sun_misc_Unsafe_getObject_jlObjectJ_jlObject:
                switch (methodSymbol->getRecognizedMethod())
                   {
@@ -671,7 +671,7 @@ int32_t TR_UnsafeFastPath::perform()
                break;
             case TR::com_ibm_jit_JITHelpers_getIntFromArrayVolatile:
             case TR::com_ibm_jit_JITHelpers_getIntFromObjectVolatile:
-               isVolatile = true;
+               ordering = TR::Symbol::VolatileSemantics;
             case TR::com_ibm_jit_JITHelpers_getIntFromArray:
             case TR::com_ibm_jit_JITHelpers_getIntFromObject:
                type = TR::Int32;
@@ -680,14 +680,14 @@ int32_t TR_UnsafeFastPath::perform()
             case TR::com_ibm_jit_JITHelpers_getLongFromObjectVolatile:
                if (comp()->target().is32Bit() && !comp()->cg()->getSupportsInlinedAtomicLongVolatiles())
                   break; // if the platform cg does not support volatile longs just generate the call
-               isVolatile = true;
+               ordering = TR::Symbol::VolatileSemantics;
             case TR::com_ibm_jit_JITHelpers_getLongFromArray:
             case TR::com_ibm_jit_JITHelpers_getLongFromObject:
                type = TR::Int64;
                break;
             case TR::com_ibm_jit_JITHelpers_getObjectFromArrayVolatile:
             case TR::com_ibm_jit_JITHelpers_getObjectFromObjectVolatile:
-               isVolatile = true;
+               ordering = TR::Symbol::VolatileSemantics;
             case TR::com_ibm_jit_JITHelpers_getObjectFromArray:
             case TR::com_ibm_jit_JITHelpers_getObjectFromObject:
                type = TR::Address;
@@ -698,7 +698,7 @@ int32_t TR_UnsafeFastPath::perform()
                type = TR::Int8;
                break;
             case TR::com_ibm_jit_JITHelpers_putByteInArrayVolatile:
-               isVolatile = true;
+               ordering = TR::Symbol::VolatileSemantics;
             case TR::com_ibm_jit_JITHelpers_putByteInArray:
                value = node->getChild(3);
                type = TR::Int8;
@@ -714,14 +714,14 @@ int32_t TR_UnsafeFastPath::perform()
                type = TR::Int16;
                break;
             case TR::com_ibm_jit_JITHelpers_putCharInArrayVolatile:
-               isVolatile = true;
+               ordering = TR::Symbol::VolatileSemantics;
             case TR::com_ibm_jit_JITHelpers_putCharInArray:
                value = node->getChild(3);
                type = TR::Int16;
                break;
             case TR::com_ibm_jit_JITHelpers_putIntInArrayVolatile:
             case TR::com_ibm_jit_JITHelpers_putIntInObjectVolatile:
-               isVolatile = true;
+               ordering = TR::Symbol::VolatileSemantics;
             case TR::com_ibm_jit_JITHelpers_putIntInArray:
             case TR::com_ibm_jit_JITHelpers_putIntInObject:
                value = node->getChild(3);
@@ -731,7 +731,7 @@ int32_t TR_UnsafeFastPath::perform()
             case TR::com_ibm_jit_JITHelpers_putLongInObjectVolatile:
                if (comp()->target().is32Bit() && !comp()->cg()->getSupportsInlinedAtomicLongVolatiles())
                   break; // if the platform cg does not support volatile longs just generate the call
-               isVolatile = true;
+               ordering = TR::Symbol::VolatileSemantics;
             case TR::com_ibm_jit_JITHelpers_putLongInArray:
             case TR::com_ibm_jit_JITHelpers_putLongInObject:
                value = node->getChild(3);
@@ -739,7 +739,7 @@ int32_t TR_UnsafeFastPath::perform()
                break;
             case TR::com_ibm_jit_JITHelpers_putObjectInArrayVolatile:
             case TR::com_ibm_jit_JITHelpers_putObjectInObjectVolatile:
-               isVolatile = true;
+               ordering = TR::Symbol::VolatileSemantics;
             case TR::com_ibm_jit_JITHelpers_putObjectInArray:
             case TR::com_ibm_jit_JITHelpers_putObjectInObject:
                value = node->getChild(3);
@@ -773,10 +773,14 @@ int32_t TR_UnsafeFastPath::perform()
                value = node->getChild(3);
 
             if (TR_J9MethodBase::isVolatileUnsafe(calleeMethod))
-               isVolatile = true;
+               ordering = TR::Symbol::VolatileSemantics;
+            else if (TR_J9MethodBase::isAcquireReleaseUnsafe(calleeMethod))
+               ordering = TR::Symbol::AcquireReleaseSemantics;
+            else if (TR_J9MethodBase::isOpaqueUnsafe(calleeMethod))
+               ordering = TR::Symbol::OpaqueSemantics;
 
             if (trace())
-               traceMsg(comp(), "VarHandle operation: isArrayOperation %d type %s value %p isVolatile %d on node %p\n", isArrayOperation, J9::DataType::getName(type), value, isVolatile, node);
+               traceMsg(comp(), "VarHandle operation: isArrayOperation %d type %s value %p access mode %s on node %p\n", isArrayOperation, J9::DataType::getName(type), value, TR::Symbol::getMemoryOrderingName(ordering), node);
             }
 
          bool mightBeArraylets = isArrayOperation && TR::Compiler->om.canGenerateArraylets();
@@ -798,7 +802,7 @@ int32_t TR_UnsafeFastPath::perform()
                TR::TransformUtil::truncateBooleanForUnsafeGetPut(comp(), tt);
                }
 
-            TR::SymbolReference * unsafeSymRef = comp()->getSymRefTab()->findOrCreateUnsafeSymbolRef(type, true, isStatic, isVolatile);
+            TR::SymbolReference * unsafeSymRef = comp()->getSymRefTab()->findOrCreateUnsafeSymbolRef(type, true, isStatic, ordering);
 
             // some helpers are special - we know they are accessing an array and we know the kind of that array
             // so use the more helpful symref if we can
