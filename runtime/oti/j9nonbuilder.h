@@ -3640,6 +3640,9 @@ typedef struct J9ClassLoader {
 	omrthread_rwmutex_t cpEntriesMutex;
 	UDATA initClassPathEntryCount;
 	UDATA asyncGetCallTraceUsed;
+#if defined(J9VM_OPT_JFR)
+	J9HashTable *typeIDs;
+#endif /* defined(J9VM_OPT_JFR) */
 } J9ClassLoader;
 
 #define J9CLASSLOADER_SHARED_CLASSES_ENABLED  8
@@ -5305,6 +5308,8 @@ typedef struct J9InternalVMFunctions {
 	void (*jfrExecutionSample)(struct J9VMThread *currentThread, struct J9VMThread *sampleThread);
 	jboolean (*setJFRRecordingFileName)(struct J9JavaVM *vm, char *fileName);
 	void (*tearDownJFR)(struct J9JavaVM *vm);
+	jlong (*getTypeIdUTF8)(struct J9VMThread *currentThread, const struct J9UTF8 *className);
+	jlong (*getTypeId)(struct J9VMThread *currentThread, struct J9Class *clazz);
 #endif /* defined(J9VM_OPT_JFR) */
 #if defined(J9VM_OPT_SNAPSHOTS)
 	void (*initializeSnapshotClassLoaderObject)(struct J9JavaVM *javaVM, struct J9ClassLoader *classLoader, j9object_t classLoaderObject);
@@ -5760,6 +5765,8 @@ typedef struct JFRState {
 	int64_t prevProcTimestamp;
 	int64_t prevContextSwitchTimestamp;
 	uint64_t prevContextSwitches;
+	omrthread_monitor_t typeIDMonitor;
+	jlong typeIDcount;
 } JFRState;
 
 typedef struct J9ReflectFunctionTable {

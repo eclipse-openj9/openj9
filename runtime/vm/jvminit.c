@@ -647,6 +647,12 @@ freeJavaVM(J9JavaVM * vm)
 	j9sig_set_async_signal_handler(sigxfszHandler, NULL, 0);
 #endif /* !defined(WIN32) */
 
+#if defined(J9VM_OPT_JFR)
+	if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_JFR_ENABLED)) {
+		shutdownJFRIDs(vm);
+	}
+#endif /* defined(J9VM_OPT_JFR) */
+
 #if JAVA_SPEC_VERSION >= 16
 	if (NULL != vm->cifNativeCalloutDataCache) {
 		pool_state poolState;
@@ -2286,6 +2292,14 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 			if (0 != initializeHiddenInstanceFieldsList(vm)) {
 				goto _error;
 			}
+
+#if defined(J9VM_OPT_JFR)
+			if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_JFR_ENABLED)) {
+				if (0 != initializeJFRIDs(vm)) {
+					goto _error;
+				}
+			}
+#endif /* defined(J9VM_OPT_JFR) */
 
 			if (FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XALLOWCONTENDEDCLASSLOAD, NULL) >= 0) {
 				contendedLoadTableFree(vm);

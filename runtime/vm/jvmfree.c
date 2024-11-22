@@ -49,7 +49,7 @@
 
 static void trcModulesFreeJ9ModuleEntry(J9JavaVM *javaVM, J9Module *j9module);
 
-void 
+void
 freeClassLoaderEntries(J9VMThread * vmThread, J9ClassPathEntry **entries, UDATA count, UDATA initCount)
 {
 	/* free memory allocated to class path entries */
@@ -203,7 +203,7 @@ recycleVMThread(J9VMThread * vmThread)
 }
 
 
-void 
+void
 deallocateVMThread(J9VMThread * vmThread, UDATA decrementZombieCount, UDATA sendThreadDestroyEvent)
 {
 	J9JavaVM * vm = vmThread->javaVM;
@@ -242,7 +242,7 @@ deallocateVMThread(J9VMThread * vmThread, UDATA decrementZombieCount, UDATA send
 		print_verbose_stackUsage(vmThread, FALSE);
 	}
 #endif
-	
+
 	/* vm->memoryManagerFunctions will be NULL if we failed to load the gc dll */
 	if (NULL != vm->memoryManagerFunctions) {
 		/* Make sure the memory manager does anything needed before shutting down */
@@ -286,7 +286,7 @@ deallocateVMThread(J9VMThread * vmThread, UDATA decrementZombieCount, UDATA send
 			currentStack = previous;
 		} while (currentStack);
 	}
-	
+
 	if (vmThread->privateFlags & J9_PRIVATE_FLAGS_DAEMON_THREAD) {
 		--(vm->daemonThreadCount);
 	}
@@ -412,7 +412,7 @@ freeJ9Module(J9JavaVM *javaVM, J9Module *j9module) {
 	Trc_MODULE_freeJ9Module_exit(j9module);
 }
 
-#if (defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)) 
+#if (defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING))
 /**
  * Perform classloader-specific cleanup.  The current thread has exclusive access.
  * J9HOOK_VM_CLASS_LOADER_UNLOAD is triggered.
@@ -422,7 +422,7 @@ freeJ9Module(J9JavaVM *javaVM, J9Module *j9module) {
  * @param classLoader the classloader to cleanup
  */
 void
-cleanUpClassLoader(J9VMThread *vmThread, J9ClassLoader* classLoader) 
+cleanUpClassLoader(J9VMThread *vmThread, J9ClassLoader* classLoader)
 {
 	J9JavaVM *javaVM = vmThread->javaVM;
 	Trc_VM_cleanUpClassLoaders_Entry(vmThread, classLoader);
@@ -438,6 +438,13 @@ cleanUpClassLoader(J9VMThread *vmThread, J9ClassLoader* classLoader)
 	if (NULL != classLoader->classHashTable) {
 		hashClassTableFree(classLoader);
 	}
+
+#if defined(J9VM_OPT_JFR)
+	if (NULL != classLoader->typeIDs) {
+		hashTableFree(classLoader->typeIDs);
+		classLoader->typeIDs = NULL;
+	}
+#endif /* defined(J9VM_OPT_JFR) */
 
 	/* Free the rom class orphans class table */
 	if (NULL != classLoader->romClassOrphansHashTable) {
