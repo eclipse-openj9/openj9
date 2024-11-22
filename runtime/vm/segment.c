@@ -527,7 +527,9 @@ J9MemorySegmentList *allocateMemorySegmentListWithSize(J9JavaVM * javaVM, U_32 n
 	 * class memory segments list.
 	 */
 	if (IS_SNAPSHOT_RUN(javaVM)
-		&& ((J9MEM_CATEGORY_CLASSES == memoryCategory) || (OMRMEM_CATEGORY_VM == memoryCategory))
+		&& ((J9MEM_CATEGORY_CLASSES == memoryCategory)
+		|| (OMRMEM_CATEGORY_VM == memoryCategory)
+		|| (J9MEM_CATEGORY_MODULES == memoryCategory))
 	) {
 		segmentList = vmsnapshot_allocate_memory(sizeof(J9MemorySegmentList), memoryCategory);
 		if (NULL == segmentList) {

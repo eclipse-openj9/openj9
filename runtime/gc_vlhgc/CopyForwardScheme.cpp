@@ -2684,11 +2684,6 @@ MM_CopyForwardScheme::scanClassLoaderObjectSlots(MM_EnvironmentVLHGC *env, MM_Al
 					J9Module * const module = *modulePtr;
 					success = copyAndForward(env, reservingContext, classLoaderObject, (J9Object **)&(module->moduleObject));
 					if (success) {
-						if (NULL != module->moduleName) {
-							success = copyAndForward(env, reservingContext, classLoaderObject, (J9Object **)&(module->moduleName));
-						}
-					}
-					if (success) {
 						if (NULL != module->version) {
 							success = copyAndForward(env, reservingContext, classLoaderObject, (J9Object **)&(module->version));
 						}
@@ -4433,11 +4428,6 @@ MM_CopyForwardScheme::scanRoots(MM_EnvironmentVLHGC* env)
 									while (success && (NULL != modulePtr)) {
 										J9Module * const module = *modulePtr;
 										success = copyAndForward(env, getContextForHeapAddress(module->moduleObject), (J9Object **)&(module->moduleObject));
-										if (success) {
-											if (NULL != module->moduleName) {
-												success = copyAndForward(env, getContextForHeapAddress(module->moduleName), (J9Object **)&(module->moduleName));
-											}
-										}
 										if (success) {
 											if (NULL != module->version) {
 												success = copyAndForward(env, getContextForHeapAddress(module->version), (J9Object **)&(module->version));

@@ -1825,7 +1825,7 @@ typedef struct J9AnnotationState {
 } J9AnnotationState;
 
 typedef struct J9Module {
-	j9object_t moduleName;
+	struct J9UTF8* moduleName;
 	j9object_t moduleObject;
 	j9object_t version;
 	struct J9ClassLoader* classLoader;

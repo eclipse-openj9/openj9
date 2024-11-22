@@ -185,7 +185,7 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, UDATA bytecode
 					omrthread_monitor_exit(vm->classLoaderModuleAndLocationMutex);
 				}
 				if (NULL != module) {
-					J9VMJAVALANGSTACKTRACEELEMENT_SET_MODULENAME(vmThread, element, module->moduleName);
+					J9VMJAVALANGSTACKTRACEELEMENT_SET_MODULENAME(vmThread, element, J9VMJAVALANGMODULE_NAME(vmThread, module->moduleObject));
 					J9VMJAVALANGSTACKTRACEELEMENT_SET_MODULEVERSION(vmThread, element, module->version);
 				}
 			}

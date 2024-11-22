@@ -1040,7 +1040,6 @@ MM_MetronomeDelegate::doClassTracing(MM_EnvironmentRealtime *env)
 							J9Module * const module = *modulePtr;
 
 							didWork |= _markingScheme->markObject(env, module->moduleObject);
-							didWork |= _markingScheme->markObject(env, module->moduleName);
 							didWork |= _markingScheme->markObject(env, module->version);
 							modulePtr = (J9Module**)hashTableNextDo(&walkState);
 						}

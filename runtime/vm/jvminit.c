@@ -768,7 +768,9 @@ freeJavaVM(J9JavaVM * vm)
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
 
 	freeNativeMethodBindTable(vm);
-	freeHiddenInstanceFieldsList(vm);
+	if (!IS_SNAPSHOTTING_ENABLED(vm)) {
+		freeHiddenInstanceFieldsList(vm);
+	}
 	cleanupLockwordConfig(vm);
 	cleanupEnsureHashedConfig(vm);
 
@@ -1512,6 +1514,7 @@ _error :
 
 #if (defined(J9VM_OPT_DYNAMIC_LOAD_SUPPORT))
 
+/* TODO Instead of allocating new cpePtrArray and cpEntries, they need to be loaded during restore runs. */
 UDATA
 initializeClassPath(J9JavaVM *vm, char *classPath, U_8 classPathSeparator, U_16 cpFlags, BOOLEAN initClassPathEntry, J9ClassPathEntry ***classPathEntries)
 {
@@ -1522,6 +1525,9 @@ initializeClassPath(J9JavaVM *vm, char *classPath, U_8 classPathSeparator, U_16 
 	BOOLEAN lastWasSeparator = TRUE;
 
 	PORT_ACCESS_FROM_JAVAVM(vm);
+#if defined(J9VM_OPT_SNAPSHOTS)
+	VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(vm);
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 
 	if (NULL == classPath) {
 		*classPathEntries = NULL;
@@ -1553,16 +1559,38 @@ initializeClassPath(J9JavaVM *vm, char *classPath, U_8 classPathSeparator, U_16 
 
 		cpePtrArraySize = ROUND_UP_TO(CPE_COUNT_INCREMENT, classPathEntryCount);
 		cpePtrArrayMemSize = sizeof(*classPathEntries) * cpePtrArraySize;
-		cpePtrArray = (J9ClassPathEntry**)j9mem_allocate_memory(cpePtrArrayMemSize, OMRMEM_CATEGORY_VM);
+#if defined(J9VM_OPT_SNAPSHOTS)
+		if (IS_SNAPSHOTTING_ENABLED(vm)) {
+			cpePtrArray = (J9ClassPathEntry **)vmsnapshot_allocate_memory(cpePtrArrayMemSize, OMRMEM_CATEGORY_VM);
+		} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+		{
+			cpePtrArray = (J9ClassPathEntry **)j9mem_allocate_memory(cpePtrArrayMemSize, OMRMEM_CATEGORY_VM);
+		}
 		/* classPathEntryCount is for number of null characters */
 		classPathMemSize = (sizeof(J9ClassPathEntry) * classPathEntryCount) + classPathLength + classPathEntryCount;
-		cpEntries = j9mem_allocate_memory(classPathMemSize, OMRMEM_CATEGORY_VM);
+#if defined(J9VM_OPT_SNAPSHOTS)
+		if (IS_SNAPSHOTTING_ENABLED(vm)) {
+			cpEntries = vmsnapshot_allocate_memory(classPathMemSize, OMRMEM_CATEGORY_VM);
+		} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+		{
+			cpEntries = j9mem_allocate_memory(classPathMemSize, OMRMEM_CATEGORY_VM);
+		}
 
 		if ((NULL == cpePtrArray)
 			|| (NULL == cpEntries)
 		) {
-			j9mem_free_memory(cpePtrArray);
-			j9mem_free_memory(cpEntries);
+#if defined(J9VM_OPT_SNAPSHOTS)
+			if (IS_SNAPSHOTTING_ENABLED(vm)) {
+				vmsnapshot_free_memory(cpePtrArray);
+				vmsnapshot_free_memory(cpEntries);
+			} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+			{
+				j9mem_free_memory(cpePtrArray);
+				j9mem_free_memory(cpEntries);
+			}
 			*classPathEntries = NULL;
 			classPathEntryCount = -1;
 		} else {
@@ -1610,6 +1638,7 @@ _end:
         return classPathEntryCount;
 }
 
+/* TODO Ensure this function is called properly when restoring. */
 IDATA
 initializeClassPathEntry (J9JavaVM * javaVM, J9ClassPathEntry *cpEntry)
 {
@@ -1638,7 +1667,7 @@ initializeClassPathEntry (J9JavaVM * javaVM, J9ClassPathEntry *cpEntry)
 		VMIZipFile *zipFile = NULL;
 
 		cpEntry->extraInfo = NULL;
-		zipFile = j9mem_allocate_memory((UDATA) sizeof(*zipFile), J9MEM_CATEGORY_CLASSES);
+		zipFile = j9mem_allocate_memory((UDATA)sizeof(*zipFile), J9MEM_CATEGORY_CLASSES);
 		if (NULL != zipFile) {
 			I_32 rc = 0;
 
@@ -1828,7 +1857,6 @@ setBootLoaderModulePatchPaths(J9JavaVM * javaVM, J9Module * j9module, const char
 					goto _exitMutex;
 				}
 			}
-
 			moduleInfo.j9module = j9module;
 			moduleInfo.patchPathCount = initializeClassPath(javaVM, property->value + length + 1, pathSeparator, 0, FALSE, &moduleInfo.patchPathEntries);
 			if (-1 == moduleInfo.patchPathCount) {
@@ -1839,7 +1867,15 @@ setBootLoaderModulePatchPaths(J9JavaVM * javaVM, J9Module * j9module, const char
 				if (NULL == node) {
 					J9VMThread *currentThread = javaVM->internalVMFunctions->currentVMThread(javaVM);
 					freeClassLoaderEntries(currentThread, moduleInfo.patchPathEntries, moduleInfo.patchPathCount, moduleInfo.patchPathCount);
-					j9mem_free_memory(moduleInfo.patchPathEntries);
+#if defined(J9VM_OPT_SNAPSHOTS)
+					if (IS_SNAPSHOTTING_ENABLED(javaVM)) {
+						VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(javaVM);
+						vmsnapshot_free_memory(moduleInfo.patchPathEntries);
+					} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+					{
+						j9mem_free_memory(moduleInfo.patchPathEntries);
+					}
 					moduleInfo.patchPathEntries = NULL;
 					result = FALSE;
 					goto _exitMutex;
@@ -2638,9 +2674,18 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 			}
 
 			if (J2SE_VERSION(vm) >= J2SE_V11) {
-				vm->modularityPool = pool_new(OMR_MAX(sizeof(J9Package),sizeof(J9Module)),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_MODULES, POOL_FOR_PORT(vm->portLibrary));
-				if (NULL == vm->modularityPool) {
-					goto _error;
+#if defined(J9VM_OPT_SNAPSHOTS)
+				/* By this point during a restore run, the modularityPool is restored. */
+				if (IS_SNAPSHOT_RUN(vm)) {
+					if (NULL == (vm->modularityPool = pool_new(OMR_MAX(sizeof(J9Package), sizeof(J9Module)), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_MODULES, POOL_FOR_PORT(VMSNAPSHOTIMPL_OMRPORT_FROM_JAVAVM(vm))))) {
+						goto _error;
+					}
+				} else if (!IS_RESTORE_RUN(vm))
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+				{
+					if (NULL == (vm->modularityPool = pool_new(OMR_MAX(sizeof(J9Package), sizeof(J9Module)), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_MODULES, POOL_FOR_PORT(vm->portLibrary)))) {
+						goto _error;
+					}
 				}
 			}
 #if JAVA_SPEC_VERSION >= 19
@@ -2935,26 +2980,31 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 			}
 
 			if (J2SE_VERSION(vm) >= J2SE_V11) {
-				BOOLEAN patchPathResult = FALSE;
+				/* javaBaseModule and unnamedModuleForSystemLoader are already setup during a restore run. */
+				if (!IS_RESTORE_RUN(vm)) {
+					BOOLEAN patchPathResult = FALSE;
+					vm->javaBaseModule = pool_newElement(vm->modularityPool);
+					if (NULL == vm->javaBaseModule) {
+						setErrorJ9dll(PORTLIB, loadInfo, "cannot allocate java.base module", FALSE);
+						goto _error;
+					}
+					vm->javaBaseModule->classLoader = vm->systemClassLoader;
 
-				vm->javaBaseModule = pool_newElement(vm->modularityPool);
-				if (NULL == vm->javaBaseModule) {
-					setErrorJ9dll(PORTLIB, loadInfo, "cannot allocate java.base module", FALSE);
-					goto _error;
-				}
-				vm->javaBaseModule->classLoader = vm->systemClassLoader;
+					vm->unnamedModuleForSystemLoader = pool_newElement(vm->modularityPool);
+					if (NULL == vm->unnamedModuleForSystemLoader) {
+						setErrorJ9dll(PORTLIB, loadInfo, "cannot allocate unnamed module for bootloader", FALSE);
+						goto _error;
+					}
+					vm->unnamedModuleForSystemLoader->classLoader = vm->systemClassLoader;
 
-				vm->unnamedModuleForSystemLoader = pool_newElement(vm->modularityPool);
-				if (NULL == vm->unnamedModuleForSystemLoader) {
-					setErrorJ9dll(PORTLIB, loadInfo, "cannot allocate unnamed module for bootloader", FALSE);
-					goto _error;
-				}
-				vm->unnamedModuleForSystemLoader->classLoader = vm->systemClassLoader;
-
-				patchPathResult = setBootLoaderModulePatchPaths(vm, vm->javaBaseModule, JAVA_BASE_MODULE);
-				if (FALSE == patchPathResult) {
-					setErrorJ9dll(PORTLIB, loadInfo, "cannot set patch paths for java.base module", FALSE);
-					goto _error;
+					/* TODO Ensure that this need not be invoked on restore runs. It initilizes the class path entries,
+					 * but does not initilize the extraInfo pointer (i.e. the only item that would need fixing up).
+					 */
+					patchPathResult = setBootLoaderModulePatchPaths(vm, vm->javaBaseModule, JAVA_BASE_MODULE);
+					if (FALSE == patchPathResult) {
+						setErrorJ9dll(PORTLIB, loadInfo, "cannot set patch paths for java.base module", FALSE);
+						goto _error;
+					}
 				}
 			}
 

@@ -138,8 +138,17 @@ printStackTraceEntry(J9VMThread * vmThread, void * voidUserData, UDATA bytecodeO
 
 				if (NULL != module) {
 					if (module != vm->javaBaseModule) {
-						moduleNameUTF = copyStringToUTF8WithMemAlloc(
-							vmThread, module->moduleName, J9_STR_NULL_TERMINATE_RESULT, "", 0, nameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
+						J9UTF8 *moduleName = module->moduleName;
+						U_8 *nameData = J9UTF8_DATA(moduleName);
+						UDATA nameLength = J9UTF8_LENGTH(moduleName);
+						if (nameLength < J9VM_PACKAGE_NAME_BUFFER_LENGTH) {
+							moduleNameUTF = nameBuf;
+						} else {
+							moduleNameUTF = (char *)j9mem_allocate_memory(nameLength + 1, OMRMEM_CATEGORY_VM);
+						}
+						memcpy(moduleNameUTF, nameData, nameLength);
+						moduleNameUTF[nameLength] = '\0';
+
 						if (nameBuf != moduleNameUTF) {
 							freeModuleName = TRUE;
 						}

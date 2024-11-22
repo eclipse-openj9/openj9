@@ -1002,6 +1002,7 @@ getModuleNameUTF(J9VMThread *currentThread, j9object_t	moduleObject, char *buffe
 	J9JavaVM const * const vm = currentThread->javaVM;
 	J9Module *module = J9OBJECT_ADDRESS_LOAD(currentThread, moduleObject, vm->modulePointerOffset);
 	char *nameBuffer = NULL;
+	PORT_ACCESS_FROM_VMC(currentThread);
 
 	if ((NULL == module) || (NULL == module->moduleName)) {
 #define UNNAMED_MODULE "unnamed module "
@@ -1012,8 +1013,12 @@ getModuleNameUTF(J9VMThread *currentThread, j9object_t	moduleObject, char *buffe
 		nameBuffer = buffer;
 #undef UNNAMED_MODULE
 	} else {
-		nameBuffer = copyStringToUTF8WithMemAlloc(
-			currentThread, module->moduleName, J9_STR_NULL_TERMINATE_RESULT, "", 0, buffer, bufferLength, NULL);
+		J9UTF8 *moduleName = module->moduleName;
+		U_8 *nameData = J9UTF8_DATA(moduleName);
+		UDATA nameLength = J9UTF8_LENGTH(moduleName);
+		nameBuffer = (char *)j9mem_allocate_memory(nameLength + 1, OMRMEM_CATEGORY_VM);
+		memcpy(nameBuffer, nameData, nameLength);
+		nameBuffer[nameLength] = '\0';
 	}
 	return nameBuffer;
 }

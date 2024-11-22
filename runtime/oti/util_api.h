@@ -2912,6 +2912,14 @@ getPackageDefinition(J9VMThread * currentThread, J9Module * fromModule, const ch
  */
 J9Package*
 hashPackageTableAt(J9VMThread * currentThread, J9ClassLoader * classLoader, const char *packageName);
+
+J9Package *
+hashPackageTableAtWithUTF8Name(J9VMThread *currentThread, J9ClassLoader *classLoader, J9UTF8 *packageName);
+
+
+J9Module *
+hashModuleTableAtWithUTF8Name(J9VMThread *currentThread, J9ClassLoader *classLoader, J9UTF8 *moduleName);
+
 /**
  * Add UTF package name to construct a J9Package for hashtable query
  *

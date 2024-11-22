@@ -343,6 +343,7 @@ internalFindClassString(J9VMThread* currentThread, j9object_t moduleName, j9obje
 		U_8 *utf8Name = NULL;
 		UDATA utf8Length = 0;
 		UDATA stringFlags = J9_STR_NULL_TERMINATE_RESULT;
+		J9InternalVMFunctions const *const vmFuncs = vm->internalVMFunctions;
 		PORT_ACCESS_FROM_JAVAVM(vm);
 
 		if (CLASSNAME_INVALID == allowedBitsForClassName) {
@@ -378,11 +379,28 @@ internalFindClassString(J9VMThread* currentThread, j9object_t moduleName, j9obje
 				J9Module module = {0};
 				J9Module *modulePtr = &module;
 
-				modulePtr->moduleName = moduleName;
+				J9UTF8 *moduleNameJ9UTF8 = NULL;
+				UDATA moduleNameLength = vmFuncs->getStringUTF8Length(currentThread, moduleName);
+				if (moduleNameLength < J9UTF8_MAX_LENGTH) {
+					UDATA moduleNameJ9UTF8Size = moduleNameLength + sizeof(J9UTF8) + 1; /* +1 for null-terminator. */
+					moduleNameJ9UTF8 = (J9UTF8 *)j9mem_allocate_memory(moduleNameJ9UTF8Size, OMRMEM_CATEGORY_VM);
+					if (NULL == moduleNameJ9UTF8) {
+						vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+						goto done;
+					}
+					vmFuncs->copyStringToUTF8Helper(currentThread, moduleName, 0, 0, J9VMJAVALANGSTRING_LENGTH(currentThread, moduleName), (U_8 *)J9UTF8_DATA(moduleNameJ9UTF8), moduleNameLength);
+					J9UTF8_DATA(moduleNameJ9UTF8)[moduleNameLength] = '\0';
+					J9UTF8_LENGTH(moduleNameJ9UTF8) = moduleNameLength;
+				} else {
+					vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
+					goto done;
+				}
+				modulePtr->moduleName = moduleNameJ9UTF8;
 				findResult = hashTableFind(classLoader->moduleHashTable, &modulePtr);
 				if (NULL != findResult) {
 					j9module = *findResult;
 				}
+				j9mem_free_memory(moduleNameJ9UTF8);
 			}
 
 			result = internalFindClassInModule(currentThread, j9module, utf8Name, utf8Length, classLoader, options);
@@ -391,6 +409,7 @@ internalFindClassString(J9VMThread* currentThread, j9object_t moduleName, j9obje
 			j9mem_free_memory(utf8Name);
 		}
 	}
+done:
 	return result;
 }
 
@@ -1044,6 +1063,18 @@ loadWarmClassFromSnapshot(J9VMThread *vmThread, J9ClassLoader *classLoader, J9Cl
 			&& (NULL == clazz->classObject)
 		) {
 			clazz = initializeSnapshotClassObject(vm, classLoader, clazz);
+		}
+
+		/* TODO Handle/trace error/NULL paths. */
+		j9object_t classObject = clazz->classObject;
+		if (NULL != classObject) {
+			J9Module *module = clazz->module;
+			if (NULL != module) {
+				j9object_t moduleObject = module->moduleObject;
+				if (NULL != moduleObject) {
+					J9VMJAVALANGCLASS_SET_MODULE(vmThread, classObject, moduleObject);
+				}
+			}
 		}
 
 		TRIGGER_J9HOOK_VM_INTERNAL_CLASS_LOAD(vm->hookInterface, vmThread, clazz, failed);

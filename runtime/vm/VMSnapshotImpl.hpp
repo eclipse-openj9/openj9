@@ -86,14 +86,15 @@ private:
 	void fixupArrayClass(J9ArrayClass *clazz);
 	void fixupMethodRunAddresses(J9Class *ramClass);
 	void fixupConstantPool(J9Class *ramClass);
-	void fixupClassPathEntries();
+	void fixupModules();
+	void fixupClassPathEntries(J9ClassLoader *classLoader);
 	void removeUnpersistedClassLoaders();
 	void saveJ9JavaVMStructures();
 	void restorePrimitiveAndArrayClasses();
 	bool restoreJ9JavaVMStructures();
 	void savePrimitiveAndArrayClasses();
 	bool isImmortalClassLoader(J9ClassLoader *classLoader);
-	J9MemorySegmentList *copyUnPersistedMemorySegmentsToNewList(J9MemorySegmentList *oldMemorySegmentList);
+	J9MemorySegmentList *copyPersistedMemorySegmentsToNewList(J9MemorySegmentList *oldMemorySegmentList);
 
 protected:
 	void *operator new(size_t size, void *memoryPointer) { return memoryPointer; }
@@ -110,6 +111,10 @@ public:
 	void restoreClassLoaderBlocks();
 	void saveMemorySegments();
 	void restoreMemorySegments();
+	void saveModularityData();
+	void restoreModularityData();
+	void saveHiddenInstanceFields();
+	void restoreHiddenInstanceFields();
 
 	bool setupRestoreRun();
 	bool setupSnapshotRun();
@@ -118,6 +123,7 @@ public:
 	void fixupJITVtable(J9Class *ramClass);
 	void fixupVMStructures();
 	void writeSnapshot();
+	void freeJ9JavaVMStructures();
 
 	void *subAllocateMemory(uintptr_t byteAmount, bool sub4G);
 	void *reallocateMemory(void *address, uintptr_t byteAmount, bool sub4G);

@@ -5136,6 +5136,7 @@ isClassFromPatchedModule(J9VMThread* vmThread, J9Module *j9module, U_8* classNam
 	J9JavaVM* vm = vmThread->javaVM;
 	J9InternalVMFunctions const * const vmFuncs = vm->internalVMFunctions;
 
+
 	if (J9_ARE_NO_BITS_SET(vm->jclFlags, J9_JCL_FLAG_JDK_MODULE_PATCH_PROP)) {
 		return ret;
 	}

@@ -216,6 +216,9 @@ freeClassLoader(J9ClassLoader *classLoader, J9JavaVM *javaVM, J9VMThread *vmThre
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 
 	PORT_ACCESS_FROM_JAVAVM(javaVM);
+#if defined(J9VM_OPT_SNAPSHOTS)
+	VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(javaVM);
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 
 	Trc_VM_freeClassLoader_Entry(classLoader);
 
@@ -264,7 +267,14 @@ freeClassLoader(J9ClassLoader *classLoader, J9JavaVM *javaVM, J9VMThread *vmThre
 	if (javaVM->systemClassLoader == classLoader) {
 		if (NULL != classLoader->classPathEntries) {
 			freeClassLoaderEntries(vmThread, classLoader->classPathEntries, classLoader->classPathEntryCount, classLoader->initClassPathEntryCount);
-			j9mem_free_memory(classLoader->classPathEntries);
+#if defined(J9VM_OPT_SNAPSHOTS)
+			if (IS_SNAPSHOTTING_ENABLED(javaVM)) {
+				vmsnapshot_free_memory(classLoader->classPathEntries);
+			} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+			{
+				j9mem_free_memory(classLoader->classPathEntries);
+			}
 			classLoader->classPathEntryCount = 0;
 			classLoader->classPathEntries = NULL;
 		}
@@ -408,11 +418,25 @@ freeClassLoader(J9ClassLoader *classLoader, J9JavaVM *javaVM, J9VMThread *vmThre
 		J9ModuleExtraInfo *moduleExtraInfoPtr = (J9ModuleExtraInfo *)hashTableStartDo(classLoader->moduleExtraInfoHashTable, &moduleExtraInfoWalkState);
 		while (NULL != moduleExtraInfoPtr) {
 			freeClassLoaderEntries(vmThread, moduleExtraInfoPtr->patchPathEntries, moduleExtraInfoPtr->patchPathCount, moduleExtraInfoPtr->patchPathCount);
-			j9mem_free_memory(moduleExtraInfoPtr->patchPathEntries);
+#if defined(J9VM_OPT_SNAPSHOTS)
+			if (IS_SNAPSHOTTING_ENABLED(javaVM)) {
+				vmsnapshot_free_memory(moduleExtraInfoPtr->patchPathEntries);
+			} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+			{
+				j9mem_free_memory(moduleExtraInfoPtr->patchPathEntries);
+			}
 			moduleExtraInfoPtr->patchPathEntries = NULL;
 			moduleExtraInfoPtr->patchPathCount = 0;
 			if (NULL != moduleExtraInfoPtr->jrtURL) {
-				j9mem_free_memory(moduleExtraInfoPtr->jrtURL);
+#if defined(J9VM_OPT_SNAPSHOTS)
+				if (IS_SNAPSHOTTING_ENABLED(javaVM)) {
+					vmsnapshot_free_memory(moduleExtraInfoPtr->jrtURL);
+				} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+				{
+					j9mem_free_memory(moduleExtraInfoPtr->jrtURL);
+				}
 			}
 			moduleExtraInfoPtr = (J9ModuleExtraInfo *)hashTableNextDo(&moduleExtraInfoWalkState);
 		}
@@ -445,7 +469,14 @@ freeClassLoader(J9ClassLoader *classLoader, J9JavaVM *javaVM, J9VMThread *vmThre
 			packagePtr = (J9Package**)hashTableNextDo(&packageWalkState);
 			cleanPackage(packageDel);
 			hashTableFree(packageDel->exportsHashTable);
-			j9mem_free_memory(packageDel->packageName);
+#if defined(J9VM_OPT_SNAPSHOTS)
+			if (IS_SNAPSHOTTING_ENABLED(javaVM)) {
+				vmsnapshot_free_memory(packageDel->packageName);
+			} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+			{
+				j9mem_free_memory(packageDel->packageName);
+			}
 			pool_removeElement(javaVM->modularityPool, packageDel);
 		}
 

@@ -236,7 +236,7 @@ VMSnapshotImpl::allocateSnapshotMemory()
 	}
 
 	_memoryRegions[SUB4G].startAddr = sub4GBMemorySection;
-	_memoryRegions[SUB4G].alignedStartAddr = (void *) ROUND_UP_TO_POWEROF2((UDATA)sub4GBMemorySection, pageSize);
+	_memoryRegions[SUB4G].alignedStartAddr = (void *)ROUND_UP_TO_POWEROF2((UDATA)sub4GBMemorySection, pageSize);
 	_memoryRegions[SUB4G].totalSize = SUB4G_MEMORY_SECTION_SIZE + pageSize;
 	_memoryRegions[SUB4G].mappableSize = SUB4G_MEMORY_SECTION_SIZE;
 	_memoryRegions[SUB4G].permissions = PROT_READ | PROT_WRITE;
@@ -362,6 +362,8 @@ VMSnapshotImpl::restoreClassLoaderBlocks()
 	_vm->systemClassLoader = _snapshotHeader->savedJavaVMStructs.systemClassLoader;
 	_vm->extensionClassLoader = _snapshotHeader->savedJavaVMStructs.extensionClassLoader;
 	_vm->applicationClassLoader = _snapshotHeader->savedJavaVMStructs.applicationClassLoader;
+
+	omrthread_rwmutex_init(&_vm->systemClassLoader->cpEntriesMutex, 0, "classPathEntries Mutex");
 }
 
 bool
@@ -372,6 +374,36 @@ VMSnapshotImpl::isImmortalClassLoader(J9ClassLoader *classLoader)
 			|| (classLoader == _vm->extensionClassLoader)
 			|| (NULL == classLoader));
 	return isImmortal;
+}
+
+#if JAVA_SPEC_VERSION > 8
+void
+VMSnapshotImpl::saveModularityData()
+{
+	_snapshotHeader->savedJavaVMStructs.modularityPool = _vm->modularityPool;
+	_snapshotHeader->savedJavaVMStructs.javaBaseModule = _vm->javaBaseModule;
+	_snapshotHeader->savedJavaVMStructs.unnamedModuleForSystemLoader = _vm->unnamedModuleForSystemLoader;
+}
+
+void
+VMSnapshotImpl::restoreModularityData()
+{
+	_vm->modularityPool = _snapshotHeader->savedJavaVMStructs.modularityPool;
+	_vm->javaBaseModule = _snapshotHeader->savedJavaVMStructs.javaBaseModule;
+	_vm->unnamedModuleForSystemLoader = _snapshotHeader->savedJavaVMStructs.unnamedModuleForSystemLoader;
+}
+#endif /* JAVA_SPEC_VERSION > 8 */
+
+void
+VMSnapshotImpl::saveHiddenInstanceFields()
+{
+	_snapshotHeader->savedJavaVMStructs.hiddenInstanceFields = _vm->hiddenInstanceFields;
+}
+
+void
+VMSnapshotImpl::restoreHiddenInstanceFields()
+{
+	_vm->hiddenInstanceFields = _snapshotHeader->savedJavaVMStructs.hiddenInstanceFields;
 }
 
 void
@@ -395,7 +427,7 @@ printAllSegments(J9MemorySegmentList *segmentList, J9JavaVM *_vm)
 }
 
 J9MemorySegmentList *
-VMSnapshotImpl::copyUnPersistedMemorySegmentsToNewList(J9MemorySegmentList *oldMemorySegmentList)
+VMSnapshotImpl::copyPersistedMemorySegmentsToNewList(J9MemorySegmentList *oldMemorySegmentList)
 {
 	J9MemorySegment *currentSegment = oldMemorySegmentList->nextSegment;
 	J9MemorySegmentList *newMemorySegmentList = _vm->internalVMFunctions->allocateMemorySegmentList(_vm, 10, OMRMEM_CATEGORY_VM);
@@ -421,12 +453,12 @@ VMSnapshotImpl::copyUnPersistedMemorySegmentsToNewList(J9MemorySegmentList *oldM
 
 			newMemorySegmentList->totalSegmentSize += newSegment->size;
 			if (0 != (newMemorySegmentList->flags & MEMORY_SEGMENT_LIST_FLAG_SORT)) {
-				avl_insert(&newMemorySegmentList->avlTreeData, (J9AVLTreeNode *) newSegment);
+				avl_insert(&newMemorySegmentList->avlTreeData, (J9AVLTreeNode *)newSegment);
 			}
 
 			/* remove segment from old list */
 			if (0 != (oldMemorySegmentList->flags & MEMORY_SEGMENT_LIST_FLAG_SORT)) {
-				avl_delete(&oldMemorySegmentList->avlTreeData, (J9AVLTreeNode *) currentSegment);
+				avl_delete(&oldMemorySegmentList->avlTreeData, (J9AVLTreeNode *)currentSegment);
 			}
 			J9_MEMORY_SEGMENT_LINEAR_LINKED_LIST_REMOVE(oldMemorySegmentList->nextSegment, currentSegment);
 			pool_removeElement(oldMemorySegmentList->segmentPool, currentSegment);
@@ -445,10 +477,10 @@ VMSnapshotImpl::saveMemorySegments()
 	 * The persisted segments will be stored in the snapshot.
 	 */
 	_snapshotHeader->savedJavaVMStructs.classMemorySegments = _vm->classMemorySegments;
-	_vm->classMemorySegments = copyUnPersistedMemorySegmentsToNewList(_vm->classMemorySegments);
+	_vm->classMemorySegments = copyPersistedMemorySegmentsToNewList(_vm->classMemorySegments);
 
 	_snapshotHeader->savedJavaVMStructs.memorySegments = _vm->memorySegments;
-	_vm->memorySegments = copyUnPersistedMemorySegmentsToNewList(_vm->memorySegments);
+	_vm->memorySegments = copyPersistedMemorySegmentsToNewList(_vm->memorySegments);
 }
 
 void
@@ -495,7 +527,6 @@ VMSnapshotImpl::fixupClassLoaders()
 	pool_state classLoaderWalkState = {0};
 	J9ClassLoader *currentClassLoader = (J9ClassLoader *)pool_startDo(_vm->classLoaderBlocks, &classLoaderWalkState);
 	while (NULL != currentClassLoader) {
-		currentClassLoader->classPathEntries = NULL;
 		currentClassLoader->sharedLibraries = NULL;
 		currentClassLoader->librariesHead = NULL;
 		currentClassLoader->librariesTail = NULL;
@@ -512,8 +543,40 @@ VMSnapshotImpl::fixupClassLoaders()
 #endif /* J9VM_NEEDS_JNI_REDIRECTION */
 		currentClassLoader->gcRememberedSet = 0;
 		currentClassLoader->jitMetaDataList = NULL;
-		/* TODO: In the future persist these as well. */
-		currentClassLoader->flags &= ~J9CLASSLOADER_CLASSPATH_SET;
+
+		fixupClassPathEntries(currentClassLoader);
+		currentClassLoader = (J9ClassLoader *)pool_nextDo(&classLoaderWalkState);
+	}
+}
+
+void
+VMSnapshotImpl::fixupClassPathEntries(J9ClassLoader *classLoader)
+{
+	J9ClassPathEntry **cpEntries = classLoader->classPathEntries;
+	UDATA classPathEntryCount = classLoader->classPathEntryCount;
+
+	for (UDATA i = 0; i < classPathEntryCount; i++) {
+		cpEntries[i]->extraInfo = NULL;
+	}
+}
+
+/* TODO: Fixup during fixupClassLoaders. */
+void
+VMSnapshotImpl::fixupModules()
+{
+	pool_state classLoaderWalkState = {0};
+	J9ClassLoader *currentClassLoader = (J9ClassLoader *)pool_startDo(_vm->classLoaderBlocks, &classLoaderWalkState);
+	while (NULL != currentClassLoader) {
+		J9HashTableState moduleWalkState = {0};
+
+		J9Module **modulePtr = (J9Module **)hashTableStartDo(currentClassLoader->moduleHashTable, &moduleWalkState);
+		while (NULL != modulePtr) {
+			J9Module *currentModule = *modulePtr;
+			currentModule->moduleObject = NULL;
+			currentModule->version = NULL;
+
+			modulePtr = (J9Module **)hashTableNextDo(&moduleWalkState);
+		}
 		currentClassLoader = (J9ClassLoader *)pool_nextDo(&classLoaderWalkState);
 	}
 }
@@ -548,7 +611,39 @@ VMSnapshotImpl::removeUnpersistedClassLoaders()
 	}
 
 	for (UDATA i = 0; i < count; i++) {
-		freeClassLoader(removeLoaders[i], _vm, vmThread, FALSE);
+		J9ClassLoader *currentClassLoader = removeLoaders[i];
+
+		J9HashTableState moduleWalkState = {0};
+		J9Module **modulePtr = (J9Module **)hashTableStartDo(currentClassLoader->moduleHashTable, &moduleWalkState);
+		while (NULL != modulePtr) {
+			J9Module *moduleDel = *modulePtr;
+			modulePtr = (J9Module **)hashTableNextDo(&moduleWalkState);
+			freeJ9Module(_vm, moduleDel);
+
+		}
+
+		J9HashTableState packageWalkState = {0};
+		J9Package **packagePtr = (J9Package **)hashTableStartDo(currentClassLoader->packageHashTable, &packageWalkState);
+		while (NULL != packagePtr) {
+			J9Package *packageDel = *packagePtr;
+			packagePtr = (J9Package **)hashTableNextDo(&packageWalkState);
+			/* TODO: Extract to header: this code is the same as cleanPackage in classsupport.c */
+			J9HashTableState walkState = {0};
+
+			J9Module **modulePtr = (J9Module **)hashTableStartDo(packageDel->exportsHashTable, &walkState);
+			while (NULL != modulePtr) {
+				if (NULL != (*modulePtr)->removeExportsHashTable) {
+					hashTableRemove((*modulePtr)->removeExportsHashTable, &packageDel);
+				}
+				J9Module *moduleDel = *modulePtr;
+				modulePtr = (J9Module **)hashTableNextDo(&walkState);
+				freeJ9Module(_vm, moduleDel);
+			}
+			hashTableFree(packageDel->exportsHashTable);
+			j9mem_free_memory(packageDel->packageName);
+			pool_removeElement(_vm->modularityPool, packageDel);
+		}
+		freeClassLoader(currentClassLoader, _vm, vmThread, FALSE);
 	}
 
 	if ((J9ClassLoader **)buf != removeLoaders) {
@@ -664,7 +759,7 @@ void
 VMSnapshotImpl::fixupArrayClass(J9ArrayClass *clazz)
 {
 	clazz->classObject = NULL;
-	fixupConstantPool((J9Class *) clazz);
+	fixupConstantPool((J9Class *)clazz);
 	clazz->initializeStatus = J9ClassInitSucceeded;
 	clazz->jniIDs = NULL;
 	clazz->replacedClass = NULL;
@@ -806,6 +901,8 @@ VMSnapshotImpl::saveJ9JavaVMStructures()
 	saveClassLoaderBlocks();
 	saveMemorySegments();
 	savePrimitiveAndArrayClasses();
+	saveHiddenInstanceFields();
+	saveModularityData();
 	_snapshotHeader->vm = _vm;
 }
 
@@ -821,6 +918,8 @@ VMSnapshotImpl::restoreJ9JavaVMStructures()
 	restoreClassLoaderBlocks();
 	restoreMemorySegments();
 	restorePrimitiveAndArrayClasses();
+	restoreHiddenInstanceFields();
+	restoreModularityData();
 
 	if (omrthread_monitor_init_with_name(&_vm->classMemorySegments->segmentMutex, 0, "VM class mem segment list")) {
 		success = false;
@@ -900,12 +999,19 @@ done:
 }
 
 void
+VMSnapshotImpl::freeJ9JavaVMStructures()
+{
+	freeHiddenInstanceFieldsList(_vm);
+}
+
+void
 VMSnapshotImpl::writeSnapshot()
 {
 	removeUnpersistedClassLoaders();
 	/* TODO: Call GC API to snapshot heap. */
 	fixupClassLoaders();
 	fixupClasses();
+	fixupModules();
 	saveJ9JavaVMStructures();
 	if(!writeSnapshotToFile()) {
 		PORT_ACCESS_FROM_PORT(_portLibrary);
@@ -1083,6 +1189,7 @@ teardownVMSnapshotImpl(J9JavaVM *javaVM)
 	} else {
 		vmSnapshotImpl->saveMemorySegments();
 	}
+	vmSnapshotImpl->freeJ9JavaVMStructures();
 }
 
 extern "C" void

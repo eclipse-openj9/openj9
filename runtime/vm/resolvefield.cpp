@@ -64,6 +64,9 @@ static J9ROMFieldShape* findFieldInTable(J9VMThread *vmThread, J9Class *clazz, U
 static J9ROMFieldShape * findFieldInClass (J9VMThread *vmStruct, J9Class *clazz, U_8 *fieldName, UDATA fieldNameLength, U_8 *signature, UDATA signatureLength, UDATA *offsetOrAddress, J9Class **definingClass);
 static J9ROMFieldShape* findFieldAndCheckVisibility (J9VMThread *vmStruct, J9Class *clazz, U_8 *fieldName, UDATA fieldNameLength, U_8 *signature, UDATA signatureLength, J9Class **definingClass, UDATA *offsetOrAddress, UDATA options, J9Class *sourceClass);
 static J9ROMFieldShape* findField (J9VMThread *vmStruct, J9Class *clazz, U_8 *fieldName, UDATA fieldNameLength, U_8 *signature, UDATA signatureLength, J9Class **definingClass, UDATA *offsetOrAddress, UDATA options);
+#if defined(J9VM_OPT_SNAPSHOTS)
+static UDATA findHiddenInstanceFieldOffset(J9JavaVM *javaVM, const char *className, const char *fieldName, const char *signature);
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 VMINLINE static UDATA calculateJ9UTFSize(UDATA stringLength);
 VMINLINE static UDATA calculateFakeJ9ROMFieldShapeSize(UDATA nameLength, UDATA signatureLength);
 static void initFakeJ9ROMFieldShape(J9ROMFieldShape *shape, U_16 nameLength, U_8 *nameData, U_16 signatureLength, U_8 *signatureData);
@@ -76,6 +79,42 @@ static void fieldOffsetsFindNext(J9ROMFieldOffsetWalkState *state, J9ROMFieldSha
 VMINLINE bool createClassLoaderHotFieldPool(J9JavaVM *javaVM, J9ClassLoader* classLoader);
 VMINLINE void createClassHotFieldsInfo(J9JavaVM *javaVM, J9Class* clazz, uint8_t fieldOffset, int32_t reducedCpuUtil, uint32_t reducedFrequency);
 VMINLINE void addOrUpdateHotField(J9JavaVM *javaVM, J9Class* clazz, uint8_t fieldOffset, int32_t reducedCpuUtil, uint32_t reducedFrequency);
+
+#if defined(J9VM_OPT_SNAPSHOTS)
+static UDATA
+findHiddenInstanceFieldOffset(J9JavaVM *javaVM, const char *className, const char *fieldName, const char *signature)
+{
+	J9HiddenInstanceField *field = javaVM->hiddenInstanceFields;
+	UDATA offset = UDATA_MAX;
+	const UDATA classNameLength = strlen(className);
+	const UDATA fieldNameLength = strlen(fieldName);
+	const UDATA signatureLength =  strlen(signature);
+
+	while (NULL != field) {
+		J9UTF8 *currentClassName = field->className;
+		J9UTF8 *currentFieldName = J9ROMFIELDSHAPE_NAME(field->shape);
+		J9UTF8 *currentFieldSig = J9ROMFIELDSHAPE_SIGNATURE(field->shape);
+
+
+		if (classNameLength == J9UTF8_LENGTH(currentClassName)
+			&& fieldNameLength == J9UTF8_LENGTH(currentFieldName)
+			&& signatureLength == J9UTF8_LENGTH(currentFieldSig)
+		) {
+			if (J9UTF8_DATA_EQUALS(J9UTF8_DATA(currentClassName), J9UTF8_LENGTH(currentClassName), className, classNameLength)
+				&& J9UTF8_DATA_EQUALS(J9UTF8_DATA(currentFieldName), J9UTF8_LENGTH(currentFieldName), fieldName, fieldNameLength)
+				&& J9UTF8_DATA_EQUALS(J9UTF8_DATA(currentFieldSig), J9UTF8_LENGTH(currentFieldSig), signature, signatureLength)
+			) {
+				offset = field->fieldOffset;
+				break;
+			}
+		}
+
+		field = field->next;
+	}
+
+	return offset;
+}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 
 J9ROMFieldShape*
 findFieldExt(J9VMThread *vmStruct, J9Class *clazz, U_8 *fieldName, UDATA fieldNameLength, U_8 *signature, UDATA signatureLength, J9Class **definingClass, UDATA *offsetOrAddress, UDATA options)
@@ -488,7 +527,9 @@ initializeHiddenInstanceFieldsList(J9JavaVM *vm)
 		goto destroyMutexAndCleanup;
 	}
 
-	vm->hiddenInstanceFields = NULL;
+	if (!IS_RESTORE_RUN(vm)) {
+		vm->hiddenInstanceFields = NULL;
+	}
 
 exit:
 	return rc;
@@ -516,7 +557,15 @@ freeHiddenInstanceFieldsList(J9JavaVM *vm)
 		while (NULL != field) {
 			J9HiddenInstanceField *next = field->next;
 
-			j9mem_free_memory(field);
+#if defined(J9VM_OPT_SNAPSHOTS)
+			if (IS_SNAPSHOT_RUN(vm)) {
+				VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(vm);
+				vmsnapshot_free_memory(field);
+			} else if (!IS_RESTORE_RUN(vm))
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+			{
+				j9mem_free_memory(field);
+			}
 			field = next;
 		}
 		vm->hiddenInstanceFields = NULL;
@@ -579,10 +628,13 @@ addHiddenInstanceField(J9JavaVM *vm, const char *className, const char *fieldNam
 	if ((NULL != vm->systemClassLoader)
 		&& (NULL != hashClassTableAt(vm->systemClassLoader, (U_8*)className, classNameLength))
 	) {
-		/* By this point during a restore run, the hidden field is already added. */
+#if defined(J9VM_OPT_SNAPSHOTS)
+		/* By this point during a restore run, the hidden field is already added. Just fill in the offset. */
 		if (IS_RESTORE_RUN(vm)) {
+			*offsetReturn = findHiddenInstanceFieldOffset(vm, className, fieldName, fieldSignature);
 			return 0;
 		}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 		return 2;
 	}
 
@@ -604,7 +656,15 @@ addHiddenInstanceField(J9JavaVM *vm, const char *className, const char *fieldNam
  	}
 
  	/* All is good - proceed to add the entry to the start of the list. */
-	field = (J9HiddenInstanceField *) j9mem_allocate_memory(neededSize, OMRMEM_CATEGORY_VM);
+#if defined(J9VM_OPT_SNAPSHOTS)
+	if (IS_SNAPSHOT_RUN(vm)) {
+		VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(vm);
+		field = (J9HiddenInstanceField *)vmsnapshot_allocate_memory(neededSize, OMRMEM_CATEGORY_VM);
+	} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+	{
+		field = (J9HiddenInstanceField *)j9mem_allocate_memory(neededSize, OMRMEM_CATEGORY_VM);
+	}
 	if (NULL == field) {
 	 	omrthread_monitor_exit(vm->hiddenInstanceFieldsMutex);
 		return 4;

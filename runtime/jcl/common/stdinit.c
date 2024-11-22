@@ -122,6 +122,9 @@ standardInit(J9JavaVM *vm, char *dllName)
 			goto _fail;
 		}
 	}
+	/* TODO Ensure proper handling within this call. Only extraInfo may need to be fixed up, all other
+	 * initializeation of members need not be done because they will be restored.
+	 */
 	/* Now create the classPathEntries */
 	if (initializeBootstrapClassPath(vm) && !IS_RESTORE_RUN(vm)) {
 		goto _fail;
@@ -628,7 +631,7 @@ initializeBootstrapClassPath(J9JavaVM *vm)
 	}
 
 #if defined(J9VM_OPT_SHARED_CLASSES)
-	if (J9_ARE_ALL_BITS_SET(loader->flags, J9CLASSLOADER_SHARED_CLASSES_ENABLED)) {
+	if (J9_ARE_ALL_BITS_SET(loader->flags, J9CLASSLOADER_SHARED_CLASSES_ENABLED) || IS_RESTORE_RUN(vm)) {
 		/* Warm up the classpath entry so that the Classpath stored in the cache has the correct info.
 		 * This is required because when we are finding classes in the cache, initializeClassPathEntry
 		 * is not called

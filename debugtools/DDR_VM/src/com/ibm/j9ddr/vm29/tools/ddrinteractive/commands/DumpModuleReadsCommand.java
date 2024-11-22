@@ -35,7 +35,7 @@ import com.ibm.j9ddr.vm29.j9.SlotIterator;
 import com.ibm.j9ddr.vm29.pointer.generated.J9HashTablePointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9JavaVMPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ModulePointer;
-import com.ibm.j9ddr.vm29.pointer.helper.J9ObjectHelper;
+import com.ibm.j9ddr.vm29.pointer.helper.J9UTF8Helper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9RASHelper;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.JavaVersionHelper;
 
@@ -72,9 +72,9 @@ public class DumpModuleReadsCommand extends Command{
 				SlotIterator<J9ModulePointer> slotIterator = moduleHashTable.iterator();
 				while (slotIterator.hasNext()) {
 					J9ModulePointer readModulePtr = slotIterator.next();
-					String moduleName = J9ObjectHelper.stringValue(readModulePtr.moduleName());
+					String moduleName = J9UTF8Helper.stringValue(readModulePtr.moduleName());
 					String hexAddress = readModulePtr.getHexAddress();
-					out.printf("%-30s !j9module %s%n", moduleName, hexAddress);
+					out.printf("%-45s !j9module %s%n", moduleName, hexAddress);
 				}
 			}
 		} catch (CorruptDataException e) {

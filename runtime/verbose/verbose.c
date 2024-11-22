@@ -1401,8 +1401,16 @@ printModule(J9VMThread* vmThread, char* message, J9Module* module)
 	PORT_ACCESS_FROM_VMC(vmThread);
 
 	/* module name */
-	moduleNameUTF = vmThread->javaVM->internalVMFunctions->copyStringToUTF8WithMemAlloc(
-		vmThread, module->moduleName, J9_STR_NULL_TERMINATE_RESULT, "", 0, moduleNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
+	J9UTF8 *moduleName = module->moduleName;
+	U_8 *nameData = J9UTF8_DATA(moduleName);
+	UDATA nameLength = J9UTF8_LENGTH(moduleName);
+	if (nameLength < J9VM_PACKAGE_NAME_BUFFER_LENGTH) {
+		moduleNameUTF = moduleNameBuf;
+	} else {
+		moduleNameUTF = (char *)j9mem_allocate_memory(nameLength + 1, OMRMEM_CATEGORY_VM);
+	}
+	memcpy(moduleNameUTF, nameData, nameLength);
+	moduleNameUTF[nameLength] = '\0';
 
 	/* module location */
 	jrtURL = getModuleJRTURL(vmThread, module->classLoader, module);

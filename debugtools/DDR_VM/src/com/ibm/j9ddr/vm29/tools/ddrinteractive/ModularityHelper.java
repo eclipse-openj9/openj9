@@ -97,9 +97,9 @@ public class ModularityHelper {
 	 *                      be outputted to.
 	 */
 	public static void printJ9Module(J9ModulePointer modulePtr, PrintStream out) throws CorruptDataException {
-		String moduleName = J9ObjectHelper.stringValue(modulePtr.moduleName());
+		String moduleName = J9UTF8Helper.stringValue(modulePtr.moduleName());
 		String hexAddress = modulePtr.getHexAddress();
-		out.printf("%-30s !j9module %s%n", moduleName, hexAddress);
+		out.printf("%-45s !j9module %s%n", moduleName, hexAddress);
 	}
 
 	/**

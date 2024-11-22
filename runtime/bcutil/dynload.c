@@ -219,12 +219,20 @@ searchClassInModule(J9VMThread * vmThread, J9Module * j9module, U_8 * className,
 	if (j9module == javaVM->javaBaseModule) {
 		moduleName = JAVA_BASE_MODULE;
 	} else {
-		moduleName = J9_VM_FUNCTION(vmThread, copyStringToUTF8WithMemAlloc)(
-			vmThread, j9module->moduleName, J9_STR_NULL_TERMINATE_RESULT, "", 0, moduleNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
+		J9UTF8 *moduleNameJ9UTF8 = j9module->moduleName;
+		U_8 *nameData = J9UTF8_DATA(moduleNameJ9UTF8);
+		UDATA nameLength = J9UTF8_LENGTH(moduleNameJ9UTF8);
+		if (nameLength < J9VM_PACKAGE_NAME_BUFFER_LENGTH) {
+			moduleName = moduleNameBuf;
+		} else {
+			moduleName = (char *)j9mem_allocate_memory(nameLength + 1, OMRMEM_CATEGORY_VM); /* +1 for null-terminator. */
+		}
 		if (NULL == moduleName) {
 			rc = -1;
 			goto _end;
 		}
+		memcpy(moduleName, nameData, nameLength);
+		moduleName[nameLength] = '\0';
 		if (moduleNameBuf != moduleName) {
 			freeModuleName = TRUE;
 		}
@@ -602,6 +610,10 @@ readZip (J9JavaVM * javaVM, J9ClassPathEntry * cpEntry) {
 	IDATA filenameLength;
 
 	zipFile = (VMIZipFile *) (cpEntry->extraInfo);
+
+	if (IS_RESTORE_RUN(javaVM) && (NULL == zipFile)) {
+		javaVM->internalVMFunctions->initializeClassPathEntry(javaVM, cpEntry);
+	}
 
 	/* Find the desired entry, if it is present. */
 	filenameLength = strlen((const char*)javaVM->dynamicLoadBuffers->searchFilenameBuffer);

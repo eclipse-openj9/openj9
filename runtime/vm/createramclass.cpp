@@ -2469,6 +2469,7 @@ trcModulesSettingPackage(J9VMThread *vmThread, J9Class *ramClass, J9ClassLoader 
 	char *moduleNameUTF = NULL;
 	char classLoaderNameBuf[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
 	char *classLoaderNameUTF = NULL;
+	PORT_ACCESS_FROM_VMC(vmThread);
 
 	if (javaVM->unnamedModuleForSystemLoader == ramClass->module) {
 #define SYSTEMLOADER_UNNAMED_NAMED_MODULE   "unnamed module for system loader"
@@ -2486,8 +2487,16 @@ trcModulesSettingPackage(J9VMThread *vmThread, J9Class *ramClass, J9ClassLoader 
 #undef UNNAMED_NAMED_MODULE
 		moduleNameUTF = moduleNameBuf;
 	} else {
-		moduleNameUTF = vmFuncs->copyStringToUTF8WithMemAlloc(
-			vmThread, ramClass->module->moduleName, J9_STR_NULL_TERMINATE_RESULT, "", 0, moduleNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
+		J9UTF8 *moduleName = ramClass->module->moduleName;
+		U_8 *nameData = J9UTF8_DATA(moduleName);
+		UDATA nameLength = J9UTF8_LENGTH(moduleName);
+		if (nameLength < J9VM_PACKAGE_NAME_BUFFER_LENGTH) {
+			moduleNameUTF = moduleNameBuf;
+		} else {
+			moduleNameUTF = (char *)j9mem_allocate_memory(nameLength + 1, OMRMEM_CATEGORY_VM);
+		}
+		memcpy(moduleNameUTF, nameData, nameLength);
+		moduleNameUTF[nameLength] = '\0';
 	}
 	j9object_t classLoaderName = NULL;
 	if (NULL != classLoader->classLoaderObject) {
@@ -2506,11 +2515,9 @@ trcModulesSettingPackage(J9VMThread *vmThread, J9Class *ramClass, J9ClassLoader 
 		Trc_MODULE_setPackage(vmThread, J9UTF8_LENGTH(className), J9UTF8_DATA(className), classLoaderNameUTF, classLoader, moduleNameUTF, ramClass->module);
 	}
 	if (moduleNameBuf != moduleNameUTF) {
-		PORT_ACCESS_FROM_VMC(vmThread);
 		j9mem_free_memory(moduleNameUTF);
 	}
 	if (classLoaderNameBuf != classLoaderNameUTF) {
-		PORT_ACCESS_FROM_VMC(vmThread);
 		j9mem_free_memory(classLoaderNameUTF);
 	}
 }

@@ -128,6 +128,11 @@ getModuleJRTURL(J9VMThread *currentThread, J9ClassLoader *classLoader, J9Module 
 	J9UTF8 *jrtURL = NULL;
 	J9ModuleExtraInfo info = {0};
 	PORT_ACCESS_FROM_JAVAVM(javaVM);
+#if defined(J9VM_OPT_SNAPSHOTS)
+	VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(javaVM);
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+
+	/* TODO: Ensure proper paths are taken herein when on a VMSnapshot restore. */
 
 	if (NULL == classLoader->moduleExtraInfoHashTable) {
 		classLoader->moduleExtraInfoHashTable = vmFuncs->hashModuleExtraInfoTableNew(javaVM, 1);
@@ -148,17 +153,45 @@ getModuleJRTURL(J9VMThread *currentThread, J9ClassLoader *classLoader, J9Module 
 
 	if (NULL == jrtURL) {
 		if (J9_ARE_ALL_BITS_SET(javaVM->runtimeFlags, J9_RUNTIME_JAVA_BASE_MODULE_CREATED)) {
-			/* set jrt URL for the module */
-			jrtURL = vmFuncs->copyStringToJ9UTF8WithMemAlloc(currentThread, module->moduleName, J9_STR_NONE, "jrt:/", 5, NULL, 0);
-
+			if (NULL == module->moduleName) {
+				goto _exit;
+			}
+			/* Set jrt URL for the module. */
+			const char *prependStr = "jrt:/";
+			const size_t prependStrLen = strlen(prependStr);
+			const J9UTF8 *moduleName = module->moduleName;
+			const U_8 *nameData = J9UTF8_DATA(moduleName);
+			const U_16 nameLength = J9UTF8_LENGTH(moduleName);
+			const U_16 totalStringLength = prependStrLen + nameLength;
+			const UDATA jrtURLSize = totalStringLength + sizeof(J9UTF8);
+#if defined(J9VM_OPT_SNAPSHOTS)
+			if (IS_SNAPSHOTTING_ENABLED(javaVM)) {
+				jrtURL = (J9UTF8 *)vmsnapshot_allocate_memory(jrtURLSize + 1, OMRMEM_CATEGORY_VM);
+			} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+			{
+				jrtURL = (J9UTF8 *)j9mem_allocate_memory(jrtURLSize + 1, OMRMEM_CATEGORY_VM);
+			}
 			if (NULL == jrtURL) {
 				goto _exit;
 			}
+			memcpy(J9UTF8_DATA(jrtURL), prependStr, prependStrLen);
+			memcpy(J9UTF8_DATA(jrtURL) + prependStrLen, nameData, nameLength);
+			J9UTF8_DATA(jrtURL)[totalStringLength] = '\0';
+			J9UTF8_SET_LENGTH(jrtURL, totalStringLength);
 		} else {
-			/* its java.base module */
+			/* It is the java.base module. */
 			J9_DECLARE_CONSTANT_UTF8(jrtJavaBaseUrl, "jrt:/java.base");
 			const U_16 length = J9UTF8_LENGTH(&jrtJavaBaseUrl);
-			jrtURL = j9mem_allocate_memory(sizeof(J9UTF8) + length, OMRMEM_CATEGORY_VM);
+			const UDATA jrtURLSize = length + sizeof(J9UTF8);
+#if defined(J9VM_OPT_SNAPSHOTS)
+			if (IS_SNAPSHOTTING_ENABLED(javaVM)) {
+				jrtURL = (J9UTF8 *)vmsnapshot_allocate_memory(jrtURLSize, OMRMEM_CATEGORY_VM);
+			} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+			{
+				jrtURL = (J9UTF8 *)j9mem_allocate_memory(jrtURLSize, OMRMEM_CATEGORY_VM);
+			}
 			if (NULL == jrtURL) {
 				goto _exit;
 			}
@@ -169,10 +202,11 @@ getModuleJRTURL(J9VMThread *currentThread, J9ClassLoader *classLoader, J9Module 
 	}
 
 	if (TRUE == newModuleInfo) {
-		/* Add moduleInfo to the hashtable */
+		/* TODO Ensure that this path cannot be taken when allocating with the snapshot port lib. */
+		/* Add moduleInfo to the hashtable. */
 		void *node = hashTableAdd(classLoader->moduleExtraInfoHashTable, (void *)moduleInfo);
 		if (NULL == node) {
-			/* If we fail to add new moduleInfo to the hashtable, then free up jrtURL */
+			/* If adding new moduleInfo to the hashtable, then free up jrtURL. */
 			j9mem_free_memory(moduleInfo->jrtURL);
 			goto _exit;
 		}
