@@ -168,9 +168,9 @@ struct ClassValidationRecordWithChain : public ClassValidationRecord
    virtual void printFields();
 
 #if defined(J9VM_OPT_JITSERVER)
-   const AOTCacheClassChainRecord *getAOTCacheClassChainRecord() { return _aotCacheClassChainRecord; }
+   const AOTCacheClassChainRecord *getAOTCacheClassChainRecord() const { return _aotCacheClassChainRecord; }
 #else /* defined(J9VM_OPT_JITSERVER) */
-   const AOTCacheClassChainRecord *getAOTCacheClassChainRecord() { return NULL; }
+   const AOTCacheClassChainRecord *getAOTCacheClassChainRecord() const { return NULL; }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    TR_OpaqueClassBlock *_class;
@@ -210,9 +210,9 @@ struct ProfiledClassRecord : public ClassValidationRecord
    virtual void printFields();
 
 #if defined(J9VM_OPT_JITSERVER)
-   const AOTCacheClassChainRecord *getAOTCacheClassChainRecord() { return _aotCacheClassChainRecord; }
+   const AOTCacheClassChainRecord *getAOTCacheClassChainRecord() const { return _aotCacheClassChainRecord; }
 #else /* defined(J9VM_OPT_JITSERVER) */
-   const AOTCacheClassChainRecord *getAOTCacheClassChainRecord() { return NULL; }
+   const AOTCacheClassChainRecord *getAOTCacheClassChainRecord() const { return NULL; }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    TR_OpaqueClassBlock *_class;
@@ -403,9 +403,9 @@ struct ClassChainRecord : public SymbolValidationRecord
    virtual void printFields();
 
 #if defined(J9VM_OPT_JITSERVER)
-   const AOTCacheClassChainRecord *getAOTCacheClassChainRecord() { return _aotCacheClassChainRecord; }
+   const AOTCacheClassChainRecord *getAOTCacheClassChainRecord() const { return _aotCacheClassChainRecord; }
 #else /* defined(J9VM_OPT_JITSERVER) */
-   const AOTCacheClassChainRecord *getAOTCacheClassChainRecord() { return NULL; }
+   const AOTCacheClassChainRecord *getAOTCacheClassChainRecord() const { return NULL; }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    TR_OpaqueClassBlock *_class;

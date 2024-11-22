@@ -8632,6 +8632,9 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                options->setOption(TR_UseSymbolValidationManager, false);
                }
 
+            if (!vm->canTrackAOTDependencies() || !that->_compInfo.getPersistentInfo()->getTrackAOTDependencies())
+               options->setOption(TR_DisableDependencyTracking);
+
             // Adjust Options for AOT compilation
             if (vm->isAOT_DEPRECATED_DO_NOT_USE())
                {

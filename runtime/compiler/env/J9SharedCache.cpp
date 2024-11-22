@@ -1636,11 +1636,11 @@ TR_J9JITServerSharedCache::TR_J9JITServerSharedCache(TR_J9VMBase *fe)
 uintptr_t
 TR_J9JITServerSharedCache::rememberClass(J9Class *clazz, const AOTCacheClassChainRecord **classChainRecord, bool create)
    {
-   TR_ASSERT_FATAL(classChainRecord || !create, "Must pass classChainRecord if creating class chain at JITServer");
+   TR::Compilation *comp = _compInfoPT->getCompilation();
+   TR_ASSERT_FATAL(classChainRecord || !create || !comp->isAOTCacheStore(), "Must pass classChainRecord if creating class chain at JITServer");
    TR_ASSERT(_stream, "stream must be initialized by now");
 
    uintptr_t clientClassChainOffset = TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET;
-   TR::Compilation *comp = _compInfoPT->getCompilation();
    ClientSessionData *clientData = comp->getClientData();
    bool needClassChainRecord = comp->isAOTCacheStore();
    bool useServerOffsets = clientData->useServerOffsets(_stream) && needClassChainRecord;
