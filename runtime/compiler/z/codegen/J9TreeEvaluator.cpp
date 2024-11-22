@@ -14670,6 +14670,7 @@ TR::Register*
 J9::Z::TreeEvaluator::inlineOnSpinWait(TR::Node *node, TR::CodeGenerator *cg) {
    // Thread.onSpinWait() on z is a simple "nop" instruction.
    cg->generateNop(node);
+   TR::Compilation *comp = cg->comp();
    static const bool printIt = feGetEnv("TR_showPauseOnSpinWait") != NULL;
    if (printIt && comp->getOption(TR_TraceCG))
       {
