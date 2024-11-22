@@ -14665,3 +14665,15 @@ J9::Z::TreeEvaluator::inlineIntegerStringSize(TR::Node* node, TR::CodeGenerator*
 
    return node->setRegister(lengthReg);
    }
+
+TR::Register*
+J9::Z::TreeEvaluator::inlineOnSpinWait(TR::Node *node, TR::CodeGenerator *cg) {
+   // Thread.onSpinWait() on z is a simple "nop" instruction.
+   cg->generateNop(node);
+   static const bool printIt = feGetEnv("TR_showPauseOnSpinWait") != NULL;
+   if (printIt && comp->getOption(TR_TraceCG))
+      {
+      traceMsg(comp, "insert PAUSE for onSpinWait : node=%p, %s\n", node, comp->signature());
+      }
+   return NULL;
+}

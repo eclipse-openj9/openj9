@@ -4043,6 +4043,14 @@ J9::Z::CodeGenerator::inlineDirectCall(
             return resultReg != NULL;
             }
          break;
+      case TR::java_lang_Thread_onSpinWait:
+         static char *disableOSW = feGetEnv("TR_noPauseOnSpinWait");
+         if (!disableOSW)
+            {
+            resultReg = TR::TreeEvaluator::inlineOnSpinWait(node, cg);
+            return true;
+            }
+         break;
 
       default:
          break;
