@@ -14665,3 +14665,18 @@ J9::Z::TreeEvaluator::inlineIntegerStringSize(TR::Node* node, TR::CodeGenerator*
 
    return node->setRegister(lengthReg);
    }
+
+TR::Register*
+J9::Z::TreeEvaluator::inlineOnSpinWait(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::Compilation *comp = cg->comp();
+   if (comp->getOption(TR_TraceCG))
+      {
+      traceMsg(comp, "Inlining Thread.onSpinWait call on node %p to NOP.\n", node);
+      }
+
+   // onSpinWait() method calls VM_AtomicSupport::yieldCPU() which is a simple NOP instruction on Z.
+   // Check omr/include_core/AtomicSupport.hpp for the JNI implementation.
+   TR::Instruction* cursor = new (cg->trHeapMemory()) TR::S390NOPInstruction(TR::InstOpCode::NOP, 2, node, cg);
+   return NULL;
+   }
