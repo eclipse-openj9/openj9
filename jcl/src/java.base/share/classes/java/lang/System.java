@@ -1265,6 +1265,9 @@ static void checkTmpDir() {
 
 /*[IF JAVA_SPEC_VERSION >= 9]*/
 static void initSecurityManager(ClassLoader applicationClassLoader) {
+	/*[IF JAVA_SPEC_VERSION >= 24]*/
+	boolean throwErrorOnInit = false;
+	/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 	String javaSecurityManager = internalGetProperties().getProperty("java.security.manager"); //$NON-NLS-1$
 	if (null == javaSecurityManager) {
 		/*[IF JAVA_SPEC_VERSION >= 18]*/
@@ -1273,7 +1276,11 @@ static void initSecurityManager(ClassLoader applicationClassLoader) {
 		/* Do nothing. */
 		/*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 	} else if ("allow".equals(javaSecurityManager)) { //$NON-NLS-1$
+		/*[IF JAVA_SPEC_VERSION >= 24]*/
+		throwErrorOnInit = true;
+		/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 		/* Do nothing. */
+		/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 	} else if ("disallow".equals(javaSecurityManager)) { //$NON-NLS-1$
 		/*[IF JAVA_SPEC_VERSION > 11]*/
 		throwUOEFromSetSM = true;
@@ -1281,6 +1288,9 @@ static void initSecurityManager(ClassLoader applicationClassLoader) {
 		/* Do nothing. */
 		/*[ENDIF] JAVA_SPEC_VERSION > 11 */
 	} else {
+		/*[IF JAVA_SPEC_VERSION >= 24]*/
+		throwErrorOnInit = true;
+		/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 		/*[IF JAVA_SPEC_VERSION >= 17]*/
 		initialErr.println("WARNING: A command line option has enabled the Security Manager"); //$NON-NLS-1$
 		initialErr.println("WARNING: The Security Manager is deprecated and will be removed in a future release"); //$NON-NLS-1$
@@ -1297,7 +1307,14 @@ static void initSecurityManager(ClassLoader applicationClassLoader) {
 				throw new Error(Msg.getString("K0631", e.toString()), e); //$NON-NLS-1$
 			}
 		}
+		/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 	}
+	/*[IF JAVA_SPEC_VERSION >= 24]*/
+	if (throwErrorOnInit) {
+		/*[MSG "K0B04", "A command line option has attempted to allow or enable the Security Manager. Enabling a Security Manager is not supported."]*/
+		throw new Error(Msg.getString("K0B04")); //$NON-NLS-1$
+	}
+	/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 }
 /*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
@@ -1315,17 +1332,25 @@ static boolean allowSecurityManager() {
  *
  * @param		s			the new security manager
  *
+/*[IF JAVA_SPEC_VERSION >= 24]
+ * @throws		UnsupportedOperationException	always
+/*[ELSE] JAVA_SPEC_VERSION >= 24
  * @throws		SecurityException 	if the security manager has already been set and its checkPermission method doesn't allow it to be replaced.
 /*[IF JAVA_SPEC_VERSION > 11]
  * @throws		UnsupportedOperationException 	if s is non-null and a special token "disallow" has been set for system property "java.security.manager"
  * 												which indicates that a security manager is not allowed to be set dynamically.
 /*[ENDIF] JAVA_SPEC_VERSION > 11
+/*[ENDIF] JAVA_SPEC_VERSION >= 24
  */
 /*[IF JAVA_SPEC_VERSION >= 17]*/
 @Deprecated(since="17", forRemoval=true)
 @CallerSensitive
 /*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 public static void setSecurityManager(final SecurityManager s) {
+/*[IF JAVA_SPEC_VERSION >= 24]*/
+	/*[MSG "K0B03", "Setting a Security Manager is not supported"]*/
+	throw new UnsupportedOperationException(Msg.getString("K0B03")); //$NON-NLS-1$
+/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 /*[IF CRIU_SUPPORT]*/
 	if (openj9.internal.criu.InternalCRIUSupport.isCRIUSupportEnabled()) {
 		/*[MSG "K0B02", "Enabling a SecurityManager currently unsupported when -XX:+EnableCRIUSupport is specified"]*/
@@ -1403,6 +1428,7 @@ public static void setSecurityManager(final SecurityManager s) {
 		currentSecurity.checkPermission(com.ibm.oti.util.RuntimePermissions.permissionSetSecurityManager);
 	}
 	security = s;
+/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 }
 
 /**
