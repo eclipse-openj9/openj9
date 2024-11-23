@@ -74,6 +74,7 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *conditionalHelperEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *flushEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *directCallEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *setmemoryEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
    static TR::Register *VMcheckcastEvaluator2(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *VMcheckcastEvaluator(TR::Node *node, TR::CodeGenerator *cg);
