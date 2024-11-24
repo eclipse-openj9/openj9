@@ -27,6 +27,7 @@ import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Utility class to check time.
@@ -99,9 +100,9 @@ public class TimeUtilities {
 	}
 
 	private volatile boolean tasksPassed = true;
-	private volatile int taskRunning = 0;
-	private volatile int taskStarted = 0;
-	private volatile int taskExecuted = 0;
+	private AtomicInteger taskRunning = new AtomicInteger(0);
+	private AtomicInteger taskStarted = new AtomicInteger(0);
+	private AtomicInteger taskExecuted = new AtomicInteger(0);
 	private final ArrayList<Timer> timers = new ArrayList<Timer>();
 
 	public void timerSchedule(String testName, long startMillisTime, long startNanoTime, long minElapsedMillisTime,
@@ -113,19 +114,21 @@ public class TimeUtilities {
 	}
 
 	public boolean getResultAndCancelTimers() {
-		showThreadCurrentTime("getResultAndCancelTimers before Thread.yield() taskRunning = " + taskRunning);
-		while (taskRunning > 0) {
+		showThreadCurrentTime("getResultAndCancelTimers before Thread.yield() taskRunning = " + taskRunning.get()
+				+ ", taskStarted: " + taskStarted.get() + ", taskExecuted: " + taskExecuted.get());
+		while (taskRunning.get() > 0) {
 			Thread.yield();
 		}
 
-		showThreadCurrentTime("getResultAndCancelTimers before timer.cancel()");
+		showThreadCurrentTime("getResultAndCancelTimers before timer.cancel() taskRunning = " + taskRunning.get()
+		+ ", taskStarted: " + taskStarted.get() + ", taskExecuted: " + taskExecuted.get());
 		for (Timer timer : timers) {
 			timer.cancel();
 		}
 
-		showThreadCurrentTime("TimeTestTask tasksPassed: " + tasksPassed + ", taskStarted: " + taskStarted
-				+ ", taskExecuted: " + taskExecuted);
-		return tasksPassed && (taskStarted == taskExecuted);
+		showThreadCurrentTime("TimeTestTask tasksPassed: " + tasksPassed + ", taskStarted: " + taskStarted.get()
+				+ ", taskExecuted: " + taskExecuted.get());
+		return tasksPassed && (taskStarted.get() == taskExecuted.get());
 	}
 
 	class TimeTestTask extends TimerTask {
@@ -148,16 +151,18 @@ public class TimeUtilities {
 			this.minElapsedNanoTimeInMillis = minElapsedNanoTimeInMillis;
 			this.maxElapsedNanoTimeInMillis = maxElapsedNanoTimeInMillis;
 
-			taskStarted++;
-			taskRunning++;
+			taskRunning.incrementAndGet();
+			taskStarted.incrementAndGet();
 		}
 
 		public void run() {
-			taskExecuted++;
+			taskExecuted.incrementAndGet();
 			if (!checkElapseTime(testName, startMillisTime, startNanoTime, minElapsedMillisTime, minElapsedNanoTimeInMillis)) {
 				tasksPassed = false;
 			}
-			taskRunning--;
+			taskRunning.decrementAndGet();
+			showThreadCurrentTime("TimeTestTask.run() taskRunning = " + taskRunning.get() + ", taskStarted: " + taskStarted.get()
+					+ ", taskExecuted: " + taskExecuted.get());
 		}
 	}
 }
