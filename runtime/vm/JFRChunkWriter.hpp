@@ -70,6 +70,7 @@ enum MetadataTypeID {
 	OSInformationID = 87,
 	VirtualizationInformationID = 88,
 	InitialSystemPropertyID = 89,
+	InitialEnvironmentVariableID = 90,
 	CPUInformationID = 92,
 	CPULoadID = 94,
 	ThreadCPULoadID = 95,
@@ -162,6 +163,7 @@ private:
 	static constexpr int INITIAL_SYSTEM_PROPERTY_EVENT_SIZE = 6000;
 	static constexpr int CPU_LOAD_EVENT_SIZE = (3 * sizeof(float)) + (3 * sizeof(I_64));
 	static constexpr int THREAD_CPU_LOAD_EVENT_SIZE = (2 * sizeof(float)) + (4 * sizeof(I_64));
+	static constexpr int INITIAL_ENVIRONMENT_VARIABLE_EVENT_SIZE = 6000;
 
 	static constexpr int METADATA_ID = 1;
 
@@ -347,6 +349,8 @@ done:
 				writeOSInformationEvent();
 
 				writeInitialSystemPropertyEvents(_vm);
+
+				writeInitialEnvironmentVariableEvents();
 			}
 
 			writePhysicalMemoryEvent();
@@ -625,6 +629,8 @@ done:
 
 	void writeStringLiteral(const char *string);
 
+	void writeStringLiteral(const char *string, UDATA len);
+
 	U_8 *writeThreadStateCheckpointEvent();
 
 	U_8 *writePackageCheckpointEvent();
@@ -658,6 +664,8 @@ done:
 	U_8 *writeOSInformationEvent();
 
 	void writeInitialSystemPropertyEvents(J9JavaVM *vm);
+
+	void writeInitialEnvironmentVariableEvents();
 
 	UDATA
 	calculateRequiredBufferSize()
@@ -712,6 +720,8 @@ done:
 		requiredBufferSize += CPU_INFORMATION_EVENT_SIZE;
 
 		requiredBufferSize += INITIAL_SYSTEM_PROPERTY_EVENT_SIZE;
+
+		requiredBufferSize += INITIAL_ENVIRONMENT_VARIABLE_EVENT_SIZE;
 
 		requiredBufferSize += _constantPoolTypes.getCPULoadCount() * CPU_LOAD_EVENT_SIZE;
 
