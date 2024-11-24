@@ -20,7 +20,24 @@ OpenJDK Assembly Exception [2].
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 -->
 <objects group="jfr">
-	<object name="jdk_jfr_internal_JVM" >
-		<include-if condition="spec.flags.opt_jfr" />
+	<object name="jdk_jfr_internal_JVM_common">
+		<include-if condition="spec.java11"/>
+	</object>
+	<object name="jdk_jfr_internal_JVM_jdk11">
+		<include-if condition="spec.java11"/>
+		<exclude-if condition="spec.java12"/>
+	</object>
+	<object name="jdk_jfr_internal_JVM_jdk17">
+		<include-if condition="spec.java17"/>
+		<exclude-if condition="spec.java18"/>
+	</object>
+	<object name="jdk_jfr_internal_JVM_jdk17andUp">
+		<include-if condition="spec.java17"/>
+	</object>
+	<object name="jdk_jfr_internal_JVM_jdk21andUp">
+		<include-if condition="spec.java21"/>
+	</object>
+	<object name="jdk_jfr_internal_JVM_jdk23">
+		<include-if condition="spec.java23"/>
 	</object>
 </objects>
