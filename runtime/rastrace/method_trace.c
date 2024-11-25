@@ -30,9 +30,6 @@
 #undef UT_MODULE_UNLOADED
 #include "ut_mt.h"
 
-#define DEFAULT_BUFFER_LENGTH 128
-#define DEFAULT_STRING_LENGTH 32
-
 static void hookRAMClassLoad(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
 static void traceMethodArgInt (J9VMThread *thr, UDATA* arg0EA, char* cursor, UDATA length, char* type); 
 static void traceMethodArgDouble (J9VMThread *thr, UDATA* arg0EA, char* cursor, UDATA length);
@@ -477,31 +474,48 @@ traceMethodArgObject(J9VMThread *thr, UDATA* arg0EA, char* cursor, UDATA length)
 	if (object == NULL) {
 		j9str_printf(PORTLIB, cursor, length, "null");
 	} else {
-		J9Class* clazz = J9OBJECT_CLAZZ(thr, object);
-		J9ROMClass * romClass = clazz->romClass;
-		J9UTF8* className = J9ROMCLASS_CLASSNAME(romClass);
+		/* string arg */
+		J9Class *clazz = J9OBJECT_CLAZZ(thr, object);
 		J9JavaVM *vm = thr->javaVM;
-		const unsigned int methodStrArgLength = ((RasGlobalStorage *)thr->javaVM->j9rasGlobalStorage)->methodStrArgLength;
-		unsigned int strArgLength = methodStrArgLength == 0 ? DEFAULT_STRING_LENGTH : methodStrArgLength;
 
 		if (clazz == J9VMJAVALANGSTRING_OR_NULL(vm)) {
-			/* string arg */
-			char stringArgBuffer[DEFAULT_BUFFER_LENGTH];
+            const unsigned int methodStrArgLength = ((RasGlobalStorage *)thr->javaVM->j9rasGlobalStorage)->methodStrArgLength;
+            unsigned int strArgLength = methodStrArgLength == 0 ? DEFAULT_STRING_LENGTH : methodStrArgLength;
 
-			J9InternalVMFunctions const * const vmFuncs = thr->javaVM->internalVMFunctions;
-			char *stringArgUTF8 = vmFuncs->copyStringToUTF8WithMemAlloc(thr, object, J9_STR_NULL_TERMINATE_RESULT, "  ", 2, stringArgBuffer, DEFAULT_BUFFER_LENGTH, NULL);
+#define DEFAULT_STRING_LENGTH 32
 
-			if(strArgLength < strlen(stringArgUTF8)) {
-				j9str_printf(PORTLIB, cursor, length, "(String)%.*s...", (U_32)strArgLength, J9UTF8_DATA(stringArgUTF8));
+			char utf8Buffer[128];
+			UDATA utf8Length = 0;
+
+			char *utf8String = vm->internalVMFunctions->copyStringToUTF8WithMemAlloc(
+								thr,
+								object,
+								0,
+								"",
+								0,
+								utf8Buffer,
+								sizeof(utf8Buffer),
+								&utf8Length);
+
+			if (NULL == utf8String) {
+				j9str_printf(PORTLIB, cursor, length, "(String)<Memory allocation error>");
+			} else if (utf8Length > strArgLength) {
+				j9str_printf(PORTLIB, cursor, length, "(String)\"%.*s\"...", (U_32)DEFAULT_STRING_LENGTH, utf8String);
 			} else {
-				j9str_printf(PORTLIB, cursor, length, "(String)%.*s", (U_32)J9UTF8_LENGTH(stringArgUTF8), J9UTF8_DATA(stringArgUTF8));
+				j9str_printf(PORTLIB, cursor, length, "(String)\"%.*s\"", (U_32)utf8Length, utf8String);
 			}
 
-			if ((char*)stringArgBuffer != stringArgUTF8) {
-				j9mem_free_memory(stringArgUTF8);
+			if (utf8Buffer != utf8String) {
+				j9mem_free_memory(utf8String);
 			}
+
+#undef DEFAULT_STRING_LENGTH
+
 		} else {
 			/* TODO: handle arrays */
+
+			J9ROMClass *romClass = clazz->romClass;
+			J9UTF8 *className = J9ROMCLASS_CLASSNAME(romClass);
 			j9str_printf(PORTLIB, cursor, length, "%.*s@%p", (U_32)J9UTF8_LENGTH(className), J9UTF8_DATA(className), object);
 		}
 	}
