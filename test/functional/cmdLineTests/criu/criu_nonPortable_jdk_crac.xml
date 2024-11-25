@@ -47,7 +47,7 @@
   </test>
 
   <test id="jdk.crac - jcmd request checkpoint via JDK.checkpoint">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ $EXPORTS$ $CRACCHECKPOINTTO$" $TESTNG$ $MAINCLASS_TESTJDKCRAC$ JDK.checkpoint 1 false false</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$ENABLE_PREVIEW$ $JVM_OPTIONS$ $EXPORTS$ $CRACCHECKPOINTTO$" $TESTNG$ $MAINCLASS_TESTJDKCRAC$ JDK.checkpoint 1 false false</command>
     <output type="success" caseSensitive="no" regex="no">JVM checkpoint requested</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>
     <output type="failure" caseSensitive="yes" regex="no">Operation not permitted</output>

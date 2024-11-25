@@ -24,3 +24,10 @@
 ifneq ($(filter openj9 ibm, $(JDK_IMPL)),)
     CMDLINETESTER_JVM_OPTIONS=$(Q)-Xshareclasses:none$(Q)
 endif
+
+# Set ENABLE_PREVIEW to --enable-preview when testing a Valhalla build.
+ifeq ($(findstring VTSTANDARD, $(TEST_FLAG)), VTSTANDARD)
+ ENABLE_PREVIEW=--enable-preview
+else
+ ENABLE_PREVIEW=
+endif
