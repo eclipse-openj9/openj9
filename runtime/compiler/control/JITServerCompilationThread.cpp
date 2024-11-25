@@ -1591,7 +1591,6 @@ TR::CompilationInfoPerThreadRemote::getCachedResolvedMethod(TR_ResolvedMethodKey
                               key.cpIndex,
                               vTableSlot,
                               (J9Method *) method,
-                              unresolvedInCP,
                               NULL,
                               methodInfo);
          }

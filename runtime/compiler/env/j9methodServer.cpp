@@ -386,10 +386,9 @@ TR_ResolvedJ9JITServerMethod::getResolvedPossiblyPrivateVirtualMethod(TR::Compil
          // call constructor without making a new query
          if (createResolvedMethod)
             {
-            resolvedMethod = createResolvedMethodFromJ9Method(comp, cpIndex, vTableIndex, ramMethod, unresolvedInCP, aotStats, methodInfo);
+            resolvedMethod = createResolvedMethodFromJ9Method(comp, cpIndex, vTableIndex, ramMethod, aotStats, methodInfo);
             compInfoPT->cacheResolvedMethod(
-               compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::VirtualFromCP,
-                                                (TR_OpaqueClassBlock *) _ramClass, cpIndex),
+               compInfoPT->getResolvedMethodKey(TR_ResolvedMethodType::VirtualFromCP, (TR_OpaqueClassBlock *) _ramClass, cpIndex),
                (TR_OpaqueMethodBlock *) ramMethod,
                (uint32_t) vTableIndex,
                methodInfo,
@@ -689,7 +688,7 @@ TR_ResolvedJ9JITServerMethod::getResolvedStaticMethod(TR::Compilation * comp, I_
       TR_AOTInliningStats *aotStats = NULL;
       if (comp->getOption(TR_EnableAOTStats))
          aotStats = & (((TR_JitPrivateConfig *)_fe->_jitConfig->privateConfig)->aotStats->staticMethods);
-      resolvedMethod = createResolvedMethodFromJ9Method(comp, cpIndex, 0, ramMethod, unresolvedInCP, aotStats, methodInfo);
+      resolvedMethod = createResolvedMethodFromJ9Method(comp, cpIndex, 0, ramMethod, aotStats, methodInfo);
       if (unresolvedInCP)
          *unresolvedInCP = false;
       }
@@ -753,7 +752,7 @@ TR_ResolvedJ9JITServerMethod::getResolvedSpecialMethod(TR::Compilation * comp, I
       if (comp->getOption(TR_EnableAOTStats))
          aotStats = & (((TR_JitPrivateConfig *)_fe->_jitConfig->privateConfig)->aotStats->specialMethods);
       if (createResolvedMethod)
-         resolvedMethod = createResolvedMethodFromJ9Method(comp, cpIndex, 0, ramMethod, unresolvedInCP, aotStats, methodInfo);
+         resolvedMethod = createResolvedMethodFromJ9Method(comp, cpIndex, 0, ramMethod, aotStats, methodInfo);
       if (unresolvedInCP)
          *unresolvedInCP = false;
       }
@@ -778,7 +777,7 @@ TR_ResolvedJ9JITServerMethod::getResolvedSpecialMethod(TR::Compilation * comp, I
    }
 
 TR_ResolvedMethod *
-TR_ResolvedJ9JITServerMethod::createResolvedMethodFromJ9Method( TR::Compilation *comp, int32_t cpIndex, uint32_t vTableSlot, J9Method *j9Method, bool * unresolvedInCP, TR_AOTInliningStats *aotStats)
+TR_ResolvedJ9JITServerMethod::createResolvedMethodFromJ9Method( TR::Compilation *comp, int32_t cpIndex, uint32_t vTableSlot, J9Method *j9Method, TR_AOTInliningStats *aotStats)
    {
    TR_ResolvedMethod *m = new (comp->trHeapMemory()) TR_ResolvedJ9JITServerMethod((TR_OpaqueMethodBlock *) j9Method, _fe, comp->trMemory(), this, vTableSlot);
    if (((TR_ResolvedJ9Method*)m)->isSignaturePolymorphicMethod())
@@ -792,7 +791,7 @@ TR_ResolvedJ9JITServerMethod::createResolvedMethodFromJ9Method( TR::Compilation 
    }
 
 TR_ResolvedMethod *
-TR_ResolvedJ9JITServerMethod::createResolvedMethodFromJ9Method( TR::Compilation *comp, int32_t cpIndex, uint32_t vTableSlot, J9Method *j9Method, bool * unresolvedInCP, TR_AOTInliningStats *aotStats, const TR_ResolvedJ9JITServerMethodInfo &methodInfo)
+TR_ResolvedJ9JITServerMethod::createResolvedMethodFromJ9Method( TR::Compilation *comp, int32_t cpIndex, uint32_t vTableSlot, J9Method *j9Method, TR_AOTInliningStats *aotStats, const TR_ResolvedJ9JITServerMethodInfo &methodInfo)
    {
    TR_ResolvedMethod *m = new (comp->trHeapMemory()) TR_ResolvedJ9JITServerMethod((TR_OpaqueMethodBlock *) j9Method, _fe, comp->trMemory(), methodInfo, this, vTableSlot);
    if (((TR_ResolvedJ9Method*)m)->isSignaturePolymorphicMethod())
@@ -884,7 +883,7 @@ TR_ResolvedJ9JITServerMethod::getResolvedInterfaceMethod(TR::Compilation * comp,
       TR_AOTInliningStats *aotStats = NULL;
       if (comp->getOption(TR_EnableAOTStats))
          aotStats = & (((TR_JitPrivateConfig *)_fe->_jitConfig->privateConfig)->aotStats->interfaceMethods);
-      TR_ResolvedMethod *m = createResolvedMethodFromJ9Method(comp, cpIndex, 0, ramMethod, NULL, aotStats, methodInfo);
+      TR_ResolvedMethod *m = createResolvedMethodFromJ9Method(comp, cpIndex, 0, ramMethod, aotStats, methodInfo);
 
       TR_OpaqueClassBlock *c = NULL;
       if (m)
@@ -970,7 +969,7 @@ TR_ResolvedJ9JITServerMethod::getResolvedImproperInterfaceMethod(TR::Compilation
       if (j9method == NULL)
          return NULL;
       else
-         return createResolvedMethodFromJ9Method(comp, cpIndex, vtableOffset, j9method, NULL, NULL, methodInfo);
+         return createResolvedMethodFromJ9Method(comp, cpIndex, vtableOffset, j9method, NULL, methodInfo);
       }
 
    return NULL;
@@ -2180,7 +2179,7 @@ TR_ResolvedRelocatableJ9JITServerMethod::allocateException(uint32_t numBytes, TR
    }
 
 TR_ResolvedMethod *
-TR_ResolvedRelocatableJ9JITServerMethod::createResolvedMethodFromJ9Method(TR::Compilation *comp, I_32 cpIndex, uint32_t vTableSlot, J9Method *j9method, bool * unresolvedInCP, TR_AOTInliningStats *aotStats) {
+TR_ResolvedRelocatableJ9JITServerMethod::createResolvedMethodFromJ9Method(TR::Compilation *comp, I_32 cpIndex, uint32_t vTableSlot, J9Method *j9method, TR_AOTInliningStats *aotStats) {
    // This method is called when a remote mirror hasn't been created yet, so it needs to be created from here.
    TR_ResolvedMethod *resolvedMethod = NULL;
 
@@ -2236,7 +2235,7 @@ TR_ResolvedRelocatableJ9JITServerMethod::createResolvedMethodFromJ9Method(TR::Co
    }
 
 TR_ResolvedMethod *
-TR_ResolvedRelocatableJ9JITServerMethod::createResolvedMethodFromJ9Method( TR::Compilation *comp, int32_t cpIndex, uint32_t vTableSlot, J9Method *j9method, bool * unresolvedInCP, TR_AOTInliningStats *aotStats, const TR_ResolvedJ9JITServerMethodInfo &methodInfo)
+TR_ResolvedRelocatableJ9JITServerMethod::createResolvedMethodFromJ9Method( TR::Compilation *comp, int32_t cpIndex, uint32_t vTableSlot, J9Method *j9method, TR_AOTInliningStats *aotStats, const TR_ResolvedJ9JITServerMethodInfo &methodInfo)
    {
    // If this method is called, remote mirror has either already been created or creation failed.
    // In either case, methodInfo contains all parameters required to construct a resolved method or check that it's NULL.
