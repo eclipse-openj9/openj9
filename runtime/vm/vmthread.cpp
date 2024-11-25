@@ -44,6 +44,7 @@
 #include "ut_j9vm.h"
 #include "vm_internal.h"
 #include "vmaccess.h"
+#include "VMHelpers.hpp"
 #include "vmhook_internal.h"
 
 #include "HeapIteratorAPI.h"
@@ -456,9 +457,11 @@ void threadCleanup(J9VMThread * vmThread, UDATA forkedByVM)
 	/* Mark this thread as dead */
 	setEventFlag(vmThread, J9_PUBLIC_FLAGS_STOPPED);
 
+	/* Set j.l.Thread status to TERMINATED. */
+	VM_VMHelpers::setThreadState(vmThread, J9VMTHREAD_STATE_DEAD);
+
 	/* We are dead at this point. Clear the suspend bit prior to triggering the thread end hook */
 	clearHaltFlag(vmThread, J9_PUBLIC_FLAGS_HALT_THREAD_JAVA_SUSPEND);
-
 	TRIGGER_J9HOOK_VM_THREAD_END(vmThread->javaVM->hookInterface, vmThread, 0);
 
 #ifdef J9VM_OPT_DEPRECATED_METHODS
@@ -470,7 +473,6 @@ void threadCleanup(J9VMThread * vmThread, UDATA forkedByVM)
 #endif
 
 	/* Increment zombie thread counter - indicates threads which have notified java of their death, but have not deallocated their vmThread and exited their thread proc */
-
 	omrthread_monitor_enter(vm->vmThreadListMutex);
 	++(vm->zombieThreadCount);
 	omrthread_monitor_exit(vm->vmThreadListMutex);
@@ -479,7 +481,6 @@ void threadCleanup(J9VMThread * vmThread, UDATA forkedByVM)
 	acquireVMAccess(vmThread);
 	cleanUpAttachedThread(vmThread);
 	releaseVMAccess(vmThread);
-
 
 #if defined(OMR_GC_CONCURRENT_SCAVENGER) && defined(J9VM_ARCH_S390)
 	/* Concurrent scavenge enabled and JIT loaded implies running on supported h/w.
@@ -495,7 +496,6 @@ void threadCleanup(J9VMThread * vmThread, UDATA forkedByVM)
 #endif
 
 	/* Deallocate the vmThread - if this thread was not forked by the VM, decrement the zombie counter now as the VM is not in control of the native thread */
-
 	deallocateVMThread(vmThread, !forkedByVM, TRUE);
 }
 
@@ -2009,8 +2009,10 @@ startJavaThreadInternal(J9VMThread * currentThread, UDATA privateFlags, UDATA os
 	}
 #endif
 
-	/* Allow the thread to run */
+	/* Set j.l.Thread status to RUNNABLE. */
+	VM_VMHelpers::setThreadState(currentThread, J9VMTHREAD_STATE_RUNNING);
 
+	/* Allow the thread to run. */
 	omrthread_resume(osThread);
 
 	TRIGGER_J9HOOK_VM_THREAD_STARTING(vm->hookInterface, currentThread, newThread);

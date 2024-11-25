@@ -91,6 +91,12 @@ threadParkImpl(J9VMThread *vmThread, BOOLEAN timeoutIsEpochRelative, I_64 timeou
 		/* vmThread->threadObject != NULL because vmThread must be the current thread */
 		J9VMTHREAD_SET_BLOCKINGENTEROBJECT(vmThread, vmThread, J9VMJAVALANGTHREAD_PARKBLOCKER(vmThread, vmThread->threadObject));
 		TRIGGER_J9HOOK_VM_PARK(vm->hookInterface, vmThread, millis, nanos);
+
+		/* Set j.l.Thread status to WAITING. */
+		U_64 oldState = (0 != (thrstate & J9_PUBLIC_FLAGS_THREAD_TIMED))
+				? VM_VMHelpers::setThreadState(vmThread, J9VMTHREAD_STATE_PARKED_TIMED)
+				: VM_VMHelpers::setThreadState(vmThread, J9VMTHREAD_STATE_PARKED);
+
 		internalReleaseVMAccessSetStatus(vmThread, thrstate);
 
 		while (1) {
@@ -109,6 +115,10 @@ threadParkImpl(J9VMThread *vmThread, BOOLEAN timeoutIsEpochRelative, I_64 timeou
 		}
 
 		internalAcquireVMAccessClearStatus(vmThread, thrstate);
+
+		/* Set j.l.Thread status to oldState. */
+		VM_VMHelpers::setThreadState(vmThread, oldState);
+
 		TRIGGER_J9HOOK_VM_UNPARKED(vm->hookInterface, vmThread);
 		J9VMTHREAD_SET_BLOCKINGENTEROBJECT(vmThread, vmThread, NULL);
 	}
