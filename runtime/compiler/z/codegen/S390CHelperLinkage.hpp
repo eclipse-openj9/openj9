@@ -39,6 +39,7 @@ class CHelperLinkage : public TR::Linkage
    uint32_t _preservedRegisterMapForGC;
    TR::RealRegister::RegNum _methodMetaDataRegister;
    TR::RealRegister::RegNum _returnAddressRegister;
+   bool getIsFastPathOnly(TR::Node * callNode);
 	// Following Regs are needed only in the case of zOS.
 #if defined(J9ZOS390)
 	TR::RealRegister::RegNum _DSAPointerRegister;
