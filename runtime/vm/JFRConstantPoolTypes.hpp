@@ -45,6 +45,7 @@ J9_DECLARE_CONSTANT_UTF8(nativeMethod, "(nativeMethod)");
 J9_DECLARE_CONSTANT_UTF8(nativeMethodSignature, "()");
 J9_DECLARE_CONSTANT_UTF8(defaultPackage, "(defaultPackage)");
 J9_DECLARE_CONSTANT_UTF8(bootLoaderName, "boostrapClassLoader");
+J9_DECLARE_CONSTANT_UTF8(unknownThread, "unknown thread");
 
 enum JFRStringConstants {
 	DefaultString = 0,
@@ -540,6 +541,21 @@ done:
 			value = jvmInfoProperty->value;
 		}
 		return value;
+	}
+
+	void addUnknownThreadEntry() {
+		ThreadEntry unknownThreadEntry = {0};
+		unknownThreadEntry.vmThread = NULL;
+		unknownThreadEntry.index = 0;
+		unknownThreadEntry.osTID = 0;
+		unknownThreadEntry.javaTID = 0;
+		unknownThreadEntry.javaThreadName = (J9UTF8 *)&unknownThread;
+		unknownThreadEntry.osThreadName = (J9UTF8 *)&unknownThread;
+		unknownThreadEntry.threadGroupIndex = 0;
+
+		ThreadEntry *entry = (ThreadEntry *)hashTableAdd(_threadTable, &unknownThreadEntry);
+		_firstThreadEntry = entry;
+		_previousThreadEntry = entry;
 	}
 
 protected:
@@ -1276,6 +1292,7 @@ done:
 
 		/* Leave index 0 as a NULL entry for unknown notifier thread. */
 		_threadCount += 1;
+		addUnknownThreadEntry();
 
 done:
 		return;

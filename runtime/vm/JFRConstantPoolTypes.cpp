@@ -1235,7 +1235,10 @@ VM_JFRConstantPoolTypes::freeThreadNameEntries(void *entry, void *userData)
 	J9VMThread *currentThread = (J9VMThread *)userData;
 	PORT_ACCESS_FROM_VMC(currentThread);
 
-	j9mem_free_memory(tableEntry->javaThreadName);
+	/* Name of the unknown thread entry cannot be freed */
+	if (0 != tableEntry->index) {
+		j9mem_free_memory(tableEntry->javaThreadName);
+	}
 	tableEntry->javaThreadName = NULL;
 
 	return FALSE;
