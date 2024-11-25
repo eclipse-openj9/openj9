@@ -979,6 +979,20 @@ j9gc_get_cumulative_bytes_allocated_by_thread(J9VMThread *vmThread, UDATA *cumul
 }
 
 /**
+ * @param[in] vmThread the vmThread we are querying about
+ * @param[out] anonymous cumulative value pointer for unloaded anonymous classes
+ * @param[out] classes cumulative value pointer for unloaded classes (including anonymous)
+ * @param[out] classloaders cumulative value pointer for unloaded classesloaders
+ */
+BOOLEAN
+j9gc_get_cumulative_class_unloading_stats(J9VMThread *vmThread, UDATA *anonymous, UDATA *classes, UDATA *classloaders)
+{
+	MM_GCExtensions *ext = MM_GCExtensions::getExtensions(vmThread->javaVM);
+	ext->globalGCStats.classUnloadStats.getUnloadedCountersCumulative(anonymous, classes, classloaders);
+	return true;
+}
+
+/**
  * Return information about the total CPU time consumed by GC threads, as well
  * as the number of GC threads. The time for the main and worker threads is
  * reported separately, with the worker threads returned as a total.

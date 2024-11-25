@@ -365,9 +365,7 @@ MM_ClassLoaderManager::cleanUpClassLoadersStart(MM_EnvironmentBase *env, J9Class
 		TRIGGER_J9HOOK_VM_CLASS_LOADERS_UNLOAD(_javaVM->hookInterface, vmThread, classLoaderUnloadList);
 	}
 
-	classUnloadStats->_classesUnloadedCount = classUnloadCount;
-	classUnloadStats->_classLoaderUnloadedCount = classLoaderUnloadCount;
-	classUnloadStats->_anonymousClassesUnloadedCount = anonymousClassUnloadCount;
+	classUnloadStats->updateUnloadedCounters(anonymousClassUnloadCount, classUnloadCount, classLoaderUnloadCount);
 
 	/* Ensure that the vm has an accurate number of currently loaded anonymous classes  */
 	_javaVM->anonClassCount -= anonymousClassUnloadCount;

@@ -4801,6 +4801,7 @@ typedef struct J9MemoryManagerFunctions {
 #endif /* defined(J9VM_GC_OBJECT_ACCESS_BARRIER) */
 	UDATA  ( *j9gc_get_bytes_allocated_by_thread)(struct J9VMThread *vmThread) ;
 	BOOLEAN ( *j9gc_get_cumulative_bytes_allocated_by_thread)(struct J9VMThread *vmThread, UDATA *cumulativeValue) ;
+	BOOLEAN ( *j9gc_get_cumulative_class_unloading_stats)(struct J9VMThread *vmThread, UDATA *anonumous, UDATA *classes, UDATA *classloaders) ;
 
 	jvmtiIterationControl  ( *j9mm_iterate_all_ownable_synchronizer_objects)(struct J9VMThread *vmThread, J9PortLibrary *portLibrary, UDATA flags, jvmtiIterationControl (*func)(struct J9VMThread *vmThread, struct J9MM_IterateObjectDescriptor *object, void *userData), void *userData) ;
 	jvmtiIterationControl  ( *j9mm_iterate_all_continuation_objects)(struct J9VMThread *vmThread, J9PortLibrary *portLibrary, UDATA flags, jvmtiIterationControl (*func)(struct J9VMThread *vmThread, struct J9MM_IterateObjectDescriptor *object, void *userData), void *userData) ;
