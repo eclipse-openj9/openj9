@@ -59,7 +59,6 @@ static const StackTraceFormattingFunction stackTraceFormattingFunctions[] = {
 };
 
 #define NUM_STACK_TRACE_FORMATTING_FUNCTIONS (sizeof(stackTraceFormattingFunctions) / sizeof(stackTraceFormattingFunctions[0]))
-#define MAX_STRING_LENGTH 128
 
 /**************************************************************************
  * name        - rasSetTriggerTrace
@@ -556,6 +555,8 @@ decimalString2Int(J9PortLibrary* portLibrary, const char *decString, I_32 signed
 omr_error_t
 setMethodStrArgLength(J9JavaVM *vm, const char *str, BOOLEAN atRuntime)
 {
+#define MAX_STRING_LENGTH 128
+
 	PORT_ACCESS_FROM_JAVAVM(vm);
     int value, length;
     omr_error_t rc = OMR_ERROR_NONE;
@@ -587,6 +588,8 @@ setMethodStrArgLength(J9JavaVM *vm, const char *str, BOOLEAN atRuntime)
 err:
     vaReportJ9VMCommandLineError(PORTLIB, "methodstrarglen takes an unsigned integer value from 1 to %d", MAX_STRING_LENGTH);
     return OMR_ERROR_INTERNAL;
+
+#undef MAX_STRING_LENGTH 128
 }
 
 /**************************************************************************

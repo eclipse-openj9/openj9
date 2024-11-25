@@ -48,13 +48,13 @@ extern "C" {
  *  Keywords for options added by J9VM layer.
  * =============================================================================
  */
-#define RAS_METHODS_KEYWORD             "METHODS"
-#define RAS_DEBUG_KEYWORD               "DEBUG"
-#define RAS_TRIGGER_KEYWORD             "TRIGGER"
-#define RAS_STACKDEPTH_KEYWORD          "STACKDEPTH"
-#define RAS_SLEEPTIME_KEYWORD           "SLEEPTIME"
-#define RAS_COMPRESSION_LEVEL_KEYWORD   "STACKCOMPRESSIONLEVEL"
-#define RAS_METHOD_STRING_LENGTH_KEYWORD   "METHODSTRARGLEN"
+#define RAS_METHODS_KEYWORD                 "METHODS"
+#define RAS_DEBUG_KEYWORD                   "DEBUG"
+#define RAS_TRIGGER_KEYWORD                 "TRIGGER"
+#define RAS_STACKDEPTH_KEYWORD              "STACKDEPTH"
+#define RAS_SLEEPTIME_KEYWORD               "SLEEPTIME"
+#define RAS_COMPRESSION_LEVEL_KEYWORD       "STACKCOMPRESSIONLEVEL"
+#define RAS_METHOD_STRING_LENGTH_KEYWORD    "METHODSTRARGLEN"
 
 /*
  * ======================================================================

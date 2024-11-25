@@ -479,13 +479,13 @@ traceMethodArgObject(J9VMThread *thr, UDATA* arg0EA, char* cursor, UDATA length)
 		J9JavaVM *vm = thr->javaVM;
 
 		if (clazz == J9VMJAVALANGSTRING_OR_NULL(vm)) {
-            const unsigned int methodStrArgLength = ((RasGlobalStorage *)thr->javaVM->j9rasGlobalStorage)->methodStrArgLength;
-            unsigned int strArgLength = methodStrArgLength == 0 ? DEFAULT_STRING_LENGTH : methodStrArgLength;
 
 #define DEFAULT_STRING_LENGTH 32
 
 			char utf8Buffer[128];
 			UDATA utf8Length = 0;
+            const unsigned int methodStrArgLength = ((RasGlobalStorage *)thr->javaVM->j9rasGlobalStorage)->methodStrArgLength;
+            unsigned int strArgLength = methodStrArgLength == 0 ? DEFAULT_STRING_LENGTH : methodStrArgLength;
 
 			char *utf8String = vm->internalVMFunctions->copyStringToUTF8WithMemAlloc(
 								thr,
@@ -500,7 +500,7 @@ traceMethodArgObject(J9VMThread *thr, UDATA* arg0EA, char* cursor, UDATA length)
 			if (NULL == utf8String) {
 				j9str_printf(PORTLIB, cursor, length, "(String)<Memory allocation error>");
 			} else if (utf8Length > strArgLength) {
-				j9str_printf(PORTLIB, cursor, length, "(String)\"%.*s\"...", (U_32)DEFAULT_STRING_LENGTH, utf8String);
+				j9str_printf(PORTLIB, cursor, length, "(String)\"%.*s\"...", (U_32)strArgLength, utf8String);
 			} else {
 				j9str_printf(PORTLIB, cursor, length, "(String)\"%.*s\"", (U_32)utf8Length, utf8String);
 			}
