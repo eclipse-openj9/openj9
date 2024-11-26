@@ -238,6 +238,7 @@ J9::CompilationStrategy::processInterpreterSample(TR_MethodEvent *event)
 
    int32_t totalSampleCount = TR::Recompilation::globalSampleCount;
    char msg[350];  // size should be big enough to hold the whole one-line msg
+   size_t maxMsgLen = sizeof(msg);
    msg[0] = 0;
    char *curMsg = msg;
    bool logSampling = fe->isLogSamplingSet() || TrcEnabled_Trc_JIT_Sampling_Detail;
@@ -252,7 +253,18 @@ J9::CompilationStrategy::processInterpreterSample(TR_MethodEvent *event)
       fe->printTruncatedSignature(sig, SIG_SZ, (TR_OpaqueMethodBlock*)j9method);
 
       if (logSampling)
-         curMsg += sprintf(curMsg, "(%d)\tInterpreted %s\t", totalSampleCount, sig);
+         {
+         int msgLen = snprintf(curMsg, maxMsgLen, "(%d)\tInterpreted %s\t", totalSampleCount, sig);
+         if ((0 < msgLen) && ((size_t)msgLen <= maxMsgLen))
+            {
+            curMsg += msgLen;
+            maxMsgLen -= msgLen;
+            }
+         else
+            {
+            maxMsgLen = 0;
+            }
+         }
       if (TrcEnabled_Trc_JIT_Sampling && ((totalSampleCount % 4) == 0))
          Trc_JIT_Sampling(getJ9VMThreadFromTR_VM(fe), "Interpreted", sig, 0);
       }
@@ -294,20 +306,30 @@ J9::CompilationStrategy::processInterpreterSample(TR_MethodEvent *event)
                   // Reduce the invocation count.
                   //
                   int32_t newCount = count / divisor;
+                  int msgLen = 0;
                   // Don't decrement more than the number of active threads
                   if (newCount < activeThreadsThreshold)
                       newCount = activeThreadsThreshold;
                   if (TR::CompilationInfo::setInvocationCount(j9method, count, newCount))
                      {
                      if (logSampling)
-                        curMsg += sprintf(curMsg, " reducing count %d --> %d", count, newCount);
+                        msgLen = snprintf(curMsg, maxMsgLen, " reducing count %d --> %d", count, newCount);
                      if (cmdLineOptions->getOption(TR_UseSamplingJProfilingForInterpSampledMethods))
                         compInfo->getInterpSamplTrackingInfo()->addOrUpdate(j9method, count - newCount);
                      }
                   else
                      {
                      if (logSampling)
-                        curMsg += sprintf(curMsg, " count = %d, already changed", count);
+                        msgLen = snprintf(curMsg, maxMsgLen, " count = %d, already changed", count);
+                     }
+                  if ((0 < msgLen) && ((size_t)msgLen <= maxMsgLen))
+                     {
+                     curMsg += msgLen;
+                     maxMsgLen -= msgLen;
+                     }
+                  else
+                     {
+                     maxMsgLen = 0;
                      }
 
                   // If the method is ready to be compiled and we are using a separate
@@ -323,6 +345,7 @@ J9::CompilationStrategy::processInterpreterSample(TR_MethodEvent *event)
                   }
                else if (returnIprofilerState() == IPROFILING_STATE_OFF)
                   {
+                  int msgLen = 0;
                   int32_t newCount = 0;
                   if (cmdLineOptions->getOption(TR_SubtractMethodCountsWhenIprofilerIsOff))
                      newCount = count - TR::Options::_IprofilerOffSubtractionFactor;
@@ -335,18 +358,28 @@ J9::CompilationStrategy::processInterpreterSample(TR_MethodEvent *event)
                   if (TR::CompilationInfo::setInvocationCount(j9method, count, newCount))
                      {
                      if (logSampling)
-                        curMsg += sprintf(curMsg, " reducing count %d --> %d", count, newCount);
+                        msgLen = snprintf(curMsg, maxMsgLen, " reducing count %d --> %d", count, newCount);
                      if (cmdLineOptions->getOption(TR_UseSamplingJProfilingForInterpSampledMethods))
                         compInfo->getInterpSamplTrackingInfo()->addOrUpdate(j9method, count - newCount);
                      }
                   else
                      {
                      if (logSampling)
-                        curMsg += sprintf(curMsg, " count = %d, already changed", count);
+                        msgLen = snprintf(curMsg, maxMsgLen, " count = %d, already changed", count);
+                     }
+                  if ((0 < msgLen) && ((size_t)msgLen <= maxMsgLen))
+                     {
+                     curMsg += msgLen;
+                     maxMsgLen -= msgLen;
+                     }
+                  else
+                     {
+                     maxMsgLen = 0;
                      }
                   }
                else if (loopy && count > activeThreadsThreshold)
                   {
+                  int msgLen = 0;
                   int32_t newCount = 0;
                   if (cmdLineOptions->getOption(TR_SubtractLoopyMethodCounts))
                      newCount = count - TR::Options::_LoopyMethodSubtractionFactor;
@@ -360,20 +393,40 @@ J9::CompilationStrategy::processInterpreterSample(TR_MethodEvent *event)
                   if (TR::CompilationInfo::setInvocationCount(j9method, count, newCount))
                      {
                      if (logSampling)
-                        curMsg += sprintf(curMsg, " reducing count %d --> %d", count, newCount);
+                        msgLen = snprintf(curMsg, maxMsgLen, " reducing count %d --> %d", count, newCount);
                      if (cmdLineOptions->getOption(TR_UseSamplingJProfilingForInterpSampledMethods))
                         compInfo->getInterpSamplTrackingInfo()->addOrUpdate(j9method, count - newCount);
                      }
                   else
                      {
                      if (logSampling)
-                        curMsg += sprintf(curMsg, " count = %d, already changed", count);
+                        msgLen = snprintf(curMsg, maxMsgLen, " count = %d, already changed", count);
+                     }
+                  if ((0 < msgLen) && ((size_t)msgLen <= maxMsgLen))
+                     {
+                     curMsg += msgLen;
+                     maxMsgLen -= msgLen;
+                     }
+                  else
+                     {
+                     maxMsgLen = 0;
                      }
                   }
                else
                   {
                   if (logSampling)
-                     curMsg += sprintf(curMsg, " count = %d / %d", count, threshold);
+                     {
+                     int msgLen = snprintf(curMsg, maxMsgLen, " count = %d / %d", count, threshold);
+                     if ((0 < msgLen) && ((size_t)msgLen <= maxMsgLen))
+                        {
+                        curMsg += msgLen;
+                        maxMsgLen -= msgLen;
+                        }
+                     else
+                        {
+                        maxMsgLen = 0;
+                        }
+                     }
                   }
                }
             else if (count == 0)
@@ -384,7 +437,18 @@ J9::CompilationStrategy::processInterpreterSample(TR_MethodEvent *event)
                // The method receives a sample while still being interpreted. We should probably
                // schedule a compilation
                if (logSampling)
-                  curMsg += sprintf(curMsg, " count = 0 (long running?)");
+                  {
+                  int msgLen = snprintf(curMsg, maxMsgLen, " count = 0 (long running?)");
+                  if ((0 < msgLen) && ((size_t)msgLen <= maxMsgLen))
+                     {
+                     curMsg += msgLen;
+                     maxMsgLen -= msgLen;
+                     }
+                  else
+                     {
+                     maxMsgLen = 0;
+                     }
+                  }
                if (fe->isAsyncCompilation())
                   {
                   if (TR::Options::_compilationDelayTime <= 0 ||
@@ -397,7 +461,18 @@ J9::CompilationStrategy::processInterpreterSample(TR_MethodEvent *event)
                if (TR::CompilationInfo::getJ9MethodVMExtra(j9method) == J9_JIT_QUEUED_FOR_COMPILATION)
                   {
                   if (logSampling)
-                      curMsg += sprintf(curMsg, " already queued");
+                     {
+                     int msgLen = snprintf(curMsg, maxMsgLen, " already queued");
+                     if ((0 < msgLen) && ((size_t)msgLen <= maxMsgLen))
+                        {
+                        curMsg += msgLen;
+                        maxMsgLen -= msgLen;
+                        }
+                     else
+                        {
+                        maxMsgLen = 0;
+                        }
+                     }
                   if (compInfo &&
                       (compInfo->compBudgetSupport() || compInfo->dynamicThreadPriority()))
                      {
@@ -406,29 +481,60 @@ J9::CompilationStrategy::processInterpreterSample(TR_MethodEvent *event)
                      fe->releaseCompilationLock();
                      if (logSampling)
                         {
+                        int msgLen = 0;
                         if (n > 0)
-                           curMsg += sprintf(curMsg, " promoted from %d", n);
+                           msgLen = snprintf(curMsg, maxMsgLen, " promoted from %d", n);
                         else if (n == 0)
-                           curMsg += sprintf(curMsg, " comp in progress");
+                            msgLen = snprintf(curMsg, maxMsgLen, " comp in progress");
                         else
-                           curMsg += sprintf(curMsg, " already in the right place %d", n);
+                           msgLen = snprintf(curMsg, maxMsgLen, " already in the right place %d", n);
+                        if ((0 < msgLen) && ((size_t)msgLen <= maxMsgLen))
+                           {
+                           curMsg += msgLen;
+                           maxMsgLen -= msgLen;
+                           }
+                        else
+                           {
+                           maxMsgLen = 0;
+                           }
                         }
                      }
                   }
                else
                   {
                   if (logSampling)
-                     curMsg += sprintf(curMsg, " cannot be compiled, extra field is %" OMR_PRIdPTR, TR::CompilationInfo::getJ9MethodExtra(j9method));
+                     {
+                     int msgLen = snprintf(curMsg, maxMsgLen, " cannot be compiled, extra field is %" OMR_PRIdPTR, TR::CompilationInfo::getJ9MethodExtra(j9method));
+                     if ((0 < msgLen) && ((size_t)msgLen <= maxMsgLen))
+                        {
+                        curMsg += msgLen;
+                        maxMsgLen -= msgLen;
+                        }
+                     else
+                        {
+                        maxMsgLen = 0;
+                        }
+                     }
                   }
                }
             TR::Recompilation::globalSampleCount++;
             }
          else if (logSampling)
             {
+            int msgLen = 0;
             if (count >= 0)
-               curMsg += sprintf(curMsg, " %d invocations before compiling", count);
+               msgLen = snprintf(curMsg, maxMsgLen, " %d invocations before compiling", count);
             else
-               curMsg += sprintf(curMsg, " cannot be compiled");
+               msgLen = snprintf(curMsg, maxMsgLen, " cannot be compiled");
+            if ((0 < msgLen) && ((size_t)msgLen <= maxMsgLen))
+               {
+               curMsg += msgLen;
+               maxMsgLen -= msgLen;
+               }
+            else
+               {
+               maxMsgLen = 0;
+               }
             }
          }
       else // sampling interpreted body, but method was compiled
@@ -444,7 +550,18 @@ J9::CompilationStrategy::processInterpreterSample(TR_MethodEvent *event)
             bodyInfo->_longRunningInterpreted = true;
 
          if (logSampling)
-            curMsg += sprintf(curMsg, " counter = XX (long running?)");
+            {
+            int msgLen = snprintf(curMsg, maxMsgLen, " counter = XX (long running?)");
+            if ((0 < msgLen) && ((size_t)msgLen <= maxMsgLen))
+               {
+               curMsg += msgLen;
+               maxMsgLen -= msgLen;
+               }
+            else
+               {
+               maxMsgLen = 0;
+               }
+            }
          // Note that we do not increment globalSampleCount here
          }
       if (fe->isLogSamplingSet())
@@ -529,11 +646,13 @@ J9::CompilationStrategy::ProcessJittedSample::initializeRecompRelatedFields()
 
    if (_logSampling)
       {
-      _curMsg += sprintf(_curMsg, " cnt=%d ncl=%d glblSmplCnt=%d startCnt=%d[-%u,+%u] samples=[%d %d] windows=[%d %u] crtSmplIntrvlCnt=%u",
+      size_t maxMsgLen = sizeof(_msg) - (_curMsg - _msg);
+      int msgLen = snprintf(_curMsg, maxMsgLen, " cnt=%d ncl=%d glblSmplCnt=%d startCnt=%d[-%u,+%u] samples=[%d %d] windows=[%d %u] crtSmplIntrvlCnt=%u",
          _count, _methodInfo->getNextCompileLevel(), _totalSampleCount, _startSampleCount,
          _bodyInfo->getOldStartCountDelta(), _bodyInfo->getHotStartCountDelta(),
          _globalSamples, _globalSamplesInHotWindow,
          _scorchingSampleInterval, _hotSampleInterval, _crtSampleIntervalCount);
+      _curMsg += ((0 < msgLen) && ((size_t)msgLen <= maxMsgLen)) ? (size_t)msgLen : maxMsgLen;
       }
    }
 
@@ -547,7 +666,11 @@ J9::CompilationStrategy::ProcessJittedSample::logSampleInfoToBuffer()
       _fe->printTruncatedSignature(sig, SIG_SZ, (TR_OpaqueMethodBlock*)_j9method);
       int32_t pcOffset = (uint8_t *)(_event->_samplePC) - (uint8_t *)_startPC;
       if (_logSampling)
-         _curMsg += sprintf(_curMsg, "(%d)\tCompiled %s\tPC=" POINTER_PRINTF_FORMAT "\t%+d\t", _totalSampleCount, sig, _startPC, pcOffset);
+         {
+         size_t maxMsgLen = sizeof(_msg) - (_curMsg - _msg);
+         int msgLen = snprintf(_curMsg, maxMsgLen, "(%d)\tCompiled %s\tPC=" POINTER_PRINTF_FORMAT "\t%+d\t", _totalSampleCount, sig, _startPC, pcOffset);
+         _curMsg += ((0 < msgLen) && ((size_t)msgLen <= maxMsgLen)) ? (size_t)msgLen : maxMsgLen;
+         }
       if (TrcEnabled_Trc_JIT_Sampling && ((_totalSampleCount % 4) == 0))
          Trc_JIT_Sampling(getJ9VMThreadFromTR_VM(_fe), "Compiled", sig, 0); // TODO put good pcOffset
       #undef SIG_SZ
@@ -596,35 +719,42 @@ void
 J9::CompilationStrategy::ProcessJittedSample::findAndSetBodyAndMethodInfo()
    {
    J9::PrivateLinkage::LinkageInfo *linkageInfo = J9::PrivateLinkage::LinkageInfo::get(_startPC);
+   size_t maxMsgLen = sizeof(_msg) - (_curMsg - _msg);
+   int msgLen = 0;
 
    if (linkageInfo->hasFailedRecompilation())
       {
       _compInfo->_stats._compiledMethodSamplesIgnored++;
       if (_logSampling)
-         _curMsg += sprintf(_curMsg, " has already failed a recompilation attempt");
+         msgLen = snprintf(_curMsg, maxMsgLen, " has already failed a recompilation attempt");
       }
    else if (!linkageInfo->isSamplingMethodBody())
       {
       _compInfo->_stats._compiledMethodSamplesIgnored++;
       if (_logSampling)
-         _curMsg += sprintf(_curMsg, " does not use sampling");
+         msgLen = snprintf(_curMsg, maxMsgLen, " does not use sampling");
       }
    else if (debug("disableSamplingRecompilation"))
       {
       _compInfo->_stats._compiledMethodSamplesIgnored++;
       if (_logSampling)
-         _curMsg += sprintf(_curMsg, " sampling disabled");
+         msgLen = snprintf(_curMsg, maxMsgLen, " sampling disabled");
       }
    else
       {
       _bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(_startPC);
       }
+   _curMsg += ((0 < msgLen) && ((size_t)msgLen <= maxMsgLen)) ? (size_t)msgLen : maxMsgLen;
 
    if (_bodyInfo && _bodyInfo->getDisableSampling())
       {
       _compInfo->_stats._compiledMethodSamplesIgnored++;
       if (_logSampling)
-         _curMsg += sprintf(_curMsg, " uses sampling but sampling disabled (last comp. with prex)");
+         {
+         maxMsgLen = sizeof(_msg) - (_curMsg - _msg);
+         msgLen = snprintf(_curMsg, maxMsgLen, " uses sampling but sampling disabled (last comp. with prex)");
+         _curMsg += ((0 < msgLen) && ((size_t)msgLen <= maxMsgLen)) ? (size_t)msgLen : maxMsgLen;
+         }
       _bodyInfo = NULL;
       }
 
@@ -662,7 +792,11 @@ J9::CompilationStrategy::ProcessJittedSample::shouldProcessSample()
          !_isAlreadyBeingCompiled)
          {
          if (_logSampling)
-            _curMsg += sprintf(_curMsg, " uses sampling but a recomp decision has already been taken");
+            {
+            size_t maxMsgLen = sizeof(_msg) - (_curMsg - _msg);
+            int msgLen = snprintf(_curMsg, maxMsgLen, " uses sampling but a recomp decision has already been taken");
+            _curMsg += ((0 < msgLen) && ((size_t)msgLen <= maxMsgLen)) ? (size_t)msgLen : maxMsgLen;
+            }
          shouldProcess = false;
          }
       }
@@ -706,7 +840,11 @@ J9::CompilationStrategy::ProcessJittedSample::determineWhetherToRecompileIfCount
             _methodInfo->setDisableMiscSamplingCounterDecrementation();
             // write a message in the vlog to know the reason of recompilation
             if (_logSampling)
-               _curMsg += sprintf(_curMsg, " PICrecomp");
+               {
+               size_t maxMsgLen = sizeof(_msg) - (_curMsg - _msg);
+               int msgLen = snprintf(_curMsg, maxMsgLen, " PICrecomp");
+               _curMsg += ((0 < msgLen) && ((size_t)msgLen <= maxMsgLen)) ? (size_t)msgLen : maxMsgLen;
+               }
             _methodInfo->setReasonForRecompilation(TR_PersistentMethodInfo::RecompDueToMegamorphicCallProfile);
             }
          else
@@ -848,7 +986,9 @@ J9::CompilationStrategy::ProcessJittedSample::determineWhetherToRecompileBasedOn
    float scalingFactor = 0.01*((100 - TR::Options::_sampleThresholdVariationAllowance) +
                         (avgCodeSize << 1)*TR::Options::_sampleThresholdVariationAllowance /
                         (float)(avgCodeSize + codeSize));
-   _curMsg += sprintf(_curMsg, " SizeScaling=%.1f", scalingFactor);
+   size_t maxMsgLen = sizeof(_msg) - (_curMsg - _msg);
+   int msgLen = snprintf(_curMsg, maxMsgLen, " SizeScaling=%.1f", scalingFactor);
+   _curMsg += ((0 < msgLen) && ((size_t)msgLen <= maxMsgLen)) ? (size_t)msgLen : maxMsgLen;
    _scaledHotThreshold = (int32_t)(_hotSampleThreshold * scalingFactor);
 
    // Do not use aggressive recompilations for big applications like websphere.
@@ -911,7 +1051,11 @@ J9::CompilationStrategy::ProcessJittedSample::determineWhetherToRecompileBasedOn
       _compInfo->_stats._methodsSampleWindowReset++;
       _bodyInfo->setCounter(_count + _hotSampleInterval);
       if (_logSampling)
-         _curMsg += sprintf(_curMsg, " is cold, reset cnt to %d", _bodyInfo->getCounter());
+         {
+         size_t maxMsgLen = sizeof(_msg) - (_curMsg - _msg);
+         int msgLen = snprintf(_curMsg, maxMsgLen, " is cold, reset cnt to %d", _bodyInfo->getCounter());
+         _curMsg += ((0 < msgLen) && ((size_t)msgLen <= maxMsgLen)) ? (size_t)msgLen : maxMsgLen;
+         }
       }
 
    // The hot sample interval is done. Prepare for next interval.
@@ -953,7 +1097,11 @@ J9::CompilationStrategy::ProcessJittedSample::determineWhetherToRecompileBasedOn
             if (entry)
                {
                if (_logSampling)
-                  _curMsg += sprintf(_curMsg, " adj opt lvl to %d", (int32_t)(entry->_optimizationPlan->getOptLevel()));
+                  {
+                  size_t maxMsgLen = sizeof(_msg) - (_curMsg - _msg);
+                  int msgLen = snprintf(_curMsg, maxMsgLen, " adj opt lvl to %d", (int32_t)(entry->_optimizationPlan->getOptLevel()));
+                  _curMsg += ((0 < msgLen) && ((size_t)msgLen <= maxMsgLen)) ? (size_t)msgLen : maxMsgLen;
+                  }
                int32_t measuredCpuUtil = _crtSampleIntervalCount == 0 ? // scorching interval done?
                                           _scorchingSampleInterval * 1000 / _globalSamples :
                                           _hotSampleInterval * 1000 / _globalSamplesInHotWindow;
@@ -1078,29 +1226,40 @@ J9::CompilationStrategy::ProcessJittedSample::triggerRecompIfNeeded()
          if (_logSampling)
             {
             float cpu = measuredCpuUtil / 10.0;
+            size_t maxMsgLen = sizeof(_msg) - (_curMsg - _msg);
+            int msgLen = 0;
             if (_useProfiling)
-               _curMsg += sprintf(_curMsg, " --> recompile at level %d, profiled CPU=%.1f%%", _nextOptLevel, cpu);
+               msgLen = snprintf(_curMsg, maxMsgLen, " --> recompile at level %d, profiled CPU=%.1f%%", _nextOptLevel, cpu);
             else
-               _curMsg += sprintf(_curMsg, " --> recompile at level %d CPU=%.1f%%", _nextOptLevel, cpu);
+               msgLen = snprintf(_curMsg, maxMsgLen, " --> recompile at level %d CPU=%.1f%%", _nextOptLevel, cpu);
+            _curMsg += ((0 < msgLen) && ((size_t)msgLen <= maxMsgLen)) ? (size_t)msgLen : maxMsgLen;
 
             if (_methodInfo->getReasonForRecompilation() == TR_PersistentMethodInfo::RecompDueToThreshold)
                {
-               _curMsg += sprintf(_curMsg, " scaledThresholds=[%d %d]", _scaledScorchingThreshold, _scaledHotThreshold);
+               maxMsgLen = sizeof(_msg) - (_curMsg - _msg);
+               msgLen = snprintf(_curMsg, maxMsgLen, " scaledThresholds=[%d %d]", _scaledScorchingThreshold, _scaledHotThreshold);
+               _curMsg += ((0 < msgLen) && ((size_t)msgLen <= maxMsgLen)) ? (size_t)msgLen : maxMsgLen;
                }
             }
          }
       else // OOM
          {
          if (_logSampling)
-            _curMsg += sprintf(_curMsg, " --> not recompiled: OOM");
+            {
+            size_t maxMsgLen = sizeof(_msg) - (_curMsg - _msg);
+            int msgLen = snprintf(_curMsg, maxMsgLen, " --> not recompiled: OOM");
+            _curMsg += ((0 < msgLen) && ((size_t)msgLen <= maxMsgLen)) ? (size_t)msgLen : maxMsgLen;
+            }
          }
       }
    else if (_logSampling)
       {
+      size_t maxMsgLen = sizeof(_msg) - (_curMsg - _msg);
+      int msgLen = 0;
       if (_isAlreadyBeingCompiled)
-         _curMsg += sprintf(_curMsg, " - is already being recompiled");
+         msgLen = snprintf(_curMsg, maxMsgLen, " - is already being recompiled");
       else if (!_hotSamplingWindowComplete)
-         _curMsg += sprintf(_curMsg, " not recompiled, smpl interval not done");
+         msgLen = snprintf(_curMsg, maxMsgLen, " not recompiled, smpl interval not done");
       else
          {
          float measuredCpuUtil = 0.0;
@@ -1114,10 +1273,11 @@ J9::CompilationStrategy::ProcessJittedSample::triggerRecompIfNeeded()
             if (_globalSamplesInHotWindow)
                measuredCpuUtil = _hotSampleInterval * 100.0 / _globalSamplesInHotWindow;
             }
-         _curMsg += sprintf(_curMsg, " not recompiled, CPU=%.1f%% %s scaledThresholds=[%d %d]",
+         msgLen = snprintf(_curMsg, maxMsgLen, " not recompiled, CPU=%.1f%% %s scaledThresholds=[%d %d]",
             measuredCpuUtil, _postponeDecision ? " postpone decision" : "",
             _scaledScorchingThreshold, _scaledHotThreshold);
          }
+      _curMsg += ((0 < msgLen) && ((size_t)msgLen <= maxMsgLen)) ? (size_t)msgLen : maxMsgLen;
       }
 
    return plan;

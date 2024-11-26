@@ -42,7 +42,7 @@ TR_MethodToBeCompiled *TR_MethodToBeCompiled::allocate(J9JITConfig *jitConfig)
       return NULL;
 
    entry->_index = _globalIndex++;
-   sprintf(entry->_monitorName, "JIT-QueueSlotMonitor-%d", (int32_t)entry->_index);
+   snprintf(entry->_monitorName, sizeof(entry->_monitorName), "JIT-QueueSlotMonitor-%d", (int32_t)entry->_index);
    entry->_monitor = TR::Monitor::create(entry->_monitorName);
    if (!entry->_monitor)
       {

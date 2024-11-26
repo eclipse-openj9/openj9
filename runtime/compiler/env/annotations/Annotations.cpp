@@ -107,8 +107,8 @@ TR_Debug::printAnnotationInfoEntry(J9AnnotationInfo * annotationInfo,
          signatureName = "";
          if ((flag & ~ANNOTATION_PARM_MASK) == ANNOTATION_TYPE_PARAMETER)
             {
-            sprintf(annNameBuffer,"parm(%d)",(flag & ANNOTATION_PARM_MASK) >> ANNOTATION_PARM_SHIFT);
-            TR_ASSERT( strlen(annNameBuffer) < ANNO_NAMEBUF_LEN, "buffer length somehow exceeded\n");
+            int len = snprintf(annNameBuffer, sizeof(annNameBuffer), "parm(%d)",(flag & ANNOTATION_PARM_MASK) >> ANNOTATION_PARM_SHIFT);
+            TR_ASSERT((0 < len) && ((size_t)len < sizeof(annNameBuffer)), "buffer length somehow exceeded\n");
             annotationTypeName = annNameBuffer;
             filterOnName = true;
             break;
