@@ -75,6 +75,7 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluatorConnector
       float frequency;
       };
 
+   static TR::Register *zdchkEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *zdloadEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *zdloadiEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *zdstoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);
