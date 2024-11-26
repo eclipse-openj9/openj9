@@ -60,7 +60,6 @@ static const StackTraceFormattingFunction stackTraceFormattingFunctions[] = {
 
 #define NUM_STACK_TRACE_FORMATTING_FUNCTIONS (sizeof(stackTraceFormattingFunctions) / sizeof(stackTraceFormattingFunctions[0]))
 
-
 /**************************************************************************
  * name        - rasSetTriggerTrace
  * description - Called whenever a class is loaded.
@@ -545,6 +544,52 @@ decimalString2Int(J9PortLibrary* portLibrary, const char *decString, I_32 signed
 	}
 
 	return num;
+}
+
+/**************************************************************************
+ * name        - setMethodStrArgLength
+ * description - Set method string argument length
+ * parameters  - thr, trace options, atRuntime flag
+ * returns     - JNI return code
+ *************************************************************************/
+omr_error_t
+setMethodStrArgLength(J9JavaVM *vm, const char *str, BOOLEAN atRuntime)
+{
+#define MAX_STRING_LENGTH 128
+
+	PORT_ACCESS_FROM_JAVAVM(vm);
+    int value, length;
+    omr_error_t rc = OMR_ERROR_NONE;
+    const char *p;
+
+    if (getParmNumber(str) != 1) {
+        goto err;
+    }
+
+    p = getPositionalParm(1, str, &length);
+
+    if (length > 3) {
+        goto err;
+    }
+
+    value = decimalString2Int(PORTLIB, p, FALSE, &rc);
+    if (OMR_ERROR_NONE != rc) {
+        goto err;
+    }
+
+    if ((0 > value) ||
+            (MAX_STRING_LENGTH < value)) {
+        goto err;
+    }
+
+    RAS_GLOBAL_FROM_JAVAVM(methodStrArgLength,vm) = (unsigned int)value;
+    return OMR_ERROR_NONE;
+
+err:
+    vaReportJ9VMCommandLineError(PORTLIB, "methodstrarglen takes an unsigned integer value from 1 to %d", MAX_STRING_LENGTH);
+    return OMR_ERROR_INTERNAL;
+
+#undef MAX_STRING_LENGTH 128
 }
 
 /**************************************************************************

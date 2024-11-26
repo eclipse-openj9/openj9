@@ -48,12 +48,13 @@ extern "C" {
  *  Keywords for options added by J9VM layer.
  * =============================================================================
  */
-#define RAS_METHODS_KEYWORD             "METHODS"
-#define RAS_DEBUG_KEYWORD               "DEBUG"
-#define RAS_TRIGGER_KEYWORD             "TRIGGER"
-#define RAS_STACKDEPTH_KEYWORD          "STACKDEPTH"
-#define RAS_SLEEPTIME_KEYWORD           "SLEEPTIME"
-#define RAS_COMPRESSION_LEVEL_KEYWORD   "STACKCOMPRESSIONLEVEL"
+#define RAS_METHODS_KEYWORD                 "METHODS"
+#define RAS_DEBUG_KEYWORD                   "DEBUG"
+#define RAS_TRIGGER_KEYWORD                 "TRIGGER"
+#define RAS_STACKDEPTH_KEYWORD              "STACKDEPTH"
+#define RAS_SLEEPTIME_KEYWORD               "SLEEPTIME"
+#define RAS_COMPRESSION_LEVEL_KEYWORD       "STACKCOMPRESSIONLEVEL"
+#define RAS_METHOD_STRING_LENGTH_KEYWORD    "METHODSTRARGLEN"
 
 /*
  * ======================================================================
@@ -130,6 +131,7 @@ omr_error_t processTriggerMethodClause(OMR_VMThread *, char *, BOOLEAN atRuntime
 void doTriggerActionJstacktrace(OMR_VMThread *thr);
 omr_error_t setStackDepth(J9JavaVM *thr, const char * value, BOOLEAN atRuntime);
 omr_error_t setStackCompressionLevel(J9JavaVM * vm, const char *str, BOOLEAN atRuntime);
+omr_error_t setMethodStrArgLength(J9JavaVM * vm, const char *str, BOOLEAN atRuntime);
 
 /*
  * =============================================================================
