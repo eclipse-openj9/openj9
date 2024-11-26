@@ -1368,8 +1368,15 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 					target = (jlong)offset;
 				}
 			}
-
-			if ((0 != target) && ((0 != vmindex) || J9_ARE_ANY_BITS_SET(flags, MN_IS_METHOD | MN_IS_CONSTRUCTOR))) {
+			if (
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				/* In project Valhalla fields may start at offset 0. */
+				(NULL != new_clazz)
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+				(0 != target)
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+				&& ((0 != vmindex) || J9_ARE_ANY_BITS_SET(flags, MN_IS_METHOD | MN_IS_CONSTRUCTOR))
+			) {
 				/* Refetch reference after GC point */
 				membernameObject = J9_JNI_UNWRAP_REFERENCE(self);
 				if (addMemberNameToClass(currentThread, membernameObject, new_clazz)) {
