@@ -275,7 +275,9 @@ jitResetAllMethods(J9VMThread *currentThread)
 
 		while (methodCount != 0) {
 			UDATA extra = (UDATA)method->extra;
-			if (0 == (extra & J9_STARTPC_NOT_TRANSLATED)) {
+			// NB methods that have been queued but not yet compiled must also be reset, but the constant
+			// used (-5) will not match the first part of this test.
+			if (0 == (extra & J9_STARTPC_NOT_TRANSLATED) || (extra == J9_JIT_QUEUED_FOR_COMPILATION)) {
 				/* Do not reset JIT INLs (currently in FSD there are no compiled JNI natives) */
 				if (0 == (J9_ROM_METHOD_FROM_RAM_METHOD(method)->modifiers & J9AccNative)) {
 					J9JITExceptionTable *metaData = vm->jitConfig->jitGetExceptionTableFromPC(currentThread, extra);
