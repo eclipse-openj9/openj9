@@ -12770,7 +12770,7 @@ TR::Register *J9::Power::TreeEvaluator::setmemoryEvaluator(TR::Node *node, TR::C
    TR::addDependency(conditions, temp2Reg, TR::RealRegister::NoReg, TR_GPR, cg);
 
 
-#if defined (J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+#if defined (J9VM_GC_SPARSE_HEAP_ALLOCATION)
 
    if (arrayCheckNeeded) // CASE (3)
       {
@@ -12833,7 +12833,7 @@ TR::Register *J9::Power::TreeEvaluator::setmemoryEvaluator(TR::Node *node, TR::C
          generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, dstAddrReg, dstBaseAddrReg, dstOffsetReg);
       }
 
-#endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
+#endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
 
    // assemble the double word value from byte value
    if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P8))
