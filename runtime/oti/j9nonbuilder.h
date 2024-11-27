@@ -440,6 +440,11 @@ typedef struct J9JFRClassLoadingStatistics {
 	I_64 unloadedClassCount;
 } J9JFRClassLoadingStatistics;
 
+typedef struct J9JFRThreadContextSwitchRate {
+	J9JFR_EVENT_COMMON_FIELDS
+	float switchRate;
+} J9JFRThreadContextSwitchRate;
+
 #endif /* defined(J9VM_OPT_JFR) */
 
 /* @ddr_namespace: map_to_type=J9CfrError */
@@ -5715,6 +5720,8 @@ typedef struct JFRState {
 	J9SysinfoCPUTime prevSysCPUTime;
 	omrthread_process_time_t prevProcCPUTimes;
 	int64_t prevProcTimestamp;
+	int64_t prevContextSwitchTimestamp;
+	uint64_t prevContextSwitches;
 } JFRState;
 
 typedef struct J9ReflectFunctionTable {
