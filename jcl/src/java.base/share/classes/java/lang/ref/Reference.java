@@ -25,15 +25,13 @@ package java.lang.ref;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
-import com.ibm.oti.vm.VM;
-
 /*[IF JAVA_SPEC_VERSION >= 12]*/
 import jdk.internal.access.JavaLangRefAccess;
 import jdk.internal.access.SharedSecrets;
 /*[ELSEIF JAVA_SPEC_VERSION >= 9] JAVA_SPEC_VERSION >= 12 */
 import jdk.internal.misc.JavaLangRefAccess;
 import jdk.internal.misc.SharedSecrets;
-/*[ELSEIF Sidecar18-SE-OpenJ9] JAVA_SPEC_VERSION >= 129 */
+/*[ELSEIF Sidecar18-SE-OpenJ9] JAVA_SPEC_VERSION >= 12 */
 import sun.misc.JavaLangRefAccess;
 import sun.misc.SharedSecrets;
 /*[ENDIF] JAVA_SPEC_VERSION >= 12 */
@@ -60,7 +58,7 @@ public abstract sealed class Reference<T> extends Object permits PhantomReferenc
 
 	private T referent;
 	private ReferenceQueue queue;
-	private int state;
+	private volatile int state;
 
 	/* jdk.lang.ref.disableClearBeforeEnqueue property allow reverting to the old behavior(non clear before enqueue)
 	 *  defer initializing the immutable variable to avoid bootstrap error
@@ -181,9 +179,7 @@ public abstract sealed class Reference<T> extends Object permits PhantomReferenc
 	@Deprecated(since="16")
 	/*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 	public boolean isEnqueued () {
-		synchronized(this) {
-			return state == STATE_ENQUEUED;
-		}
+		return state == STATE_ENQUEUED;
 	}
 
 	/**
@@ -196,24 +192,19 @@ public abstract sealed class Reference<T> extends Object permits PhantomReferenc
 	@NotCheckpointSafe
 	/*[ENDIF] CRIU_SUPPORT */
 	boolean enqueueImpl() {
-		final ReferenceQueue tempQueue;
-		boolean result;
 		T tempReferent = referent;
 		synchronized(this) {
 			/* Static order for the following code (DO NOT CHANGE) */
-			tempQueue = queue;
+			final ReferenceQueue tempQueue = queue;
 			queue = null;
-			if (state == STATE_ENQUEUED || tempQueue == null) {
+			if ((null == tempQueue) || (STATE_ENQUEUED == state)) {
 				return false;
 			}
-			result = tempQueue.enqueue(this);
-			if (result) {
-				state = STATE_ENQUEUED;
-				if (null != tempReferent) {
-					reprocess();
-				}
+			tempQueue.enqueue(this);
+			if (null != tempReferent) {
+				reprocess();
 			}
-			return result;
+			return true;
 		}
 	}
 
@@ -252,13 +243,16 @@ public abstract sealed class Reference<T> extends Object permits PhantomReferenc
 
 	/**
 	 * Called when a Reference has been removed from its ReferenceQueue.
-	 * Set the enqueued field to false.
 	 */
 	void dequeue() {
-		/*[PR 112508] not synchronized, so isEnqueued() could return wrong result */
-		synchronized(this) {
-			state = STATE_CLEARED;
-		}
+		state = STATE_CLEARED;
+	}
+
+	/**
+	 * Called when a Reference has been added to its ReferenceQueue.
+	 */
+	void setEnqueued() {
+		state = STATE_ENQUEUED;
 	}
 
 	/*[IF JAVA_SPEC_VERSION >= 9]*/
