@@ -261,6 +261,7 @@ class TR_VectorAPIExpansion : public TR::Optimization
 
    static const vec_sz_t vec_len_unknown = -1;
    static const vec_sz_t vec_len_default = 0;
+   static const vec_sz_t vec_len_boxed_unknown = 1;
 
   /** \brief
    *     Element of the alias table.
@@ -320,20 +321,32 @@ class TR_VectorAPIExpansion : public TR::Optimization
       public:
       TR_ALLOC(TR_Memory::Inliner);  // TODO: add new type
 
-      nodeTableElement() : _scalarNodes(NULL) {}
+      nodeTableElement() : _vecLen(vec_len_default), _elementType(TR::NoType),
+                           _objectType(Unknown),
+                           _origSymRef(NULL), _scalarNodes(NULL) {}
 
+      vec_sz_t             _vecLen;
+      TR::DataType         _elementType;
+      vapiObjType          _objectType;
+      bool                 _canVectorize;
+      bool                 _canScalarize;
+
+      TR::SymbolReference *_origSymRef;
       TR_Array<TR::Node *> *_scalarNodes;
       };
 
    TR_Array<vectorAliasTableElement> _aliasTable;
    TR_Array<nodeTableElement> _nodeTable;
 
+   TR_OpaqueClassBlock *_classByte128Vector;
+   TR_OpaqueClassBlock *_classByte128Mask;
 
    static methodTableEntry methodTable[];
 
    bool _trace;
    TR_BitVector _visitedNodes;
    TR_BitVector _seenClasses;
+   bool _boxingAllowed;
 
   /** \brief
    *     Checks if vector is supported on current platform
@@ -379,8 +392,88 @@ class TR_VectorAPIExpansion : public TR::Optimization
     */
    static bool findVectorMethods(TR::Compilation *comp);
 
+   /** \brief
+    *     Checks if boxing/unboxing is supported
+    *
+    *  \return
+    *     Returns true iff boxing/unboxing is supported
+    *
+    */
+   bool boxingAllowed() {return _boxingAllowed;}
+
+
+   /** \brief
+    *     Checks if a treetop can be ignored with boxing/unboxing
+    *
+    *  \param opCodeValue
+    *
+    *  \return
+    *     Returns true iff a treetop with opCodeValue can be skipped when
+    *     boxing/unboxing is supported
+    *
+    */
+   static bool treeTopAllowedWithBoxing(TR::ILOpCodes opCodeValue);
+
+   /** \brief
+    *
+    *
+    *
+    */
+   void dontVectorizeNode(TR::Node *node);
+
+   /** \brief
+    *   Checks if node will be or already is vectorized. Sets element type, bit length
+    *   and object type if it is.
+    *
+    *
+    */
+   bool isVectorizedOrScalarizedNode(TR::Node *node, TR::DataType &elementType, int32_t &bitsLength,
+                                     vapiObjType &objectType, bool &scalarized);
+
+
+   /** \brief
+    *  Creates and caches Vector and Mask classes for the given element type and bit length
+    *
+    *
+    */
+   void createClassesForBoxing(TR_ResolvedMethod *owningMethod, TR::DataType methodElementType, vec_sz_t bitsLength);
+
+   /** \brief
+    *   Depeneding on the checkBoxing parameter checks if boxing of node supported
+    *   or performs boxing
+    *
+    *
+    */
+   void boxChild(TR::TreeTop *treeTop, TR::Node *node, uint32_t i, bool checkBoxing);
+
+
+   /** \brief
+    *   Depeneding on the checkBoxing parameter checks if unboxing of node supported
+    *   or performs unboxing
+    *
+    *
+    */
+   TR::Node *unboxNode(TR::Node *parentNode, TR::Node *node, vapiObjType operandObjectType, bool checkBoxing);
+
+   /** \brief
+    *    Creates payload symbol reference
+    *
+    *  \param
+    *
+    *
+    */
+   static TR::SymbolReference *createPayloadSymbolReference(TR::Compilation *comp, TR_OpaqueClassBlock *vecClass);
+
+
+   /** \brief
+   *     The method either checks if all boxing is supported
+   *     or perfroms final IL transformation
+   */
+   void transformIL(bool checkBoxing);
+
+
   /** \brief
-   *     The method that does the final transformation
+   *     The method performs analysis and transformation
    */
    int32_t expandVectorAPI();
 
@@ -407,6 +500,20 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *     \c vapiObjType
    */
    vapiObjType getReturnType(TR::MethodSymbol * methodSymbol);
+
+  /** \brief
+   *     Returns argument type (\c vapiObjType) for the method
+   *
+   *  \param methodSymbol
+   *     Method symbol
+   *
+   *  \param i
+   *     Argument index
+   *
+   *  \return
+   *     \c vapiObjType
+   */
+   vapiObjType getArgumentType(TR::MethodSymbol * methodSymbol, int32_t i);
 
 
   /** \brief
@@ -482,12 +589,12 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *     Aliases symbol references with each other as described above
    *
    */
-   void buildVectorAliases();
+   void buildVectorAliases(bool verifyMode);
 
   /** \brief
    *     Used by \c buildVectorAliases() to visit nodes recursively
    */
-   void visitNodeToBuildVectorAliases(TR::Node *node);
+   void visitNodeToBuildVectorAliases(TR::Node *node, bool verifyMode);
 
   /** \brief
    *     Finds transitive closures of the alias sets built by \c buildVectorAliases()
@@ -586,7 +693,7 @@ class TR_VectorAPIExpansion : public TR::Optimization
    */
    static TR_OpaqueClassBlock *getOpaqueClassBlockFromClassNode(TR::Compilation *comp,
                                                                 TR::Node *classNode);
-
+   static TR_OpaqueClassBlock *getArrayClassFromDataType(TR::Compilation *comp, TR::DataType type, bool booleanClass);
 
   /** \brief
    *     Returns corresponding \c vapiObjType for a known object being loaded by node
@@ -712,7 +819,7 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *    Opcode type
    *
    */
-   static void vectorizeLoadOrStore(TR_VectorAPIExpansion *opt, TR::Node *node, TR::DataType opCodeType);
+   static TR::Node *vectorizeLoadOrStore(TR_VectorAPIExpansion *opt, TR::Node *node, TR::DataType opCodeType, bool newLoad = false);
 
   /** \brief
    *    For the node's symbol reference, creates and records, if it does not exist yet,
