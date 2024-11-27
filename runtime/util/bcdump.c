@@ -47,7 +47,7 @@ static void cfdumpBytecodePrintFunction (void *userData, char *format, ...);
 
 IDATA j9bcutil_dumpBytecodes(J9PortLibrary * portLib, J9ROMClass * romClass,
 							 U_8 * bytecodes, UDATA walkStartPC, UDATA walkEndPC,
-							 UDATA flags, void *printFunction, void *userData, char *indent)
+							 UDATA flags, void *printFunction, void *userData, UDATA indentLen)
 {
 	PORT_ACCESS_FROM_PORT(portLib);
 	DISASSEMBLY_PRINT_FN outputFunction = (DISASSEMBLY_PRINT_FN) printFunction;
@@ -166,7 +166,7 @@ IDATA j9bcutil_dumpBytecodes(J9PortLibrary * portLib, J9ROMClass * romClass,
 			}
 		}
 		_GETNEXT_U8(bc, bcIndex);
-		outputFunction(userData, "%s%5i %s ", indent, pc, JavaBCNames[bc]);
+		outputFunction(userData, "%*s%5i %s ", indentLen, "", pc, JavaBCNames[bc]);
 		start = pc;
 		pc++;
 		switch (bc) {
@@ -569,7 +569,7 @@ IDATA dumpBytecodes(J9PortLibrary * portLib, J9ROMClass * romClass, J9ROMMethod 
 	return j9bcutil_dumpBytecodes(portLib, romClass,
 								  J9_BYTECODE_START_FROM_ROM_METHOD(romMethod), 0,
 								  length - 1, flags,
-								  (void *) cfdumpBytecodePrintFunction, portLib, "");
+								  (void *) cfdumpBytecodePrintFunction, portLib, 0);
 }
 
 

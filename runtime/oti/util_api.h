@@ -136,7 +136,7 @@ IDATA dumpBytecodes(J9PortLibrary * portLib, J9ROMClass * romClass, J9ROMMethod 
 */
 IDATA j9bcutil_dumpBytecodes(J9PortLibrary * portLib, J9ROMClass * romClass,
 							 U_8 * bytecodes, UDATA walkStartPC, UDATA walkEndPC,
-							 UDATA flags, void *printFunction, void *userData, char *indent);
+							 UDATA flags, void *printFunction, void *userData, UDATA indentLen);
 
 
 /* ---------------- binarysup.c ---------------- */

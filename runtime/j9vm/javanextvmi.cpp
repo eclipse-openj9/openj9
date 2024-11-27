@@ -147,7 +147,7 @@ JVM_GetExtendedNPEMessage(JNIEnv *env, jthrowable throwableObj)
 #else /* defined(J9VM_ENV_LITTLE_ENDIAN) */
 				flags |= BCT_BigEndianOutput;
 #endif /* defined(J9VM_ENV_LITTLE_ENDIAN) */
-				j9bcutil_dumpBytecodes(PORTLIB, userData.romClass, bytecodes, 0, userData.bytecodeOffset, flags, (void *)cfdumpBytecodePrintFunction, PORTLIB, "");
+				j9bcutil_dumpBytecodes(PORTLIB, userData.romClass, bytecodes, 0, userData.bytecodeOffset, flags, (void *)cfdumpBytecodePrintFunction, PORTLIB, 0);
 			}
 #endif /* defined(DEBUG_BCV) */
 			npeMsgData.npePC = userData.bytecodeOffset;
