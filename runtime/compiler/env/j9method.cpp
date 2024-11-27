@@ -4830,7 +4830,8 @@ void TR_ResolvedJ9Method::construct()
             }
          else if ((classNameLen == 31) && !strncmp(className, "java/lang/foreign/MemorySegment", 31))
             {
-            setRecognizedMethodInfo(TR::java_lang_foreign_MemorySegment_method);
+            if (nameLen >= 3 && (!strncmp(name, "get", 3) || !strncmp(name, "set", 3)))
+               setRecognizedMethodInfo(TR::java_lang_foreign_MemorySegment_method);
             }
 #endif
          else if ((classNameLen >= 59 + 3 && classNameLen <= 59 + 7) && !strncmp(className, "java/lang/invoke/ArrayVarHandle$ArrayVarHandleOperations$Op", 59))
