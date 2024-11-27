@@ -888,4 +888,27 @@ VM_JFRChunkWriter::writeClassLoadingStatisticsEvent(void *anElement, void *userD
 	/* write size */
 	_bufferWriter->writeLEB128PaddedU32(dataStart, _bufferWriter->getCursor() - dataStart);
 }
+
+void
+VM_JFRChunkWriter::writeThreadContextSwitchRateEvent(void *anElement, void *userData)
+{
+	ThreadContextSwitchRateEntry *entry = (ThreadContextSwitchRateEntry *)anElement;
+	VM_BufferWriter *_bufferWriter = (VM_BufferWriter *)userData;
+
+	/* reserve size field */
+	U_8 *dataStart = _bufferWriter->getAndIncCursor(sizeof(U_32));
+
+	/* write event type */
+	_bufferWriter->writeLEB128(ThreadContextSwitchRateID);
+
+	/* write start time */
+	_bufferWriter->writeLEB128(entry->ticks);
+
+	/* write switch rate */
+	_bufferWriter->writeFloat(entry->switchRate);
+
+	/* write size */
+	_bufferWriter->writeLEB128PaddedU32(dataStart, (U_32)(_bufferWriter->getCursor() - dataStart));
+}
+
 #endif /* defined(J9VM_OPT_JFR) */
