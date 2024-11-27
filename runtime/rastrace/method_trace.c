@@ -474,13 +474,44 @@ traceMethodArgObject(J9VMThread *thr, UDATA* arg0EA, char* cursor, UDATA length)
 	if (object == NULL) {
 		j9str_printf(PORTLIB, cursor, length, "null");
 	} else {
-		J9Class* clazz = J9OBJECT_CLAZZ(thr, object);
-		J9ROMClass * romClass = clazz->romClass;
-		J9UTF8* className = J9ROMCLASS_CLASSNAME(romClass);
+		J9Class *clazz = J9OBJECT_CLAZZ(thr, object);
+		J9JavaVM *vm = thr->javaVM;
 
-		/* TODO: handle arrays */
+		if (clazz == J9VMJAVALANGSTRING_OR_NULL(vm)) {
+			/* string argument */
+#define DEFAULT_STRING_LENGTH 32
+			char utf8Buffer[128];
+			UDATA utf8Length = 0;
 
-		j9str_printf(PORTLIB, cursor, length, "%.*s@%p", (U_32)J9UTF8_LENGTH(className), J9UTF8_DATA(className), object);
+			char *utf8String = vm->internalVMFunctions->copyStringToUTF8WithMemAlloc(
+					thr,
+					object,
+					0,
+					"",
+					0,
+					utf8Buffer,
+					sizeof(utf8Buffer),
+					&utf8Length);
+
+			if (NULL == utf8String) {
+				j9str_printf(PORTLIB, cursor, length, "(String)<Memory allocation error>");
+			} else if (utf8Length > DEFAULT_STRING_LENGTH) {
+				j9str_printf(PORTLIB, cursor, length, "(String)\"%.*s\"...", (U_32)DEFAULT_STRING_LENGTH, utf8String);
+			} else {
+				j9str_printf(PORTLIB, cursor, length, "(String)\"%.*s\"", (U_32)utf8Length, utf8String);
+			}
+
+			if (utf8Buffer != utf8String) {
+				j9mem_free_memory(utf8String);
+			}
+#undef DEFAULT_STRING_LENGTH
+		} else {
+			/* TODO: handle arrays */
+
+			J9ROMClass *romClass = clazz->romClass;
+			J9UTF8 *className = J9ROMCLASS_CLASSNAME(romClass);
+			j9str_printf(PORTLIB, cursor, length, "%.*s@%p", (U_32)J9UTF8_LENGTH(className), J9UTF8_DATA(className), object);
+		}
 	}
 }
 
