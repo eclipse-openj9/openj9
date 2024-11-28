@@ -3579,6 +3579,12 @@ void TR::CompilationInfo::stopCompilationThreads()
          deserializer->printStats(stderr);
       }
 #endif /* defined(J9VM_OPT_JITSERVER) */
+   static char *printDependencyTableStats = feGetEnv("TR_PrintDependencyTableStats");
+   if (printDependencyTableStats)
+      {
+      if (auto dependencyTable = getPersistentInfo()->getAOTDependencyTable())
+         dependencyTable->printStats();
+      }
 
 #ifdef STATS
    if (compBudgetSupport() || dynamicThreadPriority())

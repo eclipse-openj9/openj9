@@ -47,6 +47,9 @@ TR_AOTDependencyTable::trackMethod(J9VMThread *vmThread, J9Method *method, J9ROM
    if (!methodDependencies)
       {
       dependenciesSatisfied = true;
+      if (TR::Options::getVerboseOption(TR_VerboseDependencyTracking))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "Dependency table: method %p with 0 dependencies will start at count 0", method);
+
       return true;
       }
 
@@ -79,12 +82,20 @@ TR_AOTDependencyTable::trackMethod(J9VMThread *vmThread, J9Method *method, J9ROM
 
       if (numberRemainingDependencies == 0)
          {
-         stopTracking(methodEntry);
+         stopTracking(methodEntry, false);
          dependenciesSatisfied = true;
+
+         if (TR::Options::getVerboseOption(TR_VerboseDependencyTracking))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "Dependency table: method %p with %lu dependencies will start at count 0", method, totalDependencies);
          }
       else
          {
          methodEntry->second._remainingDependencies = numberRemainingDependencies;
+         if (TR::Options::getVerboseOption(TR_VerboseDependencyTracking))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "Dependency table: method %p with %lu dependencies will be tracked with %lu remaining",
+                                           method,
+                                           totalDependencies,
+                                           numberRemainingDependencies);
          }
       }
    catch (std::exception&)
@@ -108,15 +119,22 @@ TR_AOTDependencyTable::methodWillBeCompiled(J9Method *method)
    // AOT load we might consider preventing the load from taking place (by
    // increasing the counts and continuing to track the method, or marking the
    // method as ineligible for loads and giving up on tracking it).
-   stopTracking(method);
+   stopTracking(method, true);
    }
 
 void
-TR_AOTDependencyTable::stopTracking(MethodEntryRef entry)
+TR_AOTDependencyTable::stopTracking(MethodEntryRef entry, bool isEarlyStop)
    {
+   auto method = entry->first;
    auto methodEntry = entry->second;
    auto dependencyChain = methodEntry._dependencyChain;
    auto dependencyChainLength = *dependencyChain;
+
+   bool verboseUnsatisfied = isEarlyStop && TR::Options::getVerboseOption(TR_VerboseDependencyTracking);
+   bool verboseUnsatisfiedDetails = isEarlyStop && TR::Options::getVerboseOption(TR_VerboseDependencyTrackingDetails);
+
+   if (verboseUnsatisfied)
+      TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "Dependency table: early tracking stop for method %p with %lu remaining dependencies", method, methodEntry._remainingDependencies);
 
    for (size_t i = 1; i <= dependencyChainLength; ++i)
       {
@@ -125,6 +143,10 @@ TR_AOTDependencyTable::stopTracking(MethodEntryRef entry)
       uintptr_t offset = _sharedCache->startingROMClassOffsetOfClassChain(_sharedCache->pointerFromOffsetInSharedCache(chainOffset));
 
       auto o_it = _offsetMap.find(offset);
+
+      if (verboseUnsatisfiedDetails && !findCandidateForDependency(o_it->second._loadedClasses, needsInitialization))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "Dependency table: stopped tracking method %p with unsatisfied dependency chainOffset=%lu romClassOffset=%lu needsInit=%d",
+                                        method, chainOffset, offset, needsInitialization);
 
       if (needsInitialization)
          o_it->second._waitingInitMethods.erase(entry);
@@ -138,11 +160,11 @@ TR_AOTDependencyTable::stopTracking(MethodEntryRef entry)
    }
 
 void
-TR_AOTDependencyTable::stopTracking(J9Method *method)
+TR_AOTDependencyTable::stopTracking(J9Method *method, bool isEarlyStop)
    {
    auto entry = _methodMap.find(method);
    if (entry != _methodMap.end())
-      stopTracking(&*entry);
+      stopTracking(&*entry, isEarlyStop);
    }
 
 void
@@ -207,6 +229,13 @@ TR_AOTDependencyTable::classLoadEventAtOffset(J9Class *ramClass, uintptr_t offse
       return;
    if (!isClassLoad && (offsetEntry->_loadedClasses.find(ramClass) == offsetEntry->_loadedClasses.end()))
       return;
+
+   if (TR::Options::getVerboseOption(TR_VerboseDependencyTracking))
+      {
+      auto name = J9ROMCLASS_CLASSNAME(ramClass->romClass);
+      TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "Dependency table: class load event %.*s ramClass=%p romClassOffset=%lu isLoad=%d isInit=%d",
+                                     J9UTF8_LENGTH(name), J9UTF8_DATA(name), ramClass, offset, isClassLoad, isClassInitialization);
+      }
 
    // Check for dependency satisfaction if this is the first class initialized
    // for this offset.
@@ -289,6 +318,9 @@ TR_AOTDependencyTable::invalidateClassAtOffset(J9Class *ramClass, uintptr_t romC
    auto entry = getOffsetEntry(romClassOffset, false);
    if (entry)
       {
+      if (TR::Options::getVerboseOption(TR_VerboseDependencyTracking))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "Dependency table: invalidating class %p romClassOffset=%lu", ramClass, romClassOffset);
+
       entry->_loadedClasses.erase(ramClass);
 
       // Update the waiting methods if the removal of ramClass caused a
@@ -314,7 +346,7 @@ void
 TR_AOTDependencyTable::invalidateMethodsOfClass(J9Class *ramClass)
    {
    for (uint32_t i = 0; i < ramClass->romClass->romMethodCount; i++)
-      stopTracking(&ramClass->ramMethods[i]);
+      stopTracking(&ramClass->ramMethods[i], true);
    }
 
 // If an entry exists for a class, remove it. Otherwise, if we should
@@ -414,10 +446,25 @@ TR_AOTDependencyTable::resolvePendingLoads()
    for (auto& entry: _pendingLoads)
       {
       auto method = entry->first;
-      auto count = TR::CompilationInfo::getInvocationCount(method);
-      while ((count > 0) && !TR::CompilationInfo::setInvocationCount(method, count, 0))
-         count = TR::CompilationInfo::getInvocationCount(method);
-      stopTracking(entry);
+      auto initCount = TR::CompilationInfo::getInvocationCount(method);
+      auto count = initCount;
+      while (count > 0)
+         {
+         if (TR::CompilationInfo::setInvocationCount(method, count, 0))
+            count = 0;
+         else
+            count = TR::CompilationInfo::getInvocationCount(method);
+         }
+
+      if (TR::Options::isAnyVerboseOptionSet(TR_VerboseDependencyTracking, TR_VerboseCounts))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_INFO,
+                                        "Dependency table: pending load %s - method %p count %lu --> %lu",
+                                        (count == 0) ? "success" : "failure",
+                                        method,
+                                        initCount,
+                                        count);
+
+      stopTracking(entry, false);
       }
    _pendingLoads.clear();
    }
@@ -435,6 +482,17 @@ TR_AOTDependencyTable::findClassCandidate(uintptr_t romClassOffset)
       return NULL;
 
    return (TR_OpaqueClassBlock *)findCandidateForDependency(it->second._loadedClasses, true);
+   }
+
+void
+TR_AOTDependencyTable::printStats()
+   {
+   TR_VerboseLog::CriticalSection vlogLock;
+
+   TR_VerboseLog::writeLine(TR_Vlog_INFO, "Dependency table: %lu methods remain tracked", _methodMap.size());
+
+   for (auto methodEntry : _methodMap)
+      stopTracking(&methodEntry, true);
    }
 
 J9Class *
