@@ -476,8 +476,6 @@ traceMethodArgObject(J9VMThread *thr, UDATA* arg0EA, char* cursor, UDATA length)
 	} else {
 		J9Class *clazz = J9OBJECT_CLAZZ(thr, object);
 		J9JavaVM *vm = thr->javaVM;
-		const unsigned int methodStrArgLength = ((RasGlobalStorage *)thr->javaVM->j9rasGlobalStorage)->methodStrArgLength;
-		unsigned int strArgLength = methodStrArgLength == 0 ? DEFAULT_STRING_LENGTH : methodStrArgLength;
 
 		if (clazz == J9VMJAVALANGSTRING_OR_NULL(vm)) {
 			/* string argument */
