@@ -34,17 +34,37 @@ class TR_J9SharedCache;
 class TR_AOTDependencyTable
    {
 public:
+   bool trackMethod(J9VMThread *vmThread, J9Method *method, J9ROMMethod *romMethod, bool &dependenciesSatisfied) { return false; }
+   void methodIsBeingCompiled(J9Method *method) {}
    void classLoadEvent(TR_OpaqueClassBlock *ramClass, bool isClassLoad, bool isClassInitialization) {}
    void invalidateUnloadedClass(TR_OpaqueClassBlock *ramClass) {}
    void invalidateRedefinedClass(TR_PersistentCHTable *table, TR_J9VMBase *fej9, TR_OpaqueClassBlock *oldClass, TR_OpaqueClassBlock *freshClass) {}
    TR_OpaqueClassBlock *findClassCandidate(uintptr_t offset) { return NULL; }
+   void methodWillBeCompiled(J9Method *method) {}
    };
 
 #else
 
+struct MethodEntry
+   {
+   // The number of dependencies left to be satisfied
+   uintptr_t _remainingDependencies;
+   // The dependency chain stored in the local SCC (used to stop tracking a
+   // method)
+   const uintptr_t *_dependencyChain;
+   };
+
+typedef std::pair<J9Method *const, MethodEntry>* MethodEntryRef;
+
 struct OffsetEntry
    {
+   // Classes that have been loaded and have a particular valid class chain
+   // offset
    PersistentUnorderedSet<J9Class *> _loadedClasses;
+   // Methods waiting for a class with this offset to be loaded
+   PersistentUnorderedSet<MethodEntryRef> _waitingLoadMethods;
+   // Methods waiting for a class with this offset to be initialized
+   PersistentUnorderedSet<MethodEntryRef> _waitingInitMethods;
    };
 
 /**
@@ -70,33 +90,100 @@ class TR_AOTDependencyTable
 public:
    TR_PERSISTENT_ALLOC(TR_Memory::PersistentCHTable)
    TR_AOTDependencyTable(TR_J9SharedCache *sharedCache);
-   // Update the table in response to a class load or initialization event. The
-   // isClassInitialization parameter is currently unused.
+
+   // If the given method has an AOT body with stored dependencies in the local
+   // SCC, trackMethod() will determine how many are currently satisfied. If all
+   // are, dependenciesSatisfied will be set to true. Otherwise, the method and
+   // its dependencies will be tracked until all the dependencies are satisfied,
+   // at which point the method's count will be reduced to zero.
+   //
+   // Returns true if the method had stored dependencies and either they were
+   // all satisfied immediately, or the method was successfully tracked.
+   bool trackMethod(J9VMThread *vmThread, J9Method *method, J9ROMMethod *romMethod, bool &dependenciesSatisfied);
+
+   // Inform the dependency table that a method is being compiled, so it can
+   // stop tracking the method. Will invalidate the MethodEntryRef pointer for
+   // method, if it was being tracked.
+   void methodWillBeCompiled(J9Method *method);
+
+   // Update the table in response to a class load or initialization event.
    void classLoadEvent(TR_OpaqueClassBlock *ramClass, bool isClassLoad, bool isClassInitialization);
 
-   // Invalidate an unloaded class
+   // Invalidate an unloaded class. Will invalidate the MethodEntryRef for every
+   // RAM method of ramClass.
    void invalidateUnloadedClass(TR_OpaqueClassBlock *ramClass);
 
-   // Invalidate a redefined class
+   // Invalidate a redefined class. Will invalidate the MethodEntryRef for every
+   // RAM method of ramClass.
    void invalidateRedefinedClass(TR_PersistentCHTable *table, TR_J9VMBase *fej9, TR_OpaqueClassBlock *oldClass, TR_OpaqueClassBlock *freshClass);
 
    // Given a ROM class offset, return an initialized class with a valid class
    // chain starting with that offset.
    TR_OpaqueClassBlock *findClassCandidate(uintptr_t offset);
 
+   static uintptr_t decodeDependencyOffset(uintptr_t offset)
+      {
+      return offset | 1;
+      }
+   static uintptr_t decodeDependencyOffset(uintptr_t offset, bool &needsInitialization)
+      {
+      needsInitialization = (offset & 1) == 1;
+      return decodeDependencyOffset(offset);
+      }
+   static uintptr_t encodeDependencyOffset(uintptr_t offset, bool needsInitialization)
+      {
+      return needsInitialization ? offset : (offset & ~1);
+      }
+
 private:
    bool isActive() const { return _isActive; }
    void setInactive() { _isActive = false; }
+
    // Deallocate the internal structures of the table and mark the table as
    // inactive. Must be called with the _tableMonitor in hand.
    void deactivateTable();
 
+   // Register a class load event for ramClass at offset. If any methods had
+   // their dependencies satisfied by this event, they will be added to
+   // methodsToQueue.
    void classLoadEventAtOffset(J9Class *ramClass, uintptr_t offset, bool isClassLoad, bool isClassInitialization);
+
    // Invalidate a class with a particular ROM class offset. Returns false if
-   // the class wasn't tracked.
+   // the class wasn't tracked. If pendingMethodQueue is not NULL, we will also
+   // remove all methods whose dependencies became unsatisfied from
+   // pendingMethodQueue.
    bool invalidateClassAtOffset(J9Class *ramClass, uintptr_t romClassOffset);
+
+   // Invalidate any tracked methods of ramClass. This will invalidate the
+   // MethodEntryRef of those methods. When registering a class redefinition
+   // event, this is best called before any revalidation occurs, so that stale
+   // method entry pointers are not collected in _pendingLoads.
+   void invalidateMethodsOfClass(J9Class *ramClass);
+
    void recheckSubclass(J9Class *ramClass, uintptr_t offset, bool shouldRevalidate);
+
+   // Get the OffsetEntry corresponding to offset. If create is true this will
+   // never return a NULL entry (but it may throw).
    OffsetEntry *getOffsetEntry(uintptr_t offset, bool create);
+
+   J9Class *findCandidateForDependency(const PersistentUnorderedSet<J9Class *> &loadedClasses, bool needsInitialization);
+
+   // Stop tracking the given method. This will invalidate the MethodEntryRef
+   // for the method.
+   void stopTracking(MethodEntryRef entry);
+   void stopTracking(J9Method *method);
+
+   // Queue and clear the _pendingLoads, and remove those methods from tracking.
+   // Must be called at the end of any dependency table operation that could
+   // have led to a pending load being registered.
+   void resolvePendingLoads();
+
+   // Erase the given entry at offset if the entry is empty. This will
+   // invalidate the pointer to OffsetEntry.
+   void eraseOffsetEntryIfEmpty(const OffsetEntry &entry, uintptr_t offset);
+
+   void registerSatisfaction(PersistentUnorderedSet<MethodEntryRef> waitingMethods);
+   void registerDissatisfaction(PersistentUnorderedSet<MethodEntryRef> waitingMethods);
 
    // Initially true, and set to false if there is a failure to allocate.
    bool _isActive;
@@ -111,6 +198,13 @@ private:
    // works because there can be at most one class chain in the SCC whose entry
    // is a particular ROM class offset.
    PersistentUnorderedMap<uintptr_t, OffsetEntry> _offsetMap;
+
+   // A map from methods to their tracking information in the dependency table
+   PersistentUnorderedMap<J9Method *, MethodEntry> _methodMap;
+
+   // Any pending method loads that were triggered by the current dependency
+   // table transaction
+   PersistentUnorderedSet<MethodEntryRef> _pendingLoads;
    };
 
 #endif /* defined(PERSISTENT_COLLECTIONS_UNSUPPORTED) */
