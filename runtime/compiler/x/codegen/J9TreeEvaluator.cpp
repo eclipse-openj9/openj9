@@ -1899,10 +1899,10 @@ TR::Register *J9::X86::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::Cod
                                       comp->target().cpu.supportsAVX() &&
                                       comp->target().is64Bit();
 
-      int32_t repMovsThresholdBytes = comp->target().cpu.supportsFeature(OMR_FEATURE_X86_AVX512F) ? 128 : 64;
+      int32_t repMovsThresholdBytes = 32;
       int32_t newThreshold = comp->getOptions()->getArraycopyRepMovsReferenceArrayThreshold();
 
-      if ((newThreshold == 32) || (newThreshold == 64) || (newThreshold == 128))
+      if ((repMovsThresholdBytes < newThreshold) && ((newThreshold == 64) || (newThreshold == 128)))
          {
          // If the CPU doesn't support AVX512, reduce the threshold to 64 bytes
          repMovsThresholdBytes = ((newThreshold == 128) && !comp->target().cpu.supportsFeature(OMR_FEATURE_X86_AVX512F)) ? 64 : newThreshold;
