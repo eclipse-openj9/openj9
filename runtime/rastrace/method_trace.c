@@ -30,9 +30,6 @@
 #undef UT_MODULE_UNLOADED
 #include "ut_mt.h"
 
-#define DEFAULT_BUFFER_LENGTH 128
-#define DEFAULT_STRING_LENGTH 32
-
 static void hookRAMClassLoad(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
 static void traceMethodArgInt (J9VMThread *thr, UDATA* arg0EA, char* cursor, UDATA length, char* type); 
 static void traceMethodArgDouble (J9VMThread *thr, UDATA* arg0EA, char* cursor, UDATA length);
