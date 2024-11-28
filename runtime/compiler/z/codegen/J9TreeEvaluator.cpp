@@ -14670,7 +14670,9 @@ TR::Register*
 J9::Z::TreeEvaluator::inlineOnSpinWait(TR::Node *node, TR::CodeGenerator *cg) {
    // Thread.onSpinWait() on z is a simple "nop" instruction.
    //cg->generateNop(node);
+   TR::LabelSymbol *FOO = generateLabelSymbol(cg);
    TR::Instruction* cursor = new (cg->trHeapMemory()) TR::S390NOPInstruction(TR::InstOpCode::NOP, 2, node, cg);
+   cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, FOO);
    if (cg->getDebug())
       cg->getDebug()->addInstructionComment(cursor, "To replace onSpinWait");
    TR::Compilation *comp = cg->comp();
