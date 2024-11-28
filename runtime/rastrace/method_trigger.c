@@ -576,8 +576,9 @@ setMethodStrArgLength(J9JavaVM *vm, const char *str, BOOLEAN atRuntime)
 		goto err;
 	}
 
-	if ((0 > value) ||
-			(MAX_STRING_LENGTH < value)) {
+	if ((0 > value)
+		|| (MAX_STRING_LENGTH < value)
+	) {
 		goto err;
 	}
 

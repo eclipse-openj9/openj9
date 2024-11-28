@@ -478,8 +478,9 @@ traceMethodArgObject(J9VMThread *thr, UDATA* arg0EA, char* cursor, UDATA length)
 		J9JavaVM *vm = thr->javaVM;
 		const unsigned int methodStrArgLength = ((RasGlobalStorage *)thr->javaVM->j9rasGlobalStorage)->methodStrArgLength;
 
-		if (clazz == J9VMJAVALANGSTRING_OR_NULL(vm) &&
-				(0 != methodStrArgLength)) {
+		if (clazz == J9VMJAVALANGSTRING_OR_NULL(vm)
+			&& (0 != methodStrArgLength)
+		) {
 			/* string argument */
 			char utf8Buffer[128];
 			UDATA utf8Length = 0;
