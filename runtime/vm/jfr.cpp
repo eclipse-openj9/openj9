@@ -46,7 +46,6 @@ static bool flushAllThreadBuffers(J9VMThread *currentThread, bool freeBuffers);
 static U_8* reserveBuffer(J9VMThread *currentThread, UDATA size);
 static J9JFREvent* reserveBufferWithStackTrace(J9VMThread *currentThread, J9VMThread *sampleThread, UDATA eventType, UDATA eventFixedSize);
 static void jfrThreadCreated(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
-static void jfrThreadDestroy(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
 static void jfrClassesUnload(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
 static void jfrVMShutdown(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
 static void jfrThreadStarting(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
@@ -59,6 +58,7 @@ static int J9THREAD_PROC jfrSamplingThreadProc(void *entryArg);
 static void jfrExecutionSampleCallback(J9VMThread *currentThread, IDATA handlerKey, void *userData);
 static void jfrThreadCPULoadCallback(J9VMThread *currentThread, IDATA handlerKey, void *userData);
 static bool areJFRBuffersReadyForWrite(J9VMThread *currentThread);
+
 /**
  * Calculate the size in bytes of a JFR event.
  *
@@ -252,6 +252,7 @@ flushAllThreadBuffers(J9VMThread *currentThread, bool freeBuffers)
 	bool flushedCurrentThread = false;
 
 	Assert_VM_mustHaveVMAccess(currentThread);
+	Assert_VM_true(currentThread->omrVMThread->exclusiveCount > 0);
 	Assert_VM_true((J9_XACCESS_EXCLUSIVE == vm->exclusiveAccessState) || (J9_XACCESS_EXCLUSIVE == vm->safePointState));
 
 	do {
@@ -380,7 +381,6 @@ jfrThreadCreated(J9HookInterface **hook, UDATA eventNum, void *eventData, void *
 #endif /* defined(DEBUG) */
 
 	/* TODO: allow different buffer sizes on different threads. */
-
 	U_8 *buffer = (U_8*)j9mem_allocate_memory(J9JFR_THREAD_BUFFER_SIZE, OMRMEM_CATEGORY_VM);
 	if (NULL == buffer) {
 		event->continueInitialization = FALSE;
@@ -393,37 +393,6 @@ jfrThreadCreated(J9HookInterface **hook, UDATA eventNum, void *eventData, void *
 		memset(currentThread->jfrBuffer.bufferStart, 0, J9JFR_THREAD_BUFFER_SIZE);
 #endif /* defined(DEBUG) */
 	}
-}
-
-/**
- * Hook for thread being destroyed.
- *
- * @param hook[in] the VM hook interface
- * @param eventNum[in] the event number
- * @param eventData[in] the event data
- * @param userData[in] the registered user data
- */
-static void
-jfrThreadDestroy(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData)
-{
-	J9VMThreadDestroyEvent *event = (J9VMThreadDestroyEvent *)eventData;
-	J9VMThread *currentThread = event->vmThread;
-	PORT_ACCESS_FROM_VMC(currentThread);
-
-#if defined(DEBUG)
-	j9tty_printf(PORTLIB, "\n!!! thread destroy  %p\n", currentThread);
-#endif /* defined(DEBUG) */
-
-
-	/* The current thread pointer (which can appear in other thread buffers) is about to become
-	 * invalid, so write out all of the available data now.
-	 */
-	flushAllThreadBuffers(currentThread, false);
-	writeOutGlobalBuffer(currentThread, false);
-
-	/* Free the thread local buffer */
-	j9mem_free_memory((void*)currentThread->jfrBuffer.bufferStart);
-	memset(&currentThread->jfrBuffer, 0, sizeof(currentThread->jfrBuffer));
 }
 
 /**
@@ -543,6 +512,15 @@ jfrThreadEnd(J9HookInterface **hook, UDATA eventNum, void *eventData, void *user
 	if (NULL != jfrEvent) {
 		initializeEventFields(currentThread, jfrEvent, J9JFR_EVENT_TYPE_THREAD_END);
 	}
+	PORT_ACCESS_FROM_VMC(currentThread);
+	acquireExclusiveVMAccess(currentThread);
+	flushAllThreadBuffers(currentThread, false);
+	writeOutGlobalBuffer(currentThread, false);
+
+	/* Free the thread local buffer */
+	j9mem_free_memory((void*)currentThread->jfrBuffer.bufferStart);
+	memset(&currentThread->jfrBuffer, 0, sizeof(currentThread->jfrBuffer));
+	releaseExclusiveVMAccess(currentThread);
 	internalReleaseVMAccess(currentThread);
 }
 
@@ -674,9 +652,6 @@ initializeJFR(J9JavaVM *vm, BOOLEAN lateInit)
 	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_THREAD_CREATED, jfrThreadCreated, OMR_GET_CALLSITE(), NULL)) {
 		goto fail;
 	}
-	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_THREAD_DESTROY, jfrThreadDestroy, OMR_GET_CALLSITE(), NULL)) {
-		goto fail;
-	}
 	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_CLASSES_UNLOAD, jfrClassesUnload, OMR_GET_CALLSITE(), NULL)) {
 		goto fail;
 	}
@@ -806,7 +781,6 @@ tearDownJFR(J9JavaVM *vm)
 
 	/* Unhook all the events */
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_THREAD_CREATED, jfrThreadCreated, NULL);
-	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_THREAD_DESTROY, jfrThreadDestroy, NULL);
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_CLASSES_UNLOAD, jfrClassesUnload, NULL);
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_SHUTTING_DOWN, jfrVMShutdown, NULL);
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_THREAD_STARTING, jfrThreadStarting, NULL);
