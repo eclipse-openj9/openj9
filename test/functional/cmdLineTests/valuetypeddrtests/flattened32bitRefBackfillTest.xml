@@ -118,7 +118,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<input>!fj9object $flatSingleBackfillInstanceO$</input>
 			<input>quit</input>
 		</command>
-		<output regex="no" type="success" showMatch="yes">I value = 0xEEFFEEFF (offset = 4) (java/lang/Integer)</output>
+		<output regex="no" type="success" showMatch="yes">I value = 0xEEFFEEFF (offset = 0) (java/lang/Integer)</output>
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 
@@ -162,7 +162,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<input>!fj9object $objectBackfillInstanceO$</input>
 			<input>quit</input>
 		</command>
-		<output regex="no" type="success" showMatch="yes">I value = 0xEEFFEEFF (offset = 4) (java/lang/Integer)</output>
+		<output regex="no" type="success" showMatch="yes">I value = 0xEEFFEEFF (offset = 0) (java/lang/Integer)</output>
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 
@@ -236,7 +236,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<input>!fj9object $flatUnAlignedSingleBackfillInstanceO$</input>
 			<input>quit</input>
 		</command>
-		<output regex="no" type="success" showMatch="yes">I value = 0xEEFFEEFF (offset = 4) (java/lang/Integer)</output>
+		<output regex="no" type="success" showMatch="yes">I value = 0xEEFFEEFF (offset = 0) (java/lang/Integer)</output>
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 
@@ -355,7 +355,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<input>!fj9object $singleBackfillInstanceO$</input>
 			<input>quit</input>
 		</command>
-		<output regex="no" type="success" showMatch="yes">I value = 0xEEFFEEFF (offset = 4) (java/lang/Integer)</output>
+		<output regex="no" type="success" showMatch="yes">I value = 0xEEFFEEFF (offset = 0) (java/lang/Integer)</output>
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 
@@ -388,7 +388,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<input>!fj9object $objectBackfillInstance2O$</input>
 			<input>quit</input>
 		</command>
-		<output regex="no" type="success" showMatch="yes">I value = 0xEEFFEEFF (offset = 4) (java/lang/Integer)</output>
+		<output regex="no" type="success" showMatch="yes">I value = 0xEEFFEEFF (offset = 0) (java/lang/Integer)</output>
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
 
@@ -399,7 +399,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<input>quit</input>
 		</command>
 		<output regex="no" type="success" showMatch="yes" regex="yes" javaUtilPattern="yes">J l2 = 0x11551155AAEEAAEE \(offset = 12\) \(.*ValueTypeDoubleLong\)</output>
-		<output regex="no" type="success" showMatch="yes" regex="yes" javaUtilPattern="yes">l \(offset = 4\) \(.*ValueTypeLong\)</output>
+		<output regex="no" type="success" showMatch="yes" regex="yes" javaUtilPattern="yes">l \(offset = 0\) \(.*ValueTypeLong\)</output>
 		<output regex="no" type="success" showMatch="yes" regex="yes" javaUtilPattern="yes">\// \(.*ValueTypeDoubleLong\)</output>
 		<output regex="no" type="failure">Problem running command</output>
 	</test>
