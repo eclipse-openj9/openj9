@@ -695,7 +695,7 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
          traceMsg(comp(), "Created isObjectNull test node n%dn, non-null object will fall through to Block_%d\n", isObjectNullNode->getGlobalIndex(), treetop->getEnclosingBlock()->getNumber());
 
       // Test if object is array - offheap only
-   #if defined (J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+   #if defined (J9VM_GC_SPARSE_HEAP_ALLOCATION)
       if (TR::Compiler->om.isOffHeapAllocationEnabled() && comp()->target().is64Bit())
          {
          //generate array check treetop
@@ -714,7 +714,7 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
          if (enableTrace)
             traceMsg(comp(), "Created isObjectArray test node n%dn, array will branch to array access block\n", isObjectArrayNode->getGlobalIndex());
          }
-   #endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
+   #endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
 
       // Test if low tag is set
       isNotLowTaggedNode = TR::Node::createif(TR::iflcmpne,
@@ -854,7 +854,7 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
       treetop->getEnclosingBlock()->split(treetop, cfg, fixupCommoning);
 
       // Create another helper call for array access (offheap only)
-   #if defined (J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+   #if defined (J9VM_GC_SPARSE_HEAP_ALLOCATION)
       if (isObjectArrayTreeTop != NULL)
          {
          TR::TreeTop *arrayAccessTreeTop = treetop->duplicateTree();
@@ -895,7 +895,7 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
          if (enableTrace)
             traceMsg(comp(), "Created array access helper block_%d that loads dataAddr pointer from array object address\n", arrayAccessBlock->getNumber());
          }
-   #endif /* J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION */
+   #endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
 
       // Setup CFG edges
       cfg->addEdge(unsafeCallRamStaticsTT->getEnclosingBlock(), returnBlock);
