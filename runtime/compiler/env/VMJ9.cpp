@@ -7422,12 +7422,20 @@ TR_J9VM::getClassFromSignature(const char * sig, int32_t sigLength, TR_ResolvedM
 TR_OpaqueClassBlock *
 TR_J9VM::getClassFromSignature(const char * sig, int32_t sigLength, TR_OpaqueMethodBlock * method, bool isVettedForAOT)
    {
-   J9ConstantPool * constantPool = (J9ConstantPool *) (J9_CP_FROM_METHOD((J9Method*)method));
-   return getClassFromSignature(sig, sigLength, constantPool);
+   auto constantPool = (J9ConstantPool *)getConstantPoolFromMethod(method);
+   return getClassFromSignature(sig, sigLength, constantPool, isVettedForAOT);
+   }
+
+
+TR_OpaqueClassBlock *
+TR_J9VM::getClassFromSignature(const char * sig, int32_t sigLength, TR_OpaqueClassBlock *clazz, bool isVettedForAOT)
+   {
+   auto constantPool = (J9ConstantPool *)getConstantPoolFromClass(clazz);
+   return getClassFromSignature(sig, sigLength, constantPool, isVettedForAOT);
    }
 
 TR_OpaqueClassBlock *
-TR_J9VM::getClassFromSignature(const char * sig, int32_t sigLength, J9ConstantPool * constantPool)
+TR_J9VM::getClassFromSignature(const char * sig, int32_t sigLength, J9ConstantPool * constantPool, bool isVettedForAOT)
    {
    // Primitive types don't have a class associated with them
    if (isSignatureForPrimitiveType(sig, sigLength))
@@ -9056,34 +9064,18 @@ TR_J9SharedCacheVM::isInstanceOf(TR_OpaqueClassBlock * a, TR_OpaqueClassBlock *b
    }
 
 TR_OpaqueClassBlock *
-TR_J9SharedCacheVM::getClassFromSignature(const char * sig, int32_t sigLength, TR_ResolvedMethod * method, bool isVettedForAOT)
+TR_J9SharedCacheVM::getClassFromSignature(const char * sig, int32_t sigLength, J9ConstantPool *constantPool, bool isVettedForAOT)
    {
-   return getClassFromSignature(sig, sigLength, (TR_OpaqueMethodBlock *)method->getPersistentIdentifier(), isVettedForAOT);
-   }
-
-TR_OpaqueClassBlock *
-TR_J9SharedCacheVM::getClassFromSignature(const char * sig, int32_t sigLength, TR_OpaqueMethodBlock * method, bool isVettedForAOT)
-   {
-   TR_OpaqueClassBlock* j9class = TR_J9VM::getClassFromSignature(sig, sigLength, method, true);
+   TR_OpaqueClassBlock* j9class = TR_J9VM::getClassFromSignature(sig, sigLength, constantPool, isVettedForAOT);
    bool validated = false;
    TR::Compilation* comp = TR::comp();
 
    if (j9class)
       {
       if (comp->getOption(TR_UseSymbolValidationManager))
-         {
-         TR::SymbolValidationManager *svm = comp->getSymbolValidationManager();
-         SVM_ASSERT_ALREADY_VALIDATED(svm, method);
-         validated = svm->addClassByNameRecord(j9class, getClassFromMethodBlock(method));
-         }
-      else
-         {
-         if (isVettedForAOT)
-            {
-            if (((TR_ResolvedRelocatableJ9Method *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) j9class))
-               validated = true;
-            }
-         }
+         validated = comp->getSymbolValidationManager()->addClassByNameRecord(j9class, getClassFromCP(constantPool));
+      else if (isVettedForAOT)
+         validated = ((TR_ResolvedRelocatableJ9Method *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) j9class);
       }
 
    if (validated)
