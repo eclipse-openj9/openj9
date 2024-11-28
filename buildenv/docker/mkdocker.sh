@@ -47,8 +47,6 @@ usage() {
   echo "Supported build patterns on this host ($arch):"
 if [ $arch = x86_64 ] ; then
   echo "  bash mkdocker.sh --tag=openj9/cent6 --dist=centos --version=6  --build"
-fi
-if [ $arch = x86_64 -o $arch = ppc64le ] ; then
   echo "  bash mkdocker.sh --tag=openj9/cent7 --dist=centos --version=7  --build"
 fi
   echo "  bash mkdocker.sh --tag=openj9/ub18  --dist=ubuntu --version=18 --build"
