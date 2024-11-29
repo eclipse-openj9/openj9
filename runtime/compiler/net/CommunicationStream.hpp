@@ -24,9 +24,10 @@
 #define COMMUNICATION_STREAM_H
 
 #include <unistd.h>
+#include "infra/Statistics.hpp"
 #include "net/LoadSSLLibs.hpp"
 #include "net/Message.hpp"
-#include "infra/Statistics.hpp"
+#include "net/StreamExceptions.hpp"
 #include "env/VerboseLog.hpp"
 #include "control/MethodToBeCompiled.hpp"
 
