@@ -242,7 +242,14 @@ processMethod(J9VMThread * currentThread, UDATA lookupOptions, J9Method * method
 					lookupSig = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSig);
 				}
 				
-				if (j9bcv_checkClassLoadingConstraintsForSignature(currentThread, cl1, cl2, lookupSig, methodSig) != 0) {
+				if (0 != j9bcv_checkClassLoadingConstraintsForSignature(
+						currentThread,
+						cl1,
+						cl2,
+						lookupSig,
+						methodSig,
+						J9_ARE_ALL_BITS_SET(lookupOptions, J9_LOOK_DIRECT_NAS))
+				) {
 					*exception = J9VMCONSTANTPOOL_JAVALANGLINKAGEERROR; /* was VerifyError; but Sun throws Linkage */
 					*exceptionClass = methodClass;
 					*errorType = J9_VISIBILITY_NON_MODULE_ACCESS_ERROR;

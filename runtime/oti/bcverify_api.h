@@ -160,10 +160,11 @@ bcvIsInitOrClinit (J9CfrConstantPoolInfo * info);
 * @param loader2
 * @param sig1
 * @param sig2
+* @param copySig1
 * @return UDATA
 */
 UDATA
-j9bcv_checkClassLoadingConstraintsForSignature (J9VMThread* vmThread, J9ClassLoader* loader1, J9ClassLoader* loader2, J9UTF8* sig1, J9UTF8* sig2);
+j9bcv_checkClassLoadingConstraintsForSignature (J9VMThread *vmThread, J9ClassLoader *loader1, J9ClassLoader *loader2, J9UTF8 *sig1, J9UTF8 *sig2, BOOLEAN copySig1);
 
 /**
 * @brief
@@ -173,10 +174,12 @@ j9bcv_checkClassLoadingConstraintsForSignature (J9VMThread* vmThread, J9ClassLoa
 * @param name1
 * @param name2
 * @param length
+* @param copyName1
+* @param copyName2
 * @return UDATA
  */
 UDATA
-j9bcv_checkClassLoadingConstraintForName (J9VMThread* vmThread, J9ClassLoader* loader1, J9ClassLoader* loader2, U_8* name1, U_8* name2, UDATA length, UDATA copyUTFs);
+j9bcv_checkClassLoadingConstraintForName (J9VMThread *vmThread, J9ClassLoader *loader1, J9ClassLoader *loader2, U_8 *name1, U_8 *name2, UDATA length, BOOLEAN copyName1, BOOLEAN copyName2);
 
 /**
 * @brief

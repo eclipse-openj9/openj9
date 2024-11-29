@@ -810,7 +810,7 @@ illegalAccess:
 				}
 				if (cl1 != cl2) {
 					J9UTF8 *fieldSignature = J9ROMFIELDSHAPE_SIGNATURE(field);
-					if (j9bcv_checkClassLoadingConstraintsForSignature(vmStruct, cl1, cl2, signature, fieldSignature) != 0) {
+					if (0 != j9bcv_checkClassLoadingConstraintsForSignature(vmStruct, cl1, cl2, signature, fieldSignature, FALSE)) {
 						if (throwException) {
 							setCurrentException(vmStruct, J9VMCONSTANTPOOL_JAVALANGVERIFYERROR, NULL);
 						}
@@ -1060,7 +1060,7 @@ illegalAccess:
 				}
 				if (cl1 != cl2) {
 					J9UTF8 *fieldSignature = J9ROMFIELDSHAPE_SIGNATURE(field);
-					if (j9bcv_checkClassLoadingConstraintsForSignature(vmStruct, cl1, cl2, signature, fieldSignature) != 0) {
+					if (0 != j9bcv_checkClassLoadingConstraintsForSignature(vmStruct, cl1, cl2, signature, fieldSignature, FALSE)) {
 						if (throwException) {
 							setCurrentException(vmStruct, J9VMCONSTANTPOOL_JAVALANGVERIFYERROR, NULL);
 						}
