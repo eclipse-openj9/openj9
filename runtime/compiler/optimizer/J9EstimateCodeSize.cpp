@@ -847,7 +847,7 @@ TR_J9EstimateCodeSize::processBytecodeAndGenerateCFG(TR_CallTarget *calltarget, 
             if (meth)
                {
                const char * sig = meth->signature(comp()->trMemory());
-               if (sig && !strncmp(sig, "java/lang/foreign/MemorySegment", 31))
+               if (sig && (!strncmp(sig, "java/lang/foreign/MemorySegment.get", 35) || !strncmp(sig, "java/lang/foreign/MemorySegment.set", 35) ))
                   {
                   nph.setNeedsPeekingToTrue();
                   heuristicTrace(tracer(), "Depth %d: invokeinterface call at bc index %d has Signature %s, enabled peeking for caller to fold layout field load necessary for VarHandle operation inlining.", _recursionDepth, i, sig);
