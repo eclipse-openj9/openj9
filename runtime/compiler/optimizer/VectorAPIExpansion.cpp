@@ -697,7 +697,7 @@ TR_VectorAPIExpansion::getOpaqueClassBlockFromClassNode(TR::Compilation *comp, T
          {
          auto stream = comp->getStream();
          stream->write(JITServer::MessageType::KnownObjectTable_getOpaqueClass,
-                        symRef->getKnownObjectIndex());
+                        knownObjectIndex);
          clazz = (TR_OpaqueClassBlock *)std::get<0>(stream->read<uintptr_t>());
          }
       else
