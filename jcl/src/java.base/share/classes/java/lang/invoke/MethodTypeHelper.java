@@ -321,13 +321,13 @@ final class MethodTypeHelper {
 	static MethodType fromMethodDescriptorStringInternal(String methodDescriptor, ClassLoader loader) {
 		ClassLoader classLoader = loader;
 		if (classLoader == null) {
-			/*[IF JAVA_SPEC_VERSION >= 14]*/
+			/*[IF (14 <= JAVA_SPEC_VERSION) & (JAVA_SPEC_VERSION < 24)]*/
 			@SuppressWarnings("removal")
 			SecurityManager security = System.getSecurityManager();
 			if (security != null) {
 				security.checkPermission(sun.security.util.SecurityConstants.GET_CLASSLOADER_PERMISSION);
 			}
-			/*[ENDIF] JAVA_SPEC_VERSION >= 14 */
+			/*[ENDIF] (14 <= JAVA_SPEC_VERSION) & (JAVA_SPEC_VERSION < 24) */
 			classLoader = ClassLoader.getSystemClassLoader();
 		}
 

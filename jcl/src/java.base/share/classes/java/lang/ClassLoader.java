@@ -830,12 +830,15 @@ protected final Class<?> findSystemClass (String className) throws ClassNotFound
  *
  * @return 		java.lang.ClassLoader
  *					the class or null.
+/*[IF JAVA_SPEC_VERSION < 24]
  * @exception	SecurityException
  *					if a security manager exists and it does not
  *					allow the parent loader to be retrieved.
+/*[ENDIF] JAVA_SPEC_VERSION < 24
  */
 @CallerSensitive
 public final ClassLoader getParent() {
+/*[IF JAVA_SPEC_VERSION < 24]*/
 	if (parent == null) {
 		return null;
 	}
@@ -848,6 +851,7 @@ public final ClassLoader getParent() {
 			security.checkPermission(SecurityConstants.GET_CLASSLOADER_PERMISSION);
 		}
 	}
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	return parent;
 }
 
@@ -1062,19 +1066,23 @@ static ClassLoader getClassLoader(Class<?> clz) {
  * allow access a SecurityException will be thrown.
  *
  * @return the platformClassLoader
+/*[IF JAVA_SPEC_VERSION < 24]
  * @throws SecurityException if access to the platform classloader is denied
+/*[ENDIF] JAVA_SPEC_VERSION < 24
  */
 @CallerSensitive
 public static ClassLoader getPlatformClassLoader() {
+	ClassLoader platformClassLoader = ClassLoaders.platformClassLoader();
+/*[IF JAVA_SPEC_VERSION < 24]*/
 	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
-	ClassLoader platformClassLoader = ClassLoaders.platformClassLoader();
 	if (security != null) {
 		ClassLoader callersClassLoader = callerClassLoader();
 		if (needsClassLoaderPermissionCheck(callersClassLoader, platformClassLoader)) {
 			security.checkPermission(SecurityConstants.GET_CLASSLOADER_PERMISSION);
 		}
 	}
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	return platformClassLoader;
 }
 
@@ -1108,9 +1116,11 @@ public String getName() {
  * same <code>ClassLoader</code> as that used to launch an application.
  *
  * @return java.lang.ClassLoader the system classLoader.
+/*[IF JAVA_SPEC_VERSION < 24]
  * @exception SecurityException
  *                if a security manager exists and it does not permit the
  *                caller to access the system class loader.
+/*[ENDIF] JAVA_SPEC_VERSION < 24
  */
 @CallerSensitive
 public static ClassLoader getSystemClassLoader () {
@@ -1147,6 +1157,7 @@ public static ClassLoader getSystemClassLoader () {
 	}
 
 	ClassLoader sysLoader = applicationClassLoader;
+/*[IF JAVA_SPEC_VERSION < 24]*/
 	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null) {
@@ -1155,7 +1166,7 @@ public static ClassLoader getSystemClassLoader () {
 			security.checkPermission(SecurityConstants.GET_CLASSLOADER_PERMISSION);
 		}
 	}
-
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	return sysLoader;
 }
 
@@ -2578,7 +2589,7 @@ public final boolean isRegisteredAsParallelCapable() {
 }
 /*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
-/*[IF JAVA_SPEC_VERSION >= 19]*/
+/*[IF (19 <= JAVA_SPEC_VERSION) & (JAVA_SPEC_VERSION < 24)]*/
 static void checkClassLoaderPermission(ClassLoader classLoader, Class<?> caller) {
 	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
@@ -2590,7 +2601,7 @@ static void checkClassLoaderPermission(ClassLoader classLoader, Class<?> caller)
 		}
 	}
 }
-/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
+/*[ENDIF] (19 <= JAVA_SPEC_VERSION) & (JAVA_SPEC_VERSION < 24) */
 
 /*[IF JAVA_SPEC_VERSION >= 24]*/
 static NativeLibraries nativeLibrariesFor(ClassLoader loader) {
