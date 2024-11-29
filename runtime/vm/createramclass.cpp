@@ -634,7 +634,7 @@ add_existing:
 									vTableMethodLoader = methodClass->classLoader;
 								}
 								if (interfaceLoader != vTableMethodLoader) {
-									if (0 != j9bcv_checkClassLoadingConstraintsForSignature(vmStruct, vTableMethodLoader, interfaceLoader, vTableMethodSigUTF, interfaceMethodSigUTF)) {
+									if (0 != j9bcv_checkClassLoadingConstraintsForSignature(vmStruct, vTableMethodLoader, interfaceLoader, vTableMethodSigUTF, interfaceMethodSigUTF, FALSE)) {
 										J9UTF8 *vTableMethodClassNameUTF = J9ROMCLASS_CLASSNAME(romClass);
 										if (NULL != methodClass) {
 											vTableMethodClassNameUTF = J9ROMCLASS_CLASSNAME(methodClass->romClass);
@@ -1282,7 +1282,7 @@ processVTableMethod(J9VMThread *vmThread, J9ClassLoader *classLoader, UDATA *vTa
 							J9ClassLoader *superclassVTableMethodLoader = superclassVTableMethodClass->classLoader;
 							if (superclassVTableMethodLoader != classLoader) {
 								J9UTF8 *superclassVTableMethodSigUTF = J9ROMMETHOD_SIGNATURE(superclassVTableROMMethod);
-								if (0 != j9bcv_checkClassLoadingConstraintsForSignature(vmThread, classLoader, superclassVTableMethodLoader, sigUTF, superclassVTableMethodSigUTF)) {
+								if (0 != j9bcv_checkClassLoadingConstraintsForSignature(vmThread, classLoader, superclassVTableMethodLoader, sigUTF, superclassVTableMethodSigUTF, FALSE)) {
 									J9UTF8 *superclassVTableMethodClassNameUTF = J9ROMCLASS_CLASSNAME(superclassVTableMethodClass->romClass);
 									J9UTF8 *newClassNameUTF = J9ROMCLASS_CLASSNAME(romClass);
 									J9UTF8 *superclassVTableMethodNameUTF = J9ROMMETHOD_NAME(superclassVTableROMMethod);

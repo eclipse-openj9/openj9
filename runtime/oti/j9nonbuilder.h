@@ -2026,7 +2026,7 @@ typedef struct J9TranslationBufferSet {
 
 typedef struct J9BytecodeVerificationData {
 	IDATA  ( *verifyBytecodesFunction)(struct J9PortLibrary *portLib, struct J9Class *ramClass, struct J9ROMClass *romClass, struct J9BytecodeVerificationData *verifyData) ;
-	UDATA  ( *checkClassLoadingConstraintForNameFunction)(struct J9VMThread* vmThread, struct J9ClassLoader* loader1, struct J9ClassLoader* loader2, U_8* name1, U_8* name2, UDATA length, UDATA copyUTFs) ;
+	UDATA  ( *checkClassLoadingConstraintForNameFunction)(struct J9VMThread *vmThread, struct J9ClassLoader *loader1, struct J9ClassLoader *loader2, U_8 *name1, U_8 *name2, UDATA length, BOOLEAN copyName1, BOOLEAN copyName2) ;
 	struct J9UTF8** classNameList;
 	struct J9UTF8** classNameListEnd;
 	U_8* classNameSegment;

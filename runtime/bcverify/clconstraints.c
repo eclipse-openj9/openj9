@@ -32,7 +32,7 @@
 #include "omrlinkedlist.h"
 
 static J9ClassLoadingConstraint* findClassLoadingConstraint (J9VMThread* vmThread, J9ClassLoader* loader, U_8* name, UDATA length);
-static J9ClassLoadingConstraint* registerClassLoadingConstraint (J9VMThread* vmThread, J9ClassLoader* loader, U_8* name, UDATA length, UDATA copyName);
+static J9ClassLoadingConstraint* registerClassLoadingConstraint (J9VMThread* vmThread, J9ClassLoader* loader, U_8* name, UDATA length, BOOLEAN copyName);
 static void validateArgs (J9VMThread* vmThread, J9ClassLoader* loader1, J9ClassLoader* loader2, U_8* name1, U_8* name2, UDATA length);
 static void constrainList (J9ClassLoadingConstraint* constraint, J9Class* clazz);
 static UDATA constraintHashFn(void *key, void *userData);
@@ -71,7 +71,7 @@ validateArgs (J9VMThread* vmThread, J9ClassLoader* loader1, J9ClassLoader* loade
  * return 0 if no class loading constraints have been violated, or non-zero if they have been.
  */
 UDATA 
-j9bcv_checkClassLoadingConstraintsForSignature (J9VMThread* vmThread, J9ClassLoader* loader1, J9ClassLoader* loader2, J9UTF8* sig1, J9UTF8* sig2)
+j9bcv_checkClassLoadingConstraintsForSignature (J9VMThread *vmThread, J9ClassLoader *loader1, J9ClassLoader *loader2, J9UTF8 *sig1, J9UTF8 *sig2, BOOLEAN copySig1)
 {
 	U_32 index = 0, endIndex;
 	U_32 length = J9UTF8_LENGTH(sig1);
@@ -101,8 +101,7 @@ j9bcv_checkClassLoadingConstraintsForSignature (J9VMThread* vmThread, J9ClassLoa
 		while (J9UTF8_DATA(sig1)[endIndex] != ';') {
 			endIndex++;
 		}
-
-		rc = j9bcv_checkClassLoadingConstraintForName (vmThread, loader1, loader2, &J9UTF8_DATA(sig1)[index], &J9UTF8_DATA(sig2)[index], endIndex - index, FALSE);
+		rc = j9bcv_checkClassLoadingConstraintForName (vmThread, loader1, loader2, &J9UTF8_DATA(sig1)[index], &J9UTF8_DATA(sig2)[index], endIndex - index, copySig1, FALSE);
 		if (rc) {
 			break;
 		}
@@ -120,7 +119,7 @@ j9bcv_checkClassLoadingConstraintsForSignature (J9VMThread* vmThread, J9ClassLoa
 /* NOTE: the current thread must own the class table mutex */
 
 UDATA
-j9bcv_checkClassLoadingConstraintForName (J9VMThread* vmThread, J9ClassLoader* loader1, J9ClassLoader* loader2, U_8* name1, U_8* name2, UDATA length, UDATA copyUTFs)
+j9bcv_checkClassLoadingConstraintForName (J9VMThread *vmThread, J9ClassLoader *loader1, J9ClassLoader *loader2, U_8 *name1, U_8 *name2, UDATA length, BOOLEAN copyName1, BOOLEAN copyName2)
 {
 	J9Class *class1;
 	J9Class *class2;
@@ -140,7 +139,7 @@ j9bcv_checkClassLoadingConstraintForName (J9VMThread* vmThread, J9ClassLoader* l
 			return 1;
 		}
 	} else if (class1 == NULL && class2 != NULL) {
-		const1 = registerClassLoadingConstraint (vmThread, loader1, name1, length, copyUTFs);
+		const1 = registerClassLoadingConstraint (vmThread, loader1, name1, length, copyName1);
 		if (const1 == NULL) return 1;
 		if (const1->clazz != NULL) {
 			if (const1->clazz != class2) {
@@ -151,7 +150,7 @@ j9bcv_checkClassLoadingConstraintForName (J9VMThread* vmThread, J9ClassLoader* l
 			const1->clazz = class2;
 		}
 	} else if (class2 == NULL && class1 != NULL) {
-		const2 = registerClassLoadingConstraint (vmThread, loader2, name2, length, copyUTFs);
+		const2 = registerClassLoadingConstraint (vmThread, loader2, name2, length, copyName2);
 		if (const2->clazz != NULL) {
 			if (const2->clazz != class1) {
 				return 1;
@@ -164,11 +163,11 @@ j9bcv_checkClassLoadingConstraintForName (J9VMThread* vmThread, J9ClassLoader* l
 		J9ClassLoadingConstraint *tempNext;
 		J9ClassLoadingConstraint *tempPrevious;
 
-		const1 = registerClassLoadingConstraint (vmThread, loader1, name1, length, copyUTFs);
+		const1 = registerClassLoadingConstraint (vmThread, loader1, name1, length, copyName1);
 		if (const1 == NULL) {
 			return 1;
 		}
-		const2 = registerClassLoadingConstraint (vmThread, loader2, name2, length, copyUTFs);
+		const2 = registerClassLoadingConstraint (vmThread, loader2, name2, length, copyName2);
 		if (const2 == NULL) {
 			return 1;
 		}
@@ -203,7 +202,7 @@ j9bcv_checkClassLoadingConstraintForName (J9VMThread* vmThread, J9ClassLoader* l
 /* NOTE: the current thread must own the class table mutex */
 
 static J9ClassLoadingConstraint*
-registerClassLoadingConstraint (J9VMThread* vmThread, J9ClassLoader* loader, U_8* name, UDATA length, UDATA copyName)
+registerClassLoadingConstraint (J9VMThread* vmThread, J9ClassLoader* loader, U_8* name, UDATA length, BOOLEAN copyName)
 {
 	PORT_ACCESS_FROM_VMC (vmThread);
 	J9JavaVM* vm = vmThread->javaVM;

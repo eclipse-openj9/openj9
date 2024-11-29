@@ -1323,6 +1323,7 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 																	J9UTF8_DATA(signature) + sigOffset,
 																	J9UTF8_DATA(signature) + sigOffset,
 																	J9UTF8_LENGTH(signature) - sigOffset - 1, /* -1 to remove the trailing ;*/
+																	true,
 																	true);
 									omrthread_monitor_exit(vm->classTableMutex);
 									if (0 != clConstraintResult) {
