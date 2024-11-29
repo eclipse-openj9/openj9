@@ -52,7 +52,7 @@ protected:
 
 public:
 
-   /** 
+   /**
     * @brief A factory method used to construct a CPU object for portable AOT compilations
     * @param[in] omrPortLib : the port library
     * @return TR::CPU
@@ -73,7 +73,6 @@ public:
    uint32_t getProcessorSignature();
 
    bool testOSForSSESupport() { return true; } // VM guarantees SSE/SSE2 are available
-   bool hasPopulationCountInstruction();
 
    bool isCompatible(const OMRProcessorDesc& processorDescription);
 

@@ -882,12 +882,10 @@ extern void TEMPORARY_initJ9X86TreeEvaluatorTable(TR::CodeGenerator *cg)
    tet[TR::ilbit] =                 TR::TreeEvaluator::integerLowestOneBit;
    tet[TR::inolz] =                 TR::TreeEvaluator::integerNumberOfLeadingZeros;
    tet[TR::inotz] =                 TR::TreeEvaluator::integerNumberOfTrailingZeros;
-   tet[TR::ipopcnt] =               TR::TreeEvaluator::integerBitCount;
    tet[TR::lhbit] =                 TR::TreeEvaluator::longHighestOneBit;
    tet[TR::llbit] =                 TR::TreeEvaluator::longLowestOneBit;
    tet[TR::lnolz] =                 TR::TreeEvaluator::longNumberOfLeadingZeros;
    tet[TR::lnotz] =                 TR::TreeEvaluator::longNumberOfTrailingZeros;
-   tet[TR::lpopcnt] =               TR::TreeEvaluator::longBitCount;
    tet[TR::tstart] =                TR::TreeEvaluator::tstartEvaluator;
    tet[TR::tfinish] =               TR::TreeEvaluator::tfinishEvaluator;
    tet[TR::tabort] =                TR::TreeEvaluator::tabortEvaluator;
@@ -3971,51 +3969,6 @@ TR::Register *J9::X86::TreeEvaluator::longNumberOfTrailingZeros(TR::Node *node, 
       generateRegRegInstruction(TR::InstOpCode::ADD4RegReg, node, resultLow, maskReg, cg);
       cg->stopUsingRegister(resultHigh);
       cg->stopUsingRegister(maskReg);
-      resultReg = resultLow;
-      }
-   node->setRegister(resultReg);
-   cg->decReferenceCount(child);
-   return resultReg;
-   }
-
-static
-TR::Register *bitCount(TR::Node *node, TR::CodeGenerator *cg, TR::Register *reg, bool is64Bit)
-   {
-   TR::Register *bsfReg = cg->allocateRegister();
-   generateRegRegInstruction(TR::InstOpCode::POPCNTRegReg(is64Bit), node, bsfReg, reg, cg);
-   return bsfReg;
-   }
-
-TR::Register *J9::X86::TreeEvaluator::integerBitCount(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   TR_ASSERT(node->getNumChildren() == 1, "Node has a wrong number of children (i.e. !=1 )! ");
-   TR::Node* child = node->getFirstChild();
-   TR::Register* inputReg = cg->evaluate(child);
-   TR::Register* resultReg = bitCount(node, cg, inputReg, cg->comp()->target().is64Bit());
-   node->setRegister(resultReg);
-   cg->decReferenceCount(child);
-   return resultReg;
-   }
-
-TR::Register *J9::X86::TreeEvaluator::longBitCount(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   TR_ASSERT(node->getNumChildren() == 1, "Node has a wrong number of children (i.e. !=1 )! ");
-   TR::Node * child = node->getFirstChild();
-   TR::Register * inputReg = cg->evaluate(child);
-   TR::Register * resultReg = NULL;
-   if (cg->comp()->target().is64Bit())
-      {
-      resultReg = bitCount(node, cg, inputReg, true);
-      }
-   else
-      {
-      //add low result and high result together
-      TR::Register * inputHigh = inputReg->getHighOrder();
-      TR::Register * inputLow = inputReg->getLowOrder();
-      TR::Register * resultLow = bitCount(node, cg, inputLow, false);
-      TR::Register * resultHigh = bitCount(node, cg, inputHigh, false);
-      generateRegRegInstruction(TR::InstOpCode::ADD4RegReg, node, resultLow, resultHigh, cg);
-      cg->stopUsingRegister(resultHigh);
       resultReg = resultLow;
       }
    node->setRegister(resultReg);

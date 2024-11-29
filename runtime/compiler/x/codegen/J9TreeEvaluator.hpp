@@ -72,12 +72,10 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *integerLowestOneBit(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *integerNumberOfLeadingZeros(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *integerNumberOfTrailingZeros(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *integerBitCount(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *longHighestOneBit(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *longLowestOneBit(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *longNumberOfLeadingZeros(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *longNumberOfTrailingZeros(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *longBitCount(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *tstartEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *tfinishEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *tabortEvaluator(TR::Node *node, TR::CodeGenerator *cg);
