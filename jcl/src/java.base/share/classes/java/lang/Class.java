@@ -563,6 +563,9 @@ private static Class<?> forNameHelper(
 	String className, boolean initializeBoolean, ClassLoader classLoader,
 	Class<?> caller, boolean isAdapter) throws ClassNotFoundException
 {
+/*[IF JAVA_SPEC_VERSION >= 24]*/
+	return forNameImpl(className, initializeBoolean, classLoader);
+/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 	@SuppressWarnings("removal")
 	SecurityManager sm = null;
 	if (J9VMInternals.initialized) {
@@ -590,6 +593,7 @@ private static Class<?> forNameHelper(
 		J9VMInternals.initialize(c);
 	}
 	return c;
+/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 }
 /*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 
@@ -678,14 +682,15 @@ private static Class<?> forName(Module module, String name, Class<?> caller)
 @CallerSensitive
 private static Class<?> forNameHelper(Module module, String name, Class<?> caller, boolean isAdapter)
 {
-	@SuppressWarnings("removal")
-	SecurityManager sm = null;
 	ClassLoader classLoader;
 	Class<?> c;
 
 	if ((null == module) || (null == name)) {
 		throw new NullPointerException();
 	}
+/*[IF JAVA_SPEC_VERSION < 24]*/
+	@SuppressWarnings("removal")
+	SecurityManager sm = null;
 	if (J9VMInternals.initialized) {
 		sm = System.getSecurityManager();
 	}
@@ -702,7 +707,9 @@ private static Class<?> forNameHelper(Module module, String name, Class<?> calle
 				return module.getClassLoader();
 			}
 		});
-	} else {
+	} else
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
+	{
 		classLoader = module.getClassLoader();
 	}
 
@@ -799,9 +806,10 @@ public Class<?>[] getClasses() {
 @CallerSensitive
 public ClassLoader getClassLoader() {
 	if (null != classLoader) {
-		if (classLoader == ClassLoader.bootstrapClassLoader)	{
+		if (classLoader == ClassLoader.bootstrapClassLoader) {
 			return null;
 		}
+/*[IF JAVA_SPEC_VERSION < 24]*/
 		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (null != security) {
@@ -810,6 +818,7 @@ public ClassLoader getClassLoader() {
 				security.checkPermission(SecurityConstants.GET_CLASSLOADER_PERMISSION);
 			}
 		}
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	}
 	return classLoader;
 }
