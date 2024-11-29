@@ -11661,10 +11661,6 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
             return inlineIntrinsicIndexOf(node, cg, false);
          break;
 
-      case TR::com_ibm_jit_JITHelpers_transformedEncodeUTF16Big:
-      case TR::com_ibm_jit_JITHelpers_transformedEncodeUTF16Little:
-         return TR::TreeEvaluator::encodeUTF16Evaluator(node, cg);
-
       case TR::java_lang_String_hashCodeImplDecompressed:
          if (cg->getSupportsInlineStringHashCode())
             returnRegister = inlineStringHashCode(node, false, cg);
@@ -11976,85 +11972,6 @@ J9::X86::TreeEvaluator::inlineStringLatin1Inflate(TR::Node *node, TR::CodeGenera
       }
 
    return NULL;
-   }
-
-TR::Register *
-J9::X86::TreeEvaluator::encodeUTF16Evaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   // tree looks like:
-   // icall com.ibm.jit.JITHelpers.encodeUTF16{Big,Little}()
-   //    input ptr
-   //    output ptr
-   //    input length (in elements)
-   // Number of elements translated is returned
-
-   TR::MethodSymbol *symbol = node->getSymbol()->castToMethodSymbol();
-   bool bigEndian = symbol->getRecognizedMethod() == TR::com_ibm_jit_JITHelpers_transformedEncodeUTF16Big;
-
-   // Set up register dependencies
-   const int gprClobberCount = 2;
-   const int maxFprClobberCount = 5;
-   const int fprClobberCount = bigEndian ? 5 : 4; // xmm4 only needed for big-endian
-   TR::Register *srcPtrReg, *dstPtrReg, *lengthReg, *resultReg;
-   TR::Register *gprClobbers[gprClobberCount], *fprClobbers[maxFprClobberCount];
-   bool killSrc = TR::TreeEvaluator::stopUsingCopyRegAddr(node->getChild(0), srcPtrReg, cg);
-   bool killDst = TR::TreeEvaluator::stopUsingCopyRegAddr(node->getChild(1), dstPtrReg, cg);
-   bool killLen = TR::TreeEvaluator::stopUsingCopyRegInteger(node->getChild(2), lengthReg, cg);
-   resultReg = cg->allocateRegister();
-   for (int i = 0; i < gprClobberCount; i++)
-      gprClobbers[i] = cg->allocateRegister();
-   for (int i = 0; i < fprClobberCount; i++)
-      fprClobbers[i] = cg->allocateRegister(TR_FPR);
-
-   int depCount = 11;
-   TR::RegisterDependencyConditions *deps =
-      generateRegisterDependencyConditions((uint8_t)0, depCount, cg);
-
-   deps->addPostCondition(srcPtrReg, TR::RealRegister::esi, cg);
-   deps->addPostCondition(dstPtrReg, TR::RealRegister::edi, cg);
-   deps->addPostCondition(lengthReg, TR::RealRegister::edx, cg);
-   deps->addPostCondition(resultReg, TR::RealRegister::eax, cg);
-
-   deps->addPostCondition(gprClobbers[0], TR::RealRegister::ecx, cg);
-   deps->addPostCondition(gprClobbers[1], TR::RealRegister::ebx, cg);
-
-   deps->addPostCondition(fprClobbers[0], TR::RealRegister::xmm0, cg);
-   deps->addPostCondition(fprClobbers[1], TR::RealRegister::xmm1, cg);
-   deps->addPostCondition(fprClobbers[2], TR::RealRegister::xmm2, cg);
-   deps->addPostCondition(fprClobbers[3], TR::RealRegister::xmm3, cg);
-   if (bigEndian)
-      deps->addPostCondition(fprClobbers[4], TR::RealRegister::xmm4, cg);
-
-   deps->stopAddingConditions();
-
-   // Generate helper call
-   TR_RuntimeHelper helper;
-   if (cg->comp()->target().is64Bit())
-      helper = bigEndian ? TR_AMD64encodeUTF16Big : TR_AMD64encodeUTF16Little;
-   else
-      helper = bigEndian ? TR_IA32encodeUTF16Big : TR_IA32encodeUTF16Little;
-
-   generateHelperCallInstruction(node, helper, deps, cg);
-
-   // Free up registers
-   for (int i = 0; i < gprClobberCount; i++)
-      cg->stopUsingRegister(gprClobbers[i]);
-   for (int i = 0; i < fprClobberCount; i++)
-      cg->stopUsingRegister(fprClobbers[i]);
-
-   for (uint16_t i = 0; i < node->getNumChildren(); i++)
-      cg->decReferenceCount(node->getChild(i));
-
-   TR_LiveRegisters *liveRegs = cg->getLiveRegisters(TR_GPR);
-   if (killSrc)
-      liveRegs->registerIsDead(srcPtrReg);
-   if (killDst)
-      liveRegs->registerIsDead(dstPtrReg);
-   if (killLen)
-      liveRegs->registerIsDead(lengthReg);
-
-   node->setRegister(resultReg);
-   return resultReg;
    }
 
 
