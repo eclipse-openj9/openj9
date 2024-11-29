@@ -552,7 +552,8 @@ J9::CodeCache::addFreeBlock(void  *voidMetaData)
                {
                // There could be several bodyInfo pointing to the same methodInfo
                // Prevent deallocating twice by freeing only for the last body
-               if (TR::Compiler->mtd.startPC((TR_OpaqueMethodBlock*)metaData->ramMethod) == (uintptr_t)metaData->startPC)
+               uintptr_t ramMethodStartPC = TR::Compiler->mtd.startPC((TR_OpaqueMethodBlock*)metaData->ramMethod);
+               if ((ramMethodStartPC != 0) && (ramMethodStartPC == (uintptr_t)metaData->startPC))
                   {
                   // Clear profile info
                   pmi->setBestProfileInfo(NULL);
