@@ -836,6 +836,7 @@ protected final Class<?> findSystemClass (String className) throws ClassNotFound
  */
 @CallerSensitive
 public final ClassLoader getParent() {
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	if (parent == null) {
 		return null;
 	}
@@ -848,6 +849,7 @@ public final ClassLoader getParent() {
 			security.checkPermission(SecurityConstants.GET_CLASSLOADER_PERMISSION);
 		}
 	}
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	return parent;
 }
 
@@ -1066,15 +1068,17 @@ static ClassLoader getClassLoader(Class<?> clz) {
  */
 @CallerSensitive
 public static ClassLoader getPlatformClassLoader() {
+	ClassLoader platformClassLoader = ClassLoaders.platformClassLoader();
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
-	ClassLoader platformClassLoader = ClassLoaders.platformClassLoader();
 	if (security != null) {
 		ClassLoader callersClassLoader = callerClassLoader();
 		if (needsClassLoaderPermissionCheck(callersClassLoader, platformClassLoader)) {
 			security.checkPermission(SecurityConstants.GET_CLASSLOADER_PERMISSION);
 		}
 	}
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	return platformClassLoader;
 }
 
@@ -1121,32 +1125,33 @@ public static ClassLoader getSystemClassLoader () {
 			if (initSystemClassLoader) {
 				initSystemClassLoader = false;
 
-					String userLoader = System.internalGetProperties().getProperty("java.system.class.loader"); //$NON-NLS-1$
-					if (userLoader != null) {
-						try {
-							Class<?> loaderClass = Class.forName(userLoader, true, applicationClassLoader);
-							Constructor<?> constructor = loaderClass.getConstructor(new Class<?>[]{classLoaderClass});
-							applicationClassLoader = (ClassLoader)constructor.newInstance(new Object[]{applicationClassLoader});
-							/*[PR JAZZ103 87642] Setting -Djava.system.class.loader on the command line doesn't update VMAccess.setExtClassLoader() */
-							/* Find the extension class loader */
-							ClassLoader tempLoader = applicationClassLoader;
-							while (tempLoader.parent != null) {
-								tempLoader = tempLoader.parent;
-							}
-							VMAccess.setExtClassLoader(tempLoader);
-						} catch (Throwable e) {
-							if (e instanceof InvocationTargetException) {
-								throw new Error(e.getCause());
-							} else {
-								throw new Error(e);
-							}
+				String userLoader = System.internalGetProperties().getProperty("java.system.class.loader"); //$NON-NLS-1$
+				if (userLoader != null) {
+					try {
+						Class<?> loaderClass = Class.forName(userLoader, true, applicationClassLoader);
+						Constructor<?> constructor = loaderClass.getConstructor(new Class<?>[]{classLoaderClass});
+						applicationClassLoader = (ClassLoader)constructor.newInstance(new Object[]{applicationClassLoader});
+						/*[PR JAZZ103 87642] Setting -Djava.system.class.loader on the command line doesn't update VMAccess.setExtClassLoader() */
+						/* Find the extension class loader */
+						ClassLoader tempLoader = applicationClassLoader;
+						while (tempLoader.parent != null) {
+							tempLoader = tempLoader.parent;
+						}
+						VMAccess.setExtClassLoader(tempLoader);
+					} catch (Throwable e) {
+						if (e instanceof InvocationTargetException) {
+							throw new Error(e.getCause());
+						} else {
+							throw new Error(e);
 						}
 					}
+				}
 			}
 		}
 	}
 
 	ClassLoader sysLoader = applicationClassLoader;
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null) {
@@ -1155,6 +1160,7 @@ public static ClassLoader getSystemClassLoader () {
 			security.checkPermission(SecurityConstants.GET_CLASSLOADER_PERMISSION);
 		}
 	}
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 	return sysLoader;
 }
@@ -2578,7 +2584,7 @@ public final boolean isRegisteredAsParallelCapable() {
 }
 /*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
-/*[IF JAVA_SPEC_VERSION >= 19]*/
+/*[IF (19 <= JAVA_SPEC_VERSION) & (JAVA_SPEC_VERSION < 24)]*/
 static void checkClassLoaderPermission(ClassLoader classLoader, Class<?> caller) {
 	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
@@ -2590,7 +2596,7 @@ static void checkClassLoaderPermission(ClassLoader classLoader, Class<?> caller)
 		}
 	}
 }
-/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
+/*[ENDIF] (19 <= JAVA_SPEC_VERSION) & (JAVA_SPEC_VERSION < 24) */
 
 /*[IF JAVA_SPEC_VERSION >= 24]*/
 static NativeLibraries nativeLibrariesFor(ClassLoader loader) {
