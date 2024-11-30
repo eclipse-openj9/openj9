@@ -49,6 +49,7 @@
 #include "il/SymbolReference.hpp"
 #include "infra/Assert.hpp"
 #include "infra/List.hpp"
+#include "ras/Logger.hpp"
 #include "runtime/Runtime.hpp"
 
 #define MIN_PROFILED_CALL_FREQUENCY (.075f)
@@ -268,7 +269,7 @@ void J9::ARM64::PrivateLinkage::alignLocalReferences(uint32_t &stackIndex)
       {
       if (comp->getOption(TR_TraceCG))
          {
-         traceMsg(comp,"\nLOCAL OBJECT ALIGNMENT: stack offset before alignment: %d,", stackIndex);
+         comp->log()->printf("\nLOCAL OBJECT ALIGNMENT: stack offset before alignment: %d,", stackIndex);
          }
 
       // stackIndex in mapCompactedStack is calculated using only local reference sizes and does not include the padding
@@ -276,7 +277,7 @@ void J9::ARM64::PrivateLinkage::alignLocalReferences(uint32_t &stackIndex)
 
       if (comp->getOption(TR_TraceCG))
          {
-         traceMsg(comp," with padding: %d,", stackIndex);
+         comp->log()->printf(" with padding: %d,", stackIndex);
          }
       // If there are any local objects we have to make sure they are aligned properly
       // when compressed pointers are used.  Otherwise, pointer compression may clobber
@@ -1103,7 +1104,7 @@ int32_t J9::ARM64::PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
       {
       if (comp()->getOption(TR_TraceCG))
          {
-         traceMsg(comp(), "Special arg %s in %s\n",
+         comp()->log()->printf("Special arg %s in %s\n",
             comp()->getDebug()->getName(callNode->getChild(from)),
             comp()->getDebug()->getName(cg()->machine()->getRealRegister(specialArgReg)));
          }
@@ -1510,6 +1511,8 @@ static bool getProfiledCallSiteInfo(TR::CodeGenerator *cg, TR::Node *callNode, u
    if (comp->compileRelocatableCode())
       return false;
 
+   OMR::Logger *log = comp->log();
+
    TR::SymbolReference *methodSymRef = callNode->getSymbolReference();
    TR::MethodSymbol    *methodSymbol = methodSymRef->getSymbol()->castToMethodSymbol();
 
@@ -1521,23 +1524,23 @@ static bool getProfiledCallSiteInfo(TR::CodeGenerator *cg, TR::Node *callNode, u
       {
       if (comp->getOption(TR_TraceCG))
          {
-         traceMsg(comp, "Profiled target not found for node %p\n", callNode);
+         log->printf("Profiled target not found for node %p\n", callNode);
          }
       return false;
       }
    static const bool tracePIC = (feGetEnv("TR_TracePIC") != NULL);
    if (tracePIC && comp->getOption(TR_TraceCG))
       {
-      traceMsg(comp, "Value profile info for callNode %p in %s\n", callNode, comp->signature());
-      info->getProfiler()->dumpInfo(comp->log());
-      traceMsg(comp, "\n");
+      log->printf("Value profile info for callNode %p in %s\n", callNode, comp->signature());
+      info->getProfiler()->dumpInfo(log);
+      log->println();
       }
    uint32_t totalFreq = info->getTotalFrequency();
    if (totalFreq == 0 || info->getTopProbability() < MIN_PROFILED_CALL_FREQUENCY)
       {
       if (comp->getOption(TR_TraceCG))
          {
-         traceMsg(comp, "Profiled target with enough frequency not found for node %p\n", callNode);
+         log->printf("Profiled target with enough frequency not found for node %p\n", callNode);
          }
       return false;
       }
@@ -2063,6 +2066,7 @@ void J9::ARM64::PrivateLinkage::buildVirtualDispatch(TR::Node *callNode,
    TR::Instruction *gcPoint;
 
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp()->fe());
+   OMR::Logger *log = comp()->log();
 
    // Computed calls
    //
@@ -2171,7 +2175,7 @@ void J9::ARM64::PrivateLinkage::buildVirtualDispatch(TR::Node *callNode,
                {
                if (comp()->getOption(TR_TraceCG))
                   {
-                  traceMsg(comp(), "Creating TR_NonoverriddenGuard for node %p\n", callNode);
+                  log->printf("Creating TR_NonoverriddenGuard for node %p\n", callNode);
                   }
                virtualGuard = TR_VirtualGuard::createGuardedDevirtualizationGuard(TR_NonoverriddenGuard, comp(), callNode);
                }
@@ -2193,7 +2197,7 @@ void J9::ARM64::PrivateLinkage::buildVirtualDispatch(TR::Node *callNode,
                      {
                      if (comp()->getOption(TR_TraceCG))
                         {
-                        traceMsg(comp(), "Creating TR_AbstractGuard for node %p\n", callNode);
+                        log->printf("Creating TR_AbstractGuard for node %p\n", callNode);
                         }
                      resolvedMethod = calleeMethod;
                      virtualGuard = TR_VirtualGuard::createGuardedDevirtualizationGuard(TR_AbstractGuard, comp(), callNode);
@@ -2211,7 +2215,7 @@ void J9::ARM64::PrivateLinkage::buildVirtualDispatch(TR::Node *callNode,
                      {
                      if (comp()->getOption(TR_TraceCG))
                         {
-                        traceMsg(comp(), "Creating TR_HierarchyGuard for node %p\n", callNode);
+                        log->printf("Creating TR_HierarchyGuard for node %p\n", callNode);
                         }
                      resolvedMethod = calleeMethod;
                      virtualGuard = TR_VirtualGuard::createGuardedDevirtualizationGuard(TR_HierarchyGuard, comp(), callNode);
@@ -2326,7 +2330,7 @@ void J9::ARM64::PrivateLinkage::buildVirtualDispatch(TR::Node *callNode,
                   {
                   useLastITableCache = false;
                   if (comp()->getOption(TR_TraceCG))
-                     traceMsg(comp(),"Found %d implementers for call to %s, can be fit into %d pic slots, disabling lastITable cache\n", numImplementers, methodSymbol->getMethod()->signature(comp()->trMemory()), numPICSlots);
+                     log->printf("Found %d implementers for call to %s, can be fit into %d pic slots, disabling lastITable cache\n", numImplementers, methodSymbol->getMethod()->signature(comp()->trMemory()), numPICSlots);
                   }
                }
             }
@@ -2335,7 +2339,7 @@ void J9::ARM64::PrivateLinkage::buildVirtualDispatch(TR::Node *callNode,
             {
             if (comp()->getOption(TR_TraceCG))
                {
-               traceMsg(comp(), "Found dominant profiled target, frequency = %f\n", pic->_frequency);
+               log->printf("Found dominant profiled target, frequency = %f\n", pic->_frequency);
                }
             TR::LabelSymbol *slowCallLabel = generateLabelSymbol(cg());
 
@@ -2388,7 +2392,7 @@ void J9::ARM64::PrivateLinkage::buildVirtualDispatch(TR::Node *callNode,
             {
              if (comp()->getOption(TR_TraceCG))
                {
-               traceMsg(comp(), "Generating %d static PIC calls\n", values.getSize());
+               log->printf("Generating %d static PIC calls\n", values.getSize());
                }
             // Build multiple static PIC calls
             int32_t slotCount = 1;

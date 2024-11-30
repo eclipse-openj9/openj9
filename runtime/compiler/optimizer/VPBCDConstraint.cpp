@@ -140,7 +140,7 @@ TR::VP_BCDSign *TR::VP_BCDSign::create(OMR::ValuePropagation *vp, TR_BCDSignCons
    if (constraint)
       {
       if (vp->trace())
-         traceMsg(vp->comp(),"return existing BCD sign constraint %p (dt=%s, sign=%s)\n",constraint,TR::DataType::getName(dt),constraint->getName());
+         vp->comp()->log()->printf("return existing BCD sign constraint %p (dt=%s, sign=%s)\n",constraint,TR::DataType::getName(dt),constraint->getName());
       return constraint;
       }
 
@@ -149,7 +149,7 @@ TR::VP_BCDSign *TR::VP_BCDSign::create(OMR::ValuePropagation *vp, TR_BCDSignCons
    bcdSignConstraints[type] = constraint;
 
    if (vp->trace())
-      traceMsg(vp->comp(),"created new BCD sign constraint %p (dt=%s, sign=%s)\n",constraint,TR::DataType::getName(dt),constraint->getName());
+      vp->comp()->log()->printf("created new BCD sign constraint %p (dt=%s, sign=%s)\n",constraint,TR::DataType::getName(dt),constraint->getName());
 
    return constraint;
    }
@@ -220,14 +220,15 @@ TR::VPConstraint *TR::VP_BCDSign::intersect1(TR::VPConstraint *other, OMR::Value
 
    if (vp->trace())
       {
+      OMR::Logger *log = vp->comp()->log();
       // Tracer makes this redundant really
-      traceMsg(vp->comp(),"\nTR::VP_BCDSign::intersect1\n");
-      traceMsg(vp->comp(),"this  %p: ",this);
-      print(vp->comp()->log(), vp->comp());
-      traceMsg(vp->comp(), "\n");
-      traceMsg(vp->comp(),"other %p: ",other);
-      other->print(vp->comp()->log(), vp->comp());
-      traceMsg(vp->comp(), "\n");
+      log->prints("\nTR::VP_BCDSign::intersect1\n");
+      log->printf("this  %p: ",this);
+      print(log, vp->comp());
+      log->println();
+      log->printf("other %p: ",other);
+      other->print(log, vp->comp());
+      log->println();
       }
 
    if (asBCDSign() && other->asBCDSign())
@@ -242,15 +243,17 @@ TR::VPConstraint *TR::VP_BCDSign::merge1(TR::VPConstraint *other, OMR::ValueProp
    {
    TRACER(vp, this, other);
 
+   OMR::Logger *log = vp->comp()->log();
+
    if (vp->trace())
       {
       // Tracer makes this redundant really
-      traceMsg(vp->comp(),"\nTR::VP_BCDSign::merge1\n");
-      traceMsg(vp->comp(),"this  %p: ",this);
-      print(vp->comp()->log(), vp->comp());
-      traceMsg(vp->comp(),"\nother %p (isBCDSign=%d): ",other,other->asBCDSign()?1:0);
-      other->print(vp->comp()->log(), vp->comp());
-      traceMsg(vp->comp(), "\n");
+      log->prints("\nTR::VP_BCDSign::merge1\n");
+      log->printf("this  %p: ",this);
+      print(log, vp->comp());
+      log->printf("\nother %p (isBCDSign=%d): ",other,other->asBCDSign()?1:0);
+      other->print(log, vp->comp());
+      log->println();
       }
 
    if (asBCDSign() && other->asBCDSign())
@@ -259,41 +262,41 @@ TR::VPConstraint *TR::VP_BCDSign::merge1(TR::VPConstraint *other, OMR::ValueProp
       TR_BCDSignConstraint otherSign = other->asBCDSign()->getSign();
 
       if (vp->trace())
-         traceMsg(vp->comp(),"\tthisSign %s thisType %s, otherSign %s otherType %s\n",
+         log->printf("\tthisSign %s thisType %s, otherSign %s otherType %s\n",
             asBCDSign()->getName(),TR::DataType::getName(asBCDSign()->getDataType()),other->asBCDSign()->getName(),TR::DataType::getName(other->asBCDSign()->getDataType()));
 
       if (thisSign == TR_Sign_Unknown || otherSign == TR_Sign_Unknown)
          {
          if (vp->trace())
-            traceMsg(vp->comp(),"\tone of the signs is unknown -- return NULL\n",asBCDSign()->getName(),other->asBCDSign()->getName());
+            log->prints("\tone of the signs is unknown -- return NULL\n");
          return NULL;
          }
 
       if (asBCDSign()->getDataType() != other->asBCDSign()->getDataType())
          {
          if (vp->trace())
-            traceMsg(vp->comp(),"\ttypes do not match -- return NULL\n",asBCDSign()->getName(),other->asBCDSign()->getName());
+            log->prints("\ttypes do not match -- return NULL\n");
          return NULL;
          }
 
       TR_BCDSignConstraint mergedSign = TR::VP_BCDSign::getMergedSignConstraint(thisSign, otherSign);
       if (vp->trace())
-         traceMsg(vp->comp(),"\tmergedSign = %s from %s x %s\n",TR::VP_BCDSign::getName(mergedSign),TR::VP_BCDSign::getName(thisSign),TR::VP_BCDSign::getName(otherSign));
+         log->printf("\tmergedSign = %s from %s x %s\n",TR::VP_BCDSign::getName(mergedSign),TR::VP_BCDSign::getName(thisSign),TR::VP_BCDSign::getName(otherSign));
       if (mergedSign != TR_Sign_Unknown)
          {
          TR::VP_BCDSign *mergedSignConstraint = TR::VP_BCDSign::create(vp, mergedSign, asBCDSign()->getDataType());
          if (vp->trace())
             {
-            traceMsg(vp->comp(),"\treturn mergedSignConstraint %p of sign %s: ",mergedSignConstraint,mergedSignConstraint->getName());
-            mergedSignConstraint->print(vp->comp()->log(), vp->comp());
-            traceMsg(vp->comp(), "\n\n");
+            log->printf("\treturn mergedSignConstraint %p of sign %s: ",mergedSignConstraint,mergedSignConstraint->getName());
+            mergedSignConstraint->print(log, vp->comp());
+            log->prints("\n\n");
             }
          return mergedSignConstraint;
          }
       }
 
    if (vp->trace())
-      traceMsg(vp->comp(),"\tcannot merge BCDSign constraints -- return NULL\n\n");
+      log->prints("\tcannot merge BCDSign constraints -- return NULL\n\n");
 
    return NULL;
    }

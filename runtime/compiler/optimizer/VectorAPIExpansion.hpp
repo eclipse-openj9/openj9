@@ -878,6 +878,9 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *  \param withMask
    *     true if mask is present, false otherwise
    *
+   * \param trace
+   *     Enable log tracing if true; skip tracing otherwise
+   *
    *  \param sourceElementType
    *     Source element type
    *
@@ -889,7 +892,7 @@ class TR_VectorAPIExpansion : public TR::Optimization
    */
    static TR::ILOpCodes ILOpcodeFromVectorAPIOpcode(TR::Compilation *comp, int32_t vectorOpCode, TR::DataType elementType,
                                                     TR::VectorLength vectorLength, vapiObjType objectType,
-                                                    vapiOpCodeType opCodeType, bool withMask,
+                                                    vapiOpCodeType opCodeType, bool withMask, bool trace,
                                                     TR::DataType sourceElementType = TR::NoType,
                                                     TR::VectorLength sourceVectorLength = TR::NoVectorLength);
 

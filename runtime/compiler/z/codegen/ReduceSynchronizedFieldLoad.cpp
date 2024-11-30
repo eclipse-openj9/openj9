@@ -38,6 +38,7 @@
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
 #include "infra/Assert.hpp"
+#include "ras/Logger.hpp"
 #include "z/codegen/S390Evaluator.hpp"
 #include "z/codegen/S390GenerateInstructions.hpp"
 #include "z/codegen/S390Instruction.hpp"
@@ -259,7 +260,8 @@ ReduceSynchronizedFieldLoad::perform()
       {
       if (!cg->comp()->getOption(TR_DisableSynchronizedFieldLoad) && cg->comp()->getMethodSymbol()->mayContainMonitors())
          {
-         traceMsg(cg->comp(), "Performing ReduceSynchronizedFieldLoad\n");
+         if (cg->comp()->getOption(TR_TraceCG))
+            cg->comp()->log()->prints("Performing ReduceSynchronizedFieldLoad\n");
 
          for (TR::TreeTopOrderExtendedBlockIterator iter(cg->comp()); iter.getFirst() != NULL; ++iter)
             {
@@ -275,6 +277,7 @@ bool
 ReduceSynchronizedFieldLoad::performOnTreeTops(TR::TreeTop* startTreeTop, TR::TreeTop* endTreeTop)
    {
    TR::Compilation *comp = cg->comp();
+   OMR::Logger *log = comp->log();
    bool transformed = false;
 
    for (TR::TreeTopIterator iter(startTreeTop, comp); iter != endTreeTop; ++iter)
@@ -293,7 +296,7 @@ ReduceSynchronizedFieldLoad::performOnTreeTops(TR::TreeTop* startTreeTop, TR::Tr
             continue;
          if (comp->getOption(TR_TraceCG))
             {
-            traceMsg(comp, "Found monent [%p]\n", monentNode);
+            log->printf("Found monent [%p]\n", monentNode);
             }
 
          for (++iter; iter != endTreeTop; ++iter)
@@ -307,7 +310,7 @@ ReduceSynchronizedFieldLoad::performOnTreeTops(TR::TreeTop* startTreeTop, TR::Tr
                   iter.currentNode()->getFirstChild();
                if (comp->getOption(TR_TraceCG))
                   {
-                  traceMsg(comp, "Found monexit [%p]\n", monexitNode);
+                  log->printf("Found monexit [%p]\n", monexitNode);
                   }
 
                TR::Node* synchronizedObjectNode = monentNode->getFirstChild();
@@ -316,7 +319,7 @@ ReduceSynchronizedFieldLoad::performOnTreeTops(TR::TreeTop* startTreeTop, TR::Tr
                   {
                   if (comp->getOption(TR_TraceCG))
                      {
-                     traceMsg(comp, "Children of monent and monexit are synchronizing on the same object\n", monexitNode);
+                     log->printf("Children of monent and monexit are synchronizing on the same object\n", monexitNode);
                      }
 
                   TR::Node* loadNode = findLoadInSynchornizedRegion(startTreeTop, endTreeTop, monentTreeTop, monexitTreeTop, synchronizedObjectNode);
@@ -345,7 +348,7 @@ ReduceSynchronizedFieldLoad::performOnTreeTops(TR::TreeTop* startTreeTop, TR::Tr
 
                      if (comp->getOption(TR_TraceCG))
                         {
-                        traceMsg(comp, "Lock word offset = %d\n", lockWordOffset);
+                        log->printf("Lock word offset = %d\n", lockWordOffset);
                         }
 
                      // LPD(G) is an SSF instruction with a 12-bit displacement
@@ -420,6 +423,7 @@ TR::Node*
 ReduceSynchronizedFieldLoad::findLoadInSynchornizedRegion(TR::TreeTop* startTreeTop, TR::TreeTop* endTreeTop, TR::TreeTop* monentTreeTop, TR::TreeTop* monexitTreeTop, TR::Node* synchronizedObjectNode)
    {
    TR::Compilation *comp = cg->comp();
+   OMR::Logger *log = comp->log();
    TR::PreorderNodeIterator iter(startTreeTop, comp);
 
    // First iterate through all the nodes from the start treetop until we reach the monitor provided so that all nodes
@@ -433,7 +437,7 @@ ReduceSynchronizedFieldLoad::findLoadInSynchornizedRegion(TR::TreeTop* startTree
 
       if (comp->getOption(TR_TraceCG))
          {
-         traceMsg(comp, "Iterating node [%p] outside the monitored region\n", currentNode);
+         log->printf("Iterating node [%p] outside the monitored region\n", currentNode);
          }
       }
 
@@ -445,7 +449,7 @@ ReduceSynchronizedFieldLoad::findLoadInSynchornizedRegion(TR::TreeTop* startTree
 
       if (comp->getOption(TR_TraceCG))
          {
-         traceMsg(comp, "Iterating node [%p] inside the monitored region\n", currentNode);
+         log->printf("Iterating node [%p] inside the monitored region\n", currentNode);
          }
 
       TR::ILOpCode opcode = currentNode->getOpCode();
@@ -458,7 +462,7 @@ ReduceSynchronizedFieldLoad::findLoadInSynchornizedRegion(TR::TreeTop* startTree
             {
             if (comp->getOption(TR_TraceCG))
                {
-               traceMsg(comp, "Found load node [%p]\n", currentNode);
+               log->printf("Found load node [%p]\n", currentNode);
                }
 
             loadNode = currentNode;
@@ -467,7 +471,7 @@ ReduceSynchronizedFieldLoad::findLoadInSynchornizedRegion(TR::TreeTop* startTree
             {
             if (comp->getOption(TR_TraceCG))
                {
-               traceMsg(comp, "Found sideeffect node [%p] within the monitored region\n", currentNode);
+               log->printf("Found sideeffect node [%p] within the monitored region\n", currentNode);
                }
 
             loadNode = NULL;

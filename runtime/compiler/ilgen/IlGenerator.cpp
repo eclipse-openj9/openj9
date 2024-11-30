@@ -652,7 +652,7 @@ TR_J9ByteCodeIlGenerator::genILFromByteCodes()
             if (boolArrayStoreTransformer.isBoolArrayNode(arrayBase))
                {
                if (comp()->getOption(TR_TraceILGen))
-                  traceMsg(comp(), "bstorei node n%dn is bool array store\n", currNode->getGlobalIndex());
+                  comp()->log()->printf("bstorei node n%dn is bool array store\n", currNode->getGlobalIndex());
                bstoreiBoolArrayTypeNodes.insert(currNode);
                }
             else if (!boolArrayStoreTransformer.isByteArrayNode(arrayBase))
@@ -1048,7 +1048,7 @@ TR_J9ByteCodeIlGenerator::genExceptionHandlers(TR::Block * lastBlock)
             genTreeTop(TR::Node::createStore(exceptionNode->getSymbolReference(), pop()));
             loadSymbol(TR::aload, exceptionObjectSymRef);
             if (trace)
-               traceMsg(comp(), "catch block first BC is not an astore, inserting explicit store of exception object\n");
+               comp()->log()->prints("catch block first BC is not an astore, inserting explicit store of exception object\n");
             }
 
          TR::Node *node = _stack->top();
@@ -1071,8 +1071,6 @@ TR_J9ByteCodeIlGenerator::genExceptionHandlers(TR::Block * lastBlock)
             if (lastNode->getOpCode().isResolveOrNullCheck() ||
                 (lastNode->getOpCodeValue() == TR::treetop))
                lastNode = lastNode->getFirstChild();
-
-            //traceMsg(comp(), "last node %p bc index %d and opcode %s\n", lastNode, lastNode->getByteCodeIndex(), lastNode->getOpCode().getName());
 
             TR::ILOpCode &lastOpCode = lastNode->getOpCode();
             if (!lastOpCode.isGoto() &&
@@ -1187,7 +1185,7 @@ TR_J9ByteCodeIlGenerator::prependEntryCode(TR::Block * firstBlock)
          {
          monitorEnter->setSecond((TR::Node*)owningClass);
          if (trace)
-            traceMsg(comp(), "setting class for %p to be %p\n", monitorEnter, owningClass);
+            comp()->log()->printf("setting class for %p to be %p\n", monitorEnter, owningClass);
          }
 
       _methodSymbol->setMayContainMonitors(true);
@@ -1290,6 +1288,7 @@ TR_J9ByteCodeIlGenerator::prependGuardedCountForRecompilation(TR::Block * origin
    // originalFirstBlock:   ...
    //
 
+   OMR::Logger *log = comp()->log();
    bool trace = comp()->getOption(TR_TraceILGen);
    TR::TreeTop *originalFirstTree = _methodSymbol->getFirstTreeTop();
    TR::Node *node=originalFirstTree->getNode();
@@ -1349,19 +1348,19 @@ TR_J9ByteCodeIlGenerator::prependGuardedCountForRecompilation(TR::Block * origin
    callRecompileBlock->setFrequency(UNKNOWN_COLD_BLOCK_COUNT);
 
       // get all the blocks into the CFG
-   if (trace) traceMsg(comp(), "adding edge start to guard\n");
+   if (trace) log->prints("adding edge start to guard\n");
    cfg()->addEdge(cfg()->getStart(), guardBlock);
 
-   if (trace) traceMsg(comp(), "insert before guard to bump\n");
+   if (trace) log->prints("insert before guard to bump\n");
    cfg()->insertBefore(guardBlock, bumpCounterBlock);
-   if (trace) traceMsg(comp(), "insert before bump to call\n");
+   if (trace) log->prints("insert before bump to call\n");
    cfg()->insertBefore(bumpCounterBlock, callRecompileBlock);
-   if (trace) traceMsg(comp(), "insertbefore call to original\n");
+   if (trace) log->prints("insertbefore call to original\n");
    cfg()->insertBefore(callRecompileBlock, originalFirstBlock);
 
-   if (trace) traceMsg(comp(), "remove start to original\n");
+   if (trace) log->prints("remove start to original\n");
    cfg()->removeEdge(cfg()->getStart(), originalFirstBlock);
-   if (trace) traceMsg(comp(), "set first\n");
+   if (trace) log->prints("set first\n");
    _methodSymbol->setFirstTreeTop(guardBlock->getEntry());
 
    comp()->getRecompilationInfo()->getJittedBodyInfo()->setUsesGCR();
@@ -2635,7 +2634,7 @@ void TR_J9ByteCodeIlGenerator::expandUnresolvedClassCheckcast(TR::TreeTop *tree)
 
    bool trace = comp()->getOption(TR_TraceILGen);
    if (trace)
-      traceMsg(comp(), "expanding unresolved class checkcast n%un in block_%d\n", checkcastNode->getGlobalIndex(), tree->getEnclosingBlock()->getNumber());
+      comp()->log()->printf("expanding unresolved class checkcast n%un in block_%d\n", checkcastNode->getGlobalIndex(), tree->getEnclosingBlock()->getNumber());
 
    TR::Node *objAnchor = TR::Node::create(TR::treetop, 1, objNode);
    objAnchor->copyByteCodeInfo(checkcastNode);
@@ -2664,7 +2663,7 @@ void TR_J9ByteCodeIlGenerator::expandUnresolvedClassCheckcast(TR::TreeTop *tree)
    nonNullCaseBlock->prepend(TR::TreeTop::create(comp(), resolveCheckNode));
 
    if (trace)
-      traceMsg(comp(), "\tblock_%d: resolve, checkcast\n\tblock_%d: tail of original block\n", nonNullCaseBlock->getNumber(), tailBlock->getNumber());
+      comp()->log()->printf("\tblock_%d: resolve, checkcast\n\tblock_%d: tail of original block\n", nonNullCaseBlock->getNumber(), tailBlock->getNumber());
    }
 
 /**
@@ -2748,6 +2747,7 @@ void TR_J9ByteCodeIlGenerator::expandUnresolvedClassInstanceof(TR::TreeTop *tree
    TR_ASSERT(origClassNode->getSymbolReference()->isUnresolved(), "unresolved class instanceof n%un: expected symref of class child n%un to be unresolved\n", instanceofNode->getGlobalIndex(), origClassNode->getGlobalIndex());
 
    bool trace = comp()->getOption(TR_TraceILGen);
+   OMR::Logger *log = comp()->log();
 
    // If the receiver of the instanceof is non-null, there is no need of the null case
    if(instanceofNode->isReferenceNonNull() || objNode->isNonNull())
@@ -2757,13 +2757,13 @@ void TR_J9ByteCodeIlGenerator::expandUnresolvedClassInstanceof(TR::TreeTop *tree
       tree->insertBefore(TR::TreeTop::create(comp(), resolveCheckNode));
 
       if (trace)
-         traceMsg(comp(), "%s: emit ResolveCHK n%dn before the unresolved class instanceof n%un in block_%d\n", __FUNCTION__,
+         log->printf("%s: emit ResolveCHK n%dn before the unresolved class instanceof n%un in block_%d\n", __FUNCTION__,
             resolveCheckNode->getGlobalIndex(), instanceofNode->getGlobalIndex(), tree->getEnclosingBlock()->getNumber());
       return;
       }
 
    if (trace)
-      traceMsg(comp(), "expanding unresolved class instanceof n%un in block_%d\n", instanceofNode->getGlobalIndex(), tree->getEnclosingBlock()->getNumber());
+      log->printf("expanding unresolved class instanceof n%un in block_%d\n", instanceofNode->getGlobalIndex(), tree->getEnclosingBlock()->getNumber());
 
    TR::Node *objAnchor = TR::Node::create(TR::treetop, 1, objNode);
    objAnchor->copyByteCodeInfo(instanceofNode);
@@ -2827,10 +2827,10 @@ void TR_J9ByteCodeIlGenerator::expandUnresolvedClassInstanceof(TR::TreeTop *tree
 
    if (trace)
       {
-      traceMsg(comp(), "\tresult in temp #%d\n", resultTemp->getReferenceNumber());
-      traceMsg(comp(), "\tblock_%d: resolve, instanceof\n", nonNullCaseBlock->getNumber());
-      traceMsg(comp(), "\tblock_%d: false\n", nullCaseBlock->getNumber());
-      traceMsg(comp(), "\tblock_%d: tail of original block\n", tailBlock->getNumber());
+      log->printf("\tresult in temp #%d\n", resultTemp->getReferenceNumber());
+      log->printf("\tblock_%d: resolve, instanceof\n", nonNullCaseBlock->getNumber());
+      log->printf("\tblock_%d: false\n", nullCaseBlock->getNumber());
+      log->printf("\tblock_%d: tail of original block\n", tailBlock->getNumber());
       }
    }
 
@@ -2914,17 +2914,18 @@ void TR_J9ByteCodeIlGenerator::expandInvokeSpecialInterface(TR::TreeTop *tree)
       !skipInvokeSpecialInterfaceTypeChecks(),
       "in expandInvokeSpecialInterface, but it is disabled\n");
 
+   OMR::Logger *log = comp()->log();
    const bool trace = comp()->getOption(TR_TraceILGen);
    static const bool verbose =
       feGetEnv("TR_verboseInvokeSpecialInterface") != NULL;
 
    if (trace)
       {
-      traceMsg(comp(),
+      log->printf(
          "expanding invokespecial in interface method at n%un\n",
          tree->getNode()->getGlobalIndex());
       if (verbose)
-         comp()->dumpMethodTrees(comp()->log(), "Trees before expanding invokespecial", _methodSymbol);
+         comp()->dumpMethodTrees(log, "Trees before expanding invokespecial", _methodSymbol);
       }
 
    TR::Node * const parent = tree->getNode();
@@ -2956,7 +2957,7 @@ void TR_J9ByteCodeIlGenerator::expandInvokeSpecialInterface(TR::TreeTop *tree)
    tree->insertBefore(TR::TreeTop::create(comp(), typeTest));
 
    if (trace)
-      traceMsg(comp(), "Inserted type test n%un\n", typeTest->getGlobalIndex());
+      log->printf("Inserted type test n%un\n", typeTest->getGlobalIndex());
 
    // Split block between type test and call
    TR::Block * const headBlock = tree->getEnclosingBlock();
@@ -2967,7 +2968,7 @@ void TR_J9ByteCodeIlGenerator::expandInvokeSpecialInterface(TR::TreeTop *tree)
 
    if (trace)
       {
-      traceMsg(comp(),
+      log->printf(
          "Split block_%d into:\n"
          "\tblock_%d (preceding code, and type test),\n"
          "\tblock_%d (helper call for type test failure)\n"
@@ -3016,7 +3017,7 @@ void TR_J9ByteCodeIlGenerator::expandInvokeSpecialInterface(TR::TreeTop *tree)
 
    if (trace)
       {
-      traceMsg(comp(),
+      log->printf(
          "generated helper call n%un for type test failure\n",
          helperCall->getGlobalIndex());
       }
@@ -3025,7 +3026,7 @@ void TR_J9ByteCodeIlGenerator::expandInvokeSpecialInterface(TR::TreeTop *tree)
    cfg()->addEdge(failBlock, cfg()->getEnd());
 
    if (trace && verbose)
-      comp()->dumpMethodTrees(comp()->log(), "Trees after expanding invokespecial", _methodSymbol);
+      comp()->dumpMethodTrees(log, "Trees after expanding invokespecial", _methodSymbol);
 
    _bcIndex = rememberedBcIndex;
    }
@@ -3058,7 +3059,7 @@ void TR_J9ByteCodeIlGenerator::insertCustomizationLogicTreeIfEnabled(TR::TreeTop
 
       if (comp()->getOption(TR_TraceILGen))
          {
-         traceMsg(comp(), "Inserted call to doCustomizationLogic n%dn %p\n", customization->getGlobalIndex(), customization);
+         comp()->log()->printf("Inserted call to doCustomizationLogic n%dn %p\n", customization->getGlobalIndex(), customization);
          }
       }
    }
@@ -3109,7 +3110,7 @@ void TR_J9ByteCodeIlGenerator::expandInvokeHandle(TR::TreeTop *tree)
 
    if (comp()->getOption(TR_TraceILGen))
       {
-      traceMsg(comp(), "expanding invokehandle at n%dn\n", tree->getNode()->getGlobalIndex());
+      comp()->log()->printf("expanding invokehandle at n%dn\n", tree->getNode()->getGlobalIndex());
       }
 
    TR::Node * callNode = tree->getNode()->getChild(0);
@@ -3130,7 +3131,7 @@ void TR_J9ByteCodeIlGenerator::expandInvokeHandle(TR::TreeTop *tree)
 
    if (comp()->getOption(TR_TraceILGen))
       {
-      traceMsg(comp(), "Inserted ZEROCHK n%dn %p\n", zerochkNode->getGlobalIndex(), zerochkNode);
+      comp()->log()->printf("Inserted ZEROCHK n%dn %p\n", zerochkNode->getGlobalIndex(), zerochkNode);
       }
 
    insertCustomizationLogicTreeIfEnabled(tree, receiverHandle);
@@ -3178,7 +3179,7 @@ void TR_J9ByteCodeIlGenerator::expandInvokeDynamic(TR::TreeTop *tree)
 
    if (comp()->getOption(TR_TraceILGen))
       {
-      traceMsg(comp(), "expanding invokeDynamic at n%dn\n", tree->getNode()->getGlobalIndex());
+      comp()->log()->printf("expanding invokeDynamic at n%dn\n", tree->getNode()->getGlobalIndex());
       }
 
    TR::Node * callNode = tree->getNode()->getChild(0);
@@ -3233,7 +3234,7 @@ void TR_J9ByteCodeIlGenerator::expandInvokeHandleGeneric(TR::TreeTop *tree)
 
    if (comp()->getOption(TR_TraceILGen))
       {
-      traceMsg(comp(), "expanding invokeHandleGeneric at n%dn\n", tree->getNode()->getGlobalIndex());
+      comp()->log()->printf("expanding invokeHandleGeneric at n%dn\n", tree->getNode()->getGlobalIndex());
       }
 
    TR::Node * callNode = tree->getNode()->getChild(0);
@@ -3256,7 +3257,7 @@ void TR_J9ByteCodeIlGenerator::expandInvokeHandleGeneric(TR::TreeTop *tree)
 
    if (comp()->getOption(TR_TraceILGen))
       {
-      traceMsg(comp(), "Inserted asType call n%dn %p\n", asType->getGlobalIndex(), asType);
+      comp()->log()->printf("Inserted asType call n%dn %p\n", asType->getGlobalIndex(), asType);
       }
 
    int32_t receiverChildIndex = callNode->getFirstArgumentIndex();
@@ -3304,7 +3305,7 @@ void TR_J9ByteCodeIlGenerator::expandInvokeExact(TR::TreeTop *tree)
 
    if (comp()->getOption(TR_TraceILGen))
       {
-      traceMsg(comp(), "expanding invokeExact at n%dn\n", tree->getNode()->getGlobalIndex());
+      comp()->log()->printf("expanding invokeExact at n%dn\n", tree->getNode()->getGlobalIndex());
       }
 
    TR::Node * callNode = tree->getNode()->getChild(0);
@@ -3339,7 +3340,7 @@ void TR_J9ByteCodeIlGenerator::expandInvokeExact(TR::TreeTop *tree)
 
    if (comp()->getOption(TR_TraceILGen))
       {
-      traceMsg(comp(), "Replacing first child n%dn with invoke exact thunk address n%dn\n", callNode->getFirstChild()->getGlobalIndex(), invokeExactTargetAddr->getGlobalIndex());
+      comp()->log()->printf("Replacing first child n%dn with invoke exact thunk address n%dn\n", callNode->getFirstChild()->getGlobalIndex(), invokeExactTargetAddr->getGlobalIndex());
       }
 
    // Replace the `lconst 0` node with the actual thunk address
@@ -3356,6 +3357,7 @@ void TR_J9ByteCodeIlGenerator::expandInvokeExact(TR::TreeTop *tree)
  */
 void TR_J9ByteCodeIlGenerator::expandMethodHandleInvokeCall(TR::TreeTop *tree)
    {
+   OMR::Logger *log = comp()->log();
    TR::Node *ttNode = tree->getNode();
    TR::Node* callNode = ttNode->getFirstChild();
    TR::TreeTop* prevTree = tree->getPrevTreeTop();
@@ -3363,10 +3365,10 @@ void TR_J9ByteCodeIlGenerator::expandMethodHandleInvokeCall(TR::TreeTop *tree)
 
    if (comp()->getOption(TR_TraceILGen))
       {
-      traceMsg(comp(), "Found MethodHandle invoke call n%dn %p to expand\n", callNode->getGlobalIndex(), callNode);
-      traceMsg(comp(), "   /--- Tree before expanding n%dn --------------------\n", callNode->getGlobalIndex());
-      comp()->getDebug()->printWithFixedPrefix(comp()->log(), ttNode, 1, true, true, "      ");
-      traceMsg(comp(), "\n");
+      log->printf("Found MethodHandle invoke call n%dn %p to expand\n", callNode->getGlobalIndex(), callNode);
+      log->printf("   /--- Tree before expanding n%dn --------------------\n", callNode->getGlobalIndex());
+      comp()->getDebug()->printWithFixedPrefix(log, ttNode, 1, true, true, "      ");
+      log->println();
       }
 
    int32_t oldBCIndex = _bcIndex;
@@ -3383,7 +3385,7 @@ void TR_J9ByteCodeIlGenerator::expandMethodHandleInvokeCall(TR::TreeTop *tree)
       TR::TreeTop *anchorTT = TR::TreeTop::create(comp(), TR::Node::create(TR::treetop, 1, child));
       if (comp()->getOption(TR_TraceILGen))
          {
-         traceMsg(comp(), "TreeTop n%dn is created to anchor node n%dn\n", anchorTT->getNode()->getGlobalIndex(), child->getGlobalIndex());
+         log->printf("TreeTop n%dn is created to anchor node n%dn\n", anchorTT->getNode()->getGlobalIndex(), child->getGlobalIndex());
          }
        tree->insertBefore(anchorTT);
       }
@@ -3427,12 +3429,12 @@ void TR_J9ByteCodeIlGenerator::expandMethodHandleInvokeCall(TR::TreeTop *tree)
 
    if (comp()->getOption(TR_TraceILGen))
       {
-      traceMsg(comp(), "   /--- Trees after expanding n%dn --------------------\n", callNode->getGlobalIndex());
+      log->printf("   /--- Trees after expanding n%dn --------------------\n", callNode->getGlobalIndex());
       TR::TreeTop *tt = prevTree->getNextTreeTop();
       do
          {
-         comp()->getDebug()->printWithFixedPrefix(comp()->log(), tt->getNode(), 1, true, true, "      ");
-         traceMsg(comp(), "\n");
+         comp()->getDebug()->printWithFixedPrefix(log, tt->getNode(), 1, true, true, "      ");
+         log->println();
          tt = tt->getNextTreeTop();
          } while( tt != nextTree);
       }

@@ -97,7 +97,7 @@ J9::GCStackAtlas::close(TR::CodeGenerator *cg)
          // Maps are the same - can merge
          //
          if (comp->getOption(TR_TraceCG))
-             traceMsg(comp,
+             comp->log()->printf(
                      "Map with code offset range starting at [%08x] is identical to the previous map [%08x], merging and eliminating previous\n",
                      nextMap->getLowestCodeOffset(), map->getLowestCodeOffset());
 

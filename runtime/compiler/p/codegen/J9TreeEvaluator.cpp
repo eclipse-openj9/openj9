@@ -73,6 +73,7 @@
 #include "p/codegen/PPCEvaluator.hpp"
 #include "p/codegen/PPCInstruction.hpp"
 #include "p/codegen/PPCTableOfConstants.hpp"
+#include "ras/Logger.hpp"
 #include "runtime/CodeCache.hpp"
 #include "runtime/Runtime.hpp"
 #include "env/VMJ9.h"
@@ -2443,7 +2444,7 @@ TR::Register *J9::Power::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, 
       {
       if (comp->getOption(TR_TraceCG))
          {
-         traceMsg(comp, "Disabling inline allocations for multianewarray of dim %d\n", nDims);
+         comp->log()->printf("Disabling inline allocations for multianewarray of dim %d\n", nDims);
          }
       TR::ILOpCodes opCode = node->getOpCodeValue();
       TR::Node::recreate(node, TR::acall);
@@ -3703,7 +3704,7 @@ TR::Register *J9::Power::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, T
    helperCallNode->setAndIncChild(1, destinationChild);
    if (comp->getOption(TR_TraceCG))
       {
-      traceMsg(comp, "%s: Creating and evaluating the following tree to generate the necessary helper call for this node\n", node->getOpCode().getName());
+      comp->log()->printf("%s: Creating and evaluating the following tree to generate the necessary helper call for this node\n", node->getOpCode().getName());
       cg->getDebug()->print(comp->log(), helperCallNode);
       }
 
@@ -4320,6 +4321,7 @@ TR::Register *J9::Power::TreeEvaluator::VMcheckcastEvaluator(TR::Node *node, TR:
    {
    TR::Compilation                      *comp = cg->comp();
    TR_J9VMBase                          *fej9 = reinterpret_cast<TR_J9VMBase *>(comp->fe());
+   OMR::Logger                           *log = comp->log();
    TR_OpaqueClassBlock                  *compileTimeGuessClass;
    InstanceOfOrCheckCastProfiledClasses  profiledClassesList[1];
    InstanceOfOrCheckCastSequences        sequences[InstanceOfOrCheckCastMaxSequences];
@@ -4359,7 +4361,7 @@ TR::Register *J9::Power::TreeEvaluator::VMcheckcastEvaluator(TR::Node *node, TR:
             generateLoadJ9Class(node, objectClassReg, objectReg, cg);
             break;
          case NullTest:
-            if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting NullTest\n", node->getOpCode().getName());
+            if (comp->getOption(TR_TraceCG)) log->printf("%s: Emitting NullTest\n", node->getOpCode().getName());
             TR_ASSERT(!objectNode->isNonNull(), "Object is known to be non-null, no need for a null test");
             if (node->getOpCodeValue() == TR::checkcastAndNULLCHK)
                {
@@ -4379,30 +4381,30 @@ TR::Register *J9::Power::TreeEvaluator::VMcheckcastEvaluator(TR::Node *node, TR:
             TR_ASSERT(false, "Doesn't make sense, GoToFalse should be the terminal sequence");
             break;
          case ClassEqualityTest:
-            if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting ClassEqualityTest\n", node->getOpCode().getName());
+            if (comp->getOption(TR_TraceCG)) log->printf("%s: Emitting ClassEqualityTest\n", node->getOpCode().getName());
             genInstanceOfOrCheckCastClassEqualityTest(node, cr0Reg, objectClassReg, castClassReg, cg);
             break;
          case SuperClassTest:
             {
-            if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting SuperClassTest\n", node->getOpCode().getName());
+            if (comp->getOption(TR_TraceCG)) log->printf("%s: Emitting SuperClassTest\n", node->getOpCode().getName());
             int32_t castClassDepth = castClassNode->getSymbolReference()->classDepth(comp);
             genInstanceOfOrCheckCastSuperClassTest(node, cr0Reg, objectClassReg, castClassReg, castClassDepth, nextSequenceLabel, srm, cg);
             break;
             }
          case ProfiledClassTest:
-            if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting ProfiledClassTest\n", node->getOpCode().getName());
+            if (comp->getOption(TR_TraceCG)) log->printf("%s: Emitting ProfiledClassTest\n", node->getOpCode().getName());
             genInstanceOfOrCheckCastArbitraryClassTest(node, cr0Reg, objectClassReg, profiledClassesList[0].profiledClass, srm, cg);
             break;
          case CompileTimeGuessClassTest:
-            if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting CompileTimeGuessClassTest\n", node->getOpCode().getName());
+            if (comp->getOption(TR_TraceCG)) log->printf("%s: Emitting CompileTimeGuessClassTest\n", node->getOpCode().getName());
             genInstanceOfOrCheckCastArbitraryClassTest(node, cr0Reg, objectClassReg, compileTimeGuessClass, srm, cg);
             break;
          case CastClassCacheTest:
-            if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting CastClassCacheTest\n", node->getOpCode().getName());
+            if (comp->getOption(TR_TraceCG)) log->printf("%s: Emitting CastClassCacheTest\n", node->getOpCode().getName());
             genCheckCastCastClassCacheTest(node, cr0Reg, objectClassReg, castClassReg, srm, cg);
             break;
          case ArrayOfJavaLangObjectTest:
-            if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting ArrayOfJavaLangObjectTest\n", node->getOpCode().getName());
+            if (comp->getOption(TR_TraceCG)) log->printf("%s: Emitting ArrayOfJavaLangObjectTest\n", node->getOpCode().getName());
             genInstanceOfOrCheckCastObjectArrayTest(node, cr0Reg, objectClassReg, nextSequenceLabel, srm, cg);
             break;
          case HelperCall:
@@ -4455,7 +4457,7 @@ TR::Register *J9::Power::TreeEvaluator::VMcheckcastEvaluator(TR::Node *node, TR:
       {
       TR_ASSERT(*iter == HelperCall || *iter == GoToFalse, "Expecting helper call or fail here");
       bool helperCallForFailure = *iter != HelperCall;
-      if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting HelperCall%s\n", node->getOpCode().getName(), helperCallForFailure ? " for failure" : "");
+      if (comp->getOption(TR_TraceCG)) comp->log()->printf("%s: Emitting HelperCall%s\n", node->getOpCode().getName(), helperCallForFailure ? " for failure" : "");
       TR_PPCOutOfLineCodeSection *outlinedHelperCall = new (cg->trHeapMemory()) TR_PPCOutOfLineCodeSection(node, TR::call, NULL, nextSequenceLabel, helperReturnLabel, cg);
       cg->generateDebugCounter(nextSequenceLabel->getInstruction(),
                                TR::DebugCounter::debugCounterName(comp, "instanceOfOrCheckCast/%s/%s",
@@ -4479,6 +4481,7 @@ TR::Register *J9::Power::TreeEvaluator::VMcheckcastEvaluator(TR::Node *node, TR:
 TR::Register *J9::Power::TreeEvaluator::VMinstanceOfEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::Compilation                      *comp = cg->comp();
+   OMR::Logger                           *log = comp->log();
    TR_OpaqueClassBlock                  *compileTimeGuessClass;
    bool                                  profiledClassIsInstanceOf;
    InstanceOfOrCheckCastProfiledClasses  profiledClassesList[1];
@@ -4524,7 +4527,7 @@ TR::Register *J9::Power::TreeEvaluator::VMinstanceOfEvaluator(TR::Node *node, TR
             generateLoadJ9Class(node, objectClassReg, objectReg, cg);
             break;
          case NullTest:
-            if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting NullTest\n", node->getOpCode().getName());
+            if (comp->getOption(TR_TraceCG)) log->printf("%s: Emitting NullTest\n", node->getOpCode().getName());
             TR_ASSERT(!objectNode->isNonNull(), "Object is known to be non-null, no need for a null test");
             if (node->getOpCodeValue() == TR::checkcastAndNULLCHK)
                {
@@ -4538,41 +4541,41 @@ TR::Register *J9::Power::TreeEvaluator::VMinstanceOfEvaluator(TR::Node *node, TR
                }
             break;
          case GoToTrue:
-            if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting GoToTrue\n", node->getOpCode().getName());
+            if (comp->getOption(TR_TraceCG)) log->printf("%s: Emitting GoToTrue\n", node->getOpCode().getName());
             if (initialResult == true)
                generateLabelInstruction(cg, TR::InstOpCode::b, node, doneLabel);
             break;
          case GoToFalse:
-            if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting GoToFalse\n", node->getOpCode().getName());
+            if (comp->getOption(TR_TraceCG)) log->printf("%s: Emitting GoToFalse\n", node->getOpCode().getName());
             if (initialResult == false)
                generateLabelInstruction(cg, TR::InstOpCode::b, node, doneLabel);
             break;
          case ClassEqualityTest:
-            if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting ClassEqualityTest\n", node->getOpCode().getName());
+            if (comp->getOption(TR_TraceCG)) log->printf("%s: Emitting ClassEqualityTest\n", node->getOpCode().getName());
             genInstanceOfOrCheckCastClassEqualityTest(node, cr0Reg, objectClassReg, castClassReg, cg);
             break;
          case SuperClassTest:
             {
-            if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting SuperClassTest\n", node->getOpCode().getName());
+            if (comp->getOption(TR_TraceCG)) log->printf("%s: Emitting SuperClassTest\n", node->getOpCode().getName());
             int32_t castClassDepth = castClassNode->getSymbolReference()->classDepth(comp);
             genInstanceOfOrCheckCastSuperClassTest(node, cr0Reg, objectClassReg, castClassReg, castClassDepth, nextSequenceLabel, srm, cg);
             break;
             }
          case ProfiledClassTest:
-            if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting ProfiledClassTest\n", node->getOpCode().getName());
+            if (comp->getOption(TR_TraceCG)) log->printf("%s: Emitting ProfiledClassTest\n", node->getOpCode().getName());
             profiledClassIsInstanceOf = profiledClassesList[0].isProfiledClassInstanceOfCastClass;
             genInstanceOfOrCheckCastArbitraryClassTest(node, cr0Reg, objectClassReg, profiledClassesList[0].profiledClass, srm, cg);
             break;
          case CompileTimeGuessClassTest:
-            if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting CompileTimeGuessClassTest\n", node->getOpCode().getName());
+            if (comp->getOption(TR_TraceCG)) log->printf("%s: Emitting CompileTimeGuessClassTest\n", node->getOpCode().getName());
             genInstanceOfOrCheckCastArbitraryClassTest(node, cr0Reg, objectClassReg, compileTimeGuessClass, srm, cg);
             break;
          case CastClassCacheTest:
-            if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting CastClassCacheTest\n", node->getOpCode().getName());
+            if (comp->getOption(TR_TraceCG)) log->printf("%s: Emitting CastClassCacheTest\n", node->getOpCode().getName());
             genInstanceOfCastClassCacheTest(node, cr0Reg, objectClassReg, castClassReg, srm, cg);
             break;
          case ArrayOfJavaLangObjectTest:
-            if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting ArrayOfJavaLangObjectTest\n", node->getOpCode().getName());
+            if (comp->getOption(TR_TraceCG)) log->printf("%s: Emitting ArrayOfJavaLangObjectTest\n", node->getOpCode().getName());
             genInstanceOfOrCheckCastObjectArrayTest(node, cr0Reg, objectClassReg, nextSequenceLabel, srm, cg);
             break;
          case DynamicCacheObjectClassTest:
@@ -4637,7 +4640,7 @@ TR::Register *J9::Power::TreeEvaluator::VMinstanceOfEvaluator(TR::Node *node, TR
       {
       if (*iter == HelperCall)
          {
-         if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting HelperCall\n", node->getOpCode().getName());
+         if (comp->getOption(TR_TraceCG)) log->printf("%s: Emitting HelperCall\n", node->getOpCode().getName());
          TR_PPCOutOfLineCodeSection *outlinedHelperCall = new (cg->trHeapMemory()) TR_PPCOutOfLineCodeSection(node, TR::icall, resultReg, nextSequenceLabel, helperReturnLabel, cg);
          cg->generateDebugCounter(nextSequenceLabel->getInstruction(),
                                   TR::DebugCounter::debugCounterName(comp, "instanceOfOrCheckCast/%s/helperCall",
@@ -7034,7 +7037,7 @@ TR::Register *J9::Power::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeG
                {
                // We need to check enumReg at runtime to determine correct offset of dataAddr field.
                if (comp->getOption(TR_TraceCG))
-                  traceMsg(comp, "Node (%p): Dealing with full/compressed refs variable length array.\n", node);
+                  comp->log()->printf("Node (%p): Dealing with full/compressed refs variable length array.\n", node);
 
                TR::LabelSymbol *dataAddrInitDoneLabel = generateLabelSymbol(cg);
                TR::LabelSymbol *zeroArrayLabel = needZeroInit ? generateLabelSymbol(cg) : dataAddrInitDoneLabel;
@@ -7064,7 +7067,7 @@ TR::Register *J9::Power::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeG
             else if (!isVariableLen && node->getFirstChild()->getOpCode().isLoadConst() && node->getFirstChild()->getInt() == 0)
                {
                if (comp->getOption(TR_TraceCG))
-                  traceMsg(comp, "Node (%p): Dealing with full/compressed refs fixed length zero size array.\n", node);
+                  comp->log()->printf("Node (%p): Dealing with full/compressed refs fixed length zero size array.\n", node);
 
                if (needZeroInit)
                   {
@@ -7077,7 +7080,7 @@ TR::Register *J9::Power::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeG
             else
                {
                if (comp->getOption(TR_TraceCG))
-                  traceMsg(comp, "Node (%p): Dealing with full/compressed refs fixed length non-zero size array.\n", node);
+                  comp->log()->printf("Node (%p): Dealing with full/compressed refs fixed length non-zero size array.\n", node);
 
                // Load first element address into firstDataElementReg
                iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, firstDataElementReg, resReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), iCursor);
@@ -9976,7 +9979,6 @@ static TR::Register *inlineAtomicOperation(TR::Node *node, TR::CodeGenerator *cg
       if (indexChild->getOpCode().isLoadConst() && indexChild->getRegister() == NULL && comp->target().is32Bit())
          {
          fieldOffset = (int32_t) indexChild->getLongInt();
-         //traceMsg(comp,"Allocate fieldOffsetReg\n");
          fieldOffsetReg = cg->allocateRegister();
          numDeps++;
          loadConstant(cg, node, fieldOffset, fieldOffsetReg);
@@ -14393,7 +14395,7 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
             {
             if (comp->getOption(TR_TraceCG))
                {
-               traceMsg(comp, "Inlining Thread.onSpinWait call node %p as yield instruction.\n", node);
+               comp->log()->printf("Inlining Thread.onSpinWait call node %p as yield instruction.\n", node);
                }
 
             /*
@@ -14726,7 +14728,7 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
 
       case TR::sun_misc_Unsafe_compareAndSwapLong_jlObjectJJJ_Z:
          if (comp->getOption(TR_TraceCG))
-            traceMsg(comp, "In evaluator for compareAndSwapLong. node = %p node->isSafeForCGToFastPathUnsafeCall = %p\n", node, node->isSafeForCGToFastPathUnsafeCall());
+            comp->log()->printf("In evaluator for compareAndSwapLong. node = %p node->isSafeForCGToFastPathUnsafeCall = %p\n", node, node->isSafeForCGToFastPathUnsafeCall());
          // As above, we only want to inline the JNI methods, so add an explicit test for isNative()
          if (!methodSymbol->isNative())
             break;

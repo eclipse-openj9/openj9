@@ -1445,7 +1445,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
       }
    else if (inlineArchetypeSpecimen && !mhInlineWithPeeking && debugMHInlineWithOutPeeking)
       {
-      traceMsg(comp(), "printing out trees and bytecodes through peeking because DebugMHInlineWithOutPeeking is on\n");
+      debugTrace(tracer(), "printing out trees and bytecodes through peeking because DebugMHInlineWithOutPeeking is on\n");
       methodSymbol->getResolvedMethod()->genMethodILForPeekingEvenUnderMethodRedefinition(methodSymbol, comp(), false, NULL);
       }
 
@@ -2026,7 +2026,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
    if (isPartialInliningCandidate(calltarget, &callBlocks))
       {
       if (comp()->getOption(TR_TraceBFGeneration))
-         traceMsg(comp(), "Call Target %s is a partial inline Candidate with a partial size of %d",callerName,calltarget->_partialSize);
+         comp()->log()->printf("Call Target %s is a partial inline Candidate with a partial size of %d",callerName,calltarget->_partialSize);
 
       heuristicTrace(tracer(), "*** Depth %d: ECS end for target %p signature %s. It is a partial inline Candidate with a partial size of %d", _recursionDepth, calltarget, callerName, calltarget->_partialSize);
       _realSize += calltarget->_partialSize;

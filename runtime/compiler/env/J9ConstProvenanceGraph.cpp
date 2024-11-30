@@ -22,6 +22,7 @@
 
 #include "env/J9ConstProvenanceGraph.hpp"
 #include "compile/Compilation.hpp"
+#include "ras/Logger.hpp"
 #include <algorithm>
 
 J9::ConstProvenanceGraph::ConstProvenanceGraph(TR::Compilation *comp)
@@ -65,7 +66,7 @@ J9::ConstProvenanceGraph::addEdgeImpl(Place origin, Place referent)
    if (trace())
       {
       const char *what = ignore ? "ignore redundant" : "accept";
-      traceMsg(_comp, "    %s edge: ", what);
+      _comp->log()->printf("    %s edge: ", what);
       trace(origin);
       trace(" -> ");
       trace(referent);
@@ -228,22 +229,24 @@ J9::ConstProvenanceGraph::trace()
 void
 J9::ConstProvenanceGraph::trace(Place p)
    {
+   OMR::Logger *log = _comp->log();
+
    switch (p.kind())
       {
       case PlaceKind_PermanentRoot:
-         traceMsg(_comp, "permanent root");
+         log->prints("permanent root");
          break;
 
       case PlaceKind_ClassLoader:
-         traceMsg(_comp, "class loader %p", p.getClassLoader());
+         log->printf("class loader %p", p.getClassLoader());
          break;
 
       case PlaceKind_AnonymousClass:
-         traceMsg(_comp, "anonymous class %p", p.getAnonymousClass());
+         log->printf("anonymous class %p", p.getAnonymousClass());
          break;
 
       case PlaceKind_KnownObject:
-         traceMsg(_comp, "obj%d", p.getKnownObject());
+         log->printf("obj%d", p.getKnownObject());
          break;
       }
    }
@@ -251,13 +254,13 @@ J9::ConstProvenanceGraph::trace(Place p)
 void
 J9::ConstProvenanceGraph::trace(const char *s)
    {
-   traceMsg(_comp, "%s", s);
+   _comp->log()->prints(s);
    }
 
 void
 J9::ConstProvenanceGraph::trace(J9ClassLoader *loader)
    {
-   traceMsg(_comp, "class loader %p", loader);
+   _comp->log()->printf("class loader %p", loader);
    }
 
 void
@@ -265,7 +268,7 @@ J9::ConstProvenanceGraph::trace(TR_OpaqueClassBlock *clazz)
    {
    int32_t len = 0;
    const char *name = TR::Compiler->cls.classNameChars(_comp, clazz, len);
-   traceMsg(_comp, "class %p %.*s", clazz, len, name);
+   _comp->log()->printf("class %p %.*s", clazz, len, name);
    }
 
 void
@@ -277,14 +280,13 @@ J9::ConstProvenanceGraph::trace(J9Class *clazz)
 void
 J9::ConstProvenanceGraph::trace(J9ConstantPool *cp)
    {
-   traceMsg(_comp, "constant pool %p", cp);
+   _comp->log()->printf("constant pool %p", cp);
    }
 
 void
 J9::ConstProvenanceGraph::trace(TR_ResolvedMethod *method)
    {
-   traceMsg(
-      _comp,
+   _comp->log()->printf(
       "method %p %.*s.%.*s%.*s",
       method->getNonPersistentIdentifier(),
       method->classNameLength(),
@@ -302,7 +304,7 @@ J9::ConstProvenanceGraph::trace(TR_OpaqueMethodBlock *method)
    const char *sig =
       _comp->fej9()->sampleSignature(method, buf, sizeof(buf), _comp->trMemory());
 
-   traceMsg(_comp, "method %p %s", method, sig);
+   _comp->log()->printf("method %p %s", method, sig);
    }
 
 void
@@ -314,7 +316,7 @@ J9::ConstProvenanceGraph::trace(J9Method *method)
 void
 J9::ConstProvenanceGraph::trace(KnownObject koi)
    {
-   traceMsg(_comp, "obj%d", koi._i);
+   _comp->log()->printf("obj%d", koi._i);
    }
 
 bool
