@@ -107,8 +107,7 @@ class J9::RetainedMethodSet::VectorInliningTable
 static void
 traceMethod(TR::Compilation *comp, TR_ResolvedMethod *method)
    {
-   traceMsg(
-      comp,
+   comp->log()->printf(
       "%p %.*s.%.*s%.*s in class %p",
       method->getPersistentIdentifier(),
       method->classNameLength(),
@@ -132,9 +131,9 @@ J9::RetainedMethodSet::RetainedMethodSet(
    {
    if (comp->getOption(TR_TraceRetainedMethods))
       {
-      traceMsg(comp, "RetainedMethodSet %p: created with parent=%p, method=", this, parent);
+      comp->log()->printf("RetainedMethodSet %p: created with parent=%p, method=", this, parent);
       traceMethod(comp, method);
-      traceMsg(comp, "\n");
+      comp->log()->println();
       }
    }
 
@@ -201,7 +200,7 @@ traceNamedLoader(
    const char *name,
    J9ClassLoader *loader)
    {
-   traceMsg(comp, "RetainedMethodSet %p: %s=%p\n", s, name, loader);
+   comp->log()->printf("RetainedMethodSet %p: %s=%p\n", s, name, loader);
    }
 
 void
@@ -224,8 +223,7 @@ J9::RetainedMethodSet::init(
          _loaders.insert(loader);
          if (trace)
             {
-            traceMsg(
-               comp(),
+            comp()->log()->printf(
                "RetainedMethodSet %p: add permanent loader %p\n",
                this,
                loader);
@@ -389,9 +387,9 @@ J9::RetainedMethodSet::attestWillRemainLoaded(TR_ResolvedMethod *method)
    {
    if (comp()->getOption(TR_TraceRetainedMethods))
       {
-      traceMsg(comp(), "RetainedMethodSet %p: attest method ", this);
+      comp()->log()->printf("RetainedMethodSet %p: attest method ", this);
       traceMethod(comp(), method);
-      traceMsg(comp(), "\n");
+      comp()->log()->println();
       }
 
    scan(definingJ9Class(method));
@@ -404,8 +402,7 @@ J9::RetainedMethodSet::scan(J9Class *clazz)
       {
       if (comp()->getOption(TR_TraceRetainedMethods))
          {
-         traceMsg(
-            comp(),
+         comp()->log()->printf(
             "RetainedMethodSet %p: add anonymous class %p\n",
             this,
             clazz);
@@ -418,8 +415,7 @@ J9::RetainedMethodSet::scan(J9Class *clazz)
    J9ClassLoader *loader = getLoader(clazz);
    if (comp()->getOption(TR_TraceRetainedMethods))
       {
-      traceMsg(
-         comp(),
+      comp()->log()->printf(
          "RetainedMethodSet %p: class %p has loader %p\n",
          this,
          clazz,
@@ -433,7 +429,7 @@ J9::RetainedMethodSet::scan(J9Class *clazz)
 
    if (comp()->getOption(TR_TraceRetainedMethods))
       {
-      traceMsg(comp(), "RetainedMethodSet %p: add loader %p\n", this, loader);
+      comp()->log()->printf("RetainedMethodSet %p: add loader %p\n", this, loader);
       }
 
    _loaders.insert(loader);
@@ -529,8 +525,7 @@ J9::RetainedMethodSet::scan(J9Class *clazz)
          J9ClassLoader *outlivingLoader = *it;
          if (comp()->getOption(TR_TraceRetainedMethods))
             {
-            traceMsg(
-               comp(),
+            comp()->log()->printf(
                "RetainedMethodSet %p: loader %p is outlived by loader %p\n",
                this,
                loader,
@@ -544,8 +539,7 @@ J9::RetainedMethodSet::scan(J9Class *clazz)
 
          if (comp()->getOption(TR_TraceRetainedMethods))
             {
-            traceMsg(
-               comp(),
+            comp()->log()->printf(
                "RetainedMethodSet %p: add loader %p\n",
                this,
                outlivingLoader);

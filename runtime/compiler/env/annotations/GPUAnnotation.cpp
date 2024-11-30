@@ -55,10 +55,13 @@ void TR_SharedMemoryAnnotations::loadAnnotations(TR::Compilation *comp)
    {
    if (!comp->isGPUCompilation()) return;
 
+   bool trace = comp->getOption(TR_TraceAll);
+
    J9Class * clazz = (J9Class *)comp->getCurrentMethod()->containingClass();
    J9Class **supClasses = clazz->superclasses;
    int numSupClasses = J9CLASS_DEPTH(clazz);
-   traceMsg(comp, "looking for annotations\n");
+   if (trace)
+      comp->log()->prints("looking for annotations\n");
 
    for (int i = 0; i <= numSupClasses; i++)
       {
@@ -70,10 +73,13 @@ void TR_SharedMemoryAnnotations::loadAnnotations(TR::Compilation *comp)
          romCl = supClass->romClass;
          }
 
-      J9UTF8 *utf8 = J9ROMCLASS_CLASSNAME(romCl);
-      char *className = (char *) J9UTF8_DATA(utf8);
-      int32_t classNameLength = J9UTF8_LENGTH(utf8);
-      traceMsg(comp, "class %.*s\n", classNameLength, className);
+      if (trace)
+         {
+         J9UTF8 *utf8 = J9ROMCLASS_CLASSNAME(romCl);
+         char *className = (char *) J9UTF8_DATA(utf8);
+         int32_t classNameLength = J9UTF8_LENGTH(utf8);
+         comp->log()->printf("class %.*s\n", classNameLength, className);
+         }
 
       J9ROMFieldWalkState state;
       J9ROMFieldShape * currentField;
@@ -83,7 +89,7 @@ void TR_SharedMemoryAnnotations::loadAnnotations(TR::Compilation *comp)
 
       for ( ; currentField; currentField = romFieldsNextDo(&state))
          {
-         utf8 = J9ROMFIELDSHAPE_NAME(currentField);
+         J9UTF8 *utf8 = J9ROMFIELDSHAPE_NAME(currentField);
          char *fieldName = (char *) J9UTF8_DATA(utf8);
          int32_t fieldNameLength = J9UTF8_LENGTH(utf8);
 
@@ -91,7 +97,8 @@ void TR_SharedMemoryAnnotations::loadAnnotations(TR::Compilation *comp)
          char *fieldSig = (char *) J9UTF8_DATA(utf8);
          int32_t fieldSigLength = J9UTF8_LENGTH(utf8);
 
-         traceMsg(comp, "   field %.*s %.*s\n", fieldNameLength, fieldName, fieldSigLength, fieldSig);
+         if (trace)
+            comp->log()->printf("   field %.*s %.*s\n", fieldNameLength, fieldName, fieldSigLength, fieldSig);
          int32_t size = 0;  // non-shared field
 
          U_32 * annotationsData = getFieldAnnotationsDataFromROMField(currentField);
@@ -100,7 +107,7 @@ void TR_SharedMemoryAnnotations::loadAnnotations(TR::Compilation *comp)
          if (annotationsData)
             {
             data = (U_8 *)(annotationsData + 1);
-	        NEXT_U16(numAnnotations, data);
+            NEXT_U16(numAnnotations, data);
             }
 
          for (int i= 0; i < numAnnotations; i++)
@@ -110,7 +117,8 @@ void TR_SharedMemoryAnnotations::loadAnnotations(TR::Compilation *comp)
 
             int32_t len;
             char * str = getNameFromCP(len, typeIndex, romCl);
-            traceMsg(comp, "      annotation %.*s\n",  len, str);
+            if (comp->getOption(TR_TraceAll))
+               comp->log()->printf("      annotation %.*s\n",  len, str);
 
             if (len != 33 ||
                 strncmp(str, "Lcom/ibm/gpu/Kernel$SharedMemory;", len) != 0)
@@ -133,7 +141,8 @@ void TR_SharedMemoryAnnotations::loadAnnotations(TR::Compilation *comp)
                }
             }
 
-         traceMsg(comp, "       size = %d\n", size);
+         if (trace)
+            comp->log()->printf("       size = %d\n", size);
          _sharedMemoryFields.push_back(TR_SharedMemoryField(fieldName, fieldNameLength, fieldSig, fieldSigLength, size));
          }
       }
@@ -224,10 +233,10 @@ bool currentMethodHasFpreductionAnnotation(TR::Compilation *comp, bool trace)
          if (annotationsData)
             {
             data = (U_8 *)(annotationsData + 1);
-	        NEXT_U16(numAnnotations, data);
+            NEXT_U16(numAnnotations, data);
             }
 
-         if (trace) traceMsg(comp, "current method has %d annotations %p\n", numAnnotations, annotationsData);
+         if (trace) comp->log()->printf("current method has %d annotations %p\n", numAnnotations, annotationsData);
 
          for (int i= 0; i < numAnnotations; i++)
             {
@@ -237,12 +246,12 @@ bool currentMethodHasFpreductionAnnotation(TR::Compilation *comp, bool trace)
             int32_t len;
             char * str = getNameFromCP(len, typeIndex, romCl);
 
-            if (trace) traceMsg(comp, "found annotation %.*s\n",  len, str);
+            if (trace) comp->log()->printf("found annotation %.*s\n",  len, str);
 
             if (len == 44
                 && strncmp(str, "Lorg/apache/spark/sql/execution/fpreduction;", len) == 0)
                {
-               if (trace) traceMsg(comp, "current method has @fpreduction annotation\n");
+               if (trace) comp->log()->prints("current method has @fpreduction annotation\n");
                return true;
                }
             }

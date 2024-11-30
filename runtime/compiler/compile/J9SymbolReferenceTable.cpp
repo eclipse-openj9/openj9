@@ -50,6 +50,7 @@
 #include "infra/BitVector.hpp"
 #include "infra/List.hpp"
 #include "infra/String.hpp"
+#include "ras/Logger.hpp"
 #include "runtime/RuntimeAssumptions.hpp"
 #include "env/PersistentCHTable.hpp"
 #include "optimizer/TransformUtil.hpp"
@@ -663,7 +664,7 @@ J9::SymbolReferenceTable::methodSymRefWithSignature(TR::SymbolReference *origina
       {
       TR::SymbolReference *result = _methodsBySignature[hashIndex];
       if (comp()->getOption(TR_TraceMethodIndex))
-         traceMsg(comp(), "-- MBS cache hit (2): M%p\n", result->getSymbol()->getResolvedMethodSymbol()->getResolvedMethod());
+         comp()->log()->printf("-- MBS cache hit (2): M%p\n", result->getSymbol()->getResolvedMethodSymbol()->getResolvedMethod());
       return result;
       }
    else
@@ -672,7 +673,7 @@ J9::SymbolReferenceTable::methodSymRefWithSignature(TR::SymbolReference *origina
       //
       key = OwningMethodAndString(originalSymRef->getOwningMethodIndex(), self()->strdup(fullSignature));
       if (comp()->getOption(TR_TraceMethodIndex))
-         traceMsg(comp(), "-- MBS cache miss (2) owning method #%d, signature %s\n", originalSymRef->getOwningMethodIndex().value(), fullSignature);
+         comp()->log()->printf("-- MBS cache miss (2) owning method #%d, signature %s\n", originalSymRef->getOwningMethodIndex().value(), fullSignature);
       }
 
    //

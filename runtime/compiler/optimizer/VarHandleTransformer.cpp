@@ -52,6 +52,7 @@
 #include "optimizer/Optimization.hpp"
 #include "optimizer/Optimization_inlines.hpp"
 #include "optimizer/J9TransformUtil.hpp"
+#include "ras/Logger.hpp"
 #include "env/JSR292Methods.h"
 
 // All VarHandle Access methods
@@ -190,14 +191,14 @@ int32_t TR_VarHandleTransformer::perform()
             if (comp()->compileRelocatableCode())
                {
                if (comp()->getOption(TR_TraceILGen))
-                  traceMsg(comp(), "A call to VarHandle access method %s is not supported in AOT. Aborting compile.\n", comp()->getDebug()->getName(symRef));
+                  comp()->log()->printf("A call to VarHandle access method %s is not supported in AOT. Aborting compile.\n", comp()->getDebug()->getName(symRef));
                comp()->failCompilation<J9::AOTHasInvokeVarHandle>("A call to a VarHandle access method is not supported in AOT. Aborting compile.");
                }
 
             if (comp()->getOption(TR_FullSpeedDebug) && !comp()->isPeekingMethod())
                {
                if (comp()->getOption(TR_TraceILGen))
-                  traceMsg(comp(), "A call to VarHandle access method %s is not supported in FSD. Failing ilgen.\n", comp()->getDebug()->getName(symRef));
+                  comp()->log()->printf("A call to VarHandle access method %s is not supported in FSD. Failing ilgen.\n", comp()->getDebug()->getName(symRef));
                comp()->failCompilation<J9::FSDHasInvokeHandle>("A call to a VarHandle access method is not supported in FSD. Failing ilgen.");
                }
 

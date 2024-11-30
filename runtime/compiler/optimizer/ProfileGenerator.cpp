@@ -84,7 +84,7 @@ int32_t TR_ProfileGenerator::perform()
    if (comp()->getProfilingMode() != JitProfiling)
       {
       if (trace())
-         traceMsg(comp(), "Profile Generator is only required by JitProfiling instrumentation\n");
+         comp()->log()->prints("Profile Generator is only required by JitProfiling instrumentation\n");
       return 0;
       }
 
@@ -215,7 +215,7 @@ int32_t TR_ProfileGenerator::perform()
 
    if (trace())
       {
-      traceMsg(comp(), "Starting Profile Generation for %s\n", comp()->signature());
+      comp()->log()->printf("Starting Profile Generation for %s\n", comp()->signature());
       comp()->dumpMethodTrees(comp()->log(), "Trees before Profile Generation");
       }
 
@@ -246,7 +246,7 @@ int32_t TR_ProfileGenerator::perform()
    if (trace())
       {
       comp()->dumpMethodTrees(comp()->log(), "Trees after Profile Generation");
-      traceMsg(comp(), "Ending Profile Generation");
+      comp()->log()->prints("Ending Profile Generation");
       }
 
    return 2;

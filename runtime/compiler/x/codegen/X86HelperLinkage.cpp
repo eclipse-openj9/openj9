@@ -35,6 +35,7 @@
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
 #include "env/VMJ9.h"
+#include "ras/Logger.hpp"
 #include "x/codegen/X86Instruction.hpp"
 
 // An utility to manage real registers and their corresponding virtual registers
@@ -222,7 +223,7 @@ TR::Register* J9::X86::HelperCallSite::BuildCall()
 
    if (cg()->comp()->getOption(TR_TraceCG))
       {
-      traceMsg(cg()->comp(), "X86 HelperCall: [%04d] %s\n", _SymRef->getReferenceNumber(), cg()->getDebug()->getName(_SymRef));
+      cg()->comp()->log()->printf("X86 HelperCall: [%04d] %s\n", _SymRef->getReferenceNumber(), cg()->getDebug()->getName(_SymRef));
       }
    RealRegisterManager RealRegisters(cg());
    TR::RealRegister*   ESP = cg()->machine()->getRealRegister(TR::RealRegister::esp);
