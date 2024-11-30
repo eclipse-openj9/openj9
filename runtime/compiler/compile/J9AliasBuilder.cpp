@@ -50,13 +50,15 @@ J9::AliasBuilder::AliasBuilder(TR::SymbolReferenceTable *symRefTab, size_t sizeH
 TR_BitVector *
 J9::AliasBuilder::methodAliases(TR::SymbolReference *symRef)
    {
+   OMR::Logger *log = comp()->log();
+
    static bool newImmutableAlias = feGetEnv("TR_noNewImmutableAlias") == NULL;
    static bool newUserFieldAlias = feGetEnv("TR_noNewUserFieldAlias") == NULL;
 
    if (symRef->isUnresolved() || !newImmutableAlias || !symRefTab()->hasImmutable() || !newUserFieldAlias || !symRefTab()->hasUserField())
       {
       if (comp()->getOption(TR_TraceAliases))
-         traceMsg(comp(), "For method sym %d default aliases\n", symRef->getReferenceNumber());
+         log->printf("For method sym %d default aliases\n", symRef->getReferenceNumber());
       return &defaultMethodDefAliases();
       }
 
@@ -73,9 +75,9 @@ J9::AliasBuilder::methodAliases(TR::SymbolReference *symRef)
          {
          if (comp()->getOption(TR_TraceAliases) && comp()->getLoggingEnabled())
             {
-            traceMsg(comp(), "For method sym %d aliases\n", symRef->getReferenceNumber());
-            _userFieldMethodDefAliases[id]->print(comp()->log(), comp());
-            traceMsg(comp(), "\n");
+            log->printf("For method sym %d aliases\n", symRef->getReferenceNumber());
+            _userFieldMethodDefAliases[id]->print(log, comp());
+            log->println();
             }
          return _userFieldMethodDefAliases[id];
          }
@@ -101,9 +103,9 @@ J9::AliasBuilder::methodAliases(TR::SymbolReference *symRef)
                   TR_BitVector *symrefsToInclude = immutableClassInfo->_immutableConstructorDefAliases;
                   if (comp()->getOption(TR_TraceAliases) && comp()->getLoggingEnabled())
                      {
-                     traceMsg(comp(), "Method sym %d includes aliases for %.*s.<init>\n", symRef->getReferenceNumber(), clazzNameLen, clazzName);
-                     symrefsToInclude->print(comp()->log(), comp());
-                     traceMsg(comp(), "\n");
+                     log->printf("Method sym %d includes aliases for %.*s.<init>\n", symRef->getReferenceNumber(), clazzNameLen, clazzName);
+                     symrefsToInclude->print(log, comp());
+                     log->println();
                      }
                   if (allocatedResult)
                      *allocatedResult |= *symrefsToInclude;
@@ -137,9 +139,9 @@ J9::AliasBuilder::methodAliases(TR::SymbolReference *symRef)
 
    if (comp()->getOption(TR_TraceAliases) && comp()->getLoggingEnabled())
       {
-      traceMsg(comp(), "For method sym %d default aliases without immutable\n", symRef->getReferenceNumber());
-      defaultMethodDefAliasesWithoutImmutable().print(comp()->log(), comp());
-      traceMsg(comp(), "\n");
+      log->printf("For method sym %d default aliases without immutable\n", symRef->getReferenceNumber());
+      defaultMethodDefAliasesWithoutImmutable().print(log, comp());
+      log->println();
       }
 
    return &defaultMethodDefAliasesWithoutImmutable();

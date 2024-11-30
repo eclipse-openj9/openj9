@@ -55,6 +55,7 @@
 #include "env/j9methodServer.hpp"
 #include "control/JITServerCompilationThread.hpp"
 #endif /* defined(J9VM_OPT_JITSERVER) */
+#include "ras/Logger.hpp"
 
 void
 TR_PreXRecompile::dumpInfo()
@@ -648,7 +649,7 @@ TR_CHTable::commitVirtualGuard(TR_VirtualGuard *info, List<TR_VirtualGuardSite> 
                }
             }
          else if (comp->getOption(TR_TraceCG))
-            traceMsg(comp, "MutableCallSiteTargetGuard is already invalid.  Expected epoch: obj%d  Found: obj%d\n", info->mutableCallSiteEpoch(), currentIndex);
+            comp->log()->printf("MutableCallSiteTargetGuard is already invalid.  Expected epoch: obj%d  Found: obj%d\n", info->mutableCallSiteEpoch(), currentIndex);
          }
       }
    else if ((info->getKind() == TR_MethodEnterExitGuard) || (info->getKind() == TR_DirectMethodGuard))
@@ -770,7 +771,7 @@ TR_CHTable::commitVirtualGuard(TR_VirtualGuard *info, List<TR_VirtualGuardSite> 
       for (TR_VirtualGuardSite *site = it.getFirst(); site; site = it.getNext())
          {
          if (comp->getOption(TR_TraceCG))
-            traceMsg(comp, "   Patching %p to %p\n", site->getLocation(), site->getDestination());
+            comp->log()->printf("   Patching %p to %p\n", site->getLocation(), site->getDestination());
          TR::PatchNOPedGuardSite::compensate(0, site->getLocation(), site->getDestination());
          }
       }

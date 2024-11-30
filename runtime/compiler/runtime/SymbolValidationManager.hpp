@@ -36,6 +36,7 @@
 #include "env/TRMemory.hpp"
 #include "env/VMJ9.h"
 #include "exceptions/AOTFailure.hpp"
+#include "ras/Logger.hpp"
 #include "runtime/J9Runtime.hpp"
 
 #if defined(J9VM_OPT_JITSERVER)
@@ -56,7 +57,8 @@ class AOTCacheWellKnownClassesRecord;
          if (!(nonfatal) && ::TR::SymbolValidationManager::assertionsAreFatal())                \
             ::TR::fatal_assertion(__FILE__, __LINE__, condStr, "" format "", ##__VA_ARGS__);    \
          else                                                                                   \
-            traceMsg(::TR::comp(), "" format "\n", ##__VA_ARGS__);                              \
+            if (::TR::comp()->getLoggingEnabled())                                              \
+               ::TR::comp()->log()->printf("" format "\n", ##__VA_ARGS__);                      \
                                                                                                 \
          ::TR::comp()->failCompilation< ::J9::AOTSymbolValidationManagerFailure>(               \
             SVM_ASSERT_LOCATION(__LINE__) ": " assertName " failed: " condStr);                 \

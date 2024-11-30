@@ -64,6 +64,7 @@
 #include "ilgen/J9ByteCodeIlGenerator.hpp"
 #include "runtime/IProfiler.hpp"
 #include "ras/DebugCounter.hpp"
+#include "ras/Logger.hpp"
 #include "env/JSR292Methods.h"
 #include "control/MethodToBeCompiled.hpp"
 
@@ -1373,7 +1374,10 @@ TR_ResolvedRelocatableJ9Method::getUnresolvedFieldInCP(I_32 cpIndex)
 bool
 TR_ResolvedRelocatableJ9Method::storeValidationRecordIfNecessary(TR::Compilation * comp, J9ConstantPool *constantPool, int32_t cpIndex, TR_ExternalRelocationTargetKind reloKind, J9Method *ramMethod, J9Class *definingClass)
    {
+   OMR::Logger *log = comp->log();
    TR_J9VMBase *fej9 = (TR_J9VMBase *) comp->fe();
+
+   bool trace = comp->getOption(TR_TraceOptDetails);
 
    bool storeClassInfo = true;
    bool fieldInfoCanBeUsed = false;
@@ -1391,17 +1395,21 @@ TR_ResolvedRelocatableJ9Method::storeValidationRecordIfNecessary(TR::Compilation
 
    isStatic = (reloKind == TR_ValidateStaticField);
 
-   traceMsg(comp, "storeValidationRecordIfNecessary:\n");
-   traceMsg(comp, "\tconstantPool %p cpIndex %d\n", constantPool, cpIndex);
-   traceMsg(comp, "\treloKind %d isStatic %d\n", reloKind, isStatic);
-   J9UTF8 *methodClassName = J9ROMCLASS_CLASSNAME(J9_CLASS_FROM_METHOD(ramMethod)->romClass);
-   traceMsg(comp, "\tmethod %p from class %p %.*s\n", ramMethod, J9_CLASS_FROM_METHOD(ramMethod), J9UTF8_LENGTH(methodClassName), J9UTF8_DATA(methodClassName));
-   traceMsg(comp, "\tdefiningClass %p\n", definingClass);
+   if (trace)
+      {
+      log->prints("storeValidationRecordIfNecessary:\n");
+      log->printf("\tconstantPool %p cpIndex %d\n", constantPool, cpIndex);
+      log->printf("\treloKind %d isStatic %d\n", reloKind, isStatic);
+      J9UTF8 *methodClassName = J9ROMCLASS_CLASSNAME(J9_CLASS_FROM_METHOD(ramMethod)->romClass);
+      log->printf("\tmethod %p from class %p %.*s\n", ramMethod, J9_CLASS_FROM_METHOD(ramMethod), J9UTF8_LENGTH(methodClassName), J9UTF8_DATA(methodClassName));
+      log->printf("\tdefiningClass %p\n", definingClass);
+      }
 
    if (!definingClass)
       {
       definingClass = (J9Class *) TR_ResolvedJ9Method::definingClassFromCPFieldRef(comp, constantPool, cpIndex, isStatic);
-      traceMsg(comp, "\tdefiningClass recomputed from cp as %p\n", definingClass);
+      if (trace)
+         log->printf("\tdefiningClass recomputed from cp as %p\n", definingClass);
       }
 
    if (!definingClass)
@@ -1411,8 +1419,11 @@ TR_ResolvedRelocatableJ9Method::storeValidationRecordIfNecessary(TR::Compilation
       return false;
       }
 
-   J9UTF8 *className = J9ROMCLASS_CLASSNAME(definingClass->romClass);
-   traceMsg(comp, "\tdefiningClass name %.*s\n", J9UTF8_LENGTH(className), J9UTF8_DATA(className));
+   if (trace)
+      {
+      J9UTF8 *className = J9ROMCLASS_CLASSNAME(definingClass->romClass);
+      log->printf("\tdefiningClass name %.*s\n", J9UTF8_LENGTH(className), J9UTF8_DATA(className));
+      }
 
    // all kinds of validations may need to rely on the entire class chain, so make sure we can build one first
    uintptr_t classChainOffset = fej9->sharedCache()->rememberClass(definingClass);
@@ -1448,7 +1459,8 @@ TR_ResolvedRelocatableJ9Method::storeValidationRecordIfNecessary(TR::Compilation
 
    if (inLocalList)
       {
-      traceMsg(comp, "\tFound in local list, nothing to do\n");
+      if (trace)
+         log->prints("\tFound in local list, nothing to do\n");
       if (aotStats)
          {
          if (isStatic)
@@ -1462,7 +1474,8 @@ TR_ResolvedRelocatableJ9Method::storeValidationRecordIfNecessary(TR::Compilation
    TR::AOTClassInfo *classInfo = new (comp->trHeapMemory()) TR::AOTClassInfo(fej9, (TR_OpaqueClassBlock *)definingClass, classChainOffset, (TR_OpaqueMethodBlock *)ramMethod, cpIndex, reloKind);
    if (classInfo)
       {
-      traceMsg(comp, "\tCreated new AOT class info %p\n", classInfo);
+      if (trace)
+         log->printf("\tCreated new AOT class info %p\n", classInfo);
       comp->_aotClassInfo->push_front(classInfo);
       if (aotStats)
          {
@@ -5569,8 +5582,6 @@ bool TR_ResolvedJ9Method::isWarmCallGraphTooBig(uint32_t bcIndex, TR::Compilatio
    {
    /*void * startPC = startAddressForJittedMethod();
 
-   traceMsg(comp, " inside inlinesMethod %p, start addr %p\n", ramMethod(), startPC);
-
    return findIndexInInlineRange((void *) fej9()->getJITMetaData(startPC), bcIndex, comp);*/
    if (fej9()->getIProfiler() &&
        fej9()->getIProfiler()->isWarmCallGraphTooBig((TR_OpaqueMethodBlock *)ramMethod(), bcIndex, comp))
@@ -6776,7 +6787,7 @@ TR_ResolvedJ9Method::isStable(int32_t cpIndex, TR::Compilation *comp)
       const char * className= classNameOfFieldOrStatic(cpIndex, classLen);
       int fieldLen;
       const char * fieldName = fieldNameChars(cpIndex, fieldLen);
-      traceMsg(comp, "   Found stable field: %.*s.%.*s\n", classLen, className, fieldLen, fieldName);
+      comp->log()->printf("   Found stable field: %.*s.%.*s\n", classLen, className, fieldLen, fieldName);
       }
 
    return isFieldStable;
@@ -8250,12 +8261,12 @@ getMethodHandleThunkDetails(TR_J9ByteCodeIlGenerator *ilgen, TR::Compilation *co
    else if (comp->isPeekingMethod())
       {
       if (comp->getOption(TR_TraceILGen))
-         traceMsg(comp, "  Conservatively leave ILGen macro '%s' as a native call for peeking\n", comp->getDebug()->getName(macro));
+         comp->log()->printf("  Conservatively leave ILGen macro '%s' as a native call for peeking\n", comp->getDebug()->getName(macro));
       }
    else
       {
       if (comp->getOption(TR_TraceILGen))
-         traceMsg(comp, "  Conservatively abort compile due to presence of ILGen macro '%s'\n", comp->getDebug()->getName(macro));
+         comp->log()->printf("  Conservatively abort compile due to presence of ILGen macro '%s'\n", comp->getDebug()->getName(macro));
       comp->failCompilation<TR::ILGenFailure>("Found a call to an ILGen macro requiring a MethodHandle");
       }
 
@@ -8298,6 +8309,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
    bool returnFromArchetype = false;
    char *nextHandleSignature = NULL;
 
+   OMR::Logger *log = comp()->log();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)fe();
    TR::RecognizedMethod rm = symRef->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod();
 
@@ -8475,7 +8487,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          char *targetSig = methodDescriptor+1; // skip parenthesis
          int firstArgSlot = _methodSymbol->isStatic()? 0 : 1;
          if (trace())
-            traceMsg(comp(), "sourceSig %s targetSig %.*s\n", sourceSig, methodDescriptorLength, methodDescriptor);
+            log->printf("sourceSig %s targetSig %.*s\n", sourceSig, methodDescriptorLength, methodDescriptor);
 
          for (
             int32_t argIndex = 0;
@@ -8582,7 +8594,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                   }
                else if (sourceParmClass == targetParmClass || fej9->isInstanceOf(sourceParmClass, targetParmClass, false /*objectTypeIsFixed*/, true /*castTypeIsFixed*/) == TR_yes)
                   {
-                  traceMsg(comp(), "source type and target type are compatible, omit checkcast for arg %d\n", argIndex);
+                  log->printf("source type and target type are compatible, omit checkcast for arg %d\n", argIndex);
                   }
                else
                   {
@@ -8669,7 +8681,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 
          char *returnType = strchr(methodDescriptor, ')') + 1;
          if (comp()->getOption(TR_TraceILGen))
-            traceMsg(comp(), "  invokeExactAndFixup: return type of %p is %s\n", methodHandle, returnType); // Technically methodHandle could be stale here
+            log->printf("  invokeExactAndFixup: return type of %p is %s\n", methodHandle, returnType); // Technically methodHandle could be stale here
 
          // Generate an invokeHandle using a symref with the proper return type
          //
@@ -8777,7 +8789,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             }
 
          if (comp()->getOption(TR_TraceILGen))
-            traceMsg(comp(), "  permuteArgs: nextHandleSignature is %s\n", nextHandleSignature);
+            log->printf("  permuteArgs: nextHandleSignature is %s\n", nextHandleSignature);
          }
          // FALL THROUGH
       case TR::java_lang_invoke_PermuteHandle_permuteArgs:
@@ -8817,7 +8829,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             oldSignature = originalArgs->getSymbolReference()->getSymbol()->getResolvedMethodSymbol()->getResolvedMethod()->signatureChars();
             newSignature = (char *)"()I";
             if (comp()->getOption(TR_TraceILGen))
-               traceMsg(comp(), "  permuteArgs: oldSignature is %s\n", oldSignature);
+               log->printf("  permuteArgs: oldSignature is %s\n", oldSignature);
             for (i=0; i < permuteLength; i++)
                {
                auto argIndex = argIndices[i];
@@ -8828,7 +8840,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                      oldSignature, argIndex);
                   push(originalArgs->getChild(argIndex));
                   if (comp()->getOption(TR_TraceILGen))
-                     traceMsg(comp(), "  permuteArgs:   %d: incoming argument\n", argIndex);
+                     log->printf("  permuteArgs:   %d: incoming argument\n", argIndex);
                   }
                else
                   {
@@ -8851,7 +8863,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                         break;
                      }
                   if (comp()->getOption(TR_TraceILGen))
-                     traceMsg(comp(), "  permuteArgs:   %d: call to %s.%s%s\n", argIndex, JSR292_ArgumentMoverHandle, extraName, extraSignature);
+                     log->printf("  permuteArgs:   %d: call to %s.%s%s\n", argIndex, JSR292_ArgumentMoverHandle, extraName, extraSignature);
 
                   // Get the argument type of next handle
                   TR::DataType dataType = typeFromSig(argType[0]);
@@ -8879,7 +8891,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                   }
                }
             if (comp()->getOption(TR_TraceILGen))
-               traceMsg(comp(), "  permuteArgs: permuted placeholder signature is %s\n", newSignature);
+               log->printf("  permuteArgs: permuted placeholder signature is %s\n", newSignature);
             }
          else
 #endif /* defined(J9VM_OPT_JITSERVER) */
@@ -8899,7 +8911,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             newSignature = (char *)"()I";
             permuteLength = fej9->getArrayLengthInElements(permuteArray);
             if (comp()->getOption(TR_TraceILGen))
-               traceMsg(comp(), "  permuteArgs: oldSignature is %s\n", oldSignature);
+               log->printf("  permuteArgs: oldSignature is %s\n", oldSignature);
             for (i=0; i < permuteLength; i++)
                {
                int32_t argIndex = fej9->getInt32Element(permuteArray, i);
@@ -8910,7 +8922,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                      oldSignature, argIndex);
                   push(originalArgs->getChild(argIndex));
                   if (comp()->getOption(TR_TraceILGen))
-                     traceMsg(comp(), "  permuteArgs:   %d: incoming argument\n", argIndex);
+                     log->printf("  permuteArgs:   %d: incoming argument\n", argIndex);
                   }
                else
                   {
@@ -8935,7 +8947,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                      }
 
                   if (comp()->getOption(TR_TraceILGen))
-                     traceMsg(comp(), "  permuteArgs:   %d: call to %s.%s%s\n", argIndex, JSR292_ArgumentMoverHandle, extraName, extraSignature);
+                     log->printf("  permuteArgs:   %d: call to %s.%s%s\n", argIndex, JSR292_ArgumentMoverHandle, extraName, extraSignature);
 
                   // Get the argument type of next handle
                   TR::DataType dataType = typeFromSig(argType[0]);
@@ -8963,7 +8975,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                   }
                }
             if (comp()->getOption(TR_TraceILGen))
-               traceMsg(comp(), "  permuteArgs: permuted placeholder signature is %s\n", newSignature);
+               log->printf("  permuteArgs: permuted placeholder signature is %s\n", newSignature);
 
             // We're done with the permute array
             //
@@ -9273,7 +9285,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             }
 
          if (comp()->getOption(TR_TraceILGen))
-            traceMsg(comp(), "  SpreadHandle.arrayArg: Array class name is '%s'\n", arrayClassSignature);
+            log->printf("  SpreadHandle.arrayArg: Array class name is '%s'\n", arrayClassSignature);
 
          // Edit placeholder signature to give the right class for the array
          placeholder->setSymbolReference(symRefWithArtificialSignature(placeholder->getSymbolReference(),
@@ -9793,9 +9805,9 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 
          if (comp()->getOption(TR_TraceILGen))
             {
-            traceMsg(comp(), "  FilterArgumentsHandle.filterArgument:\n");
-            traceMsg(comp(), "    filterArray node is %p\n", filterArray);
-            traceMsg(comp(), "    placeholder children: %d sig: %.*s\n", placeholder->getNumChildren(), placeholder->getSymbol()->castToMethodSymbol()->getMethod()->signatureLength(), placeholderSignature);
+            log->prints("  FilterArgumentsHandle.filterArgument:\n");
+            log->printf("    filterArray node is %p\n", filterArray);
+            log->printf("    placeholder children: %d sig: %.*s\n", placeholder->getNumChildren(), placeholder->getSymbol()->castToMethodSymbol()->getMethod()->signatureLength(), placeholderSignature);
             }
 
          int32_t firstFilteredArgIndex = 0;
@@ -10037,7 +10049,7 @@ TR_J9ByteCodeIlGenerator::walkReferenceChain(TR::Node *node, uintptr_t receiver)
       if (symRef->isUnresolved())
          {
          if (comp()->getOption(TR_TraceILGen))
-            traceMsg(comp(), "  walkReferenceChain hit unresolved symref %s; aborting\n", symRef->getName(comp()->getDebug()));
+            comp()->log()->printf("  walkReferenceChain hit unresolved symref %s; aborting\n", symRef->getName(comp()->getDebug()));
          comp()->failCompilation<TR::ILGenFailure>("Symbol reference is unresolved");
          }
       TR::Symbol *sym = symRef->getSymbol();
@@ -10054,7 +10066,7 @@ TR_J9ByteCodeIlGenerator::walkReferenceChain(TR::Node *node, uintptr_t receiver)
    if (comp()->getOption(TR_TraceILGen))
       {
       TR_ASSERT(node->getOpCode().hasSymbolReference(), "Can't get here without a symref");
-      traceMsg(comp(), "  walkReferenceChain(%s) = %p // %s\n",
+      comp()->log()->printf("  walkReferenceChain(%s) = %p // %s\n",
          comp()->getDebug()->getName(node),
          (void*)result,
          comp()->getDebug()->getName(node->getSymbolReference()));
@@ -10079,7 +10091,7 @@ TR_J9ByteCodeIlGenerator::packReferenceChainOffsets(TR::Node *node, std::vector<
       if (symRef->isUnresolved())
          {
          if (comp()->getOption(TR_TraceILGen))
-            traceMsg(comp(), "  walkReferenceChain hit unresolved symref %s; aborting\n", symRef->getName(comp()->getDebug()));
+            comp()->log()->printf("  walkReferenceChain hit unresolved symref %s; aborting\n", symRef->getName(comp()->getDebug()));
          comp()->failCompilation<TR::ILGenFailure>("Symbol reference is unresolved");
          }
       TR::Symbol *sym = symRef->getSymbol();
@@ -10097,7 +10109,7 @@ TR_J9ByteCodeIlGenerator::packReferenceChainOffsets(TR::Node *node, std::vector<
    if (comp()->getOption(TR_TraceILGen))
       {
       TR_ASSERT(node->getOpCode().hasSymbolReference(), "Can't get here without a symref");
-      traceMsg(comp(), "  walkReferenceChain(%s) // %s\n",
+      comp()->log()->printf("  walkReferenceChain(%s) // %s\n",
          comp()->getDebug()->getName(node),
          comp()->getDebug()->getName(node->getSymbolReference()));
       }

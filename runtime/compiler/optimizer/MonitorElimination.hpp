@@ -153,7 +153,7 @@ class MonitorElimination : public TR::Optimization
 
    TR_LogTracer* tracer() { return &_tracer; }
 
-   static void collectPredsAndSuccs(TR::CFGNode *, TR_BitVector *, TR_BitVector **, TR_BitVector **, List<TR::CFGEdge> *, TR_BitVector *, TR::Compilation *);
+   static void collectPredsAndSuccs(TR::CFGNode *, TR_BitVector *, TR_BitVector **, TR_BitVector **, List<TR::CFGEdge> *, TR_BitVector *, TR::Compilation *, bool trace);
 
    bool firstPass() { return (manager()->numPassesCompleted() == 0); }
 

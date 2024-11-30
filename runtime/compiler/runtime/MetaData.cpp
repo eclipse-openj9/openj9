@@ -526,7 +526,7 @@ createStackMap(
    memcpy(location, &byteCodeInfo, sizeof(TR_ByteCodeInfo));
    location += sizeof(int32_t);
 
-   ///traceMsg(comp, "map %p rsd %x location %p\n", map, location, map->getRegisterSaveDescription());
+   ///comp->log()->printf("map %p rsd %x location %p\n", map, location, map->getRegisterSaveDescription());
    *(int32_t *)location = map->getRegisterSaveDescription();
    location += sizeof(int32_t);
 
@@ -1013,35 +1013,36 @@ createStackAtlas(
 
 void AOTRAS_traceMetaData(TR_J9VMBase *vm, TR_MethodMetaData *data, TR::Compilation *comp)
    {
-   traceMsg(comp, "<relocatableDataMetaDataCG>\n");
+   OMR::Logger *log = comp->log();
+   log->prints("<relocatableDataMetaDataCG>\n");
    TR_AOTMethodHeader *aotMethodHeaderEntry = comp->getAotMethodHeaderEntry();
 
-   traceMsg(comp, "%s\n", comp->signature());
-   traceMsg(comp, "%-12s", "startPC");
-   traceMsg(comp, "%-12s", "endPC");
-   traceMsg(comp, "%-8s", "size");
-   traceMsg(comp, "%-14s", "gcStackAtlas");
-   traceMsg(comp, "%-12s\n", "bodyInfo");
+   log->printf("%s\n", comp->signature());
+   log->printf("%-12s", "startPC");
+   log->printf("%-12s", "endPC");
+   log->printf("%-8s", "size");
+   log->printf("%-14s", "gcStackAtlas");
+   log->printf("%-12s\n", "bodyInfo");
 
-   traceMsg(comp, "%-12x", data->startPC);
-   traceMsg(comp, "%-12x", data->endPC);
-   traceMsg(comp, "%-8x", data->size);
-   traceMsg(comp, "%-14x", data->gcStackAtlas);
-   traceMsg(comp, "%-12x\n", data->bodyInfo);
+   log->printf("%-12x", data->startPC);
+   log->printf("%-12x", data->endPC);
+   log->printf("%-8x", data->size);
+   log->printf("%-14x", data->gcStackAtlas);
+   log->printf("%-12x\n", data->bodyInfo);
 
-   traceMsg(comp, "%-12s", "CodeStart");
-   traceMsg(comp, "%-12s", "DataStart");
-   traceMsg(comp, "%-10s", "CodeSize");
-   traceMsg(comp, "%-10s", "DataSize");
-   traceMsg(comp, "%-12s\n", "inlinedCalls");
+   log->printf("%-12s", "CodeStart");
+   log->printf("%-12s", "DataStart");
+   log->printf("%-10s", "CodeSize");
+   log->printf("%-10s", "DataSize");
+   log->printf("%-12s\n", "inlinedCalls");
 
-   traceMsg(comp, "%-12x",aotMethodHeaderEntry->compileMethodCodeStartPC);
-   traceMsg(comp, "%-12x",aotMethodHeaderEntry->compileMethodDataStartPC);
-   traceMsg(comp, "%-10x",aotMethodHeaderEntry->compileMethodCodeSize);
-   traceMsg(comp, "%-10x",aotMethodHeaderEntry->compileMethodDataSize);
-   traceMsg(comp, "%-12x\n", data->inlinedCalls);
+   log->printf("%-12x",aotMethodHeaderEntry->compileMethodCodeStartPC);
+   log->printf("%-12x",aotMethodHeaderEntry->compileMethodDataStartPC);
+   log->printf("%-10x",aotMethodHeaderEntry->compileMethodCodeSize);
+   log->printf("%-10x",aotMethodHeaderEntry->compileMethodDataSize);
+   log->printf("%-12x\n", data->inlinedCalls);
 
-   traceMsg(comp, "</relocatableDataMetaDataCG>\n");
+   log->prints("</relocatableDataMetaDataCG>\n");
    }
 
 static int32_t calculateExceptionsSize(
@@ -1241,7 +1242,7 @@ static void populateInlineCalls(
       memcpy(callSiteCursor, inlinedCallSite, sizeof(TR_InlinedCallSite) );
       if (comp->getOption(TR_TraceRelocatableDataCG) || comp->getOption(TR_TraceRelocatableDataDetailsCG))
          {
-         traceMsg(comp, "inlineIdx %d, callSiteCursor %p, inlinedCallSite->methodInfo = %p\n", i, callSiteCursor, inlinedCallSite->_methodInfo);
+         comp->log()->printf("inlineIdx %d, callSiteCursor %p, inlinedCallSite->methodInfo = %p\n", i, callSiteCursor, inlinedCallSite->_methodInfo);
          }
 
       // For AOT, we should only have returned resolved info about a method if the method came from same class loaders.
@@ -1253,7 +1254,7 @@ static void populateInlineCalls(
             if (comp->compileRelocatableCode() && comp->getOption(TR_TraceRelocatableDataDetailsCG))
                {
                TR_OpaqueClassBlock *clazzOfCallerMethod =  comp->getCurrentMethod()->classOfMethod();
-               traceMsg(comp, "createClassUnloadPicSite: clazzOfInlinedMethod %p, loader = %p, clazzOfCallerMethod %p, loader = %p, callsiteCursor %p\n",
+               comp->log()->printf("createClassUnloadPicSite: clazzOfInlinedMethod %p, loader = %p, clazzOfCallerMethod %p, loader = %p, callsiteCursor %p\n",
                        clazzOfInlinedMethod,
                        comp->fej9()->getClassLoader(clazzOfInlinedMethod),
                        clazzOfCallerMethod,

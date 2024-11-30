@@ -54,6 +54,7 @@
 #include "p/codegen/PPCInstruction.hpp"
 #include "p/codegen/PPCTableOfConstants.hpp"
 #include "p/codegen/StackCheckFailureSnippet.hpp"
+#include "ras/Logger.hpp"
 #include "runtime/J9Profiler.hpp"
 #include "runtime/J9ValueProfiler.hpp"
 
@@ -936,7 +937,7 @@ static int32_t calculateFrameSize(TR::RealRegister::RegNum &intSavedFirst,
          }
 
       if (comp->getOption(TR_TraceCG))
-         traceMsg(comp, "PPCLinkage calculateFrameSize registerSaveDescription: 0x%x regSaveOffset: %x\n", registerSaveDescription, regSaveOffset);
+         comp->log()->printf("PPCLinkage calculateFrameSize registerSaveDescription: 0x%x regSaveOffset: %x\n", registerSaveDescription, regSaveOffset);
       registerSaveDescription |= (regSaveOffset << 17); // see above for details
       cg->setFrameSizeInBytes(size+firstLocalOffset);
       TR_ASSERT((size-argSize+firstLocalOffset)<2048*1024, "Descriptor overflowed.\n");
@@ -1515,7 +1516,7 @@ int32_t J9::Power::PrivateLinkage::buildPrivateLinkageArgs(TR::Node             
       {
       if (comp()->getOption(TR_TraceCG))
          {
-         traceMsg(comp(), "Special arg %s in %s\n",
+         comp()->log()->printf("Special arg %s in %s\n",
             comp()->getDebug()->getName(callNode->getChild(from)),
             comp()->getDebug()->getName(cg()->machine()->getRealRegister(specialArgReg)));
          }
@@ -2026,7 +2027,7 @@ int32_t J9::Power::PrivateLinkage::buildPrivateLinkageArgs(TR::Node             
          }
       }
    else if (comp()->getOption(TR_TraceCG))
-      traceMsg(comp(), "Omitting CCR save/restore for helper calls\n");
+      comp()->log()->prints("Omitting CCR save/restore for helper calls\n");
 
    if (memArgs > 0)
       {

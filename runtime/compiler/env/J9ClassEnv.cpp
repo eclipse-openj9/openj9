@@ -40,6 +40,7 @@
 #include "j9nonbuilder.h"
 #include "j9protos.h"
 #include "rommeth.h"
+#include "ras/Logger.hpp"
 #include "runtime/RuntimeAssumptions.hpp"
 
 class TR_PersistentClassInfo;
@@ -555,7 +556,7 @@ static void addEntryForFieldImpl(TR_VMField *field, TR::TypeLayoutBuilder &tlb, 
       IDATA offsetBaseForChild = field->offset + offsetBase;
 
       if (trace)
-         traceMsg(comp, "field %s:%s is flattened. offset from TR_VMField %d, offset from fcc %d\n",
+         comp->log()->printf("field %s:%s is flattened. offset from TR_VMField %d, offset from fcc %d\n",
             field->name, field->signature, field->offset,
             vm->internalVMFunctions->getFlattenableFieldOffset(definingClass, field->shape));
 
@@ -626,7 +627,7 @@ static void addEntryForFieldImpl(TR_VMField *field, TR::TypeLayoutBuilder &tlb, 
       fieldSignature[sigLen] = '\0';
 
       if (trace)
-         traceMsg(comp, "type layout definingClass %p field: %s signature: %s field offset: %d offsetBase %d\n", definingClass, fieldName, fieldSignature, field->offset, offsetBase);
+         comp->log()->printf("type layout definingClass %p field: %s signature: %s field offset: %d offsetBase %d\n", definingClass, fieldName, fieldSignature, field->offset, offsetBase);
       tlb.add(TR::TypeLayoutEntry(dataType, offset, fieldName, isVolatile, isPrivate, isFinal, isFieldNullRestricted, fieldSignature));
       }
    }

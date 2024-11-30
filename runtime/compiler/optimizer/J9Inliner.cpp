@@ -52,6 +52,7 @@
 #include "codegen/CodeGenerator.hpp"
 #include "ilgen/J9ByteCode.hpp"
 #include "ilgen/J9ByteCodeIterator.hpp"
+#include "ras/Logger.hpp"
 
 #define OPT_DETAILS "O^O INLINER: "
 const float MIN_PROFILED_CALL_FREQUENCY = (.65f); // lowered this from .80f since opportunities were being missed in WAS; in those cases getting rid of the call even in 65% of the cases was beneficial probably due to the improved icache impact
@@ -375,7 +376,7 @@ static void populateOSRCallSiteRematTable(TR::Optimizer* optimizer, TR_CallTarge
                                            : comp->getInlinedResolvedMethodSymbol(callerIndex) )->getFirstJitTempIndex()))))
          {
          if (comp->trace(OMR::inlining))
-            traceMsg(comp, "callSiteRemat: found potential pending push #%d with store #%d\n", store->getSymbolReference()->getReferenceNumber(),
+            comp->log()->printf("callSiteRemat: found potential pending push #%d with store #%d\n", store->getSymbolReference()->getReferenceNumber(),
                child->getSymbolReference()->getReferenceNumber());
 
          TR::SparseBitVector symRefsToCheck(comp->allocator());
@@ -389,7 +390,7 @@ static void populateOSRCallSiteRematTable(TR::Optimizer* optimizer, TR_CallTarge
       else
          {
          if (comp->trace(OMR::inlining))
-            traceMsg(comp, "callSiteRemat: failed to find store for pending push #%d\n", store->getSymbolReference()->getReferenceNumber());
+            comp->log()->printf("callSiteRemat: failed to find store for pending push #%d\n", store->getSymbolReference()->getReferenceNumber());
 
          failedPP.push_back(cursor);
          }
@@ -425,7 +426,7 @@ static void populateOSRCallSiteRematTable(TR::Optimizer* optimizer, TR_CallTarge
          if (storeTree == rematTree)
             {
             if (comp->trace(OMR::inlining))
-               traceMsg(comp, "callSiteRemat: adding pending push #%d with store #%d to remat table\n",
+               comp->log()->printf("callSiteRemat: adding pending push #%d with store #%d to remat table\n",
                   storeTree->getNode()->getSymbolReference()->getReferenceNumber(),
                   child->getSymbolReference()->getReferenceNumber());
 
@@ -444,7 +445,7 @@ static void populateOSRCallSiteRematTable(TR::Optimizer* optimizer, TR_CallTarge
                                                : comp->getInlinedResolvedMethodSymbol(callerIndex) )->getFirstJitTempIndex())))
                {
                if (comp->trace(OMR::inlining))
-                  traceMsg(comp, "callSiteRemat: adding pending push #%d with store #%d to remat table\n",
+                  comp->log()->printf("callSiteRemat: adding pending push #%d with store #%d to remat table\n",
                      storeTree->getNode()->getSymbolReference()->getReferenceNumber(),
                      node->getSymbolReference()->getReferenceNumber());
 
@@ -485,7 +486,7 @@ bool TR_InlinerBase::inlineCallTarget(TR_CallStack *callStack, TR_CallTarget *ca
    bool tracePrex = comp()->trace(OMR::inlining) || comp()->trace(OMR::invariantArgumentPreexistence);
    if (tracePrex && argInfo)
       {
-      traceMsg(comp(), "Final prex argInfo:\n");
+      comp()->log()->prints("Final prex argInfo:\n");
       argInfo->dumpTrace();
       }
 
@@ -516,7 +517,7 @@ bool TR_InlinerBase::inlineCallTarget(TR_CallStack *callStack, TR_CallTarget *ca
        && performTransformation(comp(), "O^O CALL SITE REMAT: populate OSR call site remat table for call [%p]\n", calltarget->_myCallSite->_callNode))
       {
       if (comp()->trace(OMR::inlining))
-         traceMsg(comp(), "callSiteRemat: populating OSR call site remat table for call [%p]\n", calltarget->_myCallSite->_callNode);
+         comp()->log()->printf("callSiteRemat: populating OSR call site remat table for call [%p]\n", calltarget->_myCallSite->_callNode);
       populateOSRCallSiteRematTable(_optimizer, calltarget, callStack);
       }
 
@@ -666,7 +667,7 @@ bool TR_J9VirtualCallSite::findCallSiteTarget(TR_CallStack *callStack, TR_Inline
                   {
                   char* oldClassSig = TR::Compiler->cls.classSignature(comp(), _receiverClass, comp()->trMemory());
                   char* callSiteClassSig = TR::Compiler->cls.classSignature(comp(), callSiteClass, comp()->trMemory());
-                  traceMsg(comp(), "Receiver type %p sig %s is class of an interface method for invokevirtual, improve it to call site receiver type %p sig %s\n", _receiverClass, oldClassSig, callSiteClass, callSiteClassSig);
+                  comp()->log()->printf("Receiver type %p sig %s is class of an interface method for invokevirtual, improve it to call site receiver type %p sig %s\n", _receiverClass, oldClassSig, callSiteClass, callSiteClassSig);
                   }
                // Update receiver class
                _receiverClass = callSiteClass;
@@ -1305,7 +1306,7 @@ void TR_ProfileableCallSite::findSingleProfiledReceiver(ListIterator<TR_ExtraAdd
             {
             // TR_J9VirtualCallSite::findCallSiteTarget() should have refined the _receiverClass, but it must have failed, we need to abort this inlining
             if (comp()->trace(OMR::inlining))
-               traceMsg(comp(), "inliner: callSiteClass [%p] is an interface making it impossible to confirm correct context of the profiled class [%p]\n", callSiteClass, tempreceiverClass);
+               comp()->log()->printf("inliner: callSiteClass [%p] is an interface making it impossible to confirm correct context of the profiled class [%p]\n", callSiteClass, tempreceiverClass);
             callSiteClass = 0;
             }
 
@@ -1323,7 +1324,7 @@ void TR_ProfileableCallSite::findSingleProfiledReceiver(ListIterator<TR_ExtraAdd
             firstInstanceOfCheckFailed = true;
 
             if (comp()->trace(OMR::inlining))
-               traceMsg(comp(), "inliner: profiled class [%p] is not instanceof callSiteClass [%p]\n", tempreceiverClass, callSiteClass);
+               comp()->log()->printf("inliner: profiled class [%p] is not instanceof callSiteClass [%p]\n", tempreceiverClass, callSiteClass);
 
             continue;
             }
@@ -1373,7 +1374,7 @@ void TR_ProfileableCallSite::findSingleProfiledReceiver(ListIterator<TR_ExtraAdd
                 !fej9->canRememberClass(callSiteClass))
                {
                if (comp()->trace(OMR::inlining))
-                  traceMsg(comp(), "inliner: profiled class [%p] or callSiteClass [%p] cannot be rememberd in shared cache\n", tempreceiverClass, callSiteClass);
+                  comp()->log()->printf("inliner: profiled class [%p] or callSiteClass [%p] cannot be rememberd in shared cache\n", tempreceiverClass, callSiteClass);
                continue;
                }
             }
@@ -1399,7 +1400,7 @@ void TR_ProfileableCallSite::findSingleProfiledReceiver(ListIterator<TR_ExtraAdd
       else  // if we're below the above threshold, lets stop considering call targets
          {
          if (comp()->trace(OMR::inlining))
-            traceMsg(comp(), "bailing, below inlining threshold\n");
+            comp()->log()->prints("bailing, below inlining threshold\n");
          break;
          }
 
@@ -1427,13 +1428,13 @@ void TR_ProfileableCallSite::findSingleProfiledMethod(ListIterator<TR_ExtraAddre
       {
       // TR_J9VirtualCallSite::findCallSiteTarget() should refine the _receiverClass, but if it failed, we need to abort this inlining
       if (callSiteClass && comp()->trace(OMR::inlining))
-         traceMsg(comp(), "callSiteClass [%p] is an interface making it impossible to confirm correct context for any profiled class\n", callSiteClass);
+         comp()->log()->printf("callSiteClass [%p] is an interface making it impossible to confirm correct context for any profiled class\n", callSiteClass);
       return;
       }
 
    // first let's do sanity test on all profiled targets
    if (comp()->trace(OMR::inlining))
-      traceMsg(comp(), "No decisive class profiling info for the virtual method, we'll try to see if more than one class uses the same method implementation.\n");
+      comp()->log()->prints("No decisive class profiling info for the virtual method, we'll try to see if more than one class uses the same method implementation.\n");
 
    bool classValuesAreSane = true;
    for (TR_ExtraAddressInfo *profiledInfo = sortedValuesIt.getFirst(); profiledInfo != NULL; profiledInfo = sortedValuesIt.getNext())
@@ -1470,7 +1471,7 @@ void TR_ProfileableCallSite::findSingleProfiledMethod(ListIterator<TR_ExtraAddre
       return;
 
    if (comp()->trace(OMR::inlining))
-      traceMsg(comp(), "OK, all classes check out, we'll try to get their method implementations.\n");
+      comp()->log()->prints("OK, all classes check out, we'll try to get their method implementations.\n");
 
    TR_ScratchList<TR_AddressInfo::ProfiledMethod> methodsList(comp()->trMemory());
    // this API doesn't do a sort
@@ -1479,7 +1480,7 @@ void TR_ProfileableCallSite::findSingleProfiledMethod(ListIterator<TR_ExtraAddre
    int numMethods = methodsList.getSize();
 
    if (comp()->trace(OMR::inlining))
-      traceMsg(comp(), "OK, all classes check out, we'll try to get their method implementations (%d).\n", numMethods);
+      comp()->log()->printf("OK, all classes check out, we'll try to get their method implementations (%d).\n", numMethods);
 
 
    ListIterator<TR_AddressInfo::ProfiledMethod> methodValuesIt(&methodsList);
@@ -1501,7 +1502,7 @@ void TR_ProfileableCallSite::findSingleProfiledMethod(ListIterator<TR_ExtraAddre
          if (comp()->trace(OMR::inlining))
             {
             TR_ResolvedMethod *targetMethod = (TR_ResolvedMethod *)bestMethodInfo->_value;
-            traceMsg(comp(), "Found a target method %s with probability of %f%%.\n",
+            comp()->log()->printf("Found a target method %s with probability of %f%%.\n",
                   targetMethod->signature(comp()->trMemory()), methodProbability * 100.0);
             }
 
@@ -1520,17 +1521,17 @@ void TR_ProfileableCallSite::findSingleProfiledMethod(ListIterator<TR_ExtraAddre
                if (comp()->trace(OMR::inlining))
                   {
                   TR_ResolvedMethod *targetMethod = (TR_ResolvedMethod *)bestMethodInfo->_value;
-                  traceMsg(comp(), "Added target method %s with probability of %f%%.\n",
+                  comp()->log()->printf("Added target method %s with probability of %f%%.\n",
                         targetMethod->signature(comp()->trMemory()), methodProbability * 100.0);
                   char* sig = TR::Compiler->cls.classSignature(comp(), targetClass, comp()->trMemory());
-                  traceMsg(comp(), "target class %s\n", sig);
+                  comp()->log()->printf("target class %s\n", sig);
                   }
                return;
                }
             }
       }
    else if (comp()->trace(OMR::inlining))
-      traceMsg(comp(), "Failed to find any methods compatible with callsite class %p signature %s\n", callSiteClass, TR::Compiler->cls.classSignature(comp(), callSiteClass, comp()->trMemory()));
+      comp()->log()->printf("Failed to find any methods compatible with callsite class %p signature %s\n", callSiteClass, TR::Compiler->cls.classSignature(comp(), callSiteClass, comp()->trMemory()));
    }
 
 bool TR_ProfileableCallSite::findProfiledCallTargets (TR_CallStack *callStack, TR_InlinerBase* inliner)

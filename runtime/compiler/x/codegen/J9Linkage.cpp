@@ -22,6 +22,7 @@
 
 #include "codegen/Linkage.hpp"
 #include "codegen/Linkage_inlines.hpp"
+#include "ras/Logger.hpp"
 
 /** \brief
  *     Align stackIndex so that rsp+stackIndex is a multiple of localObjectAlignment
@@ -70,21 +71,29 @@ void J9::X86::Linkage::alignOffset(uint32_t &stackIndex, int32_t localObjectAlig
  */
 void J9::X86::Linkage::alignLocalObjectWithCollectedFields(uint32_t & stackIndex)
    {
+   OMR::Logger *log = self()->comp()->log();
+   bool traceCG = self()->comp()->getOption(TR_TraceCG);
+
    int32_t localObjectAlignment = self()->cg()->fej9()->getLocalObjectAlignmentInBytes();
    TR::GCStackAtlas *atlas = self()->cg()->getStackAtlas();
    uint8_t pointerSize  = self()->getProperties().getPointerSize();
+
    // Note that sizeofReferenceAddress is identical to the size of a stack slot
    // Both sizeofReferenceAddress and localObjectAlignment are powers of 2,
    // and it's safe to skip the alignment when sizeofReferenceAddress is a multiple
    // of localObjectAlignment
+   //
    if (localObjectAlignment <= TR::Compiler->om.sizeofReferenceAddress())
       return;
+
    // Collected local objects have gc indice larger than -1
    // Offset of a collected local object determined by (stackIndex + pointerSize*(localCursor->getGCMapIndex()-firstLocalGCIndex))
    // In createStackAtlas, we align pointerSize*(localCursor->getGCMapIndex()-firstLocalGCIndex) by modifying local objects' gc indice
    // Here we align the stackIndex
    //
-   traceMsg(self()->comp(),"\nLOCAL OBJECT ALIGNMENT: stack offset before alignment: %d,", stackIndex);
+   if (traceCG)
+      log->printf("\nLOCAL OBJECT ALIGNMENT: stack offset before alignment: %d,", stackIndex);
+
    // When compaction is enabled, stackIndex is calculated using only collected local refs/objects size,
    // it doesn't include the size of padding slots added by aligning collected local objects' gc indice
    // Add them to reflect the correct space needed for collected locals
@@ -92,13 +101,15 @@ void J9::X86::Linkage::alignLocalObjectWithCollectedFields(uint32_t & stackIndex
       {
       uint8_t pointerSize  = self()->getProperties().getPointerSize();
       stackIndex -= pointerSize*atlas->getNumberOfPaddingSlots();
-      traceMsg(self()->comp()," with padding: %d,", stackIndex);
+      if (traceCG)
+         log->printf(" with padding: %d,", stackIndex);
       }
 
    uint32_t stackIndexBeforeAlignment = stackIndex;
    self()->alignOffset(stackIndex, localObjectAlignment);
 
-   traceMsg(self()->comp()," after alignment: %d\n", stackIndex);
+   if (traceCG)
+      log->printf(" after alignment: %d\n", stackIndex);
 
    // Update numberOfSlotsMapped in stackAtlas otherwise there will be mis-match
    // between the compile-time gc maps and the runtime gc maps
@@ -119,17 +130,24 @@ void J9::X86::Linkage::alignLocalObjectWithCollectedFields(uint32_t & stackIndex
  */
 void J9::X86::Linkage::alignLocalObjectWithoutCollectedFields(uint32_t & stackIndex)
    {
+   OMR::Logger *log = self()->comp()->log();
+   bool traceCG = self()->comp()->getOption(TR_TraceCG);
+
    int32_t localObjectAlignment = self()->cg()->fej9()->getLocalObjectAlignmentInBytes();
+
    // Note that sizeofReferenceAddress is identical to the size of a stack slot
    // Both sizeofReferenceAddress and localObjectAlignment are powers of 2,
    // and it's safe to skip the alignment when sizeofReferenceAddress is a multiple
    // of localObjectAlignment
    if (localObjectAlignment <= TR::Compiler->om.sizeofReferenceAddress())
       return;
+
    // Align uncollected local object
-   traceMsg(self()->comp(), "\nLOCAL OBJECT ALIGNMENT: stack offset before alignment: %d,", stackIndex);
+   if (traceCG)
+      log->printf("\nLOCAL OBJECT ALIGNMENT: stack offset before alignment: %d,", stackIndex);
 
    self()->alignOffset(stackIndex, localObjectAlignment);
 
-   traceMsg(self()->comp(), " after alignment: %d\n", stackIndex);
+   if (traceCG)
+      log->printf(" after alignment: %d\n", stackIndex);
    }

@@ -28,6 +28,7 @@
 #include "compile/Compilation.hpp"
 #include "optimizer/OSRGuardAnalysis.hpp"
 #include "ras/DebugCounter.hpp"
+#include "ras/Logger.hpp"
 
 /**
  * Find an OSR guard between the provided treetop and the end of the
@@ -69,7 +70,7 @@ bool TR_OSRGuardRemoval::findMatchingOSRGuard(TR::Compilation *comp, TR::TreeTop
  * return to the VM immediately.
  *
  * However, if this yield has been removed, the OSR guard may no longer be necessary. For example, DAA could convert
- * a call into an equivalent tree. If this call had an OSR guard it could be removed as long as no other yield 
+ * a call into an equivalent tree. If this call had an OSR guard it could be removed as long as no other yield
  * relied on it being there.
  */
 int32_t TR_OSRGuardRemoval::perform()
@@ -92,13 +93,13 @@ int32_t TR_OSRGuardRemoval::perform()
       if (guardAnalysis.containsYields(block))
          {
          if (trace())
-            traceMsg(comp(), "Skipping block_%d, contains yields\n", block->getNumber());
+            comp()->log()->printf("Skipping block_%d, contains yields\n", block->getNumber());
          continue;
          }
       if (!guardAnalysis._blockAnalysisInfo[block->getNumber()]->isEmpty())
          {
          if (trace())
-            traceMsg(comp(), "Skipping block_%d, reaching yields\n", block->getNumber());
+            comp()->log()->printf("Skipping block_%d, reaching yields\n", block->getNumber());
          continue;
          }
 
@@ -119,7 +120,7 @@ int32_t TR_OSRGuardRemoval::perform()
             comp(),
             TR::DebugCounter::debugCounterName(comp(), "osrGuardRemoval/successfulRemoval"),
             block->getExit());
-         } 
+         }
       else if (node->isTheVirtualGuardForAGuardedInlinedCall()
           && comp()->cg()->supportsMergingGuards()
           && performTransformation(comp(), "O^O OSR GUARD REMOVAL: removing merged OSRGuard with VG node n%dn\n", node->getGlobalIndex()))
@@ -137,7 +138,7 @@ int32_t TR_OSRGuardRemoval::perform()
             TR::DebugCounter::prependDebugCounter(
                comp(),
                TR::DebugCounter::debugCounterName(comp(), "osrGuardRemoval/successfulUnmerge"),
-               block->getLastRealTreeTop()); 
+               block->getLastRealTreeTop());
             }
          }
       }

@@ -41,6 +41,7 @@
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "il/ParameterSymbol.hpp"
+#include "ras/Logger.hpp"
 #include "x/amd64/codegen/AMD64GuardedDevirtualSnippet.hpp"
 #include "x/codegen/CallSnippet.hpp"
 #include "x/codegen/CheckFailureSnippet.hpp"
@@ -694,7 +695,7 @@ TR_MHJ2IThunk *J9::X86::AMD64::PrivateLinkage::generateInvokeExactJ2IThunk(TR::N
 
    if (comp->getOption(TR_TraceCG))
       {
-      traceMsg(comp, "\n-- ( Created invokeExact J2I thunk " POINTER_PRINTF_FORMAT " for node " POINTER_PRINTF_FORMAT " )", thunk, callNode);
+      comp->log()->printf("\n-- ( Created invokeExact J2I thunk " POINTER_PRINTF_FORMAT " for node " POINTER_PRINTF_FORMAT " )", thunk, callNode);
       }
 
    return thunk;
@@ -943,7 +944,7 @@ int32_t J9::X86::AMD64::PrivateLinkage::buildPrivateLinkageArgs(TR::Node        
 
          if (comp()->getOption(TR_TraceCG))
             {
-            traceMsg(comp(), "parm area size was %d, and is aligned to %d\n", parmAreaSize, alignedParmAreaSize);
+            comp()->log()->printf("parm area size was %d, and is aligned to %d\n", parmAreaSize, alignedParmAreaSize);
             }
          }
       if (alignedParmAreaSize > 0)
@@ -1367,7 +1368,7 @@ void J9::X86::AMD64::PrivateLinkage::buildVirtualOrComputedCall(TR::X86CallSite 
    TR::SymbolReference *methodSymRef = site.getSymbolReference();
    if (comp()->getOption(TR_TraceCG))
       {
-      traceMsg(comp(), "buildVirtualOrComputedCall(%p), isComputed=%d\n", site.getCallNode(), methodSymRef->getSymbol()->castToMethodSymbol()->isComputed());
+      comp()->log()->printf("buildVirtualOrComputedCall(%p), isComputed=%d\n", site.getCallNode(), methodSymRef->getSymbol()->castToMethodSymbol()->isComputed());
       }
 
    bool evaluateVftEarly = methodSymRef->isUnresolved()

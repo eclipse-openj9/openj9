@@ -32,6 +32,7 @@
 #include "codegen/CodeGenerator.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "ras/Logger.hpp"
 
 TR::IA32J9SystemLinkage::IA32J9SystemLinkage(TR::CodeGenerator *cg) : TR::IA32SystemLinkage(cg)
    {
@@ -237,7 +238,7 @@ int32_t TR::IA32J9SystemLinkage::buildParametersOnCStack(TR::Node *callNode, int
       adjustedArgSize = 16 - (argSize % 16);
       argSize = argSize + adjustedArgSize;
       if (comp()->getOption(TR_TraceCG))
-         traceMsg(comp(), "adjust arguments size by %d to make arguments 16 byte aligned \n", adjustedArgSize);
+         comp()->log()->printf("adjust arguments size by %d to make arguments 16 byte aligned \n", adjustedArgSize);
       }
    for(int offset = adjustedArgSize; !paramsSlotsOnStack.isEmpty(); offset += TR::Compiler->om.sizeofReferenceAddress())
       {

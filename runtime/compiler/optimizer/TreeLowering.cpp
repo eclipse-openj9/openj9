@@ -81,7 +81,7 @@ TR::TreeLowering::Transformer::moveNodeToEndOfBlock(TR::Block* const block, TR::
       {
       if (trace())
          {
-         traceMsg(comp, "Moving treetop containing node n%dn [%p] for helper call to end of prevBlock in preparation of final block split\n", tt->getNode()->getGlobalIndex(), tt->getNode());
+         comp->log()->printf("Moving treetop containing node n%dn [%p] for helper call to end of prevBlock in preparation of final block split\n", tt->getNode()->getGlobalIndex(), tt->getNode());
          }
 
       // Remove TreeTop for call node, and gather it and the treetops for stores that
@@ -108,7 +108,7 @@ TR::TreeLowering::Transformer::moveNodeToEndOfBlock(TR::Block* const block, TR::
             {
             if (trace())
                {
-               traceMsg(comp, "Moving treetop containing node n%dn [%p] for store of helper call result to end of prevBlock in preparation of final block split\n", iterTT->getNode()->getGlobalIndex(), iterTT->getNode());
+               comp->log()->printf("Moving treetop containing node n%dn [%p] for store of helper call result to end of prevBlock in preparation of final block split\n", iterTT->getNode()->getGlobalIndex(), iterTT->getNode());
                }
 
             // Remove store node from prevBlock temporarily
@@ -371,6 +371,7 @@ void
 AcmpTransformer::lower(TR::Node * const node, TR::TreeTop * const tt)
    {
    TR::Compilation* comp = this->comp();
+   OMR::Logger *log = comp->log();
    TR::CFG* cfg = comp->getFlowGraph();
    cfg->invalidateStructure();
 
@@ -381,7 +382,7 @@ AcmpTransformer::lower(TR::Node * const node, TR::TreeTop * const tt)
    // either a temp or a global register.
    auto* const anchoredCallTT = TR::TreeTop::create(comp, tt, TR::Node::create(TR::treetop, 1, node));
    if (trace())
-      traceMsg(comp, "Anchoring call node under treetop n%un (0x%p)\n", anchoredCallTT->getNode()->getGlobalIndex(), anchoredCallTT->getNode());
+      log->printf("Anchoring call node under treetop n%un (0x%p)\n", anchoredCallTT->getNode()->getGlobalIndex(), anchoredCallTT->getNode());
 
    // Anchor the call arguments just before the call. This ensures the values are
    // live before the call so that we can propagate their values in global registers if needed.
@@ -389,7 +390,7 @@ AcmpTransformer::lower(TR::Node * const node, TR::TreeTop * const tt)
    auto* const anchoredCallArg2TT = TR::TreeTop::create(comp, tt->getPrevTreeTop(), TR::Node::create(TR::treetop, 1, node->getSecondChild()));
    if (trace())
       {
-      traceMsg(comp, "Anchoring call arguments n%un and n%un under treetops n%un and n%un\n",
+      log->printf("Anchoring call arguments n%un and n%un under treetops n%un and n%un\n",
          node->getFirstChild()->getGlobalIndex(), node->getSecondChild()->getGlobalIndex(), anchoredCallArg1TT->getNode()->getGlobalIndex(), anchoredCallArg2TT->getNode()->getGlobalIndex());
       }
 
@@ -405,7 +406,7 @@ AcmpTransformer::lower(TR::Node * const node, TR::TreeTop * const tt)
       return;
    TR::Block* targetBlock = callBlock->splitPostGRA(tt->getNextTreeTop(), cfg, true, NULL);
    if (trace())
-      traceMsg(comp, "Call node n%un is in block %d, targetBlock is %d\n", node->getGlobalIndex(), callBlock->getNumber(), targetBlock->getNumber());
+      log->printf("Call node n%un is in block %d, targetBlock is %d\n", node->getGlobalIndex(), callBlock->getNumber(), targetBlock->getNumber());
 
    // As the block is split after the helper call node, it is possible that as part of un-commoning
    // code to store nodes into registers or temp-slots is appended to the original block by the call
@@ -427,14 +428,14 @@ AcmpTransformer::lower(TR::Node * const node, TR::TreeTop * const tt)
    // call to figure out where the return value of the call is being put.
    TR::Node* anchoredNode = anchoredCallTT->getNode()->getFirstChild(); // call node is under a treetop node
    if (trace())
-      traceMsg(comp, "Anchored call has been transformed into %s node n%un\n", anchoredNode->getOpCode().getName(), anchoredNode->getGlobalIndex());
+      log->printf("Anchored call has been transformed into %s node n%un\n", anchoredNode->getOpCode().getName(), anchoredNode->getGlobalIndex());
    auto* constForEqualityNode = TR::Node::iconst(cmpResultForEquality);
    TR::Node* storeNode = NULL;
    TR::Node* regDepForStoreNode = NULL; // this is the reg dep for the store if one is needed
    if (anchoredNode->getOpCodeValue() == TR::iRegLoad)
       {
       if (trace())
-         traceMsg(comp, "Storing constant %d in register %s\n", cmpResultForEquality, comp->getDebug()->getGlobalRegisterName(anchoredNode->getGlobalRegisterNumber()));
+         log->printf("Storing constant %d in register %s\n", cmpResultForEquality, comp->getDebug()->getGlobalRegisterName(anchoredNode->getGlobalRegisterNumber()));
       auto const globalRegNum = anchoredNode->getGlobalRegisterNumber();
       storeNode = TR::Node::create(TR::iRegStore, 1, constForEqualityNode);
       storeNode->setGlobalRegisterNumber(globalRegNum);
@@ -446,7 +447,7 @@ AcmpTransformer::lower(TR::Node * const node, TR::TreeTop * const tt)
    else if (anchoredNode->getOpCodeValue() == TR::iload)
       {
       if (trace())
-         traceMsg(comp, "Storing constant %d to symref %d (%s)\n", cmpResultForEquality, anchoredNode->getSymbolReference()->getReferenceNumber(), anchoredNode->getSymbolReference()->getName(comp->getDebug()));
+         log->printf("Storing constant %d to symref %d (%s)\n", cmpResultForEquality, anchoredNode->getSymbolReference()->getReferenceNumber(), anchoredNode->getSymbolReference()->getName(comp->getDebug()));
       storeNode = TR::Node::create(TR::istore, 1, constForEqualityNode);
       storeNode->setSymbolReference(anchoredNode->getSymbolReference());
       }
@@ -474,7 +475,7 @@ AcmpTransformer::lower(TR::Node * const node, TR::TreeTop * const tt)
    tt->insertBefore(TR::TreeTop::create(comp, ifacmpeqNode));
    callBlock = splitForFastpath(callBlock, tt, targetBlock);
    if (trace())
-      traceMsg(comp, "Added check node n%un; call node is now in block_%d\n", ifacmpeqNode->getGlobalIndex(), callBlock->getNumber());
+      log->printf("Added check node n%un; call node is now in block_%d\n", ifacmpeqNode->getGlobalIndex(), callBlock->getNumber());
 
    if (!performTransformation(comp, "%sInserting fastpath for lhs == NULL\n", optDetailString()))
       return;
@@ -503,12 +504,12 @@ AcmpTransformer::lower(TR::Node * const node, TR::TreeTop * const tt)
       tt->insertBefore(TR::TreeTop::create(comp, checkLhsNull));
       callBlock = splitForFastpath(callBlock, tt, targetBlock);
       if (trace())
-         traceMsg(comp, "Added check node n%un; call node is now in block_%d\n", checkLhsNull->getGlobalIndex(), callBlock->getNumber());
+         log->printf("Added check node n%un; call node is now in block_%d\n", checkLhsNull->getGlobalIndex(), callBlock->getNumber());
       }
    else
       {
       if (trace())
-         traceMsg(comp, "Skip fastpath for lhs == NULL because node n%un isNonNull\n", anchoredCallArg1TT->getNode()->getFirstChild()->getGlobalIndex());
+         log->printf("Skip fastpath for lhs == NULL because node n%un isNonNull\n", anchoredCallArg1TT->getNode()->getFirstChild()->getGlobalIndex());
       }
 
 
@@ -525,12 +526,12 @@ AcmpTransformer::lower(TR::Node * const node, TR::TreeTop * const tt)
       tt->insertBefore(TR::TreeTop::create(comp, checkRhsNull));
       callBlock = splitForFastpath(callBlock, tt, targetBlock);
       if (trace())
-         traceMsg(comp, "Added check node n%un; call node is now in block_%d\n", checkRhsNull->getGlobalIndex(), callBlock->getNumber());
+         log->printf("Added check node n%un; call node is now in block_%d\n", checkRhsNull->getGlobalIndex(), callBlock->getNumber());
       }
    else
       {
       if (trace())
-         traceMsg(comp, "Skip fastpath for rhs == NULL because node n%un isNonNull\n", anchoredCallArg2TT->getNode()->getFirstChild()->getGlobalIndex());
+         log->printf("Skip fastpath for rhs == NULL because node n%un isNonNull\n", anchoredCallArg2TT->getNode()->getFirstChild()->getGlobalIndex());
       }
 
    if (!performTransformation(comp, "%sInserting fastpath for lhs is VT\n", optDetailString()))
@@ -548,7 +549,7 @@ AcmpTransformer::lower(TR::Node * const node, TR::TreeTop * const tt)
    tt->insertBefore(TR::TreeTop::create(comp, checkLhsIsVT));
    callBlock = splitForFastpath(callBlock, tt, targetBlock);
    if (trace())
-      traceMsg(comp, "Added check node n%un; call node is now in block_%d\n", checkLhsIsVT->getGlobalIndex(), callBlock->getNumber());
+      log->printf("Added check node n%un; call node is now in block_%d\n", checkLhsIsVT->getGlobalIndex(), callBlock->getNumber());
 
    if (!performTransformation(comp, "%sInserting fastpath for rhs is VT\n", optDetailString()))
       return;
@@ -559,7 +560,7 @@ AcmpTransformer::lower(TR::Node * const node, TR::TreeTop * const tt)
    callBlock = callBlock->splitPostGRA(tt, cfg, true, NULL);
 
    if (trace())
-      traceMsg(comp, "Call node isolated in block_%d by splitPostGRA\n", callBlock->getNumber());
+      log->printf("Call node isolated in block_%d by splitPostGRA\n", callBlock->getNumber());
 
    // Move call block out of line.
    // The CFG edge that exists from prevBlock to callBlock is kept because
@@ -568,7 +569,7 @@ AcmpTransformer::lower(TR::Node * const node, TR::TreeTop * const tt)
    prevBlock->getExit()->join(targetBlock->getEntry());
    cfg->addEdge(prevBlock, targetBlock);
    if (trace())
-      traceMsg(comp, "Moved call block to end of method\n");
+      log->prints("Moved call block to end of method\n");
 
    // Create and insert branch.
    auto* const rhsVft = TR::Node::createWithSymRef(node, TR::aloadi, 1, anchoredCallArg2TT->getNode()->getFirstChild(), vftSymRef);
@@ -594,7 +595,7 @@ AcmpTransformer::lower(TR::Node * const node, TR::TreeTop * const tt)
    // Note: there's no need to add a CFG edge because one already exists from
    // before callBlock was moved.
    if (trace())
-      traceMsg(comp, "Added check node n%un\n", checkRhsIsNotVT->getGlobalIndex());
+      log->printf("Added check node n%un\n", checkRhsIsNotVT->getGlobalIndex());
 
    // Insert goto target block in outline block.
    auto* const gotoNode = TR::Node::create(node, TR::Goto, 0, targetBlock->getEntry());
@@ -753,7 +754,7 @@ NonNullableArrayNullStoreCheckTransformer::lower(TR::Node* const node, TR::TreeT
 
       if (enableTrace)
          {
-         traceMsg(comp(),"checkValueNull n%dn is inserted before  n%dn in prevBlock %d\n", checkValueNull->getGlobalIndex(), checkNotNullRestrictedArray->getGlobalIndex(), prevBlock->getNumber());
+         comp()->log()->printf("checkValueNull n%dn is inserted before  n%dn in prevBlock %d\n", checkValueNull->getGlobalIndex(), checkNotNullRestrictedArray->getGlobalIndex(), prevBlock->getNumber());
          }
 
       TR::Block *checkNotNullRestrictedBlock = prevBlock->split(checkNotNullRestrictedArrayTT, cfg);
@@ -763,7 +764,7 @@ NonNullableArrayNullStoreCheckTransformer::lower(TR::Node* const node, TR::TreeT
 
       if (enableTrace)
          {
-         traceMsg(comp(),"checkNotNullRestrictedArray n%dn is isolated in checkNotNullRestrictedBlock %d\n", checkNotNullRestrictedArray->getGlobalIndex(), checkNotNullRestrictedBlock->getNumber());
+         comp()->log()->printf("checkNotNullRestrictedArray n%dn is isolated in checkNotNullRestrictedBlock %d\n", checkNotNullRestrictedArray->getGlobalIndex(), checkNotNullRestrictedBlock->getNumber());
          }
 
       cfg->addEdge(checkNotNullRestrictedBlock, nextBlock);
@@ -794,14 +795,14 @@ cloneAndTweakGlRegDepsFromBBExit(TR::Node *bbExitNode, TR::Compilation *comp, bo
              regDep->getGlobalRegisterNumber() == registerToSkip)
             {
             if (enableTrace)
-               traceMsg(comp,"tmpGlRegDeps skip n%dn [%d] %s %s\n",
+               comp->log()->printf("tmpGlRegDeps skip n%dn [%d] %s %s\n",
                      regDep->getGlobalIndex(), i, regDep->getOpCode().getName(), comp->getDebug()->getGlobalRegisterName(regDep->getGlobalRegisterNumber()));
             continue;
             }
          else
             {
             if (enableTrace)
-               traceMsg(comp,"tmpGlRegDeps add n%dn [%d] %s %s\n",
+               comp->log()->printf("tmpGlRegDeps add n%dn [%d] %s %s\n",
                      regDep->getGlobalIndex(), i, regDep->getOpCode().getName(), comp->getDebug()->getGlobalRegisterName(regDep->getGlobalRegisterNumber()));
             }
 
@@ -832,14 +833,14 @@ createStoreNodeForAnchoredNode(TR::Node *anchoredNode, TR::Node *nodeToBeStored,
       storeNode = TR::Node::create(TR::aRegStore, 1, nodeToBeStored);
       storeNode->setGlobalRegisterNumber(anchoredNode->getGlobalRegisterNumber());
       if (enableTrace)
-         traceMsg(comp, "Storing %s n%dn in register %s storeNode n%dn anchoredNode n%dn\n", msg, nodeToBeStored->getGlobalIndex(), comp->getDebug()->getGlobalRegisterName(anchoredNode->getGlobalRegisterNumber()), storeNode->getGlobalIndex(), anchoredNode->getGlobalIndex());
+         comp->log()->printf("Storing %s n%dn in register %s storeNode n%dn anchoredNode n%dn\n", msg, nodeToBeStored->getGlobalIndex(), comp->getDebug()->getGlobalRegisterName(anchoredNode->getGlobalRegisterNumber()), storeNode->getGlobalIndex(), anchoredNode->getGlobalIndex());
       }
    else if (anchoredNode->getOpCodeValue() == TR::aload)
       {
       storeNode = TR::Node::create(TR::astore, 1, nodeToBeStored);
       storeNode->setSymbolReference(anchoredNode->getSymbolReference());
       if (enableTrace)
-         traceMsg(comp, "Storing %s n%dn to symref %d (%s) storeNode n%dn anchoredNode n%dn\n", msg, nodeToBeStored->getGlobalIndex(), anchoredNode->getSymbolReference()->getReferenceNumber(), anchoredNode->getSymbolReference()->getName(comp->getDebug()), storeNode->getGlobalIndex(), anchoredNode->getGlobalIndex());
+         comp->log()->printf("Storing %s n%dn to symref %d (%s) storeNode n%dn anchoredNode n%dn\n", msg, nodeToBeStored->getGlobalIndex(), anchoredNode->getSymbolReference()->getReferenceNumber(), anchoredNode->getSymbolReference()->getName(comp->getDebug()), storeNode->getGlobalIndex(), anchoredNode->getGlobalIndex());
       }
    else
       {
@@ -977,6 +978,7 @@ LoadArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
    {
    bool enableTrace = trace();
    TR::Compilation *comp = this->comp();
+   OMR::Logger *log = comp->log();
    TR::Block *originalBlock = tt->getEnclosingBlock();
 
    TR::Node *elementIndexNode = node->getFirstChild();
@@ -1004,7 +1006,7 @@ LoadArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
    TR::TreeTop *anchoredArrayBaseAddressTT = TR::TreeTop::create(comp, anchoredElementIndexTT, TR::Node::create(TR::treetop, 1, arrayBaseAddressNode));
 
    if (enableTrace)
-      traceMsg(comp, "Anchored call node under treetop n%un (0x%p), elementIndex under treetop n%un (0x%p), arrayBaseAddress under treetop n%un (0x%p)\n",
+      log->printf("Anchored call node under treetop n%un (0x%p), elementIndex under treetop n%un (0x%p), arrayBaseAddress under treetop n%un (0x%p)\n",
             anchoredCallTT->getNode()->getGlobalIndex(), anchoredCallTT->getNode(),
             anchoredElementIndexTT->getNode()->getGlobalIndex(), anchoredElementIndexTT->getNode(),
             anchoredArrayBaseAddressTT->getNode()->getGlobalIndex(), anchoredArrayBaseAddressTT->getNode());
@@ -1015,7 +1017,7 @@ LoadArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
    TR::Block *blockAfterHelperCall = originalBlock->splitPostGRA(anchoredCallTT, cfg, true, NULL);
 
    if (enableTrace)
-      traceMsg(comp, "Isolated the anchored call treetop n%dn in block_%d\n", anchoredCallTT->getNode()->getGlobalIndex(), blockAfterHelperCall->getNumber());
+      log->printf("Isolated the anchored call treetop n%dn in block_%d\n", anchoredCallTT->getNode()->getGlobalIndex(), blockAfterHelperCall->getNumber());
 
 
    ///////////////////////////////////////
@@ -1042,7 +1044,7 @@ LoadArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
    TR::Block *helperCallBlock = originalBlock->splitPostGRA(tt, cfg, true, NULL);
 
    if (enableTrace)
-      traceMsg(comp, "Isolated helper call treetop n%dn node n%dn in block_%d\n", tt->getNode()->getGlobalIndex(), node->getGlobalIndex(), helperCallBlock->getNumber());
+      log->printf("Isolated helper call treetop n%dn node n%dn in block_%d\n", tt->getNode()->getGlobalIndex(), node->getGlobalIndex(), helperCallBlock->getNumber());
 
 
    ///////////////////////////////////////
@@ -1062,7 +1064,7 @@ LoadArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
       elementLoadTT = originalBlock->append(TR::TreeTop::create(comp, TR::Node::create(node, TR::treetop, 1, elementLoadNode)));
 
    if (enableTrace)
-      traceMsg(comp, "Created array element load treetop n%dn node n%dn\n", elementLoadTT->getNode()->getGlobalIndex(), elementLoadNode->getGlobalIndex());
+      log->printf("Created array element load treetop n%dn node n%dn\n", elementLoadTT->getNode()->getGlobalIndex(), elementLoadNode->getGlobalIndex());
 
 
    ///////////////////////////////////////
@@ -1072,7 +1074,7 @@ LoadArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
    elementLoadTT->insertAfter(TR::TreeTop::create(comp, storeArrayElementNode));
 
    if (enableTrace)
-      traceMsg(comp, "Store array element load node n%dn to n%dn %s\n", elementLoadNode->getGlobalIndex(), storeArrayElementNode->getGlobalIndex(), storeArrayElementNode->getOpCode().getName());
+      log->printf("Store array element load node n%dn to n%dn %s\n", elementLoadNode->getGlobalIndex(), storeArrayElementNode->getGlobalIndex(), storeArrayElementNode->getOpCode().getName());
 
 
    ///////////////////////////////////////
@@ -1082,7 +1084,7 @@ LoadArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
    arrayElementLoadBlock->setIsExtensionOfPreviousBlock(true);
 
    if (enableTrace)
-      traceMsg(comp, "Isolated array element load treetop n%dn node n%dn in block_%d\n", elementLoadTT->getNode()->getGlobalIndex(), elementLoadNode->getGlobalIndex(), arrayElementLoadBlock->getNumber());
+      log->printf("Isolated array element load treetop n%dn node n%dn in block_%d\n", elementLoadTT->getNode()->getGlobalIndex(), elementLoadNode->getGlobalIndex(), arrayElementLoadBlock->getNumber());
 
    int32_t dataWidth = TR::Symbol::convertTypeToSize(TR::Address);
    if (comp->useCompressedPointers())
@@ -1124,7 +1126,7 @@ LoadArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
    originalBlock->append(TR::TreeTop::create(comp, ifNode));
 
    if (enableTrace)
-      traceMsg(comp, "Append ifNode n%dn to block_%d\n", ifNode->getGlobalIndex(), originalBlock->getNumber());
+      log->printf("Append ifNode n%dn to block_%d\n", ifNode->getGlobalIndex(), originalBlock->getNumber());
 
 
    ///////////////////////////////////////
@@ -1316,6 +1318,7 @@ StoreArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
    {
    bool enableTrace = trace();
    TR::Compilation *comp = this->comp();
+   OMR::Logger *log = comp->log();
    TR::Block *originalBlock = tt->getEnclosingBlock();
 
    TR::Node *valueNode = node->getFirstChild();
@@ -1340,7 +1343,7 @@ StoreArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
    TR::TreeTop *anchoredValueTT = TR::TreeTop::create(comp, anchoredElementIndexTT, TR::Node::create(TR::treetop, 1, valueNode));
 
    if (enableTrace)
-      traceMsg(comp, "Anchored elementIndex under treetop n%un (0x%p), arrayBaseAddress under treetop n%un (0x%p), value under treetop n%un (0x%p), \n",
+      log->printf("Anchored elementIndex under treetop n%un (0x%p), arrayBaseAddress under treetop n%un (0x%p), value under treetop n%un (0x%p), \n",
             anchoredElementIndexTT->getNode()->getGlobalIndex(), anchoredElementIndexTT->getNode(),
             anchoredArrayBaseAddressTT->getNode()->getGlobalIndex(), anchoredArrayBaseAddressTT->getNode(),
             anchoredValueTT->getNode()->getGlobalIndex(), anchoredValueTT->getNode());
@@ -1351,7 +1354,7 @@ StoreArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
    TR::Block *blockAfterHelperCall = originalBlock->splitPostGRA(tt->getNextTreeTop(), cfg, true, NULL);
 
    if (enableTrace)
-      traceMsg(comp, "Isolated the trees after the helper call in block_%d\n", blockAfterHelperCall->getNumber());
+      log->printf("Isolated the trees after the helper call in block_%d\n", blockAfterHelperCall->getNumber());
 
 
    ///////////////////////////////////////
@@ -1380,7 +1383,7 @@ StoreArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
    TR::Block *helperCallBlock = originalBlock->splitPostGRA(ttForHelperCallBlock, cfg, true, NULL);
 
    if (enableTrace)
-      traceMsg(comp, "Isolated helper call treetop n%dn node n%dn in block_%d\n", tt->getNode()->getGlobalIndex(), node->getGlobalIndex(), helperCallBlock->getNumber());
+      log->printf("Isolated helper call treetop n%dn node n%dn in block_%d\n", tt->getNode()->getGlobalIndex(), node->getGlobalIndex(), helperCallBlock->getNumber());
 
 
    ///////////////////////////////////////
@@ -1405,7 +1408,7 @@ StoreArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
       arrayStoreCHKNode->copyByteCodeInfo(node);
       arrayStoreTT = originalBlock->append(TR::TreeTop::create(comp, arrayStoreCHKNode));
       if (enableTrace)
-         traceMsg(comp, "Created arrayStoreCHK treetop n%dn arrayStoreCHKNode n%dn\n", arrayStoreTT->getNode()->getGlobalIndex(), arrayStoreCHKNode->getGlobalIndex());
+         log->printf("Created arrayStoreCHK treetop n%dn arrayStoreCHKNode n%dn\n", arrayStoreTT->getNode()->getGlobalIndex(), arrayStoreCHKNode->getGlobalIndex());
 
       // This might be the first time the various checking symbol references are used
       // Need to ensure aliasing for them is correctly constructed
@@ -1416,7 +1419,7 @@ StoreArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
       {
       arrayStoreTT = originalBlock->append(TR::TreeTop::create(comp, TR::Node::create(TR::treetop, 1, elementStoreNode)));
       if (enableTrace)
-         traceMsg(comp, "Created treetop node with awrtbari child as treetop n%dn elementStoreNode n%dn\n", arrayStoreTT->getNode()->getGlobalIndex(), elementStoreNode->getGlobalIndex());
+         log->printf("Created treetop node with awrtbari child as treetop n%dn elementStoreNode n%dn\n", arrayStoreTT->getNode()->getGlobalIndex(), elementStoreNode->getGlobalIndex());
       }
 
    ///////////////////////////////////////
@@ -1426,7 +1429,7 @@ StoreArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
    arrayElementStoreBlock->setIsExtensionOfPreviousBlock(true);
 
    if (enableTrace)
-      traceMsg(comp, "Isolated array element store treetop n%dn node n%dn in block_%d\n", arrayStoreTT->getNode()->getGlobalIndex(),
+      log->printf("Isolated array element store treetop n%dn node n%dn in block_%d\n", arrayStoreTT->getNode()->getGlobalIndex(),
             arrayStoreCHKNode ? arrayStoreCHKNode->getGlobalIndex() : elementStoreNode->getGlobalIndex(), arrayElementStoreBlock->getNumber());
 
    int32_t dataWidth = TR::Symbol::convertTypeToSize(TR::Address);
@@ -1487,7 +1490,7 @@ StoreArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
    originalBlock->append(TR::TreeTop::create(comp, ifNode));
 
    if (enableTrace)
-      traceMsg(comp, "Append ifNode n%dn to block_%d\n", ifNode->getGlobalIndex(), originalBlock->getNumber());
+      log->printf("Append ifNode n%dn to block_%d\n", ifNode->getGlobalIndex(), originalBlock->getNumber());
 
 
    ///////////////////////////////////////

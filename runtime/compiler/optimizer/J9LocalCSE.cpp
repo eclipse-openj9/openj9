@@ -29,6 +29,7 @@
 #include "il/StaticSymbol.hpp"
 #include "optimizer/LocalCSE.hpp"
 #include "optimizer/Optimization_inlines.hpp"
+#include "ras/Logger.hpp"
 
 bool
 J9::LocalCSE::shouldTransformBlock(TR::Block *block)
@@ -147,7 +148,8 @@ J9::LocalCSE::shouldCommonNode(TR::Node *parent, TR::Node *node)
 
                if (!(checkOverflowNode->getOpCode().isLoadConst() && checkOverflowNode->getConstValue() == 0))
                   {
-                  traceMsg(comp(), "Skipping propagation of %s [%p] into the first child of %s [%p] because of potential overflow checking\n", node->getOpCode().getName(), node, parent->getOpCode().getName(), parent);
+                  if (trace())
+                     comp()->log()->printf("Skipping propagation of %s [%p] into the first child of %s [%p] because of potential overflow checking\n", node->getOpCode().getName(), node, parent->getOpCode().getName(), parent);
 
                   return false;
                   }
@@ -197,7 +199,7 @@ J9::LocalCSE::shouldCopyPropagateNode(TR::Node *parent, TR::Node *node, int32_t 
        if (!propagationIsTypeCorrect && (comp()->cg()->traceBCDCodeGen() || trace()))
          {
          int32_t lineNumber = comp()->getLineNumber(rhsOfStoreDefNode);
-         traceMsg(comp(),"z^z : skipping type invalid propagation : parent %s (%p), rhsOfStoreDefNode %s (%p) line_no=%d (offset %06X)\n",
+         comp()->log()->printf("z^z : skipping type invalid propagation : parent %s (%p), rhsOfStoreDefNode %s (%p) line_no=%d (offset %06X)\n",
                  parent->getOpCode().getName(),parent,rhsOfStoreDefNode->getOpCode().getName(),rhsOfStoreDefNode,lineNumber,lineNumber);
          }
 

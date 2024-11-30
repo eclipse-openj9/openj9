@@ -26,17 +26,19 @@
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "codegen/CodeGenerator.hpp"
+#include "ras/Logger.hpp"
 
 #define VECTOR_LENGTH TR::VectorLength128
 
 bool SPMDPreCheck::isSPMDCandidate(TR::Compilation *comp, TR_RegionStructure *loop)
    {
+   OMR::Logger *log = comp->log();
    bool trace = comp->getOption(TR_TraceAll) || comp->trace(OMR::SPMDKernelParallelization);
 
    if (!loop->isNaturalLoop())
       {
       if (trace)
-         traceMsg(comp, "SPMD PRE-CHECK FAILURE: region %d is not a natural loop and is discounted as an SPMD candidate\n", loop->getNumber());
+         log->printf("SPMD PRE-CHECK FAILURE: region %d is not a natural loop and is discounted as an SPMD candidate\n", loop->getNumber());
       }
 
    TR_ScratchList<TR::Block> blocksInLoopList(comp->trMemory());
@@ -76,13 +78,13 @@ bool SPMDPreCheck::isSPMDCandidate(TR::Compilation *comp, TR_RegionStructure *lo
              if (vectorOp == TR::BadILOp)
                 {
                 if (trace)
-                  traceMsg(comp, "SPMD PRE-CHECK FAILURE: store op code %s does not have a vector equivalent - skipping consideration of loop %d\n", comp->getDebug()->getName(opcode.getOpCodeValue()), loop->getNumber());
+                  log->printf("SPMD PRE-CHECK FAILURE: store op code %s does not have a vector equivalent - skipping consideration of loop %d\n", comp->getDebug()->getName(opcode.getOpCodeValue()), loop->getNumber());
                 return false;
                 }
              if (!comp->cg()->getSupportsOpCodeForAutoSIMD(vectorOp))
                 {
                 if (trace)
-                  traceMsg(comp, "SPMD PRE-CHECK FAILURE: vector op code %s is not supported on the current platform - skipping consideration of loop %d\n", comp->getDebug()->getName(vectorOp), loop->getNumber());
+                  log->printf("SPMD PRE-CHECK FAILURE: vector op code %s is not supported on the current platform - skipping consideration of loop %d\n", comp->getDebug()->getName(vectorOp), loop->getNumber());
                 return false;
                 }
 
@@ -91,7 +93,7 @@ bool SPMDPreCheck::isSPMDCandidate(TR::Compilation *comp, TR_RegionStructure *lo
 
           // unsafe opcode - we will skip LAR and SPMD
           if (trace)
-            traceMsg(comp, "SPMD PRE-CHECK FAILURE: found disallowed treetop opcode %s at node %p in loop %d\n", comp->getDebug()->getName(node->getOpCodeValue()), node, loop->getNumber());
+            log->printf("SPMD PRE-CHECK FAILURE: found disallowed treetop opcode %s at node %p in loop %d\n", comp->getDebug()->getName(node->getOpCodeValue()), node, loop->getNumber());
           return false;
           }
        }

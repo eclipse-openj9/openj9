@@ -68,6 +68,7 @@
 #include "OMR/Bytes.hpp"
 #include "ras/Delimiter.hpp"
 #include "ras/DebugCounter.hpp"
+#include "ras/Logger.hpp"
 #include "env/VMJ9.h"
 #include "z/codegen/J9S390Snippet.hpp"
 #include "z/codegen/BinaryCommutativeAnalyser.hpp"
@@ -1152,7 +1153,7 @@ J9::Z::TreeEvaluator::inlineVectorizedStringIndexOf(TR::Node* node, TR::CodeGene
       return NULL;
 
    if (comp->getOption(TR_TraceCG))
-      traceMsg(comp, "inlineVectorizedStringIndexOf. Is isUTF16 %d\n", isUTF16);
+      comp->log()->printf("inlineVectorizedStringIndexOf. Is isUTF16 %d\n", isUTF16);
 
    // This evaluator function handles different indexOf() intrinsics, some of which are static calls without a
    // receiver. Hence, the need for static call check.
@@ -4299,7 +4300,8 @@ J9::Z::TreeEvaluator::instanceofEvaluator(TR::Node * node, TR::CodeGenerator * c
    {
    TR::Compilation *comp = cg->comp();
    static bool initialResult = feGetEnv("TR_instanceOfInitialValue") != NULL;
-   traceMsg(comp,"Initial result = %d\n",initialResult);
+   if (comp->getOption(TR_TraceCG))
+      comp->log()->printf("Initial result = %d\n",initialResult);
    // Complementing Initial Result to True if the floag is not passed.
    return VMgenCoreInstanceofEvaluator(node,cg,NULL,NULL,!initialResult,1,NULL,false);
    }
@@ -4365,6 +4367,7 @@ TR::Register *
 J9::Z::TreeEvaluator::checkcastEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
    TR::Compilation *comp = cg->comp();
+   OMR::Logger *log = comp->log();
 
    // TODO: This is not the place to make such checks. If we really want to optimize for space or disable inlining
    // of instanceof/checkcast we should still go through the else path to the common infrastructure and it should just
@@ -4374,7 +4377,8 @@ J9::Z::TreeEvaluator::checkcastEvaluator(TR::Node * node, TR::CodeGenerator * cg
    TR_OpaqueClassBlock           *profiledClass, *compileTimeGuessClass;
 
    int32_t maxProfiledClasses = comp->getOptions()->getCheckcastMaxProfiledClassTests();
-   traceMsg(comp, "%s:Maximum Profiled Classes = %d\n", node->getOpCode().getName(),maxProfiledClasses);
+   if (comp->getOption(TR_TraceCG))
+      log->printf("%s:Maximum Profiled Classes = %d\n", node->getOpCode().getName(),maxProfiledClasses);
    InstanceOfOrCheckCastProfiledClasses* profiledClassesList = (InstanceOfOrCheckCastProfiledClasses*)alloca(maxProfiledClasses * sizeof(InstanceOfOrCheckCastProfiledClasses));
    InstanceOfOrCheckCastSequences sequences[InstanceOfOrCheckCastMaxSequences];
 
@@ -4412,7 +4416,8 @@ J9::Z::TreeEvaluator::checkcastEvaluator(TR::Node * node, TR::CodeGenerator * cg
    TR::LabelSymbol *startICFLabel = NULL;
    // When we topProfiledClass in the profiled information is cast class with frequency greater than 0.5, we expect class equality to succeed so we put rest of the test outlined.
    bool outLinedTest = numSequencesRemaining >= 2 && sequences[numSequencesRemaining-2] == SuperClassTest && topClassProbability >= 0.5 && topClassWasCastClass;
-   traceMsg(comp, "Outline Super Class Test: %d\n", outLinedTest);
+   if (comp->getOption(TR_TraceCG))
+      log->printf("Outline Super Class Test: %d\n", outLinedTest);
    InstanceOfOrCheckCastSequences *iter = &sequences[0];
 
    while (numSequencesRemaining > 1)
@@ -4422,12 +4427,12 @@ J9::Z::TreeEvaluator::checkcastEvaluator(TR::Node * node, TR::CodeGenerator * cg
          case EvaluateCastClass:
             TR_ASSERT(!castClassReg, "Cast class already evaluated");
             if (comp->getOption(TR_TraceCG))
-               traceMsg(comp, "%s: Class Not Evaluated. Evaluating it\n", node->getOpCode().getName());
+               log->printf("%s: Class Not Evaluated. Evaluating it\n", node->getOpCode().getName());
             castClassReg = cg->evaluate(castClassNode);
             break;
          case LoadObjectClass:
             if (comp->getOption(TR_TraceCG))
-               traceMsg(comp, "%s: Loading Object Class\n",node->getOpCode().getName());
+               log->printf("%s: Loading Object Class\n",node->getOpCode().getName());
             objClassReg = cg->allocateRegister();
             TR::TreeEvaluator::genLoadForObjectHeadersMasked(cg, node, objClassReg, generateS390MemoryReference(objectReg, static_cast<int32_t>(TR::Compiler->om.offsetOfObjectVftField()), cg), NULL);
             startICFLabel = generateLabelSymbol(cg);
@@ -4444,7 +4449,7 @@ J9::Z::TreeEvaluator::checkcastEvaluator(TR::Node * node, TR::CodeGenerator * cg
             {
             //If Object is Null, no need to carry out rest of test and jump to Done Label
             if (comp->getOption(TR_TraceCG))
-               traceMsg(comp, "%s: Emitting NullTest\n", node->getOpCode().getName());
+               log->printf("%s: Emitting NullTest\n", node->getOpCode().getName());
             TR_ASSERT(!objectNode->isNonNull(), "Object is known to be non-null, no need for a null test");
             const bool isCCSet = genInstanceOfOrCheckCastNullTest(node, cg, objectReg);
 
@@ -4456,7 +4461,7 @@ J9::Z::TreeEvaluator::checkcastEvaluator(TR::Node * node, TR::CodeGenerator * cg
             break;
          case ClassEqualityTest:
             if (comp->getOption(TR_TraceCG))
-               traceMsg(comp, "%s: Emitting Class Equality Test\n", node->getOpCode().getName());
+               log->printf("%s: Emitting Class Equality Test\n", node->getOpCode().getName());
             if (outLinedTest)
                {
                // This is the case when we are going to have an Internal Control Flow in the OOL
@@ -4485,7 +4490,7 @@ J9::Z::TreeEvaluator::checkcastEvaluator(TR::Node * node, TR::CodeGenerator * cg
             cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "checkCastStats/(%s)/SuperClass", comp->signature()),1,TR::DebugCounter::Undetermined);
             TR_ASSERT(numSequencesRemaining == 2, "SuperClassTest should always be followed by a GoToFalse and must always be the second last test generated");
             if (comp->getOption(TR_TraceCG))
-               traceMsg(comp, "%s: Emitting Super Class Test, Cast Class Depth=%d\n", node->getOpCode().getName(), castClassDepth);
+               log->printf("%s: Emitting Super Class Test, Cast Class Depth=%d\n", node->getOpCode().getName(), castClassDepth);
 
             const int32_t flags = J9AccInterface | J9AccClassArray;
             TR_ASSERT(flags < UINT_MAX && flags > 0, "superclass test::(J9AccInterface | J9AccClassArray) is not a 32-bit number\n");
@@ -4507,7 +4512,7 @@ J9::Z::TreeEvaluator::checkcastEvaluator(TR::Node * node, TR::CodeGenerator * cg
          case ProfiledClassTest:
             {
             if (comp->getOption(TR_TraceCG))
-               traceMsg(comp, "%s: Emitting Profiled Class Test\n", node->getOpCode().getName());
+               log->printf("%s: Emitting Profiled Class Test\n", node->getOpCode().getName());
             TR::Register *arbitraryClassReg1 = srm->findOrCreateScratchRegister();
             uint8_t numPICs = 0;
             TR::Instruction *temp= NULL;
@@ -4525,7 +4530,7 @@ J9::Z::TreeEvaluator::checkcastEvaluator(TR::Node * node, TR::CodeGenerator * cg
          case CompileTimeGuessClassTest:
             {
             if (comp->getOption(TR_TraceCG))
-               traceMsg(comp, "%s: Emitting Compile Time Guess Class Test\n", node->getOpCode().getName());
+               log->printf("%s: Emitting Compile Time Guess Class Test\n", node->getOpCode().getName());
             cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "checkCastStats/(%s)/CompTimeGuess", comp->signature()),1,TR::DebugCounter::Undetermined);
             TR::Register *arbitraryClassReg2 = srm->findOrCreateScratchRegister();
             genLoadAddressConstant(cg, node, (uintptr_t)compileTimeGuessClass, arbitraryClassReg2);
@@ -4538,7 +4543,7 @@ J9::Z::TreeEvaluator::checkcastEvaluator(TR::Node * node, TR::CodeGenerator * cg
             {
             cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "checkCastStats/(%s)/ArrayTest", comp->signature()),1,TR::DebugCounter::Undetermined);
             if (comp->getOption(TR_TraceCG))
-               traceMsg(comp,"%s: Emitting ArrayOfJavaLangObjectTest\n",node->getOpCode().getName());
+               log->printf("%s: Emitting ArrayOfJavaLangObjectTest\n",node->getOpCode().getName());
             genInstanceOfOrCheckcastArrayOfJavaLangObjectTest(node, cg, objClassReg, callLabel, srm) ;
             cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, doneLabel);
             break;
@@ -4553,7 +4558,7 @@ J9::Z::TreeEvaluator::checkcastEvaluator(TR::Node * node, TR::CodeGenerator * cg
          case CastClassCacheTest:
             {
             if (comp->getOption(TR_TraceCG))
-               traceMsg(comp,"%s: Emitting CastClassCacheTest\n",node->getOpCode().getName());
+               log->printf("%s: Emitting CastClassCacheTest\n",node->getOpCode().getName());
             TR::Register *castClassCacheReg = srm->findOrCreateScratchRegister();
             cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "checkCastStats/(%s)/Cache", comp->signature()),1,TR::DebugCounter::Undetermined);
             generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, castClassCacheReg,
@@ -4596,7 +4601,7 @@ J9::Z::TreeEvaluator::checkcastEvaluator(TR::Node * node, TR::CodeGenerator * cg
       TR_ASSERT(*iter == HelperCall || *iter == GoToFalse, "Expecting helper call or fail here");
       bool helperCallForFailure = *iter != HelperCall;
       if (comp->getOption(TR_TraceCG))
-         traceMsg(comp, "%s: Emitting helper call%s\n", node->getOpCode().getName(),helperCallForFailure?" for failure":"");
+         log->printf("%s: Emitting helper call%s\n", node->getOpCode().getName(),helperCallForFailure?" for failure":"");
       //Following code is needed to put the Helper Call Outlined.
       if (!outlinedSlowPath)
          {
@@ -4842,7 +4847,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
 
    if (comp->getOption(TR_TraceCG))
       {
-      traceMsg(comp, "Inline allocation for multianewarray with element size: %d and leaf component size: %d", elementSize, componentSize);
+      comp->log()->printf("Inline allocation for multianewarray with element size: %d and leaf component size: %d", elementSize, componentSize);
       }
 
    /********************************************* Register setup *********************************************/
@@ -5128,7 +5133,7 @@ J9::Z::TreeEvaluator::multianewArrayEvaluator(TR::Node * node, TR::CodeGenerator
       {
       if (comp->getOption(TR_TraceCG))
          {
-         traceMsg(comp, "Disabling inline allocations for multianewarray of dim %d\n", nDims);
+         comp->log()->printf("Disabling inline allocations for multianewarray of dim %d\n", nDims);
          }
       TR::ILOpCodes opCode = node->getOpCodeValue();
       TR::Node::recreate(node, TR::acall);
@@ -6669,7 +6674,7 @@ J9::Z::TreeEvaluator::BNDCHKwithSpineCHKEvaluator(TR::Node *node, TR::CodeGenera
       }
 
    if (comp->getOption(TR_TraceCG))
-      traceMsg(comp,"loadOrStoreChild: %p baseArrayChild: %p arrayLengthChild: %p indexChild: %p\n",loadOrStoreChild, baseArrayChild, arrayLengthChild, indexChild);
+      comp->log()->printf("loadOrStoreChild: %p baseArrayChild: %p arrayLengthChild: %p indexChild: %p\n",loadOrStoreChild, baseArrayChild, arrayLengthChild, indexChild);
 
    // Order of evaluation dictates that the value to be stored needs to be evaluated first.
    if (loadOrStoreChild->getOpCode().isStore() && !loadOrStoreChild->getRegister())
@@ -6781,7 +6786,7 @@ J9::Z::TreeEvaluator::BNDCHKwithSpineCHKEvaluator(TR::Node *node, TR::CodeGenera
       }
 
    if (comp->getOption(TR_TraceCG))
-      traceMsg(comp,"Identified actualLoadOrStoreChild: %p and evaluated node: %p\n",actualLoadOrStoreChild, evaluatedNode);
+      comp->log()->printf("Identified actualLoadOrStoreChild: %p and evaluated node: %p\n",actualLoadOrStoreChild, evaluatedNode);
    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, oolReturnLabel);
 
    if (loadOrStoreChild != evaluatedNode)
@@ -7779,7 +7784,8 @@ J9::Z::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(TR::Node * node, bool n
                         {
                         needLateEvaluation = false;
                         nextTopNode->setHasFoldedImplicitNULLCHK(true);
-                        traceMsg(comp, "\nMerging NULLCHK [%p] and BNDCHK [%p] of load child [%p]", node, nextTopNode, n);
+                        if (comp->getOption(TR_TraceCG))
+                           comp->log()->printf("\nMerging NULLCHK [%p] and BNDCHK [%p] of load child [%p]", node, nextTopNode, n);
                         }
                      }
                   else if (nextTopNode->getOpCode().isIf()
@@ -8668,7 +8674,7 @@ void genInstanceOfDynamicCacheAndHelperCall(TR::Node *node, TR::CodeGenerator *c
       int32_t requestedBytes = 1 << (int) (log2(snippetSizeInBytes-1)+1);
       if (comp->getOption(TR_TraceCG))
          {
-         traceMsg(comp, "Number Of Dynamic Cache Slots = %d, Caching CastClass: %s\n"
+         comp->log()->printf("Number Of Dynamic Cache Slots = %d, Caching CastClass: %s\n"
                         "Bytes needed for Snippet = %d, requested Bytes = %d\n",maxOnsiteCacheSlots, cacheCastClass ? "true" : "false", snippetSizeInBytes, requestedBytes);
          }
 
@@ -8902,10 +8908,12 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node * node, TR::CodeGene
    bool initialResult, bool needResult, TR::RegisterDependencyConditions *graDeps, bool ifInstanceOf)
    {
    TR::Compilation                *comp = cg->comp();
+   OMR::Logger                     *log = comp->log();
    TR_J9VMBase *fej9 = (TR_J9VMBase *) (comp->fe());
    TR_OpaqueClassBlock           *compileTimeGuessClass;
    int32_t maxProfiledClasses = comp->getOptions()->getCheckcastMaxProfiledClassTests();
-   traceMsg(comp, "%s:Maximum Profiled Classes = %d\n", node->getOpCode().getName(),maxProfiledClasses);
+   if (comp->getOption(TR_TraceCG))
+      log->printf("%s:Maximum Profiled Classes = %d\n", node->getOpCode().getName(),maxProfiledClasses);
    InstanceOfOrCheckCastProfiledClasses* profiledClassesList = (InstanceOfOrCheckCastProfiledClasses*)alloca(maxProfiledClasses * sizeof(InstanceOfOrCheckCastProfiledClasses));
 
    TR::Node                      *objectNode = node->getFirstChild();
@@ -8958,7 +8966,8 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node * node, TR::CodeGene
       {
       if (trueLabel)
          {
-         traceMsg(comp,"IfInstanceOf Node : Branch True\n");
+         if (comp->getOption(TR_TraceCG))
+            log->prints("IfInstanceOf Node : Branch True\n");
          falseLabel = (needResult) ? oppositeResultLabel : doneLabel;
          branchLabel = trueLabel;
          branchCond = TR::InstOpCode::COND_BE;
@@ -8967,7 +8976,8 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node * node, TR::CodeGene
          }
       else
          {
-         traceMsg(comp,"IfInstanceOf Node : Branch False\n");
+         if (comp->getOption(TR_TraceCG))
+            log->prints("IfInstanceOf Node : Branch False\n");
          trueLabel = (needResult)? oppositeResultLabel : doneLabel;
          branchLabel = falseLabel;
          branchCond = TR::InstOpCode::COND_BNE;
@@ -9007,12 +9017,12 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node * node, TR::CodeGene
          case EvaluateCastClass:
             TR_ASSERT(!castClassReg, "Cast class already evaluated");
             if (comp->getOption(TR_TraceCG))
-               traceMsg(comp, "%s: Class Not Evaluated. Evaluating it\n", node->getOpCode().getName());
+               log->printf("%s: Class Not Evaluated. Evaluating it\n", node->getOpCode().getName());
             castClassReg = cg->gprClobberEvaluate(node->getSecondChild());
             break;
          case LoadObjectClass:
             if (comp->getOption(TR_TraceCG))
-               traceMsg(comp, "%s: Loading Object Class\n",node->getOpCode().getName());
+               log->printf("%s: Loading Object Class\n",node->getOpCode().getName());
             objClassReg = cg->allocateRegister();
             TR::TreeEvaluator::genLoadForObjectHeadersMasked(cg, node, objClassReg, generateS390MemoryReference(objectReg, static_cast<int32_t>(TR::Compiler->om.offsetOfObjectVftField()), cg), NULL);
             startICFLabel = generateLabelSymbol(cg);
@@ -9020,14 +9030,16 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node * node, TR::CodeGene
             generateS390LabelInstruction(cg, TR::InstOpCode::label, node, startICFLabel);
             break;
          case GoToTrue:
-            traceMsg(comp, "%s: Emitting GoToTrue\n", node->getOpCode().getName());
+            if (comp->getOption(TR_TraceCG))
+               log->printf("%s: Emitting GoToTrue\n", node->getOpCode().getName());
             // If fall through in True (Initial Result False)
             //if (trueLabel != oppositeResultLabel)
             if (trueLabel != oppositeResultLabel  || (ifInstanceOf && !trueFallThrough))
                generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BC, node, trueLabel);
             break;
          case GoToFalse:
-            traceMsg(comp, "%s: Emitting GoToFalse\n", node->getOpCode().getName());
+            if (comp->getOption(TR_TraceCG))
+               log->printf("%s: Emitting GoToFalse\n", node->getOpCode().getName());
             // There is only one case when we generate a GoToFalse branch here, when we have a primitive Cast Class other wise all tests take care of generating terminating sequence
             if (generateGoToFalseBRC)
                generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BC, node, falseLabel);
@@ -9035,7 +9047,7 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node * node, TR::CodeGene
          case NullTest:
             {
             if (comp->getOption(TR_TraceCG))
-               traceMsg(comp, "%s: Emitting NullTest\n", node->getOpCode().getName());
+               log->printf("%s: Emitting NullTest\n", node->getOpCode().getName());
             TR_ASSERT(!objectNode->isNonNull(), "Object is known to be non-null, no need for a null test");
             const bool isCCSet = genInstanceOfOrCheckCastNullTest(node, cg, objectReg);
 
@@ -9048,7 +9060,7 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node * node, TR::CodeGene
             break;
          case ClassEqualityTest:
             if (comp->getOption(TR_TraceCG))
-               traceMsg(comp, "%s: Emitting Class Equality Test\n", node->getOpCode().getName());
+               log->printf("%s: Emitting Class Equality Test\n", node->getOpCode().getName());
             cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "instanceOfStats/(%s)/Equality", comp->signature()),1,TR::DebugCounter::Undetermined);
              /*   #IF NextTest = GoToFalse
               *      branchCond = ifInstanceOf ? (!trueFallThrough ? COND_BE : COND_BNE ) : (init=true ? COND_BE : COND_BNE )
@@ -9083,7 +9095,7 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node * node, TR::CodeGene
             int32_t castClassDepth = castClassNode->getSymbolReference()->classDepth(comp);
             dynamicCacheTestLabel = generateLabelSymbol(cg);
             if (comp->getOption(TR_TraceCG))
-               traceMsg(comp, "%s: Emitting Super Class Test, Cast Class Depth = %d\n", node->getOpCode().getName(),castClassDepth);
+               log->printf("%s: Emitting Super Class Test, Cast Class Depth = %d\n", node->getOpCode().getName(), castClassDepth);
             cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "instanceOfStats/(%s)/SuperClassTest", comp->signature()),1,TR::DebugCounter::Undetermined);
 
             dynamicCastClass = (castClassDepth == -1);
@@ -9114,7 +9126,7 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node * node, TR::CodeGene
          case ProfiledClassTest:
             {
             if (comp->getOption(TR_TraceCG))
-               traceMsg(comp, "%s: Emitting ProfiledClass Test\n", node->getOpCode().getName());
+               log->printf("%s: Emitting ProfiledClass Test\n", node->getOpCode().getName());
             TR::Register *arbitraryClassReg1 = srm->findOrCreateScratchRegister();
             uint8_t numPICs = 0;
             TR::Instruction *temp= NULL;
@@ -9149,7 +9161,7 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node * node, TR::CodeGene
          case ArrayOfJavaLangObjectTest:
             {
             if (comp->getOption(TR_TraceCG))
-               traceMsg(comp,"Emitting ArrayOfJavaLangObjectTest\n",node->getOpCode().getName());
+               log->printf("%s: Emitting ArrayOfJavaLangObjectTest\n", node->getOpCode().getName());
             cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "instanceOfStats/(%s)/ArrayTest", comp->signature()),1,TR::DebugCounter::Undetermined);
             genInstanceOfOrCheckcastArrayOfJavaLangObjectTest(node, cg, objClassReg, falseLabel, srm) ;
             generateS390BranchInstruction(cg, TR::InstOpCode::BRC, branchCond, node, branchLabel);
@@ -9170,7 +9182,7 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node * node, TR::CodeGene
             {
             doneTestCacheLabel =  generateLabelSymbol(cg);
             if (comp->getOption(TR_TraceCG))
-               traceMsg(comp,"Emitting CastClassCacheTest\n",node->getOpCode().getName());
+               log->printf("%s: Emitting CastClassCacheTest\n",node->getOpCode().getName());
             TR::Register *castClassCacheReg = srm->findOrCreateScratchRegister();
             generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, castClassCacheReg,
                generateS390MemoryReference(objClassReg, offsetof(J9Class, castClassCache), cg));
@@ -9185,7 +9197,7 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node * node, TR::CodeGene
             generateDynamicCache = true;
             dynamicCacheTestLabel = generateLabelSymbol(cg);
             if (comp->getOption(TR_TraceCG))
-               traceMsg(comp,"Emitting Dynamic Cache for ObjectClass only\n",node->getOpCode().getName());
+               log->printf("%s: Emitting Dynamic Cache for ObjectClass only\n",node->getOpCode().getName());
             break;
             }
          case DynamicCacheDynamicCastClassTest:
@@ -9194,7 +9206,7 @@ J9::Z::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node * node, TR::CodeGene
             cacheCastClass = true;
             TR_ASSERT(dynamicCacheTestLabel!=NULL, "DynamicCacheDynamicCastClassTest: dynamicCacheTestLabel should be generated by SuperClassTest before reaching this point");
             if (comp->getOption(TR_TraceCG))
-               traceMsg(comp,"Emitting Dynamic Cache for CastClass and ObjectClass\n",node->getOpCode().getName());
+               log->printf("%s: Emitting Dynamic Cache for CastClass and ObjectClass\n",node->getOpCode().getName());
             break;
             }
          case HelperCall:
@@ -10967,10 +10979,12 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       if (enumReg)
          {
          conditions->addPostCondition(enumReg, TR::RealRegister::AssignAny);
-         traceMsg(comp,"enumReg = %s\n", enumReg->getRegisterName(comp));
+         if (comp->getOption(TR_TraceCG))
+            comp->log()->printf("enumReg = %s\n", enumReg->getRegisterName(comp));
          }
       conditions->addPostCondition(resReg, TR::RealRegister::AssignAny);
-      traceMsg(comp, "classReg = %s , resReg = %s \n", classReg->getRegisterName(comp), resReg->getRegisterName(comp));
+      if (comp->getOption(TR_TraceCG))
+         comp->log()->printf("classReg = %s , resReg = %s \n", classReg->getRegisterName(comp), resReg->getRegisterName(comp));
 
       //////////////////////////////////////////////////////////////////////////////////////////////////////
       ///============================ STAGE 2: Calculate Allocation Size ================================///
@@ -11115,7 +11129,8 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          {
          enumReg = cg->allocateRegister();
          conditions->addPostCondition(enumReg, TR::RealRegister::AssignAny);
-         traceMsg(comp,"enumReg = %s\n", enumReg->getRegisterName(comp));
+         if (comp->getOption(TR_TraceCG))
+            comp->log()->printf("enumReg = %s\n", enumReg->getRegisterName(comp));
          }
       // classReg and enumReg have to be intact still, in case we have to call the helper.
       genHeapAlloc(node, iCursor, isVariableLen, enumReg, resReg, dataSizeReg, srm, callLabel, allocateSize, elementSize, cg,
@@ -11194,7 +11209,7 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
                 * - full refs: we write 0s to dataAddr field
                 */
                if (comp->getOption(TR_TraceCG))
-                  traceMsg(comp, "Node (%p): Dealing with compressed refs variable length array.\n", node);
+                  comp->log()->printf("Node (%p): Dealing with compressed refs variable length array.\n", node);
 
                TR::Register *offsetReg = cg->allocateRegister();
                iCursor = generateRRInstruction(cg, TR::InstOpCode::getXORRegOpCode(), node, offsetReg, offsetReg, iCursor);
@@ -11227,12 +11242,12 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
             else if (node->getFirstChild()->getOpCode().isLoadConst() && node->getFirstChild()->getInt() == 0)
                {
                if (comp->getOption(TR_TraceCG))
-                  traceMsg(comp, "Node (%p): Dealing with fixed length 0 size array.\n", node);
+                  comp->log()->printf("Node (%p): Dealing with fixed length 0 size array.\n", node);
 
                if (!comp->getOption(TR_DisableDualTLH) && node->canSkipZeroInitialization())
                   {
                   if (comp->getOption(TR_TraceCG))
-                     traceMsg(comp, "Node (%p): Clean out dataAddr field.\n", node);
+                     comp->log()->printf("Node (%p): Clean out dataAddr field.\n", node);
 
                   uint16_t bytesToClear = static_cast<uint16_t>(TR::Compiler->om.discontiguousArrayHeaderSizeInBytes() - fej9->getOffsetOfDiscontiguousDataAddrField());
                   TR_ASSERT_FATAL_WITH_NODE(node, bytesToClear == 8, "dataAddr field is expected to be 8 bytes wide, but was %d bytes.\n", bytesToClear);
@@ -11249,7 +11264,7 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
             else
                {
                if (comp->getOption(TR_TraceCG))
-                  traceMsg(comp, "Node (%p): Dealing with full/compressed refs fixed length non-zero size array.\n", node);
+                  comp->log()->printf("Node (%p): Dealing with full/compressed refs fixed length non-zero size array.\n", node);
 
                // Load address of first array element
                iCursor = generateRXInstruction(cg,
@@ -11868,7 +11883,7 @@ TR::Register *J9::Z::TreeEvaluator::inlineCheckAssignableFromEvaluator(TR::Node 
    TR::Instruction *cursor = NULL;
 
    if (comp->getOption(TR_TraceCG))
-      traceMsg(comp,"%s: Emitting Class Equality Test\n",node->getOpCode().getName());
+      comp->log()->printf("%s: Emitting Class Equality Test\n",node->getOpCode().getName());
    // for isAssignableFrom we can always generate the class equality test since both arguments are classes
    cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "isAssignableFromStats/(%s)/ClassEqualityTest", comp->signature()), 1, TR::DebugCounter::Undetermined);
    cursor = generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpRegOpCode(), node, toClassReg, fromClassReg, TR::InstOpCode::COND_BE, successLabel, false, false);
@@ -11880,15 +11895,15 @@ TR::Register *J9::Z::TreeEvaluator::inlineCheckAssignableFromEvaluator(TR::Node 
    TR::SymbolReference *toClassSymRef = getClassSymRefAndDepth(toClass, comp, toClassDepth);
    bool fastFail = false;
    if (comp->getOption(TR_TraceCG))
-      traceMsg(comp,"%s: toClassSymRef is %s\n",node->getOpCode().getName(), NULL == toClassSymRef ? "null" : "non-null");
+      comp->log()->printf("%s: toClassSymRef is %s\n",node->getOpCode().getName(), NULL == toClassSymRef ? "null" : "non-null");
    if (NULL != toClassSymRef && comp->getOption(TR_TraceCG))
-      traceMsg(comp,"%s: toClass is %s\n",node->getOpCode().getName(), toClassSymRef->isClassInterface(comp) ? "an interface" : "not an interface");
+      comp->log()->printf("%s: toClass is %s\n",node->getOpCode().getName(), toClassSymRef->isClassInterface(comp) ? "an interface" : "not an interface");
    if ((NULL != toClassSymRef) && !toClassSymRef->isClassInterface(comp))
       {
       int32_t fromClassDepth = -1;
       TR::SymbolReference *fromClassSymRef = getClassSymRefAndDepth(fromClass, comp, fromClassDepth);
       if (comp->getOption(TR_TraceCG))
-         traceMsg(comp,"%s: fromClassSymRef is %s\n",node->getOpCode().getName(), NULL == toClassSymRef ? "null" : "non-null");
+         comp->log()->printf("%s: fromClassSymRef is %s\n",node->getOpCode().getName(), NULL == toClassSymRef ? "null" : "non-null");
       if ((NULL != fromClassSymRef) && !fromClassSymRef->isClassInterface(comp))
          {
          if (toClassDepth > -1 && fromClassDepth > -1 && toClassDepth > fromClassDepth)
@@ -11907,11 +11922,11 @@ TR::Register *J9::Z::TreeEvaluator::inlineCheckAssignableFromEvaluator(TR::Node 
       {
       // castClassCache test
       if ((NULL != toClassSymRef) && comp->getOption(TR_TraceCG))
-         traceMsg(comp,"%s: toclass is %s\n",node->getOpCode().getName(), toClassSymRef->isClassAbstract(comp) ? "abstract" : "non-abstract");
+         comp->log()->printf("%s: toclass is %s\n",node->getOpCode().getName(), toClassSymRef->isClassAbstract(comp) ? "abstract" : "non-abstract");
       if ((NULL == toClassSymRef) || !toClassSymRef->isClassAbstract(comp))
          {
          if (comp->getOption(TR_TraceCG))
-            traceMsg(comp,"%s: Emitting CastClassCacheTest\n",node->getOpCode().getName());
+            comp->log()->printf("%s: Emitting CastClassCacheTest\n",node->getOpCode().getName());
          TR::Register *castClassCacheReg = srm->findOrCreateScratchRegister();
          cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "isAssignableFromStats/(%s)/Cache", comp->signature()), 1, TR::DebugCounter::Undetermined);
          generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, castClassCacheReg,
@@ -14351,7 +14366,7 @@ J9::Z::TreeEvaluator::generateSoftwareReadBarrier(TR::Node* node,
    const bool fieldUnresolved = node->getSymbolReference()->isUnresolved();
    if (comp->getOption(TR_TraceCG))
       {
-      traceMsg(comp, "SoftwareReadBarrier: symbol is %s. Compr shift %d. RA reg: %s Entry reg %s\n",
+      comp->log()->printf("SoftwareReadBarrier: symbol is %s. Compr shift %d. RA reg: %s Entry reg %s\n",
                fieldUnresolved ? "unresolved" : "resolved",
                TR::Compiler->om.compressedReferenceShift(),
                raReg->getRegisterName(comp),
@@ -14591,7 +14606,7 @@ J9::Z::TreeEvaluator::inlineIntegerToCharsForLatin1Strings(TR::Node *node, TR::C
 
    if (comp->getOption(TR_TraceCG))
       {
-      traceMsg(comp, "inlineIntegerToCharsForLatin1Strings (compressed strings)\n");
+      comp->log()->prints("inlineIntegerToCharsForLatin1Strings (compressed strings)\n");
       }
    TR::Node *inputValueNode = node->getChild(0);
    TR::Node *stringSizeNode = node->getChild(1);
@@ -14781,7 +14796,7 @@ J9::Z::TreeEvaluator::inlineIntegerToCharsForUTF16Strings(TR::Node *node, TR::Co
 
    if (comp->getOption(TR_TraceCG))
       {
-      traceMsg(comp, "inlineIntegerToCharsForUTF16Strings (decompressed strings)\n");
+      comp->log()->prints("inlineIntegerToCharsForUTF16Strings (decompressed strings)\n");
       }
    TR::Node *inputValueNode = node->getChild(0);
    TR::Node *stringSizeNode = node->getChild(1);
@@ -15057,7 +15072,7 @@ J9::Z::TreeEvaluator::inlineOnSpinWait(TR::Node *node, TR::CodeGenerator *cg)
    TR::Compilation *comp = cg->comp();
    if (comp->getOption(TR_TraceCG))
       {
-      traceMsg(comp, "Inlining Thread.onSpinWait call on node %p to NOP.\n", node);
+      comp->log()->printf("Inlining Thread.onSpinWait call on node %p to NOP.\n", node);
       }
 
    // onSpinWait() method calls VM_AtomicSupport::yieldCPU() which is a simple NOP instruction on Z.

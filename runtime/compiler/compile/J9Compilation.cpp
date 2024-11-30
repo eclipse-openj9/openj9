@@ -59,6 +59,7 @@
 #include "optimizer/OptimizationManager.hpp"
 #include "optimizer/Optimizer.hpp"
 #include "optimizer/TransformUtil.hpp"
+#include "ras/Logger.hpp"
 #include "runtime/RuntimeAssumptions.hpp"
 #include "runtime/J9Profiler.hpp"
 #include "OMR/Bytes.hpp"
@@ -738,7 +739,7 @@ J9::Compilation::canAllocateInline(TR::Node* node, TR_OpaqueClassBlock* &classIn
             {
             if (self()->getOption(TR_TraceCG))
                {
-               traceMsg(self(), "cannot inline array allocation @ node %p because value types are enabled\n", node);
+               self()->log()->printf("cannot inline array allocation @ node %p because value types are enabled\n", node);
                }
             const char *signature = self()->signature();
 
@@ -797,7 +798,7 @@ J9::Compilation::canAllocateInline(TR::Node* node, TR_OpaqueClassBlock* &classIn
    if (TR::Compiler->om.useHybridArraylets() && TR::Compiler->om.isDiscontiguousArray(size))
       {
       if (self()->getOption(TR_TraceCG))
-         traceMsg(self(), "cannot inline array allocation @ node %p because size %d is discontiguous\n", node, size);
+         self()->log()->printf("cannot inline array allocation @ node %p because size %d is discontiguous\n", node, size);
       return -1;
       }
    else if (!isRealTimeGC && size == 0)
@@ -805,10 +806,10 @@ J9::Compilation::canAllocateInline(TR::Node* node, TR_OpaqueClassBlock* &classIn
 #if (defined(TR_HOST_S390) && defined(TR_TARGET_S390)) || (defined(TR_TARGET_X86) && defined(TR_HOST_X86)) || (defined(TR_TARGET_POWER) && defined(TR_HOST_POWER)) || (defined(TR_TARGET_ARM64) && defined(TR_HOST_ARM64))
       size = TR::Compiler->om.discontiguousArrayHeaderSizeInBytes();
       if (self()->getOption(TR_TraceCG))
-         traceMsg(self(), "inline array allocation @ node %p for size 0\n", node);
+         self()->log()->printf("inline array allocation @ node %p for size 0\n", node);
 #else
       if (self()->getOption(TR_TraceCG))
-         traceMsg(self(), "cannot inline array allocation @ node %p because size 0 is discontiguous\n", node);
+         self()->log()->printf("cannot inline array allocation @ node %p because size 0 is discontiguous\n", node);
       return -1;
 #endif
       }
@@ -1789,7 +1790,7 @@ J9::Compilation::addKeepaliveClass(TR_OpaqueClassBlock *c)
       {
       int32_t len;
       const char *name = TR::Compiler->cls.classNameChars(self(), c, len);
-      traceMsg(self(), "Added global keepalive class %p %.*s\n", c, len, name);
+      self()->log()->printf("Added global keepalive class %p %.*s\n", c, len, name);
       }
    }
 

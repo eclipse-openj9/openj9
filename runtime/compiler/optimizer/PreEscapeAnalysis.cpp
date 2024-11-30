@@ -38,7 +38,7 @@ int32_t TR_PreEscapeAnalysis::perform()
       {
       if (comp()->trace(OMR::escapeAnalysis))
          {
-         traceMsg(comp(), "EscapeAnalysis is disabled - skipping Pre-EscapeAnalysis\n");
+         comp()->log()->prints("EscapeAnalysis is disabled - skipping Pre-EscapeAnalysis\n");
          }
       return 0;
       }
@@ -47,7 +47,7 @@ int32_t TR_PreEscapeAnalysis::perform()
       {
       if (comp()->trace(OMR::escapeAnalysis))
          {
-         traceMsg(comp(), "Special handling of OSR points is not possible outside of voluntary OSR or if OSR Liveness is not available - nothing to do\n");
+         comp()->log()->prints("Special handling of OSR points is not possible outside of voluntary OSR or if OSR Liveness is not available - nothing to do\n");
          }
       return 0;
       }
@@ -55,7 +55,7 @@ int32_t TR_PreEscapeAnalysis::perform()
       {
       if (comp()->trace(OMR::escapeAnalysis))
          {
-         traceMsg(comp(), "EA has self-enabled, setup not required on subsequent passes - skipping preEscapeAnalysis\n");
+         comp()->log()->prints("EA has self-enabled, setup not required on subsequent passes - skipping preEscapeAnalysis\n");
          }
       return 0;
       }

@@ -33,6 +33,7 @@
 #include "il/TreeTop.hpp"
 #include "infra/Cfg.hpp"
 #include "infra/ILWalk.hpp"
+#include "ras/Logger.hpp"
 #include <deque>
 #include <stack>
 
@@ -88,7 +89,7 @@ static void printTypeInfo(TR_BoolArrayStoreTransformer::TypeInfo *typeInfo, TR::
       if (*it != TR_maybe)
          {
          char buffer[15];
-         traceMsg(comp, "( local #%2d: %s )  ", localIndex, getTypeName(*it, buffer));
+         comp->log()->printf("( local #%2d: %s )  ", localIndex, getTypeName(*it, buffer));
          }
       localIndex++;
       }
@@ -109,7 +110,7 @@ TR_BoolArrayStoreTransformer::TR_BoolArrayStoreTransformer(NodeSet *bstoreiUnkno
 void TR_BoolArrayStoreTransformer::perform()
    {
    if (comp()->getOption(TR_TraceILGen))
-      traceMsg(comp(), "<BoolArrayStoreTransformer>\n");
+      comp()->log()->prints("<BoolArrayStoreTransformer>\n");
 
    if (comp()->isDLT())
       {
@@ -131,14 +132,14 @@ void TR_BoolArrayStoreTransformer::perform()
             if (isBoolArrayNode(arrayBaseNode, false /* parmAsAuto */))
                {
                if (comp()->getOption(TR_TraceILGen))
-                  traceMsg(comp(), "bstorei node n%dn is [Z from parm type signature\n", bstoreiNode->getGlobalIndex());
+                  comp()->log()->printf("bstorei node n%dn is [Z from parm type signature\n", bstoreiNode->getGlobalIndex());
                _bstoreiBoolArrayTypeNodes->insert(bstoreiNode);
                _bstoreiUnknownArrayTypeNodes->erase(bstoreiNode);
                }
             else if (isByteArrayNode(arrayBaseNode, false /* parmAsAuto */))
                {
                if (comp()->getOption(TR_TraceILGen))
-                  traceMsg(comp(), "bstorei node n%dn is [B from parm type signature\n", bstoreiNode->getGlobalIndex());
+                  comp()->log()->printf("bstorei node n%dn is [B from parm type signature\n", bstoreiNode->getGlobalIndex());
                _bstoreiUnknownArrayTypeNodes->erase(bstoreiNode);
                }
             }
@@ -171,13 +172,13 @@ void TR_BoolArrayStoreTransformer::perform()
          if (_hasBoolArrayAutoOrCheckCast) // if only boolean array exist then all the bstorei nodes are operating on boolean array
             {
             if (comp()->getOption(TR_TraceILGen))
-               traceMsg(comp(), "only boolean array exist as auto or checkcast type\n");
+               comp()->log()->prints("only boolean array exist as auto or checkcast type\n");
             _bstoreiBoolArrayTypeNodes->insert(_bstoreiUnknownArrayTypeNodes->begin(), _bstoreiUnknownArrayTypeNodes->end());
             }
          else
             {
             if (comp()->getOption(TR_TraceILGen))
-               traceMsg(comp(), "only byte array exist as auto or checkcast type\n");
+               comp()->log()->prints("only byte array exist as auto or checkcast type\n");
             }
          _bstoreiUnknownArrayTypeNodes->clear();
          }
@@ -190,7 +191,7 @@ void TR_BoolArrayStoreTransformer::perform()
       transformUnknownTypeArrayStore();
 
    if (comp()->getOption(TR_TraceILGen))
-      traceMsg(comp(), "</BoolArrayStoreTransformer>\n");
+      comp()->log()->prints("</BoolArrayStoreTransformer>\n");
    }
 
 void TR_BoolArrayStoreTransformer::collectLocals(TR_Array<List<TR::SymbolReference>> *autosListArray)
@@ -205,7 +206,7 @@ void TR_BoolArrayStoreTransformer::collectLocals(TR_Array<List<TR::SymbolReferen
          if (p && p->getDataType() == TR::Address)
             {
             if (comp()->getOption(TR_TraceILGen))
-               traceMsg(comp(), "Local #%2d is symbol %p [#n%dn]\n", _numLocals, p, symRef->getReferenceNumber());
+               comp()->log()->printf("Local #%2d is symbol %p [#n%dn]\n", _numLocals, p, symRef->getReferenceNumber());
             p->setLocalIndex(_numLocals++);
             }
          }
@@ -217,12 +218,13 @@ void TR_BoolArrayStoreTransformer::collectLocals(TR_Array<List<TR::SymbolReferen
  */
 void TR_BoolArrayStoreTransformer::mergeTypeInfo(TypeInfo *first, TypeInfo *second)
    {
+   OMR::Logger *log = comp()->log();
    bool traceIt = comp()->getOption(TR_TraceILGen);
    if (traceIt)
       {
-      traceMsg(comp(), "before merging: ");
+      log->prints("before merging: ");
       printTypeInfo(first, comp());
-      traceMsg(comp(), "\n");
+      log->println();
       }
 
    bool changed = false;
@@ -245,7 +247,7 @@ void TR_BoolArrayStoreTransformer::mergeTypeInfo(TypeInfo *first, TypeInfo *seco
                {
                char firstTypeBuffer[15];
                char secondTypeBuffer[15];
-               traceMsg(comp(), "local #%2d has conflict types keep the first type for now: firstType %s, secondType %s\n", i, getTypeName(firstType, firstTypeBuffer), getTypeName(secondType, secondTypeBuffer));
+               log->printf("local #%2d has conflict types keep the first type for now: firstType %s, secondType %s\n", i, getTypeName(firstType, firstTypeBuffer), getTypeName(secondType, secondTypeBuffer));
                }
             }
          }
@@ -253,14 +255,15 @@ void TR_BoolArrayStoreTransformer::mergeTypeInfo(TypeInfo *first, TypeInfo *seco
 
    if (changed && traceIt)
       {
-      traceMsg(comp(), "after merging: ");
+      log->prints("after merging: ");
       printTypeInfo(first, comp());
-      traceMsg(comp(), "\n");
+      log->println();
       }
    }
 
 void TR_BoolArrayStoreTransformer::findBoolArrayStoreNodes()
    {
+   OMR::Logger *log = comp()->log();
    TR::Region currentRegion(comp()->region());
 
    ListIterator<TR::ParameterSymbol> parms(&comp()->getMethodSymbol()->getParameterList());
@@ -269,7 +272,7 @@ void TR_BoolArrayStoreTransformer::findBoolArrayStoreNodes()
       if (p->getDataType() == TR::Address)
          {
          if (comp()->getOption(TR_TraceILGen))
-            traceMsg(comp(), "Local #%2d is symbol %p <parm %d>\n", _numLocals, p, p->getSlot());
+            log->printf("Local #%2d is symbol %p <parm %d>\n", _numLocals, p, p->getSlot());
          p->setLocalIndex(_numLocals++);
          }
       }
@@ -319,9 +322,9 @@ void TR_BoolArrayStoreTransformer::findBoolArrayStoreNodes()
          blockStartTypeInfos[firstBlock->getNumber()] = typeInfo;
          if (comp()->getOption(TR_TraceILGen))
             {
-            traceMsg(comp(), "Entry Block (block_%d) type Info: ", firstBlock->getNumber());
+            log->printf("Entry Block (block_%d) type Info: ", firstBlock->getNumber());
             printTypeInfo(typeInfo, comp());
-            traceMsg(comp(), "\n");
+            log->println();
             }
          }
       }
@@ -347,7 +350,7 @@ void TR_BoolArrayStoreTransformer::findBoolArrayStoreNodes()
             if (blockStartTypeInfos.find(nextBlockNum) != blockStartTypeInfos.end())
                {
                if (comp()->getOption(TR_TraceILGen))
-                  traceMsg(comp(), "merging into type info of successor block_%d\n", nextBlockNum);
+                  log->printf("merging into type info of successor block_%d\n", nextBlockNum);
                mergeTypeInfo(blockStartTypeInfos[nextBlockNum], blockEndTypeInfo);
                }
             else
@@ -554,6 +557,7 @@ void TR_BoolArrayStoreTransformer::findLoadAddressAutoAndFigureOutType(TR::Node 
  */
 TR_BoolArrayStoreTransformer::TypeInfo * TR_BoolArrayStoreTransformer::processBlock(TR::Block *block, TR_BoolArrayStoreTransformer::TypeInfo *blockStartTypeInfo)
    {
+   OMR::Logger *log = comp()->log();
    TR_BoolArrayStoreTransformer::TypeInfo *currentTypeInfo = blockStartTypeInfo;
    TR::NodeChecklist boolArrayNodes(comp());
    TR::NodeChecklist byteArrayNodes(comp());
@@ -561,10 +565,10 @@ TR_BoolArrayStoreTransformer::TypeInfo * TR_BoolArrayStoreTransformer::processBl
 
    if (comp()->getOption(TR_TraceILGen))
       {
-      traceMsg(comp(), "start processing block_%d: ", block->getNumber());
+      log->printf("start processing block_%d: ", block->getNumber());
       if (currentTypeInfo)
          printTypeInfo(currentTypeInfo, comp());
-      traceMsg(comp(), "\n");
+      log->println();
       }
 
    for (TR::TreeTop *tt = block->getEntry(); tt != block->getExit(); tt = tt->getNextTreeTop())
@@ -595,7 +599,7 @@ TR_BoolArrayStoreTransformer::TypeInfo * TR_BoolArrayStoreTransformer::processBl
                   char newTypeBuffer[15];
                   char oldTypeBuffer[15];
                   TR_YesNoMaybe oldType = (*currentTypeInfo)[local->getLocalIndex()];
-                  traceMsg(comp(), "Local #%2d %s -> %s at node n%dn\n", local->getLocalIndex(), getTypeName(oldType, oldTypeBuffer), getTypeName(newType, newTypeBuffer),  node->getGlobalIndex());
+                  log->printf("Local #%2d %s -> %s at node n%dn\n", local->getLocalIndex(), getTypeName(oldType, oldTypeBuffer), getTypeName(newType, newTypeBuffer),  node->getGlobalIndex());
                   }
                (*currentTypeInfo)[local->getLocalIndex()] = newType;
                }
@@ -611,7 +615,7 @@ TR_BoolArrayStoreTransformer::TypeInfo * TR_BoolArrayStoreTransformer::processBl
             if (comp()->getOption(TR_TraceILGen))
                {
                char buffer[15];
-               traceMsg(comp(), "bstorei node n%dn is %s\n", node->getGlobalIndex(), getTypeName(TR_yes, buffer));
+               log->printf("bstorei node n%dn is %s\n", node->getGlobalIndex(), getTypeName(TR_yes, buffer));
                }
             _bstoreiUnknownArrayTypeNodes->erase(node);
             _bstoreiBoolArrayTypeNodes->insert(node);
@@ -621,7 +625,7 @@ TR_BoolArrayStoreTransformer::TypeInfo * TR_BoolArrayStoreTransformer::processBl
             if (comp()->getOption(TR_TraceILGen))
                {
                char buffer[15];
-               traceMsg(comp(), "bstorei node n%dn is %s\n", node->getGlobalIndex(), getTypeName(TR_no, buffer));
+               log->printf("bstorei node n%dn is %s\n", node->getGlobalIndex(), getTypeName(TR_no, buffer));
                }
             _bstoreiUnknownArrayTypeNodes->erase(node);
             }
@@ -635,7 +639,7 @@ TR_BoolArrayStoreTransformer::TypeInfo * TR_BoolArrayStoreTransformer::processBl
             if (byteArrayNodes.contains(checkcastedNode)) // this can happen when [Z and [B are merged at one point
                byteArrayNodes.remove(checkcastedNode);
             if (comp()->getOption(TR_TraceILGen))
-               traceMsg(comp(), "checkcast node n%dn force node n%dn to be [Z\n", node->getGlobalIndex(), checkcastedNode->getGlobalIndex());
+               log->printf("checkcast node n%dn force node n%dn to be [Z\n", node->getGlobalIndex(), checkcastedNode->getGlobalIndex());
             boolArrayNodes.add(checkcastedNode);
             }
          else if (isByteArrayNode(typeNode))
@@ -643,7 +647,7 @@ TR_BoolArrayStoreTransformer::TypeInfo * TR_BoolArrayStoreTransformer::processBl
             if (boolArrayNodes.contains(checkcastedNode)) // this can happen when [Z and [B are merged at one point
                boolArrayNodes.remove(checkcastedNode);
             if (comp()->getOption(TR_TraceILGen))
-               traceMsg(comp(), "checkcast node n%dn force node n%dn to be [B\n", node->getGlobalIndex(), checkcastedNode->getGlobalIndex());
+               log->printf("checkcast node n%dn force node n%dn to be [B\n", node->getGlobalIndex(), checkcastedNode->getGlobalIndex());
             byteArrayNodes.add(checkcastedNode);
             }
          }
@@ -651,10 +655,10 @@ TR_BoolArrayStoreTransformer::TypeInfo * TR_BoolArrayStoreTransformer::processBl
 
    if (comp()->getOption(TR_TraceILGen))
       {
-      traceMsg(comp(), "end processing block_%d: ", block->getNumber());
+      log->printf("end processing block_%d: ", block->getNumber());
       if (currentTypeInfo)
          printTypeInfo(currentTypeInfo, comp());
-      traceMsg(comp(), "\n");
+      log->println();
       }
 
    return currentTypeInfo;
@@ -687,7 +691,7 @@ TR_BoolArrayStoreTransformer::TypeInfo * TR_BoolArrayStoreTransformer::processBl
 static void generateiAndNode(TR::Node *bstoreiNode, TR::Node *mask, TR::Compilation *comp)
    {
    if (comp->getOption(TR_TraceILGen))
-      traceMsg(comp, "truncating mask node n%dn\n", mask->getGlobalIndex());
+      comp->log()->printf("truncating mask node n%dn\n", mask->getGlobalIndex());
    TR::Node *bValueChild = bstoreiNode->getSecondChild();
    TR::Node *iValueChild = TR::Node::create(bstoreiNode, TR::b2i, 1, bValueChild);
    TR::Node *iandNode = TR::Node::create(bstoreiNode, TR::iand, 2, iValueChild, mask);

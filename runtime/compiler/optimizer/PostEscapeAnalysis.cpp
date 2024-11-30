@@ -37,7 +37,7 @@ int32_t TR_PostEscapeAnalysis::perform()
       {
       if (comp()->trace(OMR::escapeAnalysis))
          {
-         traceMsg(comp(), "EscapeAnalysis is disabled - skipping Post-EscapeAnalysis\n");
+         comp()->log()->prints("EscapeAnalysis is disabled - skipping Post-EscapeAnalysis\n");
          }
       return 0;
       }
@@ -46,7 +46,7 @@ int32_t TR_PostEscapeAnalysis::perform()
       {
       if (comp()->trace(OMR::escapeAnalysis))
          {
-         traceMsg(comp(), "Special handling of OSR points is not possible outside of voluntary OSR - nothing to do\n");
+         comp()->log()->prints("Special handling of OSR points is not possible outside of voluntary OSR - nothing to do\n");
          }
       return 0;
       }
@@ -54,7 +54,7 @@ int32_t TR_PostEscapeAnalysis::perform()
       {
       if (comp()->trace(OMR::escapeAnalysis))
          {
-         traceMsg(comp(), "EA has self enabled - skipping clean-up\n");
+         comp()->log()->prints("EA has self enabled - skipping clean-up\n");
          }
       return 0;
       }

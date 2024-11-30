@@ -32,6 +32,7 @@
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "optimizer/Optimization_inlines.hpp"
+#include "ras/Logger.hpp"
 
 bool
 J9::Simplifier::isLegalToUnaryCancel(TR::Node *node, TR::Node *firstChild, TR::ILOpCodes opcode)
@@ -47,17 +48,17 @@ J9::Simplifier::isLegalToUnaryCancel(TR::Node *node, TR::Node *firstChild, TR::I
       // pd2f  frac=5
       //    f2pd frac=0
       //       f
-      // to just 'f' because the extra digits that should be introduced by 
+      // to just 'f' because the extra digits that should be introduced by
       // the frac=5 in the parent will be lost
       if (trace())
-         traceMsg(comp(),"disallow unaryCancel of node %p and firstChild %p due to mismatch of decimal fractions (%d != %d)\n",
+         comp()->log()->printf("disallow unaryCancel of node %p and firstChild %p due to mismatch of decimal fractions (%d != %d)\n",
                  node,firstChild,node->getDecimalFraction(),firstChild->getDecimalFraction());
       return false;
       }
 
    if (firstChild->getOpCodeValue() == opcode &&
-       node->getType().isBCD() && 
-       firstChild->getType().isBCD() && 
+       node->getType().isBCD() &&
+       firstChild->getType().isBCD() &&
        firstChild->getFirstChild()->getType().isBCD() &&
        node->hasIntermediateTruncation())
       {
@@ -65,14 +66,14 @@ J9::Simplifier::isLegalToUnaryCancel(TR::Node *node, TR::Node *firstChild, TR::I
       // zd2pd p=4         0034
       //    pd2zd p=2        34
       //       pdx p=4     1234
-      // if folding is performed to remove zd2pd/pd2zd then the result will 
+      // if folding is performed to remove zd2pd/pd2zd then the result will
       // be 1234 instead of 0034
       if (trace())
-         traceMsg(comp(),"disallow unaryCancel of node %p and firstChild %p due to intermediate truncation of node\n",node,firstChild);
+         comp()->log()->printf("disallow unaryCancel of node %p and firstChild %p due to intermediate truncation of node\n",node,firstChild);
       return false;
       }
-   else if (firstChild->getOpCodeValue() == opcode && 
-            node->getType().isBCD() && 
+   else if (firstChild->getOpCodeValue() == opcode &&
+            node->getType().isBCD() &&
             !firstChild->getType().isBCD())
       {
       int32_t nodeP = node->getDecimalPrecision();
@@ -87,20 +88,20 @@ J9::Simplifier::isLegalToUnaryCancel(TR::Node *node, TR::Node *firstChild, TR::I
       if (childP < nodeP && childP < grandChildP)
          {
          if (trace())
-            traceMsg(comp(),"disallow unaryCancel of node %p and firstChild %p due to intermediate truncation of node\n",node,firstChild);
+            comp()->log()->printf("disallow unaryCancel of node %p and firstChild %p due to intermediate truncation of node\n",node,firstChild);
          return false;
          }
       }
-   else if (firstChild->getOpCodeValue() == opcode && 
-            !node->getType().isBCD() && 
+   else if (firstChild->getOpCodeValue() == opcode &&
+            !node->getType().isBCD() &&
             !firstChild->getType().isBCD())
       {
-      if (node->getDataType().canGetMaxPrecisionFromType() && 
+      if (node->getDataType().canGetMaxPrecisionFromType() &&
           firstChild->getDataType().canGetMaxPrecisionFromType() &&
           node->getDataType().getMaxPrecisionFromType() > firstChild->getDataType().getMaxPrecisionFromType())
          {
          if (trace())
-            traceMsg(comp(),"disallow unaryCancel of node %p and firstChild %p due to intermediate truncation of node\n",node,firstChild);
+            comp()->log()->printf("disallow unaryCancel of node %p and firstChild %p due to intermediate truncation of node\n",node,firstChild);
          return false;
          }
       }
@@ -604,9 +605,9 @@ TR::Node *
 J9::Simplifier::getUnsafeIorByteChild(TR::Node *child, TR::ILOpCodes b2iOpCode, int32_t mulConst)
    {
    if (child->getOpCodeValue() == TR::imul &&
-       child->getSecondChild()->getOpCodeValue() == TR::iconst && 
+       child->getSecondChild()->getOpCodeValue() == TR::iconst &&
        child->getSecondChild()->getInt() == mulConst &&
-       child->getFirstChild()->getOpCodeValue() == b2iOpCode && 
+       child->getFirstChild()->getOpCodeValue() == b2iOpCode &&
        child->getFirstChild()->getReferenceCount() == 1 &&
        child->getFirstChild()->getFirstChild()->getOpCodeValue() == TR::bloadi &&
        child->getFirstChild()->getFirstChild()->getReferenceCount() == 1 &&
@@ -620,9 +621,9 @@ J9::Simplifier::getUnsafeIorByteChild(TR::Node *child, TR::ILOpCodes b2iOpCode, 
 
 static TR::Node *getUnsafeBaseAddr(TR::Node * node, int32_t isubConst)
    {
-   if (node->getOpCodeValue() == TR::isub && 
+   if (node->getOpCodeValue() == TR::isub &&
        node->getReferenceCount() == 1 &&
-       node->getSecondChild()->getOpCodeValue() == TR::iconst && 
+       node->getSecondChild()->getOpCodeValue() == TR::iconst &&
        node->getSecondChild()->getInt() == isubConst)
       {
       return node->getFirstChild();
@@ -634,7 +635,7 @@ static TR::Node *getUnsafeBaseAddr(TR::Node * node, int32_t isubConst)
 TR::Node *
 J9::Simplifier::getLastUnsafeIorByteChild(TR::Node *child)
    {
-   if (child->getOpCodeValue() == TR::bu2i && 
+   if (child->getOpCodeValue() == TR::bu2i &&
        child->getReferenceCount() == 1 &&
        child->getFirstChild()->getOpCodeValue() == TR::bloadi &&
        child->getFirstChild()->getReferenceCount() == 1 &&
@@ -670,10 +671,10 @@ TR::Node * J9::Simplifier::getArrayByteChildWithMultiplier(TR::Node * child, TR:
 
 /** Check if we are simply reading an element from a byte array.
 
- This "last" byte in the pattern we are matching does not involve any shifting and we will read and OR 
+ This "last" byte in the pattern we are matching does not involve any shifting and we will read and OR
  this byte into the 32-bit word where the other three bytes we read have been shifted by 8/16/24 bits.
 
- @return the child node (that is expected to be an aiadd or aladd) under the byte array element load. 
+ @return the child node (that is expected to be an aiadd or aladd) under the byte array element load.
 */
 TR::Node * J9::Simplifier::getLastArrayByteChild(TR::Node * child)
    {
@@ -703,16 +704,16 @@ TR::Node * J9::Simplifier::getArrayBaseAddr(TR::Node * node)
    return NULL;
    }
 
-/** Check if we are reading a byte array element that is offset by a particular constant amount 
+/** Check if we are reading a byte array element that is offset by a particular constant amount
 off a base index value.
 
-Since the pattern we are matching involves reading four successive byte array elements, we are 
+Since the pattern we are matching involves reading four successive byte array elements, we are
 essentially looking for whatever base index value the first array element access used being offset
 by +1/+2/+3 for the subsequent array accesses.
 
-@return 0 if the constant offset value passed in did not match what is expected at the given byte 
-array load, otherwise return the base index value, e.g. array accesses a[i], a[i + 1], a[i + 2], 
-a[i + 3] will return i as the base index value. 
+@return 0 if the constant offset value passed in did not match what is expected at the given byte
+array load, otherwise return the base index value, e.g. array accesses a[i], a[i + 1], a[i + 2],
+a[i + 3] will return i as the base index value.
 */
 TR::Node * J9::Simplifier::getArrayOffset(TR::Node * node, int32_t isubConst)
    {
@@ -721,7 +722,7 @@ TR::Node * J9::Simplifier::getArrayOffset(TR::Node * node, int32_t isubConst)
    // negated if we have to re-generate the node after transforming the sequence to
    // an ibyteswap.
    if (node->getOpCode().isArrayRef() && node->getReferenceCount() == 1 &&
-       node->getSecondChild()->getOpCode().isSub() && 
+       node->getSecondChild()->getOpCode().isSub() &&
        node->getSecondChild()->getReferenceCount() == 1 &&
        ((node->getSecondChild()->getSecondChild()->getOpCodeValue() == TR::iconst && node->getSecondChild()->getSecondChild()->getInt() == isubConst) ||
         (node->getSecondChild()->getSecondChild()->getOpCodeValue() == TR::lconst && node->getSecondChild()->getSecondChild()->getLongInt() == (int64_t)isubConst))
@@ -777,7 +778,7 @@ J9::Simplifier::simplifyiOrPatterns(TR::Node *node)
    TR::Node *byte1, *byte2, *byte3, *byte4, *temp, *addr;
    if (firstChild->getReferenceCount() == 1 &&
        firstChildOp == TR::ior &&
-       firstChild->getSecondChild()->getOpCodeValue() == TR::ior && 
+       firstChild->getSecondChild()->getOpCodeValue() == TR::ior &&
        (byte1 = getUnsafeIorByteChild(firstChild->getSecondChild()->getFirstChild(), TR::bu2i, 16777216)) &&
        (byte2 = getUnsafeIorByteChild(firstChild->getSecondChild()->getSecondChild(), TR::bu2i, 65536)) &&
        (byte3 = getUnsafeIorByteChild(firstChild->getFirstChild(), TR::bu2i, 256)) &&
@@ -817,7 +818,7 @@ J9::Simplifier::simplifyiOrPatterns(TR::Node *node)
       {
       /*
          A common application pattern for reading from a byte array and performing endianness conversion
-         will perform four consecutive reads from a byte array, multiplying three of the bytes 
+         will perform four consecutive reads from a byte array, multiplying three of the bytes
          by 256, 65536 and 16777216 and or'ing the results together. We can detect this pattern and
          transform it to a single ibyteswap. Note that the ishl in the trees below have been converted
          to imul by the time we reach here.
@@ -1031,7 +1032,7 @@ J9::Simplifier::simplifyi2sPatterns(TR::Node *node)
    TR::Node * firstChild = node->getFirstChild();
    TR::Node *address;
 
-   if (firstChild->getOpCodeValue() == TR::ior && 
+   if (firstChild->getOpCodeValue() == TR::ior &&
        firstChild->getReferenceCount() == 1 &&
        (address = getOrOfTwoConsecutiveBytes(firstChild)) &&
        performTransformation(comp(), "%sconvert ior to sloadi node [" POINTER_PRINTF_FORMAT "]\n", optDetailString(), node))
@@ -1074,10 +1075,10 @@ J9::Simplifier::simplifyd2fPatterns(TR::Node *node)
    if (sqrtCall->getReferenceCount() != 2)
       return NULL;
 
-   if (!comp()->cg()->supportsSinglePrecisionSQRT()) 
+   if (!comp()->cg()->supportsSinglePrecisionSQRT())
       return NULL;
 
-   if (sqrtCall->getOpCodeValue() != TR::dcall) 
+   if (sqrtCall->getOpCodeValue() != TR::dcall)
       return NULL;
 
    static char *skipit = feGetEnv("TR_NOFSQRT");
@@ -1100,10 +1101,10 @@ J9::Simplifier::simplifyd2fPatterns(TR::Node *node)
    else
      f2dChild= sqrtCall->getFirstChild();
 
-   if (f2dChild->getOpCodeValue() != TR::f2d) 
+   if (f2dChild->getOpCodeValue() != TR::f2d)
       return NULL; // TODO: could get more aggressive
 
-   if (!performTransformation(comp(), "%sTransforming [" POINTER_PRINTF_FORMAT "] (double)sqrt(f2d(x))->(float)sqrt(x)\n", optDetailString(), sqrtCall)) 
+   if (!performTransformation(comp(), "%sTransforming [" POINTER_PRINTF_FORMAT "] (double)sqrt(f2d(x))->(float)sqrt(x)\n", optDetailString(), sqrtCall))
       {
       return NULL;
       }
@@ -1215,7 +1216,7 @@ J9::Simplifier::simplifyIndirectLoadPatterns(TR::Node *node)
             fieldsAreComplementary = true;
 
          TR::Node *grandchild = firstChild->getFirstChild();
-         if (fieldsAreComplementary && 
+         if (fieldsAreComplementary &&
              performTransformation(comp(), "%sFolded complementary field load [%p]->%s->%s\n",
                optDetailString(), grandchild,
                nodeSymref ->getName(getDebug()),

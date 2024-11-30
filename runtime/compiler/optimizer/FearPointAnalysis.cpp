@@ -33,6 +33,7 @@
 #include "infra/Assert.hpp"
 #include "infra/BitVector.hpp"
 #include "infra/Checklist.hpp"
+#include "ras/Logger.hpp"
 
 
 bool TR_FearPointAnalysis::virtualGuardKillsFear(TR::Compilation *comp, TR::Node *virtualGuardNode)
@@ -69,7 +70,7 @@ TR_DataFlowAnalysis::Kind TR_FearPointAnalysis::getKind() { return FearPointAnal
 
 TR_FearPointAnalysis *TR_FearPointAnalysis::asFearPointAnalysis() { return this; }
 
-void TR_FearPointAnalysis::analyzeNode(TR::Node *node, vcount_t visitCount, TR_BlockStructure *block, TR_SingleBitContainer *bv) 
+void TR_FearPointAnalysis::analyzeNode(TR::Node *node, vcount_t visitCount, TR_BlockStructure *block, TR_SingleBitContainer *bv)
    {
    }
 
@@ -78,9 +79,9 @@ void TR_FearPointAnalysis::analyzeTreeTopsInBlockStructure(TR_BlockStructure *bl
    }
 
 /**
- * Conduct fear analysis for an set of fear generating nodes, provided 
+ * Conduct fear analysis for an set of fear generating nodes, provided
  * as a bit vector of their global indices.
- * 
+ *
  * The default behaviour will initially search trees for children nodes generating
  * fear and then propagate this upwards. When topLevelFearOnly is enabled, this phase
  * is skipped and it is assumed that the set of fear generating nodes are all treetop nodes.
@@ -134,7 +135,7 @@ TR_FearPointAnalysis::TR_FearPointAnalysis(
    // the caller
    //
    initializeBlockInfo();
-   
+
    {
    TR::StackMemoryRegion stackMemoryRegion(*trMemory());
    performAnalysis(rootStructure, false);
@@ -164,7 +165,7 @@ void TR_FearPointAnalysis::computeFear(TR::Compilation *comp, TR::Node *node, TR
    if (_fearGeneratingNodes.get(node->getGlobalIndex()))
       {
       if (_trace)
-         traceMsg(comp, "@@ n%dn generates fear\n", node->getGlobalIndex());
+         comp->log()->printf("@@ n%dn generates fear\n", node->getGlobalIndex());
       _fearfulNodes[node->getGlobalIndex()]->set();
       }
    }
@@ -190,7 +191,7 @@ void TR_FearPointAnalysis::computeFearFromBitVector(TR::Compilation *comp)
       {
       int32_t index = nodes.getNextElement();
       if (_trace)
-         traceMsg(comp, "@@ n%dn generates fear\n", index);
+         comp->log()->printf("@@ n%dn generates fear\n", index);
       TR_ASSERT(_fearfulNodes[index],
          "all fear generating nodes must be treetop nodes when using topLevelFearOnly, otherwise the data structure may not be initialized");
       _fearfulNodes[index]->set();
@@ -222,7 +223,7 @@ TR_SingleBitContainer *TR_FearPointAnalysis::generatedFear(TR::Node *node)
    {
    TR_SingleBitContainer *returnValue = _fearfulNodes[node->getGlobalIndex()];
    if (!returnValue)
-     return &_EMPTY; 
+     return &_EMPTY;
    return returnValue;
    }
 

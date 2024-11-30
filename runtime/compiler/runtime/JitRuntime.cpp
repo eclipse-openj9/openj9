@@ -56,6 +56,7 @@
 #include "env/TRMemory.hpp"
 #include "env/ut_j9jit.h"
 #include "env/VerboseLog.hpp"
+#include "ras/Logger.hpp"
 #include "runtime/asmprotos.h"
 #include "runtime/CodeCacheManager.hpp"
 #include "runtime/J9Runtime.hpp"
@@ -118,14 +119,20 @@ void setDllSlip(const char *CodeStart, const char *CodeEnd, const char *dllName,
    PORT_ACCESS_FROM_PORT(portLib);
 
    TR_ASSERT(comp, "Logging requires a compilation object");
-   traceMsg(comp, "code start 0x%016p , code end 0x%016p ,size = %d\n", CodeStart, CodeEnd, CodeStart - CodeEnd);
+
+   bool trace = comp->getLoggingEnabled();
+   OMR::Logger *log = comp->log();
+
+   if (trace)
+      log->printf("code start 0x%016p , code end 0x%016p ,size = %d\n", CodeStart, CodeEnd, CodeStart - CodeEnd);
 
    if (sliphandle == 0)
       {
       rc = j9sl_open_shared_library(const_cast<char *>(dllName), &sliphandle, FALSE);
       if (rc)
          {
-         traceMsg(comp, "Failed to open SLIP DLL: %s (%s) %016p\n", dllName, j9error_last_error_message(), sliphandle);
+         if (trace)
+            log->printf("Failed to open SLIP DLL: %s (%s) %016p\n", dllName, j9error_last_error_message(), sliphandle);
          }
       }
 
@@ -147,12 +154,14 @@ void setDllSlip(const char *CodeStart, const char *CodeEnd, const char *dllName,
          }
       else if (comp)
          {
-         traceMsg(comp, "\nCannot find do_slip function within SLIP DLL\n");
+         if (trace)
+            log->prints("\nCannot find do_slip function within SLIP DLL\n");
          }
       }
    else if (comp)
       {
-      traceMsg(comp, "Cannot load slip/trap DLL\n");
+      if (trace)
+         log->prints("Cannot load slip/trap DLL\n");
       }
 #endif
    return;

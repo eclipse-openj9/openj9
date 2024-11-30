@@ -67,12 +67,15 @@
 #include "optimizer/Optimizations.hpp"
 #include "optimizer/Optimizer.hpp"
 #include "ras/Debug.hpp"
+#include "ras/Logger.hpp"
 
 
 int32_t TR_AllocationSinking::perform()
    {
    if (comp()->getOptions()->realTimeGC()) // memory area can be changed by the arg eval call, so better not disturb things
       return 0;
+
+   OMR::Logger *log = comp()->log();
 
    // Note: if the evaluation of constructor arguments contains control flow (ie. a select)
    // then the "new" and ctor call will be in different blocks, and this opt won't have the
@@ -94,8 +97,8 @@ int32_t TR_AllocationSinking::perform()
          {
          if (trace())
             {
-            traceMsg(comp(), "Found allocation %s\n", comp()->getDebug()->getName(allocation));
-            printf("Allocation Sinking found allocation %s in %s\n", comp()->getDebug()->getName(allocation), comp()->signature());
+            log->printf("Found allocation %s\n", comp()->getDebug()->getName(allocation));
+            log->printf("Allocation Sinking found allocation %s in %s\n", comp()->getDebug()->getName(allocation), comp()->signature());
             }
 
          // Scan down for the first actual use of this new
@@ -111,7 +114,7 @@ int32_t TR_AllocationSinking::perform()
                //
                flushToSink = useTree;
                if (trace())
-                  traceMsg(comp(), "   Sinking flush %s along with %s\n",
+                  log->printf("   Sinking flush %s along with %s\n",
                      comp()->getDebug()->getName(flushToSink->getNode()),
                      comp()->getDebug()->getName(allocation));
                }
@@ -124,7 +127,7 @@ int32_t TR_AllocationSinking::perform()
                if (allocTree->getNextTreeTop() == useTree)
                   {
                   if (trace())
-                     traceMsg(comp(), "   Allocation %s is used immediately in %s; no sinking opportunity\n",
+                     log->printf("   Allocation %s is used immediately in %s; no sinking opportunity\n",
                         comp()->getDebug()->getName(allocation),
                         comp()->getDebug()->getName(useTree->getNode()));
                   break;
@@ -156,7 +159,7 @@ int32_t TR_AllocationSinking::perform()
                      flushToSink->unlink(false);
                      useTree->insertBefore(flushToSink);
                      if (trace())
-                        traceMsg(comp(), "   Sank flush %s along with allocation %s\n", comp()->getDebug()->getName(flushToSink->getNode()), comp()->getDebug()->getName(allocation));
+                        log->printf("   Sank flush %s along with allocation %s\n", comp()->getDebug()->getName(flushToSink->getNode()), comp()->getDebug()->getName(allocation));
                      }
                   }
                break;

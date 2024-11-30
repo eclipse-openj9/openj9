@@ -30,6 +30,7 @@
 #include "codegen/CodeGenerator.hpp"           // for CodeGenerator
 #include "env/VMAccessCriticalSection.hpp"     // for VMAccessCriticalSection
 #include "env/VerboseLog.hpp"
+#include "ras/Logger.hpp"
 
 void
 JITClientCommitVirtualGuard(const VirtualGuardInfoForCHTable *info, std::vector<TR_VirtualGuardSite> &sites,
@@ -481,7 +482,7 @@ JITClientCommitVirtualGuard(const VirtualGuardInfoForCHTable *info, std::vector<
                }
             }
          else if (comp->getOption(TR_TraceCG))
-            traceMsg(comp, "MutableCallSiteTargetGuard is already invalid.  Expected epoch: obj%d  Found: obj%d\n", info->_mutableCallSiteEpoch, currentIndex);
+            comp->log()->printf("MutableCallSiteTargetGuard is already invalid.  Expected epoch: obj%d  Found: obj%d\n", info->_mutableCallSiteEpoch, currentIndex);
          }
       }
    else if ((info->_kind == TR_MethodEnterExitGuard) || (info->_kind == TR_DirectMethodGuard))
@@ -597,7 +598,7 @@ JITClientCommitVirtualGuard(const VirtualGuardInfoForCHTable *info, std::vector<
       for (TR_VirtualGuardSite &site : sites)
          {
          if (comp->getOption(TR_TraceCG))
-            traceMsg(comp, "   Patching %p to %p\n", site.getLocation(), site.getDestination());
+            comp->log()->printf("   Patching %p to %p\n", site.getLocation(), site.getDestination());
          TR::PatchNOPedGuardSite::compensate(0, site.getLocation(), site.getDestination());
          }
       }

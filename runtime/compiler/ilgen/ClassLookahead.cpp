@@ -34,6 +34,7 @@
 #include "ilgen/J9ByteCodeIlGenerator.hpp"
 #include "ilgen/J9ByteCodeIterator.hpp"
 #include "infra/Cfg.hpp"
+#include "ras/Logger.hpp"
 
 TR_ClassLookahead::TR_ClassLookahead(
    TR_PersistentClassInfo * classInfo, TR_FrontEnd * fe, TR::Compilation * comp,
@@ -404,6 +405,8 @@ TR_ClassLookahead::findInitializerMethods(List<TR_ResolvedMethod> *resolvedMetho
 bool
 TR_ClassLookahead::examineNode(TR::TreeTop *nextTree, TR::Node *grandParent, TR::Node *parent, int32_t childNum, TR::Node *node, vcount_t visitCount)
    {
+   OMR::Logger *log = comp()->log();
+
    if (node->getVisitCount() == visitCount)
       {
       if (node->getOpCode().isLoadVar())
@@ -540,7 +543,7 @@ TR_ClassLookahead::examineNode(TR::TreeTop *nextTree, TR::Node *grandParent, TR:
                    if (_inClassInitializerMethod)
                       {
                       if (_traceIt)
-                         traceMsg(comp(), "CStatically initializing type info for symbol %x at node %x\n", sym, node);
+                         log->printf("CStatically initializing type info for symbol %x at node %x\n", sym, node);
                       fieldInfo->setIsTypeInfoValid(VALID_AND_INITIALIZED_STATICALLY);
                       }
                    else
@@ -551,7 +554,7 @@ TR_ClassLookahead::examineNode(TR::TreeTop *nextTree, TR::Node *grandParent, TR:
                              !sym->isStatic())
                             {
                             if (_traceIt)
-                               traceMsg(comp(), "C0Not always initializing type info for symbol %x at node %x\n", sym, node);
+                               log->printf("C0Not always initializing type info for symbol %x at node %x\n", sym, node);
                             fieldInfo->setIsTypeInfoValid(VALID_BUT_NOT_ALWAYS_INITIALIZED);
                             }
                          else
@@ -559,7 +562,7 @@ TR_ClassLookahead::examineNode(TR::TreeTop *nextTree, TR::Node *grandParent, TR:
                             if (!sym->isStatic())
                                {
                                if (_traceIt)
-                                  traceMsg(comp(), "C0Always initializing type info for symbol %x at node %x\n", sym, node);
+                                  log->printf("C0Always initializing type info for symbol %x at node %x\n", sym, node);
                                fieldInfo->setIsTypeInfoValid(VALID_AND_ALWAYS_INITIALIZED);
                                }
                             }
@@ -569,13 +572,13 @@ TR_ClassLookahead::examineNode(TR::TreeTop *nextTree, TR::Node *grandParent, TR:
                          if (!sym->isStatic())
                             {
                             if (_traceIt)
-                               traceMsg(comp(), "C1Always initializing type info for symbol %x at node %x\n", sym, node);
+                               log->printf("C1Always initializing type info for symbol %x at node %x\n", sym, node);
                             fieldInfo->setIsTypeInfoValid(VALID_AND_ALWAYS_INITIALIZED);
                             }
                          else
                             {
                             if (_traceIt)
-                              traceMsg(comp(), "C0Invalidating type info for symbol %x at node %x\n", sym, node);
+                              log->printf("C0Invalidating type info for symbol %x at node %x\n", sym, node);
                             fieldInfo->setIsTypeInfoValid(INVALID);
                             }
                          }
@@ -584,7 +587,7 @@ TR_ClassLookahead::examineNode(TR::TreeTop *nextTree, TR::Node *grandParent, TR:
                 else
                    {
                    if (_traceIt)
-                      traceMsg(comp(), "C0Invalidating type info for symbol %x at node %x\n", sym, node);
+                      log->printf("C0Invalidating type info for symbol %x at node %x\n", sym, node);
                    fieldInfo->setIsTypeInfoValid(INVALID);
                    }
                 }
@@ -609,7 +612,7 @@ TR_ClassLookahead::examineNode(TR::TreeTop *nextTree, TR::Node *grandParent, TR:
                             // at different program points within this class.
                             //
                             if (_traceIt)
-                               traceMsg(comp(), "0Invalidating dimension info for symbol %x at node %x\n", sym, node);
+                               log->printf("0Invalidating dimension info for symbol %x at node %x\n", sym, node);
                             arrayFieldInfo->setIsDimensionInfoValid(INVALID);
                             }
                          }
@@ -623,7 +626,7 @@ TR_ClassLookahead::examineNode(TR::TreeTop *nextTree, TR::Node *grandParent, TR:
                 else
                    {
                    if (_traceIt)
-                      traceMsg(comp(), "00Invalidating dimension info for symbol %x at node %x\n", sym, node);
+                      log->printf("00Invalidating dimension info for symbol %x at node %x\n", sym, node);
                       arrayFieldInfo->setIsDimensionInfoValid(INVALID);
                    }
 
@@ -649,7 +652,7 @@ TR_ClassLookahead::examineNode(TR::TreeTop *nextTree, TR::Node *grandParent, TR:
                            if (_inClassInitializerMethod)
                               {
                               if (_traceIt)
-                                  traceMsg(comp(), "Statically initializing dimension info for symbol %x at node %x\n", sym, node);
+                                  log->printf("Statically initializing dimension info for symbol %x at node %x\n", sym, node);
                               arrayFieldInfo->setIsDimensionInfoValid(VALID_AND_INITIALIZED_STATICALLY);
                               }
                            else
@@ -660,7 +663,7 @@ TR_ClassLookahead::examineNode(TR::TreeTop *nextTree, TR::Node *grandParent, TR:
                                      !sym->isStatic())
                                     {
                                     if (_traceIt)
-                                       traceMsg(comp(), "0Not always initializing dimension info for symbol %x at node %x\n", sym, node);
+                                       log->printf("0Not always initializing dimension info for symbol %x at node %x\n", sym, node);
                                     arrayFieldInfo->setIsDimensionInfoValid(VALID_BUT_NOT_ALWAYS_INITIALIZED);
                                     }
                                  else
@@ -668,7 +671,7 @@ TR_ClassLookahead::examineNode(TR::TreeTop *nextTree, TR::Node *grandParent, TR:
                                     if (!sym->isStatic())
                                        {
                                        if (_traceIt)
-                                          traceMsg(comp(), "0Always initializing dimension info for symbol %x at node %x\n", sym, node);
+                                          log->printf("0Always initializing dimension info for symbol %x at node %x\n", sym, node);
                                        arrayFieldInfo->setIsDimensionInfoValid(VALID_AND_ALWAYS_INITIALIZED);
                                        }
                                     }
@@ -678,13 +681,13 @@ TR_ClassLookahead::examineNode(TR::TreeTop *nextTree, TR::Node *grandParent, TR:
                                  if (!sym->isStatic())
                                     {
                                     if (_traceIt)
-                                       traceMsg(comp(), "1Always initializing dimension info for symbol %x at node %x\n", sym, node);
+                                       log->printf("1Always initializing dimension info for symbol %x at node %x\n", sym, node);
                                     arrayFieldInfo->setIsDimensionInfoValid(VALID_AND_ALWAYS_INITIALIZED);
                                     }
                                  else
                                     {
                                     if (_traceIt)
-                                       traceMsg(comp(), "C0Invalidating dimension info for symbol %x at node %x\n", sym, node);
+                                       log->printf("C0Invalidating dimension info for symbol %x at node %x\n", sym, node);
                                     arrayFieldInfo->setIsDimensionInfoValid(INVALID);
                                     }
                                  }
@@ -693,7 +696,7 @@ TR_ClassLookahead::examineNode(TR::TreeTop *nextTree, TR::Node *grandParent, TR:
                        else
                            {
                            if (_traceIt)
-                              traceMsg(comp(), "C1Invalidating dimension info for symbol %x at node %x\n", sym, node);
+                              log->printf("C1Invalidating dimension info for symbol %x at node %x\n", sym, node);
                            arrayFieldInfo->setIsDimensionInfoValid(INVALID);
                            arrayFieldInfo->setDimensionInfo(k, -1);
                            }
@@ -705,7 +708,7 @@ TR_ClassLookahead::examineNode(TR::TreeTop *nextTree, TR::Node *grandParent, TR:
                 // Not a constant length allocation event
                 //
                 if (_traceIt)
-                  traceMsg(comp(), "1Invalidating dimension info for symbol %x at node %x\n", sym, node);
+                  log->printf("1Invalidating dimension info for symbol %x at node %x\n", sym, node);
                 arrayFieldInfo->setIsDimensionInfoValid(INVALID);
                 }
              }
@@ -714,7 +717,7 @@ TR_ClassLookahead::examineNode(TR::TreeTop *nextTree, TR::Node *grandParent, TR:
              // It is a store to this array field but not an allocation event
              //
              if (_traceIt)
-                 traceMsg(comp(), "1Invalidating dimension and type info for symbol %x at node %x(%s)\n", sym, node, node->getOpCode().getName());
+                 log->printf("1Invalidating dimension and type info for symbol %x at node %x(%s)\n", sym, node, node->getOpCode().getName());
 
              fieldInfo->setIsTypeInfoValid(INVALID);
              TR_PersistentArrayFieldInfo *arrayFieldInfo = fieldInfo->asPersistentArrayFieldInfo();
@@ -735,7 +738,7 @@ TR_ClassLookahead::examineNode(TR::TreeTop *nextTree, TR::Node *grandParent, TR:
           if (fieldInfo)
              {
              if (_traceIt)
-               traceMsg(comp(), "2Invalidating dimension and type info for symbol %x at node %x\n", sym, node);
+               log->printf("2Invalidating dimension and type info for symbol %x at node %x\n", sym, node);
 
              fieldInfo->setIsTypeInfoValid(INVALID);
              TR_PersistentArrayFieldInfo *arrayFieldInfo = fieldInfo->asPersistentArrayFieldInfo();
@@ -1161,7 +1164,7 @@ void TR_ClassLookahead::invalidateIfEscapingLoad(TR::TreeTop *nextTree, TR::Node
               ((parent->getOpCodeValue() != TR::awrtbari) || (childNum != 2))))
               {
               if (_traceIt)
-                  traceMsg(comp(), "2Invalidating dimension and type info for symbol %x at node %x\n", sym, node);
+                  comp()->log()->printf("2Invalidating dimension and type info for symbol %x at node %x\n", sym, node);
               arrayFieldInfo->setIsDimensionInfoValid(INVALID);
               arrayFieldInfo->setIsTypeInfoValid(INVALID);
               }
@@ -1270,7 +1273,8 @@ TR_PersistentArrayFieldInfo *TR_ClassLookahead::getExistingArrayFieldInfo(TR::Sy
                }
             else
                {
-               traceMsg(comp(), "fieldInfo %p exists already for array field %s, so cannot morph\n", newFieldInfo, sig);
+               if (_traceIt)
+                  comp()->log()->printf("fieldInfo %p exists already for array field %s, so cannot morph\n", newFieldInfo, sig);
                newArrayFieldInfo = NULL;
                newFieldInfo->setIsTypeInfoValid(INVALID);
                }

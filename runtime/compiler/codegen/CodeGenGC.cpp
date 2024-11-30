@@ -61,6 +61,7 @@
 #include "infra/InterferenceGraph.hpp"
 #include "infra/List.hpp"
 #include "ras/Debug.hpp"
+#include "ras/Logger.hpp"
 
 void
 J9::CodeGenerator::createStackAtlas()
@@ -389,7 +390,8 @@ J9::CodeGenerator::createStackAtlas()
                   {
                   slotIndex += gcMapIndexAlignment - remainder;
                   numLocalObjectPaddingSlots += gcMapIndexAlignment - remainder;
-                  traceMsg(comp, "GC index of local object %p is adjusted by +%d, and is %d now\n",localCursor, gcMapIndexAlignment - remainder, slotIndex);
+                  if (comp->getOption(TR_TraceCG))
+                     comp->log()->printf("GC index of local object %p is adjusted by +%d, and is %d now\n",localCursor, gcMapIndexAlignment - remainder, slotIndex);
                   }
                }
             }
@@ -508,6 +510,6 @@ J9::CodeGenerator::createStackAtlas()
 
    if (comp->getOption(TR_TraceCG))
       {
-      traceMsg(comp, "totalSlotsInMap is %d, numLocalObjectPaddingSlots is %d\n", totalSlotsInMap, numLocalObjectPaddingSlots);
+      comp->log()->printf("totalSlotsInMap is %d, numLocalObjectPaddingSlots is %d\n", totalSlotsInMap, numLocalObjectPaddingSlots);
       }
    }

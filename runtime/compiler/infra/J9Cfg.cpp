@@ -140,7 +140,7 @@ J9::CFG::setFrequencies()
          self()->normalizeFrequencies(nodesToBeNormalized);
          if (comp()->getOption(TR_TraceBFGeneration))
             {
-            traceMsg(comp(), "CFG of %s after setting frequencies using JITProfiling\n", self()->getMethodSymbol()->signature(comp()->trMemory()));
+            comp()->log()->printf("CFG of %s after setting frequencies using JITProfiling\n", self()->getMethodSymbol()->signature(comp()->trMemory()));
             comp()->dumpFlowGraph(comp()->log(), self());
             }
          if (this == comp()->getFlowGraph() && comp()->getInlinedCalls() > 0)
@@ -215,6 +215,7 @@ static bool isVirtualGuard(TR::Node *ifNode)
 TR_BitVector *
 J9::CFG::setBlockAndEdgeFrequenciesBasedOnJITProfiler()
    {
+   OMR::Logger *log = comp()->log();
    TR_PersistentProfileInfo *profileInfo = getProfilingInfoForCFG(comp(), self());
 
    if (!profileInfo)
@@ -252,7 +253,7 @@ J9::CFG::setBlockAndEdgeFrequenciesBasedOnJITProfiler()
        for(; edge != NULL; edge=sit.getNext())
            {
            if (comp()->getOption(TR_TraceBFGeneration))
-              traceMsg(comp(), "edge visit count = %d\n", edge->getVisitCount());
+              log->printf("edge visit count = %d\n", edge->getVisitCount());
            edge->setVisitCount(1);
            }
        }
@@ -337,7 +338,7 @@ J9::CFG::setBlockAndEdgeFrequenciesBasedOnJITProfiler()
                if (fallThrough && branchTarget)
                   {
                   if (comp()->getOption(TR_TraceBFGeneration))
-                     traceMsg(comp(), "      checking effective singleton on block_%d with fallthrough block_%d and branchTarget block_%d\n", pred->getNumber(), fallThrough->getNumber(), branchTarget->getNumber());
+                     log->printf("      checking effective singleton on block_%d with fallthrough block_%d and branchTarget block_%d\n", pred->getNumber(), fallThrough->getNumber(), branchTarget->getNumber());
                   if (fallThrough == node && !fallThrough->isCold() && branchTarget->isCold())
                      effectiveSingleton = true;
                   else if (branchTarget == node && !branchTarget->isCold() && fallThrough->isCold())
@@ -346,7 +347,7 @@ J9::CFG::setBlockAndEdgeFrequenciesBasedOnJITProfiler()
                }
 
             if (comp()->getOption(TR_TraceBFGeneration) && pred)
-               traceMsg(comp(), "      block_%d's pred block_%d has normalized frequency %d and %s\n",
+               log->printf("      block_%d's pred block_%d has normalized frequency %d and %s\n",
                   node->getNumber(),
                   pred->getNumber(),
                   predRawFrequency,
@@ -358,12 +359,12 @@ J9::CFG::setBlockAndEdgeFrequenciesBasedOnJITProfiler()
                {
                combinedPredRawFrequency += predRawFrequency;
                if (comp()->getOption(TR_TraceBFGeneration))
-                  traceMsg(comp(), "       combinedPredRawFrequency is now %d\n", combinedPredRawFrequency);
+                  log->printf("       combinedPredRawFrequency is now %d\n", combinedPredRawFrequency);
                }
             else if (isGuardedBlock)
                {
                if (comp()->getOption(TR_TraceBFGeneration))
-                  traceMsg(comp(), "       %d is a guarded block; ignoring predecessor\n", node->getNumber());
+                  log->printf("       %d is a guarded block; ignoring predecessor\n", node->getNumber());
                }
             else if (pred && pred->hasSuccessor(node) && (frequency < 0 || (!blockFrequencyInfo->isJProfilingData() && pred->getFrequency() <= GUESS_THRESHOLD)))
                {
@@ -381,7 +382,7 @@ J9::CFG::setBlockAndEdgeFrequenciesBasedOnJITProfiler()
                   {
                   combinedPredRawFrequency += succCount ? (predRawFrequency / succCount) : predRawFrequency;
                   if (comp()->getOption(TR_TraceBFGeneration))
-                     traceMsg(comp(), "       combinedPredRawFrequency is now %d based on succCount %d and predRawFrequency %d\n", combinedPredRawFrequency, succCount, predRawFrequency);
+                     log->printf("       combinedPredRawFrequency is now %d based on succCount %d and predRawFrequency %d\n", combinedPredRawFrequency, succCount, predRawFrequency);
                   }
                else
                   {
@@ -393,7 +394,7 @@ J9::CFG::setBlockAndEdgeFrequenciesBasedOnJITProfiler()
                   //
                   combinedPredRawFrequency += origMaxFrequency / 4; // probably intended something like denormalizedFrequency(25,100)
                   if (comp()->getOption(TR_TraceBFGeneration))
-                     traceMsg(comp(), "       can't figure out frequency; defaulting to wild guess %d\n", combinedPredRawFrequency);
+                     log->printf("       can't figure out frequency; defaulting to wild guess %d\n", combinedPredRawFrequency);
                   }
                }
             else if (frequency < 0 || (!blockFrequencyInfo->isJProfilingData() && pred->getFrequency() <= GUESS_THRESHOLD))
@@ -406,7 +407,7 @@ J9::CFG::setBlockAndEdgeFrequenciesBasedOnJITProfiler()
                //
                combinedPredRawFrequency = origMaxFrequency / 4; // probably intended something like denormalizedFrequency(25,100)
                if (comp()->getOption(TR_TraceBFGeneration))
-                  traceMsg(comp(), "       can't figure out frequency; defaulting to wild guess %d\n", combinedPredRawFrequency);
+                  log->printf("       can't figure out frequency; defaulting to wild guess %d\n", combinedPredRawFrequency);
                break;
                }
             }
@@ -414,7 +415,7 @@ J9::CFG::setBlockAndEdgeFrequenciesBasedOnJITProfiler()
         combinedPredRawFrequency = std::min(maxCount, combinedPredRawFrequency);
 
         if (_compilation->getOption(TR_TraceBFGeneration))
-           traceMsg(comp(), "Raw frequency for block_%d is %d (maxCount %d origMax %d combinedPredRawFrequency %d)\n", node->getNumber(), frequency, maxCount, origMaxFrequency, combinedPredRawFrequency);
+           log->printf("Raw frequency for block_%d is %d (maxCount %d origMax %d combinedPredRawFrequency %d)\n", node->getNumber(), frequency, maxCount, origMaxFrequency, combinedPredRawFrequency);
 
         if (frequency <= 0)
            frequency = combinedPredRawFrequency;
@@ -434,7 +435,7 @@ J9::CFG::setBlockAndEdgeFrequenciesBasedOnJITProfiler()
         //if (!isGuardedBlock)
            {
            if (comp()->getOption(TR_TraceBFGeneration))
-              traceMsg(comp(), "   Setting block_%d frequency %d (origMaxFrequency %d)\n", node->getNumber(), frequency, origMaxFrequency);
+              log->printf("   Setting block_%d frequency %d (origMaxFrequency %d)\n", node->getNumber(), frequency, origMaxFrequency);
            if ((frequency > origMaxFrequency) &&
                (origMaxFrequency > -1))
               {
@@ -469,12 +470,12 @@ J9::CFG::setBlockAndEdgeFrequenciesBasedOnJITProfiler()
         TR::Block *succ = edge->getTo()->asBlock();
 
         if (comp()->getOption(TR_TraceBFGeneration))
-           traceMsg(comp(), "node %d has single succ. set Frequency for edge %d->%d to %d final.\n", node->getNumber(), node->getNumber(), succ->getNumber(), frequency);
+           log->printf("node %d has single succ. set Frequency for edge %d->%d to %d final.\n", node->getNumber(), node->getNumber(), succ->getNumber(), frequency);
 
         if (edge->getVisitCount()>1)
            {
            if (comp()->getOption(TR_TraceBFGeneration))
-              traceMsg(comp(), "edge visitCount=%d.\n",edge->getVisitCount());
+              log->printf("edge visitCount=%d.\n",edge->getVisitCount());
            }
         else
            {
@@ -489,12 +490,12 @@ J9::CFG::setBlockAndEdgeFrequenciesBasedOnJITProfiler()
          TR::Block *pred = edge->getFrom()->asBlock();
 
          if (comp()->getOption(TR_TraceBFGeneration))
-            traceMsg(comp(), "node %d has single pred. set Frequency for edge %d->%d to %d final.\n", node->getNumber(), pred->getNumber(), node->getNumber(), frequency);
+            log->printf("node %d has single pred. set Frequency for edge %d->%d to %d final.\n", node->getNumber(), pred->getNumber(), node->getNumber(), frequency);
 
          if (edge->getVisitCount()>1)
             {
             if (comp()->getOption(TR_TraceBFGeneration))
-               traceMsg(comp(), "edge visitCount=%d.\n",edge->getVisitCount());
+               log->printf("edge visitCount=%d.\n",edge->getVisitCount());
             }
          else
             {
@@ -558,19 +559,19 @@ J9::CFG::setBlockAndEdgeFrequenciesBasedOnJITProfiler()
                      {
                      int32_t ff = succ->getFrequency() - (*e)->getFrequency();
                      if (comp()->getOption(TR_TraceBFGeneration))
-                        traceMsg(comp(), "\t\tedge(%d->%d) frequency can be set to succ_%d(%d) - e_freq(%d->%d)(%d) = ee_freq(%d)\n",
+                        log->printf("\t\tedge(%d->%d) frequency can be set to succ_%d(%d) - e_freq(%d->%d)(%d) = ee_freq(%d)\n",
                         ee->getFrom()->getNumber(), ee->getTo()->getNumber(), succ->getNumber(), succ->getFrequency(), (*e)->getFrom()->getNumber(), (*e)->getTo()->getNumber(),(*e)->getFrequency(), ff);
                      if (ee->getVisitCount()>1)
                         {
                         if (comp()->getOption(TR_TraceBFGeneration))
-                           traceMsg(comp(), "\t\tedge frequency = %d already final\n", ee->getFrequency());
+                           log->printf("\t\tedge frequency = %d already final\n", ee->getFrequency());
                         }
                      else
                         {
                         ee->setFrequency(ff);
                         ee->setVisitCount(2);
                         if (comp()->getOption(TR_TraceBFGeneration))
-                           traceMsg(comp(), "\t\tset edge frequency = %d as final\n", ff);
+                           log->printf("\t\tset edge frequency = %d as final\n", ff);
                         }
 
                      //TODO: can continue to check the other successors of this predecessor
@@ -614,7 +615,7 @@ J9::CFG::setBlockAndEdgeFrequenciesBasedOnJITProfiler()
                   if ((*e)->getVisitCount() > 1)
                      {
                      if (comp()->getOption(TR_TraceBFGeneration))
-                        traceMsg(comp(), "\t\tedge frequency = %d is final, don't change\n", (*e)->getFrequency());
+                        log->printf("\t\tedge frequency = %d is final, don't change\n", (*e)->getFrequency());
                      edgeFrequency = (*e)->getFrequency();
                      }
                   else
@@ -687,20 +688,20 @@ J9::CFG::setBlockAndEdgeFrequenciesBasedOnJITProfiler()
                      {
                      int32_t ff = pred->getFrequency() - (*e)->getFrequency();
                      if (comp()->getOption(TR_TraceBFGeneration))
-                        traceMsg(comp(), "\t\tedge(%d->%d) frequency can be set to pred_%d(%d) - e_freq(%d->%d)(%d) = ee_freq(%d)\n",
+                        log->printf("\t\tedge(%d->%d) frequency can be set to pred_%d(%d) - e_freq(%d->%d)(%d) = ee_freq(%d)\n",
                         ee->getFrom()->getNumber(), ee->getTo()->getNumber(), pred->getNumber(), pred->getFrequency(), (*e)->getFrom()->getNumber(), (*e)->getTo()->getNumber(), (*e)->getFrequency(), ff);
 
                      if (ee->getVisitCount()>1)
                         {
                         if (comp()->getOption(TR_TraceBFGeneration))
-                           traceMsg(comp(), "\t\tedge frequency = %d already final\n", ee->getFrequency());
+                           log->printf("\t\tedge frequency = %d already final\n", ee->getFrequency());
                         }
                      else
                         {
                         ee->setFrequency(ff);
                         ee->setVisitCount(2);
                         if (comp()->getOption(TR_TraceBFGeneration))
-                           traceMsg(comp(), "\t\tset edge frequency = %d as final\n", ff);
+                           log->printf("\t\tset edge frequency = %d as final\n", ff);
                         }
 
                      //TODO: can continue to check the other successors of this predecessor
@@ -745,7 +746,7 @@ J9::CFG::setBlockAndEdgeFrequenciesBasedOnJITProfiler()
                   if ((*e)->getVisitCount() > 1)
                      {
                      if (comp()->getOption(TR_TraceBFGeneration))
-                        traceMsg(comp(), "\t\tedge frequency = %d is final, don't change\n", (*e)->getFrequency());
+                        log->printf("\t\tedge frequency = %d is final, don't change\n", (*e)->getFrequency());
                      edgeFrequency = (*e)->getFrequency();
                      }
                   else
@@ -809,8 +810,6 @@ static int32_t summarizeFrequencyFromPredecessors(TR::CFGNode *node, TR::CFG *cf
             if (rawScalingFactor < 0)
                rawScalingFactor = cfg->getMaxEdgeFrequency();
 
-            //traceMsg(comp, "raw scaling %d max %d old max %d\n", rawScalingFactor, cfg->getMaxEdgeFrequency(), cfg->getOldMaxEdgeFrequency());
-
             if (rawScalingFactor > 0)
                {
                if (edgeFreq > MAX_COLD_BLOCK_COUNT)
@@ -831,6 +830,7 @@ static int32_t summarizeFrequencyFromPredecessors(TR::CFGNode *node, TR::CFG *cf
 void
 J9::CFG::setBlockFrequenciesBasedOnInterpreterProfiler()
    {
+   OMR::Logger *log = comp()->log();
    TR::StackMemoryRegion stackMemoryRegion(*trMemory());
    int32_t numBlocks = getNextNodeNumber();
 
@@ -988,7 +988,7 @@ J9::CFG::setBlockFrequenciesBasedOnInterpreterProfiler()
       TR::CFGNode *node = stack.popHead();
 
       if (comp()->getOption(TR_TraceBFGeneration))
-         traceMsg(comp(), "Considering block_%d\n", node->getNumber());
+         log->printf("Considering block_%d\n", node->getNumber());
 
       if (_seenNodes->isSet(node->getNumber()))
          continue;
@@ -1056,7 +1056,7 @@ J9::CFG::setBlockFrequenciesBasedOnInterpreterProfiler()
                      int32_t edgeFreq = edge->getFrequency();
 
                      if (comp()->getOption(TR_TraceBFGeneration))
-                        traceMsg(comp(), "11Pred %d has freq %d\n", pred->getNumber(), edgeFreq);
+                        log->printf("11Pred %d has freq %d\n", pred->getNumber(), edgeFreq);
                      }
                   }
 
@@ -1145,7 +1145,7 @@ J9::CFG::setBlockFrequenciesBasedOnInterpreterProfiler()
                   _seenNodesInCycle->empty();
 
                if (comp()->getOption(TR_TraceBFGeneration))
-                  traceMsg(comp(), "2Setting block and uniform freqs\n");
+                  log->prints("2Setting block and uniform freqs\n");
 
               if ((node->getSuccessors().size() == 2) && (sumFreq > 0) && node->asBlock()->getEntry() && node->asBlock()->getLastRealTreeTop()->getNode()->getOpCode().isBranch())
                  self()->setEdgeFrequenciesOnNode( node, 0, sumFreq, comp());
@@ -1196,7 +1196,7 @@ J9::CFG::setBlockFrequenciesBasedOnInterpreterProfiler()
                      TR::CFGNode *nextTempNode = tempNode->getSuccessors().front()->getTo();
 
                      if (comp()->getOption(TR_TraceBFGeneration))
-                        traceMsg(comp(), "3Setting block and uniform freqs\n");
+                        log->prints("3Setting block and uniform freqs\n");
 
                      self()->setUniformEdgeFrequenciesOnNode( tempNode, edge->getFrequency(), true, comp());
                      setBlockFrequency (tempNode, edge->getFrequency(), true);
@@ -1256,7 +1256,7 @@ J9::CFG::setBlockFrequenciesBasedOnInterpreterProfiler()
    _oldMaxEdgeFrequency = _maxEdgeFrequency;
 
    if (comp()->getOption(TR_TraceBFGeneration))
-      traceMsg(comp(), "max freq %d max edge freq %d\n", _maxFrequency, _maxEdgeFrequency);
+      log->printf("max freq %d max edge freq %d\n", _maxFrequency, _maxEdgeFrequency);
 
    }
 
@@ -1478,6 +1478,7 @@ J9::CFG::setSwitchEdgeFrequenciesOnNode(TR::CFGNode *node, TR::Compilation *comp
 void
 J9::CFG::setBlockFrequency(TR::CFGNode *node, int32_t frequency, bool addFrequency)
    {
+   OMR::Logger *log = comp()->log();
    TR::Block *block = node->asBlock();
    if (!block)
       return;
@@ -1486,8 +1487,7 @@ J9::CFG::setBlockFrequency(TR::CFGNode *node, int32_t frequency, bool addFrequen
       {
       if (comp()->getOption(TR_TraceBFGeneration))
          {
-         traceMsg(
-            comp(),
+         log->printf(
             "Leaving cold reason %d on block_%d\n",
             block->getFrequency(),
             block->getNumber());
@@ -1496,7 +1496,7 @@ J9::CFG::setBlockFrequency(TR::CFGNode *node, int32_t frequency, bool addFrequen
       }
 
    if (comp()->getOption(TR_TraceBFGeneration))
-      traceMsg(comp(), "Original freq %d on block_%d incoming freq %d\n", block->getFrequency(), block->getNumber(), frequency);
+      log->printf("Original freq %d on block_%d incoming freq %d\n", block->getFrequency(), block->getNumber(), frequency);
 
    if (_frequencySet)
       {
@@ -1504,7 +1504,7 @@ J9::CFG::setBlockFrequency(TR::CFGNode *node, int32_t frequency, bool addFrequen
          {
          _frequencySet->set(block->getNumber());
          if (comp()->getOption(TR_TraceBFGeneration))
-            traceMsg(comp(), "00 Setting freq %d on block_%d added freq %d\n", block->getFrequency(), block->getNumber(), 0);
+            log->printf("00 Setting freq %d on block_%d added freq %d\n", block->getFrequency(), block->getNumber(), 0);
          block->setFrequency(0);
          }
       }
@@ -1520,7 +1520,7 @@ J9::CFG::setBlockFrequency(TR::CFGNode *node, int32_t frequency, bool addFrequen
 
       block->setFrequency(addedFrequency);
       if (comp()->getOption(TR_TraceBFGeneration))
-         traceMsg(comp(), "11 Setting freq %d on block_%d added freq %d\n", block->getFrequency(), block->getNumber(), addedFrequency);
+         log->printf("11 Setting freq %d on block_%d added freq %d\n", block->getFrequency(), block->getNumber(), addedFrequency);
       }
    else
       {
@@ -1529,7 +1529,7 @@ J9::CFG::setBlockFrequency(TR::CFGNode *node, int32_t frequency, bool addFrequen
 
       block->setFrequency(frequency);
       if (comp()->getOption(TR_TraceBFGeneration))
-         traceMsg(comp(), "22 Setting freq %d on block_%d\n", block->getFrequency(), block->getNumber());
+         log->printf("22 Setting freq %d on block_%d\n", block->getFrequency(), block->getNumber());
       }
    return;
    }
@@ -1538,6 +1538,7 @@ void
 J9::CFG::getBranchCountersFromProfilingData(TR::Node *node, TR::Block *block, int32_t *taken, int32_t *notTaken)
    {
    TR::Compilation *comp = self()->comp();
+   OMR::Logger *log = comp->log();
    TR::Block *branchToBlock = node->getBranchDestination()->getNode()->getBlock();
    TR::Block *fallThroughBlock = block->getNextBlock();
 
@@ -1570,13 +1571,13 @@ J9::CFG::getBranchCountersFromProfilingData(TR::Node *node, TR::Block *block, in
                   if( (*taken > *notTaken && fallthruBlockFreq > branchBlockFreq ) || (*notTaken > *taken && branchBlockFreq > fallthruBlockFreq) )
                      {
                      if (comp->getOption(TR_TraceBFGeneration))
-                        traceMsg(comp, "For block %d fallthru block %d and branch block %d  iprofiler says taken = %d notTaken = %d jitprofiler says currentBlockfreq = %d "
+                        log->printf("For block %d fallthru block %d and branch block %d  iprofiler says taken = %d notTaken = %d jitprofiler says currentBlockfreq = %d "
                            "taken = %d notTaken = %d. Scaling iprofiler info.\n",block->getNumber(),fallThroughBlock->getNumber(),branchToBlock->getNumber(),*taken,*notTaken,
                             currentBlockFreq,branchBlockFreq,fallthruBlockFreq);
                      *taken =  ((*taken) * fallthruBlockFreq ) / (fallthruBlockFreq + branchBlockFreq) ;
                      *notTaken = ((*notTaken) * branchBlockFreq) /  (fallthruBlockFreq + branchBlockFreq) ;
                      if (comp->getOption(TR_TraceBFGeneration))
-                        traceMsg(comp,"New taken = %d notTaken = %d\n",*taken,*notTaken);
+                        log->printf("New taken = %d notTaken = %d\n",*taken,*notTaken);
 
                      }
                   }
