@@ -44,6 +44,7 @@
 #include "il/TreeTop_inlines.hpp"
 #include "infra/Assert.hpp"
 #include "infra/Bit.hpp"
+#include "ras/Logger.hpp"
 
 
 #define OPT_DETAILS "O^O IN MEMORY LOAD/STORE MARKING: "
@@ -71,7 +72,7 @@ void InMemoryLoadStoreMarking::perform()
          if (!block->isExtensionOfPreviousBlock())
             {
             if (cg->traceBCDCodeGen())
-               traceMsg(comp(),"block_%d is a new extension so clear all load and store lists\n",block->getNumber());
+               comp()->log()->printf("block_%d is a new extension so clear all load and store lists\n",block->getNumber());
             clearAllLists();
             }
          }
@@ -120,19 +121,19 @@ void InMemoryLoadStoreMarking::refineConditionalCleanLoadList(TR::Node *child, T
    if (_BCDConditionalCleanLoadList.find(child))
       {
       if (cg->traceBCDCodeGen())
-         traceMsg(comp(),"found %s (%p) in condCleanLoadList : examine parent %s (%p) to see if it relies on clean sign\n",
+         comp()->log()->printf("found %s (%p) in condCleanLoadList : examine parent %s (%p) to see if it relies on clean sign\n",
             child->getOpCode().getName(),child,parent->getOpCode().getName(),parent);
       if (cg->reliesOnAParticularSignEncoding(parent))
          {
          if (cg->traceBCDCodeGen())
-            traceMsg(comp(),"\tz^z : parent %s (%p) does rely on a clean sign so remove child %s (%p) from condCleanLoadList\n",
+            comp()->log()->printf("\tz^z : parent %s (%p) does rely on a clean sign so remove child %s (%p) from condCleanLoadList\n",
                parent->getOpCode().getName(),parent,child->getOpCode().getName(),child);
          _BCDConditionalCleanLoadList.remove(child);
          }
       else
          {
          if (cg->traceBCDCodeGen())
-            traceMsg(comp(),"\tparent %s (%p) does not rely on a clean sign so do not remove child %s (%p) from condCleanLoadList\n",
+            comp()->log()->printf("\tparent %s (%p) does not rely on a clean sign so do not remove child %s (%p) from condCleanLoadList\n",
                parent->getOpCode().getName(),parent,child->getOpCode().getName(),child);
          }
       }
@@ -147,7 +148,7 @@ void InMemoryLoadStoreMarking::examineFirstReference(TR::Node *node, TR::TreeTop
           tt->getNode()->getValueChild() == node)
          {
          if (cg->traceBCDCodeGen())
-            traceMsg(comp(),"store first encounter: %s (%p) under %s (%p), add store to list and set node futureUseCount %d\n",
+            comp()->log()->printf("store first encounter: %s (%p) under %s (%p), add store to list and set node futureUseCount %d\n",
                node->getOpCode().getName(),node,tt->getNode()->getOpCode().getName(),tt->getNode(),node->getReferenceCount()-1);
          node->setFutureUseCount(node->getReferenceCount()-1);
          _BCDAggrStoreList.add(tt->getNode());
@@ -159,7 +160,7 @@ void InMemoryLoadStoreMarking::examineFirstReference(TR::Node *node, TR::TreeTop
       if (node->getOpCode().isBCDLoadVar())
          {
          if (cg->traceBCDCodeGen())
-            traceMsg(comp(),"load var first encounter: %s (%p), add load to list and set node futureUseCount %d\n",node->getOpCode().getName(),node,node->getReferenceCount()-1);
+            comp()->log()->printf("load var first encounter: %s (%p), add load to list and set node futureUseCount %d\n",node->getOpCode().getName(),node,node->getReferenceCount()-1);
          node->setFutureUseCount(node->getReferenceCount()-1);
          _BCDAggrLoadList.add(node);
          }
@@ -193,7 +194,7 @@ void InMemoryLoadStoreMarking::examineCommonedReference(TR::Node *child, TR::Nod
       return;
    int32_t isLastReference = child->decFutureUseCount() == 0;
    if (cg->traceBCDCodeGen())
-      traceMsg(comp(),"looking at commoned reference to %s (%p) with parent %s (%p) and tt %s (%p) (isLastReference %s)\n",
+      comp()->log()->printf("looking at commoned reference to %s (%p) with parent %s (%p) and tt %s (%p) (isLastReference %s)\n",
          child->getOpCode().getName(),child,
          parent?parent->getOpCode().getName():"NULL",parent,
          tt?tt->getNode()->getOpCode().getName():"NULL",tt?tt->getNode():0,
@@ -276,7 +277,7 @@ bool InMemoryLoadStoreMarking::isConditionalCleanLoad(TR::Node *listNode, TR::No
       // The _BCDConditionalCleanLoadList also must be checked for other possible kills as with the regular _BCDAggrLoadList
       // The caller is removing listNode from _BCDAggrLoadList so a particular listNode will only be in one of (or neither of) _BCDConditionalCleanLoadList and _BCDAggrLoadList
       if (cg->traceBCDCodeGen())
-         traceMsg(comp(),"\t\tfound conditional clean listNode %s (%p) under %s (%p) : do not consider a def but add to condCleanLoadList if not already present\n",
+         comp()->log()->printf("\t\tfound conditional clean listNode %s (%p) under %s (%p) : do not consider a def but add to condCleanLoadList if not already present\n",
             listNode->getOpCode().getName(),listNode,defNode->getOpCode().getName(),defNode);
       return true;
       }
@@ -295,13 +296,13 @@ void InMemoryLoadStoreMarking::addToConditionalCleanLoadList(TR::Node *listNode)
       //    =>pdload "a"   <-- will already be in list at this point
       //
       if (cg->traceBCDCodeGen())
-         traceMsg(comp(),"\t\tlistNode %s (%p) already present in condCleanLoadList : do not add again\n",
+         comp()->log()->printf("\t\tlistNode %s (%p) already present in condCleanLoadList : do not add again\n",
             listNode->getOpCode().getName(),listNode);
       }
    else
       {
       if (cg->traceBCDCodeGen())
-         traceMsg(comp(),"\t\tlistNode %s (%p) not already present in condCleanLoadList : add to list\n",
+         comp()->log()->printf("\t\tlistNode %s (%p) not already present in condCleanLoadList : add to list\n",
             listNode->getOpCode().getName(),listNode);
       _BCDConditionalCleanLoadList.add(listNode);
       }
@@ -311,8 +312,9 @@ void InMemoryLoadStoreMarking::processBCDAggrNodeList(List<TR::Node> &nodeList, 
    {
    if (!nodeList.isEmpty())
       {
+      OMR::Logger *log = comp()->log();
       if (cg->traceBCDCodeGen())
-         traceMsg(comp(),"\titerate through non-empty %s\n",getName(listType));
+         log->printf("\titerate through non-empty %s\n",getName(listType));
       bool isRegularLoadList = (listType == LoadList);
       bool isConditionalCleanLoadList = (listType == ConditionalCleanLoadList);
       bool isAnyTypeOfLoadList = (isRegularLoadList || isConditionalCleanLoadList);
@@ -326,7 +328,7 @@ void InMemoryLoadStoreMarking::processBCDAggrNodeList(List<TR::Node> &nodeList, 
             {
             bool defNodeHasSymRef = defNode->getOpCode().hasSymbolReference() && defNode->getSymbolReference();
             if (cg->traceBCDCodeGen())
-               traceMsg(comp(),"\t\tintersect defNode %s (%p) #%d aliases with listNode %s (%p) #%d\n",
+               log->printf("\t\tintersect defNode %s (%p) #%d aliases with listNode %s (%p) #%d\n",
                   defNode->getOpCode().getName(),defNode,defNodeHasSymRef ? defNode->getSymbolReference()->getReferenceNumber() : -1,
                   listNode->getOpCode().getName(),listNode,listNode->getSymbolReference()->getReferenceNumber());
 
@@ -351,7 +353,7 @@ void InMemoryLoadStoreMarking::processBCDAggrNodeList(List<TR::Node> &nodeList, 
                      if (isRegularLoadList)
                         {
                         if (cg->traceBCDCodeGen())
-                           traceMsg(comp(),"\t\t\tremove listNode %s (%p) from regular load list\n",listNode->getOpCode().getName(),listNode);
+                           log->printf("\t\t\tremove listNode %s (%p) from regular load list\n",listNode->getOpCode().getName(),listNode);
                         nodeList.remove(listNode);
                         }
                      }
@@ -359,7 +361,7 @@ void InMemoryLoadStoreMarking::processBCDAggrNodeList(List<TR::Node> &nodeList, 
                      {
                      // this path may either be removing a load from the regular or conditional load list (in the latter case when some other type of def is possibly seen)
                      if (cg->traceBCDCodeGen())
-                        traceMsg(comp(),"\t\t\tfound an intersection so remove listNode %s (%p) from %s and set setSkipCopyOnLoad flag to false (defNodeHasSymRef=%s)\n",
+                        log->printf("\t\t\tfound an intersection so remove listNode %s (%p) from %s and set setSkipCopyOnLoad flag to false (defNodeHasSymRef=%s)\n",
                            listNode->getOpCode().getName(),listNode,getName(listType),defNodeHasSymRef?"yes":"no");
                      listNode->setSkipCopyOnLoad(false);
                      nodeList.remove(listNode);
@@ -368,7 +370,7 @@ void InMemoryLoadStoreMarking::processBCDAggrNodeList(List<TR::Node> &nodeList, 
                else
                   {
                   if (cg->traceBCDCodeGen())
-                     traceMsg(comp(),"\t\t\tfound an intersection so remove listNode %s (%p) from %s and set setSkipCopyOnStore flag to false (defNodeHasSymRef=%s)\n",
+                     log->printf("\t\t\tfound an intersection so remove listNode %s (%p) from %s and set setSkipCopyOnStore flag to false (defNodeHasSymRef=%s)\n",
                         listNode->getOpCode().getName(),listNode,getName(listType),defNodeHasSymRef?"yes":"no");
                   TR_ASSERT(listType == StoreList,"expecting StoreList for listNode %s (%p)\n",listNode->getOpCode().getName(),listNode);
                   listNode->setSkipCopyOnStore(false);
@@ -378,7 +380,7 @@ void InMemoryLoadStoreMarking::processBCDAggrNodeList(List<TR::Node> &nodeList, 
             }
          else if (cg->traceBCDCodeGen())
             {
-            traceMsg(comp(),"\t\tskipping current store treetop listNode %s (%p)\n",listNode->getOpCode().getName(),listNode);
+            log->printf("\t\tskipping current store treetop listNode %s (%p)\n",listNode->getOpCode().getName(),listNode);
             }
          }
       }

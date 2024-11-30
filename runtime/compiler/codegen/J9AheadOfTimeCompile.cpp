@@ -34,6 +34,7 @@
 #include "env/VerboseLog.hpp"
 #include "env/VMJ9.h"
 #include "codegen/AheadOfTimeCompile.hpp"
+#include "ras/Logger.hpp"
 #include "runtime/RelocationRuntime.hpp"
 #include "runtime/RelocationRecord.hpp"
 #include "runtime/SymbolValidationManager.hpp"
@@ -637,7 +638,8 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          TR_OpaqueClassBlock *inlinedCodeClass = reinterpret_cast<TR_OpaqueClassBlock *>(inlinedMethod->classOfMethod());
 
          uintptr_t romClassOffsetInSharedCache = self()->offsetInSharedCacheFromClass(sharedCache, inlinedCodeClass);
-         traceMsg(comp, "class is %p, romclass is %p, offset is %llu\n",
+         if (comp->getOption(TR_TraceRelocatableDataCG))
+            comp->log()->printf("class is %p, romclass is %p, offset is %llu\n",
                   inlinedCodeClass,
                   reinterpret_cast<J9ROMClass *>(fej9->getPersistentClassPointerFromClassPointer(inlinedCodeClass)),
                   romClassOffsetInSharedCache);
@@ -1415,6 +1417,7 @@ uint8_t *
 J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose)
    {
    TR::Compilation *comp = self()->comp();
+   OMR::Logger *log = comp->log();
    TR_RelocationRuntime *reloRuntime = comp->reloRuntime();
    TR_RelocationTarget *reloTarget = reloRuntime->reloTarget();
 
@@ -1430,15 +1433,15 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
 
    bool orderedPair = isOrderedPair(kind);
 
-   traceMsg(self()->comp(), "%16x  ", cursor);
-   traceMsg(self()->comp(), "%-5d", reloRecord->size(reloTarget));
-   traceMsg(self()->comp(), "%-31s", TR::ExternalRelocation::getName(kind));
-   traceMsg(self()->comp(), "%-6d", offsetSize);
-   traceMsg(self()->comp(), "%s", (reloRecord->flags(reloTarget) & RELOCATION_TYPE_EIP_OFFSET) ? "Rel " : "Abs ");
+   log->printf("%16x  ", cursor);
+   log->printf("%-5d", reloRecord->size(reloTarget));
+   log->printf("%-31s", TR::ExternalRelocation::getName(kind));
+   log->printf("%-6d", offsetSize);
+   log->printf("%s", (reloRecord->flags(reloTarget) & RELOCATION_TYPE_EIP_OFFSET) ? "Rel " : "Abs ");
 
    // Print out the correct number of spaces when no index is available
    if (kind != TR_HelperAddress && kind != TR_AbsoluteHelperAddress)
-      traceMsg(self()->comp(), "      ");
+      log->prints("      ");
 
    switch (kind)
       {
@@ -1451,7 +1454,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\nInlined site index = %d, Constant pool = %x",
+            log->printf("\nInlined site index = %d, Constant pool = %x",
                                      cpRecord->inlinedSiteIndex(reloTarget),
                                      cpRecord->constantPool(reloTarget));
             }
@@ -1465,7 +1468,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\nInlined site index = %d, Constant pool = %x, flags = %x",
+            log->printf("\nInlined site index = %d, Constant pool = %x, flags = %x",
                                      cpRecord->inlinedSiteIndex(reloTarget),
                                      cpRecord->constantPool(reloTarget),
                                      (uint32_t)cpRecord->reloFlags(reloTarget));
@@ -1479,12 +1482,12 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
 
          uint32_t helperID = haRecord->helperID(reloTarget);
 
-         traceMsg(self()->comp(), "%-6d", helperID);
+         log->printf("%-6d", helperID);
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            TR::SymbolReference *symRef = self()->comp()->getSymRefTab()->getSymRef(helperID);
-            traceMsg(self()->comp(), "\nHelper method address of %s(%d)", self()->getDebug()->getName(symRef), helperID);
+            TR::SymbolReference *symRef = comp->getSymRefTab()->getSymRef(helperID);
+            log->printf("\nHelper method address of %s(%d)", self()->getDebug()->getName(symRef), helperID);
             }
          }
          break;
@@ -1509,7 +1512,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
       case TR_MethodCallAddress:
          {
          TR_RelocationRecordMethodCallAddress *mcaRecord = reinterpret_cast<TR_RelocationRecordMethodCallAddress *>(reloRecord);
-         traceMsg(self()->comp(), "\n Method Call Address: address=" POINTER_PRINTF_FORMAT, mcaRecord->address(reloTarget));
+         log->printf("\n Method Call Address: address=" POINTER_PRINTF_FORMAT, mcaRecord->address(reloTarget));
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          }
          break;
@@ -1520,12 +1523,12 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
 
          uint32_t helperID = ahaRecord->helperID(reloTarget);
 
-         traceMsg(self()->comp(), "%-6d", helperID);
+         log->printf("%-6d", helperID);
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            TR::SymbolReference *symRef = self()->comp()->getSymRefTab()->getSymRef(helperID);
-            traceMsg(self()->comp(), "\nHelper method address of %s(%d)", self()->getDebug()->getName(symRef), helperID);
+            TR::SymbolReference *symRef = comp->getSymRefTab()->getSymRef(helperID);
+            log->printf("\nHelper method address of %s(%d)", self()->getDebug()->getName(symRef), helperID);
             }
          }
          break;
@@ -1539,7 +1542,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\n Direct to JNI Relocation (%s): inlinedIndex = %d, constantPool = %p, CPI = %d, offsetToReloLocation = %d",
+            log->printf("\n Direct to JNI Relocation (%s): inlinedIndex = %d, constantPool = %p, CPI = %d, offsetToReloLocation = %d",
                                      getNameForMethodRelocation(kind),
                                      djnicRecord->inlinedSiteIndex(reloTarget),
                                      djnicRecord->constantPool(reloTarget),
@@ -1558,7 +1561,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\n Address Relocation (%s): inlinedIndex = %d, constantPool = %p, CPI = %d",
+            log->printf("\n Address Relocation (%s): inlinedIndex = %d, constantPool = %p, CPI = %d",
                                      getNameForMethodRelocation(kind),
                                      cpiRecord->inlinedSiteIndex(reloTarget),
                                      cpiRecord->constantPool(reloTarget),
@@ -1575,7 +1578,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\n Address Relocation (%s): inlinedIndex = %d, constantPool = %p, CPI = %d, flags = 0x%x",
+            log->printf("\n Address Relocation (%s): inlinedIndex = %d, constantPool = %p, CPI = %d, flags = 0x%x",
                                      getNameForMethodRelocation(kind),
                                      cpiRecord->inlinedSiteIndex(reloTarget),
                                      cpiRecord->constantPool(reloTarget),
@@ -1593,7 +1596,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\nDestination address %x", mtRecord->destinationAddress(reloTarget));
+            log->printf("\nDestination address %x", mtRecord->destinationAddress(reloTarget));
             }
          }
          break;
@@ -1605,7 +1608,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\nVerify Class Object for Allocation: InlineCallSite index = %d, Constant pool = %x, index = %d, binaryEncode = %x, size = %d",
+            log->printf("\nVerify Class Object for Allocation: InlineCallSite index = %d, Constant pool = %x, index = %d, binaryEncode = %x, size = %d",
                                      allocRecord->inlinedSiteIndex(reloTarget),
                                      allocRecord->constantPool(reloTarget),
                                      allocRecord->cpIndex(reloTarget),
@@ -1622,7 +1625,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\nVerify Class Object for Allocation: InlineCallSite index = %d, Constant pool = %x, index = %d, binaryEncode = %x",
+            log->printf("\nVerify Class Object for Allocation: InlineCallSite index = %d, Constant pool = %x, index = %d, binaryEncode = %x",
                                      allocRecord->inlinedSiteIndex(reloTarget),
                                      allocRecord->constantPool(reloTarget),
                                      allocRecord->cpIndex(reloTarget),
@@ -1638,7 +1641,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\nValidation Relocation: InlineCallSite index = %d, Constant pool = %x, cpIndex = %d, Class Chain offset = %x",
+            log->printf("\nValidation Relocation: InlineCallSite index = %d, Constant pool = %x, cpIndex = %d, Class Chain offset = %x",
                                      fieldRecord->inlinedSiteIndex(reloTarget),
                                      fieldRecord->constantPool(reloTarget),
                                      fieldRecord->cpIndex(reloTarget),
@@ -1658,7 +1661,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\nInlined Method: Inlined site index = %d, Constant pool = %x, cpIndex = %x, romClassOffsetInSharedCache=%p, destinationAddress = %p",
+            log->printf("\nInlined Method: Inlined site index = %d, Constant pool = %x, cpIndex = %x, romClassOffsetInSharedCache=%p, destinationAddress = %p",
                                      inlinedMethod->inlinedSiteIndex(reloTarget),
                                      inlinedMethod->constantPool(reloTarget),
                                      inlinedMethod->cpIndex(reloTarget),
@@ -1675,7 +1678,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\nValidation Relocation: InlineCallSite index = %d, Constant pool = %x, cpIndex = %d, ROM Class offset = %x",
+            log->printf("\nValidation Relocation: InlineCallSite index = %d, Constant pool = %x, cpIndex = %d, ROM Class offset = %x",
                                        vsfRecord->inlinedSiteIndex(reloTarget),
                                        vsfRecord->constantPool(reloTarget),
                                        vsfRecord->cpIndex(reloTarget),
@@ -1691,7 +1694,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\nValidation Relocation: InlineCallSite index = %d, Constant pool = %x, cpIndex = %d, Class Chain offset = %x",
+            log->printf("\nValidation Relocation: InlineCallSite index = %d, Constant pool = %x, cpIndex = %d, Class Chain offset = %x",
                                        vcRecord->inlinedSiteIndex(reloTarget),
                                        vcRecord->constantPool(reloTarget),
                                        vcRecord->cpIndex(reloTarget),
@@ -1709,7 +1712,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\nProfiled Class Guard: Inlined site index = %d, Constant pool = %x, cpIndex = %x, romClassOffsetInSharedCache=%p, classChainIdentifyingLoaderOffsetInSharedCache=%p, classChainForInlinedMethod %p, methodIndex %d",
+            log->printf("\nProfiled Class Guard: Inlined site index = %d, Constant pool = %x, cpIndex = %x, romClassOffsetInSharedCache=%p, classChainIdentifyingLoaderOffsetInSharedCache=%p, classChainForInlinedMethod %p, methodIndex %d",
                                        pRecord->inlinedSiteIndex(reloTarget),
                                        pRecord->constantPool(reloTarget),
                                        pRecord->romClassOffsetInSharedCache(reloTarget),
@@ -1727,7 +1730,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\nMethod Pointer: Inlined site index = %d, classChainIdentifyingLoaderOffsetInSharedCache=%p, classChainForInlinedMethod %p, vTableOffset %x",
+            log->printf("\nMethod Pointer: Inlined site index = %d, classChainIdentifyingLoaderOffsetInSharedCache=%p, classChainForInlinedMethod %p, vTableOffset %x",
                                       mpRecord->inlinedSiteIndex(reloTarget),
                                       mpRecord->classChainIdentifyingLoaderOffsetInSharedCache(reloTarget),
                                       mpRecord->classChainForInlinedMethod(reloTarget),
@@ -1743,7 +1746,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\nInlined Method Pointer: Inlined site index = %d", impRecord->inlinedSiteIndex(reloTarget));
+            log->printf("\nInlined Method Pointer: Inlined site index = %d", impRecord->inlinedSiteIndex(reloTarget));
             }
          }
          break;
@@ -1756,7 +1759,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\nClass Pointer: Inlined site index = %d, classChainIdentifyingLoaderOffsetInSharedCache=%p, classChainForInlinedMethod %p",
+            log->printf("\nClass Pointer: Inlined site index = %d, classChainIdentifyingLoaderOffsetInSharedCache=%p, classChainForInlinedMethod %p",
                                       cpRecord->inlinedSiteIndex(reloTarget),
                                       cpRecord->classChainIdentifyingLoaderOffsetInSharedCache(reloTarget),
                                       cpRecord->classChainForInlinedMethod(reloTarget));
@@ -1771,7 +1774,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\nValidateArbitraryClass Relocation: classChainOffsetForClassToValidate = %p, classChainIdentifyingClassLoader = %p",
+            log->printf("\nValidateArbitraryClass Relocation: classChainOffsetForClassToValidate = %p, classChainIdentifyingClassLoader = %p",
                                       vacRecord->classChainOffsetForClassBeingValidated(reloTarget),
                                       vacRecord->classChainIdentifyingLoaderOffset(reloTarget));
             }
@@ -1789,7 +1792,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\n Removed Guard inlined method: Inlined site index = %d, Constant pool = %x, cpIndex = %x, romClassOffsetInSharedCache=%p",
+            log->printf("\n Removed Guard inlined method: Inlined site index = %d, Constant pool = %x, cpIndex = %x, romClassOffsetInSharedCache=%p",
                                       imRecord->inlinedSiteIndex(reloTarget),
                                       imRecord->constantPool(reloTarget),
                                       imRecord->cpIndex(reloTarget),
@@ -1805,7 +1808,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\nInlined site index %lld, constant pool 0x%llx, offset to j2i thunk pointer 0x%llx",
+            log->printf("\nInlined site index %lld, constant pool 0x%llx, offset to j2i thunk pointer 0x%llx",
                                      vtpRecord->inlinedSiteIndex(reloTarget),
                                      vtpRecord->constantPool(reloTarget),
                                      vtpRecord->getOffsetToJ2IVirtualThunkPointer(reloTarget));
@@ -1820,7 +1823,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\n Validate Class By Name: classID=%d beholderID=%d classChainOffsetInSCC=%p ",
+            log->printf("\n Validate Class By Name: classID=%d beholderID=%d classChainOffsetInSCC=%p ",
                                       (uint32_t)cbnRecord->classID(reloTarget),
                                       (uint32_t)cbnRecord->beholderID(reloTarget),
                                       (void *)cbnRecord->classChainOffset(reloTarget));
@@ -1835,7 +1838,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\n Validate Profiled Class: classID=%d classChainOffsetInSCC=%p classChainOffsetForCLInScc=%p ",
+            log->printf("\n Validate Profiled Class: classID=%d classChainOffsetInSCC=%p classChainOffsetForCLInScc=%p ",
                                       (uint32_t)pcRecord->classID(reloTarget),
                                       (void *)pcRecord->classChainOffset(reloTarget),
                                       (void *)pcRecord->classChainOffsetForClassLoader(reloTarget));
@@ -1865,7 +1868,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
             else
                TR_ASSERT_FATAL(false, "Unknown relokind %d!\n", kind);
 
-            traceMsg(self()->comp(), "\n Validate %s: classID=%d, beholderID=%d, cpIndex=%d ",
+            log->printf("\n Validate %s: classID=%d, beholderID=%d, cpIndex=%d ",
                                      recordType,
                                      (uint32_t)cpRecord->classID(reloTarget),
                                      (uint32_t)cpRecord->beholderID(reloTarget),
@@ -1881,7 +1884,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\n Validate Defining Class From CP: classID=%d, beholderID=%d, cpIndex=%d, isStatic=%s ",
+            log->printf("\n Validate Defining Class From CP: classID=%d, beholderID=%d, cpIndex=%d, isStatic=%s ",
                                       (uint32_t)dcpRecord->classID(reloTarget),
                                       (uint32_t)dcpRecord->beholderID(reloTarget),
                                       dcpRecord->cpIndex(reloTarget),
@@ -1897,7 +1900,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\n Validate Array Class From Component: arrayClassID=%d, componentClassID=%d ",
+            log->printf("\n Validate Array Class From Component: arrayClassID=%d, componentClassID=%d ",
                                       (uint32_t)acRecord->arrayClassID(reloTarget),
                                       (uint32_t)acRecord->componentClassID(reloTarget));
             }
@@ -1920,7 +1923,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
             else
                TR_ASSERT_FATAL(false, "Unknown relokind %d!\n", kind);
 
-            traceMsg(self()->comp(), "\n Validate %s: superClassID=%d, childClassID=%d ",
+            log->printf("\n Validate %s: superClassID=%d, childClassID=%d ",
                                       recordType,
                                       (uint32_t)scRecord->superClassID(reloTarget),
                                       (uint32_t)scRecord->childClassID(reloTarget));
@@ -1935,7 +1938,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if(isVerbose)
             {
-            traceMsg(self()->comp(), "\n Validate Class InstanceOf Class: classOneID=%d, classTwoID=%d, objectTypeIsFixed=%s, castTypeIsFixed=%s, isInstanceOf=%s ",
+            log->printf("\n Validate Class InstanceOf Class: classOneID=%d, classTwoID=%d, objectTypeIsFixed=%s, castTypeIsFixed=%s, isInstanceOf=%s ",
                                      (uint32_t)cicRecord->classOneID(reloTarget),
                                      (uint32_t)cicRecord->classTwoID(reloTarget),
                                      cicRecord->objectTypeIsFixed(reloTarget) ? "true" : "false",
@@ -1952,7 +1955,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\n Validate System Class By Name: systemClassID=%d classChainOffsetInSCC=%p ",
+            log->printf("\n Validate System Class By Name: systemClassID=%d classChainOffsetInSCC=%p ",
                      (uint32_t)scmRecord->systemClassID(reloTarget),
                      (void *)scmRecord->classChainOffset(reloTarget));
             }
@@ -1966,7 +1969,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\n Validate Class Chain: classID=%d classChainOffsetInSCC=%p ",
+            log->printf("\n Validate Class Chain: classID=%d classChainOffsetInSCC=%p ",
                      (uint32_t)ccRecord->classID(reloTarget),
                      (void *)ccRecord->classChainOffset(reloTarget));
             }
@@ -1980,7 +1983,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\n Validate Method By Name: methodID=%d, beholderID=%d, index=%d ",
+            log->printf("\n Validate Method By Name: methodID=%d, beholderID=%d, index=%d ",
                      (uint32_t)mfcRecord->methodID(reloTarget),
                      (uint32_t)mfcRecord->beholderID(reloTarget),
                      mfcRecord->index(reloTarget));
@@ -2010,7 +2013,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
             else
                TR_ASSERT_FATAL(false, "Unknown relokind %d!\n", kind);
 
-            traceMsg(self()->comp(), "\n Validate %s Method From CP: methodID=%d, definingClassID=%d, beholderID=%d, cpIndex=%d ",
+            log->printf("\n Validate %s Method From CP: methodID=%d, definingClassID=%d, beholderID=%d, cpIndex=%d ",
                      recordType,
                      (uint32_t)mfcpRecord->methodID(reloTarget),
                      (uint32_t)mfcpRecord->definingClassID(reloTarget),
@@ -2027,7 +2030,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\n Validate Virtual Method From Offset: methodID=%d, definingClassID=%d, beholderID=%d, virtualCallOffset=%d, ignoreRtResolve=%s ",
+            log->printf("\n Validate Virtual Method From Offset: methodID=%d, definingClassID=%d, beholderID=%d, virtualCallOffset=%d, ignoreRtResolve=%s ",
                      (uint32_t)vmfoRecord->methodID(reloTarget),
                      (uint32_t)vmfoRecord->definingClassID(reloTarget),
                      (uint32_t)vmfoRecord->beholderID(reloTarget),
@@ -2044,7 +2047,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\n Validate Interface Method From CP: methodID=%d, definingClassID=%d, beholderID=%d, lookupID=%d, cpIndex=%d ",
+            log->printf("\n Validate Interface Method From CP: methodID=%d, definingClassID=%d, beholderID=%d, lookupID=%d, cpIndex=%d ",
                      (uint32_t)imfcpRecord->methodID(reloTarget),
                      (uint32_t)imfcpRecord->definingClassID(reloTarget),
                      (uint32_t)imfcpRecord->beholderID(reloTarget),
@@ -2061,7 +2064,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\n Validate Method From Class and Sig: methodID=%d, definingClassID=%d, lookupClassID=%d, beholderID=%d, romMethodOffsetInSCC=%p ",
+            log->printf("\n Validate Method From Class and Sig: methodID=%d, definingClassID=%d, lookupClassID=%d, beholderID=%d, romMethodOffsetInSCC=%p ",
                      (uint32_t)mfcsRecord->methodID(reloTarget),
                      (uint32_t)mfcsRecord->definingClassID(reloTarget),
                      (uint32_t)mfcsRecord->lookupClassID(reloTarget),
@@ -2078,7 +2081,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\n Validate Stack Walker May Skip Frames: methodID=%d, methodClassID=%d, skipFrames=%s ",
+            log->printf("\n Validate Stack Walker May Skip Frames: methodID=%d, methodClassID=%d, skipFrames=%s ",
                      (uint32_t)swmsfRecord->methodID(reloTarget),
                      (uint32_t)swmsfRecord->methodClassID(reloTarget),
                      swmsfRecord->skipFrames(reloTarget) ? "true" : "false");
@@ -2093,7 +2096,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\n Validate Class Info Is Initialized: classID=%d, isInitialized=%s ",
+            log->printf("\n Validate Class Info Is Initialized: classID=%d, isInitialized=%s ",
                      (uint32_t)ciiiRecord->classID(reloTarget),
                      ciiiRecord->isInitialized(reloTarget) ? "true" : "false");
             }
@@ -2107,7 +2110,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\n Validate Method From Single Implementor: methodID=%d, definingClassID=%d, thisClassID=%d, cpIndexOrVftSlot=%d, callerMethodID=%d, useGetResolvedInterfaceMethod=%d ",
+            log->printf("\n Validate Method From Single Implementor: methodID=%d, definingClassID=%d, thisClassID=%d, cpIndexOrVftSlot=%d, callerMethodID=%d, useGetResolvedInterfaceMethod=%d ",
                      (uint32_t)mfsiRecord->methodID(reloTarget),
                      (uint32_t)mfsiRecord->definingClassID(reloTarget),
                      (uint32_t)mfsiRecord->thisClassID(reloTarget),
@@ -2125,7 +2128,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\n Validate Method From Single Interface Implementor: methodID=%u, definingClassID=%u, thisClassID=%u, cpIndex=%u, callerMethodID=%u ",
+            log->printf("\n Validate Method From Single Interface Implementor: methodID=%u, definingClassID=%u, thisClassID=%u, cpIndex=%u, callerMethodID=%u ",
                      (uint32_t)mfsiiRecord->methodID(reloTarget),
                      (uint32_t)mfsiiRecord->definingClassID(reloTarget),
                      (uint32_t)mfsiiRecord->thisClassID(reloTarget),
@@ -2142,7 +2145,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\n Validate Method From Single Abstract Implementor: methodID=%d, definingClassID=%d, thisClassID=%d, vftSlot=%d, callerMethodID=%d ",
+            log->printf("\n Validate Method From Single Abstract Implementor: methodID=%d, definingClassID=%d, thisClassID=%d, vftSlot=%d, callerMethodID=%d ",
                      (uint32_t)mfsaiRecord->methodID(reloTarget),
                      (uint32_t)mfsaiRecord->definingClassID(reloTarget),
                      (uint32_t)mfsaiRecord->thisClassID(reloTarget),
@@ -2160,7 +2163,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\n %sSymbol From Manager: symbolID=%d symbolType=%d flags=%x",
+            log->printf("\n %sSymbol From Manager: symbolID=%d symbolType=%d flags=%x",
                      kind == TR_DiscontiguousSymbolFromManager ? "Discontiguous " : "",
                      (uint32_t)sfmRecord->symbolID(reloTarget),
                      (uint32_t)sfmRecord->symbolType(reloTarget),
@@ -2176,7 +2179,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\n Resolved Trampoline: symbolID=%u ",
+            log->printf("\n Resolved Trampoline: symbolID=%u ",
                      (uint32_t)rtRecord->symbolID(reloTarget));
             }
          }
@@ -2189,7 +2192,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\nTR_DataAddress: InlinedCallSite index = %d, Constant pool = %x, cpIndex = %d, offset = %x, flags = %x",
+            log->printf("\nTR_DataAddress: InlinedCallSite index = %d, Constant pool = %x, cpIndex = %d, offset = %x, flags = %x",
                                      daRecord->inlinedSiteIndex(reloTarget),
                                      daRecord->constantPool(reloTarget),
                                      daRecord->cpIndex(reloTarget),
@@ -2224,7 +2227,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
             else
                TR_ASSERT_FATAL(false, "Unknown relokind %d!\n", kind);
 
-            traceMsg(self()->comp(),"%s: patch location offset = %p", recordType, (void *)rwoRecord->offset(reloTarget));
+            log->printf("%s: patch location offset = %p", recordType, (void *)rwoRecord->offset(reloTarget));
             }
          }
          break;
@@ -2236,7 +2239,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\nTR_EmitClass: InlinedCallSite index = %d, bcIndex = %d",
+            log->printf("\nTR_EmitClass: InlinedCallSite index = %d, bcIndex = %d",
                                      ecRecord->inlinedSiteIndex(reloTarget),
                                      ecRecord->bcIndex(reloTarget));
             }
@@ -2250,7 +2253,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\nTR_PicTrampolines: num trampolines = %d", ptRecord->numTrampolines(reloTarget));
+            log->printf("\nTR_PicTrampolines: num trampolines = %d", ptRecord->numTrampolines(reloTarget));
             }
          }
          break;
@@ -2262,7 +2265,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\n Debug Counter: Inlined site index = %d, bcIndex = %d, delta = %d, fidelity = %d, staticDelta = %d, offsetOfNameString = %p",
+            log->printf("\n Debug Counter: Inlined site index = %d, bcIndex = %d, delta = %d, fidelity = %d, staticDelta = %d, offsetOfNameString = %p",
                                      dcRecord->inlinedSiteIndex(reloTarget),
                                      dcRecord->bcIndex(reloTarget),
                                      dcRecord->delta(reloTarget),
@@ -2280,7 +2283,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\n Frequency offset %lld", bfRecord->frequencyOffset(reloTarget));
+            log->printf("\n Frequency offset %lld", bfRecord->frequencyOffset(reloTarget));
             }
          }
          break;
@@ -2292,7 +2295,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(self()->comp(), "\n Breakpoint Guard: Inlined site index = %d, destinationAddress = %p",
+            log->printf("\n Breakpoint Guard: Inlined site index = %d, destinationAddress = %p",
                      bpgRecord->inlinedSiteIndex(reloTarget),
                      bpgRecord->destinationAddress(reloTarget));
             }
@@ -2306,8 +2309,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(
-               self()->comp(),
+            log->printf(
                "\n Validate J2I Thunk From Method: thunkID=%d, methodID=%d",
                thunkRecord->thunkID(reloTarget),
                thunkRecord->methodID(reloTarget));
@@ -2322,8 +2324,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(
-               self()->comp(),
+            log->printf(
                "\n Validate Is Class Visible: sourceClassID=%d, destClassID=%d, isVisible=%s ",
                      (uint32_t)icvRecord->sourceClassID(reloTarget),
                      (uint32_t)icvRecord->destClassID(reloTarget),
@@ -2339,8 +2340,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(
-               self()->comp(),
+            log->printf(
                "\n Method Enter/Exit Hook Address: isEnterHookAddr=%s ",
                mehaRecord->isEnterHookAddr(reloTarget) ? "true" : "false");
             }
@@ -2354,8 +2354,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(
-               self()->comp(),
+            log->printf(
                "\n Validate Dynamic Method From Callsite Index: methodID=%d, callerID=%d, callsiteIndex=%d, appendixObjectNull=%s, definingClassID=%d, methodIndex=%d ",
                      (uint32_t)dmciRecord->methodID(reloTarget),
                      (uint32_t)dmciRecord->callerID(reloTarget),
@@ -2374,8 +2373,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(
-               self()->comp(),
+            log->printf(
                "\n Validate Handle Method From CP Index: methodID=%d, callerID=%d, cpIndex=%d, appendixObjectNull=%s, definingClassID=%d, methodIndex=%d ",
                      (uint32_t)hmciRecord->methodID(reloTarget),
                      (uint32_t)hmciRecord->callerID(reloTarget),
@@ -2394,8 +2392,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(
-               self()->comp(),
+            log->printf(
                "\n Callsite Table Entry Address: methodID=%d, callsiteIndex=%d ",
                (uint32_t)cteaRecord->methodID(reloTarget),
                cteaRecord->callsiteIndex(reloTarget));
@@ -2410,8 +2407,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          self()->traceRelocationOffsets(startOfOffsets, offsetSize, endOfCurrentRecord, orderedPair);
          if (isVerbose)
             {
-            traceMsg(
-               self()->comp(),
+            log->printf(
                "\n Method Type Table Entry Address: methodID=%d, cpIndex=%d ",
                      (uint32_t)mteaRecord->methodID(reloTarget),
                      mteaRecord->cpIndex(reloTarget));
@@ -2423,7 +2419,7 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
          TR_ASSERT_FATAL(false, "dumpRelocationHeaderData: unknown relo kind %d\n", kind);
       }
 
-   traceMsg(self()->comp(), "\n");
+   log->println();
 
    return endOfCurrentRecord;
    }
@@ -2431,31 +2427,34 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
 void
 J9::AheadOfTimeCompile::dumpRelocationData()
    {
+   TR::Compilation *comp = self()->comp();
+   OMR::Logger *log = comp->log();
+
    // Don't trace unless traceRelocatableDataCG or traceRelocatableDataDetailsCG
-   if (!self()->comp()->getOption(TR_TraceRelocatableDataCG) && !self()->comp()->getOption(TR_TraceRelocatableDataDetailsCG))
+   if (!comp->getOption(TR_TraceRelocatableDataCG) && !comp->getOption(TR_TraceRelocatableDataDetailsCG))
       {
       return;
       }
 
-   bool isVerbose = self()->comp()->getOption(TR_TraceRelocatableDataDetailsCG);
+   bool isVerbose = comp->getOption(TR_TraceRelocatableDataDetailsCG);
 
    uint8_t *cursor = self()->getRelocationData();
 
    if (!cursor)
       {
-      traceMsg(self()->comp(), "No relocation data allocated\n");
+      log->prints("No relocation data allocated\n");
       return;
       }
 
    // Output the method
-   traceMsg(self()->comp(), "%s\n", self()->comp()->signature());
+   log->printf("%s\n", comp->signature());
 
-   if (self()->comp()->getOption(TR_TraceRelocatableDataCG))
+   if (comp->getOption(TR_TraceRelocatableDataCG))
       {
-      traceMsg(self()->comp(), "\n\nRelocation Record Generation Info\n");
-      traceMsg(self()->comp(), "%-35s %-32s %-5s %-9s %-10s %-8s\n", "Type", "File", "Line","Offset(M)","Offset(PC)", "Node");
+      log->prints("\n\nRelocation Record Generation Info\n");
+      log->printf("%-35s %-32s %-5s %-9s %-10s %-8s\n", "Type", "File", "Line","Offset(M)","Offset(PC)", "Node");
 
-      TR::list<TR::Relocation*>& aotRelocations = self()->comp()->cg()->getExternalRelocationList();
+      TR::list<TR::Relocation*>& aotRelocations = comp->cg()->getExternalRelocationList();
       //iterate over aotRelocations
       if (!aotRelocations.empty())
          {
@@ -2463,11 +2462,11 @@ J9::AheadOfTimeCompile::dumpRelocationData()
             {
             if (*relocation)
                {
-               (*relocation)->trace(self()->comp());
+               (*relocation)->trace(comp);
                }
             }
          }
-      if (!self()->comp()->getOption(TR_TraceRelocatableDataCG) && !self()->comp()->getOption(TR_TraceRelocatableDataDetailsCG))
+      if (!comp->getOption(TR_TraceRelocatableDataCG) && !comp->getOption(TR_TraceRelocatableDataDetailsCG))
          {
          return;//otherwise continue with the other options
          }
@@ -2475,34 +2474,33 @@ J9::AheadOfTimeCompile::dumpRelocationData()
 
    if (isVerbose)
       {
-      traceMsg(self()->comp(), "Size of relocation data in AOT object is %d bytes\n", self()->getSizeOfAOTRelocations());
+      log->printf("Size of relocation data in AOT object is %d bytes\n", self()->getSizeOfAOTRelocations());
       }
 
    uint8_t *endOfData;
-   if (self()->comp()->target().is64Bit())
+   if (comp->target().is64Bit())
       {
       endOfData = cursor + *(uint64_t *)cursor;
-      traceMsg(self()->comp(), "Size field in relocation data is %d bytes\n\n", *(uint64_t *)cursor);
+      log->printf("Size field in relocation data is %d bytes\n\n", *(uint64_t *)cursor);
       cursor += 8;
       }
    else
       {
       endOfData = cursor + *(uint32_t *)cursor;
-      traceMsg(self()->comp(), "Size field in relocation data is %d bytes\n\n", *(uint32_t *)cursor);
+      log->printf("Size field in relocation data is %d bytes\n\n", *(uint32_t *)cursor);
       cursor += 4;
       }
 
-   if (self()->comp()->getOption(TR_UseSymbolValidationManager))
+   if (comp->getOption(TR_UseSymbolValidationManager))
       {
-      traceMsg(
-         self()->comp(),
+      log->printf(
          "SCC offset of class chain offsets of well-known classes is: 0x%llx\n\n",
          (unsigned long long)*(uintptr_t *)cursor);
       cursor += sizeof (uintptr_t);
       }
 
-   traceMsg(self()->comp(), "Address           Size %-31s", "Type");
-   traceMsg(self()->comp(), "Width EIP Index Offsets\n"); // Offsets from Code Start
+   log->printf("Address           Size %-31s", "Type");
+   log->prints("Width EIP Index Offsets\n"); // Offsets from Code Start
 
    while (cursor < endOfData)
       {

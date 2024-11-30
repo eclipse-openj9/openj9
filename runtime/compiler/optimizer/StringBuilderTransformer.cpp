@@ -32,6 +32,7 @@
 #include "infra/String.hpp"
 #include "optimizer/Optimization_inlines.hpp"
 #include "ras/DebugCounter.hpp"
+#include "ras/Logger.hpp"
 
 #define OPT_DETAILS "O^O STRINGBUILDER TRANSFORMER: "
 
@@ -122,7 +123,7 @@ int32_t TR_StringBuilderTransformer::performOnBlock(TR::Block* block)
             {
             if (trace())
                {
-               traceMsg(comp(), "[0x%p] Found new java/lang/StringBuilder node.\n", currentNode);
+               comp()->log()->printf("[0x%p] Found new java/lang/StringBuilder node.\n", currentNode);
                }
 
             ++iter;
@@ -225,7 +226,7 @@ TR::Node* TR_StringBuilderTransformer::findStringBuilderInit(TR::TreeTopIterator
       while (comp()->getMethodSymbol()->isOSRRelatedNode(iter.currentNode(), bci))
          {
          if (trace())
-            traceMsg(comp(), "[0x%p] Skipping OSR bookkeeping node.\n", iter.currentNode());
+            comp()->log()->printf("[0x%p] Skipping OSR bookkeeping node.\n", iter.currentNode());
          if (newNode == iter.currentNode()->getFirstChild())
             foundNewReference = true;
          ++iter;
@@ -254,7 +255,7 @@ TR::Node* TR_StringBuilderTransformer::findStringBuilderInit(TR::TreeTopIterator
             {
             if (trace())
                {
-               traceMsg(comp(), "[0x%p] Found java/lang/StringBuilder.<init>()V call node.\n", callNode);
+               comp()->log()->printf("[0x%p] Found java/lang/StringBuilder.<init>()V call node.\n", callNode);
                }
 
             return callNode;
@@ -264,7 +265,7 @@ TR::Node* TR_StringBuilderTransformer::findStringBuilderInit(TR::TreeTopIterator
 
    if (trace())
       {
-      traceMsg(comp(), "[0x%p] Could not find java/lang/StringBuilder.<init>()V call on new node.\n", newNode);
+      comp()->log()->printf("[0x%p] Could not find java/lang/StringBuilder.<init>()V call on new node.\n", newNode);
       }
 
    TR::DebugCounter::incStaticDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "StringBuilderTransformer/Failed/CouldNotLocateInit/%s", comp()->signature()));
@@ -304,6 +305,7 @@ TR::Node* TR_StringBuilderTransformer::findStringBuilderInit(TR::TreeTopIterator
  */
 TR::Node* TR_StringBuilderTransformer::findStringBuilderChainedAppendArguments(TR::TreeTopIterator iter, TR::Node* newNode, List<TR_Pair<TR::Node*, TR::RecognizedMethod> >& appendArguments)
    {
+   OMR::Logger *log = comp()->log();
    TR::Node* stringBuilderReceiver = newNode;
 
    // Under postExecution OSR, there will be an additional reference to the call result
@@ -323,7 +325,7 @@ TR::Node* TR_StringBuilderTransformer::findStringBuilderChainedAppendArguments(T
          {
          if (trace())
             {
-            traceMsg(comp(), "Skipping potentialOSRPointHelper call n%dn [0x%p].\n", currentNode->getGlobalIndex(), currentNode);
+            log->printf("Skipping potentialOSRPointHelper call n%dn [0x%p].\n", currentNode->getGlobalIndex(), currentNode);
             }
          ++iter;
          continue;
@@ -337,7 +339,7 @@ TR::Node* TR_StringBuilderTransformer::findStringBuilderChainedAppendArguments(T
             {
             if (trace())
                {
-               traceMsg(comp(), "[0x%p] Examining acall node.\n", acallNode);
+               log->printf("[0x%p] Examining acall node.\n", acallNode);
                }
 
             OMR::ResolvedMethodSymbol* acallSymbol = acallNode->getSymbol()->getResolvedMethodSymbol();
@@ -363,7 +365,7 @@ TR::Node* TR_StringBuilderTransformer::findStringBuilderChainedAppendArguments(T
 
                         if (trace())
                            {
-                           traceMsg(comp(), "[0x%p] Adding argument of java/lang/StringBuilder.append acall node.\n", acallNode);
+                           log->printf("[0x%p] Adding argument of java/lang/StringBuilder.append acall node.\n", acallNode);
                            }
 
                         appendArguments.add(new (trHeapMemory()) TR_Pair<TR::Node*, TR::RecognizedMethod> (acallNode->getSecondChild(), recognizedMethod));
@@ -376,7 +378,7 @@ TR::Node* TR_StringBuilderTransformer::findStringBuilderChainedAppendArguments(T
                         {
                         if (trace())
                            {
-                           traceMsg(comp(), "[0x%p] Invalid reference count at acall node due to missing OSR bookkeeping.\n", stringBuilderReceiver);
+                           log->printf("[0x%p] Invalid reference count at acall node due to missing OSR bookkeeping.\n", stringBuilderReceiver);
                            }
 
                         TR::DebugCounter::incStaticDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "StringBuilderTransformer/Failed/InvalidReferenceCountMissingBookkeeping/%s", comp()->signature()));
@@ -387,7 +389,7 @@ TR::Node* TR_StringBuilderTransformer::findStringBuilderChainedAppendArguments(T
                         {
                         if (trace())
                            {
-                           traceMsg(comp(), "[0x%p] Invalid reference count at acall node.\n", acallNode);
+                           log->printf("[0x%p] Invalid reference count at acall node.\n", acallNode);
                            }
 
                         TR::DebugCounter::incStaticDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "StringBuilderTransformer/Failed/InvalidReferenceCount/%s", comp()->signature()));
@@ -404,7 +406,7 @@ TR::Node* TR_StringBuilderTransformer::findStringBuilderChainedAppendArguments(T
                         {
                         if (trace())
                            {
-                           traceMsg(comp(), "[0x%p] Found java/lang/StringBuilder.toString acall node.\n", acallNode);
+                           log->printf("[0x%p] Found java/lang/StringBuilder.toString acall node.\n", acallNode);
                            }
 
                         return acallNode;
@@ -413,7 +415,7 @@ TR::Node* TR_StringBuilderTransformer::findStringBuilderChainedAppendArguments(T
                         {
                         if (trace())
                            {
-                           traceMsg(comp(), "[0x%p] Invalid reference count at acall node due to missing OSR bookkeeping for final append.\n", stringBuilderReceiver);
+                           log->printf("[0x%p] Invalid reference count at acall node due to missing OSR bookkeeping for final append.\n", stringBuilderReceiver);
                            }
 
                         TR::DebugCounter::incStaticDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "StringBuilderTransformer/Failed/InvalidReferenceCountMissingBookkeeping/%s", comp()->signature()));
@@ -427,7 +429,7 @@ TR::Node* TR_StringBuilderTransformer::findStringBuilderChainedAppendArguments(T
                      {
                      if (trace())
                         {
-                        traceMsg(comp(), "[0x%p] java/lang/StringBuilder.append chain broken at node.\n", acallNode);
+                        log->printf("[0x%p] java/lang/StringBuilder.append chain broken at node.\n", acallNode);
                         }
 
                      TR::DebugCounter::incStaticDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "StringBuilderTransformer/Failed/AppendChainBroken/%s", comp()->signature()));
@@ -440,7 +442,7 @@ TR::Node* TR_StringBuilderTransformer::findStringBuilderChainedAppendArguments(T
                {
                if (trace())
                   {
-                  traceMsg(comp(), "[0x%p] Unresolved acall node.\n", acallNode);
+                  log->printf("[0x%p] Unresolved acall node.\n", acallNode);
                   }
 
                TR::DebugCounter::incStaticDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "StringBuilderTransformer/Failed/UnresolvedACall/%s", comp()->signature()));
@@ -457,7 +459,7 @@ TR::Node* TR_StringBuilderTransformer::findStringBuilderChainedAppendArguments(T
 
    if (trace())
       {
-      traceMsg(comp(), "[0x%p] NULLCHK chain broken at node.\n", iter.currentNode());
+      log->printf("[0x%p] NULLCHK chain broken at node.\n", iter.currentNode());
       }
 
    TR::DebugCounter::incStaticDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "StringBuilderTransformer/Failed/ToStringNotFound/%s", comp()->signature()));
@@ -639,7 +641,7 @@ int32_t TR_StringBuilderTransformer::computeHeuristicStringBuilderInitCapacity(L
 
       if (trace())
          {
-         traceMsg(comp(), "[0x%p] Added capacity for node. Current capacity = %d.\n", argument, capacity);
+         comp()->log()->printf("[0x%p] Added capacity for node. Current capacity = %d.\n", argument, capacity);
          }
       }
 

@@ -116,30 +116,30 @@ static void printStack(OMR::Logger *log, TR::Compilation *comp, TR_Stack<TR::Nod
    // TODO: This should be in the debug DLL
    if (stack->isEmpty())
       {
-      traceMsg(comp, "   ---- %s: empty -----------------\n", message);
+      log->printf("   ---- %s: empty -----------------\n", message);
       }
    else
       {
       TR_BitVector nodesAlreadyPrinted(comp->getNodeCount(), comp->trMemory(), stackAlloc, growable);
       comp->getDebug()->saveNodeChecklist(nodesAlreadyPrinted);
       char buf[30];
-      traceMsg(comp, "   /--- %s ------------------------", message);
+      log->printf("   /--- %s ------------------------", message);
       for (int i = stack->topIndex(); i >= 0; --i)
          {
          TR::Node *node = stack->element(i);
-         traceMsg(comp, "\n");
+         log->println();
          snprintf(buf, sizeof(buf), "   @%-2d", i);
          comp->getDebug()->printWithFixedPrefix(log, node, 1, false, true, buf);
          if (!nodesAlreadyPrinted.isSet(node->getGlobalIndex()))
             {
             for (int j = 0; j < node->getNumChildren(); ++j)
                {
-               traceMsg(comp, "\n");
+               log->println();
                comp->getDebug()->printWithFixedPrefix(log, node->getChild(j), 3, true, true, "      ");
                }
             }
          }
-      traceMsg(comp, "\n");
+      log->println();
       }
    }
 
@@ -148,17 +148,17 @@ static void printTrees(OMR::Logger *log, TR::Compilation *comp, TR::TreeTop *fir
    // TODO: This should be in the debug DLL
    if (firstTree == stopTree)
       {
-      traceMsg(comp, "   ---- %s: none ------------------\n", message);
+      log->printf("   ---- %s: none ------------------\n", message);
       }
    else
       {
-      traceMsg(comp, "   /--- %s ------------------------", message);
+      log->printf("   /--- %s ------------------------", message);
       for (TR::TreeTop *tt = firstTree; tt && tt != stopTree; tt = tt->getNextTreeTop())
          {
-         traceMsg(comp, "\n");
+         log->println();
          comp->getDebug()->printWithFixedPrefix(log, tt->getNode(), 1, true, true, "      ");
          }
-      traceMsg(comp, "\n");
+      log->println();
       }
    }
 
@@ -190,15 +190,16 @@ static TR::ILOpCodes getCallOpForType(TR::DataType type)
 
 TR::Block * TR_J9ByteCodeIlGenerator::walker(TR::Block * prevBlock)
    {
+   OMR::Logger *log = comp()->log();
    int32_t i, lastIndex = _bcIndex, firstIndex = _bcIndex;
 
    if (comp()->getOption(TR_TraceILGen))
       {
       comp()->getDebug()->clearNodeChecklist();
-      traceMsg(comp(), "==== Starting ILGen walker at bytecode %x", _bcIndex);
+      log->printf("==== Starting ILGen walker at bytecode %x", _bcIndex);
       if (_argPlaceholderSlot != -1)
-         traceMsg(comp(), " argPlaceholderSlot=%d", _argPlaceholderSlot);
-      traceMsg(comp(), "\n");
+         log->printf(" argPlaceholderSlot=%d", _argPlaceholderSlot);
+      log->println();
       }
 
 
@@ -247,7 +248,7 @@ TR::Block * TR_J9ByteCodeIlGenerator::walker(TR::Block * prevBlock)
       TR::TreeTop *traceStop  = _block->getExit();
       TR::TreeTop *traceStart = traceStop->getPrevTreeTop();
       if (comp()->getOption(TR_TraceILGen))
-         traceMsg(comp(), "%4x: %s\n", _bcIndex, ((TR_J9VM *)fej9())->getByteCodeName(opcode));
+         log->printf("%4x: %s\n", _bcIndex, ((TR_J9VM *)fej9())->getByteCodeName(opcode));
 
       _bc = convertOpCodeToByteCodeEnum(opcode);
       stashArgumentsForOSR(_bc);
@@ -570,7 +571,7 @@ TR::Block * TR_J9ByteCodeIlGenerator::walker(TR::Block * prevBlock)
          TR_BitVector afterTreesInserted (comp()->getNodeCount(), trMemory(), stackAlloc, growable);
 
          comp()->getDebug()->saveNodeChecklist(beforeTreesInserted);
-         printTrees(comp()->log(), comp(), traceStart->getNextTreeTop(), traceStop, "trees inserted");
+         printTrees(log, comp(), traceStart->getNextTreeTop(), traceStop, "trees inserted");
          comp()->getDebug()->saveNodeChecklist(afterTreesInserted);
 
          // Commoning in the "stack after" printout should match that in the
@@ -584,9 +585,9 @@ TR::Block * TR_J9ByteCodeIlGenerator::walker(TR::Block * prevBlock)
          // be commoned, but this overall clarity seems to favour the terser format.
          //
          //comp()->getDebug()->restoreNodeChecklist(beforeTreesInserted);
-         printStack(comp()->log(), comp(), _stack, "stack after");
+         printStack(log, comp(), _stack, "stack after");
 
-         traceMsg(comp(), "  ============================================================\n");
+         log->prints("  ============================================================\n");
 
          // Commoning from now on will reflect trees already inserted, not
          // those that happened to appear on the stack.  (The desirability
@@ -749,7 +750,7 @@ TR_J9ByteCodeIlGenerator::placeholderWithDummySignature()
    // result to something like genNodeAndPopChildren which will expand the
    // signature properly.
    if (comp()->getOption(TR_TraceMethodIndex))
-      traceMsg(comp(), "placeholderWithDummySignature using owning symbol M%p _methodSymbol: M%p\n", comp()->getJittedMethodSymbol(), _methodSymbol);
+      comp()->log()->printf("placeholderWithDummySignature using owning symbol M%p _methodSymbol: M%p\n", comp()->getJittedMethodSymbol(), _methodSymbol);
 
    // Note that we use comp()->getJittedMethodSymbol() instead of _methodSymbol here.
    // The caller doesn't matter for this special method, and there's no need to make
@@ -955,7 +956,7 @@ TR_J9ByteCodeIlGenerator::expandPlaceholderCall()
    TR::Node *placeholder = pop();
    TR_ASSERT(isPlaceholderCall(placeholder), "expandPlaceholderCall expects placeholder call on top of stack");
    if (comp()->getOption(TR_TraceILGen))
-      traceMsg(comp(), "  Expanding placeholder call %s\n", comp()->getDebug()->getName(placeholder->getSymbolReference()));
+      comp()->log()->printf("  Expanding placeholder call %s\n", comp()->getDebug()->getName(placeholder->getSymbolReference()));
    for (int i = 0; i < placeholder->getNumChildren(); i++)
       push(placeholder->getAndDecChild(i));
    return placeholder->getNumChildren()-1; // there was already 1 for the placeholder itself
@@ -1055,7 +1056,7 @@ TR_J9ByteCodeIlGenerator::genNodeAndPopChildren(TR::ILOpCodes opcode, int32_t nu
 
       if (comp()->getOption(TR_TraceILGen))
          {
-         traceMsg(comp(), "  Expanded placeholder(s) needing %d additional nodes -- resulting symref: %s\n", numAdditionalNodes, comp()->getDebug()->getName(symRef));
+         comp()->log()->printf("  Expanded placeholder(s) needing %d additional nodes -- resulting symref: %s\n", numAdditionalNodes, comp()->getDebug()->getName(symRef));
 
          TR::StackMemoryRegion stackMemoryRegion(*comp()->trMemory());
 
@@ -1085,7 +1086,7 @@ TR_J9ByteCodeIlGenerator::genUnary(TR::ILOpCodes unaryOp, bool isForArrayAccess)
       {
       if (comp()->getOption(TR_TraceILGen))
          {
-         traceMsg(comp(), "setting i2l node %p n%dn non-negative because it's for array access\n");
+         comp()->log()->prints("setting i2l node %p n%dn non-negative because it's for array access\n");
          }
       node->setIsNonNegative(true);
       }
@@ -1121,13 +1122,13 @@ TR_J9ByteCodeIlGenerator::genTreeTop(TR::Node * n)
    //handle pending pushes for them because the operand stack is always empty at catch.
    bool isExceptionOnlyPoint = comp()->getOSRMode() == TR::involuntaryOSR && !n->canGCandReturn(comp()) && n->canGCandExcept();
    if (comp()->getOption(TR_TraceOSR))
-      traceMsg(comp(), "skip saving PPS for exceptionOnlyPoints %d node n%dn\n", isExceptionOnlyPoint, n->getGlobalIndex());
+      comp()->log()->printf("skip saving PPS for exceptionOnlyPoints %d node n%dn\n", isExceptionOnlyPoint, n->getGlobalIndex());
 
    // It is not necessary to save the stack under OSR if the bytecode index or caller has been marked as cannotAttemptOSR
    bool cannotAttemptOSR = comp()->getOption(TR_EnableOSR) && !comp()->isPeekingMethod() &&
       (_methodSymbol->cannotAttemptOSRAt(n->getByteCodeInfo(), NULL, comp()) || _cannotAttemptOSR);
    if (comp()->getOption(TR_TraceOSR) && cannotAttemptOSR)
-      traceMsg(comp(), "skip saving PPS for cannotAttemptOSR at %d:%d node n%dn\n", n->getByteCodeIndex(), n->getByteCodeInfo().getCallerIndex(), n->getGlobalIndex());
+      comp()->log()->printf("skip saving PPS for cannotAttemptOSR at %d:%d node n%dn\n", n->getByteCodeIndex(), n->getByteCodeInfo().getCallerIndex(), n->getGlobalIndex());
 
    if (!comp()->isPeekingMethod() && comp()->isPotentialOSRPoint(n) && !isExceptionOnlyPoint && !cannotAttemptOSR)
       {
@@ -1171,7 +1172,7 @@ TR_J9ByteCodeIlGenerator::genTreeTop(TR::Node * n)
         if (n->getFirstChild()->getOpCode().isCall() && !comp()->getOption(TR_FullSpeedDebug) && comp()->getOption(TR_EnableOSR))
            {
            if (comp()->getOption(TR_TraceOSR))
-              traceMsg(comp(), "Skipping OSR due to cost at bci %d.%d\n", comp()->getCurrentInlinedSiteIndex(), n->getFirstChild()->getByteCodeIndex());
+              comp()->log()->printf("Skipping OSR due to cost at bci %d.%d\n", comp()->getCurrentInlinedSiteIndex(), n->getFirstChild()->getByteCodeIndex());
            _methodSymbol->setCannotAttemptOSR(n->getFirstChild()->getByteCodeIndex());
            }
         }
@@ -1211,7 +1212,7 @@ TR_J9ByteCodeIlGenerator::genTreeTop(TR::Node * n)
                   }
                else if (comp()->getOption(TR_TraceOSR))
                   {
-                  traceMsg(comp(), "Skipping OSR stack state for repeated call n%dn in treetop n%dn\n", n->getFirstChild()->getGlobalIndex(), n->getGlobalIndex());
+                  comp()->log()->printf("Skipping OSR stack state for repeated call n%dn in treetop n%dn\n", n->getFirstChild()->getGlobalIndex(), n->getGlobalIndex());
                   }
 
                return _block->append(TR::TreeTop::create(comp(), n));
@@ -1691,7 +1692,7 @@ TR_J9ByteCodeIlGenerator::stashArgumentsForOSR(TR_J9ByteCode byteCode)
          }
 
       if (trace())
-         traceMsg(comp(), "Original num args for invokedynamic/handle: %d, num args to not stash for OSR: %d, stack size: %d\n", numArgs, numArgsToNotStash, _stack->size());
+         comp()->log()->printf("Original num args for invokedynamic/handle: %d, num args to not stash for OSR: %d, stack size: %d\n", numArgs, numArgsToNotStash, _stack->size());
       }
 
    numArgs -= numArgsToNotStash;
@@ -1994,7 +1995,8 @@ TR_J9ByteCodeIlGenerator::calculateElementAddressInContiguousArray(int32_t width
    int32_t shift = TR::TransformUtil::convertWidthToShift(width);
    if (shift)
       {
-      traceMsg(comp(), "shift > 0 (i.e., is true)\n");
+      if (trace())
+         comp()->log()->prints("shift > 0 (i.e., is true)\n");
       loadConstant(TR::iconst, shift);
       // generate a TR::aladd instead if required
       if (comp()->target().is64Bit())
@@ -2386,10 +2388,9 @@ TR_J9ByteCodeIlGenerator::genCompressedRefs(TR::Node * address, bool genTT, int3
    if (pEnv && (isLoad < 0)) // store
       value = address->getSecondChild();
    TR::Node *newAddress = TR::Node::createCompressedRefsAnchor(value);
-   //traceMsg(comp(), "compressedRefs anchor %p generated\n", newAddress);
 
    if (trace())
-      traceMsg(comp(), "IlGenerator: Generating compressedRefs anchor [%p] for node [%p]\n", newAddress, address);
+      comp()->log()->printf("IlGenerator: Generating compressedRefs anchor [%p] for node [%p]\n", newAddress, address);
 
    if (!pEnv && genTT)
       {
@@ -2421,7 +2422,7 @@ TR_J9ByteCodeIlGenerator::genNullCheck(TR::Node * first)
                grandChild->getSymbolReference()->getSymbol()->getRecognizedField() == TR::Symbol::Java_lang_String_value)
          {
          if (trace())
-            traceMsg(comp(), "Skipping NULLCHK (node %p) on String.value field : %s -> %s\n", grandChild, comp()->signature(), _methodSymbol->signature(trMemory()));
+            comp()->log()->printf("Skipping NULLCHK (node %p) on String.value field : %s -> %s\n", grandChild, comp()->signature(), _methodSymbol->signature(trMemory()));
          }
       else
          {
@@ -2637,6 +2638,7 @@ TR_J9ByteCodeIlGenerator::genIfImpl(TR::ILOpCodes nodeop)
 
    static char *disableIfFolding = feGetEnv("TR_DisableIfFolding");
    bool trace = comp()->getOption(TR_TraceILGen);
+   OMR::Logger *log = comp()->log();
 
    TR::DataType type = first->getDataType();
    if (!disableIfFolding &&
@@ -2677,12 +2679,12 @@ TR_J9ByteCodeIlGenerator::genIfImpl(TR::ILOpCodes nodeop)
       if (_blocksToInline)
          {
          if (trace)
-            traceMsg(comp(), "Not folding the if because of partial inlining\n");
+            log->prints("Not folding the if because of partial inlining\n");
          }
       else
          {
          if (trace)
-            traceMsg(comp(), "%s\n", branchTaken ? "taking the branch" : "fall through");
+            log->printf("%s\n", branchTaken ? "taking the branch" : "fall through");
 
          if (branchTaken)
             {
@@ -2836,29 +2838,30 @@ TR_J9ByteCodeIlGenerator::genIncLong()
 void
 TR_J9ByteCodeIlGenerator::genInvokeStatic(int32_t cpIndex)
    {
+   OMR::Logger *log = comp()->log();
    TR::SymbolReference *methodSymRef = symRefTab()->findOrCreateStaticMethodSymbol(_methodSymbol, cpIndex);
 
    if (comp()->getOption(TR_TraceILGen))
-      traceMsg(comp(), "  genInvokeStatic(%d) // %s\n", cpIndex, comp()->getDebug()->getName(methodSymRef));
+      log->printf("  genInvokeStatic(%d) // %s\n", cpIndex, comp()->getDebug()->getName(methodSymRef));
 
    if (runMacro(methodSymRef))
       {
       if (comp()->compileRelocatableCode())
          {
          if (comp()->getOption(TR_TraceILGen))
-            traceMsg(comp(), "  ILGen macro %s not supported in AOT.  Aborting compile.\n", comp()->getDebug()->getName(methodSymRef));
+            log->printf("  ILGen macro %s not supported in AOT.  Aborting compile.\n", comp()->getDebug()->getName(methodSymRef));
          comp()->failCompilation<J9::AOTHasInvokeHandle>("An ILGen macro not supported in AOT.  Aborting compile.");
          }
 
       if (comp()->getOption(TR_FullSpeedDebug) && !isPeekingMethod())
          {
          if (comp()->getOption(TR_TraceILGen))
-            traceMsg(comp(), "  ILGen macro %s not supported in FSD. Failing ilgen\n", comp()->getDebug()->getName(methodSymRef));
+            log->printf("  ILGen macro %s not supported in FSD. Failing ilgen\n", comp()->getDebug()->getName(methodSymRef));
          comp()->failCompilation<J9::FSDHasInvokeHandle>("An ILGen macro not supported in FSD.  Failing ilgen.");
          }
 
       if (comp()->getOption(TR_TraceILGen))
-         traceMsg(comp(), "  Finished macro %s\n", comp()->getDebug()->getName(methodSymRef));
+         log->printf("  Finished macro %s\n", comp()->getDebug()->getName(methodSymRef));
       return;
       }
 
@@ -2898,6 +2901,7 @@ TR_J9ByteCodeIlGenerator::genInvokeStatic(int32_t cpIndex)
 void
 TR_J9ByteCodeIlGenerator::genInvokeSpecial(int32_t cpIndex)
    {
+   OMR::Logger *log = comp()->log();
    TR::SymbolReference *methodSymRef = symRefTab()->findOrCreateSpecialMethodSymbol(_methodSymbol, cpIndex);
 
    genInvokeDirect(methodSymRef);
@@ -2916,7 +2920,7 @@ TR_J9ByteCodeIlGenerator::genInvokeSpecial(int32_t cpIndex)
    if (skipInvokeSpecialInterfaceTypeChecks())
       {
       if (trace)
-         traceMsg(comp(), "invokespecial type tests disabled by env var\n");
+         log->prints("invokespecial type tests disabled by env var\n");
       return;
       }
 
@@ -2939,7 +2943,7 @@ TR_J9ByteCodeIlGenerator::genInvokeSpecial(int32_t cpIndex)
          const char * name = "(none)";
          if (_invokeSpecialInterface != NULL)
             name = fej9()->getClassNameChars(_invokeSpecialInterface, len);
-         traceMsg(comp(),
+         log->printf(
             "within interface %p %.*s for the purpose of invokespecial\n",
             _invokeSpecialInterface,
             len, name);
@@ -2949,7 +2953,7 @@ TR_J9ByteCodeIlGenerator::genInvokeSpecial(int32_t cpIndex)
    if (_invokeSpecialInterface == NULL)
       {
       if (trace)
-         traceMsg(comp(), "no invokespecial type tests in this method\n");
+         log->prints("no invokespecial type tests in this method\n");
       return;
       }
 
@@ -2957,14 +2961,14 @@ TR_J9ByteCodeIlGenerator::genInvokeSpecial(int32_t cpIndex)
    if (callee->isConstructor())
       {
       if (trace)
-         traceMsg(comp(), "no invokespecial type test for constructor\n");
+         log->prints("no invokespecial type test for constructor\n");
       return;
       }
 
    if (callee->isFinalInObject())
       {
       if (trace)
-         traceMsg(comp(), "invokespecial of final Object method is really invokevirtual\n");
+         log->prints("invokespecial of final Object method is really invokevirtual\n");
       return;
       }
 
@@ -3003,7 +3007,7 @@ TR_J9ByteCodeIlGenerator::genInvokeSpecial(int32_t cpIndex)
 
    _invokeSpecialInterfaceCalls->set(bcIndex);
    if (trace)
-      traceMsg(comp(), "request invokespecial type test at bc index %d\n", bcIndex);
+      log->printf("request invokespecial type test at bc index %d\n", bcIndex);
    }
 
 void
@@ -3186,7 +3190,7 @@ TR_J9ByteCodeIlGenerator::genInvokeInterface(int32_t cpIndex)
 
          if (comp()->getOption(TR_TraceILGen))
             {
-            traceMsg(comp(), "%s: move the anchored instanceof n%dn before ZEROCHK n%dn\n", __FUNCTION__, instanceOfTT->getNode()->getGlobalIndex(), zeroCHKTT->getNode()->getGlobalIndex());
+            comp()->log()->printf("%s: move the anchored instanceof n%dn before ZEROCHK n%dn\n", __FUNCTION__, instanceOfTT->getNode()->getGlobalIndex(), zeroCHKTT->getNode()->getGlobalIndex());
             }
          }
       }
@@ -3539,7 +3543,7 @@ TR_J9ByteCodeIlGenerator::genHandleTypeCheck(TR::Node* handle, TR::Node* expecte
 
    if (comp()->getOption(TR_TraceILGen))
       {
-      traceMsg(comp(), "Inserted indirect load of MethodHandle.type n%dn %p\n", handleType->getGlobalIndex(), handleType);
+      comp()->log()->printf("Inserted indirect load of MethodHandle.type n%dn %p\n", handleType->getGlobalIndex(), handleType);
       }
 
     // Generate zerochk
@@ -3749,6 +3753,7 @@ TR_J9ByteCodeIlGenerator::genInvokeInner(
    TR::KnownObjectTable::Index *requiredKoi,
    int32_t numExpectedArgs)
    {
+   OMR::Logger *log = comp()->log();
    TR::MethodSymbol * symbol = symRef->getSymbol()->castToMethodSymbol();
    bool isStatic     = symbol->isStatic();
    bool isDirectCall = indirectCallFirstChild == NULL;
@@ -4009,7 +4014,7 @@ TR_J9ByteCodeIlGenerator::genInvokeInner(
 #define DAA_PRINT(a) \
 case a: \
    if(trace()) \
-      traceMsg(comp(), "DAA Method found: %s\n", #a); \
+      comp()->log()->printf("DAA Method found: %s\n", #a); \
 break
 
    //print out the method name and ILCode from the
@@ -4344,7 +4349,7 @@ break
        !strncmp(_methodSymbol->getResolvedMethod()->signatureChars(), ORB_CALLER_METHOD_SIG, ORB_CALLER_METHOD_SIG_LEN))
       {
       if (comp()->getOption(TR_TraceILGen))
-         traceMsg(comp(), "handling callNode %p, current method %s\n", callNode, _methodSymbol->getResolvedMethod()->signature(trMemory()));
+         log->printf("handling callNode %p, current method %s\n", callNode, _methodSymbol->getResolvedMethod()->signature(trMemory()));
 
       TR::Node *receiver = callNode->getFirstArgument();
       if (receiver && receiver->getOpCode().hasSymbolReference() && receiver->getSymbol()->isParm() && !receiver->isThisPointer() &&
@@ -4356,7 +4361,7 @@ break
          TR_OpaqueClassBlock *cl = _methodSymbol->getResolvedMethod()->containingClass();
 
          if (comp()->getOption(TR_TraceILGen))
-            traceMsg(comp(), "called method %s, containing class %p\n", calledMethod->signature(trMemory()), cl);
+            log->printf("called method %s, containing class %p\n", calledMethod->signature(trMemory()), cl);
 
          bool isClassInitialized = false;
          TR_PersistentClassInfo * classInfo = comp()->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(cl, comp());
@@ -4364,14 +4369,14 @@ break
              isClassInitialized = true;
 
          if (comp()->getOption(TR_TraceILGen))
-            traceMsg(comp(), "isClassInitialized = %d\n", isClassInitialized);
+            log->printf("isClassInitialized = %d\n", isClassInitialized);
 
          if (isClassInitialized)
             {
             TR_OpaqueClassBlock *orbClass = fej9()->getClassFromSignature(ORB_REPLACE_CLASS_NAME, ORB_REPLACE_CLASS_LEN, callNode->getSymbol()->castToResolvedMethodSymbol()->getResolvedMethod());
 
             if (comp()->getOption(TR_TraceILGen))
-               traceMsg(comp(), "orbClass = %p, orbClassLoader %s systemClassLoader\n", orbClass, (!fej9()->isClassLoadedBySystemClassLoader(cl)) ? "!=" : "==");
+               log->printf("orbClass = %p, orbClassLoader %s systemClassLoader\n", orbClass, (!fej9()->isClassLoadedBySystemClassLoader(cl)) ? "!=" : "==");
 
             // PR107804 if the ORB class is loaded we cannot do the serialization opt since the
             // ObjectInputStream.redirectedReadObject cannot handle ORB for some reason
@@ -4417,12 +4422,12 @@ break
       }
 
    if (comp()->getOption(TR_TraceILGen))
-      traceMsg(comp(), "considering callNode %p for java serialization optimization\n", callNode);
+      log->printf("considering callNode %p for java serialization optimization\n", callNode);
    if (canDoSerializationOpt && callNode && callNode->getOpCode().hasSymbolReference() && !callNode->getSymbolReference()->isUnresolved() &&
        callNode->getOpCode().isCallDirect())
       {
       if (comp()->getOption(TR_TraceILGen))
-         traceMsg(comp(), "looking at receiver sig for callNode %p\n", callNode);
+         log->printf("looking at receiver sig for callNode %p\n", callNode);
       TR::Node *receiver = callNode->getFirstArgument();
       if (receiver && receiver->getOpCode().hasSymbolReference())
          {
@@ -4430,12 +4435,12 @@ break
          int32_t receiverLen;
          const char *receiverSig = receiverSymRef->getTypeSignature(receiverLen);
          if (comp()->getOption(TR_TraceILGen))
-             traceMsg(comp(), "handling callNode %p, receiver class name %s\n", callNode, receiverSig);
+             log->printf("handling callNode %p, receiver class name %s\n", callNode, receiverSig);
          if (receiverSig != NULL && (receiverLen == JAVA_SERIAL_CLASS_NAME_LEN) &&
              !strncmp(receiverSig, JAVA_SERIAL_CLASS_NAME, receiverLen))
             {
             if (comp()->getOption(TR_TraceILGen))
-               traceMsg(comp(), "handling callNode %p, current method %s\n", callNode, _methodSymbol->getResolvedMethod()->signature(trMemory()));
+               log->printf("handling callNode %p, current method %s\n", callNode, _methodSymbol->getResolvedMethod()->signature(trMemory()));
 
             if ((calledMethod->nameLength() == JAVA_SERIAL_CALLEE_METHOD_NAME_LEN) &&
                 !strncmp(calledMethod->nameChars(), JAVA_SERIAL_CALLEE_METHOD_NAME, JAVA_SERIAL_CALLEE_METHOD_NAME_LEN) &&
@@ -4445,18 +4450,18 @@ break
                TR_OpaqueClassBlock *cl = _methodSymbol->getResolvedMethod()->containingClass();
 
                if (comp()->getOption(TR_TraceILGen))
-                  traceMsg(comp(), "called method %s, containing class %p\n", calledMethod->signature(trMemory()), cl);
+                  log->printf("called method %s, containing class %p\n", calledMethod->signature(trMemory()), cl);
                bool isClassInitialized = false;
                TR_PersistentClassInfo * classInfo = comp()->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(cl, comp());
                if (classInfo && classInfo->isInitialized())
                   isClassInitialized = true;
                if (comp()->getOption(TR_TraceILGen))
-                  traceMsg(comp(), "isClassInitialized = %d\n", isClassInitialized);
+                  log->printf("isClassInitialized = %d\n", isClassInitialized);
                if (isClassInitialized)
                   {
                   TR_OpaqueClassBlock *serialClass = fej9()->getClassFromSignature(JAVA_SERIAL_REPLACE_CLASS_NAME, JAVA_SERIAL_REPLACE_CLASS_LEN, callNode->getSymbol()->castToResolvedMethodSymbol()->getResolvedMethod());
                   if (comp()->getOption(TR_TraceILGen))
-                     traceMsg(comp(), "serialClass = %p, serialClassLoader %s systemClassLoader\n", serialClass, (!fej9()->isClassLoadedBySystemClassLoader(cl)) ? "!=" : "==");
+                     log->printf("serialClass = %p, serialClassLoader %s systemClassLoader\n", serialClass, (!fej9()->isClassLoadedBySystemClassLoader(cl)) ? "!=" : "==");
                   if (serialClass && !fej9()->isClassLoadedBySystemClassLoader(cl))
                      {
                      TR_ScratchList<TR_ResolvedMethod> methods(trMemory());
@@ -4678,7 +4683,7 @@ break
    if ((numExpectedArgs > 0) && (numPopped < numExpectedArgs))
       {
       if (comp()->getOption(TR_TraceILGen))
-         traceMsg(comp(), "InvokeDynamic received error throwing MethodHandle. Popping extra args.\n");
+         log->prints("InvokeDynamic received error throwing MethodHandle. Popping extra args.\n");
       while (numPopped < numExpectedArgs)
          {
          pop();
@@ -4724,7 +4729,7 @@ break
              (len==23 && !strncmp(className, "java/lang/StringBuilder", 23)))
             {
                if (comp()->getOption(TR_TraceILGen))
-                  traceMsg(comp(), "added post-init fence for recognized class %s\n", className);
+                  log->printf("added post-init fence for recognized class %s\n", className);
                fenceRequired = true;
             }
          else
@@ -4739,7 +4744,7 @@ break
                if ((field->modifiers & J9AccFinal) && methodClass == jitGetDeclaringClassOfROMField(comp()->j9VMThread(), methodClass, field->shape))
                   {
                   if (comp()->getOption(TR_TraceILGen))
-                     traceMsg(comp(), "added fence due to final field %s \n", field->name);
+                     log->printf("added fence due to final field %s \n", field->name);
                   fenceRequired = true;
                   break;
                   }
@@ -5329,7 +5334,7 @@ TR_J9ByteCodeIlGenerator::loadFlattenableInstance(int32_t cpIndex)
 
          if (comp()->getOption(TR_TraceILGen))
             {
-            traceMsg(comp(), "Load flattened field %s\n - field[%d] name %s type %d offset %d\n",
+            comp()->log()->printf("Load flattened field %s\n - field[%d] name %s type %d offset %d\n",
                   comp()->getDebug()->getName(fieldSymRef), idx, fieldEntry._fieldname,
                   fieldEntry._datatype.getDataType(), fieldEntry._offset);
             }
@@ -5363,7 +5368,7 @@ TR_J9ByteCodeIlGenerator::loadStatic(int32_t cpIndex)
 
    TR::SymbolReference * symRef = symRefTab()->findOrCreateStaticSymbol(_methodSymbol, cpIndex, false);
    if (comp()->getOption(TR_TraceILGen))
-      traceMsg(comp(), "load static symref %d created with knownObjectIndex %d\n", symRef->getReferenceNumber(), symRef->getKnownObjectIndex());
+      comp()->log()->printf("load static symref %d created with knownObjectIndex %d\n", symRef->getReferenceNumber(), symRef->getKnownObjectIndex());
    TR::StaticSymbol *      symbol = symRef->getSymbol()->castToStaticSymbol();
    TR_ASSERT(symbol, "Didn't geta static symbol.");
 
@@ -5710,7 +5715,7 @@ TR_J9ByteCodeIlGenerator::loadFromCP(TR::DataType type, int32_t cpIndex)
             if (comp()->compileRelocatableCode())
                {
                if (comp()->getOption(TR_TraceILGen))
-                  traceMsg(comp(), "  Constant Dynamic not supported in AOT.\n");
+                  comp()->log()->prints("  Constant Dynamic not supported in AOT.\n");
                comp()->failCompilation<J9::AOTHasConstantDynamic>("Constant Dynamic not supported in AOT.");
                }
 
@@ -5936,7 +5941,7 @@ TR_J9ByteCodeIlGenerator::loadFromCP(TR::DataType type, int32_t cpIndex)
             if (comp()->compileRelocatableCode())
                {
                if (comp()->getOption(TR_TraceILGen))
-                  traceMsg(comp(), "  Method Handle Constant not supported in AOT.\n");
+                  comp()->log()->printf("  Method Handle Constant not supported in AOT.\n");
                comp()->failCompilation<J9::AOTHasMethodHandleConstant>("Method Handle Constant not supported in AOT.");
                }
             loadSymbol(TR::aload, symRefTab()->findOrCreateMethodHandleSymbol(_methodSymbol, cpIndex));
@@ -5947,7 +5952,7 @@ TR_J9ByteCodeIlGenerator::loadFromCP(TR::DataType type, int32_t cpIndex)
             if (comp()->compileRelocatableCode())
                {
                if (comp()->getOption(TR_TraceILGen))
-                  traceMsg(comp(), "  Method Type Constant not supported in AOT.\n");
+                  comp()->log()->printf("  Method Type Constant not supported in AOT.\n");
                comp()->failCompilation<J9::AOTHasMethodTypeConstant>("Method Type Constant not supported in AOT.");
                }
             loadSymbol(TR::aload, symRefTab()->findOrCreateMethodTypeSymbol(_methodSymbol, cpIndex));
@@ -6292,7 +6297,7 @@ TR_J9ByteCodeIlGenerator::genNew(TR::ILOpCodes opCode)
          )
          {
          if (comp()->getOption(TR_TraceILGen))
-            traceMsg(comp(), "skipping pre-init fence for recognized class %s\n", sig);
+            comp()->log()->printf("skipping pre-init fence for recognized class %s\n", sig);
          skipFlush = true;
          }
       }
@@ -6692,7 +6697,7 @@ TR_J9ByteCodeIlGenerator::storeInstance(int32_t cpIndex)
          TR::Node *value = pop();
          if (comp()->getOption(TR_TraceILGen))
             {
-            traceMsg(comp(), "%s: cpIndex %d isFieldFlattened 0 value n%dn isNonNull %d\n", __FUNCTION__, cpIndex, value->getGlobalIndex(), value->isNonNull());
+            comp()->log()->printf("%s: cpIndex %d isFieldFlattened 0 value n%dn isNonNull %d\n", __FUNCTION__, cpIndex, value->getGlobalIndex(), value->isNonNull());
             }
 
          if (!value->isNonNull())
@@ -6960,7 +6965,7 @@ TR_J9ByteCodeIlGenerator::storeFlattenableInstance(int32_t cpIndex)
       {
       if (comp()->getOption(TR_TraceILGen))
          {
-         traceMsg(comp(), "%s: cpIndex %d fieldCount 0 value n%dn isNonNull %d address n%dn isNonNull %d\n", __FUNCTION__, cpIndex,
+         comp()->log()->printf("%s: cpIndex %d fieldCount 0 value n%dn isNonNull %d address n%dn isNonNull %d\n", __FUNCTION__, cpIndex,
             value->getGlobalIndex(), value->isNonNull(), address->getGlobalIndex(), address->isNonNull());
          }
 
@@ -7010,7 +7015,7 @@ TR_J9ByteCodeIlGenerator::storeFlattenableInstance(int32_t cpIndex)
 
          if (comp()->getOption(TR_TraceILGen))
             {
-            traceMsg(comp(), "Store flattened field %s to %s \n - field[%d] name %s type %d offset %d\n",
+            comp()->log()->printf("Store flattened field %s to %s \n - field[%d] name %s type %d offset %d\n",
                   comp()->getDebug()->getName(loadFieldSymRef), comp()->getDebug()->getName(fieldSymRef),
                   idx, fieldEntry._fieldname, fieldEntry._datatype.getDataType(), fieldEntry._offset);
             }
@@ -7037,7 +7042,7 @@ TR_J9ByteCodeIlGenerator::storeStatic(int32_t cpIndex)
       {
       if (comp()->getOption(TR_TraceILGen))
          {
-         traceMsg(comp(), "%s: cpIndex %d isFieldNullRestricted 1 value n%dn isNonNull %d\n", __FUNCTION__, cpIndex, value->getGlobalIndex(), value->isNonNull());
+         comp()->log()->printf("%s: cpIndex %d isFieldNullRestricted 1 value n%dn isNonNull %d\n", __FUNCTION__, cpIndex, value->getGlobalIndex(), value->isNonNull());
          }
 
       if (!value->isNonNull())
@@ -7094,7 +7099,6 @@ TR_J9ByteCodeIlGenerator::storeStatic(int32_t cpIndex)
       // So set canBeArrayShadow false here
       //
       TR_PersistentFieldInfo * fieldInfo = _classInfo->getFieldInfo() ? _classInfo->getFieldInfo()->findFieldInfo(comp(), node, false) : NULL;
-      //traceMsg(comp(), "Field %p info %p\n", node, fieldInfo);
       if (storeCanBeRemovedForUnreadField(fieldInfo, value) &&
           performTransformation(comp(), "O^O CLASS LOOKAHEAD: Can skip store to static (that is never read) storing value %p based on class file examination\n", value))
          {
@@ -7222,7 +7226,6 @@ TR_J9ByteCodeIlGenerator::storeAuto(TR::DataType type, int32_t slot, bool isAdju
           !_methodSymbol->getThisTempForObjectCtor())
       {
       TR::SymbolReference *tempSymRef = symRefTab()->createTemporary(_methodSymbol, TR::Address);
-      ///traceMsg(comp(), "created tempSymRef = %d\n", tempSymRef->getReferenceNumber());
       _methodSymbol->setThisTempForObjectCtor(tempSymRef);
       // iterate through other returns in this method to make sure all the calls to jitCheckIfFinalizeObject
       // use this particular symref

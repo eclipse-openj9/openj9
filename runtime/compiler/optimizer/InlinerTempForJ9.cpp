@@ -456,7 +456,7 @@ TR_J9InlinerPolicy::alwaysWorthInlining(TR_ResolvedMethod * calleeMethod, TR::No
        comp()->fej9()->isForceInline(calleeMethod))
       {
       if (comp()->trace(OMR::inlining))
-         traceMsg(comp(), "@ForceInline was specified for %s, in alwaysWorthInlining\n", calleeMethod->signature(comp()->trMemory()));
+         comp()->log()->printf("@ForceInline was specified for %s, in alwaysWorthInlining\n", calleeMethod->signature(comp()->trMemory()));
       return true;
       }
 
@@ -465,7 +465,7 @@ TR_J9InlinerPolicy::alwaysWorthInlining(TR_ResolvedMethod * calleeMethod, TR::No
        !comp()->getOption(TR_DisableInliningUnrecognizedIntrinsics))
       {
       if (comp()->trace(OMR::inlining))
-         traceMsg(comp(), "@IntrinsicCandidate was specified for %s, in alwaysWorthInlining\n", calleeMethod->signature(comp()->trMemory()));
+         comp()->log()->printf("@IntrinsicCandidate was specified for %s, in alwaysWorthInlining\n", calleeMethod->signature(comp()->trMemory()));
       return true;
       }
 
@@ -522,35 +522,39 @@ TR_J9InlinerUtil::requestAdditionalOptimizations(TR_CallTarget *calltarget)
 void
 TR_J9InlinerUtil::adjustByteCodeSize(TR_ResolvedMethod *calleeResolvedMethod, bool isInLoop, TR::Block *block, int &bytecodeSize)
    {
-   traceMsg(comp(), "Reached new code \n");
-      int32_t blockNestingDepth = 1;
-      if (isInLoop)
-        {
-         char *tmptmp=0;
-         if (calleeResolvedMethod)
-            tmptmp = TR::Compiler->cls.classSignature(comp(), calleeResolvedMethod->containingClass(),trMemory());
+   bool trace = comp()->trace(OMR::inlining);
+   if (trace)
+      comp()->log()->prints("Reached new code \n");
 
-         bool doit = false;
+   int32_t blockNestingDepth = 1;
+   if (isInLoop)
+      {
+      char *tmptmp=0;
+      if (calleeResolvedMethod)
+         tmptmp = TR::Compiler->cls.classSignature(comp(), calleeResolvedMethod->containingClass(),trMemory());
 
-         if (((TR_J9InlinerPolicy *)inliner()->getPolicy())->aggressivelyInlineInLoops())
+      bool doit = false;
+
+      if (((TR_J9InlinerPolicy *)inliner()->getPolicy())->aggressivelyInlineInLoops())
+         {
+         doit = true;
+         }
+
+      if (doit && calleeResolvedMethod && !strcmp(tmptmp,"Ljava/math/BigDecimal;"))
+         {
+         if (trace)
+            comp()->log()->printf("Reached code for block nesting depth %d\n", blockNestingDepth);
+         if ((isInLoop || (blockNestingDepth > 1)) &&
+            (bytecodeSize > 10))
             {
-            doit = true;
+            if (trace)
+               heuristicTrace(tracer(),"Exceeds Size Threshold: Scaled down size for call block %d from %d to %d\n", block->getNumber(), bytecodeSize, 10);
+            bytecodeSize = 15;
             }
-
-         if (doit && calleeResolvedMethod && !strcmp(tmptmp,"Ljava/math/BigDecimal;"))
-            {
-            traceMsg(comp(), "Reached code for block nesting depth %d\n", blockNestingDepth);
-            if ((isInLoop || (blockNestingDepth > 1)) &&
-               (bytecodeSize > 10))
-               {
-               if (comp()->trace(OMR::inlining))
-                  heuristicTrace(tracer(),"Exceeds Size Threshold: Scaled down size for call block %d from %d to %d\n", block->getNumber(), bytecodeSize, 10);
-               bytecodeSize = 15;
-               }
-            }
-         else
-            heuristicTrace(tracer(),"Omitting Big Decimal method from size readjustment, calleeResolvedMethod = %p, tmptmp =%s",calleeResolvedMethod, tmptmp);
-        }
+         }
+      else
+         heuristicTrace(tracer(),"Omitting Big Decimal method from size readjustment, calleeResolvedMethod = %p, tmptmp =%s",calleeResolvedMethod, tmptmp);
+      }
    }
 
 TR::Node *
@@ -564,7 +568,6 @@ TR_J9InlinerPolicy::genCompressedRefs(TR::Node * address, bool genTT, int32_t is
       if (pEnv && (isLoad < 0)) // store
          value = address->getSecondChild();
       TR::Node *newAddress = TR::Node::createCompressedRefsAnchor(value);
-      //traceMsg(comp(), "compressedRefs anchor %p generated\n", newAddress);
       if (!pEnv && genTT)
          {
          if (!newAddress->getOpCode().isTreeTop())
@@ -630,6 +633,7 @@ TR_J9InlinerPolicy::createTempsForUnsafePutGet(TR::Node*& unsafeAddress,
                                            TR::SymbolReference*& newSymbolReferenceForAddress,
                                            bool isUnsafeGet)
    {
+   OMR::Logger *log = comp()->log();
    TR::Node *oldUnsafeAddress = unsafeAddress;
    TR::DataType dataType = unsafeAddress->getDataType();
    TR::SymbolReference *newSymbolReference =
@@ -643,7 +647,7 @@ TR_J9InlinerPolicy::createTempsForUnsafePutGet(TR::Node*& unsafeAddress,
    if (tracer()->debugLevel() && comp()->getLoggingEnabled())
       {
       debugTrace(tracer(), "\tIn createTempsForUnsafePutGet.  inserting store Tree before callNodeTT:\n");
-      comp()->getDebug()->print(comp()->log(), storeTree);
+      comp()->getDebug()->print(log, storeTree);
       }
 
    callNodeTreeTop->insertTreeTopsBeforeMe(storeTree);
@@ -668,8 +672,8 @@ TR_J9InlinerPolicy::createTempsForUnsafePutGet(TR::Node*& unsafeAddress,
 
    if (tracer()->debugLevel() && comp()->getLoggingEnabled())
       {
-      traceMsg(comp(), "\tIn createTempsForUnsafePutGet.  inserting store Tree before callNodeTT 2:\n");
-      comp()->getDebug()->print(comp()->log(), storeTree);
+      comp()->log()->prints("\tIn createTempsForUnsafePutGet.  inserting store Tree before callNodeTT 2:\n");
+      comp()->getDebug()->print(log, storeTree);
       }
 
    callNodeTreeTop->insertTreeTopsBeforeMe(storeTree);
@@ -1404,6 +1408,8 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
    if (isUnaligned && comp()->cg()->getSupportsAlignedAccessOnly())
       return false;
 
+   OMR::Logger *log = comp()->log();
+
    if (debug("traceUnsafe"))
       printf("createUnsafePutWithOffset %d in %s\n", type.getDataType(), comp()->signature());
 
@@ -1489,7 +1495,7 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
       {
       debugTrace(tracer(), "\t After createUnsafeAddressWithOffset, unsafeAddress = %p : \n", unsafeAddress);
       TR::TreeTop *tmpUnsafeAddressTT = TR::TreeTop::create(comp(), unsafeAddress);
-      comp()->getDebug()->print(comp()->log(), tmpUnsafeAddressTT);
+      comp()->getDebug()->print(log, tmpUnsafeAddressTT);
       }
 
    TR::Node* valueWithoutConversion = unsafeCall->getChild(3);
@@ -1527,9 +1533,9 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
    if (tracer()->debugLevel() && comp()->getLoggingEnabled())
       {
       debugTrace(tracer(), "\t After callNodeTreeTop setNode callNodeTreeTop dump:\n");
-      comp()->getDebug()->print(comp()->log(), callNodeTreeTop);
+      comp()->getDebug()->print(log, callNodeTreeTop);
       debugTrace(tracer(), "\t After callNodeTreeTop setNode oldCallNodeTreeTop dump oldCallNodeTreeTop->getNode->getChild = %p:\n", oldCallNodeTreeTop->getNode() ? oldCallNodeTreeTop->getNode()->getFirstChild() : 0);
-      comp()->getDebug()->print(comp()->log(), oldCallNodeTreeTop);
+      comp()->getDebug()->print(log, oldCallNodeTreeTop);
       }
 
    TR::TreeTop* directAccessTreeTop = genDirectAccessCodeForUnsafeGetPut(unsafeNode, false, false);
@@ -1537,7 +1543,7 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
    if (tracer()->debugLevel() && comp()->getLoggingEnabled())
       {
       debugTrace(tracer(), "\t After genDirectAccessCodeForUnsafeGetPut, directAccessTreeTop dump:\n");
-      comp()->getDebug()->print(comp()->log(), directAccessTreeTop);
+      comp()->getDebug()->print(log, directAccessTreeTop);
       }
 
    // We need to generate an arrayDirectAccessBlock AND a directAccessBlock in the following cases:
@@ -1558,7 +1564,7 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
    if (tracer()->debugLevel() && conversionNeeded)
       {
       debugTrace(tracer(), "\t After genDirectAccessCodeForUnsafeGetPut, arrayDirectAccessTreeTop dump:\n");
-      comp()->getDebug()->print(comp()->log(), arrayDirectAccessTreeTop);
+      comp()->getDebug()->print(log, arrayDirectAccessTreeTop);
       }
 
    // When conversionNeeded is true, NULL references must be accessed via direct access with conversion.
@@ -1582,7 +1588,7 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
    if (tracer()->debugLevel() && comp()->getLoggingEnabled())
       {
       debugTrace(tracer(), "\t After genIndirectAccessCodeForUnsafeGetPut, indirectAccessTreeTop dump:\n");
-      comp()->getDebug()->print(comp()->log(), indirectAccessTreeTop);
+      comp()->getDebug()->print(log, indirectAccessTreeTop);
       }
 
    if (indirectAccessTreeTop && indirectAccessTreeTop->getNode() && indirectAccessTreeTop->getNode()->getOpCode().isWrtBar())
@@ -1671,7 +1677,8 @@ TR_J9InlinerPolicy::createUnsafeMonitorOp(TR::ResolvedMethodSymbol *calleeSymbol
    // Expecting directToJNI to have loadaddr children, if not then we had better bail out
    if (isDirectJNI && unsafeCall->getChild(1)->getOpCodeValue() != TR::loadaddr)
       {
-      traceMsg(comp(),"Unsafe Inlining: The Unsafe.monitorEnter/Exit() children are not loadaddr's as expected. Not inlining.\n");
+      if (comp()->trace(OMR::inlining))
+         comp()->log()->prints("Unsafe Inlining: The Unsafe.monitorEnter/Exit() children are not loadaddr's as expected. Not inlining.\n");
       return unsafeCall;
       }
 
@@ -2907,12 +2914,13 @@ TR_J9InlinerPolicy::isInlineableJNI(TR_ResolvedMethod *method,TR::Node *callNode
 bool
 TR_J9InlinerPolicy::tryToInline(TR_CallTarget * calltarget, TR_CallStack * callStack, bool toInline)
    {
+   OMR::Logger *log = comp()->log();
    TR_ResolvedMethod *method = calltarget->_calleeMethod;
 
    if (toInline && insideIntPipelineForEach(method, comp()))
       {
       if (comp()->trace(OMR::inlining))
-         traceMsg(comp(), "forcing inlining of IntPipelineForEach or method inside it: %s\n", method->signature(comp()->trMemory()));
+         log->printf("forcing inlining of IntPipelineForEach or method inside it: %s\n", method->signature(comp()->trMemory()));
 
       return true;
       }
@@ -2923,7 +2931,7 @@ TR_J9InlinerPolicy::tryToInline(TR_CallTarget * calltarget, TR_CallStack * callS
           comp()->fej9()->isForceInline(method))
          {
          if (comp()->trace(OMR::inlining))
-            traceMsg(comp(), "@ForceInline was specified for %s, in tryToInline\n", method->signature(comp()->trMemory()));
+            log->printf("@ForceInline was specified for %s, in tryToInline\n", method->signature(comp()->trMemory()));
          return true;
          }
 
@@ -2932,7 +2940,7 @@ TR_J9InlinerPolicy::tryToInline(TR_CallTarget * calltarget, TR_CallStack * callS
           !comp()->getOption(TR_DisableInliningUnrecognizedIntrinsics))
          {
          if (comp()->trace(OMR::inlining))
-            traceMsg(comp(), "@IntrisicCandidate was specified for %s, in tryToInline\n", method->signature(comp()->trMemory()));
+            log->printf("@IntrisicCandidate was specified for %s, in tryToInline\n", method->signature(comp()->trMemory()));
          return true;
          }
       }
@@ -3031,7 +3039,7 @@ bool TR_J9InlinerPolicy::_tryToGenerateILForMethod (TR::ResolvedMethodSymbol* ca
 
       if (comp()->trace(OMR::inlining))
          {
-         traceMsg(comp(), "ILGen of [%p] using request: ", callNode);
+         comp()->log()->printf("ILGen of [%p] using request: ", callNode);
          ilGenRequest.print(comp()->log(), comp()->fe(), "\n");
          }
       success = calleeSymbol->genIL(comp()->fe(), comp(), comp()->getSymRefTab(), ilGenRequest);
@@ -3182,10 +3190,11 @@ TR_J9InlinerPolicy::adjustFanInSizeInExceedsSizeThreshold(int bytecodeSize,
 bool
 TR_J9InlinerPolicy::callMustBeInlinedInCold(TR_ResolvedMethod *method)
    {
+   OMR::Logger *log = comp()->log();
    if (insideIntPipelineForEach(method, comp()))
       {
       if (comp()->trace(OMR::inlining))
-         traceMsg(comp(), "forcing inlining of IntPipelineForEach or method inside it:  %s\n", method->signature(comp()->trMemory()));
+         log->printf("forcing inlining of IntPipelineForEach or method inside it:  %s\n", method->signature(comp()->trMemory()));
 
       return true;
       }
@@ -3215,7 +3224,7 @@ TR_J9InlinerPolicy::callMustBeInlinedInCold(TR_ResolvedMethod *method)
       if (vectorMethod)
          {
          if (comp()->trace(OMR::inlining))
-            traceMsg(comp(), "@ForceInline was specified for %s, in callMustBeInlined\n", method->signature(comp()->trMemory()));
+            log->printf("@ForceInline was specified for %s, in callMustBeInlined\n", method->signature(comp()->trMemory()));
          return true;
          }
       }
@@ -3225,7 +3234,7 @@ TR_J9InlinerPolicy::callMustBeInlinedInCold(TR_ResolvedMethod *method)
        !comp()->getOption(TR_DisableInliningUnrecognizedIntrinsics))
       {
       if (comp()->trace(OMR::inlining))
-         traceMsg(comp(), "@IntrinsicCandidate was specified for %s, in callMustBeInlined\n", method->signature(comp()->trMemory()));
+         log->printf("@IntrinsicCandidate was specified for %s, in callMustBeInlined\n", method->signature(comp()->trMemory()));
       return true;
       }
 
@@ -3757,6 +3766,7 @@ TR_MultipleCallTargetInliner::TR_MultipleCallTargetInliner(TR::Optimizer *optimi
 
 bool TR_MultipleCallTargetInliner::inlineCallTargets(TR::ResolvedMethodSymbol *callerSymbol, TR_CallStack *prevCallStack, TR_InnerPreexistenceInfo *innerPrexInfo)
    {
+   OMR::Logger *log = comp()->log();
    TR_InlinerDelimiter delimiter(tracer(),"TR_MultipleCallTargetInliner::inlineCallTargets");
 
    TR_CallStack callStack(comp(), callerSymbol, callerSymbol->getResolvedMethod(), prevCallStack, 0, true);
@@ -3965,15 +3975,15 @@ bool TR_MultipleCallTargetInliner::inlineCallTargets(TR::ResolvedMethodSymbol *c
 
       if (comp()->getOption(TR_TraceAll))
          {
-         traceMsg(comp(), "\n\n~~~ Call site weights for %s\n", comp()->signature());
-         traceMsg(comp(), "original size: %d\n", size);
-         traceMsg(comp(), "Inlining weight limit: %d\n", limit);
+         log->printf("\n\n~~~ Call site weights for %s\n", comp()->signature());
+         log->printf("original size: %d\n", size);
+         log->printf("Inlining weight limit: %d\n", limit);
          totalWeight = 0;
          for (calltarget = _callTargets.getFirst(); calltarget; calltarget = calltarget->getNext())
             {
             totalWeight += calltarget->_weight;
-            traceMsg(comp(), "Calltarget %p callnode %p %s\n", calltarget, &calltarget->_myCallSite->_callNode, tracer()->traceSignature(calltarget->_calleeSymbol));
-            traceMsg(comp(), "Site size: %d site weight %d call-graph adjusted weight %lf, total weight %d\n", calltarget->_size, calltarget->_weight, calltarget->_callGraphAdjustedWeight, totalWeight);
+            log->printf("Calltarget %p callnode %p %s\n", calltarget, &calltarget->_myCallSite->_callNode, tracer()->traceSignature(calltarget->_calleeSymbol));
+            log->printf("Site size: %d site weight %d call-graph adjusted weight %lf, total weight %d\n", calltarget->_size, calltarget->_weight, calltarget->_callGraphAdjustedWeight, totalWeight);
             }
          }
 
@@ -4014,7 +4024,7 @@ bool TR_MultipleCallTargetInliner::inlineCallTargets(TR::ResolvedMethodSymbol *c
          estimatedNumberOfNodes += myEstimate.getNodeEstimate();
 
          if (comp()->trace(OMR::inlining))
-            traceMsg(comp(), "Estimated Number of Nodes is %d after calltarget %p\n", estimatedNumberOfNodes,calltarget);
+            log->printf("Estimated Number of Nodes is %d after calltarget %p\n", estimatedNumberOfNodes, calltarget);
 
          debugTrace(tracer(),"Estimated Number of Nodes is %d after calltarget %p\n", estimatedNumberOfNodes,calltarget);
 
@@ -4133,8 +4143,7 @@ TR_MultipleCallTargetInliner::canSkipCountingNodes(TR_CallTarget* callTarget)
             TR_PrexArgument* arg  = callTarget->_myCallSite->_ecsPrexArgInfo->get(0);
             if (arg && arg->getClass() && arg->classIsFixed() && arg->hasKnownObjectIndex())
                {
-               if (comp()->trace(OMR::inlining))
-                  traceMsg(comp(), "Skipping node counting for sub call graph of java/lang/Object.hashCode()I\n");
+               trprints(comp()->trace(OMR::inlining), "Skipping node counting for sub call graph of java/lang/Object.hashCode()I\n");
                return true;
                }
             }
@@ -4148,6 +4157,7 @@ TR_MultipleCallTargetInliner::canSkipCountingNodes(TR_CallTarget* callTarget)
 
 void TR_MultipleCallTargetInliner::weighCallSite( TR_CallStack * callStack , TR_CallSite *callsite, bool currentBlockHasExceptionSuccessors, bool dontAddCalls)
    {
+   OMR::Logger *log = comp()->log();
    TR_J9InlinerPolicy *j9inlinerPolicy = (TR_J9InlinerPolicy *) getPolicy();
    TR_InlinerDelimiter delimiter(tracer(), "weighCallSite");
 
@@ -4238,7 +4248,7 @@ void TR_MultipleCallTargetInliner::weighCallSite( TR_CallStack * callStack , TR_
             heuristicTrace(tracer(),"Not Adding Call Target %p to list of targets to be inlined");
             if (comp()->cg()->traceBCDCodeGen())
                {
-               traceMsg(comp(), "q^q : failing to inline %s into %s (callNode %p on line_no=%d) due to code size\n",
+               log->printf("q^q : failing to inline %s into %s (callNode %p on line_no=%d) due to code size\n",
                   tracer()->traceSignature(calltarget->_calleeSymbol),tracer()->traceSignature(callStack->_methodSymbol),
                   callsite->_callNode,comp()->getLineNumber(callsite->_callNode));
                }
@@ -4481,7 +4491,7 @@ void TR_MultipleCallTargetInliner::weighCallSite( TR_CallStack * callStack , TR_
             tracer()->insertCounter(Callee_Too_Many_Bytecodes,calltarget->_myCallSite->_callNodeTreeTop);
             TR::Options::INLINE_calleeToDeep ++;
             if (comp()->trace(OMR::inlining))
-               traceMsg(comp(), "inliner: size exceeds call graph size threshold: %d > %d: %s\n", size, _maxRecursiveCallByteCodeSizeEstimate, tracer()->traceSignature(calltarget->_calleeSymbol));
+               log->printf("inliner: size exceeds call graph size threshold: %d > %d: %s\n", size, _maxRecursiveCallByteCodeSizeEstimate, tracer()->traceSignature(calltarget->_calleeSymbol));
 
             callsite->removecalltarget(k,tracer(),Exceeds_Size_Threshold);
             k--;
@@ -4571,7 +4581,8 @@ void TR_MultipleCallTargetInliner::weighCallSite( TR_CallStack * callStack , TR_
              )
             {
             weight = 1;
-            traceMsg(comp(), "Setting SIMD kernel methods weights to minimum(%d) node %p.", weight, callsite->_callNode);
+            if (comp()->trace(OMR::inlining))
+               log->printf("Setting SIMD kernel methods weights to minimum(%d) node %p.", weight, callsite->_callNode);
             }
 #endif
 
@@ -4973,7 +4984,8 @@ TR_MultipleCallTargetInliner::exceedsSizeThreshold(TR_CallSite *callSite, int by
         }
      else if (getPolicy()->aggressiveSmallAppOpts())
          {
-          traceMsg(comp(), "Reached new code 2\n");
+          if (comp()->trace(OMR::inlining))
+             comp()->log()->prints("Reached new code 2\n");
           int32_t blockNestingDepth = 1;
           if (_isInLoop)
              {
@@ -4989,7 +5001,8 @@ TR_MultipleCallTargetInliner::exceedsSizeThreshold(TR_CallSite *callSite, int by
 
              if (doit && calleeResolvedMethod && !strcmp(tmptmp,"Ljava/math/BigDecimal;"))
                 {
-                traceMsg(comp(), "Reached code for block nesting depth %d\n", blockNestingDepth);
+                if (comp()->trace(OMR::inlining))
+                   comp()->log()->printf("Reached code for block nesting depth %d\n", blockNestingDepth);
                 if ((_isInLoop || (blockNestingDepth > 1)) &&
                    (bytecodeSize > 10))
                    {
@@ -5347,7 +5360,7 @@ TR_J9InlinerPolicy::doCorrectnessAndSizeChecksForInlineCallTarget(TR_CallStack *
       {
       tracer()->insertCounter(Exceeded_Caller_SiteSize,calltarget->_myCallSite->_callNodeTreeTop);
       if (comp()->trace(OMR::inlining))
-         traceMsg(comp(), "inliner: failed: Caller has too many call sites %s\n", tracer()->traceSignature(calltarget->_calleeSymbol));
+         comp()->log()->printf("inliner: failed: Caller has too many call sites %s\n", tracer()->traceSignature(calltarget->_calleeSymbol));
       return false;
       }
 
@@ -5363,7 +5376,7 @@ TR_J9InlinerPolicy::doCorrectnessAndSizeChecksForInlineCallTarget(TR_CallStack *
          TR::Options::INLINE_calleeHasTooManyNodes++;
          TR::Options::INLINE_calleeHasTooManyNodesSum += nodeCount;
          if (comp()->trace(OMR::inlining))
-            traceMsg(comp(), "inliner: failed: Caller has too many nodes %s while considering callee %s  nodeCount = %d nodeCountThreshold = %d\n",comp()->signature(), tracer()->traceSignature(calltarget->_calleeSymbol),nodeCount,_inliner->getNodeCountThreshold());
+            comp()->log()->printf("inliner: failed: Caller has too many nodes %s while considering callee %s  nodeCount = %d nodeCountThreshold = %d\n",comp()->signature(), tracer()->traceSignature(calltarget->_calleeSymbol),nodeCount,_inliner->getNodeCountThreshold());
          return false;
          }
       }
@@ -5668,7 +5681,7 @@ TR_J9InlinerPolicy::suppressInliningRecognizedInitialCallee(TR_CallSite* callsit
             static char *printIt = feGetEnv("TR_showPauseOnSpinWait");
             if (printIt && comp->trace(OMR::inlining))
                {
-               traceMsg(comp, "suppress inlining onSpinWait : node=%p, %s\n", callNode, comp->signature());
+               comp->log()->printf("suppress inlining onSpinWait : node=%p, %s\n", callNode, comp->signature());
                }
 
             return true;
@@ -5692,7 +5705,7 @@ TR_J9InlinerPolicy::suppressInliningRecognizedInitialCallee(TR_CallSite* callsit
             if (callerArgInfo->get(0)->hasKnownObjectIndex())
                {
                if (comp->trace(OMR::inlining))
-                  traceMsg(comp, "Suppressing inlining identityHashCode helper call as it can be evaluated in VP.\n");
+                  comp->log()->prints("Suppressing inlining identityHashCode helper call as it can be evaluated in VP.\n");
                return true;
                }
             }
@@ -5886,7 +5899,6 @@ isDecimalFormatPattern(TR::Compilation *comp, TR_ResolvedMethod *method)
    if (bc != J9BCgenericReturn)
       return false; // matched 6th (or 7th) bc
 
-   ///traceMsg(comp, "pattern matched successfully\n");
    return true;
    }
 
@@ -5951,8 +5963,7 @@ TR_InlinerFailureReason
     && !comp->fej9()->isChangesCurrentThread(callsite->_callerResolvedMethod))
       {
       if (comp->trace(OMR::inlining))
-         traceMsg(
-            comp,
+         comp->log()->printf(
             "Preventing inlining of %s as it is a JCL method annotated with @ChangesCurrentThread without its caller sharing the same annotation.\n",
             resolvedMethod->signature(comp->trMemory()));
       return DontInline_Callee;
@@ -6038,7 +6049,8 @@ TR_InlinerFailureReason
       switch (rm)
          {
          case TR::java_util_stream_AbstractPipeline_evaluate:
-            traceMsg(comp, "Intentionally avoided inlining evaluate\n");
+            if (comp()->trace(OMR::inlining))
+               comp()->log()->prints("Intentionally avoided inlining evaluate\n");
             return Recognized_Callee;
             break;
          default:
@@ -6057,7 +6069,8 @@ TR_InlinerFailureReason
          case TR::java_lang_Math_sqrt:
          case TR::java_lang_Math_sin:
          case TR::java_lang_Math_cos:
-            traceMsg(comp, "Intentionally avoided inlining MathMethod\n");
+            if (comp()->trace(OMR::inlining))
+               comp()->log()->prints("Intentionally avoided inlining MathMethod\n");
             return Recognized_Callee;
          default:
             break;
@@ -6322,11 +6335,11 @@ TR_J9InlinerUtil::estimateAndRefineBytecodeSize(TR_CallSite* callsite, TR_CallTa
          if (estimateIsFine)
             {
             if (comp()->trace(OMR::inlining))
-               traceMsg( comp(), "Partial estimate for this target %d, full size %d, real bytecode size %d\n", callTargetClone._partialSize, callTargetClone._fullSize, bytecodeSize);
+               comp()->log()->printf("Partial estimate for this target %d, full size %d, real bytecode size %d\n", callTargetClone._partialSize, callTargetClone._fullSize, bytecodeSize);
 
             bytecodeSize = callTargetClone._fullSize;
             if (comp()->trace(OMR::inlining))
-               traceMsg( comp(), "Reducing bytecode size to %d\n", bytecodeSize);
+               comp()->log()->printf("Reducing bytecode size to %d\n", bytecodeSize);
             }
          }
       }
@@ -6350,7 +6363,7 @@ TR_PrexArgInfo* TR_PrexArgInfo::argInfoFromCaller(TR::Node* callNode, TR_PrexArg
          {
          argInfo->set(i - firstArgIndex, TR_PrexArgInfo::getArgForChild(child, callerArgInfo));
          if (tracePrex)
-            traceMsg(compilation, "Arg %d is from caller\n", i - firstArgIndex);
+            compilation->log()->printf("Arg %d is from caller\n", i - firstArgIndex);
          }
       }
    return argInfo;
@@ -6374,7 +6387,7 @@ TR_J9InlinerUtil::computePrexInfo(TR_CallTarget *target, TR_PrexArgInfo *callerA
 
    if (tracePrex && prexArgInfo)
       {
-      traceMsg(comp(), "PREX.inl:    argInfo for target %p\n", target);
+      comp()->log()->printf("PREX.inl:    argInfo for target %p\n", target);
       prexArgInfo->dumpTrace();
       }
 
@@ -6482,6 +6495,7 @@ TR_PrexArgInfo *
 TR_J9InlinerUtil::computePrexInfo(TR_InlinerBase *inliner, TR_CallSite* site, TR_PrexArgInfo *callerArgInfo)
    {
    TR::Compilation* comp = inliner->comp();
+   OMR::Logger *log = comp->log();
 
    if (comp->getOption(TR_DisableInlinerArgsPropagation))
       return NULL;
@@ -6501,7 +6515,7 @@ TR_J9InlinerUtil::computePrexInfo(TR_InlinerBase *inliner, TR_CallSite* site, TR
 
    bool tracePrex = comp->trace(OMR::inlining) || comp->trace(OMR::invariantArgumentPreexistence);
    if (tracePrex)
-      traceMsg(comp, "PREX.inl: Populating prex argInfo for [%p] %s %s\n", callNode, callNode->getOpCode().getName(), callNode->getSymbol()->castToMethodSymbol()->getMethod()->signature(inliner->trMemory(), stackAlloc));
+      log->printf("PREX.inl: Populating prex argInfo for [%p] %s %s\n", callNode, callNode->getOpCode().getName(), callNode->getSymbol()->castToMethodSymbol()->getMethod()->signature(inliner->trMemory(), stackAlloc));
 
    int32_t firstArgIndex = callNode->getFirstArgumentIndex();
    for (int32_t c = callNode->getNumChildren() -1; c >= firstArgIndex; c--)
@@ -6511,7 +6525,7 @@ TR_J9InlinerUtil::computePrexInfo(TR_InlinerBase *inliner, TR_CallSite* site, TR
       TR::Node *argument = callNode->getChild(c);
       if (tracePrex)
          {
-         traceMsg(comp, "PREX.inl:    Child %d [%p] n%dn %s %s\n",
+         log->printf("PREX.inl:    Child %d [%p] n%dn %s %s\n",
             c, argument,
             argument->getGlobalIndex(),
             argument->getOpCode().getName(),
@@ -6544,20 +6558,20 @@ TR_J9InlinerUtil::computePrexInfo(TR_InlinerBase *inliner, TR_CallSite* site, TR
          if (tracePrex)
             {
             TR::Node *mh = callNode->getArgument(0);
-            traceMsg(comp, "PREX.inl:      %p: %p is known object obj%d in inlined call [%p]\n", prexArg, mh, methodHandleIndex, callNode);
+            log->printf("PREX.inl:      %p: %p is known object obj%d in inlined call [%p]\n", prexArg, mh, methodHandleIndex, callNode);
             }
          }
       else if (symRef->hasKnownObjectIndex())
          {
          prexArg = new (inliner->trHeapMemory()) TR_PrexArgument(symRef->getKnownObjectIndex(), comp);
          if (tracePrex)
-            traceMsg(comp, "PREX.inl:      %p: is symref known object obj%d\n", prexArg, symRef->getKnownObjectIndex());
+            log->printf("PREX.inl:      %p: is symref known object obj%d\n", prexArg, symRef->getKnownObjectIndex());
          }
       else if (argument->hasKnownObjectIndex())
          {
          prexArg = new (inliner->trHeapMemory()) TR_PrexArgument(argument->getKnownObjectIndex(), comp);
          if (tracePrex)
-            traceMsg(comp, "PREX.inl:      %p: is node known object obj%d\n", prexArg, argument->getKnownObjectIndex());
+            log->printf("PREX.inl:      %p: is node known object obj%d\n", prexArg, argument->getKnownObjectIndex());
          }
       else if (argument->getOpCodeValue() == TR::aload)
          {
@@ -6570,7 +6584,7 @@ TR_J9InlinerUtil::computePrexInfo(TR_InlinerBase *inliner, TR_CallSite* site, TR
                if (tracePrex)
                   {
                   char *sig = TR::Compiler->cls.classSignature(comp, (TR_OpaqueClassBlock*)parmSymbol->getFixedType(), inliner->trMemory());
-                  traceMsg(comp, "PREX.inl:      %p: is load of parm with fixed class %p %s\n", prexArg, parmSymbol->getFixedType(), sig);
+                  log->printf("PREX.inl:      %p: is load of parm with fixed class %p %s\n", prexArg, parmSymbol->getFixedType(), sig);
                   }
                }
             if (parmSymbol->getIsPreexistent())
@@ -6583,7 +6597,7 @@ TR_J9InlinerUtil::computePrexInfo(TR_InlinerBase *inliner, TR_CallSite* site, TR
                   {
                   prexArg = new (inliner->trHeapMemory()) TR_PrexArgument(TR_PrexArgument::ClassIsPreexistent, clazz);
                   if (tracePrex)
-                     traceMsg(comp, "PREX.inl:      %p: is preexistent\n", prexArg);
+                     log->printf("PREX.inl:      %p: is preexistent\n", prexArg);
                   }
                }
             }
@@ -6599,7 +6613,7 @@ TR_J9InlinerUtil::computePrexInfo(TR_InlinerBase *inliner, TR_CallSite* site, TR
                {
                prexArg = new (inliner->trHeapMemory()) TR_PrexArgument(valueNode->getSymbolReference()->getKnownObjectIndex(), comp);
                if (tracePrex)
-                  traceMsg(comp, "PREX.inl:      %p: is known object obj%d, argument n%dn has def from n%dn %s %s\n",
+                  log->printf("PREX.inl:      %p: is known object obj%d, argument n%dn has def from n%dn %s %s\n",
                            prexArg,
                            prexArg->getKnownObjectIndex(),
                            argument->getGlobalIndex(),
@@ -6630,7 +6644,7 @@ TR_J9InlinerUtil::computePrexInfo(TR_InlinerBase *inliner, TR_CallSite* site, TR
 
                prexArg = new (comp->trHeapMemory()) TR_PrexArgument(knownObjectIndex, comp);
                if (tracePrex)
-                  traceMsg(comp, "PREX.inl is known java/lang/Class obj%d\n", prexArg, knownObjectIndex);
+                  log->printf("PREX.inl is known java/lang/Class obj%d\n", prexArg, knownObjectIndex);
                }
             }
          }
@@ -6644,18 +6658,18 @@ TR_J9InlinerUtil::computePrexInfo(TR_InlinerBase *inliner, TR_CallSite* site, TR
       }
 
    if (tracePrex)
-      traceMsg(comp, "PREX.inl: Done populating prex argInfo for %s %p\n", callNode->getOpCode().getName(), callNode);
+      log->printf("PREX.inl: Done populating prex argInfo for %s %p\n", callNode->getOpCode().getName(), callNode);
 
    if (tracePrex && prexArgInfo)
       {
-      traceMsg(comp, "PREX.inl:    argInfo for callsite %p\n", site);
+      log->printf("PREX.inl:    argInfo for callsite %p\n", site);
       prexArgInfo->dumpTrace();
       }
 
    if (callerArgInfo)
       {
       if (tracePrex)
-         traceMsg(comp, "PREX.inl: Propagating prex argInfo from caller for [%p] %s %s\n",
+         log->printf("PREX.inl: Propagating prex argInfo from caller for [%p] %s %s\n",
                   callNode,
                   callNode->getOpCode().getName(),
                   callNode->getSymbol()->castToMethodSymbol()->getMethod()->signature(inliner->trMemory(), stackAlloc));
@@ -6665,7 +6679,7 @@ TR_J9InlinerUtil::computePrexInfo(TR_InlinerBase *inliner, TR_CallSite* site, TR
 
       if (tracePrex)
          {
-         traceMsg(comp, "PREX.inl:    argInfo for callsite %p after propagating argInfo from caller\n", site);
+         log->printf("PREX.inl:    argInfo for callsite %p after propagating argInfo from caller\n", site);
          prexArgInfo->dumpTrace();
          }
       }
@@ -6695,6 +6709,7 @@ bool TR_J9InlinerUtil::needTargetedInlining(TR::ResolvedMethodSymbol *callee)
 */
 void TR_J9InlinerUtil::checkForConstClass(TR_CallTarget *target, TR_LogTracer *tracer)
    {
+   OMR::Logger *log = comp->log();
    static char *disableCCI=feGetEnv("TR_DisableConstClassInlining");
 
    if (disableCCI || !tracer || !target) return;
@@ -6712,7 +6727,7 @@ void TR_J9InlinerUtil::checkForConstClass(TR_CallTarget *target, TR_LogTracer *t
    bool tracePrex = comp->trace(OMR::inlining) || comp->trace(OMR::invariantArgumentPreexistence);
 
    if (tracePrex)
-      traceMsg(comp, "checkForConstClass parm for [%p] %s %s\n", callNode, callNode->getOpCode().getName(), callNode->getSymbol()->castToMethodSymbol()->getMethod()->signature(comp->trMemory(), stackAlloc));
+      log->printf("checkForConstClass parm for [%p] %s %s\n", callNode, callNode->getOpCode().getName(), callNode->getSymbol()->castToMethodSymbol()->getMethod()->signature(comp->trMemory(), stackAlloc));
 
    // loop over args
    int32_t firstArgIndex = callNode->getFirstArgumentIndex();
@@ -6723,7 +6738,8 @@ void TR_J9InlinerUtil::checkForConstClass(TR_CallTarget *target, TR_LogTracer *t
       // Check that argOrdinal is a valid index for ecsArgInfo.
       if (argOrdinal >= ecsArgInfo->getNumArgs())
          {
-         traceMsg(comp, "checkForConstClass skipping c=%d because argOrdinal(%d) >= numArgs(%d)\n", c, argOrdinal, ecsArgInfo->getNumArgs());
+         if (tracePrex)
+            log->printf("checkForConstClass skipping c=%d because argOrdinal(%d) >= numArgs(%d)\n", c, argOrdinal, ecsArgInfo->getNumArgs());
          continue;
          }
 
@@ -6734,7 +6750,7 @@ void TR_J9InlinerUtil::checkForConstClass(TR_CallTarget *target, TR_LogTracer *t
       TR::Node *argument = callNode->getChild(c);
       if (tracePrex)
          {
-         traceMsg(comp, "checkForConstClass: Child %d [%p] arg %p %s%s %s\n",
+         log->printf("checkForConstClass: Child %d [%p] arg %p %s%s %s\n",
                   c, argument, prexArgument, TR_PrexArgument::priorKnowledgeStrings[priorKnowledge],
                   argument->getOpCode().getName(),
                   argument->getOpCode().hasSymbolReference()? argument->getSymbolReference()->getName(comp->getDebug()) : "");
@@ -6792,7 +6808,7 @@ void TR_J9InlinerUtil::checkForConstClass(TR_CallTarget *target, TR_LogTracer *t
 
             ecsArgInfo->set(argOrdinal, new (comp->trStackMemory()) TR_PrexArgument(knownObjectIndex, comp));
             if (tracePrex)
-               traceMsg(comp, "checkForConstClass: %p: is known object obj%d (from %s)\n", ecsArgInfo->get(argOrdinal), knownObjectIndex, whence);
+               log->printf("checkForConstClass: %p: is known object obj%d (from %s)\n", ecsArgInfo->get(argOrdinal), knownObjectIndex, whence);
             }
          }
 
@@ -7235,8 +7251,8 @@ TR_J9InlinerUtil::computeMethodBranchProfileInfo (TR::Block * cfgBlock, TR_CallT
 
          if (comp()->getOption(TR_TraceBFGeneration))
             {
-            traceMsg(comp(), "Setting initial block count for a call with index %d to be %d, call factor %f where block %d (%p) and blockFreq = %d\n", cfgBlock->getEntry()->getNode()->getInlinedSiteIndex(), firstBlockFreq, freqScaleFactor, block->getNumber(), block, blockFreq);
-            traceMsg(comp(), "first block freq %d and initial block freq %d\n", callerSymbol->getFirstTreeTop()->getNode()->getBlock()->getFrequency(), callerSymbol->getFlowGraph()->getInitialBlockFrequency());
+            comp()->log()->printf("Setting initial block count for a call with index %d to be %d, call factor %f where block %d (%p) and blockFreq = %d\n", cfgBlock->getEntry()->getNode()->getInlinedSiteIndex(), firstBlockFreq, freqScaleFactor, block->getNumber(), block, blockFreq);
+            comp()->log()->printf("first block freq %d and initial block freq %d\n", callerSymbol->getFirstTreeTop()->getNode()->getBlock()->getFrequency(), callerSymbol->getFlowGraph()->getInitialBlockFrequency());
             }
          }
       }
@@ -7266,7 +7282,7 @@ TR_J9TransformInlinedFunction::transform(){
    if (calleeResolvedMethod->isSynchronized() && !_callNode->canDesynchronizeCall())
       {
       if (comp()->trace(OMR::inlining))
-         traceMsg(comp(), "Wrapping in try region for synchronized method\n");
+         comp()->log()->prints("Wrapping in try region for synchronized method\n");
       transformSynchronizedMethod(calleeResolvedMethod);
       }
    TR_TransformInlinedFunction::transform();
@@ -7628,7 +7644,7 @@ TR_J9InlinerUtil::addTargetIfThereIsSingleImplementer (TR_IndirectCallSite *call
             (implementer = callsite->findSingleJittedImplementer(inliner())))
       {
       if (comp()->trace(OMR::inlining))
-         traceMsg(comp(), "inliner: Abstract method %s currently has a single jitted implementation %s\n",
+         comp()->log()->printf("inliner: Abstract method %s currently has a single jitted implementation %s\n",
                  inliner()->tracer()->traceSignature(callsite->_initialCalleeMethod), implementer->signature(comp()->trMemory()));
 
       if (!comp()->cg()->getSupportsProfiledInlining())

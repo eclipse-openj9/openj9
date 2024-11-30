@@ -35,6 +35,7 @@
 #include "control/RecompilationInfo.hpp"
 #include "env/TRMemory.hpp"
 #include "optimizer/EstimateCodeSize.hpp"
+#include "ras/Logger.hpp"
 
 class TR_ResolvedMethod;
 class NeedsPeekingHeuristic;
@@ -176,10 +177,12 @@ class TR_prevArgs
 
       void printIndexes(TR::Compilation *comp)
          {
-         for (int32_t i = 0 ; i < NUM_PREV_BC ; i++)
+         if (comp->getLoggingEnabled())
             {
-            if(comp->getDebug())
-               traceMsg(comp,"_prevBC[%d] = %s\n" ,i,((TR_J9VM*)(comp->fej9()))->getByteCodeName(_prevBC[i]));
+            for (int32_t i = 0 ; i < NUM_PREV_BC ; i++)
+               {
+               comp->log()->printf("_prevBC[%d] = %s\n" ,i,((TR_J9VM*)(comp->fej9()))->getByteCodeName(_prevBC[i]));
+               }
             }
          }
 

@@ -140,14 +140,15 @@ List<OMR::RuntimeAssumption> *TR::InterProceduralAnalyzer::analyzeCall(TR::Node 
    List<OMR::RuntimeAssumption> *runtimeAssumptions = analyzeCallGraph(callNode, &success);
    if (trace())
       {
+      OMR::Logger *log = comp()->log();
       if (success)
          {
-         traceMsg(comp(), "Ended peek which was successful\n");
-         traceMsg(comp(), "Number of unloaded classes are %d\n", _classesThatShouldNotBeLoaded.getSize());
-         traceMsg(comp(), "Number of classes that should not be newly extended are %d\n", _classesThatShouldNotBeNewlyExtended.getSize());
+         log->prints("Ended peek which was successful\n");
+         log->printf("Number of unloaded classes are %d\n", _classesThatShouldNotBeLoaded.getSize());
+         log->printf("Number of classes that should not be newly extended are %d\n", _classesThatShouldNotBeNewlyExtended.getSize());
          }
       else
-         traceMsg(comp(), "Ended peek which was unsuccessful\n");
+         log->prints("Ended peek which was unsuccessful\n");
       }
 
    ListElement<TR_ClassExtendCheck> *currCec = _classesThatShouldNotBeNewlyExtendedInCurrentPeek.getListHead();
@@ -173,6 +174,8 @@ List<OMR::RuntimeAssumption> *TR::InterProceduralAnalyzer::analyzeCall(TR::Node 
 
 List<OMR::RuntimeAssumption> *TR::InterProceduralAnalyzer::analyzeCallGraph(TR::Node *callNode, bool *success)
    {
+   OMR::Logger *log = comp()->log();
+
    if (_sniffDepth >= _maxSniffDepth)
       {
       _maxSniffDepthExceeded = true;
@@ -180,7 +183,7 @@ List<OMR::RuntimeAssumption> *TR::InterProceduralAnalyzer::analyzeCallGraph(TR::
 
       if (trace())
          {
-         traceMsg(comp(), "High sniff depth made peek unsuccessful\n");
+         log->prints("High sniff depth made peek unsuccessful\n");
          }
 
       return 0;
@@ -197,7 +200,7 @@ List<OMR::RuntimeAssumption> *TR::InterProceduralAnalyzer::analyzeCallGraph(TR::
       *success = false;
       if (trace())
          {
-         traceMsg(comp(), "Unresolved non-interface call node %p made peek unsuccessful\n", callNode);
+         log->printf("Unresolved non-interface call node %p made peek unsuccessful\n", callNode);
          }
 
       return 0;
@@ -228,7 +231,7 @@ List<OMR::RuntimeAssumption> *TR::InterProceduralAnalyzer::analyzeCallGraph(TR::
             *success = false;
             if (trace())
                {
-               traceMsg(comp(), "Found unresolved method call node %p while peeking whose class is unresolved and unable to add assumption -- peek unsuccessful\n", callNode);
+               log->printf("Found unresolved method call node %p while peeking whose class is unresolved and unable to add assumption -- peek unsuccessful\n", callNode);
                }
             }
          else
@@ -237,7 +240,7 @@ List<OMR::RuntimeAssumption> *TR::InterProceduralAnalyzer::analyzeCallGraph(TR::
 
             if (trace())
                {
-               traceMsg(comp(), "Found unresolved method call node %p while peeking -- add assumption\n", callNode);
+               log->printf("Found unresolved method call node %p while peeking -- add assumption\n", callNode);
                }
             }
          return 0;
@@ -269,11 +272,11 @@ List<OMR::RuntimeAssumption> *TR::InterProceduralAnalyzer::analyzeCallGraph(TR::
             s = thisChild->getFirstChild()->getTypeSignature(len);
          }
 
-      //traceMsg(comp(), "callNode %p thisChild %p\n", callNode, thisChild);
+      //log->printf("callNode %p thisChild %p\n", callNode, thisChild);
       //if (s)
-      //   traceMsg(comp(), "sig %s\n", s);
+      //   log->printf("sig %s\n", s);
       //else
-      //        traceMsg(comp(), "sig is NULL\n");
+      //   log->prints("sig is NULL\n");
 
       if (s)
          {
@@ -291,7 +294,7 @@ List<OMR::RuntimeAssumption> *TR::InterProceduralAnalyzer::analyzeCallGraph(TR::
          if (!addClassThatShouldNotBeNewlyExtended(clazz))
             {
             if(trace())
-               traceMsg(comp(), "Could not add Class That should not be newly extended to assumptions list.\n");
+               log->prints("Could not add Class That should not be newly extended to assumptions list.\n");
 
             *success = false;
             return 0;
@@ -299,7 +302,7 @@ List<OMR::RuntimeAssumption> *TR::InterProceduralAnalyzer::analyzeCallGraph(TR::
 
          if (trace())
             {
-            traceMsg(comp(), "Found class for this object -- add assumption that the class should not be newly extended\n");
+            log->prints("Found class for this object -- add assumption that the class should not be newly extended\n");
             }
          }
 
@@ -308,9 +311,9 @@ List<OMR::RuntimeAssumption> *TR::InterProceduralAnalyzer::analyzeCallGraph(TR::
       if (classInfo)
          {
          TR_ScratchList<TR_PersistentClassInfo> subClasses(trMemory());
-	 TR_ClassQueries::getSubClasses(classInfo, subClasses, fe());
+         TR_ClassQueries::getSubClasses(classInfo, subClasses, fe());
          if (trace())
-            traceMsg(comp(), "Number of subclasses = %d\n", subClasses.getSize());
+            log->printf("Number of subclasses = %d\n", subClasses.getSize());
          TR_ScratchList<TR_ResolvedMethod> subMethods(trMemory());
          int32_t numSubMethods = 0;
          ListIterator<TR_PersistentClassInfo> subClassesIt(&subClasses);
@@ -326,7 +329,7 @@ List<OMR::RuntimeAssumption> *TR::InterProceduralAnalyzer::analyzeCallGraph(TR::
                subClassMethod = owningMethod->getResolvedVirtualMethod(comp(), subClass, symRef->getOffset());
             int32_t length;
             if (trace())
-               traceMsg(comp(), "Class name %s\n", TR::Compiler->cls.classNameChars(comp(), subClass, length));
+               log->printf("Class name %s\n", TR::Compiler->cls.classNameChars(comp(), subClass, length));
             if (subClassMethod && !subMethods.find(subClassMethod))
                {
                subMethods.add(subClassMethod);
@@ -350,9 +353,11 @@ List<OMR::RuntimeAssumption> *TR::InterProceduralAnalyzer::analyzeCallGraph(TR::
 
 List<OMR::RuntimeAssumption> *TR::InterProceduralAnalyzer::analyzeMethod(TR::Node *callNode, TR_ResolvedMethod *method, bool *success)
    {
+   OMR::Logger *log = comp()->log();
+
    if (trace())
       {
-      traceMsg(comp(), "Consider method %s for peek\n", method->signature(trMemory()));
+      log->printf("Consider method %s for peek\n", method->signature(trMemory()));
       }
 
    if (!method->isCompilable(trMemory()) || method->isJNINative())
@@ -370,14 +375,14 @@ List<OMR::RuntimeAssumption> *TR::InterProceduralAnalyzer::analyzeMethod(TR::Nod
          *success = false;
          if (trace())
             {
-            traceMsg(comp(), "Prior peek failure for method %s caused current peek to be unsuccessful\n", method->signature(trMemory()));
+            log->printf("Prior peek failure for method %s caused current peek to be unsuccessful\n", method->signature(trMemory()));
             }
          }
       else
          {
          if (trace())
             {
-            traceMsg(comp(), "Prior peek success for method %s caused current peek to be successful -- prior assumptions added\n", method->signature(trMemory()));
+            log->printf("Prior peek success for method %s caused current peek to be successful -- prior assumptions added\n", method->signature(trMemory()));
             }
 
          for (TR_ClassLoadCheck * clc = priorPeek->_classesThatShouldNotBeLoaded.getFirst(); clc; clc = clc->getNext())
@@ -395,7 +400,7 @@ List<OMR::RuntimeAssumption> *TR::InterProceduralAnalyzer::analyzeMethod(TR::Nod
       *success = false;
       if (trace())
          {
-         traceMsg(comp(), "Large bytecode size %d made peek unsuccessful\n", bytecodeSize);
+         log->printf("Large bytecode size %d made peek unsuccessful\n", bytecodeSize);
          }
 
       return 0;
@@ -405,7 +410,7 @@ List<OMR::RuntimeAssumption> *TR::InterProceduralAnalyzer::analyzeMethod(TR::Nod
       return 0;
 
    if (trace())
-      traceMsg(comp(), "\nDepth %d sniffing into call at [%p] to %s\n", _sniffDepth, callNode, method->signature(trMemory()));
+      log->printf("\nDepth %d sniffing into call at [%p] to %s\n", _sniffDepth, callNode, method->signature(trMemory()));
 
    TR::SymbolReference * symRef = callNode->getSymbolReference();
    int32_t offset = symRef->getOffset();
@@ -446,11 +451,11 @@ List<OMR::RuntimeAssumption> *TR::InterProceduralAnalyzer::analyzeMethod(TR::Nod
 
             if (trace())
                {
-               traceMsg(comp(), "callNode %p arg %p\n", callNode, argument);
+               log->printf("callNode %p arg %p\n", callNode, argument);
                if (s)
-                  traceMsg(comp(), "sig %s\n", s);
+                  log->printf("sig %s\n", s);
                else
-                  traceMsg(comp(), "sig is NULL\n");
+                  log->prints("sig is NULL\n");
                }
 
             if (s && (c == firstArgIndex))
@@ -463,7 +468,7 @@ List<OMR::RuntimeAssumption> *TR::InterProceduralAnalyzer::analyzeMethod(TR::Nod
                   *success = false;
                   if (trace())
                      {
-                     traceMsg(comp(), "The call argument class is NULL, bailing out. (probably because of different class loaders)\n");
+                     log->prints("The call argument class is NULL, bailing out. (probably because of different class loaders)\n");
                      }
 
                   return 0;
@@ -490,7 +495,7 @@ List<OMR::RuntimeAssumption> *TR::InterProceduralAnalyzer::analyzeMethod(TR::Nod
           *success = false;
           if (trace())
              {
-             traceMsg(comp(), "Large bytecode size %d made peek unsuccessful\n", bytecodeSize);
+             log->printf("Large bytecode size %d made peek unsuccessful\n", bytecodeSize);
              }
 
          return 0;
@@ -514,22 +519,20 @@ List<OMR::RuntimeAssumption> *TR::InterProceduralAnalyzer::analyzeMethod(TR::Nod
          {
          *success = false;
          if (trace())
-            traceMsg(comp(), "   (IL generation failed)\n");
+            log->prints("   (IL generation failed)\n");
          return 0;
          }
 
       if (trace())
          {
-	 //comp()->setVisitCount(1);
          for (TR::TreeTop *tt = resolvedMethodSymbol->getFirstTreeTop(); tt; tt = tt->getNextTreeTop())
             comp()->getDebug()->print(comp()->log(), tt);
-         //comp()->setVisitCount(visitCount);
          }
       }
    else
       {
       if (trace())
-         traceMsg(comp(), "   (trees already dumped)\n");
+         log->prints("   (trees already dumped)\n");
       }
 
    ++_sniffDepth;
@@ -572,7 +575,7 @@ List<OMR::RuntimeAssumption> *TR::InterProceduralAnalyzer::analyzeMethod(TR::Nod
          {
          if (trace())
             {
-            traceMsg(comp(), "Node %p made peek unsuccessful\n", node);
+            log->printf("Node %p made peek unsuccessful\n", node);
             }
          break;
          }
@@ -584,7 +587,7 @@ List<OMR::RuntimeAssumption> *TR::InterProceduralAnalyzer::analyzeMethod(TR::Nod
          {
          if (trace())
             {
-            traceMsg(comp(), "Node %p made peek unsuccessful\n", node);
+            log->printf("Node %p made peek unsuccessful\n", node);
             }
          break;
          }
@@ -623,7 +626,7 @@ List<OMR::RuntimeAssumption> *TR::InterProceduralAnalyzer::analyzeMethod(TR::Nod
       _successfullyPeekedMethods.add(priorPeek);
       if (trace())
          {
-         traceMsg(comp(), "Method %s is successfully peeked\n", resolvedMethodSymbol->getResolvedMethod()->signature(trMemory()));
+         log->printf("Method %s is successfully peeked\n", resolvedMethodSymbol->getResolvedMethod()->signature(trMemory()));
          }
       }
    else
@@ -632,7 +635,7 @@ List<OMR::RuntimeAssumption> *TR::InterProceduralAnalyzer::analyzeMethod(TR::Nod
          {
          if (trace())
             {
-            traceMsg(comp(), "1Method %s is unsuccessfully peeked\n", resolvedMethodSymbol->getResolvedMethod()->signature(trMemory()));
+            log->printf("1Method %s is unsuccessfully peeked\n", resolvedMethodSymbol->getResolvedMethod()->signature(trMemory()));
             }
 
          _unsuccessfullyPeekedMethods.add(resolvedMethodSymbol->getResolvedMethod());
@@ -644,7 +647,7 @@ List<OMR::RuntimeAssumption> *TR::InterProceduralAnalyzer::analyzeMethod(TR::Nod
             {
             if (trace())
                {
-               traceMsg(comp(), "2Method %s is unsuccessfully peeked\n", resolvedMethodSymbol->getResolvedMethod()->signature(trMemory()));
+               log->printf("2Method %s is unsuccessfully peeked\n", resolvedMethodSymbol->getResolvedMethod()->signature(trMemory()));
                }
             _unsuccessfullyPeekedMethods.add(resolvedMethodSymbol->getResolvedMethod());
             }
@@ -682,7 +685,7 @@ bool TR::InterProceduralAnalyzer::isOnPeekingStack(TR_ResolvedMethod *method)
            TR_ScratchList<TR_PersistentClassInfo> subClasses;
            classInfo->getSubClasses(subClasses, comp());
            if (trace())
-           traceMsg(comp(), "Number of subclasses = %d\n", subClasses.getSize());
+              comp()->log()->printf("Number of subclasses = %d\n", subClasses.getSize());
            ListIterator<TR_PersistentClassInfo> subClassesIt(&subClasses);
            for (TR_PersistentClassInfo *subClassInfo = subClassesIt.getFirst(); subClassInfo; subClassInfo = subClassesIt.getNext())
            {

@@ -49,6 +49,7 @@
 #include "optimizer/Optimization.hpp"
 #include "optimizer/Optimization_inlines.hpp"
 #include "optimizer/J9TransformUtil.hpp"
+#include "ras/Logger.hpp"
 
 void TR_StaticFinalFieldFolding::visitNode(TR::TreeTop * currentTree, TR::Node *node)
    {
@@ -74,31 +75,33 @@ void TR_StaticFinalFieldFolding::visitNode(TR::TreeTop * currentTree, TR::Node *
  */
 int32_t TR_StaticFinalFieldFolding::perform()
    {
+   OMR::Logger *log = comp()->log();
+
    if (comp()->getOSRMode() == TR::involuntaryOSR)
       {
       if (trace())
-         traceMsg(comp(), "Static final field folding disabled due to involuntary OSR\n");
+         log->prints("Static final field folding disabled due to involuntary OSR\n");
       return 0;
       }
 
    if (comp()->getOption(TR_DisableOSR))
       {
       if (trace())
-         traceMsg(comp(), "Static final field folding disabled due to disabled OSR\n");
+         log->prints("Static final field folding disabled due to disabled OSR\n");
       return 0;
       }
 
    if (comp()->getOption(TR_EnableFieldWatch))
       {
       if (trace())
-         traceMsg(comp(), "Static final field folding disabled due to field watch\n");
+         log->prints("Static final field folding disabled due to field watch\n");
       return 0;
       }
 
    if (comp()->getOption(TR_MimicInterpreterFrameShape))
       {
       if (trace())
-         traceMsg(comp(), "Static final field folding disabled due to mimic interpreter frame shape\n");
+         log->prints("Static final field folding disabled due to mimic interpreter frame shape\n");
       return 0;
       }
 
