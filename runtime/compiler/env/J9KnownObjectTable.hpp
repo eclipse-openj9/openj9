@@ -37,6 +37,7 @@ namespace J9 { typedef J9::KnownObjectTable KnownObjectTableConnector; }
 #include "infra/Array.hpp"
 #include "infra/BitVector.hpp"
 #if defined(J9VM_OPT_JITSERVER)
+#include <string>
 #include <tuple>
 #include <vector>
 #endif /* defined(J9VM_OPT_JITSERVER) */

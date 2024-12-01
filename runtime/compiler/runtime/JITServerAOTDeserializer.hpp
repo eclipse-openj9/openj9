@@ -23,8 +23,9 @@
 #ifndef JITSERVER_AOT_DESERIALIZER_H
 #define JITSERVER_AOT_DESERIALIZER_H
 
-#include "env/TRMemory.hpp"
 #include "env/PersistentCollections.hpp"
+#include "env/SystemSegmentProvider.hpp"
+#include "env/TRMemory.hpp"
 #include "runtime/JITServerAOTSerializationRecords.hpp"
 
 class TR_PersistentClassLoaderTable;
