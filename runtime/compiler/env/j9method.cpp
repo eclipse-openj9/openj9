@@ -3192,6 +3192,8 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::com_ibm_jit_JITHelpers_getPackedDataSizeFromJ9Class64,           "getPackedDataSizeFromJ9Class64", "(J)J")},
       {x(TR::com_ibm_jit_JITHelpers_getComponentTypeFromJ9Class32,            "getComponentTypeFromJ9Class32", "(I)I")},
       {x(TR::com_ibm_jit_JITHelpers_getComponentTypeFromJ9Class64,            "getComponentTypeFromJ9Class64", "(J)J")},
+      {x(TR::com_ibm_jit_JITHelpers_transformedEncodeUTF16Big,                "transformedEncodeUTF16Big",       "(JJI)I")},
+      {x(TR::com_ibm_jit_JITHelpers_transformedEncodeUTF16Little,             "transformedEncodeUTF16Little",    "(JJI)I")},
       {x(TR::com_ibm_jit_JITHelpers_getIntFromObject,                         "getIntFromObject", "(Ljava/lang/Object;J)I")},
       {x(TR::com_ibm_jit_JITHelpers_getIntFromObjectVolatile,                 "getIntFromObjectVolatile", "(Ljava/lang/Object;J)I")},
       {x(TR::com_ibm_jit_JITHelpers_getLongFromObject,                        "getLongFromObject", "(Ljava/lang/Object;J)J")},
@@ -3779,6 +3781,8 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::sun_nio_cs_ext_SBCS_Decoder_decodeSBCS,              "decodeSBCS",           "([BII[CI[C)I")},
       {x(TR::sun_nio_cs_UTF_8_Encoder_encodeUTF_8,                "encodeUTF_8",     "([CII[BI)I")},
       {x(TR::sun_nio_cs_UTF_8_Decoder_decodeUTF_8,                "decodeUTF_8",          "([BII[CI)I")},
+      {x(TR::sun_nio_cs_UTF16_Encoder_encodeUTF16Big,             "encodeUTF16Big",       "([CII[BI)I")},
+      {x(TR::sun_nio_cs_UTF16_Encoder_encodeUTF16Little,          "encodeUTF16Little",    "([CII[BI)I")},
       {  TR::unknownMethod}
       };
 
@@ -4187,6 +4191,7 @@ void TR_ResolvedJ9Method::construct()
       { "java/lang/reflect/Method", MethodMethods },
       { "sun/nio/cs/UTF_8$Decoder", EncodeMethods },
       { "sun/nio/cs/UTF_8$Encoder", EncodeMethods },
+      { "sun/nio/cs/UTF16_Encoder", EncodeMethods },
       { "jdk/internal/misc/Unsafe", UnsafeMethods },
       { 0 }
       };

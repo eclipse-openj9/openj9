@@ -10597,6 +10597,95 @@ static TR::Register *inlineStringHashcode(TR::Node *node, TR::CodeGenerator *cg)
     return hashReg;
 }
 
+static TR::Register *inlineEncodeUTF16(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // tree looks like:
+   // icall com.ibm.jit.JITHelpers.encodeUtf16{Big,Little}()
+   // input ptr
+   // output ptr
+   // input length (in elements)
+   // Number of elements converted returned
+
+   TR::MethodSymbol *symbol = node->getSymbol()->castToMethodSymbol();
+   bool bigEndian = symbol->getRecognizedMethod() == TR::com_ibm_jit_JITHelpers_transformedEncodeUTF16Big;
+
+   // Set up register dependencies
+   const int gprClobberCount = 5;
+   const int fprClobberCount = 4;
+   const int vrClobberCount = 6;
+   const int crClobberCount = 2;
+   const int totalDeps = crClobberCount + gprClobberCount + fprClobberCount + vrClobberCount + 3;
+   TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(1, totalDeps, cg->trMemory());
+
+   TR::Register *inputReg = cg->gprClobberEvaluate(node->getChild(0));
+   TR::Register *outputReg = cg->gprClobberEvaluate(node->getChild(1));
+   TR::Register *inputLenReg = cg->gprClobberEvaluate(node->getChild(2));
+   TR::Register *outputLenReg = cg->allocateRegister();
+
+   // Allocate clobbered registers
+   TR::Register *gprClobbers[gprClobberCount], *fprClobbers[fprClobberCount], *vrClobbers[vrClobberCount], *crClobbers[crClobberCount];
+   for (int i = 0; i < gprClobberCount; ++i) gprClobbers[i] = cg->allocateRegister(TR_GPR);
+   for (int i = 0; i < fprClobberCount; ++i) fprClobbers[i] = cg->allocateRegister(TR_FPR);
+   for (int i = 0; i < vrClobberCount; ++i) vrClobbers[i] = cg->allocateRegister(TR_VRF);
+   for (int i = 0; i < crClobberCount; ++i) crClobbers[i] = cg->allocateRegister(TR_CCR);
+
+   // Add the pre and post conditions
+   // Input and output registers
+   deps->addPreCondition(inputReg, TR::RealRegister::gr3);
+
+   deps->addPostCondition(outputLenReg, TR::RealRegister::gr3);
+   deps->addPostCondition(outputReg, TR::RealRegister::gr4);
+   deps->addPostCondition(inputLenReg, TR::RealRegister::gr5);
+
+   //CCR.
+   deps->addPostCondition(crClobbers[0], TR::RealRegister::cr0);
+   deps->addPostCondition(crClobbers[1], TR::RealRegister::cr6);
+
+   //GPRs + Trampoline
+   deps->addPostCondition(gprClobbers[0], TR::RealRegister::gr6);
+   deps->addPostCondition(gprClobbers[1], TR::RealRegister::gr7);
+   deps->addPostCondition(gprClobbers[2], TR::RealRegister::gr8);
+   deps->addPostCondition(gprClobbers[3], TR::RealRegister::gr9);
+   deps->addPostCondition(gprClobbers[4], TR::RealRegister::gr11);
+
+   //VR's
+   deps->addPostCondition(vrClobbers[0], TR::RealRegister::vr0);
+   deps->addPostCondition(vrClobbers[1], TR::RealRegister::vr1);
+   deps->addPostCondition(vrClobbers[2], TR::RealRegister::vr2);
+   deps->addPostCondition(vrClobbers[3], TR::RealRegister::vr3);
+   deps->addPostCondition(vrClobbers[4], TR::RealRegister::vr4);
+   deps->addPostCondition(vrClobbers[5], TR::RealRegister::vr5);
+
+   //FP/VSR
+   deps->addPostCondition(fprClobbers[0], TR::RealRegister::fp0);
+   deps->addPostCondition(fprClobbers[1], TR::RealRegister::fp1);
+   deps->addPostCondition(fprClobbers[2], TR::RealRegister::fp2);
+   deps->addPostCondition(fprClobbers[3], TR::RealRegister::fp3);
+
+   // Generate helper call
+   TR_RuntimeHelper helper;
+   helper = bigEndian ? TR_PPCencodeUTF16Big : TR_PPCencodeUTF16Little;
+   TR::SymbolReference *helperSym = cg->comp()->getSymRefTab()->findOrCreateRuntimeHelper(helper);
+   generateDepImmSymInstruction(cg, TR::InstOpCode::bl, node, (uintptr_t)helperSym->getMethodAddress(), deps, helperSym);
+
+   for (uint32_t i = 0; i < node->getNumChildren(); ++i) cg->decReferenceCount(node->getChild(i));
+
+   // Spill the clobbered registers
+   if (inputReg != node->getChild(0)->getRegister()) cg->stopUsingRegister(inputReg);
+   if (outputReg != node->getChild(1)->getRegister()) cg->stopUsingRegister(outputReg);
+   if (inputLenReg != node->getChild(2)->getRegister()) cg->stopUsingRegister(inputLenReg);
+   for (int i = 0; i < gprClobberCount; ++i) cg->stopUsingRegister(gprClobbers[i]);
+   for (int i = 0; i < vrClobberCount; ++i) cg->stopUsingRegister(vrClobbers[i]);
+   for (int i = 0; i < fprClobberCount; ++i) cg->stopUsingRegister(fprClobbers[i]);
+   for (int i = 0; i < crClobberCount; ++i) cg->stopUsingRegister(crClobbers[i]);
+
+   cg->machine()->setLinkRegisterKilled(true);
+   cg->setHasCall();
+   node->setRegister(outputLenReg);
+
+   return outputLenReg;
+   }
+
 static TR::Register *inlineIntrinsicIndexOf_P10(TR::Node *node, TR::CodeGenerator *cg, bool isLatin1)
    {
    static bool disableIndexOfStringIntrinsic = feGetEnv("TR_DisableIndexOfStringIntrinsic") != NULL;
@@ -12032,6 +12121,15 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
             )
             {
             resultReg = inlineStringHashcode(node, cg);
+            return true;
+            }
+         break;
+
+      case TR::com_ibm_jit_JITHelpers_transformedEncodeUTF16Big:
+      case TR::com_ibm_jit_JITHelpers_transformedEncodeUTF16Little:
+         if (comp->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P7) && comp->target().cpu.supportsFeature(OMR_FEATURE_PPC_HAS_VSX))
+            {
+            resultReg = inlineEncodeUTF16(node, cg);
             return true;
             }
          break;

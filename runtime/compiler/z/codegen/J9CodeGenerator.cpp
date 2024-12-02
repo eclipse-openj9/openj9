@@ -4032,6 +4032,10 @@ J9::Z::CodeGenerator::inlineDirectCall(
             return true;
             }
          break;
+      case TR::com_ibm_jit_JITHelpers_transformedEncodeUTF16Big:
+         return resultReg = comp->getOption(TR_DisableUTF16BEEncoder) ? TR::TreeEvaluator::inlineUTF16BEEncodeSIMD(node, cg)
+                                                                      : TR::TreeEvaluator::inlineUTF16BEEncode    (node, cg);
+         break;
       case TR::java_lang_Integer_stringSize:
       case TR::java_lang_Long_stringSize:
          if (cg->getSupportsIntegerStringSize())
