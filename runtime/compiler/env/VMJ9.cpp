@@ -1213,11 +1213,59 @@ TR_J9VMBase::getObjectClassFromKnownObjectIndex(TR::Compilation *comp, TR::Known
    return clazz;
    }
 
+TR_OpaqueClassBlock *
+TR_J9VMBase::getObjectClassFromKnownObjectIndex(TR::Compilation *comp,
+                                                TR::KnownObjectTable::Index idx,
+                                                bool *isJavaLangClass)
+   {
+   TR::VMAccessCriticalSection vpKnownObjectCriticalSection(comp);
+
+   TR::KnownObjectTable *knot = comp->getKnownObjectTable();
+   if (!knot)
+      return NULL;
+
+   TR_OpaqueClassBlock *clazz = getObjectClass(knot->getPointer(idx));
+   TR_OpaqueClassBlock *jlClass = getClassClassPointer(clazz);
+   *isJavaLangClass = (clazz == jlClass);
+   if (*isJavaLangClass)
+      {
+      clazz = getClassFromJavaLangClass(knot->getPointer(idx));
+      }
+   return clazz;
+   }
 uintptr_t
 TR_J9VMBase::getStaticReferenceFieldAtAddress(uintptr_t fieldAddress)
    {
    TR_ASSERT(haveAccess(), "Must haveAccess in getStaticReferenceFieldAtAddress");
    return (uintptr_t)J9STATIC_OBJECT_LOAD(vmThread(), NULL, fieldAddress);
+   }
+
+TR_J9VMBase::ObjectClassInfo
+TR_J9VMBase::getObjectClassInfoFromObjectReferenceLocation(TR::Compilation *comp,
+                                               uintptr_t objectReferenceLocation)
+   {
+   TR_J9VMBase::ObjectClassInfo ci = {};
+   TR::KnownObjectTable *knot = comp->getKnownObjectTable();
+   if (knot)
+      {
+      TR::VMAccessCriticalSection getObjectReferenceLocation(comp);
+      uintptr_t objectReference = getStaticReferenceFieldAtAddress
+         (objectReferenceLocation);
+      ci.clazz   = getObjectClass(objectReference);
+      ci.isString = isString(ci.clazz);
+      ci.jlClass = getClassClassPointer(ci.clazz);
+      ci.isFixedJavaLangClass = (ci.jlClass == ci.clazz);
+      if (ci.isFixedJavaLangClass)
+         {
+         // A FixedClass constraint means something different
+         // when the class happens to be java/lang/Class.
+         // Must add constraints pertaining to the class that
+         // the java/lang/Class object represents.
+         ci.clazz = getClassFromJavaLangClass(objectReference);
+         }
+      ci.knownObjectIndex = knot->getOrCreateIndex(objectReference);
+      }
+   return ci;
    }
 
 uintptr_t

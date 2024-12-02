@@ -586,6 +586,24 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, fe->getObjectClassFromKnownObjectIndex(comp, idx));
          }
          break;
+      case MessageType::VM_getObjectClassFromKnownObjectIndexJLClass:
+         {
+         auto recv = client->getRecvData<TR::KnownObjectTable::Index>();
+         auto idx = std::get<0>(recv);
+         bool isJL;
+         client->write(response, fe->getObjectClassFromKnownObjectIndex(comp, idx, &isJL), isJL);
+         }
+         break;
+      case MessageType::VM_getObjectClassInfoFromObjectReferenceLocation:
+         {
+         auto recv = client->getRecvData<uintptr_t>();
+         uintptr_t objectReferenceLocation = std::get<0>(recv);
+         auto ci = fe->getObjectClassInfoFromObjectReferenceLocation(comp, objectReferenceLocation);
+         client->write(response,
+                       ci,
+                       knot->getPointerLocation(ci.knownObjectIndex));
+         }
+         break;
       case MessageType::VM_stackWalkerMaySkipFrames:
          {
          client->getRecvData<JITServer::Void>();

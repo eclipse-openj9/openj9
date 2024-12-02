@@ -118,6 +118,8 @@ const char *messageNames[] =
    "VM_getObjectClass",
    "VM_getObjectClassAt",
    "VM_getObjectClassFromKnownObjectIndex",
+   "VM_getObjectClassFromKnownObjectIndexJLClass",
+   "VM_getObjectClassInfoFromObjectReferenceLocation",
    "VM_stackWalkerMaySkipFrames",
    "VM_getStringUTF8Length",
    "VM_classInitIsFinished",

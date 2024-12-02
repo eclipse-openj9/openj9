@@ -635,12 +635,27 @@ public:
    virtual TR_OpaqueClassBlock *getObjectClass(uintptr_t objectPointer);
    virtual TR_OpaqueClassBlock *getObjectClassAt(uintptr_t objectAddress);
    virtual TR_OpaqueClassBlock *getObjectClassFromKnownObjectIndex(TR::Compilation *comp, TR::KnownObjectTable::Index idx);
+   virtual TR_OpaqueClassBlock *getObjectClassFromKnownObjectIndex(TR::Compilation *comp, TR::KnownObjectTable::Index idx, bool *isJavaLangClass);
    virtual uintptr_t           getReferenceFieldAt(uintptr_t objectPointer, uintptr_t offsetFromHeader);
    virtual uintptr_t           getVolatileReferenceFieldAt(uintptr_t objectPointer, uintptr_t offsetFromHeader);
    virtual uintptr_t           getReferenceFieldAtAddress(uintptr_t fieldAddress);
    virtual uintptr_t           getReferenceFieldAtAddress(void *fieldAddress){ return getReferenceFieldAtAddress((uintptr_t)fieldAddress); }
    virtual uintptr_t           getStaticReferenceFieldAtAddress(uintptr_t fieldAddress);
    virtual int32_t              getInt32FieldAt(uintptr_t objectPointer, uintptr_t fieldOffset);
+
+   /* Used to contain all information needed for getObjectClassInfoFromObjectReferenceLocation
+    * to create a VPKnownObject constraint.
+    */
+   struct ObjectClassInfo
+      {
+      TR_OpaqueClassBlock *clazz;
+      TR_OpaqueClassBlock *jlClass;
+      bool isFixedJavaLangClass;
+      bool isString;
+      TR::KnownObjectTable::Index knownObjectIndex;
+      };
+   virtual ObjectClassInfo getObjectClassInfoFromObjectReferenceLocation
+                                    (TR::Compilation *comp, uintptr_t objectReferenceLocation);
 
    int32_t getInt32Field(uintptr_t objectPointer, const char *fieldName)
       {
