@@ -296,7 +296,7 @@ public:
 
    virtual bool callTargetsNeedRelocations() { return false; }
 
-   virtual TR::DataType dataTypeForLoadOrStore(TR::DataType dt) override { return (dt == TR::Int8 || dt == TR::Int16) ? TR::Int32 : dt; }
+   virtual TR::DataType dataTypeForLoadOrStore(TR::DataType dt) { return (dt == TR::Int8 || dt == TR::Int16) ? TR::Int32 : dt; }
 
    static bool createGlobalFrontEnd(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo);
    static TR_J9VMBase * get(J9JITConfig *, J9VMThread *, VM_TYPE vmType=DEFAULT_VM);
@@ -335,11 +335,11 @@ public:
 
    virtual bool stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *methodClass) = 0;
 
-   virtual bool supportsEmbeddedHeapBounds()       { return true; }
+   virtual bool supportsEmbeddedHeapBounds()  { return true; }
    virtual bool supportsFastNanoTime();
-   virtual bool supportsGuardMerging()             { return true; }
-   virtual bool canDevirtualizeDispatch() override { return true; }
-   virtual bool doStringPeepholing()               { return true; }
+   virtual bool supportsGuardMerging()        { return true; }
+   virtual bool canDevirtualizeDispatch()     { return true; }
+   virtual bool doStringPeepholing()          { return true; }
    virtual bool isPortableSCCEnabled();
 
    /**
@@ -469,26 +469,26 @@ public:
    virtual TR::KnownObjectTable::Index getLayoutVarHandle(TR::Compilation *comp, TR::KnownObjectTable::Index layoutIndex);
 
    virtual TR::Method * createMethod(TR_Memory *, TR_OpaqueClassBlock *, int32_t);
-   virtual TR_ResolvedMethod * createResolvedMethod(TR_Memory *, TR_OpaqueMethodBlock *, TR_ResolvedMethod * = 0, TR_OpaqueClassBlock * = 0) override;
+   virtual TR_ResolvedMethod * createResolvedMethod(TR_Memory *, TR_OpaqueMethodBlock *, TR_ResolvedMethod * = 0, TR_OpaqueClassBlock * = 0);
    virtual TR_ResolvedMethod * createResolvedMethodWithVTableSlot(TR_Memory *, uint32_t vTableSlot, TR_OpaqueMethodBlock * aMethod, TR_ResolvedMethod * owningMethod = 0, TR_OpaqueClassBlock * classForNewInstance = 0);
    virtual TR_ResolvedMethod * createResolvedMethodWithSignature(TR_Memory *, TR_OpaqueMethodBlock *, TR_OpaqueClassBlock *, char *signature, int32_t signatureLength, TR_ResolvedMethod *, uint32_t = 0);
    virtual void * getStaticFieldAddress(TR_OpaqueClassBlock *, unsigned char *, uint32_t, unsigned char *, uint32_t);
    virtual int32_t getInterpreterVTableSlot(TR_OpaqueMethodBlock *, TR_OpaqueClassBlock *);
    virtual int32_t getVTableSlot(TR_OpaqueMethodBlock *, TR_OpaqueClassBlock *);
-   virtual uint32_t           offsetOfIsOverriddenBit() override;
+   virtual uint32_t           offsetOfIsOverriddenBit();
    virtual uint32_t           offsetOfMethodIsBreakpointedBit();
 
-   virtual TR_Debug *     createDebug( TR::Compilation * comp = NULL) override;
+   virtual TR_Debug *     createDebug( TR::Compilation * comp = NULL);
 
    virtual void               acquireCompilationLock();
    virtual void               releaseCompilationLock();
 
-   virtual void               acquireLogMonitor() override;
-   virtual void               releaseLogMonitor() override;
+   virtual void               acquireLogMonitor();
+   virtual void               releaseLogMonitor();
 
    virtual bool               isAsyncCompilation();
    virtual uintptr_t         getProcessID();
-   virtual char *             getFormattedName(char *, int32_t, char *, char *, bool) override;
+   virtual char *             getFormattedName(char *, int32_t, char *, char *, bool);
 
    virtual void               invalidateCompilationRequestsForUnloadedMethods(TR_OpaqueClassBlock *, bool);
 
@@ -502,7 +502,7 @@ public:
    virtual bool               hasFixedFrameC_CallingConvention();
    virtual bool               pushesOutgoingArgsAtCallSite( TR::Compilation *comp);
 
-   virtual TR::PersistentInfo *getPersistentInfo() override { return ((TR_PersistentMemory *)_jitConfig->scratchSegment)->getPersistentInfo(); }
+   virtual TR::PersistentInfo * getPersistentInfo()  { return ((TR_PersistentMemory *)_jitConfig->scratchSegment)->getPersistentInfo(); }
    void                       unknownByteCode( TR::Compilation *, uint8_t opcode);
    void                       unsupportedByteCode( TR::Compilation *, uint8_t opcode);
 
@@ -513,7 +513,7 @@ public:
 
    virtual bool               vmRequiresSelector(uint32_t mask);
 
-   virtual int32_t            getLineNumberForMethodAndByteCodeIndex(TR_OpaqueMethodBlock *method, int32_t bcIndex) override;
+   virtual int32_t            getLineNumberForMethodAndByteCodeIndex(TR_OpaqueMethodBlock *method, int32_t bcIndex);
    virtual bool               isJavaOffloadEnabled();
    virtual uint32_t           getMethodSize(TR_OpaqueMethodBlock *method);
    virtual void *             getMethods(TR_OpaqueClassBlock *classPointer);
@@ -525,7 +525,7 @@ public:
    virtual uint8_t *          allocateCodeMemory( TR::Compilation *, uint32_t warmCodeSize, uint32_t coldCodeSize, uint8_t **coldCode, bool isMethodHeaderNeeded=true);
 
    virtual void               releaseCodeMemory(void *startPC, uint8_t bytesToSaveAtStart);
-   virtual uint8_t *          allocateRelocationData( TR::Compilation *, uint32_t numBytes) override;
+   virtual uint8_t *          allocateRelocationData( TR::Compilation *, uint32_t numBytes);
 
    virtual bool               supportsCodeCacheSnippets();
 #if defined(TR_TARGET_X86)
@@ -570,17 +570,17 @@ public:
    uintptr_t                 getDLTBufferOffsetInBlock();
    virtual int32_t *          getCurrentLocalsMapForDLT( TR::Compilation *);
    virtual bool               compiledAsDLTBefore(TR_ResolvedMethod *);
-   virtual uintptr_t         getObjectHeaderSizeInBytes() override;
+   virtual uintptr_t         getObjectHeaderSizeInBytes();
    uintptr_t                 getOffsetOfSuperclassesInClassObject();
    uintptr_t                 getOffsetOfBackfillOffsetField();
 
    static TR_OpaqueClassBlock *staticGetBaseComponentClass(TR_OpaqueClassBlock *clazz, int32_t &numDims);
    virtual TR_OpaqueClassBlock *getBaseComponentClass(TR_OpaqueClassBlock *clazz, int32_t &numDims) { return NULL; }
 
-   bool vftFieldRequiresMask() { return ~TR::Compiler->om.maskOfObjectVftField() != 0; }
+   bool vftFieldRequiresMask(){ return ~TR::Compiler->om.maskOfObjectVftField() != 0; }
 
-   virtual uintptr_t         getOffsetOfDiscontiguousArraySizeField() override;
-   virtual uintptr_t         getOffsetOfContiguousArraySizeField() override;
+   virtual uintptr_t         getOffsetOfDiscontiguousArraySizeField();
+   virtual uintptr_t         getOffsetOfContiguousArraySizeField();
    virtual uintptr_t         getJ9ObjectContiguousLength();
    virtual uintptr_t         getJ9ObjectDiscontiguousLength();
    virtual uintptr_t         getOffsetOfArrayClassRomPtrField();
@@ -618,7 +618,7 @@ public:
    virtual bool               generateCompressedPointers();
    virtual bool               generateCompressedLockWord();
 
-   virtual void                 printVerboseLogHeader(TR::Options *) override;
+   virtual void                 printVerboseLogHeader(TR::Options *);
    virtual void                 printPID();
 
    virtual void                 emitNewPseudoRandomNumberVerbosePrefix();
@@ -693,7 +693,7 @@ public:
    virtual uintptr_t         getOffsetOfClassDepthAndFlags();
    virtual uintptr_t         getOffsetOfClassFlags();
    virtual uintptr_t         getOffsetOfArrayComponentTypeField();
-   virtual uintptr_t         getOffsetOfIndexableSizeField() override;
+   virtual uintptr_t         getOffsetOfIndexableSizeField();
    virtual uintptr_t         constReleaseVMAccessOutOfLineMask();
    virtual uintptr_t         constReleaseVMAccessMask();
    virtual uintptr_t         constAcquireVMAccessOutOfLineMask();
@@ -753,8 +753,8 @@ public:
    virtual uintptr_t         thisThreadGetGSOperandAddressOffset();
    virtual uintptr_t         thisThreadGetGSHandlerAddressOffset();
 
-   virtual int32_t            getArraySpineShift(int32_t) override;
-   virtual int32_t            getArrayletMask(int32_t) override;
+   virtual int32_t            getArraySpineShift(int32_t);
+   virtual int32_t            getArrayletMask(int32_t);
    virtual int32_t            getArrayletLeafIndex(int64_t, int32_t);
    virtual int32_t            getLeafElementIndex(int64_t , int32_t);
    virtual bool               CEEHDLREnabled();
@@ -787,7 +787,7 @@ public:
    virtual bool               scanReferenceSlotsInClassForOffset( TR::Compilation * comp, TR_OpaqueClassBlock * classPointer, int32_t offset);
    virtual int32_t            findFirstHotFieldTenuredClassOffset( TR::Compilation *comp, TR_OpaqueClassBlock *opclazz);
 
-   virtual bool               isInlineableNativeMethod(TR::Compilation *, TR::ResolvedMethodSymbol * methodSymbol) override;
+   virtual bool               isInlineableNativeMethod( TR::Compilation *, TR::ResolvedMethodSymbol * methodSymbol);
    //receiverClass is for specifying a more specific receiver type. otherwise it is determined from the call.
    virtual bool               maybeHighlyPolymorphic(TR::Compilation *, TR_ResolvedMethod *caller, int32_t cpIndex, TR::Method *callee, TR_OpaqueClassBlock *receiverClass = NULL);
    virtual bool isQueuedForVeryHotOrScorching(TR_ResolvedMethod *calleeMethod, TR::Compilation *comp);
@@ -1124,8 +1124,8 @@ public:
    virtual bool      isJavaLangObject(TR_OpaqueClassBlock *clazz);
    virtual int32_t   getStringLength(uintptr_t objectPointer);
    virtual uint16_t  getStringCharacter(uintptr_t objectPointer, int32_t index);
-   virtual intptr_t getStringUTF8Length(uintptr_t objectPointer) override;
-   virtual char     *getStringUTF8      (uintptr_t objectPointer, char *buffer, intptr_t bufferSize) override;
+   virtual intptr_t getStringUTF8Length(uintptr_t objectPointer);
+   virtual char     *getStringUTF8      (uintptr_t objectPointer, char *buffer, intptr_t bufferSize);
 
    virtual uint32_t getVarHandleHandleTableOffset(TR::Compilation *);
 
@@ -1172,7 +1172,7 @@ public:
    virtual void setHasFailedCodeCacheAllocation(); // MCT
    void *getCCPreLoadedCodeAddress(TR::CodeCache *codeCache, TR_CCPreLoadedCode h, TR::CodeGenerator *cg);
 
-   virtual void reserveTrampolineIfNecessary( TR::Compilation *, TR::SymbolReference *symRef, bool inBinaryEncoding) override;
+   virtual void reserveTrampolineIfNecessary( TR::Compilation *, TR::SymbolReference *symRef, bool inBinaryEncoding);
    virtual TR::CodeCache* getResolvedTrampoline( TR::Compilation *, TR::CodeCache* curCache, J9Method * method, bool inBinaryEncoding) = 0;
 
    // Interpreter profiling support
@@ -1229,7 +1229,7 @@ public:
    virtual intptr_t getVFTEntry(TR_OpaqueClassBlock *clazz, int32_t offset);
 
    TR::TreeTop * lowerAsyncCheck(TR::Compilation *, TR::Node * root,  TR::TreeTop * treeTop);
-   virtual bool isMethodTracingEnabled(TR_OpaqueMethodBlock *method) override;
+   virtual bool isMethodTracingEnabled(TR_OpaqueMethodBlock *method);
    virtual bool isMethodTracingEnabled(J9Method *j9method)
       {
       return isMethodTracingEnabled((TR_OpaqueMethodBlock *)j9method);
@@ -1441,8 +1441,8 @@ public:
 
    virtual bool classInitIsFinished(TR_OpaqueClassBlock *clazz) { return (((J9Class*)clazz)->initializeStatus & J9ClassInitStatusMask) == J9ClassInitSucceeded; }
 
-   virtual TR_OpaqueClassBlock *getClassFromNewArrayType(int32_t arrayType) override;
-   virtual TR_OpaqueClassBlock *getClassFromNewArrayTypeNonNull(int32_t arrayType);
+   virtual TR_OpaqueClassBlock * getClassFromNewArrayType(int32_t arrayType);
+   virtual TR_OpaqueClassBlock * getClassFromNewArrayTypeNonNull(int32_t arrayType);
 
    virtual TR_OpaqueClassBlock *getClassFromCP(J9ConstantPool *cp);
    virtual J9ROMMethod *getROMMethodFromRAMMethod(J9Method *ramMethod);
