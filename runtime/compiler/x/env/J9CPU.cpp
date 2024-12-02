@@ -25,17 +25,12 @@
 #include "env/CPU.hpp"
 #include "env/VMJ9.h"
 #include "x/runtime/X86Runtime.hpp"
-#include "env/JitConfig.hpp"
 #include "codegen/CodeGenerator.hpp"
 #if defined(J9VM_OPT_JITSERVER)
 #include "control/CompilationRuntime.hpp"
 #include "control/CompilationThread.hpp"
 #include "runtime/JITClientSession.hpp"
 #endif /* defined(J9VM_OPT_JITSERVER) */
-
-// This is a workaround to avoid J9_PROJECT_SPECIFIC macros in x/env/OMRCPU.cpp
-// Without this definition, we get an undefined symbol of JITConfig::instance() at runtime
-TR::JitConfig * TR::JitConfig::instance() { return NULL; }
 
 TR::CPU
 J9::X86::CPU::detectRelocatable(OMRPortLibrary * const omrPortLib)

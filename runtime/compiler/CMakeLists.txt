@@ -165,9 +165,9 @@ endif()
 set(REMOVED_OMR_FILES
 	${omr_SOURCE_DIR}/compiler/codegen/CCData.cpp
 	${omr_SOURCE_DIR}/compiler/control/CompileMethod.cpp
-	${omr_SOURCE_DIR}/compiler/env/FEBase.cpp
 	${omr_SOURCE_DIR}/compiler/optimizer/FEInliner.cpp
-	${omr_SOURCE_DIR}/compiler/env/JitConfig.cpp
+	${omr_SOURCE_DIR}/compiler/env/OMRJitConfig.cpp
+	${omr_SOURCE_DIR}/compiler/env/OMRFrontEnd.cpp
 	${omr_SOURCE_DIR}/compiler/env/PersistentAllocator.cpp
 	${omr_SOURCE_DIR}/compiler/env/SystemSegmentProvider.cpp
 	${omr_SOURCE_DIR}/compiler/infra/OMRMonitor.cpp
