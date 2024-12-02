@@ -5059,6 +5059,11 @@ TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & detail
 
       Trc_JIT_CompRequest(vmThread, method, pc, !async, optimizationPlan->getOptLevel(), (int)priority, _numQueuedMethods);
 
+      // If method is going to be compiled, then the dependency table no longer needs to
+      // track it. Let the table know.
+      if (auto dependencyTable = getPersistentInfo()->getAOTDependencyTable())
+         dependencyTable->methodWillBeCompiled(method);
+
       // Increase the queue weight
       uint8_t entryWeight; // must be less than 256
       if (!details.isOrdinaryMethod() || details.isNewInstanceThunk() || isJNINativeMethodRequest)
@@ -8253,11 +8258,6 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
    UDATA oldState = vmThread->omrVMThread->vmState;
    vmThread->omrVMThread->vmState = J9VMSTATE_JIT | J9VMSTATE_MINOR;
    vmThread->jitMethodToBeCompiled = method;
-
-   // If method is being compiled, then the dependency table no longer needs to
-   // track it. Let the table know.
-   if (auto dependencyTable = getCompilationInfo()->getPersistentInfo()->getAOTDependencyTable())
-      dependencyTable->methodWillBeCompiled(method);
 
    try
       {
