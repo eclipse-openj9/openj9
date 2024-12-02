@@ -428,18 +428,36 @@ J9::OptionsPostRestore::invalidateCompiledMethod(J9Method *method, TR_J9VMBase *
 
    if (bodyInfo)
       {
-      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestoreDetails))
+      // Ensure that methodCannotBeRecompiled forces the method to revert to the
+      // interpreter.
+      bodyInfo->getMethodInfo()->setIsExcludedPostRestore();
+
+      // Ensure all bodies, even old stubs, are patched to revert to the
+      // interpreter.
+      do
          {
-         TR_VerboseLog::CriticalSection();
-         TR_VerboseLog::write(TR_Vlog_CHECKPOINT_RESTORE, "Invalidating ");
-         _compInfo->printMethodNameToVlog(method);
-         TR_VerboseLog::writeLine(" (%p)", method);
+         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestoreDetails))
+            {
+            TR_VerboseLog::CriticalSection();
+            TR_VerboseLog::write(TR_Vlog_CHECKPOINT_RESTORE, "Invalidating ");
+            _compInfo->printMethodNameToVlog(method);
+            TR_VerboseLog::writeLine(" (%p), startPC=%p", method, startPC);
+            }
+
+         TR::Recompilation::methodCannotBeRecompiled(startPC, fej9);
+
+         startPC = bodyInfo->getStartPCAfterPreviousCompile();
+         if (startPC)
+            {
+            TR_ASSERT_FATAL(!((uintptr_t)startPC & J9_STARTPC_NOT_TRANSLATED), "Invalid startPC %p from bodyInfo (%p)->getStartPCAfterPreviousCompile()\n", startPC, bodyInfo);
+            bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(startPC);
+            }
+         else
+            {
+            bodyInfo = NULL;
+            }
          }
-
-      TR_PersistentMethodInfo *pmi = bodyInfo->getMethodInfo();
-      pmi->setIsExcludedPostRestore();
-
-      TR::Recompilation::invalidateMethodBody(startPC, fej9);
+      while (bodyInfo);
 
       // TODO: add method to a list to check the stack of java threads to print out message
       }
