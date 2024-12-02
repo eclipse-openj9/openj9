@@ -126,6 +126,12 @@ J9::Z::CodeGenerator::initialize()
       {
       cg->setSupportsInlineStringCodingHasNegatives();
       }
+   static bool disableInlineStringCodingCountPositives = feGetEnv("TR_DisableInlineStringCodingCountPositives") != NULL;
+   if (cg->getSupportsVectorRegisters() && !disableInlineStringCodingCountPositives &&
+         !TR::Compiler->om.canGenerateArraylets())
+      {
+      cg->setSupportsInlineStringCodingCountPositives();
+      }
 
    // Similar to AOT, array translate instructions are not supported for remote compiles because instructions such as
    // TRTO allocate lookup tables in persistent memory that cannot be relocated.
@@ -4028,7 +4034,14 @@ J9::Z::CodeGenerator::inlineDirectCall(
       case TR::java_lang_StringCoding_hasNegatives:
          if (cg->getSupportsInlineStringCodingHasNegatives())
             {
-            resultReg = TR::TreeEvaluator::inlineStringCodingHasNegatives(node, cg);
+            resultReg = TR::TreeEvaluator::inlineStringCodingHasNegativesOrCountPositives(node, cg, false);
+            return true;
+            }
+         break;
+      case TR::java_lang_StringCoding_countPositives:
+         if (cg->getSupportsInlineStringCodingCountPositives())
+            {
+            resultReg = TR::TreeEvaluator::inlineStringCodingHasNegativesOrCountPositives(node, cg, true);
             return true;
             }
          break;

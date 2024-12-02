@@ -859,9 +859,9 @@ J9::Z::TreeEvaluator::pdclearSetSignEvaluator(TR::Node *node, TR::CodeGenerator 
    }
 
 /*
- * This method inlines the Java API StringCoding.hasNegatives(byte src, int off, int len) using
+ * This method inlines the Java APIs StringCoding.hasNegatives(byte[] src, int off, int len) and StringCoding.countPositives(byte[] src, int off, int len) using
  * SIMD instructions.
- * The method looks like below on Java 17:
+ * StringCoding.hasNegatives is available on Java 11, 17 and 21. It looks like below on all platforms:
  *
  *   @IntrinsicCandidate
  *   public static boolean hasNegatives(byte[] ba, int off, int len) {
@@ -872,10 +872,22 @@ J9::Z::TreeEvaluator::pdclearSetSignEvaluator(TR::Node *node, TR::CodeGenerator 
  *       }
  *       return false;
  *   }
- * This routine behaves similarly on Java 11 and 21 as well and so is supported on those platforms too.
+ *
+ * StringCoding.countPositives looks like below and is available on Java 21 and newer platforms:
+ *
+ *  @IntrinsicCandidate
+ *  public static int countPositives(byte[] ba, int off, int len) {
+ *      int limit = off + len;
+ *      for (int i = off; i < limit; i++) {
+ *          if (ba[i] < 0) {
+ *              return i - off;
+ *          }
+ *      }
+ *      return len;
+ *  }
  */
 TR::Register*
-J9::Z::TreeEvaluator::inlineStringCodingHasNegatives(TR::Node *node, TR::CodeGenerator *cg)
+J9::Z::TreeEvaluator::inlineStringCodingHasNegativesOrCountPositives(TR::Node *node, TR::CodeGenerator *cg, bool isCountPositives)
    {
    TR::Register *inputPtrReg = cg->gprClobberEvaluate(node->getChild(0));
    TR::Register *offsetReg = cg->evaluate(node->getChild(1));
@@ -886,17 +898,27 @@ J9::Z::TreeEvaluator::inlineStringCodingHasNegatives(TR::Node *node, TR::CodeGen
    TR::LabelSymbol *cFlowRegionEnd = generateLabelSymbol(cg);
    TR::LabelSymbol *cFlowRegionStart = generateLabelSymbol(cg);
    TR::LabelSymbol *processOutOfRangeChar = generateLabelSymbol(cg);
+   TR::LabelSymbol *processCountPositivesOutOfRangeChar = isCountPositives ? generateLabelSymbol(cg) : NULL;
 
    TR::Register *vInput = cg->allocateRegister(TR_VRF);
    TR::Register *vUpperLimit = cg->allocateRegister(TR_VRF);
    TR::Register *vComparison = cg->allocateRegister(TR_VRF);
    TR::Register *numCharsLeftToProcess = cg->allocateRegister(); // off + len
    TR::Register *outOfRangeCharIndex = cg->allocateRegister(TR_VRF);
+   TR::Register *outOfRangeCharIndexGR = isCountPositives ? cg->allocateRegister() : NULL;
 
    TR::Register *returnReg = cg->allocateRegister();
-   generateRIInstruction(cg, TR::InstOpCode::LGHI, node, returnReg, 0);
+   if (isCountPositives)
+      {
+      generateRRInstruction(cg, TR::InstOpCode::LR, node, returnReg, lengthReg);
+      }
+   else
+      {
+      generateRIInstruction(cg, TR::InstOpCode::LGHI, node, returnReg, 0);
+      }
 
    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, cFlowRegionStart);
+   cFlowRegionStart->setStartInternalControlFlow();
    generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::C, node, lengthReg, 0, TR::InstOpCode::COND_BE, cFlowRegionEnd, false, false);
    generateRRInstruction(cg, TR::InstOpCode::AGFR, node, inputPtrReg, offsetReg);
    generateRRInstruction(cg, TR::InstOpCode::LR, node, numCharsLeftToProcess, lengthReg);
@@ -910,7 +932,6 @@ J9::Z::TreeEvaluator::inlineStringCodingHasNegatives(TR::Node *node, TR::CodeGen
    generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::C, node, numCharsLeftToProcess, 16, TR::InstOpCode::COND_BNH, processMultiple16CharsEnd, false, false);
 
    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, processMultiple16CharsStart);
-   processMultiple16CharsStart->setStartInternalControlFlow();
 
    // Load bytes and search for out of range character
    generateVRXInstruction(cg, TR::InstOpCode::VL, node, vInput, generateS390MemoryReference(inputPtrReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg));
@@ -938,21 +959,43 @@ J9::Z::TreeEvaluator::inlineStringCodingHasNegatives(TR::Node *node, TR::CodeGen
    generateVRSbInstruction(cg, TR::InstOpCode::VLL, node, vInput, numCharsLeftToProcess, generateS390MemoryReference(inputPtrReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg));
 
    generateVRRdInstruction(cg, TR::InstOpCode::VSTRC, node, outOfRangeCharIndex, vInput, vUpperLimit, vComparison, 0x1, 0);
-   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC1, node, processOutOfRangeChar);
+   generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC1, node, isCountPositives ? processCountPositivesOutOfRangeChar : processOutOfRangeChar);
 
    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, cFlowRegionEnd);
 
-   generateS390LabelInstruction(cg, TR::InstOpCode::label, node, processOutOfRangeChar);
-   generateRIInstruction(cg, TR::InstOpCode::LGHI, node, returnReg, 1);
+   if (isCountPositives)
+      {
+      // numCharsLeftToProcess is reused to load residue bytes in residue handling code. We must reverse this to ensure
+      // we are calculating the return value of StringCoding.countPositives correctly.
+      generateS390LabelInstruction(cg, TR::InstOpCode::label, node, processCountPositivesOutOfRangeChar);
+      generateRIInstruction(cg, TR::InstOpCode::AHI, node, numCharsLeftToProcess, 1);
+      }
 
-   TR::RegisterDependencyConditions* dependencies = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 7, cg);
-   dependencies->addPostConditionIfNotAlreadyInserted(vInput, TR::RealRegister::AssignAny);
-   dependencies->addPostConditionIfNotAlreadyInserted(outOfRangeCharIndex, TR::RealRegister::AssignAny);
-   dependencies->addPostConditionIfNotAlreadyInserted(vUpperLimit, TR::RealRegister::AssignAny);
-   dependencies->addPostConditionIfNotAlreadyInserted(vComparison, TR::RealRegister::AssignAny);
-   dependencies->addPostConditionIfNotAlreadyInserted(inputPtrReg, TR::RealRegister::AssignAny);
-   dependencies->addPostConditionIfNotAlreadyInserted(numCharsLeftToProcess, TR::RealRegister::AssignAny);
-   dependencies->addPostConditionIfNotAlreadyInserted(returnReg, TR::RealRegister::AssignAny);
+   generateS390LabelInstruction(cg, TR::InstOpCode::label, node, processOutOfRangeChar);
+   if (isCountPositives)
+      {
+      generateRRRInstruction(cg, TR::InstOpCode::SRK, node, returnReg, lengthReg, numCharsLeftToProcess);
+      generateVRScInstruction(cg, TR::InstOpCode::VLGV, node, outOfRangeCharIndexGR, outOfRangeCharIndex, generateS390MemoryReference(7, cg), 0);
+      generateRRInstruction(cg, TR::InstOpCode::AR, node, returnReg, outOfRangeCharIndexGR);
+      }
+   else
+      {
+      generateRIInstruction(cg, TR::InstOpCode::LGHI, node, returnReg, 1);
+      }
+   TR::RegisterDependencyConditions* dependencies = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, isCountPositives ? 10 : 9, cg);
+   if (isCountPositives)
+      {
+      dependencies->addPostCondition(outOfRangeCharIndexGR, TR::RealRegister::AssignAny);
+      }
+   dependencies->addPostCondition(lengthReg, TR::RealRegister::AssignAny);
+   dependencies->addPostCondition(vInput, TR::RealRegister::AssignAny);
+   dependencies->addPostCondition(outOfRangeCharIndex, TR::RealRegister::AssignAny);
+   dependencies->addPostCondition(vUpperLimit, TR::RealRegister::AssignAny);
+   dependencies->addPostCondition(vComparison, TR::RealRegister::AssignAny);
+   dependencies->addPostCondition(inputPtrReg, TR::RealRegister::AssignAny);
+   dependencies->addPostCondition(numCharsLeftToProcess, TR::RealRegister::AssignAny);
+   dependencies->addPostCondition(returnReg, TR::RealRegister::AssignAny);
+   dependencies->addPostCondition(offsetReg, TR::RealRegister::AssignAny);
 
    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, cFlowRegionEnd, dependencies);
    cFlowRegionEnd->setEndInternalControlFlow();
@@ -967,6 +1010,10 @@ J9::Z::TreeEvaluator::inlineStringCodingHasNegatives(TR::Node *node, TR::CodeGen
    cg->stopUsingRegister(vUpperLimit);
    cg->stopUsingRegister(vComparison);
    cg->stopUsingRegister(numCharsLeftToProcess);
+   if (isCountPositives)
+      {
+      cg->stopUsingRegister(outOfRangeCharIndexGR);
+      }
    node->setRegister(returnReg);
    return returnReg;
    }

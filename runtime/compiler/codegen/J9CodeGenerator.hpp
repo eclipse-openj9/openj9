@@ -462,6 +462,16 @@ public:
    void setSupportsInlineStringHashCode() { _j9Flags.set(SupportsInlineStringHashCode); }
 
    /** \brief
+   *    Determines whether the code generator supports inlining of java/lang/StringCoding.countPositives
+   */
+   bool getSupportsInlineStringCodingCountPositives() { return _j9Flags.testAny(SupportsInlineStringCodingCountPositives); }
+
+   /** \brief
+   *    The code generator supports inlining of java/lang/StringCoding.countPositives
+   */
+   void setSupportsInlineStringCodingCountPositives() { _j9Flags.set(SupportsInlineStringCodingCountPositives); }
+
+   /** \brief
    *    Determines whether the code generator supports inlining of java/lang/StringCoding.hasNegatives
    */
    bool getSupportsInlineStringCodingHasNegatives() { return _j9Flags.testAny(SupportsInlineStringCodingHasNegatives); }
@@ -688,6 +698,7 @@ private:
       SupportsInlineVectorizedMismatch                    = 0x00001000,
       SupportsInlineVectorizedHashCode                    = 0x00002000,
       SupportsInlineStringCodingHasNegatives              = 0x00004000,
+      SupportsInlineStringCodingCountPositives            = 0x00008000,
       };
 
    flags32_t _j9Flags;
