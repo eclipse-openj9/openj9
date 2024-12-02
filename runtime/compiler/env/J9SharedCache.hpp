@@ -101,7 +101,7 @@ public:
    virtual uint16_t getAllEnabledHints(J9Method *method);
    virtual void addHint(J9Method *, TR_SharedCacheHint);
    virtual void addHint(TR_ResolvedMethod *, TR_SharedCacheHint);
-   virtual bool isMostlyFull() override;
+   virtual bool isMostlyFull();
 
    static void validateAOTHeader(J9JITConfig *jitConfig, J9VMThread *vmThread, TR::CompilationInfo *compInfo);
 
@@ -144,7 +144,7 @@ public:
     * \param[in] offset The offset to convert.
     * \return A pointer. Raises a fatal assertion before returning NULL if the offset is invalid.
     */
-   virtual void *pointerFromOffsetInSharedCache(uintptr_t offset) override;
+   virtual void *pointerFromOffsetInSharedCache(uintptr_t offset);
 
    /**
     * \brief Converts a pointer into the metadata section of the SCC into an offset, calculated
@@ -153,7 +153,7 @@ public:
     * \param[in] ptr The pointer to convert.
     * \return An offset. Raises a fatal assertion before returning 0 if the pointer is invalid.
     */
-   virtual uintptr_t offsetInSharedCacheFromPointer(void *ptr) override;
+   virtual uintptr_t offsetInSharedCacheFromPointer(void *ptr);
 
    /**
     * \brief Converts an offset into the ROMClass section into a J9ROMClass *.
@@ -161,7 +161,7 @@ public:
     * \param[in] offset The offset to convert.
     * \return A J9ROMClass *. Raises a fatal assertion before returning NULL if the offset is invalid.
     */
-   virtual J9ROMClass *romClassFromOffsetInSharedCache(uintptr_t offset) override;
+   virtual J9ROMClass *romClassFromOffsetInSharedCache(uintptr_t offset);
 
    /**
     * \brief Converts a J9ROMClass * pointer into the SCC into an offset.
@@ -169,7 +169,7 @@ public:
     * \param[in] romClass The J9ROMClass * to convert
     * \return An offset. Raises a fatal assertion before returning 0 if the pointer is invalid.
     */
-   virtual uintptr_t offsetInSharedCacheFromROMClass(J9ROMClass *romClass) override;
+   virtual uintptr_t offsetInSharedCacheFromROMClass(J9ROMClass *romClass);
 
    /**
     * \brief Converts an offset into the ROMClass section into a J9ROMMethod *.
@@ -177,7 +177,7 @@ public:
     * \param[in] offset The offset to convert
     * \return A J9ROMMethod *. Raises a fatal assertion before returning NULL if the offset is invalid.
     */
-   virtual J9ROMMethod *romMethodFromOffsetInSharedCache(uintptr_t offset) override;
+   virtual J9ROMMethod *romMethodFromOffsetInSharedCache(uintptr_t offset);
 
    /**
     * \brief Converts a J9ROMMethod * pointer into the SCC into an offset.
@@ -185,7 +185,7 @@ public:
     * \param[in] romMethod The J9ROMMethod * to convert
     * \return An offset. Raises a fatal assertion before returning INVALID_ROM_METHOD_OFFSET if the pointer is invalid.
     */
-   virtual uintptr_t offsetInSharedCacheFromROMMethod(J9ROMMethod *romMethod) override;
+   virtual uintptr_t offsetInSharedCacheFromROMMethod(J9ROMMethod *romMethod);
 
    /**
     * \brief Converts an offset into the ROMClass section into a pointer.
@@ -193,7 +193,7 @@ public:
     * \param[in] offset The offset to convert
     * \return A pointer. Raises a fatal assertion before returning NULL if the offset is invalid.
     */
-   virtual void *ptrToROMClassesSectionFromOffsetInSharedCache(uintptr_t offset) override;
+   virtual void *ptrToROMClassesSectionFromOffsetInSharedCache(uintptr_t offset);
 
    /**
     * \brief Converts a pointer into the ROM Classes section of the SCC into an offset.
@@ -201,21 +201,21 @@ public:
     * \param[in] ptr The pointer to convert
     * \return  An offset. Raises a fatal assertion before returning 0 if the pointer is invalid.
     */
-   virtual uintptr_t offsetInSharedCacheFromPtrToROMClassesSection(void *ptr) override;
+   virtual uintptr_t offsetInSharedCacheFromPtrToROMClassesSection(void *ptr);
 
 
-   virtual void persistIprofileInfo(TR::ResolvedMethodSymbol *, TR::Compilation *comp) override;
-   virtual void persistIprofileInfo(TR::ResolvedMethodSymbol *, TR_ResolvedMethod*, TR::Compilation *comp) override;
+   virtual void persistIprofileInfo(TR::ResolvedMethodSymbol *, TR::Compilation *comp);
+   virtual void persistIprofileInfo(TR::ResolvedMethodSymbol *, TR_ResolvedMethod*, TR::Compilation *comp);
 
    static const uint32_t maxClassChainLength = 32;
 
-   virtual bool canRememberClass(TR_OpaqueClassBlock *classPtr) override
+   virtual bool canRememberClass(TR_OpaqueClassBlock *classPtr)
       {
       return rememberClass((J9Class *)classPtr, NULL, false) != TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET;
       }
 
    virtual uintptr_t rememberClass(TR_OpaqueClassBlock *classPtr,
-                                   const AOTCacheClassChainRecord **classChainRecord = NULL) override
+                                    const AOTCacheClassChainRecord **classChainRecord = NULL)
       {
       return rememberClass((J9Class *)classPtr, classChainRecord, true);
       }
@@ -227,7 +227,7 @@ public:
    virtual const char *getDebugCounterName(UDATA offset);
 
    virtual bool classMatchesCachedVersion(J9Class *clazz, UDATA *chainData=NULL);
-   virtual bool classMatchesCachedVersion(TR_OpaqueClassBlock *classPtr, UDATA *chainData=NULL) override
+   virtual bool classMatchesCachedVersion(TR_OpaqueClassBlock *classPtr, UDATA *chainData=NULL)
       {
       return classMatchesCachedVersion((J9Class *) classPtr, chainData);
       }
@@ -239,9 +239,9 @@ public:
     * \param[in] chainData The pointer to convert, which should have come from pointerFromOffsetInSharedCache().
     * \return A pointer. Raises a fatal assertion before returning NULL if the pointer is invalid.
     */
-   virtual void *lookupClassLoaderAssociatedWithClassChain(void *chainData) override;
+   virtual void *lookupClassLoaderAssociatedWithClassChain(void *chainData);
    virtual TR_OpaqueClassBlock *lookupClassFromChainAndLoader(uintptr_t *chainData, void *classLoader,
-                                                              TR::Compilation *comp) override;
+                                                              TR::Compilation *comp);
 
    /**
     * \brief Checks whether the specified pointer points into the metadata section
@@ -255,7 +255,7 @@ public:
     *             the SCC.
     * \return True if the pointer points into the shared cache, false otherwise.
     */
-   virtual bool isPointerInSharedCache(void *ptr, uintptr_t *cacheOffset = NULL) override;
+   virtual bool isPointerInSharedCache(void *ptr, uintptr_t *cacheOffset = NULL);
 
    /**
     * \brief Checks whether the specified offset, calculated from the end of the SCC,
@@ -267,7 +267,7 @@ public:
     *             here. If offset is not within the shared cache this parameter is ignored.
     * \return True if the offset is within the shared cache, false otherwise.
     */
-   virtual bool isOffsetInSharedCache(uintptr_t encoded_offset, void *ptr = NULL) override;
+   virtual bool isOffsetInSharedCache(uintptr_t encoded_offset, void *ptr = NULL);
 
    /**
     * \brief Checks whether the J9ROMClass underlying the given class exists in the SCC
@@ -279,7 +279,7 @@ public:
     *             parameter is ignored.
     * \return True if romClass points into the SCC, false otherwise.
     */
-   virtual bool isClassInSharedCache(TR_OpaqueClassBlock *clazz, uintptr_t *cacheOffset = NULL) override;
+   virtual bool isClassInSharedCache(TR_OpaqueClassBlock *clazz, uintptr_t *cacheOffset = NULL);
    virtual bool isClassInSharedCache(J9Class *clazz, uintptr_t *cacheOffset = NULL)
       { return isClassInSharedCache(reinterpret_cast<TR_OpaqueClassBlock *>(clazz), cacheOffset); }
 
@@ -293,7 +293,7 @@ public:
     *             parameter is ignored.
     * \return True if romClass points into the SCC, false otherwise.
     */
-   virtual bool isROMClassInSharedCache(J9ROMClass *romClass, uintptr_t *cacheOffset = NULL) override;
+   virtual bool isROMClassInSharedCache(J9ROMClass *romClass, uintptr_t *cacheOffset = NULL);
 
    /**
     * \brief Checks whether the specified offset is within the ROMClass section
@@ -305,7 +305,7 @@ public:
     *             here. If offset is not within the shared cache this parameter is ignored.
     * \return True if the offset is within the shared cache, false otherwise.
     */
-   virtual bool isROMClassOffsetInSharedCache(uintptr_t offset, J9ROMClass **romClassPtr = NULL) override;
+   virtual bool isROMClassOffsetInSharedCache(uintptr_t offset, J9ROMClass **romClassPtr = NULL);
 
    /**
     * \brief Checks whether the persisent representation of a J9Method exists in the SCC
@@ -317,7 +317,7 @@ public:
     *             be returned here. If it is not in the SCC, this parameter is ignored.
     * \return True if the J9Method's romMethod exists in the SCC, false otherwise.
     */
-   virtual bool isMethodInSharedCache(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *definingClass, uintptr_t *cacheOffset = NULL) override;
+   virtual bool isMethodInSharedCache(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *definingClass, uintptr_t *cacheOffset = NULL);
 
    /**
     * \brief Checks whether the specified J9ROMMethod exists in the SCC
@@ -329,7 +329,7 @@ public:
     *             parameter is ignored.
     * \return True if romMethod points into the SCC, false otherwise.
     */
-   virtual bool isROMMethodInSharedCache(J9ROMMethod *romMethod, uintptr_t *cacheOffset = NULL) override;
+   virtual bool isROMMethodInSharedCache(J9ROMMethod *romMethod, uintptr_t *cacheOffset = NULL);
 
    /**
     * \brief Checks whether the specified offset is within the ROMClass section
@@ -340,7 +340,7 @@ public:
     *             here. If offset is not within the shared cache this parameter is ignored.
     * \return True if the offset is within the shared cache, false otherwise.
     */
-   virtual bool isROMMethodOffsetInSharedCache(uintptr_t offset, J9ROMMethod **romMethodPtr = NULL) override;
+   virtual bool isROMMethodOffsetInSharedCache(uintptr_t offset, J9ROMMethod **romMethodPtr = NULL);
 
    /**
     * \brief Checks whether the specified pointer points into the ROMClass section
@@ -353,7 +353,7 @@ public:
     *             parameter is ignored.
     * \return True if the pointer points into the shared cache, false otherwise.
     */
-   virtual bool isPtrToROMClassesSectionInSharedCache(void *ptr, uintptr_t *cacheOffset = NULL) override;
+   virtual bool isPtrToROMClassesSectionInSharedCache(void *ptr, uintptr_t *cacheOffset = NULL);
 
    /**
     * \brief Checks whether the specified offset is within the ROMClass section
@@ -365,12 +365,12 @@ public:
     *             here. If offset is not within the shared cache this parameter is ignored.
     * \return True if the offset is within the shared cache, false otherwise.
     */
-   virtual bool isOffsetOfPtrToROMClassesSectionInSharedCache(uintptr_t offset, void **ptr = NULL) override;
+   virtual bool isOffsetOfPtrToROMClassesSectionInSharedCache(uintptr_t offset, void **ptr = NULL);
 
    J9ROMClass *startingROMClassOfClassChain(UDATA *classChain);
    uintptr_t startingROMClassOffsetOfClassChain(void *chain);
 
-   virtual uintptr_t getClassChainOffsetIdentifyingLoader(TR_OpaqueClassBlock *clazz, uintptr_t **classChain = NULL) override;
+   virtual uintptr_t getClassChainOffsetIdentifyingLoader(TR_OpaqueClassBlock *clazz, uintptr_t **classChain = NULL);
 
 #if defined(J9VM_OPT_JITSERVER)
    /**
