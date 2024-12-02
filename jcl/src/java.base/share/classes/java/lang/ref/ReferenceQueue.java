@@ -239,31 +239,6 @@ void forEach(java.util.function.Consumer<? super Reference<? extends T>> consume
 }
 
 /*[IF JAVA_SPEC_VERSION >= 19]*/
-final boolean headIsNull() {
-	return empty;
-}
-
-final Reference<? extends T> poll0() {
-	return poll();
-}
-
-final Reference<? extends T> remove0(long timeout) throws IllegalArgumentException, InterruptedException {
-	return remove(timeout);
-}
-
-final Reference<? extends T> remove0() throws IllegalArgumentException, InterruptedException {
-	return remove(0L);
-}
-
-final boolean enqueue0(Reference reference) {
-	enqueue(reference);
-	return true;
-}
-
-void signal() {}
-void await() throws InterruptedException {}
-void await(long timeout) throws InterruptedException {}
-
 ReferenceQueue(int value) {
 	this();
 }
