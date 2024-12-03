@@ -23,7 +23,9 @@
 package java.security;
 
 import com.ibm.oti.util.Msg;
+/*[IF JAVA_SPEC_VERSION < 24]*/
 import sun.security.util.SecurityConstants;
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 /*[IF JAVA_SPEC_VERSION >= 9]
 import jdk.internal.reflect.CallerSensitive;
@@ -153,6 +155,7 @@ private static native Object[] getAccSnapshot(int depth, boolean forDoPrivileged
  */
 private static native ProtectionDomain getCallerPD(int depth);
 
+/*[IF JAVA_SPEC_VERSION < 24]*/
 /**
  * provide debug info according to debug settings before throwing AccessControlException
  *
@@ -192,7 +195,6 @@ private static void throwACE(boolean debug, Permission perm, ProtectionDomain pD
 	}
 }
 
-/*[IF JAVA_SPEC_VERSION < 24]*/
 /**
  * Helper method to check whether the running program is allowed to access the resource
  * being guarded by the given Permission argument
@@ -253,11 +255,13 @@ private static boolean checkPermissionHelper(Permission perm, AccessControlConte
 			if (pDomains != null) {
 				for (int i = 0; i < length ; ++i) {
 					// invoke PD within acc.context first
+					if ((pDomains[length - i - 1] != null)
 					/*[IF JAVA_SPEC_VERSION >= 9]*/
-					if ((pDomains[length - i - 1] != null) && !pDomains[length - i - 1].impliesWithAltFilePerm(perm)) {
+						&& !pDomains[length - i - 1].impliesWithAltFilePerm(perm)
 					/*[ELSE] JAVA_SPEC_VERSION >= 9 */
-					if ((pDomains[length - i - 1] != null) && !pDomains[length - i - 1].implies(perm)) {
+						&& !pDomains[length - i - 1].implies(perm)
 					/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
+					) {
 						throwACE((debug & AccessControlContext.DEBUG_ACCESS_DENIED) != 0, perm, pDomains[length - i - 1], false);
 					}
 				}
@@ -620,6 +624,9 @@ private static ProtectionDomain[] generatePDarray(DomainCombiner activeDC, Acces
  * @return   AccessControlContext.STATE_AUTHORIZED or STATE_NOT_AUTHORIZED (can't be STATE_UNKNOWN)
  */
 private static int getNewAuthorizedState(AccessControlContext acc, ProtectionDomain callerPD) {
+	/*[IF JAVA_SPEC_VERSION >= 24]*/
+	return AccessControlContext.STATE_AUTHORIZED;
+	/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 	int newAuthorizedState;
 	/*[PR JAZZ 87596] PMR 18839,756,000 - Need to trust AccessControlContext created without active SecurityManager */
 	if ((null != acc) && (null != System.getSecurityManager())) {
@@ -636,7 +643,8 @@ private static int getNewAuthorizedState(AccessControlContext acc, ProtectionDom
 		newAuthorizedState = AccessControlContext.STATE_AUTHORIZED;
 	}
 	return newAuthorizedState;
- }
+	/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
+}
 
 /**
  * Helper method to combine the ProtectionDomain objects
