@@ -3289,13 +3289,6 @@ TR_RelocationRecordProfiledInlinedMethod::methodIndex(TR_RelocationTarget *reloT
    return reloTarget->loadRelocationRecordValue((uintptr_t *) &((TR_RelocationRecordProfiledInlinedMethodBinaryTemplate *)_record)->_methodIndex);
    }
 
-
-bool
-TR_RelocationRecordProfiledInlinedMethod::checkInlinedClassValidity(TR_RelocationRuntime *reloRuntime, TR_OpaqueClassBlock *inlinedClass)
-   {
-   return true;
-   }
-
 TR_OpaqueMethodBlock *
 TR_RelocationRecordProfiledInlinedMethod::getInlinedMethod(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, TR_OpaqueClassBlock *inlinedCodeClass)
    {
@@ -3370,7 +3363,7 @@ TR_RelocationRecordProfiledInlinedMethod::preparePrivateData(TR_RelocationRuntim
          }
       }
 
-   if (inlinedCodeClass && checkInlinedClassValidity(reloRuntime, inlinedCodeClass))
+   if (inlinedCodeClass)
       {
       RELO_LOG(reloRuntime->reloLogger(), 6,"\tpreparePrivateData: inlined class valid\n");
       reloPrivateData->_inlinedCodeClass = inlinedCodeClass;
@@ -3446,13 +3439,6 @@ TR_RelocationRecordProfiledClassGuard::name()
    return "TR_ProfiledClassGuard";
    }
 
-bool
-TR_RelocationRecordProfiledClassGuard::checkInlinedClassValidity(TR_RelocationRuntime *reloRuntime, TR_OpaqueClassBlock *inlinedCodeClass)
-   {
-   return true;
-   return !reloRuntime->fej9()->classHasBeenExtended(inlinedCodeClass) && !reloRuntime->options()->getOption(TR_DisableProfiledInlining);
-   }
-
 void
 TR_RelocationRecordProfiledClassGuard::setupInlinedMethodData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget)
    {
@@ -3478,13 +3464,6 @@ const char *
 TR_RelocationRecordProfiledMethodGuard::name()
    {
    return "TR_ProfiledMethodGuard";
-   }
-
-bool
-TR_RelocationRecordProfiledMethodGuard::checkInlinedClassValidity(TR_RelocationRuntime *reloRuntime, TR_OpaqueClassBlock *inlinedCodeClass)
-   {
-   return true;
-   return !reloRuntime->options()->getOption(TR_DisableProfiledMethodInlining);
    }
 
 void
