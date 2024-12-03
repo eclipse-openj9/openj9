@@ -1717,12 +1717,20 @@ bool
 J9::TransformUtil::transformIndirectLoadChain(TR::Compilation *comp, TR::Node *node, TR::Node *baseExpression, TR::KnownObjectTable::Index baseKnownObject, TR::Node **removedNode)
    {
 #if defined(J9VM_OPT_JITSERVER)
-   // JITServer KOT: Bypass this method at the JITServer.
-   // transformIndirectLoadChainImpl requires access to the VM.
-   // It is already bypassed by transformIndirectLoadChainAt().
+   // Under JITServer, call a simplified version of transformIndirectLoadChain
+   // that does not access the VM
    if (comp->isOutOfProcessCompilation())
       {
-      return false;
+      int32_t stableArrayRank =
+         comp->getKnownObjectTable()->getArrayWithStableElementsRank(baseKnownObject);
+      bool result =
+         TR::TransformUtil::transformIndirectLoadChainServerImpl(comp,
+                                                                 node,
+                                                                 baseExpression,
+                                                                 baseKnownObject,
+                                                                 stableArrayRank,
+                                                                 removedNode);
+      return result;
       }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
@@ -1732,6 +1740,216 @@ J9::TransformUtil::transformIndirectLoadChain(TR::Compilation *comp, TR::Node *n
    bool result = TR::TransformUtil::transformIndirectLoadChainImpl(comp, node, baseExpression, (void*)comp->getKnownObjectTable()->getPointer(baseKnownObject), stableArrayRank, removedNode);
    return result;
    }
+
+#if defined(J9VM_OPT_JITSERVER)
+/** Dereference node and fold it into a constant when possible.
+ *
+ * A simpler version of transformIndirectLoadChain() for the JITServer mode, which only considers
+ * the case where the node's symRef is a Java field.
+ */
+bool
+J9::TransformUtil::transformIndirectLoadChainServerImpl(TR::Compilation *comp, TR::Node *node, TR::Node *baseExpression, TR::KnownObjectTable::Index baseKnownObject, int32_t baseStableArrayRank, TR::Node **removedNode)
+   {
+   bool isBaseStableArray = baseStableArrayRank > 0;
+   TR_J9VMBase *fej9 = comp->fej9();
+
+   TR_ASSERT(node->getOpCode().isLoadIndirect(),
+      "Expecting indirect load; found %s %p", node->getOpCode().getName(), node);
+   TR_ASSERT(node->getNumChildren() == 1,
+      "Expecting indirect load %s %p to have one child; actually has %d",
+      node->getOpCode().getName(), node, node->getNumChildren());
+
+   TR::SymbolReference *symRef = node->getSymbolReference();
+
+   if (comp->compileRelocatableCode() ||
+      (isBaseStableArray && !symRef->getSymbol()->isArrayShadowSymbol()) ||
+      symRef->hasKnownObjectIndex())
+      {
+      return false;
+      }
+
+   // Ignore the case of the J9Class whose finality is conditional on the holding value for now.
+   if (!symRef->isUnresolved() &&
+       symRef == comp->getSymRefTab()->findInitializeStatusFromClassSymbolRef())
+      {
+      return false;
+      }
+
+   if (!isBaseStableArray && !fej9->canDereferenceAtCompileTime(symRef, comp))
+      {
+      if (comp->getOption(TR_TraceOptDetails))
+         {
+         traceMsg(comp, "Abort transformIndirectLoadChain - cannot dereference at compile time!\n");
+         }
+      return false;
+      }
+
+
+   // Instead of the recursive dereferenceStructPointerChain, we only consider a single level
+   // of indirection
+   TR::Symbol *field = symRef->getSymbol();
+   TR::Node *addressChildNode = field->isArrayShadowSymbol() ?
+         node->getFirstChild()->getFirstChild() :
+         node->getFirstChild();
+   if (!addressChildNode->getOpCode().hasSymbolReference()
+       || addressChildNode != baseExpression)
+      return false;
+   // baseStruct is always the value of baseExpression; dereference is not needed
+
+   // We only consider the case where isJavaField is true for verifyFieldAccess
+   if (isJavaField(symRef, comp))
+      {
+      TR_OpaqueClassBlock *fieldClass = NULL;
+
+      if (symRef->getCPIndex() < 0 &&
+          field->getRecognizedField() != TR::Symbol::UnknownField)
+         {
+         const char* className;
+         int32_t length;
+         className = field->owningClassNameCharsForRecognizedField(length);
+         fieldClass = fej9->getClassFromSignature(className, length, symRef->getOwningMethod(comp));
+         }
+      else
+         fieldClass = symRef->getOwningMethod(comp)->getDeclaringClassFromFieldOrStatic(comp,
+            symRef->getCPIndex());
+
+      TR_OpaqueClassBlock *objectClass =
+         fej9->getObjectClassFromKnownObjectIndex(comp, baseKnownObject);
+
+      // field access verified
+      if ((fieldClass != NULL) && (fej9->isInstanceOf(objectClass, fieldClass, true) == TR_yes))
+         {
+
+         // check the recognized fields case of avoidFoldingInstanceField
+         // the non-null checks are done when we get the actual values
+         if (field->getRecognizedField() == TR::Symbol::Java_lang_invoke_CallSite_target ||
+             field->getRecognizedField() == TR::Symbol::Java_lang_invoke_MethodHandle_form)
+             return false;
+
+         TR::DataType loadType = node->getDataType();
+
+         if (loadType == TR::Address)
+            {
+            if (isFinalFieldPointingAtRepresentableNativeStruct(symRef, comp) ||
+                isFinalFieldPointingAtNativeStruct(symRef, comp))
+               {
+               return false;
+               }
+            else if (field->isCollectedReference())
+               {
+               auto stream = comp->getStream();
+               stream->write(
+                  JITServer::MessageType::KnownObjectTable_addFieldAddressFromBaseIndex,
+                             baseKnownObject, symRef->getOffset());
+               auto recv = stream->read<TR::KnownObjectTable::Index, uintptr_t *>();
+               TR::KnownObjectTable::Index value = std::get<0>(recv);
+               uintptr_t *objectReferenceLocationClient = std::get<1>(recv);
+               comp->getKnownObjectTable()->updateKnownObjectTableAtServer(
+                  value,
+                  objectReferenceLocationClient
+               );
+
+               if (value != -1)
+                  {
+                  TR::SymbolReference *improvedSymRef =
+                     comp->getSymRefTab()->findOrCreateSymRefWithKnownObject(symRef, value);
+
+                  if (improvedSymRef->hasKnownObjectIndex()
+                     && performTransformation(comp,
+                        "O^O transformIndirectLoadChain: %s [%p] with fieldOffset %d is obj%d referenceAddr is %p\n", node->getOpCode().getName(), node, improvedSymRef->getKnownObjectIndex(), symRef->getOffset(), value))
+                     {
+                     node->setSymbolReference(improvedSymRef);
+                     node->setIsNull(false);
+                     node->setIsNonNull(true);
+
+                     int32_t stableArrayRank = isArrayWithStableElements(symRef->getCPIndex(),
+                                                                        symRef->getOwningMethod(comp),
+                                                                        comp);
+                     if (isBaseStableArray)
+                        stableArrayRank = baseStableArrayRank - 1;
+
+                     if (stableArrayRank > 0)
+                        {
+                        TR::KnownObjectTable *knot = comp->getOrCreateKnownObjectTable();
+                        knot->addStableArray(improvedSymRef->getKnownObjectIndex(),
+                                             stableArrayRank);
+                        }
+                     return true;
+                     }
+                  else /* has known object index */
+                     {
+                     return false;
+                     }
+                  }
+               else /* value != -1 */
+                  {
+                  return false;
+                  }
+               }
+            else /* collected reference */
+               {
+               return false;
+               }
+            }
+         else // non-address types
+            {
+            auto stream = comp->getStream();
+            stream->write(
+               JITServer::MessageType::KnownObjectTable_getFieldAddressData,
+                           baseKnownObject, symRef->getOffset());
+            UDATA data = std::get<0>(stream->read<UDATA>());
+
+            if (data == 0)
+               return false;
+
+            switch (loadType)
+               {
+               case TR::Int32:
+                  {
+                  int32_t value = (int32_t)data;
+                  if (changeIndirectLoadIntoConst(node, TR::iconst, removedNode, comp))
+                     node->setInt(value);
+                  else
+                     return false;
+                  }
+                  break;
+               case TR::Int64:
+                  {
+                  int64_t value = (int64_t)data;
+                  if (changeIndirectLoadIntoConst(node, TR::lconst, removedNode, comp))
+                     node->setLongInt(value);
+                  else
+                     return false;
+                  }
+                  break;
+               case TR::Float:
+                  {
+                  float value = (float)data;
+                  if (changeIndirectLoadIntoConst(node, TR::fconst, removedNode, comp))
+                     node->setFloat(value);
+                  else
+                     return false;
+                  }
+                  break;
+               case TR::Double:
+                  {
+                  double value = (double)data;
+                  if (changeIndirectLoadIntoConst(node, TR::dconst, removedNode, comp))
+                     node->setDouble(value);
+                  else
+                     return false;
+                  }
+                  break;
+               default:
+                  return false;
+               }
+            return true;
+            }
+         }
+      }
+   return false;
+   }
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
 /** Dereference node and fold it into a constant when possible
  *
