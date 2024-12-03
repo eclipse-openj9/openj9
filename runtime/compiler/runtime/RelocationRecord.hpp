@@ -984,7 +984,6 @@ class TR_RelocationRecordProfiledInlinedMethod : public TR_RelocationRecordInlin
    private:
 
       virtual void setupInlinedMethodData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget);
-      virtual bool checkInlinedClassValidity(TR_RelocationRuntime *reloRuntime, TR_OpaqueClassBlock *inlinedCodeClass);
       virtual void activateGuard(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation) {}
       virtual void invalidateGuard(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation) {}
       virtual void updateFailedStats(TR_AOTStats *aotStats);
@@ -1009,7 +1008,6 @@ class TR_RelocationRecordProfiledClassGuard : public TR_RelocationRecordProfiled
       virtual const char *name();
 
    private:
-      virtual bool checkInlinedClassValidity(TR_RelocationRuntime *reloRuntime, TR_OpaqueClassBlock *inlinedCodeClass);
       virtual void setupInlinedMethodData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget);
       virtual void updateFailedStats(TR_AOTStats *aotStats);
       virtual void updateSucceededStats(TR_AOTStats *aotStats);
@@ -1023,7 +1021,6 @@ class TR_RelocationRecordProfiledMethodGuard : public TR_RelocationRecordProfile
       virtual const char *name();
 
    private:
-      virtual bool checkInlinedClassValidity(TR_RelocationRuntime *reloRuntime, TR_OpaqueClassBlock *inlinedCodeClass);
       virtual void setupInlinedMethodData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget);
       virtual void updateFailedStats(TR_AOTStats *aotStats);
       virtual void updateSucceededStats(TR_AOTStats *aotStats);
