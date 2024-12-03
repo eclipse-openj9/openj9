@@ -30,7 +30,7 @@ import com.ibm.j9ddr.tools.ddrinteractive.Context;
 import com.ibm.j9ddr.tools.ddrinteractive.FormatWalkResult;
 import com.ibm.j9ddr.tools.ddrinteractive.IFieldFormatter;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ModulePointer;
-import com.ibm.j9ddr.vm29.pointer.helper.J9ObjectHelper;
+import com.ibm.j9ddr.vm29.tools.ddrinteractive.ModularityHelper;
 
 /**
  * Structure Formatter that adds a suffix to the command "!j9module $moduleAddress$" output
@@ -55,7 +55,7 @@ public class J9ModuleStructureFormatter extends BaseStructureFormatter
 			J9ModulePointer modulePtr = J9ModulePointer.cast(address);
 			String moduleAddress = modulePtr.getHexAddress();
 			try {
-				out.println("Module name: " + J9ObjectHelper.stringValue(modulePtr.moduleName()));
+				out.println("Module name: " + ModularityHelper.getModuleName(modulePtr));
 			} catch (CorruptDataException e) {
 				// Do nothing
 			}

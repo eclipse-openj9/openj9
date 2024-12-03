@@ -343,6 +343,7 @@ internalFindClassString(J9VMThread* currentThread, j9object_t moduleName, j9obje
 		U_8 *utf8Name = NULL;
 		UDATA utf8Length = 0;
 		UDATA stringFlags = J9_STR_NULL_TERMINATE_RESULT;
+		J9InternalVMFunctions const *const vmFuncs = vm->internalVMFunctions;
 		PORT_ACCESS_FROM_JAVAVM(vm);
 
 		if (CLASSNAME_INVALID == allowedBitsForClassName) {
@@ -378,15 +379,22 @@ internalFindClassString(J9VMThread* currentThread, j9object_t moduleName, j9obje
 				J9Module module = {0};
 				J9Module *modulePtr = &module;
 
-				modulePtr->moduleName = moduleName;
+				module.moduleName = vmFuncs->copyStringToJ9UTF8WithMemAlloc(
+						currentThread, moduleName, J9_STR_NULL_TERMINATE_RESULT, "", 0, NULL, 0);
+				if (NULL == module.moduleName) {
+					vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+					goto done;
+				}
 				findResult = hashTableFind(classLoader->moduleHashTable, &modulePtr);
 				if (NULL != findResult) {
 					j9module = *findResult;
 				}
+				j9mem_free_memory(module.moduleName);
 			}
 
 			result = internalFindClassInModule(currentThread, j9module, utf8Name, utf8Length, classLoader, options);
 		}
+done:
 		if (utf8Name != localBuf) {
 			j9mem_free_memory(utf8Name);
 		}

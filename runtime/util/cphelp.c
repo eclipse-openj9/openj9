@@ -148,19 +148,24 @@ getModuleJRTURL(J9VMThread *currentThread, J9ClassLoader *classLoader, J9Module 
 
 	if (NULL == jrtURL) {
 		if (J9_ARE_ALL_BITS_SET(javaVM->runtimeFlags, J9_RUNTIME_JAVA_BASE_MODULE_CREATED)) {
-			/* set jrt URL for the module */
-			if (NULL != module->moduleName) {
-				jrtURL = vmFuncs->copyStringToJ9UTF8WithMemAlloc(currentThread, module->moduleName, J9_STR_NONE, "jrt:/", 5, NULL, 0);
+			if (NULL == module->moduleName) {
+				goto _exit;
+			} else {
+				/* Set jrt URL for the module. */
+				const char *prependStr = "jrt:/";
+				const size_t prependStrLen = strlen(prependStr);
+				jrtURL = vmFuncs->copyJ9UTF8WithMemAlloc(
+						currentThread, module->moduleName, J9_STR_NONE, prependStr, prependStrLen, NULL, 0);
 			}
-
 			if (NULL == jrtURL) {
 				goto _exit;
 			}
 		} else {
-			/* its java.base module */
+			/* It is the java.base module. */
 			J9_DECLARE_CONSTANT_UTF8(jrtJavaBaseUrl, "jrt:/java.base");
 			const U_16 length = J9UTF8_LENGTH(&jrtJavaBaseUrl);
-			jrtURL = j9mem_allocate_memory(sizeof(J9UTF8) + length, OMRMEM_CATEGORY_VM);
+			const UDATA jrtURLSize = length + sizeof(J9UTF8);
+			jrtURL = (J9UTF8 *)j9mem_allocate_memory(jrtURLSize, OMRMEM_CATEGORY_VM);
 			if (NULL == jrtURL) {
 				goto _exit;
 			}
