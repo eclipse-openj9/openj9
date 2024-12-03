@@ -27,7 +27,6 @@
 #include "j9protos.h"
 #include "ut_j9vm.h"
 
-static j9object_t moduleHashGetName(const void *entry);
 static UDATA moduleNameHashFn(void *key, void *userData);
 static UDATA moduleNameHashEqualFn(void *leftKey, void *rightKey, void *userData);
 static UDATA modulePointerHashFn(void *key, void *userData);
@@ -37,39 +36,22 @@ static UDATA packageHashEqualFn(void *leftKey, void *rightKey, void *userData);
 static UDATA moduleExtraInfoHashFn(void *key, void *userData);
 static UDATA moduleExtraInfoHashEqualFn(void *tableNode, void *queryNode, void *userData);
 
-static j9object_t
-moduleHashGetName(const void *entry)
-{
-	const J9Module **const modulePtr = (const J9Module **)entry;
-	const J9Module *const module = *modulePtr;
-	j9object_t moduleName = module->moduleName;
-
-	return moduleName;
-}
-
 static UDATA
 moduleNameHashFn(void *key, void *userData)
 {
-	J9JavaVM *javaVM = (J9JavaVM *)userData;
-	j9object_t name = moduleHashGetName(key);
+	J9Module *entry = *(J9Module **)key;
 
-	return javaVM->memoryManagerFunctions->j9gc_stringHashFn(&name, userData);
+	return computeHashForUTF8(J9UTF8_DATA(entry->moduleName), J9UTF8_LENGTH(entry->moduleName));
 }
 
 static UDATA
 moduleNameHashEqualFn(void *tableNode, void *queryNode, void *userData)
 {
-	J9JavaVM *javaVM = (J9JavaVM *)userData;
+	const J9Module *const tableNodeModuleName = *(J9Module **)tableNode;
+	const J9Module *const queryNodeModuleName = *(J9Module **)queryNode;
 
-	const J9Module *const tableNodeModule = *(J9Module **)tableNode;
-	j9object_t tableNodeModuleName = tableNodeModule->moduleName;
-
-	const J9Module *const queryNodeModule = *(J9Module **)queryNode;
-	j9object_t queryNodeModuleName = queryNodeModule->moduleName;
-
-	Assert_VM_true(tableNodeModule->classLoader == queryNodeModule->classLoader);
-
-	return javaVM->memoryManagerFunctions->j9gc_stringHashEqualFn(&tableNodeModuleName, &queryNodeModuleName, userData);
+	return J9UTF8_EQUALS(tableNodeModuleName->moduleName, queryNodeModuleName->moduleName)
+	    && (tableNodeModuleName->classLoader == queryNodeModuleName->classLoader);
 }
 
 static UDATA

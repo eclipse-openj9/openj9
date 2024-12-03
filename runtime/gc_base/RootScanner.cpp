@@ -90,9 +90,6 @@ MM_RootScanner::scanModularityObjects(J9ClassLoader * classLoader)
 			J9Module * const module = *modulePtr;
 
 			doSlot(&module->moduleObject);
-			if (NULL != module->moduleName) {
-				doSlot(&module->moduleName);
-			}
 			if (NULL != module->version) {
 				doSlot(&module->version);
 			}
