@@ -290,6 +290,9 @@ enum MessageType : uint16_t
    KnownObjectTable_getOpaqueClass,
    // for getting a vectorBitSize from KnownObjectTable
    KnownObjectTable_getVectorBitSize,
+   // used with J9TransformUtil
+   KnownObjectTable_addFieldAddressFromBaseIndex,
+   KnownObjectTable_getFieldAddressData,
 
    AOTCache_getROMClassBatch,
 
