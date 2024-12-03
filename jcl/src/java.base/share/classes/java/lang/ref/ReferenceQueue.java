@@ -191,17 +191,14 @@ public Reference<? extends T> remove(long timeout) throws IllegalArgumentExcepti
  *
  * @param		reference
  *					reference object to be enqueued.
- * @return		boolean
- *					true if reference is enqueued.
- *					false if reference failed to enqueue.
  */
-boolean enqueue(Reference<? extends T> reference) {
+void enqueue(Reference<? extends T> reference) {
 	/*[PR CMVC 96472] deadlock loading sun.misc.Cleaner */
 	/*[PR 102259] call Cleaner.clean(), do not enqueue */
 	if (reference instanceof Cleaner) {
 		reference.dequeue();
 		((Cleaner)reference).clean();
-		return true;
+		return;
 	}
 	/*[PR 125873] Improve reflection cache */
 	Class refClass = reference.getClass();
@@ -210,18 +207,18 @@ boolean enqueue(Reference<? extends T> reference) {
 	) {
 		reference.dequeue();
 		((Runnable)reference).run();
-		return true;
+		return;
 	}
 	synchronized(this) {
 		/*[PR CMVC 181985] Perf: zWAS ftprint regressed 6% Java7 vs 626FP1 -ReferenceQueue */
-		if ( references == null) {
+		if (references == null) {
 			references =  new Reference[DEFAULT_QUEUE_SIZE];
-		} else if(!empty && head == tail) {
+		} else if (!empty && (head == tail)) {
 			/* Queue is full - grow */
 			int newQueueSize = (int)(references.length * 1.10);
 			Reference newQueue[] = new Reference[newQueueSize];
 			System.arraycopy(references, head, newQueue, 0, references.length - head);
-			if(tail > 0) {
+			if (tail > 0) {
 				System.arraycopy(references, 0, newQueue, references.length - head, tail);
 			}
 			head = 0;
@@ -229,43 +226,19 @@ boolean enqueue(Reference<? extends T> reference) {
 			references = newQueue;
 		}
 		references[tail++] = reference;
-		if(tail == references.length) {
+		if (tail == references.length) {
 			tail = 0;
 		}
 		empty = false;
+		reference.setEnqueued();
 		notifyAll();
 	}
-	return true;
 }
 
 void forEach(java.util.function.Consumer<? super Reference<? extends T>> consumer) {
 }
 
 /*[IF JAVA_SPEC_VERSION >= 19]*/
-final boolean headIsNull() {
-	return empty;
-}
-
-final Reference<? extends T> poll0() {
-	return poll();
-}
-
-final Reference<? extends T> remove0(long timeout) throws IllegalArgumentException, InterruptedException {
-	return remove(timeout);
-}
-
-final Reference<? extends T> remove0() throws IllegalArgumentException, InterruptedException {
-	return remove(0L);
-}
-
-final boolean enqueue0(Reference reference) {
-	return enqueue(reference);
-}
-
-void signal() {}
-void await() throws InterruptedException {}
-void await(long timeout) throws InterruptedException {}
-
 ReferenceQueue(int value) {
 	this();
 }
