@@ -1849,13 +1849,13 @@ typedef struct J9AnnotationState {
 } J9AnnotationState;
 
 typedef struct J9Module {
-	j9object_t moduleName;
+	struct J9UTF8 *moduleName;
 	j9object_t moduleObject;
 	j9object_t version;
-	struct J9ClassLoader* classLoader;
-	struct J9HashTable* readAccessHashTable;
-	struct J9HashTable* removeAccessHashTable;
-	struct J9HashTable* removeExportsHashTable;
+	struct J9ClassLoader *classLoader;
+	struct J9HashTable *readAccessHashTable;
+	struct J9HashTable *removeAccessHashTable;
+	struct J9HashTable *removeExportsHashTable;
 	BOOLEAN isLoose;
 	BOOLEAN isOpen;
 } J9Module;
@@ -4859,6 +4859,8 @@ typedef struct J9InternalVMFunctions {
 	IDATA  ( *javaThreadProc)(void *entryarg) ;
 	char*  ( *copyStringToUTF8WithMemAlloc)(struct J9VMThread *currentThread, j9object_t string, UDATA stringFlags, const char *prependStr, UDATA prependStrLength, char *buffer, UDATA bufferLength, UDATA *utf8Length) ;
 	J9UTF8* ( *copyStringToJ9UTF8WithMemAlloc)(struct J9VMThread *vmThread, j9object_t string, UDATA stringFlags, const char *prependStr, UDATA prependStrLength, char *buffer, UDATA bufferLength) ;
+	char*  ( *copyJ9UTF8ToUTF8WithMemAlloc)(struct J9VMThread *vmThread, J9UTF8 *string, UDATA stringFlags, const char *prependStr, UDATA prependStrLength, char *buffer, UDATA bufferLength) ;
+	J9UTF8* ( *copyJ9UTF8WithMemAlloc)(struct J9VMThread *vmThread, J9UTF8 *string, UDATA stringFlags, const char *prependStr, UDATA prependStrLength, char *buffer, UDATA bufferLength) ;
 	void  ( *internalAcquireVMAccess)(struct J9VMThread * currentThread) ;
 	void  ( *internalAcquireVMAccessWithMask)(struct J9VMThread * currentThread, UDATA haltFlags) ;
 	void  ( *internalAcquireVMAccessNoMutexWithMask)(struct J9VMThread * vmThread, UDATA haltFlags) ;

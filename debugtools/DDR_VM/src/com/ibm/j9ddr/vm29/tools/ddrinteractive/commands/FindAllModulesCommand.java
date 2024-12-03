@@ -35,9 +35,9 @@ import com.ibm.j9ddr.vm29.j9.gc.GCClassLoaderIterator;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ClassLoaderPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9JavaVMPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ModulePointer;
-import com.ibm.j9ddr.vm29.pointer.helper.J9ObjectHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9RASHelper;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.JavaVersionHelper;
+import com.ibm.j9ddr.vm29.tools.ddrinteractive.ModularityHelper;
 
 /**
  * FindAllModules command displays all the modules loaded by the runtime
@@ -70,7 +70,7 @@ public class FindAllModulesCommand extends Command
 					SlotIterator<J9ModulePointer> slotIterator = moduleHashTable.iterator();
 					while (slotIterator.hasNext()) {
 						J9ModulePointer modulePtr = slotIterator.next();
-						String moduleName = J9ObjectHelper.stringValue(modulePtr.moduleName());
+						String moduleName = ModularityHelper.getModuleName(modulePtr);
 						String hexAddress = modulePtr.getHexAddress();
 						out.printf("%-30s !j9module %s%n", moduleName, hexAddress);
 					}

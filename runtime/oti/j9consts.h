@@ -704,6 +704,11 @@ extern "C" {
 #define J9_METHOD_TYPE_ORIGIN_INVOKE_EXACT 0x2
 #define J9_METHOD_TYPE_ORIGIN_INVOKE 0x4
 
+/* J9Module::moduleName was previously of type j9object_t. This constant signifies
+ * to DDR whether the moduleNames in a core file are of type J9UTF8 *.
+ */
+#define J9_MODULE_NAME_IS_J9UTF8 0x1
+
 #define J9_CHECK_ASYNC_NO_ACTION 0x0
 #define J9_CHECK_ASYNC_THROW_EXCEPTION 0x1
 #define J9_CHECK_ASYNC_POP_FRAMES 0x4

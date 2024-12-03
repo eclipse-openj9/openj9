@@ -207,9 +207,7 @@ static IDATA
 searchClassInModule(J9VMThread * vmThread, J9Module * j9module, U_8 * className, UDATA classNameLength, BOOLEAN verbose, J9TranslationLocalBuffer *localBuffer)
 {
 	J9JavaVM *javaVM = vmThread->javaVM;
-	char moduleNameBuf[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
-	char *moduleName = NULL;
-	BOOLEAN freeModuleName = FALSE;
+	U_8 *moduleName = NULL;
 	IDATA rc = 1;
 	PORT_ACCESS_FROM_JAVAVM(javaVM);
 
@@ -217,28 +215,18 @@ searchClassInModule(J9VMThread * vmThread, J9Module * j9module, U_8 * className,
 	Trc_BCU_Assert_True(NULL != localBuffer);
 
 	if (j9module == javaVM->javaBaseModule) {
-		moduleName = JAVA_BASE_MODULE;
+		moduleName = (U_8 *)JAVA_BASE_MODULE;
 	} else {
-		moduleName = J9_VM_FUNCTION(vmThread, copyStringToUTF8WithMemAlloc)(
-			vmThread, j9module->moduleName, J9_STR_NULL_TERMINATE_RESULT, "", 0, moduleNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
-		if (NULL == moduleName) {
-			rc = -1;
-			goto _end;
-		}
-		if (moduleNameBuf != moduleName) {
-			freeModuleName = TRUE;
+		if (NULL != j9module->moduleName) {
+			moduleName = J9UTF8_DATA(j9module->moduleName);
 		}
 	}
 
-	rc = searchClassInCPEntry(vmThread, javaVM->modulesPathEntry, j9module, (U_8*)moduleName, className, classNameLength, verbose);
+	rc = searchClassInCPEntry(vmThread, javaVM->modulesPathEntry, j9module, moduleName, className, classNameLength, verbose);
 	if (0 == rc) {
 		localBuffer->loadLocationType = LOAD_LOCATION_MODULE;
 	}
 
-	if (TRUE == freeModuleName) {
-		j9mem_free_memory(moduleName);
-	}
-_end:
 	return rc;
 }
 

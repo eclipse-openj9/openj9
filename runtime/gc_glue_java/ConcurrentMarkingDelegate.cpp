@@ -426,9 +426,6 @@ MM_ConcurrentMarkingDelegate::concurrentClassMark(MM_EnvironmentBase *env, bool 
 						J9Module * const module = *modulePtr;
 
 						_markingScheme->markObject(env, (j9object_t)module->moduleObject);
-						if (NULL != module->moduleName) {
-							_markingScheme->markObject(env, (j9object_t)module->moduleName);
-						}
 						if (NULL != module->version) {
 							_markingScheme->markObject(env, (j9object_t)module->version);
 						}

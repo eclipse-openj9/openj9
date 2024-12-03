@@ -410,6 +410,83 @@ copyStringToJ9UTF8WithMemAlloc(J9VMThread *vmThread, j9object_t string, UDATA st
 	return (J9UTF8 *)result;
 }
 
+char *
+copyJ9UTF8ToUTF8WithMemAlloc(J9VMThread *vmThread, J9UTF8 *string, UDATA stringFlags, const char *prependStr, UDATA prependStrLength, char *buffer, UDATA bufferLength)
+{
+	Assert_VM_notNull(prependStr);
+	Assert_VM_notNull(string);
+
+	U_8 *result = NULL;
+	PORT_ACCESS_FROM_VMC(vmThread);
+
+	const U_8 *stringData = J9UTF8_DATA(string);
+	const UDATA stringLength = (UDATA)J9UTF8_LENGTH(string);
+	UDATA allocationSize = prependStrLength + stringLength;
+
+	if (J9_ARE_ALL_BITS_SET(stringFlags, J9_STR_NULL_TERMINATE_RESULT)) {
+		allocationSize += 1;
+	}
+
+	if (stringLength < bufferLength) {
+		result = (U_8 *)buffer;
+	} else {
+		result = (U_8 *)j9mem_allocate_memory(allocationSize, OMRMEM_CATEGORY_VM);
+	}
+
+	if (NULL != result) {
+		if (prependStrLength > 0) {
+			memcpy(result, prependStr, prependStrLength);
+		}
+		memcpy(result + prependStrLength, stringData, stringLength);
+		if (J9_ARE_ALL_BITS_SET(stringFlags, J9_STR_NULL_TERMINATE_RESULT)) {
+			result[allocationSize - 1] = '\0';
+		}
+	}
+
+	return (char *)result;
+}
+
+J9UTF8 *
+copyJ9UTF8WithMemAlloc(J9VMThread *vmThread, J9UTF8 *string, UDATA stringFlags, const char *prependStr, UDATA prependStrLength, char *buffer, UDATA bufferLength)
+{
+	Assert_VM_notNull(prependStr);
+	Assert_VM_notNull(string);
+
+	J9UTF8 *result = NULL;
+	PORT_ACCESS_FROM_VMC(vmThread);
+
+	const U_8 *stringData = J9UTF8_DATA(string);
+	const UDATA stringLength = (UDATA)J9UTF8_LENGTH(string);
+	const UDATA totalStringLength = prependStrLength + stringLength;
+	UDATA allocationSize = totalStringLength + sizeof(J9UTF8);
+
+	if (J9_ARE_ALL_BITS_SET(stringFlags, J9_STR_NULL_TERMINATE_RESULT)) {
+		allocationSize += 1;
+	}
+
+	if (totalStringLength < J9UTF8_MAX_LENGTH) {
+		if (allocationSize <= bufferLength) {
+			result = (J9UTF8 *)buffer;
+		} else {
+			result = (J9UTF8 *)j9mem_allocate_memory(allocationSize, OMRMEM_CATEGORY_VM);
+		}
+
+		if (NULL != result) {
+			U_8 *resultString = J9UTF8_DATA(result);
+			if (prependStrLength > 0) {
+				memcpy(resultString, prependStr, prependStrLength);
+			}
+			memcpy(resultString + prependStrLength, stringData, stringLength);
+			if (J9_ARE_ALL_BITS_SET(stringFlags, J9_STR_NULL_TERMINATE_RESULT)) {
+				resultString[totalStringLength] = '\0';
+			}
+			J9UTF8_SET_LENGTH(result, totalStringLength);
+		}
+	}
+
+	return result;
+}
+
 UDATA
 getStringUTF8Length(J9VMThread *vmThread, j9object_t string)
 {
