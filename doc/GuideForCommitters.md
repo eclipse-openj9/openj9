@@ -167,9 +167,10 @@ possible between them.
     necessary to wait for this build to finish because an equivalent
     of the OMR Acceptance Build was already tested in Step 1.
 
-7.  Verify that the `master` branch of the `eclipse-openj9/openj9-omr` repo
-    contains the Eclipse OMR commit you merged in Step 3.  Make note
-    of the commit SHA for Step 8.
+7.  Verify that the [master branch](https://github.com/eclipse-openj9/openj9-omr/commits/master)
+    of the [eclipse-openj9/openj9-omr](https://github.com/eclipse-openj9/openj9-omr)
+    repo contains the Eclipse OMR commit you merged in Step 3.
+    Make note of the commit SHA for Step 8.
 
 8.  Launch a ["Promote_OMR"](https://openj9-jenkins.osuosl.org/job/Promote_OMR/)
     job on the SHA of the commit that was just merged in the Eclipse
