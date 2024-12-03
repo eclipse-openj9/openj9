@@ -281,8 +281,9 @@ j9jit_testarossa_err(
       void *oldStartPC,
       TR_CompilationErrorCode *compErrCode)
    {
-   // The method is called by the interpreter when a method's invocation count has reached zero.
-   // Rather than just compiling blindly, pass the controller an event, and let it decide what to do.
+   // The method is called by the interpreter when a method's invocation count
+   // has reached zero. Rather than just compiling blindly, pass the controller
+   // an event, and let it decide what to do.
    //
    bool queued = false;
    TR_YesNoMaybe async = TR_maybe;
@@ -315,23 +316,53 @@ j9jit_testarossa_err(
          }
       else
          {
-         // Async compilation is disabled or recompilations triggered from jitted code
+         // Async compilation is disabled or recompilations triggered from
+         // jitted code
          //
-         // Check if the method has already been scheduled for compilation and return
-         // abruptly if so. This will reduce contention on the optimizationPlanMonitor
-         // when a profiled compilation is followed by a very slow recompilation
-         // (until the recompilation is over, the java threads will try to trigger
-         // recompilations again and again. See defect 193193)
+         // Check if the method has already been scheduled for compilation and
+         // return abruptly if so. This will reduce contention on the
+         // optimizationPlanMonitor when a profiled compilation is followed by
+         // a very slow recompilation (until the recompilation is over, the java
+         // threads will try to trigger recompilations again and again. See
+         // defect 193193)
          //
          if (linkageInfo->isBeingCompiled())
             {
             TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, vmThread);
             if (fe->isAsyncCompilation())
-               return 0; // early return because the method is queued for compilation
+               {
+               // Also check if recompilation has occurred. If it has, then this
+               // request is coming from the old body whose start PC should have
+               // already been patched to jump to the helper that forwards
+               // execution to the new body. The only way to end up here is if
+               // the helper could not determine the start PC of the new body;
+               // this can happen if the new body was invalidated, and the sync
+               // recompilation triggered by the invalidation failed.
+               //
+               // In that case, trigger a sync compilation. If it succeeds, all
+               // new invocations will get forwarded to the new body; if it
+               // fails, the startPC will get patched to revert to the
+               // interpreter. Furthermore, this also prevents contention on the
+               // optimizationPlanMonitor.
+               //
+               // See OpenJ9:20750 for details.
+               //
+               if (linkageInfo->hasBeenRecompiled())
+                  {
+                  async = TR_no;
+                  }
+               else
+                  {
+                  // early return because the method is queued for compilation
+                  return 0;
+                  }
+               }
             }
-         // If PersistentJittedBody contains the profile Info and has BlockFrequencyInfo, it will set the
-         // isQueuedForRecompilation field which can be used by the jitted code at runtime to skip the profiling
-         // code if it has made request to recompile this method.
+
+         // If PersistentJittedBody contains the profile Info and has
+         // BlockFrequencyInfo, it will set the isQueuedForRecompilation field
+         // which can be used by the jitted code at runtime to skip the
+         // profiling code if it has made request to recompile this method.
          if (jbi->getProfileInfo() != NULL && jbi->getProfileInfo()->getBlockFrequencyInfo() != NULL)
             jbi->getProfileInfo()->getBlockFrequencyInfo()->setIsQueuedForRecompilation();
 
