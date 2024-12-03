@@ -70,6 +70,7 @@
 			<variation>-Xjit -XX:+CRIURestoreNonPortableMode</variation>
 			<variation>-Xint -XX:+CRIURestoreNonPortableMode</variation>
 			<variation>-Xjit:count=0 -XX:+CRIURestoreNonPortableMode</variation>
+			<variation>-XX:+DebugOnRestore</variation>
 		</variations>
 		<command>
 			$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -Xdump \
