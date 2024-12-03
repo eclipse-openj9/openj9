@@ -64,6 +64,7 @@ accessCheckFieldType(J9VMThread *currentThread, J9Class* lookupClass, J9Class* t
 						&lookupSigData[1],
 						&lookupSigData[1],
 						J9UTF8_LENGTH(lookupSig) - 2, 
+						TRUE,
 						TRUE) != 0) {
 					result = FALSE;
 				}
