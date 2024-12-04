@@ -530,6 +530,17 @@ addModularitySystemProperties(J9JavaVM * vm)
 	}
 #endif /* JAVA_SPEC_VERSION >= 17 */
 
+#if JAVA_SPEC_VERSION >= 24
+	/* Find and consume the last --illegal-native-access option. */
+	rc = addPropertyForOptionWithEqualsArg(
+			vm, VMOPT_ILLEGAL_NATIVE_ACCESS,
+			LITERAL_STRLEN(VMOPT_ILLEGAL_NATIVE_ACCESS),
+			SYSPROP_JDK_MODULE_ILLEGALNATIVEACCESS);
+	if (J9SYSPROP_ERROR_NONE != rc) {
+		goto _end;
+	}
+#endif /* JAVA_SPEC_VERSION >= 24 */
+
 	/* Find last --illegal-access */
 	rc = addPropertyForOptionWithEqualsArg(vm, VMOPT_ILLEGAL_ACCESS, LITERAL_STRLEN(VMOPT_ILLEGAL_ACCESS), SYSPROP_JDK_MODULE_ILLEGALACCESS);
 
