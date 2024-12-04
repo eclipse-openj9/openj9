@@ -93,6 +93,8 @@ private:
 	bool restoreJ9JavaVMStructures();
 	void savePrimitiveAndArrayClasses();
 	bool isImmortalClassLoader(J9ClassLoader *classLoader);
+	void saveHiddenInstanceFields();
+	void restoreHiddenInstanceFields();
 	J9MemorySegmentList *copyUnPersistedMemorySegmentsToNewList(J9MemorySegmentList *oldMemorySegmentList);
 
 protected:
@@ -118,6 +120,7 @@ public:
 	void fixupJITVtable(J9Class *ramClass);
 	void fixupVMStructures();
 	void writeSnapshot();
+	void freeJ9JavaVMStructures();
 
 	void *subAllocateMemory(uintptr_t byteAmount, bool sub4G);
 	void *reallocateMemory(void *address, uintptr_t byteAmount, bool sub4G);

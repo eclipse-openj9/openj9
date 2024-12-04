@@ -768,7 +768,9 @@ freeJavaVM(J9JavaVM * vm)
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
 
 	freeNativeMethodBindTable(vm);
-	freeHiddenInstanceFieldsList(vm);
+	if (!IS_SNAPSHOTTING_ENABLED(vm)) {
+		freeHiddenInstanceFieldsList(vm);
+	}
 	cleanupLockwordConfig(vm);
 	cleanupEnsureHashedConfig(vm);
 
