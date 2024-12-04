@@ -537,6 +537,13 @@ final class Access implements JavaLangAccess {
 		return mod.implAddEnableNativeAccess();
 	}
 
+/*[IF (21 <= JAVA_SPEC_VERSION) & (JAVA_SPEC_VERSION < 24)]*/
+	@Override
+	public boolean allowSecurityManager() {
+		return System.allowSecurityManager();
+	}
+/*[ENDIF] (21 <= JAVA_SPEC_VERSION) & (JAVA_SPEC_VERSION < 24) */
+
 /*[IF JAVA_SPEC_VERSION >= 23]*/
 	@Override
 	public boolean addEnableNativeAccess(ModuleLayer moduleLayer, String moduleName) {
@@ -559,11 +566,6 @@ final class Access implements JavaLangAccess {
 	}
 
 /*[IF JAVA_SPEC_VERSION < 24]*/
-	@Override
-	public boolean allowSecurityManager() {
-		return System.allowSecurityManager();
-	}
-
 	@Override
 	public long stringConcatHelperPrepend(long indexCoder, byte[] buf, String value) {
 		return StringConcatHelper.prepend(indexCoder, buf, value);
