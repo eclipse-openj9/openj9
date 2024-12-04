@@ -440,6 +440,7 @@ jfrVMShutdown(J9HookInterface **hook, UDATA eventNum, void *eventData, void *use
 {
 	J9VMShutdownEvent *event = (J9VMShutdownEvent *)eventData;
 	J9VMThread *currentThread = event->vmThread;
+	bool needsVMAccess = J9_ARE_NO_BITS_SET(currentThread->publicFlags, J9_PUBLIC_FLAGS_VM_ACCESS);
 	bool acquiredExclusive = false;
 
 #if defined(DEBUG)
@@ -447,8 +448,11 @@ jfrVMShutdown(J9HookInterface **hook, UDATA eventNum, void *eventData, void *use
 	j9tty_printf(PORTLIB, "\n!!! shutdown %p\n", currentThread);
 #endif /* defined(DEBUG) */
 
-	if (J9_XACCESS_NONE == currentThread->javaVM->exclusiveAccessState) {
+	if (needsVMAccess) {
 		internalAcquireVMAccess(currentThread);
+	}
+
+	if (J9_XACCESS_NONE == currentThread->javaVM->exclusiveAccessState) {
 		acquireExclusiveVMAccess(currentThread);
 		acquiredExclusive = true;
 	}
@@ -459,10 +463,13 @@ jfrVMShutdown(J9HookInterface **hook, UDATA eventNum, void *eventData, void *use
 
 	if (acquiredExclusive) {
 		releaseExclusiveVMAccess(currentThread);
-		internalReleaseVMAccess(currentThread);
 	}
 
 	tearDownJFR(currentThread->javaVM);
+
+	if (needsVMAccess) {
+		internalReleaseVMAccess(currentThread);
+	}
 }
 
 /**
@@ -762,7 +769,12 @@ void
 tearDownJFR(J9JavaVM *vm)
 {
 	PORT_ACCESS_FROM_JAVAVM(vm);
+	J9VMThread *currentThread = currentVMThread(vm);
 	J9HookInterface **vmHooks = getVMHookInterface(vm);
+
+	Assert_VM_mustHaveVMAccess(currentThread);
+
+	internalReleaseVMAccess(currentThread);
 
 	/* Stop the sampler thread */
 	if (NULL != vm->jfrSamplerMutex) {
@@ -778,6 +790,9 @@ tearDownJFR(J9JavaVM *vm)
 		omrthread_monitor_destroy(vm->jfrSamplerMutex);
 		vm->jfrSamplerMutex = NULL;
 	}
+
+	internalAcquireVMAccess(currentThread);
+
 	vm->jfrState.isStarted = FALSE;
 	vm->jfrSamplerState = J9JFR_SAMPLER_STATE_UNINITIALIZED;
 
