@@ -39,6 +39,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			-DJCOMMANDERJAR=$(Q)$(LIB_DIR)$(D)jcommander.jar$(Q) \
 			-DTESTNGJAR=$(Q)$(LIB_DIR)$(D)testng.jar$(Q) \
 			-DVALUETYPEJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)Valhalla$(D)ValhallaTests.jar$(Q) \
+			-DMIGRATEDVALUECLASSJAR=$(Q)$(TEST_JDK_HOME)$(D)lib$(D)valueclasses$(D)java.base-valueclasses.jar$(Q) \
 			-DCPDL=$(Q)$(P)$(Q) \
 			-jar $(CMDLINETESTER_JAR) \
 			-config $(Q)$(TEST_RESROOT)$(D)flattenedvaluetypeddrtests.xml$(Q) \
@@ -78,6 +79,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			-DJCOMMANDERJAR=$(Q)$(LIB_DIR)$(D)jcommander.jar$(Q) \
 			-DTESTNGJAR=$(Q)$(LIB_DIR)$(D)testng.jar$(Q) \
 			-DVALUETYPEJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)Valhalla$(D)ValhallaTests.jar$(Q) \
+			-DMIGRATEDVALUECLASSJAR=$(Q)$(TEST_JDK_HOME)$(D)lib$(D)valueclasses$(D)java.base-valueclasses.jar$(Q) \
 			-DCPDL=$(Q)$(P)$(Q) \
 			-jar $(CMDLINETESTER_JAR) \
 			-config $(Q)$(TEST_RESROOT)$(D)unflattenedvaluetypeddrtests.xml$(Q) \
@@ -118,6 +120,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			-DJCOMMANDERJAR=$(Q)$(LIB_DIR)$(D)jcommander.jar$(Q) \
 			-DTESTNGJAR=$(Q)$(LIB_DIR)$(D)testng.jar$(Q) \
 			-DVALUETYPEJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)Valhalla$(D)ValhallaTests.jar$(Q) \
+			-DMIGRATEDVALUECLASSJAR=$(Q)$(TEST_JDK_HOME)$(D)lib$(D)valueclasses$(D)java.base-valueclasses.jar$(Q) \
 			-DCPDL=$(Q)$(P)$(Q) \
 			-jar $(CMDLINETESTER_JAR) \
 			-config $(Q)$(TEST_RESROOT)$(D)flattened32bitRefBackfillTest.xml$(Q) \
@@ -158,6 +161,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			-DJCOMMANDERJAR=$(Q)$(LIB_DIR)$(D)jcommander.jar$(Q) \
 			-DTESTNGJAR=$(Q)$(LIB_DIR)$(D)testng.jar$(Q) \
 			-DVALUETYPEJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)Valhalla$(D)ValhallaTests.jar$(Q) \
+			-DMIGRATEDVALUECLASSJAR=$(Q)$(TEST_JDK_HOME)$(D)lib$(D)valueclasses$(D)java.base-valueclasses.jar$(Q) \
 			-DCPDL=$(Q)$(P)$(Q) \
 			-jar $(CMDLINETESTER_JAR) \
 			-config $(Q)$(TEST_RESROOT)$(D)flattened32bitRefBackfillTest.xml$(Q) \
