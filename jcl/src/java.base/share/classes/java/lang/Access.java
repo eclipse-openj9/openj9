@@ -87,6 +87,7 @@ import sun.nio.ch.Interruptible;
 import sun.reflect.annotation.AnnotationType;
 /*[IF JAVA_SPEC_VERSION >= 24]*/
 import java.util.concurrent.Executor;
+import java.util.concurrent.ScheduledExecutorService;
 import jdk.internal.loader.NativeLibraries;
 /*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 
@@ -863,6 +864,13 @@ final class Access implements JavaLangAccess {
 	@Override
 	public Executor virtualThreadDefaultScheduler() {
 		return VirtualThread.defaultScheduler();
+	}
+
+	/*[IF !INLINE-TYPES]*/
+	@Override
+	/*[ENDIF] !INLINE-TYPES */
+	public Stream<ScheduledExecutorService> virtualThreadDelayedTaskSchedulers() {
+		return VirtualThread.delayedTaskSchedulers();
 	}
 /*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 

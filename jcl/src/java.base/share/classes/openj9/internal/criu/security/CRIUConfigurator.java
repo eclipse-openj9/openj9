@@ -35,7 +35,6 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import openj9.internal.criu.CRIUSECProvider;
-import sun.security.action.GetPropertyAction;
 import sun.security.jca.ProviderList;
 import sun.security.jca.Providers;
 
@@ -48,7 +47,12 @@ public final class CRIUConfigurator {
 	private static final HashMap<String, String> oldProviders = new HashMap<>();
 	/** Tracing for CRIUSEC. */
 	private static final boolean debug = Boolean.parseBoolean(
-			GetPropertyAction.privilegedGetProperty("enable.j9internal.checkpoint.security.api.debug", "false"));
+			/*[IF JAVA_SPEC_VERSION < 24]*/
+			sun.security.action.GetPropertyAction.privilegedGetProperty
+			/*[ELSE] JAVA_SPEC_VERSION < 24
+			System.getProperty
+			/*[ENDIF] JAVA_SPEC_VERSION < 24 */
+					("enable.j9internal.checkpoint.security.api.debug", "false"));
 	private static final Map<String, Set<String>> cachedAlgorithms = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 	private static boolean isCacheEligible;
 
