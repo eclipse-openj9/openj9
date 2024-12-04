@@ -1286,6 +1286,16 @@ TR::SymbolValidationManager::validateStaticClassFromCPRecord(uint16_t classID, u
    {
    J9Class *beholder = getJ9ClassFromID(beholderID);
    J9ConstantPool *beholderCP = J9_CP_FROM_CLASS(beholder);
+
+   // This CP entry could still be unresolved, which would cause
+   // getClassOfStaticFromCP() to fail. Attempt to resolve it manually to reduce
+   // the chances of failure.
+   if (cpIndex != -1)
+      {
+      TR::VMAccessCriticalSection getClassFromConstantPool(_fej9);
+      _fej9->_vmFunctionTable->resolveStaticFieldRef(_fej9->vmThread(), NULL, beholderCP, cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME, NULL);
+      }
+
    return validateSymbol(classID, TR_ResolvedJ9Method::getClassOfStaticFromCP(_fej9, beholderCP, cpIndex));
    }
 
