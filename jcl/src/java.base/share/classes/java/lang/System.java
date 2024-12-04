@@ -1301,11 +1301,11 @@ static void initSecurityManager(ClassLoader applicationClassLoader) {
 }
 /*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
-/*[IF JAVA_SPEC_VERSION == 23]*/
+/*[IF (21 <= JAVA_SPEC_VERSION) & (JAVA_SPEC_VERSION < 24)]*/
 static boolean allowSecurityManager() {
 	return !throwUOEFromSetSM;
 }
-/*[ENDIF] JAVA_SPEC_VERSION == 23 */
+/*[ENDIF] (21 <= JAVA_SPEC_VERSION) & (JAVA_SPEC_VERSION < 24) */
 
 /**
  * Sets the active security manager. Note that once
