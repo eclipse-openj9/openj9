@@ -1323,8 +1323,8 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 																	J9UTF8_DATA(signature) + sigOffset,
 																	J9UTF8_DATA(signature) + sigOffset,
 																	J9UTF8_LENGTH(signature) - sigOffset - 1, /* -1 to remove the trailing ;*/
-																	true,
-																	true);
+																	TRUE,
+																	TRUE);
 									omrthread_monitor_exit(vm->classTableMutex);
 									if (0 != clConstraintResult) {
 										vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGLINKAGEERROR, NULL);
