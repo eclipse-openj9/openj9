@@ -32,7 +32,9 @@ import java.util.ArrayList;
 /*[IF JAVA_SPEC_VERSION >= 9]*/
 import sun.security.util.FilePermCompat;
 /*[ENDIF] JAVA_SPEC_VERSION >= 9 */
+/*[IF JAVA_SPEC_VERSION < 24]*/
 import sun.security.util.SecurityConstants;
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 /**
  * An AccessControlContext encapsulates the information which is needed
@@ -379,6 +381,7 @@ public AccessControlContext(AccessControlContext acc, DomainCombiner combiner) {
  * @exception NullPointerException if the provided context is null.
  */
 AccessControlContext(AccessControlContext acc, DomainCombiner combiner, boolean preauthorized) {
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	if (!preauthorized) {
 		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
@@ -387,6 +390,7 @@ AccessControlContext(AccessControlContext acc, DomainCombiner combiner, boolean 
 			/*[PR JAZZ 78139] java.security.AccessController.checkPermission invokes untrusted DomainCombiner.combine method */
 		}
 	}
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	// only AccessControlContext with STATE_AUTHORIZED authorizeState could have non-null domainCombiner
 	this.authorizeState = STATE_AUTHORIZED;
 	this.context = acc.context;
@@ -906,10 +910,12 @@ public int hashCode() {
  *      when the caller doesn't have the  "getDomainCombiner" SecurityPermission
  */
 public DomainCombiner getDomainCombiner() {
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null)
 		security.checkPermission(SecurityConstants.GET_COMBINER_PERMISSION);
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	return domainCombiner;
 }
 

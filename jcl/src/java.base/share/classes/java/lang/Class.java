@@ -317,6 +317,7 @@ public final class Class<T> implements java.io.Serializable, GenericDeclaration,
  */
 private Class() {}
 
+/*[IF JAVA_SPEC_VERSION < 24]*/
 /*
  * Ensure the caller has the requested type of access.
  *
@@ -385,6 +386,7 @@ private static void forNameAccessCheck(final SecurityManager sm, final Class<?> 
 		}
 	}
 }
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 /**
  * Answers a Class object which represents the class
@@ -433,6 +435,7 @@ public static Class<?> forName(String className) throws ClassNotFoundException
 @CallerSensitiveAdapter
 private static Class<?> forName(String className, Class<?> caller) throws ClassNotFoundException
 {
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	@SuppressWarnings("removal")
 	SecurityManager sm = null;
 	/**
@@ -442,6 +445,7 @@ private static Class<?> forName(String className, Class<?> caller) throws ClassN
 	if (J9VMInternals.initialized) {
 		sm = System.getSecurityManager();
 	}
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	ClassLoader callerClassLoader;
 	if (null != caller) {
 		callerClassLoader = caller.internalGetClassLoader();
@@ -452,13 +456,15 @@ private static Class<?> forName(String className, Class<?> caller) throws ClassN
 		callerClassLoader = null;
 		/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
 	}
-	if (null == sm) {
-		return forNameImpl(className, true, callerClassLoader);
+	/*[IF JAVA_SPEC_VERSION < 24]*/
+	if (null != sm) {
+		Class<?> c = forNameImpl(className, false, callerClassLoader);
+		forNameAccessCheck(sm, caller, c);
+		J9VMInternals.initialize(c);
+		return c;
 	}
-	Class<?> c = forNameImpl(className, false, callerClassLoader);
-	forNameAccessCheck(sm, caller, c);
-	J9VMInternals.initialize(c);
-	return c;
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
+	return forNameImpl(className, true, callerClassLoader);
 }
 /*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 
@@ -520,7 +526,7 @@ public static Class<?> forName(
 {
 /*[IF JAVA_SPEC_VERSION >= 18]*/
 	return forNameHelper(className, initializeBoolean, classLoader, null, false);
-/*[ELSE] JAVA_SPEC_VERSION >= 18
+/*[ELSE] JAVA_SPEC_VERSION >= 18 */
 	@SuppressWarnings("removal")
 	SecurityManager sm = null;
 	if (J9VMInternals.initialized) {
@@ -622,7 +628,7 @@ public static Class<?> forName(Module module, String name)
 {
 /*[IF JAVA_SPEC_VERSION >= 18]*/
 	return forNameHelper(module, name, null, false);
-/*[ELSE] JAVA_SPEC_VERSION >= 18
+/*[ELSE] JAVA_SPEC_VERSION >= 18 */
 	@SuppressWarnings("removal")
 	SecurityManager sm = null;
 	ClassLoader classLoader;
@@ -764,12 +770,19 @@ private static native Class<?> forNameImpl(String className,
  * superclasses and interfaces
  *
  * @return		the class' public class members
+/*[IF JAVA_SPEC_VERSION < 24]
  * @throws		SecurityException If member access is not allowed
+/*[ENDIF] JAVA_SPEC_VERSION < 24
  *
  * @see			java.lang.Class
  */
 @CallerSensitive
-public Class<?>[] getClasses() {
+public Class<?>[] getClasses()
+/*[IF JAVA_SPEC_VERSION < 24]*/
+		throws SecurityException
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
+{
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	/*[PR CMVC 82311] Spec is incorrect before 1.5, RI has this behavior since 1.2 */
 	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
@@ -777,6 +790,7 @@ public Class<?>[] getClasses() {
 		ClassLoader callerClassLoader = ClassLoader.getStackClassLoader(1);
 		checkNonSunProxyMemberAccess(security, callerClassLoader, Member.PUBLIC);
 	}
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 	java.util.Vector<Class<?>> publicClasses = new java.util.Vector<>();
 	Class<?> current = this;
@@ -892,18 +906,28 @@ private NoSuchMethodException newNoSuchMethodException(String name, Class<?>[] t
  * @param		parameterTypes	the types of the arguments.
  * @return		the constructor described by the arguments.
  * @throws		NoSuchMethodException if the constructor could not be found.
+/*[IF JAVA_SPEC_VERSION < 24]
  * @throws		SecurityException if member access is not allowed
+/*[ENDIF] JAVA_SPEC_VERSION < 24
  *
  * @see			#getConstructors
  */
 @CallerSensitive
-public Constructor<T> getConstructor(Class<?>... parameterTypes) throws NoSuchMethodException, SecurityException {
+public Constructor<T> getConstructor(Class<?>... parameterTypes)
+/*[IF JAVA_SPEC_VERSION < 24]*/
+		throws NoSuchMethodException, SecurityException
+/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		throws NoSuchMethodException
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
+{
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null) {
 		ClassLoader callerClassLoader = ClassLoader.getStackClassLoader(1);
 		checkMemberAccess(security, callerClassLoader, Member.PUBLIC);
 	}
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 	/*[PR CMVC 114820, CMVC 115873, CMVC 116166] add reflection cache */
 	if (parameterTypes == null) parameterTypes = EmptyParameters;
@@ -949,18 +973,26 @@ private native Constructor<T> getConstructorImpl(Class<?> parameterTypes[], Stri
  * context.
  *
  * @return		all visible constructors starting from the receiver.
+/*[IF JAVA_SPEC_VERSION < 24]
  * @throws		SecurityException if member access is not allowed
+/*[ENDIF] JAVA_SPEC_VERSION < 24
  *
  * @see			#getMethods
  */
 @CallerSensitive
-public Constructor<?>[] getConstructors() throws SecurityException {
+public Constructor<?>[] getConstructors()
+/*[IF JAVA_SPEC_VERSION < 24]*/
+		throws SecurityException
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
+{
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null) {
 		ClassLoader callerClassLoader = ClassLoader.getStackClassLoader(1);
 		checkMemberAccess(security, callerClassLoader, Member.PUBLIC);
 	}
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 	/*[PR CMVC 114820, CMVC 115873, CMVC 116166] add reflection cache */
 	Constructor<T>[] cachedConstructors = lookupCachedConstructors(CacheKey.PublicConstructorsKey);
@@ -994,18 +1026,26 @@ private native Constructor<T>[] getConstructorsImpl();
  * execution context.
  *
  * @return		the class' class members
+/*[IF JAVA_SPEC_VERSION < 24]
  * @throws		SecurityException if member access is not allowed
+/*[ENDIF] JAVA_SPEC_VERSION < 24
  *
  * @see			java.lang.Class
  */
 @CallerSensitive
-public Class<?>[] getDeclaredClasses() throws SecurityException {
+public Class<?>[] getDeclaredClasses()
+/*[IF JAVA_SPEC_VERSION < 24]*/
+		throws SecurityException
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
+{
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null) {
 		ClassLoader callerClassLoader = ClassLoader.getStackClassLoader(1);
 		checkNonSunProxyMemberAccess(security, callerClassLoader, Member.DECLARED);
 	}
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 	/*[PR 97353] getClasses() calls this native directly */
 	return getDeclaredClassesImpl();
@@ -1030,18 +1070,28 @@ private native Class<?>[] getDeclaredClassesImpl();
  * @param		parameterTypes	the types of the arguments.
  * @return		the constructor described by the arguments.
  * @throws		NoSuchMethodException if the constructor could not be found.
+/*[IF JAVA_SPEC_VERSION < 24]
  * @throws		SecurityException if member access is not allowed
+/*[ENDIF] JAVA_SPEC_VERSION < 24
  *
  * @see			#getConstructors
  */
 @CallerSensitive
-public Constructor<T> getDeclaredConstructor(Class<?>... parameterTypes) throws NoSuchMethodException, SecurityException {
+public Constructor<T> getDeclaredConstructor(Class<?>... parameterTypes)
+/*[IF JAVA_SPEC_VERSION < 24]*/
+		throws NoSuchMethodException, SecurityException
+/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		throws NoSuchMethodException
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
+{
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null) {
 		ClassLoader callerClassLoader = ClassLoader.getStackClassLoader(1);
 		checkMemberAccess(security, callerClassLoader, Member.DECLARED);
 	}
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 	/*[PR CMVC 114820, CMVC 115873, CMVC 116166] add reflection cache */
 	if (parameterTypes == null) parameterTypes = EmptyParameters;
@@ -1088,18 +1138,26 @@ private native Constructor<T> getDeclaredConstructorImpl(Class<?>[] parameterTyp
  * in the current execution context.
  *
  * @return		the receiver's constructors.
+/*[IF JAVA_SPEC_VERSION < 24]
  * @throws		SecurityException if member access is not allowed
+/*[ENDIF] JAVA_SPEC_VERSION < 24
  *
  * @see			#getMethods
  */
 @CallerSensitive
-public Constructor<?>[] getDeclaredConstructors() throws SecurityException {
+public Constructor<?>[] getDeclaredConstructors()
+/*[IF JAVA_SPEC_VERSION < 24]*/
+		throws SecurityException
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
+{
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null) {
 		ClassLoader callerClassLoader = ClassLoader.getStackClassLoader(1);
 		checkMemberAccess(security, callerClassLoader, Member.DECLARED);
 	}
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 	/*[PR CMVC 114820, CMVC 115873, CMVC 116166] add reflection cache */
 	Constructor<T>[] cachedConstructors = lookupCachedConstructors(CacheKey.DeclaredConstructorsKey);
@@ -1135,18 +1193,28 @@ private native Constructor<T>[] getDeclaredConstructorsImpl();
  * @param		name		The name of the field to look for.
  * @return		the field in the receiver named by the argument.
  * @throws		NoSuchFieldException if the requested field could not be found
+/*[IF JAVA_SPEC_VERSION < 24]
  * @throws		SecurityException if member access is not allowed
+/*[ENDIF] JAVA_SPEC_VERSION < 24
  *
  * @see			#getDeclaredFields
  */
 @CallerSensitive
-public Field getDeclaredField(String name) throws NoSuchFieldException, SecurityException {
+public Field getDeclaredField(String name)
+/*[IF JAVA_SPEC_VERSION < 24]*/
+		throws NoSuchFieldException, SecurityException
+/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		throws NoSuchFieldException
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
+{
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null) {
 		ClassLoader callerClassLoader = ClassLoader.getStackClassLoader(1);
 		checkMemberAccess(security, callerClassLoader, Member.DECLARED);
 	}
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	return getDeclaredFieldInternal(name, true);
 }
 
@@ -1209,18 +1277,26 @@ private native Field getDeclaredFieldImpl(String name) throws NoSuchFieldExcepti
  * in the current execution context.
  *
  * @return		the receiver's fields.
+/*[IF JAVA_SPEC_VERSION < 24]
  * @throws		SecurityException If member access is not allowed
+/*[ENDIF] JAVA_SPEC_VERSION < 24
  *
  * @see			#getFields
  */
 @CallerSensitive
-public Field[] getDeclaredFields() throws SecurityException {
+public Field[] getDeclaredFields()
+/*[IF JAVA_SPEC_VERSION < 24]*/
+		throws SecurityException
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
+{
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null) {
 		ClassLoader callerClassLoader = ClassLoader.getStackClassLoader(1);
 		checkMemberAccess(security, callerClassLoader, Member.DECLARED);
 	}
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 	/*[PR CMVC 114820, CMVC 115873, CMVC 116166] add reflection cache */
 	Field[] cachedFields = lookupCachedFields(CacheKey.DeclaredFieldsKey);
@@ -1358,18 +1434,28 @@ static void reflectCacheDebugHelper(Class<?>[] parameters, int posInsert, String
  * @param		parameterTypes	the types of the arguments.
  * @return		the method described by the arguments.
  * @throws		NoSuchMethodException if the method could not be found.
+/*[IF JAVA_SPEC_VERSION < 24]
  * @throws		SecurityException If member access is not allowed
+/*[ENDIF] JAVA_SPEC_VERSION < 24
  *
  * @see			#getMethods
  */
 @CallerSensitive
-public Method getDeclaredMethod(String name, Class<?>... parameterTypes) throws NoSuchMethodException, SecurityException {
+public Method getDeclaredMethod(String name, Class<?>... parameterTypes)
+/*[IF JAVA_SPEC_VERSION < 24]*/
+		throws NoSuchMethodException, SecurityException
+/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		throws NoSuchMethodException
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
+{
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null) {
 		ClassLoader callerClassLoader = ClassLoader.getStackClassLoader(1);
 		checkMemberAccess(security, callerClassLoader, Member.DECLARED);
 	}
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	return getMethodHelper(true, true, false, null, name, parameterTypes);
 }
 
@@ -1397,19 +1483,27 @@ private native Method getDeclaredMethodImpl(String name, Class<?>[] parameterTyp
  * some of the methods which are returned may not be visible
  * in the current execution context.
  *
- * @throws		SecurityException	if member access is not allowed
  * @return		the receiver's methods.
+/*[IF JAVA_SPEC_VERSION < 24]
+ * @throws		SecurityException	if member access is not allowed
+/*[ENDIF] JAVA_SPEC_VERSION < 24
  *
  * @see			#getMethods
  */
 @CallerSensitive
-public Method[] getDeclaredMethods() throws SecurityException {
+public Method[] getDeclaredMethods()
+/*[IF JAVA_SPEC_VERSION < 24]*/
+		throws SecurityException
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
+{
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null) {
 		ClassLoader callerClassLoader = ClassLoader.getStackClassLoader(1);
 		checkMemberAccess(security, callerClassLoader, Member.DECLARED);
 	}
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 	/*[PR CMVC 114820, CMVC 115873, CMVC 116166] add reflection cache */
 	Method[] cachedMethods = lookupCachedMethods(CacheKey.DeclaredMethodsKey);
@@ -1442,9 +1536,16 @@ private native Method[] getDeclaredMethodsImpl();
  * is not a member of another class.
  *
  * @return		the declaring class of the receiver.
+/*[IF JAVA_SPEC_VERSION < 24]
+ * @throws		SecurityException	if member access is not allowed
+/*[ENDIF] JAVA_SPEC_VERSION < 24
  */
 @CallerSensitive
-public Class<?> getDeclaringClass() {
+public Class<?> getDeclaringClass()
+/*[IF JAVA_SPEC_VERSION < 24]*/
+		throws SecurityException
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
+{
 	if (cachedDeclaringClassOffset == -1) {
 		cachedDeclaringClassOffset = getFieldOffset("cachedDeclaringClass"); //$NON-NLS-1$
 	}
@@ -1472,12 +1573,14 @@ public Class<?> getDeclaringClass() {
 		return declaringClass;
 	}
 	if (declaringClass.isClassADeclaredClass(this)) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
 			ClassLoader callerClassLoader = ClassLoader.getStackClassLoader(1);
 			declaringClass.checkMemberAccess(security, callerClassLoader, MEMBER_INVALID_TYPE);
 		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		return declaringClass;
 	} else if (this.isClassADeclaredClass(declaringClass) || this.isClassADeclaredClass(this) || this.isCircularDeclaringClass()) {
 		/* The execution of VM shouldn't be interrupted by corrupted InnerClasses attributes such as circular entries.
@@ -1565,18 +1668,28 @@ private native Class<?> getDeclaringClassImpl();
  * @param		name		The name of the field to look for.
  * @return		the field in the receiver named by the argument.
  * @throws		NoSuchFieldException If the given field does not exist
+/*[IF JAVA_SPEC_VERSION < 24]
  * @throws		SecurityException If access is denied
+/*[ENDIF] JAVA_SPEC_VERSION < 24
  *
  * @see			#getDeclaredFields
  */
 @CallerSensitive
-public Field getField(String name) throws NoSuchFieldException, SecurityException {
+public Field getField(String name)
+/*[IF JAVA_SPEC_VERSION < 24]*/
+		throws NoSuchFieldException, SecurityException
+/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		throws NoSuchFieldException
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
+{
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null) {
 		ClassLoader callerClassLoader = ClassLoader.getStackClassLoader(1);
 		checkMemberAccess(security, callerClassLoader, Member.PUBLIC);
 	}
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 	/*[PR CMVC 114820, CMVC 115873, CMVC 116166] add reflection cache */
 	Field cachedField = lookupCachedField(name);
@@ -1615,18 +1728,26 @@ private native Field getFieldImpl(String name) throws NoSuchFieldException;
  * context.
  *
  * @return		all visible fields starting from the receiver.
+/*[IF JAVA_SPEC_VERSION < 24]
  * @throws		SecurityException If member access is not allowed
+/*[ENDIF] JAVA_SPEC_VERSION < 24
  *
  * @see			#getDeclaredFields
  */
 @CallerSensitive
-public Field[] getFields() throws SecurityException {
+public Field[] getFields()
+/*[IF JAVA_SPEC_VERSION < 24]*/
+		throws SecurityException
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
+{
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null) {
 		ClassLoader callerClassLoader = ClassLoader.getStackClassLoader(1);
 		checkMemberAccess(security, callerClassLoader, Member.PUBLIC);
 	}
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 	/*[PR CMVC 114820, CMVC 115873, CMVC 116166] add reflection cache */
 	Field[] cachedFields = lookupCachedFields(CacheKey.PublicFieldsKey);
@@ -1684,19 +1805,29 @@ public Class<?>[] getInterfaces() {
  *					the method described by the arguments.
  * @throws	NoSuchMethodException
  *					if the method could not be found.
+/*[IF JAVA_SPEC_VERSION < 24]
  * @throws	SecurityException
  *					if member access is not allowed
+/*[ENDIF] JAVA_SPEC_VERSION < 24
  *
  * @see			#getMethods
  */
 @CallerSensitive
-public Method getMethod(String name, Class<?>... parameterTypes) throws NoSuchMethodException, SecurityException {
+public Method getMethod(String name, Class<?>... parameterTypes)
+/*[IF JAVA_SPEC_VERSION < 24]*/
+		throws NoSuchMethodException, SecurityException
+/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		throws NoSuchMethodException
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
+{
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null) {
 		ClassLoader callerClassLoader = ClassLoader.getStackClassLoader(1);
 		checkMemberAccess(security, callerClassLoader, Member.PUBLIC);
 	}
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	return getMethodHelper(true, false, true, null, name, parameterTypes);
 }
 
@@ -2032,19 +2163,27 @@ private native Method getMethodImpl(String name, Class<?>[] parameterTypes, Stri
  *
  * @return		Method[]
  *					all visible methods starting from the receiver.
+/*[IF JAVA_SPEC_VERSION < 24]
  * @throws	SecurityException
  *					if member access is not allowed
+/*[ENDIF] JAVA_SPEC_VERSION < 24
  *
  * @see			#getDeclaredMethods
  */
 @CallerSensitive
-public Method[] getMethods() throws SecurityException {
+public Method[] getMethods()
+/*[IF JAVA_SPEC_VERSION < 24]*/
+		throws SecurityException
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
+{
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null) {
 		ClassLoader callerClassLoader = ClassLoader.getStackClassLoader(1);
 		checkMemberAccess(security, callerClassLoader, Member.PUBLIC);
 	}
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 	Method[] methods;
 
@@ -2294,15 +2433,24 @@ public String getName() {
  *
  * @return		ProtectionDomain
  *					the receiver's ProtectionDomain.
+/*[IF JAVA_SPEC_VERSION < 24]
+ * @throws SecurityException if the RuntimePermission "getProtectionDomain" is not allowed
+/*[ENDIF] JAVA_SPEC_VERSION < 24
  *
  * @see			java.lang.Class
  */
-public ProtectionDomain getProtectionDomain() {
+public ProtectionDomain getProtectionDomain()
+/*[IF JAVA_SPEC_VERSION < 24]*/
+		throws SecurityException
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
+{
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null) {
-		security.checkPermission(sun.security.util.SecurityConstants.GET_PD_PERMISSION);
+		security.checkPermission(SecurityConstants.GET_PD_PERMISSION);
 	}
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	return getProtectionDomainInternal();
 }
 
@@ -2319,7 +2467,7 @@ ProtectionDomain getProtectionDomainInternal() {
 
 private void allocateAllPermissionsPD() {
 	Permissions collection = new Permissions();
-	collection.add(sun.security.util.SecurityConstants.ALL_PERMISSION);
+	collection.add(SecurityConstants.ALL_PERMISSION);
 	AllPermissionsPD = new ProtectionDomain(null, collection);
 }
 
@@ -2673,12 +2821,14 @@ public native boolean isIdentity();
 @Deprecated(forRemoval=false, since="9")
 /*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 public T newInstance() throws IllegalAccessException, InstantiationException {
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null) {
 		ClassLoader callerClassLoader = ClassLoader.getStackClassLoader(1);
 		checkNonSunProxyMemberAccess(security, callerClassLoader, Member.PUBLIC);
 	}
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 /*[IF JAVA_SPEC_VERSION >= 12]*/
 	Class<?> callerClazz = getStackClass(1);
@@ -3983,7 +4133,9 @@ private native Object getEnclosingObject();
  * If this Class is defined inside a constructor, return the Constructor.
  *
  * @return the enclosing Constructor or null
+/*[IF JAVA_SPEC_VERSION < 24]
  * @throws SecurityException if declared member access or package access is not allowed
+/*[ENDIF] JAVA_SPEC_VERSION < 24
  *
  * @since 1.5
  *
@@ -3991,11 +4143,16 @@ private native Object getEnclosingObject();
  * @see #isLocalClass()
  */
 @CallerSensitive
-public Constructor<?> getEnclosingConstructor() throws SecurityException {
+public Constructor<?> getEnclosingConstructor()
+/*[IF JAVA_SPEC_VERSION < 24]*/
+		throws SecurityException
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
+{
 	Constructor<?> constructor = null;
 	Object enclosing = getEnclosingObject();
 	if (enclosing instanceof Constructor<?>) {
 		constructor = (Constructor<?>) enclosing;
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
@@ -4003,6 +4160,7 @@ public Constructor<?> getEnclosingConstructor() throws SecurityException {
 			constructor.getDeclaringClass().checkMemberAccess(security, callerClassLoader, Member.DECLARED);
 		}
 		/*[PR CMVC 201439] To remove CheckPackageAccess call from getEnclosingMethod of J9 */
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	}
 	return constructor;
 }
@@ -4011,7 +4169,9 @@ public Constructor<?> getEnclosingConstructor() throws SecurityException {
  * If this Class is defined inside a method, return the Method.
  *
  * @return the enclosing Method or null
+/*[IF JAVA_SPEC_VERSION < 24]
  * @throws SecurityException if declared member access or package access is not allowed
+/*[ENDIF] JAVA_SPEC_VERSION < 24
  *
  * @since 1.5
  *
@@ -4019,11 +4179,16 @@ public Constructor<?> getEnclosingConstructor() throws SecurityException {
  * @see #isLocalClass()
  */
 @CallerSensitive
-public Method getEnclosingMethod() throws SecurityException {
+public Method getEnclosingMethod()
+/*[IF JAVA_SPEC_VERSION < 24]*/
+		throws SecurityException
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
+{
 	Method method = null;
 	Object enclosing = getEnclosingObject();
 	if (enclosing instanceof Method) {
 		method = (Method)enclosing;
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
@@ -4031,6 +4196,7 @@ public Method getEnclosingMethod() throws SecurityException {
 			method.getDeclaringClass().checkMemberAccess(security, callerClassLoader, Member.DECLARED);
 		}
 		/*[PR CMVC 201439] To remove CheckPackageAccess call from getEnclosingMethod of J9 */
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	}
 	return method;
 }
@@ -4043,7 +4209,9 @@ private native Class<?> getEnclosingObjectClass();
  * in other classes.
  *
  * @return the enclosing Class or null
+/*[IF JAVA_SPEC_VERSION < 24]
  * @throws SecurityException if package access is not allowed
+/*[ENDIF] JAVA_SPEC_VERSION < 24
  *
  * @since 1.5
  *
@@ -4053,7 +4221,11 @@ private native Class<?> getEnclosingObjectClass();
  * @see #isMemberClass()
  */
 @CallerSensitive
-public Class<?> getEnclosingClass() throws SecurityException {
+public Class<?> getEnclosingClass()
+/*[IF JAVA_SPEC_VERSION < 24]*/
+		throws SecurityException
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
+{
 	Class<?> enclosingClass = getDeclaringClass();
 	if (enclosingClass == null) {
 		if (cachedEnclosingClassOffset == -1) {
@@ -4072,6 +4244,7 @@ public Class<?> getEnclosingClass() throws SecurityException {
 		 */
 		enclosingClass = cachedEnclosingClass == ClassReflectNullPlaceHolder.class ? null: cachedEnclosingClass;
 	}
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	if (enclosingClass != null) {
 		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
@@ -4080,6 +4253,7 @@ public Class<?> getEnclosingClass() throws SecurityException {
 			enclosingClass.checkMemberAccess(security, callerClassLoader, MEMBER_INVALID_TYPE);
 		}
 	}
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 	return enclosingClass;
 }
@@ -5381,7 +5555,11 @@ private native Class<?>[] getNestMembersImpl();
  * @return the host class of the receiver.
  */
 @CallerSensitive
-public Class<?> getNestHost() throws SecurityException {
+public Class<?> getNestHost()
+/*[IF JAVA_SPEC_VERSION < 24]*/
+		throws SecurityException
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
+{
 	if (nestHost == null) {
 		nestHost = getNestHostImpl();
 	}
@@ -5435,17 +5613,21 @@ public boolean isNestmateOf(Class<?> that) {
 /*[IF JAVA_SPEC_VERSION < 15]
  * @throws LinkageError if there is any problem loading or validating a nest member or the nest host
 /*[ENDIF]
+/*[IF JAVA_SPEC_VERSION < 24]
  * @throws SecurityException if a returned class is not the current class, a security manager is enabled,
  *	the caller's class loader is not the same or an ancestor of that returned class, and the
  * 	checkPackageAccess() denies access
+/*[ENDIF] JAVA_SPEC_VERSION < 24
  * @return the host class of the receiver.
  */
 @CallerSensitive
-public Class<?>[] getNestMembers() throws
+public Class<?>[] getNestMembers()
 /*[IF JAVA_SPEC_VERSION < 15]*/
-LinkageError,
+		throws LinkageError, SecurityException
+/*[ELSEIF JAVA_SPEC_VERSION < 24] */
+		throws SecurityException
 /*[ENDIF] JAVA_SPEC_VERSION < 15 */
-SecurityException {
+{
 	if (isArray() || isPrimitive()) {
 		/* By spec, Class objects representing array types or primitive types
 		 * belong to the nest consisting only of itself.
@@ -5453,13 +5635,16 @@ SecurityException {
 		return new Class<?>[] { this };
 	}
 
+	/*[IF JAVA_SPEC_VERSION >= 24]*/
+	return getNestMembersImpl();
+	/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 	Class<?>[] members = getNestMembersImpl();
-	/* Skip security check for the Class object that belongs to the nest consisting only of itself */
+	/* Skip security check for the Class object that belongs to the nest consisting only of itself. */
 	if (members.length > 1) {
 		@SuppressWarnings("removal")
 		SecurityManager securityManager = System.getSecurityManager();
 		if (securityManager != null) {
-			/* All classes in a nest must be in the same runtime package and therefore same classloader */
+			/* All classes in a nest must be in the same runtime package and therefore the same classloader. */
 			ClassLoader nestMemberClassLoader = this.internalGetClassLoader();
 			ClassLoader callerClassLoader = ClassLoader.getCallerClassLoader();
 			if (!doesClassLoaderDescendFrom(nestMemberClassLoader, callerClassLoader)) {
@@ -5472,6 +5657,7 @@ SecurityException {
 	}
 
 	return members;
+	/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 }
 /*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 
@@ -5622,16 +5808,24 @@ SecurityException {
 	 * For a class that is not a record, null is returned.
 	 * For a record with no components an empty array is returned.
 	 *
+/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException if declared member access or package access is not allowed
+/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	@CallerSensitive
-	public RecordComponent[] getRecordComponents() {
+	public RecordComponent[] getRecordComponents()
+	/*[IF JAVA_SPEC_VERSION < 24]*/
+			throws SecurityException
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
+	{
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
 			ClassLoader callerClassLoader = ClassLoader.getStackClassLoader(1);
 			checkMemberAccess(security, callerClassLoader, Member.DECLARED);
 		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		if (!isRecord()) {
 			return null;
@@ -5689,7 +5883,11 @@ SecurityException {
 	 * @since 16
 	 */
 	@CallerSensitive
-	public Class<?>[] getPermittedSubclasses() throws SecurityException {
+	public Class<?>[] getPermittedSubclasses()
+	/*[IF JAVA_SPEC_VERSION < 24]*/
+			throws SecurityException
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
+	{
 		if (!isSealed()) {
 			return null;
 		}
