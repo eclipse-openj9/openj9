@@ -41,6 +41,7 @@ public:
    void invalidateRedefinedClass(TR_PersistentCHTable *table, TR_J9VMBase *fej9, TR_OpaqueClassBlock *oldClass, TR_OpaqueClassBlock *freshClass) {}
    TR_OpaqueClassBlock *findClassCandidate(uintptr_t offset) { return NULL; }
    void methodWillBeCompiled(J9Method *method) {}
+   void printStats() {}
    };
 
 #else
@@ -135,6 +136,7 @@ public:
       return needsInitialization ? offset : (offset & ~1);
       }
 
+   void printStats();
 private:
    bool isActive() const { return _isActive; }
    void setInactive() { _isActive = false; }
@@ -170,8 +172,8 @@ private:
 
    // Stop tracking the given method. This will invalidate the MethodEntryRef
    // for the method.
-   void stopTracking(MethodEntryRef entry);
-   void stopTracking(J9Method *method);
+   void stopTracking(MethodEntryRef entry, bool isEarlyStop);
+   void stopTracking(J9Method *method, bool isEarlyStop);
 
    // Queue and clear the _pendingLoads, and remove those methods from tracking.
    // Must be called at the end of any dependency table operation that could

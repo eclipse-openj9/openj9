@@ -1607,11 +1607,28 @@ J9::Compilation::addAOTMethodDependency(uintptr_t chainOffset, bool ensureClassI
    TR_ASSERT(TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET != chainOffset, "Attempted to remember invalid chain offset");
    TR_ASSERT(self()->compileRelocatableCode(), "Must be generating AOT code");
 
+   bool newDependency = false;
+
    auto it = _aotMethodDependencies.find(chainOffset);
    if (it != _aotMethodDependencies.end())
+      {
+      newDependency = ensureClassIsInitialized && !it->second;
       it->second = it->second || ensureClassIsInitialized;
+      }
    else
+      {
+      newDependency = true;
       _aotMethodDependencies.insert(it, {chainOffset, ensureClassIsInitialized});
+      }
+
+   if (self()->getOptions()->getVerboseOption(TR_VerboseDependencyTrackingDetails))
+      {
+      auto method = self()->getMethodBeingCompiled()->getPersistentIdentifier();
+      auto sharedCache = self()->fej9()->sharedCache();
+      auto romClassOffset = sharedCache->startingROMClassOffsetOfClassChain(sharedCache->pointerFromOffsetInSharedCache(chainOffset));
+      TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "Method %p dependency: chainOffset=%lu romClassOffset=%lu needsInit=%d",
+                                     method, chainOffset, romClassOffset, ensureClassIsInitialized);
+      }
    }
 
 // Populate the given dependencyBuffer with dependencies of this method, in the
