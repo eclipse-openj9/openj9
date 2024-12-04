@@ -79,6 +79,9 @@ jitGetClassInClassloaderFromUTF8(J9VMThread *vmStruct, J9ClassLoader *classLoade
 }
 
 /**
+ * This function returns the class associated to a static field ref at a particular cpIndex in a constant pool.
+ * The class entry will be resolved with resolveStaticFieldRef if it is not already resolved.
+ *
  * @param vmStruct, the current J9VMThread
  * @param constantPool, the constant pool that the cpIndex is referring to
  * @param fieldIndex, the index of an entry in a constant pool, pointing at a static field ref.
@@ -95,6 +98,11 @@ jitGetClassOfFieldFromCP(J9VMThread *vmStruct, J9ConstantPool *constantPool, UDA
 
 	/* romConstantPool is a J9ROMConstantPoolItem */
 	ramRefWrapper = ((J9RAMStaticFieldRef*) constantPool) + fieldIndex;
+
+	if (!J9RAMSTATICFIELDREF_IS_RESOLVED(ramRefWrapper)) {
+	   vmStruct->javaVM->internalVMFunctions->resolveStaticFieldRef(vmStruct, NULL, constantPool, fieldIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME, NULL);
+	}
+
 	if (J9RAMSTATICFIELDREF_IS_RESOLVED(ramRefWrapper)) {
 		J9Class *classWrapper = J9RAMSTATICFIELDREF_CLASS(ramRefWrapper);
 		UDATA initStatus = classWrapper->initializeStatus;
