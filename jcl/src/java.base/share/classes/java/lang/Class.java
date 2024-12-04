@@ -98,6 +98,10 @@ import sun.security.util.SecurityConstants;
 import jdk.internal.reflect.CallerSensitiveAdapter;
 /*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 
+/*[IF JAVA_SPEC_VERSION >= 24]*/
+import static jdk.internal.reflect.ReflectionFactory.getReflectionFactory;
+/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
+
 /**
  * An instance of class Class is the in-image representation
  * of a Java class. There are three basic types of Classes
@@ -221,10 +225,6 @@ public final class Class<T> implements java.io.Serializable, GenericDeclaration,
 
 	/*[PR Jazz 85476] Address locking contention on classRepository in getGeneric*() methods */
 	private transient ClassRepositoryHolder classRepoHolder;
-
-/*[IF JAVA_SPEC_VERSION >= 11]*/
-	private static ReflectionFactory reflectionFactory;
-/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 
 	/* Helper class to hold the ClassRepository. We use a Class with a final
 	 * field to ensure that we have both safe initialization and safe publication.
@@ -2841,9 +2841,8 @@ public T newInstance() throws IllegalAccessException, InstantiationException {
 	} else {
 		try {
 			Constructor<?> ctr = getDeclaredConstructor();
-			reflectionFactory = getReflectionFactory();
-			return (T)reflectionFactory.newInstance(ctr, null, callerClazz);
-		} catch (NoSuchMethodException  e) {
+			return (T)getReflectionFactory().newInstance(ctr, null, callerClazz);
+		} catch (NoSuchMethodException e) {
 			InstantiationException instantiationEx = new InstantiationException();
 			throw (InstantiationException)instantiationEx.initCause(e);
 		} catch (InvocationTargetException e) {
@@ -4854,8 +4853,7 @@ private static final class CacheKey {
 
 private static Class<?>[] getParameterTypes(Constructor<?> constructor) {
 /*[IF JAVA_SPEC_VERSION >= 11]*/
-	reflectionFactory = getReflectionFactory();
-	return reflectionFactory.getExecutableSharedParameterTypes(constructor);
+	return getReflectionFactory().getExecutableSharedParameterTypes(constructor);
 /*[ELSE] JAVA_SPEC_VERSION >= 11*/
 	try {
 		if (null != constructorParameterTypesField)	{
@@ -4871,8 +4869,7 @@ private static Class<?>[] getParameterTypes(Constructor<?> constructor) {
 
 static Class<?>[] getParameterTypes(Method method) {
 /*[IF JAVA_SPEC_VERSION >= 11]*/
-	reflectionFactory = getReflectionFactory();
-	return reflectionFactory.getExecutableSharedParameterTypes(method);
+	return getReflectionFactory().getExecutableSharedParameterTypes(method);
 /*[ELSE] JAVA_SPEC_VERSION >= 11*/
 	try {
 		if (null != methodParameterTypesField)	{
@@ -5026,9 +5023,8 @@ private Method lookupCachedMethod(String methodName, Class<?>[] parameters) {
 				// ensure the parameter classes are identical
 				if (sameTypes(parameters, orgParams)) {
 					/*[IF JAVA_SPEC_VERSION >= 11]*/
-					reflectionFactory = getReflectionFactory();
-					return (Method) reflectionFactory.copyMethod(method);
-					/*[ELSE] JAVA_SPEC_VERSION >= 11*/
+					return (Method) getReflectionFactory().copyMethod(method);
+					/*[ELSE] JAVA_SPEC_VERSION >= 11 */
 					return (Method) copyMethod.invoke(method, NoArgs);
 					/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 				}
@@ -5078,8 +5074,7 @@ private Method cacheMethod(Method method) {
 			cache.release();
 		}
 		/*[IF JAVA_SPEC_VERSION >= 11]*/
-		reflectionFactory = getReflectionFactory();
-		return (Method) reflectionFactory.copyMethod(method);
+		return (Method) getReflectionFactory().copyMethod(method);
 		/*[ELSE] JAVA_SPEC_VERSION >= 11*/
 		return (Method) copyMethod.invoke(method, NoArgs);
 		/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
@@ -5104,9 +5099,8 @@ private Field lookupCachedField(String fieldName) {
 		if (field != null) {
 			try {
 				/*[IF JAVA_SPEC_VERSION >= 11]*/
-				reflectionFactory = getReflectionFactory();
-				return (Field) reflectionFactory.copyField(field);
-				/*[ELSE] JAVA_SPEC_VERSION >= 11*/
+				return (Field) getReflectionFactory().copyField(field);
+				/*[ELSE] JAVA_SPEC_VERSION >= 11 */
 				return (Field) copyField.invoke(field, NoArgs);
 				/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 			} catch (IllegalArgumentException
@@ -5150,8 +5144,7 @@ private Field cacheField(Field field) {
 	}
 	try {
 		/*[IF JAVA_SPEC_VERSION >= 11]*/
-		reflectionFactory = getReflectionFactory();
-		return (Field) reflectionFactory.copyField(field);
+		return (Field) getReflectionFactory().copyField(field);
 		/*[ELSE] JAVA_SPEC_VERSION >= 11*/
 		return (Field) copyField.invoke(field, NoArgs);
 		/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
@@ -5179,8 +5172,7 @@ private Constructor<T> lookupCachedConstructor(Class<?>[] parameters) {
 				// ensure the parameter classes are identical
 				if (sameTypes(orgParams, parameters)) {
 					/*[IF JAVA_SPEC_VERSION >= 11]*/
-					reflectionFactory = getReflectionFactory();
-					return (Constructor<T>) reflectionFactory.copyConstructor(constructor);
+					return (Constructor<T>) getReflectionFactory().copyConstructor(constructor);
 					/*[ELSE] JAVA_SPEC_VERSION >= 11*/
 					return (Constructor<T>) copyConstructor.invoke(constructor, NoArgs);
 					/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
@@ -5218,8 +5210,7 @@ private Constructor<T> cacheConstructor(Constructor<T> constructor) {
 	}
 	try {
 		/*[IF JAVA_SPEC_VERSION >= 11]*/
-		reflectionFactory = getReflectionFactory();
-		return (Constructor<T>) reflectionFactory.copyConstructor(constructor);
+		return (Constructor<T>) getReflectionFactory().copyConstructor(constructor);
 		/*[ELSE] JAVA_SPEC_VERSION >= 11*/
 		return (Constructor<T>) copyConstructor.invoke(constructor, NoArgs);
 		/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
@@ -5236,12 +5227,12 @@ private static Method[] copyMethods(Method[] methods) {
 	Method[] result = new Method[methods.length];
 	try {
 		/*[IF JAVA_SPEC_VERSION >= 11]*/
-		reflectionFactory = getReflectionFactory();
+		ReflectionFactory reflectionFactory = getReflectionFactory();
 		/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
-		for (int i=0; i<methods.length; i++) {
+		for (int i = 0; i < methods.length; i++) {
 			/*[IF JAVA_SPEC_VERSION >= 11]*/
 			result[i] = (Method) reflectionFactory.copyMethod(methods[i]);
-			/*[ELSE] JAVA_SPEC_VERSION >= 11*/
+			/*[ELSE] JAVA_SPEC_VERSION >= 11 */
 			result[i] = (Method) copyMethod.invoke(methods[i], NoArgs);
 			/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 		}
@@ -5320,12 +5311,12 @@ private static Field[] copyFields(Field[] fields) {
 	Field[] result = new Field[fields.length];
 	try {
 		/*[IF JAVA_SPEC_VERSION >= 11]*/
-		reflectionFactory = getReflectionFactory();
+		ReflectionFactory reflectionFactory = getReflectionFactory();
 		/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
-		for (int i=0; i<fields.length; i++) {
+		for (int i = 0; i < fields.length; i++) {
 			/*[IF JAVA_SPEC_VERSION >= 11]*/
 			result[i] = (Field) reflectionFactory.copyField(fields[i]);
-			/*[ELSE] JAVA_SPEC_VERSION >= 11*/
+			/*[ELSE] JAVA_SPEC_VERSION >= 11 */
 			result[i] = (Field) copyField.invoke(fields[i], NoArgs);
 			/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 		}
@@ -5404,9 +5395,9 @@ private static <T> Constructor<T>[] copyConstructors(Constructor<T>[] constructo
 	Constructor<T>[] result = new Constructor[constructors.length];
 	try {
 		/*[IF JAVA_SPEC_VERSION >= 11]*/
-		reflectionFactory = getReflectionFactory();
+		ReflectionFactory reflectionFactory = getReflectionFactory();
 		/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
-		for (int i=0; i<constructors.length; i++) {
+		for (int i = 0; i < constructors.length; i++) {
 			/*[IF JAVA_SPEC_VERSION >= 11]*/
 			result[i] = (Constructor<T>) reflectionFactory.copyConstructor(constructors[i]);
 			/*[ELSE] JAVA_SPEC_VERSION >= 11*/
@@ -5938,7 +5929,9 @@ public Class<?>[] getNestMembers()
 	}
 /*[ENDIF] JAVA_SPEC_VERSION >= 16 */
 
-	/*[IF JAVA_SPEC_VERSION >= 11]*/
+	/*[IF (11 <= JAVA_SPEC_VERSION) & (JAVA_SPEC_VERSION < 24)]*/
+	private static ReflectionFactory reflectionFactory;
+
 	@SuppressWarnings("removal")
 	private static ReflectionFactory getReflectionFactory() {
 		if (reflectionFactory == null) {
@@ -5946,7 +5939,7 @@ public Class<?>[] getNestMembers()
 		}
 		return reflectionFactory;
 	}
-	/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
+	/*[ENDIF] (11 <= JAVA_SPEC_VERSION) & (JAVA_SPEC_VERSION < 24) */
 
 /*[IF JAVA_SPEC_VERSION >= 20]*/
 	/**
