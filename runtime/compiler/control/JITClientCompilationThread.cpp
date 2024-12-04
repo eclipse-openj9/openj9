@@ -591,7 +591,8 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          auto recv = client->getRecvData<TR::KnownObjectTable::Index>();
          auto idx = std::get<0>(recv);
          bool isJL;
-         client->write(response, fe->getObjectClassFromKnownObjectIndex(comp, idx, &isJL), isJL);
+         TR_OpaqueClassBlock *result = fe->getObjectClassFromKnownObjectIndex(comp, idx, &isJL);
+         client->write(response, result, isJL);
          }
          break;
       case MessageType::VM_getObjectClassInfoFromObjectReferenceLocation:
