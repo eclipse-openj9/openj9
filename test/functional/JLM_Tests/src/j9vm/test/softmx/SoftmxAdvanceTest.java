@@ -134,7 +134,7 @@ public class SoftmxAdvanceTest {
 
 		//waiting for maximum 5 min (300000ms)
 		while ((System.currentTimeMillis() - startTime) < 300000) {
-			if (ibmMemoryMBean.getHeapMemoryUsage().getCommitted() < new_softmx_value) {
+			if (ibmMemoryMBean.getHeapMemoryUsage().getCommitted() <= new_softmx_value) {
 				if (enableDisclaimMemory) {
 					if (ibmOSMBean.getFreePhysicalMemorySize() > preMemSize) {
 						isShrink = true;
