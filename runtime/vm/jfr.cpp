@@ -155,7 +155,7 @@ areJFRBuffersReadyForWrite(J9VMThread *currentThread)
  * @returns true on success, false on failure
  */
 static bool
-writeOutGlobalBuffer(J9VMThread *currentThread, bool finalWrite)
+writeOutGlobalBuffer(J9VMThread *currentThread, bool finalWrite, bool isExclusivePermited)
 {
 	J9JavaVM *vm = currentThread->javaVM;
 
@@ -165,7 +165,7 @@ writeOutGlobalBuffer(J9VMThread *currentThread, bool finalWrite)
 #endif /* defined(DEBUG) */
 
 	if (areJFRBuffersReadyForWrite(currentThread)) {
-		VM_JFRWriter::flushJFRDataToFile(currentThread, finalWrite);
+		VM_JFRWriter::flushJFRDataToFile(currentThread, finalWrite, isExclusivePermited);
 
 		/* Reset the buffer */
 		vm->jfrBuffer.bufferRemaining = vm->jfrBuffer.bufferSize;
@@ -209,7 +209,7 @@ flushBufferToGlobal(J9VMThread *currentThread, J9VMThread *flushThread)
 
 	omrthread_monitor_enter(vm->jfrBufferMutex);
 	if (vm->jfrBuffer.bufferRemaining < bufferSize) {
-		if (!writeOutGlobalBuffer(currentThread, false)) {
+		if (!writeOutGlobalBuffer(currentThread, false, true)) {
 			omrthread_monitor_exit(vm->jfrBufferMutex);
 			success = false;
 			goto done;
@@ -396,6 +396,40 @@ jfrThreadCreated(J9HookInterface **hook, UDATA eventNum, void *eventData, void *
 }
 
 /**
+<<<<<<< HEAD
+=======
+ * Hook for thread being destroyed.
+ *
+ * @param hook[in] the VM hook interface
+ * @param eventNum[in] the event number
+ * @param eventData[in] the event data
+ * @param userData[in] the registered user data
+ */
+static void
+jfrThreadDestroy(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData)
+{
+	J9VMThreadDestroyEvent *event = (J9VMThreadDestroyEvent *)eventData;
+	J9VMThread *currentThread = event->vmThread;
+	PORT_ACCESS_FROM_VMC(currentThread);
+
+#if defined(DEBUG)
+	j9tty_printf(PORTLIB, "\n!!! thread destroy  %p\n", currentThread);
+#endif /* defined(DEBUG) */
+
+
+	/* The current thread pointer (which can appear in other thread buffers) is about to become
+	 * invalid, so write out all of the available data now.
+	 */
+	flushAllThreadBuffers(currentThread, false, true);
+	writeOutGlobalBuffer(currentThread, false, false);
+
+	/* Free the thread local buffer */
+	j9mem_free_memory((void*)currentThread->jfrBuffer.bufferStart);
+	memset(&currentThread->jfrBuffer, 0, sizeof(currentThread->jfrBuffer));
+}
+
+/**
+>>>>>>> e820080e20 (Add JFR ThreadDump support)
  * Hook for classes being unloaded.
  *
  * Fkushes all thread buffers. Current thread has exclusive VM access.
@@ -419,8 +453,8 @@ jfrClassesUnload(J9HookInterface **hook, UDATA eventNum, void *eventData, void *
 	/* Some class pointers in the thread and global buffers are about the become
 	 * invalid, so write out all of the available data now.
 	 */
-	flushAllThreadBuffers(currentThread, false);
-	writeOutGlobalBuffer(currentThread, false);
+	flushAllThreadBuffers(currentThread, false, false);
+	writeOutGlobalBuffer(currentThread, false, true);
 }
 
 /**
@@ -450,8 +484,8 @@ jfrVMShutdown(J9HookInterface **hook, UDATA eventNum, void *eventData, void *use
 	}
 
 	/* Flush and free all the thread buffers and write out the global buffer */
-	flushAllThreadBuffers(currentThread, true);
-	writeOutGlobalBuffer(currentThread, true);
+	flushAllThreadBuffers(currentThread, true, false);
+	writeOutGlobalBuffer(currentThread, true, true);
 
 	if (acquiredExclusive) {
 		releaseExclusiveVMAccess(currentThread);
@@ -995,8 +1029,8 @@ void
 jfrDump(J9VMThread *currentThread, BOOLEAN finalWrite)
 {
 	/* Flush all the thread buffers and write out the global buffer. */
-	flushAllThreadBuffers(currentThread, finalWrite);
-	writeOutGlobalBuffer(currentThread, finalWrite);
+	flushAllThreadBuffers(currentThread, finalWrite, false);
+	writeOutGlobalBuffer(currentThread, finalWrite, true);
 }
 } /* extern "C" */
 
