@@ -71,7 +71,7 @@ Adding a testNG test as an example:
     - update testng.xml to add the test class to a existing <test> or
     create a new <test>
     - If the new <test> is created in testng.xml, playlist.xml should
-    be updated to add the new <test> based on [playlist.xsd](./TKG/playlist.xsd)
+    be updated to add the new <test> based on [playlist.xsd](./TKG/resources/playlist.xsd)
     Supported test groups are `functional|system|openjdk|external|perf|jck`.
     It is required to provide one group per test in playlist.xml.
 - adding additional new test methods for new Java10 functionality
