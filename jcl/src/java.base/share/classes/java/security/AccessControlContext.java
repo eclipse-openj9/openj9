@@ -333,7 +333,24 @@ AccessControlContext(ProtectionDomain[] context, int authorizeState) {
 }
 
 AccessControlContext(AccessControlContext acc, ProtectionDomain[] context, int authorizeState) {
-	AccessControlContext(context, null, acc, authorizeState);
+	super();
+	switch (authorizeState) {
+	default:
+		// authorizeState can't be STATE_UNKNOWN, callerPD always is NULL
+		throw new IllegalArgumentException();
+	case STATE_AUTHORIZED:
+		if (null != acc) {
+			// inherit the domain combiner when authorized
+			this.domainCombiner = acc.domainCombiner;
+		}
+		break;
+	case STATE_NOT_AUTHORIZED:
+		break;
+	}
+	this.doPrivilegedAcc = acc;
+	this.context = context;
+	this.authorizeState = authorizeState;
+	this.containPrivilegedContext = true;
 }
 
 AccessControlContext(ProtectionDomain[] pdArray, AccessControlContext parentAcc, AccessControlContext context, int authorizeState) {
@@ -346,7 +363,7 @@ AccessControlContext(ProtectionDomain[] pdArray, AccessControlContext parentAcc,
 		if (null != context) {
 			if (parentAcc == null) {
 				// inherit the domain combiner when authorized
-				this.domainCombiner = acc.domainCombiner;
+				this.domainCombiner = context.domainCombiner;
 			} else {
 				// when parent combiner is not null, use parent combiner to combine the current context
 				if (parentAcc.getCombiner() != null) {
