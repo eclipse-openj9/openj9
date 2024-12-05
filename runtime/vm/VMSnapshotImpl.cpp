@@ -377,15 +377,14 @@ VMSnapshotImpl::isImmortalClassLoader(J9ClassLoader *classLoader)
 void
 VMSnapshotImpl::saveHiddenInstanceFields()
 {
-       _snapshotHeader->savedJavaVMStructs.hiddenInstanceFields = _vm->hiddenInstanceFields;
+	_snapshotHeader->savedJavaVMStructs.hiddenInstanceFields = _vm->hiddenInstanceFields;
 }
 
 void
 VMSnapshotImpl::restoreHiddenInstanceFields()
 {
-       _vm->hiddenInstanceFields = _snapshotHeader->savedJavaVMStructs.hiddenInstanceFields;
+	_vm->hiddenInstanceFields = _snapshotHeader->savedJavaVMStructs.hiddenInstanceFields;
 }
-
 
 void
 printAllSegments(J9MemorySegmentList *segmentList, J9JavaVM *_vm)
