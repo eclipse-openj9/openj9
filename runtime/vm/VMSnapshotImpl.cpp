@@ -375,6 +375,19 @@ VMSnapshotImpl::isImmortalClassLoader(J9ClassLoader *classLoader)
 }
 
 void
+VMSnapshotImpl::saveHiddenInstanceFields()
+{
+       _snapshotHeader->savedJavaVMStructs.hiddenInstanceFields = _vm->hiddenInstanceFields;
+}
+
+void
+VMSnapshotImpl::restoreHiddenInstanceFields()
+{
+       _vm->hiddenInstanceFields = _snapshotHeader->savedJavaVMStructs.hiddenInstanceFields;
+}
+
+
+void
 printAllSegments(J9MemorySegmentList *segmentList, J9JavaVM *_vm)
 {
 	PORT_ACCESS_FROM_JAVAVM(_vm);
@@ -806,6 +819,7 @@ VMSnapshotImpl::saveJ9JavaVMStructures()
 	saveClassLoaderBlocks();
 	saveMemorySegments();
 	savePrimitiveAndArrayClasses();
+	saveHiddenInstanceFields();
 	_snapshotHeader->vm = _vm;
 }
 
@@ -821,6 +835,7 @@ VMSnapshotImpl::restoreJ9JavaVMStructures()
 	restoreClassLoaderBlocks();
 	restoreMemorySegments();
 	restorePrimitiveAndArrayClasses();
+	restoreHiddenInstanceFields();
 
 	if (omrthread_monitor_init_with_name(&_vm->classMemorySegments->segmentMutex, 0, "VM class mem segment list")) {
 		success = false;
@@ -831,6 +846,17 @@ VMSnapshotImpl::restoreJ9JavaVMStructures()
 	}
 
 	return success;
+}
+
+/**
+ * Some data written to the snapshot cannot be freed at their usual points during VM shutdown.
+ * This function handles those data to ensure that they are freed after they are written to
+ * the snapshot.
+ */
+void
+VMSnapshotImpl::freeJ9JavaVMStructures()
+{
+	freeHiddenInstanceFieldsList(_vm);
 }
 
 bool
@@ -1083,6 +1109,7 @@ teardownVMSnapshotImpl(J9JavaVM *javaVM)
 	} else {
 		vmSnapshotImpl->saveMemorySegments();
 	}
+	vmSnapshotImpl->freeJ9JavaVMStructures();
 }
 
 extern "C" void
