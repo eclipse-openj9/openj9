@@ -150,6 +150,18 @@ J9::Z::CodeGenerator::initialize()
       cg->setSupportsInlineVectorizedMismatch();
       }
 
+   static bool disableCASInlining = feGetEnv("TR_DisableCASInlining") != NULL;
+   if (!disableCASInlining)
+      {
+      cg->setSupportsInlineUnsafeCompareAndSet();
+      }
+
+   static bool disableCAEInlining = feGetEnv("TR_DisableCAEInlining") != NULL;
+   if (!disableCAEInlining)
+      {
+      cg->setSupportsInlineUnsafeCompareAndExchange();
+      }
+
    // Let's turn this on.  There is more work needed in the opt
    // to catch the case where the BNDSCHK is inserted after
    //
@@ -3822,7 +3834,8 @@ J9::Z::CodeGenerator::inlineDirectCall(
       }
 
    static const char * enableTRTRE = feGetEnv("TR_enableTRTRE");
-   static bool disableCAEIntrinsic = feGetEnv("TR_DisableCAEIntrinsic") != NULL;
+   bool disableCASInlining = !cg->getSupportsInlineUnsafeCompareAndSet();
+   bool disableCAEInlining = !cg->getSupportsInlineUnsafeCompareAndExchange();
    switch (methodSymbol->getRecognizedMethod())
       {
       case TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z:
@@ -3834,8 +3847,11 @@ J9::Z::CodeGenerator::inlineDirectCall(
 
          if ((!TR::Compiler->om.canGenerateArraylets() || node->isUnsafeGetPutCASCallOnNonArray()) && node->isSafeForCGToFastPathUnsafeCall())
             {
-            resultReg = TR::TreeEvaluator::VMinlineCompareAndSwap(node, cg, TR::InstOpCode::CS, IS_NOT_OBJ);
-            return true;
+            if (!disableCASInlining)
+               {
+               resultReg = TR::TreeEvaluator::VMinlineCompareAndSwap(node, cg, TR::InstOpCode::CS, IS_NOT_OBJ);
+               return true;
+               }
             }
          break;
 
@@ -3847,8 +3863,11 @@ J9::Z::CodeGenerator::inlineDirectCall(
          // Too risky to do Long-31bit version now.
          if (comp->target().is64Bit() && (!TR::Compiler->om.canGenerateArraylets() || node->isUnsafeGetPutCASCallOnNonArray()) && node->isSafeForCGToFastPathUnsafeCall())
             {
-            resultReg = TR::TreeEvaluator::VMinlineCompareAndSwap(node, cg, TR::InstOpCode::CSG, IS_NOT_OBJ);
-            return true;
+            if (!disableCASInlining)
+               {
+               resultReg = TR::TreeEvaluator::VMinlineCompareAndSwap(node, cg, TR::InstOpCode::CSG, IS_NOT_OBJ);
+               return true;
+               }
             }
          break;
 
@@ -3859,15 +3878,18 @@ J9::Z::CodeGenerator::inlineDirectCall(
 
          if ((!TR::Compiler->om.canGenerateArraylets() || node->isUnsafeGetPutCASCallOnNonArray()) && node->isSafeForCGToFastPathUnsafeCall())
             {
-            resultReg = TR::TreeEvaluator::VMinlineCompareAndSwap(node, cg, (comp->useCompressedPointers() ? TR::InstOpCode::CS : TR::InstOpCode::getCmpAndSwapOpCode()), IS_OBJ);
-            return true;
+            if (!disableCASInlining)
+               {
+               resultReg = TR::TreeEvaluator::VMinlineCompareAndSwap(node, cg, (comp->useCompressedPointers() ? TR::InstOpCode::CS : TR::InstOpCode::getCmpAndSwapOpCode()), IS_OBJ);
+               return true;
+               }
             }
          break;
 
       case TR::jdk_internal_misc_Unsafe_compareAndExchangeInt:
          if ((!TR::Compiler->om.canGenerateArraylets() || node->isUnsafeGetPutCASCallOnNonArray()) && node->isSafeForCGToFastPathUnsafeCall())
             {
-            if (!disableCAEIntrinsic)
+            if (!disableCAEInlining)
                {
                resultReg = TR::TreeEvaluator::VMinlineCompareAndSwap(node, cg, TR::InstOpCode::CS, IS_NOT_OBJ, true);
                return true;
@@ -3879,7 +3901,7 @@ J9::Z::CodeGenerator::inlineDirectCall(
          // Too risky to do Long-31bit version now.
          if (comp->target().is64Bit() && (!TR::Compiler->om.canGenerateArraylets() || node->isUnsafeGetPutCASCallOnNonArray()) && node->isSafeForCGToFastPathUnsafeCall())
             {
-            if (!disableCAEIntrinsic)
+            if (!disableCAEInlining)
                {
                resultReg = TR::TreeEvaluator::VMinlineCompareAndSwap(node, cg, TR::InstOpCode::CSG, IS_NOT_OBJ, true);
                return true;
@@ -3899,7 +3921,7 @@ J9::Z::CodeGenerator::inlineDirectCall(
       case TR::jdk_internal_misc_Unsafe_compareAndExchangeReference:
          if ((!TR::Compiler->om.canGenerateArraylets() || node->isUnsafeGetPutCASCallOnNonArray()) && node->isSafeForCGToFastPathUnsafeCall())
             {
-            if (!disableCAEIntrinsic)
+            if (!disableCAEInlining)
                {
                resultReg = TR::TreeEvaluator::VMinlineCompareAndSwap(node, cg, (comp->useCompressedPointers() ? TR::InstOpCode::CS : TR::InstOpCode::getCmpAndSwapOpCode()), IS_OBJ, true);
                return true;

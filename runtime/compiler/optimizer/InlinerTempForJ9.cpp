@@ -2517,7 +2517,8 @@ TR_J9InlinerPolicy::inlineUnsafeCall(TR::ResolvedMethodSymbol *calleeSymbol, TR:
        !comp()->fej9()->traceableMethodsCanBeInlined()))
       return false;
 
-   static bool disableCAEIntrinsic = feGetEnv("TR_DisableCAEIntrinsic") != NULL;
+   bool disableCASInlining = !comp()->cg()->getSupportsInlineUnsafeCompareAndSet();
+   bool disableCAEInlining = !comp()->cg()->getSupportsInlineUnsafeCompareAndExchange();
    // I am not sure if having the same type between C/S and B/Z matters here.. ie. if the type is being used as the only distinguishing factor
    switch (callNode->getSymbol()->castToResolvedMethodSymbol()->getRecognizedMethod())
       {
@@ -2705,18 +2706,21 @@ TR_J9InlinerPolicy::inlineUnsafeCall(TR::ResolvedMethodSymbol *calleeSymbol, TR:
       case TR::jdk_internal_misc_Unsafe_compareAndExchangeLong:
       case TR::jdk_internal_misc_Unsafe_compareAndExchangeObject:
       case TR::jdk_internal_misc_Unsafe_compareAndExchangeReference:
-         if (disableCAEIntrinsic)
+         if (disableCAEInlining || callNode->isSafeForCGToFastPathUnsafeCall())
             {
-            break;
+            return false;
             }
-         // Fallthrough if previous if condition is not met.
+         return createUnsafeCASCallDiamond(callNodeTreeTop, callNode);
+
       case TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z:
       case TR::sun_misc_Unsafe_compareAndSwapLong_jlObjectJJJ_Z:
       case TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z:
-         if (callNode->isSafeForCGToFastPathUnsafeCall())
+         if (disableCASInlining || callNode->isSafeForCGToFastPathUnsafeCall())
+            {
             return false;
+            }
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
-         if(TR::Compiler->om.isOffHeapAllocationEnabled())
+         if (TR::Compiler->om.isOffHeapAllocationEnabled())
             return createUnsafeCASCallDiamond(callNodeTreeTop, callNode);
 #endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
          switch (callerSymbol->castToMethodSymbol()->getRecognizedMethod())

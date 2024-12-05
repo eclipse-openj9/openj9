@@ -522,6 +522,26 @@ public:
    */
    void setSupportsInlineVectorizedHashCode() { _j9Flags.set(SupportsInlineVectorizedHashCode); }
 
+   /** \brief
+   *    Determines whether the code generator supports inlining of jdk/internal/misc/Unsafe.CompareAndSet[Object|Reference|Int|Long]
+   */
+   bool getSupportsInlineUnsafeCompareAndSet() { return _j9Flags.testAny(SupportsInlineUnsafeCompareAndSet); }
+
+   /** \brief
+   *    The code generator supports inlining of jdk/internal/misc/Unsafe.CompareAndSet[Object|Reference|Int|Long]
+   */
+   void setSupportsInlineUnsafeCompareAndSet() { _j9Flags.set(SupportsInlineUnsafeCompareAndSet); }
+
+   /** \brief
+   *    Determines whether the code generator supports inlining of jdk/internal/misc/Unsafe.CompareAndExchange[Object|Reference|Int|Long]
+   */
+   bool getSupportsInlineUnsafeCompareAndExchange() { return _j9Flags.testAny(SupportsInlineUnsafeCompareAndExchange); }
+
+   /** \brief
+   *    The code generator supports inlining of jdk/internal/misc/Unsafe.CompareAndExchange[Object|Reference|Int|Long]
+   */
+   void setSupportsInlineUnsafeCompareAndExchange() { _j9Flags.set(SupportsInlineUnsafeCompareAndExchange); }
+
    /**
     * \brief
     *    The number of nodes between a monext and the next monent before
@@ -688,6 +708,8 @@ private:
       SupportsInlineVectorizedMismatch                    = 0x00001000,
       SupportsInlineVectorizedHashCode                    = 0x00002000,
       SupportsInlineStringCodingHasNegatives              = 0x00004000,
+      SupportsInlineUnsafeCompareAndSet                   = 0x00008000,
+      SupportsInlineUnsafeCompareAndExchange              = 0x00010000,
       };
 
    flags32_t _j9Flags;
