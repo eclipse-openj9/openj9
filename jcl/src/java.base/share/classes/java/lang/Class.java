@@ -3204,7 +3204,9 @@ static final native Class<?> getStackClass(int depth);
  * array of not more than maxDepth Classes representing the classes of
  * running methods on the stack (including native methods).  Frames
  * representing the VM implementation of java.lang.reflect are not included
- * in the list.  If stopAtPrivileged is true, the walk will terminate at any
+ * in the list.
+/*[IF JAVA_SPEC_VERSION < 24]
+ * If stopAtPrivileged is true, the walk will terminate at any
  * frame running one of the following methods:
  *
  * <code><ul>
@@ -3215,6 +3217,7 @@ static final native Class<?> getStackClass(int depth);
  * </ul></code>
  *
  * If one of the doPrivileged methods is found, the walk terminate and that frame is NOT included in the returned array.
+/*[ENDIF] JAVA_SPEC_VERSION < 24
  *
  * Notes: <ul>
  * 	 <li> This method operates on the defining classes of methods on stack.
@@ -3225,7 +3228,11 @@ static final native Class<?> getStackClass(int depth);
  *</ul>
  *
  * @param 		maxDepth			maximum depth to walk the stack, -1 for the entire stack
+/*[IF JAVA_SPEC_VERSION >= 24]
+ * @param 		stopAtPrivileged	has no effect
+/*[ELSE] JAVA_SPEC_VERSION >= 24
  * @param 		stopAtPrivileged	stop at privileged classes
+/*[ENDIF] JAVA_SPEC_VERSION >= 24
  * @return		the array of the most recent classes on the stack
  */
 @CallerSensitive

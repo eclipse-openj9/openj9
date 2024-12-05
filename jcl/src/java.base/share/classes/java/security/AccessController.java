@@ -46,30 +46,30 @@ import sun.reflect.CallerSensitive;
 @SuppressWarnings("removal")
 /*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 public final class AccessController {
+/*[IF JAVA_SPEC_VERSION >= 24]*/
+	private static final AccessControlContext ACC_NO_PERM = new AccessControlContext(
+			new ProtectionDomain[] { new ProtectionDomain(null, null) });
+/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 	static {
 		// Initialize vm-internal caches
 		initializeInternal();
 	}
-
-/*[IF JAVA_SPEC_VERSION >= 24]*/
-	private static AccessControlContext ACC_NO_PERM = new AccessControlContext(
-			new ProtectionDomain[] { new ProtectionDomain(null, null) });
-/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 
 	static final int OBJS_INDEX_ACC = 0;
 	static final int OBJS_INDEX_PDS = 1;
 	static final int OBJS_ARRAY_SIZE = 3;
 	static final int OBJS_INDEX_PERMS_OR_CACHECHECKED = 2;
 
-private static native void initializeInternal();
+	private static native void initializeInternal();
 
-/* [PR CMVC 188787] Enabling -Djava.security.debug option within WAS keeps JVM busy */
-static final class DebugRecursionDetection {
-	private static ThreadLocal<String> tlDebug = new ThreadLocal<>();
-	static ThreadLocal<String> getTlDebug() {
-		return tlDebug;
+	/* [PR CMVC 188787] Enabling -Djava.security.debug option within WAS keeps JVM busy */
+	static final class DebugRecursionDetection {
+		private static ThreadLocal<String> tlDebug = new ThreadLocal<>();
+		static ThreadLocal<String> getTlDebug() {
+			return tlDebug;
+		}
 	}
-}
+/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 
 /*[PR 1FDIC6B] J9JCL:WIN95 - AccessController missing private no-arg constructor */
 /**
@@ -79,6 +79,7 @@ private AccessController() {
 	super();
 }
 
+/*[IF JAVA_SPEC_VERSION < 24]*/
 /**
  * The object array returned has following format:
  *
@@ -155,7 +156,6 @@ private static native Object[] getAccSnapshot(int depth, boolean forDoPrivileged
  */
 private static native ProtectionDomain getCallerPD(int depth);
 
-/*[IF JAVA_SPEC_VERSION < 24]*/
 /**
  * provide debug info according to debug settings before throwing AccessControlException
  *
@@ -279,7 +279,6 @@ private static boolean checkPermissionHelper(Permission perm, AccessControlConte
 	}
 	return limitedPermImplied;
 }
-/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 /**
  * Helper to print debug stack information for checkPermission().
@@ -369,8 +368,15 @@ private static boolean debugHelperJEP140(Object[] objects, Permission perm) {
 	debugPrintStack(debug, perm);
 	return debug;
 }
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 /**
+/*[IF JAVA_SPEC_VERSION >= 24]
+ * Throws AccessControlException
+ *
+ * @param       perm                    is ignored
+ * @exception   AccessControlException  is always thrown
+/*[ELSE] JAVA_SPEC_VERSION >= 24
  * Checks whether the running program is allowed to
  * access the resource being guarded by the given
  * Permission argument.
@@ -378,6 +384,7 @@ private static boolean debugHelperJEP140(Object[] objects, Permission perm) {
  * @param       perm                    the permission to check
  * @exception   AccessControlException  if access is not allowed.
  *              NullPointerException if perm is null
+/*[ENDIF] JAVA_SPEC_VERSION >= 24
  */
 public static void checkPermission(Permission perm) throws AccessControlException {
 /*[IF JAVA_SPEC_VERSION >= 24]*/
@@ -441,6 +448,29 @@ public static void checkPermission(Permission perm) throws AccessControlExceptio
 }
 
 /**
+/*[IF JAVA_SPEC_VERSION >= 24]
+ * @return an AccessControlContext with no permissions
+/*[ELSE] JAVA_SPEC_VERSION >= 24
+ * Answers the access controller context of the current thread,
+ * including the inherited ones. It basically retrieves all the
+ * protection domains from the calling stack and creates an
+ * <code>AccessControlContext</code> with them.
+ *
+ * @return an AccessControlContext which captures the current state
+ *
+ * @see         AccessControlContext
+/*[ENDIF] JAVA_SPEC_VERSION >= 24
+ */
+public static AccessControlContext getContext() {
+/*[IF JAVA_SPEC_VERSION >= 24]*/
+	return ACC_NO_PERM;
+/*[ELSE] JAVA_SPEC_VERSION >= 24 */
+	return getContextHelper(false);
+/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
+}
+
+/*[IF JAVA_SPEC_VERSION < 24]*/
+/**
  * Used to keep the context live during doPrivileged().
  *
  * @param context  the context to retain
@@ -456,24 +486,6 @@ private static void keepalive(AccessControlContext context) {
  */
 private static void keepalive(Permission... perms) {
 	return;
-}
-
-/**
- * Answers the access controller context of the current thread,
- * including the inherited ones. It basically retrieves all the
- * protection domains from the calling stack and creates an
- * <code>AccessControlContext</code> with them.
- *
- * @return an AccessControlContext which captures the current state
- *
- * @see         AccessControlContext
- */
-public static AccessControlContext getContext() {
-/*[IF JAVA_SPEC_VERSION >= 24]*/
-	return ACC_NO_PERM;
-/*[ELSE] JAVA_SPEC_VERSION >= 24 */
-	return getContextHelper(false);
-/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 }
 
 /**
@@ -624,9 +636,6 @@ private static ProtectionDomain[] generatePDarray(DomainCombiner activeDC, Acces
  * @return   AccessControlContext.STATE_AUTHORIZED or STATE_NOT_AUTHORIZED (can't be STATE_UNKNOWN)
  */
 private static int getNewAuthorizedState(AccessControlContext acc, ProtectionDomain callerPD) {
-	/*[IF JAVA_SPEC_VERSION >= 24]*/
-	return AccessControlContext.STATE_AUTHORIZED;
-	/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 	int newAuthorizedState;
 	/*[PR JAZZ 87596] PMR 18839,756,000 - Need to trust AccessControlContext created without active SecurityManager */
 	if ((null != acc) && (null != System.getSecurityManager())) {
@@ -643,7 +652,6 @@ private static int getNewAuthorizedState(AccessControlContext acc, ProtectionDom
 		newAuthorizedState = AccessControlContext.STATE_AUTHORIZED;
 	}
 	return newAuthorizedState;
-	/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 }
 
 /**
@@ -712,6 +720,7 @@ static ProtectionDomain[] toArrayOfProtectionDomains(Object[] domains, AccessCon
 
 	return answer;
 }
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 /**
  * Performs the privileged action specified by <code>action</code>.
@@ -760,10 +769,14 @@ public static <T> T doPrivileged(PrivilegedAction<T> action) {
  */
 @CallerSensitive
 public static <T> T doPrivileged(PrivilegedAction<T> action, AccessControlContext context) {
+	/*[IF JAVA_SPEC_VERSION >= 24]*/
+	return action.run();
+	/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 	T result = action.run();
 	/*[PR 108112] context is not kept alive*/
 	keepalive(context);
 	return result;
+	/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 }
 
 /**
@@ -827,10 +840,14 @@ public static <T> T doPrivileged (PrivilegedExceptionAction<T> action, AccessCon
 	throws PrivilegedActionException
 {
 	try {
+		/*[IF JAVA_SPEC_VERSION >= 24]*/
+		return action.run();
+		/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 		T result = action.run();
 		/*[PR 108112] context is not kept alive*/
 		keepalive(context);
 		return result;
+		/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 	} catch (RuntimeException ex) {
 		throw ex;
 	} catch (Exception ex) {
@@ -857,7 +874,11 @@ public static <T> T doPrivileged (PrivilegedExceptionAction<T> action, AccessCon
  */
 @CallerSensitive
 public static <T> T doPrivilegedWithCombiner(PrivilegedAction<T> action) {
+	/*[IF JAVA_SPEC_VERSION >= 24]*/
+	return doPrivileged(action, null);
+	/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 	return doPrivileged(action, doPrivilegedWithCombinerHelper(null));
+	/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 }
 
 /**
@@ -884,9 +905,14 @@ public static <T> T doPrivilegedWithCombiner(PrivilegedAction<T> action) {
 public static <T> T doPrivilegedWithCombiner(PrivilegedExceptionAction<T> action)
 	throws PrivilegedActionException
 {
+	/*[IF JAVA_SPEC_VERSION >= 24]*/
+	return doPrivileged(action, null);
+	/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 	return doPrivileged(action, doPrivilegedWithCombinerHelper(null));
+	/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 }
 
+/*[IF JAVA_SPEC_VERSION < 24]*/
 /**
  * Helper method to check if any permission is null
  *
@@ -902,6 +928,7 @@ private static void checkPermsNPE(Permission... perms) {
 		}
 	}
 }
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 /**
  * Performs the privileged action specified by <code>action</code>.
@@ -930,11 +957,15 @@ private static void checkPermsNPE(Permission... perms) {
 public static <T> T doPrivileged(PrivilegedAction<T> action,
 		AccessControlContext context, Permission... perms)
 {
+	/*[IF JAVA_SPEC_VERSION >= 24]*/
+	return action.run();
+	/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 	checkPermsNPE(perms);
 	T result = action.run();
 	keepalive(context);
 	keepalive(perms);
 	return result;
+	/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 }
 
 /**
@@ -962,8 +993,12 @@ public static <T> T doPrivileged(PrivilegedAction<T> action,
 public static <T> T doPrivilegedWithCombiner(PrivilegedAction<T> action,
 		AccessControlContext context, Permission... perms)
 {
+	/*[IF JAVA_SPEC_VERSION >= 24]*/
+	return doPrivileged(action, context, perms);
+	/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 	checkPermsNPE(perms);
 	return doPrivileged(action, doPrivilegedWithCombinerHelper(context), perms);
+	/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 }
 
 /**
@@ -997,11 +1032,15 @@ public static <T> T doPrivileged(PrivilegedExceptionAction<T> action,
 	throws PrivilegedActionException
 {
 	try {
+		/*[IF JAVA_SPEC_VERSION >= 24]*/
+		return action.run();
+		/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 		checkPermsNPE(perms);
 		T result = action.run();
 		keepalive(context);
 		keepalive(perms);
 		return result;
+		/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 	} catch (RuntimeException ex) {
 		throw ex;
 	} catch (Exception ex) {
@@ -1037,10 +1076,15 @@ public static <T> T doPrivilegedWithCombiner(PrivilegedExceptionAction<T> action
 		AccessControlContext context, Permission... perms)
 	throws PrivilegedActionException
 {
+	/*[IF JAVA_SPEC_VERSION >= 24]*/
+	return doPrivileged(action, context, perms);
+	/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 	checkPermsNPE(perms);
 	return doPrivileged(action, doPrivilegedWithCombinerHelper(context), perms);
+	/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 }
 
+/*[IF JAVA_SPEC_VERSION < 24]*/
 /**
  * Helper method to construct an AccessControlContext for doPrivilegedWithCombiner methods.
  *
@@ -1060,5 +1104,6 @@ private static AccessControlContext doPrivilegedWithCombinerHelper(AccessControl
 	}
 	return fixedContext;
 }
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 }

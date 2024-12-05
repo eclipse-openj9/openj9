@@ -376,7 +376,6 @@ omr_add_exports(jclse
 	Java_java_lang_reflect_Proxy_defineClassImpl
 	Java_java_security_AccessController_getAccSnapshot
 	Java_java_security_AccessController_getCallerPD
-	Java_java_security_AccessController_initializeInternal
 	Java_java_util_stream_IntPipeline_promoteGPUCompile
 	Java_jdk_internal_misc_Unsafe_allocateDBBMemory
 	Java_jdk_internal_misc_Unsafe_copySwapMemory0
@@ -452,6 +451,12 @@ omr_add_exports(jclse
 	Java_java_lang_Thread_resumeImpl
 	Java_java_lang_Thread_stopImpl
 	Java_java_lang_Thread_suspendImpl
+)
+endif()
+
+if(JAVA_SPEC_VERSION LESS 24)
+omr_add_exports(jclse
+	Java_java_security_AccessController_initializeInternal
 )
 endif()
 
