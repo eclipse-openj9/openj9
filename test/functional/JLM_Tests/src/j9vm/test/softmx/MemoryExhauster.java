@@ -61,7 +61,14 @@ public class MemoryExhauster {
 		try {
 			while ( ibmMemoryMBean.getHeapMemoryUsage().getCommitted() < ((long) ( original_softmx_value * percentage ))){
 				try {
-					myObjects[i] = new byte[OBJECT_SIZE];
+					byte myObject[] = new byte[OBJECT_SIZE];
+
+					myObjects[i] = myObject;
+
+					for (int j = 0; j < OBJECT_SIZE; j += 4 * 1024) {
+						myObject[j] = (byte)i;
+					}
+
 					i++;
 				} catch (OutOfMemoryError e){
 					// at this point we stop
