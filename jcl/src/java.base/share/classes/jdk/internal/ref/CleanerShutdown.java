@@ -22,14 +22,14 @@
  */
 package jdk.internal.ref;
 
-import jdk.internal.ref.CleanerFactory;
-
 import java.lang.ref.Cleaner;
 import java.lang.ref.Cleaner.Cleanable;
+/*[IF JAVA_SPEC_VERSION < 24]*/
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 @SuppressWarnings("javadoc")
 public class CleanerShutdown {
@@ -47,14 +47,15 @@ public class CleanerShutdown {
 			}
 		}
 
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		try {
-			Method phantomRemove = PhantomCleanable.class.getDeclaredMethod("remove", (Class<?>[]) null); //$NON-NLS-1$
+			Method phantomRemove = PhantomCleanable.class.getDeclaredMethod("remove"); //$NON-NLS-1$
 			AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
 				phantomRemove.setAccessible(true);
 				return null;
 			});
-			while(!commonCleanerImpl.phantomCleanableList.isListEmpty()) {
-				phantomRemove.invoke(commonCleanerImpl.phantomCleanableList, (Object[]) null);
+			while (!commonCleanerImpl.phantomCleanableList.isListEmpty()) {
+				phantomRemove.invoke(commonCleanerImpl.phantomCleanableList);
 			}
 		} catch (NoSuchMethodException
 				| SecurityException
@@ -65,5 +66,6 @@ public class CleanerShutdown {
 			/* should not fail */
 			e.printStackTrace();
 		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	}
 }
