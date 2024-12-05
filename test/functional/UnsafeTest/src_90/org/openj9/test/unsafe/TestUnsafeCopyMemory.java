@@ -967,7 +967,12 @@ public class TestUnsafeCopyMemory extends UnsafeTestBase {
 			Array.setByte(array, i, (byte) (i % Byte.SIZE));
 		}
 
-		for (long arrayOffset = baseOffset; arrayOffset < (baseOffset + maxNumBytes); arrayOffset = arrayOffset * 11 - 1) {
+		/*
+			For off-heap eanbled case initial arrayOffset would be 0 (baseOffset=0),
+			cause the next arrayOffset in loop become to negative (arrayOffset*11-1),
+			update logic for the next arrayOffset to avoid negative offset test case.
+		*/
+		for (long arrayOffset = baseOffset; arrayOffset < (baseOffset + maxNumBytes); arrayOffset = ((arrayOffset==0) ? 16 : arrayOffset) * 11 - 1 ) {
 			long maxNumBytesLeft = ((baseOffset + maxNumBytes) - arrayOffset);
 			for (long numBytesToCopy = 1; numBytesToCopy < maxNumBytesLeft; numBytesToCopy = (numBytesToCopy + 1)
 					* numBytesToCopy) {
