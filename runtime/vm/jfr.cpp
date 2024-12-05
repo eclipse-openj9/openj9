@@ -22,6 +22,7 @@
 #include "JFRConstantPoolTypes.hpp"
 #include "j9protos.h"
 #include "omrlinkedlist.h"
+#include "pool_api.h"
 #include "thread_api.h"
 #include "ut_j9vm.h"
 #include "vm_internal.h"
@@ -91,6 +92,9 @@ jfrEventSize(J9JFREvent *jfrEvent)
 		break;
 	case J9JFR_EVENT_TYPE_THREAD_CPU_LOAD:
 		size = sizeof(J9JFRThreadCPULoad);
+		break;
+	case J9JFR_EVENT_TYPE_CLASS_LOADING_STATISTICS:
+		size = sizeof(J9JFRClassLoadingStatistics);
 		break;
 	default:
 		Assert_VM_unreachable();
@@ -954,6 +958,36 @@ jfrThreadCPULoadCallback(J9VMThread *currentThread, IDATA handlerKey, void *user
 	jfrThreadCPULoad(currentThread, currentThread);
 }
 
+void
+jfrClassLoadingStatistics(J9VMThread *currentThread)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	J9JFRClassLoadingStatistics *jfrEvent = (J9JFRClassLoadingStatistics *)reserveBuffer(currentThread, sizeof(J9JFRClassLoadingStatistics));
+
+	if (NULL != jfrEvent) {
+		initializeEventFields(currentThread, (J9JFREvent *)jfrEvent, J9JFR_EVENT_TYPE_CLASS_LOADING_STATISTICS);
+
+		UDATA unloadedClassCount = 0;
+		vm->memoryManagerFunctions->j9gc_get_cumulative_class_unloading_stats(currentThread, NULL, &unloadedClassCount, NULL);
+		jfrEvent->unloadedClassCount = (I_64)unloadedClassCount;
+
+		internalReleaseVMAccess(currentThread);
+
+		J9ClassLoaderWalkState walkState = {0};
+		J9ClassLoader *classLoader = vmFuncs->allClassLoadersStartDo(&walkState, vm, 0);
+
+		while (NULL != classLoader) {
+			jfrEvent->loadedClassCount += classLoader->loadedClassCount;
+
+			classLoader= vmFuncs->allClassLoadersNextDo(&walkState);
+		}
+		vmFuncs->allClassLoadersEndDo(&walkState);
+
+		internalAcquireVMAccess(currentThread);
+	}
+}
+
 static int J9THREAD_PROC
 jfrSamplingThreadProc(void *entryArg)
 {
@@ -971,6 +1005,7 @@ jfrSamplingThreadProc(void *entryArg)
 				omrthread_monitor_exit(vm->jfrSamplerMutex);
 				internalAcquireVMAccess(currentThread);
 				jfrCPULoad(currentThread);
+				jfrClassLoadingStatistics(currentThread);
 				internalReleaseVMAccess(currentThread);
 				omrthread_monitor_enter(vm->jfrSamplerMutex);
 				if (0 == (count % 1000)) { // 10 seconds
