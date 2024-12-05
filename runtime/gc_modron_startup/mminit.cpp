@@ -3356,6 +3356,7 @@ setIndexableObjectHeaderSizeWithoutDataAddress(J9JavaVM* vm)
 		vm->contiguousIndexableHeaderSize = sizeof(J9IndexableObjectContiguousFull);
 		vm->discontiguousIndexableHeaderSize = sizeof(J9IndexableObjectDiscontiguousFull);
 	}
+	vm->unsafeIndexableHeaderSize = vm->contiguousIndexableHeaderSize;
 }
 
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)

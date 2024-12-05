@@ -92,6 +92,9 @@
 #include "RegionBasedOverflowVLHGC.hpp"
 #include "RootScanner.hpp"
 #include "SlotObject.hpp"
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+#include "SparseVirtualMemory.hpp"
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 #include "StackSlotValidator.hpp"
 #include "SublistFragment.hpp"
 #include "SublistIterator.hpp"
@@ -440,14 +443,14 @@ MM_CopyForwardScheme::updateLeafRegions(MM_EnvironmentVLHGC *env)
 				Assert_MM_true(updatedSpineRegion->containsObjects());
 
 				/* we need to move the leaf to another region's leaf list since its spine has moved */
-				region->_allocateData.removeFromArrayletLeafList();
+				region->_allocateData.removeFromArrayletLeafList(env);
 				region->_allocateData.addToArrayletLeafList(updatedSpineRegion);
 				region->_allocateData.setSpine((J9IndexableObject *)updatedSpineObject);
 			} else if (!isLiveObject(spineObject)) {
 				Assert_MM_true(isObjectInEvacuateMemory(spineObject));
 				/* the spine is in evacuate space so the arraylet is dead => recycle the leaf */
 				/* remove arraylet leaf from list */
-				region->_allocateData.removeFromArrayletLeafList();
+				region->_allocateData.removeFromArrayletLeafList(env);
 				/* recycle */
 				region->_allocateData.setSpine(NULL);
 				region->getSubSpace()->recycleRegion(env, region);
@@ -2022,16 +2025,20 @@ MM_CopyForwardScheme::copy(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *
 				memcpy((void *)destinationObjectPtr, forwardedHeader->getObject(), objectCopySizeInBytes);
 
 				forwardedHeader->fixupForwardedObject(destinationObjectPtr);
+				GC_ArrayObjectModel *indexableObjectModel = &_extensions->indexableObjectModel;
 
 				if (objectModel->isIndexable(destinationObjectPtr)) {
-					_extensions->indexableObjectModel.fixupInternalLeafPointersAfterCopy((J9IndexableObject *)destinationObjectPtr, (J9IndexableObject *)forwardedHeader->getObject());
-
-					/* Updates internal data address of indexable objects. Every indexable object have a void *dataAddr
-					 * that always points to the array data. It will always point to the address right after the header,
-					 * in case of contiguous data it will point to the data itself, and in case of discontiguous
-					 * arraylet it will point to the first arrayiod. dataAddr is only updated if dataAddr points to data
-					 * within heap. */
-					_extensions->indexableObjectModel.fixupDataAddr(destinationObjectPtr);
+					indexableObjectModel->fixupInternalLeafPointersAfterCopy((J9IndexableObject *)destinationObjectPtr, (J9IndexableObject *)forwardedHeader->getObject());
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+					/**
+					 * Update the dataAddr internal field of the indexable object. The field being updated
+					 * points to the array data. In the case of contiguous data, it will point to the data
+					 * itself, and in case of discontiguous data, it will be NULL.
+					 */
+					if (_extensions->isVirtualLargeObjectHeapEnabled) {
+						indexableObjectModel->fixupDataAddr(forwardedHeader, (J9IndexableObject *)destinationObjectPtr);
+					}
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 				}
 
 				objectModel->fixupHashFlagsAndSlot(forwardedHeader, destinationObjectPtr);
@@ -2592,7 +2599,6 @@ MM_CopyForwardScheme::scanPointerArrayObjectSlotsSplit(MM_EnvironmentVLHGC *env,
 				/* this can happen if the array is only partially allocated */
 				break;
 			}
-
 			/* Copy/Forward the slot reference and perform any inter-region remember work that is required */
 			success = copyAndForwardPointerArray(env, reservingContext, arrayPtr, startIndex, slotObject);
 		}
@@ -3049,7 +3055,6 @@ MM_CopyForwardScheme::scanPointerArrayObjectSlots(MM_EnvironmentVLHGC *env, MM_A
 		 */
 		updateScanStats(env, (J9Object *)arrayPtr, reason);
 	}
-	
 	scanPointerArrayObjectSlotsSplit(env, reservingContext, arrayPtr, index, currentSplitUnitOnly);
 }
 
@@ -4080,23 +4085,36 @@ private:
 		}
 	}
 
-#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
-	virtual void doDoubleMappedObjectSlot(J9Object *objectPtr, struct J9PortVmemIdentifier *identifier) {
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+	virtual void doObjectInVirtualLargeObjectHeap(J9Object *objectPtr, bool *sparseHeapAllocation) {
 		MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(_env);
-		env->_copyForwardStats._doubleMappedArrayletsCandidates += 1;
+		env->_copyForwardStats._offHeapRegionCandidates += 1;
+
 		if (!_copyForwardScheme->isLiveObject(objectPtr)) {
 			Assert_MM_true(_copyForwardScheme->isObjectInEvacuateMemory(objectPtr));
+
 			MM_ForwardedHeader forwardedHeader(objectPtr, _extensions->compressObjectReferences());
-			objectPtr = forwardedHeader.getForwardedObject();
-			if (NULL == objectPtr) {
+			J9Object *fwdOjectPtr = forwardedHeader.getForwardedObject();
+
+			/* If forwarded object is NULL, free the sparse region occupied by the data of the indexable object */
+			if (NULL == fwdOjectPtr) {
 				Assert_MM_mustBeClass(_extensions->objectModel.getPreservedClass(&forwardedHeader));
-				env->_copyForwardStats._doubleMappedArrayletsCleared += 1;
-				OMRPORT_ACCESS_FROM_OMRVM(_javaVM->omrVM);
-				omrvmem_release_double_mapped_region(identifier->address, identifier->size, identifier);
+				env->_copyForwardStats._offHeapRegionsCleared += 1;
+				void *dataAddr = _extensions->indexableObjectModel.getDataAddrForContiguous((J9IndexableObject *)objectPtr);
+				_extensions->largeObjectVirtualMemory->freeSparseRegionAndUnmapFromHeapObject(_env, dataAddr);
+				*sparseHeapAllocation = false;
+			} else {
+				void *dataAddr = _extensions->indexableObjectModel.getDataAddrForContiguous((J9IndexableObject *)fwdOjectPtr);
+				if (NULL != dataAddr) {
+					/* There might be the case that GC finds a floating arraylet, which was a result of an allocation
+					 * failure (reason why this GC cycle is happening).
+					 */
+					_extensions->largeObjectVirtualMemory->updateSparseDataEntryAfterObjectHasMoved(dataAddr, fwdOjectPtr);
+				}
 			}
 		}
 	}
-#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 
 	/**
 	 * @Clear the string table cache slot if the object is not marked

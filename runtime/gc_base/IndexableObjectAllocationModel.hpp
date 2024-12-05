@@ -34,6 +34,8 @@
 #include "JavaObjectAllocationModel.hpp"
 #include "MemorySpace.hpp"
 
+class MM_HeapRegionDescriptorVLHGC;
+
 /**
  * Class definition for the array object allocation model.
  */
@@ -58,12 +60,41 @@ public:
 	 */
 private:
 	/**
+
+	 * For contiguous arraylet all data is subsumed into the spine.
+	 *
+	 * @param env thread GC Environment
+	 * @param spine indexable object spine
+	 *
+	 * @return initialized arraylet spine with its arraylet pointers initialized.
+	 */
+	MMINLINE J9IndexableObject *layoutContiguousArraylet(MM_EnvironmentBase *env, J9IndexableObject *spine);
+
+	/**
 	 * For non-contiguous arraylet (i.e. discontiguous and hybrid), perform separate allocations
 	 * for spine and leaf data. The spine and attached leaves may move as each leaf is allocated
 	 * is GC is allowed. The final location of the spine is returned.
+	 *
+	 * @param env thread GC Environment
+	 * @param spine indexable object spine
+	 *
 	 * @return initialized arraylet spine with its arraylet pointers initialized.
 	 */
 	MMINLINE J9IndexableObject *layoutDiscontiguousArraylet(MM_EnvironmentBase *env, J9IndexableObject *spine);
+
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+	/**
+	 * For discontiguous arraylet that will be allocated to sparse heap (off-heap). Even though this arraylet is large enough to be
+	 * discontiguous, its true layout is InlineContiguous. Arraylet leaves still need to be created and initialized,
+	 * even though they won't be used.
+	 *
+	 * @param env thread GC Environment
+	 * @param spine indexable object spine
+	 *
+	 * @return initialized arraylet spine with its arraylet pointers initialized
+	 */
+	MMINLINE J9IndexableObject *getSparseAddressAndDecommitLeaves(MM_EnvironmentBase *env, J9IndexableObject *spine);
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 
 protected:
 
@@ -117,25 +148,6 @@ public:
 	 * Allocation description and layout initialization.
 	 */
 	bool initializeAllocateDescription(MM_EnvironmentBase *env);
-
-#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
-	/**
-	 * For non-contiguous arraylets (discontiguous arraylets, hybrid not allowed
-	 * when double map is enabled), double maps the arraylet leaves to a contiguous
-	 * region outside the heap, making a discontiguous arraylet look contiguous.
-	 * Double map is enabled by default, if one wants to disable it, manually pass
-	 * command line option -Xgc:disableArrayletDoubleMapping; however, if the
-	 * system supports huge pages then double map will be disabled. That's because
-	 * double map does support huge pages yet. If one still wants to enable double
-	 * map in such systems, one must manually force the application to use the
-	 * small system page size
-	 *
-	 * @param env thread GC Environment
-	 * @param objectPtr indexable object spine
-	 * @return the contiguous address pointer
-	 */
-	void *doubleMapArraylets(MM_EnvironmentBase *env, J9Object *objectPtr, void *preferredAddress);
-#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 
 	/**
 	 * Initializer.
