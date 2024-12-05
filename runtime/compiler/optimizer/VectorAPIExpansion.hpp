@@ -415,16 +415,18 @@ class TR_VectorAPIExpansion : public TR::Optimization
    static bool treeTopAllowedWithBoxing(TR::ILOpCodes opCodeValue);
 
    /** \brief
+    *     Identitfies node as non-vectorizable and non-scalarizable
     *
-    *
+    *  \param node
+    *     Node
     *
     */
    void dontVectorizeNode(TR::Node *node);
 
    /** \brief
-    *   Checks if node will be or already is vectorized. Sets element type, bit length
-    *   and object type if it is.
-    *
+    *     Checks if node will be or already is vectorized or scalarized.
+    *     Sets element type, bit length, object type, and whether it's scalarized
+    *     if it is.
     *
     */
    bool isVectorizedOrScalarizedNode(TR::Node *node, TR::DataType &elementType, int32_t &bitsLength,
@@ -432,34 +434,31 @@ class TR_VectorAPIExpansion : public TR::Optimization
 
 
    /** \brief
-    *  Creates and caches Vector and Mask classes for the given element type and bit length
+    *     Creates and caches Vector and Mask classes for the given element type and bit length
     *
     *
     */
    void createClassesForBoxing(TR_ResolvedMethod *owningMethod, TR::DataType methodElementType, vec_sz_t bitsLength);
 
    /** \brief
-    *   Depeneding on the checkBoxing parameter checks if boxing of node supported
-    *   or performs boxing
-    *
-    *
+    *     Depending on the checkBoxing parameter checks if boxing of node supported
+    *     or performs boxing
     */
    void boxChild(TR::TreeTop *treeTop, TR::Node *node, uint32_t i, bool checkBoxing);
 
 
    /** \brief
-    *   Depeneding on the checkBoxing parameter checks if unboxing of node supported
-    *   or performs unboxing
-    *
+    *     Depending on the checkBoxing parameter checks if unboxing of node supported
+    *     or performs unboxing
     *
     */
    TR::Node *unboxNode(TR::Node *parentNode, TR::Node *node, vapiObjType operandObjectType, bool checkBoxing);
 
    /** \brief
-    *    Creates payload symbol reference
+    *     Creates payload symbol reference given TR_OpaqueClassBlock
     *
-    *  \param
-    *
+    *  \param vecClass
+    *     TR_OpaqueClassBlock
     *
     */
    static TR::SymbolReference *createPayloadSymbolReference(TR::Compilation *comp, TR_OpaqueClassBlock *vecClass);
@@ -693,6 +692,22 @@ class TR_VectorAPIExpansion : public TR::Optimization
    */
    static TR_OpaqueClassBlock *getOpaqueClassBlockFromClassNode(TR::Compilation *comp,
                                                                 TR::Node *classNode);
+
+  /** \brief
+   *     Returns TR_OpaqueClassBlock for ann array class given element type
+   *
+   *  \param comp
+   *     Compilation
+   *
+   *  \param type
+   *      Data type
+   *
+   *  \param booleanClass
+   *     true if array of boolean values is needed
+   *
+   *  \return
+   *     TR_OpaqueClassBlock
+   */
    static TR_OpaqueClassBlock *getArrayClassFromDataType(TR::Compilation *comp, TR::DataType type, bool booleanClass);
 
   /** \brief
