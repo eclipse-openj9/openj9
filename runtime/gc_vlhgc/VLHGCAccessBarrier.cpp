@@ -299,9 +299,6 @@ MM_VLHGCAccessBarrier::jniGetPrimitiveArrayCritical(J9VMThread* vmThread, jarray
 #endif /* defined(J9VM_GC_ENABLE_DOUBLE_MAP) */
 		/* alwaysCopyInCritical or discontiguous (including 0 size array) */
 		copyArrayCritical(vmThread, &data, arrayObject, isCopy);
-	} else if (indexableObjectModel->isVirtualLargeObjectHeapEnabled() && !indexableObjectModel->isDataAdjacentToHeader(arrayObject)) {
-		/* off heap enabled and not adjacent */
-		data = (void *)indexableObjectModel->getDataPointerForContiguous(arrayObject);
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 	} else if (!indexableObjectModel->isInlineContiguousArraylet(arrayObject)) {
 		/* an array having discontiguous extents is another reason to force the critical section to be a copy */
@@ -336,6 +333,9 @@ MM_VLHGCAccessBarrier::jniGetPrimitiveArrayCritical(J9VMThread* vmThread, jarray
 			copyArrayCritical(vmThread, &data, arrayObject, isCopy);
 		}
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
+	} else if (indexableObjectModel->isVirtualLargeObjectHeapEnabled() && !indexableObjectModel->isDataAdjacentToHeader(arrayObject)) {
+		/* off heap enabled and not adjacent */
+		data = (void *)indexableObjectModel->getDataPointerForContiguous(arrayObject);
 	} else {
 		/* Adjacent for offheap enabled and contiguous for offheap disabled.
 		   acquire access to prevent object being moved by GC access and return a direct pointer. */
@@ -369,8 +369,6 @@ MM_VLHGCAccessBarrier::jniReleasePrimitiveArrayCritical(J9VMThread* vmThread, ja
 #endif /* defined(J9VM_GC_ENABLE_DOUBLE_MAP) */
 		/* alwaysCopyInCritical or discontiguous (including 0 size array) */
 		copyBackArrayCritical(vmThread, elems, &arrayObject, mode);
-	} else if (indexableObjectModel->isVirtualLargeObjectHeapEnabled() && !indexableObjectModel->isDataAdjacentToHeader(arrayObject)) {
-		/* off heap enabled and not adjacent */
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 	} else if (!indexableObjectModel->isInlineContiguousArraylet(arrayObject)) {
 		/* an array having discontiguous extents is another reason to force the critical section to be a copy */
@@ -406,6 +404,8 @@ MM_VLHGCAccessBarrier::jniReleasePrimitiveArrayCritical(J9VMThread* vmThread, ja
 			copyBackArrayCritical(vmThread, elems, &arrayObject, mode);
 		}
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
+	} else if (indexableObjectModel->isVirtualLargeObjectHeapEnabled() && !indexableObjectModel->isDataAdjacentToHeader(arrayObject)) {
+		/* off heap enabled and not adjacent */
 	} else {
 		/* adjacent for offheap enabled and contiguous for offheap disabled,
 		 * Objects can not be moved if critical section is active
@@ -451,9 +451,6 @@ MM_VLHGCAccessBarrier::jniGetStringCritical(J9VMThread* vmThread, jstring str, j
 #endif /* defined(J9VM_GC_ENABLE_DOUBLE_MAP) */
 		/*  alwaysCopyInCritical or isCompressed  or discontiguous (including 0 size array) */
 		copyStringCritical(vmThread, &data, valueObject, stringObject, isCopy, isCompressed);
-	} else if (indexableObjectModel->isVirtualLargeObjectHeapEnabled() && !indexableObjectModel->isDataAdjacentToHeader(valueObject)) {
-		/* off heap enabled and not adjacent */
-		data = (jchar *)indexableObjectModel->getDataPointerForContiguous(valueObject);
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 	} else if (!indexableObjectModel->isInlineContiguousArraylet(valueObject)) {
 		MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(vmThread);
@@ -487,6 +484,9 @@ MM_VLHGCAccessBarrier::jniGetStringCritical(J9VMThread* vmThread, jstring str, j
 			copyStringCritical(vmThread, &data, valueObject, stringObject, isCopy, isCompressed);
 		}
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
+	} else if (indexableObjectModel->isVirtualLargeObjectHeapEnabled() && !indexableObjectModel->isDataAdjacentToHeader(valueObject)) {
+		/* off heap enabled and not adjacent */
+		data = (jchar *)indexableObjectModel->getDataPointerForContiguous(valueObject);
 	} else {
 		/**
 		 *  adjacent for offheap enabled and contiguous for offheap disabled
@@ -530,8 +530,6 @@ MM_VLHGCAccessBarrier::jniReleaseStringCritical(J9VMThread* vmThread, jstring st
 #endif /* defined(J9VM_GC_ENABLE_DOUBLE_MAP) */
 		/*  alwaysCopyInCritical or isCompressed  or discontiguous (including 0 size array) */
 		freeStringCritical(vmThread, elems);
-	} else if (indexableObjectModel->isVirtualLargeObjectHeapEnabled() && !indexableObjectModel->isDataAdjacentToHeader(valueObject)) {
-		/* off heap enabled and not adjacent */
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 	} else if (!indexableObjectModel->isInlineContiguousArraylet(valueObject)) {
 		/* an array having discontiguous extents can use double mapping if enabled in the critical section */
@@ -558,6 +556,8 @@ MM_VLHGCAccessBarrier::jniReleaseStringCritical(J9VMThread* vmThread, jstring st
 			freeStringCritical(vmThread, elems);
 		}
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
+	} else if (indexableObjectModel->isVirtualLargeObjectHeapEnabled() && !indexableObjectModel->isDataAdjacentToHeader(valueObject)) {
+		/* off heap enabled and not adjacent */
 	} else {
 		/**
 		 *  adjacent for offheap enabled and contiguous for offheap disabled,
