@@ -63,6 +63,7 @@ typedef struct RasGlobalStorage {
 	void *  traceMethodTable;
 	int     stackdepth;
 	unsigned int    stackCompressionLevel;
+	unsigned int    methodStrArgLength;
 	ConfigureTraceFunction configureTraceEngine;
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 	CRIURestoreInitializeTrace criuRestoreInitializeTrace;
