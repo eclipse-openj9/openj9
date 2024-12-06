@@ -169,6 +169,11 @@ allocateClassLoader(J9JavaVM *javaVM)
 		classLoader->moduleHashTable = hashModuleNameTableNew(javaVM, INITIAL_MODULE_HASHTABLE_SIZE);
 		classLoader->packageHashTable = hashPackageTableNew(javaVM, INITIAL_PACKAGE_HASHTABLE_SIZE);
 #endif /* JAVA_SPEC_VERSION > 8 */
+
+#if defined(J9VM_OPT_JFR)
+		classLoader->loadedClassCount = 0;
+#endif /* defined(J9VM_OPT_JFR) */
+
 		/* Allocate classLocationHashTable only for bootloader which is the first classloader to be allocated.
 		 * The classLoader being allocated must be the bootloader if javaVM->systemClassLoader is NULL.
 		 */

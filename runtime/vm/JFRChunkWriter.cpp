@@ -863,4 +863,29 @@ VM_JFRChunkWriter::writeInitialEnvironmentVariableEvents()
 		}
 	}
 }
+
+void
+VM_JFRChunkWriter::writeClassLoadingStatisticsEvent(void *anElement, void *userData)
+{
+	ClassLoadingStatisticsEntry *entry = (ClassLoadingStatisticsEntry  *)anElement;
+	VM_BufferWriter *_bufferWriter = (VM_BufferWriter *)userData;
+
+	/* reserve size field */
+	U_8 *dataStart = _bufferWriter->getAndIncCursor(sizeof(U_32));
+
+	/* write event type */
+	_bufferWriter->writeLEB128(ClassLoadingStatisticsID);
+
+	/* write start time */
+	_bufferWriter->writeLEB128(entry->ticks);
+
+	/* write user loaded class count */
+	_bufferWriter->writeLEB128(entry->loadedClassCount);
+
+	/* write system unloaded class count */
+	_bufferWriter->writeLEB128(entry->unloadedClassCount);
+
+	/* write size */
+	_bufferWriter->writeLEB128PaddedU32(dataStart, _bufferWriter->getCursor() - dataStart);
+}
 #endif /* defined(J9VM_OPT_JFR) */

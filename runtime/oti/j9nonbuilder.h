@@ -434,6 +434,12 @@ typedef struct J9JFRThreadCPULoad {
 	float system;
 } J9JFRThreadCPULoad;
 
+typedef struct J9JFRClassLoadingStatistics {
+	J9JFR_EVENT_COMMON_FIELDS
+	I_64 loadedClassCount;
+	I_64 unloadedClassCount;
+} J9JFRClassLoadingStatistics;
+
 #endif /* defined(J9VM_OPT_JFR) */
 
 /* @ddr_namespace: map_to_type=J9CfrError */
@@ -3601,6 +3607,9 @@ typedef struct J9ClassLoader {
 	omrthread_rwmutex_t cpEntriesMutex;
 	UDATA initClassPathEntryCount;
 	UDATA asyncGetCallTraceUsed;
+#if defined(J9VM_OPT_JFR)
+	UDATA loadedClassCount;
+#endif /* defined(J9VM_OPT_JFR) */
 } J9ClassLoader;
 
 #define J9CLASSLOADER_SHARED_CLASSES_ENABLED  8
