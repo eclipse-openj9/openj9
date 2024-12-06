@@ -514,6 +514,11 @@
    sun_nio_cs_UTF_8_Encoder_encodeUTF_8,
    sun_nio_cs_ext_IBM1388_Encoder_encodeArrayLoop,
 
+   sun_nio_cs_UTF16_Encoder_encodeUTF16Big,
+   sun_nio_cs_UTF16_Encoder_encodeUTF16Little,
+   com_ibm_jit_JITHelpers_transformedEncodeUTF16Big,
+   com_ibm_jit_JITHelpers_transformedEncodeUTF16Little,
+
    java_lang_Integer_bitCount,
    java_lang_Integer_highestOneBit,
    java_lang_Integer_lowestOneBit,

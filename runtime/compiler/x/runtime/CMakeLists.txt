@@ -25,6 +25,7 @@ j9jit_files(
 	x/runtime/Recomp.cpp
 	x/runtime/X86ArrayTranslate.nasm
 	x/runtime/X86Codert.nasm
+	x/runtime/X86EncodeUTF16.nasm
 	x/runtime/X86LockReservation.nasm
 	x/runtime/X86PicBuilder.nasm
 	x/runtime/X86RelocationTarget.cpp 

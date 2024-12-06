@@ -65,6 +65,10 @@ public final class JITHelpers {
 		return helpers;
 	}
 
+	public native int transformedEncodeUTF16Big(long src, long dest, int num);
+
+	public native int transformedEncodeUTF16Little(long src, long dest, int num);
+
 	/*
 	 * Constants for getSuperclass.
 	 */

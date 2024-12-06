@@ -25,3 +25,4 @@
 /X86Unresolveds.s
 /X86Unresolveds.asm
 /X86Crypto.s
+/X86EncodeUTF16.s
