@@ -939,12 +939,12 @@ jfrThreadCPULoad(J9VMThread *currentThread, J9VMThread *sampleThread)
 			int64_t currentTime = j9time_nano_time();
 
 			if (-1 == jfrState->prevTimestamp) {
-				jfrEvent->user = 0;
-				jfrEvent->system = 0;
+				jfrEvent->userCPULoad = 0;
+				jfrEvent->systemCPULoad = 0;
 			} else {
 				int64_t timeDelta = currentTime - jfrState->prevTimestamp;
-				jfrEvent->user = OMR_MIN((threadTimes.userTime - jfrState->prevThreadCPUTimes.userTime) / (double)timeDelta, 1.0);
-				jfrEvent->system = OMR_MIN((threadTimes.sysTime - jfrState->prevThreadCPUTimes.sysTime) / (double)timeDelta, 1.0);
+				jfrEvent->userCPULoad = OMR_MIN((threadTimes.userTime - jfrState->prevThreadCPUTimes.userTime) / (double)timeDelta, 1.0);
+				jfrEvent->systemCPULoad = OMR_MIN((threadTimes.sysTime - jfrState->prevThreadCPUTimes.sysTime) / (double)timeDelta, 1.0);
 			}
 			jfrState->prevTimestamp = currentTime;
 			jfrState->prevThreadCPUTimes = threadTimes;
