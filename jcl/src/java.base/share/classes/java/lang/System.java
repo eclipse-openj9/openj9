@@ -1310,13 +1310,19 @@ static void initSecurityManager(ClassLoader applicationClassLoader) {
 		/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 	}
 	/*[IF JAVA_SPEC_VERSION >= 24]*/
-	if (throwErrorOnInit) {
-		/*[MSG "K0B04", "A command line option has attempted to allow or enable the Security Manager. Enabling a Security Manager is not supported."]*/
-		throw new Error(Msg.getString("K0B04")); //$NON-NLS-1$
-	}
+	initPhase3(throwErrorOnInit);
 	/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 }
 /*[ENDIF] JAVA_SPEC_VERSION >= 9 */
+
+/*[IF JAVA_SPEC_VERSION >= 24]*/
+private static void initPhase3(boolean throwError) {
+	if (throwError) {
+		/*[MSG "K0B04", "A command line option has attempted to allow or enable the Security Manager. Enabling a Security Manager is not supported."]*/
+		throw new Error(Msg.getString("K0B04")); //$NON-NLS-1$
+	}
+}
+/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 
 /*[IF (21 <= JAVA_SPEC_VERSION) & (JAVA_SPEC_VERSION < 24)]*/
 static boolean allowSecurityManager() {
