@@ -204,7 +204,15 @@ addJarToSystemClassLoaderClassPathEntries(J9JavaVM *vm, const char *filename)
 	J9ClassPathEntry *cpEntry = NULL;
 
 	PORT_ACCESS_FROM_JAVAVM(vm);
-	cpEntry = (J9ClassPathEntry*) j9mem_allocate_memory(newMemSize, OMRMEM_CATEGORY_VM);
+#if defined(J9VM_OPT_SNAPSHOTS)
+	VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(vm);
+	if (IS_SNAPSHOTTING_ENABLED(vm)) {
+		cpEntry = (J9ClassPathEntry *)vmsnapshot_allocate_memory(newMemSize, OMRMEM_CATEGORY_VM);
+	} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+	{
+		cpEntry = (J9ClassPathEntry *)j9mem_allocate_memory(newMemSize, OMRMEM_CATEGORY_VM);
+	}
 	if (NULL != cpEntry) {
 		J9ClassPathEntry **cpePtrArray = NULL;
 		UDATA entryCount = 0;
@@ -219,8 +227,7 @@ addJarToSystemClassLoaderClassPathEntries(J9JavaVM *vm, const char *filename)
 		cpEntry->type = CPE_TYPE_UNKNOWN;
 		cpEntry->flags = CPE_FLAG_BOOTSTRAP;
 
-#if defined(J9VM_OPT_SHARED_CLASSES)
-		if (J9_ARE_ALL_BITS_SET(classLoader->flags, J9CLASSLOADER_SHARED_CLASSES_ENABLED)) {
+		if (J9_ARE_ALL_BITS_SET(classLoader->flags, J9CLASSLOADER_SHARED_CLASSES_ENABLED) || IS_RESTORE_RUN(vm)) {
 			/*
 			 * Warm up the classpath entry so that the Classpath stored in the cache has the correct info.
 			 * This is required because when we are finding classes in the cache, initializeClassPathEntry is not called
@@ -229,7 +236,6 @@ addJarToSystemClassLoaderClassPathEntries(J9JavaVM *vm, const char *filename)
 				goto done;
 			}
 		}
-#endif
 		omrthread_rwmutex_enter_write(classLoader->cpEntriesMutex);
 		entryCount = classLoader->classPathEntryCount;
 		cpePtrArray = classLoader->classPathEntries;
@@ -239,7 +245,14 @@ addJarToSystemClassLoaderClassPathEntries(J9JavaVM *vm, const char *filename)
 			/* class path entry pointer array needs to be incremented */
 			UDATA count = ROUND_UP_TO(CPE_COUNT_INCREMENT, entryCount + 1);
 			newMemSize = sizeof(J9ClassPathEntry*) * count;
-			cpePtrArray = (J9ClassPathEntry **)j9mem_reallocate_memory(cpePtrArray, newMemSize, OMRMEM_CATEGORY_VM);
+#if defined(J9VM_OPT_SNAPSHOTS)
+			if (IS_SNAPSHOTTING_ENABLED(vm)) {
+				cpePtrArray = (J9ClassPathEntry **)vmsnapshot_reallocate_memory(cpePtrArray, newMemSize, OMRMEM_CATEGORY_VM);
+			} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+			{
+				cpePtrArray = (J9ClassPathEntry **)j9mem_reallocate_memory(cpePtrArray, newMemSize, OMRMEM_CATEGORY_VM);
+			}
 			if (NULL == cpePtrArray) {
 				goto done;
 			} else {
@@ -257,7 +270,14 @@ addJarToSystemClassLoaderClassPathEntries(J9JavaVM *vm, const char *filename)
 done:
 	/* If any error occurred, discard any allocated memory and throw OutOfMemoryError */
 	if (0 == newCount) {
-		j9mem_free_memory(cpEntry);
+#if defined(J9VM_OPT_SNAPSHOTS)
+		if (IS_SNAPSHOTTING_ENABLED(vm)) {
+			vmsnapshot_free_memory(cpEntry);
+		} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+		{
+			j9mem_free_memory(cpEntry);
+		}
 	} else {
 		TRIGGER_J9HOOK_VM_CLASS_LOADER_CLASSPATH_ENTRY_ADDED(vm->hookInterface, vm, classLoader, cpEntry);
 	}

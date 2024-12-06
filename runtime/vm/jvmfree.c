@@ -58,6 +58,9 @@ freeClassLoaderEntries(J9VMThread * vmThread, J9ClassPathEntry **entries, UDATA 
 	U_32 i = 0;
 	J9ClassPathEntry *cpEntry = NULL;
 	PORT_ACCESS_FROM_VMC(vmThread);
+#if defined(J9VM_OPT_SNAPSHOTS)
+	VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(vm);
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 
 	Trc_VM_freeClassLoaderEntries_Entry(vmThread, entries, count);
 
@@ -85,12 +88,26 @@ freeClassLoaderEntries(J9VMThread * vmThread, J9ClassPathEntry **entries, UDATA 
 		cpEntry->pathLength = 0;
 		if (i >= initCount) {
 			/* Additional entries are appended after initial entries, allocated separately. */
-			j9mem_free_memory(cpEntry);
+#if defined(J9VM_OPT_SNAPSHOTS)
+			if (IS_SNAPSHOTTING_ENABLED(vm)) {
+				vmsnapshot_free_memory(cpEntry);
+			} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+			{
+				j9mem_free_memory(cpEntry);
+			}
 		}
 	}
 	/* Initial entries are allocated together, free them together. */
 	if (count > 0) {
-		j9mem_free_memory(entries[0]);
+#if defined(J9VM_OPT_SNAPSHOTS)
+		if (IS_SNAPSHOTTING_ENABLED(vm)) {
+			vmsnapshot_free_memory(entries[0]);
+		} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+		{
+			j9mem_free_memory(entries[0]);
+		}
 	}
 
 	Trc_VM_freeClassLoaderEntries_Exit(vmThread);
@@ -122,7 +139,15 @@ freeSharedCacheCLEntries(J9VMThread * vmThread, J9ClassLoader * classloader)
 		}
 		pool_removeElement(cpCachePool, (void *)cachePoolItem);
 	}
-	j9mem_free_memory(classloader->classPathEntries);
+#if defined(J9VM_OPT_SNAPSHOTS)
+	if (IS_SNAPSHOTTING_ENABLED(vm)) {
+		VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(vm);
+		vmsnapshot_free_memory(classloader->classPathEntries);
+	} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+	{
+		j9mem_free_memory(classloader->classPathEntries);
+	}
 	classloader->classPathEntries = NULL;
 	classloader->classPathEntryCount = 0;
 	omrthread_monitor_exit(sharedClassConfig->jclCacheMutex);
@@ -418,7 +443,15 @@ cleanUpClassLoader(J9VMThread *vmThread, J9ClassLoader* classLoader)
 			PORT_ACCESS_FROM_VMC(vmThread);
 			/* Free the class path entries  in system class loader */
 			freeClassLoaderEntries(vmThread, classLoader->classPathEntries, classLoader->classPathEntryCount, classLoader->initClassPathEntryCount);
-			j9mem_free_memory(classLoader->classPathEntries);
+#if defined(J9VM_OPT_SNAPSHOTS)
+			VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(javaVM);
+			if (IS_SNAPSHOTTING_ENABLED(javaVM)) {
+				vmsnapshot_free_memory(classLoader->classPathEntries);
+			} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+			{
+				j9mem_free_memory(classLoader->classPathEntries);
+			}
 			classLoader->classPathEntryCount = 0;
 			classLoader->classPathEntries = NULL;
 			if (NULL != classLoader->cpEntriesMutex) {

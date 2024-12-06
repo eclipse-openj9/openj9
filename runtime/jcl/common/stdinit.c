@@ -56,6 +56,12 @@ static char * addEndorsedPath(J9PortLibrary *portLib, char *endorsedPath, char *
 
 static J9Class jclFakeClass;
 
+/* initializeBootstrapClassPath return values. */
+#define INIT_BOOTSTRAP_CLASS_PATH_SUCCESS 0
+#define INIT_BOOTSTRAP_CLASS_PATH_RESTORED 1
+#define INIT_BOOTSTRAP_CLASS_PATH_ALREADY_SET -2
+#define INIT_BOOTSTRAP_CLASS_PATH_FAILED -1
+
 /**
  * Compute the JCL runtime flags to be used during the initialization of
  * known classes.
@@ -123,7 +129,13 @@ standardInit(J9JavaVM *vm, char *dllName)
 		}
 	}
 	/* Now create the classPathEntries */
-	if (initializeBootstrapClassPath(vm) && !IS_RESTORE_RUN(vm)) {
+	switch (initializeBootstrapClassPath(vm)) {
+	case INIT_BOOTSTRAP_CLASS_PATH_SUCCESS:
+		break;
+	case INIT_BOOTSTRAP_CLASS_PATH_RESTORED:
+		Assert_JCL_true(IS_RESTORE_RUN(vm));
+		break;
+	default:
 		goto _fail;
 	}
 #endif
@@ -622,9 +634,14 @@ initializeBootstrapClassPath(J9JavaVM *vm)
 	}
 	(*VMI)->GetSystemProperty(VMI, BOOT_PATH_SEPARATOR_SYS_PROP, &classpathSeparator);
 
-	/* Fail if the classpath has already been set */
+	if (IS_RESTORE_RUN(vm)) {
+		Assert_JCL_true(J9_ARE_ALL_BITS_SET(loader->flags, J9CLASSLOADER_CLASSPATH_SET));
+		return INIT_BOOTSTRAP_CLASS_PATH_RESTORED;
+	}
+
+	/* Fail if the classpath has already been set. */
 	if (J9_ARE_ALL_BITS_SET(loader->flags, J9CLASSLOADER_CLASSPATH_SET)) {
-		return -2;
+		return INIT_BOOTSTRAP_CLASS_PATH_ALREADY_SET;
 	}
 
 #if defined(J9VM_OPT_SHARED_CLASSES)
@@ -639,7 +656,7 @@ initializeBootstrapClassPath(J9JavaVM *vm)
 	loader->classPathEntryCount = vmFuncs->initializeClassPath(vm, path, classpathSeparator[0], CPE_FLAG_BOOTSTRAP, initClassPathEntry, &loader->classPathEntries);
 
 	if (-1 == (IDATA)loader->classPathEntryCount) {
-		return -1;
+		return INIT_BOOTSTRAP_CLASS_PATH_FAILED;
 	} else {
 		omrthread_rwmutex_init(&loader->cpEntriesMutex, 0, "classPathEntries Mutex");
 		loader->initClassPathEntryCount = loader->classPathEntryCount;
@@ -649,7 +666,7 @@ initializeBootstrapClassPath(J9JavaVM *vm)
 		TRIGGER_J9HOOK_VM_CLASS_LOADER_CLASSPATH_ENTRIES_INITIALIZED(vm->hookInterface, vm, loader);
 	}
 
-	return 0;
+	return INIT_BOOTSTRAP_CLASS_PATH_SUCCESS;
 }
 
 static UDATA

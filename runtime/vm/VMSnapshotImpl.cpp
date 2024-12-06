@@ -36,6 +36,7 @@
 
 void snapshot_mem_free_memory(struct OMRPortLibrary *portLibrary, void *memoryPointer);
 void *snapshot_mem_allocate_memory(struct OMRPortLibrary *portLibrary, uintptr_t byteAmount, const char *callSite, uint32_t category);
+void *snapshot_mem_reallocate_memory(struct OMRPortLibrary *portLibrary, void *memoryPointer, uintptr_t byteAmount, const char *callSite, uint32_t category);
 void snapshot_mem_free_memory32(struct OMRPortLibrary *portLibrary, void *memoryPointer);
 void *snapshot_mem_allocate_memory32(struct OMRPortLibrary *portLibrary, uintptr_t byteAmount, const char *callSite, uint32_t category);
 
@@ -507,7 +508,6 @@ VMSnapshotImpl::fixupClassLoaders()
 	pool_state classLoaderWalkState = {0};
 	J9ClassLoader *currentClassLoader = (J9ClassLoader *)pool_startDo(_vm->classLoaderBlocks, &classLoaderWalkState);
 	while (NULL != currentClassLoader) {
-		currentClassLoader->classPathEntries = NULL;
 		currentClassLoader->sharedLibraries = NULL;
 		currentClassLoader->librariesHead = NULL;
 		currentClassLoader->librariesTail = NULL;
@@ -524,9 +524,20 @@ VMSnapshotImpl::fixupClassLoaders()
 #endif /* J9VM_NEEDS_JNI_REDIRECTION */
 		currentClassLoader->gcRememberedSet = 0;
 		currentClassLoader->jitMetaDataList = NULL;
-		/* TODO: In the future persist these as well. */
-		currentClassLoader->flags &= ~J9CLASSLOADER_CLASSPATH_SET;
+
+		fixupClassPathEntries(currentClassLoader);
 		currentClassLoader = (J9ClassLoader *)pool_nextDo(&classLoaderWalkState);
+	}
+}
+
+void
+VMSnapshotImpl::fixupClassPathEntries(J9ClassLoader *classLoader)
+{
+	J9ClassPathEntry **cpEntries = classLoader->classPathEntries;
+	UDATA classPathEntryCount = classLoader->classPathEntryCount;
+
+	for (UDATA i = 0; i < classPathEntryCount; i++) {
+		cpEntries[i]->extraInfo = NULL;
 	}
 }
 
@@ -836,11 +847,15 @@ VMSnapshotImpl::restoreJ9JavaVMStructures()
 	restorePrimitiveAndArrayClasses();
 	restoreHiddenInstanceFields();
 
-	if (omrthread_monitor_init_with_name(&_vm->classMemorySegments->segmentMutex, 0, "VM class mem segment list")) {
+	if (J9THREAD_RWMUTEX_OK != omrthread_rwmutex_init(&_vm->systemClassLoader->cpEntriesMutex, 0, "classPathEntries Mutex")) {
 		success = false;
 	}
 
-	if (omrthread_monitor_init_with_name(&_vm->memorySegments->segmentMutex, 0, "VM mem segment list")) {
+	if (0 != omrthread_monitor_init_with_name(&_vm->classMemorySegments->segmentMutex, 0, "VM class mem segment list")) {
+		success = false;
+	}
+
+	if (0 != omrthread_monitor_init_with_name(&_vm->memorySegments->segmentMutex, 0, "VM mem segment list")) {
 		success = false;
 	}
 
@@ -1163,6 +1178,15 @@ snapshot_mem_free_memory(struct OMRPortLibrary *portLibrary, void *memoryPointer
 	Assert_VM_notNull(vmSnapshotImpl);
 
 	vmSnapshotImpl->freeSubAllocatedMemory(memoryPointer, false);
+}
+
+void *
+snapshot_mem_reallocate_memory(struct OMRPortLibrary *portLibrary, void *memoryPointer, uintptr_t byteAmount, const char *callSite, uint32_t category)
+{
+	VMSnapshotImpl *vmSnapshotImpl = (VMSnapshotImpl *)((VMSnapshotImplPortLibrary *)portLibrary)->vmSnapshotImpl;
+	Assert_VM_notNull(vmSnapshotImpl);
+
+	return vmSnapshotImpl->reallocateMemory(memoryPointer, byteAmount, false);
 }
 
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */

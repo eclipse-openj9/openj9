@@ -834,6 +834,8 @@ typedef struct VMSnapshotImplPortLibrary {
 		VMSNAPSHOTIMPL_OMRPORT_FROM_VMSNAPSHOTIMPLPORT(privateImagePortLibrary)->mem_allocate_memory32(VMSNAPSHOTIMPL_OMRPORT_FROM_VMSNAPSHOTIMPLPORT(privateImagePortLibrary), param1, J9_GET_CALLSITE(), category)
 #define vmsnapshot_free_memory32(param1) \
 		VMSNAPSHOTIMPL_OMRPORT_FROM_VMSNAPSHOTIMPLPORT(privateImagePortLibrary)->mem_free_memory32(VMSNAPSHOTIMPL_OMRPORT_FROM_VMSNAPSHOTIMPLPORT(privateImagePortLibrary), param1)
+#define vmsnapshot_reallocate_memory(param1, param2, category) \
+		VMSNAPSHOTIMPL_OMRPORT_FROM_VMSNAPSHOTIMPLPORT(privateImagePortLibrary)->mem_reallocate_memory(VMSNAPSHOTIMPL_OMRPORT_FROM_VMSNAPSHOTIMPLPORT(privateImagePortLibrary), param1, param2, J9_GET_CALLSITE(), category)
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
 
 #if defined(OMR_OPT_CUDA)
