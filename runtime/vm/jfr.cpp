@@ -940,11 +940,17 @@ jfrThreadCPULoad(J9VMThread *currentThread, J9VMThread *sampleThread)
 
 			if (-1 == jfrState->prevTimestamp) {
 				jfrEvent->user = 0;
+#if !defined(J9ZOS390)
+				/* This line doesn't compile on z/OS. */
 				jfrEvent->system = 0;
+#endif /* !defined(J9ZOS390) */
 			} else {
 				int64_t timeDelta = currentTime - jfrState->prevTimestamp;
 				jfrEvent->user = OMR_MIN((threadTimes.userTime - jfrState->prevThreadCPUTimes.userTime) / (double)timeDelta, 1.0);
+#if !defined(J9ZOS390)
+				/* This line doesn't compile on z/OS. */
 				jfrEvent->system = OMR_MIN((threadTimes.sysTime - jfrState->prevThreadCPUTimes.sysTime) / (double)timeDelta, 1.0);
+#endif /* !defined(J9ZOS390) */
 			}
 			jfrState->prevTimestamp = currentTime;
 			jfrState->prevThreadCPUTimes = threadTimes;
