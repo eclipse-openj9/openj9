@@ -838,16 +838,17 @@ TR::SymbolValidationManager::addClassFromCPRecord(TR_OpaqueClassBlock *clazz, J9
    if (recordExists(&byName))
       return true; // already have an equivalent ClassByName
 
-   bool added;
    if (!isAlreadyValidated(clazz)) // save a ClassChainRecord
-      added = addClassRecordWithChain(new (_region) ClassByNameRecord(clazz, beholder));
-   else
-      added = addClassRecord(clazz, new (_region) ClassFromCPRecord(clazz, beholder, cpIndex));
+      {
+      if (!addClassRecordWithChain(new (_region) ClassByNameRecord(clazz, beholder)))
+         return false;
+      }
 
-   if (added)
-      _classesFromAnyCPIndex.insert(ClassFromAnyCPIndex(clazz, beholder));
+   if (!addClassRecord(clazz, new (_region) ClassFromCPRecord(clazz, beholder, cpIndex)))
+      return false;
 
-   return added;
+   _classesFromAnyCPIndex.insert(ClassFromAnyCPIndex(clazz, beholder));
+   return true;
    }
 
 bool
