@@ -187,6 +187,9 @@ objectMonitorEnterBlocking(J9VMThread *currentThread)
 restart:
 		internalReleaseVMAccessSetStatus(currentThread, J9_PUBLIC_FLAGS_THREAD_BLOCKED);
 releasedAccess:
+		/* Set j.l.Thread status to BLOCKED. */
+		U_64 oldState = VM_VMHelpers::setThreadState(currentThread, J9VMTHREAD_STATE_BLOCKED);
+
 		omrthread_monitor_enter_using_threadId(monitor, osThread);
 #if defined(J9VM_THR_SMART_DEFLATION)
 		/* Update the anti-deflation vote because we had to block */
@@ -285,6 +288,9 @@ releasedAccess:
 		}
 done:
 		clearEventFlag(currentThread, J9_PUBLIC_FLAGS_THREAD_BLOCKED);
+		/* Set j.l.Thread status to oldState. */
+		VM_VMHelpers::setThreadState(currentThread, oldState);
+
 		/* Clear the SUPPRESS_CONTENDED_EXITS bit in the monitor saying that CONTENDED EXIT can be sent again */
 		((J9ThreadMonitor*)monitor)->flags &= ~(UDATA)J9THREAD_MONITOR_SUPPRESS_CONTENDED_EXIT;
 		VM_AtomicSupport::subtract(&monitor->pinCount, 1);
