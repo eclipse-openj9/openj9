@@ -255,10 +255,10 @@ public class XMLParser {
 
 		XMLStringBuffer buffer = new XMLStringBuffer();
 
-		do {
+		while (_fScan != '"') {
 			buffer.append(_fScan);
 			scan_char();
-		} while ( _fScan != '"' );
+		}
 
 		// Advance past the final quote
 		scan_char();
@@ -396,6 +396,9 @@ public class XMLParser {
 		Hashtable attributes = _scan_attributes();
 
 		// Notify the content handler
+		if (VERBOSE) {
+			System.out.format("%nAbout to start <%s> at level %d%n", elementName, _fLevel + 1);
+		}
 		_fDocumentHandler.xmlStartElement(elementName, attributes);
 		_fLevel++;
 
