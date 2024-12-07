@@ -1089,9 +1089,9 @@ final class PointerHelper extends HelperBase {
 
 	/* Sample generated code:
 	 *
-	 * @com.ibm.j9ddr.GeneratedFieldAccessor(offsetFieldName="_physicalProcessorOffset_", declaredType="J9ProcessorArchitecture")
-	 * public long physicalProcessor() throws CorruptDataException {
-	 *     return getIntAtOffset(J9ProcessorDesc._physicalProcessorOffset_);
+	 * @com.ibm.j9ddr.GeneratedFieldAccessor(offsetFieldName="__allocationContextTypeOffset_", declaredType="const MM_AllocationContextTarok$AllocationContextType")
+	 * public long _allocationContextType() throws CorruptDataException {
+	 *     return getIntAtOffset(J9ProcessorDesc.__allocationContextTypeOffset_);
 	 * }
 	 *
 	 * If the size of the field type is not 4, getByteAtOffset, getShortAtOffset
