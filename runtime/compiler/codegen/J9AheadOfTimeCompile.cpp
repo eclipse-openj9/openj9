@@ -672,7 +672,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          pRecord->setRomClassOffsetInSharedCache(reloTarget, romClassOffsetInSharedCache, self(), inlinedCodeClass, classChainRecord);
          pRecord->setClassChainIdentifyingLoaderOffsetInSharedCache(reloTarget, classChainIdentifyingLoaderOffsetInSharedCache,
                                                                     self(), classChainRecord);
-         pRecord->setClassChainForInlinedMethod(reloTarget, classChainOffsetInSharedCache, self(), classChainRecord);
+         pRecord->setClassChainForInlinedMethod(reloTarget, classChainOffsetInSharedCache, self(), classChainRecord, inlinedCodeClass);
          pRecord->setMethodIndex(reloTarget, methodIndex);
          }
          break;
@@ -698,7 +698,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
 
          mpRecord->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
          mpRecord->setClassChainForInlinedMethod(reloTarget, classChainForInlinedMethodOffsetInSharedCache,
-                                                 self(), classChainRecord);
+                                                 self(), classChainRecord, j9class);
          mpRecord->setClassChainIdentifyingLoaderOffsetInSharedCache(reloTarget, classChainOffsetOfCLInSharedCache,
                                                                      self(), classChainRecord);
          mpRecord->setVTableSlot(reloTarget, vTableOffset);
@@ -739,7 +739,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
 
          cpRecord->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
          cpRecord->setClassChainForInlinedMethod(reloTarget, classChainForInlinedMethodOffsetInSharedCache,
-                                                 self(), classChainRecord);
+                                                 self(), classChainRecord, j9class);
          cpRecord->setClassChainIdentifyingLoaderOffsetInSharedCache(reloTarget, classChainOffsetOfCLInSharedCache,
                                                                      self(), classChainRecord);
          }
@@ -1224,7 +1224,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          acaRecord->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
          acaRecord->setClassChainIdentifyingLoaderOffsetInSharedCache(reloTarget, classChainIdentifyingLoaderOffsetInSharedCache,
                                                                       self(), classChainRecord);
-         acaRecord->setClassChainForInlinedMethod(reloTarget, classChainOffsetInSharedCache, self(), classChainRecord);
+         acaRecord->setClassChainForInlinedMethod(reloTarget, classChainOffsetInSharedCache, self(), classChainRecord, j9class);
          }
          break;
 

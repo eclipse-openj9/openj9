@@ -251,7 +251,7 @@ J9::Power::AheadOfTimeCompile::initializePlatformSpecificAOTRelocationHeader(TR:
          acaRecord->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
          acaRecord->setClassChainIdentifyingLoaderOffsetInSharedCache(reloTarget, classChainIdentifyingLoaderOffsetInSharedCache,
                                                                       self(), classChainRecord);
-         acaRecord->setClassChainForInlinedMethod(reloTarget, classChainOffsetInSharedCache, self(), classChainRecord);
+         acaRecord->setClassChainForInlinedMethod(reloTarget, classChainOffsetInSharedCache, self(), classChainRecord, j9class);
          }
          break;
 
