@@ -353,6 +353,41 @@ AccessControlContext(AccessControlContext acc, ProtectionDomain[] context, int a
 	this.containPrivilegedContext = true;
 }
 
+AccessControlContext(ProtectionDomain[] pdArray, AccessControlContext parentAcc, AccessControlContext context, int authorizeState) {
+	super();
+	switch (authorizeState) {
+	default:
+		// authorizeState can't be STATE_UNKNOWN, callerPD always is NULL
+		throw new IllegalArgumentException();
+	case STATE_AUTHORIZED:
+		if (null != context) {
+			if (parentAcc == null) {
+				// inherit the domain combiner when authorized
+				this.domainCombiner = context.domainCombiner;
+			} else {
+				// when parent combiner is not null, use parent combiner to combine the current context
+				if (parentAcc.getCombiner() != null) {
+					this.context = parentAcc.getCombiner().combine(pdArray, context.context);
+					this.domainCombiner = parentAcc.getCombiner();
+				} else {
+					this.context = combinePDObjs(pdArray, context.context);
+					this.domainCombiner = context.domainCombiner;
+				}
+			}
+		} else {
+			this.domainCombiner = parentAcc.domainCombiner;
+			this.context = pdArray;
+			this.nextStackAcc = parentAcc;
+		}
+		break;
+	case STATE_NOT_AUTHORIZED:
+		break;
+	}
+	this.doPrivilegedAcc = context;
+	this.authorizeState = authorizeState;
+	this.containPrivilegedContext = true;
+}
+
 /**
  * Constructs a new instance of this class given a context
  * and a DomainCombiner
