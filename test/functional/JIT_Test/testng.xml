@@ -588,6 +588,7 @@
   <!-- jit.test.recognizedMethod tests start here -->
   <test name="RecognizedMethodTest">
     <classes>
+      <class name="jit.test.recognizedMethod.TestArraysSupport" />
       <class name="jit.test.recognizedMethod.TestJavaLangStrictMath" />
       <class name="jit.test.recognizedMethod.TestJavaLangMath" />
       <class name="jit.test.recognizedMethod.TestJavaLangStringLatin1" />

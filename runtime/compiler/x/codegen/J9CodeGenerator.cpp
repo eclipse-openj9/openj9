@@ -126,6 +126,13 @@ J9::X86::CodeGenerator::initialize()
       cg->setSupportsStackAllocationOfArraylets();
       }
 
+   static bool disableInlineVectorHashCode = feGetEnv("TR_disableInlineVectorHashCode") != NULL;
+   if (comp->target().cpu.supportsFeature(OMR_FEATURE_X86_SSE4_1) && !TR::Compiler->om.canGenerateArraylets() &&
+       !TR::Compiler->om.isOffHeapAllocationEnabled() && !disableInlineVectorHashCode)
+      {
+      cg->setSupportsInlineVectorizedHashCode();
+      }
+
    if (!comp->getOption(TR_FullSpeedDebug))
       cg->setSupportsDirectJNICalls();
 

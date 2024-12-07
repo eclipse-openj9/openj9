@@ -9270,6 +9270,427 @@ static TR::Register* inlineStringHashCode(TR::Node* node, bool isCompressed, TR:
    return hash;
    }
 
+TR::Register* J9::X86::TreeEvaluator::inlineVectorizedHashCode(TR::Node* node, TR::CodeGenerator* cg)
+   {
+   TR::Node *fromIndexNode = node->getChild(1);
+   TR::Node *initialValueNode = node->getChild(3);
+   TR::Node *elementTypeNode = node->getChild(4);
+   TR::Register* registerHash = NULL;
+
+   if (!(fromIndexNode->getOpCodeValue() == TR::iconst && fromIndexNode->getInt() == 0))
+      return NULL; // only supporting offset of const 0
+
+   switch (elementTypeNode->getConstValue())
+      {
+      case 4:  // T_BOOLEAN
+         registerHash = vectorizedHashCodeHelper(node, TR::Int8, initialValueNode, false, cg);
+         break;
+      case 8:  // T_BYTE
+         registerHash = vectorizedHashCodeHelper(node, TR::Int8, initialValueNode, true, cg);
+         break;
+      case 5:  // T_CHAR
+         registerHash = vectorizedHashCodeHelper(node, TR::Int16, initialValueNode, false, cg);
+         break;
+      case 9:  // T_SHORT
+         registerHash = vectorizedHashCodeHelper(node, TR::Int16, initialValueNode, true, cg);
+         break;
+      case 10: // T_INT
+         registerHash = vectorizedHashCodeHelper(node, TR::Int32, initialValueNode, true, cg);
+         break;
+      default:
+         return NULL;
+      }
+
+   if (registerHash != NULL)
+      cg->decReferenceCount(elementTypeNode);
+
+   node->setRegister(registerHash);
+
+   return registerHash;
+   }
+
+TR::Register *
+J9::X86::TreeEvaluator::vectorizedHashCodeReductionHelper(TR::Node* node, TR::Register **vectorRegisters, int32_t numVectors, TR::Register *tmpVectorRegVRF, TR::Register *result, TR::VectorLength vl, TR::DataType dt, TR::CodeGenerator* cg)
+   {
+   TR::InstOpCode opcode = TR::InstOpCode::PADDDRegReg;
+   TR::Register *vectorRegVRF = vectorRegisters[0];
+
+   // If we unrolled the main loop, vertically add the vectors together first
+   // then proceed to do horizontal reduction
+   for (int32_t i = 1; i < numVectors; i++)
+      {
+      OMR::X86::Encoding opcodeEncoding = opcode.getSIMDEncoding(&cg->comp()->target().cpu, vl);
+      generateRegRegInstruction(TR::InstOpCode::PADDDRegReg, node, vectorRegVRF, vectorRegisters[i], cg, opcodeEncoding);
+      }
+
+   // Reduce lanes -> horizontally add all vector elements together
+   // Store the result in a GPR
+
+   switch (vl)
+      {
+      case TR::VectorLength512:
+         // extract 256-bits from zmm and store in ymm, then perform vertical operation
+         generateRegRegImmInstruction(TR::InstOpCode::VEXTRACTF64X4YmmZmmImm1, node, tmpVectorRegVRF, vectorRegVRF, 0xFF, cg);
+         generateRegRegInstruction(opcode.getMnemonic(), node, vectorRegVRF, tmpVectorRegVRF, cg, opcode.getSIMDEncoding(&cg->comp()->target().cpu, TR::VectorLength256));
+         // Fallthrough to treat remaining result as 256-bit vector
+      case TR::VectorLength256:
+          // extract 128 bits from ymm and store in xmm, then perform vertical operation
+         generateRegRegImmInstruction(TR::InstOpCode::VEXTRACTF128RegRegImm1, node, tmpVectorRegVRF, vectorRegVRF, 0xFF, cg);
+         generateRegRegInstruction(opcode.getMnemonic(), node, vectorRegVRF, tmpVectorRegVRF, cg, opcode.getSIMDEncoding(&cg->comp()->target().cpu, TR::VectorLength128));
+         // Fallthrough to treat remaining result as 128-bit vector
+      case TR::VectorLength128:
+         generateRegRegImmInstruction(TR::InstOpCode::PSHUFDRegRegImm1, node, tmpVectorRegVRF, vectorRegVRF, 0x0e, cg);
+         generateRegRegInstruction(TR::InstOpCode::PADDDRegReg, node, vectorRegVRF, tmpVectorRegVRF, cg);
+         generateRegRegImmInstruction(TR::InstOpCode::PSHUFDRegRegImm1, node, tmpVectorRegVRF, vectorRegVRF, 0x01, cg);
+         generateRegRegInstruction(TR::InstOpCode::PADDDRegReg, node, vectorRegVRF, tmpVectorRegVRF, cg);
+         break;
+      default:
+         TR_ASSERT_FATAL(false, "Unsupported vector length");
+      }
+
+   generateRegRegInstruction(TR::InstOpCode::MOVDReg4Reg, node, result, vectorRegVRF, cg);
+   return result;
+   }
+
+// 31^64, 31^63, ..., 31^0
+static const int32_t powersOf31[65] = {
+      1304393729,
+      2120287199, -208698303, -1807847521, -1166696319, 100911967, 280349889, -1930619105, 630458625,
+      20337375, 693392705, 438009503, -1925533311, 769170015, 1133190593, -240540129, -7759359,
+      969581023, 1970939457, -1183347297, -1700740479, -1024693921, -448696639, 124073247, -1935660287,
+      1461579999, -922683583, 1632803999, 329765761, 1950300255, 1725480897, 1025491999, 2111290369,
+      -2010103841, 350799937, 11316127, 693101697, -254736545, 961614017, 31019807, -2077209343,
+      -67006753, 1244764481, -2038056289, 211350913, -408824225, -844471871, -997072353, 1353309697,
+      -510534177, 1507551809, -505558625, -293403007, 129082719, -1796951359, -196513505, -1807454463,
+      1742810335, 887503681, 28629151, 923521, 29791, 961, 31, 1
+};
+
+//
+// This function generates the main vectorized loop in the vectorizedHashCode(...) implementation. It supports both
+// signed and unsigned integer elements up to 32-bits in size, vector lengths from 128-bit up to 512-bit and up to 4x
+// loop unrolling.
+//
+// This helper generates code in three sections,
+//   1. Setup registers, load multiplier constants
+//     a. Initialize vector constants used in step 2.
+//     b. Zero out running hash vectors. The number of running hash vectors is equal to the unrolling factor.
+//     c. If an initial hash is non-zero, move that value into the first element of the first running hash vector.
+//   2. Generate main loop with x unrolling
+//     a. Load batch of data using size appropriate vector load, with zero extension for unsigned types, sign extension
+//        for signed types.
+//     b. Multiply batch by (31^(n-1), 31^(n-2), ..., 31^0), where n is the number of elements being processed in the loop
+//       i. In case of a loop unroll x times, the multiplier is split into x vectors. The first batch of elements is
+//          multiplied by the higher powers of 31. The next batch of elements are multiplied by the next multiplier
+//          vector, and so on.
+//     c. Multiply the existing running hash the vector (31^n, 31^n, ..., 31^n)
+//     d. Add product from 2 (b) to the running hash.
+//   3. Combine and reduces vectors into a single result
+//     a. If the main loop is unrolled, add the running hash vectors together.
+//     b. Horizontally add the elements together and move the result to a generate-purpose register.
+//
+TR::Register *
+J9::X86::TreeEvaluator::vectorizedHashCodeLoopHelper(TR::Node *node,
+                                                     TR::DataType dt,
+                                                     TR::VectorLength vl,
+                                                     bool isSigned,
+                                                     TR::Register *result,
+                                                     TR::Register *initialHash,
+                                                     TR::Register *index,
+                                                     TR::Register *length,
+                                                     TR::Register *arrayAddress,
+                                                     int32_t unrollCount,
+                                                     TR::CodeGenerator *cg)
+   {
+   static OMR::X86::Encoding vectorEncodingMethods[3] = { OMR::X86::Default, OMR::X86::VEX_L256, OMR::X86::EVEX_L512 };
+   static int32_t vectorSizes[3] = { 4, 8, 16 };
+   int32_t shift = dt - TR::Int8; /* i8 -> 0, i16 -> 1, i32 -> 2 */
+
+   TR_ASSERT_FATAL(shift >= 0 && shift <= 2, "Unsupported datatype for vectorized hashcode");
+   TR_ASSERT_FATAL(unrollCount == 1 || unrollCount == 2 || unrollCount == 4, "Unroll count must be 1/2/4");
+   TR_ASSERT_FATAL(vl >= TR::VectorLength128 && vl <= TR::VectorLength512, "Unsupported vector length");
+
+   OMR::X86::Encoding vectorEncoding = vectorEncodingMethods[vl - TR::VectorLength128];
+   int32_t vectorSizeElements = vectorSizes[vl - TR::VectorLength128];
+   int32_t numElements = vectorSizeElements * unrollCount;
+
+   TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions((uint8_t)0, (uint8_t)11, cg);
+   TR::Register *tmp = cg->allocateRegister(TR_GPR);
+   TR::Register *tmpVRF = cg->allocateRegister(TR_VRF);
+   TR::Register *multiplierVRF = cg->allocateRegister(TR_VRF);
+
+   TR::Register *hashRegsVRF[]             = {cg->allocateRegister(TR_VRF), cg->allocateRegister(TR_VRF), cg->allocateRegister(TR_VRF), cg->allocateRegister(TR_VRF) };
+   TR::Register *multiplier31PowNRegsVRF[] = {cg->allocateRegister(TR_VRF), cg->allocateRegister(TR_VRF), cg->allocateRegister(TR_VRF), cg->allocateRegister(TR_VRF) };
+
+   deps->addPostCondition(tmp, TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(tmpVRF, TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(multiplierVRF, TR::RealRegister::NoReg, cg);
+
+   for (int32_t i = 0; i < 4; i++) deps->addPostCondition(multiplier31PowNRegsVRF[i], TR::RealRegister::NoReg, cg);
+   for (int32_t i = 0; i < 4; i++) deps->addPostCondition(hashRegsVRF[i], TR::RealRegister::NoReg, cg);
+
+   TR::LabelSymbol *begLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *endLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *loopLabel = generateLabelSymbol(cg);
+
+   begLabel->setStartInternalControlFlow();
+   endLabel->setEndInternalControlFlow();
+
+   generateRegRegInstruction(TR::InstOpCode::MOVRegReg(), node, result, initialHash, cg);
+   generateLabelInstruction(TR::InstOpCode::label, node, begLabel, cg);
+   generateRegRegInstruction(TR::InstOpCode::MOVRegReg(), node, tmp, length, cg);
+   generateRegImmInstruction(TR::InstOpCode::AND4RegImm4, node, tmp, ~(numElements - 1), cg);
+
+   {
+   generateRegRegInstruction(TR::InstOpCode::CMP4RegReg, node, index, tmp, cg);
+   generateLabelInstruction(TR::InstOpCode::JGE4, node, endLabel, cg);
+
+   // Initialize Constants outside of loop body but after the first compare
+   generateRegRegInstruction(TR::InstOpCode::MOVDRegReg4, node, hashRegsVRF[0], initialHash, cg);
+   for (int32_t i = 1; i < unrollCount; i++)
+      generateRegRegInstruction(TR::InstOpCode::PXORRegReg, node, hashRegsVRF[i], hashRegsVRF[i], cg, vectorEncoding);
+
+   int32_t multiplier31PowNData[16];
+   // Fill multiplier array with 31^numElements
+   std::fill_n(multiplier31PowNData, 16, powersOf31[64 - numElements]);
+   generateRegMemInstruction(TR::InstOpCode::MOVDQURegMem, node, multiplierVRF, generateX86MemoryReference(cg->findOrCreateConstantDataSnippet(node, multiplier31PowNData, vectorSizeElements * sizeof(int32_t)), cg), cg, vectorEncoding);
+
+   for (int32_t i = 0; i < unrollCount; i++)
+      {
+      // Based on the unrolling factor (x), we need to split multiplier constant (powers of 31) into x vectors.
+      //   The constant is as follows (31^(n-1), 31^(n-2), ..., 31^0)
+      // Where n is the number of elements processed in the loop. n is directly proportional to the unrolling factor (x)
+      //
+      // For example, given an unrolling factor (x) of 4, and a vector length of 128-bits, we will process up to 16
+      // elements per iteration of the main loop. This means the multiplication vectors are as follows:
+      //
+      //   multiplier31PowNRegsVRF[0] = (31^15, 31^14, 31^13, 31^12),
+      //   multiplier31PowNRegsVRF[1] = (31^11, 31^10, 31^9, 31^8),
+      //   multiplier31PowNRegsVRF[2] = (31^7, 31^6, 31^5, 31^4),
+      //   multiplier31PowNRegsVRF[3] = (31^3, 31^2, 31^1, 31^0),
+      //
+      TR::Register *multiplier31PowN_i = multiplier31PowNRegsVRF[i];
+      const int32_t vectorSize = vectorSizeElements * 4;
+      int32_t offset = sizeof(powersOf31) / sizeof(int32_t) - (vectorSizeElements * (unrollCount - i));
+
+      int32_t *multiplier = const_cast<int32_t *>(powersOf31 + offset);
+      TR::MemoryReference *mr = generateX86MemoryReference(cg->findOrCreateConstantDataSnippet(node, multiplier, vectorSize), cg);
+
+      generateRegMemInstruction(TR::InstOpCode::MOVDQURegMem, node, multiplier31PowN_i, mr, cg, vectorEncoding);
+      }
+   }
+
+   generateLabelInstruction(TR::InstOpCode::label, node, loopLabel, cg);
+
+   {
+   // Main loop body;
+
+   for (int32_t i = 0; i < unrollCount; i++)
+      {
+      // Load in the next batch of elements. (sign/zero) extend i8, i16 to i32
+      TR::InstOpCode::Mnemonic loadOpcode = TR::InstOpCode::bad;
+      int32_t elementSize;
+
+      switch (dt)
+         {
+         case TR::Int8:
+            loadOpcode = isSigned ? TR::InstOpCode::PMOVSXBDRegMem  : TR::InstOpCode::PMOVZXBDRegMem;
+            elementSize = 1;
+            break;
+         case TR::Int16:
+            loadOpcode = isSigned ? TR::InstOpCode::PMOVSXWDRegMem : TR::InstOpCode::PMOVZXWDRegMem;
+            elementSize = 2;
+            break;
+         case TR::Int32:
+            loadOpcode = TR::InstOpCode::MOVDQURegMem;
+            elementSize = 4;
+            break;
+         default:
+            TR_ASSERT_FATAL(false, "Unsupported element type");
+            break;
+         }
+
+      int32_t displacement = TR::Compiler->om.contiguousArrayHeaderSizeInBytes() + i * (vectorSizeElements * elementSize);
+      TR::MemoryReference *mr = generateX86MemoryReference(arrayAddress, index, shift, displacement, cg);
+      // load next batch of data
+      generateRegMemInstruction(loadOpcode, node, tmpVRF, mr, cg, vectorEncoding);
+
+      // tmpVRF = tmpVRF * multiplierVRF
+      generateRegRegInstruction(TR::InstOpCode::PMULLDRegReg, node, tmpVRF, multiplier31PowNRegsVRF[i], cg, vectorEncoding);
+      // hashRegsVRF = ( hashRegsVRF * {31^vl, ..., 31^vl} ) + tmpVRF
+      generateRegRegInstruction(TR::InstOpCode::PMULLDRegReg, node, hashRegsVRF[i], multiplierVRF, cg, vectorEncoding);
+      generateRegRegInstruction(TR::InstOpCode::PADDDRegReg, node, hashRegsVRF[i], tmpVRF, cg, vectorEncoding);
+      }
+   }
+
+   // Increase loop index by the number of processed elements
+   generateRegImmInstruction(TR::InstOpCode::ADD4RegImms, node, index, numElements, cg);
+   // Compare index with numElements and loop back if necessary
+   generateRegRegInstruction(TR::InstOpCode::CMP4RegReg, node, index, tmp, cg);
+   generateLabelInstruction(TR::InstOpCode::JL4, node, loopLabel, cg);
+
+   vectorizedHashCodeReductionHelper(node, hashRegsVRF, unrollCount, tmpVRF, result, vl, dt, cg);
+   generateLabelInstruction(TR::InstOpCode::label, node, endLabel, deps, cg);
+
+   cg->stopUsingRegister(tmp);
+   cg->stopUsingRegister(tmpVRF);
+   cg->stopUsingRegister(multiplierVRF);
+
+   for (int32_t i = 0; i < 4; i++) cg->stopUsingRegister(multiplier31PowNRegsVRF[i]);
+   for (int32_t i = 0; i < 4; i++) cg->stopUsingRegister(hashRegsVRF[i]);
+
+   return result;
+   }
+
+/**
+ * @brief Implements the vectorized `hashCode` computation using SIMD instructions.
+ *
+ * This implementation supports various processor microarchitectures (sse4.1+), enabling vectorization
+ * with 128-bit, 256-bit, and 512-bit vectors. It handles both signed and unsigned integer element types
+ * of 8-bit, 16-bit, and 32-bit sizes. Elements are processed iteratively as 32-bit integers, with
+ * smaller types being sign- or zero-extended to 32-bit integers.
+ *
+ * The following steps are performed to generate the vectorized `hashCode` implementation:
+ *
+ * 1. Generate the main vectorized loop unrolled by a factor of x (default is 4) at the highest
+ *    available vector length.
+ * 2. Generate a secondary vectorized loop, not unrolled, using 128-bit vectors.
+ *    - This secondary loop is necessary because small amounts of data or residual data
+ *      may not fit into the unrolled main loop, which often requires large amounts of
+ *      data to process efficiently. By using a simpler 128-bit vectorized loop, better
+ *      performance can be achieved for these cases.
+ * 3. Process any remaining elements sequentially:
+ *    @code
+ *    for (; index < length; index++) { hash = 31 * hash + arr[index]; }
+ *    @endcode
+ *
+ * The implementation relies on two helper functions:
+ * - `vectorizedHashCodeLoopHelper(...)`:
+ *   Generates the vectorized loop code for the specified type and vector size.
+ * - `vectorizedHashCodeReductionHelper(...)`:
+ *   Generates code to reduce x vectors by summing all elements together into a scalar hashCode value.
+ *
+ * @note Future enhancements could investigate optimal unrolling factors based on:
+ * - Block hotness
+ * - Array length
+ * - Cache implications of unrolling
+ *
+ * Given the large expected size of the generated code with unrolling, this intrinsic could
+ * exert significant pressure on the code cache. This effect may be especially pronounced if
+ * the vectorized hashCode algorithm is inlined multiple times in the same method.
+ *
+ * @param node      The input node to process.
+ * @param dt        The data type of the elements.
+ * @param nodeHash  The node representing the initial hash value.
+ * @param isSigned  Indicates whether the elements are signed.
+ * @param cg        The code generator instance.
+ * @return The register containing the computed hashCode value.
+ */
+TR::Register *
+J9::X86::TreeEvaluator::vectorizedHashCodeHelper(TR::Node *node, TR::DataType dt, TR::Node *nodeHash, bool isSigned,
+                                                 TR::CodeGenerator *cg)
+   {
+   int32_t shift = dt - TR::Int8; /* i8 -> 0, i16 -> 1, i32 -> 2 */
+
+   TR_ASSERT_FATAL(node->getChild(1)->getOpCodeValue() == TR::iconst && node->getChild(1)->getInt() == 0, "vector hashcode offset can only be const zero.");
+   TR_ASSERT_FATAL(shift >= 0 && shift <= 2, "Unsupported datatype for vectorized hashcode");
+
+   TR::Compilation *comp = cg->comp();
+   TR::VectorLength vl = TR::VectorLength128;
+
+   if (comp->target().cpu.supportsFeature(OMR_FEATURE_X86_AVX512F))
+      vl = TR::VectorLength512;
+   else if (comp->target().cpu.supportsFeature(OMR_FEATURE_X86_AVX2))
+      vl = TR::VectorLength256;
+
+   TR::Register *address = cg->evaluate(node->getChild(0));
+   TR::Register *length = cg->evaluate(node->getChild(2));
+   TR::Register *initHash = nodeHash ? cg->intClobberEvaluate(nodeHash) : cg->allocateRegister(TR_GPR);
+   TR::Register *index = cg->allocateRegister();
+   TR::Register *result = cg->allocateRegister();
+   TR::Register *tmp = cg->allocateRegister();
+
+   TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions(0, 6, cg);
+
+   deps->addPostCondition(result, TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(address, TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(index, TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(tmp, TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(initHash, TR::RealRegister::NoReg, cg);
+   deps->addPostCondition(length, TR::RealRegister::NoReg, cg);
+
+   if (!nodeHash)
+      {
+      // If nodeHash is not provided, assume initial hash value of 0.
+      generateRegRegInstruction(TR::InstOpCode::XOR4RegReg, node, initHash, initHash, cg);
+      }
+
+   // Set index ptr to 0
+   generateRegRegInstruction(TR::InstOpCode::XOR4RegReg, node, index, index, cg);
+
+   // Generate Main Loop; 4x Unrolled seems to yield the best performance for large arrays
+   static char *unrollVar = feGetEnv("TR_setInlineVectorHashCodeUnrollCount");
+   int32_t unrollCount = unrollVar ? atoi(unrollVar) : 4;
+
+   vectorizedHashCodeLoopHelper(node, dt, vl, isSigned, result, initHash, index, length, address, unrollCount, cg);
+
+   static bool disableSecondLoop = feGetEnv("TR_disableVectorHashCodeSecondLoop") != NULL;
+
+   // Generate a second vectorized loop;
+   if (!disableSecondLoop)
+      {
+      generateRegRegInstruction(TR::InstOpCode::MOV4RegReg, node, initHash, result, cg);
+      vectorizedHashCodeLoopHelper(node, dt, TR::VectorLength128, isSigned, result, initHash, index, length, address, 1, cg);
+      }
+
+   // handle residual elements sequentially
+   // for (; index < length; index++) { hash = 31 * hash + arr[index]; }
+   {
+   TR::LabelSymbol *residueBeginLoopLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *residueEndLoopLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *residueLoopLabel = generateLabelSymbol(cg);
+
+   residueBeginLoopLabel->setStartInternalControlFlow();
+   residueBeginLoopLabel->setEndInternalControlFlow();
+
+   generateLabelInstruction(TR::InstOpCode::label, node, residueBeginLoopLabel, cg);
+   generateRegRegInstruction(TR::InstOpCode::CMP4RegReg, node, index, length, cg);
+   generateLabelInstruction(TR::InstOpCode::JGE4, node, residueEndLoopLabel, cg);
+   generateLabelInstruction(TR::InstOpCode::label, node, residueLoopLabel, cg);
+
+   // hash = 31 * hash + arr[index] = tmp * hash + arr[index]
+   generateRegRegImmInstruction(TR::InstOpCode::IMUL4RegRegImm4, node, result, result, 31, cg);
+
+   static TR::InstOpCode::Mnemonic signedLoadOpcode[3]   = { TR::InstOpCode::MOVSXReg4Mem1, TR::InstOpCode::MOVSXReg4Mem2, TR::InstOpCode::L4RegMem };
+   static TR::InstOpCode::Mnemonic unsignedLoadOpcode[3] = { TR::InstOpCode::MOVZXReg4Mem1, TR::InstOpCode::MOVZXReg4Mem2, TR::InstOpCode::L4RegMem };
+   TR::InstOpCode::Mnemonic loadOpcode = isSigned ? signedLoadOpcode[dt - TR::Int8] : unsignedLoadOpcode[dt - TR::Int8];
+
+   generateRegMemInstruction(loadOpcode, node, tmp, generateX86MemoryReference(address, index, shift, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cg);
+   generateRegRegInstruction(TR::InstOpCode::ADDRegReg(), node, result, tmp, cg);
+
+   // Increase loop index by the number of processed elements
+   generateRegInstruction(TR::InstOpCode::INCReg(), node, index, cg);
+
+   // Compare index with numElements and loop back if necessary
+   generateRegRegInstruction(TR::InstOpCode::CMP4RegReg, node, index, length, cg);
+   generateLabelInstruction(TR::InstOpCode::JL4, node, residueLoopLabel, cg);
+   generateLabelInstruction(TR::InstOpCode::label, node, residueEndLoopLabel, deps, cg);
+   }
+
+   cg->stopUsingRegister(initHash);
+   cg->stopUsingRegister(index);
+   cg->stopUsingRegister(tmp);
+
+   node->setRegister(result);
+   cg->decReferenceCount(node->getChild(0));
+   cg->decReferenceCount(node->getChild(1));
+   cg->decReferenceCount(node->getChild(2));
+
+   if (nodeHash)
+      cg->decReferenceCount(nodeHash);
+
+   return result;
+   }
+
 static bool
 getNodeIs64Bit(
       TR::Node *node,
@@ -11725,6 +12146,15 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
             return TR::TreeEvaluator::inlineStringLatin1Inflate(node, cg);
             }
          break;
+      case TR::jdk_internal_util_ArraysSupport_vectorizedHashCode:
+         {
+         if (cg->getSupportsInlineVectorizedHashCode())
+            {
+            TR::Register *result = inlineVectorizedHashCode(node, cg);
+            if (result)
+               return result;
+            }
+         }
       case TR::java_lang_Math_sqrt:
       case TR::java_lang_StrictMath_sqrt:
       case TR::java_lang_System_nanoTime:
