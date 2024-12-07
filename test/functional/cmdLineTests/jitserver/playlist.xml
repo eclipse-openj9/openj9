@@ -27,6 +27,13 @@
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
+			<disables>
+				<disable>
+					<comment>https://github.com/eclipse-openj9/openj9/issues/18599</comment>
+					<version>8</version>
+					<platform>x86-64_linux</platform>
+				</disable>
+			</disables>
 		<command>
 			if [ -x $(Q)$(TEST_JDK_BIN)$(D)jitserver$(Q) ]; \
 			then \
