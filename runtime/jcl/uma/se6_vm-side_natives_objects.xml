@@ -24,7 +24,9 @@
 	<object name="java_lang_ref_Finalizer" />
 	<object name="java_lang_ref_Reference" />
 	<object name="reflecthelp" />
-	<object name="acccont" />
+	<object name="acccont">
+		<exclude-if condition="spec.java24"/>
+	</object>
 	<object name="annparser" />
 	<object name="jniidcacheinit" />
 	<object name="bootstrp" />

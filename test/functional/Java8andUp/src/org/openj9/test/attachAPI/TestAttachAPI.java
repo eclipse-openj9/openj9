@@ -37,6 +37,7 @@ import java.util.Properties;
 
 import org.openj9.test.util.PlatformInfo;
 import org.openj9.test.util.StringPrintStream;
+import org.openj9.test.util.VersionCheck;
 import org.testng.AssertJUnit;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -1104,8 +1105,15 @@ public class TestAttachAPI extends AttachApiTest {
 		try {
 			ap.checkGuard(this);
 		} catch (SecurityException unwantedException) {
-			fail("attachperm04: checkGuard: unexpected exception: "
-					+ unwantedException.getMessage());
+			String m = unwantedException.getMessage();
+			if (VersionCheck.major() >= 24
+				&& m.contains("checking permissions is not supported")
+			) {
+				return;
+			} else {
+				fail("attachperm04: checkGuard: unexpected exception: "
+						+ unwantedException.getMessage());
+			}
 		}
 		String testString = ap.toString();
 		assertTrue(

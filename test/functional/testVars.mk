@@ -20,12 +20,15 @@
 #  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
 ##############################################################################
 
+# In JDK24+, java.security.manager the security manager is permanently disabled,
+# attempting to enable it will result in an error.
 # In JDK18+, java.security.manager == null behaves as -Djava.security.manager=disallow.
 # In JDK17-, java.security.manager == null behaves as -Djava.security.manager=allow.
 # For OpenJ9 tests to work as expected, -Djava.security.manager=allow behaviour is
 # needed in JDK18+.
-ifeq ($(filter 8 9 10 11 12 13 14 15 16 17, $(JDK_VERSION)),)
-  export JAVA_SECURITY_MANAGER = -Djava.security.manager=allow
-else
+
+ifeq ($(filter 21 23, $(JDK_VERSION)),)
   export JAVA_SECURITY_MANAGER =
+else
+  export JAVA_SECURITY_MANAGER = -Djava.security.manager=allow
 endif

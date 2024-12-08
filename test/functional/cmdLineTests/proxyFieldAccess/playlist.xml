@@ -70,7 +70,7 @@
 			<impl>ibm</impl>
 		</impls>
 		<versions>
-			<version>11+</version>
+			<version>[11,23]</version>
 		</versions>
 	</test>
 </playlist>

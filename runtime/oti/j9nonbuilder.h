@@ -5861,10 +5861,12 @@ typedef struct J9JavaVM {
 	/* extensionClassLoader holds the platform class loader in Java 11+ */
 	struct J9ClassLoader* extensionClassLoader;
 	struct J9ClassLoader* applicationClassLoader;
+#if JAVA_SPEC_VERSION < 24
 	UDATA doPrivilegedMethodID1;
 	UDATA doPrivilegedMethodID2;
 	UDATA doPrivilegedWithContextMethodID1;
 	UDATA doPrivilegedWithContextMethodID2;
+#endif /* JAVA_SPEC_VERSION < 24 */
 	void* defaultMemorySpace;
 	j9object_t* systemThreadGroupRef;
 	omrthread_monitor_t classLoaderBlocksMutex;
@@ -6125,8 +6127,10 @@ typedef struct J9JavaVM {
 	omrthread_monitor_t nativeLibraryMonitor;
 	UDATA freePreviousClassLoaders;
 	struct J9ClassLoader* anonClassLoader;
+#if JAVA_SPEC_VERSION < 24
 	UDATA doPrivilegedWithContextPermissionMethodID1;
 	UDATA doPrivilegedWithContextPermissionMethodID2;
+#endif /* JAVA_SPEC_VERSION < 24 */
 	UDATA nativeLibrariesLoadMethodID;
 #if defined(J9VM_INTERP_CUSTOM_SPIN_OPTIONS)
 	struct J9Pool *customSpinOptions;
