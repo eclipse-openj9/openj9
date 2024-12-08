@@ -73,9 +73,6 @@ j9vm_add_library(jvmti_test_src STATIC
 
 	com/ibm/jvmti/tests/getClassVersionNumbers/gcvn001.c
 
-	com/ibm/jvmti/tests/getConstantPool/gcp001.c
-	com/ibm/jvmti/tests/getConstantPool/gcp_bcdump.c
-
 	com/ibm/jvmti/tests/getCurrentThreadCpuTimerInfo/gctcti001.c
 
 	com/ibm/jvmti/tests/getHeapFreeTotalMemory/ghftm001.c
