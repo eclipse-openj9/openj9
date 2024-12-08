@@ -10456,7 +10456,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                      }
                   try
                      {
-                     TR::CompilationInfoPerThreadBase::InterruptibleOperation(*entry->_compInfoPT);
+                     TR::CompilationInfoPerThreadBase::InterruptibleOperation relocatingAOTBody(*entry->_compInfoPT);
                      // need to get a non-shared cache VM to relocate
                      TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, vmThread);
                      TR_ResolvedMethod *compilee = fe->createResolvedMethod(comp->trMemory(), (TR_OpaqueMethodBlock *)method);
