@@ -1519,8 +1519,8 @@ TR_VectorAPIExpansion::boxChild(TR::TreeTop *treeTop, TR::Node *node, uint32_t i
 
    if (TR::Options::getVerboseOption(TR_VerboseVectorAPI))
       {
-      TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Boxed in %s at %s",
-                               comp()->signature(), comp()->getHotnessName(comp()->getMethodHotness()));
+      TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Boxed %s in %s at %s %s", objectType == Vector ? "Vector" : "Mask",
+                               comp()->signature(), comp()->getHotnessName(comp()->getMethodHotness()), comp()->isDLT() ? "DLT" : "");
       }
    }
 
@@ -1595,8 +1595,8 @@ TR_VectorAPIExpansion::unboxNode(TR::Node *parentNode, TR::Node *operand, vapiOb
 
    if (TR::Options::getVerboseOption(TR_VerboseVectorAPI))
       {
-      TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Unboxed in %s at %s",
-                               comp()->signature(), comp()->getHotnessName(comp()->getMethodHotness()));
+      TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Unboxed %s in %s at %s %s", operandObjectType == Vector ? "Vector" : "Mask",
+                               comp()->signature(), comp()->getHotnessName(comp()->getMethodHotness()), comp()->isDLT() ? "DLT" : "");
       }
 
    return newOperand;
@@ -2352,9 +2352,9 @@ TR::Node *TR_VectorAPIExpansion::transformLoadFromArray(TR_VectorAPIExpansion *o
       if (TR::Options::getVerboseOption(TR_VerboseVectorAPI))
          {
          TR::ILOpCode opcode(op);
-         TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Vectorized using %s%s in %s at %s",
+         TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Vectorized using %s%s in %s at %s %s",
                                   opcode.getName(), TR::DataType::getName(opcode.getVectorResultDataType()),
-                                  comp->signature(), comp->getHotnessName(comp->getMethodHotness()));
+                                  comp->signature(), comp->getHotnessName(comp->getMethodHotness()), comp->isDLT() ? "DLT" : "");
          }
       }
 
@@ -2571,9 +2571,9 @@ TR::Node *TR_VectorAPIExpansion::transformStoreToArray(TR_VectorAPIExpansion *op
       if (TR::Options::getVerboseOption(TR_VerboseVectorAPI))
          {
          TR::ILOpCode opcode(op);
-         TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Vectorized using %s%s in %s at %s",
+         TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Vectorized using %s%s in %s at %s %s",
                                   opcode.getName(), TR::DataType::getName(opcode.getVectorResultDataType()),
-                                  comp->signature(), comp->getHotnessName(comp->getMethodHotness()));
+                                  comp->signature(), comp->getHotnessName(comp->getMethodHotness()), comp->isDLT() ? "DLT" : "");
          }
       }
 
@@ -2836,9 +2836,9 @@ TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt
          if (TR::Options::getVerboseOption(TR_VerboseVectorAPI))
             {
             TR::ILOpCode opcode(vectorOpCode);
-            TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Vectorized using %s%s in %s at %s",
+            TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Vectorized using %s%s in %s at %s %s",
                                      opcode.getName(), TR::DataType::getName(opcode.getVectorResultDataType()),
-                                     comp->signature(), comp->getHotnessName(comp->getMethodHotness()));
+                                     comp->signature(), comp->getHotnessName(comp->getMethodHotness()), comp->isDLT() ? "DLT" : "");
             }
 
          }
@@ -2963,9 +2963,9 @@ TR::Node *TR_VectorAPIExpansion::fromBitsCoercedIntrinsicHandler(TR_VectorAPIExp
       if (TR::Options::getVerboseOption(TR_VerboseVectorAPI))
          {
          TR::ILOpCode opcode(splatsOpCode);
-         TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Vectorized using %s%s in %s at %s", opcode.getName(),
+         TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Vectorized using %s%s in %s at %s %s", opcode.getName(),
                                   TR::DataType::getName(opcode.getVectorResultDataType()), comp->signature(),
-                                  comp->getHotnessName(comp->getMethodHotness()));
+                                  comp->getHotnessName(comp->getMethodHotness()), comp->isDLT() ? "DLT" : "");
          }
       }
 
