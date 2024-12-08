@@ -121,9 +121,7 @@ printStackTraceEntry(J9VMThread * vmThread, void * voidUserData, UDATA bytecodeO
 		UDATA sourceFileNameLen = 0;
 		char *moduleNameUTF = NULL;
 		char *moduleVersionUTF = NULL;
-		char nameBuf[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
 		char versionBuf[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
-		BOOLEAN freeModuleName = FALSE;
 		BOOLEAN freeModuleVersion = FALSE;
 
 		if (JAVA_SPEC_VERSION >= 11) {
@@ -138,10 +136,9 @@ printStackTraceEntry(J9VMThread * vmThread, void * voidUserData, UDATA bytecodeO
 
 				if (NULL != module) {
 					if (module != vm->javaBaseModule) {
-						moduleNameUTF = copyStringToUTF8WithMemAlloc(
-							vmThread, module->moduleName, J9_STR_NULL_TERMINATE_RESULT, "", 0, nameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
-						if (nameBuf != moduleNameUTF) {
-							freeModuleName = TRUE;
+						J9UTF8 *moduleName = module->moduleName;
+						if (NULL != moduleName) {
+							moduleNameUTF = (char *)J9UTF8_DATA(moduleName);
 						}
 					} else {
 						moduleNameUTF = JAVA_BASE_MODULE;
@@ -211,9 +208,6 @@ printStackTraceEntry(J9VMThread * vmThread, void * voidUserData, UDATA bytecodeO
 		}
 		if (freeModuleVersion) {
 			j9mem_free_memory(moduleVersionUTF);
-		}
-		if (freeModuleName) {
-			j9mem_free_memory(moduleNameUTF);
 		}
 	}
 

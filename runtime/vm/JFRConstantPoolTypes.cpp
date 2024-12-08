@@ -560,7 +560,7 @@ VM_JFRConstantPoolTypes::addModuleEntry(J9Module *module)
 		entry = &entryBuffer;
 	}
 
-	entry->nameStringIndex = addStringEntry(entry->module->moduleName);
+	entry->nameStringIndex = addStringUTF8Entry(entry->module->moduleName);
 	if (isResultNotOKay()) goto done;
 
 	entry->versionStringIndex = addStringEntry(entry->module->version);

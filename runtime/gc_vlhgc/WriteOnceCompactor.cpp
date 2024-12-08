@@ -1340,15 +1340,6 @@ MM_WriteOnceCompactor::fixupClassLoaderObject(MM_EnvironmentVLHGC* env, J9Object
 				*slotPtr = forwardedObject;
 				_interRegionRememberedSet->rememberReferenceForCompact(env, classLoaderObject, forwardedObject);
 
-				slotPtr = &module->moduleName;
-
-				originalObject = *slotPtr;
-				if (NULL != originalObject) {
-					J9Object* forwardedObject = getForwardWrapper(env, originalObject, cache);
-					*slotPtr = forwardedObject;
-					_interRegionRememberedSet->rememberReferenceForCompact(env, classLoaderObject, forwardedObject);
-				}
-
 				slotPtr = &module->version;
 
 				originalObject = *slotPtr;
