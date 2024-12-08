@@ -1131,7 +1131,10 @@ VM_JFRConstantPoolTypes::addThreadCPULoadEntry(J9JFRThreadCPULoad *threadCPULoad
 
 	entry->ticks = threadCPULoadData->startTicks;
 	entry->user = threadCPULoadData->user;
+#if !defined(J9ZOS390)
+	/* This line doesn't compile on z/OS. */
 	entry->system = threadCPULoadData->system;
+#endif /* !defined(J9ZOS390) */
 
 	entry->threadIndex = addThreadEntry(threadCPULoadData->vmThread);
 	if (isResultNotOKay()) {
