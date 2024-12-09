@@ -4026,7 +4026,7 @@ TR_J9VMBase::isChangesCurrentThread(TR_ResolvedMethod *method)
 #if JAVA_SPEC_VERSION >= 21
    TR_OpaqueMethodBlock* m = method->getPersistentIdentifier();
    // @ChangesCurrentThread should be ignored if used outside the class library
-   if (isClassLibraryMethod(m))
+   if (isClassLibraryMethod(m, true))
       return jitIsMethodTaggedWithChangesCurrentThread(vmThread(), (J9Method*)m);
 #endif /* JAVA_SPEC_VERSION >= 21 */
 
