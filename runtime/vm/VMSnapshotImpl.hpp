@@ -86,7 +86,7 @@ private:
 	void fixupArrayClass(J9ArrayClass *clazz);
 	void fixupMethodRunAddresses(J9Class *ramClass);
 	void fixupConstantPool(J9Class *ramClass);
-	void fixupClassPathEntries();
+	void fixupClassPathEntries(J9ClassLoader *classLoader);
 	void removeUnpersistedClassLoaders();
 	void saveJ9JavaVMStructures();
 	void restorePrimitiveAndArrayClasses();
