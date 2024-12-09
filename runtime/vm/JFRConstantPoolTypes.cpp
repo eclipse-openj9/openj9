@@ -508,7 +508,7 @@ VM_JFRConstantPoolTypes::addPackageEntry(J9Class *clazz)
 	}
 
 	entry->packageName = (U_8*) packageName;
-	entry->packageNameLength = packageNameLength;
+	entry->packageNameLength = (U_32)packageNameLength;
 
 	entry->exported = FALSE; //TODO
 

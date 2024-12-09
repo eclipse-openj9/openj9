@@ -904,8 +904,8 @@ jfrCPULoad(J9VMThread *currentThread)
 				jfrEvent->jvmSystem = 0;
 			} else {
 				int64_t timeDelta = currentTime - jfrState->prevProcTimestamp;
-				jfrEvent->jvmUser = OMR_MIN((currentProcCPUTimes._userTime - jfrState->prevProcCPUTimes._userTime) / ((double)numberOfCpus * timeDelta), 1.0);
-				jfrEvent->jvmSystem = OMR_MIN((currentProcCPUTimes._systemTime - jfrState->prevProcCPUTimes._systemTime) / ((double)numberOfCpus * timeDelta), 1.0);
+				jfrEvent->jvmUser = OMR_MIN((currentProcCPUTimes._userTime - jfrState->prevProcCPUTimes._userTime) / ((float)numberOfCpus * timeDelta), 1.0f);
+				jfrEvent->jvmSystem = OMR_MIN((currentProcCPUTimes._systemTime - jfrState->prevProcCPUTimes._systemTime) / ((float)numberOfCpus * timeDelta), 1.0f);
 			}
 			jfrState->prevProcCPUTimes = currentProcCPUTimes;
 			jfrState->prevProcTimestamp = currentTime;
@@ -913,7 +913,7 @@ jfrCPULoad(J9VMThread *currentThread)
 			if (-1 == jfrState->prevSysCPUTime.timestamp) {
 				jfrEvent->machineTotal = 0;
 			} else {
-				jfrEvent->machineTotal = OMR_MIN((currentSysCPUTime.cpuTime - jfrState->prevSysCPUTime.cpuTime) / ((double)numberOfCpus * (currentSysCPUTime.timestamp - jfrState->prevSysCPUTime.timestamp)), 1.0);
+				jfrEvent->machineTotal = OMR_MIN((currentSysCPUTime.cpuTime - jfrState->prevSysCPUTime.cpuTime) / ((float)numberOfCpus * (currentSysCPUTime.timestamp - jfrState->prevSysCPUTime.timestamp)), 1.0f);
 			}
 			jfrState->prevSysCPUTime = currentSysCPUTime;
 		}
@@ -943,8 +943,8 @@ jfrThreadCPULoad(J9VMThread *currentThread, J9VMThread *sampleThread)
 				jfrEvent->system = 0;
 			} else {
 				int64_t timeDelta = currentTime - jfrState->prevTimestamp;
-				jfrEvent->user = OMR_MIN((threadTimes.userTime - jfrState->prevThreadCPUTimes.userTime) / (double)timeDelta, 1.0);
-				jfrEvent->system = OMR_MIN((threadTimes.sysTime - jfrState->prevThreadCPUTimes.sysTime) / (double)timeDelta, 1.0);
+				jfrEvent->user = OMR_MIN((threadTimes.userTime - jfrState->prevThreadCPUTimes.userTime) / (float)timeDelta, 1.0f);
+				jfrEvent->system = OMR_MIN((threadTimes.sysTime - jfrState->prevThreadCPUTimes.sysTime) / (float)timeDelta, 1.0f);
 			}
 			jfrState->prevTimestamp = currentTime;
 			jfrState->prevThreadCPUTimes = threadTimes;
