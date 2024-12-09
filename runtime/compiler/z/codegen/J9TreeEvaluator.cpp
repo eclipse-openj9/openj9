@@ -12153,6 +12153,12 @@ J9::Z::TreeEvaluator::VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *
 
    // Eval old and new vals
    //
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+   bool isObjOffHeapDataAddr = (TR::Compiler->om.writeBarrierType() == gc_modron_wrtbar_cardmark_incremental && TR::Compiler->om.isOffHeapAllocationEnabled() && objNode->isDataAddrPointer());
+   TR::Register *baseObjReg = NULL;
+   if (isObjOffHeapDataAddr)
+      baseObjReg = cg->gprClobberEvaluate(objNode->getFirstChild());
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
    objReg  = cg->evaluate(objNode);
    oldVReg = cg->gprClobberEvaluate(oldVNode);  //  CS oldReg, newReg, OFF(objReg)
    newVReg = cg->evaluate(newVNode);                    //    oldReg is clobbered
@@ -12285,7 +12291,11 @@ J9::Z::TreeEvaluator::VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *
    if (isObj && (doWrtBar || doCrdMrk))
       {
       TR::LabelSymbol *doneLabelWrtBar = generateLabelSymbol(cg);
-      TR::Register *epReg = cg->allocateRegister();
+      TR::Register *epReg = NULL;
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+      if (!isObjOffHeapDataAddr)
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
+         epReg = cg->allocateRegister();
       TR::Register *raReg = cg->allocateRegister();
       TR::RegisterDependencyConditions* condWrtBar = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 5, cg);
       condWrtBar->addPostCondition(objReg, TR::RealRegister::GPR1);
@@ -12293,7 +12303,12 @@ J9::Z::TreeEvaluator::VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *
          condWrtBar->addPostCondition(newVReg, TR::RealRegister::AssignAny); //defect 92001
       if (decompressedValueRegister != objReg)  // add this because I got conflicting dependencies on GPR1 and GPR2!
          condWrtBar->addPostCondition(decompressedValueRegister, TR::RealRegister::GPR2); //defect 92001
-      condWrtBar->addPostCondition(epReg, cg->getEntryPointRegister());
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+      if (isObjOffHeapDataAddr)
+         condWrtBar->addPostCondition(baseObjReg, cg->getEntryPointRegister());
+      else
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
+         condWrtBar->addPostCondition(epReg, cg->getEntryPointRegister());
       condWrtBar->addPostCondition(raReg, cg->getReturnAddressRegister());
       // Cardmarking is not inlined for gencon. Consider doing so when perf issue arises.
       if (doWrtBar)
@@ -12309,7 +12324,12 @@ J9::Z::TreeEvaluator::VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *
          }
       else if (doCrdMrk)
          {
-         VMCardCheckEvaluator(node, objReg, epReg, condWrtBar, cg, false, doneLabelWrtBar, false);
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+         if (isObjOffHeapDataAddr)
+            VMCardCheckEvaluator(node, baseObjReg, NULL, condWrtBar, cg, true, doneLabelWrtBar, false);
+         else
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
+            VMCardCheckEvaluator(node, objReg, epReg, condWrtBar, cg, false, doneLabelWrtBar, false);
                                                                            // true #1 -> copy of objReg just happened, it's safe to clobber tempReg
                                                                            // false #2 -> Don't do compile time check for heap obj
          }

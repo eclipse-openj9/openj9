@@ -987,7 +987,8 @@ VMCardCheckEvaluator(
       TR::Register *dstReg,
       TR_ARM64ScratchRegisterManager *srm,
       TR::LabelSymbol *doneLabel,
-      TR::CodeGenerator *cg)
+      TR::CodeGenerator *cg,
+      bool clobberDstReg=false)
    {
    TR::Compilation *comp = cg->comp();
 
@@ -1014,7 +1015,11 @@ VMCardCheckEvaluator(
       cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "wrtbarEvaluator:020VMCardCheckEvaluator:01markThreadActiveCheckDone"), *srm);
       }
 
-   TR::Register *temp2Reg = srm->findOrCreateScratchRegister();
+   TR::Register *temp2Reg;
+   if (clobberDstReg)
+      temp2Reg = dstReg;
+   else
+      temp2Reg = srm->findOrCreateScratchRegister();
       /*
        * Generating code checking whether an object is in heap
        *
@@ -5083,6 +5088,12 @@ static TR::Register *VMinlineCompareAndSwapObject(TR::Node *node, TR::CodeGenera
    oldVNode = node->getChild(3);
    newVNode = node->getChild(4);
 
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+   bool isObjOffHeapDataAddr = (gcMode == gc_modron_wrtbar_cardmark_incremental && TR::Compiler->om.isOffHeapAllocationEnabled() && objNode->isDataAddrPointer());
+   TR::Register *baseObjReg = NULL;
+   if (isObjOffHeapDataAddr)
+      TR::TreeEvaluator::stopUsingCopyReg(objNode->getFirstChild(), baseObjReg, cg);
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
    objReg = cg->evaluate(objNode);
 
    if (offsetNode->getOpCode().isLoadConst() && offsetNode->getRegister() == NULL)
@@ -5253,11 +5264,20 @@ static TR::Register *VMinlineCompareAndSwapObject(TR::Node *node, TR::CodeGenera
             generateCompareBranchInstruction(cg, TR::InstOpCode::cbzx, node, wrtBarSrcReg, doneLabel);
             cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "wrtbarEvaluator:000srcNullChk:NonNull"), *srm);
             }
-         VMCardCheckEvaluator(node, objReg, srm, doneLabel, cg);
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+         if (isObjOffHeapDataAddr)
+            VMCardCheckEvaluator(node, baseObjReg, srm, doneLabel, cg, true);
+         else
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
+            VMCardCheckEvaluator(node, objReg, srm, doneLabel, cg);
          }
 
       TR_ARM64ScratchRegisterDependencyConditions scratchDeps;
       scratchDeps.addDependency(cg, objReg, doWrtBar ? TR::RealRegister::x0 : TR::RealRegister::NoReg);
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+      if (isObjOffHeapDataAddr)
+         scratchDeps.addDependency(cg, baseObjReg, TR::RealRegister::NoReg);
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
       scratchDeps.addDependency(cg, wrtBarSrcReg, doWrtBar ? TR::RealRegister::x1 : TR::RealRegister::NoReg);
       if (offsetInReg)
          {
