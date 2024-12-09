@@ -1130,8 +1130,8 @@ VM_JFRConstantPoolTypes::addThreadCPULoadEntry(J9JFRThreadCPULoad *threadCPULoad
 	}
 
 	entry->ticks = threadCPULoadData->startTicks;
-	entry->user = threadCPULoadData->user;
-	entry->system = threadCPULoadData->system;
+	entry->userCPULoad = threadCPULoadData->userCPULoad;
+	entry->systemCPULoad = threadCPULoadData->systemCPULoad;
 
 	entry->threadIndex = addThreadEntry(threadCPULoadData->vmThread);
 	if (isResultNotOKay()) {

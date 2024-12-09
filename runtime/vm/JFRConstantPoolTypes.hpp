@@ -224,8 +224,8 @@ struct CPULoadEntry {
 struct ThreadCPULoadEntry {
 	I_64 ticks;
 	U_32 threadIndex;
-	float user;
-	float system;
+	float userCPULoad;
+	float systemCPULoad;
 };
 
 struct ClassLoadingStatisticsEntry {
@@ -1268,28 +1268,28 @@ done:
 		 * zero is NULL threadGroup.
 		 */
 		_stringUTF8Count += 1;
-		_defaultStringUTF8Entry = {0};
+		memset(&_defaultStringUTF8Entry, 0, sizeof(_defaultStringUTF8Entry));
 		_defaultStringUTF8Entry.string = (J9UTF8*)&nullString;
 
 		_stringUTF8Count += 1;
-		_unknownClassStringUTF8Entry = {0};
+		memset(&_unknownClassStringUTF8Entry , 0, sizeof(_unknownClassStringUTF8Entry));
 		_unknownClassStringUTF8Entry.string = (J9UTF8*)&unknownClass;
 
 		_stringUTF8Count += 1;
-		_nativeMethodStringUTF8Entry = {0};
+		memset(&_nativeMethodStringUTF8Entry, 0, sizeof(_nativeMethodStringUTF8Entry));
 		_nativeMethodStringUTF8Entry.string = (J9UTF8*)&nativeMethod;
 
 		_stringUTF8Count += 1;
-		_nativeMethodSignatureStringUTF8Entry = {0};
+		memset(&_nativeMethodSignatureStringUTF8Entry, 0, sizeof(_nativeMethodSignatureStringUTF8Entry));
 		_nativeMethodSignatureStringUTF8Entry.string = (J9UTF8*)&nativeMethodSignature;
 
 		_moduleCount += 1;
-		_defaultModuleEntry = {0};
+		memset(&_defaultModuleEntry, 0, sizeof(_defaultModuleEntry));
 		_firstModuleEntry = &_defaultModuleEntry;
 		_previousModuleEntry = _firstModuleEntry;
 
 		_packageCount += 1;
-		_defaultPackageEntry = {0};
+		memset(&_defaultPackageEntry, 0, sizeof(_defaultPackageEntry));
 		_defaultPackageEntry.exported = TRUE;
 		_defaultPackageEntry.packageName = J9UTF8_DATA((J9UTF8*) &defaultPackage);
 		_defaultPackageEntry.packageNameLength = J9UTF8_LENGTH((J9UTF8*) &defaultPackage);
@@ -1297,18 +1297,18 @@ done:
 		_previousPackageEntry = _firstPackageEntry;
 
 		_threadGroupCount += 1;
-		_defaultThreadGroup = {0};
+		memset(&_defaultThreadGroup, 0, sizeof(_defaultThreadGroup));
 		_firstThreadGroupEntry = &_defaultThreadGroup;
 		_previousThreadGroupEntry = _firstThreadGroupEntry;
 
 		_classCount += 1;
-		_defaultClassEntry = {0};
+		memset(&_defaultClassEntry, 0, sizeof(_defaultClassEntry));
 		_defaultClassEntry.nameStringUTF8Index = (U_32)UnknownClass;
 		_firstClassEntry = &_defaultClassEntry;
 		_previousClassEntry = _firstClassEntry;
 
 		_methodCount += 1;
-		_defaultMethodEntry = {0};
+		memset(&_defaultMethodEntry, 0, sizeof(_defaultMethodEntry));
 		_defaultMethodEntry.nameStringUTF8Index = (U_32)NativeMethod;
 		_defaultMethodEntry.descriptorStringUTF8Index = (U_32)NativeMethodSignature;
 		/* default class */
@@ -1317,7 +1317,7 @@ done:
 		_previousMethodEntry = _firstMethodEntry;
 
 		_stackTraceCount += 1;
-		_defaultStackTraceEntry = {0};
+		memset(&_defaultStackTraceEntry, 0, sizeof(_defaultStackTraceEntry));
 		_firstStackTraceEntry = &_defaultStackTraceEntry;
 		_previousStackTraceEntry = _firstStackTraceEntry;
 
