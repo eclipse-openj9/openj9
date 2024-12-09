@@ -4597,6 +4597,11 @@ J9::ARM64::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::CodeGenerator *
    TR::Node *srcAddrNode = node->getChild(2);
    TR::Node *dstAddrNode = node->getChild(3);
    TR::Node *lengthNode  = node->getChild(4);
+#if defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION)
+   if (TR::Compiler->om.isOffHeapAllocationEnabled())
+      // For correct card-marking calculation, the dstObjNode should be the baseObj not the dataAddrPointer
+      TR_ASSERT_FATAL(!dstObjNode->isDataAddrPointer(), "The dstObjNode child of arraycopy cannot be a dataAddrPointer");
+#endif /* defined(J9VM_GC_ENABLE_SPARSE_HEAP_ALLOCATION) */
    TR::Register *srcObjReg, *dstObjReg, *srcAddrReg, *dstAddrReg, *lengthReg;
    bool stopUsingCopyReg1, stopUsingCopyReg2, stopUsingCopyReg3, stopUsingCopyReg4, stopUsingCopyReg5 = false;
 
