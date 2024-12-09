@@ -54,6 +54,7 @@ extern "C" {
 #define RAS_STACKDEPTH_KEYWORD          "STACKDEPTH"
 #define RAS_SLEEPTIME_KEYWORD           "SLEEPTIME"
 #define RAS_COMPRESSION_LEVEL_KEYWORD   "STACKCOMPRESSIONLEVEL"
+#define RAS_MAX_STRING_LENGTH_KEYWORD   "MAXSTRINGLENGTH"
 
 /*
  * ======================================================================
@@ -128,8 +129,9 @@ void rasTriggerMethod(J9VMThread *thr, J9Method *mb, I_32 entry, const TriggerPh
 BOOLEAN matchMethod (RasMethodTable * methodTable, J9Method *method);
 omr_error_t processTriggerMethodClause(OMR_VMThread *, char *, BOOLEAN atRuntime);
 void doTriggerActionJstacktrace(OMR_VMThread *thr);
-omr_error_t setStackDepth(J9JavaVM *thr, const char * value, BOOLEAN atRuntime);
-omr_error_t setStackCompressionLevel(J9JavaVM * vm, const char *str, BOOLEAN atRuntime);
+omr_error_t setStackDepth(J9JavaVM *thr, const char *value, BOOLEAN atRuntime);
+omr_error_t setStackCompressionLevel(J9JavaVM *vm, const char *str, BOOLEAN atRuntime);
+omr_error_t setMaxStringLength(J9JavaVM *vm, const char *str, BOOLEAN atRuntime);
 
 /*
  * =============================================================================
