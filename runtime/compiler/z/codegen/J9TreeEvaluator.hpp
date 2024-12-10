@@ -144,6 +144,20 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register* inlineUTF16BEEncode    (TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *inlineCRC32CUpdateBytes(TR::Node *node, TR::CodeGenerator *cg, bool isDirectBuffer);
 
+   /**
+   * \brief
+   * Accelerate inlining onSpinWait() method.
+   *
+   * \details
+   * onSpinWait() method calls VM_AtomicSupport::yieldCPU() which is a simple NOP instruction on Z.
+   *
+   * \param node the method call node.
+   * \param cg the code generator.
+   *
+   * \return NULL
+   */
+   static TR::Register *inlineOnSpinWait(TR::Node *node, TR::CodeGenerator *cg);
+
    static TR::Register *zdloadEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *zdloadiEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *zdstoreEvaluator(TR::Node *node, TR::CodeGenerator *cg);
