@@ -44,6 +44,9 @@ typedef enum {
 	STATE_IMPLIED = 1
 } StackWalkingStates;
 
+#define STACK_WALK_STATE_MAGIC ((void *)1)
+
+#if JAVA_SPEC_VERSION < 24
 typedef enum {
 	OBJS_ARRAY_IDX_ACC = 0,
 	OBJS_ARRAY_IDX_PDS = 1,
@@ -51,14 +54,15 @@ typedef enum {
 	OBJS_ARRAY_SIZE = 3
 } ObjsArraySizeNindex;
 
-#define 	STACK_WALK_STATE_MAGIC 		(void *)1
-#define 	STACK_WALK_STATE_LIMITED_DOPRIVILEGED		(void *)2
-#define 	STACK_WALK_STATE_FULL_DOPRIVILEGED		(void *)3
+#define STACK_WALK_STATE_LIMITED_DOPRIVILEGED ((void *)2)
+#define STACK_WALK_STATE_FULL_DOPRIVILEGED ((void *)3)
 
 static UDATA isPrivilegedFrameIterator(J9VMThread * currentThread, J9StackWalkState * walkState);
 static UDATA isPrivilegedFrameIteratorGetAccSnapshot(J9VMThread * currentThread, J9StackWalkState * walkState);
 static UDATA frameIteratorGetAccSnapshotHelper(J9VMThread * currentThread, J9StackWalkState * walkState, j9object_t acc, j9object_t perm);
 static j9object_t storePDobjectsHelper(J9VMThread* vmThread, J9Class* arrayClass, J9StackWalkState* walkState, j9object_t contextObject, U_32 arraySize, UDATA framesWalked, I_32 startPos, BOOLEAN dupCallerPD);
+#endif /* JAVA_SPEC_VERSION < 24 */
+
 static BOOLEAN checkInnerClassHelper(J9Class* declaringClass, J9Class* declaredClass);
 
 jobject JNICALL
@@ -80,6 +84,7 @@ Java_java_lang_Class_getDeclaredAnnotationsData(JNIEnv *env, jobject jlClass)
 	return result;
 }
 
+#if JAVA_SPEC_VERSION < 24
 static UDATA
 isPrivilegedFrameIterator(J9VMThread * currentThread, J9StackWalkState * walkState)
 {
@@ -129,6 +134,7 @@ isPrivilegedFrameIterator(J9VMThread * currentThread, J9StackWalkState * walkSta
 
 	return J9_STACKWALK_KEEP_ITERATING;
 }
+#endif /* JAVA_SPEC_VERSION < 24 */
 
 jobject JNICALL
 Java_java_lang_Class_getStackClasses(JNIEnv *env, jclass jlHeapClass, jint maxDepth, jboolean stopAtPrivileged)
@@ -165,10 +171,12 @@ Java_java_lang_Class_getStackClasses(JNIEnv *env, jclass jlHeapClass, jint maxDe
 	walkState.maxFrames = maxDepth;
 	walkState.walkThread = vmThread;
 
+#if JAVA_SPEC_VERSION < 24
 	if (stopAtPrivileged) {
 		walkFlags |= J9_STACKWALK_ITERATE_FRAMES;
 		walkState.frameWalkFunction = isPrivilegedFrameIterator;
 	}
+#endif /* JAVA_SPEC_VERSION < 24 */
 	walkState.flags = walkFlags;
 
 	if (vm->walkStackFrames(vmThread, &walkState) != J9_STACKWALK_RC_NONE) {
@@ -1201,6 +1209,7 @@ Java_java_lang_Class_permittedSubclassesImpl(JNIEnv *env, jobject cls)
 	return permittedSubclassesHelper(env, cls);
 }
 
+#if JAVA_SPEC_VERSION < 24
 static UDATA
 frameIteratorGetAccSnapshotHelper(J9VMThread * currentThread, J9StackWalkState * walkState, j9object_t acc, j9object_t perm)
 {
@@ -1423,13 +1432,11 @@ Java_java_security_AccessController_getAccSnapshot(JNIEnv* env, jclass jsAccessC
 	if (NULL != vmThread->currentException) {
 		goto _walkStateUninitialized;
 	}
-#if JAVA_SPEC_VERSION < 24
 	/* AccessControlContext is allocated in the same space as the thread, so no exception can occur */
 	contextObject = vmThread->threadObject;
 	if (NULL != contextObject) {
 		contextObject = J9VMJAVALANGTHREAD_INHERITEDACCESSCONTROLCONTEXT(vmThread, contextObject);
 	}
-#endif /* JAVA_SPEC_VERSION < 24 */
 	/* Walk the stack, caching the constant pools of the frames. */
 	walkState.skipCount = startingFrame + 1; /* skip this JNI frame as well */
 	walkState.userData1 = STACK_WALK_STATE_MAGIC;	/* set to NULL when a limited doPrivileged frame is discovered */
@@ -1821,7 +1828,7 @@ storePDobjectsHelper(J9VMThread* vmThread, J9Class* arrayClass, J9StackWalkState
 	}
 	return arrayObject;
 }
-
+#endif /* JAVA_SPEC_VERSION < 24 */
 
 jobject JNICALL
 Java_java_lang_Class_getNestHostImpl(JNIEnv *env, jobject recv)

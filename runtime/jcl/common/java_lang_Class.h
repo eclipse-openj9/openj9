@@ -25,11 +25,13 @@
 /* @ddr_namespace: default */
 #include "j9.h"
 
+#if JAVA_SPEC_VERSION < 24
 typedef struct DoPrivilegedMethodArgs {
 	UDATA frameCounter;		/* the frame just walked */
 	j9object_t accControlContext;	/* arg0EA[-1] - AccessControlContext */
 	j9object_t permissions;	/* arg0EA[-2] - Limited permission array */
 	struct DoPrivilegedMethodArgs* next;	/* next DoPrivilegedMethodArgs structure */
 } DoPrivilegedMethodArgs;
+#endif /* JAVA_SPEC_VERSION < 24 */
 
 #endif	/* java_lang_Class_h */

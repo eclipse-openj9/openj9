@@ -739,8 +739,10 @@ extern J9_CFUNC jclass
 defineClassCommon (JNIEnv *env, jobject classLoaderObject,
 	jstring className, jbyteArray classRep, jint offset, jint length, jobject protectionDomain, UDATA *options, J9Class *hostClass, J9ClassPatchMap *patchMap, BOOLEAN validateName);
 
+#if JAVA_SPEC_VERSION < 24
 /* BBjclNativesCommonAccessController*/
 jboolean JNICALL Java_java_security_AccessController_initializeInternal (JNIEnv *env, jclass thisClz);
+#endif /* JAVA_SPEC_VERSION < 24 */
 
 /* BBjclNativesCommonProxy*/
 jclass JNICALL Java_java_lang_reflect_Proxy_defineClassImpl (JNIEnv * env, jclass recvClass, jobject classLoader, jstring className, jbyteArray classBytes);
