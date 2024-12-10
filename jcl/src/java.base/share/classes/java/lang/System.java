@@ -1264,6 +1264,9 @@ static void checkTmpDir() {
 }
 
 /*[IF JAVA_SPEC_VERSION >= 9]*/
+/*[IF JAVA_SPEC_VERSION < 24]*/
+@SuppressWarnings("removal")
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 static void initSecurityManager(ClassLoader applicationClassLoader) {
 	/*[IF JAVA_SPEC_VERSION >= 24]*/
 	boolean throwErrorOnInit = false;
