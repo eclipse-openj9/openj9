@@ -95,6 +95,11 @@ jitGetClassOfFieldFromCP(J9VMThread *vmStruct, J9ConstantPool *constantPool, UDA
 
 	/* romConstantPool is a J9ROMConstantPoolItem */
 	ramRefWrapper = ((J9RAMStaticFieldRef*) constantPool) + fieldIndex;
+
+	if (!J9RAMSTATICFIELDREF_IS_RESOLVED(ramRefWrapper)) {
+	   resolveStaticFieldRef(vmStruct, NULL, constantPool, fieldIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME, NULL);
+	}
+
 	if (J9RAMSTATICFIELDREF_IS_RESOLVED(ramRefWrapper)) {
 		J9Class *classWrapper = J9RAMSTATICFIELDREF_CLASS(ramRefWrapper);
 		UDATA initStatus = classWrapper->initializeStatus;
