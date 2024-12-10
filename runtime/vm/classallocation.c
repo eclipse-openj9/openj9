@@ -269,7 +269,15 @@ freeClassLoader(J9ClassLoader *classLoader, J9JavaVM *javaVM, J9VMThread *vmThre
 	if (javaVM->systemClassLoader == classLoader) {
 		if (NULL != classLoader->classPathEntries) {
 			freeClassLoaderEntries(vmThread, classLoader->classPathEntries, classLoader->classPathEntryCount, classLoader->initClassPathEntryCount);
-			j9mem_free_memory(classLoader->classPathEntries);
+#if defined(J9VM_OPT_SNAPSHOTS)
+			VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(javaVM);
+			if (IS_SNAPSHOTTING_ENABLED(javaVM)) {
+				vmsnapshot_free_memory(classLoader->classPathEntries);
+			} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+			{
+				j9mem_free_memory(classLoader->classPathEntries);
+			}
 			classLoader->classPathEntryCount = 0;
 			classLoader->classPathEntries = NULL;
 		}

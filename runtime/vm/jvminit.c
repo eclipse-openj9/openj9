@@ -1524,6 +1524,9 @@ initializeClassPath(J9JavaVM *vm, char *classPath, U_8 classPathSeparator, U_16 
 	BOOLEAN lastWasSeparator = TRUE;
 
 	PORT_ACCESS_FROM_JAVAVM(vm);
+#if defined(J9VM_OPT_SNAPSHOTS)
+	VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(vm);
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 
 	if (NULL == classPath) {
 		*classPathEntries = NULL;
@@ -1555,16 +1558,36 @@ initializeClassPath(J9JavaVM *vm, char *classPath, U_8 classPathSeparator, U_16 
 
 		cpePtrArraySize = ROUND_UP_TO(CPE_COUNT_INCREMENT, classPathEntryCount);
 		cpePtrArrayMemSize = sizeof(*classPathEntries) * cpePtrArraySize;
-		cpePtrArray = (J9ClassPathEntry**)j9mem_allocate_memory(cpePtrArrayMemSize, OMRMEM_CATEGORY_VM);
+#if defined(J9VM_OPT_SNAPSHOTS)
+		if (IS_SNAPSHOTTING_ENABLED(vm)) {
+			cpePtrArray = (J9ClassPathEntry **)vmsnapshot_allocate_memory(cpePtrArrayMemSize, OMRMEM_CATEGORY_VM);
+		} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+		{
+			cpePtrArray = (J9ClassPathEntry **)j9mem_allocate_memory(cpePtrArrayMemSize, OMRMEM_CATEGORY_VM);
+		}
 		/* classPathEntryCount is for number of null characters */
 		classPathMemSize = (sizeof(J9ClassPathEntry) * classPathEntryCount) + classPathLength + classPathEntryCount;
-		cpEntries = j9mem_allocate_memory(classPathMemSize, OMRMEM_CATEGORY_VM);
+#if defined(J9VM_OPT_SNAPSHOTS)
+		if (IS_SNAPSHOTTING_ENABLED(vm)) {
+			cpEntries = vmsnapshot_allocate_memory(classPathMemSize, OMRMEM_CATEGORY_VM);
+		} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+		{
+			cpEntries = j9mem_allocate_memory(classPathMemSize, OMRMEM_CATEGORY_VM);
+		}
 
-		if ((NULL == cpePtrArray)
-			|| (NULL == cpEntries)
-		) {
-			j9mem_free_memory(cpePtrArray);
-			j9mem_free_memory(cpEntries);
+		if ((NULL == cpePtrArray) || (NULL == cpEntries)) {
+#if defined(J9VM_OPT_SNAPSHOTS)
+			if (IS_SNAPSHOTTING_ENABLED(vm)) {
+				vmsnapshot_free_memory(cpePtrArray);
+				vmsnapshot_free_memory(cpEntries);
+			} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+			{
+				j9mem_free_memory(cpePtrArray);
+				j9mem_free_memory(cpEntries);
+			}
 			*classPathEntries = NULL;
 			classPathEntryCount = -1;
 		} else {
@@ -1619,7 +1642,7 @@ initializeClassPathEntry (J9JavaVM * javaVM, J9ClassPathEntry *cpEntry)
 	int32_t attr = 0;
 
 	/* If we know what it is, then go for it */
-	if (CPE_TYPE_UNKNOWN != cpEntry->type) {
+	if ((CPE_TYPE_UNKNOWN != cpEntry->type) && !IS_RESTORE_RUN(javaVM)) {
 		return (IDATA)cpEntry->type;
 	}
 
