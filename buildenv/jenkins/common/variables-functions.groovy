@@ -226,6 +226,7 @@ def parse_variables_file() {
  */
 def get_variables_file() {
     VARIABLE_FILE = params.VARIABLE_FILE ?: "buildenv/jenkins/variables/defaults.yml"
+    echo "params varialbe file:'${params.VARIABLE_FILE}'"
     echo "VARIABLE_FILE:'${VARIABLE_FILE}'"
     VENDOR_REPO = params.VENDOR_REPO ?: ""
     echo "VENDOR_REPO:'${VENDOR_REPO}'"
