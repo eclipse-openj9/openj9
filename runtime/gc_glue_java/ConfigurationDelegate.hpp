@@ -141,19 +141,22 @@ public:
 	{
 		J9JavaVM *vm = (J9JavaVM *)env->getOmrVM()->_language_vm;
 
+		/* local _extensions might not be initialized yet, use one from VM */
+		MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(vm);
+
 		if (NULL != vm->identityHashData) {
 			env->getForge()->free(vm->identityHashData);
 			vm->identityHashData = NULL;
 		}
 
-		if (NULL != _extensions->classLoaderManager) {
-			_extensions->classLoaderManager->kill(env);
-			_extensions->classLoaderManager = NULL;
+		if (NULL != extensions->classLoaderManager) {
+			extensions->classLoaderManager->kill(env);
+			extensions->classLoaderManager = NULL;
 		}
 
-		if (NULL != _extensions->stringTable) {
-			_extensions->stringTable->kill(env);
-			_extensions->stringTable = NULL;
+		if (NULL != extensions->stringTable) {
+			extensions->stringTable->kill(env);
+			extensions->stringTable = NULL;
 		}
 	}
 
