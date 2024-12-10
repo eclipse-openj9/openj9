@@ -22,6 +22,7 @@
 
 #include "control/CompilationRuntime.hpp"
 #include "control/CompilationThread.hpp"
+#include "env/ClassLoaderTable.hpp"
 #include "env/DependencyTable.hpp"
 #include "env/J9SharedCache.hpp"
 #include "env/PersistentCHTable.hpp"
@@ -469,9 +470,32 @@ TR_AOTDependencyTable::resolvePendingLoads()
    _pendingLoads.clear();
    }
 
-TR_OpaqueClassBlock *
-TR_AOTDependencyTable::findClassCandidate(uintptr_t romClassOffset)
+J9Class *
+TR_AOTDependencyTable::findCandidateWithChainAndLoader(TR::Compilation *comp, uintptr_t classChainOffset, void *classLoaderChain)
    {
+   if (comp->isDeserializedAOTMethod() || comp->ignoringLocalSCC())
+      return NULL;
+
+   auto classChain = (uintptr_t *)_sharedCache->pointerFromOffsetInSharedCache(classChainOffset);
+   return findChainLoaderCandidate(comp, classChain, classLoaderChain);
+   }
+
+J9Class *
+TR_AOTDependencyTable::findCandidateWithChainAndLoader(TR::Compilation *comp, uintptr_t *classChain, void *classLoaderChain)
+   {
+   if (comp->isDeserializedAOTMethod() || comp->ignoringLocalSCC())
+      return NULL;
+
+   return findChainLoaderCandidate(comp, classChain, classLoaderChain);
+   }
+
+J9Class *
+TR_AOTDependencyTable::findChainLoaderCandidate(TR::Compilation *comp, uintptr_t *classChain, void *classLoaderChain)
+   {
+   TR_ASSERT_FATAL(classLoaderChain, "Must be given a loader chain");
+
+   uintptr_t romClassOffset = _sharedCache->startingROMClassOffsetOfClassChain(classChain);
+
    OMR::CriticalSection cs(_tableMonitor);
 
    if (!isActive())
@@ -481,7 +505,15 @@ TR_AOTDependencyTable::findClassCandidate(uintptr_t romClassOffset)
    if (it == _offsetMap.end())
       return NULL;
 
-   return (TR_OpaqueClassBlock *)findCandidateForDependency(it->second._loadedClasses, true);
+   for (const auto& clazz: it->second._loadedClasses)
+      {
+      // Init condition taken from jitGetClassInClassloaderFromUTF8()
+      if ((J9ClassInitFailed != clazz->initializeStatus) &&
+          (_sharedCache->persistentClassLoaderTable()->lookupClassChainAssociatedWithClassLoader(clazz->classLoader) == classLoaderChain))
+         return clazz;
+      }
+
+   return NULL;
    }
 
 void

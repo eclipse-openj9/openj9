@@ -389,6 +389,9 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
    // fails serialization by setting _aotCacheStore to false if we are not ignoring the client's SCC, and otherwise
    // fails the compilation entirely.
    void addThunkRecord(const AOTCacheThunkRecord *record);
+#else
+   bool isDeserializedAOTMethod() const { return false; }
+   bool ignoringLocalSCC() const { return false; }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    TR::SymbolValidationManager *getSymbolValidationManager() { return _symbolValidationManager; }
