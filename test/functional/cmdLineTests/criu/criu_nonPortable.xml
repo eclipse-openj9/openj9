@@ -464,6 +464,7 @@
   </test>
   <test id="Test setting SecurityManager via -Djava.security.manager">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $OPTION_SET_SECURITYMANAGER$ $MAINCLASS_TEST_SECURITYMANAGER$ setSMCommandOption 1 false false</command>
+    <output type="success" caseSensitive="no" regex="no">java/lang/Error: A command line option has attempted to allow or enable the Security Manager. Enabling a Security Manager is not supported.</output>
     <output type="success" caseSensitive="no" regex="no">UnsupportedOperationException: Enabling a SecurityManager currently unsupported</output>
     <output type="failure" caseSensitive="yes" regex="no">TEST FAILED</output>
     <output type="failure" caseSensitive="yes" regex="no">CRIU is not enabled</output>

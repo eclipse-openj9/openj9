@@ -726,6 +726,13 @@ private boolean debugHelper(Permission perm) {
 }
 
 /**
+/*[IF JAVA_SPEC_VERSION >= 24]
+ * Throws java.security.AccessControlException
+ *
+ * @param       perm is ignored
+ * @exception	java.security.AccessControlException
+ * 					is always thrown
+/*[ELSE] JAVA_SPEC_VERSION >= 24
  * Checks if the permission <code>perm</code> is allowed in this context.
  * All ProtectionDomains must grant the permission for it to be granted.
  *
@@ -735,6 +742,7 @@ private boolean debugHelper(Permission perm) {
  *                  thrown when perm is not granted.
  * @exception   NullPointerException
  *                  if perm is null
+/*[ENDIF] JAVA_SPEC_VERSION >= 24
  */
 public void checkPermission(Permission perm) throws AccessControlException {
 /*[IF JAVA_SPEC_VERSION >= 24]*/
@@ -946,6 +954,7 @@ ProtectionDomain[] getContext() {
 	return context;
 }
 
+/*[IF JAVA_SPEC_VERSION < 24]*/
 /*
  * Added to resolve: S6907662, CVE-2010-4465: System clipboard should ensure access restrictions
  * Called internally from java.security.ProtectionDomain
@@ -959,6 +968,7 @@ AccessControlContext(ProtectionDomain[] domains, AccessControlContext acc) {
 		this.domainCombiner = acc.domainCombiner;
 	}
 }
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 /*
  * Added to resolve: S6907662, CVE-2010-4465: System clipboard should ensure access restrictions

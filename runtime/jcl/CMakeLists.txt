@@ -106,7 +106,6 @@ target_link_libraries(jclse
 
 target_sources(jclse
 	PRIVATE
-		${CMAKE_CURRENT_SOURCE_DIR}/common/acccont.c
 		${CMAKE_CURRENT_SOURCE_DIR}/common/annparser.c
 		${CMAKE_CURRENT_SOURCE_DIR}/common/attach.c
 		${CMAKE_CURRENT_SOURCE_DIR}/common/bootstrp.c
@@ -236,6 +235,10 @@ if(NOT JAVA_SPEC_VERSION LESS 19)
 		PRIVATE
 			${CMAKE_CURRENT_SOURCE_DIR}/common/jdk_internal_vm_Continuation.cpp
 	)
+endif()
+
+if(JAVA_SPEC_VERSION LESS 24)
+	target_sources(jclse PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/common/acccont.c)
 endif()
 
 if(J9VM_OPT_JFR)
