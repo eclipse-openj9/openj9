@@ -2960,9 +2960,10 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::KnownObjectTable_addFieldAddressFromBaseIndex:
          {
-         auto recv = client->getRecvData<TR::KnownObjectTable::Index, intptr_t>();
+         auto recv = client->getRecvData<TR::KnownObjectTable::Index, intptr_t, bool>();
          TR::KnownObjectTable::Index baseObjectIndex = std::get<0>(recv);
          intptr_t fieldOffset = std::get<1>(recv);
+         bool isArrayWithConstantElements = std::get<2>(recv);
 
          TR::KnownObjectTable::Index resultIndex = TR::KnownObjectTable::UNKNOWN;
 
@@ -2974,11 +2975,11 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             uintptr_t objectPointer = fe->getReferenceFieldAtAddress(fieldAddress);
 
             if (objectPointer)
-               resultIndex = knot->getOrCreateIndex(objectPointer);
+               resultIndex = knot->getOrCreateIndexAt(&objectPointer, isArrayWithConstantElements);
             }
 
-         uintptr_t *resultPointer =
-            (resultIndex == -1) ? NULL : knot->getPointerLocation(resultIndex);
+         uintptr_t *resultPointer = (resultIndex == TR::KnownObjectTable::UNKNOWN) ?
+               NULL : knot->getPointerLocation(resultIndex);
 
          client->write(response, resultIndex, resultPointer);
          }
@@ -2989,7 +2990,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          TR::KnownObjectTable::Index baseObjectIndex = std::get<0>(recv);
          intptr_t fieldOffset = std::get<1>(recv);
 
-         UDATA data = 0;
+         J9::TransformUtil::value data;
 
             {
             TR::VMAccessCriticalSection addFieldAddressFromBaseIndex(fe);
@@ -2997,7 +2998,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
 
             uintptr_t fieldAddress = baseObjectAddress + fieldOffset;
 
-            data = *(UDATA *) fieldAddress;
+            data = *(J9::TransformUtil::value *) fieldAddress;
             }
 
          client->write(response, data);
