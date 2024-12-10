@@ -430,8 +430,8 @@ typedef struct J9JFRCPULoad {
 
 typedef struct J9JFRThreadCPULoad {
 	J9JFR_EVENT_COMMON_FIELDS
-	float user;
-	float system;
+	float userCPULoad;
+	float systemCPULoad;
 } J9JFRThreadCPULoad;
 
 typedef struct J9JFRClassLoadingStatistics {

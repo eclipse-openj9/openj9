@@ -595,10 +595,10 @@ done:
 		_bufferWriter->writeLEB128(entry->threadIndex);
 
 		/* write user thread CPU load */
-		_bufferWriter->writeFloat(entry->user);
+		_bufferWriter->writeFloat(entry->userCPULoad);
 
 		/* write system thread CPU load */
-		_bufferWriter->writeFloat(entry->system);
+		_bufferWriter->writeFloat(entry->systemCPULoad);
 
 		/* write size */
 		_bufferWriter->writeLEB128PaddedU32(dataStart, _bufferWriter->getCursor() - dataStart);
