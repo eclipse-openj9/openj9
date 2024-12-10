@@ -178,9 +178,13 @@ isJVMInPortableRestoreMode(J9VMThread *currentThread)
 BOOLEAN
 isDebugOnRestoreEnabled(J9JavaVM *vm)
 {
-	return J9_ARE_NO_BITS_SET(vm->checkpointState.flags, J9VM_CRIU_IS_JDWP_ENABLED)
-			&& J9_ARE_ALL_BITS_SET(vm->checkpointState.flags, J9VM_CRIU_SUPPORT_DEBUG_ON_RESTORE)
-			&& isCRaCorCRIUSupportEnabled(vm);
+	return vm->checkpointState.isDebugOnRestoreEnabled;
+}
+
+BOOLEAN
+isDebugAgentDisabled(J9JavaVM *vm)
+{
+	return isCheckpointAllowed(vm) && vm->checkpointState.isDebugOnRestoreEnabled;
 }
 
 void
