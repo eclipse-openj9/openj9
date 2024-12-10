@@ -77,6 +77,7 @@ enum MetadataTypeID {
 	ClassLoadingStatisticsID = 99,
 	PhysicalMemoryID = 107,
 	ExecutionSampleID = 108,
+	ThreadDumpID = 110,
 	ThreadID = 163,
 	ThreadGroupID = 164,
 	ClassID = 165,
@@ -165,7 +166,8 @@ private:
 	static constexpr int CPU_LOAD_EVENT_SIZE = (3 * sizeof(float)) + (3 * sizeof(I_64));
 	static constexpr int THREAD_CPU_LOAD_EVENT_SIZE = (2 * sizeof(float)) + (4 * sizeof(I_64));
 	static constexpr int INITIAL_ENVIRONMENT_VARIABLE_EVENT_SIZE = 6000;
-	static constexpr int CLASS_LOADING_STATISTICS_EVENT_SIZE = 5 * sizeof(I_64);
+static constexpr int CLASS_LOADING_STATISTICS_EVENT_SIZE = 5 * sizeof(I_64);
+	static constexpr int THREAD_DUMP_EVENT_SIZE = 10000;
 
 	static constexpr int METADATA_ID = 1;
 
@@ -257,7 +259,7 @@ done:
 
 	}
 
-	void writeJFRChunk()
+	void writeJFRChunk(bool isExclusivePermited)
 	{
 		U_8 *buffer = NULL;
 		UDATA requiredBufferSize = 0;
@@ -359,6 +361,10 @@ done:
 			}
 
 			writePhysicalMemoryEvent();
+
+			if (isExclusivePermited) {
+				writeThreadDumpEvent();
+			}
 
 			writeJFRHeader();
 
@@ -668,6 +674,8 @@ done:
 
 	U_8 *writeOSInformationEvent();
 
+	U_8 *writeThreadDumpEvent();
+
 	void writeInitialSystemPropertyEvents(J9JavaVM *vm);
 
 	void writeInitialEnvironmentVariableEvents();
@@ -735,6 +743,8 @@ done:
 		requiredBufferSize += _constantPoolTypes.getThreadCPULoadCount() * THREAD_CPU_LOAD_EVENT_SIZE;
 
 		requiredBufferSize += _constantPoolTypes.getClassLoadingStatisticsCount() * CLASS_LOADING_STATISTICS_EVENT_SIZE;
+
+		requiredBufferSize += THREAD_DUMP_EVENT_SIZE;
 
 		return requiredBufferSize;
 	}
