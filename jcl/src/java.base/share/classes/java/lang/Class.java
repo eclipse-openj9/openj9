@@ -5913,6 +5913,7 @@ public Class<?>[] getNestMembers()
 			getUnsafe().putObjectRelease(this, localPermittedSubclassesCacheOffset, localPermittedSubclasses);
 		}
 
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		@SuppressWarnings("removal")
 		SecurityManager sm = System.getSecurityManager();
 		if (null != sm) {
@@ -5931,6 +5932,7 @@ public Class<?>[] getNestMembers()
 				sm.checkPackageAccess(pkgName);
 			}
 		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		return localPermittedSubclasses;
 	}
