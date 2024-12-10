@@ -317,7 +317,7 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node, bool verify
             }
          else if (boxingAllowed() &&
                   opCodeValue == TR::astore &&
-                  rhs->getOpCode().isFunctionCall())
+                  rhs->getOpCodeValue() != TR::aload)
             {
             _aliasTable[id1]._elementType = TR::Address;
             dontVectorizeNode(node);
@@ -1565,11 +1565,7 @@ TR_VectorAPIExpansion::unboxNode(TR::Node *parentNode, TR::Node *operand, vapiOb
    bool parentVectorizedOrScalarized = isVectorizedOrScalarizedNode(parentNode, elementType, bitsLength,
                                                                     parentType, parentScalarized);
 
-   // TODO: enable mask unboxing  after general bug of using masks read from arrays is fixed
-   //
-   static bool enableMaskUnboxing = feGetEnv("TR_enableMaskUnboxing") ? true : false;
-
-   if ((operandObjectType != Vector && (operandObjectType != Mask || !enableMaskUnboxing)) ||
+   if ((operandObjectType != Vector && operandObjectType != Mask) ||
         elementType != TR::Int8 ||
         bitsLength != 128 ||
         parentScalarized)  // TODO: support unboxing into scalars
@@ -1801,8 +1797,17 @@ TR_VectorAPIExpansion::transformIL(bool checkBoxing)
          int32_t elementSize = OMR::DataType::getSize(elementType);
          numLanes = bitsLength/8/elementSize;
 
-         // TODO: add an assert that unboxing is not needed in this case since the temp
-         // would not be vectorized
+         if (boxingAllowed())
+            {
+            TR::DataType elementTypeTmp;
+            int32_t bitsLengthTmp;
+            vapiObjType objectTypeTmp;
+            bool scalarizedTmp;
+            bool rhsVectorizedOrScalarized = isVectorizedOrScalarizedNode(node->getFirstChild(), elementTypeTmp, bitsLengthTmp,
+                                                                          objectTypeTmp, scalarizedTmp);
+
+            TR_ASSERT_FATAL(rhsVectorizedOrScalarized, "RHS of vectorized astore should be vectorized too");
+            }
 
          if (!checkBoxing)
             astoreHandler(this, treeTop, node, elementType, vectorLength, numLanes, doMode);
