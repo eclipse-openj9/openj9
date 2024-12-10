@@ -37,11 +37,14 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9ClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9HashTablePointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9JavaVMPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ModulePointer;
+import com.ibm.j9ddr.vm29.pointer.generated.J9ObjectPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9PackagePointer;
+import com.ibm.j9ddr.vm29.pointer.generated.J9UTF8Pointer;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ClassHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ObjectHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9RASHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9UTF8Helper;
+import com.ibm.j9ddr.vm29.structure.J9Consts;
 
 public class ModularityHelper {
 	@FunctionalInterface
@@ -97,7 +100,7 @@ public class ModularityHelper {
 	 *                      be outputted to.
 	 */
 	public static void printJ9Module(J9ModulePointer modulePtr, PrintStream out) throws CorruptDataException {
-		String moduleName = J9ObjectHelper.stringValue(modulePtr.moduleName());
+		String moduleName = getModuleName(modulePtr);
 		String hexAddress = modulePtr.getHexAddress();
 		out.printf("%-30s !j9module %s%n", moduleName, hexAddress);
 	}
@@ -340,4 +343,18 @@ public class ModularityHelper {
 		return count;
 	}
 
+	public static String getModuleName(J9ModulePointer module) throws CorruptDataException {
+		String moduleName = null;
+		if ((module != null) && module.notNull()) {
+			if (0 != J9Consts.J9_MODULE_NAME_IS_J9UTF8) {
+				J9UTF8Pointer mn = module.moduleName();
+				moduleName = J9UTF8Helper.stringValue(mn);
+			} else {
+				/* moduleName used to be a J9ObjectPointer. */
+				J9ObjectPointer mn = J9ObjectPointer.cast(module.moduleNameEA().at(0));
+				moduleName = J9ObjectHelper.stringValue(mn);
+			}
+		}
+		return moduleName;
+	}
 }

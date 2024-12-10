@@ -1004,9 +1004,10 @@ defaultMethodConflictExceptionMessage(J9VMThread *currentThread, J9Class *target
  * @return a char pointer to the module name
  */
 static char *
-getModuleNameUTF(J9VMThread *currentThread, j9object_t	moduleObject, char *buffer, UDATA bufferLength)
+getModuleNameUTF(J9VMThread *currentThread, j9object_t moduleObject, char *buffer, UDATA bufferLength)
 {
-	J9JavaVM const * const vm = currentThread->javaVM;
+	J9JavaVM const *const vm = currentThread->javaVM;
+	J9InternalVMFunctions const *const vmFuncs = vm->internalVMFunctions;
 	J9Module *module = J9OBJECT_ADDRESS_LOAD(currentThread, moduleObject, vm->modulePointerOffset);
 	char *nameBuffer = NULL;
 
@@ -1019,9 +1020,10 @@ getModuleNameUTF(J9VMThread *currentThread, j9object_t	moduleObject, char *buffe
 		nameBuffer = buffer;
 #undef UNNAMED_MODULE
 	} else {
-		nameBuffer = copyStringToUTF8WithMemAlloc(
-			currentThread, module->moduleName, J9_STR_NULL_TERMINATE_RESULT, "", 0, buffer, bufferLength, NULL);
+		nameBuffer = vmFuncs->copyJ9UTF8ToUTF8WithMemAlloc(
+				currentThread, module->moduleName, J9_STR_NULL_TERMINATE_RESULT, "", 0, buffer, bufferLength);
 	}
+
 	return nameBuffer;
 }
 #endif /* JAVA_SPEC_VERSION >= 11 */

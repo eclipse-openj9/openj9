@@ -36,9 +36,9 @@ import com.ibm.j9ddr.vm29.j9.gc.GCClassLoaderIterator;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ClassLoaderPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9JavaVMPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ModulePointer;
-import com.ibm.j9ddr.vm29.pointer.helper.J9ObjectHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9RASHelper;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.JavaVersionHelper;
+import com.ibm.j9ddr.vm29.tools.ddrinteractive.ModularityHelper;
 
 /**
  * FindModuleByName command find the modules corresponding to its module name
@@ -82,7 +82,7 @@ public class FindModuleByNameCommand extends Command
 					SlotIterator<J9ModulePointer> slotIterator = moduleHashTable.iterator();
 					while (slotIterator.hasNext()) {
 						J9ModulePointer modulePtr = slotIterator.next();
-						String moduleName = J9ObjectHelper.stringValue(modulePtr.moduleName());
+						String moduleName = ModularityHelper.getModuleName(modulePtr);
 						if (pattern.isMatch(moduleName)) {
 							hitCount++;
 							String hexAddress = modulePtr.getHexAddress();
