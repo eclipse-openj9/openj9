@@ -1901,12 +1901,12 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          TR_ResolvedJ9Method *callerMethod = std::get<3>(recv);
          TR_YesNoMaybe useGetResolvedInterfaceMethod = std::get<4>(recv);
 
-         TR_ResolvedMethod *implArray[maxCount];
+         std::vector<TR_ResolvedMethod *> implArray(maxCount, NULL);
          TR_PersistentClassInfo *classInfo = comp->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(clazz, comp, true);
          int32_t implCount =
             TR_ClassQueries::collectImplementorsCapped(
                classInfo,
-               implArray,
+               implArray.data(),
                maxCount,
                slotOrIndex,
                callerMethod,
