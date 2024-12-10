@@ -1264,6 +1264,20 @@ static void checkTmpDir() {
 }
 
 /*[IF JAVA_SPEC_VERSION >= 9]*/
+/**
+ * Initialize the security manager according
+ * to the java.security.manager system property.
+ * @param applicationClassLoader
+ * @throws Error
+/*[IF JAVA_SPEC_VERSION >= 24]
+ *  if the user attempts to enable the security manager
+/*[ELSE] JAVA_SPEC_VERSION >= 24
+ *  if the security manager could not be initialized
+/*[ENDIF] JAVA_SPEC_VERSION >= 24
+ */
+/*[IF JAVA_SPEC_VERSION < 24]*/
+@SuppressWarnings("removal")
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 static void initSecurityManager(ClassLoader applicationClassLoader) {
 	/*[IF JAVA_SPEC_VERSION >= 24]*/
 	boolean throwErrorOnInit = false;
