@@ -1115,13 +1115,25 @@ public static int identityHashCode(Object anObject) {
 /**
  * Loads the specified file as a dynamic library.
  *
- * @param 		pathName	the path of the file to be loaded
+ * @param pathName the path of the file to be loaded
+ *
+ * @throws UnsatisfiedLinkError if the library could not be loaded
+ * @throws SecurityException if the library was not allowed to be loaded
+ * @throws NullPointerException if pathName is null
+/*[IF JAVA_SPEC_VERSION >= 24]
+ * @throws IllegalCallerException if the caller belongs to a module where native access is not enabled
+/*[ENDIF] JAVA_SPEC_VERSION >= 24
  */
 @CallerSensitive
 /*[IF JAVA_SPEC_VERSION >= 24]*/
 @Restricted
 /*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 public static void load(String pathName) {
+	/*[IF JAVA_SPEC_VERSION >= 24]*/
+	Class<?> caller = Reflection.getCallerClass();
+	Reflection.ensureNativeAccess(caller, System.class, "load", false);
+	/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
+
 	@SuppressWarnings("removal")
 	SecurityManager smngr = System.getSecurityManager();
 	if (smngr != null) {
@@ -1146,16 +1158,25 @@ public static void load(String pathName) {
 /**
  * Loads and links the library specified by the argument.
  *
- * @param		libName		the name of the library to load
+ * @param libName the name of the library to load
  *
- * @throws		UnsatisfiedLinkError	if the library could not be loaded
- * @throws		SecurityException 		if the library was not allowed to be loaded
+ * @throws UnsatisfiedLinkError if the library could not be loaded
+ * @throws SecurityException if the library was not allowed to be loaded
+ * @throws NullPointerException if libName is null
+/*[IF JAVA_SPEC_VERSION >= 24]
+ * @throws IllegalCallerException if the caller belongs to a module where native access is not enabled
+/*[ENDIF] JAVA_SPEC_VERSION >= 24
  */
 @CallerSensitive
 /*[IF JAVA_SPEC_VERSION >= 24]*/
 @Restricted
 /*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 public static void loadLibrary(String libName) {
+	/*[IF JAVA_SPEC_VERSION >= 24]*/
+	Class<?> caller = Reflection.getCallerClass();
+	Reflection.ensureNativeAccess(caller, System.class, "loadLibrary", false);
+	/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
+
 	if (libName.indexOf(File.pathSeparator) >= 0) {
 		/*[MSG "K0B01", "Library name must not contain a file path: {0}"]*/
 		throw new UnsatisfiedLinkError(Msg.getString("K0B01", libName)); //$NON-NLS-1$
