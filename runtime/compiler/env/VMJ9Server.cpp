@@ -253,7 +253,7 @@ TR_J9ServerVM::getByteArrayClass()
    {
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    auto *vmInfo = _compInfoPT->getClientData()->getOrCacheVMInfo(stream);
-   return vmInfo->_byteArrayClass;
+   return vmInfo->_byteArrayOpaqueClass;
    }
 
 bool
@@ -2689,6 +2689,47 @@ TR_J9ServerVM::getClassPrimitiveDataType(TR_OpaqueClassBlock* clazz)
       return TR::NoType;
    }
 
+TR_OpaqueClassBlock *
+TR_J9ServerVM::getArrayClassFromDataType(TR::DataType type, bool booleanClass)
+   {
+   J9Class *j9class;
+   auto vmInfo = _compInfoPT->getClientData()->getOrCacheVMInfo(_compInfoPT->getStream());
+
+   if (booleanClass)
+      {
+      j9class = (J9Class *) vmInfo->_booleanArrayClass;
+      }
+   else
+      {
+      switch (type)
+         {
+         case TR::Float:
+            j9class = (J9Class *) vmInfo->_floatArrayClass;
+            break;
+         case TR::Double:
+            j9class = (J9Class *) vmInfo->_doubleArrayClass;
+            break;
+         case TR::Int8:
+            j9class = (J9Class *) vmInfo->_byteArrayClass;
+            break;
+         case TR::Int16:
+            j9class = (J9Class *) vmInfo->_shortArrayClass;
+            break;
+         case TR::Int32:
+            j9class = (J9Class *) vmInfo->_intArrayClass;
+            break;
+         case TR::Int64:
+            j9class = (J9Class *) vmInfo->_longArrayClass;
+            break;
+         default:
+            TR_ASSERT_FATAL(false, "Incorrect array element type");
+            return NULL;
+         }
+      }
+
+
+   return convertClassPtrToClassOffset(j9class);
+   }
 
 bool
 TR_J9SharedCacheServerVM::isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT)

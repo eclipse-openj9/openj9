@@ -1411,6 +1411,48 @@ TR_J9VMBase::getClassPrimitiveDataType(TR_OpaqueClassBlock* clazz)
    }
 
 TR_OpaqueClassBlock *
+TR_J9VMBase::getArrayClassFromDataType(TR::DataType type, bool booleanClass)
+   {
+   J9Class *j9class;
+   J9JavaVM *vm = getJ9JITConfig()->javaVM;
+
+
+   if (booleanClass)
+      {
+      j9class = vm->booleanArrayClass;
+      }
+   else
+      {
+      switch (type)
+         {
+         case TR::Float:
+            j9class = vm->floatArrayClass;
+            break;
+         case TR::Double:
+            j9class = vm->doubleArrayClass;
+            break;
+         case TR::Int8:
+            j9class = vm->byteArrayClass;
+            break;
+         case TR::Int16:
+            j9class = vm->shortArrayClass;
+            break;
+         case TR::Int32:
+            j9class = vm->intArrayClass;
+            break;
+         case TR::Int64:
+            j9class = vm->longArrayClass;
+            break;
+         default:
+            TR_ASSERT_FATAL(false, "Incorrect array element type");
+            return NULL;
+         }
+      }
+
+   return convertClassPtrToClassOffset(j9class);
+   }
+
+TR_OpaqueClassBlock *
 TR_J9VMBase::getClassFromJavaLangClass(uintptr_t objectPointer)
    {
    return (TR_OpaqueClassBlock*)J9VM_J9CLASS_FROM_HEAPCLASS(_vmThread, objectPointer);
