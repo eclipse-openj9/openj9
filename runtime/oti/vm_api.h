@@ -2918,8 +2918,8 @@ findFieldExt(J9VMThread *vmStruct, J9Class *clazz, U_8 *fieldName, UDATA fieldNa
 void
 fieldIndexTableRemove(J9JavaVM* vm, J9Class *ramClass);
 
-
 /* ---------------- resolvesupport.c ---------------- */
+
 #if JAVA_SPEC_VERSION < 24
 /**
  * Perform a package access check from the ProtectionDomain to the targetClass

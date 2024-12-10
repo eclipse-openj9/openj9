@@ -462,7 +462,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	for each combination of method flags.
 -->
 	<staticmethodref class="java/lang/J9VMInternals" name="completeInitialization" signature="()V"/>
-	<staticmethodref class="java/lang/J9VMInternals" name="checkPackageAccess" signature="(Ljava/lang/Class;Ljava/security/ProtectionDomain;)V"/>
+	<staticmethodref class="java/lang/J9VMInternals" name="checkPackageAccess" signature="(Ljava/lang/Class;Ljava/security/ProtectionDomain;)V" versions="8-23"/>
 	<staticmethodref class="java/lang/J9VMInternals" name="threadCleanup" signature="(Ljava/lang/Thread;)V"/>
 	<staticmethodref class="java/lang/J9VMInternals" name="newInstanceImpl" signature="(Ljava/lang/Class;)Ljava/lang/Object;" flags="jit_newInstancePrototype"/>
 	<staticmethodref class="java/lang/J9VMInternals" name="formatNoSuchMethod" signature="(Ljava/lang/String;Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;Ljava/lang/String;)Ljava/lang/String;"/>
