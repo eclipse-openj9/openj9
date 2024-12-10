@@ -76,25 +76,77 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getNonHeapMemoryUsag
 	omrthread_monitor_enter(javaVM->classTableMutex);
 	classLoader = javaVM->internalVMFunctions->allClassLoadersStartDo(&walkState, javaVM, 0);
 	while (NULL != classLoader) {
-		UDATA *udataFreeListBlock = classLoader->ramClassUDATABlockFreeList;
-		J9RAMClassFreeListBlock *tinyFreeListBlock = classLoader->ramClassTinyBlockFreeList;
-		J9RAMClassFreeListBlock *smallFreeListBlock = classLoader->ramClassSmallBlockFreeList;
-		J9RAMClassFreeListBlock *largeFreeListBlock = classLoader->ramClassLargeBlockFreeList;
-		while (NULL != udataFreeListBlock) {
-			used -= sizeof(UDATA);
-			udataFreeListBlock = *(UDATA **) udataFreeListBlock;
+		J9RAMClassUDATABlockFreeList *udataFreeListBlock = &classLoader->ramClassUDATABlocks;
+		J9RAMClassFreeLists *sub4gFreeListBlock = &classLoader->sub4gBlock;
+		J9RAMClassFreeLists *freqFreeListBlock = &classLoader->frequentlyAccessedBlock;
+		J9RAMClassFreeLists *InFreqFreeListBlock = &classLoader->inFrequentlyAccessedBlock;
+		if (NULL != udataFreeListBlock) {
+			UDATA *sub4gListBlock = udataFreeListBlock->ramClassSub4gUDATABlockFreeList;
+			UDATA *freqListBlock = udataFreeListBlock->ramClassFreqUDATABlockFreeList;
+			UDATA *inFreqListBlock = udataFreeListBlock->ramClassInFreqUDATABlockFreeList;
+			while (NULL != sub4gListBlock) {
+				used -= sizeof(UDATA);
+				sub4gListBlock = *(UDATA **) sub4gListBlock;
+			}
+			while (NULL != freqListBlock) {
+				used -= sizeof(UDATA);
+				freqListBlock = *(UDATA **) freqListBlock;
+			}
+			while (NULL != inFreqListBlock) {
+				used -= sizeof(UDATA);
+				inFreqListBlock = *(UDATA **) inFreqListBlock;
+			}
 		}
-		while (NULL != tinyFreeListBlock) {
-			used -= tinyFreeListBlock->size;
-			tinyFreeListBlock = tinyFreeListBlock->nextFreeListBlock;
+		if (NULL != sub4gFreeListBlock) {
+			J9RAMClassFreeListBlock *tinyFreeListBlock = sub4gFreeListBlock->ramClassTinyBlockFreeList;
+			J9RAMClassFreeListBlock *smallFreeListBlock = sub4gFreeListBlock->ramClassSmallBlockFreeList;
+			J9RAMClassFreeListBlock *largeFreeListBlock = sub4gFreeListBlock->ramClassLargeBlockFreeList;
+			while (NULL != tinyFreeListBlock) {
+				used -= tinyFreeListBlock->size;
+				tinyFreeListBlock = tinyFreeListBlock->nextFreeListBlock;
+			}
+			while (NULL != smallFreeListBlock) {
+				used -= smallFreeListBlock->size;
+				smallFreeListBlock = smallFreeListBlock->nextFreeListBlock;
+			}
+			while (NULL != largeFreeListBlock) {
+				used -= largeFreeListBlock->size;
+				largeFreeListBlock = largeFreeListBlock->nextFreeListBlock;
+			}
 		}
-		while (NULL != smallFreeListBlock) {
-			used -= smallFreeListBlock->size;
-			smallFreeListBlock = smallFreeListBlock->nextFreeListBlock;
+		if (NULL != freqFreeListBlock) {
+			J9RAMClassFreeListBlock *tinyFreeListBlock = freqFreeListBlock->ramClassTinyBlockFreeList;
+			J9RAMClassFreeListBlock *smallFreeListBlock = freqFreeListBlock->ramClassSmallBlockFreeList;
+			J9RAMClassFreeListBlock *largeFreeListBlock = freqFreeListBlock->ramClassLargeBlockFreeList;
+			while (NULL != tinyFreeListBlock) {
+				used -= tinyFreeListBlock->size;
+				tinyFreeListBlock = tinyFreeListBlock->nextFreeListBlock;
+			}
+			while (NULL != smallFreeListBlock) {
+				used -= smallFreeListBlock->size;
+				smallFreeListBlock = smallFreeListBlock->nextFreeListBlock;
+			}
+			while (NULL != largeFreeListBlock) {
+				used -= largeFreeListBlock->size;
+				largeFreeListBlock = largeFreeListBlock->nextFreeListBlock;
+			}
 		}
-		while (NULL != largeFreeListBlock) {
-			used -= largeFreeListBlock->size;
-			largeFreeListBlock = largeFreeListBlock->nextFreeListBlock;
+		if (NULL != InFreqFreeListBlock) {
+			J9RAMClassFreeListBlock *tinyFreeListBlock = InFreqFreeListBlock->ramClassTinyBlockFreeList;
+			J9RAMClassFreeListBlock *smallFreeListBlock = InFreqFreeListBlock->ramClassSmallBlockFreeList;
+			J9RAMClassFreeListBlock *largeFreeListBlock = InFreqFreeListBlock->ramClassLargeBlockFreeList;
+			while (NULL != tinyFreeListBlock) {
+				used -= tinyFreeListBlock->size;
+				tinyFreeListBlock = tinyFreeListBlock->nextFreeListBlock;
+			}
+			while (NULL != smallFreeListBlock) {
+				used -= smallFreeListBlock->size;
+				smallFreeListBlock = smallFreeListBlock->nextFreeListBlock;
+			}
+			while (NULL != largeFreeListBlock) {
+				used -= largeFreeListBlock->size;
+				largeFreeListBlock = largeFreeListBlock->nextFreeListBlock;
+			}
 		}
 		classLoader = javaVM->internalVMFunctions->allClassLoadersNextDo(&walkState);
 	}
