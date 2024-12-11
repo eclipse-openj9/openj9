@@ -32,6 +32,7 @@
 #include "ConfigurationRealtime.hpp"
 
 #include "EnvironmentRealtime.hpp"
+#include "GCExtensions.hpp"
 #include "GlobalAllocationManagerRealtime.hpp"
 #include "GCExtensionsBase.hpp"
 #include "HeapVirtualMemory.hpp"
@@ -107,12 +108,12 @@ MM_ConfigurationRealtime::tearDown(MM_EnvironmentBase* env)
 MM_Heap *
 MM_ConfigurationRealtime::createHeapWithManager(MM_EnvironmentBase *env, uintptr_t heapBytesRequested, MM_HeapRegionManager *regionManager)
 {
-	MM_GCExtensionsBase *extensions = env->getExtensions();
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
 
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
 	PORT_ACCESS_FROM_ENVIRONMENT(env);
 
-	if (extensions->isVirtualLargeObjectHeapRequested) {
+	if (extensions->virtualLargeObjectHeap._wasSpecified && extensions->virtualLargeObjectHeap._valueSpecified) {
 		j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_GC_OPTIONS_VIRTUAL_LARGE_OBJECT_HEAP_NOT_SUPPORTED_WARN, "metronome");
 	}
 #endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
