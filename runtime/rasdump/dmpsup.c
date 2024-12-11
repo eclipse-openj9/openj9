@@ -1570,7 +1570,8 @@ J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
 				/* RAS init may happen in either dump or trace */
 				vm->j9rasGlobalStorage = j9mem_allocate_memory(sizeof(RasGlobalStorage), OMRMEM_CATEGORY_VM);
 				if (vm->j9rasGlobalStorage != NULL) {
-					memset (vm->j9rasGlobalStorage, '\0', sizeof(RasGlobalStorage));
+					memset(vm->j9rasGlobalStorage, '\0', sizeof(RasGlobalStorage));
+					RAS_GLOBAL_FROM_JAVAVM(maxStringLength, vm) = RAS_MAX_STRING_LENGTH_DEFAULT;
 				}
 			}
 			break;
