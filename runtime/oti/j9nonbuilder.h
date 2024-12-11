@@ -5516,7 +5516,7 @@ typedef struct J9VMThread {
 	UDATA contiguousIndexableHeaderSize;
 	UDATA discontiguousIndexableHeaderSize;
 #if defined(J9VM_ENV_DATA64)
-	BOOLEAN isIndexableDataAddrPresent;
+	UDATA isIndexableDataAddrPresent;
 	BOOLEAN isVirtualLargeObjectHeapEnabled;
 #endif /* defined(J9VM_ENV_DATA64) */
 	void* gpInfo;
@@ -6078,7 +6078,7 @@ typedef struct J9JavaVM {
 	UDATA contiguousIndexableHeaderSize;
 	UDATA discontiguousIndexableHeaderSize;
 #if defined(J9VM_ENV_DATA64)
-	BOOLEAN isIndexableDataAddrPresent;
+	UDATA isIndexableDataAddrPresent;
 	BOOLEAN isVirtualLargeObjectHeapEnabled;
 	BOOLEAN isIndexableDualHeaderShapeEnabled;
 #endif /* defined(J9VM_ENV_DATA64) */
