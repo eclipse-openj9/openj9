@@ -410,6 +410,54 @@ copyStringToJ9UTF8WithMemAlloc(J9VMThread *vmThread, j9object_t string, UDATA st
 	return (J9UTF8 *)result;
 }
 
+J9UTF8 *
+copyStringToJ9UTF8WithPortLib(J9VMThread *vmThread, j9object_t string, UDATA stringFlags, const char *prependStr, UDATA prependStrLength, OMRPortLibrary *portLib)
+{
+	Assert_VM_notNull(prependStr);
+	Assert_VM_notNull(string);
+
+	U_8 *result = NULL;
+	UDATA stringLength = J9VMJAVALANGSTRING_LENGTH(vmThread, string);
+	U_64 length = sizeof(J9UTF8) + prependStrLength + ((U_64)stringLength * 3);
+
+	if (J9_ARE_ALL_BITS_SET(stringFlags, J9_STR_NULL_TERMINATE_RESULT)) {
+		++length;
+	}
+
+#if UDATA_MAX < (3 * INT32_MAX)
+	/* Memory allocation functions take a UDATA as the input parameter for length.
+	 * On 32-bit systems, the length needs to be restricted to UDATA_MAX since the
+	 * maximum UTF-8 length of a Java string can be 3 * Integer.MAX_VALUE. Otherwise,
+	 * there will be overflow. On 64-bit platforms, this is not an issue since UDATA
+	 * and U_64 are the same size.
+	 */
+	if (length > UDATA_MAX) {
+		length = UDATA_MAX;
+	}
+#endif /* UDATA_MAX < (3 * INT32_MAX) */
+
+	if ((prependStrLength <= J9UTF8_MAX_LENGTH) && (length <= (J9UTF8_MAX_LENGTH - prependStrLength))) {
+		result = (U_8 *)portLib->mem_allocate_memory(portLib, (UDATA)length, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM);
+	}
+
+	if (NULL != result) {
+		UDATA computedUtf8Length = 0;
+
+		if (0 < prependStrLength) {
+			memcpy(result + sizeof(J9UTF8), prependStr, prependStrLength);
+		}
+
+		computedUtf8Length = copyStringToUTF8Helper(
+				vmThread, string, stringFlags, 0, stringLength,
+				result + sizeof(J9UTF8) + prependStrLength,
+				(UDATA)(length - sizeof(J9UTF8) - prependStrLength));
+
+		J9UTF8_SET_LENGTH(result, (U_16)computedUtf8Length + (U_16)prependStrLength);
+	}
+
+	return (J9UTF8 *)result;
+}
+
 char *
 copyJ9UTF8ToUTF8WithMemAlloc(J9VMThread *vmThread, J9UTF8 *string, UDATA stringFlags, const char *prependStr, UDATA prependStrLength, char *buffer, UDATA bufferLength)
 {
@@ -470,6 +518,42 @@ copyJ9UTF8WithMemAlloc(J9VMThread *vmThread, J9UTF8 *string, UDATA stringFlags, 
 		} else {
 			result = (J9UTF8 *)j9mem_allocate_memory(allocationSize, OMRMEM_CATEGORY_VM);
 		}
+
+		if (NULL != result) {
+			U_8 *resultString = J9UTF8_DATA(result);
+			if (prependStrLength > 0) {
+				memcpy(resultString, prependStr, prependStrLength);
+			}
+			memcpy(resultString + prependStrLength, stringData, stringLength);
+			if (J9_ARE_ALL_BITS_SET(stringFlags, J9_STR_NULL_TERMINATE_RESULT)) {
+				resultString[totalStringLength] = '\0';
+			}
+			J9UTF8_SET_LENGTH(result, (U_16)totalStringLength);
+		}
+	}
+
+	return result;
+}
+
+J9UTF8 *
+copyJ9UTF8WithPortLib(J9VMThread *vmThread, J9UTF8 *string, UDATA stringFlags, const char *prependStr, UDATA prependStrLength, OMRPortLibrary *portLib)
+{
+	Assert_VM_notNull(prependStr);
+	Assert_VM_notNull(string);
+
+	J9UTF8 *result = NULL;
+
+	const U_8 *stringData = J9UTF8_DATA(string);
+	const UDATA stringLength = (UDATA)J9UTF8_LENGTH(string);
+	const UDATA totalStringLength = prependStrLength + stringLength;
+	UDATA allocationSize = totalStringLength + sizeof(J9UTF8);
+
+	if (J9_ARE_ALL_BITS_SET(stringFlags, J9_STR_NULL_TERMINATE_RESULT)) {
+		allocationSize += 1;
+	}
+
+	if (totalStringLength < J9UTF8_MAX_LENGTH) {
+		result = (J9UTF8 *)portLib->mem_allocate_memory(portLib, allocationSize, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM);
 
 		if (NULL != result) {
 			U_8 *resultString = J9UTF8_DATA(result);

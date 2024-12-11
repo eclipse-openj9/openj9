@@ -3596,6 +3596,26 @@ J9UTF8*
 copyStringToJ9UTF8WithMemAlloc(J9VMThread *vmThread, j9object_t string, UDATA stringFlags, const char *prependStr, UDATA prependStrLength, char *buffer, UDATA bufferLength);
 
 /**
+ * Copy a string object to a J9UTF8 allocated via a port library, and optionally prepend a string
+ * before it.
+ *
+ * @note The caller must free the memory from this pointer from the same port library memory allocator.
+ *
+ * @param[in] currentThread the current J9VMThread
+ * @param[in] string a string object to be copied
+ * 				it can't be NULL
+ * @param[in] stringFlags the flag to determine performing '.' --> '/' or NULL termination
+ * @param[in] prependStr the string to be prepended before the string object to be copied
+ *				it can't be NULL but can be an empty string ""
+ * @param[in] prependStrLength the length of prependStr as computed by strlen
+ * @param[in] portLib the OMRPortLibrary from which to allocate the buffer
+ *
+ * @return a J9UTF8 pointer to the string
+ */
+J9UTF8 *
+copyStringToJ9UTF8WithPortLib(J9VMThread *vmThread, j9object_t string, UDATA stringFlags, const char *prependStr, UDATA prependStrLength, OMRPortLibrary *portLib);
+
+/**
  * Copy a J9UTF8 to a UTF8 data buffer, and optionally prepend a string before it.
  *
  * @note The caller must free the memory from this pointer if the return value is NOT the buffer argument.
@@ -3636,6 +3656,26 @@ copyJ9UTF8ToUTF8WithMemAlloc(J9VMThread *vmThread, J9UTF8 *string, UDATA stringF
  */
 J9UTF8 *
 copyJ9UTF8WithMemAlloc(J9VMThread *vmThread, J9UTF8 *string, UDATA stringFlags, const char *prependStr, UDATA prependStrLength, char *buffer, UDATA bufferLength);
+
+/**
+ * Creates a fresh copy of a J9UTF8 allocated via a specified port library, and optionally prepend
+ * a string it.
+ *
+ * @note The caller must free the memory from this pointer from the same port library memory allocator.
+ *
+ * @param[in] currentThread the current J9VMThread
+ * @param[in] string a J9UTF8 pointer to the data to be copied
+ * 				it can't be NULL
+ * @param[in] stringFlags the flag to determine performing '.' --> '/' or NULL termination
+ * @param[in] prependStr the string to be prepended before the string object to be copied
+ * 				it can't be NULL but can be an empty string ""
+ * @param[in] prependStrLength The length of prependStr as computed by strlen.
+ * @param[in] portLib the OMRPortLibrary from which to allocate the buffer
+ *
+ * @return a J9UTF8 pointer to the string
+ */
+J9UTF8 *
+copyJ9UTF8WithPortLib(J9VMThread *vmThread, J9UTF8 *string, UDATA stringFlags, const char *prependStr, UDATA prependStrLength, OMRPortLibrary *portLib);
 
 /**
  * Copy a Unicode String to a UTF8 data buffer.

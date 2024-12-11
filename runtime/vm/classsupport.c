@@ -1025,6 +1025,7 @@ loadWarmClassFromSnapshot(J9VMThread *vmThread, J9ClassLoader *classLoader, J9Cl
 		J9JavaVM *vm = vmThread->javaVM;
 		J9Class *superClazz = clazz->superclasses[J9CLASS_DEPTH(clazz) - 1];
 		J9ITable *itable = (J9ITable *)clazz->iTable;
+		j9object_t classObject = NULL;
 		const char *className = (const char *)J9UTF8_DATA(J9ROMCLASS_CLASSNAME(clazz->romClass));
 
 		clazz->classFlags |= J9ClassIsLoadedFromSnapshot;
@@ -1070,6 +1071,18 @@ loadWarmClassFromSnapshot(J9VMThread *vmThread, J9ClassLoader *classLoader, J9Cl
 		if (NULL != clazz->arrayClass) {
 			if (!loadWarmClassFromSnapshot(vmThread, classLoader, clazz->arrayClass)) {
 				goto done;
+			}
+		}
+
+		/* TODO: Handle/trace error/NULL paths. */
+		classObject = clazz->classObject;
+		if (NULL != classObject) {
+			J9Module *module = clazz->module;
+			if (NULL != module) {
+				j9object_t moduleObject = module->moduleObject;
+				if (NULL != moduleObject) {
+					J9VMJAVALANGCLASS_SET_MODULE(vmThread, classObject, moduleObject);
+				}
 			}
 		}
 
