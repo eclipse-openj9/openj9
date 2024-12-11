@@ -1,30 +1,31 @@
-‡
-Lock ClassGC WhenMemoryProtocol Versionjdk.DoubleFlag1461
+˜
+Lock ClassGC WhenMemoryProtocol Versionjdk.DoubleFlag
 descriptor	validFrom
-youngSpaceMinimum Heap Size	lockClassSerial NumberAllocated (direct)1454CPU Time Stamp Counterjdk.types.ReferenceType1453wastedPhysical MemoryframesthresholdPercentagejdk.jfr.DataAmount:Extra information specific to G1 Young Garbage Collections12146831467jdk.types.SweepId4size51465reserved146467146389"G1 Evacuation Statistics for YoungpeakTimeSpentCWhether further biasing for instances of this class will be allowedChunk HeaderallocationRegionsobjectData Amount%Class whose biased locks were revokedjdk.ZThreadPhaseTotal CapacityTenuring Threshold14841482smallChunksTotalSizeisExplicitGCConcurrentLimit running time of eventActive ThreadsresultrecordingDurationBCurrent IHOP threshold in percent of the internal target occupancyvalidationCounterYoung Garbage Collection+Revoked biases for all instances of a classjdk.OldGarbageCollection"Number of incoming bits per second	DirectoryrecentMutatorDuration	committedaddressClass Parked Onjdk.ClassLoad	Old Value	truncatedEnabled1493-Target for runtime vs garbage collection time14921491Network InterfacefastTimeFrequency14881486
+youngSpaceMinimum Heap Size	lockClassSerial NumberAllocated (direct)CPU Time Stamp Counterjdk.types.ReferenceTypewastedPhysical MemoryframesthresholdPercentagejdk.jfr.DataAmount:Extra information specific to G1 Young Garbage Collections123jdk.types.SweepId4size5reserved6en_US789"G1 Evacuation Statistics for YoungpeakTimeSpentCWhether further biasing for instances of this class will be allowedChunk HeaderallocationRegionsobjectData Amount%Class whose biased locks were revokedjdk.ZThreadPhaseTotal CapacityTenuring ThresholdsmallChunksTotalSizeisExplicitGCConcurrentLimit running time of eventActive ThreadsresultrecordingDurationBCurrent IHOP threshold in percent of the internal target occupancyvalidationCounterYoung Garbage Collection+Revoked biases for all instances of a classjdk.OldGarbageCollection"Number of incoming bits per second	DirectoryrecentMutatorDuration	committedaddressClass Parked Onjdk.ClassLoad	Old Value	truncatedEnabled-Target for runtime vs garbage collection timeNetwork InterfacefastTimeFrequency
 objectSizeStack Trace1Time stopped because of GC during last time sliceunallocatedCapacity
 validUntilinfinityLast Known Heap Usagejdk.DumpReasonCommitted End AddressStart	Code HeapKData could not be copied out from a buffer, typically because of contentionPrediction Activeempty#Loader Constraints Table StatisticsGC Worker IdentifierUSum of all the times in which Java execution was paused during the garbage collection	endOfFilepayloadgcTime3Percentage, represented as a number between 0 and 1EMemory related evacuation statistics during GC for the old generation'Garbage collection performed by the JVMjdk.ObjectAllocationOutsideTLAB%Number of context switches per second
 CPU SharesExceptions CreatedrecentMutatorAllocationSizeCompilerconcurrentGCThreadsPeak ThreadsrunningThreadCountGC ThresholdJVM shutting downExperimentaltenuringThresholdGUpper limit for the age of how old objects to keep in the survivor areajdk.types.G1YCTypebucketCountVarianceObject ReferencesClass of object waited onStatejdk.TLSHandshakejdk.GCPhaseParalleljdk.StringFlag	heapSpaceminBlockLengthCode Cache StatisticsEvent IdlocaleAllocation RegionsoldCollector6Whether a dynamic number of GC threads are used or notDisabled Explicit GC	File ReadaccumulatedCountproviderrootcompilerAge	CPU Usage	Old SpaceMemory Address	chunkSizeinitialSizereservedTopAddressOld Garbage CollectionMethod Profiling Sample Native:Number of concurrent threads to use for garbage collectionClass Count
 throwables	totalSizeTLAB Refill Waste LimitG1 Adaptive IHOP StatisticsCutoffNumber of Regionsjdk.ShutdownEnd address of the space
-sweptCount(Protection Domain Cache Table StatisticstDescribes the detection of an uncommon situation in a compiled method which may lead to deoptimization of the methodInstructioncores	Long FlagContent TypeVirtualization InformationusesCompressedOopsperiodGC Time RatioredefinedClassbyteDeserializationCompiler ConfigurationstandardCompileCount/The configuration of the garbage collected heapjdk.types.FrameTypecodeBlobTypeJNI Critical ThreadsAllocation in new TLAB!jdk.SafepointStateSynchronizationHeap Address Size (in bits)jdk.ContainerMemoryUsageSpecialized Chunks Total SizepredictedAllocationRate	ZGC UnmapWasted (failure)minTLABSizejava.lang.StringInitiating Class Loader
+sweptCount(Protection Domain Cache Table StatisticstDescribes the detection of an uncommon situation in a compiled method which may lead to deoptimization of the methodInstructioncores	Long FlagContent TypeVirtualization InformationusesCompressedOops
+PLAB FillsperiodGC Time RatioredefinedClassbyteDeserializationCompiler ConfigurationnumDirectAllocatedstandardCompileCount/The configuration of the garbage collected heapjdk.types.FrameTypecodeBlobTypeJNI Critical ThreadsAllocation in new TLAB!jdk.SafepointStateSynchronizationHeap Address Size (in bits)jdk.ContainerMemoryUsageSpecialized Chunks Total SizepredictedAllocationRate	ZGC UnmapWasted (failure)minTLABSizejava.lang.StringInitiating Class Loader
 Frame TyperecordingStart
-PercentageUnloaded ClasscpuSystemTimeZGC Statistics CounterEnding address of the moduleNew Java ThreadInvalidated Compilations	superTypeSpecialized Chunks5Extra information specific to Old Garbage CollectionsInitial Tenuring ThresholdMaximum Heap SizemonitorClasspidjdk.BiasedLockClassRevocation!jdk.MetaspaceChunkFreeListSummarycipherSuiteJIT Restartjdk.CPUTimeStampCounterflushIdCounterjdk.SystemProcessCertificate PositionJava Thread Startjdk.types.FlagValueOriginJVM ShutdownClass Loading StatisticsTimeout
-Code CacheAllocation TimebucketCountMaximumSmall ChunkscpuÑThe relative weight of the sample. Aggregating the weights for a large number of samples, for a particular class, thread or stack trace, gives a statistically accurate representation of the allocation pressurebucketCountAverage200GC Phase Pause Level 3Non-profiled SizeGC Phase Pause Level 4201GC Phase Pause Level 1202jdk.BiasedLockRevocationGC Phase Pause Level 2203204jdk.types.Module205jdk.GCPhaseConcurrent8Certificate position in chain of trust, 1 = trust anchor206Recent Mutator Allocation Size207208209Inflation CausemetadataTypeReserved	CPU Quota#jdk.ShenandoahHeapRegionStateChange
-Full CountProfiled SizecauseYNumber of times that user memory requests in the container have exceeded the memory limitCode Blob TypeObject Allocation SampleRemote Hostjdk.jfr.Name210211212213Region End WastedtieredCompilation	Peer HostMetaspace Object TypeException StatisticsCompile Phase-Total count of processed references during GCjdk.NativeMethodSamplejdk.settings.PeriodTotal lost amount for threadhAmount of physical memory and swap space, in bytes, that is currently allocated in the current container
+PercentageUnloaded ClasscpuSystemTimeZGC Statistics CounterNew Java ThreadInvalidated Compilations	superTypeSpecialized Chunks5Extra information specific to Old Garbage CollectionsInitial Tenuring ThresholdMaximum Heap SizemonitorClasspidjdk.BiasedLockClassRevocation!jdk.MetaspaceChunkFreeListSummarycipherSuiteJIT Restartjdk.CPUTimeStampCounterflushIdCounterjdk.SystemProcessCertificate PositionJava Thread Startjdk.types.FlagValueOriginJVM ShutdownClass Loading StatisticsTimeout
+Code CacheAllocation TimebucketCountMaximumSmall ChunkscpuÑThe relative weight of the sample. Aggregating the weights for a large number of samples, for a particular class, thread or stack trace, gives a statistically accurate representation of the allocation pressurebucketCountAverage200GC Phase Pause Level 3Non-profiled Size201GC Phase Pause Level 4GC Phase Pause Level 1202jdk.BiasedLockRevocationGC Phase Pause Level 2203204jdk.types.Module205jdk.GCPhaseConcurrent8Certificate position in chain of trust, 1 = trust anchor206207Recent Mutator Allocation Size208209Inflation CausemetadataTypeReserved	CPU Quota#jdk.ShenandoahHeapRegionStateChange
+Full CountProfiled SizecauseYNumber of times that user memory requests in the container have exceeded the memory limitCode Blob TypeObject Allocation Samplejdk.jfr.NameRemote Host210211212numPlabsFilled213214Region End WastedtieredCompilation	Peer HostMetaspace Object TypeException StatisticsCompile Phase-Total count of processed references during GCjdk.NativeMethodSamplejdk.settings.PeriodTotal lost amount for threadhAmount of physical memory and swap space, in bytes, that is currently allocated in the current container
 jvmVersionjdk.jfr.TransitionToRevoked bias of objectrecordingIdtlabSizeCompilation*Container memory usage related informationString Flag ChangedAmount lost datarActivation of Reserved Stack Area caused by stack overflow with ReservedStackAccess annotated method in call stack
 memoryUsedBlock IO Request CountUnmappedstatejdk.ZAllocationStalljdk.X509Validationjdk.DirectBufferStatistics
 Bytes Readjdk.types.JavaMonitorAddressFilter StatusHeapEvacuation InformationJCharacteristics and descriptions of the processor(s) the JVM is running on>Initial age limit for how old objects to keep in survivor areajdk.jfr.TransitionFromjdk.types.CalleeMethodPrevious OwnermaxTenuringThresholdClass Modification CountCPU Loadjdk.jfr.Percentage	Timestampjdk.types.OldObjectRootTypeClass Loader StatisticsCPU System Time	osVersionObject DescriptionContainer ConfigurationcontainerTypeInitial System PropertytenuringAgeEntry CountunmappedParallel GC ThreadsMemory LimitJAllocation rate of the mutator in the most recent interval in bytes/secondSocket Write6The total number of threads at the start of safe point Operating system process startedJava Class LoaderTotal ThreadsUncommittedjdk.jfr.Frequency!The object is this many hops awaysourceDouble Flag ChangedSize of arrayG1 MMU InformationrequiredModuleTenuring DistributionAverage Bucket CountProcess StartweightfilterStatusKey TypemediumChunksContainer IO Usage]Total available run-time allowed during each scheduling period for all tasks in the containerPredicted Marking DurationRequired Modulejdk.SafepointCleanupUnallocatedPeak Time Fraction Sweepjdk.ExceptionStatisticsJava Development Kitjdk.ObjectAllocationInNewTLABGC Phase Concurrent Level 1cSetUsedBeforeMethod NameIf end of stream was reached
-Object AgeupdaterEden Used Size_Total size of all allocated metaspace blocks for hidden classes (each chunk has several blocks)	dataSpace&A set of container specific attributesjvmUser&Container IO usage related informationstartTotal Object Size	Safepoint7Information about a Shenandoah heap region state changeshorttime-Total memory occupied by objects within PLABsGC ConfigurationJInternal target old generation occupancy to reach at the start of mixed GCdefaultValueMetaspace SummaryModules+Description of JVM and the Java applicationCountjdk.IntFlag'Bytes allocated by objects in the spaceœObject survived scavenge and was copied to a new Promotion Local Allocation Buffer (PLAB). Supported GCs are Parallel Scavange, G1 and CMS with Parallel New. Due to promotion being done in parallel an object might be reported multiple times as the GC threads race to copy all objects.Transition To7How many items were added since last event (per second)Networkvalue-1value-0value-2jdk.ObjectCount.Information about a G1 heap region type changejdk.settings.ThrottleTime Spent Sweepingjdk.ZRelocationSetInt Flag ChangedStack FramessuccededSystem ProcessMetaspace Allocation FailureObject#jdk.types.ShenandoahHeapRegionStateLine NumbercSetRegionsjdk.jfr.Periodthrottlejdk.types.GCThresholdUpdaterObject Count	timeSliceProcess IdentifierprofiledSize
-Java ClassHidden Class LoaderSemantic meaning of a valueprotocolVersionPending GC IdentifierException MessageJava Thread Name Current old generation occupancyjdk.X509Certificate$Number of bytes read from the socketG1 Heap Region Informationjdk.ContainerConfiguration7Statistics related to current adaptive IHOP calculationExecution of a VM OperationTypejdk.GCPhasePauseBiased Lock Self Revocationcharjdk.ClassDefineNetwork Utilizationjdk.jfr.Eventjdk.types.MetaspaceSizescpuSlicePeriod@The configuration of the Thread Local Allocation Buffers (TLABs)Deoptimization ReasonSetting Name
-Skip ValueCPU Throttled Timejdk.JavaMonitorInflatemethodCountfailureWastegroupVM Operation Typejdk.JavaMonitorWaitFlagBucket Count Standard Deviationjdk.types.MethodRecording DurationRedefine Classesjdk.GCReferenceStatisticsContainer Memory Usage#Who requested the recording and whyCompilation LevelValue Based ClassAllocation outside TLABjdk.G1AdaptiveIHOPMemory Fail Countjdk.LongFlagChanged/Measure of how often something occurs, in HertzField ModifiersYoung Generation ConfigurationUnsigned Long Flag jdk.types.ZStatisticsCounterType	dimensionreadRateOSR Bytes CompiledGC Phase PausevalueBasedClassjvmArgumentsDatarecentAllocationRate;Total memory wasted within PLABs due to alignment or refill
-sweepCountZGC Relocation Setjdk.ObjectCountAfterGCTotal Hidden Classes Block SizePrevious Monitor OwnerSizeCommitted Sizejdk.CodeCacheConfigurationjdk.GarbageCollectionflushedjdk.ZStatisticsCounterpathMemory and Swap LimitRevoked Classjdk.types.ThreadGroupjvmName8Number of parallel threads to use for garbage collection'G1 Evacuation Memory Statistics for OldparallelGCThreadsjdk.BooleanFlagChanged"Shenandoah Heap Region Informationjdk.types.ClassLoaderMethodJava Thread Sleep	AllocatedspecializedChunksTotalSizeBytecode InstructioncodeCacheMaxCapacityEnd of FileexceptionTypejdk.CodeCacheStatisticsjdk.G1HeapRegionInformation0Allocation in new Thread Local Allocation Bufferblockingjdk.JITRestartMethods Flushed#Array or null if it is not an arrayRegions Freed Synchronize run state of threadsjdk.types.BytecoderegionsFreedOS FrequencyEnd of StreamRecording ReasonserviceRequestsCallerinsertionRateisOsrIHOP Target OccupancycutoffCPU User Time:Whether System.gc() will cause a garbage collection or notzombifiedCountjdk.SafepointEndSweep Code CacheInitial Security Property2Size of the committed memory for the virtual space
+Object AgeupdaterEden Used Size_Total size of all allocated metaspace blocks for hidden classes (each chunk has several blocks)	dataSpace&A set of container specific attributesjvmUser&Container IO usage related informationstartTotal Object Size	Safepoint7Information about a Shenandoah heap region state changeshorttime-Total memory occupied by objects within PLABsGC ConfigurationJInternal target old generation occupancy to reach at the start of mixed GCdefaultValueMetaspace SummaryModules+Description of JVM and the Java applicationCountjdk.IntFlag'Bytes allocated by objects in the spaceœObject survived scavenge and was copied to a new Promotion Local Allocation Buffer (PLAB). Supported GCs are Parallel Scavange, G1 and CMS with Parallel New. Due to promotion being done in parallel an object might be reported multiple times as the GC threads race to copy all objects.Transition To7How many items were added since last event (per second)Networkvalue-1value-0value-2jdk.ObjectCount.Information about a G1 heap region type changejdk.settings.ThrottleTime Spent Sweepingjdk.ZRelocationSetInt Flag ChangedStack FramessuccededSystem ProcessMetaspace Allocation FailureObject#jdk.types.ShenandoahHeapRegionStateLine NumbercSetRegionsjdk.jfr.Periodthrottlejdk.types.GCThresholdUpdaterObject Count	timeSlice151415131512Process IdentifierprofiledSize
+Java ClassHidden Class LoaderSemantic meaning of a valueprotocolVersionPending GC IdentifierException MessageJava Thread Name Current old generation occupancyjdk.X509Certificate$Number of bytes read from the socketG1 Heap Region Information1525jdk.ContainerConfiguration7Statistics related to current adaptive IHOP calculationExecution of a VM OperationTypejdk.GCPhasePause1521Biased Lock Self Revocationcharjdk.ClassDefine1527Network Utilization1526jdk.jfr.Eventjdk.types.MetaspaceSizescpuSlicePeriod@The configuration of the Thread Local Allocation Buffers (TLABs)Deoptimization ReasonSetting Name
+Skip ValueCPU Throttled Timejdk.JavaMonitorInflatemethodCountfailureWastegroupVM Operation Typejdk.JavaMonitorWaitFlagBucket Count Standard Deviation1547jdk.types.Method15461544Recording DurationRedefine Classesjdk.GCReferenceStatisticsContainer Memory Usage#Who requested the recording and whyCompilation LevelValue Based Class1560Allocation outside TLABjdk.G1AdaptiveIHOPMemory Fail Countjdk.LongFlagChanged/Measure of how often something occurs, in Hertz1557155615551553Field ModifiersYoung Generation ConfigurationUnsigned Long Flag jdk.types.ZStatisticsCounterType	dimension1559readRateOSR Bytes CompiledGC Phase Pause1571valueBasedClassjvmArgumentsDatarecentAllocationRate;Total memory wasted within PLABs due to alignment or refill
+sweepCountZGC Relocation Setjdk.ObjectCountAfterGCTotal Hidden Classes Block SizePrevious Monitor OwnerSize1583Committed Size1582jdk.CodeCacheConfigurationjdk.GarbageCollectionflushedjdk.ZStatisticsCounter1579path15771575Memory and Swap LimitRevoked Classjdk.types.ThreadGroupjvmName8Number of parallel threads to use for garbage collection'G1 Evacuation Memory Statistics for OldparallelGCThreadsjdk.BooleanFlagChanged"Shenandoah Heap Region Informationjdk.types.ClassLoaderMethodJava Thread Sleep	AllocatedspecializedChunksTotalSizeBytecode InstructioncodeCacheMaxCapacity1584End of FileexceptionTypejdk.CodeCacheStatisticsjdk.G1HeapRegionInformation0Allocation in new Thread Local Allocation Bufferblockingjdk.JITRestartNumber of direct allocationsMethods Flushed#Array or null if it is not an arrayRegions Freed Synchronize run state of threadsjdk.types.BytecoderegionsFreedOS FrequencyEnd of StreamRecording ReasonserviceRequestsCallerinsertionRateisOsrIHOP Target OccupancycutoffCPU User Time:Whether System.gc() will cause a garbage collection or notzombifiedCountjdk.SafepointEndSweep Code CacheInitial Security Property2Size of the committed memory for the virtual space
 topAddress!The name of the Garbage Collector<Aggregate system time consumed by all tasks in the containerFreed Memory8Information about the CPU time stamp mechanism / (RD)TSCtimedOuthiddenClassCountFNumber of effective processors that this container has available to it	Read RateMonitor Inflation CausecountjavaThreadId=The number of threads running at the beginning of state checkCode Cache ConfigurationPromotion outside PLABjdk.settings.ThresholdCPU Slice Periodjava.lang.annotation.AnnotationSweep IdentifiermemoryLimit1Size of the reserved memory for the virtual space6Record event with duration above or equal to thresholdBase AddressWaiting on a Java monitordurationA point in timeField8The configuration of the survivors of garbage collectionsumOfPausesCode Sweeper Statistics	jdk.G1MMU
 stallCountRecent Allocation RateGC Root Systemrelocatejdk.IntFlagChangedjdk.ProcessStartLoaded Class Count9End address of the committed memory for the virtual spaceVAn object derived from java.lang.Error has been created. OutOfMemoryErrors are ignoredŒRelative weighting of processes with the container used for prioritizing the scheduling of processes across all containers running on a hostMemory Soft LimitspecializedChunksFailure MessageCPU Elapsed Slicesjdk.types.CopyFailedCallee Methodaction
-Valid FromSystem Mode CPU LoadEffective CPU CountbNumber of time-slice periods that the CPU has been throttled or limited due to exceeding CPU quotajModule to which the package is qualifiedly exported. If null or N/A, the package is unqualifiedly exportedjdk.ConcurrentModeFailureMethods Zombifiedjdk.types.ClassRedefinitionIdDouble FlagCommand Linefieldjdk.G1HeapSummaryCompilation Resulting SizeMaximum wait timeonOutOfMemoryErrorskipgcThresholdĞTenuring age of a surviving object before being copied. The tenuring age of an object is a value between 0-15 and is incremented each scavange the object survives. Newly allocated objects have tenuring age 0.cpuThrottledTimeString Table StatisticsPlaceholder Table StatisticskeyTypeJava Thread Id Time slice used to calculate MMUbytesWrittenValidation CounterReferrer Objectjdk.jfr.MemoryAddress
+Valid FromSystem Mode CPU LoadEffective CPU CountbNumber of time-slice periods that the CPU has been throttled or limited due to exceeding CPU quotauserTimejModule to which the package is qualifiedly exported. If null or N/A, the package is unqualifiedly exportedjdk.ConcurrentModeFailureMethods Zombifiedjdk.types.ClassRedefinitionIdDouble FlagCommand Linefieldjdk.G1HeapSummaryCompilation Resulting SizeMaximum wait timeonOutOfMemoryErrorskipgcThresholdĞTenuring age of a surviving object before being copied. The tenuring age of an object is a value between 0-15 and is incremented each scavange the object survives. Newly allocated objects have tenuring age 0.cpuThrottledTimeString Table StatisticsPlaceholder Table StatisticskeyTypeJava Thread Id Time slice used to calculate MMUbytesWrittenValidation CounterReferrer Objectjdk.jfr.MemoryAddress
 Park UntilbMaximum amount of physical memory and swap space, in bytes, that can be allocated in the container'Object alignment (in bytes) on the heap
 switchRate	cpuSharesJava Monitor Blocked(Whether System.gc() is concurrent or notsubjectRoot Descriptionjdk.types.OldObjectArrayAllocation Regions BeforeBLength of the scheduling period for processes within the container5Aggregate time consumed by all tasks in the containerGC Phase ParallelThread CPU LoadPeak Time Full Sweep1Describes the result of a method inlining attempthostJava Thread StatisticsCompiler Phase
 Write Ratejdk.InitialSystemPropertyjdk.ThreadAllocationStatisticsJVM Start TimeGC Threshold Updaterjdk.UnsignedLongFlagChangedjdk.jfr.EnabledSamplertrueValue
-DescriptorMemory and Swap UsageDense PrefixAllocation Regions After	fullCountReserved Stack ActivationDestinationjdk.types.GCCauseThe root typeheapAddressBitsSymbolObject referencing this objectmaxSizejdk.types.DeoptimizationActionUser mode thread CPU loadMonitor AddresstotalTimeSpentallocationSizeGC RootsweeperEnabled1The reason for triggering this Garbage CollectionFull path of the fileBiased Lock Class RevocationThread Context Switch Ratethread jdk.types.G1EvacuationStatisticsReserved End AddressINumber of objects derived from java.lang.Throwable that have been createdCode Sweeper Configurationjdk.NetworkUtilizationswapMemoryUsagejdk.DeserializationOriginjdk.ObjectAllocationSampleConfigurationusedSizeplabSizejdk.CodeCacheFullbucketCount/Element is not to be shown to a user by default10Classes1112Java Application13141516regionEndWaste1718module19eventThreadDisable Further BiasingSmall Chunks Total SizepauseTargetUpdate MetadatatotalSweepTimejniCriticalThreadCount20Key2122Snapshot of a threads state23Initial Size242526272829Young Garbage CollectorG1 Heap Region Typelong8Key-value pairs for environment variables at JVM startup0Revoked bias of object biased towards own threadCipher Suitejdk.GCSurvivorConfiguration303132Caller Method33jdk.PhysicalMemorytargetModule34Bytecode Index35=Information about a specific heap region in the Shenandoah GC36373839	bytesReadThread StateStart address of the spacejdk.PlaceholderTableStatisticsSafepointing begin	objectAgeen_CA	Frequency4041currentOccupancy	operation42Exported43	PLAB Size3Memory usage after GC in the collection set regions4445humongousChunks46474849Address of object waited ongcTimeRatioSource ModulesweepThresholdjdk.DeoptimizationMinimum TLAB Size8End address of the reserved memory for the virtual spaceWriting data to a file5051jdk.ExecuteVMOperation525354Object Alignment55
+DescriptorMemory and Swap UsageDense PrefixAllocation Regions After	fullCountReserved Stack ActivationDestinationjdk.types.GCCauseThe root typeheapAddressBitsSymbolObject referencing this objectmaxSizejdk.types.DeoptimizationActionUser mode thread CPU loadMonitor AddresstotalTimeSpentallocationSizeGC RootsweeperEnabled1The reason for triggering this Garbage CollectionFull path of the fileBiased Lock Class RevocationThread Context Switch Ratethread jdk.types.G1EvacuationStatisticsReserved End AddressINumber of objects derived from java.lang.Throwable that have been createdCode Sweeper Configurationjdk.NetworkUtilizationswapMemoryUsagejdk.DeserializationOriginjdk.ObjectAllocationSampleConfigurationusedSizeplabSizejdk.CodeCacheFullbucketCount/Element is not to be shown to a user by default10Classes1112Java Application13141516regionEndWaste1718module19eventThreadDisable Further BiasingSmall Chunks Total SizepauseTargetUpdate MetadatatotalSweepTimejniCriticalThreadCount20Key2122Snapshot of a threads state23Initial Size242526272829Young Garbage CollectorG1 Heap Region Typelong8Key-value pairs for environment variables at JVM startup0Revoked bias of object biased towards own threadCipher Suitejdk.GCSurvivorConfiguration303132Caller Method33jdk.PhysicalMemorytargetModule34Bytecode Index35=Information about a specific heap region in the Shenandoah GC36373839	bytesReadThread StateStart address of the spacejdk.PlaceholderTableStatisticsSafepointing begin	objectAge	Frequency40System Time41currentOccupancy	operation42Exported43	PLAB Size3Memory usage after GC in the collection set regions4445humongousChunks46474849Address of object waited ongcTimeRatioSource ModulesweepThresholdjdk.DeoptimizationMinimum TLAB Size8End address of the reserved memory for the virtual spaceWriting data to a file5051jdk.ExecuteVMOperation525354Object Alignment55
 simpleType56
 Total Size575859JVM Command Line ArgumentsdataTransferredWastedJava Monitor WaitUnsigned Int Flag ChangedPromotion FailedAdaptorsMethod Inlining
 Array Sizejdk.UnsignedIntFlag#Shenandoah Heap Region State Changejdk.types.ChunkHeaderjdk.DataLossHumongous ChunksException Type6061ZGC Allocation Stall6263646566	Used Size67previousOwner6869Parent Class LoaderDiagnosticsHidden Classesjdk.types.DeoptimizationReasonOS Thread Id	modifiersOn Stack Replacementjdk.ThreadSleepEmpty707172>Extra information specific to Parallel Old Garbage CollectionsCurrent IHOP Threshold737475jdk.ContainerCPUThrottling76777879jdk.types.OldObjectField(Safepointing begin running cleanup tasksreservedSize	System GC
@@ -32,2149 +33,807 @@ entryCountClass RedefinitiontotalFootprintTotal memory allocated by PLABs
 Total timejdk.types.StackFrameThread GroupMemory UsedSecurityjdk.LongFlagexpansionSize90919293allocationTime94failureUsed9596979899Security Providerjdk.ContainerIOUsagedefiningClassLoaderhiddenClassLoaderobjectClassBucket Count VarianceObject descriptionReserved Top
 Old ObjectNNumber of block IO requests to the disk that have been issued by the container
 Class Load8Indicates whether the adaptive IHOP prediction is activeGDescription of the OS the JVM runs on, for example, a uname-like output
-IterationsCommitted memory for this space'If the operation occured at a safepointDescriptionconstantPoolFlush IdentifierInitial Environment VariableTenuredjdk.types.ThreadStateJVM Name	fromSpace)Reason for writing recording data to diskClass LoadingVCurrent predicted time from the end of the last concurrent start to the first mixed GCCompiler StatisticsnonProfiledSizeIf end of file was reachedZ Statistics SamplerZ Statistics CounterHeap Address Size	hwThreadsCoresjdk.types.VirtualSpacejdk.CompilerStatisticsConcurrent Mode failedEvacuation Failed Data	metaspacefastTimeAutoEnabledjdk.types.ObjectSpacePromotion Failed Datajdk.GCPhaseConcurrentLevel1gDescribes various phases of the compilation process like inlining or string optimization related phasesjdk.jfr.LabelNon-nmethod Size	thresholdjdk.types.InflateCausefloatiHint to the operating system that allows groups to specify the minimum required amount of physical memoryGC Survivor Configuration1656Reserved SizeMedium ChunksreservedEndCauseAdditional buffer sizeNThe number of Java threads in a critical section when the GC locker is startedjdk.NativeLibraryfrommemorySoftLimit'Container CPU usage related informationDeoptimization1659Timespan0 nsPromotion in new PLABAlgorithm Name>How far bucket lengths are spread out from their average valueGC TimeJVM Version16681665GThe configuration of the young generation of the garbage collected heapjdk.types.NetworkInterfaceName16624Restart of the JIT compilers after they were stoppedmachineTotalZ Page Typejdk.SystemGCFilter Configured:Number of threads created and also started since JVM startarrayTotal Block Sizenotifiervaluejdk.GCPhasePauseLevel4jdk.GCPhasePauseLevel1jdk.GCPhasePauseLevel3jdk.GCPhasePauseLevel2Heap SummaryUnmapping of memory	usesTLABsintcommandunloadedClass9A code heap is full, this leads to disabling the compilerMemory UsageAccess ModifiersFile SystemRoot information;Total memory left unused in regions where evacuation failedjdk.JavaMonitorEnterMinimum Block Lengthjdk.jfr.internal.Throttlejdk.ZStatisticsSamplerStringsettingRuntimePromotion of an object failedjdk.types.SafepointId#Force updates to be written to fileNon-blockingjdk.JavaExceptionThrowjdk.CPULoadjdk.ActiveSettingjdk.G1EvacuationOldStatisticsCollection Set RegionsGC phases for parallel workersCPU Throttled SlicesEntriesversion9Size of the allocated PLAB to which the object was copiedoldSpaceFlag Value OrigindisableBiasing jdk.YoungGenerationConfigurationType of Servicejdk.PromoteObjectInNewPLABCPU Information
+IterationsCommitted memory for this space'If the operation occured at a safepointDescriptionconstantPoolFlush IdentifierInitial Environment VariableTenuredjdk.types.ThreadStateJVM Name	fromSpace)Reason for writing recording data to diskClass LoadingVCurrent predicted time from the end of the last concurrent start to the first mixed GCCompiler StatisticsnonProfiledSizeIf end of file was reachedZ Statistics SamplerZ Statistics CounterHeap Address Size	hwThreadsCoresjdk.types.VirtualSpacejdk.CompilerStatisticsConcurrent Mode failedEvacuation Failed Data	metaspacefastTimeAutoEnabledjdk.types.ObjectSpacePromotion Failed Datajdk.GCPhaseConcurrentLevel1gDescribes various phases of the compilation process like inlining or string optimization related phasesjdk.jfr.LabelNon-nmethod Size	thresholdjdk.types.InflateCausefloatiHint to the operating system that allows groups to specify the minimum required amount of physical memoryGC Survivor ConfigurationReserved SizeMedium ChunksreservedEndCauseAdditional buffer sizeNThe number of Java threads in a critical section when the GC locker is startedjdk.NativeLibraryfrommemorySoftLimit'Container CPU usage related informationDeoptimizationTimespan0 nsPromotion in new PLABAlgorithm Name>How far bucket lengths are spread out from their average valueGC TimeJVM VersionGThe configuration of the young generation of the garbage collected heapjdk.types.NetworkInterfaceName4Restart of the JIT compilers after they were stoppedmachineTotalZ Page Typejdk.SystemGCFilter Configured:Number of threads created and also started since JVM startarrayTotal Block Sizenotifiervaluejdk.GCPhasePauseLevel4jdk.GCPhasePauseLevel1jdk.GCPhasePauseLevel3jdk.GCPhasePauseLevel2Heap SummaryUnmapping of memory	usesTLABsintcommandunloadedClass9A code heap is full, this leads to disabling the compilerMemory UsageAccess ModifiersFile SystemRoot information;Total memory left unused in regions where evacuation failedjdk.JavaMonitorEnterMinimum Block Lengthjdk.jfr.internal.Throttlejdk.ZStatisticsSamplerStringsettingRuntimePromotion of an object failedjdk.types.SafepointId#Force updates to be written to fileNon-blockingjdk.JavaExceptionThrowjdk.CPULoadjdk.ActiveSettingjdk.G1EvacuationOldStatisticsCollection Set RegionsGC phases for parallel workersCPU Throttled SlicesAGC CPU Time information. Supported: G1GC, ParallelGC and SerialGCEntriesversion9Size of the allocated PLAB to which the object was copiedoldSpaceFlag Value OrigindisableBiasing jdk.YoungGenerationConfigurationType of Servicejdk.PromoteObjectInNewPLABCPU Information
 Java ErrorField Information_Total size of all allocated metaspace chunks for hidden classes (each chunk has several blocks)allocationRegionsUsedAfterjdk.SecurityProviderServicecompileCountMILLISECONDS_SINCE_EPOCH"Security Provider Instance Request
-annotationNetwork Interface NamePathBiased Lock RevocationTLS Handshakejdk.SymbolTableStatisticsFast Time Frequency/Number of bytes read from the file (possibly 0)GC Reference StatisticsContainer TypeRecord stack tracesjdk.JVMInformationaRegions chosen as allocation regions during evacuation (includes survivors and old space regions)certificateId1263Concurrent Explicit GC
-osThreadIdcpuQuotaCode Sweeperjdk.ReservedStackActivation=Serial numbers from X.509 Certificates forming chain of trust9Max time allowed to be spent on GC during last time slicejdk.FileWritejdk.UnsignedIntFlagChanged"Start address of the virtual spaceParallel Scavenge Heap Summary1275threadCount12731271Name of fieldReference TypeObject Tenuring Age1269osFrequency1267port1265jdk.ZRelocationSetGroup/Total amount of physical memory available to OSjdk.YoungGarbageCollectionZGC UncommitReserved memory for this spaceendOfStream12851283jdk.InitialEnvironmentVariable1281	directoryjdk.types.OldObjectRootSystemcpuUserTime12791277	TruncatedendoldValueGCjdk.TenuringDistributionclassLoaderDatajdk.jfr.BooleanFlagUndo WastedRunning thread&The kind of compressed oops being usedAllocation of a ZPageGMemory related evacuation statistics during GC for the young generation1295message1293jdk.BiasedLockSelfRevocation1291referrerUnsigned Int Flagjdk.CompilerConfiguration1289jdk.ModuleExportTransition From1287edenUsedSizejava.lang.Classjdk.SafepointCleanupTask	Heap Dumpage4Basic statistics related to current IHOP calculationjdk.settings.Enabled	TLAB SizeStandard Bytes Compiled7Total memory wasted at the end of regions due to refilljdk.AllocationRequiringGCcallee(Throttles the emission rate for an eventSegments*Snapshot of a threads state when in nativeZGC Relocation Set GroupSafepoint EndArray ElementsATarget old generation occupancy to reach at the start of mixed GC1298HiddensweepIdsocketspeerPort	algorithmjdk.HeapDumpBytes WrittenTotal Count(jdk.ProtectionDomainCacheTableStatisticsStarting address of the moduleVM OperationParallel Old Garbage Collectionjdk.ThreadCPULoadsystemRecording IdIdRetransform ClassesdensePrefix	firstSizeUnsigned Long Flag ChangedcpuThrottledSlicesBlock IO TransferSecurity Property ModificationWait has been timed outparentClassLoaderhiddenBlockSizeMetadata TypeDepthsegmentsobjectReferencesjdk.ThreadParkjdk.SweepCodeCacheAmountosrBytesCompiledosNamejdk.SocketReadjdk.ActiveRecording^Number of time-slice periods that have elapsed if a CPU quota has been setup for the containerCurrent IHOP thresholdEvacuation StatisticsTarget for GC pausesFHow far bucket lengths are spread out from their mean (expected) valuejdk.GCTLABConfiguration&Total amount of physical memory in use#jdk.ShenandoahHeapRegionInformation
+annotationNetwork Interface NamePathBiased Lock RevocationTLS Handshakejdk.SymbolTableStatisticsFast Time Frequency/Number of bytes read from the file (possibly 0)GC Reference StatisticsContainer TypeRecord stack tracesjdk.JVMInformationaRegions chosen as allocation regions during evacuation (includes survivors and old space regions)certificateIdConcurrent Explicit GC
+osThreadIdcpuQuotaCode Sweeperjdk.ReservedStackActivation=Serial numbers from X.509 Certificates forming chain of trust9Max time allowed to be spent on GC during last time slicejdk.FileWritejdk.UnsignedIntFlagChanged"Start address of the virtual spaceParallel Scavenge Heap SummarythreadCountName of fieldReference TypeObject Tenuring AgeosFrequencyportjdk.ZRelocationSetGroup/Total amount of physical memory available to OSjdk.YoungGarbageCollectionZGC UncommitReserved memory for this spaceendOfStreamjdk.InitialEnvironmentVariable	directoryjdk.types.OldObjectRootSystemcpuUserTime12791277	TruncatedendoldValueGCjdk.TenuringDistributionclassLoaderDatajdk.jfr.BooleanFlagUndo WastedRunning thread&The kind of compressed oops being usedAllocation of a ZPageGMemory related evacuation statistics during GC for the young generationmessagejdk.BiasedLockSelfRevocationreferrerUnsigned Int Flagjdk.CompilerConfigurationjdk.ModuleExportTransition FromedenUsedSizejava.lang.Classjdk.SafepointCleanupTask	Heap Dumpage4Basic statistics related to current IHOP calculationjdk.settings.Enabled	TLAB SizeStandard Bytes Compiled7Total memory wasted at the end of regions due to refilljdk.AllocationRequiringGCcallee(Throttles the emission rate for an eventSegments*Snapshot of a threads state when in nativeZGC Relocation Set GroupSafepoint EndArray ElementsATarget old generation occupancy to reach at the start of mixed GCHiddensweepIdsocketspeerPort	algorithmjdk.HeapDumpBytes WrittenTotal Count(jdk.ProtectionDomainCacheTableStatisticsStarting address of the moduleVM OperationParallel Old Garbage Collectionjdk.ThreadCPULoadsystemRecording IdIdRetransform ClassesdensePrefix	firstSizeUnsigned Long Flag ChangedcpuThrottledSlicesBlock IO TransferSecurity Property ModificationWait has been timed outparentClassLoaderhiddenBlockSizeMetadata TypeDepthsegmentsobjectReferencesjdk.ThreadParkjdk.SweepCodeCacheAmountosrBytesCompiledosNamejdk.SocketReadjdk.ActiveRecording^Number of time-slice periods that have elapsed if a CPU quota has been setup for the containerCurrent IHOP thresholdEvacuation StatisticsTarget for GC pausesFHow far bucket lengths are spread out from their mean (expected) valuejdk.GCTLABConfiguration&Total amount of physical memory in use#jdk.ShenandoahHeapRegionInformation
 Start TimemodeUsed (failure)pagesjdk.PromoteObjectOutsidePLABJVM UserpeakFractionTimejdk.jfr.internal.CutoffRemoval RateRegion RefillsHumongous Chunks Total SizeJVM Information	lockCountG1 Heap Region Type Changejdk.ClassUnload
 File WriteInitial Threads Parameters used in TLS HandshakejTotal time duration, in nanoseconds, that the CPU has been throttled or limited due to exceeding CPU quotajdk.VirtualizationInformationG1 Young Garbage Collection	CommittedJVM Settings File ArgumentsisExplicitGCDisabledjdk.UnsignedLongFlagCode Cache FullReading data from a file	gmtOffsetYoung SpaceMax SizeSafepoint Beginjdk.InitialSecurityPropertyjdk.types.CompileIdnonBlockingRecord eventheapUsed6The maximum bucket length (entries in a single bucket))A directed edge representing a dependency jdk.ParallelOldGarbageCollectioncpuElapsedSlicescallerPredicted Allocation RateuntilreasonCode Sweeper Enabledjdk.jfr.ContentType
-jdk.ZUnmapJava ThreadallocationRegionsUsedBeforeSetting ValueloadedClassCountNotifier Thread	edenSpaceDefining Class LoaderClass UnloadnewValuebytesCopied
+jdk.ZUnmapJava ThreadallocationRegionsUsedBeforeSetting ValueloadedClassCountNotifier Thread	edenSpaceDefining Class LoaderClass UnloadnewValuebytesCopied	User Time
 Key LengthOS Informationjdk.types.GCWhensampledThreadparkedClassjdk.types.SymbolJava Thread Park	succeeded	Fast Timebytecodejdk.CodeSweeperStatistics	Processorjdk.ClassRedefinition*Number of classes unloaded since JVM startTotal Hidden Classes Chunk Sizejdk.jfr.UnsignedflushedCountGC Phase ConcurrentGC IdentifierUNumber of block IO bytes that have been transferred to/from the disk by the containermetaData"Number of outgoing bits per secondA potential memory leakCode Cache Maximum CapacitycommittedSizeG1 Basic IHOP StatisticsactiveCountLong Flag ChangedEvent Emission ThrottleCompilation Identifierjdk.MetaspaceOOMGC Heap Configuration3Pointer to the ClassLoaderData structure in the JVMJava Virtual MachineReason for JVM shutdown<Description of the virtualization technology the JVM runs onjdk.RetransformClassesOld Object SpaceMethods SweptDeoptimization Action*Details of X.509 Certificate parsed by JDKFlight RecordingNumber of regions refilledClass Loaderjdk.JavaErrorThrow?The safepoint (if any) under which this operation was completedTojavaName0Time the mutator ran in the most recent intervalserialNumberjdk.settings.Cutoff
 phaseLevelIf Compressed Oops Are UsedBoolean Flag Changed
-iterationsCompiler Phase TypenametargetOccupancyremovalRatejdk.types.NarrowOopModeClassjdk.types.G1HeapRegionTypehiddenstringParentJava Application ArgumentsdescriptionExported Package	undoWasteSystemDetailedSafepoint Identifierjdk.G1EvacuationYoungStatisticsCompilation Resulting Code SizeSize of promoted objectjdk.types.ReferenceStatistics of direct buffer Number of state check iterationsThe task nameAdditional Buffer	Task NameGC Root TypeObject Class jdk.SecurityPropertyModificationinitiatingClassLoaderinlinedBytesredefinitionIdtotalThreadCountwhenissuerjdk.ModuleRequireSize of the spacejdk.jfr.ThresholdnewRatiojdk.CodeSweeperConfigurationjdk.settings.StackTracecommittedEndCThe size of the young generation relative to the tenured generationJava MethodCompiled Code SizeLoaded ClassOSR CompilationsbaseAddressdoublejdk.ClassLoadingStatistics)The number of times the class has changedLTotal size of all allocated metaspace chunks (each chunk has several blocks)Pages;An object derived from java.lang.Exception has been created	-180000007Extra information specific to Young Garbage CollectionsparentThreadCollection Set AfterModuleBIf the calling thread was blocked until the operation was completetlabRefillWasteLimit=Identifier signifying GC during which the object was promotedEvacuation of an object failedNumber of bucketsLast Marking Duration	increment$The subsystem of origin for the rootenabledsafepointId
+iterationsCompiler Phase TypenametargetOccupancy1709removalRatejdk.types.NarrowOopModeClass1706jdk.types.G1HeapRegionTypehiddenstringParentJava Application ArgumentsdescriptionExported Package	undoWasteSystemDetailed1712Safepoint Identifierjdk.G1EvacuationYoungStatisticsCompilation Resulting Code SizeSize of promoted objectjdk.types.Reference17181715Statistics of direct buffer Number of state check iterationsThe task nameAdditional Buffer	Task NameGC Root TypeObject Class jdk.SecurityPropertyModificationinitiatingClassLoaderinlinedBytesredefinitionIdtotalThreadCountwhenissuerjdk.ModuleRequireSize of the spacejdk.jfr.ThresholdnewRatiojdk.CodeSweeperConfigurationjdk.settings.StackTracecommittedEndCThe size of the young generation relative to the tenured generationJava MethodCompiled Code SizeLoaded ClassOSR CompilationsbaseAddressdoublejdk.ClassLoadingStatistics)The number of times the class has changedLTotal size of all allocated metaspace chunks (each chunk has several blocks)Pages;An object derived from java.lang.Exception has been created7Extra information specific to Young Garbage CollectionsparentThreadCollection Set AfterModuleBIf the calling thread was blocked until the operation was completetlabRefillWasteLimit=Identifier signifying GC during which the object was promotedGC CPU TimeEvacuation of an object failedNumber of bucketsLast Marking Duration	increment$The subsystem of origin for the rootenabledsafepointId
 Process Id
 TLABs Used	startTimebailoutCount
-stackTracejdk.MetaspaceSummary#The number of threads still runningFlushedtenuredinvokedConcurrentMaximum Tenuring Thresholdjdk.types.GCName!Metaspace Chunk Free List Summaryjdk.MetaspaceAllocationFailure1Value should be interpreted as unsigned data typeField modifiersjdk.FileForcejdk.OldObjectSample
+stackTracejdk.MetaspaceSummary#The number of threads still runningFlushedtenuredinvokedConcurrentMaximum Tenuring Thresholdjdk.types.GCName!Metaspace Chunk Free List Summaryjdk.MetaspaceAllocationFailure1Value should be interpreted as unsigned data typeField modifiersjdk.FileForcejIf the object is an array, the number of elements, or minimum value for the type int if it is not an arrayjdk.OldObjectSample
 statisticsBYTESObject Size Object holder for this reference	Profilingjdk.CompilerPhasejdk.ClassLoaderStatisticsModule ExportbytecodeIndexjdk.GCConfigurationusedInvoked ConcurrentEnd AddressCurrent OccupancyobjectAlignmentjdk.ExecutionSample
-Lock CountBytes CopiedSmallest Failed Object Sizejdk.ContainerCPUUsageSafepoint State Synchronization	safepointMinimum Young Generation Sizepackagejdk.BooleanFlagPark Timeout.A duration, measured in nanoseconds by defaultStall Countjdk.types.FlushId1300jdk.PromotionFailedFlush IntervalJava Thread End[Thread requesting operation. If non-blocking, will be set to 0 indicating thread is unknownRunning Threads2Maximum direct buffer capacity the process can useMessageDDetails of Provider.getInstance(String type, String algorithm) callsString FlagAccumulated Threads	CollectorsmallChunksinitialThreadCountHardware ThreadsReading data from a socketamount
-File Force	Data LossTrusted PlatformInsertion Rate1330Daemon ThreadsFromWriting data to a socketClass of allocated object1322$Represents a physical memory addressuserjdk.jfr.Description13291328lastMarkingDurationparentCPU Throttling	peakCountcompressedOopsModeArray InformationPhasesInitial Heap Size&Results of method compilation attemptsjdk.types.GcIdNative Libraryjava.lang.Thread1331*The configuration of the garbage collectorTop Addressjdk.ZUncommitCode Cache Flushing EnabledfTrue if object was promoted to Old space, otherwise the object was aged and copied to a Survivor space5If Thread Local Allocation Buffers (TLABs) are in useCompiler Typejdk.types.StackTrace
-lineNumberInitial Security PropertiesParent Java ThreadusesDynamicGCThreadsbciarrayElementsCPU TimeEvent ThreadswapMemoryLimitjdk.jfr.Categoryjdk.types.OldObjectGcRootjdk.ThreadStartSocket ReadmemoryFailCountSweep ThresholdThread Allocation Statistics
-classSpacejdk.Compilation
-StatisticslongestPause+Memory usage after GC in allocation regionsFirst Failed Object SizeSwitch RateUses Dynamic GC ThreadsfastTimeEnabledjdk.CompilationFailureAllocation Requiring GCjdk.ThreadContextSwitchRate7Results of deserialization and ObjectInputFilter checksIndexMonitor ClassRemote Portjdk.StringFlagChangedVersionField or null if it is an arrayOld Object ArrayAmount of dataOld Object Samplejdk.MetaspaceGCThresholdBucket CountpeakSweepTimemethodReclaimedCountModule RequireDurationRecording SettingsmallestSize
+Lock CountBytes CopiedSmallest Failed Object Sizejdk.ContainerCPUUsage*Ending address of the module, if availableSafepoint State Synchronization	safepointMinimum Young Generation Sizepackagejdk.BooleanFlagPark Timeout.A duration, measured in nanoseconds by defaultStall Countjdk.types.FlushIdjdk.PromotionFailedFlush IntervalJava Thread End[Thread requesting operation. If non-blocking, will be set to 0 indicating thread is unknownRunning Threads2Maximum direct buffer capacity the process can useMessageDDetails of Provider.getInstance(String type, String algorithm) callsString FlagAccumulated Threads	CollectorsmallChunksinitialThreadCountHardware ThreadsReading data from a socketamount
+File Force	Data LossTrusted PlatformInsertion RateDaemon ThreadsFromWriting data to a socketClass of allocated object$Represents a physical memory addressuserjdk.jfr.DescriptionlastMarkingDurationparentCPU Throttling	peakCountcompressedOopsModeArray InformationPhasesInitial Heap Size&Results of method compilation attemptsjdk.types.GcIdNative Libraryjava.lang.Thread*The configuration of the garbage collectorTop Addressjdk.ZUncommitCode Cache Flushing Enabled1350fTrue if object was promoted to Old space, otherwise the object was aged and copied to a Survivor spacejdk.GCCPUTime13475If Thread Local Allocation Buffers (TLABs) are in useCompiler Typejdk.types.StackTrace
+lineNumberInitial Security PropertiesParent Java ThreadusesDynamicGCThreadsbci1362arrayElements1359CPU TimeEvent Thread1356swapMemoryLimit1353jdk.jfr.Categoryjdk.types.OldObjectGcRootjdk.ThreadStartSocket ReadmemoryFailCountSweep ThresholdThread Allocation Statistics1374
+classSpacejdk.Compilation1371
+StatisticslongestPause+Memory usage after GC in allocation regions13681365First Failed Object SizeNumber of PLABs filledSwitch RateUses Dynamic GC ThreadsfastTimeEnabledjdk.CompilationFailureAllocation Requiring GCjdk.ThreadContextSwitchRate7Results of deserialization and ObjectInputFilter checksIndex13831380Monitor ClassRemote Portjdk.StringFlagChangedVersionField or null if it is an array1377Old Object ArrayAmount of dataOld Object Samplejdk.MetaspaceGCThresholdBucket CountpeakSweepTimemethodReclaimedCountModule Require1395Duration139213891386Recording SettingsmallestSize
 G1 YC TypefilterConfiguredThread DumpPause TargetATotal memory footprint (the table itself plus all of the entries)
-Eden SpaceInt FlagConcurrent GC ThreadsoriginCPeak live thread count since JVM start or when peak count was resettimeoutFlight RecorderRelationGMutator allocation during mutator operation in the most recent interval	IncrementclassThread CountUnloaded Class Countjdk.types.MetaspaceObjectType,Memory usage before GC in allocation regionsOS Physical MemoryNumber of hidden classesfalseAllocation SizecounterRelocatejdk.jfr.StackTraceObject Count after GCArray LengthWId of the recording that triggered the dump, or -1 if it was not related to a recordingMaximum Young Generation SizearrayLengthSafepointing endCommandmetaspaceObjectTypejdk.EvacuationFailedjdk.PSHeapSummaryBoolean FlagTLAB Configuration	Peer PortZIn case a JIT compilation failed, a compilation failure is triggered, reporting the reasonjdk.G1HeapRegionTypeChangecSetUsedAfterunloadedClassCount!Modification of Security propertyyoungCollectorjvmFlagsUncommitting of memoryTimeout ValueX509 Validation
+Eden SpaceInt FlagConcurrent GC ThreadsoriginCPeak live thread count since JVM start or when peak count was resettimeoutFlight RecorderRelation1399GMutator allocation during mutator operation in the most recent interval	IncrementclassThread CountUnloaded Class Countjdk.types.MetaspaceObjectType,Memory usage before GC in allocation regionsOS Physical MemoryNumber of hidden classesfalseAllocation SizecounterRelocatejdk.jfr.StackTraceObject Count after GCArray LengthWId of the recording that triggered the dump, or -1 if it was not related to a recordingMaximum Young Generation SizearrayLengthSafepointing endCommandmetaspaceObjectTypejdk.EvacuationFailedjdk.PSHeapSummaryBoolean FlagTLAB Configuration	Peer PortZIn case a JIT compilation failed, a compilation failure is triggered, reporting the reasonjdk.G1HeapRegionTypeChangecSetUsedAfterunloadedClassCount!Modification of Security propertyyoungCollectorjvmFlagsUncommitting of memoryTimeout ValueX509 Validation
 Frame typeBITSidpredictedMarkingDurationIndex in the arrayMILLISECONDSthrownClassmemoryUsagestandardBytesCompiledindexDirect Buffer StatisticsGC Before Dump
-everyChunkÿObject survived scavenge and was copied directly to the heap. Supported GCs are Parallel Scavange, G1 and CMS with Parallel New. Due to promotion being done in parallel an object might be reported multiple times as the GC threads race to copy all objects.Metaspace GC ThresholdnetworkInterfacePayloadcommandLineUser Mode CPU LoadOld Object Fieldjdk.jfr.SettingControlNIf the object is an array, the number of elements, or -1 if it is not an arrayContainer type informationclassLoader:Aggregate user time consumed by all tasks in the containerjdk.types.CodeBlobType&Bytes allocated by objects in the heap(Thread owning the bias before revocationJNumber of live active threads including both daemon and non-daemon threadsUnsigned Value-Class of object whose biased lock was revoked5The address of the dense prefix, used when compacting	GC LockerILast time from the end of the last concurrent start to the first mixed GCedenTotalSizenonNMethodSizeexportedPackageZGC Statistics SamplerihopTargetOccupancyoffSerialization	writeRateMax AgeinstructionMaximum Capacityjdk.types.PackageJava Monitor InflatedfailureMessagedirectAllocatedjdk.types.ZPageTypeTypeMethod Profiling Sample	New Value	SucceededGarbage CollectionUpdatertotalCapacity	Peak Time&Thread in which event was committed in9Information about the recent CPU usage of the JVM processEden Total SizesurvivorUsedSizeflushIntervalcertificatePositionRecord event at intervalnmethodsSizejdk.types.OldObjectPhaseSignature AlgorithmIssuer
-Heap SpacetoSpaceOld Garbage Collectorjdk.types.MetadataTypeOptimizationLTotal size of all allocated metaspace blocks (each chunk has several blocks)totaljdk.ThreadEndjdk.types.VMOperationType5Information about a specific heap region in the G1 GCCertificate Id	allocatedRemote AddresscommitedTopAddress1Time spent waiting for memory to become availableOn Out of Memory ErrorSafepoint Cleanup Task$Whether the file metadata is updatedTarget OccupancyMode100101Narrow Oop Mode1021037Total memory wasted due to allocation undo within PLABs104105106107108109jdk.types.CompilerTypedefinedClassClass of promoted objectMaximum Bucket CountmetadatabucketCountStandardDeviation9If compressed Oops (Ordinary Object Pointers) are enabledSafepoint Cleanup110111jdk.SafepointBegin112jdk.ZPageAllocationoldObjectSpace113114115116117118119minSizeeffectiveCpuCount jdk.types.ZStatisticsSamplerTypeClass Redefinition IdMethod DescriptorGC CauserevokedClass	Heap Used	blockSize120evacuationFailed121uncommitted122peerHost123124125126	jdk.FlushTo Space127128adaptorCount129HMaximum amount of physical memory that can be allocated in the containerClassLoaderData Pointer9How many items were removed since last event (per second)MICROSECONDS	New Ratiojdk.OSInformation130131132Sample Weight133134?Total memory allocated using direct allocation outside of PLABsAddress of Object Parked135136137cpuTime138compileLevelhiddenChunkSize139Tableskeyexportedjdk.GCLockerNumber of all entriesjvmStartTime140141Java Thread State142143144145%Number of bytes written to the socket2Allocation outside Thread Local Allocation Buffers146147148149ZGC Page Allocationto
-Stacktrace150151Notifying Thread152Name153154155156gcBeforeDump157	keyLength158159TICKS	compileIdjdk.RedefineClasses	jvmSystemTotal Chunk Size?Stack Trace starting from the method the event was committed inNumber of live daemon threadsdaemonCountstartAddress160Defined Class161X509 Certificate162163164165166167168169Compilation FailureSize WrittenjavaArgumentsadditionalBufferSizeSystem Property at JVM startregionActionNANOSECONDSLongest Pausedestination1701713The number of Java threads stalled by the GC locker172	Metaspace173174175176177
-Sleep Time178179ACurrent predicted allocation rate for the mutator in bytes/second3The garbage collector used for the young generation.The number of threads in JNI critical sectionsinitialTenuringThresholdClass DefineConcurrent Mode FailureCommited TopCompressed Oops Mode180Flush181Java Exception182183184185Subject186187Number of loaded classes188Methods Reclaimed189classModificationCountSocketsnumberOfRegions
-JVM SystemlocationnmethodCodeSize1The garbage collector used for the old generation190191jdk.G1BasicIHOP192193type1948Approximate number of bytes allocated since thread start195196197198199jdk.GCHeapSummarylastKnownHeapUsage!Value Based Class Synchronization6Longest individual pause during the garbage collectionMedium Chunks Total SizeOperating SystemendChunkTotal Footprint	ThresholdphasemethodgcId$jdk.LoaderConstraintsTableStatisticsmaxCapacityjdk.JavaThreadStatisticssamplerBailoutsPackage#Number of bytes written to the filejdk.SyncOnValueBasedClass
-Time SliceG1 Heap Summaryjdk.CPUInformationobjectCountSystem mode thread CPU loadMetaspace Out of MemorySurvivor Used SizeregionsRefilled
+everyChunkrealTimeÿObject survived scavenge and was copied directly to the heap. Supported GCs are Parallel Scavange, G1 and CMS with Parallel New. Due to promotion being done in parallel an object might be reported multiple times as the GC threads race to copy all objects.Metaspace GC ThresholdnetworkInterfacePayloadcommandLineUser Mode CPU LoadOld Object Fieldjdk.jfr.SettingControlContainer type information	-28800000classLoader:Aggregate user time consumed by all tasks in the containerjdk.types.CodeBlobType&Bytes allocated by objects in the heap(Thread owning the bias before revocationJNumber of live active threads including both daemon and non-daemon threadsUnsigned Value-Class of object whose biased lock was revoked5The address of the dense prefix, used when compacting	GC LockerILast time from the end of the last concurrent start to the first mixed GCedenTotalSizenonNMethodSizeexportedPackageZGC Statistics SamplerihopTargetOccupancyoffSerialization	writeRateMax AgeinstructionMaximum Capacityjdk.types.PackageJava Monitor InflatedfailureMessagedirectAllocatedjdk.types.ZPageTypeTypeMethod Profiling Sample	New Value	SucceededGarbage CollectionUpdatertotalCapacity	Peak Time&Thread in which event was committed in9Information about the recent CPU usage of the JVM processEden Total SizesurvivorUsedSizeflushIntervalcertificatePositionRecord event at intervalnmethodsSizejdk.types.OldObjectPhaseSignature AlgorithmIssuer
+Heap SpacetoSpaceOld Garbage Collectorjdk.types.MetadataTypeOptimizationLTotal size of all allocated metaspace blocks (each chunk has several blocks)totaljdk.ThreadEndjdk.types.VMOperationType5Information about a specific heap region in the G1 GCCertificate Id	allocatedRemote AddresscommitedTopAddress1Time spent waiting for memory to become availableOn Out of Memory ErrorSafepoint Cleanup Task$Whether the file metadata is updatedTarget OccupancyMode100101Narrow Oop Mode1021037Total memory wasted due to allocation undo within PLABs104105106107108109jdk.types.CompilerTypedefinedClassClass of promoted objectMaximum Bucket CountmetadatabucketCountStandardDeviation9If compressed Oops (Ordinary Object Pointers) are enabledSafepoint Cleanup110111jdk.SafepointBegin112jdk.ZPageAllocationoldObjectSpace113114115116117118119minSizeeffectiveCpuCount jdk.types.ZStatisticsSamplerTypeClass Redefinition IdMethod DescriptorGC CauserevokedClass	Heap Used	blockSize120evacuationFailed121uncommitted122peerHost123124125126	jdk.FlushTo Space127128adaptorCount129HMaximum amount of physical memory that can be allocated in the containerClassLoaderData Pointer9How many items were removed since last event (per second)MICROSECONDS	New Ratiojdk.OSInformation130131132Sample Weight133134?Total memory allocated using direct allocation outside of PLABsAddress of Object Parked135136137cpuTime138compileLevelhiddenChunkSize139Tableskeyexportedjdk.GCLockerNumber of all entriesjvmStartTime140141Direct allocationsJava Thread State142143144145%Number of bytes written to the socket2Allocation outside Thread Local Allocation Buffers146147148149ZGC Page Allocationto
+Stacktrace150151Notifying Thread152Name153154155156gcBeforeDump157	keyLength158159TICKS	compileIdjdk.RedefineClasses	jvmSystemTotal Chunk Size?Stack Trace starting from the method the event was committed inNumber of live daemon threadsdaemonCountstartAddress160Defined Class161X509 Certificate162163164165166167168169Compilation FailureSize WrittenjavaArgumentsadditionalBufferSizeSystem Property at JVM startregionActionNANOSECONDSLongest Pausedestination1701713The number of Java threads stalled by the GC locker	Metaspace172173174175176177
+Sleep Time178179ACurrent predicted allocation rate for the mutator in bytes/second3The garbage collector used for the young generation.The number of threads in JNI critical sectionsinitialTenuringThresholdClass DefineConcurrent Mode FailureCommited TopCompressed Oops Mode180Flush181Java Exception182183184185Subject186Number of loaded classes187188Methods Reclaimed189classModificationCountSocketsnumberOfRegions
+JVM SystemlocationnmethodCodeSize1The garbage collector used for the old generation190191jdk.G1BasicIHOP192193type1941958Approximate number of bytes allocated since thread start196197198199jdk.GCHeapSummarylastKnownHeapUsage!Value Based Class Synchronization6Longest individual pause during the garbage collectionMedium Chunks Total SizeOperating SystemendChunkTotal Footprint	ThresholdphasemethodgcId$jdk.LoaderConstraintsTableStatisticsmaxCapacityjdk.JavaThreadStatisticssamplerBailouts	Real TimePackage#Number of bytes written to the filejdk.SyncOnValueBasedClass
+Time SliceG1 Heap Summaryjdk.CPUInformationobjectCountSystem mode thread CPU loadMetaspace Out of MemorySurvivor Used SizeregionsRefilledSInformation about a dynamic library or other native image loaded by the JVM process
 OS Version,Container CPU throttling related information
-classCount(Number of classes loaded since JVM startSymbol Table StatisticsCompiled Methodsjdk.types.CompilerPhaseTypejdk.jfr.Timespan3Current IHOP threshold in percent of old generationfreedMemoryExpansion sizejdk.G1GarbageCollectionjdk.StringTableStatisticsmediumChunksTotalSizejdk.ThreadDumpexceptionMessage	Timed OutStandard Compilations	ReferenceSum of PausesPhase LevelPeer Certificate IdThreadWhendepthInlined Code SizeTiered CompilationpredictionActivemaxAgeelementsjdk.GCHeapConfigurationSweepsGC Name1408osrCompileCountpromotionFailedjdk.CompilerInliningjdk.jfr.Relational
-From Spacejdk.SocketWritejdk.DoubleFlagChangedRecent Mutator DurationShenandoah Heap Region StateElements Written1419141814174Memory usage before GC in the collection set regionsAt SafepointPeriodjdk.jfr.TimestampValid UntilStart AddressThe average bucket lengthMethods1427OS Thread Namejdk.jfr.ExperimentalinvalidatedCountJava Thread Group	Operationjdk.FileRead
-gcWorkerIdcodeSizeReason143414331432humongousChunksTotalSizeloadedClassCTotal memory occupied by objects in regions where evacuation failedZGC Thread Phase1451Target ModuleYAmount of physical memory, in bytes, that is currently allocated in the current containerbooleanCollection Set BeforeUsedTotalCause of inflationflushingEnabledCaller Blocked‹ Ş ‰Òí	 È¬÷	Ïí	µ
-ÒPõ÷ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	‘ÒĞô÷îÒú
-¹Æ Éí	¤
-ÒĞô÷îÒú
-¹— îÒ¥ îÒú
-¹Ø Òí	ÁÈ¬÷Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	‘ÒĞô÷îÒú
-¹«	 îÒ¥ îÒú
-¹ã
- Òí	ªÈ¬÷
-Ïí	’ÒQõ¥ Ïí	µ
-ÒPõ÷ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	ñÒğîÒã¹ú îÒú
-¹ë îÒ¥ îÒú
-¹í Òí	íÈ¬÷Ïí	’ÒQõ¥ Ïí	µ
-ÒPõ÷ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	¹	ÒÒô÷îÒú
-¹E Éí	ÍÒğîÒã¹Ş îÒú
-¹Ü
- Éí	¦	ÒğîÒì¹ì îÒú
-¹Û Éí	DÒğîÒ îÒ" îÒ— îÒú
-¹• îÒ¥ îÒú
-¹»	 Òí	ÊÈ¬÷#Ïí	’ÒQõ¥ Ïí	µ
-ÒPõ÷ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	ÍÒÒô÷îÒú
-¹³ Éí	 ÒĞô÷îÒú
-¹Ú Éí	DÒğîÒ îÒ" îÒ— îÒú
-¹ˆ îÒ¥ îÒú
-¹à Òí	¹È¬÷$Ïí	’ÒQõ¥ Ïí	µ
-ÒPõ÷ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	ÍÒÒô÷îÒú
-¹³ îÒá¹z Éí	¸ÒĞô÷îÒú
-¹¯	 îÒá¹¶ Éí	ÍÒğîÒã¹ú îÒú
-¹Ü îÒá¹Ì Éí	”Ò†îÒú
-¹Å îÒá¹æ Éí	DÒğîÒ îÒ" îÒ— îÒú
-¹ˆ îÒá¹ñ îÒ¥ îÒú
-¹Š îÒá¹¦ Òí	´È¬÷&Ïí	’ÒQõ¥ Ïí	µ
-ÒPõ÷ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	ÍÒÒô÷îÒú
-¹³ Éí	DÒğîÒ îÒ" îÒ— îÒú
-¹ˆ Éí	ÿÒüô÷îÒú
-¹˜ îÒá¹„ îÒ¥ îÒú
-¹£ Òí	¬È¬÷'	Ïí	µ
-ÒPõ÷ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	ÑÒÒô÷îÒú
-¹Ã îÒÖ	€¤ îÒú
-¹› îÒı Òí	ëÈ¬÷¡Ïí	’ÒQõ¥ Ïí	µ
-ÒPõ÷ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	
-ÒÒô÷îÒú
-¹  îÒá¹“ Éí	°
-ÒğîÒ îÒ˜ îÒú
-¹ü	 Éí	 ÒĞô÷îÒú
-¹® îÒá¹ îÒÖ	€Ğ îÒú
-¹ñ îÒá¹– Òí	²È¬÷£Ïí	’ÒQõ¥ Ïí	µ
-ÒPõ÷ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	
-ÒÒô÷îÒú
-¹  îÒá¹“ îÒÖ	€Ğ îÒú
-¹¨ îÒá¹Ç Òí	ÏÈ¬÷¤Ïí	’ÒQõ¥ Ïí	µ
-ÒPõ÷ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	õÒÒô÷îÒú
-¹ã îÒá¹/ Éí	áÒ†îÒú
-¹° îÒá¹* Éí	°
-ÒğîÒ îÒ˜ îÒú
-¹ü	 îÒÖ	€Ğ îÒú
-¹ îÒá¹> Òí	È¬÷¦	Ïí	µ
-ÒPõ÷ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	£ÒÔô÷îÒú
-¹—
- îÒÖ	€Ğ îÒú
-¹ş îÒá¹ Òí	FÈ¬÷§Ïí	’ÒQõ¥ Ïí	µ
-ÒPõ÷ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	úÒÒô÷îÒú
-¹™
- Éí	åÒÓô÷îÒú
-¹±	 Éí	‰
-ÒÓô÷îÒú
-¹¾ îÒÖ	€ü îÒú
-¹í Òí	ªÈ¬÷¨	Ïí	µ
-ÒPõ÷ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	ÛÒÒô÷îÒú
-¹Ì Éí	åÒÓô÷îÒú
-¹±	 îÒÖ	€ü îÒú
-¹ò Òí	Á	È¬÷©Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	«ÒÒô÷îÒú
-¹Â Éí	…ÒóîÒú
-¹° îÒá¹
- Éí	‹
-ÒğîÒ îÒî îÒú
-¹ò îÒÖ	€ü îÒú
-¹¾ Òí	ÄÈ¬÷«Ïí	’ÒQõ¥ Ïí	µ
-ÒPõ÷ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	·ÒóîÒú
-¹— Éí	‹
-ÒğîÒ îÒî îÒú
-¹ò îÒÖ	€ü îÒú
-¹¾ Òí	Ù	È¬÷¬Ïí	’ÒQõ¥ Ïí	µ
-ÒPõ÷ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	·ÒóîÒú
-¹— Éí	‹
-ÒğîÒ îÒî îÒú
-¹ò îÒÖ	€ü îÒú
-¹ß Òí	Š	È¬÷®Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	ÃÒÒô÷îÒú
-¹Â Éí	åÒÓô÷îÒú
-¹±	 îÒÖ	€ü îÒú
-¹²	 Òí	²È¬÷¶Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	í	ÒˆîÒú
-¹¸ Éí	¥ÒóîÒú
-¹G Éí	³	ÒóîÒú
-¹¨ Éí	ËÒúô÷îÒú
-¹™ îÒÖ	€º îÒú
-¹ˆ Òí	…È¬÷¸Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	í	ÒˆîÒú
-¹¸ Éí	¥ÒóîÒ îÒú
-¹G Éí	³	ÒóîÒ îÒú
-¹¨ Éí	ËÒúô÷îÒú
-¹™ îÒÖ	€º îÒú
-¹‹ Òí	ÇÈ¬÷¹Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	í	ÒˆîÒú
-¹¸ Éí	¥ÒğîÒú
-¹G Éí	³	ÒğîÒú
-¹¨ Éí	ËÒúô÷îÒú
-¹™ îÒÖ	€º îÒú
-¹Ğ	 Òí	ôÈ¬÷»Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	í	ÒˆîÒú
-¹¸ Éí	¥ÒğîÒ îÒú
-¹G Éí	³	ÒğîÒ îÒú
-¹¨ Éí	ËÒúô÷îÒú
-¹™ îÒÖ	€º îÒú
-¹â Òí	İÈ¬÷½Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	í	ÒˆîÒú
-¹¸ Éí	¥Ò÷îÒú
-¹G Éí	³	Ò÷îÒú
-¹¨ Éí	ËÒúô÷îÒú
-¹™ îÒÖ	€º îÒú
-¹Ë Òí	éÈ¬÷¾Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	í	ÒˆîÒú
-¹¸ Éí	¥Ò†îÒú
-¹G Éí	³	Ò†îÒú
-¹¨ Éí	ËÒúô÷îÒú
-¹™ îÒÖ	€º îÒú
-¹ê	 Òí	µÈ¬÷¿Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	í	ÒˆîÒú
-¹¸ Éí	¥ÒˆîÒú
-¹G Éí	³	ÒˆîÒú
-¹¨ Éí	ËÒúô÷îÒú
-¹™ îÒÖ	€º îÒú
-¹› Òí	™È¬÷ÀÏí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	¤ÒóîÒ îÒä îÒú
-¹Ç	 Éí	
-Òäô÷îÒú
-¹Ì Éí	Ò¯îÒú
-¹º Éí	Ÿ	ÒğîÒ îÒ ¹Ä
- îÒú
-¹ö îÒá¹ îÒÖ	€¦‚¨ îÒú
-¹¾ Òí	¶
-È¬÷Á
-Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	¤ÒóîÒ îÒä îÒú
-¹Ç	 Éí	
-Òäô÷îÒú
-¹Ì Éí	ÏÒğîÒ îÒ ¹Ä
- îÒú
-¹r Éí	ŠÒ´îÒú
-¹ƒ Éí	èÒ´îÒú
-¹Ó Éí	¥Ò´îÒú
-¹ñ	 îÒÖ	€¦‚¨ îÒú
-¹ö Òí	»È¬÷ÂÏí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	¥ÒğîÒ îÒ ¹Ä
- îÒú
-¹G Éí	³	ÒğîÒ îÒ ¹Ä
- îÒú
-¹¨ Éí	åÒèô÷îÒú
-¹« îÒÖ	€¦‚å îÒú
-¹ƒ Òí	¾
-È¬÷ÊÏí	µ
-ÒPõ÷ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	ŒÒÓô÷îÒú
-¹à	 Éí	æÒ†îÒú
-¹™ Éí	ÒğîÒ îÒ ¹Ä
- îÒú
-¹Û Éí	ùÒêô÷îÒú
-¹é Éí	åÒìô÷îÒú
-¹Œ îÒÖ	€¦‚å îÒú
-¹Œ Òí	Ó	È¬÷ËÏí	µ
-ÒPõ÷ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	ŒÒÓô÷îÒú
-¹à	 Éí	æÒ†îÒú
-¹™ Éí	ÒğîÒ îÒ ¹Ä
- îÒú
-¹Û Éí	ùÒêô÷îÒú
-¹é Éí	åÒìô÷îÒú
-¹Œ îÒÖ	€¦‚å îÒú
-¹² Òí	ĞÈ¬÷ÌÏí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	¤ÒóîÒ îÒä îÒú
-¹Ç	 Éí	
-Òäô÷îÒú
-¹Ì Éí	ùÒêô÷îÒú
-¹é Éí	¹ÒğîÒ îÒú
-¹É Éí	ïÒğîÒ îÒ ¹Ä
- îÒú
-¹¸ Éí	ì
-ÒğîÒ îÒú
-¹à Éí	5ÒğîÒ îÒ ¹Ä
- îÒú
-¹± Éí	ÕÒğîÒ îÒú
-¹™ Éí	ÂÒğîÒ îÒ ¹Ä
- îÒú
-¹ Éí	ìÒğîÒ îÒú
-¹” Éí	ùÒğîÒ îÒ ¹Ä
- îÒú
-¹†	 îÒÖ	€¦‚å îÒú
-¹½
- Òí	çÈ¬÷ÎÏí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	¤ÒóîÒ îÒä îÒú
-¹Ç	 Éí	
-Òäô÷îÒú
-¹Ì Éí	ßÒ¯îÒú
-¹ Éí	çÒ°îÒú
-¹Ú	 Éí	Ò¯îÒú
-¹˜	 Éí	°	Ò°îÒú
-¹È Éí	úÒ°îÒú
-¹Û Éí	»Ò°îÒú
-¹ƒ îÒÖ	€¦‚¨ îÒú
-¹‡ Òí	ÊÈ¬÷Ñ
-Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	¤ÒóîÒ îÒä îÒú
-¹Ç	 Éí	
-Òäô÷îÒú
-¹Ì Éí	»ÒğîÒ îÒ ¹Ä
- îÒú
-¹æ Éí	—ÒğîÒ îÒ ¹Ä
- îÒú
-¹° Éí	±ÒğîÒ îÒ ¹Ä
- îÒú
-¹³ Éí	‡ÒóîÒ îÒú
-¹ îÒÖ	€¦‚¨ îÒú
-¹® Òí	ŞÈ¬÷ÓÏí	’ÒQõ¥ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¤ÒóîÒ îÒä îÒú
-¹Ç	 Éí	í	Òáô÷îÒú
-¹¸ îÒá¹ Éí	ÿÒâô÷îÒú
-¹› îÒá¹ Éí	«ÒğîÒ îÒã¹Â îÒú
-¹È îÒá¹b Éí	¨ÒğîÒ îÒã¹Â îÒú
-¹ß îÒá¹œ îÒÖ	€¦‚ë
- îÒú
-¹ª îÒá¹h Òí	³È¬÷Õ
-Ïí	’ÒQõ¥ Ïí	µ
-ÒPõ÷ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	º
-Ò†îÒú
-¹Î
- îÒÖ	€¦‚ë
- îÒú
-¹¼ Òí	¢	È¬÷Ö	Ïí	’ÒQõ¥ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¤ÒóîÒ îÒä îÒú
-¹Ç	 Éí	àÒğîÒ îÒ" îÒú
-¹û îÒá¹” îÒÖ	€¦‚ë
- îÒú
-¹Ú îÒá¹¯ Òí	–È¬÷×	Ïí	’ÒQõ¥ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¤ÒóîÒ îÒä îÒú
-¹Ç	 Éí	uÒóîÒ îÒú
-¹2 îÒÖ	€¦‚ë
- îÒú
-¹= îÒá¹£
- Òí	?È¬÷ØÏí	’ÒQõ¥ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¤ÒóîÒ îÒä îÒú
-¹Ç	 îÒÖ	€¦‚ë
- îÒú
-¹” îÒá¹Ê Òí	ÀÈ¬÷á	Ïí	’ÒQõ¥ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¤ÒóîÒ îÒä îÒú
-¹Ç	 Éí	‘Òçô÷îÒú
-¹¦ îÒÖ	€¦‚ë
- îÒú
-¹	 îÒá¹ Òí	­È¬÷âÏí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	¤ÒóîÒ îÒä îÒú
-¹Ç	 Éí	•ÒğîÒã¹ú îÒú
-¹­ îÒá¹Ö Éí	eÒğîÒã¹ú îÒú
-¹© îÒá¹T Éí	²ÒğîÒã¹ú îÒú
-¹Æ îÒá¹ƒ îÒÖ	€¦‚û	 îÒú
-¹Í Òí	ÏÈ¬÷åÏí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	¤ÒóîÒ îÒä îÒú
-¹Ç	 Éí	ÒóîÒ îÒú
-¹Ù Éí	áÒğîÒ îÒ ¹Ä
- îÒú
-¹ îÒá¹ä Éí	íÒğîÒ îÒ ¹Ä
- îÒú
-¹¥
- îÒá¹é Éí	,ÒóîÒ îÒú
-¹„ îÒá¹ú Éí	¬	ÒğîÒ îÒ ¹Ä
- îÒú
-¹å îÒá¹Ö Éí	éÒğîÒ îÒ ¹Ä
- îÒú
-¹ü îÒá¹© Éí	´	ÒğîÒ îÒ ¹Ä
- îÒú
-¹Ô
- Éí	şÒóîÒ îÒú
-¹û îÒÖ	€¦‚û	 îÒú
-¹© Òí	¿È¬÷çÏí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	¤ÒóîÒ îÒä îÒú
-¹Ç	 Éí	‘Òéô÷îÒú
-¹¦ Éí	™ÒğîÒ îÒú
-¹Ö îÒÖ	€¦‚Ç îÒú
-¹ö îÒá¹ Òí	ØÈ¬÷êÏí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	¤ÒóîÒ îÒä îÒú
-¹Ç	 Éí	çÒÒô÷îÒú
-¹‡
- Éí	™ÒğîÒú
-¹ù Éí	™ÒğîÒ îÒ ¹Ä
- îÒú
-¹ƒ îÒÖ	€¦‚û	 îÒú
-¹Ş Òí	ı	È¬÷ëÏí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	Ã
-Ò·îÒú
-¹ö îÒÖ	€¦‚û	 îÒú
-¹( îÒá¹® Òí	ØÈ¬÷íÏí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	Ã
-Ò·îÒú
-¹ö îÒÖ	€¦‚û	 îÒú
-¹ç îÒá¹g Òí	È¬÷îÏí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	¤ÒóîÒ îÒä îÒú
-¹Ç	 Éí	’ÒğîÒ îÒ ¹Ä
- îÒú
-¹° îÒá¹õ Éí	Ò…îÒ îÒú
-¹° îÒá¹½ Éí	î	ÒğîÒ îÒ ¹Ä
- îÒú
-¹Ì îÒá¹Í Éí	ãÒğîÒ îÒ ¹Ä
- îÒú
-¹Ğ
- îÒá¹Ÿ Éí	mÒğîÒ îÒ ¹Ä
- îÒú
-¹ô îÒá¹Ğ Éí	BÒğîÒã¹ú îÒú
-¹Ş îÒá¹å	 Éí	ÔÒ÷îÒ ¹Ä
- îÒ îÒú
-¹¯ îÒá¹Á Éí	€ÒğîÒã¹ú îÒú
-¹¬
- îÒá¹– îÒÖ	€¦‚û	 îÒú
-¹Î	 îÒá¹À Òí	ÅÈ¬÷ïÏí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	¤ÒóîÒ îÒä îÒú
-¹Ç	 Éí	’ÒğîÒ îÒ ¹Ä
- îÒú
-¹¡ îÒá¹° Éí	Ò…îÒ îÒú
-¹¡ îÒá¹; Éí	›ÒğîÒ îÒ ¹Ä
- îÒú
-¹† îÒá¹ô Éí	ãÒğîÒ îÒ ¹Ä
- îÒú
-¹Ğ
- îÒá¹Ÿ Éí	ÚÒğîÒ îÒ ¹Ä
- îÒú
-¹„
- îÒı îÒá¹œ Éí	¹Ò÷îÒ ¹Ä
- îÒ îÒú
-¹¥	 îÒá¹î Éí	øÒğîÒã¹ú îÒú
-¹Ø îÒá¹ı Éí	ĞÒ†îÒú
-¹^ îÒá¹î îÒÖ	€¦‚û	 îÒú
-¹› îÒá¹¤ Òí	äÈ¬÷ğÏí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	¤ÒóîÒ îÒä îÒú
-¹Ç	 îÒá¹©
- Éí	çÒÒô÷îÒú
-¹‡
- îÒá¹Ü Éí	RÒğîÒ îÒ ¹Ä
- îÒú
-¹Å
- îÒá¹ÿ	 Éí	¼ÒóîÒ îÒú
-¹ îÒá¹Ğ Éí	¹
-Ò†îÒú
-¹÷ îÒá¹‘ Éí	ÒğîÒ îÒ ¹Ä
- îÒú
-¹è îÒá¹Ş îÒÖ	€¦‚û	 îÒú
-¹¦ îÒá¹ü Òí	€	È¬÷ùÏí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	¤ÒóîÒ îÒä îÒú
-¹Ç	 îÒá¹©
- Éí	çÒÒô÷îÒú
-¹‡
- îÒá¹Ü Éí	RÒğîÒ îÒ ¹Ä
- îÒú
-¹Å
- îÒá¹ÿ	 Éí	¼ÒóîÒ îÒú
-¹ îÒá¹Ğ Éí	¹
-Ò†îÒú
-¹÷ îÒá¹‘ îÒÖ	€¦‚û	 îÒú
-¹ îÒá¹‚ Òí	á
-È¬÷úÏí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	¤ÒóîÒ îÒä îÒú
-¹Ç	 Éí	ØÒµîÒú
-¹ Éí	‘ÒĞô÷îÒú
-¹« îÒÖ	€¦‚û	 îÒú
-¹Œ îÒá¹Ñ Òí	æÈ¬÷üÏí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	¤ÒóîÒ îÒä îÒú
-¹Ç	 Éí	ùÒµîÒú
-¹‰ îÒÖ	€¦‚û	 îÒú
-¹Î îÒá¹ª
- Òí	ÄÈ¬÷ıÏí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	¤ÒóîÒ îÒä îÒú
-¹Ç	 îÒÖ	€¦‚û	 îÒú
-¹ó îÒá¹ˆ Òí	§È¬÷ş	Ïí	’ÒQõ¥ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	¤ÒóîÒ îÒä îÒú
-¹Ç	 Éí	í	ÒˆîÒú
-¹¸ îÒÖ	€¦‚† îÒú
-¹Ğ Òí	»È¬÷€	Ïí	’ÒQõ¥ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	¤ÒóîÒ îÒä îÒú
-¹Ç	 Éí	í	ÒˆîÒú
-¹¸ îÒÖ	€¦‚† îÒú
-¹é Òí	½È¬÷‚	Ïí	’ÒQõ¥ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	¤ÒóîÒ îÒä îÒú
-¹Ç	 Éí	í	ÒˆîÒú
-¹¸ îÒÖ	€¦‚† îÒú
-¹ì Òí	¼È¬÷„	Ïí	’ÒQõ¥ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	¤ÒóîÒ îÒä îÒú
-¹Ç	 Éí	í	ÒˆîÒú
-¹¸ îÒÖ	€¦‚† îÒú
-¹å Òí	ºÈ¬÷…	Ïí	’ÒQõ¥ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	¤ÒóîÒ îÒä îÒú
-¹Ç	 Éí	í	ÒˆîÒú
-¹¸ îÒÖ	€¦‚† îÒú
-¹ç Òí	ñÈ¬÷†	Ïí	’ÒQõ¥ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	¤ÒóîÒ îÒä îÒú
-¹Ç	 Éí	í	ÒˆîÒú
-¹¸ îÒÖ	€¦‚† îÒú
-¹Æ	 Òí	È¬÷–	Ïí	’ÒQõ¥ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	¤ÒóîÒ îÒä îÒú
-¹Ç	 Éí	í	ÒˆîÒú
-¹¸ îÒÖ	€¦‚† îÒú
-¹à Òí	}È¬÷—Ïí	’ÒQõ¥ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	¤ÒóîÒ îÒä îÒú
-¹Ç	 Éí	óÒóîÒ îÒú
-¹a Éí	í	ÒˆîÒú
-¹¸ îÒÖ	€¦‚† îÒú
-¹è îÒá¹Ú Òí	ÅÈ¬÷™	Ïí	µ
-ÒPõ÷ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	¤ÒóîÒ îÒä îÒú
-¹œ Éí	ÒğîÒ îÒ ¹Ä
- îÒú
-¹Ú îÒÖ	€¦‚û	 îÒú
-¹¯ Òí	§È¬÷šÏí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	¤ÒóîÒ îÒä îÒú
-¹Ç	 Éí	¿ÒóîÒ îÒú
-¹ Éí	ÒğîÒ îÒ ¹Ä
- îÒú
-¹Û îÒÖ	€¦‚û	 îÒú
-¹Ï Òí	ìÈ¬÷›
-Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	şÒóîÒ îÒú
-¹² Éí	ŸÒæô÷îÒú
-¹÷
- Éí	²Òæô÷îÒú
-¹ã	 Éí	ìÒğîÒ îÒ" îÒú
-¹[ Éí	Í
-ÒğîÒ îÒ ¹Ä
- îÒú
-¹‚ îÒÖ	€¦‚û	 îÒú
-¹‰	 îÒá¹„ Òí	øÈ¬÷œÏí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	¾ÒóîÒ ¹Ä
- îÒú
-¹’ Éí	ñÒğîÒ îÒ ¹Ä
- îÒú
-¹Ì	 îÒÖ	€n îÒú
-¹Ò îÒá¹° Òí	¦È¬÷Ïí	’ÒQõ¥ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	ÃÒóîÒ îÒè îÒú
-¹Ò	 Éí	ŒÒÀô÷îÒú
-¹n Éí	£ÒÔô÷îÒú
-¹ì Éí	›ÒõîÒ îÒú
-¹Â Éí	ŠÒ†îÒú
-¹© Éí	…Ò†îÒú
-¹© Éí	ôÒğîÒ îÒ ¹Ä
- îÒú
-¹˜
- Éí	Š
-ÒğîÒ îÒ ¹Ä
- îÒú
-¹Î îÒÖ	€n îÒú
-¹™ îÒá¹ˆ Òí	È
-È¬÷ŸÏí	’ÒQõ¥ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	¢Òøô÷îÒú
-¹ Éí	ÃÒóîÒ îÒè îÒú
-¹Ò	 Éí	è	ÒõîÒ îÒú
-¹É îÒÖ	€n îÒú
-¹î îÒá¹ Òí	®È¬÷¡Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	¤ÒˆîÒú
-¹º Éí	ÃÒóîÒ îÒè îÒú
-¹Ò	 îÒÖ	€n îÒú
-¹× îÒá¹ë Òí	ÙÈ¬÷¢Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	ÃÒóîÒ îÒè îÒú
-¹Ò	 Éí	¤	ÒÔô÷îÒú
-¹Í Éí	ÆÒ¹îÒú
-¹½ Éí	¼	Ò†îÒú
-¹© Éí	°ÒˆîÒú
-¹ç
- Éí	™ÒóîÒú
-¹Ò îÒÖ	€n‚¾ îÒú
-¹ îÒá¹ë Òí	îÈ¬÷¬Ïí	’ÒQõ¥ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	ĞÒóîÒê îÒú
-¹¡ Éí	 ÒóîÒ îÒú
-¹Û	 Éí	Å	ÒóîÒ îÒú
-¹ù Éí	ŠÒóîÒ îÒú
-¹Å îÒÖ	€€ îÒú
-¹Œ Òí	È¬÷­Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	²Òûô÷îÒú
-¹\ Éí	ÊÒğîÒ îÒ" îÒú
-¹é Éí	ÇÒğîÒ îÒ" îÒú
-¹ô Éí	“ÒğîÒ îÒ" îÒú
-¹ê Éí	½ÒóîÒú
-¹Ü Éí	µÒóîÒú
-¹ë Éí	†ÒóîÒú
-¹ Éí	UÒğîÒ îÒ ¹Ä
- îÒú
-¹Û Éí	ıÒóîÒú
-¹ı Éí	ñÒğîÒ îÒ ¹Ä
- îÒú
-¹Ì	 îÒÖ	€İ îÒú
-¹•	 îÒá¹Ä Òí	õÈ¬÷®Ïí	µ
-ÒPõ÷ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	ÃÒóîÒ îÒè îÒú
-¹Ò	 Éí	ŒÒÀô÷îÒú
-¹n Éí	£ÒÔô÷îÒú
-¹ì Éí	•ÒóîÒú
-¹ Éí	™ÒóîÒú
-¹Ò Éí	 Ò¾ô÷îÒú
-¹£ Éí	§	Ò»ô÷îÒú
-¹õ Éí	¾Ò¼ô÷îÒú
-¹İ îÒÖ	€n îÒú
-¹¢ îÒá¹¢ Òí	äÈ¬÷±Ïí	’ÒQõ¥ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	°
-ÒğîÒ îÒ˜ îÒú
-¹ü	 Éí	Œ
-ÒóîÒú
-¹Æ îÒá¹Ã Éí	µÒóîÒú
-¹³ îÒá¹ğ îÒÖ	€Ğ‚î îÒú
-¹š	 îÒá¹İ Òí	µÈ¬÷²Ïí	’ÒQõ¥ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	°
-ÒğîÒ îÒ˜ îÒú
-¹ü	 Éí	í
-ÒóîÒú
-¹Œ	 îÒá¹› Éí	qÒóîÒú
-¹å
- îÒá¹·
- Éí	ë	ÒóîÒú
-¹ğ îÒá¹‚
- îÒÖ	€Ğ‚î îÒú
-¹×
- îÒá¹ü Òí	ÚÈ¬÷³	Ïí	’ÒQõ¥ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	°
-ÒğîÒ îÒ˜ îÒú
-¹ü	 îÒÖ	€Ğ‚î îÒú
-¹á îÒá¹º Òí	½È¬÷µ
-Ïí	’ÒQõ¥ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	°
-ÒğîÒ îÒ˜ îÒú
-¹ü	 Éí	í	ÒˆîÒú
-¹…
- îÒá¹ƒ
- îÒÖ	€Ğ‚î îÒú
-¹Ê îÒá¹º Òí	‹È¬÷¶	Ïí	’ÒQõ¥ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	°
-ÒğîÒ îÒ˜ îÒú
-¹ü	 îÒÖ	€Ğ‚î îÒú
-¹Ë îÒá¹ã Òí	ûÈ¬÷·Ïí	’ÒQõ¥ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	äÒöô÷îÒú
-¹ñ Éí	Ø
-Ò†îÒú
-¹å îÒá¹ò Éí	÷Ò†îÒú
-¹† îÒá¹§
- Éí	¤	ÒĞô÷îÒú
-¹ƒ îÒá¹ä
- îÒö Éí	°
-ÒğîÒ îÒ˜ îÒú
-¹ü	 îÒá¹â	 îÒÖ	€Ğ îÒú
-¹Ù îÒá¹¥ Òí	È¬÷¸	Ïí	µ
-ÒPõ÷ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	§	ÒˆîÒú
-¹õ îÒá¹×	 îÒÖ	€Ğ îÒú
-¹Ú îÒá¹s Òí	ßÈ¬÷ÁÏí	µ
-ÒPõ÷ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	çÒÒô÷îÒú
-¹‡
- îÒá¹ù
- Éí	ŠÒğîÒ îÒ ¹Ä
- îÒú
-¹Ú Éí	˜ÒğîÒ îÒ ¹Ä
- îÒú
-¹Â îÒ¥ îÒú
-¹´ îÒá¹ö Òí	iÈ¬÷Ã
-Ïí	µ
-ÒPõ÷ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	çÒÒô÷îÒú
-¹‡
- îÒá¹ù
- Éí	ŠÒğîÒ îÒ ¹Ä
- îÒú
-¹Ú îÒ¥ îÒú
-¹Ä îÒá¹¬ Òí	šÈ¬÷Ä
-Ïí	µ
-ÒPõ÷ Ïí	’ÒJõœ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	çÒÒô÷îÒú
-¹‡
- îÒá¹ù
- Éí	ÒÒğîÒ ¹Ä
- îÒú
-¹‘ îÒá¹â îÒ¥ îÒú
-¹‚ Òí	Â
-È¬÷ÅÏí	µ
-ÒPõ÷ Ïí	‡ÒLõW Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	ÛÒğîÒ îÒì¹Â îÒú
-¹Ş Éí	ŞÒğîÒ îÒã¹Â îÒú
-¹ä Éí	šÒğîÒ îÒ ¹Ä
- îÒú
-¹X Éí	-Ò’ô÷îÒú
-¹ Éí	šÒóîÒú
-¹Ì îÒá¹Š Éí	‹Òô÷îÒú
-¹‹ îÒÖ	€Ç
- îÒú
-¹º îÒá¹Ë	 Òí	YÈ¬÷ÆÏí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§	ÒˆîÒú
-¹õ îÒá¹û Éí	—ÒóîÒú
-¹İ îÒá¹à îÒÎ îÒú
-¹ îÒá¹Á Òí	“È¬÷ÇÏí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	ğ
-ÒğîÒ îÒ ¹Ä
- îÒú
-¹ï îÒá¹œ Éí	ÀÒğîÒ îÒ ¹Ä
- îÒú
-¹ƒ îÒá¹’ îÒÎ îÒú
-¹ò
- îÒá¹] Òí	ùÈ¬÷ÉÏí	©ÒMõŸ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	åÒˆîÒú
-¹ù Éí	”ÒˆîÒú
-¹ª Éí	ÒÒˆîÒú
-¹‡ Éí	ñÒˆîÒú
-¹’	 Éí	ÙÒˆîÒú
-¹ö	 Éí	£ÒğîÒì¹ì îÒú
-¹ò Éí	ÎÒğîÒú
-¹– îÒÖ	 îÒú
-¹‡	 îÒá¹ø Òí	È¬÷ÊÏí	©ÒMõŸ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	·ÒˆîÒú
-¹µ îÒ îÒú
-¹¶	 îÒá¹ï Òí		È¬÷ÌÏí	©ÒMõŸ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	í	ÒˆîÒú
-¹¸ îÒ îÒú
-¹§ îÒá¹Ø	 Òí	ğÈ¬÷ÍÏí	©ÒMõŸ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	ŸÒˆîÒú
-¹· Éí	¹ÒˆîÒú
-¹ø îÒÖ	 îÒú
-¹» îÒá¹Û Òí	œÈ¬÷×Ïí	©ÒMõŸ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	ŸÒˆîÒú
-¹· Éí	¹ÒˆîÒú
-¹ø îÒ îÒú
-¹ö îÒá¹Æ Òí	ÖÈ¬÷ØÏí	©ÒMõŸ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	ÎÒˆîÒú
-¹– Éí	†ÒˆîÒú
-¹È îÒ îÒú
-¹‹ Òí	¯È¬÷ÙÏí	©ÒMõŸ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	áÒˆîÒú
-¹¦ Éí	÷	ÒˆîÒú
-¹ó Éí	ÑÒóîÒ îÒú
-¹† Éí	¤ÒóîÒ îÒú
-¹… Éí	„ÒóîÒ îÒú
-¹î
- îÒ€À	 îÒú
-¹å îÒá¹ª Òí	ÓÈ¬÷Ú
-Ïí	©ÒMõŸ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	­Ò†îÒú
-¹½	 Éí	‹Ò†îÒú
-¹ó
- Éí	ÒğîÒ îÒú
-¹ÿ Éí	OÒğîÒ îÒú
-¹ô îÒ€À	 îÒú
-¹ îÒá¹“ Òí	ÖÈ¬÷Ü	Ïí	©ÒMõ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	êÒ…îÒ îÒú
-¹	 Éí	ÅÒ…îÒ îÒú
-¹ˆ Éí	±Ò…îÒ îÒú
-¹È îÒ€À	 îÒú
-¹± îÒá¹¯ Òí	ÛÈ¬÷ŞÏí	©ÒMõ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	ü
-Ò…îÒ îÒú
-¹‡ îÒá¹‡ Éí	ÜÒ…îÒ îÒú
-¹À îÒá¹± îÒ€À	 îÒú
-¹é Òí	°È¬÷ßÏí	©ÒMõ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	ŞÒ…îÒ îÒú
-¹« îÒá¹j îÒ€À	 îÒú
-¹ Òí	–È¬÷àÏí	©ÒMõ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	„ÒÏô÷îÒú
-¹N îÒá¹ï Éí	ÎÒğîÒ ¹ö îÒ îÒú
-¹— îÒá¹@ Éí	ÒğîÒ ¹ö îÒ îÒú
-¹ï îÒá¹Ê	 îÒ€ÿ îÒú
-¹« Òí	§È¬÷á	Ïí	©ÒMõ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	Ï	ÒğîÒú
-¹8 îÒá¹‘ Éí	ÉÒğîÒú
-¹ö
- îÒá¹È Éí	‰ÒğîÒú
-¹ê
- îÒá¹µ Éí	ƒÒğîÒú
-¹p îÒá¹Ì îÒ¥€§ îÒú
-¹í Òí	
-È¬÷âÏí	©ÒMõ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	®	ÒğîÒú
-¹´ îÒá¹¸ Éí	îÒğîÒú
-¹Ô îÒá¹Â	 îÒ¥€§ îÒú
-¹Û Òí	É
-È¬÷ÎÏí	©ÒMõ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	ŒÒÓô÷îÒú
-¹à	 Éí	çÒÓô÷îÒú
-¹£ Éí	¨ÒğîÒ îÒ" îÒú
-¹‰ îÒá¹Õ	 Éí	·ÒğîÒú
-¹¢ îÒá¹ Éí	‘ÒğîÒ îÒ ¹Ä
- îÒú
-¹Æ îÒá¹Ÿ
- Éí	÷ÒğîÒ îÒ ¹Ä
- îÒú
-¹· îÒá¹¿ Éí	•ÒğîÒú
-¹¥ îÒá¹Ø Éí	œÒğîÒ îÒ ¹Ä
- îÒú
-¹Ã	 îÒá¹è Éí	èÒğîÒ îÒ ¹Ä
- îÒú
-¹Ù îÒá¹ç îÒ¥€§ îÒú
-¹µ Òí	óÈ¬÷ÏÏí	©ÒMõ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	ŸÒğîÒ îÒú
-¹¼ îÒá¹«
- Éí	½ÒğîÒ îÒú
-¹½ îÒá¹¢ Éí	¿ÒğîÒ îÒ ¹Ä
- îÒú
-¹  îÒá¹Ç Éí	ßÒğîÒ îÒú
-¹İ îÒá¹ 	 Éí	ãÒ…îÒú
-¹Ğ îÒá¹ê Éí	xÒ…îÒú
-¹è îÒá¹¨ Éí	ßÒ…îÒú
-¹» îÒá¹ø Éí	„Ò…îÒú
-¹ô
- îÒá¹ş Éí	ï	Ò…îÒú
-¹„	 îÒá¹Š îÒÖ	€Ğ‚ îÒú
-¹¹ Òí	ÁÈ¬÷ÑÏí	©ÒMõ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	ŸÒğîÒ îÒú
-¹¼ îÒá¹«
- Éí	½ÒğîÒ îÒú
-¹½ îÒá¹¢ Éí	¿ÒğîÒ îÒ ¹Ä
- îÒú
-¹  îÒá¹Ç Éí	ßÒğîÒ îÒú
-¹İ îÒá¹ 	 Éí	ãÒ…îÒú
-¹Ğ îÒá¹ê Éí	xÒ…îÒú
-¹è îÒá¹¨ Éí	ßÒ…îÒú
-¹» îÒá¹ø Éí	„Ò…îÒú
-¹ô
- îÒá¹ş Éí	ï	Ò…îÒú
-¹„	 îÒá¹Š îÒÖ	€Ğ‚ îÒú
-¹Ò Òí	ÜÈ¬÷ÒÏí	©ÒMõ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	ŸÒğîÒ îÒú
-¹¼ îÒá¹«
- Éí	½ÒğîÒ îÒú
-¹½ îÒá¹¢ Éí	¿ÒğîÒ îÒ ¹Ä
- îÒú
-¹  îÒá¹Ç Éí	ßÒğîÒ îÒú
-¹İ îÒá¹ 	 Éí	ãÒ…îÒú
-¹Ğ îÒá¹ê Éí	xÒ…îÒú
-¹è îÒá¹¨ Éí	ßÒ…îÒú
-¹» îÒá¹ø Éí	„Ò…îÒú
-¹ô
- îÒá¹ş Éí	ï	Ò…îÒú
-¹„	 îÒá¹Š îÒÖ	€Ğ‚ îÒú
-¹Ó Òí	¥È¬÷ÔÏí	©ÒMõ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	ŸÒğîÒ îÒú
-¹¼ Éí	½ÒğîÒ îÒú
-¹½ îÒá¹¢ Éí	¿ÒğîÒ îÒ ¹Ä
- îÒú
-¹  îÒá¹Ç Éí	ßÒğîÒ îÒú
-¹İ îÒá¹ 	 Éí	ãÒ…îÒú
-¹Ğ îÒá¹ê Éí	xÒ…îÒú
-¹è îÒá¹¨ Éí	ßÒ…îÒú
-¹» îÒá¹ø Éí	„Ò…îÒú
-¹ô
- îÒá¹ş Éí	ï	Ò…îÒú
-¹„	 îÒá¹Š îÒÖ	€Ğ‚ îÒú
-¹` Òí	×È¬÷ÕÏí	©ÒMõ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	ŸÒğîÒ îÒú
-¹¼ îÒá¹«
- Éí	½ÒğîÒ îÒú
-¹½ îÒá¹¢ Éí	¿ÒğîÒ îÒ ¹Ä
- îÒú
-¹  îÒá¹Ç Éí	ßÒğîÒ îÒú
-¹İ îÒá¹ 	 Éí	ãÒ…îÒú
-¹Ğ îÒá¹ê Éí	xÒ…îÒú
-¹è îÒá¹¨ Éí	ßÒ…îÒú
-¹» îÒá¹ø Éí	„Ò…îÒú
-¹ô
- îÒá¹ş Éí	ï	Ò…îÒú
-¹„	 îÒá¹Š îÒÖ	€Ğ‚ îÒú
-¹¡ Òí	ñÈ¬÷ÖÏí	©ÒMõ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	ÅÒğîÒ îÒ ¹Ä
- îÒú
-¹î îÒá¹“ Éí	‘ÒĞô÷îÒú
-¹Ë îÒ¥€§ îÒú
-¹¤ Òí	ÏÈ¬÷×Ïí	©ÒMõ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	™ÒğîÒ îÒ ¹Ä
- îÒú
-¹ƒ îÒá¹• Éí	œÒğîÒ îÒ ¹Ä
- îÒú
-¹ îÒá¹ú îÒ€ îÒú
-¹ îÒá¹× Òí	Ò
-È¬÷Ø	Ïí	©ÒMõ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	¸	ÒĞô÷îÒú
-¹Ë Éí	µ
-Ò€ô÷îÒú
-¹S Éí	¡ÒÖô÷îÒú
-¹Ú îÒÖ	€Ç
- îÒú
-¹§ îÒá¹º Òí	È¬÷Ù	Ïí	©ÒMõ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	¸	ÒĞô÷îÒú
-¹Ë Éí	µ
-Ò€ô÷îÒú
-¹S Éí	¡ÒÖô÷îÒú
-¹Ú îÒÖ	€Ç
- îÒú
-¹• îÒá¹É Òí	ÃÈ¬÷âÏí	©ÒMõ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	9ÒˆîÒú
-¹Å îÒÖ	€Ğ îÒú
-¹Å Òí	È¬÷ãÏí	©ÒMõ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	í	ÒˆîÒú
-¹¸ Éí	›
-ÒğîÒ îÒ" îÒú
-¹¥ îÒá¹Ø Éí	ÒğîÒ îÒ" îÒú
-¹ îÒá¹Å îÒÖ	€Ğ îÒú
-¹Š Òí	
-È¬÷åÏí	©ÒMõ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	ÊÒıô÷îÒú
-¹ó Éí	ÎÒıô÷îÒú
-¹Ù îÒÖ	€Ğ‚÷ îÒú
-¹¿ îÒá¹¡	 Òí	¸È¬÷èÏí	©ÒMõ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	™Òÿô÷îÒú
-¹ø	 Éí	ĞÒıô÷îÒú
-¹ş îÒá¹Ã îÒÖ	€Ğ‚÷ îÒú
-¹Ê
- Òí	‡È¬÷éÏí	©ÒMõ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	ëÒóîÒú
-¹º Éí	´
-ÒóîÒú
-¹© Éí	ïÒóîÒú
-¹Ç Éí	×ÒóîÒú
-¹š
- Éí	¯ÒóîÒú
-¹Æ Éí	ğÒğîÒ îÒ ¹Ä
- îÒú
-¹Ï Éí	ıÒğîÒ îÒ ¹Ä
- îÒú
-¹Ã Éí	µÒğîÒ îÒ ¹Ä
- îÒú
-¹Ë Éí	ŠÒğîÒ îÒ ¹Ä
- îÒú
-¹ş	 Éí	)ÒğîÒã¹ú îÒú
-¹­ Éí	‰ÒğîÒã¹ú îÒú
-¹Ğ îÒÖ	€n îÒú
-¹ş Òí	¶È¬÷êÏí	©ÒMõŸ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	‰ÒóîÒú
-¹Ó Éí	ŠÒ†îÒú
-¹Ï îÒÖ	€n îÒú
-¹® Òí	ôÈ¬÷ëÏí	©ÒMõ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	²Òûô÷îÒú
-¹\ Éí	ÊÒğîÒ îÒ" îÒú
-¹é Éí	“ÒğîÒ îÒ" îÒú
-¹ê Éí	½ÒóîÒú
-¹Ü Éí	µÒóîÒú
-¹ë Éí	†ÒóîÒú
-¹ Éí	UÒğîÒ îÒ ¹Ä
- îÒú
-¹Û Éí	ıÒóîÒú
-¹ı îÒÖ	€İ îÒú
-¹ Òí	İÈ¬÷ìÏí	©ÒMõŸ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	’ÒğîÒ îÒ ¹Ä
- îÒú
-¹¼ Éí	»ÒğîÒ îÒ ¹Ä
- îÒú
-¹˜ Éí	˜ÒğîÒ îÒ ¹Ä
- îÒú
-¹‘ Éí	—ÒğîÒ îÒ ¹Ä
- îÒú
-¹ş Éí	ÿÒğîÒ îÒ ¹Ä
- îÒú
-¹æ Éí	ÖÒğîÒ îÒ ¹Ä
- îÒú
-¹¿ Éí	€ÒğîÒ îÒ ¹Ä
- îÒú
-¹Ë Éí	ÊÒğîÒ îÒ" îÒú
-¹é Éí	“ÒğîÒ îÒ" îÒú
-¹ê îÒÖ	€İ îÒú
-¹œ Òí	¿	È¬÷í
-Ïí	©ÒMõ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	ÖÒóîÒú
-¹Ô Éí	¾ÒóîÒú
-¹ƒ Éí	´ÒğîÒ îÒã¹Â îÒú
-¹† Éí	‚	ÒğîÒ îÒã¹Â îÒú
-¹Ü Éí	½ÒğîÒ îÒã¹Â îÒú
-¹ê îÒÖ	€€ îÒú
-¹¬ Òí	“
-È¬÷îÏí	©ÒMõŸ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	ŒÒ†îÒú
-¹¨	 Éí	…Ò†îÒú
-¹ Éí	ôÒğîÒ îÒ ¹Ä
- îÒú
-¹£ îÒÖ	€€ îÒú
-¹• Òí	úÈ¬÷øÏí	©ÒMõŸ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	í	ÒˆîÒú
-¹¸ Éí	¹ÒóîÒú
-¹ø Éí	ËÒúô÷îÒú
-¹™ îÒÖ	€º îÒú
-¹É Òí	È¬÷úÏí	©ÒMõŸ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	í	ÒˆîÒú
-¹¸ Éí	¹ÒóîÒ îÒú
-¹ø Éí	ËÒúô÷îÒú
-¹™ îÒÖ	€º îÒú
-¹µ Òí	ÕÈ¬÷üÏí	©ÒMõŸ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	í	ÒˆîÒú
-¹¸ Éí	¹ÒğîÒú
-¹ø Éí	ËÒúô÷îÒú
-¹™ îÒÖ	€º îÒú
-¹¥ Òí	”	È¬÷şÏí	©ÒMõŸ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	í	ÒˆîÒú
-¹¸ Éí	¹ÒğîÒ îÒú
-¹ø Éí	ËÒúô÷îÒú
-¹™ îÒÖ	€º îÒú
-¹Ë Òí	È¬÷ÿÏí	©ÒMõŸ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	í	ÒˆîÒú
-¹¸ Éí	¹Ò÷îÒú
-¹ø Éí	ËÒúô÷îÒú
-¹™ îÒÖ	€º îÒú
-¹Ç Òí	Û
-È¬÷€Ïí	©ÒMõŸ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	í	ÒˆîÒú
-¹¸ Éí	¹Ò†îÒú
-¹ø Éí	ËÒúô÷îÒú
-¹™ îÒÖ	€º îÒú
-¹è Òí	~È¬÷Ïí	©ÒMõŸ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	í	ÒˆîÒú
-¹¸ Éí	¹ÒˆîÒú
-¹ø Éí	ËÒúô÷îÒú
-¹™ îÒÖ	€º îÒú
-¹é
- Òí	ƒÈ¬÷„	Ïí	©ÒMõ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	¤ÒóîÒ îÒä îÒú
-¹Ç	 Éí	çÒÒô÷îÒú
-¹‡
- Éí	™ÒğîÒú
-¹ù Éí	™ÒğîÒ îÒ ¹Ä
- îÒú
-¹ƒ îÒÖ	€¦‚û	 îÒú
-¹” Òí	õÈ¬÷…
-Ïí	©ÒMõ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	şÒóîÒ îÒú
-¹² Éí	‘Òæô÷îÒú
-¹¦ Éí	ìÒğîÒ îÒ" îÒú
-¹[ Éí	Í
-ÒğîÒ îÒ ¹Ä
- îÒú
-¹‚ îÒÖ	€¦‚û	 îÒú
-¹¢ îÒá¹Ã Òí	Ì
-È¬÷‡Ïí	©ÒMõŸ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	ğÒáô÷îÒú
-¹Ã îÒá¹ï Éí	…Òáô÷îÒú
-¹¼ îÒá¹‹ Éí	èÒóîÒ îÒú
-¹¿ îÒá¹æ Éí	oÒóîÒ îÒú
-¹Ê îÒá¹– Éí	˜Ò†îÒú
-¹¬ îÒá¹† Éí	6Ò†îÒú
-¹ı îÒá¹á Éí	“	Ò†îÒú
-¹‡ îÒá¹‰ Éí	²ÒğîÒã¹ú îÒú
-¹Æ îÒá¹÷ Éí	òÒóîÒ îÒú
-¹ª îÒá¹K îÒÖ	€¦‚› îÒú
-¹ó îÒá¹ Òí	ÉÈ¬÷Ïí	©ÒMõŸ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	¯ÒöîÒ îÒú
-¹»
- îÒá¹v Éí	ñÒöîÒ îÒú
-¹Ë îÒá¹« îÒÖ	€¦‚› îÒú
-¹– îÒá¹ª Òí	ùÈ¬÷	Ïí	©ÒMõŸ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	ÀÒ†îÒú
-¹²
- îÒá¹’ Éí	¼ÒğîÒ îÒ ¹Ä
- îÒú
-¹ö Éí	¨
-ÒğîÒ îÒ ¹Ä
- îÒú
-¹š îÒÖ	€¦‚› îÒú
-¹é îÒá¹¯ Òí	ÓÈ¬÷Ïí	©ÒMõŸ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	ïÒğîÒ îÒ ¹Ä
- îÒú
-¹	 Éí	…ÒğîÒ îÒ ¹Ä
- îÒú
-¹Ì Éí	’ÒğîÒ îÒ ¹Ä
- îÒú
-¹‡ Éí	¨Ò†îÒú
-¹é	 îÒá¹à Éí	„Òíô÷îÒú
-¹õ îÒá¹¬ Éí	Ñ
-ÒğîÒ îÒ ¹Ä
- îÒú
-¹ÿ îÒá¹İ Éí	‚ÒöîÒ îÒú
-¹ƒ îÒá¹¶ îÒÖ	€¦‚› îÒú
-¹Ô	 îÒá¹° Òí	âÈ¬÷’	Ïí	©ÒMõŸ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	ïÒğîÒ îÒ ¹Ä
- îÒú
-¹Ù
- Éí	…ÒğîÒ îÒ ¹Ä
- îÒú
-¹á Éí	’
-ÒóîÒ îÒú
-¹Œ îÒá¹–
- îÒÖ	€¦‚› îÒú
-¹Ê îÒá¹­ Òí	¢È¬÷“
-Ïí	’ÒQõ¥ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	‘ÒÁô÷îÒú
-¹¦ Éí	ÒğîÒ îÒ ¹Ä
- îÒú
-¹Û îÒÖ	€¦‚û	 îÒú
-¹˜ îÒá¹È Òí	æÈ¬÷–Ïí	’ÒQõ¥ Ïí	µ
-ÒPõ÷ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	‘ÒÁô÷îÒú
-¹¦ Éí	ÒğîÒ îÒ ¹Ä
- îÒú
-¹Û Éí	ßÒğîÒ îÒ ¹Ä
- îÒú
-¹¸
- Éí	CÒğîÒ îÒ ¹Ä
- îÒú
-¹‘	 Éí	ëÒóîÒ îÒú
-¹È Éí		Ò†îÒú
-¹Ô îÒÖ	€¦‚û	 îÒú
-¹± îÒá¹­ Òí	‡È¬÷—
-Ïí	’ÒQõ¥ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	ÀÒğîÒ îÒ ¹Ä
- îÒú
-¹ƒ Éí	_ÒğîÒ îÒ ¹Ä
- îÒú
-¹« Éí	±ÒğîÒ îÒ ¹Ä
- îÒú
-¹Ü îÒÖ	€¦‚û	 îÒú
-¹× Òí	”È¬÷˜Ïí	’ÒQõ¥ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	‘ÒÁô÷îÒú
-¹¦ Éí	ÿÒğîÒ îÒú
-¹ 
- Éí	ÀÒğîÒ îÒ ¹Ä
- îÒú
-¹ƒ Éí	_ÒğîÒ îÒ ¹Ä
- îÒú
-¹« Éí	±ÒğîÒ îÒ ¹Ä
- îÒú
-¹Ü îÒÖ	€¦‚û	 îÒú
-¹Ê Òí	àÈ¬÷šÏí	’ÒQõ¥ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	÷ÒËô÷îÒú
-¹Ş Éí	­
-ÒğîÒ îÒú
-¹Ñ Éí	¹ÒğîÒ îÒú
-¹ø îÒÖ	€¦‚û	 îÒú
-¹Ä îÒı Òí	ÍÈ¬÷
-Ïí	’ÒQõ¥ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	÷ÒÍô÷îÒú
-¹Ş Éí	¹ÒğîÒ îÒú
-¹ø îÒÖ	€¦‚û	 îÒú
-¹š îÒı Òí	0È¬÷¤
-Ïí	’ÒQõ¥ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	¤ÒóîÒ îÒä îÒú
-¹Ç	 Éí	í	ÒˆîÒú
-¹¸ îÒÖ	€¦‚û	 îÒú
-¹ü îÒı Òí	È¬÷¥	Ïí	’ÒQõ¥ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	ûÒğîÒ îÒ ¹Ä
- îÒú
-¹Ç îÒÖ	€¦‚û	 îÒú
-¹— îÒá¹ò Òí	ª	È¬÷§	Ïí	’ÒQõ¥ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	¾ÒğîÒ îÒ ¹Ä
- îÒú
-¹  îÒÖ	€¦‚û	 îÒú
-¹º îÒá¹¿ Òí	üÈ¬÷¨
-Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	şÒóîÒ îÒú
-¹² Éí	ŸÒºô÷îÒú
-¹÷
- Éí	²Òºô÷îÒú
-¹ã	 Éí	ìÒğîÒ îÒ" îÒú
-¹[ Éí	Í
-ÒğîÒ îÒ ¹Ä
- îÒú
-¹‚ îÒÖ	€¦‚û	 îÒú
-¹‘ îÒá¹ï Òí	ûÈ¬÷©
-Ïí	©ÒMõ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	şÒóîÒ îÒú
-¹² Éí	¡Òºô÷îÒú
-¹{ Éí	ìÒğîÒ îÒ" îÒú
-¹[ Éí	Í
-ÒğîÒ îÒ ¹Ä
- îÒú
-¹‚ îÒÖ	€¦‚û	 îÒú
-¹ê îÒá¹Ô Òí	‚È¬÷ª
-Ïí	’ÒQõ¥ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	ÔÒğîÒ îÒí îÒú
-¹õ Éí	ÒÒğîÒ îÒú
-¹à Éí	ÒğîÒ îÒ ¹Ä
- îÒú
-¹Ø îÒÎ îÒú
-¹÷ îÒı Òí	ÔÈ¬÷­Ïí	’ÒQõ¥ Ïí	µ
-ÒPõ÷ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	àÒˆîÒú
-¹ÿ Éí	ÒğîÒú
-¹Û Éí	½Ò†îÒú
-¹€ Éí	ÍÒ†îÒú
-¹É îÒÖ	€¤ îÒú
-¹¾ Òí	¡È¬÷®Ïí	’ÒQõ¥ Ïí	µ
-ÒPõ÷ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	ˆ	ÒóîÒ îÒú
-¹Ó
- îÒá¹ Éí	®ÒóîÒ îÒú
-¹Ş
- îÒá¹ã îÒÖ	€¦‚û	 îÒú
-¹• Òí	†÷¯Éí	ìÒğîÒ îÒ" îÒú
-¹é îÒá¹† Éí	•
-ÒğîÒ îÒ" îÒú
-¹Z îÒá¹µ Éí	Í	ÒğîÒ îÒ ¹Ä
- îÒú
-¹Ü îÒá¹ Éí	šÒğîÒ îÒ" îÒú
-¹“ îÒá¹÷ Éí	»ÒğîÒ îÒ ¹Ä
- îÒú
-¹˜ îÒá¹£ Òí	Œ÷°Éí	ìÒğîÒ îÒ" îÒú
-¹é îÒá¹Û Éí	¤ÒğîÒ îÒ" îÒú
-¹Ï
- îÒá¹Ÿ Éí	Í
-ÒğîÒ îÒ ¹Ä
- îÒú
-¹‚ îÒá¹û Éí	ÒğîÒ îÒ ¹Ä
- îÒú
-¹Û îÒá¹
- Òí	­÷´Éí	CÒğîÒ îÒ ¹Ä
- îÒú
-¹‘	 îÒá¹ñ Éí	Í
-ÒğîÒ îÒ ¹Ä
- îÒú
-¹‚ îÒá¹û Éí	!ÒğîÒ îÒ ¹Ä
- îÒú
-¹ú îÒá¹˜ Òí	¼÷µÉí	°ÒğîÒ îÒú
-¹” Éí	áÒğîÒ îÒ ¹Ä
- îÒú
-¹ª Éí	ÂÒğîÒ îÒ ¹Ä
- îÒú
-¹Õ
- Éí	™ÒğîÒ îÒ ¹Ä
- îÒú
-¹í Òí	’÷·
-Éí	¤ÒóîÒ îÒä îÒú
-¹Ç	 Éí	ÅÒğîÒ îÒ ¹Ä
- îÒú
-¹î îÒá¹À Éí	ÒğîÒ îÒ ¹Ä
- îÒú
-¹‰ îÒá¹Õ Éí	Í
-ÒğîÒ îÒ ¹Ä
- îÒú
-¹‚ îÒá¹ò Éí	ù	ÒğîÒ îÒ ¹Ä
- îÒú
-¹ª îÒá¹Ó Éí	ªÒğîÒ îÒ ¹Ä
- îÒú
-¹‰ îÒá¹Ä Éí	´ÒóîÒ îÒú
-¹…	 îÒá¹ß	 Éí	¥ÒğîÒ îÒ ¹Ä
- îÒú
-¹ îÒá¹” Éí	İÒğîÒ îÒ ¹Ä
- îÒú
-¹ş îÒá¹û Éí	¶ÒğîÒ îÒ ¹Ä
- îÒú
-¹» îÒá¹É Òí	­÷¹Éí	‘ÒˆîÒú
-¹ñ	 Éí	í	ÒˆîÒú
-¹â Éí	ÒˆîÒú
-¹ó Òí	÷÷ºÉí	¡ÒˆîÒú
-¹{ îÒú
-¹ß Òí	¦÷÷»Éí	§	ÒˆîÒú
-¹õ îÒú
-¹° Òí	†÷÷¼Éí	¾ÒˆîÒú
-¹İ îÒú
-¹Ü	 Òí	ı÷÷¾Éí	¾	ÒˆîÒú
-¹£ îÒú
-¹ğ Òí	Ú÷÷ÀÉí	ŒÒˆîÒú
-¹n îÒú
-¹“ Òí	¦÷÷ÁÉí	‘ÒˆîÒú
-¹¦ îÒú
-¹² Òí	Ì÷÷ËÉí	ÛÒˆîÒú
-¹Õ îÒú
-¹‚ Òí	ñ÷÷ÍÉí	¨ÒˆîÒú
-¹ö îÒú
-¹ Òí	®÷÷ÏÉí	„ÒˆîÒú
-¹N îÒá¹ï îÒú
-¹N Òí	‹÷ĞÉí	ñÒˆîÒú
-¹í Éí	şÒğîÒú
-¹§ Éí	ä	ÒˆîÒú
-¹ Éí	šÒğîÒú
-¹Õ Éí	·ÒÑô÷îÒú
-¹ğ îÒú
-¹Ë Òí	ä÷ÑÉí	ÒÑô÷îÒú
-¹õ	 Éí	í	ÒˆîÒú
-¹¸ îÒú
-¹Ò Òí	¼÷ÒÉí	ŒÒÓô÷îÒú
-¹à	 Éí	í	ÒÕô÷îÒú
-¹¸ Éí	Ú
-Òÿô÷îÒú
-¹ª Éí	¨ÒóîÒú
-¹Æ Éí	ó	Ò†îÒú
-¹Ï îÒú
-¹˜ Òí	ë÷ÓÉí	‘ÒÒô÷îÒú
-¹¦ Éí	í	ÒÕô÷îÒú
-¹¸ îÒú
-¹Å Òí	¼÷ÔÉí	‘ÒÒô÷îÒú
-¹¦ Éí	í	ÒÕô÷îÒú
-¹¸ Éí	ÒÕô÷îÒú
-¹ù Éí	¨ÒóîÒú
-¹Æ Éí	ó	Ò†îÒú
-¹Ï îÒú
-¹—
- Òí	º	÷÷ÕÉí	ô	ÒˆîÒú
-¹Î îÒú
-¹ƒ Òí	ø÷÷ÖÉí	í	ÒˆîÒú
-¹¸ îÒú
-¹¦ Òí	¼
-÷÷áÉí	í	ÒˆîÒú
-¹¸ îÒú
-¹Õ Òí	€÷÷âÉí	ÿÒˆîÒú
-¹› îÒú
-¹ô Òí	·	÷÷äÉí	
-ÒˆîÒú
-¹Ì îÒú
-¹ Òí	ò	÷÷æÉí	‘ÒˆîÒú
-¹¦ îÒú
-¹Ä Òí	w÷÷çÉí	‘ÒˆîÒú
-¹¦ îÒú
-¹Ã Òí	“÷÷èÉí	åÒˆîÒú
-¹« îÒú
-¹ó Òí	÷÷éÉí	‘ÒˆîÒú
-¹¦ îÒú
-¹ Òí	½÷÷êÉí	‘ÒˆîÒú
-¹¦ îÒú
-¹é Òí	Õ÷÷ìÉí	‘ÒˆîÒú
-¹¦ îÒú
-¹Œ Òí	ğ	÷÷íÉí	ıÒˆîÒú
-¹Í îÒú
-¹Ğ Òí	Â÷÷öÉí	‘ÒˆîÒú
-¹¦ îÒú
-¹¸ Òí	»÷÷øÉí	¢ÒˆîÒú
-¹· îÒú
-¹ì	 Òí	Ù÷÷úÉí	ËÒˆîÒú
-¹™ îÒú
-¹à Òí	÷÷ûÉí	‘ÒˆîÒú
-¹¦ îÒú
-¹ Òí	“÷÷üÉí	ÿÒˆîÒú
-¹› îÒú
-¹ø Òí	ï÷ıÉí	í	ÒÕô÷îÒú
-¹¸ Éí	İÒÕô÷îÒú
-¹¶ Éí	‰ÒÕô÷îÒú
-¹Ë Éí	ŒÒÓô÷îÒú
-¹à	 îÒú
-¹¦
- Òí	¢÷ÿÉí	í	ÒÕô÷îÒú
-¹¸ Éí	­Òıô÷îÒú
-¹¦
- Éí	 Ò†îÒú
-¹æ îÒú
-¹ª Òí	”÷€Éí	HÒ†îÒú
-¹£ Éí	Ò•ÍîÒú
-¹‰ îÒú
-¹³ Òí	±÷÷‚Éí	÷	ÒˆîÒú
-¹ó îÒú
-¹õ Òí	Ÿ÷÷„Éí	ÜÒˆîÒú
-¹ú	 îÒú
-¹° Òí	´÷÷ŒÉí	‘ÒˆîÒú
-¹¦ îÒú
-¹†
- Òí	Ÿ÷Éí	÷	ÒˆîÒú
-¹ã îÒá¹È Éí	ÜÒ„ô÷îÒú
-¹ú	 îÒá¹®
- Éí	‘ÒŒô÷îÒú
-¹¦ îÒá¹ îÒú
-¹‹ Òí	ä÷Éí	ÒóîÒú
-¹ îÒá¹Ì Éí	şÒóîÒú
-¹² îÒá¹ù îÒú
-¹¸ Òí	¹÷Éí	í	ÒˆîÒú
-¹© îÒá¹Œ Éí	¨ÒõîÒú
-¹É îÒá¹À
- îÒú
-¹ˆ Òí	¶÷’Éí	DÒğîÒ îÒ" îÒú
-¹ Éí	‘ÒÒô÷îÒú
-¹˜ Éí	÷	ÒˆîÒú
-¹¸ îÒá¹é Éí	´Ò”ô÷îÒú
-¹Ù îÒá¹„ îÒú
-¹ë Òí	€
-÷”Éí	¶Òô÷îÒú
-¹… îÒá¹ú Éí	ÉÒô÷îÒú
-¹ç îÒá¹· Éí	-Ò’ô÷îÒú
-¹ îÒá¹Æ
- Éí	ÎÒóîÒú
-¹² îÒá¹É îÒú
-¹Ç Òí	Ñ÷•Éí	£ÒÔô÷îÒú
-¹—
- Éí	•ÒóîÒú
-¹ Éí	Ë
-ÒóîÒú
-¹Ò Éí	‘Ò‚ô÷îÒú
-¹¿ Òí	’÷÷–Éí	dÒöÍîÒú
-¹… îÒú
-¹+ Òí	¦È ÷—îÒø Òí	ÒÈ ÷˜îÒø Òí	‰È ÷äîÒø Òí	œ	È ÷èîÒø Òí	È ÷êîÒø Òí	ß
-È ÷íîÒø Òí	ÆÈ ÷îîÒø Òí	Å÷ğ Òí	Á÷ó Òí	ğ÷õ Òí	¬÷ö Òí	œ
-÷÷ Òí	”÷… Òí	€÷† Òí	©÷‡ Òí	½÷ˆ Òí	Á
-È¬÷üÏí	’ÒQõ¥ Ïí	µ
-ÒPõÙ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	áÒˆîÒú
-¹ğ îÒá¹ Éí	É	Ò†îÒú
-¹³ îÒá¹Ë îÒÖ¹Á
- îÒú
-¹ñ
- îÒ¥ îÒá¹Ó Òí	òÈ¬÷“Ïí	’ÒQõ¥ Ïí	µ
-ÒPõÙ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	áÒˆîÒú
-¹ğ îÒá¹ Éí	ÙÒğîÒú
-¹¥ îÒá¹õ îÒ ¹Ä
- Éí	cÒ†îÒú
-¹ò îÒá¹€ îÒÖ¹ò îÒú
-¹ˆ îÒ¥ îÒá¹–	 Òí	„È¬÷‘Ïí	’ÒQõ¥ Ïí	µ
-ÒPõÙ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	áÒˆîÒú
-¹ğ îÒá¹ Éí	×ÒğîÒú
-¹Õ îÒá¹« îÒ ¹Ä
- îÒÖ¹„ îÒú
-¹‹	 îÒ¥ îÒá¹ø Òí	òÈ¬÷Ïí	’ÒQõ¥ Ïí	µ
-ÒPõÙ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	ìÒˆîÒú
-¹ƒ Éí	DÒˆîÒú
-¹Æ Éí	’ÒóîÒú
-¹´ Éí	ÍÒğîÒú
-¹ó îÒã¹ú Éí	ÙÒğîÒú
-¹¥ îÒá¹¡ îÒ ¹Ä
- Éí	™Ò†îÒú
-¹€ îÒá¹ã îÒÖ¹ò îÒú
-¹¡ îÒ¥ îÒá¹ï
- Òí	ÜÈ¬÷‹Ïí	’ÒQõ¥ Ïí	µ
-ÒPõÙ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	ìÒˆîÒú
-¹ƒ Éí	DÒˆîÒú
-¹Æ Éí	’ÒóîÒú
-¹´ Éí	×ÒğîÒú
-¹Õ îÒá¹« îÒ ¹Ä
- îÒÖ¹Ü îÒú
-¹Â îÒ¥ îÒá¹ø
- Òí	ÕÈ¬÷ŠÏí	’ÒQõ¥ Ïí	µ
-ÒPõÙ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	°ÒˆîÒú
-¹ç
- Éí	ûÒÒô÷îÒú
-¹ñ	 îÒÖ¹Õ îÒú
-¹ù îÒ¥ îÒá¹¡
- Òí	İÈ¬÷ˆÏí	©ÒMõ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	˜ÒğîÒú
-¹l îÒÖ¹İ îÒú
-¹ îÒ¥€§ îÒá¹” Òí	á	È¬÷¢Ïí	’ÒQõ¥ Ïí	µ
-ÒPõÙ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	°ÒˆîÒú
-¹ç
- Éí	ûÒÒô÷îÒú
-¹ñ	 îÒÖ¹á	 îÒú
-¹æ îÒ¥ îÒá¹¶ Òí	×È¬÷¡Ïí	’ÒQõ¥ Ïí	µ
-ÒPõÙ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	÷ÒğîÒú
-¹‚ Éí	í	ÒˆîÒú
-¹± Éí	¹ÒˆîÒú
-¹­	 îÒÖ¹× îÒú
-¹Á îÒÎ Òí	óÈ¬÷Ïí	’ÒQõ¥ Ïí	µ
-ÒPõÙ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	÷ÒğîÒú
-¹Ş Éí	í	ÒˆîÒú
-¹¸ Éí	àÒˆîÒú
-¹ÿ Éí	ÑÒğîÒú
-¹Ÿ îÒã¹ú Éí	²ÒğîÒú
-¹â
- îÒã¹ú Éí	…ÒğîÒú
-¹™	 îÒ ¹Ä
- Éí	ÀÒğîÒú
-¹ü îÒì¹ì Éí	:ÒğîÒú
-¹½ îÒã¹ú îÒÖ¹ó îÒú
-¹Ş	 îÒÎ Òí	˜È¬÷›Ïí	’ÒQõ¥ Ïí	µ
-ÒPõÙ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	ÄÒ†îÒú
-¹´ Éí	ÓÒˆîÒú
-¹§ Éí	‘ÒÒô÷îÒú
-¹¦ Éí	âÒóîÒú
-¹ß Éí	ìÒğîÒú
-¹y Éí	ÍÒğîÒú
-¹ê Éí	ÙÒğîÒú
-¹¥ Éí	óÒÒô÷îÒú
-¹• Éí	ÄÒˆîÒú
-¹ îÒŞ€ îÒú
-¹­ îÒÖ¹˜ îÒá¹± Òí	³È¬÷šÏí	’ÒQõ¥ Ïí	µ
-ÒPõÙ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	ÎÒğîÒú
-¹±
- Éí	ÒˆîÒú
-¹A Éí	ÂÒˆîÒú
-¹ä îÒ îÒú
-¹Ñ îÒÖ¹³ îÒá¹Ä Òí	ˆ
-È¬÷ºÏí	’ÒQõ¥ Ïí	µ
-ÒPõÙ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	ŸÒˆîÒú
-¹· Éí	¹ÒˆîÒú
-¹ø îÒŞ€Ô îÒú
-¹å îÒÖ¹ˆ
- îÒá¹ï Òí	êÈ¬÷·Ïí	’ÒQõ¥ Ïí	µ
-ÒPõÙ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	‘ÒˆîÒú
-¹ã Éí	ÓÒˆîÒú
-¹§ Éí	ŠÒˆîÒú
-¹ã îÒŞ€Ô îÒú
-¹í îÒÖ¹ê îÒá¹è
- Òí	|È¬÷³Ïí	’ÒQõ¥ Ïí	µ
-ÒPõÙ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	ıÒˆîÒú
-¹‹ Éí	ÒÒóîÒú
-¹ê Éí	›ÒˆîÒú
-¹ Éí	ÑÒˆîÒú
-¹È Éí	ûÒğîÒú
-¹Ä îÒá¹Ê îÒŞ€Ô îÒú
-¹ò îÒÖ¹| îÒá¹	 Òí	 È¬÷±Ïí	’ÒQõ¥ Ïí	µ
-ÒPõÙ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	ÓÒˆîÒú
-¹¸ Éí	æ	ÒˆîÒú
-¹ Éí	âÒˆîÒú
-¹ş Éí	
-ÒˆîÒú
-¹¹ Éí	ÔÒˆîÒú
-¹Ô Éí	¿ÒóîÒú
-¹µ	 Éí	ûÒğîÒú
-¹Ä Éí	ÒğîÒú
-¹¿ îÒì¹ì Éí	VÒğîÒú
-¹è îÒì¹ì îÒŞ€Ô îÒú
-¹Î îÒÖ¹  îÒá¹İ	 Òí	£È¬÷¯Ïí	’ÒQõ¥ Ïí	µ
-ÒPõÙ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	ûÒğîÒú
-¹Ä Éí	³ÒóîÒú
-¹× îÒá¹ò Éí	<ÒğîÒú
-¹Ø îÒŞ€Ô îÒú
-¹ô îÒÖ¹£ îÒá¹‚ Òí	¤È¬÷ÎÏí	©ÒMõ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	¦ÒğîÒú
-¹¡ îÒá¹æ
- îÒ ¹Ä
- Éí	™ÒğîÒú
-¹ù Éí	¬ÒğîÒú
-¹1 îÒ ¹Ä
- Éí	ÒğîÒú
-¹Ó îÒ ¹Ä
- îÒ¥€§ îÒÖ¹¤ îÒú
-¹ÿ îÒá¹
- Òí	›	È¬÷à
-Ïí	©ÒMõ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	ŸÒˆîÒú
-¹· Éí	¹ÒˆîÒú
-¹ø îÒŞ€Ô îÒú
-¹ îÒÖ¹›	 îÒá¹– Òí	È ÷ú
-Éí	¹Òˆ Òí	‘
-È ÷ÿ
-Éí	¹Òˆ Òí	İÈ ÷ş
-Éí	¹Ò† Òí	‘È ÷õ
-Éí	¹Òˆ Òí	õÈ ÷ŒÉí	¹Ò† Òí	„È ÷ÖÉí	¹Òˆ Òí	¼È ÷ãÉí	¹Òˆ îÒâ îÒú
-¹¤ îÒá¹İ
- Òí	©	È ÷âîÒú
-¹¦ îÒá¹š Òí	ı
-È ÷áÉí	¹Òˆ Òí	çÈ ÷ìÉí	¹Òˆ îÒâ îÒú
-¹³ îÒá¹¨ Òí	ÚÈ ÷øîÒú
-¹Ï Òí	•È ÷÷îÒú
-¹ı Òí	¬È ÷öîÒú
-¹¹ Òí	îÈ ÷ıîÒú
-¹t îÒá¹  Òí	Ä	È ÷îÒâ îÒú
-¹’ îÒá¹¿
- Òí	È ÷Éí	¹ÒˆÍ Òí	ÌÈ ÷Éí	¹Òˆ Òí	ƒ	È ÷%Éí	¹Òˆ Òí	ÚÈ ÷"îÒâ îÒú
-¹ îÒá¹û
- Òí	È ÷ Éí	¹Òˆ îÒâ îÒú
-¹. îÒá¹¹ Òí	²È ÷îÒâ îÒú
-¹Á îÒá¹f Òí	ÈÈ ÷îÒâ îÒú
-¹à îÒá¹È Òí	ÁÈ‰÷4îÒú
-¹I îÒá¹	 îÒÖ¹Á îÒ3 Òí	©È ÷3îÒâ îÒú
-¹º Òí	È‰÷QîÒú
-¹¡ îÒÖ¹ îÒá¹¤ îÒã¹Ş Òí	”
-È‰÷PîÒú
-¹S îÒÖ¹”
- îÒá¹ø îÒ3 Òí	‘È‰÷MîÒú
-¹æ îÒá¹´ îÒÖ¹‘ Òí	ç	È‰÷LîÒú
-¹œ îÒá¹7 îÒÖ¹ç	 îÒã¹Ş Òí	…È‰÷JîÒú
-¹Ñ	 îÒá¹Ç îÒÖ¹… Òí	£È¬÷—Ïí	©ÒMõ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	ºÒˆîÒú
-¹÷ îÒá¹‹ Éí	®ÒğîÒú
-¹Ÿ îÒá¹æ îÒã¹‹ Éí	ÿÒğîÒú
-¹û îÒá¹× îÒã¹‹ Éí	ßÒğîÒú
-¹k îÒá¹· Éí	ğÒğîÒú
-¹Á îÒá¹– Éí	 ÒğîÒú
-¹¸ îÒá¹• îÒ ¹Ä
- Éí	¢ÒğîÒú
-¹À îÒá¹ˆ îÒ ¹Ä
- Éí	ÒğîÒú
-¹â îÒá¹Ü îÒ ¹Ä
- îÒÖ¹£ îÒú
-¹¹ îÒ îÒá¹é Òí	Ö
-È¬÷£Ïí	©ÒMõ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	™ÒğîÒú
-¹› îÒá¹ç îÒã¹Ş Éí	 ÒğîÒú
-¹ˆ îÒá¹ îÒã¹Ş Éí	ÃÒğîÒú
-¹¶ îÒá¹‘ îÒã¹Ş îÒÖ¹Ö
- îÒú
-¹ îÒ€À	 îÒá¹¡ Òí	´È¬÷¯Ïí	©ÒMõ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	£	ÒğîÒú
-¹» îÒá¹ô Éí	ãÒğîÒú
-¹Û îÒá¹Â Éí	ÑÒğîÒú
-¹³ îÒá¹	 îÒã¹Ş îÒÖ¹´ îÒú
-¹‚ îÒ€À	 îÒá¹¶ Òí	·È¬÷¬Ïí	©ÒMõ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	¢ÒğîÒú
-¹Æ îÒá¹€ Éí	üÒğîÒú
-¹Å îÒá¹ÿ îÒ ¹Ä
- Éí	—ÒğîÒú
-¹ú îÒá¹“ îÒ ¹Ä
- îÒÖ¹· îÒú
-¹À îÒ€ îÒá¹š Òí	äÈ¬÷«Ïí	©ÒMõ Ïí	¯
-Ò4õÙ Éí	³
-ÒğîÒú
-¹ü îÒì¹Â Éí	§ÒğîÒú
-¹À îÒã¹Â Éí	¯ÒĞô÷îÒú
-¹œ îÒá¹® Éí	µ
-Ò€ô÷îÒú
-¹S îÒá¹Ç Éí	‚ÒğîÒú
-¹Ÿ îÒá¹ì Éí	ˆÒğîÒú
-¹ä îÒá¹È	 îÒ ¹Ä
- îÒÖ¹ä îÒú
-¹Ö îÒ€Ç îÒá¹ë Üƒß—	¢
- 
+classCount(Number of classes loaded since JVM startSymbol Table StatisticsCompiled Methodsjdk.types.CompilerPhaseTypejdk.jfr.Timespan3Current IHOP threshold in percent of old generationfreedMemoryExpansion sizejdk.G1GarbageCollectionjdk.StringTableStatisticsmediumChunksTotalSizejdk.ThreadDumpexceptionMessage	Timed OutStandard Compilations	ReferenceSum of PausesPhase LevelPeer Certificate IdThread1404WhendepthInlined Code SizeTiered CompilationpredictionActivemaxAgeelementsjdk.GCHeapConfigurationSweepsGC NameosrCompileCountpromotionFailedjdk.CompilerInliningjdk.jfr.Relational
+From Spacejdk.SocketWritejdk.DoubleFlagChangedRecent Mutator DurationShenandoah Heap Region StateElements Written4Memory usage before GC in the collection set regionsAt SafepointPeriodjdk.jfr.TimestampValid UntilStart AddressThe average bucket lengthMethods1427OS Thread Namejdk.jfr.ExperimentalinvalidatedCountJava Thread Group	Operationjdk.FileRead
+gcWorkerId
+systemTimecodeSizeReason143414331432humongousChunksTotalSizeloadedClassCTotal memory occupied by objects in regions where evacuation failedZGC Thread PhaseTarget ModuleYAmount of physical memory, in bytes, that is currently allocated in the current containerbooleanCollection Set BeforeUsedTotalCause of inflationflushingEnabledCaller Blocked} ï Šâè	£»¨‡	Øè	µ
+âéê… Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è	Ÿâã‚…øâıÂ¹ ×è	£
+âã‚…øâıÂ– øâ¸ö³ øâıÂË âè	Ò»¨‡Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	Ÿâã‚…øâıÂ¥	 øâ¸ö³ øâıÂä
+ âè	¸»¨‡
+Øè	 âëê± Øè	µ
+âéê… Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è	æâæøâÂŠ øâıÂı øâ¸ö³ øâıÂø âè	ç»¨‡Øè	 âëê± Øè	µ
+âéê… Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è	´	âå‚…øâıÂ< ×è	ÜâæøâÂğ øâıÂŞ
+ ×è	 	âæøâ¡Âö øâıÂé ×è	;âæøâº øâÊ øâª øâıÂ¦ øâ¸ö³ øâıÂ¶	 âè	Ó»¨‡Øè	 âëê± Øè	µ
+âéê… Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è	Àâå‚…øâıÂ½ ×è	®âã‚…øâıÂà ×è	;âæøâº øâÊ øâª øâıÂ– øâ¸ö³ øâıÂî âè	µ»¨‡Øè	 âëê± Øè	µ
+âéê… Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è	Àâå‚…øâıÂ½ øâ‹Âl ×è	Áâã‚…øâıÂ©	 øâ‹ÂÈ ×è	ÜâæøâÂŠ øâıÂÏ øâ‹ÂÚ ×è	¡âúøâıÂÙ øâ‹Âà ×è	;âæøâº øâÊ øâª øâıÂ– øâ‹Âÿ øâ¸ö³ øâıÂ˜ øâ‹Â³ âè	°»¨‡Øè	 âëê± Øè	µ
+âéê… Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è	Àâå‚…øâıÂ½ ×è	;âæøâº øâÊ øâª øâıÂ– ×è	òâ‚…øâıÂ¥ øâ‹Â• øâ¸ö³ øâıÂ´ âè	¿»¨‡ 	Øè	µ
+âéê… Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è	×âå‚…øâıÂÂ øâ¸öÑ	õ² øâıÂ­ øâ» âè	Ş»¨‡¯Øè	 âëê± Øè	µ
+âéê… Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è		âå‚…øâıÂ  øâ‹Â¤ ×è	°
+âæøâº øâ× øâıÂú	 ×è	®âã‚…øâıÂ£ øâ‹Â¡ øâ¸öÑ	õÙ øâıÂû øâ‹Â‹ âè	°»¨‡±Øè	 âëê± Øè	µ
+âéê… Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è		âå‚…øâıÂ  øâ‹Â¤ øâ¸öÑ	õÙ øâıÂ¢ øâ‹ÂÕ âè	Â»¨‡²Øè	 âëê± Øè	µ
+âéê… Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è	†âå‚…øâıÂî øâ‹Â( ×è	ëâúøâıÂ¾ øâ‹Â# ×è	°
+âæøâº øâ× øâıÂú	 øâ¸öÑ	õÙ øâıÂ øâ‹Â5 âè	Š»¨‡´	Øè	µ
+âéê… Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è	µâç‚…øâıÂ—
+ øâ¸öÑ	õÙ øâıÂŒ øâ‹Â’ âè	=»¨‡µØè	 âëê± Øè	µ
+âéê… Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è	Œâå‚…øâıÂ™
+ ×è	óâæ‚…øâıÂ«	 ×è	‰
+âæ‚…øâıÂ² øâ¸öÑ	õŠ øâıÂû âè	¤»¨‡¶	Øè	µ
+âéê… Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è	ìâå‚…øâıÂŞ ×è	óâæ‚…øâıÂ«	 øâ¸öÑ	õŠ øâıÂ„ âè	¼	»¨‡·Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	âå‚…øâıÂĞ ×è	—âçøâıÂ¥ øâ‹Â
+ ×è	‹
+âæøâº øâã øâıÂƒ øâ¸öÑ	õŠ øâıÂÌ âè	Ö»¨‡¹Øè	 âëê± Øè	µ
+âéê… Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è	ËâçøâıÂ‰ ×è	‹
+âæøâº øâã øâıÂƒ øâ¸öÑ	õŠ øâıÂ½ âè	Ô	»¨‡ºØè	 âëê± Øè	µ
+âéê… Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è	ËâçøâıÂ‰ ×è	‹
+âæøâº øâã øâıÂƒ øâ¸öÑ	õŠ øâıÂÙ âè	„	»¨‡¼Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	Ìâå‚…øâıÂ¶ ×è	óâæ‚…øâıÂ«	 øâ¸öÑ	õŠ øâıÂ¬	 âè	¿»¨‡ÄØè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	è	âıøâıÂÊ ×è	¥âçøâıÂ> ×è	­	âçøâıÂ¹ ×è	Úâ‚…øâıÂ§ øâ¸öÑ	õ¶ øâıÂı âè	»¨‡ÆØè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	è	âıøâıÂÊ ×è	¥âçøâº øâıÂ> ×è	­	âçøâº øâıÂ¹ ×è	Úâ‚…øâıÂ§ øâ¸öÑ	õ¶ øâıÂ™ âè	Ç»¨‡ÇØè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	è	âıøâıÂÊ ×è	¥âæøâıÂ> ×è	­	âæøâıÂ¹ ×è	Úâ‚…øâıÂ§ øâ¸öÑ	õ¶ øâıÂË	 âè	‚»¨‡ÉØè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	è	âıøâıÂÊ ×è	¥âæøâº øâıÂ> ×è	­	âæøâº øâıÂ¹ ×è	Úâ‚…øâıÂ§ øâ¸öÑ	õ¶ øâıÂÜ âè	ñ»¨‡ËØè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	è	âıøâıÂÊ ×è	¥âøøâıÂ> ×è	­	âøøâıÂ¹ ×è	Úâ‚…øâıÂ§ øâ¸öÑ	õ¶ øâıÂÀ âè	ô»¨‡ÌØè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	è	âıøâıÂÊ ×è	¥âúøâıÂ> ×è	­	âúøâıÂ¹ ×è	Úâ‚…øâıÂ§ øâ¸öÑ	õ¶ øâıÂå	 âè	¿»¨‡ÍØè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	è	âıøâıÂÊ ×è	¥âıøâıÂ> ×è	­	âıøâıÂ¹ ×è	Úâ‚…øâıÂ§ øâ¸öÑ	õ¶ øâıÂ âè	«»¨‡ÎØè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	¶âçøâº øâÚ øâıÂÂ	 ×è	
+âø‚…øâıÂá ×è	qâÂøâıÂË ×è	™	âæøâº øâÉÂÅ
+ øâıÂ‡ øâ‹Â  øâ¸öÑ	õ¦÷ øâıÂÇ âè	¶
+»¨‡Ï
+Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	¶âçøâº øâÚ øâıÂÂ	 ×è	
+âø‚…øâıÂá ×è	İâæøâº øâÉÂÅ
+ øâıÂd ×è	˜âÇøâıÂ” ×è	İâÇøâıÂÙ ×è	©âÇøâıÂí	 øâ¸öÑ	õ¦÷ øâıÂë âè	Æ»¨‡ĞØè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	¥âæøâº øâÉÂÅ
+ øâıÂ> ×è	­	âæøâº øâÉÂÅ
+ øâıÂ¹ ×è	Úâû‚…øâıÂ¼ øâ¸öÑ	õ¦÷ö øâıÂ” âè	¾
+»¨‡ØØè	µ
+âéê… Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è	âæ‚…øâıÂÛ	 ×è	ôâúøâıÂ‘ ×è	âæøâº øâÉÂÅ
+ øâıÂá ×è	ìâş‚…øâıÂã ×è	õâÿ‚…øâıÂ øâ¸öÑ	õ¦÷ö øâıÂ âè	Î	»¨‡ÙØè	µ
+âéê… Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è	âæ‚…øâıÂÛ	 ×è	ôâúøâıÂ‘ ×è	âæøâº øâÉÂÅ
+ øâıÂá ×è	ìâş‚…øâıÂã ×è	õâÿ‚…øâıÂ øâ¸öÑ	õ¦÷ö øâıÂÅ âè	Ã»¨‡ÚØè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	¶âçøâº øâÚ øâıÂÂ	 ×è	
+âø‚…øâıÂá ×è	ìâş‚…øâıÂã ×è	Æâæøâº øâıÂ¼ ×è	úâæøâº øâÉÂÅ
+ øâıÂ¬ ×è	í
+âæøâº øâıÂÓ ×è	,âæøâº øâÉÂÅ
+ øâıÂ¿ ×è	Êâæøâº øâıÂ¦ ×è	Öâæøâº øâÉÂÅ
+ øâıÂ¯ ×è	úâæøâº øâıÂ¢ ×è	‹âæøâº øâÉÂÅ
+ øâıÂ€	 øâ¸öÑ	õ¦÷ö øâıÂ½
+ âè	÷»¨‡ÜØè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	¶âçøâº øâÚ øâıÂÂ	 ×è	
+âø‚…øâıÂá ×è	éâÂøâıÂ ×è	øâÆøâıÂÕ	 ×è	âÂøâıÂ’	 ×è	ª	âÆøâıÂ× ×è	ˆâÆøâıÂï ×è	ÌâÆøâıÂ” øâ¸öÑ	õ¦÷ øâıÂ âè	Ø»¨‡ß
+Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	¶âçøâº øâÚ øâıÂÂ	 ×è	
+âø‚…øâıÂá ×è	¶âæøâº øâÉÂÅ
+ øâıÂÛ ×è	¨âæøâº øâÉÂÅ
+ øâıÂÁ ×è	Ââæøâº øâÉÂÅ
+ øâıÂÆ ×è	™âçøâº øâıÂ øâ¸öÑ	õ¦÷ øâıÂÁ âè	æ»¨‡áØè	 âëê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	¶âçøâº øâÚ øâıÂÂ	 ×è	è	âô‚…øâıÂÊ øâ‹Â ×è	òâ÷‚…øâıÂ¨ øâ‹Â› ×è	¸âæøâº øâÂÔ øâıÂÜ øâ‹ÂT ×è	­âæøâº øâÂÔ øâıÂñ øâ‹Â® øâ¸öÑ	õ¦÷ì
+ øâıÂ» øâ‹ÂZ âè	¼»¨‡ã
+Øè	 âëê± Øè	µ
+âéê… Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è	º
+âúøâıÂÏ
+ øâ¸öÑ	õ¦÷ì
+ øâıÂÊ âè	œ	»¨‡ä	Øè	 âëê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	¶âçøâº øâÚ øâıÂÂ	 ×è	Úâæøâº øâÊ øâıÂ‰ øâ‹Â¥ øâ¸öÑ	õ¦÷ì
+ øâıÂÔ øâ‹Â½ âè	™»¨‡å	Øè	 âëê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	¶âçøâº øâÚ øâıÂÂ	 ×è	gâçøâº øâıÂ+ øâ¸öÑ	õ¦÷ì
+ øâıÂ4 øâ‹Â¢
+ âè	6»¨‡æØè	 âëê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	¶âçøâº øâÚ øâıÂÂ	 øâ¸öÑ	õ¦÷ì
+ øâıÂ† øâ‹Â½ âè	Ô»¨‡î	Øè	 âëê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	¶âçøâº øâÚ øâıÂÂ	 ×è	£âú‚…øâıÂŸ øâ¸öÑ	õ¦÷ì
+ øâıÂŠ	 øâ‹Â âè	º»¨‡ğØè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	¶âçøâº øâÚ øâıÂÂ	 ×è	ŠâæøâÂŠ øâıÂÀ øâ‹Âä ×è	WâæøâÂŠ øâıÂµ øâ‹ÂF ×è	ÀâæøâÂŠ øâıÂÕ øâ‹ÂŒ øâ¸öÑ	õ¦÷ø	 øâıÂÂ âè	İ»¨‡óØè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	¶âçøâº øâÚ øâıÂÂ	 ×è	…âçøâº øâıÂâ ×è	Öâæøâº øâÉÂÅ
+ øâıÂ’ øâ‹Âõ ×è	ıâæøâº øâÉÂÅ
+ øâıÂ¤
+ øâ‹Â÷ ×è	%âçøâº øâıÂv øâ‹Â„ ×è	¦	âæøâº øâÉÂÅ
+ øâıÂó øâ‹Âæ ×è	óâæøâº øâÉÂÅ
+ øâıÂŠ øâ‹Â® ×è	®	âæøâº øâÉÂÅ
+ øâıÂÕ
+ ×è	‹âçøâº øâıÂˆ øâ¸öÑ	õ¦÷ø	 øâıÂ âè	¾»¨‡õØè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	¶âçøâº øâÚ øâıÂÂ	 ×è	£âü‚…øâıÂŸ ×è	¦âæøâº øâıÂĞ øâ¸öÑ	õ¦÷Û øâıÂ€ øâ‹Â„ âè	Ş»¨‡øØè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	¶âçøâº øâÚ øâıÂÂ	 ×è	õâå‚…øâıÂ‡
+ ×è	¦âæøâıÂî ×è	‹âæøâº øâÉÂÅ
+ øâıÂ‘ øâ¸öÑ	õ¦÷ø	 øâıÂî âè	û	»¨‡ùØè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	Ä
+âËøâıÂğ øâ¸öÑ	õ¦÷ø	 øâıÂ! øâ‹Â® âè	á»¨‡ûØè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	Ä
+âËøâıÂğ øâ¸öÑ	õ¦÷ø	 øâıÂò øâ‹ÂY âè	 »¨‡üØè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	¶âçøâº øâÚ øâıÂÂ	 ×è	 âæøâº øâÉÂÅ
+ øâıÂ¾ øâ‹Âï ×è	âùøâÒ øâıÂ¾ øâ‹ÂÑ ×è	é	âæøâº øâÉÂÅ
+ øâıÂİ øâ‹ÂÈ ×è	ñâæøâº øâÉÂÅ
+ øâıÂÑ
+ øâ‹Â— ×è	_âæøâº øâÉÂÅ
+ øâıÂè øâ‹Âà ×è	9âæøâÂŠ øâıÂò øâ‹Âà	 ×è	ÚâøøâÉÂÅ
+ øâÃ øâıÂ¼ øâ‹Â¶ ×è	ı
+âæøâÂŠ øâıÂ¬
+ øâ‹Â§ øâ¸öÑ	õ¦÷ø	 øâıÂÉ	 øâ‹Â» âè	Å»¨‡ıØè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	¶âçøâº øâÚ øâıÂÂ	 ×è	 âæøâº øâÉÂÅ
+ øâıÂ³ øâ‹Â¾ ×è	âùøâÒ øâıÂ³ øâ‹Â2 ×è	¬âæøâº øâÉÂÅ
+ øâıÂ“ øâ‹Âé ×è	ñâæøâº øâÉÂÅ
+ øâıÂÑ
+ øâ‹Â— ×è	ìâæøâº øâÉÂÅ
+ øâıÂ„
+ øâ» øâ‹Â© ×è	­âøøâÉÂÅ
+ øâÃ øâıÂŸ	 øâ‹Â€ ×è	ˆâæøâÂŠ øâıÂÍ øâ‹Â‹ ×è	åâúøâıÂP øâ‹Âü øâ¸öÑ	õ¦÷ø	 øâıÂ øâ‹Â âè	î»¨‡şØè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	¶âçøâº øâÚ øâıÂÂ	 øâ‹Â¨
+ ×è	õâå‚…øâıÂ‡
+ øâ‹Âí ×è	Dâæøâº øâÉÂÅ
+ øâıÂÆ
+ øâ‹Âı	 ×è	±âçøâº øâıÂ” øâ‹ÂŞ ×è	¹
+âúøâıÂ… øâ‹Â ×è	«âæøâº øâÉÂÅ
+ øâıÂö øâ‹Âè øâ¸öÑ	õ¦÷ø	 øâıÂ² øâ‹Âñ âè	ú»¨‡‡Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	¶âçøâº øâÚ øâıÂÂ	 øâ‹Â¨
+ ×è	õâå‚…øâıÂ‡
+ øâ‹Âí ×è	Dâæøâº øâÉÂÅ
+ øâıÂÆ
+ øâ‹Âı	 ×è	±âçøâº øâıÂ” øâ‹ÂŞ ×è	¹
+âúøâıÂ… øâ‹Â øâ¸öÑ	õ¦÷ø	 øâıÂª øâ‹Â“ âè	â
+»¨‡ˆØè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	¶âçøâº øâÚ øâıÂÂ	 ×è	ìâÉøâıÂ› ×è	Ÿâã‚…øâıÂ« øâ¸öÑ	õ¦÷ø	 øâıÂš øâ‹ÂÚ âè	ö»¨‡ŠØè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	¶âçøâº øâÚ øâıÂÂ	 ×è	ŠâÉøâıÂ— øâ¸öÑ	õ¦÷ø	 øâıÂÜ øâ‹Âª
+ âè	Ò»¨‡‹Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	¶âçøâº øâÚ øâıÂÂ	 øâ¸öÑ	õ¦÷ø	 øâıÂ… øâ‹Â– âè	»¨‡Œ	Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	¶âçøâº øâÚ øâıÂÂ	 ×è	Ğâæøâº øâÂğ øâıÂ¯	 ×è	…âæøâº øâÂğ øâıÂï ×è	’âæøâº øâÂğ øâıÂ¼ øâ¸öÑ	õ¦÷ø	 øâıÂ©
+ øâ‹Âå âè	 »¨‡	Øè	 âëê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	¶âçøâº øâÚ øâıÂÂ	 ×è	è	âıøâıÂÊ øâ¸öÑ	õ¦÷ƒ øâıÂÕ âè	Ä»¨‡	Øè	 âëê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	¶âçøâº øâÚ øâıÂÂ	 ×è	è	âıøâıÂÊ øâ¸öÑ	õ¦÷ƒ øâıÂÜ âè	Æ»¨‡’	Øè	 âëê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	¶âçøâº øâÚ øâıÂÂ	 ×è	è	âıøâıÂÊ øâ¸öÑ	õ¦÷ƒ øâıÂß âè	Å»¨‡“	Øè	 âëê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	¶âçøâº øâÚ øâıÂÂ	 ×è	è	âıøâıÂÊ øâ¸öÑ	õ¦÷ƒ øâıÂØ âè	Ã»¨‡”	Øè	 âëê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	¶âçøâº øâÚ øâıÂÂ	 ×è	è	âıøâıÂÊ øâ¸öÑ	õ¦÷ƒ øâıÂÛ âè	ä»¨‡¤	Øè	 âëê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	¶âçøâº øâÚ øâıÂÂ	 ×è	è	âıøâıÂÊ øâ¸öÑ	õ¦÷ƒ øâıÂÁ	 âè	œ»¨‡¥	Øè	 âëê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	¶âçøâº øâÚ øâıÂÂ	 ×è	è	âıøâıÂÊ øâ¸öÑ	õ¦÷ƒ øâıÂÕ âè	o»¨‡§Øè	 âëê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	¶âçøâº øâÚ øâıÂÂ	 ×è	„âçøâº øâıÂS ×è	è	âıøâıÂÊ øâ¸öÑ	õ¦÷ƒ øâıÂö øâ‹Âã âè	À»¨‡¨	Øè	µ
+âéê… Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è	¶âçøâº øâÚ øâıÂ” ×è	âæøâº øâÉÂÅ
+ øâıÂê øâ¸öÑ	õ¦÷ø	 øâıÂ· âè	§»¨‡©Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	¶âçøâº øâÚ øâıÂÂ	 ×è	ºâçøâº øâıÂ ×è	âæøâº øâÉÂÅ
+ øâıÂá øâ¸öÑ	õ¦÷ø	 øâıÂÄ âè	ü»¨‡ª
+Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	âçøâº øâıÂº ×è	¬âù‚…øâıÂ÷
+ ×è	Äâù‚…øâıÂŞ	 ×è	áâæøâº øâÊ øâıÂM ×è	Î
+âæøâº øâÉÂÅ
+ øâıÂ“ øâ¸öÑ	õ¦÷ø	 øâıÂƒ	 øâ‹Âù âè	„»¨‡«Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	ÒâçøâÉÂÅ
+ øâıÂŸ ×è	üâæøâº øâÉÂÅ
+ øâıÂÇ	 øâ¸öÑ	õ` øâıÂÅ øâ‹Â¹ âè	ª»¨‡­Øè	 âëê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	Õâçøâº øâİ øâıÂÍ	 ×è	~âÓ‚…øâıÂ` ×è	µâç‚…øâıÂ÷ ×è	¬âéøâº øâıÂÁ ×è	ÿâúøâıÂº ×è	’âúøâıÂ· ×è	†âæøâº øâÉÂÅ
+ øâıÂ˜
+ ×è	Š
+âæøâº øâÉÂÅ
+ øâıÂã øâ¸öÑ	õ` øâıÂ øâ‹Â… âè	É
+»¨‡¯Øè	 âëê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	´âŒ‚…øâıÂƒ ×è	Õâçøâº øâİ øâıÂÍ	 ×è	ã	âéøâº øâıÂİ øâ¸öÑ	õ` øâıÂü øâ‹Â âè	¶»¨‡°Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µâıøâıÂÇ ×è	Õâçøâº øâİ øâıÂÍ	 øâ¸öÑ	õ` øâıÂé øâ‹Âû âè	í»¨‡ºØè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	Õâçøâº øâİ øâıÂÍ	 ×è		âç‚…øâıÂÛ ×è	ÁâÌøâıÂÊ ×è	·	âúøâıÂº ×è	¯âıøâıÂè
+ ×è	˜âçøâıÂà øâ¸öÑ	õ`÷Ï øâıÂœ øâ‹Âù âè	è»¨‡»Øè	 âëê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	Êâçøâà øâıÂ® ×è	’âçøâº øâıÂÖ	 ×è	À	âçøâº øâıÂ† ×è	—âçøâº øâıÂÓ øâ¸öÑ	õ‰ øâıÂ™ âè	¬»¨‡¼Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	¦â‚…øâıÂN ×è	Üâæøâº øâÊ øâıÂú ×è	Øâæøâº øâÊ øâıÂ† ×è	…âæøâº øâÊ øâıÂø ×è	ËâçøâıÂæ ×è	±âçøâıÂü ×è	—âçøâıÂ› ×è	Gâæøâº øâÉÂÅ
+ øâıÂĞ ×è	‹âçøâıÂğ ×è	üâæøâº øâÉÂÅ
+ øâıÂÇ	 øâ¸öÑ	õĞ øâıÂ	 øâ‹ÂÍ âè	ƒ»¨‡¿Øè	µ
+âéê… Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è	Õâçøâº øâİ øâıÂÍ	 ×è	~âÓ‚…øâıÂ` ×è	µâç‚…øâıÂ÷ ×è	”âçøâıÂ„ ×è	˜âçøâıÂà ×è	±âÒ‚…øâıÂ• ×è	¡	âÎ‚…øâıÂ‡ ×è	ËâĞ‚…øâıÂï øâ¸öÑ	õ` øâıÂ¯ øâ‹Â” âè	õ»¨‡ÀØè	 âëê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	°
+âæøâº øâ× øâıÂú	 ×è	Œ
+âçøâıÂ» øâ‹Â¸ ×è	ÃâçøâıÂ§ øâ‹Â‚ øâ¸öÑ	õÙ÷ã øâıÂ”	 øâ‹Âë âè	©»¨‡ÁØè	 âëê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	°
+âæøâº øâ× øâıÂú	 ×è	î
+âçøâıÂ†	 øâ‹Â¨ ×è	câçøâıÂæ
+ øâ‹Â·
+ ×è	æ	âçøâıÂş øâ‹Â‚
+ øâ¸öÑ	õÙ÷ã øâıÂÙ
+ øâ‹Â‰ âè	Ï»¨‡Ã	Øè	 âëê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	°
+âæøâº øâ× øâıÂú	 øâ¸öÑ	õÙ÷ã øâıÂò øâ‹ÂÈ âè	¸»¨‡Ä
+Øè	 âëê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	°
+âæøâº øâ× øâıÂú	 ×è	è	âıøâıÂ…
+ øâ‹Âƒ
+ øâ¸öÑ	õÙ÷ã øâıÂÛ øâ‹ÂÈ âè	˜»¨‡Å	Øè	 âëê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	°
+âæøâº øâ× øâıÂú	 øâ¸öÑ	õÙ÷ã øâıÂÆ øâ‹Âó âè	‰»¨‡ÆØè	 âëê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	òâŠ‚…øâıÂ‚ ×è	Ú
+âúøâıÂö øâ‹Â€ ×è	ƒâúøâıÂ— øâ‹Â¦
+ ×è		âã‚…øâıÂ øâ‹Âå
+ øâ¥ ×è	°
+âæøâº øâ× øâıÂú	 øâ‹Âİ	 øâ¸öÑ	õÙ øâıÂÓ øâ‹Â âè	»¨‡Ï	Øè	µ
+âéê… Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è	¡	âıøâıÂ‡ øâ‹ÂÒ	 øâ¸öÑ	õÙ øâıÂÍ øâ‹Âe âè	Ô»¨‡ÑØè	µ
+âéê… Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è	õâå‚…øâıÂ‡
+ øâ‹Âù
+ ×è	˜âæøâº øâÉÂÅ
+ øâıÂê ×è	âæøâº øâÉÂÅ
+ øâıÂ½ øâ¸ö³ øâıÂ¨ øâ‹Â‚ âè	[»¨‡Ò
+Øè	µ
+âéê… Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è	õâå‚…øâıÂ‡
+ øâ‹Âù
+ ×è	˜âæøâº øâÉÂÅ
+ øâıÂê øâ¸ö³ øâıÂÄ øâ‹Â¾ âè	¨»¨‡Ó
+Øè	µ
+âéê… Øè	‡âıê­ Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è	õâå‚…øâıÂ‡
+ øâ‹Âù
+ ×è	ÇâæøâÉÂÅ
+ øâıÂ¢ øâ‹ÂÕ øâ¸ö³ øâıÂõ âè	Ã
+»¨‡ÔØè	µ
+âéê… Øè	”ââêI Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è	éâæøâº øâ¡ÂÔ øâıÂÑ ×è	ìâæøâº øâÂÔ øâıÂÙ ×è	¬âæøâº øâÉÂÅ
+ øâıÂJ ×è	&â¥‚…øâıÂ‚ ×è	šâçøâıÂÇ øâ‹ÂÂ
+ ×è	}â¡‚…øâıÂ™ øâ¸öÑ	õÈ
+ øâıÂÅ øâ‹ÂÆ	 âè	K»¨‡ÕØè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	¡	âıøâıÂ‡ øâ‹Â‰ ×è	ŒâçøâıÂ× øâ‹Âğ øâ¸öİ øâıÂ øâ‹ÂÀ âè	¡»¨‡×Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	ñ
+âæøâº øâÉÂÅ
+ øâıÂé øâ‹Â‘ ×è	Ñâæøâº øâÉÂÅ
+ øâıÂ” øâ‹Â‡ øâ¸öİ øâıÂó
+ øâ‹ÂO âè	ƒ»¨‡ØØè	œâäê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	ğâıøâıÂ‡ ×è	‰âıøâıÂ¶ ×è	ØâıøâıÂ• ×è	âıøâıÂŒ	 ×è	ëâıøâıÂó	 ×è	´âæøâ¡Âö øâıÂ€ ×è	ÁâæøâıÂ øâ¸öÑ	 øâıÂ	 øâ‹Âí âè	»¨‡ÚØè	œâäê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	¬âıøâıÂÉ øâ¸ö° øâıÂ±	 øâ‹Âı âè	‰	»¨‡ÛØè	œâäê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	è	âıøâıÂÊ øâ¸ö° øâıÂ™ øâ‹ÂÓ	 âè	ş»¨‡åØè	œâäê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	°âıøâıÂÅ ×è	ÂâıøâıÂ† øâ¸öÑ	 øâıÂ° øâ‹Âí âè	»¨‡æØè	œâäê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	°âıøâıÂÅ ×è	ÂâıøâıÂ† øâ¸ö° øâıÂ„ øâ‹ÂÔ âè	É»¨‡çØè	œâäê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	ÁâıøâıÂ ×è	—âıøâıÂÖ øâ¸ö° øâıÂ€ âè	Â»¨‡èØè	œâäê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	ÔâıøâıÂŸ ×è	ô	âıøâıÂ ×è	Ëâçøâº øâıÂ˜ ×è	–âçøâº øâıÂ“ ×è	’âçøâº øâıÂï
+ øâ¸ö°õ»	 øâıÂï øâ‹ÂŸ âè	Æ»¨‡ê
+Øè	œâäê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	µâúøâıÂ¸	 ×è	™âúøâıÂô
+ ×è	•âæøâÃ øâıÂŒ ×è	CâæøâÃ øâıÂş øâ¸ö°õ»	 øâıÂ øâ‹Â  âè	ß»¨‡ì	Øè	œâäê‘ Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	ßâùøâÒ øâıÂû ×è	×âùøâÒ øâıÂš ×è	ºâùøâÒ øâıÂÖ øâ¸ö°õ»	 øâıÂ¦ øâ‹ÂÀ âè	Õ»¨‡íØè	œâäê‘ Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	û
+âùøâÒ øâıÂ˜ øâ‹Â• ×è	ÖâùøâÒ øâıÂÍ øâ‹ÂÄ øâ¸ö°õ»	 øâıÂ÷ âè	¸»¨‡îØè	œâäê‘ Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	ìâùøâÃ øâıÂ³ øâ‹Â\ øâ¸ö°õ»	 øâıÂ âè	¤»¨‡ïØè	œâäê‘ Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	•ââ‚…øâıÂB øâ‹Âù ×è	ÓâæøâÉÂ† øâÃ øâıÂ¤ øâ‹Â7 ×è	¯âæøâÉÂ† øâÃ øâıÂı øâ‹ÂÅ	 øâ¸ö°õô øâıÂ¦ âè	¹»¨‡ğ	Øè	œâäê‘ Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	Ê	âæøâıÂ/ øâ‹Â¢ ×è	ÛâæøâıÂö
+ øâ‹ÂÚ ×è	{âæøâıÂë
+ øâ‹Â¾ ×è	€âæøâıÂb øâ‹ÂÛ øâ¸ö³õ¬ øâıÂû âè	
+»¨‡ßØè	œâäê‘ Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	¨	âæøâıÂÁ øâ‹ÂÌ ×è	şâæøâıÂä øâ‹Â½	 øâ¸ö³õ¬ øâıÂÎ âè	Ê
+»¨‡àØè	œâäê‘ Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	âæ‚…øâıÂÛ	 ×è	áâæ‚…øâıÂ± ×è	¨âæøâº øâÊ øâıÂš øâ‹ÂĞ	 ×è	ËâæøâıÂ° øâ‹Â’ ×è	ƒâæøâº øâÉÂÅ
+ øâıÂØ øâ‹ÂŸ
+ ×è	ˆâæøâº øâÉÂÅ
+ øâıÂÀ øâ‹ÂĞ ×è	¢âæøâıÂ³ øâ‹Âè ×è	­âæøâº øâÉÂÅ
+ øâıÂ¾	 øâ‹Âò ×è	ââæøâº øâÉÂÅ
+ øâıÂß øâ‹ÂÜ øâ¸ö³õ¬ øâıÂª âè	ı»¨‡âØè	œâäê‘ Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	­âæøâº øâıÂÇ øâ‹Â«
+ ×è	Ëâæøâº øâıÂ² øâ‹Â³ ×è	Íâæøâº øâÉÂÅ
+ øâıÂ² øâ‹ÂÖ ×è	Òâæøâº øâıÂî øâ‹Âš	 ×è	ÖâùøâıÂÅ øâ‹Âû ×è	jâùøâıÂö øâ‹Â´ ×è	ğâùøâıÂ· øâ‹Âò ×è	‘âùøâıÂõ
+ øâ‹Âó ×è	ë	âùøâıÂş øâ‹Â› øâ¸öÑ	õÙ÷¯ øâıÂÍ âè	Õ»¨‡ãØè	œâäê‘ Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	­âæøâº øâıÂÇ øâ‹Â«
+ ×è	Ëâæøâº øâıÂ² øâ‹Â³ ×è	Íâæøâº øâÉÂÅ
+ øâıÂ² øâ‹ÂÖ ×è	Òâæøâº øâıÂî øâ‹Âš	 ×è	ÖâùøâıÂÅ øâ‹Âû ×è	jâùøâıÂö øâ‹Â´ ×è	ğâùøâıÂ· øâ‹Âò ×è	‘âùøâıÂõ
+ øâ‹Âó ×è	ë	âùøâıÂş øâ‹Â› øâ¸öÑ	õÙ÷¯ øâıÂà âè	ê»¨‡åØè	œâäê‘ Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	­âæøâº øâıÂÇ øâ‹Â«
+ ×è	Ëâæøâº øâıÂ² øâ‹Â³ ×è	Íâæøâº øâÉÂÅ
+ øâıÂ² øâ‹ÂÖ ×è	Òâæøâº øâıÂî øâ‹Âš	 ×è	ÖâùøâıÂÅ øâ‹Âû ×è	jâùøâıÂö øâ‹Â´ ×è	ğâùøâıÂ· øâ‹Âò ×è	‘âùøâıÂõ
+ øâ‹Âó ×è	ë	âùøâıÂş øâ‹Â› øâ¸öÑ	õÙ÷¯ øâıÂá âè	·»¨‡æØè	œâäê‘ Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	­âæøâº øâıÂÇ ×è	Ëâæøâº øâıÂ² øâ‹Â³ ×è	Íâæøâº øâÉÂÅ
+ øâıÂ² øâ‹ÂÖ ×è	Òâæøâº øâıÂî øâ‹Âš	 ×è	ÖâùøâıÂÅ øâ‹Âû ×è	jâùøâıÂö øâ‹Â´ ×è	ğâùøâıÂ· øâ‹Âò ×è	‘âùøâıÂõ
+ øâ‹Âó ×è	ë	âùøâıÂş øâ‹Â› øâ¸öÑ	õÙ÷¯ øâıÂR âè	Ñ»¨‡çØè	œâäê‘ Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	­âæøâº øâıÂÇ øâ‹Â«
+ ×è	Ëâæøâº øâıÂ² øâ‹Â³ ×è	Íâæøâº øâÉÂÅ
+ øâıÂ² øâ‹ÂÖ ×è	Òâæøâº øâıÂî øâ‹Âš	 ×è	ÖâùøâıÂÅ øâ‹Âû ×è	jâùøâıÂö øâ‹Â´ ×è	ğâùøâıÂ· øâ‹Âò ×è	‘âùøâıÂõ
+ øâ‹Âó ×è	ë	âùøâıÂş øâ‹Â› øâ¸öÑ	õÙ÷¯ øâıÂ“ âè	ÿ»¨‡èØè	œâäê‘ Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	Öâæøâº øâÉÂÅ
+ øâıÂù øâ‹Â¦ ×è	Ÿâã‚…øâıÂß øâ¸ö³õ¬ øâıÂ§ âè	İ»¨‡éØè	œâäê‘ Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	‹âæøâº øâÉÂÅ
+ øâıÂ‘ øâ‹Â˜ ×è	ªâæøâº øâÉÂÅ
+ øâıÂ¬ øâ‹Âô øâ¸ö°õ øâıÂ øâ‹Âç âè	Ó
+»¨‡ê	Øè	œâäê‘ Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	³	âã‚…øâıÂß ×è	µ
+â”‚…øâıÂE ×è	–âó‚…øâıÂè øâ¸öÑ	õÈ
+ øâıÂ¸ øâ‹ÂÈ âè	…»¨‡ó	Øè	œâäê‘ Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	³	âã‚…øâıÂß ×è	µ
+â”‚…øâıÂE ×è	–âó‚…øâıÂè øâ¸öÑ	õÈ
+ øâıÂ‡ øâ‹ÂÄ âè	×»¨‡ôØè	œâäê‘ Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	0âıøâıÂÔ øâ¸öÑ	õÙ øâıÂÔ âè	«»¨‡ö	Øè	œâäê‘ Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	è	âıøâıÂÊ ×è	›
+âæøâº øâÊ øâıÂ² øâ‹ÂÒ ×è	œâæøâº øâÊ øâıÂŠ øâ‹ÂØ
+ øâ¸öÑ	õÙ øâıÂ‡ øâ‹ÂÈ âè	
+»¨‡ùØè	œâäê‘ Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	¿â‘‚…øâıÂ ×è	Ãâ‘‚…øâıÂÎ øâ¸öÑ	õÙ÷ì øâıÂÊ øâ‹Â›	 âè	´»¨‡úØè	œâäê‘ Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	ªâ“‚…øâıÂõ	 ×è	Şâ‘‚…øâıÂ øâ‹ÂÑ øâ¸öÑ	õÙ÷ì øâıÂË
+ âè	•»¨‡ûØè	œâäê‘ Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	õâçøâıÂÎ ×è	´
+âçøâıÂ» ×è	€âçøâıÂº ×è	ëâçøâıÂš
+ ×è	£âçøâıÂÚ ×è	êâæøâº øâÉÂÅ
+ øâıÂÔ ×è	âæøâº øâÉÂÅ
+ øâıÂ¾ ×è	Æâæøâº øâÉÂÅ
+ øâıÂÙ ×è	œâæøâº øâÉÂÅ
+ øâıÂü	 ×è	"âæøâÂŠ øâıÂ¾ ×è	—âæøâÂŠ øâıÂŞ øâ¸öÑ	õ` øâıÂŒ âè	³»¨‡üØè	œâäê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	‘âçøâıÂã ×è	ÿâúøâıÂä øâ¸öÑ	õ` øâıÂ¡ âè	€»¨‡ıØè	œâäê‘ Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	¦â‚…øâıÂN ×è	Üâæøâº øâÊ øâıÂú ×è	…âæøâº øâÊ øâıÂø ×è	ËâçøâıÂæ ×è	±âçøâıÂü ×è	—âçøâıÂ› ×è	Gâæøâº øâÉÂÅ
+ øâıÂĞ ×è	‹âçøâıÂğ øâ¸öÑ	õĞ øâıÂs âè	å»¨‡şØè	œâäê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	„âæøâº øâÉÂÅ
+ øâıÂÊ ×è	Éâæøâº øâÉÂÅ
+ øâıÂ¥ ×è	©âæøâº øâÉÂÅ
+ øâıÂŸ ×è	âæøâº øâÉÂÅ
+ øâıÂñ ×è	âæøâº øâÉÂÅ
+ øâıÂÙ ×è	äâæøâº øâÉÂÅ
+ øâıÂÓ ×è	râæøâº øâÉÂÅ
+ øâıÂÔ ×è	Üâæøâº øâÊ øâıÂú ×è	…âæøâº øâÊ øâıÂø øâ¸öÑ	õĞ øâıÂ© âè	º	»¨‡ÿ
+Øè	œâäê‘ Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	ÜâçøâıÂé ×è	ÉâçøâıÂ• ×è	Ââæøâº øâÂÔ øâıÂû ×è	üâæøâº øâÂÔ øâıÂÑ ×è	Èâæøâº øâÂÔ øâıÂø øâ¸öÑ	õ‰ øâıÂ¹ âè	“
+»¨‡‰Øè	œâäê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	šâúøâıÂ¢	 ×è	–âúøâıÂŒ ×è	‚âæøâº øâÉÂÅ
+ øâıÂ¦ øâ¸öÑ	õ‰ øâıÂ£ âè	ï»¨‡‹Øè	œâäê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	è	âıøâıÂÊ ×è	ÂâçøâıÂ† ×è	Úâ‚…øâıÂ§ øâ¸öÑ	õ¶ øâıÂØ âè	»¨‡Øè	œâäê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	è	âıøâıÂÊ ×è	Ââçøâº øâıÂ† ×è	Úâ‚…øâıÂ§ øâ¸öÑ	õ¶ øâıÂ² âè	ã»¨‡Øè	œâäê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	è	âıøâıÂÊ ×è	ÂâæøâıÂ† ×è	Úâ‚…øâıÂ§ øâ¸öÑ	õ¶ øâıÂ— âè		»¨‡Øè	œâäê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	è	âıøâıÂÊ ×è	Ââæøâº øâıÂ† ×è	Úâ‚…øâıÂ§ øâ¸öÑ	õ¶ øâıÂÏ âè	»¨‡‘Øè	œâäê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	è	âıøâıÂÊ ×è	ÂâøøâıÂ† ×è	Úâ‚…øâıÂ§ øâ¸öÑ	õ¶ øâıÂÕ âè	İ
+»¨‡’Øè	œâäê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	è	âıøâıÂÊ ×è	ÂâúøâıÂ† ×è	Úâ‚…øâıÂ§ øâ¸öÑ	õ¶ øâıÂø âè	p»¨‡•Øè	œâäê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	è	âıøâıÂÊ ×è	ÂâıøâıÂ† ×è	Úâ‚…øâıÂ§ øâ¸öÑ	õ¶ øâıÂê
+ âè	ø»¨‡–	Øè	œâäê‘ Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	¶âçøâº øâÚ øâıÂÂ	 ×è	õâå‚…øâıÂ‡
+ ×è	¦âæøâıÂî ×è	‹âæøâº øâÉÂÅ
+ øâıÂ‘ øâ¸öÑ	õ¦÷ø	 øâıÂ‰ âè	»¨‡˜
+Øè	œâäê‘ Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	âçøâº øâıÂº ×è	£âù‚…øâıÂŸ ×è	áâæøâº øâÊ øâıÂM ×è	Î
+âæøâº øâÉÂÅ
+ øâıÂ“ øâ¸öÑ	õ¦÷ø	 øâıÂš øâ‹ÂÔ âè	Í
+»¨‡ŸØè	œâäê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	€âô‚…øâıÂÑ øâ‹Â ×è	wâô‚…øâıÂÍ øâ‹Â ×è	óâçøâº øâıÂ´ øâ‹Âñ ×è	aâçøâº øâıÂÙ øâ‹Âˆ ×è	—âúøâıÂ´ øâ‹Âx ×è	-âúøâıÂ† øâ‹Âï ×è		âúøâıÂy øâ‹Â– ×è	ÀâæøâÂŠ øâıÂÕ øâ‹Âñ ×è	€âçøâº øâıÂ øâ‹ÂA øâ¸öÑ	õ¦÷© øâıÂè øâ‹Â‰ âè	×»¨‡ Øè	œâäê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	¤âêøâº øâıÂ»
+ øâ‹Âh ×è	ƒâêøâº øâıÂ¾ øâ‹Â  øâ¸öÑ	õ¦÷© øâıÂ¤ øâ‹Â· âè	ó»¨‡¡	Øè	œâäê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	ÉâúøâıÂ²
+ øâ‹Â‘ ×è	°âæøâº øâÉÂÅ
+ øâıÂ„ ×è	§
+âæøâº øâÉÂÅ
+ øâıÂŒ øâ¸öÑ	õ¦÷© øâıÂù øâ‹Â« âè	è»¨‡£Øè	œâäê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	€âæøâº øâÉÂÅ
+ øâıÂ ×è	“âæøâº øâÉÂÅ
+ øâıÂ¿ ×è	„âæøâº øâÉÂÅ
+ øâıÂ„ ×è	šâúøâıÂä	 øâ‹Âñ ×è	âˆ‚…øâıÂ‡ øâ‹Â¬ ×è	Ò
+âæøâº øâÉÂÅ
+ øâıÂ øâ‹Âë ×è	âêøâº øâıÂ‘ øâ‹Âª øâ¸öÑ	õ¦÷© øâıÂÏ	 øâ‹Â¤ âè	ì»¨‡¤	Øè	œâäê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	€âæøâº øâÉÂÅ
+ øâıÂÛ
+ ×è	“âæøâº øâÉÂÅ
+ øâıÂñ ×è	’
+âçøâº øâıÂ øâ‹Â–
+ øâ¸öÑ	õ¦÷© øâıÂÎ øâ‹Â· âè	—»¨‡§Øè	 âëê± Øè	µ
+âéê… Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è	£âİ‚…øâıÂŸ ×è	âæøâº øâÉÂÅ
+ øâıÂá øâ¸öÑ	õ¦÷ø	 øâıÂ¦ øâ‹ÂÙ âè	÷»¨‡¨Øè	 âëê± Øè	µ
+âéê… Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è	£âİ‚…øâıÂŸ ×è	âæøâº øâÉÂÅ
+ øâıÂá ×è	çâæøâº øâÉÂÅ
+ øâıÂ¸
+ ×è	:âæøâº øâÉÂÅ
+ øâıÂ‹	 ×è	åâçøâº øâıÂÃ ×è	—	âúøâıÂİ øâ¸öÑ	õ¦÷ø	 øâıÂÃ øâ‹Â­ âè	ü»¨‡©
+Øè	 âëê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	Ñâæøâº øâÉÂÅ
+ øâıÂ” ×è	Qâæøâº øâÉÂÅ
+ øâıÂ¹ ×è	¾âæøâº øâÉÂÅ
+ øâıÂì øâ¸öÑ	õ¦÷ø	 øâıÂİ âè	—»¨‡«Øè	 âëê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	£âİ‚…øâıÂŸ ×è	ùâæøâº øâıÂ 
+ ×è	Ñâæøâº øâÉÂÅ
+ øâıÂ” ×è	Qâæøâº øâÉÂÅ
+ øâıÂ¹ ×è	¾âæøâº øâÉÂÅ
+ øâıÂì øâ¸öÑ	õ¦÷ø	 øâıÂÅ âè	è»¨‡®Øè	 âëê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	‡âß‚…øâıÂØ ×è	­
+âæøâº øâıÂá ×è	Ââæøâº øâıÂ† øâ¸öÑ	õ¦÷ø	 øâıÂ¸ øâ» âè	Ö»¨‡µ
+Øè	 âëê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	‡âá‚…øâıÂØ ×è	Ââæøâº øâıÂ† øâ¸öÑ	õ¦÷ø	 øâıÂ« øâ» âè	)»¨‡¶
+Øè	 âëê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	¶âçøâº øâÚ øâıÂÂ	 ×è	è	âıøâıÂÊ øâ¸öÑ	õ¦÷ø	 øâıÂ øâ» âè	‹»¨‡¹	Øè	 âëê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	Œâæøâº øâÉÂÅ
+ øâıÂ¼ øâ¸öÑ	õ¦÷ø	 øâıÂš øâ‹Â‚ âè	¤	»¨‡º	Øè	 âëê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	³âæøâº øâÉÂÅ
+ øâıÂ• øâ¸öÑ	õ¦÷ø	 øâıÂ® øâ‹ÂÈ âè	ï»¨‡»
+Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	âçøâº øâıÂº ×è	¬âÍ‚…øâıÂ÷
+ ×è	ÄâÍ‚…øâıÂŞ	 ×è	áâæøâº øâÊ øâıÂM ×è	Î
+âæøâº øâÉÂÅ
+ øâıÂ“ øâ¸öÑ	õ¦÷ø	 øâıÂŸ øâ‹Âä âè	õ»¨‡¼
+Øè	œâäê‘ Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	âçøâº øâıÂº ×è	–âÍ‚…øâıÂm ×è	áâæøâº øâÊ øâıÂM ×è	Î
+âæøâº øâÉÂÅ
+ øâıÂ“ øâ¸öÑ	õ¦÷ø	 øâıÂõ øâ‹Ââ âè	“»¨‡¿
+Øè	 âëê± Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	Çâæøâº øâá øâıÂƒ ×è	çâæøâº øâıÂô ×è	âæøâº øâÉÂÅ
+ øâıÂê øâ¸öİ øâıÂ‰ øâ» âè	Î»¨‡ÀØè	 âëê± Øè	µ
+âéê… Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è	òâıøâıÂ ×è	âæøâıÂá ×è	ÏâúøâıÂ ×è	ÛâúøâıÂÚ øâ¸öÑ	õ² øâıÂ¹ âè	²»¨‡ÁØè	 âëê± Øè	µ
+âéê… Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è	‚	âçøâº øâıÂÔ
+ øâ‹Âª ×è	»âçøâº øâıÂà
+ øâ‹Âõ øâ¸öÑ	õ¦÷ø	 øâıÂ¦ âè	”‡Â×è	áâæøâº øâÊ øâıÂú øâ‹Â ×è	•
+âæøâº øâÊ øâıÂL øâ‹ÂÂ ×è	È	âæøâº øâÉÂÅ
+ øâıÂã øâ‹Â› ×è	§âæøâº øâÊ øâıÂ¡ øâ‹Â… ×è	Éâæøâº øâÉÂÅ
+ øâıÂ¥ øâ‹Â° âè	š‡Æ×è	áâæøâº øâÊ øâıÂú øâ‹Âé ×è	¤âæøâº øâÊ øâıÂĞ
+ øâ‹Â‘ ×è	Î
+âæøâº øâÉÂÅ
+ øâıÂ“ øâ‹Âğ ×è	âæøâº øâÉÂÅ
+ øâıÂá øâ‹Â
+ âè	©‡Ç×è	:âæøâº øâÉÂÅ
+ øâıÂ‹	 øâ‹Âÿ ×è	Î
+âæøâº øâÉÂÅ
+ øâıÂ“ øâ‹Âğ ×è	âæøâº øâÉÂÅ
+ øâıÂí øâ‹Â› âè	É‡É×è	Ãâæøâº øâıÂ‰ ×è	Ûâæøâº øâÉÂÅ
+ øâıÂ± ×è	Ñâæøâº øâÉÂÅ
+ øâıÂÖ
+ ×è	‹âæøâº øâÉÂÅ
+ øâıÂâ âè	 ‡Ë×è	¶âçøâº øâÚ øâıÂÂ	 ×è	Öâæøâº øâÉÂÅ
+ øâıÂù øâ‹ÂÎ ×è	âæøâº øâÉÂÅ
+ øâıÂ— øâ‹ÂÛ ×è	Î
+âæøâº øâÉÂÅ
+ øâıÂ“ øâ‹Âç ×è	ö	âæøâº øâÉÂÅ
+ øâıÂª øâ‹Âä ×è	¸âæøâº øâÉÂÅ
+ øâıÂş øâ‹Â¿ ×è	Çâçøâº øâıÂÿ øâ‹ÂÚ	 ×è	ûâæøâº øâıÂ› øâ‹Â² ×è	¶âæøâº øâÉÂÅ
+ øâıÂ øâ‹Â¥ ×è	¢âæøâº øâıÂ· øâ‹Â… ×è	ëâæøâº øâÉÂÅ
+ øâıÂø øâ‹Â ×è	²âæøâº øâÉÂÅ
+ øâıÂ¯ øâ‹ÂÒ âè	¢‡Ì×è	£âıøâıÂí	 ×è	è	âıøâıÂ× ×è	âıøâıÂ„ âè	ƒ…‡Í×è	–âıøâıÂm øâıÂó âè	´…‡Î×è	¡	âıøâıÂ‡ øâıÂ¬ âè	”…‡Ğ×è	ËâıøâıÂï øâıÂ×	 âè	Š…‡Ò×è	¹	âıøâıÂ• øâıÂû âè	ë…‡Ó×è	~âıøâıÂ` øâıÂ’ âè	·…‡İ×è	£âıøâıÂŸ øâıÂ» âè	Ğ…‡ß×è	ëâıøâıÂÈ øâıÂ âè	‚…‡á×è	ºâıøâıÂ„ øâıÂ âè	¸…‡â×è	•âıøâıÂB øâ‹Âù øâıÂB âè	ˆ‡ã×è	ëâıøâıÂş ×è	‡âæøâıÂµ ×è	ß	âıøâıÂ– ×è	§âæøâıÂã ×è	³âä‚…øâıÂ øâıÂß âè	ï‡ä×è	ş
+âä‚…øâıÂò	 ×è	è	âıøâıÂÊ øâıÂà âè	·‡å×è	âæ‚…øâıÂÛ	 ×è	è	âè‚…øâıÂÊ ×è	Ü
+â“‚…øâıÂ½ ×è	¶âçøâıÂÏ ×è	ğ	âúøâıÂÉ øâıÂ âè	ö‡æ×è	£âå‚…øâıÂŸ ×è	è	âè‚…øâıÂÊ øâıÂº âè	¹‡ç×è	£âå‚…øâıÂŸ ×è	è	âè‚…øâıÂÊ ×è	âè‚…øâıÂ‡ ×è	¶âçøâıÂÏ ×è	ğ	âúøâıÂÉ øâıÂ—
+ âè	µ	…‡è×è	ñ	âıøâıÂ× øâıÂ‘ âè	†…‡ó×è	è	âıøâıÂÊ øâıÂ¸ âè	¼
+…‡ô×è	è	âıøâıÂÊ øâıÂê âè	…‡÷×è	òâıøâıÂ¨ øâıÂ… âè	²	…‡ø×è	
+âıøâıÂá øâıÂ âè	ï	…‡ù×è	£âıøâıÂŸ øâıÂÒ âè	i…‡ú×è	£âıøâıÂŸ øâıÂÒ âè	ˆ…‡û×è	ÚâıøâıÂ¼ øâıÂ âè	…‡ü×è	£âıøâıÂŸ øâıÂ“ âè	Î…‡ş×è	£âıøâıÂŸ øâıÂã âè	å…‡ÿ×è	£âıøâıÂŸ øâıÂ âè	ì	…‡ˆ×è	÷âıøâıÂŞ øâıÂá âè	Ó…‡Š×è	£âıøâıÂŸ øâıÂ´ âè	Ï…‡Œ×è	´âıøâıÂÈ øâıÂç	 âè	Ì…‡×è	ÚâıøâıÂ§ øâıÂê âè	Ÿ…‡×è	£âıøâıÂŸ øâıÂô âè	¡…‡×è	òâıøâıÂ¨ øâıÂë âè	â‡‘×è	è	âè‚…øâıÂÊ ×è	çâè‚…øâıÂÀ ×è	›âè‚…øâıÂÙ ×è	âæ‚…øâıÂÛ	 øâıÂ¥
+ âè	³‡“×è	è	âè‚…øâıÂÊ ×è	»â‘‚…øâıÂ¥
+ ×è	±âúøâıÂô øâıÂ½ âè	“‡”×è	?âúøâıÂ£ ×è	â¨ÑøâıÂş øâıÂÅ âè	¥…‡–×è	ô	âıøâıÂ øâıÂ… âè	Ÿ…‡×è	ÖâıøâıÂ÷	 øâıÂ½ âè	©…‡Ÿ×è	£âıøâıÂŸ øâıÂ†
+ âè	¢‡¡×è	ô	âıøâıÂñ øâ‹ÂÑ ×è	Öâ‚…øâıÂ÷	 øâ‹Â®
+ ×è	£âŸ‚…øâıÂŸ øâ‹Â øâıÂ™ âè	ò‡¢×è	âçøâıÂ øâ‹ÂÁ ×è	âçøâıÂº øâ‹Â‰ øâıÂÃ âè	Ç‡¤×è	è	âıøâıÂ¶ øâ‹Â’ ×è	¶âéøâıÂÍ øâ‹ÂÀ
+ øâıÂ™ âè	Ç‡¥×è	;âæøâº øâÊ øâıÂ‚ ×è	£âå‚…øâıÂ ×è	ô	âıøâıÂ­ øâ‹Â÷ ×è	±â§‚…øâıÂç øâ‹Â’ øâıÂù âè	ş	‡§×è	¿â¢‚…øâıÂ‚ øâ‹Â‡ ×è	×â¤‚…øâıÂñ øâ‹ÂÁ ×è	&â¥‚…øâıÂ‚ øâ‹ÂÇ
+ ×è	ÜâçøâıÂ® øâ‹Â¾ øâıÂÛ âè	ß‡¨×è	µâç‚…øâıÂ—
+ ×è	”âçøâıÂ„ ×è	Ì
+âçøâıÂà ×è	£â–‚…øâıÂ³ âè	 …‡©×è	VâêÑøâıÂ– øâıÂ$ âè	›»­‡ªøâ› âè	Û»­‡×øâ› âè	†»­‡Úøâ› âè	–	»­‡İøâ› âè	»­‡àøâ› âè	á
+»­‡áøâ› âè	Ô»­‡ãøâ› âè	Ó‡æ âè	Ê‡ç âè	å‡é âè	Ÿ‡ê âè	œ
+‡ø âè	¢‡ù âè	‘‡ú âè	£‡ü âè	±‡ı âè	ö»­‡¢×è	Ââı âè	ƒ»­‡¡×è	Ââú âè	Á
+»¨‡Øè	 âëê± Øè	µ
+âéêé Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è	êâıøâıÂú øâ‹Âœ ×è	Ä	âúøâıÂÁ øâ‹ÂÜ øâ¢ÂÁ
+ øâıÂò
+ øâ¸ö³ øâ‹ÂÜ âè	ƒ»¨‡Øè	 âëê± Øè	µ
+âéêé Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è	êâıøâıÂú øâ‹Âœ ×è	çâæøâıÂš øâ‹Âÿ øâÉÂÅ
+ ×è	UâúøâıÂş øâ‹Â øâ¢Âƒ øâıÂz øâ¸ö³ øâ‹Â	 âè	»¨‡ Øè	 âëê± Øè	µ
+âéêé Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è	êâıøâıÂú øâ‹Âœ ×è	åâæøâıÂÏ øâ‹Â¾ øâÉÂÅ
+ øâ¢Â øâıÂ…	 øâ¸ö³ øâ‹Â† âè	ì»¨‡Øè	 âëê± Øè	µ
+âéêé Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è	úâıøâıÂ÷ ×è	;âıøâıÂ× ×è	–âçøâıÂ¾ ×è	ÜâæøâıÂƒ øâÂŠ ×è	çâæøâıÂš øâ‹Â™ øâÉÂÅ
+ ×è	œâúøâıÂ øâ‹ÂØ øâ¢Âì øâıÂ¤ øâ¸ö³ øâ‹Âğ
+ âè	ğ»¨‡›Øè	 âëê± Øè	µ
+âéêé Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è	úâıøâıÂ÷ ×è	;âıøâıÂ× ×è	–âçøâıÂ¾ ×è	åâæøâıÂÏ øâ‹Â½ øâÉÂÅ
+ øâ¢Âğ øâıÂ· øâ¸ö³ øâ‹Âø
+ âè	Ş»¨‡™Øè	 âëê± Øè	µ
+âéêé Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è	¯âıøâıÂè
+ ×è	‹âå‚…øâıÂí	 øâ¢ÂŞ øâıÂ‹ øâ¸ö³ øâ‹Â¡
+ âè	Ò»¨‡°Øè	œâäê‘ Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è	ŠâæøâıÂ^ øâ¢ÂÒ øâıÂ‚ øâ¸ö³õ¬ øâ‹Â¢ âè	Ü	»¨‡¯Øè	 âëê± Øè	µ
+âéêé Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è	¯âıøâıÂè
+ ×è	‹âå‚…øâıÂí	 øâ¢ÂÜ	 øâıÂğ øâ¸ö³ øâ‹ÂÃ âè	à»¨‡«Øè	 âëê± Øè	µ
+âéêé Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è	‡âæøâıÂt ×è	è	âıøâıÂ­ ×è	ÂâıøâıÂ§	 øâ¢Âà øâıÂĞ øâ¸öİ âè	í»¨‡¨Øè	 âëê± Øè	µ
+âéêé Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è	‡âæøâıÂØ ×è	è	âıøâıÂÊ ×è	òâıøâıÂ ×è	æâæøâıÂ° øâÂŠ ×è	ÃâæøâıÂã
+ øâÂŠ ×è	“âæøâıÂ“	 øâÉÂÅ
+ ×è	´âæøâıÂö øâ¡Âö ×è	1âæøâıÂ¼ øâÂŠ øâ¢Âí øâıÂÙ	 øâ¸öİ âè	¦»¨‡ÂØè	 âëê± Øè	µ
+âéêé Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è	ÓâúøâıÂ½ ×è	ÈâıøâıÂœ ×è	£âå‚…øâıÂŸ ×è	òâçøâıÂï ×è	æâæøâıÂk ×è	ââæøâıÂä ×è	çâæøâıÂš ×è	ÿâå‚…øâıÂ£ ×è	ØâıøâıÂ• øâ¸öÓõ® øâıÂ  øâ¢Â¦ øâ‹Â¹ âè	À»¨‡¼Øè	 âëê± Øè	µ
+âéêé Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è	ÁâæøâıÂ±
+ ×è	âıøâıÂ8 ×è	ËâıøâıÂô øâ¸ö° øâıÂÆ øâ¢ÂÀ øâ‹Â¹ âè	ˆ
+»¨‡»Øè	 âëê± Øè	µ
+âéêé Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è	°âıøâıÂÅ ×è	ÂâıøâıÂ† øâ¸öÓõâ øâıÂß øâ¢Âˆ
+ øâ‹Âÿ âè	ô»¨‡ÏØè	 âëê± Øè	µ
+âéêé Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è	£âıøâıÂí ×è	ÍâıøâıÂ³ ×è	|âıøâıÂñ øâ¸öÓõâ øâıÂ÷ øâ¢Âô øâ‹Âé
+ âè	n»¨‡ÎØè	 âëê± Øè	µ
+âéêé Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è	âıøâıÂ€ ×è	ÌâçøâıÂú ×è	“âıøâıÂ ×è	ÄâıøâıÂÖ ×è	…âæøâıÂÕ øâ‹ÂŞ øâ¸öÓõâ øâıÂü øâ¢Ân øâ‹Â‡	 âè	˜»¨‡ÍØè	 âëê± Øè	µ
+âéêé Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è	ÍâıøâıÂÉ ×è	á	âıøâıÂ
+ ×è	ğâıøâıÂ ×è	
+âıøâıÂÊ ×è	ââıøâıÂÉ ×è	ÑâçøâıÂ°	 ×è	…âæøâıÂÕ ×è	âæøâıÂÌ øâ¡Âö ×è	HâæøâıÂù øâ¡Âö øâ¸öÓõâ øâıÂà øâ¢Â˜ øâ‹ÂØ	 âè	˜»¨‡ËØè	 âëê± Øè	µ
+âéêé Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è	…âæøâıÂÕ ×è	ÄâçøâıÂÊ øâ‹Âå ×è	3âæøâıÂæ øâ¸öÓõâ øâıÂ„ øâ¢Â˜ øâ‹Â‹ âè	™»¨‡ßØè	œâäê‘ Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è	¸âæøâıÂ² øâ‹Âç
+ øâÉÂÅ
+ ×è	¦âæøâıÂî ×è	½âæøâıÂ* øâÉÂÅ
+ ×è	“âæøâıÂá øâÉÂÅ
+ øâ¸ö³õ¬ øâ¢Â™ øâıÂ øâ‹Â
+ âè	•	»¨‡àØè	œâäê‘ Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è	°âıøâıÂÅ ×è	ÂâıøâıÂ† øâ¸öÓõâ øâıÂš øâ¢Â•	 øâ‹Â• âè	»­‡ı×è	Ââı âè	‘
+»­‡Š×è	Ââı âè	í»­‡‰×è	Ââú âè	†»­‡ˆ×è	Ââı âè	Ğ»­‡×è	Ââı øâŒ øâıÂ° øâ‹Âß
+ âè	£	»­‡ŒøâıÂ˜ øâ‹Â’ âè	ü
+»­‡‹×è	Ââı âè	ø»­‡¡×è	Ââı øâŒ øâıÂ¨ øâ‹Âµ âè	î»­‡›øâıÂŞ âè	Š»­‡§øâıÂò âè	¡»­‡¥øâıÂµ âè	ÿ»­‡»øâıÂf øâ‹Â® âè	¿	»­‡ºøâŒ øâıÂ£ øâ‹Â¿
+ âè	¡»­‡¸×è	ÂâıÑ âè	Õ»­‡Ì×è	Ââı âè	ı»­‡Ë×è	Ââı âè	è»­‡ÊøâŒ øâıÂ‚ øâ‹Âú
+ âè	»­‡É×è	Ââı øâŒ øâıÂ' øâ‹ÂÄ âè	§»­‡ÒøâŒ øâıÂµ øâ‹ÂX âè	½»­‡ÃøâŒ øâıÂí øâ‹ÂÈ âè	¼»š‡ÖøâıÂ@ øâ‹Â˜	 øâ¢Â¼ øâì âè	©»­‡ìøâŒ øâıÂ¶ âè	«»š‡ëøâıÂ³ øâ¢Â« øâ‹Â± øâÂğ âè	”
+»š‡éøâıÂE øâ¢Â”
+ øâ‹Â‚ øâì âè	†»š‡äøâıÂ÷ øâ‹ÂÅ øâ¢Â† âè	â	»š‡âøâıÂ øâ‹Â. øâ¢Ââ	 øâÂğ âè	ú»š‡ıøâıÂÌ	 øâ‹ÂÂ øâ¢Âú âè	œ»¨‡î	Øè	œâäê‘ Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è	¯âıøâıÂ øâ‹Â› ×è	ªâæøâıÂ¬ øâ‹Âô øâÂœ ×è	ˆâæøâıÂî øâ‹ÂÌ øâÂœ ×è	íâæøâıÂ] øâ‹ÂÄ ×è	âæøâıÂÎ øâ‹Â£ ×è	­âæøâıÂÅ øâ‹Â£ øâÉÂÅ
+ ×è	¯âæøâıÂµ øâ‹Â™ øâÉÂÅ
+ ×è	ŸâæøâıÂí øâ‹Âê øâÉÂÅ
+ øâ¢Âœ øâıÂ® øâ¸ö° øâ‹ÂŞ âè	×
+»¨‡ê	Øè	œâäê‘ Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è	ªâæøâıÂœ øâ‹Âõ øâÂğ ×è	 âæøâıÂ• øâ‹Â øâÂğ ×è	·âæøâıÂ« øâ‹Â øâÂğ øâ¢Â×
+ øâıÂ€ øâ¸ö°õ»	 øâ‹Â® âè	Â»¨‡ù	Øè	œâäê‘ Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è		âæøâıÂÈ øâ‹Âî ×è	İâæøâıÂä øâ‹ÂÏ ×è	ßâæøâıÂ¯ øâ‹Âˆ	 øâÂğ øâ¢ÂÂ øâıÂÿ
+ øâ¸ö°õ»	 øâ‹ÂÊ âè	«»¨‡€
+Øè	œâäê‘ Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è	¥âæøâıÂÆ øâ‹Âó ×è	ŒâæøâıÂÎ øâ‹Â øâÉÂÅ
+ ×è	¥âæøâıÂˆ øâ‹Âˆ øâÉÂÅ
+ øâ¢Â« øâıÂ¿ øâ¸ö°õ øâ‹Â âè	ò»¨‡ÿ	Øè	œâäê‘ Øè	¯
+âÖêé ×è	³
+âæøâıÂö øâ¡ÂÔ ×è	´âæøâıÂÌ øâÂÔ ×è	½âã‚…øâıÂ øâ‹Â¿ ×è	µ
+â”‚…øâıÂE øâ‹ÂÙ ×è	âæøâıÂ” øâ‹Âú ×è	–âæøâıÂŞ øâ‹ÂÃ	 øâÉÂÅ
+ øâ¢Âò øâıÂË øâ¸ö°õĞ øâ‹Âà îu‘	œ 
