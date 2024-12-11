@@ -415,9 +415,6 @@ MM_MarkingDelegate::completeMarking(MM_EnvironmentBase *env)
 										J9Module * const module = *modulePtr;
 
 										_markingScheme->markObjectNoCheck(env, (omrobjectptr_t )module->moduleObject);
-										if (NULL != module->moduleName) {
-											_markingScheme->markObjectNoCheck(env, (omrobjectptr_t )module->moduleName);
-										}
 										if (NULL != module->version) {
 											_markingScheme->markObjectNoCheck(env, (omrobjectptr_t )module->version);
 										}

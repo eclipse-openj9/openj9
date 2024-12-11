@@ -899,10 +899,6 @@ MM_GlobalMarkingScheme::scanClassLoaderObject(MM_EnvironmentVLHGC *env, J9Object
 				Assert_MM_true(NULL != module->moduleObject);
 				markObject(env, module->moduleObject);
 				rememberReferenceIfRequired(env, classLoaderObject, module->moduleObject);
-				if (NULL != module->moduleName) {
-					markObject(env, module->moduleName);
-					rememberReferenceIfRequired(env, classLoaderObject, module->moduleName);
-				}
 				if (NULL != module->version) {
 					markObject(env, module->version);
 					rememberReferenceIfRequired(env, classLoaderObject, module->version);

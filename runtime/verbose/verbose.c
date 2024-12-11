@@ -1393,24 +1393,19 @@ verboseStackMapFrameVerification(J9HookInterface** hook, UDATA eventNum, void* e
 static void
 printModule(J9VMThread* vmThread, char* message, J9Module* module)
 {
-	char moduleNameBuf[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
-	char *moduleNameUTF = NULL;
 	J9UTF8 *jrtURL = NULL;
 	char* template = "%s: %s from: %.*s\n";
 
 	PORT_ACCESS_FROM_VMC(vmThread);
 
-	/* module name */
-	moduleNameUTF = vmThread->javaVM->internalVMFunctions->copyStringToUTF8WithMemAlloc(
-		vmThread, module->moduleName, J9_STR_NULL_TERMINATE_RESULT, "", 0, moduleNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
-
-	/* module location */
+	/* module location. */
 	jrtURL = getModuleJRTURL(vmThread, module->classLoader, module);
 
-	j9tty_printf(PORTLIB, template, message, moduleNameUTF, J9UTF8_LENGTH(jrtURL), J9UTF8_DATA(jrtURL));
-
-	if (moduleNameUTF != moduleNameBuf) {
-		j9mem_free_memory((void *)moduleNameUTF);
+	J9UTF8 *moduleName = module->moduleName;
+	if (NULL != moduleName) {
+		j9tty_printf(
+			PORTLIB, template, message,
+			(const char *)J9UTF8_DATA(moduleName), J9UTF8_LENGTH(jrtURL), J9UTF8_DATA(jrtURL));
 	}
 }
 

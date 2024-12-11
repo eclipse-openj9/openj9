@@ -38,9 +38,9 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9ClassLoaderPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9HashTablePointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9JavaVMPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ModulePointer;
-import com.ibm.j9ddr.vm29.pointer.helper.J9ObjectHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9RASHelper;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.JavaVersionHelper;
+import com.ibm.j9ddr.vm29.tools.ddrinteractive.ModularityHelper;
 
 /**
  * FindAllReads command displays all modules that read the target module
@@ -79,7 +79,7 @@ public class FindAllReadsCommand extends Command{
 					SlotIterator<J9ModulePointer> slotIterator = moduleHashTable.iterator();
 					while (slotIterator.hasNext()) {
 						J9ModulePointer modulePtr = slotIterator.next();
-						String moduleName = J9ObjectHelper.stringValue(modulePtr.moduleName());
+						String moduleName = ModularityHelper.getModuleName(modulePtr);
 						String hexAddress = modulePtr.getHexAddress();
 						J9HashTablePointer readTable = modulePtr.readAccessHashTable();
 						HashTable<J9ModulePointer> readModuleHashTable = ModuleHashTable.fromJ9HashTable(readTable);

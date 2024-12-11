@@ -64,6 +64,8 @@ J9InternalVMFunctions J9InternalFunctions = {
 	javaThreadProc,
 	copyStringToUTF8WithMemAlloc,
 	copyStringToJ9UTF8WithMemAlloc,
+	copyJ9UTF8ToUTF8WithMemAlloc,
+	copyJ9UTF8WithMemAlloc,
 	internalAcquireVMAccess,
 	internalAcquireVMAccessWithMask,
 	internalAcquireVMAccessNoMutexWithMask,

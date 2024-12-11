@@ -290,9 +290,6 @@ MM_GlobalMarkCardScrubber::scrubClassLoaderObject(MM_EnvironmentVLHGC *env, J9Ob
 				Assert_MM_true(NULL != module->moduleObject);
 				doScrub = mayScrubReference(env, classLoaderObject, module->moduleObject);
 				if (doScrub) {
-					doScrub = mayScrubReference(env, classLoaderObject, module->moduleName);
-				}
-				if (doScrub) {
 					doScrub = mayScrubReference(env, classLoaderObject, module->version);
 				}
 				modulePtr = (J9Module**)hashTableNextDo(&walkState);

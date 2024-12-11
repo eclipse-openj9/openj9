@@ -347,15 +347,9 @@ static void
 trcModulesFreeJ9ModuleEntry(J9JavaVM *javaVM, J9Module *j9module)
 {
 	J9VMThread *currentThread = javaVM->mainThread;
-	PORT_ACCESS_FROM_VMC(currentThread);
-	char moduleNameBuf[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
-	char *moduleNameUTF = copyStringToUTF8WithMemAlloc(
-		currentThread, j9module->moduleName, J9_STR_NULL_TERMINATE_RESULT, "", 0, moduleNameBuf, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
-	if (NULL != moduleNameUTF) {
-		Trc_MODULE_freeJ9ModuleV2_entry(currentThread, moduleNameUTF, j9module);
-		if (moduleNameBuf != moduleNameUTF) {
-			j9mem_free_memory(moduleNameUTF);
-		}
+	J9UTF8 *moduleName = j9module->moduleName;
+	if (NULL != moduleName) {
+		Trc_MODULE_freeJ9ModuleV2_entry(currentThread, (const char *)J9UTF8_DATA(moduleName), j9module);
 	}
 }
 
@@ -398,6 +392,11 @@ freeJ9Module(J9JavaVM *javaVM, J9Module *j9module) {
 		}
 
 		hashTableFree(j9module->removeExportsHashTable);
+	}
+
+	if (NULL != j9module->moduleName) {
+		PORT_ACCESS_FROM_JAVAVM(javaVM);
+		j9mem_free_memory((void *)j9module->moduleName);
 	}
 
 	pool_removeElement(javaVM->modularityPool, j9module);
