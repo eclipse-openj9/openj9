@@ -480,7 +480,7 @@ copyJ9UTF8WithMemAlloc(J9VMThread *vmThread, J9UTF8 *string, UDATA stringFlags, 
 			if (J9_ARE_ALL_BITS_SET(stringFlags, J9_STR_NULL_TERMINATE_RESULT)) {
 				resultString[totalStringLength] = '\0';
 			}
-			J9UTF8_SET_LENGTH(result, totalStringLength);
+			J9UTF8_SET_LENGTH(result, (U_16)totalStringLength);
 		}
 	}
 
