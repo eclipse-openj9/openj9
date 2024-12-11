@@ -376,9 +376,11 @@ AccessControlContext(ProtectionDomain[] pdArray, AccessControlContext parentAcc,
 				}
 			}
 		} else {
-			this.domainCombiner = parentAcc.domainCombiner;
+			if (parentAcc != null) {
+				this.domainCombiner = parentAcc.domainCombiner;
+				this.nextStackAcc = parentAcc;
+			}
 			this.context = pdArray;
-			this.nextStackAcc = parentAcc;
 		}
 		break;
 	case STATE_NOT_AUTHORIZED:
