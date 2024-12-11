@@ -3835,6 +3835,7 @@ J9::Z::CodeGenerator::inlineDirectCall(
 
    static const char * enableTRTRE = feGetEnv("TR_enableTRTRE");
    static bool disableCAEIntrinsic = feGetEnv("TR_DisableCAEIntrinsic") != NULL;
+   static const bool enableOSW = feGetEnv("TR_noPauseOnSpinWait") == NULL;
    switch (methodSymbol->getRecognizedMethod())
       {
       case TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z:
@@ -4082,7 +4083,6 @@ J9::Z::CodeGenerator::inlineDirectCall(
             }
          break;
       case TR::java_lang_Thread_onSpinWait:
-         static const bool enableOSW = feGetEnv("TR_noPauseOnSpinWait") == NULL;
          if (enableOSW)
             {
             resultReg = TR::TreeEvaluator::inlineOnSpinWait(node, cg);
