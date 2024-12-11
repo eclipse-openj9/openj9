@@ -11573,8 +11573,6 @@ J9::Z::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR::CodeGenerator *c
    return 0;
    }
 
-
-
 /////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////
 static bool inlineIsAssignableFrom(TR::Node *node, TR::CodeGenerator *cg)
@@ -11729,23 +11727,29 @@ static bool inlineIsAssignableFrom(TR::Node *node, TR::CodeGenerator *cg)
 
 TR::Register *J9::Z::TreeEvaluator::inlineCheckAssignableFromEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   TR::Register *thisClassReg = cg->evaluate(node->getFirstChild());
-   TR::Register *checkClassReg = cg->evaluate(node->getSecondChild());
+   TR::Register *fromClassReg = cg->evaluate(node->getFirstChild());
+   TR::Register *toClassReg = cg->evaluate(node->getSecondChild());
 
    TR::Register *resultReg = cg->allocateRegister();
    TR::LabelSymbol *helperCallLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *successLabel = generateLabelSymbol(cg);
 
-   TR::RegisterDependencyConditions* deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 3, cg);
-   deps->addPostCondition(thisClassReg, TR::RealRegister::AssignAny);
-   deps->addPostConditionIfNotAlreadyInserted(checkClassReg, TR::RealRegister::AssignAny);
-   deps->addPostCondition(resultReg, TR::RealRegister::AssignAny);
+   TR::LabelSymbol* cFlowRegionStart = generateLabelSymbol(cg);
+   generateS390LabelInstruction(cg, TR::InstOpCode::label, node, cFlowRegionStart);
+   cFlowRegionStart->setStartInternalControlFlow();
 
    /*
-    * TODO: add inlined tests (classEqualityTest, SuperclassTest, etc)
+    * check for class equality
+    * if equal, we are done. If not, fall through to helper call
+    */
+   generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpRegOpCode(), node, toClassReg, fromClassReg, TR::InstOpCode::COND_BE, successLabel, false, false);
+
+   /*
+    * TODO: add inlined tests (SuperclassTest, cast class cache, etc)
     * Inlined tests will be used when possible, or will jump to the OOL section
     * and perform the tests using the CHelper when not possible
-   */
+    */
 
    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, helperCallLabel);
    TR_S390OutOfLineCodeSection *outlinedSlowPath = new (cg->trHeapMemory()) TR_S390OutOfLineCodeSection(helperCallLabel, doneLabel, cg);
@@ -11758,9 +11762,17 @@ TR::Register *J9::Z::TreeEvaluator::inlineCheckAssignableFromEvaluator(TR::Node 
    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, doneLabel); // exit OOL section
    outlinedSlowPath->swapInstructionListsWithCompilation();
 
-   generateS390LabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, deps);
-   node->setRegister(resultReg);
+   generateS390LabelInstruction(cg, TR::InstOpCode::label, node, successLabel);
+   generateRIInstruction(cg, TR::InstOpCode::getLoadHalfWordImmOpCode(), node, resultReg, 1);
 
+   TR::RegisterDependencyConditions* deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 3, cg);
+   deps->addPostCondition(fromClassReg, TR::RealRegister::AssignAny);
+   deps->addPostConditionIfNotAlreadyInserted(toClassReg, TR::RealRegister::AssignAny);
+   deps->addPostCondition(resultReg, TR::RealRegister::AssignAny);
+
+   generateS390LabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, deps);
+   doneLabel->setEndInternalControlFlow();
+   node->setRegister(resultReg);
    return resultReg;
    }
 
