@@ -230,6 +230,7 @@ public:
 	bool recycleRemainders; /**< true if need to recycle TLHRemainders at the end of PGC, for balanced GC only */
 
 	bool forceGPFOnHeapInitializationError; /**< if set causes GPF generation on heap initialization error */
+	bool isRegionSizeWithOverrideSpecified; /**< set true if -XXgc:regionSizeWithOverride is specified */
 
 	enum ContinuationListOption {
 		disable_continuation_list = 0,
@@ -440,6 +441,7 @@ public:
 		, freeSizeThresholdForSurvivor(DEFAULT_SURVIVOR_THRESHOLD)
 		, recycleRemainders(true)
 		, forceGPFOnHeapInitializationError(false)
+		, isRegionSizeWithOverrideSpecified(false)
 		, continuationListOption(enable_continuation_list)
 		, timingAddContinuationInList(onCreated)
 		, testContainerMemLimit(false)

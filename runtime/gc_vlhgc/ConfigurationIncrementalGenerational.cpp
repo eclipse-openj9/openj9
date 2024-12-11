@@ -421,7 +421,8 @@ MM_ConfigurationIncrementalGenerational::prepareParameters(OMR_VM *omrVM, UDATA 
 bool
 MM_ConfigurationIncrementalGenerational::verifyRegionSize(MM_EnvironmentBase *env, UDATA regionSize)
 {
-	return regionSize >= TAROK_MINIMUM_REGION_SIZE_BYTES;
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
+	return extensions->isRegionSizeWithOverrideSpecified || (regionSize >= TAROK_MINIMUM_REGION_SIZE_BYTES);
 }
 
 bool
