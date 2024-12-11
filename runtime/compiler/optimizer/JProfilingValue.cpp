@@ -940,9 +940,9 @@ TR_JProfilingValue::incrementMemory(TR::Compilation *comp, TR::DataType counterT
  * \param value Value to store in const.
  */
 TR::Node *
-TR_JProfilingValue::systemConst(TR::Node *example, uint64_t value)
+TR_JProfilingValue::systemConst(TR::Compilation *comp, TR::Node *example, uint64_t value)
    {
-   TR::ILOpCodes constOp = TR::comp()->target().is64Bit() ? TR::lconst : TR::iconst;
+   TR::ILOpCodes constOp = comp->target().is64Bit() ? TR::lconst : TR::iconst;
    return TR::Node::create(example, constOp, 0, value);
    }
 
