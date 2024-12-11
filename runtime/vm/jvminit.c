@@ -1864,7 +1864,15 @@ setBootLoaderModulePatchPaths(J9JavaVM * javaVM, J9Module * j9module, const char
 				if (NULL == node) {
 					J9VMThread *currentThread = javaVM->internalVMFunctions->currentVMThread(javaVM);
 					freeClassLoaderEntries(currentThread, moduleInfo.patchPathEntries, moduleInfo.patchPathCount, moduleInfo.patchPathCount);
-					j9mem_free_memory(moduleInfo.patchPathEntries);
+#if defined(J9VM_OPT_SNAPSHOTS)
+					if (IS_SNAPSHOTTING_ENABLED(javaVM)) {
+						VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(javaVM);
+						vmsnapshot_free_memory(moduleInfo.patchPathEntries);
+					} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+					{
+						j9mem_free_memory(moduleInfo.patchPathEntries);
+					}
 					moduleInfo.patchPathEntries = NULL;
 					result = FALSE;
 					goto _exitMutex;
@@ -2663,9 +2671,18 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 			}
 
 			if (J2SE_VERSION(vm) >= J2SE_V11) {
-				vm->modularityPool = pool_new(OMR_MAX(sizeof(J9Package),sizeof(J9Module)),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_MODULES, POOL_FOR_PORT(vm->portLibrary));
-				if (NULL == vm->modularityPool) {
-					goto _error;
+#if defined(J9VM_OPT_SNAPSHOTS)
+				/* By this point during a restore run, the modularityPool is restored. */
+				if (IS_SNAPSHOT_RUN(vm)) {
+					if (NULL == (vm->modularityPool = pool_new(OMR_MAX(sizeof(J9Package), sizeof(J9Module)), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_MODULES, POOL_FOR_PORT(VMSNAPSHOTIMPL_OMRPORT_FROM_JAVAVM(vm))))) {
+						goto _error;
+					}
+				} else if (!IS_RESTORE_RUN(vm))
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+				{
+					if (NULL == (vm->modularityPool = pool_new(OMR_MAX(sizeof(J9Package), sizeof(J9Module)), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_MODULES, POOL_FOR_PORT(vm->portLibrary)))) {
+						goto _error;
+					}
 				}
 			}
 #if JAVA_SPEC_VERSION >= 19
@@ -2960,26 +2977,28 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 			}
 
 			if (J2SE_VERSION(vm) >= J2SE_V11) {
-				BOOLEAN patchPathResult = FALSE;
+				/* javaBaseModule and unnamedModuleForSystemLoader are already setup during a restore run. */
+				if (!IS_RESTORE_RUN(vm)) {
+					BOOLEAN patchPathResult = FALSE;
+					vm->javaBaseModule = pool_newElement(vm->modularityPool);
+					if (NULL == vm->javaBaseModule) {
+						setErrorJ9dll(PORTLIB, loadInfo, "cannot allocate java.base module", FALSE);
+						goto _error;
+					}
+					vm->javaBaseModule->classLoader = vm->systemClassLoader;
 
-				vm->javaBaseModule = pool_newElement(vm->modularityPool);
-				if (NULL == vm->javaBaseModule) {
-					setErrorJ9dll(PORTLIB, loadInfo, "cannot allocate java.base module", FALSE);
-					goto _error;
-				}
-				vm->javaBaseModule->classLoader = vm->systemClassLoader;
+					vm->unnamedModuleForSystemLoader = pool_newElement(vm->modularityPool);
+					if (NULL == vm->unnamedModuleForSystemLoader) {
+						setErrorJ9dll(PORTLIB, loadInfo, "cannot allocate unnamed module for bootloader", FALSE);
+						goto _error;
+					}
+					vm->unnamedModuleForSystemLoader->classLoader = vm->systemClassLoader;
 
-				vm->unnamedModuleForSystemLoader = pool_newElement(vm->modularityPool);
-				if (NULL == vm->unnamedModuleForSystemLoader) {
-					setErrorJ9dll(PORTLIB, loadInfo, "cannot allocate unnamed module for bootloader", FALSE);
-					goto _error;
-				}
-				vm->unnamedModuleForSystemLoader->classLoader = vm->systemClassLoader;
-
-				patchPathResult = setBootLoaderModulePatchPaths(vm, vm->javaBaseModule, JAVA_BASE_MODULE);
-				if (FALSE == patchPathResult) {
-					setErrorJ9dll(PORTLIB, loadInfo, "cannot set patch paths for java.base module", FALSE);
-					goto _error;
+					patchPathResult = setBootLoaderModulePatchPaths(vm, vm->javaBaseModule, JAVA_BASE_MODULE);
+					if (FALSE == patchPathResult) {
+						setErrorJ9dll(PORTLIB, loadInfo, "cannot set patch paths for java.base module", FALSE);
+						goto _error;
+					}
 				}
 			}
 

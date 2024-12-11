@@ -136,9 +136,16 @@ J9HashTable *
 hashModulePointerTableNew(J9JavaVM *javaVM, U_32 initialSize)
 {
 	U_32 flags = J9HASH_TABLE_ALLOW_SIZE_OPTIMIZATION;
+	OMRPORT_ACCESS_FROM_J9PORT(javaVM->portLibrary);
+
+#if defined(J9VM_OPT_SNAPSHOTS)
+	if (IS_SNAPSHOTTING_ENABLED(javaVM)) {
+		OMRPORTLIB = VMSNAPSHOTIMPL_OMRPORT_FROM_JAVAVM(javaVM);
+	}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 
 	return hashTableNew(
-			OMRPORT_FROM_J9PORT(javaVM->portLibrary),
+			OMRPORTLIB,
 			J9_GET_CALLSITE(),
 			initialSize,
 			sizeof(void *),
@@ -181,9 +188,16 @@ J9HashTable *
 hashModuleExtraInfoTableNew(J9JavaVM *javaVM, U_32 initialSize)
 {
 	U_32 flags = J9HASH_TABLE_ALLOW_SIZE_OPTIMIZATION;
+	OMRPORT_ACCESS_FROM_J9PORT(javaVM->portLibrary);
+
+#if defined(J9VM_OPT_SNAPSHOTS)
+	if (IS_SNAPSHOTTING_ENABLED(javaVM)) {
+		OMRPORTLIB = VMSNAPSHOTIMPL_OMRPORT_FROM_JAVAVM(javaVM);
+	}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 
 	return hashTableNew(
-			OMRPORT_FROM_J9PORT(javaVM->portLibrary),
+			OMRPORTLIB,
 			J9_GET_CALLSITE(),
 			initialSize,
 			sizeof(J9ModuleExtraInfo),

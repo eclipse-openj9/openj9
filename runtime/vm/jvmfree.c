@@ -395,8 +395,16 @@ freeJ9Module(J9JavaVM *javaVM, J9Module *j9module) {
 	}
 
 	if (NULL != j9module->moduleName) {
-		PORT_ACCESS_FROM_JAVAVM(javaVM);
-		j9mem_free_memory((void *)j9module->moduleName);
+#if defined(J9VM_OPT_SNAPSHOTS)
+		if (IS_SNAPSHOTTING_ENABLED(javaVM)) {
+			VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(javaVM);
+			vmsnapshot_free_memory((void *)j9module->moduleName);
+		} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+		{
+			PORT_ACCESS_FROM_JAVAVM(javaVM);
+			j9mem_free_memory((void *)j9module->moduleName);
+		}
 	}
 
 	pool_removeElement(javaVM->modularityPool, j9module);

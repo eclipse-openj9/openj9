@@ -86,6 +86,7 @@ private:
 	void fixupArrayClass(J9ArrayClass *clazz);
 	void fixupMethodRunAddresses(J9Class *ramClass);
 	void fixupConstantPool(J9Class *ramClass);
+	void fixupModules();
 	void fixupClassPathEntries(J9ClassLoader *classLoader);
 	void removeUnpersistedClassLoaders();
 	void saveJ9JavaVMStructures();
@@ -112,6 +113,8 @@ public:
 	void restoreClassLoaderBlocks();
 	void saveMemorySegments();
 	void restoreMemorySegments();
+	void saveModularityData();
+	void restoreModularityData();
 
 	bool setupRestoreRun();
 	bool setupSnapshotRun();
