@@ -299,8 +299,12 @@
 	<export name="Java_java_lang_Thread_suspendImpl">
 		<exclude-if condition="spec.java20" />
 	</export>
-	<export name="Java_java_security_AccessController_getAccSnapshot" />
-	<export name="Java_java_security_AccessController_getCallerPD" />
+	<export name="Java_java_security_AccessController_getAccSnapshot">
+		<exclude-if condition="spec.java24"/>
+	</export>
+	<export name="Java_java_security_AccessController_getCallerPD">
+		<exclude-if condition="spec.java24"/>
+	</export>
 	<export name="JCL_OnLoad" />
 	<export name="JNI_OnUnload" />
 	<export name="JVM_OnLoad" />

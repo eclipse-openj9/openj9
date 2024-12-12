@@ -160,8 +160,12 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<export name="pre_block" />
 
 		<!-- Additions for Java 7 -->
-		<export name="_JVM_GetStackAccessControlContext@8"/>
-		<export name="_JVM_GetInheritedAccessControlContext@8"/>
+		<export name="_JVM_GetStackAccessControlContext@8">
+			<exclude-if condition="spec.java24"/>
+		</export>
+		<export name="_JVM_GetInheritedAccessControlContext@8">
+			<exclude-if condition="spec.java24"/>
+		</export>
 		<export name="_JVM_GetArrayLength@8"/>
 		<export name="_JVM_GetArrayElement@12"/>
 		<export name="_JVM_GetStackTraceElement@12"/>

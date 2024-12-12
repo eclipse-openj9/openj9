@@ -144,8 +144,6 @@ jvm_add_exports(jvm
 	post_block
 	pre_block
 	# Additions for Java 7
-	_JVM_GetStackAccessControlContext@8
-	_JVM_GetInheritedAccessControlContext@8
 	_JVM_GetArrayLength@8
 	_JVM_GetArrayElement@12
 	_JVM_GetStackTraceElement@12
@@ -466,6 +464,8 @@ endif()
 if(JAVA_SPEC_VERSION LESS 24)
 	jvm_add_exports(jvm
 		_JVM_GetClassContext@4
+		_JVM_GetInheritedAccessControlContext@8
+		_JVM_GetStackAccessControlContext@8
 	)
 else()
 	jvm_add_exports(jvm
