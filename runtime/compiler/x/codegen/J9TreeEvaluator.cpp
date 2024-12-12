@@ -1851,6 +1851,12 @@ TR::Register *J9::X86::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::Cod
    auto dstReg    = cg->evaluate(node->getChild(3));
    auto sizeReg   = cg->evaluate(node->getChild(4));
 
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+   if (TR::Compiler->om.isOffHeapAllocationEnabled())
+      // For correct card-marking calculation, the dstObjNode should be the baseObj not the dataAddrPointer
+      TR_ASSERT_FATAL(!node->getChild(1)->isDataAddrPointer(), "The byteDstObjNode child of arraycopy cannot be a dataAddrPointer");
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
+
    if (comp->target().is64Bit() && !TR::TreeEvaluator::getNodeIs64Bit(node->getChild(4), cg))
       {
       generateRegRegInstruction(TR::InstOpCode::MOVZXReg8Reg4, node, sizeReg, sizeReg, cg);
