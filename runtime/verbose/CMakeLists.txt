@@ -80,6 +80,11 @@ target_link_libraries(j9vrb
 		j9gcvrbhdlrvlhgc
 		j9zip
 		j9utilcore
+		j9gc
+		j9gctrc
+		j9gcapi
+		j9gctrcstandard
+		j9gctrcvlhgc
 )
 
 target_compile_definitions(j9vrb
@@ -138,6 +143,11 @@ if(OMR_MIXED_REFERENCES_MODE_STATIC)
 			j9gcvrbhdlrvlhgc_full
 			j9zip
 			j9utilcore
+			j9gc
+			j9gctrc
+			j9gcapi
+			j9gctrcstandard
+			j9gctrcvlhgc
 	)
 
 	target_compile_definitions(j9vrb_full
