@@ -39,7 +39,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<contains string="${TEST_FLAG}" substring="JFR" />
 			<!-- For the time being, JFR tests are only limited to JDK17+. -->
 			<not>
-				<matches string="${JDK_VERSION}" pattern="^(8|9|1[0-6])$$" />
+				<matches string="${JDK_VERSION}" pattern="^(8|9)$$" />
 			</not>
 		</and>
 	</condition>
