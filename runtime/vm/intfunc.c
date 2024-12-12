@@ -155,6 +155,9 @@ J9InternalVMFunctions J9InternalFunctions = {
 	printThreadInfo,
 	initializeAttachedThread,
 	initializeMethodRunAddressNoHook,
+#if defined(J9VM_OPT_SNAPSHOTS)
+	initializeMethodRunAddressForSnapshot,
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 	sidecarInvokeReflectMethod,
 	sidecarInvokeReflectConstructor,
 	allocateMemorySegmentListWithSize,
