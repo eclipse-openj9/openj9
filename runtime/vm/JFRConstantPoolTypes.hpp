@@ -966,6 +966,7 @@ done:
 		if (NULL != jfrConstantEvents) {
 			PORT_ACCESS_FROM_JAVAVM(vm);
 			j9mem_free_memory(jfrConstantEvents->JVMInfoEntry.jvmArguments);
+			jfrConstantEvents->JVMInfoEntry.jvmArguments = NULL;
 		}
 	}
 
@@ -1016,6 +1017,7 @@ done:
 		if (NULL != jfrConstantEvents) {
 			PORT_ACCESS_FROM_JAVAVM(vm);
 			j9mem_free_memory(jfrConstantEvents->CPUInfoEntry.description);
+			jfrConstantEvents->CPUInfoEntry.description = NULL;
 		}
 	}
 
@@ -1099,6 +1101,7 @@ done:
 		if (NULL != jfrConstantEvents) {
 			PORT_ACCESS_FROM_JAVAVM(vm);
 			j9mem_free_memory(jfrConstantEvents->OSInfoEntry.osVersion);
+			jfrConstantEvents->OSInfoEntry.osVersion = NULL;
 		}
 	}
 
