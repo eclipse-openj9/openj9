@@ -277,7 +277,7 @@ public:
       bool _elgibleForPersistIprofileInfo;
       bool _reportByteCodeInfoAtCatchBlock;
       TR_OpaqueClassBlock *_arrayTypeClasses[8];
-      TR_OpaqueClassBlock *_byteArrayClass;
+      TR_OpaqueClassBlock *_byteArrayOpaqueClass;
       bool _isIndexableDataAddrPresent;
       uintptr_t _contiguousIndexableHeaderSize;
       uintptr_t _discontiguousIndexableHeaderSize;
@@ -335,7 +335,7 @@ public:
       bool _isPortableRestoreMode;
       bool _isSnapshotModeEnabled;
       bool _isNonPortableRestoreMode;
-      // The reflect class pointers for the server to identify the classes
+      // The reflect and array class pointers for the server to identify the classes
       void *_voidReflectClassPtr;
       void *_booleanReflectClassPtr;
       void *_charReflectClassPtr;
@@ -345,6 +345,14 @@ public:
       void *_shortReflectClassPtr;
       void *_intReflectClassPtr;
       void *_longReflectClassPtr;
+      void *_booleanArrayClass;
+      void *_charArrayClass;
+      void *_floatArrayClass;
+      void *_doubleArrayClass;
+      void *_byteArrayClass;
+      void *_shortArrayClass;
+      void *_intArrayClass;
+      void *_longArrayClass;
       }; // struct VMInfo
 
    /**

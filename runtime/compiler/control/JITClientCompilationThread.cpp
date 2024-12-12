@@ -445,7 +445,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             {
             vmInfo._arrayTypeClasses[i] = fe->getClassFromNewArrayTypeNonNull(i + 4);
             }
-         vmInfo._byteArrayClass = fe->getByteArrayClass();
+         vmInfo._byteArrayOpaqueClass = fe->getByteArrayClass();
          vmInfo._isIndexableDataAddrPresent = TR::Compiler->om.isIndexableDataAddrPresent();
          vmInfo._contiguousIndexableHeaderSize = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
          vmInfo._discontiguousIndexableHeaderSize = TR::Compiler->om.discontiguousArrayHeaderSizeInBytes();
@@ -562,6 +562,14 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          vmInfo._shortReflectClassPtr = javaVM->shortReflectClass;
          vmInfo._intReflectClassPtr = javaVM->intReflectClass;
          vmInfo._longReflectClassPtr = javaVM->longReflectClass;
+         vmInfo._booleanArrayClass = javaVM->booleanArrayClass;
+         vmInfo._charArrayClass = javaVM->charArrayClass;
+         vmInfo._floatArrayClass = javaVM->floatArrayClass;
+         vmInfo._doubleArrayClass = javaVM->doubleArrayClass;
+         vmInfo._byteArrayClass = javaVM->byteArrayClass;
+         vmInfo._shortArrayClass = javaVM->shortArrayClass;
+         vmInfo._intArrayClass = javaVM->intArrayClass;
+         vmInfo._longArrayClass = javaVM->longArrayClass;
 
          client->write(response, vmInfo, listOfCacheDescriptors, comp->getPersistentInfo()->getJITServerAOTCacheName());
          }

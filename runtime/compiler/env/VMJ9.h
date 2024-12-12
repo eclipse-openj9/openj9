@@ -686,6 +686,7 @@ public:
    virtual TR_OpaqueClassBlock *getClassFromJavaLangClass(uintptr_t objectPointer);
    virtual TR_arrayTypeCode    getPrimitiveArrayTypeCode(TR_OpaqueClassBlock* clazz);
    virtual TR::DataType        getClassPrimitiveDataType(TR_OpaqueClassBlock* clazz);
+   virtual TR_OpaqueClassBlock *getArrayClassFromDataType(TR::DataType type, bool booleanClass);
    virtual TR_OpaqueClassBlock * getSystemClassFromClassName(const char * name, int32_t length, bool callSiteVettedForAOT=false) { return 0; }
    virtual TR_OpaqueClassBlock * getByteArrayClass();
 

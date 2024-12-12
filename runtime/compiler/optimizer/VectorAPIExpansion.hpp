@@ -694,23 +694,6 @@ class TR_VectorAPIExpansion : public TR::Optimization
                                                                 TR::Node *classNode);
 
   /** \brief
-   *     Returns TR_OpaqueClassBlock for ann array class given element type
-   *
-   *  \param comp
-   *     Compilation
-   *
-   *  \param type
-   *      Data type
-   *
-   *  \param booleanClass
-   *     true if array of boolean values is needed
-   *
-   *  \return
-   *     TR_OpaqueClassBlock
-   */
-   static TR_OpaqueClassBlock *getArrayClassFromDataType(TR::Compilation *comp, TR::DataType type, bool booleanClass);
-
-  /** \brief
    *     Returns corresponding \c vapiObjType for a known object being loaded by node
    *
    *  \param comp

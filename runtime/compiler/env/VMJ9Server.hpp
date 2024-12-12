@@ -270,6 +270,7 @@ public:
 
    virtual TR_arrayTypeCode       getPrimitiveArrayTypeCode(TR_OpaqueClassBlock* clazz) override;
    virtual TR::DataType           getClassPrimitiveDataType(TR_OpaqueClassBlock* clazz) override;
+   virtual TR_OpaqueClassBlock *getArrayClassFromDataType(TR::DataType type, bool booleanClass) override;
 
 private:
    bool instanceOfOrCheckCastHelper(J9Class *instanceClass, J9Class* castClass, bool cacheUpdate);
