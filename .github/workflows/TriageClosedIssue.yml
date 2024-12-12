@@ -21,6 +21,7 @@ jobs:
               repo: context.repo.repo
             });
 
+            const sandboxIssueNumber = 19673;
             const commentsUrl = issueData.comments_url;
             const { data: commentsData } = await github.request(commentsUrl);
 
@@ -74,7 +75,7 @@ jobs:
             }
 
             await github.issues.createComment({
-              issue_number: context.issue.number,
+              issue_number: sandboxIssueNumber,
               owner: sandboxOwner,
               repo: sandboxRepo,
               body: resultString,
