@@ -718,12 +718,12 @@ VMSnapshotImpl::fixupMethodRunAddresses(J9Class *ramClass)
 {
 	J9ROMClass *romClass = ramClass->romClass;
 
-	/* for all ramMethods call initializeMethodRunAdress for special methods */
+	/* Call initializeMethodRunAddressForSnapshot on all for J9Methods in a J9Class. */
 	if (0 != romClass->romMethodCount) {
 		UDATA count = romClass->romMethodCount;
 		J9Method *ramMethod = ramClass->ramMethods;
 		for (UDATA i = 0; i < count; i++) {
-			initializeMethodRunAddressNoHook(_vm, ramMethod);
+			initializeMethodRunAddressForSnapshot(_vm, ramMethod);
 			ramMethod++;
 		}
 	}
