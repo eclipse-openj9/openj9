@@ -216,6 +216,18 @@ initializeMethodRunAddress(J9VMThread *vmThread, J9Method *method)
 
 	method->extra = (void *) J9_STARTPC_NOT_TRANSLATED;
 
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	if (initializeMethodRunAddressMethodHandle(method)) {
+		return;
+	}
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+
+#if defined(J9VM_OPT_METHOD_HANDLE)
+	if (initializeMethodRunAddressVarHandle(method)) {
+		return;
+	}
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
+
 	if (J9_EVENT_IS_HOOKED(vm->hookInterface, J9HOOK_VM_INITIALIZE_SEND_TARGET)) {
 		method->methodRunAddress = NULL;
 		ALWAYS_TRIGGER_J9HOOK_VM_INITIALIZE_SEND_TARGET(vm->hookInterface, vmThread, method);
@@ -233,20 +245,6 @@ initializeMethodRunAddressNoHook(J9JavaVM* vm, J9Method *method)
 {
 	J9ROMMethod* romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
 	U_32 const modifiers = romMethod->modifiers;
-
-	method->extra = (void *) J9_STARTPC_NOT_TRANSLATED;
-
-#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
-	if (initializeMethodRunAddressMethodHandle(method)) {
-		return;
-	}
-#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
-
-#if defined(J9VM_OPT_METHOD_HANDLE)
-	if (initializeMethodRunAddressVarHandle(method)) {
-		return;
-	}
-#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 
 	if (modifiers & J9AccAbstract) {
 		method->methodRunAddress = J9_BCLOOP_ENCODE_SEND_TARGET(J9_BCLOOP_SEND_TARGET_UNSATISFIED_OR_ABSTRACT);
