@@ -1261,7 +1261,6 @@ growJavaStack(J9VMThread * vmThread, UDATA newStackSize);
 * @brief
 * @param *vmThread
 * @param *method
-* @param *jxeDescription
 * @return void
 */
 void
@@ -1274,7 +1273,26 @@ initializeMethodRunAddress(J9VMThread *vmThread, J9Method *method);
 * @return void
 */
 void
-initializeMethodRunAddressNoHook(J9JavaVM* vm, J9Method *method);
+initializeMethodRunAddressNoHook(J9JavaVM *vm, J9Method *method);
+
+#if defined(J9VM_OPT_SNAPSHOTS)
+/**
+ * @brief This function is similar to initializeMethodRunAddress but without the hook call.
+ *
+ * Prior to writing a VM snapshot, J9Method::methodRunAddress and J9Method::extra need to be
+ * reinitialized to a state that is restore friendly (i.e. set to appropriate interpreter entries).
+ * initializeMethodRunAddress should not be used; it may run the J9HOOK_VM_INITIALIZE_SEND_TARGET
+ * hook that initializes invocation counts and sets J9Method::methodRunAddress's to JIT specific
+ * send targets. initializeMethodRunAddressNoHook should not be used because it does not perform
+ * MethodHandle and VarHandle send target initialization, nor does it reset J9Method::extra
+ * appropriately.
+ *
+ * @param vm pointer to the J9JavaVM
+ * @param method pointer to the J9Method
+ */
+void
+initializeMethodRunAddressForSnapshot(J9JavaVM *vm, J9Method *method);
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 
 /**
 * @brief

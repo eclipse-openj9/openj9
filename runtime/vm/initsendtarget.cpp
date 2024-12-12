@@ -292,6 +292,27 @@ initializeMethodRunAddressNoHook(J9JavaVM* vm, J9Method *method)
 	method->methodRunAddress = J9_BCLOOP_ENCODE_SEND_TARGET(J9_BCLOOP_SEND_TARGET_NON_SYNC);
 }
 
+#if defined(J9VM_OPT_SNAPSHOTS)
+void
+initializeMethodRunAddressForSnapshot(J9JavaVM *vm, J9Method *method)
+{
+	method->extra = (void *)J9_STARTPC_NOT_TRANSLATED;
+
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	if (initializeMethodRunAddressMethodHandle(method)) {
+		return;
+	}
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+
+#if defined(J9VM_OPT_METHOD_HANDLE)
+	if (initializeMethodRunAddressVarHandle(method)) {
+		return;
+	}
+#endif /* defined(J9VM_OPT_METHOD_HANDLE) */
+	initializeMethodRunAddressNoHook(vm, method);
+}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+
 #if !defined(J9VM_OPT_SNAPSHOTS)
 J9Method cInitialStaticMethod = { 0, 0, J9_BCLOOP_ENCODE_SEND_TARGET(J9_BCLOOP_SEND_TARGET_INITIAL_STATIC), 0 };
 J9Method cInitialSpecialMethod = { 0, 0, J9_BCLOOP_ENCODE_SEND_TARGET(J9_BCLOOP_SEND_TARGET_INITIAL_SPECIAL), 0 };
