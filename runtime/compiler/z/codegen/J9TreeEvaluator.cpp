@@ -10453,7 +10453,7 @@ genHeapAlloc(TR::Node * node, TR::Instruction *& iCursor, bool isVariableLen, TR
             TR::Register * addressReg = srm->findOrCreateScratchRegister();
             iCursor = generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, addressReg, resReg, iCursor);
 
-            if (TR::comp()->target().is64Bit())
+            if (comp->target().is64Bit())
                {
                iCursor = generateRSInstruction(cg, TR::InstOpCode::SRAG, node, loopIterRegsiter, lengthReg, 8, iCursor);
                }
