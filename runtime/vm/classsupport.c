@@ -1073,6 +1073,18 @@ loadWarmClassFromSnapshot(J9VMThread *vmThread, J9ClassLoader *classLoader, J9Cl
 			}
 		}
 
+		/* TODO Handle/trace error/NULL paths. */
+		j9object_t classObject = clazz->classObject;
+		if (NULL != classObject) {
+			J9Module *module = clazz->module;
+			if (NULL != module) {
+				j9object_t moduleObject = module->moduleObject;
+				if (NULL != moduleObject) {
+					J9VMJAVALANGCLASS_SET_MODULE(vmThread, classObject, moduleObject);
+				}
+			}
+		}
+
 		Trc_VM_snapshot_loadWarmClassFromSnapshot_ClassInfo(vmThread, clazz, className);
 	}
 

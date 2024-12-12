@@ -128,6 +128,9 @@ getModuleJRTURL(J9VMThread *currentThread, J9ClassLoader *classLoader, J9Module 
 	J9UTF8 *jrtURL = NULL;
 	J9ModuleExtraInfo info = {0};
 	PORT_ACCESS_FROM_JAVAVM(javaVM);
+#if defined(J9VM_OPT_SNAPSHOTS)
+	VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(javaVM);
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 
 	if (NULL == classLoader->moduleExtraInfoHashTable) {
 		classLoader->moduleExtraInfoHashTable = vmFuncs->hashModuleExtraInfoTableNew(javaVM, 1);
@@ -154,8 +157,16 @@ getModuleJRTURL(J9VMThread *currentThread, J9ClassLoader *classLoader, J9Module 
 				/* Set jrt URL for the module. */
 				const char *prependStr = "jrt:/";
 				const size_t prependStrLen = strlen(prependStr);
-				jrtURL = vmFuncs->copyJ9UTF8WithMemAlloc(
-						currentThread, module->moduleName, J9_STR_NONE, prependStr, prependStrLen, NULL, 0);
+#if defined(J9VM_OPT_SNAPSHOTS)
+				if (IS_SNAPSHOTTING_ENABLED(javaVM)) {
+					jrtURL = vmFuncs->copyJ9UTF8WithPortLib(
+							currentThread, module->moduleName, J9_STR_NONE, prependStr, prependStrLen, VMSNAPSHOTIMPL_OMRPORT_FROM_JAVAVM(javaVM));
+				} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+				{
+					jrtURL = vmFuncs->copyJ9UTF8WithMemAlloc(
+							currentThread, module->moduleName, J9_STR_NONE, prependStr, prependStrLen, NULL, 0);
+				}
 			}
 			if (NULL == jrtURL) {
 				goto _exit;
@@ -165,7 +176,14 @@ getModuleJRTURL(J9VMThread *currentThread, J9ClassLoader *classLoader, J9Module 
 			J9_DECLARE_CONSTANT_UTF8(jrtJavaBaseUrl, "jrt:/java.base");
 			const U_16 length = J9UTF8_LENGTH(&jrtJavaBaseUrl);
 			const UDATA jrtURLSize = length + sizeof(J9UTF8);
-			jrtURL = (J9UTF8 *)j9mem_allocate_memory(jrtURLSize, OMRMEM_CATEGORY_VM);
+#if defined(J9VM_OPT_SNAPSHOTS)
+			if (IS_SNAPSHOTTING_ENABLED(javaVM)) {
+				jrtURL = (J9UTF8 *)vmsnapshot_allocate_memory(jrtURLSize, OMRMEM_CATEGORY_VM);
+			} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+			{
+				jrtURL = (J9UTF8 *)j9mem_allocate_memory(jrtURLSize, OMRMEM_CATEGORY_VM);
+			}
 			if (NULL == jrtURL) {
 				goto _exit;
 			}
@@ -176,11 +194,18 @@ getModuleJRTURL(J9VMThread *currentThread, J9ClassLoader *classLoader, J9Module 
 	}
 
 	if (TRUE == newModuleInfo) {
-		/* Add moduleInfo to the hashtable */
+		/* Add moduleInfo to the hashtable. */
 		void *node = hashTableAdd(classLoader->moduleExtraInfoHashTable, (void *)moduleInfo);
 		if (NULL == node) {
 			/* If we fail to add new moduleInfo to the hashtable, then free up jrtURL */
-			j9mem_free_memory(moduleInfo->jrtURL);
+#if defined(J9VM_OPT_SNAPSHOTS)
+			if (IS_SNAPSHOTTING_ENABLED(javaVM)) {
+				vmsnapshot_free_memory(moduleInfo->jrtURL);
+			} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+			{
+				j9mem_free_memory(moduleInfo->jrtURL);
+			}
 			goto _exit;
 		}
 	}

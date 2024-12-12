@@ -26,7 +26,6 @@
 
 #if JAVA_SPEC_VERSION >= 11
 
-static J9Package* hashPackageTableAtWithUTF8Name(J9VMThread *currentThread, J9ClassLoader *classLoader, J9UTF8 *packageName);
 static BOOLEAN isPackageExportedToModuleHelper(J9VMThread *currentThread, J9Module *fromModule, J9Package *j9package, J9Module *toModule, BOOLEAN toUnnamed);
 
 /* All the helper functions below assume that:
@@ -149,7 +148,21 @@ addUTFNameToPackage(J9VMThread *currentThread, J9Package *j9package, const char 
 	return TRUE;
 }
 
-static J9Package*
+J9Module *
+hashModuleTableAtWithUTF8Name(J9VMThread *currentThread, J9ClassLoader *classLoader, J9UTF8 *moduleName)
+{
+	J9Module module = {0};
+	J9Module *modulePtr = &module;
+	J9Module **targetPtr = NULL;
+
+	modulePtr->moduleName = moduleName;
+	modulePtr->classLoader = classLoader;
+	Assert_Util_notNull(modulePtr->moduleName);
+	targetPtr = hashTableFind(classLoader->moduleHashTable, &modulePtr);
+	return (NULL != targetPtr) ? *targetPtr : NULL;
+}
+
+J9Package *
 hashPackageTableAtWithUTF8Name(J9VMThread *currentThread, J9ClassLoader *classLoader, J9UTF8 *packageName)
 {
 	J9Package package = {0};
