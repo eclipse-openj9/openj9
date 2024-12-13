@@ -461,6 +461,16 @@ void J9FASTCALL jProfile64BitValue(uint64_t value, TR_HashTableProfilerInfo<uint
    table->addKey(value);
    }
 
+void J9FASTCALL jProfile32BitValueLowOpt(uint32_t value, TR_HashTableProfilerInfo<uint32_t> *table)
+   {
+   table->updateFrequency(value);
+   }
+
+void J9FASTCALL jProfile64BitValueLowOpt(uint64_t value, TR_HashTableProfilerInfo<uint64_t> *table)
+   {
+   table->updateFrequency(value);
+   }
+
 }
 
 extern "C" {
@@ -1227,6 +1237,8 @@ void initializeJitRuntimeHelperTable(char isSMP)
    SET(TR_jitProfileParseBuffer,                (void *)_jitProfileParseBuffer,           TR_Helper);
    SET_CONST(TR_jProfile32BitValue,             (void *)jProfile32BitValue);
    SET_CONST(TR_jProfile64BitValue,             (void *)jProfile64BitValue);
+   SET_CONST(TR_jProfile32BitValueLowOpt        (void *)jProfile32BitValueLowOpt);
+   SET_CONST(TR_jProfile64BitValueLowOpt        (void *)jProfile64BitValueLowOpt);
 #elif defined(TR_HOST_X86)
    SET(TR_jitProfileWarmCompilePICAddress,      (void *)_jitProfileWarmCompilePICAddress, TR_CHelper);
    SET(TR_jitProfileAddress,                    (void *)_jitProfileAddress,               TR_CHelper);
@@ -1238,9 +1250,13 @@ void initializeJitRuntimeHelperTable(char isSMP)
 #if defined(TR_HOST_64BIT)
    SET(TR_jProfile32BitValue,                   (void *)jProfile32BitValueWrapper,        TR_CHelper);
    SET(TR_jProfile64BitValue,                   (void *)jProfile64BitValueWrapper,        TR_CHelper);
+   SET(TR_jProfile32BitValueLowOpt,             (void *)jProfile32BitValueLowOptWrapper,  TR_CHelper);
+   SET(TR_jProfile64BitValueLowOpt,             (void *)jProfile64BitValueLowOptWrapper,  TR_CHelper);
 #else
    SET(TR_jProfile32BitValue,                   (void *)jProfile32BitValue,        TR_CHelper);
    SET(TR_jProfile64BitValue,                   (void *)jProfile64BitValue,        TR_CHelper);
+   SET(TR_jProfile32BitValueLowOpt,             (void *)jProfile32BitValueLowOpt,  TR_CHelper);
+   SET(TR_jProfile64BitValueLowOpt,             (void *)jProfile64BitValueLowOpt,  TR_CHelper);
 #endif
 #else
    SET(TR_jitProfileWarmCompilePICAddress,      (void *)_jitProfileWarmCompilePICAddress, TR_Helper);
@@ -1250,8 +1266,10 @@ void initializeJitRuntimeHelperTable(char isSMP)
    SET(TR_jitProfileBigDecimalValue,            (void *)_jitProfileBigDecimalValue,       TR_Helper);
    SET(TR_jitProfileStringValue,                (void *)_jitProfileStringValue,           TR_Helper);
    SET(TR_jitProfileParseBuffer,                (void *)_jitProfileParseBuffer,           TR_Helper);
-   SET(TR_jProfile32BitValue,                   (void *)jProfile32BitValue,              TR_Helper);
-   SET(TR_jProfile64BitValue,                   (void *)jProfile64BitValue,              TR_Helper);
+   SET(TR_jProfile32BitValue,                   (void *)jProfile32BitValue,               TR_Helper);
+   SET(TR_jProfile64BitValue,                   (void *)jProfile64BitValue,               TR_Helper);
+   SET(TR_jProfile32BitValueLowOpt,             (void *)jProfile32BitValueLowOpt,         TR_Helper);
+   SET(TR_jProfile64BitValueLowOpt,             (void *)jProfile64BitValueLowOpt,         TR_Helper);
 #endif
 
 #if defined(J9ZOS390)
