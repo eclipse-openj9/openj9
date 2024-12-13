@@ -102,7 +102,7 @@ Please read [DependentLibs.md](./DependentLibs.md) for details.
 - If you have added new features to OpenJ9, you will likely need to add new tests. Check out [openj9/test/functional/TestExample/src/org/openj9/test/MyTest.java](https://github.com/eclipse-openj9/openj9/blob/master/test/functional/TestExample/src/org/openj9/test/example/MyTest.java) for
 the format to use.
 
-- If you have many new test cases to add and special build requirements, then you may want to copy the [TestExample](https://github.com/eclipse-openj9/openj9/blob/master/test/functional/TestExample) update the build.xml and playlist.xml files to match your new Test class names. The playlist.xml format is defined in TKG/playlist.xsd.
+- If you have many new test cases to add and special build requirements, then you may want to copy the [TestExample](https://github.com/eclipse-openj9/openj9/blob/master/test/functional/TestExample) update the build.xml and playlist.xml files to match your new Test class names. The playlist.xml format is defined in TKG/resources/playlist.xsd.
 
 - A test can be tagged with following elements:
 
