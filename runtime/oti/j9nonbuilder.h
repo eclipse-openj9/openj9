@@ -4950,6 +4950,9 @@ typedef struct J9InternalVMFunctions {
 	void  ( *printThreadInfo)(struct J9JavaVM *vm, struct J9VMThread *self, char *toFile, BOOLEAN allThreads) ;
 	void  (JNICALL *initializeAttachedThread)(struct J9VMThread *vmContext, const char *name, j9object_t *group, UDATA daemon, struct J9VMThread *initializee) ;
 	void  ( *initializeMethodRunAddressNoHook)(struct J9JavaVM* vm, J9Method *method) ;
+#if defined(J9VM_OPT_SNAPSHOTS)
+	void  ( *initializeMethodRunAddressForSnapshot)(struct J9JavaVM *vm, struct J9Method *method) ;
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 	void  (JNICALL *sidecarInvokeReflectMethod)(struct J9VMThread *vmContext, jobject methodRef, jobject recevierRef, jobjectArray argsRef) ;
 	void  (JNICALL *sidecarInvokeReflectConstructor)(struct J9VMThread *vmContext, jobject constructorRef, jobject recevierRef, jobjectArray argsRef) ;
 	struct J9MemorySegmentList*  ( *allocateMemorySegmentListWithSize)(struct J9JavaVM * javaVM, U_32 numberOfMemorySegments, UDATA sizeOfElements, U_32 memoryCategory) ;
