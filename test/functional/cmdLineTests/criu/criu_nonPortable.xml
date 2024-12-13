@@ -273,7 +273,7 @@
   </test>
 
   <test id="Create and Restore Criu Checkpoint Image once - CheckpointDeadlock">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ --add-opens java.base/jdk.internal.misc=ALL-UNNAMED  $STD_CMD_OPTS$" $MAINCLASS_DEADLOCK_TEST$ CheckpointDeadlock 1 false false</command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$ -Xtrace:print={j9jcl.533,j9vm.684-696,j9vm.699,j9vm.717-743} --add-opens java.base/jdk.internal.misc=ALL-UNNAMED  $STD_CMD_OPTS$" $MAINCLASS_DEADLOCK_TEST$ CheckpointDeadlock 1 false false</command>
     <output type="success" caseSensitive="yes" regex="no">User requested Java dump using</output>
     <output type="failure" caseSensitive="yes" regex="no">AOT load and compilation disabled post restore</output>
     <output type="success" caseSensitive="yes" regex="no">TEST PASSED</output>
