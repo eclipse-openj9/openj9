@@ -28,6 +28,10 @@ follow when reviewing and merging pull requests and issues. It also provides
 a checklist of items that committers must ensure have been completed prior to
 merging a pull request.
 
+Committers should be aware of the
+[Eclipse Foundation Generative Artificial Intelligence Usage Guidelines](https://www.eclipse.org/projects/guidelines/genai/)
+as well as the
+[Eclipse OpenJ9 Generative Artificial Intelligence Usage Guidelines](/CONTRIBUTING.md#Generative-Artificial-Intelligence-Usage-Guidelines).
 
 ## General Guidelines
 
