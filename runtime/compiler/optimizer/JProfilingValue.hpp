@@ -56,18 +56,18 @@ class TR_JProfilingValue : public TR::Optimization
    void cleanUpAndAddProfilingCandidates();
    /**
     * Examines node to identify profiling candidate and add place holder calls for profiling it.
-    * This routine checks node and it's children for mainly two type of nodes. 
+    * This routine checks node and it's children for mainly two type of nodes.
     * 1. Virtual Call
     * 2. instanceOf/checkcast/checkcastAndNULLCHK
     * In these case, it adds placeholder call to profiler the VFT Pointer.
-    * 
+    *
     * @param node to examine for profiling candidate
     * @param cursor A TreeTop Pointer containing the node
     * @param alreadyProfiledValues A BitVector containing information about already profiled nodes in Extended Basic Blocks
     * @param checklist A Node checklist to make sure while recursively examining node, we do not examine node multiple times.
     */
    void performOnNode(TR::Node *node, TR::TreeTop *cursor, TR_BitVector *alreadyProfiledValues, TR::NodeChecklist *checklist);
-   
+
    static bool addProfilingTrees(
       TR::Compilation *comp,
       TR::TreeTop *insertionPoint,
@@ -76,7 +76,7 @@ class TR_JProfilingValue : public TR::Optimization
       bool addNullCheck = false,
       bool extendBlocks = true,
       bool trace = false);
-   
+
    private:
    static TR::Node *computeHash(TR::Compilation *comp, TR_AbstractHashTableProfilerInfo *table, TR::Node *value, TR::Node *baseAddr);
 
@@ -94,7 +94,7 @@ class TR_JProfilingValue : public TR::Optimization
    static TR::Node *incrementMemory(TR::Compilation *comp, TR::DataType counterType, TR::Node *address);
    static TR::Node *copyGlRegDeps(TR::Compilation *comp, TR::Node *origGlRegDeps);
    static TR::Node *effectiveAddress(TR::DataType dataType, TR::Node *base, TR::Node *index = NULL, TR::Node *offset = NULL);
-   static TR::Node *systemConst(TR::Node *example, uint64_t value);
+   static TR::Node *systemConst(TR::Compilation *comp, TR::Node *example, uint64_t value);
    static TR::Node *convertType(TR::Node *index, TR::DataType dataType, bool zeroExtend = true);
    };
 

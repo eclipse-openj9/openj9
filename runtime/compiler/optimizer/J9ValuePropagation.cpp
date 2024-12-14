@@ -696,7 +696,6 @@ J9::ValuePropagation::isValue(TR::VPConstraint *constraint, TR_OpaqueClassBlock 
       return type->isFixedClass() ? TR_no : TR_maybe;
       }
 
-   TR::Compilation *comp = TR::comp();
    clazz = type->getClass();
 
    // No need to check array class type because array classes should be marked as having identity.
@@ -707,7 +706,7 @@ J9::ValuePropagation::isValue(TR::VPConstraint *constraint, TR_OpaqueClassBlock 
 
    // Is the type either an abstract class or an interface (i.e., not a
    // concrete class)?  If so, it might be a value type.
-   if (!TR::Compiler->cls.isConcreteClass(comp, clazz))
+   if (!TR::Compiler->cls.isConcreteClass(comp(), clazz))
       {
       return TR_maybe;
       }
