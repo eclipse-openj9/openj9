@@ -1105,17 +1105,32 @@ lookupJNINative(J9VMThread *currentThread, J9NativeLibrary *nativeLibrary, J9Met
 #if JAVA_SPEC_VERSION >= 17
 	if (NULL == nativeLibrary) {
 		internalAcquireVMAccess(currentThread);
-		j9object_t entryName = vm->memoryManagerFunctions->j9gc_createJavaLangString(currentThread, (U_8*)symbolName, strlen(symbolName), 0);
+		J9MemoryManagerFunctions *mmFuncs = vm->memoryManagerFunctions;
+		j9object_t entryName = mmFuncs->j9gc_createJavaLangString(currentThread, (U_8*)symbolName, strlen(symbolName), 0);
 		if (NULL != entryName) {
-			j9object_t classLoaderObject = J9_CLASS_FROM_METHOD(nativeMethod)->classLoader->classLoaderObject;
-			J9Method *findNativeMethod = J9VMJAVALANGCLASSLOADER_FINDNATIVE_METHOD(vm);
-			UDATA args[] = {(UDATA)classLoaderObject, (UDATA)entryName};
-			internalRunStaticMethod(currentThread, findNativeMethod, TRUE, (sizeof(args) / sizeof(UDATA)), args);
-			functionAddress = (UDATA*)(*(U_64*)&(currentThread->returnValue));
+#if JAVA_SPEC_VERSION >= 24
+			J9ROMMethod *nativeROMMethod = J9_ROM_METHOD_FROM_RAM_METHOD(nativeMethod);
+			j9object_t javaName = mmFuncs->j9gc_createJavaLangStringWithUTFCache(currentThread, J9ROMMETHOD_NAME(nativeROMMethod));
+			if (NULL != javaName)
+#endif /* JAVA_SPEC_VERSION >= 24 */
+			{
+				J9Class *nativeMethodCls = J9_CLASS_FROM_METHOD(nativeMethod);
+				j9object_t classLoaderObject = nativeMethodCls->classLoader->classLoaderObject;
+#if JAVA_SPEC_VERSION >= 24
+				j9object_t classObject = nativeMethodCls->classObject;
+				J9Method *findNativeMethod = J9VMJAVALANGCLASSLOADER_FINDNATIVE1_METHOD(vm);
+				UDATA args[] = {(UDATA)classLoaderObject, (UDATA)entryName, (UDATA)classObject, (UDATA)javaName};
+#else /* JAVA_SPEC_VERSION >= 24 */
+				J9Method *findNativeMethod = J9VMJAVALANGCLASSLOADER_FINDNATIVE0_METHOD(vm);
+				UDATA args[] = {(UDATA)classLoaderObject, (UDATA)entryName};
+#endif /* JAVA_SPEC_VERSION >= 24 */
+				internalRunStaticMethod(currentThread, findNativeMethod, TRUE, (sizeof(args) / sizeof(UDATA)), args);
+				functionAddress = (UDATA*)(*(U_64*)&(currentThread->returnValue));
 #if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
-			doSwitching = ((UDATA)functionAddress) & J9_NATIVE_LIBRARY_SWITCH_MASK;
-			functionAddress = (UDATA *)(((UDATA)functionAddress) & ~(UDATA)J9_NATIVE_LIBRARY_SWITCH_MASK);
+				doSwitching = ((UDATA)functionAddress) & J9_NATIVE_LIBRARY_SWITCH_MASK;
+				functionAddress = (UDATA *)(((UDATA)functionAddress) & ~(UDATA)J9_NATIVE_LIBRARY_SWITCH_MASK);
 #endif /* defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT) */
+			}
 		}
 		/* always clear pending exception, might retry later */
 		VM_VMHelpers::clearException(currentThread);

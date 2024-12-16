@@ -72,6 +72,10 @@ import jdk.internal.loader.NativeLibrary;
 import jdk.internal.reflect.CallerSensitiveAdapter;
 /*[ENDIF] JAVA_SPEC_VERSION >= 18 */
 
+/*[IF JAVA_SPEC_VERSION >= 24]*/
+import jdk.internal.reflect.Reflection;
+/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
+
 /*[IF CRIU_SUPPORT]*/
 import openj9.internal.criu.NotCheckpointSafe;
 /*[ENDIF] CRIU_SUPPORT*/
@@ -2101,13 +2105,27 @@ static void loadLibrary(Class<?> caller, String libName) {
 	}
 }
 
-static long findNative(ClassLoader loader, String entryName) {
+/*[IF JAVA_SPEC_VERSION >= 24]*/
+static long findNative1(ClassLoader loader, String entryName, Class<?> cls, String javaName) {
+	long address = findNative0(loader, entryName);
+
+	if ((loader != null) && (address != 0)) {
+		Reflection.ensureNativeAccess(cls, cls, javaName, true);
+	}
+
+	return address;
+}
+/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
+
+static long findNative0(ClassLoader loader, String entryName) {
 	NativeLibraries nativelib;
+
 	if ((loader == null) || (loader == bootstrapClassLoader)) {
 		nativelib = BootLoader.getNativeLibraries();
 	} else {
 		nativelib = loader.nativelibs;
 	}
+
 	return nativelib.find(entryName);
 }
 /*[ENDIF] JAVA_SPEC_VERSION >= 15 */
