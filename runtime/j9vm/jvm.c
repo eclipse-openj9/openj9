@@ -4544,11 +4544,11 @@ JVM_Lseek(jint descriptor, jlong bytesToSeek, jint origin)
 	}
 
 #if defined(WIN32)
-#ifdef __IBMC__
+#if defined(__IBMC__)
 	result = lseek(descriptor, (long) bytesToSeek, origin);
-#else
+#else /* defined(__IBMC__) */
 	result = _lseeki64(descriptor, bytesToSeek, origin);
-#endif
+#endif /* defined(__IBMC__) */
 #elif defined(J9UNIX) || defined(J9ZOS390) /* defined(WIN32) */
 #if defined(LINUX) && !defined(J9VM_ENV_DATA64)
 
@@ -4644,7 +4644,7 @@ JVM_Open(const char* filename, jint flags, jint mode)
 #define JVM_EEXIST -100
 
 #ifdef WIN32
-#ifdef __IBMC__
+#if defined(__IBMC__)
 #define EXTRA_OPEN_FLAGS O_NOINHERIT | O_BINARY
 #else
 #define EXTRA_OPEN_FLAGS _O_NOINHERIT | _O_BINARY

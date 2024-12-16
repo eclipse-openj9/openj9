@@ -284,7 +284,11 @@ elseif(OMR_OS_AIX)
 		-DSUPPORTS_THREAD_LOCAL
 	)
 	if(OMR_ENV_DATA64)
-		list(APPEND J9_SHAREDFLAGS -q64)
+		if(CMAKE_C_COMPILER_IS_OPENXL)
+			list(APPEND J9_SHAREDFLAGS -m64)
+		else()
+			list(APPEND J9_SHAREDFLAGS -q64)
+		endif()
 		if(OMR_TOOLCONFIG STREQUAL "xlc")
 			# Modify the arch tuning value we inherit from OMR.
 			list(REMOVE_ITEM TR_COMPILE_OPTIONS "-qarch=pwr7")
