@@ -297,9 +297,9 @@ struct LocalJ9UTF8Buffer {
 	 * Constructs an empty LocalJ9UTF8Buffer.
 	 */
 	LocalJ9UTF8Buffer()
-		: utf8(nullptr)
+		: utf8(NULL)
 		, capacity(0)
-		, cursor(nullptr)
+		, cursor(NULL)
 	{
 	}
 
