@@ -30,4 +30,19 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<command>$EXE$ -XX:+FlightRecorder --add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED -cp $RESJAR$ org.openj9.test.TriggerExecutionSample</command>
 		<return type="success" value="0" />
 	</test>
+	<test id="runWorkload - approx 30seconds">
+		<command>$EXE$ -XX:+FlightRecorder --add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED -cp $RESJAR$ org.openj9.test.WorkLoad</command>
+		<output type="success" caseSensitive="yes" regex="no">All runs complete.</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception</output>
+	</test>
+	<test id="runWorkload 2 - approx 2mins">
+		<command>$EXE$ -XX:+FlightRecorder --add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED -cp $RESJAR$ org.openj9.test.WorkLoad 200 20000 200</command>
+		<output type="success" caseSensitive="yes" regex="no">All runs complete.</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception</output>
+	</test>
+	<test id="runWorkload 2 - approx 2mins">
+		<command>$EXE$ --add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED -cp $RESJAR$ org.openj9.test.VMAPITest</command>
+		<output type="success" caseSensitive="yes" regex="no">All runs complete.</output>
+		<output type="failure" caseSensitive="yes" regex="no">Failed</output>
+	</test>
 </suite>
