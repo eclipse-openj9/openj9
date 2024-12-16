@@ -302,21 +302,21 @@ private:
 
 	/* Event Types */
 	J9Pool *_executionSampleTable;
-	UDATA _executionSampleCount;
+	U_32 _executionSampleCount;
 	J9Pool *_threadStartTable;
-	UDATA _threadStartCount;
+	U_32 _threadStartCount;
 	J9Pool *_threadEndTable;
-	UDATA _threadEndCount;
+	U_32 _threadEndCount;
 	J9Pool *_threadSleepTable;
-	UDATA _threadSleepCount;
+	U_32 _threadSleepCount;
 	J9Pool *_monitorWaitTable;
-	UDATA _monitorWaitCount;
+	U_32 _monitorWaitCount;
 	J9Pool *_cpuLoadTable;
-	UDATA _cpuLoadCount;
+	U_32 _cpuLoadCount;
 	J9Pool *_threadCPULoadTable;
-	UDATA _threadCPULoadCount;
+	U_32 _threadCPULoadCount;
 	J9Pool *_classLoadingStatisticsTable;
-	UDATA _classLoadingStatisticsCount;
+	U_32 _classLoadingStatisticsCount;
 
 	/* Processing buffers */
 	StackFrame *_currentStackFrameBuffer;
@@ -495,13 +495,13 @@ private:
 		if ((UDATA)-1 == bytecodeOffset) {
 			frame->bytecodeIndex = 0;
 		} else {
-			frame->bytecodeIndex = bytecodeOffset;
+			frame->bytecodeIndex = (I_32)bytecodeOffset;
 		}
 
 		if ((UDATA)-1 == lineNumber) {
 			frame->lineNumber = 0;
 		} else {
-			frame->lineNumber = lineNumber;
+			frame->lineNumber = (I_32)lineNumber;
 		}
 
 		cp->_currentFrameCount++;
@@ -626,42 +626,42 @@ public:
 		return _classLoadingStatisticsTable;
 	}
 
-	UDATA getExecutionSampleCount()
+	U_32 getExecutionSampleCount()
 	{
 		return _executionSampleCount;
 	}
 
-	UDATA getThreadStartCount()
+	U_32 getThreadStartCount()
 	{
 		return _threadStartCount;
 	}
 
-	UDATA getThreadEndCount()
+	U_32 getThreadEndCount()
 	{
 		return _threadEndCount;
 	}
 
-	UDATA getThreadSleepCount()
+	U_32 getThreadSleepCount()
 	{
 		return _threadSleepCount;
 	}
 
-	UDATA getMonitorWaitCount()
+	U_32 getMonitorWaitCount()
 	{
 		return _monitorWaitCount;
 	}
 
-	UDATA getCPULoadCount()
+	U_32 getCPULoadCount()
 	{
 		return _cpuLoadCount;
 	}
 
-	UDATA getThreadCPULoadCount()
+	U_32 getThreadCPULoadCount()
 	{
 		return _threadCPULoadCount;
 	}
 
-	UDATA getClassLoadingStatisticsCount()
+	U_32 getClassLoadingStatisticsCount()
 	{
 		return _classLoadingStatisticsCount;
 	}
@@ -867,7 +867,7 @@ done:
 		iterateStackTraceImpl(_currentThread, (j9object_t*)walkStateCache, &stackTraceCallback, this, FALSE, FALSE, numberOfFrames, FALSE);
 
 		index = addStackTraceEntry(walkThread, j9time_nano_time(), _currentFrameCount);
-		_stackFrameCount += expandedStackTraceCount;
+		_stackFrameCount += (U_32)expandedStackTraceCount;
 		_currentStackFrameBuffer = NULL;
 
 done:
@@ -998,12 +998,12 @@ done:
 			*result = OutOfMemory;
 		}
 
-		cpuInformation->cores = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_PHYSICAL);
+		cpuInformation->cores = (U_32)j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_PHYSICAL);
 		/* Setting number of sockets to number of cores for now as there's no easy way to get this info.
 		 * TODO: fix this when we can query number of sockets from OMR
 		 */
 		cpuInformation->sockets = cpuInformation->cores;
-		cpuInformation->hwThreads = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_TARGET);
+		cpuInformation->hwThreads = (U_32)j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_TARGET);
 	}
 
 	/**
