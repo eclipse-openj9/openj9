@@ -117,9 +117,10 @@ const struct traceOption TRACE_OPTIONS[] =
 	{RAS_METHODS_KEYWORD, FALSE, setMethod},
 	{RAS_STACKDEPTH_KEYWORD, TRUE, setStackDepth},
 	{RAS_COMPRESSION_LEVEL_KEYWORD, TRUE, setStackCompressionLevel},
+	{RAS_MAX_STRING_LENGTH_KEYWORD, FALSE, setMaxStringLength},
 };
 
-#define NUMBER_OF_TRACE_OPTIONS ( sizeof(TRACE_OPTIONS) / sizeof(struct traceOption))
+#define NUMBER_OF_TRACE_OPTIONS (sizeof(TRACE_OPTIONS) / sizeof(struct traceOption))
 
 /**
  * The list of trigger actions defined by J9VM passed to the
