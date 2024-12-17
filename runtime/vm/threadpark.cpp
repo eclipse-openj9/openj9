@@ -92,6 +92,9 @@ threadParkImpl(J9VMThread *vmThread, BOOLEAN timeoutIsEpochRelative, I_64 timeou
 
 	if (J9THREAD_TIMED_OUT != rc) {
 		PORT_ACCESS_FROM_VMC(vmThread);
+		J9Class *parkedClass = getThreadParkClassObject(vmThread);
+		UDATA parkedAddress = (UDATA) vmThread->threadObject;
+		I_64 startTicks = j9time_nano_time();
 		/* vmThread->threadObject != NULL because vmThread must be the current thread */
 		J9VMTHREAD_SET_BLOCKINGENTEROBJECT(vmThread, vmThread, J9VMJAVALANGTHREAD_PARKBLOCKER(vmThread, vmThread->threadObject));
 		TRIGGER_J9HOOK_VM_PARK(vm->hookInterface, vmThread, millis, nanos);
@@ -113,7 +116,7 @@ threadParkImpl(J9VMThread *vmThread, BOOLEAN timeoutIsEpochRelative, I_64 timeou
 		}
 
 		internalAcquireVMAccessClearStatus(vmThread, thrstate);
-		TRIGGER_J9HOOK_VM_UNPARKED(vm->hookInterface, vmThread);
+		TRIGGER_J9HOOK_VM_UNPARKED(vm->hookInterface, vmThread, millis, nanos, startTicks, (UDATA) parkedAddress, VM_VMHelpers::currentClass(parkedClass));
 		J9VMTHREAD_SET_BLOCKINGENTEROBJECT(vmThread, vmThread, NULL);
 	}
 	/* Trc_JCL_park_Exit(vmThread, rc); */
@@ -161,6 +164,37 @@ threadUnparkImpl(J9VMThread *vmThread, j9object_t threadObject)
 			objectMonitorExit(vmThread, threadLock);
 			/*Trc_JCL_unpark_Exit(vmThread);*/
 		}
+	}
+}
+
+J9Class*
+getThreadParkClassObject(J9VMThread *vmThread)
+{
+	J9JavaVM *vm = vmThread->javaVM;
+	J9StackWalkState walkState =  {0};
+	J9Class *result = NULL;
+	jint depth = 2;
+	walkState.frameWalkFunction = getThreadParkClassIterator;
+	walkState.walkThread = vmThread;
+	walkState.skipCount = 0;
+	walkState.flags = J9_STACKWALK_VISIBLE_ONLY | J9_STACKWALK_INCLUDE_NATIVES | J9_STACKWALK_ITERATE_FRAMES;
+	walkState.userData1 = (void *) (IDATA) depth;
+	walkState.userData2 = NULL;
+	vm->walkStackFrames(vmThread, &walkState);
+	result = (J9Class*) walkState.userData2;
+	return result;
+}
+
+UDATA
+getThreadParkClassIterator(J9VMThread *vmThread, J9StackWalkState *walkState)
+{
+	J9Class *currentClass = J9_CLASS_FROM_CP(walkState->constantPool);
+	if ((UDATA)walkState->userData1 == 0) {
+		walkState->userData2 = currentClass;
+		return J9_STACKWALK_STOP_ITERATING;
+	} else {
+		walkState->userData1 = (void *) (((UDATA) walkState->userData1) - 1);
+		return J9_STACKWALK_KEEP_ITERATING;
 	}
 }
 
