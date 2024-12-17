@@ -124,10 +124,12 @@ public final class System {
 	 */
 	private static Properties systemProperties;
 
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	/**
 	 * The System default SecurityManager.
 	 */
 	private static SecurityManager security;
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 	private static volatile Console console;
 	private static volatile boolean consoleInitialized;
@@ -1085,7 +1087,11 @@ private static native String getSysPropBeforePropertiesInitialized(int sysPropID
 @Deprecated(since="17", forRemoval=true)
 /*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 public static SecurityManager getSecurityManager() {
+	/*[IF JAVA_SPEC_VERSION >= 24]*/
+	return null;
+	/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 	return security;
+	/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 }
 
 /**
