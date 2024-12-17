@@ -459,6 +459,7 @@
    jdk_internal_misc_Unsafe_compareAndExchangeObject,
    jdk_internal_misc_Unsafe_compareAndExchangeReference,
 
+   jdk_internal_misc_Unsafe_storeStoreFence,
    jdk_internal_misc_Unsafe_copyMemory0,
    jdk_internal_misc_Unsafe_getCharUnaligned,
    jdk_internal_misc_Unsafe_getShortUnaligned,
