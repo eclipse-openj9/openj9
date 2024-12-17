@@ -160,6 +160,9 @@ isMethodHandleINL(U_8 *methodName, U_16 methodNameLength)
 UDATA   
 packageAccessIsLegal(J9VMThread *currentThread, J9Class *targetClass, j9object_t protectionDomain, UDATA canRunJavaCode)
 {
+#if JAVA_SPEC_VERSION >= 24
+	return TRUE;
+#else /* JAVA_SPEC_VERSION >= 24 */
 	UDATA legal = FALSE;
 	j9object_t security = J9VMJAVALANGSYSTEM_SECURITY(currentThread, J9VMCONSTANTPOOL_CLASSREF_AT(currentThread->javaVM, J9VMCONSTANTPOOL_JAVALANGSYSTEM)->value);
 	if (NULL == security) {
@@ -175,6 +178,7 @@ packageAccessIsLegal(J9VMThread *currentThread, J9Class *targetClass, j9object_t
 		}
 	}
 	return legal;
+#endif /* JAVA_SPEC_VERSION >= 24 */
 }
 
 BOOLEAN
