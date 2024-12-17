@@ -604,6 +604,11 @@ typedef UDATA (* lookupNativeAddressCallback)(struct J9VMThread *currentThread, 
 		</description>
 		<struct>J9VMUnparkedEvent</struct>
 		<data type="struct J9VMThread *" name="currentThread" description="current thread" />
+		<data type="I_64" name="millis" description="milliseconds to park for" />
+		<data type="IDATA" name="nanos" description="nanoseconds to park for" />
+		<data type="I_64" name="startTicks" description="current ticks when wait began" />
+		<data type="UDATA" name="parkedAddress" description="object parked address" />
+		<data type="struct J9Class*" name="parkedClass" description="the class which park was called from?" />
 	</event>
 
 	<event>

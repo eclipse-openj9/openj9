@@ -65,6 +65,7 @@ enum MetadataTypeID {
 	ThreadStartID = 2,
 	ThreadEndID = 3,
 	ThreadSleepID = 4,
+	ThreadParkID = 5,
 	MonitorWaitID = 7,
 	JVMInformationID = 86,
 	OSInformationID = 87,
@@ -337,6 +338,8 @@ done:
 
 			pool_do(_constantPoolTypes.getMonitorWaitTable(), &writeMonitorWaitEvent, _bufferWriter);
 
+			pool_do(_constantPoolTypes.getThreadParkTable(), &writeThreadParkEvent, _bufferWriter);
+
 			pool_do(_constantPoolTypes.getCPULoadTable(), &writeCPULoadEvent, _bufferWriter);
 
 			pool_do(_constantPoolTypes.getThreadCPULoadTable(), &writeThreadCPULoadEvent, _bufferWriter);
@@ -547,6 +550,49 @@ done:
 		/* write size */
 		_bufferWriter->writeLEB128PaddedU32(dataStart, _bufferWriter->getCursor() - dataStart);
 	}
+
+	static void
+	writeThreadParkEvent(void *anElement, void *userData)
+	{
+		ThreadParkEntry *entry = (ThreadParkEntry *)anElement;
+		VM_BufferWriter *_bufferWriter = (VM_BufferWriter *) userData;
+
+		/* reserve size field */
+		U_8 *dataStart = _bufferWriter->getAndIncCursor(sizeof(U_32));
+
+		/* write event type */
+		_bufferWriter->writeLEB128(ThreadParkID);
+
+		/* write start time - this is when the sleep started not when it ended so we
+		 * need to subtract the duration since the event is emitted when the sleep ends.
+		 */
+		_bufferWriter->writeLEB128(entry->ticks - entry->duration);
+
+		/* write duration time which is always in ticks, in our case nanos */
+		_bufferWriter->writeLEB128(entry->duration);
+
+		/* write event thread index */
+		_bufferWriter->writeLEB128(entry->eventThreadIndex);
+
+		/* stacktrace index */
+		_bufferWriter->writeLEB128(entry->stackTraceIndex);
+
+		/* class index */
+		_bufferWriter->writeLEB128(entry->parkedClass);
+
+		/* timeout value which is always in millis */
+		_bufferWriter->writeLEB128(entry->timeOut/1000000);
+
+		/* until value which is always in millis */
+		_bufferWriter->writeLEB128(entry->untilTime/1000000);
+
+		/* address of monitor */
+		_bufferWriter->writeLEB128(entry->parkedAddress);
+
+		/* write size */
+		_bufferWriter->writeLEB128PaddedU32(dataStart, _bufferWriter->getCursor() - dataStart);
+	}
+
 
 	static void
 	writeCPULoadEvent(void *anElement, void *userData)
