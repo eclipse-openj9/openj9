@@ -3835,6 +3835,54 @@ bool J9::ValuePropagation::isUnreliableSignatureType(
    return true;
    }
 
+bool J9::ValuePropagation::canArrayClassBeTrustedAsFixedClass(TR_OpaqueClassBlock *arrayClass, TR_OpaqueClassBlock *componentClass)
+   {
+   if (TR::Compiler->om.areFlattenableValueTypesEnabled() &&
+       !TR::Compiler->cls.isArrayNullRestricted(comp(), arrayClass) && // If the array is null-restricted array, we know it is a fixed class
+       TR::Compiler->cls.isValueTypeClass(componentClass))
+      return false;
+
+   return true;
+   }
+
+bool J9::ValuePropagation::canClassBeTrustedAsFixedClass(TR::SymbolReference *symRef, TR_OpaqueClassBlock *classObject)
+   {
+   if (!TR::Compiler->om.areFlattenableValueTypesEnabled())
+      return true;
+
+   if (!classObject && symRef && symRef->getSymbol()->isClassObject())
+      {
+      if (!symRef->isUnresolved())
+         {
+         classObject = (TR_OpaqueClassBlock*)symRef->getSymbol()->getStaticSymbol()->getStaticAddress();
+         }
+      else
+         {
+         int32_t len;
+         const char *name = TR::Compiler->cls.classNameChars(comp(), symRef, len);
+         char *sig = TR::Compiler->cls.classNameToSignature(name, len, comp());
+         classObject = fe()->getClassFromSignature(sig, len, symRef->getOwningMethod(comp()));
+         }
+      }
+
+   if (classObject)
+      {
+      // If null-restricted array is enabled and the class is an array class, the null-restricted array
+      // class and the nullable array class share the same signature. The null-restricted array can be
+      // viewed as a sub-type of the nullable array. Therefore, if the array is not a null-restricted array,
+      // it can't be trusted as a fixed class.
+      int32_t numDims = 0;
+      TR_OpaqueClassBlock *klass = comp()->fej9()->getBaseComponentClass(classObject, numDims);
+
+      if ((numDims > 0) &&
+          !TR::Compiler->cls.isArrayNullRestricted(comp(), classObject) && // If the array is null-restricted array, we know it is a fixed class
+          TR::Compiler->cls.isValueTypeClass(klass))
+         return false;
+      }
+
+   return true;
+   }
+
 static void getHelperSymRefs(OMR::ValuePropagation *vp, TR::Node *curCallNode, TR::SymbolReference *&getHelpersSymRef, TR::SymbolReference *&helperSymRef, const char *helperSig, int32_t helperSigLen, TR::MethodSymbol::Kinds helperCallKind)
    {
    //Function to retrieve the JITHelpers.getHelpers and JITHelpers.<helperSig> method symbol references.
