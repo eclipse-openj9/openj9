@@ -477,7 +477,8 @@ TR_ResolvedJ9JITServerMethod::fieldsAreSame(int32_t cpIndex1, TR_ResolvedMethod 
 bool
 TR_ResolvedJ9JITServerMethod::staticsAreSame(int32_t cpIndex1, TR_ResolvedMethod *m2, int32_t cpIndex2, bool &sigSame)
    {
-   if (TR::comp()->compileRelocatableCode())
+   auto comp = TR::comp();
+   if (comp->compileRelocatableCode())
       // in AOT, this should always return false, because mainline compares class loaders
       // with fe->sameClassLoaders, which always returns false for AOT compiles
       return false;
@@ -509,7 +510,16 @@ TR_ResolvedJ9JITServerMethod::staticsAreSame(int32_t cpIndex1, TR_ResolvedMethod
       char *declaringClassName2 = serverMethod2->classNameOfFieldOrStatic(cpIndex2, class2Len);
 
       if (class1Len == class2Len && !memcmp(declaringClassName1, declaringClassName2, class1Len))
-          return true;
+         {
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+         // Lambda form name comparison is unreliable when they are shared, so
+         // pretend that the name and signature comparison was inconclusive and
+         // rely on the fallback in TR_J9VM::jitStaticsAreSame().
+         if (isLambdaFormClassName(declaringClassName1, class1Len, NULL))
+            return false;
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+         return true;
+         }
       }
    else
       {
