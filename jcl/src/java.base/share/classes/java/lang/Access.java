@@ -592,7 +592,7 @@ final class Access implements JavaLangAccess {
 /*[ENDIF] JAVA_SPEC_VERSION >= 23 */
 
 	public long findNative(ClassLoader loader, String entryName) {
-		return ClassLoader.findNative(loader, entryName);
+		return ClassLoader.findNative0(loader, entryName);
 	}
 
 	@Override
