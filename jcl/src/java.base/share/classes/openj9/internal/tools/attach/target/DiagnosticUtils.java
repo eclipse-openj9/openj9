@@ -700,14 +700,17 @@ public class DiagnosticUtils {
 /*[ENDIF] CRAC_SUPPORT */
 
 /*[IF JFR_SUPPORT]*/
-		commandTable.put(DIAGNOSTICS_JFR_START, DiagnosticUtils::doJFR);
-		helpTable.put(DIAGNOSTICS_JFR_START, DIAGNOSTICS_JFR_START_HELP);
+		if (VM.isJFREnabled()) {
+			commandTable.put(DIAGNOSTICS_JFR_START, DiagnosticUtils::doJFR);
+			helpTable.put(DIAGNOSTICS_JFR_START, DIAGNOSTICS_JFR_START_HELP);
 
-		commandTable.put(DIAGNOSTICS_JFR_DUMP, DiagnosticUtils::doJFR);
-		helpTable.put(DIAGNOSTICS_JFR_DUMP, DIAGNOSTICS_JFR_DUMP_HELP);
+			commandTable.put(DIAGNOSTICS_JFR_DUMP, DiagnosticUtils::doJFR);
+			helpTable.put(DIAGNOSTICS_JFR_DUMP, DIAGNOSTICS_JFR_DUMP_HELP);
 
-		commandTable.put(DIAGNOSTICS_JFR_STOP, DiagnosticUtils::doJFR);
-		helpTable.put(DIAGNOSTICS_JFR_STOP, DIAGNOSTICS_JFR_STOP_HELP);
+			commandTable.put(DIAGNOSTICS_JFR_STOP, DiagnosticUtils::doJFR);
+			helpTable.put(DIAGNOSTICS_JFR_STOP, DIAGNOSTICS_JFR_STOP_HELP);
+		}
+
 /*[ENDIF] JFR_SUPPORT */
 	}
 }

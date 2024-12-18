@@ -4340,12 +4340,19 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 	{
 		IDATA flightRecorder = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXFLIGHTRECORDER, NULL);
 		IDATA noFlightRecorder = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXNOFLIGHTRECORDER, NULL);
-		if (flightRecorder > noFlightRecorder) {
-			vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_JFR_ENABLED;
-		} else if (flightRecorder < noFlightRecorder) {
+
+		vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_JFR_ENABLED;
+
+		if (flightRecorder < noFlightRecorder) {
 			vm->extendedRuntimeFlags2 &= ~(UDATA)J9_EXTENDED_RUNTIME2_JFR_ENABLED;
 		}
 	}
+	{
+		if (0 <= FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXSTARTFLIGHTRECORDING, NULL)) {
+			vm->extendedRuntimeFlags3 |= J9_EXTENDED_RUNTIME3_START_FLIGHT_RECORDING;
+		}
+	}
+
 #endif /* defined(J9VM_OPT_JFR) */
 
 	if (FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXKEEPJNIIDS, NULL) != -1) {
@@ -7604,8 +7611,10 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 
 #if defined(J9VM_OPT_JFR)
 	if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_JFR_ENABLED)) {
-		if (JNI_OK != initializeJFR(vm, FALSE)) {
-			goto error;
+		if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_START_FLIGHT_RECORDING)) {
+			if (JNI_OK != initializeJFR(vm, FALSE)) {
+				goto error;
+			}
 		}
 	}
 #endif /* defined(J9VM_OPT_JFR) */

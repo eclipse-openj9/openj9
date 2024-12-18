@@ -195,6 +195,14 @@ Java_com_ibm_oti_vm_VM_isJVMInSingleThreadedMode(JNIEnv *env, jclass unused)
 
 #if defined(J9VM_OPT_JFR)
 jboolean JNICALL
+Java_com_ibm_oti_vm_VM_isJFREnabled(JNIEnv *env, jclass unused)
+{
+	J9JavaVM *vm = ((J9VMThread *)env)->javaVM;
+
+	return vm->internalVMFunctions->isJFREnabled(vm) ? JNI_TRUE : JNI_FALSE;
+}
+
+jboolean JNICALL
 Java_com_ibm_oti_vm_VM_isJFRRecordingStarted(JNIEnv *env, jclass unused)
 {
 	J9JavaVM *vm = ((J9VMThread *)env)->javaVM;
