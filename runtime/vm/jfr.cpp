@@ -692,6 +692,7 @@ initializeJFR(J9JavaVM *vm, BOOLEAN lateInit)
 	if (NULL == vm->jfrState.constantEvents) {
 		goto fail;
 	}
+	memset(vm->jfrState.constantEvents, 0, sizeof(JFRConstantEvents));
 
 	/* Allocate global data. */
 	buffer = (U_8*)j9mem_allocate_memory(J9JFR_GLOBAL_BUFFER_SIZE, OMRMEM_CATEGORY_VM);
