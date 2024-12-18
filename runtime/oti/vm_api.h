@@ -5473,6 +5473,16 @@ jint
 initializeJFR(J9JavaVM *vm, BOOLEAN lateInit);
 
 /**
+ * Check if a JFR is enabled on the JVM.
+ *
+ * @param vm[in] the J9JavaVM
+ *
+ * @returns JNI_TRUE if a JFR enabled, JNI_FALSE otherwise
+ */
+jboolean
+isJFREnabled(J9JavaVM *vm);
+
+/**
  * Check if a JFR recording has been started.
  *
  * @param vm[in] the J9JavaVM
