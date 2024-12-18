@@ -5263,6 +5263,7 @@ typedef struct J9InternalVMFunctions {
 #endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) && (JAVA_SPEC_VERSION >= 17) */
 #if defined(J9VM_OPT_JFR)
 	jint (*initializeJFR)(struct J9JavaVM *vm, BOOLEAN lateInit);
+	jboolean (*isJFREnabled)(struct J9JavaVM *vm);
 	jboolean (*isJFRRecordingStarted)(struct J9JavaVM *vm);
 	void (*jfrDump)(struct J9VMThread *currentThread, BOOLEAN finalWrite);
 	void (*jfrExecutionSample)(struct J9VMThread *currentThread, struct J9VMThread *sampleThread);
@@ -5796,6 +5797,7 @@ typedef struct J9JavaVM {
 	U_32 runtimeFlags;
 	U_32 extendedRuntimeFlags;
 	U_32 extendedRuntimeFlags2;
+	U_32 extendedRuntimeFlags3;
 	UDATA zeroOptions;
 	struct J9Pool* hotFieldClassInfoPool;
 	omrthread_monitor_t hotFieldClassInfoPoolMutex;

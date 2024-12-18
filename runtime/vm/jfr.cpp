@@ -853,6 +853,12 @@ initializeEventFields(J9VMThread *currentThread, J9JFREvent *event, UDATA eventT
 }
 
 jboolean
+isJFREnabled(J9JavaVM *vm)
+{
+	return J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_JFR_ENABLED) ? JNI_TRUE : JNI_FALSE;
+}
+
+jboolean
 isJFRRecordingStarted(J9JavaVM *vm)
 {
 	return vm->jfrState.isStarted ? JNI_TRUE : JNI_FALSE;

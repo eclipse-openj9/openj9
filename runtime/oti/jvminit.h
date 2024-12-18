@@ -587,6 +587,8 @@ enum INIT_STAGE {
 #define VMOPT_XXFLIGHTRECORDER "-XX:+FlightRecorder"
 #define VMOPT_XXNOFLIGHTRECORDER "-XX:-FlightRecorder"
 
+#define VMOPT_XXSTARTFLIGHTRECORDING "-XX:StartFlightRecording"
+
 #define VMOPT_XXCONTINUATIONCACHE "-XX:ContinuationCache:"
 
 #if JAVA_SPEC_VERSION >= 22

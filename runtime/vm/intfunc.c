@@ -463,6 +463,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 #endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) && (JAVA_SPEC_VERSION >= 17) */
 #if defined(J9VM_OPT_JFR)
 	initializeJFR,
+	isJFREnabled,
 	isJFRRecordingStarted,
 	jfrDump,
 	jfrExecutionSample,
