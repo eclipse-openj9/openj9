@@ -9656,7 +9656,7 @@ J9::X86::TreeEvaluator::vectorizedHashCodeHelper(TR::Node *node, TR::DataType dt
    TR::LabelSymbol *residueLoopLabel = generateLabelSymbol(cg);
 
    residueBeginLoopLabel->setStartInternalControlFlow();
-   residueBeginLoopLabel->setEndInternalControlFlow();
+   residueEndLoopLabel->setEndInternalControlFlow();
 
    generateLabelInstruction(TR::InstOpCode::label, node, residueBeginLoopLabel, cg);
    generateRegRegInstruction(TR::InstOpCode::CMP4RegReg, node, index, length, cg);
