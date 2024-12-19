@@ -9686,7 +9686,6 @@ J9::X86::TreeEvaluator::vectorizedHashCodeHelper(TR::Node *node, TR::DataType dt
    cg->stopUsingRegister(index);
    cg->stopUsingRegister(tmp);
 
-   node->setRegister(result);
    cg->decReferenceCount(node->getChild(0));
    cg->decReferenceCount(node->getChild(1));
    cg->decReferenceCount(node->getChild(2));
