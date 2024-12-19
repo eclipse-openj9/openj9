@@ -1624,7 +1624,7 @@ typedef struct J9ExceptionHandler {
 	U_32 exceptionClassIndex;
 } J9ExceptionHandler;
 
-#if defined(__xlC__) || defined(J9ZOS390)  /* Covers: Z/OS, AIX, Linux PPC*/
+#if defined(__xlC__) || defined(J9ZOS390) || defined(__open_xl__)  /* Covers: AIX, Linux PPC and z/OS. */
 #pragma pack(1)
 #elif defined(__ibmxl__) || defined(__GNUC__) || defined(_MSC_VER) /* Covers: Linux PPC LE, Windows, Linux x86 */
 #pragma pack(push, 1)
@@ -1646,7 +1646,7 @@ typedef struct J9MethodParametersData {
 	J9MethodParameter parameters;
 } J9MethodParametersData;
 
-#if defined(__xlC__) || defined(__ibmxl__) || defined(__GNUC__) || defined(_MSC_VER) || defined(J9ZOS390) || defined(LINUX) || defined(AIXPPC) || defined(WIN32)
+#if defined(__xlC__) || defined(__ibmxl__) || defined(__open_xl__) || defined(__GNUC__) || defined(_MSC_VER) || defined(J9ZOS390) || defined(LINUX) || defined(AIXPPC) || defined(WIN32)
 #pragma pack(pop)
 #else
 #error "Unrecognized compiler. Cannot pack struct J9MethodParameter and J9MethodParametersData."
@@ -4968,6 +4968,9 @@ typedef struct J9InternalVMFunctions {
 	void  ( *printThreadInfo)(struct J9JavaVM *vm, struct J9VMThread *self, char *toFile, BOOLEAN allThreads) ;
 	void  (JNICALL *initializeAttachedThread)(struct J9VMThread *vmContext, const char *name, j9object_t *group, UDATA daemon, struct J9VMThread *initializee) ;
 	void  ( *initializeMethodRunAddressNoHook)(struct J9JavaVM* vm, J9Method *method) ;
+#if defined(J9VM_OPT_SNAPSHOTS)
+	void  ( *initializeMethodRunAddressForSnapshot)(struct J9JavaVM *vm, struct J9Method *method) ;
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 	void  (JNICALL *sidecarInvokeReflectMethod)(struct J9VMThread *vmContext, jobject methodRef, jobject recevierRef, jobjectArray argsRef) ;
 	void  (JNICALL *sidecarInvokeReflectConstructor)(struct J9VMThread *vmContext, jobject constructorRef, jobject recevierRef, jobjectArray argsRef) ;
 	struct J9MemorySegmentList*  ( *allocateMemorySegmentListWithSize)(struct J9JavaVM * javaVM, U_32 numberOfMemorySegments, UDATA sizeOfElements, U_32 memoryCategory) ;
