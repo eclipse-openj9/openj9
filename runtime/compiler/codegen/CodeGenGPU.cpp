@@ -2082,7 +2082,7 @@ J9::CodeGenerator::findExtraParms(
                    "can only access a field of this object\n");
 
          // TODO: handle duplicate names from different classes
-         TR_SharedMemoryField field = sharedMemory->find(TR::comp(), node->getSymbolReference());
+         TR_SharedMemoryField field = sharedMemory->find(self()->comp(), node->getSymbolReference());
 
          if (field.getSize() == 0)
             numExtraParms++;
@@ -2296,13 +2296,13 @@ J9::CodeGenerator::dumpNVVMIR(
 
    ir.print("\ndefine %s @test%d(", getTypeName(_gpuReturnType), gpuPtxCount);
 
-   CS2::ArrayOf<gpuParameter, TR::Allocator> gpuParameterMap(TR::comp()->allocator());
+   CS2::ArrayOf<gpuParameter, TR::Allocator> gpuParameterMap(self()->comp()->allocator());
    CS2::ArrayOf<TR::CodeGenerator::gpuMapElement, TR::Allocator>::Cursor ait(_gpuSymbolMap);
 
    for (ait.SetToFirst(); ait.Valid(); ait.SetToNext())
       {
       if (!ait->_hostSymRef) continue;
-      traceMsg(TR::comp(), "hostSymRef #%d parmSlot %d\n", (int)ait, ait->_parmSlot);
+      traceMsg(self()->comp(), "hostSymRef #%d parmSlot %d\n", (int)ait, ait->_parmSlot);
 
       if (ait->_parmSlot != -1)
          {
