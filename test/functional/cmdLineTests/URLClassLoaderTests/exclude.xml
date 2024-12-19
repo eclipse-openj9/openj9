@@ -44,5 +44,4 @@
 	<!-- PR 133321 -->
 	<exclude id="JarExtensionsTests.SingleJarInManifest.Verify1" platform="current"><reason>Failure condition was found: [Output match: LOCAL]</reason></exclude>
 	<exclude id="JarExtensionsTests.MultipleJarsInManifests.Verify1" platform="current"><reason>Failure condition was found: [Output match: LOCAL]</reason></exclude>
-	<exclude id="NonExistJarTests.CheckForError1" platform="all"><reason>https://github.com/eclipse-openj9/openj9/issues/20702</reason></exclude>
 </suite>
