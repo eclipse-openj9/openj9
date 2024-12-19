@@ -596,12 +596,13 @@ static URL codeSource(Class<?> callerClass) {
  * @param		newIn 		the new value for in.
  */
 public static void setIn(InputStream newIn) {
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null)	{
 		security.checkPermission(com.ibm.oti.util.RuntimePermissions.permissionSetIO);
 	}
-
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	setFieldImpl("in", newIn); //$NON-NLS-1$
 }
 
@@ -612,11 +613,13 @@ public static void setIn(InputStream newIn) {
  * @param		newOut 		the new value for out.
  */
 public static void setOut(java.io.PrintStream newOut) {
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null)	{
 		security.checkPermission(com.ibm.oti.util.RuntimePermissions.permissionSetIO);
 	}
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	setFieldImpl("out", newOut); //$NON-NLS-1$
 }
 
@@ -627,12 +630,13 @@ public static void setOut(java.io.PrintStream newOut) {
  * @param		newErr  	the new value for err.
  */
 public static void setErr(java.io.PrintStream newErr) {
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null)	{
 		security.checkPermission(com.ibm.oti.util.RuntimePermissions.permissionSetIO);
 	}
-
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	setFieldImpl("err", newErr); //$NON-NLS-1$
 }
 
@@ -914,11 +918,12 @@ public static void gc() {
 @SuppressWarnings("dep-ann")
 public static String getenv(String var) {
 	if (var == null) throw new NullPointerException();
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null)
 		security.checkPermission(new RuntimePermission("getenv." + var)); //$NON-NLS-1$
-
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	return ProcessEnvironment.getenv(var);
 }
 
@@ -927,19 +932,22 @@ public static String getenv(String var) {
  * not a copy, so that changes made to the returned
  * Properties object will be reflected in subsequent
  * calls to {@code getProperty()} and {@code getProperties()}.
+/*[IF JAVA_SPEC_VERSION < 24]
  * <p>
  * Security managers should restrict access to this
  * API if possible.
+/*[ENDIF] JAVA_SPEC_VERSION < 24
  *
  * @return		the system properties
  */
 public static Properties getProperties() {
 	if (!propertiesInitialized) throw new Error("bootstrap error, system property access before init"); //$NON-NLS-1$
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null)
 		security.checkPropertiesAccess();
-
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	return systemProperties;
 }
 
@@ -1000,10 +1008,12 @@ public static String getProperty(String prop) {
 public static String getProperty(String prop, String defaultValue) {
 	if (prop.length() == 0) throw new IllegalArgumentException();
 
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null)
 		security.checkPropertyAccess(prop);
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 	if (!propertiesInitialized
 			&& !prop.equals("com.ibm.IgnoreMalformedInput") //$NON-NLS-1$
@@ -1041,11 +1051,13 @@ public static String setProperty(String prop, String value) {
 	/*[PR CMVC 80288] should check for empty key */
 	if (prop.length() == 0) throw new IllegalArgumentException();
 
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null)
 		security.checkPermission(
 			new PropertyPermission(prop, "write")); //$NON-NLS-1$
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 	return (String)systemProperties.setProperty(prop, value);
 }
@@ -1124,10 +1136,11 @@ public static int identityHashCode(Object anObject) {
  * @param pathName the path of the file to be loaded
  *
  * @throws UnsatisfiedLinkError if the library could not be loaded
- * @throws SecurityException if the library was not allowed to be loaded
  * @throws NullPointerException if pathName is null
 /*[IF JAVA_SPEC_VERSION >= 24]
  * @throws IllegalCallerException if the caller belongs to a module where native access is not enabled
+/*[ELSE] JAVA_SPEC_VERSION >= 24
+ * @throws SecurityException if the library was not allowed to be loaded
 /*[ENDIF] JAVA_SPEC_VERSION >= 24
  */
 @CallerSensitive
@@ -1138,14 +1151,14 @@ public static void load(String pathName) {
 	/*[IF JAVA_SPEC_VERSION >= 24]*/
 	Class<?> caller = Reflection.getCallerClass();
 	Reflection.ensureNativeAccess(caller, System.class, "load", false);
-	/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
-
+	/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 	@SuppressWarnings("removal")
 	SecurityManager smngr = System.getSecurityManager();
 	if (smngr != null) {
 		smngr.checkLink(pathName);
 	}
-/*[IF JAVA_SPEC_VERSION >= 15]*/
+	/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
+	/*[IF JAVA_SPEC_VERSION >= 15]*/
 	/*[IF PLATFORM-mz31 | PLATFORM-mz64]*/
 	ClassLoader.loadZOSLibrary(getCallerClass(), pathName);
 	/*[ELSE] PLATFORM-mz31 | PLATFORM-mz64 */
@@ -1156,9 +1169,9 @@ public static void load(String pathName) {
 	}
 	ClassLoader.loadLibrary(getCallerClass(), fileName);
 	/*[ENDIF] PLATFORM-mz31 | PLATFORM-mz64 */
-/*[ELSE] JAVA_SPEC_VERSION >= 15 */
+	/*[ELSE] JAVA_SPEC_VERSION >= 15 */
 	ClassLoader.loadLibraryWithPath(pathName, ClassLoader.callerClassLoader(), null);
-/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
+	/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 }
 
 /**
@@ -1167,10 +1180,11 @@ public static void load(String pathName) {
  * @param libName the name of the library to load
  *
  * @throws UnsatisfiedLinkError if the library could not be loaded
- * @throws SecurityException if the library was not allowed to be loaded
  * @throws NullPointerException if libName is null
 /*[IF JAVA_SPEC_VERSION >= 24]
  * @throws IllegalCallerException if the caller belongs to a module where native access is not enabled
+/*[ELSE] JAVA_SPEC_VERSION >= 24
+ * @throws SecurityException if the library was not allowed to be loaded
 /*[ENDIF] JAVA_SPEC_VERSION >= 24
  */
 @CallerSensitive
@@ -1193,12 +1207,13 @@ public static void loadLibrary(String libName) {
 			throw new UnsatisfiedLinkError(Msg.getString("K0B01", libName)); //$NON-NLS-1$
 		}
 	}
-
+/*[IF JAVA_SPEC_VERSION < 24]*/
 	@SuppressWarnings("removal")
 	SecurityManager smngr = System.getSecurityManager();
 	if (smngr != null) {
 		smngr.checkLink(libName);
 	}
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 /*[IF JAVA_SPEC_VERSION >= 15]*/
 	Class<?> callerClass = getCallerClass();
 /*[ELSE]*/
@@ -1254,17 +1269,21 @@ public static void runFinalizersOnExit(boolean flag) {
  * Sets the system properties. Note that the object which is passed in
  * is not copied, so that subsequent changes made to it will be reflected
  * in calls to {@code getProperty()} and {@code getProperties()}.
+/*[IF JAVA_SPEC_VERSION < 24]
  * <p>
  * Security managers should restrict access to this
  * API if possible.
+/*[ENDIF] JAVA_SPEC_VERSION < 24
  *
  * @param		p			the properties to set
  */
 public static void setProperties(Properties p) {
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null)
 		security.checkPropertiesAccess();
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	if (p == null) {
 		ensureProperties(false);
 	} else {
@@ -1525,10 +1544,12 @@ public static String clearProperty(String prop) {
 	if (!propertiesInitialized) throw new Error("bootstrap error, system property access before init: " + prop); //$NON-NLS-1$
 
 	if (prop.length() == 0) throw new IllegalArgumentException();
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null)
 		security.checkPermission(new PropertyPermission(prop, "write")); //$NON-NLS-1$
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	return (String)systemProperties.remove(prop);
 }
 
@@ -1538,11 +1559,12 @@ public static String clearProperty(String prop) {
  * @return	an unmodifiable Map containing all of the system environment variables.
  */
 public static Map<String, String> getenv() {
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
 	if (security != null)
 		security.checkPermission(new RuntimePermission("getenv.*")); //$NON-NLS-1$
-
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	return ProcessEnvironment.getenv();
 }
 
@@ -1903,10 +1925,14 @@ public abstract static class LoggerFinder {
 	/**
 	 * Checks needed runtime permissions
 	 *
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException if RuntimePermission("loggerFinder") is not allowed
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	protected LoggerFinder() {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		verifyPermissions();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	}
 
 	/**
@@ -1917,10 +1943,14 @@ public abstract static class LoggerFinder {
 	 * @param callerModule The module for which the logger is being requested
 	 * @return an instance of Logger
 	 * @throws NullPointerException if loggerName or callerModule is null
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException if RuntimePermission("loggerFinder") is not allowed
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public Logger getLocalizedLogger(String loggerName, ResourceBundle bundle, Module callerModule) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		verifyPermissions();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		Objects.requireNonNull(loggerName);
 		Objects.requireNonNull(callerModule);
 		Logger logger = this.getLogger(loggerName, callerModule);
@@ -1935,7 +1965,9 @@ public abstract static class LoggerFinder {
 	 * @param callerModule The module for which the logger is being requested
 	 * @return a Logger suitable for use within the given module
 	 * @throws NullPointerException if loggerName or callerModule is null
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException if RuntimePermission("loggerFinder") is not allowed
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public abstract Logger getLogger(String loggerName, Module callerModule);
 
@@ -1943,10 +1975,14 @@ public abstract static class LoggerFinder {
 	 * Returns the LoggerFinder instance
 	 *
 	 * @return the LoggerFinder instance.
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException if RuntimePermission("loggerFinder") is not allowed
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public static LoggerFinder getLoggerFinder() {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		verifyPermissions();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		LoggerFinder localFinder = loggerFinder;
 		if (localFinder == null) {
 			localFinder = AccessController.doPrivileged(
@@ -1963,6 +1999,7 @@ public abstract static class LoggerFinder {
 		return localFinder;
 	}
 
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	private static void verifyPermissions() {
 		@SuppressWarnings("removal")
 		SecurityManager securityManager = System.getSecurityManager();
@@ -1970,6 +2007,7 @@ public abstract static class LoggerFinder {
 			securityManager.checkPermission(com.ibm.oti.util.RuntimePermissions.permissionLoggerFinder);
 		}
 	}
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 }
 
 /**
