@@ -136,6 +136,11 @@ MM_ConfigurationIncrementalGenerational::createHeapWithManager(MM_EnvironmentBas
 
 #if defined(J9VM_ENV_DATA64)
 	extensions->indexableObjectModel.setIsDataAddressPresent(true);
+	J9JavaVM *vm = (J9JavaVM *)extensions->getOmrVM()->_language_vm;
+	/* Let VM know that indexable objects in Balanced always have dataAddr, and
+	   let's assume initially it has arraylets, which can be later overridden if Offheap is Enabled.
+	 */
+	vm->indexableObjectLayout = J9IndexableObjectLayout_DataAddr_Arraylet;
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
 	if (extensions->isVirtualLargeObjectHeapRequested) {
 		/* Create off-heap */
@@ -144,9 +149,9 @@ MM_ConfigurationIncrementalGenerational::createHeapWithManager(MM_EnvironmentBas
 			extensions->largeObjectVirtualMemory = largeObjectVirtualMemory;
 			extensions->indexableObjectModel.setEnableVirtualLargeObjectHeap(true);
 			extensions->isVirtualLargeObjectHeapEnabled = true;
-			/* reset vm->isVirtualLargeObjectHeapEnabled and vm->unsafeIndexableHeaderSize for off-heap case */
-			J9JavaVM *vm = (J9JavaVM *)extensions->getOmrVM()->_language_vm;
-			vm->isVirtualLargeObjectHeapEnabled = TRUE;
+			/* Overriding the original assumption that Balanced has arraylets. */
+			vm->indexableObjectLayout = J9IndexableObjectLayout_DataAddr_NoArraylet;
+			/* reset vm->unsafeIndexableHeaderSize for off-heap case */
 			vm->unsafeIndexableHeaderSize = 0;
 		} else {
 #if defined(OMR_GC_VLHGC_CONCURRENT_COPY_FORWARD)
