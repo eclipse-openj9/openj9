@@ -719,17 +719,10 @@ public void test_getDeclaredFieldLjava_lang_String() {
 	}
 */
 
-	/**
-	 * Disable temporarily for Java 24+ until the
-	 * System.security field is removed.
-	 * https://github.com/eclipse-openj9/openj9/issues/20563
-	 */
-	if (VersionCheck.major() < 24) {
-		try {
-			java.lang.reflect.Field f = System.class.getDeclaredField("security");
-			Assert.fail("java.lang.System.security shoud NOT be accessible via reflection");
-		} catch (NoSuchFieldException e) {
-		}
+	try {
+		java.lang.reflect.Field f = System.class.getDeclaredField("security");
+		Assert.fail("java.lang.System.security shoud NOT be accessible via reflection");
+	} catch (NoSuchFieldException e) {
 	}
 
 	try {

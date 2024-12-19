@@ -2920,8 +2920,7 @@ fieldIndexTableRemove(J9JavaVM* vm, J9Class *ramClass);
 
 
 /* ---------------- resolvesupport.c ---------------- */
-/*
- */
+#if JAVA_SPEC_VERSION < 24
 /**
  * Perform a package access check from the ProtectionDomain to the targetClass
  * No check is required if no SecurityManager is in place.  If a check is required and the
@@ -2949,6 +2948,7 @@ packageAccessIsLegal(J9VMThread *currentThread, J9Class *targetClass, j9object_t
  */
 BOOLEAN
 requirePackageAccessCheck(J9JavaVM *vm, J9ClassLoader *srcClassLoader, J9Module *srcModule, J9Class *targetClass);
+#endif /* JAVA_SPEC_VERSION < 24 */
 
 /**
  * @brief
