@@ -4426,6 +4426,12 @@ genInstanceOfOrCheckCastNullTest(TR::Node* node, TR::CodeGenerator* cg, TR::Regi
       }
    }
 
+static void genInlineClassEqualityTest(TR::Node * node, TR::CodeGenerator * cg, TR::Compilation * comp, TR::Register * toClassReg, TR::Register * fromClassReg, TR::LabelSymbol * successLabel) {
+   cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "checkCastStats/(%s)/Equal", comp->signature()),1,TR::DebugCounter::Undetermined);
+   generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpRegOpCode(), node, toClassReg, fromClassReg, TR::InstOpCode::COND_BE, successLabel, false, false);
+   cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "checkCastStats/(%s)/EqualFail", comp->signature()),1,TR::DebugCounter::Undetermined);
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////
 //  checkcastEvaluator - checkcast
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -4539,9 +4545,7 @@ J9::Z::TreeEvaluator::checkcastEvaluator(TR::Node * node, TR::CodeGenerator * cg
                }
             else
                {
-               cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "checkCastStats/(%s)/Equal", comp->signature()),1,TR::DebugCounter::Undetermined);
-               generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpRegOpCode(), node, castClassReg, objClassReg, TR::InstOpCode::COND_BE, doneLabel, false, false);
-               cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "checkCastStats/(%s)/EqualFail", comp->signature()),1,TR::DebugCounter::Undetermined);
+               genInlineClassEqualityTest(node, cg, comp, castClassReg, objClassReg, doneLabel);
                }
             break;
          case SuperClassTest:
@@ -11573,6 +11577,52 @@ J9::Z::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR::CodeGenerator *c
    return 0;
    }
 
+
+static bool isInterfaceOrAbstract(TR::Node *clazz, TR::Compilation *comp)
+   {
+   while (clazz->getOpCodeValue() == TR::aloadi)
+      {
+      clazz = clazz->getFirstChild();
+      }
+
+   // we don't assume its an interface if its not loadaddr
+   // (could have Class.forName(<someinterface>) as the node)
+   if (clazz->getOpCodeValue() != TR::loadaddr) return false;
+
+   TR::SymbolReference *thisClassSymRef = clazz->getSymbolReference();
+   return thisClassSymRef->isClassInterface(comp) || thisClassSymRef->isClassAbstract(comp);
+   }
+
+static int32_t getCompileTimeClassDepth(TR::Node *clazz, TR::Compilation *comp)
+   {
+   int32_t classDepth = -1;
+   while (clazz->getOpCodeValue() == TR::aloadi && clazz->getNumChildren() > 0 && clazz->getFirstChild()->getOpCodeValue() == TR::aloadi)
+      {
+      clazz = clazz->getFirstChild();
+      }
+   
+   if (clazz->getSymbolReference() != comp->getSymRefTab()->findJavaLangClassFromClassSymbolRef() || clazz->getFirstChild()->getOpCodeValue() != TR::loadaddr) return classDepth;
+
+   TR::Node   *castClassRef = clazz->getFirstChild();
+
+   TR::SymbolReference *castClassSymRef = NULL;
+   if(castClassRef->getOpCode().hasSymbolReference())
+      castClassSymRef= castClassRef->getSymbolReference();
+
+   TR::StaticSymbol    *castClassSym = NULL;
+   if (castClassSymRef && !castClassSymRef->isUnresolved())
+      castClassSym= castClassSymRef ? castClassSymRef->getSymbol()->getStaticSymbol() : NULL;
+
+   TR_OpaqueClassBlock * clazzz = NULL;
+   if (castClassSym)
+      clazzz = (TR_OpaqueClassBlock *) castClassSym->getStaticAddress();
+
+   if(clazzz)
+      classDepth = (int32_t)TR::Compiler->cls.classDepthOf(clazzz);
+
+   return classDepth;
+   }
+
 /////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////
 static bool inlineIsAssignableFrom(TR::Node *node, TR::CodeGenerator *cg)
@@ -11730,21 +11780,39 @@ TR::Register *J9::Z::TreeEvaluator::inlineCheckAssignableFromEvaluator(TR::Node 
    TR::Register *fromClassReg = cg->evaluate(node->getFirstChild());
    TR::Register *toClassReg = cg->evaluate(node->getSecondChild());
 
+
    TR::Register *resultReg = cg->allocateRegister();
    TR::LabelSymbol *helperCallLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
-   TR::LabelSymbol *successLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *failLabel = generateLabelSymbol(cg);
+   TR::RegisterDependencyConditions* deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 5, cg);
 
    TR::LabelSymbol* cFlowRegionStart = generateLabelSymbol(cg);
+   TR_S390ScratchRegisterManager *srm = cg->generateScratchRegisterManager(2);
+   TR::Register *sr1 =  srm->findOrCreateScratchRegister();
+   TR::Register *sr2 = srm->findOrCreateScratchRegister();
+   deps->addPostCondition(fromClassReg, TR::RealRegister::AssignAny);
+   deps->addPostConditionIfNotAlreadyInserted(toClassReg, TR::RealRegister::AssignAny);
+   deps->addPostCondition(resultReg, TR::RealRegister::AssignAny);
+   srm->addScratchRegistersToDependencyList(deps);
+
+   generateRIInstruction(cg, TR::InstOpCode::getLoadHalfWordImmOpCode(), node, resultReg, 1);
    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, cFlowRegionStart);
    cFlowRegionStart->setStartInternalControlFlow();
 
-   /*
-    * check for class equality
-    * if equal, we are done. If not, fall through to helper call
-    */
-   generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpRegOpCode(), node, toClassReg, fromClassReg, TR::InstOpCode::COND_BE, successLabel, false, false);
-
+   if (!isInterfaceOrAbstract(node->getSecondChild(), cg->comp()) && !isInterfaceOrAbstract(node->getFirstChild(), cg->comp()))
+      {
+      generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpRegOpCode(), node, toClassReg, fromClassReg, TR::InstOpCode::COND_BE, doneLabel, false, false);
+      auto toClassDepth = getCompileTimeClassDepth(node->getSecondChild(), cg->comp());
+      auto fromClassDepth = getCompileTimeClassDepth(node->getFirstChild(), cg->comp());
+      if (toClassDepth > -1 && fromClassDepth > -1 && toClassDepth > fromClassDepth)
+         {
+         generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, failLabel);
+         }
+      genTestIsSuper(cg, node, fromClassReg, toClassReg, sr1, sr2, resultReg, NULL, toClassDepth, failLabel, doneLabel, helperCallLabel, deps, NULL, false, NULL, NULL);
+      srm->stopUsingRegisters();
+      }
+   
    /*
     * TODO: add inlined tests (SuperclassTest, cast class cache, etc)
     * Inlined tests will be used when possible, or will jump to the OOL section
@@ -11762,15 +11830,12 @@ TR::Register *J9::Z::TreeEvaluator::inlineCheckAssignableFromEvaluator(TR::Node 
    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, doneLabel); // exit OOL section
    outlinedSlowPath->swapInstructionListsWithCompilation();
 
-   generateS390LabelInstruction(cg, TR::InstOpCode::label, node, successLabel);
-   generateRIInstruction(cg, TR::InstOpCode::getLoadHalfWordImmOpCode(), node, resultReg, 1);
+   generateS390LabelInstruction(cg, TR::InstOpCode::label, node, failLabel, deps);
+   generateRIInstruction(cg, TR::InstOpCode::getLoadHalfWordImmOpCode(), node, resultReg, 0);
 
-   TR::RegisterDependencyConditions* deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 3, cg);
-   deps->addPostCondition(fromClassReg, TR::RealRegister::AssignAny);
-   deps->addPostConditionIfNotAlreadyInserted(toClassReg, TR::RealRegister::AssignAny);
-   deps->addPostCondition(resultReg, TR::RealRegister::AssignAny);
 
    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, deps);
+   doneLabel->setEndInternalControlFlow();
    doneLabel->setEndInternalControlFlow();
    node->setRegister(resultReg);
    return resultReg;
