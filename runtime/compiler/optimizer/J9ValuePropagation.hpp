@@ -62,6 +62,25 @@ class ValuePropagation : public OMR::ValuePropagation
    TR_YesNoMaybe isStringObject(TR::VPConstraint *constraint);
 
    /**
+    * \brief Determine whether an \p arrayClass with the \p componentClass can be trusted as a fixed class
+    *
+    * \param arrayClass The array class.
+    * \param componentClass The component class of the array.
+    *
+    * \return true if an array with the component class can be trusted as a fixed class, and false otherwise.
+    */
+   virtual bool canArrayClassBeTrustedAsFixedClass(TR_OpaqueClassBlock *arrayClass, TR_OpaqueClassBlock *componentClass);
+   /**
+    * \brief Determine whether a class retrieved from signature can be trusted as a fixed class
+    *
+    * \param symRef The symbol reference of the class object.
+    * \param classObject The class object to be checked.
+    *
+    * \return true if a class can be trusted as a fixed class, and false otherwise.
+    */
+   virtual bool canClassBeTrustedAsFixedClass(TR::SymbolReference *symRef, TR_OpaqueClassBlock *classObject);
+
+   /**
     * Determine whether the type is, or might be, a value type.  Note that
     * a null reference can be cast to a value type that is not a primitive
     * value type, but for the purposes of this method, a null reference is
