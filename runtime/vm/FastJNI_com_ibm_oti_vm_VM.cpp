@@ -140,10 +140,17 @@ internalError:
 			}
 			allClassesEndDo(&classWalkState);
 		} else {
-			J9ClassLoader *classLoaderStruct = internalAllocateClassLoader(vm, classLoaderObject);
-			if (J9_CLASSLOADER_TYPE_PLATFORM == loaderType) {
-				/* extensionClassLoader holds the platform class loader in Java 11+ */
-				vm->extensionClassLoader = classLoaderStruct;
+#if defined(J9VM_OPT_SNAPSHOTS)
+			if (IS_RESTORE_RUN(vm) && (J9_CLASSLOADER_TYPE_PLATFORM == loaderType)) {
+				vm->internalVMFunctions->initializeSnapshotClassLoaderObject(vm, vm->extensionClassLoader, classLoaderObject);
+			} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+			{
+				J9ClassLoader *classLoaderStruct = internalAllocateClassLoader(vm, classLoaderObject);
+				if (J9_CLASSLOADER_TYPE_PLATFORM == loaderType) {
+					/* extensionClassLoader holds the platform class loader in Java 11+ */
+					vm->extensionClassLoader = classLoaderStruct;
+				}
 			}
 		}
 	}
