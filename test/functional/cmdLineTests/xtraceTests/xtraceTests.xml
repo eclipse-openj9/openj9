@@ -33,6 +33,7 @@
 		<output regex="no" type="required">Error processing trace option, detail: maxstringlength takes an integer value from 0 to 128</output>
 		<output regex="no" type="required">Error processing trace option, detail: Invalid character(s) encountered in decimal number</output>
 	</test>
+
 	<test id="Test 2 - out of range invalid argument - 129">
 		<command>$EXE$ -Xtrace:methods={java/lang/String.concat()},maxstringlength=129,print=mt -version</command>
 		<output regex="no" type="success">Trace option unrecognized: -Xtrace:maxstringlength</output>
@@ -63,5 +64,4 @@
 		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(.)*method arguments: \(\(String\)"([\x00-\x7F]{0,32})"\)</output>
 		<output type="success" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk|semeru) version</output>
 	</test>
-
 </suite>
