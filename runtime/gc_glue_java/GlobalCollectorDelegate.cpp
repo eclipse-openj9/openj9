@@ -121,9 +121,10 @@ MM_GlobalCollectorDelegate::initialize(MM_EnvironmentBase *env, MM_GlobalCollect
 void
 MM_GlobalCollectorDelegate::tearDown(MM_EnvironmentBase *env)
 {
-	if (_extensions->isStandardGC() && (NULL != _extensions->accessBarrier)) {
-		_extensions->accessBarrier->kill(env);
-		_extensions->accessBarrier = NULL;
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
+	if (extensions->isStandardGC() && (NULL != extensions->accessBarrier)) {
+		extensions->accessBarrier->kill(env);
+		extensions->accessBarrier = NULL;
 	}
 }
 
