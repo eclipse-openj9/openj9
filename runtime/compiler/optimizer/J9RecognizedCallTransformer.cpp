@@ -42,6 +42,7 @@
 #include "optimizer/CallInfo.hpp"
 #include "optimizer/IdiomRecognitionUtils.hpp"
 #include "optimizer/Structure.hpp"
+#include "optimizer/ValuePropagation.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "optimizer/TransformUtil.hpp"
 #include "env/j9method.h"
@@ -269,6 +270,181 @@ void J9::RecognizedCallTransformer::process_java_lang_StringCoding_encodeASCII(T
    cfg->addEdge(ifCmpTreeTop->getEnclosingBlock(), fallbackPathBlock);
    cfg->addEdge(fallthroughBlock, tailBlock);
    cfg->removeEdge(fallthroughBlock, fallbackPathBlock);
+   }
+
+void J9::RecognizedCallTransformer::process_java_lang_StringLatin1_inflate_BIBII(TR::TreeTop *treetop, TR::Node *node)
+   {
+   /*
+    * Replace the call with the following tree (+ boundary checks)
+    *
+    * treetop
+    *   arraytranslate (TROTNoBreak)
+    *     aladd
+    *       srcObj
+    *       ladd
+    *         srcOff
+    *         hdrSize
+    *     aladd
+    *       dstObj
+    *       ladd
+    *         lmul
+    *           dstOff
+    *           lconst 2
+    *         hdrSize
+    *     iconst 0 (dummy: table node)
+    *     iconst 0xffff (term char node)
+    *     length
+    *     iconst -1 (dummy: stop index node)
+    */
+   static bool verboseLatin1inflate = (feGetEnv("TR_verboseLatin1inflate") != NULL);
+   if (verboseLatin1inflate)
+      {
+      fprintf(stderr, "Recognize StringLatin1.inflate([BI[BII)V: %s @ %s\n",
+         comp()->signature(),
+         comp()->getHotnessName(comp()->getMethodHotness()));
+      }
+
+   TR_ASSERT_FATAL(comp()->cg()->getSupportsArrayTranslateTROTNoBreak(), "Support for arraytranslateTROTNoBreak is required");
+
+   bool is64BitTarget = comp()->target().is64Bit();
+
+   TR::Node *srcObj = node->getChild(0);
+   TR::Node *srcOff = node->getChild(1);
+   TR::Node *dstObj = node->getChild(2);
+   TR::Node *dstOff = node->getChild(3);
+   TR::Node *length = node->getChild(4);
+
+   TR::Node *hdrSize = createHdrSizeNode(comp(), node);
+
+   TR::Node *strideNode;
+   if (is64BitTarget)
+      {
+      strideNode = TR::Node::create(node, TR::lconst);
+      strideNode->setLongInt(2);
+      }
+   else
+      {
+      strideNode = TR::Node::create(node, TR::iconst, 0, 2);
+      }
+
+   TR::Node *arrayTranslateNode = TR::Node::create(node, TR::arraytranslate, 6);
+   arrayTranslateNode->setSourceIsByteArrayTranslate(true);
+   arrayTranslateNode->setTargetIsByteArrayTranslate(false);
+   arrayTranslateNode->setTermCharNodeIsHint(false);
+   arrayTranslateNode->setSourceCellIsTermChar(false);
+   arrayTranslateNode->setTableBackedByRawStorage(true);
+   arrayTranslateNode->setSymbolReference(comp()->getSymRefTab()->findOrCreateArrayTranslateSymbol());
+
+   TR::Node *srcAddr, *dstAddr;
+
+#if defined(OMR_GC_SPARSE_HEAP_ALLOCATION)
+   if (TR::Compiler->om.isOffHeapAllocationEnabled())
+      {
+      dstOff = TR::TransformUtil::generateConvertArrayElementIndexToOffsetTrees(comp(), dstOff, strideNode, 0, false);
+      srcAddr = TR::TransformUtil::generateArrayElementAddressTrees(comp(), srcObj, srcOff);
+      dstAddr = TR::TransformUtil::generateArrayElementAddressTrees(comp(), dstObj, dstOff);
+      }
+   else
+#endif /* OMR_GC_SPARSE_HEAP_ALLOCATION */
+      {
+      TR::Node *tmpNode;
+      if (is64BitTarget)
+         {
+         tmpNode = TR::Node::create(node, TR::i2l, 1, srcOff);
+         tmpNode = TR::Node::create(node, TR::ladd, 2, tmpNode, hdrSize);
+         }
+      else
+         {
+         tmpNode = TR::Node::create(node, TR::iadd, 2, srcOff, hdrSize);
+         }
+      srcAddr = TR::Node::create(node, is64BitTarget ? TR::aladd : TR::aiadd, 2, srcObj, tmpNode);
+
+      if (is64BitTarget)
+         {
+         tmpNode = TR::Node::create(node, TR::i2l, 1, dstOff);
+         tmpNode = TR::Node::create(node, TR::lmul, 2, tmpNode, strideNode);
+         }
+      else
+         {
+         tmpNode = TR::Node::create(node, TR::imul, 2, dstOff, strideNode);
+         }
+      tmpNode = TR::Node::create(node, is64BitTarget ? TR::ladd : TR::iadd, 2, tmpNode, hdrSize);
+      dstAddr = TR::Node::create(node, is64BitTarget ? TR::aladd : TR::aiadd, 2, dstObj, tmpNode);
+      }
+   TR::Node *termCharNode = TR::Node::create(node, TR::iconst, 0, 0xffff); // mask for ISO 8859-1 decoder
+   TR::Node *tableNode = TR::Node::create(node, TR::iconst, 0, 0); // dummy table node
+   TR::Node *stoppingNode = TR::Node::create(node, TR::iconst, 0, -1); // dummy stop index node
+
+   arrayTranslateNode->setAndIncChild(0, srcAddr);
+   arrayTranslateNode->setAndIncChild(1, dstAddr);
+   arrayTranslateNode->setAndIncChild(2, tableNode);
+   arrayTranslateNode->setAndIncChild(3, termCharNode);
+   arrayTranslateNode->setAndIncChild(4, length);
+   arrayTranslateNode->setAndIncChild(5, stoppingNode);
+
+   TR::CFG *cfg = comp()->getFlowGraph();
+
+   // if (length < 0) { call the original method }
+   TR::Node *constZeroNode1 = TR::Node::create(node, TR::iconst, 0, 0);
+   TR::Node *ifCmpNode1 = TR::Node::createif(TR::ificmplt, length, constZeroNode1);
+   TR::TreeTop *ifCmpTreeTop1 = TR::TreeTop::create(comp(), treetop->getPrevTreeTop(), ifCmpNode1);
+   // if (srcOff < 0) { call the original method }
+   TR::Node *constZeroNode2 = TR::Node::create(node, TR::iconst, 0, 0);
+   TR::Node *ifCmpNode2 = TR::Node::createif(TR::ificmplt, srcOff, constZeroNode2);
+   TR::TreeTop *ifCmpTreeTop2 = TR::TreeTop::create(comp(), ifCmpTreeTop1, ifCmpNode2);
+   // if (srcObj.length < srcOff + length) { call the original method }
+   TR::Node *arrayLenNode1 = TR::Node::create(node, TR::arraylength, 1, srcObj);
+   TR::Node *iaddNode1 = TR::Node::create(node, TR::iadd, 2, srcOff, length);
+   TR::Node *ifCmpNode3 = TR::Node::createif(TR::ificmplt, arrayLenNode1, iaddNode1);
+   TR::TreeTop *ifCmpTreeTop3 = TR::TreeTop::create(comp(), ifCmpTreeTop2, ifCmpNode3);
+   // if (dstOff < 0) { call the original method }
+   TR::Node *constZeroNode3 = TR::Node::create(node, TR::iconst, 0, 0);
+   TR::Node *ifCmpNode4 = TR::Node::createif(TR::ificmplt, dstOff, constZeroNode3);
+   TR::TreeTop *ifCmpTreeTop4 = TR::TreeTop::create(comp(), ifCmpTreeTop3, ifCmpNode4);
+   // if ((dstObj.length >> 1) < dstOff + length) { call the original method }
+   TR::Node *arrayLenNode2 = TR::Node::create(node, TR::arraylength, 1, dstObj);
+   TR::Node *constOneNode = TR::Node::create(node, TR::iconst, 0, 1);
+   TR::Node *ishrNode = TR::Node::create(node, TR::ishr, 2, arrayLenNode2, constOneNode);
+   TR::Node *iaddNode2 = TR::Node::create(node, TR::iadd, 2, dstOff, length);
+   TR::Node *ifCmpNode5 = TR::Node::createif(TR::ificmplt, ishrNode, iaddNode2);
+   TR::TreeTop *ifCmpTreeTop5 = TR::TreeTop::create(comp(), ifCmpTreeTop4, ifCmpNode5);
+
+   TR::TreeTop *arrayTranslateTreeTop = TR::TreeTop::create(comp(), ifCmpTreeTop5, arrayTranslateNode);
+
+   TR::Block *ifCmpBlock1 = ifCmpTreeTop1->getEnclosingBlock();
+   TR::Block *ifCmpBlock2 = ifCmpBlock1->split(ifCmpTreeTop2, cfg, true /* fixUpCommoning */, true /* copyExceptionSuccessors */);
+   TR::Block *ifCmpBlock3 = ifCmpBlock2->split(ifCmpTreeTop3, cfg, true /* fixUpCommoning */, true /* copyExceptionSuccessors */);
+   TR::Block *ifCmpBlock4 = ifCmpBlock3->split(ifCmpTreeTop4, cfg, true /* fixUpCommoning */, true /* copyExceptionSuccessors */);
+   TR::Block *ifCmpBlock5 = ifCmpBlock4->split(ifCmpTreeTop5, cfg, true /* fixUpCommoning */, true /* copyExceptionSuccessors */);
+   TR::Block *fallThroughPathBlock = ifCmpBlock5->split(arrayTranslateTreeTop, cfg, true /* fixUpCommoning */, true /* copyExceptionSuccessors */);
+   // This block contains the original call node
+   TR::Block *fallbackPathBlock = fallThroughPathBlock->split(treetop, cfg, true /* fixUpCommoning */, true /* copyExceptionSuccessors */);
+   TR::Block *tailBlock = fallbackPathBlock->split(treetop->getNextTreeTop(), cfg, true /* fixUpCommoning */, true /* copyExceptionSuccessors */);
+
+   // Go to the tail block from the fall-through block
+   TR::Node *gotoNode = TR::Node::create(node, TR::Goto);
+   TR::TreeTop *gotoTree = TR::TreeTop::create(comp(), gotoNode, NULL, NULL);
+   gotoNode->setBranchDestination(tailBlock->getEntry());
+   fallThroughPathBlock->getExit()->insertBefore(gotoTree);
+
+   // Set the ificmp blocks' destinations to the fallback block and update the CFG
+   ifCmpNode1->setBranchDestination(fallbackPathBlock->getEntry());
+   cfg->addEdge(ifCmpBlock1, fallbackPathBlock);
+   ifCmpNode2->setBranchDestination(fallbackPathBlock->getEntry());
+   cfg->addEdge(ifCmpBlock2, fallbackPathBlock);
+   ifCmpNode3->setBranchDestination(fallbackPathBlock->getEntry());
+   cfg->addEdge(ifCmpBlock3, fallbackPathBlock);
+   ifCmpNode4->setBranchDestination(fallbackPathBlock->getEntry());
+   cfg->addEdge(ifCmpBlock4, fallbackPathBlock);
+   ifCmpNode5->setBranchDestination(fallbackPathBlock->getEntry());
+   cfg->addEdge(ifCmpBlock5, fallbackPathBlock);
+   cfg->addEdge(fallThroughPathBlock, tailBlock);
+   cfg->removeEdge(fallThroughPathBlock, fallbackPathBlock);
+
+   // The original call to StringLatin1.inflate([BI[BII)V will only be used
+   // if an exception needs to be thrown.  Mark it as cold.
+   fallbackPathBlock->setFrequency(UNKNOWN_COLD_BLOCK_COUNT);
+   fallbackPathBlock->setIsCold();
    }
 
 void J9::RecognizedCallTransformer::process_java_lang_StringUTF16_toBytes(TR::TreeTop* treetop, TR::Node* node)
@@ -1591,6 +1767,8 @@ bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop* treetop)
          case TR::java_lang_StringCoding_encodeASCII:
          case TR::java_lang_String_encodeASCII:
             return comp()->cg()->getSupportsInlineEncodeASCII();
+         case TR::java_lang_StringLatin1_inflate_BIBII:
+            return (comp()->cg()->getSupportsArrayTranslateTROTNoBreak() && !comp()->target().cpu.isPower());
          case TR::jdk_internal_util_ArraysSupport_vectorizedMismatch:
             return comp()->cg()->getSupportsInlineVectorizedMismatch();
          default:
@@ -1726,6 +1904,9 @@ void J9::RecognizedCallTransformer::transform(TR::TreeTop* treetop)
          case TR::java_lang_StringCoding_encodeASCII:
          case TR::java_lang_String_encodeASCII:
             process_java_lang_StringCoding_encodeASCII(treetop, node);
+            break;
+         case TR::java_lang_StringLatin1_inflate_BIBII:
+            process_java_lang_StringLatin1_inflate_BIBII(treetop, node);
             break;
          case TR::java_lang_StrictMath_sqrt:
          case TR::java_lang_Math_sqrt:

@@ -12127,7 +12127,7 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
             }
 
          break;
-      case TR::java_lang_StringLatin1_inflate:
+      case TR::java_lang_StringLatin1_inflate_BICII:
          if (cg->getSupportsInlineStringLatin1Inflate())
             {
             return TR::TreeEvaluator::inlineStringLatin1Inflate(node, cg);
