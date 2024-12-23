@@ -3234,7 +3234,8 @@ void TR_ResolvedJ9Method::construct()
       {
       { x(TR::java_lang_StringLatin1_indexOf,                                 "indexOf",       "([BI[BII)I")},
       { x(TR::java_lang_StringLatin1_indexOfChar,                             "indexOfChar",   "([BIII)I")},
-      { x(TR::java_lang_StringLatin1_inflate,                                 "inflate",       "([BI[CII)V")},
+      { x(TR::java_lang_StringLatin1_inflate_BICII,                           "inflate",       "([BI[CII)V")},
+      { x(TR::java_lang_StringLatin1_inflate_BIBII,                           "inflate",       "([BI[BII)V")},
       { TR::unknownMethod }
       };
 
@@ -5121,7 +5122,8 @@ TR_ResolvedJ9Method::setRecognizedMethodInfo(TR::RecognizedMethod rm)
             case TR::java_lang_System_nanoTime:
             case TR::java_lang_String_hashCodeImplCompressed:
             case TR::java_lang_String_hashCodeImplDecompressed:
-            case TR::java_lang_StringLatin1_inflate:
+            case TR::java_lang_StringLatin1_inflate_BICII:
+            case TR::java_lang_StringLatin1_inflate_BIBII:
             case TR::java_lang_StringCoding_hasNegatives:
             case TR::java_lang_StringCoding_countPositives:
             case TR::sun_nio_ch_NativeThread_current:
