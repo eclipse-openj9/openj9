@@ -231,7 +231,7 @@ J9::KnownObjectTable::getPointerLocation(Index index)
 
 #if defined(J9VM_OPT_JITSERVER)
 void
-J9::KnownObjectTable::updateKnownObjectTableAtServer(Index index, uintptr_t *objectReferenceLocationClient)
+J9::KnownObjectTable::updateKnownObjectTableAtServer(Index index, uintptr_t *objectReferenceLocationClient, bool isArrayWithConstantElements)
    {
    TR_ASSERT_FATAL(self()->comp()->isOutOfProcessCompilation(), "updateKnownObjectTableAtServer should only be called at the server");
    if (index == TR::KnownObjectTable::UNKNOWN)
@@ -257,6 +257,9 @@ J9::KnownObjectTable::updateKnownObjectTableAtServer(Index index, uintptr_t *obj
       {
       TR_ASSERT_FATAL(false, "index %d from the client is greater than the KOT nextIndex %d at the server", index, nextIndex);
       }
+
+   if (isArrayWithConstantElements)
+      addArrayWithConstantElements(index);
    }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 

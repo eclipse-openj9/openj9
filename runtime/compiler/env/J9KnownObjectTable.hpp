@@ -107,7 +107,7 @@ public:
    uintptr_t getPointer(Index index);
 
 #if defined(J9VM_OPT_JITSERVER)
-   void updateKnownObjectTableAtServer(Index index, uintptr_t *objectReferenceLocationClient);
+   void updateKnownObjectTableAtServer(Index index, uintptr_t *objectReferenceLocationClient, bool isArrayWithConstantElements = false);
    void getKnownObjectTableDumpInfo(std::vector<TR_KnownObjectTableDumpInfo> &knotDumpInfoList);
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
