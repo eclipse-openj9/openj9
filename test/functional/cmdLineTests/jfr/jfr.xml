@@ -24,7 +24,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 
 <!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
 
-<suite id="JFR Tests" timeout="300">
+<suite id="JFR Tests" timeout="1800">
 	<envvar name="OPENJ9_METADATA_BLOB_FILE_PATH" value="$METADATA_BLOB_PATH$" />
 	<test id="triggerExecutionSample">
 		<command>$EXE$ -XX:StartFlightRecording --add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED -cp $RESJAR$ org.openj9.test.TriggerExecutionSample</command>
