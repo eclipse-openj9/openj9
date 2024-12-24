@@ -564,11 +564,11 @@ UDATA jitPPCHandler(J9VMThread* vmThread, U_32 sigType, void* sigInfo)
                                 *iarPtr = (UDATA) ((void *) &jitHandleInternalErrorTrap);
 #endif
                                 return J9PORT_SIG_EXCEPTION_CONTINUE_EXECUTION;
-	
+
 			}
 			else if (J9PORT_SIG_FLAG_SIGTRAP == sigType) {
 				IDATA trapType = jitPPCIdentifyCodeCacheTrapType((U_8 *) *iarPtr);
-				
+
 				switch (trapType) {
 
 				case TRAP_TYPE_NULL_CHECK:
@@ -937,8 +937,19 @@ UDATA restoreSystemStackPointerState(J9VMThread* vmThread, U_32 sigType, void* s
    return J9PORT_SIG_EXCEPTION_CONTINUE_EXECUTION;
    }
 
+#ifdef EMULATE_ZNEXT
+extern int jitS390Emulation(J9VMThread* vmThread, void* sigInfo);
+#endif
+
 UDATA jit390Handler(J9VMThread* vmThread, U_32 sigType, void* sigInfo)
    {
+#ifdef EMULATE_ZNEXT
+   if (J9PORT_SIG_FLAG_SIGILL == sigType && jitS390Emulation(vmThread, sigInfo) == 0)
+      {
+      return J9PORT_SIG_EXCEPTION_CONTINUE_EXECUTION;
+      }
+#endif
+
    PORT_ACCESS_FROM_VMC(vmThread);
 
    J9JITConfig *jitConfig = vmThread->javaVM->jitConfig;
@@ -1251,13 +1262,13 @@ UDATA jit390Handler(J9VMThread* vmThread, U_32 sigType, void* sigInfo)
                /* add one to *controlPC for symmetry with IA32, handler check subs one */
                jit390SetTrapHandler(controlPC, entryPointRegister, (void *) &jitHandleNullPointerExceptionTrap);
                return restoreSystemStackPointerState(vmThread, sigType, sigInfo);
-   
+
             case TRAP_TYPE_INTERNAL_ERROR:
                vmThread->jitException = (J9Object *) (controlPCValue + 1);
                /* add one to *controlPC for symmetry with IA32, handler check subs one */
                jit390SetTrapHandler(controlPC, entryPointRegister, (void *) &jitHandleInternalErrorTrap);
                return restoreSystemStackPointerState(vmThread, sigType, sigInfo);
-            
+
             case TRAP_TYPE_ARRAY_BOUNDS:
                vmThread->jitException = (J9Object *) (controlPCValue + 1);
                /* add one to *controlPC for symmetry with IA32, handler check subs one */

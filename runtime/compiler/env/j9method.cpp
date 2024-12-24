@@ -2615,6 +2615,14 @@ void TR_ResolvedJ9Method::construct()
       {TR::unknownMethod}
    };
 
+   static X DataAccessExternalDecimalMethods[] =
+   {
+      {x(TR::com_ibm_dataaccess_ExternalDecimal_checkExternalDecimal , "checkExternalDecimal" , "([BIIII)I")},
+      {x(TR::com_ibm_dataaccess_ExternalDecimal_checkExternalDecimal_, "checkExternalDecimal_", "([BIIII)I")},
+
+      {TR::unknownMethod}
+   };
+
 
    static X BigDecimalMethods[] =
       {
@@ -3312,6 +3320,8 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_lang_Integer_reverseBytes,            "reverseBytes",          "(I)I")},
       {x(TR::java_lang_Integer_rotateLeft,              "rotateLeft",            "(II)I")},
       {x(TR::java_lang_Integer_rotateRight,             "rotateRight",           "(II)I")},
+      {x(TR::java_lang_Integer_compress,                "compress",              "(II)I")},
+      {x(TR::java_lang_Integer_expand,                  "expand",                "(II)I")},
       {x(TR::java_lang_Integer_valueOf,                 "valueOf",               "(I)Ljava/lang/Integer;")},
       {  TR::java_lang_Integer_init,              6,    "<init>", (int16_t)-1,    "*"},
       {x(TR::java_lang_Integer_toUnsignedLong,          "toUnsignedLong",         "(I)J")},
@@ -3333,6 +3343,8 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_lang_Long_reverseBytes,              "reverseBytes",           "(J)J")},
       {x(TR::java_lang_Long_rotateLeft,                 "rotateLeft",            "(JI)J")},
       {x(TR::java_lang_Long_rotateRight,                "rotateRight",           "(JI)J")},
+      {x(TR::java_lang_Long_compress,                   "compress",              "(JJ)J")},
+      {x(TR::java_lang_Long_expand,                     "expand",                "(JJ)J")},
       {  TR::java_lang_Long_init,                  6,    "<init>", (int16_t)-1,    "*"},
       {x(TR::java_lang_Long_stringSize,                 "stringSize",            "(J)I") },
       {x(TR::java_lang_Long_toString,                   "toString",            "(J)Ljava/lang/String;") },
@@ -4285,6 +4297,7 @@ void TR_ResolvedJ9Method::construct()
       { "java/util/Hashtable$HashEnumerator", HashtableHashEnumeratorMethods },
       { "com/ibm/Compiler/Internal/Prefetch", PrefetchMethods },
       { "java/lang/invoke/VarHandleInternal", VarHandleMethods },
+      { "com/ibm/dataaccess/ExternalDecimal", DataAccessExternalDecimalMethods },
       { 0 }
       };
 

@@ -117,6 +117,7 @@ J9::LocalCSE::shouldCommonNode(TR::Node *parent, TR::Node *node)
             case TR::com_ibm_dataaccess_PackedDecimal_equalsPackedDecimal_:
             case TR::com_ibm_dataaccess_PackedDecimal_notEqualsPackedDecimal_:
             case TR::com_ibm_dataaccess_PackedDecimal_checkPackedDecimal_:
+            case TR::com_ibm_dataaccess_ExternalDecimal_checkExternalDecimal_:
             case TR::com_ibm_dataaccess_DecimalData_convertExternalDecimalToPackedDecimal_:
             case TR::com_ibm_dataaccess_DecimalData_convertPackedDecimalToExternalDecimal_:
             case TR::com_ibm_dataaccess_DecimalData_convertPackedDecimalToUnicodeDecimal_:

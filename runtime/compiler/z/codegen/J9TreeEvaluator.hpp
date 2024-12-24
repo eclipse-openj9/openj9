@@ -470,6 +470,7 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
                                                          bool ignoreDecimalOverflow = false);
 
    static TR::Register *pdchkEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *zdchkEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
    static TR::Register *pdcmpeqEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *pdcmpneEvaluator(TR::Node *node, TR::CodeGenerator *cg);
