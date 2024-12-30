@@ -2738,9 +2738,8 @@ TR::Register *J9::X86::TreeEvaluator::ZEROCHKEvaluator(TR::Node *node, TR::CodeG
    }
 
 
-bool isConditionCodeSetForCompare(TR::Node *node, bool *jumpOnOppositeCondition)
+bool isConditionCodeSetForCompare(TR::Node *node, bool *jumpOnOppositeCondition, TR::Compilation *comp)
    {
-   TR::Compilation *comp = TR::comp();
    // Disable.  Need to re-think how we handle overflow cases.
    //
    static char *disableNoCompareEFlags = feGetEnv("TR_disableNoCompareEFlags");
@@ -2870,7 +2869,7 @@ TR::Register *J9::X86::TreeEvaluator::BNDCHKEvaluator(TR::Node *node, TR::CodeGe
          }
       else
          {
-         if (!isConditionCodeSetForCompare(node, &jumpOnOppositeCondition))
+         if (!isConditionCodeSetForCompare(node, &jumpOnOppositeCondition, cg->comp()))
             {
             node->swapChildren();
             TR::TreeEvaluator::compareIntegersForOrder(node, cg);
@@ -2883,7 +2882,7 @@ TR::Register *J9::X86::TreeEvaluator::BNDCHKEvaluator(TR::Node *node, TR::CodeGe
       }
    else
       {
-      if (!isConditionCodeSetForCompare(node, &jumpOnOppositeCondition))
+      if (!isConditionCodeSetForCompare(node, &jumpOnOppositeCondition, cg->comp()))
          {
          TR::TreeEvaluator::compareIntegersForOrder(node, cg);
          instr = generateLabelInstruction(TR::InstOpCode::JBE4, node, boundCheckFailureLabel, cg);
