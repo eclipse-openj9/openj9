@@ -1129,10 +1129,36 @@ TR_ResolvedJ9JITServerMethod::getResolvedHandleMethod(TR::Compilation *comp, I_3
    auto ramMethod = std::get<0>(recv);
    auto &methodInfo = std::get<1>(recv);
    auto &signature = std::get<2>(recv);
+   auto unresolved = std::get<3>(recv);
+   auto invokeCacheAppendixNull = std::get<4>(recv);
    if (unresolvedInCP)
-      *unresolvedInCP = std::get<3>(recv);
+      *unresolvedInCP = unresolved;
    if (isInvokeCacheAppendixNull)
-      *isInvokeCacheAppendixNull = std::get<4>(recv);
+      *isInvokeCacheAppendixNull = invokeCacheAppendixNull;
+
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   if (comp->compileRelocatableCode())
+      {
+      if (!unresolved)
+         {
+         bool valid =
+            comp->getSymbolValidationManager()->addHandleMethodFromCPIndex(
+               ramMethod,
+               getNonPersistentIdentifier(),
+               cpIndex,
+               invokeCacheAppendixNull);
+
+         if (!valid)
+            comp->failCompilation<J9::AOTHasInvokeHandle>("Failed to add validation record for resolved handle method %p", ramMethod);
+         }
+      else
+         {
+         // Call getMethodFromName to create an SVM record
+         auto dummyInvoke = _fe->getMethodFromName("java/lang/invoke/MethodHandle", "linkToStatic", "([Ljava/lang/Object;)Ljava/lang/Object;");
+         TR_ASSERT_FATAL(ramMethod == dummyInvoke, "%p != %p; Unresolved targetMethod not dummyInvoke\n", ramMethod, dummyInvoke);
+         }
+      }
+#endif // #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
 
    return static_cast<TR_J9ServerVM *>(_fe)->createResolvedMethodWithSignature(
       comp->trMemory(), ramMethod, NULL, (char *)signature.data(), signature.length(), this, methodInfo
@@ -1198,10 +1224,36 @@ TR_ResolvedJ9JITServerMethod::getResolvedDynamicMethod(TR::Compilation *comp, I_
    auto ramMethod = std::get<0>(recv);
    auto &methodInfo = std::get<1>(recv);
    auto &signature = std::get<2>(recv);
+   auto unresolved = std::get<3>(recv);
+   auto invokeCacheAppendixNull = std::get<4>(recv);
    if (unresolvedInCP)
-      *unresolvedInCP = std::get<3>(recv);
+      *unresolvedInCP = unresolved;
    if (isInvokeCacheAppendixNull)
-      *isInvokeCacheAppendixNull = std::get<4>(recv);
+      *isInvokeCacheAppendixNull = invokeCacheAppendixNull;
+
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   if (comp->compileRelocatableCode())
+      {
+      if (!unresolved)
+         {
+         bool valid =
+            comp->getSymbolValidationManager()->addDynamicMethodFromCallsiteIndex(
+               ramMethod,
+               getNonPersistentIdentifier(),
+               callSiteIndex,
+               invokeCacheAppendixNull);
+
+         if (!valid)
+            comp->failCompilation<J9::AOTHasInvokeHandle>("Failed to add validation record for resolved dynamic method %p", ramMethod);
+         }
+      else
+         {
+         // Call getMethodFromName to create an SVM record
+         auto dummyInvoke = _fe->getMethodFromName("java/lang/invoke/MethodHandle", "linkToStatic", "([Ljava/lang/Object;)Ljava/lang/Object;");
+         TR_ASSERT_FATAL(ramMethod == dummyInvoke, "%p != %p; Unresolved targetMethod not dummyInvoke\n", ramMethod, dummyInvoke);
+         }
+      }
+#endif // #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
 
    return static_cast<TR_J9ServerVM *>(_fe)->createResolvedMethodWithSignature(
       comp->trMemory(), ramMethod, NULL, (char *)signature.data(), signature.size(), this, methodInfo
