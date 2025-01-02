@@ -639,6 +639,9 @@ public static Properties internalGetProperties() {
 }
 
 /*[IF JFR_SUPPORT]*/
+
+public static native boolean isJFREnabled();
+
 /**
  * Check if a JFR recording has been started.
  *
