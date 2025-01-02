@@ -790,9 +790,9 @@ public final boolean isDaemon() {
  * @see			Thread#interrupted
  */
 public boolean isInterrupted() {
-	synchronized(lock) {
+	//synchronized(lock) {
 		return isInterruptedImpl();
-	}
+	//}
 }
 
 private native boolean isInterruptedImpl();
@@ -1496,7 +1496,7 @@ public static enum State {
  * @see State
  */
 public State getState() {
-	synchronized(lock) {
+	//synchronized(lock) {
 		if (threadRef == NO_REF) {
 			if (isDead()) {
 				return State.TERMINATED;
@@ -1504,7 +1504,7 @@ public State getState() {
 			return State.NEW;
 		}
 		return State.values()[getStateImpl(threadRef)];
-	}
+	//}
 }
 
 private native int getStateImpl(long threadRef);
