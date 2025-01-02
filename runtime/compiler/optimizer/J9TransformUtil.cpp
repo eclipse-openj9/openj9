@@ -2037,16 +2037,16 @@ J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp,
       return false;
       }
 
-   void *valuePtr;
-   J9::TransformUtil::value value;
+   J9::TransformUtil::value val;
+   void *valuePtr = NULL;
 #if defined(J9VM_OPT_JITSERVER)
    if (isServer)
       {
       // Instead of the recursive dereferenceStructPointerChain, we only consider a single level
       // of indirection
       void *result = dereferenceStructPointer(baseKnownObject, node, baseExpression,
-                                              isBaseStableArray, comp, &value);
-      valuePtr = &value;
+                                              isBaseStableArray, comp, &val);
+      valuePtr = &val;
       if (result != valuePtr)
          return false;
       }
@@ -2114,6 +2114,7 @@ J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp,
          break;
       case TR::Address:
          {
+         uintptr_t value = 0;
          if (isFinalFieldPointingAtRepresentableNativeStruct(symRef, comp))
             {
 #if defined(J9VM_OPT_JITSERVER)
@@ -2124,8 +2125,9 @@ J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp,
                {
                if (changeIndirectLoadIntoConst(node, TR::loadaddr, removedNode, comp))
                   {
-                  TR_OpaqueClassBlock *value = *(TR_OpaqueClassBlock**)valuePtr;
-                  node->setSymbolReference(comp->getSymRefTab()->findOrCreateClassSymbol(comp->getMethodSymbol(), -1, value));
+                  TR_OpaqueClassBlock *clazz = *(TR_OpaqueClassBlock**)valuePtr;
+                  value = (uintptr_t)clazz;
+                  node->setSymbolReference(comp->getSymRefTab()->findOrCreateClassSymbol(comp->getMethodSymbol(), -1, clazz));
                   }
                else
                   {
@@ -2147,7 +2149,7 @@ J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp,
 #endif /* defined(J9VM_OPT_JITSERVER) */
             if (symRef->getReferenceNumber() - comp->getSymRefTab()->getNumHelperSymbols() == TR::SymbolReferenceTable::ramStaticsFromClassSymbol)
                {
-               uintptr_t value = *(uintptr_t*)valuePtr;
+               value = *(uintptr_t*)valuePtr;
                if (changeIndirectLoadIntoConst(node, TR::aconst, removedNode, comp))
                   {
                   node->setAddress(value);
@@ -2171,7 +2173,7 @@ J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp,
             else
 #endif /* defined(J9VM_OPT_JITSERVER) */
                {
-               uintptr_t value = fej9->getReferenceFieldAtAddress((uintptr_t)valuePtr);
+               value = fej9->getReferenceFieldAtAddress((uintptr_t)valuePtr);
                if (value)
                   {
                   knotIndex = comp->getKnownObjectTable()->getOrCreateIndexAt(&value,
@@ -2185,7 +2187,7 @@ J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp,
                   comp->getSymRefTab()->findOrCreateSymRefWithKnownObject(symRef, knotIndex);
 
                if (improvedSymRef->hasKnownObjectIndex()
-                  && performTransformation(comp, "O^O transformIndirectLoadChain: %s [%p] with fieldOffset %d is obj%d referenceAddr is %p\n", node->getOpCode().getName(), node, improvedSymRef->getKnownObjectIndex(), symRef->getOffset(), value))
+                  && performTransformation(comp, "O^O transformIndirectLoadChain: %s [%p] with fieldOffset %d is obj%d referenceAddr is %p\n", node->getOpCode().getName(), node, improvedSymRef->getKnownObjectIndex(), symRef->getOffset(), (void*)value))
                   {
                   node->setSymbolReference(improvedSymRef);
                   node->setIsNull(false);
