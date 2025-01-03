@@ -329,7 +329,15 @@ packCallback(const J9ROMClass *romClass, const J9SRP *origSrp, const char *slotN
    if (dst == ctx._cursor)
       ctx._cursor += copyUTF8((J9UTF8 *)dst, str, it->second.second/*truncate*/ ? ctx._generatedPrefixLength : 0);
    else
-      TR_ASSERT((dst < ctx._cursor) && (memcmp(dst, str, J9UTF8_TOTAL_SIZE(str)) == 0), "Must be already copied");
+      TR_ASSERT(
+         (dst < ctx._cursor) && (
+            (it->second.second && (memcmp(utf8Data((J9UTF8 *) dst),
+                                          utf8Data((J9UTF8 *) str),
+                                          ctx._generatedPrefixLength) == 0)) ||
+            (!it->second.second && (memcmp(dst, str, J9UTF8_TOTAL_SIZE(str)) == 0))
+         ),
+         "Must be already copied"
+      );
    }
 
 static void
