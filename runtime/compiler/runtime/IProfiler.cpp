@@ -236,7 +236,7 @@ void TR_ReadSampleRequestsHistory::advanceEpoch() // performed by sampling threa
 
 uintptr_t
 TR_IProfiler::createBalancedBST(uintptr_t *pcEntries, int32_t low, int32_t high, uintptr_t memChunk,
-                                TR::Compilation *comp)
+                                TR_J9SharedCache *sharedCache)
    {
    if (high < low)
       return 0;
@@ -245,10 +245,10 @@ TR_IProfiler::createBalancedBST(uintptr_t *pcEntries, int32_t low, int32_t high,
    int32_t middle = (high+low)/2;
    TR_IPBytecodeHashTableEntry *entry = profilingSample (pcEntries[middle], 0, false);
    uint32_t bytes = entry->getBytesFootprint();
-   entry->createPersistentCopy(comp->fej9()->sharedCache(), storage, _compInfo->getPersistentInfo());
+   entry->createPersistentCopy(sharedCache, storage, _compInfo->getPersistentInfo());
 
    uintptr_t leftChild = createBalancedBST(pcEntries, low, middle-1,
-                                            memChunk + bytes, comp);
+                                            memChunk + bytes, sharedCache);
 
    if (leftChild)
       {
@@ -257,7 +257,7 @@ TR_IProfiler::createBalancedBST(uintptr_t *pcEntries, int32_t low, int32_t high,
       }
 
    uintptr_t rightChild = createBalancedBST(pcEntries, middle+1, high,
-                                             memChunk + bytes + leftChild, comp);
+                                             memChunk + bytes + leftChild, sharedCache);
    if (rightChild)
       {
       TR_ASSERT(bytes + leftChild < 1 << 16, "Error storing iprofile information: right child too far away"); // current size of right child
@@ -452,7 +452,7 @@ TR_IProfiler::persistIprofileInfo(TR::ResolvedMethodSymbol *resolvedMethodSymbol
                   fprintf(stderr, "\n");
 #endif
                   void * memChunk = comp->trMemory()->allocateMemory(bytesFootprint, stackAlloc);
-                  intptr_t bytes = createBalancedBST(pcEntries, 0, numEntries-1, (uintptr_t) memChunk, comp);
+                  intptr_t bytes = createBalancedBST(pcEntries, 0, numEntries-1, (uintptr_t) memChunk, comp->fej9()->sharedCache());
                   TR_ASSERT(bytes == bytesFootprint, "BST doesn't match expected footprint");
 
 
