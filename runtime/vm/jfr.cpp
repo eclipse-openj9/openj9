@@ -96,6 +96,9 @@ jfrEventSize(J9JFREvent *jfrEvent)
 	case J9JFR_EVENT_TYPE_CLASS_LOADING_STATISTICS:
 		size = sizeof(J9JFRClassLoadingStatistics);
 		break;
+	case J9JFR_EVENT_TYPE_THREAD_CONTEXT_SWITCH_RATE:
+		size = sizeof(J9JFRThreadContextSwitchRate);
+		break;
 	default:
 		Assert_VM_unreachable();
 		break;
@@ -720,6 +723,7 @@ initializeJFR(J9JavaVM *vm, BOOLEAN lateInit)
 
 	vm->jfrState.prevSysCPUTime.timestamp = -1;
 	vm->jfrState.prevProcTimestamp = -1;
+	vm->jfrState.prevContextSwitchTimestamp = -1;
 	if (omrthread_monitor_init_with_name(&vm->jfrBufferMutex, 0, "JFR global buffer mutex")) {
 		goto fail;
 	}
@@ -995,6 +999,35 @@ jfrClassLoadingStatistics(J9VMThread *currentThread)
 	}
 }
 
+void
+jfrThreadContextSwitchRate(J9VMThread *currentThread)
+{
+	PORT_ACCESS_FROM_VMC(currentThread);
+	OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
+
+	uint64_t switches = 0;
+	int32_t rc = omrsysinfo_get_number_context_switches(&switches);
+
+	if (0 == rc) {
+		J9JFRThreadContextSwitchRate *jfrEvent = (J9JFRThreadContextSwitchRate *)reserveBuffer(currentThread, sizeof(J9JFRThreadContextSwitchRate));
+		if (NULL != jfrEvent) {
+			JFRState *jfrState = &currentThread->javaVM->jfrState;
+			int64_t currentTime = j9time_nano_time();
+
+			initializeEventFields(currentThread, (J9JFREvent *)jfrEvent, J9JFR_EVENT_TYPE_THREAD_CONTEXT_SWITCH_RATE);
+
+			if (-1 == jfrState->prevContextSwitchTimestamp) {
+				jfrEvent->switchRate = 0;
+			} else {
+				int64_t timeDelta = currentTime - jfrState->prevContextSwitchTimestamp;
+				jfrEvent->switchRate = ((double)(switches - jfrState->prevContextSwitches) / timeDelta) * 1e9;
+			}
+			jfrState->prevContextSwitches = switches;
+			jfrState->prevContextSwitchTimestamp = currentTime;
+		}
+	}
+}
+
 static int J9THREAD_PROC
 jfrSamplingThreadProc(void *entryArg)
 {
@@ -1013,11 +1046,12 @@ jfrSamplingThreadProc(void *entryArg)
 				internalAcquireVMAccess(currentThread);
 				jfrCPULoad(currentThread);
 				jfrClassLoadingStatistics(currentThread);
-				internalReleaseVMAccess(currentThread);
-				omrthread_monitor_enter(vm->jfrSamplerMutex);
 				if (0 == (count % 1000)) { // 10 seconds
 					J9SignalAsyncEvent(vm, NULL, vm->jfrThreadCPULoadAsyncKey);
+					jfrThreadContextSwitchRate(currentThread);
 				}
+				internalReleaseVMAccess(currentThread);
+				omrthread_monitor_enter(vm->jfrSamplerMutex);
 			}
 			count += 1;
 			omrthread_monitor_wait_timed(vm->jfrSamplerMutex, J9JFR_SAMPLING_RATE, 0);
