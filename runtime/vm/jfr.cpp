@@ -980,8 +980,9 @@ jfrClassLoadingStatistics(J9VMThread *currentThread)
 		initializeEventFields(currentThread, (J9JFREvent *)jfrEvent, J9JFR_EVENT_TYPE_CLASS_LOADING_STATISTICS);
 
 		UDATA unloadedClassCount = 0;
-		vm->memoryManagerFunctions->j9gc_get_cumulative_class_unloading_stats(currentThread, NULL, &unloadedClassCount, NULL);
-		jfrEvent->unloadedClassCount = (I_64)unloadedClassCount;
+		UDATA unloadedAnonClassCount = 0;
+		vm->memoryManagerFunctions->j9gc_get_cumulative_class_unloading_stats(currentThread, &unloadedAnonClassCount, &unloadedClassCount, NULL);
+		jfrEvent->unloadedClassCount = (I_64)(unloadedClassCount + unloadedAnonClassCount);
 
 		internalReleaseVMAccess(currentThread);
 
