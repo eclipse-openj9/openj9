@@ -6883,7 +6883,8 @@ J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
             break;
          }
 
-      static bool disableCAEIntrinsic = feGetEnv("TR_DisableCAEIntrinsic") != NULL;
+      bool disableCASInlining = !cg->getSupportsInlineUnsafeCompareAndSet();
+      bool disableCAEInlining = !cg->getSupportsInlineUnsafeCompareAndExchange();
       switch (methodSymbol->getRecognizedMethod())
          {
          case TR::java_lang_Thread_onSpinWait:
@@ -6977,8 +6978,11 @@ J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
 
             if ((node->isUnsafeGetPutCASCallOnNonArray() || !TR::Compiler->om.canGenerateArraylets()) && node->isSafeForCGToFastPathUnsafeCall())
                {
-               resultReg = VMinlineCompareAndSwap(node, cg, false);
-               return true;
+               if (!disableCASInlining)
+                  {
+                  resultReg = VMinlineCompareAndSwap(node, cg, false);
+                  return true;
+                  }
                }
             break;
             }
@@ -6991,8 +6995,11 @@ J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
 
             if ((node->isUnsafeGetPutCASCallOnNonArray() || !TR::Compiler->om.canGenerateArraylets()) && node->isSafeForCGToFastPathUnsafeCall())
                {
-               resultReg = VMinlineCompareAndSwap(node, cg, true);
-               return true;
+               if (!disableCASInlining)
+                  {
+                  resultReg = VMinlineCompareAndSwap(node, cg, true);
+                  return true;
+                  }
                }
             break;
             }
@@ -7004,8 +7011,11 @@ J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
 
             if ((node->isUnsafeGetPutCASCallOnNonArray() || !TR::Compiler->om.canGenerateArraylets()) && node->isSafeForCGToFastPathUnsafeCall())
                {
-               resultReg = VMinlineCompareAndSwapObject(node, cg);
-               return true;
+               if (!disableCASInlining)
+                  {
+                  resultReg = VMinlineCompareAndSwapObject(node, cg);
+                  return true;
+                  }
                }
             break;
             }
@@ -7014,7 +7024,7 @@ J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
             {
             if ((node->isUnsafeGetPutCASCallOnNonArray() || !TR::Compiler->om.canGenerateArraylets()) && node->isSafeForCGToFastPathUnsafeCall())
                {
-               if (!disableCAEIntrinsic)
+               if (!disableCAEInlining)
                   {
                   resultReg = VMinlineCompareAndSwap(node, cg, false, true);
                   return true;
@@ -7027,7 +7037,7 @@ J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
             {
             if ((node->isUnsafeGetPutCASCallOnNonArray() || !TR::Compiler->om.canGenerateArraylets()) && node->isSafeForCGToFastPathUnsafeCall())
                {
-               if (!disableCAEIntrinsic)
+               if (!disableCAEInlining)
                   {
                   resultReg = VMinlineCompareAndSwap(node, cg, true, true);
                   return true;
@@ -7049,7 +7059,7 @@ J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
             {
             if ((node->isUnsafeGetPutCASCallOnNonArray() || !TR::Compiler->om.canGenerateArraylets()) && node->isSafeForCGToFastPathUnsafeCall())
                {
-               if (!disableCAEIntrinsic)
+               if (!disableCAEInlining)
                   {
                   resultReg = VMinlineCompareAndSwapObject(node, cg, true);
                   return true;
