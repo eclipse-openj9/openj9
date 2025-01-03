@@ -684,7 +684,7 @@ private:
    TR_IPBCDataCallGraph* getCGProfilingData(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR::Compilation *comp);
 
    uintptr_t createBalancedBST(uintptr_t *pcEntries, int32_t low, int32_t high, uintptr_t memChunk,
-                                TR::Compilation *comp);
+                               TR_J9SharedCache *sharedCache);
    uint32_t walkILTreeForEntries(uintptr_t *pcEntries, uint32_t &numEntries, TR_J9ByteCodeIterator *bcIterator, TR_OpaqueMethodBlock *method, TR::Compilation *comp,
                                  vcount_t visitCount, int32_t callerIndex, TR_BitVector *BCvisit, bool &abort);
 
