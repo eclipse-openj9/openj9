@@ -3358,6 +3358,7 @@ TR_IProfiler::setCallCount(TR_OpaqueMethodBlock *method, int32_t bcIndex, int32_
       if (csInfo)
          {
          csInfo->_weight[0] = count;
+         csInfo->setClazz(0, (uintptr_t)comp->fej9()->getClassOfMethod(method));
 
          if (count>_maxCallFrequency)
             _maxCallFrequency = count;
