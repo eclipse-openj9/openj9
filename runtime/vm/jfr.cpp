@@ -724,6 +724,7 @@ initializeJFR(J9JavaVM *vm, BOOLEAN lateInit)
 	vm->jfrState.prevSysCPUTime.timestamp = -1;
 	vm->jfrState.prevProcTimestamp = -1;
 	vm->jfrState.prevContextSwitchTimestamp = -1;
+	vm->jfrState.prevContextSwitches = 0;
 	if (omrthread_monitor_init_with_name(&vm->jfrBufferMutex, 0, "JFR global buffer mutex")) {
 		goto fail;
 	}
@@ -1020,7 +1021,7 @@ jfrThreadContextSwitchRate(J9VMThread *currentThread)
 				jfrEvent->switchRate = 0;
 			} else {
 				int64_t timeDelta = currentTime - jfrState->prevContextSwitchTimestamp;
-				jfrEvent->switchRate = ((double)(switches - jfrState->prevContextSwitches) / timeDelta) * 1e9;
+				jfrEvent->switchRate = ((float)(switches - jfrState->prevContextSwitches) / timeDelta) * 1e9f;
 			}
 			jfrState->prevContextSwitches = switches;
 			jfrState->prevContextSwitchTimestamp = currentTime;
