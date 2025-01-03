@@ -642,6 +642,7 @@ jint
 initializeJFR(J9JavaVM *vm, BOOLEAN lateInit)
 {
 	PORT_ACCESS_FROM_JAVAVM(vm);
+	OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
 	jint rc = JNI_ERR;
 	J9HookInterface **vmHooks = getVMHookInterface(vm);
 	U_8 *buffer = NULL;
@@ -723,7 +724,14 @@ initializeJFR(J9JavaVM *vm, BOOLEAN lateInit)
 
 	vm->jfrState.prevSysCPUTime.timestamp = -1;
 	vm->jfrState.prevProcTimestamp = -1;
-	vm->jfrState.prevContextSwitchTimestamp = -1;
+
+	if (0 == omrsysinfo_get_number_context_switches(&vm->jfrState.prevContextSwitches)) {
+		vm->jfrState.prevContextSwitchTimestamp = j9time_nano_time();
+	} else {
+		vm->jfrState.prevContextSwitchTimestamp = -1;
+		vm->jfrState.prevContextSwitches = 0;
+	}
+
 	if (omrthread_monitor_init_with_name(&vm->jfrBufferMutex, 0, "JFR global buffer mutex")) {
 		goto fail;
 	}
@@ -1017,11 +1025,13 @@ jfrThreadContextSwitchRate(J9VMThread *currentThread)
 
 			initializeEventFields(currentThread, (J9JFREvent *)jfrEvent, J9JFR_EVENT_TYPE_THREAD_CONTEXT_SWITCH_RATE);
 
-			if (-1 == jfrState->prevContextSwitchTimestamp) {
-				jfrEvent->switchRate = 0;
+			if ((-1 == jfrState->prevContextSwitchTimestamp)
+				|| (currentTime == jfrState->prevContextSwitchTimestamp)
+			) {
+				jfrEvent->switchRate = 0.0f;
 			} else {
 				int64_t timeDelta = currentTime - jfrState->prevContextSwitchTimestamp;
-				jfrEvent->switchRate = ((double)(switches - jfrState->prevContextSwitches) / timeDelta) * 1e9;
+				jfrEvent->switchRate = (switches - jfrState->prevContextSwitches) * 1e9f / timeDelta;
 			}
 			jfrState->prevContextSwitches = switches;
 			jfrState->prevContextSwitchTimestamp = currentTime;
