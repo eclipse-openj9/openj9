@@ -410,8 +410,8 @@ public:
    virtual uint32_t* getDataReference() { return NULL; }
    virtual bool isCompact() { return false; }
    virtual TR_IPBCDataCallGraph *asIPBCDataCallGraph() { return this; }
+   int32_t getSumCount();
    int32_t getSumCount(TR::Compilation *comp);
-   int32_t getSumCount(TR::Compilation *comp, bool);
    int32_t getEdgeWeight(TR_OpaqueClassBlock *clazz, TR::Compilation *comp);
    void updateEdgeWeight(TR_OpaqueClassBlock *clazz, int32_t weight);
    void printWeights(TR::Compilation *comp);
@@ -487,7 +487,65 @@ private:
    int32_t _historyBufferSize;
    int32_t _crtIndex;
    TR_ReadSampleRequestsStats *_history; // My circular buffer
-   };
+   }; // class TR_ReadSampleRequestsHistory
+
+
+// Supporting code for dumping IProfiler data to stderr to track possible
+// performance issues due to insufficient or wrong IProfiler info.
+// It implements a hashtable where each node stores information for
+// various bytecodes of a single ROMMethod.
+// Code is currently inactive. To actually use one must issue
+// iProfiler->dumpIPBCDataCallGraph(vmThread)
+// in some part of the code (typically at shutdown time)
+class TR_AggregationHT
+   {
+public:
+   class TR_IPChainedEntry
+      {
+      TR_IPChainedEntry *_next; // for chaining
+      TR_IPBytecodeHashTableEntry *_IPentry;
+   public:
+      TR_IPChainedEntry(TR_IPBytecodeHashTableEntry *entry) : _next(NULL), _IPentry(entry) { }
+      TR_IPChainedEntry *getNext() const { return _next; }
+      void setNext(TR_IPChainedEntry *next) { _next = next; }
+      TR_IPBytecodeHashTableEntry *getIPData() const { return _IPentry; }
+      uintptr_t getPC() const { return _IPentry->getPC(); }
+      };
+   class TR_AggregationHTNode
+      {
+      TR_AggregationHTNode *_next; // for chaining
+      J9ROMMethod *_romMethod; // this is the key
+      J9ROMClass  *_romClass; // TODO: is this needed?
+      TR_IPChainedEntry *_IPData;
+   public:
+      TR_AggregationHTNode(J9ROMMethod *romMethod, J9ROMClass *romClass, TR_IPBytecodeHashTableEntry *entry);
+      ~TR_AggregationHTNode();
+      TR_AggregationHTNode *getNext() const { return _next; }
+      void setNext(TR_AggregationHTNode *next) { _next = next; }
+      J9ROMMethod *getROMMethod() const { return _romMethod; }
+      J9ROMClass *getROMClass() const { return _romClass; }
+      TR_IPChainedEntry *getFirstIPEntry() const { return _IPData; }
+      void setFirstCGEntry(TR_IPChainedEntry *e) { _IPData = e; }
+      };
+   struct SortingPair
+      {
+      char *_methodName;
+      TR_AggregationHTNode *_IPdata;
+      };
+
+   TR_AggregationHT(size_t sz);
+   ~TR_AggregationHT();
+   size_t hash(J9ROMMethod *romMethod) const { return (((uintptr_t)romMethod) >> 3) % _sz; }
+   size_t getSize() const { return _sz; }
+   size_t numTrackedMethods() const { return _numTrackedMethods; }
+   TR_AggregationHTNode* getBucket(size_t i) const { return _backbone[i]; }
+   void add(J9ROMMethod *romMethod, J9ROMClass *romClass, TR_IPBytecodeHashTableEntry *cgEntry);
+   void sortByNameAndPrint();
+private:
+   size_t _sz; // size of the backbone of the hashtable
+   size_t _numTrackedMethods; // only increasing
+   TR_AggregationHTNode** _backbone;
+   }; // class TR_AggregationHT
 
 class TR_IProfiler : public TR_ExternalProfiler
    {

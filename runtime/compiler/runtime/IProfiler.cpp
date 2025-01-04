@@ -1632,7 +1632,7 @@ TR_IProfiler::getSamplingCount( TR_IPBytecodeHashTableEntry *entry, TR::Compilat
    else if (entry->asIPBCDataCallGraph())
       {
       TR_IPBCDataCallGraph *callGraphEntry = (TR_IPBCDataCallGraph *)entry;
-      return callGraphEntry->getSumCount(comp, true);
+      return callGraphEntry->getSumCount(comp);
       }
    else if (entry->asIPBCDataFourBytes())
       {
@@ -2810,7 +2810,7 @@ TR_IPBCDataCallGraph::setData(uintptr_t v, uint32_t freq)
    }
 
 int32_t
-TR_IPBCDataCallGraph::getSumCount(TR::Compilation *comp)
+TR_IPBCDataCallGraph::getSumCount()
    {
    int32_t sumWeight = 0;
    for (int32_t i = 0; i < NUM_CS_SLOTS; i++)
@@ -2820,7 +2820,7 @@ TR_IPBCDataCallGraph::getSumCount(TR::Compilation *comp)
    }
 
 int32_t
-TR_IPBCDataCallGraph::getSumCount(TR::Compilation *comp, bool)
+TR_IPBCDataCallGraph::getSumCount(TR::Compilation *comp)
    {
    static bool debug = feGetEnv("TR_debugiprofiler_detail") ? true : false;
    int32_t sumWeight = 0;
@@ -3378,7 +3378,7 @@ TR_IProfiler::getCallCount(TR_OpaqueMethodBlock *calleeMethod, TR_OpaqueMethodBl
    TR_IPBytecodeHashTableEntry *entry = profilingSample(method, bcIndex, comp);
 
    if (entry && entry->asIPBCDataCallGraph())
-      return entry->asIPBCDataCallGraph()->getSumCount(comp);
+      return entry->asIPBCDataCallGraph()->getSumCount();
 
    uint32_t weight = 0;
    bool foundEntry = getCallerWeight(calleeMethod,method, &weight, bcIndex, comp);
@@ -3394,7 +3394,7 @@ TR_IProfiler::getCallCount(TR_OpaqueMethodBlock *method, int32_t bcIndex, TR::Co
    TR_IPBytecodeHashTableEntry *entry = profilingSample(method, bcIndex, comp);
 
    if (entry && entry->asIPBCDataCallGraph())
-      return entry->asIPBCDataCallGraph()->getSumCount(comp);
+      return entry->asIPBCDataCallGraph()->getSumCount();
 
    return 0;
    }
@@ -4594,147 +4594,119 @@ CallSiteProfileInfo::getDominantClass(int32_t &sumW, int32_t &maxW)
 // Code is currently inactive. To actually use one must issue
 // iProfiler->dumpIPBCDataCallGraph(vmThread)
 // in some part of the code (typically at shutdown time)
-class TR_AggregationHT
+TR_AggregationHT::TR_AggregationHTNode::TR_AggregationHTNode(J9ROMMethod *romMethod, J9ROMClass *romClass, TR_IPBytecodeHashTableEntry *entry):
+   _next(NULL), _romMethod(romMethod), _romClass(romClass)
    {
-   public:
-         class TR_CGChainedEntry
-         {
-         TR_CGChainedEntry    *_next; // for chaining
-         TR_IPBCDataCallGraph *_CGentry;
-         public:
-            TR_CGChainedEntry(TR_IPBCDataCallGraph *entry) : _next(NULL), _CGentry(entry) { }
-            uintptr_t getPC() const { return _CGentry->getPC(); }
-            TR_CGChainedEntry *getNext() const { return _next; }
-            TR_IPBCDataCallGraph *getCGData() const { return _CGentry; }
-            void setNext(TR_CGChainedEntry *next) { _next = next; }
-         };
-      class TR_AggregationHTNode
-         {
-         TR_AggregationHTNode *_next; // for chaining
-         J9ROMMethod *_romMethod; // this is the key
-         J9ROMClass  *_romClass;
-         TR_CGChainedEntry *_IPData;
-         public:
-            TR_AggregationHTNode(J9ROMMethod *romMethod, J9ROMClass *romClass, TR_IPBCDataCallGraph *entry) : _next(NULL), _romMethod(romMethod), _romClass(romClass)
-               {
-               _IPData = new (*TR_IProfiler::allocator()) TR_CGChainedEntry(entry);
-               }
-            ~TR_AggregationHTNode()
-               {
-               TR_CGChainedEntry *entry = getFirstCGEntry();
-               while (entry)
-                  {
-                  TR_CGChainedEntry *nextEntry = entry->getNext();
-                  TR_IProfiler::allocator()->deallocate(entry);
-                  entry = nextEntry;
-                  }
-               }
-            TR_AggregationHTNode *getNext() const { return _next; }
-            J9ROMMethod *getROMMethod() const { return _romMethod; }
-            J9ROMClass *getROMClass() const { return _romClass; }
-            TR_CGChainedEntry *getFirstCGEntry() const { return _IPData; }
-            void setNext(TR_AggregationHTNode *next) { _next = next; }
-            void setFirstCGEntry(TR_CGChainedEntry *e) { _IPData = e; }
-         };
-      struct SortingPair
-         {
-         char *_methodName;
-         TR_AggregationHT::TR_AggregationHTNode *_IPdata;
-         };
+   _IPData = new (*TR_IProfiler::allocator()) TR_IPChainedEntry(entry);
+   }
 
-      TR_AggregationHT(size_t sz) : _sz(sz), _numTrackedMethods(0)
+TR_AggregationHT::TR_AggregationHTNode::~TR_AggregationHTNode()
+   {
+   TR_IPChainedEntry *entry = getFirstIPEntry();
+   while (entry)
+      {
+      TR_IPChainedEntry *nextEntry = entry->getNext();
+      TR_IProfiler::allocator()->deallocate(entry);
+      entry = nextEntry;
+      }
+   }
+
+TR_AggregationHT::TR_AggregationHT(size_t sz) : _sz(sz), _numTrackedMethods(0)
+   {
+   // TODO: use scratch memory
+   _backbone = new (*TR_IProfiler::allocator()) TR_AggregationHTNode*[sz];
+   if (!_backbone) // OOM
+      {
+      _sz = 0;
+      }
+   else
+      {
+      for (size_t i = 0; i < sz; i++)
+         _backbone[i] = NULL;
+      }
+   }
+
+TR_AggregationHT::~TR_AggregationHT()
+   {
+   for (int32_t bucket = 0; bucket < _sz; bucket++)
+      {
+      TR_AggregationHTNode *node = _backbone[bucket];
+      while (node)
          {
-         _backbone = new (*TR_IProfiler::allocator()) TR_AggregationHTNode*[sz];
-         if (!_backbone) // OOM
-            {
-            _sz = 0;
-            }
-         else
-            {
-            for (size_t i = 0; i < sz; i++)
-               _backbone[i] = NULL;
-            }
+         TR_AggregationHTNode *nextNode = node->getNext();
+         node->~TR_AggregationHTNode();
+         TR_IProfiler::allocator()->deallocate(node);
+         node = nextNode;
          }
-      ~TR_AggregationHT()
+      }
+   TR_IProfiler::allocator()->deallocate(_backbone);
+   }
+
+// Add the given cgEntry from the IP table into the aggregationHT
+// The caller also provides the romMethod/romClass that contains the
+// bytecode described by this cgEntry
+void
+TR_AggregationHT::add(J9ROMMethod *romMethod, J9ROMClass *romClass, TR_IPBytecodeHashTableEntry *cgEntry)
+   {
+   size_t index = hash(romMethod);
+   // search the bucket for matching romMethod
+   TR_AggregationHTNode *crtMethodNode = _backbone[index];
+   for (; crtMethodNode; crtMethodNode = crtMethodNode->getNext())
+      {
+      if (crtMethodNode->getROMMethod() == romMethod)
          {
-         for (int32_t bucket = 0; bucket < _sz; bucket++)
+         // Add a new bc data point to the method entry we found; keep it sorted by pc
+         TR_IPChainedEntry *newEntry = new (*TR_IProfiler::allocator()) TR_IPChainedEntry(cgEntry);
+         if (!newEntry) // OOM
             {
-            TR_AggregationHTNode *node = _backbone[bucket];
-            while (node)
-               {
-               TR_AggregationHTNode *nextNode = node->getNext();
-               node->~TR_AggregationHTNode();
-               TR_IProfiler::allocator()->deallocate(node);
-               node = nextNode;
-               }
+            // printfs are ok since this method will be used for diagnostics only
+            fprintf(stderr, "Cannot allocated memory. Incomplete info will be printed.\n");
+            return;
             }
-         TR_IProfiler::allocator()->deallocate(_backbone);
-         }
-      size_t hash(J9ROMMethod *romMethod) { return (((uintptr_t)romMethod) >> 3) % _sz; }
-      size_t getSize() const { return _sz; }
-      size_t numTrackedMethods() const { return _numTrackedMethods; }
-      TR_AggregationHTNode* getBucket(size_t i) const { return _backbone[i]; }
-      void add(J9ROMMethod *romMethod, J9ROMClass *romClass, TR_IPBCDataCallGraph *cgEntry)
-         {
-         size_t index = hash(romMethod);
-         // search the bucket for matching romMethod
-         TR_AggregationHTNode *crtMethodNode = _backbone[index];
-         for (; crtMethodNode; crtMethodNode = crtMethodNode->getNext())
-            if (crtMethodNode->getROMMethod() == romMethod)
-               {
-               // Add a new bc data point to the method entry we found; keep it sorted by pc
-               TR_CGChainedEntry *newEntry = new (*TR_IProfiler::allocator()) TR_CGChainedEntry(cgEntry);
-               if (!newEntry) // OOM
-                  {
-                  fprintf(stderr, "Cannot allocated memory. Incomplete info will be printed.\n");
-                  return;
-                  }
-               TR_CGChainedEntry *crtEntry = crtMethodNode->getFirstCGEntry();
-               TR_CGChainedEntry *prevEntry = NULL;
-               while (crtEntry)
-                  {
-                  // Ideally we should not have two entries with the same pc in the
-                  // Iprofiler HT (the pc is the key in the HT). However, due to the
-                  // fact that we don't acquire any locks, such rare occurrences are
-                  // possible. We should ignore any such  events.
-                  if (crtEntry->getPC() == cgEntry->getPC())
-                     {
-                     fprintf(stderr, "We cannot find the same PC twice");
-                     return;
-                     }
-                  if (crtEntry->getPC() > cgEntry->getPC())
-                     break; // found the position
-                  prevEntry = crtEntry;
-                  crtEntry = crtEntry->getNext();
-                  }
-               if (prevEntry)
-                  prevEntry->setNext(newEntry);
-               else
-                  crtMethodNode->setFirstCGEntry(newEntry);
-               newEntry->setNext(crtEntry);
-               break;
-               }
-         // If my romMethod is not already in the HT let's add it
-         if (!crtMethodNode)
+         TR_IPChainedEntry *crtEntry = crtMethodNode->getFirstIPEntry();
+         TR_IPChainedEntry *prevEntry = NULL;
+         while (crtEntry)
             {
-            // Add a new entry at the beginning
-            TR_AggregationHTNode *newMethodNode = new (*TR_IProfiler::allocator()) TR_AggregationHTNode(romMethod, romClass, cgEntry);
-            if (!newMethodNode || !newMethodNode->getFirstCGEntry()) // OOM
+            // Ideally we should not have two entries with the same pc in the
+            // Iprofiler HT (the pc is the key in the HT). However, due to the
+            // fact that we don't acquire any locks, such rare occurrences are
+            // possible. We should ignore any such  events.
+            if (crtEntry->getPC() == cgEntry->getPC())
                {
-               fprintf(stderr, "Cannot allocated memory. Incomplete info will be printed.\n");
+               TR_IPBCDataCallGraph *cg = cgEntry->asIPBCDataCallGraph();
+               int32_t cnt = cg ? cg->getSumCount() : 0;
+               fprintf(stderr, "We cannot find the same PC twice. PC=%zu romMethod=%p sumCount=%d\n",
+                       cgEntry->getPC(), romMethod, cnt);
                return;
                }
-            newMethodNode->setNext(_backbone[index]);
-            _backbone[index] = newMethodNode;
-            _numTrackedMethods++;
+            if (crtEntry->getPC() > cgEntry->getPC())
+               break; // found the position
+            prevEntry = crtEntry;
+            crtEntry = crtEntry->getNext();
             }
+         if (prevEntry)
+            prevEntry->setNext(newEntry);
+         else
+            crtMethodNode->setFirstCGEntry(newEntry);
+         newEntry->setNext(crtEntry);
+         break;
          }
-      void sortByNameAndPrint(TR_J9VMBase *fe);
-   private:
-      size_t _sz;
-      size_t _numTrackedMethods;
-      TR_AggregationHTNode** _backbone;
-   };
+      }
+   // If my romMethod is not already in the HT let's add it
+   if (!crtMethodNode)
+      {
+      // Add a new entry at the beginning
+      TR_AggregationHTNode *newMethodNode = new (*TR_IProfiler::allocator()) TR_AggregationHTNode(romMethod, romClass, cgEntry);
+      if (!newMethodNode || !newMethodNode->getFirstIPEntry()) // OOM
+         {
+         fprintf(stderr, "Cannot allocated memory. Incomplete info will be printed.\n");
+         return;
+         }
+      newMethodNode->setNext(_backbone[index]);
+      _backbone[index] = newMethodNode;
+      _numTrackedMethods++;
+      }
+   }
 
 // Callback for qsort to sort by methodName
 int compareByMethodName(const void *a, const void *b)
@@ -4742,7 +4714,8 @@ int compareByMethodName(const void *a, const void *b)
    return strcmp(((TR_AggregationHT::SortingPair *)a)->_methodName, ((TR_AggregationHT::SortingPair *)b)->_methodName);
    }
 
-void TR_AggregationHT::sortByNameAndPrint(TR_J9VMBase *fe)
+void
+TR_AggregationHT::sortByNameAndPrint()
    {
    // Scan the aggregationTable and convert from romMethod to methodName so that
    // we can sort and print the information
@@ -4795,11 +4768,13 @@ void TR_AggregationHT::sortByNameAndPrint(TR_J9VMBase *fe)
       {
       fprintf(stderr, "Method: %s\n", sortingArray[i]._methodName);
       J9ROMMethod *romMethod = sortingArray[i]._IPdata->getROMMethod();
-      TR_CGChainedEntry *cgEntry = sortingArray[i]._IPdata->getFirstCGEntry();
-      // Iterate through bytecodes with info
+      TR_IPChainedEntry *cgEntry = sortingArray[i]._IPdata->getFirstIPEntry();
+      // Iterate through bytecodes with info from this method
       for (; cgEntry; cgEntry = cgEntry->getNext())
          {
-         TR_IPBCDataCallGraph *ipbcCGData = cgEntry->getCGData();
+         TR_IPBCDataCallGraph *ipbcCGData = cgEntry->getIPData()->asIPBCDataCallGraph();
+         if (!ipbcCGData)
+            continue;
          U_8* pc = (U_8*)ipbcCGData->getPC();
 
          size_t bcOffset = pc - (U_8*)J9_BYTECODE_START_FROM_ROM_METHOD(romMethod);
@@ -4821,7 +4796,7 @@ void TR_AggregationHT::sortByNameAndPrint(TR_J9VMBase *fe)
             if (cgData->getClazz(j))
                {
                int32_t len;
-               const char * s = fe->getClassNameChars((TR_OpaqueClassBlock*)cgData->getClazz(j), len);
+               const char * s = utf8Data(J9ROMCLASS_CLASSNAME(TR::Compiler->cls.romClassOf((TR_OpaqueClassBlock*)cgData->getClazz(j))), len);
                fprintf(stderr, "\t\tW:%4u\tM:%#" OMR_PRIxPTR "\t%.*s\n", cgData->_weight[j], cgData->getClazz(j), len, s);
                }
             }
@@ -4912,7 +4887,7 @@ void TR_IProfiler::dumpIPBCDataCallGraph(J9VMThread* vmThread)
             }
          }
       }
-   aggregationHT.sortByNameAndPrint(fe);
+   aggregationHT.sortByNameAndPrint();
 
    fprintf(stderr, "Finished dumping info\n");
    }
