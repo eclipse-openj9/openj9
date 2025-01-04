@@ -4810,6 +4810,77 @@ TR_AggregationHT::sortByNameAndPrint()
    TR_IProfiler::allocator()->deallocate(sortingArray);
    }
 
+// Given a bytecode PC, return the ROMMethod that contains that bytecode PC.
+// Also return the romClass that contains the ROMMethod we found.
+// This method is relatively expensive and should not be called on a critical path.
+J9ROMMethod *
+TR_IProfiler::findROMMethodFromPC(J9VMThread *vmThread, uintptr_t methodPC, J9ROMClass *&romClass)
+  {
+   J9JavaVM *javaVM = vmThread->javaVM;
+   J9InternalVMFunctions *vmFunctions = javaVM->internalVMFunctions;
+
+   J9ClassLoader* loader;
+   romClass = vmFunctions->findROMClassFromPC(vmThread, (UDATA)methodPC, &loader);
+
+   J9ROMMethod *currentMethod = J9ROMCLASS_ROMMETHODS(romClass);
+   J9ROMMethod *desiredMethod = NULL;
+   if (romClass)
+      {
+      // Find the method with the corresponding PC
+      for (U_32 i = 0; i < romClass->romMethodCount; i++)
+         {
+         if (((UDATA)methodPC >= (UDATA)currentMethod)
+             && ((UDATA)methodPC < (UDATA)J9_BYTECODE_END_FROM_ROM_METHOD(currentMethod)))
+            {
+            // found the method
+            desiredMethod = currentMethod;
+            break;
+            }
+         currentMethod = nextROMMethod(currentMethod);
+         }
+      }
+   return desiredMethod;
+   }
+
+// All information that is stored in the IProfiler table will be stored
+// in the indicated AggregationTable, aggregated by J9ROMMethod
+// The `collectOnlyCallGraphEntries` parameter indicates whether we should
+// only look at the callGraph entries used for virtual/interface invokes
+void
+TR_IProfiler::traverseIProfilerTableAndCollectEntries(TR_AggregationHT *aggregationHT, J9VMThread* vmThread, bool collectOnlyCallGraphEntries)
+{
+   J9JavaVM *javaVM = vmThread->javaVM;
+   J9InternalVMFunctions *vmFunctions = javaVM->internalVMFunctions;
+   TR_J9VMBase * fe = TR_J9VMBase::get(javaVM->jitConfig, vmThread);
+
+   TR::VMAccessCriticalSection dumpCallGraph(fe); // prevent class unloading
+
+   for (int32_t bucket = 0; bucket < TR::Options::_iProfilerBcHashTableSize; bucket++)
+      {
+      for (TR_IPBytecodeHashTableEntry *entry = _bcHashTable[bucket]; entry; entry = entry->getNext())
+         {
+         // Skip invalid entries
+         if (entry->isInvalid() || invalidateEntryIfInconsistent(entry))
+            continue;
+         // Skip non-callgraph entries, if so desired
+         if (collectOnlyCallGraphEntries && !entry->asIPBCDataCallGraph())
+            continue;
+
+         // Get the pc and find the method this pc belongs to
+         J9ROMClass *romClass = NULL;
+         J9ROMMethod * desiredMethod = findROMMethodFromPC(vmThread, entry->getPC(), romClass);
+         if (desiredMethod)
+            {
+            // Add the information to the aggregationTable
+            aggregationHT->add(desiredMethod, romClass, entry);
+            }
+         else
+            {
+            fprintf(stderr, "Cannot find RomMethod that contains pc=%p \n", (uint8_t*)entry->getPC());
+            }
+         }
+      } // for each bucket
+   }
 
 
 // This method can be used to print to stderr in readable format all the IPBCDataCallGraph
@@ -4820,7 +4891,8 @@ TR_AggregationHT::sortByNameAndPrint()
 // Temporary data structures will be allocated using persistent memory which will be deallocated
 // at the end.
 // Parameter: the vmThread it is executing on.
-void TR_IProfiler::dumpIPBCDataCallGraph(J9VMThread* vmThread)
+void
+TR_IProfiler::dumpIPBCDataCallGraph(J9VMThread* vmThread)
    {
    fprintf(stderr, "Dumping info ...\n");
    TR_AggregationHT aggregationHT(TR::Options::_iProfilerBcHashTableSize);
@@ -4829,64 +4901,7 @@ void TR_IProfiler::dumpIPBCDataCallGraph(J9VMThread* vmThread)
       fprintf(stderr, "Cannot allocate memory. Bailing out.\n");
       return;
       }
-
-   J9JavaVM *javaVM = vmThread->javaVM;
-   J9InternalVMFunctions *vmFunctions = javaVM->internalVMFunctions;
-   TR_J9VMBase * fe = TR_J9VMBase::get(javaVM->jitConfig, vmThread);
-
-   TR::VMAccessCriticalSection dumpCallGraph(fe);
-
-   fprintf(stderr, "Aggregating per method ...\n");
-   for (int32_t bucket = 0; bucket < TR::Options::_iProfilerBcHashTableSize; bucket++)
-      {
-      //fprintf(stderr, "Looking at bucket %d\n", bucket);
-      for (TR_IPBytecodeHashTableEntry *entry = _bcHashTable[bucket]; entry; entry = entry->getNext())
-         {
-         // Skip invalid entries
-         if (entry->isInvalid() || invalidateEntryIfInconsistent(entry))
-            continue;
-         TR_IPBCDataCallGraph *cgEntry = entry->asIPBCDataCallGraph();
-         if (cgEntry)
-            {
-            // Get the pc and find the method this pc belongs to
-            U_8* pc = (U_8*)cgEntry->getPC();
-            //fprintf(stderr, "\tInspecting pc=%p\n", pc);
-            J9ClassLoader* loader;
-            J9ROMClass * romClass = vmFunctions->findROMClassFromPC(vmThread, (UDATA)pc, &loader);
-            if (romClass)
-               {
-               //J9ROMMethod * romMethod = vmFunctions->findROMMethodInROMClass(vmThread, romClass, (UDATA)pc);
-               J9ROMMethod *currentMethod = J9ROMCLASS_ROMMETHODS(romClass);
-               J9ROMMethod *desiredMethod = NULL;
-               //fprintf(stderr, "Scanning %u romMethods...\n", romClass->romMethodCount);
-               for (U_32 i = 0; i < romClass->romMethodCount; i++)
-                  {
-                  if (((UDATA)pc >= (UDATA)currentMethod) && ((UDATA)pc < (UDATA)J9_BYTECODE_END_FROM_ROM_METHOD(currentMethod)))
-                     {
-                     // found the method
-                     desiredMethod = currentMethod;
-                     break;
-                     }
-                  currentMethod = nextROMMethod(currentMethod);
-                  }
-
-               if (desiredMethod)
-                  {
-                  // Add the information to the aggregationTable
-                  aggregationHT.add(desiredMethod, romClass, cgEntry);
-                  }
-               else
-                  {
-                  fprintf(stderr, "pc=%p does not belong to romMethod range\n", pc);
-                  }
-               }
-            else
-               {
-               fprintf(stderr, "pc=%p does not belong to a romMethod\n", pc);
-               }
-            }
-         }
-      }
+   traverseIProfilerTableAndCollectEntries(&aggregationHT, vmThread, true/*collectOnlyCallGraphEntries*/);
    aggregationHT.sortByNameAndPrint();
 
    fprintf(stderr, "Finished dumping info\n");

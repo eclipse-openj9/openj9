@@ -601,6 +601,7 @@ public:
    */
    virtual void persistIprofileInfo(TR::ResolvedMethodSymbol *methodSymbol, TR_ResolvedMethod *method, TR::Compilation *comp); // JITServer: mark virtual
    bool elgibleForPersistIprofileInfo(TR::Compilation *comp) const;
+   void traverseIProfilerTableAndCollectEntries(TR_AggregationHT *aggregationHT, J9VMThread* vmThread, bool collectOnlyCallGraphEntries = false);
 
    void checkMethodHashTable();
 
@@ -741,6 +742,7 @@ private:
    TR_IPBCDataCallGraph* getCGProfilingData(TR_ByteCodeInfo &bcInfo, TR::Compilation *comp);
    TR_IPBCDataCallGraph* getCGProfilingData(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR::Compilation *comp);
 
+   J9ROMMethod *findROMMethodFromPC(J9VMThread *vmThread, uintptr_t methodPC, J9ROMClass *&romClass);
    uintptr_t createBalancedBST(uintptr_t *pcEntries, int32_t low, int32_t high, uintptr_t memChunk,
                                TR_J9SharedCache *sharedCache);
    uint32_t walkILTreeForEntries(uintptr_t *pcEntries, uint32_t &numEntries, TR_J9ByteCodeIterator *bcIterator, TR_OpaqueMethodBlock *method, TR::Compilation *comp,
