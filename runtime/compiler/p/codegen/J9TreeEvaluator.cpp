@@ -6163,6 +6163,26 @@ static void genInitArrayHeader(TR::Node *node, TR::Instruction *&iCursor, bool i
                                            TR::MemoryReference::createWithDisplacement(cg, resReg, fej9->getOffsetOfContiguousArraySizeField(), 4),
                                            instanceSizeReg, iCursor);
       }
+
+   // Clear padding after size field
+   if (needZeroInit)
+      {
+      TR_ASSERT_FATAL_WITH_NODE(node, zeroReg, "zeroReg is expected to be intialized but wasn't.\n");
+      if (TR::Compiler->om.compressObjectReferences())
+         {
+         // padding field starts at fej9->getOffsetOfDiscontiguousArraySizeField() + 4
+         iCursor = generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node,
+                                          TR::MemoryReference::createWithDisplacement(cg, resReg, fej9->getOffsetOfDiscontiguousArraySizeField() + 4, 4),
+                                          zeroReg, iCursor);
+         }
+      else
+         {
+         // padding field starts at fej9->getOffsetOfContiguousArraySizeField() + 4
+         iCursor = generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node,
+                                          TR::MemoryReference::createWithDisplacement(cg, resReg, fej9->getOffsetOfContiguousArraySizeField() + 4, 4),
+                                          zeroReg, iCursor);
+         }
+      }
    }
 
 static void genZeroInit(TR::CodeGenerator *cg, TR::Node *node, TR::Register *objectReg, int32_t headerSize, int32_t totalSize, bool useInitInfo)
@@ -6492,7 +6512,8 @@ TR::Register *J9::Power::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeG
              * runtime size checks are needed to determine whether to use contiguous or discontiguous header layout.
              *
              * In both scenarios, arrays of non-zero size use contiguous header layout while zero size arrays use
-             * discontiguous header layout.
+             * discontiguous header layout. DataAddr field of zero size arrays is intialized to NULL because they
+             * don't have any data elements.
              */
             TR::Register *offsetReg = tmp5Reg;
             TR::Register *firstDataElementReg = tmp4Reg;
@@ -6517,17 +6538,22 @@ TR::Register *J9::Power::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeG
                iCursor = generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, offsetReg, offsetReg, 29, 8, iCursor);
                // offsetReg should either be 0 (if enumReg > 0) or 8 (if enumReg == 0)
                iCursor = generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, offsetReg, resReg, offsetReg, iCursor);
-
                iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, firstDataElementReg, offsetReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), iCursor);
                dataAddrSlotMR = TR::MemoryReference::createWithDisplacement(cg, offsetReg, fej9->getOffsetOfContiguousDataAddrField(), TR::Compiler->om.sizeofReferenceAddress());
+
+               // Clear firstDataElementReg reg if dealing with 0 size arrays
+               iCursor = generateTrg1Src1ImmInstruction(cg,TR::InstOpCode::cmpi8, node, condReg, enumReg, 0, iCursor);
+               iCursor = generateTrg1Src3Instruction(cg, TR::InstOpCode::iseleq, node, firstDataElementReg, NULL, firstDataElementReg, condReg, iCursor);
                }
             else if (!isVariableLen && node->getFirstChild()->getOpCode().isLoadConst() && node->getFirstChild()->getInt() == 0)
                {
                if (comp->getOption(TR_TraceCG))
                   traceMsg(comp, "Node (%p): Dealing with full/compressed refs fixed length zero size array.\n", node);
 
-               iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, firstDataElementReg, resReg, TR::Compiler->om.discontiguousArrayHeaderSizeInBytes(), iCursor);
                dataAddrSlotMR = TR::MemoryReference::createWithDisplacement(cg, resReg, fej9->getOffsetOfDiscontiguousDataAddrField(), TR::Compiler->om.sizeofReferenceAddress());
+
+               // NULL firstDataElementReg reg
+               iCursor = generateTrg1Src2Instruction(cg, TR::InstOpCode::XOR, node, firstDataElementReg, firstDataElementReg, firstDataElementReg);
                }
             else
                {
@@ -6547,8 +6573,16 @@ TR::Register *J9::Power::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeG
                      fej9->getOffsetOfDiscontiguousDataAddrField(), fej9->getOffsetOfContiguousDataAddrField());
                   }
 
+               // Load first element address into firstDataElementReg
                iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, firstDataElementReg, resReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), iCursor);
                dataAddrSlotMR = TR::MemoryReference::createWithDisplacement(cg, resReg, fej9->getOffsetOfContiguousDataAddrField(), TR::Compiler->om.sizeofReferenceAddress());
+
+               // Clear firstDataElementReg reg if dealing with variable len 0 size arrays
+               if (isVariableLen && !TR::Compiler->om.compressObjectReferences())
+                  {
+                  iCursor = generateTrg1Src1ImmInstruction(cg,TR::InstOpCode::cmpi8, node, condReg, enumReg, 0, iCursor);
+                  iCursor = generateTrg1Src3Instruction(cg, TR::InstOpCode::iseleq, node, firstDataElementReg, NULL, firstDataElementReg, condReg, iCursor);
+                  }
                }
 
             // store the first data element address to dataAddr slot

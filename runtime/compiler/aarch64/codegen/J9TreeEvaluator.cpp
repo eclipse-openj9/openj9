@@ -3298,6 +3298,23 @@ genInitArrayHeader(TR::Node *node, TR::CodeGenerator *cg, TR_OpaqueClassBlock *c
                                     tempReg1);
          }
       }
+
+   // Clear padding after the size field
+   if (!isTLHHasNotBeenCleared)
+      {
+      if (TR::Compiler->om.generateCompressedObjectHeaders())
+         {
+         generateMemSrc1Instruction(cg, TR::InstOpCode::strimmw, node,
+                        TR::MemoryReference::createWithDisplacement(cg, objectReg, fej9->getOffsetOfDiscontiguousArraySizeField() + 4),
+                        zeroReg);
+         }
+      else
+         {
+         generateMemSrc1Instruction(cg, TR::InstOpCode::strimmw, node,
+                        TR::MemoryReference::createWithDisplacement(cg, objectReg, fej9->getOffsetOfContiguousArraySizeField() + 4),
+                        zeroReg);
+         }
+      }
    }
 
 /**
@@ -3462,7 +3479,8 @@ J9::ARM64::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGenerator *cg)
           * runtime size checks are needed to determine whether to use contiguous or discontiguous header layout.
           *
           * In both scenarios, arrays of non-zero size use contiguous header layout while zero size arrays use
-          * discontiguous header layout.
+          * discontiguous header layout. DataAddr field of zero size arrays is intialized to NULL because they
+          * don't have any data elements.
           */
          TR::Register *offsetReg = tempReg1;
          TR::Register *firstDataElementReg = tempReg2;
@@ -3491,6 +3509,10 @@ J9::ARM64::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 
             dataAddrSlotMR = TR::MemoryReference::createWithDisplacement(cg, offsetReg, fej9->getOffsetOfContiguousDataAddrField());
             generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, firstDataElementReg, offsetReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+
+            // Clear firstDataElementReg reg if dealing with 0 size arrays
+            generateCompareImmInstruction(cg, node, lengthReg, 0, false);
+            generateCondTrg1Src2Instruction(cg, TR::InstOpCode::cselx, node, firstDataElementReg, zeroReg, firstDataElementReg, TR::CC_EQ);
             }
          else if (!isVariableLength && node->getFirstChild()->getOpCode().isLoadConst() && node->getFirstChild()->getInt() == 0)
             {
@@ -3498,7 +3520,7 @@ J9::ARM64::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGenerator *cg)
                traceMsg(comp, "Node (%p): Dealing with full/compressed refs fixed length zero size array.\n", node);
 
             dataAddrSlotMR = TR::MemoryReference::createWithDisplacement(cg, resultReg, fej9->getOffsetOfDiscontiguousDataAddrField());
-            generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, firstDataElementReg, resultReg, TR::Compiler->om.discontiguousArrayHeaderSizeInBytes());
+            firstDataElementReg =  zeroReg;
             }
          else
             {
@@ -3520,8 +3542,14 @@ J9::ARM64::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 
             dataAddrSlotMR = TR::MemoryReference::createWithDisplacement(cg, resultReg, fej9->getOffsetOfContiguousDataAddrField());
             generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, firstDataElementReg, resultReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
-            }
 
+            if (isVariableLength && !TR::Compiler->om.compressObjectReferences())
+               {
+               // Clear firstDataElementReg reg if dealing with variable length 0 size arrays
+               generateCompareImmInstruction(cg, node, lengthReg, 0, false);
+               generateCondTrg1Src2Instruction(cg, TR::InstOpCode::cselx, node, offsetReg, zeroReg, offsetReg, TR::CC_EQ);
+               }
+            }
          generateMemSrc1Instruction(cg, TR::InstOpCode::strimmx, node, dataAddrSlotMR, firstDataElementReg);
          }
 #endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
