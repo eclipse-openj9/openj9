@@ -4278,6 +4278,9 @@ void JitShutdown(J9JITConfig * jitConfig)
    // so the fact that this option is true doesn't mean that IProfiler structures were not allocated
    if (options /* && !options->getOption(TR_DisableInterpreterProfiling) */ && iProfiler)
       {
+      //if (options->getOption(TR_StoreIPInfoOnShutdown))
+      //   iProfiler->persistAllEntries();
+
       printIprofilerStats(options, jitConfig, iProfiler, "Shutdown");
       // Prevent the interpreter to accumulate more info
       // stopInterpreterProfiling is stronger than turnOff... because it prevents the reactivation
@@ -7803,6 +7806,7 @@ void printIprofilerStats(TR::Options *options, J9JITConfig * jitConfig, TR_IProf
          iProfiler->printAllocationReport();
       if (TEST_verbose || options->getOption(TR_VerboseInterpreterProfiling))
          iProfiler->outputStats();
+      // iProfiler->traverseIProfilerTableAndGenerateHistograms(jitConfig);
       }
    }
 

@@ -50,6 +50,7 @@
 #include "env/PersistentCHTable.hpp"
 #include "env/PersistentInfo.hpp"
 #include "env/jittypes.h"
+#include "env/SystemSegmentProvider.hpp"
 #include "env/VerboseLog.hpp"
 #include "env/VMAccessCriticalSection.hpp"
 #include "il/Block.hpp"
@@ -4905,6 +4906,299 @@ TR_IProfiler::dumpIPBCDataCallGraph(J9VMThread* vmThread)
    aggregationHT.sortByNameAndPrint();
 
    fprintf(stderr, "Finished dumping info\n");
+   }
+
+uintptr_t
+TR_IProfiler::createBalancedBST(TR_IPBytecodeHashTableEntry **ipEntries, int32_t low, int32_t high, uintptr_t memChunk, TR_J9SharedCache *sharedCache)
+   {
+   if (high < low)
+      return 0;
+
+   TR_IPBCDataStorageHeader * storage = (TR_IPBCDataStorageHeader *) memChunk;
+   int32_t middle = (high+low)/2;
+   TR_IPBytecodeHashTableEntry *entry = ipEntries[middle];
+   uint32_t bytes = entry->getBytesFootprint();
+   entry->createPersistentCopy(sharedCache, storage, _compInfo->getPersistentInfo());
+
+   uintptr_t leftChild = createBalancedBST(ipEntries, low, middle - 1, memChunk + bytes, sharedCache);
+   if (leftChild)
+      {
+      TR_ASSERT(bytes < 1 << 8, "Error storing iprofile information: left child too far away"); // current size of left child
+      storage->left = bytes;
+      }
+
+   uintptr_t rightChild = createBalancedBST(ipEntries, middle + 1, high, memChunk + bytes + leftChild, sharedCache);
+   if (rightChild)
+      {
+      TR_ASSERT(bytes + leftChild < 1 << 16, "Error storing iprofile information: right child too far away"); // current size of right child
+      storage->right = bytes+leftChild;
+      }
+
+   return bytes + leftChild + rightChild;
+   }
+
+// Persist all IProfiler entries into the SCC.
+// This is done by aggregating all IProfiler entries per
+// ROMMethod with the help of a TR_AggregationHT table.
+// Then, for each ROMMethod with IP info we store the
+// entries arranged as a BST (for fast retrieval later).
+void
+TR_IProfiler::persistAllEntries()
+   {
+   J9JavaVM * javaVM = _compInfo->getJITConfig()->javaVM;
+   J9VMThread *vmThread = javaVM->internalVMFunctions->currentVMThread(javaVM);
+   TR_J9VMBase * fe = TR_J9VMBase::get(_compInfo->getJITConfig(), vmThread, TR_J9VMBase::AOT_VM);
+   TR_J9SharedCache *sharedCache = fe->sharedCache();
+   static bool SCfull = false;
+
+   if (!(TR::Options::sharedClassCache() && sharedCache))
+      return;
+
+   J9SharedClassConfig *scConfig = javaVM->sharedClassConfig;
+
+   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseIProfilerPersistence))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "IProfiler persisting all entries to SCC");
+
+   int32_t entriesAlreadyPersisted = _STATS_entriesPersisted;
+
+   try
+      {
+      TR::RawAllocator rawAllocator(javaVM);
+      J9::SegmentAllocator segmentAllocator(MEMORY_TYPE_JIT_SCRATCH_SPACE | MEMORY_TYPE_VIRTUAL, *javaVM);
+      J9::SystemSegmentProvider regionSegmentProvider(1 << 20, 1 << 20, TR::Options::getScratchSpaceLimit(), segmentAllocator, rawAllocator);
+      TR::Region region(regionSegmentProvider, rawAllocator);
+      TR_Memory trMemory(*_compInfo->persistentMemory(), region);
+
+      TR_AggregationHT aggregationHT(TR::Options::_iProfilerBcHashTableSize);
+      if (aggregationHT.getSize() == 0) // OOM
+         {
+         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseIProfilerPersistence))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "IProfiler: Cannot allocate memory. Bailing out persisting all entries to SCC");
+         return;
+         }
+      traverseIProfilerTableAndCollectEntries(&aggregationHT, vmThread);
+
+      size_t methodIndex = 0;
+      for (int32_t bucket = 0; bucket < aggregationHT.getSize(); bucket++)
+         {
+         for (TR_AggregationHT::TR_AggregationHTNode *node = aggregationHT.getBucket(bucket); node; node = node->getNext())
+            {
+            _STATS_methodPersistenceAttempts++;
+            // If there is no more space, continue the loop to update the stats
+            if (SCfull)
+               {
+               _STATS_methodNotPersisted_other++;
+               continue;
+               }
+            J9ROMMethod* romMethod = node->getROMMethod();
+
+            // Can only persist profile info if the method is in the shared cache
+            if (!sharedCache->isROMMethodInSharedCache(romMethod))
+               {
+               _STATS_methodNotPersisted_classNotInSCC++;
+               continue;
+               }
+
+            // If the method is already persisted, we don't need to do anything else
+            unsigned char storeBuffer[1000];
+            uint32_t bufferLength = sizeof(storeBuffer);
+            J9SharedDataDescriptor descriptor;
+            descriptor.address = storeBuffer;
+            descriptor.length = bufferLength;
+            descriptor.type = J9SHR_ATTACHED_DATA_TYPE_JITPROFILE;
+            descriptor.flags = J9SHR_ATTACHED_DATA_NO_FLAGS;
+            IDATA dataIsCorrupt;
+            const U_8 *found = scConfig->findAttachedData(vmThread, romMethod, &descriptor, &dataIsCorrupt);
+            if (found)
+               {
+               _STATS_methodNotPersisted_alreadyStored++;
+               continue;
+               }
+            // Count how many entries we have for this ROMMethod and how much space we need
+            size_t numEntries = 0;
+            size_t bytesFootprint = 0;
+            TR_IPBytecodeHashTableEntry* ipEntries[1000]; // Capped size for number of profiled entries per method
+            for (TR_AggregationHT::TR_IPChainedEntry *ipEntry = node->getFirstIPEntry(); ipEntry; ipEntry = ipEntry->getNext())
+               {
+               TR_IPBytecodeHashTableEntry *ipData = ipEntry->getIPData();
+
+               if (!invalidateEntryIfInconsistent(ipData))
+                  {
+                  if (numEntries >= sizeof(ipEntries))
+                     break; // stop here because we have too many entries for this method
+                  // Check whether info can be persisted.
+                  // Reasons for not being to include: locked entries, unloaded methods, target class not in SCC
+                  // Note that canBePersisted() locks the entry
+                  uint32_t canPersist = ipData->canBePersisted(sharedCache, _compInfo->getPersistentInfo());
+                  if (canPersist == IPBC_ENTRY_CAN_PERSIST)
+                     {
+                     bytesFootprint += ipData->getBytesFootprint();
+                     ipEntries[numEntries] = ipData;
+                     numEntries++;
+                     }
+                  else
+                     {
+                     // Stats for why we cannot persist
+                     switch (canPersist)
+                        {
+                        case IPBC_ENTRY_PERSIST_LOCK:
+                           break;
+                        case IPBC_ENTRY_PERSIST_NOTINSCC:
+                           _STATS_entriesNotPersisted_NotInSCC++;
+                           break;
+                        case IPBC_ENTRY_PERSIST_UNLOADED:
+                           _STATS_entriesNotPersisted_Unloaded++;
+                           break;
+                        default:
+                           _STATS_entriesNotPersisted_Other++;
+                        }
+                     }
+                  }
+               else // Entry is invalid
+                  {
+
+                  }
+               }
+            // Attempt to store numEntries whose PCs are stored in pcEntries
+            if (numEntries)
+               {
+               void * memChunk = trMemory.allocateMemory(bytesFootprint, stackAlloc);
+               // We already have the data
+               intptr_t bytes = createBalancedBST(ipEntries, 0, numEntries-1, (uintptr_t) memChunk, sharedCache);
+               TR_ASSERT(bytes == bytesFootprint, "BST doesn't match expected footprint");
+               // store in the shared cache
+               descriptor.address = (U_8 *) memChunk;
+               descriptor.length = bytesFootprint;
+               UDATA store = scConfig->storeAttachedData(vmThread, romMethod, &descriptor, 0);
+               if (store == 0)
+                  {
+                  _STATS_methodPersisted++;
+                  _STATS_entriesPersisted += numEntries;
+#ifdef PERSISTENCE_VERBOSE
+                  fprintf(stderr, "\tPersisted %d entries\n", numEntries);
+#endif
+                  }
+               else if (store != J9SHR_RESOURCE_STORE_FULL)
+                  {
+                  _STATS_persistError++;
+   #ifdef PERSISTENCE_VERBOSE
+                  fprintf(stderr, "\tNot Persisted: error\n");
+   #endif
+                  }
+               else
+                  {
+                  SCfull = true;
+                  _STATS_methodNotPersisted_SCCfull++;
+                  //bytesToPersist = bytesFootprint;
+   #ifdef PERSISTENCE_VERBOSE
+                  fprintf(stderr, "\tNot Persisted: SCC full\n");
+   #endif
+                  }
+               // Release all entries in ipEntries[] that were locked by us
+               for (uint32_t i = 0; i < numEntries; i++)
+                  {
+                  TR_IPBCDataCallGraph *cgEntry = ipEntries[i]->asIPBCDataCallGraph();
+                  if (cgEntry)
+                     cgEntry->releaseEntry();
+                  }
+               }
+            else // Nothing can be persisted for this method
+               {
+#ifdef PERSISTENCE_VERBOSE
+               fprintf(stderr, "\tNo entry can be persisted for this method (locked/invalid/notOnSCC) \n");
+#endif
+               }
+            }
+         }
+      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseIProfilerPersistence))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "IProfiler: persisted a total of %d entries, of which %d were persisted at shutdown",
+                                        _STATS_entriesPersisted, _STATS_entriesPersisted - entriesAlreadyPersisted);
+      }
+   catch (const std::exception &e)
+      {
+      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseIProfilerPersistence))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "IProfiler: Failed to store all entries to SCC");
+      }
+   }
+
+// Generates histograms IP info related to virtual/interface calls.
+// (1) Histogram for the "weight" of the dominant target (as a percentage of all targets)
+// (2) Histogram for the number of distinct targets of a particular call
+// To be used as diagnostic, not in production, at shutdown time (see JITShutdown()).
+void
+TR_IProfiler::traverseIProfilerTableAndGenerateHistograms(J9JITConfig *jitConfig)
+{
+   TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, NULL);
+
+   TR_StatsHisto<20> maxWeightHisto("Histo max weight of target", 0, 100);
+   TR_StatsHisto<3> numTargetsHisto("Histo num profiled targets", 1, 4);
+
+   //TR::VMAccessCriticalSection dumpCallGraph(fe); // prevent class unloading
+
+   for (int32_t bucket = 0; bucket < TR::Options::_iProfilerBcHashTableSize; bucket++)
+      {
+      for (TR_IPBytecodeHashTableEntry *entry = _bcHashTable[bucket]; entry; entry = entry->getNext())
+         {
+         // Skip invalid entries
+         if (entry->isInvalid() || invalidateEntryIfInconsistent(entry))
+            continue;
+         // Skip the artificial entries
+         if (!entry->getCanPersistEntryFlag())
+            continue;
+         // Skip non-callgraph entries
+         TR_IPBCDataCallGraph *cgEntry = entry->asIPBCDataCallGraph();
+         if (!cgEntry)
+            continue;
+         CallSiteProfileInfo *cgData = cgEntry->getCGData();
+
+         uint32_t sumWeight = 0;
+         uint32_t maxWeight = 0;
+         int maxIndex = -1;
+         int numTargets = 0;
+         for (int j = 0; j < NUM_CS_SLOTS; j++)
+            {
+            sumWeight += cgData->_weight[j];
+            if (maxWeight < cgData->_weight[j])
+               {
+               maxWeight = cgData->_weight[j];
+               maxIndex = j;
+               }
+            if (cgData->getClazz(j) && cgData->_weight[j] > 0)
+               numTargets++;
+            }
+         sumWeight += cgData->_residueWeight;
+         if (cgData->_residueWeight)
+            numTargets++;
+         if (sumWeight > 1)
+            numTargetsHisto.update(numTargets);
+         if (numTargets == 0)
+            {
+            fprintf(stderr, "Entry with no weight\n");
+            for (int j = 0; j < NUM_CS_SLOTS; j++)
+               fprintf(stderr, "Class %zu, weight=%u\n", cgData->getClazz(j), cgData->_weight[j]);
+            }
+
+         double percentage = 0;
+         if (maxIndex != -1)
+            percentage = maxWeight*100.0/(double)sumWeight;
+         else
+            fprintf(stderr, "maxIndex is 1\n");
+         if (sumWeight > 1)
+            maxWeightHisto.update(percentage);
+         if (sumWeight > 1)
+            {
+            if (numTargets == 1)
+               {
+               if (percentage < 100.0)
+                  {
+                  fprintf(stderr, "Single target but percentage is %f  maxWeight=%u maxIndex=%d sumWeight=%u\n", percentage, maxWeight, maxIndex, sumWeight);
+                  }
+               }
+            }
+         }
+      } // for each bucket
+      maxWeightHisto.report(stderr);
+      numTargetsHisto.report(stderr);
    }
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)

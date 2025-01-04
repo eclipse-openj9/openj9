@@ -601,6 +601,8 @@ public:
    */
    virtual void persistIprofileInfo(TR::ResolvedMethodSymbol *methodSymbol, TR_ResolvedMethod *method, TR::Compilation *comp); // JITServer: mark virtual
    bool elgibleForPersistIprofileInfo(TR::Compilation *comp) const;
+
+   void persistAllEntries(); // Persists all entries from IProfiler table into the SCC; TODO: check that JITServer does not execute this
    void traverseIProfilerTableAndCollectEntries(TR_AggregationHT *aggregationHT, J9VMThread* vmThread, bool collectOnlyCallGraphEntries = false);
 
    void checkMethodHashTable();
@@ -674,6 +676,8 @@ public:
    TR_IprofilerThreadLifetimeStates getIProfilerThreadLifetimeState() const { return _iprofilerThreadLifetimeState; }
    void setIProfilerThreadLifetimeState(TR_IprofilerThreadLifetimeStates s) { _iprofilerThreadLifetimeState = s; }
 
+   void traverseIProfilerTableAndGenerateHistograms(J9JITConfig *jitConfig);
+
 protected:
    bool isCompact(U_8 byteCode);
    bool isSwitch(U_8 byteCode);
@@ -743,8 +747,8 @@ private:
    TR_IPBCDataCallGraph* getCGProfilingData(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR::Compilation *comp);
 
    J9ROMMethod *findROMMethodFromPC(J9VMThread *vmThread, uintptr_t methodPC, J9ROMClass *&romClass);
-   uintptr_t createBalancedBST(uintptr_t *pcEntries, int32_t low, int32_t high, uintptr_t memChunk,
-                               TR_J9SharedCache *sharedCache);
+   uintptr_t createBalancedBST(TR_IPBytecodeHashTableEntry **ipEntries, int32_t low, int32_t high, uintptr_t memChunk, TR_J9SharedCache *sharedCache);
+   uintptr_t createBalancedBST(uintptr_t *pcEntries, int32_t low, int32_t high, uintptr_t memChunk, TR_J9SharedCache *sharedCache);
    uint32_t walkILTreeForEntries(uintptr_t *pcEntries, uint32_t &numEntries, TR_J9ByteCodeIterator *bcIterator, TR_OpaqueMethodBlock *method, TR::Compilation *comp,
                                  vcount_t visitCount, int32_t callerIndex, TR_BitVector *BCvisit, bool &abort);
 
