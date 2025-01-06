@@ -726,12 +726,12 @@ def setup_pull_request_single_comment(parsedComment) {
         case ~/.*openj9-openjdk-jdk.*/:
             // <org>/openj9-openjdk-jdk<version>(-zos)?
             def tmp_version = ghprbGhRepository.substring(ghprbGhRepository.indexOf('-jdk')+4)
-            if ("${tmp_version}" == "") {
-                tmp_version = 'next'
-            }
             if (tmp_version.contains('-')) {
                 // Strip off '-zos'
                 tmp_version = tmp_version.substring(0, tmp_version.indexOf('-'))
+            }
+            if ("${tmp_version}" == "") {
+                tmp_version = 'next'
             }
             RELEASES.add(tmp_version)
             minCommentSize = 3
