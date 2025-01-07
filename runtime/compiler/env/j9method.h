@@ -321,7 +321,7 @@ public:
    virtual bool                    getCallerWeight(TR_ResolvedJ9Method *caller, uint32_t *weight, uint32_t pcIndex=~0);
 
 
-   virtual intptr_t               getInvocationCount();
+   virtual intptr_t                getInvocationCount();
    virtual bool                    setInvocationCount(intptr_t oldCount, intptr_t newCount);
    virtual bool                    isSameMethod(TR_ResolvedMethod *);
 
@@ -468,6 +468,13 @@ public:
    virtual TR_ResolvedMethod *     getResolvedInterfaceMethod( TR::Compilation *, TR_OpaqueClassBlock * classObject, int32_t cpIndex);
    virtual TR_ResolvedMethod *     getResolvedVirtualMethod( TR::Compilation *, TR_OpaqueClassBlock * classObject, int32_t virtualCallOffset, bool ignoreRtResolve = true);
 
+   bool                            isDAAWrapperMethod();
+   bool                            isDAAMarshallingWrapperMethod();
+   bool                            isDAAPackedDecimalWrapperMethod();
+   bool                            isDAAIntrinsicMethod();
+   bool                            isDAAMarshallingIntrinsicMethod();
+   bool                            isDAAPackedDecimalIntrinsicMethod();
+
 protected:
    TR_ResolvedMethod *             aotMaskResolvedPossiblyPrivateVirtualMethod(TR::Compilation *comp, TR_ResolvedMethod *method);
    TR_ResolvedMethod *             aotMaskResolvedImproperInterfaceMethod(TR::Compilation *comp, TR_ResolvedMethod *method);
@@ -486,7 +493,7 @@ public:
    virtual bool                    isJITInternalNative();
    virtual bool                    methodIsNotzAAPEligible();
 
-   uintptr_t                      getJNIProperties() { return _jniProperties; }
+   uintptr_t                       getJNIProperties() { return _jniProperties; }
    void *                          getJNITargetAddress() {return _jniTargetAddress; }
 
    virtual TR_OpaqueMethodBlock *  getNonPersistentIdentifier();

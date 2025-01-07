@@ -133,12 +133,12 @@ static int32_t getJ9InitialBytecodeSize(TR_ResolvedMethod * feMethod, TR::Resolv
       size >>= 1;
       }
 
-    else if (feMethod->isDAAWrapperMethod())
+    else if (((TR_ResolvedJ9Method*)feMethod)->isDAAWrapperMethod())
       {
       size = 1;
       }
 
-    else if (feMethod->isDAAIntrinsicMethod())
+    else if (((TR_ResolvedJ9Method*)feMethod)->isDAAIntrinsicMethod())
       {
       size >>= 3;
       }
@@ -348,7 +348,7 @@ TR_J9InlinerPolicy::alwaysWorthInlining(TR_ResolvedMethod * calleeMethod, TR::No
    if (isInlineableJNI(calleeMethod, callNode))
       return true;
 
-   if (calleeMethod->isDAAWrapperMethod())
+   if (((TR_ResolvedJ9Method*)calleeMethod)->isDAAWrapperMethod())
       return true;
 
    if (isJSR292AlwaysWorthInlining(calleeMethod))
@@ -4452,7 +4452,7 @@ void TR_MultipleCallTargetInliner::weighCallSite( TR_CallStack * callStack , TR_
 
       weight = applyArgumentHeuristics(map,weight, calltarget);
 
-      if (calltarget->_calleeMethod->isDAAWrapperMethod())
+      if (((TR_ResolvedJ9Method*)calltarget->_calleeMethod)->isDAAWrapperMethod())
          {
          weight = 1;
          heuristicTrace(tracer(),"Setting DAA wrapper methods weights to minimum(%d).", weight);
@@ -5941,8 +5941,8 @@ TR_InlinerFailureReason
        rm == TR::java_lang_Math_max_D ||
        rm == TR::java_lang_Math_min_D ||
        //DAA Intrinsic methods will get reduced if intrinsics are on, so don't consider it as a target
-       (resolvedMethod->isDAAMarshallingIntrinsicMethod() && !comp->getOption(TR_DisableMarshallingIntrinsics)) ||
-       (resolvedMethod->isDAAPackedDecimalIntrinsicMethod() && !comp->getOption(TR_DisablePackedDecimalIntrinsics)) ||
+       (((TR_ResolvedJ9Method*)resolvedMethod)->isDAAMarshallingIntrinsicMethod() && !comp->getOption(TR_DisableMarshallingIntrinsics)) ||
+       (((TR_ResolvedJ9Method*)resolvedMethod)->isDAAPackedDecimalIntrinsicMethod() && !comp->getOption(TR_DisablePackedDecimalIntrinsics)) ||
 
       // dont inline methods that contain the NumberFormat pattern
       // this is because we want to catch the opportunity with stringpeepholes
