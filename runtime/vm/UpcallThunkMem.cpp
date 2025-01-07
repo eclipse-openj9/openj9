@@ -22,6 +22,7 @@
 
 #include "j9.h"
 #include "j9protos.h"
+#include "OMR/Bytes.hpp"
 #include "ut_j9vm.h"
 #include "vm_internal.h"
 
@@ -175,6 +176,7 @@ allocateThunkHeap(J9UpcallMetaData *data)
 	J9HashTable *metaDataHashTable = NULL;
 	void *allocMemPtr = NULL;
 	J9Heap *thunkHeap = NULL;
+	uintptr_t heapSize = pageSize;
 	J9PortVmemIdentifier vmemID;
 
 	Trc_VM_allocateThunkHeap_Entry(thunkSize);
@@ -193,27 +195,35 @@ allocateThunkHeap(J9UpcallMetaData *data)
 		goto freeAllMemoryThenExit;
 	}
 
+	if (thunkSize > heapSize) {
+		/* If page size is insufficient to store the thunk, create a heap that is adequately sized
+		 * and aligned to the page size to store the thunk.
+		 */
+		heapSize = OMR::align((size_t)thunkSize, (size_t)pageSize);
+	}
+
 	/* Reserve a block of memory with the fixed page size for heap creation. */
-	allocMemPtr = j9vmem_reserve_memory(NULL, pageSize, &vmemID,
-		J9PORT_VMEM_MEMORY_MODE_READ | J9PORT_VMEM_MEMORY_MODE_WRITE | J9PORT_VMEM_MEMORY_MODE_EXECUTE | J9PORT_VMEM_MEMORY_MODE_COMMIT,
-		pageSize, J9MEM_CATEGORY_VM_FFI);
+	allocMemPtr = j9vmem_reserve_memory(
+			NULL, heapSize, &vmemID,
+			J9PORT_VMEM_MEMORY_MODE_READ | J9PORT_VMEM_MEMORY_MODE_WRITE | J9PORT_VMEM_MEMORY_MODE_EXECUTE | J9PORT_VMEM_MEMORY_MODE_COMMIT,
+			pageSize, J9MEM_CATEGORY_VM_FFI);
 	if (NULL == allocMemPtr) {
-		Trc_VM_allocateThunkHeap_reserve_memory_failed(pageSize);
+		Trc_VM_allocateThunkHeap_reserve_memory_failed(heapSize);
 		goto freeAllMemoryThenExit;
 	}
 
 	omrthread_jit_write_protect_disable();
 
 	/* Initialize the allocated memory as a J9Heap. */
-	thunkHeap = j9heap_create(allocMemPtr, pageSize, 0);
+	thunkHeap = j9heap_create(allocMemPtr, heapSize, 0);
 	if (NULL == thunkHeap) {
-		Trc_VM_allocateThunkHeap_create_heap_failed(allocMemPtr, pageSize);
+		Trc_VM_allocateThunkHeap_create_heap_failed(allocMemPtr, heapSize);
 		goto freeAllMemoryThenExit;
 	}
 
 	/* Store the heap handle in J9UpcallThunkHeapWrapper if the thunk heap is successfully created. */
 	thunkHeapWrapper->heap = thunkHeap;
-	thunkHeapWrapper->heapSize = pageSize;
+	thunkHeapWrapper->heapSize = heapSize;
 	thunkHeapWrapper->vmemID = vmemID;
 	thunkHeapNode->thunkHeapWrapper = thunkHeapWrapper;
 
@@ -258,7 +268,7 @@ freeAllMemoryThenExit:
 	}
 	if (NULL != allocMemPtr) {
 		omrthread_jit_write_protect_enable();
-		j9vmem_free_memory(allocMemPtr, pageSize, &vmemID);
+		j9vmem_free_memory(allocMemPtr, heapSize, &vmemID);
 		allocMemPtr = NULL;
 	}
 	goto done;
