@@ -599,7 +599,7 @@ public static void setIn(InputStream newIn) {
 	/*[IF JAVA_SPEC_VERSION < 24]*/
 	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
-	if (security != null)	{
+	if (security != null) {
 		security.checkPermission(com.ibm.oti.util.RuntimePermissions.permissionSetIO);
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
@@ -616,7 +616,7 @@ public static void setOut(java.io.PrintStream newOut) {
 	/*[IF JAVA_SPEC_VERSION < 24]*/
 	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
-	if (security != null)	{
+	if (security != null) {
 		security.checkPermission(com.ibm.oti.util.RuntimePermissions.permissionSetIO);
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
@@ -633,7 +633,7 @@ public static void setErr(java.io.PrintStream newErr) {
 	/*[IF JAVA_SPEC_VERSION < 24]*/
 	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
-	if (security != null)	{
+	if (security != null) {
 		security.checkPermission(com.ibm.oti.util.RuntimePermissions.permissionSetIO);
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
@@ -921,8 +921,9 @@ public static String getenv(String var) {
 	/*[IF JAVA_SPEC_VERSION < 24]*/
 	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
-	if (security != null)
+	if (security != null) {
 		security.checkPermission(new RuntimePermission("getenv." + var)); //$NON-NLS-1$
+	}
 	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	return ProcessEnvironment.getenv(var);
 }
@@ -945,8 +946,9 @@ public static Properties getProperties() {
 	/*[IF JAVA_SPEC_VERSION < 24]*/
 	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
-	if (security != null)
+	if (security != null) {
 		security.checkPropertiesAccess();
+	}
 	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	return systemProperties;
 }
@@ -1011,8 +1013,9 @@ public static String getProperty(String prop, String defaultValue) {
 	/*[IF JAVA_SPEC_VERSION < 24]*/
 	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
-	if (security != null)
+	if (security != null) {
 		security.checkPropertyAccess(prop);
+	}
 	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 	if (!propertiesInitialized
@@ -1054,9 +1057,9 @@ public static String setProperty(String prop, String value) {
 	/*[IF JAVA_SPEC_VERSION < 24]*/
 	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
-	if (security != null)
-		security.checkPermission(
-			new PropertyPermission(prop, "write")); //$NON-NLS-1$
+	if (security != null) {
+		security.checkPermission(new PropertyPermission(prop, "write")); //$NON-NLS-1$
+	}
 	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 	return (String)systemProperties.setProperty(prop, value);
@@ -1281,8 +1284,9 @@ public static void setProperties(Properties p) {
 	/*[IF JAVA_SPEC_VERSION < 24]*/
 	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
-	if (security != null)
+	if (security != null) {
 		security.checkPropertiesAccess();
+	}
 	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	if (p == null) {
 		ensureProperties(false);
@@ -1547,8 +1551,9 @@ public static String clearProperty(String prop) {
 	/*[IF JAVA_SPEC_VERSION < 24]*/
 	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
-	if (security != null)
+	if (security != null) {
 		security.checkPermission(new PropertyPermission(prop, "write")); //$NON-NLS-1$
+	}
 	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	return (String)systemProperties.remove(prop);
 }
@@ -1562,8 +1567,9 @@ public static Map<String, String> getenv() {
 	/*[IF JAVA_SPEC_VERSION < 24]*/
 	@SuppressWarnings("removal")
 	SecurityManager security = System.getSecurityManager();
-	if (security != null)
+	if (security != null) {
 		security.checkPermission(new RuntimePermission("getenv.*")); //$NON-NLS-1$
+	}
 	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	return ProcessEnvironment.getenv();
 }
@@ -2003,7 +2009,7 @@ public abstract static class LoggerFinder {
 	private static void verifyPermissions() {
 		@SuppressWarnings("removal")
 		SecurityManager securityManager = System.getSecurityManager();
-		if (securityManager != null)	{
+		if (securityManager != null) {
 			securityManager.checkPermission(com.ibm.oti.util.RuntimePermissions.permissionLoggerFinder);
 		}
 	}
