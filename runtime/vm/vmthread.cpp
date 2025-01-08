@@ -301,6 +301,10 @@ allocateVMThread(J9JavaVM *vm, omrthread_t osThread, UDATA privateFlags, void *m
 #if defined(J9VM_OPT_JFR)
 	newThread->threadJfrState.prevTimestamp = -1;
 #endif /* defined(J9VM_OPT_JFR) */
+	newThread->parkWaitSlidingWindow = (U_64*) j9mem_allocate_memory(vm->parkWaitSlidingWindowSize * sizeof(U_64), OMRMEM_CATEGORY_VM);
+	if (NULL == newThread->parkWaitSlidingWindow) {
+		goto fail;
+	}
 
 	/* If an exclusive access request is in progress, mark this thread */
 
@@ -571,6 +575,15 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 	vm->thrNestedSpinning = 1;
 	vm->thrTryEnterNestedSpinning = 1;
 	vm->thrDeflationPolicy = J9VM_DEFLATION_POLICY_ASAP;
+	vm->thrParkSpinCount1 = 0;
+	vm->thrParkSpinCount2 = 0;
+	vm->parkSpinWaitThreshold = 0;
+	vm->parkWaitSlidingWindowSize = 0;
+	vm->parkSpinRatioOfAvgWait = 0.95;
+	vm->parkLock = 0;
+	vm->parkYield = 0;
+	vm->parkSleepMultiplier = 0;
+	vm->yieldUsleepMultiplier = 0;
 
 	if (cpus > 1) {
 #if (defined(LINUXPPC)) && !defined(J9VM_ENV_LITTLE_ENDIAN)
@@ -825,6 +838,55 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 
 		if (try_scan(&scan_start, "noPriorities")) {
 			vm->runtimeFlags |= J9_RUNTIME_NO_PRIORITIES;
+			continue;
+		}
+
+		if (try_scan(&scan_start, "parkSpinCount1=")) {
+			if (scan_udata(&scan_start, &vm->thrParkSpinCount1)) {
+				goto _error;
+			}
+			continue;
+		}
+		if (try_scan(&scan_start, "parkSpinCount2=")) {
+			if (scan_udata(&scan_start, &vm->thrParkSpinCount2)) {
+				goto _error;
+			}
+			continue;
+		}
+		if (try_scan(&scan_start, "parkSpinWaitThreshold=")) {
+			if (scan_udata(&scan_start, &vm->parkSpinWaitThreshold)) {
+				goto _error;
+			}
+			continue;
+		}
+		if (try_scan(&scan_start, "parkWaitSlidingWindowSize=")) {
+			if (scan_udata(&scan_start, &vm->parkWaitSlidingWindowSize)) {
+				goto _error;
+			}
+			continue;
+		}
+		if (try_scan(&scan_start, "parkSpinRatioOfAvgWait=")) {
+			if (scan_double(&scan_start, &vm->parkSpinRatioOfAvgWait)) {
+				goto _error;
+			}
+			continue;
+		}
+		if (try_scan(&scan_start, "parkYield=")) {
+			if (scan_udata(&scan_start, &vm->parkYield)) {
+				goto _error;
+			}
+			continue;
+		}
+		if (try_scan(&scan_start, "parkLock=")) {
+			if (scan_udata(&scan_start, &vm->parkLock)) {
+				goto _error;
+			}
+			continue;
+		}
+		if (try_scan(&scan_start, "parkSleepMultiplier=")) {
+			if (scan_udata(&scan_start, &vm->parkSleepMultiplier)) {
+				goto _error;
+			}
 			continue;
 		}
 
@@ -1209,6 +1271,8 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 				goto _error;
 			}
 			**(UDATA**)omrthread_global((char*)"yieldUsleepMultiplier") = yieldUsleepMultiplier;
+
+			vm->yieldUsleepMultiplier = yieldUsleepMultiplier;
 			continue;
 		}
 

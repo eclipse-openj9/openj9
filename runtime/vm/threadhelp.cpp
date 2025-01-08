@@ -427,9 +427,9 @@ IDATA
 timeCompensationHelper(J9VMThread *vmThread, U_8 threadHelperType, omrthread_monitor_t monitor, I_64 millis, I_32 nanos)
 {
 	IDATA rc = 0;
+	J9JavaVM *vm = vmThread->javaVM;
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-	J9JavaVM *vm = vmThread->javaVM;
 	/* Time compensation only supports CRIURestoreNonPortableMode which is default mode. */
 	bool waitTimed = (millis > 0) || (nanos > 0);
 	bool compensationMightBeRequired = waitTimed && !J9_IS_CRIU_RESTORED(vm);
@@ -452,8 +452,78 @@ continueTimeCompensation:
 		rc = omrthread_monitor_wait_timed(monitor, millis, nanos);
 		break;
 	case HELPER_TYPE_THREAD_PARK:
-		rc = omrthread_park(millis, nanos);
-		break;
+		{
+			PORT_ACCESS_FROM_VMC(vmThread);
+			U_64 parkStart = j9time_nano_time();
+			U_64 slidingWindowSize = vm->parkWaitSlidingWindowSize;
+			U_64 avgWait = 0;
+			U_64 cpuYields = 0;
+			U_64 osYields = 0;
+			bool noSpin = true;
+			bool shouldYield = vm->parkYield > 0;
+			UDATA data = 0;
+			if (0 != slidingWindowSize) {
+				if (vmThread->parkWaitSlidingWindowIndex > slidingWindowSize) {
+					U_64 totalWait = 0;
+					vmThread->prePark = 1;
+
+					for (U_64 i = 0; i < slidingWindowSize; i++) {
+						totalWait += vmThread->parkWaitSlidingWindow[i];
+
+					}
+					avgWait = totalWait/slidingWindowSize;
+					bool spinElapsed = true;
+					//Trc_VM_ThreadHelp_timeCompensationHelper_parkWait(vmThread, avgWait, vmThread->parkCount, vmThread);
+
+					if (avgWait < vm->parkSpinWaitThreshold) {
+						noSpin = false;
+						for (IDATA spinCount2 = vm->thrParkSpinCount2; spinCount2 > 0; --spinCount2) {
+							U_64 spinTime = j9time_nano_time() - parkStart;
+
+							if ((vmThread->prePark == 0) || (spinTime > vm->parkSpinWaitThreshold)) {
+								data++;
+								Trc_VM_ThreadHelp_timeCompensationHelper_parkWait(vmThread, avgWait, spinTime, osYields, cpuYields, data, vmThread->prePark, vmThread);
+								spinElapsed = false;
+								break;
+							}
+
+							for (IDATA spinCount1 = vm->thrParkSpinCount1; spinCount1 > 0; --spinCount1) {
+								VM_AtomicSupport::yieldCPU();
+								cpuYields++;
+								if (vmThread->prePark == 0) {
+									data++;
+									spinElapsed = false;
+									break;
+								}
+							}
+							if (shouldYield) {
+								if (vmThread->prePark != 0) {
+									usleep(((osYields * vm->parkSleepMultiplier) + 1) * vm->yieldUsleepMultiplier);
+									//omrthread_yield_new(vm->thrParkSpinCount2 - spinCount2);
+									osYields++;
+								}
+							}
+						}
+
+						if (spinElapsed) {
+							Trc_VM_ThreadHelp_timeCompensationHelper_parkWaitSpinElapsed(vmThread, avgWait, j9time_nano_time() - parkStart, vmThread->prePark, osYields, cpuYields, vmThread);
+						}
+					}
+				}
+				rc = omrthread_park(millis, nanos);
+				U_64 parkEnd = j9time_nano_time();
+				vmThread->parkWaitSlidingWindow[vmThread->parkWaitSlidingWindowIndex % slidingWindowSize] = parkEnd - parkStart;
+				vmThread->parkWaitSlidingWindowIndex += 1;
+				vmThread->prePark = 0;
+				if (noSpin) {
+					Trc_VM_ThreadHelp_timeCompensationHelper_parkWaitNoSpin(vmThread, avgWait, parkEnd - parkStart, vmThread->prePark, vmThread);
+				}
+
+			} else {
+				rc = omrthread_park(millis, nanos);
+			}
+			break;
+		}
 	case HELPER_TYPE_THREAD_SLEEP:
 		/* Returns 0 when the timeout specified passed.
 		 * A timeout of 0 (0ms, 0ns) indicates an immediate return.
