@@ -965,7 +965,7 @@ extern "C" {
 
 /* Class version minimum for value type support. */
 
-#define VALUE_TYPES_MAJOR_VERSION 68
+#define VALUE_TYPES_MAJOR_VERSION 69
 #define PREVIEW_MINOR_VERSION 65535
 #define J9_IS_CLASSFILE_OR_ROMCLASS_VALUETYPE_VERSION(classfileOrRomClass) (((classfileOrRomClass)->majorVersion >= VALUE_TYPES_MAJOR_VERSION) && (PREVIEW_MINOR_VERSION == (classfileOrRomClass)->minorVersion))
 
