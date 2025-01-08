@@ -98,6 +98,7 @@ public class Thread implements Runnable {
 	private String name;						// The Thread's name
 	private int priority = NORM_PRIORITY;			// The Thread's current priority
 	private boolean isDaemon;				// Tells if the Thread is a daemon thread or not.
+	private volatile int threadStatus;      // The Thread's state.
 
 	ThreadGroup group;			// A Thread belongs to exactly one ThreadGroup
 	private Runnable runnable;				// Target (optional) runnable object
@@ -1489,6 +1490,36 @@ public static enum State {
 	TERMINATED }
 
 /**
+ * Returns the translation from a J9VMThread state to a Thread::State.
+ *
+ * @return this thread's state.
+ *
+ * @see State
+ */
+private State translateJ9VMThreadStateToThreadState(int status) {
+	switch (status) {
+		case 1: // J9VMTHREAD_STATE_RUNNING
+			return State.RUNNABLE;
+		case 2: // J9VMTHREAD_STATE_BLOCKED
+			return State.BLOCKED;
+		case 4: // J9VMTHREAD_STATE_WAITING
+		case 0x80: // J9VMTHREAD_STATE_PARKED
+			return State.WAITING;
+		case 8: // J9VMTHREAD_STATE_SLEEPING
+		case 64: // J9VMTHREAD_STATE_WAITING_TIMED
+		case 0x100: // J9VMTHREAD_STATE_PARKED_TIMED
+			return State.TIMED_WAITING;
+		case 32: // J9VMTHREAD_STATE_DEAD
+			return State.TERMINATED;
+		default:
+			// Fallback case: evaluate the state lazily.
+			synchronized (lock) {
+				return State.values()[getStateImpl(threadRef)];
+			}
+	}
+}
+
+/**
  * Returns the current Thread state.
  *
  * @return the current Thread state constant.
@@ -1496,15 +1527,13 @@ public static enum State {
  * @see State
  */
 public State getState() {
-	synchronized(lock) {
-		if (threadRef == NO_REF) {
-			if (isDead()) {
-				return State.TERMINATED;
-			}
-			return State.NEW;
+	if (threadRef == NO_REF) {
+		if (isDead()) {
+			return State.TERMINATED;
 		}
-		return State.values()[getStateImpl(threadRef)];
+		return State.NEW;
 	}
+	return translateJ9VMThreadStateToThreadState(threadStatus);
 }
 
 private native int getStateImpl(long threadRef);
