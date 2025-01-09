@@ -38,7 +38,10 @@ set(interp_new_flags) # flags to be added when compiling the interpreter
 # Note: the uma makefiles also specify this for pLinux, however it appears we no longer
 # support building the interpreter with xlc on linux
 if(OMR_ARCH_POWER AND OMR_OS_AIX)
-	if(OMR_TOOLCONFIG STREQUAL "xlc")
+	if(CMAKE_C_COMPILER_IS_OPENXL)
+		# Fixes a performance defect related to PPC's handling of branch tables/indirect branch prediction
+		list(APPEND interp_new_flags "-mllvm" "-ppc-min-jump-table-entries=512")
+	elseif(OMR_TOOLCONFIG STREQUAL "xlc")
 		list(APPEND interp_flags_to_remove "-O3" "-g")
 		list(APPEND interp_new_flags "-O2" "-qdebug=lincomm:ptranl:tfbagg")
 		# Note: the following code is specified in the UMA builds, however,
