@@ -21,6 +21,9 @@
  */
 package com.ibm.oti.VMCPTool;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
+import java.lang.reflect.Field;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -528,6 +531,21 @@ public class Main implements Constants {
 
 			try (FileWriter fw = new FileWriter(file.getPath())) {
 				fw.write(desiredContent);
+                                try {
+					// Load FileAttribute.Tag class and grab constructor
+					Class<?> fileAttributeClass = Class.forName("com.ibm.jzos.FileAttribute");
+					Class<?> fileAttributeTagClass = Class.forName("com.ibm.jzos.FileAttribute$Tag");
+					Constructor<?> constructor = fileAttributeTagClass.getConstructor(char.class, boolean.class);
+
+					Field ccsid = fileAttributeTagClass.getField("CCSID_ISO_8859_1");
+					char ccsidChar = (char) ccsid.get(null);
+					Object tag = constructor.newInstance(ccsidChar, true);
+
+					Method setTag = fileAttributeClass.getMethod("setTag", String.class, fileAttributeTagClass);
+					setTag.invoke(null, file.getPath().toString(), tag);
+				} catch (Exception e) {
+					System.err.println("Reflection error while trying to set FileAttribute.Tag");
+				}
 			}
 		} else if (verbose) {
 			System.out.println("** Skipped writing [same as on file system]: " + file.getPath());
