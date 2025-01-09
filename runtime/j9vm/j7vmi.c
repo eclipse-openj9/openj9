@@ -380,7 +380,7 @@ java_lang_J9VMInternals_doPrivilegedWithException(JNIEnv* env)
 	return cached;
 }
 
-
+/* Do not remove: this method is required by Windows IBM Java 8 builds. */
 jobject JNICALL
 JVM_DoPrivileged(JNIEnv* env, jobject java_security_AccessController, jobject action, jboolean unknown, jboolean isExceptionAction)
 {

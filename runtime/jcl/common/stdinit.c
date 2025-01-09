@@ -465,35 +465,33 @@ internalInitializeJavaLangClassLoader(JNIEnv * env)
 
 	vmFuncs->internalEnterVMFromJNI(vmThread);
 
+#if defined(J9VM_OPT_SNAPSHOT)
 	/* Always use the persisted applicationClassLoader in restore runs. */
-	if (!IS_RESTORE_RUN(vm)) {
+	if (IS_RESTORE_RUN(vm)) {
+		vmFuncs->initializeSnapshotClassLoaderObject(vm, vm->applicationClassLoader, J9_JNI_UNWRAP_REFERENCE(appClassLoader));
+	} else
+#endif /* defined(J9VM_OPT_SNAPSHOT) */
+	{
 		vm->applicationClassLoader = J9VMJAVALANGCLASSLOADER_VMREF(vmThread, J9_JNI_UNWRAP_REFERENCE(appClassLoader));
-	}
 
-	if (NULL == vm->applicationClassLoader) {
-		/* CMVC 201518
-		 * applicationClassLoader may be null due to lazy classloader initialization. Initialize
-		 * the applicationClassLoader now or vm will start throwing NoClassDefFoundException.
-		 */
-#if defined(J9VM_OPT_SNAPSHOTS)
-		if (IS_RESTORE_RUN(vm)) {
-			vmFuncs->initializeSnapshotClassLoaderObject(vm, vm->applicationClassLoader, J9_JNI_UNWRAP_REFERENCE(appClassLoader));
-		} else
-#endif /* defined(J9VM_OPT_SNAPSHOTS) */
-		{
-			vm->applicationClassLoader = (void *)(UDATA)(vmFuncs->internalAllocateClassLoader(vm, J9_JNI_UNWRAP_REFERENCE(appClassLoader)));
-		}
-
-		if (NULL != vmThread->currentException) {
-			/* while this exception check and return statement seem un-necessary, it is added to prevent
-			 * oversights if anybody adds more code in the future.
+		if (NULL == vm->applicationClassLoader) {
+			/* CMVC 201518
+			 * applicationClassLoader may be null due to lazy classloader initialization. Initialize
+			 * the applicationClassLoader now or vm will start throwing NoClassDefFoundException.
 			 */
-			goto exitVM;
+			vm->applicationClassLoader = (void *)(UDATA)(vmFuncs->internalAllocateClassLoader(vm, J9_JNI_UNWRAP_REFERENCE(appClassLoader)));
+
+			if (NULL != vmThread->currentException) {
+				/* While this exception check and return statement seem un-necessary, it is added to prevent
+				 * oversights if anybody adds more code in the future.
+				 */
+				goto exitVM;
+			}
 		}
 	}
 
 	/* Set up extension class loader in VM */
-	if (NULL == vm->extensionClassLoader) {
+	if (NULL != vm->applicationClassLoader) {
 		j9object_t classLoaderObject = vm->applicationClassLoader->classLoaderObject;
 		j9object_t classLoaderParentObject = classLoaderObject;
 
@@ -502,26 +500,24 @@ internalInitializeJavaLangClassLoader(JNIEnv * env)
 			classLoaderParentObject = J9VMJAVALANGCLASSLOADER_PARENT(vmThread, classLoaderObject);
 		}
 
-		/* Restore runs use the persisted extensionClassLoader. */
-		if (!IS_RESTORE_RUN(vm)) {
-			vm->extensionClassLoader = J9VMJAVALANGCLASSLOADER_VMREF(vmThread, classLoaderObject);
-		}
-
-		if (NULL == vm->extensionClassLoader) {
 #if defined(J9VM_OPT_SNAPSHOTS)
-			if (IS_RESTORE_RUN(vm)) {
-				vmFuncs->initializeSnapshotClassLoaderObject(vm, vm->extensionClassLoader, classLoaderObject);
-			} else
+		/* Always use the persisted extensionClassLoader in restore runs. */
+		if (IS_RESTORE_RUN(vm)) {
+			vmFuncs->initializeSnapshotClassLoaderObject(vm, vm->extensionClassLoader, classLoaderObject);
+		} else
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
-			{
-				vm->extensionClassLoader = (void *)(UDATA)(vmFuncs->internalAllocateClassLoader(vm, classLoaderObject));
-			}
+		if (NULL == vm->extensionClassLoader) {
+			vm->extensionClassLoader = J9VMJAVALANGCLASSLOADER_VMREF(vmThread, classLoaderObject);
 
-			if (NULL != vmThread->currentException) {
-				/* while this exception check and return statement seem un-necessary, it is added to prevent
-				 * oversights if anybody adds more code in the future.
-				 */
-				goto exitVM;
+			if (NULL == vm->extensionClassLoader) {
+				vm->extensionClassLoader = (void *)(UDATA)(vmFuncs->internalAllocateClassLoader(vm, classLoaderObject));
+
+				if (NULL != vmThread->currentException) {
+					/* While this exception check and return statement seem un-necessary, it is added to prevent
+					 * oversights if anybody adds more code in the future.
+					 */
+					goto exitVM;
+				}
 			}
 		}
 	}

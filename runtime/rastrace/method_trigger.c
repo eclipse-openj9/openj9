@@ -60,7 +60,6 @@ static const StackTraceFormattingFunction stackTraceFormattingFunctions[] = {
 
 #define NUM_STACK_TRACE_FORMATTING_FUNCTIONS (sizeof(stackTraceFormattingFunctions) / sizeof(stackTraceFormattingFunctions[0]))
 
-
 /**************************************************************************
  * name        - rasSetTriggerTrace
  * description - Called whenever a class is loaded.
@@ -548,6 +547,41 @@ decimalString2Int(J9PortLibrary* portLibrary, const char *decString, I_32 signed
 }
 
 /**************************************************************************
+ * name        - setMaxStringLength
+ * description - Set max string length for arguments and return values
+ * parameters  - vm, str - trace options, atRuntime flag
+ * returns     - JNI return code
+ *************************************************************************/
+omr_error_t
+setMaxStringLength(J9JavaVM *vm, const char *str, BOOLEAN atRuntime)
+{
+	PORT_ACCESS_FROM_JAVAVM(vm);
+	int value = 0;
+	int length = 0;
+	omr_error_t rc = OMR_ERROR_NONE;
+	const char *param = NULL;
+
+	if (1 != getParmNumber(str)) {
+		goto err;
+	}
+
+	param = getPositionalParm(1, str, &length);
+
+	value = decimalString2Int(PORTLIB, param, FALSE, &rc);
+	if (OMR_ERROR_NONE != rc) {
+		goto err;
+	}
+
+	if ((0 <= value) && (value <= RAS_MAX_STRING_LENGTH_LIMIT)) {
+		RAS_GLOBAL_FROM_JAVAVM(maxStringLength, vm) = (unsigned int)value;
+		return OMR_ERROR_NONE;
+	}
+err:
+	vaReportJ9VMCommandLineError(PORTLIB, "maxstringlength takes an integer value from 0 to %d", RAS_MAX_STRING_LENGTH_LIMIT);
+	return OMR_ERROR_INTERNAL;
+}
+
+/**************************************************************************
  * name        - addTriggeredMethodSpec
  * description - Take a user specified method trigger rule (from the
  *               trigger property and allocate and populate a method rule
@@ -653,13 +687,17 @@ addTriggeredMethodSpec(J9VMThread *thr, const char *ptrMethodSpec, const struct 
 			ptr->next = methodRule;
 		}
 
-		if (methodRule->entryAction != NULL && methodRule->entryAction->name != NULL
-		    && j9_cmdla_stricmp((char *)methodRule->entryAction->name, "jstacktrace") == 0) {
+		if ((NULL != methodRule->entryAction)
+			&& (NULL != methodRule->entryAction->name)
+			&& (0 == j9_cmdla_stricmp((char *)methodRule->entryAction->name, "jstacktrace"))
+		) {
 			/* set up the current method spec to be enabled for trace */
 			setMethod(thr->javaVM, ptrMethodSpec, FALSE);
 		}
-		if (methodRule->exitAction != NULL && methodRule->exitAction->name != NULL
-		    && j9_cmdla_stricmp((char *)methodRule->exitAction->name, "jstacktrace") == 0) {
+		if ((NULL != methodRule->exitAction)
+			&& (NULL != methodRule->exitAction->name)
+			&& (0 == j9_cmdla_stricmp((char *)methodRule->exitAction->name, "jstacktrace"))
+		) {
 			/* set up the current method spec to be enabled for trace */
 			setMethod(thr->javaVM, ptrMethodSpec, FALSE);
 		}

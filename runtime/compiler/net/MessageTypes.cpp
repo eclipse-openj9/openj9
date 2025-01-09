@@ -263,6 +263,8 @@ const char *messageNames[] =
    "KnownObjectTable_getKnownObjectTableDumpInfo",
    "KnownObjectTable_getOpaqueClass",
    "KnownObjectTable_getVectorBitSize",
+   "KnownObjectTable_addFieldAddressFromBaseIndex",
+   "KnownObjectTable_getFieldAddressData",
    "AOTCache_getROMClassBatch",
    "AOTCacheMap_request",
    "AOTCacheMap_reply"

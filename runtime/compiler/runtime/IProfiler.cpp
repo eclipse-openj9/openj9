@@ -50,6 +50,7 @@
 #include "env/PersistentCHTable.hpp"
 #include "env/PersistentInfo.hpp"
 #include "env/jittypes.h"
+#include "env/SystemSegmentProvider.hpp"
 #include "env/VerboseLog.hpp"
 #include "env/VMAccessCriticalSection.hpp"
 #include "il/Block.hpp"
@@ -236,7 +237,7 @@ void TR_ReadSampleRequestsHistory::advanceEpoch() // performed by sampling threa
 
 uintptr_t
 TR_IProfiler::createBalancedBST(uintptr_t *pcEntries, int32_t low, int32_t high, uintptr_t memChunk,
-                                TR::Compilation *comp)
+                                TR_J9SharedCache *sharedCache)
    {
    if (high < low)
       return 0;
@@ -245,10 +246,10 @@ TR_IProfiler::createBalancedBST(uintptr_t *pcEntries, int32_t low, int32_t high,
    int32_t middle = (high+low)/2;
    TR_IPBytecodeHashTableEntry *entry = profilingSample (pcEntries[middle], 0, false);
    uint32_t bytes = entry->getBytesFootprint();
-   entry->createPersistentCopy(comp->fej9()->sharedCache(), storage, _compInfo->getPersistentInfo());
+   entry->createPersistentCopy(sharedCache, storage, _compInfo->getPersistentInfo());
 
    uintptr_t leftChild = createBalancedBST(pcEntries, low, middle-1,
-                                            memChunk + bytes, comp);
+                                            memChunk + bytes, sharedCache);
 
    if (leftChild)
       {
@@ -257,7 +258,7 @@ TR_IProfiler::createBalancedBST(uintptr_t *pcEntries, int32_t low, int32_t high,
       }
 
    uintptr_t rightChild = createBalancedBST(pcEntries, middle+1, high,
-                                             memChunk + bytes + leftChild, comp);
+                                             memChunk + bytes + leftChild, sharedCache);
    if (rightChild)
       {
       TR_ASSERT(bytes + leftChild < 1 << 16, "Error storing iprofile information: right child too far away"); // current size of right child
@@ -452,7 +453,7 @@ TR_IProfiler::persistIprofileInfo(TR::ResolvedMethodSymbol *resolvedMethodSymbol
                   fprintf(stderr, "\n");
 #endif
                   void * memChunk = comp->trMemory()->allocateMemory(bytesFootprint, stackAlloc);
-                  intptr_t bytes = createBalancedBST(pcEntries, 0, numEntries-1, (uintptr_t) memChunk, comp);
+                  intptr_t bytes = createBalancedBST(pcEntries, 0, numEntries-1, (uintptr_t) memChunk, comp->fej9()->sharedCache());
                   TR_ASSERT(bytes == bytesFootprint, "BST doesn't match expected footprint");
 
 
@@ -1632,7 +1633,7 @@ TR_IProfiler::getSamplingCount( TR_IPBytecodeHashTableEntry *entry, TR::Compilat
    else if (entry->asIPBCDataCallGraph())
       {
       TR_IPBCDataCallGraph *callGraphEntry = (TR_IPBCDataCallGraph *)entry;
-      return callGraphEntry->getSumCount(comp, true);
+      return callGraphEntry->getSumCount(comp);
       }
    else if (entry->asIPBCDataFourBytes())
       {
@@ -2810,7 +2811,7 @@ TR_IPBCDataCallGraph::setData(uintptr_t v, uint32_t freq)
    }
 
 int32_t
-TR_IPBCDataCallGraph::getSumCount(TR::Compilation *comp)
+TR_IPBCDataCallGraph::getSumCount()
    {
    int32_t sumWeight = 0;
    for (int32_t i = 0; i < NUM_CS_SLOTS; i++)
@@ -2820,7 +2821,7 @@ TR_IPBCDataCallGraph::getSumCount(TR::Compilation *comp)
    }
 
 int32_t
-TR_IPBCDataCallGraph::getSumCount(TR::Compilation *comp, bool)
+TR_IPBCDataCallGraph::getSumCount(TR::Compilation *comp)
    {
    static bool debug = feGetEnv("TR_debugiprofiler_detail") ? true : false;
    int32_t sumWeight = 0;
@@ -3358,6 +3359,7 @@ TR_IProfiler::setCallCount(TR_OpaqueMethodBlock *method, int32_t bcIndex, int32_
       if (csInfo)
          {
          csInfo->_weight[0] = count;
+         csInfo->setClazz(0, (uintptr_t)comp->fej9()->getClassOfMethod(method));
 
          if (count>_maxCallFrequency)
             _maxCallFrequency = count;
@@ -3377,7 +3379,7 @@ TR_IProfiler::getCallCount(TR_OpaqueMethodBlock *calleeMethod, TR_OpaqueMethodBl
    TR_IPBytecodeHashTableEntry *entry = profilingSample(method, bcIndex, comp);
 
    if (entry && entry->asIPBCDataCallGraph())
-      return entry->asIPBCDataCallGraph()->getSumCount(comp);
+      return entry->asIPBCDataCallGraph()->getSumCount();
 
    uint32_t weight = 0;
    bool foundEntry = getCallerWeight(calleeMethod,method, &weight, bcIndex, comp);
@@ -3393,7 +3395,7 @@ TR_IProfiler::getCallCount(TR_OpaqueMethodBlock *method, int32_t bcIndex, TR::Co
    TR_IPBytecodeHashTableEntry *entry = profilingSample(method, bcIndex, comp);
 
    if (entry && entry->asIPBCDataCallGraph())
-      return entry->asIPBCDataCallGraph()->getSumCount(comp);
+      return entry->asIPBCDataCallGraph()->getSumCount();
 
    return 0;
    }
@@ -4593,147 +4595,119 @@ CallSiteProfileInfo::getDominantClass(int32_t &sumW, int32_t &maxW)
 // Code is currently inactive. To actually use one must issue
 // iProfiler->dumpIPBCDataCallGraph(vmThread)
 // in some part of the code (typically at shutdown time)
-class TR_AggregationHT
+TR_AggregationHT::TR_AggregationHTNode::TR_AggregationHTNode(J9ROMMethod *romMethod, J9ROMClass *romClass, TR_IPBytecodeHashTableEntry *entry):
+   _next(NULL), _romMethod(romMethod), _romClass(romClass)
    {
-   public:
-         class TR_CGChainedEntry
-         {
-         TR_CGChainedEntry    *_next; // for chaining
-         TR_IPBCDataCallGraph *_CGentry;
-         public:
-            TR_CGChainedEntry(TR_IPBCDataCallGraph *entry) : _next(NULL), _CGentry(entry) { }
-            uintptr_t getPC() const { return _CGentry->getPC(); }
-            TR_CGChainedEntry *getNext() const { return _next; }
-            TR_IPBCDataCallGraph *getCGData() const { return _CGentry; }
-            void setNext(TR_CGChainedEntry *next) { _next = next; }
-         };
-      class TR_AggregationHTNode
-         {
-         TR_AggregationHTNode *_next; // for chaining
-         J9ROMMethod *_romMethod; // this is the key
-         J9ROMClass  *_romClass;
-         TR_CGChainedEntry *_IPData;
-         public:
-            TR_AggregationHTNode(J9ROMMethod *romMethod, J9ROMClass *romClass, TR_IPBCDataCallGraph *entry) : _next(NULL), _romMethod(romMethod), _romClass(romClass)
-               {
-               _IPData = new (*TR_IProfiler::allocator()) TR_CGChainedEntry(entry);
-               }
-            ~TR_AggregationHTNode()
-               {
-               TR_CGChainedEntry *entry = getFirstCGEntry();
-               while (entry)
-                  {
-                  TR_CGChainedEntry *nextEntry = entry->getNext();
-                  TR_IProfiler::allocator()->deallocate(entry);
-                  entry = nextEntry;
-                  }
-               }
-            TR_AggregationHTNode *getNext() const { return _next; }
-            J9ROMMethod *getROMMethod() const { return _romMethod; }
-            J9ROMClass *getROMClass() const { return _romClass; }
-            TR_CGChainedEntry *getFirstCGEntry() const { return _IPData; }
-            void setNext(TR_AggregationHTNode *next) { _next = next; }
-            void setFirstCGEntry(TR_CGChainedEntry *e) { _IPData = e; }
-         };
-      struct SortingPair
-         {
-         char *_methodName;
-         TR_AggregationHT::TR_AggregationHTNode *_IPdata;
-         };
+   _IPData = new (*TR_IProfiler::allocator()) TR_IPChainedEntry(entry);
+   }
 
-      TR_AggregationHT(size_t sz) : _sz(sz), _numTrackedMethods(0)
+TR_AggregationHT::TR_AggregationHTNode::~TR_AggregationHTNode()
+   {
+   TR_IPChainedEntry *entry = getFirstIPEntry();
+   while (entry)
+      {
+      TR_IPChainedEntry *nextEntry = entry->getNext();
+      TR_IProfiler::allocator()->deallocate(entry);
+      entry = nextEntry;
+      }
+   }
+
+TR_AggregationHT::TR_AggregationHT(size_t sz) : _sz(sz), _numTrackedMethods(0)
+   {
+   // TODO: use scratch memory
+   _backbone = new (*TR_IProfiler::allocator()) TR_AggregationHTNode*[sz];
+   if (!_backbone) // OOM
+      {
+      _sz = 0;
+      }
+   else
+      {
+      for (size_t i = 0; i < sz; i++)
+         _backbone[i] = NULL;
+      }
+   }
+
+TR_AggregationHT::~TR_AggregationHT()
+   {
+   for (int32_t bucket = 0; bucket < _sz; bucket++)
+      {
+      TR_AggregationHTNode *node = _backbone[bucket];
+      while (node)
          {
-         _backbone = new (*TR_IProfiler::allocator()) TR_AggregationHTNode*[sz];
-         if (!_backbone) // OOM
-            {
-            _sz = 0;
-            }
-         else
-            {
-            for (size_t i = 0; i < sz; i++)
-               _backbone[i] = NULL;
-            }
+         TR_AggregationHTNode *nextNode = node->getNext();
+         node->~TR_AggregationHTNode();
+         TR_IProfiler::allocator()->deallocate(node);
+         node = nextNode;
          }
-      ~TR_AggregationHT()
+      }
+   TR_IProfiler::allocator()->deallocate(_backbone);
+   }
+
+// Add the given cgEntry from the IP table into the aggregationHT
+// The caller also provides the romMethod/romClass that contains the
+// bytecode described by this cgEntry
+void
+TR_AggregationHT::add(J9ROMMethod *romMethod, J9ROMClass *romClass, TR_IPBytecodeHashTableEntry *cgEntry)
+   {
+   size_t index = hash(romMethod);
+   // search the bucket for matching romMethod
+   TR_AggregationHTNode *crtMethodNode = _backbone[index];
+   for (; crtMethodNode; crtMethodNode = crtMethodNode->getNext())
+      {
+      if (crtMethodNode->getROMMethod() == romMethod)
          {
-         for (int32_t bucket = 0; bucket < _sz; bucket++)
+         // Add a new bc data point to the method entry we found; keep it sorted by pc
+         TR_IPChainedEntry *newEntry = new (*TR_IProfiler::allocator()) TR_IPChainedEntry(cgEntry);
+         if (!newEntry) // OOM
             {
-            TR_AggregationHTNode *node = _backbone[bucket];
-            while (node)
-               {
-               TR_AggregationHTNode *nextNode = node->getNext();
-               node->~TR_AggregationHTNode();
-               TR_IProfiler::allocator()->deallocate(node);
-               node = nextNode;
-               }
+            // printfs are ok since this method will be used for diagnostics only
+            fprintf(stderr, "Cannot allocated memory. Incomplete info will be printed.\n");
+            return;
             }
-         TR_IProfiler::allocator()->deallocate(_backbone);
-         }
-      size_t hash(J9ROMMethod *romMethod) { return (((uintptr_t)romMethod) >> 3) % _sz; }
-      size_t getSize() const { return _sz; }
-      size_t numTrackedMethods() const { return _numTrackedMethods; }
-      TR_AggregationHTNode* getBucket(size_t i) const { return _backbone[i]; }
-      void add(J9ROMMethod *romMethod, J9ROMClass *romClass, TR_IPBCDataCallGraph *cgEntry)
-         {
-         size_t index = hash(romMethod);
-         // search the bucket for matching romMethod
-         TR_AggregationHTNode *crtMethodNode = _backbone[index];
-         for (; crtMethodNode; crtMethodNode = crtMethodNode->getNext())
-            if (crtMethodNode->getROMMethod() == romMethod)
-               {
-               // Add a new bc data point to the method entry we found; keep it sorted by pc
-               TR_CGChainedEntry *newEntry = new (*TR_IProfiler::allocator()) TR_CGChainedEntry(cgEntry);
-               if (!newEntry) // OOM
-                  {
-                  fprintf(stderr, "Cannot allocated memory. Incomplete info will be printed.\n");
-                  return;
-                  }
-               TR_CGChainedEntry *crtEntry = crtMethodNode->getFirstCGEntry();
-               TR_CGChainedEntry *prevEntry = NULL;
-               while (crtEntry)
-                  {
-                  // Ideally we should not have two entries with the same pc in the
-                  // Iprofiler HT (the pc is the key in the HT). However, due to the
-                  // fact that we don't acquire any locks, such rare occurrences are
-                  // possible. We should ignore any such  events.
-                  if (crtEntry->getPC() == cgEntry->getPC())
-                     {
-                     fprintf(stderr, "We cannot find the same PC twice");
-                     return;
-                     }
-                  if (crtEntry->getPC() > cgEntry->getPC())
-                     break; // found the position
-                  prevEntry = crtEntry;
-                  crtEntry = crtEntry->getNext();
-                  }
-               if (prevEntry)
-                  prevEntry->setNext(newEntry);
-               else
-                  crtMethodNode->setFirstCGEntry(newEntry);
-               newEntry->setNext(crtEntry);
-               break;
-               }
-         // If my romMethod is not already in the HT let's add it
-         if (!crtMethodNode)
+         TR_IPChainedEntry *crtEntry = crtMethodNode->getFirstIPEntry();
+         TR_IPChainedEntry *prevEntry = NULL;
+         while (crtEntry)
             {
-            // Add a new entry at the beginning
-            TR_AggregationHTNode *newMethodNode = new (*TR_IProfiler::allocator()) TR_AggregationHTNode(romMethod, romClass, cgEntry);
-            if (!newMethodNode || !newMethodNode->getFirstCGEntry()) // OOM
+            // Ideally we should not have two entries with the same pc in the
+            // Iprofiler HT (the pc is the key in the HT). However, due to the
+            // fact that we don't acquire any locks, such rare occurrences are
+            // possible. We should ignore any such  events.
+            if (crtEntry->getPC() == cgEntry->getPC())
                {
-               fprintf(stderr, "Cannot allocated memory. Incomplete info will be printed.\n");
+               TR_IPBCDataCallGraph *cg = cgEntry->asIPBCDataCallGraph();
+               int32_t cnt = cg ? cg->getSumCount() : 0;
+               fprintf(stderr, "We cannot find the same PC twice. PC=%zu romMethod=%p sumCount=%d\n",
+                       cgEntry->getPC(), romMethod, cnt);
                return;
                }
-            newMethodNode->setNext(_backbone[index]);
-            _backbone[index] = newMethodNode;
-            _numTrackedMethods++;
+            if (crtEntry->getPC() > cgEntry->getPC())
+               break; // found the position
+            prevEntry = crtEntry;
+            crtEntry = crtEntry->getNext();
             }
+         if (prevEntry)
+            prevEntry->setNext(newEntry);
+         else
+            crtMethodNode->setFirstCGEntry(newEntry);
+         newEntry->setNext(crtEntry);
+         break;
          }
-      void sortByNameAndPrint(TR_J9VMBase *fe);
-   private:
-      size_t _sz;
-      size_t _numTrackedMethods;
-      TR_AggregationHTNode** _backbone;
-   };
+      }
+   // If my romMethod is not already in the HT let's add it
+   if (!crtMethodNode)
+      {
+      // Add a new entry at the beginning
+      TR_AggregationHTNode *newMethodNode = new (*TR_IProfiler::allocator()) TR_AggregationHTNode(romMethod, romClass, cgEntry);
+      if (!newMethodNode || !newMethodNode->getFirstIPEntry()) // OOM
+         {
+         fprintf(stderr, "Cannot allocated memory. Incomplete info will be printed.\n");
+         return;
+         }
+      newMethodNode->setNext(_backbone[index]);
+      _backbone[index] = newMethodNode;
+      _numTrackedMethods++;
+      }
+   }
 
 // Callback for qsort to sort by methodName
 int compareByMethodName(const void *a, const void *b)
@@ -4741,7 +4715,8 @@ int compareByMethodName(const void *a, const void *b)
    return strcmp(((TR_AggregationHT::SortingPair *)a)->_methodName, ((TR_AggregationHT::SortingPair *)b)->_methodName);
    }
 
-void TR_AggregationHT::sortByNameAndPrint(TR_J9VMBase *fe)
+void
+TR_AggregationHT::sortByNameAndPrint()
    {
    // Scan the aggregationTable and convert from romMethod to methodName so that
    // we can sort and print the information
@@ -4794,11 +4769,13 @@ void TR_AggregationHT::sortByNameAndPrint(TR_J9VMBase *fe)
       {
       fprintf(stderr, "Method: %s\n", sortingArray[i]._methodName);
       J9ROMMethod *romMethod = sortingArray[i]._IPdata->getROMMethod();
-      TR_CGChainedEntry *cgEntry = sortingArray[i]._IPdata->getFirstCGEntry();
-      // Iterate through bytecodes with info
+      TR_IPChainedEntry *cgEntry = sortingArray[i]._IPdata->getFirstIPEntry();
+      // Iterate through bytecodes with info from this method
       for (; cgEntry; cgEntry = cgEntry->getNext())
          {
-         TR_IPBCDataCallGraph *ipbcCGData = cgEntry->getCGData();
+         TR_IPBCDataCallGraph *ipbcCGData = cgEntry->getIPData()->asIPBCDataCallGraph();
+         if (!ipbcCGData)
+            continue;
          U_8* pc = (U_8*)ipbcCGData->getPC();
 
          size_t bcOffset = pc - (U_8*)J9_BYTECODE_START_FROM_ROM_METHOD(romMethod);
@@ -4820,7 +4797,7 @@ void TR_AggregationHT::sortByNameAndPrint(TR_J9VMBase *fe)
             if (cgData->getClazz(j))
                {
                int32_t len;
-               const char * s = fe->getClassNameChars((TR_OpaqueClassBlock*)cgData->getClazz(j), len);
+               const char * s = utf8Data(J9ROMCLASS_CLASSNAME(TR::Compiler->cls.romClassOf((TR_OpaqueClassBlock*)cgData->getClazz(j))), len);
                fprintf(stderr, "\t\tW:%4u\tM:%#" OMR_PRIxPTR "\t%.*s\n", cgData->_weight[j], cgData->getClazz(j), len, s);
                }
             }
@@ -4834,6 +4811,77 @@ void TR_AggregationHT::sortByNameAndPrint(TR_J9VMBase *fe)
    TR_IProfiler::allocator()->deallocate(sortingArray);
    }
 
+// Given a bytecode PC, return the ROMMethod that contains that bytecode PC.
+// Also return the romClass that contains the ROMMethod we found.
+// This method is relatively expensive and should not be called on a critical path.
+J9ROMMethod *
+TR_IProfiler::findROMMethodFromPC(J9VMThread *vmThread, uintptr_t methodPC, J9ROMClass *&romClass)
+  {
+   J9JavaVM *javaVM = vmThread->javaVM;
+   J9InternalVMFunctions *vmFunctions = javaVM->internalVMFunctions;
+
+   J9ClassLoader* loader;
+   romClass = vmFunctions->findROMClassFromPC(vmThread, (UDATA)methodPC, &loader);
+
+   J9ROMMethod *currentMethod = J9ROMCLASS_ROMMETHODS(romClass);
+   J9ROMMethod *desiredMethod = NULL;
+   if (romClass)
+      {
+      // Find the method with the corresponding PC
+      for (U_32 i = 0; i < romClass->romMethodCount; i++)
+         {
+         if (((UDATA)methodPC >= (UDATA)currentMethod)
+             && ((UDATA)methodPC < (UDATA)J9_BYTECODE_END_FROM_ROM_METHOD(currentMethod)))
+            {
+            // found the method
+            desiredMethod = currentMethod;
+            break;
+            }
+         currentMethod = nextROMMethod(currentMethod);
+         }
+      }
+   return desiredMethod;
+   }
+
+// All information that is stored in the IProfiler table will be stored
+// in the indicated AggregationTable, aggregated by J9ROMMethod
+// The `collectOnlyCallGraphEntries` parameter indicates whether we should
+// only look at the callGraph entries used for virtual/interface invokes
+void
+TR_IProfiler::traverseIProfilerTableAndCollectEntries(TR_AggregationHT *aggregationHT, J9VMThread* vmThread, bool collectOnlyCallGraphEntries)
+{
+   J9JavaVM *javaVM = vmThread->javaVM;
+   J9InternalVMFunctions *vmFunctions = javaVM->internalVMFunctions;
+   TR_J9VMBase * fe = TR_J9VMBase::get(javaVM->jitConfig, vmThread);
+
+   TR::VMAccessCriticalSection dumpCallGraph(fe); // prevent class unloading
+
+   for (int32_t bucket = 0; bucket < TR::Options::_iProfilerBcHashTableSize; bucket++)
+      {
+      for (TR_IPBytecodeHashTableEntry *entry = _bcHashTable[bucket]; entry; entry = entry->getNext())
+         {
+         // Skip invalid entries
+         if (entry->isInvalid() || invalidateEntryIfInconsistent(entry))
+            continue;
+         // Skip non-callgraph entries, if so desired
+         if (collectOnlyCallGraphEntries && !entry->asIPBCDataCallGraph())
+            continue;
+
+         // Get the pc and find the method this pc belongs to
+         J9ROMClass *romClass = NULL;
+         J9ROMMethod * desiredMethod = findROMMethodFromPC(vmThread, entry->getPC(), romClass);
+         if (desiredMethod)
+            {
+            // Add the information to the aggregationTable
+            aggregationHT->add(desiredMethod, romClass, entry);
+            }
+         else
+            {
+            fprintf(stderr, "Cannot find RomMethod that contains pc=%p \n", (uint8_t*)entry->getPC());
+            }
+         }
+      } // for each bucket
+   }
 
 
 // This method can be used to print to stderr in readable format all the IPBCDataCallGraph
@@ -4844,7 +4892,8 @@ void TR_AggregationHT::sortByNameAndPrint(TR_J9VMBase *fe)
 // Temporary data structures will be allocated using persistent memory which will be deallocated
 // at the end.
 // Parameter: the vmThread it is executing on.
-void TR_IProfiler::dumpIPBCDataCallGraph(J9VMThread* vmThread)
+void
+TR_IProfiler::dumpIPBCDataCallGraph(J9VMThread* vmThread)
    {
    fprintf(stderr, "Dumping info ...\n");
    TR_AggregationHT aggregationHT(TR::Options::_iProfilerBcHashTableSize);
@@ -4853,67 +4902,303 @@ void TR_IProfiler::dumpIPBCDataCallGraph(J9VMThread* vmThread)
       fprintf(stderr, "Cannot allocate memory. Bailing out.\n");
       return;
       }
+   traverseIProfilerTableAndCollectEntries(&aggregationHT, vmThread, true/*collectOnlyCallGraphEntries*/);
+   aggregationHT.sortByNameAndPrint();
 
-   J9JavaVM *javaVM = vmThread->javaVM;
-   J9InternalVMFunctions *vmFunctions = javaVM->internalVMFunctions;
-   TR_J9VMBase * fe = TR_J9VMBase::get(javaVM->jitConfig, vmThread);
+   fprintf(stderr, "Finished dumping info\n");
+   }
 
-   TR::VMAccessCriticalSection dumpCallGraph(fe);
+uintptr_t
+TR_IProfiler::createBalancedBST(TR_IPBytecodeHashTableEntry **ipEntries, int32_t low, int32_t high, uintptr_t memChunk, TR_J9SharedCache *sharedCache)
+   {
+   if (high < low)
+      return 0;
 
-   fprintf(stderr, "Aggregating per method ...\n");
+   TR_IPBCDataStorageHeader * storage = (TR_IPBCDataStorageHeader *) memChunk;
+   int32_t middle = (high+low)/2;
+   TR_IPBytecodeHashTableEntry *entry = ipEntries[middle];
+   uint32_t bytes = entry->getBytesFootprint();
+   entry->createPersistentCopy(sharedCache, storage, _compInfo->getPersistentInfo());
+
+   uintptr_t leftChild = createBalancedBST(ipEntries, low, middle - 1, memChunk + bytes, sharedCache);
+   if (leftChild)
+      {
+      TR_ASSERT(bytes < 1 << 8, "Error storing iprofile information: left child too far away"); // current size of left child
+      storage->left = bytes;
+      }
+
+   uintptr_t rightChild = createBalancedBST(ipEntries, middle + 1, high, memChunk + bytes + leftChild, sharedCache);
+   if (rightChild)
+      {
+      TR_ASSERT(bytes + leftChild < 1 << 16, "Error storing iprofile information: right child too far away"); // current size of right child
+      storage->right = bytes+leftChild;
+      }
+
+   return bytes + leftChild + rightChild;
+   }
+
+// Persist all IProfiler entries into the SCC.
+// This is done by aggregating all IProfiler entries per
+// ROMMethod with the help of a TR_AggregationHT table.
+// Then, for each ROMMethod with IP info we store the
+// entries arranged as a BST (for fast retrieval later).
+void
+TR_IProfiler::persistAllEntries()
+   {
+   J9JavaVM * javaVM = _compInfo->getJITConfig()->javaVM;
+   J9VMThread *vmThread = javaVM->internalVMFunctions->currentVMThread(javaVM);
+   TR_J9VMBase * fe = TR_J9VMBase::get(_compInfo->getJITConfig(), vmThread, TR_J9VMBase::AOT_VM);
+   TR_J9SharedCache *sharedCache = fe->sharedCache();
+   static bool SCfull = false;
+
+   if (!(TR::Options::sharedClassCache() && sharedCache))
+      return;
+
+   J9SharedClassConfig *scConfig = javaVM->sharedClassConfig;
+
+   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseIProfilerPersistence))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "IProfiler persisting all entries to SCC");
+
+   int32_t entriesAlreadyPersisted = _STATS_entriesPersisted;
+
+   try
+      {
+      TR::RawAllocator rawAllocator(javaVM);
+      J9::SegmentAllocator segmentAllocator(MEMORY_TYPE_JIT_SCRATCH_SPACE | MEMORY_TYPE_VIRTUAL, *javaVM);
+      J9::SystemSegmentProvider regionSegmentProvider(1 << 20, 1 << 20, TR::Options::getScratchSpaceLimit(), segmentAllocator, rawAllocator);
+      TR::Region region(regionSegmentProvider, rawAllocator);
+      TR_Memory trMemory(*_compInfo->persistentMemory(), region);
+
+      TR_AggregationHT aggregationHT(TR::Options::_iProfilerBcHashTableSize);
+      if (aggregationHT.getSize() == 0) // OOM
+         {
+         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseIProfilerPersistence))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "IProfiler: Cannot allocate memory. Bailing out persisting all entries to SCC");
+         return;
+         }
+      traverseIProfilerTableAndCollectEntries(&aggregationHT, vmThread);
+
+      size_t methodIndex = 0;
+      for (int32_t bucket = 0; bucket < aggregationHT.getSize(); bucket++)
+         {
+         for (TR_AggregationHT::TR_AggregationHTNode *node = aggregationHT.getBucket(bucket); node; node = node->getNext())
+            {
+            _STATS_methodPersistenceAttempts++;
+            // If there is no more space, continue the loop to update the stats
+            if (SCfull)
+               {
+               _STATS_methodNotPersisted_other++;
+               continue;
+               }
+            J9ROMMethod* romMethod = node->getROMMethod();
+
+            // Can only persist profile info if the method is in the shared cache
+            if (!sharedCache->isROMMethodInSharedCache(romMethod))
+               {
+               _STATS_methodNotPersisted_classNotInSCC++;
+               continue;
+               }
+
+            // If the method is already persisted, we don't need to do anything else
+            unsigned char storeBuffer[1000];
+            uint32_t bufferLength = sizeof(storeBuffer);
+            J9SharedDataDescriptor descriptor;
+            descriptor.address = storeBuffer;
+            descriptor.length = bufferLength;
+            descriptor.type = J9SHR_ATTACHED_DATA_TYPE_JITPROFILE;
+            descriptor.flags = J9SHR_ATTACHED_DATA_NO_FLAGS;
+            IDATA dataIsCorrupt;
+            const U_8 *found = scConfig->findAttachedData(vmThread, romMethod, &descriptor, &dataIsCorrupt);
+            if (found)
+               {
+               _STATS_methodNotPersisted_alreadyStored++;
+               continue;
+               }
+            // Count how many entries we have for this ROMMethod and how much space we need
+            size_t numEntries = 0;
+            size_t bytesFootprint = 0;
+            TR_IPBytecodeHashTableEntry* ipEntries[1000]; // Capped size for number of profiled entries per method
+            for (TR_AggregationHT::TR_IPChainedEntry *ipEntry = node->getFirstIPEntry(); ipEntry; ipEntry = ipEntry->getNext())
+               {
+               TR_IPBytecodeHashTableEntry *ipData = ipEntry->getIPData();
+
+               if (!invalidateEntryIfInconsistent(ipData))
+                  {
+                  if (numEntries >= sizeof(ipEntries))
+                     break; // stop here because we have too many entries for this method
+                  // Check whether info can be persisted.
+                  // Reasons for not being to include: locked entries, unloaded methods, target class not in SCC
+                  // Note that canBePersisted() locks the entry
+                  uint32_t canPersist = ipData->canBePersisted(sharedCache, _compInfo->getPersistentInfo());
+                  if (canPersist == IPBC_ENTRY_CAN_PERSIST)
+                     {
+                     bytesFootprint += ipData->getBytesFootprint();
+                     ipEntries[numEntries] = ipData;
+                     numEntries++;
+                     }
+                  else
+                     {
+                     // Stats for why we cannot persist
+                     switch (canPersist)
+                        {
+                        case IPBC_ENTRY_PERSIST_LOCK:
+                           break;
+                        case IPBC_ENTRY_PERSIST_NOTINSCC:
+                           _STATS_entriesNotPersisted_NotInSCC++;
+                           break;
+                        case IPBC_ENTRY_PERSIST_UNLOADED:
+                           _STATS_entriesNotPersisted_Unloaded++;
+                           break;
+                        default:
+                           _STATS_entriesNotPersisted_Other++;
+                        }
+                     }
+                  }
+               else // Entry is invalid
+                  {
+
+                  }
+               }
+            // Attempt to store numEntries whose PCs are stored in pcEntries
+            if (numEntries)
+               {
+               void * memChunk = trMemory.allocateMemory(bytesFootprint, stackAlloc);
+               // We already have the data
+               intptr_t bytes = createBalancedBST(ipEntries, 0, numEntries-1, (uintptr_t) memChunk, sharedCache);
+               TR_ASSERT(bytes == bytesFootprint, "BST doesn't match expected footprint");
+               // store in the shared cache
+               descriptor.address = (U_8 *) memChunk;
+               descriptor.length = bytesFootprint;
+               UDATA store = scConfig->storeAttachedData(vmThread, romMethod, &descriptor, 0);
+               if (store == 0)
+                  {
+                  _STATS_methodPersisted++;
+                  _STATS_entriesPersisted += numEntries;
+#ifdef PERSISTENCE_VERBOSE
+                  fprintf(stderr, "\tPersisted %d entries\n", numEntries);
+#endif
+                  }
+               else if (store != J9SHR_RESOURCE_STORE_FULL)
+                  {
+                  _STATS_persistError++;
+   #ifdef PERSISTENCE_VERBOSE
+                  fprintf(stderr, "\tNot Persisted: error\n");
+   #endif
+                  }
+               else
+                  {
+                  SCfull = true;
+                  _STATS_methodNotPersisted_SCCfull++;
+                  //bytesToPersist = bytesFootprint;
+   #ifdef PERSISTENCE_VERBOSE
+                  fprintf(stderr, "\tNot Persisted: SCC full\n");
+   #endif
+                  }
+               // Release all entries in ipEntries[] that were locked by us
+               for (uint32_t i = 0; i < numEntries; i++)
+                  {
+                  TR_IPBCDataCallGraph *cgEntry = ipEntries[i]->asIPBCDataCallGraph();
+                  if (cgEntry)
+                     cgEntry->releaseEntry();
+                  }
+               }
+            else // Nothing can be persisted for this method
+               {
+#ifdef PERSISTENCE_VERBOSE
+               fprintf(stderr, "\tNo entry can be persisted for this method (locked/invalid/notOnSCC) \n");
+#endif
+               }
+            }
+         }
+      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseIProfilerPersistence))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "IProfiler: persisted a total of %d entries, of which %d were persisted at shutdown",
+                                        _STATS_entriesPersisted, _STATS_entriesPersisted - entriesAlreadyPersisted);
+      }
+   catch (const std::exception &e)
+      {
+      if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseIProfilerPersistence))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "IProfiler: Failed to store all entries to SCC");
+      }
+   }
+
+// Generates histograms IP info related to virtual/interface calls.
+// (1) Histogram for the "weight" of the dominant target (as a percentage of all targets)
+// (2) Histogram for the number of distinct targets of a particular call
+// To be used as diagnostic, not in production, at shutdown time (see JITShutdown()).
+void
+TR_IProfiler::traverseIProfilerTableAndGenerateHistograms(J9JITConfig *jitConfig)
+{
+   TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, NULL);
+
+   TR_StatsHisto<20> maxWeightHisto("Histo max weight of target", 0, 100);
+   TR_StatsHisto<3> numTargetsHisto("Histo num profiled targets", 1, 4);
+
+   //TR::VMAccessCriticalSection dumpCallGraph(fe); // prevent class unloading
+
    for (int32_t bucket = 0; bucket < TR::Options::_iProfilerBcHashTableSize; bucket++)
       {
-      //fprintf(stderr, "Looking at bucket %d\n", bucket);
       for (TR_IPBytecodeHashTableEntry *entry = _bcHashTable[bucket]; entry; entry = entry->getNext())
          {
          // Skip invalid entries
          if (entry->isInvalid() || invalidateEntryIfInconsistent(entry))
             continue;
+         // Skip the artificial entries
+         if (!entry->getCanPersistEntryFlag())
+            continue;
+         // Skip non-callgraph entries
          TR_IPBCDataCallGraph *cgEntry = entry->asIPBCDataCallGraph();
-         if (cgEntry)
-            {
-            // Get the pc and find the method this pc belongs to
-            U_8* pc = (U_8*)cgEntry->getPC();
-            //fprintf(stderr, "\tInspecting pc=%p\n", pc);
-            J9ClassLoader* loader;
-            J9ROMClass * romClass = vmFunctions->findROMClassFromPC(vmThread, (UDATA)pc, &loader);
-            if (romClass)
-               {
-               //J9ROMMethod * romMethod = vmFunctions->findROMMethodInROMClass(vmThread, romClass, (UDATA)pc);
-               J9ROMMethod *currentMethod = J9ROMCLASS_ROMMETHODS(romClass);
-               J9ROMMethod *desiredMethod = NULL;
-               //fprintf(stderr, "Scanning %u romMethods...\n", romClass->romMethodCount);
-               for (U_32 i = 0; i < romClass->romMethodCount; i++)
-                  {
-                  if (((UDATA)pc >= (UDATA)currentMethod) && ((UDATA)pc < (UDATA)J9_BYTECODE_END_FROM_ROM_METHOD(currentMethod)))
-                     {
-                     // found the method
-                     desiredMethod = currentMethod;
-                     break;
-                     }
-                  currentMethod = nextROMMethod(currentMethod);
-                  }
+         if (!cgEntry)
+            continue;
+         CallSiteProfileInfo *cgData = cgEntry->getCGData();
 
-               if (desiredMethod)
-                  {
-                  // Add the information to the aggregationTable
-                  aggregationHT.add(desiredMethod, romClass, cgEntry);
-                  }
-               else
-                  {
-                  fprintf(stderr, "pc=%p does not belong to romMethod range\n", pc);
-                  }
-               }
-            else
+         uint32_t sumWeight = 0;
+         uint32_t maxWeight = 0;
+         int maxIndex = -1;
+         int numTargets = 0;
+         for (int j = 0; j < NUM_CS_SLOTS; j++)
+            {
+            sumWeight += cgData->_weight[j];
+            if (maxWeight < cgData->_weight[j])
                {
-               fprintf(stderr, "pc=%p does not belong to a romMethod\n", pc);
+               maxWeight = cgData->_weight[j];
+               maxIndex = j;
+               }
+            if (cgData->getClazz(j) && cgData->_weight[j] > 0)
+               numTargets++;
+            }
+         sumWeight += cgData->_residueWeight;
+         if (cgData->_residueWeight)
+            numTargets++;
+         if (sumWeight > 1)
+            numTargetsHisto.update(numTargets);
+         if (numTargets == 0)
+            {
+            fprintf(stderr, "Entry with no weight\n");
+            for (int j = 0; j < NUM_CS_SLOTS; j++)
+               fprintf(stderr, "Class %zu, weight=%u\n", cgData->getClazz(j), cgData->_weight[j]);
+            }
+
+         double percentage = 0;
+         if (maxIndex != -1)
+            percentage = maxWeight*100.0/(double)sumWeight;
+         else
+            fprintf(stderr, "maxIndex is 1\n");
+         if (sumWeight > 1)
+            maxWeightHisto.update(percentage);
+         if (sumWeight > 1)
+            {
+            if (numTargets == 1)
+               {
+               if (percentage < 100.0)
+                  {
+                  fprintf(stderr, "Single target but percentage is %f  maxWeight=%u maxIndex=%d sumWeight=%u\n", percentage, maxWeight, maxIndex, sumWeight);
+                  }
                }
             }
          }
-      }
-   aggregationHT.sortByNameAndPrint(fe);
-
-   fprintf(stderr, "Finished dumping info\n");
+      } // for each bucket
+      maxWeightHisto.report(stderr);
+      numTargetsHisto.report(stderr);
    }
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)

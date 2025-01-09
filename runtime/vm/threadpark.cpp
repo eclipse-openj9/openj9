@@ -45,20 +45,24 @@ threadParkImpl(J9VMThread *vmThread, BOOLEAN timeoutIsEpochRelative, I_64 timeou
 	J9JavaVM *vm = vmThread->javaVM;
 
 	/* Trc_JCL_park_Entry(vmThread, timeoutIsEpochRelative, timeout); */
-	if ((0 != timeout) || (timeoutIsEpochRelative)) {
+	if ((0 != timeout) || timeoutIsEpochRelative) {
 		if (timeoutIsEpochRelative) {
-			/* Currently, the omrthread layer provides no direct support for absolute timeouts.
-			 * Simulate the timeout by calculating the delta from the current time.
-			 */
-			PORT_ACCESS_FROM_VMC(vmThread);
-			I_64 timeNow = j9time_current_time_millis();
-
-			millis = timeout - timeNow;
-			nanos = 0;
-
-			if (millis <= 0) {
+			if (timeout <= 0) {
 				rc = J9THREAD_TIMED_OUT;
-				/*Trc_JCL_park_timeIsInPast(vmThread, timeNow);*/
+			} else {
+				/* Currently, the omrthread layer provides no direct support for absolute timeouts.
+				 * Simulate the timeout by calculating the delta from the current time.
+				 */
+				PORT_ACCESS_FROM_VMC(vmThread);
+				I_64 timeNow = j9time_current_time_millis();
+
+				millis = timeout - timeNow;
+				nanos = 0;
+
+				if (millis <= 0) {
+					rc = J9THREAD_TIMED_OUT;
+					/* Trc_JCL_park_timeIsInPast(vmThread, timeNow); */
+				}
 			}
 		} else {
 			millis = timeout / oneMillion;

@@ -1294,7 +1294,25 @@ TR::SymbolValidationManager::validateStaticClassFromCPRecord(uint16_t classID, u
    {
    J9Class *beholder = getJ9ClassFromID(beholderID);
    J9ConstantPool *beholderCP = J9_CP_FROM_CLASS(beholder);
-   return validateSymbol(classID, TR_ResolvedJ9Method::getClassOfStaticFromCP(_fej9, beholderCP, cpIndex));
+   TR_OpaqueClassBlock *clazz = NULL;
+
+   if (cpIndex != -1)
+      {
+      // VM access is acquired explicitly here to avoid acquiring and releasing
+      // it several times if the initial getClassOfStaticFromCP() fails.
+      TR::VMAccessCriticalSection getClassFromConstantPool(_fej9);
+      clazz = TR_ResolvedJ9Method::getClassOfStaticFromCP(_fej9, beholderCP, cpIndex);
+      if (!clazz)
+         {
+         // This relocation may be early enough that the referenced class is
+         // loaded but not yet resolved at this index. Try to resolve the field
+         // and get the class again.
+         _vmThread->javaVM->internalVMFunctions->resolveStaticFieldRef(_fej9->vmThread(), NULL, beholderCP, cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME, NULL);
+         clazz = TR_ResolvedJ9Method::getClassOfStaticFromCP(_fej9, beholderCP, cpIndex);
+         }
+      }
+
+   return validateSymbol(classID, clazz);
    }
 
 bool

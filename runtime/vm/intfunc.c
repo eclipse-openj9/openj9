@@ -64,8 +64,10 @@ J9InternalVMFunctions J9InternalFunctions = {
 	javaThreadProc,
 	copyStringToUTF8WithMemAlloc,
 	copyStringToJ9UTF8WithMemAlloc,
+	copyStringToJ9UTF8WithPortLib,
 	copyJ9UTF8ToUTF8WithMemAlloc,
 	copyJ9UTF8WithMemAlloc,
+	copyJ9UTF8WithPortLib,
 	internalAcquireVMAccess,
 	internalAcquireVMAccessWithMask,
 	internalAcquireVMAccessNoMutexWithMask,
@@ -463,6 +465,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 #endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) && (JAVA_SPEC_VERSION >= 17) */
 #if defined(J9VM_OPT_JFR)
 	initializeJFR,
+	isJFREnabled,
 	isJFRRecordingStarted,
 	jfrDump,
 	jfrExecutionSample,
