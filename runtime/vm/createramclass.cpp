@@ -3949,8 +3949,8 @@ allocateFreeListBlock (RAMClassAllocationRequest *request, J9ClassLoader *classL
 }
 
 
-static void
-allocateRemainingFragments(RAMClassAllocationRequest *requests, UDATA allocationRequestCount)
+static BOOLEAN
+allocateRemainingFragments(RAMClassAllocationRequest *requests, UDATA allocationRequestCount, J9JavaVM *javaVM, J9ClassLoader *classLoader, RAMClassAllocationRequest *allocationRequests)
 {
 	if (NULL != requests) {
 		/* Calculate required space in new segment, including maximum alignment padding */
@@ -3966,6 +3966,9 @@ allocateRemainingFragments(RAMClassAllocationRequest *requests, UDATA allocation
 		UDATA sub4gFragmentsLeftToAllocate = 0;
 		UDATA freqAccessedFragmentsLeftToAllocate = 0;
 		UDATA inFreqAccessedFragmentsLeftToAllocate = 0;
+		RAMClassAllocationRequest *request = NULL;
+		BOOLEAN isNotLoadedByAnonClassLoader = classLoader != javaVM->anonClassLoader;
+		UDATA i = 0;
 
 		for (request = requests; NULL != request; request = request->next) {
 			if(SUB4G == request->segmentKind) {
@@ -4010,7 +4013,7 @@ allocateRemainingFragments(RAMClassAllocationRequest *requests, UDATA allocation
 				}
 			}
 			Trc_VM_internalAllocateRAMClass_SegmentAllocationFailed();
-			return NULL;
+			return false;
 		}
 		Trc_VM_internalAllocateRAMClass_AllocatedClassMemorySegment(newSub4gSegment, newSub4gSegment->size, newSub4gSegment->heapBase, newSub4gSegment->heapTop);
 
@@ -4027,7 +4030,7 @@ allocateRemainingFragments(RAMClassAllocationRequest *requests, UDATA allocation
 				}
 			}
 			Trc_VM_internalAllocateRAMClass_SegmentAllocationFailed();
-			return NULL;
+			return false;
 		}
 		Trc_VM_internalAllocateRAMClass_AllocatedClassMemorySegment(newFreAccessedSegment, newFreAccessedSegment->size, newFreAccessedSegment->heapBase, newFreAccessedSegment->heapTop);
 
@@ -4044,7 +4047,7 @@ allocateRemainingFragments(RAMClassAllocationRequest *requests, UDATA allocation
 				}
 			}
 			Trc_VM_internalAllocateRAMClass_SegmentAllocationFailed();
-			return NULL;
+			return false;
 		}
 		Trc_VM_internalAllocateRAMClass_AllocatedClassMemorySegment(newInFreqAccessedSegment, newInFreqAccessedSegment->size, newInFreqAccessedSegment->heapBase, newInFreqAccessedSegment->heapTop);
 
@@ -4107,7 +4110,7 @@ allocateRemainingFragments(RAMClassAllocationRequest *requests, UDATA allocation
 				inFreqAccessedFragmentsLeftToAllocate--;
 			}
 		}
-		
+
 		/* Add a new block with the remaining space at the end of the segment, if any, to an appropriate free list */
 		if (sub4gAllocAddress != (UDATA)newSub4gSegment->heapTop) {
 			addBlockToFreeList(classLoader, (UDATA)sub4gAllocAddress, ((UDATA)newSub4gSegment->heapTop) - sub4gAllocAddress, &classLoader->sub4gBlock, classLoader->ramClassUDATABlocks.ramClassSub4gUDATABlockFreeList);
@@ -4119,6 +4122,7 @@ allocateRemainingFragments(RAMClassAllocationRequest *requests, UDATA allocation
 			addBlockToFreeList(classLoader, (UDATA)inFreqAccessedAllocAddress, ((UDATA)newInFreqAccessedSegment->heapTop) - inFreqAccessedAllocAddress, &classLoader->inFrequentlyAccessedBlock, classLoader->ramClassUDATABlocks.ramClassInFreqUDATABlockFreeList);
 		}
 	}
+	return true;
 
 }
 
@@ -4137,6 +4141,7 @@ internalAllocateRAMClass(J9JavaVM *javaVM, J9ClassLoader *classLoader, RAMClassA
 	RAMClassAllocationRequest *request = NULL;
 	RAMClassAllocationRequest *prev = NULL;
 	RAMClassAllocationRequest dummyHead;
+	BOOLEAN memoryAllocationSuccess = false;
 	BOOLEAN isNotLoadedByAnonClassLoader = classLoader != javaVM->anonClassLoader;
 
 	/* Initialize results of allocation requests and ensure sizes are at least UDATA-aligned */
@@ -4197,7 +4202,12 @@ internalAllocateRAMClass(J9JavaVM *javaVM, J9ClassLoader *classLoader, RAMClassA
 	}
 
 	/* If any fragments remain unallocated, allocate a new segment to (at least) fit them */
-	allocateRemainingFragments(requests, allocationRequestCount)
+	memoryAllocationSuccess = allocateRemainingFragments(requests, allocationRequestCount, javaVM, classLoader, allocationRequests);
+
+	if(!memoryAllocationSuccess)
+	{
+		return NULL;
+	}
 
 	/* Clear all allocated fragments */
 	for (i = 0; i < allocationRequestCount; i++) {
