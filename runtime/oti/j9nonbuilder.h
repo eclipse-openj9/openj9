@@ -3573,11 +3573,10 @@ typedef struct J9HookedNative {
 	UDATA userdata;
 } J9HookedNative;
 
-/* @ddr_namespace: map_to_type=J9ClassLoader */
 typedef struct J9RAMClassFreeLists {
-	struct J9RAMClassFreeListBlock* ramClassTinyBlockFreeList;
-	struct J9RAMClassFreeListBlock* ramClassSmallBlockFreeList;
-	struct J9RAMClassFreeListBlock* ramClassLargeBlockFreeList;
+	struct J9RAMClassFreeListBlock *ramClassTinyBlockFreeList;
+	struct J9RAMClassFreeListBlock *ramClassSmallBlockFreeList;
+	struct J9RAMClassFreeListBlock *ramClassLargeBlockFreeList;
 } J9RAMClassFreeLists;
 
 typedef struct J9RAMClassUDATABlockFreeList {
@@ -3586,6 +3585,7 @@ typedef struct J9RAMClassUDATABlockFreeList {
 	UDATA *ramClassInFreqUDATABlockFreeList;
 } J9RAMClassUDATABlockFreeList;
 
+/* @ddr_namespace: map_to_type=J9ClassLoader */
 typedef struct J9ClassLoader {
 	struct J9Pool* sharedLibraries;
 	struct J9HashTable* classHashTable;
