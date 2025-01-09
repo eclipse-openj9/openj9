@@ -440,6 +440,11 @@ typedef struct J9JFRClassLoadingStatistics {
 	I_64 unloadedClassCount;
 } J9JFRClassLoadingStatistics;
 
+typedef struct J9JFRThreadContextSwitchRate {
+	J9JFR_EVENT_COMMON_FIELDS
+	float switchRate;
+} J9JFRThreadContextSwitchRate;
+
 #endif /* defined(J9VM_OPT_JFR) */
 
 /* @ddr_namespace: map_to_type=J9CfrError */
@@ -4870,8 +4875,10 @@ typedef struct J9InternalVMFunctions {
 	IDATA  ( *javaThreadProc)(void *entryarg) ;
 	char*  ( *copyStringToUTF8WithMemAlloc)(struct J9VMThread *currentThread, j9object_t string, UDATA stringFlags, const char *prependStr, UDATA prependStrLength, char *buffer, UDATA bufferLength, UDATA *utf8Length) ;
 	J9UTF8* ( *copyStringToJ9UTF8WithMemAlloc)(struct J9VMThread *vmThread, j9object_t string, UDATA stringFlags, const char *prependStr, UDATA prependStrLength, char *buffer, UDATA bufferLength) ;
+	J9UTF8* ( *copyStringToJ9UTF8WithPortLib)(struct J9VMThread *vmThread, j9object_t string, UDATA stringFlags, const char *prependStr, UDATA prependStrLength, OMRPortLibrary *portLib) ;
 	char*  ( *copyJ9UTF8ToUTF8WithMemAlloc)(struct J9VMThread *vmThread, J9UTF8 *string, UDATA stringFlags, const char *prependStr, UDATA prependStrLength, char *buffer, UDATA bufferLength) ;
 	J9UTF8* ( *copyJ9UTF8WithMemAlloc)(struct J9VMThread *vmThread, J9UTF8 *string, UDATA stringFlags, const char *prependStr, UDATA prependStrLength, char *buffer, UDATA bufferLength) ;
+	J9UTF8* ( *copyJ9UTF8WithPortLib)(struct J9VMThread *vmThread, J9UTF8 *string, UDATA stringFlags, const char *prependStr, UDATA prependStrLength, OMRPortLibrary *portLib) ;
 	void  ( *internalAcquireVMAccess)(struct J9VMThread * currentThread) ;
 	void  ( *internalAcquireVMAccessWithMask)(struct J9VMThread * currentThread, UDATA haltFlags) ;
 	void  ( *internalAcquireVMAccessNoMutexWithMask)(struct J9VMThread * vmThread, UDATA haltFlags) ;
@@ -5274,6 +5281,7 @@ typedef struct J9InternalVMFunctions {
 #endif /* defined(J9VM_ZOS_3164_INTEROPERABILITY) && (JAVA_SPEC_VERSION >= 17) */
 #if defined(J9VM_OPT_JFR)
 	jint (*initializeJFR)(struct J9JavaVM *vm, BOOLEAN lateInit);
+	jboolean (*isJFREnabled)(struct J9JavaVM *vm);
 	jboolean (*isJFRRecordingStarted)(struct J9JavaVM *vm);
 	void (*jfrDump)(struct J9VMThread *currentThread, BOOLEAN finalWrite);
 	void (*jfrExecutionSample)(struct J9VMThread *currentThread, struct J9VMThread *sampleThread);
@@ -5729,6 +5737,8 @@ typedef struct JFRState {
 	J9SysinfoCPUTime prevSysCPUTime;
 	omrthread_process_time_t prevProcCPUTimes;
 	int64_t prevProcTimestamp;
+	int64_t prevContextSwitchTimestamp;
+	uint64_t prevContextSwitches;
 } JFRState;
 
 typedef struct J9ReflectFunctionTable {
@@ -5807,6 +5817,7 @@ typedef struct J9JavaVM {
 	U_32 runtimeFlags;
 	U_32 extendedRuntimeFlags;
 	U_32 extendedRuntimeFlags2;
+	U_32 extendedRuntimeFlags3;
 	UDATA zeroOptions;
 	struct J9Pool* hotFieldClassInfoPool;
 	omrthread_monitor_t hotFieldClassInfoPoolMutex;

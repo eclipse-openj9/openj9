@@ -694,6 +694,7 @@ endif()
 
 if(J9VM_OPT_JFR)
 	omr_add_exports(jclse
+		Java_com_ibm_oti_vm_VM_isJFREnabled
 		Java_com_ibm_oti_vm_VM_isJFRRecordingStarted
 		Java_com_ibm_oti_vm_VM_jfrDump
 		Java_com_ibm_oti_vm_VM_setJFRRecordingFileName

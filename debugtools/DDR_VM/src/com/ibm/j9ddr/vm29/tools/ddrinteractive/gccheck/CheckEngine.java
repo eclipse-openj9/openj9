@@ -228,11 +228,11 @@ class CheckEngine
 			CheckError error = new CheckError(object, _cycle, _currentCheck, elementName, result, _cycle.nextErrorCount());
 			_reporter.report(error);
 			/* There are some error cases would not prevent further iteration */
-			if (!(J9MODRON_GCCHK_RC_CLASS_IS_UNLOADED == result)) {
+			if ((J9MODRON_GCCHK_RC_CLASS_IS_UNLOADED == result) || (J9MODRON_GCCHK_RC_INVALID_INDEXABLE_DATA_ADDRESS == result)) {
+				return J9MODRON_SLOT_ITERATOR_OK;
+			} else {
 				_reporter.reportHeapWalkError(error, _lastHeapObject1, _lastHeapObject2, _lastHeapObject3);
 				return J9MODRON_SLOT_ITERATOR_UNRECOVERABLE_ERROR;
-			} else {
-				return J9MODRON_SLOT_ITERATOR_OK;
 			}
 		}
 

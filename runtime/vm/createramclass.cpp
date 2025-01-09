@@ -162,7 +162,9 @@ static void copyVTable(J9VMThread *vmStruct, J9Class *ramClass, J9Class *supercl
 static UDATA processVTableMethod(J9VMThread *vmThread, J9ClassLoader *classLoader, UDATA *vTableAddress, J9Class *superclass, J9ROMClass *romClass, J9ROMMethod *romMethod, UDATA localPackageID, UDATA vTableMethodCount, void *storeValue, J9OverrideErrorData *errorData);
 static VMINLINE UDATA growNewVTableSlot(UDATA *vTableAddress, UDATA vTableMethodCount, void *storeValue);
 static UDATA getVTableIndexForNameAndSigStartingAt(UDATA *vTable, J9UTF8 *name, J9UTF8 *signature, UDATA vTableIndex);
+#if JAVA_SPEC_VERSION < 24
 static UDATA checkPackageAccess(J9VMThread *vmThread, J9Class *foundClass, UDATA classPreloadFlags);
+#endif /* JAVA_SPEC_VERSION < 24 */
 static void setCurrentExceptionForBadClass(J9VMThread *vmThread, J9UTF8 *badClassName, UDATA exceptionIndex, U_32 nlsModuleName, U_32 nlsMessageID);
 static BOOLEAN verifyClassLoadingStack(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass);
 static void popFromClassLoadingStack(J9VMThread *vmThread);
@@ -1448,22 +1450,22 @@ getVTableOffsetForMethod(J9Method * method, J9Class *clazz, J9VMThread *vmThread
 	return 0;
 }
 
+#if JAVA_SPEC_VERSION < 24
 static UDATA
 checkPackageAccess(J9VMThread *vmThread, J9Class *foundClass, UDATA classPreloadFlags)
 {
-	if ((classPreloadFlags & J9_FINDCLASS_FLAG_CHECK_PKG_ACCESS) == J9_FINDCLASS_FLAG_CHECK_PKG_ACCESS) {
-
-		if (!packageAccessIsLegal(vmThread, foundClass, PEEK_OBJECT_IN_SPECIAL_FRAME(vmThread, 0), TRUE))
-		{
-			if ((classPreloadFlags & J9_FINDCLASS_FLAG_THROW_ON_FAIL) != J9_FINDCLASS_FLAG_THROW_ON_FAIL) {
-				vmThread->currentException = NULL;
-				vmThread->privateFlags &= ~J9_PRIVATE_FLAGS_REPORT_EXCEPTION_THROW;
-			}
-			return 1;
+	if (J9_ARE_ANY_BITS_SET(classPreloadFlags, J9_FINDCLASS_FLAG_CHECK_PKG_ACCESS)
+		&& !packageAccessIsLegal(vmThread, foundClass, PEEK_OBJECT_IN_SPECIAL_FRAME(vmThread, 0), TRUE)
+	) {
+		if (J9_ARE_NO_BITS_SET(classPreloadFlags, J9_FINDCLASS_FLAG_THROW_ON_FAIL)) {
+			vmThread->currentException = NULL;
+			vmThread->privateFlags &= ~J9_PRIVATE_FLAGS_REPORT_EXCEPTION_THROW;
 		}
+		return 1;
 	}
 	return 0;
 }
+#endif /* JAVA_SPEC_VERSION < 24 */
 
 /**
  * Sets the current exception using the detailed error message plus the specified class name.
@@ -1697,7 +1699,6 @@ static VMINLINE BOOLEAN
 loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass, UDATA options, J9Class *elementClass,
 	BOOLEAN hotswapping, UDATA classPreloadFlags, J9Class **superclassOut, J9Module *module)
 {
-	J9JavaVM *vm = vmThread->javaVM;
 	BOOLEAN isExemptFromValidation = J9_ARE_ANY_BITS_SET(options, J9_FINDCLASS_FLAG_UNSAFE);
 	J9UTF8 *className = J9ROMCLASS_CLASSNAME(romClass);
 	J9UTF8 *superclassName = NULL;
@@ -1731,12 +1732,14 @@ loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9
 				/* we will inherit exemption from superclass */
 				isExemptFromValidation = TRUE;
 			}
+#if JAVA_SPEC_VERSION < 24
 			if (!isExemptFromValidation
-				&& requirePackageAccessCheck(vm, classLoader, module, superclass)
-				&& (checkPackageAccess(vmThread, superclass, classPreloadFlags) != 0)
+				&& requirePackageAccessCheck(vmThread->javaVM, classLoader, module, superclass)
+				&& (0 != checkPackageAccess(vmThread, superclass, classPreloadFlags))
 			) {
 				return FALSE;
 			}
+#endif /* JAVA_SPEC_VERSION < 24 */
 
 			/* ensure that the superclass isn't an interface or final */
 			if (J9_ARE_ANY_BITS_SET(superclass->romClass->modifiers, J9AccFinal)) {
@@ -1789,11 +1792,13 @@ loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9
 					if (interfaceClass == NULL) {
 						return FALSE;
 					}
-					if (requirePackageAccessCheck(vm, classLoader, module, interfaceClass)
-						&& (checkPackageAccess(vmThread, interfaceClass, classPreloadFlags) != 0)
+#if JAVA_SPEC_VERSION < 24
+					if (requirePackageAccessCheck(vmThread->javaVM, classLoader, module, interfaceClass)
+						&& (0 != checkPackageAccess(vmThread, interfaceClass, classPreloadFlags))
 					) {
 						return FALSE;
 					}
+#endif /* JAVA_SPEC_VERSION < 24 */
 					/* ensure that the interface is in fact an interface */
 					if ((interfaceClass->romClass->modifiers & J9AccInterface) != J9AccInterface) {
 						Trc_VM_CreateRAMClassFromROMClass_interfaceIsNotAnInterface(vmThread, interfaceClass);

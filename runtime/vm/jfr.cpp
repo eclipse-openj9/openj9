@@ -96,6 +96,9 @@ jfrEventSize(J9JFREvent *jfrEvent)
 	case J9JFR_EVENT_TYPE_CLASS_LOADING_STATISTICS:
 		size = sizeof(J9JFRClassLoadingStatistics);
 		break;
+	case J9JFR_EVENT_TYPE_THREAD_CONTEXT_SWITCH_RATE:
+		size = sizeof(J9JFRThreadContextSwitchRate);
+		break;
 	default:
 		Assert_VM_unreachable();
 		break;
@@ -639,6 +642,7 @@ jint
 initializeJFR(J9JavaVM *vm, BOOLEAN lateInit)
 {
 	PORT_ACCESS_FROM_JAVAVM(vm);
+	OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
 	jint rc = JNI_ERR;
 	J9HookInterface **vmHooks = getVMHookInterface(vm);
 	U_8 *buffer = NULL;
@@ -720,6 +724,14 @@ initializeJFR(J9JavaVM *vm, BOOLEAN lateInit)
 
 	vm->jfrState.prevSysCPUTime.timestamp = -1;
 	vm->jfrState.prevProcTimestamp = -1;
+
+	if (0 == omrsysinfo_get_number_context_switches(&vm->jfrState.prevContextSwitches)) {
+		vm->jfrState.prevContextSwitchTimestamp = j9time_nano_time();
+	} else {
+		vm->jfrState.prevContextSwitchTimestamp = -1;
+		vm->jfrState.prevContextSwitches = 0;
+	}
+
 	if (omrthread_monitor_init_with_name(&vm->jfrBufferMutex, 0, "JFR global buffer mutex")) {
 		goto fail;
 	}
@@ -853,6 +865,12 @@ initializeEventFields(J9VMThread *currentThread, J9JFREvent *event, UDATA eventT
 }
 
 jboolean
+isJFREnabled(J9JavaVM *vm)
+{
+	return J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_JFR_ENABLED) ? JNI_TRUE : JNI_FALSE;
+}
+
+jboolean
 isJFRRecordingStarted(J9JavaVM *vm)
 {
 	return vm->jfrState.isStarted ? JNI_TRUE : JNI_FALSE;
@@ -970,8 +988,9 @@ jfrClassLoadingStatistics(J9VMThread *currentThread)
 		initializeEventFields(currentThread, (J9JFREvent *)jfrEvent, J9JFR_EVENT_TYPE_CLASS_LOADING_STATISTICS);
 
 		UDATA unloadedClassCount = 0;
-		vm->memoryManagerFunctions->j9gc_get_cumulative_class_unloading_stats(currentThread, NULL, &unloadedClassCount, NULL);
-		jfrEvent->unloadedClassCount = (I_64)unloadedClassCount;
+		UDATA unloadedAnonClassCount = 0;
+		vm->memoryManagerFunctions->j9gc_get_cumulative_class_unloading_stats(currentThread, &unloadedAnonClassCount, &unloadedClassCount, NULL);
+		jfrEvent->unloadedClassCount = (I_64)(unloadedClassCount + unloadedAnonClassCount);
 
 		internalReleaseVMAccess(currentThread);
 
@@ -986,6 +1005,37 @@ jfrClassLoadingStatistics(J9VMThread *currentThread)
 		vmFuncs->allClassLoadersEndDo(&walkState);
 
 		internalAcquireVMAccess(currentThread);
+	}
+}
+
+void
+jfrThreadContextSwitchRate(J9VMThread *currentThread)
+{
+	PORT_ACCESS_FROM_VMC(currentThread);
+	OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
+
+	uint64_t switches = 0;
+	int32_t rc = omrsysinfo_get_number_context_switches(&switches);
+
+	if (0 == rc) {
+		J9JFRThreadContextSwitchRate *jfrEvent = (J9JFRThreadContextSwitchRate *)reserveBuffer(currentThread, sizeof(J9JFRThreadContextSwitchRate));
+		if (NULL != jfrEvent) {
+			JFRState *jfrState = &currentThread->javaVM->jfrState;
+			int64_t currentTime = j9time_nano_time();
+
+			initializeEventFields(currentThread, (J9JFREvent *)jfrEvent, J9JFR_EVENT_TYPE_THREAD_CONTEXT_SWITCH_RATE);
+
+			if ((-1 == jfrState->prevContextSwitchTimestamp)
+				|| (currentTime == jfrState->prevContextSwitchTimestamp)
+			) {
+				jfrEvent->switchRate = 0.0f;
+			} else {
+				int64_t timeDelta = currentTime - jfrState->prevContextSwitchTimestamp;
+				jfrEvent->switchRate = (switches - jfrState->prevContextSwitches) * 1e9f / timeDelta;
+			}
+			jfrState->prevContextSwitches = switches;
+			jfrState->prevContextSwitchTimestamp = currentTime;
+		}
 	}
 }
 
@@ -1007,11 +1057,12 @@ jfrSamplingThreadProc(void *entryArg)
 				internalAcquireVMAccess(currentThread);
 				jfrCPULoad(currentThread);
 				jfrClassLoadingStatistics(currentThread);
-				internalReleaseVMAccess(currentThread);
-				omrthread_monitor_enter(vm->jfrSamplerMutex);
 				if (0 == (count % 1000)) { // 10 seconds
 					J9SignalAsyncEvent(vm, NULL, vm->jfrThreadCPULoadAsyncKey);
+					jfrThreadContextSwitchRate(currentThread);
 				}
+				internalReleaseVMAccess(currentThread);
+				omrthread_monitor_enter(vm->jfrSamplerMutex);
 			}
 			count += 1;
 			omrthread_monitor_wait_timed(vm->jfrSamplerMutex, J9JFR_SAMPLING_RATE, 0);

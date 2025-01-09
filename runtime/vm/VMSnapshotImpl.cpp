@@ -375,6 +375,24 @@ VMSnapshotImpl::isImmortalClassLoader(J9ClassLoader *classLoader)
 	return isImmortal;
 }
 
+#if JAVA_SPEC_VERSION > 8
+void
+VMSnapshotImpl::saveModularityData()
+{
+	_snapshotHeader->savedJavaVMStructs.modularityPool = _vm->modularityPool;
+	_snapshotHeader->savedJavaVMStructs.javaBaseModule = _vm->javaBaseModule;
+	_snapshotHeader->savedJavaVMStructs.unnamedModuleForSystemLoader = _vm->unnamedModuleForSystemLoader;
+}
+
+void
+VMSnapshotImpl::restoreModularityData()
+{
+	_vm->modularityPool = _snapshotHeader->savedJavaVMStructs.modularityPool;
+	_vm->javaBaseModule = _snapshotHeader->savedJavaVMStructs.javaBaseModule;
+	_vm->unnamedModuleForSystemLoader = _snapshotHeader->savedJavaVMStructs.unnamedModuleForSystemLoader;
+}
+#endif /* JAVA_SPEC_VERSION > 8 */
+
 void
 VMSnapshotImpl::saveHiddenInstanceFields()
 {
@@ -541,6 +559,27 @@ VMSnapshotImpl::fixupClassPathEntries(J9ClassLoader *classLoader)
 	}
 }
 
+/* TODO: Fixup during fixupClassLoaders. */
+void
+VMSnapshotImpl::fixupModules()
+{
+	pool_state classLoaderWalkState = {0};
+	J9ClassLoader *currentClassLoader = (J9ClassLoader *)pool_startDo(_vm->classLoaderBlocks, &classLoaderWalkState);
+	while (NULL != currentClassLoader) {
+		J9HashTableState moduleWalkState = {0};
+
+		J9Module **modulePtr = (J9Module **)hashTableStartDo(currentClassLoader->moduleHashTable, &moduleWalkState);
+		while (NULL != modulePtr) {
+			J9Module *currentModule = *modulePtr;
+			currentModule->moduleObject = NULL;
+			currentModule->version = NULL;
+
+			modulePtr = (J9Module **)hashTableNextDo(&moduleWalkState);
+		}
+		currentClassLoader = (J9ClassLoader *)pool_nextDo(&classLoaderWalkState);
+	}
+}
+
 /* TODO: Once all class loaders are supported, this won't be needed. */
 void
 VMSnapshotImpl::removeUnpersistedClassLoaders()
@@ -571,7 +610,37 @@ VMSnapshotImpl::removeUnpersistedClassLoaders()
 	}
 
 	for (UDATA i = 0; i < count; i++) {
-		freeClassLoader(removeLoaders[i], _vm, vmThread, FALSE);
+		J9ClassLoader *currentClassLoader = removeLoaders[i];
+
+		J9HashTableState moduleWalkState = {0};
+		J9Module **modulePtr = (J9Module **)hashTableStartDo(currentClassLoader->moduleHashTable, &moduleWalkState);
+		while (NULL != modulePtr) {
+			J9Module *moduleDel = *modulePtr;
+			modulePtr = (J9Module **)hashTableNextDo(&moduleWalkState);
+			freeJ9Module(_vm, moduleDel);
+		}
+
+		J9HashTableState packageWalkState = {0};
+		J9Package **packagePtr = (J9Package **)hashTableStartDo(currentClassLoader->packageHashTable, &packageWalkState);
+		while (NULL != packagePtr) {
+			J9Package *packageDel = *packagePtr;
+			packagePtr = (J9Package **)hashTableNextDo(&packageWalkState);
+			J9HashTableState walkState = {0};
+
+			J9Module **modulePtr = (J9Module **)hashTableStartDo(packageDel->exportsHashTable, &walkState);
+			while (NULL != modulePtr) {
+				if (NULL != (*modulePtr)->removeExportsHashTable) {
+					hashTableRemove((*modulePtr)->removeExportsHashTable, &packageDel);
+				}
+				J9Module *moduleDel = *modulePtr;
+				modulePtr = (J9Module **)hashTableNextDo(&walkState);
+				freeJ9Module(_vm, moduleDel);
+			}
+			hashTableFree(packageDel->exportsHashTable);
+			j9mem_free_memory(packageDel->packageName);
+			pool_removeElement(_vm->modularityPool, packageDel);
+		}
+		freeClassLoader(currentClassLoader, _vm, vmThread, FALSE);
 	}
 
 	if ((J9ClassLoader **)buf != removeLoaders) {
@@ -830,6 +899,7 @@ VMSnapshotImpl::saveJ9JavaVMStructures()
 	saveMemorySegments();
 	savePrimitiveAndArrayClasses();
 	saveHiddenInstanceFields();
+	saveModularityData();
 	_snapshotHeader->vm = _vm;
 }
 
@@ -846,6 +916,7 @@ VMSnapshotImpl::restoreJ9JavaVMStructures()
 	restoreMemorySegments();
 	restorePrimitiveAndArrayClasses();
 	restoreHiddenInstanceFields();
+	restoreModularityData();
 
 	if (J9THREAD_RWMUTEX_OK != omrthread_rwmutex_init(&_vm->systemClassLoader->cpEntriesMutex, 0, "classPathEntries Mutex")) {
 		success = false;
@@ -946,6 +1017,7 @@ VMSnapshotImpl::writeSnapshot()
 	/* TODO: Call GC API to snapshot heap. */
 	fixupClassLoaders();
 	fixupClasses();
+	fixupModules();
 	saveJ9JavaVMStructures();
 	if(!writeSnapshotToFile()) {
 		PORT_ACCESS_FROM_PORT(_portLibrary);

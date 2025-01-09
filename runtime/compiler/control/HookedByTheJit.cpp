@@ -938,7 +938,6 @@ static void emptyJitGCMapCheck(J9VMThread * currentThread, J9StackWalkState * wa
 
 static void jitGCMapCheck(J9VMThread* vmThread, IDATA handlerKey, void* userData)
    {
-
    J9StackWalkState walkState;
    walkState.flags = J9_STACKWALK_ITERATE_O_SLOTS | J9_STACKWALK_ITERATE_HIDDEN_JIT_FRAMES | J9_STACKWALK_CHECK_I_SLOTS_FOR_OBJECTS;
    walkState.objectSlotWalkFunction = emptyJitGCMapCheck;
@@ -1067,33 +1066,42 @@ void DLTLogic(J9VMThread* vmThread, TR::CompilationInfo *compInfo)
       TR_J9VMBase * vm = TR_J9VMBase::get(jitConfig, vmThread);
 
       static char *enableDebugDLT = feGetEnv("TR_DebugDLT");
-      bool dltMostOnce = false;
       int32_t enableDLTidx = -1;
       int32_t disableDLTidx = -1;
-      int32_t dltOptLevel = -1;
 
-      if (enableDebugDLT!=NULL)
+      TR::Options *options = TR::Options::getCmdLineOptions();
+      TR::OptionSet *optionSet = NULL;
+      bool dltMostOnce = options->getOption(TR_DLTMostOnce);
+      if (options->anOptionSetContainsADltOptLevel())
          {
-         TR::OptionSet *optionSet = findOptionSet(walkState.method, false);
-         TR::Options *options = optionSet ? optionSet->getOptions() : NULL;
+         optionSet = findOptionSet(walkState.method, false/*AOT*/);
+         if (optionSet)
+            options = optionSet->getOptions();
+         }
+      int32_t dltOptLevel = options->getDLTOptLevel();
 
-         enableDLTidx = options ? options->getEnableDLTBytecodeIndex() : -1;
-         disableDLTidx = options ? options->getDisableDLTBytecodeIndex() : -1;
-
-         if (enableDLTidx != -1)
+      if (enableDebugDLT != NULL)
+         {
+         if (!optionSet)
+            optionSet = findOptionSet(walkState.method, false);
+         // If option set exist, extract DLT related options from it
+         if (optionSet)
             {
-            J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(walkState.method);
-            bcIndex = enableDLTidx;
-            if (enableDLTidx >= (J9_BYTECODE_END_FROM_ROM_METHOD(romMethod)) - (J9_BYTECODE_START_FROM_ROM_METHOD(romMethod)))
+            TR::Options *options = optionSet->getOptions();
+            enableDLTidx = options->getEnableDLTBytecodeIndex();
+            disableDLTidx = options->getDisableDLTBytecodeIndex();
+            if (enableDLTidx != -1)
+               {
+               J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(walkState.method);
+               bcIndex = enableDLTidx;
+               if (enableDLTidx >= (J9_BYTECODE_END_FROM_ROM_METHOD(romMethod)) - (J9_BYTECODE_START_FROM_ROM_METHOD(romMethod)))
+                  return;
+               dltBlock->bcIndex[idx] = enableDLTidx;
+               }
+            if (disableDLTidx != -1 && disableDLTidx == bcIndex)
                return;
-            dltBlock->bcIndex[idx] = enableDLTidx;
+            dltMostOnce = options->getOption(TR_DLTMostOnce);
             }
-         if (disableDLTidx != -1 && disableDLTidx == bcIndex) return;
-
-         dltMostOnce = options ? options->getOption(TR_DLTMostOnce) :
-            TR::Options::getCmdLineOptions()->getOption(TR_DLTMostOnce);
-         dltOptLevel = options ? options->getDLTOptLevel() :
-            TR::Options::getCmdLineOptions()->getDLTOptLevel();
          }
 
       // This setup is for matching dltEntry to the right transfer point. It can be an issue only
@@ -4270,6 +4278,9 @@ void JitShutdown(J9JITConfig * jitConfig)
    // so the fact that this option is true doesn't mean that IProfiler structures were not allocated
    if (options /* && !options->getOption(TR_DisableInterpreterProfiling) */ && iProfiler)
       {
+      //if (options->getOption(TR_StoreIPInfoOnShutdown))
+      //   iProfiler->persistAllEntries();
+
       printIprofilerStats(options, jitConfig, iProfiler, "Shutdown");
       // Prevent the interpreter to accumulate more info
       // stopInterpreterProfiling is stronger than turnOff... because it prevents the reactivation
@@ -7795,6 +7806,7 @@ void printIprofilerStats(TR::Options *options, J9JITConfig * jitConfig, TR_IProf
          iProfiler->printAllocationReport();
       if (TEST_verbose || options->getOption(TR_VerboseInterpreterProfiling))
          iProfiler->outputStats();
+      // iProfiler->traverseIProfilerTableAndGenerateHistograms(jitConfig);
       }
    }
 

@@ -4748,15 +4748,22 @@ internalError:
 			allClassesEndDo(&classWalkState);
 		} else {
 			updateVMStruct(REGISTER_ARGS);
-			J9ClassLoader* result = internalAllocateClassLoader(_vm, classLoaderObject);
-			VMStructHasBeenUpdated(REGISTER_ARGS); // likely unnecessary - no code runs in internalAllocateClassLoader
-			if (NULL == result) {
-				rc = GOTO_THROW_CURRENT_EXCEPTION;
-				goto done;
-			}
-			if (J9_CLASSLOADER_TYPE_PLATFORM == loaderType) {
-				/* extensionClassLoader holds the platform class loader in Java 11+ */
-				_vm->extensionClassLoader = result;
+#if defined(J9VM_OPT_SNAPSHOTS)
+			if (IS_RESTORE_RUN(_vm) && (J9_CLASSLOADER_TYPE_PLATFORM == loaderType)) {
+				_vm->internalVMFunctions->initializeSnapshotClassLoaderObject(_vm, _vm->extensionClassLoader, classLoaderObject);
+			} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+			{
+				J9ClassLoader *result = internalAllocateClassLoader(_vm, classLoaderObject);
+				VMStructHasBeenUpdated(REGISTER_ARGS); // likely unnecessary - no code runs in internalAllocateClassLoader
+				if (NULL == result) {
+					rc = GOTO_THROW_CURRENT_EXCEPTION;
+					goto done;
+				}
+				if (J9_CLASSLOADER_TYPE_PLATFORM == loaderType) {
+					/* extensionClassLoader holds the platform class loader in Java 11+ */
+					_vm->extensionClassLoader = result;
+				}
 			}
 		}
 		restoreInternalNativeStackFrame(REGISTER_ARGS);

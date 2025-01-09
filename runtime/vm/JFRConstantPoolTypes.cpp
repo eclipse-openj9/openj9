@@ -23,6 +23,7 @@
 #include "j9protos.h"
 #include "j9consts.h"
 #include "j9vmconstantpool.h"
+#include "pool_api.h"
 
 #if defined(J9VM_OPT_JFR)
 
@@ -1162,9 +1163,24 @@ VM_JFRConstantPoolTypes::addClassLoadingStatisticsEntry(J9JFRClassLoadingStatist
 
 	index = _classLoadingStatisticsCount;
 	_classLoadingStatisticsCount += 1;
-
 done:
 	return index;
+}
+
+void
+VM_JFRConstantPoolTypes::addThreadContextSwitchRateEntry(J9JFRThreadContextSwitchRate *threadContextSwitchRateData)
+{
+	ThreadContextSwitchRateEntry *entry = (ThreadContextSwitchRateEntry *)pool_newElement(_threadContextSwitchRateTable);
+
+	if (NULL == entry) {
+		_buildResult = OutOfMemory;
+		return;
+	}
+
+	entry->ticks = threadContextSwitchRateData->startTicks;
+	entry->switchRate = threadContextSwitchRateData->switchRate;
+
+	_threadContextSwitchRateCount += 1;
 }
 
 void
