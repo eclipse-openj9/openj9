@@ -43,9 +43,9 @@ class TR_J9EstimateCodeSize : public TR_EstimateCodeSize
    {
    public:
 
-      TR_J9EstimateCodeSize() : TR_EstimateCodeSize(), _optimisticSize(0), _lastCallBlockFrequency(-1) { }
+      TR_J9EstimateCodeSize() : TR_EstimateCodeSize(), _analyzedSize(0), _lastCallBlockFrequency(-1) { }
 
-      int32_t getOptimisticSize()       { return _optimisticSize; }
+      int32_t getOptimisticSize()       { return _analyzedSize; }
 
    /** \brief
     *     The inliner weight adjustment factor used for java/lang/String* compression related methods.
@@ -164,7 +164,7 @@ class TR_J9EstimateCodeSize : public TR_EstimateCodeSize
 
 
       int32_t _lastCallBlockFrequency;
-      int32_t _optimisticSize;          // size if we assume we are doing a partial inline
+      int32_t _analyzedSize;          // size if we assume we are doing a partial inline
    };
 
 #define NUM_PREV_BC 5
