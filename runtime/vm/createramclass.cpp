@@ -3943,6 +3943,180 @@ allocateFreeListBlock (RAMClassAllocationRequest *request, J9ClassLoader *classL
 	}
 }
 
+
+static void
+allocateRemainingFragments(RAMClassAllocationRequest *requests, UDATA allocationRequestCount)
+{
+	if (NULL != requests) {
+		/* Calculate required space in new segment, including maximum alignment padding */
+		UDATA newSub4gSegmentSize = 0;
+		UDATA newFreqAccessedSegmentSize = 0;
+		UDATA newInFreqAccessedSegmentSize = 0;
+		J9MemorySegment *newSub4gSegment = NULL;
+		J9MemorySegment *newFreAccessedSegment = NULL;
+		J9MemorySegment *newInFreqAccessedSegment = NULL;
+		UDATA sub4gAllocAddress = 0;
+		UDATA freqAccessedAllocAddress = 0;
+		UDATA inFreqAccessedAllocAddress = 0;
+		UDATA sub4gFragmentsLeftToAllocate = 0;
+		UDATA freqAccessedFragmentsLeftToAllocate = 0;
+		UDATA inFreqAccessedFragmentsLeftToAllocate = 0;
+
+		for (request = requests; NULL != request; request = request->next) {
+			if(SUB4G == request->segmentKind) {
+				sub4gFragmentsLeftToAllocate++;
+				newSub4gSegmentSize += request->fragmentSize + request->alignment;
+			} else if (FREQUENTLY_ACCESSED == request->segmentKind) {
+				freqAccessedFragmentsLeftToAllocate++;
+				newFreqAccessedSegmentSize += request->fragmentSize + request->alignment;
+			} else if (INFREQUENTLY_ACCESSED == request->segmentKind) {
+				inFreqAccessedFragmentsLeftToAllocate++;
+				newInFreqAccessedSegmentSize += request->fragmentSize + request->alignment;}
+		}
+
+		/* Add sizeof(UDATA) to hold the "lastAllocatedClass" pointer - only for sub4g*/
+		newSub4gSegmentSize += sizeof(UDATA);
+
+		/* Allocate a new segment of the required size */
+
+		UDATA classAllocationIncrement = javaVM->ramClassAllocationIncrement;
+		if (!isNotLoadedByAnonClassLoader) {
+			classAllocationIncrement = 0;
+		}
+
+		Trc_VM_internalAllocateRAMClass_AllocateClassMemorySegment(sub4gFragmentsLeftToAllocate, newSub4gSegmentSize, classAllocationIncrement);
+		Trc_VM_internalAllocateRAMClass_AllocateClassMemorySegment(freqAccessedFragmentsLeftToAllocate, newFreqAccessedSegmentSize, classAllocationIncrement);
+		Trc_VM_internalAllocateRAMClass_AllocateClassMemorySegment(inFreqAccessedFragmentsLeftToAllocate, newInFreqAccessedSegmentSize, classAllocationIncrement);
+
+		newSub4gSegment = allocateClassMemorySegment(javaVM, newSub4gSegmentSize, MEMORY_TYPE_RAM_CLASS, classLoader, classAllocationIncrement);
+		newFreAccessedSegment = allocateClassMemorySegment(javaVM, newFreqAccessedSegmentSize, MEMORY_TYPE_RAM_CLASS, classLoader, classAllocationIncrement);
+		newInFreqAccessedSegment = allocateClassMemorySegment(javaVM, newInFreqAccessedSegmentSize, MEMORY_TYPE_RAM_CLASS, classLoader, classAllocationIncrement);
+
+		if (NULL == newSub4gSegment) {
+			/* Free allocated fragments */
+			/* TODO attempt to coalesce free blocks? */
+			for (i = 0; i < allocationRequestCount; i++) {
+				if ((NULL != allocationRequests[i].address)
+					&& (SUB4G == allocationRequests[i].segmentKind)) 
+				{
+					UDATA fragmentAddress = ((UDATA)allocationRequests[i].address) - allocationRequests[i].prefixSize;
+					addBlockToFreeList(classLoader, fragmentAddress, allocationRequests[i].fragmentSize, &classLoader->sub4gBlock, classLoader->ramClassUDATABlocks.ramClassSub4gUDATABlockFreeList);
+					allocationRequests[i].address = NULL;
+				}
+			}
+			Trc_VM_internalAllocateRAMClass_SegmentAllocationFailed();
+			return NULL;
+		}
+		Trc_VM_internalAllocateRAMClass_AllocatedClassMemorySegment(newSub4gSegment, newSub4gSegment->size, newSub4gSegment->heapBase, newSub4gSegment->heapTop);
+
+		if (NULL == newFreAccessedSegment) {
+			/* Free allocated fragments */
+			/* TODO attempt to coalesce free blocks? */
+			for (i = 0; i < allocationRequestCount; i++) {
+				if ((NULL != allocationRequests[i].address)
+					&& (FREQUENTLY_ACCESSED == allocationRequests[i].segmentKind)) 
+				{
+					UDATA fragmentAddress = ((UDATA)allocationRequests[i].address) - allocationRequests[i].prefixSize;
+					addBlockToFreeList(classLoader, fragmentAddress, allocationRequests[i].fragmentSize, &classLoader->frequentlyAccessedBlock, classLoader->ramClassUDATABlocks.ramClassFreqUDATABlockFreeList);
+					allocationRequests[i].address = NULL;
+				}
+			}
+			Trc_VM_internalAllocateRAMClass_SegmentAllocationFailed();
+			return NULL;
+		}
+		Trc_VM_internalAllocateRAMClass_AllocatedClassMemorySegment(newFreAccessedSegment, newFreAccessedSegment->size, newFreAccessedSegment->heapBase, newFreAccessedSegment->heapTop);
+
+		if (NULL == newInFreqAccessedSegment) {
+			/* Free allocated fragments */
+			/* TODO attempt to coalesce free blocks? */
+			for (i = 0; i < allocationRequestCount; i++) {
+				if ((NULL != allocationRequests[i].address)
+					&& (INFREQUENTLY_ACCESSED == allocationRequests[i].segmentKind)) 
+				{
+					UDATA fragmentAddress = ((UDATA)allocationRequests[i].address) - allocationRequests[i].prefixSize;
+					addBlockToFreeList(classLoader, fragmentAddress, allocationRequests[i].fragmentSize, &classLoader->inFrequentlyAccessedBlock, classLoader->ramClassUDATABlocks.ramClassInFreqUDATABlockFreeList);
+					allocationRequests[i].address = NULL;
+				}
+			}
+			Trc_VM_internalAllocateRAMClass_SegmentAllocationFailed();
+			return NULL;
+		}
+		Trc_VM_internalAllocateRAMClass_AllocatedClassMemorySegment(newInFreqAccessedSegment, newInFreqAccessedSegment->size, newInFreqAccessedSegment->heapBase, newInFreqAccessedSegment->heapTop);
+
+		/* Initialize the "lastAllocatedClass" pointer - only for sub4g*/
+		*(J9Class **)newSub4gSegment->heapBase = NULL;
+
+		/* Bump the heapAlloc pointer to the end - don't use it again */
+		newSub4gSegment->heapAlloc = newSub4gSegment->heapTop;
+		newFreAccessedSegment->heapAlloc = newFreAccessedSegment->heapTop;
+		newInFreqAccessedSegment->heapAlloc = newInFreqAccessedSegment->heapTop;
+
+		/* Allocate the remaining fragments in the new segment, adding holes to the free list */
+		sub4gAllocAddress = ((UDATA)newSub4gSegment->heapBase) + sizeof(UDATA);
+		freqAccessedAllocAddress = ((UDATA)newFreAccessedSegment->heapBase) + sizeof(UDATA);
+		inFreqAccessedAllocAddress = ((UDATA)newInFreqAccessedSegment->heapBase) + sizeof(UDATA);
+		for (request = requests; NULL != request; request = request->next) {
+			/* Allocate from the start of the segment */
+			UDATA addressForAlignedArea = 0;
+			UDATA alignmentMod = 0;
+			UDATA alignmentShift = 0;
+
+			request->address = (UDATA *) (addressForAlignedArea + alignmentShift);
+			if(SUB4G == request->segmentKind) {
+				addressForAlignedArea = sub4gAllocAddress + request->prefixSize;
+				alignmentMod = addressForAlignedArea & (request->alignment - 1);
+				alignmentShift = (0 == alignmentMod) ? 0 : (request->alignment - alignmentMod);
+				Trc_VM_internalAllocateRAMClass_AllocatedFromNewSegment(request->index, newSub4gSegment, request->address, request->prefixSize, request->alignedSize, request->alignment);
+
+				/* Add a new block with the remaining space at the start of this block, if any, to an appropriate free list */
+				if (0 != alignmentShift) {
+					addBlockToFreeList(classLoader, (UDATA)sub4gAllocAddress, alignmentShift, &classLoader->sub4gBlock, classLoader->ramClassUDATABlocks.ramClassSub4gUDATABlockFreeList);
+				}
+				sub4gAllocAddress += alignmentShift + request->fragmentSize;
+				sub4gFragmentsLeftToAllocate--;
+
+			} else if (FREQUENTLY_ACCESSED == request->segmentKind) {
+				addressForAlignedArea = freqAccessedAllocAddress + request->prefixSize;
+				alignmentMod = addressForAlignedArea & (request->alignment - 1);
+				alignmentShift = (0 == alignmentMod) ? 0 : (request->alignment - alignmentMod);
+				Trc_VM_internalAllocateRAMClass_AllocatedFromNewSegment(request->index, newFreAccessedSegment, request->address, request->prefixSize, request->alignedSize, request->alignment);
+
+				/* Add a new block with the remaining space at the start of this block, if any, to an appropriate free list */
+				if (0 != alignmentShift) {
+					addBlockToFreeList(classLoader, (UDATA)freqAccessedAllocAddress, alignmentShift, &classLoader->frequentlyAccessedBlock, classLoader->ramClassUDATABlocks.ramClassFreqUDATABlockFreeList);
+				}
+				freqAccessedAllocAddress += alignmentShift + request->fragmentSize;
+				freqAccessedFragmentsLeftToAllocate--;
+
+			} else if (INFREQUENTLY_ACCESSED == request->segmentKind) {
+				addressForAlignedArea = inFreqAccessedAllocAddress + request->prefixSize;
+				alignmentMod = addressForAlignedArea & (request->alignment - 1);
+				alignmentShift = (0 == alignmentMod) ? 0 : (request->alignment - alignmentMod);
+				Trc_VM_internalAllocateRAMClass_AllocatedFromNewSegment(request->index, newInFreqAccessedSegment, request->address, request->prefixSize, request->alignedSize, request->alignment);
+
+				/* Add a new block with the remaining space at the start of this block, if any, to an appropriate free list */
+				if (0 != alignmentShift) {
+					addBlockToFreeList(classLoader, (UDATA)inFreqAccessedAllocAddress, alignmentShift, &classLoader->inFrequentlyAccessedBlock, classLoader->ramClassUDATABlocks.ramClassInFreqUDATABlockFreeList);
+				}
+				inFreqAccessedAllocAddress += alignmentShift + request->fragmentSize;
+				inFreqAccessedFragmentsLeftToAllocate--;
+			}
+		}
+		
+		/* Add a new block with the remaining space at the end of the segment, if any, to an appropriate free list */
+		if (sub4gAllocAddress != (UDATA)newSub4gSegment->heapTop) {
+			addBlockToFreeList(classLoader, (UDATA)sub4gAllocAddress, ((UDATA)newSub4gSegment->heapTop) - sub4gAllocAddress, &classLoader->sub4gBlock, classLoader->ramClassUDATABlocks.ramClassSub4gUDATABlockFreeList);
+		}
+		if (freqAccessedAllocAddress != (UDATA)newFreAccessedSegment->heapTop) {
+			addBlockToFreeList(classLoader, (UDATA)freqAccessedAllocAddress, ((UDATA)newFreAccessedSegment->heapTop) - freqAccessedAllocAddress, &classLoader->frequentlyAccessedBlock, classLoader->ramClassUDATABlocks.ramClassFreqUDATABlockFreeList);
+		}
+		if (inFreqAccessedAllocAddress != (UDATA)newInFreqAccessedSegment->heapTop) {
+			addBlockToFreeList(classLoader, (UDATA)inFreqAccessedAllocAddress, ((UDATA)newInFreqAccessedSegment->heapTop) - inFreqAccessedAllocAddress, &classLoader->inFrequentlyAccessedBlock, classLoader->ramClassUDATABlocks.ramClassInFreqUDATABlockFreeList);
+		}
+	}
+
+}
+
 /**
  * Allocates fragments for a RAM class.
  *
@@ -4018,88 +4192,7 @@ internalAllocateRAMClass(J9JavaVM *javaVM, J9ClassLoader *classLoader, RAMClassA
 	}
 
 	/* If any fragments remain unallocated, allocate a new segment to (at least) fit them */
-	if (NULL != requests) {
-		/* Calculate required space in new segment, including maximum alignment padding */
-		UDATA newSegmentSize = 0;
-		J9MemorySegment *newSegment = NULL;
-		UDATA allocAddress = 0;
-
-		fragmentsLeftToAllocate = 0;
-		for (request = requests; NULL != request; request = request->next) {
-			fragmentsLeftToAllocate++;
-			newSegmentSize += request->fragmentSize + request->alignment;
-		}
-
-		/* Add sizeof(UDATA) to hold the "lastAllocatedClass" pointer */
-		newSegmentSize += sizeof(UDATA);
-
-		/* Allocate a new segment of the required size */
-
-		UDATA classAllocationIncrement = javaVM->ramClassAllocationIncrement;
-		if (!isNotLoadedByAnonClassLoader) {
-			classAllocationIncrement = 0;
-		}
-
-		Trc_VM_internalAllocateRAMClass_AllocateClassMemorySegment(fragmentsLeftToAllocate, newSegmentSize, classAllocationIncrement);
-		newSegment = allocateClassMemorySegment(javaVM, newSegmentSize, MEMORY_TYPE_RAM_CLASS, classLoader, classAllocationIncrement);
-
-		if (NULL == newSegment) {
-			/* Free allocated fragments */
-			/* TODO attempt to coalesce free blocks? */
-			for (i = 0; i < allocationRequestCount; i++) {
-				if (NULL != allocationRequests[i].address) {
-					UDATA fragmentAddress = ((UDATA)allocationRequests[i].address) - allocationRequests[i].prefixSize;
-					if(SUB4G == allocationRequests[i].segmentKind) {
-						addBlockToFreeList(classLoader, fragmentAddress, allocationRequests[i].fragmentSize, &classLoader->sub4gBlock, classLoader->ramClassUDATABlocks.ramClassSub4gUDATABlockFreeList);
-					} else if (FREQUENTLY_ACCESSED == allocationRequests[i].segmentKind) {
-						addBlockToFreeList(classLoader, fragmentAddress, allocationRequests[i].fragmentSize, &classLoader->frequentlyAccessedBlock, classLoader->ramClassUDATABlocks.ramClassFreqUDATABlockFreeList);
-					} else if (INFREQUENTLY_ACCESSED == allocationRequests[i].segmentKind) {
-						addBlockToFreeList(classLoader, fragmentAddress, allocationRequests[i].fragmentSize, &classLoader->inFrequentlyAccessedBlock, classLoader->ramClassUDATABlocks.ramClassInFreqUDATABlockFreeList);
-					}
-					allocationRequests[i].address = NULL;
-				}
-			}
-			Trc_VM_internalAllocateRAMClass_SegmentAllocationFailed();
-			return NULL;
-		}
-		Trc_VM_internalAllocateRAMClass_AllocatedClassMemorySegment(newSegment, newSegment->size, newSegment->heapBase, newSegment->heapTop);
-
-		/* Initialize the "lastAllocatedClass" pointer */
-		*(J9Class **)newSegment->heapBase = NULL;
-
-		/* Bump the heapAlloc pointer to the end - don't use it again */
-		newSegment->heapAlloc = newSegment->heapTop;
-
-		/* Allocate the remaining fragments in the new segment, adding holes to the free list */
-		allocAddress = ((UDATA)newSegment->heapBase) + sizeof(UDATA);
-		for (request = requests; NULL != request; request = request->next) {
-			/* Allocate from the start of the segment */
-			UDATA addressForAlignedArea = allocAddress + request->prefixSize;
-			UDATA alignmentMod = addressForAlignedArea & (request->alignment - 1);
-			UDATA alignmentShift = (0 == alignmentMod) ? 0 : (request->alignment - alignmentMod);
-
-			request->address = (UDATA *) (addressForAlignedArea + alignmentShift);
-
-			Trc_VM_internalAllocateRAMClass_AllocatedFromNewSegment(request->index, newSegment, request->address, request->prefixSize, request->alignedSize, request->alignment);
-
-			/* Add a new block with the remaining space at the start of this block, if any, to an appropriate free list */
-			if (0 != alignmentShift) {
-				if(SUB4G == request->segmentKind) {
-					addBlockToFreeList(classLoader, (UDATA)allocAddress, alignmentShift, &classLoader->sub4gBlock, classLoader->ramClassUDATABlocks.ramClassSub4gUDATABlockFreeList);
-				} else if (FREQUENTLY_ACCESSED == request->segmentKind) {
-					addBlockToFreeList(classLoader, (UDATA)allocAddress, alignmentShift, &classLoader->frequentlyAccessedBlock, classLoader->ramClassUDATABlocks.ramClassFreqUDATABlockFreeList);
-				} else if (INFREQUENTLY_ACCESSED == request->segmentKind) {
-					addBlockToFreeList(classLoader, (UDATA)allocAddress, alignmentShift, &classLoader->inFrequentlyAccessedBlock, classLoader->ramClassUDATABlocks.ramClassInFreqUDATABlockFreeList);
-				}
-			}
-			allocAddress += alignmentShift + request->fragmentSize;
-			fragmentsLeftToAllocate--;
-			}
-		/* Add a new block with the remaining space at the end of this segment, if any, to an appropriate free list */
-		if (allocAddress != (UDATA)newSegment->heapTop) {
-			addBlockToFreeList(classLoader, (UDATA)allocAddress, ((UDATA)newSegment->heapTop) - allocAddress, &classLoader->inFrequentlyAccessedBlock, classLoader->ramClassUDATABlocks.ramClassInFreqUDATABlockFreeList);
-		}
-	}
+	allocateRemainingFragments(requests, allocationRequestCount)
 
 	/* Clear all allocated fragments */
 	for (i = 0; i < allocationRequestCount; i++) {

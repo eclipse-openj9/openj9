@@ -76,76 +76,76 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getNonHeapMemoryUsag
 	omrthread_monitor_enter(javaVM->classTableMutex);
 	classLoader = javaVM->internalVMFunctions->allClassLoadersStartDo(&walkState, javaVM, 0);
 	while (NULL != classLoader) {
-		J9RAMClassUDATABlockFreeList *udataFreeListBlock = &classLoader->ramClassUDATABlocks;
-		J9RAMClassFreeLists *sub4gFreeListBlock = &classLoader->sub4gBlock;
-		J9RAMClassFreeLists *freqFreeListBlock = &classLoader->frequentlyAccessedBlock;
-		J9RAMClassFreeLists *InFreqFreeListBlock = &classLoader->inFrequentlyAccessedBlock;
-		if (NULL != udataFreeListBlock) {
-			UDATA *sub4gListBlock = udataFreeListBlock->ramClassSub4gUDATABlockFreeList;
-			UDATA *freqListBlock = udataFreeListBlock->ramClassFreqUDATABlockFreeList;
-			UDATA *inFreqListBlock = udataFreeListBlock->ramClassInFreqUDATABlockFreeList;
-			while (NULL != sub4gListBlock) {
+		J9RAMClassUDATABlockFreeList *ramClassUDATABlocksPtr = &classLoader->ramClassUDATABlocks;
+		J9RAMClassFreeLists *sub4gBlockPtr = &classLoader->sub4gBlock;
+		J9RAMClassFreeLists *frequentlyAccessedBlockPtr = &classLoader->frequentlyAccessedBlock;
+		J9RAMClassFreeLists *inFrequentlyAccessedBlockPtr = &classLoader->inFrequentlyAccessedBlock;
+		if (NULL != ramClassUDATABlocksPtr) {
+			UDATA *ramClassSub4gUDATABlockFreeListPtr = ramClassUDATABlocksPtr->ramClassSub4gUDATABlockFreeList;
+			UDATA *ramClassFreqUDATABlockFreeListPtr = ramClassUDATABlocksPtr->ramClassFreqUDATABlockFreeList;
+			UDATA *ramClassInFreqUDATABlockFreeListPtr = ramClassUDATABlocksPtr->ramClassInFreqUDATABlockFreeList;
+			while (NULL != ramClassSub4gUDATABlockFreeListPtr) {
 				used -= sizeof(UDATA);
-				sub4gListBlock = *(UDATA **)sub4gListBlock;
+				ramClassSub4gUDATABlockFreeListPtr = *(UDATA **)ramClassSub4gUDATABlockFreeListPtr;
 			}
-			while (NULL != freqListBlock) {
+			while (NULL != ramClassFreqUDATABlockFreeListPtr) {
 				used -= sizeof(UDATA);
-				freqListBlock = *(UDATA **)freqListBlock;
+				ramClassFreqUDATABlockFreeListPtr = *(UDATA **)ramClassFreqUDATABlockFreeListPtr;
 			}
-			while (NULL != inFreqListBlock) {
+			while (NULL != ramClassInFreqUDATABlockFreeListPtr) {
 				used -= sizeof(UDATA);
-				inFreqListBlock = *(UDATA **)inFreqListBlock;
+				ramClassInFreqUDATABlockFreeListPtr = *(UDATA **)ramClassInFreqUDATABlockFreeListPtr;
 			}
 		}
-		if (NULL != sub4gFreeListBlock) {
-			J9RAMClassFreeListBlock *tinyFreeListBlock = sub4gFreeListBlock->ramClassTinyBlockFreeList;
-			J9RAMClassFreeListBlock *smallFreeListBlock = sub4gFreeListBlock->ramClassSmallBlockFreeList;
-			J9RAMClassFreeListBlock *largeFreeListBlock = sub4gFreeListBlock->ramClassLargeBlockFreeList;
-			while (NULL != tinyFreeListBlock) {
-				used -= tinyFreeListBlock->size;
-				tinyFreeListBlock = tinyFreeListBlock->nextFreeListBlock;
+		if (NULL != sub4gBlockPtr) {
+			J9RAMClassFreeListBlock *ramClassTinyBlockFreeListPtr = sub4gBlockPtr->ramClassTinyBlockFreeList;
+			J9RAMClassFreeListBlock *ramClassSmallBlockFreeListPtr = sub4gBlockPtr->ramClassSmallBlockFreeList;
+			J9RAMClassFreeListBlock *ramClassLargeBlockFreeListPtr = sub4gBlockPtr->ramClassLargeBlockFreeList;
+			while (NULL != ramClassTinyBlockFreeListPtr) {
+				used -= ramClassTinyBlockFreeListPtr->size;
+				ramClassTinyBlockFreeListPtr = ramClassTinyBlockFreeListPtr->nextFreeListBlock;
 			}
-			while (NULL != smallFreeListBlock) {
-				used -= smallFreeListBlock->size;
-				smallFreeListBlock = smallFreeListBlock->nextFreeListBlock;
+			while (NULL != ramClassSmallBlockFreeListPtr) {
+				used -= ramClassSmallBlockFreeListPtr->size;
+				ramClassSmallBlockFreeListPtr = ramClassSmallBlockFreeListPtr->nextFreeListBlock;
 			}
-			while (NULL != largeFreeListBlock) {
-				used -= largeFreeListBlock->size;
-				largeFreeListBlock = largeFreeListBlock->nextFreeListBlock;
-			}
-		}
-		if (NULL != freqFreeListBlock) {
-			J9RAMClassFreeListBlock *tinyFreeListBlock = freqFreeListBlock->ramClassTinyBlockFreeList;
-			J9RAMClassFreeListBlock *smallFreeListBlock = freqFreeListBlock->ramClassSmallBlockFreeList;
-			J9RAMClassFreeListBlock *largeFreeListBlock = freqFreeListBlock->ramClassLargeBlockFreeList;
-			while (NULL != tinyFreeListBlock) {
-				used -= tinyFreeListBlock->size;
-				tinyFreeListBlock = tinyFreeListBlock->nextFreeListBlock;
-			}
-			while (NULL != smallFreeListBlock) {
-				used -= smallFreeListBlock->size;
-				smallFreeListBlock = smallFreeListBlock->nextFreeListBlock;
-			}
-			while (NULL != largeFreeListBlock) {
-				used -= largeFreeListBlock->size;
-				largeFreeListBlock = largeFreeListBlock->nextFreeListBlock;
+			while (NULL != ramClassLargeBlockFreeListPtr) {
+				used -= ramClassLargeBlockFreeListPtr->size;
+				ramClassLargeBlockFreeListPtr = ramClassLargeBlockFreeListPtr->nextFreeListBlock;
 			}
 		}
-		if (NULL != InFreqFreeListBlock) {
-			J9RAMClassFreeListBlock *tinyFreeListBlock = InFreqFreeListBlock->ramClassTinyBlockFreeList;
-			J9RAMClassFreeListBlock *smallFreeListBlock = InFreqFreeListBlock->ramClassSmallBlockFreeList;
-			J9RAMClassFreeListBlock *largeFreeListBlock = InFreqFreeListBlock->ramClassLargeBlockFreeList;
-			while (NULL != tinyFreeListBlock) {
-				used -= tinyFreeListBlock->size;
-				tinyFreeListBlock = tinyFreeListBlock->nextFreeListBlock;
+		if (NULL != frequentlyAccessedBlockPtr) {
+			J9RAMClassFreeListBlock *ramClassTinyBlockFreeListPtr = frequentlyAccessedBlockPtr->ramClassTinyBlockFreeList;
+			J9RAMClassFreeListBlock *ramClassSmallBlockFreeListPtr = frequentlyAccessedBlockPtr->ramClassSmallBlockFreeList;
+			J9RAMClassFreeListBlock *ramClassLargeBlockFreeListPtr = frequentlyAccessedBlockPtr->ramClassLargeBlockFreeList;
+			while (NULL != ramClassTinyBlockFreeListPtr) {
+				used -= ramClassTinyBlockFreeListPtr->size;
+				ramClassTinyBlockFreeListPtr = ramClassTinyBlockFreeListPtr->nextFreeListBlock;
 			}
-			while (NULL != smallFreeListBlock) {
-				used -= smallFreeListBlock->size;
-				smallFreeListBlock = smallFreeListBlock->nextFreeListBlock;
+			while (NULL != ramClassSmallBlockFreeListPtr) {
+				used -= ramClassSmallBlockFreeListPtr->size;
+				ramClassSmallBlockFreeListPtr = ramClassSmallBlockFreeListPtr->nextFreeListBlock;
 			}
-			while (NULL != largeFreeListBlock) {
-				used -= largeFreeListBlock->size;
-				largeFreeListBlock = largeFreeListBlock->nextFreeListBlock;
+			while (NULL != ramClassLargeBlockFreeListPtr) {
+				used -= ramClassLargeBlockFreeListPtr->size;
+				ramClassLargeBlockFreeListPtr = ramClassLargeBlockFreeListPtr->nextFreeListBlock;
+			}
+		}
+		if (NULL != inFrequentlyAccessedBlockPtr) {
+			J9RAMClassFreeListBlock *ramClassTinyBlockFreeListPtr = inFrequentlyAccessedBlockPtr->ramClassTinyBlockFreeList;
+			J9RAMClassFreeListBlock *ramClassSmallBlockFreeListPtr = inFrequentlyAccessedBlockPtr->ramClassSmallBlockFreeList;
+			J9RAMClassFreeListBlock *ramClassLargeBlockFreeListPtr = inFrequentlyAccessedBlockPtr->ramClassLargeBlockFreeList;
+			while (NULL != ramClassTinyBlockFreeListPtr) {
+				used -= ramClassTinyBlockFreeListPtr->size;
+				ramClassTinyBlockFreeListPtr = ramClassTinyBlockFreeListPtr->nextFreeListBlock;
+			}
+			while (NULL != ramClassSmallBlockFreeListPtr) {
+				used -= ramClassSmallBlockFreeListPtr->size;
+				ramClassSmallBlockFreeListPtr = ramClassSmallBlockFreeListPtr->nextFreeListBlock;
+			}
+			while (NULL != ramClassLargeBlockFreeListPtr) {
+				used -= ramClassLargeBlockFreeListPtr->size;
+				ramClassLargeBlockFreeListPtr = ramClassLargeBlockFreeListPtr->nextFreeListBlock;
 			}
 		}
 		classLoader = javaVM->internalVMFunctions->allClassLoadersNextDo(&walkState);
