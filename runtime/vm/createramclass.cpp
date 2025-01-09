@@ -4005,7 +4005,7 @@ allocateRemainingFragments(RAMClassAllocationRequest *requests, UDATA allocation
 			/* TODO attempt to coalesce free blocks? */
 			for (i = 0; i < allocationRequestCount; i++) {
 				if ((NULL != allocationRequests[i].address)
-					&& (SUB4G == allocationRequests[i].segmentKind)) 
+					&& (SUB4G == allocationRequests[i].segmentKind))
 				{
 					UDATA fragmentAddress = ((UDATA)allocationRequests[i].address) - allocationRequests[i].prefixSize;
 					addBlockToFreeList(classLoader, fragmentAddress, allocationRequests[i].fragmentSize, &classLoader->sub4gBlock, classLoader->ramClassUDATABlocks.ramClassSub4gUDATABlockFreeList);
@@ -4022,7 +4022,7 @@ allocateRemainingFragments(RAMClassAllocationRequest *requests, UDATA allocation
 			/* TODO attempt to coalesce free blocks? */
 			for (i = 0; i < allocationRequestCount; i++) {
 				if ((NULL != allocationRequests[i].address)
-					&& (FREQUENTLY_ACCESSED == allocationRequests[i].segmentKind)) 
+					&& (FREQUENTLY_ACCESSED == allocationRequests[i].segmentKind))
 				{
 					UDATA fragmentAddress = ((UDATA)allocationRequests[i].address) - allocationRequests[i].prefixSize;
 					addBlockToFreeList(classLoader, fragmentAddress, allocationRequests[i].fragmentSize, &classLoader->frequentlyAccessedBlock, classLoader->ramClassUDATABlocks.ramClassFreqUDATABlockFreeList);
@@ -4039,7 +4039,7 @@ allocateRemainingFragments(RAMClassAllocationRequest *requests, UDATA allocation
 			/* TODO attempt to coalesce free blocks? */
 			for (i = 0; i < allocationRequestCount; i++) {
 				if ((NULL != allocationRequests[i].address)
-					&& (INFREQUENTLY_ACCESSED == allocationRequests[i].segmentKind)) 
+					&& (INFREQUENTLY_ACCESSED == allocationRequests[i].segmentKind))
 				{
 					UDATA fragmentAddress = ((UDATA)allocationRequests[i].address) - allocationRequests[i].prefixSize;
 					addBlockToFreeList(classLoader, fragmentAddress, allocationRequests[i].fragmentSize, &classLoader->inFrequentlyAccessedBlock, classLoader->ramClassUDATABlocks.ramClassInFreqUDATABlockFreeList);
@@ -4110,7 +4110,7 @@ allocateRemainingFragments(RAMClassAllocationRequest *requests, UDATA allocation
 				inFreqAccessedFragmentsLeftToAllocate--;
 			}
 		}
-
+		
 		/* Add a new block with the remaining space at the end of the segment, if any, to an appropriate free list */
 		if (sub4gAllocAddress != (UDATA)newSub4gSegment->heapTop) {
 			addBlockToFreeList(classLoader, (UDATA)sub4gAllocAddress, ((UDATA)newSub4gSegment->heapTop) - sub4gAllocAddress, &classLoader->sub4gBlock, classLoader->ramClassUDATABlocks.ramClassSub4gUDATABlockFreeList);
