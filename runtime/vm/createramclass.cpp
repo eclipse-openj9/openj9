@@ -1779,13 +1779,13 @@ loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9
 
 				for (i = 0; i<romClass->interfaceCount; i++) {
 					J9UTF8 *interfaceName = NNSRP_GET(interfaceNames[i], J9UTF8*);
-					
+
 					if (J9UTF8_EQUALS(interfaceName, className)) {
 						/* className and interfaceName are the same */
 						setCurrentException(vmThread, J9VMCONSTANTPOOL_JAVALANGCLASSCIRCULARITYERROR, NULL);
 						return FALSE;
 					}
-					
+
 					J9Class *interfaceClass = internalFindClassUTF8(vmThread, J9UTF8_DATA(interfaceName), J9UTF8_LENGTH(interfaceName), classLoader, classPreloadFlags);
 
 					Trc_VM_CreateRAMClassFromROMClass_loadedInterface(vmThread, J9UTF8_LENGTH(interfaceName), J9UTF8_DATA(interfaceName), interfaceClass);
@@ -2414,7 +2414,7 @@ nativeOOM:
 				javaVM->memoryManagerFunctions->j9gc_modron_global_collect_with_overrides(vmThread, J9MMCONSTANT_EXPLICIT_GC_NATIVE_OUT_OF_MEMORY);
 				state->classObject = POP_OBJECT_IN_SPECIAL_FRAME(vmThread);
 				omrthread_monitor_enter(javaVM->classTableMutex);
-				
+
 				if (J9_ARE_NO_BITS_SET(options, J9_FINDCLASS_FLAG_HIDDEN)) {
 					/* If the class was successfully loaded while we were GCing, use that one */
 					if (elementClass == NULL) {
@@ -2425,7 +2425,7 @@ nativeOOM:
 					if (alreadyLoadedClass != NULL) {
 						goto alreadyLoaded;
 					}
-	
+
 					/* Try the store again - if it fails again, throw native OOM */
 					if (hashClassTableAtPut(vmThread, classLoader, J9UTF8_DATA(className), J9UTF8_LENGTH(className), state->ramClass)) {
 						goto nativeOOM;
@@ -4110,7 +4110,7 @@ allocateRemainingFragments(RAMClassAllocationRequest *requests, UDATA allocation
 				inFreqAccessedFragmentsLeftToAllocate--;
 			}
 		}
-		
+
 		/* Add a new block with the remaining space at the end of the segment, if any, to an appropriate free list */
 		if (sub4gAllocAddress != (UDATA)newSub4gSegment->heapTop) {
 			addBlockToFreeList(classLoader, (UDATA)sub4gAllocAddress, ((UDATA)newSub4gSegment->heapTop) - sub4gAllocAddress, &classLoader->sub4gBlock, classLoader->ramClassUDATABlocks.ramClassSub4gUDATABlockFreeList);
