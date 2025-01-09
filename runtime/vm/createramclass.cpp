@@ -108,6 +108,12 @@ typedef struct J9RAMClassFreeListLargeBlock {
 	UDATA maxSizeInList;
 } J9RAMClassFreeListLargeBlock;
 
+enum SegmentKind {
+	SUB4G = 0,
+	FREQUENTLY_ACCESSED,
+	INFREQUENTLY_ACCESSED
+};
+
 typedef struct RAMClassAllocationRequest {
 	UDATA prefixSize;
 	UDATA alignment;
@@ -115,6 +121,7 @@ typedef struct RAMClassAllocationRequest {
 	UDATA *address;
 	UDATA index;
 	UDATA fragmentSize;
+	SegmentKind segmentKind;
 	struct RAMClassAllocationRequest *next;
 } RAMClassAllocationRequest;
 
@@ -577,7 +584,7 @@ addInterfaceMethods(J9VMThread *vmStruct, J9ClassLoader *classLoader, J9Class *i
 									const UDATA combinedModifiers = J9_ROM_METHOD_FROM_RAM_METHOD(interfaceMethod)->modifiers | vTableMethod->modifiers;
 									if (J9_ARE_ANY_BITS_SET(combinedModifiers, J9AccAbstract)) {
 										/* Convert to equivSet by adding the existing vtable method to the equivSet */
-										J9EquivalentEntry *entry = (J9EquivalentEntry*) pool_newElement(equivalentSets);
+										J9EquivalentEntry *entry = (J9EquivalentEntry*)pool_newElement(equivalentSets);
 										if (NULL == entry) {
 											/* OOM will be thrown */
 											goto fail;
@@ -610,7 +617,7 @@ add_existing:
 								existing_entry = existing_entry->next;
 							}
 							existing_entry = previous_entry;
-							J9EquivalentEntry * new_entry = (J9EquivalentEntry*) pool_newElement(equivalentSets);
+							J9EquivalentEntry * new_entry = (J9EquivalentEntry*)pool_newElement(equivalentSets);
 							if (NULL == new_entry) {
 								/* OOM will be thrown */
 								goto fail;
@@ -1497,9 +1504,9 @@ compareRomClassName(void *item, J9StackElement *currentElement)
 {
 	J9UTF8 *currentRomName;
 	BOOLEAN rc = FALSE;
-	J9UTF8 *className = J9ROMCLASS_CLASSNAME((J9ROMClass *) item);
+	J9UTF8 *className = J9ROMCLASS_CLASSNAME((J9ROMClass *)item);
 
-	currentRomName = J9ROMCLASS_CLASSNAME((J9ROMClass *) currentElement->element);
+	currentRomName = J9ROMCLASS_CLASSNAME((J9ROMClass *)currentElement->element);
 	if (0 == compareUTF8Length(J9UTF8_DATA(currentRomName), J9UTF8_LENGTH(currentRomName),
 			J9UTF8_DATA(className), J9UTF8_LENGTH(className)))
 	{
@@ -1576,7 +1583,7 @@ verifyLoadingOrLinkingStack(J9VMThread *vmThread, J9ClassLoader *classLoader, vo
 		setNativeOutOfMemoryError(vmThread, 0, 0);
 		return FALSE;
 	}
-	newTopOfStack->element = (void *) clazz;
+	newTopOfStack->element = (void *)clazz;
 	newTopOfStack->previous = *stack;
 	newTopOfStack->classLoader = classLoader;
 	*stack = newTopOfStack;
@@ -2027,7 +2034,7 @@ loadFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *class
 		} else {
 			if (J9_ARE_ALL_BITS_SET(modifiers, J9FieldFlagIsNullRestricted)) {
 				J9FlattenedClassCacheEntry *entry = J9_VM_FCC_ENTRY_FROM_FCC(flattenedClassCache, flattenableFieldCount);
-				entry->clazz = (J9Class *) J9_VM_FCC_CLASS_FLAGS_STATIC_FIELD;
+				entry->clazz = (J9Class *)J9_VM_FCC_CLASS_FLAGS_STATIC_FIELD;
 				entry->field = field;
 				entry->offset = UDATA_MAX;
 				flattenableFieldCount += 1;
@@ -2532,7 +2539,7 @@ trcModulesSettingPackage(J9VMThread *vmThread, J9Class *ramClass, J9ClassLoader 
 static void
 initializeClassLinks(J9Class *ramClass, J9Class *superclass, J9MemorySegment *segment, UDATA options)
 {
-	ramClass->nextClassInSegment = *(J9Class **) segment->heapBase;
+	ramClass->nextClassInSegment = *(J9Class **)segment->heapBase;
 	*(J9Class **)segment->heapBase = ramClass;
 
 	ramClass->subclassTraversalLink = ramClass;
@@ -2869,9 +2876,9 @@ fail:
 			omrthread_monitor_exit(bcvd->verifierMutex);
 
 #if JAVA_SPEC_VERSION >= 16
-			setCurrentExceptionUTF(vmThread, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, (char *) verifyErrorString);
+			setCurrentExceptionUTF(vmThread, J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, (char *)verifyErrorString);
 #else /* JAVA_SPEC_VERSION >= 16 */
-			setCurrentExceptionUTF(vmThread, J9VMCONSTANTPOOL_JAVALANGVERIFYERROR, (char *) verifyErrorString);
+			setCurrentExceptionUTF(vmThread, J9VMCONSTANTPOOL_JAVALANGVERIFYERROR, (char *)verifyErrorString);
 #endif /* JAVA_SPEC_VERSION >= 16 */
 
 			j9mem_free_memory(verifyErrorString);
@@ -2908,12 +2915,14 @@ fail:
 			allocationRequests[RAM_CLASS_HEADER_FRAGMENT].alignment = J9_REQUIRED_CLASS_ALIGNMENT;
 			allocationRequests[RAM_CLASS_HEADER_FRAGMENT].alignedSize = sizeof(J9Class) + vTableSlots * sizeof(UDATA);
 			allocationRequests[RAM_CLASS_HEADER_FRAGMENT].address = NULL;
+			allocationRequests[RAM_CLASS_HEADER_FRAGMENT].segmentKind = SUB4G;
 
 			/* RAM methods fragment */
 			allocationRequests[RAM_METHODS_FRAGMENT].prefixSize = extendedMethodBlockSize * sizeof(UDATA);
 			allocationRequests[RAM_METHODS_FRAGMENT].alignment = sizeof(UDATA);
 			allocationRequests[RAM_METHODS_FRAGMENT].alignedSize = (romClass->romMethodCount + defaultConflictCount) * sizeof(J9Method);
 			allocationRequests[RAM_METHODS_FRAGMENT].address = NULL;
+			allocationRequests[RAM_METHODS_FRAGMENT].segmentKind = FREQUENTLY_ACCESSED;
 
 			/* superclasses fragment */
 			allocationRequests[RAM_SUPERCLASSES_FRAGMENT].prefixSize = 0;
@@ -2925,36 +2934,42 @@ fail:
 			}
 			allocationRequests[RAM_SUPERCLASSES_FRAGMENT].alignedSize = OMR_MAX(superclassSizeBytes, minimumSuperclassArraySizeBytes);
 			allocationRequests[RAM_SUPERCLASSES_FRAGMENT].address = NULL;
+			allocationRequests[RAM_SUPERCLASSES_FRAGMENT].segmentKind = FREQUENTLY_ACCESSED;
 
 			/* instance description fragment */
 			allocationRequests[RAM_INSTANCE_DESCRIPTION_FRAGMENT].prefixSize = 0;
 			allocationRequests[RAM_INSTANCE_DESCRIPTION_FRAGMENT].alignment = sizeof(UDATA);
 			allocationRequests[RAM_INSTANCE_DESCRIPTION_FRAGMENT].alignedSize = instanceDescriptionSlotCount * sizeof(UDATA);
 			allocationRequests[RAM_INSTANCE_DESCRIPTION_FRAGMENT].address = NULL;
+			allocationRequests[RAM_INSTANCE_DESCRIPTION_FRAGMENT].segmentKind = FREQUENTLY_ACCESSED;
 
 			/* iTable fragment */
 			allocationRequests[RAM_ITABLE_FRAGMENT].prefixSize = 0;
 			allocationRequests[RAM_ITABLE_FRAGMENT].alignment = sizeof(UDATA);
 			allocationRequests[RAM_ITABLE_FRAGMENT].alignedSize = iTableSlotCount * sizeof(UDATA);
 			allocationRequests[RAM_ITABLE_FRAGMENT].address = NULL;
+			allocationRequests[RAM_ITABLE_FRAGMENT].segmentKind = FREQUENTLY_ACCESSED;
 
 			/* static slots fragment */
 			allocationRequests[RAM_STATICS_FRAGMENT].prefixSize = 0;
 			allocationRequests[RAM_STATICS_FRAGMENT].alignment = sizeof(U_64);
 			allocationRequests[RAM_STATICS_FRAGMENT].alignedSize = totalStaticSlots * sizeof(UDATA);
 			allocationRequests[RAM_STATICS_FRAGMENT].address = NULL;
+			allocationRequests[RAM_STATICS_FRAGMENT].segmentKind = FREQUENTLY_ACCESSED;
 
 			/* constant pool fragment */
 			allocationRequests[RAM_CONSTANT_POOL_FRAGMENT].prefixSize = 0;
 			allocationRequests[RAM_CONSTANT_POOL_FRAGMENT].alignment = REQUIRED_CONSTANT_POOL_ALIGNMENT;
 			allocationRequests[RAM_CONSTANT_POOL_FRAGMENT].alignedSize = romClass->ramConstantPoolCount * 2 * sizeof(UDATA);
 			allocationRequests[RAM_CONSTANT_POOL_FRAGMENT].address = NULL;
+			allocationRequests[RAM_CONSTANT_POOL_FRAGMENT].segmentKind = FREQUENTLY_ACCESSED;
 
 			/* call sites fragment */
 			allocationRequests[RAM_CALL_SITES_FRAGMENT].prefixSize = 0;
 			allocationRequests[RAM_CALL_SITES_FRAGMENT].alignment = sizeof(UDATA);
 			allocationRequests[RAM_CALL_SITES_FRAGMENT].alignedSize = romClass->callSiteCount * sizeof(UDATA);
 			allocationRequests[RAM_CALL_SITES_FRAGMENT].address = NULL;
+			allocationRequests[RAM_CALL_SITES_FRAGMENT].segmentKind = FREQUENTLY_ACCESSED;
 
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
 			/* invoke cache fragment */
@@ -2962,17 +2977,20 @@ fail:
 			allocationRequests[RAM_INVOKE_CACHE_FRAGMENT].alignment = sizeof(UDATA);
 			allocationRequests[RAM_INVOKE_CACHE_FRAGMENT].alignedSize = romClass->invokeCacheCount * sizeof(UDATA);
 			allocationRequests[RAM_INVOKE_CACHE_FRAGMENT].address = NULL;
+			allocationRequests[RAM_INVOKE_CACHE_FRAGMENT].segmentKind = FREQUENTLY_ACCESSED;
 #else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 			/* method types fragment */
 			allocationRequests[RAM_METHOD_TYPES_FRAGMENT].prefixSize = 0;
 			allocationRequests[RAM_METHOD_TYPES_FRAGMENT].alignment = sizeof(UDATA);
 			allocationRequests[RAM_METHOD_TYPES_FRAGMENT].alignedSize = romClass->methodTypeCount * sizeof(UDATA);
 			allocationRequests[RAM_METHOD_TYPES_FRAGMENT].address = NULL;
+			allocationRequests[RAM_METHOD_TYPES_FRAGMENT].segmentKind = FREQUENTLY_ACCESSED;
 			/* varhandle method types fragment */
 			allocationRequests[RAM_VARHANDLE_METHOD_TYPES_FRAGMENT].prefixSize = 0;
 			allocationRequests[RAM_VARHANDLE_METHOD_TYPES_FRAGMENT].alignment = sizeof(UDATA);
 			allocationRequests[RAM_VARHANDLE_METHOD_TYPES_FRAGMENT].alignedSize = romClass->varHandleMethodTypeCount * sizeof(UDATA);
 			allocationRequests[RAM_VARHANDLE_METHOD_TYPES_FRAGMENT].address = NULL;
+			allocationRequests[RAM_VARHANDLE_METHOD_TYPES_FRAGMENT].segmentKind = FREQUENTLY_ACCESSED;
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
 			/* static split table fragment */
@@ -2980,12 +2998,14 @@ fail:
 			allocationRequests[RAM_STATIC_SPLIT_TABLE_FRAGMENT].alignment = sizeof(UDATA);
 			allocationRequests[RAM_STATIC_SPLIT_TABLE_FRAGMENT].alignedSize = romClass->staticSplitMethodRefCount * sizeof(J9Method *);
 			allocationRequests[RAM_STATIC_SPLIT_TABLE_FRAGMENT].address = NULL;
+			allocationRequests[RAM_STATIC_SPLIT_TABLE_FRAGMENT].segmentKind = FREQUENTLY_ACCESSED;
 
 			/* special split table fragment */
 			allocationRequests[RAM_SPECIAL_SPLIT_TABLE_FRAGMENT].prefixSize = 0;
 			allocationRequests[RAM_SPECIAL_SPLIT_TABLE_FRAGMENT].alignment = sizeof(UDATA);
 			allocationRequests[RAM_SPECIAL_SPLIT_TABLE_FRAGMENT].alignedSize = romClass->specialSplitMethodRefCount * sizeof(J9Method *);
 			allocationRequests[RAM_SPECIAL_SPLIT_TABLE_FRAGMENT].address = NULL;
+			allocationRequests[RAM_SPECIAL_SPLIT_TABLE_FRAGMENT].segmentKind = FREQUENTLY_ACCESSED;
 
 			/* flattened classes cache */
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
@@ -2997,17 +3017,18 @@ fail:
 			allocationRequests[RAM_CLASS_FLATTENED_CLASS_CACHE].alignment = OMR_MAX(sizeof(J9Class *), sizeof(UDATA));
 			allocationRequests[RAM_CLASS_FLATTENED_CLASS_CACHE].alignedSize = flattenedClassCacheAllocSize;
 			allocationRequests[RAM_CLASS_FLATTENED_CLASS_CACHE].address = NULL;
+			allocationRequests[RAM_CLASS_FLATTENED_CLASS_CACHE].segmentKind = FREQUENTLY_ACCESSED;
 #endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
 
 			if (fastHCR) {
 				/* For shared fragments, set alignedSize and prefixSize to 0 to make internalAllocateRAMClass() ignore them. */
-				allocationRequests[RAM_SUPERCLASSES_FRAGMENT].address = (UDATA *) classBeingRedefined->superclasses;
+				allocationRequests[RAM_SUPERCLASSES_FRAGMENT].address = (UDATA *)classBeingRedefined->superclasses;
 				allocationRequests[RAM_SUPERCLASSES_FRAGMENT].prefixSize = 0;
 				allocationRequests[RAM_SUPERCLASSES_FRAGMENT].alignedSize = 0;
 				allocationRequests[RAM_INSTANCE_DESCRIPTION_FRAGMENT].address = classBeingRedefined->instanceDescription;
 				allocationRequests[RAM_INSTANCE_DESCRIPTION_FRAGMENT].prefixSize = 0;
 				allocationRequests[RAM_INSTANCE_DESCRIPTION_FRAGMENT].alignedSize = 0;
-				allocationRequests[RAM_ITABLE_FRAGMENT].address = (UDATA *) classBeingRedefined->iTable;
+				allocationRequests[RAM_ITABLE_FRAGMENT].address = (UDATA *)classBeingRedefined->iTable;
 				allocationRequests[RAM_ITABLE_FRAGMENT].prefixSize = 0;
 				allocationRequests[RAM_ITABLE_FRAGMENT].alignedSize = 0;
 				allocationRequests[RAM_STATICS_FRAGMENT].address = classBeingRedefined->ramStatics;
@@ -3017,9 +3038,9 @@ fail:
 
 			segment = internalAllocateRAMClass(javaVM, classLoader, allocationRequests, RAM_CLASS_FRAGMENT_COUNT);
 			if (NULL != segment) {
-				ramClass = (J9Class *) allocationRequests[RAM_CLASS_HEADER_FRAGMENT].address;
+				ramClass = (J9Class *)allocationRequests[RAM_CLASS_HEADER_FRAGMENT].address;
 				state->ramClass = ramClass;
-				ramClass->ramMethods = (J9Method *) allocationRequests[RAM_METHODS_FRAGMENT].address;
+				ramClass->ramMethods = (J9Method *)allocationRequests[RAM_METHODS_FRAGMENT].address;
 				if (fastHCR) {
 					/* Share iTable and instanceDescription (and associated fields) with class being redefined. */
 					ramClass->iTable = classBeingRedefined->iTable;
@@ -3035,26 +3056,26 @@ fail:
 					instanceDescription = allocationRequests[RAM_INSTANCE_DESCRIPTION_FRAGMENT].address;
 					iTable = allocationRequests[RAM_ITABLE_FRAGMENT].address;
 				}
-				ramClass->superclasses = (J9Class **) allocationRequests[RAM_SUPERCLASSES_FRAGMENT].address;
+				ramClass->superclasses = (J9Class **)allocationRequests[RAM_SUPERCLASSES_FRAGMENT].address;
 				ramClass->ramStatics = allocationRequests[RAM_STATICS_FRAGMENT].address;
-				ramClass->ramConstantPool = (J9ConstantPool *) allocationRequests[RAM_CONSTANT_POOL_FRAGMENT].address;
-				ramClass->callSites = (j9object_t *) allocationRequests[RAM_CALL_SITES_FRAGMENT].address;
+				ramClass->ramConstantPool = (J9ConstantPool *)allocationRequests[RAM_CONSTANT_POOL_FRAGMENT].address;
+				ramClass->callSites = (j9object_t *)allocationRequests[RAM_CALL_SITES_FRAGMENT].address;
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
-				ramClass->invokeCache = (j9object_t *) allocationRequests[RAM_INVOKE_CACHE_FRAGMENT].address;
+				ramClass->invokeCache = (j9object_t *)allocationRequests[RAM_INVOKE_CACHE_FRAGMENT].address;
 #else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
-				ramClass->methodTypes = (j9object_t *) allocationRequests[RAM_METHOD_TYPES_FRAGMENT].address;
-				ramClass->varHandleMethodTypes = (j9object_t *) allocationRequests[RAM_VARHANDLE_METHOD_TYPES_FRAGMENT].address;
+				ramClass->methodTypes = (j9object_t *)allocationRequests[RAM_METHOD_TYPES_FRAGMENT].address;
+				ramClass->varHandleMethodTypes = (j9object_t *)allocationRequests[RAM_VARHANDLE_METHOD_TYPES_FRAGMENT].address;
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
-				ramClass->staticSplitMethodTable = (J9Method **) allocationRequests[RAM_STATIC_SPLIT_TABLE_FRAGMENT].address;
+				ramClass->staticSplitMethodTable = (J9Method **)allocationRequests[RAM_STATIC_SPLIT_TABLE_FRAGMENT].address;
 				for (U_16 i = 0; i < romClass->staticSplitMethodRefCount; ++i) {
 					ramClass->staticSplitMethodTable[i] = (J9Method*)javaVM->initialMethods.initialStaticMethod;
 				}
-				ramClass->specialSplitMethodTable = (J9Method **) allocationRequests[RAM_SPECIAL_SPLIT_TABLE_FRAGMENT].address;
+				ramClass->specialSplitMethodTable = (J9Method **)allocationRequests[RAM_SPECIAL_SPLIT_TABLE_FRAGMENT].address;
 				for (U_16 i = 0; i < romClass->specialSplitMethodRefCount; ++i) {
 					ramClass->specialSplitMethodTable[i] = (J9Method*)javaVM->initialMethods.initialSpecialMethod;
 				}
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-				ramClass->flattenedClassCache = (J9FlattenedClassCache *) allocationRequests[RAM_CLASS_FLATTENED_CLASS_CACHE].address;
+				ramClass->flattenedClassCache = (J9FlattenedClassCache *)allocationRequests[RAM_CLASS_FLATTENED_CLASS_CACHE].address;
 				if (0 != flattenedClassCacheAllocSize) {
 					memcpy(ramClass->flattenedClassCache, flattenedClassCache, flattenedClassCacheAllocSize);
 				}
@@ -3321,7 +3342,7 @@ fail:
 				initializeRAMClassITable(vmThread, ramClass, superclass, iTable, interfaceHead, maxInterfaceDepth);
 			}
 			/* Ensure that lastITable is never NULL */
-			ramClass->lastITable = (J9ITable *) ramClass->iTable;
+			ramClass->lastITable = (J9ITable *)ramClass->iTable;
 			if (NULL == ramClass->lastITable) {
 				ramClass->lastITable = (J9ITable *) &invalidITable;
 			}
@@ -3543,7 +3564,7 @@ internalCreateRAMClassFromROMClass(J9VMThread *vmThread, J9ClassLoader *classLoa
 	UDATA valueTypeFlags = 0;
 	UDATA flattenedClassCacheAllocSize = sizeof(J9FlattenedClassCache) + (sizeof(J9FlattenedClassCacheEntry) * romFieldCount);
 	U_8 flattenedClassCacheBuffer[sizeof(J9FlattenedClassCache) + (sizeof(J9FlattenedClassCacheEntry) * DEFAULT_NUMBER_OF_ENTRIES_IN_FLATTENED_CLASS_CACHE)] = {0};
-	J9FlattenedClassCache *flattenedClassCache = (J9FlattenedClassCache *) flattenedClassCacheBuffer;
+	J9FlattenedClassCache *flattenedClassCache = (J9FlattenedClassCache *)flattenedClassCacheBuffer;
 	PORT_ACCESS_FROM_VMC(vmThread);
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 
@@ -3673,7 +3694,7 @@ retry:
 	}
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	if (romFieldCount > DEFAULT_NUMBER_OF_ENTRIES_IN_FLATTENED_CLASS_CACHE) {
-		flattenedClassCache = (J9FlattenedClassCache *) j9mem_allocate_memory(flattenedClassCacheAllocSize, J9MEM_CATEGORY_CLASSES);
+		flattenedClassCache = (J9FlattenedClassCache *)j9mem_allocate_memory(flattenedClassCacheAllocSize, J9MEM_CATEGORY_CLASSES);
 		if (NULL == flattenedClassCache) {
 			setNativeOutOfMemoryError(vmThread, 0, 0);
 			omrthread_monitor_enter(javaVM->classTableMutex);
@@ -3703,7 +3724,7 @@ retry:
 	result = internalCreateRAMClassFromROMClassImpl(vmThread, classLoader, romClass, options, elementClass,
 		methodRemapArray, entryIndex, locationType, classBeingRedefined, superclass, &state, hostClassLoader, hostClass, module, flattenedClassCache, &valueTypeFlags);
 
-		if (flattenedClassCache != (J9FlattenedClassCache *) flattenedClassCacheBuffer) {
+		if (flattenedClassCache != (J9FlattenedClassCache *)flattenedClassCacheBuffer) {
 			j9mem_free_memory(flattenedClassCache);
 		}
 #else
@@ -3722,12 +3743,12 @@ done:
 }
 
 static VMINLINE void
-addBlockToLargeFreeList(J9ClassLoader *classLoader, J9RAMClassFreeListLargeBlock *block)
+addBlockToLargeFreeList(J9ClassLoader *classLoader, J9RAMClassFreeListLargeBlock *block, J9RAMClassFreeLists *blockFreeLists)
 {
-	J9RAMClassFreeListLargeBlock *tailBlock = (J9RAMClassFreeListLargeBlock *) classLoader->ramClassLargeBlockFreeList;
+	J9RAMClassFreeListLargeBlock *tailBlock = (J9RAMClassFreeListLargeBlock *)blockFreeLists->ramClassLargeBlockFreeList;
 
 	block->nextFreeListBlock = tailBlock;
-	classLoader->ramClassLargeBlockFreeList = (J9RAMClassFreeListBlock *) block;
+	blockFreeLists->ramClassLargeBlockFreeList = (J9RAMClassFreeListBlock *)block;
 
 	if ((NULL != tailBlock) && (tailBlock->maxSizeInList > block->size)) {
 		block->maxSizeInList = tailBlock->maxSizeInList;
@@ -3737,7 +3758,7 @@ addBlockToLargeFreeList(J9ClassLoader *classLoader, J9RAMClassFreeListLargeBlock
 }
 
 static void
-addBlockToFreeList(J9ClassLoader *classLoader, UDATA address, UDATA size)
+addBlockToFreeList(J9ClassLoader *classLoader, UDATA address, UDATA size, J9RAMClassFreeLists *blockFreeLists, UDATA *ramClassUDATABlockFreelist)
 {
 	if (J9_ARE_ANY_BITS_SET(classLoader->flags, J9CLASSLOADER_ANON_CLASS_LOADER)) {
 		/* We support individual class unloading for anonymous classes, so each anonymous class
@@ -3746,20 +3767,20 @@ addBlockToFreeList(J9ClassLoader *classLoader, UDATA address, UDATA size)
 		return;
 	}
 	if (sizeof(UDATA) == size) {
-		UDATA *block = (UDATA *) address;
-		*block = (UDATA) classLoader->ramClassUDATABlockFreeList;
-		classLoader->ramClassUDATABlockFreeList = block;
+		UDATA *block = (UDATA *)address;
+		*block = (UDATA)ramClassUDATABlockFreelist;
+		ramClassUDATABlockFreelist = block;
 	} else if (sizeof(J9RAMClassFreeListBlock) <= size) {
-		J9RAMClassFreeListBlock *block = (J9RAMClassFreeListBlock *) address;
+		J9RAMClassFreeListBlock *block = (J9RAMClassFreeListBlock *)address;
 		block->size = size;
 		if (RAM_CLASS_SMALL_FRAGMENT_LIMIT > size) {
-			block->nextFreeListBlock = classLoader->ramClassTinyBlockFreeList;
-			classLoader->ramClassTinyBlockFreeList = block;
+			block->nextFreeListBlock = blockFreeLists->ramClassTinyBlockFreeList;
+			blockFreeLists->ramClassTinyBlockFreeList = block;
 		} else if (RAM_CLASS_FRAGMENT_LIMIT > size) {
-			block->nextFreeListBlock = classLoader->ramClassSmallBlockFreeList;
-			classLoader->ramClassSmallBlockFreeList = block;
+			block->nextFreeListBlock = blockFreeLists->ramClassSmallBlockFreeList;
+			blockFreeLists->ramClassSmallBlockFreeList = block;
 		} else {
-			addBlockToLargeFreeList(classLoader, (J9RAMClassFreeListLargeBlock *) block);
+			addBlockToLargeFreeList(classLoader, (J9RAMClassFreeListLargeBlock *)block, blockFreeLists);
 		}
 	}
 }
@@ -3770,19 +3791,19 @@ addBlockToFreeList(J9ClassLoader *classLoader, UDATA address, UDATA size)
  * list to update their maxSizeInList values.
  */
 static void
-removeBlockFromLargeFreeList(J9ClassLoader *classLoader, J9RAMClassFreeListLargeBlock **freeListBlockPtr, J9RAMClassFreeListLargeBlock *freeListBlock)
+removeBlockFromLargeFreeList(J9ClassLoader *classLoader, J9RAMClassFreeListLargeBlock **freeListBlockPtr, J9RAMClassFreeListLargeBlock *freeListBlock, J9RAMClassFreeLists *blockFreeLists)
 {
 	J9RAMClassFreeListLargeBlock *nextBlock = freeListBlock->nextFreeListBlock;
 
 	if ((NULL == nextBlock) || (freeListBlock->maxSizeInList != nextBlock->maxSizeInList)) {
 		/* Re-compute the maxSizeInList values on earlier blocks by re-adding them to the list. */
-		J9RAMClassFreeListLargeBlock *block = (J9RAMClassFreeListLargeBlock *) classLoader->ramClassLargeBlockFreeList;
+		J9RAMClassFreeListLargeBlock *block = (J9RAMClassFreeListLargeBlock *)blockFreeLists->ramClassLargeBlockFreeList;
 
-		classLoader->ramClassLargeBlockFreeList = (J9RAMClassFreeListBlock *) freeListBlock->nextFreeListBlock;
+		blockFreeLists->ramClassLargeBlockFreeList = (J9RAMClassFreeListBlock *)freeListBlock->nextFreeListBlock;
 		while (block != freeListBlock) {
 			J9RAMClassFreeListLargeBlock *nextBlock = block->nextFreeListBlock;
 
-			addBlockToLargeFreeList(classLoader, block);
+			addBlockToLargeFreeList(classLoader, block, blockFreeLists);
 			block = nextBlock;
 		}
 	} else {
@@ -3800,11 +3821,11 @@ removeBlockFromLargeFreeList(J9ClassLoader *classLoader, J9RAMClassFreeListLarge
  * Returns TRUE if the fragment was allocated.
  */
 static BOOLEAN
-allocateRAMClassFragmentFromFreeList(RAMClassAllocationRequest *request, J9RAMClassFreeListBlock **freeList, J9ClassLoader *classLoader)
+allocateRAMClassFragmentFromFreeList(RAMClassAllocationRequest *request, J9RAMClassFreeListBlock **freeList, J9ClassLoader *classLoader, UDATA *ramClassUDATABlockFreelist, J9RAMClassFreeLists *blockFreeLists)
 {
 	J9RAMClassFreeListBlock **freeListBlockPtr = freeList;
 	J9RAMClassFreeListBlock *freeListBlock = *freeListBlockPtr;
-	const BOOLEAN islargeBlocksList = (freeList == &classLoader->ramClassLargeBlockFreeList);
+	const BOOLEAN islargeBlocksList = (freeList == &blockFreeLists->ramClassLargeBlockFreeList);
 	const UDATA alignmentMask = (request->alignment == sizeof(UDATA)) ? 0 : (request->alignment - 1);
 	const UDATA prefixSize = request->prefixSize;
 	const UDATA fragmentSize = request->fragmentSize;
@@ -3812,7 +3833,7 @@ allocateRAMClassFragmentFromFreeList(RAMClassAllocationRequest *request, J9RAMCl
 
 	if (islargeBlocksList) {
 		/* Fail fast if the requested size is larger than anything in the free list. */
-		if (fragmentSize + alignmentMask > ((J9RAMClassFreeListLargeBlock *) freeListBlock)->maxSizeInList) {
+		if (fragmentSize + alignmentMask > ((J9RAMClassFreeListLargeBlock *)freeListBlock)->maxSizeInList) {
 			return FALSE;
 		}
 	}
@@ -3821,7 +3842,7 @@ allocateRAMClassFragmentFromFreeList(RAMClassAllocationRequest *request, J9RAMCl
 
 	while (NULL != freeListBlock) {
 		/* Allocate from the start of the block */
-		UDATA addressForAlignedArea = ((UDATA) freeListBlock) + prefixSize;
+		UDATA addressForAlignedArea = ((UDATA)freeListBlock) + prefixSize;
 		UDATA alignmentMod = addressForAlignedArea & alignmentMask;
 		UDATA alignmentShift = (0 == alignmentMod) ? 0 : (alignment - alignmentMod);
 
@@ -3833,7 +3854,7 @@ allocateRAMClassFragmentFromFreeList(RAMClassAllocationRequest *request, J9RAMCl
 			Trc_VM_internalAllocateRAMClass_AllocatedFromFreeList(request->index, freeListBlock, freeListBlock->size, request->address, request->prefixSize, request->alignedSize, request->alignment);
 
 			if (islargeBlocksList) {
-				removeBlockFromLargeFreeList(classLoader, (J9RAMClassFreeListLargeBlock **) freeListBlockPtr, (J9RAMClassFreeListLargeBlock *) freeListBlock);
+				removeBlockFromLargeFreeList(classLoader, (J9RAMClassFreeListLargeBlock **)freeListBlockPtr, (J9RAMClassFreeListLargeBlock *)freeListBlock, blockFreeLists);
 			} else {
 				*freeListBlockPtr = freeListBlock->nextFreeListBlock;
 				freeListBlock->nextFreeListBlock = NULL;
@@ -3841,12 +3862,12 @@ allocateRAMClassFragmentFromFreeList(RAMClassAllocationRequest *request, J9RAMCl
 
 			/* Add a new block with the remaining space at the start of this block, if any, to an appropriate free list */
 			if (0 != alignmentShift) {
-				addBlockToFreeList(classLoader, (UDATA) freeListBlock, alignmentShift);
+				addBlockToFreeList(classLoader, (UDATA)freeListBlock, alignmentShift, blockFreeLists, ramClassUDATABlockFreelist);
 			}
 
 			/* Add a new block with the remaining space at the end of this block, if any, to an appropriate free list */
 			if (0 != newBlockSize) {
-				addBlockToFreeList(classLoader, ((UDATA) freeListBlock) + alignmentShift + request->fragmentSize, newBlockSize);
+				addBlockToFreeList(classLoader, ((UDATA)freeListBlock) + alignmentShift + request->fragmentSize, newBlockSize, blockFreeLists, ramClassUDATABlockFreelist);
 			}
 
 			return TRUE;
@@ -3858,6 +3879,162 @@ allocateRAMClassFragmentFromFreeList(RAMClassAllocationRequest *request, J9RAMCl
 	}
 
 	return FALSE;
+}
+
+/**
+ * Allocates fragments from free list.
+ */
+static void
+allocateFreeListBlock (RAMClassAllocationRequest *request, J9ClassLoader *classLoader, RAMClassAllocationRequest *prev, J9RAMClassFreeLists *blockFreeLists, UDATA *ramClassUDATABlockFreelist)
+{
+	if ((sizeof(UDATA) == request->fragmentSize)
+		&& (NULL != ramClassUDATABlockFreelist)
+	) {
+		UDATA *block = ramClassUDATABlockFreelist;
+		if (sizeof(UDATA) == request->alignment) {
+			request->address = ramClassUDATABlockFreelist;
+			ramClassUDATABlockFreelist = *(UDATA **)ramClassUDATABlockFreelist;
+		} else {
+			UDATA **blockPtr = &ramClassUDATABlockFreelist;
+			while (NULL != block) {
+				/* Check alignment constraint */
+				if (0 == (((UDATA)block) & (request->alignment - 1))) {
+					/* Unhook block from list */
+					*blockPtr = *(UDATA **)block;
+					*block = (UDATA)NULL;
+
+					/* Record allocation & adjust for alignment */
+					request->address = block;
+					break;
+				}
+
+				/* Advance to next block */
+				blockPtr = *(UDATA ***)block;
+				block = *blockPtr;
+			}
+		}
+		if (NULL != request->address) {
+			if (request->prefixSize != 0) {
+				request->address++;
+			}
+			Trc_VM_internalAllocateRAMClass_AllocatedFromFreeList(request->index, block, sizeof(UDATA), request->address, request->prefixSize, request->alignedSize, request->alignment);
+			prev->next = request->next;
+			return;
+		}
+	}
+
+	if ((RAM_CLASS_SMALL_FRAGMENT_LIMIT > request->fragmentSize)
+		&& (NULL != blockFreeLists->ramClassTinyBlockFreeList)
+	) {
+		if (allocateRAMClassFragmentFromFreeList(request, &blockFreeLists->ramClassTinyBlockFreeList, classLoader, ramClassUDATABlockFreelist, blockFreeLists)) {
+			prev->next = request->next;
+			return;
+		}
+	}
+	/* Avoid scanning the small free block list to allocate RAM class headers. The alignment constraint will rarely be satisfied. */
+	if ((RAM_CLASS_FRAGMENT_LIMIT > request->fragmentSize + request->alignment)
+		&& (NULL != blockFreeLists->ramClassSmallBlockFreeList)
+	) {
+		if (allocateRAMClassFragmentFromFreeList(request, &blockFreeLists->ramClassSmallBlockFreeList, classLoader, ramClassUDATABlockFreelist, blockFreeLists)) {
+			prev->next = request->next;
+			return;
+		}
+	}
+	if (NULL != blockFreeLists->ramClassLargeBlockFreeList) {
+		if (allocateRAMClassFragmentFromFreeList(request, &blockFreeLists->ramClassLargeBlockFreeList, classLoader, ramClassUDATABlockFreelist, blockFreeLists)) {
+			prev->next = request->next;
+			return;
+		}
+	}
+}
+
+
+static BOOLEAN
+allocateRemainingFragments(RAMClassAllocationRequest *requests, UDATA allocationRequestCount, J9JavaVM *javaVM, J9ClassLoader *classLoader, RAMClassAllocationRequest *allocationRequests, J9RAMClassFreeLists *j9RamClassFreeList, UDATA *ramClassUDATABlockFreelist,  SegmentKind segmentKind)
+{
+	UDATA i = 0;
+	if (NULL != requests) {
+		/* Calculate required space in new segment, including maximum alignment padding */
+		UDATA newSegmentSize = 0;
+		J9MemorySegment *newSegment = NULL;
+		UDATA allocAddress = 0;
+		BOOLEAN isNotLoadedByAnonClassLoader = classLoader != javaVM->anonClassLoader;
+		RAMClassAllocationRequest *request = NULL;
+		UDATA fragmentsLeftToAllocate = 0;
+		for (request = requests; NULL != request; request = request->next) {
+			if (request->segmentKind == segmentKind)
+			{
+				fragmentsLeftToAllocate++;
+				newSegmentSize += request->fragmentSize + request->alignment;
+			}
+		}
+
+		/* Add sizeof(UDATA) to hold the "lastAllocatedClass" pointer */
+		newSegmentSize += sizeof(UDATA);
+
+		/* Allocate a new segment of the required size */
+
+		UDATA classAllocationIncrement = javaVM->ramClassAllocationIncrement;
+		if (!isNotLoadedByAnonClassLoader) {
+			classAllocationIncrement = 0;
+		}
+
+		Trc_VM_internalAllocateRAMClass_AllocateClassMemorySegment(fragmentsLeftToAllocate, newSegmentSize, classAllocationIncrement);
+		newSegment = allocateClassMemorySegment(javaVM, newSegmentSize, MEMORY_TYPE_RAM_CLASS, classLoader, classAllocationIncrement);
+
+		if (NULL == newSegment) {
+			/* Free allocated fragments */
+			/* TODO attempt to coalesce free blocks? */
+			for (i = 0; i < allocationRequestCount; i++) {
+				if (NULL != allocationRequests[i].address && allocationRequests[i].segmentKind == segmentKind) {
+					UDATA fragmentAddress = ((UDATA) allocationRequests[i].address) - allocationRequests[i].prefixSize;
+					addBlockToFreeList(classLoader, fragmentAddress, allocationRequests[i].fragmentSize, j9RamClassFreeList, ramClassUDATABlockFreelist);
+					allocationRequests[i].address = NULL;
+				}
+			}
+			Trc_VM_internalAllocateRAMClass_SegmentAllocationFailed();
+			return false;
+		}
+		Trc_VM_internalAllocateRAMClass_AllocatedClassMemorySegment(newSegment, newSegment->size, newSegment->heapBase, newSegment->heapTop);
+
+		/* Initialize the "lastAllocatedClass" pointer */
+		*(J9Class **) newSegment->heapBase = NULL;
+
+		/* Bump the heapAlloc pointer to the end - don't use it again */
+		newSegment->heapAlloc = newSegment->heapTop;
+
+		/* Allocate the remaining fragments in the new segment, adding holes to the free list */
+		allocAddress = ((UDATA) newSegment->heapBase) + sizeof(UDATA);
+		for (request = requests; NULL != request; request = request->next) {
+			if (request->segmentKind == segmentKind)
+			{
+				/* Allocate from the start of the segment */
+				UDATA addressForAlignedArea = allocAddress + request->prefixSize;
+				UDATA alignmentMod = addressForAlignedArea & (request->alignment - 1);
+				UDATA alignmentShift = (0 == alignmentMod) ? 0 : (request->alignment - alignmentMod);
+
+				request->address = (UDATA *) (addressForAlignedArea + alignmentShift);
+
+				Trc_VM_internalAllocateRAMClass_AllocatedFromNewSegment(request->index, newSegment, request->address, request->prefixSize, request->alignedSize, request->alignment);
+
+				/* Add a new block with the remaining space at the start of this block, if any, to an appropriate free list */
+				if (0 != alignmentShift) {
+					addBlockToFreeList(classLoader, (UDATA) allocAddress, alignmentShift, j9RamClassFreeList, ramClassUDATABlockFreelist);
+				}
+
+				allocAddress += alignmentShift + request->fragmentSize;
+
+				fragmentsLeftToAllocate--;
+			}
+		}
+
+		/* Add a new block with the remaining space at the end of this segment, if any, to an appropriate free list */
+		if (allocAddress != (UDATA) newSegment->heapTop) {
+			addBlockToFreeList(classLoader, allocAddress, ((UDATA) newSegment->heapTop) - allocAddress, j9RamClassFreeList, ramClassUDATABlockFreelist);
+		}
+	}
+	return true;
+
 }
 
 /**
@@ -3875,6 +4052,7 @@ internalAllocateRAMClass(J9JavaVM *javaVM, J9ClassLoader *classLoader, RAMClassA
 	RAMClassAllocationRequest *request = NULL;
 	RAMClassAllocationRequest *prev = NULL;
 	RAMClassAllocationRequest dummyHead;
+	BOOLEAN memoryAllocationSuccess = false;
 	BOOLEAN isNotLoadedByAnonClassLoader = classLoader != javaVM->anonClassLoader;
 
 	/* Initialize results of allocation requests and ensure sizes are at least UDATA-aligned */
@@ -3922,57 +4100,12 @@ internalAllocateRAMClass(J9JavaVM *javaVM, J9ClassLoader *classLoader, RAMClassA
 		dummyHead.next = requests;
 		prev = &dummyHead;
 		for (request = requests; NULL != request; request = request->next) {
-			if ((sizeof(UDATA) == request->fragmentSize) && (NULL != classLoader->ramClassUDATABlockFreeList)) {
-				UDATA *block = classLoader->ramClassUDATABlockFreeList;
-				if (sizeof(UDATA) == request->alignment) {
-					request->address = classLoader->ramClassUDATABlockFreeList;
-					classLoader->ramClassUDATABlockFreeList = *(UDATA **) classLoader->ramClassUDATABlockFreeList;
-				} else {
-					UDATA **blockPtr = &classLoader->ramClassUDATABlockFreeList;
-					while (NULL != block) {
-						/* Check alignment constraint */
-						if (0 == (((UDATA) block) & (request->alignment - 1))) {
-							/* Unhook block from list */
-							*blockPtr = *(UDATA **) block;
-							*block = (UDATA) NULL;
-
-							/* Record allocation & adjust for alignment */
-							request->address = block;
-							break;
-						}
-
-						/* Advance to next block */
-						blockPtr = *(UDATA ***) block;
-						block = *blockPtr;
-					}
-				}
-				if (NULL != request->address) {
-					if (request->prefixSize != 0) {
-						request->address++;
-					}
-					Trc_VM_internalAllocateRAMClass_AllocatedFromFreeList(request->index, block, sizeof(UDATA), request->address, request->prefixSize, request->alignedSize, request->alignment);
-					prev->next = request->next;
-					continue;
-				}
-			}
-			if ((RAM_CLASS_SMALL_FRAGMENT_LIMIT > request->fragmentSize) && (NULL != classLoader->ramClassTinyBlockFreeList)) {
-				if (allocateRAMClassFragmentFromFreeList(request, &classLoader->ramClassTinyBlockFreeList, classLoader)) {
-					prev->next = request->next;
-					continue;
-				}
-			}
-			/* Avoid scanning the small free block list to allocate RAM class headers. The alignment constraint will rarely be satisfied. */
-			if ((RAM_CLASS_FRAGMENT_LIMIT > request->fragmentSize + request->alignment) && (NULL != classLoader->ramClassSmallBlockFreeList)) {
-				if (allocateRAMClassFragmentFromFreeList(request, &classLoader->ramClassSmallBlockFreeList, classLoader)) {
-					prev->next = request->next;
-					continue;
-				}
-			}
-			if (NULL != classLoader->ramClassLargeBlockFreeList) {
-				if (allocateRAMClassFragmentFromFreeList(request, &classLoader->ramClassLargeBlockFreeList, classLoader)) {
-					prev->next = request->next;
-					continue;
-				}
+			if(SUB4G == request->segmentKind) {
+				allocateFreeListBlock (request, classLoader, prev, &classLoader->sub4gBlock, classLoader->sub4gBlock.ramClassUDATABlockFreeList);
+			} else if (FREQUENTLY_ACCESSED == request->segmentKind) {
+				allocateFreeListBlock (request, classLoader, prev, &classLoader->frequentlyAccessedBlock, classLoader->frequentlyAccessedBlock.ramClassUDATABlockFreeList);
+			} else if (INFREQUENTLY_ACCESSED == request->segmentKind) {
+				allocateFreeListBlock (request, classLoader, prev, &classLoader->inFrequentlyAccessedBlock, classLoader->inFrequentlyAccessedBlock.ramClassUDATABlockFreeList);
 			}
 			prev = request;
 		}
@@ -3980,84 +4113,23 @@ internalAllocateRAMClass(J9JavaVM *javaVM, J9ClassLoader *classLoader, RAMClassA
 	}
 
 	/* If any fragments remain unallocated, allocate a new segment to (at least) fit them */
-	if (NULL != requests) {
-		/* Calculate required space in new segment, including maximum alignment padding */
-		UDATA newSegmentSize = 0;
-		J9MemorySegment *newSegment = NULL;
-		UDATA allocAddress = 0;
-
-		fragmentsLeftToAllocate = 0;
-		for (request = requests; NULL != request; request = request->next) {
-			fragmentsLeftToAllocate++;
-			newSegmentSize += request->fragmentSize + request->alignment;
-		}
-
-		/* Add sizeof(UDATA) to hold the "lastAllocatedClass" pointer */
-		newSegmentSize += sizeof(UDATA);
-
-		/* Allocate a new segment of the required size */
-
-		UDATA classAllocationIncrement = javaVM->ramClassAllocationIncrement;
-		if (!isNotLoadedByAnonClassLoader) {
-			classAllocationIncrement = 0;
-		}
-
-		Trc_VM_internalAllocateRAMClass_AllocateClassMemorySegment(fragmentsLeftToAllocate, newSegmentSize, classAllocationIncrement);
-		newSegment = allocateClassMemorySegment(javaVM, newSegmentSize, MEMORY_TYPE_RAM_CLASS, classLoader, classAllocationIncrement);
-
-		if (NULL == newSegment) {
-			/* Free allocated fragments */
-			/* TODO attempt to coalesce free blocks? */
-			for (i = 0; i < allocationRequestCount; i++) {
-				if (NULL != allocationRequests[i].address) {
-					UDATA fragmentAddress = ((UDATA) allocationRequests[i].address) - allocationRequests[i].prefixSize;
-					addBlockToFreeList(classLoader, fragmentAddress, allocationRequests[i].fragmentSize);
-					allocationRequests[i].address = NULL;
-				}
-			}
-			Trc_VM_internalAllocateRAMClass_SegmentAllocationFailed();
-			return NULL;
-		}
-		Trc_VM_internalAllocateRAMClass_AllocatedClassMemorySegment(newSegment, newSegment->size, newSegment->heapBase, newSegment->heapTop);
-
-		/* Initialize the "lastAllocatedClass" pointer */
-		*(J9Class **) newSegment->heapBase = NULL;
-
-		/* Bump the heapAlloc pointer to the end - don't use it again */
-		newSegment->heapAlloc = newSegment->heapTop;
-
-		/* Allocate the remaining fragments in the new segment, adding holes to the free list */
-		allocAddress = ((UDATA) newSegment->heapBase) + sizeof(UDATA);
-		for (request = requests; NULL != request; request = request->next) {
-			/* Allocate from the start of the segment */
-			UDATA addressForAlignedArea = allocAddress + request->prefixSize;
-			UDATA alignmentMod = addressForAlignedArea & (request->alignment - 1);
-			UDATA alignmentShift = (0 == alignmentMod) ? 0 : (request->alignment - alignmentMod);
-
-			request->address = (UDATA *) (addressForAlignedArea + alignmentShift);
-
-			Trc_VM_internalAllocateRAMClass_AllocatedFromNewSegment(request->index, newSegment, request->address, request->prefixSize, request->alignedSize, request->alignment);
-
-			/* Add a new block with the remaining space at the start of this block, if any, to an appropriate free list */
-			if (0 != alignmentShift) {
-				addBlockToFreeList(classLoader, (UDATA) allocAddress, alignmentShift);
-			}
-
-			allocAddress += alignmentShift + request->fragmentSize;
-
-			fragmentsLeftToAllocate--;
-		}
-
-		/* Add a new block with the remaining space at the end of this segment, if any, to an appropriate free list */
-		if (allocAddress != (UDATA) newSegment->heapTop) {
-			addBlockToFreeList(classLoader, allocAddress, ((UDATA) newSegment->heapTop) - allocAddress);
-		}
+	memoryAllocationSuccess = allocateRemainingFragments(requests, allocationRequestCount, javaVM, classLoader, allocationRequests, &classLoader->sub4gBlock, classLoader->sub4gBlock.ramClassUDATABlockFreeList, SUB4G);
+	if(!memoryAllocationSuccess) {
+		return NULL;
 	}
+	memoryAllocationSuccess = allocateRemainingFragments(requests, allocationRequestCount, javaVM, classLoader, allocationRequests, &classLoader->frequentlyAccessedBlock, classLoader->frequentlyAccessedBlock.ramClassUDATABlockFreeList, FREQUENTLY_ACCESSED);
+	if(!memoryAllocationSuccess) {
+		return NULL;
+	}
+	memoryAllocationSuccess = allocateRemainingFragments(requests, allocationRequestCount, javaVM, classLoader, allocationRequests, &classLoader->inFrequentlyAccessedBlock, classLoader->inFrequentlyAccessedBlock.ramClassUDATABlockFreeList, INFREQUENTLY_ACCESSED);
 
+	if(!memoryAllocationSuccess) {
+		return NULL;
+	}
 	/* Clear all allocated fragments */
 	for (i = 0; i < allocationRequestCount; i++) {
 		if (NULL != allocationRequests[i].address) {
-			memset((void *) (((UDATA) allocationRequests[i].address) - allocationRequests[i].prefixSize), 0, allocationRequests[i].fragmentSize);
+			memset((void *) (((UDATA)allocationRequests[i].address) - allocationRequests[i].prefixSize), 0, allocationRequests[i].fragmentSize);
 		}
 	}
 
@@ -4078,7 +4150,6 @@ internalAllocateRAMClass(J9JavaVM *javaVM, J9ClassLoader *classLoader, RAMClassA
 	omrthread_monitor_exit(javaVM->classMemorySegments->segmentMutex);
 
 	Trc_VM_internalAllocateRAMClass_Exit(classStart, segment);
-
 	return segment;
 }
 
