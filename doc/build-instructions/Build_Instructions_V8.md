@@ -420,8 +420,8 @@ Not all of the shared libraries that are included with Visual Studio are registe
 In particular, the `msdia140.dll` libraries must be registered manually by running command prompt as administrator.  To do so, execute the following from a command prompt:
 
 ```
-regsvr32 "C:\Program Files (x86)\Microsoft Visual Studio\2022\Community\DIA SDK\bin\msdia140.dll"
-regsvr32 "C:\Program Files (x86)\Microsoft Visual Studio\2022\Community\DIA SDK\bin\amd64\msdia140.dll"
+regsvr32 "C:\Program Files\Microsoft Visual Studio\2022\Community\DIA SDK\bin\msdia140.dll"
+regsvr32 "C:\Program Files\Microsoft Visual Studio\2022\Community\DIA SDK\bin\amd64\msdia140.dll"
 ```
 
 - When building with `--with-cmake=no`, unpack the Freemarker archive:
