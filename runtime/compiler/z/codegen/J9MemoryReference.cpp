@@ -94,10 +94,11 @@ void recursivelyIncrementReferenceCount(TR::Node *node, rcount_t increment, List
    TR::CodeGenerator *cg)
    {
    TR::Compilation *comp = cg->comp();
+   OMR::Logger *log = comp->log();
+   bool trace = cg->traceBCDCodeGen();
    TR_ASSERT( increment > 0,"recursivelyIncrementReferenceCount only valid for positive increments\n");
-   if (cg->traceBCDCodeGen())
-      comp->log()->printf("\t\t\trecAdjust node - %s (%p) and add to list, increment %d: refCount %d->%d\n",
-         node->getOpCode().getName(),node,increment,node->getReferenceCount(),node->getReferenceCount()+increment);
+   logprintf(trace, log, "\t\t\trecAdjust node - %s (%p) and add to list, increment %d: refCount %d->%d\n",
+         node->getOpCode().getName(), node, increment, node->getReferenceCount(), node->getReferenceCount()+increment);
    incrementedNodesList.add(node);
    node->setReferenceCount(node->getReferenceCount()+increment);
 
@@ -115,23 +116,20 @@ void recursivelyIncrementReferenceCount(TR::Node *node, rcount_t increment, List
       {
       TR_ASSERT( node->getOpCodeValue()==TR::loadaddr,"temporary symbol references should only be attached to loadaddr nodes\n");
       TR::AutomaticSymbol *sym = node->getSymbolReference()->getSymbol()->castToVariableSizeSymbol();
-      if (comp->cg()->traceBCDCodeGen())
-         comp->log()->printf("\tincrement temporary #%d (sym %p -- from loadaddr node %p) reference count %d->%d\n",
-            node->getSymbolReference()->getReferenceNumber(),sym,node,sym->getReferenceCount(),sym->getReferenceCount()+1);
+      logprintf(trace, log, "\tincrement temporary #%d (sym %p -- from loadaddr node %p) reference count %d->%d\n",
+            node->getSymbolReference()->getReferenceNumber(), sym, node, sym->getReferenceCount(), sym->getReferenceCount()+1);
       sym->setReferenceCount(sym->getReferenceCount()+1);
       }
    if (node->getRegister() == NULL)
       {
-      if (cg->traceBCDCodeGen())
-         comp->log()->prints("\t\t\tnode has no register so do recurse\n");
+      logprints(trace, log, "\t\t\tnode has no register so do recurse\n");
       for (int32_t childCount = node->getNumChildren()-1; childCount >= 0; childCount--)
          recursivelyIncrementReferenceCount(node->getChild(childCount), increment, incrementedNodesList, nodesAlreadyEvaluatedBeforeFoldingList, cg);
       }
    else
       {
       nodesAlreadyEvaluatedBeforeFoldingList.add(node);
-      if (cg->traceBCDCodeGen())
-         comp->log()->prints("\t\t\tnode has a register so do not recurse\n");
+      logprints(trace, log, "\t\t\tnode has a register so do not recurse\n");
       }
    return;
    }
@@ -153,6 +151,9 @@ void
 J9::Z::MemoryReference::tryForceFolding(TR::Node *& rootLoadOrStore, TR::CodeGenerator *& cg, TR_StorageReference *& storageReference, TR::SymbolReference *& symRef, TR::Symbol *& symbol,
                                         List<TR::Node>& nodesAlreadyEvaluatedBeforeFoldingList)
    {
+   OMR::Logger *log = cg->comp()->log();
+   bool trace = cg->traceBCDCodeGen();
+
    if (storageReference)
       {
       bool isImpliedMemoryReference = false;
@@ -172,8 +173,7 @@ J9::Z::MemoryReference::tryForceFolding(TR::Node *& rootLoadOrStore, TR::CodeGen
 
       symbol = _symbolReference->getSymbol();
 
-      if (cg->traceBCDCodeGen())
-         comp->log()->printf("\t\tmr storageRef case: setting rootLoadOrStore from %s (%p) to storageRef->node %s (%p) (ref->nodeRefCount %d, symRef #%d (sym=%p), isIndirect %s, isConst %s)\n",
+      logprintf(trace, log, "\t\tmr storageRef case: setting rootLoadOrStore from %s (%p) to storageRef->node %s (%p) (ref->nodeRefCount %d, symRef #%d (sym=%p), isIndirect %s, isConst %s)\n",
             rootLoadOrStore?rootLoadOrStore->getOpCode().getName():"NULL",
             rootLoadOrStore,
             storageRefNode?storageRefNode->getOpCode().getName():"NULL",
@@ -190,22 +190,19 @@ J9::Z::MemoryReference::tryForceFolding(TR::Node *& rootLoadOrStore, TR::CodeGen
          if (storageReference->isNodeBasedHint())
             {
             isImpliedMemoryReference = true;
-            if (cg->traceBCDCodeGen())
-               comp->log()->prints("\t\tset isImpliedMemoryReference=true as ref isNodeBasedHint=true\n");
+            logprints(trace, log, "\t\tset isImpliedMemoryReference=true as ref isNodeBasedHint=true\n");
             }
          else
             {
             TR_ASSERT(storageReference->getNodeReferenceCount() >= 1,"storageReference->getNodeReferenceCount() should be >=1 and not %d storageRefNode:[%p]\n",storageReference->getNodeReferenceCount(), storageRefNode);
             isImpliedMemoryReference = (storageReference->getNodeReferenceCount() > 1);
-            if (cg->traceBCDCodeGen())
-               comp->log()->printf("\t\tset isImpliedMemoryReference=%s as ref->getNodeReferenceCount() %s 1\n",
+            logprintf(trace, log, "\t\tset isImpliedMemoryReference=%s as ref->getNodeReferenceCount() %s 1\n",
                   isImpliedMemoryReference?"true":"false",isImpliedMemoryReference?">":"==");
             }
          }
       if (!storageReference->isNodeBasedHint())
          {
-         if (cg->traceBCDCodeGen())
-            comp->log()->printf("\t\tdec nodeRefCount %d->%d on storageRef #%d (storageRefNode %s (%p))\n",
+         logprintf(trace, log, "\t\tdec nodeRefCount %d->%d on storageRef #%d (storageRefNode %s (%p))\n",
                storageReference->getNodeReferenceCount(),storageReference->getNodeReferenceCount()-1,
                storageReference->getReferenceNumber(),
                storageReference->getNode()->getOpCode().getName(),storageReference->getNode());
@@ -229,8 +226,7 @@ J9::Z::MemoryReference::tryForceFolding(TR::Node *& rootLoadOrStore, TR::CodeGen
 
          if (self()->forceFolding() || self()->forceFirstTimeFolding() || addressChild->getOpCodeValue() == TR::loadaddr)
             {
-            if (cg->traceBCDCodeGen())
-               comp->log()->printf("\t\tisImpliedMemoryReference=true and %s so recInc refCounts for rootLoadOrStore %s (%p) and addressChild %s (%p)\n",
+            logprintf(trace, log, "\t\tisImpliedMemoryReference=true and %s so recInc refCounts for rootLoadOrStore %s (%p) and addressChild %s (%p)\n",
                   self()->forceFirstTimeFolding()?
                      "forceFirstTimeFolding":
                       (self()->forceFolding()?"forceFolding=true":"addressChild is a loadaddr"),
@@ -249,8 +245,7 @@ J9::Z::MemoryReference::tryForceFolding(TR::Node *& rootLoadOrStore, TR::CodeGen
          else
             {
             self()->setForceEvaluation();
-            if (cg->traceBCDCodeGen())
-               comp->log()->printf("\t\tisImpliedMemoryReference=true and forceFolding=false so increment addressChild %s (%p) refCount %d->%d and setForceEvaluation to true\n",
+            logprintf(trace, log, "\t\tisImpliedMemoryReference=true and forceFolding=false so increment addressChild %s (%p) refCount %d->%d and setForceEvaluation to true\n",
                   addressChild->getOpCode().getName(),addressChild,addressChild->getReferenceCount(),addressChild->getReferenceCount()+1);
             addressChild->incReferenceCount();
             }
@@ -401,6 +396,9 @@ TR::MemoryReference *
 generateS390MemRefFromStorageRef(TR::Node *node, TR_StorageReference *storageReference, TR::CodeGenerator * cg, bool enforceSSLimits, bool isNewTemp)
    {
    TR::Compilation *comp = cg->comp();
+   OMR::Logger *log = comp->log();
+   bool trace = cg->traceBCDCodeGen();
+
    TR_ASSERT( storageReference,"must specify a storageReference when creating an aligned memory reference\n");
    TR::MemoryReference *memRef = NULL;
    // A memRef created for an indirect load may have its symRef replaced with its child's symRef (when the child is a loadaddr for example)
@@ -425,29 +423,27 @@ generateS390MemRefFromStorageRef(TR::Node *node, TR_StorageReference *storageRef
        node->getOpaquePseudoRegister()->getRightAlignedDeadAndIgnoredBytes() > 0)
       {
       int32_t regDeadAndIgnoredBytes = node->getOpaquePseudoRegister()->getRightAlignedDeadAndIgnoredBytes();
-      if (cg->traceBCDCodeGen())
-         comp->log()->printf("\tgenerateS390AlignedMemoryReference: adjust memRef->_offset for regDeadAndIgnoredBytes (%d->%d) from node %s (%p) and reg %s\n",
+      logprintf(trace, log, "\tgenerateS390AlignedMemoryReference: adjust memRef->_offset for regDeadAndIgnoredBytes (%d->%d) from node %s (%p) and reg %s\n",
             memRef->getOffset(),memRef->getOffset()-regDeadAndIgnoredBytes,node->getOpCode().getName(),node,cg->getDebug()->getName(node->getOpaquePseudoRegister()));
       memRef->addToTemporaryNegativeOffset(node, -regDeadAndIgnoredBytes, cg);
       }
 
    if (storageReference->isTemporaryBased() && storageReference->getSymbolReference()->hasTemporaryNegativeOffset())
       {
-      if (cg->traceBCDCodeGen())
-         comp->log()->printf("\tgenerateS390AlignedMemoryReference mr %p: call addToTemporaryNegativeOffset flag for storageRef->symRef #%d (offset = %d) and node %s (%p) to memRef\n",
+      logprintf(trace, log, "\tgenerateS390AlignedMemoryReference mr %p: call addToTemporaryNegativeOffset flag for storageRef->symRef #%d (offset = %d) and node %s (%p) to memRef\n",
             memRef,storageReference->getReferenceNumber(),storageReference->getSymbolReference()->getOffset(),
             node->getOpCode().getName(),node);
       memRef->enforceSSFormatLimits(node, cg, NULL);
       memRef->setHasTemporaryNegativeOffset();
       }
 
-   if (cg->traceBCDCodeGen() && storageReference->isTemporaryBased() && !storageReference->isSingleUseTemporary())
+   if (trace && storageReference->isTemporaryBased() && !storageReference->isSingleUseTemporary())
       {
       if (storageReference->getTemporaryReferenceCount() == 0)
-         comp->log()->printf("**ERROR**: using an already freed temp #%d sym %p (node %p storageRef %p)\n",
+         log->printf("**ERROR**: using an already freed temp #%d sym %p (node %p storageRef %p)\n",
             storageReference->getReferenceNumber(),storageReference->getTemporarySymbol(),node,storageReference);
       else if (!storageReference->getTemporarySymbol()->isReferenced())
-         comp->log()->printf("**ERROR**: using an unreferenced temp #%d sym %p (node %p storageRef %p)\n",
+         log->printf("**ERROR**: using an unreferenced temp #%d sym %p (node %p storageRef %p)\n",
             storageReference->getReferenceNumber(),storageReference->getTemporarySymbol(),node,storageReference);
       }
 

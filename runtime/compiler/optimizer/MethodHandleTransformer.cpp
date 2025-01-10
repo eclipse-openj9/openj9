@@ -184,8 +184,7 @@ void TR_MethodHandleTransformer::assignLocalIndices()
       {
       if (p->getDataType() == TR::Address)
          {
-         if (trace())
-            log->printf("Local #%2d is symbol %p <parm %d>\n", _numLocals, p, p->getSlot());
+         logprintf(trace(), log, "Local #%2d is symbol %p <parm %d>\n", _numLocals, p, p->getSlot());
          p->setLocalIndex(_numLocals++);
          }
       }
@@ -203,8 +202,7 @@ void TR_MethodHandleTransformer::assignLocalIndices()
       TR::AutomaticSymbol *p = symRef->getSymbol()->getAutoSymbol();
       if (p && p->getDataType() == TR::Address)
          {
-         if (trace())
-            log->printf("Local #%2d is symbol %p [#%d]\n", _numLocals, p, symRef->getReferenceNumber());
+         logprintf(trace(), log, "Local #%2d is symbol %p [#%d]\n", _numLocals, p, symRef->getReferenceNumber());
          p->setLocalIndex(_numLocals++);
          }
       }
@@ -230,8 +228,7 @@ TR_MethodHandleTransformer::getMethodEntryObjectInfo()
          if (arg && arg->getKnownObjectIndex() != TR::KnownObjectTable::UNKNOWN)
             {
             (*objectInfo)[p->getLocalIndex()] = arg->getKnownObjectIndex();
-            if (trace())
-               comp()->log()->printf("Local #%2d is parm %d is obj%d\n", p->getLocalIndex(), ordinal, arg->getKnownObjectIndex());
+            logprintf(trace(), comp()->log(), "Local #%2d is parm %d is obj%d\n", p->getLocalIndex(), ordinal, arg->getKnownObjectIndex());
             }
          }
       }
@@ -251,8 +248,7 @@ TR_MethodHandleTransformer::blockStartObjectInfoFromPredecessors(TR::Block* bloc
    //
    if (block->isCatchBlock())
       {
-      if (trace())
-         log->printf("block_%d has exception predecessor, initialize all local slots to unknown object\n", blockNum);
+      logprintf(trace(), log, "block_%d has exception predecessor, initialize all local slots to unknown object\n", blockNum);
 
       return new (comp()->trMemory()->currentStackRegion()) ObjectInfo(_numLocals, static_cast<int>(TR::KnownObjectTable::UNKNOWN), comp()->trMemory()->currentStackRegion());
       }
@@ -267,8 +263,7 @@ TR_MethodHandleTransformer::blockStartObjectInfoFromPredecessors(TR::Block* bloc
       int32_t fromBlockNum = fromBlock->getNumber();
       if (_blockEndObjectInfos->find(fromBlockNum) == _blockEndObjectInfos->end())
          {
-         if (trace())
-            log->printf("Predecessor block_%d hasn't been visited yet, no object info is propagated for block_%d\n", fromBlockNum, blockNum);
+         logprintf(trace(), log, "Predecessor block_%d hasn't been visited yet, no object info is propagated for block_%d\n", fromBlockNum, blockNum);
 
          return new (comp()->trMemory()->currentStackRegion()) ObjectInfo(_numLocals, static_cast<int>(TR::KnownObjectTable::UNKNOWN), comp()->trMemory()->currentStackRegion());
          }
@@ -363,10 +358,7 @@ TR_MethodHandleTransformer::computeObjectInfoOfNode(TR::TreeTop *tt, TR::Node *n
       return; // no known object, nothing to do
       }
 
-   if (trace())
-      {
-      log->printf("Determining object info of n%dn\n", node->getGlobalIndex());
-      }
+   logprintf(trace(), log, "Determining object info of n%dn\n", node->getGlobalIndex());
 
    TR::KnownObjectTable::Index koi = TR::KnownObjectTable::UNKNOWN;
    auto symbol = symRef->getSymbol();
@@ -388,8 +380,7 @@ TR_MethodHandleTransformer::computeObjectInfoOfNode(TR::TreeTop *tt, TR::Node *n
             if (isKnownObject(mhIndex) && !knot->isNull(mhIndex))
                {
                auto mnIndex = comp()->fej9()->getMemberNameFieldKnotIndexFromMethodHandleKnotIndex(comp(), mhIndex, "member");
-               if (trace())
-                  log->printf("Get DirectMethodHandle.member known object %d, update node n%dn known object\n", mnIndex, node->getGlobalIndex());
+               logprintf(trace(), log, "Get DirectMethodHandle.member known object %d, update node n%dn known object\n", mnIndex, node->getGlobalIndex());
 
                koi = mnIndex;
                }
@@ -403,8 +394,7 @@ TR_MethodHandleTransformer::computeObjectInfoOfNode(TR::TreeTop *tt, TR::Node *n
             if (isKnownObject(mhIndex) && !knot->isNull(mhIndex))
                {
                auto mnIndex = comp()->fej9()->getMemberNameFieldKnotIndexFromMethodHandleKnotIndex(comp(), mhIndex, "initMethod");
-               if (trace())
-                  log->printf("Get DirectMethodHandle.initMethod known object %d, update node n%dn known object\n", mnIndex, node->getGlobalIndex());
+               logprintf(trace(), log, "Get DirectMethodHandle.initMethod known object %d, update node n%dn known object\n", mnIndex, node->getGlobalIndex());
 
                koi = mnIndex;
                }
@@ -434,8 +424,7 @@ TR_MethodHandleTransformer::computeObjectInfoOfNode(TR::TreeTop *tt, TR::Node *n
                && !knot->isNull(adIndex))
                {
                auto mhIndex = comp()->fej9()->getMethodHandleTableEntryIndex(comp(), vhIndex, adIndex);
-               if (trace())
-                  log->printf("Invokers_checkVarHandleGenericType with known VarHandle object %d, updating node n%dn with known MH object %d from MH table\n", vhIndex, node->getGlobalIndex(), mhIndex);
+               logprintf(trace(), log, "Invokers_checkVarHandleGenericType with known VarHandle object %d, updating node n%dn with known MH object %d from MH table\n", vhIndex, node->getGlobalIndex(), mhIndex);
                koi = mhIndex;
                }
             break;
@@ -492,8 +481,7 @@ TR_MethodHandleTransformer::visitStoreToLocalVariable(TR::TreeTop* tt, TR::Node*
       {
       // Get object info of the rhs
       TR::KnownObjectTable::Index newObject = getObjectInfoOfNode(rhs);
-      if (trace())
-         comp()->log()->printf("rhs of store n%dn is obj%d\n", node->getGlobalIndex(), newObject);
+      logprintf(trace(), comp()->log(), "rhs of store n%dn is obj%d\n", node->getGlobalIndex(), newObject);
 
       TR::KnownObjectTable::Index oldObject = (*_currentObjectInfo)[local->getLocalIndex()];
       if (newObject != oldObject && trace())
@@ -512,8 +500,7 @@ void TR_MethodHandleTransformer::visitIndirectLoad(TR::TreeTop* tt, TR::Node* no
    auto symRef = node->getSymbolReference();
    if (symRef->hasKnownObjectIndex())
       {
-      if (trace())
-         log->printf("Indirect load n%dn is obj%d\n", node->getGlobalIndex(), symRef->getKnownObjectIndex());
+      logprintf(trace(), log, "Indirect load n%dn is obj%d\n", node->getGlobalIndex(), symRef->getKnownObjectIndex());
       return;
       }
 
@@ -524,8 +511,7 @@ void TR_MethodHandleTransformer::visitIndirectLoad(TR::TreeTop* tt, TR::Node* no
       auto baseNode = symbol->isArrayShadowSymbol() ? node->getFirstChild()->getFirstChild() : node->getFirstChild();
       auto baseSymRef = baseNode->getSymbolReference();
       TR::KnownObjectTable::Index baseObj = getObjectInfoOfNode(baseNode);
-      if (trace())
-         log->printf("base object for indirect load n%dn is obj%d\n", node->getGlobalIndex(), baseObj);
+      logprintf(trace(), log, "base object for indirect load n%dn is obj%d\n", node->getGlobalIndex(), baseObj);
 
       auto knot = comp()->getKnownObjectTable();
       if (knot && isKnownObject(baseObj) && !knot->isNull(baseObj))
@@ -546,8 +532,7 @@ void TR_MethodHandleTransformer::visitIndirectLoad(TR::TreeTop* tt, TR::Node* no
             {
             TR::SymbolReference* improvedSymRef = comp()->getSymRefTab()->findOrCreateImmutableArrayShadowSymbolRef(symbol->getDataType());
             node->setSymbolReference(improvedSymRef);
-            if (trace())
-               log->printf("Improve regular array-shadow to immutable-array-shadow for n%dn\n", node->getGlobalIndex());
+            logprintf(trace(), log, "Improve regular array-shadow to immutable-array-shadow for n%dn\n", node->getGlobalIndex());
             }
 
          TR::Node* removedNode = NULL;
@@ -674,8 +659,7 @@ TR_MethodHandleTransformer::process_java_lang_invoke_MethodHandle_invokeBasic(TR
    {
    auto mhNode = node->getFirstArgument();
    TR::KnownObjectTable::Index objIndex = getObjectInfoOfNode(mhNode);
-   if (trace())
-      comp()->log()->printf("MethodHandle is obj%d\n", objIndex);
+   logprintf(trace(), comp()->log(), "MethodHandle is obj%d\n", objIndex);
 
    auto knot = comp()->getKnownObjectTable();
    bool transformed = false;
@@ -698,8 +682,7 @@ TR_MethodHandleTransformer::process_java_lang_invoke_MethodHandle_linkTo(TR::Tre
    {
    auto mnNode = node->getLastChild();
    TR::KnownObjectTable::Index objIndex = getObjectInfoOfNode(mnNode);
-   if (trace())
-      comp()->log()->printf("MemberName is obj%d\n", objIndex);
+   logprintf(trace(), comp()->log(), "MemberName is obj%d\n", objIndex);
 
    auto knot = comp()->getKnownObjectTable();
    bool transformed = false;

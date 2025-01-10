@@ -119,13 +119,11 @@ void TR_MethodToBeCompiled::acquireSlotMonitor(J9VMThread *vmThread)
    {
    getMonitor()->enter();
    // Must have the compilationMonitor in hand to be able to call this method
-   //fprintf(stderr, "Thread %p has acquired slot monitor\n", vmThread);
    }
 
 void TR_MethodToBeCompiled::releaseSlotMonitor(J9VMThread *vmThread)
    {
    // Must have the compilationMonitor in hand to be able to call this method
-   //fprintf(stderr, "Thread %p will release slot monitor\n", vmThread);
    getMonitor()->exit();
    }
 

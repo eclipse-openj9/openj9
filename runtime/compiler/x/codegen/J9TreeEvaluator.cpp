@@ -1770,11 +1770,8 @@ TR::Register *J9::X86::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, TR
       }
    else
       {
-      // trace a message to indicate that inline allocation is disabled for nDims < 2
-      if (comp->getOption(TR_TraceCG))
-         {
-         comp->log()->printf("Disabling inline allocations for multianewarray of dim %d\n", nDims);
-         }
+      logprintf(comp->getOption(TR_TraceCG), comp->log(), "Disabling inline allocations for multianewarray of dim %d\n", nDims);
+
       TR::ILOpCodes opCode = node->getOpCodeValue();
       TR::Node::recreate(node, TR::acall);
       TR::Register *targetRegister = directCallEvaluator(node, cg);
@@ -2775,8 +2772,7 @@ void setImplicitNULLCHKExceptionInfo(TR::Node *node, TR::CodeGenerator *cg)
           faultingInstruction != cmpInstruction &&
           isComparisonMemForm)
          {
-         if (isTraceCG)
-            comp->log()->printf("Faulting instruction (previously %p) updated to %p\n",faultingInstruction,cmpInstruction);
+         logprintf(isTraceCG, comp->log(), "Faulting instruction (previously %p) updated to %p\n", faultingInstruction, cmpInstruction);
 
          faultingInstruction = cmpInstruction;
          cg->setImplicitExceptionPoint(faultingInstruction);
@@ -2786,8 +2782,7 @@ void setImplicitNULLCHKExceptionInfo(TR::Node *node, TR::CodeGenerator *cg)
       faultingInstruction->setNode(node);
       }
 
-   if (isTraceCG)
-      comp->log()->printf("Node %p has foldedimplicitNULLCHK, and a faulting instruction of %p\n", node, faultingInstruction);
+   logprintf(isTraceCG, comp->log(), "Node %p has foldedimplicitNULLCHK, and a faulting instruction of %p\n", node, faultingInstruction);
    }
 
 TR::Register *J9::X86::TreeEvaluator::BNDCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
@@ -4165,8 +4160,7 @@ generateInlinedCheckCastOrInstanceOfForArrayClass(TR::Node *node, TR_OpaqueClass
       TR_OpaqueClassBlock *componentClass = fej9->getComponentClassFromArrayClass(clazz);
       if (fej9->isJavaLangObject(componentClass))
          {
-         if (comp->getOption(TR_TraceCG))
-            comp->log()->printf("Inline checkcast for [jlO : node=%p", node);
+         logprintf(comp->getOption(TR_TraceCG), comp->log(), "Inline checkcast for [jlO : node=%p", node);
 
          TR::LabelSymbol *outlinedCallLabel = generateLabelSymbol(cg);
          TR::LabelSymbol *fallThruLabel = generateLabelSymbol(cg);
@@ -7595,6 +7589,8 @@ static void handleOffHeapDataForArrays(
    {
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
+   OMR::Logger *log = comp->log();
+   bool trace = comp->getOption(TR_TraceCG);
 
    /* Here we'll update dataAddr slot for both fixed and variable length arrays. Fixed length arrays are
     * simple as we just need to check first child of the node for array size. For variable length arrays,
@@ -7613,8 +7609,7 @@ static void handleOffHeapDataForArrays(
        * Here we deal only with compressed refs because dataAddr field offset for discontiguous
        * and contiguous arrays is the same in full refs.
        */
-      if (comp->getOption(TR_TraceCG))
-         comp->log()->printf("Node (%p): Dealing with compressed refs variable length array.\n", node);
+      logprintf(trace, log, "Node (%p): Dealing with compressed refs variable length array.\n", node);
 
       TR_ASSERT_FATAL_WITH_NODE(node,
          (fej9->getOffsetOfDiscontiguousDataAddrField() - fej9->getOffsetOfContiguousDataAddrField()) == 8,
@@ -7647,20 +7642,14 @@ static void handleOffHeapDataForArrays(
       }
    else if (NULL == sizeReg && node->getFirstChild()->getOpCode().isLoadConst() && node->getFirstChild()->getInt() == 0)
       {
-      if (comp->getOption(TR_TraceCG))
-         comp->log()->printf("Node (%p): Dealing with full/compressed refs fixed length zero size array.\n", node);
+      logprintf(trace, log, "Node (%p): Dealing with full/compressed refs fixed length zero size array.\n", node);
 
       dataAddrSlotMR = generateX86MemoryReference(targetReg, fej9->getOffsetOfDiscontiguousDataAddrField(), cg);
       generateMemImmInstruction(TR::InstOpCode::SMemImm4(), node, dataAddrSlotMR, 0, cg);
       }
    else
       {
-      if (comp->getOption(TR_TraceCG))
-         {
-         comp->log()->printf(
-            "Node (%p): Dealing with either full/compressed refs fixed length non-zero size array or full refs variable length array.\n",
-            node);
-         }
+      logprintf(trace, log, "Node (%p): Dealing with either full/compressed refs fixed length non-zero size array or full refs variable length array.\n", node);
 
       if (!TR::Compiler->om.compressObjectReferences())
          {
@@ -7753,6 +7742,8 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
    {
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = comp->fej9();
+   OMR::Logger *log = comp->log();
+   bool trace = comp->getOption(TR_TraceCG);
 
    if (comp->suppressAllocationInlining())
       return NULL;
@@ -7859,10 +7850,7 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
          {
          classReg = cg->evaluate(node->getFirstChild());
 
-         if (comp->getOption(TR_TraceCG))
-            {
-            comp->log()->printf("%s: evaluate loadaddr: clazz %p classReg %s\n", __FUNCTION__, clazz, classReg ? classReg->getRegisterName(comp) : "<none>");
-            }
+         logprintf(trace, log, "%s: evaluate loadaddr: clazz %p classReg %s\n", __FUNCTION__, clazz, classReg ? classReg->getRegisterName(comp) : "<none>");
          }
 
       TR_ASSERT_FATAL_WITH_NODE(node, objectSize > 0, "Object size must be known");
@@ -7937,13 +7925,11 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
          node->setSymbolReference(noZeroInitSymRef);
          }
 
-      if (comp->getOption(TR_TraceCG))
-         comp->log()->printf("SKIPZEROINIT: for %p, change the symbol to %p ", node, node->getSymbolReference());
+      logprintf(trace, log, "SKIPZEROINIT: for %p, change the symbol to %p ", node, node->getSymbolReference());
       }
    else
       {
-      if (comp->getOption(TR_TraceCG))
-         comp->log()->printf("NOSKIPZEROINIT: for %p,  keep symbol as %p ", node, node->getSymbolReference());
+      logprintf(trace, log, "NOSKIPZEROINIT: for %p,  keep symbol as %p ", node, node->getSymbolReference());
       }
 #endif
 
@@ -7956,8 +7942,7 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
       {
       sizeReg = cg->evaluate(node->getFirstChild());
       allocationSize += dataOffset;
-      if (comp->getOption(TR_TraceCG))
-         comp->log()->printf("allocationSize %d dataOffset %d\n", allocationSize, dataOffset);
+      logprintf(trace, log, "allocationSize %d dataOffset %d\n", allocationSize, dataOffset);
       }
    else
       {
@@ -11555,8 +11540,7 @@ static void generateWriteBarrierCall(
 
 static void reportFlag(bool value, char *name, TR::CodeGenerator *cg)
    {
-   if (value)
-      cg->comp()->log()->printf(" %s", name);
+   logprintf(value, cg->comp()->log(), " %s", name);
    }
 
 static int32_t byteOffsetForMask(int32_t mask, TR::CodeGenerator *cg)

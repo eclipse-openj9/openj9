@@ -211,7 +211,7 @@ TR_Debug::print(
             log->prints("liveMonitor mask: ");
             uint8_t * maskBits = callSiteCursor;
             printStackMapInfo(log, maskBits, sa->getNumberOfSlotsMapped(), 0, offsetInfo);
-            log->prints("\n");
+            log->println();
             }
 
          callSiteCursor += j9StackAtlas->numberOfMapBytes;
@@ -336,7 +336,7 @@ TR_Debug::printStackAtlasDetails(
        uint8_t *mapBits = (uint8_t *) ((uintptr_t) localStackAllocMap + sizeof(uintptr_t));
        printStackMapInfo(log, mapBits, numberOfSlotsMapped, sizeOfStackAtlas, NULL);
 
-       log->prints("\n");
+       log->println();
        }
 
    //Offset info
@@ -511,7 +511,7 @@ TR_Debug::printMapInfo(
          printStackMapInfo(log, mapBits, numberOfSlotsMapped, sizeOfStackAtlas, offsetInfo, nummaps);
 
          if (!nummaps)
-            log->prints("\n");
+            log->println();
 
          // check is there's live monitor meta data and if so, bump the pointers.
          // todo: print out the live monitor meta data
@@ -524,7 +524,7 @@ TR_Debug::printMapInfo(
             printStackMapInfo(log, mapBits, numberOfSlotsMapped, sizeOfStackAtlas, offsetInfo, nummaps);
 
             if (!nummaps)
-               log->prints("\n");
+               log->println();
             }
 
          if (_comp->isAlignStackMaps())
@@ -536,7 +536,7 @@ TR_Debug::printMapInfo(
       }
 
    if (!nummaps)
-      log->prints("\n");
+      log->println();
 
    return mapBits;
    }

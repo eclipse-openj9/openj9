@@ -264,7 +264,6 @@ bool JITClientCHTableCommit(
             {
             site.setDestination(site.getDestination() - serverStartPC + startPC);
             site.setLocation(site.getLocation() - serverStartPC + startPC);
-            //fprintf(stderr, "\nsite: location=%p dest=%p, serverStartPC=%p, startPc=%p\n", site.getLocation(), site.getDestination(), serverStartPC, startPC);
             }
          // Commit the virtual guard itself
          //
@@ -373,6 +372,8 @@ void
 JITClientCommitVirtualGuard(const VirtualGuardInfoForCHTable *info, std::vector<TR_VirtualGuardSite> &sites,
                             TR_PersistentCHTable *table, TR::Compilation *comp)
    {
+   OMR::Logger *log = comp->log();
+   bool trace = comp->getOption(TR_TraceCG);
    // If this is an OSR guard or another kind that has been marked as necessary to patch
    // in OSR, add a runtime assumption for every class that generated fear
    //
@@ -481,8 +482,8 @@ JITClientCommitVirtualGuard(const VirtualGuardInfoForCHTable *info, std::vector<
                   ::make(comp->fe(), comp->trPersistentMemory(), cookie, site.getLocation(), site.getDestination(), comp->getMetadataAssumptionList());
                }
             }
-         else if (comp->getOption(TR_TraceCG))
-            comp->log()->printf("MutableCallSiteTargetGuard is already invalid.  Expected epoch: obj%d  Found: obj%d\n", info->_mutableCallSiteEpoch, currentIndex);
+         else
+            logprintf(trace, log, "MutableCallSiteTargetGuard is already invalid.  Expected epoch: obj%d  Found: obj%d\n", info->_mutableCallSiteEpoch, currentIndex);
          }
       }
    else if ((info->_kind == TR_MethodEnterExitGuard) || (info->_kind == TR_DirectMethodGuard))
@@ -597,8 +598,7 @@ JITClientCommitVirtualGuard(const VirtualGuardInfoForCHTable *info, std::vector<
       {
       for (TR_VirtualGuardSite &site : sites)
          {
-         if (comp->getOption(TR_TraceCG))
-            comp->log()->printf("   Patching %p to %p\n", site.getLocation(), site.getDestination());
+         logprintf(trace, log, "   Patching %p to %p\n", site.getLocation(), site.getDestination());
          TR::PatchNOPedGuardSite::compensate(0, site.getLocation(), site.getDestination());
          }
       }

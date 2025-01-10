@@ -693,10 +693,7 @@ TR_MHJ2IThunk *J9::X86::AMD64::PrivateLinkage::generateInvokeExactJ2IThunk(TR::N
       *(uint8_t *)cursor++ = 0xe7;
       }
 
-   if (comp->getOption(TR_TraceCG))
-      {
-      comp->log()->printf("\n-- ( Created invokeExact J2I thunk " POINTER_PRINTF_FORMAT " for node " POINTER_PRINTF_FORMAT " )", thunk, callNode);
-      }
+   logprintf(comp->getOption(TR_TraceCG), comp->log(), "\n-- ( Created invokeExact J2I thunk " POINTER_PRINTF_FORMAT " for node " POINTER_PRINTF_FORMAT " )", thunk, callNode);
 
    return thunk;
    }
@@ -942,10 +939,7 @@ int32_t J9::X86::AMD64::PrivateLinkage::buildPrivateLinkageArgs(TR::Node        
          frameSize += stackFrameAlignment - (frameSize % stackFrameAlignment);
          alignedParmAreaSize = frameSize - cg()->getFrameSizeInBytes() - getProperties().getRetAddressWidth();
 
-         if (comp()->getOption(TR_TraceCG))
-            {
-            comp()->log()->printf("parm area size was %d, and is aligned to %d\n", parmAreaSize, alignedParmAreaSize);
-            }
+         logprintf(comp()->getOption(TR_TraceCG), comp()->log(), "parm area size was %d, and is aligned to %d\n", parmAreaSize, alignedParmAreaSize);
          }
       if (alignedParmAreaSize > 0)
          generateRegImmInstruction((alignedParmAreaSize <= 127 ? TR::InstOpCode::SUBRegImms() : TR::InstOpCode::SUBRegImm4()), callNode, stackPointer, alignedParmAreaSize, cg());
@@ -1366,10 +1360,7 @@ void J9::X86::AMD64::PrivateLinkage::buildVirtualOrComputedCall(TR::X86CallSite 
       generateLabelInstruction(TR::InstOpCode::label, site.getCallNode(), entryLabel, cg());
 
    TR::SymbolReference *methodSymRef = site.getSymbolReference();
-   if (comp()->getOption(TR_TraceCG))
-      {
-      comp()->log()->printf("buildVirtualOrComputedCall(%p), isComputed=%d\n", site.getCallNode(), methodSymRef->getSymbol()->castToMethodSymbol()->isComputed());
-      }
+   logprintf(comp()->getOption(TR_TraceCG), comp()->log(), "buildVirtualOrComputedCall(%p), isComputed=%d\n", site.getCallNode(), methodSymRef->getSymbol()->castToMethodSymbol()->isComputed());
 
    bool evaluateVftEarly = methodSymRef->isUnresolved()
       || !fej9->isResolvedVirtualDispatchGuaranteed(comp());

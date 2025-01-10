@@ -568,6 +568,7 @@ void J9::X86::PrivateLinkage::createPrologue(TR::Instruction *cursor)
 
    TR_DebugFrameSegmentInfo *debugFrameSlotInfo=NULL;
 #endif
+   OMR::Logger *log = comp()->log();
    bool trace = comp()->getOption(TR_TraceCG);
 
    TR::RealRegister  *espReal      = machine()->getRealRegister(TR::RealRegister::esp);
@@ -634,13 +635,11 @@ void J9::X86::PrivateLinkage::createPrologue(TR::Instruction *cursor)
       uint32_t adjust = OMR::align(stackSize, _properties.getOutgoingArgAlignment()) - stackSize;
       cg()->setStackFramePaddingSizeInBytes(adjust);
       cg()->setFrameSizeInBytes(frameSize + adjust);
-      if (trace)
-         comp()->log()->printf(
-                  "Stack size was %d, and is adjusted by +%d (alignment %d, return address width %d)\n",
-                  stackSize,
-                  cg()->getStackFramePaddingSizeInBytes(),
-                  _properties.getOutgoingArgAlignment(),
-                  _properties.getRetAddressWidth());
+      logprintf(trace, log, "Stack size was %d, and is adjusted by +%d (alignment %d, return address width %d)\n",
+         stackSize,
+         cg()->getStackFramePaddingSizeInBytes(),
+         _properties.getOutgoingArgAlignment(),
+         _properties.getRetAddressWidth());
       }
    auto allocSize = cg()->getFrameSizeInBytes();
 
@@ -664,12 +663,9 @@ void J9::X86::PrivateLinkage::createPrologue(TR::Instruction *cursor)
    const bool frameIsSmall  = peakSize < STACKCHECKBUFFER;
    const bool frameIsMedium = !frameIsSmall;
 
-   if (trace)
-      {
-      comp()->log()->printf("\nFrame size: %c%c locals=%d frame=%d peak=%d\n",
-         frameIsSmall? 'S':'-', frameIsMedium? 'M':'-',
-         localSize, cg()->getFrameSizeInBytes(), peakSize);
-      }
+   logprintf(trace, log, "\nFrame size: %c%c locals=%d frame=%d peak=%d\n",
+      frameIsSmall? 'S':'-', frameIsMedium? 'M':'-',
+      localSize, cg()->getFrameSizeInBytes(), peakSize);
 
 #if defined(DEBUG)
    for (
@@ -1033,7 +1029,7 @@ void J9::X86::PrivateLinkage::createPrologue(TR::Instruction *cursor)
    cursor = cg()->generateDebugCounter(cursor, "cg.prologues:#peakBytes",  peakSize,  TR::DebugCounter::Expensive);
 
 #if defined(DEBUG)
-   if (comp()->getOption(TR_TraceCG))
+   if (trace)
       {
       diagnostic("\nFrame layout:\n");
       diagnostic("        +rsp  +vfp     end  size        what\n");
@@ -1335,6 +1331,7 @@ void TR::X86CallSite::computeProfiledTargets()
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
    OMR::Logger *log = comp()->log();
+   bool trace = comp()->getOption(TR_TraceCG);
 
    if (cg()->profiledPointersRequireRelocation())
       // bail until create appropriate relocations to validate profiled targets
@@ -1380,7 +1377,6 @@ void TR::X86CallSite::computeProfiledTargets()
                }
             else
                {
-               //printf("Checking is instanceof for top %p for %s\n", topValue, methodSymRef->getSymbol()->getResolvedMethodSymbol()->getResolvedMethod()->signature(comp()->trMemory())); fflush(stdout);
                TR_OpaqueClassBlock *callSiteMethodClass = methodSymRef->getSymbol()->getResolvedMethodSymbol()->getResolvedMethod()->classOfMethod();
                if (!cg()->isProfiledClassAndCallSiteCompatible((TR_OpaqueClassBlock *)topValue, callSiteMethodClass))
                   {
@@ -1403,7 +1399,6 @@ void TR::X86CallSite::computeProfiledTargets()
                 profiledVirtualMethod->isJITInternalNative()))
                {
                //if (!getMethodSymbol()->isInterface() && profiledVirtualMethod->isJITInternalNative())
-               //printf("New opportunity in %s to callee %s\n", comp()->signature(), profiledVirtualMethod->signature(comp()->trMemory(), stackAlloc));
                //TR_ASSERT(profiledVirtualMethod->classOfMethod() == (TR_OpaqueClassBlock *)topValue, "assertion failure");
 
                TR_OpaqueMethodBlock *methodToBeCompared = NULL;
@@ -1454,8 +1449,7 @@ void TR::X86CallSite::computeProfiledTargets()
          for (TR_ExtraAddressInfo *profiledInfo = sortedValuesIt.getFirst(); profiledInfo != NULL; profiledInfo = sortedValuesIt.getNext())
             {
             float frequency = ((float)profiledInfo->_frequency) / totalFrequency;
-            if (comp()->getOption(TR_TraceCG))
-               log->printf("  Profiled target frequency %f", frequency);
+            logprintf(trace, log, "  Profiled target frequency %f", frequency);
 
             TR_OpaqueClassBlock *thisType = (TR_OpaqueClassBlock *) profiledInfo->_value;
             TR_ResolvedMethod *profiledInterfaceMethod = NULL;
@@ -1475,31 +1469,26 @@ void TR::X86CallSite::computeProfiledTargets()
 
                if (frequency < minProfiledCallFrequency)
                   {
-                  if (comp()->getOption(TR_TraceCG))
-                     log->prints(" - Too infrequent");
+                  logprints(trace, log, " - Too infrequent");
                   totalPICMissFrequency += profiledInfo->_frequency;
                   }
                else if (numStaticPICSlots >= comp()->getOptions()->getMaxStaticPICSlots(comp()->getMethodHotness()))
                   {
-                  if (comp()->getOption(TR_TraceCG))
-                     log->printf(" - Already reached limit of %d static PIC slots", numStaticPICSlots);
+                  logprintf(trace, log, " - Already reached limit of %d static PIC slots", numStaticPICSlots);
                   totalPICMissFrequency += profiledInfo->_frequency;
                   }
                else
                   {
                   _profiledTargets->add(new(comp()->trStackMemory()) TR::X86PICSlot((uintptr_t)thisType, profiledInterfaceMethod));
-                  if (comp()->getOption(TR_TraceCG))
-                     log->prints(" + Added static PIC slot");
+                  logprints(trace, log, " + Added static PIC slot");
                   numStaticPICSlots++;
                   totalPICHitFrequency += profiledInfo->_frequency;
                   }
-               if (comp()->getOption(TR_TraceCG))
-                  log->printf(" for %s\n", profiledInterfaceMethod->signature(comp()->trMemory(), stackAlloc));
+               logprintf(trace, log, " for %s\n", profiledInterfaceMethod->signature(comp()->trMemory(), stackAlloc));
                }
             else
                {
-               if (comp()->getOption(TR_TraceCG))
-                  log->prints(" * Can't find suitable method from profile info\n");
+               logprints(trace, log, " * Can't find suitable method from profile info\n");
                }
 
             }
@@ -1522,8 +1511,8 @@ void TR::X86CallSite::computeProfiledTargets()
          if (numImplementers <= numPICSlots)
             {
             _useLastITableCache = false;
-            if (comp()->getOption(TR_TraceCG))
-               log->printf("Found %d implementers for call to %s, can be fit into %d pic slots, disabling lastITable cache\n", numImplementers, getMethodSymbol()->getMethod()->signature(comp()->trMemory()), numPICSlots);
+            logprintf(trace, log, "Found %d implementers for call to %s, can be fit into %d pic slots, disabling lastITable cache\n",
+               numImplementers, getMethodSymbol()->getMethod()->signature(comp()->trMemory()), numPICSlots);
             }
          }
       else if (_useLastITableCache && comp()->target().is32Bit())  // Use the original heuristic for ia32 due to defect 111651
@@ -1635,8 +1624,7 @@ static void evaluateCommonedNodes(TR::Node *node, TR::CodeGenerator *cg)
       {
       if (node->getReferenceCount() >= 2)
          {
-         if (comp->getOption(TR_TraceCG))
-            comp->log()->printf("Promptly evaluating commoned node %s\n", cg->getDebug()->getName(node));
+         logprintf(comp->getOption(TR_TraceCG), comp->log(), "Promptly evaluating commoned node %s\n", cg->getDebug()->getName(node));
          cg->evaluate(node);
          }
       else
@@ -1736,7 +1724,6 @@ TR::Register *J9::X86::PrivateLinkage::buildIndirectDispatch(TR::Node *callNode)
          {
          // skip evaluate vft mask load instruction
          // as it is not used in direct call
-         //fprintf(stderr, "Skip load in %s\n", comp()->getMethodSymbol()->signature(comp()->trMemory()));
          skipVFTmaskInstruction = true;
          /*
          cg()->generateDebugCounter(
@@ -2975,8 +2962,7 @@ void J9::X86::PrivateLinkage::buildInterfaceDispatchUsingLastITable (TR::X86Call
 
             iterations = (maxInterfaces > MAX_ITABLE_ITERATIONS) ? MAX_ITABLE_ITERATIONS : maxInterfaces;
 
-            if (trace)
-               comp()->log()->printf("%s: declaringClass %p numImplementers %d maxInterfaces %d iterations %d\n", __FUNCTION__, declaringClass, numImplementers, maxInterfaces, iterations);
+            logprintf(trace, comp()->log(), "%s: declaringClass %p numImplementers %d maxInterfaces %d iterations %d\n", __FUNCTION__, declaringClass, numImplementers, maxInterfaces, iterations);
             }
          }
 
@@ -2986,8 +2972,7 @@ void J9::X86::PrivateLinkage::buildInterfaceDispatchUsingLastITable (TR::X86Call
 
       iterations = numITableIterationsAfterLastITableCacheCheck ? numITableIterationsAfterLastITableCacheCheckValue : iterations;
 
-      if (trace)
-         comp()->log()->printf("%s: Final iterations %d before generating the iTable entry comparison\n", __FUNCTION__, iterations);
+      logprintf(trace, comp()->log(), "%s: Final iterations %d before generating the iTable entry comparison\n", __FUNCTION__, iterations);
 
       //------------
       TR::LabelSymbol *iterateITableLabel = generateLabelSymbol(cg());

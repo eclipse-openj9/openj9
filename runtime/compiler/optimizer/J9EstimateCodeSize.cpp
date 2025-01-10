@@ -1284,7 +1284,6 @@ TR_J9EstimateCodeSize::processBytecodeAndGenerateCFG(TR_CallTarget *calltarget, 
                break;
             }
          }
-      //      printf("Iterating through sizes array.  bcSizes[%d] = %d maxIndex = %d\n",i,bcSizes[i],maxIndex);
       }
 
    for (i = 0; i < (int32_t) tryCatchInfo.size(); ++i)
@@ -1880,7 +1879,6 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                   int32_t bigCalleesSizeBelowMe = _bigCalleesSize - origBigCalleesSize;
                   if ((_analyzedSize - origAnalyzedSize - bigCalleesSizeBelowMe) > bigCalleeThreshold)
                      {
-                     ///printf("set warmcallgraphtoobig for method %s at index %d\n", calleeName, newBCInfo._byteCodeIndex);fflush(stdout);
                      calltarget->_calleeMethod->setWarmCallGraphTooBig( newBCInfo.getByteCodeIndex(), comp());
                      _bigCalleesSize = _bigCalleesSize + _analyzedSize - origAnalyzedSize - bigCalleesSizeBelowMe;
                      heuristicTrace(tracer(), "set warmcallgraphtoobig for method %s at index %d\n", calleeName, newBCInfo.getByteCodeIndex());
@@ -2025,8 +2023,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
    /****************** PHASE 5: Figure out if We're really going to do a partial Inline and add whatever we do to the realSize. *******************/
    if (isPartialInliningCandidate(calltarget, &callBlocks))
       {
-      if (comp()->getOption(TR_TraceBFGeneration))
-         comp()->log()->printf("Call Target %s is a partial inline Candidate with a partial size of %d",callerName,calltarget->_partialSize);
+      logprintf(comp()->getOption(TR_TraceBFGeneration), comp()->log(), "Call Target %s is a partial inline Candidate with a partial size of %d", callerName, calltarget->_partialSize);
 
       heuristicTrace(tracer(), "*** Depth %d: ECS end for target %p signature %s. It is a partial inline Candidate with a partial size of %d", _recursionDepth, calltarget, callerName, calltarget->_partialSize);
       _realSize += calltarget->_partialSize;

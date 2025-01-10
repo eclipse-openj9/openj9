@@ -164,8 +164,7 @@ void TR_FearPointAnalysis::computeFear(TR::Compilation *comp, TR::Node *node, TR
 
    if (_fearGeneratingNodes.get(node->getGlobalIndex()))
       {
-      if (_trace)
-         comp->log()->printf("@@ n%dn generates fear\n", node->getGlobalIndex());
+      logprintf(_trace, comp->log(), "@@ n%dn generates fear\n", node->getGlobalIndex());
       _fearfulNodes[node->getGlobalIndex()]->set();
       }
    }
@@ -190,8 +189,7 @@ void TR_FearPointAnalysis::computeFearFromBitVector(TR::Compilation *comp)
    while (nodes.hasMoreElements())
       {
       int32_t index = nodes.getNextElement();
-      if (_trace)
-         comp->log()->printf("@@ n%dn generates fear\n", index);
+      logprintf(_trace, comp->log(), "@@ n%dn generates fear\n", index);
       TR_ASSERT(_fearfulNodes[index],
          "all fear generating nodes must be treetop nodes when using topLevelFearOnly, otherwise the data structure may not be initialized");
       _fearfulNodes[index]->set();

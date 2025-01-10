@@ -134,13 +134,13 @@ uint32_t TR::VP_BCDValue::hash(char *lit, int32_t litSize, TR_BCDSignConstraint 
 TR::VP_BCDSign *TR::VP_BCDSign::create(OMR::ValuePropagation *vp, TR_BCDSignConstraint type, TR::DataType dt)
    {
    TR_ASSERT(type < TR_Sign_Num_Types,"invalid TR_BCDSignConstraint type %d\n",type);
+   OMR::Logger *log = vp->comp()->log();
    J9::ValuePropagation *j9vp = static_cast<J9::ValuePropagation *>(vp);
    TR::VP_BCDSign **bcdSignConstraints = j9vp->getBCDSignConstraints(dt);
    TR::VP_BCDSign *constraint = type < TR_Sign_Num_Types ? bcdSignConstraints[type] : NULL;
    if (constraint)
       {
-      if (vp->trace())
-         vp->comp()->log()->printf("return existing BCD sign constraint %p (dt=%s, sign=%s)\n",constraint,TR::DataType::getName(dt),constraint->getName());
+      logprintf(vp->trace(), log, "return existing BCD sign constraint %p (dt=%s, sign=%s)\n", constraint, TR::DataType::getName(dt), constraint->getName());
       return constraint;
       }
 
@@ -148,8 +148,7 @@ TR::VP_BCDSign *TR::VP_BCDSign::create(OMR::ValuePropagation *vp, TR_BCDSignCons
 
    bcdSignConstraints[type] = constraint;
 
-   if (vp->trace())
-      vp->comp()->log()->printf("created new BCD sign constraint %p (dt=%s, sign=%s)\n",constraint,TR::DataType::getName(dt),constraint->getName());
+   logprintf(vp->trace(), log, "created new BCD sign constraint %p (dt=%s, sign=%s)\n", constraint, TR::DataType::getName(dt), constraint->getName());
 
    return constraint;
    }
@@ -261,27 +260,23 @@ TR::VPConstraint *TR::VP_BCDSign::merge1(TR::VPConstraint *other, OMR::ValueProp
       TR_BCDSignConstraint thisSign = asBCDSign()->getSign();
       TR_BCDSignConstraint otherSign = other->asBCDSign()->getSign();
 
-      if (vp->trace())
-         log->printf("\tthisSign %s thisType %s, otherSign %s otherType %s\n",
-            asBCDSign()->getName(),TR::DataType::getName(asBCDSign()->getDataType()),other->asBCDSign()->getName(),TR::DataType::getName(other->asBCDSign()->getDataType()));
+      logprintf(vp->trace(), log, "\tthisSign %s thisType %s, otherSign %s otherType %s\n",
+         asBCDSign()->getName(),TR::DataType::getName(asBCDSign()->getDataType()),other->asBCDSign()->getName(),TR::DataType::getName(other->asBCDSign()->getDataType()));
 
       if (thisSign == TR_Sign_Unknown || otherSign == TR_Sign_Unknown)
          {
-         if (vp->trace())
-            log->prints("\tone of the signs is unknown -- return NULL\n");
+         logprints(vp->trace(), log, "\tone of the signs is unknown -- return NULL\n");
          return NULL;
          }
 
       if (asBCDSign()->getDataType() != other->asBCDSign()->getDataType())
          {
-         if (vp->trace())
-            log->prints("\ttypes do not match -- return NULL\n");
+         logprints(vp->trace(), log, "\ttypes do not match -- return NULL\n");
          return NULL;
          }
 
       TR_BCDSignConstraint mergedSign = TR::VP_BCDSign::getMergedSignConstraint(thisSign, otherSign);
-      if (vp->trace())
-         log->printf("\tmergedSign = %s from %s x %s\n",TR::VP_BCDSign::getName(mergedSign),TR::VP_BCDSign::getName(thisSign),TR::VP_BCDSign::getName(otherSign));
+      logprintf(vp->trace(), log, "\tmergedSign = %s from %s x %s\n", TR::VP_BCDSign::getName(mergedSign), TR::VP_BCDSign::getName(thisSign), TR::VP_BCDSign::getName(otherSign));
       if (mergedSign != TR_Sign_Unknown)
          {
          TR::VP_BCDSign *mergedSignConstraint = TR::VP_BCDSign::create(vp, mergedSign, asBCDSign()->getDataType());
@@ -295,8 +290,7 @@ TR::VPConstraint *TR::VP_BCDSign::merge1(TR::VPConstraint *other, OMR::ValueProp
          }
       }
 
-   if (vp->trace())
-      log->prints("\tcannot merge BCDSign constraints -- return NULL\n\n");
+   logprints(vp->trace(), log, "\tcannot merge BCDSign constraints -- return NULL\n\n");
 
    return NULL;
    }

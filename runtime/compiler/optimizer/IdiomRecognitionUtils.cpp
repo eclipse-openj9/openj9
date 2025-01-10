@@ -1466,7 +1466,7 @@ sortList(List<TR_CISCNode>* input, List<TR_CISCNode>* output, List<TR_CISCNode>*
 //*****************************************************************************************
 // Checks if loop preheader block is last block in method.
 //*****************************************************************************************
-bool isLoopPreheaderLastBlockInMethod(TR::Compilation *comp, TR::Block *block, TR::Block **predBlock)
+bool isLoopPreheaderLastBlockInMethod(TR::Compilation *comp, TR::Block *block, bool trace, TR::Block **predBlock)
    {
 
    // If already a loop invariant block, we likely have the preheader.
@@ -1476,7 +1476,7 @@ bool isLoopPreheaderLastBlockInMethod(TR::Compilation *comp, TR::Block *block, T
          *predBlock = block;
       if (block->getExit()->getNextTreeTop() == NULL)
          {
-         comp->log()->printf("Preheader block_%d [%p] is last block in method.\n", block->getNumber(), block);
+         logprintf(trace, comp->log(), "Preheader block_%d [%p] is last block in method.\n", block->getNumber(), block);
          return true;
          }
       }
@@ -1494,7 +1494,7 @@ bool isLoopPreheaderLastBlockInMethod(TR::Compilation *comp, TR::Block *block, T
                *predBlock = source;
             if (source->getExit()->getNextTreeTop() == NULL)
                {
-               comp->log()->printf("Preheader block_%d [%p] to block_%d [%p] is last block in method.\n", source->getNumber(), source, block->getNumber(), block);
+               logprintf(trace, comp->log(), "Preheader block_%d [%p] to block_%d [%p] is last block in method.\n", source->getNumber(), source, block->getNumber(), block);
                return true;
                }
             }

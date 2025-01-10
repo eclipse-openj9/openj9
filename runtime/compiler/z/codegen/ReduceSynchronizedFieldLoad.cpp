@@ -254,16 +254,16 @@ ReduceSynchronizedFieldLoad::inlineSynchronizedFieldLoad(TR::Node* node, TR::Cod
 bool
 ReduceSynchronizedFieldLoad::perform()
    {
+   TR::Compilation *comp = cg->comp();
    bool transformed = false;
 
-   if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z196))
+   if (comp->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z196))
       {
-      if (!cg->comp()->getOption(TR_DisableSynchronizedFieldLoad) && cg->comp()->getMethodSymbol()->mayContainMonitors())
+      if (!comp->getOption(TR_DisableSynchronizedFieldLoad) && comp->getMethodSymbol()->mayContainMonitors())
          {
-         if (cg->comp()->getOption(TR_TraceCG))
-            cg->comp()->log()->prints("Performing ReduceSynchronizedFieldLoad\n");
+         logprints(comp->getOption(TR_TraceCG), comp->log(), "Performing ReduceSynchronizedFieldLoad\n");
 
-         for (TR::TreeTopOrderExtendedBlockIterator iter(cg->comp()); iter.getFirst() != NULL; ++iter)
+         for (TR::TreeTopOrderExtendedBlockIterator iter(comp); iter.getFirst() != NULL; ++iter)
             {
             transformed = performOnTreeTops(iter.getFirst()->getEntry(), iter.getLast()->getExit());
             }
@@ -278,6 +278,7 @@ ReduceSynchronizedFieldLoad::performOnTreeTops(TR::TreeTop* startTreeTop, TR::Tr
    {
    TR::Compilation *comp = cg->comp();
    OMR::Logger *log = comp->log();
+   bool trace = comp->getOption(TR_TraceCG);
    bool transformed = false;
 
    for (TR::TreeTopIterator iter(startTreeTop, comp); iter != endTreeTop; ++iter)
@@ -294,10 +295,7 @@ ReduceSynchronizedFieldLoad::performOnTreeTops(TR::TreeTop* startTreeTop, TR::Tr
          // the locking object is not a value type or value based
          if (cg->isMonitorValueBasedOrValueType(monentNode) != TR_no)
             continue;
-         if (comp->getOption(TR_TraceCG))
-            {
-            log->printf("Found monent [%p]\n", monentNode);
-            }
+         logprintf(trace, log, "Found monent [%p]\n", monentNode);
 
          for (++iter; iter != endTreeTop; ++iter)
             {
@@ -308,19 +306,13 @@ ReduceSynchronizedFieldLoad::performOnTreeTops(TR::TreeTop* startTreeTop, TR::Tr
                TR::Node* monexitNode = iter.currentNode()->getOpCodeValue() == TR::monexit ?
                   iter.currentNode() :
                   iter.currentNode()->getFirstChild();
-               if (comp->getOption(TR_TraceCG))
-                  {
-                  log->printf("Found monexit [%p]\n", monexitNode);
-                  }
+               logprintf(trace, log, "Found monexit [%p]\n", monexitNode);
 
                TR::Node* synchronizedObjectNode = monentNode->getFirstChild();
 
                if (synchronizedObjectNode == monexitNode->getFirstChild())
                   {
-                  if (comp->getOption(TR_TraceCG))
-                     {
-                     log->printf("Children of monent and monexit are synchronizing on the same object\n", monexitNode);
-                     }
+                  logprintf(trace, log, "Children of monent and monexit are synchronizing on the same object\n", monexitNode);
 
                   TR::Node* loadNode = findLoadInSynchornizedRegion(startTreeTop, endTreeTop, monentTreeTop, monexitTreeTop, synchronizedObjectNode);
 
@@ -346,10 +338,7 @@ ReduceSynchronizedFieldLoad::performOnTreeTops(TR::TreeTop* startTreeTop, TR::Tr
 
                      int32_t lockWordOffset = static_cast<TR_J9VMBase*>(comp->fe())->getByteOffsetToLockword(static_cast<TR_OpaqueClassBlock*>(cg->getMonClass(monentNode)));
 
-                     if (comp->getOption(TR_TraceCG))
-                        {
-                        log->printf("Lock word offset = %d\n", lockWordOffset);
-                        }
+                     logprintf(trace, log, "Lock word offset = %d\n", lockWordOffset);
 
                      // LPD(G) is an SSF instruction with a 12-bit displacement
                      if (lockWordOffset > 0 && lockWordOffset < 4096)
@@ -424,6 +413,7 @@ ReduceSynchronizedFieldLoad::findLoadInSynchornizedRegion(TR::TreeTop* startTree
    {
    TR::Compilation *comp = cg->comp();
    OMR::Logger *log = comp->log();
+   bool trace = comp->getOption(TR_TraceCG);
    TR::PreorderNodeIterator iter(startTreeTop, comp);
 
    // First iterate through all the nodes from the start treetop until we reach the monitor provided so that all nodes
@@ -435,10 +425,7 @@ ReduceSynchronizedFieldLoad::findLoadInSynchornizedRegion(TR::TreeTop* startTree
       {
       TR::Node* currentNode = iter.currentNode();
 
-      if (comp->getOption(TR_TraceCG))
-         {
-         log->printf("Iterating node [%p] outside the monitored region\n", currentNode);
-         }
+      logprintf(trace, log, "Iterating node [%p] outside the monitored region\n", currentNode);
       }
 
    TR::Node* loadNode = NULL;
@@ -447,10 +434,7 @@ ReduceSynchronizedFieldLoad::findLoadInSynchornizedRegion(TR::TreeTop* startTree
       {
       TR::Node* currentNode = iter.currentNode();
 
-      if (comp->getOption(TR_TraceCG))
-         {
-         log->printf("Iterating node [%p] inside the monitored region\n", currentNode);
-         }
+      logprintf(trace, log, "Iterating node [%p] inside the monitored region\n", currentNode);
 
       TR::ILOpCode opcode = currentNode->getOpCode();
 
@@ -460,19 +444,13 @@ ReduceSynchronizedFieldLoad::findLoadInSynchornizedRegion(TR::TreeTop* startTree
             opcode.isLoadIndirect() && (opcode.isRef() || opcode.isInt() || opcode.isLong()) &&
             currentNode->getFirstChild() == synchronizedObjectNode)
             {
-            if (comp->getOption(TR_TraceCG))
-               {
-               log->printf("Found load node [%p]\n", currentNode);
-               }
+            logprintf(trace, log, "Found load node [%p]\n", currentNode);
 
             loadNode = currentNode;
             }
          else
             {
-            if (comp->getOption(TR_TraceCG))
-               {
-               log->printf("Found sideeffect node [%p] within the monitored region\n", currentNode);
-               }
+            logprintf(trace, log, "Found sideeffect node [%p] within the monitored region\n", currentNode);
 
             loadNode = NULL;
 
