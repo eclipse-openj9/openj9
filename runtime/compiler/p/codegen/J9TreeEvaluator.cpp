@@ -10768,7 +10768,25 @@ static TR::Register *inlineIntrinsicIndexOf_P10(TR::Node *node, TR::CodeGenerato
       generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, endPos, endPos, endPos);
       }
 
-   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, arrAddress, array, TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+   /*
+    * Determine the address of the first byte to read either by loading from dataAddr or adding the header size.
+    * This is followed by adding in the offset.
+    */
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+   if (TR::Compiler->om.isOffHeapAllocationEnabled())
+      {
+      generateTrg1MemInstruction(
+         cg, TR::InstOpCode::ld, node, arrAddress,
+         TR::MemoryReference::createWithDisplacement(
+            cg, array, TR::Compiler->om.offsetOfContiguousDataAddrField(), 8)
+         );
+      }
+   else
+#endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
+      {
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, arrAddress, array,
+                                     TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+      }
 
    // match first byte
    generateTrg1MemInstruction(cg, scalarLoadOp, node, temp, TR::MemoryReference::createWithIndexReg(cg, position, arrAddress, isLatin1 ? 1 : 2));
@@ -10954,7 +10972,26 @@ static TR::Register *inlineIntrinsicIndexOf(TR::Node *node, TR::CodeGenerator *c
    if (node->getChild(firstCallArgIdx+3)->getReferenceCount() == 1)
       srm->donateScratchRegister(length);
 
-   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, arrAddress, array, TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+   /*
+    * Determine the address of the first byte to read either by loading from dataAddr or adding the header size.
+    * This is followed by adding in the offset.
+    */
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+   if (TR::Compiler->om.isOffHeapAllocationEnabled())
+      {
+      generateTrg1MemInstruction(
+         cg, TR::InstOpCode::ld, node, arrAddress,
+         TR::MemoryReference::createWithDisplacement(
+            cg, array, TR::Compiler->om.offsetOfContiguousDataAddrField(), 8)
+         );
+      }
+   else
+#endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
+      {
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, arrAddress, array,
+                                     TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+      }
+
    if (node->getChild(firstCallArgIdx)->getReferenceCount() == 1)
       srm->donateScratchRegister(array);
 
