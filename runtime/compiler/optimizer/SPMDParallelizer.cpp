@@ -310,10 +310,7 @@ bool TR_SPMDKernelParallelizer::visitTreeTopToSIMDize(TR::TreeTop *tt, TR_SPMDKe
 
    // SIMD_TODO: check first child if node is TR::TreeTop
 
-   if (trace)
-      {
-      log->printf("   Visiting Tree Top [%p] during %s mode \n", node, isCheckMode ? "detection" : "transformation");
-      }
+   logprintf(trace, log, "   Visiting Tree Top [%p] during %s mode \n", node, isCheckMode ? "detection" : "transformation");
 
    if (scalarOp.isStore())
       {
@@ -328,7 +325,7 @@ bool TR_SPMDKernelParallelizer::visitTreeTopToSIMDize(TR::TreeTop *tt, TR_SPMDKe
 
          if (((TR::Node *)_loopDataType->getData(id))->getSize() != node->getSize() && isCheckMode)
             {
-            if (trace) log->printf("   Node size does not match loop data type for node: %p\n", node);
+            logprintf(trace, log, "   Node size does not match loop data type for node: %p\n", node);
             return false;
             }
 
@@ -356,16 +353,14 @@ bool TR_SPMDKernelParallelizer::visitTreeTopToSIMDize(TR::TreeTop *tt, TR_SPMDKe
             }
          else if (loop->isExprInvariant(node->getFirstChild()))
             {
-            if (trace)
-               log->printf("   node %p has loop invariant address\n", node);
+            logprintf(trace, log, "   node %p has loop invariant address\n", node);
             return false;
             }
          else
             {
             int32_t pivStride = INVALID_STRIDE;
             bool affine = isAffineAccess(comp, node->getFirstChild(), loop, piv, pivStride);
-            if (trace)
-               log->printf("   node %p affine = %d stride = %d\n", node, affine, pivStride);
+            logprintf(trace, log, "   node %p affine = %d stride = %d\n", node, affine, pivStride);
 
             if (!affine || !(pivStride*getUnrollCount(node->getDataType()) == VECTOR_SIZE))
                return false;
@@ -401,8 +396,7 @@ bool TR_SPMDKernelParallelizer::visitTreeTopToSIMDize(TR::TreeTop *tt, TR_SPMDKe
                       hasPIV(tt->getNextTreeTop()->getNode(), piv)) ||
                       tt->getNextTreeTop()->getNextTreeTop()->getNode()->getOpCodeValue() != TR::BBEnd)
                      {
-                     if (trace)
-                        log->printf("   Induction variable may be incremented before vectorized operations, "
+                     logprints(trace, log, "   Induction variable may be incremented before vectorized operations, "
                          "this may cause functionally incorrect result. Vectorization not performed. see: openj9/issues/9331.\n");
                      return false;
                      }
@@ -430,8 +424,7 @@ bool TR_SPMDKernelParallelizer::visitTreeTopToSIMDize(TR::TreeTop *tt, TR_SPMDKe
                      vecSymRef = comp->cg()->allocateLocalTemp(node->getDataType().scalarToVector(TR::VectorLength128)); // need to handle alignment?
                      pSPMDInfo->addVectorSymRef(symRef, vecSymRef);
 
-                     if (trace)
-                         log->printf("   created new symRef #%d for #%d\n", vecSymRef->getReferenceNumber(), symRef->getReferenceNumber());
+                     logprintf(trace, log, "   created new symRef #%d for #%d\n", vecSymRef->getReferenceNumber(), symRef->getReferenceNumber());
                      }
 
                   TR::ILOpCode scalarOp = node->getOpCode();
@@ -441,8 +434,7 @@ bool TR_SPMDKernelParallelizer::visitTreeTopToSIMDize(TR::TreeTop *tt, TR_SPMDKe
                   dupNode->setSymbolReference(vecSymRef);
                   TR::Node::recreate(dupNode, vectorOpCode);
 
-                  if (trace)
-                     log->printf("   Duplicating trees [%p] into [%p] and vectorizing for Vectorized PIV increment\n", node, dupNode);
+                  logprintf(trace, log, "   Duplicating trees [%p] into [%p] and vectorizing for Vectorized PIV increment\n", node, dupNode);
 
                   return visitNodeToSIMDize(dupNode, 0, dupNode->getFirstChild(), pSPMDInfo, false, loop, comp, usesInLoop, useNodesOfDefsInLoop, useDefInfo, defsInLoop, reductionHashTab, /*storeSymRef*/0);
                   }
@@ -458,7 +450,7 @@ bool TR_SPMDKernelParallelizer::visitTreeTopToSIMDize(TR::TreeTop *tt, TR_SPMDKe
             if (reductionHashTab->locate(node->getSymbolReference(), id))
                {
                reductionInfo = (TR_SPMDReductionInfo*)reductionHashTab->getData(id);
-               if (trace) log->printf("   visitTreeTopToSIMDize: Found reductionInfo for node: %p, symRef: %p\n", node, node->getSymbolReference());
+               logprintf(trace, log, "   visitTreeTopToSIMDize: Found reductionInfo for node: %p, symRef: %p\n", node, node->getSymbolReference());
                }
             else
                {
@@ -467,7 +459,7 @@ bool TR_SPMDKernelParallelizer::visitTreeTopToSIMDize(TR::TreeTop *tt, TR_SPMDKe
                reductionInfo->reductionSymRef = node->getSymbolReference();
                reductionHashTab->add(node->getSymbolReference(), id, reductionInfo);
 
-               if (trace) log->printf("   visitTreeTopToSIMDize: Created reductionInfo for node: %p, symRef: %p\n", node, node->getSymbolReference());
+               logprintf(trace, log, "   visitTreeTopToSIMDize: Created reductionInfo for node: %p, symRef: %p\n", node, node->getSymbolReference());
                }
 
             //if autoSIMD reduction is not supported, immediately set the reduction to invalid.
@@ -488,14 +480,14 @@ bool TR_SPMDKernelParallelizer::visitTreeTopToSIMDize(TR::TreeTop *tt, TR_SPMDKe
                //-only the reduction operation is used between the store node and the reduction variable load
                if (isReduction(comp, loop, node->getFirstChild(), reductionInfo, reductionInfo->reductionOp))
                   {
-                  if (trace) log->printf("   visitTreeTopToSIMDize: Reduction pattern match on node: %p\n", node);
+                  logprintf(trace, log, "   visitTreeTopToSIMDize: Reduction pattern match on node: %p\n", node);
                   //add node to list of nodes that might be a store to a reduction variable
                   reductionInfo->storeNodes.add(node);
                   }
                else
                   {
                   //we know this isn't a supported reduction at this point
-                  if (trace) log->printf("   visitTreeTopToSIMDize: Reduction pattern mismatch for node: %p\n", node);
+                  logprintf(trace, log, "   visitTreeTopToSIMDize: Reduction pattern mismatch for node: %p\n", node);
 
                   reductionInfo->reductionOp = Reduction_Invalid;
 
@@ -508,7 +500,7 @@ bool TR_SPMDKernelParallelizer::visitTreeTopToSIMDize(TR::TreeTop *tt, TR_SPMDKe
                   ListIterator<TR::Node> nodeIt(&reductionInfo->storeNodes);
                   for (TR::Node *nextNode = nodeIt.getCurrent(); nextNode; nextNode=nodeIt.getNext())
                      {
-                     if (trace) log->printf("   visitTreeTopToSIMDize: Adding recorded invalid reduction node to defsInLoop. node: %p\n", nextNode);
+                     logprintf(trace, log, "   visitTreeTopToSIMDize: Adding recorded invalid reduction node to defsInLoop. node: %p\n", nextNode);
                      defsInLoop[nextNode->getGlobalIndex()] = true;
                      collectUses(nextNode, comp, useDefInfo, useNodesOfDefsInLoop);
                      }
@@ -552,7 +544,7 @@ bool TR_SPMDKernelParallelizer::visitTreeTopToSIMDize(TR::TreeTop *tt, TR_SPMDKe
 
          if (((TR::Node *)_loopDataType->getData(id))->getSize() != node->getSize() && isCheckMode)
             {
-            if (trace) log->printf("   Node size does not match loop data type for node: %p\n", node);
+            logprintf(trace, log, "   Node size does not match loop data type for node: %p\n", node);
             return false;
             }
 
@@ -573,19 +565,17 @@ bool TR_SPMDKernelParallelizer::visitTreeTopToSIMDize(TR::TreeTop *tt, TR_SPMDKe
                pSPMDInfo->addVectorSymRef(symRef, vecSymRef);
                createdNewVecSym = true;
 
-               if (trace)
-                  log->printf("   created new symRef #%d for #%d\n", vecSymRef->getReferenceNumber(), symRef->getReferenceNumber());
+               logprintf(trace, log, "   created new symRef #%d for #%d\n", vecSymRef->getReferenceNumber(), symRef->getReferenceNumber());
                }
 
-            if (trace)
-               log->printf("   using symRef #%d for #%d\n", vecSymRef->getReferenceNumber(), symRef->getReferenceNumber());
+            logprintf(trace, log, "   using symRef #%d for #%d\n", vecSymRef->getReferenceNumber(), symRef->getReferenceNumber());
 
             if (createdNewVecSym && reductionHashTab->locate(symRef, id))
                {
                TR_SPMDReductionInfo* reductionInfo = (TR_SPMDReductionInfo*)reductionHashTab->getData(id);
                if (reductionInfo->reductionOp != Reduction_Invalid)
                   {
-                  if (trace) log->printf("   node: %p is a store to a reduction var\n", node);
+                  logprintf(trace, log, "   node: %p is a store to a reduction var\n", node);
 
                   //creating trees to initialize reduction vector symref
                   reductionLoopEntranceProcessing(comp, loop, symRef, vecSymRef, reductionInfo->reductionOp);
@@ -624,7 +614,7 @@ bool TR_SPMDKernelParallelizer::visitTreeTopToSIMDize(TR::TreeTop *tt, TR_SPMDKe
          }
       else
          {
-         if (trace) log->printf("asynccheck nodes are not supported for AutoSIMD. node: %p\n", node);
+         logprintf(trace, log, "asynccheck nodes are not supported for AutoSIMD. node: %p\n", node);
          return false;
          }
       }
@@ -666,17 +656,14 @@ bool TR_SPMDKernelParallelizer::visitNodeToSIMDize(TR::Node *parent, int32_t chi
    TR::ILOpCodes vectorOpCode = TR::ILOpCode::convertScalarToVector(scalarOp.getOpCodeValue(), VECTOR_LENGTH);
    int32_t pivStride = INVALID_STRIDE;
 
-   if (trace)
-      {
-      log->printf("   Visiting Node [%p] during %s mode - %s\n", node, isCheckMode ? "detection" : "transformation", scalarOp.getName());
-      }
+   logprintf(trace, log, "   Visiting Node [%p] during %s mode - %s\n", node, isCheckMode ? "detection" : "transformation", scalarOp.getName());
 
    TR_HashId id = 0;
    _loopDataType->locate(loop,id);
 
    if (isCheckMode && node->getSize() != ((TR::Node *)_loopDataType->getData(id))->getSize())
       {
-      if (trace) log->printf("   Node size does not match loop data type for node: %p\n", node);
+      logprintf(trace, log, "   Node size does not match loop data type for node: %p\n", node);
       return false;
       }
 
@@ -685,10 +672,7 @@ bool TR_SPMDKernelParallelizer::visitNodeToSIMDize(TR::Node *parent, int32_t chi
       TR::DataType vt = node->getDataType().scalarToVector(VECTOR_LENGTH);
       if (isCheckMode && !comp->cg()->getSupportsOpCodeForAutoSIMD(TR::ILOpCode::createVectorOpCode(TR::vsplats, vt)))
          {
-         if (trace)
-            {
-            log->printf("   [%p]: vsplats Opcode and data type are not supported by this platform\n", node);
-            }
+         logprintf(trace, log, "   [%p]: vsplats Opcode and data type are not supported by this platform\n", node);
          return false;
          }
 
@@ -705,10 +689,7 @@ bool TR_SPMDKernelParallelizer::visitNodeToSIMDize(TR::Node *parent, int32_t chi
    //to debug in codegen and can happen due to multiple reasons. So for easy of debugging, we go ahead and set BadIlOp.
    if (isCheckMode && vectorOpCode == TR::BadILOp)
       {
-      if (trace)
-         {
-         log->printf("   [%p]: Can't convert scalar OpCode %s to a vectorized instruction\n", node, scalarOp.getName());
-         }
+      logprintf(trace, log, "   [%p]: Can't convert scalar OpCode %s to a vectorized instruction\n", node, scalarOp.getName());
       return false;
       }
 
@@ -716,10 +697,7 @@ bool TR_SPMDKernelParallelizer::visitNodeToSIMDize(TR::Node *parent, int32_t chi
 
    if (isCheckMode && !comp->cg()->getSupportsOpCodeForAutoSIMD(vectorOpCode))
       {
-      if (trace)
-         {
-         log->printf("   [%p - %s]: vector Opcode and data type are not supported by this platform\n", node, scalarOp.getName());
-         }
+      logprintf(trace, log, "   [%p - %s]: vector Opcode and data type are not supported by this platform\n", node, scalarOp.getName());
       return false;
       }
 
@@ -749,7 +727,7 @@ bool TR_SPMDKernelParallelizer::visitNodeToSIMDize(TR::Node *parent, int32_t chi
 
                if (!elementType.isVectorElement())
                   {
-                  log->printf("   Induction variable type cannot be converted to vector [%p]\n", node);
+                  logprintf(trace, log, "   Induction variable type cannot be converted to vector [%p]\n", node);
                   return false;
                   }
 
@@ -760,14 +738,18 @@ bool TR_SPMDKernelParallelizer::visitNodeToSIMDize(TR::Node *parent, int32_t chi
                                       comp->cg()->getSupportsOpCodeForAutoSIMD(TR::ILOpCode::createVectorOpCode(TR::vadd, vectorType)) &&
                                       comp->cg()->getSupportsOpCodeForAutoSIMD(TR::ILOpCode::createVectorOpCode(TR::vsplats, vectorType));
 
-               if (trace && platformSupport)
-                  log->printf("   Found use of induction variable at node [%p]\n", node);
-
-               if (trace && !platformSupport)
-                  log->printf("   Found use of induction variable at node [%p] - platform does not support this vectorization\n", node);
-
-               if (trace && platformSupport)
-                  log->printf("   Found use of induction variable at node [%p] - vectorization disabled for now\n", node);
+               if (trace)
+                  {
+                  if (platformSupport)
+                     {
+                     log->printf("   Found use of induction variable at node [%p]\n", node);
+                     log->printf("   Found use of induction variable at node [%p] - vectorization disabled for now\n", node);
+                     }
+                  else
+                     {
+                     log->printf("   Found use of induction variable at node [%p] - platform does not support this vectorization\n", node);
+                     }
+                  }
 
                return false;  // see : eclipse-openj9/openj9/9446
                }
@@ -795,13 +777,10 @@ bool TR_SPMDKernelParallelizer::visitNodeToSIMDize(TR::Node *parent, int32_t chi
             pSPMDInfo->addVectorSymRef(symRef, vecSymRef);
             createdNewVecSym = true;
 
-            if (trace)
-                log->printf("   created new symRef #%d for #%d\n", vecSymRef->getReferenceNumber(), symRef->getReferenceNumber());
-
+            logprintf(trace, log, "   created new symRef #%d for #%d\n", vecSymRef->getReferenceNumber(), symRef->getReferenceNumber());
             }
 
-         if (trace)
-             log->printf("   using symRef #%d for #%d\n", vecSymRef->getReferenceNumber(), symRef->getReferenceNumber());
+         logprintf(trace, log, "   using symRef #%d for #%d\n", vecSymRef->getReferenceNumber(), symRef->getReferenceNumber());
 
          bool loadInductionVar = false;
          if (!scalarOp.isLoadIndirect())
@@ -862,9 +841,7 @@ bool TR_SPMDKernelParallelizer::visitNodeToSIMDize(TR::Node *parent, int32_t chi
             TR::TreeTop *vinitTreeTop = TR::TreeTop::create(comp, treetopNode, 0, 0);
             insertionPoint->insertAfter(vinitTreeTop);
 
-            if (trace)
-               log->printf("   Created trees to initialize vectorized PIV at node [%p]\n", vstoreNode);
-
+            logprintf(trace, log, "   Created trees to initialize vectorized PIV at node [%p]\n", vstoreNode);
             }
 
          if (loadInductionVar)
@@ -900,7 +877,7 @@ bool TR_SPMDKernelParallelizer::visitNodeToSIMDize(TR::Node *parent, int32_t chi
                TR_SPMDReductionInfo* reductionInfo = (TR_SPMDReductionInfo*)reductionHashTab->getData(id);
                if (reductionInfo->reductionOp != Reduction_Invalid)
                   {
-                  if (trace) log->printf("   node: %p is a load from a reduction var\n", node);
+                  logprintf(trace, log, "   node: %p is a load from a reduction var\n", node);
 
                   //creating trees to initialize reduction vector symref
                   reductionLoopEntranceProcessing(comp, loop, symRef, vecSymRef, reductionInfo->reductionOp);
@@ -920,8 +897,7 @@ bool TR_SPMDKernelParallelizer::visitNodeToSIMDize(TR::Node *parent, int32_t chi
          int32_t pivStride = INVALID_STRIDE;
          bool affine = isAffineAccess(comp, node->getFirstChild(), loop, piv, pivStride);
 
-         if (trace)
-            log->printf("   node %p affine = %d stride = %d\n", node, affine, pivStride);
+         logprintf(trace, log, "   node %p affine = %d stride = %d\n", node, affine, pivStride);
 
          if (!affine || !(pivStride*getUnrollCount(node->getDataType()) == VECTOR_SIZE || pivStride == 0))
             {
@@ -937,12 +913,12 @@ bool TR_SPMDKernelParallelizer::visitNodeToSIMDize(TR::Node *parent, int32_t chi
             //this code checks that this condition is being met. If not, the symRef is not a supported reduction symRef
             if (reductionInfo->reductionOp != Reduction_Invalid && node->getSymbolReference() != storeSymRef)
                {
-               if (trace) log->printf("   visitNodeToSIMDize: Load symRef does not match store symref at node: %p\n", node);
+               logprintf(trace, log, "   visitNodeToSIMDize: Load symRef does not match store symref at node: %p\n", node);
                reductionInfo->reductionOp = Reduction_Invalid;
                ListIterator<TR::Node> nodeIt(&reductionInfo->storeNodes);
                for (TR::Node *nextNode = nodeIt.getCurrent(); nextNode; nextNode=nodeIt.getNext())
                   {
-                  if (trace) log->printf("   visitNodeToSIMDize: Adding recorded invalid reduction node to defsInLoop. node: %p\n", nextNode);
+                  logprintf(trace, log, "   visitNodeToSIMDize: Adding recorded invalid reduction node to defsInLoop. node: %p\n", nextNode);
                   defsInLoop[nextNode->getGlobalIndex()] = true;
                   collectUses(nextNode, comp, useDefInfo, useNodesOfDefsInLoop);
                   }
@@ -950,7 +926,7 @@ bool TR_SPMDKernelParallelizer::visitNodeToSIMDize(TR::Node *parent, int32_t chi
             }
          else
             {
-            if (trace) log->printf("   visitNodeToSIMDize: Never before seen symRef being recorded as not a reduction at node: %p\n", node);
+            logprintf(trace, log, "   visitNodeToSIMDize: Never before seen symRef being recorded as not a reduction at node: %p\n", node);
             TR_SPMDReductionInfo* reductionInfo = new (comp->trStackMemory()) TR_SPMDReductionInfo(comp);
             reductionInfo->reductionOp = Reduction_Invalid;
             reductionInfo->reductionSymRef = node->getSymbolReference();
@@ -973,8 +949,7 @@ bool TR_SPMDKernelParallelizer::visitNodeToSIMDize(TR::Node *parent, int32_t chi
          if (isCheckMode)
             return true;
 
-         if (trace)
-            log->printf("Transforming node [%p] from %s to %s\n", node, scalarOp.getName(), vectorOp.getName());
+         logprintf(trace, log, "Transforming node [%p] from %s to %s\n", node, scalarOp.getName(), vectorOp.getName());
 
          TR::Node *firstChild = node->getFirstChild();
          TR::Node *secondChild = node->getSecondChild();
@@ -993,8 +968,7 @@ bool TR_SPMDKernelParallelizer::visitNodeToSIMDize(TR::Node *parent, int32_t chi
          if (isCheckMode)
             return true;
 
-         if (trace)
-            log->printf("Transforming node [%p] from %s to %s\n", node, scalarOp.getName(), vectorOp.getName());
+         logprintf(trace, log, "Transforming node [%p] from %s to %s\n", node, scalarOp.getName(), vectorOp.getName());
 
          TR::Node *firstChild = node->getFirstChild();
 
@@ -1006,10 +980,8 @@ bool TR_SPMDKernelParallelizer::visitNodeToSIMDize(TR::Node *parent, int32_t chi
          }
       }
 
-   if (trace)
-      {
-      log->printf("   [%p - %s]:  Vectorization failed due to unknown reason.\n", node, scalarOp.getName());
-      }
+   logprintf(trace, log, "   [%p - %s]:  Vectorization failed due to unknown reason.\n", node, scalarOp.getName());
+
    return false;
    }
 
@@ -1025,7 +997,7 @@ bool TR_SPMDKernelParallelizer::autoSIMDReductionSupported(TR::Compilation *comp
        && !_fpreductionAnnotation
        && (node->getDataType() == TR::Float || node->getDataType() == TR::Double))
       {
-      if (trace) log->printf("   autoSIMDReductionSupported: float and double reduction are not supported right now. node: %p\n", node);
+      logprintf(trace, log, "   autoSIMDReductionSupported: float and double reduction are not supported right now. node: %p\n", node);
       return false;
       }
 
@@ -1034,7 +1006,7 @@ bool TR_SPMDKernelParallelizer::autoSIMDReductionSupported(TR::Compilation *comp
 
    if (!scalarType.isVectorElement())
       {
-      if (trace) log->printf("   autoSIMDReductionSupported: vectorization is not supported for dataType: %s\n", scalarType.toString());
+      logprintf(trace, log, "   autoSIMDReductionSupported: vectorization is not supported for dataType: %s\n", scalarType.toString());
       return false;
       }
 
@@ -1042,25 +1014,25 @@ bool TR_SPMDKernelParallelizer::autoSIMDReductionSupported(TR::Compilation *comp
 
    if (!comp->cg()->getSupportsOpCodeForAutoSIMD(TR::ILOpCode::createVectorOpCode(TR::vsplats, vectorType)))
       {
-      if (trace) log->printf("   autoSIMDReductionSupported: vsplats is not supported for dataType: %s\n", scalarType.toString());
+      logprintf(trace, log, "   autoSIMDReductionSupported: vsplats is not supported for dataType: %s\n", scalarType.toString());
       return false;
       }
 
    if (!comp->cg()->getSupportsOpCodeForAutoSIMD(TR::ILOpCode::createVectorOpCode(TR::vstore, vectorType)))
       {
-      if (trace) log->printf("   autoSIMDReductionSupported: vstore is not supported for dataType: %s\n", scalarType.toString());
+      logprintf(trace, log, "   autoSIMDReductionSupported: vstore is not supported for dataType: %s\n", scalarType.toString());
       return false;
       }
 
    if (!comp->cg()->getSupportsOpCodeForAutoSIMD(TR::ILOpCode::createVectorOpCode(TR::vload, vectorType)))
       {
-      if (trace) log->printf("   autoSIMDReductionSupported: vload is not supported for dataType: %s\n", scalarType.toString());
+      logprintf(trace, log, "   autoSIMDReductionSupported: vload is not supported for dataType: %s\n", scalarType.toString());
       return false;
       }
 
    if (!comp->cg()->getSupportsOpCodeForAutoSIMD(TR::ILOpCode::createVectorOpCode(TR::vgetelem, vectorType)))
       {
-      if (trace) log->printf("   autoSIMDReductionSupported: vgetelem is not supported for dataType: %s\n", scalarType.toString());
+      logprintf(trace, log, "   autoSIMDReductionSupported: vgetelem is not supported for dataType: %s\n", scalarType.toString());
       return false;
       }
 
@@ -1096,7 +1068,7 @@ bool TR_SPMDKernelParallelizer::isReduction(TR::Compilation *comp, TR_RegionStru
       {
       if (opCode.isLoadDirect() && node->getSymbolReference() == reductionInfo->reductionSymRef)
          {
-         if (trace) comp->log()->printf("   isReduction: found potential reduction symRef. Node %p\n", node);
+         logprintf(trace, comp->log(), "   isReduction: found potential reduction symRef. Node %p\n", node);
          reductionInfo->reductionOp = pathOp;
          return true;
          }
@@ -1184,7 +1156,7 @@ bool TR_SPMDKernelParallelizer::noReductionVar(TR::Compilation *comp, TR_RegionS
       {
       if (opCode.isLoadDirect() && node->getSymbolReference() == reductionInfo->reductionSymRef)
          {
-         if (trace) comp->log()->printf("   noReductionVar: found multiple uses of reduction symRef. Node %p\n", node);
+         logprintf(trace, comp->log(), "   noReductionVar: found multiple uses of reduction symRef. Node %p\n", node);
          return false;
          }
       else
@@ -1218,7 +1190,7 @@ bool TR_SPMDKernelParallelizer::reductionLoopEntranceProcessing(TR::Compilation 
    bool trace = comp->trace(OMR::SPMDKernelParallelization);
    OMR::Logger *log = comp->log();
 
-   if (trace) log->printf("   reductionLoopEntranceProcessing: loop: %d, symRef: %p, vecSymRef: %p\n", loop->getNumber(), symRef, vecSymRef);
+   logprintf(trace, log, "   reductionLoopEntranceProcessing: loop: %d, symRef: %p, vecSymRef: %p\n", loop->getNumber(), symRef, vecSymRef);
 
    if (reductionOp == Reduction_OpUninitialized)
       return true; //Nothing needs to be done
@@ -1226,7 +1198,7 @@ bool TR_SPMDKernelParallelizer::reductionLoopEntranceProcessing(TR::Compilation 
    //we only know how to handle add and multiply ops right now
    if (!(reductionOp == Reduction_Add || reductionOp == Reduction_Mul))
       {
-      if (trace) log->prints("   reductionLoopEntranceProcessing: Invalid or unknown reductionOp during transformation phase.\n");
+      logprints(trace, log, "   reductionLoopEntranceProcessing: Invalid or unknown reductionOp during transformation phase.\n");
       TR_ASSERT(0, "Invalid or unknown reductionOp during transformation phase");
       return false;
       }
@@ -1235,7 +1207,7 @@ bool TR_SPMDKernelParallelizer::reductionLoopEntranceProcessing(TR::Compilation 
    TR::Block* loopInvariantBlock = findLoopInvariantBlockSIMD(comp, loop);
    if (!loopInvariantBlock)
       {
-      if (trace) log->printf("   reductionLoopEntranceProcessing: Loop: %d. No loop invariant block. Creating one.\n", loop->getNumber());
+      logprintf(trace, log, "   reductionLoopEntranceProcessing: Loop: %d. No loop invariant block. Creating one.\n", loop->getNumber());
       loopInvariantBlock = createLoopInvariantBlockSIMD(comp, loop);
       }
 
@@ -1259,7 +1231,7 @@ bool TR_SPMDKernelParallelizer::reductionLoopEntranceProcessing(TR::Compilation 
          identity = 1;
          break;
       default:
-         if (trace) log->prints("   reductionLoopEntranceProcessing: Invalid or unknown reductionOp during transformation phase (2).\n");
+         logprints(trace, log, "   reductionLoopEntranceProcessing: Invalid or unknown reductionOp during transformation phase (2).\n");
          TR_ASSERT(0, "Invalid or unknown reductionOp during transformation phase (2)");
          return false;
       }
@@ -1285,7 +1257,7 @@ bool TR_SPMDKernelParallelizer::reductionLoopEntranceProcessing(TR::Compilation 
          constNode->setDouble(identity);
          break;
       default:
-         if (trace) log->prints("   reductionLoopEntranceProcessing: Unknown vector data type during transformation phase.\n");
+         logprints(trace, log, "   reductionLoopEntranceProcessing: Unknown vector data type during transformation phase.\n");
          TR_ASSERT(0, "Unknown vector data type during transformation phase.");
          return false;
          break;
@@ -1301,7 +1273,7 @@ bool TR_SPMDKernelParallelizer::reductionLoopEntranceProcessing(TR::Compilation 
    TR::TreeTop *vIdentityTreeTop = TR::TreeTop::create(comp, treetopNode, 0, 0);
    insertionPoint->insertAfter(vIdentityTreeTop);
 
-   if (trace) log->printf("   reductionLoopEntranceProcessing: Loop: %d. Created reduction identity store node: %p\n", loop->getNumber(), vstoreNode);
+   logprintf(trace, log, "   reductionLoopEntranceProcessing: Loop: %d. Created reduction identity store node: %p\n", loop->getNumber(), vstoreNode);
 
    return true;
    }
@@ -1312,7 +1284,7 @@ bool TR_SPMDKernelParallelizer::reductionLoopExitProcessing(TR::Compilation *com
    bool trace = comp->trace(OMR::SPMDKernelParallelization);
    OMR::Logger *log = comp->log();
 
-   if (trace) log->printf("   reductionLoopExitProcessing: loop: %d, symRef: %p, vecSymRef: %p\n", loop->getNumber(), symRef, vecSymRef);
+   logprintf(trace, log, "   reductionLoopExitProcessing: loop: %d, symRef: %p, vecSymRef: %p\n", loop->getNumber(), symRef, vecSymRef);
 
    if (reductionOp == Reduction_OpUninitialized)
       return true; //Nothing needs to be done
@@ -1320,7 +1292,7 @@ bool TR_SPMDKernelParallelizer::reductionLoopExitProcessing(TR::Compilation *com
    //we only know how to handle add and multiply ops right now
    if (!(reductionOp == Reduction_Add || reductionOp == Reduction_Mul))
       {
-      if (trace) log->prints("   reductionLoopExitProcessing: Invalid or unknown reductionOp during transformation phase.\n");
+      logprints(trace, log, "   reductionLoopExitProcessing: Invalid or unknown reductionOp during transformation phase.\n");
       TR_ASSERT(0, "Invalid or unknown reductionOp during transformation phase");
       return false;
       }
@@ -1336,7 +1308,7 @@ bool TR_SPMDKernelParallelizer::reductionLoopExitProcessing(TR::Compilation *com
          scalarReductionOp = TR::ILOpCode::multiplyOpCode(scalarDataType);
          break;
       default:
-         if (trace) log->prints("   reductionLoopExitProcessing: Invalid or unknown reductionOp during transformation phase (2).\n");
+         logprints(trace, log, "   reductionLoopExitProcessing: Invalid or unknown reductionOp during transformation phase (2).\n");
          TR_ASSERT(0, "Invalid or unknown reductionOp during transformation phase (2)");
          return false;
       }
@@ -1360,7 +1332,7 @@ bool TR_SPMDKernelParallelizer::reductionLoopExitProcessing(TR::Compilation *com
          numelements = 2;
          break;
       default:
-         if (trace) log->prints("   reductionLoopExitProcessing: Unknown vector data type during transformation phase.\n");
+         logprints(trace, log, "   reductionLoopExitProcessing: Unknown vector data type during transformation phase.\n");
          TR_ASSERT(0, "Unknown vector data type during transformation phase.");
          return false;
          break;
@@ -1405,7 +1377,7 @@ bool TR_SPMDKernelParallelizer::reductionLoopExitProcessing(TR::Compilation *com
 
       //create a new block for each edge that leaves each exit block that does not reenter the loop
       TR::Block* reductionBlock = exitBlock->splitEdge(exitBlock, next, comp);
-      if (trace) log->printf("   reductionLoopExitProcessing: Created block: %d\n", reductionBlock->getNumber());
+      logprintf(trace, log, "   reductionLoopExitProcessing: Created block: %d\n", reductionBlock->getNumber());
 
       TR::TreeTop *insertionPoint = reductionBlock->getEntry();
 
@@ -1439,7 +1411,7 @@ bool TR_SPMDKernelParallelizer::reductionLoopExitProcessing(TR::Compilation *com
       insertionPoint->insertAfter(reductionTreeTop);
       TR::DebugCounter::prependDebugCounter(comp, "auto-SIMD-reduction-end", reductionTreeTop);
 
-      if (trace) log->printf("   reductionLoopExitProcessing: Created tree: %p\n", treetopNode);
+      logprintf(trace, log, "   reductionLoopExitProcessing: Created tree: %p\n", treetopNode);
 
       //store the final value back in the original scalar symref
       TR::TreeTop::create(comp, reductionTreeTop, TR::Node::createStore(symRef, topNode));
@@ -1503,8 +1475,8 @@ bool TR_SPMDKernelParallelizer::processSPMDKernelLoopForSIMDize(TR::Compilation 
    if (iters > 0 && !(iters % unrollCount))
       unroller._spillLoopRequired = false;
 
-   if (trace())
-      log->printf("   Checking Loop ==== (iter = %d, unroll = %d, vectorSize = %d) and unroller._spillLoopRequired %d \n", iters, unrollCount, vectorSize, unroller._spillLoopRequired);
+   logprintf(trace(), log, "   Checking Loop ==== (iter = %d, unroll = %d, vectorSize = %d) and unroller._spillLoopRequired %d \n",
+      iters, unrollCount, vectorSize, unroller._spillLoopRequired);
 
    TR::Block *origFallthruBlock = branchBlock->getExit()->getNextTreeTop()->getNode()->getBlock();
 
@@ -1547,9 +1519,8 @@ bool TR_SPMDKernelParallelizer::processSPMDKernelLoopForSIMDize(TR::Compilation 
                {
                int nodeIndex = entries->locate(curNode->getFirstChild(), hashOne) ? 0 : 1;
                TR::Node *newNode = nodeIndex == 0 ? reinterpret_cast<TR::Node*>(entries->getData(hashOne)) : reinterpret_cast<TR::Node*>(entries->getData(hashTwo));
-               if (trace())
-                  log->printf("Parent node n%dn [%p] will be uncommoned to n%dn [%p]\n", curNode->getChild(nodeIndex)->getGlobalIndex(), curNode->getChild(nodeIndex),
-                   newNode->getGlobalIndex(), newNode);
+               logprintf(trace(), log, "Parent node n%dn [%p] will be uncommoned to n%dn [%p]\n",
+                  curNode->getChild(nodeIndex)->getGlobalIndex(), curNode->getChild(nodeIndex), newNode->getGlobalIndex(), newNode);
                replaceAndAnchorOldNode(comp, tt, curNode, curNode->getChild(nodeIndex), newNode, nodeIndex);
                }
             else if (curNode->getFirstChild()->getReferenceCount() > 1 || curNode->getSecondChild()->getReferenceCount() > 1)
@@ -1574,8 +1545,7 @@ bool TR_SPMDKernelParallelizer::processSPMDKernelLoopForSIMDize(TR::Compilation 
                   // So, we need to adjust the stride by vectorSize and store the mapping {oldNode, newNode} in the hashTable.
                   newNode = oldNode->duplicateTree(false);
                   replaceAndAnchorOldNode(comp, tt, curNode, oldNode, newNode, childIndex);
-                  if (trace())
-                     log->printf("Parent node n%dn [%p] was uncommoned to n%dn [%p]\n", oldNode->getGlobalIndex(), oldNode, newNode->getGlobalIndex(), newNode);
+                  logprintf(trace(), log, "Parent node n%dn [%p] was uncommoned to n%dn [%p]\n", oldNode->getGlobalIndex(), oldNode, newNode->getGlobalIndex(), newNode);
                   _visitedNodes.reset(oldNode->getGlobalIndex());
                   TR::Node *oldConstNode = multiplyLoopStride(newNode, vectorSize);
                   _visitedNodes.reset(oldConstNode->getGlobalIndex());
@@ -1588,8 +1558,8 @@ bool TR_SPMDKernelParallelizer::processSPMDKernelLoopForSIMDize(TR::Compilation 
          if (curNode->getOpCodeValue() == TR::istore && curNode->getSymbolReference() == unroller._piv->getSymRef())
             {
             // increment of PIV
-            if (trace())
-               log->printf("Reducing the number of iterations of the loop %d at storeNode [%p] by vector length %d \n",loop->getNumber(), curNode, unrollCount);
+            logprintf(trace(), log, "Reducing the number of iterations of the loop %d at storeNode [%p] by vector length %d \n",
+               loop->getNumber(), curNode, unrollCount);
             TR_ASSERT_FATAL(curNode->getFirstChild()->getOpCode().isAdd() || curNode->getFirstChild()->getOpCode().isSub(), "PIV increment should be simple (either by add or by sub");
             TR_ASSERT_FATAL(curNode->getFirstChild()->getFirstChild()->getOpCode().isLoad(), "PIV increment should have load");
             TR_ASSERT_FATAL(curNode->getFirstChild()->getSecondChild()->getOpCode().isLoadConst(), "PIV increment should have const increment value");
@@ -1622,9 +1592,8 @@ bool TR_SPMDKernelParallelizer::processSPMDKernelLoopForSIMDize(TR::Compilation 
                   TR_HashId entryHash = entries->calculateHash(oldNode);
                   entries->add(oldNode, entryHash, newNode);
                   }
-               if (trace())
-                  log->printf("Parent node n%dn [%p] was uncommoned to n%dn [%p]\n", oldNode->getGlobalIndex(), oldNode,
-                     newNode->getGlobalIndex(), newNode);
+               logprintf(trace(), log, "Parent node n%dn [%p] was uncommoned to n%dn [%p]\n",
+                  oldNode->getGlobalIndex(), oldNode, newNode->getGlobalIndex(), newNode);
                }
             else
                {
@@ -1706,6 +1675,7 @@ int32_t getArrayElementSize(TR::Compilation *comp, TR::SymbolReference *symRef)
 
 int32_t TR_SPMDKernelParallelizer::findArrayElementSize(TR::Node *node)
    {
+   OMR::Logger *log = comp()->log();
    TR_UseDefInfo *useDefInfo = optimizer()->getUseDefInfo();
    if (!useDefInfo)
       return -1;
@@ -1718,8 +1688,7 @@ int32_t TR_SPMDKernelParallelizer::findArrayElementSize(TR::Node *node)
    useDefInfo->getUseDef(defs, useIndex);
 
    if (defs.PopulationCount() > 1)
-      if (trace())
-         comp()->log()->printf("More than one def for node %p\n", node);
+      logprintf(trace(), log, "More than one def for node %p\n", node);
 
    if (!defs.IsZero() && (defs.PopulationCount() == 1))
       {
@@ -1736,8 +1705,7 @@ int32_t TR_SPMDKernelParallelizer::findArrayElementSize(TR::Node *node)
          if (!defNode->getOpCode().isStoreDirect())
             return -1;
 
-         if (trace())
-            comp()->log()->printf("found def node %p\n", defNode);
+         logprintf(trace(), log, "found def node %p\n", defNode);
 
          if (defNode->getFirstChild()->getOpCode().isLoadIndirect() ||
                (defNode->getFirstChild()->getOpCode().isLoad() &&
@@ -1854,8 +1822,7 @@ bool TR_SPMDKernelParallelizer::visitNodeToMapSymbols(TR::Node *node,
             {
             if (!comp()->cg()->_gpuSymbolMap[hostSymRef->getReferenceNumber()]._hostSymRef)
                {
-               if (trace())
-                  comp()->log()->printf("Adding node %p into auto list\n", node);
+               logprintf(trace(), comp()->log(), "Adding node %p into auto list\n", node);
 
                autos.add((TR::AutomaticSymbol *)hostSymRef->getSymbol());
 
@@ -1998,8 +1965,7 @@ bool TR_SPMDKernelParallelizer::visitNodeToDetectArrayAccesses(TR::Node *node,
                if (opcode.isLoadVar() || opcode.getOpCodeValue() == TR::arraylength ||
                    (opcode.getOpCodeValue() == TR::arraycopy && childNum == childrenNodeOffset))
                   {
-                  if (doTrace)
-                     log->printf("Node[%p]: addrNode[%p], #%d, READ\n", node, addrNode, symRefIndex);
+                  logprintf(doTrace, log, "Node[%p]: addrNode[%p], #%d, READ\n", node, addrNode, symRefIndex);
                   gpuSymbolMap[nc]._accessKind |= TR::CodeGenerator::ReadAccess;
 
                   if (!disableDataTransferElimination)
@@ -2028,8 +1994,7 @@ bool TR_SPMDKernelParallelizer::visitNodeToDetectArrayAccesses(TR::Node *node,
                               TR_VerboseLog::writeLine(TR_Vlog_GPU, "Detected affine load in %s at line %d",
                                                                     comp()->signature(), comp()->getLineNumber(node));
 
-                           if (doTrace)
-                              log->printf("Detected affine load %p in RHS for gpuSymbolMap[%d]\n", addrExpr, nc);
+                           logprintf(doTrace, log, "Detected affine load %p in RHS for gpuSymbolMap[%d]\n", addrExpr, nc);
                            }
                         else
                            {
@@ -2044,8 +2009,7 @@ bool TR_SPMDKernelParallelizer::visitNodeToDetectArrayAccesses(TR::Node *node,
                   }
                else
                   {
-                  if (doTrace)
-                     log->printf("Node[%p]: addrNode[%p], #%d, WRITE\n", node, addrNode, symRefIndex);
+                  logprintf(doTrace, log, "Node[%p]: addrNode[%p], #%d, WRITE\n", node, addrNode, symRefIndex);
                   gpuSymbolMap[nc]._accessKind |= TR::CodeGenerator::WriteAccess;
 
                   if (!disableDataTransferElimination || !comp()->getOptions()->getEnableGPU(TR_EnableSafeMT))
@@ -2076,8 +2040,7 @@ bool TR_SPMDKernelParallelizer::visitNodeToDetectArrayAccesses(TR::Node *node,
                               }
                            gpuSymbolMap[nc]._lhsAddrExpr = addrExpr;
 
-                           if (doTrace)
-                              log->printf("Detected contiguous store %p in LHS for gpuSymbolMap[%d]\n", addrExpr, nc);
+                           logprintf(doTrace, log, "Detected contiguous store %p in LHS for gpuSymbolMap[%d]\n", addrExpr, nc);
                            }
                         else
                            {
@@ -2838,8 +2801,7 @@ void TR_SPMDKernelParallelizer::insertFlushGPU(TR_BitVector *flushGPUBlocks, TR:
       int i = bvi.getNextElement();
       TR::Block *flushGPUBlock = cfgBlocks[i];
       TR::Node* flushGPUNode = insertFlushGPU(flushGPUBlock, scopeSymRef);
-      if (trace())
-         comp()->log()->printf("Inserted flushGPU %p in block %d\n", flushGPUNode, i);
+      logprintf(trace(), comp()->log(), "Inserted flushGPU %p in block %d\n", flushGPUNode, i);
       }
    }
 
@@ -3049,8 +3011,9 @@ bool TR_SPMDKernelParallelizer::addRegionCost(TR_RegionStructure *region, TR_Reg
       {
       TR::Node *addNode;
 
-      if (trace())
-         comp()->log()->printf("adding cost of loop %d with piv %p entry %p exit %p %d %d\n", region->getNumber(), piv, piv->getEntryValue(), piv->getExitBound(), loop->isExprInvariant(piv->getEntryValue(), false), loop->isExprInvariant(piv->getExitBound(), false));
+      logprintf(trace(), comp()->log(), "adding cost of loop %d with piv %p entry %p exit %p %d %d\n",
+         region->getNumber(), piv, piv->getEntryValue(), piv->getExitBound(), loop->isExprInvariant(piv->getEntryValue(), false),
+         loop->isExprInvariant(piv->getExitBound(), false));
 
       addNode = TR::Node::create(estimateGPUBlock->getLastRealTreeTop()->getNode(), TR::iadd, 2);
       addNode->setAndIncChild(0, TR::Node::createLoad(lambdaCost));
@@ -3123,7 +3086,8 @@ bool TR_SPMDKernelParallelizer::processGPULoop(TR_RegionStructure *loop, TR_SPMD
 
    if (trace())
       {
-      log->printf("GPU loop %d: first tree = %p last tree = %p loopTest = %p block after loop = %d\n", loop->getNumber(), firstNode, lastTree->getNode(), loopTestTree->getNode(), blockAfterLoop->getNumber());
+      log->printf("GPU loop %d: first tree = %p last tree = %p loopTest = %p block after loop = %d\n",
+         loop->getNumber(), firstNode, lastTree->getNode(), loopTestTree->getNode(), blockAfterLoop->getNumber());
 
       if (gpuScope->getScopeType() == scopeNaturalLoop)
          {
@@ -3137,8 +3101,7 @@ bool TR_SPMDKernelParallelizer::processGPULoop(TR_RegionStructure *loop, TR_SPMD
 
    if (loopInvariantBlock == NULL)
       {
-      if (trace())
-         log->printf("Stop processing since %d doesn't have a no-preheader\n", loop->getNumber());
+      logprintf(trace(), log, "Stop processing since %d doesn't have a no-preheader\n", loop->getNumber());
       return false;
       }
 
@@ -3175,8 +3138,7 @@ bool TR_SPMDKernelParallelizer::processGPULoop(TR_RegionStructure *loop, TR_SPMD
 
    if (!ibmTryGPUBlock || !lambdaCPUBlock)
       {
-      if (trace())
-         log->prints("Stop processing since could not find ibmTryGPU or lambdaCPU Block\n");
+      logprints(trace(), log, "Stop processing since could not find ibmTryGPU or lambdaCPU Block\n");
       return false;
       }
 
@@ -3257,8 +3219,7 @@ bool TR_SPMDKernelParallelizer::processGPULoop(TR_RegionStructure *loop, TR_SPMD
          }
       }
 
-   if (trace())
-      log->printf("#parms = %d\n", parms.getSize());
+   logprintf(trace(), log, "#parms = %d\n", parms.getSize());
 
    visitCount = comp()->incVisitCount();
    currentBlock = 0;
@@ -3335,8 +3296,7 @@ bool TR_SPMDKernelParallelizer::processGPULoop(TR_RegionStructure *loop, TR_SPMD
 
       if (!estimateGPUCost(loop, estimateGPUBlock, lambdaCost))
          {
-         if (trace())
-            log->prints("lambda is too small\n");
+         logprints(trace(), log, "lambda is too small\n");
          if (_verboseTrace > 1)
             TR_VerboseLog::writeLine(TR_Vlog_GPU, "\tforEach in %s at line %d does not have any loops", comp()->signature(), lineNumber);
          // return false;  // TransposeDouble seems to run faster on GPU
@@ -3365,8 +3325,7 @@ bool TR_SPMDKernelParallelizer::processGPULoop(TR_RegionStructure *loop, TR_SPMD
 
    if (!ptxSource)
       {
-      if (trace())
-         log->prints("generatePTX function returned 0.\n");
+      logprints(trace(), log, "generatePTX function returned 0.\n");
       return false;
       }
 
@@ -3392,8 +3351,7 @@ bool TR_SPMDKernelParallelizer::processGPULoop(TR_RegionStructure *loop, TR_SPMD
 
    if (gpuScope->getScopeType() == scopeNaturalLoop)
       {
-      if (trace())
-         log->printf("GPU Data Transfer optimization for loop %d\n",loop->getNumber());
+      logprintf(trace(), log, "GPU Data Transfer optimization for loop %d\n", loop->getNumber());
 
       CS2::ArrayOf<gpuMapElement, TR::Allocator> &gpuSymbolMap = comp()->cg()->_gpuSymbolMap;
       CS2::ArrayOf<gpuMapElement, TR::Allocator>::Cursor nc(gpuSymbolMap);
@@ -3422,14 +3380,12 @@ bool TR_SPMDKernelParallelizer::processGPULoop(TR_RegionStructure *loop, TR_SPMD
    TR::Node *lastNode = loopInvariantBlock->getLastRealTreeTop()->getNode();
    if (lastNode->getOpCode().isGoto())
       {
-      if (trace())
-         log->printf("Changing destination of goto at the end of block_%d\n", loopInvariantBlock->getNumber());
+      logprintf(trace(), log, "Changing destination of goto at the end of block_%d\n", loopInvariantBlock->getNumber());
       lastNode->setBranchDestination(blockAfterLoop->getEntry());
       }
    else
       {
-      if (trace())
-         log->printf("Inserting goto at the end of block_%d\n", loopInvariantBlock->getNumber());
+      logprintf(trace(), log, "Inserting goto at the end of block_%d\n", loopInvariantBlock->getNumber());
       TR::Node *gotoNode = TR::Node::create(firstNode, TR::Goto, 0, blockAfterLoop->getEntry());
       TR::TreeTop *gotoTreeTop = TR::TreeTop::create(comp(), gotoNode);
       loopInvariantBlock->append(gotoTreeTop);
@@ -3581,8 +3537,7 @@ bool TR_SPMDKernelParallelizer::processGPULoop(TR_RegionStructure *loop, TR_SPMD
 
    if(!(_reversedBranchNodes->isSet(ibmTryGPUNode->getGlobalIndex()))) //check if not set
       {
-      if (trace())
-         log->printf("Reversing branch in node %p, Global Index %u\n", ibmTryGPUNode, ibmTryGPUNode->getGlobalIndex());
+      logprintf(trace(), log, "Reversing branch in node %p, Global Index %u\n", ibmTryGPUNode, ibmTryGPUNode->getGlobalIndex());
       ibmTryGPUNode->reverseBranch(ibmTryGPUNode->getBranchDestination());
       _reversedBranchNodes->set(ibmTryGPUNode->getGlobalIndex());
       }
@@ -3729,8 +3684,7 @@ bool TR_SPMDKernelParallelizer::visitCPUNode(TR::Node *node, int32_t visitCount,
        node->getOpCodeValue() == TR::arraycopy ||
        opcode.isCall())
       {
-      if (trace())
-         log->printf("Found %s in non-cold CPU node %p\n", opcode.isCall() ? "a call" : "array access", node);
+      logprintf(trace(), log, "Found %s in non-cold CPU node %p\n", opcode.isCall() ? "a call" : "array access", node);
 
       TR_ResolvedMethod  *method;
 
@@ -3764,29 +3718,25 @@ bool TR_SPMDKernelParallelizer::visitCPUNode(TR::Node *node, int32_t visitCount,
              !node->getSymbolReference()->getSymbol()->castToMethodSymbol() ||
              !node->getSymbolReference()->getSymbol()->castToMethodSymbol()->getMethod())
             {
-            if (trace())
-               log->prints("can't hoist due to a call\n");
+            logprints(trace(), log, "can't hoist due to a call\n");
             return false;
             }
 
          TR::Method * method = node->getSymbolReference()->getSymbol()->castToMethodSymbol()->getMethod();
          const char * signature = method->signature(comp()->trMemory(), stackAlloc);
 
-         if (trace())
-            log->printf("signature: %s\n", signature ? signature : "NULL");
+         logprintf(trace(), log, "signature: %s\n", signature ? signature : "NULL");
 
          if (!(signature && strlen(signature) >= 10 && strncmp(signature, "java/lang/", 10) == 0) &&
              !(signature && strlen(signature) >= 10 && strncmp(signature, "java/util/", 10) == 0))
             {
-            if (trace())
-               log->prints("can't hoist due to a call\n");
+            logprints(trace(), log, "can't hoist due to a call\n");
             return false;
             }
          }
       else
          {
-         if (trace())
-            log->prints("can't hoist due do array access\n");
+         logprints(trace(), log, "can't hoist due do array access\n");
          return false;
          }
       }
@@ -3869,8 +3819,7 @@ TR_SPMDKernelParallelizer::analyzeGPUScope(TR_SPMDScopeInfo* pScopeInfo)
 
     for (kernel = kit.getFirst(); kernel; kernel = kit.getNext())
        {
-       if (trace())
-         log->printf("GPU kernel: %d\n", kernel->getNumber());
+       logprintf(trace(), log, "GPU kernel: %d\n", kernel->getNumber());
        kernel->getBlocks(&kernelBlocks);
        }
 
@@ -3887,8 +3836,7 @@ TR_SPMDKernelParallelizer::analyzeGPUScope(TR_SPMDScopeInfo* pScopeInfo)
 
    for (TR_RegionStructure *loop = lit.getFirst(); loop; loop = lit.getNext())
       {
-      if (trace())
-         log->printf("cold loop: %d\n", loop->getNumber());
+      logprintf(trace(), log, "cold loop: %d\n", loop->getNumber());
       loop->getBlocks(&coldLoopBlocks);
       }
 
@@ -3903,8 +3851,7 @@ TR_SPMDKernelParallelizer::analyzeGPUScope(TR_SPMDScopeInfo* pScopeInfo)
    for (nbit.SetToFirstOne(); nbit.Valid(); nbit.SetToNextOne())
       {
       TR::Block *nextBlock = _origCfgBlocks[nbit];
-      if (trace())
-         log->printf("non-cold CPU block %d\n", nextBlock->getNumber());
+      logprintf(trace(), log, "non-cold CPU block %d\n", nextBlock->getNumber());
 
       for (TR::TreeTop *tt = nextBlock->getEntry() ; tt != nextBlock->getExit() ; tt = tt->getNextTreeTop())
          {
@@ -3965,8 +3912,7 @@ TR_SPMDKernelParallelizer::collectGPUScopes(TR_RegionStructure *region, List<TR_
          TR_SPMDScopeInfo* pScopeInfo = new (comp()->trStackMemory()) TR_SPMDScopeInfo(comp(),region,scopeNaturalLoop);
          pScopeInfo->setKernelList(gpuKernels);
 
-         if (trace())
-            comp()->log()->printf("Found GPU scope %d in %s (natural loop type) with kernels:\n", region->getNumber(), comp()->signature());
+         logprintf(trace(), comp()->log(), "Found GPU scope %d in %s (natural loop type) with kernels:\n", region->getNumber(), comp()->signature());
 
          if (analyzeGPUScope(pScopeInfo))
             {
@@ -3975,8 +3921,7 @@ TR_SPMDKernelParallelizer::collectGPUScopes(TR_RegionStructure *region, List<TR_
             }
          else
             {
-            if (trace())
-               comp()->log()->prints("Discarding GPU scope due to negative analysis\n");
+            logprintf(trace(), comp()->log(), "Discarding GPU scope due to negative analysis\n");
             }
          }
       }
@@ -4008,8 +3953,7 @@ bool TR_SPMDKernelParallelizer::isSPMDKernelLoop(TR_RegionStructure *region, TR:
       {
       if (!SPMDPreCheck::isSPMDCandidate(comp, region))
          {
-         if (trace())
-            comp->log()->printf("Natural loop %d has failed SPMD pre-check - skipping consideration\n", region->getNumber());
+         logprintf(trace(), comp->log(), "Natural loop %d has failed SPMD pre-check - skipping consideration\n", region->getNumber());
          return false;
          }
 
@@ -4025,10 +3969,9 @@ bool TR_SPMDKernelParallelizer::isSPMDKernelLoop(TR_RegionStructure *region, TR:
 
 #if defined(ENABLE_SPMD_SIMD)
       if (method->getRecognizedMethod() == com_ibm_simt_SPMDKernel_execute)
-
          {
-         if (trace())
-            comp->log()->printf("identified SPMD kernel execution loop in %s block = %d stride = %d symbol = %d\n", comp->signature(), branchBlock->getNumber(), piv->getDeltaOnBackEdge(), piv->getSymRef()->getReferenceNumber());//method->nameChars());
+         logprintf(trace(), comp->log(), "identified SPMD kernel execution loop in %s block = %d stride = %d symbol = %d\n",
+            comp->signature(), branchBlock->getNumber(), piv->getDeltaOnBackEdge(), piv->getSymRef()->getReferenceNumber());
          return true;
          }
 #endif
@@ -4054,16 +3997,14 @@ bool TR_SPMDKernelParallelizer::isParallelForEachLoop(TR_RegionStructure *region
 
       if (method->getRecognizedMethod() == TR::java_util_stream_IntPipeline_forEach)
          {
-         if (trace())
-            comp->log()->printf("Found forEach loop %d in %s piv=%s\n", entryBlock->getNumber(), comp->signature(), piv ? "yes" : "no");
+         logprintf(trace(), comp->log(), "Found forEach loop %d in %s piv=%s\n", entryBlock->getNumber(), comp->signature(), piv ? "yes" : "no");
 
          if (comp->getOptions()->getEnableGPU(TR_EnableGPUDetails))
             TR_VerboseLog::writeLine(TR_Vlog_GPU, "Found forEach in %s", comp->signature());
 
          int32_t inc = piv->getDeltaOnBackEdge();
 
-         if (trace())
-            comp->log()->printf("branchBlock = %d inc = %d piv = %d\n", branchBlock->getNumber(), inc , piv->getSymRef()->getReferenceNumber());
+         logprintf(trace(), comp->log(), "branchBlock = %d inc = %d piv = %d\n", branchBlock->getNumber(), inc , piv->getSymRef()->getReferenceNumber());
 
          if (inc == 1) return true;
 
@@ -4107,13 +4048,13 @@ bool TR_SPMDKernelParallelizer::isPerfectNest(TR_RegionStructure *region, TR::Co
 
 bool TR_SPMDKernelParallelizer::checkDataLocality(TR_RegionStructure *loop, CS2::ArrayOf<TR::Node *, TR::Allocator> &useNodesOfDefsInLoop, SharedSparseBitVector &defsInLoop, TR::Compilation *comp, TR_UseDefInfo *useDefInfo, TR_HashTab* reductionHashTab)
    {
-   if (trace())
-      comp->log()->printf("Checking data locality in loop %d piv = %d\n", loop->getNumber(), loop->getPrimaryInductionVariable()->getSymRef()->getReferenceNumber());
+   OMR::Logger *log = comp->log();
+
+   logprintf(trace(), log, "Checking data locality in loop %d piv = %d\n", loop->getNumber(), loop->getPrimaryInductionVariable()->getSymRef()->getReferenceNumber());
 
    for (int32_t idx = 0; idx < _pivList.NumberOfElements(); idx++)
       {
-      if (trace())
-         comp->log()->printf("   iv = %d\n", _pivList[idx]->getSymRef()->getReferenceNumber());
+      logprintf(trace(), log, "   iv = %d\n", _pivList[idx]->getSymRef()->getReferenceNumber());
       }
 
    setLoopDataType(loop,comp);
@@ -4150,9 +4091,9 @@ bool TR_SPMDKernelParallelizer::checkDataLocality(TR_RegionStructure *loop, CS2:
    usesOfDefsInLoop.Andc(usesInLoop);
    if (!usesOfDefsInLoop.IsZero())
       {
+      logprints(trace(), log, "   loop defines temps that are used outside: ");
       if (trace())
-         comp->log()->printf("   loop defines temps that are used outside: ");
-      (*comp) << usesOfDefsInLoop << "\n";
+         (*comp) << usesOfDefsInLoop << "\n";
       return false;
       }
 
@@ -4169,8 +4110,7 @@ bool TR_SPMDKernelParallelizer::checkLoopIteration(TR_RegionStructure *loop,TR::
       return false;
 
    bool goodLoopBounds= false;
-   if (trace())
-      comp->log()->printf("checking loop iteration pattern on loop %d \n",loop->getNumber());
+   logprintf(trace(), comp->log(), "checking loop iteration pattern on loop %d \n", loop->getNumber());
    for (TR::TreeTop *tt = branchBlock->getEntry() ; tt != branchBlock->getExit() ; tt = tt->getNextTreeTop())
       {
       TR::Node *storeNode = tt->getNode();
@@ -4326,8 +4266,7 @@ bool TR_SPMDKernelParallelizer::checkConstantDistanceDependence(TR_RegionStructu
       {
       // there are loop invariant parameters in the distance - need to generate
       // a runtime check
-      if (trace())
-         comp->log()->printf("SPMD DEPENDENCE ANALYSIS: def %p and %s %p distance depends on parameters\n", node1, type == 0 ? "use" : "def", node2);
+      logprintf(trace(), comp->log(), "SPMD DEPENDENCE ANALYSIS: def %p and %s %p distance depends on parameters\n", node1, type == 0 ? "use" : "def", node2);
       return false;
       }
    else
@@ -4336,8 +4275,7 @@ bool TR_SPMDKernelParallelizer::checkConstantDistanceDependence(TR_RegionStructu
       int s1 = symbolicEvaluateTree(node1->getFirstChild()->getSecondChild());
       int s2 = symbolicEvaluateTree(node2->getFirstChild()->getSecondChild());
       int distance = (s1-s2);
-      if (trace())
-         comp->log()->printf("SPMD DEPENDENCE ANALYSIS: def %p, %s %p. Constant distance dependence of %d bytes\n", node1, type == 0 ? "use" : "def", node2, distance);
+      logprintf(trace(), comp->log(), "SPMD DEPENDENCE ANALYSIS: def %p, %s %p. Constant distance dependence of %d bytes\n", node1, type == 0 ? "use" : "def", node2, distance);
 
       if (type == 0 && (distance >= VECTOR_SIZE || distance <= 0))
          { // permissable flow dependence
@@ -4357,8 +4295,7 @@ bool TR_SPMDKernelParallelizer::checkIndependence(TR_RegionStructure *loop, TR_U
    {
    OMR::Logger *log = comp->log();
 
-   if (trace())
-      log->printf("Checking independence in loop %d piv = %d\n", loop->getNumber(), loop->getPrimaryInductionVariable()->getSymRef()->getReferenceNumber());
+   logprintf(trace(), log, "Checking independence in loop %d piv = %d\n", loop->getNumber(), loop->getPrimaryInductionVariable()->getSymRef()->getReferenceNumber());
    CS2::ArrayOf<TR::Node *, TR::Allocator> defs(comp->allocator(), NULL);
    CS2::ArrayOf<TR::Node *, TR::Allocator> uses(comp->allocator(), NULL);
 
@@ -4386,8 +4323,7 @@ bool TR_SPMDKernelParallelizer::checkIndependence(TR_RegionStructure *loop, TR_U
          if (defs[dc2]->getOpCode().hasSymbolReference() &&
              defs[dc]->mayKill().contains(defs[dc2]->getSymbolReference(), comp))
             {
-            if (trace())
-               log->printf("SPMD DEPENDENCE ANALYSIS: Testing (def %p, def %p) for dependence\n", defs[dc], defs[dc2]);
+            logprintf(trace(), log, "SPMD DEPENDENCE ANALYSIS: Testing (def %p, def %p) for dependence\n", defs[dc], defs[dc2]);
 
             if (!loop->isExprInvariant(defs[dc]->getFirstChild()) &&
                 !loop->isExprInvariant(defs[dc2]->getFirstChild()) &&
@@ -4417,8 +4353,7 @@ bool TR_SPMDKernelParallelizer::checkIndependence(TR_RegionStructure *loop, TR_U
          if (uses[uc]->getOpCode().hasSymbolReference() &&
              defs[dc]->mayKill().contains(uses[uc]->getSymbolReference(), comp))
             {
-            if (trace())
-               log->printf("SPMD DEPENDENCE ANALYSIS: Testing (def %p, use %p) for dependence\n", defs[dc], uses[uc]);
+            logprintf(trace(), log, "SPMD DEPENDENCE ANALYSIS: Testing (def %p, use %p) for dependence\n", defs[dc], uses[uc]);
             if (!loop->isExprInvariant(defs[dc]->getFirstChild()) &&
                 !loop->isExprInvariant(uses[uc]->getFirstChild()) &&
                 areNodesEquivalent(comp,defs[dc]->getFirstChild(),uses[uc]->getFirstChild()))
@@ -4458,10 +4393,7 @@ bool TR_SPMDKernelParallelizer::checkIndependence(TR_RegionStructure *loop, TR_U
 
          if (!useDefNode)
             {
-            if (trace())
-               {
-               log->printf("Def #%d (from method entry) reaches a use inside loop %d\n", defIndex, loop->getNumber());
-               }
+            logprintf(trace(), log, "Def #%d (from method entry) reaches a use inside loop %d\n", defIndex, loop->getNumber());
             return false;
             }
 
@@ -4473,8 +4405,7 @@ bool TR_SPMDKernelParallelizer::checkIndependence(TR_RegionStructure *loop, TR_U
    defsOfDefsInLoop.Andc(defsInLoop);
    if(!defsOfDefsInLoop.IsZero())
       {
-      if (trace())
-         log->prints("Both a definition from inside the loop and outside the loop reaches a temp used inside the loop.\n");
+      logprints(trace(), log, "Both a definition from inside the loop and outside the loop reaches a temp used inside the loop.\n");
       return false;
       }
 
@@ -4502,8 +4433,8 @@ TR_SPMDKernelParallelizer::collectParallelLoops(TR_RegionStructure *region,
         checkIndependence(region, useDefInfo, useNodesOfDefsInLoop, defsInLoop, comp()) &&
         checkLoopIteration(region,comp())))
       {
-      if (trace())
-         comp()->log()->printf("Loop %d and piv = %d collected for Auto-Vectorization\n", region->getNumber(), region->getPrimaryInductionVariable()->getSymRef()->getReferenceNumber());
+      logprintf(trace(), comp()->log(), "Loop %d and piv = %d collected for Auto-Vectorization\n",
+         region->getNumber(), region->getPrimaryInductionVariable()->getSymRef()->getReferenceNumber());
       simdLoops.add(region);
       reductionOperationsHashTab->add(region, id, reductionHashTab);
       return;
@@ -4520,32 +4451,30 @@ TR_SPMDKernelParallelizer::collectParallelLoops(TR_RegionStructure *region,
 bool
 TR_SPMDKernelParallelizer::vectorize(TR::Compilation *comp, TR_RegionStructure *loop, TR_PrimaryInductionVariable *piv, TR_HashTab* reductionHashTab, int32_t peelCount, TR::Optimizer *optimizer)
    {
+   OMR::Logger *log = comp->log();
+
    /* copy of TR_LoopUnroller::unroll for counted loop */
    // We dont do peeling as of yet
    //
    if (peelCount != 0)
       {
-      if (trace())
-         comp->log()->printf("Cannot unroll loop %d: peeling not supported yet\n", loop->getNumber());
+      logprintf(trace(), log, "Cannot unroll loop %d: peeling not supported yet\n", loop->getNumber());
       return false;
       }
 
    TR::Block *loopInvariantBlock = NULL;
    if (!TR_LoopUnroller::isWellFormedLoop(loop, comp, loopInvariantBlock))
       {
-      if (trace())
-         comp->log()->printf("Cannot unroll loop %d: not a well formed loop\n", loop->getNumber());
+      logprintf(trace(), log, "Cannot unroll loop %d: not a well formed loop\n", loop->getNumber());
       return false;
       }
 
    if (TR_LoopUnroller::isTransactionStartLoop(loop, comp))
       {
-      if (trace())
-         comp->log()->printf("Cannot unroll loop %d: it is a transaction start loop\n",loop->getNumber());
+      logprintf(trace(), log, "Cannot unroll loop %d: it is a transaction start loop\n", loop->getNumber());
       return false;
       }
 
    bool vl = processSPMDKernelLoopForSIMDize(comp, optimizer, loop, piv, reductionHashTab, peelCount, loopInvariantBlock);
    return vl;
    }
-

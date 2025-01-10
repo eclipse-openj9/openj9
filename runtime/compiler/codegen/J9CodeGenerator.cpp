@@ -1264,7 +1264,6 @@ J9::CodeGenerator::lowerTreeIfNeeded(
                 (n->getReferenceCount() > 1) &&
                 n->getSymbol()->isAutoOrParm())
                {
-               //printf("Uncommoned address child of JNI call in %s\n", comp()->signature());
                TR::Node *dupChild = n->duplicateTree();
                node->setAndIncChild(i, dupChild);
                n->recursivelyDecReferenceCount();
@@ -1318,8 +1317,6 @@ J9::CodeGenerator::lowerTreeIfNeeded(
                methodSymbol->getResolvedMethodSymbol()->getResolvedMethod())
             {
             TR_PersistentJittedBodyInfo * bodyInfo = ((TR_ResolvedJ9Method*) methodSymbol->getResolvedMethodSymbol()->getResolvedMethod())->getExistingJittedBodyInfo();
-            //printf("Pushing node %p\n", node);
-            //fflush(stdout);
             if (bodyInfo &&
                 bodyInfo->getHotness() <= warm && !bodyInfo->getIsProfilingBody())
                {
@@ -1344,7 +1341,6 @@ J9::CodeGenerator::lowerTreeIfNeeded(
                      }
                   }
 
-               //printf ("Scorching method %s is calling warm (or called method) %s, in block_%d with frequency %d, is in loop %d\n", comp()->getMethodSymbol()->signature(), fej9->sampleSignature(method->getPersistentIdentifier(), 0, 0, trMemory()), getCurrentBlock()->getNumber(), getCurrentBlock()->getFrequency(), isInLoop);
                if ((self()->getCurrentBlock()->getFrequency() > MAX_COLD_BLOCK_COUNT) || (isInLoop && self()->getCurrentBlock()->getFrequency()==0))
                   {
                   bodyInfo->setCounter(1);
@@ -1419,8 +1415,7 @@ J9::CodeGenerator::lowerTreeIfNeeded(
 
          TR::Node *ttNode = TR::Node::create(TR::treetop, 1, node);
          tt->getPrevTreeTop()->insertAfter(TR::TreeTop::create(comp, ttNode));
-         if (comp->getOption(TR_TraceCG))
-            comp->log()->printf("Anchoring %s node %s [%p] under treetop [%p]\n", anchoringReason, node->getOpCode().getName(), node, ttNode);
+         logprintf(comp->getOption(TR_TraceCG), comp->log(), "Anchoring %s node %s [%p] under treetop [%p]\n", anchoringReason, node->getOpCode().getName(), node, ttNode);
          break;
          }
       default:
@@ -1483,6 +1478,8 @@ J9::CodeGenerator::zeroOutAutoOnEdge(
       TR_ScratchList<TR::Node> *fsdStores)
    {
    TR::Compilation *comp = self()->comp();
+   OMR::Logger *log = comp->log();
+   bool trace = comp->getOption(TR_TraceCG);
    TR::Block *storeBlock = NULL;
    if ((succBlock->getPredecessors().size() == 1))
       storeBlock = succBlock;
@@ -1539,8 +1536,7 @@ J9::CodeGenerator::zeroOutAutoOnEdge(
                TR_ASSERT(glRegDepsParent->getOpCodeValue() == TR::Goto, "Expected block to fall through or end in goto; it ends with %s %s\n",
                   self()->getDebug()->getName(glRegDepsParent->getOpCodeValue()), self()->getDebug()->getName(glRegDepsParent));
                }
-            if (comp->getOption(TR_TraceCG))
-               comp->log()->printf("zeroOutAutoOnEdge: glRegDepsParent is %s\n", self()->getDebug()->getName(glRegDepsParent));
+            logprintf(trace, log, "zeroOutAutoOnEdge: glRegDepsParent is %s\n", self()->getDebug()->getName(glRegDepsParent));
             glRegDepsParent->setNumChildren(1);
             glRegDepsParent->setAndIncChild(0, duplicateGlRegDeps);
             }
@@ -1557,8 +1553,7 @@ J9::CodeGenerator::zeroOutAutoOnEdge(
 
       if (comp->getOption(TR_PoisonDeadSlots))
          {
-         if (comp->getOption(TR_TraceCG))
-            comp->log()->printf("POISON DEAD SLOTS --- New Block Created %d\n", newBlock->getNumber());
+         logprintf(trace, log, "POISON DEAD SLOTS --- New Block Created %d\n", newBlock->getNumber());
          newBlock->setIsCreatedAtCodeGen();
          }
 
@@ -1586,6 +1581,7 @@ J9::CodeGenerator::doInstructionSelection()
    {
    TR::Compilation *comp = self()->comp();
    OMR::Logger *log = comp->log();
+   bool traceCG = comp->getOption(TR_TraceCG);
 
    J9::SetMonitorStateOnBlockEntry::LiveMonitorStacks liveMonitorStacks(
       (J9::SetMonitorStateOnBlockEntry::LiveMonitorStacksComparator()),
@@ -1600,7 +1596,7 @@ J9::CodeGenerator::doInstructionSelection()
       diagnostic("\n<selection>");
 
    if (comp->getOption(TR_TraceCG))
-      comp->getDebug()->setupToDumpTreesAndInstructions(comp->log(), "Performing Instruction Selection");
+      comp->getDebug()->setupToDumpTreesAndInstructions(log, "Performing Instruction Selection");
 
    self()->beginInstructionSelection();
 
@@ -1630,8 +1626,7 @@ J9::CodeGenerator::doInstructionSelection()
    _lmmdFailed = false;
    if (comp->getMethodSymbol()->mayContainMonitors())
       {
-      if(traceLiveMon)
-         log->prints("In doInstructionSelection: Method may contain monitors\n");
+      logprints(traceLiveMon, log, "In doInstructionSelection: Method may contain monitors\n");
 
       if (!liveLocals)
          comp->getMethodSymbol()->resetLiveLocalIndices();
@@ -1640,18 +1635,15 @@ J9::CodeGenerator::doInstructionSelection()
       for (TR::AutomaticSymbol * a = locals.getFirst(); a; a = locals.getNext())
          if (a->holdsMonitoredObject())
             {
-            if(traceLiveMon)
-               log->printf("\tSymbol %p contains monitored object\n",a);
+            logprintf(traceLiveMon, log, "\tSymbol %p contains monitored object\n", a);
             if (!liveLocals)
                {
-               if(traceLiveMon)
-                  log->printf("\tsetting LiveLocalIndex to %d on symbol %p\n",numMonitorLocals+1,a);
+               logprintf(traceLiveMon, log, "\tsetting LiveLocalIndex to %d on symbol %p\n", numMonitorLocals+1, a);
                a->setLiveLocalIndex(numMonitorLocals++, self()->fe());
                }
             else if (a->getLiveLocalIndex() + 1 > numMonitorLocals)
                {
-               if(traceLiveMon)
-                  log->printf("\tsetting numMonitorLocals to %d while considering symbol %p\n",a->getLiveLocalIndex()+1,a);
+               logprintf(traceLiveMon, log, "\tsetting numMonitorLocals to %d while considering symbol %p\n", a->getLiveLocalIndex()+1, a);
                numMonitorLocals = a->getLiveLocalIndex() + 1;
                }
             }
@@ -1660,15 +1652,13 @@ J9::CodeGenerator::doInstructionSelection()
          {
          J9::SetMonitorStateOnBlockEntry monitorState(comp, &liveMonitorStacks);
 
-         if(traceLiveMon)
-            log->printf("\tCreated monitorState %p\n",&monitorState);
+         logprintf(traceLiveMon, log, "\tCreated monitorState %p\n", &monitorState);
 
          monitorState.set(_lmmdFailed, traceLiveMon);
-         if (traceLiveMon)
-            log->printf("found numMonitorLocals %d\n", numMonitorLocals);
+         logprintf(traceLiveMon, log, "found numMonitorLocals %d\n", numMonitorLocals);
          }
-      else if(traceLiveMon)
-         log->printf("\tnumMonitorLocals = %d\n",numMonitorLocals);
+      else
+         logprintf(traceLiveMon, log, "\tnumMonitorLocals = %d\n",numMonitorLocals);
       }
 
    TR::SymbolReference **liveLocalSyms = NULL;
@@ -1735,8 +1725,7 @@ J9::CodeGenerator::doInstructionSelection()
 
    for (TR::TreeTop *tt = comp->getStartTree(); tt; tt = self()->getCurrentEvaluationTreeTop()->getNextTreeTop())
       {
-      if(traceLiveMon)
-         log->printf("\tWalking TreeTops at tt %p with node %p\n",tt,tt->getNode());
+      logprintf(traceLiveMon, log, "\tWalking TreeTops at tt %p with node %p\n", tt, tt->getNode());
 
       TR::Instruction *prevInstr = self()->getAppendInstruction();
       TR::Node * node = tt->getNode();
@@ -1780,26 +1769,20 @@ J9::CodeGenerator::doInstructionSelection()
             if (liveMonitorStack)
                {
                liveMonitors = new (self()->trHeapMemory()) TR_BitVector(numMonitorLocals, self()->trMemory());
-               if (traceLiveMon)
-                  log->printf("created liveMonitors bitvector at block_%d for stack  %p size %d\n",
-                                                            block->getNumber(), liveMonitorStack,
-                                                            liveMonitorStack->size());
+               logprintf(traceLiveMon, log, "created liveMonitors bitvector at block_%d for stack  %p size %d\n",
+                     block->getNumber(), liveMonitorStack, liveMonitorStack->size());
                for (int32_t i = liveMonitorStack->size() - 1; i >= 0; --i)
                   {
-                  if (traceLiveMon)
-                     log->printf("about to set liveMonitors for symbol %p\n",(*liveMonitorStack)[i]->getSymbol());
+                  logprintf(traceLiveMon, log, "about to set liveMonitors for symbol %p\n", (*liveMonitorStack)[i]->getSymbol());
                   liveMonitors->set((*liveMonitorStack)[i]->getSymbol()->castToRegisterMappedSymbol()->getLiveLocalIndex());
-                  if (traceLiveMon)
-                     log->printf("setting livemonitor %d at block_%d\n",
-                                                            (*liveMonitorStack)[i]->getSymbol()->castToRegisterMappedSymbol()->getLiveLocalIndex(),
-                                                            block->getNumber());
+                  logprintf(traceLiveMon, log, "setting livemonitor %d at block_%d\n",
+                        (*liveMonitorStack)[i]->getSymbol()->castToRegisterMappedSymbol()->getLiveLocalIndex(), block->getNumber());
                   }
                }
            else
                {
                liveMonitors = 0;
-               if (traceLiveMon)
-                  log->printf("no liveMonitorStack for block_%d\n", block->getNumber());
+               logprintf(traceLiveMon, log, "no liveMonitorStack for block_%d\n", block->getNumber());
                }
             numEBBsSinceFreeingVariableSizeSymRefs++;
             }
@@ -1867,8 +1850,7 @@ J9::CodeGenerator::doInstructionSelection()
 
                if (traceLiveMon)
                   {
-                  log->printf("liveMonitorStack %p at CFG end (syncMethod %d)", liveMonitorStack,
-                                                         comp->getMethodSymbol()->isSynchronised());
+                  log->printf("liveMonitorStack %p at CFG end (syncMethod %d)", liveMonitorStack, comp->getMethodSymbol()->isSynchronised());
                   if (liveMonitorStack)
                      log->printf("   size %d\n", liveMonitorStack->size());
                   else
@@ -2078,8 +2060,6 @@ J9::CodeGenerator::doInstructionSelection()
 
       if (comp->getOption(TR_TraceCG))
          {
-         OMR::Logger *log = comp->log();
-
          // any evaluator that handles multiple trees will need to dump
          // the others
          comp->getDebug()->saveNodeChecklist(nodeChecklistBeforeDump);
@@ -2120,14 +2100,12 @@ J9::CodeGenerator::doInstructionSelection()
             if (liveMonitorStack)
                {
                liveMonitorStack->push(node->getSymbolReference());
-               if (traceLiveMon)
-                  log->printf("pushing symref %p (#%u) onto monitor stack\n", node->getSymbolReference(), node->getSymbolReference()->getReferenceNumber());
+               logprintf(traceLiveMon, log, "pushing symref %p (#%u) onto monitor stack\n", node->getSymbolReference(), node->getSymbolReference()->getReferenceNumber());
                }
 
             liveMonitors->set(node->getSymbol()->castToRegisterMappedSymbol()->getLiveLocalIndex());
 
-            if (traceLiveMon)
-               log->printf("monitor %p went live at node %p\n", node->getSymbol(), node);
+            logprintf(traceLiveMon, log, "monitor %p went live at node %p\n", node->getSymbol(), node);
             }
          else if (!isMonent)
             {
@@ -2163,8 +2141,7 @@ J9::CodeGenerator::doInstructionSelection()
                      {
                      TR::SymbolReference *symref = liveMonitorStack->pop();
 
-                     if (traceLiveMon)
-                        log->printf("popping symref %p (#%u) off monitor stack\n", symref, symref->getReferenceNumber());
+                     logprintf(traceLiveMon, log, "popping symref %p (#%u) off monitor stack\n", symref, symref->getReferenceNumber());
                      liveMonitors->reset(symref->getSymbol()->castToRegisterMappedSymbol()->getLiveLocalIndex());
                      }
 
@@ -2176,10 +2153,9 @@ J9::CodeGenerator::doInstructionSelection()
                      liveMonitors->empty();
                   }
 
-               if (traceLiveMon)
-                  log->printf("monitor %p went dead at node %p\n", node->getSymbol(), node);
+               logprintf(traceLiveMon, log, "monitor %p went dead at node %p\n", node->getSymbol(), node);
                }
-           // no need to generate code for this store
+            // no need to generate code for this store
             //
             doEvaluation = false;
             }
@@ -2207,8 +2183,7 @@ J9::CodeGenerator::doInstructionSelection()
             //
             TR::Instruction *lastInstr = b->getLastInstruction();
 
-            if (comp->getOption(TR_TraceCG))
-               log->printf("%s Last warm instruction is %p\n", SPLIT_WARM_COLD_STRING, lastInstr);
+            logprintf(traceCG, log, "%s Last warm instruction is %p\n", SPLIT_WARM_COLD_STRING, lastInstr);
 
             lastInstr->setLastWarmInstruction(true);
             self()->setLastWarmInstruction(lastInstr);
@@ -2349,8 +2324,7 @@ J9::CodeGenerator::doInstructionSelection()
                   }
                else if (sym->getReferenceCount() > 0 && nodeToFreeAfterIsCurrentNode)
                   {
-                  if (self()->traceBCDCodeGen())
-                     log->printf("\treset nodeToFreeAfter %p->NULL for sym %p with refCount %d > 0\n",nodeToFreeAfter,sym,sym->getReferenceCount());
+                  logprintf(self()->traceBCDCodeGen(), log, "\treset nodeToFreeAfter %p->NULL for sym %p with refCount %d > 0\n", nodeToFreeAfter, sym, sym->getReferenceCount());
                   sym->setNodeToFreeAfter(NULL);
                   }
                else
@@ -2363,10 +2337,8 @@ J9::CodeGenerator::doInstructionSelection()
             }
          }
 
-      if (comp->getOption(TR_TraceCG))
+      if (traceCG)
          {
-         OMR::Logger *log = comp->log();
-
          comp->getDebug()->restoreNodeChecklist(nodeChecklistBeforeDump);
 
          if (tt == self()->getCurrentEvaluationTreeTop())
@@ -2380,7 +2352,7 @@ J9::CodeGenerator::doInstructionSelection()
             log->prints("------------------------------");
             for (TR::TreeTop *dumptt = tt; dumptt != self()->getCurrentEvaluationTreeTop()->getNextTreeTop(); dumptt = dumptt->getNextTreeTop())
                {
-               log->prints("\n");
+               log->println();
                comp->getDebug()->dumpSingleTreeWithInstrs(log, dumptt, NULL, true, false, true, false);
                }
 
@@ -2392,8 +2364,7 @@ J9::CodeGenerator::doInstructionSelection()
          }
       }
 
-   if (self()->traceBCDCodeGen())
-      log->prints("\tinstruction selection is complete so free all symbols in the _variableSizeSymRefPendingFreeList\n");
+   logprints(self()->traceBCDCodeGen(), log, "\tinstruction selection is complete so free all symbols in the _variableSizeSymRefPendingFreeList\n");
 
    self()->freeAllVariableSizeSymRefs();
 
@@ -2484,8 +2455,7 @@ J9::CodeGenerator::populateOSRBuffer()
       TR_ASSERT(osrMethodData != NULL && osrMethodData->getOSRCodeBlock() != NULL,
              "osr method data or its block is NULL\n");
 
-      if (traceOSR)
-         log->printf("Lowering trees in OSR block_%d...\n", block->getNumber());
+      logprintf(traceOSR, log, "Lowering trees in OSR block_%d...\n", block->getNumber());
 
       //osrFrameIndex is a field in the vmThread that is initialized by the VM to the offset
       //of the start of the first (deepest) frame in the OSR buffer
@@ -2500,9 +2470,8 @@ J9::CodeGenerator::populateOSRBuffer()
       TR::TreeTop* insertionPoint = tt->getPrevRealTreeTop();
       bool inlinesAnyMethod = osrMethodData->inlinesAnyMethod();
 
-      if (traceOSR)
-         log->printf("callerIndex %d: max pending push slots=%d, # of auto slots=%d, # of arg slots=%d\n",
-                 osrMethodData->getInlinedSiteIndex(), methSym->getNumPPSlots(),
+      logprintf(traceOSR, log, "callerIndex %d: max pending push slots=%d, # of auto slots=%d, # of arg slots=%d\n",
+            osrMethodData->getInlinedSiteIndex(), methSym->getNumPPSlots(),
             methSym->getResolvedMethod()->numberOfTemps(), methSym->getNumParameterSlots());
 
       uint32_t numOfSymsThatShareSlot = 0;
@@ -2564,13 +2533,11 @@ J9::CodeGenerator::populateOSRBuffer()
       osrMethodData->setNumOfSymsThatShareSlot(numOfSymsThatShareSlot);
       maxScratchBufferSize = (maxScratchBufferSize > scratchBufferOffset) ? maxScratchBufferSize : scratchBufferOffset;
 
-      if (traceOSR)
-         {
-         log->printf("%s %s %s: written out bytes in OSR buffer\n",
-                 osrMethodData->getInlinedSiteIndex() == -1 ? "Method," : "Inlined method,",
-                 inlinesAnyMethod? "inlines another method,": "doesn't inline any method,",
-                 methSym->signature(self()->trMemory()));
-         }
+      logprintf(traceOSR, log, "%s %s %s: written out bytes in OSR buffer\n",
+            osrMethodData->getInlinedSiteIndex() == -1 ? "Method," : "Inlined method,",
+            inlinesAnyMethod? "inlines another method,": "doesn't inline any method,",
+            methSym->signature(self()->trMemory()));
+
       int32_t totalNumOfSlots = osrMethodData->getTotalNumOfSlots();
       //The OSR helper call will print the contents of the OSR buffer (if trace option is on)
       //and populate the OSR buffer with the correct values of the shared slots (if there is any)
@@ -2665,12 +2632,10 @@ static void addValidationRecords(TR::CodeGenerator *cg)
                TR_InlinedCallSite &ics = comp->getInlinedCallSite(i);
                TR_OpaqueMethodBlock *inlinedMethod = fej9->getInlinedCallSiteMethod(&ics);
 
-               if (trace)
-                  log->printf("\tinline site %d inlined method %p\n", i, inlinedMethod);
+               logprintf(trace, log, "\tinline site %d inlined method %p\n", i, inlinedMethod);
                if (ramMethod == inlinedMethod)
                   {
-                  if (trace)
-                     log->prints("\t\tmatch!\n");
+                  logprints(trace, log, "\t\tmatch!\n");
                   siteIndex = i;
                   break;
                   }
@@ -2683,13 +2648,11 @@ static void addValidationRecords(TR::CodeGenerator *cg)
                // kind of overkill for TR_ValidateStaticField, but still correct
                (*info)->_reloKind = TR_ValidateArbitraryClass;
                siteIndex = -1;   // invalidate main compiled method
-               if (trace)
-                  log->prints("\ttransformed into TR_ValidateArbitraryClass\n");
+               logprints(trace, log, "\ttransformed into TR_ValidateArbitraryClass\n");
                }
             }
 
-         if (trace)
-            log->printf("Found inlined site %d\n", siteIndex);
+         logprintf(trace, log, "Found inlined site %d\n", siteIndex);
 
          TR_ASSERT(siteIndex < (int32_t) comp->getNumInlinedCallSites(), "did not find AOTClassInfo %p method in inlined site table", *info);
 
@@ -2793,22 +2756,19 @@ static TR_ExternalRelocationTargetKind getReloKindFromGuardSite(TR::CodeGenerato
          if (site->getGuard()->getTestType() == TR_MethodTest)
             {
             type = TR_ProfiledMethodGuardRelocation;
-            if (trace)
-               log->prints("TR_ProfiledMethodGuardRelocation\n");
+            logprints(trace, log, "TR_ProfiledMethodGuardRelocation\n");
             }
          else if (site->getGuard()->getTestType() == TR_VftTest)
             {
             type = TR_ProfiledClassGuardRelocation;
-            if (trace)
-               log->prints("TR_ProfiledClassGuardRelocation\n");
+            logprints(trace, log, "TR_ProfiledClassGuardRelocation\n");
             }
          else
             TR_ASSERT(false, "unexpected profiled guard test type");
          break;
 
       case TR_BreakpointGuard:
-         if (trace)
-            log->prints("TR_Breakpoint\n");
+         logprints(trace, log, "TR_Breakpoint\n");
          type = TR_Breakpoint;
          break;
 
@@ -3182,7 +3142,7 @@ J9::CodeGenerator::compressedReferenceRematerialization()
          !disableRematforCP)
       {
       if (comp->getOption(TR_TraceCG))
-         comp->dumpMethodTrees(comp->log(), "Trees before this remat phase", comp->getMethodSymbol());
+         comp->dumpMethodTrees(log, "Trees before this remat phase", comp->getMethodSymbol());
 
       List<TR::Node> rematerializedNodes(self()->trMemory());
       vcount_t visitCount = comp->incVisitCount();
@@ -3272,7 +3232,7 @@ J9::CodeGenerator::compressedReferenceRematerialization()
             }
          }
       if (comp->getOption(TR_TraceCG))
-         comp->dumpMethodTrees(comp->log(), "Trees after this remat phase", comp->getMethodSymbol());
+         comp->dumpMethodTrees(log, "Trees after this remat phase", comp->getMethodSymbol());
 
       if (self()->shouldYankCompressedRefs())
          {
@@ -3287,7 +3247,7 @@ J9::CodeGenerator::compressedReferenceRematerialization()
             }
 
          if (comp->getOption(TR_TraceCG))
-            comp->dumpMethodTrees(comp->log(), "Trees after this yank phase", comp->getMethodSymbol());
+            comp->dumpMethodTrees(log, "Trees after this yank phase", comp->getMethodSymbol());
          }
       }
 
@@ -3539,8 +3499,7 @@ J9::CodeGenerator::rematerializeCompressedRefs(
                      {
                      TR::Node *ttNode = TR::Node::create(TR::treetop, 1, node);
 
-                     if (comp->getOption(TR_TraceCG))
-                        comp->log()->printf("Placing treetop %p (to hide delay) after tree %p for l2a %p\n", ttNode, cursorNode, node);
+                     logprintf(comp->getOption(TR_TraceCG), comp->log(), "Placing treetop %p (to hide delay) after tree %p for l2a %p\n", ttNode, cursorNode, node);
 
                      TR::TreeTop *treeTop = TR::TreeTop::create(comp, ttNode);
                      TR::TreeTop *nextTT = cursorTree->getNextTreeTop();
@@ -3794,8 +3753,6 @@ J9::CodeGenerator::yankCompressedRefs(
        (node->getFirstChild()->getOpCodeValue() == TR::ladd &&
         node->getFirstChild()->containsCompressionSequence()))
       {
-
-      //printf("Looking at node %p in %s\n", node, comp()->signature()); fflush(stdout);
       TR::TreeTop *firstTree = tt;
       TR::TreeTop *lastTree = tt;
       bool nullCheckTree = false;
@@ -3844,8 +3801,6 @@ J9::CodeGenerator::yankCompressedRefs(
 
          TR_BitVector intersection(self()->comp()->getSymRefCount(), self()->comp()->trMemory(), stackAlloc);
 
-         //printf("canYank %d node %d in %s\n", canYank, node, comp()->signature()); fflush(stdout);
-
          if (canYank)
             {
             TR::TreeTop *cursorTree = firstTree->getPrevTreeTop();
@@ -3854,7 +3809,6 @@ J9::CodeGenerator::yankCompressedRefs(
               {
               numTrees++;
               TR::Node *cursorNode = cursorTree->getNode();
-              //printf("canYank %d node %p cursor %p in %s\n", canYank, node, cursorNode, comp()->signature()); fflush(stdout);
               TR::Node *childNode = NULL;
               if (cursorNode->getNumChildren() > 0)
                  childNode = cursorNode->getFirstChild();
@@ -3925,7 +3879,6 @@ J9::CodeGenerator::yankCompressedRefs(
 
             if (cursorTree != firstTree->getPrevTreeTop())
                {
-               /////printf("Yanking l2a node %p past %d trees in %s\n", node, numTrees, comp()->signature()); fflush(stdout);
                TR::TreeTop *nextTree = cursorTree->getNextTreeTop();
                TR::TreeTop *prevTreeAtSrc = firstTree->getPrevTreeTop();
                TR::TreeTop *nextTreeAtSrc = lastTree->getNextTreeTop();
@@ -4279,24 +4232,27 @@ J9::CodeGenerator::fixUpProfiledInterfaceGuardTest()
 void
 J9::CodeGenerator::allocateLinkageRegisters()
    {
-   if (self()->comp()->isGPUCompilation())
+   TR::Compilation *comp = self()->comp();
+   OMR::Logger *log = comp->log();
+
+   if (comp->isGPUCompilation())
       return;
 
-   TR::Delimiter d(self()->comp(), self()->comp()->getOptions()->getAnyOption(TR_TraceOptDetails|TR_CountOptTransformations), "AllocateLinkageRegisters");
+   TR::Delimiter d(comp, comp->getOptions()->getAnyOption(TR_TraceOptDetails|TR_CountOptTransformations), "AllocateLinkageRegisters");
 
    if (!self()->prepareForGRA())
       {
-      dumpOptDetails(self()->comp(), "  prepareForGRA failed -- giving up\n");
+      dumpOptDetails(comp, "  prepareForGRA failed -- giving up\n");
       return;
       }
 
-   TR::Block     *firstBlock         = self()->comp()->getStartBlock();
-   const int32_t numParms           = self()->comp()->getMethodSymbol()->getParameterList().getSize();
+   TR::Block *firstBlock = comp->getStartBlock();
+   const int32_t numParms = comp->getMethodSymbol()->getParameterList().getSize();
 
    if (numParms == 0) return ;
 
-   TR_BitVector  globalRegsWithRegLoad(self()->getNumberOfGlobalRegisters(), self()->comp()->trMemory(), stackAlloc); // indexed by global register number
-   TR_BitVector  killedParms(numParms, self()->comp()->trMemory(), stackAlloc); // indexed by parm->getOrdinal()
+   TR_BitVector  globalRegsWithRegLoad(self()->getNumberOfGlobalRegisters(), comp->trMemory(), stackAlloc); // indexed by global register number
+   TR_BitVector  killedParms(numParms, comp->trMemory(), stackAlloc); // indexed by parm->getOrdinal()
    TR::Node     **regLoads = (TR::Node**)self()->trMemory()->allocateStackMemory(numParms*sizeof(regLoads[0])); // indexed by parm->getOrdinal() to give the RegLoad for a given parm
    memset(regLoads, 0, numParms*sizeof(regLoads[0]));
 
@@ -4307,13 +4263,13 @@ J9::CodeGenerator::allocateLinkageRegisters()
       {
       // Rather than put regStores in all predecessors, we give up.
       //
-      dumpOptDetails(self()->comp(), "  First basic block is in a loop -- giving up\n");
+      dumpOptDetails(comp, "  First basic block is in a loop -- giving up\n");
       return;
       }
 
    // Initialize regLoads and usedGlobalRegs from the RegLoads already present on the BBStart node
    //
-   TR::Node *bbStart    = self()->comp()->getStartTree()->getNode();
+   TR::Node *bbStart    = comp->getStartTree()->getNode();
    TR_ASSERT(bbStart->getOpCodeValue() == TR::BBStart, "assertion failure");
    TR::Node *oldRegDeps = (bbStart->getNumChildren() > 0)? bbStart->getFirstChild() : NULL;
    if (oldRegDeps)
@@ -4323,9 +4279,9 @@ J9::CodeGenerator::allocateLinkageRegisters()
          {
          TR::Node *regLoad = oldRegDeps->getChild(i);
          TR_ASSERT(regLoad->getSymbol() && regLoad->getSymbol()->isParm(), "First basic block can have only parms live on entry");
-         dumpOptDetails(self()->comp(), "  Parm %d has RegLoad %s\n", regLoad->getSymbol()->getParmSymbol()->getOrdinal(), self()->comp()->getDebug()->getName(regLoad));
+         dumpOptDetails(comp, "  Parm %d has RegLoad %s\n", regLoad->getSymbol()->getParmSymbol()->getOrdinal(), comp->getDebug()->getName(regLoad));
          regLoads[regLoad->getSymbol()->getParmSymbol()->getOrdinal()] = regLoad;
-         if (regLoad->getType().isInt64() && self()->comp()->target().is32Bit() && !self()->use64BitRegsOn32Bit())
+         if (regLoad->getType().isInt64() && comp->target().is32Bit() && !self()->use64BitRegsOn32Bit())
             {
             globalRegsWithRegLoad.set(regLoad->getLowGlobalRegisterNumber());
             globalRegsWithRegLoad.set(regLoad->getHighGlobalRegisterNumber());
@@ -4337,17 +4293,17 @@ J9::CodeGenerator::allocateLinkageRegisters()
          }
       }
 
-   if (self()->comp()->getOption(TR_TraceOptDetails) && self()->comp()->getLoggingEnabled())
+   if (comp->getOption(TR_TraceOptDetails) && comp->getLoggingEnabled())
       {
-      dumpOptDetails(self()->comp(), "  Initial globalRegsWithRegLoad: ");
-      self()->getDebug()->print(self()->comp()->log(), &globalRegsWithRegLoad);
-      dumpOptDetails(self()->comp(), "\n");
+      dumpOptDetails(comp, "  Initial globalRegsWithRegLoad: ");
+      self()->getDebug()->print(log, &globalRegsWithRegLoad);
+      dumpOptDetails(comp, "\n");
       }
 
 
    // Recursively replace parm loads with regLoads; create new RegLoads as necessary
    //
-   vcount_t visitCount = self()->comp()->incVisitCount();
+   vcount_t visitCount = comp->incVisitCount();
    int32_t  numRegLoadsAdded = 0;
    for(TR::TreeTop *tt = firstBlock->getFirstRealTreeTop(); tt; tt = tt->getNextTreeTop())
       {
@@ -4358,11 +4314,11 @@ J9::CodeGenerator::allocateLinkageRegisters()
       if (node->getOpCode().isStoreDirect() && node->getSymbol()->isParm())
          {
          killedParms.set(node->getSymbol()->getParmSymbol()->getOrdinal());
-         if (self()->comp()->getOption(TR_TraceOptDetails) && self()->comp()->getLoggingEnabled())
+         if (comp->getOption(TR_TraceOptDetails) && comp->getLoggingEnabled())
             {
-            dumpOptDetails(self()->comp(), "  Found store %s\n  killedParms is now ", self()->comp()->getDebug()->getName(node));
-            self()->getDebug()->print(self()->comp()->log(), &killedParms);
-            dumpOptDetails(self()->comp(), "\n");
+            dumpOptDetails(comp, "  Found store %s\n  killedParms is now ", comp->getDebug()->getName(node));
+            self()->getDebug()->print(log, &killedParms);
+            dumpOptDetails(comp, "\n");
             }
          }
       }
@@ -4393,9 +4349,9 @@ J9::CodeGenerator::allocateLinkageRegisters()
       bbStart->setAndIncChild(0, newRegDeps);
       bbStart->setNumChildren(1);
 
-      dumpOptDetails(self()->comp(), "  Created new GlRegDeps %s on BBStart %s\n",
-         self()->comp()->getDebug()->getName(newRegDeps),
-         self()->comp()->getDebug()->getName(bbStart));
+      dumpOptDetails(comp, "  Created new GlRegDeps %s on BBStart %s\n",
+         comp->getDebug()->getName(newRegDeps),
+         comp->getDebug()->getName(bbStart));
       }
    }
 
@@ -4448,6 +4404,8 @@ J9::CodeGenerator::swapChildrenIfNeeded(TR::Node *store, char *optDetails)
 uint16_t
 J9::CodeGenerator::changeParmLoadsToRegLoads(TR::Node *node, TR::Node **regLoads, TR_BitVector *globalRegsWithRegLoad, TR_BitVector &killedParms, vcount_t visitCount)
    {
+   TR::Compilation *comp = self()->comp();
+
    if (node->getVisitCount() == visitCount)
       {
       return 0;
@@ -4460,11 +4418,11 @@ J9::CodeGenerator::changeParmLoadsToRegLoads(TR::Node *node, TR::Node **regLoads
    if (node->getOpCode().isLoadAddr() && node->getOpCode().hasSymbolReference() && node->getSymbol()->isParm())
       {
       killedParms.set(node->getSymbol()->getParmSymbol()->getOrdinal());
-      if (self()->comp()->getOption(TR_TraceOptDetails) && self()->comp()->getLoggingEnabled())
+      if (comp->getOption(TR_TraceOptDetails) && comp->getLoggingEnabled())
          {
-         dumpOptDetails(self()->comp(), "  Found loadaddr %s\n  killedParms is now ", self()->comp()->getDebug()->getName(node));
-         self()->getDebug()->print(self()->comp()->log(), &killedParms);
-         dumpOptDetails(self()->comp(), "\n");
+         dumpOptDetails(comp, "  Found loadaddr %s\n  killedParms is now ", comp->getDebug()->getName(node));
+         self()->getDebug()->print(comp->log(), &killedParms);
+         dumpOptDetails(comp, "\n");
          }
       }
 
@@ -4472,24 +4430,24 @@ J9::CodeGenerator::changeParmLoadsToRegLoads(TR::Node *node, TR::Node **regLoads
       {
       TR::ParameterSymbol *parm      = node->getSymbol()->getParmSymbol();
       int8_t              lri       = parm->getLinkageRegisterIndex();
-      TR::ILOpCodes        regLoadOp = self()->comp()->il.opCodeForRegisterLoad(parm->getDataType());
+      TR::ILOpCodes        regLoadOp = comp->il.opCodeForRegisterLoad(parm->getDataType());
 
       if (regLoads[parm->getOrdinal()] == NULL && lri != -1 && !killedParms.isSet(parm->getOrdinal()))
          {
          // Transmute this node into a regLoad
 
-         if ((node->getType().isInt64() && self()->comp()->target().is32Bit() && !self()->use64BitRegsOn32Bit()))
+         if ((node->getType().isInt64() && comp->target().is32Bit() && !self()->use64BitRegsOn32Bit()))
             {
             if (self()->getDisableLongGRA())
                {
-               dumpOptDetails(self()->comp(), "  GRA not supported for longs; leaving %s unchanged\n", self()->comp()->getDebug()->getName(node));
+               dumpOptDetails(comp, "  GRA not supported for longs; leaving %s unchanged\n", comp->getDebug()->getName(node));
                }
             else
                {
                // Endianness affects how longs are passed
                //
                int8_t lowLRI, highLRI;
-               if (self()->comp()->target().cpu.isBigEndian())
+               if (comp->target().cpu.isBigEndian())
                   {
                   highLRI = lri;
                   lowLRI  = lri+1;
@@ -4503,18 +4461,18 @@ J9::CodeGenerator::changeParmLoadsToRegLoads(TR::Node *node, TR::Node **regLoads
                TR_GlobalRegisterNumber highReg = self()->getLinkageGlobalRegisterNumber(highLRI, node->getDataType());
 
                if (lowReg != -1 && highReg != -1 && !globalRegsWithRegLoad->isSet(lowReg) && !globalRegsWithRegLoad->isSet(highReg)
-                  && performTransformation(self()->comp(), "O^O LINKAGE REGISTER ALLOCATION: transforming %s into %s\n", self()->comp()->getDebug()->getName(node), self()->comp()->getDebug()->getName(regLoadOp)))
+                  && performTransformation(comp, "O^O LINKAGE REGISTER ALLOCATION: transforming %s into %s\n", comp->getDebug()->getName(node), comp->getDebug()->getName(regLoadOp)))
                   {
                   // Both halves are in regs, and both regs are available.
                   // Transmute load into regload
                   //
                   if(parm->getDataType() == TR::Aggregate)
                      {
-                     dumpOptDetails(self()->comp(), "\tNot doing transformation for parm %p because it is an aggregate.\n",node);
+                     dumpOptDetails(comp, "\tNot doing transformation for parm %p because it is an aggregate.\n",node);
                      }
                   else
                      {
-                     TR::Node::recreate(node, self()->comp()->il.opCodeForRegisterLoad(parm->getDataType()));
+                     TR::Node::recreate(node, comp->il.opCodeForRegisterLoad(parm->getDataType()));
                      node->setLowGlobalRegisterNumber(lowReg);
                      node->setHighGlobalRegisterNumber(highReg);
 
@@ -4528,7 +4486,7 @@ J9::CodeGenerator::changeParmLoadsToRegLoads(TR::Node *node, TR::Node **regLoads
                   }
                }
             }
-         else if (self()->comp()->target().cpu.isZ() && self()->comp()->target().isLinux() && parm->getDataType() == TR::Aggregate &&
+         else if (comp->target().cpu.isZ() && comp->target().isLinux() && parm->getDataType() == TR::Aggregate &&
                   (parm->getSize() <= 2 ||  parm->getSize() == 4 ||  parm->getSize() == 8))
             {
             // On zLinux aggregates with a size of 1, 2, 4 or 8 bytes are passed by value in registers.
@@ -4545,15 +4503,15 @@ J9::CodeGenerator::changeParmLoadsToRegLoads(TR::Node *node, TR::Node **regLoads
                dt = TR::Int8;
 
             // if not 64 bit and data type is 64 bit, need to place it into two registers
-            if ((self()->comp()->target().is32Bit() && !self()->use64BitRegsOn32Bit()) && dt == TR::Int64)
+            if ((comp->target().is32Bit() && !self()->use64BitRegsOn32Bit()) && dt == TR::Int64)
                {
                TR_GlobalRegisterNumber lowReg  = self()->getLinkageGlobalRegisterNumber(lri+1, dt);
                TR_GlobalRegisterNumber highReg = self()->getLinkageGlobalRegisterNumber(lri, dt);
 
                if (lowReg != -1 && highReg != -1 && !globalRegsWithRegLoad->isSet(lowReg) && !globalRegsWithRegLoad->isSet(highReg) &&
-                   performTransformation(self()->comp(), "O^O LINKAGE REGISTER ALLOCATION: transforming aggregate parm %s into xRegLoad\n", self()->comp()->getDebug()->getName(node)))
+                   performTransformation(comp, "O^O LINKAGE REGISTER ALLOCATION: transforming aggregate parm %s into xRegLoad\n", comp->getDebug()->getName(node)))
                   {
-                  TR::Node::recreate(node, self()->comp()->il.opCodeForRegisterLoad(dt));
+                  TR::Node::recreate(node, comp->il.opCodeForRegisterLoad(dt));
 
                   node->setLowGlobalRegisterNumber(lowReg);
                   node->setHighGlobalRegisterNumber(highReg);
@@ -4570,9 +4528,9 @@ J9::CodeGenerator::changeParmLoadsToRegLoads(TR::Node *node, TR::Node **regLoads
                TR_GlobalRegisterNumber reg = self()->getLinkageGlobalRegisterNumber(lri, dt);
 
                if (reg != -1 && !globalRegsWithRegLoad->isSet(reg) &&
-                   performTransformation(self()->comp(), "O^O LINKAGE REGISTER ALLOCATION: transforming aggregate parm %s into xRegLoad\n", self()->comp()->getDebug()->getName(node)))
+                   performTransformation(comp, "O^O LINKAGE REGISTER ALLOCATION: transforming aggregate parm %s into xRegLoad\n", comp->getDebug()->getName(node)))
                   {
-                  TR::Node::recreate(node, self()->comp()->il.opCodeForRegisterLoad(dt));
+                  TR::Node::recreate(node, comp->il.opCodeForRegisterLoad(dt));
 
                   node->setGlobalRegisterNumber(reg);
                   globalRegsWithRegLoad->set(reg);
@@ -4586,17 +4544,17 @@ J9::CodeGenerator::changeParmLoadsToRegLoads(TR::Node *node, TR::Node **regLoads
             {
             TR_GlobalRegisterNumber reg = self()->getLinkageGlobalRegisterNumber(parm->getLinkageRegisterIndex(), node->getDataType());
             if (reg != -1 && !globalRegsWithRegLoad->isSet(reg)
-               && performTransformation(self()->comp(), "O^O LINKAGE REGISTER ALLOCATION: transforming %s into %s\n", self()->comp()->getDebug()->getName(node), self()->comp()->getDebug()->getName(regLoadOp)))
+               && performTransformation(comp, "O^O LINKAGE REGISTER ALLOCATION: transforming %s into %s\n", comp->getDebug()->getName(node), comp->getDebug()->getName(regLoadOp)))
                {
                // Transmute load into regload
                //
                if(parm->getDataType() == TR::Aggregate) // for aggregates, must look at node type to determine register type as parm type is still 'aggregate'
                   {
-                  dumpOptDetails(self()->comp(), "\tNot doing transformation for parm %p because it is an aggregate.\n",node);
+                  dumpOptDetails(comp, "\tNot doing transformation for parm %p because it is an aggregate.\n",node);
                   }
                else
                   {
-                  TR::Node::recreate(node, self()->comp()->il.opCodeForRegisterLoad(parm->getDataType()));
+                  TR::Node::recreate(node, comp->il.opCodeForRegisterLoad(parm->getDataType()));
                   node->setGlobalRegisterNumber(reg);
 
                   // Update state to include the new regLoad
@@ -5388,10 +5346,7 @@ J9::CodeGenerator::addInvokeBasicCallSiteImpl(
       numArgSlots32 += 1 + (uint32_t)(dt == TR::Int64 || dt == TR::Double);
       }
 
-   if (comp()->getOption(TR_TraceCG))
-      {
-      log->printf("  arg slots: %u\n", numArgSlots32);
-      }
+   logprintf(comp()->getOption(TR_TraceCG), log, "  arg slots: %u\n", numArgSlots32);
 
    TR_ASSERT_FATAL_WITH_NODE(
       callNode,
@@ -5413,10 +5368,7 @@ J9::CodeGenerator::addInvokeBasicCallSiteImpl(
       j2iThunk = fej9->getJ2IThunk(sig, sigLen, comp());
       TR_ASSERT_FATAL_WITH_NODE(callNode, j2iThunk != NULL, "missing J2I thunk");
 
-      if (comp()->getOption(TR_TraceCG))
-         {
-         log->printf("  J2I thunk: %p\n", j2iThunk);
-         }
+      logprintf(comp()->getOption(TR_TraceCG), log, "  J2I thunk: %p\n", j2iThunk);
       }
 
    InvokeBasicCallSite site = {};

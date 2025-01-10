@@ -91,8 +91,7 @@ void J9::X86::Linkage::alignLocalObjectWithCollectedFields(uint32_t & stackIndex
    // In createStackAtlas, we align pointerSize*(localCursor->getGCMapIndex()-firstLocalGCIndex) by modifying local objects' gc indice
    // Here we align the stackIndex
    //
-   if (traceCG)
-      log->printf("\nLOCAL OBJECT ALIGNMENT: stack offset before alignment: %d,", stackIndex);
+   logprintf(traceCG, log, "\nLOCAL OBJECT ALIGNMENT: stack offset before alignment: %d,", stackIndex);
 
    // When compaction is enabled, stackIndex is calculated using only collected local refs/objects size,
    // it doesn't include the size of padding slots added by aligning collected local objects' gc indice
@@ -101,15 +100,13 @@ void J9::X86::Linkage::alignLocalObjectWithCollectedFields(uint32_t & stackIndex
       {
       uint8_t pointerSize  = self()->getProperties().getPointerSize();
       stackIndex -= pointerSize*atlas->getNumberOfPaddingSlots();
-      if (traceCG)
-         log->printf(" with padding: %d,", stackIndex);
+      logprintf(traceCG, log, " with padding: %d,", stackIndex);
       }
 
    uint32_t stackIndexBeforeAlignment = stackIndex;
    self()->alignOffset(stackIndex, localObjectAlignment);
 
-   if (traceCG)
-      log->printf(" after alignment: %d\n", stackIndex);
+   logprintf(traceCG, log, " after alignment: %d\n", stackIndex);
 
    // Update numberOfSlotsMapped in stackAtlas otherwise there will be mis-match
    // between the compile-time gc maps and the runtime gc maps
@@ -143,11 +140,9 @@ void J9::X86::Linkage::alignLocalObjectWithoutCollectedFields(uint32_t & stackIn
       return;
 
    // Align uncollected local object
-   if (traceCG)
-      log->printf("\nLOCAL OBJECT ALIGNMENT: stack offset before alignment: %d,", stackIndex);
+   logprintf(traceCG, log, "\nLOCAL OBJECT ALIGNMENT: stack offset before alignment: %d,", stackIndex);
 
    self()->alignOffset(stackIndex, localObjectAlignment);
 
-   if (traceCG)
-      log->printf(" after alignment: %d\n", stackIndex);
+   logprintf(traceCG, log, " after alignment: %d\n", stackIndex);
    }

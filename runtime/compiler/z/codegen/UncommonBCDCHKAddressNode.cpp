@@ -42,8 +42,9 @@
 void
 UncommonBCDCHKAddressNode::perform()
    {
-   if (comp()->getOption(TR_TraceCG))
-      comp()->log()->prints("Performing UncommonBCDCHKAddressNode\n");
+   OMR::Logger *log = comp()->log();
+   bool trace = comp()->getOption(TR_TraceCG);
+   logprints(trace, log, "Performing UncommonBCDCHKAddressNode\n");
 
    for(TR::TreeTop* tt = comp()->getStartTree(); tt; tt = tt->getNextTreeTop())
       {
@@ -110,8 +111,7 @@ UncommonBCDCHKAddressNode::perform()
 
             node->setAndIncChild(1, newAddressNode);
             oldAddressNode->decReferenceCount();
-            if (comp()->getOption(TR_TraceCG))
-               comp()->log()->printf("%sReplacing node %s [%p] with [%p]\n",
+            logprintf(trace, log, "%sReplacing node %s [%p] with [%p]\n",
                         OPT_DETAILS,
                         oldAddressNode->getOpCode().getName(),
                         oldAddressNode,

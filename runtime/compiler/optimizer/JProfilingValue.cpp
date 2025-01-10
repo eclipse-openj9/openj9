@@ -165,26 +165,25 @@ loadConst(TR::DataType dt)
 int32_t
 TR_JProfilingValue::perform()
    {
+   OMR::Logger *log = comp()->log();
+
    if (comp()->getProfilingMode() == JProfiling)
       {
-      if (trace())
-         comp()->log()->prints("JProfiling has been enabled for profiling compilations, run JProfilingValue\n");
+      logprints(trace(), log, "JProfiling has been enabled for profiling compilations, run JProfilingValue\n");
       }
    else if (comp()->getOption(TR_EnableJProfiling))
       {
-      if (trace())
-         comp()->log()->prints("JProfiling has been enabled, run JProfilingValue\n");
+      logprints(trace(), log, "JProfiling has been enabled, run JProfilingValue\n");
       }
    else
       {
-      if (trace())
-         comp()->log()->prints("JProfiling has been disabled, skip JProfilingValue\n");
+      logprints(trace(), log, "JProfiling has been disabled, skip JProfilingValue\n");
       return 0;
       }
 
    cleanUpAndAddProfilingCandidates();
    if (trace())
-      comp()->dumpMethodTrees(comp()->log(), "After Cleaning up Trees");
+      comp()->dumpMethodTrees(log, "After Cleaning up Trees");
    lowerCalls();
 
    if (comp()->isProfilingCompilation())
@@ -560,8 +559,7 @@ TR_JProfilingValue::addProfilingTrees(
    TR::Block *mainlineReturn = originalBlock->splitPostGRA(insertionPoint->getNextTreeTop(), cfg, true, NULL);
 
    TR::Node *origBlockGlRegDeps = originalBlock->getExit()->getNode()->getNumChildren() == 1 ? originalBlock->getExit()->getNode()->getFirstChild() : NULL;
-   if (trace)
-      log->printf("\t\t\tUsing split mainline return block = %d\n", mainlineReturn->getNumber());
+   logprintf(trace, log, "\t\t\tUsing split mainline return block = %d\n", mainlineReturn->getNumber());
    TR::Node *profilingValue = value;
    /*
     * Look if profiling value is stored into a register (In case of post GRA split) or temp slot by splitter while uncommoning.
@@ -578,8 +576,7 @@ TR_JProfilingValue::addProfilingTrees(
          break;
          }
       }
-   if (trace)
-      log->printf("\t\t\tProfiling value n%dn\n", profilingValue->getGlobalIndex());
+   logprintf(trace, log, "\t\t\tProfiling value n%dn\n", profilingValue->getGlobalIndex());
 
    TR::Block *iter = originalBlock;
    TR::TreeTop *lastBranchToMainlineReturnTT = NULL;
@@ -603,8 +600,8 @@ TR_JProfilingValue::addProfilingTrees(
             checkIfQueueForRecompilation->addChildren(&exitGlRegDeps, 1);
             }
          lastBranchToMainlineReturnTT = checkIfNeedToProfileValue;
-         if (trace)
-            log->printf("\t\t\tCheck if queued for recompilation test performed in block_%d: n%dn\n", iter->getNumber(), checkIfQueueForRecompilation->getGlobalIndex());
+         logprintf(trace, log, "\t\t\tCheck if queued for recompilation test performed in block_%d: n%dn\n",
+            iter->getNumber(), checkIfQueueForRecompilation->getGlobalIndex());
          }
       }
 
@@ -633,8 +630,7 @@ TR_JProfilingValue::addProfilingTrees(
          nullTest->addChildren(&exitGlRegDeps, 1);
          }
       lastBranchToMainlineReturnTT = nullTestTree;
-      if (trace)
-         log->printf("\t\t\tNull test performed in block_%d\n", iter->getNumber());
+      logprintf(trace, log, "\t\t\tNull test performed in block_%d\n", iter->getNumber());
       }
 
    /********************* quickTest Block *********************/
@@ -667,8 +663,7 @@ TR_JProfilingValue::addProfilingTrees(
       {
       cfg->addEdge(iter, mainlineReturn);
       }
-   if (trace)
-      log->printf("\t\t\tQuick Test to check if value is already being profiled is in block_%d\n", quickTestBlock->getNumber());
+   logprintf(trace, log, "\t\t\tQuick Test to check if value is already being profiled is in block_%d\n", quickTestBlock->getNumber());
 
    TR::Node *checkIfTableIsLockedNode = TR::Node::create(value, comp->il.opCodeForCompareGreaterOrEquals(lockType), 2, lock, TR::Node::sconst(value, 0));
    TR::Node *checkNode = TR::Node::createif(TR::ificmpeq,
@@ -688,8 +683,7 @@ TR_JProfilingValue::addProfilingTrees(
       incrementMemory(comp, counterType, effectiveAddress(counterType, counterBaseAddress, convertType(selectNode, systemType, true))));
    TR::Block *quickInc = quickTestBlock->split(incTree, cfg, false, true);
    quickInc->setIsExtensionOfPreviousBlock();
-   if (trace)
-      log->printf("\t\t\tQuick increment performed in block_%d\n", quickInc->getNumber());
+   logprintf(trace, log, "\t\t\tQuick increment performed in block_%d\n", quickInc->getNumber());
 
 
    /********************* helper call block *********************/
@@ -773,8 +767,7 @@ TR_JProfilingValue::addProfilingTrees(
          }
       else
          {
-         if (trace)
-            log->printf("\t\t\tNode n%dn needs to be stored on temp slot\n", profilingValue->getGlobalIndex());
+         logprintf(trace, log, "\t\t\tNode n%dn needs to be stored on temp slot\n", profilingValue->getGlobalIndex());
          // profiledValue is normal Node which is not referenced further. Store value to temp slot at the beginning of quick test
          TR::TreeTop *storeValue = TR::TreeTop::create(comp, quickTestBlock->getEntry(), storeNode(comp,  profilingValue, storedValueSymRef));
          }
@@ -792,8 +785,7 @@ TR_JProfilingValue::addProfilingTrees(
    TR::TreeTop *helperCallTreeTop = TR::TreeTop::create(comp, helper->getEntry(), createHelperCall(comp,
       valueChildOfHelperCall,
       TR::Node::aconst(value, table->getBaseAddress())));
-   if (trace)
-      log->printf("\t\t\tHelper call in block_%d\n", helper->getNumber());
+   logprintf(trace, log, "\t\t\tHelper call in block_%d\n", helper->getNumber());
    TR::NodeChecklist checklist(comp);
    checklist.add(value);
    TR::TreeTop *tt = quickTestBlock->getEntry(), *end = mainlineReturn->getEntry();

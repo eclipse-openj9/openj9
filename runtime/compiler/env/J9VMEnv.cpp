@@ -158,8 +158,6 @@ acquireVMaccessIfNeededInner(J9VMThread *vmThread, TR_YesNoMaybe isCompThread)
 
          //--- GC CAN INTERVENE HERE ---
 
-         // fprintf(stderr, "Have released class unload monitor temporarily\n"); fflush(stderr);
-
          // At this point we must not hold any JIT monitors that can also be accessed by the GC
          // As we don't know how the GC code will be modified in the future we will
          // scan the entire list of known monitors
@@ -179,14 +177,12 @@ acquireVMaccessIfNeededInner(J9VMThread *vmThread, TR_YesNoMaybe isCompThread)
          if (hadClassUnloadMonitor)
             {
             TR::MonitorTable::get()->readAcquireClassUnloadMonitor(compInfoPT->getCompThreadId());
-            //fprintf(stderr, "Have acquired class unload monitor again\n"); fflush(stderr);
             }
 
          // Now we can check if the GC has done some unloading or redefinition happened
          if (compInfoPT->compilationShouldBeInterrupted())
             {
             // bail out
-            // fprintf(stderr, "Released classUnloadMonitor and will throw an exception because GC unloaded classes\n"); fflush(stderr);
             //TR::MonitorTable::get()->readReleaseClassUnloadMonitor(0); // Main code should do it.
             // releaseVMAccess(vmThread);
 

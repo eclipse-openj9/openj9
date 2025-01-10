@@ -80,6 +80,9 @@ J9::Z::TreeEvaluator::asciiAndUnicodeToPackedHelper(TR::Node *node,
 
    TR::DataType sourceType = TR::NoType;
    TR::Compilation *comp = cg->comp();
+   OMR::Logger *log = comp->log();
+   bool trace = cg->traceBCDCodeGen();
+
    if (isUnicode)
       sourceType = TR::UnicodeDecimal;
    else if (isZoned)
@@ -119,9 +122,9 @@ J9::Z::TreeEvaluator::asciiAndUnicodeToPackedHelper(TR::Node *node,
    int32_t targetPrecision = pkxSourcePrecision;
    int32_t sourceEndByte = TR::DataType::getLeftMostByte(child->getDataType(), pkxSourceSize);
 
-   if (cg->traceBCDCodeGen())
-      comp->log()->printf("\tasciiAndUnicodeToPackedHelper %p : op %s, isTruncation=%s, fixedDestSize %d, targetRegPrec %d, sourcePrecision %d, sourceEndByte %d, sourceSize %d, pkuSourceSize %d\n",
-         node,node->getOpCode().getName(),isTruncation?"yes":"no",destSize,targetPrecision,sourcePrecision,sourceEndByte,childReg->getSize(),pkxSourceSize);
+   logprintf(trace, log, "\tasciiAndUnicodeToPackedHelper %p : op %s, isTruncation=%s, fixedDestSize %d, targetRegPrec %d, sourcePrecision %d, sourceEndByte %d, sourceSize %d, pkuSourceSize %d\n",
+         node, node->getOpCode().getName(), isTruncation?"yes":"no", destSize, targetPrecision,
+         sourcePrecision, sourceEndByte, childReg->getSize(), pkxSourceSize);
 
    // For PKA/PKU the 1st operand (target) size is fixed at 16 bytes and the 2nd operand (source) is variable.
    // For this reason use left, instead of right, aligned memory references so the correct alignment is done for both operands
@@ -129,8 +132,7 @@ J9::Z::TreeEvaluator::asciiAndUnicodeToPackedHelper(TR::Node *node,
    TR::MemoryReference *destMR = generateS390LeftAlignedMemoryReference(node, targetReg->getStorageReference(), cg, destSize);
    sourceMR = reuseS390LeftAlignedMemoryReference(sourceMR, child, childReg->getStorageReference(), cg, sourceEndByte);
 
-   if (cg->traceBCDCodeGen())
-      comp->log()->printf("\tgen %s with fixed dest size of %d and source size %d. Set targetRegPrec to sourcePrec (%d)\n",isUnicode?"PKU":"PKA",destSize,pkxSourceSize,sourcePrecision);
+   logprintf(trace, log, "\tgen %s with fixed dest size of %d and source size %d. Set targetRegPrec to sourcePrec (%d)\n",isUnicode?"PKU":"PKA",destSize,pkxSourceSize,sourcePrecision);
 
    generateSS1Instruction(cg, isUnicode ? TR::InstOpCode::PKU : TR::InstOpCode::PKA, node, pkxSourceSize-1, destMR, sourceMR);
 
@@ -230,6 +232,8 @@ TR::Register *
 J9::Z::TreeEvaluator::udsl2pdEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::Compilation *comp = cg->comp();
+   OMR::Logger *log = comp->log();
+   bool trace = cg->traceBCDCodeGen();
    cg->traceBCDEntry("udsl2pd",node);
    cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "PD-Op/%s", node->getOpCode().getName()),
                             1, TR::DebugCounter::Cheap);
@@ -259,9 +263,9 @@ J9::Z::TreeEvaluator::udsl2pdEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 
       bool isTruncation = childReg->getDecimalPrecision() > node->getDecimalPrecision();
 
-      if (cg->traceBCDCodeGen())
-         comp->log()->printf("\tudsl2pdEvaluator %p : op %s, isTruncation=%s, targetReg->isInit=%s, targetRegSize=%d, targetRegPrec=%d, srcRegSize=%d, srcRegPrec=%d, sourceSignEndByte=%d\n",
-            node,node->getOpCode().getName(),isTruncation?"yes":"no",targetReg->isInitialized()?"yes":"no",targetReg->getSize(),targetReg->getDecimalPrecision(),childReg->getSize(),childReg->getDecimalPrecision(),sourceSignEndByte);
+      logprintf(trace, log, "\tudsl2pdEvaluator %p : op %s, isTruncation=%s, targetReg->isInit=%s, targetRegSize=%d, targetRegPrec=%d, srcRegSize=%d, srcRegPrec=%d, sourceSignEndByte=%d\n",
+            node, node->getOpCode().getName(), isTruncation?"yes":"no", targetReg->isInitialized()?"yes":"no", targetReg->getSize(),
+            targetReg->getDecimalPrecision(), childReg->getSize(), childReg->getDecimalPrecision(), sourceSignEndByte);
 
       if (isImplicitValue)
          {
@@ -311,7 +315,8 @@ J9::Z::TreeEvaluator::udsl2pdEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       if (!isTruncation)
          targetReg->transferCleanSign(childReg);
       else
-         comp->log()->printf("\tudsx2p is a truncation (srcRegPrec %d > nodePrec %d) so do not transfer any clean sign flags\n",childReg->getDecimalPrecision(),node->getDecimalPrecision());
+         logprintf(trace, log, "\tudsx2p is a truncation (srcRegPrec %d > nodePrec %d) so do not transfer any clean sign flags\n",
+            childReg->getDecimalPrecision(), node->getDecimalPrecision());
       }
 
    //at this point targetReg is PseudoRegister that has converted Packed decimal value.
@@ -354,6 +359,8 @@ J9::Z::TreeEvaluator::pd2udslEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 
    TR::Node* childNode = node->getFirstChild();
    TR::Compilation *comp = cg->comp();
+   OMR::Logger *log = comp->log();
+   bool trace = cg->traceBCDCodeGen();
    TR_PseudoRegister *childReg = NULL;
    TR::MemoryReference *sourceMR = NULL;
    TR_StorageReference* pdStorageRef = NULL;
@@ -416,14 +423,12 @@ J9::Z::TreeEvaluator::pd2udslEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       int32_t convertedSign = TR::DataType::convertSignEncoding(childNode->getDataType(), node->getDataType(), childReg->getKnownSignCode());
       if (convertedSign == TR::DataType::getNationalSeparateMinus())
          {
-         if (cg->traceBCDCodeGen())
-            comp->log()->printf("\tchildReg has negative knownSignCode 0x%x so generate an MVI of the converted sign 0x%x\n",childReg->getKnownSignCode(),convertedSign);
+         logprintf(trace, log, "\tchildReg has negative knownSignCode 0x%x so generate an MVI of the converted sign 0x%x\n", childReg->getKnownSignCode(), convertedSign);
          generateSIInstruction(cg, TR::InstOpCode::MVI, node, generateS390LeftAlignedMemoryReference(*destMR, node, 1, cg, destSignEndByte), convertedSign);
          }
       else
          {
-         if (cg->traceBCDCodeGen())
-            comp->log()->printf("\tchildReg has positive knownSignCode 0x%x so no more codegen is needed (an MVC of 002B was already done)\n", childReg->getKnownSignCode());
+         logprintf(trace, log, "\tchildReg has positive knownSignCode 0x%x so no more codegen is needed (an MVC of 002B was already done)\n", childReg->getKnownSignCode());
          TR_ASSERT(convertedSign == TR::DataType::getNationalSeparatePlus(), "converted sign should be nationalSeparatePlusSign of 0x%x and not 0x%x\n", TR::DataType::getNationalSeparatePlus(), convertedSign);
          }
       targetReg->setKnownSignCode(convertedSign);
@@ -562,6 +567,8 @@ J9::Z::TreeEvaluator::packedToUnicodeHelper(TR::Node *node,
    TR_StorageReference *hint = node->getStorageReferenceHint();
    TR_StorageReference *targetStorageReference = NULL;
    TR::Compilation *comp = cg->comp();
+   OMR::Logger *log = comp->log();
+   bool trace = cg->traceBCDCodeGen();
 
    int32_t destSize = node->getStorageReferenceSize(comp);
 
@@ -590,9 +597,8 @@ J9::Z::TreeEvaluator::packedToUnicodeHelper(TR::Node *node,
    int32_t unpkuDestSize = TR::DataType::getSizeFromBCDPrecision(TR::UnicodeDecimal, unpkuDestPrecision);
    int32_t unpkuDestEndByte = TR::DataType::getLeftMostByte(node->getDataType(), unpkuDestSize);
 
-   if (cg->traceBCDCodeGen())
-      comp->log()->printf("\tpackedToUnicodeHelper %p : op %s, targetRegSize %d, targetRegPrec %d, srcRegSize %d, srcRegPrec %d\n",
-         node,node->getOpCode().getName(),targetReg->getSize(),targetReg->getDecimalPrecision(),childReg->getSize(),childReg->getDecimalPrecision());
+   logprintf(trace, log, "\tpackedToUnicodeHelper %p : op %s, targetRegSize %d, targetRegPrec %d, srcRegSize %d, srcRegPrec %d\n",
+         node, node->getOpCode().getName(), targetReg->getSize(), targetReg->getDecimalPrecision(), childReg->getSize(), childReg->getDecimalPrecision());
 
    // For UNPKU the 1st operand (target-unicode) size is variable and the 2nd operand (source-packed) is fixed at 16 bytes.
    // For this reason use left, instead of right, aligned memory references so the correct alignment is done for both operands
@@ -618,8 +624,7 @@ J9::Z::TreeEvaluator::packedToUnicodeHelper(TR::Node *node,
 
       if (isImplicitValue)
          {
-         if (cg->traceBCDCodeGen())
-            comp->log()->printf("\tgen 2 MVIs of unicode sign with size of %d and destSignEndByte of %d\n", TR::DataType::getUnicodeSignSize(),destSignEndByte);
+         logprintf(trace, log, "\tgen 2 MVIs of unicode sign with size of %d and destSignEndByte of %d\n", TR::DataType::getUnicodeSignSize(), destSignEndByte);
          generateSIInstruction(cg, TR::InstOpCode::MVI, node,
                                generateS390LeftAlignedMemoryReference(*destMR, node, 0, cg, destSignEndByte), 0x00);
          generateSIInstruction(cg, TR::InstOpCode::MVI, node,
@@ -629,8 +634,7 @@ J9::Z::TreeEvaluator::packedToUnicodeHelper(TR::Node *node,
          {
          TR::Node *signNode = node->getSecondChild();
          TR::MemoryReference *signMR = generateS390ConstantAreaMemoryReference(cg, signNode, true); // forSS=true
-         if (cg->traceBCDCodeGen())
-            comp->log()->printf("\tgen MVC of unicode sign with size of %d and destSignEndByte of %d\n", TR::DataType::getUnicodeSignSize(),destSignEndByte);
+         logprintf(trace, log, "\tgen MVC of unicode sign with size of %d and destSignEndByte of %d\n", TR::DataType::getUnicodeSignSize(), destSignEndByte);
          generateSS1Instruction(cg, TR::InstOpCode::MVC, node,
                                 TR::DataType::getUnicodeSignSize()-1,
                                 generateS390LeftAlignedMemoryReference(*destMR, node, 0, cg, destSignEndByte),
@@ -646,8 +650,7 @@ J9::Z::TreeEvaluator::packedToUnicodeHelper(TR::Node *node,
          }
       }
 
-   if (cg->traceBCDCodeGen())
-      comp->log()->printf("\tgen UNPKU: unpkuDestSize %d, destEndByte %d and fixed source size %d\n",unpkuDestSize,unpkuDestEndByte,fixedSourceSize);
+   logprintf(trace, log, "\tgen UNPKU: unpkuDestSize %d, destEndByte %d and fixed source size %d\n", unpkuDestSize, unpkuDestEndByte, fixedSourceSize);
 
    generateSS1Instruction(cg, TR::InstOpCode::UNPKU, node,
                           unpkuDestSize-1,
@@ -669,6 +672,8 @@ J9::Z::TreeEvaluator::zonedToZonedSeparateSignHelper(TR::Node *node, TR_PseudoRe
    int32_t sign = 0;
    TR::Node *signCodeNode = NULL;
    TR::Compilation *comp = cg->comp();
+   OMR::Logger *log = comp->log();
+   bool trace = cg->traceBCDCodeGen();
 
    if (isSetSign)
       {
@@ -684,16 +689,15 @@ J9::Z::TreeEvaluator::zonedToZonedSeparateSignHelper(TR::Node *node, TR_PseudoRe
    else if (node->getDecimalPrecision() > targetReg->getDecimalPrecision())
       digitsToClear = node->getDecimalPrecision()-targetReg->getDecimalPrecision();
 
-   if (cg->traceBCDCodeGen())
-      comp->log()->printf("\tzonedToZonedSeparateSignHelper %p : op %s, isTruncation=%s, targetReg->knownSign=0x%x, trgSignIsZone=%s, targetReg->size=%d, targetRegPrec=%d, , digitsToClear=%d, (isSetSign=%s, sign 0x%x)\n",
-         node,node->getOpCode().getName(),isTruncation?"yes":"no",targetReg->hasKnownOrAssumedSignCode() ? targetReg->getKnownOrAssumedSignCode() : 0,targetReg->knownOrAssumedSignIsZone()?"yes":"no",
-         targetReg->getSize(),targetReg->getDecimalPrecision(),digitsToClear,isSetSign?"yes":"no",sign);
+   logprintf(trace, log, "\tzonedToZonedSeparateSignHelper %p : op %s, isTruncation=%s, targetReg->knownSign=0x%x, trgSignIsZone=%s, targetReg->size=%d, targetRegPrec=%d, , digitsToClear=%d, (isSetSign=%s, sign 0x%x)\n",
+         node, node->getOpCode().getName(), isTruncation?"yes":"no", targetReg->hasKnownOrAssumedSignCode() ? targetReg->getKnownOrAssumedSignCode() : 0,
+         targetReg->knownOrAssumedSignIsZone()?"yes":"no", targetReg->getSize(), targetReg->getDecimalPrecision(), digitsToClear, isSetSign?"yes":"no", sign);
 
    TR_ASSERT(!isTruncation,"a zd2zdsxs operation should not truncate\n");
    if (digitsToClear > 0)
       {
-      if (cg->traceBCDCodeGen())
-         comp->log()->printf("\tdigitsToClear > 0 (%d) so set upper bytes to 0x%x and set targetRegPrec to nodePrec %d\n",digitsToClear,TR::DataType::getZonedZeroCode(),node->getDecimalPrecision());
+      logprintf(trace, log, "\tdigitsToClear > 0 (%d) so set upper bytes to 0x%x and set targetRegPrec to nodePrec %d\n",
+            digitsToClear, TR::DataType::getZonedZeroCode(), node->getDecimalPrecision());
       int32_t endByte = isDestTrailingSign ? node->getSize() : node->getSize() - TR::DataType::getZonedSignSize();
       cg->genZeroLeftMostZonedBytes(node, targetReg, endByte, digitsToClear, generateS390LeftAlignedMemoryReference(*destMR, node, 0, cg, endByte));
       targetReg->setDecimalPrecision(node->getDecimalPrecision());
@@ -712,8 +716,7 @@ J9::Z::TreeEvaluator::zonedToZonedSeparateSignHelper(TR::Node *node, TR_PseudoRe
       int32_t signToSet = isSetSign ? sign :
                                       TR::DataType::convertSignEncoding(TR::ZonedDecimal, node->getDataType(), srcReg->getKnownSignCode());
       bool srcSignAlreadyZone = srcReg->knownOrAssumedSignIsZone(); // || targetReg->temporaryKnownSignCodeIs(TR::DataType::getZonedValue());
-      if (cg->traceBCDCodeGen())
-         comp->log()->printf("\t%s case so gen MVI to set target sign to 0x%x (from source sign 0x%x) and do %sgen OI because srcReg->knownOrAssumedSignIsZone() = %s\n",
+      logprintf(trace, log, "\t%s case so gen MVI to set target sign to 0x%x (from source sign 0x%x) and do %sgen OI because srcReg->knownOrAssumedSignIsZone() = %s\n",
             isSetSign?"isSetSign=true":"srcReg->hasKnownSignCode",
             signToSet,
             isSetSign?sign:srcReg->getKnownSignCode(),
@@ -859,6 +862,9 @@ J9::Z::TreeEvaluator::zonedSeparateSignToPackedOrZonedHelper(TR::Node *node, TR_
    bool isSrcTrailingSign = (srcNode->getDataType() == TR::ZonedDecimalSignTrailingSeparate);
    int32_t sourceSignEndByte = isSrcTrailingSign ? TR::DataType::getZonedSignSize() : srcReg->getSize();
    TR::Compilation *comp = cg->comp();
+   OMR::Logger *log = comp->log();
+   bool trace = cg->traceBCDCodeGen();
+
    if (node->getOpCode().isSetSign())
       {
       TR::Node *signCodeNode = node->getSetSignValueNode();
@@ -867,8 +873,7 @@ J9::Z::TreeEvaluator::zonedSeparateSignToPackedOrZonedHelper(TR::Node *node, TR_
       if (sign == TR::DataType::getIgnoredSignCode())
          {
          // just check for an invalid sign but do not set anything in this case
-         if (cg->traceBCDCodeGen())
-            comp->log()->printf("\tzonedSeparateSignToPackedOrZonedHelper %p : op %s, ignoredSetSign=true case, sign 0x%x\n",node,node->getOpCode().getName(),sign);
+         logprintf(trace, log, "\tzonedSeparateSignToPackedOrZonedHelper %p : op %s, ignoredSetSign=true case, sign 0x%x\n", node, node->getOpCode().getName(), sign);
 
          TR::LabelSymbol * returnLabel     = generateLabelSymbol(cg);
          TR::LabelSymbol * callLabel       = generateLabelSymbol(cg);
@@ -886,9 +891,9 @@ J9::Z::TreeEvaluator::zonedSeparateSignToPackedOrZonedHelper(TR::Node *node, TR_
          generateS390LabelInstruction(cg, TR::InstOpCode::label, node, cFlowRegionStart, deps);
          cFlowRegionStart->setStartInternalControlFlow();
 
-         if (cg->traceBCDCodeGen())
-            comp->log()->printf("\t\ttargetReg->isInit=%s, targetRegSize=%d, targetRegPrec=%d, srcRegSize=%d, srcRegPrec=%d, sourceSignEndByte=%d\n",
-               targetReg->isInitialized()?"yes":"no",targetReg->getSize(),targetReg->getDecimalPrecision(),srcReg->getSize(),srcReg->getDecimalPrecision(),sourceSignEndByte);
+         logprintf(trace, log, "\t\ttargetReg->isInit=%s, targetRegSize=%d, targetRegPrec=%d, srcRegSize=%d, srcRegPrec=%d, sourceSignEndByte=%d\n",
+               targetReg->isInitialized()?"yes":"no", targetReg->getSize(), targetReg->getDecimalPrecision(),
+               srcReg->getSize(), srcReg->getDecimalPrecision(), sourceSignEndByte);
 
          generateSIInstruction(cg, TR::InstOpCode::CLI, node, generateS390LeftAlignedMemoryReference(*sourceMR, node, 0, cg, sourceSignEndByte), TR::DataType::getZonedSeparatePlus());
          generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK8, node, cflowRegionEnd);
@@ -901,8 +906,7 @@ J9::Z::TreeEvaluator::zonedSeparateSignToPackedOrZonedHelper(TR::Node *node, TR_
          }
       else
          {
-         if (cg->traceBCDCodeGen())
-            comp->log()->printf("\tzonedSeparateSignToPackedOrZonedHelper %p : op %s, setSign=true case, sign 0x%x\n",node,node->getOpCode().getName(),sign);
+         logprintf(trace, log, "\tzonedSeparateSignToPackedOrZonedHelper %p : op %s, setSign=true case, sign 0x%x\n", node, node->getOpCode().getName(), sign);
          cg->genSignCodeSetting(node, targetReg, targetReg->getSize(), generateS390RightAlignedMemoryReference(*destMR, node, 0, cg), sign, targetReg, 0, false /* !numericNibbleIsZero */);
          }
       }
@@ -931,9 +935,9 @@ J9::Z::TreeEvaluator::zonedSeparateSignToPackedOrZonedHelper(TR::Node *node, TR_
       generateS390LabelInstruction(cg, TR::InstOpCode::label, node, cFlowRegionStart, deps);
       cFlowRegionStart->setStartInternalControlFlow();
 
-      if (cg->traceBCDCodeGen())
-         comp->log()->printf("\tzonedSeparateSignToPackedOrZonedHelper %p : op %s, targetReg->isInit=%s, targetRegSize=%d, targetRegPrec=%d, srcRegSize=%d, srcRegPrec=%d, sourceSignEndByte=%d\n",
-            node,node->getOpCode().getName(),targetReg->isInitialized()?"yes":"no",targetReg->getSize(),targetReg->getDecimalPrecision(),srcReg->getSize(),srcReg->getDecimalPrecision(),sourceSignEndByte);
+      logprintf(trace, log, "\tzonedSeparateSignToPackedOrZonedHelper %p : op %s, targetReg->isInit=%s, targetRegSize=%d, targetRegPrec=%d, srcRegSize=%d, srcRegPrec=%d, sourceSignEndByte=%d\n",
+            node, node->getOpCode().getName(), targetReg->isInitialized()?"yes":"no", targetReg->getSize(), targetReg->getDecimalPrecision(),
+            srcReg->getSize(), srcReg->getDecimalPrecision(), sourceSignEndByte);
 
         // DAA library assumes all BCD types are positive, unless an explicit negative sign code is present
       generateSIInstruction(cg, TR::InstOpCode::CLI, node, generateS390LeftAlignedMemoryReference(*sourceMR, node, 0, cg, sourceSignEndByte), TR::DataType::getZonedSeparateMinus());
@@ -998,6 +1002,8 @@ J9::Z::TreeEvaluator::zdsls2zdEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    int32_t sign = 0;
    TR::Node *signCodeNode = NULL;
    TR::Compilation *comp = cg->comp();
+   OMR::Logger *log = comp->log();
+   bool trace = cg->traceBCDCodeGen();
    if (isSetSign)
       {
       signCodeNode = node->getSecondChild();
@@ -1033,10 +1039,11 @@ J9::Z::TreeEvaluator::zdsls2zdEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
    targetReg->setDecimalPrecision(targetPrecision);
    bool isInitialized = targetReg->isInitialized();
-   if (cg->traceBCDCodeGen())
-      comp->log()->printf("\tzdsls2zdEvaluator %p : op %s, isInitialized=%s, targetRegSize=%d, targetRegPrec=%d, srcRegSize=%d, srcRegPrec=%d, isEffectiveNop=%s (isSetSign %s, sign 0x%x)\n",
-         node,node->getOpCode().getName(),isInitialized?"yes":"no",
-            targetReg->getSize(),targetReg->getDecimalPrecision(),srcReg->getSize(),srcReg->getDecimalPrecision(),isEffectiveNop?"yes":"no",isSetSign?"yes":"no",sign);
+
+   logprintf(trace, log, "\tzdsls2zdEvaluator %p : op %s, isInitialized=%s, targetRegSize=%d, targetRegPrec=%d, srcRegSize=%d, srcRegPrec=%d, isEffectiveNop=%s (isSetSign %s, sign 0x%x)\n",
+         node, node->getOpCode().getName(), isInitialized?"yes":"no",
+         targetReg->getSize(), targetReg->getDecimalPrecision(), srcReg->getSize(), srcReg->getDecimalPrecision(),
+         isEffectiveNop?"yes":"no", isSetSign?"yes":"no", sign);
 
    if (!isEffectiveNop)
       {
@@ -1044,8 +1051,7 @@ J9::Z::TreeEvaluator::zdsls2zdEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          {
          int32_t mvcSize = targetReg->getDecimalPrecision();
          int32_t srcEndByte = isSrcTrailingSign ? srcReg->getSize() : srcReg->getSize() - TR::DataType::getZonedSignSize();
-         if (cg->traceBCDCodeGen())
-            comp->log()->printf("\tisInit=false so gen MVC to init with size=%d and sourceOffset=%d, srcEndByte=%d\n",mvcSize,sourceOffset,srcEndByte);
+         logprintf(trace, log, "\tisInit=false so gen MVC to init with size=%d and sourceOffset=%d, srcEndByte=%d\n", mvcSize, sourceOffset, srcEndByte);
          generateSS1Instruction(cg, TR::InstOpCode::MVC, node,
                                 mvcSize-1,
                                 generateS390RightAlignedMemoryReference(*destMR, node, 0, cg),
@@ -1066,16 +1072,14 @@ J9::Z::TreeEvaluator::zdsls2zdEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       if (isEffectiveNop)
          {
          targetReg->addToRightAlignedIgnoredBytes(TR::DataType::getZonedSignSize());
-         if (cg->traceBCDCodeGen())
-            comp->log()->printf("\tisSrcTrailingSign=true and isEffectiveNop=true (zdsls2zd) : increment targetReg %s ignoredBytes %d -> %d (by the TR::DataType::getZonedSignSize())\n",
-               cg->getDebug()->getName(targetReg),targetReg->getRightAlignedIgnoredBytes() - TR::DataType::getZonedSignSize(),targetReg->getRightAlignedIgnoredBytes());
+         logprintf(trace, log, "\tisSrcTrailingSign=true and isEffectiveNop=true (zdsls2zd) : increment targetReg %s ignoredBytes %d -> %d (by the TR::DataType::getZonedSignSize())\n",
+               cg->getDebug()->getName(targetReg), targetReg->getRightAlignedIgnoredBytes() - TR::DataType::getZonedSignSize(), targetReg->getRightAlignedIgnoredBytes());
          }
       else if (isInitialized)
          {
          targetReg->addToRightAlignedDeadBytes(TR::DataType::getZonedSignSize());
-         if (cg->traceBCDCodeGen())
-            comp->log()->printf("\tisSrcTrailingSign=true and isInitialized=true (zdsls2zd) : increment targetReg %s deadBytes %d -> %d (by the TR::DataType::getZonedSignSize())\n",
-               cg->getDebug()->getName(targetReg),targetReg->getRightAlignedDeadBytes() - TR::DataType::getZonedSignSize(),targetReg->getRightAlignedDeadBytes());
+         logprintf(trace, log, "\tisSrcTrailingSign=true and isInitialized=true (zdsls2zd) : increment targetReg %s deadBytes %d -> %d (by the TR::DataType::getZonedSignSize())\n",
+               cg->getDebug()->getName(targetReg), targetReg->getRightAlignedDeadBytes() - TR::DataType::getZonedSignSize(), targetReg->getRightAlignedDeadBytes());
          }
       }
 
@@ -1095,6 +1099,8 @@ J9::Z::TreeEvaluator::zd2zdslsEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
    cg->traceBCDEntry("zd2zdsls",node);
    TR::Compilation *comp = cg->comp();
+   OMR::Logger *log = comp->log();
+   bool trace = cg->traceBCDCodeGen();
    TR::Node *srcNode = node->getFirstChild();
    TR_PseudoRegister *srcReg = cg->evaluateBCDNode(srcNode);
 
@@ -1106,23 +1112,20 @@ J9::Z::TreeEvaluator::zd2zdslsEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
    bool isTrailingSign = (node->getDataType() == TR::ZonedDecimalSignTrailingSeparate);
 
-   if (cg->traceBCDCodeGen())
-      comp->log()->printf("\tzd2zdslsEvaluator %p : op %s, targetReg->isInit=%s, targetRegSize=%d, targetRegPrec=%d\n",
-         node,node->getOpCode().getName(),targetReg->isInitialized()?"yes":"no",targetReg->getSize(),targetReg->getDecimalPrecision());
+   logprintf(trace, log, "\tzd2zdslsEvaluator %p : op %s, targetReg->isInit=%s, targetRegSize=%d, targetRegPrec=%d\n",
+         node, node->getOpCode().getName(), targetReg->isInitialized()?"yes":"no", targetReg->getSize(), targetReg->getDecimalPrecision());
 
    bool isTruncation = node->getDecimalPrecision() < srcReg->getDecimalPrecision();
    TR_ASSERT( !isTruncation,"a zd2zdsxs operation should not truncate\n");
 
-   if (cg->traceBCDCodeGen())
-      comp->log()->printf("\tset targetReg->prec to srcReg->prec %d\n",srcReg->getDecimalPrecision());
+   logprintf(trace, log, "\tset targetReg->prec to srcReg->prec %d\n", srcReg->getDecimalPrecision());
    targetReg->setDecimalPrecision(srcReg->getDecimalPrecision());
 
    // the (targetReg->isInitialized() && isTrailingSign) case below is needed to move the initialized data left by 1 byte to make room for the trailing separate sign code
    if (!targetReg->isInitialized() || (targetReg->isInitialized() && isTrailingSign))
       {
       int32_t mvcSize = srcReg->getSize();
-      if (cg->traceBCDCodeGen())
-         comp->log()->printf("\t%s so gen MVC to init with size %d\n",!targetReg->isInitialized()?"isInit=false":"isInit=true and isTrailingSign=true", mvcSize);
+      logprintf(trace, log, "\t%s so gen MVC to init with size %d\n", !targetReg->isInitialized()?"isInit=false":"isInit=true and isTrailingSign=true", mvcSize);
       generateSS1Instruction(cg, TR::InstOpCode::MVC, node,
                              mvcSize-1,
                              generateS390LeftAlignedMemoryReference(*destMR, node, 0, cg, isTrailingSign ? srcReg->getSize() + TR::DataType::getZonedSignSize() : srcReg->getSize()),
@@ -1154,6 +1157,8 @@ J9::Z::TreeEvaluator::zdsle2zdEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    int32_t sign = 0;
    TR::Node *signCodeNode = NULL;
    TR::Compilation *comp = cg->comp();
+   OMR::Logger *log = comp->log();
+   bool trace = cg->traceBCDCodeGen();
    if (isSetSign)
       {
       signCodeNode = node->getSecondChild();
@@ -1176,9 +1181,9 @@ J9::Z::TreeEvaluator::zdsle2zdEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    bool isNondestructiveNop = isEffectiveNop && !isTruncation;
    bool doWidening = true;
 
-   if (cg->traceBCDCodeGen())
-      comp->log()->printf("\tzdsle2zdEvaluator %p : op %s, isEffectiveNop=%s, isTruncation=%s, srcSignIsZone=%s, srcReg->getSize()=%d, (isSetSign=%s, sign 0x%x)\n",
-         node,node->getOpCode().getName(),isEffectiveNop?"yes":"no",isTruncation?"yes":"no",srcReg->knownOrAssumedSignIsZone()?"yes":"no",srcReg->getSize(),isSetSign?"yes":"no",sign);
+   logprintf(trace, log, "\tzdsle2zdEvaluator %p : op %s, isEffectiveNop=%s, isTruncation=%s, srcSignIsZone=%s, srcReg->getSize()=%d, (isSetSign=%s, sign 0x%x)\n",
+         node, node->getOpCode().getName(), isEffectiveNop?"yes":"no", isTruncation?"yes":"no",
+         srcReg->knownOrAssumedSignIsZone()?"yes":"no", srcReg->getSize(), isSetSign?"yes":"no", sign);
 
    TR::MemoryReference *sourceMR = NULL;
    TR_PseudoRegister *targetReg = NULL;
@@ -1189,8 +1194,8 @@ J9::Z::TreeEvaluator::zdsle2zdEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       {
       sourceMR = generateS390RightAlignedMemoryReference(srcNode, srcReg->getStorageReference(), cg);
       targetReg = evaluateBCDValueModifyingOperand(node, true, sourceMR, cg); // initTarget=true
-      if (cg->traceBCDCodeGen())
-         comp->log()->printf("\tperform an explicit widening (digitsToClear=%d, doWidening=yes, isEffectiveNop=no) set targetReg->prec to node->prec %d\n",digitsToClear,node->getDecimalPrecision());
+      logprintf(trace, log, "\tperform an explicit widening (digitsToClear=%d, doWidening=yes, isEffectiveNop=no) set targetReg->prec to node->prec %d\n",
+            digitsToClear, node->getDecimalPrecision());
       targetReg->setDecimalPrecision(node->getDecimalPrecision());
       }
    else
@@ -1199,9 +1204,8 @@ J9::Z::TreeEvaluator::zdsle2zdEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          sourceMR = generateS390RightAlignedMemoryReference(srcNode, srcReg->getStorageReference(), cg);
       targetReg = evaluateBCDSignModifyingOperand(node, isEffectiveNop, isNondestructiveNop, true /*initTarget*/, sourceMR, cg);
       int32_t targetPrecision = isTruncation ? node->getDecimalPrecision() : srcReg->getDecimalPrecision();
-      if (cg->traceBCDCodeGen())
-         comp->log()->printf("\tdo not perform an explicit widening (set digitsToClear=%d->0, doWidening=%s, isEffectiveNop=%s) set targetReg->prec to %d\n",
-            digitsToClear,doWidening?"yes":"no",isEffectiveNop ?"yes":"no",targetPrecision);
+      logprintf(trace, log, "\tdo not perform an explicit widening (set digitsToClear=%d->0, doWidening=%s, isEffectiveNop=%s) set targetReg->prec to %d\n",
+            digitsToClear, doWidening?"yes":"no", isEffectiveNop ?"yes":"no", targetPrecision);
       digitsToClear = 0;
       targetReg->setDecimalPrecision(targetPrecision);
       }
@@ -1215,7 +1219,7 @@ J9::Z::TreeEvaluator::zdsle2zdEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          {
          if (sign == TR::DataType::getIgnoredSignCode())
             {
-            if (cg->traceBCDCodeGen()) comp->log()->printf("\tisSetSign=true with ignored sign=0x%x\n",sign);
+            logprintf(trace, log, "\tisSetSign=true with ignored sign=0x%x\n", sign);
             if (isTrailingDst) // zdsle2zd
                {
                if (srcReg->getSize() == 1)
@@ -1235,7 +1239,7 @@ J9::Z::TreeEvaluator::zdsle2zdEvaluator(TR::Node * node, TR::CodeGenerator * cg)
             }
          else
             {
-            if (cg->traceBCDCodeGen()) comp->log()->printf("\tisSetSign=true : call genSignCodeSetting with sign=0x%x\n",sign);
+            logprintf(trace, log, "\tisSetSign=true : call genSignCodeSetting with sign=0x%x\n", sign);
             bool numericNibbleIsZero = false;
             if (isTrailingDst)  // zdsle2zd
                {
@@ -1272,7 +1276,7 @@ J9::Z::TreeEvaluator::zdsle2zdEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
       if (!isSetSign)
          {
-         if (cg->traceBCDCodeGen()) comp->log()->printf("\tisSetSign=false : generate MVZ of size 1 to transfer left aligned zdsle sign to right aligned zd sign position\n");
+         logprints(trace, log, "\tisSetSign=false : generate MVZ of size 1 to transfer left aligned zdsle sign to right aligned zd sign position\n");
 
          sourceMR = isTrailingSrc ? reuseS390RightAlignedMemoryReference(sourceMR, srcNode, srcReg->getStorageReference(), cg) :
                                     reuseS390LeftAlignedMemoryReference(sourceMR, srcNode, srcReg->getStorageReference(), cg, srcReg->getSize());
@@ -1290,13 +1294,12 @@ J9::Z::TreeEvaluator::zdsle2zdEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       bool srcSignResetRedundant = srcReg->knownOrAssumedSignIsZone() || (isLeadingSrc && isTruncation);
       bool srcSignResetIllegal = targetReg->getSize() == 1;
 
-      if (cg->traceBCDCodeGen())
-         comp->log()->printf("\tcheck before resetting srcSignCode: srcSignWillBeIgnored %s, srcSignResetRedundant %s, srcSignResetIllegal %s\n",
-            srcSignWillBeIgnored?"yes":"no",srcSignResetRedundant?"yes":"no",srcSignResetIllegal?"yes":"no");
+      logprintf(trace, log, "\tcheck before resetting srcSignCode: srcSignWillBeIgnored %s, srcSignResetRedundant %s, srcSignResetIllegal %s\n",
+            srcSignWillBeIgnored?"yes":"no", srcSignResetRedundant?"yes":"no", srcSignResetIllegal?"yes":"no");
       if (!(srcSignWillBeIgnored || srcSignResetRedundant || srcSignResetIllegal))
          {
             {
-            if (cg->traceBCDCodeGen()) comp->log()->printf("\tgenerate OI 0xF0 to force %s-aligned high nibble to 0xF\n",isTrailingSrc?"right":"left");
+            logprintf(trace, log, "\tgenerate OI 0xF0 to force %s-aligned high nibble to 0xF\n", isTrailingSrc?"right":"left");
             generateSIInstruction(cg, TR::InstOpCode::OI, node, generateS390LeftAlignedMemoryReference(*destMR, node, 0, cg, isTrailingSrc ? 1 : targetReg->getSize()), TR::DataType::getZonedCode());
             }
          }
@@ -1320,6 +1323,8 @@ J9::Z::TreeEvaluator::zonedToPackedHelper(TR::Node *node, TR_PseudoRegister *tar
    int32_t destPrecision = 0;
    int32_t destSize = 0;
    TR::Compilation *comp = cg->comp();
+   OMR::Logger *log = comp->log();
+   bool trace = cg->traceBCDCodeGen();
    if (hint)
       {
       TR_ASSERT( !childReg->isInitialized() || hint != childReg->getStorageReference(),"bcd conversion operands will overlap\n");
@@ -1340,15 +1345,13 @@ J9::Z::TreeEvaluator::zonedToPackedHelper(TR::Node *node, TR_PseudoRegister *tar
    bool isTruncation = false;
    int32_t sourceOffsetForLeftAlignment = 0;
 
-   if (cg->traceBCDCodeGen())
-      comp->log()->printf("\tzonedToPackedHelper %p : op %s, destPrecision %d, destSize %d, sourcePrecision %d, sourceSize %d\n",
-         node,node->getOpCode().getName(),destPrecision,destSize,sourcePrecision,childReg->getSize());
+   logprintf(trace, log, "\tzonedToPackedHelper %p : op %s, destPrecision %d, destSize %d, sourcePrecision %d, sourceSize %d\n",
+         node, node->getOpCode().getName(), destPrecision, destSize, sourcePrecision, childReg->getSize());
 
    if (node->getDecimalPrecision() < sourcePrecision)
       {
-      if (cg->traceBCDCodeGen())
-         comp->log()->printf("\tnodePrec <= sourcePrecision (%d <= %d) so set sourcePrecision=nodePrec=%d,isTruncation=true,sourceOffsetForLeftAlignment=%d\n",
-                     node->getDecimalPrecision(),sourcePrecision,node->getDecimalPrecision(),sourcePrecision - node->getDecimalPrecision());
+      logprintf(trace, log, "\tnodePrec <= sourcePrecision (%d <= %d) so set sourcePrecision=nodePrec=%d,isTruncation=true,sourceOffsetForLeftAlignment=%d\n",
+          node->getDecimalPrecision(), sourcePrecision, node->getDecimalPrecision(), sourcePrecision - node->getDecimalPrecision());
       sourceOffsetForLeftAlignment = sourcePrecision - node->getDecimalPrecision();
       sourcePrecision = node->getDecimalPrecision();
       isTruncation = true;
@@ -1357,16 +1360,14 @@ J9::Z::TreeEvaluator::zonedToPackedHelper(TR::Node *node, TR_PseudoRegister *tar
    TR::MemoryReference *destMR = NULL;
    if (destSize > 16)
       {
-      if (cg->traceBCDCodeGen())
-         comp->log()->printf("\tdestSize %d > 16 so reduce destSize to 16 and destPrecision to 31 for PACK encoding and clear top %d byte(s)\n",destSize,(destSize-16));
+      logprintf(trace, log, "\tdestSize %d > 16 so reduce destSize to 16 and destPrecision to 31 for PACK encoding and clear top %d byte(s)\n", destSize, (destSize-16));
       destMR = generateS390RightAlignedMemoryReference(node, targetStorageReference, cg);
       cg->genZeroLeftMostPackedDigits(node, targetReg, destSize, (destSize-16)*2, destMR);
       destSize = 16;
       destPrecision = 31;
       }
 
-   if (cg->traceBCDCodeGen())
-      comp->log()->printf("\tsetting targetReg->prec to sourcePrecision %d\n",sourcePrecision);
+   logprintf(trace, log, "\tsetting targetReg->prec to sourcePrecision %d\n", sourcePrecision);
    targetReg->setDecimalPrecision(sourcePrecision);
 
    // skip over trailing sign for the unpack
@@ -1376,8 +1377,8 @@ J9::Z::TreeEvaluator::zonedToPackedHelper(TR::Node *node, TR_PseudoRegister *tar
 
    if (sourcePrecision <= 16)
       {
-      if (cg->traceBCDCodeGen())
-         comp->log()->printf("\tsourcePrecision %d <= 16 so generate a single PACK destSize %d, sourcePrecision %d, sourceEndByte %d\n",sourcePrecision,destSize,sourcePrecision,sourceEndByte);
+      logprintf(trace, log, "\tsourcePrecision %d <= 16 so generate a single PACK destSize %d, sourcePrecision %d, sourceEndByte %d\n",
+            sourcePrecision, destSize, sourcePrecision, sourceEndByte);
       destMR = reuseS390RightAlignedMemoryReference(destMR, node, targetStorageReference, cg);
       generateSS2Instruction(cg, TR::InstOpCode::PACK, node,
                              destSize-1,
@@ -1390,12 +1391,12 @@ J9::Z::TreeEvaluator::zonedToPackedHelper(TR::Node *node, TR_PseudoRegister *tar
       }
    else if (sourcePrecision >= 17 && sourcePrecision <= 31)
       {
-      if (cg->traceBCDCodeGen())
+      if (trace)
          {
          if (sourcePrecision >= 17 && sourcePrecision <= 30)
-            comp->log()->printf("\tsourcePrecision 17 <= %d <= 30 so generate two PACKs with sourceEndByte %d\n",sourcePrecision,sourceEndByte);
+            log->printf("\tsourcePrecision 17 <= %d <= 30 so generate two PACKs with sourceEndByte %d\n", sourcePrecision, sourceEndByte);
          else
-            comp->log()->printf("\tsourcePrecision == 31  so generate three PACKs with sourceEndByte %d\n",sourceEndByte);
+            log->printf("\tsourcePrecision == 31  so generate three PACKs with sourceEndByte %d\n", sourceEndByte);
          }
       bool needsThirdPack = false;
       if (sourcePrecision == 31)
@@ -1403,21 +1404,18 @@ J9::Z::TreeEvaluator::zonedToPackedHelper(TR::Node *node, TR_PseudoRegister *tar
          sourcePrecision = 29;   // The first two PACKs for the sourcePrecision=31 case are the same as for the sourcePrecision=29 case
          destPrecision = 29;
          needsThirdPack = true;
-         if (cg->traceBCDCodeGen())
-            comp->log()->printf("\tsourcePrecision == 31 so reduce sourcePrecision and destPrecision to 29 and update sourceEndByte to %d\n",sourceEndByte);
+         logprintf(trace, log, "\tsourcePrecision == 31 so reduce sourcePrecision and destPrecision to 29 and update sourceEndByte to %d\n", sourceEndByte);
          }
 
-      if (cg->traceBCDCodeGen())
-         comp->log()->printf("x^x : found large packed/zoned conv -- node %s (%p) prec %d, child %s (%p) prec %d (three=%s)\n",
-            node->getOpCode().getName(),node,destPrecision,
-            child->getOpCode().getName(),child,sourcePrecision,needsThirdPack?"yes":"no");
+      logprintf(trace, log, "x^x : found large packed/zoned conv -- node %s (%p) prec %d, child %s (%p) prec %d (three=%s)\n",
+            node->getOpCode().getName(), node, destPrecision,
+            child->getOpCode().getName(), child, sourcePrecision, needsThirdPack?"yes":"no");
 
       destMR = reuseS390LeftAlignedMemoryReference(destMR, node, targetStorageReference, cg, destSize);
       sourceMR = generateS390LeftAlignedMemoryReference(*sourceMR, node, 0, cg, sourceEndByte);
       int32_t pack1SourceSize = sourcePrecision-14;
       int32_t pack1DestSize = TR::DataType::getSizeFromBCDPrecision(node->getDataType(), destPrecision-14);
-      if (cg->traceBCDCodeGen())
-         comp->log()->printf("\t\t1st PACK destSize=%d,srcSize=%d\n",pack1DestSize,pack1SourceSize);
+      logprintf(trace, log, "\t\t1st PACK destSize=%d,srcSize=%d\n", pack1DestSize, pack1SourceSize);
       generateSS2Instruction(cg, TR::InstOpCode::PACK, node,
                              pack1DestSize-1,
                              destMR,
@@ -1433,8 +1431,7 @@ J9::Z::TreeEvaluator::zonedToPackedHelper(TR::Node *node, TR_PseudoRegister *tar
       int32_t pack2SourceOffset = pack1SourceSize-1;
       int32_t pack2DestSize = TR::DataType::getSizeFromBCDPrecision(node->getDataType(), pack2SourceSize);
       int32_t pack2DestOffset = pack1DestSize-1;
-      if (cg->traceBCDCodeGen())
-         comp->log()->printf("\t\t2nd PACK destSize=%d,destOffset=%d, srcSize=%d,srcOffset=%d\n",pack2DestSize,pack2DestOffset,pack2SourceSize,pack2SourceOffset);
+      logprintf(trace, log, "\t\t2nd PACK destSize=%d,destOffset=%d, srcSize=%d,srcOffset=%d\n", pack2DestSize, pack2DestOffset, pack2SourceSize, pack2SourceOffset);
       generateSS2Instruction(cg, TR::InstOpCode::PACK, node,
                              pack2DestSize-1,
                              generateS390LeftAlignedMemoryReference(*destMR, node, pack2DestOffset, cg, destMR->getLeftMostByte()),
@@ -1446,8 +1443,7 @@ J9::Z::TreeEvaluator::zonedToPackedHelper(TR::Node *node, TR_PseudoRegister *tar
          int32_t pack3SourceOffset = pack2SourceOffset+(pack2SourceSize-1);
          int32_t pack3DestSize = TR::DataType::getSizeFromBCDPrecision(node->getDataType(), pack3SourceSize);
          int32_t pack3DestOffset = pack2DestOffset+(pack2DestSize-1);
-         if (cg->traceBCDCodeGen())
-            comp->log()->printf("\t\t3rd PACK destSize=%d,destOffset=%d, srcSize=%d,srcOffset=%d\n",pack3DestSize,pack3DestOffset,pack3SourceSize,pack3SourceOffset);
+         logprintf(trace, log, "\t\t3rd PACK destSize=%d,destOffset=%d, srcSize=%d,srcOffset=%d\n", pack3DestSize, pack3DestOffset, pack3SourceSize, pack3SourceOffset);
          generateSS2Instruction(cg, TR::InstOpCode::PACK, node,
                                 pack3DestSize-1,
                                 generateS390LeftAlignedMemoryReference(*destMR, node, pack3DestOffset, cg, destMR->getLeftMostByte()),
@@ -1689,6 +1685,8 @@ J9::Z::TreeEvaluator::packedToZonedHelper(TR::Node *node, TR_PseudoRegister *tar
    {
    TR::Node *child = node->getFirstChild();
    TR::Compilation *comp = cg->comp();
+   OMR::Logger *log = comp->log();
+   bool trace = cg->traceBCDCodeGen();
 
    TR_StorageReference *hint = node->getStorageReferenceHint();
    TR_StorageReference *targetStorageReference = NULL;
@@ -1718,9 +1716,8 @@ J9::Z::TreeEvaluator::packedToZonedHelper(TR::Node *node, TR_PseudoRegister *tar
    int32_t destEndByte = isDestTrailingSign ? destPrecision + TR::DataType::getZonedSignSize() :
                                               destPrecision;
 
-   if (cg->traceBCDCodeGen())
-      comp->log()->printf("\tpackedToZonedHelper %p : op %s, destPrecision %d, destSize %d, destEndByte %d, sourcePrecision %d, sourceSize %d\n",
-         node,node->getOpCode().getName(),destPrecision,destSize,destEndByte,sourcePrecision,childReg->getSize());
+   logprintf(trace, log, "\tpackedToZonedHelper %p : op %s, destPrecision %d, destSize %d, destEndByte %d, sourcePrecision %d, sourceSize %d\n",
+         node, node->getOpCode().getName(), destPrecision, destSize, destEndByte, sourcePrecision, childReg->getSize());
 
    bool isTruncation = false;
    if (destPrecision < childReg->getDecimalPrecision())
@@ -1729,9 +1726,8 @@ J9::Z::TreeEvaluator::packedToZonedHelper(TR::Node *node, TR_PseudoRegister *tar
       sourcePrecision = destPrecision;
       sourceSize = TR::DataType::getSizeFromBCDPrecision(child->getDataType(), sourcePrecision);
 
-      if (cg->traceBCDCodeGen())
-         comp->log()->printf("\tisTruncation=true (dstPrec %d < srcPrec %d) reduce srcPrec %d->%d, srcSize %d->%d\n",
-            destPrecision,childReg->getDecimalPrecision(),childReg->getDecimalPrecision(),sourcePrecision,childReg->getSize(),sourceSize);
+      logprintf(trace, log, "\tisTruncation=true (dstPrec %d < srcPrec %d) reduce srcPrec %d->%d, srcSize %d->%d\n",
+            destPrecision, childReg->getDecimalPrecision(), childReg->getDecimalPrecision(), sourcePrecision, childReg->getSize(), sourceSize);
       }
 
    TR::Node *paddingAnchor = NULL;
@@ -1747,20 +1743,17 @@ J9::Z::TreeEvaluator::packedToZonedHelper(TR::Node *node, TR_PseudoRegister *tar
       if (destPrecision > 16)
          {
          int32_t bytesToSet = destPrecision-sourcePrecision;
-         if (cg->traceBCDCodeGen())
-            comp->log()->printf("\tdestPrecision %d > 16, sourcePrecision %d <= 16 gen %d leftmost bytes of 0xF0\n",destPrecision,sourcePrecision,bytesToSet);
+         logprintf(trace, log, "\tdestPrecision %d > 16, sourcePrecision %d <= 16 gen %d leftmost bytes of 0xF0\n", destPrecision, sourcePrecision, bytesToSet);
          TR_ASSERT(bytesToSet > 0,"destPrecision (%d) should be > sourcePrecision (%d)\n",destPrecision,sourcePrecision);
          cg->genZeroLeftMostZonedBytes(node, targetReg, destEndByte, bytesToSet, destMR);
          evaluatedPaddingAnchor = true;
-         if (cg->traceBCDCodeGen())
-            comp->log()->printf("\treduce unpkDestOffset %d->%d and unpkDestSize %d->%d\n",unpkDestOffset,bytesToSet,unpkDestSize,sourcePrecision);
+         logprintf(trace, log, "\treduce unpkDestOffset %d->%d and unpkDestSize %d->%d\n", unpkDestOffset, bytesToSet, unpkDestSize, sourcePrecision);
          unpkDestOffset = bytesToSet;
          unpkDestSize = sourcePrecision;
          }
 
-      if (cg->traceBCDCodeGen())
-         comp->log()->printf("\tdestPrecision %d <= 16 or sourcePrecision %d <= 16 so generate a single UNPK destPrecision %d, destOffset %d, unpkSourceSize %d\n",
-                      destPrecision,sourcePrecision,unpkDestSize,unpkDestOffset,unpkSourceSize);
+      logprintf(trace, log, "\tdestPrecision %d <= 16 or sourcePrecision %d <= 16 so generate a single UNPK destPrecision %d, destOffset %d, unpkSourceSize %d\n",
+            destPrecision, sourcePrecision, unpkDestSize, unpkDestOffset, unpkSourceSize);
       generateSS2Instruction(cg, TR::InstOpCode::UNPK, node,
                              unpkDestSize-1,
                              generateS390LeftAlignedMemoryReference(*destMR, node, unpkDestOffset, cg, destMR->getLeftMostByte()),
@@ -1768,8 +1761,7 @@ J9::Z::TreeEvaluator::packedToZonedHelper(TR::Node *node, TR_PseudoRegister *tar
                              generateS390RightAlignedMemoryReference(*sourceMR, node, 0, cg));
       if (unpkDestSize > sourcePrecision)
          {
-         if (cg->traceBCDCodeGen())
-            comp->log()->printf("\tunpkDestSize %d > sourcePrecision %d adding range of zero digits for pd2zd op\n",unpkDestSize,sourcePrecision);
+         logprintf(trace, log, "\tunpkDestSize %d > sourcePrecision %d adding range of zero digits for pd2zd op\n", unpkDestSize, sourcePrecision);
          targetReg->addRangeOfZeroDigits(sourcePrecision, unpkDestSize);
          }
       }
@@ -1777,12 +1769,12 @@ J9::Z::TreeEvaluator::packedToZonedHelper(TR::Node *node, TR_PseudoRegister *tar
       {
       TR_ASSERT(destPrecision <= 31,"pd2zd destPrecision should be <= 31 and not %d\n",destPrecision);
       TR_ASSERT(sourcePrecision <= 31,"pd2zd sourcePrecision should be <= 31 and not %d\n",sourcePrecision);
-      if (cg->traceBCDCodeGen())
+      if (trace)
          {
          if (sourcePrecision >= 17 && sourcePrecision <= 30)
-            comp->log()->printf("\tsourcePrecision 17 <= %d <= 30 so generate two UNPKs\n",sourcePrecision);
+            log->printf("\tsourcePrecision 17 <= %d <= 30 so generate two UNPKs\n", sourcePrecision);
          else
-            comp->log()->prints("\tsourcePrecision == 31 so generate three UNPKs\n");
+            log->prints("\tsourcePrecision == 31 so generate three UNPKs\n");
          }
       bool needsThirdUnpk = false;
       int32_t precisionAdjustment = 14;
@@ -1794,28 +1786,24 @@ J9::Z::TreeEvaluator::packedToZonedHelper(TR::Node *node, TR_PseudoRegister *tar
       else
          {
          // in this case can do the conversion in 2 UNPKs instead of 3. Keep the target precision up to 30 bytes to widen extra bytes.
-         if (cg->traceBCDCodeGen())
-            comp->log()->printf("\tsourcePrecision < 31 (%d) so reduce destPrecision to min(destPrecision,30) = min(%d,30) = %d ",
-               sourcePrecision,destPrecision,std::min(destPrecision,30));
+         logprintf(trace, log, "\tsourcePrecision < 31 (%d) so reduce destPrecision to min(destPrecision,30) = min(%d,30) = %d ",
+               sourcePrecision, destPrecision, std::min(destPrecision, 30));
          destPrecision = std::min(destPrecision, 30);
          destEndByte = isDestTrailingSign ? destPrecision + TR::DataType::getZonedSignSize() :
                                             destPrecision;
          targetReg->setDecimalPrecision(destPrecision);
-         if (cg->traceBCDCodeGen())
-            comp->log()->printf("and update targetReg->prec to new destPrecision %d and update destEndByte to %d\n",destPrecision,destEndByte);
+         logprintf(trace, log, "and update targetReg->prec to new destPrecision %d and update destEndByte to %d\n", destPrecision, destEndByte);
          }
 
-      if (cg->traceBCDCodeGen())
-         comp->log()->printf("x^x : found large packed/zoned conv -- node %s (%p) prec %d, child %s (%p) prec %d (three=%s)\n",
-            node->getOpCode().getName(),node,destPrecision,
-            child->getOpCode().getName(),child,sourcePrecision,needsThirdUnpk?"yes":"no");
+      logprintf(trace, log, "x^x : found large packed/zoned conv -- node %s (%p) prec %d, child %s (%p) prec %d (three=%s)\n",
+            node->getOpCode().getName(), node, destPrecision,
+            child->getOpCode().getName(), child, sourcePrecision, needsThirdUnpk?"yes":"no");
 
       destMR = generateS390LeftAlignedMemoryReference(node, targetStorageReference, cg, destEndByte);
       sourceMR = generateS390LeftAlignedMemoryReference(*sourceMR, node, 0, cg, sourceSize);
       int32_t unpk1DestSize   = destPrecision-precisionAdjustment;
       int32_t unpk1SourceSize = TR::DataType::getSizeFromBCDPrecision(child->getDataType(), sourcePrecision-precisionAdjustment);
-      if (cg->traceBCDCodeGen())
-         comp->log()->printf("\t\t1st UNPK destSize=%d,srcSize=%d\n",unpk1DestSize,unpk1SourceSize);
+      logprintf(trace, log, "\t\t1st UNPK destSize=%d,srcSize=%d\n", unpk1DestSize, unpk1SourceSize);
       generateSS2Instruction(cg, TR::InstOpCode::UNPK, node,
                              unpk1DestSize-1,
                              destMR,
@@ -1825,8 +1813,7 @@ J9::Z::TreeEvaluator::packedToZonedHelper(TR::Node *node, TR_PseudoRegister *tar
       int32_t unpk2DestOffset = unpk1DestSize-1;
       int32_t unpk2SourceSize = TR::DataType::getSizeFromBCDPrecision(child->getDataType(), 15);
       int32_t unpk2SourceOffset = unpk1SourceSize-1;
-      if (cg->traceBCDCodeGen())
-         comp->log()->printf("\t\t2nd UNPK destSize=%d,destOffset=%d, srcSize=%d,srcOffset=%d\n",unpk2DestSize,unpk2DestOffset,unpk2SourceSize,unpk2SourceOffset);
+      logprintf(trace, log, "\t\t2nd UNPK destSize=%d,destOffset=%d, srcSize=%d,srcOffset=%d\n", unpk2DestSize, unpk2DestOffset, unpk2SourceSize, unpk2SourceOffset);
       generateSS2Instruction(cg, TR::InstOpCode::UNPK, node,
                              unpk2DestSize-1,
                              generateS390LeftAlignedMemoryReference(*destMR, node, unpk2DestOffset, cg, destMR->getLeftMostByte()),
@@ -1838,8 +1825,7 @@ J9::Z::TreeEvaluator::packedToZonedHelper(TR::Node *node, TR_PseudoRegister *tar
          int32_t unpk3DestOffset = unpk2DestOffset+(unpk2DestSize-1);
          int32_t unpk3SourceSize = TR::DataType::getSizeFromBCDPrecision(child->getDataType(), 3);
          int32_t unpk3SourceOffset = unpk2SourceOffset+(unpk2SourceSize-1);
-         if (cg->traceBCDCodeGen())
-            comp->log()->printf("\t\t3rd UNPK destSize=%d,destOffset=%d, srcSize=%d,srcOffset=%d\n",unpk3DestSize,unpk3DestOffset,unpk3SourceSize,unpk3SourceOffset);
+         logprintf(trace, log, "\t\t3rd UNPK destSize=%d,destOffset=%d, srcSize=%d,srcOffset=%d\n", unpk3DestSize, unpk3DestOffset, unpk3SourceSize, unpk3SourceOffset);
          generateSS2Instruction(cg, TR::InstOpCode::UNPK, node,
                                 unpk3DestSize-1,
                                 generateS390LeftAlignedMemoryReference(*destMR, node, unpk3DestOffset, cg, destMR->getLeftMostByte()),
@@ -1864,8 +1850,10 @@ TR::Register *
 J9::Z::TreeEvaluator::pd2zdVectorEvaluatorHelper(TR::Node * node, TR::CodeGenerator * cg)
    {
    TR::Compilation* comp = cg->comp();
-   if (cg->traceBCDCodeGen())
-      comp->log()->prints("DAA: Enter pd2zdVectorEvaluatorHelper\n");
+   OMR::Logger *log = comp->log();
+   bool trace = cg->traceBCDCodeGen();
+   if (trace)
+      log->prints("DAA: Enter pd2zdVectorEvaluatorHelper\n");
    TR_PseudoRegister *targetReg = cg->allocatePseudoRegister(node->getDataType());
 
    // pd2zd we need to create storagerefence and save this value to the memoryreference
@@ -1901,10 +1889,7 @@ J9::Z::TreeEvaluator::pd2zdVectorEvaluatorHelper(TR::Node * node, TR::CodeGenera
          }
       }
 
-   if(cg->traceBCDCodeGen())
-      {
-      comp->log()->printf("gen VUKPZ, sizeOfZonedValue=%d, precision=%d\n", sizeOfZonedValue, precision);
-      }
+   logprintf(trace, log, "gen VUKPZ, sizeOfZonedValue=%d, precision=%d\n", sizeOfZonedValue, precision);
 
    generateVSIInstruction(cg, TR::InstOpCode::VUPKZ, node, valueRegister, targetMR, sizeOfZonedValue - 1);
 
@@ -1914,8 +1899,7 @@ J9::Z::TreeEvaluator::pd2zdVectorEvaluatorHelper(TR::Node * node, TR::CodeGenera
    node->setRegister(targetReg);
    cg->decReferenceCount(child);
    targetReg->setIsInitialized();
-   if (cg->traceBCDCodeGen())
-      comp->log()->prints("DAA: Leave pd2zdVectorEvaluatorHelper\n");
+   logprints(trace, log, "DAA: Leave pd2zdVectorEvaluatorHelper\n");
    return targetReg;
    }
 
@@ -2045,6 +2029,8 @@ J9::Z::TreeEvaluator::BCDCHKEvaluatorImpl(TR::Node * node,
                                           bool isVariableParam)
    {
    TR::Compilation *comp = cg->comp();
+   OMR::Logger *log = comp->log();
+   bool trace = cg->traceBCDCodeGen();
    TR_Debug* debugObj = cg->getDebug();
    TR::Node* pdopNode = node->getFirstChild();
    TR::Node* addressNode = node->getSecondChild();
@@ -2130,8 +2116,7 @@ J9::Z::TreeEvaluator::BCDCHKEvaluatorImpl(TR::Node * node,
       }
 
    // start of OOL section
-   if (cg->traceBCDCodeGen())
-      comp->log()->prints("starting OOL section generation.\n");
+   logprints(trace, log, "starting OOL section generation.\n");
    TR_S390OutOfLineCodeSection* outlinedHelperCall = new (INSN_HEAP) TR_S390OutOfLineCodeSection(handlerLabel, passThroughLabel, cg);
    cg->getS390OutOfLineCodeSectionList().push_front(outlinedHelperCall);
    outlinedHelperCall->swapInstructionListsWithCompilation();
@@ -2204,8 +2189,7 @@ J9::Z::TreeEvaluator::BCDCHKEvaluatorImpl(TR::Node * node,
       debugObj->addInstructionComment(cursor, "End of BCDCHK OOL sequence: return to mainline");
       }
 
-   if (cg->traceBCDCodeGen())
-      comp->log()->prints("Finished OOL section generation.\n");
+   logprints(trace, log, "Finished OOL section generation.\n");
 
    // ***Done using OOL with manual code generation *** //
    outlinedHelperCall->swapInstructionListsWithCompilation();
@@ -2222,6 +2206,8 @@ TR::Register *
 J9::Z::TreeEvaluator::BCDCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    {
    TR::Compilation *comp = cg->comp();
+   OMR::Logger *log = comp->log();
+   bool trace = cg->traceBCDCodeGen();
    TR::Node* pdopNode = node->getFirstChild();
    TR::Register* resultReg = pdopNode->getRegister();
    bool isResultPD = pdopNode->getDataType() == TR::PackedDecimal;
@@ -2304,9 +2290,7 @@ J9::Z::TreeEvaluator::BCDCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
                          pdopNode,
                          pdopNode->getOpCode().getName());
 
-         if (cg->traceBCDCodeGen())
-            comp->log()->printf("BCDCHK node n%dn has non-PD operation %s\n",
-                     node->getGlobalIndex(), pdopNode->getOpCode().getName());
+         logprintf(trace, log, "BCDCHK node n%dn has non-PD operation %s\n", node->getGlobalIndex(), pdopNode->getOpCode().getName());
          }
       }
 
@@ -2351,8 +2335,7 @@ J9::Z::TreeEvaluator::BCDCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          }
 
 
-      if (cg->traceBCDCodeGen())
-         comp->log()->printf("Skipped BCDCHK node n%dn\n", node->getGlobalIndex());
+      logprintf(trace, log, "Skipped BCDCHK node n%dn\n", node->getGlobalIndex());
       }
    else
       {
@@ -2961,6 +2944,8 @@ J9::Z::TreeEvaluator::pdnegEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    TR::Node *srcNode = node->getFirstChild();
    TR_PseudoRegister *srcReg = cg->evaluateBCDNode(srcNode);
    TR::Compilation *comp = cg->comp();
+   OMR::Logger *log = comp->log();
+   bool trace = cg->traceBCDCodeGen();
 
    TR::MemoryReference *sourceMR = generateS390RightAlignedMemoryReference(srcNode, srcReg->getStorageReference(), cg);
 
@@ -2977,8 +2962,7 @@ J9::Z::TreeEvaluator::pdnegEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    bool isTruncation = node->getDecimalPrecision() < srcReg->getDecimalPrecision();
    bool isWiden = node->getDecimalPrecision() > srcReg->getDecimalPrecision();
 
-   if (cg->traceBCDCodeGen())
-      comp->log()->printf("\tpdnegEvaluator: isTruncation=%s, isWiden=%s, srcSign = 0x%x, srcSignIsValid=%s, isSimpleSignSet=%s, useRegBasedSequence=%s, needsFullInitialization=%s (== !useRegBasedSequence || isSimpleSignSet)\n",
+   logprintf(trace, log, "\tpdnegEvaluator: isTruncation=%s, isWiden=%s, srcSign = 0x%x, srcSignIsValid=%s, isSimpleSignSet=%s, useRegBasedSequence=%s, needsFullInitialization=%s (== !useRegBasedSequence || isSimpleSignSet)\n",
          isTruncation ? "yes":"no",
          isWiden ? "yes":"no",
          srcSign,
@@ -3004,9 +2988,8 @@ J9::Z::TreeEvaluator::pdnegEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    if (!needsFullInitialization && !targetReg->isInitialized() && targetReg->getSize() > 1)
       {
       int32_t mvcSize = targetReg->getSize() - 1;  // do not include the least significant byte as this is done as part of the sign setting below
-      if (cg->traceBCDCodeGen())
-         comp->log()->printf("\ttargetReg is not init and size %d > 1 so gen MVC with size targetRegSize-1 = %d and leftMostByte %d\n",
-            targetReg->getSize(),mvcSize,targetReg->getSize());
+      logprintf(trace, log, "\ttargetReg is not init and size %d > 1 so gen MVC with size targetRegSize-1 = %d and leftMostByte %d\n",
+            targetReg->getSize(), mvcSize, targetReg->getSize());
       generateSS1Instruction(cg, TR::InstOpCode::MVC, node,
                              mvcSize-1,
                              reuseS390LeftAlignedMemoryReference(destMR, node, targetReg->getStorageReference(), cg, targetReg->getSize()),
@@ -3023,9 +3006,8 @@ J9::Z::TreeEvaluator::pdnegEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    else if (isSimpleSignFlip)
       {
       isSignManipulation = true;
-      if (cg->traceBCDCodeGen())
-         comp->log()->printf("\tsrcReg has known preferred (%s) or known clean (%s) sign so gen XI 0x1 of sign byte to flip it\n",
-            srcReg->hasKnownPreferredSign()?"yes":"no",srcReg->hasKnownCleanSign()?"yes":"no");
+      logprintf(trace, log, "\tsrcReg has known preferred (%s) or known clean (%s) sign so gen XI 0x1 of sign byte to flip it\n",
+            srcReg->hasKnownPreferredSign()?"yes":"no", srcReg->hasKnownCleanSign()?"yes":"no");
       generateSIInstruction(cg, TR::InstOpCode::XI, node, reuseS390LeftAlignedMemoryReference(destMR, node, targetReg->getStorageReference(), cg, 1), 0x01);
       if (targetReg->getDataType() == TR::PackedDecimal && targetReg->isEvenPrecision())
          cg->genZeroLeftMostDigitsIfNeeded(node, targetReg, targetReg->getSize(), 1, destMR);
@@ -3035,8 +3017,7 @@ J9::Z::TreeEvaluator::pdnegEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       {
       isSignManipulation = true;
 
-      if (cg->traceBCDCodeGen())
-         comp->log()->prints("\ttargetReg has unknown but valid sign so generate register based decode sequence\n");
+      logprints(trace, log, "\ttargetReg has unknown but valid sign so generate register based decode sequence\n");
 
       TR::Register *tempSign = cg->allocateRegister();
       TR::Register *targetSign = cg->allocateRegister();
@@ -3135,12 +3116,12 @@ J9::Z::TreeEvaluator::evaluateValueModifyingOperand(TR::Node * node,
    TR_StorageReference *firstStorageReference = firstReg->getStorageReference();
    TR::Compilation *comp = cg->comp();
    OMR::Logger *log = comp->log();
+   bool trace = cg->traceBCDCodeGen();
 
    bool isInitialized = firstReg->isInitialized();
-   if (cg->traceBCDCodeGen())
-      log->printf("\tevaluateValueModifyingOperand for %s (%p) with targetReg %s and firstReg %s (#%d isInit %s), sourceSize=%d : initTarget=%s, alwaysLegalToCleanSign=%s\n",
-         node->getOpCode().getName(),node,cg->getDebug()->getName(targetReg),cg->getDebug()->getName(firstReg),
-         firstStorageReference->getReferenceNumber(),isInitialized ? "yes":"no",sourceSize,initTarget ? "yes":"no",alwaysLegalToCleanSign ? "yes":"no");
+   logprintf(trace, log, "\tevaluateValueModifyingOperand for %s (%p) with targetReg %s and firstReg %s (#%d isInit %s), sourceSize=%d : initTarget=%s, alwaysLegalToCleanSign=%s\n",
+         node->getOpCode().getName(), node, cg->getDebug()->getName(targetReg), cg->getDebug()->getName(firstReg),
+         firstStorageReference->getReferenceNumber(), isInitialized ? "yes":"no", sourceSize, initTarget ? "yes":"no", alwaysLegalToCleanSign ? "yes":"no");
 
    if (sourceSize == 0)
       sourceSize = firstReg->getSize();
@@ -3189,16 +3170,15 @@ J9::Z::TreeEvaluator::evaluateValueModifyingOperand(TR::Node * node,
       if (!skipClobberEvaluate)
          cg->ssrClobberEvaluate(firstChild, sourceMR);
       int32_t resultSize = node->getStorageReferenceSize(comp);
-      if (cg->traceBCDCodeGen())
-         log->printf("\tisInitialized==true: liveSymSize %d (symSize %d - firstReg->deadAndIgnoredBytes %d), resultSize = %d (nodeSize %d)\n",
-            savedLiveSymbolSize,firstStorageReference->getSymbolSize(),firstReg->getRightAlignedDeadAndIgnoredBytes(),resultSize,node->getSize());
+      logprintf(trace, log, "\tisInitialized==true: liveSymSize %d (symSize %d - firstReg->deadAndIgnoredBytes %d), resultSize = %d (nodeSize %d)\n",
+            savedLiveSymbolSize, firstStorageReference->getSymbolSize(), firstReg->getRightAlignedDeadAndIgnoredBytes(), resultSize, node->getSize());
       if (savedLiveSymbolSize < resultSize)
          {
          // In this case the source memory slot has been initialized but it is no longer larger enough to contain the result for the current node.
          // Therefore either the size of the symbol must be increased (for autos) or a new larger, memory slot must be created and initialized (for non-autos)
          if (firstStorageReference->isTemporaryBased())
             {
-            if (cg->traceBCDCodeGen())
+            if (trace)
                {
                log->printf("\treg->getLiveSymbolSize() < resultSize (%d < %d) so call increaseTemporarySymbolSize\n",savedLiveSymbolSize,resultSize);
                log->printf("\t\t * setting rightAlignedDeadBytes %d from firstReg %s to targetReg %s (valueMod incSize)\n",
@@ -3213,9 +3193,8 @@ J9::Z::TreeEvaluator::evaluateValueModifyingOperand(TR::Node * node,
             }
          else
             {
-            if (cg->traceBCDCodeGen())
-               log->printf("\t\tfirstStorageReference is not temporary based and liveSymSize < resultSize (%d < %d) so alloc and init a new temp slot and clear left most bytes\n",
-                  savedLiveSymbolSize,resultSize);
+            logprintf(trace, log, "\t\tfirstStorageReference is not temporary based and liveSymSize < resultSize (%d < %d) so alloc and init a new temp slot and clear left most bytes\n",
+                  savedLiveSymbolSize, resultSize);
             int32_t destLength = resultSize;
             int32_t srcLength = sourceSize;
             // If the firstStorageReference is not a temp or a hint then the recursive dec in setStorageReference() will be wrong.
@@ -3242,7 +3221,7 @@ J9::Z::TreeEvaluator::evaluateValueModifyingOperand(TR::Node * node,
          }
       else
          {
-         if (cg->traceBCDCodeGen())
+         if (trace)
             {
             log->printf("\tliveSymSize >= resultSize (%d >= %d) so can reuse the firstStorageReference #%d for the targetStorageReference\n",
                savedLiveSymbolSize,resultSize,firstStorageReference->getReferenceNumber());
@@ -3271,8 +3250,7 @@ J9::Z::TreeEvaluator::evaluateValueModifyingOperand(TR::Node * node,
          {
          int32_t resultSize = node->getStorageReferenceSize(comp);
          targetStorageReference = node->getStorageReferenceHint();
-         if (cg->traceBCDCodeGen())
-            log->printf("\tusing storageRefHint #%d on node %p (useNewStoreHintOnInit=%d)\n",targetStorageReference->getReferenceNumber(),node,useNewStoreHint && isInitialized);
+         logprintf(trace, log, "\tusing storageRefHint #%d on node %p (useNewStoreHintOnInit=%d)\n", targetStorageReference->getReferenceNumber(), node, useNewStoreHint && isInitialized);
          if (targetStorageReference->isTemporaryBased())
             {
             // Consider this scenario (common when a sub-expression is rooted in a load of a large value returned from a runtime routine)
@@ -3293,23 +3271,20 @@ J9::Z::TreeEvaluator::evaluateValueModifyingOperand(TR::Node * node,
       else
          {
          targetStorageReference = TR_StorageReference::createTemporaryBasedStorageReference(node->getStorageReferenceSize(comp), comp);
-         if (cg->traceBCDCodeGen())
-            log->printf("\tcreated new targetStorageReference #%d on node %p\n",targetStorageReference->getReferenceNumber(),node);
+         logprintf(trace, log, "\tcreated new targetStorageReference #%d on node %p\n", targetStorageReference->getReferenceNumber(), node);
          }
 
       if (destLength > 0)
          {
          // update the symSize so in the initTarget=false case a consumer will not do a needlessly large initialization
          targetStorageReference->getTemporarySymbol()->setActiveSize(destLength);
-         if (cg->traceBCDCodeGen())
-            log->printf("\tsetting destLength and activeSize for initialization based on the smallest remaining node left on the temp based hint #%d : %d\n",
-               targetStorageReference->getReferenceNumber(),destLength);
+         logprintf(trace, log, "\tsetting destLength and activeSize for initialization based on the smallest remaining node left on the temp based hint #%d : %d\n",
+               targetStorageReference->getReferenceNumber(), destLength);
          }
       else if (destLength == 0)
          {
          destLength = targetStorageReference->getSymbolSize();
-         if (cg->traceBCDCodeGen())
-            log->printf("\tsetting destLength for initialization based on the current storageRef #%d size : %d\n",targetStorageReference->getReferenceNumber(),destLength);
+         logprintf(trace, log, "\tsetting destLength for initialization based on the current storageRef #%d size : %d\n", targetStorageReference->getReferenceNumber(), destLength);
          }
       else
          {
@@ -3334,9 +3309,8 @@ J9::Z::TreeEvaluator::evaluateValueModifyingOperand(TR::Node * node,
              firstReg->getLiveSymbolSize() == targetReg->getLiveSymbolSize() &&
              cg->storageReferencesMatch(targetStorageReference, firstStorageReference))
             {
-            if (cg->traceBCDCodeGen())
-               log->printf("\ty^y : transfer leftAlignedZeroDigits %d from firstReg %s to targetReg %s (node %s %p)\n",
-                  zeroDigits,cg->getDebug()->getName(firstReg),cg->getDebug()->getName(targetReg),node->getOpCode().getName(),node);
+            logprintf(trace, log, "\ty^y : transfer leftAlignedZeroDigits %d from firstReg %s to targetReg %s (node %s %p)\n",
+                  zeroDigits, cg->getDebug()->getName(firstReg), cg->getDebug()->getName(targetReg), node->getOpCode().getName(), node);
             targetReg->setLeftAlignedZeroDigits(zeroDigits);
             }
 
@@ -3360,9 +3334,9 @@ J9::Z::TreeEvaluator::evaluateValueModifyingOperand(TR::Node * node,
          targetReg->setIsInitialized();
          }
       }
-   if (cg->traceBCDCodeGen() && targetReg->getStorageReference()->isReadOnlyTemporary())
+   if (trace && targetReg->getStorageReference()->isReadOnlyTemporary())
       log->printf("reset readOnlyTemp flag on storageRef #%d (%s) (valueMod case)\n",
-         targetReg->getStorageReference()->getReferenceNumber(),cg->getDebug()->getName(targetReg->getStorageReference()->getSymbol()));
+         targetReg->getStorageReference()->getReferenceNumber(), cg->getDebug()->getName(targetReg->getStorageReference()->getSymbol()));
    targetReg->getStorageReference()->setIsReadOnlyTemporary(false, NULL);
    node->setRegister(targetReg);
    return targetReg;
@@ -3422,6 +3396,7 @@ TR::Register *J9::Z::TreeEvaluator::pdloadEvaluatorHelper(TR::Node *node, TR::Co
    {
    TR::Compilation *comp = cg->comp();
    OMR::Logger *log = comp->log();
+   bool trace = cg->traceBCDCodeGen();
 
    bool isBCD = node->getType().isBCD();
 
@@ -3445,9 +3420,8 @@ TR::Register *J9::Z::TreeEvaluator::pdloadEvaluatorHelper(TR::Node *node, TR::Co
       targetPseudoReg->setStorageReference(storageRef, node);
       if (isConstant)
          {
-         if (cg->traceBCDCodeGen())
-            log->printf("\t%s (%p) is a constant load so set hasKnownValidSignAndData = true%s\n",
-               node->getOpCode().getName(),node,isReadOnlyConstant?" and skip privatizeStorageReference":"");
+         logprintf(trace, log, "\t%s (%p) is a constant load so set hasKnownValidSignAndData = true%s\n",
+               node->getOpCode().getName(), node, isReadOnlyConstant?" and skip privatizeStorageReference":"");
          targetPseudoReg->setHasKnownValidSignAndData();
          }
 
@@ -3489,13 +3463,12 @@ TR::Register *J9::Z::TreeEvaluator::pdloadEvaluatorHelper(TR::Node *node, TR::Co
             node->hasKnownCleanSign() ? targetPseudoReg->setKnownSignCode(preferredPlusSign) : targetPseudoReg->setAssumedSignCode(preferredPlusSign);
          else if (node->isNonZero() && node->isNonPositive())  // < 0
             node->hasKnownCleanSign() ? targetPseudoReg->setKnownSignCode(preferredMinusSign) : targetPseudoReg->setAssumedSignCode(preferredMinusSign);
-         if (cg->traceBCDCodeGen() && targetPseudoReg->hasKnownOrAssumedSignCode())
+         if (trace && targetPseudoReg->hasKnownOrAssumedSignCode())
             log->printf("\ttargetPseudoReg has%sSignCode = true and it is 0x%x\n",targetPseudoReg->hasAssumedSignCode()?"Assumed":"Known",targetPseudoReg->getKnownOrAssumedSignCode());
          // call setHasCleanSign() after the set*SignCode() calls so the TR::DataType::getPreferredMinusCode() does not unset
          // the clean flag (as it must conservatively do to account for the unclean case of -0)
-         if (cg->traceBCDCodeGen())
-            log->printf("\tsetting Has%sCleanSign (due to node flag) on targetPseudoReg %s on %s (%p)\n",
-               node->hasKnownCleanSign()?"Known":"Assumed",cg->getDebug()->getName(targetPseudoReg),node->getOpCode().getName(),node);
+         logprintf(trace, log, "\tsetting Has%sCleanSign (due to node flag) on targetPseudoReg %s on %s (%p)\n",
+               node->hasKnownCleanSign()?"Known":"Assumed", cg->getDebug()->getName(targetPseudoReg), node->getOpCode().getName(), node);
          node->hasKnownCleanSign() ? targetPseudoReg->setHasKnownCleanSign() : targetPseudoReg->setHasAssumedCleanSign();
          }
 
@@ -3508,12 +3481,11 @@ TR::Register *J9::Z::TreeEvaluator::pdloadEvaluatorHelper(TR::Node *node, TR::Co
       if (storageRef->isTemporaryBased())
          {
          TR_ASSERT(false,"storageRef for load node %p should not be temp based\n");
-         if (cg->traceBCDCodeGen())
-            log->printf("\tstorageRef is tempBased so set targetReg %s to isInitialized=true\n",cg->getDebug()->getName(targetPseudoReg));
+         logprintf(trace, log, "\tstorageRef is tempBased so set targetReg %s to isInitialized=true\n", cg->getDebug()->getName(targetPseudoReg));
          targetPseudoReg->setIsInitialized();
          }
 
-      if (cg->traceBCDCodeGen())
+      if (trace)
          {
          log->printf("\tsignState on targetReg %s for %s (%p) :\n",cg->getDebug()->getName(targetPseudoReg),node->getOpCode().getName(),node);
          log->printf("\t\tknownCleanSign=%d, knownPrefSign=%d, knownSign=0x%x, assumedCleanSign=%d, assumedPrefSign=%d, assumedSign=0x%x (signStateKnown %d, signStateAssumed %d)\n",
@@ -3530,8 +3502,7 @@ TR::Register *J9::Z::TreeEvaluator::pdloadEvaluatorHelper(TR::Node *node, TR::Co
          // any incoming sign state can help in generating better code (e.g. a ZAP can be used for widening as the side effect of cleaning
          // the sign will not matter vs using a ZAP to widen and illegally modifying a loaded value with an unsigned sign code 0xf->0xc)
          targetPseudoReg->setSignStateInitialized();
-         if (cg->traceBCDCodeGen())
-            log->printf("\tsetting SignStateInitialized due to hasSignStateOnLoad=false flag on %s (%p)\n",node->getOpCode().getName(),node);
+         logprintf(trace, log, "\tsetting SignStateInitialized due to hasSignStateOnLoad=false flag on %s (%p)\n", node->getOpCode().getName(), node);
          }
       }
    else
@@ -3553,9 +3524,12 @@ TR::Register *J9::Z::TreeEvaluator::pdloadEvaluatorHelper(TR::Node *node, TR::Co
 TR::Register*
 J9::Z::TreeEvaluator::pdloadVectorEvaluatorHelper(TR::Node *node, TR::CodeGenerator *cg)
    {
+   TR::Compilation *comp = cg->comp();
+   OMR::Logger *log = comp->log();
+   bool trace = cg->traceBCDCodeGen();
+
    TR_ASSERT(node->getOpCodeValue() == TR::pdload || node->getOpCodeValue() == TR::pdloadi, "vector instructions only support PD load.");
-   if (cg->traceBCDCodeGen())
-      cg->comp()->log()->printf("pdload Vector Evaluator, node=%p %d\n", node, __LINE__);
+   logprintf(trace, log, "pdload Vector Evaluator, node=%p %d\n", node, __LINE__);
 
    TR::Register* vTargetReg = vTargetReg = cg->allocateRegister(TR_VRF);
 
@@ -3581,12 +3555,8 @@ J9::Z::TreeEvaluator::pdloadVectorEvaluatorHelper(TR::Node *node, TR::CodeGenera
       }
 
    TR_ASSERT(indexFromTheRight >= 0 && indexFromTheRight <= 15, "Load length too large for VLRL instruction");
-   if(cg->traceBCDCodeGen())
-      {
-      cg->comp()->log()->printf("\tGen VLRL for %s node->size=%d\n",
-                  node->getOpCode().getName(),
-                  node->getSize());
-      }
+   logprintf(trace, log, "\tGen VLRL for %s node->size=%d\n", node->getOpCode().getName(), node->getSize());
+
    generateVSIInstruction(cg, TR::InstOpCode::VLRL, node, vTargetReg, sourceMR, indexFromTheRight);
 
    node->setRegister(vTargetReg);
@@ -3614,10 +3584,11 @@ bool
 isLegalOverlappingZAP(TR::Node *store, TR::CodeGenerator *cg)
    {
    TR::Compilation *comp = cg->comp();
+   OMR::Logger *log = comp->log();
+   bool trace = cg->traceBCDCodeGen();
 
-   if (cg->traceBCDCodeGen())
-      comp->log()->printf("\tisLegalOverlappingZAP check : store %s (%p), valueChild %s (%p)\n",
-         store->getOpCode().getName(),store,store->getValueChild()->getOpCode().getName(),store->getValueChild());
+   logprintf(trace, log, "\tisLegalOverlappingZAP check : store %s (%p), valueChild %s (%p)\n",
+         store->getOpCode().getName(), store, store->getValueChild()->getOpCode().getName(), store->getValueChild());
 
    if (!store->getOpCode().isStoreIndirect())
       return false;
@@ -3662,24 +3633,22 @@ isLegalOverlappingZAP(TR::Node *store, TR::CodeGenerator *cg)
    int64_t loadStart = loadAddrOffset;
    int64_t loadEnd   = loadStart + loadSize;
 
-   if (cg->traceBCDCodeGen())
+   if (trace)
       {
       int64_t overlapStart = std::max(storeStart, loadStart);
       int64_t overlapEnd = std::min(storeEnd, loadEnd);
-      comp->log()->printf("\tstoreRange %lld->%lld vs loadRange %lld->%lld --> overlap range %lld -> %lld\n",
-         storeStart,storeEnd,loadStart,loadEnd,overlapStart,overlapEnd);
+      log->printf("\tstoreRange %lld->%lld vs loadRange %lld->%lld --> overlap range %lld -> %lld\n",
+         storeStart, storeEnd, loadStart, loadEnd, overlapStart, overlapEnd);
       }
 
    if (storeEnd >= loadEnd)
       {
-      if (cg->traceBCDCodeGen())
-         comp->log()->printf("\t\tstoreEnd %lld >= loadEnd %lld : overlap ZAP is legal\n",storeEnd, loadEnd);
+      logprintf(trace, log, "\t\tstoreEnd %lld >= loadEnd %lld : overlap ZAP is legal\n", storeEnd, loadEnd);
       return true;
       }
    else
       {
-      if (cg->traceBCDCodeGen())
-         comp->log()->printf("\t\tstoreEnd %lld < loadEnd %lld : overlap ZAP is NOT legal\n",storeEnd, loadEnd);
+      logprintf(trace, log, "\t\tstoreEnd %lld < loadEnd %lld : overlap ZAP is NOT legal\n", storeEnd, loadEnd);
       return false;
       }
    }
@@ -3757,6 +3726,7 @@ TR::Register* J9::Z::TreeEvaluator::pdstoreEvaluatorHelper(TR::Node *node, TR::C
    bool isIndirect = node->getOpCode().isIndirect();
    TR::Compilation *comp = cg->comp();
    OMR::Logger *log = comp->log();
+   bool trace = cg->traceBCDCodeGen();
 
    bool evaluatedPaddingAnchor = false; // store nodes may contain an extra node giving an address of padding bytes (e.g. 0xF0F0..F0 for zoned)
    bool useZAP = isPacked && node->mustCleanSignInPDStoreEvaluator();
@@ -3788,16 +3758,14 @@ TR::Register* J9::Z::TreeEvaluator::pdstoreEvaluatorHelper(TR::Node *node, TR::C
       if (node->useStoreAsAnAccumulator()) // see comment above
          {
          canForceSkipCopyOnLoad = true;
-         if (cg->traceBCDCodeGen())
-            log->printf("\tsetting valueChild (%s) %p setSkipCopyOnLoad=true due to store with skipCopyOnStore=true (storeAccumCase)\n",valueChild->getOpCode().getName(),valueChild);
+         logprintf(trace, log, "\tsetting valueChild (%s) %p setSkipCopyOnLoad=true due to store with skipCopyOnStore=true (storeAccumCase)\n", valueChild->getOpCode().getName(), valueChild);
          }
       else if (useZAP && isLegalOverlappingZAP(node, cg))
          {
          canForceSkipCopyOnLoad = true;
          mustUseZAP = true; // the overlap check and forcing of skipCopyOnLoad is only valid if we do actually end up generating a ZAP (vs an MVC for example) so make sure this happens
          overlapZAPIsAllowed = true;
-         if (cg->traceBCDCodeGen())
-            log->printf("\tsetting valueChild %s (%p) setSkipCopyOnLoad=true due to store with skipCopyOnStore=true (legalOverlappingZAPCase)\n",valueChild->getOpCode().getName(),valueChild);
+         logprintf(trace, log, "\tsetting valueChild %s (%p) setSkipCopyOnLoad=true due to store with skipCopyOnStore=true (legalOverlappingZAPCase)\n", valueChild->getOpCode().getName(), valueChild);
          }
       if (canForceSkipCopyOnLoad)
          {
@@ -3808,15 +3776,13 @@ TR::Register* J9::Z::TreeEvaluator::pdstoreEvaluatorHelper(TR::Node *node, TR::C
 
    if (useZAP && valueChild->getOpCode().isPackedLeftShift())
       {
-      if (cg->traceBCDCodeGen())
-         log->printf("\tsetting valueChild %p cleanSignDuringPackedLeftShift=true due to store that needs a ZAP\n",valueChild);
+      logprintf(trace, log, "\tsetting valueChild %p cleanSignDuringPackedLeftShift=true due to store that needs a ZAP\n", valueChild);
       valueChild->setCleanSignDuringPackedLeftShift(true);
       }
 
    TR_OpaquePseudoRegister *valueReg = cg->evaluateOPRNode(valueChild);
 
-   if (cg->traceBCDCodeGen())
-      log->printf("\t%s (%p) : isInMemoryCopyProp=%s\n",node->getOpCode().getName(),node,node->isInMemoryCopyProp()?"yes":"no");
+   logprintf(trace, log, "\t%s (%p) : isInMemoryCopyProp=%s\n", node->getOpCode().getName(), node, node->isInMemoryCopyProp()?"yes":"no");
    // NOTE: if a temp copy is generated below then valueStorageReference and valueReg are reset to point to the temp copies
    TR_StorageReference *valueStorageReference = valueReg->getStorageReference();
    TR::MemoryReference *sourceMR = NULL;
@@ -3886,57 +3852,49 @@ TR::Register* J9::Z::TreeEvaluator::pdstoreEvaluatorHelper(TR::Node *node, TR::C
       //    ipdload "a_alias" s=13     // valueChild may not be a simple load but some commoned pdX operation that has the ipdload as its storageRefNode
       //       =>addr
 
-      if (cg->traceBCDCodeGen())
-         log->printf("\tisInMemoryCopyProp=%s, isUsingStorageRefFromAnotherStore=%s, valueRegHasDeadOrIgnoredBytes=%s : node %s (%p), valueReg %s, storageRefNode %s (%p)\n",
+      logprintf(trace, log, "\tisInMemoryCopyProp=%s, isUsingStorageRefFromAnotherStore=%s, valueRegHasDeadOrIgnoredBytes=%s : node %s (%p), valueReg %s, storageRefNode %s (%p)\n",
             node->isInMemoryCopyProp() ? "yes":"no",
             isUsingStorageRefFromAnotherStore ? "yes":"no",
             valueRegHasDeadOrIgnoredBytes ? "yes":"no",
             node->getOpCode().getName(),node,
             cg->getDebug()->getName(valueReg),
-            storageRefNode->getOpCode().getName(),storageRefNode);
+            storageRefNode->getOpCode().getName(), storageRefNode);
 
-      if (cg->traceBCDCodeGen())
-         log->printf("\tallSizesMatch=%s (nodeSize=%d, valueRegSize=%d, storageRefNodeSize=%d)\n",
-            allSizesMatch ? "yes":"no",node->getSize(),valueReg->getSize(),storageRefNode->getSize());
+      logprintf(trace, log, "\tallSizesMatch=%s (nodeSize=%d, valueRegSize=%d, storageRefNodeSize=%d)\n",
+            allSizesMatch ? "yes":"no", node->getSize(), valueReg->getSize(), storageRefNode->getSize());
 
       if (node->isInMemoryCopyProp() || isUsingStorageRefFromAnotherStore || valueRegHasDeadOrIgnoredBytes || !allSizesMatch)
          {
          // a redundant copy is an MVC with exact matching target and source. This is a nop but a very expensive nop as the hardware treats it
          // as any other overlap copy (i.e. very slowly)
-         if (cg->traceBCDCodeGen())
-            log->printf("\tnode %s (%p) and source %s (%p) may overlap but first check if copy would be redundant\n",
-               node->getOpCode().getName(),node,valueChild->getOpCode().getName(),valueChild);
+         logprintf(trace, log, "\tnode %s (%p) and source %s (%p) may overlap but first check if copy would be redundant\n",
+               node->getOpCode().getName(), node, valueChild->getOpCode().getName(), valueChild);
 
          bool copyIsRedundant = !valueRegHasDeadOrIgnoredBytes && allSizesMatch && cg->loadOrStoreAddressesMatch(node, valueStorageReference->getNode());
 
-         if (cg->traceBCDCodeGen())
-            log->printf("\tgot copyIsRedundant=%s from first test\n",copyIsRedundant?"yes":"no");
+         logprintf(trace, log, "\tgot copyIsRedundant=%s from first test\n", copyIsRedundant?"yes":"no");
 
          //Further check if there is potential destructive overlap based on storage info
          if (isAggr && !copyIsRedundant && !valueRegHasDeadOrIgnoredBytes && allSizesMatch)
             {
-            if (cg->traceBCDCodeGen())
-               log->prints("\tperform test for definitelyNoDestructive overlap\n");
+            logprints(trace, log, "\tperform test for definitelyNoDestructive overlap\n");
 
             if (cg->getStorageDestructiveOverlapInfo(valueStorageReference->getNode(), valueReg->getSize(), node, node->getSize()) == TR_DefinitelyNoDestructiveOverlap)
                {
                copyIsRedundant = true;
-               if (cg->traceBCDCodeGen())
-                  log->printf("\t\tset copyIsRedundant=true : overlap check between node %s (%p) size=%d and valueStorageRefNode %s (%p) valueRegSize %d returns TR_DefinitelyNoDestructiveOverlap\n",
-                     node->getOpCode().getName(),node,node->getSize(),
-                     valueStorageReference->getNode()->getOpCode().getName(),valueStorageReference->getNode(),valueReg->getSize());
+               logprintf(trace, log, "\t\tset copyIsRedundant=true : overlap check between node %s (%p) size=%d and valueStorageRefNode %s (%p) valueRegSize %d returns TR_DefinitelyNoDestructiveOverlap\n",
+                     node->getOpCode().getName(), node, node->getSize(),
+                     valueStorageReference->getNode()->getOpCode().getName(), valueStorageReference->getNode(), valueReg->getSize());
                }
             }
 
-         if (cg->traceBCDCodeGen())
-            log->printf("\t\tcopyIsRedundant=%s\n",copyIsRedundant?"yes":"no");
+         logprintf(trace, log, "\t\tcopyIsRedundant=%s\n", copyIsRedundant?"yes":"no");
 
          if (!copyIsRedundant)
             {
             // i.e. a simple load/store BUT load and store memory may overlap so must use a temp so MVC doesn't destructively overlap and lose some source bytes
-            if (cg->traceBCDCodeGen())
-               log->printf("\tnode %s (%p) and source %s (%p) (uninitialized valueReg %s) may overlap -- must privatize valueReg\n",
-                  node->getOpCode().getName(),node,valueChild->getOpCode().getName(),valueChild,cg->getDebug()->getName(valueReg));
+            logprintf(trace, log, "\tnode %s (%p) and source %s (%p) (uninitialized valueReg %s) may overlap -- must privatize valueReg\n",
+                  node->getOpCode().getName(), node, valueChild->getOpCode().getName(), valueChild, cg->getDebug()->getName(valueReg));
 
             int32_t privatizedSize = valueReg->getSize();
             int32_t storageRefNodeSize = storageRefNode->getSize();
@@ -3947,9 +3905,8 @@ TR::Register* J9::Z::TreeEvaluator::pdstoreEvaluatorHelper(TR::Node *node, TR::C
                // back 3 bytes to addr_1
                // This 13 byte copy will copy the entire original field and then the store generated by the usual pdstoreEvaluator will be MVC addr_1(10,br),addr_1+3(10,br)
                privatizedSize = storageRefNodeSize;
-               if (cg->traceBCDCodeGen())
-                  log->printf("\tset privatizedSize to storageRefNodeSize %d for uninit valueReg %s with mismatched storageRefNodeSize %d and valueRegSize %d\n",
-                    privatizedSize,cg->getDebug()->getName(valueReg),storageRefNodeSize,valueReg->getSize());
+               logprintf(trace, log, "\tset privatizedSize to storageRefNodeSize %d for uninit valueReg %s with mismatched storageRefNodeSize %d and valueRegSize %d\n",
+                    privatizedSize, cg->getDebug()->getName(valueReg), storageRefNodeSize, valueReg->getSize());
 
                if (valueRegHasDeadOrIgnoredBytes)
                   {
@@ -3966,16 +3923,15 @@ TR::Register* J9::Z::TreeEvaluator::pdstoreEvaluatorHelper(TR::Node *node, TR::C
                   // If the offset on the addr is less then the shift then the final offset will be < 0 and the binary encoding time assume will be hit
                   // For larger offsets no compile time problem is hit but the temp copy reaches back to read bytes from before it's field (but the these bytes
                   // are not actually examined so everything ends up 'working' (delta any access exceptions if this were the first field in storage)
-                  if (cg->traceBCDCodeGen())
-                     log->printf("\t\tgetRightAlignedIgnoredBytes %d > 0 so reduce privatizedSize %d -> %d\n",
-                        valueReg->getRightAlignedIgnoredBytes(), privatizedSize,  privatizedSize - valueReg->getRightAlignedIgnoredBytes());
+                  logprintf(trace, log, "\t\tgetRightAlignedIgnoredBytes %d > 0 so reduce privatizedSize %d -> %d\n",
+                        valueReg->getRightAlignedIgnoredBytes(), privatizedSize, privatizedSize - valueReg->getRightAlignedIgnoredBytes());
                   privatizedSize = privatizedSize - valueReg->getRightAlignedIgnoredBytes();
                   }
                }
             TR_OpaquePseudoRegister *tempRegister = cg->privatizePseudoRegister(valueChild, valueReg, valueStorageReference, privatizedSize);
             tempStorageReference = tempRegister->getStorageReference();
 
-            if (cg->traceBCDCodeGen())
+            if (trace)
                {
                if (node->isInMemoryCopyProp())
                   log->printf("\ta^a : privatize needed due to isInMemoryCopyProp node %s (%p) on line_no=%d (storeCase)\n",
@@ -4004,8 +3960,7 @@ TR::Register* J9::Z::TreeEvaluator::pdstoreEvaluatorHelper(TR::Node *node, TR::C
          }
       else
          {
-         if (cg->traceBCDCodeGen())
-            log->printf("y^y : temp copy saved isInMemoryCopyProp = false on %s (%p) (storeCase)\n",node->getOpCode().getName(),node);
+         logprintf(trace, log, "y^y : temp copy saved isInMemoryCopyProp = false on %s (%p) (storeCase)\n", node->getOpCode().getName(), node);
          }
       }
 
@@ -4036,7 +3991,7 @@ TR::Register* J9::Z::TreeEvaluator::pdstoreEvaluatorHelper(TR::Node *node, TR::C
        preserveSrcSign)
       {
       savePreZappedValue = true;
-      if (cg->traceBCDCodeGen())
+      if (trace)
          {
          log->printf("\tsetting savePreZappedValue=true because valueReg (from valueChild %p with refCount %d > 1) ",valueChild,valueChild->getReferenceCount());
          if (!bcdValueReg->signStateInitialized())
@@ -4050,8 +4005,7 @@ TR::Register* J9::Z::TreeEvaluator::pdstoreEvaluatorHelper(TR::Node *node, TR::C
                                          valueStorageReference->isNodeBasedHint() &&
                                          (valueStorageReference->getNode() == node);
 
-   if (cg->traceBCDCodeGen())
-      log->printf("\tisPacked=%s, useZAP=%s, valueReg->signStateInit()=%s, valueReg->hasKnownOrAssumedCleanSign()=%s, isByteTruncation=%s, isByteWidening=%s, destSize=%d, sourceSize=%d\n",
+   logprintf(trace, log, "\tisPacked=%s, useZAP=%s, valueReg->signStateInit()=%s, valueReg->hasKnownOrAssumedCleanSign()=%s, isByteTruncation=%s, isByteWidening=%s, destSize=%d, sourceSize=%d\n",
          isPacked?"true":"false",
          useZAP?"true":"false",
          bcdValueReg && bcdValueReg->signStateInitialized()?"true":"false",
@@ -4075,8 +4029,7 @@ TR::Register* J9::Z::TreeEvaluator::pdstoreEvaluatorHelper(TR::Node *node, TR::C
        node->skipCopyOnStore())
       {
       isLegalToChangeCommonedChildAddress = true;
-      if (cg->traceBCDCodeGen())
-         log->printf("\tsetting isLegalToChangeCommonedChildAddress=true for valueChild %s (%p) because isByteTruncation=false, isLeadingSignByteWidening=false, refCount %d > 1, skipCopyOnStore=true and savePreZappedValue=false\n",
+      logprintf(trace, log, "\tsetting isLegalToChangeCommonedChildAddress=true for valueChild %s (%p) because isByteTruncation=false, isLeadingSignByteWidening=false, refCount %d > 1, skipCopyOnStore=true and savePreZappedValue=false\n",
             valueChild->getOpCode().getName(),
             valueChild,
             valueChild->getReferenceCount());
@@ -4089,8 +4042,7 @@ TR::Register* J9::Z::TreeEvaluator::pdstoreEvaluatorHelper(TR::Node *node, TR::C
       TR_ASSERT(valueReg->getStorageReference()->isNodeBased(),"expecting valueReg storageRef to be nodeBased on valueChild %p\n",valueChild);
       if (valueStorageReference->getNode()->getOpCode().isStore())
          {
-         if (cg->traceBCDCodeGen())
-            log->printf("found uninit storageRef node based STORE case valueChild %s (%p) and storageRefNode %s (%p)\n",
+         logprintf(trace, log, "found uninit storageRef node based STORE case valueChild %s (%p) and storageRefNode %s (%p)\n",
                valueChild->getOpCode().getName(),
                valueChild,
                valueStorageReference->getNode()->getOpCode().getName(),
@@ -4098,8 +4050,7 @@ TR::Register* J9::Z::TreeEvaluator::pdstoreEvaluatorHelper(TR::Node *node, TR::C
          }
       else if (valueStorageReference->getNode()->getOpCode().isLoad())
          {
-         if (cg->traceBCDCodeGen())
-            log->printf("found uninit storageRef node based LOAD case valueChild %s (%p) and storageRefNode %s (%p), skipCopyOnLoad storageRefNode is %s\n",
+         logprintf(trace, log, "found uninit storageRef node based LOAD case valueChild %s (%p) and storageRefNode %s (%p), skipCopyOnLoad storageRefNode is %s\n",
                valueChild->getOpCode().getName(),
                valueChild,
                valueStorageReference->getNode()->getOpCode().getName(),
@@ -4114,7 +4065,7 @@ TR::Register* J9::Z::TreeEvaluator::pdstoreEvaluatorHelper(TR::Node *node, TR::C
 
    if (valueStorageReference->isTemporaryBased() || (valueStorageReference->getNode() != node))
       {
-      if (cg->traceBCDCodeGen() && valueStorageReference->isTemporaryBased())
+      if (trace && valueStorageReference->isTemporaryBased())
          log->prints("\tvalueStorageReference->isTemporaryBased() case so see if changeCommonedChildAddress should be set to true\n");
       else if (cg->traceBCDCodeGen())
          log->printf("\tvalueStorageReference->getNode() != node (%p != %p) case so see if changeCommonedChildAddress should be set to true\n",
@@ -4126,18 +4077,18 @@ TR::Register* J9::Z::TreeEvaluator::pdstoreEvaluatorHelper(TR::Node *node, TR::C
          if (useZAP)
             {
             changeCommonedChildAddress = true;
-            if (cg->traceBCDCodeGen()) log->prints("\t\tset changeCommonedChildAddress = true due to ZAP\n");
+            logprints(trace, log, "\t\tset changeCommonedChildAddress = true due to ZAP\n");
             }
          else if (isByteWidening)
             {
             changeCommonedChildAddress = true;
-            if (cg->traceBCDCodeGen()) log->prints("\t\tset changeCommonedChildAddress = true due to byteWidening\n");
+            logprints(trace, log, "\t\tset changeCommonedChildAddress = true due to byteWidening\n");
             }
 /* // disable this case, not a good enough reason for potential operand store compare
          else if (!isIndirect && valueChild->getOpCode().isIndirect())    // addressability is cheaper
             {
             changeCommonedChildAddress = true;
-            if (cg->traceBCDCodeGen()) log->prints("\t\tset changeCommonedChildAddress = true due to cheaper addressability\n");
+            logprints(trace, log, "\t\tset changeCommonedChildAddress = true due to cheaper addressability\n");
             }
 */
          else if (uninitializedSourceLocationMayBeKilled &&
@@ -4145,18 +4096,16 @@ TR::Register* J9::Z::TreeEvaluator::pdstoreEvaluatorHelper(TR::Node *node, TR::C
                   (valueStorageReference->getNode()->getOpCode().isLoadVar() || valueStorageReference->getNode()->getOpCode().isStore()))
             {
             changeCommonedChildAddress = true;
-            if (cg->traceBCDCodeGen())
-               log->printf("\t\tset changeCommonedChildAddress = true due to uninitialized storageRefNode %p with skipCopyOnLoad that was forced to true\n",valueStorageReference->getNode());
+            logprintf(trace, log, "\t\tset changeCommonedChildAddress = true due to uninitialized storageRefNode %p with skipCopyOnLoad that was forced to true\n", valueStorageReference->getNode());
             }
          else
             {
-            if (cg->traceBCDCodeGen()) log->prints("\t\tleave changeCommonedChildAddress = false\n");
+            logprints(trace, log, "\t\tleave changeCommonedChildAddress = false\n");
             }
          }
       else
          {
-         if (cg->traceBCDCodeGen())
-            log->prints("\t\tisLegalToChangeCommonedChildAddress = false so do not attempt to look for cases to set changeCommonedChildAddress to true\n");
+         logprints(trace, log, "\t\tisLegalToChangeCommonedChildAddress = false so do not attempt to look for cases to set changeCommonedChildAddress to true\n");
          }
       }
    else
@@ -4168,11 +4117,10 @@ TR::Register* J9::Z::TreeEvaluator::pdstoreEvaluatorHelper(TR::Node *node, TR::C
       // to contain any leftmost result value.
       TR_ASSERT( !isByteTruncation,"byte truncation should not occur when using the pdstore as an accumulator\n");
       changeCommonedChildAddress = true;
-      if (cg->traceBCDCodeGen()) log->prints("\taccumulated hint case so unconditionally set changeCommonedChildAddress = true\n");
+      logprints(trace, log, "\taccumulated hint case so unconditionally set changeCommonedChildAddress = true\n");
       }
 
-   if (cg->traceBCDCodeGen())
-      log->printf("\tbef legality check: changeCommonedChildAddress = %s and isLegalToChangeCommonedChildAddress=%s so final changeCommonedChildAddress=%s\n",
+   logprintf(trace, log, "\tbef legality check: changeCommonedChildAddress = %s and isLegalToChangeCommonedChildAddress=%s so final changeCommonedChildAddress=%s\n",
          changeCommonedChildAddress?"true":"false",
          isLegalToChangeCommonedChildAddress?"true":"false",
          (changeCommonedChildAddress && isLegalToChangeCommonedChildAddress)?"true":"false");
@@ -4183,8 +4131,7 @@ TR::Register* J9::Z::TreeEvaluator::pdstoreEvaluatorHelper(TR::Node *node, TR::C
    // isLegalToChangeCommonedChildAddress is false.
    // This means that it is not safe to keep using the storageRef on the valueChild past this store point so must force it to a temp
    bool mustPrivatizeValueChild = tempStorageReference == NULL && !valueReg->isInitialized() && uninitializedSourceLocationMayBeKilled && !changeCommonedChildAddress;
-   if (cg->traceBCDCodeGen())
-      log->printf("\tmustPrivatizeValueChild=%s\n",mustPrivatizeValueChild?"yes":"no");
+   logprintf(trace, log, "\tmustPrivatizeValueChild=%s\n", mustPrivatizeValueChild?"yes":"no");
 
    TR_StorageReference *targetStorageReference =
          TR_StorageReference::createNodeBasedStorageReference(node,
@@ -4193,8 +4140,7 @@ TR::Register* J9::Z::TreeEvaluator::pdstoreEvaluatorHelper(TR::Node *node, TR::C
 
    rcount_t origValueChildRefCount = valueChild->getReferenceCount();
 
-   if (cg->traceBCDCodeGen())
-      log->printf("\tcreate node based targetStorageReference #%d from %s (%p) and nodeRefCount %d (%s)\n",
+   logprintf(trace, log, "\tcreate node based targetStorageReference #%d from %s (%p) and nodeRefCount %d (%s)\n",
          targetStorageReference->getReferenceNumber(),
          node->getOpCode().getName(),
          node,
@@ -4204,8 +4150,7 @@ TR::Register* J9::Z::TreeEvaluator::pdstoreEvaluatorHelper(TR::Node *node, TR::C
    TR::MemoryReference *targetMR = NULL;
    if (useZAP)
       {
-      if (cg->traceBCDCodeGen())
-         log->printf("\tuseZAP=true so gen ZAP but first determine the zapDestSize, initial size is destSize=%d\n",destSize);
+      logprintf(trace, log, "\tuseZAP=true so gen ZAP but first determine the zapDestSize, initial size is destSize=%d\n", destSize);
       int32_t zapDestSize = destSize;
       targetMR = generateS390RightAlignedMemoryReference(node, targetStorageReference, cg);
       TR::Node *sourceNodeForZAP = sourceNode;
@@ -4220,14 +4165,12 @@ TR::Register* J9::Z::TreeEvaluator::pdstoreEvaluatorHelper(TR::Node *node, TR::C
          // when zapping a field against itself then we may be able to reduce the destSize if some of the upper bytes are already clear
          if (isByteWidening)
             {
-            if (cg->traceBCDCodeGen())
-               log->printf("\t\tdestSize > sourceSize (%d > %d) so check valueReg->getLiveSymbolSize() %d against destSize %d before checking if the upper bytes are clear\n",
+            logprintf(trace, log, "\t\tdestSize > sourceSize (%d > %d) so check valueReg->getLiveSymbolSize() %d against destSize %d before checking if the upper bytes are clear\n",
                   destSize,sourceSize,valueReg->getLiveSymbolSize(),destSize);
             if (valueReg->getBytesToClear(sourceSize, destSize) == 0)
                {
                zapDestSize=sourceSize;
-               if (cg->traceBCDCodeGen())
-                  log->printf("\t\tvalueReg bytes sourceSize->destSize (%d->%d) are already clear so set zapDestSize=sourceSize=%d\n",sourceSize,destSize,sourceSize);
+               logprintf(trace, log, "\t\tvalueReg bytes sourceSize->destSize (%d->%d) are already clear so set zapDestSize=sourceSize=%d\n", sourceSize, destSize, sourceSize);
                }
             }
          cg->correctBadSign(node, bcdValueReg, zapDestSize, targetMR);
@@ -4243,14 +4186,12 @@ TR::Register* J9::Z::TreeEvaluator::pdstoreEvaluatorHelper(TR::Node *node, TR::C
             valueReg->setStorageReference(valueStorageReferenceCopy, valueChild);
             valueReg->setIsInitialized();
             valueStorageReference = valueStorageReferenceCopy;
-            if (cg->traceBCDCodeGen())
-               log->printf("\tsavePreZappedValue=true so gen MVC with sourceSize %d to copy #%d on pdstore for valueChild %p with refCnt %d\n",
-                  sourceSize,valueStorageReferenceCopy->getReferenceNumber(),valueChild,valueChild->getReferenceCount());
+            logprintf(trace, log, "\tsavePreZappedValue=true so gen MVC with sourceSize %d to copy #%d on pdstore for valueChild %p with refCnt %d\n",
+                  sourceSize, valueStorageReferenceCopy->getReferenceNumber(), valueChild, valueChild->getReferenceCount());
             TR::MemoryReference *targetCopyMR = generateS390RightAlignedMemoryReference(*targetMR, node, 0, cg);
             if (savedRightAlignedDeadAndIgnoredBytes > 0)
                {
-               if (cg->traceBCDCodeGen())
-                  log->printf("\tadd -savedRightAlignedDeadAndIgnoredBytes = -%d to sourceMR for savePreZappedValue copy\n",savedRightAlignedDeadAndIgnoredBytes);
+               logprintf(trace, log, "\tadd -savedRightAlignedDeadAndIgnoredBytes = -%d to sourceMR for savePreZappedValue copy\n", savedRightAlignedDeadAndIgnoredBytes);
                targetCopyMR->addToTemporaryNegativeOffset(node, -savedRightAlignedDeadAndIgnoredBytes, cg);
                }
             generateSS1Instruction(cg, TR::InstOpCode::MVC, node,
@@ -4263,8 +4204,7 @@ TR::Register* J9::Z::TreeEvaluator::pdstoreEvaluatorHelper(TR::Node *node, TR::C
 
          if (savedRightAlignedDeadAndIgnoredBytes > 0)
             {
-            if (cg->traceBCDCodeGen())
-               log->printf("\tadd -savedRightAlignedDeadAndIgnoredBytes = -%d to sourceMR for final ZAP\n",savedRightAlignedDeadAndIgnoredBytes);
+            logprintf(trace, log, "\tadd -savedRightAlignedDeadAndIgnoredBytes = -%d to sourceMR for final ZAP\n", savedRightAlignedDeadAndIgnoredBytes);
             sourceMR->addToTemporaryNegativeOffset(node, -savedRightAlignedDeadAndIgnoredBytes, cg);
             }
 
@@ -4273,13 +4213,11 @@ TR::Register* J9::Z::TreeEvaluator::pdstoreEvaluatorHelper(TR::Node *node, TR::C
 
       if (isByteTruncation)
          {
-         if (cg->traceBCDCodeGen())
-            log->printf("\tisByteTruncating ZAP so reduce sourceSize %d->%d\n",sourceSize,zapDestSize);
+         logprintf(trace, log, "\tisByteTruncating ZAP so reduce sourceSize %d->%d\n", sourceSize, zapDestSize);
          sourceSize = zapDestSize;
          }
 
-      if (cg->traceBCDCodeGen())
-         log->printf("\tgen ZAP with zapDestSize=%d,sourceSize=%d\n",zapDestSize,sourceSize);
+      logprintf(trace, log, "\tgen ZAP with zapDestSize=%d,sourceSize=%d\n", zapDestSize, sourceSize);
       generateSS2Instruction(cg, TR::InstOpCode::ZAP, node,
                              zapDestSize-1,
                              reuseS390RightAlignedMemoryReference(targetMR, node, targetStorageReference, cg),
@@ -4290,9 +4228,8 @@ TR::Register* J9::Z::TreeEvaluator::pdstoreEvaluatorHelper(TR::Node *node, TR::C
       {
       if (sourceNode)
          {
-         if (cg->traceBCDCodeGen())
-            log->printf("\tuseZAP=false and sourceNode %s (%p) is non-NULL so gen MVC but first determine the mvcSize\n",
-               sourceNode->getOpCode().getName(),sourceNode);
+         logprintf(trace, log, "\tuseZAP=false and sourceNode %s (%p) is non-NULL so gen MVC but first determine the mvcSize\n",
+               sourceNode->getOpCode().getName(), sourceNode);
          int32_t mvcSize = sourceSize;
          if (isByteTruncation)
             {
@@ -4302,21 +4239,18 @@ TR::Register* J9::Z::TreeEvaluator::pdstoreEvaluatorHelper(TR::Node *node, TR::C
          if (isByteWidening)
             {
             needsClear = true;
-            if (cg->traceBCDCodeGen())
-               log->printf("\t\tdestSize > sourceSize (%d > %d) so try to reduce mvcSize by checking if the upper bytes are clear\n",
-                  destSize,sourceSize,valueReg->getLiveSymbolSize(),destSize);
+            logprintf(trace, log, "\t\tdestSize > sourceSize (%d > %d) so try to reduce mvcSize by checking if the upper bytes are clear\n",
+                  destSize, sourceSize, valueReg->getLiveSymbolSize(), destSize);
             if (valueReg->getBytesToClear(sourceSize, destSize) == 0)
                {
                needsClear=false;
                mvcSize=destSize;
-               if (cg->traceBCDCodeGen())
-                  log->printf("\t\tvalueReg bytes sourceSize->destSize (%d->%d) are already clear so set mvcSize=destSize=%d\n",sourceSize,destSize,mvcSize);
+               logprintf(trace, log, "\t\tvalueReg bytes sourceSize->destSize (%d->%d) are already clear so set mvcSize=destSize=%d\n", sourceSize, destSize, mvcSize);
                }
             }
 
-         if (cg->traceBCDCodeGen())
-            log->printf("\tsourceNode %s (%p) is non-NULL so gen MVC/memcpy with size %d to store (isByteTruncation=%s)\n",
-               sourceNode->getOpCode().getName(),sourceNode,mvcSize,isByteTruncation?"yes":"no");
+         logprintf(trace, log, "\tsourceNode %s (%p) is non-NULL so gen MVC/memcpy with size %d to store (isByteTruncation=%s)\n",
+               sourceNode->getOpCode().getName(), sourceNode, mvcSize, isByteTruncation?"yes":"no");
 
          if (isBCD)
             {
@@ -4340,7 +4274,7 @@ TR::Register* J9::Z::TreeEvaluator::pdstoreEvaluatorHelper(TR::Node *node, TR::C
                                 allSizesMatch &&
                                 valueStorageReference->isNonConstantNodeBased() &&
                                 cg->loadOrStoreAddressesMatch(node, valueStorageReference->getNode());
-         if (cg->traceBCDCodeGen() && copyIsRedundant)
+         if (trace && copyIsRedundant)
             log->prints("\t\tcopyIsRedundant=yes so skip memcpy\n");
          if (!copyIsRedundant)
             cg->genMemCpy(targetMR, node, sourceMR, sourceNode, mvcSize);
@@ -4353,8 +4287,7 @@ TR::Register* J9::Z::TreeEvaluator::pdstoreEvaluatorHelper(TR::Node *node, TR::C
          }
       else if (isByteWidening)
          {
-         if (cg->traceBCDCodeGen())
-            log->prints("\tuseZAP=false and sourceNode is NULL so just check if upper bytes need to be cleared\n");
+         logprints(trace, log, "\tuseZAP=false and sourceNode is NULL so just check if upper bytes need to be cleared\n");
          targetMR = generateS390RightAlignedMemoryReference(node, targetStorageReference, cg);
          cg->widenBCDValueIfNeeded(node, bcdValueReg, sourceSize, node->getSize(), targetMR);
          evaluatedPaddingAnchor = true;
@@ -4366,9 +4299,8 @@ TR::Register* J9::Z::TreeEvaluator::pdstoreEvaluatorHelper(TR::Node *node, TR::C
       if (changeCommonedChildAddress)
          {
          int32_t savedLeftAlignedZeroDigits = valueReg->getLeftAlignedZeroDigits();
-         if (cg->traceBCDCodeGen())
-            log->printf("\tchangeCommonedChildAddress=true so update storage reference on valueReg %s (leftAlignedZeroDigits=%d) and reset isInit to false\n",
-               cg->getDebug()->getName(valueReg),savedLeftAlignedZeroDigits);
+         logprintf(trace, log, "\tchangeCommonedChildAddress=true so update storage reference on valueReg %s (leftAlignedZeroDigits=%d) and reset isInit to false\n",
+               cg->getDebug()->getName(valueReg), savedLeftAlignedZeroDigits);
 
          valueReg->setStorageReference(targetStorageReference, valueChild); // also resets leftAlignedZeroDigits
 
@@ -4388,16 +4320,14 @@ TR::Register* J9::Z::TreeEvaluator::pdstoreEvaluatorHelper(TR::Node *node, TR::C
             if (childContainsAccumulatedResult &&
                 valueReg->getSize() == node->getSize())
                {
-               if (cg->traceBCDCodeGen())
-                  log->printf("\tset leftAlignedZeroDigits to %d on %s after setStorageReference\n",savedLeftAlignedZeroDigits,cg->getDebug()->getName(valueReg));
+               logprintf(trace, log, "\tset leftAlignedZeroDigits to %d on %s after setStorageReference\n", savedLeftAlignedZeroDigits, cg->getDebug()->getName(valueReg));
                valueReg->setLeftAlignedZeroDigits(savedLeftAlignedZeroDigits);
                }
             else
                {
                // could also probably transfer savedLeftAlignedZeroDigits in some non-accum cases too but need to see a motivating case first
-               if (cg->traceBCDCodeGen())
-                  log->printf("z^z : missed transferring zeroDigits %d to valueChild %s (%p) (accum=%s, valueRegSize %d, nodeSize %d\n",
-                     savedLeftAlignedZeroDigits,valueChild->getOpCode().getName(),valueChild,childContainsAccumulatedResult?"yes":"no",valueReg->getSize(),node->getSize());
+               logprintf(trace, log, "z^z : missed transferring zeroDigits %d to valueChild %s (%p) (accum=%s, valueRegSize %d, nodeSize %d\n",
+                     savedLeftAlignedZeroDigits, valueChild->getOpCode().getName(), valueChild, childContainsAccumulatedResult?"yes":"no", valueReg->getSize(), node->getSize());
                }
             }
 
@@ -4406,7 +4336,7 @@ TR::Register* J9::Z::TreeEvaluator::pdstoreEvaluatorHelper(TR::Node *node, TR::C
             bcdValueReg->setHasKnownValidSignAndData();
             bcdValueReg->setHasKnownCleanSign();
             TR_ASSERT(!bcdValueReg->hasKnownOrAssumedSignCode() || bcdValueReg->getKnownOrAssumedSignCode() != 0xf,"inconsistent sign code of 0xf found for node %p\n",valueChild);
-            if (cg->traceBCDCodeGen()) log->printf("\t\tsetting HasKnownCleanSign (due to ZAP) on valueReg %s on valueChild %p\n",cg->getDebug()->getName(bcdValueReg),valueChild);
+            logprintf(trace, log, "\t\tsetting HasKnownCleanSign (due to ZAP) on valueReg %s on valueChild %p\n", cg->getDebug()->getName(bcdValueReg), valueChild);
             }
          }
       else if (mustPrivatizeValueChild ||
@@ -4438,10 +4368,9 @@ TR::Register* J9::Z::TreeEvaluator::pdstoreEvaluatorHelper(TR::Node *node, TR::C
          valueReg->setIsInitialized();
 
          // do not clean sign for the BCD copy as the commoned use may not be a final use (so the sign cleaning may be premature)
-         if (cg->traceBCDCodeGen())
-            log->printf("\tlate pdstore privatization of valueChild : so gen MVC/memcpy with sourceSize %d to copy #%d (%s) on %s for child %s (%p) with refCnt %d (mustPrivatizeValueChild %s)\n",
-               sourceSize,valueStorageReferenceCopy->getReferenceNumber(),cg->getDebug()->getName(valueStorageReferenceCopy->getSymbol()),
-               node->getOpCode().getName(),valueChild->getOpCode().getName(),valueChild,valueChild->getReferenceCount(),
+         logprintf(trace, log, "\tlate pdstore privatization of valueChild : so gen MVC/memcpy with sourceSize %d to copy #%d (%s) on %s for child %s (%p) with refCnt %d (mustPrivatizeValueChild %s)\n",
+               sourceSize, valueStorageReferenceCopy->getReferenceNumber(), cg->getDebug()->getName(valueStorageReferenceCopy->getSymbol()),
+               node->getOpCode().getName(), valueChild->getOpCode().getName(), valueChild, valueChild->getReferenceCount(),
                mustPrivatizeValueChild?"yes":"no");
 
          bool useSourceMR = sourceMR && !overlapZAPIsAllowed;
@@ -4504,9 +4433,7 @@ TR::Register* J9::Z::TreeEvaluator::pdstoreEvaluatorHelper(TR::Node *node, TR::C
             TR::MemoryReference *copyMR =
                reuseS390LeftAlignedMemoryReference(copyTargetMR, valueChild, valueStorageReferenceCopy, cg, sourceSize);
 
-            if (cg->traceBCDCodeGen())
-               log->printf("\tAccumulating a leading sign type: have to restore the sign code for the copy: signSize %d\n",
-                        signSize);
+            logprintf(trace, log, "\tAccumulating a leading sign type: have to restore the sign code for the copy: signSize %d\n", signSize);
 
 
             generateSS1Instruction(cg, signCopyOp, node,
@@ -4542,18 +4469,16 @@ TR::Register* J9::Z::TreeEvaluator::pdstoreEvaluatorHelper(TR::Node *node, TR::C
          {
          // only remaining use is as the valueChild of this very store so must do the final recDec of the addressChild
          // a recDec is safe here as the targetMR would have already privatized any loads in the address child to registers
-         if (cg->traceBCDCodeGen())
-            log->printf("\tfinalValueChildRefCount < origValueChildRefCount (%d < %d) and is 1 so recursively dec addrChild %s (%p) %d->%d\n",
-               finalValueChildRefCount,origValueChildRefCount,
+         logprintf(trace, log, "\tfinalValueChildRefCount < origValueChildRefCount (%d < %d) and is 1 so recursively dec addrChild %s (%p) %d->%d\n",
+               finalValueChildRefCount, origValueChildRefCount,
                node->getFirstChild()->getOpCode().getName(),
                node->getFirstChild(),
                node->getFirstChild()->getReferenceCount(),node->getFirstChild()->getReferenceCount()-1);
          cg->recursivelyDecReferenceCount(node->getFirstChild());
          }
-      if (cg->traceBCDCodeGen())
-         log->printf("\tfinalValueChildRefCount < origValueChildRefCount (%d < %d) decrement the targetStorageReference nodeRefCount by the difference %d->%d\n",
-            finalValueChildRefCount,origValueChildRefCount,
-            targetStorageReference->getNodeReferenceCount(),targetStorageReference->getNodeReferenceCount()-(origValueChildRefCount-finalValueChildRefCount));
+      logprintf(trace, log, "\tfinalValueChildRefCount < origValueChildRefCount (%d < %d) decrement the targetStorageReference nodeRefCount by the difference %d->%d\n",
+            finalValueChildRefCount, origValueChildRefCount,
+            targetStorageReference->getNodeReferenceCount(), targetStorageReference->getNodeReferenceCount()-(origValueChildRefCount-finalValueChildRefCount));
       // the valueChild may be commoned more than once under the addressChild of the store so dec by the difference of the before and after refCounts
       targetStorageReference->decrementNodeReferenceCount(origValueChildRefCount-finalValueChildRefCount);
       }
@@ -4568,21 +4493,18 @@ TR::Register* J9::Z::TreeEvaluator::pdstoreEvaluatorHelper(TR::Node *node, TR::C
          // any loads in the address child to registers when accumulating to the final store location
          if (!changeCommonedChildAddress)
             {
-            if (cg->traceBCDCodeGen())
-               log->printf("\tno explicit store inst and changeCommonedChildAddress=false so recursively dec addrChild %p %d->%d\n",
-                  node->getFirstChild(),node->getFirstChild()->getReferenceCount(),node->getFirstChild()->getReferenceCount()-1);
+            logprintf(trace, log, "\tno explicit store inst and changeCommonedChildAddress=false so recursively dec addrChild %p %d->%d\n",
+                  node->getFirstChild(), node->getFirstChild()->getReferenceCount(), node->getFirstChild()->getReferenceCount()-1);
             cg->recursivelyDecReferenceCount(node->getFirstChild());
             }
          else
             {
-            if (cg->traceBCDCodeGen())
-               log->printf("\tno explicit store inst and changeCommonedChildAddress=true so do NOT recursively dec addrChild %p (refCount stays at %d)\n",
-                  node->getFirstChild(),node->getFirstChild()->getReferenceCount());
+            logprintf(trace, log, "\tno explicit store inst and changeCommonedChildAddress=true so do NOT recursively dec addrChild %p (refCount stays at %d)\n",
+                  node->getFirstChild(), node->getFirstChild()->getReferenceCount());
             }
          }
-      if (cg->traceBCDCodeGen())
-         log->printf("\tno explicit store inst so decrement the targetStorageReference nodeRefCount %d->%d\n",
-            targetStorageReference->getNodeReferenceCount(),targetStorageReference->getNodeReferenceCount()-1);
+      logprintf(trace, log, "\tno explicit store inst so decrement the targetStorageReference nodeRefCount %d->%d\n",
+            targetStorageReference->getNodeReferenceCount(), targetStorageReference->getNodeReferenceCount()-1);
       targetStorageReference->decrementNodeReferenceCount();
       }
 
@@ -4601,8 +4523,9 @@ TR::Register*
 J9::Z::TreeEvaluator::pdstoreVectorEvaluatorHelper(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::Compilation *comp = cg->comp();
-   if (cg->traceBCDCodeGen())
-      comp->log()->printf("DAA: Entering pdstoreVectorEvaluator %d\n", __LINE__);
+   OMR::Logger *log = comp->log();
+   bool trace = cg->traceBCDCodeGen();
+   logprintf(trace, log, "DAA: Entering pdstoreVectorEvaluator %d\n", __LINE__);
    TR::Node * valueChild = node->getValueChild();
    // evaluate valueChild (which is assumed by the OMR layer to be the second child) to Vector register.
    // for this "pdStore" we assume if we evaluate value node we get Vector Register
@@ -4611,10 +4534,7 @@ J9::Z::TreeEvaluator::pdstoreVectorEvaluatorHelper(TR::Node *node, TR::CodeGener
    TR_ASSERT((pdValueReg->getKind() == TR_FPR || pdValueReg->getKind() == TR_VRF),
              "vectorized pdstore is expecting its value in a vector register.");
 
-   if (cg->traceBCDCodeGen())
-      {
-      comp->log()->printf("generating VSTRL for pdstore node->size = %d.\n", node->getSize());
-      }
+   logprintf(trace, log, "generating VSTRL for pdstore node->size = %d.\n", node->getSize());
 
    // No need to evaluate the address node (first child) of the pdstorei.
    // TR::MemoryReference::create(...) will call populateMemoryReference(...)
@@ -4638,8 +4558,7 @@ J9::Z::TreeEvaluator::pdstoreVectorEvaluatorHelper(TR::Node *node, TR::CodeGener
    generateVSIInstruction(cg, TR::InstOpCode::VSTRL, node, pdValueReg, targetMR, lengthToStore);
    cg->decReferenceCount(valueChild);
 
-   if (cg->traceBCDCodeGen())
-      comp->log()->printf("DAA: Exiting pdstoreVectorEvaluator %d\n", __LINE__);
+   logprintf(trace, log, "DAA: Exiting pdstoreVectorEvaluator %d\n", __LINE__);
    return NULL;
    }
 
@@ -4670,11 +4589,12 @@ TR_OpaquePseudoRegister * J9::Z::TreeEvaluator::evaluateSignModifyingOperand(TR:
    TR_OpaquePseudoRegister *firstReg = cg->evaluateOPRNode(child);
    TR::Compilation *comp = cg->comp();
    OMR::Logger *log = comp->log();
+   bool trace = cg->traceBCDCodeGen();
 
    if (isBCD)
       TR_ASSERT(firstReg->getPseudoRegister(),"firstReg->getPseudoRegister() is null in evaluateSignModifyingOperand for BCD node %p\n",child);
 
-   if (cg->traceBCDCodeGen())
+   if (trace)
       {
       if (isBCD)
          log->printf("\tevaluateSignModOperand %s (%p) : firstReg %s firstReg->getPseudoRegister()->prec %d (isInit %s, isLegalToCleanSign %s, isEffectiveNop %s, initTarget %s)\n",
@@ -4722,7 +4642,7 @@ TR_OpaquePseudoRegister * J9::Z::TreeEvaluator::evaluateSignModifyingOperand(TR:
       targetReg->setLeftAlignedZeroDigits(firstReg->getLeftAlignedZeroDigits());
       targetReg->setRightAlignedDeadBytes(firstReg->getRightAlignedDeadBytes());
       targetReg->setRightAlignedIgnoredBytes(firstReg->getRightAlignedIgnoredBytes());
-      if (cg->traceBCDCodeGen())
+      if (trace)
          {
          log->printf("\t * setting rightAlignedDeadBytes %d from firstReg %s to targetReg %s (signMod nop)\n",
             firstReg->getRightAlignedDeadBytes(),cg->getDebug()->getName(firstReg),cg->getDebug()->getName(targetReg));
@@ -4739,13 +4659,12 @@ TR_OpaquePseudoRegister * J9::Z::TreeEvaluator::evaluateSignModifyingOperand(TR:
          // This skipCopyOnStore analysis will then guarantee that the underlying non-temp variable is not killed before its next use(s).
          if (!comp->getOption(TR_DisableRefinedBCDClobberEval) && firstStorageReference->isTemporaryBased() && isNondestructiveNop)
             {
-            if (cg->traceBCDCodeGen())
-               log->printf("%sskipping ssrClobberEvaluate for %s (%p) with child %s (%p) refCount %d %s 1 owningRegisterCount %d %s 1-- %s mark #%d (%s) as readOnlyTemp (nondestructive nop case)\n",
-                        child->getReferenceCount() > 1 ? "y^y : ":"",
-                        node->getOpCode().getName(),node,child->getOpCode().getName(),child,
-                        child->getReferenceCount(),child->getReferenceCount() > 1 ? ">":"<=",
-                        firstStorageReference->getOwningRegisterCount(), firstStorageReference->getOwningRegisterCount() > 1 ? ">" : "<=",
-                        child->getReferenceCount() > 1 ? "do":"do not",firstStorageReference->getReferenceNumber(),
+            logprintf(trace, log, "%sskipping ssrClobberEvaluate for %s (%p) with child %s (%p) refCount %d %s 1 owningRegisterCount %d %s 1-- %s mark #%d (%s) as readOnlyTemp (nondestructive nop case)\n",
+                  child->getReferenceCount() > 1 ? "y^y : ":"",
+                  node->getOpCode().getName(), node, child->getOpCode().getName(), child,
+                  child->getReferenceCount(), child->getReferenceCount() > 1 ? ">":"<=",
+                  firstStorageReference->getOwningRegisterCount(), firstStorageReference->getOwningRegisterCount() > 1 ? ">" : "<=",
+                  child->getReferenceCount() > 1 ? "do":"do not", firstStorageReference->getReferenceNumber(),
                   cg->getDebug()->getName(firstStorageReference->getSymbol()));
 
             if (child->getReferenceCount() > 1 || firstStorageReference->getOwningRegisterCount() > 1)
@@ -4769,8 +4688,7 @@ TR_OpaquePseudoRegister * J9::Z::TreeEvaluator::evaluateSignModifyingOperand(TR:
          // as this type of storage reference is only used when it has been initialized
          TR_ASSERT( !targetStorageReference->isNodeBasedHint(),"a node based hint should have been initialized\n");
          // This is the case where the firstChild is likely an ipdload (or a pdclean of ipdload etc)
-         if (cg->traceBCDCodeGen())
-            log->printf("\tisEffectiveNop=yes and firstReg->isInit=false case so increment the targetStorageReference nodeRefCount by (node->refCount() - 1) = %d : %d->%d\n",
+         logprintf(trace, log, "\tisEffectiveNop=yes and firstReg->isInit=false case so increment the targetStorageReference nodeRefCount by (node->refCount() - 1) = %d : %d->%d\n",
                node->getReferenceCount()-1,
                targetStorageReference->getNodeReferenceCount(),
                targetStorageReference->getNodeReferenceCount()+(node->getReferenceCount()-1));
@@ -4791,7 +4709,7 @@ TR_OpaquePseudoRegister * J9::Z::TreeEvaluator::evaluateSignModifyingOperand(TR:
       targetReg->setRightAlignedDeadBytes(firstReg->getRightAlignedDeadBytes());
       targetReg->setRightAlignedIgnoredBytes(firstReg->getRightAlignedIgnoredBytes());
       targetReg->getPseudoRegister()->transferDataState(firstReg->getPseudoRegister());
-      if (cg->traceBCDCodeGen())
+      if (trace)
          {
          log->printf("\t * setting rightAlignedDeadBytes %d from firstReg %s to targetReg %s (signMod isInit)\n",
             firstReg->getRightAlignedDeadBytes(),cg->getDebug()->getName(firstReg),cg->getDebug()->getName(targetReg));
@@ -4813,14 +4731,13 @@ TR_OpaquePseudoRegister * J9::Z::TreeEvaluator::evaluateSignModifyingOperand(TR:
          //    the t1 storageReference will be marked as readOnly and pdadd added to nodeToUpdateOnClobber list so if/when t1 is actually clobbered the commoned
          //    register/node can have its storageRef updated to point to the saved value.
          //
-         if (cg->traceBCDCodeGen())
-            log->printf("%sskipping ssrClobberEvaluate for %s (%p) with child %s (%p) refCount %d %s 1 owningRegisterCount %d %s 1-- %s mark #%d (%s) as readOnlyTemp (isInit case)\n",
-                     child->getReferenceCount() > 1 ? "y^y : ":"",
-                     node->getOpCode().getName(),node,child->getOpCode().getName(),child,
-                     child->getReferenceCount(),child->getReferenceCount() > 1 ? ">":"<=",
-                     firstStorageReference->getOwningRegisterCount(), firstStorageReference->getOwningRegisterCount() > 1 ? ">" : "<=",
-                     child->getReferenceCount() > 1 ? "do":"do not",firstStorageReference->getReferenceNumber(),
-                     cg->getDebug()->getName(firstStorageReference->getSymbol()));
+         logprintf(trace, log, "%sskipping ssrClobberEvaluate for %s (%p) with child %s (%p) refCount %d %s 1 owningRegisterCount %d %s 1-- %s mark #%d (%s) as readOnlyTemp (isInit case)\n",
+               child->getReferenceCount() > 1 ? "y^y : ":"",
+               node->getOpCode().getName(),node,child->getOpCode().getName(),child,
+               child->getReferenceCount(),child->getReferenceCount() > 1 ? ">":"<=",
+               firstStorageReference->getOwningRegisterCount(), firstStorageReference->getOwningRegisterCount() > 1 ? ">" : "<=",
+               child->getReferenceCount() > 1 ? "do":"do not",firstStorageReference->getReferenceNumber(),
+               cg->getDebug()->getName(firstStorageReference->getSymbol()));
 
          if (child->getReferenceCount() > 1 || firstStorageReference->getOwningRegisterCount() > 1)
             {
@@ -4865,28 +4782,24 @@ TR_OpaquePseudoRegister * J9::Z::TreeEvaluator::evaluateSignModifyingOperand(TR:
             //
             // In this case the source register has some zero bytes above its register size so increase the MVC size to include these zero bytes
             // e.g. if targetReg->getSize()=6 but the childLiveSymbolSize=9 then increase the mvcSize by 3 to 9
-            if (cg->traceBCDCodeGen())
-               log->printf("\tupper %d bytes on srcReg %s are already clear so set mvcSize=%d\n", srcLiveSymbolSize-mvcSize,cg->getDebug()->getName(firstReg),srcLiveSymbolSize);
+            logprintf(trace, log, "\tupper %d bytes on srcReg %s are already clear so set mvcSize=%d\n", srcLiveSymbolSize-mvcSize,cg->getDebug()->getName(firstReg), srcLiveSymbolSize);
             targetReg->addRangeOfZeroBytes(mvcSize,srcLiveSymbolSize);
             mvcSize = srcLiveSymbolSize;
             }
          else if (!isTruncation)   // on a widening only initialize up to the source size
             {
-            if (cg->traceBCDCodeGen())
-               log->printf("\tfirstReg->getSize() <= node->getSize() (%d <= %d) so reduce mvcSize\n",firstReg->getSize(),node->getSize());
+            logprintf(trace, log, "\tfirstReg->getSize() <= node->getSize() (%d <= %d) so reduce mvcSize\n", firstReg->getSize(), node->getSize());
             mvcSize = firstReg->getSize();
             }
 
          if (isTruncation && node->getType().isSeparateSign())
             {
             mvcSize -= node->getDataType().separateSignSize();
-            if (cg->traceBCDCodeGen())
-               log->printf("\tnode %s is a truncating separateSign type so reduce mvcSize by sign size (%d->%d)\n",
-                  node->getOpCode().getName(),mvcSize+node->getDataType().separateSignSize(),mvcSize);
+            logprintf(trace, log, "\tnode %s is a truncating separateSign type so reduce mvcSize by sign size (%d->%d)\n",
+                  node->getOpCode().getName(), mvcSize+node->getDataType().separateSignSize(), mvcSize);
             }
 
-         if (cg->traceBCDCodeGen())
-            log->printf("\tfirstReg->isInitialized()==false so gen MVC to init with mvcSize %d\n", mvcSize);
+         logprintf(trace, log, "\tfirstReg->isInitialized()==false so gen MVC to init with mvcSize %d\n", mvcSize);
          TR_ASSERT( sourceMR,"source memory reference should have been created by caller\n");
          generateSS1Instruction(cg, TR::InstOpCode::MVC, node,
                                 mvcSize-1,
@@ -4903,14 +4816,14 @@ TR_OpaquePseudoRegister * J9::Z::TreeEvaluator::evaluateSignModifyingOperand(TR:
    if (firstReg->getSize() < node->getSize())
       {
       TR_ASSERT( isBCD, "this path should only be taken for BCD nodes (unless we extend support for aggr types)\n");
-      if (cg->traceBCDCodeGen())
-         log->printf("\twidening: firstRegSize < nodeSize (%d < %d) so set targetReg->getPseudoRegister()->prec to firstReg->prec (%d)\n",firstReg->getSize(), node->getSize(),firstReg->getPseudoRegister()->getDecimalPrecision());
+      logprintf(trace, log, "\twidening: firstRegSize < nodeSize (%d < %d) so set targetReg->getPseudoRegister()->prec to firstReg->prec (%d)\n",
+            firstReg->getSize(), node->getSize(), firstReg->getPseudoRegister()->getDecimalPrecision());
       targetReg->getPseudoRegister()->setDecimalPrecision(firstReg->getPseudoRegister()->getDecimalPrecision());
       }
 
-   if (cg->traceBCDCodeGen() && targetReg->getStorageReference()->isReadOnlyTemporary())
+   if (trace && targetReg->getStorageReference()->isReadOnlyTemporary())
       log->printf("%sreset readOnlyTemp flag on storageRef #%d (%s) (signMod case)\n",
-         resetReadOnly?"":"do not ",targetReg->getStorageReference()->getReferenceNumber(),cg->getDebug()->getName(targetReg->getStorageReference()->getSymbol()));
+         resetReadOnly?"":"do not ", targetReg->getStorageReference()->getReferenceNumber(), cg->getDebug()->getName(targetReg->getStorageReference()->getSymbol()));
 
    if (resetReadOnly)
       targetReg->getStorageReference()->setIsReadOnlyTemporary(false, NULL);
@@ -5010,6 +4923,7 @@ J9::Z::TreeEvaluator::pdclearEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    int32_t sign = TR::DataType::getValue(setSignValue);
    TR::Compilation *comp = cg->comp();
    OMR::Logger *log = comp->log();
+   bool trace = cg->traceBCDCodeGen();
 
    TR_ASSERT(!isSetSign || setSignValue != raw_bcd_sign_unknown,"setSignValue must be on the node for %p\n",node);
 
@@ -5032,12 +4946,11 @@ J9::Z::TreeEvaluator::pdclearEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 
    TR_PseudoRegister *srcReg = cg->evaluateBCDNode(srcNode);
    bool isInitialized = srcReg->isInitialized();
-   if (cg->traceBCDCodeGen())
-      log->printf("\t%s (%p) : srcNode %s (%p) isInit=%s, digitClearRange %d->%d (leftMostByte=%d), digitsToClear = %d (isSetSign %s, sign 0x%x)\n",
-         node->getOpCode().getName(),node,
-         srcNode->getOpCode().getName(),srcNode,
+   logprintf(trace, log, "\t%s (%p) : srcNode %s (%p) isInit=%s, digitClearRange %d->%d (leftMostByte=%d), digitsToClear = %d (isSetSign %s, sign 0x%x)\n",
+         node->getOpCode().getName(), node,
+         srcNode->getOpCode().getName(), srcNode,
          isInitialized ? "yes":"no",
-         leftMostDigit,rightMostDigit,leftMostByte,digitsToClear,isSetSign?"yes":"no",sign);
+         leftMostDigit, rightMostDigit, leftMostByte, digitsToClear, isSetSign?"yes":"no", sign);
    TR_StorageReference *srcStorageReference = srcReg->getStorageReference();
    TR::MemoryReference *sourceMR = generateS390RightAlignedMemoryReference(srcNode, srcStorageReference, cg);
 
@@ -5052,8 +4965,7 @@ J9::Z::TreeEvaluator::pdclearEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 
    int32_t targetRegPrec = targetReg->getDecimalPrecision();
 
-   if (cg->traceBCDCodeGen())
-      log->printf("\tset targetReg prec to %d (isTrucation %s)\n",targetRegPrec,isTruncation?"yes":"no");
+   logprintf(trace, log, "\tset targetReg prec to %d (isTrucation %s)\n", targetRegPrec, isTruncation?"yes":"no");
 
    bool truncatedIntoClearedDigits = false;
    if (targetRegPrec < leftMostDigit)
@@ -5064,9 +4976,8 @@ J9::Z::TreeEvaluator::pdclearEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       leftMostByte = TR::DataType::packedDecimalPrecisionToByteLength(leftMostDigit);
       digitsToClear -= precDelta;
       rightMostDigit = leftMostDigit - digitsToClear;
-      if (cg->traceBCDCodeGen())
-         log->printf("\ttargetRegPrec %d < leftMostDigit %d : update leftMostDigit %d->%d, leftMostByte = %d, digitsToClear %d->%d, rightMostDigit = %d\n",
-            targetRegPrec,leftMostDigit+precDelta,leftMostDigit+precDelta,leftMostDigit,leftMostByte,digitsToClear+precDelta,digitsToClear,rightMostDigit);
+      logprintf(trace, log, "\ttargetRegPrec %d < leftMostDigit %d : update leftMostDigit %d->%d, leftMostByte = %d, digitsToClear %d->%d, rightMostDigit = %d\n",
+            targetRegPrec, leftMostDigit+precDelta, leftMostDigit+precDelta, leftMostDigit, leftMostByte, digitsToClear+precDelta, digitsToClear, rightMostDigit);
       }
 
    // do not bother checking !node->canSkipPadByteClearing() below because being able to clear the full byte generally results in better codegen
@@ -5078,30 +4989,26 @@ J9::Z::TreeEvaluator::pdclearEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    bool coincidentEvenDigitCorrection = needsEvenDigitCorrection && (leftMostByteForClear == targetReg->getSize());
    if (isEven(leftMostDigit))
       {
-      if (cg->traceBCDCodeGen())
-         log->printf("\tleftMostDigit %d isEven : isInit=%s, truncatedIntoClearedDigits=%s, coincidentEvenDigitCorrection=%s -- adjust the leftMostNibble to preserve or clear the leftMostByte\n",
-            leftMostDigit,isInitialized?"yes":"no",truncatedIntoClearedDigits?"yes":"no",needsEvenDigitCorrection?"yes":"no");
+      logprintf(trace, log, "\tleftMostDigit %d isEven : isInit=%s, truncatedIntoClearedDigits=%s, coincidentEvenDigitCorrection=%s -- adjust the leftMostNibble to preserve or clear the leftMostByte\n",
+            leftMostDigit, isInitialized?"yes":"no", truncatedIntoClearedDigits?"yes":"no", needsEvenDigitCorrection?"yes":"no");
 
       if (isInitialized && !truncatedIntoClearedDigits && !coincidentEvenDigitCorrection) // full byte will be cleared if truncatedIntoClearedDigits or coincidentEvenDigitCorrection are true
          {
-         if (cg->traceBCDCodeGen())
-            log->printf("\t\tisInit=yes,truncatedIntoClearedDigits=no,coincidentEvenDigitCorrection=no so dec %d->%d to preserve initialized leftMostNibble\n",digitsToClear,digitsToClear-1);
+         logprintf(trace, log, "\t\tisInit=yes,truncatedIntoClearedDigits=no,coincidentEvenDigitCorrection=no so dec %d->%d to preserve initialized leftMostNibble\n", digitsToClear,digitsToClear-1);
          digitsToClear--; // must preserve the top byte and then clear just the top digit after the clearAndSetSign
          leftMostByteForClear--;
          }
       else
          {
-         if (cg->traceBCDCodeGen())
-            log->printf("\t\tisInit=no or truncatedIntoClearedDigits=yes or coincidentEvenDigitCorrection=yes so inc %d->%d to clear initialized leftMostNibble\n",digitsToClear,digitsToClear+1);
+         logprintf(trace, log, "\t\tisInit=no or truncatedIntoClearedDigits=yes or coincidentEvenDigitCorrection=yes so inc %d->%d to clear initialized leftMostNibble\n", digitsToClear,digitsToClear+1);
          digitsToClear++; // clear a larger even # of digits and put back
          }
       }
 
    if (!isTruncation && srcReg->isEvenPrecision() && srcReg->isLeftMostNibbleClear())
       {
-      if (cg->traceBCDCodeGen())
-         log->printf("\twidening with even srcRegPrec %d update targetReg with zero range for leftMostNibble %d->%d\n",
-            srcReg->getDecimalPrecision(),srcReg->getDecimalPrecision(),srcReg->getDecimalPrecision()+1);
+      logprintf(trace, log, "\twidening with even srcRegPrec %d update targetReg with zero range for leftMostNibble %d->%d\n",
+            srcReg->getDecimalPrecision(), srcReg->getDecimalPrecision(), srcReg->getDecimalPrecision()+1);
       targetReg->addRangeOfZeroDigits(srcReg->getDecimalPrecision(),srcReg->getDecimalPrecision()+1);
       }
 
@@ -5115,8 +5022,7 @@ J9::Z::TreeEvaluator::pdclearEvaluator(TR::Node *node, TR::CodeGenerator *cg)
          if (isInitialized)
             {
                {
-               if (cg->traceBCDCodeGen())
-                  log->printf("\tisInit=yes : gen NI to clear right most nibble at byte %d\n",leftMostByte);
+               logprintf(trace, log, "\tisInit=yes : gen NI to clear right most nibble at byte %d\n", leftMostByte);
                generateSIInstruction(cg, TR::InstOpCode::NI, node,
                                      reuseS390LeftAlignedMemoryReference(destMR, node, targetReg->getStorageReference(), cg, leftMostByte),
                                      0xF0);
@@ -5124,8 +5030,7 @@ J9::Z::TreeEvaluator::pdclearEvaluator(TR::Node *node, TR::CodeGenerator *cg)
             }
          else
             {
-            if (cg->traceBCDCodeGen())
-               log->printf("\tisInit=no : gen MVZ to restore left most nibble at byte %d\n",leftMostByte);
+            logprintf(trace, log, "\tisInit=no : gen MVZ to restore left most nibble at byte %d\n", leftMostByte);
             int32_t mvzSize = 1;
             generateSS1Instruction(cg, TR::InstOpCode::MVZ, node,
                                    mvzSize-1,
@@ -5312,9 +5217,8 @@ J9::Z::TreeEvaluator::correctPackedArithmeticPrecision(TR::Node *node, int32_t o
 
    int32_t resultPrecision = std::min<int32_t>(computedResultPrecision, node->getDecimalPrecision());
    targetReg->setDecimalPrecision(resultPrecision);
-   if (cg->traceBCDCodeGen())
-      cg->comp()->log()->printf("\tset targetRegPrec to min(computedResultPrecision, nodePrec) = min(%d, %d) = %d (targetRegSize = %d)\n",
-         computedResultPrecision,node->getDecimalPrecision(),resultPrecision,targetReg->getSize());
+   logprintf(cg->traceBCDCodeGen(), cg->comp()->log(), "\tset targetRegPrec to min(computedResultPrecision, nodePrec) = min(%d, %d) = %d (targetRegSize = %d)\n",
+         computedResultPrecision, node->getDecimalPrecision(), resultPrecision, targetReg->getSize());
    }
 
 TR::Register *
@@ -5429,6 +5333,7 @@ J9::Z::TreeEvaluator::pdaddsubEvaluatorHelper(TR::Node * node, TR::InstOpCode::M
    TR::Node *secondChild = node->getSecondChild();
    TR::Compilation *comp = cg->comp();
    OMR::Logger *log = comp->log();
+   bool trace = cg->traceBCDCodeGen();
 
    TR_PseudoRegister *firstReg = cg->evaluateBCDNode(firstChild);
    bool trackSignState=false;
@@ -5446,8 +5351,7 @@ J9::Z::TreeEvaluator::pdaddsubEvaluatorHelper(TR::Node * node, TR::InstOpCode::M
    // The preparatory clearing operations need a length set so base it on the op1EncodingSize but the final returned precision will be set after the AP/SP instruction has been generated
    targetReg->setDecimalPrecision(op1EncodingPrecision);
 
-   if (cg->traceBCDCodeGen())
-      log->printf("\t%s: produceOverflowMessage=%s, node->getSize()=%d, firstReg->getSize()=%d, secondReg->getSize()=%d, op1EncodingPrec=%d, op1EncodingSize=%d\n",
+   logprintf(trace, log, "\t%s: produceOverflowMessage=%s, node->getSize()=%d, firstReg->getSize()=%d, secondReg->getSize()=%d, op1EncodingPrec=%d, op1EncodingSize=%d\n",
          node->getOpCode().getName(),produceOverflowMessage?"yes":"no", node->getSize(), firstReg->getSize(), secondReg->getSize(),op1EncodingPrecision, targetReg->getSize());
 
    if (op1EncodingSize > firstReg->getSize())
@@ -5462,9 +5366,8 @@ J9::Z::TreeEvaluator::pdaddsubEvaluatorHelper(TR::Node * node, TR::InstOpCode::M
    bool mayOverflow = computedResultPrecision > node->getDecimalPrecision();
    correctPackedArithmeticPrecision(node, op1EncodingSize, targetReg, computedResultPrecision, cg);
 
-   if (cg->traceBCDCodeGen())
-      log->printf("\tcomputedResultPrecision %s nodePrec (%d %s %d) -- mayOverflow = %s\n",
-         mayOverflow?">":"<=",computedResultPrecision,mayOverflow?">":"<=",node->getDecimalPrecision(),mayOverflow?"yes":"no");
+   logprintf(trace, log, "\tcomputedResultPrecision %s nodePrec (%d %s %d) -- mayOverflow = %s\n",
+         mayOverflow?">":"<=", computedResultPrecision, mayOverflow?">":"<=", node->getDecimalPrecision(), mayOverflow?"yes":"no");
 
    TR::LabelSymbol * cFlowRegionStart = NULL;
    TR::LabelSymbol * cflowRegionEnd = NULL;
@@ -5503,8 +5406,7 @@ J9::Z::TreeEvaluator::pdaddsubEvaluatorHelper(TR::Node * node, TR::InstOpCode::M
          cg->genZeroLeftMostPackedDigits(node, targetReg, targetReg->getSize(), 1, generateS390RightAlignedMemoryReference(*destMR, node, 0, cg));
          }
       targetReg->setHasKnownPreferredSign();
-      if (cg->traceBCDCodeGen())
-         log->printf("\toverflow may occur so set HasKnownPreferredSign = true on reg %s\n",cg->getDebug()->getName(targetReg));
+      logprintf(trace, log, "\toverflow may occur so set HasKnownPreferredSign = true on reg %s\n", cg->getDebug()->getName(targetReg));
       if (produceOverflowMessage)
          {
          // The only overflow message handled is overflow into the next byte (i.e. not 'even' to 'odd' precision 'overflow').
@@ -5524,7 +5426,7 @@ J9::Z::TreeEvaluator::pdaddsubEvaluatorHelper(TR::Node * node, TR::InstOpCode::M
    else
       {
       targetReg->setHasKnownCleanSign();
-      if (cg->traceBCDCodeGen())
+      if (trace)
          {
          if (firstChild->isZero() || secondChild->isZero())
             log->printf("\t%s firstChild %p isZero=%s or secondChild %p isZero=%s so nibble clearing is NOT required and set HasKnownCleanSign = true on reg %s\n",
@@ -5545,8 +5447,7 @@ J9::Z::TreeEvaluator::pdaddsubEvaluatorHelper(TR::Node * node, TR::InstOpCode::M
        firstReg->hasKnownOrAssumedPositiveSignCode() &&
        secondReg->hasKnownOrAssumedPositiveSignCode())
       {
-      if (cg->traceBCDCodeGen())
-         log->printf("\tfirstReg and secondReg have positive sign codes so set targetReg sign code to the preferred positive sign 0x%x\n", TR::DataType::getPreferredPlusCode());
+      logprintf(trace, log, "\tfirstReg and secondReg have positive sign codes so set targetReg sign code to the preferred positive sign 0x%x\n", TR::DataType::getPreferredPlusCode());
       // positive+positive=positive and then AP will clean the positive sign to 0xc
       targetReg->setKnownSignCode(TR::DataType::getPreferredPlusCode());
       }
@@ -5586,6 +5487,8 @@ J9::Z::TreeEvaluator::pdmulEvaluatorHelper(TR::Node * node, TR::CodeGenerator * 
    TR::Node *firstChild = node->getFirstChild();
    TR::Node *secondChild = node->getSecondChild();
    TR::Compilation *comp = cg->comp();
+   OMR::Logger *log = comp->log();
+   bool trace = cg->traceBCDCodeGen();
 
    TR_PseudoRegister *firstReg = cg->evaluateBCDNode(firstChild);
    bool trackSignState=false;
@@ -5627,11 +5530,9 @@ J9::Z::TreeEvaluator::pdmulEvaluatorHelper(TR::Node * node, TR::CodeGenerator * 
       if (!node->canSkipPadByteClearing() && targetReg->isEvenPrecision())
          cg->genZeroLeftMostPackedDigits(node, targetReg, targetReg->getSize(), 1, generateS390RightAlignedMemoryReference(*destMR, node, 0, cg));
       }
-   else if (cg->traceBCDCodeGen())
-      {
-      comp->log()->printf("TR::InstOpCode::MP node %p targetRegPrec %d >= computedResultPrecision %d (firstRegPrec %d + secondRegPrec %d) so skip nibble clearing\n",
-         node,targetReg->getDecimalPrecision(),computedResultPrecision,firstReg->getDecimalPrecision(),secondReg->getDecimalPrecision());
-      }
+   else
+      logprintf(trace, log, "TR::InstOpCode::MP node %p targetRegPrec %d >= computedResultPrecision %d (firstRegPrec %d + secondRegPrec %d) so skip nibble clearing\n",
+         node, targetReg->getDecimalPrecision(), computedResultPrecision, firstReg->getDecimalPrecision(), secondReg->getDecimalPrecision());
 
    // Even with no overflow MP can produce a negative zero as the sign of the result is determined from the rules
    // of algebra *even when one or both of the operands are zero*. So 0 * -1 = -0 (0x0c * 0x1d = 0x0d -- not clean result)
@@ -5639,8 +5540,7 @@ J9::Z::TreeEvaluator::pdmulEvaluatorHelper(TR::Node * node, TR::CodeGenerator * 
    if (firstReg->hasKnownOrAssumedPositiveSignCode() &&
        secondReg->hasKnownOrAssumedPositiveSignCode())
       {
-      if (cg->traceBCDCodeGen())
-         comp->log()->printf("\tfirstReg and secondReg have positive sign codes so set targetReg sign code to the preferred positive sign 0x%x\n", TR::DataType::getPreferredPlusCode());
+      logprintf(trace, log, "\tfirstReg and secondReg have positive sign codes so set targetReg sign code to the preferred positive sign 0x%x\n", TR::DataType::getPreferredPlusCode());
       // positive*positive=positive and then MP will clean the positive sign to 0xc
       targetReg->setKnownSignCode(TR::DataType::getPreferredPlusCode());
       }
@@ -5714,6 +5614,7 @@ J9::Z::TreeEvaluator::pddivremEvaluatorHelper(TR::Node * node, TR::CodeGenerator
    TR::Node *secondChild = node->getSecondChild();
    TR::Compilation *comp = cg->comp();
    OMR::Logger *log = comp->log();
+   bool trace = cg->traceBCDCodeGen();
 
    TR_PseudoRegister *firstReg = cg->evaluateBCDNode(firstChild);
    bool trackSignState=false;
@@ -5746,9 +5647,8 @@ J9::Z::TreeEvaluator::pddivremEvaluatorHelper(TR::Node * node, TR::CodeGenerator
    targetReg->setDecimalPrecision(dividendPrecision);
    int32_t dividendSize = targetReg->getSize();
    TR_ASSERT( dividendSize <= node->getStorageReferenceSize(comp),"allocated symbol for pddiv/pdrem is too small\n");
-   if (cg->traceBCDCodeGen())
-      log->printf("\t%s: gen DP dividendSize = %d, secondOpSize = secondRegSize = %d, targetRegSize = %d (firstRegPrec %d, secondRegPrec %d)\n",
-         node->getOpCode().getName(),dividendSize,secondReg->getSize(),targetReg->getSize(),firstReg->getDecimalPrecision(),secondReg->getDecimalPrecision());
+   logprintf(trace, log, "\t%s: gen DP dividendSize = %d, secondOpSize = secondRegSize = %d, targetRegSize = %d (firstRegPrec %d, secondRegPrec %d)\n",
+         node->getOpCode().getName(), dividendSize, secondReg->getSize(), targetReg->getSize(), firstReg->getDecimalPrecision(), secondReg->getDecimalPrecision());
 
    cg->clearByteRangeIfNeeded(node, targetReg, generateS390RightAlignedMemoryReference(*destMR, node, 0, cg), dividendSize-divisorSize-dividendSizeBumpForClear, dividendSize, true); // widenOnLeft=true
 
@@ -5770,9 +5670,8 @@ J9::Z::TreeEvaluator::pddivremEvaluatorHelper(TR::Node * node, TR::CodeGenerator
       {
       targetReg->setDecimalPrecision(secondReg->getDecimalPrecision());
       isTruncation = node->getDecimalPrecision() < targetReg->getDecimalPrecision();
-      if (cg->traceBCDCodeGen())
-         log->printf("\tpdrem: setting targetReg prec to divisor prec %d (node prec is %d), isTruncation=%s\n",
-            secondReg->getDecimalPrecision(),node->getDecimalPrecision(),isTruncation?"yes":"no");
+      logprintf(trace, log, "\tpdrem: setting targetReg prec to divisor prec %d (node prec is %d), isTruncation=%s\n",
+            secondReg->getDecimalPrecision(), node->getDecimalPrecision(), isTruncation?"yes":"no");
       targetReg->removeRangeOfZeroDigits(0, TR::DataType::byteLengthToPackedDecimalPrecisionCeiling(dividendSize));
       }
    else
@@ -5783,15 +5682,14 @@ J9::Z::TreeEvaluator::pddivremEvaluatorHelper(TR::Node * node, TR::CodeGenerator
       int32_t computedQuotientPrecision = TR::DataType::byteLengthToPackedDecimalPrecisionCeiling(dividendSize - deadBytes);
       if (firstReg->isEvenPrecision())
          {
-         if (cg->traceBCDCodeGen())
-            log->printf("\tfirstRegPrec (%d) isEven=true so reduce computedQuotientPrecision %d->%d\n",firstReg->getDecimalPrecision(),computedQuotientPrecision,computedQuotientPrecision-1);
+         logprintf(trace, log, "\tfirstRegPrec (%d) isEven=true so reduce computedQuotientPrecision %d->%d\n", firstReg->getDecimalPrecision(), computedQuotientPrecision, computedQuotientPrecision-1);
          computedQuotientPrecision--;
          }
       isTruncation = node->getDecimalPrecision() < computedQuotientPrecision;
       int32_t resultQuotientPrecision = std::min<int32_t>(computedQuotientPrecision, node->getDecimalPrecision());
       targetReg->setDecimalPrecision(resultQuotientPrecision);
       targetReg->addToRightAlignedDeadBytes(deadBytes);
-      if (cg->traceBCDCodeGen())
+      if (trace)
          {
          log->printf("\tisDiv=true (pddivrem) : increment targetReg %s deadBytes %d -> %d (by the divisorSize)\n",
             cg->getDebug()->getName(targetReg),targetReg->getRightAlignedDeadBytes()-deadBytes,targetReg->getRightAlignedDeadBytes());
@@ -5805,8 +5703,7 @@ J9::Z::TreeEvaluator::pddivremEvaluatorHelper(TR::Node * node, TR::CodeGenerator
       {
       TR_ASSERT( node->getStorageReferenceSize(comp) >= dividendSize,"operand size should only shrink from original size\n");
       int32_t leftMostByte = targetReg->getSize();
-      if (cg->traceBCDCodeGen())
-         log->printf("\t%s: generating NI to clear top nibble with leftMostByte = targetReg->getSize() = %d\n",isRem ? "pdrem":"pddiv",targetReg->getSize());
+      logprintf(trace, log, "\t%s: generating NI to clear top nibble with leftMostByte = targetReg->getSize() = %d\n", isRem ? "pdrem":"pddiv", targetReg->getSize());
       cg->genZeroLeftMostPackedDigits(node, targetReg, leftMostByte, 1, generateS390RightAlignedMemoryReference(*destMR, node, -deadBytes, cg));
       }
 
@@ -5817,9 +5714,8 @@ J9::Z::TreeEvaluator::pddivremEvaluatorHelper(TR::Node * node, TR::CodeGenerator
       if (firstReg->hasKnownOrAssumedSignCode())
          {
          targetReg->setKnownSignCode(firstReg->hasKnownOrAssumedPositiveSignCode() ? TR::DataType::getPreferredPlusCode() : TR::DataType::getPreferredMinusCode());
-         if (cg->traceBCDCodeGen())
-            log->printf("\tpdrem: firstReg has the knownSignCode 0x%x so set targetReg sign code to the preferred sign 0x%x\n",
-               firstReg->getKnownOrAssumedSignCode(),targetReg->getKnownOrAssumedSignCode());
+         logprintf(trace, log, "\tpdrem: firstReg has the knownSignCode 0x%x so set targetReg sign code to the preferred sign 0x%x\n",
+               firstReg->getKnownOrAssumedSignCode(), targetReg->getKnownOrAssumedSignCode());
          }
       }
    else
@@ -5837,14 +5733,12 @@ J9::Z::TreeEvaluator::pddivremEvaluatorHelper(TR::Node * node, TR::CodeGenerator
              (dividendSignIsNegative && divisorSignIsNegative))
             {
             targetReg->setKnownSignCode(TR::DataType::getPreferredPlusCode());
-            if (cg->traceBCDCodeGen())
-               log->printf("\tpddiv: dividendSign matches the divisorSign so set targetReg sign code to the preferred sign 0x%x\n", TR::DataType::getPreferredPlusCode());
+            logprintf(trace, log, "\tpddiv: dividendSign matches the divisorSign so set targetReg sign code to the preferred sign 0x%x\n", TR::DataType::getPreferredPlusCode());
             }
          else
             {
             targetReg->setKnownSignCode(TR::DataType::getPreferredMinusCode());
-            if (cg->traceBCDCodeGen())
-               log->printf("\tpddiv: dividendSign does not match the divisorSign so set targetReg sign code to the preferred sign 0x%x\n", TR::DataType::getPreferredMinusCode());
+            logprintf(trace, log, "\tpddiv: dividendSign does not match the divisorSign so set targetReg sign code to the preferred sign 0x%x\n", TR::DataType::getPreferredMinusCode());
             }
          }
       }
@@ -5895,9 +5789,9 @@ J9::Z::TreeEvaluator::clearAndSetSign(TR::Node *node,
    {
    TR::Compilation *comp = cg->comp();
    OMR::Logger *log = comp->log();
+   bool trace = cg->traceBCDCodeGen();
 
-   if (cg->traceBCDCodeGen())
-      log->printf("\tclearAndSetSign: digitsToClear %d, leftMostByte %d (isSetSign=%s, sign 0x%x)\n",digitsToClear,leftMostByteForClear,isSetSign?"yes":"no",sign);
+   logprintf(trace, log, "\tclearAndSetSign: digitsToClear %d, leftMostByte %d (isSetSign=%s, sign 0x%x)\n", digitsToClear, leftMostByteForClear, isSetSign?"yes":"no", sign);
    bool clearingNeeded = digitsToClear > 0;
    if (isSetSign)
       {
@@ -5911,13 +5805,12 @@ J9::Z::TreeEvaluator::clearAndSetSign(TR::Node *node,
             {
             digitsToClear++;  // when digitsToClear is odd for the ignore sign code case then bump up to the next even amount (and clear the sign too) as this is easier to clear
             targetReg->setHasKnownBadSignCode();
-            if (cg->traceBCDCodeGen())
-               log->printf("\tignored setSign case so inc digitsToClear %d->%d and setHasKnownBadSignCode=true on targetReg %s\n",
-                  digitsToClear-1,digitsToClear,cg->getDebug()->getName(targetReg));
+            logprintf(trace, log, "\tignored setSign case so inc digitsToClear %d->%d and setHasKnownBadSignCode=true on targetReg %s\n",
+                  digitsToClear-1, digitsToClear, cg->getDebug()->getName(targetReg));
             }
          }
       signCodeIsInitialized = true;
-      if (cg->traceBCDCodeGen())
+      if (trace)
          {
          if (clearingNeeded)
             log->printf("\t\tisSetSign case (clearingNeeded==true): sign setting cleared %d digits so adjust digitsToClear %d->%d\n",
@@ -5936,26 +5829,25 @@ J9::Z::TreeEvaluator::clearAndSetSign(TR::Node *node,
                                 generateS390RightAlignedMemoryReference(*sourceMR, node, 0, cg));
          targetReg->transferSignState(srcReg, true); // digitsLost=true -- a clear always loses digits
          signCodeIsInitialized = true;    // no longer clear the sign code in the code below for if (needLateClear)
-         if (cg->traceBCDCodeGen()) log->prints("\t\tdigitsToClear==1 case: gen MVC to initialize sign code\n");
+         logprintf(trace, log, "\t\tdigitsToClear==1 case: gen MVC to initialize sign code\n");
          }
       else */
       if (clearingNeeded)
          {
          digitsToClear++;         // clear the sign code too and then MVN in the new sign code
-         if (cg->traceBCDCodeGen()) log->printf("\t\t init=false && isSetSign=false case : bump digitsToClear %d->%d to clear entire field\n",digitsToClear,digitsToClear+1);
+         logprintf(trace, log, "\t\t init=false && isSetSign=false case : bump digitsToClear %d->%d to clear entire field\n", digitsToClear, digitsToClear+1);
          }
       }
    TR_ASSERT(digitsToClear >= 0,"digitsToClear %d should be >= 0\n",digitsToClear);
    if (digitsToClear > 0)
       {
-      if (cg->traceBCDCodeGen()) log->printf("\t\tdigitsToClear %d > 0 so call genClearLeftMostDigitsIfNeeded\n",digitsToClear);
+      logprintf(trace, log, "\t\tdigitsToClear %d > 0 so call genClearLeftMostDigitsIfNeeded\n", digitsToClear);
       cg->genZeroLeftMostDigitsIfNeeded(node, targetReg, leftMostByteForClear, digitsToClear, generateS390RightAlignedMemoryReference(*destMR, node, 0, cg));
       }
 
    if (!signCodeIsInitialized)
       {
-      if (cg->traceBCDCodeGen())
-         log->printf("\t\tsignCodeIsInitialized=false after clearing of %d digits : init the sign now with an MVN of size 1\n",digitsToClear,isSetSign?"yes":"no");
+      logprintf(trace, log, "\t\tsignCodeIsInitialized=false after clearing of %d digits : init the sign now with an MVN of size 1\n", digitsToClear, isSetSign?"yes":"no");
       // Move the sign code over from the source location. The top nibble has already been cleared above.
       int32_t mvnSize = 1;
       generateSS1Instruction(cg, TR::InstOpCode::MVN, node,
@@ -5975,8 +5867,8 @@ J9::Z::TreeEvaluator::simpleWideningOrTruncation(TR::Node *node,
    {
    TR::Compilation *comp = cg->comp();
    OMR::Logger *log = comp->log();
-   if (cg->traceBCDCodeGen())
-      log->printf("\tsimple widening or truncating shift: srcRegPrecision %d, isSetSign=%s, sign 0x%x\n",srcReg->getDecimalPrecision(),isSetSign?"yes":"no",sign);
+   bool trace = cg->traceBCDCodeGen();
+   logprintf(trace, log, "\tsimple widening or truncating shift: srcRegPrecision %d, isSetSign=%s, sign 0x%x\n", srcReg->getDecimalPrecision(), isSetSign?"yes":"no", sign);
    bool isDigitTruncation = false;
    bool needsTopNibbleClearing = false;
    int32_t srcPrecision = srcReg->getDecimalPrecision();
@@ -5999,7 +5891,7 @@ J9::Z::TreeEvaluator::simpleWideningOrTruncation(TR::Node *node,
       else if (!node->canSkipPadByteClearing())
          {
          needsTopNibbleClearing = true;
-         if (cg->traceBCDCodeGen()) log->printf("z^z : new clear : simpleWide %p\n",node);
+         logprintf(trace, log, "z^z : new clear : simpleWide %p\n", node);
          }
       }
 
@@ -6008,9 +5900,8 @@ J9::Z::TreeEvaluator::simpleWideningOrTruncation(TR::Node *node,
    bool isNondestructiveNop = isPassThrough && !isDigitTruncation;
    TR_PseudoRegister *targetReg = NULL;
    TR::MemoryReference *sourceMR = NULL;
-   if (cg->traceBCDCodeGen())
-      log->printf("\tisDigitTruncation=%s, srcPrecision=%d, isPassThrough=%s, needsTopNibbleClearing=%s, initTargetAndSign=%s\n",
-         isDigitTruncation?"true":"false",srcPrecision,isPassThrough?"true":"false",needsTopNibbleClearing?"true":"false",initTargetAndSign?"yes":"no");
+   logprintf(trace, log, "\tisDigitTruncation=%s, srcPrecision=%d, isPassThrough=%s, needsTopNibbleClearing=%s, initTargetAndSign=%s\n",
+         isDigitTruncation?"true":"false", srcPrecision, isPassThrough?"true":"false", needsTopNibbleClearing?"true":"false", initTargetAndSign?"yes":"no");
    if (!isPassThrough)
       sourceMR =  generateS390RightAlignedMemoryReference(node->getFirstChild(), srcReg->getStorageReference(), cg);
    if (initTargetAndSign || needsTopNibbleClearing)
@@ -6025,17 +5916,14 @@ J9::Z::TreeEvaluator::simpleWideningOrTruncation(TR::Node *node,
    if (!isInitialized && !isPassThrough)
       {
       int32_t srcSize = TR::DataType::packedDecimalPrecisionToByteLength(srcPrecision);
-      if (cg->traceBCDCodeGen())
-         log->printf("\tisInit=false and isPassThru=false so gen initializing MVC with size %d. Do not clear after MVC just set targetReg->prec to srcPrecision %d\n",srcSize,srcPrecision);
+      logprintf(trace, log, "\tisInit=false and isPassThru=false so gen initializing MVC with size %d. Do not clear after MVC just set targetReg->prec to srcPrecision %d\n", srcSize, srcPrecision);
       generateSS1Instruction(cg, TR::InstOpCode::MVC, node,
                              srcSize-1,
                              generateS390RightAlignedMemoryReference(*destMR, node, 0, cg),
                              generateS390RightAlignedMemoryReference(*sourceMR, node, 0, cg));
       }
-   else if (cg->traceBCDCodeGen())
-      {
-      log->printf("\tisInit=true (%s) or isPassThru=true (%s): no move needed just set targetReg->prec to srcPrecision %d\n",isInitialized?"yes":"no",isPassThrough?"yes":"no",srcPrecision);
-      }
+   else
+      logprintf(trace, log, "\tisInit=true (%s) or isPassThru=true (%s): no move needed just set targetReg->prec to srcPrecision %d\n", isInitialized?"yes":"no", isPassThrough?"yes":"no", srcPrecision);
 
    // a ZAP may have been generated when initializing targetReg so in this case do not transfer the srcReg sign
    if (!targetReg->signStateInitialized() || !initTargetAndSign)
@@ -6052,7 +5940,7 @@ J9::Z::TreeEvaluator::simpleWideningOrTruncation(TR::Node *node,
 
    if (needsTopNibbleClearing)
       {
-      if (cg->traceBCDCodeGen()) log->printf("\tisDigitTruncation=true and targetReg->isEvenPrecision() (%d) so clear top nibble\n",targetReg->isEvenPrecision());
+      logprintf(trace, log, "\tisDigitTruncation=true and targetReg->isEvenPrecision() (%d) so clear top nibble\n", targetReg->isEvenPrecision());
       int32_t leftMostByteForClear = TR::DataType::packedDecimalPrecisionToByteLength(srcPrecision);
       cg->genZeroLeftMostPackedDigits(node, targetReg, leftMostByteForClear, 1, generateS390RightAlignedMemoryReference(*destMR, node, 0, cg));
       }
@@ -6199,18 +6087,15 @@ J9::Z::TreeEvaluator::pdshiftEvaluatorHelper(TR::Node *node, TR::CodeGenerator *
    TR_StorageReference* tmpStorageRef = NULL;
    TR::MemoryReference* tmpMR = NULL;
 
-   if (cg->traceBCDCodeGen())
-      {
-      comp->log()->printf("\tGen packed decimal shift: %s %p : shift by %d, roundAmount=%d, result Size=%d, precision %d, sourceSize=%d, precision %d\n",
-               node->getOpCode().getName(),
-               node,
-               shiftAmount,
-               roundAmount,
-               resultSize,
-               resultPrecision,
-               sourceSize,
-               srcNode->getDecimalPrecision());
-      }
+   logprintf(cg->traceBCDCodeGen(), comp->log(), "\tGen packed decimal shift: %s %p : shift by %d, roundAmount=%d, result Size=%d, precision %d, sourceSize=%d, precision %d\n",
+         node->getOpCode().getName(),
+         node,
+         shiftAmount,
+         roundAmount,
+         resultSize,
+         resultPrecision,
+         sourceSize,
+         srcNode->getDecimalPrecision());
 
    if(shiftAmount == 0)
       {
@@ -6567,8 +6452,7 @@ J9::Z::TreeEvaluator::pdshrVectorEvaluatorHelper(TR::Node *node, TR::CodeGenerat
 TR::Register*
 J9::Z::TreeEvaluator::zdstoreiVectorEvaluatorHelper(TR::Node *node, TR::CodeGenerator *cg)
    {
-   if (cg->comp()->getOption(TR_TraceCG))
-      cg->comp()->log()->printf("DAA: Entering zdstoreiVectorEvaluator %d\n", __LINE__);
+   logprintf(cg->comp()->getOption(TR_TraceCG), cg->comp()->log(), "DAA: Entering zdstoreiVectorEvaluator %d\n", __LINE__);
 
    TR::Node* pd2zdNode = node->getSecondChild();
    TR::Node* pdloadiNode = pd2zdNode->getFirstChild();

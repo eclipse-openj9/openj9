@@ -246,13 +246,14 @@ class TR_DataAccessAccelerator : public TR::Optimization
       {
       if (trace())
          {
-            if (status)
-               comp()->log()->printf("DataAccessAccelerator: Intrinsics on node %p : SUCCESS\n", node);
-            else
-               {
-               comp()->log()->printf("DataAccessAccelerator: Intrinsics on node %p : FAILED\n", node);
-               comp()->log()->printf("DataAccessAccelerator:     Reason : %s\n", reason);
-               }
+         OMR::Logger *log = comp()->log();
+         if (status)
+            log->printf("DataAccessAccelerator: Intrinsics on node %p : SUCCESS\n", node);
+         else
+            {
+            log->printf("DataAccessAccelerator: Intrinsics on node %p : FAILED\n", node);
+            log->printf("DataAccessAccelerator:     Reason : %s\n", reason);
+            }
          }
       return status;
       }

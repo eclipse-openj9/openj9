@@ -173,6 +173,7 @@ TR::RecognizedMethod TR_VarHandleTransformer::getVarHandleAccessMethod(TR::Node 
 int32_t TR_VarHandleTransformer::perform()
 {
 #if defined(J9VM_OPT_METHOD_HANDLE)
+   bool doTrace = comp()->getOption(TR_TraceILGen);
    TR::ResolvedMethodSymbol *methodSymbol = comp()->getMethodSymbol();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp()->fe());
    for (TR::TreeTop * tt = methodSymbol->getFirstTreeTop(); tt != NULL; tt = tt->getNextTreeTop())
@@ -190,15 +191,13 @@ int32_t TR_VarHandleTransformer::perform()
             {
             if (comp()->compileRelocatableCode())
                {
-               if (comp()->getOption(TR_TraceILGen))
-                  comp()->log()->printf("A call to VarHandle access method %s is not supported in AOT. Aborting compile.\n", comp()->getDebug()->getName(symRef));
+               logprintf(doTrace, comp()->log(), "A call to VarHandle access method %s is not supported in AOT. Aborting compile.\n", comp()->getDebug()->getName(symRef));
                comp()->failCompilation<J9::AOTHasInvokeVarHandle>("A call to a VarHandle access method is not supported in AOT. Aborting compile.");
                }
 
             if (comp()->getOption(TR_FullSpeedDebug) && !comp()->isPeekingMethod())
                {
-               if (comp()->getOption(TR_TraceILGen))
-                  comp()->log()->printf("A call to VarHandle access method %s is not supported in FSD. Failing ilgen.\n", comp()->getDebug()->getName(symRef));
+               logprintf(doTrace, comp()->log(), "A call to VarHandle access method %s is not supported in FSD. Failing ilgen.\n", comp()->getDebug()->getName(symRef));
                comp()->failCompilation<J9::FSDHasInvokeHandle>("A call to a VarHandle access method is not supported in FSD. Failing ilgen.");
                }
 

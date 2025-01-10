@@ -256,7 +256,7 @@ TR_MHJ2IThunkTable::Node::dumpTo(
    if (_thunk)
       log->printf(" %s @%p\n", _thunk->terseSignature(), _thunk);
    else
-      log->prints("\n");
+      log->println();
    for (int32_t typeIndex = 0; typeIndex < NUM_TYPE_CHARS; typeIndex++)
       {
       if (_children[typeIndex])

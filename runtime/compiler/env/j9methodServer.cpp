@@ -2138,8 +2138,7 @@ TR_ResolvedRelocatableJ9JITServerMethod::storeValidationRecordIfNecessary(TR::Co
    if (!definingClass)
       {
       definingClass = (J9Class *) TR_ResolvedJ9JITServerMethod::definingClassFromCPFieldRef(comp, cpIndex, isStatic);
-      if (trace)
-         log->printf("\tdefiningClass recomputed from cp as %p\n", definingClass);
+      logprintf(trace, log, "\tdefiningClass recomputed from cp as %p\n", definingClass);
       }
 
    if (!definingClass)
@@ -2152,8 +2151,7 @@ TR_ResolvedRelocatableJ9JITServerMethod::storeValidationRecordIfNecessary(TR::Co
    if (comp->getDebug())
       {
       J9UTF8 *className = J9ROMCLASS_CLASSNAME(TR::Compiler->cls.romClassOf((TR_OpaqueClassBlock *) definingClass));
-      if (trace)
-         log->printf("\tdefiningClass name %.*s\n", J9UTF8_LENGTH(className), J9UTF8_DATA(className));
+      logprintf(trace, log, "\tdefiningClass name %.*s\n", J9UTF8_LENGTH(className), J9UTF8_DATA(className));
       }
 
    // all kinds of validations may need to rely on the entire class chain, so make sure we can build one first
@@ -2192,8 +2190,7 @@ TR_ResolvedRelocatableJ9JITServerMethod::storeValidationRecordIfNecessary(TR::Co
 
    if (inLocalList)
       {
-      if (trace)
-         log->prints("\tFound in local list, nothing to do\n");
+      logprints(trace, log, "\tFound in local list, nothing to do\n");
       if (aotStats)
          {
          if (isStatic)
@@ -2210,8 +2207,7 @@ TR_ResolvedRelocatableJ9JITServerMethod::storeValidationRecordIfNecessary(TR::Co
    );
    if (classInfo)
       {
-      if (trace)
-         log->printf("\tCreated new AOT class info %p\n", classInfo);
+      logprintf(trace, log, "\tCreated new AOT class info %p\n", classInfo);
       comp->_aotClassInfo->push_front(classInfo);
       if (aotStats)
          {

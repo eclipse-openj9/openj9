@@ -82,8 +82,7 @@ bool J9::CFGSimplifier::simplifyUnresolvedRequireNonNull(bool needToDuplicateTre
    if (comp()->getOSRMode() == TR::involuntaryOSR)
          return false;
 
-   if (trace())
-      log->prints("Start simplifyUnresolvedRequireNonNull\n");
+   logprints(trace(), log, "Start simplifyUnresolvedRequireNonNull\n");
 
    // This block must end in an ifacmpeq or ifacmpne against aconst NULLa
    TR::TreeTop *compareTreeTop = getLastRealTreetop(_block);
@@ -92,8 +91,7 @@ bool J9::CFGSimplifier::simplifyUnresolvedRequireNonNull(bool needToDuplicateTre
        && compareNode->getOpCodeValue() != TR::ifacmpne)
       return false;
 
-   if (trace())
-      log->printf("   Found an ifacmp[eq/ne] n%dn\n", compareNode->getGlobalIndex());
+   logprintf(trace(), log, "   Found an ifacmp[eq/ne] n%dn\n", compareNode->getGlobalIndex());
 
    if (compareNode->getSecondChild()->getOpCodeValue() != TR::aconst
        || compareNode->getSecondChild()->getAddress() != 0)
@@ -103,8 +101,7 @@ bool J9::CFGSimplifier::simplifyUnresolvedRequireNonNull(bool needToDuplicateTre
    TR::Block *nullBlock = compareNode->getOpCodeValue() == TR::ifacmpeq ? _next2 : _next1;
    TR::Block *nonnullBlock = compareNode->getOpCodeValue() == TR::ifacmpeq ? _next1 : _next2;
 
-   if (trace())
-      log->printf("  Matched nullBlock %d\n", nullBlock->getNumber());
+   logprintf(trace(), log, "  Matched nullBlock %d\n", nullBlock->getNumber());
 
    TR::TreeTop *nullBlockCursor = nullBlock->getEntry()->getNextTreeTop();
 
@@ -112,8 +109,7 @@ bool J9::CFGSimplifier::simplifyUnresolvedRequireNonNull(bool needToDuplicateTre
        || nullBlockCursor->getNode()->getFirstChild()->getOpCodeValue() != TR::loadaddr)
       return false;
 
-   if (trace())
-      log->prints("   Match ResolveCHK of loadaddr\n");
+   logprints(trace(), log, "   Match ResolveCHK of loadaddr\n");
 
    TR::Node *loadaddr = nullBlockCursor->getNode()->getFirstChild();
    nullBlockCursor = nullBlockCursor->getNextTreeTop();
@@ -125,8 +121,7 @@ bool J9::CFGSimplifier::simplifyUnresolvedRequireNonNull(bool needToDuplicateTre
 
    TR::Node *exceptionNode = nullBlockCursor->getNode()->getFirstChild();
 
-   if (trace())
-      log->prints("   Matched new of loadaddr\n");
+   logprints(trace(), log, "   Matched new of loadaddr\n");
 
    nullBlockCursor = nullBlockCursor->getNextTreeTop();
 
@@ -143,23 +138,20 @@ bool J9::CFGSimplifier::simplifyUnresolvedRequireNonNull(bool needToDuplicateTre
 
    TR::Node *initCall = nullBlockCursor->getNode()->getFirstChild();
 
-   if (trace())
-      log->printf("   Matched call node %d\n", initCall->getGlobalIndex());
+   logprintf(trace(), log, "   Matched call node %d\n", initCall->getGlobalIndex());
 
    if (!initCall->getSymbolReference()->isUnresolved())
       return false;
 
    TR::Method *calleeMethod = initCall->getSymbol()->castToMethodSymbol()->getMethod();
-   if (trace())
-      log->printf("   Matched calleeMethod %s %s %s\n", calleeMethod->classNameChars(), calleeMethod->nameChars(), calleeMethod->signatureChars());
+   logprintf(trace(), log, "   Matched calleeMethod %s %s %s\n", calleeMethod->classNameChars(), calleeMethod->nameChars(), calleeMethod->signatureChars());
    if (strncmp(calleeMethod->nameChars(), "<init>", 6) != 0
        || strncmp(calleeMethod->classNameChars(), "java/lang/NullPointerException", 30) != 0
        || strncmp(calleeMethod->signatureChars(), "()V", 3) != 0)
       return false;
 
 
-   if (trace())
-      log->prints("   Matched NPE init\n");
+   logprints(trace(), log, "   Matched NPE init\n");
 
    nullBlockCursor = nullBlockCursor->getNextTreeTop();
    if ((nullBlockCursor->getNode()->getOpCodeValue() != TR::NULLCHK
@@ -168,8 +160,7 @@ bool J9::CFGSimplifier::simplifyUnresolvedRequireNonNull(bool needToDuplicateTre
        || nullBlockCursor->getNode()->getFirstChild()->getFirstChild() != exceptionNode)
       return false;
 
-   if (trace())
-      log->prints("   Matched throw\n");
+   logprints(trace(), log, "   Matched throw\n");
 
    TR::Node *throwNode = nullBlockCursor->getNode()->getFirstChild();
 
@@ -200,8 +191,7 @@ bool J9::CFGSimplifier::simplifyUnresolvedRequireNonNull(bool needToDuplicateTre
    passthroughNode->setAndIncChild(0, compareNode->getFirstChild());
    TR::SymbolReference *symRef = comp()->getSymRefTab()->findOrCreateNullCheckSymbolRef(comp()->getMethodSymbol());
    TR::Node *nullchkNode = TR::Node::createWithSymRef(TR::NULLCHK, 1, 1, passthroughNode, symRef);
-   if (trace())
-      log->printf("End simplifyUnresolvedRequireNonNull. Generated NULLCHK node n%dn\n", nullchkNode->getGlobalIndex());
+   logprintf(trace(), log, "End simplifyUnresolvedRequireNonNull. Generated NULLCHK node n%dn\n", nullchkNode->getGlobalIndex());
    TR::TreeTop *nullchkTree = TR::TreeTop::create(comp(), nullchkNode);
    checkBlock->getEntry()->insertAfter(nullchkTree);
 
@@ -255,8 +245,7 @@ bool J9::CFGSimplifier::simplifyResolvedRequireNonNull(bool needToDuplicateTree)
    if (comp()->getOSRMode() == TR::involuntaryOSR)
          return false;
 
-   if (trace())
-      log->prints("Start simplifyResolvedRequireNonNull\n");
+   logprints(trace(), log, "Start simplifyResolvedRequireNonNull\n");
 
    // This block must end in an ifacmpeq or ifacmpne against aconst NULL
    TR::TreeTop *compareTreeTop = getLastRealTreetop(_block);
@@ -265,8 +254,7 @@ bool J9::CFGSimplifier::simplifyResolvedRequireNonNull(bool needToDuplicateTree)
        && compareNode->getOpCodeValue() != TR::ifacmpne)
       return false;
 
-   if (trace())
-      log->printf("   Found an ifacmp[eq/ne] n%dn\n", compareNode->getGlobalIndex());
+   logprintf(trace(), log, "   Found an ifacmp[eq/ne] n%dn\n", compareNode->getGlobalIndex());
 
    if (compareNode->getSecondChild()->getOpCodeValue() != TR::aconst
        || compareNode->getSecondChild()->getAddress() != 0)
@@ -276,8 +264,7 @@ bool J9::CFGSimplifier::simplifyResolvedRequireNonNull(bool needToDuplicateTree)
    TR::Block *nullBlock = compareNode->getOpCodeValue() == TR::ifacmpeq ? _next2 : _next1;
    TR::Block *nonnullBlock = compareNode->getOpCodeValue() == TR::ifacmpeq ? _next1 : _next2;
 
-   if (trace())
-      log->printf("   Found nullBlock %d\n", nullBlock->getNumber());
+   logprintf(trace(), log, "   Found nullBlock %d\n", nullBlock->getNumber());
 
    TR::TreeTop *nullBlockCursor = nullBlock->getEntry()->getNextTreeTop();
    if (nullBlockCursor->getNode()->getOpCodeValue() != TR::treetop
@@ -285,8 +272,7 @@ bool J9::CFGSimplifier::simplifyResolvedRequireNonNull(bool needToDuplicateTree)
        || nullBlockCursor->getNode()->getFirstChild()->getFirstChild()->getOpCodeValue() != TR::loadaddr)
       return false;
 
-   if (trace())
-      log->prints("   Matched new tree\n");
+   logprints(trace(), log, "   Matched new tree\n");
 
    TR::Node *exceptionNode = nullBlockCursor->getNode()->getFirstChild();
    TR::Node *loadaddr = nullBlockCursor->getNode()->getFirstChild()->getFirstChild();
@@ -296,8 +282,7 @@ bool J9::CFGSimplifier::simplifyResolvedRequireNonNull(bool needToDuplicateTree)
        || loadaddr->getSymbolReference()->getSymbol()->castToStaticSymbol()->getStaticAddress() != NPEclazz)
       return false;
 
-   if (trace())
-      log->prints("   Matched new tree class\n");
+   logprints(trace(), log, "   Matched new tree class\n");
 
    nullBlockCursor = nullBlockCursor->getNextTreeTop();
 
@@ -313,23 +298,20 @@ bool J9::CFGSimplifier::simplifyResolvedRequireNonNull(bool needToDuplicateTree)
        || nullBlockCursor->getNode()->getFirstChild()->getFirstChild() != exceptionNode)
       return false;
 
-   if (trace())
-      log->prints("   Matched exceptionNode\n");
+   logprints(trace(), log, "   Matched exceptionNode\n");
 
    TR::Node *initCall = nullBlockCursor->getNode()->getFirstChild();
    if (initCall->getSymbolReference()->isUnresolved())
       return false;
 
    TR_ResolvedMethod *calleeMethod = initCall->getSymbol()->castToResolvedMethodSymbol()->getResolvedMethod();
-   if (trace())
-      log->printf("   Matched calleeMethod %s %s %s\n", calleeMethod->classNameChars(), calleeMethod->nameChars(), calleeMethod->signatureChars());
+   logprintf(trace(), log, "   Matched calleeMethod %s %s %s\n", calleeMethod->classNameChars(), calleeMethod->nameChars(), calleeMethod->signatureChars());
    if (strncmp(calleeMethod->nameChars(), "<init>", 6) != 0
        || strncmp(calleeMethod->classNameChars(), "java/lang/Throwable", 19) != 0
        || strncmp(calleeMethod->signatureChars(), "()V", 3) != 0)
       return false;
 
-   if (trace())
-      log->prints("   Matched exceptionNode call\n");
+   logprints(trace(), log, "   Matched exceptionNode call\n");
 
    nullBlockCursor = nullBlockCursor->getNextTreeTop();
    if ((nullBlockCursor->getNode()->getOpCodeValue() != TR::treetop
@@ -338,8 +320,7 @@ bool J9::CFGSimplifier::simplifyResolvedRequireNonNull(bool needToDuplicateTree)
        || nullBlockCursor->getNode()->getFirstChild()->getFirstChild() != exceptionNode)
       return false;
 
-   if (trace())
-      log->prints("   Matched exception throw\n");
+   logprints(trace(), log, "   Matched exception throw\n");
 
    TR::Node *throwNode = nullBlockCursor->getNode()->getFirstChild();
 
@@ -370,8 +351,7 @@ bool J9::CFGSimplifier::simplifyResolvedRequireNonNull(bool needToDuplicateTree)
    passthroughNode->setAndIncChild(0, compareNode->getFirstChild());
    TR::SymbolReference *symRef = comp()->getSymRefTab()->findOrCreateNullCheckSymbolRef(comp()->getMethodSymbol());
    TR::Node *nullchkNode = TR::Node::createWithSymRef(TR::NULLCHK, 1, 1, passthroughNode, symRef);
-   if (trace())
-      log->printf("End simplifyResolvedRequireNonNull. Generated NULLCHK node n%dn\n", nullchkNode->getGlobalIndex());
+   logprintf(trace(), log, "End simplifyResolvedRequireNonNull. Generated NULLCHK node n%dn\n", nullchkNode->getGlobalIndex());
    TR::TreeTop *nullchkTree = TR::TreeTop::create(comp(), nullchkNode);
    checkBlock->getEntry()->insertAfter(nullchkTree);
 

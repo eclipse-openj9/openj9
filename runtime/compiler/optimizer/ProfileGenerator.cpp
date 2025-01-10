@@ -78,13 +78,14 @@ TR_ProfileGenerator::TR_ProfileGenerator(TR::OptimizationManager *manager)
 
 int32_t TR_ProfileGenerator::perform()
    {
+   OMR::Logger *log = comp()->log();
+
    /**
     * Duplication is not necessary under JProfiling
     */
    if (comp()->getProfilingMode() != JitProfiling)
       {
-      if (trace())
-         comp()->log()->prints("Profile Generator is only required by JitProfiling instrumentation\n");
+      logprints(trace(), log, "Profile Generator is only required by JitProfiling instrumentation\n");
       return 0;
       }
 
@@ -215,8 +216,8 @@ int32_t TR_ProfileGenerator::perform()
 
    if (trace())
       {
-      comp()->log()->printf("Starting Profile Generation for %s\n", comp()->signature());
-      comp()->dumpMethodTrees(comp()->log(), "Trees before Profile Generation");
+      log->printf("Starting Profile Generation for %s\n", comp()->signature());
+      comp()->dumpMethodTrees(log, "Trees before Profile Generation");
       }
 
    {
@@ -245,8 +246,8 @@ int32_t TR_ProfileGenerator::perform()
 
    if (trace())
       {
-      comp()->dumpMethodTrees(comp()->log(), "Trees after Profile Generation");
-      comp()->log()->prints("Ending Profile Generation");
+      comp()->dumpMethodTrees(log, "Trees after Profile Generation");
+      log->prints("Ending Profile Generation");
       }
 
    return 2;

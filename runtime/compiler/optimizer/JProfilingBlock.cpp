@@ -609,15 +609,13 @@ void TR_JProfilingBlock::computeMinimumSpanningTree(BlockParents &parent, BlockP
       Q.pop();
 
       inMST.add(block);
-      if (trace())
-         comp()->log()->printf("Add block_%d to the MST\n", block->getNumber());
+      logprintf(trace(), comp()->log(), "Add block_%d to the MST\n", block->getNumber());
 
       AdjacentBlockIterator adj(comp(), block);
       while (adj.current())
          {
          TR::Block *candidate = adj.current();
-         if (trace())
-            comp()->log()->printf("  adj block_%d weight %d\n", candidate->getNumber(), adj.frequency());
+         logprintf(trace(), comp()->log(), "  adj block_%d weight %d\n", candidate->getNumber(), adj.frequency());
          if (!inMST.contains(candidate) && weights[candidate] > -adj.frequency())
             {
             weights[candidate] = -adj.frequency();
@@ -663,16 +661,14 @@ int32_t TR_JProfilingBlock::processCFGForCounting(BlockParents &parent, TR::Bloc
             {
             if (parent[block] == to)
                {
-               if (trace())
-                  log->printf("skipping edge block_%d to block_%d\n", block->getNumber(), to->getNumber());
+               logprintf(trace(), log, "skipping edge block_%d to block_%d\n", block->getNumber(), to->getNumber());
                continue;
                }
 
             if (parent[to] == block
                 && !(to->hasSuccessor(block) && block->hasSuccessor(to)))
                {
-               if (trace())
-                  log->printf("skipping edge block_%d to block_%d\n", block->getNumber(), to->getNumber());
+               logprintf(trace(), log, "skipping edge block_%d to block_%d\n", block->getNumber(), to->getNumber());
                continue;
                }
             }
@@ -691,8 +687,7 @@ int32_t TR_JProfilingBlock::processCFGForCounting(BlockParents &parent, TR::Bloc
                {
                countedBlocks.add(codeBlock);
                insertionBlock = codeBlock;
-               if (trace())
-                  log->printf("count osr block_%d (predecessor of block_%d)\n", codeBlock->getNumber(), to->getNumber());
+               logprintf(trace(), log, "count osr block_%d (predecessor of block_%d)\n", codeBlock->getNumber(), to->getNumber());
                }
             }
          // if the source of the edge has a single source we can count the source
@@ -705,8 +700,7 @@ int32_t TR_JProfilingBlock::processCFGForCounting(BlockParents &parent, TR::Bloc
                {
                countedBlocks.add(block);
                insertionBlock = block;
-               if (trace())
-                  log->printf("count block_%d (single predecessor of block_%d)\n", block->getNumber(), to->getNumber());
+               logprintf(trace(), log, "count block_%d (single predecessor of block_%d)\n", block->getNumber(), to->getNumber());
                }
             }
          // if the destination of the edge has a single destination we can count the destination
@@ -720,8 +714,7 @@ int32_t TR_JProfilingBlock::processCFGForCounting(BlockParents &parent, TR::Bloc
                {
                countedBlocks.add(to);
                insertionBlock = to;
-               if (trace())
-                  log->printf("count block_%d (single successor of block_%d)\n", to->getNumber(), block->getNumber());
+               logprintf(trace(), log, "count block_%d (single successor of block_%d)\n", to->getNumber(), block->getNumber());
                }
             }
          // we have a critical edge and so need to split it to insert the counter
@@ -730,8 +723,7 @@ int32_t TR_JProfilingBlock::processCFGForCounting(BlockParents &parent, TR::Bloc
             {
             insertionBlock = block->splitEdge(block, to, comp(), NULL, true);
             countedBlocks.add(insertionBlock);
-            if (trace())
-               log->printf("split edge %d to %d -- new block_%d\n", block->getNumber(), to->getNumber(), insertionBlock->getNumber());
+            logprintf(trace(), log, "split edge %d to %d -- new block_%d\n", block->getNumber(), to->getNumber(), insertionBlock->getNumber());
             // the edge we originally numbered has gone so we need to decrement the counter
             edgeId -= 1;
             // now we number all of the predecessors and successors of the new block
@@ -869,8 +861,8 @@ void TR_JProfilingBlock::addRecompilationTests(TR_BlockFrequencyInfo *blockFrequ
          }
 
       static int32_t jProfilingCompileThreshold = comp()->getOptions()->getJProfilingMethodRecompThreshold();
-      if (trace())
-         log->printf("Profiling Compile Threshold for method = %d\n",isProfilingCompilation ? jProfilingCompileThreshold : *thresholdLocation);
+      logprintf(trace(), log, "Profiling Compile Threshold for method = %d\n",
+         isProfilingCompilation ? jProfilingCompileThreshold : *thresholdLocation);
       TR::Block *guardBlock2 = TR::Block::createEmptyBlock(node, comp(), originalFirstBlock->getFrequency());
       TR::Node *recompThreshold = isProfilingCompilation ? TR::Node::iconst(node, jProfilingCompileThreshold) : TR::Node::createWithSymRef(node, TR::iload, 0, comp()->getSymRefTab()->createKnownStaticDataSymbolRef(thresholdLocation, TR::Int32));
       TR::Node *cmpFlagNode = TR::Node::createif(TR::ificmplt, root, recompThreshold, originalFirstBlock->getEntry());
@@ -890,18 +882,18 @@ void TR_JProfilingBlock::addRecompilationTests(TR_BlockFrequencyInfo *blockFrequ
 
       comp()->getRecompilationInfo()->getJittedBodyInfo()->setUsesJProfiling();
       TR::CFG *cfg = comp()->getFlowGraph();
-      if (trace()) log->prints("adding edge start to guard\n");
-         cfg->addEdge(cfg->getStart(), guardBlock1);
-      if (trace()) log->prints("insert before guard to bump\n");
-         cfg->insertBefore(guardBlock1, guardBlock2);
-         cfg->insertBefore(guardBlock2, callRecompileBlock);
-      if (trace()) log->prints("insertbefore call to original\n");
-         cfg->insertBefore(callRecompileBlock, originalFirstBlock);
+      logprints(trace(), log, "adding edge start to guard\n");
+      cfg->addEdge(cfg->getStart(), guardBlock1);
+      logprints(trace(), log, "insert before guard to bump\n");
+      cfg->insertBefore(guardBlock1, guardBlock2);
+      cfg->insertBefore(guardBlock2, callRecompileBlock);
+      logprints(trace(), log, "insertbefore call to original\n");
+      cfg->insertBefore(callRecompileBlock, originalFirstBlock);
 
-      if (trace()) log->prints("remove start to original\n");
-         cfg->removeEdge(cfg->getStart(), originalFirstBlock);
-      if (trace()) log->prints("set first\n");
-         comp()->getJittedMethodSymbol()->setFirstTreeTop(guardBlock1->getEntry());
+      logprints(trace(), log, "remove start to original\n");
+      cfg->removeEdge(cfg->getStart(), originalFirstBlock);
+      logprints(trace(), log, "set first\n");
+      comp()->getJittedMethodSymbol()->setFirstTreeTop(guardBlock1->getEntry());
       if (trace())
          comp()->dumpMethodTrees(log, "Trees after JProfiling");
       }
@@ -930,18 +922,15 @@ int32_t TR_JProfilingBlock::perform()
 
    if (comp()->getOption(TR_EnableJProfiling))
       {
-      if (trace())
-         log->prints("JProfiling has been enabled, run JProfiling\n");
+      logprints(trace(), log, "JProfiling has been enabled, run JProfiling\n");
       }
    else if (comp()->getProfilingMode() == JProfiling)
       {
-      if (trace())
-         log->prints("JProfiling has been enabled for profiling compilations, run JProfilingBlock\n");
+      logprints(trace(), log, "JProfiling has been enabled for profiling compilations, run JProfilingBlock\n");
       }
    else
       {
-      if (trace())
-         log->prints("JProfiling has not been enabled, skip JProfilingBlock\n");
+      logprints(trace(), log, "JProfiling has not been enabled, skip JProfilingBlock\n");
       comp()->setSkippedJProfilingBlock();
       return 0;
       }
@@ -1061,13 +1050,11 @@ int32_t TR_JProfilingBlock::perform()
       int32_t depth = Q.top().first;
       Q.pop();
 
-      if (trace())
-         log->printf("Processing depth %d - block_%d\n", depth, block->getNumber());
+      logprintf(trace(), log, "Processing depth %d - block_%d\n", depth, block->getNumber());
 
       if (edgeInfo.computeBlockFrequencyFromPredecessors(componentCounters, blockFrequencyInfo, block))
          {
-         if (trace())
-            log->printf("Can compute block_%d from predecessors\n", block->getNumber());
+         logprintf(trace(), log, "Can compute block_%d from predecessors\n", block->getNumber());
          bool canComputeParent = true;
          TR::CFGEdge *parentEdge = NULL;
          CFGSuccessorIterator sit(cfg, &loopBack, block);
@@ -1089,8 +1076,7 @@ int32_t TR_JProfilingBlock::perform()
          }
       else if (edgeInfo.computeBlockFrequencyFromSuccessors(componentCounters, blockFrequencyInfo, block))
          {
-         if (trace())
-            log->printf("Can compute block_%d from successors\n", block->getNumber());
+         logprintf(trace(), log, "Can compute block_%d from successors\n", block->getNumber());
          bool canComputeParent = true;
          TR::CFGEdge *parentEdge = NULL;
          CFGPredecessorIterator pit(cfg, &loopBack, block);

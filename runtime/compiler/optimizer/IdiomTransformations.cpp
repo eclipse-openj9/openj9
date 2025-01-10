@@ -112,6 +112,7 @@ bool
 ChangeAlignmentOfRegion(TR_CISCTransformer *trans)
    {
    const bool disptrace = DISPTRACE(trans);
+   TR::Compilation * comp = trans->comp();
    OMR::Logger *log = comp->log();
    TR_CISCGraph *P = trans->getP();
    TR_CISCGraph *T = trans->getT();
@@ -119,8 +120,6 @@ ChangeAlignmentOfRegion(TR_CISCTransformer *trans)
    TR_CISCNode *t;
    TR_CISCNode *beforeLoop = NULL;
    bool changed = false;
-
-   TR::Compilation * comp = trans->comp();
 
    // Find actual pTop. Skip an optional node if there is no corresponding target node.
    while (trans->getP2TRep(pTop) == NULL)
@@ -141,13 +140,13 @@ ChangeAlignmentOfRegion(TR_CISCTransformer *trans)
             }
          if (!chk->isOutsideOfLoop())
             {
-            if (disptrace) log->printf("ChangeAlignmentOfRegion : (t:%d p:%d) no need to change alignment\n",t->getID(),pTop->getID());
+            logprintf(disptrace, log, "ChangeAlignmentOfRegion : (t:%d p:%d) no need to change alignment\n",t->getID(),pTop->getID());
             return changed;        // Find pTop! Already aligned correctly
             }
          }
       if (t->getNumSuccs() < 1)
          {
-         if (disptrace) log->printf("ChangeAlignmentOfRegion : #succs of tID:%d is 0\n", t->getID());
+         logprintf(disptrace, log, "ChangeAlignmentOfRegion : #succs of tID:%d is 0\n", t->getID());
          return changed;    // cannot find either a loop body or pTop in the fallthrough path
          }
       beforeLoop = t;
@@ -180,7 +179,7 @@ ChangeAlignmentOfRegion(TR_CISCTransformer *trans)
    int condT2P = trans->analyzeT2P(t, pTop);
    if (condT2P & _T2P_MatchMask) return changed;    // no need to change alignment
 
-   if (disptrace) log->printf("ChangeAlignmentOfRegion : tTop %d, pTop %d\n",t->getID(),pTop->getID());
+   logprintf(disptrace, log, "ChangeAlignmentOfRegion : tTop %d, pTop %d\n",t->getID(),pTop->getID());
    TR_CISCNodeRegion r(T->getNumNodes(), trans->trMemory()->heapMemoryRegion());
    TR_CISCNode *firstNode = t;
    TR_CISCNode *lastNode = NULL;
@@ -214,11 +213,11 @@ ChangeAlignmentOfRegion(TR_CISCTransformer *trans)
       }
 
    // Add nodes from firstNode to lastNode into the region r
-   if (disptrace) log->printf("ChangeAlignmentOfRegion : foundNode %d, lastNode %d\n",foundNode->getID(),lastNode->getID());
+   logprintf(disptrace, log, "ChangeAlignmentOfRegion : foundNode %d, lastNode %d\n",foundNode->getID(),lastNode->getID());
    if (branchCount > 0 &&
        !lastNode->getIlOpCode().isBranch())
       {
-      if (disptrace) log->printf("Fail: there is a branch in the region. lastNode must be a branch node.\n");
+      logprints(disptrace, log, "Fail: there is a branch in the region. lastNode must be a branch node.\n");
       return changed;
       }
    for (t = firstNode; ;t = t->getSucc(0))
@@ -252,7 +251,7 @@ ChangeAlignmentOfRegion(TR_CISCTransformer *trans)
          {
          if (!r.isIncluded(pn))
             {
-            if (disptrace) log->printf("ChangeAlignmentOfRegion : There is a parent(%d) of %d in the outside of the region\n", pn->getID(), t->getID());
+            logprintf(disptrace, log, "ChangeAlignmentOfRegion : There is a parent(%d) of %d in the outside of the region\n", pn->getID(), t->getID());
             return changed; // fail
             }
          }
@@ -268,11 +267,11 @@ ChangeAlignmentOfRegion(TR_CISCTransformer *trans)
    if (disptrace)
       {
       log->printf("ChangeAlignmentOfRegion: Succ[0] of %d will be changed from %d to %d.\n",
-             beforeLoop->getID(),
-             beforeLoop->getSucc(0)->getID(),
-             foundNode->getID());
+         beforeLoop->getID(),
+         beforeLoop->getSucc(0)->getID(),
+         foundNode->getID());
       log->printf("\tNodes from %d to %d will be added to BeforeInsertionList.\n",
-             from->getID(),to->getID());
+         from->getID(),to->getID());
       }
    TR_ASSERT(r.getListTail()->getData()->getIlOpCode().isTreeTop(), "error");
    beforeLoop->replaceSucc(0, foundNode);       // replace the loop entry with foundNode
@@ -282,10 +281,8 @@ ChangeAlignmentOfRegion(TR_CISCTransformer *trans)
       if (t->getIlOpCode().isTreeTop())
          {
          TR::Node *rep = t->getHeadOfTrNodeInfo()->_node;
-         if (disptrace)
-            {
-            log->printf("add TR::Node 0x%p (tid:%d) to BeforeInsertionList.\n", rep, t->getID());
-            }
+         logprintf(disptrace, log, "add TR::Node 0x%p (tid:%d) to BeforeInsertionList.\n", rep, t->getID());
+
          rep = duplicator.duplicateTree(rep);
          if (t->getIlOpCode().isIf())
             {
@@ -414,7 +411,7 @@ analyzeMoveNodeForward(TR_CISCTransformer *trans, List<TR_CISCNode> *l, TR_CISCN
                      if (!generateCompensation0)
                         {
                         trans->getT()->duplicateListsDuplicator();
-                        if (disptrace) comp->log()->printf("analyzeMoveNodeForward: append the tree of 0x%p into AfterInsertionIdiomList\n", trNode);
+                        logprintf(disptrace, comp->log(), "analyzeMoveNodeForward: append the tree of 0x%p into AfterInsertionIdiomList\n", trNode);
                         trans->getAfterInsertionIdiomList(0)->append(trNode->duplicateTree());
                         }
                      fail = false;
@@ -524,7 +521,7 @@ reorderTargetNodesInBB(TR_CISCTransformer *trans)
                   {
                   T->duplicateListsDuplicator();
                   // OK, we can move the node t!
-                  if (disptrace) log->printf("We can move the node %d to %p(%d)\n",tID,tgt,tgt->getID());
+                  logprintf(disptrace, log, "We can move the node %d to %p(%d)\n", tID, tgt, tgt->getID());
                   anyChanged = changed = true;
 
                   trans->moveCISCNodes(t, t, tgt, "reorderTargetNodesInBB");
@@ -558,6 +555,7 @@ moveStoreOutOfLoopForward(TR_CISCTransformer *trans)
    TR_CISCNode *ixload, *aload, *iload;
    TR::Compilation *comp = trans->comp();
    OMR::Logger *log = comp->log();
+   const bool disptrace = DISPTRACE(trans);
 
    TR_CISCNode *boolTable = P->getSpecialCareNode(0);  // Note: The opcode isn't always TR_booltable.
    TR_CISCNode *p = boolTable->getChild(0); // just before TR_booltable, such as b2i
@@ -589,7 +587,7 @@ moveStoreOutOfLoopForward(TR_CISCTransformer *trans)
             if (!storedVariable) storedVariable = tParent->getChild(1);
             else if (storedVariable != tParent->getChild(1))
                {
-               if (DISPTRACE(trans)) log->prints("moveStoreOutOfLoopForward failed because all variables of stores are not same.\n");
+               logprints(disptrace, log, "moveStoreOutOfLoopForward failed because all variables of stores are not same.\n");
                success0 = false;
                goto endSpecial0;        // FAIL!
                }
@@ -602,7 +600,7 @@ moveStoreOutOfLoopForward(TR_CISCTransformer *trans)
                }
             else
                {
-               if (DISPTRACE(trans)) log->prints("moveStoreOutOfLoopForward failed because tParent will not reach either boolTable or optionalCmp.\n");
+               logprints(disptrace, log, "moveStoreOutOfLoopForward failed because tParent will not reach either boolTable or optionalCmp.\n");
                success0 = false;
                goto endSpecial0;        // FAIL!
                }
@@ -614,13 +612,13 @@ moveStoreOutOfLoopForward(TR_CISCTransformer *trans)
 
    if (targetList.isEmpty())
       {
-      if (DISPTRACE(trans)) log->prints("moveStoreOutOfLoopForward failed because targetList is empty.\n");
+      logprints(disptrace, log, "moveStoreOutOfLoopForward failed because targetList is empty.\n");
       success0 = false;
       }
    // check if descendants of p include an array load
    if (!getThreeNodesForArray(p, &ixload, &aload, &iload, true))
       {
-      if (DISPTRACE(trans)) log->printf("moveStoreOutOfLoopForward failed because decendents of pid:%d don't include an array load.\n", p->getID());
+      logprintf(disptrace, log, "moveStoreOutOfLoopForward failed because decendents of pid:%d don't include an array load.\n", p->getID());
       success0 = false;
       }
 
@@ -629,8 +627,8 @@ moveStoreOutOfLoopForward(TR_CISCTransformer *trans)
       ixload = trans->getP2TRep(ixload);
       aload = trans->getP2TRep(aload);
       iload = trans->getP2TRep(iload);
-      if (DISPTRACE(trans)) log->printf("moveStoreOutOfLoopForward: Target nodes ixload=%d, aload=%d, iload=%d\n",
-                                    ixload ? ixload->getID() : -1, aload ? aload->getID() : -1, iload ? iload->getID() : -1);
+      logprintf(disptrace, log, "moveStoreOutOfLoopForward: Target nodes ixload=%d, aload=%d, iload=%d\n",
+         ixload ? ixload->getID() : -1, aload ? aload->getID() : -1, iload ? iload->getID() : -1);
       trans->getT()->duplicateListsDuplicator();
       if (ixload && aload && iload && (iload->isLoadVarDirect() || iload->getOpcode() == TR_variable))
          {
@@ -677,7 +675,7 @@ moveStoreOutOfLoopForward(TR_CISCTransformer *trans)
          trans->getAfterInsertionIdiomList(0)->append(storeDup0);       // base[index]
          trans->getAfterInsertionIdiomList(1)->append(storeDup1);       // base[index-1] (it may not be used.)
          if (VERBOSE(trans)) printf("%s moveStoreOutOfLoopForward\n", trans->getT()->getTitle());
-         if (DISPTRACE(trans)) log->printf("moveStoreOutOfLoopForward adds %d into compensation code [0] and [1]\n", t->getID());
+         logprintf(disptrace, log, "moveStoreOutOfLoopForward adds %d into compensation code [0] and [1]\n", t->getID());
          for (; t; t = ti.getNext()) t->setIsNegligible();      // set negligible to all stores
          }
       else
@@ -853,6 +851,8 @@ usedInLoopTest(TR::Compilation *comp, TR::Node *loopTestNode, TR::SymbolReferenc
 static bool
 indexContainsArray(TR::Compilation *comp, TR::Node *index, vcount_t visitCount)
    {
+   bool trace = comp->trace(OMR::idiomRecognition);
+
    if (index->getVisitCount() == visitCount)
       return false;
 
@@ -860,14 +860,12 @@ indexContainsArray(TR::Compilation *comp, TR::Node *index, vcount_t visitCount)
 
    index->setVisitCount(visitCount);
 
-   if (comp->trace(OMR::idiomRecognition))
-      log->printf("analyzing node %p\n", index);
+   logprintf(trace, log, "analyzing node %p\n", index);
 
    if (index->getOpCode().hasSymbolReference() &&
          index->getSymbolReference()->getSymbol()->isArrayShadowSymbol())
       {
-      if (comp->trace(OMR::idiomRecognition))
-         log->printf("found array node %p\n", index);
+      logprintf(trace, log, "found array node %p\n", index);
       return true;
       }
 
@@ -882,8 +880,9 @@ indexContainsArray(TR::Compilation *comp, TR::Node *index, vcount_t visitCount)
 static bool
 indexContainsArrayAccess(TR::Compilation *comp, TR::Node *aXaddNode)
    {
-   if (comp->trace(OMR::idiomRecognition))
-      comp->log()->printf("axaddnode %p\n", aXaddNode);
+   bool trace = comp->trace(OMR::idiomRecognition);
+   OMR::Logger *log = comp->log();
+   logprintf(trace, log, "axaddnode %p\n", aXaddNode);
 
    TR::Node *loadNode1, *loadNode2, *topLevelIndex;
    findIndexLoad(aXaddNode, loadNode1, loadNode2, topLevelIndex);
@@ -892,8 +891,7 @@ indexContainsArrayAccess(TR::Compilation *comp, TR::Node *aXaddNode)
    // this loop into an arraycopy
    // ie. a[b[i]] do not represent linear array accesses
    //
-   if (comp->trace(OMR::idiomRecognition))
-      comp->log()->printf("aXaddNode %p topLevelIndex %p\n", aXaddNode, topLevelIndex);
+   logprintf(trace, log, "aXaddNode %p topLevelIndex %p\n", aXaddNode, topLevelIndex);
    vcount_t visitCount = comp->incOrResetVisitCount();
    if (topLevelIndex)
       return indexContainsArray(comp, topLevelIndex, visitCount);
@@ -981,22 +979,21 @@ static TR::Node* getArrayBase(TR::Node *node)
 static bool
 areArraysInvariant(TR::Compilation *comp, TR::Node *inputNode, TR::Node *outputNode, TR_CISCGraph *T)
    {
+   bool trace = comp->trace(OMR::idiomRecognition);
    OMR::Logger *log = comp->log();
    if (T)
       {
       TR::Node *aNode = getArrayBase(inputNode);
       TR::Node *bNode = getArrayBase(outputNode);
 
-      if (comp->trace(OMR::idiomRecognition))
-         log->printf("aNode = %p bNode = %p\n", aNode, bNode);
+      logprintf(trace, log, "aNode = %p bNode = %p\n", aNode, bNode);
       if (aNode && aNode->getOpCode().isLoadDirect() &&
             bNode && bNode->getOpCode().isLoadDirect())
          {
          TR_CISCNode *aCNode = T->getCISCNode(aNode);
          TR_CISCNode *bCNode = T->getCISCNode(bNode);
 
-         if (comp->trace(OMR::idiomRecognition))
-            log->printf("aC = %p %d bC = %p %d\n", aCNode, aCNode->getID(), bCNode, bCNode->getID());
+         logprintf(trace, log, "aC = %p %d bC = %p %d\n", aCNode, aCNode->getID(), bCNode, bCNode->getID());
          if (aCNode && bCNode)
             {
             ListIterator<TR_CISCNode> aDefI(aCNode->getChains());
@@ -1006,7 +1003,7 @@ areArraysInvariant(TR::Compilation *comp, TR::Node *inputNode, TR::Node *outputN
                {
                if (ch->getDagID() == aCNode->getDagID())
                   {
-                  log->printf("def %d found inside loop for %d\n", ch->getID(), aCNode->getID());
+                  logprintf(trace, log, "def %d found inside loop for %d\n", ch->getID(), aCNode->getID());
                   return false;
                   }
                }
@@ -1014,7 +1011,7 @@ areArraysInvariant(TR::Compilation *comp, TR::Node *inputNode, TR::Node *outputN
                {
                if (ch->getDagID() == bCNode->getDagID())
                   {
-                  log->printf("def %d found inside loop for %d\n", ch->getID(), bCNode->getID());
+                  logprintf(trace, log, "def %d found inside loop for %d\n", ch->getID(), bCNode->getID());
                   return false;
                   }
                }
@@ -1224,9 +1221,9 @@ static TR::Node *
 areDefsOnlyInsideLoop(TR::Compilation *comp, TR_CISCTransformer *trans, TR::Node *outputNode)
    {
    bool extraTrace = DISPTRACE(trans);
+   OMR::Logger *log = trans->comp()->log();
 
-   if (extraTrace)
-      trans->comp()->log()->printf("finding defs for index used in tree %p\n", outputNode);
+   logprintf(extraTrace, log, "finding defs for index used in tree %p\n", outputNode);
 
    TR_UseDefInfo *info = trans->optimizer()->getUseDefInfo();
    if (info)
@@ -1261,8 +1258,7 @@ areDefsOnlyInsideLoop(TR::Compilation *comp, TR_CISCTransformer *trans, TR::Node
             if (numDefs == 1)
                {
                TR::Block *defBlock = defTT->getEnclosingBlock();
-               if (extraTrace)
-                  trans->comp()->log()->printf("found single def %p for load %p\n", defTT->getNode(), loadNode);
+               logprintf(extraTrace, log, "found single def %p for load %p\n", defTT->getNode(), loadNode);
                if (trans->isBlockInLoopBody(defBlock))
                   return (defTT->getNode()->duplicateTree(trans->comp()));
                }
@@ -1327,8 +1323,8 @@ checkForPostIncrement(TR::Compilation *comp, TR::Block *loopHeader, TR::Node *lo
    if (storeIvLoad->getOpCode().isAdd() || storeIvLoad->getOpCode().isSub())
       storeIvLoad = storeIvLoad->getFirstChild();
 
-   if(comp->trace(OMR::idiomRecognition))
-      comp->log()->printf("found storeIvload %p cmpFirstChild %p\n", storeIvLoad, cmpFirstChild);
+   logprintf(comp->trace(OMR::idiomRecognition), comp->log(), "found storeIvload %p cmpFirstChild %p\n", storeIvLoad, cmpFirstChild);
+
    // simple case
    // the loopCmp uses the un-incremented value
    // of the iv
@@ -1569,10 +1565,9 @@ CISCTransform2FindBytes(TR_CISCTransformer *trans)
    trans->findFirstNode(&trTreeTop, &trNode, &block);
    if (!block) return false;    // cannot find
 
-   if (isLoopPreheaderLastBlockInMethod(comp, block))
+   if (isLoopPreheaderLastBlockInMethod(comp, block, disptrace))
       {
-      if (disptrace)
-         log->prints("Bailing CISCTransform2FindBytes due to null TT - might be a preheader in last block of method\n");
+      logprints(disptrace, log, "Bailing CISCTransform2FindBytes due to null TT - might be a preheader in last block of method\n");
       return false;
       }
 
@@ -1583,7 +1578,7 @@ CISCTransform2FindBytes(TR_CISCTransformer *trans)
       {
       if (exitIfRep != trans->getP2TInLoopIfSingle(P->getImportantNode(1)))
          {
-         if (disptrace) log->prints("Give up because of multiple candidates of ificmpge.\n");
+         logprints(disptrace, log, "Give up because of multiple candidates of ificmpge.\n");
          return false;
          }
       bool isDecrement;
@@ -1598,7 +1593,7 @@ CISCTransform2FindBytes(TR_CISCTransformer *trans)
       if (listT->isEmpty() ||
           trans->getNumOfBBlistSucc() != 2)
          {
-         if (disptrace) log->prints("Currently, CISCTransform2FindBytes allows only the case where there is an ificmpge node and successor is 2.\n");
+         logprints(disptrace, log, "Currently, CISCTransform2FindBytes allows only the case where there is an ificmpge node and successor is 2.\n");
          return false;
          }
       }
@@ -1657,7 +1652,7 @@ CISCTransform2FindBytes(TR_CISCTransformer *trans)
             }
          if (!go)
             {
-            if (disptrace) log->prints("analyzeByteBoolTable failed.\n");
+            logprints(disptrace, log, "analyzeByteBoolTable failed.\n");
             return false;  // fail to analyze
             }
          }
@@ -1676,7 +1671,7 @@ CISCTransform2FindBytes(TR_CISCTransformer *trans)
             }
          else
             {
-            if (disptrace) log->prints("analyzeCharBoolTable failed.\n");
+            logprints(disptrace, log, "analyzeCharBoolTable failed.\n");
             return false;  // fail to analyze
             }
          }
@@ -1690,14 +1685,14 @@ CISCTransform2FindBytes(TR_CISCTransformer *trans)
 
             if (tmpTable[0])
                {
-               if (disptrace) log->prints("Char array has '0' as an exit condition, loop will not be reduced TRT/SRST (single-byte) instruction.\n");
+               logprints(disptrace, log, "Char array has '0' as an exit condition, loop will not be reduced TRT/SRST (single-byte) instruction.\n");
                return false;    // if zero is a delimiter, give up.
                }
             for (int32_t i = 256; i < 65536; i++)
                {
                if (tmpTable[i])
                   {
-                  if (disptrace) log->printf("Char array has one of 256 through 65535 (%d) as an exit condition, loop cannot be reduced to TRT/SRST (single-byte) instruction.\n", i);
+                  logprintf(disptrace, log, "Char array has one of 256 through 65535 (%d) as an exit condition, loop cannot be reduced to TRT/SRST (single-byte) instruction.\n", i);
                   return false;    // if any value between 256 and 65535 is a delimiter, give up.
                   }
                }
@@ -1707,16 +1702,17 @@ CISCTransform2FindBytes(TR_CISCTransformer *trans)
 
    if (count != 0 && !retSameExit)    // there is a booltable check and all destinations of booltable are not same
       {
-      if (disptrace) log->prints("Multiple targets for different delimiter checks detected.  Abandoning reduction.\n");
+      logprints(disptrace, log, "Multiple targets for different delimiter checks detected.  Abandoning reduction.\n");
       return false;
       }
 
    // Check to ensure that the delimiter checks 'break' to the target successor blocks if single successor.
    if (retSameExit != NULL && !isNeedGenIcmpge && retSameExit->getEnclosingBlock() != target)
       {
-      if (disptrace) log->printf("Target for delimiter check (Treetop: %p / Block %d: %p) is different than loop exit block_%d: %p.  Abandoning reduction.\n",
-              retSameExit, retSameExit->getEnclosingBlock()->getNumber(), retSameExit->getEnclosingBlock(),
-              target->getNumber(), target);
+      logprintf(disptrace, log,
+         "Target for delimiter check (Treetop: %p / Block %d: %p) is different than loop exit block_%d: %p.  Abandoning reduction.\n",
+         retSameExit, retSameExit->getEnclosingBlock()->getNumber(), retSameExit->getEnclosingBlock(),
+         target->getNumber(), target);
       return false;
       }
 
@@ -1762,13 +1758,13 @@ CISCTransform2FindBytes(TR_CISCTransformer *trans)
       // for now disable cases when ahConstNode doesn't equal contiguousArrayHeaderSizeInBytes
       if (indexRequiresAdjustment)
          {
-         if (disptrace) log->printf("headerConst node value doesn't equal contiguous array header size %p. Abandoning reduction.\n", ahConstNode);
+         logprintf(disptrace, log, "headerConst node value doesn't equal contiguous array header size %p. Abandoning reduction.\n", ahConstNode);
          return false;
          }
 
    if (avoidTransformingStringLoops(comp))
       {
-      if (disptrace) log->prints("Abandoning reduction because of functional problems when String compression is enabled in Java 8 SR5\n");
+      logprints(disptrace, log, "Abandoning reduction because of functional problems when String compression is enabled in Java 8 SR5\n");
       return false;
       }
 
@@ -1782,14 +1778,14 @@ CISCTransform2FindBytes(TR_CISCTransformer *trans)
       tableNode = inv.invariantExpr(origComparand);
       if (tableNode == NULL)
          {
-         if (disptrace) log->printf(
+         logprintf(disptrace, log,
             "Abandoning reduction: failed to create loop-invariant expression for n%un [%p]\n",
             origComparand->getGlobalIndex(),
             origComparand);
          return false;
          }
 
-      if (disptrace) log->printf("Single non-constant delimiter found.  Setting %p as tableNode.\n", comp->getDebug()->getName(tableCISCNode->getHeadOfTrNodeInfo()->_node));
+      logprintf(disptrace, log, "Single non-constant delimiter found.  Setting %p as tableNode.\n", comp->getDebug()->getName(tableCISCNode->getHeadOfTrNodeInfo()->_node));
       }
    else if (count == 1)      // single delimiter
       {
@@ -1804,14 +1800,14 @@ CISCTransform2FindBytes(TR_CISCTransformer *trans)
             }
          }
       TR_ASSERT(tableNode, "error!!!");
-      if (disptrace) log->printf("Single delimiter found.  Setting 'iconst %d' [%p] as tableNode.\n", i, comp->getDebug()->getName(tableNode));
+      logprintf(disptrace, log, "Single delimiter found.  Setting 'iconst %d' [%p] as tableNode.\n", i, comp->getDebug()->getName(tableNode));
       }
    else
       {
       // the static table currently cannot be relocated
       if (comp->compileRelocatableCode())
          {
-         if (disptrace) log->prints("Abandoning reduction since we can't relocate the static table\n");
+         logprints(disptrace, log, "Abandoning reduction since we can't relocate the static table\n");
          return false;
          }
       tableNode = createTableLoad(comp, baseRepNode, 8, 8, tmpTable, disptrace);    // function table for TRT
@@ -1877,7 +1873,7 @@ CISCTransform2FindBytes(TR_CISCTransformer *trans)
       }
    else
       {
-      if (disptrace) log->prints("Loop has TR::ificmpge for comparing the index.\n");
+      logprints(disptrace, log, "Loop has TR::ificmpge for comparing the index.\n");
       TR_CISCNode *lenNode;
       if (listT->isSingleton())
          {
@@ -1919,7 +1915,7 @@ CISCTransform2FindBytes(TR_CISCTransformer *trans)
    TR::Block *compensateBlock1 = NULL;
    if (isNeedGenIcmpge)
       {
-      if (disptrace) log->prints("Now assuming that all exits of booltable are identical and the exit of icmpge points different.\n");
+      logprints(disptrace, log, "Now assuming that all exits of booltable are identical and the exit of icmpge points different.\n");
       TR_ASSERT(icmpgeRepInfo, "Not implemented yet"); // current restriction
       okDest = retSameExit;
       failDest = icmpgeCISCnode->getDestination();
@@ -1935,8 +1931,8 @@ CISCTransform2FindBytes(TR_CISCTransformer *trans)
          }
       TR_ASSERT(okDest != NULL, "error! okDest == NULL");
       TR_ASSERT(failDest != NULL, "error! failDest == NULL");
-      if (disptrace) log->printf("Block: okDest=%d failDest=%d\n", okDest->getEnclosingBlock()->getNumber(),
-                             failDest->getEnclosingBlock()->getNumber());
+      logprintf(disptrace, log, "Block: okDest=%d failDest=%d\n",
+         okDest->getEnclosingBlock()->getNumber(), failDest->getEnclosingBlock()->getNumber());
       TR_ASSERT(okDest != failDest, "error! okDest == failDest");
 
       // It actually generates "ificmplt" (NOT ificmpge!) in order to suppress a redundant goto block.
@@ -1969,7 +1965,7 @@ CISCTransform2FindBytes(TR_CISCTransformer *trans)
       }
    else
       {
-      if (disptrace) log->prints("NULLCHK is found!\n");
+      logprints(disptrace, log, "NULLCHK is found!\n");
       // a NULLCHK was found, so just create a NULLCHK on
       // the arraybase
       // NULLCHK
@@ -2262,9 +2258,9 @@ CISCTransform2NestedArrayFindBytes(TR_CISCTransformer *trans)
    trans->findFirstNode(&trTreeTop, &trNode, &block);
    if (!block) return false;    // cannot find
 
-   if (isLoopPreheaderLastBlockInMethod(comp, block))
+   if (isLoopPreheaderLastBlockInMethod(comp, block, disptrace))
       {
-      if (disptrace) log->prints("Bailing CISCTransform2NestedArrayFindBytes due to null TT - might be a preheader in last block of method\n");
+      logprints(disptrace, log, "Bailing CISCTransform2NestedArrayFindBytes due to null TT - might be a preheader in last block of method\n");
       return false;
       }
 
@@ -2289,7 +2285,7 @@ CISCTransform2NestedArrayFindBytes(TR_CISCTransformer *trans)
 
    if (avoidTransformingStringLoops(comp))
       {
-      if (disptrace) log->prints("Abandoning reduction because of functional problems when String compression is enabled in Java 8 SR5\n");
+      logprints(disptrace, log, "Abandoning reduction because of functional problems when String compression is enabled in Java 8 SR5\n");
       return false;
       }
 
@@ -2372,7 +2368,7 @@ CISCTransform2NestedArrayFindBytes(TR_CISCTransformer *trans)
       }
    else
       {
-      if (disptrace) log->prints("TR::ificmpge for comaring the index is found!\n");
+      logprints(disptrace, log, "TR::ificmpge for comaring the index is found!\n");
       TR_CISCNode *lenNode;
       TR::Node *lenRepNode;
       if (listT->isSingleton())
@@ -2435,7 +2431,7 @@ CISCTransform2NestedArrayFindBytes(TR_CISCTransformer *trans)
       }
    else
       {
-      if (disptrace) log->prints("NULLCHK is found!\n");
+      logprints(disptrace, log, "NULLCHK is found!\n");
       TR::TreeTop *nextTreeTop1 = TR::TreeTop::create(comp);
       TR::TreeTop *nextTreeTop2 = TR::TreeTop::create(comp);
       // a NULLCHK was found, so just create a NULLCHK on
@@ -2666,7 +2662,7 @@ CISCTransform2CopyingTROx(TR_CISCTransformer *trans)
    bool genSIMD = comp->cg()->getSupportsVectorRegisters() && !comp->getOption(TR_DisableSIMDArrayTranslate);
 
    if (!isOutputChar  && genSIMD && !genTRxx){
-      if (disptrace) log->prints("Bailing CISCTransform2CopyingTROx : b2b - no proper evaluator available\n");
+      logprints(disptrace, log, "Bailing CISCTransform2CopyingTROx : b2b - no proper evaluator available\n");
       return false;
    }
 
@@ -2676,8 +2672,7 @@ CISCTransform2CopyingTROx(TR_CISCTransformer *trans)
       TR_YesNoMaybe sx = isSignExtendingCopyingTROx(trans);
       if (sx == TR_maybe)
          {
-         if (disptrace) log->printf(
-            "Bailing CISCTransform2CopyingTROx : unknown integer conversion\n");
+         logprints(disptrace, log, "Bailing CISCTransform2CopyingTROx : unknown integer conversion\n");
          return false;
          }
       isSignExtending = sx == TR_yes;
@@ -2695,8 +2690,7 @@ CISCTransform2CopyingTROx(TR_CISCTransformer *trans)
       // requiring that one is obviously the loaded value. If not, give up now.
       if (additionHigh->getChild(0) != loadResult && additionHigh->getChild(1) != loadResult)
          {
-         if (disptrace) log->printf(
-            "Bailing CISCTransform2CopyingTROx : inscrutable iadd\n");
+         logprints(disptrace, log, "Bailing CISCTransform2CopyingTROx : inscrutable iadd\n");
          return false;
          }
       }
@@ -2712,15 +2706,14 @@ CISCTransform2CopyingTROx(TR_CISCTransformer *trans)
       ++title;
       }
    */
-   if (disptrace)
-      log->printf("Found graph pattern as %d\n", pattern);
+   logprintf(disptrace, log, "Found graph pattern as %d\n", pattern);
 
    trans->findFirstNode(&trTreeTop, &trNode, &block);
    if (!block) return false;    // cannot find
 
-   if (isLoopPreheaderLastBlockInMethod(comp, block))
+   if (isLoopPreheaderLastBlockInMethod(comp, block, disptrace))
       {
-      if (disptrace) log->prints("Bailing CISCTransform2CopyingTROx due to null TT - might be a preheader in last block of method\n");
+      logprints(disptrace, log, "Bailing CISCTransform2CopyingTROx due to null TT - might be a preheader in last block of method\n");
       return false;
       }
 
@@ -2735,7 +2728,7 @@ CISCTransform2CopyingTROx(TR_CISCTransformer *trans)
    TR::SymbolReference * dstIndexVarSymRef = dstIndexRepNode ? dstIndexRepNode->getSymbolReference() : NULL;
    if (trans->countGoodArrayIndex(indexVarSymRef) == 0)
       {
-      if (disptrace) log->printf("countGoodArrayIndex failed for %p\n",indexRepNode);
+      logprintf(disptrace, log, "countGoodArrayIndex failed for %p\n", indexRepNode);
       return false;
       }
    if (indexVarSymRef == dstIndexVarSymRef)
@@ -2747,7 +2740,7 @@ CISCTransform2CopyingTROx(TR_CISCTransformer *trans)
       {
       if (trans->countGoodArrayIndex(dstIndexVarSymRef) == 0)
          {
-         if (disptrace) log->printf("countGoodArrayIndex failed for %p\n",dstIndexRepNode);
+         logprintf(disptrace, log, "countGoodArrayIndex failed for %p\n", dstIndexRepNode);
          return false;
          }
       }
@@ -2771,7 +2764,7 @@ CISCTransform2CopyingTROx(TR_CISCTransformer *trans)
       // current restrictions. allow only the case where the number of successors is 2.
       if (trans->getNumOfBBlistSucc() != 2)
          {
-         if (disptrace) log->printf("current restrictions. The number of successors is %d\n", trans->getNumOfBBlistSucc());
+         logprintf(disptrace, log, "current restrictions. The number of successors is %d\n", trans->getNumOfBBlistSucc());
          return false;
          }
       }
@@ -2796,22 +2789,23 @@ CISCTransform2CopyingTROx(TR_CISCTransformer *trans)
    int32_t numBoolTableTestChars = trans->analyzeByteBoolTable(P->getImportantNode(0), tmpTable, P->getImportantNode(1), &retSameExit);
    if (numBoolTableTestChars < 0)
       {
-      if (disptrace) log->prints("analyzeByteBoolTable failed.\n");
+      logprints(disptrace, log, "analyzeByteBoolTable failed.\n");
       return false;
       }
 
    if (numBoolTableTestChars != 0 && !retSameExit)    // Destinations of booltable checks are not same
       {
-      if (disptrace) log->prints("Multiple targets for different delimiter checks detected.  Abandoning reduction.\n");
+      logprints(disptrace, log, "Multiple targets for different delimiter checks detected.  Abandoning reduction.\n");
       return false;
       }
 
    // Check to ensure that the delimiter checks 'break' to the target successor blocks if single successor.
    if (retSameExit != NULL && !isNeedGenIcmpge && retSameExit->getEnclosingBlock() != target)
       {
-      if (disptrace) log->printf("Target for delimiter check (Treetop: %p / Block %d: %p) is different than loop exit block_%d: %p.  Abandoning reduction.\n",
-              retSameExit, retSameExit->getEnclosingBlock()->getNumber(), retSameExit->getEnclosingBlock(),
-              target->getNumber(), target);
+      logprintf(disptrace, log,
+         "Target for delimiter check (Treetop: %p / Block %d: %p) is different than loop exit block_%d: %p.  Abandoning reduction.\n",
+         retSameExit, retSameExit->getEnclosingBlock()->getNumber(), retSameExit->getEnclosingBlock(),
+         target->getNumber(), target);
       return false;
       }
 
@@ -2825,7 +2819,7 @@ CISCTransform2CopyingTROx(TR_CISCTransformer *trans)
    if (0 && boolTableExit)
       {
       TR::Node *boolTableNode = boolTableExit->getHeadOfTrNodeInfo()->_node;
-      if (disptrace) log->printf("boolTableNode : %p of loop %d\n", boolTableNode, block->getNumber());
+      logprintf(disptrace, log, "boolTableNode : %p of loop %d\n", boolTableNode, block->getNumber());
       ivNeedsUpdate = ivIncrementedBeforeBoolTableExit(comp, boolTableNode, block, indexVarSymRef);
       if (dstIndexVarSymRef)
          dstIvNeedsUpdate = ivIncrementedBeforeBoolTableExit(comp, boolTableNode, block, dstIndexVarSymRef);
@@ -2840,7 +2834,7 @@ CISCTransform2CopyingTROx(TR_CISCTransformer *trans)
       termchar = 0;  //value of 0, needed by arraytranslateEvaluator to decide between TROT and TROTNoBreak versions.
       if (!isOutputChar)
          {
-         if (disptrace) log->prints("failed because of reason 1 %\n");
+         logprints(disptrace, log, "failed because of reason 1 %\n");
          return false;
          }
       if (comp->cg()->getSupportsArrayTranslateTROTNoBreak())
@@ -2872,7 +2866,7 @@ CISCTransform2CopyingTROx(TR_CISCTransformer *trans)
       //
       if (!foundLoopToReduce)
          {
-         if (disptrace) log->prints("failed because of reason 2\n");
+         logprints(disptrace, log, "failed because of reason 2\n");
          return false;
          }
       tableNode = TR::Node::create(baseRepNode, TR::iconst, 0, 0); //dummy table node, it's not gonna be used
@@ -2884,8 +2878,7 @@ CISCTransform2CopyingTROx(TR_CISCTransformer *trans)
          // to decode ISO 8859-1, it may not be what the loop asks us to do.
          if (isSignExtending)
             {
-            if (disptrace) log->printf(
-               "Bailing CISCTransform2CopyingTROx due to sign-extension\n");
+            logprints(disptrace, log, "Bailing CISCTransform2CopyingTROx due to sign-extension\n");
             return false;
             }
          }
@@ -2920,7 +2913,7 @@ CISCTransform2CopyingTROx(TR_CISCTransformer *trans)
        	 if (isSIMDPossible) {
        		tableNode = TR::Node::create(baseRepNode, TR::aconst, 0, 0); //dummy table node, it's not gonna be used
        	 } else if (!genTRxx){
-             if (disptrace) log->prints("Bailing CISCTransform2CopyingTROx: b2c - no proper evaluator available\n");
+             logprints(disptrace, log, "Bailing CISCTransform2CopyingTROx: b2c - no proper evaluator available\n");
              return false;
        	 } else {
        		 for (int i = 0; i < 256; i++)
@@ -2956,7 +2949,7 @@ CISCTransform2CopyingTROx(TR_CISCTransformer *trans)
             }
          if (termchar < 0)
             {
-            if (disptrace) log->prints("No terminating character found. Abandoning reduction.\n");
+            logprints(disptrace, log, "No terminating character found. Abandoning reduction.\n");
             return false;
             }
          tableNode = createTableLoad(comp, baseRepNode, 8, 8, tmpTable, disptrace);
@@ -2986,8 +2979,7 @@ CISCTransform2CopyingTROx(TR_CISCTransformer *trans)
             {
             if (icmpgeCISCnode != NULL)
                {
-               if (disptrace)
-                  log->printf("Bailing CISCTransform2CopyingTROx: multiple loop tests: %d and %d\n", icmpgeCISCnode->getID(), n->getID());
+               logprintf(disptrace, log, "Bailing CISCTransform2CopyingTROx: multiple loop tests: %d and %d\n", icmpgeCISCnode->getID(), n->getID());
                return false;
                }
             icmpgeCISCnode = n;
@@ -3010,14 +3002,14 @@ CISCTransform2CopyingTROx(TR_CISCTransformer *trans)
       {
       constLoad = modifyArrayHeaderConst(comp, inputNode, trans->getOffsetOperand1());
       TR_ASSERT(constLoad, "Not implemented yet");
-      if (disptrace) log->printf("The array header const of inputNode %p is modified. (offset=%d)\n", inputNode, trans->getOffsetOperand1());
+      logprintf(disptrace, log, "The array header const of inputNode %p is modified. (offset=%d)\n", inputNode, trans->getOffsetOperand1());
       }
    if (trans->getOffsetOperand2())
       {
       int32_t offset = trans->getOffsetOperand2() * (isOutputChar ? 2 : 1);
       constLoad = modifyArrayHeaderConst(comp, outputNode, offset);
       TR_ASSERT(constLoad, "Not implemented yet");
-      if (disptrace) log->printf("The array header const of outputNode %p is modified. (offset=%d)\n", outputNode, offset);
+      logprintf(disptrace, log, "The array header const of outputNode %p is modified. (offset=%d)\n", outputNode, offset);
       }
 
    // Prepare the arraytranslate node
@@ -3139,7 +3131,7 @@ CISCTransform2CopyingTROx(TR_CISCTransformer *trans)
    TR::Block *compensateBlock1 = NULL;
    if (isNeedGenIcmpge)
       {
-      if (disptrace) log->prints("Now assuming that all exits of booltable are identical and the exit of icmpge points different.\n");
+      logprints(disptrace, log, "Now assuming that all exits of booltable are identical and the exit of icmpge points different.\n");
 
       TR_ASSERT(icmpgeRepInfo, "Not implemented yet"); // current restriction
       okDest = retSameExit;
@@ -3311,8 +3303,7 @@ isSignExtendingCopyingTROx(TR_CISCTransformer *trans)
    TR::ILOpCode firstOp = loadConv->getOpCode();
    if (!firstOp.isInteger() && !firstOp.isUnsigned())
       {
-      if (disptrace) log->prints(
-         "isSignExtendingCopyingTROx: conversion through non-integer type\n");
+      logprints(disptrace, comp->log(), "isSignExtendingCopyingTROx: conversion through non-integer type\n");
       return TR_maybe;
       }
 
@@ -3646,9 +3637,9 @@ CISCTransform2TROTArray(TR_CISCTransformer *trans)
    trans->findFirstNode(&trTreeTop, &trNode, &block);
    if (!block) return false;    // cannot find
 
-   if (isLoopPreheaderLastBlockInMethod(comp, block))
+   if (isLoopPreheaderLastBlockInMethod(comp, block, disptrace))
       {
-      if (disptrace) log->prints("Bailing CISCTransform2TROTArray due to null TT - might be a preheader in last block of method\n");
+      logprints(disptrace, comp->log(), "Bailing CISCTransform2TROTArray due to null TT - might be a preheader in last block of method\n");
       return false;
       }
 
@@ -3943,7 +3934,7 @@ CISCTransform2CopyingTRTx(TR_CISCTransformer *trans)
    bool genSIMD = comp->cg()->getSupportsVectorRegisters() && !comp->getOption(TR_DisableSIMDArrayTranslate);
 
    if (isOutputChar  && genSIMD && !genTRxx){
-      if (disptrace) log->prints("Bailing CISCTransform2CopyingTRTx : c2c - no proper evaluator available\n");
+      logprints(disptrace, log, "Bailing CISCTransform2CopyingTRTx : c2c - no proper evaluator available\n");
       return false;
    }
 
@@ -3952,9 +3943,9 @@ CISCTransform2CopyingTRTx(TR_CISCTransformer *trans)
    if (!block)
       return false;    // cannot find
 
-   if (isLoopPreheaderLastBlockInMethod(comp, block))
+   if (isLoopPreheaderLastBlockInMethod(comp, block, disptrace))
       {
-      if (disptrace) log->prints("Bailing CISCTransform2CopyingTRTx due to null TT - might be a preheader in last block of method\n");
+      logprints(disptrace, log, "Bailing CISCTransform2CopyingTRTx due to null TT - might be a preheader in last block of method\n");
       return false;
       }
 
@@ -3976,7 +3967,7 @@ CISCTransform2CopyingTRTx(TR_CISCTransformer *trans)
    if (trans->countGoodArrayIndex(indexVarSymRef) == 0 &&
        (!dstIndexVarSymRef || trans->countGoodArrayIndex(dstIndexVarSymRef) == 0))
       {
-      if (disptrace) log->printf("countGoodArrayIndex failed for %p, %p\n",indexRepNode,dstIndexRepNode);
+      logprintf(disptrace, log, "countGoodArrayIndex failed for %p, %p\n",indexRepNode,dstIndexRepNode);
       return false;
       }
    TR_ScratchList<TR::Node> variableList(comp->trMemory());
@@ -3995,7 +3986,7 @@ CISCTransform2CopyingTRTx(TR_CISCTransformer *trans)
       // current restrictions. allow only the case where the number of successors is greater than 3.
       if (trans->getNumOfBBlistSucc() > 3)
          {
-         if (disptrace) log->printf("trans->getNumOfBBlistSucc() is %d.",trans->getNumOfBBlistSucc());
+         logprintf(disptrace, log, "trans->getNumOfBBlistSucc() is %d.",trans->getNumOfBBlistSucc());
          return false;
          }
       }
@@ -4015,22 +4006,23 @@ CISCTransform2CopyingTRTx(TR_CISCTransformer *trans)
    TR::TreeTop *retSameExit = NULL;
    if ((count = trans->analyzeCharBoolTable(P->getImportantNode(0), tmpTable, P->getImportantNode(1), &retSameExit)) <= 0)
       {
-      if (disptrace) log->prints("trans->analyzeCharBoolTable failed\n");
+      logprints(disptrace, log, "trans->analyzeCharBoolTable failed\n");
       return false;
       }
 
    if (!retSameExit)    // all destinations of booltable are not same
       {
-      if (disptrace) log->prints("Multiple targets for different delimiter checks detected.  Abandoning reduction.\n");
+      logprints(disptrace, log, "Multiple targets for different delimiter checks detected.  Abandoning reduction.\n");
       return false;
       }
 
    // Check to ensure that the delimiter checks 'break' to the target successor blocks if single successor.
    if (retSameExit != NULL && !isNeedGenIcmpge && retSameExit->getEnclosingBlock() != target)
       {
-      if (disptrace) log->printf("Target for delimiter check (Treetop: %p / Block %d: %p) is different than loop exit block_%d: %p.  Abandoning reduction.\n",
-              retSameExit, retSameExit->getEnclosingBlock()->getNumber(), retSameExit->getEnclosingBlock(),
-              target->getNumber(), target);
+      logprintf(disptrace, log,
+         "Target for delimiter check (Treetop: %p / Block %d: %p) is different than loop exit block_%d: %p.  Abandoning reduction.\n",
+         retSameExit, retSameExit->getEnclosingBlock()->getNumber(), retSameExit->getEnclosingBlock(),
+         target->getNumber(), target);
       return false;
       }
 
@@ -4044,7 +4036,7 @@ CISCTransform2CopyingTRTx(TR_CISCTransformer *trans)
    if (0 && boolTableExit)
       {
       TR::Node *boolTableNode = boolTableExit->getHeadOfTrNodeInfo()->_node;
-      if (disptrace) log->printf("boolTableNode : %p of loop %d\n", boolTableNode, block->getNumber());
+      logprintf(disptrace, log, "boolTableNode : %p of loop %d\n", boolTableNode, block->getNumber());
       ivNeedsUpdate = ivIncrementedBeforeBoolTableExit(comp, boolTableNode, block, indexVarSymRef);
       if (dstIndexVarSymRef)
          dstIvNeedsUpdate = ivIncrementedBeforeBoolTableExit(comp, boolTableNode, block, dstIndexVarSymRef);
@@ -4139,7 +4131,7 @@ CISCTransform2CopyingTRTx(TR_CISCTransformer *trans)
         if (isSIMDPossible) {
             tableNode = TR::Node::create(baseRepNode, TR::aconst, 0, 0); //dummy table node, it's not gonna be used
         } else if(!genTRxx){
-           if (disptrace) log->prints("Bailing CISCTransform2CopyingTRTx : c2b - no proper evaluator available\n");
+           logprints(disptrace, log, "Bailing CISCTransform2CopyingTRTx : c2b - no proper evaluator available\n");
            return false;
         } else {
         	//TRxx
@@ -4157,11 +4149,9 @@ CISCTransform2CopyingTRTx(TR_CISCTransformer *trans)
         	 {
         		 isAllowSourceCellTermChar = true; // Generated code will check whether the character is a delimiter.
         		 termchar = TERMBYTE;
-        		 if (disptrace)
-        			 log->prints("setAllowSourceCellIsTermChar: ");
+                 logprints(disptrace, log, "setAllowSourceCellIsTermChar: ");
         	 }
-        	 if (disptrace)
-        		 log->printf("termchar is 0x%02x\n", termchar);
+             logprintf(disptrace, log, "termchar is 0x%02x\n", termchar);
 
 
         	 uint8_t *table = (uint8_t*)comp->trMemory()->allocateMemory(65536, stackAlloc);
@@ -4228,7 +4218,7 @@ CISCTransform2CopyingTRTx(TR_CISCTransformer *trans)
    // We cannot handle too many loop exit tests.
    if (necessaryCmp.getSize() >= 3)
       {
-      if (disptrace) log->printf("Too many (%d) loop exit tests to transform correctly.  Transformation only supports up to 2.  Abandoning reduction.\n", necessaryCmp.getSize());
+      logprintf(disptrace, log, "Too many (%d) loop exit tests to transform correctly.  Transformation only supports up to 2.  Abandoning reduction.\n", necessaryCmp.getSize());
       return false;
       }
 
@@ -4236,12 +4226,12 @@ CISCTransform2CopyingTRTx(TR_CISCTransformer *trans)
 
    if (!testExitIF(icmpgeCISCnode1->getOpcode(), &isDecrement, &modLength))
       {
-      if (disptrace) log->prints("testExitIF for icmpgeCISCnode1 failed\n");
+      logprints(disptrace, log, "testExitIF for icmpgeCISCnode1 failed\n");
       return false;
       }
    if (isDecrement)
       {
-      if (disptrace) log->prints("Not support a decrement loop. (icmpgeCISCnode1)\n");
+      logprints(disptrace, log, "Not support a decrement loop. (icmpgeCISCnode1)\n");
       return false;
       }
    TR_ASSERT(modLength == 0 || modLength == 1, "error");
@@ -4259,7 +4249,7 @@ CISCTransform2CopyingTRTx(TR_CISCTransformer *trans)
       cmpVarSymRef = cmpChild->getSymbolReference();
    if (cmpVarSymRef == NULL)
       {
-      if (disptrace)  log->prints("Unable to determine the sym ref of induction variable in loop termination node.\n");
+      logprints(disptrace, log, "Unable to determine the sym ref of induction variable in loop termination node.\n");
       return false;
       }
 
@@ -4277,13 +4267,13 @@ CISCTransform2CopyingTRTx(TR_CISCTransformer *trans)
       {
       if (icmpgeCISCnode2)
          {
-         if (disptrace) log->prints("Not support yet more than three if-statements. (1)\n");
+         logprints(disptrace, log, "Not support yet more than three if-statements. (1)\n");
          return false;
          }
       icmpgeCISCnode2 = trans->getP2TInLoopIfSingle(P->getImportantNode(4));
       if (!icmpgeCISCnode2)
          {
-         if (disptrace) log->prints("Not support yet more than three if-statements. (2)\n");
+         logprints(disptrace, log, "Not support yet more than three if-statements. (2)\n");
          return false;
          }
       }
@@ -4292,12 +4282,12 @@ CISCTransform2CopyingTRTx(TR_CISCTransformer *trans)
       {
       if (!testExitIF(icmpgeCISCnode2->getOpcode(), &isDecrement, &modLength))
          {
-         if (disptrace) log->prints("testExitIF for icmpgeCISCnode2 failed\n");
+         logprints(disptrace, log, "testExitIF for icmpgeCISCnode2 failed\n");
          return false;
          }
       if (isDecrement)
          {
-         if (disptrace) log->prints("Not support a decrement loop. (icmpgeCISCnode2)\n");
+         logprints(disptrace, log, "Not support a decrement loop. (icmpgeCISCnode2)\n");
          return false;
          }
       TR_ASSERT(modLength == 0 || modLength == 1, "error");
@@ -4322,14 +4312,14 @@ CISCTransform2CopyingTRTx(TR_CISCTransformer *trans)
       int32_t offset = trans->getOffsetOperand1() * 2;
       constLoad = modifyArrayHeaderConst(comp, inputNode, offset);
       TR_ASSERT(constLoad, "Not implemented yet");
-      if (disptrace) log->printf("The array header const of inputNode %p is modified. (offset=%d)\n", inputNode, offset);
+      logprintf(disptrace, log, "The array header const of inputNode %p is modified. (offset=%d)\n", inputNode, offset);
       }
    if (trans->getOffsetOperand2())
       {
       int32_t offset = trans->getOffsetOperand2() * (isOutputChar ? 2 : 1);
       constLoad = modifyArrayHeaderConst(comp, outputNode, offset);
       TR_ASSERT(constLoad, "Not implemented yet");
-      if (disptrace) log->printf("The array header const of outputNode %p is modified. (offset=%d)\n", outputNode, offset);
+      logprintf(disptrace, log, "The array header const of outputNode %p is modified. (offset=%d)\n", outputNode, offset);
       }
 
    // Prepare arraytranslate
@@ -4417,7 +4407,7 @@ CISCTransform2CopyingTRTx(TR_CISCTransformer *trans)
       TR::Block *compensateBlock2 = NULL;
       TR::Block *newBlockForIf2 = NULL;
 
-      if (disptrace) log->prints("Now assuming that all exits of booltable are identical.\n");
+      logprints(disptrace, log, "Now assuming that all exits of booltable are identical.\n");
 
       icmpgeNode = icmpgeCISCnode1->getHeadOfTrNode();
       okDest = retSameExit;
@@ -4518,7 +4508,7 @@ CISCTransform2CopyingTRTx(TR_CISCTransformer *trans)
       {
       if (isNeedGenIcmpge)
          {
-         if (disptrace) log->prints("Now assuming that all exits of booltable are identical and the exit of icmpge points different.\n");
+         logprints(disptrace, log, "Now assuming that all exits of booltable are identical and the exit of icmpge points different.\n");
 
          icmpgeNode = icmpgeCISCnode1->getHeadOfTrNode();
          okDest = retSameExit;
@@ -5062,9 +5052,9 @@ CISCTransform2TRTOArray(TR_CISCTransformer *trans)
    trans->findFirstNode(&trTreeTop, &trNode, &block);
    if (!block) return false;    // cannot find
 
-   if (isLoopPreheaderLastBlockInMethod(comp, block))
+   if (isLoopPreheaderLastBlockInMethod(comp, block, disptrace))
       {
-      if (disptrace) log->prints("Bailing CISCTransform2TRTOArray due to null TT - might be a preheader in last block of method\n");
+      logprints(disptrace, comp->log(), "Bailing CISCTransform2TRTOArray due to null TT - might be a preheader in last block of method\n");
       return false;
       }
 
@@ -5862,9 +5852,9 @@ CISCTransform2ArrayCopySub(TR_CISCTransformer *trans, TR::Node *indexRepNode, TR
    trans->findFirstNode(&trTreeTop, &trNode, &block);
    if (!block) return false;    // cannot find
 
-   if (isLoopPreheaderLastBlockInMethod(comp, block))
+   if (isLoopPreheaderLastBlockInMethod(comp, block, disptrace))
       {
-      if (disptrace) log->prints("Bailing CISCTransform2ARrayCopySub due to null TT - might be a preheader in last block of method\n");
+      logprints(disptrace, log, "Bailing CISCTransform2ARrayCopySub due to null TT - might be a preheader in last block of method\n");
       return false;
       }
 
@@ -5876,7 +5866,7 @@ CISCTransform2ArrayCopySub(TR_CISCTransformer *trans, TR::Node *indexRepNode, TR
    TR_CISCNode * inStoreCISCNode = trans->getP2TInLoopIfSingle(P->getImportantNode(1));
    if (!inLoadCISCNode || !inStoreCISCNode)
       {
-      if (disptrace) log->printf("CISCTransform2ArrayCopy failed. inLoadCISCNode %x inStoreCISCNode %x\n",inLoadCISCNode,inStoreCISCNode);
+      logprintf(disptrace, log, "CISCTransform2ArrayCopy failed. inLoadCISCNode %x inStoreCISCNode %x\n",inLoadCISCNode,inStoreCISCNode);
       return false;
       }
 
@@ -5884,7 +5874,7 @@ CISCTransform2ArrayCopySub(TR_CISCTransformer *trans, TR::Node *indexRepNode, TR
    TR_CISCGraph *T = trans->getT();
    if (T && T->getAspects()->getIfCount() > 1)
       {
-      if (disptrace) log->printf("CISCTransform2ArrayCopySub detected %d if-stmts in loop (> 1).  Not transforming.\n", T->getAspects()->getIfCount());
+      logprintf(disptrace, log, "CISCTransform2ArrayCopySub detected %d if-stmts in loop (> 1).  Not transforming.\n", T->getAspects()->getIfCount());
       return false;
       }
 
@@ -5899,12 +5889,13 @@ CISCTransform2ArrayCopySub(TR_CISCTransformer *trans, TR::Node *indexRepNode, TR
    // Get the size of elements
    if (!getMultiplier(trans, P->getImportantNode(2), &mulFactorNode, &elementSize, inLoadNode->getType()))
       {
-      if (disptrace) log->prints("CISCTransform2ArrayCopy getMultiplier failed.\n");
+      logprints(disptrace, log, "CISCTransform2ArrayCopy getMultiplier failed.\n");
       return false;
       }
    if (elementSize != inLoadNode->getSize() || elementSize != inStoreNode->getSize())
       {
-      if (disptrace) log->printf("CISCTransform2ArrayCopy failed - Size Mismatch.  Element Size: %d InLoadSize: %d inStoreSize: %d\n", elementSize, inLoadNode->getSize(), inStoreNode->getSize());
+      logprintf(disptrace, log, "CISCTransform2ArrayCopy failed - Size Mismatch.  Element Size: %d InLoadSize: %d inStoreSize: %d\n",
+         elementSize, inLoadNode->getSize(), inStoreNode->getSize());
       return false;     // Size is mismatch!
       }
 
@@ -5917,7 +5908,7 @@ CISCTransform2ArrayCopySub(TR_CISCTransformer *trans, TR::Node *indexRepNode, TR
    if (indexContainsArrayAccess(comp, inLoadNode->getFirstChild()) ||
          indexContainsArrayAccess(comp, inStoreNode->getFirstChild()))
       {
-      if (disptrace) log->printf("inputNode %p or outputnode %p contains another arrayaccess, no reduction\n", inLoadNode, inStoreNode);
+      logprintf(disptrace, log, "inputNode %p or outputnode %p contains another arrayaccess, no reduction\n", inLoadNode, inStoreNode);
       return false;
       }
 
@@ -5927,7 +5918,7 @@ CISCTransform2ArrayCopySub(TR_CISCTransformer *trans, TR::Node *indexRepNode, TR
    bool isDecrementRet;
    if (!testExitIF(cmpIfAllCISCNode->getOpcode(), &isDecrementRet, &modLength, &modStartIdx))
       {
-      if (disptrace) log->prints("CISCTransform2ArrayCopy testExitIF failed.\n");
+      logprints(disptrace, log, "CISCTransform2ArrayCopy testExitIF failed.\n");
       return false;
       }
    if (isDecrement != isDecrementRet) return false;
@@ -5936,7 +5927,7 @@ CISCTransform2ArrayCopySub(TR_CISCTransformer *trans, TR::Node *indexRepNode, TR
    TR::SymbolReference * indexVarSymRef = indexRepNode->getSymbolReference();
    if (!trans->analyzeArrayIndex(indexVarSymRef))
       {
-      if (disptrace) log->printf("analyzeArrayIndex failed. %x\n",indexRepNode);
+      logprintf(disptrace, log, "analyzeArrayIndex failed. %x\n",indexRepNode);
       return false;
       }
    TR::SymbolReference * dstIndexVarSymRef = dstIndexRepNode ? dstIndexRepNode->getSymbolReference() : NULL;
@@ -5944,18 +5935,18 @@ CISCTransform2ArrayCopySub(TR_CISCTransformer *trans, TR::Node *indexRepNode, TR
    indexRepNode = convertStoreToLoad(comp, indexRepNode);
    if (!trans->searchNodeInTrees(inputNode, indexRepNode))
       {
-      if (disptrace) log->prints("searchNodeInTrees for inputNode failed.\n");
+      logprints(disptrace, log, "searchNodeInTrees for inputNode failed.\n");
       return false;
       }
    if (!trans->searchNodeInTrees(outputNode, dstIndexVarSymRef ? convertStoreToLoad(comp, dstIndexRepNode) : indexRepNode))
       {
-      if (disptrace) log->prints("searchNodeInTrees for outputNode failed.\n");
+      logprints(disptrace, log, "searchNodeInTrees for outputNode failed.\n");
       return false;
       }
    TR::SymbolReference * exitVarSymRef = exitVarRepNode->getSymbolReference();
    if (indexVarSymRef != exitVarSymRef && dstIndexVarSymRef != exitVarSymRef)
       {
-      if (disptrace) log->printf("CISCTransform2ArrayCopy cannot find exitVarSymRef correctly %x.\n", exitVarRepNode);
+      logprintf(disptrace, log, "CISCTransform2ArrayCopy cannot find exitVarSymRef correctly %x.\n", exitVarRepNode);
       return false;
       }
 
@@ -5974,8 +5965,7 @@ CISCTransform2ArrayCopySub(TR_CISCTransformer *trans, TR::Node *indexRepNode, TR
 
    int32_t postIncrement = checkForPostIncrement(comp, block, cmpIfAllCISCNode->getHeadOfTrNodeInfo()->_node, exitVarSymRef->getSymbol());
 
-   if (disptrace)
-      log->printf("detected postIncrement %d modLength %d modStartIdx %d\n", postIncrement, modLength, modStartIdx);
+   logprintf(disptrace, log, "detected postIncrement %d modLength %d modStartIdx %d\n", postIncrement, modLength, modStartIdx);
 
    TR::Node * lengthNode;
    if (isDecrement)
@@ -6031,7 +6021,7 @@ CISCTransform2ArrayCopySub(TR_CISCTransformer *trans, TR::Node *indexRepNode, TR
 
    if (!comp->cg()->getSupportsReferenceArrayCopy() && needWriteBarrier)
       {
-      if (disptrace) log->prints("CISCTransform2ArrayCopy: needWriteBarrier but not getSupportsReferenceArrayCopy().\n");
+      logprints(disptrace, log, "CISCTransform2ArrayCopy: needWriteBarrier but not getSupportsReferenceArrayCopy().\n");
       return false;
       }
 
@@ -6380,9 +6370,9 @@ CISCTransform2ArrayCopyB2CorC2B(TR_CISCTransformer *trans)
    trans->findFirstNode(&trTreeTop, &trNode, &block);
    if (!block) return false;    // cannot find
 
-   if (isLoopPreheaderLastBlockInMethod(comp, block))
+   if (isLoopPreheaderLastBlockInMethod(comp, block, disptrace))
       {
-      if (disptrace) log->prints("Bailing CISCTransform2ArrayCopyB2CorC2B due to null TT - might be a preheader in last block of method\n");
+      logprints(disptrace, comp->log(), "Bailing CISCTransform2ArrayCopyB2CorC2B due to null TT - might be a preheader in last block of method\n");
       return false;
       }
 
@@ -6729,6 +6719,7 @@ CISCTransform2ArrayCopyB2CBndchk(TR_CISCTransformer *trans)
    TR_CISCGraph *P = trans->getP();
    List<TR_CISCNode> *P2T = trans->getP2T();
    TR::Compilation *comp = trans->comp();
+   OMR::Logger *log = comp->log();
    const bool disptrace = DISPTRACE(trans);
 
    if (!trans->isEmptyAfterInsertionIdiomList(0) || !trans->isEmptyAfterInsertionIdiomList(1))
@@ -6740,9 +6731,9 @@ CISCTransform2ArrayCopyB2CBndchk(TR_CISCTransformer *trans)
    trans->findFirstNode(&trTreeTop, &trNode, &block);
    if (!block) return false;    // cannot find
 
-   if (isLoopPreheaderLastBlockInMethod(comp, block))
+   if (isLoopPreheaderLastBlockInMethod(comp, block, disptrace))
       {
-      if (disptrace) log->prints("Bailing CISCTransform2ArrayCopyB2CBndchk due to null TT - might be a preheader in last block of method\n");
+      logprints(disptrace, log, "Bailing CISCTransform2ArrayCopyB2CBndchk due to null TT - might be a preheader in last block of method\n");
       return false;
       }
 
@@ -6756,7 +6747,7 @@ CISCTransform2ArrayCopyB2CBndchk(TR_CISCTransformer *trans)
    TR::SymbolReference * exitVarSymRef = exitVarRepNode->getSymbolReference();
    if (!trans->analyzeArrayIndex(dstIndexVarSymRef))
       {
-      if (disptrace) log->printf("analyzeArrayIndex failed. %x\n",dstIndexRepNode);
+      logprintf(disptrace, log, "analyzeArrayIndex failed. %x\n",dstIndexRepNode);
       return false;
       }
 
@@ -6961,9 +6952,9 @@ CISCTransform2ArrayCopyC2BMixed(TR_CISCTransformer *trans)
    trans->findFirstNode(&trTreeTop, &trNode, &block);
    if (!block) return false;    // cannot find
 
-   if (isLoopPreheaderLastBlockInMethod(comp, block))
+   if (isLoopPreheaderLastBlockInMethod(comp, block, disptrace))
       {
-      if (disptrace) log->prints("Bailing CISCTransform2ArrayCopyC2BMixed due to null TT - might be a preheader in last block of method\n");
+      logprints(disptrace, log, "Bailing CISCTransform2ArrayCopyC2BMixed due to null TT - might be a preheader in last block of method\n");
       return false;
       }
 
@@ -6977,13 +6968,13 @@ CISCTransform2ArrayCopyC2BMixed(TR_CISCTransformer *trans)
    TR::SymbolReference * dstIndexVarSymRef = dstIndexRepNode->getSymbolReference();
    if (trans->countGoodArrayIndex(indexVarSymRef) == 0)
       {
-      if (disptrace) log->printf("analyzeArrayIndex failed. %x\n",indexRepNode);
+      logprintf(disptrace, log, "analyzeArrayIndex failed. %x\n",indexRepNode);
       return false;
       }
    TR_ASSERT(indexVarSymRef != dstIndexVarSymRef, "error");
    if (trans->countGoodArrayIndex(dstIndexVarSymRef) == 0)
       {
-      if (disptrace) log->printf("analyzeArrayIndex failed. %x\n",dstIndexRepNode);
+      logprintf(disptrace, log, "analyzeArrayIndex failed. %x\n",dstIndexRepNode);
       return false;
       }
 
@@ -6994,8 +6985,8 @@ CISCTransform2ArrayCopyC2BMixed(TR_CISCTransformer *trans)
    TR_CISCNode * flagIf = trans->getP2TInLoopIfSingle(P->getImportantNode(4));
    TR_CISCNode * backIf = trans->getP2TInLoopIfSingle(P->getImportantNode(5));
 
-   if (disptrace) log->printf("All parameters: %x %x %x %x %x %x\n",
-                                 LEloadMem, LEstoreMem, BEloadMem, BEstoreMem, flagIf, backIf);
+   logprintf(disptrace, log, "All parameters: %x %x %x %x %x %x\n",
+      LEloadMem, LEstoreMem, BEloadMem, BEstoreMem, flagIf, backIf);
    if (!LEloadMem || !LEstoreMem || !BEloadMem || !BEstoreMem || !flagIf || !backIf) return false;
    if (flagIf->getOpcode() != TR::ificmpeq && flagIf->getOpcode() != TR::ificmpne) return false;
 
@@ -7006,7 +6997,7 @@ CISCTransform2ArrayCopyC2BMixed(TR_CISCTransformer *trans)
    bool LEalongJumpPath = searchNodeInBlock(flagIf->getSucc(1), LEloadMem);
    bool isBig = comp->target().cpu.isBigEndian();
    if (!isBig) LEalongJumpPath = !LEalongJumpPath;
-   if (disptrace) log->printf("LEalongJumpPath = %d\n",LEalongJumpPath);
+   logprintf(disptrace, log, "LEalongJumpPath = %d\n",LEalongJumpPath);
 
    TR::Block *blockBE = TR::Block::createEmptyBlock(trNode, comp, block->getFrequency()/2, block);
    TR::Block *blockLE = TR::Block::createEmptyBlock(trNode, comp, block->getFrequency()/2, block);
@@ -7295,9 +7286,9 @@ CISCTransform2ArrayCopyC2BIf2(TR_CISCTransformer *trans)
    trans->findFirstNode(&trTreeTop, &trNode, &block);
    if (!block) return false;    // cannot find
 
-   if (isLoopPreheaderLastBlockInMethod(comp, block))
+   if (isLoopPreheaderLastBlockInMethod(comp, block, disptrace))
       {
-      if (disptrace) comp->log()->prints("Bailing CISCTransform2ArrayCopyC2BIf2 due to null TT - might be a preheader in last block of method\n");
+      logprints(disptrace, comp->log(), "Bailing CISCTransform2ArrayCopyC2BIf2 due to null TT - might be a preheader in last block of method\n");
       return false;
       }
 
@@ -7583,9 +7574,9 @@ CISCTransform2ArrayCopyB2I(TR_CISCTransformer *trans)
    trans->findFirstNode(&trTreeTop, &trNode, &block);
    if (!block) return false;    // cannot find
 
-   if (isLoopPreheaderLastBlockInMethod(comp, block))
+   if (isLoopPreheaderLastBlockInMethod(comp, block, disptrace))
       {
-      if (disptrace) comp->log()->prints("Bailing CISCTransform2ArrayCopyB2I due to null TT - might be a preheader in last block of method\n");
+      logprints(disptrace, comp->log(), "Bailing CISCTransform2ArrayCopyB2I due to null TT - might be a preheader in last block of method\n");
       return false;
       }
 
@@ -7860,14 +7851,14 @@ CISCTransform2PtrArraySet(TR_CISCTransformer *trans)
    // Only handle very simple loops.
    if (trans->getNumOfBBlistBody() > 1)
       {
-      if (trace) log->prints("Need exactly 1 basic block\n");
+      logprints(trace, log, "Need exactly 1 basic block\n");
       return false;
       }
 
    // Should have 3 treetops in body. See makePtrArraySetGraph
    if (block->getNumberOfRealTreeTops() != 3)
       {
-      if (trace) log->prints("Need exactly 3 real treetops\n");
+      logprints(trace, log, "Need exactly 3 real treetops\n");
       return false;
       }
 
@@ -7877,17 +7868,17 @@ CISCTransform2PtrArraySet(TR_CISCTransformer *trans)
 
    if (!astore)
       {
-      if (trace) log->prints("astore missing\n");
+      logprints(trace, log, "astore missing\n");
       return false;
       }
    if (!Store)
       {
-      if (trace) log->prints("array element store missing\n");
+      logprints(trace, log, "array element store missing\n");
       return false;
       }
    if (!ifcmp)
       {
-      if (trace) log->prints("if compare missing\n");
+      logprints(trace, log, "if compare missing\n");
       return false;
       }
 
@@ -7898,14 +7889,14 @@ CISCTransform2PtrArraySet(TR_CISCTransformer *trans)
    if (!(astoreNode->getChild(0)->getChild(0) == StoreNode->getChild(0) &&
          astoreNode->getChild(0) == ifcmpNode->getChild(0)))
       {
-      if (trace) log->prints("node trees not in required form\n");
+      logprints(trace, log, "node trees not in required form\n");
       return false;
       }
 
    if (!ifcmpNode->getChild(0)->getOpCode().isLoadVar() &&
        !ifcmpNode->getChild(1)->getOpCode().isLoadVar())
       {
-      if (trace) log->prints("neither comparands are loadvar\n");
+      logprints(trace, log, "neither comparands are loadvar\n");
       return false;
       }
 
@@ -7916,7 +7907,7 @@ CISCTransform2PtrArraySet(TR_CISCTransformer *trans)
             ifcmpNode->getChild(1) : ifcmpNode->getChild(0);
       if (astoreNode->getChild(0) != nonLoadChild)
          {
-         if (trace) log->prints("iv is not a commoned child in if comparand\n");
+         logprints(trace, log, "iv is not a commoned child in if comparand\n");
          return false;
          }
       }
@@ -7925,7 +7916,7 @@ CISCTransform2PtrArraySet(TR_CISCTransformer *trans)
    if (!ifcmpNode->getOpCode().isCompareForOrder() &&
        !(!ifcmpNode->getOpCode().isCompareTrueIfEqual() && ifcmpNode->getOpCode().isCompareForEquality()))
       {
-      if (trace) log->prints("invalid compare condition\n");
+      logprints(trace, log, "invalid compare condition\n");
       return false;
       }
 
@@ -7933,8 +7924,7 @@ CISCTransform2PtrArraySet(TR_CISCTransformer *trans)
        (StoreNode->getChild(0)->getOpCode().isLoadVar() &&
         StoreNode->getChild(0)->getSymbolReference() != astoreNode->getSymbolReference()))
       {
-      if (trace) log->prints("array element store node is neither indirect store "
-            "nor matched with addr iv\n");
+      logprints(trace, log, "array element store node is neither indirect store nor matched with addr iv\n");
       return false;
       }
 
@@ -7945,22 +7935,20 @@ CISCTransform2PtrArraySet(TR_CISCTransformer *trans)
       case 4:
       case 8: break;
       default:
-         if (trace)
-            log->prints("element size is not power-of-2 <= 8\n");
+         logprints(trace, log, "element size is not power-of-2 <= 8\n");
          return false;
       }
 
    if (StoreNode->getDataType() == TR::Aggregate)
       {
-      if (trace)
-         log->prints("arrayset can't handle aggregate elem type\n");
+      logprints(trace, log, "arrayset can't handle aggregate elem type\n");
       return false;
       }
 
    auto increment = astoreNode->getChild(0)->getChild(1)->getConst<int32_t>();
    if (StoreNode->getSize() != getAbs(increment))
       {
-      if (trace) log->prints("increment size does not match element size\n");
+      logprints(trace, log, "increment size does not match element size\n");
       return false;
       }
 
@@ -7974,7 +7962,7 @@ CISCTransform2PtrArraySet(TR_CISCTransformer *trans)
 
    if (!endPtr)
       {
-      if (trace) log->prints("Could not get end pointer\n");
+      logprints(trace, log, "Could not get end pointer\n");
       return false;
       }
 
@@ -8065,9 +8053,9 @@ CISCTransform2ArraySet(TR_CISCTransformer *trans)
    trans->findFirstNode(&trTreeTop, &trNode, &block);
    if (!block) return false;    // cannot find
 
-   if (isLoopPreheaderLastBlockInMethod(comp, block))
+   if (isLoopPreheaderLastBlockInMethod(comp, block, disptrace))
       {
-      if (disptrace) log->prints("Bailing CISCTransform2ArraySet due to null TT - might be a preheader in last block of method\n");
+      logprints(disptrace, log, "Bailing CISCTransform2ArraySet due to null TT - might be a preheader in last block of method\n");
       return false;
       }
 
@@ -8090,7 +8078,7 @@ CISCTransform2ArraySet(TR_CISCTransformer *trans)
 
    if (!cmpIfAllCISCNode)
       {
-      if (disptrace) log->prints("Not implemented yet for multiple-if\n");
+      logprints(disptrace, log, "Not implemented yet for multiple-if\n");
       return false;
       }
    TR_ASSERT(addORsubCISCNode->getOpcode() == TR::isub || addORsubCISCNode->getOpcode() == TR::iadd, "error");
@@ -8122,12 +8110,12 @@ CISCTransform2ArraySet(TR_CISCTransformer *trans)
          if (retStore == ivStoreCISCNode) lengthMod++;
          break;
       default:
-         if (disptrace) log->prints("Bailing CISCTransform2ArraySet due to unrecognized loop exit comparison.\n");
+         logprints(disptrace, log, "Bailing CISCTransform2ArraySet due to unrecognized loop exit comparison.\n");
          return false;
       }
 
    if (disptrace)
-      log->printf("Examining exit comparison CICS node %d, and determined required length modifier to be: %d\n", cmpIfAllCISCNode->getID(), lengthMod);
+      logprintf(disptrace, log, "Examining exit comparison CICS node %d, and determined required length modifier to be: %d\n", cmpIfAllCISCNode->getID(), lengthMod);
 
    TR_ScratchList<TR::Node> listStores(comp->trMemory());
    ListAppender<TR::Node> appenderListStores(&listStores);
@@ -8162,11 +8150,10 @@ CISCTransform2ArraySet(TR_CISCTransformer *trans)
    TR::Node *indexRepNode, *index1RepNode, *dstBaseRepNode, *variableORconstRepNode1;
    getP2TTrRepNodes(trans, &indexRepNode, &index1RepNode, &dstBaseRepNode, &variableORconstRepNode1);
 
-   if (disptrace)
-      {
-      log->printf("Identified target nodes\n\tindexRepNode: %p\n\tindex1RepNode: %p\n\tdstBaseRepNode: %p\n\tvariableOrconstRepNode1: %p\n",
-            indexRepNode, index1RepNode, dstBaseRepNode, variableORconstRepNode1);
-      }
+   logprintf(disptrace, log,
+      "Identified target nodes\n\tindexRepNode: %p\n\tindex1RepNode: %p\n\tdstBaseRepNode: %p\n\tvariableOrconstRepNode1: %p\n",
+      indexRepNode, index1RepNode, dstBaseRepNode, variableORconstRepNode1);
+
    TR::SymbolReference * indexVarSymRef = indexRepNode->getSymbolReference();
    TR::SymbolReference * indexVar1SymRef = index1RepNode->getSymbolReference();
    if (trans->countGoodArrayIndex(indexVarSymRef) == 0 &&
@@ -8206,7 +8193,7 @@ CISCTransform2ArraySet(TR_CISCTransformer *trans)
          if (valueNode->getSymbolReference()->getReferenceNumber() == indexNode->getSymbolReference()->getReferenceNumber() ||
              valueNode->getSymbolReference()->getReferenceNumber() == index1RepNode->getSymbolReference()->getReferenceNumber())
             {
-            if (disptrace) log->prints("arraystore tree has induction variable on rhs\n");
+            logprints(disptrace, log, "arraystore tree has induction variable on rhs\n");
             return false;
             }
          }
@@ -8332,7 +8319,7 @@ CISCTransform2ArraySet(TR_CISCTransformer *trans)
             // If they match, we have case (B), so we need to readjust by +1.
             if (origIndVarLoad == origArrayIndVarLoad)
                {
-               if (disptrace) log->printf("Identified array index to have been referencing original induction variable value: %p\n",origIndVarLoad);
+               logprintf(disptrace, log, "Identified array index to have been referencing original induction variable value: %p\n",origIndVarLoad);
                arrayStoreCommoningAdjustment = 1;
                }
             }
@@ -8469,14 +8456,14 @@ bool CISCTransform2Strlen16(TR_CISCTransformer *trans)
    // Only handle very simple loops.
    if (trans->getNumOfBBlistBody() > 1)
       {
-      if (trace) log->prints("Need exactly 1 basic block\n");
+      logprints(trace, log, "Need exactly 1 basic block\n");
       return false;
       }
 
    // Should have 2 treetops in body. See makeStrlen16Graph
    if (block->getNumberOfRealTreeTops() != 2)
       {
-      if (trace) log->prints("Need exactly 2 real treetops\n");
+      logprints(trace, log, "Need exactly 2 real treetops\n");
       return false;
       }
 
@@ -8503,7 +8490,7 @@ bool CISCTransform2Strlen16(TR_CISCTransformer *trans)
       conv = ificmpne->getChild(0);
       }
 
-   if (trace) log->prints("Failed one of the requirements\n");
+   logprints(trace, log, "Failed one of the requirements\n");
    return false;
    }
 
@@ -8738,9 +8725,9 @@ CISCTransform2MixedArraySet(TR_CISCTransformer *trans)
    trans->findFirstNode(&trTreeTop, &trNode, &block);
    if (!block) return false;    // cannot find
 
-   if (isLoopPreheaderLastBlockInMethod(comp, block))
+   if (isLoopPreheaderLastBlockInMethod(comp, block, disptrace))
       {
-      if (disptrace) comp->log()->printf("Bailing CISCTransform2MixedArraySet due to null TT - might be a preheader in last block of method\n");
+      logprints(disptrace, comp->log(), "Bailing CISCTransform2MixedArraySet due to null TT - might be a preheader in last block of method\n");
       return false;
       }
 
@@ -9051,9 +9038,9 @@ CISCTransform2ArrayCmp2Ifs(TR_CISCTransformer *trans)
    trans->findFirstNode(&trTreeTop, &trNode, &block);
    if (!block) return false;    // cannot find
 
-   if (isLoopPreheaderLastBlockInMethod(comp, block))
+   if (isLoopPreheaderLastBlockInMethod(comp, block, disptrace))
       {
-      if (disptrace) log->prints("Bailing CISCTransform2ArrayCmp2Ifs due to null TT - might be a preheader in last block of method\n");
+      logprints(disptrace, comp->log(), "Bailing CISCTransform2ArrayCmp2Ifs due to null TT - might be a preheader in last block of method\n");
       return false;
       }
 
@@ -9135,7 +9122,9 @@ CISCTransform2ArrayCmp2Ifs(TR_CISCTransformer *trans)
    if (!getMultiplier(trans, P->getImportantNode(6), &mulFactorNode, &elementSize, inSrc1Node->getType())) return false;
    if (elementSize != inSrc1Node->getSize() || elementSize != inSrc2Node->getSize())
       {
-      if (disptrace) log->printf("CISCTransform2ArrayCmp2Ifs failed - Size Mismatch.  Element Size: %d InSrc1Size: %d inSrc2Size: %d\n", elementSize, inSrc1Node->getSize(), inSrc2Node->getSize());
+      logprintf(disptrace, comp->log(),
+         "CISCTransform2ArrayCmp2Ifs failed - Size Mismatch.  Element Size: %d InSrc1Size: %d inSrc2Size: %d\n",
+         elementSize, inSrc1Node->getSize(), inSrc2Node->getSize());
       return false;     // Size is mismatch!
       }
 
@@ -9407,9 +9396,9 @@ CISCTransform2ArrayCmp(TR_CISCTransformer *trans)
    if (!block) return false;    // cannot find
 
    TR::Block *preHeader = NULL;
-   if (isLoopPreheaderLastBlockInMethod(comp, block, &preHeader))
+   if (isLoopPreheaderLastBlockInMethod(comp, block, disptrace, &preHeader))
       {
-      if (disptrace) log->prints("Bailing CISCTransform2ArrayCmp due to null TT - might be a preheader in last block of method\n");
+      logprints(disptrace, log, "Bailing CISCTransform2ArrayCmp due to null TT - might be a preheader in last block of method\n");
       return false;
       }
 
@@ -9421,8 +9410,7 @@ CISCTransform2ArrayCmp(TR_CISCTransformer *trans)
 
    if (preHeader)
       {
-      if (disptrace)
-         log->printf("found preheader to be %d\n", preHeader->getNumber());
+      logprintf(disptrace, log, "found preheader to be %d\n", preHeader->getNumber());
       //
       // obtain a CISCNode of each store for incrementing induction variables
 
@@ -9433,9 +9421,9 @@ CISCTransform2ArrayCmp(TR_CISCTransformer *trans)
       int32_t index1SymRefNum = inStoreSrc1->getSymbolReference()->getReferenceNumber();
       int32_t index2SymRefNum = inStoreSrc2->getSymbolReference()->getReferenceNumber();
 
-      if (disptrace)
-         log->printf("searching for stores to loop indices between preheader first tree %p and first matching tree %p, looking for symrefnum %d %d\n", preHeader->getFirstRealTreeTop()->getNode(),trTreeTop->getNode(),index1SymRefNum,index2SymRefNum);
-
+      logprintf(disptrace, log,
+         "searching for stores to loop indices between preheader first tree %p and first matching tree %p, looking for symrefnum %d %d\n",
+         preHeader->getFirstRealTreeTop()->getNode(),trTreeTop->getNode(),index1SymRefNum,index2SymRefNum);
 
       TR::Node * tempNode;
       for (TR::TreeTop * tt = preHeader->getFirstRealTreeTop();tt && tt != trTreeTop; tt = tt->getNextRealTreeTop())
@@ -9445,7 +9433,7 @@ CISCTransform2ArrayCmp(TR_CISCTransformer *trans)
             ((tempNode->getSymbolReference()->getReferenceNumber() == index1SymRefNum) ||
             (tempNode->getSymbolReference()->getReferenceNumber() == index2SymRefNum)))
             {
-            if (disptrace) log->printf("Bailing CISCTransform2ArrayCmp due to unexpected store (%p) of one of the indices prior to the idiom\n",tempNode);
+            logprintf(disptrace, log, "Bailing CISCTransform2ArrayCmp due to unexpected store (%p) of one of the indices prior to the idiom\n", tempNode);
             return false;
             }
          }
@@ -9468,7 +9456,7 @@ CISCTransform2ArrayCmp(TR_CISCTransformer *trans)
    TR_CISCGraph *T = trans->getT();
    if (T && T->getAspects()->getIfCount() > 2)
       {
-      if (disptrace) log->printf("CISCTransform2ArrayCmp detected %d if-stmts in loop (> 2).  Not transforming.\n", T->getAspects()->getIfCount());
+      logprintf(disptrace, log, "CISCTransform2ArrayCmp detected %d if-stmts in loop (> 2).  Not transforming.\n", T->getAspects()->getIfCount());
       return false;
       }
 
@@ -9499,8 +9487,7 @@ CISCTransform2ArrayCmp(TR_CISCTransformer *trans)
    // We will fail this pattern if the comparison 'exit' is in fact not an exit out of the loop
    if (trans->isBlockInLoopBody(failDest->getNode()->getBlock()))
       {
-      if (disptrace)
-         log->prints("CISCTransform2ArrayCmp failing transformer, ifcmpall test branch does not exit the loop.\n");
+      logprints(disptrace, log, "CISCTransform2ArrayCmp failing transformer, ifcmpall test branch does not exit the loop.\n");
       return false;
       }
 
@@ -9624,7 +9611,7 @@ CISCTransform2ArrayCmp(TR_CISCTransformer *trans)
 
    if (!areArraysInvariant(comp, inSrc1Node, inSrc2Node, T))
       {
-      if (disptrace) log->printf("input array bases %p and %p are not invariant, no reduction\n", inSrc1Node, inSrc2Node);
+      logprintf(disptrace, log, "input array bases %p and %p are not invariant, no reduction\n", inSrc1Node, inSrc2Node);
       return false;
       }
 
@@ -9636,8 +9623,7 @@ CISCTransform2ArrayCmp(TR_CISCTransformer *trans)
 
    if (inSrc1Node->getType() != inSrc2Node->getType())
       {
-      if (disptrace) log->printf(
-         "CISCTransform2ArrayCmp failed - Array access types differ. inSrc1: %s, inSrc2: %s\n",
+      logprintf(disptrace, log, "CISCTransform2ArrayCmp failed - Array access types differ. inSrc1: %s, inSrc2: %s\n",
          TR::DataType::getName(inSrc1Node->getType()),
          TR::DataType::getName(inSrc2Node->getType()));
       return false;     // Size is mismatch!
@@ -9649,8 +9635,7 @@ CISCTransform2ArrayCmp(TR_CISCTransformer *trans)
 
    if (elementSize != expectedSize)
       {
-      if (disptrace) log->printf(
-         "CISCTransform2ArrayCmp failed - Size Mismatch.  Element Size: %d, Expected Size: %d\n",
+      logprintf(disptrace, log, "CISCTransform2ArrayCmp failed - Size Mismatch.  Element Size: %d, Expected Size: %d\n",
          elementSize,
          expectedSize);
       return false;     // Size is mismatch!
@@ -9695,8 +9680,7 @@ CISCTransform2ArrayCmp(TR_CISCTransformer *trans)
       end1Idx = convertStoreToLoad(comp, src1IdxRepNode);
       start1Idx = createOP2(comp, TR::isub, end1Idx, diff2);
 
-      if (disptrace)
-         log->printf("isDecrement start1Idx %p start2Idx %p end1Idx %p end2Idx %p\n", start1Idx, start2Idx, end1Idx, end2Idx);
+      logprintf(disptrace, log, "isDecrement start1Idx %p start2Idx %p end1Idx %p end2Idx %p\n", start1Idx, start2Idx, end1Idx, end2Idx);
       startNode = start2Idx->duplicateTree();
       endNode = useSrc1 ? end1Idx->duplicateTree() : end2Idx->duplicateTree();
 
@@ -9713,8 +9697,7 @@ CISCTransform2ArrayCmp(TR_CISCTransformer *trans)
       start1Idx = convertStoreToLoad(comp, src1IdxRepNode);
       end1Idx = needVersioned ? createOP2(comp, TR::iadd, start1Idx, diff2) : NULL;
 
-      if (disptrace)
-         log->printf("start1Idx %p start2Idx %p end1Idx %p end2Idx %p\n", start1Idx, start2Idx, end1Idx, end2Idx);
+      logprintf(disptrace, log, "start1Idx %p start2Idx %p end1Idx %p end2Idx %p\n", start1Idx, start2Idx, end1Idx, end2Idx);
       startNode = useSrc1 ? start1Idx->duplicateTree() : start2Idx->duplicateTree();
       endNode = end2Idx->duplicateTree();
 
@@ -9863,7 +9846,7 @@ CISCTransform2ArrayCmp(TR_CISCTransformer *trans)
             }
          else
             {
-            if (disptrace) log->prints("ArrayCmp: Convert compareTo into equals!\n");
+            logprints(disptrace, log, "ArrayCmp: Convert compareTo into equals!\n");
             topArraycmp = TR::Node::createStore(storeCompareToResult->getSymbolReference(),
                                                createOP2(comp, TR::isub,
                                                          TR::Node::create(src1BaseRepNode, TR::iconst, 0, 1),
@@ -9999,7 +9982,7 @@ CISCTransform2ArrayCmp(TR_CISCTransformer *trans)
       //   else
       //      arraycmp
       //      ...
-      if (disptrace) log->printf("cmpifallciscnode %d ifcmpge %d\n", cmpIfAllCISCNode->getOpcode(), TR::ificmpge);
+      logprintf(disptrace, log, "cmpifallciscnode %d ifcmpge %d\n", cmpIfAllCISCNode->getOpcode(), TR::ificmpge);
       TR::Node *compareNode = TR::Node::createif((TR::ILOpCodes)cmpIfAllCISCNode->getOpcode(), startNode, endNode, compensateBlock0->getEntry());
       TR::TreeTop *compareTree = TR::TreeTop::create(comp, compareNode);
       if (!preHeader)
@@ -10323,9 +10306,9 @@ CISCTransform2BitOpMem(TR_CISCTransformer *trans)
    trans->findFirstNode(&trTreeTop, &trNode, &block);
    if (!block) return false;    // cannot find
 
-   if (isLoopPreheaderLastBlockInMethod(comp, block))
+   if (isLoopPreheaderLastBlockInMethod(comp, block, disptrace))
       {
-      if (disptrace) log->prints("Bailing CISCTransform2BitOpMem due to null TT - might be a preheader in last block of method\n");
+      logprints(disptrace, log, "Bailing CISCTransform2BitOpMem due to null TT - might be a preheader in last block of method\n");
       return false;
       }
 
@@ -10356,7 +10339,7 @@ CISCTransform2BitOpMem(TR_CISCTransformer *trans)
    if (!getMultiplier(trans, P->getImportantNode(7), &mulFactorNode, &elementSize, inSrc1Node->getType())) return false;
    if (elementSize != inSrc1Node->getSize() || elementSize != inSrc2Node->getSize())
       {
-      if (disptrace) log->printf("CISCTransform2BitOpMem failed - Size Mismatch.  Element Size: %d InSrc1Size: %d inSrc2Size: %d\n", elementSize, inSrc1Node->getSize(), inSrc2Node->getSize());
+      logprintf(disptrace, log, "CISCTransform2BitOpMem failed - Size Mismatch.  Element Size: %d InSrc1Size: %d inSrc2Size: %d\n", elementSize, inSrc1Node->getSize(), inSrc2Node->getSize());
       return false;     // Size is mismatch!
       }
 
@@ -10597,8 +10580,8 @@ CISCTransform2BitOpMem(TR_CISCTransformer *trans)
       cfg->removeEdge(orgPrevBlock, slowpad);
       block = lastpath;
 
-      if (disptrace) log->printf("CISCTransform2BitOpMem: orgPrevBlock=%d checkSrc1=%d lastpath=%d slowpad=%d orgNextTreeTop=%x\n",
-                          orgPrevBlock->getNumber(), checkSrc1->getNumber(), lastpath->getNumber(), slowpad->getNumber(), orgNextTreeTop);
+      logprintf(disptrace, log, "CISCTransform2BitOpMem: orgPrevBlock=%d checkSrc1=%d lastpath=%d slowpad=%d orgNextTreeTop=%x\n",
+         orgPrevBlock->getNumber(), checkSrc1->getNumber(), lastpath->getNumber(), slowpad->getNumber(), orgNextTreeTop);
 
       if (lastOrgPrevRealNode->getOpCode().getOpCodeValue() == TR::Goto)
          {
@@ -10864,13 +10847,13 @@ CISCTransform2CountDecimalDigit(TR_CISCTransformer *trans)
 
    if (comp->compileRelocatableCode())
       {
-      if (disptrace) log->prints("Bailing CISCTransform2CountDecimalDigit - not supported for AOT compilations.");
+      logprints(disptrace, log, "Bailing CISCTransform2CountDecimalDigit - not supported for AOT compilations.");
       return false;
       }
 
-   if (isLoopPreheaderLastBlockInMethod(comp, block))
+   if (isLoopPreheaderLastBlockInMethod(comp, block, disptrace))
       {
-      if (disptrace) log->prints("Bailing CISCTransform2CountDecimalDigit due to null TT - might be a preheader in last block of method\n");
+      logprints(disptrace, log, "Bailing CISCTransform2CountDecimalDigit due to null TT - might be a preheader in last block of method\n");
       return false;
       }
 
@@ -10882,7 +10865,7 @@ CISCTransform2CountDecimalDigit(TR_CISCTransformer *trans)
    TR_CISCNode *constNode = ifcmp->getChild(1);
    if (!constNode->getIlOpCode().isLoadConst())
       {
-      if (disptrace) log->printf("%p is not isLoadConst().\n",constNode);
+      logprintf(disptrace, log, "%p is not isLoadConst().\n", constNode);
       return false;
       }
 
@@ -10912,7 +10895,7 @@ CISCTransform2CountDecimalDigit(TR_CISCTransformer *trans)
       case TR::iflcmpeq:
          if (constNode->getOtherInfo() != 0)
             {
-            if (disptrace) log->printf("The exit-if is TR::if*cmpeq but the constant value is %d.\n",constNode->getOtherInfo());
+            logprintf(disptrace, log, "The exit-if is TR::if*cmpeq but the constant value is %d.\n", constNode->getOtherInfo());
             return false;
             }
          break;
@@ -10920,7 +10903,7 @@ CISCTransform2CountDecimalDigit(TR_CISCTransformer *trans)
       case TR::iflcmplt:
          if (constNode->getOtherInfo() != 10)
             {
-            if (disptrace) log->printf("The exit-if is TR::if*cmplt but the constant value is %d.\n",constNode->getOtherInfo());
+            logprintf(disptrace, log, "The exit-if is TR::if*cmplt but the constant value is %d.\n", constNode->getOtherInfo());
             return false;
             }
          versionNode = TR::Node::createif((TR::ILOpCodes)ifcmp->getOpcode(), inputVar->duplicateTree(),
@@ -10928,7 +10911,7 @@ CISCTransform2CountDecimalDigit(TR_CISCTransformer *trans)
          modificationResult = -1;
          break;
       default:
-         if (disptrace) log->printf("The exit-if %p is not as expected. We may be able to implement this case.\n",ifcmp);
+         logprintf(disptrace, log, "The exit-if %p is not as expected. We may be able to implement this case.\n", ifcmp);
          return false;
       }
 
@@ -11178,13 +11161,13 @@ CISCTransform2LongToStringDigit(TR_CISCTransformer *trans)
 
    if (comp->compileRelocatableCode())
       {
-      if (disptrace) log->prints("Bailing CISCTransform2LongToStringDigit - not supported for AOT compilations.");
+      logprints(disptrace, log, "Bailing CISCTransform2LongToStringDigit - not supported for AOT compilations.");
       return false;
       }
 
-   if (isLoopPreheaderLastBlockInMethod(comp, block))
+   if (isLoopPreheaderLastBlockInMethod(comp, block, disptrace))
       {
-      if (disptrace) log->prints("Bailing CISCTransform2LongToStringDigit due to null TT - might be a preheader in last block of method\n");
+      logprints(disptrace, log, "Bailing CISCTransform2LongToStringDigit due to null TT - might be a preheader in last block of method\n");
       return false;
       }
 

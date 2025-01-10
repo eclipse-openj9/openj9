@@ -181,7 +181,7 @@ TR_J9ByteCodeIterator::findFloatingPointInstruction()
             break;
             }
          default:
-         	break;
+            break;
          }
    return -1;
    }
@@ -307,7 +307,7 @@ TR_J9ByteCodeIterator::printByteCode(OMR::Logger *log)
          printJumpIndex(log, next4BytesSigned());
          break;
       default:
-      	break;
+         break;
       }
    }
 

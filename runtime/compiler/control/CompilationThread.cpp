@@ -11023,9 +11023,10 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
       uintptr_t translationTime = currentTime - getTimeWhenCompStarted();
       if (TR::Options::_largeTranslationTime > 0 && translationTime > (uintptr_t)TR::Options::_largeTranslationTime)
          {
+         OMR::Logger *log = compiler->log();
          if (compiler->getLoggingEnabled())
-            compiler->log()->printf("Compilation took %d usec\n", (int32_t)translationTime);
-         compiler->dumpMethodTrees(compiler->log(), "Post optimization trees for large computing method");
+            log->printf("Compilation took %d usec\n", (int32_t)translationTime);
+         compiler->dumpMethodTrees(log, "Post optimization trees for large computing method");
          }
       if (_onSeparateThread)
          {

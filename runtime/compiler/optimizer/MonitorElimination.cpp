@@ -177,16 +177,15 @@ class TR_ActiveMonitor
       {
       _paths.add(path);
       _currentBlocksSeen.set(path->getBlock()->getNumber());
-      if (trace())
-         comp()->log()->printf("Adding path [%p] in block_%d to monitor [%p]\n", path->getNode(), path->getBlock()->getNumber(), getMonitorNode());
+
+      logprintf(trace(), comp()->log(), "Adding path [%p] in block_%d to monitor [%p]\n", path->getNode(), path->getBlock()->getNumber(), getMonitorNode());
       }
 
    void addPartialExitPath(TR_MonitorPath *path)
       {
       _paths.add(path);
       _partialExitBlocksSeen.set(path->getBlock()->getNumber());
-      if (trace())
-         comp()->log()->printf("Adding partial exit path [%p] in block_%d to monitor [%p]\n", path->getNode(), path->getBlock()->getNumber(), getMonitorNode());
+      logprintf(trace(), comp()->log(), "Adding partial exit path [%p] in block_%d to monitor [%p]\n", path->getNode(), path->getBlock()->getNumber(), getMonitorNode());
       }
 
    TR_ScratchList<TR::TreeTop> & getExitTrees() { return _exitTrees; }
@@ -209,8 +208,7 @@ class TR_ActiveMonitor
       {
       if (container)
          container->_innerBlocksSeen |= _currentBlocksSeen;
-      if (trace())
-         comp()->log()->printf("Found all exits for monitor [%p]\n", getMonitorNode());
+      logprintf(trace(), comp()->log(), "Found all exits for monitor [%p]\n", getMonitorNode());
       }
 
 
@@ -319,8 +317,7 @@ TR::MonitorElimination::MonitorElimination(TR::OptimizationManager *manager)
       _tracer.setTraceLevelToDebug();
       setTrace(true);   // want monitorelimination trace statements when debug trace is set
 
-      if (trace())
-         comp()->log()->printf("setting trace to true.  trace now returns %d\n",trace());
+      logprintf(trace(), comp()->log(), "setting trace to true.  trace now returns %d\n",trace());
       }
 
    }
@@ -331,8 +328,7 @@ int32_t TR::MonitorElimination::perform()
 
    if (comp()->getOption(TR_DisableMonitorOpts))
       {
-      if (trace())
-         log->prints("Monitor optimizations explicitly disabled\n");
+      logprints(trace(), log, "Monitor optimizations explicitly disabled\n");
       return 0;
       }
 
@@ -364,8 +360,7 @@ int32_t TR::MonitorElimination::perform()
    TR_ValueNumberInfo *valueNumberInfo = optimizer()->getValueNumberInfo();
    if (valueNumberInfo == NULL)
       {
-      if (trace())
-         log->prints("Can't do Monitor Elimination, no value number information\n");
+      logprints(trace(), log, "Can't do Monitor Elimination, no value number information\n");
       return 0;
       }
 
@@ -414,46 +409,39 @@ int32_t TR::MonitorElimination::perform()
    static bool disableOSRwithTM = feGetEnv("TR_disableOSRwithTM") ? true: false;
    if (comp()->getOption(TR_EnableOSR) && disableOSRwithTM)
       {
-      if (trace())
-         log->prints("Cannot remove redundant monitors: OSR disabled with TM\n");
+      logprints(trace(), log, "Cannot remove redundant monitors: OSR disabled with TM\n");
       attemptRedundantMonitors = false;
       }
 
    if (comp()->getOSRMode() == TR::voluntaryOSR && comp()->getOption(TR_DisableLiveMonitorMetadata))
       {
-      if (trace())
-         log->prints("Cannot remove redundant monitors: voluntary OSR requires the monitor object stores from live monitor metadata\n");
+      logprints(trace(), log, "Cannot remove redundant monitors: voluntary OSR requires the monitor object stores from live monitor metadata\n");
       attemptRedundantMonitors = false;
       }
 
    if (attemptRedundantMonitors && findRedundantMonitors())
       {
-      if (trace())
-         log->prints("findRedundantMonitors returned true.  About to remove Redundant Monitors\n");
+      logprints(trace(), log, "findRedundantMonitors returned true.  About to remove Redundant Monitors\n");
       removeRedundantMonitors();
 
       /* enable TLE by default on supported HW for now */
       if(!comp()->getOption(TR_DisableTLE) && comp()->cg()->getSupportsTLE())
          {
-         if (trace())
-            log->prints("findRedundantMonitors returned true. about to check for TM candidates\n");
+         logprints(trace(), log, "findRedundantMonitors returned true. about to check for TM candidates\n");
 
-         if(evaluateMonitorsForTMCandidates())
+         if (evaluateMonitorsForTMCandidates())
             {
-               if (trace())
-                  log->printf("evaluateMonitorsForTMCandidates returned true. firstPass = %d numPassesCompleted = %d\n", firstPass(), manager()->numPassesCompleted());
-               static const char *doTMInFirstPass = feGetEnv("TR_doTMInFirstPass");
-               if(!firstPass() || doTMInFirstPass)
-                  transformMonitorsIntoTMRegions();
+            logprintf(trace(), log, "evaluateMonitorsForTMCandidates returned true. firstPass = %d numPassesCompleted = %d\n", firstPass(), manager()->numPassesCompleted());
+            static const char *doTMInFirstPass = feGetEnv("TR_doTMInFirstPass");
+            if (!firstPass() || doTMInFirstPass)
+               transformMonitorsIntoTMRegions();
             }
          }
       }
    else
       {
       dumpOptDetails(comp(), "Bad monitor structure found, abandoning monitor elimination\n");
-      //if (debug("traceBadMonitorStructure"))
-      if (trace())
-         log->printf("Bad monitor structure found while compiling %s\n", comp()->signature());
+      logprintf(trace(), log, "Bad monitor structure found while compiling %s\n", comp()->signature());
       }
 
    // static const char *ifThenReadMonitors = feGetEnv("TR_IfThenReadMonitors");
@@ -532,14 +520,12 @@ bool TR::MonitorElimination::findRedundantMonitors()
       TR::Block *block = path->getBlock();
       TR::TreeTop *exitTree = block->getExit();
 
-      if (trace())
-         log->printf("Examining path [%p] in block_%d for monitor [%p]\n", path->getNode(), path->getBlock()->getNumber(), monitor->getMonitorNode());
+      logprintf(trace(), log, "Examining path [%p] in block_%d for monitor [%p]\n", path->getNode(), path->getBlock()->getNumber(), monitor->getMonitorNode());
 
       if (block->isOSRInduceBlock())
          {
          // Skip this block
-         if (trace())
-            log->printf("Found OSR induce block %d for monitor [%p]\n", block->getNumber(), monitor->getMonitorNode());
+         logprintf(trace(), log, "Found OSR induce block %d for monitor [%p]\n", block->getNumber(), monitor->getMonitorNode());
 
          // Add it to all monitors on the stack
          addOSRGuard(block->getEntry());
@@ -590,20 +576,17 @@ bool TR::MonitorElimination::findRedundantMonitors()
 
          if (node->getOpCode().isCall() || (node->getNumChildren() > 0 &&  node->getFirstChild()->getOpCode().isCall()))
             {
-            if (trace())
-               log->printf("Monitor node %p has a call at %p in its monitor region\n",monitor->getMonitorNode(),node);
+            logprintf(trace(), log, "Monitor node %p has a call at %p in its monitor region\n",monitor->getMonitorNode(),node);
 
             if ((!block->isCold() && block->getFrequency() >= minBlockCount) ||
                 (monitor->getMonitorTree() && (monitor->getMonitorTree()->getEnclosingBlock()->getNextBlock() == block)))
                {
                monitor->_containsCalls = true;
-               if (trace())
-                  log->printf("MJ Cannot eliminate block call Freq:%d, CCount:%d\n", block->getFrequency(), minBlockCount);
+               logprintf(trace(), log, "MJ Cannot eliminate block call Freq:%d, CCount:%d\n", block->getFrequency(), minBlockCount);
                }
             else
                {
-               if (trace())
-                  log->printf("MJ Cold block, do not stop TLE Freq:%d, isCold:%d \n", block->getFrequency(), block->isCold());
+               logprintf(trace(), log, "MJ Cold block, do not stop TLE Freq:%d, isCold:%d \n", block->getFrequency(), block->isCold());
                }
             }
 
@@ -619,15 +602,13 @@ bool TR::MonitorElimination::findRedundantMonitors()
                if (multipleTempsForMonitor)
                   {
                   syncMethodTemp = NULL;
-                  if (trace())
-                     log->printf("Found another temp #%d holding monitored object for sync method, giving up\n", node->getSymbolReference()->getReferenceNumber());
+                  logprintf(trace(), log, "Found another temp #%d holding monitored object for sync method, giving up\n", node->getSymbolReference()->getReferenceNumber());
                   }
                else
                   {
                   multipleTempsForMonitor = true;
                   syncMethodTemp = treeTop;
-                  if (trace())
-                     log->printf("Found temp #%d holding monitored object for sync method\n", node->getSymbolReference()->getReferenceNumber());
+                  logprintf(trace(), log, "Found temp #%d holding monitored object for sync method\n", node->getSymbolReference()->getReferenceNumber());
                   }
                }
             else if (node->getSymbolReference()->getSymbol()->holdsMonitoredObject() && _monitorStack->topIndex() > 0)
@@ -640,9 +621,8 @@ bool TR::MonitorElimination::findRedundantMonitors()
                   TR_ASSERT(optimizer()->areNodesEquivalent(node->getFirstChild(), monitor->getMonitorNode()->getFirstChild()), "object stored in temp and locked by monitor should be equivalent");
 
                monitor->setMonitorObject(treeTop);
-               if (trace())
-                  log->printf("Found temp #%d holding monitored object for monent [%p]\n", node->getSymbolReference()->getReferenceNumber(),
-                     monitor->getMonitorNode());
+               logprintf(trace(), log, "Found temp #%d holding monitored object for monent [%p]\n",
+                  node->getSymbolReference()->getReferenceNumber(), monitor->getMonitorNode());
                }
             }
 
@@ -684,9 +664,7 @@ bool TR::MonitorElimination::findRedundantMonitors()
             //
             if (node->getVisitCount() == comp()->getVisitCount())
                {
-               if (trace())
-                  log->printf("Monitor enter [%p] found on more than one container path\n", node);
-               //return false;
+               logprintf(trace(), log, "Monitor enter [%p] found on more than one container path\n", node);
                }
             node->setVisitCount(comp()->getVisitCount());
 
@@ -727,9 +705,7 @@ bool TR::MonitorElimination::findRedundantMonitors()
             if (node->getVisitCount() == comp()->getVisitCount())
                {
                resetReadMonitors(_monitorStack->topIndex());
-               if (trace())
-                  log->printf("Monitor exit [%p] found on more than one container path\n", node);
-               //return false;
+               logprintf(trace(), log, "Monitor exit [%p] found on more than one container path\n", node);
                }
             node->setVisitCount(comp()->getVisitCount());
 
@@ -743,14 +719,12 @@ bool TR::MonitorElimination::findRedundantMonitors()
 
             if (container == NULL)
                {
-               if (trace())
-                  log->printf("Monitor exit [%p] found without a corresponding monitor enter\n", node);
+               logprintf(trace(), log, "Monitor exit [%p] found without a corresponding monitor enter\n", node);
                resetReadMonitors(_monitorStack->topIndex());
                return false;
                }
 
-            if (trace())
-               log->printf("Monitor exit found at [%p] for monitor [%p]\n", node, monitor->getMonitorNode());
+            logprintf(trace(), log, "Monitor exit found at [%p] for monitor [%p]\n", node, monitor->getMonitorNode());
 
             monitor->getExitTrees().add(treeTop);
 
@@ -821,8 +795,7 @@ bool TR::MonitorElimination::addPath(TR_ActiveMonitor *monitor, TR::Block *block
       //
       if (monitor->isBlockSeenInContainers(block->getNumber()))
          {
-         if (trace())
-            comp()->log()->printf("Monitor enter [%p] loops back to containing monitor scope via block_%d\n", monitor->getMonitorNode(), block->getNumber());
+         logprintf(trace(), comp()->log(), "Monitor enter [%p] loops back to containing monitor scope via block_%d\n", monitor->getMonitorNode(), block->getNumber());
          return false;
          }
 
@@ -1085,8 +1058,7 @@ bool TR::MonitorElimination::evaluateMonitorsForTMCandidates()
 
       if(monitor->_containsCalls)
          {
-         if (trace())
-            log->printf("TM: monitor at node %p contains calls. Not doing TM\n",monitor->getMonitorNode());
+         logprintf(trace(), log, "TM: monitor at node %p contains calls. Not doing TM\n", monitor->getMonitorNode());
          continue;
          }
 
@@ -1099,15 +1071,13 @@ bool TR::MonitorElimination::evaluateMonitorsForTMCandidates()
       int32_t minTTs= TR::Options::_minimalNumberOfTreeTopsInsideTMMonitor;
       if (monitor->_numberOfTreeTopsInsideMonitor <= minTTs)
          {
-         if (trace())
-            log->printf("TM: monitor at node %p only has %d TreeTops. Not doing TM\n",monitor->getMonitorNode(), minTTs);
+         logprintf(trace(), log, "TM: monitor at node %p only has %d TreeTops. Not doing TM\n", monitor->getMonitorNode(), minTTs);
          continue;
          }
 
       if(hasMultipleEntriesWithSameExit(monitor))
          {
-         if (trace())
-            log->printf("TM: monitor at node %p has multiple exits for a given entry (not supported yet. Not doing TM",monitor->getMonitorNode());
+         logprintf(trace(), log, "TM: monitor at node %p has multiple exits for a given entry (not supported yet. Not doing TM", monitor->getMonitorNode());
          continue;
          }
 
@@ -1156,8 +1126,7 @@ TR::SymbolReference* TR::MonitorElimination::createAndInsertTMRetryCounter(TR_Ac
 
    monitor->getMonitorTree()->insertBefore(TR::TreeTop::create(comp(),storeNode,NULL,NULL));
 
-   if (trace())
-      comp()->log()->printf("Created tempSymRef (%p) for temporary\n",tempSymRef);
+   logprintf(trace(), comp()->log(), "Created tempSymRef (%p) for temporary\n",tempSymRef);
 
    return tempSymRef;
    }
@@ -1249,9 +1218,6 @@ bool TR::MonitorElimination::searchDownForOtherMonitorsInCurrentBlock(TR::TreeTo
          node = node->getFirstChild();
          }
 
- //     if(trace())
- //        comp()->log()->printf("In single block search.  Considering node %p\n",node);
-
       if (node->getOpCodeValue() == TR::BBEnd)
          break;
       else if (node->getOpCodeValue() == TR::monent )
@@ -1290,8 +1256,7 @@ bool TR::MonitorElimination::searchDownForOtherMonitorsInSuccessors(TR::TreeTop 
    int32_t depth = 0;
    numberOfNodesAtDepth[depth] = size;
 
-   if(trace())
-      log->printf("Begun search down for monitors in successors  monexit at %p.\n Setting numberOfNodesAtDepth[%d] to %d\n",tt->getNode(),depth,size);
+   logprintf(trace(), log, "Begun search down for monitors in successors  monexit at %p.\n Setting numberOfNodesAtDepth[%d] to %d\n", tt->getNode(), depth, size);
 
    TR::Block *currentBlock = tt->getEnclosingBlock();
    depth++;
@@ -1304,9 +1269,7 @@ bool TR::MonitorElimination::searchDownForOtherMonitorsInSuccessors(TR::TreeTop 
       currentBlock = nodesToBeEvaluated.pop();
       depth = nodeDepth[currentBlock->getNumber()];
 
-      if(trace())
-          log->printf("Considering block %d  depth %d\n",currentBlock->getNumber(),depth);
-
+      logprintf(trace(), log, "Considering block %d  depth %d\n", currentBlock->getNumber(), depth);
 
       int32_t currentBlockSize = 0;
       TR::TreeTop *monitorTT=0;
@@ -1315,20 +1278,17 @@ bool TR::MonitorElimination::searchDownForOtherMonitorsInSuccessors(TR::TreeTop 
          int32_t numberOfTTs=currentBlockSize;
          for(int32_t i=0; i<depth ; i++)
             {
-            if(trace())
-               log->printf("i = %d, nodeDepth[i] = %d\n",i,numberOfNodesAtDepth[i]);
+            logprintf(trace(), log, "i = %d, nodeDepth[i] = %d\n", i, numberOfNodesAtDepth[i]);
             numberOfTTs+=numberOfNodesAtDepth[i];
             }
-         if(trace())
-              log->printf("Found a monitor %p numberOfTTs %d\n",monitorTT->getNode(),numberOfTTs);
+         logprintf(trace(), log, "Found a monitor %p numberOfTTs %d\n", monitorTT->getNode(), numberOfTTs);
 
          if (numberOfTTs < minNumberOfNodes )
             closeMonitors.push_back(monitorTT);
          }
       else if (depth < maxDepth)
          {
-         if(trace())
-           log->printf("Setting numberOfNodesAtDepth[%d] to currentBlockSize %d\n",depth,currentBlockSize);
+         logprintf(trace(), log, "Setting numberOfNodesAtDepth[%d] to currentBlockSize %d\n", depth, currentBlockSize);
 
          numberOfNodesAtDepth[depth] = currentBlockSize;
          depth++;
@@ -1365,15 +1325,13 @@ void TR::MonitorElimination::searchAndLabelNearbyMonitors(TR_ActiveMonitor *curr
 
    TR::CFG *cfg = comp()->getFlowGraph();
 
-   if(trace())
-      log->printf("Begun search for other nearby Monitors.  Active Monitor %p with Node %p\n",currentMonitor,currentMonitor->getMonitorNode());
+   logprintf(trace(), log, "Begun search for other nearby Monitors.  Active Monitor %p with Node %p\n", currentMonitor, currentMonitor->getMonitorNode());
 
    ListIterator<TR::TreeTop> treeIT (&currentMonitor->getExitTrees());
    TR::TreeTop *et = 0;
    for(et = treeIT.getCurrent() ; et ; et = treeIT.getNext())
       {
-      if (trace())
-         log->printf("Considering exit at node %p\n",et->getNode());
+      logprintf(trace(), log, "Considering exit at node %p\n", et->getNode());
 
       int32_t numberOfTTs = 0;
       TR::TreeTop *monitorTT = 0;
@@ -1387,9 +1345,8 @@ void TR::MonitorElimination::searchAndLabelNearbyMonitors(TR_ActiveMonitor *curr
             TR_ActiveMonitor *monitor = findActiveMonitor(monitorTT);
             if (monitor)
                {
-               if(trace())
-                  log->printf("Setting Active monitor with monitorNode %p to NOT a TM Candidate because it's too close"
-                                  " to previous TM Candidate with monexit %p\n",monitor->getMonitorNode(),et->getNode());
+               logprintf(trace(), log, "Setting Active monitor with monitorNode %p to NOT a TM Candidate because it's too close"
+                  " to previous TM Candidate with monexit %p\n", monitor->getMonitorNode(), et->getNode());
                monitor->setNotTMCandidate();
                }
             }
@@ -1402,9 +1359,8 @@ void TR::MonitorElimination::searchAndLabelNearbyMonitors(TR_ActiveMonitor *curr
             TR_ActiveMonitor *monitor = findActiveMonitor(monitorTTinOtherBlock);
             if (monitor)
                {
-               if(trace())
-                  log->printf("Setting Active monitor with monitorNode %p to NOT a TM Candidate because it's too close (in another block)"
-                                  " to previous TM Candidate with monexit %p\n",monitor->getMonitorNode(),et->getNode());
+               logprintf(trace(), log, "Setting Active monitor with monitorNode %p to NOT a TM Candidate because it's too close (in another block)"
+                  " to previous TM Candidate with monexit %p\n", monitor->getMonitorNode(), et->getNode());
                monitor->setNotTMCandidate();
                }
             }
@@ -1440,8 +1396,9 @@ bool TR::MonitorElimination::hasMultipleEntriesWithSameExit(TR_ActiveMonitor *mo
      }
    if (!isCandidate)
       {
-      if (trace())
-         comp()->log()->printf("TM:monitor %p at node %p is NOT a TM Candidate because some other monitor sharing the exit is not a TM Candidate\n",monitor,monitor->getTreeTopNode());
+      logprintf(trace(), comp()->log(),
+            "TM:monitor %p at node %p is NOT a TM Candidate because some other monitor sharing the exit is not a TM Candidate\n",
+            monitor, monitor->getTreeTopNode());
       monitor->setNotTMCandidate();
       return true;
       }
@@ -1513,15 +1470,15 @@ void TR::MonitorElimination::transformMonitorsIntoTMRegions()
 
       if (monitor->getMonitorTree()->getNextTreeTop()->getNode()->getOpCodeValue() == TR::BBEnd)
          {
-         if (trace())
-            log->printf("next treetop after monitor has node %p. monitorblock = %p. Not splitting\n",monitor->getMonitorTree()->getNextTreeTop()->getNode(),monitorblock->getNumber(),monitorblock);
+         logprintf(trace(), log, "next treetop after monitor has node %p. monitorblock = %p. Not splitting\n",
+            monitor->getMonitorTree()->getNextTreeTop()->getNode(), monitorblock->getNumber(), monitorblock);
          critSectStart = monitor->getMonitorTree()->getEnclosingBlock()->getExit()->getNextTreeTop()->getEnclosingBlock();
          }
       else
          {
          critSectStart = monitor->getMonitorTree()->getEnclosingBlock()->split(monitor->getMonitorTree()->getNextTreeTop(),cfg,true,true);
-         if (trace())
-            log->printf("next treetop after monitor has node %p. critsectionblock = %d %p. splitting\n",monitor->getMonitorTree()->getNextTreeTop()->getNode(),critSectStart->getNumber(),critSectStart);
+         logprintf(trace(), log, "next treetop after monitor has node %p. critsectionblock = %d %p. splitting\n",
+            monitor->getMonitorTree()->getNextTreeTop()->getNode(), critSectStart->getNumber(), critSectStart);
          }
 
       debugTrace(tracer(),"monitorblock = %d(%p) critSectStart = %d(%p)\n",monitorblock->getNumber(),monitorblock,critSectStart->getNumber(),critSectStart);
@@ -1547,8 +1504,7 @@ void TR::MonitorElimination::transformMonitorsIntoTMRegions()
 
 
       TR::TreeTop *test1 = comp()->getMethodSymbol()->getLastTreeTop();  //seeing if we get past this point
-      if (trace())
-         log->printf("test1 =%p\n",test1);
+      logprintf(trace(), log, "test1 =%p\n", test1);
 
       tophalfmonitorblock->append(TR::TreeTop::create(comp(),TR::Node::create(monitor->getMonitorNode(),TR::Goto,0,tstartblock->getEntry())));
       //Insert the fail handler
@@ -1556,8 +1512,7 @@ void TR::MonitorElimination::transformMonitorsIntoTMRegions()
       (*fhBlocks)[2]->getExit()->join(tstartblock->getEntry());
 
       test1 = comp()->getMethodSymbol()->getLastTreeTop();  //seeing if we get past this point
-      if (trace())
-         log->printf("test1 =%p\n",test1);
+      logprintf(trace(), log, "test1 =%p\n", test1);
 
       //append monitor block to end of the trees and make it go to the critical section
       monitorblock->getExit()->setNextTreeTop(0);       // its the end of the cfg now
@@ -1591,8 +1546,6 @@ void TR::MonitorElimination::transformMonitorsIntoTMRegions()
 
       tstartblock->getEntry()->join(tstarttt);
       tstarttt->join(tstartblock->getExit());
-
-      // log->printf("\nTM: \n\tadded edge between fhBlock %d(%p) and monenter block_%d(%p)",fhBlock->getNumber(),fhBlock,monitorblock->getNumber(),monitorblock);
 
       //CFG Modifications -- recall that removeEdge hides complex code under its seemingly simple name, and must be done last
 
@@ -1871,8 +1824,6 @@ void TR::MonitorElimination::recognizeIfThenReadRegion(TR::TreeTop *lastMonitor,
             _invalidateValueNumberInfo = true;
             _invalidateAliasSets = true;
 
-            //printf("Found a locked region that was almost read-only in %s and num intermediate blocks = %d\n", comp()->signature(), intermediateBlocks.getSize());
-            //
             // Intermediate blocks have a kill point that prevented this from
             // being marked as a read region.
             //
@@ -2215,8 +2166,6 @@ void TR::MonitorElimination::resetReadMonitors(int32_t index)
       {
       TR_ActiveMonitor *containingMonitor = _monitorStack->element(i);
       containingMonitor->setReadMonitor(false);
-      //printf("NOT a read monitor %p cause monexit %p in %s\n", containingMonitor->getMonitorNode(), node, comp()->signature());
-      //fflush(stdout);
       }
    }
 
@@ -2232,8 +2181,6 @@ bool TR::MonitorElimination::tagReadMonitors()
       ListIterator<TR::TreeTop> exitTrees(&monitor->getExitTrees());
       if (readOnly)
          {
-           //printf("Tagging a read monitor in %s\n", comp()->signature());
-           //fflush(stdout);
          foundReadMonitor = true;
          if (monitor->getMonitorNode()->getOpCodeValue() == TR::monent)
             {
@@ -2320,8 +2267,7 @@ bool TR::MonitorElimination::markBlocksAtSameNestingLevel(TR_Structure *structur
          blocksInRegion = new (trStackMemory()) TR_BitVector(comp()->getFlowGraph()->getNextNodeNumber(), trMemory(), stackAlloc, notGrowable);
          collectCFGBackEdges(region->getEntry());
          _loopEntryBlocks->set(region->getEntry()->getNumber());
-         if (trace())
-            comp()->log()->printf("Block numbered %d is loop entry\n", region->getEntry()->getNumber());
+         logprintf(trace(), comp()->log(), "Block numbered %d is loop entry\n", region->getEntry()->getNumber());
          }
 
       TR_StructureSubGraphNode *subNode;
@@ -2436,8 +2382,7 @@ void TR::MonitorElimination::collectPredsAndSuccs(TR::CFGNode *startNode, TR_Bit
                   if (!loopEntryBlocks->get(node->getNumber()) &&
                       predecessorInfo[node->getNumber()]->get(node->getNumber()))
                      {
-                     if (trace)
-                        comp->log()->printf("Node is %d\n", node->getNumber());
+                     logprintf(trace, comp->log(), "Node is %d\n", node->getNumber());
                      TR_ASSERT(0, "CFG node cannot have itself as a predecessor in a CFG walk ignoring back edges\n");
                      }
                   }
@@ -2692,15 +2637,13 @@ void TR::MonitorElimination::coarsenMonitorRanges()
          /*
          if (_monentBlockInfo[blockNum] == -2)
             {
-            if (trace())
-               log->printf("Kill monent in block_%d cause %p\n", blockNum, node);
+            logprintf(trace(), comp()->log(), "Kill monent in block_%d cause %p\n", blockNum, node);
             _monentBlockInfo[blockNum] = -1;
             }
 
          if (_monexitBlockInfo[blockNum] > -1)
              {
-             if (trace())
-                log->printf("Kill monexit in block_%d cause %p\n", blockNum, node);
+             logprintf(trace(), comp()->log(), "Kill monexit in block_%d cause %p\n", blockNum, node);
              _monexitBlockInfo[blockNum] = -1;
              currentMonexit = NULL;
              }
@@ -2798,11 +2741,7 @@ void TR::MonitorElimination::coarsenMonitorRanges()
                    else
                       TR::Node::recreate(currentMonexit->getNode()->getFirstChild(), TR::PassThrough);
 
-                   if (trace())
-                      {
-                      log->prints("Success: coarsen locally\n");
-                      //printf("Success: coarsen locally in method %s\n", comp()->signature());
-                      }
+                   logprints(trace(), log, "Success: coarsen locally\n");
 
                    TR::TreeTop *prevTree = currentMonexit->getPrevTreeTop();
                    //TR::TreeTop *nextTree = currentMonexit->getNextTreeTop();
@@ -2828,8 +2767,7 @@ void TR::MonitorElimination::coarsenMonitorRanges()
                 }
              else
                 {
-                if (trace())
-                   log->printf("Kill monexit in block_%d cause %p\n", blockNum, node);
+                logprintf(trace(), log, "Kill monexit in block_%d cause %p\n", blockNum, node);
 
                 _monexitBlockInfo[blockNum] = -1;
                 currentMonexit = NULL;
@@ -2931,8 +2869,7 @@ void TR::MonitorElimination::coarsenMonitorRanges()
 
          if (_monentBlockInfo[blockNum] == -2)
             {
-            if (trace())
-               log->printf("Kill monent in block_%d cause %p\n", blockNum, node);
+            logprintf(trace(), log, "Kill monent in block_%d cause %p\n", blockNum, node);
             _monentBlockInfo[blockNum] = -1;
             }
 
@@ -3024,22 +2961,19 @@ void TR::MonitorElimination::coarsenMonitorRanges()
       if (node->getOpCodeValue() == TR::BBEnd)
         {
 
-         if (trace())
-            log->printf("Coarsening: Considering node %p blockNum %d prevLockedObject = %d\n",node,blockNum,prevLockedObject);
+        logprintf(trace(), log, "Coarsening: Considering node %p blockNum %d prevLockedObject = %d\n", node, blockNum, prevLockedObject);
 
         if (prevLockedObject > -1)
            {
 
-        if (trace())
-           log->printf("Coarsening: _multiplyLockedObjects->get(prevLockedObject) = %d _safeValueNumbers[prevLockedObject] = %d _coarsendMonexits->get(blockNum) = %d\n"
-                 ,_multiplyLockedObjects->get(prevLockedObject),_safeValueNumbers[prevLockedObject],_coarsenedMonexits->get(blockNum));
+           logprintf(trace(), log, "Coarsening: _multiplyLockedObjects->get(prevLockedObject) = %d _safeValueNumbers[prevLockedObject] = %d _coarsendMonexits->get(blockNum) = %d\n",
+              _multiplyLockedObjects->get(prevLockedObject),_safeValueNumbers[prevLockedObject],_coarsenedMonexits->get(blockNum));
 
            if (_multiplyLockedObjects->get(prevLockedObject) &&
                (_safeValueNumbers[prevLockedObject] > 0) &&
                !_coarsenedMonexits->get(blockNum))
               {
-              if (trace())
-                 log->printf("Try to coarsen monexit in block_%d\n", blockNum);
+              logprintf(trace(), log, "Try to coarsen monexit in block_%d\n", blockNum);
               coarsenMonitor(blockNum, prevLockedObject, prevMonitorNode);
               }
            }
@@ -3087,8 +3021,7 @@ void TR::MonitorElimination::coarsenMonitorRanges()
 
       for (block = blocksIt.getFirst(); block != NULL; block = blocksIt.getNext())
          {
-         if (trace())
-            log->printf("Coarsening for special block_%d\n", block->_succBlock->getNumber());
+         logprintf(trace(), log, "Coarsening for special block_%d\n", block->_succBlock->getNumber());
          coarsenSpecialBlock(block);
          }
       }
@@ -3187,19 +3120,16 @@ void TR::MonitorElimination::coarsenMonitor(int32_t origBlockNum, int32_t prevLo
 
       buildClosure(blockNum, _temp, successors, prevLockedObject);
 
-      if (trace())
-         log->prints("Finished building closure\n");
+      logprints(trace(), log, "Finished building closure\n");
       if (_matchingMonentBlocks->isEmpty())
          {
-         if (trace())
-            log->prints("Returned matching monent\n");
+         logprints(trace(), log, "Returned matching monent\n");
          return;
          }
 
       if (_specialBlockInfo.getSize() > numSpecialBlocks)
          {
-         if (trace())
-            log->prints("Special block exists\n");
+         logprints(trace(), log, "Special block exists\n");
 
          //ListIterator<SpecialBlockInfo> blocksIt(&_specialBlockInfo);
          //SpecialBlockInfo *block;
@@ -3240,8 +3170,7 @@ void TR::MonitorElimination::coarsenMonitor(int32_t origBlockNum, int32_t prevLo
 
             if (!nodesInList)
                {
-               if (trace())
-                  log->printf("Cannot coarsen monexit in block_%d because of unknown catch block structure\n", nextListElement);
+               logprintf(trace(), log, "Cannot coarsen monexit in block_%d because of unknown catch block structure\n", nextListElement);
                return;
                }
             else
@@ -3256,8 +3185,7 @@ void TR::MonitorElimination::coarsenMonitor(int32_t origBlockNum, int32_t prevLo
 
             if (!nodesInList)
                {
-               if (trace())
-                  log->printf("Cannot coarsen monexit in block_%d because succs of block_%d are NOT in list\n", origBlockNum, nextListElement);
+               logprintf(trace(), log, "Cannot coarsen monexit in block_%d because succs of block_%d are NOT in list\n", origBlockNum, nextListElement);
                return;
                }
             }
@@ -3283,15 +3211,13 @@ void TR::MonitorElimination::coarsenMonitor(int32_t origBlockNum, int32_t prevLo
                nodesInList = checkIfSuccsInList(block->getSuccessors(), _inclusiveIntersection);
                if (!nodesInList)
                   {
-                  if (trace())
-                    log->printf("Cannot coarsen monexit in block_%d because succ test failed for block_%d\n", origBlockNum, nextListElement);
+                  logprintf(trace(), log, "Cannot coarsen monexit in block_%d because succ test failed for block_%d\n", origBlockNum, nextListElement);
                   break;
                   }
                }
             else
                {
-               if (trace())
-                  log->printf("Cannot coarsen monexit in block_%d because pred test failed for block_%d\n", origBlockNum, nextListElement);
+               logprintf(trace(), log, "Cannot coarsen monexit in block_%d because pred test failed for block_%d\n", origBlockNum, nextListElement);
                break;
                }
             }
@@ -3319,14 +3245,12 @@ void TR::MonitorElimination::coarsenMonitor(int32_t origBlockNum, int32_t prevLo
                }
             else
                {
-               if (trace())
-                  log->printf("Cannot coarsen monexit in block_%d because preds of succ %d are NOT in list\n", origBlockNum, nextSucc);
+               logprintf(trace(), log, "Cannot coarsen monexit in block_%d because preds of succ %d are NOT in list\n", origBlockNum, nextSucc);
                }
 
             if (!nodesInList)
                {
-               if (trace())
-                  log->printf("Cannot coarsen monexit in block_%d because of matching monent in block_%d\n", origBlockNum, nextSucc);
+               logprintf(trace(), log, "Cannot coarsen monexit in block_%d because of matching monent in block_%d\n", origBlockNum, nextSucc);
                }
             }
 
@@ -3344,19 +3268,16 @@ void TR::MonitorElimination::coarsenMonitor(int32_t origBlockNum, int32_t prevLo
             while (scratchIt.hasMoreElements())
                {
                int32_t nextBlockNum = scratchIt.getNextElement();
-               if (trace())
-                  log->printf("Look at virtual call block %d\n", nextBlockNum);
+               logprintf(trace(), log, "Look at virtual call block %d\n", nextBlockNum);
 
                TR::Block *nextBlock = _blockInfo[nextBlockNum];
                for (auto succEdge = nextBlock->getSuccessors().begin(); succEdge != nextBlock->getSuccessors().end(); ++succEdge)
                   {
-                  if (trace())
-                     log->printf("Virtual call block %d and succ block %d\n", nextBlockNum, (*succEdge)->getTo()->getNumber());
+                  logprintf(trace(), log, "Virtual call block %d and succ block %d\n", nextBlockNum, (*succEdge)->getTo()->getNumber());
 
                   if (!_inclusiveIntersection->get((*succEdge)->getTo()->getNumber()))
                      {
-                     if (trace())
-                         log->printf("Reset virtual call block %d\n", nextBlockNum);
+                     logprintf(trace(), log, "Reset virtual call block %d\n", nextBlockNum);
                      _scratch->reset(nextBlockNum);
                      break;
                      }
@@ -3407,8 +3328,7 @@ void TR::MonitorElimination::coarsenMonitor(int32_t origBlockNum, int32_t prevLo
                   removeLastMonexitInBlock(block);
                   _coarsenedMonexits->set(nextSucc);
 
-                  if (trace())
-                     log->printf("Success: Coarsening monexit in block_%d in %s\n", nextSucc, comp()->signature());
+                  logprintf(trace(), log, "Success: Coarsening monexit in block_%d in %s\n", nextSucc, comp()->signature());
                   }
                }
 
@@ -3423,8 +3343,7 @@ void TR::MonitorElimination::coarsenMonitor(int32_t origBlockNum, int32_t prevLo
                   block = _blockInfo[nextSucc];
                   removeFirstMonentInBlock(block);
 
-                  if (trace())
-                     log->printf("Success: Coarsening monent in block_%d in %s\n", nextSucc, comp()->signature());
+                  logprintf(trace(), log, "Success: Coarsening monent in block_%d in %s\n", nextSucc, comp()->signature());
                   }
                }
             }
@@ -3515,8 +3434,6 @@ void TR::MonitorElimination::collectSuccessors(int32_t blockNum, TR_BitVector *m
       recoveryPossible = treesAllowCoarsening(_monexitTrees[blockNum]->getNextTreeTop(), block->getExit(), &peekedCall, &blockContainsCheck);
       if (recoveryPossible)
          {
-           //if (peekedCall)
-           // printf("Found a coarsening opportunity across call (peek done successfully) in %s\n", comp()->signature());
          }
       else
          return;
@@ -3654,11 +3571,7 @@ void TR::MonitorElimination::collectSuccessors(int32_t blockNum, TR_BitVector *m
                             symbolsAreNotWrittenInTrees(_blockInfo[nextSucc]->getEntry(), _monentTrees[nextSucc]->getPrevTreeTop()))
                            {
                            canRecover = true;
-                           if (trace())
-                              {
-                              log->prints("Found a coarsening opportunity across loop\n");
-                              //printf("Found a coarsening opportunity across loop in %s\n", comp()->signature());
-                              }
+                           logprints(trace(), log, "Found a coarsening opportunity across loop\n");
                            }
                         }
                      }
@@ -3669,7 +3582,6 @@ void TR::MonitorElimination::collectSuccessors(int32_t blockNum, TR_BitVector *m
                if (trace() &&(peekedCallInSucc || peekedCall))
                   {
                   log->prints("Found a coarsening opportunity across call (peek done successfully)\n");
-                  //printf("Found a coarsening opportunity across call (peek done successfully) in %s\n", comp()->signature());
                   }
 
                //
@@ -3709,11 +3621,7 @@ void TR::MonitorElimination::collectSuccessors(int32_t blockNum, TR_BitVector *m
                           symbolsAreNotWrittenInTrees(_blockInfo[nextSucc]->getEntry(), _monentTrees[nextSucc]->getPrevTreeTop()))
                          {
                          canRecover = true;
-                         if (trace())
-                            {
-                            log->prints("Found a coarsening opportunity across call (peek done successfully)\n");
-                            //printf("Found a coarsening opportunity across call (peek done successfully) in %s\n", comp()->signature());
-                            }
+                         logprints(trace(), log, "Found a coarsening opportunity across call (peek done successfully)\n");
                          }
                       }
                   }
@@ -3728,13 +3636,6 @@ void TR::MonitorElimination::collectSuccessors(int32_t blockNum, TR_BitVector *m
              !peekedCallInSucc)
             simpleCoarsening = true;
 
-         //dumpOptDetails(comp(), "simpleCoarsening %d canRecover %d blockNum %d nextSucc %d\n", simpleCoarsening, canRecover, blockNum, nextSucc);
-         //if (canRecover)
-         //   {
-         //   _matchingMonentBlocks->print(comp());
-         //   _matchingMonexitBlocks->print(comp());
-         //   }
-
          if ((simpleCoarsening && !_matchingSpecialBlocks->get(blockNum) && !_matchingSpecialBlocks->get(nextSucc)) ||
              (canRecover && !_matchingNormalMonentBlocks->get(nextSucc) && !_matchingNormalMonexitBlocks->get(blockNum)))
             {
@@ -3745,8 +3646,7 @@ void TR::MonitorElimination::collectSuccessors(int32_t blockNum, TR_BitVector *m
                SpecialBlockInfo *specialBlockInfo = (SpecialBlockInfo *) trMemory()->allocateStackMemory(sizeof(SpecialBlockInfo));
                //specialBlockInfo->_predBlock = _blockInfo[blockNum];
                specialBlockInfo->_succBlock = _blockInfo[nextSucc];
-               if (trace())
-                  log->prints("special block info added\n");
+               logprints(trace(), log, "special block info added\n");
                specialBlockInfo->_treeTop = _monexitTrees[blockNum]->getPrevTreeTop();
                specialBlockInfo->_clonedBlock = NULL;
                _specialBlockInfo.add(specialBlockInfo);
@@ -3796,7 +3696,6 @@ void TR::MonitorElimination::collectPredecessors(int32_t blockNum, TR_BitVector 
       recoveryPossible = treesAllowCoarsening(block->getEntry(), _monentTrees[blockNum]->getPrevTreeTop(), &peekedCall, &blockContainsCheck);
       if (recoveryPossible)
          {
-           //printf("Found a coarsening opportunity across call (peek done successfully) in %s\n", comp()->signature());
          }
       else
          return;
@@ -3808,8 +3707,7 @@ void TR::MonitorElimination::collectPredecessors(int32_t blockNum, TR_BitVector 
       int32_t nextPred = preds.getNextElement();
       bool canRecover = false;
 
-      if (trace())
-         log->printf("Block number %d monexit status %d prevLockedObject %d\n", nextPred, _monexitBlockInfo[nextPred], lockedObject);
+      logprintf(trace(), log, "Block number %d monexit status %d prevLockedObject %d\n", nextPred, _monexitBlockInfo[nextPred], lockedObject);
 
       if (_monexitBlockInfo[nextPred] != -1 &&
           _monexitBlockInfo[nextPred] == lockedObject)
@@ -3925,11 +3823,7 @@ void TR::MonitorElimination::collectPredecessors(int32_t blockNum, TR_BitVector 
                          symbolsAreNotWrittenInTrees(_blockInfo[blockNum]->getEntry(), _monentTrees[blockNum]->getPrevTreeTop()))
                         {
                         canRecover = true;
-                        if (trace())
-                           {
-                            log->prints("Found a coarsening opportunity across loop\n");
-                            //printf("Found a coarsening opportunity across loop in %s\n", comp()->signature());
-                           }
+                        logprints(trace(), log, "Found a coarsening opportunity across loop\n");
                         }
                      }
                   }
@@ -3939,7 +3833,6 @@ void TR::MonitorElimination::collectPredecessors(int32_t blockNum, TR_BitVector 
                if (trace() && (peekedCallInPred || peekedCall))
                   {
                   log->prints("Found a coarsening opportunity across call (peek done successfully");
-                  //printf("Found a coarsening opportunity across call (peek done successfully) in %s\n", comp()->signature());
                   }
                //
                // Compensate for calls
@@ -3978,11 +3871,7 @@ void TR::MonitorElimination::collectPredecessors(int32_t blockNum, TR_BitVector 
                          symbolsAreNotWrittenInTrees(_blockInfo[blockNum]->getEntry(), _monentTrees[blockNum]->getPrevTreeTop()))
                          {
                          canRecover = true;
-                         if (trace())
-                            {
-                            log->prints("Found a coarsening opportunity across call (peek done successfully)\n");
-                            //printf("Found a coarsening opportunity across call (peek done successfully) in %s\n", comp()->signature());
-                            }
+                         logprints(trace(), log, "Found a coarsening opportunity across call (peek done successfully)\n");
                          }
                       }
                   }
@@ -3997,13 +3886,6 @@ void TR::MonitorElimination::collectPredecessors(int32_t blockNum, TR_BitVector 
              !peekedCallInPred)
             simpleCoarsening = true;
 
-         //dumpOptDetails(comp(), "simpleCoarsening %d canRecover %d blockNum %d nextPred %d\n", simpleCoarsening, canRecover, blockNum, nextPred);
-         //if (canRecover)
-         //   {
-         //   _matchingMonentBlocks->print(comp());
-         //   _matchingMonexitBlocks->print(comp());
-         //   }
-
          if ((simpleCoarsening && !_matchingSpecialBlocks->get(blockNum) && !_matchingSpecialBlocks->get(nextPred)) ||
              (canRecover && !_matchingNormalMonentBlocks->get(blockNum) && !_matchingNormalMonexitBlocks->get(nextPred)))
             {
@@ -4011,8 +3893,7 @@ void TR::MonitorElimination::collectPredecessors(int32_t blockNum, TR_BitVector 
                {
                _matchingSpecialBlocks->set(blockNum);
 
-               if (trace())
-                  log->prints("1special block info added\n");
+               logprints(trace(), log, "1special block info added\n");
                SpecialBlockInfo *specialBlockInfo = (SpecialBlockInfo *) trMemory()->allocateStackMemory(sizeof(SpecialBlockInfo));
                //specialBlockInfo->_predBlock = _blockInfo[nextPred];
                specialBlockInfo->_succBlock = _blockInfo[blockNum];
@@ -4074,8 +3955,7 @@ void TR::MonitorElimination::adjustMonentAndMonexitBlocks(TR::Node *prevMonitorN
       int32_t nextBlockNum = bvi.getNextElement();
       TR::Block *nextBlock = _blockInfo[nextBlockNum];
 
-      if (trace())
-        comp()->log()->printf("Adding monexit and monent in block_%d\n", nextBlockNum);
+      logprintf(trace(), comp()->log(), "Adding monexit and monent in block_%d\n", nextBlockNum);
 
       for (auto edge = nextBlock->getPredecessors().begin(); edge != nextBlock->getPredecessors().end(); ++edge)
           monitorInfo->addMonexitEdge(*edge);
@@ -4124,8 +4004,7 @@ void TR::MonitorElimination::prependMonexitInBlock(TR::Node *prevMonitorNode, TR
 
 void TR::MonitorElimination::prependMonexitInBlock(TR::Node *prevMonitorNode, TR::Block *nextBlock, bool insertNullTest)
    {
-   if (trace())
-      comp()->log()->printf("Adding monexit in block_%d\n", nextBlock->getNumber());
+   logprintf(trace(), comp()->log(), "Adding monexit in block_%d\n", nextBlock->getNumber());
 
    TR::SymbolReferenceTable *symRefTab = comp()->getSymRefTab();
    TR::ResolvedMethodSymbol *owningMethodSymbol = NULL;
@@ -4191,8 +4070,7 @@ void TR::MonitorElimination::appendMonentInBlock(TR::Node *prevMonitorNode, TR::
 
 void TR::MonitorElimination::appendMonentInBlock(TR::Node *prevMonitorNode, TR::Block *nextBlock, bool insertNullTest)
    {
-   if (trace())
-      comp()->log()->printf("Adding monent in block_%d\n", nextBlock->getNumber());
+   logprintf(trace(), comp()->log(), "Adding monent in block_%d\n", nextBlock->getNumber());
 
    TR::SymbolReferenceTable *symRefTab = comp()->getSymRefTab();
    TR::ResolvedMethodSymbol *owningMethodSymbol = NULL;
@@ -4234,10 +4112,7 @@ void TR::MonitorElimination::appendMonentInBlock(TR::Node *prevMonitorNode, TR::
 
 void TR::MonitorElimination::insertNullTestBeforeBlock(TR::Node *prevMonitorNode, TR::Block *nextBlock)
    {
-   if (trace())
-      comp()->log()->printf("Inserting null test before block_%d\n", nextBlock->getNumber());
-
-   //printf("Inserting null test in method %s\n", comp()->signature());
+   logprintf(trace(), comp()->log(), "Inserting null test before block_%d\n", nextBlock->getNumber());
 
    _invalidateUseDefInfo = true;
    _invalidateValueNumberInfo = true;
@@ -4518,8 +4393,7 @@ void TR::MonitorElimination::addCatchBlocks()
 //      _lastTreeTop->join(catchBlock->getEntry());
 //      _lastTreeTop = catchBlock->getExit();
 
-      if (trace())
-          comp()->log()->printf("Created catch block_%d(%p)\n", catchBlock->getNumber(), catchBlock);
+      logprintf(trace(), comp()->log(), "Created catch block_%d(%p)\n", catchBlock->getNumber(), catchBlock);
 
       bool firstTime = true, addedNode = false;
       TR_BitVectorIterator listIt(monitorInfo->getInterveningBlocks());
@@ -4545,8 +4419,7 @@ void TR::MonitorElimination::addCatchBlocks()
 
             firstTime = false;
             cfg->addExceptionEdgeUnchecked(block, catchBlock);
-            if (trace())
-               comp()->log()->printf("Added edge from block_%d to catch block_%d\n", block->getNumber(), catchBlock->getNumber());
+            logprintf(trace(), comp()->log(), "Added edge from block_%d to catch block_%d\n", block->getNumber(), catchBlock->getNumber());
 
             if (origExceptionSuccs)
                {
@@ -4850,8 +4723,7 @@ bool TR::MonitorElimination::checkIfSuccsInList(TR::CFGEdgeList& edgesList, TR_B
               bool result = true;
               if (std::find(block->getExceptionSuccessors().begin(), block->getExceptionSuccessors().end(), *edge) == block->getExceptionSuccessors().end())
                  {
-                 if (trace())
-                    comp()->log()->printf("0Tripped on succ %d(%d)\n", (*edge)->getTo()->getNumber(), checkIfControlFlowInCatch);
+                 logprintf(trace(), comp()->log(), "0Tripped on succ %d(%d)\n", (*edge)->getTo()->getNumber(), checkIfControlFlowInCatch);
                  result = false;
                  }
 
@@ -4874,8 +4746,7 @@ bool TR::MonitorElimination::checkIfSuccsInList(TR::CFGEdgeList& edgesList, TR_B
               }
            else
               {
-              if (trace())
-                 comp()->log()->printf("1Tripped on succ %d\n", (*edge)->getTo()->getNumber());
+              logprintf(trace(), comp()->log(), "1Tripped on succ %d\n", (*edge)->getTo()->getNumber());
 
               _monexitEdges.add(*edge);
               //return false;
@@ -5113,8 +4984,7 @@ bool TR::MonitorElimination::treesAllowCoarsening(TR::TreeTop *startTree, TR::Tr
          if (!ipaAnalyzer.analyzeCall(node))
             {
             recoveryPossible = false;
-            if (trace())
-               comp()->log()->printf("Recovery is NOT possible from call %p to method %s\n", node, resolvedMethod->signature(trMemory()));
+            logprintf(trace(), comp()->log(), "Recovery is NOT possible from call %p to method %s\n", node, resolvedMethod->signature(trMemory()));
             break;
             }
          else
@@ -5164,8 +5034,7 @@ bool TR::MonitorElimination::treesAllowCoarsening(TR::TreeTop *startTree, TR::Tr
                      if ((length == currLength) &&
                          (memcmp(sig, currSig, length) == 0))
                         {
-                        if (trace())
-                           comp()->log()->printf("Recovery is NOT possible from call %p to method %s due to written symbols\n", node, resolvedMethod->signature(trMemory()));
+                        logprintf(trace(), comp()->log(), "Recovery is NOT possible from call %p to method %s due to written symbols\n", node, resolvedMethod->signature(trMemory()));
                         return false;
                         }
                      }
@@ -5294,20 +5163,12 @@ bool TR::CoarseningInterProceduralAnalyzer::analyzeNode(TR::Node *node, vcount_t
              if (!className)
                 {
                 *success = false;
-                if (trace())
-                   {
-                   log->printf("Found unresolved class object load %p while peeking and unable to add assumption -- peek unsuccessful\n", node);
-                   //printf("Found unresolved class object load %p while peeking and unable to add assumption -- peek unsuccessful\n", node);
-                   }
+                logprintf(trace(), log, "Found unresolved class object load %p while peeking and unable to add assumption -- peek unsuccessful\n", node);
                 }
              else
                 {
                 addClassThatShouldNotBeLoaded(className, classNameLength);
-                if (trace())
-                   {
-                   log->printf("Found unresolved class object node %p while peeking -- add assumption -- skip peeking in rest of block\n", node);
-                   //printf("Found unresolved class object node %p while peeking -- add assumption for class %s\n", node, className);
-                   }
+                logprintf(trace(), log, "Found unresolved class object node %p while peeking -- add assumption -- skip peeking in rest of block\n", node);
 
                 // Add assumption here
                 //
@@ -5342,11 +5203,7 @@ bool TR::CoarseningInterProceduralAnalyzer::analyzeNode(TR::Node *node, vcount_t
                    {
                    addClassThatShouldNotBeLoaded(className, classnameLength);
 
-                   if (trace())
-                      {
-                      log->printf("Found unresolved class object node %p while peeking -- skip peeking in rest of block\n", node);
-                      //printf("Found unresolved class object node %p while peeking -- add assumption for class %s\n", node, className);
-                      }
+                   logprintf(trace(), log, "Found unresolved class object node %p while peeking -- skip peeking in rest of block\n", node);
 
                    return true;
                    }
@@ -5358,22 +5215,14 @@ bool TR::CoarseningInterProceduralAnalyzer::analyzeNode(TR::Node *node, vcount_t
                 else
                    {
                    *success = false;
-                   if (trace())
-                      {
-                      log->printf("Found unresolved node %p while peeking whose class in resolved -- peek unsuccessful\n", node);
-                      printf("Found unresolved node %p while peeking whose class %s in resolved -- peek unsuccessful\n", node, className);
-                      }
+                   logprintf(trace(), log, "Found unresolved node %p while peeking whose class in resolved -- peek unsuccessful\n", node);
                    }
                 */
                 }
              else
                 {
                 *success = false;
-                if (trace())
-                   {
-                   log->printf("Found unresolved node %p while peeking whose class is unresolved and unable to add assumption -- peek unsuccessful\n", node);
-                   //printf("Found unresolved node %p while peeking whose class is unresolved and unable to add assumption -- peek unsuccessful\n", node);
-                   }
+                logprintf(trace(), log, "Found unresolved node %p while peeking whose class is unresolved and unable to add assumption -- peek unsuccessful\n", node);
                 }
              }
 
@@ -5392,11 +5241,7 @@ bool TR::CoarseningInterProceduralAnalyzer::analyzeNode(TR::Node *node, vcount_t
    if (node->getOpCodeValue() == TR::monent ||
        node->getOpCodeValue() == TR::monexit)
       {
-      if (trace())
-        {
-        //printf("Found monitor node %p while peeking -- peek unsuccessful\n", node);
-        log->printf("Found monitor node %p while peeking -- peek unsuccessful\n", node);
-        }
+      logprintf(trace(), log, "Found monitor node %p while peeking -- peek unsuccessful\n", node);
       *success = false;
       return false;
       }

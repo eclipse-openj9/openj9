@@ -573,7 +573,6 @@ TR::Node *pd2udSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier * s
             }
          if (newNode)
             {
-            //printf("changing %p pdshx %p to new setsign %p\n",node,child,newNode);
             dumpOptDetails(s->comp(), " %s [" POINTER_PRINTF_FORMAT "] to ignored value (%d) [" POINTER_PRINTF_FORMAT "]\n", newNode->getOpCode().getName(),newNode,TR::DataType::getIgnoredSignCode());
             newNode->incReferenceCount();
             newNode->setDecimalPrecision(child->getDecimalPrecision());
@@ -1302,22 +1301,23 @@ static TR::Node *reducePackedArithmeticPrecision(TR::Node *node, int32_t maxComp
 // Handles constant and non-constant compares
 static TR_PackedCompareCondition packedCompareCommon(TR::Node *parent, TR::Node *op1, TR::Node *op2, bool ignoreConstSign, TR::Simplifier * s)
    {
-   if (s->trace())
-      s->comp()->log()->printf("packedCompare: (parent  %s (%p) castedToBCD=%s, op1 %s (%p), op2 %s (%p), absVal=%s) %s vs %s",
-         parent->getOpCode().getName(),parent,parent->castedToBCD()?"yes":"no",
-         op1->getOpCode().getName(),op1,
-         op2->getOpCode().getName(),op2,
-         ignoreConstSign ? "true":"false",
-         op1->getOpCode().getName(),
-         op2->getOpCode().getName());
+   OMR::Logger *log = s->comp()->log();
+   bool trace = s->trace();
+
+   logprintf(trace, log, "packedCompare: (parent  %s (%p) castedToBCD=%s, op1 %s (%p), op2 %s (%p), absVal=%s) %s vs %s",
+      parent->getOpCode().getName(),parent,parent->castedToBCD()?"yes":"no",
+      op1->getOpCode().getName(),op1,
+      op2->getOpCode().getName(),op2,
+      ignoreConstSign ? "true":"false",
+      op1->getOpCode().getName(),
+      op2->getOpCode().getName());
 
    // check some properties first before the general compare loop for constants
    bool op1IsZero = op1->isZero();
    bool op2IsZero = op2->isZero();
    if (op1IsZero && op2IsZero)
       {
-      if (s->trace())
-         s->comp()->log()->prints(" -> TR_PACKED_COMPARE_EQUAL (op1 == op2 == zero)\n");
+      logprints(trace, log, " -> TR_PACKED_COMPARE_EQUAL (op1 == op2 == zero)\n");
       return TR_PACKED_COMPARE_EQUAL;
       }
 
@@ -1334,15 +1334,13 @@ static TR_PackedCompareCondition packedCompareCommon(TR::Node *parent, TR::Node 
       {
       if (op1IsNegative && op2_GE_zero)
          {
-         if (s->trace())
-            s->comp()->log()->prints(" -> TR_PACKED_COMPARE_LESS (op1 < 0 and op2 >= 0)\n");
+         logprints(trace, log, " -> TR_PACKED_COMPARE_LESS (op1 < 0 and op2 >= 0)\n");
          return TR_PACKED_COMPARE_LESS;
          }
 
       if (op1_GE_zero && op2IsNegative)
          {
-         if (s->trace())
-            s->comp()->log()->prints(" -> TR_PACKED_COMPARE_GREATER (op1 >= 0 and op2 < 0)\n");
+         logprints(trace, log, " -> TR_PACKED_COMPARE_GREATER (op1 >= 0 and op2 < 0)\n");
          return TR_PACKED_COMPARE_GREATER;
          }
       }
@@ -1366,9 +1364,8 @@ static TR::Node *simplifyPackedArithmeticOperand(TR::Node *node, TR::Node *paren
       // operation (e.g. an pdcmpxx) may have to be done as a logical operation so do not remove sign changing children as the comparison may then fail
       if (parent->castedToBCD())
          {
-         if (s->trace())
-            s->comp()->log()->printf("parent %s (%p) castedToBCD=true for child %s (%p) so do not allow removal of child\n",
-               parent->getOpCode().getName(),parent,node->getOpCode().getName(),node);
+         logprintf(s->trace(), s->comp()->log(), "parent %s (%p) castedToBCD=true for child %s (%p) so do not allow removal of child\n",
+            parent->getOpCode().getName(), parent, node->getOpCode().getName(), node);
          parentAllowsRemoval = false;
          }
 
@@ -2139,11 +2136,10 @@ TR::Node *pdcleanSimplifier(TR::Node * node, TR::Block * block, TR::Simplifier *
                //
                // as this will usually result in better codegen (e.g. move and clean can be done by one instruction)
                // so prevent reversing this optimization here (otherwise both opts keep happening and flipping the IL back and forth)
-               if (s->trace())
-                  s->comp()->log()->printf("do not replace %s (%p) with setsign 0xf because parent %s (%p) is a store and child %s (%p) is a loadVar\n",
-                     node->getOpCode().getName(),node,
-                     parent->getOpCode().getName(),parent,
-                     child->getOpCode().getName(),child);
+               logprintf(s->trace(), s->comp()->log(), "do not replace %s (%p) with setsign 0xf because parent %s (%p) is a store and child %s (%p) is a loadVar\n",
+                  node->getOpCode().getName(),node,
+                  parent->getOpCode().getName(),parent,
+                  child->getOpCode().getName(),child);
                removeClean = false;
                }
 
@@ -2652,9 +2648,8 @@ static TR::Node *foldSetSignIntoNode(TR::Node *setSign, bool setSignIsTheChild, 
    if (removeSetSign &&
        parent->hasIntermediateTruncation())
       {
-      if (s->trace())
-         s->comp()->log()->printf("disallow foldSetSignIntoNode of setSign -- %s (%p) with other node -- %s (%p) because child %p (prec %d) truncates and parent %p (prec %d) widens\n",
-            setSign->getOpCode().getName(),setSign,other->getOpCode().getName(),other,child,child->getDecimalPrecision(),parent,parent->getDecimalPrecision());
+      logprintf(s->trace(), s->comp()->log(), "disallow foldSetSignIntoNode of setSign -- %s (%p) with other node -- %s (%p) because child %p (prec %d) truncates and parent %p (prec %d) widens\n",
+         setSign->getOpCode().getName(), setSign, other->getOpCode().getName(), other, child, child->getDecimalPrecision(), parent, parent->getDecimalPrecision());
       return parent;
       }
 
@@ -3042,9 +3037,8 @@ static TR::Node *foldAndReplaceDominatedSetSign(TR::Node *setSign, bool setSignI
          //       iconst shift
          //       iconst signB
          //
-         if (s->trace())
-            s->comp()->log()->printf("disallow setting ignored setsign value on dominated %s [" POINTER_PRINTF_FORMAT "] so sign verification can be skipped\n",
-               child->getOpCode().getName(),child);
+         logprintf(s->trace(), s->comp()->log(), "disallow setting ignored setsign value on dominated %s [" POINTER_PRINTF_FORMAT "] so sign verification can be skipped\n",
+            child->getOpCode().getName(), child);
          return parent;
          }
       else if (parent->getOpCode().isSetSign() && parent->getFirstChild()->getOpCode().isSetSign())

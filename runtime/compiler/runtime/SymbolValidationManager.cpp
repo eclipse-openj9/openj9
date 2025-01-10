@@ -169,9 +169,8 @@ TR::SymbolValidationManager::isClassWorthRemembering(TR_OpaqueClassBlock *clazz)
          if (systemClassNotWorthRemembering->_clazz &&
              _fej9->isSameOrSuperClass((J9Class *)systemClassNotWorthRemembering->_clazz, (J9Class *)clazz))
             {
-            if (_comp->getOption(TR_TraceRelocatableDataCG))
-               _comp->log()->printf("isClassWorthRemembering: clazz %p is or inherits from %s (%p)\n",
-                        clazz, systemClassNotWorthRemembering->_className, systemClassNotWorthRemembering->_clazz);
+            logprintf(_comp->getOption(TR_TraceRelocatableDataCG), _comp->log(), "isClassWorthRemembering: clazz %p is or inherits from %s (%p)\n",
+                  clazz, systemClassNotWorthRemembering->_className, systemClassNotWorthRemembering->_clazz);
 
             worthRemembering = false;
             }
@@ -224,6 +223,8 @@ TR::SymbolValidationManager::populateWellKnownClasses()
       "com/ibm/jit/JITHelpers",
       };
 
+   OMR::Logger *log = _comp->log();
+
    unsigned int includedClasses = 0;
 
    static_assert(
@@ -256,11 +257,11 @@ TR::SymbolValidationManager::populateWellKnownClasses()
       uintptr_t chainOffset = TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET;
       if (wkClass == NULL)
          {
-         if (trace) _comp->log()->printf("well-known class %s not found\n", name);
+         logprintf(trace, log, "well-known class %s not found\n", name);
          }
       else if (!_fej9->isPublicClass(wkClass))
          {
-         if (trace) _comp->log()->printf("well-known class %s is not public\n", name);
+         logprintf(trace, log, "well-known class %s is not public\n", name);
          }
       else
          {
@@ -276,8 +277,7 @@ TR::SymbolValidationManager::populateWellKnownClasses()
 
       if (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET == chainOffset)
          {
-         if (trace)
-            _comp->log()->printf("no class chain for well-known class %s\n", name);
+         logprintf(trace, log, "no class chain for well-known class %s\n", name);
          SVM_ASSERT_NONFATAL(
             i >= REQUIRED_WELL_KNOWN_CLASS_COUNT,
             "failed to remember required class %s\n",

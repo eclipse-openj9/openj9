@@ -78,13 +78,11 @@ int32_t TR_JitProfiler::perform()
    {
    if (!comp()->getOptions()->isAnySamplingJProfilingOptionSet())
       {
-      if (trace())
-         comp()->log()->prints("JIT Profiling disabled, returning\n");
+      logprints(trace(), comp()->log(), "JIT Profiling disabled, returning\n");
       return 0;
       }
 
-   if (trace())
-      comp()->log()->printf("Processing method: %s\n", comp()->signature());
+   logprintf(trace(), comp()->log(), "Processing method: %s\n", comp()->signature());
 
    _cfg = comp()->getFlowGraph();
    _lastTreeTop = comp()->findLastTree();
@@ -207,9 +205,7 @@ TR::Block *TR_JitProfiler::appendBranchTree(TR::Node *profilingNode, TR::Block *
    _lastTreeTop->join(ifBlock->getEntry());
    _lastTreeTop = ifBlock->getExit();
 
-
-   if (trace())
-      comp()->log()->printf("Inserted Profiling Bypass Branch %p for node %p\n", branchNode, profilingNode);
+   logprintf(trace(), comp()->log(), "Inserted Profiling Bypass Branch %p for node %p\n", branchNode, profilingNode);
 
    _checklist->add(branchNode);
 
@@ -275,9 +271,8 @@ TR::Block *TR_JitProfiler::createProfilingBlocks(TR::Node *profilingNode, TR::Bl
 
    _lastTreeTop = profBlock->getExit();
 
-
-   if (trace())
-      comp()->log()->printf("Added buffer condition to block_%d, added call block_%d, and added empty profiling block_%d\n", ifBlock->getNumber(), callBlock->getNumber(), profBlock->getNumber());
+   logprintf(trace(), comp()->log(), "Added buffer condition to block_%d, added call block_%d, and added empty profiling block_%d\n",
+      ifBlock->getNumber(), callBlock->getNumber(), profBlock->getNumber());
 
    _checklist->add(parserCall);
    _checklist->add(ifNode);
@@ -348,9 +343,7 @@ void TR_JitProfiler::addBranchProfiling(TR::Node *branchNode, TR::TreeTop* tt, T
    TR::Node *falseSideConst = TR::Node::bconst(branchNode, 0);
    falseCreator.addProfilingTree(TR::bstorei, falseSideConst, sizeof(U_8));
 
-
-   if (trace())
-      comp()->log()->printf("Populated block_%d to profile branch node [%p]\n", profilingBlock->getNumber(), branchNode);
+   logprintf(trace(), comp()->log(), "Populated block_%d to profile branch node [%p]\n", profilingBlock->getNumber(), branchNode);
 
    return;
    }
@@ -416,9 +409,7 @@ void TR_JitProfiler::addInstanceProfiling(TR::Node *instanceNode, TR::TreeTop* t
    TR::Node *vftNode          = TR::Node::createWithSymRef(TR::aloadi, 1, 1, classLoadPtrNode, getSymRefTab()->findOrCreateVftSymbolRef());
    falseCreator.addProfilingTree(TR::astorei, vftNode, TR::Compiler->om.sizeofReferenceAddress());
 
-
-   if (trace())
-      comp()->log()->printf("Populated block_%d to profile instanceof/checkcast node [%p]\n", profilingBlock->getNumber(), instanceNode);
+   logprintf(trace(), comp()->log(), "Populated block_%d to profile instanceof/checkcast node [%p]\n", profilingBlock->getNumber(), instanceNode);
 
    return;
    }
@@ -497,9 +488,7 @@ void TR_JitProfiler::addCallProfiling(TR::Node *callNode, TR::TreeTop* tt, TR::B
       blockCreator.addProfilingTree(TR::astorei, callerNode, TR::Compiler->om.sizeofReferenceAddress());
       }
 
-
-   if (trace())
-      comp()->log()->printf("Populated block_%d to profile call [%p]\n", profilingBlock->getNumber(), callNode);
+   logprintf(trace(), comp()->log(), "Populated block_%d to profile call [%p]\n", profilingBlock->getNumber(), callNode);
 
    return;
    }

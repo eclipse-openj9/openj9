@@ -658,6 +658,8 @@ J9::Compilation::canAllocateInlineClass(TR_OpaqueClassBlock *block)
 int32_t
 J9::Compilation::canAllocateInline(TR::Node* node, TR_OpaqueClassBlock* &classInfo)
    {
+   OMR::Logger *log = self()->log();
+   bool trace = self()->getOption(TR_TraceCG);
 
    // Can't skip the allocation if we are generating JVMPI hooks, since
    // JVMPI needs to know about the allocation.
@@ -737,10 +739,8 @@ J9::Compilation::canAllocateInline(TR::Node* node, TR_OpaqueClassBlock* &classIn
          classInfo = NULL;
          if (areValueTypesEnabled)
             {
-            if (self()->getOption(TR_TraceCG))
-               {
-               self()->log()->printf("cannot inline array allocation @ node %p because value types are enabled\n", node);
-               }
+            logprintf(trace, log, "cannot inline array allocation @ node %p because value types are enabled\n", node);
+
             const char *signature = self()->signature();
 
             TR::DebugCounter::incStaticDebugCounter(self(), TR::DebugCounter::debugCounterName(self(), "inlineAllocation/dynamicArray/failed/valueTypes/(%s)", signature));
@@ -797,19 +797,16 @@ J9::Compilation::canAllocateInline(TR::Node* node, TR_OpaqueClassBlock* &classIn
 
    if (TR::Compiler->om.useHybridArraylets() && TR::Compiler->om.isDiscontiguousArray(size))
       {
-      if (self()->getOption(TR_TraceCG))
-         self()->log()->printf("cannot inline array allocation @ node %p because size %d is discontiguous\n", node, size);
+      logprintf(trace, log, "cannot inline array allocation @ node %p because size %d is discontiguous\n", node, size);
       return -1;
       }
    else if (!isRealTimeGC && size == 0)
       {
 #if (defined(TR_HOST_S390) && defined(TR_TARGET_S390)) || (defined(TR_TARGET_X86) && defined(TR_HOST_X86)) || (defined(TR_TARGET_POWER) && defined(TR_HOST_POWER)) || (defined(TR_TARGET_ARM64) && defined(TR_HOST_ARM64))
       size = TR::Compiler->om.discontiguousArrayHeaderSizeInBytes();
-      if (self()->getOption(TR_TraceCG))
-         self()->log()->printf("inline array allocation @ node %p for size 0\n", node);
+      logprintf(trace, log, "inline array allocation @ node %p for size 0\n", node);
 #else
-      if (self()->getOption(TR_TraceCG))
-         self()->log()->printf("cannot inline array allocation @ node %p because size 0 is discontiguous\n", node);
+      logprintf(trace, log, "cannot inline array allocation @ node %p because size 0 is discontiguous\n", node);
       return -1;
 #endif
       }

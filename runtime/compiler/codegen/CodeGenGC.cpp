@@ -70,6 +70,8 @@ J9::CodeGenerator::createStackAtlas()
    // Stack mapping will have to map the stack in a way that honours these indices
    //
    TR::Compilation *comp = self()->comp();
+   OMR::Logger *log = comp->log();
+   bool trace = comp->getOption(TR_TraceCG);
    TR::ResolvedMethodSymbol * methodSymbol = comp->getMethodSymbol();
 
    const bool doLocalsCompaction = self()->getLocalsIG() && self()->getSupportsCompactedLocals();
@@ -390,8 +392,7 @@ J9::CodeGenerator::createStackAtlas()
                   {
                   slotIndex += gcMapIndexAlignment - remainder;
                   numLocalObjectPaddingSlots += gcMapIndexAlignment - remainder;
-                  if (comp->getOption(TR_TraceCG))
-                     comp->log()->printf("GC index of local object %p is adjusted by +%d, and is %d now\n",localCursor, gcMapIndexAlignment - remainder, slotIndex);
+                  logprintf(trace, log, "GC index of local object %p is adjusted by +%d, and is %d now\n", localCursor, gcMapIndexAlignment - remainder, slotIndex);
                   }
                }
             }
@@ -508,8 +509,5 @@ J9::CodeGenerator::createStackAtlas()
    atlas->setNumberOfPaddingSlots(numLocalObjectPaddingSlots);
    self()->setStackAtlas(atlas);
 
-   if (comp->getOption(TR_TraceCG))
-      {
-      comp->log()->printf("totalSlotsInMap is %d, numLocalObjectPaddingSlots is %d\n", totalSlotsInMap, numLocalObjectPaddingSlots);
-      }
+   logprintf(trace, log, "totalSlotsInMap is %d, numLocalObjectPaddingSlots is %d\n", totalSlotsInMap, numLocalObjectPaddingSlots);
    }

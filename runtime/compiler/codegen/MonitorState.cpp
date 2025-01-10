@@ -49,10 +49,8 @@ J9::SetMonitorStateOnBlockEntry::addSuccessors(
    {
    OMR::Logger *log = comp()->log();
 
-   if (traceIt)
-      log->printf(
-       "\tIn SMSOBE::addSuccessors for cfgNode %d, monitorStack %p dontPropagateMonitor %d monitorType = %d callerIndex %d walkOlyExceptionSuccs %d\n"
-            , cfgNode->getNumber(),monitorStack,dontPropagateMonitor,monitorType,callerIndex,walkOnlyExceptionSuccs);
+   logprintf(traceIt, log, "\tIn SMSOBE::addSuccessors for cfgNode %d, monitorStack %p dontPropagateMonitor %d monitorType = %d callerIndex %d walkOlyExceptionSuccs %d\n",
+         cfgNode->getNumber(), monitorStack, dontPropagateMonitor, monitorType, callerIndex, walkOnlyExceptionSuccs);
 
    bool firstSuccessor = true;
 
@@ -111,8 +109,7 @@ J9::SetMonitorStateOnBlockEntry::addSuccessors(
          bool addInfo = true;
          if (monitorType == MonitorEnter)
             {
-            if (traceIt)
-              log->printf("\tIn J9::SetMonitorStateOnBlockEntry::addSuccessors monitorType = MonitorEnter  block %d\n", succBlock->getNumber());
+            logprintf(traceIt, log, "\tIn J9::SetMonitorStateOnBlockEntry::addSuccessors monitorType = MonitorEnter  block %d\n", succBlock->getNumber());
             if (succBlock->isCatchBlock() && dontPropagateMonitor)
                {
                returnValue = 0;
@@ -136,8 +133,9 @@ J9::SetMonitorStateOnBlockEntry::addSuccessors(
                continue;
             }
 
-         if (traceIt)
-            log->printf("process succBlock %d propagate (t/f: %d) isCatchBlock=%d monitorType=%d callerIndex=%d entryCallerIndex=%d\n", succBlock->getNumber(), addInfo, succBlock->isCatchBlock(), monitorType, callerIndex, succBlock->getEntry()->getNode()->getByteCodeInfo().getCallerIndex());
+         logprintf(traceIt, log, "process succBlock %d propagate (t/f: %d) isCatchBlock=%d monitorType=%d callerIndex=%d entryCallerIndex=%d\n",
+               succBlock->getNumber(), addInfo, succBlock->isCatchBlock(), monitorType, callerIndex,
+               succBlock->getEntry()->getNode()->getByteCodeInfo().getCallerIndex());
 
          bool popMonitor = false;
          if (monitorStack)
@@ -154,13 +152,11 @@ J9::SetMonitorStateOnBlockEntry::addSuccessors(
                {
                TR_Stack<TR::SymbolReference *> *newMonitorStack = new (trHeapMemory()) TR_Stack<TR::SymbolReference *>(*monitorStack);
 
-               if (traceIt)
-                  log->printf("\tIn SMSOnBE::addSuccesors  created newMonitorStack %p and monitorStack %p\n", newMonitorStack,monitorStack);
+               logprintf(traceIt, log, "\tIn SMSOnBE::addSuccesors  created newMonitorStack %p and monitorStack %p\n", newMonitorStack,monitorStack);
 
                if (popMonitor)
                   {
-                  if (traceIt)
-                     log->printf("popping monitor symRef=%d before propagation\n", newMonitorStack->top()->getReferenceNumber());
+                  logprintf(traceIt, log, "popping monitor symRef=%d before propagation\n", newMonitorStack->top()->getReferenceNumber());
                   newMonitorStack->pop();
                   }
 
@@ -169,8 +165,7 @@ J9::SetMonitorStateOnBlockEntry::addSuccessors(
                   _liveMonitorStacks->erase(succBlock->getNumber());
                   }
                (*_liveMonitorStacks)[succBlock->getNumber()] = newMonitorStack;
-               if (traceIt)
-                  log->printf("adding monitorstack to successor %d (%p size %d)\n", succBlock->getNumber(), newMonitorStack, newMonitorStack->size());
+               logprintf(traceIt, log, "adding monitorstack to successor %d (%p size %d)\n", succBlock->getNumber(), newMonitorStack, newMonitorStack->size());
                }
             else
                {
@@ -182,8 +177,7 @@ J9::SetMonitorStateOnBlockEntry::addSuccessors(
                      comp()->cg()->setLmmdFailed();
                   else
                      {
-                     if (traceIt)
-                        log->printf("verified block_%d monitorState is consistent\n", succBlock->getNumber());
+                     logprintf(traceIt, log, "verified block_%d monitorState is consistent\n", succBlock->getNumber());
                      }
                   }
                continue;
@@ -195,14 +189,13 @@ J9::SetMonitorStateOnBlockEntry::addSuccessors(
                {
                if (!isMonitorStateConsistentForBlock(succBlock, monitorStack, popMonitor))
                   comp()->cg()->setLmmdFailed();
-               else if (traceIt)
-                  log->printf("verified block_%d monitorState is consistent\n", succBlock->getNumber());
+               else
+                  logprintf(traceIt, log, "verified block_%d monitorState is consistent\n", succBlock->getNumber());
                }
             continue;
             }
 
-         if (traceIt)
-            log->printf("\tIn SMSOnBE::addSuccessors adding block %d to blocksToVisit\n", succBlock->getNumber());
+         logprintf(traceIt, log, "\tIn SMSOnBE::addSuccessors adding block %d to blocksToVisit\n", succBlock->getNumber());
          _blocksToVisit.push(succBlock);
          }
       }
@@ -222,8 +215,8 @@ J9::SetMonitorStateOnBlockEntry::isMonitorStateConsistentForBlock(
    bool traceIt = traceItEnv || comp()->getOption(TR_TraceLiveMonitorMetadata);
    OMR::Logger *log = comp()->log();
 
-   if (traceIt)
-      log->printf("MonitorState block_%d: oldMonitorStack %p newMonitorStack %p popMonitor %d\n", block->getNumber(), oldMonitorStack, newMonitorStack, popMonitor);
+   logprintf(traceIt, log, "MonitorState block_%d: oldMonitorStack %p newMonitorStack %p popMonitor %d\n",
+         block->getNumber(), oldMonitorStack, newMonitorStack, popMonitor);
 
    // first step: check if both monitor stacks are empty
    bool oldMonitorStackEmpty = false;
@@ -236,8 +229,8 @@ J9::SetMonitorStateOnBlockEntry::isMonitorStateConsistentForBlock(
       newMonitorStackEmpty = true;
    if (oldMonitorStackEmpty != newMonitorStackEmpty)
       {
-      if (traceIt)
-         log->printf("MonitorState inconsistent for block_%d: oldMonitorStack isEmpty %d, newMonitorStack isEmpty %d\n", block->getNumber(), oldMonitorStackEmpty, newMonitorStackEmpty);
+      logprintf(traceIt, log, "MonitorState inconsistent for block_%d: oldMonitorStack isEmpty %d, newMonitorStack isEmpty %d\n",
+            block->getNumber(), oldMonitorStackEmpty, newMonitorStackEmpty);
       return false;
       }
    else if (oldMonitorStackEmpty)
@@ -250,8 +243,8 @@ J9::SetMonitorStateOnBlockEntry::isMonitorStateConsistentForBlock(
       newSize--;
    if (newSize != oldSize)
       {
-      if (traceIt)
-         log->printf("MonitorState inconsistent for block_%d: oldMonitorStack size %d, newMonitorStack size %d\n",block->getNumber(), oldSize, newSize);
+      logprintf(traceIt, log, "MonitorState inconsistent for block_%d: oldMonitorStack size %d, newMonitorStack size %d\n",
+            block->getNumber(), oldSize, newSize);
       return false;
       }
 
@@ -260,8 +253,8 @@ J9::SetMonitorStateOnBlockEntry::isMonitorStateConsistentForBlock(
       {
       if (newMonitorStack->element(i)->getReferenceNumber() != oldMonitorStack->element(i)->getReferenceNumber())
          {
-         if (traceIt)
-            log->printf("MonitorState inconsistent for block_%d: oldMonitorStack(%d) symRef=%d, newMonitorStack(%d) symRef=%d\n",block->getNumber(), i, oldMonitorStack->element(i)->getReferenceNumber(), i, newMonitorStack->element(i)->getReferenceNumber());
+         logprintf(traceIt, log, "MonitorState inconsistent for block_%d: oldMonitorStack(%d) symRef=%d, newMonitorStack(%d) symRef=%d\n",
+               block->getNumber(), i, oldMonitorStack->element(i)->getReferenceNumber(), i, newMonitorStack->element(i)->getReferenceNumber());
          return false;
          }
       }
@@ -327,14 +320,12 @@ static bool canPopMonitorStack(
                   !comp->getJittedMethodSymbol()->isStatic() &&
                   !blockExitsMethod)
                {
-               if (traceIt)
-                  log->printf("monitorStack is empty (except for special DLT sync object slot) for DLT compile at monexit %p\n", node);
+               logprintf(traceIt, log, "monitorStack is empty (except for special DLT sync object slot) for DLT compile at monexit %p\n", node);
                return false;
                }
             else if (monitorStack->isEmpty())
                {
-               if (traceIt)
-                  log->printf("monitorStack is empty for DLT compile at monexit %p\n", node);
+               logprintf(traceIt, log, "monitorStack is empty for DLT compile at monexit %p\n", node);
                return false;
                }
             }
@@ -342,8 +333,7 @@ static bool canPopMonitorStack(
             {
             if (monitorStack->isEmpty())
                {
-                if (traceIt)
-                   log->printf("monitorStack is empty for non-synchronized DLT compile at monexit %p\n", node);
+                logprintf(traceIt, log, "monitorStack is empty for non-synchronized DLT compile at monexit %p\n", node);
                 return false;
                }
             }
@@ -401,14 +391,14 @@ static bool needToPushMonitor(TR::Compilation *comp, TR::Block *block, bool trac
    // monexit and the tfinish.  So the two blocks will generally have an exception edge with the same destination block
    // So for this case don't return true.  *Shudder*
 
+   OMR::Logger *log = comp->log();
    bool retval = false;
    for (auto e = block->getSuccessors().begin(); e != block->getSuccessors().end(); ++e)
       {
       TR::Block *succ = (*e)->getTo()->asBlock();
       if (comp->getFlowGraph()->compareExceptionSuccessors(block, succ) == 0)
          {
-         if (traceIt)
-            comp->log()->printf("found identical exception successors for block %d and succ %d\n", block->getNumber(), succ->getNumber());
+         logprintf(traceIt, log, "found identical exception successors for block %d and succ %d\n", block->getNumber(), succ->getNumber());
 
          retval = true;
          for (TR::TreeTop *tt = succ->getEntry(); tt != succ->getExit() ; tt = tt->getNextTreeTop())
@@ -419,8 +409,7 @@ static bool needToPushMonitor(TR::Compilation *comp, TR::Block *block, bool trac
                           ((aNode->getOpCodeValue() == TR::treetop|| aNode->getOpCodeValue() == TR::NULLCHK) && aNode->getFirstChild()->getOpCodeValue() == TR::monexit )
                           ))
                {
-               if(traceIt)
-                  comp->log()->printf("overriding identical exception decision because node %p in block %d is either monexit or tfinish",aNode,succ->getNumber());
+               logprintf(traceIt, log, "overriding identical exception decision because node %p in block %d is either monexit or tfinish", aNode, succ->getNumber());
                retval = false;
                break;
                }
@@ -444,8 +433,7 @@ void J9::SetMonitorStateOnBlockEntry::set(bool& lmmdFailed, bool traceIt)
          continue;
       block->setVisitCount(_visitCount);
 
-      if (traceIt)
-         log->printf("block to process: %d\n", block->getNumber());
+      logprintf(traceIt, log, "block to process: %d\n", block->getNumber());
 
       TR_Stack<TR::SymbolReference *> *monitorStack =
          (_liveMonitorStacks->find(block->getNumber()) != _liveMonitorStacks->end()) ?
@@ -454,8 +442,8 @@ void J9::SetMonitorStateOnBlockEntry::set(bool& lmmdFailed, bool traceIt)
 
       if (traceIt && monitorStack && !monitorStack->isEmpty())
          log->printf("top of the stack symRef=%d, and size=%d\n", monitorStack->top()->getReferenceNumber(), monitorStack->size());
-      else if (traceIt)
-         log->prints("monitor stack is empty\n");
+      else
+         logprints(traceIt, log, "monitor stack is empty\n");
 
       bool blockHasMonent = false;
       bool blockHasMonexit = false;
@@ -495,14 +483,14 @@ void J9::SetMonitorStateOnBlockEntry::set(bool& lmmdFailed, bool traceIt)
             if (monitorStack)
                {
                monitorStack = new (trHeapMemory()) TR_Stack<TR::SymbolReference *>(*monitorStack);
-               if (traceIt)
-                  log->printf("adding monitor to stack symbol=%p symRef=%d (size=%d) (node %p)\n", node->getSymbol(), node->getSymbolReference()->getReferenceNumber(), monitorStack->size()+1,node);
+               logprintf(traceIt, log, "adding monitor to stack symbol=%p symRef=%d (size=%d) (node %p)\n",
+                     node->getSymbol(), node->getSymbolReference()->getReferenceNumber(), monitorStack->size()+1,node);
                }
             else
                {
                monitorStack = new (trHeapMemory()) TR_Stack<TR::SymbolReference *>(trMemory());
-               if (traceIt)
-                  log->printf("adding monitor to fresh stack symbol=%p symRef=%d (size=%d) (node %p)\n", node->getSymbol(), node->getSymbolReference()->getReferenceNumber(), monitorStack->size()+1,node);
+               logprintf(traceIt, log, "adding monitor to fresh stack symbol=%p symRef=%d (size=%d) (node %p)\n",
+                     node->getSymbol(), node->getSymbolReference()->getReferenceNumber(), monitorStack->size()+1,node);
                }
 
             monitorStack->push(node->getSymbolReference());
@@ -543,7 +531,6 @@ void J9::SetMonitorStateOnBlockEntry::set(bool& lmmdFailed, bool traceIt)
             blockHasMonexit = true;
             callerIndex = node->getByteCodeInfo().getCallerIndex();
 
-            //log->printf("blockHasMonexit = %d isSyncMethodMonitor = %d\n", blockHasMonexit, isSyncMethodMonitor);
             // process all the exception successors at this point
             // the normal successors will be processed at the end of the block
             //
@@ -552,21 +539,17 @@ void J9::SetMonitorStateOnBlockEntry::set(bool& lmmdFailed, bool traceIt)
             if (monitorStack->topIndex() == 0)
                {
                monitorStack = new (trHeapMemory()) TR_Stack<TR::SymbolReference *>(*monitorStack);
-               if (traceIt)
-                  log->printf("popping monitor off stack symRef=%d, BEFORE pop size=%d, ", monitorStack->top()->getReferenceNumber(), monitorStack->size());
+               logprintf(traceIt, log, "popping monitor off stack symRef=%d, BEFORE pop size=%d, ", monitorStack->top()->getReferenceNumber(), monitorStack->size());
                monitorStack->pop();
-               if (traceIt)
-                  log->printf("AFTER size=%d\n", monitorStack->size());
+               logprintf(traceIt, log, "AFTER size=%d\n", monitorStack->size());
                }
 
             else
                {
                monitorStack = new (trHeapMemory()) TR_Stack<TR::SymbolReference *>(*monitorStack);
-               if (traceIt)
-                  log->printf("popping monitor off stack symRef=%d, BEFORE pop size=%d, ", monitorStack->top()->getReferenceNumber(), monitorStack->size());
+               logprintf(traceIt, log, "popping monitor off stack symRef=%d, BEFORE pop size=%d, ", monitorStack->top()->getReferenceNumber(), monitorStack->size());
                monitorStack->pop();
-               if (traceIt)
-                  log->printf("AFTER size=%d\n", monitorStack->size());
+               logprintf(traceIt, log, "AFTER size=%d\n", monitorStack->size());
                }
             }
          else if(node->getOpCode().getOpCodeValue() != TR::monexit && node->exceptionsRaised())
@@ -580,8 +563,8 @@ void J9::SetMonitorStateOnBlockEntry::set(bool& lmmdFailed, bool traceIt)
                   if (node->getByteCodeInfo().getCallerIndex() ==
                         succBlock->getEntry()->getNode()->getByteCodeInfo().getCallerIndex())
                      {
-                     if (traceInitMonitorsForExceptionAfterMonexit)
-                        log->printf("block_%d has exceptions after monexit with catch block in the same method %s\n", block->getNumber(), comp()->signature());
+                     logprintf(traceInitMonitorsForExceptionAfterMonexit, log, "block_%d has exceptions after monexit with catch block in the same method %s\n",
+                           block->getNumber(), comp()->signature());
                      lmmdFailed = true;
                      break;
                      }
@@ -595,8 +578,7 @@ void J9::SetMonitorStateOnBlockEntry::set(bool& lmmdFailed, bool traceIt)
             MonitorInBlock monitorType = NoMonitor;
             if ((monitorExitFence+monitorEnterStore)>= 2)
                {
-               if (traceIt)
-                  log->printf("block_%d has monitorEnterStore=%d monitorExitFence=%d\n", block->getNumber(), monitorEnterStore, monitorExitFence);
+               logprintf(traceIt, log, "block_%d has monitorEnterStore=%d monitorExitFence=%d\n", block->getNumber(), monitorEnterStore, monitorExitFence);
                lmmdFailed = true;
                }
 
@@ -633,14 +615,13 @@ void J9::SetMonitorStateOnBlockEntry::set(bool& lmmdFailed, bool traceIt)
                      monitorStackTop &&
                      needToPushMonitor(comp(), block, traceIt))
                   {
-                  if (traceIt)
-                     log->printf("pushing monexit symRef=%d back temporarily\n", monitorStackTop->getReferenceNumber());
+                  logprintf(traceIt, log, "pushing monexit symRef=%d back temporarily\n", monitorStackTop->getReferenceNumber());
                   monitorStack->push(monitorStackTop);
                   }
                }
 
-            if (traceIt)
-               log->printf("blockHasMonent=%d blockHasMonexit=%d dontPropagateMonitor=%d callerIndex=%d monitorPoppedForExceptionSucc=%d\n", blockHasMonent, blockHasMonexit, dontPropagateMonitor, callerIndex, monitorPoppedForExceptionSucc);
+            logprintf(traceIt, log, "blockHasMonent=%d blockHasMonexit=%d dontPropagateMonitor=%d callerIndex=%d monitorPoppedForExceptionSucc=%d\n",
+                  blockHasMonent, blockHasMonexit, dontPropagateMonitor, callerIndex, monitorPoppedForExceptionSucc);
 
             addSuccessors(block, monitorStack, traceIt, dontPropagateMonitor, monitorType, callerIndex);
             break;

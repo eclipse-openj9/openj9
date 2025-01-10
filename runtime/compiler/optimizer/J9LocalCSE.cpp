@@ -148,9 +148,8 @@ J9::LocalCSE::shouldCommonNode(TR::Node *parent, TR::Node *node)
 
                if (!(checkOverflowNode->getOpCode().isLoadConst() && checkOverflowNode->getConstValue() == 0))
                   {
-                  if (trace())
-                     comp()->log()->printf("Skipping propagation of %s [%p] into the first child of %s [%p] because of potential overflow checking\n", node->getOpCode().getName(), node, parent->getOpCode().getName(), parent);
-
+                  logprintf(trace(), comp()->log(), "Skipping propagation of %s [%p] into the first child of %s [%p] because of potential overflow checking\n",
+                     node->getOpCode().getName(), node, parent->getOpCode().getName(), parent);
                   return false;
                   }
 
@@ -200,7 +199,7 @@ J9::LocalCSE::shouldCopyPropagateNode(TR::Node *parent, TR::Node *node, int32_t 
          {
          int32_t lineNumber = comp()->getLineNumber(rhsOfStoreDefNode);
          comp()->log()->printf("z^z : skipping type invalid propagation : parent %s (%p), rhsOfStoreDefNode %s (%p) line_no=%d (offset %06X)\n",
-                 parent->getOpCode().getName(),parent,rhsOfStoreDefNode->getOpCode().getName(),rhsOfStoreDefNode,lineNumber,lineNumber);
+            parent->getOpCode().getName(), parent, rhsOfStoreDefNode->getOpCode().getName(), rhsOfStoreDefNode, lineNumber, lineNumber);
          }
 
       if (!propagationIsTypeCorrect)

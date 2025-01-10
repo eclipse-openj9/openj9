@@ -77,7 +77,6 @@ void
 TR_PPCRelocationTarget::performThunkRelocation(uint8_t *thunkBase, uintptr_t vmHelper)
    {
 #if defined(TR_HOST_64BIT)
-   //printf("TR_PPCRelocationTarget::performThunkRelocation thunkBase: %p\n", thunkBase);fflush(stdout);
    uintptr_t sendTarget = vmHelper;
    int32_t *thunkRelocationData;
 

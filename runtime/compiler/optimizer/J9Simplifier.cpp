@@ -37,6 +37,8 @@
 bool
 J9::Simplifier::isLegalToUnaryCancel(TR::Node *node, TR::Node *firstChild, TR::ILOpCodes opcode)
    {
+   OMR::Logger *log = comp()->log();
+
    if (!OMR::Simplifier::isLegalToUnaryCancel(node, firstChild, opcode))
       return false;
 
@@ -50,9 +52,8 @@ J9::Simplifier::isLegalToUnaryCancel(TR::Node *node, TR::Node *firstChild, TR::I
       //       f
       // to just 'f' because the extra digits that should be introduced by
       // the frac=5 in the parent will be lost
-      if (trace())
-         comp()->log()->printf("disallow unaryCancel of node %p and firstChild %p due to mismatch of decimal fractions (%d != %d)\n",
-                 node,firstChild,node->getDecimalFraction(),firstChild->getDecimalFraction());
+      logprintf(trace(), log, "disallow unaryCancel of node %p and firstChild %p due to mismatch of decimal fractions (%d != %d)\n",
+         node, firstChild, node->getDecimalFraction(), firstChild->getDecimalFraction());
       return false;
       }
 
@@ -68,8 +69,7 @@ J9::Simplifier::isLegalToUnaryCancel(TR::Node *node, TR::Node *firstChild, TR::I
       //       pdx p=4     1234
       // if folding is performed to remove zd2pd/pd2zd then the result will
       // be 1234 instead of 0034
-      if (trace())
-         comp()->log()->printf("disallow unaryCancel of node %p and firstChild %p due to intermediate truncation of node\n",node,firstChild);
+      logprintf(trace(), log, "disallow unaryCancel of node %p and firstChild %p due to intermediate truncation of node\n", node, firstChild);
       return false;
       }
    else if (firstChild->getOpCodeValue() == opcode &&
@@ -87,8 +87,7 @@ J9::Simplifier::isLegalToUnaryCancel(TR::Node *node, TR::Node *firstChild, TR::I
 
       if (childP < nodeP && childP < grandChildP)
          {
-         if (trace())
-            comp()->log()->printf("disallow unaryCancel of node %p and firstChild %p due to intermediate truncation of node\n",node,firstChild);
+         logprintf(trace(), log, "disallow unaryCancel of node %p and firstChild %p due to intermediate truncation of node\n", node, firstChild);
          return false;
          }
       }
@@ -100,8 +99,7 @@ J9::Simplifier::isLegalToUnaryCancel(TR::Node *node, TR::Node *firstChild, TR::I
           firstChild->getDataType().canGetMaxPrecisionFromType() &&
           node->getDataType().getMaxPrecisionFromType() > firstChild->getDataType().getMaxPrecisionFromType())
          {
-         if (trace())
-            comp()->log()->printf("disallow unaryCancel of node %p and firstChild %p due to intermediate truncation of node\n",node,firstChild);
+         logprintf(trace(), log, "disallow unaryCancel of node %p and firstChild %p due to intermediate truncation of node\n", node, firstChild);
          return false;
          }
       }
