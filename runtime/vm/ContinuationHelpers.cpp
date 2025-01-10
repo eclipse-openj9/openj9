@@ -452,6 +452,11 @@ copyFieldsFromContinuation(J9VMThread *currentThread, J9VMThread *vmThread, J9VM
 	 * benefit to a single walk and the cache memory must be managed.
 	 */
 	vmThread->jitArtifactSearchCache = (void*)((UDATA)vmThread->jitArtifactSearchCache | J9_STACKWALK_NO_JIT_CACHE);
+
+#if JAVA_SPEC_VERSION >= 24
+	vmThread->ownedMonitorCount = continuation->ownedMonitorCount;
+	vmThread->monitorEnterRecords = continuation->monitorEnterRecords;
+#endif /* JAVA_SPEC_VERSION >= 24 */
 }
 
 UDATA
@@ -619,4 +624,53 @@ releaseVThreadInspector(J9VMThread *currentThread, jobject thread)
 		}
 	}
 }
+
+#if JAVA_SPEC_VERSION >= 24
+void
+detachMonitorInfo(J9VMThread currentThread, J9ObjectMonitor *objectMonitor)
+{
+	J9ThreadAbstractMonitor *monitor = objectMonitor->monitor;
+	monitor->owner = 1;
+	objectMonitor->vthread = currentThread->threadObject;
+}
+
+void
+updateMonitorInfo(J9VMThread *currentThread, J9ObjectMonitor *objectMonitor)
+{
+	J9ThreadAbstractMonitor *monitor = objectMonitor->monitor;
+	monitor->owner = currentThread->osThread;
+	objectMonitor->vthread = NULL;
+}
+
+void
+preparePinnedVirtualThreadForUnmount(J9VMThread *currentThread)
+{
+	if (0 < currentThread->ownedMonitorCount) {
+		/* Inflate all owned monitors */
+		J9MonitorEnterRecord monitorRecords = currentThread->monitorEnterRecords;
+		while (monitorRecords) {
+			j9object_t object = monitorRecords->object;
+			j9objectmonitor_t lock = 0;
+			J9ObjectMonitor *objectMonitor = NULL;
+
+			if (!LN_HAS_LOCKWORD(currentThread, object)) {
+				objectMonitor = monitorTablePeek(currentThread->javaVM, object);
+				if (objectMonitor != NULL){
+					lock = J9_LOAD_LOCKWORD_VM(vm, &objectMonitor->alternateLockword);
+				} else {
+					lock = 0;
+				}
+			} else {
+				lock = J9OBJECT_MONITOR(currentThread, object);
+			}
+
+			if (!J9_LOCK_IS_INFLATED(lock)) {
+				objectMonitor = objectMonitorInflate(currentThread, object, lock);
+			}
+
+			detachMonitorInfo(currentThread, objectMonitor);
+		}
+	}
+}
+#endif /* JAVA_SPEC_VERSION >= 24 */
 } /* extern "C" */
