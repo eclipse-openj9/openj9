@@ -510,7 +510,7 @@ private:
 			goto skipFrame;
 		} else {
 			frame->methodIndex = cp->getMethodEntry(romMethod, ramClass);
-			frame->frameType = Interpreted; /* TODO need a way to know if its JIT'ed and inlined */
+			frame->frameType = (FrameType) frameType;
 		}
 
 		if ((UDATA)-1 == bytecodeOffset) {
