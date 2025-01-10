@@ -117,7 +117,7 @@ import com.ibm.j9ddr.vm29.types.U64;
 import com.ibm.j9ddr.vm29.types.UDATA;
 
 /**
- * Walk every slot and sections of a ROMClass
+ * Walk every slot and sections of a ROMClass.
  *
  * @author jeanpb
  */
@@ -215,22 +215,17 @@ public class RomClassWalker extends ClassWalker {
 	}
 
 	private void allSlotsInROMMethodsSectionDo() throws CorruptDataException {
-		int count;
-		J9ROMMethodPointer firstMethod;
-		J9ROMMethodPointer nextMethod;
-		J9ROMMethodPointer methodCursor;
-
-		methodCursor = firstMethod = romClass.romMethods();
-		for (count = romClass.romMethodCount().intValue(); (methodCursor.notNull()) && (count > 0); count--) {
-			nextMethod = allSlotsInROMMethodDo(methodCursor);
+		J9ROMMethodPointer firstMethod = romClass.romMethods();
+		J9ROMMethodPointer methodCursor = firstMethod;
+		for (int count = romClass.romMethodCount().intValue(); (count > 0) && methodCursor.notNull(); --count) {
+			J9ROMMethodPointer nextMethod = allSlotsInROMMethodDo(methodCursor);
 			classWalkerCallback.addSection(clazz, methodCursor, nextMethod.getAddress() - methodCursor.getAddress(), "method", true);
 			methodCursor = nextMethod;
 		}
 		classWalkerCallback.addSection(clazz, firstMethod, methodCursor.getAddress() - firstMethod.getAddress(), "methods", true);
 	}
 
-	private void allSlotsInROMFieldsSectionDo() throws CorruptDataException
-	{
+	private void allSlotsInROMFieldsSectionDo() throws CorruptDataException {
 		J9ROMFieldShapeIterator iterator = new J9ROMFieldShapeIterator(romClass.romFields(), romClass.romFieldCount());
 		int size = 0;
 		while (iterator.hasNext()) {
@@ -245,13 +240,10 @@ public class RomClassWalker extends ClassWalker {
 		classWalkerCallback.addSection(clazz, romClass.romFields(), size, "fields", true);
 	}
 
-	private J9ROMMethodPointer allSlotsInROMMethodDo(J9ROMMethodPointer method) throws CorruptDataException
-	{
-		U32Pointer cursor;
-
+	private J9ROMMethodPointer allSlotsInROMMethodDo(J9ROMMethodPointer method) throws CorruptDataException {
 		addObjectsasSlot(method);
 
-		cursor = ROMHelp.J9_EXTENDED_MODIFIERS_ADDR_FROM_ROM_METHOD(method);
+		U32Pointer cursor = ROMHelp.J9_EXTENDED_MODIFIERS_ADDR_FROM_ROM_METHOD(method);
 
 		allSlotsInBytecodesDo(method);
 
@@ -316,19 +308,17 @@ public class RomClassWalker extends ClassWalker {
 		return J9ROMMethodPointer.cast(cursor);
 	}
 
-	private long allSlotsInMethodParametersDataDo(U32Pointer cursor) throws CorruptDataException
-	{
+	private long allSlotsInMethodParametersDataDo(U32Pointer cursor) throws CorruptDataException {
 		J9MethodParametersDataPointer methodParametersData = J9MethodParametersDataPointer.cast(cursor);
 		J9MethodParameterPointer parameters = methodParametersData.parameters();
 		long methodParametersSize = ROMHelp.J9_METHOD_PARAMS_SIZE_FROM_NUMBER_OF_PARAMS(methodParametersData.parameterCount().longValue());
 		long padding = U32.SIZEOF - (methodParametersSize % U32.SIZEOF);
-		long size = 0;
 
 		if (padding == U32.SIZEOF) {
 			padding = 0;
 		}
 
-		size = methodParametersSize + padding;
+		long size = methodParametersSize + padding;
 
 		classWalkerCallback.addSlot(clazz, SlotType.J9_SRP, methodParametersData.parameterCountEA(), "parameterCount");
 
@@ -344,22 +334,17 @@ public class RomClassWalker extends ClassWalker {
 		}
 
 		classWalkerCallback.addSection(clazz, methodParametersData, size, "Method Parameters", true);
-		return size/U32.SIZEOF;
+		return size / U32.SIZEOF;
 	}
 
 	private int allSlotsInROMFieldDo(J9ROMFieldShapePointer field) throws CorruptDataException {
-		int fieldLength = 0;
-
-		U32Pointer initialValue;
-		UDATA modifiers;
-
 		J9ROMNameAndSignaturePointer fieldNAS = field.nameAndSignature();
 		classWalkerCallback.addSlot(clazz, SlotType.J9_ROM_UTF8, fieldNAS.nameEA(), "name");
 		classWalkerCallback.addSlot(clazz, SlotType.J9_ROM_UTF8, fieldNAS.signatureEA(), "signature");
 		classWalkerCallback.addSlot(clazz, SlotType.J9_U32, field.modifiersEA(), "modifiers");
 
-		modifiers = field.modifiers();
-		initialValue = U32Pointer.cast(field.add(1));
+		UDATA modifiers = field.modifiers();
+		U32Pointer initialValue = U32Pointer.cast(field.add(1));
 
 		if (modifiers.anyBitsIn(J9FieldFlagConstant)) {
 			if (modifiers.anyBitsIn(J9FieldSizeDouble)) {
@@ -380,20 +365,19 @@ public class RomClassWalker extends ClassWalker {
 			initialValue = initialValue.add(allSlotsInAnnotationDo(initialValue, "fieldAnnotation"));
 		}
 
-		fieldLength = (int) (initialValue.getAddress() - field.getAddress());
+		int fieldLength = (int) (initialValue.getAddress() - field.getAddress());
+
 		classWalkerCallback.addSection(clazz, field, fieldLength, "field", true);
 
 		return fieldLength;
 	}
-	void allSlotsInExceptionInfoDo(J9ExceptionInfoPointer exceptionInfo) throws CorruptDataException
-	{
-		J9ExceptionHandlerPointer exceptionHandler;
-		SelfRelativePointer throwNames;
 
+	void allSlotsInExceptionInfoDo(J9ExceptionInfoPointer exceptionInfo) throws CorruptDataException {
 		classWalkerCallback.addSlot(clazz, SlotType.J9_U16, exceptionInfo.catchCountEA(), "catchCount");
 		classWalkerCallback.addSlot(clazz, SlotType.J9_U16, exceptionInfo.throwCountEA(), "throwCount");
 
-		exceptionHandler = ROMHelp.J9EXCEPTIONINFO_HANDLERS(exceptionInfo); /* endian safe */
+		J9ExceptionHandlerPointer exceptionHandler = ROMHelp.J9EXCEPTIONINFO_HANDLERS(exceptionInfo); /* endian safe */
+
 		for (int i = 0; i < exceptionInfo.catchCount().longValue(); i++) {
 			classWalkerCallback.addSlot(clazz, SlotType.J9_U32, exceptionHandler.startPCEA(), "startPC");
 			classWalkerCallback.addSlot(clazz, SlotType.J9_U32, exceptionHandler.endPCEA(), "endPC");
@@ -403,14 +387,14 @@ public class RomClassWalker extends ClassWalker {
 		}
 
 		/* not using J9EXCEPTIONINFO_THROWNAMES...we're already there */
-		throwNames = SelfRelativePointer.cast(exceptionHandler);
+		SelfRelativePointer throwNames = SelfRelativePointer.cast(exceptionHandler);
+
 		for (int i = 0; i < exceptionInfo.throwCount().intValue(); i++, throwNames = throwNames.add(1)) {
 			classWalkerCallback.addSlot(clazz, SlotType.J9_ROM_UTF8, throwNames, "throwNameUTF8");
 		}
 	}
-	private void allSlotsInBytecodesDo(J9ROMMethodPointer method) throws CorruptDataException {
-		U8Pointer pc, bytecodes;
 
+	private void allSlotsInBytecodesDo(J9ROMMethodPointer method) throws CorruptDataException {
 		/* bytecodeSizeLow already walked */
 		long length = ROMHelp.J9_BYTECODE_SIZE_FROM_ROM_METHOD(method).longValue();
 
@@ -418,10 +402,11 @@ public class RomClassWalker extends ClassWalker {
 			return;
 		}
 
-		pc = bytecodes = ROMHelp.J9_BYTECODE_START_FROM_ROM_METHOD(method);
+		U8Pointer bytecodes = ROMHelp.J9_BYTECODE_START_FROM_ROM_METHOD(method);
+		U8Pointer pc = bytecodes;
 
 		while ((pc.getAddress() - bytecodes.getAddress()) < length) {
-			int bc = (int) pc.at(0).intValue();
+			int bc = pc.at(0).intValue();
 			try {
 				classWalkerCallback.addSlot(clazz, SlotType.J9_U8, pc, BCNames.getName(bc));
 			} catch (Exception e) {
@@ -532,18 +517,18 @@ public class RomClassWalker extends ClassWalker {
 				pc = pc.add(4);
 			} else if (bc == JBtableswitch) {
 				int delta = (int) (pc.getAddress() - bytecodes.getAddress() - 1);
-				switch(delta % 4) {
-					case 0:
-						classWalkerCallback.addSlot(clazz, SlotType.J9_U8, pc, "bcPad");
-						pc = pc.add(1);
-					case 1:
-						classWalkerCallback.addSlot(clazz, SlotType.J9_U8, pc, "bcPad");
-						pc = pc.add(1);
-					case 2:
-						classWalkerCallback.addSlot(clazz, SlotType.J9_U8, pc, "bcPad");
-						pc = pc.add(1);
-					case 3:
-						break;
+				switch (delta % 4) {
+				case 0:
+					classWalkerCallback.addSlot(clazz, SlotType.J9_U8, pc, "bcPad");
+					pc = pc.add(1);
+				case 1:
+					classWalkerCallback.addSlot(clazz, SlotType.J9_U8, pc, "bcPad");
+					pc = pc.add(1);
+				case 2:
+					classWalkerCallback.addSlot(clazz, SlotType.J9_U8, pc, "bcPad");
+					pc = pc.add(1);
+				case 3:
+					break;
 				}
 				classWalkerCallback.addSlot(clazz, SlotType.J9_U32, pc, "bcArg32");
 				pc = pc.add(4);
@@ -559,18 +544,18 @@ public class RomClassWalker extends ClassWalker {
 				}
 			} else if (bc == JBlookupswitch) {
 				int delta2 = (int) (pc.getAddress() - bytecodes.getAddress() - 1);
-				switch(delta2 % 4) {
-					case 0:
-						classWalkerCallback.addSlot(clazz, SlotType.J9_U8, pc, "bcArg8");
-						pc = pc.add(1);
-					case 1:
-						classWalkerCallback.addSlot(clazz, SlotType.J9_U8, pc, "bcArg8");
-						pc = pc.add(1);
-					case 2:
-						classWalkerCallback.addSlot(clazz, SlotType.J9_U8, pc, "bcArg8");
-						pc = pc.add(1);
-					case 3:
-						break;
+				switch (delta2 % 4) {
+				case 0:
+					classWalkerCallback.addSlot(clazz, SlotType.J9_U8, pc, "bcArg8");
+					pc = pc.add(1);
+				case 1:
+					classWalkerCallback.addSlot(clazz, SlotType.J9_U8, pc, "bcArg8");
+					pc = pc.add(1);
+				case 2:
+					classWalkerCallback.addSlot(clazz, SlotType.J9_U8, pc, "bcArg8");
+					pc = pc.add(1);
+				case 3:
+					break;
 				}
 				classWalkerCallback.addSlot(clazz, SlotType.J9_U32, pc, "bcArg32");
 				pc = pc.add(4);
@@ -595,8 +580,7 @@ public class RomClassWalker extends ClassWalker {
 		classWalkerCallback.addSection(clazz, bytecodes, pc.getAddress() - bytecodes.getAddress(), "methodBytecodes", true);
 	}
 
-	void allSlotsInCPShapeDescriptionDo() throws CorruptDataException
-	{
+	void allSlotsInCPShapeDescriptionDo() throws CorruptDataException {
 		U32Pointer cpShapeDescription = J9ROMClassHelper.cpShapeDescription(romClass);
 		final int romConstantPoolCount = romClass.romConstantPoolCount().intValue();
 		int count = (romConstantPoolCount + (U32.SIZEOF * 2) - 1) / (U32.SIZEOF * 2);
@@ -608,8 +592,7 @@ public class RomClassWalker extends ClassWalker {
 		}
 	}
 
-	private void allSlotsInConstantPoolDo() throws CorruptDataException
-	{
+	private void allSlotsInConstantPoolDo() throws CorruptDataException {
 		J9ROMConstantPoolItemPointer constantPool = J9ROMClassHelper.constantPool(romClass);
 		U32Pointer cpShapeDescription = J9ROMClassHelper.cpShapeDescription(romClass);
 
@@ -659,7 +642,7 @@ public class RomClassWalker extends ClassWalker {
 				classWalkerCallback.addSlot(clazz, SlotType.J9_U32, ref.classRefCPIndexEA(), "cpFieldClassRef");
 
 			} else if ((shapeDesc == J9CPTYPE_HANDLE_METHOD) ||
-					(shapeDesc == J9CPTYPE_STATIC_METHOD) || 
+					(shapeDesc == J9CPTYPE_STATIC_METHOD) ||
 					(shapeDesc == J9CPTYPE_INSTANCE_METHOD) ||
 					(shapeDesc == J9CPTYPE_INTERFACE_METHOD) ||
 					(shapeDesc == J9CPTYPE_INTERFACE_INSTANCE_METHOD) ||
@@ -698,8 +681,7 @@ public class RomClassWalker extends ClassWalker {
 		}
 	}
 
-	void allSlotsInOptionalInfoDo() throws CorruptDataException
-	{
+	void allSlotsInOptionalInfoDo() throws CorruptDataException {
 		U32Pointer optionalInfo = J9ROMClassHelper.optionalInfo(romClass);
 		SelfRelativePointer cursor = SelfRelativePointer.cast(optionalInfo);
 
@@ -749,7 +731,6 @@ public class RomClassWalker extends ClassWalker {
 				classWalkerCallback.addSlot(clazz, SlotType.J9_SRP, cursor, "optionalInjectedInterfaces");
 				cursor = cursor.add(1);
 			}
-
 			if (J9ROMClassHelper.hasLoadableDescriptorsAttribute(romClass)) {
 				classWalkerCallback.addSlot(clazz, SlotType.J9_SRP, cursor, "loadableDescriptorsAttributeSRP");
 				loadableDescriptorsAttributeDo(U32Pointer.cast(cursor.get()));
@@ -764,19 +745,17 @@ public class RomClassWalker extends ClassWalker {
 		classWalkerCallback.addSection(clazz, optionalInfo, cursor.getAddress() - optionalInfo.getAddress(), "optionalInfo", true);
 	}
 
-	void allSlotsInIntermediateClassDataDo () throws CorruptDataException
-	{
+	void allSlotsInIntermediateClassDataDo() throws CorruptDataException {
 		UDATA count = romClass.intermediateClassDataLength();
 		if (count.gt(0)) {
 			U8Pointer cursor = romClass.intermediateClassData();
-			String j9xHelp = "!j9x "+cursor.getHexAddress()+","+count.getHexValue();
+			String j9xHelp = "!j9x " + cursor.getHexAddress() + "," + count.getHexValue();
 			classWalkerCallback.addSlot(clazz, SlotType.J9_IntermediateClassData, cursor, "intermediateClassData", j9xHelp);
 			classWalkerCallback.addSection(clazz, cursor, count.longValue(), "intermediateClassDataSection", true);
 		}
 	}
 
-	void allSlotsInVarHandleMethodTypeLookupTableDo() throws CorruptDataException
-	{
+	void allSlotsInVarHandleMethodTypeLookupTableDo() throws CorruptDataException {
 		if (J9BuildFlags.J9VM_OPT_METHOD_HANDLE && !J9BuildFlags.J9VM_OPT_OPENJDK_METHODHANDLE) {
 			try {
 				int count = romClass.varHandleMethodTypeCount().intValue();
@@ -797,8 +776,7 @@ public class RomClassWalker extends ClassWalker {
 		}
 	}
 
-	void allSlotsInStaticSplitMethodRefIndexesDo() throws CorruptDataException
-	{
+	void allSlotsInStaticSplitMethodRefIndexesDo() throws CorruptDataException {
 		int count = romClass.staticSplitMethodRefCount().intValue();
 		U16Pointer cursor = romClass.staticSplitMethodRefIndexes();
 
@@ -810,8 +788,7 @@ public class RomClassWalker extends ClassWalker {
 		}
 	}
 
-	void allSlotsInSpecialSplitMethodRefIndexesDo() throws CorruptDataException
-	{
+	void allSlotsInSpecialSplitMethodRefIndexesDo() throws CorruptDataException {
 		int count = romClass.specialSplitMethodRefCount().intValue();
 		U16Pointer cursor = romClass.specialSplitMethodRefIndexes();
 
@@ -823,8 +800,7 @@ public class RomClassWalker extends ClassWalker {
 		}
 	}
 
-	private long allSlotsInStackMapFramesDo(U8Pointer cursor, long frameCount) throws CorruptDataException
-	{
+	private long allSlotsInStackMapFramesDo(U8Pointer cursor, long frameCount) throws CorruptDataException {
 		U8Pointer cursorStart = U8Pointer.NULL;
 		long count;
 
@@ -907,11 +883,8 @@ public class RomClassWalker extends ClassWalker {
 		return cursor.getAddress() - cursorStart.getAddress();
 	}
 
-	private void allSlotsInStackMapDo(U8Pointer stackMap) throws CorruptDataException
-	{
+	private void allSlotsInStackMapDo(U8Pointer stackMap) throws CorruptDataException {
 		U8Pointer cursor = stackMap;
-		long frameCount;
-		int stackMapSize = U16.SIZEOF;
 
 		if (stackMap.isNull()) {
 			return;
@@ -923,15 +896,13 @@ public class RomClassWalker extends ClassWalker {
 		 *  - do we want to have a J9ROM_U16_BE type?
 		 *  */
 		classWalkerCallback.addSlot(clazz, SlotType.J9_U16, U16Pointer.cast(cursor), "stackMapFrameCount");
-		frameCount = U16Pointer.cast(cursor).at(0).longValue();
-		frameCount = SWAP2BE((short) frameCount);
+		short frameCount = SWAP2BE(U16Pointer.cast(cursor).at(0).shortValue());
 		cursor = cursor.add(2);
 
-		stackMapSize += allSlotsInStackMapFramesDo(cursor, frameCount);
+		allSlotsInStackMapFramesDo(cursor, frameCount);
 	}
 
-	int allSlotsInVerificationTypeInfoDo(U8Pointer cursor) throws CorruptDataException
-	{
+	int allSlotsInVerificationTypeInfoDo(U8Pointer cursor) throws CorruptDataException {
 		try {
 			classWalkerCallback.addSlot(clazz, SlotType.J9_U8, cursor, "typeInfoTag");
 			long type = cursor.at(0).longValue();
@@ -948,8 +919,7 @@ public class RomClassWalker extends ClassWalker {
 		return 3;
 	}
 
-	void recordAttributeDo(U32Pointer attribute) throws CorruptDataException
-	{
+	void recordAttributeDo(U32Pointer attribute) throws CorruptDataException {
 		if (attribute.isNull()) {
 			return;
 		}
@@ -1002,8 +972,7 @@ public class RomClassWalker extends ClassWalker {
 		classWalkerCallback.addSection(clazz, attributeStart, recordComponentLength + padding, "recordComponent", true);
 	}
 
-	void permittedSubclassAttributeDo(U32Pointer attribute) throws CorruptDataException
-	{
+	void permittedSubclassAttributeDo(U32Pointer attribute) throws CorruptDataException {
 		if (attribute.isNull()) {
 			return;
 		}
@@ -1018,8 +987,7 @@ public class RomClassWalker extends ClassWalker {
 		classWalkerCallback.addSection(clazz, attributeStart, attribute.getAddress() - attributeStart.getAddress(), "permittedSubclass", true);
 	}
 
-	void loadableDescriptorsAttributeDo(U32Pointer attribute) throws CorruptDataException
-	{
+	void loadableDescriptorsAttributeDo(U32Pointer attribute) throws CorruptDataException {
 		if (attribute.isNull()) {
 			return;
 		}
@@ -1035,8 +1003,7 @@ public class RomClassWalker extends ClassWalker {
 			"loadableDescriptorsAttribute", true);
 	}
 
-	void implicitCreationAttributeDo(U32Pointer attribute) throws CorruptDataException
-	{
+	void implicitCreationAttributeDo(U32Pointer attribute) throws CorruptDataException {
 		if (attribute.isNull()) {
 			return;
 		}
@@ -1046,8 +1013,7 @@ public class RomClassWalker extends ClassWalker {
 		classWalkerCallback.addSection(clazz, attributeStart, attribute.getAddress() - attributeStart.getAddress(), "implicitCreationAttribute", true);
 	}
 
-	int allSlotsInAnnotationDo(U32Pointer annotation, String annotationSectionName) throws CorruptDataException
-	{
+	int allSlotsInAnnotationDo(U32Pointer annotation, String annotationSectionName) throws CorruptDataException {
 		int increment = 0;
 		int annotationLength = annotation.at(0).intValue();
 		/* determine how many U_32 sized chunks to increment initialValue by
@@ -1080,8 +1046,7 @@ public class RomClassWalker extends ClassWalker {
 		return increment;
 	}
 
-	long allSlotsInMethodDebugInfoDo(U32Pointer cursor) throws CorruptDataException
-	{
+	long allSlotsInMethodDebugInfoDo(U32Pointer cursor) throws CorruptDataException {
 		J9MethodDebugInfoPointer methodDebugInfo;
 		U8Pointer currentLineNumberPtr;
 		/* if data is out of line, then the size of the data inline in the method is a single SRP in sizeof(U_32 increments), currently assuming J9SRP is U_32 aligned*/
@@ -1173,8 +1138,7 @@ public class RomClassWalker extends ClassWalker {
 		return inlineSize;
 	}
 
-	void allSlotsInEnclosingObjectDo(J9EnclosingObjectPointer enclosingObject) throws CorruptDataException
-	{
+	void allSlotsInEnclosingObjectDo(J9EnclosingObjectPointer enclosingObject) throws CorruptDataException {
 		if (enclosingObject.isNull()) {
 			return;
 		}
@@ -1185,8 +1149,7 @@ public class RomClassWalker extends ClassWalker {
 		addObjectsasSlot(enclosingObject);
 	}
 
-	void allSlotsInSourceDebugExtensionDo(J9SourceDebugExtensionPointer sde) throws CorruptDataException
-	{
+	void allSlotsInSourceDebugExtensionDo(J9SourceDebugExtensionPointer sde) throws CorruptDataException {
 		if (sde.isNull()) {
 			return;
 		}

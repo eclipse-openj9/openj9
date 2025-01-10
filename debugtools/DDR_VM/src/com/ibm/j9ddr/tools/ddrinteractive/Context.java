@@ -24,7 +24,6 @@ package com.ibm.j9ddr.tools.ddrinteractive;
 import java.io.PrintStream;
 import java.text.ParseException;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
@@ -52,14 +51,14 @@ public class Context
 	public final long vmAddress;
 	public List<ICommand> nonVMCommands;
 	public List<ICommand> commands;
-	
+
 	/**
 	 * Shared logger for all commands to write to
 	 */
 	public final Logger logger = Logger.getLogger(LoggerNames.LOGGER_INTERACTIVE_CONTEXT);
-	
+
 	private DDRInteractiveClassLoader loader;
-	
+
 	public Context(IProcess process, IVMData vmData, List<ICommand> nonVMCommands) {
 		this.vmData = vmData;
 		this.process = process;
@@ -67,14 +66,14 @@ public class Context
 		this.vmAddress = getVMAddress();
 		refreshCommandList();
 	}
-	
+
 	public DDRInteractiveClassLoader getPluginClassloader() {
 		return loader;
 	}
-	
+
 	public void refreshCommandList() {
 		try {
-			if(vmData.getClassLoader() == null) {
+			if (vmData.getClassLoader() == null) {
 				loader = new DDRInteractiveClassLoader(vmData, this.getClass().getClassLoader());
 			} else {
 				loader = new DDRInteractiveClassLoader(vmData);
@@ -86,65 +85,62 @@ public class Context
 		}
 		commands = getContextCommands();
 	}
-	
+
 	@SuppressWarnings("unchecked")
-	private List<ICommand> getContextCommands()
-	{
+	private List<ICommand> getContextCommands() {
 		Object bootstrapArray[] = new Object[2];
 		bootstrapArray[1] = loader;
-		
+
 		try {
-			vmData.bootstrapRelative(TASK_GETCOMMANDS, (Object)bootstrapArray);
+			vmData.bootstrapRelative(TASK_GETCOMMANDS, (Object) bootstrapArray);
 		} catch (ClassNotFoundException e) {
-			//Shouldn't happen
+			// shouldn't happen
 			throw new Error(e);
 		}
-		
+
 		return Collections.unmodifiableList((List<ICommand>) bootstrapArray[0]);
 	}
 
 	@Override
-	public String toString()
-	{
+	public String toString() {
 		long pid;
 		try {
-			pid = process.getProcessId();	
+			pid = process.getProcessId();
 		} catch (CorruptDataException e1) {
 			pid = -1;
 		}
 		if (this.process.getPlatform() == Platform.ZOS) {
-			if(pid == -1) {
+			if (pid == -1) {
 				return "ASID: " + Long.toHexString(this.process.getAddressSpace().getAddressSpaceId()) + " : No JRE";
-			} 
+			}
 			return "ASID: " + Long.toHexString(this.process.getAddressSpace().getAddressSpaceId()) + " EDB: " + Long.toHexString(pid) + " " + vmString();
 		} else {
 			String pidString = pid == -1 ? "<error>" : Long.toString(pid);
 			return "PID: " + pidString + "; " + vmString();
 		}
 	}
-	
-	public String toString(boolean shortFormat)
-	{
+
+	public String toString(boolean shortFormat) {
 		StringBuilder data = new StringBuilder();
 		long pid;
 		try {
-			pid = process.getProcessId();	
+			pid = process.getProcessId();
 		} catch (CorruptDataException e1) {
 			pid = -1;
 		}
 		if (this.process.getPlatform() == Platform.ZOS) {
 			data.append("ASID: 0x" + Long.toHexString(this.process.getAddressSpace().getAddressSpaceId()));
-			if(pid == -1) {
+			if (pid == -1) {
 				data.append(" : No JRE");
 			} else {
 				data.append(" EDB: 0x" + Long.toHexString(pid));
-				if(!shortFormat) {
+				if (!shortFormat) {
 					data.append(" " + vmString());
 				}
 			}
 			return data.toString();
 		} else {
-			if(shortFormat) {
+			if (shortFormat) {
 				String pidString = pid == -1 ? "<error>" : Long.toString(pid);
 				return "PID: " + pidString;
 			} else {
@@ -153,38 +149,36 @@ public class Context
 			}
 		}
 	}
-	
-	private long getVMAddress()
-	{
+
+	private long getVMAddress() {
 		long[] passBackArray = new long[1];
 		try {
-			vmData.bootstrapRelative(TASK_FINDVM,(Object)passBackArray);
+			vmData.bootstrapRelative(TASK_FINDVM, (Object) passBackArray);
 		} catch (ClassNotFoundException e) {
 			throw new Error(e);
 		}
 		return passBackArray[0];
 	}
-	
+
 	private String vmString() {
 		String hexAddress = "0x" + Long.toHexString(vmAddress);
 		return " !j9javavm " + hexAddress;
 	}
-	
+
 	/**
 	 * Old way - use command and arguments as plain strings.
 	 * @param command
 	 * @param arguments
 	 * @param out
 	 */
-	public void execute(String command, String[] arguments, PrintStream out) 
-	{
+	public void execute(String command, String[] arguments, PrintStream out) {
 		try {
 			execute(new CommandParser(command, arguments), out);
 		} catch (ParseException e) {
 			out.println("Error executing command: " + e.getMessage());
 		}
 	}
-	
+
 	/**
 	 * New way - use CommandParser for added smarts in handling commands (file redirection etc.)
 	 * @param command
@@ -197,26 +191,23 @@ public class Context
 				return;
 			}
 		}
-		
+
 		for (ICommand thisCommand : commands) {
 			if (tryCommand(command, thisCommand, defaultOut)) {
 				return;
 			}
 		}
-		
+
 		defaultOut.println("Unrecognised command: " + command);
 	}
-	
-	private boolean tryCommand(CommandParser command, ICommand thisCommand, PrintStream defaultOut)
-	{
-		String cmd;
-		
-		if (command.getCommand().startsWith("!") == false) {
-			cmd = "!" + command.getCommand();
-		} else {
-			cmd = command.getCommand();
+
+	private boolean tryCommand(CommandParser command, ICommand thisCommand, PrintStream defaultOut) {
+		String cmd = command.getCommand();
+
+		if (cmd.startsWith("!") == false) {
+			cmd = "!" + cmd;
 		}
-		
+
 		if (thisCommand.recognises(cmd, this)) {
 			PrintStream fileOut = null;
 			try {
@@ -246,32 +237,27 @@ public class Context
 			return false;
 		}
 	}
-		
-	public Vector<String> getCommandNames() 
-	{
-		Vector<String> commandNames = new Vector<String>();
-		
+
+	public Vector<String> getCommandNames() {
+		Vector<String> commandNames = new Vector<>();
+
 		for (ICommand thisCommand : nonVMCommands) {
 			if (thisCommand.getCommandNames() != null) {
 				commandNames.addAll(thisCommand.getCommandNames());
 			}
 		}
-		
+
 		for (ICommand thisCommand : commands) {
 			if (thisCommand.getCommandNames() != null) {
 				commandNames.addAll(thisCommand.getCommandNames());
 			}
 		}
-		
+
 		Map<String, StructureDescriptor> structureMap = StructureCommandUtil.getStructureMap(this);
-		Iterator<String> keys = structureMap.keySet().iterator();
-    	while(keys.hasNext()) {
-    		String command = (String) keys.next();
-    		commandNames.add(command);
-    	}
-		
+
+		commandNames.addAll(structureMap.keySet());
+
 		return commandNames;
 	}
 
-	
 }
