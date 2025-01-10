@@ -1050,8 +1050,8 @@ VM_JFRConstantPoolTypes::addThreadSleepEntry(J9JFRThreadSlept *threadSleepData)
 	entry->stackTraceIndex = consumeStackTrace(threadSleepData->vmThread, J9JFRTHREADSLEPT_STACKTRACE(threadSleepData), threadSleepData->stackTraceSize);
 	if (isResultNotOKay()) goto done;
 
-	index = _threadEndCount;
-	_threadEndCount += 1;
+	index = _threadSleepCount;
+	_threadSleepCount += 1;
 
 done:
 	return index;
@@ -1088,11 +1088,45 @@ VM_JFRConstantPoolTypes::addMonitorWaitEntry(J9JFRMonitorWaited* threadWaitData)
 
 	entry->notifierThread = 0; //Need a way to find the notifiying thread
 
-	index = _threadEndCount;
-	_threadEndCount += 1;
+	index = _monitorWaitCount;
+	_monitorWaitCount += 1;
 
 done:
 	return index;
+}
+
+void
+VM_JFRConstantPoolTypes::addThreadParkEntry(J9JFRThreadParked* threadParkData)
+{
+	ThreadParkEntry *entry = (ThreadParkEntry*)pool_newElement(_threadParkTable);
+
+	if (NULL == entry) {
+		_buildResult = OutOfMemory;
+		goto done;
+	}
+
+	entry->ticks = threadParkData->startTicks;
+	entry->duration = threadParkData->duration;
+
+	entry->parkedAddress = (U_64)threadParkData->parkedAddress;
+
+	entry->threadIndex = addThreadEntry(threadParkData->vmThread);
+	if (isResultNotOKay()) goto done;
+
+	entry->eventThreadIndex = addThreadEntry(threadParkData->vmThread);
+	if (isResultNotOKay()) goto done;
+
+	entry->stackTraceIndex = consumeStackTrace(threadParkData->vmThread, J9JFRTHREADPARKED_STACKTRACE(threadParkData), threadParkData->stackTraceSize);
+	if (isResultNotOKay()) goto done;
+
+	entry->parkedClass = getClassEntry(threadParkData->parkedClass);
+	if (isResultNotOKay()) goto done;
+
+	entry->timeOut = threadParkData->timeOut;
+	entry->untilTime = threadParkData->untilTime;
+
+done:
+	return;
 }
 
 U_32

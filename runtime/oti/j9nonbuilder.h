@@ -421,6 +421,19 @@ typedef struct J9JFRMonitorWaited {
 
 #define J9JFRMonitorWaitedED_STACKTRACE(jfrEvent) ((UDATA*)(((J9JFRMonitorWaited*)(jfrEvent)) + 1))
 
+typedef struct J9JFRThreadParked {
+	J9JFR_EVENT_WITH_STACKTRACE_FIELDS
+	I_64 time;
+	I_64 duration;
+	struct J9VMThread *thread;
+	struct J9Class *parkedClass;
+	I_64 timeOut;
+	I_64 untilTime;
+	UDATA parkedAddress;
+} J9JFRThreadParked;
+
+#define J9JFRTHREADPARKED_STACKTRACE(jfrEvent) ((UDATA*)(((J9JFRThreadParked*)(jfrEvent)) + 1))
+
 typedef struct J9JFRCPULoad {
 	J9JFR_EVENT_COMMON_FIELDS
 	float jvmUser;

@@ -4948,6 +4948,10 @@ void
 threadParkImpl(J9VMThread *vmThread, BOOLEAN timeoutIsEpochRelative, I_64 timeout);
 void
 threadUnparkImpl (J9VMThread* vmThread, j9object_t threadObject);
+J9Class*
+getThreadParkClassObject(J9VMThread *vmThread);
+UDATA
+getThreadParkClassIterator(J9VMThread *vmThread, J9StackWalkState *walkState);
 
 /* -------------------- threadhelp.cpp ------------ */
 
