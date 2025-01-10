@@ -151,7 +151,7 @@ List<TR_CISCNode>* sortList(List<TR_CISCNode>* input, List<TR_CISCNode>* output,
 
 void dump256Bytes(uint8_t *t, TR::Compilation * comp);
 
-bool isLoopPreheaderLastBlockInMethod(TR::Compilation *comp, TR::Block *block, TR::Block **predBlock = NULL);
+bool isLoopPreheaderLastBlockInMethod(TR::Compilation *comp, TR::Block *block, bool trace, TR::Block **predBlock = NULL);
 bool findAndOrReplaceNodesWithMatchingSymRefNumber(TR::Node *curNode, TR::Node *targetNode, int32_t symRefNumberToBeMatched);
 TR::Node *findLoadWithMatchingSymRefNumber(TR::Node *curNode, int32_t symRefNumberToBeMatched);
 

@@ -117,8 +117,7 @@ J9::ValuePropagation::transformCallToNodeWithHCRGuard(TR::TreeTop *callTree, TR:
    // Add the call to inlining table
    if (!comp()->incInlineDepth(calleeSymbol, callNode, !callNode->getOpCode().isCallIndirect(), NULL, calleeSymbol->getResolvedMethod()->classOfMethod(), 0))
       {
-      if (trace())
-         comp()->log()->printf("Cannot inline call %p, quit transforming it into a constant\n", callNode);
+      trprintf(trace(), comp()->log(), "Cannot inline call %p, quit transforming it into a constant\n", callNode);
       return;
       }
    // With the method added to the inlining table, getCurrentInlinedSiteIndex() will return the desired inlined site index
@@ -187,21 +186,20 @@ J9::ValuePropagation::getObjectLocationFromConstraint(TR::VPConstraint *constrai
 void
 J9::ValuePropagation::transformCallToIconstInPlaceOrInDelayedTransformations(TR::TreeTop* callTree, int32_t result, bool isGlobal, bool inPlace, bool requiresGuard)
    {
-    TR::Node * callNode = callTree->getNode()->getFirstChild();
-    TR::Method * calledMethod = callNode->getSymbol()->castToMethodSymbol()->getMethod();
-    const char *signature = calledMethod->signature(comp()->trMemory(), stackAlloc);
-    if (inPlace)
-       {
-       if (trace())
-          comp()->log()->printf("Fold the call to %s on node %p to %d\n", signature, callNode, result);
-       replaceByConstant(callNode, TR::VPIntConst::create(this, result), isGlobal);
-       }
+   TR::Logger *log = comp()->log();
+   TR::Node * callNode = callTree->getNode()->getFirstChild();
+   TR::Method * calledMethod = callNode->getSymbol()->castToMethodSymbol()->getMethod();
+   const char *signature = calledMethod->signature(comp()->trMemory(), stackAlloc);
+   if (inPlace)
+      {
+      trprintf(trace(), log, "Fold the call to %s on node %p to %d\n", signature, callNode, result);
+      replaceByConstant(callNode, TR::VPIntConst::create(this, result), isGlobal);
+      }
     else
-       {
-       if (trace())
-          comp()->log()->printf("The call to %s on node %p will be folded to %d in delayed transformations\n", signature, callNode, result);
-       _callsToBeFoldedToNode.add(new (trStackMemory()) TreeNodeResultPair(callTree, TR::Node::iconst(callTree->getNode()->getFirstChild(), result), requiresGuard));
-       }
+      {
+      trprintf(trace(), log, "The call to %s on node %p will be folded to %d in delayed transformations\n", signature, callNode, result);
+      _callsToBeFoldedToNode.add(new (trStackMemory()) TreeNodeResultPair(callTree, TR::Node::iconst(callTree->getNode()->getFirstChild(), result), requiresGuard));
+      }
    }
 
 void
@@ -210,10 +208,9 @@ J9::ValuePropagation::transformCallToNodeDelayedTransformations(TR::TreeTop *cal
    TR::Node * callNode = callTree->getNode()->getFirstChild();
    TR::Method * calledMethod = callNode->getSymbol()->castToMethodSymbol()->getMethod();
    const char *signature = calledMethod ? calledMethod->signature(comp()->trMemory(), stackAlloc) : NULL;
-   if (trace())
-      {
-      comp()->log()->printf("The call to %s on node %p will be folded in delayed transformations\n", signature ? signature : comp()->getDebug()->getName(callNode->getSymbol()), callNode, result);
-      }
+   trprintf(trace(), comp()->log(), "The call to %s on node %p will be folded in delayed transformations\n",
+      signature ? signature : comp()->getDebug()->getName(callNode->getSymbol()), callNode, result);
+
    _callsToBeFoldedToNode.add(new (trStackMemory()) TreeNodeResultPair(callTree, result, requiresGuard));
    }
 /**
@@ -787,13 +784,12 @@ J9::ValuePropagation::processRefinedMethodHandleINLCall(TR::Node *node)
                && argConstraint->isNonNullObject())
             {
             argInfo->set(i, new (trStackMemory()) TR_PrexArgument(argConstraint->getKnownObject()->getIndex(), comp()));
-            if (trace())
-               log->printf("PREX.vp:    Child %d [%p] arg is known object obj%d\n", i, argInfo->get(i), argConstraint->getKnownObject()->getIndex());
+            trprintf(trace(), log, "PREX.vp:    Child %d [%p] arg is known object obj%d\n", i, argInfo->get(i), argConstraint->getKnownObject()->getIndex());
             }
          }
       }
-   if (trace())
-      log->printf("PREX.vp: Done populating prex argInfo for %s %p.\n", node->getOpCode().getName(), node);
+
+   trprintf(trace(), log, "PREX.vp: Done populating prex argInfo for %s %p.\n", node->getOpCode().getName(), node);
 
    // Add the refined method CallInfo into the linked list _refinedMethodHandleINLMethodsToInline. Since the call
    // refinement replaces the call node in-place with a different method call, we do not have to do a lastTimeThrough()
@@ -932,11 +928,8 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                new (trStackMemory()) ObjectComparisonHelperCallTransform(_curTree, node,
                   ValueTypesHelperCallTransform::InsertDebugCounter | ValueTypesHelperCallTransform::InlineVTCompare, lhsClass));
 
-            if (trace())
-               {
-               log->printf("%s: Add delayed transformation for callNode n%dn: lhsNode n%dn rhsNode n%dn fieldCount %d lhsClass %p\n", __FUNCTION__,
-                  node->getGlobalIndex(), lhsNode->getGlobalIndex(), rhsNode->getGlobalIndex(), fieldCount, lhsClass);
-               }
+            trprintf(trace(), log, "%s: Add delayed transformation for callNode n%dn: lhsNode n%dn rhsNode n%dn fieldCount %d lhsClass %p\n", __FUNCTION__,
+               node->getGlobalIndex(), lhsNode->getGlobalIndex(), rhsNode->getGlobalIndex(), fieldCount, lhsClass);
             }
          }
 
@@ -993,9 +986,8 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
          return;
          }
 
-      if (trace())
-         log->printf("%s: isLoadFlattenableArrayElement %d isStoreFlattenableArrayElement %d n%dn symRef #%d\n", __FUNCTION__,
-            isLoadFlattenableArrayElement, isStoreFlattenableArrayElement, node->getGlobalIndex(), node->getSymbolReference()->getReferenceNumber());
+      trprintf(trace(), log, "%s: isLoadFlattenableArrayElement %d isStoreFlattenableArrayElement %d n%dn symRef #%d\n", __FUNCTION__,
+         isLoadFlattenableArrayElement, isStoreFlattenableArrayElement, node->getGlobalIndex(), node->getSymbolReference()->getReferenceNumber());
 
       bool arrayRefGlobal;
       bool storeValueGlobal;
@@ -1152,9 +1144,10 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                         // If the value that's being stored is not the same as the array hint component type, use helper call.
                         canTransformFlattenedArrayElementLoadStoreUseTypeHint = (isInstanceOfHintComponentType == TR_yes);
                         }
-                     else if (trace())
+                     else
                         {
-                        log->printf("%s: n%dn %s valueClass is NULL storeValueConstraint 0x%p storeValueNode n%dn 0x%p\n", __FUNCTION__, node->getGlobalIndex(), node->getOpCode().getName(), storeValueConstraint, storeValueNode->getGlobalIndex(), storeValueNode);
+                        trprintf(trace(), log, "%s: n%dn %s valueClass is NULL storeValueConstraint 0x%p storeValueNode n%dn 0x%p\n", __FUNCTION__,
+                           node->getGlobalIndex(), node->getOpCode().getName(), storeValueConstraint, storeValueNode->getGlobalIndex(), storeValueNode);
                         }
                      }
                   }
@@ -1166,11 +1159,13 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
             }
          }
 
-      if (trace())
-         log->printf("%s: n%dn %s canTransformFlattenedArrayElementLoadStore %d canTransformUnflattenedArrayElementLoadStore %d canTransformIdentityArrayElementLoadStore %d canTransformFlattenedArrayElementLoadStoreUseTypeHint %d canTransformUnflattenedArrayElementLoadStoreUseTypeHint %d canTransformIdentityArrayElementLoadStoreUseTypeHint %d typeHintClass %p\n",
-            __FUNCTION__, node->getGlobalIndex(), node->getOpCode().getName(),
-            canTransformFlattenedArrayElementLoadStore, canTransformUnflattenedArrayElementLoadStore, canTransformIdentityArrayElementLoadStore,
-            canTransformFlattenedArrayElementLoadStoreUseTypeHint, canTransformUnflattenedArrayElementLoadStoreUseTypeHint, canTransformIdentityArrayElementLoadStoreUseTypeHint, typeHintClass);
+      trprintf(trace(), log,
+         "%s: n%dn %s canTransformFlattenedArrayElementLoadStore %d canTransformUnflattenedArrayElementLoadStore %d "
+         "canTransformIdentityArrayElementLoadStore %d canTransformFlattenedArrayElementLoadStoreUseTypeHint %d "
+         "canTransformUnflattenedArrayElementLoadStoreUseTypeHint %d canTransformIdentityArrayElementLoadStoreUseTypeHint %d typeHintClass %p\n",
+         __FUNCTION__, node->getGlobalIndex(), node->getOpCode().getName(),
+         canTransformFlattenedArrayElementLoadStore, canTransformUnflattenedArrayElementLoadStore, canTransformIdentityArrayElementLoadStore,
+         canTransformFlattenedArrayElementLoadStoreUseTypeHint, canTransformUnflattenedArrayElementLoadStoreUseTypeHint, canTransformIdentityArrayElementLoadStoreUseTypeHint, typeHintClass);
 
       if (canTransformFlattenedArrayElementLoadStore
           || canTransformUnflattenedArrayElementLoadStore
@@ -1473,8 +1468,7 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
    static const char *disableHCRGuards = feGetEnv("TR_DisableHCRGuards");
    bool transformNonnativeMethodInPlace = disableHCRGuards || comp()->getHCRMode() == TR::none;
 
-   if (trace())
-      log->printf("Trying to compute the result of call to %s on node %p at compile time\n", signature, node);
+   trprintf(trace(), log, "Trying to compute the result of call to %s on node %p at compile time\n", signature, node);
    // This switch is used for transformations with AOT support
    switch (rm)
       {
@@ -1515,8 +1509,7 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
             bool success = comp()->fej9()->getStringHashCode(comp(), stringLocation, hashCode);
             if (!success)
                {
-               if (trace())
-                  log->prints("Cannot get access to the String object, quit transforming String.hashCode\n");
+               trprints(trace(), log, "Cannot get access to the String object, quit transforming String.hashCode\n");
                break;
                }
             transformCallToIconstInPlaceOrInDelayedTransformations(_curTree, hashCode, receiverChildGlobal, transformNonnativeMethodInPlace, !transformNonnativeMethodInPlace);
@@ -1552,8 +1545,7 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
 
             if (isObjectString == TR_maybe)
                {
-               if (trace())
-                  log->printf("Argument type is unknown, quit transforming String.equals on node %p\n", node);
+               trprintf(trace(), log, "Argument type is unknown, quit transforming String.equals on node %p\n", node);
                break;
                }
             else if (isObjectString == TR_no)
@@ -1576,8 +1568,7 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                   bool success = comp()->fej9()->stringEquals(comp(), receiverLocation, objectLocation, result);
                   if (!success)
                      {
-                     if (trace())
-                        log->printf("Does not have VM access, cannot tell whether %p and %p are equal\n", receiverChild, objectChild);
+                     trprintf(trace(), log, "Does not have VM access, cannot tell whether %p and %p are equal\n", receiverChild, objectChild);
                      break;
                      }
                   transformCallToIconstInPlaceOrInDelayedTransformations(_curTree, result, receiverChildGlobal && objectChildGlobal, transformNonnativeMethodInPlace, !transformNonnativeMethodInPlace);
@@ -1674,8 +1665,7 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                   TR_YesNoMaybe isInstanceOfResult = comp()->fej9()->isInstanceOf(secondClass, firstClass, false, true);
                   if (isInstanceOfResult == TR_maybe)
                      {
-                     if (trace())
-                        log->printf("Relationship between %p and %p is unknown, quit transforming Class.isAssignableFrom\n", firstClassChild, secondClassChild);
+                     trprintf(trace(), log, "Relationship between %p and %p is unknown, quit transforming Class.isAssignableFrom\n", firstClassChild, secondClassChild);
                      return;
                      }
                   else if (isInstanceOfResult == TR_yes)
@@ -1683,8 +1673,7 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                   }
                else
                   {
-                  if (trace())
-                     log->prints("The second child class type is not resolved at compile-time, quit transforming Class.isAssignableFrom\n");
+                  trprints(trace(), log, "The second child class type is not resolved at compile-time, quit transforming Class.isAssignableFrom\n");
                   return;
                   }
                transformCallToIconstInPlaceOrInDelayedTransformations(_curTree, assignable, firstClassChildGlobal && secondClassChildGlobal, true, false);
@@ -1828,8 +1817,7 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                // J9Class pointer introduced by the opt has to be remembered under AOT
                if (!arrayComponentClass)
                   {
-                  if (trace())
-                     log->printf("Array component class cannot be remembered, quit transforming Class.getComponentType on node %p\n", node);
+                  trprintf(trace(), log, "Array component class cannot be remembered, quit transforming Class.getComponentType on node %p\n", node);
                   break;
                   }
 
@@ -1865,8 +1853,7 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
             else
                {
                // Not an array, return null as the component type
-               if (trace())
-                  log->printf("Class is not an array class, transforming %s on node %p to null\n", signature, node);
+               trprintf(trace(), log, "Class is not an array class, transforming %s on node %p to null\n", signature, node);
                TR::VPConstraint *getComponentTypeConstraint = TR::VPNullObject::create(this);
                replaceByConstant(node, getComponentTypeConstraint, classChildGlobal);
                TR::DebugCounter::incStaticDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "constrainCall/(%s)", signature));
@@ -2154,8 +2141,7 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                uintptr_t mtInMh = comp()->fej9()->getReferenceFieldAtAddress(mhObject + mtOffset);
                uintptr_t mtObject = comp()->fej9()->getStaticReferenceFieldAtAddress((uintptr_t)mtLocation);
 
-               if (trace())
-                  log->printf("mhLocation %p mtLocation %p mhObject %p mtOffset %d mtInMh %p mtObject %p\n", mhLocation, mtLocation, mhObject, mtOffset, mtInMh, mtObject);
+               trprintf(trace(), log, "mhLocation %p mtLocation %p mhObject %p mtOffset %d mtInMh %p mtObject %p\n", mhLocation, mtLocation, mhObject, mtOffset, mtInMh, mtObject);
 
                // AOT doesn't relocate/validate objects, which is why this transformation is disabled under AOT
                if (mtInMh == mtObject)
@@ -2206,10 +2192,7 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                if (comp()->fej9()->classInitIsFinished((TR_OpaqueClassBlock*)defcClazz))
                   {
                   removeCall = true;
-                  if (trace())
-                     {
-                     log->printf("defc in MethodHandle %p has been initialized\n", mh);
-                     }
+                  trprintf(trace(), log, "defc in MethodHandle %p has been initialized\n", mh);
                   }
                }
 
@@ -2244,10 +2227,7 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                 && receiverConstraint->isNonNullObject())
                {
                removeCall = true;
-               if (trace())
-                  {
-                  log->printf("receiver child %p for DirectHandle.nullCheckIfRequired is non-null\n", receiver);
-                  }
+               trprintf(trace(), log, "receiver child %p for DirectHandle.nullCheckIfRequired is non-null\n", receiver);
                }
             else if (mhConstraint->getKnownObject()
                      && mhConstraint->isNonNullObject())
@@ -2267,10 +2247,7 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                if (isStatic)
                   {
                   removeCall = true;
-                  if (trace())
-                     {
-                     log->printf("DirectHandle %p refers to a static method\n", mh);
-                     }
+                  trprintf(trace(), log, "DirectHandle %p refers to a static method\n", mh);
                   }
                else
                   {
@@ -2322,8 +2299,7 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                 !classChildConstraint->getClassType()->asFixedClass() ||
                 !TR::Compiler->cls.isClassInitialized(comp(), classChildConstraint->getClass()))
                {
-               if (trace())
-                  log->printf("Class child %p is not a non-null java/lang/Class object with fixed class constraint, quit transforming Object.newInstancePrototype on node %p\n", classChild, node);
+               trprintf(trace(), log, "Class child %p is not a non-null java/lang/Class object with fixed class constraint, quit transforming Object.newInstancePrototype on node %p\n", classChild, node);
                break;
                }
 
@@ -2343,8 +2319,8 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                    !callerClassChildConstraint->getClassType()->asFixedClass() ||
                    callerClassChildConstraint->isJavaLangClassObject() != TR_yes)
                   {
-                  if (trace())
-                     log->printf("Caller class %p is not a non-null java/lang/Class object with fixed class constraint, quit transforming Object.newInstancePrototype on node %p\n", callerClassChild, node);
+                  trprintf(trace(), log, "Caller class %p is not a non-null java/lang/Class object with fixed class constraint, quit transforming Object.newInstancePrototype on node %p\n",
+                     callerClassChild, node);
                   break;
                   }
 
@@ -2357,8 +2333,7 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                 comp()->fej9()->isPrimitiveClass(newClass) ||
                 comp()->fej9()->isClassArray(newClass))
                {
-               if (trace())
-                  log->printf("Class is not instantiatable via bytecode new, quit transforming Object.newInstancePrototype on node %p\n", node);
+               trprintf(trace(), log, "Class is not instantiatable via bytecode new, quit transforming Object.newInstancePrototype on node %p\n", node);
                break;
                }
 
@@ -2368,8 +2343,7 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                {
                if (!comp()->fej9()->isClassVisible(callerClass, newClass))
                   {
-                  if (trace())
-                     log->printf("Class is not visialbe to caller class, quit transforming Object.newInstancePrototype on node %p\n", node);
+                  trprintf(trace(), log, "Class is not visialbe to caller class, quit transforming Object.newInstancePrototype on node %p\n", node);
                   break;
                   }
 
@@ -2378,8 +2352,7 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
 
                if (!constructor)
                   {
-                  if (trace())
-                     log->printf("Cannot find the default constructor, quit transforming Object.newInstancePrototype on node %p\n", node);
+                  trprintf(trace(), log, "Cannot find the default constructor, quit transforming Object.newInstancePrototype on node %p\n", node);
                   break;
                   }
                }
@@ -2582,6 +2555,8 @@ J9::ValuePropagation::transformIntoRegularArrayElementStore(TR::TreeTop *callTre
 void
 J9::ValuePropagation::transformFlattenedArrayElementLoad(TR_OpaqueClassBlock *arrayClass, TR::Node *callNode)
    {
+   TR::Logger *log = comp()->log();
+
    /*
     * primitive public class MultipleFieldsPrimitive {
     *    public final int x;
@@ -2641,10 +2616,7 @@ J9::ValuePropagation::transformFlattenedArrayElementLoad(TR_OpaqueClassBlock *ar
    // If the array element contains zero field, the newvalue will contain only loadaddr
    if (fieldCount == 0)
       {
-      if (trace())
-         {
-         comp()->log()->printf("%s fieldCount 0: The call node is recreated to newValueNode n%dn\n", __FUNCTION__, newValueNode->getGlobalIndex());
-         }
+      trprintf(trace(), log, "%s fieldCount 0: The call node is recreated to newValueNode n%dn\n", __FUNCTION__, newValueNode->getGlobalIndex());
       return;
       }
 
@@ -2666,12 +2638,9 @@ J9::ValuePropagation::transformFlattenedArrayElementLoad(TR_OpaqueClassBlock *ar
                                                                   fieldEntry._isPrivate,
                                                                   fieldEntry._fieldname,
                                                                   fieldEntry._typeSignature);
-      if (trace())
-         {
-         comp()->log()->printf("%s %s fieldSymRef: %s fieldEntry[%d] fieldName %s fieldSig %s type %d offset %d\n", __FUNCTION__,
-            comp()->getDebug()->getName(loadOpCode), comp()->getDebug()->getName(fieldSymRef), (int)idx,
-            fieldEntry._fieldname, fieldEntry._typeSignature, fieldEntry._datatype.getDataType(), fieldEntry._offset);
-         }
+      trprintf(trace(), log, "%s %s fieldSymRef: %s fieldEntry[%d] fieldName %s fieldSig %s type %d offset %d\n", __FUNCTION__,
+         comp()->getDebug()->getName(loadOpCode), comp()->getDebug()->getName(fieldSymRef), (int)idx,
+         fieldEntry._fieldname, fieldEntry._typeSignature, fieldEntry._datatype.getDataType(), fieldEntry._offset);
 
       TR::Node *loadNode = TR::Node::createWithSymRef(loadOpCode, 1, elementAddressNode, 0, fieldSymRef);
       newValueNode->setAndIncChild(newValueNodeChildIndex++, loadNode);
@@ -2742,10 +2711,7 @@ J9::ValuePropagation::transformFlattenedArrayElementStore(TR_OpaqueClassBlock *a
       TR::Node *nullCheck = TR::Node::createWithSymRef(callNode, TR::ZEROCHK, 1, isNonNull,
                                   comp()->getSymRefTab()->findOrCreateArrayStoreExceptionSymbolRef(comp()->getMethodSymbol()));
       callTree->insertBefore(TR::TreeTop::create(comp(), nullCheck));
-      if (trace())
-         {
-         log->printf("%s inserted NULLCHK n%dn on valueNode n%dn\n", __FUNCTION__, nullCheck->getGlobalIndex(), valueNode->getGlobalIndex());
-         }
+      trprintf(trace(), log, "%s inserted NULLCHK n%dn on valueNode n%dn\n", __FUNCTION__, nullCheck->getGlobalIndex(), valueNode->getGlobalIndex());
       }
 
    // If the array element contains zero field, there is nothing to store into.
@@ -2753,10 +2719,7 @@ J9::ValuePropagation::transformFlattenedArrayElementStore(TR_OpaqueClassBlock *a
    if (fieldCount == 0)
       {
       TR::TransformUtil::removeTree(comp(), callTree);
-      if (trace())
-         {
-         log->printf("%s fieldCount 0 callTree n%dn is removed\n", __FUNCTION__, callTree->getNode()->getGlobalIndex());
-         }
+      trprintf(trace(), log, "%s fieldCount 0 callTree n%dn is removed\n", __FUNCTION__, callTree->getNode()->getGlobalIndex());
       return true;
       }
 
@@ -2832,6 +2795,8 @@ J9::ValuePropagation::transformFlattenedArrayElementStore(TR_OpaqueClassBlock *a
 void
 J9::ValuePropagation::transformFlattenedArrayElementLoadStoreUseTypeHint(TR_OpaqueClassBlock *typeHintClass, TR::Node *callNode, TR::TreeTop *callTree, bool isLoad, bool needsNullValueCheck)
    {
+   TR::Logger *log = comp()->log();
+
    /*
     * Use the transformation of jitLoadFlattenableArrayElement as an example below
     *
@@ -2891,8 +2856,8 @@ J9::ValuePropagation::transformFlattenedArrayElementLoadStoreUseTypeHint(TR_Opaq
     *
     */
 
-   if (trace())
-      comp()->log()->printf("%s: callTree n%dn callNode n%dn isLoad %d needsNullValueCheck %d\n", __FUNCTION__, callTree->getNode()->getGlobalIndex(), callNode->getGlobalIndex(), isLoad, needsNullValueCheck);
+   trprintf(trace(), log, "%s: callTree n%dn callNode n%dn isLoad %d needsNullValueCheck %d\n", __FUNCTION__,
+      callTree->getNode()->getGlobalIndex(), callNode->getGlobalIndex(), isLoad, needsNullValueCheck);
 
    J9::TransformUtil::createTempsForCall(this, callTree);
 
@@ -2914,9 +2879,9 @@ J9::ValuePropagation::transformFlattenedArrayElementLoadStoreUseTypeHint(TR_Opaq
    // "elseTree" is the fast path that uses sym ref to access array elements through "newvalue"
    TR::TreeTop *elseTree = TR::TreeTop::create(comp(), callTree->getNode()->duplicateTree());
 
-   if (trace())
-      comp()->log()->printf("%s: ifTree n%dn (%p). slow path helper call treetop n%dn (%p). fast path newvalue treetop n%dn (%p)\n", __FUNCTION__,
-         ifTree->getNode()->getGlobalIndex(), ifTree->getNode(), thenTree->getNode()->getGlobalIndex(), thenTree->getNode(), elseTree->getNode()->getGlobalIndex(), elseTree->getNode());
+   trprintf(trace(), log, "%s: ifTree n%dn (%p). slow path helper call treetop n%dn (%p). fast path newvalue treetop n%dn (%p)\n", __FUNCTION__,
+      ifTree->getNode()->getGlobalIndex(), ifTree->getNode(), thenTree->getNode()->getGlobalIndex(),
+      thenTree->getNode(), elseTree->getNode()->getGlobalIndex(), elseTree->getNode());
 
    J9::TransformUtil::createDiamondForCall(this,
                                           callTree,
@@ -2962,10 +2927,11 @@ J9::ValuePropagation::transformUnflattenedArrayElementLoadStoreUseTypeHint(TR_Op
                                                                            TR_OpaqueClassBlock *storeClassForArrayStoreCHK,
                                                                            TR_OpaqueClassBlock *componentClassForArrayStoreCHK)
    {
-   if (trace())
-      comp()->log()->printf("%s: callTree n%dn callNode n%dn isLoad %d needsNullValueCheck %d needsStoreCheck %d storeClassForArrayStoreCHK %p componentClassForArrayStoreCHK %p\n", __FUNCTION__,
-                     callTree->getNode()->getGlobalIndex(), callNode->getGlobalIndex(), isLoad,
-                     needsNullValueCheck, needsStoreCheck, storeClassForArrayStoreCHK, componentClassForArrayStoreCHK);
+   TR::Logger *log = comp()->log();
+
+   trprintf(trace(), log, "%s: callTree n%dn callNode n%dn isLoad %d needsNullValueCheck %d needsStoreCheck %d storeClassForArrayStoreCHK %p componentClassForArrayStoreCHK %p\n", __FUNCTION__,
+      callTree->getNode()->getGlobalIndex(), callNode->getGlobalIndex(), isLoad,
+      needsNullValueCheck, needsStoreCheck, storeClassForArrayStoreCHK, componentClassForArrayStoreCHK);
 
    J9::TransformUtil::createTempsForCall(this, callTree);
 
@@ -2987,9 +2953,9 @@ J9::ValuePropagation::transformUnflattenedArrayElementLoadStoreUseTypeHint(TR_Op
    // "elseTree" is the fast path that uses regular aaload and aastore to access array elements
    TR::TreeTop *elseTree = TR::TreeTop::create(comp(), callTree->getNode()->duplicateTree());
 
-   if (trace())
-      comp()->log()->printf("%s: ifTree n%dn (%p). slow path helper call treetop n%dn (%p). fast path treetop n%dn (%p)\n", __FUNCTION__,
-         ifTree->getNode()->getGlobalIndex(), ifTree->getNode(), thenTree->getNode()->getGlobalIndex(), thenTree->getNode(), elseTree->getNode()->getGlobalIndex(), elseTree->getNode());
+   trprintf(trace(), log, "%s: ifTree n%dn (%p). slow path helper call treetop n%dn (%p). fast path treetop n%dn (%p)\n", __FUNCTION__,
+      ifTree->getNode()->getGlobalIndex(), ifTree->getNode(), thenTree->getNode()->getGlobalIndex(),
+      thenTree->getNode(), elseTree->getNode()->getGlobalIndex(), elseTree->getNode());
 
    J9::TransformUtil::createDiamondForCall(this,
                                           callTree,
@@ -3072,8 +3038,7 @@ J9::ValuePropagation::isArrayNullRestricted(TR::VPConstraint *arrayConstraint)
    if (!(arrayConstraint && arrayConstraint->getClass()
               && arrayConstraint->getClassType()->isArray() == TR_yes))
       {
-      if (trace())
-         log->printf("%s: return TR_maybe. arrayConstraint %p\n", __FUNCTION__, arrayConstraint);
+      trprintf(trace(), log, "%s: return TR_maybe. arrayConstraint %p\n", __FUNCTION__, arrayConstraint);
       return TR_maybe;
       }
 
@@ -3081,8 +3046,7 @@ J9::ValuePropagation::isArrayNullRestricted(TR::VPConstraint *arrayConstraint)
 
    if (TR::Compiler->cls.isArrayNullRestricted(comp(), arrayClass))
       {
-      if (trace())
-         log->printf("%s: return TR_yes. arrayClass %p\n", __FUNCTION__, arrayClass);
+      trprintf(trace(), log, "%s: return TR_yes. arrayClass %p\n", __FUNCTION__, arrayClass);
       return TR_yes;
       }
 
@@ -3090,8 +3054,7 @@ J9::ValuePropagation::isArrayNullRestricted(TR::VPConstraint *arrayConstraint)
 
    if (!arrayComponentClass)
       {
-      if (trace())
-         log->printf("%s: return TR_maybe. arrayComponentClass NULL\n", __FUNCTION__);
+      trprintf(trace(), log, "%s: return TR_maybe. arrayComponentClass NULL\n", __FUNCTION__);
       return TR_maybe;
       }
 
@@ -3102,14 +3065,12 @@ J9::ValuePropagation::isArrayNullRestricted(TR::VPConstraint *arrayConstraint)
       // If abstract class has identity flag set, it cannot be extended by value class.
       if (TR::Compiler->cls.classHasIdentity(arrayComponentClass))
          {
-         if (trace())
-            log->printf("%s: return TR_no. abstract classHasIdentity\n", __FUNCTION__);
+         trprintf(trace(), log, "%s: return TR_no. abstract classHasIdentity\n", __FUNCTION__);
          return TR_no;
          }
       else
          {
-         if (trace())
-            log->printf("%s: return TR_maybe. Not concrete class\n", __FUNCTION__);
+         trprintf(trace(), log, "%s: return TR_maybe. Not concrete class\n", __FUNCTION__);
          return TR_maybe;
          }
       }
@@ -3127,8 +3088,7 @@ J9::ValuePropagation::isArrayNullRestricted(TR::VPConstraint *arrayConstraint)
        && !strncmp(sig, "[Ljava/lang/Object;", 19))
       {
       ret = (arrayConstraint->isFixedClass()) ? TR_no : TR_maybe;
-      if (trace())
-         log->printf("%s: return %s. java.lang.Object\n", __FUNCTION__, comp()->getDebug()->getName(ret));
+      trprintf(trace(), log, "%s: return %s. java.lang.Object\n", __FUNCTION__, comp()->getDebug()->getName(ret));
       return ret;
       }
 
@@ -3137,8 +3097,7 @@ J9::ValuePropagation::isArrayNullRestricted(TR::VPConstraint *arrayConstraint)
    // class.
    //
    ret = TR::Compiler->cls.classHasIdentity(arrayComponentClass) ? TR_no : TR_maybe;
-   if (trace())
-      log->printf("%s: return %s. Concrete class\n", __FUNCTION__, comp()->getDebug()->getName(ret));
+   trprintf(trace(), log, "%s: return %s. Concrete class\n", __FUNCTION__, comp()->getDebug()->getName(ret));
    return ret;
    }
 
@@ -3159,11 +3118,8 @@ J9::ValuePropagation::transformVTObjectEqNeCompare(TR_OpaqueClassBlock *containi
       {
       TR::Node::recreateWithoutProperties(callNode, TR::iconst);
       callNode->setConstValue(isObjectEqualityCompare ? 1 : 0);
-      if (trace())
-         {
-         log->printf("%s Changing n%dn from %s to iconst %d\n", __FUNCTION__, callNode->getGlobalIndex(),
-               isObjectEqualityCompare ? "<objectEqualityComparison>" : "<objectInequalityComparison>", isObjectEqualityCompare ? 1 : 0);
-         }
+      trprintf(trace(), log, "%s Changing n%dn from %s to iconst %d\n", __FUNCTION__, callNode->getGlobalIndex(),
+         isObjectEqualityCompare ? "<objectEqualityComparison>" : "<objectInequalityComparison>", isObjectEqualityCompare ? 1 : 0);
       }
    else if (fieldCount == 1)
       {
@@ -3289,11 +3245,8 @@ J9::ValuePropagation::transformVTObjectEqNeCompare(TR_OpaqueClassBlock *containi
       TR::Node::recreateWithoutProperties(callNode, isObjectEqualityCompare ? TR::icmpeq : TR::icmpne, 2,
                                           arraycmpNode, TR::Node::iconst(callNode, 0));
 
-      if (trace())
-         {
-         log->printf("%s Changing n%dn from %s to arraycmp: totalSize %d\n", __FUNCTION__, callNode->getGlobalIndex(),
-               isObjectEqualityCompare ? "<objectEqualityComparison>" : "<objectInequalityComparison>", totalFieldSize);
-         }
+      trprintf(trace(), log, "%s Changing n%dn from %s to arraycmp: totalSize %d\n", __FUNCTION__, callNode->getGlobalIndex(),
+         isObjectEqualityCompare ? "<objectEqualityComparison>" : "<objectInequalityComparison>", totalFieldSize);
       }
 
    lhsNode->recursivelyDecReferenceCount();
@@ -3341,8 +3294,7 @@ J9::ValuePropagation::doDelayedTransformations()
       TR::TreeTop *callTree = it->_tree;
       TR::Node *result = it->_result;
       TR::Node * callNode = callTree->getNode()->getFirstChild();
-      if (trace())
-         comp()->log()->printf("Doing delayed call transformation on call node n%dn\n", callNode->getGlobalIndex());
+      trprintf(trace(), comp()->log(), "Doing delayed call transformation on call node n%dn\n", callNode->getGlobalIndex());
 
       if (!performTransformation(comp(), "%sTransforming call node %p on tree %p to node %p\n", OPT_DETAILS, callNode, callTree, result))
          break;
@@ -4006,7 +3958,6 @@ static void getHelperSymRefs(OMR::ValuePropagation *vp, TR::Node *curCallNode, T
    for (TR_ResolvedMethod *m = it.getCurrent(); m; m = it.getNext())
       {
       char *sig = m->nameChars();
-      //printf("Here is the sig %s and the passed in %s \n", sig,helperSig);
       if (!strncmp(sig, helperSig, helperSigLen))
          {
          if (TR::MethodSymbol::Virtual == helperCallKind)
@@ -4020,11 +3971,9 @@ static void getHelperSymRefs(OMR::ValuePropagation *vp, TR::Node *curCallNode, T
             {
             helperSymRef = vp->comp()->getSymRefTab()->findOrCreateMethodSymbol(curCallNode->getSymbolReference()->getOwningMethodIndex(), -1, m, helperCallKind);
             }
-         //printf("found gethelpers, 0x%x \n", helperSymRef);
          }
       else if (!strncmp(sig, "jitHelpers", 10))
          {
-         //printf("found helpers");
          getHelpersSymRef = vp->comp()->getSymRefTab()->findOrCreateMethodSymbol(JITTED_METHOD_INDEX, -1, m, TR::MethodSymbol::Static);
          }
       }
@@ -4037,8 +3986,6 @@ static void transformToOptimizedCloneCall(OMR::ValuePropagation *vp, TR::Node *n
    TR::SymbolReference *optimizedCloneSymRef = NULL;
 
    getHelperSymRefs(vp, node, getHelpersSymRef, optimizedCloneSymRef, "optimizedClone", 14, TR::MethodSymbol::Special);
-
-   //printf("helper sym 0x%x, optsym 0x%x \n", getHelpersSymRef, optimizedCloneSymRef);
 
    if (optimizedCloneSymRef && getHelpersSymRef && performTransformation(vp->comp(), "%sChanging call to new optimizedClone at node [%p]\n", OPT_DETAILS, node))
         {
@@ -4060,7 +4007,6 @@ static void transformToOptimizedCloneCall(OMR::ValuePropagation *vp, TR::Node *n
         vp->invalidateUseDefInfo();
         vp->invalidateValueNumberInfo();
         }
-//printf("TRANSFORMED \n");
    }
 
 
@@ -4217,8 +4163,7 @@ J9::ValuePropagation::innerConstrainAcall(TR::Node *node)
                // Do nothing if the class of the object doesn't implement Cloneable
                if (constraint->getClass() && !comp()->fej9()->isCloneable(constraint->getClass()))
                   {
-                  if (trace())
-                     log->printf("Object Clone: Class of node %p is not cloneable, quit\n", node);
+                  trprintf(trace(), log, "Object Clone: Class of node %p is not cloneable, quit\n", node);
 
                   TR::DebugCounter::incStaticDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "inlineClone/unsuitable/(%s)/%s/block_%d", comp()->signature(), comp()->getHotnessName(comp()->getMethodHotness()), _curTree->getEnclosingBlock()->getNumber()));
 
@@ -4258,14 +4203,12 @@ J9::ValuePropagation::innerConstrainAcall(TR::Node *node)
                   if (!comp()->compileRelocatableCode()
                       && comp()->getOSRMode() != TR::involuntaryOSR)
                      {
-                     if (trace())
-                        log->printf("Object Clone: Resolved Class of node %p \n", node);
+                     trprintf(trace(), log, "Object Clone: Resolved Class of node %p \n", node);
                      if (enableDynamicObjectClone
                          && constraint->getClassType()->isArray() == TR_no
                          && !_objectCloneCalls.find(_curTree))
                         {
-                        if (trace())
-                           log->printf("Object Clone: Resolved Class of node %p object clone\n", node);
+                        trprintf(trace(), log, "Object Clone: Resolved Class of node %p object clone\n", node);
                         _objectCloneCalls.add(_curTree);
                         _objectCloneTypes.add(new (trStackMemory()) OMR::ValuePropagation::ObjCloneInfo(constraint->getClass(), false));
                         }
@@ -4276,8 +4219,7 @@ J9::ValuePropagation::innerConstrainAcall(TR::Node *node)
                          && !_arrayCloneCalls.find(_curTree)
                          && !comp()->generateArraylets())
                         {
-                        if (trace())
-                           log->printf("Object Clone: Resolved Class of node %p array clone\n", node);
+                        trprintf(trace(), log, "Object Clone: Resolved Class of node %p array clone\n", node);
                         _arrayCloneCalls.add(_curTree);
                         _arrayCloneTypes.add(new (trStackMemory()) OMR::ValuePropagation::ArrayCloneInfo(constraint->getClass(), false));
                         }
@@ -4342,15 +4284,13 @@ J9::ValuePropagation::innerConstrainAcall(TR::Node *node)
                 firstChildAcallNode->getSymbol()->isResolvedMethod() &&
                 (firstChildAcallNode->getSymbol()->getResolvedMethodSymbol()->getRecognizedMethod() == TR::jdk_internal_value_NullRestrictedCheckedType_of))
                {
-               if (trace())
-                  log->printf("%s: node n%dn its first child fixed class %p is an instance of NullRestrictedCheckedType\n", __FUNCTION__, node->getGlobalIndex(), constraint->getClass());
+               trprintf(trace(), log, "%s: node n%dn its first child fixed class %p is an instance of NullRestrictedCheckedType\n", __FUNCTION__, node->getGlobalIndex(), constraint->getClass());
 
                constraint = firstChildAcallNode->getFirstChild() ? getConstraint(firstChildAcallNode->getFirstChild(), isGlobal) : NULL;
                TR_OpaqueClassBlock *arrayComponentClass = (constraint && constraint->isFixedClass()) ? constraint->getClass() : NULL;
                TR_OpaqueClassBlock *nullRestrictedArrayClass = arrayComponentClass ? fe()->getNullRestrictedArrayClassFromComponentClass(arrayComponentClass) : NULL;
 
-               if (trace())
-                  log->printf("%s: node n%dn arrayComponentClass %p nullRestrictedArrayClass %p\n", __FUNCTION__, node->getGlobalIndex(), arrayComponentClass, nullRestrictedArrayClass);
+               trprintf(trace(), log, "%s: node n%dn arrayComponentClass %p nullRestrictedArrayClass %p\n", __FUNCTION__, node->getGlobalIndex(), arrayComponentClass, nullRestrictedArrayClass);
 
                if (nullRestrictedArrayClass)
                   {

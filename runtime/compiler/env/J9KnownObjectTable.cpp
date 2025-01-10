@@ -291,7 +291,6 @@ J9::KnownObjectTable::dumpObjectTo(
    if (comp->getKnownObjectTable()->isNull(i))
       {
       // Usually don't care about null fields
-      // log->printf("%*s%s%snull\n", indent, "", fieldName, sep);
       return;
       }
    else if (visited.isSet(i))
@@ -337,7 +336,7 @@ J9::KnownObjectTable::dumpObjectTo(
             if (!strcmp(field->signature, "I"))
                log->printf("  %s: %d", field->name, j9fe->getInt32Field(*ref, field->name));
             }
-         log->prints("\n");
+         log->println();
          ListIterator<TR_VMField> refIter(fieldsInfo->getFields());
          for (TR_VMField *field = refIter.getFirst(); field; field = refIter.getNext())
             {
@@ -352,7 +351,7 @@ J9::KnownObjectTable::dumpObjectTo(
          }
       else
          {
-         log->prints("\n");
+         log->println();
          }
       }
    }

@@ -107,7 +107,6 @@ J9::MonitorTable::create(const char *name)
       return 0;
       }
 
-   //fprintf(stderr, "ADDING MONITOR: %p, %s (first is %p)\n", m, name, _monitors.getFirst());
    self()->insert(m);
    return m;
    }
