@@ -406,14 +406,6 @@ if(NOT JAVA_SPEC_VERSION LESS 19)
 		JVM_LoadZipLibrary
 		JVM_RegisterContinuationMethods
 	)
-	if(JAVA_SPEC_VERSION LESS 21)
-		jvm_add_exports(jvm
-			JVM_VirtualThreadMountBegin
-			JVM_VirtualThreadMountEnd
-			JVM_VirtualThreadUnmountBegin
-			JVM_VirtualThreadUnmountEnd
-		)
-	endif()
 endif()
 
 if(JAVA_SPEC_VERSION LESS 20)

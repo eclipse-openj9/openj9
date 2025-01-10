@@ -1829,11 +1829,7 @@ JVM_RegisterLambdaProxyClassForArchiving(JNIEnv *env, jclass arg1, jstring arg2,
 }
 
 JNIEXPORT jclass JNICALL
-JVM_LookupLambdaProxyClassFromArchive(JNIEnv *env, jclass arg1, jstring arg2, jobject arg3, jobject arg4, jobject arg5, jobject arg6
-#if JAVA_SPEC_VERSION == 15
-		, jboolean arg7
-#endif /* JAVA_SPEC_VERSION == 15 */
-		)
+JVM_LookupLambdaProxyClassFromArchive(JNIEnv *env, jclass arg1, jstring arg2, jobject arg3, jobject arg4, jobject arg5, jobject arg6)
 {
 	assert(!"JVM_LookupLambdaProxyClassFromArchive unimplemented");
 	return NULL;
