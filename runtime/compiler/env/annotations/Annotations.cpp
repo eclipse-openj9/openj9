@@ -126,8 +126,6 @@ TR_Debug::printAnnotationInfoEntry(
       J9UTF8 *name      = SRP_GET(annotationInfoEntryPtr->memberName, J9UTF8*);
       J9UTF8 *signature = SRP_GET(annotationInfoEntryPtr->memberSignature, J9UTF8*);
 
-     //trfprintf(_file,"name=%s sig=%s\n",utf8Data(name),utf8Data(signature));
-
       //int32_t classNameLength;
       //const char *annotatedClass = utf8Data(SRP_GET(annotationInfo->className,J9UTF8*),classNameLength);
 
@@ -220,7 +218,7 @@ TR_Debug::printAnnotationInfoEntry(
                log->printf("%x ",*ptr++);
                }
             if (truncateOutput) log->prints(" (truncated)...");
-            log->prints("\n");
+            log->println();
             break;
             }
 

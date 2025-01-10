@@ -226,10 +226,11 @@ InterpreterEmulator::printOperandArray(OperandArray* operands)
 //
 void InterpreterEmulator::mergeOperandArray(OperandArray *first, OperandArray *second)
    {
+   OMR::Logger *log = comp()->log();
    bool enableTrace = tracer()->debugLevel();
    if (enableTrace)
       {
-      comp()->log()->prints("Operands before merging:\n");
+      log->prints("Operands before merging:\n");
       printOperandArray(first);
       }
 
@@ -251,11 +252,11 @@ void InterpreterEmulator::mergeOperandArray(OperandArray *first, OperandArray *s
       {
       if (changed)
          {
-         comp()->log()->prints("Operands after merging:\n");
+         log->prints("Operands after merging:\n");
          printOperandArray(first);
          }
       else
-         comp()->log()->prints("Operands is not changed after merging\n");
+         log->prints("Operands is not changed after merging\n");
       }
    }
 

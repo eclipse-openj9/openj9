@@ -516,11 +516,13 @@ static bool verifyFieldAccess(void *curStruct, TR::SymbolReference *field, bool 
  */
 static void *dereferenceStructPointerChain(void *baseStruct, TR::Node *baseNode, bool isBaseStableArray, TR::Node *curNode, TR::Compilation *comp)
    {
+   OMR::Logger *log = comp->log();
+   bool trace = comp->getOption(TR_TraceOptDetails);
+
    if (baseNode == curNode)
       {
       TR_ASSERT(false, "dereferenceStructPointerChain has no idea what to dereference");
-      if (comp->getOption(TR_TraceOptDetails))
-         comp->log()->printf("Caller has already dereferenced node %p, returning NULL as dereferenceStructPointerChain has no idea what to dereference\n", curNode);
+      logprintf(trace, log, "Caller has already dereferenced node %p, returning NULL as dereferenceStructPointerChain has no idea what to dereference\n", curNode);
       return NULL;
       }
    else
@@ -581,13 +583,11 @@ static void *dereferenceStructPointerChain(void *baseStruct, TR::Node *baseNode,
                {
                if (TR::TransformUtil::avoidFoldingInstanceField(curStruct, symRef, comp))
                   {
-                  if (comp->getOption(TR_TraceOptDetails))
-                     {
-                     comp->log()->printf(
-                        "avoid folding load of field #%d from object at %p\n",
-                        symRef->getReferenceNumber(),
-                        (void*)curStruct);
-                     }
+                  logprintf(trace, log,
+                     "avoid folding load of field #%d from object at %p\n",
+                     symRef->getReferenceNumber(),
+                     (void*)curStruct);
+
                   return NULL;
                   }
 
@@ -619,8 +619,7 @@ static void *dereferenceStructPointerChain(void *baseStruct, TR::Node *baseNode,
                if (offset < minOffset ||
                    offset >= maxOffset)
                   {
-                  if (comp->getOption(TR_TraceOptDetails))
-                     comp->log()->printf("Offset %d is out of bound [%d, %d] for %s on array shadow %p!\n", offset, minOffset, maxOffset, symRef->getName(comp->getDebug()), curNode);
+                  logprintf(trace, log, "Offset %d is out of bound [%d, %d] for %s on array shadow %p!\n", offset, minOffset, maxOffset, symRef->getName(comp->getDebug()), curNode);
                   return NULL;
                   }
 
@@ -650,8 +649,7 @@ static void *dereferenceStructPointerChain(void *baseStruct, TR::Node *baseNode,
             }
          else
             {
-            if (comp->getOption(TR_TraceOptDetails))
-               comp->log()->printf("Unable to verify field access to %s on %p!\n", symRef->getName(comp->getDebug()), curNode);
+            logprintf(trace, log, "Unable to verify field access to %s on %p!\n", symRef->getName(comp->getDebug()), curNode);
             return NULL;
             }
          }
@@ -682,8 +680,9 @@ static void *dereferenceStructPointer(TR::KnownObjectTable::Index baseKnownObjec
    if (node == baseExpression)
       {
       TR_ASSERT(false, "dereferenceStructPointerChain has no idea what to dereference");
-      if (comp->getOption(TR_TraceOptDetails))
-         comp->log()->printf("Caller has already dereferenced node %p, returning NULL as dereferenceStructPointerChain has no idea what to dereference\n", node);
+
+      logprintf(comp->getOption(TR_TraceOptDetails), comp->log(),
+         "Caller has already dereferenced node %p, returning NULL as dereferenceStructPointerChain has no idea what to dereference\n", node);
       return NULL;
       }
    TR_ASSERT(node != NULL, "Field node is NULL");
@@ -1361,19 +1360,14 @@ static TR_YesNoMaybe safeToAddFearPointAt(TR::Optimization* opt, TR::TreeTop* tt
    {
    TR::Compilation* comp = opt->comp();
    OMR::Logger *log = comp->log();
+   bool trace = opt->trace();
 
-   if (opt->trace())
-      {
-      log->printf("Checking if it is safe to add fear point at n%dn\n", tt->getNode()->getGlobalIndex());
-      }
+   logprintf(trace, log, "Checking if it is safe to add fear point at n%dn\n", tt->getNode()->getGlobalIndex());
 
    int32_t callerIndex = tt->getNode()->getByteCodeInfo().getCallerIndex();
    if (!cannotAttemptOSRDuring(comp, callerIndex) && !comp->isOSRProhibitedOverRangeOfTrees())
       {
-      if (opt->trace())
-         {
-         log->prints("Safe to add fear point because there is no OSR prohibition\n");
-         }
+      logprints(trace, log, "Safe to add fear point because there is no OSR prohibition\n");
       return TR_yes;
       }
 
@@ -1389,13 +1383,10 @@ static TR_YesNoMaybe safeToAddFearPointAt(TR::Optimization* opt, TR::TreeTop* tt
       if (comp->isPotentialOSRPoint(tt->getNode()))
          {
          TR_YesNoMaybe result = comp->isPotentialOSRPointWithSupport(tt) ? TR_yes : TR_no;
-         if (opt->trace())
-            {
-            log->printf("Found %s potential OSR point n%dn, %s to add fear point\n",
-                     result == TR_yes ? "supported" : "unsupported",
-                     tt->getNode()->getGlobalIndex(),
-                     result == TR_yes ? "Safe" : "Not safe");
-            }
+         logprintf(trace, log, "Found %s potential OSR point n%dn, %s to add fear point\n",
+            result == TR_yes ? "supported" : "unsupported",
+            tt->getNode()->getGlobalIndex(),
+            result == TR_yes ? "Safe" : "Not safe");
 
          return result;
          }
@@ -1406,18 +1397,13 @@ static TR_YesNoMaybe safeToAddFearPointAt(TR::Optimization* opt, TR::TreeTop* tt
    if (guardAnalysis)
       {
       TR_YesNoMaybe result = guardAnalysis->_blockAnalysisInfo[block->getNumber()]->isEmpty() ? TR_yes : TR_no;
-      if (opt->trace())
-         {
-         log->printf("%s to add fear point based on HCRGuardAnalysis\n", result == TR_yes ? "Safe" : "Not safe");
-         }
+      logprintf(trace, log, "%s to add fear point based on HCRGuardAnalysis\n", result == TR_yes ? "Safe" : "Not safe");
 
       return result;
       }
 
-   if (opt->trace())
-      {
-      log->printf("Cannot determine if it is safe to add fear point at n%dn\n", tt->getNode()->getGlobalIndex());
-      }
+   logprintf(trace, log, "Cannot determine if it is safe to add fear point at n%dn\n", tt->getNode()->getGlobalIndex());
+
    return TR_maybe;
    }
 
@@ -1492,11 +1478,13 @@ bool J9::TransformUtil::canDoGuardedStaticFinalFieldFolding(
 bool J9::TransformUtil::attemptStaticFinalFieldFoldingImpl(TR::Optimization* opt, TR::TreeTop * currentTree, TR::Node *node, bool varHandleOnly)
    {
    TR::Compilation* comp = opt->comp();
+   OMR::Logger *log = comp->log();
+   bool trace = opt->trace();
+
    // first attempt folding reliable fields
    if (J9::TransformUtil::foldReliableStaticFinalField(comp, node))
       {
-      if (opt->trace())
-         comp->log()->printf("SFFF fold reliable at node %p\n", node);
+      logprintf(trace, log, "SFFF fold reliable at node %p\n", node);
       return true;
       }
 
@@ -1533,12 +1521,9 @@ bool J9::TransformUtil::attemptStaticFinalFieldFoldingImpl(TR::Optimization* opt
    int32_t fieldSigLength;
    char* fieldSignature = symRef->getOwningMethod(comp)->staticSignatureChars(cpIndex, fieldSigLength);
 
-   if (opt->trace())
-      {
-      comp->log()->printf(
-              "Looking at static final field n%dn %.*s declared in class %p\n",
-              node->getGlobalIndex(), fieldNameLen, fieldName, declaringClass);
-      }
+   logprintf(trace, log, "Looking at static final field n%dn %.*s declared in class %p\n",
+      node->getGlobalIndex(), fieldNameLen, fieldName, declaringClass);
+
    if (!varHandleOnly || isVarHandleFolding(comp, declaringClass, fieldSignature, fieldSigLength))
       {
       if (J9::TransformUtil::foldStaticFinalFieldAssumingProtection(comp, node))
@@ -1549,12 +1534,8 @@ bool J9::TransformUtil::attemptStaticFinalFieldFoldingImpl(TR::Optimization* opt
          TR::TreeTop* helperTree = TR::TreeTop::create(comp, TR::Node::create(node, TR::treetop, 1, TR::Node::createOSRFearPointHelperCall(node)));
          currentTree->insertBefore(helperTree);
 
-         if (opt->trace())
-            {
-            comp->log()->printf(
-                    "Static final field n%dn is folded with OSRFearPointHelper call tree n%dn  helper tree n%dn\n",
-                    node->getGlobalIndex(), currentTree->getNode()->getGlobalIndex(), helperTree->getNode()->getGlobalIndex());
-            }
+         logprintf(trace, log, "Static final field n%dn is folded with OSRFearPointHelper call tree n%dn  helper tree n%dn\n",
+            node->getGlobalIndex(), currentTree->getNode()->getGlobalIndex(), helperTree->getNode()->getGlobalIndex());
 
          TR::DebugCounter::prependDebugCounter(comp,
                                             TR::DebugCounter::debugCounterName(comp,
@@ -2101,6 +2082,7 @@ J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp,
                                                   int32_t baseStableArrayRank,
                                                   TR::Node **removedNode)
    {
+   bool trace = comp->getOption(TR_TraceOptDetails);
    OMR::Logger *log = comp->log();
 #if defined(J9VM_OPT_JITSERVER)
    bool isServer = comp->isOutOfProcessCompilation();
@@ -2156,11 +2138,8 @@ J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp,
 #endif /* defined(J9VM_OPT_JITSERVER) */
          {
          J9Class* clazz = (J9Class*) baseAddress;
-         if (comp->getOption(TR_TraceOptDetails))
-            log->printf(
-                  "Looking at node %p with initializeStatusFromClassSymbol,"
-                     " class %p initialize status is %d\n",
-                  node, clazz, clazz->initializeStatus);
+         logprintf(trace, log, "Looking at node %p with initializeStatusFromClassSymbol, class %p initialize status is %d\n",
+            node, clazz, clazz->initializeStatus);
          // Only fold the load if the class has been initialized
          if (fej9->isClassInitialized((TR_OpaqueClassBlock *) clazz) == J9ClassInitSucceeded)
             {
@@ -2187,10 +2166,7 @@ J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp,
 
    if (!isBaseStableArray && !fej9->canDereferenceAtCompileTime(symRef, comp))
       {
-      if (comp->getOption(TR_TraceOptDetails))
-         {
-         log->prints("Abort transformIndirectLoadChain - cannot dereference at compile time!\n");
-         }
+      logprints(trace, log, "Abort transformIndirectLoadChain - cannot dereference at compile time!\n");
       return false;
       }
 
@@ -2215,10 +2191,8 @@ J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp,
                                                          isBaseStableArray, node, comp);
       if (!fieldAddress)
          {
-         if (comp->getOption(TR_TraceOptDetails))
-            {
-            log->printf("Abort transformIndirectLoadChain - cannot verify/dereference field access to %s in %p!\n", symRef->getName(comp->getDebug()), baseAddress);
-            }
+         logprintf(trace, log, "Abort transformIndirectLoadChain - cannot verify/dereference field access to %s in %p!\n",
+            symRef->getName(comp->getDebug()), baseAddress);
          return false;
          }
       valuePtr = fieldAddress;
@@ -2227,7 +2201,7 @@ J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp,
    // The last step in the dereference chain is not necessarily an address.
    // Determine what it is and transform node appropriately.
    //
-   if (isBaseStableArray && comp->getOption(TR_TraceOptDetails))
+   if (isBaseStableArray && trace)
       log->printf("Transforming a load from stable array %p\n", node);
 
    TR::DataType loadType = node->getDataType();
@@ -2761,9 +2735,9 @@ J9::TransformUtil::createTempsForCall(TR::Optimization* opt, TR::TreeTop *callTr
    {
    TR::Compilation* comp = opt->comp();
    OMR::Logger *log = comp->log();
+   bool trace = opt->trace();
    TR::Node *callNode = callTree->getNode()->getFirstChild();
-   if (opt->trace())
-      log->printf("Creating temps for children of call node %p\n", callNode);
+   logprintf(trace, log, "Creating temps for children of call node %p\n", callNode);
    for (int32_t i = 0 ; i < callNode->getNumChildren() ; ++i)
       {
       TR::Node *child = callNode->getChild(i);
@@ -2775,15 +2749,13 @@ J9::TransformUtil::createTempsForCall(TR::Optimization* opt, TR::TreeTop *callTr
 
       TR::Node *storeNode = TR::Node::createStore(callNode, newSymbolReference, child);
       TR::TreeTop *storeTree = TR::TreeTop::create(comp, storeNode);
-      if (opt->trace())
-         log->printf("Creating store node %p for child %p\n", storeNode, child);
+      logprintf(trace, log, "Creating store node %p for child %p\n", storeNode, child);
 
       callTree->insertBefore(storeTree);
 
       // Replace the old child with a load of the new sym ref
       TR::Node *value = TR::Node::createLoad(callNode, newSymbolReference);
-      if (opt->trace())
-         log->printf("Replacing call node %p child %p with %p\n",callNode, callNode->getChild(i),value);
+      logprintf(trace, log, "Replacing call node %p child %p with %p\n", callNode, callNode->getChild(i), value);
 
       callNode->setAndIncChild(i, value);
       child->recursivelyDecReferenceCount();
@@ -2825,8 +2797,10 @@ J9::TransformUtil::createDiamondForCall(TR::Optimization* opt, TR::TreeTop *call
    TR_ASSERT(callTree != ifTree && callTree != elseTree, "callTree cannot be the same as ifTree nor elseTree");
 
    TR::Compilation* comp = opt->comp();
-   if (opt->trace())
-      comp->log()->printf("Creating diamond for call tree %p with compare tree %p if tree %p and else tree %p\n", callTree, compareTree, ifTree, elseTree);
+   OMR::Logger *log = comp->log();
+   bool trace = opt->trace();
+
+   logprintf(trace, log, "Creating diamond for call tree %p with compare tree %p if tree %p and else tree %p\n", callTree, compareTree, ifTree, elseTree);
 
    TR::Node *callNode = callTree->getNode()->getFirstChild();
    // the call itself may be commoned, so we need to create a temp for the callnode itself
@@ -2834,8 +2808,7 @@ J9::TransformUtil::createDiamondForCall(TR::Optimization* opt, TR::TreeTop *call
    TR::DataType dataType = callNode->getDataType();
    if(callNode->getReferenceCount() > 1)
       {
-      if (opt->trace())
-         comp->log()->printf("Creating temps for call node %p before generating the diamond\n", callNode);
+      logprintf(trace, log, "Creating temps for call node %p before generating the diamond\n", callNode);
       newSymbolReference = comp->getSymRefTab()->createTemporary(comp->getMethodSymbol(), dataType);
       TR::Node::recreate(callNode, comp->il.opCodeForDirectLoad(dataType));
       callNode->setSymbolReference(newSymbolReference);
@@ -2857,8 +2830,7 @@ J9::TransformUtil::createDiamondForCall(TR::Optimization* opt, TR::TreeTop *call
       TR::Node *elseStoreNode = TR::Node::createStore(callNode, newSymbolReference, elseTree->getNode()->getFirstChild());
       TR::TreeTop *elseStoreTree = TR::TreeTop::create(comp, elseStoreNode);
       elseTree->insertAfter(elseStoreTree);
-      if (opt->trace())
-         comp->log()->printf("Two store nodes %p and %p are inserted in the diamond\n", ifStoreNode, elseStoreNode);
+      logprintf(trace, log, "Two store nodes %p and %p are inserted in the diamond\n", ifStoreNode, elseStoreNode);
       }
    }
 
@@ -2954,13 +2926,9 @@ void J9::TransformUtil::separateNullCheck(TR::Compilation* comp, TR::TreeTop* tr
       return;
 
    TR::Node *checkedRef = nullCheck->getNullCheckReference();
-   if (trace)
-      {
-      comp->log()->printf(
-         "separating null check on n%un from n%un\n",
-         checkedRef->getGlobalIndex(),
-         nullCheck->getGlobalIndex());
-      }
+   logprintf(trace, comp->log(), "separating null check on n%un from n%un\n",
+      checkedRef->getGlobalIndex(),
+      nullCheck->getGlobalIndex());
 
    TR::Node * const passthrough = TR::Node::create(nullCheck, TR::PassThrough, 1, checkedRef);
 
@@ -3093,15 +3061,13 @@ bool
 J9::TransformUtil::refineMethodHandleInvokeBasic(TR::Compilation* comp, TR::TreeTop* treetop, TR::Node* node, TR::KnownObjectTable::Index mhIndex, bool trace)
    {
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   OMR::Logger *log = comp->log();
    if (!comp->fej9()->isResolvedDirectDispatchGuaranteed(comp))
       {
-      if (trace)
-         {
-         comp->log()->printf(
-            "Cannot refine invokeBasic n%un %p without isResolvedDirectDispatchGuaranteed()\n",
-            node->getGlobalIndex(),
-            node);
-         }
+      logprintf(trace, log, "Cannot refine invokeBasic n%un %p without isResolvedDirectDispatchGuaranteed()\n",
+         node->getGlobalIndex(),
+         node);
+
       return false;
       }
 
@@ -3110,8 +3076,7 @@ J9::TransformUtil::refineMethodHandleInvokeBasic(TR::Compilation* comp, TR::Tree
        !knot ||
        knot->isNull(mhIndex))
       {
-      if (trace)
-         comp->log()->printf("MethodHandle for invokeBasic n%dn %p is unknown or null\n", node->getGlobalIndex(), node);
+      logprintf(trace, log, "MethodHandle for invokeBasic n%dn %p is unknown or null\n", node->getGlobalIndex(), node);
       return false;
       }
 
@@ -3189,6 +3154,7 @@ bool
 J9::TransformUtil::refineMethodHandleLinkTo(TR::Compilation* comp, TR::TreeTop* treetop, TR::Node* node, TR::KnownObjectTable::Index mnIndex, bool trace)
    {
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   OMR::Logger *log = comp->log();
    TR_J9VMBase* fej9 = comp->fej9();
    auto symRef = node->getSymbolReference();
    auto rm = node->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod();
@@ -3227,13 +3193,11 @@ J9::TransformUtil::refineMethodHandleLinkTo(TR::Compilation* comp, TR::TreeTop* 
 
    if (missingResolvedDispatch != NULL)
       {
-      if (trace)
-         {
-         comp->log()->printf(
-            "Cannot refine %s without isResolved%sDispatchGuaranteed()\n",
+
+      logprintf(trace, log, "Cannot refine %s without isResolved%sDispatchGuaranteed()\n",
             nodeStr,
             missingResolvedDispatch);
-         }
+
       return false;
       }
 
@@ -3242,18 +3206,14 @@ J9::TransformUtil::refineMethodHandleLinkTo(TR::Compilation* comp, TR::TreeTop* 
        !knot ||
        knot->isNull(mnIndex))
       {
-      if (trace)
-         comp->log()->printf("%s: MemberName is unknown or null\n", nodeStr);
-
+      logprintf(trace, log, "%s: MemberName is unknown or null\n", nodeStr);
       return false;
       }
 
    TR_J9VMBase::MemberNameMethodInfo info = {};
    if (!fej9->getMemberNameMethodInfo(comp, mnIndex, &info) || info.vmtarget == NULL)
       {
-      if (trace)
-         comp->log()->printf("%s: Failed to get MemberName method info\n", nodeStr);
-
+      logprintf(trace, log, "%s: Failed to get MemberName method info\n", nodeStr);
       return false;
       }
 
@@ -3267,9 +3227,7 @@ J9::TransformUtil::refineMethodHandleLinkTo(TR::Compilation* comp, TR::TreeTop* 
       {
       if (info.refKind != MH_REF_INVOKEVIRTUAL)
          {
-         if (trace)
-            comp->log()->printf("%s: wrong MemberName kind %d\n", nodeStr, info.refKind);
-
+         logprintf(trace, log, "%s: wrong MemberName kind %d\n", nodeStr, info.refKind);
          return false;
          }
 

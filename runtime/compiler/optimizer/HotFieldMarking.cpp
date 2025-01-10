@@ -77,10 +77,12 @@ static int32_t getReducedFrequencyMax(int32_t currentValue, int32_t count, int32
 
 int32_t TR_HotFieldMarking::perform()
    {
+   OMR::Logger *log = comp()->log();
+   bool trace = comp()->getOption(TR_TraceMarkingOfHotFields);
+
    if (!TR::Compiler->om.isHotReferenceFieldRequired())
       {
-      if (trace())
-         comp()->log()->prints("Skipping hot field marking since dynamic breadth first scan ordering is disabled\n");
+      logprints(trace, log, "Skipping hot field marking since dynamic breadth first scan ordering is disabled\n");
       return 0;
       }
 
@@ -154,19 +156,20 @@ int32_t TR_HotFieldMarking::perform()
          if (!comp()->fej9()->isAnonymousClass(itr->second->_clazz) && performTransformation(comp(), "%sUpdate hot field info for hot field. fieldSignature: %s; fieldName: %s; frequencyScore = %d\n", optDetailString(), itr->second->_fieldSig, itr->second->_fieldName, itr->second->_score) && (fieldOffset < U_8_MAX))
             {
             comp()->fej9()->reportHotField(getUtilization(), TR::Compiler->cls.convertClassOffsetToClassPtr(itr->second->_clazz), (uint8_t)fieldOffset, itr->second->_score);
-            if (comp()->getOption(TR_TraceMarkingOfHotFields))
+            if (trace)
                {
                int32_t classNameLength = 0;
                char *className = comp()->fej9()->getClassNameChars(itr->second->_clazz, classNameLength);
-               comp()->log()->printf("<traceMarkingOfHotFields\n"
-                        "\tmethodSignature=\"%s\"\n"
-                        "\tmethodHotness=\"%s\"\n"
-                        "\tclassName=\"%s\"\n"
-                        "\tfieldName=\"%s\""
-                        "\tfieldSig=\"%s\""
-                        "\tfrequencyScore=%d"
-                        "\tfieldOffset=%d>\n",
-                        comp()->signature(), comp()->getHotnessName(comp()->getMethodHotness()), className, itr->second->_fieldName, itr->second->_fieldSig, itr->second->_score, fieldOffset);
+               log->printf(
+                  "<traceMarkingOfHotFields\n"
+                  "\tmethodSignature=\"%s\"\n"
+                  "\tmethodHotness=\"%s\"\n"
+                  "\tclassName=\"%s\"\n"
+                  "\tfieldName=\"%s\""
+                  "\tfieldSig=\"%s\""
+                  "\tfrequencyScore=%d"
+                  "\tfieldOffset=%d>\n",
+                  comp()->signature(), comp()->getHotnessName(comp()->getMethodHotness()), className, itr->second->_fieldName, itr->second->_fieldSig, itr->second->_score, fieldOffset);
                }
             }
          }

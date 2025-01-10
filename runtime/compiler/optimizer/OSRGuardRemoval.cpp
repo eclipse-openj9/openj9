@@ -75,6 +75,8 @@ bool TR_OSRGuardRemoval::findMatchingOSRGuard(TR::Compilation *comp, TR::TreeTop
  */
 int32_t TR_OSRGuardRemoval::perform()
    {
+   OMR::Logger *log = comp()->log();
+
    // isPotentialOSRPoint will test if OSR infrastructure has been removed
    bool osrInfraRemoved = comp()->osrInfrastructureRemoved();
    comp()->setOSRInfrastructureRemoved(false);
@@ -92,14 +94,12 @@ int32_t TR_OSRGuardRemoval::perform()
       // or it contains a yield, there is nothing that can be done
       if (guardAnalysis.containsYields(block))
          {
-         if (trace())
-            comp()->log()->printf("Skipping block_%d, contains yields\n", block->getNumber());
+         logprintf(trace(), log, "Skipping block_%d, contains yields\n", block->getNumber());
          continue;
          }
       if (!guardAnalysis._blockAnalysisInfo[block->getNumber()]->isEmpty())
          {
-         if (trace())
-            comp()->log()->printf("Skipping block_%d, reaching yields\n", block->getNumber());
+         logprintf(trace(), log, "Skipping block_%d, reaching yields\n", block->getNumber());
          continue;
          }
 

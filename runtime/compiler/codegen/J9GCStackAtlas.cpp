@@ -40,11 +40,11 @@ J9::GCStackAtlas::close(TR::CodeGenerator *cg)
    // dump of the external atlas
    //
    TR::Compilation *comp = cg->comp();
+   OMR::Logger *log = comp->log();
+   bool trace = comp->getOption(TR_TraceCG);
 
-   if (comp->getOption(TR_TraceCG))
-      {
-      comp->getDebug()->print(comp->log(), self());
-      }
+   if (trace)
+      comp->getDebug()->print(log, self());
 
    TR_GCStackMap * parameterMap = 0;
    if (self()->getInternalPointerMap())
@@ -96,10 +96,8 @@ J9::GCStackAtlas::close(TR::CodeGenerator *cg)
          {
          // Maps are the same - can merge
          //
-         if (comp->getOption(TR_TraceCG))
-             comp->log()->printf(
-                     "Map with code offset range starting at [%08x] is identical to the previous map [%08x], merging and eliminating previous\n",
-                     nextMap->getLowestCodeOffset(), map->getLowestCodeOffset());
+         logprintf(trace, log, "Map with code offset range starting at [%08x] is identical to the previous map [%08x], merging and eliminating previous\n",
+               nextMap->getLowestCodeOffset(), map->getLowestCodeOffset());
 
          map->setLowestCodeOffset(nextMap->getLowestCodeOffset());
          self()->getStackMapList().removeNext(mapEntry);

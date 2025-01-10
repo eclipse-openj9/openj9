@@ -200,8 +200,7 @@ int32_t TR_NewInitialization::performAnalysis(bool doGlobalAnalysis)
 
 bool TR_NewInitialization::doAnalysisOnce(int32_t iteration)
    {
-   if (trace())
-      comp()->log()->printf("\nStarting iteration %d\n", iteration);
+   logprintf(trace(), comp()->log(), "\nStarting iteration %d\n", iteration);
 
    TR::StackMemoryRegion stackMemoryRegion(*trMemory());
 
@@ -240,8 +239,7 @@ void TR_NewInitialization::findNewCandidates()
 
    comp()->incVisitCount();
 
-   if (trace())
-      comp()->log()->printf("\n\nFinding candidates\n\n");
+   logprintf(trace(), comp()->log(), "\n\nFinding candidates\n\n");
 
    TR::CFG *cfg = comp()->getFlowGraph();
    bool saveSniffCalls = _sniffCalls;
@@ -337,10 +335,8 @@ bool TR_NewInitialization::findNewCandidatesInBlock(TR::TreeTop *startTree, TR::
          //
          if (!_firstActiveCandidate)
             _firstActiveCandidate = candidate;
-         if (trace())
-            {
-            comp()->log()->printf("   Active candidates are now [%p]-[%p]\n",_firstActiveCandidate->node, candidate->node);
-            }
+
+         logprintf(trace(), comp()->log(), "   Active candidates are now [%p]-[%p]\n",_firstActiveCandidate->node, candidate->node);
          continue;
          }
 
@@ -542,8 +538,7 @@ bool TR_NewInitialization::sniffCall(TR::TreeTop *callTree)
    //
    TR::Node *callNode = callTree->getNode()->getFirstChild();
 
-   if (trace())
-      comp()->log()->printf("Sniffing into call at [%p]\n", callNode);
+   logprintf(trace(), comp()->log(), "Sniffing into call at [%p]\n", callNode);
 
    TR_Array<TR::Node*> *newParms =  new (trStackMemory()) TR_Array<TR::Node*>(trMemory(), callNode->getNumChildren(), false, stackAlloc);
    for (int32_t i = 0; i < callNode->getNumChildren(); ++i)
@@ -566,8 +561,7 @@ bool TR_NewInitialization::sniffCall(TR::TreeTop *callTree)
    if (isOutermostCallSite)
       _outermostCallSite = NULL;
 
-   if (trace())
-      comp()->log()->printf("Finished sniffing into call at [%p]\n", callNode);
+   logprintf(trace(), comp()->log(), "Finished sniffing into call at [%p]\n", callNode);
 
    return sniffedCompleteMethod;
    }
@@ -626,15 +620,11 @@ TR::ResolvedMethodSymbol *TR_NewInitialization::findInlinableMethod(TR::TreeTop 
 
    if (!canSniff)
       {
-      if (trace())
-         comp()->log()->printf("\nCall at [%p] to %s is NOT inlineable\n", callTree->getNode()->getFirstChild(), calleeSymbol->getResolvedMethod()->signature(trMemory()));
+      logprintf(trace(), comp()->log(), "\nCall at [%p] to %s is NOT inlineable\n", callTree->getNode()->getFirstChild(), calleeSymbol->getResolvedMethod()->signature(trMemory()));
       return NULL;
       }
 
-   if (trace())
-      {
-      comp()->log()->printf("\nGenerating trees for call at [%p] to %s\n", callTree->getNode()->getFirstChild(), calleeSymbol->getResolvedMethod()->signature(trMemory()));
-      }
+   logprintf(trace(), comp()->log(), "\nGenerating trees for call at [%p] to %s\n", callTree->getNode()->getFirstChild(), calleeSymbol->getResolvedMethod()->signature(trMemory()));
 
    dumpOptDetails(comp(), "O^O NEW INITIALIZATION: Peeking into the IL to check for inlineable calls \n");
 
@@ -909,8 +899,7 @@ bool TR_NewInitialization::visitNode(TR::Node *node)
                      }
                   }
 
-               if (trace())
-                  comp()->log()->printf("Node [%p]: Initialize bytes %d-%d for candidate [%p]\n", node, offset, offset+size-1, c->node);
+               logprintf(trace(), comp()->log(), "Node [%p]: Initialize bytes %d-%d for candidate [%p]\n", node, offset, offset+size-1, c->node);
 
                for (i = size-1; i >= 0; --i)
                  {
@@ -918,8 +907,7 @@ bool TR_NewInitialization::visitNode(TR::Node *node)
                  }
                c->numInitializedBytes += size;
 
-               if (trace())
-                  comp()->log()->printf("Node [%p]: Uninitialized %d Initialized %d\n", node, c->numUninitializedBytes, c->numInitializedBytes);
+               logprintf(trace(), comp()->log(), "Node [%p]: Uninitialized %d Initialized %d\n", node, c->numUninitializedBytes, c->numInitializedBytes);
 
                setAffectedCandidate(c);
                }
@@ -928,8 +916,7 @@ bool TR_NewInitialization::visitNode(TR::Node *node)
                for (i = size-1; i >= 0; --i)
                   c->uninitializedBytes->set(offset+i);
                c->numUninitializedBytes += size;
-               if (trace())
-                  comp()->log()->printf("Node [%p]: Uninitialize bytes %d-%d for candidate [%p]\n", node, offset, offset+size-1, c->node);
+               logprintf(trace(), comp()->log(), "Node [%p]: Uninitialize bytes %d-%d for candidate [%p]\n", node, offset, offset+size-1, c->node);
                }
             }
          }
@@ -1049,8 +1036,7 @@ void TR_NewInitialization::escapeToUserCode(Candidate *c, TR::Node *cause)
          c->numUninitializedBytes = c->size - c->numInitializedBytes;
          }
 
-      if (trace())
-         comp()->log()->printf("Node [%p]: Make the rest of candidate [%p] uninitialized\n", cause, c->node);
+      logprintf(trace(), comp()->log(), "Node [%p]: Make the rest of candidate [%p] uninitialized\n", cause, c->node);
       }
    }
 
@@ -1101,8 +1087,7 @@ void TR_NewInitialization::escapeToGC(Candidate *c, TR::Node *cause)
                c->numUninitializedBytes++;
                }
             }
-         if (trace())
-            comp()->log()->printf("Node [%p]: Make reference slots of candidate [%p] uninitialized\n", cause, c->node);
+         logprintf(trace(), comp()->log(), "Node [%p]: Make reference slots of candidate [%p] uninitialized\n", cause, c->node);
          }
       }
    else // (c->node->getOpCodeValue() == TR::anewarray)
@@ -1209,16 +1194,17 @@ void TR_NewInitialization::findUninitializedWords()
 
       if (trace())
          {
-         comp()->log()->printf("Uninitialized words for candidate [%p] = %d/%d : ", c->node, c->numUninitializedWords, c->size/4);
+         OMR::Logger *log = comp()->log();
+         log->printf("Uninitialized words for candidate [%p] = %d/%d : ", c->node, c->numUninitializedWords, c->size/4);
          if (c->uninitializedWords)
             {
-            c->uninitializedWords->print(comp()->log(), comp());
-            comp()->log()->println();
+            c->uninitializedWords->print(log, comp());
+            log->println();
             }
          else if (c->numUninitializedWords)
-            comp()->log()->prints("{all}\n");
+            log->prints("{all}\n");
          else
-            comp()->log()->prints("{}\n");
+            log->prints("{}\n");
          }
       }
    }
@@ -1284,11 +1270,9 @@ void TR_NewInitialization::inlineCalls()
       TR::TreeTop              *treeTop   = entry->treeTop;
       TR::ResolvedMethodSymbol *methodSym = treeTop->getNode()->getFirstChild()->getSymbol()->getResolvedMethodSymbol();
       TR_ResolvedMethod     *method    = methodSym->getResolvedMethod();
-      if (trace())
-         {
-         comp()->log()->printf("\nInlining method %s into treetop at [%p], total inlined size = %d\n", method->signature(trMemory()), treeTop->getNode(), _totalInlinedBytecodeSize+method->maxBytecodeIndex());
-         /////printf("secs Inlining method %s in %s\n", method->signature(trMemory()), comp()->signature());
-         }
+
+      logprintf(trace(), comp()->log(), "\nInlining method %s into treetop at [%p], total inlined size = %d\n",
+         method->signature(trMemory()), treeTop->getNode(), _totalInlinedBytecodeSize+method->maxBytecodeIndex());
 
       // Now inline the call
       //
@@ -1325,7 +1309,6 @@ void TR_NewInitialization::modifyTrees(Candidate *candidate)
    if (candidate->node->canSkipZeroInitialization())
       {
       extraInfo->numZeroInitSlots = 0;
-      //printf("Skip zero init for new in %s\n", comp()->signature());
       }
    else
       extraInfo->numZeroInitSlots = candidate->numUninitializedWords;

@@ -1203,8 +1203,7 @@ J9::CodeGenerator::printNVVMIR(
       {
       if((node->getDataType() == TR::Address) && (node->getAddress() != 0))
          {
-         if (trace)
-            log->printf("Load Const with a non-zero address in node %p\n", node);
+         logprintf(trace, log, "Load Const with a non-zero address in node %p\n", node);
          return GPUInvalidProgram;
          }
       else
@@ -1350,8 +1349,7 @@ J9::CodeGenerator::printNVVMIR(
       getParmName(_gpuSymbolMap[node->getSymbolReference()->getReferenceNumber()]._parmSlot, name0);
 
       node->setLocalIndex(_gpuNodeCount++);
-      if (trace)
-         log->printf("node %p assigned index %d\n", node, node->getLocalIndex());
+      logprintf(trace, log, "node %p assigned index %d\n", node, node->getLocalIndex());
 
       ir.print("  %%%d = %s %s* %s, align %d\n",
                    node->getLocalIndex(),
@@ -1381,8 +1379,7 @@ J9::CodeGenerator::printNVVMIR(
       }
 
    node->setLocalIndex(_gpuNodeCount++);
-   if (trace)
-      log->printf("node %p assigned index %d\n", node, node->getLocalIndex());
+   logprintf(trace, log, "node %p assigned index %d\n", node, node->getLocalIndex());
 
    if (node->getOpCodeValue() == TR::PassThrough)
       {
@@ -1561,8 +1558,7 @@ J9::CodeGenerator::printNVVMIR(
                       firstChild->chkSharedMemory() ? "addrspace(3)" : isReadOnlyArray ? "addrspace(1)" : "");
 
          node->setLocalIndex(_gpuNodeCount++);
-         if (trace)
-            log->printf("node %p assigned index %d\n", node, node->getLocalIndex());
+         logprintf(trace, log, "node %p assigned index %d\n", node, node->getLocalIndex());
 
          //NVVM 1.3 onward uses a two parameter version of ldg
          if (isReadOnlyArray)
@@ -1614,8 +1610,7 @@ J9::CodeGenerator::printNVVMIR(
       }
    else if (node->getOpCode().isCall())
       {
-      if (trace)
-         log->printf("unrecognized call %p\n", node);
+      logprintf(trace, log, "unrecognized call %p\n", node);
       return GPUInvalidProgram;
       }
    else if (node->getOpCode().isStoreDirect() &&
@@ -1640,8 +1635,7 @@ J9::CodeGenerator::printNVVMIR(
       {
       if (!node->getSymbol()->isAutoOrParm())
          {
-         if (trace)
-            log->printf("unexpected symbol in node %p\n", node);
+         logprintf(trace, log, "unexpected symbol in node %p\n", node);
          return GPUInvalidProgram;
          }
 
@@ -1658,8 +1652,7 @@ J9::CodeGenerator::printNVVMIR(
       {
       if (!node->getSymbol()->isAutoOrParm())
          {
-         if (trace)
-            log->printf("unexpected symbol in node %p\n", node);
+         logprintf(trace, log, "unexpected symbol in node %p\n", node);
          return GPUInvalidProgram;
          }
 
@@ -2024,8 +2017,7 @@ J9::CodeGenerator::printNVVMIR(
             strcmp(getOpCodeName(node->getOpCodeValue()), "INVALID") == 0)
       {
       node->setLocalIndex(_gpuNodeCount--);
-      if (trace)
-         log->printf("INVALID operation required by node %p\n", node);
+      logprintf(trace, log, "INVALID operation required by node %p\n", node);
       return GPUInvalidProgram;
       }
    else
@@ -2046,9 +2038,9 @@ J9::CodeGenerator::printNVVMIR(
 
 void traceNVVMIR(TR::Compilation *comp, char *buffer)
    {
+   OMR::Logger *log = comp->log();
    bool trace = comp->getOption(TR_TraceCG);
-   if (trace)
-      comp->log()->prints("NVVM IR:\n");
+   logprints(trace, log, "NVVM IR:\n");
    char msg[256];
    char *cs = buffer;
    int line = 1;
@@ -2063,16 +2055,16 @@ void traceNVVMIR(TR::Compilation *comp, char *buffer)
       int len = (ce - cs) < 255 ? (ce - cs) : 255;
       memcpy(msg, cs, len);
       msg[len] = '\0';
-      if (trace)
-         comp->log()->printf("%6d: %s", line++, msg);
+      logprintf(trace, log, "%6d: %s", line++, msg);
       if (*(ce - 1) == '\0')
          {
          ce--;
          }
       cs = ce;
       }
+
    if (trace)
-      comp->log()->println();
+      log->println();
    }
 
 
@@ -2182,8 +2174,7 @@ J9::CodeGenerator::dumpNVVMIR(
 #ifdef ENABLE_GPU
    if (!calculateComputeCapability(/*tracing*/0, &computeMajor, &computeMinor, /*deviceId*/0))
       {
-      if (trace)
-         log->prints("calculateComputeCapability was unsuccessful.\n");
+      logprints(trace, log, "calculateComputeCapability was unsuccessful.\n");
       return GPUHelperError;
       }
    computeCapability = 100*computeMajor + computeMinor; //combines Major and Minor versions into a single number.
@@ -2193,8 +2184,7 @@ J9::CodeGenerator::dumpNVVMIR(
 
    if (!getNvvmVersion(/*tracing*/0, &nvvmMajorVersion, &nvvmMinorVersion))
       {
-      if (trace)
-         log->prints("getNvvmVersion was unsuccessful.\n");
+      logprints(trace, log, "getNvvmVersion was unsuccessful.\n");
       return GPUHelperError;
       }
 
@@ -2270,8 +2260,7 @@ J9::CodeGenerator::dumpNVVMIR(
       //findExtraParms(node, numExtraParms, &sharedMemory, visitCount);
       }
 
-   if (trace)
-      log->printf("extra parameters = %d\n", numExtraParms);
+   logprintf(trace, log, "extra parameters = %d\n", numExtraParms);
    ir.print("target triple = \"nvptx64-unknown-cuda\"\n");
    ir.print("target datalayout = \"e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v16:16:16-v32:32:32-v64:64:64-v128:128:128-n16:32:64\"\n\n");  // TODO: 32-bit
 
@@ -2281,14 +2270,13 @@ J9::CodeGenerator::dumpNVVMIR(
        {
        if ((*lit).getSize() > 0)
           ir.print("@%.*s = internal addrspace(3) global [%d x %s] zeroinitializer, align 8\n",
-        		  (*lit).getFieldNameLength(), (*lit).getFieldName(), (*lit).getSize(),
+                     (*lit).getFieldNameLength(), (*lit).getFieldName(), (*lit).getSize(),
                      getTypeNameFromSignature((*lit).getFieldSig(), (*lit).getFieldSigLength()));
        }
 
    static bool disableReadOnlyCacheArray = (feGetEnv("TR_disableGPUReadOnlyCacheArray") != NULL);
    static bool disableReadOnlyCacheObjHdr = (feGetEnv("TR_disableGPUReadOnlyCacheObjHdr") != NULL);
 
-   //ir.print("@_ExceptionKind = addrspace(1) global [1 x i32 0, align 4\n");
    ir.print("@_ExceptionKind = addrspace(1) global [1 x i32] zeroinitializer, align 4\n");
 
    //NVVM 1.3 onward uses a two parameter version of ldg
@@ -2327,8 +2315,7 @@ J9::CodeGenerator::dumpNVVMIR(
    for (ait.SetToFirst(); ait.Valid(); ait.SetToNext())
       {
       if (!ait->_hostSymRef) continue;
-      if (trace)
-         log->printf("hostSymRef #%d parmSlot %d\n", (int)ait, ait->_parmSlot);
+      logprintf(trace, log, "hostSymRef #%d parmSlot %d\n", (int)ait, ait->_parmSlot);
 
       if (ait->_parmSlot != -1)
          {

@@ -221,10 +221,8 @@ TR::Register* J9::X86::HelperCallSite::BuildCall()
    TR_ASSERT(CalleeCleanup || cg()->getLinkage()->getProperties().getReservesOutgoingArgsInPrologue(),
              "Caller must reserve outgoing args in prologue unless callee cleans up stack");
 
-   if (cg()->comp()->getOption(TR_TraceCG))
-      {
-      cg()->comp()->log()->printf("X86 HelperCall: [%04d] %s\n", _SymRef->getReferenceNumber(), cg()->getDebug()->getName(_SymRef));
-      }
+   logprintf(cg()->comp()->getOption(TR_TraceCG), cg()->comp()->log(), "X86 HelperCall: [%04d] %s\n", _SymRef->getReferenceNumber(), cg()->getDebug()->getName(_SymRef));
+
    RealRegisterManager RealRegisters(cg());
    TR::RealRegister*   ESP = cg()->machine()->getRealRegister(TR::RealRegister::esp);
 

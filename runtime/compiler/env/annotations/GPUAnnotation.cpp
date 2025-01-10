@@ -55,13 +55,13 @@ void TR_SharedMemoryAnnotations::loadAnnotations(TR::Compilation *comp)
    {
    if (!comp->isGPUCompilation()) return;
 
+   OMR::Logger *log = comp->log();
    bool trace = comp->getOption(TR_TraceAll);
 
    J9Class * clazz = (J9Class *)comp->getCurrentMethod()->containingClass();
    J9Class **supClasses = clazz->superclasses;
    int numSupClasses = J9CLASS_DEPTH(clazz);
-   if (trace)
-      comp->log()->prints("looking for annotations\n");
+   logprints(trace, log, "looking for annotations\n");
 
    for (int i = 0; i <= numSupClasses; i++)
       {
@@ -78,7 +78,7 @@ void TR_SharedMemoryAnnotations::loadAnnotations(TR::Compilation *comp)
          J9UTF8 *utf8 = J9ROMCLASS_CLASSNAME(romCl);
          char *className = (char *) J9UTF8_DATA(utf8);
          int32_t classNameLength = J9UTF8_LENGTH(utf8);
-         comp->log()->printf("class %.*s\n", classNameLength, className);
+         log->printf("class %.*s\n", classNameLength, className);
          }
 
       J9ROMFieldWalkState state;
@@ -97,8 +97,7 @@ void TR_SharedMemoryAnnotations::loadAnnotations(TR::Compilation *comp)
          char *fieldSig = (char *) J9UTF8_DATA(utf8);
          int32_t fieldSigLength = J9UTF8_LENGTH(utf8);
 
-         if (trace)
-            comp->log()->printf("   field %.*s %.*s\n", fieldNameLength, fieldName, fieldSigLength, fieldSig);
+         logprintf(trace, log, "   field %.*s %.*s\n", fieldNameLength, fieldName, fieldSigLength, fieldSig);
          int32_t size = 0;  // non-shared field
 
          U_32 * annotationsData = getFieldAnnotationsDataFromROMField(currentField);
@@ -117,8 +116,7 @@ void TR_SharedMemoryAnnotations::loadAnnotations(TR::Compilation *comp)
 
             int32_t len;
             char * str = getNameFromCP(len, typeIndex, romCl);
-            if (comp->getOption(TR_TraceAll))
-               comp->log()->printf("      annotation %.*s\n",  len, str);
+            logprintf(trace, log, "      annotation %.*s\n",  len, str);
 
             if (len != 33 ||
                 strncmp(str, "Lcom/ibm/gpu/Kernel$SharedMemory;", len) != 0)
@@ -141,8 +139,7 @@ void TR_SharedMemoryAnnotations::loadAnnotations(TR::Compilation *comp)
                }
             }
 
-         if (trace)
-            comp->log()->printf("       size = %d\n", size);
+         logprintf(trace, log, "       size = %d\n", size);
          _sharedMemoryFields.push_back(TR_SharedMemoryField(fieldName, fieldNameLength, fieldSig, fieldSigLength, size));
          }
       }
@@ -221,6 +218,7 @@ void TR_SharedMemoryAnnotations::setParmNum(TR::Compilation *comp, TR::SymbolRef
 
 bool currentMethodHasFpreductionAnnotation(TR::Compilation *comp, bool trace)
    {
+    OMR::Logger *log = comp->log();
     J9ROMMethod * romMethod = static_cast<TR_J9VM *>(comp->fej9())->getROMMethodFromRAMMethod((J9Method *)comp->getCurrentMethod()->getPersistentIdentifier());
 
     U_32 * annotationsData = getMethodAnnotationsDataFromROMMethod(romMethod);
@@ -236,7 +234,7 @@ bool currentMethodHasFpreductionAnnotation(TR::Compilation *comp, bool trace)
             NEXT_U16(numAnnotations, data);
             }
 
-         if (trace) comp->log()->printf("current method has %d annotations %p\n", numAnnotations, annotationsData);
+         logprintf(trace, log, "current method has %d annotations %p\n", numAnnotations, annotationsData);
 
          for (int i= 0; i < numAnnotations; i++)
             {
@@ -246,12 +244,12 @@ bool currentMethodHasFpreductionAnnotation(TR::Compilation *comp, bool trace)
             int32_t len;
             char * str = getNameFromCP(len, typeIndex, romCl);
 
-            if (trace) comp->log()->printf("found annotation %.*s\n",  len, str);
+            logprintf(trace, log, "found annotation %.*s\n", len, str);
 
             if (len == 44
                 && strncmp(str, "Lorg/apache/spark/sql/execution/fpreduction;", len) == 0)
                {
-               if (trace) comp->log()->prints("current method has @fpreduction annotation\n");
+               logprints(trace, log, "current method has @fpreduction annotation\n");
                return true;
                }
             }

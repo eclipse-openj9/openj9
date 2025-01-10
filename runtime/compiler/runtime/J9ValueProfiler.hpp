@@ -663,7 +663,7 @@ TR_HashTableProfilerInfo<T>::dumpInfo(OMR::Logger *log)
    else
       log->printf("Mask\n    0x%0*llX\n", padding, _hashConfig.mask);
 
-   log->prints("\n");
+   log->println();
    unlock();
    }
 

@@ -1413,11 +1413,9 @@ TR_IProfiler::getJ9SharedDataDescriptorForMethod(J9SharedDataDescriptor * descri
 TR_IPMethodHashTableEntry *
 TR_IProfiler::searchForMethodSample(TR_OpaqueMethodBlock *omb, int32_t bucket)
    {
-//   printf("Searching for method %p in bucket %d\n",omb,bucket);
    TR_IPMethodHashTableEntry *entry;
    for (entry = _methodHashTable[bucket]; entry; entry = entry->_next)
       {
-//      printf("entry = %p entry->_method = %p\n",entry,entry->_method);
       if (omb == entry->_method)
          return entry;
       }
@@ -1942,8 +1940,7 @@ TR_IProfiler::getSearchPCFromMethodAndBCIndex(TR_OpaqueMethodBlock *method, uint
       OMR::Logger *log = comp->log();
       TR_Stack<int32_t> & stack = comp->getInlinedCallStack();
       int len = comp->getInlinedCallStack().size();
-      if (traceIProfiling)
-         comp->log()->printf("CSI : INLINER STACK :\n");
+      logprints(traceIProfiling, log, "CSI : INLINER STACK :\n");
       for (int i = 0; i < len; i++)
          {
          TR_IPHashedCallSite hcs;
@@ -2011,23 +2008,20 @@ TR_IProfiler::getProfilingEntry(TR_OpaqueMethodBlock *method, uint32_t byteCodeI
    static bool traceIProfiling = ((debug("traceIProfiling") != NULL));
    OMR::Logger *log = comp->log();
 
-   if (traceIProfiling)
-      log->printf("Asked for profiling data on PC=%p, ", getSearchPC (method, byteCodeIndex, comp));
+   logprintf(traceIProfiling, log, "Asked for profiling data on PC=%p, ", getSearchPC (method, byteCodeIndex, comp));
 
    if (entry)
       {
       if (invalidateEntryIfInconsistent(entry))
          {
-         if (traceIProfiling)
-            log->prints("got nothing because it was invalidated\n");
+         logprints(traceIProfiling, log, "got nothing because it was invalidated\n");
          return 0;
          }
 
       return entry;
       }
 
-   if (traceIProfiling)
-      log->prints("got nothing\n");
+   logprints(traceIProfiling, log, "got nothing\n");
 
    return 0;
    }
@@ -2196,8 +2190,7 @@ TR_IProfiler::getBranchCounters(TR::Node *node, TR::TreeTop *fallThroughTree, in
          {
          // branch was changed in non-consistent way
          // better not set anything
-         if (traceIProfiling)
-            comp->log()->printf("I couldn't figure out the branch direction after change for node [%p], so I gave default direction \n", node);
+         logprintf(traceIProfiling, comp->log(), "I couldn't figure out the branch direction after change for node [%p], so I gave default direction \n", node);
          *taken = (int32_t) branchToCount;
          *notTaken = (int32_t) fallThroughCount;
          }
@@ -2304,19 +2297,21 @@ TR_IProfiler::setBlockAndEdgeFrequencies(TR::CFG *cfg, TR::Compilation *comp)
    if (!isIProfilingEnabled())
       return;
 
+   OMR::Logger *log = comp->log();
+
    cfg->propagateFrequencyInfoFromExternalProfiler(this);
 
    static bool traceIProfiling = ((debug("traceIProfiling") != NULL));
    if (traceIProfiling)
       {
-      comp->log()->prints("\nBlock frequency info set by Interpreter profiling\n");
+      log->prints("\nBlock frequency info set by Interpreter profiling\n");
 
       for (TR::TreeTop *treeTop = comp->getStartTree(); treeTop; treeTop = treeTop->getNextTreeTop())
          {
          TR::Node *node = treeTop->getNode();
          if (node->getOpCodeValue() == TR::BBStart)
             {
-            comp->log()->printf("\nBlock[%d] frequency = %d\n", node->getBlock()->getNumber(), node->getBlock()->getFrequency());
+            log->printf("\nBlock[%d] frequency = %d\n", node->getBlock()->getNumber(), node->getBlock()->getFrequency());
             }
          }
       }
@@ -2342,10 +2337,7 @@ TR_IProfiler::createIProfilingValueInfo(TR_ByteCodeInfo &bcInfo, TR::Compilation
       return NULL;
       }
 
-   if (traceIProfiling)
-      {
-      log->printf("\nQuerying for bcIndex=%d, callerIndex=%d\n", bcInfo.getByteCodeIndex(), bcInfo.getCallerIndex());
-      }
+   logprintf(traceIProfiling, log, "\nQuerying for bcIndex=%d, callerIndex=%d\n", bcInfo.getByteCodeIndex(), bcInfo.getCallerIndex());
 
    if (_allowedToGiveInlinedInformation &&
         bcInfo.getCallerIndex()>=0/*          &&
@@ -2361,10 +2353,8 @@ TR_IProfiler::createIProfilingValueInfo(TR_ByteCodeInfo &bcInfo, TR::Compilation
 
          if (!currentPersistentClassInfo || !calleePersistentClassInfo)
             {
-            if (traceIProfiling)
-               {
-               log->prints("\nMissing persistent class or method info returning NULL\n");
-               }
+            logprints(traceIProfiling, log, "\nMissing persistent class or method info returning NULL\n");
+
 //#ifdef VERBOSE_INLINING_PROFILING
             TR_IProfiler::_STATS_cannotGetClassInfo  ++;
 //#endif
@@ -2374,10 +2364,8 @@ TR_IProfiler::createIProfilingValueInfo(TR_ByteCodeInfo &bcInfo, TR::Compilation
          if ((currentPersistentClassInfo->getTimeStamp() == (uint16_t)0x0FFFF) ||
              (calleePersistentClassInfo->getTimeStamp() == (uint16_t)0x0FFFF))
             {
-            if (traceIProfiling)
-               {
-               log->prints("\nThe time stamp for callee or caller class has expired, I refuse to give profiling information back\n");
-               }
+            logprints(traceIProfiling, log, "\nThe time stamp for callee or caller class has expired, I refuse to give profiling information back\n");
+
 //#ifdef VERBOSE_INLINING_PROFILING
             TR_IProfiler::_STATS_timestampHasExpired  ++;
 //#endif
@@ -2387,21 +2375,18 @@ TR_IProfiler::createIProfilingValueInfo(TR_ByteCodeInfo &bcInfo, TR::Compilation
          if ((currentPersistentClassInfo->getTimeStamp() > calleePersistentClassInfo->getTimeStamp()) &&
              ((int32_t)(currentPersistentClassInfo->getTimeStamp() - calleePersistentClassInfo->getTimeStamp()) > _classLoadTimeStampGap))
             {
-            if (traceIProfiling)
-               {
-               log->printf("\nCallee method %s (callerIndex=%d) is interpreted but class time stamps are too far apart, I refuse to give profiling info for this callee method (ownerClass time stamp %d, callee class time stamp %d).\n",
-                   _vm->sampleSignature(method, 0, 0, comp->trMemory()), bcInfo.getCallerIndex(), currentPersistentClassInfo->getTimeStamp(), calleePersistentClassInfo->getTimeStamp());
-               }
+            logprintf(traceIProfiling, log, "\nCallee method %s (callerIndex=%d) is interpreted but class time stamps are too far apart, I refuse to give profiling info for this callee method (ownerClass time stamp %d, callee class time stamp %d).\n",
+                  _vm->sampleSignature(method, 0, 0, comp->trMemory()), bcInfo.getCallerIndex(),
+                  currentPersistentClassInfo->getTimeStamp(), calleePersistentClassInfo->getTimeStamp());
+
 //#ifdef VERBOSE_INLINING_PROFILING
             TR_IProfiler::_STATS_timestampHasExpired ++;
 //#endif
             return NULL;
             }
-         if (traceIProfiling)
-            {
-            log->printf("\nCallee method %s (callerIndex=%d) is interpreted I'll give profiling information for it, ownerClass time stamp %d, callee class time stamp %d.\n",
-               _vm->sampleSignature(method, 0, 0, comp->trMemory()), bcInfo.getCallerIndex(), currentPersistentClassInfo->getTimeStamp(), calleePersistentClassInfo->getTimeStamp());
-            }
+         logprintf(traceIProfiling, log, "\nCallee method %s (callerIndex=%d) is interpreted I'll give profiling information for it, ownerClass time stamp %d, callee class time stamp %d.\n",
+               _vm->sampleSignature(method, 0, 0, comp->trMemory()), bcInfo.getCallerIndex(),
+               currentPersistentClassInfo->getTimeStamp(), calleePersistentClassInfo->getTimeStamp());
          }
       }
    else if (bcInfo.getCallerIndex()>=0)
@@ -2435,10 +2420,7 @@ TR_IProfiler::createIProfilingValueInfo(TR_ByteCodeInfo &bcInfo, TR::Compilation
             data = csInfo->getClazz(0);
             if (!data)
                {
-               if (traceIProfiling)
-                  {
-                  log->printf("Call-graph 1 No profiling data for bcIndex=%d, callerIndex=%d\n", bcInfo.getByteCodeIndex(), bcInfo.getCallerIndex());
-                  }
+               logprintf(traceIProfiling, log, "Call-graph 1 No profiling data for bcIndex=%d, callerIndex=%d\n", bcInfo.getByteCodeIndex(), bcInfo.getCallerIndex());
                return NULL;
                }
             weight = cgData->getEdgeWeight((TR_OpaqueClassBlock *)data, comp);
@@ -2463,10 +2445,7 @@ TR_IProfiler::createIProfilingValueInfo(TR_ByteCodeInfo &bcInfo, TR::Compilation
             }
          else
             {
-            if (traceIProfiling)
-               {
-               log->printf("Call-graph 2 Set not to profile bcIndex=%d, callerIndex=%d\n", bcInfo.getByteCodeIndex(), bcInfo.getCallerIndex());
-               }
+            logprintf(traceIProfiling, log, "Call-graph 2 Set not to profile bcIndex=%d, callerIndex=%d\n", bcInfo.getByteCodeIndex(), bcInfo.getCallerIndex());
             return NULL;
             }
          }
@@ -2475,19 +2454,14 @@ TR_IProfiler::createIProfilingValueInfo(TR_ByteCodeInfo &bcInfo, TR::Compilation
          data = getProfilingData(bcInfo, comp);
          if (!data)
             {
-            if (traceIProfiling)
-               {
-               log->printf("No profiling data for bcIndex=%d, callerIndex=%d\n", bcInfo.getByteCodeIndex(), bcInfo.getCallerIndex());
-               }
+            logprintf(traceIProfiling, log, "No profiling data for bcIndex=%d, callerIndex=%d\n", bcInfo.getByteCodeIndex(), bcInfo.getCallerIndex());
             return NULL;
             }
          valueInfo = valueProfileInfo->createAddressInfo(bcInfo, comp, data, weight);
          }
 
-      if (valueInfo && traceIProfiling)
-         {
-         log->printf("\nAdded new value info for bcIndex=%d, callerIndex=%d\n", bcInfo.getByteCodeIndex(), bcInfo.getCallerIndex());
-         }
+      if (valueInfo)
+         logprintf(traceIProfiling, log, "\nAdded new value info for bcIndex=%d, callerIndex=%d\n", bcInfo.getByteCodeIndex(), bcInfo.getCallerIndex());
 
       return valueInfo;
       }
@@ -2512,10 +2486,7 @@ TR_IProfiler::createIProfilingValueInfo (TR::Node *node, TR::Compilation *comp)
    {
 
    static bool traceIProfiling = ((debug("traceIProfiling") != NULL));
-   if (traceIProfiling)
-      {
-      comp->log()->printf("\nCreating iprofiling value info for node %p\n", node);
-      }
+   logprintf(traceIProfiling, comp->log(), "\nCreating iprofiling value info for node %p\n", node);
 
    if (node &&
       ((node->getOpCode().isCall() && !node->isTheVirtualCallNodeForAGuardedInlinedCall()) ||
@@ -2532,20 +2503,17 @@ TR_IProfiler::getValueProfileInfo(TR_ByteCodeInfo &bcInfo, TR::Compilation *comp
    if (!isIProfilingEnabled())
       return NULL;
 
+   OMR::Logger *log = comp->log();
+
    static bool traceIProfiling = ((debug("traceIProfiling") != NULL));
 
-   if (traceIProfiling)
-      {
-      comp->log()->printf("\nAsking for value info for bcIndex=%d, callerIndex=%d\n", bcInfo.getByteCodeIndex(), bcInfo.getCallerIndex());
-      }
+   logprintf(traceIProfiling, log, "\nAsking for value info for bcIndex=%d, callerIndex=%d\n", bcInfo.getByteCodeIndex(), bcInfo.getCallerIndex());
 
    //TR_OpaqueMethodBlock *originatorMethod = (TR_OpaqueMethodBlock *)(comp->getCurrentMethod()->getPersistentIdentifier());
    TR_OpaqueMethodBlock *originatorMethod = getMethodFromBCInfo(bcInfo, comp);
 
-   if (traceIProfiling)
-      {
-      comp->log()->printf("\nCurrent compiling method %p\n", originatorMethod);
-      }
+   logprintf(traceIProfiling, log, "\nCurrent compiling method %p\n", originatorMethod);
+
    TR_ExternalValueProfileInfo *valueProfileInfo = TR_ExternalValueProfileInfo::getInfo(originatorMethod, comp);
 
    if (!valueProfileInfo)
@@ -2841,7 +2809,7 @@ TR_IPBCDataCallGraph::getData(TR::Compilation *comp)
    uintptr_t data = _csInfo.getDominantClass(sumWeight, maxWeight);
 
    static bool traceIProfiling = ((debug("traceIProfiling") != NULL));
-   trprintf(traceIProfiling && comp, comp->log(), "\nMax weight %d, current sum weight %d\n", maxWeight, sumWeight);
+   logprintf(traceIProfiling && comp, comp->log(), "\nMax weight %d, current sum weight %d\n", maxWeight, sumWeight);
 
    // prevent potential division by zero
    if (sumWeight && ((float)maxWeight/(float)sumWeight) < 0.1f)
@@ -3390,8 +3358,7 @@ TR_IProfiler::getCGProfilingData(TR_OpaqueMethodBlock *method, uint32_t byteCode
       {
       if (invalidateEntryIfInconsistent(entry))
          {
-         if (traceIProfiling)
-            comp->log()->printf("got nothing because it was invalidated\n");
+         logprints(traceIProfiling, comp->log(), "got nothing because it was invalidated\n");
          return NULL;
          }
       TR_IPBCDataCallGraph *e = entry->asIPBCDataCallGraph();
@@ -3641,7 +3608,6 @@ bool TR_IProfiler::getCallerWeight(TR_OpaqueMethodBlock *calleeMethod,TR_OpaqueM
    bool useTuples = (pcIndex != ~0);
 
     int32_t bucket = methodHash((uintptr_t)calleeMethod);
-   //printf("getCallerWeight:  method = %p methodHash = %d\n",calleeMethod,bucket);
 
    //adjust pcIndex for interface calls (see getSearchPCFromMethodAndBCIndex)
    //otherwise we won't be able to locate a caller-callee-bcIndex triplet
@@ -3728,7 +3694,6 @@ static int32_t J9THREAD_PROC iprofilerThreadProc(void * entryarg)
       (*vm->javaOffloadSwitchOffNoEnvWithReasonFunc)(vm, j9thread_self(), J9_JNI_OFFLOAD_SWITCH_JIT_IPROFILER_THREAD);
 #endif
 
-   //fprintf(stderr, "iprofilerThread will exit now numRequests=%u numRequestsHandedToIProfilerThread=%u numRequestsSkipped=%u\n", numRequests, numRequestsHandedToIProfilerThread, numRequestsSkipped);
    return 0;
    }
 
@@ -3960,7 +3925,6 @@ TR_IProfiler::processWorkingQueue()
          {
          setIProfilerThreadLifetimeState(TR_IProfiler::IPROF_THR_WAITING_FOR_WORK);
 
-         //fprintf(stderr, "IProfiler thread will wait for data outstanding=%d\n", numOutstandingBuffers);
          _iprofilerMonitor->wait();
 
          // The state could have been changed either for checkpoint or shutdown, ensure
@@ -3995,9 +3959,7 @@ TR_IProfiler::processWorkingQueue()
          // Check to see if GC has invalidated this buffer
          if (_crtProfilingBuffer->isValid())
             {
-            //fprintf(stderr, "IProfiler thread will process buffer %p of size %u\n", profilingBuffer->getBuffer(), profilingBuffer->getSize());
             parseBuffer(_iprofilerThread, _crtProfilingBuffer->getBuffer(), _crtProfilingBuffer->getSize());
-            //fprintf(stderr, "IProfiler thread finished processing\n");
             }
          releaseVMAccess(_iprofilerThread);
 
@@ -4340,7 +4302,6 @@ UDATA TR_IProfiler::parseBuffer(J9VMThread * vmThread, const U_8* dataStart, UDA
 
    if (cursor != dataStart + size)
       {
-      //j9tty_printf(PORTLIB, "Error! Parser overran buffer.\n");
       TR_ASSERT(false, "Iprofiler parser overran buffer");
       return 0;
       }
@@ -4571,7 +4532,6 @@ TR_AggregationHT::add(J9ROMMethod *romMethod, J9ROMClass *romClass, TR_IPBytecod
          TR_IPChainedEntry *newEntry = new (*TR_IProfiler::allocator()) TR_IPChainedEntry(cgEntry);
          if (!newEntry) // OOM
             {
-            // printfs are ok since this method will be used for diagnostics only
             fprintf(stderr, "Cannot allocated memory. Incomplete info will be printed.\n");
             return;
             }
