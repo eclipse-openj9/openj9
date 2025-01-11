@@ -583,9 +583,7 @@ final class Access implements JavaLangAccess {
 		return StringConcatHelper.mix(lengthCoder, value);
 	}
 
-	/*[IF !INLINE-TYPES]*/
 	@Override
-	/*[ENDIF] !INLINE-TYPES */
 	public PrintStream initialSystemErr() {
 		return System.initialErr;
 	}
@@ -868,9 +866,7 @@ final class Access implements JavaLangAccess {
 		return VirtualThread.defaultScheduler();
 	}
 
-	/*[IF !INLINE-TYPES]*/
 	@Override
-	/*[ENDIF] !INLINE-TYPES */
 	public Stream<ScheduledExecutorService> virtualThreadDelayedTaskSchedulers() {
 		return VirtualThread.delayedTaskSchedulers();
 	}
