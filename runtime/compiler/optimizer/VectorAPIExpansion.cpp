@@ -1666,13 +1666,78 @@ TR_VectorAPIExpansion::transformIL(bool checkBoxing)
          continue;
 
       bool scalarized;
-      bool vectorizedNode;
-
+      bool vectorizedOrScalarizedNode;
       TR::DataType elementType;
       int32_t bitsLength;
       vapiObjType objectType;
 
-      bool vectorizedOrScalarizedNode = isVectorizedOrScalarizedNode(node, elementType, bitsLength, objectType, scalarized);
+      vectorizedOrScalarizedNode = isVectorizedOrScalarizedNode(node, elementType, bitsLength, objectType, scalarized);
+
+      // Vectorize intrinsic if its operands are known
+      if (boxingAllowed() &&
+         !vectorizedOrScalarizedNode &&
+         opCode.isFunctionCall())
+         {
+         TR::MethodSymbol * methodSymbol = node->getSymbolReference()->getSymbol()->castToMethodSymbol();
+         if (isVectorAPIMethod(methodSymbol))
+             {
+             if (methodSymbol->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_compare)
+                {
+                for (int i = 0; i < 2; i++)
+                   {
+                   TR::Node* operand = node->getChild(getFirstOperandIndex(methodSymbol) + i);
+
+                   bool operandVectorizedOrScalarized;
+                   bool operandScalarized;
+                   TR::DataType operandElementType;
+                   int32_t operandBitsLength;
+                   vapiObjType operandObjectType;
+
+                   operandVectorizedOrScalarized = isVectorizedOrScalarizedNode(operand, operandElementType, operandBitsLength,
+                                                                                operandObjectType, operandScalarized);
+
+                   if (operandVectorizedOrScalarized &&
+                       !operandScalarized)
+                      {
+                      TR::MethodSymbol * methodSymbol = node->getSymbolReference()->getSymbol()->castToMethodSymbol();
+                      TR::RecognizedMethod index = methodSymbol->getRecognizedMethod();
+                      int32_t handlerIndex = index - _firstMethod;
+
+                      TR::VectorLength operandVectorLength = OMR::DataType::bitsToVectorLength(operandBitsLength);
+                      int32_t operandElementSize = OMR::DataType::getSize(operandElementType);
+                      int32_t operandNumLanes = bitsLength/8/operandElementSize;
+
+                      bool canVectorizeMethod = methodTable[handlerIndex]._methodHandler(this, NULL, node, operandElementType, operandVectorLength,
+                                                                                         operandObjectType, operandNumLanes,
+                                                                                         checkVectorization);
+
+                      if (canVectorizeMethod)
+                         {
+                         ncount_t nodeIndex = node->getGlobalIndex();
+
+                         _nodeTable[nodeIndex]._canVectorize = true;
+                         _nodeTable[nodeIndex]._elementType = operandElementType;
+                         _nodeTable[nodeIndex]._vecLen = operandBitsLength;
+                         _nodeTable[nodeIndex]._objectType = operandObjectType;
+
+                         createClassesForBoxing(node->getSymbolReference()->getOwningMethod(comp()), operandElementType, operandBitsLength);
+
+                         vectorizedOrScalarizedNode = true;
+                         scalarized = false;
+                         elementType = operandElementType;
+                         bitsLength = operandBitsLength;
+                         objectType = operandObjectType;
+
+                         if (_trace)
+                            traceMsg(comp(), "Vectorized node %p based on operand %d\n", node, i);
+
+                         break;
+                         }
+                      }
+                   }
+                }
+             }
+         }
 
       // Handle non-vectorized nodes by boxing their children
       if (boxingAllowed() &&
