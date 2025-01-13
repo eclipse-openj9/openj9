@@ -311,10 +311,10 @@ vmOptionsTableAddOptionWithCopy(void **vmOptionsTable, char *optionString, void 
 #if defined(WIN32)
   /* On Windows, the subdirectory containing the redirector hasn't changed with Java versions. */
   #define J9JAVA_REDIRECTOR_SUBDIR "\\bin\\j9vm\\"
-#elif (JAVA_SPEC_VERSION >= 10) || ((JAVA_SPEC_VERSION == 9) && defined(OPENJ9_BUILD)) || defined(OSX)
+#elif (JAVA_SPEC_VERSION >= 10) || defined(OSX) /* defined(WIN32) */
   /* On other platforms, the subdirectory containing the redirector is common in recent Java versions. */
   #define J9JAVA_REDIRECTOR_SUBDIR "/lib/j9vm/"
-#else /* WIN32 */
+#else /* defined(WIN32) */
   /* In Java 8 and early versions of Java 9, the path depends on the platform architecture. */
   #if defined(J9HAMMER)
 	#define JVM_ARCH_DIR "amd64"
@@ -337,12 +337,12 @@ vmOptionsTableAddOptionWithCopy(void **vmOptionsTable, char *optionString, void 
 	  #define JVM_ARCH_DIR "ppc64"
 	#endif /* PPC64 */
   #elif defined(RISCV64)
-      #define JVM_ARCH_DIR "riscv64"
+	  #define JVM_ARCH_DIR "riscv64"
   #else
 	#error "Must define an architecture"
   #endif
   #define J9JAVA_REDIRECTOR_SUBDIR "/lib/" JVM_ARCH_DIR "/j9vm/"
-#endif /* WIN32 */
+#endif /* defined(WIN32) */
 
 #define JAVAHOMEDIR "-Djava.home="
 #define JAVAHOMEDIR_LEN (sizeof(JAVAHOMEDIR) - 1)

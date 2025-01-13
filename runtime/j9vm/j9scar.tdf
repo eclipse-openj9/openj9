@@ -351,17 +351,17 @@ TraceEvent=Trc_SC_LoadLibrary_OpenShared_Decorate NoEnv Overhead=1 Level=3 Templ
 
 TraceExit=Trc_SC_LoadLibrary_Exit NoEnv Overhead=1 Level=2 Template="JVM_LoadLibrary -- return 0x%zx"
 
-TraceEntry=Trc_SC_VirtualThreadMountBegin_Entry Overhead=1 Level=3 Template="thread = %p, firstMount = %d"
-TraceExit=Trc_SC_VirtualThreadMountBegin_Exit Overhead=1 Level=3 Template="thread = %p, firstMount = %d"
+TraceEntry=Trc_SC_VirtualThreadMountBegin_Entry Obsolete Overhead=1 Level=3 Template="thread = %p, firstMount = %d"
+TraceExit=Trc_SC_VirtualThreadMountBegin_Exit Obsolete Overhead=1 Level=3 Template="thread = %p, firstMount = %d"
 
-TraceEntry=Trc_SC_VirtualThreadMountEnd_Entry Overhead=1 Level=3 Template="thread = %p, firstMount = %d"
-TraceExit=Trc_SC_VirtualThreadMountEnd_Exit Overhead=1 Level=3 Template="thread = %p, firstMount = %d"
+TraceEntry=Trc_SC_VirtualThreadMountEnd_Entry Obsolete Overhead=1 Level=3 Template="thread = %p, firstMount = %d"
+TraceExit=Trc_SC_VirtualThreadMountEnd_Exit Obsolete Overhead=1 Level=3 Template="thread = %p, firstMount = %d"
 
-TraceEntry=Trc_SC_VirtualThreadUnmountBegin_Entry Overhead=1 Level=3 Template="thread = %p, lastUnmount = %d"
-TraceExit=Trc_SC_VirtualThreadUnmountBegin_Exit Overhead=1 Level=3 Template="thread = %p, lastUnmount = %d"
+TraceEntry=Trc_SC_VirtualThreadUnmountBegin_Entry Obsolete Overhead=1 Level=3 Template="thread = %p, lastUnmount = %d"
+TraceExit=Trc_SC_VirtualThreadUnmountBegin_Exit Obsolete Overhead=1 Level=3 Template="thread = %p, lastUnmount = %d"
 
-TraceEntry=Trc_SC_VirtualThreadUnmountEnd_Entry Overhead=1 Level=3 Template="thread = %p, lastUnmount = %d"
-TraceExit=Trc_SC_VirtualThreadUnmountEnd_Exit Overhead=1 Level=3 Template="thread = %p, lastUnmount = %d"
+TraceEntry=Trc_SC_VirtualThreadUnmountEnd_Entry Obsolete Overhead=1 Level=3 Template="thread = %p, lastUnmount = %d"
+TraceExit=Trc_SC_VirtualThreadUnmountEnd_Exit Obsolete Overhead=1 Level=3 Template="thread = %p, lastUnmount = %d"
 
 TraceEvent=Trc_SC_VirtualThread_Info Overhead=1 Level=3 Test Template="virtualThreadObj = %p, virtualThreadState = %p, virtualThreadInspectorCount = %lld, carrierThreadObj = %p, continuationObj = %p, J9VMContinuation = %p"
 
