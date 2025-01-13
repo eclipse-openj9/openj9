@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar18-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*
  * Copyright IBM Corp. and others 2000
  *
@@ -71,28 +71,7 @@ public class TraceSection {
 		Util.Debug.println("TraceSection: type:                " + type); //  0=internal 1=external
 		Util.Debug.println("TraceSection: generations:         " + generations);
 		Util.Debug.println("TraceSection: pointerSize:         " + pointerSize);
-
 	}
-
-	/** summarizes the trace section
-	 *
-	 * @return  null
-	 */
-	//final protected void summary(BufferedWriter out) throws IOException
-	//{
-	//        int            off   = offset;
-	//        String         temp  = Util.constructString(data, off);
-	//
-	//        out.write("Internal Trace Data :");
-	//        out.newLine();
-	//        while ( !temp.equals("") ) {
-	//            out.write((Util.SUM_TAB+temp));
-	//            out.newLine();
-	//            off += (temp.length() + 1);
-	//            temp = Util.constructString(data, off);
-	//        }
-	//        out.newLine();
-	//}
 
 	/** returns the type of trace ( INTERNAL or EXTERNAL )
 	 *

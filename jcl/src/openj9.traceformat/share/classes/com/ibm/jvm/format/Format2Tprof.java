@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar18-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*
  * Copyright IBM Corp. and others 2000
  *
@@ -22,12 +22,12 @@
  */
 package com.ibm.jvm.format;
 
-/**
- * Trace Tool routine for generating profile format output.
- */
 import java.io.*;
 import java.util.*;
 
+/**
+ * Trace Tool routine for generating profile format output.
+ */
 public class Format2Tprof {
 	final String Trc_JIT_Component_Name = "j9jit";
 	final int    Trc_JIT_Sampling_Id = 13;
