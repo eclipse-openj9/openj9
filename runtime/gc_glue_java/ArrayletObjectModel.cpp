@@ -55,14 +55,22 @@ GC_ArrayletObjectModel::AssertContiguousArrayDataUnreachable()
 void
 GC_ArrayletObjectModel::AssertArrayletIsDiscontiguous(J9IndexableObject *objPtr)
 {
-	if (!isVirtualLargeObjectHeapEnabled()) {
+	if (!isVirtualLargeObjectHeapEnabled()
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+		&& !isDoubleMappingEnabled()
+#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
+	) {
 		uintptr_t arrayletLeafSize = _omrVM->_arrayletLeafSize;
 		uintptr_t remainderBytes = getDataSizeInBytes(objPtr) % arrayletLeafSize;
 		if (0 != remainderBytes) {
 			MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(_omrVM);
 			Assert_MM_true((getSpineSize(objPtr) + remainderBytes + extensions->getObjectAlignmentInBytes()) > arrayletLeafSize);
 		}
-	} else if (0 != getSizeInElements(objPtr)) {
+	} else if ((0 != getSizeInElements(objPtr))
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+			&& isVirtualLargeObjectHeapEnabled()
+#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
+			) {
 		Assert_MM_unreachable();
 	}
 }
@@ -124,13 +132,20 @@ GC_ArrayletObjectModel::getArrayletLayout(J9Class* clazz, uintptr_t numberOfElem
 			if (extensions->isVLHGC()) {
 				adjustedHybridSpineBytesAfterMove += objectAlignmentInBytes;
 			}
-			/* if remainder data can fit in spine, make it hybrid */
-			if (adjustedHybridSpineBytesAfterMove <= largestDesirableSpine) {
-				/* remainder data can fit in spine, last arrayoid pointer points to empty data section in spine */
-				layout = Hybrid;
-			} else {
-				/* remainder data will go into an arraylet, last arrayoid pointer points to it */
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+			if (extensions->indexableObjectModel.isDoubleMappingEnabled()) {
 				layout = Discontiguous;
+			} else
+#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
+			{
+				/* if remainder data can fit in spine, make it hybrid */
+				if (adjustedHybridSpineBytesAfterMove <= largestDesirableSpine) {
+					/* remainder data can fit in spine, last arrayoid pointer points to empty data section in spine */
+					layout = Hybrid;
+				} else {
+					/* remainder data will go into an arraylet, last arrayoid pointer points to it */
+					layout = Discontiguous;
+				}
 			}
 		} else {
 			/* remainder is empty, so no arraylet allocated; last arrayoid pointer is set to MULL */
