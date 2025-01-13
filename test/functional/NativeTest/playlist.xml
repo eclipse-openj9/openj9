@@ -244,7 +244,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<impl>ibm</impl>
 		</impls>
 		<versions>
-			<version>9</version>
 			<version>11+</version>
 		</versions>
 		<features>
@@ -277,7 +276,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<impl>ibm</impl>
 		</impls>
 		<versions>
-			<version>9</version>
 			<version>11+</version>
 		</versions>
 		<features>
@@ -310,7 +308,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<impl>ibm</impl>
 		</impls>
 		<versions>
-			<version>9</version>
 			<version>11+</version>
 		</versions>
 		<features>
@@ -342,7 +339,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<impl>ibm</impl>
 		</impls>
 		<versions>
-			<version>9</version>
 			<version>11+</version>
 		</versions>
 		<features>
@@ -529,7 +525,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<type>native</type>
 		</types>
 		<versions>
-			<version>9</version>
 			<version>11+</version>
 		</versions>
 		<impls>
@@ -600,7 +595,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<type>native</type>
 		</types>
 		<versions>
-			<version>9</version>
 			<version>11+</version>
 		</versions>
 	</test>
