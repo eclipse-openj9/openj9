@@ -74,6 +74,10 @@ public:
 	uintptr_t _offHeapRegionsCleared; /**< The number of sparse heap allocated regions that have been cleared during marking */
 	uintptr_t _offHeapRegionCandidates; /**< The number of sparse heap allocated regions that have been visited during marking */
 #endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+	uintptr_t _doubleMappedArrayletsCleared; /**< The number of double mapped arraylets that have been cleared durign marking */
+	uintptr_t _doubleMappedArrayletsCandidates; /**< The number of double mapped arraylets that have been visited during marking */
+#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 
 	uint64_t _cycleStartTime; /**< The start time of a copy forward cycle */
 
@@ -111,6 +115,10 @@ public:
 		_offHeapRegionsCleared = 0;
 		_offHeapRegionCandidates = 0;
 #endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+		_doubleMappedArrayletsCleared = 0;
+		_doubleMappedArrayletsCandidates = 0;
+#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 	}
 	
 	/**
@@ -140,6 +148,10 @@ public:
 		_offHeapRegionsCleared += stats->_offHeapRegionsCleared;
 		_offHeapRegionCandidates += stats->_offHeapRegionCandidates;
 #endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+		_doubleMappedArrayletsCleared += stats->_doubleMappedArrayletsCleared;
+		_doubleMappedArrayletsCandidates += stats->_doubleMappedArrayletsCandidates;
+#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 	}
 
 	MM_CopyForwardStats() :
@@ -161,6 +173,10 @@ public:
 		, _offHeapRegionsCleared(0)
 		, _offHeapRegionCandidates(0)
 #endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+		, _doubleMappedArrayletsCleared(0)
+		, _doubleMappedArrayletsCandidates(0)
+#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 	{}
 };
 
