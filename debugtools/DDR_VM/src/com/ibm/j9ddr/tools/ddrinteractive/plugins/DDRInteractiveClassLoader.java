@@ -124,6 +124,7 @@ public class DDRInteractiveClassLoader extends ClassLoader {
 		}
 	}
 
+	@SuppressWarnings("deprecation")
 	private void definePackage(String name) {
 		// split off the class name
 		int finalSeparator = name.lastIndexOf('/');
@@ -131,7 +132,8 @@ public class DDRInteractiveClassLoader extends ClassLoader {
 		if (finalSeparator != -1) {
 			String packageName = name.substring(0, finalSeparator);
 
-			if (getDefinedPackage(packageName) == null) {
+			// getDefinedPackage() is only available in Java 9+
+			if (getPackage(packageName) == null) {
 				definePackage(packageName, "J9DDR", "0.1", "IBM", "J9DDR", "0.1", "IBM", null);
 			}
 		}

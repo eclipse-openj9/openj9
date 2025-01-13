@@ -175,6 +175,7 @@ public class J9DDRClassLoader extends SecureClassLoader {
 		return baos.toByteArray();
 	}
 
+	@SuppressWarnings("deprecation")
 	private void definePackage(String name) {
 		// Split off the class name
 		int finalSeparator = name.lastIndexOf('.');
@@ -182,7 +183,8 @@ public class J9DDRClassLoader extends SecureClassLoader {
 		if (finalSeparator != -1) {
 			String packageName = name.substring(0, finalSeparator);
 
-			if (getDefinedPackage(packageName) == null) {
+			// getDefinedPackage() is only available in Java 9+
+			if (getPackage(packageName) == null) {
 				// TODO think about the correct values here
 				definePackage(packageName, "J9DDR", "0.1", "IBM", "J9DDR", "0.1", "IBM", null);
 			}
