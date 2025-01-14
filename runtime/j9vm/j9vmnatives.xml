@@ -193,7 +193,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<export name="_JVM_HoldsLock@12"/>
 		<export name="_JVM_InitProperties@8"/>
 		<export name="_JVM_ArrayCopy@28"/>
-		<export name="_JVM_DoPrivileged@20"/>
+		<export name="_JVM_DoPrivileged@20">
+			<include-if condition="spec.win_.*"/>
+			<exclude-if condition="spec.java9"/>
+		</export>
 		<export name="_JVM_IHashCode@8"/>
 		<export name="_JVM_Clone@8"/>
 		<export name="_JVM_CompileClass@12"/>
