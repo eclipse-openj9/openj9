@@ -5540,7 +5540,7 @@ typedef struct J9VMThread {
 	UDATA contiguousIndexableHeaderSize;
 	UDATA discontiguousIndexableHeaderSize;
 #if defined(J9VM_ENV_DATA64)
-	U_32 isIndexableDataAddrPresent;
+	UDATA isIndexableDataAddrPresent;
 	U_32 isVirtualLargeObjectHeapEnabled;
 #endif /* defined(J9VM_ENV_DATA64) */
 	void* gpInfo;
@@ -6105,7 +6105,7 @@ typedef struct J9JavaVM {
 	UDATA contiguousIndexableHeaderSize;
 	UDATA discontiguousIndexableHeaderSize;
 #if defined(J9VM_ENV_DATA64)
-	U_32 isIndexableDataAddrPresent;
+	UDATA isIndexableDataAddrPresent;
 	U_32 isVirtualLargeObjectHeapEnabled;
 	U_32 isIndexableDualHeaderShapeEnabled;
 #endif /* defined(J9VM_ENV_DATA64) */
