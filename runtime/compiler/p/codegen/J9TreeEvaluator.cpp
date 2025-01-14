@@ -11900,7 +11900,8 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
       }
    else if (methodSymbol)
       {
-      static bool disableCAEIntrinsic = feGetEnv("TR_DisableCAEIntrinsic") != NULL;
+      bool disableCASInlining = !cg->getSupportsInlineUnsafeCompareAndSet();
+      bool disableCAEInlining = !cg->getSupportsInlineUnsafeCompareAndExchange();
       switch (methodSymbol->getRecognizedMethod())
          {
       case TR::java_util_concurrent_ConcurrentLinkedQueue_tmOffer:
@@ -12189,8 +12190,11 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
 
         if ((node->isUnsafeGetPutCASCallOnNonArray() || !TR::Compiler->om.canGenerateArraylets()) && node->isSafeForCGToFastPathUnsafeCall())
             {
-            resultReg = VMinlineCompareAndSetOrExchange(node, cg, 4, false);
-            return true;
+            if (!disableCASInlining)
+               {
+               resultReg = VMinlineCompareAndSetOrExchange(node, cg, 4, false);
+               return true;
+               }
             }
          break;
 
@@ -12203,13 +12207,19 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
 
          if (comp->target().is64Bit() && (node->isUnsafeGetPutCASCallOnNonArray() || !TR::Compiler->om.canGenerateArraylets()) && node->isSafeForCGToFastPathUnsafeCall())
             {
-            resultReg = VMinlineCompareAndSetOrExchange(node, cg, 8, false);
-            return true;
+            if (!disableCASInlining)
+               {
+               resultReg = VMinlineCompareAndSetOrExchange(node, cg, 8, false);
+               return true;
+               }
             }
          else if ((node->isUnsafeGetPutCASCallOnNonArray() || !TR::Compiler->om.canGenerateArraylets()) && node->isSafeForCGToFastPathUnsafeCall())
             {
-            resultReg = inlineAtomicOperation(node, cg, methodSymbol);
-            return true;
+            if (!disableCASInlining)
+               {
+               resultReg = inlineAtomicOperation(node, cg, methodSymbol);
+               return true;
+               }
             }
          break;
 
@@ -12220,15 +12230,18 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
 
          if ((node->isUnsafeGetPutCASCallOnNonArray() || !TR::Compiler->om.canGenerateArraylets()) && node->isSafeForCGToFastPathUnsafeCall())
             {
-            resultReg = VMinlineCompareAndSetOrExchangeReference(node, cg, false);
-            return true;
+            if (!disableCASInlining)
+               {
+               resultReg = VMinlineCompareAndSetOrExchangeReference(node, cg, false);
+               return true;
+               }
             }
          break;
 
       case TR::jdk_internal_misc_Unsafe_compareAndExchangeInt:
         if ((node->isUnsafeGetPutCASCallOnNonArray() || !TR::Compiler->om.canGenerateArraylets()) && node->isSafeForCGToFastPathUnsafeCall())
             {
-            if (!disableCAEIntrinsic)
+            if (!disableCAEInlining)
                {
                resultReg = VMinlineCompareAndSetOrExchange(node, cg, 4, true);
                return true;
@@ -12239,7 +12252,7 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
       case TR::jdk_internal_misc_Unsafe_compareAndExchangeLong:
         if (comp->target().is64Bit() && (node->isUnsafeGetPutCASCallOnNonArray() || !TR::Compiler->om.canGenerateArraylets()) && node->isSafeForCGToFastPathUnsafeCall())
             {
-            if (!disableCAEIntrinsic)
+            if (!disableCAEInlining)
                {
                resultReg = VMinlineCompareAndSetOrExchange(node, cg, 8, true);
                return true;
@@ -12259,7 +12272,7 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
       case TR::jdk_internal_misc_Unsafe_compareAndExchangeReference:
          if ((node->isUnsafeGetPutCASCallOnNonArray() || !TR::Compiler->om.canGenerateArraylets()) && node->isSafeForCGToFastPathUnsafeCall())
             {
-            if (!disableCAEIntrinsic)
+            if (!disableCAEInlining)
                {
                resultReg = VMinlineCompareAndSetOrExchangeReference(node, cg, true);
                return true;

@@ -650,31 +650,32 @@ J9::CodeGenerator::lowerTreesPreChildrenVisit(TR::Node *parent, TR::TreeTop *tre
 
    if (parent->getOpCode().isFunctionCall())
       {
-      // J9
-      //
-      /* Hiding compressedref logic from CodeGen isn't a good practice, and the evaluator still needs the uncompressedref node for write barriers.
+      /* J9
+       *
+       * Hiding compressedref logic from CodeGen isn't a good practice, and the evaluator still needs the uncompressedref node for write barriers.
        * Therefore, this part is deprecated. It can only be activated on X, P or Z with the TR_UseOldCompareAndSwapObject envvar.
        *
-       * If TR_DisableCAEIntrinsic is set to disable inlining of compareAndExchange, compressedref logic will not be hidden for compareAndExchange
-       * calls even if TR_UseOldCompareAndSwapObject is set. The reason is that TR_DisableCAEIntrinsic takes priority over TR_UseOldCompareAndSwapObject
+       * If TR_DisableCAEInlining is set to disable inlining of compareAndExchange, compressedref logic will not be hidden for compareAndExchange
+       * calls even if TR_UseOldCompareAndSwapObject is set. The reason is that TR_DisableCAEInlining takes priority over TR_UseOldCompareAndSwapObject
        * so neither the old nor new version of the inlined compareAndExchange are used and the non-inlined version expects that the compressedrefs are
        * not hidden.
        *
-       * Similarly, TR_DisableCASInlining (which is only supported on X) can be used to disable inlining on both compareAndSwap and compareAndExchange.
-       * This also takes priority over TR_UseOldCompareAndSwapObject. Once again, the compressedrefs logic will not be hidden since it is expected by
-       * the non-inlined version.
+       * Similarly, TR_DisableCASInlining can be used to disable inlining of compareAndSet. This also takes priority over TR_UseOldCompareAndSwapObject.
+       * Once again, the compressedrefs logic will not be hidden since it is expected by the non-inlined version.
        */
       static bool useOldCompareAndSwapObject = (bool)feGetEnv("TR_UseOldCompareAndSwapObject");
-      static bool disableCASInlining = feGetEnv("TR_DisableCASInlining") != NULL;
-      if (((self()->comp()->target().cpu.isX86() && !disableCASInlining) || self()->comp()->target().cpu.isPower() || self()->comp()->target().cpu.isZ()) &&
+      if ((self()->comp()->target().cpu.isX86() || self()->comp()->target().cpu.isPower() || self()->comp()->target().cpu.isZ()) &&
           self()->comp()->useCompressedPointers() && useOldCompareAndSwapObject)
          {
          TR::MethodSymbol *methodSymbol = parent->getSymbol()->castToMethodSymbol();
-         static bool disableCAEIntrinsic = feGetEnv("TR_DisableCAEIntrinsic") != NULL;
+
+         bool disableCASInlining = !self()->getSupportsInlineUnsafeCompareAndSet();
+         bool disableCAEIntrinsic = !self()->getSupportsInlineUnsafeCompareAndExchange();
+
          // In Java9 Unsafe could be the jdk.internal JNI method or the sun.misc ordinary method wrapper,
          // while in Java8 it can only be the sun.misc package which will itself contain the JNI method.
          // Test for isNative to distinguish between them.
-         if (((methodSymbol->getRecognizedMethod() == TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z) ||
+         if ((((methodSymbol->getRecognizedMethod() == TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z) && !disableCASInlining) ||
               ((methodSymbol->getRecognizedMethod() == TR::jdk_internal_misc_Unsafe_compareAndExchangeObject) && !disableCAEIntrinsic) ||
               ((methodSymbol->getRecognizedMethod() == TR::jdk_internal_misc_Unsafe_compareAndExchangeReference) && !disableCAEIntrinsic)) &&
                methodSymbol->isNative() &&

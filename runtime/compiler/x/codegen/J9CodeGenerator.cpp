@@ -152,6 +152,18 @@ J9::X86::CodeGenerator::initialize()
       cg->setSupportsInlineVectorizedMismatch();
       }
 
+   static bool disableCASInlining = feGetEnv("TR_DisableCASInlining") != NULL;
+   if (!disableCASInlining)
+      {
+      cg->setSupportsInlineUnsafeCompareAndSet();
+      }
+
+   static bool disableCAEInlining = feGetEnv("TR_DisableCAEInlining") != NULL;
+   if (!disableCAEInlining)
+      {
+      cg->setSupportsInlineUnsafeCompareAndExchange();
+      }
+
    // Disable fast gencon barriers for AOT compiles because relocations on
    // the inlined heap addresses are not available (yet).
    //
@@ -529,21 +541,23 @@ J9::X86::CodeGenerator::supportsNonHelper(TR::SymbolReferenceTable::CommonNonhel
    }
 
 /*
- * This method returns TRUE for all the cases we decide NOT to replace the call to CAS
- * with inline assembly. The GRA and Evaluator should be consistent about whether to inline CAS natives.
+ * This method returns TRUE for all the cases we decide NOT to replace the call to CAS/CAE
+ * with inline assembly. The GRA and Evaluator should be consistent about whether to inline CAS/CAE natives.
  */
 static bool willNotInlineCompareAndSwapNative(TR::Node *node,
       int8_t size,
-      TR::Compilation *comp)
+      TR::Compilation *comp,
+      bool isExchange)
    {
    TR::SymbolReference *callSymRef = node->getSymbolReference();
    TR::MethodSymbol *methodSymbol = callSymRef->getSymbol()->castToMethodSymbol();
 
    if (TR::Compiler->om.canGenerateArraylets() && !node->isUnsafeGetPutCASCallOnNonArray())
       return true;
-   static char *disableCASInlining = feGetEnv("TR_DisableCASInlining");
 
-   if (disableCASInlining)
+   if (!isExchange && !comp->cg()->getSupportsInlineUnsafeCompareAndSet())
+      return true;
+   if (isExchange && !comp->cg()->getSupportsInlineUnsafeCompareAndExchange())
       return true;
 
    // In Java9 the sun.misc.Unsafe JNI methods have been moved to jdk.internal,
@@ -590,15 +604,18 @@ J9::X86::CodeGenerator::willBeEvaluatedAsCallByCodeGen(TR::Node *node, TR::Compi
    switch (methodSymbol->getRecognizedMethod())
       {
       case TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z:
-      case TR::jdk_internal_misc_Unsafe_compareAndExchangeInt:
-         return willNotInlineCompareAndSwapNative(node, 4, comp);
+         return willNotInlineCompareAndSwapNative(node, 4, comp, false);
       case TR::sun_misc_Unsafe_compareAndSwapLong_jlObjectJJJ_Z:
-      case TR::jdk_internal_misc_Unsafe_compareAndExchangeLong:
-         return willNotInlineCompareAndSwapNative(node, 8, comp);
+         return willNotInlineCompareAndSwapNative(node, 8, comp, false);
       case TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z:
+         return willNotInlineCompareAndSwapNative(node, TR::Compiler->om.sizeofReferenceField(), comp, false);
+      case TR::jdk_internal_misc_Unsafe_compareAndExchangeInt:
+         return willNotInlineCompareAndSwapNative(node, 4, comp, true);
+      case TR::jdk_internal_misc_Unsafe_compareAndExchangeLong:
+         return willNotInlineCompareAndSwapNative(node, 8, comp, true);
       case TR::jdk_internal_misc_Unsafe_compareAndExchangeObject:
       case TR::jdk_internal_misc_Unsafe_compareAndExchangeReference:
-         return willNotInlineCompareAndSwapNative(node, TR::Compiler->om.sizeofReferenceField(), comp);
+         return willNotInlineCompareAndSwapNative(node, TR::Compiler->om.sizeofReferenceField(), comp, true);
 
       default:
          break;

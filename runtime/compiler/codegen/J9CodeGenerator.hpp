@@ -542,6 +542,26 @@ public:
    */
    void setSupportsInlineMath_MaxMin_FD() { _j9Flags.set(SupportsInlineMath_MaxMin_FD); }
 
+   /** \brief
+   *    Determines whether the code generator supports inlining of jdk/internal/misc/Unsafe.CompareAndSet[Object|Reference|Int|Long]
+   */
+   bool getSupportsInlineUnsafeCompareAndSet() { return _j9Flags.testAny(SupportsInlineUnsafeCompareAndSet); }
+
+   /** \brief
+   *    The code generator supports inlining of jdk/internal/misc/Unsafe.CompareAndSet[Object|Reference|Int|Long]
+   */
+   void setSupportsInlineUnsafeCompareAndSet() { _j9Flags.set(SupportsInlineUnsafeCompareAndSet); }
+
+   /** \brief
+   *    Determines whether the code generator supports inlining of jdk/internal/misc/Unsafe.CompareAndExchange[Object|Reference|Int|Long]
+   */
+   bool getSupportsInlineUnsafeCompareAndExchange() { return _j9Flags.testAny(SupportsInlineUnsafeCompareAndExchange); }
+
+   /** \brief
+   *    The code generator supports inlining of jdk/internal/misc/Unsafe.CompareAndExchange[Object|Reference|Int|Long]
+   */
+   void setSupportsInlineUnsafeCompareAndExchange() { _j9Flags.set(SupportsInlineUnsafeCompareAndExchange); }
+
    /**
     * \brief
     *    The number of nodes between a monext and the next monent before
@@ -710,6 +730,8 @@ private:
       SupportsInlineStringCodingHasNegatives              = 0x00004000,
       SupportsInlineStringCodingCountPositives            = 0x00008000,
       SupportsInlineMath_MaxMin_FD                        = 0x00010000,
+      SupportsInlineUnsafeCompareAndSet                   = 0x00020000,
+      SupportsInlineUnsafeCompareAndExchange              = 0x00040000,
       };
 
    flags32_t _j9Flags;
