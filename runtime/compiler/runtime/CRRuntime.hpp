@@ -348,6 +348,16 @@ class CRRuntime
    void resetStartTime();
 
    /**
+    * @brief Closes various log files
+    */
+   void closeLogFiles();
+
+   /**
+    * @brief Reopens log files closed at checkpoint
+    */
+   void reopenLogFiles();
+
+   /**
     * @brief Helper method to push a J9Method onto the front of list that is
     *        used to memoize a future compilation of said J9Method. This method
     *        should only be called with the Comp Monitor in hand.

@@ -40,6 +40,7 @@
 #include "infra/Assert.hpp"
 #include "infra/CriticalSection.hpp"
 #include "infra/Monitor.hpp"
+#include "runtime/CodeRuntime.hpp"
 #include "runtime/CRRuntime.hpp"
 #include "runtime/IProfiler.hpp"
 #include "runtime/J9VMAccess.hpp"
@@ -678,6 +679,62 @@ TR::CRRuntime::resetStartTime()
    }
 
 void
+TR::CRRuntime::closeLogFiles()
+   {
+   TR_JitPrivateConfig *privateConfig = (TR_JitPrivateConfig*)getJITConfig()->privateConfig;
+
+   if (privateConfig->vLogFileName)
+      {
+      TR_VerboseLog::vlogAcquire();
+      j9jit_fclose(privateConfig->vLogFile);
+      privateConfig->vLogFile = NULL;
+      TR_VerboseLog::vlogRelease();
+      }
+
+   if (privateConfig->rtLogFileName)
+      {
+      JITRT_LOCK_LOG(getJITConfig());
+      j9jit_fclose(privateConfig->rtLogFile);
+      privateConfig->rtLogFile = NULL;
+      JITRT_UNLOCK_LOG(getJITConfig());
+
+      TR::CompilationInfoPerThread * const * arrayOfCompInfoPT = getCompInfo()->getArrayOfCompilationInfoPerThread();
+      for (int32_t i = 0; i < getCompInfo()->getNumTotalAllocatedCompilationThreads(); i++)
+         {
+         TR::CompilationInfoPerThread *compThreadInfoPT = arrayOfCompInfoPT[i];
+         compThreadInfoPT->closeRTLogFile();
+         }
+      }
+   }
+
+void
+TR::CRRuntime::reopenLogFiles()
+   {
+   TR_JitPrivateConfig *privateConfig = (TR_JitPrivateConfig*)getJITConfig()->privateConfig;
+
+   if (privateConfig->vLogFileName)
+      {
+      TR_VerboseLog::vlogAcquire();
+      privateConfig->vLogFile = fileOpen(TR::Options::getCmdLineOptions(), getJITConfig(), privateConfig->vLogFileName, "ab", false);
+      TR_VerboseLog::vlogRelease();
+      }
+
+   if (privateConfig->rtLogFileName)
+      {
+      JITRT_LOCK_LOG(getJITConfig());
+      privateConfig->rtLogFile = fileOpen(TR::Options::getCmdLineOptions(), getJITConfig(), privateConfig->rtLogFileName, "ab", false);
+      JITRT_UNLOCK_LOG(getJITConfig());
+
+      TR::CompilationInfoPerThread * const * arrayOfCompInfoPT = getCompInfo()->getArrayOfCompilationInfoPerThread();
+      for (int32_t i = 0; i < getCompInfo()->getNumTotalAllocatedCompilationThreads(); i++)
+         {
+         TR::CompilationInfoPerThread *compThreadInfoPT = arrayOfCompInfoPT[i];
+         compThreadInfoPT->openRTLogFile();
+         }
+      }
+   }
+
+void
 TR::CRRuntime::prepareForCheckpoint()
    {
    J9JavaVM   *vm       = getJITConfig()->javaVM;
@@ -751,6 +808,8 @@ TR::CRRuntime::prepareForCheckpoint()
 
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
       TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Ready for checkpoint");
+
+   closeLogFiles();
    }
 
 void
@@ -761,6 +820,8 @@ TR::CRRuntime::prepareForRestore()
 
    PORT_ACCESS_FROM_JAVAVM(vm);
    OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
+
+   reopenLogFiles();
 
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCheckpointRestore))
       TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE, "Preparing for restore");
