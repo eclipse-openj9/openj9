@@ -1049,12 +1049,14 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
 		if (try_scan(&scan_start, "enableVirtualLargeObjectHeap")) {
-			extensions->isVirtualLargeObjectHeapRequested = true;
+			extensions->virtualLargeObjectHeap._wasSpecified = true;
+			extensions->virtualLargeObjectHeap._valueSpecified = true;
 			continue;
 		}
 
 		if (try_scan(&scan_start, "disableVirtualLargeObjectHeap")) {
-			extensions->isVirtualLargeObjectHeapRequested = false;
+			extensions->virtualLargeObjectHeap._wasSpecified = true;
+			extensions->virtualLargeObjectHeap._valueSpecified = false;
 			continue;
 		}
 #endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
