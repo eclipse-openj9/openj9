@@ -27,7 +27,9 @@ import java.lang.invoke.MethodType;
 /*[ENDIF] JAVA_SPEC_VERSION >= 10 */
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Version;
+/*[IF JAVA_SPEC_VERSION < 24]*/
 import java.security.Permission;
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -125,11 +127,13 @@ public final class StackWalker {
 		}
 
 		if ((flags & J9_RETAIN_CLASS_REFERENCE) != 0) {
+			/*[IF JAVA_SPEC_VERSION < 24]*/
 			@SuppressWarnings("removal")
 			SecurityManager securityMgr = System.getSecurityManager();
 			if (null != securityMgr) {
 				securityMgr.checkPermission(PermissionSingleton.perm);
 			}
+			/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 			/*[IF JAVA_SPEC_VERSION >= 19]*/
 			this.retainClassRef = true;
 		} else {
@@ -166,9 +170,11 @@ public final class StackWalker {
 	 * @param option
 	 *            select the type of information to include
 	 * @return StackWalker instance configured with the value of option
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException
 	 *             if option is RETAIN_CLASS_REFERENCE and the security manager
 	 *             check fails
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public static StackWalker getInstance(Option option) {
 		Objects.requireNonNull(option);
@@ -181,9 +187,11 @@ public final class StackWalker {
 	 * @param options
 	 *            select the types of information to include
 	 * @return StackWalker instance configured with the given options
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException
 	 *             if RETAIN_CLASS_REFERENCE is requested and not permitted by
 	 *             the security manager
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public static StackWalker getInstance(Set<Option> options) {
 		return getInstance(options, DEFAULT_BUFFER_SIZE);
@@ -198,9 +206,11 @@ public final class StackWalker {
 	 *            hint for the size of buffer to use. Must be 1 or greater
 	 * @return StackWalker instance with the given options specifying the stack
 	 *         frame information it can access
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException
 	 *             if RETAIN_CLASS_REFERENCE is requested and not permitted by
 	 *             the security manager
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public static StackWalker getInstance(Set<Option> options, int estimatedDepth) {
 		Objects.requireNonNull(options);
@@ -585,8 +595,10 @@ public final class StackWalker {
 		/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 	}
 
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	static final class PermissionSingleton {
 		static final Permission perm =
 				new RuntimePermission("getStackWalkerWithClassReference"); //$NON-NLS-1$
 	}
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 }
