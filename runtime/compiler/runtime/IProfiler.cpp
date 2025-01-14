@@ -653,6 +653,12 @@ TR_IProfiler::TR_IProfiler(J9JITConfig *jitConfig)
          {
          _isIProfilingEnabled = false;
          }
+#if defined(TRACK_SAMPLE_SOURCES)
+      if (_isIProfilingEnabled)
+         {
+         _trackProfilingActivity = feGetEnv("TR_TrackIProfilerActivity") != NULL;
+         }
+#endif
       }
    }
 
@@ -3982,14 +3988,16 @@ TR_IProfiler::postIprofilingBufferToWorkingQueue(J9VMThread * vmThread, const U_
 // Method executed by the java thread when jitHookBytecodeProfiling() is called
 bool TR_IProfiler::processProfilingBuffer(J9VMThread *vmThread, const U_8* dataStart, UDATA size)
    {
-   if (_numOutstandingBuffers >= TR::Options::_iprofilerNumOutstandingBuffers ||
+   if ((_numOutstandingBuffers >= TR::Options::_iprofilerNumOutstandingBuffers ||
        _compInfo->getPersistentInfo()->getLoadFactor() >= 1) // More active threads than CPUs
+#if defined(TRACK_SAMPLE_SOURCES)
+       && !_trackProfilingActivity // If tracking is enabled we want to parse the buffer on the dedicated IProfiler thread
+#endif
+      )
       {
       if (100*_numRequestsSkipped >= (uint64_t)TR::Options::_iprofilerBufferMaxPercentageToDiscard * _numRequests)
          {
          // too many skipped requests; let the java thread handle this one
-         //records = parseBuffer(vmThread, cursor, size, iProfiler);
-         //setProfilingBufferCursor(vmThread, (U_8*)cursor);
          return false; // delegate the processing to the java thread
          }
       else // skip this request altogether
@@ -4004,8 +4012,6 @@ bool TR_IProfiler::processProfilingBuffer(J9VMThread *vmThread, const U_8* dataS
          {
          // If posting fails, we should let the app thread process the buffer
          return false;
-         //_numRequestsSkipped++;
-         //setProfilingBufferCursor(vmThread, (U_8*)dataStart);
          }
       }
    return true;
@@ -4144,6 +4150,55 @@ static inline uint16_t readU16(U_8 *_offset)
 static inline uint16_t readU16(U_8 *_offset) { return (*(U_16*)(_offset)); }
 #endif /* !FIXUP_UNALIGNED */
 
+#if defined(TRACK_SAMPLE_SOURCES)
+void
+TR_IProfiler::TopFiveMethods::processElement(const std::pair<const J9ROMMethod*, uint32_t>  & newElem)
+   {
+   if (_sortedList.size() == 5)
+      {
+      if (_sortedList.back().second < newElem.second)
+         {
+         // Take the last element out (smallest) to make room for the new one
+         _sortedList.pop_back();
+         }
+      }
+   if (_sortedList.size() < 5)
+      {
+      // Insert new element
+      bool inserted = false;
+      for (auto it = _sortedList.begin(); it != _sortedList.end(); ++it)
+         {
+         if (it->second < newElem.second) // compare number of samples
+            {
+            _sortedList.insert(it, newElem);
+            inserted = true;
+            break;
+            }
+         } // end for
+      if (!inserted)
+         {
+         _sortedList.push_back(newElem);
+         }
+      }
+   } // processElement
+
+void
+TR_IProfiler::TopFiveMethods::print(const std::map<const J9ROMMethod *, std::string> &methodNames)
+   {
+   TR_VerboseLog::vlogAcquire();
+   TR_VerboseLog::writeLine(TR_Vlog_IPROFILER, "Top five methods in terms of samples in the last interval:");
+   for (auto it = _sortedList.cbegin(); it != _sortedList.cend(); ++it)
+      {
+      const J9ROMMethod *romMethod = it->first;
+      uint32_t numSamples = it->second;
+      auto methodEntryIter = methodNames.find(romMethod);
+      const std::string methodName = (methodEntryIter != methodNames.end()) ? methodEntryIter->second : "";
+      TR_VerboseLog::writeLine(TR_Vlog_IPROFILER, "%lu samples in method %p %s", (unsigned long)numSamples, romMethod, methodName.c_str());
+      }
+   TR_VerboseLog::vlogRelease();
+   }
+
+#endif //#if defined(TRACK_SAMPLE_SOURCES)
 
 //------------------------------ parseBuffer -------------------------
 // Parses a buffer from the VM and populates a hash table
@@ -4414,7 +4469,39 @@ UDATA TR_IProfiler::parseBuffer(J9VMThread * vmThread, const U_8* dataStart, UDA
 
       if (addSample && !verboseReparse)
          {
-         profilingSample ((uintptr_t)pc, (uintptr_t)data, true);
+         TR_IPBytecodeHashTableEntry *entry = profilingSample ((uintptr_t)pc, (uintptr_t)data, true);
+#if defined(TRACK_SAMPLE_SOURCES)
+         if (_trackProfilingActivity && entry && vmThread == _iprofilerThread) // only IProfiler thread is allowed to execute this)
+            {
+            // If this sample does not yet have the romMethod set, find it and set it
+            if (entry->getROMMethod() == NULL)
+               {
+               J9ROMClass *romClass = NULL;
+               J9ROMMethod *romMethod = findROMMethodFromPC(vmThread, (uintptr_t)pc, romClass);
+               entry->setROMMethod(romMethod);
+               // Determine the full method name and memorize it
+               if (romMethod && romClass)
+                  {
+                  auto methodIt = _methodNames.find(romMethod);
+                  if (methodIt == _methodNames.end())
+                     {
+                     J9UTF8* className = J9ROMCLASS_CLASSNAME(romClass);
+                     J9UTF8* name = J9ROMMETHOD_NAME(romMethod);
+                     J9UTF8* signature = J9ROMMETHOD_SIGNATURE(romMethod);
+                     std::string fullMethodName(utf8Data(className), J9UTF8_LENGTH(className));
+                     size_t len = J9UTF8_LENGTH(className) + J9UTF8_LENGTH(name) + J9UTF8_LENGTH(signature) + 2;
+                     fullMethodName.reserve(len);
+                     fullMethodName.push_back('.');
+                     fullMethodName.append(utf8Data(name), J9UTF8_LENGTH(name));
+                     fullMethodName.append(utf8Data(signature), J9UTF8_LENGTH(signature));
+                     _methodNames.insert({romMethod, fullMethodName});
+                     }
+                  }
+               }
+            // Search the hashtable for my method and increment the number of samples
+            _samplesPerMethod[entry->getROMMethod()]++;
+            }
+#endif
          records++;
          }
       }
@@ -4426,7 +4513,31 @@ UDATA TR_IProfiler::parseBuffer(J9VMThread * vmThread, const U_8* dataStart, UDA
       return 0;
       }
    _iprofilerNumRecords += records;
-
+#if defined(TRACK_SAMPLE_SOURCES)
+   // If enough time has passed since the last operation
+   // determine the top 5 romMethods with the most number of samples and
+   // print their names. Then clear _samplesPerMethod and start all over.
+   static uint64_t lastPrintTime = 0;
+   static uint64_t lastNumIPsamples = 0;
+   if (_trackProfilingActivity  &&  vmThread == _iprofilerThread) // only IProfiler thread is allowed to execute this)
+      {
+      uint64_t crtTime = _compInfo->getPersistentInfo()->getElapsedTime();
+      if (crtTime - lastPrintTime >= 5000) // every 5 seconds or so
+         {
+         TopFiveMethods topFive;
+         for (auto it = _samplesPerMethod.begin(); it != _samplesPerMethod.end(); ++it)
+            topFive.processElement(*it);
+         TR_VerboseLog::writeLineLocked(TR_Vlog_IPROFILER, "t=%lu IP samples in the last interval = %lu Total CPU spent in IP thread = %u ms",
+            (unsigned long)crtTime, (unsigned long)(_iprofilerNumRecords - lastNumIPsamples),
+            (unsigned)(j9thread_get_self_cpu_time(j9thread_self())/1000000));
+         topFive.print(_methodNames);
+         // Prepare for next interval
+         _samplesPerMethod.clear();
+         lastPrintTime = crtTime;
+         lastNumIPsamples = _iprofilerNumRecords;
+         }
+      }
+#endif
    return records;
    }
 
