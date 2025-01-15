@@ -52,6 +52,9 @@ const float TR_J9EstimateCodeSize::CONST_ARG_IN_CALLEE_ADJUSTMENT_FACTOR = 0.75f
 
 #define DEFAULT_KNOWN_OBJ_WEIGHT 10
 
+#define DEFAULT_FREQ_CUTOFF 40
+
+
 /*
 DEFINEs are ugly in general, but putting
    if (tracer)
@@ -1294,7 +1297,11 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
       return returnCleanup(ECS_VISITED_COUNT_THRESHOLD_EXCEEDED);
       }
 
-   if (_recursionDepth > MAX_ECS_RECURSION_DEPTH)
+
+   static const char *mrd = feGetEnv("TR_MaxRecursionDepth");
+   static const int32_t maxRecDepth = mrd ? atoi(mrd) : MAX_ECS_RECURSION_DEPTH;
+
+   if (_recursionDepth > maxRecDepth)
       {
       calltarget->_isPartialInliningCandidate = false;
       heuristicTrace(tracer(), "*** Depth %d: ECS end for target %p signature %s. Exceeded Recursion Depth", _recursionDepth, calltarget, callerName);
@@ -1669,7 +1676,9 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                   }
                else
                   {
-                  int32_t freqCutoff = 40;
+                  static const char *fc = feGetEnv("TR_FrequencyCutoff");
+                  static const int32_t freqCutoff = fc ? atoi(fc) : DEFAULT_FREQ_CUTOFF;
+
                   bool isColdCall = (((comp()->getMethodHotness() <= warm) && profileManager->isColdCall(targetCallee->_calleeMethod->getPersistentIdentifier(), calltarget->_calleeMethod->getPersistentIdentifier(), i, comp())) || (currentBlock->getFrequency() < freqCutoff)) && !_inliner->alwaysWorthInlining(targetCallee->_calleeMethod, NULL);
 
                   if (coldCallInfoIsReliable && isColdCall)
@@ -1802,6 +1811,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                      calltarget->addDeadCallee(callSites[i]);
                      j--;
                      _numOfEstimatedCalls--;
+                     heuristicTrace(tracer(),"Depth %d: estimateCodeSize skipping estimated call and resetting _optimisticSize to %d and _realSize to %d", _recursionDepth, _optimisticSize, _realSize);
                      }
 
                   if(comp()->getVisitCount() > HIGH_VISIT_COUNT)
@@ -1823,6 +1833,8 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                      calltarget->addDeadCallee(callSites[i]);
                      j--;
                      _numOfEstimatedCalls--;
+
+                     heuristicTrace(tracer(),"Depth %d: estimateCodeSize skipping too big estimated call and resetting _optimisticSize to %d and _realSize to %d", _recursionDepth, _optimisticSize, _realSize);
                      }
 
                   if(comp()->getVisitCount() > HIGH_VISIT_COUNT)
@@ -1836,7 +1848,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                }
             else
                {
-               heuristicTrace(tracer(),"Depth %d: estimateCodeSize aborting due to _optimisticSize: %d > sizeThreshold: %d",_optimisticSize,sizeThreshold);
+               heuristicTrace(tracer(),"Depth %d: estimateCodeSize aborting due to _optimisticSize: %d > sizeThreshold: %d", _recursionDepth, _optimisticSize,sizeThreshold);
                break;
                }
             }
