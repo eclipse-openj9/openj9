@@ -83,7 +83,9 @@ public class ImageFactory implements com.ibm.dtfj.image.ImageFactory {
 		try {
 			Module baseModule = String.class.getModule();
 
+			/*[IF JAVA_SPEC_VERSION < 24]*/
 			Modules.addExportsToAllUnnamed(baseModule, "jdk.internal.org.objectweb.asm"); //$NON-NLS-1$
+			/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 			Module thisModule = ImageFactory.class.getModule();
 
