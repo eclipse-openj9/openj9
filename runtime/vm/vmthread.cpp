@@ -348,6 +348,11 @@ allocateVMThread(J9JavaVM *vm, omrthread_t osThread, UDATA privateFlags, void *m
 	/* Update counters for total # of threads and daemon threads and notify anyone waiting */
 
 	++(vm->totalThreadCount);
+	++(vm->accumulatedThreadCount);
+	if (vm->totalThreadCount > vm->peakThreadCount) {
+		vm->peakThreadCount = vm->totalThreadCount;
+	}
+
 	if (privateFlags & J9_PRIVATE_FLAGS_DAEMON_THREAD) {
 		++(vm->daemonThreadCount);
 	}

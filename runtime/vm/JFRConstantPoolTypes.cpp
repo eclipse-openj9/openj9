@@ -1126,6 +1126,8 @@ VM_JFRConstantPoolTypes::addThreadParkEntry(J9JFRThreadParked* threadParkData)
 	entry->timeOut = threadParkData->timeOut;
 	entry->untilTime = threadParkData->untilTime;
 
+	_threadParkCount += 1;
+
 done:
 	return;
 }
@@ -1215,6 +1217,28 @@ VM_JFRConstantPoolTypes::addThreadContextSwitchRateEntry(J9JFRThreadContextSwitc
 	entry->switchRate = threadContextSwitchRateData->switchRate;
 
 	_threadContextSwitchRateCount += 1;
+}
+
+void
+VM_JFRConstantPoolTypes::addThreadStatisticsEntry(J9JFRThreadStatistics *threadStatisticsData)
+{
+	ThreadStatisticsEntry *entry = (ThreadStatisticsEntry *)pool_newElement(_threadStatisticsTable);
+
+	if (NULL == entry) {
+		_buildResult = OutOfMemory;
+		goto done;
+	}
+
+	entry->ticks = threadStatisticsData->startTicks;
+	entry->activeThreadCount = threadStatisticsData->activeThreadCount;
+	entry->daemonThreadCount = threadStatisticsData->daemonThreadCount;
+	entry->accumulatedThreadCount = threadStatisticsData->accumulatedThreadCount;
+	entry->peakThreadCount = threadStatisticsData->peakThreadCount;
+
+	_threadStatisticsCount += 1;
+
+done:
+	return;
 }
 
 void

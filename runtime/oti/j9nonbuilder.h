@@ -453,6 +453,14 @@ typedef struct J9JFRClassLoadingStatistics {
 	I_64 unloadedClassCount;
 } J9JFRClassLoadingStatistics;
 
+typedef struct J9JFRThreadStatistics {
+	J9JFR_EVENT_COMMON_FIELDS
+	U_32 activeThreadCount;
+	U_32 daemonThreadCount;
+	U_32 accumulatedThreadCount;
+	U_32 peakThreadCount;
+} J9JFRThreadStatistics;
+
 typedef struct J9JFRThreadContextSwitchRate {
 	J9JFR_EVENT_COMMON_FIELDS
 	float switchRate;
@@ -5873,6 +5881,8 @@ typedef struct J9JavaVM {
 	UDATA anonClassCount;
 	UDATA totalThreadCount;
 	UDATA daemonThreadCount;
+	UDATA accumulatedThreadCount;
+	UDATA peakThreadCount;
 	omrthread_t finalizeMainThread;
 	omrthread_monitor_t finalizeMainMonitor;
 	omrthread_monitor_t processReferenceMonitor; /* the monitor for synchronizing between reference process and j9gc_wait_for_reference_processing() (only for Java 9 and later) */

@@ -911,4 +911,35 @@ VM_JFRChunkWriter::writeThreadContextSwitchRateEvent(void *anElement, void *user
 	_bufferWriter->writeLEB128PaddedU32(dataStart, (U_32)(_bufferWriter->getCursor() - dataStart));
 }
 
+void
+VM_JFRChunkWriter::writeThreadStatisticsEvent(void *anElement, void *userData)
+{
+	ThreadStatisticsEntry *entry = (ThreadStatisticsEntry *)anElement;
+	VM_BufferWriter *_bufferWriter = (VM_BufferWriter *)userData;
+
+	/* reserve event size */
+	U_8 *dataStart = _bufferWriter->getAndIncCursor(sizeof(U_32));
+
+	/* write event type */
+	_bufferWriter->writeLEB128(ThreadStatisticsID);
+
+	/* write start ticks */
+	_bufferWriter->writeLEB128(entry->ticks);
+
+	/* write active thread count */
+	_bufferWriter->writeLEB128(entry->activeThreadCount);
+
+	/* write daemon thread count */
+	_bufferWriter->writeLEB128(entry->daemonThreadCount);
+
+	/* write accumulated thread count */
+	_bufferWriter->writeLEB128(entry->accumulatedThreadCount);
+
+	/* write peak thread count */
+	_bufferWriter->writeLEB128(entry->peakThreadCount);
+
+	/* write size */
+	_bufferWriter->writeLEB128PaddedU32(dataStart, _bufferWriter->getCursor() - dataStart);
+}
+
 #endif /* defined(J9VM_OPT_JFR) */
