@@ -28,7 +28,6 @@
 #include "j9port.h"
 #include <string.h>
 
-
 /**
  * Determine if DLPAR (i.e. the ability to change number of CPUs and amount of memory dynamically)
  * is enabled on this platform.
@@ -51,7 +50,7 @@ j9sysinfo_DLPAR_enabled(struct J9PortLibrary *portLibrary)
  * @return the classpathSeparator character.
  */
 uint16_t
-j9sysinfo_get_classpathSeparator(struct J9PortLibrary *portLibrary )
+j9sysinfo_get_classpathSeparator(struct J9PortLibrary *portLibrary)
 {
 	return ';';
 }
@@ -93,7 +92,7 @@ j9sysinfo_startup(struct J9PortLibrary *portLibrary)
 
 /**
  * Determine if the platform has weak memory consistency behaviour.
- * 
+ *
  * @param[in] portLibrary The port library.
  *
  * @return 1 if weak memory consistency, 0 otherwise.
@@ -103,12 +102,13 @@ j9sysinfo_weak_memory_consistency(struct J9PortLibrary *portLibrary)
 {
 	return FALSE;
 }
+
 /**
  * Determine the maximum number of CPUs on this platform
  *
  * @param[in] portLibrary The port library.
  *
- * @return The maximum number of supported CPUs..
+ * @return The maximum number of supported CPUs.
  */
 uintptr_t
 j9sysinfo_DLPAR_max_CPUs(struct J9PortLibrary *portLibrary)
@@ -133,47 +133,17 @@ j9sysinfo_get_processing_capacity(struct J9PortLibrary *portLibrary)
 }
 
 /**
- * Determine CPU type and features.
- *
- * @param[in] portLibrary The port library.
- * @param[out] desc pointer to the struct that will contain the CPU type and features.
- *              - desc will still be initialized if there is a failure.
- *
- * @return 0 on success, -1 on failure
- */
-intptr_t
-j9sysinfo_get_processor_description(struct J9PortLibrary *portLibrary, J9ProcessorDesc *desc)
-{
-	return -1;
-}
-
-/**
- * Determine if a CPU feature is present.
- *
- * @param[in] portLibrary The port library.
- * @param[in] desc The struct that will contain the CPU type and features.
- * @param[in] feature The feature to check (see j9port.h for list of features J9PORT_{PPC,S390,PPC}_FEATURE_*)
- *
- * @return TRUE if feature is present, FALSE otherwise.
- */
-BOOLEAN
-j9sysinfo_processor_has_feature(struct J9PortLibrary *portLibrary, J9ProcessorDesc *desc, uint32_t feature)
-{
-	return FALSE;
-}
-
-/**
- * Retrieve hardware information such as model. The information is returned in 
+ * Retrieve hardware information such as model. The information is returned in
  * an ASCII string.
  *
  * @param portLibrary instance of port library
- * @param infoType A number representing the information that is being 
+ * @param infoType A number representing the information that is being
  * requested (e.g., J9PORT_SYSINFO_GET_HW_INFO_MODEL for hw model)
- * @param buf buffer where string containing the information requested will 
+ * @param buf buffer where string containing the information requested will
  * be written to
  * @param bufLen Length of buf
  *
- * @return J9PORT_SYSINFO_GET_HW_INFO_SUCCESS in case of success. Any other 
+ * @return J9PORT_SYSINFO_GET_HW_INFO_SUCCESS in case of success. Any other
  * value represents a failure.
  */
 int32_t
@@ -183,7 +153,6 @@ j9sysinfo_get_hw_info(struct J9PortLibrary *portLibrary, uint32_t infoType,
 	return J9PORT_SYSINFO_GET_HW_INFO_NOT_AVAILABLE;
 }
 
-
 /**
  * Return information about the CPU caches, such as number of levels, cache sizes and types, lines size, etc.
  * @param[in] portLibrary The Port Library instance
@@ -191,6 +160,7 @@ j9sysinfo_get_hw_info(struct J9PortLibrary *portLibrary, uint32_t infoType,
  * @return requested information: may be integer or bit-map data.
  */
 IDATA
-j9sysinfo_get_cache_info(struct J9PortLibrary *portLibrary, struct const J9CacheInfoQuery * query) {
+j9sysinfo_get_cache_info(struct J9PortLibrary *portLibrary, struct const J9CacheInfoQuery * query)
+{
 	return J9PORT_ERROR_SYSINFO_NOT_SUPPORTED;
 }

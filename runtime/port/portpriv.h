@@ -234,10 +234,6 @@ extern J9_CFUNC void
 j9sysinfo_shutdown (struct J9PortLibrary *portLibrary);
 extern J9_CFUNC uint16_t
 j9sysinfo_get_classpathSeparator (struct J9PortLibrary *portLibrary );
-extern J9_CFUNC intptr_t
-j9sysinfo_get_processor_description(struct J9PortLibrary *portLibrary, J9ProcessorDesc *desc);
-extern J9_CFUNC BOOLEAN
-j9sysinfo_processor_has_feature(struct J9PortLibrary *portLibrary, J9ProcessorDesc *desc, uint32_t feature);
 extern J9_CFUNC int32_t
 j9sysinfo_get_hw_info(struct J9PortLibrary *portLibrary, uint32_t infoType, char * buf, uint32_t bufLen);
 extern J9_CFUNC int32_t

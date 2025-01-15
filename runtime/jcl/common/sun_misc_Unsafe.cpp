@@ -887,19 +887,19 @@ Java_jdk_internal_misc_Unsafe_writebackMemory(JNIEnv *env, jobject receiver, jlo
 
 		VM_AtomicSupport::readWriteBarrier();
 		switch (vm->cpuCacheWritebackCapabilities) {
-		case J9PORT_X86_FEATURE_CLWB:
+		case OMR_FEATURE_X86_CLWB:
 			do {
 				cacheLine += cacheLineSize;
 				asm volatile("clwb %0" : "+m" (*(U_8 *)cacheLine));
 			} while (lastCacheLine != cacheLine);
 			break;
-		case J9PORT_X86_FEATURE_CLFLUSHOPT:
+		case OMR_FEATURE_X86_CLFLUSHOPT:
 			do {
 				cacheLine += cacheLineSize;
 				asm volatile("clflushopt %0" : "+m" (*(U_8 *)cacheLine));
 			} while (lastCacheLine != cacheLine);
 			break;
-		case J9PORT_X86_FEATURE_CLFSH:
+		case OMR_FEATURE_X86_CLFSH:
 			do {
 				cacheLine += cacheLineSize;
 				asm volatile("clflush %0" : "+m" (*(U_8 *)cacheLine));
@@ -937,9 +937,9 @@ Java_jdk_internal_misc_Unsafe_isWritebackEnabled(JNIEnv *env, jclass clazz)
 	J9JavaVM *vm = currentThread->javaVM;
 	if (vm->dCacheLineSize > 0) {
 		switch (vm->cpuCacheWritebackCapabilities) {
-		case J9PORT_X86_FEATURE_CLWB:
-		case J9PORT_X86_FEATURE_CLFLUSHOPT:
-		case J9PORT_X86_FEATURE_CLFSH:
+		case OMR_FEATURE_X86_CLFLUSHOPT:
+		case OMR_FEATURE_X86_CLFSH:
+		case OMR_FEATURE_X86_CLWB:
 			result = JNI_TRUE;
 			break;
 		default:

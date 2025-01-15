@@ -1207,23 +1207,27 @@ initializeJavaVM(void * osMainThread, J9JavaVM ** vmPtr, J9CreateJavaVMParams *c
 	}
 #endif /* J9VM_OPT_JITSERVER */
 
-
 /*
  * Disable AVX+ vector register preservation on x86 due to a large performance regression.
  * Issue: #15716
  */
 #if defined(J9HAMMER) && (JAVA_SPEC_VERSION >= 17) && 0
-	J9ProcessorDesc desc;
-	j9sysinfo_get_processor_description(&desc);
+{
+	OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
+	OMRProcessorDesc desc;
+	omrsysinfo_get_processor_description(&desc);
 
-	if (j9sysinfo_processor_has_feature(&desc, J9PORT_X86_FEATURE_AVX512F) && j9sysinfo_processor_has_feature(&desc, J9PORT_X86_FEATURE_AVX512BW)) {
+	if (omrsysinfo_processor_has_feature(&desc, OMR_FEATURE_X86_AVX512F)
+	&&  omrsysinfo_processor_has_feature(&desc, OMR_FEATURE_X86_AVX512BW)
+	) {
 		vm->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS;
 		vm->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_USE_EXTENDED_VECTOR_REGISTERS;
-	} else if (j9sysinfo_processor_has_feature(&desc, J9PORT_X86_FEATURE_AVX512F)) {
+	} else if (omrsysinfo_processor_has_feature(&desc, OMR_FEATURE_X86_AVX512F)) {
 		vm->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_USE_EXTENDED_VECTOR_REGISTERS;
-	} else if (j9sysinfo_processor_has_feature(&desc, J9PORT_X86_FEATURE_AVX)) {
+	} else if (omrsysinfo_processor_has_feature(&desc, OMR_FEATURE_X86_AVX)) {
 		vm->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS;
 	}
+}
 #endif /* defined(J9HAMMER) && (JAVA_SPEC_VERSION >= 17) && 0 */
 
 	initArgs.j2seVersion = createParams->j2seVersion;
@@ -7275,16 +7279,17 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 
 #if defined(J9X86) || defined(J9HAMMER)
 	{
-		J9ProcessorDesc desc;
-		j9sysinfo_get_processor_description(&desc);
+		OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
+		OMRProcessorDesc desc;
+		omrsysinfo_get_processor_description(&desc);
 		/* cache line size in bytes is the value of bits 8-15 * 8 */
 		vm->dCacheLineSize = ((desc.features[2] & 0xFF00) >> 8) * 8;
-		if (j9sysinfo_processor_has_feature(&desc, J9PORT_X86_FEATURE_CLWB)) {
-			vm->cpuCacheWritebackCapabilities = J9PORT_X86_FEATURE_CLWB;
-		} else if (j9sysinfo_processor_has_feature(&desc, J9PORT_X86_FEATURE_CLFLUSHOPT)) {
-			vm->cpuCacheWritebackCapabilities = J9PORT_X86_FEATURE_CLFLUSHOPT;
-		} else if (j9sysinfo_processor_has_feature(&desc, J9PORT_X86_FEATURE_CLFSH)) {
-			vm->cpuCacheWritebackCapabilities = J9PORT_X86_FEATURE_CLFSH;
+		if (omrsysinfo_processor_has_feature(&desc, OMR_FEATURE_X86_CLWB)) {
+			vm->cpuCacheWritebackCapabilities = OMR_FEATURE_X86_CLWB;
+		} else if (omrsysinfo_processor_has_feature(&desc, OMR_FEATURE_X86_CLFLUSHOPT)) {
+			vm->cpuCacheWritebackCapabilities = OMR_FEATURE_X86_CLFLUSHOPT;
+		} else if (omrsysinfo_processor_has_feature(&desc, OMR_FEATURE_X86_CLFSH)) {
+			vm->cpuCacheWritebackCapabilities = OMR_FEATURE_X86_CLFSH;
 		}
 	}
 #endif /* x86 */
