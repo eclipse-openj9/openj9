@@ -57,6 +57,7 @@ method already exists in the SCC and loads that instead.
 8. [Inlined Methods](InlinedMethods.md)
 9. [Adding New Relocation Records](AddingNewRelocation.md)
 10. [Diagnostics](Diagnostics.md)
+11. [Dependency-based AOT load scheduling](LoadingByDependency.md)
 
 <hr/>
 
