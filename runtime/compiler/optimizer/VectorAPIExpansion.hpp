@@ -225,6 +225,7 @@ class TR_VectorAPIExpansion : public TR::Optimization
       Invalid
       };
 
+   static const char *vapiObjTypeNames[];
 
   /** \brief
    *  Used to specify Vector API opcode category
