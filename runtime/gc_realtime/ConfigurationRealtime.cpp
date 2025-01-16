@@ -108,7 +108,9 @@ MM_Heap *
 MM_ConfigurationRealtime::createHeapWithManager(MM_EnvironmentBase *env, uintptr_t heapBytesRequested, MM_HeapRegionManager *regionManager)
 {
 	MM_GCExtensionsBase *extensions = env->getExtensions();
-
+	J9JavaVM *vm = (J9JavaVM *)extensions->getOmrVM()->_language_vm;
+	/* Let VM know that Metronome GC has discontiguous indexable object (arraylet layout) */
+	vm->indexableObjectLayout = J9IndexableObjectLayout_NoDataAddr_Arraylet;
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
 	PORT_ACCESS_FROM_ENVIRONMENT(env);
 

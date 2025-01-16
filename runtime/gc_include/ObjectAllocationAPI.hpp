@@ -321,7 +321,7 @@ public:
 		: _gcAllocationType(currentThread->javaVM->gcAllocationType)
 		, _contiguousIndexableHeaderSize(currentThread->contiguousIndexableHeaderSize)
 #if defined(J9VM_ENV_DATA64)
-		, _isIndexableDataAddrPresent(currentThread->isIndexableDataAddrPresent)
+		, _isIndexableDataAddrPresent(currentThread->javaVM->isIndexableDataAddrPresent)
 #endif /* defined(J9VM_ENV_DATA64) */
 #if defined(J9VM_GC_BATCH_CLEAR_TLH)
 		, _initializeSlotsOnTLHAllocate(currentThread->javaVM->initializeSlotsOnTLHAllocate)

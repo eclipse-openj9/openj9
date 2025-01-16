@@ -196,8 +196,7 @@ allocateVMThread(J9JavaVM *vm, omrthread_t osThread, UDATA privateFlags, void *m
 	newThread->discontiguousIndexableHeaderSize = vm->discontiguousIndexableHeaderSize;
 	newThread->unsafeIndexableHeaderSize = vm->unsafeIndexableHeaderSize;
 #if defined(J9VM_ENV_DATA64)
-	newThread->isIndexableDataAddrPresent = vm->isIndexableDataAddrPresent;
-	newThread->isVirtualLargeObjectHeapEnabled = vm->isVirtualLargeObjectHeapEnabled;
+	newThread->indexableObjectLayout = vm->indexableObjectLayout;
 #endif /* defined(J9VM_ENV_DATA64) */
 
 	newThread->privateFlags = privateFlags;
