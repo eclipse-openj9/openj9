@@ -28,6 +28,11 @@
 #include "vm_internal.h"
 #include "j9cp.h"
 #include "j9consts.h"
+
+#if JAVA_SPEC_VERSION >= 24
+#include "objhelp.h"
+#endif /* JAVA_SPEC_VERSION >= 24 */
+
 #include "OutOfLineINL.hpp"
 #include "VMHelpers.hpp"
 #include "AtomicSupport.hpp"
@@ -1110,7 +1115,9 @@ lookupJNINative(J9VMThread *currentThread, J9NativeLibrary *nativeLibrary, J9Met
 		if (NULL != entryName) {
 #if JAVA_SPEC_VERSION >= 24
 			J9ROMMethod *nativeROMMethod = J9_ROM_METHOD_FROM_RAM_METHOD(nativeMethod);
+			PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, entryName);
 			j9object_t javaName = mmFuncs->j9gc_createJavaLangStringWithUTFCache(currentThread, J9ROMMETHOD_NAME(nativeROMMethod));
+			entryName = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
 			if (NULL != javaName)
 #endif /* JAVA_SPEC_VERSION >= 24 */
 			{
