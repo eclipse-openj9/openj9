@@ -1125,6 +1125,8 @@ VM_JFRConstantPoolTypes::addThreadParkEntry(J9JFRThreadParked* threadParkData)
 	entry->timeOut = threadParkData->timeOut;
 	entry->untilTime = threadParkData->untilTime;
 
+	_threadParkCount += 1;
+
 done:
 	return;
 }
