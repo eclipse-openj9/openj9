@@ -158,6 +158,7 @@ private:
 	static constexpr int THREAD_END_EVENT_SIZE = (4 * sizeof(U_64)) + sizeof(U_32);
 	static constexpr int THREAD_SLEEP_EVENT_SIZE = (7 * sizeof(U_64)) + sizeof(U_32);
 	static constexpr int MONITOR_WAIT_EVENT_SIZE = (9 * sizeof(U_64)) + sizeof(U_32);
+	static constexpr int THREAD_PARK_EVENT_SIZE = (9 * sizeof(U_64)) + sizeof(U_32);
 	static constexpr int JVM_INFORMATION_EVENT_SIZE = 3000;
 	static constexpr int PHYSICAL_MEMORY_EVENT_SIZE = (4 * sizeof(U_64)) + sizeof(U_32);
 	static constexpr int VIRTUALIZATION_INFORMATION_EVENT_SIZE = 50;
@@ -767,6 +768,8 @@ done:
 		requiredBufferSize += (_constantPoolTypes.getThreadSleepCount() * THREAD_SLEEP_EVENT_SIZE);
 
 		requiredBufferSize += (_constantPoolTypes.getMonitorWaitCount() * MONITOR_WAIT_EVENT_SIZE);
+
+		requiredBufferSize += (_constantPoolTypes.getThreadParkCount() * THREAD_PARK_EVENT_SIZE);
 
 		requiredBufferSize += JVM_INFORMATION_EVENT_SIZE;
 
