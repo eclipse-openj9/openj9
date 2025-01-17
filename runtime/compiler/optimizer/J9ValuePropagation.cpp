@@ -1768,6 +1768,10 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
          }
       case TR::java_lang_Class_getComponentType:
          {
+         // Constrain the call in the last run of vp to avoid adding the transformation twice if the call is inside a loop.
+         if (!lastTimeThrough())
+            return;
+
          TR::Node *classChild = node->getLastChild();
          bool classChildGlobal;
          TR::VPConstraint *classChildConstraint = getConstraint(classChild, classChildGlobal);
