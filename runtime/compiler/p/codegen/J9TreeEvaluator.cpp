@@ -11939,8 +11939,27 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
       {
       bool disableCASInlining = !cg->getSupportsInlineUnsafeCompareAndSet();
       bool disableCAEInlining = !cg->getSupportsInlineUnsafeCompareAndExchange();
+      static bool disableOSW = feGetEnv("TR_noPauseOnSpinWait") != NULL;
       switch (methodSymbol->getRecognizedMethod())
          {
+      case TR::java_lang_Thread_onSpinWait:
+         {
+         if (!disableOSW)
+            {
+            if (comp->getOption(TR_TraceCG))
+               {
+               traceMsg(comp, "Inlining Thread.onSpinWait call node %p as yield instruction.\n", node);
+               }
+
+            /*
+             * onSpinWait() method calls VM_AtomicSupport::yieldCPU() which is a yield instruction encoded as "or r27, r27, r27".
+             * Check omr/include_core/AtomicSupport.hpp for the JNI implementation.
+             */
+            generateInstruction(cg, TR::InstOpCode::yield, node);
+            return true;
+            }
+         break;
+         }
       case TR::java_util_concurrent_ConcurrentLinkedQueue_tmOffer:
          {
          if (cg->getSupportsInlineConcurrentLinkedQueue())
