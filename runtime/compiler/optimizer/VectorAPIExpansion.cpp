@@ -583,6 +583,16 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node, bool verify
             createClassesForBoxing(node->getSymbolReference()->getOwningMethod(comp()), methodElementType, bitsLength);
             }
          }
+
+         if (isVectorAPICall && _trace)
+            {
+            traceMsg(comp(), "Parsed intrinsic call node %p: elementType=%s vecLen=%d objectType=%s\n",
+                             node,
+                             TR::DataType::getName(_nodeTable[nodeIndex]._elementType),
+                             _nodeTable[nodeIndex]._vecLen,
+                             vapiObjTypeNames[_nodeTable[nodeIndex]._objectType]);
+            }
+
       }
    else if (opCode.isLoadAddr())
       {
@@ -1748,15 +1758,19 @@ TR_VectorAPIExpansion::transformIL(bool checkBoxing)
 
       if (opCodeValue == TR::astore)
          {
-         if (_trace)
-            traceMsg(comp(), "%s astore %p (temp class #%d)\n", checkBoxing ? "Checking for boxing" : "Handling",
-                              node, tempClassId);
-
          TR::DataType elementType = _aliasTable[tempClassId]._elementType;
          int32_t bitsLength = _aliasTable[tempClassId]._vecLen;
+         vapiObjType objectType = _aliasTable[tempClassId]._objectType;
          TR::VectorLength vectorLength = OMR::DataType::bitsToVectorLength(bitsLength);
          int32_t elementSize = OMR::DataType::getSize(elementType);
          numLanes = bitsLength/8/elementSize;
+
+         if (_trace)
+            {
+            traceMsg(comp(), "%s astore %p (temp class #%d) elementType=%d vectorLength=%d objectType=%s\n",
+                              checkBoxing ? "Checking for boxing" : "Transforming",
+                              node, tempClassId, elementType, vectorLength, vapiObjTypeNames[objectType]);
+            }
 
          if (boxingAllowed())
             {
@@ -3421,6 +3435,19 @@ TR::Node *TR_VectorAPIExpansion::transformNary(TR_VectorAPIExpansion *opt, TR::T
    return node;
 }
 
+const char*
+TR_VectorAPIExpansion::vapiObjTypeNames[] =
+   {
+   "Unknown",
+   "Vector",
+   "Species",
+   "ElementType",
+   "NumLanes",
+   "Mask",
+   "Scalar",
+   "Shuffle",
+   "Invalid"
+   };
 
 // high level methods are disabled because they require exception handling
 TR_VectorAPIExpansion::methodTableEntry
