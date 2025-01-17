@@ -43,7 +43,7 @@ J9_DECLARE_CONSTANT_UTF8(nullString, "(nullString)");
 J9_DECLARE_CONSTANT_UTF8(unknownClass, "(defaultPackage)/(unknownClass)");
 J9_DECLARE_CONSTANT_UTF8(nativeMethod, "(nativeMethod)");
 J9_DECLARE_CONSTANT_UTF8(nativeMethodSignature, "()");
-J9_DECLARE_CONSTANT_UTF8(defaultPackage, "(defaultPackage)");
+J9_DECLARE_CONSTANT_UTF8(defaultPackage, "");
 J9_DECLARE_CONSTANT_UTF8(bootLoaderName, "boostrapClassLoader");
 J9_DECLARE_CONSTANT_UTF8(unknownThread, "unknown thread");
 
