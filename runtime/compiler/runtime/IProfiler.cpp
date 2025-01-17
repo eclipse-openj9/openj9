@@ -4313,18 +4313,20 @@ UDATA TR_IProfiler::parseBuffer(J9VMThread * vmThread, const U_8* dataStart, UDA
             if (fanInDisabled)
                break;
             J9ConstantPool* ramCP = J9_CP_FROM_METHOD(caller);
-            uint16_t cpIndex = readU16(pc + 1);
+            // Read the cpIndex (or the index into the split table) and extend it to UDATA.
+            // The extension is needed because J9_STATIC_SPLIT_TABLE_INDEX_FLAG and
+            // J9_SPECIAL_SPLIT_TABLE_INDEX_FLAG do not fit on 16 bits.
+            UDATA cpIndex = readU16(pc + 1);
 
-            if (JBinvokestaticsplit == cpIndex)
+            // For split bytecodes, the cpIndex is actually the index into the split table.
+            if (JBinvokestaticsplit == *pc)
                cpIndex |= J9_STATIC_SPLIT_TABLE_INDEX_FLAG;
-            if (JBinvokespecialsplit == cpIndex)
+            if (JBinvokespecialsplit == *pc)
                cpIndex |= J9_SPECIAL_SPLIT_TABLE_INDEX_FLAG;
-            J9Method * callee = jitGetJ9MethodUsingIndex(vmThread, ramCP, cpIndex);
+            J9Method *callee = jitGetJ9MethodUsingIndex(vmThread, ramCP, cpIndex);
 
-            if (callee == NULL)
-               {
+            if (!callee)
                break;
-               }
 
             uint32_t offset = (uint32_t) (pc - caller->bytecodes);
             findOrCreateMethodEntry(caller, callee , true ,offset);
