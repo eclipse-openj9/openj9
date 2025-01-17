@@ -1156,7 +1156,7 @@ public:
 	/**
 	 * Returns the address of first data slot in the array.
 	 *
-	 * @param arrayPtr Pointer to the contigous indexable object whose dataPointer we are trying to access
+	 * @param arrayPtr Pointer to the contiguous indexable object whose dataPointer we are trying to access
 	 * @return Address of first data slot in the array
 	 */
 	MMINLINE void *

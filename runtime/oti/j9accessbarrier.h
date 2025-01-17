@@ -156,10 +156,10 @@ typedef struct J9IndexableObject* mm_j9array_t;
  * 	else if off-heap enabled (J9IndexableObjectLayout_DataAddr_NoArraylet)
  * 		contiguous-via-dataAddr
  * 	else balancedGC with off-heap disabled or Metronome GC (J9IndexableObjectLayout_NoDataAddr_Arraylet or J9IndexableObjectLayout_DataAddr_Arraylet)
- * 		if contigious
+ * 		if contiguous
  * 			contiguous
  * 		else
- * 			discontigous
+ * 			discontiguous
  */
 #define J9JAVAARRAY_EA(vmThread, array, index, elemType) \
 	((J9IndexableObjectLayout_NoDataAddr_NoArraylet == (vmThread)->indexableObjectLayout) \

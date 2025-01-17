@@ -44,7 +44,7 @@ import java.lang.invoke.MethodHandle;
 
 /**
  * Test cases for JEP 454: Foreign Linker API for argument/return struct in the
- * case of contiguous/discontigous heap array in downcall.
+ * case of contiguous/discontiguous heap array in downcall.
  *
  * Note:
  * The test suite is mainly intended for the following Clinker API:

@@ -6510,7 +6510,7 @@ TR::Register *J9::Power::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeG
                TR_ASSERT_FATAL_WITH_NODE(node,
                   (fej9->getOffsetOfDiscontiguousDataAddrField() - fej9->getOffsetOfContiguousDataAddrField()) == 8,
                   "Offset of dataAddr field in discontiguous array is expected to be 8 bytes more than contiguous array. "
-                  "But was %d bytes for discontigous and %d bytes for contiguous array.\n",
+                  "But was %d bytes for discontiguous and %d bytes for contiguous array.\n",
                   fej9->getOffsetOfDiscontiguousDataAddrField(), fej9->getOffsetOfContiguousDataAddrField());
 
                iCursor = generateTrg1Src1Instruction(cg, TR::InstOpCode::cntlzd, node, offsetReg, enumReg, iCursor);
