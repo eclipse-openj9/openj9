@@ -3620,7 +3620,6 @@ void TR_IProfiler::checkMethodHashTable()
    if (!fname)
       return;
 
-   printf("TR_PrintMethodHashTableFileName is set; trying to open file %s\n",fname);
    ::FILE *fout = fopen(fname, "a");
 
    if (!fout)
@@ -3628,62 +3627,74 @@ void TR_IProfiler::checkMethodHashTable()
       printf("Couldn't open the file; re-directing to stderr instead\n");
       fout = stderr;
       }
+   // Do not define this end var if class unloading is possible.
+   // Class unloading can render some of cached methods stale, leading to crashes
+   // when trying to find method names.
+   static char *methodNames = feGetEnv("TR_PrintMethodHashTableMethodNames");
 
-   fprintf(fout, "printing method hash table\n");fflush(fout);
+   TR_StatsHisto<TR_IPMethodHashTableEntry::MAX_IPMETHOD_CALLERS-1> faninHisto("Fanin caller list length histo", 1, TR_IPMethodHashTableEntry::MAX_IPMETHOD_CALLERS);
+
+   fprintf(fout, "Printing method hash table\n");fflush(fout);
    for (int32_t bucket = 0; bucket < TR::Options::_iProfilerMethodHashTableSize; bucket++)
       {
-      TR_IPMethodHashTableEntry *entry = _methodHashTable[bucket];
-
-      while (entry)
+      for (TR_IPMethodHashTableEntry *entry = _methodHashTable[bucket]; entry; entry = entry->_next)
          {
          J9Method *method = (J9Method*)entry->_method;
-         fprintf(fout,"method\t");fflush(fout);
-#if 1
-         J9UTF8 * nameUTF8;
-         J9UTF8 * signatureUTF8;
-         J9UTF8 * methodClazzUTRF8;
-         getClassNameSignatureFromMethod(method, methodClazzUTRF8, nameUTF8, signatureUTF8);
-
-         fprintf(fout,"%.*s.%.*s%.*s\t %p\t",
-                J9UTF8_LENGTH(methodClazzUTRF8), J9UTF8_DATA(methodClazzUTRF8), J9UTF8_LENGTH(nameUTF8), J9UTF8_DATA(nameUTF8),
-                J9UTF8_LENGTH(signatureUTF8), J9UTF8_DATA(signatureUTF8), method);fflush(fout);
-#endif
-         int32_t count = 0;
-         fprintf(fout,"\t has %d callers and %" OMR_PRIdPTR " -bytecode long:\n", 0, J9_BYTECODE_END_FROM_ROM_METHOD(getOriginalROMMethod(method)) - J9_BYTECODE_START_FROM_ROM_METHOD(getOriginalROMMethod(method)));
+         fprintf(fout, "Callee method %p", method);
+         if (methodNames)
+            {
+            J9UTF8 * nameUTF8;
+            J9UTF8 * signatureUTF8;
+            J9UTF8 * methodClazzUTRF8;
+            getClassNameSignatureFromMethod(method, methodClazzUTRF8, nameUTF8, signatureUTF8);
+            fprintf(fout,"\t%.*s.%.*s%.*s",
+                    J9UTF8_LENGTH(methodClazzUTRF8), J9UTF8_DATA(methodClazzUTRF8),
+                    J9UTF8_LENGTH(nameUTF8), J9UTF8_DATA(nameUTF8),
+                    J9UTF8_LENGTH(signatureUTF8), J9UTF8_DATA(signatureUTF8));
+            fprintf(fout,"\t is %" OMR_PRIdPTR " bytecode long", J9_BYTECODE_END_FROM_ROM_METHOD(getOriginalROMMethod(method)) - J9_BYTECODE_START_FROM_ROM_METHOD(getOriginalROMMethod(method)));
+            }
+         fprintf(fout, "\n");
          fflush(fout);
+         int32_t count = 0;
          uint32_t i=0;
 
          for (TR_IPMethodData* it = &entry->_caller; it; it = it->next)
             {
             count++;
-
-            TR_OpaqueMethodBlock *meth = it->getMethod();
-            if(meth)
+            TR_OpaqueMethodBlock *caller = it->getMethod();
+            if(caller)
                {
-               J9UTF8 * caller_nameUTF8;
-               J9UTF8 * caller_signatureUTF8;
-               J9UTF8 * caller_methodClazzUTF8;
-               getClassNameSignatureFromMethod((J9Method*)meth, caller_methodClazzUTF8, caller_nameUTF8, caller_signatureUTF8);
+               fprintf(fout,"\t%8p pcIndex %3" OMR_PRIu32 " weight %3" OMR_PRIu32 "\t",
+                       caller, it->getPCIndex(), it->getWeight());
+               if (methodNames)
+                  {
+                  J9UTF8 * caller_nameUTF8;
+                  J9UTF8 * caller_signatureUTF8;
+                  J9UTF8 * caller_methodClazzUTF8;
+                  getClassNameSignatureFromMethod((J9Method*)caller, caller_methodClazzUTF8, caller_nameUTF8, caller_signatureUTF8);
 
-               fprintf(fout,"%p %.*s%.*s%.*s weight %" OMR_PRIu32 " pc %" OMR_PRIx32 "\n", meth,
-                  J9UTF8_LENGTH(caller_methodClazzUTF8), J9UTF8_DATA(caller_methodClazzUTF8),
-                  J9UTF8_LENGTH(caller_nameUTF8), J9UTF8_DATA(caller_nameUTF8),
-                  J9UTF8_LENGTH(caller_signatureUTF8), J9UTF8_DATA(caller_signatureUTF8),
-                  it->getWeight(), it->getPCIndex());
-               fflush(fout);
+                  fprintf(fout, "%.*s%.*s%.*s",
+                     J9UTF8_LENGTH(caller_methodClazzUTF8), J9UTF8_DATA(caller_methodClazzUTF8),
+                     J9UTF8_LENGTH(caller_nameUTF8), J9UTF8_DATA(caller_nameUTF8),
+                     J9UTF8_LENGTH(caller_signatureUTF8), J9UTF8_DATA(caller_signatureUTF8));
+                  }
+                  fprintf(fout, "\n");
+                  fflush(fout);
                }
             else
                {
-               fprintf(fout,"meth is null\n");
+               fprintf(fout,"caller method is null\n");
                }
             }
          //Print the other bucket
-         fprintf(fout, "other bucket: weight %d\n", entry->_otherBucket.getWeight()); fflush(fout);
-
-         entry = entry->_next;
-         fprintf(fout,": %d \n", count);fflush(fout);
+         fprintf(fout, "\tother bucket: weight %d\n", entry->_otherBucket.getWeight());
+         fprintf(fout,"Caller list length = %d\n", count);
+         fflush(fout);
+         faninHisto.update(count);
          }
       }
+      faninHisto.report(fout);
+      fflush(fout);
    }
 
 void
