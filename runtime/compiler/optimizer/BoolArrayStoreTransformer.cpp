@@ -728,6 +728,10 @@ void TR_BoolArrayStoreTransformer::transformUnknownTypeArrayStore()
       TR::Node *bstoreiNode = *it;
       dumpOptDetails(comp(), "%s transform value child of bstorei node of unknown type n%dn\n", OPT_DETAILS, bstoreiNode->getGlobalIndex());
       TR::Node *arrayBaseNode = bstoreiNode->getFirstChild()->getFirstChild();
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+      if (arrayBaseNode->isDataAddrPointer())
+         arrayBaseNode = arrayBaseNode->getFirstChild();
+#endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
       TR::Node *vft = TR::Node::createWithSymRef(TR::aloadi, 1, 1, arrayBaseNode, comp()->getSymRefTab()->findOrCreateVftSymbolRef());
       TR::Node *aconstNode = TR::Node::aconst(bstoreiNode, j9class);
       aconstNode->setIsClassPointerConstant(true);
