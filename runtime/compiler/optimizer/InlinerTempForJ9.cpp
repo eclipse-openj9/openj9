@@ -87,7 +87,6 @@ namespace TR { class SimpleRegex; }
 #define OWNING_METHOD_MAY_NOT_BE_THE_CALLER (1)
 
 #define MIN_NUM_CALLERS 20
-#define MIN_FAN_IN_SIZE 50
 #define SIZE_MULTIPLIER 4
 #define FANIN_OTHER_BUCKET_THRESHOLD 0.5
 #define DEFAULT_CONST_CLASS_WEIGHT 10
@@ -2932,11 +2931,8 @@ TR_J9InlinerPolicy::adjustFanInSizeInWeighCallSite(int32_t& weight,
       if (comp()->getMethodHotness() > warm)
          return;
 
-      static const char *qq = feGetEnv("TR_Min_FanIn_Size");
-      static const uint32_t min_size = ( qq ) ? atoi(qq) : MIN_FAN_IN_SIZE;
-
       uint32_t thresholdSize = (!comp()->getOption(TR_InlinerFanInUseCalculatedSize)) ? getJ9InitialBytecodeSize(callee, 0, comp()) : size;
-      if (thresholdSize <= min_size)  // if we are less than min_fan_in size, we don't want to apply fan-in heuristic
+      if (thresholdSize <= TR::Options::_iprofilerFaninMethodMinSize)  // if we are less than min_fan_in size, we don't want to apply fan-in heuristic
          {
          return;
          }
@@ -3047,15 +3043,12 @@ TR_J9InlinerPolicy::adjustFanInSizeInExceedsSizeThreshold(int bytecodeSize,
    static const char *q = feGetEnv("TR_SizeMultiplier");
    static const uint32_t multiplier = ( q ) ? atoi (q) : SIZE_MULTIPLIER;
 
-   static const char *qq = feGetEnv("TR_Min_FanIn_Size");
-   static const uint32_t min_size = ( qq ) ? atoi(qq) : MIN_FAN_IN_SIZE;
-
    static const char *qqq = feGetEnv("TR_OtherBucketThreshold");
    static const float otherBucketThreshold = (qqq) ? (float) (atoi (qqq) /100.0) : FANIN_OTHER_BUCKET_THRESHOLD;
 
 
    uint32_t thresholdSize = (!comp()->getOption(TR_InlinerFanInUseCalculatedSize)) ? getJ9InitialBytecodeSize(callee, 0, comp()) : calculatedSize;
-   if (thresholdSize <= min_size)  // if we are less than min_fan_in size, we don't want to apply fan-in heuristic
+   if (thresholdSize <= TR::Options::_iprofilerFaninMethodMinSize)  // if we are less than min_fan_in size, we don't want to apply fan-in heuristic
       {
       return false;
       }
@@ -4982,11 +4975,9 @@ TR_MultipleCallTargetInliner::exceedsSizeThreshold(TR_CallSite *callSite, int by
  */
        }
 
-   static const char *qq;
-   static uint32_t min_size = ( qq = feGetEnv("TR_Min_FanIn_Size")) ? atoi(qq) : MIN_FAN_IN_SIZE;
    static const char *q;
    static uint32_t multiplier = ( q = feGetEnv("TR_SizeMultiplier")) ? atoi (q) : SIZE_MULTIPLIER;
-   uint32_t calculatedSize = bytecodeSize; //(bytecodeSize - MIN_FAN_IN_SIZE);
+   uint32_t calculatedSize = bytecodeSize;
 
    if (!comp()->getOption(TR_DisableInlinerFanIn))  // TODO: make the default for everybody
       {
