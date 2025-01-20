@@ -73,33 +73,64 @@ JVM_IsNullRestrictedArray(JNIEnv *env, jobject obj)
 	return result;
 }
 
-JNIEXPORT jarray JNICALL
-JVM_NewNullRestrictedArray(JNIEnv *env, jclass componentType, jint length)
+JNIEXPORT jboolean JNICALL
+JVM_IsFlatArray(JNIEnv *env, jobject obj)
+{
+	jboolean result = JNI_FALSE;
+	J9VMThread *currentThread = (J9VMThread *)env;
+	J9InternalVMFunctions *vmFuncs = currentThread->javaVM->internalVMFunctions;
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+	if (NULL == obj) {
+		vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
+	} else {
+		J9Class *j9clazz = J9OBJECT_CLAZZ(currentThread, J9_JNI_UNWRAP_REFERENCE(obj));
+		if (J9CLASS_IS_ARRAY(j9clazz) && J9_IS_J9CLASS_FLATTENED(j9clazz)) {
+			result = JNI_TRUE;
+		}
+	}
+	vmFuncs->internalExitVMToJNI(currentThread);
+	return result;
+}
+
+static jarray
+newArrayHelper(JNIEnv *env, jclass componentType, jint length, bool isNullRestricted)
 {
 	J9VMThread *currentThread = (J9VMThread *)env;
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = currentThread->javaVM->internalVMFunctions;
 	J9Class *ramClass = NULL;
+	J9Class *arrayClass = NULL;
+	UDATA options = 0;
 	j9object_t newArray = NULL;
 	jarray arrayRef = NULL;
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	ramClass = J9VMJAVALANGCLASS_VMREF(currentThread, J9_JNI_UNWRAP_REFERENCE(componentType));
 
-	if (length < 0) {
+	if ((NULL == ramClass) || (length < 0)) {
 		vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, NULL);
 		goto done;
 	}
 
-	if (!(J9_IS_J9CLASS_VALUETYPE(ramClass) && J9_IS_J9CLASS_ALLOW_DEFAULT_VALUE(ramClass))) {
+	if (!J9_IS_J9CLASS_VALUETYPE(ramClass)) {
 		vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, NULL);
 		goto done;
 	}
 
-	if (NULL == J9CLASS_GET_NULLRESTRICTED_ARRAY(ramClass)) {
+	if (isNullRestricted && !J9_IS_J9CLASS_ALLOW_DEFAULT_VALUE(ramClass)) {
+		vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, NULL);
+		goto done;
+	}
+
+	arrayClass = ramClass->arrayClass;
+	if (isNullRestricted) {
+		arrayClass = J9CLASS_GET_NULLRESTRICTED_ARRAY(ramClass);
+		options = J9_FINDCLASS_FLAG_CLASS_OPTION_NULL_RESTRICTED_ARRAY;
+	}
+
+	if (NULL == arrayClass) {
 		J9ROMArrayClass *arrayOfObjectsROMClass = (J9ROMArrayClass *)J9ROMIMAGEHEADER_FIRSTCLASS(vm->arrayROMClasses);
-		vmFuncs->internalCreateArrayClassWithOptions(
-			currentThread, arrayOfObjectsROMClass, ramClass, J9_FINDCLASS_FLAG_CLASS_OPTION_NULL_RESTRICTED_ARRAY);
+		arrayClass = vmFuncs->internalCreateArrayClassWithOptions(currentThread, arrayOfObjectsROMClass, ramClass, options);
 		if (NULL != currentThread->currentException) {
 			goto done;
 		}
@@ -107,8 +138,7 @@ JVM_NewNullRestrictedArray(JNIEnv *env, jclass componentType, jint length)
 	}
 
 	newArray = vm->memoryManagerFunctions->J9AllocateIndexableObject(
-			currentThread, J9CLASS_GET_NULLRESTRICTED_ARRAY(ramClass), length, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
-
+			currentThread, arrayClass, length, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
 	if (NULL == newArray) {
 		vmFuncs->setHeapOutOfMemoryError(currentThread);
 		goto done;
@@ -118,6 +148,24 @@ JVM_NewNullRestrictedArray(JNIEnv *env, jclass componentType, jint length)
 done:
 	vmFuncs->internalExitVMToJNI(currentThread);
 	return arrayRef;
+}
+
+JNIEXPORT jarray JNICALL
+JVM_NewNullRestrictedArray(JNIEnv *env, jclass componentType, jint length)
+{
+	return newArrayHelper(env, componentType, length, TRUE);
+}
+
+JNIEXPORT jarray JNICALL
+JVM_NewNullRestrictedAtomicArray(JNIEnv *env, jclass componentType, jint length)
+{
+	return newArrayHelper(env, componentType, length, TRUE);
+}
+
+JNIEXPORT jarray JNICALL
+JVM_NewNullableAtomicArray(JNIEnv *env, jclass componentType, jint length)
+{
+	return newArrayHelper(env, componentType, length, FALSE);
 }
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 } /* extern "C" */

@@ -331,7 +331,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<export name="AsyncGetCallTrace"/>
 
 		<!-- Additions for Valhalla -->
-		<export name="JVM_IsValhallaEnabled">
+		<export name="JVM_IsFlatArray">
 			<include-if condition="spec.flags.opt_valhallaValueTypes"/>
 		</export>
 		<export name="JVM_IsImplicitlyConstructibleClass">
@@ -340,7 +340,16 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<export name="JVM_IsNullRestrictedArray">
 			<include-if condition="spec.flags.opt_valhallaValueTypes"/>
 		</export>
+		<export name="JVM_IsValhallaEnabled">
+			<include-if condition="spec.flags.opt_valhallaValueTypes"/>
+		</export>
+		<export name="JVM_NewNullableAtomicArray">
+			<include-if condition="spec.flags.opt_valhallaValueTypes"/>
+		</export>
 		<export name="JVM_NewNullRestrictedArray">
+			<include-if condition="spec.flags.opt_valhallaValueTypes"/>
+		</export>
+		<export name="JVM_NewNullRestrictedAtomicArray">
 			<include-if condition="spec.flags.opt_valhallaValueTypes"/>
 		</export>
 		<export name="JVM_VirtualThreadHideFrames">
