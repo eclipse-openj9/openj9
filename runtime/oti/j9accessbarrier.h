@@ -161,14 +161,11 @@ typedef struct J9IndexableObject* mm_j9array_t;
  * 		else
  * 			discontiguous
  */
-#define J9JAVAARRAY_EA(vmThread, array, index, elemType) \
-	((J9IndexableObjectLayout_NoDataAddr_NoArraylet == (vmThread)->indexableObjectLayout) \
-		? J9JAVAARRAYCONTIGUOUS_BASE_EA(vmThread, array, index, elemType) \
-		: ((J9IndexableObjectLayout_DataAddr_NoArraylet == (vmThread)->indexableObjectLayout) \
-			? J9JAVAARRAYCONTIGUOUS_WITH_DATAADDRESS_VIRTUALLARGEOBJECTHEAPENABLED_EA(vmThread, array, index, elemType) \
-			: (J9ISCONTIGUOUSARRAY(vmThread, array) \
-				? J9JAVAARRAYCONTIGUOUS_EA(vmThread, array, index, elemType) \
-				: J9JAVAARRAYDISCONTIGUOUS_EA(vmThread, array, index, elemType))))
+
+
+
+/* Effective Address calculation for callers using vmThread are passed to C implementation, which may force outlining for some platforms. */
+#define J9JAVAARRAY_EA(vmThread, array, index, elemType) j9javaArray_##elemType##_EA(vmThread, (J9IndexableObject *)(array), index)
 
 #define J9JAVAARRAY_EA_VM(javaVM, array, index, elemType) \
 	((J9IndexableObjectLayout_NoDataAddr_NoArraylet == (javaVM)->indexableObjectLayout) \
