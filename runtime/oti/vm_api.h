@@ -903,10 +903,11 @@ iterateStackTrace(J9VMThread * vmThread, j9object_t* exception,  UDATA  (*callba
 * @param skipHiddenFrames
 * @param sizeOfWalkstateCache
 * @param exceptionIsJavaObject
+* @param revealAnonAndHiddenClass
 * @return UDATA
 */
 UDATA
-iterateStackTraceImpl(J9VMThread * vmThread, j9object_t* exception,  UDATA  (*callback) (J9VMThread * vmThread, void * userData, UDATA bytecodeOffset, J9ROMClass * romClass, J9ROMMethod * romMethod, J9UTF8 * fileName, UDATA lineNumber, J9ClassLoader* classLoader, J9Class* ramClass, UDATA frameType), void * userData, UDATA pruneConstructors, UDATA skipHiddenFrames, UDATA sizeOfWalkstateCache, BOOLEAN exceptionIsJavaObject);
+iterateStackTraceImpl(J9VMThread * vmThread, j9object_t* exception,  UDATA  (*callback) (J9VMThread * vmThread, void * userData, UDATA bytecodeOffset, J9ROMClass * romClass, J9ROMMethod * romMethod, J9UTF8 * fileName, UDATA lineNumber, J9ClassLoader* classLoader, J9Class* ramClass, UDATA frameType), void * userData, UDATA pruneConstructors, UDATA skipHiddenFrames, UDATA sizeOfWalkstateCache, BOOLEAN exceptionIsJavaObject, BOOLEAN revealAnonAndHiddenClass);
 
 
 /* ---------------- exceptionsupport.c ---------------- */
@@ -2112,6 +2113,16 @@ isAnyClassLoadedFromPackage(J9ClassLoader* classLoader, U_8 *pkgName, UDATA pkgN
 void
 hashClassTableFree(J9ClassLoader* classLoader);
 
+/**
+* @brief
+* @param *classLoader
+* @param *className
+* @param classNameLength
+* @param ignoreAnonAndHiddenClass
+* @return J9Class *
+*/
+J9Class *
+hashClassTableAtImpl(J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength, BOOLEAN ignoreAnonAndHiddenClass);
 
 /**
 * @brief
