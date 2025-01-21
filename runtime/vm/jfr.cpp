@@ -1120,7 +1120,10 @@ jfrSamplingThreadProc(void *entryArg)
 jboolean
 setJFRRecordingFileName(J9JavaVM *vm, char *fileName)
 {
-	if ((char*)DEFAULT_JFR_FILE_NAME != vm->jfrState.jfrFileName) {
+	UDATA defaultFileNameLen = strlen(DEFAULT_JFR_FILE_NAME);
+	if ((defaultFileNameLen != strlen(vm->jfrState.jfrFileName))
+	|| (0 != strncmp(DEFAULT_JFR_FILE_NAME, vm->jfrState.jfrFileName, defaultFileNameLen))
+	) {
 		PORT_ACCESS_FROM_JAVAVM(vm);
 		j9mem_free_memory(vm->jfrState.jfrFileName);
 	}

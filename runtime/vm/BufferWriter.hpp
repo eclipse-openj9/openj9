@@ -33,7 +33,6 @@ class VM_BufferWriter {
 	private:
 	U_8 *_buffer;
 	U_8 *_cursor;
-	UDATA _size;
 	U_8 *_bufferEnd;
 	U_8 *_maxCursor;
 	bool _overflow;
@@ -94,7 +93,6 @@ class VM_BufferWriter {
 	VM_BufferWriter(U_8 *buffer, UDATA size)
 		: _buffer(buffer)
 		, _cursor(buffer)
-		, _size(size)
 		, _bufferEnd(buffer + size)
 		, _maxCursor(NULL)
 		, _overflow(false)
