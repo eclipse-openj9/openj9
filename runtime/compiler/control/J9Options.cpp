@@ -191,6 +191,7 @@ int32_t J9::Options::_maxIprofilingCount = TR_DEFAULT_INITIAL_COUNT; // 3000
 int32_t J9::Options::_maxIprofilingCountInStartupMode = TR_QUICKSTART_INITIAL_COUNT; // 1000
 int32_t J9::Options::_iprofilerFailRateThreshold = 70; // percent 1-100
 int32_t J9::Options::_iprofilerFailHistorySize = 10; // percent 1-100
+int32_t J9::Options::_iprofilerFaninMethodMinSize = 50; // bytecodes
 
 int32_t J9::Options::_compYieldStatsThreshold = 1000; // usec
 int32_t J9::Options::_compYieldStatsHeartbeatPeriod = 0; // ms
@@ -1045,6 +1046,8 @@ TR::OptionTable OMR::Options::_feOptions[] = {
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_iprofilerFailHistorySize, 0, "F%d", NOT_IN_SUBSET},
    {"iprofilerFailRateThreshold=", "I<nnn>\tReactivate Iprofiler if fail rate exceeds this threshold. 1-100",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_iprofilerFailRateThreshold, 0, "F%d", NOT_IN_SUBSET},
+   {"iprofilerFaninMethodMinSize=", "I<nnn>\tMinimum size of methods considered by the fanin mechanism",
+        TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_iprofilerFaninMethodMinSize, 50, "F%d", NOT_IN_SUBSET},
    {"iprofilerIntToTotalSampleRatio=", "O<nnn>\tRatio of Interpreter samples to Total samples",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_iprofilerIntToTotalSampleRatio, 0, "F%d", NOT_IN_SUBSET},
    {"iprofilerMaxCount=", "O<nnn>\tmax invocation count for IProfiler to be active",

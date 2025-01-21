@@ -292,6 +292,8 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
                                                     // during STARTUP phase (and only during classLoadPhase)
    static int32_t _iprofilerFailRateThreshold; // will reactivate Iprofiler if failure rate exceeds this threshold
    static int32_t _iprofilerFailHistorySize;
+   static int32_t _iprofilerFaninMethodMinSize; // minimum method size (in bytecodes) so that the method is
+                                                // considered by the fanin mechanism in the inliner
    static int32_t _iProfilerMemoryConsumptionLimit;
    static int32_t _iProfilerBcHashTableSize;
    static int32_t _iProfilerMethodHashTableSize;
