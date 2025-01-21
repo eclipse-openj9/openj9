@@ -40,7 +40,7 @@ typedef UDATA (*callback_func_t) (J9VMThread * vmThread, void * userData, UDATA 
 static void printExceptionInThread (J9VMThread* vmThread);
 static UDATA isSubclassOfThreadDeath (J9VMThread *vmThread, j9object_t exception);
 static void printExceptionMessage (J9VMThread* vmThread, j9object_t exception);
-static J9Class* findJ9ClassForROMClass(J9VMThread *vmThread, J9ROMClass *romClass, J9ClassLoader **resultClassLoader);
+static J9Class* findJ9ClassForROMClass(J9VMThread *vmThread, J9ROMClass *romClass, J9ClassLoader **resultClassLoader, BOOLEAN revealAnonAndHiddenClass);
 
 
 /* assumes VM access */
@@ -220,18 +220,19 @@ printStackTraceEntry(J9VMThread * vmThread, void * voidUserData, UDATA bytecodeO
 * @param[in] ROMClass The J9ROMClass from which the J9Class is created.
 * @param[in, out] resultClassLoader This is the classLoader that owns the memory segment that the ROMClass was found in.
 *	The romclass memory segment in the shared cache always belongs to vm->systemClassLoader. Set it to the actual class loader which loaded the class in this case.
+* @param[in] revealAnonAndHiddenClass Whether to return the J9Class of a hidden or anonymous class.
 *
 * @return The J9class, or NULL on failure.
 */
 static J9Class*
-findJ9ClassForROMClass(J9VMThread *vmThread, J9ROMClass *romClass, J9ClassLoader **resultClassLoader)
+findJ9ClassForROMClass(J9VMThread *vmThread, J9ROMClass *romClass, J9ClassLoader **resultClassLoader, BOOLEAN revealAnonAndHiddenClass)
 {
 	J9UTF8 const *utfClassName = J9ROMCLASS_CLASSNAME(romClass);
 	J9JavaVM *vm = vmThread->javaVM;
 	J9SharedClassConfig *config = vm->sharedClassConfig;
 	J9Class* ret = NULL;
 
-	if (_J9ROMCLASS_J9MODIFIER_IS_SET(romClass, J9AccClassAnonClass)) {
+	if ((FALSE == revealAnonAndHiddenClass) && _J9ROMCLASS_J9MODIFIER_IS_SET(romClass, J9AccClassAnonClass)) {
 		/* Anonymous classes are not allowed in any class loader hash table. */
 		return NULL;
 	}
@@ -332,7 +333,27 @@ cacheresult:
 			omrthread_rwmutex_exit_write(config->romToRamHashTableMutex);
 		}
 	} else {
-		ret = peekClassHashTable(vmThread, *resultClassLoader, J9UTF8_DATA(utfClassName), J9UTF8_LENGTH(utfClassName));
+		if ((TRUE == revealAnonAndHiddenClass) && J9ROMCLASS_IS_ANON_OR_HIDDEN(romClass)) {
+			PORT_ACCESS_FROM_JAVAVM(vmThread->javaVM);
+			char buf[ROM_ADDRESS_LENGTH + 1] = {0};
+			BOOLEAN fastMode = J9_ARE_ALL_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_FAST_CLASS_HASH_TABLE);
+
+			/* A hidden or anonymous class is keyed on its address */
+			j9str_printf(buf, ROM_ADDRESS_LENGTH + 1, ROM_ADDRESS_FORMAT, romClass);
+			if (!fastMode) {
+				omrthread_monitor_enter(vm->classTableMutex);
+			}
+			if (_J9ROMCLASS_J9MODIFIER_IS_SET(romClass, J9AccClassAnonClass)) {
+				ret = hashClassTableAtImpl(vm->anonClassLoader, (U_8 *)buf, ROM_ADDRESS_LENGTH, FALSE);
+			} else {
+				ret = hashClassTableAtImpl(*resultClassLoader, (U_8 *)buf, ROM_ADDRESS_LENGTH, FALSE);
+			}
+			if (!fastMode) {
+				omrthread_monitor_exit(vm->classTableMutex);
+			}
+		} else {
+			ret = peekClassHashTable(vmThread, *resultClassLoader, J9UTF8_DATA(utfClassName), J9UTF8_LENGTH(utfClassName));
+		}
 	}
 done:
 	return ret;
@@ -349,12 +370,13 @@ done:
  * @param pruneConstructors Non-zero if constructors should be pruned from the stack trace.
  * @param sizeOfWalkstateCache Non-zero if exception is walkstate cache instead of exception object.
  * 								Indicatest the size of cache.
+ * @param revealAnonAndHiddenClass Whether to show methods of hidden and anonymous classes.
  * @return The number of times the callback function was invoked.
  *
  * @note Assumes VM access
  **/
 UDATA
-iterateStackTraceImpl(J9VMThread * vmThread, j9object_t* exception, callback_func_t callback, void * userData, UDATA pruneConstructors, UDATA skipHiddenFrames, UDATA sizeOfWalkstateCache, BOOLEAN exceptionIsJavaObject)
+iterateStackTraceImpl(J9VMThread * vmThread, j9object_t* exception, callback_func_t callback, void * userData, UDATA pruneConstructors, UDATA skipHiddenFrames, UDATA sizeOfWalkstateCache, BOOLEAN exceptionIsJavaObject, BOOLEAN revealAnonAndHiddenClass)
 {
 	J9JavaVM * vm = vmThread->javaVM;
 	UDATA totalEntries = 0;
@@ -473,7 +495,7 @@ inlinedEntry:
 #endif
 					romClass = findROMClassFromPC(vmThread, methodPC, &classLoader);
 					if (NULL != romClass) {
-						ramClass = findJ9ClassForROMClass(vmThread, romClass, &classLoader);
+						ramClass = findJ9ClassForROMClass(vmThread, romClass, &classLoader, revealAnonAndHiddenClass);
 						while (NULL != ramClass) {
 							U_32 i = 0;
 							J9Method *methods = ramClass->ramMethods;
@@ -582,7 +604,7 @@ done:
 UDATA
 iterateStackTrace(J9VMThread * vmThread, j9object_t* exception, callback_func_t callback, void * userData, UDATA pruneConstructors, UDATA skipHiddenFrames)
 {
-	return iterateStackTraceImpl(vmThread, exception, callback, userData, pruneConstructors, skipHiddenFrames, 0, TRUE);
+	return iterateStackTraceImpl(vmThread, exception, callback, userData, pruneConstructors, skipHiddenFrames, 0, TRUE, FALSE);
 }
 
 /**

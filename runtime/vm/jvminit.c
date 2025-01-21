@@ -8373,25 +8373,32 @@ freeClassNativeMemory(J9HookInterface** hook, UDATA eventNum, void* eventData, v
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 }
 
-
 static void
 vmHookAnonClassesUnload(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData)
 {
-	J9VMAnonymousClassesUnloadEvent * unloadedEvent = (J9VMAnonymousClassesUnloadEvent *)eventData;
-	J9VMThread * vmThread = unloadedEvent->currentThread;
+	J9VMAnonymousClassesUnloadEvent *unloadedEvent = (J9VMAnonymousClassesUnloadEvent *)eventData;
+	J9VMThread *vmThread = unloadedEvent->currentThread;
 	J9JavaVM *vm = vmThread->javaVM;
+	PORT_ACCESS_FROM_JAVAVM(vm);
 	for (J9Class* j9clazz = unloadedEvent->anonymousClassesToUnload; j9clazz; j9clazz = j9clazz->gcLink) {
+		J9ROMClass *romClass = j9clazz->romClass;
+		/* Anonymous class is keyed on its address */
+		char buf[ROM_ADDRESS_LENGTH + 1] = {0};
+		j9str_printf(buf, ROM_ADDRESS_LENGTH + 1, ROM_ADDRESS_FORMAT, romClass);
 		/* AnonClass->classLoader points to the hostclass->classLoader not the anonClassLoader. */
 		if (J9VM_SHOULD_CLEAR_JNIIDS_FOR_ASGCT(vm, j9clazz->classLoader)) {
 			void **jniIDs = j9clazz->jniIDs;
 			if (NULL != jniIDs) {
-				UDATA size = J9VM_NUM_OF_ENTRIES_IN_CLASS_JNIID_TABLE(j9clazz->romClass);
+				UDATA size = J9VM_NUM_OF_ENTRIES_IN_CLASS_JNIID_TABLE(romClass);
 				for (UDATA i = 0; i < size; i++) {
 					J9GenericJNIID *id = (J9GenericJNIID*)(jniIDs[i]);
 					memset(id, -1, sizeof(J9GenericJNIID));
 				}
 			}
 		}
+		omrthread_monitor_enter(vm->classTableMutex);
+		hashClassTableDelete(vm->anonClassLoader, (U_8 *)buf, ROM_ADDRESS_LENGTH);
+		omrthread_monitor_exit(vm->classTableMutex);
 #if JAVA_SPEC_VERSION >= 22
 		hashClassTablePackageDelete(vmThread, j9clazz->classLoader, j9clazz->romClass);
 #endif /* JAVA_SPEC_VERSION >= 22 */

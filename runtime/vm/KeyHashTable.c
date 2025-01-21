@@ -123,19 +123,32 @@ classHashEqualFn(void *tableNode, void *queryNode, void *userData)
 	const U_8 *tableNodeName = NULL;
 	const U_8 *queryNodeName = NULL;
 	char buf[ROM_ADDRESS_LENGTH + 1] = {0};
+	char queryNodeBuf[ROM_ADDRESS_LENGTH + 1] = {0};
 	UDATA tableNodeType = classHashGetName(tableNode, &tableNodeName, &tableNodeLength);
 	UDATA queryNodeType = classHashGetName(queryNode, &queryNodeName, &queryNodeLength);
 	UDATA tableNodeTag = ((KeyHashTableClassEntry *)tableNode)->tag;
-	BOOLEAN isTableNodeHiddenClass = (TYPE_CLASS == tableNodeType)
+	UDATA queryNodeTag = ((KeyHashTableClassEntry *)queryNode)->tag;
+	BOOLEAN isTableNodeAnonOrHiddenClass = (TYPE_CLASS == tableNodeType)
 					&& (TAG_RAM_CLASS == (tableNodeTag & MASK_RAM_CLASS))
-					&& J9ROMCLASS_IS_HIDDEN(((KeyHashTableClassEntry *)tableNode)->ramClass->romClass);
+					&& J9ROMCLASS_IS_ANON_OR_HIDDEN(((KeyHashTableClassEntry *)tableNode)->ramClass->romClass);
+	BOOLEAN isQueryNodeAnonOrHiddenClass = (TYPE_CLASS == queryNodeType)
+					&& (TAG_RAM_CLASS == (queryNodeTag & MASK_RAM_CLASS))
+					&& J9ROMCLASS_IS_ANON_OR_HIDDEN(((KeyHashTableClassEntry *)queryNode)->ramClass->romClass);
 
-	if (isTableNodeHiddenClass) {
-		/* Hidden class is keyed on its rom address, not on its name. */
+	if (isTableNodeAnonOrHiddenClass) {
+		/* Anon and Hidden class is keyed on its rom address, not on its name. */
 		PORT_ACCESS_FROM_JAVAVM(javaVM);
 		j9str_printf(buf, ROM_ADDRESS_LENGTH + 1, ROM_ADDRESS_FORMAT, (UDATA)((KeyHashTableClassEntry *)tableNode)->ramClass->romClass);
 		tableNodeName = (const U_8 *)buf;
 		tableNodeLength = ROM_ADDRESS_LENGTH;
+	}
+
+	if (isQueryNodeAnonOrHiddenClass) {
+		/* Anon and Hidden class is keyed on its rom address, not on its name. */
+		PORT_ACCESS_FROM_JAVAVM(javaVM);
+		j9str_printf(queryNodeBuf, ROM_ADDRESS_LENGTH + 1, ROM_ADDRESS_FORMAT, (UDATA)((KeyHashTableClassEntry *)queryNode)->ramClass->romClass);
+		queryNodeName = (const U_8 *)queryNodeBuf;
+		queryNodeLength = ROM_ADDRESS_LENGTH;
 	}
 
 	if (queryNodeType == TYPE_UNICODE) {
@@ -225,12 +238,12 @@ classHashFn(void *key, void *userData)
 	UDATA type = classHashGetName(key, &name, &length);
 	UDATA keyTag = ((KeyHashTableClassEntry *)key)->tag;
 	char buf[ROM_ADDRESS_LENGTH + 1] = {0};
-	BOOLEAN isTableNodeHiddenClass = (TYPE_CLASS == type)
+	BOOLEAN isTableNodeHiddenOrAnonClass = (TYPE_CLASS == type)
 					&& (TAG_RAM_CLASS == (keyTag & MASK_RAM_CLASS))
-					&& J9ROMCLASS_IS_HIDDEN(((KeyHashTableClassEntry *)key)->ramClass->romClass);
+					&& J9ROMCLASS_IS_ANON_OR_HIDDEN(((KeyHashTableClassEntry *)key)->ramClass->romClass);
 
-	if (isTableNodeHiddenClass) {
-		/* for hidden class, do not key on its name, key on its rom address */
+	if (isTableNodeHiddenOrAnonClass) {
+		/* For anon or hidden class, do not key on its name, key on its rom address */
 		PORT_ACCESS_FROM_JAVAVM(javaVM);
 		j9str_printf(buf, ROM_ADDRESS_LENGTH + 1, ROM_ADDRESS_FORMAT, (UDATA)((KeyHashTableClassEntry *)key)->ramClass->romClass);
 		name = (const U_8 *)buf;
@@ -333,7 +346,7 @@ hashClassTableNew(J9JavaVM *javaVM, U_32 initialSize)
 }
 
 J9Class *
-hashClassTableAt(J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength)
+hashClassTableAtImpl(J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength, BOOLEAN ignoreAnonAndHiddenClass)
 {
 	J9HashTable *table = classLoader->classHashTable;
 	KeyHashTableClassQueryEntry key;
@@ -346,13 +359,19 @@ hashClassTableAt(J9ClassLoader *classLoader, U_8 *className, UDATA classNameLeng
 	if (NULL != result) {
 		J9Class *clazz = result->ramClass;
 		checkClassAlignment(clazz, "hashClassTableAt");
-		if (J9ROMCLASS_IS_HIDDEN(clazz->romClass)) {
+		if ((TRUE == ignoreAnonAndHiddenClass) && J9ROMCLASS_IS_ANON_OR_HIDDEN(clazz->romClass)) {
 			return NULL;
 		}
 		return clazz;
 	} else {
 		return NULL;
 	}
+}
+
+J9Class *
+hashClassTableAt(J9ClassLoader *classLoader, U_8 *className, UDATA classNameLength)
+{
+	return hashClassTableAtImpl(classLoader, className, classNameLength, TRUE);
 }
 
 BOOLEAN

@@ -959,7 +959,7 @@ done:
 			goto done;
 		}
 
-		expandedStackTraceCount = iterateStackTraceImpl(_currentThread, (j9object_t*)walkStateCache, NULL, NULL, FALSE, FALSE, numberOfFrames, FALSE);
+		expandedStackTraceCount = iterateStackTraceImpl(_currentThread, (j9object_t*)walkStateCache, NULL, NULL, FALSE, FALSE, numberOfFrames, FALSE, TRUE);
 
 		_currentStackFrameBuffer = (StackFrame*) j9mem_allocate_memory(sizeof(StackFrame) * expandedStackTraceCount, J9MEM_CATEGORY_CLASSES);
 		_currentFrameCount = 0;
@@ -968,7 +968,7 @@ done:
 			goto done;
 		}
 
-		iterateStackTraceImpl(_currentThread, (j9object_t*)walkStateCache, &stackTraceCallback, this, FALSE, FALSE, numberOfFrames, FALSE);
+		iterateStackTraceImpl(_currentThread, (j9object_t*)walkStateCache, &stackTraceCallback, this, FALSE, FALSE, numberOfFrames, FALSE, TRUE);
 
 		index = addStackTraceEntry(walkThread, j9time_nano_time(), _currentFrameCount);
 		_stackFrameCount += (U_32)expandedStackTraceCount;
