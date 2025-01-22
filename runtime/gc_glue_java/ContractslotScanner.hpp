@@ -73,7 +73,7 @@ public:
 		J9Object *objectPtr = *slotPtr;
 		if (NULL != objectPtr) {
 			if ((objectPtr >= (J9Object *)_srcBase) && (objectPtr < (J9Object *)_srcTop)) {
-				objectPtr = (J9Object *)((((UDATA)objectPtr) - ((UDATA)_srcBase)) + ((UDATA)_dstBase));
+				objectPtr = (J9Object *)((uintptr_t)objectPtr - (uintptr_t)_srcBase + (uintptr_t)_dstBase);
 				*slotPtr = objectPtr;
 			}
 		}
@@ -88,7 +88,7 @@ public:
 		GC_ClassIterator classIterator(_env, clazz);
 		while ((objectSlotPtr = classIterator.nextSlot()) != NULL) {
 			/* discard volatile since we must be in stop-the-world mode */
-			doSlot((j9object_t*)objectSlotPtr);
+			doSlot((j9object_t *)objectSlotPtr);
 		}
 		/* There is no need to walk the J9Class slots since no values within this struct could
 		 * move during a nursery contract.
@@ -108,7 +108,7 @@ public:
 		while (NULL != (region = regionIterator.nextRegion())) {
 			if ((MEMORY_TYPE_NEW == (region->getTypeFlags() & MEMORY_TYPE_NEW))) {
 				MM_HeapRegionDescriptorStandardExtension *regionExtension = MM_ConfigurationDelegate::getHeapRegionDescriptorStandardExtension(env, region);
-				for (UDATA i = 0; i < regionExtension->_maxListIndex; i++) {
+				for (uintptr_t i = 0; i < regionExtension->_maxListIndex; i++) {
 					MM_UnfinalizedObjectList *list = &regionExtension->_unfinalizedObjectLists[i];
 					list->startUnfinalizedProcessing();
 				}
@@ -119,14 +119,14 @@ public:
 		while (NULL != (region = regionIterator2.nextRegion())) {
 			if ((MEMORY_TYPE_NEW == (region->getTypeFlags() & MEMORY_TYPE_NEW))) {
 				MM_HeapRegionDescriptorStandardExtension *regionExtension = MM_ConfigurationDelegate::getHeapRegionDescriptorStandardExtension(env, region);
-				for (UDATA i = 0; i < regionExtension->_maxListIndex; i++) {
+				for (uintptr_t i = 0; i < regionExtension->_maxListIndex; i++) {
 					MM_UnfinalizedObjectList *list = &regionExtension->_unfinalizedObjectLists[i];
 					if (!list->wasEmpty()) {
 						J9Object *object = list->getPriorList();
 						while (NULL != object) {
 							J9Object *movePtr = object;
 							if ((movePtr >= (J9Object *)_srcBase) && (movePtr < (J9Object *)_srcTop)) {
-								movePtr = (J9Object *)((((UDATA)movePtr) - ((UDATA)_srcBase)) + ((UDATA)_dstBase));
+								movePtr = (J9Object *)((uintptr_t)movePtr - (uintptr_t)_srcBase + (uintptr_t)_dstBase);
 							}
 							/* read the next link out of the moved copy of the object before we add it to the buffer */
 							object = _extensions->accessBarrier->getFinalizeLink(movePtr);
@@ -156,7 +156,7 @@ public:
 		while (NULL != (region = regionIterator.nextRegion())) {
 			if ((MEMORY_TYPE_NEW == (region->getTypeFlags() & MEMORY_TYPE_NEW))) {
 				MM_HeapRegionDescriptorStandardExtension *regionExtension = MM_ConfigurationDelegate::getHeapRegionDescriptorStandardExtension(env, region);
-				for (UDATA i = 0; i < regionExtension->_maxListIndex; i++) {
+				for (uintptr_t i = 0; i < regionExtension->_maxListIndex; i++) {
 					MM_OwnableSynchronizerObjectList *list = &regionExtension->_ownableSynchronizerObjectLists[i];
 					list->startOwnableSynchronizerProcessing();
 				}
@@ -167,14 +167,14 @@ public:
 		while (NULL != (region = regionIterator2.nextRegion())) {
 			if ((MEMORY_TYPE_NEW == (region->getTypeFlags() & MEMORY_TYPE_NEW))) {
 				MM_HeapRegionDescriptorStandardExtension *regionExtension = MM_ConfigurationDelegate::getHeapRegionDescriptorStandardExtension(env, region);
-				for (UDATA i = 0; i < regionExtension->_maxListIndex; i++) {
+				for (uintptr_t i = 0; i < regionExtension->_maxListIndex; i++) {
 					MM_OwnableSynchronizerObjectList *list = &regionExtension->_ownableSynchronizerObjectLists[i];
 					if (!list->wasEmpty()) {
 						J9Object *object = list->getPriorList();
 						while (NULL != object) {
 							J9Object *movePtr = object;
 							if ((movePtr >= (J9Object *)_srcBase) && (movePtr < (J9Object *)_srcTop)) {
-								movePtr = (J9Object *)((((UDATA)movePtr) - ((UDATA)_srcBase)) + ((UDATA)_dstBase));
+								movePtr = (J9Object *)((uintptr_t)movePtr - (uintptr_t)_srcBase + (uintptr_t)_dstBase);
 							}
 							/* read the next link out of the moved copy of the object before we add it to the buffer */
 							J9Object *next = _extensions->accessBarrier->getOwnableSynchronizerLink(movePtr);
@@ -211,7 +211,7 @@ public:
 		while (NULL != (region = regionIterator.nextRegion())) {
 			if ((MEMORY_TYPE_NEW == (region->getTypeFlags() & MEMORY_TYPE_NEW))) {
 				MM_HeapRegionDescriptorStandardExtension *regionExtension = MM_ConfigurationDelegate::getHeapRegionDescriptorStandardExtension(env, region);
-				for (UDATA i = 0; i < regionExtension->_maxListIndex; i++) {
+				for (uintptr_t i = 0; i < regionExtension->_maxListIndex; i++) {
 					regionExtension->_continuationObjectLists[i].startProcessing();
 				}
 			}
@@ -221,14 +221,14 @@ public:
 		while (NULL != (region = regionIterator2.nextRegion())) {
 			if ((MEMORY_TYPE_NEW == (region->getTypeFlags() & MEMORY_TYPE_NEW))) {
 				MM_HeapRegionDescriptorStandardExtension *regionExtension = MM_ConfigurationDelegate::getHeapRegionDescriptorStandardExtension(env, region);
-				for (UDATA i = 0; i < regionExtension->_maxListIndex; i++) {
+				for (uintptr_t i = 0; i < regionExtension->_maxListIndex; i++) {
 					MM_ContinuationObjectList *list = &regionExtension->_continuationObjectLists[i];
 					if (!list->wasEmpty()) {
 						J9Object *object = list->getPriorList();
 						while (NULL != object) {
 							J9Object *movePtr = object;
 							if ((movePtr >= (J9Object *)_srcBase) && (movePtr < (J9Object *)_srcTop)) {
-								movePtr = (J9Object *)((((UDATA)movePtr) - ((UDATA)_srcBase)) + ((UDATA)_dstBase));
+								movePtr = (J9Object *)((uintptr_t)movePtr - (uintptr_t)_srcBase + (uintptr_t)_dstBase);
 							}
 							/* read the next link out of the moved copy of the object before we add it to the buffer */
 							J9Object *next = _extensions->accessBarrier->getContinuationLink(movePtr);
@@ -264,7 +264,7 @@ public:
 	{
 		reportScanningStarted(RootScannerEntity_FinalizableObjects);
 
-		GC_FinalizeListManager * finalizeListManager = _extensions->finalizeListManager;
+		GC_FinalizeListManager *finalizeListManager = _extensions->finalizeListManager;
 		{
 			GC_FinalizableObjectBuffer objectBuffer(_extensions);
 			/* walk finalizable objects loaded by the system class loader */
@@ -272,7 +272,7 @@ public:
 			while (NULL != systemObject) {
 				J9Object *movePtr = systemObject;
 				if ((movePtr >= (J9Object *)_srcBase) && (movePtr < (J9Object *)_srcTop)) {
-					movePtr = (J9Object *)((((UDATA)movePtr) - ((UDATA)_srcBase)) + ((UDATA)_dstBase));
+					movePtr = (J9Object *)((uintptr_t)movePtr - (uintptr_t)_srcBase + (uintptr_t)_dstBase);
 				}
 				/* read the next link out of the moved copy of the object before we add it to the buffer */
 				systemObject = _extensions->accessBarrier->getFinalizeLink(movePtr);
@@ -289,7 +289,7 @@ public:
 			while (NULL != defaultObject) {
 				J9Object *movePtr = defaultObject;
 				if ((movePtr >= (J9Object *)_srcBase) && (movePtr < (J9Object *)_srcTop)) {
-					movePtr = (J9Object *)((((UDATA)movePtr) - ((UDATA)_srcBase)) + ((UDATA)_dstBase));
+					movePtr = (J9Object *)((uintptr_t)movePtr - (uintptr_t)_srcBase + (uintptr_t)_dstBase);
 				}
 				/* read the next link out of the moved copy of the object before we add it to the buffer */
 				defaultObject = _extensions->accessBarrier->getFinalizeLink(movePtr);
@@ -306,7 +306,7 @@ public:
 			while (NULL != referenceObject) {
 				J9Object *movePtr = referenceObject;
 				if ((movePtr >= (J9Object *)_srcBase) && (movePtr < (J9Object *)_srcTop)) {
-					movePtr = (J9Object *)((((UDATA)movePtr) - ((UDATA)_srcBase)) + ((UDATA)_dstBase));
+					movePtr = (J9Object *)((uintptr_t)movePtr - (uintptr_t)_srcBase + (uintptr_t)_dstBase);
 				}
 				/* read the next link out of the moved copy of the object before we add it to the buffer */
 				referenceObject = _extensions->accessBarrier->getReferenceLink(movePtr);
