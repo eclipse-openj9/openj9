@@ -6612,7 +6612,6 @@ TR_J9VM::getObjectAlignmentInBytes()
    return (I_32)result;
    }
 
-
 TR_ResolvedMethod *
 TR_J9VM::getObjectNewInstanceImplMethod(TR_Memory * trMemory)
    {
