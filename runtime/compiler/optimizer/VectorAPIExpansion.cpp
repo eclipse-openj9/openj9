@@ -379,7 +379,6 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node, bool verify
       _nodeTable[nodeIndex]._objectType = getReturnType(methodSymbol);
 
       // Find return object type
-      // For intrinsics below, the class child indicates the object type of the result
       if (_aliasTable[methodRefNum]._objectType == Unknown &&
           isVectorAPICall)
          {
@@ -389,7 +388,7 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node, bool verify
             _aliasTable[methodRefNum]._objectType = getObjectTypeFromClassNode(comp(), node->getFirstChild());
             _nodeTable[nodeIndex]._objectType = getObjectTypeFromClassNode(comp(), node->getFirstChild());
             }
-         if (methodSymbol->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_binaryOp)
+         if (methodSymbol->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_binaryOp) // can be used for Mask objects too
             {
             _aliasTable[methodRefNum]._objectType = getObjectTypeFromClassNode(comp(), node->getSecondChild());
             _nodeTable[nodeIndex]._objectType = getObjectTypeFromClassNode(comp(), node->getSecondChild());
@@ -534,13 +533,11 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node, bool verify
 
          if (supportedOnPlatform(comp(), bitsLength) != TR::NoVectorLength)
             {
-            canVectorize = methodTable[handlerIndex]._methodHandler(this, NULL, node, methodElementType, vectorLength,
-                                                                    _nodeTable[nodeIndex]._objectType, methodNumLanes,
+            canVectorize = methodTable[handlerIndex]._methodHandler(this, NULL, node, methodElementType, vectorLength, methodNumLanes,
                                                                     checkVectorization);
             }
 
-         bool canScalarize = methodTable[handlerIndex]._methodHandler(this, NULL, node, methodElementType, vectorLength,
-                                                                      _nodeTable[nodeIndex]._objectType, methodNumLanes,
+         bool canScalarize = methodTable[handlerIndex]._methodHandler(this, NULL, node, methodElementType, vectorLength, methodNumLanes,
                                                                       checkScalarization);
 
          if (boxingAllowed())
@@ -1667,15 +1664,15 @@ TR_VectorAPIExpansion::transformIL(bool checkBoxing)
       bool scalarized;
       bool vectorizedNode;
 
-      TR::DataType elementType;
-      int32_t bitsLength;
-      vapiObjType objectType;
+      TR::DataType elementTypeTmp;
+      int32_t bitsLengthTmp;
+      vapiObjType objectTypeTmp;
 
-      bool vectorizedOrScalarizedNode = isVectorizedOrScalarizedNode(node, elementType, bitsLength, objectType, scalarized);
+      vectorizedNode = isVectorizedOrScalarizedNode(node, elementTypeTmp, bitsLengthTmp, objectTypeTmp, scalarized);
 
       // Handle non-vectorized nodes by boxing their children
       if (boxingAllowed() &&
-          !vectorizedOrScalarizedNode &&
+          !vectorizedNode &&
           (opCodeValue == TR::astore ||
            opCodeValue == TR::astorei ||
            opCode.isFunctionCall() ||
@@ -1723,7 +1720,7 @@ TR_VectorAPIExpansion::transformIL(bool checkBoxing)
       if (_aliasTable[classId]._classId == -1)  // class was invalidated
          continue;
 
-      TR_ASSERT_FATAL(!boxingAllowed() || vectorizedOrScalarizedNode,
+      TR_ASSERT_FATAL(!boxingAllowed() || vectorizedNode,
                       "Node %p should be either a candidate for vectorization or already vectorized", node);
 
       handlerMode checkMode = checkVectorization;
@@ -1757,13 +1754,17 @@ TR_VectorAPIExpansion::transformIL(bool checkBoxing)
          traceMsg(comp(), "%s node %p of class #%d\n", checkBoxing ? "Checking for boxing" : "Transforming",
                           node, classId);
 
-
-      TR::VectorLength vectorLength = OMR::DataType::bitsToVectorLength(bitsLength);
-      int32_t elementSize = OMR::DataType::getSize(elementType);
-      int32_t numLanes = bitsLength/8/elementSize;
+      int32_t numLanes;
 
       if (opCodeValue == TR::astore)
          {
+         TR::DataType elementType = _aliasTable[tempClassId]._elementType;
+         int32_t bitsLength = _aliasTable[tempClassId]._vecLen;
+         vapiObjType objectType = _aliasTable[tempClassId]._objectType;
+         TR::VectorLength vectorLength = OMR::DataType::bitsToVectorLength(bitsLength);
+         int32_t elementSize = OMR::DataType::getSize(elementType);
+         numLanes = bitsLength/8/elementSize;
+
          if (_trace)
             {
             traceMsg(comp(), "%s astore %p (temp class #%d) elementType=%d vectorLength=%d objectType=%s\n",
@@ -1773,12 +1774,12 @@ TR_VectorAPIExpansion::transformIL(bool checkBoxing)
 
          if (boxingAllowed())
             {
-            TR::DataType rhsElementType;
-            int32_t rhsBitsLength;
-            vapiObjType rhsObjectType;
-            bool rhsScalarized;
-            bool rhsVectorizedOrScalarized = isVectorizedOrScalarizedNode(node->getFirstChild(), rhsElementType, rhsBitsLength,
-                                                                          rhsObjectType, rhsScalarized);
+            TR::DataType elementTypeTmp;
+            int32_t bitsLengthTmp;
+            vapiObjType objectTypeTmp;
+            bool scalarizedTmp;
+            bool rhsVectorizedOrScalarized = isVectorizedOrScalarizedNode(node->getFirstChild(), elementTypeTmp, bitsLengthTmp,
+                                                                          objectTypeTmp, scalarizedTmp);
 
             TR_ASSERT_FATAL(rhsVectorizedOrScalarized, "RHS of vectorized astore should be vectorized too");
             }
@@ -1795,8 +1796,15 @@ TR_VectorAPIExpansion::transformIL(bool checkBoxing)
 
          TR::RecognizedMethod index = methodSymbol->getRecognizedMethod();
          int32_t handlerIndex = index - _firstMethod;
+         TR::DataType elementType;
 
-         TR_ASSERT_FATAL(methodTable[handlerIndex]._methodHandler(this, treeTop, node, elementType, vectorLength, objectType, numLanes, checkMode),
+         getElementTypeAndNumLanes(node, elementType, numLanes);
+
+         int32_t elementSize = OMR::DataType::getSize(elementType);
+         int32_t bitsLength = numLanes*elementSize*8;
+         TR::VectorLength vectorLength = OMR::DataType::bitsToVectorLength(bitsLength);
+
+         TR_ASSERT_FATAL(methodTable[handlerIndex]._methodHandler(this, treeTop, node, elementType, vectorLength, numLanes, checkMode),
                          "Analysis should've proved that method %p is supported for %s", node,
                          (checkMode == checkScalarization) ? "scalarization" : "vectorization");
 
@@ -1824,13 +1832,13 @@ TR_VectorAPIExpansion::transformIL(bool checkBoxing)
                   TR::Node *operand = node->getChild(i);
                   bool vectorizedOrScalarized = false;
 
-                  TR::DataType operandElementType;
-                  int32_t operandBitsLength;
-                  vapiObjType operandObjectType;
-                  bool operandScalarized;
+                  TR::DataType elementTypeTmp;
+                  int32_t bitsLengthTmp;
+                  vapiObjType objectTypeTmp;
+                  bool scalarizedTmp;
 
-                  vectorizedOrScalarized = isVectorizedOrScalarizedNode(operand, operandElementType, operandBitsLength,
-                                                                        operandObjectType, operandScalarized);
+                  vectorizedOrScalarized = isVectorizedOrScalarizedNode(operand, elementTypeTmp, bitsLengthTmp,
+                                                                        objectTypeTmp, scalarizedTmp);
 
                   if (!vectorizedOrScalarized)
                      {
@@ -1865,7 +1873,7 @@ TR_VectorAPIExpansion::transformIL(bool checkBoxing)
 
          if (!checkBoxing)
             {
-            methodTable[handlerIndex]._methodHandler(this, treeTop, node, elementType, vectorLength, objectType, numLanes, doMode);
+            methodTable[handlerIndex]._methodHandler(this, treeTop, node, elementType, vectorLength, numLanes, doMode);
             }
          }
 
@@ -2136,10 +2144,9 @@ void TR_VectorAPIExpansion::astoreHandler(TR_VectorAPIExpansion *opt, TR::TreeTo
    }
 
 
-TR::Node *TR_VectorAPIExpansion::unsupportedHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop,
+TR::Node *TR_VectorAPIExpansion::unsupportedHandler(TR_VectorAPIExpansion *, TR::TreeTop *treeTop,
                                                     TR::Node *node, TR::DataType elementType,
-                                                    TR::VectorLength vectorLength, vapiObjType objectType, int32_t numLanes,
-                                                    handlerMode mode)
+                                                    TR::VectorLength vectorLength, int32_t numLanes, handlerMode mode)
    {
    return NULL;
    }
@@ -2147,18 +2154,19 @@ TR::Node *TR_VectorAPIExpansion::unsupportedHandler(TR_VectorAPIExpansion *opt, 
 
 TR::Node *TR_VectorAPIExpansion::loadIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop,
                                                       TR::Node *node, TR::DataType elementType,
-                                                      TR::VectorLength vectorLength, vapiObjType objectType, int32_t numLanes,
-                                                      handlerMode mode)
+                                                      TR::VectorLength vectorLength, int32_t numLanes, handlerMode mode)
    {
    TR::Compilation *comp = opt->comp();
 
+   vapiObjType objType = getObjectTypeFromClassNode(comp, node->getFirstChild());
+
    if (mode == checkScalarization)
       {
-      return (objectType == Vector) ? node : NULL;
+      return (objType == Vector) ? node : NULL;
       }
    else if (mode == checkVectorization)
       {
-      if (objectType == Vector)
+      if (objType == Vector)
          {
          if (opt->_trace)
             traceMsg(comp, "Vector load with numLanes %d in node %p\n", numLanes, node);
@@ -2171,7 +2179,7 @@ TR::Node *TR_VectorAPIExpansion::loadIntrinsicHandler(TR_VectorAPIExpansion *opt
 
          return node;
          }
-      else if (objectType == Mask)
+      else if (objType == Mask)
          {
          if (opt->_trace)
             traceMsg(comp, "Mask load with numLanes %d in node %p\n", numLanes, node);
@@ -2223,13 +2231,13 @@ TR::Node *TR_VectorAPIExpansion::loadIntrinsicHandler(TR_VectorAPIExpansion *opt
    TR::Node *base = node->getChild(3);
    TR::Node *offset = node->getChild(4);
 
-   return transformLoadFromArray(opt, treeTop, node, elementType, vectorLength, objectType, numLanes, mode, base, offset);
+   return transformLoadFromArray(opt, treeTop, node, elementType, vectorLength, numLanes, mode, base, offset, objType);
    }
 
 TR::Node *TR_VectorAPIExpansion::transformLoadFromArray(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
-                                                        TR::DataType elementType, TR::VectorLength vectorLength, vapiObjType objectType,
-                                                        int32_t numLanes, handlerMode mode,
-                                                        TR::Node *base, TR::Node *offset)
+                                                        TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes,
+                                                        handlerMode mode,
+                                                        TR::Node *base, TR::Node *offset, vapiObjType objType)
 
    {
    TR::Compilation *comp = opt->comp();
@@ -2239,7 +2247,7 @@ TR::Node *TR_VectorAPIExpansion::transformLoadFromArray(TR_VectorAPIExpansion *o
 
    anchorOldChildren(opt, treeTop, node);
 
-   if (objectType != Mask)
+   if (objType != Mask)
       node->setAndIncChild(0, aladdNode);
 
    node->setNumChildren(1);
@@ -2280,7 +2288,7 @@ TR::Node *TR_VectorAPIExpansion::transformLoadFromArray(TR_VectorAPIExpansion *o
       TR::DataType vectorType = TR::DataType::createVectorType(elementType, vectorLength);
       TR::ILOpCodes op;
 
-      if (objectType == Vector)
+      if (objType == Vector)
          {
          TR::DataType symRefType = vectorType;
          TR::SymbolReference *symRef = comp->getSymRefTab()->findOrCreateArrayShadowSymbolRef(symRefType, NULL);
@@ -2288,7 +2296,7 @@ TR::Node *TR_VectorAPIExpansion::transformLoadFromArray(TR_VectorAPIExpansion *o
          TR::Node::recreate(node, op);
          node->setSymbolReference(symRef);
          }
-      else if (objectType == Mask)
+      else if (objType == Mask)
          {
          TR::ILOpCodes loadOpCode;
          TR::DataType symRefType;
@@ -2355,18 +2363,20 @@ TR::Node *TR_VectorAPIExpansion::transformLoadFromArray(TR_VectorAPIExpansion *o
 
 
 TR::Node *TR_VectorAPIExpansion::storeIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
-                                                       TR::DataType elementType, TR::VectorLength vectorLength, vapiObjType objectType,
-                                                       int32_t numLanes, handlerMode mode)
+                                                       TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes,
+                                                       handlerMode mode)
    {
    TR::Compilation *comp = opt->comp();
 
+   vapiObjType objType = getObjectTypeFromClassNode(comp, node->getFirstChild());
+
    if (mode == checkScalarization)
       {
-      return (objectType == Vector) ? node : NULL;
+      return (objType == Vector) ? node : NULL;
       }
    else if (mode == checkVectorization)
       {
-      if (objectType == Vector)
+      if (objType == Vector)
          {
          TR::DataType vectorType = TR::DataType::createVectorType(elementType, vectorLength);
          TR::ILOpCodes vectorOpCode = TR::ILOpCode::createVectorOpCode(TR::vstorei, vectorType);
@@ -2376,7 +2386,7 @@ TR::Node *TR_VectorAPIExpansion::storeIntrinsicHandler(TR_VectorAPIExpansion *op
 
          return node;
          }
-      else if (objectType == Mask)
+      else if (objType == Mask)
          {
          if (opt->_trace)
             traceMsg(comp, "Mask store with numLanes %d in node %p\n", numLanes, node);
@@ -2435,14 +2445,14 @@ TR::Node *TR_VectorAPIExpansion::storeIntrinsicHandler(TR_VectorAPIExpansion *op
    TR::Node *valueToWrite = node->getChild(6);
 #endif
 
-   return transformStoreToArray(opt, treeTop, node, elementType, vectorLength, objectType, numLanes, mode, valueToWrite, base, offset);
+   return transformStoreToArray(opt, treeTop, node, elementType, vectorLength, numLanes, mode, valueToWrite, base, offset, objType);
    }
 
 
 TR::Node *TR_VectorAPIExpansion::transformStoreToArray(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
-                                                       TR::DataType elementType, TR::VectorLength vectorLength, vapiObjType objectType,
-                                                       int32_t numLanes, handlerMode mode,
-                                                       TR::Node *valueToWrite, TR::Node *base, TR::Node *offset)
+                                                       TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes,
+                                                       handlerMode mode,
+                                                       TR::Node *valueToWrite, TR::Node *base, TR::Node *offset, vapiObjType objType)
 
    {
    TR::Compilation *comp = opt->comp();
@@ -2497,21 +2507,21 @@ TR::Node *TR_VectorAPIExpansion::transformStoreToArray(TR_VectorAPIExpansion *op
    else if (mode == doVectorization)
       {
       TR::DataType opCodeType = TR::DataType::createVectorType(elementType, vectorLength);
-      if (objectType == Mask)
+      if (objType == Mask)
           opCodeType = TR::DataType::createMaskType(elementType, vectorLength);
 
       if (valueToWrite->getOpCodeValue() == TR::aload) vectorizeLoadOrStore(opt, valueToWrite, opCodeType);
 
       TR::ILOpCodes op;
 
-      if (objectType == Vector)
+      if (objType == Vector)
          {
          TR::SymbolReference *symRef = comp->getSymRefTab()->findOrCreateArrayShadowSymbolRef(opCodeType, NULL);
          op = TR::ILOpCode::createVectorOpCode(TR::vstorei, opCodeType);
          TR::Node::recreate(node, op);
          node->setSymbolReference(symRef);
          }
-      else if (objectType == Mask)
+      else if (objType == Mask)
          {
          TR::ILOpCodes storeOpCode;
 
@@ -2572,46 +2582,46 @@ TR::Node *TR_VectorAPIExpansion::transformStoreToArray(TR_VectorAPIExpansion *op
 
 
 TR::Node *TR_VectorAPIExpansion::unaryIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
-                                                       TR::DataType elementType, TR::VectorLength vectorLength, vapiObjType objectType,
-                                                       int32_t numLanes, handlerMode mode)
+                                                       TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes,
+                                                       handlerMode mode)
    {
-   return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, objectType, numLanes, mode, 1, Other);
+   return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, numLanes, mode, 1, Other);
    }
 
 TR::Node *TR_VectorAPIExpansion::binaryIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
-                                                        TR::DataType elementType, TR::VectorLength vectorLength, vapiObjType objectType,
-                                                        int32_t numLanes, handlerMode mode)
+                                                        TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes,
+                                                        handlerMode mode)
    {
-   return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, objectType, numLanes, mode, 2, Other);
+   return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, numLanes, mode, 2, Other);
    }
 
 TR::Node *TR_VectorAPIExpansion::maskReductionCoercedIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
-                                                                      TR::DataType elementType, TR::VectorLength vectorLength, vapiObjType objectType,
-                                                                      int32_t numLanes, handlerMode mode)
+                                                                  TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes,
+                                                                  handlerMode mode)
    {
-   return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, objectType, numLanes, mode, 1, MaskReduction);
+   return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, numLanes, mode, 1, MaskReduction);
    }
 
 
 TR::Node *TR_VectorAPIExpansion::reductionCoercedIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
-                                                                  TR::DataType elementType, TR::VectorLength vectorLength, vapiObjType objectType,
-                                                                  int32_t numLanes, handlerMode mode)
+                                                                  TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes,
+                                                                  handlerMode mode)
    {
-   return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, objectType, numLanes, mode, 1, Reduction);
+   return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, numLanes, mode, 1, Reduction);
    }
 
 TR::Node *TR_VectorAPIExpansion::ternaryIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
-                                                         TR::DataType elementType, TR::VectorLength vectorLength, vapiObjType objectType,
-                                                         int32_t numLanes, handlerMode mode)
+                                                         TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes,
+                                                         handlerMode mode)
    {
-   return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, objectType, numLanes, mode, 3, Other);
+   return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, numLanes, mode, 3, Other);
    }
 
 TR::Node *TR_VectorAPIExpansion::testIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
-                                                      TR::DataType elementType, TR::VectorLength vectorLength, vapiObjType objectType,
-                                                      int32_t numLanes, handlerMode mode)
+                                                         TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes,
+                                                         handlerMode mode)
    {
-   return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, objectType, numLanes, mode, 1, Test);
+   return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, numLanes, mode, 1, Test);
    }
 
 TR::Node *TR_VectorAPIExpansion::transformRORtoROL(TR_VectorAPIExpansion *opt, TR::Node *shiftAmount,
@@ -2653,8 +2663,8 @@ TR::Node *TR_VectorAPIExpansion::transformRORtoROL(TR_VectorAPIExpansion *opt, T
 
 
 TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
-                                                      TR::DataType elementType, TR::VectorLength vectorLength, vapiObjType objectType,
-                                                      int32_t numLanes, handlerMode mode,
+                                                      TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes,
+                                                      handlerMode mode,
                                                       int32_t numChildren, vapiOpCodeType opCodeType)
    {
    TR::Compilation *comp = opt->comp();
@@ -2707,7 +2717,7 @@ TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt
       // and all operations should be done in Int in the case of scalarization
       if (elementType == TR::Int8 || elementType == TR::Int16)
            opType = TR::Int32;
-      scalarOpCode = ILOpcodeFromVectorAPIOpcode(comp, vectorAPIOpcode, opType, TR::NoVectorLength, objectType, opCodeType, withMask);
+      scalarOpCode = ILOpcodeFromVectorAPIOpcode(comp, vectorAPIOpcode, opType, TR::NoVectorLength, opCodeType, withMask);
 
       if (mode == checkScalarization)
          {
@@ -2776,7 +2786,7 @@ TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt
 
       if (mode == checkVectorization)
          {
-         vectorOpCode = ILOpcodeFromVectorAPIOpcode(comp, vectorAPIOpcode, opType, vectorLength, objectType, opCodeType, withMask,
+         vectorOpCode = ILOpcodeFromVectorAPIOpcode(comp, vectorAPIOpcode, opType, vectorLength, opCodeType, withMask,
                                                     resultElementType, resultVectorLength);
 
          if (vectorOpCode == TR::BadILOp || !comp->cg()->getSupportsOpCodeForAutoSIMD(vectorOpCode))
@@ -2818,7 +2828,7 @@ TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt
          }
       else
          {
-         vectorOpCode = ILOpcodeFromVectorAPIOpcode(comp, vectorAPIOpcode, opType, vectorLength, objectType, opCodeType, withMask,
+         vectorOpCode = ILOpcodeFromVectorAPIOpcode(comp, vectorAPIOpcode, opType, vectorLength, opCodeType, withMask,
                                                     resultElementType, resultVectorLength);
 
          TR_ASSERT_FATAL(vectorOpCode != TR::BadILOp, "Vector opcode should exist for node %p\n", node);
@@ -2839,22 +2849,22 @@ TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt
    }
 
 TR::Node *TR_VectorAPIExpansion::blendIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
-                                                       TR::DataType elementType, TR::VectorLength vectorLength, vapiObjType objectType,
-                                                       int32_t numLanes, handlerMode mode)
+                                                       TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes,
+                                                       handlerMode mode)
    {
-   return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, objectType, numLanes, mode, 3, Blend);
+   return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, numLanes, mode, 3, Blend);
    }
 
 TR::Node *TR_VectorAPIExpansion::broadcastIntIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
-                                                              TR::DataType elementType, TR::VectorLength vectorLength, vapiObjType objectType,
-                                                              int32_t numLanes, handlerMode mode)
+                                                       TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes,
+                                                       handlerMode mode)
    {
-   return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, objectType, numLanes, mode, 2, BroadcastInt);
+   return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, numLanes, mode, 2, BroadcastInt);
    }
 
 TR::Node *TR_VectorAPIExpansion::fromBitsCoercedIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
-                                                                 TR::DataType elementType, TR::VectorLength vectorLength, vapiObjType objectType,
-                                                                 int32_t numLanes, handlerMode mode)
+                                                                 TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes,
+                                                                 handlerMode mode)
    {
    TR::Compilation *comp = opt->comp();
 
@@ -2878,9 +2888,6 @@ TR::Node *TR_VectorAPIExpansion::fromBitsCoercedIntrinsicHandler(TR_VectorAPIExp
 
    if (mode == checkVectorization)
       {
-      if (objectType == Mask)
-         return NULL; // TODO: support Mask
-
       TR::ILOpCodes splatsOpCode = TR::ILOpCode::createVectorOpCode(mask ? TR::mLongBitsToMask : TR::vsplats,
                                                                     TR::DataType::createVectorType(elementType, vectorLength));
 
@@ -2966,43 +2973,41 @@ TR::Node *TR_VectorAPIExpansion::fromBitsCoercedIntrinsicHandler(TR_VectorAPIExp
    }
 
 TR::Node *TR_VectorAPIExpansion::compareIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
-                                                         TR::DataType elementType, TR::VectorLength vectorLength, vapiObjType objectType,
-                                                         int32_t numLanes, handlerMode mode)
+                                                         TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes,
+                                                         handlerMode mode)
    {
-   return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, objectType, numLanes, mode, 2, Compare);
+   return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, numLanes, mode, 2, Compare);
    }
 
 TR::Node *TR_VectorAPIExpansion::compressExpandOpIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
-                                                                  TR::DataType elementType, TR::VectorLength vectorLength, vapiObjType objectType,
-                                                                  int32_t numLanes, handlerMode mode)
+                                                         TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes,
+                                                         handlerMode mode)
    {
-   return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, objectType, numLanes, mode, objectType == Vector ? 2 : 1, Compress);
+   TR::Compilation *comp = opt->comp();
+   vapiObjType objType;
+
+   if (node->getFirstChild()->getOpCode().isLoadConst() &&
+       node->getFirstChild()->get32bitIntegralValue() == VECTOR_OP_MASK_COMPRESS)
+       objType = Mask;
+   else
+       objType = Vector;
+
+   return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, numLanes, mode, objType == Vector ? 2 : 1, Compress);
    }
 
 TR::Node *TR_VectorAPIExpansion::convertIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
-                                                         TR::DataType elementType, TR::VectorLength vectorLength, vapiObjType objectType,
-                                                         int32_t numLanes, handlerMode mode)
+                                                         TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes,
+                                                         handlerMode mode)
    {
-   return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, objectType, numLanes, mode, 1, Convert);
+   return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, numLanes, mode, 1, Convert);
    }
 
 TR::ILOpCodes TR_VectorAPIExpansion::ILOpcodeFromVectorAPIOpcode(TR::Compilation *comp, int32_t vectorAPIOpCode, TR::DataType elementType,
-                                                                 TR::VectorLength vectorLength, vapiObjType objectType,
-                                                                 vapiOpCodeType opCodeType,
+                                                                 TR::VectorLength vectorLength, vapiOpCodeType opCodeType,
                                                                  bool withMask,
                                                                  TR::DataType resultElementType,
                                                                  TR::VectorLength resultVectorLength)
    {
-   // Skip some unsupported operations on Mask for now (e.g. binary operation on Mask). TODO: implement
-   if (objectType == Mask &&
-       vectorAPIOpCode != VECTOR_OP_MASK_COMPRESS &&
-       opCodeType != Test &&
-       opCodeType != MaskReduction &&
-       opCodeType != Compare)  // for Compare, objectType is Mask (the result) but the operands are always vectors
-      {
-      return TR::BadILOp;
-      }
-
    // TODO: support more scalarization
 
    bool scalar = (vectorLength == TR::NoVectorLength);
