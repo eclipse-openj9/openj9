@@ -3632,9 +3632,6 @@ typedef struct J9ClassLoader {
 	omrthread_rwmutex_t cpEntriesMutex;
 	UDATA initClassPathEntryCount;
 	UDATA asyncGetCallTraceUsed;
-#if defined(J9VM_OPT_JFR)
-	UDATA loadedClassCount;
-#endif /* defined(J9VM_OPT_JFR) */
 } J9ClassLoader;
 
 #define J9CLASSLOADER_SHARED_CLASSES_ENABLED  8
@@ -6307,6 +6304,9 @@ typedef struct J9JavaVM {
 	VMSnapshotImplPortLibrary *vmSnapshotImplPortLibrary;
 	const char *vmSnapshotFilePath;
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
+#if defined(J9VM_OPT_JFR)
+	UDATA loadedClassCount;
+#endif /* defined(J9VM_OPT_JFR) */
 } J9JavaVM;
 
 #define J9JFR_SAMPLER_STATE_UNINITIALIZED 0

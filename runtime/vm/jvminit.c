@@ -1179,6 +1179,9 @@ initializeJavaVM(void * osMainThread, J9JavaVM ** vmPtr, J9CreateJavaVMParams *c
 	vm->internalVMLabels = (J9InternalVMLabels*)-1001;
 	vm->cInterpreter = J9_BUILDER_SYMBOL(cInterpreter);
 	vm->threadDllHandle = createParams->threadDllHandle;
+#if defined(J9VM_OPT_JFR)
+	vm->loadedClassCount = 0;
+#endif /* defined(J9VM_OPT_JFR) */
 
 #if JAVA_SPEC_VERSION >= 19
 	/* tid 1 will be use by main thread, first usable tid starts at 2 */

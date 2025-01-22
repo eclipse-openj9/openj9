@@ -1020,7 +1020,6 @@ void
 jfrClassLoadingStatistics(J9VMThread *currentThread)
 {
 	J9JavaVM *vm = currentThread->javaVM;
-	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	J9JFRClassLoadingStatistics *jfrEvent = (J9JFRClassLoadingStatistics *)reserveBuffer(currentThread, sizeof(J9JFRClassLoadingStatistics));
 
 	if (NULL != jfrEvent) {
@@ -1030,20 +1029,7 @@ jfrClassLoadingStatistics(J9VMThread *currentThread)
 		UDATA unloadedAnonClassCount = 0;
 		vm->memoryManagerFunctions->j9gc_get_cumulative_class_unloading_stats(currentThread, &unloadedAnonClassCount, &unloadedClassCount, NULL);
 		jfrEvent->unloadedClassCount = (I_64)(unloadedClassCount + unloadedAnonClassCount);
-
-		internalReleaseVMAccess(currentThread);
-
-		J9ClassLoaderWalkState walkState = {0};
-		J9ClassLoader *classLoader = vmFuncs->allClassLoadersStartDo(&walkState, vm, 0);
-
-		while (NULL != classLoader) {
-			jfrEvent->loadedClassCount += classLoader->loadedClassCount;
-
-			classLoader= vmFuncs->allClassLoadersNextDo(&walkState);
-		}
-		vmFuncs->allClassLoadersEndDo(&walkState);
-
-		internalAcquireVMAccess(currentThread);
+		jfrEvent->loadedClassCount = vm->loadedClassCount;
 	}
 }
 
