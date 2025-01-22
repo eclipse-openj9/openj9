@@ -167,11 +167,6 @@ J9::Recompilation::fixUpMethodCode(void * startPC)
 
       // This code will race with switchToInterpreter (NOTE2 in this file) if the following is not atomic
       s390compareAndExchange4(jitEntry, preserved, jumpBackInsn);
-
-      if (debug("traceRecompilation"))
-         {
-         ;//diagnostic("RC>>%p: modified %p from %p to %p, will jump to %p(%x)\n", startPC, jitEntry, preserved, jumpBackInsn, (char *) jitEntry + jumpSize, *(int *) ((char *) jitEntry + jumpSize));
-         }
       }
    }
 
@@ -188,11 +183,6 @@ J9::Recompilation::methodHasBeenRecompiled(void * oldStartPC, void * newStartPC,
 #else
    const bool is64Bit = false;
 #endif
-
-   if (debug("traceRecompilation"))
-      {
-      ;//diagnostic("RC>>Method successfully recompiled: %p -> %p\n", oldStartPC, newStartPC);
-      }
 
    if (linkageInfo->isCountingMethodBody())
       {
@@ -216,10 +206,6 @@ J9::Recompilation::methodHasBeenRecompiled(void * oldStartPC, void * newStartPC,
 
       int32_t * patchInsnAddr;
       patchInsnAddr = (int32_t *) ((uint8_t *) oldStartPC + jitEntryOffset);
-      if (debug("traceRecompilation"))
-         {
-         ;//diagnostic("Patching counting prologue, starting at %p(%x)\n", patchInsnAddr, *patchInsnAddr);
-         }
 
       int32_t patchCodeOffset = OFFSET_JITEP_COUNTING_PATCH_CALL_SITE_SNIPPET_START;
       *patchInsnAddr = FOUR_BYTE_JUMP_INSTRUCTION | ((patchCodeOffset / 2) & 0x0000ffff);
@@ -248,11 +234,6 @@ J9::Recompilation::methodHasBeenRecompiled(void * oldStartPC, void * newStartPC,
       patchAddr = (intptr_t *) ((uint8_t *) oldStartPC + -(startPCToAsmOffset + requiredPad));
       oldAsmAddr = *patchAddr;
       newAsmAddr = (intptr_t) runtimeHelpers.getFunctionEntryPointOrConst(TR_S390samplingPatchCallSite);
-
-      if (debug("traceRecompilation"))
-         {
-         ;//diagnostic("RC>>Attempted to patch %p from %p to %p...\n", patchAddr, oldAsmAddr, newAsmAddr);
-         }
 
 #if defined(TR_HOST_64BIT)
       TR_ASSERT(0 == ((uint64_t) patchAddr % sizeof(intptr_t)), "Address %p is not word aligned\n", patchAddr);
@@ -305,11 +286,6 @@ J9::Recompilation::methodCannotBeRecompiled(void * oldStartPC, TR_FrontEnd * fe)
    const bool is64Bit = false;
 #endif
 
-   if (debug("traceRecompilation"))
-      {
-      ;//diagnostic("RC>> Cannot recompile method @ %p\n", oldStartPC);
-      }
-
    patchAddr = (int32_t *) ((uint8_t *) oldStartPC + getJitEntryOffset(linkageInfo));
 
    if ((linkageInfo->isSamplingMethodBody() && !fej9->isAsyncCompilation()) // failed recomps in sync mode
@@ -332,11 +308,6 @@ J9::Recompilation::methodCannotBeRecompiled(void * oldStartPC, TR_FrontEnd * fe)
       //
       if (!methodInfo->hasBeenReplaced()) // HCR: VM presumably already has the method in its proper state
          fej9->revertToInterpreted(methodInfo->getMethodInfo());
-
-      if (debug("traceRecompilation"))
-         {
-         ;//diagnostic("Reverted to interpreted method\n");
-         }
       }
    else if (linkageInfo->isCountingMethodBody())
       {
@@ -386,13 +357,6 @@ J9::Recompilation::methodCannotBeRecompiled(void * oldStartPC, TR_FrontEnd * fe)
          {
          uint32_t prevValue = *patchAddr;
          restoreJitEntryPoint((uint8_t*)oldStartPC, (uint8_t*)patchAddr);
-         if (debug("traceRecompilation"))
-            {
-            uint32_t * saveLocn = (uint32_t*)((uint8_t*)oldStartPC + OFFSET_INTEP_JITEP_SAVE_RESTORE_LOCATION);
-
-
-            ;//diagnostic("RC>>Jit entry point %p(%x->%x) restored saveLocn %p(%x)\n",patchAddr,*patchAddr, prevValue,saveLocn,*saveLocn);
-            }
          }
       }
    linkageInfo->setHasFailedRecompilation();

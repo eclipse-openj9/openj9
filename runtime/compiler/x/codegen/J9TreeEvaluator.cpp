@@ -1171,19 +1171,10 @@ TR::Register *J9::X86::AMD64::TreeEvaluator::conditionalHelperEvaluator(TR::Node
          TR::RegisterDependencyConditions  *cursorDeps = cursor->getDependencyConditions();
          if (cursorDeps && cursor->getOpCodeValue() != TR::InstOpCode::assocreg)
             {
-            if (debug("traceConditionalHelperEvaluator"))
-               {
-               diagnostic("conditionalHelperEvaluator: Adding deps from " POINTER_PRINTF_FORMAT "\n", cursor);
-               }
             for (int32_t i = 0; i < cursorDeps->getNumPostConditions(); i++)
                {
                TR::RegisterDependency  *cursorPostCondition = cursorDeps->getPostConditions()->getRegisterDependency(i);
                postConditions->unionPostCondition(cursorPostCondition->getRegister(), cursorPostCondition->getRealRegister(), cg);
-               if (debug("traceConditionalHelperEvaluator"))
-                  {
-                  TR_Debug *debug = cg->getDebug();
-                  diagnostic("conditionalHelperEvaluator:    [%s : %s]\n", debug->getName(cursorPostCondition->getRegister()), debug->getName(machine->getRealRegister(cursorPostCondition->getRealRegister())));
-                  }
                }
             }
          }
@@ -8944,9 +8935,6 @@ inlineNanoTime(
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
 
-   if (debug("traceInlInlining"))
-      diagnostic("nanoTime called by %s\n", comp->signature());
-
    if (fej9->supportsFastNanoTime())
       {  // Fully Inlined Version
 
@@ -9036,9 +9024,6 @@ inlineNanoTime(
    {
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
-
-   if (debug("traceInlInlining"))
-      diagnostic("nanoTime called by %s\n", comp->signature());
 
    TR::RealRegister  *espReal = cg->machine()->getRealRegister(TR::RealRegister::esp);
    TR::Register *vmThreadReg = cg->getVMThreadRegister();
