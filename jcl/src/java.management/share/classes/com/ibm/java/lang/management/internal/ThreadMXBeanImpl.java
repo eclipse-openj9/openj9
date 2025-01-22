@@ -91,11 +91,13 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 	 */
 	@Override
 	public long[] findMonitorDeadlockedThreads() {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
 			security.checkPermission(ManagementPermissionHelper.MPMONITOR);
 		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		return this.findMonitorDeadlockedThreadsImpl();
 	}
 
@@ -111,11 +113,13 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 	 */
 	@Override
 	public long[] getAllThreadIds() {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
 			security.checkPermission(ManagementPermissionHelper.MPMONITOR);
 		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		return this.getAllThreadIdsImpl();
 	}
 
@@ -260,11 +264,13 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 	 */
 	@Override
 	public ThreadInfo[] getThreadInfo(long[] ids, int maxDepth) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
 			security.checkPermission(ManagementPermissionHelper.MPMONITOR);
 		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		// Validate inputs
 		for (long id : ids) {
@@ -346,11 +352,13 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 			throw new UnsupportedOperationException(com.ibm.oti.util.Msg.getString("K05FB")); //$NON-NLS-1$
 		}
 
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
 			security.checkPermission(ManagementPermissionHelper.MPMONITOR);
 		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		// Validate thread ids
 		for (long id : ids) {
@@ -370,11 +378,13 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 	 */
 	@Override
 	public ThreadInfo getThreadInfo(long id, int maxDepth) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
 			security.checkPermission(ManagementPermissionHelper.MPMONITOR);
 		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		// Validate inputs
 		if (id <= 0) {
@@ -563,11 +573,13 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 	 */
 	@Override
 	public void resetPeakThreadCount() {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
 			security.checkPermission(ManagementPermissionHelper.MPCONTROL);
 		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		this.resetPeakThreadCountImpl();
 	}
 
@@ -588,11 +600,13 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 			throw new UnsupportedOperationException(com.ibm.oti.util.Msg.getString("K05FA")); //$NON-NLS-1$
 		}
 
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
 			security.checkPermission(ManagementPermissionHelper.MPCONTROL);
 		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		this.setThreadContentionMonitoringEnabledImpl(enable);
 	}
 
@@ -613,11 +627,13 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 			throw new UnsupportedOperationException(com.ibm.oti.util.Msg.getString("K05F9")); //$NON-NLS-1$
 		}
 
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
 			security.checkPermission(ManagementPermissionHelper.MPCONTROL);
 		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		this.setThreadCpuTimeEnabledImpl(enable);
 		isThreadCpuTimeEnabled = Boolean.valueOf(enable);
 	}
@@ -660,11 +676,13 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 			throw new UnsupportedOperationException(com.ibm.oti.util.Msg.getString("K05FB")); //$NON-NLS-1$
 		}
 
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
 			security.checkPermission(ManagementPermissionHelper.MPMONITOR);
 		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		return this.findDeadlockedThreadsImpl();
 	}
 
@@ -694,11 +712,13 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 			/*[MSG "K05FB", "Monitoring of ownable synchronizer usage is not supported on this virtual machine"]*/
 			throw new UnsupportedOperationException(com.ibm.oti.util.Msg.getString("K05FB")); //$NON-NLS-1$
 		}
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
 			security.checkPermission(ManagementPermissionHelper.MPMONITOR);
 		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		ThreadInfoBase[] threadInfoBaseArray = dumpAllThreadsImpl(lockedMonitors, lockedSynchronizers, maxDepth);
 		return makeThreadInfos(threadInfoBaseArray);
 	}
@@ -759,11 +779,13 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 	 * To satisfy com.ibm.lang.management.ThreadMXBean.
 	 */
 	public long[] getNativeThreadIds(long[] threadIDs) throws IllegalArgumentException, SecurityException {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (null != security) {
 			security.checkPermission(ManagementPermissionHelper.MPMONITOR);
 		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		/* Prevent users from modifying this after we've validated it. */
 		long[] localThreadIDs = threadIDs.clone();
 		for (long iter : localThreadIDs) {
@@ -782,11 +804,13 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 	 * To satisfy com.ibm.lang.management.
 	 */
 	public long getNativeThreadId(long threadId) throws IllegalArgumentException, SecurityException {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (null != security) {
 			security.checkPermission(ManagementPermissionHelper.MPMONITOR);
 		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		if (threadId <= 0) {
 			/*[MSG "K05FD", "Invalid thread identifier ({0}) specified."]*/
 			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K05FD", threadId)); //$NON-NLS-1$

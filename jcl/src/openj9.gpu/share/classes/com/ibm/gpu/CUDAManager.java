@@ -253,14 +253,20 @@ public final class CUDAManager {
 	 * @return a CUDAManager instance
 	 * @throws GPUConfigurationException
 	 *          This exception is not actually thrown; use {@code instance()} instead.
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException
 	 *          If a security manager exists and the calling thread does not
 	 *          have permission to access the CUDAManager instance.
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 * @deprecated Use {@code instance()} instead.
 	 */
 	@Deprecated
 	public static CUDAManager getInstance()
-			throws GPUConfigurationException, SecurityException {
+			throws GPUConfigurationException
+			/*[IF JAVA_SPEC_VERSION < 24] */
+			, SecurityException
+			/*[ENDIF] JAVA_SPEC_VERSION < 24 */
+	{
 		return instance();
 	}
 
@@ -268,17 +274,25 @@ public final class CUDAManager {
 	 * Return a CUDAManager instance.
 	 *
 	 * @return a CUDAManager instance
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException
 	 *          If a security manager exists and the calling thread does not
 	 *          have permission to access the CUDAManager instance.
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
-	public static CUDAManager instance() throws SecurityException {
+	public static CUDAManager instance()
+		/*[IF JAVA_SPEC_VERSION < 24]*/
+		throws SecurityException
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
+	{
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 
 		if (security != null) {
 			security.checkPermission(GPUPermission.Access);
 		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		return instanceInternal();
 	}

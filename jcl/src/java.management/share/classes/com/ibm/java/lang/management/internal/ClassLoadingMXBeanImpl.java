@@ -118,11 +118,13 @@ public final class ClassLoadingMXBeanImpl implements ClassLoadingMXBean {
 	 */
 	@Override
 	public void setVerbose(boolean value) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
 			security.checkPermission(ManagementPermissionHelper.MPCONTROL);
 		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		this.setVerboseImpl(value);
 	}
 

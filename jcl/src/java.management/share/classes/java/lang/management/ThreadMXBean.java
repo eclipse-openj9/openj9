@@ -64,9 +64,11 @@ public interface ThreadMXBean extends PlatformManagedObject {
 	 *         machine that has been detected as currently being in a deadlock
 	 *         situation over an object monitor. May be <code>null</code> if
 	 *         there are currently no threads in that category.
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException
 	 *             if there is a security manager in effect and the caller does
 	 *             not have {@link ManagementPermission} of &quot;monitor&quot;.
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public long[] findMonitorDeadlockedThreads();
 
@@ -214,9 +216,11 @@ public interface ThreadMXBean extends PlatformManagedObject {
 	 *         that thread. Otherwise, returns <code>null</code>.
 	 * @throws IllegalArgumentException
 	 *             if <code>id</code> is &lt;=0.
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException
 	 *             if there is a security manager in effect and the caller does
 	 *             not have {@link ManagementPermission} of &quot;monitor&quot;.
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public ThreadInfo getThreadInfo(long id);
 
@@ -244,9 +248,11 @@ public interface ThreadMXBean extends PlatformManagedObject {
 	 * @throws IllegalArgumentException
 	 *             if any of the entries in the <code>ids</code> array is
 	 *             &lt;=0.
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException
 	 *             if there is a security manager in effect and the caller does
 	 *             not have {@link ManagementPermission} of &quot;monitor&quot;.
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public ThreadInfo[] getThreadInfo(long[] ids);
 
@@ -288,9 +294,11 @@ public interface ThreadMXBean extends PlatformManagedObject {
 	 *             if any element in <code>ids</code> is &lt;=0.
 	 * @throws IllegalArgumentException
 	 *             if <code>maxDepth</code> is &lt;0.
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException
 	 *             if there is a security manager in effect and the caller does
 	 *             not have {@link ManagementPermission} of &quot;monitor&quot;.
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public ThreadInfo[] getThreadInfo(long[] ids, int maxDepth);
 
@@ -337,9 +345,11 @@ public interface ThreadMXBean extends PlatformManagedObject {
 	 * @throws IllegalArgumentException
 	 *             if any of the entries in the <code>ids</code> array is
 	 *             &lt;=0.
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException
 	 *             if there is a security manager in effect and the caller does
 	 *             not have {@link ManagementPermission} of &quot;monitor&quot;.
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 * @throws UnsupportedOperationException
 	 *             if either of the following conditions apply:
 	 *             <ul>
@@ -395,9 +405,11 @@ public interface ThreadMXBean extends PlatformManagedObject {
 	 *             if <code>id</code> is &lt;=0.
 	 * @throws IllegalArgumentException
 	 *             if <code>maxDepth</code> is &lt;0.
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException
 	 *             if there is a security manager in effect and the caller does
 	 *             not have {@link ManagementPermission} of &quot;monitor&quot;.
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public ThreadInfo getThreadInfo(long id, int maxDepth);
 
@@ -504,9 +516,11 @@ public interface ThreadMXBean extends PlatformManagedObject {
 	 * Resets the peak thread count to be the current number of threads alive in
 	 * the virtual machine when the call is made.
 	 *
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException
 	 *             if there is a security manager in effect and the caller does
 	 *             not have {@link ManagementPermission} of &quot;control&quot;.
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public void resetPeakThreadCount();
 
@@ -521,9 +535,11 @@ public interface ThreadMXBean extends PlatformManagedObject {
 	 * @param enable
 	 *            enable thread contention monitoring if <code>true</code>,
 	 *            otherwise disable thread contention monitoring.
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException
 	 *             if there is a security manager in effect and the caller does
 	 *             not have {@link ManagementPermission} of &quot;control&quot;.
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 * @throws UnsupportedOperationException
 	 *             if the virtual machine does not support thread contention
 	 *             monitoring.
@@ -542,9 +558,11 @@ public interface ThreadMXBean extends PlatformManagedObject {
 	 * @param enable
 	 *            enable thread CPU timing if <code>true</code>, otherwise
 	 *            disable thread CPU timing
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException
 	 *             if there is a security manager in effect and the caller does
 	 *             not have {@link ManagementPermission} of &quot;control&quot;.
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 * @throws UnsupportedOperationException
 	 *             if the virtual machine does not support thread CPU timing.
 	 * @see #isThreadCpuTimeSupported()
@@ -592,9 +610,11 @@ public interface ThreadMXBean extends PlatformManagedObject {
 	 *         situation involving object monitors <i>and</i> ownable
 	 *         synchronizers. If there are no threads in this category a
 	 *         <code>null</code> is returned.
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException
 	 *             if there is a security manager in effect and the caller does
 	 *             not have {@link ManagementPermission} of &quot;monitor&quot;.
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 * @throws UnsupportedOperationException
 	 *             if the virtual machine does not support any monitoring of
 	 *             ownable synchronizers.
@@ -616,9 +636,11 @@ public interface ThreadMXBean extends PlatformManagedObject {
 	 *            currently locked ownable synchronizers is to be included in
 	 *            the returned array
 	 * @return an array of <code>ThreadInfo</code> objects
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException
 	 *             if there is a security manager in effect and the caller does
 	 *             not have {@link ManagementPermission} of &quot;monitor&quot;.
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 * @throws UnsupportedOperationException
 	 *             if either of the following conditions apply:
 	 *             <ul>
@@ -648,9 +670,11 @@ public interface ThreadMXBean extends PlatformManagedObject {
 	 *            the returned array
 	 * @param maxDepth limits the number of stack frames returned
 	 * @return an array of <code>ThreadInfo</code> objects
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException
 	 *             if there is a security manager in effect and the caller does
 	 *             not have {@link ManagementPermission} of &quot;monitor&quot;.
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 * @throws UnsupportedOperationException
 	 * 	if either of the following conditions apply:
 	 *  	<ul>
@@ -713,9 +737,11 @@ public interface ThreadMXBean extends PlatformManagedObject {
 	 * @throws IllegalArgumentException
 	 *             if any of the entries in the <code>ids</code> array is
 	 *             &lt;=0.
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException
 	 *             if there is a security manager in effect and the caller does
 	 *             not have {@link ManagementPermission} of &quot;monitor&quot;.
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 * @throws UnsupportedOperationException
 	 * if either of the following conditions apply:
 	 *  <ul>

@@ -338,15 +338,6 @@ public class TestManagementUtils {
 	}
 
 	/*
-	 * Test method for 'com.ibm.lang.management.ManagementUtils.getClassMaybePrimitive(String)'
-	 */
-	@Test
-	public final void testGetClassMaybePrimitive() {
-		// TODO Auto-generated method stub
-
-	}
-
-	/*
 	 * Test method for 'com.ibm.lang.management.ManagementUtils.isWrapperClass(Class<? extends Object>, Class)'
 	 */
 	@Test

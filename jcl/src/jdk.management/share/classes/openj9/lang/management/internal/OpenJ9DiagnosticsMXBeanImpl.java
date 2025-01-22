@@ -34,7 +34,9 @@ import com.ibm.jvm.Dump;
 import com.ibm.jvm.DumpConfigurationUnavailableException;
 import com.ibm.jvm.InvalidDumpOptionException;
 /*[ENDIF] JAVA_SPEC_VERSION >= 9 */
+/*[IF JAVA_SPEC_VERSION < 24]*/
 import com.ibm.java.lang.management.internal.ManagementPermissionHelper;
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 import openj9.lang.management.ConfigurationUnavailableException;
 import openj9.lang.management.InvalidOptionException;
@@ -101,7 +103,9 @@ public final class OpenJ9DiagnosticsMXBeanImpl implements OpenJ9DiagnosticsMXBea
 	 */
 	@Override
 	public void resetDumpOptions() throws ConfigurationUnavailableException {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkManagementSecurityPermission();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		try {
 			/*[IF JAVA_SPEC_VERSION >= 9]*/
 			dump_resetDumpOptions.invoke(null);
@@ -119,7 +123,9 @@ public final class OpenJ9DiagnosticsMXBeanImpl implements OpenJ9DiagnosticsMXBea
 	 */
 	@Override
 	public String[] queryDumpOptions() {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkManagementSecurityPermission();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		try {
 			/*[IF JAVA_SPEC_VERSION >= 9]*/
 			return (String[])dump_queryDumpOptions.invoke(null);
@@ -152,7 +158,9 @@ public final class OpenJ9DiagnosticsMXBeanImpl implements OpenJ9DiagnosticsMXBea
 	 */
 	@Override
 	public void setDumpOptions(String dumpOptions) throws InvalidOptionException, ConfigurationUnavailableException {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkManagementSecurityPermission();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		try {
 			/*[IF JAVA_SPEC_VERSION >= 9]*/
 			dump_setDumpOptions.invoke(null, dumpOptions);
@@ -171,7 +179,9 @@ public final class OpenJ9DiagnosticsMXBeanImpl implements OpenJ9DiagnosticsMXBea
 	 */
 	@Override
 	public void triggerDump(String dumpAgent) throws IllegalArgumentException {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkManagementSecurityPermission();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		switch (dumpAgent) {
 		/*[IF JAVA_SPEC_VERSION >= 9]*/
 		case "java": //$NON-NLS-1$
@@ -228,7 +238,9 @@ public final class OpenJ9DiagnosticsMXBeanImpl implements OpenJ9DiagnosticsMXBea
 	@Override
 	public String triggerDumpToFile(String dumpAgent, String fileNamePattern) throws IllegalArgumentException, InvalidOptionException {
 		String fileName = null;
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkManagementSecurityPermission();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		switch (dumpAgent) {
 		/*[IF JAVA_SPEC_VERSION >= 9]*/
 		case "java": //$NON-NLS-1$
@@ -310,7 +322,9 @@ public final class OpenJ9DiagnosticsMXBeanImpl implements OpenJ9DiagnosticsMXBea
 	@Override
 	public String triggerClassicHeapDump() throws InvalidOptionException {
 		String dumpOptions = "heap:opts=CLASSIC"; //$NON-NLS-1$
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkManagementSecurityPermission();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		try {
 			/*[IF JAVA_SPEC_VERSION >= 9]*/
 			String fileName = (String) dump_triggerDump.invoke(null, dumpOptions);
@@ -324,6 +338,7 @@ public final class OpenJ9DiagnosticsMXBeanImpl implements OpenJ9DiagnosticsMXBea
 		}
 	}
 
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	private static void checkManagementSecurityPermission() {
 		/* Check the caller has Management Permission. */
 		@SuppressWarnings("removal")
@@ -332,6 +347,7 @@ public final class OpenJ9DiagnosticsMXBeanImpl implements OpenJ9DiagnosticsMXBea
 			manager.checkPermission(ManagementPermissionHelper.MPCONTROL);
 		}
 	}
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 	/**
 	 * Singleton accessor method. Returns an instance of {@link OpenJ9DiagnosticsMXBeanImpl}.

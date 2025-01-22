@@ -672,7 +672,9 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 
 	@Override
 	public boolean isProcessRunning(long pid) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		com.ibm.java.lang.management.internal.RuntimeMXBeanImpl.checkMonitorPermission();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		return openj9.internal.tools.attach.target.IPC.processExists(pid);
 	}
 
