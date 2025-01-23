@@ -48,6 +48,12 @@
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_lockWordAlignment_Object_i</testCaseName>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/20539</comment>
+				<version>24+</version>
+			</disable>
+		</disables>
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
@@ -73,6 +79,12 @@
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_lockWordAlignment_Object_ii</testCaseName>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/20539</comment>
+				<version>24+</version>
+			</disable>
+		</disables>
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
@@ -98,6 +110,12 @@
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_lockWordAlignment_Object_iii</testCaseName>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/20539</comment>
+				<version>24+</version>
+			</disable>
+		</disables>
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
@@ -123,6 +141,12 @@
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_lockWordAlignment_Object_d</testCaseName>
+		<disables>
+			<disable>
+				<comment>https://github.com/eclipse-openj9/openj9/issues/20539</comment>
+				<version>24+</version>
+			</disable>
+		</disables>
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
