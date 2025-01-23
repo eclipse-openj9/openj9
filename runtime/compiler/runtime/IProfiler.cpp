@@ -1180,11 +1180,6 @@ TR_IProfiler::findOrCreateMethodEntry(J9Method *callerMethod, J9Method *calleeMe
    if (!_methodHashTable)
       return NULL;
 
-   // There is no point to add small methods to the table because
-   // the inliner does not consider them in its heristics.
-   if (addIt && TR::Compiler->mtd.bytecodeSize((TR_OpaqueMethodBlock*)calleeMethod) <= TR::Options::_iprofilerFaninMethodMinSize)
-      return NULL;
-
    // Search the hashtable
    int32_t bucket = methodHash((uintptr_t)calleeMethod);
    entry = searchForMethodSample((TR_OpaqueMethodBlock*)calleeMethod, bucket);
