@@ -1947,10 +1947,10 @@ bool TR_J9EstimateCodeSize::reduceDAAWrapperCodeSize(TR_CallTarget* target)
    // DAA Wrappers are basically free if intrinsics are on since all they consist of is the slow and fast paths
    if (target->_calleeMethod)
       {
-      bool reduceMarshallingWrapper = target->_calleeMethod->isDAAMarshallingWrapperMethod() &&
+      bool reduceMarshallingWrapper = ((TR_ResolvedJ9Method*)target->_calleeMethod)->isDAAMarshallingWrapperMethod() &&
               !comp()->getOption(TR_DisableMarshallingIntrinsics);
 
-      bool reducePackedDecimalWrapper = target->_calleeMethod->isDAAPackedDecimalWrapperMethod() &&
+      bool reducePackedDecimalWrapper = ((TR_ResolvedJ9Method*)target->_calleeMethod)->isDAAPackedDecimalWrapperMethod() &&
               !comp()->getOption(TR_DisableMarshallingIntrinsics);
 
       if (reduceMarshallingWrapper || reducePackedDecimalWrapper)
