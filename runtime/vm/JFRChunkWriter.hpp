@@ -183,7 +183,8 @@ public:
 	 * Function members
 	 */
 private:
-	bool isResultNotOKay() {
+	bool isResultNotOKay()
+	{
 		if (!isOkay()) {
 			if (_debug) {
 				j9tty_printf(PORTLIB, "Chunk writer operation failed error=%d\n", (int) _buildResult);
@@ -191,6 +192,28 @@ private:
 			return true;
 		}
 		return false;
+	}
+
+	U_8 *reserveEventSize()
+	{
+		return reserveEventSize(_bufferWriter);
+	}
+
+	void writeEventSize(U_8 *eventStart)
+	{
+		writeEventSize(_bufferWriter, eventStart);
+	}
+
+	static U_8 *reserveEventSize(VM_BufferWriter *bufferWriter)
+	{
+		return bufferWriter->getAndIncCursor(9);
+	}
+
+	static void writeEventSize(VM_BufferWriter *bufferWriter, U_8 *eventStart)
+	{
+		bufferWriter->writeLEB128PaddedU72(
+				eventStart,
+				bufferWriter->getCursor() - eventStart);
 	}
 
 protected:
@@ -240,7 +263,7 @@ public:
 		UDATA written = 0;
 		const size_t fileNameLen = sizeof(intermediateChunkFileName) + 16 + sizeof(".jfr");
 		char fileName[fileNameLen];
-		snprintf(fileName, fileNameLen, "%s%lX.jfr", intermediateChunkFileName, _vm->jfrState.jfrChunkCount);
+		j9str_printf(fileName, fileNameLen, "%s%zX.jfr", intermediateChunkFileName, _vm->jfrState.jfrChunkCount);
 		UDATA len = _bufferWriter->getSize();
 		IDATA fd = j9file_open(fileName, EsOpenWrite | EsOpenCreate | EsOpenTruncate, 0666);
 
@@ -405,7 +428,7 @@ done:
 		VM_BufferWriter *_bufferWriter = (VM_BufferWriter *)userData;
 
 		/* reserve size field */
-		U_8 *dataStart = _bufferWriter->getAndIncCursor(sizeof(U_32));
+		U_8 *dataStart = reserveEventSize(_bufferWriter);
 
 		/* write event type */
 		_bufferWriter->writeLEB128(ExecutionSampleID);
@@ -423,7 +446,7 @@ done:
 		_bufferWriter->writeLEB128(RUNNABLE);
 
 		/* write size */
-		_bufferWriter->writeLEB128PaddedU32(dataStart, _bufferWriter->getCursor() - dataStart);
+		writeEventSize(_bufferWriter, dataStart);
 	}
 
 	static void
@@ -433,7 +456,7 @@ done:
 		VM_BufferWriter *_bufferWriter = (VM_BufferWriter *)userData;
 
 		/* reserve size field */
-		U_8 *dataStart = _bufferWriter->getAndIncCursor(sizeof(U_32));
+		U_8 *dataStart = reserveEventSize(_bufferWriter);
 
 		/* write event type */
 		_bufferWriter->writeLEB128(ThreadStartID);
@@ -454,7 +477,7 @@ done:
 		_bufferWriter->writeLEB128(entry->parentThreadIndex);
 
 		/* write size */
-		_bufferWriter->writeLEB128PaddedU32(dataStart, _bufferWriter->getCursor() - dataStart);
+		writeEventSize(_bufferWriter, dataStart);
 	}
 
 	static void
@@ -464,7 +487,7 @@ done:
 		VM_BufferWriter *_bufferWriter = (VM_BufferWriter *)userData;
 
 		/* reserve size field */
-		U_8 *dataStart = _bufferWriter->getAndIncCursor(sizeof(U_32));
+		U_8 *dataStart = reserveEventSize(_bufferWriter);
 
 		/* write event type */
 		_bufferWriter->writeLEB128(ThreadEndID);
@@ -479,7 +502,7 @@ done:
 		_bufferWriter->writeLEB128(entry->threadIndex);
 
 		/* write size */
-		_bufferWriter->writeLEB128PaddedU32(dataStart, _bufferWriter->getCursor() - dataStart);
+		writeEventSize(_bufferWriter, dataStart);
 	}
 
 	static void
@@ -489,7 +512,7 @@ done:
 		VM_BufferWriter *_bufferWriter = (VM_BufferWriter *) userData;
 
 		/* reserve size field */
-		U_8 *dataStart = _bufferWriter->getAndIncCursor(sizeof(U_32));
+		U_8 *dataStart = reserveEventSize(_bufferWriter);
 
 		/* write event type */
 		_bufferWriter->writeLEB128(ThreadSleepID);
@@ -509,10 +532,10 @@ done:
 		_bufferWriter->writeLEB128(entry->stackTraceIndex);
 
 		/* write sleep time which is always in millis */
-		_bufferWriter->writeLEB128(entry->sleepTime/1000000);
+		_bufferWriter->writeLEB128(entry->sleepTime / 1000000);
 
 		/* write size */
-		_bufferWriter->writeLEB128PaddedU32(dataStart, _bufferWriter->getCursor() - dataStart);
+		writeEventSize(_bufferWriter, dataStart);
 	}
 
 	static void
@@ -522,7 +545,7 @@ done:
 		VM_BufferWriter *_bufferWriter = (VM_BufferWriter *) userData;
 
 		/* reserve size field */
-		U_8 *dataStart = _bufferWriter->getAndIncCursor(sizeof(U_32));
+		U_8 *dataStart = reserveEventSize(_bufferWriter);
 
 		/* write event type */
 		_bufferWriter->writeLEB128(MonitorWaitID);
@@ -557,7 +580,7 @@ done:
 		_bufferWriter->writeLEB128(entry->monitorAddress);
 
 		/* write size */
-		_bufferWriter->writeLEB128PaddedU32(dataStart, _bufferWriter->getCursor() - dataStart);
+		writeEventSize(_bufferWriter, dataStart);
 	}
 
 	static void
@@ -567,7 +590,7 @@ done:
 		VM_BufferWriter *_bufferWriter = (VM_BufferWriter *) userData;
 
 		/* reserve size field */
-		U_8 *dataStart = _bufferWriter->getAndIncCursor(sizeof(U_32));
+		U_8 *dataStart = reserveEventSize(_bufferWriter);
 
 		/* write event type */
 		_bufferWriter->writeLEB128(ThreadParkID);
@@ -599,7 +622,7 @@ done:
 		_bufferWriter->writeLEB128(entry->parkedAddress);
 
 		/* write size */
-		_bufferWriter->writeLEB128PaddedU32(dataStart, _bufferWriter->getCursor() - dataStart);
+		writeEventSize(_bufferWriter, dataStart);
 	}
 
 	static void
@@ -609,7 +632,7 @@ done:
 		VM_BufferWriter *_bufferWriter = (VM_BufferWriter *)userData;
 
 		/* reserve size field */
-		U_8 *dataStart = _bufferWriter->getAndIncCursor(sizeof(U_32));
+		U_8 *dataStart = reserveEventSize(_bufferWriter);
 
 		/* write event type */
 		_bufferWriter->writeLEB128(CPULoadID);
@@ -627,7 +650,7 @@ done:
 		_bufferWriter->writeFloat(entry->machineTotal);
 
 		/* write size */
-		_bufferWriter->writeLEB128PaddedU32(dataStart, _bufferWriter->getCursor() - dataStart);
+		writeEventSize(_bufferWriter, dataStart);
 	}
 
 	static void
@@ -637,7 +660,7 @@ done:
 		VM_BufferWriter *_bufferWriter = (VM_BufferWriter *)userData;
 
 		/* reserve size field */
-		U_8 *dataStart = _bufferWriter->getAndIncCursor(sizeof(U_32));
+		U_8 *dataStart = reserveEventSize(_bufferWriter);
 
 		/* write event type */
 		_bufferWriter->writeLEB128(ThreadCPULoadID);
@@ -655,7 +678,7 @@ done:
 		_bufferWriter->writeFloat(entry->systemCPULoad);
 
 		/* write size */
-		_bufferWriter->writeLEB128PaddedU32(dataStart, _bufferWriter->getCursor() - dataStart);
+		writeEventSize(_bufferWriter, dataStart);
 	}
 
 	void
@@ -682,9 +705,9 @@ done:
 
 	U_8 *writeCheckpointEventHeader(CheckpointTypeMask typeMask, U_32 cpCount);
 
-	void writeUTF8String(J9UTF8* string);
+	void writeUTF8String(const J9UTF8 *string);
 
-	void writeUTF8String(U_8 *data, UDATA len);
+	void writeUTF8String(const U_8 *data, UDATA len);
 
 	void writeStringLiteral(const char *string);
 

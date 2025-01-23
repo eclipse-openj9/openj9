@@ -475,7 +475,7 @@ VM_JFRConstantPoolTypes::addPackageEntry(J9Class *clazz)
 	J9PackageIDTableEntry *pkgID =  NULL;
 	PackageEntry *entry = NULL;
 	UDATA packageNameLength = 0;
-	const char *packageName = NULL;
+	const U_8 *packageName = NULL;
 	PackageEntry entryBuffer = {0};
 
 	entry = &entryBuffer;
@@ -502,14 +502,14 @@ VM_JFRConstantPoolTypes::addPackageEntry(J9Class *clazz)
 	entry->moduleIndex = addModuleEntry(clazz->module);
 	if (isResultNotOKay()) goto done;
 
-	packageName = (const char *) getPackageName(pkgID, &packageNameLength);
+	packageName = getPackageName(pkgID, &packageNameLength);
 	if (NULL == packageName) {
 		_buildResult = InternalVMError;
 		goto done;
 	}
 
-	entry->packageName = (U_8*) packageName;
-	entry->packageNameLength = packageNameLength;
+	entry->packageName = packageName;
+	entry->packageNameLength = (U_32)packageNameLength;
 
 	entry->exported = FALSE; //TODO
 
@@ -941,11 +941,10 @@ done:
 	return index;
 }
 
-U_32
+void
 VM_JFRConstantPoolTypes::addExecutionSampleEntry(J9JFRExecutionSample *executionSampleData)
 {
 	ExecutionSampleEntry *entry = (ExecutionSampleEntry*)pool_newElement(_executionSampleTable);
-	U_32 index = U_32_MAX;
 
 	if (NULL == entry) {
 		_buildResult = OutOfMemory;
@@ -962,18 +961,16 @@ VM_JFRConstantPoolTypes::addExecutionSampleEntry(J9JFRExecutionSample *execution
 	entry->stackTraceIndex = consumeStackTrace(entry->vmThread, J9JFREXECUTIONSAMPLE_STACKTRACE(executionSampleData), executionSampleData->stackTraceSize);
 	if (isResultNotOKay()) goto done;
 
-	index = _executionSampleCount++;
-	entry->index = index;
+	_executionSampleCount += 1;
 
 done:
-	return index;
+	return;
 }
 
-U_32
+void
 VM_JFRConstantPoolTypes::addThreadStartEntry(J9JFRThreadStart *threadStartData)
 {
 	ThreadStartEntry *entry = (ThreadStartEntry*)pool_newElement(_threadStartTable);
-	U_32 index = U_32_MAX;
 
 	if (NULL == entry) {
 		_buildResult = OutOfMemory;
@@ -994,18 +991,16 @@ VM_JFRConstantPoolTypes::addThreadStartEntry(J9JFRThreadStart *threadStartData)
 	entry->stackTraceIndex = consumeStackTrace(threadStartData->parentThread, J9JFRTHREADSTART_STACKTRACE(threadStartData), threadStartData->stackTraceSize);
 	if (isResultNotOKay()) goto done;
 
-	index = _threadStartCount;
 	_threadStartCount += 1;
 
 done:
-	return index;
+	return;
 }
 
-U_32
+void
 VM_JFRConstantPoolTypes::addThreadEndEntry(J9JFREvent *threadEndData)
 {
 	ThreadEndEntry *entry = (ThreadEndEntry*)pool_newElement(_threadEndTable);
-	U_32 index = U_32_MAX;
 
 	if (NULL == entry) {
 		_buildResult = OutOfMemory;
@@ -1020,18 +1015,16 @@ VM_JFRConstantPoolTypes::addThreadEndEntry(J9JFREvent *threadEndData)
 	entry->eventThreadIndex = addThreadEntry(threadEndData->vmThread);
 	if (isResultNotOKay()) goto done;
 
-	index = _threadEndCount;
 	_threadEndCount += 1;
 
 done:
-	return index;
+	return;
 }
 
-U_32
+void
 VM_JFRConstantPoolTypes::addThreadSleepEntry(J9JFRThreadSlept *threadSleepData)
 {
 	ThreadSleepEntry *entry = (ThreadSleepEntry*)pool_newElement(_threadSleepTable);
-	U_32 index = U_32_MAX;
 
 	if (NULL == entry) {
 		_buildResult = OutOfMemory;
@@ -1051,18 +1044,16 @@ VM_JFRConstantPoolTypes::addThreadSleepEntry(J9JFRThreadSlept *threadSleepData)
 	entry->stackTraceIndex = consumeStackTrace(threadSleepData->vmThread, J9JFRTHREADSLEPT_STACKTRACE(threadSleepData), threadSleepData->stackTraceSize);
 	if (isResultNotOKay()) goto done;
 
-	index = _threadSleepCount;
 	_threadSleepCount += 1;
 
 done:
-	return index;
+	return;
 }
 
-U_32
+void
 VM_JFRConstantPoolTypes::addMonitorWaitEntry(J9JFRMonitorWaited* threadWaitData)
 {
 	MonitorWaitEntry *entry = (MonitorWaitEntry*)pool_newElement(_monitorWaitTable);
-	U_32 index = U_32_MAX;
 
 	if (NULL == entry) {
 		_buildResult = OutOfMemory;
@@ -1089,11 +1080,10 @@ VM_JFRConstantPoolTypes::addMonitorWaitEntry(J9JFRMonitorWaited* threadWaitData)
 
 	entry->notifierThread = 0; //Need a way to find the notifiying thread
 
-	index = _monitorWaitCount;
 	_monitorWaitCount += 1;
 
 done:
-	return index;
+	return;
 }
 
 void
@@ -1132,11 +1122,10 @@ done:
 	return;
 }
 
-U_32
+void
 VM_JFRConstantPoolTypes::addCPULoadEntry(J9JFRCPULoad *cpuLoadData)
 {
 	CPULoadEntry *entry = (CPULoadEntry *)pool_newElement(_cpuLoadTable);
-	U_32 index = U_32_MAX;
 
 	if (NULL == entry) {
 		_buildResult = OutOfMemory;
@@ -1148,18 +1137,16 @@ VM_JFRConstantPoolTypes::addCPULoadEntry(J9JFRCPULoad *cpuLoadData)
 	entry->jvmSystem = cpuLoadData->jvmSystem;
 	entry->machineTotal = cpuLoadData->machineTotal;
 
-	index = _cpuLoadCount;
 	_cpuLoadCount += 1;
 
 done:
-	return index;
+	return;
 }
 
-U_32
+void
 VM_JFRConstantPoolTypes::addThreadCPULoadEntry(J9JFRThreadCPULoad *threadCPULoadData)
 {
 	ThreadCPULoadEntry *entry = (ThreadCPULoadEntry *)pool_newElement(_threadCPULoadTable);
-	U_32 index = U_32_MAX;
 
 	if (NULL == entry) {
 		_buildResult = OutOfMemory;
@@ -1175,18 +1162,16 @@ VM_JFRConstantPoolTypes::addThreadCPULoadEntry(J9JFRThreadCPULoad *threadCPULoad
 		goto done;
 	}
 
-	index = _threadCPULoadCount;
 	_threadCPULoadCount += 1;
 
 done:
-	return index;
+	return;
 }
 
-U_32
+void
 VM_JFRConstantPoolTypes::addClassLoadingStatisticsEntry(J9JFRClassLoadingStatistics *classLoadingStatisticsData)
 {
 	ClassLoadingStatisticsEntry *entry = (ClassLoadingStatisticsEntry *)pool_newElement(_classLoadingStatisticsTable);
-	U_32 index = U_32_MAX;
 
 	if (NULL == entry) {
 		_buildResult = OutOfMemory;
@@ -1197,10 +1182,9 @@ VM_JFRConstantPoolTypes::addClassLoadingStatisticsEntry(J9JFRClassLoadingStatist
 	entry->loadedClassCount = classLoadingStatisticsData->loadedClassCount;
 	entry->unloadedClassCount = classLoadingStatisticsData->unloadedClassCount;
 
-	index = _classLoadingStatisticsCount;
 	_classLoadingStatisticsCount += 1;
 done:
-	return index;
+	return;
 }
 
 void
@@ -1293,7 +1277,14 @@ VM_JFRConstantPoolTypes::printMergedStringTables()
 		PackageEntry *tableEntry = (PackageEntry *) _globalStringTable[i];
 
 		j9tty_printf(PORTLIB, "%li -> ", i);
-		j9tty_printf(PORTLIB, "%u) moduleIndex=%u packageName=%.*s exported=%u\n", tableEntry->index, tableEntry->moduleIndex, tableEntry->packageNameLength, (char*)tableEntry->packageName, tableEntry->exported);
+		j9tty_printf(
+				PORTLIB,
+				"%u) moduleIndex=%u packageName=%.*s exported=%u\n",
+				tableEntry->index,
+				tableEntry->moduleIndex,
+				tableEntry->packageNameLength,
+				(const char *)tableEntry->packageName,
+				tableEntry->exported);
 	}
 }
 
