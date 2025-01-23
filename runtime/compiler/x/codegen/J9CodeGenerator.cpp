@@ -73,11 +73,11 @@ J9::X86::CodeGenerator::initialize()
 
    cg->setAheadOfTimeCompile(new (cg->trHeapMemory()) TR::AheadOfTimeCompile(cg));
 
-   if (!TR::Compiler->om.canGenerateArraylets() && !TR::Compiler->om.isOffHeapAllocationEnabled())
-      {
+   if (!TR::Compiler->om.canGenerateArraylets())
       cg->setSupportsReferenceArrayCopy();
+
+   if (!TR::Compiler->om.canGenerateArraylets() && !TR::Compiler->om.isOffHeapAllocationEnabled())
       cg->setSupportsInlineStringLatin1Inflate();
-      }
 
    if (comp->requiresSpineChecks())
       {
