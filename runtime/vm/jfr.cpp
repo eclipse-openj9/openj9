@@ -103,6 +103,9 @@ jfrEventSize(J9JFREvent *jfrEvent)
 	case J9JFR_EVENT_TYPE_THREAD_CONTEXT_SWITCH_RATE:
 		size = sizeof(J9JFRThreadContextSwitchRate);
 		break;
+	case J9JFR_EVENT_TYPE_THREAD_STATISTICS:
+		size = sizeof(J9JFRThreadStatistics);
+		break;
 	default:
 		Assert_VM_unreachable();
 		break;
@@ -1064,6 +1067,23 @@ jfrThreadContextSwitchRate(J9VMThread *currentThread)
 	}
 }
 
+void
+jfrThreadStatistics(J9VMThread *currentThread)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+	J9JFRThreadStatistics *jfrEvent = (J9JFRThreadStatistics *)reserveBuffer(currentThread, sizeof(J9JFRThreadStatistics));
+
+	if (NULL != jfrEvent) {
+		initializeEventFields(currentThread, (J9JFREvent *)jfrEvent, J9JFR_EVENT_TYPE_THREAD_STATISTICS);
+
+		jfrEvent->activeThreadCount = vm->totalThreadCount;
+		jfrEvent->daemonThreadCount = vm->daemonThreadCount;
+		jfrEvent->accumulatedThreadCount = vm->accumulatedThreadCount;
+		jfrEvent->peakThreadCount = vm->peakThreadCount;
+	}
+
+}
+
 static int J9THREAD_PROC
 jfrSamplingThreadProc(void *entryArg)
 {
@@ -1082,6 +1102,7 @@ jfrSamplingThreadProc(void *entryArg)
 				internalAcquireVMAccess(currentThread);
 				jfrCPULoad(currentThread);
 				jfrClassLoadingStatistics(currentThread);
+				jfrThreadStatistics(currentThread);
 				if (0 == (count % 1000)) { // 10 seconds
 					J9SignalAsyncEvent(vm, NULL, vm->jfrThreadCPULoadAsyncKey);
 					jfrThreadContextSwitchRate(currentThread);

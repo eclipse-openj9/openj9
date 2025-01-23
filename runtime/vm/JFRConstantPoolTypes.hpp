@@ -251,6 +251,14 @@ struct ThreadContextSwitchRateEntry {
 	float switchRate;
 };
 
+struct ThreadStatisticsEntry {
+	I_64 ticks;
+	U_32 activeThreadCount;
+	U_32 daemonThreadCount;
+	U_32 accumulatedThreadCount;
+	U_32 peakThreadCount;
+};
+
 struct JVMInformationEntry {
 	const char *jvmName;
 	const char *jvmVersion;
@@ -338,6 +346,8 @@ private:
 	UDATA _classLoadingStatisticsCount;
 	J9Pool *_threadContextSwitchRateTable;
 	U_32 _threadContextSwitchRateCount;
+	J9Pool *_threadStatisticsTable;
+	UDATA _threadStatisticsCount;
 
 	/* Processing buffers */
 	StackFrame *_currentStackFrameBuffer;
@@ -611,6 +621,8 @@ public:
 
 	void addThreadContextSwitchRateEntry(J9JFRThreadContextSwitchRate *threadContextSwitchRateData);
 
+	void addThreadStatisticsEntry(J9JFRThreadStatistics *threadStatisticsData);
+
 	J9Pool *getExecutionSampleTable()
 	{
 		return _executionSampleTable;
@@ -661,6 +673,11 @@ public:
 		return _threadContextSwitchRateTable;
 	}
 
+	J9Pool *getThreadStatisticsTable()
+	{
+		return _threadStatisticsTable;
+	}
+
 	UDATA getExecutionSampleCount()
 	{
 		return _executionSampleCount;
@@ -709,6 +726,11 @@ public:
 	U_32 getThreadContextSwitchRateCount()
 	{
 		return _threadContextSwitchRateCount;
+	}
+
+	UDATA getThreadStatisticsCount()
+	{
+		return _threadStatisticsCount;
 	}
 
 	ClassloaderEntry *getClassloaderEntry()
@@ -868,6 +890,9 @@ public:
 				break;
 			case J9JFR_EVENT_TYPE_THREAD_CONTEXT_SWITCH_RATE:
 				addThreadContextSwitchRateEntry((J9JFRThreadContextSwitchRate *)event);
+				break;
+			case J9JFR_EVENT_TYPE_THREAD_STATISTICS:
+				addThreadStatisticsEntry((J9JFRThreadStatistics *)event);
 				break;
 			default:
 				Assert_VM_unreachable();
@@ -1201,6 +1226,8 @@ done:
 		, _classLoadingStatisticsCount(0)
 		, _threadContextSwitchRateTable(NULL)
 		, _threadContextSwitchRateCount(0)
+		, _threadStatisticsTable(NULL)
+		, _threadStatisticsCount(0)
 		, _previousStackTraceEntry(NULL)
 		, _firstStackTraceEntry(NULL)
 		, _previousThreadEntry(NULL)
@@ -1333,6 +1360,12 @@ done:
 			goto done;
 		}
 
+		_threadStatisticsTable = pool_new(sizeof(ThreadStatisticsEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		if (NULL == _threadStatisticsTable ) {
+			_buildResult = OutOfMemory;
+			goto done;
+		}
+
 		/* Add reserved index for default entries. For strings zero is the empty or NUll string.
 		 * For package zero is the deafult package, for Module zero is the unnamed module. ThreadGroup
 		 * zero is NULL threadGroup.
@@ -1424,6 +1457,7 @@ done:
 		pool_kill(_threadCPULoadTable);
 		pool_kill(_classLoadingStatisticsTable);
 		pool_kill(_threadContextSwitchRateTable);
+		pool_kill(_threadStatisticsTable);
 		j9mem_free_memory(_globalStringTable);
 	}
 

@@ -76,6 +76,7 @@ enum MetadataTypeID {
 	CPULoadID = 95,
 	ThreadCPULoadID = 96,
 	ThreadContextSwitchRateID = 97,
+	ThreadStatisticsID = 99,
 	ClassLoadingStatisticsID = 100,
 	PhysicalMemoryID = 108,
 	ExecutionSampleID = 109,
@@ -170,6 +171,7 @@ private:
 	static constexpr int INITIAL_ENVIRONMENT_VARIABLE_EVENT_SIZE = 6000;
 	static constexpr int CLASS_LOADING_STATISTICS_EVENT_SIZE = 5 * sizeof(I_64);
 	static constexpr int THREAD_CONTEXT_SWITCH_RATE_SIZE = sizeof(float) + (3 * sizeof(I_64));
+	static constexpr int THREAD_STATISTICS_EVENT_SIZE = (6 * sizeof(U_64)) + sizeof(U_32);
 
 	static constexpr int METADATA_ID = 1;
 
@@ -350,6 +352,8 @@ done:
 			pool_do(_constantPoolTypes.getClassLoadingStatisticsTable(), &writeClassLoadingStatisticsEvent, _bufferWriter);
 
 			pool_do(_constantPoolTypes.getThreadContextSwitchRateTable(), &writeThreadContextSwitchRateEvent, _bufferWriter);
+
+			pool_do(_constantPoolTypes.getThreadStatisticsTable(), &writeThreadStatisticsEvent, _bufferWriter);
 
 			/* Only write constant events in first chunk */
 			if (0 == _vm->jfrState.jfrChunkCount) {
@@ -598,7 +602,6 @@ done:
 		_bufferWriter->writeLEB128PaddedU32(dataStart, _bufferWriter->getCursor() - dataStart);
 	}
 
-
 	static void
 	writeCPULoadEvent(void *anElement, void *userData)
 	{
@@ -727,6 +730,8 @@ done:
 
 	static void writeThreadContextSwitchRateEvent(void *anElement, void *userData);
 
+	static void writeThreadStatisticsEvent(void *anElement, void *userData);
+
 	UDATA
 	calculateRequiredBufferSize()
 	{
@@ -792,6 +797,8 @@ done:
 		requiredBufferSize += _constantPoolTypes.getClassLoadingStatisticsCount() * CLASS_LOADING_STATISTICS_EVENT_SIZE;
 
 		requiredBufferSize += _constantPoolTypes.getThreadContextSwitchRateCount() * THREAD_CONTEXT_SWITCH_RATE_SIZE;
+
+		requiredBufferSize += (_constantPoolTypes.getThreadStatisticsCount() * THREAD_STATISTICS_EVENT_SIZE);
 
 		return requiredBufferSize;
 	}
