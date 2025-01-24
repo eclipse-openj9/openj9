@@ -1554,6 +1554,11 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    // Init size and mustBeZero ('0') fields to 0
    generateMemImmInstruction(TR::InstOpCode::S4MemImm4, node, generateX86MemoryReference(targetReg, fej9->getOffsetOfContiguousArraySizeField(), cg), 0, cg);
    generateMemImmInstruction(TR::InstOpCode::S4MemImm4, node, generateX86MemoryReference(targetReg, fej9->getOffsetOfDiscontiguousArraySizeField(), cg), 0, cg);
+   if (TR::Compiler->om.compressObjectReferences())
+      {
+      // Clear padding in contiguous array header layout. +4 because size field is 4 bytes wide.
+      generateMemImmInstruction(TR::InstOpCode::S4MemImm4, node, generateX86MemoryReference(targetReg, fej9->getOffsetOfDiscontiguousArraySizeField() + 4, cg), 0, cg);
+      }
 
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
    if (isOffHeapAllocationEnabled)
@@ -1633,6 +1638,10 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    generateMemRegInstruction(TR::InstOpCode::SMemReg(use64BitClasses), node, generateX86MemoryReference(targetReg, TR::Compiler->om.offsetOfObjectVftField(), cg), classReg, cg);
    // Init 1st dim array size field
    generateMemRegInstruction(TR::InstOpCode::S4MemReg, node, generateX86MemoryReference(targetReg, fej9->getOffsetOfContiguousArraySizeField(), cg), firstDimLenReg, cg);
+   if (!TR::Compiler->om.compressObjectReferences())
+      { // Clear padding in contiguous array header layout. +4 because size field is 4 bytes wide.
+      generateMemImmInstruction(TR::InstOpCode::S4MemImm4, node, generateX86MemoryReference(targetReg, fej9->getOffsetOfContiguousArraySizeField() + 4, cg), 0, cg);
+      }
 
    // temp2 point to end of 1st dim array i.e. start of 2nd dim
    generateRegRegInstruction(TR::InstOpCode::MOVRegReg(),  node, temp2Reg, targetReg, cg);
@@ -1647,6 +1656,10 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    // Init 2nd dim element's size and mustBeZero ('0') fields to 0
    generateMemImmInstruction(TR::InstOpCode::S4MemImm4, node, generateX86MemoryReference(temp2Reg, fej9->getOffsetOfContiguousArraySizeField(), cg), 0, cg);
    generateMemImmInstruction(TR::InstOpCode::S4MemImm4, node, generateX86MemoryReference(temp2Reg, fej9->getOffsetOfDiscontiguousArraySizeField(), cg), 0, cg);
+   if (TR::Compiler->om.compressObjectReferences())
+      { // Clear padding in contiguous array header layout. +4 because size field is 4 bytes wide.
+      generateMemImmInstruction(TR::InstOpCode::S4MemImm4, node, generateX86MemoryReference(temp2Reg, fej9->getOffsetOfDiscontiguousArraySizeField() + 4, cg), 0, cg);
+      }
 
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
    if (isOffHeapAllocationEnabled)
@@ -6826,6 +6839,20 @@ static void genInitArrayHeader(
          generateMemImmInstruction(TR::InstOpCode::S4MemImm4, node, arrayDiscontiguousSizeMR, 0, cg);
          }
       }
+
+   // Clear padding after size field in array header
+   int32_t paddingOffset = fej9->getOffsetOfDiscontiguousArraySizeField();
+   if (TR::Compiler->om.compressObjectReferences())
+      {
+      // In compressed refs, padding is after the size field in discontiguous
+      // header layout (for 0 length arrays)
+      paddingOffset+=4;
+      }
+   generateMemImmInstruction(TR::InstOpCode::S4MemImm4,
+      node,
+      generateX86MemoryReference(objectReg, paddingOffset, cg),
+      0,
+      cg);
 
    bool generateArraylets = comp->generateArraylets();
 
