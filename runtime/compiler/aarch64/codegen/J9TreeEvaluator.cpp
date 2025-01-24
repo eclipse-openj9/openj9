@@ -3298,6 +3298,23 @@ genInitArrayHeader(TR::Node *node, TR::CodeGenerator *cg, TR_OpaqueClassBlock *c
                                     tempReg1);
          }
       }
+
+   // Clear padding after the size field
+   if (!isTLHHasNotBeenCleared)
+      {
+      if (TR::Compiler->om.generateCompressedObjectHeaders())
+         {
+         generateMemSrc1Instruction(cg, TR::InstOpCode::strimmw, node,
+                        TR::MemoryReference::createWithDisplacement(cg, objectReg, fej9->getOffsetOfDiscontiguousArraySizeField() + 4),
+                        zeroReg);
+         }
+      else
+         {
+         generateMemSrc1Instruction(cg, TR::InstOpCode::strimmw, node,
+                        TR::MemoryReference::createWithDisplacement(cg, objectReg, fej9->getOffsetOfContiguousArraySizeField() + 4),
+                        zeroReg);
+         }
+      }
    }
 
 /**
