@@ -180,7 +180,7 @@ TR_OptimizationPlan *J9::CompilationStrategy::processEvent(TR_MethodEvent *event
          hotnessLevel = bodyInfo->getHotness();
          plan = TR_OptimizationPlan::alloc(hotnessLevel);
          *newPlanCreated = true;
-         bodyInfo->getMethodInfo()->incrementNumberOfInvalidations();
+         bodyInfo->getMethodInfo()->addInvalidationReasons(bodyInfo->invalidationReasons());
 
          // the following is just for compatibility with older implementation
          //bodyInfo->getMethodInfo()->setNextCompileLevel(hotnessLevel, false); // no profiling

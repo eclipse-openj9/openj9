@@ -2595,7 +2595,9 @@ void jitClassesRedefined(J9VMThread * currentThread, UDATA classCount, J9JITRede
                if (bodyInfo)
                   {
                   reportHookDetail(currentThread, "jitClassesRedefined", "    Invalidate method body stale=%p startPC=%p", staleMethod, startPC);
-                  TR::Recompilation::invalidateMethodBody(startPC, fe);
+                  TR::Recompilation::invalidateMethodBody(
+                     startPC, fe, TR_JitBodyInvalidations::HCR);
+
                   bodyInfo->setDisableSampling(true);
                   TR_PersistentMethodInfo *pmi = bodyInfo->getMethodInfo();
                   if (pmi)
