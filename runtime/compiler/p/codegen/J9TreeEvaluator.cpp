@@ -6163,6 +6163,26 @@ static void genInitArrayHeader(TR::Node *node, TR::Instruction *&iCursor, bool i
                                            TR::MemoryReference::createWithDisplacement(cg, resReg, fej9->getOffsetOfContiguousArraySizeField(), 4),
                                            instanceSizeReg, iCursor);
       }
+
+   // Clear padding after size field
+   if (needZeroInit)
+      {
+      TR_ASSERT_FATAL_WITH_NODE(node, zeroReg, "zeroReg is expected to be intialized but wasn't.\n");
+      if (TR::Compiler->om.compressObjectReferences())
+         {
+         // padding field starts at fej9->getOffsetOfDiscontiguousArraySizeField() + 4
+         iCursor = generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node,
+                                          TR::MemoryReference::createWithDisplacement(cg, resReg, fej9->getOffsetOfDiscontiguousArraySizeField() + 4, 4),
+                                          zeroReg, iCursor);
+         }
+      else
+         {
+         // padding field starts at fej9->getOffsetOfDiscontiguousArraySizeField()
+         iCursor = generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node,
+                                          TR::MemoryReference::createWithDisplacement(cg, resReg, fej9->getOffsetOfDiscontiguousArraySizeField(), 4),
+                                          zeroReg, iCursor);
+         }
+      }
    }
 
 static void genZeroInit(TR::CodeGenerator *cg, TR::Node *node, TR::Register *objectReg, int32_t headerSize, int32_t totalSize, bool useInitInfo)
