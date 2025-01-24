@@ -27,6 +27,7 @@ import com.ibm.j9ddr.IBootstrapRunnable;
 import com.ibm.j9ddr.IVMData;
 import com.ibm.j9ddr.tools.ddrinteractive.BaseJVMCommands;
 import com.ibm.j9ddr.tools.ddrinteractive.ICommand;
+import com.ibm.j9ddr.vm29.pointer.generated.J9BuildFlags;
 import com.ibm.j9ddr.vm29.pointer.helper.ValueTypeHelper;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.ACCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.AllClassesCommand;
@@ -41,6 +42,7 @@ import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.ContinuationStackWalkCom
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.CoreInfoCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.DumpAllClassesInModuleCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.DumpAllClassloadersCommand;
+import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.DumpAllOffHeapEntriesCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.DumpAllRamClassLinearCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.DumpAllRegionsCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.DumpAllRomClassLinearCommand;
@@ -199,6 +201,9 @@ public class GetCommandsTask extends BaseJVMCommands implements IBootstrapRunnab
 		toPassBack.add(new FindModulesCommand());
 		toPassBack.add(new DumpModuleCommand());
 		toPassBack.add(new DumpPackageCommand());
+		if (J9BuildFlags.J9VM_ENV_DATA64) {
+			toPassBack.add(new DumpAllOffHeapEntriesCommand());
+		}
 		if (J9ConstantPoolCommand.isSupported()) {
 			toPassBack.add(new J9ConstantPoolCommand());
 		}
