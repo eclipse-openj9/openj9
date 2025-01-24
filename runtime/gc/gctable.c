@@ -204,6 +204,7 @@ J9MemoryManagerFunctions MemoryManagerFunctions = {
 	j9gc_get_gcmodestring,
 	j9gc_get_object_size_in_bytes,
 	j9gc_get_object_total_footprint_in_bytes,
+	j9gc_get_explicit_GC_disabled,
 	j9gc_modron_global_collect,
 	j9gc_modron_global_collect_with_overrides,
 	j9gc_modron_local_collect,

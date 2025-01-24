@@ -876,6 +876,18 @@ j9gc_get_object_total_footprint_in_bytes(J9JavaVM *javaVM, j9object_t objectPtr)
 }
 
 /**
+ * API to return is explicit GC disabled
+ *
+ * @parm[in] javaVM The J9JavaVM
+ * @return true if explicit GC is disabled
+ */
+BOOLEAN
+j9gc_get_explicit_GC_disabled(J9JavaVM *javaVM)
+{
+	return MM_GCExtensions::getExtensions(javaVM)->disableExplicitGC;
+}
+
+/**
  * Called whenever the allocation threshold values or enablement state changes.
  * 
  * @parm[in] currentThread The current VM Thread

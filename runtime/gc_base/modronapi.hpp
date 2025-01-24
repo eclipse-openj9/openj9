@@ -88,6 +88,7 @@ UDATA j9gc_get_maximum_heap_size(J9JavaVM *javaVM);
 const char *j9gc_get_gcmodestring(J9JavaVM *javaVM);
 UDATA j9gc_get_object_size_in_bytes(J9JavaVM *javaVM, j9object_t objectPtr);
 UDATA j9gc_get_object_total_footprint_in_bytes(J9JavaVM *javaVM, j9object_t objectPtr);
+BOOLEAN j9gc_get_explicit_GC_disabled(J9JavaVM *javaVM);
 j9object_t j9gc_get_memoryController(J9VMThread *vmContext, j9object_t objectPtr);
 void j9gc_set_memoryController(J9VMThread *vmThread, j9object_t objectPtr, j9object_t memoryController);
 void j9gc_set_allocation_sampling_interval(J9JavaVM *vm, UDATA samplingInterval);
