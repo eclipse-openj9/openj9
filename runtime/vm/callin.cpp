@@ -747,6 +747,7 @@ internalRunStaticMethod(J9VMThread *currentThread, J9Method *method, BOOLEAN ret
 	Trc_VM_internalRunStaticMethod_Exit(currentThread);
 }
 
+#if JAVA_SPEC_VERSION < 24
 void JNICALL
 sendCheckPackageAccess(J9VMThread *currentThread, J9Class *clazz, j9object_t protectionDomain)
 {
@@ -763,6 +764,7 @@ sendCheckPackageAccess(J9VMThread *currentThread, J9Class *clazz, j9object_t pro
 	}
 	Trc_VM_sendCheckPackageAccess_Exit(currentThread);
 }
+#endif /* JAVA_SPEC_VERSION < 24 */
 
 void JNICALL
 sendCompleteInitialization(J9VMThread *currentThread)

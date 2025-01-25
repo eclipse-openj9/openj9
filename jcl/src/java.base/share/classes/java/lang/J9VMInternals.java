@@ -385,13 +385,13 @@ final class J9VMInternals {
 		}
 	}
 
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	/*[PR CVMC 124584] checkPackageAccess(), not defineClassImpl(), should use ProtectionDomain */
 	private static void checkPackageAccess(final Class<?> clazz, ProtectionDomain pd) {
-		/*[IF JAVA_SPEC_VERSION < 24]*/
 		@SuppressWarnings("removal")
 		final SecurityManager sm = System.getSecurityManager();
 		if (sm != null) {
-			ProtectionDomain[] pdArray = (pd == null) ? new ProtectionDomain[]{} : new ProtectionDomain[]{pd};
+			ProtectionDomain[] pdArray = (pd == null) ? new ProtectionDomain[] {} : new ProtectionDomain[] { pd };
 			AccessController.doPrivileged(new PrivilegedAction<Object>() {
 				@Override
 				public Object run() {
@@ -401,15 +401,15 @@ final class J9VMInternals {
 					}
 					if (Proxy.isProxyClass(clazz)) {
 						/*[PR CMVC 198986] Fix proxies */
-						ClassLoader	cl = clazz.getClassLoaderImpl();
+						ClassLoader cl = clazz.getClassLoaderImpl();
 						sun.reflect.misc.ReflectUtil.checkProxyPackageAccess(cl, clazz.getInterfaces());
 					}
 					return null;
 				}
 			}, new AccessControlContext(pdArray));
 		}
-		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	}
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 	/*[PR CMVC 104341] Exceptions in Object.finalize() not ignored */
 

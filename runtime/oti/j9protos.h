@@ -1353,7 +1353,9 @@ extern J9_CFUNC void  JNICALL initializeAttachedThread (J9VMThread *vmContext, c
 extern J9_CFUNC void  JNICALL initializeAttachedThreadImpl (J9VMThread *vmContext, const char *name, j9object_t *group, UDATA daemon, J9VMThread *initializee);
 extern J9_CFUNC void  JNICALL runStaticMethod (J9VMThread *vmContext, U_8* className, J9NameAndSignature* selector, UDATA argCount, UDATA* arguments);
 extern J9_CFUNC void  JNICALL internalRunStaticMethod (J9VMThread *vmContext, J9Method *method, BOOLEAN returnsObject, UDATA argCount, UDATA* arguments);
-extern J9_CFUNC void  JNICALL sendCheckPackageAccess (J9VMThread *vmContext, J9Class * clazz, j9object_t protectionDomain);
+#if JAVA_SPEC_VERSION < 24
+extern J9_CFUNC void  JNICALL sendCheckPackageAccess(J9VMThread *vmContext, J9Class *clazz, j9object_t protectionDomain);
+#endif /* JAVA_SPEC_VERSION < 24 */
 extern J9_CFUNC void  JNICALL sidecarInvokeReflectConstructor (J9VMThread *vmContext, jobject constructorRef, jobject recevierRef, jobjectArray argsRef);
 extern J9_CFUNC void  JNICALL sidecarInvokeReflectConstructorImpl (J9VMThread *vmContext, jobject constructorRef, jobject recevierRef, jobjectArray argsRef);
 extern J9_CFUNC void  JNICALL sendFromMethodDescriptorString (J9VMThread *vmThread, J9UTF8 *descriptor, J9ClassLoader *classLoader, J9Class *appendArgType);
