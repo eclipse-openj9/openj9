@@ -118,6 +118,7 @@
 #define pdModifyPrecisionSimplifierHandler pdshlSimplifier
 #define countDigitsSimplifierHandler dftSimplifier
 #define BCDCHKSimplifierHandler dftSimplifier
+#define storeStoreFenceSimplifierHandler dftSimplifier
 
 #include "optimizer/OMRSimplifierTable.enum"
 
