@@ -103,7 +103,7 @@ class TR_MultipleCallTargetInliner : public TR_InlinerBase
       int32_t applyArgumentHeuristics(TR_LinkHead<TR_ParameterMapping> &map, int32_t originalWeight, TR_CallTarget *target);
       bool eliminateTailRecursion(TR::ResolvedMethodSymbol *, TR_CallStack *, TR::TreeTop *, TR::Node *, TR::Node *, TR_VirtualGuardSelection *);
       void assignArgumentsToParameters(TR::ResolvedMethodSymbol *, TR::TreeTop *, TR::Node *);
-      bool isLargeCompiledMethod(TR_ResolvedMethod *calleeResolvedMethod, int32_t bytecodeSize, int32_t freq);
+     bool isLargeCompiledMethod(TR_ResolvedMethod *calleeResolvedMethod, int32_t bytecodeSize, int32_t freq,  int32_t exemptionFreqCutoff, int32_t veryLargeCompiledMethodThreshold, int32_t veryLargeCompiledMethodFaninThreshold);
       /* \brief
        *    This API processes the call targets got chopped off from \ref _calltargets
        *
