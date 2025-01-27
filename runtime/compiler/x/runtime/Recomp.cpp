@@ -349,25 +349,6 @@ void J9::Recompilation::methodCannotBeRecompiled(void *oldStartPC, TR_FrontEnd *
    linkageInfo->setHasFailedRecompilation();
    }
 
-void J9::Recompilation::invalidateMethodBody(void *startPC, TR_FrontEnd *fe)
-   {
-   // Preexistence assumptions for this method have been violated.  Make the
-   // method no-longer runnable and schedule it for a sync recompilation
-   //
-   J9::PrivateLinkage::LinkageInfo *linkageInfo = J9::PrivateLinkage::LinkageInfo::get(startPC);
-   //linkageInfo->setInvalidated();
-   TR_PersistentJittedBodyInfo* bodyInfo = getJittedBodyInfoFromPC(startPC);
-   bodyInfo->setIsInvalidated(); // bodyInfo must exist
-
-   // If the compilation has been attempted before then we are fine (in case of success,
-   // each caller is being re-directed to the new method -- in case if failure, all callers
-   // are being sent to the interpreter)
-   //
-   if (linkageInfo->recompilationAttempted())
-      return;
-   fixUpMethodCode(startPC); // schedule a sync compilation
-   }
-
 #if defined(TR_HOST_X86)
 void fixupMethodInfoAddressInCodeCache(void *startPC, void *bodyInfo)
    {

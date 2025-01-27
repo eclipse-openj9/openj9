@@ -237,6 +237,24 @@ J9::Recompilation::sampleMethod(
       }
    }
 
+void J9::Recompilation::invalidateMethodBody(void *startPC, TR_FrontEnd *fe)
+   {
+   // Pre-existence assumptions for this method have been violated. Make the
+   // method no-longer runnable and schedule it for sync recompilation
+   //
+   J9::PrivateLinkage::LinkageInfo *linkageInfo = J9::PrivateLinkage::LinkageInfo::get(startPC);
+   TR_PersistentJittedBodyInfo *bodyInfo = getJittedBodyInfoFromPC(startPC);
+   bodyInfo->setIsInvalidated(); // bodyInfo must exist
+
+   // If the compilation has been attempted before then we are fine (in case of success,
+   // each caller is being re-directed to the new method -- in case if failure, all callers
+   // are being sent to the interpreter)
+   //
+   if (linkageInfo->recompilationAttempted())
+      return;
+
+   fixUpMethodCode(startPC);
+   }
 
 bool
 J9::Recompilation::induceRecompilation(
