@@ -551,6 +551,7 @@ final class Access implements JavaLangAccess {
 		return moduleLayer.addEnableNativeAccess(moduleName);
 	}
 
+	/*[IF JAVA_SPEC_VERSION < 25]*/
 	@Override
 	public int getCharsLatin1(long i, int index, byte[] buf) {
 		return StringLatin1.getChars(i, index, buf);
@@ -560,6 +561,7 @@ final class Access implements JavaLangAccess {
 	public int getCharsUTF16(long i, int index, byte[] buf) {
 		return StringUTF16.getChars(i, index, buf);
 	}
+	/*[ENDIF] JAVA_SPEC_VERSION < 25 */
 
 	@Override
 	public void putCharUTF16(byte[] val, int index, int c) {
