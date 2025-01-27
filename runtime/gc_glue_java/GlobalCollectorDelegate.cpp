@@ -74,7 +74,7 @@ fixObjectIfClassDying(OMR_VMThread *omrVMThread, MM_HeapRegionDescriptor *region
 	if (0 != (classFlags & J9AccClassDying)) {
 		MM_MemorySubSpace *memorySubSpace = region->getSubSpace();
 		uintptr_t deadObjectByteSize = MM_GCExtensions::getExtensions(omrVMThread)->objectModel.getConsumedSizeInBytesWithHeader(object);
-		memorySubSpace->abandonHeapChunk(object, ((U_8*)object) + deadObjectByteSize);
+		memorySubSpace->abandonHeapChunk(object, ((uint8_t *)object) + deadObjectByteSize);
 		/* the userdata is a counter of dead objects fixed up so increment it here as a uintptr_t */
 		*((uintptr_t *)userData) += 1;
 	}
@@ -86,7 +86,7 @@ MM_GlobalCollectorDelegate::initialize(MM_EnvironmentBase *env, MM_GlobalCollect
 {
 	_markingScheme = markingScheme;
 	_globalCollector = globalCollector;
-	_javaVM = (J9JavaVM*)env->getLanguageVM();
+	_javaVM = (J9JavaVM *)env->getLanguageVM();
 	_extensions = MM_GCExtensions::getExtensions(env);
 
 	/* This delegate is used primarily by MM_ParallelGlobalGC but is declared in base MM_GlobalCollector
@@ -186,10 +186,10 @@ MM_GlobalCollectorDelegate::mainThreadGarbageCollectFinished(MM_EnvironmentBase 
 	 */
 	MM_HeapRegionDescriptorStandard *region = NULL;
 	GC_HeapRegionIteratorStandard regionIterator(_extensions->heap->getHeapRegionManager());
-	while(NULL != (region = regionIterator.nextRegion())) {
+	while (NULL != (region = regionIterator.nextRegion())) {
 		/* check all lists for regions, they should be empty */
 		MM_HeapRegionDescriptorStandardExtension *regionExtension =  MM_ConfigurationDelegate::getHeapRegionDescriptorStandardExtension(env, region);
-		for (UDATA i = 0; i < regionExtension->_maxListIndex; i++) {
+		for (uintptr_t i = 0; i < regionExtension->_maxListIndex; i++) {
 			MM_ReferenceObjectList *list = &regionExtension->_referenceObjectLists[i];
 			Assert_MM_true(list->isWeakListEmpty());
 			Assert_MM_true(list->isSoftListEmpty());
@@ -215,7 +215,7 @@ MM_GlobalCollectorDelegate::mainThreadGarbageCollectFinished(MM_EnvironmentBase 
 				/* fix the heap */
 				Trc_MM_DoFixHeapForUnload_Entry(vmThread, MEMORY_TYPE_RAM);
 				MM_ParallelGlobalGC *parallelGlobalCollector = (MM_ParallelGlobalGC *)_globalCollector;
-				UDATA fixedObjectCount = parallelGlobalCollector->fixHeapForWalk(env, MEMORY_TYPE_RAM, FIXUP_CLASS_UNLOADING, fixObjectIfClassDying);
+				uintptr_t fixedObjectCount = parallelGlobalCollector->fixHeapForWalk(env, MEMORY_TYPE_RAM, FIXUP_CLASS_UNLOADING, fixObjectIfClassDying);
 				if (0 < fixedObjectCount) {
 					Trc_MM_DoFixHeapForUnload_Exit(vmThread, fixedObjectCount);
 				} else {
@@ -305,7 +305,7 @@ MM_GlobalCollectorDelegate::prepareHeapForWalk(MM_EnvironmentBase *env)
 	/* Clear the appropriate flags of all classLoaders */
 	GC_ClassLoaderIterator classLoaderIterator(_javaVM->classLoaderBlocks);
 	J9ClassLoader *classLoader;
-	while((classLoader = classLoaderIterator.nextSlot()) != NULL) {
+	while ((classLoader = classLoaderIterator.nextSlot()) != NULL) {
 		classLoader->gcFlags &= ~J9_GC_CLASS_LOADER_SCANNED;
 	}
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
@@ -326,16 +326,16 @@ MM_GlobalCollectorDelegate::healSlots(MM_EnvironmentBase *env)
 #endif /* defined(OMR_ENV_DATA64) && defined(OMR_GC_FULL_POINTERS) */
 
 bool
-MM_GlobalCollectorDelegate::heapAddRange(MM_EnvironmentBase *env, MM_MemorySubSpace *subspace, UDATA size, void *lowAddress, void *highAddress)
+MM_GlobalCollectorDelegate::heapAddRange(MM_EnvironmentBase *env, MM_MemorySubSpace *subspace, uintptr_t size, void *lowAddress, void *highAddress)
 {
-	if(NULL != _extensions->referenceChainWalkerMarkMap) {
+	if (NULL != _extensions->referenceChainWalkerMarkMap) {
 		return _extensions->referenceChainWalkerMarkMap->heapAddRange(env, size, lowAddress, highAddress);
 	}
 	return true;
 }
 
 bool
-MM_GlobalCollectorDelegate::heapRemoveRange(MM_EnvironmentBase *env, MM_MemorySubSpace *subspace, UDATA size, void *lowAddress, void *highAddress, void *lowValidAddress, void *highValidAddress)
+MM_GlobalCollectorDelegate::heapRemoveRange(MM_EnvironmentBase *env, MM_MemorySubSpace *subspace, uintptr_t size, void *lowAddress, void *highAddress, void *lowValidAddress, void *highValidAddress)
 {
 	if (NULL != _extensions->referenceChainWalkerMarkMap) {
 		return _extensions->referenceChainWalkerMarkMap->heapRemoveRange(env, size, lowAddress, highAddress, lowValidAddress, highValidAddress);
@@ -386,10 +386,10 @@ MM_GlobalCollectorDelegate::isTimeForGlobalGCKickoff()
 }
 
 void
-MM_GlobalCollectorDelegate::postCollect(MM_EnvironmentBase* env, MM_MemorySubSpace* subSpace)
+MM_GlobalCollectorDelegate::postCollect(MM_EnvironmentBase *env, MM_MemorySubSpace *subSpace)
 {
 	/* update the dynamic soft reference age based on the free space in the oldest generation after this collection so we know how many to clear next time */
-	MM_Heap* heap = (MM_Heap*)_extensions->heap;
+	MM_Heap* heap = (MM_Heap *)_extensions->heap;
 	uintptr_t heapSize = heap->getActiveMemorySize(MEMORY_TYPE_OLD);
 	uintptr_t freeSize = heap->getApproximateActiveFreeMemorySize(MEMORY_TYPE_OLD);
 	double percentFree = ((double)freeSize) / ((double)heapSize);
@@ -446,7 +446,7 @@ MM_GlobalCollectorDelegate::unloadDeadClassLoaders(MM_EnvironmentBase *env)
 	/* The list of classLoaders to be unloaded by cleanUpClassLoadersEnd is rooted in unloadLink */
 
 	/* set the vmState whilst we're unloading classes */
-	UDATA vmState = env->pushVMstate(OMRVMSTATE_GC_CLEANING_METADATA);
+	uintptr_t vmState = env->pushVMstate(OMRVMSTATE_GC_CLEANING_METADATA);
 
 	/* Count the classes we're unloading and perform class-specific clean up work for each unloading class.
 	 * If we're unloading any classes, perform common class-unloading clean up.
