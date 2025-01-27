@@ -467,11 +467,13 @@ public class MemoryMXBeanImpl extends LazyDelegatingNotifier implements MemoryMX
 	 */
 	@Override
 	public void setVerbose(boolean value) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
 			security.checkPermission(ManagementPermissionHelper.MPCONTROL);
 		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		this.setVerboseImpl(value);
 	}
 
@@ -526,11 +528,13 @@ public class MemoryMXBeanImpl extends LazyDelegatingNotifier implements MemoryMX
 		if (size < this.getMinHeapSize() || size > this.getMaxHeapSizeLimit()) {
 			throw new IllegalArgumentException();
 		}
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
 			security.checkPermission(ManagementPermissionHelper.MPCONTROL);
 		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		this.setMaxHeapSizeImpl(size);
 	}
 
@@ -662,11 +666,13 @@ public class MemoryMXBeanImpl extends LazyDelegatingNotifier implements MemoryMX
 		if (value < 0) {
 			throw new IllegalArgumentException();
 		}
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
 			security.checkPermission(ManagementPermissionHelper.MPCONTROL);
 		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		return this.setSharedClassCacheSoftmxBytesImpl(value);
 	}
 
@@ -677,11 +683,13 @@ public class MemoryMXBeanImpl extends LazyDelegatingNotifier implements MemoryMX
 		if (value < 0) {
 			throw new IllegalArgumentException();
 		}
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
 			security.checkPermission(ManagementPermissionHelper.MPCONTROL);
 		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		return this.setSharedClassCacheMinAotBytesImpl(value);
 	}
 
@@ -692,11 +700,13 @@ public class MemoryMXBeanImpl extends LazyDelegatingNotifier implements MemoryMX
 		if (value < 0) {
 			throw new IllegalArgumentException();
 		}
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
 			security.checkPermission(ManagementPermissionHelper.MPCONTROL);
 		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		return this.setSharedClassCacheMaxAotBytesImpl(value);
 	}
 
@@ -707,11 +717,13 @@ public class MemoryMXBeanImpl extends LazyDelegatingNotifier implements MemoryMX
 		if (value < 0) {
 			throw new IllegalArgumentException();
 		}
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
 			security.checkPermission(ManagementPermissionHelper.MPCONTROL);
 		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		return this.setSharedClassCacheMinJitDataBytesImpl(value);
 	}
 
@@ -722,11 +734,13 @@ public class MemoryMXBeanImpl extends LazyDelegatingNotifier implements MemoryMX
 		if (value < 0) {
 			throw new IllegalArgumentException();
 		}
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
 			security.checkPermission(ManagementPermissionHelper.MPCONTROL);
 		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		return this.setSharedClassCacheMaxJitDataBytesImpl(value);
 	}
 

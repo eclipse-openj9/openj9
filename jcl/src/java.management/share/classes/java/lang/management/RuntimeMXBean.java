@@ -67,9 +67,11 @@ public interface RuntimeMXBean extends PlatformManagedObject {
 	 *         system.
 	 * @throws UnsupportedOperationException
 	 *             if the virtual machine does not support boot class loading.
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException
 	 *             if there is a security manager in effect and the caller does
 	 *             not have {@link ManagementPermission} of &quot;monitor&quot;.
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public String getBootClassPath();
 

@@ -221,10 +221,12 @@ public interface MemoryPoolMXBean extends PlatformManagedObject {
 	 * Updates this memory pool's memory usage peak value to be whatever the
 	 * value of the current memory usage is.
 	 *
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException
 	 *             if there is a security manager active and the method caller
 	 *             does not have ManagementPermission "control".
 	 * @see ManagementPermission
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public void resetPeakUsage();
 
@@ -246,9 +248,11 @@ public interface MemoryPoolMXBean extends PlatformManagedObject {
 	 *             if input value <code>threshold</code> is either negative or
 	 *             else is in excess of any maximum memory size that may have
 	 *             been defined for this memory pool.
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException
 	 *             if there is a security manager active and the method caller
 	 *             does not have {@link ManagementPermission}"control".
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public void setCollectionUsageThreshold(long threshold);
 
@@ -267,9 +271,11 @@ public interface MemoryPoolMXBean extends PlatformManagedObject {
 	 *             if input value <code>threshold</code> is either negative or
 	 *             else is in excess of any maximum memory size that may have
 	 *             been defined for this memory pool.
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException
 	 *             if there is a security manager active and the method caller
 	 *             does not have {@link ManagementPermission}"control".
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public void setUsageThreshold(long threshold);
 

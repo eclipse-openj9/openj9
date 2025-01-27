@@ -433,65 +433,6 @@ public final class ManagementUtils {
 	}
 
 	/**
-	 * Convenience method that sets out to return the {@link Class} object for
-	 * the specified type named <code>name</code>. Unlike the
-	 * {@link Class#forName(java.lang.String)} method, this will work even for
-	 * primitive types.
-	 *
-	 * @param name
-	 *            the name of a Java type
-	 * @return the <code>Class</code> object for the type <code>name</code>
-	 * @throws ClassNotFoundException
-	 *             if <code>name</code> does not correspond to any known type
-	 *             (including primitive types).
-	 */
-	public static Class<?> getClassMaybePrimitive(String name) throws ClassNotFoundException {
-		int i = name.lastIndexOf('.');
-
-		if (i != -1) {
-			@SuppressWarnings("removal")
-			SecurityManager sm = System.getSecurityManager();
-			if (sm != null) {
-				sm.checkPackageAccess(name.substring(0, i));
-			}
-		}
-
-		Class<?> result = null;
-
-		try {
-			result = Class.forName(name);
-		} catch (ClassNotFoundException e) {
-			if (name.equals(boolean.class.getName())) {
-				result = boolean.class;
-			} else if (name.equals(char.class.getName())) {
-				result = char.class;
-			} else if (name.equals(byte.class.getName())) {
-				result = byte.class;
-			} else if (name.equals(short.class.getName())) {
-				result = short.class;
-			} else if (name.equals(int.class.getName())) {
-				result = int.class;
-			} else if (name.equals(long.class.getName())) {
-				result = long.class;
-			} else if (name.equals(float.class.getName())) {
-				result = float.class;
-			} else if (name.equals(double.class.getName())) {
-				result = double.class;
-			} else if (name.equals(void.class.getName())) {
-				result = void.class;
-			} else {
-				if (ManagementUtils.VERBOSE_MODE) {
-					e.printStackTrace(System.err);
-				}
-				// Rethrow the original ClassNotFoundException
-				throw e;
-			}
-		}
-
-		return result;
-	}
-
-	/**
 	 * Convenience method to determine if the <code>wrapper</code>
 	 * <code>Class</code>
 	 * object is really the wrapper class for the

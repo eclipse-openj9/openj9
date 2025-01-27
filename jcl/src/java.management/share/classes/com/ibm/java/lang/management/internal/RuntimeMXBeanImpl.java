@@ -71,7 +71,9 @@ public class RuntimeMXBeanImpl implements RuntimeMXBean {
 			throw new UnsupportedOperationException(com.ibm.oti.util.Msg.getString("K05F5")); //$NON-NLS-1$
 		}
 
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkMonitorPermission();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		return VM.internalGetProperties().getProperty("sun.boot.class.path"); //$NON-NLS-1$
 	}
 
@@ -208,7 +210,9 @@ public class RuntimeMXBeanImpl implements RuntimeMXBean {
 	 */
 	@Override
 	public final List<String> getInputArguments() {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkMonitorPermission();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		return Collections.unmodifiableList(ManagementUtils.convertStringArrayToList(VM.getVMArgs()));
 	}
 
@@ -237,6 +241,7 @@ public class RuntimeMXBeanImpl implements RuntimeMXBean {
 		return objectName;
 	}
 
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	public static void checkMonitorPermission() {
 		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
@@ -245,5 +250,6 @@ public class RuntimeMXBeanImpl implements RuntimeMXBean {
 			security.checkPermission(ManagementPermissionHelper.MPMONITOR);
 		}
 	}
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 }

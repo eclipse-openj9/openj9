@@ -69,9 +69,11 @@ public final class Trace {
 	public static final String EXIT = "4 "; //$NON-NLS-1$
 	public static final String EXCEPTION_EXIT = "5 "; //$NON-NLS-1$
 
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	private static final String LEGACY_TRACE_PERMISSION_PROPERTY = "com.ibm.jvm.enableLegacyTraceSecurity"; //$NON-NLS-1$
 
 	private static final TracePermission TRACE_PERMISSION = new TracePermission();
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 	/**
 	 * Initialize the class.
@@ -119,21 +121,27 @@ public final class Trace {
 	 * set at startup on the command line not at runtime using this method.
 	 * <p>
 	 * This method returns zero on success and non-zero otherwise.
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * <p>
 	 * A security manager check will be made only if the system property
 	 * com.ibm.jvm.enableLegacyTraceSecurity is set to "true" in which case a
 	 * check will be made for com.ibm.jvm.TracePermission
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 *
 	 * @param cmd
 	 *            the trace options string to set
 	 * @return 0 on success, non-zero otherwise
 	 *
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException
 	 *             if there is a security manager and it doesn't allow the
 	 *             checks required to change the dump settings
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public static int set(String cmd) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		return setImpl(cmd);
 	}
 
@@ -142,42 +150,54 @@ public final class Trace {
 	 * and must be processed using the trace formatting tool supplied
 	 * with the IBM JVM.
 	 *
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * A security manager check will be made only if the system property
 	 * com.ibm.jvm.enableLegacyTraceSecurity is set to "true" in which case
 	 * a check will be made for com.ibm.jvm.TracePermission
 	 *
 	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to take this dump
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public static void snap() {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		snapImpl();
 	}
 
 	/**
 	 * Suspends tracing for all the threads in the JVM.
 	 *
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * A security manager check will be made only if the system property
 	 * com.ibm.jvm.enableLegacyTraceSecurity is set to "true" in which case
 	 * a check will be made for com.ibm.jvm.TracePermission
 	 *
 	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to take this dump
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public static void suspend() {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		suspendImpl();
 	}
 
 	/**
 	 * Resumes tracing for all the threads in the JVM.
 	 *
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * A security manager check will be made only if the system property
 	 * com.ibm.jvm.enableLegacyTraceSecurity is set to "true" in which case
 	 * a check will be made for com.ibm.jvm.TracePermission
 	 *
 	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to take this dump
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public static void resume() {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		resumeImpl();
 	}
 
@@ -185,14 +205,18 @@ public final class Trace {
 	 * Decrements the suspend and resume count for the current thread and suspends
 	 * tracing the thread if the result is negative.
 	 *
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * A security manager check will be made only if the system property
 	 * com.ibm.jvm.enableLegacyTraceSecurity is set to "true" in which case
 	 * a check will be made for com.ibm.jvm.TracePermission
 	 *
 	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to take this dump
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public static void suspendThis() {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		suspendThisImpl();
 	}
 
@@ -200,14 +224,18 @@ public final class Trace {
 	 * Increments the suspend and resume count for the current thread and resumes
 	 * tracing the thread if the result is not negative.
 	 *
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * A security manager check will be made only if the system property
 	 * com.ibm.jvm.enableLegacyTraceSecurity is set to "true" in which case
 	 * a check will be made for com.ibm.jvm.TracePermission
 	 *
 	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to take this dump
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public static void resumeThis() {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		resumeThisImpl();
 	}
 
@@ -232,10 +260,12 @@ public final class Trace {
 	 *
 	 * To start printing the third trace point you could call Trace.set() like
 	 * this: {@code Trace.set("print=HelloWorld.2"); }
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * <p>
 	 * A security manager check will be made only if the system property
 	 * com.ibm.jvm.enableLegacyTraceSecurity is set to "true" in which case a
 	 * check will be made for com.ibm.jvm.TracePermission
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	 *
 	 * @param name
 	 *            the name of the application you want to trace
@@ -243,15 +273,19 @@ public final class Trace {
 	 *            an array of format strings like the strings used by the C
 	 *            printf method
 	 *
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException
 	 *             if there is a security manager and it doesn't allow the
 	 *             checks required to take this dump
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 * @return an int that should be passed to trace() calls as the handle value
 	 *         or -1 on error.
 	 */
 	public synchronized static int registerApplication(String name,
 			String[] templates) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		Objects.requireNonNull(name, "name"); //$NON-NLS-1$
 		Objects.requireNonNull(templates, "templates"); //$NON-NLS-1$
 		return registerApplicationImpl(name, templates);
@@ -274,6 +308,7 @@ public final class Trace {
 	private static native int registerApplicationImpl(String name,
 			String[] templates); /* ibm@94077 */
 
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	/**
 	 * Check the caller has permission to use the Trace API for calls that existed pre-Java 8
 	 * when security was added. Public API added after Java 8 should call checkTraceSecurityPermssion()
@@ -296,28 +331,37 @@ public final class Trace {
 			manager.checkPermission(TRACE_PERMISSION);
 		}
 	}
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 	// Application trace tracing methods
 	public static void trace(int handle, int traceId) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		traceImpl(handle, traceId);
 	}
 
 	public static void trace(int handle, int traceId, String s1) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		Objects.requireNonNull(s1, "s1"); //$NON-NLS-1$
 		traceImpl(handle, traceId, s1);
 	}
 
 	public static void trace(int handle, int traceId, String s1, String s2) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		Objects.requireNonNull(s1, "s1"); //$NON-NLS-1$
 		Objects.requireNonNull(s2, "s2"); //$NON-NLS-1$
 		traceImpl(handle, traceId, s1, s2);
 	}
 
 	public static void trace(int handle, int traceId, String s1, String s2, String s3) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		Objects.requireNonNull(s1, "s1"); //$NON-NLS-1$
 		Objects.requireNonNull(s2, "s2"); //$NON-NLS-1$
 		Objects.requireNonNull(s3, "s3"); //$NON-NLS-1$
@@ -325,196 +369,266 @@ public final class Trace {
 	}
 
 	public static void trace(int handle, int traceId, String s1, Object o1) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		Objects.requireNonNull(s1, "s1"); //$NON-NLS-1$
 		Objects.requireNonNull(o1, "o1"); //$NON-NLS-1$
 		traceImpl(handle, traceId, s1, o1);
 	}
 
 	public static void trace(int handle, int traceId, Object o1, String s1) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		Objects.requireNonNull(o1, "o1"); //$NON-NLS-1$
 		Objects.requireNonNull(s1, "s1"); //$NON-NLS-1$
 		traceImpl(handle, traceId, o1, s1);
 	}
 
 	public static void trace(int handle, int traceId, String s1, int i1) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		Objects.requireNonNull(s1, "s1"); //$NON-NLS-1$
 		traceImpl(handle, traceId, s1, i1);
 	}
 
 	public static void trace(int handle, int traceId, int i1, String s1) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		Objects.requireNonNull(s1, "s1"); //$NON-NLS-1$
 		traceImpl(handle, traceId, i1, s1);
 	}
 
 	public static void trace(int handle, int traceId, String s1, long l1) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		Objects.requireNonNull(s1, "s1"); //$NON-NLS-1$
 		traceImpl(handle, traceId, s1, l1);
 	}
 
 	public static void trace(int handle, int traceId, long l1, String s1) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		Objects.requireNonNull(s1, "s1"); //$NON-NLS-1$
 		traceImpl(handle, traceId, l1, s1);
 	}
 
 	public static void trace(int handle, int traceId, String s1, byte b1) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		Objects.requireNonNull(s1, "s1"); //$NON-NLS-1$
 		traceImpl(handle, traceId, s1, b1);
 	}
 
 	public static void trace(int handle, int traceId, byte b1, String s1) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		Objects.requireNonNull(s1, "s1"); //$NON-NLS-1$
 		traceImpl(handle, traceId, b1, s1);
 	}
 
 	public static void trace(int handle, int traceId, String s1, char c1) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		Objects.requireNonNull(s1, "s1"); //$NON-NLS-1$
 		traceImpl(handle, traceId, s1, c1);
 	}
 
 	public static void trace(int handle, int traceId, char c1, String s1) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		Objects.requireNonNull(s1, "s1"); //$NON-NLS-1$
 		traceImpl(handle, traceId, c1, s1);
 	}
 
 	public static void trace(int handle, int traceId, String s1, float f1) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		Objects.requireNonNull(s1, "s1"); //$NON-NLS-1$
 		traceImpl(handle, traceId, s1, f1);
 	}
 
 	public static void trace(int handle, int traceId, float f1, String s1) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		Objects.requireNonNull(s1, "s1"); //$NON-NLS-1$
 		traceImpl(handle, traceId, f1, s1);
 	}
 
 	public static void trace(int handle, int traceId, String s1, double d1) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		Objects.requireNonNull(s1, "s1"); //$NON-NLS-1$
 		traceImpl(handle, traceId, s1, d1);
 	}
 
 	public static void trace(int handle, int traceId, double d1, String s1) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		Objects.requireNonNull(s1, "s1"); //$NON-NLS-1$
 		traceImpl(handle, traceId, d1, s1);
 	}
 
 	public static void trace(int handle, int traceId, Object o1) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		Objects.requireNonNull(o1, "o1"); //$NON-NLS-1$
 		traceImpl(handle, traceId, o1);
 	}
 
 	public static void trace(int handle, int traceId, Object o1, Object o2) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		Objects.requireNonNull(o1, "o1"); //$NON-NLS-1$
 		Objects.requireNonNull(o2, "o2"); //$NON-NLS-1$
 		traceImpl(handle, traceId, o1, o2);
 	}
 
 	public static void trace(int handle, int traceId, int i1) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		traceImpl(handle, traceId, i1);
 	}
 
 	public static void trace(int handle, int traceId, int i1, int i2) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		traceImpl(handle, traceId, i1, i2);
 	}
 
 	public static void trace(int handle, int traceId, int i1, int i2, int i3) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		traceImpl(handle, traceId, i1, i2, i3);
 	}
 
 	public static void trace(int handle, int traceId, long l1) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		traceImpl(handle, traceId, l1);
 	}
 
 	public static void trace(int handle, int traceId, long l1, long l2) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		traceImpl(handle, traceId, l1, l2);
 	}
 
 	public static void trace(int handle, int traceId, long l1, long l2, long i3) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		traceImpl(handle, traceId, l1, l2, i3);
 	}
 
 	public static void trace(int handle, int traceId, byte b1) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		traceImpl(handle, traceId, b1);
 	}
 
 	public static void trace(int handle, int traceId, byte b1, byte b2) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		traceImpl(handle, traceId, b1, b2);
 	}
 
 	public static void trace(int handle, int traceId, byte b1, byte b2, byte b3) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		traceImpl(handle, traceId, b1, b2, b3);
 	}
 
 	public static void trace(int handle, int traceId, char c1) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		traceImpl(handle, traceId, c1);
 	}
 
 	public static void trace(int handle, int traceId, char c1, char c2) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		traceImpl(handle, traceId, c1, c2);
 	}
 
 	public static void trace(int handle, int traceId, char c1, char c2, char c3) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		traceImpl(handle, traceId, c1, c2, c3);
 	}
 
 	public static void trace(int handle, int traceId, float f1) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		traceImpl(handle, traceId, f1);
 	}
 
 	public static void trace(int handle, int traceId, float f1, float f2) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		traceImpl(handle, traceId, f1, f2);
 	}
 
 	public static void trace(int handle, int traceId, float f1, float f2, float f3) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		traceImpl(handle, traceId, f1, f2, f3);
 	}
 
 	public static void trace(int handle, int traceId, double d1) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		traceImpl(handle, traceId, d1);
 	}
 
 	public static void trace(int handle, int traceId, double d1, double d2) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		traceImpl(handle, traceId, d1, d2);
 	}
 
 	public static void trace(int handle, int traceId, double d1, double d2, double d3) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		traceImpl(handle, traceId, d1, d2, d3);
 	}
 
 	public static void trace(int handle, int traceId, String s1, Object o1, String s2) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		Objects.requireNonNull(s1, "s1"); //$NON-NLS-1$
 		Objects.requireNonNull(o1, "o1"); //$NON-NLS-1$
 		Objects.requireNonNull(s2, "s2"); //$NON-NLS-1$
@@ -522,7 +636,9 @@ public final class Trace {
 	}
 
 	public static void trace(int handle, int traceId, Object o1, String s1, Object o2) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		Objects.requireNonNull(o1, "o1"); //$NON-NLS-1$
 		Objects.requireNonNull(s1, "s1"); //$NON-NLS-1$
 		Objects.requireNonNull(o2, "o2"); //$NON-NLS-1$
@@ -530,79 +646,103 @@ public final class Trace {
 	}
 
 	public static void trace(int handle, int traceId, String s1, int i1, String s2) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		Objects.requireNonNull(s1, "s1"); //$NON-NLS-1$
 		Objects.requireNonNull(s2, "s2"); //$NON-NLS-1$
 		traceImpl(handle, traceId, s1, i1, s2);
 	}
 
 	public static void trace(int handle, int traceId, int i1, String s1, int i2) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		Objects.requireNonNull(s1, "s1"); //$NON-NLS-1$
 		traceImpl(handle, traceId, i1, s1, i2);
 	}
 
 	public static void trace(int handle, int traceId, String s1, long l1, String s2) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		Objects.requireNonNull(s1, "s1"); //$NON-NLS-1$
 		Objects.requireNonNull(s2, "s2"); //$NON-NLS-1$
 		traceImpl(handle, traceId, s1, l1, s2);
 	}
 
 	public static void trace(int handle, int traceId, long l1, String s1, long l2) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		Objects.requireNonNull(s1, "s1"); //$NON-NLS-1$
 		traceImpl(handle, traceId, l1, s1, l2);
 	}
 
 	public static void trace(int handle, int traceId, String s1, byte b1, String s2) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		Objects.requireNonNull(s1, "s1"); //$NON-NLS-1$
 		Objects.requireNonNull(s2, "s2"); //$NON-NLS-1$
 		traceImpl(handle, traceId, s1, b1, s2);
 	}
 
 	public static void trace(int handle, int traceId, byte b1, String s1, byte b2) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		Objects.requireNonNull(s1, "s1"); //$NON-NLS-1$
 		traceImpl(handle, traceId, b1, s1, b2);
 	}
 
 	public static void trace(int handle, int traceId, String s1, char c1, String s2) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		Objects.requireNonNull(s1, "s1"); //$NON-NLS-1$
 		Objects.requireNonNull(s2, "s2"); //$NON-NLS-1$
 		traceImpl(handle, traceId, s1, c1, s2);
 	}
 
 	public static void trace(int handle, int traceId, char c1, String s1, char c2) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		Objects.requireNonNull(s1, "s1"); //$NON-NLS-1$
 		traceImpl(handle, traceId, c1, s1, c2);
 	}
 
 	public static void trace(int handle, int traceId, String s1, float f1, String s2) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		Objects.requireNonNull(s1, "s1"); //$NON-NLS-1$
 		Objects.requireNonNull(s2, "s2"); //$NON-NLS-1$
 		traceImpl(handle, traceId, s1, f1, s2);
 	}
 
 	public static void trace(int handle, int traceId, float f1, String s1, float f2) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		Objects.requireNonNull(s1, "s1"); //$NON-NLS-1$
 		traceImpl(handle, traceId, f1, s1, f2);
 	}
 
 	public static void trace(int handle, int traceId, String s1, double d1, String s2) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		Objects.requireNonNull(s1, "s1"); //$NON-NLS-1$
 		Objects.requireNonNull(s2, "s2"); //$NON-NLS-1$
 		traceImpl(handle, traceId, s1, d1, s2);
 	}
 
 	public static void trace(int handle, int traceId, double d1, String s1, double d2) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		Objects.requireNonNull(s1, "s1"); //$NON-NLS-1$
 		traceImpl(handle, traceId, d1, s1, d2);
 	}

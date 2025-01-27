@@ -360,11 +360,13 @@ public class MemoryPoolMXBeanImpl implements MemoryPoolMXBean {
 	 */
 	@Override
 	public void resetPeakUsage() {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
 			security.checkPermission(ManagementPermissionHelper.MPCONTROL);
 		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		this.resetPeakUsageImpl(id);
 	}
 
@@ -386,11 +388,13 @@ public class MemoryPoolMXBeanImpl implements MemoryPoolMXBean {
 			throw new UnsupportedOperationException(com.ibm.oti.util.Msg.getString("K05EE")); //$NON-NLS-1$
 		}
 
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
 			security.checkPermission(ManagementPermissionHelper.MPCONTROL);
 		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		if (threshold < 0) {
 			/*[MSG "K05FE", "Collection usage threshold cannot be negative."]*/
@@ -421,11 +425,13 @@ public class MemoryPoolMXBeanImpl implements MemoryPoolMXBean {
 			throw new UnsupportedOperationException(com.ibm.oti.util.Msg.getString("K05EF")); //$NON-NLS-1$
 		}
 
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
 			security.checkPermission(ManagementPermissionHelper.MPCONTROL);
 		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		if (threshold < 0) {
 			/*[MSG "K05F0", "Usage threshold cannot be negative."]*/
