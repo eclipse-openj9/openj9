@@ -64,9 +64,9 @@ import sun.reflect.generics.scope.ClassScope;
 import sun.reflect.annotation.AnnotationType;
 import java.util.Arrays;
 import com.ibm.oti.vm.VM;
-/*[IF JAVA_SPEC_VERSION >= 11]*/
+/*[IF (11 <= JAVA_SPEC_VERSION) & (JAVA_SPEC_VERSION < 24)]*/
 import static com.ibm.oti.util.Util.doesClassLoaderDescendFrom;
-/*[ENDIF] JAVA_SPEC_VERSION >= 11*/
+/*[ENDIF] (11 <= JAVA_SPEC_VERSION) & (JAVA_SPEC_VERSION < 24) */
 
 /*[IF JAVA_SPEC_VERSION >= 9]
 import jdk.internal.misc.Unsafe;
@@ -5547,9 +5547,11 @@ private native Class<?>[] getNestMembersImpl();
 /**
  * Answers the host class of the receiver's nest.
  *
+/*[IF JAVA_SPEC_VERSION < 24]
  * @throws SecurityException if nestHost is not same as the current class, a security manager
  *	is present, the classloader of the caller is not the same or an ancestor of nestHost
  * 	class, and checkPackageAccess() denies access
+/*[ENDIF] JAVA_SPEC_VERSION < 24
  * @return the host class of the receiver.
  */
 @CallerSensitive
@@ -5561,6 +5563,7 @@ public Class<?> getNestHost()
 	if (nestHost == null) {
 		nestHost = getNestHostImpl();
 	}
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	/* The specification requires that if:
 	 *    - the returned class is not the current class
 	 *    - a security manager is present
@@ -5582,6 +5585,7 @@ public Class<?> getNestHost()
 			}
 		}
 	}
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	return nestHost;
 }
 

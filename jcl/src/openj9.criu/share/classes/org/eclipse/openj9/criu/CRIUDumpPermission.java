@@ -1,4 +1,4 @@
-/*[INCLUDE-IF CRIU_SUPPORT]*/
+/*[INCLUDE-IF CRIU_SUPPORT & (JAVA_SPEC_VERSION < 24)]*/
 /*
  * Copyright IBM Corp. and others 2021
  *
