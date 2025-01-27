@@ -4722,13 +4722,22 @@ bool TR_MultipleCallTargetInliner::isLargeCompiledMethod(TR_ResolvedMethod *call
                   veryLargeCompiledMethodFaninThreshold = 0;
                   }
                }
-
-            uint32_t numCallers = 0, totalWeight = 0;
-            ((TR_ResolvedJ9Method *) calleeResolvedMethod)->getFaninInfo(&numCallers, &totalWeight);
-            if ((numCallers > veryLargeCompiledMethodFaninThreshold) &&
-                (bytecodeSize > veryLargeCompiledMethodThreshold))
+            // Prevent inlining of "large" methods with "many" callers
+            if (bytecodeSize > veryLargeCompiledMethodThreshold)
                {
-               return true;
+               uint32_t numCallers = 0, totalWeight = 0;
+               if (!comp()->getOption(TR_DisableInlinerFanIn))
+                  ((TR_ResolvedJ9Method *) calleeResolvedMethod)->getFaninInfo(&numCallers, &totalWeight);
+               if (numCallers == 0) // no fanin info
+                  {
+                  // If there is no fanin info, prevent inlining just based on method size
+                  return true;
+                  }
+               else
+                  {
+                  if (numCallers > veryLargeCompiledMethodFaninThreshold)
+                     return true;
+                  }
                }
             }
          }
