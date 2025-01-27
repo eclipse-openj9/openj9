@@ -271,6 +271,7 @@ performVerification(J9VMThread *currentThread, J9Class *clazz)
 		}
 	}
 done:
+	Trc_VM_performVerification_Exit(currentThread);
 	return;
 }
 
