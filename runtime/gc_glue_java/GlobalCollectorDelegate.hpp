@@ -81,7 +81,7 @@ public:
 	void mainThreadGarbageCollectStarted(MM_EnvironmentBase *env);
 	void postMarkProcessing(MM_EnvironmentBase *env);
 	void mainThreadGarbageCollectFinished(MM_EnvironmentBase *env, bool compactedThisCycle);
-	void postCollect(MM_EnvironmentBase* env, MM_MemorySubSpace* subSpace);
+	void postCollect(MM_EnvironmentBase *env, MM_MemorySubSpace *subSpace);
 
 	bool isAllowUserHeapWalk();
 	void prepareHeapForWalk(MM_EnvironmentBase *env);
@@ -91,8 +91,8 @@ public:
 	void healSlots(MM_EnvironmentBase *env);
 #endif /* defined(OMR_ENV_DATA64) && defined(OMR_GC_FULL_POINTERS) */
 
-	bool heapAddRange(MM_EnvironmentBase *env, MM_MemorySubSpace *subspace, UDATA size, void *lowAddress, void *highAddress);
-	bool heapRemoveRange(MM_EnvironmentBase *env, MM_MemorySubSpace *subspace, UDATA size, void *lowAddress, void *highAddress, void *lowValidAddress, void *highValidAddress);
+	bool heapAddRange(MM_EnvironmentBase *env, MM_MemorySubSpace *subspace, uintptr_t size, void *lowAddress, void *highAddress);
+	bool heapRemoveRange(MM_EnvironmentBase *env, MM_MemorySubSpace *subspace, uintptr_t size, void *lowAddress, void *highAddress, void *lowValidAddress, void *highValidAddress);
 
 	bool isTimeForGlobalGCKickoff();
 
