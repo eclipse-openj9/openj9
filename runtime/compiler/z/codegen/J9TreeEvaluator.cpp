@@ -3214,9 +3214,6 @@ J9::Z::TreeEvaluator::genLoadForObjectHeadersMasked(TR::CodeGenerator *cg, TR::N
    return iCursor;
    }
 
-// max number of cache slots used by checkcat/instanceof
-#define NUM_PICS 3
-
 static TR::Instruction *
 genTestIsSuper(TR::CodeGenerator * cg, TR::Node * node,
    TR::Register * objClassReg, TR::Register * castClassReg,
@@ -3562,68 +3559,6 @@ bool killedByInstanceOfHelper(int32_t regIndex, TR::Node * node, TR::CodeGenerat
       }
    }
 
-static bool generateInlineTest(TR::CodeGenerator * cg, TR::Node * node, TR::Node * castClassNode,
-                               TR::Register * objClassReg, TR::Register * resultReg,
-                               TR::Register * scratchReg, TR::Register * litPoolReg,
-                               bool needsResult, TR::LabelSymbol * falseLabel,
-                               TR::LabelSymbol * trueLabel, TR::LabelSymbol * doneLabel, bool isCheckCast, int32_t maxNum_PICS = NUM_PICS)
-   {
-   TR::Compilation *comp = cg->comp();
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
-   TR_OpaqueClassBlock* guessClassArray[NUM_PICS];
-   TR_OpaqueClassBlock* castClassAddr = TR::TreeEvaluator::getCastClassAddress(castClassNode);
-   uint8_t num_PICs = 0, i;
-
-   if (!castClassAddr)
-      {
-      return false;
-      }
-
-   if (isCheckCast)
-      {
-      TR_OpaqueClassBlock *tempGuessClassArray[NUM_PICS];
-      uint8_t numberOfGuessClasses = TR::TreeEvaluator::interpreterProfilingInstanceOfOrCheckCastInfo(cg, node, tempGuessClassArray);
-      if (numberOfGuessClasses > 0)
-         {
-         for (i = 0; i < numberOfGuessClasses; i++)
-            {
-            if (fej9->instanceOfOrCheckCast((J9Class*)tempGuessClassArray[i], (J9Class*)castClassAddr))
-               {
-               guessClassArray[num_PICs++] = tempGuessClassArray[i];
-               if (maxNum_PICS == num_PICs) break;
-               }
-            }
-         }
-      }
-   else
-      {
-      num_PICs = TR::TreeEvaluator::interpreterProfilingInstanceOfOrCheckCastInfo(cg, node, guessClassArray);
-      }
-
-   // defect 92901
-   // if test fails, in case of checkcast, there is no need to generate inline check for guess value
-   if (num_PICs == 0)
-      return false;
-
-   bool result_bool;
-   TR::LabelSymbol *result_label;
-   TR::Instruction * unloadableConstInstr[NUM_PICS];
-   num_PICs = ((num_PICs > maxNum_PICS) ? maxNum_PICS : num_PICs);
-   for (i = 0; i < num_PICs; i++)
-      {
-      dumpOptDetails(comp, "inline test with guess class address of %p\n", guessClassArray[i]);
-
-      unloadableConstInstr[i] = genLoadProfiledClassAddressConstant(cg, node, guessClassArray[i], scratchReg, NULL, NULL, NULL);
-      result_bool = fej9->instanceOfOrCheckCast((J9Class*)(guessClassArray[i]), (J9Class*)castClassAddr);
-      result_label = (falseLabel != trueLabel ) ? (result_bool ? trueLabel : falseLabel) : doneLabel;
-
-      if (needsResult)
-         generateRIInstruction(cg, TR::InstOpCode::getLoadHalfWordImmOpCode(), node, resultReg, (int32_t)result_bool);
-      generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpLogicalRegOpCode(), node, objClassReg, scratchReg, TR::InstOpCode::COND_BE, result_label);
-
-      }
-   return true;
-   }
 static void
 generateTestBitFlag(
       TR::CodeGenerator *cg,
