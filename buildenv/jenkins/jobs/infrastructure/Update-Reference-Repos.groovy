@@ -95,9 +95,12 @@ timeout(time: 6, unit: 'HOURS') {
                             continue
                         }
 
+                        def gc = true
                         def sNodeName = sNode.getDisplayName()
                         if (!sNode.toComputer().name) {
                             sNodeName = builtInLabel
+                            // Do not gc on aix or master. Seems to be problematic #20346
+                            gc = false
                         }
 
                         setupNodesNames.add(sNodeName)
@@ -105,7 +108,7 @@ timeout(time: 6, unit: 'HOURS') {
                         jobs["${sNodeName}"] = {
                             node("${sNodeName}") {
                                 stage("${sNodeName} - Update Reference Repo") {
-                                    refresh(sNodeName, get_cache_dir(), defaultRepos, true)
+                                    refresh(sNodeName, get_cache_dir(), defaultRepos, true, gc)
                                 }
                             }
                         }
@@ -155,10 +158,15 @@ timeout(time: 6, unit: 'HOURS') {
                         // Remove any dups
                         repos.unique()
 
+                        def gc = true
+                        if (nodeLabels.contains('sw.os.aix')) {
+                            // Do not gc on aix or master. Seems to be problematic #20346
+                            gc = false
+                        }
                         jobs["${nodeName}"] = {
                             node("${nodeName}") {
                                 stage("${nodeName} - Update Reference Repo") {
-                                    refresh(nodeName, get_cache_dir(), repos, foundLabel)
+                                    refresh(nodeName, get_cache_dir(), repos, foundLabel, gc)
                                 }
                             }
                         }
@@ -186,7 +194,7 @@ timeout(time: 6, unit: 'HOURS') {
 /*
  * Creates and updates the git reference repository cache on the node.
  */
-def refresh(node, cacheDir, repos, isKnownOs) {
+def refresh(node, cacheDir, repos, isKnownOs, gc) {
     if (CLEAN_CACHE_DIR) {
         sh "rm -fr ${cacheDir}"
     }
@@ -207,8 +215,10 @@ def refresh(node, cacheDir, repos, isKnownOs) {
                 sh "git fetch --all"
             }
         }
-        stage("${node} - GC Repo") {
-            sh "git gc --aggressive --prune=all"
+        if (gc) {
+            stage("${node} - GC Repo") {
+                sh "git gc --aggressive --prune=all"
+            }
         }
     }
 }
