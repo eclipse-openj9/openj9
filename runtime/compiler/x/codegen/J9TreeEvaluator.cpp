@@ -903,25 +903,26 @@ extern void TEMPORARY_initJ9X86TreeEvaluatorTable(TR::CodeGenerator *cg)
    }
 
 
-static void generateCommonLockNurseryCodes(TR::Node          *node,
-                                     TR::CodeGenerator *cg,
-                                     bool              monent, //true for VMmonentEvaluator, false for VMmonexitEvaluator
-                                     TR::LabelSymbol    *monitorLookupCacheLabel,
-                                     TR::LabelSymbol    *fallThruFromMonitorLookupCacheLabel,
-                                     TR::LabelSymbol    *snippetLabel,
-                                     uint32_t         &numDeps,
-                                     int              &lwOffset,
-                                     TR::Register      *objectClassReg,
-                                     TR::Register      *&lookupOffsetReg,
-                                     TR::Register      *vmThreadReg,
-                                     TR::Register      *objectReg
-                                     )
+static void generateCommonLockNurseryCodes(
+      TR::Node *node,
+      TR::CodeGenerator *cg,
+      bool isMonitorEnter, //true for VMmonentEvaluator, false for VMmonexitEvaluator
+      TR::LabelSymbol *monitorLookupCacheLabel,
+      TR::LabelSymbol *fallThruFromMonitorLookupCacheLabel,
+      TR::LabelSymbol *snippetLabel,
+      uint32_t &numDeps,
+      int &lwOffset,
+      TR::Register *objectClassReg,
+      TR::Register *&lookupOffsetReg,
+      TR::Register *vmThreadReg,
+      TR::Register *objectReg)
    {
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
+
    if (comp->getOption(TR_EnableMonitorCacheLookup))
       {
-      if (monent) lwOffset = 0;
+      if (isMonitorEnter) lwOffset = 0;
       generateLabelInstruction(TR::InstOpCode::JLE4, node, monitorLookupCacheLabel, cg);
       generateLabelInstruction(TR::InstOpCode::JMP4, node, fallThruFromMonitorLookupCacheLabel, cg);
 
@@ -932,7 +933,6 @@ static void generateCommonLockNurseryCodes(TR::Node          *node,
 
       int32_t offsetOfMonitorLookupCache = offsetof(J9VMThread, objectMonitorLookupCache);
 
-      //generateRegMemInstruction(TR::InstOpCode::LRegMem(), node, objectClassReg, generateX86MemoryReference(vmThreadReg, offsetOfMonitorLookupCache, cg), cg);
       generateRegRegInstruction(TR::InstOpCode::MOVRegReg(), node, lookupOffsetReg, objectReg, cg);
 
       generateRegImmInstruction(TR::InstOpCode::SARRegImm1(comp->target().is64Bit()), node, lookupOffsetReg, trailingZeroes(TR::Compiler->om.getObjectAlignmentInBytes()), cg);
@@ -955,9 +955,7 @@ static void generateCommonLockNurseryCodes(TR::Node          *node,
       generateLabelInstruction(TR::InstOpCode::JNE4, node, snippetLabel, cg);
 
       int32_t offsetOfAlternateLockWord = offsetof(J9ObjectMonitor, alternateLockword);
-      //generateRegMemInstruction(TR::InstOpCode::LRegMem(), node, lookupOffsetReg, generateX86MemoryReference(objectClassReg, offsetOfAlternateLockWord, cg), cg);
       generateRegImmInstruction(TR::InstOpCode::ADDRegImms(), node, objectClassReg, offsetOfAlternateLockWord, cg);
-      //generateRegRegInstruction(TR::InstOpCode::ADDRegReg(), node, objectClassReg, lookupOffsetReg, cg);
       generateRegRegInstruction(TR::InstOpCode::SUBRegReg(), node, objectClassReg, objectReg, cg);
 
       generateLabelInstruction(TR::InstOpCode::label, node, fallThruFromMonitorLookupCacheLabel, cg);
@@ -4977,7 +4975,7 @@ void J9::X86::TreeEvaluator::asyncGCMapCheckPatching(TR::Node *node, TR::CodeGen
      }
   }
 
-void J9::X86::TreeEvaluator::inlineRecursiveMonitor(
+void J9::X86::TreeEvaluator::inlineAcquireReleaseRecursiveMonitor(
       TR::Node *node,
       TR::CodeGenerator *cg,
       TR::LabelSymbol *fallThruLabel,
@@ -4985,8 +4983,7 @@ void J9::X86::TreeEvaluator::inlineRecursiveMonitor(
       TR::LabelSymbol *inlineRecursiveSnippetLabel,
       TR::Register *objectReg,
       int lwOffset,
-      TR::LabelSymbol *snippetRestartLabel,
-      bool reservingLock)
+      TR::LabelSymbol *snippetRestartLabel)
    {
    // Code generated:
    //
@@ -5020,9 +5017,12 @@ void J9::X86::TreeEvaluator::inlineRecursiveMonitor(
    TR::Register *lockWordReg = cg->allocateRegister();
    TR::Register *lockWordMaskedReg = cg->allocateRegister();
    TR::Register *vmThreadReg = cg->getVMThreadRegister();
+   TR::SymbolReferenceTable *srt = cg->comp()->getSymRefTab();
+   bool isMonitorEnter =
+      node->getSymbolReference() == srt->findOrCreateMethodMonitorEntrySymbolRef(NULL) ||
+      node->getSymbolReference() == srt->findOrCreateMonitorEntrySymbolRef(NULL);
+
    bool use64bitOp = cg->comp()->target().is64Bit() && !fej9->generateCompressedLockWord();
-   bool isMonitorEnter = node->getSymbolReference() == cg->comp()->getSymRefTab()->findOrCreateMethodMonitorEntrySymbolRef(NULL)
-                       ||  node->getSymbolReference() == cg->comp()->getSymRefTab()->findOrCreateMonitorEntrySymbolRef(NULL);
 
    generateRegMemInstruction(TR::InstOpCode::LRegMem(use64bitOp), node, lockWordReg, generateX86MemoryReference(objectReg, lwOffset, cg), cg);
    generateRegImmInstruction(TR::InstOpCode::ADDRegImm4(use64bitOp), node, lockWordReg, isMonitorEnter? INC_DEC_VALUE: -INC_DEC_VALUE, cg);
@@ -5104,8 +5104,10 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
    bool is64Bit = comp->target().is64Bit();
 
+   bool enableLockReservation = comp->getOption(TR_ReservingLocks);
+
    static const char *noInline = feGetEnv("TR_NoInlineMonitor");
-   bool reservingLock = false;
+   bool monitorIsAReservationCandidate = false;
    bool normalLockPreservingReservation = false;
    bool dummyMethodMonitor = false;
    TR_YesNoMaybe isMonitorValueBasedOrValueType = cg->isMonitorValueBasedOrValueType(node);
@@ -5127,16 +5129,15 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
       return NULL;
       }
 
-   if (lwOffset > 0 && comp->getOption(TR_ReservingLocks))
+   if (lwOffset > 0 && enableLockReservation)
       {
-      bool dummy=false;
-      TR::TreeEvaluator::evaluateLockForReservation (node, &reservingLock, &normalLockPreservingReservation, cg);
-      TR::TreeEvaluator::isPrimitiveMonitor (node, cg);
+      TR::TreeEvaluator::evaluateLockForReservation(node, &monitorIsAReservationCandidate, &normalLockPreservingReservation, cg);
+      TR::TreeEvaluator::isPrimitiveMonitor(node, cg);
 
-      if (node->isPrimitiveLockedRegion() && reservingLock)
+      if (node->isPrimitiveLockedRegion() && monitorIsAReservationCandidate)
          dummyMethodMonitor = TR::TreeEvaluator::isDummyMonitorEnter(node, cg);
 
-      if (reservingLock && !node->isPrimitiveLockedRegion())
+      if (monitorIsAReservationCandidate && !node->isPrimitiveLockedRegion())
          dummyMethodMonitor = false;
       }
 
@@ -5145,7 +5146,7 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
    static const char *disableInlineRecursiveEnv = feGetEnv("TR_DisableInlineRecursiveMonitor");
    bool inlineRecursive = disableInlineRecursiveEnv ? false : true;
    if (lwOffset <= 0)
-     inlineRecursive = false;
+      inlineRecursive = false;
 
    // Evaluate the object reference
    //
@@ -5181,12 +5182,12 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
    if (isMonitorValueBasedOrValueType == TR_maybe)
       TR::TreeEvaluator::generateCheckForValueMonitorEnterOrExit(node, J9_CLASS_DISALLOWS_LOCKING_FLAGS, snippetLabel, cg);
 
-   if (comp->getOption(TR_ReservingLocks))
+   if (enableLockReservation)
       {
       // About to change the node's symref... store the original.
       originalNodeSymRef = node->getSymbolReference();
 
-      if (reservingLock && node->isPrimitiveLockedRegion() && dummyMethodMonitor)
+      if (monitorIsAReservationCandidate && node->isPrimitiveLockedRegion() && dummyMethodMonitor)
          {
          TR_RuntimeHelper monExitHelper = (node->getSymbolReference() == cg->getSymRef(TR_methodMonitorEntry)) ?
             TR_AMD64JitMethodMonitorExitReservedPrimitive : TR_AMD64JitMonitorExitReservedPrimitive;
@@ -5199,11 +5200,11 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
          }
 
       TR_RuntimeHelper helper;
-      bool success = TR::TreeEvaluator::monEntryExitHelper(true, node, reservingLock, normalLockPreservingReservation, helper, cg);
-      if (success)
+      bool replaceMonitorSymRefWithReserving = TR::TreeEvaluator::monEntryExitHelper(true, node, monitorIsAReservationCandidate, normalLockPreservingReservation, helper, cg);
+      if (replaceMonitorSymRefWithReserving)
          node->setSymbolReference(comp->getSymRefTab()->findOrCreateRuntimeHelper(helper, true, true, true));
 
-      if (reservingLock)
+      if (monitorIsAReservationCandidate)
          {
          uint32_t reservableLwValue = RES_BIT;
          if (TR::Options::_aggressiveLockReservation)
@@ -5245,7 +5246,7 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
           1, TR::DebugCounter::Cheap);
 
    // Okay, and we've made it down here and we've successfully generated all outlined snippets, let's restore the node's symref.
-   if (comp->getOption(TR_ReservingLocks))
+   if (enableLockReservation)
       {
       node->setSymbolReference(originalNodeSymRef);
       }
@@ -5255,7 +5256,7 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
       TR::LabelSymbol *inlineRecursiveSnippetLabel = generateLabelSymbol(cg);
       TR::LabelSymbol *jitMonitorEnterSnippetLabel = snippetLabel;
       snippetLabel = inlineRecursiveSnippetLabel;
-      TR::TreeEvaluator::inlineRecursiveMonitor(node, cg, fallThruLabel, jitMonitorEnterSnippetLabel, inlineRecursiveSnippetLabel, objectReg, lwOffset, snippetFallThruLabel, reservingLock);
+      TR::TreeEvaluator::inlineAcquireReleaseRecursiveMonitor(node, cg, fallThruLabel, jitMonitorEnterSnippetLabel, inlineRecursiveSnippetLabel, objectReg, lwOffset, snippetFallThruLabel);
       }
 
    // Compare the monitor slot in the object against zero.  If it succeeds
@@ -5324,7 +5325,7 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
          objectReg);
       }
 
-   if (comp->getOption(TR_ReservingLocks) && reservingLock)
+   if (enableLockReservation && monitorIsAReservationCandidate)
       {
       TR::LabelSymbol *mismatchLabel = TR::Options::_aggressiveLockReservation ? snippetLabel : generateLabelSymbol(cg);
 
@@ -5372,7 +5373,7 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
       {
       if (TR::Options::_aggressiveLockReservation)
          {
-         if (comp->getOption(TR_ReservingLocks) && normalLockPreservingReservation)
+         if (enableLockReservation && normalLockPreservingReservation)
             {
             TR::InstOpCode::Mnemonic cmpMemImmOp = (is64Bit && fej9->generateCompressedLockWord()) ?
                TR::InstOpCode::CMP4MemImms : TR::InstOpCode::CMPMemImms();
@@ -5388,7 +5389,7 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
 
          generateRegRegInstruction(TR::InstOpCode::XOR4RegReg, node, eaxReal, eaxReal, cg);
          }
-      else if (!comp->getOption(TR_ReservingLocks))
+      else if (!enableLockReservation)
          {
          generateRegRegInstruction(TR::InstOpCode::XOR4RegReg, node, eaxReal, eaxReal, cg);
          }
@@ -5423,7 +5424,7 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
          {
          bool conditionallyReserve = false;
          bool shouldConditionallyReserveForReservableClasses =
-            comp->getOption(TR_ReservingLocks)
+            enableLockReservation
             && !TR::Options::_aggressiveLockReservation
             && lwOffset > 0
             && cg->getMonClass(node) != NULL;
@@ -5546,8 +5547,10 @@ J9::X86::TreeEvaluator::VMmonexitEvaluator(
    //
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
+
+   bool enableLockReservation = comp->getOption(TR_ReservingLocks);
    static const char *noInline = feGetEnv("TR_NoInlineMonitor");
-   bool reservingLock = false;
+   bool monitorIsAReservationCandidate = false;
    bool normalLockPreservingReservation = false;
    bool dummyMethodMonitor = false;
    bool gen64BitInstr = cg->comp()->target().is64Bit() && !fej9->generateCompressedLockWord();
@@ -5569,13 +5572,13 @@ J9::X86::TreeEvaluator::VMmonexitEvaluator(
       return NULL;
       }
 
-   if (lwOffset > 0 && comp->getOption(TR_ReservingLocks))
+   if (lwOffset > 0 && enableLockReservation)
       {
-      TR::TreeEvaluator::evaluateLockForReservation (node, &reservingLock, &normalLockPreservingReservation, cg);
-      if (node->isPrimitiveLockedRegion() && reservingLock)
+      TR::TreeEvaluator::evaluateLockForReservation(node, &monitorIsAReservationCandidate, &normalLockPreservingReservation, cg);
+      if (node->isPrimitiveLockedRegion() && monitorIsAReservationCandidate)
          dummyMethodMonitor = TR::TreeEvaluator::isDummyMonitorExit(node, cg);
 
-      if (!node->isPrimitiveLockedRegion() && reservingLock)
+      if (!node->isPrimitiveLockedRegion() && monitorIsAReservationCandidate)
          dummyMethodMonitor = false;
       }
 
@@ -5588,14 +5591,14 @@ J9::X86::TreeEvaluator::VMmonexitEvaluator(
    static const char *disableInlineRecursiveEnv = feGetEnv("TR_DisableInlineRecursiveMonitor");
    bool inlineRecursive = disableInlineRecursiveEnv ? false : true;
    if (lwOffset <= 0)
-     inlineRecursive = false;
+      inlineRecursive = false;
 
    // Evaluate the object reference
    //
    TR::Node     *objectRef = node->getFirstChild();
    TR::Register *objectReg = cg->evaluate(objectRef);
-   TR::Register *tempReg  = NULL;
-   uint32_t     numDeps   = 2; // objectReg, ebp
+   TR::Register *tempReg = NULL;
+   uint32_t      numDeps = 2; // objectReg, ebp
 
    cg->setImplicitExceptionPoint(NULL);
    TR::Register *vmThreadReg = cg->getVMThreadRegister();
@@ -5645,18 +5648,19 @@ J9::X86::TreeEvaluator::VMmonexitEvaluator(
 
       generateRegImmInstruction(TR::InstOpCode::CMP4RegImm4, node, objectClassReg, 0, cg);
 
-      generateCommonLockNurseryCodes(node,
-                               cg,
-                               false, //true for VMmonentEvaluator, false for VMmonexitEvaluator
-                               monitorLookupCacheLabel,
-                               fallThruFromMonitorLookupCacheLabel,
-                               snippetLabel,
-                               numDeps,
-                               lwOffset,
-                               objectClassReg,
-                               lookupOffsetReg,
-                               vmThreadReg,
-                               objectReg);
+      generateCommonLockNurseryCodes(
+         node,
+         cg,
+         false, //true for VMmonentEvaluator, false for VMmonexitEvaluator
+         monitorLookupCacheLabel,
+         fallThruFromMonitorLookupCacheLabel,
+         snippetLabel,
+         numDeps,
+         lwOffset,
+         objectClassReg,
+         lookupOffsetReg,
+         vmThreadReg,
+         objectReg);
       }
 
    // This is a normal inlined monitor exit
@@ -5679,18 +5683,18 @@ J9::X86::TreeEvaluator::VMmonexitEvaluator(
    //    jne   snippet
    //    label restartLabel
    //
-   if (comp->getOption(TR_ReservingLocks))
+   if (enableLockReservation)
       {
-      if (reservingLock)
+      if (monitorIsAReservationCandidate)
          {
          tempReg = cg->allocateRegister();
          numDeps++;
          }
 
-      if (reservingLock || normalLockPreservingReservation)
+      if (monitorIsAReservationCandidate || normalLockPreservingReservation)
          {
          TR_RuntimeHelper helper;
-         bool success = TR::TreeEvaluator::monEntryExitHelper(false, node, reservingLock, normalLockPreservingReservation, helper, cg);
+         bool success = TR::TreeEvaluator::monEntryExitHelper(false, node, monitorIsAReservationCandidate, normalLockPreservingReservation, helper, cg);
 
          TR_ASSERT(success == true, "monEntryExitHelper: could not find runtime helper");
 
@@ -5710,7 +5714,7 @@ J9::X86::TreeEvaluator::VMmonexitEvaluator(
       TR::LabelSymbol *inlineRecursiveSnippetLabel = generateLabelSymbol(cg);
       TR::LabelSymbol *jitMonitorExitSnippetLabel = snippetLabel;
       snippetLabel = inlineRecursiveSnippetLabel;
-      TR::TreeEvaluator::inlineRecursiveMonitor(node, cg, fallThruLabel, jitMonitorExitSnippetLabel, inlineRecursiveSnippetLabel, objectReg, lwOffset, snippetFallThruLabel, reservingLock);
+      TR::TreeEvaluator::inlineAcquireReleaseRecursiveMonitor(node, cg, fallThruLabel, jitMonitorExitSnippetLabel, inlineRecursiveSnippetLabel, objectReg, lwOffset, snippetFallThruLabel);
       }
 
    bool reservingDecrementNeeded = false;
@@ -5728,7 +5732,7 @@ J9::X86::TreeEvaluator::VMmonexitEvaluator(
       }
    else
       {
-      if (reservingLock)
+      if (monitorIsAReservationCandidate)
          {
          if (node->isPrimitiveLockedRegion())
             {
@@ -5767,7 +5771,7 @@ J9::X86::TreeEvaluator::VMmonexitEvaluator(
          }
       }
 
-   TR::LabelSymbol *mismatchLabel = (reservingLock && !TR::Options::_aggressiveLockReservation) ? generateLabelSymbol(cg) : snippetLabel;
+   TR::LabelSymbol *mismatchLabel = (monitorIsAReservationCandidate && !TR::Options::_aggressiveLockReservation) ? generateLabelSymbol(cg) : snippetLabel;
 
    generateLabelInstruction(TR::InstOpCode::JNE4, node, mismatchLabel, cg);
 
@@ -5778,13 +5782,15 @@ J9::X86::TreeEvaluator::VMmonexitEvaluator(
          getMemoryReference(objectClassReg, objectReg, lwOffset, cg), REC_BIT, cg);  // I'm not sure TR::InstOpCode::SUB4MemImms will work.
       }
 
-   if (!node->isReadMonitor() && !reservingLock)
+   if (!node->isReadMonitor() && !monitorIsAReservationCandidate)
       {
+      // Update the lock word (non-reserving case)
+      //
       generateMemImmInstruction(TR::InstOpCode::SMemImm4(gen64BitInstr), node,
          getMemoryReference(objectClassReg, objectReg, lwOffset, cg), 0, cg);
       }
 
-   if (reservingLock && !TR::Options::_aggressiveLockReservation)
+   if (monitorIsAReservationCandidate && !TR::Options::_aggressiveLockReservation)
       {
       generateLabelInstruction(TR::InstOpCode::JMP4, node, inlinedMonExitFallThruLabel, cg);
 
@@ -5793,6 +5799,9 @@ J9::X86::TreeEvaluator::VMmonexitEvaluator(
       auto lwMR = getMemoryReference(objectClassReg, objectReg, lwOffset, cg);
       generateMemRegInstruction(TR::InstOpCode::CMPMemReg(gen64BitInstr), node, lwMR, vmThreadReg, cg);
       generateLabelInstruction(TR::InstOpCode::JNE4, node, snippetLabel, cg);
+
+      // Update the lock word (reserving case)
+      //
       lwMR = getMemoryReference(objectClassReg, objectReg, lwOffset, cg);
       generateMemImmInstruction(TR::InstOpCode::SMemImm4(gen64BitInstr), node, lwMR, 0, cg);
       }
@@ -5864,7 +5873,7 @@ J9::X86::TreeEvaluator::VMmonexitEvaluator(
 bool J9::X86::TreeEvaluator::monEntryExitHelper(
       bool entry,
       TR::Node* node,
-      bool reservingLock,
+      bool monitorIsAReservationCandidate,
       bool normalLockPreservingReservation,
       TR_RuntimeHelper &helper,
       TR::CodeGenerator* cg)
@@ -5873,7 +5882,7 @@ bool J9::X86::TreeEvaluator::monEntryExitHelper(
       ? (node->getSymbolReference() == cg->getSymRef(TR_methodMonitorEntry))
       : (node->getSymbolReference() == cg->getSymRef(TR_methodMonitorExit));
 
-   if (reservingLock)
+   if (monitorIsAReservationCandidate)
       {
       if (node->isPrimitiveLockedRegion())
          {
