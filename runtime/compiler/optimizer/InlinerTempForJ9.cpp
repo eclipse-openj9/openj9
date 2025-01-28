@@ -4288,8 +4288,19 @@ void TR_MultipleCallTargetInliner::weighCallSite( TR_CallStack * callStack , TR_
 
                if (size > 0)
                   {
+                  int32_t exemptionFreqCutoff = comp()->getOptions()->getLargeCompiledMethodExemptionFreqCutoff();
+                  int32_t veryLargeCompiledMethodThreshold = comp()->getOptions()->getInlinerVeryLargeCompiledMethodThreshold();
+                  int32_t veryLargeCompiledMethodFaninThreshold = comp()->getOptions()->getInlinerVeryLargeCompiledMethodFaninThreshold();
+
+                  static const char *cmt = feGetEnv("TR_CompiledMethodCallGraphThreshold");
+                  if (cmt)
+		     {
+                     static const int32_t callGraphSizeBasedThreshold = atoi(cmt);
+                     veryLargeCompiledMethodThreshold = callGraphSizeBasedThreshold;
+		     }
+
                   bool largeCompiledCallee = !comp()->getOption(TR_InlineVeryLargeCompiledMethods) &&
-                                             isLargeCompiledMethod(calltarget->_calleeMethod, size, frequency2);
+		    isLargeCompiledMethod(calltarget->_calleeMethod, size, frequency2, exemptionFreqCutoff, veryLargeCompiledMethodThreshold, veryLargeCompiledMethodFaninThreshold);
                   if (largeCompiledCallee)
                      {
                      size = size*TR::Options::_inlinerVeryLargeCompiledMethodAdjustFactor;
@@ -4650,8 +4661,19 @@ int32_t TR_MultipleCallTargetInliner::scaleSizeBasedOnBlockFrequency(int32_t byt
    {
    int32_t maxFrequency = MAX_BLOCK_COUNT + MAX_COLD_BLOCK_COUNT;
 
+   int32_t exemptionFreqCutoff = comp()->getOptions()->getLargeCompiledMethodExemptionFreqCutoff();
+   int32_t veryLargeCompiledMethodThreshold = comp()->getOptions()->getInlinerVeryLargeCompiledMethodThreshold();
+   int32_t veryLargeCompiledMethodFaninThreshold = comp()->getOptions()->getInlinerVeryLargeCompiledMethodFaninThreshold();
+
+   static const char *bcmt = feGetEnv("TR_CompiledMethodByteCodeThreshold");
+   if (bcmt)
+      {
+      static const int32_t byteCodeSizeBasedThreshold = atoi(bcmt);
+      veryLargeCompiledMethodThreshold = byteCodeSizeBasedThreshold;
+      }
+
    bool largeCompiledCallee = !comp()->getOption(TR_InlineVeryLargeCompiledMethods) &&
-                              isLargeCompiledMethod(calleeResolvedMethod, bytecodeSize, frequency);
+      isLargeCompiledMethod(calleeResolvedMethod, bytecodeSize, frequency, exemptionFreqCutoff, veryLargeCompiledMethodThreshold, veryLargeCompiledMethodFaninThreshold);
    if (largeCompiledCallee)
       {
       bytecodeSize = bytecodeSize * TR::Options::_inlinerVeryLargeCompiledMethodAdjustFactor;
@@ -4690,7 +4712,7 @@ int32_t TR_MultipleCallTargetInliner::scaleSizeBasedOnBlockFrequency(int32_t byt
    }
 
 
-bool TR_MultipleCallTargetInliner::isLargeCompiledMethod(TR_ResolvedMethod *calleeResolvedMethod, int32_t bytecodeSize, int32_t callerBlockFrequency)
+bool TR_MultipleCallTargetInliner::isLargeCompiledMethod(TR_ResolvedMethod *calleeResolvedMethod, int32_t bytecodeSize, int32_t callerBlockFrequency, int32_t exemptionFreqCutoff, int32_t veryLargeCompiledMethodThreshold, int32_t veryLargeCompiledMethodFaninThreshold)
    {
    TR_OpaqueMethodBlock* methodCallee = calleeResolvedMethod->getPersistentIdentifier();
    if (!calleeResolvedMethod->isInterpreted())
@@ -4708,15 +4730,13 @@ bool TR_MultipleCallTargetInliner::isLargeCompiledMethod(TR_ResolvedMethod *call
                }
 
             // Allow inlining of big methods into high frequency blocks
-            if (callerBlockFrequency > comp()->getOptions()->getLargeCompiledMethodExemptionFreqCutoff())
+            if (callerBlockFrequency > exemptionFreqCutoff)
                return false;
 
-            int32_t veryLargeCompiledMethodThreshold = comp()->getOptions()->getInlinerVeryLargeCompiledMethodThreshold();
-            int32_t veryLargeCompiledMethodFaninThreshold = comp()->getOptions()->getInlinerVeryLargeCompiledMethodFaninThreshold();
             // Subdue inliner in low frequency blocks
             if (callerBlockFrequency > 0)
                {
-               if ((2 * callerBlockFrequency) < comp()->getOptions()->getLargeCompiledMethodExemptionFreqCutoff())
+               if ((2 * callerBlockFrequency) < exemptionFreqCutoff)
                   {
                   veryLargeCompiledMethodThreshold = 100;
                   veryLargeCompiledMethodFaninThreshold = 0;
