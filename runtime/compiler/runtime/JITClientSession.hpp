@@ -312,6 +312,7 @@ public:
       UDATA _osrGlobalBufferSize;
       bool _needsMethodTrampolines;
       int32_t _objectAlignmentInBytes;
+      int32_t _minimumObjectSizeInBytes;
       bool _isGetImplAndRefersToInliningSupported;
       bool _isAllocateZeroedTLHPagesEnabled;
       uint32_t _staticObjectAllocateFlags;

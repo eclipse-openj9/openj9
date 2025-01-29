@@ -102,6 +102,7 @@ J9::ObjectModel::initialize()
       }
 
    _objectAlignmentInBytes = objectAlignmentInBytes();
+   _minimumObjectSizeInBytes = mmf->j9gc_modron_getConfigurationValueForKey(vm, j9gc_modron_configuration_minimumObjectSize, &result) ? result : 0;
    }
 
 
@@ -841,4 +842,17 @@ J9::ObjectModel::getObjectAlignmentInBytes()
       }
 #endif /* defined(J9VM_OPT_JITSERVER) */
    return _objectAlignmentInBytes;
+}
+
+int32_t
+J9::ObjectModel::getMinimumObjectSizeInBytes()
+{
+#if defined(J9VM_OPT_JITSERVER)
+   if (auto stream = TR::CompilationInfo::getStream())
+      {
+      auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+      return vmInfo->_minimumObjectSizeInBytes;
+      }
+#endif /* defined(J9VM_OPT_JITSERVER) */
+   return _minimumObjectSizeInBytes;
 }

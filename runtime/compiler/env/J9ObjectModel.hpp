@@ -55,7 +55,8 @@ public:
       _arrayLetLeafLogSize(0),
       _readBarrierType(gc_modron_readbar_none),
       _writeBarrierType(gc_modron_wrtbar_none),
-      _objectAlignmentInBytes(0)
+      _objectAlignmentInBytes(0),
+      _minimumObjectSizeInBytes(0)
    {}
 
    void initialize();
@@ -157,6 +158,7 @@ public:
    bool compressObjectReferences();
 
    int32_t getObjectAlignmentInBytes();
+   int32_t getMinimumObjectSizeInBytes();
 
 private:
 
@@ -167,6 +169,7 @@ private:
    MM_GCReadBarrierType  _readBarrierType;
    MM_GCWriteBarrierType _writeBarrierType;
    int32_t               _objectAlignmentInBytes;
+   int32_t               _minimumObjectSizeInBytes;
    };
 
 }
