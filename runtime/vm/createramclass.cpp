@@ -2934,28 +2934,28 @@ fail:
 			}
 			allocationRequests[RAM_SUPERCLASSES_FRAGMENT].alignedSize = OMR_MAX(superclassSizeBytes, minimumSuperclassArraySizeBytes);
 			allocationRequests[RAM_SUPERCLASSES_FRAGMENT].address = NULL;
-			allocationRequests[RAM_SUPERCLASSES_FRAGMENT].segmentKind = FREQUENTLY_ACCESSED;
+			allocationRequests[RAM_SUPERCLASSES_FRAGMENT].segmentKind = SUB4G;
 
 			/* instance description fragment */
 			allocationRequests[RAM_INSTANCE_DESCRIPTION_FRAGMENT].prefixSize = 0;
 			allocationRequests[RAM_INSTANCE_DESCRIPTION_FRAGMENT].alignment = sizeof(UDATA);
 			allocationRequests[RAM_INSTANCE_DESCRIPTION_FRAGMENT].alignedSize = instanceDescriptionSlotCount * sizeof(UDATA);
 			allocationRequests[RAM_INSTANCE_DESCRIPTION_FRAGMENT].address = NULL;
-			allocationRequests[RAM_INSTANCE_DESCRIPTION_FRAGMENT].segmentKind = FREQUENTLY_ACCESSED;
+			allocationRequests[RAM_INSTANCE_DESCRIPTION_FRAGMENT].segmentKind = SUB4G;
 
 			/* iTable fragment */
 			allocationRequests[RAM_ITABLE_FRAGMENT].prefixSize = 0;
 			allocationRequests[RAM_ITABLE_FRAGMENT].alignment = sizeof(UDATA);
 			allocationRequests[RAM_ITABLE_FRAGMENT].alignedSize = iTableSlotCount * sizeof(UDATA);
 			allocationRequests[RAM_ITABLE_FRAGMENT].address = NULL;
-			allocationRequests[RAM_ITABLE_FRAGMENT].segmentKind = FREQUENTLY_ACCESSED;
+			allocationRequests[RAM_ITABLE_FRAGMENT].segmentKind = SUB4G;
 
 			/* static slots fragment */
 			allocationRequests[RAM_STATICS_FRAGMENT].prefixSize = 0;
 			allocationRequests[RAM_STATICS_FRAGMENT].alignment = sizeof(U_64);
 			allocationRequests[RAM_STATICS_FRAGMENT].alignedSize = totalStaticSlots * sizeof(UDATA);
 			allocationRequests[RAM_STATICS_FRAGMENT].address = NULL;
-			allocationRequests[RAM_STATICS_FRAGMENT].segmentKind = FREQUENTLY_ACCESSED;
+			allocationRequests[RAM_STATICS_FRAGMENT].segmentKind = SUB4G;
 
 			/* constant pool fragment */
 			allocationRequests[RAM_CONSTANT_POOL_FRAGMENT].prefixSize = 0;
