@@ -246,6 +246,18 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
    TR::SymbolReference * findOrCreateArrayComponentTypeAsPrimitiveSymbolRef();
    TR::SymbolReference * findOrCreateMethodTypeCheckSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol);
    TR::SymbolReference * findOrCreateIncompatibleReceiverSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol);
+
+   /**
+    * Used to find the symbol reference for \c java/lang/IdentityException.  If it does not already exist,
+    * it will be created.
+    *
+    * \param owningMethodSymbol
+    *     The method in which the IdentityException symbol reference needs to be created.
+    *
+    * \returns
+    *     A symbol reference for \c java/lang/IdentityException
+    */
+   TR::SymbolReference * findOrCreateIdentityExceptionSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol);
    TR::SymbolReference * findOrCreateIncompatibleClassChangeErrorSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol);
    TR::SymbolReference * findOrCreateReportStaticMethodEnterSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol);
    TR::SymbolReference * findOrCreateReportMethodExitSymbolRef(TR::ResolvedMethodSymbol * owningMethodSymbol);
@@ -414,6 +426,18 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
     *     The <storeFlattenableArrayElementNonHelper> symbol reference.
     */
    TR::SymbolReference *findOrCreateStoreFlattenableArrayElementNonHelperSymbolRef();
+
+   /**
+    * \brief
+    *    Finds the <isIdentityObject> "non-helper" symbol reference, creating it if
+    *    necessary.  The non-helper is used to test whether an object is an instance
+    *    of an identity class, in which case it returns the value one, or a value type
+    *    class, in which case it returns the value zero.
+    *
+    * \return
+    *    The <isIdentityObject> symbol reference
+    */
+   TR::SymbolReference *findOrCreateIsIdentityObjectNonHelperSymbolRef();
 
    /**
     * \brief
