@@ -22,7 +22,9 @@
  */
 package com.ibm.oti.shared;
 
+/*[IF JAVA_SPEC_VERSION < 24]*/
 import java.security.AccessControlException;
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -36,6 +38,7 @@ public abstract class SharedAbstractHelperFactory {
 	 */
 	private static final AtomicInteger idCount = new AtomicInteger(1);
 
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	@SuppressWarnings("removal")
 	static boolean checkPermission(ClassLoader loader, String type) {
 		boolean result = true;
@@ -57,6 +60,7 @@ public abstract class SharedAbstractHelperFactory {
 	static boolean canStore(ClassLoader loader) {
 		return checkPermission(loader, "write"); //$NON-NLS-1$
 	}
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 	static int getNewID() {
 		return idCount.getAndIncrement();

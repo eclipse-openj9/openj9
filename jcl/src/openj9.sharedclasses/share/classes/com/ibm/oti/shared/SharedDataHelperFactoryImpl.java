@@ -52,6 +52,11 @@ final class SharedDataHelperFactoryImpl extends SharedAbstractHelperFactory impl
 					return (SharedDataHelper)helper;
 				}
 			} else {
+				/*[IF JAVA_SPEC_VERSION >= 24]*/
+				SharedDataHelper result = new SharedDataHelperImpl(owner, getNewID());
+				helpers.put(owner, result);
+				return result;
+				/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 				boolean canFind = canFind(owner);
 				boolean canStore = canStore(owner);
 
@@ -60,6 +65,7 @@ final class SharedDataHelperFactoryImpl extends SharedAbstractHelperFactory impl
 					helpers.put(owner, result);
 					return result;
 				}
+				/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 			}
 		}
 		return null;

@@ -61,8 +61,10 @@ import java.net.URL;
  *   any metadata that it needs from disk before defining the classes.</p>
  * <h2>Security</h2>
  * <p>A SharedClassHelper will only allow classes that were defined by the ClassLoader that owns the SharedClassHelper to be stored in the cache.</p>
+/*[IF JAVA_SPEC_VERSION < 24]
  * <p>If a SecurityManager is installed, SharedClassPermissions must be used to permit read/write access to the shared class cache.
  * Permissions are granted by ClassLoader classname in the java.policy file and are fixed when the SharedClassHelper is created.</p>
+/*[ENDIF] JAVA_SPEC_VERSION < 24
  * <p>Note also that if the createClassLoader RuntimePermission is not granted, ClassLoaders cannot be created,
  * which in turn means that SharedClassHelpers cannot be created.</p>
  * <h2>Compatibility with other SharedClassHelpers</h2>
@@ -71,7 +73,9 @@ import java.net.URL;
  *
  * @see SharedClassURLHelper
  * @see SharedClassHelperFactory
+/*[IF JAVA_SPEC_VERSION < 24]
  * @see SharedClassPermission
+/*[ENDIF] JAVA_SPEC_VERSION < 24
  */
 public interface SharedClassURLHelper extends SharedClassHelper {
 

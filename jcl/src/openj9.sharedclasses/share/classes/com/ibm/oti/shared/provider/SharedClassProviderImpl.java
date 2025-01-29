@@ -24,14 +24,18 @@
 package com.ibm.oti.shared.provider;
 
 import java.net.URL;
+/*[IF JAVA_SPEC_VERSION < 24]*/
 import java.security.BasicPermission;
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 import java.util.function.IntConsumer;
 import com.ibm.sharedclasses.spi.SharedClassProvider;
 import com.ibm.oti.shared.CannotSetClasspathException;
 import com.ibm.oti.shared.HelperAlreadyDefinedException;
 import com.ibm.oti.shared.Shared;
 import com.ibm.oti.shared.SharedClassHelperFactory;
+/*[IF JAVA_SPEC_VERSION < 24]*/
 import com.ibm.oti.shared.SharedClassPermission;
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 import com.ibm.oti.shared.SharedClassStatistics;
 import com.ibm.oti.shared.SharedClassURLClasspathHelper;
 import com.ibm.oti.shared.SharedClassURLHelper;
@@ -196,6 +200,7 @@ public class SharedClassProviderImpl implements SharedClassProvider {
 			return 0;
 		}
 	}
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	@Override
 	public BasicPermission createPermission(String classLoaderClassName, String actions) {
 		if (!isSharedClassEnabled()) {
@@ -203,4 +208,5 @@ public class SharedClassProviderImpl implements SharedClassProvider {
 		}
 		return new SharedClassPermission(classLoaderClassName, actions);
 	}
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 }

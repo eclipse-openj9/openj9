@@ -49,6 +49,23 @@ final class SharedClassURLClasspathHelperImpl extends SharedClassAbstractHelper 
 	}
 
 	/* Not public - should only be created by factory */
+	/*[IF JAVA_SPEC_VERSION >= 24]*/
+	SharedClassURLClasspathHelperImpl(ClassLoader loader, URL[] classpath, int id) {
+		this.origurls = classpath;
+		this.urls = new URL[classpath.length];
+		this.urlCount = classpath.length;
+		this.validated = new boolean[classpath.length];
+		this.confirmedCount = 0;
+		this.invalidURLExists = false;
+		urlcpReadWriteLock = new ReentrantReadWriteLock();
+		initialize(loader, id);
+		initializeShareableClassloader(loader);
+		initializeURLs();
+		if (!invalidURLExists) {
+			notifyClasspathChange3(id, loader, this.urls, 0, this.urlCount, true);
+		}
+	}
+	/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 	SharedClassURLClasspathHelperImpl(ClassLoader loader, URL[] classpath, int id, boolean canFind, boolean canStore) {
 		this.origurls = classpath;
 		this.urls = new URL[classpath.length];
@@ -64,6 +81,7 @@ final class SharedClassURLClasspathHelperImpl extends SharedClassAbstractHelper 
 			notifyClasspathChange3(id, loader, this.urls, 0, this.urlCount, true);
 		}
 	}
+	/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 
 	private void initializeURLs() {
 		for (int i=0; i<urlCount; i++) {
@@ -102,9 +120,11 @@ final class SharedClassURLClasspathHelperImpl extends SharedClassAbstractHelper 
 			printVerboseInfo(Msg.getString("K059f")); //$NON-NLS-1$
 			return null;
 		}
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		if (!canFind) {
 			return null;
 		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		if (className==null) {
 			/*[MSG "K05a1", "Cannot call findSharedClass with null class name. Returning null."]*/
 			printVerboseError(Msg.getString("K05a1")); //$NON-NLS-1$
@@ -168,9 +188,11 @@ final class SharedClassURLClasspathHelperImpl extends SharedClassAbstractHelper 
 
 	@Override
 	public boolean storeSharedClass(String partition, Class<?> clazz, int foundAtIndex) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		if (!canStore) {
 			return false;
 		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		if (clazz==null) {
 			/*[MSG "K05a3", "Cannot call storeSharedClass with null Class. Returning false."]*/
 			printVerboseError(Msg.getString("K05a3")); //$NON-NLS-1$

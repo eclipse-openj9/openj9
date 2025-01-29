@@ -23,7 +23,9 @@
 package com.ibm.sharedclasses.spi;
 
 import java.net.URL;
+/*[IF JAVA_SPEC_VERSION < 24]*/
 import java.security.BasicPermission;
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 import java.util.function.IntConsumer;
 
 /**
@@ -216,6 +218,7 @@ public interface SharedClassProvider {
 	 */
 	public long getFreeSpace();
 
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	/**
 	 * <p>Constructs a new instance of SharedClassPermission which is a sub-class of BasicPermission.</p>
 	 *
@@ -227,4 +230,5 @@ public interface SharedClassProvider {
 	 * 					A new instance of SharedClassPermission which is a sub-class of BasicPermission, or null if shared classes are not enabled.
 	 */
 	public BasicPermission createPermission(String classLoaderClassName, String actions);
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 }

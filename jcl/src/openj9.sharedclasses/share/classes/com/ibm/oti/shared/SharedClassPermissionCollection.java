@@ -1,4 +1,4 @@
-/*[INCLUDE-IF SharedClasses]*/
+/*[INCLUDE-IF SharedClasses & (JAVA_SPEC_VERSION < 24)]*/
 /*
  * Copyright IBM Corp. and others 1998
  *

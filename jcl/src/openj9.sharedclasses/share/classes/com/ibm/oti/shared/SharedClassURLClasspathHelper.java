@@ -113,8 +113,10 @@ import java.net.URL;
  * <p>If findSharedClass returns null, then load the class from disk, cache the metadata from the entry anyway, define the class, and store it.</p>
  * <h2>Security</h2>
  * <p>A SharedClassHelper will only allow classes that were defined by the ClassLoader that owns the SharedClassHelper to be stored in the cache.</p>
+/*[IF JAVA_SPEC_VERSION < 24]
  * <p>If a SecurityManager is installed, SharedClassPermissions must be used to permit read/write access to the shared class cache.
  * Permissions are granted by ClassLoader classname in the java.policy file and are fixed when the SharedClassHelper is created.</p>
+/*[ENDIF] JAVA_SPEC_VERSION < 24
  * <p>Note also that if the createClassLoader RuntimePermission is not granted, ClassLoaders cannot be created,
  * which in turn means that SharedClassHelpers cannot be created.</p>
  * <h2>Efficient use of the SharedClassURLClasspathHelper</h2>
@@ -131,7 +133,9 @@ import java.net.URL;
  *
  * @see SharedClassURLClasspathHelper
  * @see SharedClassHelperFactory
+/*[IF JAVA_SPEC_VERSION < 24]
  * @see SharedClassPermission
+/*[ENDIF] JAVA_SPEC_VERSION < 24
  */
 public interface SharedClassURLClasspathHelper extends SharedClassHelper {
 

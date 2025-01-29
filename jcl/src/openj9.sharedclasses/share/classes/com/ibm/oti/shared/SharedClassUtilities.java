@@ -25,7 +25,9 @@ package com.ibm.oti.shared;
 import java.util.ArrayList;
 import java.util.List;
 
+/*[IF JAVA_SPEC_VERSION < 24]*/
 import com.ibm.oti.shared.SharedClassesNamedPermission.SharedPermissions;
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 /**
  * SharedClassUtilities provides APIs to get information about all shared class
@@ -119,16 +121,20 @@ public class SharedClassUtilities {
 	 * 					If shared classes is disabled for this JVM (that is -Xshareclasses:none is present).
 	 * @throws		IllegalArgumentException
 	 * 					If <code>flags</code> is not a valid value.
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws		SecurityException
 	 * 					If a security manager is enabled and the calling thread does not
 	 * 					have SharedClassesNamedPermission("getSharedCacheInfo")
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public static List<SharedClassCacheInfo> getSharedCacheInfo(String cacheDir, int flags, boolean useCommandLineValues) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		@SuppressWarnings("removal")
 		SecurityManager sm = System.getSecurityManager();
 		if (sm != null) {
 			sm.checkPermission(SharedPermissions.getSharedCacheInfo);
 		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		if (flags != NO_FLAGS) {
 			/*[MSG "K0553", "parameter {0} has invalid value"]*/
@@ -191,16 +197,20 @@ public class SharedClassUtilities {
 	 * 					If shared classes is disabled for this JVM (that is -Xshareclasses:none is present).
 	 * @throws		IllegalArgumentException
 	 * 					If <code>cacheType</code> is not a valid value.
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws		SecurityException
 	 * 					If a security manager is enabled and the calling thread does not
 	 * 					have SharedClassesNamedPermission("destroySharedCache")
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public static int destroySharedCache(String cacheDir, int cacheType, String cacheName, boolean useCommandLineValues) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		@SuppressWarnings("removal")
 		SecurityManager sm = System.getSecurityManager();
 		if (sm != null) {
 			sm.checkPermission(SharedPermissions.destroySharedCache);
 		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		/*
 		 * check if cacheType has a valid value only if we are not using command line values.
