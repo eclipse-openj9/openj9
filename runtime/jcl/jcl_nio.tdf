@@ -1,0 +1,29 @@
+// Copyright IBM Corp. and others 2025
+//
+// This program and the accompanying materials are made available under
+// the terms of the Eclipse Public License 2.0 which accompanies this
+// distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+// or the Apache License, Version 2.0 which accompanies this distribution and
+// is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// This Source Code may also be made available under the following
+// Secondary Licenses when the conditions for such availability set
+// forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+// General Public License, version 2 with the GNU Classpath
+// Exception [1] and GNU General Public License, version 2 with the
+// OpenJDK Assembly Exception [2].
+//
+// [1] https://www.gnu.org/software/classpath/license.html
+// [2] https://openjdk.org/legal/assembly-exception.html
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
+
+Executable=jcl_nio
+DATFileName=J9TraceFormat.dat
+
+TraceEvent=Trc_nio_ch_Net_connect4 Noenv Overhead=1 Level=3 Template="nio_ch_Net_Connect(descriptor=%lld, connect_to(AF_INET: addr=%s port=%d), length=%d)"
+TraceEvent=Trc_nio_ch_Net_connect6 Noenv Overhead=1 Level=3 Template="nio_ch_Net_Connect(descriptor=%lld, connect_to(AF_INET6: addr=%s port=%d scope_id=%d), length=%d)"
+TraceEvent=Trc_nio_ch_UnixDomainSockets_connect Noenv Overhead=1 Level=3 Template="nio_ch_UnixDomainSockets_Connect(descriptor=%d, connect_to(AF_UNIX: pname=%s), length=%d)"
+TraceEvent=Trc_nio_ch_UnixDispatcher_close Noenv Overhead=1 Level=3 Template="nio_ch_UnixDispatcher_close(descriptor=%d)"
+TraceEvent=Trc_nio_ch_SocketDispatcher_close Noenv Overhead=1 Level=3 Template="nio_ch_SocketDispatcher_close(descriptor=%d)"
+TraceEvent=Trc_nio_ch_FileDispatcherImpl_close Noenv Overhead=1 Level=3 Template="nio_ch_FileDispatcherImpl_close(descriptor=%d)"

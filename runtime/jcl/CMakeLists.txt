@@ -23,6 +23,9 @@
 set(J9VM_JCL_BIN_DIR "${CMAKE_CURRENT_BINARY_DIR}")
 
 add_tracegen(j9jcl.tdf)
+add_tracegen(jcl_java.tdf)
+add_tracegen(jcl_net.tdf)
+add_tracegen(jcl_nio.tdf)
 
 j9vm_add_library(jclse SHARED
 	OUTPUT_NAME jclse${J9VM_VERSION_SUFFIX}
