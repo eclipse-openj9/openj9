@@ -1940,29 +1940,7 @@ J9::SymbolReferenceTable::findOrCreateStaticSymbol(TR::ResolvedMethodSymbol * ow
    if (sharesSymbol)
       symRef->setReallySharesSymbol();
 
-   TR::KnownObjectTable::Index knownObjectIndex = TR::KnownObjectTable::UNKNOWN;
-   if (resolved && isFinal && type == TR::Address)
-      {
-      TR_OpaqueClassBlock *declaringClass =
-         owningMethod->getDeclaringClassFromFieldOrStatic(comp(), cpIndex);
-
-      TR::Symbol::RecognizedField recField = sym->getRecognizedField();
-      TR_YesNoMaybe canFold =
-         TR::TransformUtil::canFoldStaticFinalField(
-            comp(), declaringClass, recField, owningMethod, cpIndex);
-
-      if (canFold == TR_yes)
-         {
-         TR::AnyConst value = TR::AnyConst::makeAddress(0);
-         bool gotValue = TR::TransformUtil::staticFinalFieldValue(
-            comp(), owningMethod, cpIndex, dataAddress, TR::Address, recField, &value);
-
-         if (gotValue && value.isKnownObject())
-            knownObjectIndex = value.getKnownObjectIndex();
-         }
-      }
-
-   symRef = new (trHeapMemory()) TR::SymbolReference(self(), sym, owningMethodSymbol->getResolvedMethodIndex(), cpIndex, unresolvedIndex, knownObjectIndex);
+   symRef = new (trHeapMemory()) TR::SymbolReference(self(), sym, owningMethodSymbol->getResolvedMethodIndex(), cpIndex, unresolvedIndex, TR::KnownObjectTable::UNKNOWN);
 
    checkUserField(symRef);
 
