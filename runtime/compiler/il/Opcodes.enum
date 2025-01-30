@@ -1542,3 +1542,19 @@ OPCODE_MACRO(\
    /* .ifCompareOpCode      = */ TR::BadILOp, \
    /* .description          = */ \
 )
+OPCODE_MACRO(\
+   /* .opcode               = */ zdchk, \
+   /* .name                 = */ "zdchk", \
+   /* .properties1          = */ 0, \
+   /* .properties2          = */ ILProp2::ValueNumberShare | ILProp2::SupportedForPRE, \
+   /* .properties3          = */ 0, \
+   /* .properties4          = */ ILProp4::BinaryCodedDecimalOp, \
+   /* .dataType             = */ TR::Int32, \
+   /* .typeProperties       = */ ILTypeProp::Size_4 | ILTypeProp::Integer, \
+   /* .childProperties      = */ TWO_CHILD(TR::ZonedDecimal, TR::Int8), \
+   /* .swapChildrenOpCode   = */ TR::BadILOp, \
+   /* .reverseBranchOpCode  = */ TR::BadILOp, \
+   /* .booleanCompareOpCode = */ TR::BadILOp, \
+   /* .ifCompareOpCode      = */ TR::BadILOp, \
+   /* .description          =    zoned decimal validity checking */ \
+)

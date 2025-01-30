@@ -113,6 +113,14 @@ J9::Z::CPU::customize(OMRProcessorDesc processorDescription)
       omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY_2, FALSE);
       }
 
+   if (processorDescription.processor < OMR_PROCESSOR_S390_ZNEXT)
+      {
+      omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_S390_MISCELLANEOUS_INSTRUCTION_EXTENSION_3, FALSE);
+      omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_S390_VECTOR_FACILITY_ENHANCEMENT_3, FALSE);
+      omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_S390_PLO_EXTENSION, FALSE);
+      omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY_3, FALSE);
+      }
+
    // This variable is used internally by the j9sysinfo macros below and cannot be folded away
    J9PortLibrary* privatePortLibrary = TR::Compiler->portLib;
 
@@ -160,7 +168,11 @@ J9::Z::CPU::enableFeatureMasks()
                                          OMR_FEATURE_S390_VECTOR_FACILITY_ENHANCEMENT_2,
                                          OMR_FEATURE_S390_MISCELLANEOUS_INSTRUCTION_EXTENSION_3,
                                          OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY,
-                                         OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY_2};
+                                         OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY_2,
+                                         OMR_FEATURE_S390_MISCELLANEOUS_INSTRUCTION_EXTENSION_4,
+                                         OMR_FEATURE_S390_VECTOR_FACILITY_ENHANCEMENT_3,
+                                         OMR_FEATURE_S390_PLO_EXTENSION,
+                                         OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY_3};
 
    memset(_supportedFeatureMasks.features, 0, OMRPORT_SYSINFO_FEATURES_SIZE*sizeof(uint32_t));
    OMRPORT_ACCESS_FROM_OMRPORT(TR::Compiler->omrPortLib);

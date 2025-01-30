@@ -527,6 +527,8 @@
    java_lang_Integer_reverseBytes,
    java_lang_Integer_rotateLeft,
    java_lang_Integer_rotateRight,
+   java_lang_Integer_compress,
+   java_lang_Integer_expand,
    java_lang_Integer_valueOf,
    java_lang_Integer_toUnsignedLong,
    java_lang_Integer_stringSize,
@@ -544,6 +546,8 @@
    java_lang_Long_reverseBytes,
    java_lang_Long_rotateLeft,
    java_lang_Long_rotateRight,
+   java_lang_Long_compress,
+   java_lang_Long_expand,
    java_lang_Short_reverseBytes,
    java_lang_Long_stringSize,
    java_lang_Long_toString,
@@ -719,6 +723,12 @@
    com_ibm_dataaccess_PackedDecimal_shiftRightPackedDecimal_,
    com_ibm_dataaccess_PackedDecimal_movePackedDecimal_,
    com_ibm_dataaccess_PackedDecimal_checkPackedDecimal_,
+
+   // wrapper methods
+   com_ibm_dataaccess_ExternalDecimal_checkExternalDecimal,
+
+   //inline methods
+   com_ibm_dataaccess_ExternalDecimal_checkExternalDecimal_,
 
    com_ibm_Compiler_Internal__TR_Prefetch,
 

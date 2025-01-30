@@ -37,6 +37,12 @@
 #include "util_api.h"
 
 TR::Register*
+J9::TreeEvaluator::zdchkEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::unImpOpEvaluator(node, cg);
+   }
+
+TR::Register*
 J9::TreeEvaluator::zdloadEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    return TR::TreeEvaluator::unImpOpEvaluator(node, cg);

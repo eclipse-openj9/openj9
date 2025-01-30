@@ -471,9 +471,11 @@ public:
    bool                            isDAAWrapperMethod();
    bool                            isDAAMarshallingWrapperMethod();
    bool                            isDAAPackedDecimalWrapperMethod();
+   bool                            isDAAExternalDecimalWrapperMethod();
    bool                            isDAAIntrinsicMethod();
    bool                            isDAAMarshallingIntrinsicMethod();
    bool                            isDAAPackedDecimalIntrinsicMethod();
+   bool 				                 isDAAExternalDecimalIntrinsicMethod();
 
 protected:
    TR_ResolvedMethod *             aotMaskResolvedPossiblyPrivateVirtualMethod(TR::Compilation *comp, TR_ResolvedMethod *method);

@@ -5431,6 +5431,9 @@ TR_J9InlinerPolicy::supressInliningRecognizedInitialCallee(TR_CallSite* callsite
       // DAA Packed Decimal check method
       case TR::com_ibm_dataaccess_PackedDecimal_checkPackedDecimal_:
 
+      // DAA External Decimal check method
+      case TR::com_ibm_dataaccess_ExternalDecimal_checkExternalDecimal_:
+
       // DAA Packed Decimal <-> Integer
       case TR::com_ibm_dataaccess_DecimalData_convertPackedDecimalToInteger_:
       case TR::com_ibm_dataaccess_DecimalData_convertPackedDecimalToInteger_ByteBuffer_:

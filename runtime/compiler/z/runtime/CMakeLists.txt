@@ -65,3 +65,9 @@ j9jit_files(
 	${CMAKE_CURRENT_BINARY_DIR}/Recompilation.s
 	${CMAKE_CURRENT_BINARY_DIR}/ValueProf.s
 )
+
+if(J9VM_JIT_EMULATE_ZNEXT)
+	j9jit_files(
+		z/runtime/Emulation.cpp
+	)
+endif()
