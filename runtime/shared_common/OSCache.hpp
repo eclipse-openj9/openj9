@@ -64,23 +64,23 @@
 #define OSCACHE_CURRENT_CACHE_GEN 45
 #define OSCACHE_CURRENT_LAYER_LAYER 0
 
-#define J9SH_VERSION(versionMajor, versionMinor) (versionMajor*100 + versionMinor)
+#define J9SH_VERSION(versionMajor, versionMinor) (((versionMajor) * 100) + versionMinor)
 
-#define J9SH_GET_VERSION_STRING(portLib, versionStr, version, modlevel, feature, addrmode)\
-											 j9str_printf(portLib, versionStr, J9SH_VERSION_STRING_LEN, J9SH_VERSION_STRING_SPEC,\
-											 version, modlevel, feature, addrmode)
+#define J9SH_GET_VERSION_STRING(versionStr, version, modlevel, feature, addrmode) \
+		j9str_printf(versionStr, J9SH_VERSION_STRING_LEN, J9SH_VERSION_STRING_SPEC, \
+				version, modlevel, feature, addrmode)
 
-#define J9SH_GET_VERSION_STRING_JAVA9ANDLOWER(portLib, versionStr, version, modlevel, feature, addrmode)\
-											 j9str_printf(portLib, versionStr, J9SH_VERSION_STRING_LEN - J9SH_VERSTRLEN_INCREASED_SINCEJAVA10, J9SH_VERSION_STRING_SPEC,\
-											 version, modlevel, feature, addrmode)
+#define J9SH_GET_VERSION_STRING_JAVA9ANDLOWER(versionStr, version, modlevel, feature, addrmode) \
+		j9str_printf(versionStr, J9SH_VERSION_STRING_LEN - J9SH_VERSTRLEN_INCREASED_SINCEJAVA10, J9SH_VERSION_STRING_SPEC, \
+				version, modlevel, feature, addrmode)
 
-#define J9SH_GET_VERSION_G07TO29_STRING(portLib, versionStr, version, modlevel, addrmode)\
-											 j9str_printf(portLib, versionStr, J9SH_VERSION_STRING_LEN - J9SH_VERSTRLEN_INCREASED_SINCEG29 - J9SH_VERSTRLEN_INCREASED_SINCEJAVA10, J9SH_VERSION_STRING_G07TO29_SPEC,\
-											 version, modlevel, addrmode)
+#define J9SH_GET_VERSION_G07TO29_STRING(versionStr, version, modlevel, addrmode) \
+		j9str_printf(versionStr, J9SH_VERSION_STRING_LEN - J9SH_VERSTRLEN_INCREASED_SINCEG29 - J9SH_VERSTRLEN_INCREASED_SINCEJAVA10, J9SH_VERSION_STRING_G07TO29_SPEC, \
+				version, modlevel, addrmode)
 
-#define J9SH_GET_VERSION_G07ANDLOWER_STRING(portLib, versionStr, version, modlevel, addrmode)\
-											 j9str_printf(portLib, versionStr, J9SH_VERSION_STRING_LEN - J9SH_VERSTRLEN_INCREASED_SINCEG29 - J9SH_VERSTRLEN_INCREASED_SINCEJAVA10, J9SH_VERSION_STRING_G07ANDLOWER_SPEC,\
-											 version, modlevel, addrmode)
+#define J9SH_GET_VERSION_G07ANDLOWER_STRING(versionStr, version, modlevel, addrmode) \
+		j9str_printf(versionStr, J9SH_VERSION_STRING_LEN - J9SH_VERSTRLEN_INCREASED_SINCEG29 - J9SH_VERSTRLEN_INCREASED_SINCEJAVA10, J9SH_VERSION_STRING_G07ANDLOWER_SPEC, \
+				version, modlevel, addrmode)
 
 #define OSC_TRACE(var) if (_verboseFlags) j9nls_printf(PORTLIB, J9NLS_INFO, var)
 #define OSC_TRACE1(var, p1) if (_verboseFlags) j9nls_printf(PORTLIB, J9NLS_INFO, var, p1)

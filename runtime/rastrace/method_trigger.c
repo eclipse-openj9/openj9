@@ -1065,27 +1065,27 @@ uncompressedStackFrameFormatter(J9VMThread *vmThread, J9Method * method, J9UTF8 
 	char *cursor = buf;
 	char *end = buf + sizeof(buf);
 
-	cursor += j9str_printf(PORTLIB, cursor, end - cursor, "%.*s.%.*s", J9UTF8_LENGTH(className), J9UTF8_DATA(className), J9UTF8_LENGTH(methodName), J9UTF8_DATA(methodName));
+	cursor += j9str_printf(cursor, end - cursor, "%.*s.%.*s", J9UTF8_LENGTH(className), J9UTF8_DATA(className), J9UTF8_LENGTH(methodName), J9UTF8_DATA(methodName));
 
 	slashesToDots(buf,cursor);
 
 	if (NATIVE_METHOD == frameType) {
 		/*increment cursor here by the return value of j9str_printf if it needs to be used further*/
-		j9str_printf(PORTLIB, cursor, end - cursor, " (Native Method)");
+		j9str_printf(cursor, end - cursor, " (Native Method)");
 	} else {
 		if (sourceFile) {
-			cursor += j9str_printf(PORTLIB, cursor, end - cursor, " (%.*s", J9UTF8_LENGTH(sourceFile), J9UTF8_DATA(sourceFile));
+			cursor += j9str_printf(cursor, end - cursor, " (%.*s", J9UTF8_LENGTH(sourceFile), J9UTF8_DATA(sourceFile));
 			if (lineNumber != -1) {
-				cursor += j9str_printf(PORTLIB, cursor, end - cursor, ":%zu", lineNumber);
+				cursor += j9str_printf(cursor, end - cursor, ":%zu", lineNumber);
 			}
-			cursor += j9str_printf(PORTLIB, cursor, end - cursor, ")");
+			cursor += j9str_printf(cursor, end - cursor, ")");
 		} else {
-			cursor += j9str_printf(PORTLIB, cursor, end - cursor, " (Bytecode PC: %zu)", offsetPC);
+			cursor += j9str_printf(cursor, end - cursor, " (Bytecode PC: %zu)", offsetPC);
 		}
 
 		if (COMPILED_METHOD == frameType) {
 			/*increment cursor here by the return value of j9str_printf if it needs to be used further*/
-			j9str_printf(PORTLIB, cursor, end - cursor, " (Compiled Code)", offsetPC);
+			j9str_printf(cursor, end - cursor, " (Compiled Code)", offsetPC);
 		}
 	}
 

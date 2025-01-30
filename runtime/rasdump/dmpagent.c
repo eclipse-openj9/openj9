@@ -2060,13 +2060,13 @@ queryAgent(struct J9JavaVM *vm, struct J9RASdumpAgent *agent, IDATA buffer_size,
 	
 	/* copy in the events */
 	separator = "";
-	len = j9str_printf(PORTLIB, temp_buf, sizeof(temp_buf), "%s", ":events=");
+	len = j9str_printf(temp_buf, sizeof(temp_buf), "%s", ":events=");
 	for (i = 0; i < J9RAS_DUMP_KNOWN_EVENTS; i++)
 	{
 		if ( agent->eventMask & rasDumpEvents[i].bits )
 		{
 			/* Switch between multi-line and single-line styles */
-			len += j9str_printf(PORTLIB, &temp_buf[len], sizeof(temp_buf) - len, "%s%s", separator, rasDumpEvents[i].name);
+			len += j9str_printf(&temp_buf[len], sizeof(temp_buf) - len, "%s%s", separator, rasDumpEvents[i].name);
 			separator = "+";
 		}
 	}
@@ -2083,7 +2083,7 @@ queryAgent(struct J9JavaVM *vm, struct J9RASdumpAgent *agent, IDATA buffer_size,
 	len = 0;
 	if (agent->detailFilter != NULL) {
 		/* Limit filter to 1000 characters so we don't overflow temp_buf and lose the "," */
-		len = j9str_printf(PORTLIB, temp_buf, sizeof(temp_buf), "filter=%.1000s,", agent->detailFilter);
+		len = j9str_printf(temp_buf, sizeof(temp_buf), "filter=%.1000s,", agent->detailFilter);
 	}
 	if (len > 0) {
 		/*increment buf here if it needs to be used further*/
@@ -2097,7 +2097,7 @@ queryAgent(struct J9JavaVM *vm, struct J9RASdumpAgent *agent, IDATA buffer_size,
 	/* copy in the subfilters */
 	len = 0;
 	if (agent->subFilter != NULL) {                
-		len = j9str_printf(PORTLIB, temp_buf, sizeof(temp_buf), "msg_filter=%.1000s,", agent->subFilter);
+		len = j9str_printf(temp_buf, sizeof(temp_buf), "msg_filter=%.1000s,", agent->subFilter);
 	}
 	if (len > 0) {
 		rc = writeIntoBuffer(buffer, buffer_size, &next_char, temp_buf);
@@ -2108,7 +2108,7 @@ queryAgent(struct J9JavaVM *vm, struct J9RASdumpAgent *agent, IDATA buffer_size,
 
 	/* copy in the label, range and priority */
 	len = 0;
-	len += j9str_printf(PORTLIB, temp_buf, sizeof(temp_buf),
+	len += j9str_printf(temp_buf, sizeof(temp_buf),
 			"%s%s,"
 			"range=%d..%d,"
 			"priority=%d,",
@@ -2127,13 +2127,13 @@ queryAgent(struct J9JavaVM *vm, struct J9RASdumpAgent *agent, IDATA buffer_size,
 
 	/* copy in the requests */
 	separator = "";
-	len = j9str_printf(PORTLIB, temp_buf, sizeof(temp_buf), "%s", "request=");
+	len = j9str_printf(temp_buf, sizeof(temp_buf), "%s", "request=");
 	for (i = 0; i < J9RAS_DUMP_KNOWN_REQUESTS; i++)
 	{
 		if ( agent->requestMask & rasDumpRequests[i].bits )
 		{
 			/* Switch between multi-line and single-line styles */
-			len += j9str_printf(PORTLIB, &temp_buf[len], sizeof(temp_buf) - len, "%s%s", separator, rasDumpRequests[i].name);
+			len += j9str_printf(&temp_buf[len], sizeof(temp_buf) - len, "%s%s", separator, rasDumpRequests[i].name);
 			separator = "+";
 		}
 	}
@@ -2141,10 +2141,10 @@ queryAgent(struct J9JavaVM *vm, struct J9RASdumpAgent *agent, IDATA buffer_size,
 	/* copy in the options */
 	if ( agent->dumpOptions != NULL ){
 		 /* Switch between multi-line and single-line styles */
-		len += j9str_printf(PORTLIB, &temp_buf[len], sizeof(temp_buf) - len, ",%s=%s", "opts", agent->dumpOptions);
+		len += j9str_printf(&temp_buf[len], sizeof(temp_buf) - len, ",%s=%s", "opts", agent->dumpOptions);
 	}
 
-	len += j9str_printf(PORTLIB, &temp_buf[len], sizeof(temp_buf) - len, "\n");
+	len += j9str_printf(&temp_buf[len], sizeof(temp_buf) - len, "\n");
 	if (len > 0) {
 		rc = writeIntoBuffer(buffer, buffer_size, &next_char, temp_buf);
 		if (rc == FALSE) {

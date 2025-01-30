@@ -1014,13 +1014,13 @@ createErrorMessage(J9VMThread *vmStruct, J9ROMClass *anonROMClass, J9ROMClass *h
 			}
 		}
 
-		bufLen = j9str_printf(PORTLIB, NULL, 0, errorMsg,
+		bufLen = j9str_printf(NULL, 0, errorMsg,
 						hostClassNameLength, hostClassNameData,
 						anonClassNameLength, anonClassNameData);
 		if (bufLen > 0) {
 			buf = j9mem_allocate_memory(bufLen, OMRMEM_CATEGORY_VM);
 			if (NULL != buf) {
-				j9str_printf(PORTLIB, buf, bufLen, errorMsg,
+				j9str_printf(buf, bufLen, errorMsg,
 						hostClassNameLength, hostClassNameData,
 						anonClassNameLength, anonClassNameData);
 			}

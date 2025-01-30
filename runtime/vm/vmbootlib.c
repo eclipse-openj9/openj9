@@ -292,7 +292,7 @@ openNativeLibrary(J9JavaVM *vm, J9ClassLoader *classLoader, const char *libName,
 					}
 					fullPathBufferLength = expectedPathLength;
 				}
-				j9str_printf(PORTLIB, fullPathPtr, expectedPathLength, "%.*s%s%s", pathLength, libraryPath, dirSeparator, libName);
+				j9str_printf(fullPathPtr, expectedPathLength, "%.*s%s%s", pathLength, libraryPath, dirSeparator, libName);
 				result = openFunction(userData, classLoader, libName, fullPathPtr, libraryPtr, errorBuffer, bufferLength, flags | J9PORT_SLOPEN_DECORATE | J9PORT_SLOPEN_NO_LOOKUP_MSG_FOR_NOT_FOUND);
 				if(result == J9NATIVELIB_LOAD_ERR_NOT_FOUND) {
 					result = openFunction(userData, classLoader, libName, fullPathPtr, libraryPtr, errorBuffer, bufferLength, flags | J9PORT_SLOPEN_NO_LOOKUP_MSG_FOR_NOT_FOUND);
@@ -627,7 +627,7 @@ classLoaderRegisterLibrary(void *voidVMThread, J9ClassLoader *classLoader, const
 				/* Proceed to check for the JNI_OnLoad_L() routine.  If not found skip to linking 
 				 * dynamically.
 				 */
-				j9str_printf(PORTLIB, onloadRtnName, nameLength, "%s%s", J9STATIC_ONLOAD, logicalName);
+				j9str_printf(onloadRtnName, nameLength, "%s%s", J9STATIC_ONLOAD, logicalName);
 				RELEASE_CLASS_LOADER_BLOCKS_MUTEX(javaVM);
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
 				exitVMToJNI(vmThread);
@@ -668,11 +668,11 @@ classLoaderRegisterLibrary(void *voidVMThread, J9ClassLoader *classLoader, const
 						j9sl_close_shared_library(newNativeLibrary->handle);
 						newNativeLibrary->handle = 0;
 						rc = J9NATIVELIB_LOAD_ERR_JNI_ONLOAD_FAILED;
-						j9str_printf(PORTLIB, 
-									 msgBuffer, 
-									 MAXIMUM_MESSAGE_LENGTH, 
-									 "0x%.8x not a valid JNI version for static linking (1.8 or later required)",
-									 jniVersion);
+						j9str_printf(
+								msgBuffer,
+								MAXIMUM_MESSAGE_LENGTH,
+								"0x%.8x not a valid JNI version for static linking (1.8 or later required)",
+								jniVersion);
 						reportError(errBuf, msgBuffer, bufLen);
 						goto leave_routine;
 					}
@@ -743,11 +743,11 @@ classLoaderRegisterLibrary(void *voidVMThread, J9ClassLoader *classLoader, const
 			if ((FALSE == jniVersionIsValid(jniVersion)) || (NULL != vmThread->currentException)) {
 				char msgBuffer[MAXIMUM_MESSAGE_LENGTH];
 
-				j9str_printf(PORTLIB, 
-							 msgBuffer, 
-							 MAXIMUM_MESSAGE_LENGTH, 
-							 "0x%.8x is not a valid JNI version", 
-							 jniVersion);
+				j9str_printf(
+						msgBuffer,
+						MAXIMUM_MESSAGE_LENGTH,
+						"0x%.8x is not a valid JNI version",
+						jniVersion);
 				if ((UDATA)-1 == jniVersion) {
 					strcpy(msgBuffer, "JNI_OnLoad returned JNI_ERR");
 				}

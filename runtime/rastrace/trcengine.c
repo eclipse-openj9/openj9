@@ -325,7 +325,7 @@ J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
 		 *  are processed so it's Ok to use stack space.
 		 */
 		opts[0] = UT_FORMAT_KEYWORD;
-		j9str_printf(PORTLIB, tempPath, sizeof(tempPath), "%s" DIR_SEPARATOR_STR "lib;.", javahome);
+		j9str_printf(tempPath, sizeof(tempPath), "%s" DIR_SEPARATOR_STR "lib;.", javahome);
 
 		opts[1] = tempPath;
 		opts[2] = NULL;

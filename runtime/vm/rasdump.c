@@ -406,7 +406,7 @@ j9rasSetServiceLevel(J9JavaVM *vm, const char *runtimeVersion) {
 
 	serviceLevel = j9mem_allocate_memory((UDATA)(size + 1), OMRMEM_CATEGORY_VM);
 	if (NULL != serviceLevel) {
-		j9str_printf(PORTLIB, serviceLevel, size + 1, formatString,
+		j9str_printf(serviceLevel, size + 1, formatString,
 				javaVersion, osname, osarch, ossize, openBracket, runtimeVersion, closeBracket);
 		serviceLevel[size] = '\0';
 

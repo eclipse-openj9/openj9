@@ -51,7 +51,7 @@ getJ9CfrErrorNormalMessage(J9PortLibrary* portLib, J9CfrError* error, const U_8*
 	allocSize = strlen(template) + strlen(errorDescription) + classNameLength + MAX_INT_SIZE;
 	errorString = j9mem_allocate_memory(allocSize, OMRMEM_CATEGORY_VM);
 	if (NULL != errorString) {
-		j9str_printf(PORTLIB, errorString, allocSize, template, errorDescription, classNameLength, className, error->errorOffset);
+		j9str_printf(errorString, allocSize, template, errorDescription, classNameLength, className, error->errorOffset);
 	}
 
 	return errorString;
@@ -71,7 +71,7 @@ getJ9CfrErrorBsmMessage(J9PortLibrary* portLib, J9CfrError* error, const U_8* cl
 	allocSize = strlen(template) + classNameLength + (MAX_INT_SIZE * 4);
 	errorString = j9mem_allocate_memory(allocSize, OMRMEM_CATEGORY_VM);
 	if (NULL != errorString) {
-		j9str_printf(PORTLIB, errorString, allocSize, template,
+		j9str_printf(errorString, allocSize, template,
 			error->errorBsmIndex, error->errorBsmArgsIndex, error->errorCPType, classNameLength, className, error->errorOffset);
 	}
 
@@ -87,7 +87,7 @@ getJ9CfrErrorMajorVersionMessage(J9PortLibrary* portLib, J9CfrError* error, cons
 	char *errorString = j9mem_allocate_memory(allocSize, OMRMEM_CATEGORY_VM);
 
 	if (NULL != errorString) {
-		j9str_printf(PORTLIB, errorString, allocSize, template,
+		j9str_printf(errorString, allocSize, template,
 			error->errorMajorVersion, error->errorMinorVersion, classNameLength, className, error->errorMaxMajorVersion, error->errorOffset);
 	}
 
@@ -103,7 +103,7 @@ getJ9CfrErrorMinorVersionMessage(J9PortLibrary* portLib, J9CfrError* error, cons
 	char *errorString = j9mem_allocate_memory(allocSize, OMRMEM_CATEGORY_VM);
 
 	if (NULL != errorString) {
-		j9str_printf(PORTLIB, errorString, allocSize, template,
+		j9str_printf(errorString, allocSize, template,
 			classNameLength, className, error->errorMinorVersion, error->errorMajorVersion, error->errorOffset);
 	}
 
@@ -119,7 +119,7 @@ getJ9CfrErrorPreviewVersionMessage(J9PortLibrary* portLib, J9CfrError* error, co
 	char *errorString = j9mem_allocate_memory(allocSize, OMRMEM_CATEGORY_VM);
 
 	if (NULL != errorString) {
-		j9str_printf(PORTLIB, errorString, allocSize, template,
+		j9str_printf(errorString, allocSize, template,
 			error->errorMajorVersion, error->errorMinorVersion, classNameLength, className, error->errorMaxMajorVersion, error->errorOffset);
 	}
 
@@ -135,7 +135,7 @@ getJ9CfrErrorPreviewVersionNotEnabledMessage(J9PortLibrary* portLib, J9CfrError*
 	char *errorString = j9mem_allocate_memory(allocSize, OMRMEM_CATEGORY_VM);
 
 	if (NULL != errorString) {
-		j9str_printf(PORTLIB, errorString, allocSize, template,
+		j9str_printf(errorString, allocSize, template,
 			error->errorMajorVersion, error->errorMinorVersion, classNameLength, className, error->errorOffset);
 	}
 
@@ -189,22 +189,22 @@ getJ9CfrErrorDetailMessageForMethod(J9PortLibrary* portLib, J9CfrError* error, c
 
 	errorString = j9mem_allocate_memory(allocSize, OMRMEM_CATEGORY_VM);
 	if (errorString != NULL) {
-		UDATA cursor = j9str_printf(PORTLIB,
-			errorString, 
-			allocSize,
-			template, 
-			errorDescription, 
-			classNameLength, 
-			className, 
-			methodNameLength,
-			methodName,
-			methodSignatureLength,
-			methodSignature,
-			error->errorPC);
+		UDATA cursor = j9str_printf(
+				errorString,
+				allocSize,
+				template,
+				errorDescription,
+				classNameLength,
+				className,
+				methodNameLength,
+				methodName,
+				methodSignatureLength,
+				methodSignature,
+				error->errorPC);
 
 		/* Jazz 82615: Print the detailed exception info to the error message buffer if not empty */
 		if ((NULL != detailedException) && (detailedExceptionLength > 0)) {
-			j9str_printf(PORTLIB, &errorString[cursor], allocSize - cursor, "%.*s", detailedExceptionLength, detailedException);
+			j9str_printf(&errorString[cursor], allocSize - cursor, "%.*s", detailedExceptionLength, detailedException);
 		}
 	}
 
@@ -279,4 +279,3 @@ buildMethodErrorWithExceptionDetails(J9CfrError * errorStruct, UDATA code, I_32 
 	errorStruct->errorFrameIndex = stackmapFrameIndex;
 	errorStruct->errorFrameBCI = stackmapFrameBCI;
 }
-

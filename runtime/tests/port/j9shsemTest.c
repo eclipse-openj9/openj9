@@ -45,8 +45,7 @@ getControlDirectoryName(struct J9PortLibrary *portLibrary, char* baseDir)
 #define J9SHTEST_BASEDIR "/tmp/j9shsem/"
 #endif
 
-	j9str_printf(PORTLIB, baseDir, J9SH_MAXPATH, "%s", J9SHTEST_BASEDIR);
-
+	j9str_printf(baseDir, J9SH_MAXPATH, "%s", J9SHTEST_BASEDIR);
 }
 
 static void
@@ -129,7 +128,7 @@ j9shsem_test2(J9PortLibrary *portLibrary)
 		goto cleanup;
 	}
 
-	j9str_printf(PORTLIB, mybaseFilePath, J9SH_MAXPATH, "%s%s", params.controlFileDir, params.semName);
+	j9str_printf(mybaseFilePath, J9SH_MAXPATH, "%s%s", params.controlFileDir, params.semName);
 	fd = j9file_open(mybaseFilePath, EsOpenRead, 0);
 
 	if(-1 == fd) {
@@ -422,8 +421,8 @@ j9shsem_test5(J9PortLibrary *portLibrary)
 		goto cleanup;
 	}
 
-	j9str_printf(PORTLIB, mybaseFilePath, J9SH_MAXPATH, "%s%s", params.controlFileDir, params.semName);
-	j9str_printf(PORTLIB, myNewFilePath, J9SH_MAXPATH, "%s%s_new", params.controlFileDir, params.semName);
+	j9str_printf(mybaseFilePath, J9SH_MAXPATH, "%s%s", params.controlFileDir, params.semName);
+	j9str_printf(myNewFilePath, J9SH_MAXPATH, "%s%s_new", params.controlFileDir, params.semName);
 
 	j9file_move(mybaseFilePath, myNewFilePath);
 
@@ -586,10 +585,10 @@ static void test7_cleanup(J9PortLibrary *portLibrary,
 	if (myhandleB != NULL) {
 		j9shsem_destroy(&myhandleB);
 	}
-	j9str_printf(PORTLIB, mybaseFilePath, J9SH_MAXPATH, "%s%s",
+	j9str_printf(mybaseFilePath, J9SH_MAXPATH, "%s%s",
 			params->controlFileDir, params->semName);
 	j9file_unlink(mybaseFilePath);
-	j9str_printf(PORTLIB, mybaseFilePath, J9SH_MAXPATH, "%s%s_new",
+	j9str_printf(mybaseFilePath, J9SH_MAXPATH, "%s%s_new",
 			params->controlFileDir, params->semName);
 	j9file_unlink(mybaseFilePath);
 }
@@ -611,7 +610,7 @@ static IDATA destroyAndReopenSemaphore(J9PortLibrary *portLibrary,
 		 * this code is for testing the test: to make the test fail, set deleteBasefile=1.
 		 * j9shsem_destroy deletes the file and j9file_open with a different name ensures that j9shsem_open doesn't reuse the same inode.
 		 */
-		j9str_printf(PORTLIB, dummyFilePath, J9SH_MAXPATH, "%s%s_new", params->controlFileDir, params->semName);
+		j9str_printf(dummyFilePath, J9SH_MAXPATH, "%s%s_new", params->controlFileDir, params->semName);
 		fd = j9file_open(dummyFilePath, EsOpenWrite | EsOpenCreate, 0);
 	}
 
@@ -767,4 +766,3 @@ j9shsem_runTests(struct J9PortLibrary *portLibrary, char* argv0, char* shsem_chi
 	deleteControlDirectory(portLibrary, baseDir);
 	return TEST_PASS == rc ? 0 : -1;
 }
-

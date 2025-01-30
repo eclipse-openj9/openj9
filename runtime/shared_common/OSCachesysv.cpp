@@ -2635,7 +2635,7 @@ SH_OSCachesysv::getControlFilePerm(char *cacheDirName, char *filename, bool *isN
 	I_32 rc;
 	PORT_ACCESS_FROM_PORT(_portLibrary);
 
-	j9str_printf(_portLibrary, baseFile, J9SH_MAXPATH, "%s%s", cacheDirName, filename);
+	j9str_printf(baseFile, J9SH_MAXPATH, "%s%s", cacheDirName, filename);
 	rc = j9file_stat(baseFile, 0, &statbuf);
 	if (0 == rc) {
 		UDATA euid = j9sysinfo_get_euid();

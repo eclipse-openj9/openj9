@@ -340,7 +340,7 @@ freeClassLoader(J9ClassLoader *classLoader, J9JavaVM *javaVM, J9VMThread *vmThre
 					/* Prevent call to JNI_OnUnload; can't invoke JNI_OnUnload based on VM oom. */
 					unloadPerformed = TRUE;
 				} else {
-					j9str_printf(PORTLIB, onUnloadRtnName, nameLength, "%s%s", J9STATIC_ONUNLOAD, nativeLibrary->logicalName);
+					j9str_printf(onUnloadRtnName, nameLength, "%s%s", J9STATIC_ONUNLOAD, nativeLibrary->logicalName);
 
 					/* Invoke the JNI_OnUnLoad_L routine, if present. */
 					rc = (*nativeLibrary->send_lifecycle_event)(vmThread, nativeLibrary, onUnloadRtnName, (UDATA) -1);
@@ -527,4 +527,3 @@ freeClassLoader(J9ClassLoader *classLoader, J9JavaVM *javaVM, J9VMThread *vmThre
 
 	Trc_VM_freeClassLoader_Exit();
 }
-

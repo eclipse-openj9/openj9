@@ -1545,11 +1545,11 @@ static UDATA printMethodInfo(J9VMThread *currentThread , J9StackWalkState *state
 	char *end = buf + sizeof(buf);
 	PORT_ACCESS_FROM_VMC(currentThread);
 
-	cursor += j9str_printf(PORTLIB, cursor, end - cursor, "\tat %.*s.%.*s%.*s", J9UTF8_LENGTH(className), J9UTF8_DATA(className), J9UTF8_LENGTH(methodName), J9UTF8_DATA(methodName), J9UTF8_LENGTH(sig), J9UTF8_DATA(sig));
+	cursor += j9str_printf(cursor, end - cursor, "\tat %.*s.%.*s%.*s", J9UTF8_LENGTH(className), J9UTF8_DATA(className), J9UTF8_LENGTH(methodName), J9UTF8_DATA(methodName), J9UTF8_LENGTH(sig), J9UTF8_DATA(sig));
 
 	if (romMethod->modifiers & J9AccNative) {
 	/*increment cursor here by the return of j9str_printf if it needs to be used further*/
-		j9str_printf(PORTLIB, cursor, end - cursor, " (Native Method)");
+		j9str_printf(cursor, end - cursor, " (Native Method)");
 	} else {
 		UDATA offsetPC = state->bytecodePCOffset;
 #ifdef J9VM_OPT_DEBUG_INFO_SERVER
@@ -1558,21 +1558,21 @@ static UDATA printMethodInfo(J9VMThread *currentThread , J9StackWalkState *state
 		if (sourceFile) {
 			IDATA lineNumber = getLineNumberForROMClass(vm, method, offsetPC);
 
-			cursor += j9str_printf(PORTLIB, cursor, end - cursor, " (%.*s", J9UTF8_LENGTH(sourceFile), J9UTF8_DATA(sourceFile));
+			cursor += j9str_printf(cursor, end - cursor, " (%.*s", J9UTF8_LENGTH(sourceFile), J9UTF8_DATA(sourceFile));
 			if (lineNumber != -1) {
-				cursor += j9str_printf(PORTLIB, cursor, end - cursor, ":%zu", lineNumber);
+				cursor += j9str_printf(cursor, end - cursor, ":%zu", lineNumber);
 			}
-			cursor += j9str_printf(PORTLIB, cursor, end - cursor, ")");
+			cursor += j9str_printf(cursor, end - cursor, ")");
 		} else
 #endif
 		{
-			cursor += j9str_printf(PORTLIB, cursor, end - cursor, " (Bytecode PC: %zu)", offsetPC);
+			cursor += j9str_printf(cursor, end - cursor, " (Bytecode PC: %zu)", offsetPC);
 		}
 
 #ifdef J9VM_INTERP_NATIVE_SUPPORT
 		if (state->jitInfo != NULL) {
 		/*increment cursor here by the return of j9str_printf if it needs to be used further*/
-			j9str_printf(PORTLIB, cursor, end - cursor, " (Compiled Code)");
+			j9str_printf(cursor, end - cursor, " (Compiled Code)");
 		}
 #endif
 	}
@@ -1627,8 +1627,8 @@ void printThreadInfo(J9JavaVM *vm, J9VMThread *self, char *toFile, BOOLEAN allTh
 			j9tty_err_printf(PORTLIB, "Error: Failed to open dump file %s.\nWill output to stderr instead:\n", fileName);
 		}
 	} else if (vm->sigquitToFileDir != NULL) {
-		j9str_printf(PORTLIB, fileName, EsMaxPath, "%s%s%s%d%s",
-							vm->sigquitToFileDir, DIR_SEPARATOR_STR, SIGQUIT_FILE_NAME, j9time_usec_clock(), SIGQUIT_FILE_EXT);
+		j9str_printf(fileName, EsMaxPath, "%s%s%s%d%s",
+				vm->sigquitToFileDir, DIR_SEPARATOR_STR, SIGQUIT_FILE_NAME, j9time_usec_clock(), SIGQUIT_FILE_EXT);
 		if ((tracefd = j9file_open(fileName, EsOpenWrite | EsOpenCreate | EsOpenTruncate, 0666))==-1) {
 			j9tty_err_printf(PORTLIB, "Error: Failed to open trace file %s.\nWill output to stderr instead:\n", fileName);
 		}
@@ -2051,12 +2051,12 @@ setFailedToForkThreadException(J9VMThread *currentThread, IDATA retVal, omrthrea
 			J9NLS_VM_THREAD_CREATE_FAILED_WITH_32BIT_ERRNO2, NULL);
 
 	if (errorMessage) {
-		bufLen = j9str_printf(PORTLIB, NULL, 0, errorMessage, retVal, os_errno, os_errno, (U_32)(UDATA)os_errno2);
+		bufLen = j9str_printf(NULL, 0, errorMessage, retVal, os_errno, os_errno, (U_32)(UDATA)os_errno2);
 		if (bufLen > 0) {
 			buf = (char*)j9mem_allocate_memory(bufLen, OMRMEM_CATEGORY_VM);
 			if (buf) {
 				/* j9str_printf return value doesn't include the NUL terminator */
-				if ((bufLen - 1) == j9str_printf(PORTLIB, buf, bufLen, errorMessage, retVal, os_errno, os_errno, os_errno2, os_errno2)) {
+				if ((bufLen - 1) == j9str_printf(buf, bufLen, errorMessage, retVal, os_errno, os_errno, os_errno2, os_errno2)) {
 					setCurrentExceptionUTF(currentThread, J9_EX_OOM_THREAD | J9VMCONSTANTPOOL_JAVALANGOUTOFMEMORYERROR, buf);
 					rc = 0;
 				}
@@ -2090,12 +2090,12 @@ setFailedToForkThreadException(J9VMThread *currentThread, IDATA retVal, omrthrea
 		J9NLS_VM_THREAD_CREATE_FAILED_WITH_ERRNO, NULL);
 
 	if (errorMessage) {
-		bufLen = j9str_printf(PORTLIB, NULL, 0, errorMessage, retVal, os_errno);
+		bufLen = j9str_printf(NULL, 0, errorMessage, retVal, os_errno);
 		if (bufLen > 0) {
 			buf = (char*)j9mem_allocate_memory(bufLen, OMRMEM_CATEGORY_VM);
 			if (buf) {
 				/* j9str_printf return value doesn't include the NUL terminator */
-				if ((bufLen - 1) == j9str_printf(PORTLIB, buf, bufLen, errorMessage, retVal, os_errno)) {
+				if ((bufLen - 1) == j9str_printf(buf, bufLen, errorMessage, retVal, os_errno)) {
 					setCurrentExceptionUTF(currentThread, J9_EX_OOM_THREAD | J9VMCONSTANTPOOL_JAVALANGOUTOFMEMORYERROR, buf);
 					rc = 0;
 				}

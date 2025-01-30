@@ -5286,9 +5286,9 @@ generateStartupHintsKey(J9JavaVM* vm)
 		) {
 			if (firstOption) {
 				firstOption = false;
-				j9str_printf(PORTLIB, key, keyLength, "%s%s", key, option);
+				j9str_printf(key, keyLength, "%s%s", key, option);
 			} else {
-				j9str_printf(PORTLIB, key, keyLength, "%s%s%s", key, " ", option);
+				j9str_printf(key, keyLength, "%s%s%s", key, " ", option);
 			}
 		}
 	}

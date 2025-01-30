@@ -248,7 +248,7 @@ convertMethodSignature(J9VMThread *vmThread, J9UTF8 *methodSig)
 
 		memset(result, 0, bufferSize);
 		/* first character is '(' */
-		j9str_printf(PORTLIB, cursor, availableSize, "(");
+		j9str_printf(cursor, availableSize, "(");
 		cursor += 1;
 		availableSize -= 1;
 		for (i = 1; (')' != string[i]); i++) {
@@ -303,23 +303,23 @@ convertMethodSignature(J9VMThread *vmThread, J9UTF8 *methodSig)
 					break;
 				}
 				UDATA elementLength = strlen(elementType);
-				j9str_printf(PORTLIB, cursor, availableSize, elementType);
+				j9str_printf(cursor, availableSize, elementType);
 				cursor += elementLength;
 				availableSize -= elementLength;
 			}
 			for(j = 0; j < arity; j++) {
-				j9str_printf(PORTLIB, cursor, availableSize, "[]");
+				j9str_printf(cursor, availableSize, "[]");
 				cursor += 2;
 				availableSize -= 2;
 			}
 
 			if (')' != string[i + 1]) {
-				j9str_printf(PORTLIB, cursor, availableSize, ", ");
+				j9str_printf(cursor, availableSize, ", ");
 				cursor += 2;
 				availableSize -= 2;
 			}
 		}
-		j9str_printf(PORTLIB, cursor, availableSize, ")");
+		j9str_printf(cursor, availableSize, ")");
 	} else {
 		bufferSize = 0;
 	}

@@ -420,7 +420,7 @@ traceMethodArgDouble(J9VMThread *thr, UDATA* arg0EA, char* cursor, UDATA length)
 	/* read a potentially misaligned double value */
 	memcpy(&data, arg0EA, sizeof(data));
 
-	j9str_printf(PORTLIB, cursor, length, "(double)%f", data);
+	j9str_printf(cursor, length, "(double)%f", data);
 }
 
 /*
@@ -432,7 +432,7 @@ traceMethodArgFloat(J9VMThread *thr, UDATA* arg0EA, char* cursor, UDATA length)
 	jfloat data = *(jfloat*)arg0EA;
 	PORT_ACCESS_FROM_VMC(thr);
 
-	j9str_printf(PORTLIB, cursor, length, "(float)%f", data);
+	j9str_printf(cursor, length, "(float)%f", data);
 }
 
 /*
@@ -444,7 +444,7 @@ traceMethodArgInt(J9VMThread *thr, UDATA* arg0EA, char* cursor, UDATA length, ch
 	jint data = *(jint*)arg0EA;
 	PORT_ACCESS_FROM_VMC(thr);
 
-	j9str_printf(PORTLIB, cursor, length, "(%s)%d", type, data);
+	j9str_printf(cursor, length, "(%s)%d", type, data);
 }
 
 /*
@@ -459,7 +459,7 @@ traceMethodArgLong(J9VMThread *thr, UDATA* arg0EA, char* cursor, UDATA length)
 	/* read a potentially misaligned long value */
 	memcpy(&data, arg0EA, sizeof(data));
 
-	j9str_printf(PORTLIB, cursor, length, "(long)%lld", data);
+	j9str_printf(cursor, length, "(long)%lld", data);
 }
 
 /*
@@ -472,7 +472,7 @@ traceMethodArgObject(J9VMThread *thr, UDATA* arg0EA, char* cursor, UDATA length)
 	PORT_ACCESS_FROM_VMC(thr);
 
 	if (object == NULL) {
-		j9str_printf(PORTLIB, cursor, length, "null");
+		j9str_printf(cursor, length, "null");
 	} else {
 		J9Class *clazz = J9OBJECT_CLAZZ(thr, object);
 		J9JavaVM *vm = thr->javaVM;
@@ -496,11 +496,11 @@ traceMethodArgObject(J9VMThread *thr, UDATA* arg0EA, char* cursor, UDATA length)
 					&utf8Length);
 
 			if (NULL == utf8String) {
-				j9str_printf(PORTLIB, cursor, length, "(String)<Memory allocation error>");
+				j9str_printf(cursor, length, "(String)<Memory allocation error>");
 			} else if (utf8Length > maxStringLength) {
-				j9str_printf(PORTLIB, cursor, length, "(String)\"%.*s\"...", (U_32)maxStringLength, utf8String);
+				j9str_printf(cursor, length, "(String)\"%.*s\"...", (U_32)maxStringLength, utf8String);
 			} else {
-				j9str_printf(PORTLIB, cursor, length, "(String)\"%.*s\"", (U_32)utf8Length, utf8String);
+				j9str_printf(cursor, length, "(String)\"%.*s\"", (U_32)utf8Length, utf8String);
 			}
 
 			if (utf8Buffer != utf8String) {
@@ -511,7 +511,7 @@ traceMethodArgObject(J9VMThread *thr, UDATA* arg0EA, char* cursor, UDATA length)
 
 			J9ROMClass *romClass = clazz->romClass;
 			J9UTF8 *className = J9ROMCLASS_CLASSNAME(romClass);
-			j9str_printf(PORTLIB, cursor, length, "%.*s@%p", (U_32)J9UTF8_LENGTH(className), J9UTF8_DATA(className), object);
+			j9str_printf(cursor, length, "%.*s@%p", (U_32)J9UTF8_LENGTH(className), J9UTF8_DATA(className), object);
 		}
 	}
 }
@@ -662,6 +662,5 @@ traceMethodArgBoolean(J9VMThread *thr, UDATA* arg0EA, char* cursor, UDATA length
 	jint data = *(jint*)arg0EA;
 	PORT_ACCESS_FROM_VMC(thr);
 
-	j9str_printf(PORTLIB, cursor, length, data ? "true" : "false");
+	j9str_printf(cursor, length, data ? "true" : "false");
 }
-

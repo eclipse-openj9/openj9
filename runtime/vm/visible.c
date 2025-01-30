@@ -250,7 +250,7 @@ setNestmatesError(J9VMThread *vmThread, J9Class *nestMember, J9Class *nestHost, 
 	}
 
 	if (NULL != nlsTemplate) {
-		UDATA msgLen = j9str_printf(PORTLIB, NULL, 0, nlsTemplate,
+		UDATA msgLen = j9str_printf(NULL, 0, nlsTemplate,
 				J9UTF8_LENGTH(nestMemberName), J9UTF8_DATA(nestMemberName),
 				J9UTF8_LENGTH(nestHostName), J9UTF8_DATA(nestHostName),
 				J9UTF8_LENGTH(nestMemberName), J9UTF8_DATA(nestMemberName));
@@ -259,7 +259,7 @@ setNestmatesError(J9VMThread *vmThread, J9Class *nestMember, J9Class *nestHost, 
 
 		/* If msg is NULL we can still throw the exception without it. */
 		if (NULL != msg) {
-			j9str_printf(PORTLIB, msg, msgLen, nlsTemplate,
+			j9str_printf(msg, msgLen, nlsTemplate,
 					J9UTF8_LENGTH(nestMemberName), J9UTF8_DATA(nestMemberName),
 					J9UTF8_LENGTH(nestHostName), J9UTF8_DATA(nestHostName),
 					J9UTF8_LENGTH(nestMemberName), J9UTF8_DATA(nestMemberName));

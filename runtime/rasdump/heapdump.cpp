@@ -559,16 +559,16 @@ public :
 	{
 		PORT_ACCESS_FROM_PORT(_PortLibrary);
 		char buffer[1 + (sizeof(UDATA) * 8)];
-		
+
 		switch (radix) {
 		case 16:
-			j9str_printf(PORTLIB, buffer, sizeof(buffer), "%.*zX", sizeof(UDATA) * 2, data);
+			j9str_printf(buffer, sizeof(buffer), "%.*zX", sizeof(UDATA) * 2, data);
 			break;
 		default:
-			j9str_printf(PORTLIB, buffer, sizeof(buffer), "%zu", data);
+			j9str_printf(buffer, sizeof(buffer), "%zu", data);
 			break;
 		}
-		
+
 		append(buffer, strlen(buffer));
 
 		return *this;

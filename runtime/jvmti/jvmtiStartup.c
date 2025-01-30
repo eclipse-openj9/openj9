@@ -784,12 +784,11 @@ loadAgentLibraryOnAttach(struct J9JavaVM * vm, const char * library, const char 
 		/* Try invoking Agent_OnAttach_L function, if agent was linked statically.  */
 		if (J9NATIVELIB_LINK_MODE_STATIC == agentLibrary->nativeLib.linkMode) {
 			loadFunctionNameLength = j9str_printf(
-											PORTLIB,
-											loadFunctionName,
-											(J9JVMTI_BUFFER_LENGTH + 1),
-											"%s_%s",
-											J9JVMTI_AGENT_ONATTACH,
-											agentLibrary->nativeLib.name);
+					loadFunctionName,
+					(J9JVMTI_BUFFER_LENGTH + 1),
+					"%s_%s",
+					J9JVMTI_AGENT_ONATTACH,
+					agentLibrary->nativeLib.name);
 			if (loadFunctionNameLength >= J9JVMTI_BUFFER_LENGTH) {
 				rc = JNI_ERR;
 				goto exit;
@@ -816,12 +815,11 @@ loadAgentLibraryOnAttach(struct J9JavaVM * vm, const char * library, const char 
 			goto exit;
 		}
 		loadFunctionNameLength = j9str_printf(
-			PORTLIB,
-			loadFunctionName,
-			(J9JVMTI_BUFFER_LENGTH + 1),
-			"%s_%s",
-			J9JVMTI_AGENT_ONATTACH,
-			agentLibrary->nativeLib.name);
+				loadFunctionName,
+				(J9JVMTI_BUFFER_LENGTH + 1),
+				"%s_%s",
+				J9JVMTI_AGENT_ONATTACH,
+				agentLibrary->nativeLib.name);
 		if (loadFunctionNameLength >= J9JVMTI_BUFFER_LENGTH) {
 			rc = JNI_ERR;
 			goto exit;
@@ -902,12 +900,11 @@ loadAgentLibrary(J9JavaVM * vm, J9JVMTIAgentLibrary * agentLibrary)
 	 * If this is not found, fall back on the regular, dynamic linking way.
 	 */
 	nameBufferLengh = j9str_printf(
-							PORTLIB,
-							nameBuffer,
-							(J9JVMTI_BUFFER_LENGTH + 1),
-							"%s_%s",
-							J9JVMTI_AGENT_ONLOAD,
-							agentLibrary->nativeLib.name);
+			nameBuffer,
+			(J9JVMTI_BUFFER_LENGTH + 1),
+			"%s_%s",
+			J9JVMTI_AGENT_ONLOAD,
+			agentLibrary->nativeLib.name);
 	if (nameBufferLengh >= J9JVMTI_BUFFER_LENGTH) {
 		result = JNI_ERR;
 		goto exit;
@@ -976,12 +973,12 @@ shutDownAgentLibraries(J9JavaVM * vm, UDATA closeLibrary)
 				 * Agent_OnUnload, or else invoke Agent_OnUnload_L.
 				 */
 				if (J9NATIVELIB_LINK_MODE_STATIC == agentLibrary->nativeLib.linkMode) {
-					j9str_printf(PORTLIB,
-								 nameBuffer,
-								 sizeof(nameBuffer),
-								 "%s_%s",
-								 J9JVMTI_AGENT_ONUNLOAD,
-								 agentLibrary->nativeLib.name);
+					j9str_printf(
+							nameBuffer,
+							sizeof(nameBuffer),
+							"%s_%s",
+							J9JVMTI_AGENT_ONUNLOAD,
+							agentLibrary->nativeLib.name);
 				} else /* J9NATIVELIB_LINK_MODE_DYNAMIC == linkMode */ {
 					strcpy(nameBuffer, J9JVMTI_AGENT_ONUNLOAD);
 				}
@@ -1480,8 +1477,8 @@ isAgentLibraryLoaded(J9JavaVM *vm, const char *library, BOOLEAN decorate)
 				libNameSo = (char *)j9mem_allocate_memory(sizeLibNameSo, J9MEM_CATEGORY_JVMTI);
 				libNameAr = (char *)j9mem_allocate_memory(sizeLibNameAr, J9MEM_CATEGORY_JVMTI);
 				if ((NULL != libNameSo) && (NULL != libNameAr)) {
-					j9str_printf(PORTLIB, libNameSo, sizeLibNameSo, "lib%s.so", library);
-					j9str_printf(PORTLIB, libNameAr, sizeLibNameAr, "lib%s.a", library);
+					j9str_printf(libNameSo, sizeLibNameSo, "lib%s.so", library);
+					j9str_printf(libNameAr, sizeLibNameAr, "lib%s.a", library);
 					Trc_JVMTI_isAgentLibraryLoaded_libNames(libNameSo, libNameAr);
 				} else {
 					Trc_JVMTI_isAgentLibraryLoaded_OOM("libNameSo or libNameAr");
@@ -1547,13 +1544,13 @@ findAgentLibrary(J9JavaVM * vm, const char *libraryAndOptions, UDATA libraryLeng
 	J9JVMTIAgentLibrary * agentLibrary;
 	J9NativeLibrary * nativeLibrary = NULL;
 	UDATA nativeLibraryNameLength;
-    pool_state state;
+	pool_state state;
 
-    Trc_JVMTI_findAgentLibrary_Entry(libraryAndOptions);
+	Trc_JVMTI_findAgentLibrary_Entry(libraryAndOptions);
 	agentLibrary = pool_startDo(jvmtiData->agentLibraries, &state);
 	while (agentLibrary) {
-        nativeLibrary = &(agentLibrary->nativeLib);
- 		nativeLibraryNameLength = strlen(nativeLibrary->name);
+		nativeLibrary = &(agentLibrary->nativeLib);
+		nativeLibraryNameLength = strlen(nativeLibrary->name);
 		if (nativeLibraryNameLength == libraryLength) {
 			if (!strncmp(libraryAndOptions, nativeLibrary->name, libraryLength)) {
 				Trc_JVMTI_findAgentLibrary_successExit(nativeLibrary->name);

@@ -184,9 +184,9 @@ escapeUTF8(J9PortLibrary *portLib, J9UTF8 *utf8, char *str, size_t strSize)
 				break;
 			}
 
-			escapedLength = j9str_printf(PORTLIB, str, strSize, "\\u%04x", (UDATA)c);
+			escapedLength = j9str_printf(str, strSize, "\\u%04x", (UDATA)c);
 		} else {
-			escapedLength = j9str_printf(PORTLIB, str, strSize, "%c", (char)c);
+			escapedLength = j9str_printf(str, strSize, "%c", (char)c);
 		}
 
 		strSize -= (size_t)escapedLength;
@@ -456,35 +456,35 @@ getRegionValueString(J9PortLibrary *portLib, J9ROMClass *romClass, J9ROMClassReg
 
 	switch (region->type) {
 		case J9ROM_U8:
-			j9str_printf(PORTLIB, str, strSize, "%12u", *(U_8 *)fieldPtr);
+			j9str_printf(str, strSize, "%12u", *(U_8 *)fieldPtr);
 			return;
 		case J9ROM_U16:
-			j9str_printf(PORTLIB, str, strSize, "%12u", *(U_16 *)fieldPtr);
+			j9str_printf(str, strSize, "%12u", *(U_16 *)fieldPtr);
 			return;
 		case J9ROM_U32:
-			j9str_printf(PORTLIB, str, strSize, "%12u", *(U_32 *)fieldPtr);
+			j9str_printf(str, strSize, "%12u", *(U_32 *)fieldPtr);
 			return;
 		case J9ROM_U64:
-			j9str_printf(PORTLIB, str, strSize, "%12llu", *(U_64 *)fieldPtr);
+			j9str_printf(str, strSize, "%12llu", *(U_64 *)fieldPtr);
 			return;
 		case J9ROM_UTF8:
-			j9str_printf(PORTLIB, str, strSize, "(UTF-8)");
+			j9str_printf(str, strSize, "(UTF-8)");
 			return;
 		case J9ROM_SRP:
-			j9str_printf(PORTLIB, str, strSize, "0x%08x", *(J9SRP *)fieldPtr);
+			j9str_printf(str, strSize, "0x%08x", *(J9SRP *)fieldPtr);
 			return;
 		case J9ROM_WSRP:
-			j9str_printf(PORTLIB, str, strSize, "0x%08x", *(J9WSRP *)fieldPtr);
+			j9str_printf(str, strSize, "0x%08x", *(J9WSRP *)fieldPtr);
 			return;
 		case J9ROM_SECTION_END:
-			j9str_printf(PORTLIB, str, strSize, "(SECTION)");
+			j9str_printf(str, strSize, "(SECTION)");
 			return;
 		case J9ROM_INTERMEDIATECLASSDATA:
-			j9str_printf(PORTLIB, str, strSize, "");
+			j9str_printf(str, strSize, "");
 			return;
 	}
 
-	j9str_printf(PORTLIB, str, strSize, "<error>");
+	j9str_printf(str, strSize, "<error>");
 }
 
 static void
@@ -522,7 +522,7 @@ getRegionDetailString(J9PortLibrary *portLib, J9ROMClassGatherLayoutInfoState *s
 				}
 
 				if (rangeValid) {
-					UDATA length = j9str_printf(PORTLIB, str, strSize, " -> ");
+					UDATA length = j9str_printf(str, strSize, " -> ");
 
 					escapeUTF8(PORTLIB, utf8, str + length, strSize - length);
 					printedUTF8 = TRUE;
@@ -534,16 +534,16 @@ getRegionDetailString(J9PortLibrary *portLib, J9ROMClassGatherLayoutInfoState *s
 			U_8 *addr = SRP_PTR_GET((J9SRP*)fieldPtr, U_8*);
 
 			if (NULL != addr) {
-				j9str_printf(PORTLIB, str, strSize, " -> 0x%p%s", (UDATA)addr - (UDATA)romClass,
+				j9str_printf(str, strSize, " -> 0x%p%s", (UDATA)addr - (UDATA)romClass,
 					((UDATA)addr - (UDATA)romClass) > romClass->romSize ? " (external)" : "");
 			}
 		}
 	} else if (J9ROM_INTERMEDIATECLASSDATA == region->type) {
-		j9str_printf(PORTLIB, str, strSize, " %5d bytes  !j9x 0x%p,0x%p", region->length, base + region->offset, region->length);
+		j9str_printf(str, strSize, " %5d bytes  !j9x 0x%p,0x%p", region->length, base + region->offset, region->length);
 	}
 
 	if (J9ROM_SECTION_END == region->type) {
-		j9str_printf(PORTLIB, str, strSize, " %5d bytes", region->length);
+		j9str_printf(str, strSize, " %5d bytes", region->length);
 	}
 }
 
@@ -611,7 +611,7 @@ j9bcutil_linearDumpROMClass(J9PortLibrary *portLib, J9ROMClass *romClass, void *
 				lastOffset = region->offset;
 			}
 			if (nesting < nestingThreshold) {
-				j9str_printf(PORTLIB, buf, sizeof(buf), "Section Start: %s (%d bytes)", region->name, region->length);
+				j9str_printf(buf, sizeof(buf), "Section Start: %s (%d bytes)", region->name, region->length);
 				j9tty_printf(PORTLIB, "=== %-59s ===\n", buf);
 			}
 			nesting++;
@@ -623,7 +623,7 @@ j9bcutil_linearDumpROMClass(J9PortLibrary *portLib, J9ROMClass *romClass, void *
 						reportSuspectedPadding(portLib, romClass, &state, lastOffset, region->offset, base);
 					}
 				}
-				j9str_printf(PORTLIB, buf, sizeof(buf), "Section End: %s", region->name);
+				j9str_printf(buf, sizeof(buf), "Section End: %s", region->name);
 				j9tty_printf(PORTLIB, "=== %-59s ===\n", buf);
 			} else if (nesting == nestingThreshold) {
 				printRegionLine(portLib, &state, romClass, region, base - region->length);
@@ -811,12 +811,12 @@ j9bcutil_queryROMClass(J9PortLibrary *portLib, J9ROMClass *romClass, void *baseA
 				char buf[256];
 
 				if (J9ROM_SECTION_START == region->type) {
-					j9str_printf(PORTLIB, buf, sizeof(buf), "Section Start: %s (%d bytes)", region->name, region->length);
+					j9str_printf(buf, sizeof(buf), "Section Start: %s (%d bytes)", region->name, region->length);
 					j9tty_printf(PORTLIB, "=== %-59s ===\n", buf);
 					nesting++;
 				} else if (J9ROM_SECTION_END == region->type) {
 					nesting--;
-					j9str_printf(PORTLIB, buf, sizeof(buf), "Section End: %s", region->name);
+					j9str_printf(buf, sizeof(buf), "Section End: %s", region->name);
 					j9tty_printf(PORTLIB, "=== %-59s ===\n", buf);
 					if (0 == nesting) {
 						queryMatched = TRUE;
@@ -911,16 +911,16 @@ getRegionValueStringXML(J9PortLibrary *portLib, J9ROMClass *romClass, J9ROMClass
 
 	switch (region->type) {
 		case J9ROM_U8:
-			j9str_printf(PORTLIB, str, strSize, "%u", *(U_8 *)fieldPtr);
+			j9str_printf(str, strSize, "%u", *(U_8 *)fieldPtr);
 			return;
 		case J9ROM_U16:
-			j9str_printf(PORTLIB, str, strSize, "%u", *(U_16 *)fieldPtr);
+			j9str_printf(str, strSize, "%u", *(U_16 *)fieldPtr);
 			return;
 		case J9ROM_U32:
-			j9str_printf(PORTLIB, str, strSize, "%u", *(U_32 *)fieldPtr);
+			j9str_printf(str, strSize, "%u", *(U_32 *)fieldPtr);
 			return;
 		case J9ROM_U64:
-			j9str_printf(PORTLIB, str, strSize, "%llu", *(U_64 *)fieldPtr);
+			j9str_printf(str, strSize, "%llu", *(U_64 *)fieldPtr);
 			return;
 		case J9ROM_UTF8: {
 			J9UTF8 *utf8 = fieldPtr;
@@ -928,14 +928,14 @@ getRegionValueStringXML(J9PortLibrary *portLib, J9ROMClass *romClass, J9ROMClass
 			return;
 		}
 		case J9ROM_SRP:
-			j9str_printf(PORTLIB, str, strSize, "0x%08x", *(J9SRP *)fieldPtr);
+			j9str_printf(str, strSize, "0x%08x", *(J9SRP *)fieldPtr);
 			return;
 		case J9ROM_WSRP:
-			j9str_printf(PORTLIB, str, strSize, "0x%08x", *(J9WSRP *)fieldPtr);
+			j9str_printf(str, strSize, "0x%08x", *(J9WSRP *)fieldPtr);
 			return;
 	}
 
-	j9str_printf(PORTLIB, str, strSize, "error>");
+	j9str_printf(str, strSize, "error>");
 }
 
 void

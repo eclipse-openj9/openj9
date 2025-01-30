@@ -112,7 +112,7 @@ lookupInterfaceMethod(J9VMThread *currentThread, J9Class *lookupClass, J9UTF8 *n
 						+ 4 /* period, parentheses, and terminating null */;
 					char *msg = j9mem_allocate_memory(nameAndSigLength, OMRMEM_CATEGORY_VM);
 					if (NULL != msg) {
-						j9str_printf(PORTLIB, msg, nameAndSigLength, "%.*s.%.*s(%.*s)",
+						j9str_printf(msg, nameAndSigLength, "%.*s.%.*s(%.*s)",
 								J9UTF8_LENGTH(className), J9UTF8_DATA(className),
 								J9UTF8_LENGTH(methodName), J9UTF8_DATA(methodName),
 								J9UTF8_LENGTH(sig), J9UTF8_DATA(sig));

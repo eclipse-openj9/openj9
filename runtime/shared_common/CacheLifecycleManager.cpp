@@ -293,7 +293,7 @@ printSharedCache(void* element, void* param)
 		char addrmodeStr[10];
 		getStringForShcAddrmode(PORTLIB, currentItem->versionData.addrmode, addrmodeStr);
 		char levelStr[20];
-		j9str_printf(PORTLIB, levelStr, sizeof(levelStr), "%s %s", jclLevelStr, addrmodeStr);
+		j9str_printf(levelStr, sizeof(levelStr), "%s %s", jclLevelStr, addrmodeStr);
 		j9tty_printf(PORTLIB, "%-15s", levelStr);
 		if (J9PORT_SHR_CACHE_TYPE_PERSISTENT == currentItem->versionData.cacheType) {
 			j9tty_printf(PORTLIB, "%-16s", "persistent");

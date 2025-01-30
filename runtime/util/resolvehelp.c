@@ -146,13 +146,13 @@ createErrorMessage(J9VMThread *vmStruct, J9Class *resolvedOrReceiverClass, J9Cla
 	if (NULL != errorMsg) {
 		J9UTF8 *resolvedOrReceiverName = J9ROMCLASS_CLASSNAME(resolvedOrReceiverClass->romClass);
 		J9UTF8 *currentName = J9ROMCLASS_CLASSNAME(currentClass->romClass);
-		UDATA bufLen = j9str_printf(PORTLIB, NULL, 0, errorMsg,
+		UDATA bufLen = j9str_printf(NULL, 0, errorMsg,
 				J9UTF8_LENGTH(resolvedOrReceiverName), J9UTF8_DATA(resolvedOrReceiverName),
 				J9UTF8_LENGTH(currentName), J9UTF8_DATA(currentName));
 		if (bufLen > 0) {
 			buf = j9mem_allocate_memory(bufLen, OMRMEM_CATEGORY_VM);
 			if (NULL != buf) {
-				j9str_printf(PORTLIB, buf, bufLen, errorMsg,
+				j9str_printf(buf, bufLen, errorMsg,
 					J9UTF8_LENGTH(resolvedOrReceiverName), J9UTF8_DATA(resolvedOrReceiverName),
 					J9UTF8_LENGTH(currentName), J9UTF8_DATA(currentName));
 			}

@@ -365,21 +365,18 @@ GetMonitorName(J9VMThread *vmThread, J9ThreadAbstractMonitor *monitor, char *nam
 			}
 		}
 
-
-		 j9str_printf(PORTLIB, nameBuf, OBJ_MON_NAME_BUF_SIZE,
+		j9str_printf(nameBuf, OBJ_MON_NAME_BUF_SIZE,
 				OBJ_MON_NAME_FORMAT,
 				monitor,
 				(length < OBJ_MON_NAME_CLASS_NAME_SIZE) ? length : OBJ_MON_NAME_CLASS_NAME_SIZE, 
 				name, 
 				object, objType);
 
-
-
 		if (free){
 			j9mem_free_memory(name);
 		}
 	} else {
-		j9str_printf(PORTLIB, nameBuf, OBJ_MON_NAME_BUF_SIZE, "[%p] %s", monitor, omrthread_monitor_get_name((omrthread_monitor_t) monitor));
+		j9str_printf(nameBuf, OBJ_MON_NAME_BUF_SIZE, "[%p] %s", monitor, omrthread_monitor_get_name((omrthread_monitor_t) monitor));
 	}
 }
 

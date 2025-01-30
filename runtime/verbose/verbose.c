@@ -323,7 +323,7 @@ dumpQualifiedSize(J9PortLibrary* portLib, UDATA byteSize, const char* optionName
 		message_num,
 		NULL);
 
-	paramSize = j9str_printf(PORTLIB, buffer, 16, "%zu%s", size, qualifier);
+	paramSize = j9str_printf(buffer, 16, "%zu%s", size, qualifier);
 	paramSize = 15 - paramSize;
 	paramSize += strlen(optionDescription);
 	paramSize -= strlen(optionName);
@@ -1792,4 +1792,3 @@ initVerboseVerificationBuffer(VerboseVerificationBuffer* buf, UDATA size, char* 
 	buf->cursor = 0;
 	buf->buffer = (U_8*)byteArray;
 }
-

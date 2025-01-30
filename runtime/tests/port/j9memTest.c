@@ -294,42 +294,42 @@ j9mem_test2(struct J9PortLibrary *portLibrary)
 
 	/* allocate some memory of various sizes */
 	byteAmount = 0;
-	(void)j9str_printf(PORTLIB, allocName, allocNameSize, "j9mem_allocate_memory(%d)", byteAmount);
+	(void)j9str_printf(allocName, allocNameSize, "j9mem_allocate_memory(%d)", byteAmount);
 	memPtr = j9mem_allocate_memory(byteAmount, OMRMEM_CATEGORY_PORT_LIBRARY);
 	verifyMemory(portLibrary, testName, memPtr, byteAmount, allocName);
 	j9mem_free_memory(memPtr);
 	memPtr = NULL;
 
 	byteAmount = 1;
-	(void)j9str_printf(PORTLIB, allocName, allocNameSize, "j9mem_allocate_memory(%d)", byteAmount);
+	(void)j9str_printf(allocName, allocNameSize, "j9mem_allocate_memory(%d)", byteAmount);
 	memPtr = j9mem_allocate_memory(byteAmount, OMRMEM_CATEGORY_PORT_LIBRARY);
 	verifyMemory(portLibrary, testName, memPtr, byteAmount, allocName);
 	j9mem_free_memory(memPtr);
 	memPtr = NULL;
 
 	byteAmount = MAX_ALLOC_SIZE/8;
-	(void)j9str_printf(PORTLIB, allocName, allocNameSize, "j9mem_allocate_memory(%d)", byteAmount);
+	(void)j9str_printf(allocName, allocNameSize, "j9mem_allocate_memory(%d)", byteAmount);
 	memPtr = j9mem_allocate_memory(byteAmount, OMRMEM_CATEGORY_PORT_LIBRARY);
 	verifyMemory(portLibrary, testName, memPtr, byteAmount, allocName);
 	j9mem_free_memory(memPtr);
 	memPtr = NULL;
 
 	byteAmount = MAX_ALLOC_SIZE/4;
-	(void)j9str_printf(PORTLIB, allocName, allocNameSize, "j9mem_allocate_memory(%d)", byteAmount);
+	(void)j9str_printf(allocName, allocNameSize, "j9mem_allocate_memory(%d)", byteAmount);
 	memPtr = j9mem_allocate_memory(byteAmount, OMRMEM_CATEGORY_PORT_LIBRARY);
 	verifyMemory(portLibrary, testName, memPtr, byteAmount, allocName);
 	j9mem_free_memory(memPtr);
 	memPtr = NULL;
 
 	byteAmount = MAX_ALLOC_SIZE/2;
-	(void)j9str_printf(PORTLIB, allocName, allocNameSize, "j9mem_allocate_memory(%d)", byteAmount);
+	(void)j9str_printf(allocName, allocNameSize, "j9mem_allocate_memory(%d)", byteAmount);
 	memPtr = j9mem_allocate_memory(byteAmount, OMRMEM_CATEGORY_PORT_LIBRARY);
 	verifyMemory(portLibrary, testName, memPtr, byteAmount, allocName);
 	j9mem_free_memory(memPtr);
 	memPtr = NULL;
 
 	byteAmount = MAX_ALLOC_SIZE;
-	(void)j9str_printf(PORTLIB, allocName, allocNameSize, "j9mem_allocate_memory(%d)", byteAmount);
+	(void)j9str_printf(allocName, allocNameSize, "j9mem_allocate_memory(%d)", byteAmount);
 	memPtr = j9mem_allocate_memory(byteAmount, OMRMEM_CATEGORY_PORT_LIBRARY);
 	verifyMemory(portLibrary, testName, memPtr, byteAmount, allocName);
 	j9mem_free_memory(memPtr);
@@ -381,42 +381,42 @@ j9mem_test4(struct J9PortLibrary *portLibrary)
 	/* Now re-allocate memory of various sizes */
 	/* TODO is memPtr supposed to be re-used? */
 	byteAmount = 0;
-	rc = j9str_printf(PORTLIB, allocName, allocNameSize, "j9mem_reallocate_memory(%d)", byteAmount);
+	rc = j9str_printf(allocName, allocNameSize, "j9mem_reallocate_memory(%d)", byteAmount);
 	memPtr = j9mem_reallocate_memory(saveMemPtr, byteAmount);
 	verifyMemory(portLibrary, testName, memPtr, byteAmount, allocName);
 	j9mem_free_memory(memPtr);
 	memPtr = NULL;
 
 	byteAmount = 1;
-	rc = j9str_printf(PORTLIB, allocName, allocNameSize, "j9mem_reallocate_memory(%d)", byteAmount);
+	rc = j9str_printf(allocName, allocNameSize, "j9mem_reallocate_memory(%d)", byteAmount);
 	memPtr = j9mem_reallocate_memory(saveMemPtr, byteAmount);
 	verifyMemory(portLibrary, testName, memPtr, byteAmount, allocName);
 	j9mem_free_memory(memPtr);
 	memPtr = NULL;
 
 	byteAmount = MAX_ALLOC_SIZE/8;
-	rc = j9str_printf(PORTLIB, allocName, allocNameSize, "j9mem_reallocate_memory(%d)", byteAmount);
+	rc = j9str_printf(allocName, allocNameSize, "j9mem_reallocate_memory(%d)", byteAmount);
 	memPtr = j9mem_reallocate_memory(saveMemPtr, byteAmount);
 	verifyMemory(portLibrary, testName, memPtr, byteAmount, allocName);
 	j9mem_free_memory(memPtr);
 	memPtr = NULL;
 
 	byteAmount = MAX_ALLOC_SIZE/4;
-	rc = j9str_printf(PORTLIB, allocName, allocNameSize, "j9mem_reallocate_memory(%d)", byteAmount);
+	rc = j9str_printf(allocName, allocNameSize, "j9mem_reallocate_memory(%d)", byteAmount);
 	memPtr = j9mem_reallocate_memory(saveMemPtr, byteAmount);
 	verifyMemory(portLibrary, testName, memPtr, byteAmount, allocName);
 	j9mem_free_memory(memPtr);
 	memPtr = NULL;
 
 	byteAmount = MAX_ALLOC_SIZE/2;
-	rc = j9str_printf(PORTLIB, allocName, allocNameSize, "j9mem_reallocate_memory(%d)", byteAmount);
+	rc = j9str_printf(allocName, allocNameSize, "j9mem_reallocate_memory(%d)", byteAmount);
 	memPtr = j9mem_reallocate_memory(saveMemPtr, byteAmount);
 	verifyMemory(portLibrary, testName, memPtr, byteAmount, allocName);
 	j9mem_free_memory(memPtr);
 	memPtr = NULL;
 
 	byteAmount = MAX_ALLOC_SIZE;
-	rc = j9str_printf(PORTLIB, allocName, allocNameSize, "j9mem_reallocate_memory(%d)", byteAmount);
+	rc = j9str_printf(allocName, allocNameSize, "j9mem_reallocate_memory(%d)", byteAmount);
 	memPtr = j9mem_reallocate_memory(saveMemPtr, byteAmount);
 	verifyMemory(portLibrary, testName, memPtr, byteAmount, allocName);
 	j9mem_free_memory(memPtr);
@@ -519,42 +519,42 @@ j9mem_test6(struct J9PortLibrary *portLibrary)
 
 	/* allocate some memory of various sizes */
 	byteAmount = 0;
-	rc = j9str_printf(PORTLIB, allocName, allocNameSize, "j9mem_allocate_portLibrary(%d)", byteAmount);
+	rc = j9str_printf(allocName, allocNameSize, "j9mem_allocate_portLibrary(%d)", byteAmount);
 	memPtr = j9mem_allocate_portLibrary(byteAmount);
 	verifyMemory(portLibrary, testName, memPtr, byteAmount, allocName);
 	j9mem_deallocate_portLibrary(memPtr);
 	memPtr = NULL;
 
 	byteAmount = 1;
-	rc = j9str_printf(PORTLIB, allocName, allocNameSize, "j9mem_allocate_portLibrary(%d)", byteAmount);
+	rc = j9str_printf(allocName, allocNameSize, "j9mem_allocate_portLibrary(%d)", byteAmount);
 	memPtr = j9mem_allocate_portLibrary(byteAmount);
 	verifyMemory(portLibrary, testName, memPtr, byteAmount, allocName);
 	j9mem_deallocate_portLibrary(memPtr);
 	memPtr = NULL;
 
 	byteAmount = MAX_ALLOC_SIZE/8;
-	rc = j9str_printf(PORTLIB, allocName, allocNameSize, "j9mem_allocate_portLibrary(%d)", byteAmount);
+	rc = j9str_printf(allocName, allocNameSize, "j9mem_allocate_portLibrary(%d)", byteAmount);
 	memPtr = j9mem_allocate_portLibrary(byteAmount);
 	verifyMemory(portLibrary, testName, memPtr, byteAmount, allocName);
 	j9mem_deallocate_portLibrary(memPtr);
 	memPtr = NULL;
 
 	byteAmount = MAX_ALLOC_SIZE/4;
-	rc = j9str_printf(PORTLIB, allocName, allocNameSize, "j9mem_allocate_portLibrary(%d)", byteAmount);
+	rc = j9str_printf(allocName, allocNameSize, "j9mem_allocate_portLibrary(%d)", byteAmount);
 	memPtr = j9mem_allocate_portLibrary(byteAmount);
 	verifyMemory(portLibrary, testName, memPtr, byteAmount, allocName);
 	j9mem_deallocate_portLibrary(memPtr);
 	memPtr = NULL;
 
 	byteAmount = MAX_ALLOC_SIZE/2;
-	rc = j9str_printf(PORTLIB, allocName, allocNameSize, "j9mem_allocate_portLibrary(%d)", byteAmount);
+	rc = j9str_printf(allocName, allocNameSize, "j9mem_allocate_portLibrary(%d)", byteAmount);
 	memPtr = j9mem_allocate_portLibrary(byteAmount);
 	verifyMemory(portLibrary, testName, memPtr, byteAmount, allocName);
 	j9mem_deallocate_portLibrary(memPtr);
 	memPtr = NULL;
 
 	byteAmount = MAX_ALLOC_SIZE;
-	rc = j9str_printf(PORTLIB, allocName, allocNameSize, "j9mem_allocate_portLibrary(%d)", byteAmount);
+	rc = j9str_printf(allocName, allocNameSize, "j9mem_allocate_portLibrary(%d)", byteAmount);
 	memPtr = j9mem_allocate_portLibrary(byteAmount);
 	verifyMemory(portLibrary, testName, memPtr, byteAmount, allocName);
 	j9mem_deallocate_portLibrary(memPtr);
@@ -642,7 +642,7 @@ j9mem_test7_allocate32(struct J9PortLibrary *portLibrary, int randomSeed)
 		UDATA byteAmount = allocBlockSizes[allocBlockCursor];
 		void **returnPtrLocation = &allocBlockReturnPtrs[allocBlockCursor]; 
 		
-		j9str_printf(PORTLIB, allocName, allocNameSize, "\nj9mem_allocate_memory32(%d)", byteAmount);
+		j9str_printf(allocName, allocNameSize, "\nj9mem_allocate_memory32(%d)", byteAmount);
 		pointer = j9mem_allocate_memory32(byteAmount, OMRMEM_CATEGORY_PORT_LIBRARY);
 		verifyMemory(portLibrary, testName, pointer, byteAmount, allocName);
 		
@@ -662,7 +662,7 @@ j9mem_test7_allocate32(struct J9PortLibrary *portLibrary, int randomSeed)
 	 * This should not incur any vmem allocation.  
 	 */
 	finalAllocSize = HEAP_SIZE_BYTES-60;
-	j9str_printf(PORTLIB, allocName, allocNameSize, "\nj9mem_allocate_memory32(%d)", finalAllocSize);
+	j9str_printf(allocName, allocNameSize, "\nj9mem_allocate_memory32(%d)", finalAllocSize);
 	pointer = j9mem_allocate_memory32(finalAllocSize, OMRMEM_CATEGORY_PORT_LIBRARY);
 	verifyMemory(portLibrary, testName, pointer, finalAllocSize, allocName);
 #endif
@@ -1561,4 +1561,3 @@ j9mem_runTests(struct J9PortLibrary *portLibrary, int randomSeed)
 	j9tty_printf(PORTLIB, "\nMemory test done%s\n\n", rc == TEST_PASS ? "." : ", failures detected.");
 	return TEST_PASS == rc ? 0 : -1;
 }
-

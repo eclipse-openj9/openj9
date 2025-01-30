@@ -443,10 +443,10 @@ runTests(J9PortLibrary *portLib, char * id, J9SRPHashTable **srptable, UDATA *da
 
 	/* remove all elements verifying the integrity */
 	if (removeOffset == REVERSE) {
-		j9str_printf(PORTLIB, buf, sizeof(buf), "%s reverse remove", id);
+		j9str_printf(buf, sizeof(buf), "%s reverse remove", id);
 		operation = buf;
 	} else if (removeOffset > 0) {
-		j9str_printf(PORTLIB, buf, sizeof(buf), "%s offset %d remove", id, removeOffset);
+		j9str_printf(buf, sizeof(buf), "%s offset %d remove", id, removeOffset);
 		operation = buf;
 	}
 	for (i = 0; i < dataLength; i++) {
@@ -995,7 +995,7 @@ verifySRPHashtable(J9PortLibrary *portLib, UDATA *passCount, UDATA *failCount)
 		UDATA offset = i;
 		char name[32];
 
-		j9str_printf(PORTLIB, name, sizeof(name), "randomData%d", i);
+		j9str_printf(name, sizeof(name), "randomData%d", i);
 		if (RandomValues[i] == 0) {
 			continue;
 		}

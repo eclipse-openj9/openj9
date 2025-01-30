@@ -82,8 +82,7 @@ loadJ9DLLWithPath(J9JavaVM *vm, J9VMDllLoadInfo *info, char *dllName)
 			superSeparatorIndex = strrchr(dllDirectory, DIR_SEPARATOR) - dllDirectory;
 			bufferSize = superSeparatorIndex + 1 + sizeof(DIR_SEPARATOR_STR) + strlen(dllName);  /* +1 for NUL */
 		} else {
-			bufferSize = j9str_printf(PORTLIB, NULL, 0, "%s%s%s",
-				dllDirectory, DIR_SEPARATOR_STR, dllName);
+			bufferSize = j9str_printf(NULL, 0, "%s%s%s", dllDirectory, DIR_SEPARATOR_STR, dllName);
 		}
 		localBuffer = j9mem_allocate_memory(bufferSize, OMRMEM_CATEGORY_VM);
 
@@ -98,9 +97,8 @@ loadJ9DLLWithPath(J9JavaVM *vm, J9VMDllLoadInfo *info, char *dllName)
 			localBuffer[superSeparatorIndex+1] = (char) 0;
 			strcat(localBuffer, dllName);
 		} else {
-			j9str_printf(PORTLIB, localBuffer, bufferSize, "%s%s%s",
-				dllDirectory, DIR_SEPARATOR_STR, dllName);
-		}	
+			j9str_printf(localBuffer, bufferSize, "%s%s%s", dllDirectory, DIR_SEPARATOR_STR, dllName);
+		}
 	} else {
 		localBuffer = dllName;
 	}
@@ -177,4 +175,3 @@ setErrorJ9dll(J9PortLibrary *portLib, J9VMDllLoadInfo *info, const char *error, 
 		info->loadFlags &= ~FREE_ERROR_STRING;
 	}
 }
-

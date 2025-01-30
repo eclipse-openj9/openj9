@@ -636,7 +636,7 @@ static void walkJITFrameSlots(J9StackWalkState * walkState, U_8 * jitDescription
 		{
 #ifdef J9VM_INTERP_STACKWALK_TRACING
 			PORT_ACCESS_FROM_WALKSTATE(walkState);
-			j9str_printf(PORTLIB, indexedTag, 64, "O-Slot: %s%d", slotDescription, slotsRemaining - 1);
+			j9str_printf(indexedTag, 64, "O-Slot: %s%d", slotDescription, slotsRemaining - 1);
 			WALK_NAMED_O_SLOT((j9object_t*) scanCursor, indexedTag);
 #else
 			WALK_O_SLOT((j9object_t*) scanCursor);
@@ -650,7 +650,7 @@ static void walkJITFrameSlots(J9StackWalkState * walkState, U_8 * jitDescription
 		{
 #ifdef J9VM_INTERP_STACKWALK_TRACING
 			PORT_ACCESS_FROM_WALKSTATE(walkState);
-			j9str_printf(PORTLIB, indexedTag, 64, "I-Slot: %s%d", slotDescription, slotsRemaining - 1);
+			j9str_printf(indexedTag, 64, "I-Slot: %s%d", slotDescription, slotsRemaining - 1);
 			WALK_NAMED_I_SLOT(scanCursor, indexedTag);
 #else
 			WALK_I_SLOT(scanCursor);

@@ -2833,9 +2833,9 @@ processJImageResource(const char *jimageFileName, J9JImage *jimage, J9JImageLoca
 
 		/* skip leading '/' if present */
 		if ('/' == resourceName[0]) {
-			j9str_printf(PORTLIB, tempPath, EsMaxPath, "%s", resourceName + 1);
+			j9str_printf(tempPath, EsMaxPath, "%s", resourceName + 1);
 		} else {
-			j9str_printf(PORTLIB, tempPath, EsMaxPath, "%s", resourceName);
+			j9str_printf(tempPath, EsMaxPath, "%s", resourceName);
 		}
 		current = strchr(tempPath, jimageFileSeparator);
 		while (NULL != current) {
@@ -3220,7 +3220,7 @@ static I_32 processROMClass(J9ROMClass* romClass, char* requestedFile, U_32 flag
 					length = (((length & 0xFF00) >> 8) | (length & 0x00FF) << 8);
 				}
 
-				j9str_printf(PORTLIB, tempPath, EsMaxPath, "%.*s", length, romClassName);
+				j9str_printf(tempPath, EsMaxPath, "%.*s", length, romClassName);
 				current = strchr(tempPath, DIR_SEPARATOR);
 				while (NULL != current) {
 					*current = '\0';

@@ -1783,7 +1783,7 @@ methodEnterHook(J9HookInterface** hook, UDATA eventNum, void* eventData, void* u
 
 		argBuffer[0] = '\0';
 		if (!(romMethod->modifiers & J9AccStatic)) {
-			written = j9str_printf(PORTLIB, current, remainingSize, "receiver ");
+			written = j9str_printf(current, remainingSize, "receiver ");
 			current += written;
 			remainingSize -= written;
 			jniDecodeValue(vmThread, 'L', argPtr, &current, &remainingSize);
@@ -1791,7 +1791,7 @@ methodEnterHook(J9HookInterface** hook, UDATA eventNum, void* eventData, void* u
 		}
 		while ((sigChar = jniNextSigChar(&sigData)) != ')') {
 			if (argPtr != arg0EA) {
-				written = j9str_printf(PORTLIB, current, remainingSize, ", ");
+				written = j9str_printf(current, remainingSize, ", ");
 				current += written;
 				remainingSize -= written;
 			}
@@ -1891,38 +1891,38 @@ jniDecodeValue(J9VMThread * vmThread, UDATA sigChar, void * valuePtr, char ** ou
 
 	switch (sigChar) {
 		case 'B':
-			written = j9str_printf(PORTLIB, *outputBuffer, *outputBufferLength, "(jbyte)%d", *((I_32 *) valuePtr));
+			written = j9str_printf(*outputBuffer, *outputBufferLength, "(jbyte)%d", *((I_32 *) valuePtr));
 			break;
 		case 'C':
-			written = j9str_printf(PORTLIB, *outputBuffer, *outputBufferLength, "(jchar)%d", *((I_32 *) valuePtr));
+			written = j9str_printf(*outputBuffer, *outputBufferLength, "(jchar)%d", *((I_32 *) valuePtr));
 			break;
 		case 'D':
 			memcpy(&doubleValue, valuePtr, 8);
-			written = j9str_printf(PORTLIB, *outputBuffer, *outputBufferLength, "(jdouble)%lf", doubleValue);
+			written = j9str_printf(*outputBuffer, *outputBufferLength, "(jdouble)%lf", doubleValue);
 			argSize = 2;
 			break;
 		case 'F':
-			written = j9str_printf(PORTLIB, *outputBuffer, *outputBufferLength, "(jfloat)%lf", *((float *) valuePtr));
+			written = j9str_printf(*outputBuffer, *outputBufferLength, "(jfloat)%lf", *((float *) valuePtr));
 			break;
 		case 'I':
-			written = j9str_printf(PORTLIB, *outputBuffer, *outputBufferLength, "(jint)%d", *((I_32 *) valuePtr));
+			written = j9str_printf(*outputBuffer, *outputBufferLength, "(jint)%d", *((I_32 *) valuePtr));
 			break;
 		case 'J':
 			memcpy(&longValue, valuePtr, 8);
-			written = j9str_printf(PORTLIB, *outputBuffer, *outputBufferLength, "(jlong)%lld", longValue);
+			written = j9str_printf(*outputBuffer, *outputBufferLength, "(jlong)%lld", longValue);
 			argSize = 2;
 			break;
 		case 'S':
-			written = j9str_printf(PORTLIB, *outputBuffer, *outputBufferLength, "(jshort)%d", *((I_32 *) valuePtr));
+			written = j9str_printf(*outputBuffer, *outputBufferLength, "(jshort)%d", *((I_32 *) valuePtr));
 			break;
 		case 'Z':
-			written = j9str_printf(PORTLIB, *outputBuffer, *outputBufferLength, "(jboolean)%s", *((I_32 *) valuePtr) ? "true" : "false");
+			written = j9str_printf(*outputBuffer, *outputBufferLength, "(jboolean)%s", *((I_32 *) valuePtr) ? "true" : "false");
 			break;
 		case 'L':
-			written = j9str_printf(PORTLIB, *outputBuffer, *outputBufferLength, "(jobject)0x%p", *((UDATA *) valuePtr));
+			written = j9str_printf(*outputBuffer, *outputBufferLength, "(jobject)0x%p", *((UDATA *) valuePtr));
 			break;
 		default:
-			written = j9str_printf(PORTLIB, *outputBuffer, *outputBufferLength, "void");
+			written = j9str_printf(*outputBuffer, *outputBufferLength, "void");
 			argSize = 0;
 			break;
 	}

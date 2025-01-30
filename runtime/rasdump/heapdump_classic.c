@@ -179,11 +179,11 @@ hdClassicMultiSpaceIteratorCallback(J9JavaVM *vm, J9MM_IterateSpaceDescriptor *s
 	char *cursor = ctx->label;
 	char *end = cursor + strlen(ctx->label);
 	PORT_ACCESS_FROM_JAVAVM(ctx->vm);
-	
+
 	memset(&(ctx->filename), 0, sizeof(ctx->filename));
 
-	j9str_printf(PORTLIB, insert, sizeof(insert), "%s%.*zX", spaceDescriptor->name, sizeof(UDATA) * 2, spaceDescriptor->id);
-	
+	j9str_printf(insert, sizeof(insert), "%s%.*zX", spaceDescriptor->name, sizeof(UDATA) * 2, spaceDescriptor->id);
+
 	/* Generate the filename to be written to by substituting "%id" for insert */
 	while (cursor < end) {
 		if (cursor == strstr(cursor, "%id")) {

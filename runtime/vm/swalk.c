@@ -667,10 +667,10 @@ static void walkDescribedPushes(J9StackWalkState * walkState, UDATA * highestSlo
 			char indexedTag[64];
 			PORT_ACCESS_FROM_WALKSTATE(walkState);
 			if (walkState->slotType == J9_STACKWALK_SLOT_TYPE_METHOD_LOCAL) {
-				j9str_printf(PORTLIB, indexedTag, 64, "%s-Slot: %s%d",
-						 (description & 1) ? "O" : "I", (walkState->slotIndex >= (IDATA)argCount) ? "t" : "a", walkState->slotIndex);
+				j9str_printf(indexedTag, 64, "%s-Slot: %s%d",
+						(description & 1) ? "O" : "I", (walkState->slotIndex >= (IDATA)argCount) ? "t" : "a", walkState->slotIndex);
 			} else {
-				j9str_printf(PORTLIB, indexedTag, 64, "%s-Slot: p%d", (description & 1) ? "O" : "I", walkState->slotIndex);
+				j9str_printf(indexedTag, 64, "%s-Slot: p%d", (description & 1) ? "O" : "I", walkState->slotIndex);
 			}
 
 			if (description & 1) {

@@ -201,13 +201,13 @@ const char *zipCache_uniqueId(J9ZipCache * zipCache) {
 			break;
 		}
 	}
-	
-	sizeRequired = j9str_printf(PORTLIB, NULL, 0, "%s_%d_%lld_%d", fileName, zce->zipFileSize, zce->zipTimeStamp, ZIP_CACHE_VERSION);
+
+	sizeRequired = j9str_printf(NULL, 0, "%s_%d_%lld_%d", fileName, zce->zipFileSize, zce->zipTimeStamp, ZIP_CACHE_VERSION);
 	buf = j9mem_allocate_memory(sizeRequired, J9MEM_CATEGORY_VM_JCL);
 	if (!buf) {
 		return NULL;
 	}
-	j9str_printf(PORTLIB, buf, sizeRequired, "%s_%d_%lld_%d", fileName, zce->zipFileSize, zce->zipTimeStamp, ZIP_CACHE_VERSION);
+	j9str_printf(buf, sizeRequired, "%s_%d_%lld_%d", fileName, zce->zipFileSize, zce->zipTimeStamp, ZIP_CACHE_VERSION);
 	return (const char *)buf;
 }
 #endif

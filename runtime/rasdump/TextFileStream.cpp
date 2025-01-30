@@ -176,7 +176,7 @@ TextFileStream::writeInteger(UDATA data, const char *format)
 	PORT_ACCESS_FROM_PORT(_PortLibrary);
 	UDATA length;
 	
-	length = j9str_printf(PORTLIB, buffer, sizeof(buffer), format, data);
+	length = j9str_printf(buffer, sizeof(buffer), format, data);
 
 	writeCharacters(buffer, length);
 }
@@ -189,7 +189,7 @@ TextFileStream::writeInteger64(U_64 data, const char *format)
 	PORT_ACCESS_FROM_PORT(_PortLibrary);
 	UDATA length;
 	
-	length = j9str_printf(PORTLIB, buffer, sizeof(buffer), format, data);
+	length = j9str_printf(buffer, sizeof(buffer), format, data);
 
 	writeCharacters(buffer, length);
 }

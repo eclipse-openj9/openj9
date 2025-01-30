@@ -965,25 +965,25 @@ defaultMethodConflictExceptionMessage(J9VMThread *currentThread, J9Class *target
 	listString[listLength] = '\0'; /* Overallocated by 1 to enable null termination */
 
 	/* Write error message to buffer */
-	bufLen = j9str_printf(PORTLIB, NULL, 0, errorMsg,
-				nameLength,
-				name,
-				sigLength,
-				sig,
-				(UDATA)J9UTF8_LENGTH(targetClassNameUTF),
-				J9UTF8_DATA(targetClassNameUTF),
-				listString);
+	bufLen = j9str_printf(NULL, 0, errorMsg,
+			nameLength,
+			name,
+			sigLength,
+			sig,
+			(UDATA)J9UTF8_LENGTH(targetClassNameUTF),
+			J9UTF8_DATA(targetClassNameUTF),
+			listString);
 	if (bufLen > 0) {
 		buf = j9mem_allocate_memory(bufLen, OMRMEM_CATEGORY_VM);
 		if (NULL != buf) {
-			bufLen = j9str_printf(PORTLIB, buf, bufLen, errorMsg,
-						nameLength,
-						name,
-						sigLength,
-						sig,
-						J9UTF8_LENGTH(targetClassNameUTF),
-						J9UTF8_DATA(targetClassNameUTF),
-						listString);
+			bufLen = j9str_printf(buf, bufLen, errorMsg,
+					nameLength,
+					name,
+					sigLength,
+					sig,
+					J9UTF8_LENGTH(targetClassNameUTF),
+					J9UTF8_DATA(targetClassNameUTF),
+					listString);
 		}
 	}
 	j9mem_free_memory(listString);
@@ -1016,7 +1016,7 @@ getModuleNameUTF(J9VMThread *currentThread, j9object_t moduleObject, char *buffe
 		/* ensure bufferLength is not less than 128 which is enough for unnamed module */
 		PORT_ACCESS_FROM_VMC(currentThread);
 		Assert_VM_true(bufferLength >= 128);
-		j9str_printf(PORTLIB, buffer, bufferLength, "%s0x%p", UNNAMED_MODULE, moduleObject);
+		j9str_printf(buffer, bufferLength, "%s0x%p", UNNAMED_MODULE, moduleObject);
 		nameBuffer = buffer;
 #undef UNNAMED_MODULE
 	} else {
@@ -1116,7 +1116,7 @@ illegalAccessMessage(J9VMThread *currentThread, IDATA badMemberModifier, J9Class
 					NULL);
 		}
 
-		bufLen = j9str_printf(PORTLIB, NULL, 0, errorMsg,
+		bufLen = j9str_printf(NULL, 0, errorMsg,
 				J9UTF8_LENGTH(nestMemberNameUTF),
 				J9UTF8_DATA(nestMemberNameUTF),
 				J9UTF8_LENGTH(nestHostNameUTF),
@@ -1127,7 +1127,7 @@ illegalAccessMessage(J9VMThread *currentThread, IDATA badMemberModifier, J9Class
 			if (NULL == buf) {
 				goto allocationFailure;
 			}
-			j9str_printf(PORTLIB, buf, bufLen, errorMsg,
+			j9str_printf(buf, bufLen, errorMsg,
 					J9UTF8_LENGTH(nestMemberNameUTF),
 					J9UTF8_DATA(nestMemberNameUTF),
 					J9UTF8_LENGTH(nestHostNameUTF),
@@ -1150,7 +1150,7 @@ illegalAccessMessage(J9VMThread *currentThread, IDATA badMemberModifier, J9Class
 		if (J9_VISIBILITY_MODULE_READ_ACCESS_ERROR == errorType) {
 			/* module read access NOT allowed */
 			errorMsg = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_VM_ILLEGAL_ACCESS_MODULE_READ, NULL);
-			bufLen = j9str_printf(PORTLIB, NULL, 0, errorMsg,
+			bufLen = j9str_printf(NULL, 0, errorMsg,
 					J9UTF8_LENGTH(senderClassNameUTF),
 					J9UTF8_DATA(senderClassNameUTF),
 					srcModuleMsg,
@@ -1160,7 +1160,7 @@ illegalAccessMessage(J9VMThread *currentThread, IDATA badMemberModifier, J9Class
 			if (bufLen > 0) {
 				buf = j9mem_allocate_memory(bufLen, OMRMEM_CATEGORY_VM);
 				if (NULL != buf) {
-					j9str_printf(PORTLIB, buf, bufLen, errorMsg,
+					j9str_printf(buf, bufLen, errorMsg,
 							J9UTF8_LENGTH(senderClassNameUTF),
 							J9UTF8_DATA(senderClassNameUTF),
 							srcModuleMsg,
@@ -1192,7 +1192,7 @@ illegalAccessMessage(J9VMThread *currentThread, IDATA badMemberModifier, J9Class
 			}
 			*(packageNameMsg + packageNameLength) = '\0';
 			errorMsg = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_VM_ILLEGAL_ACCESS_MODULE_EXPORT, NULL);
-			bufLen = j9str_printf(PORTLIB, NULL, 0, errorMsg,
+			bufLen = j9str_printf(NULL, 0, errorMsg,
 					J9UTF8_LENGTH(senderClassNameUTF),
 					J9UTF8_DATA(senderClassNameUTF),
 					srcModuleMsg,
@@ -1203,7 +1203,7 @@ illegalAccessMessage(J9VMThread *currentThread, IDATA badMemberModifier, J9Class
 			if (bufLen > 0) {
 				buf = j9mem_allocate_memory(bufLen, OMRMEM_CATEGORY_VM);
 				if (NULL != buf) {
-					j9str_printf(PORTLIB, buf, bufLen, errorMsg,
+					j9str_printf(buf, bufLen, errorMsg,
 							J9UTF8_LENGTH(senderClassNameUTF),
 							J9UTF8_DATA(senderClassNameUTF),
 							srcModuleMsg,
@@ -1256,7 +1256,7 @@ illegalAccessMessage(J9VMThread *currentThread, IDATA badMemberModifier, J9Class
 		 * second is member access flag
 		 * third  is declaring class
 		 */
-		bufLen = j9str_printf(PORTLIB, NULL, 0, errorMsg,
+		bufLen = j9str_printf(NULL, 0, errorMsg,
 				J9UTF8_LENGTH(senderClassNameUTF),
 				J9UTF8_DATA(senderClassNameUTF),
 				modifierStr,
@@ -1266,7 +1266,7 @@ illegalAccessMessage(J9VMThread *currentThread, IDATA badMemberModifier, J9Class
 			buf = j9mem_allocate_memory(bufLen, OMRMEM_CATEGORY_VM);
 			if (buf) {
 				/* j9str_printf return value doesn't include the NULL terminator */
-				j9str_printf(PORTLIB, buf, bufLen, errorMsg,
+				j9str_printf(buf, bufLen, errorMsg,
 						J9UTF8_LENGTH(senderClassNameUTF),
 						J9UTF8_DATA(senderClassNameUTF),
 						modifierStr,

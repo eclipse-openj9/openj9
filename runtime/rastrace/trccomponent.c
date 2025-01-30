@@ -70,7 +70,7 @@ initializeComponentData(UtComponentData **componentDataPtr, UtModuleInfo *module
 	 */
 	if (moduleInfo->traceVersionInfo->traceVersion >= 7 && moduleInfo->containerModule != NULL) {
 		char qualifiedName[MAX_QUALIFIED_NAME_LENGTH];
-		j9str_printf(PORTLIB, qualifiedName, MAX_QUALIFIED_NAME_LENGTH, "%s(%s)", moduleInfo->name, moduleInfo->containerModule->name);
+		j9str_printf(qualifiedName, MAX_QUALIFIED_NAME_LENGTH, "%s(%s)", moduleInfo->name, moduleInfo->containerModule->name);
 		componentData->qualifiedComponentName = (char *)j9mem_allocate_memory(strlen(qualifiedName) + 1, OMRMEM_CATEGORY_TRACE);
 		if (componentData->qualifiedComponentName == NULL) {
 			UT_DBGOUT(1, ("<UT> Unable to allocate componentData's name field for %s\n", componentName));

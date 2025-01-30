@@ -674,7 +674,7 @@ addOptionsDefaultFile(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsL
 	UDATA resultLength  = 0;
 	PORT_ACCESS_FROM_PORT(portLib);
 
-	resultLength  = j9str_printf(PORTLIB, optionsArgumentBuffer, sizeof(optionsArgumentBuffer), VMOPT_XOPTIONSFILE_EQUALS "%s" DIR_SEPARATOR_STR OPTIONS_DEFAULT, optionsDirectory);
+	resultLength  = j9str_printf(optionsArgumentBuffer, sizeof(optionsArgumentBuffer), VMOPT_XOPTIONSFILE_EQUALS "%s" DIR_SEPARATOR_STR OPTIONS_DEFAULT, optionsDirectory);
 	if (resultLength > (sizeof(VMOPT_XOPTIONSFILE_EQUALS) + MAX_PATH)) {
 		return -1; /* overflow */
 	}
@@ -701,7 +701,7 @@ addXjcl(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, UDATA j2s
 	if (NULL == argString) {
 		return -1;
 	}
-	j9str_printf(PORTLIB, argString, argumentLength, VMOPT_XJCL_COLON "%s", dllName);
+	j9str_printf(argString, argumentLength, VMOPT_XJCL_COLON "%s", dllName);
 	optArg = newJavaVMArgInfo(vmArgumentsList, argString, ARG_MEMORY_ALLOCATION | CONSUMABLE_ARG);
 	if (NULL == optArg) {
 		j9mem_free_memory(argString);
@@ -726,7 +726,7 @@ addBootLibraryPath(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList
 		return -1;
 	}
 
-	j9str_printf(PORTLIB, optionsArgumentBuffer, argumentLength, "%s%s" J9JAVA_PATH_SEPARATOR "%s", propertyNameEquals, j9binPath, jrebinPath);
+	j9str_printf(optionsArgumentBuffer, argumentLength, "%s%s" J9JAVA_PATH_SEPARATOR "%s", propertyNameEquals, j9binPath, jrebinPath);
 
 	optArg = newJavaVMArgInfo(vmArgumentsList, optionsArgumentBuffer, ARG_MEMORY_ALLOCATION|CONSUMABLE_ARG);
 	if (NULL == optArg) {
@@ -984,7 +984,7 @@ addJavaHome(J9PortLibrary *portLib, J9JavaVMArgInfoList *vmArgumentsList, UDATA 
 		if (NULL == optionsArgumentBuffer) {
 			return -1;
 		}
-		j9str_printf(PORTLIB, optionsArgumentBuffer, argumentLength, JAVA_HOME_EQUALS "%s" J9JAVA_PATH_SEPARATOR "%s", altJavaHomeBuffer, jrelibPath);
+		j9str_printf(optionsArgumentBuffer, argumentLength, JAVA_HOME_EQUALS "%s" J9JAVA_PATH_SEPARATOR "%s", altJavaHomeBuffer, jrelibPath);
 	} else
 #endif /* WIN32 */
 	{
@@ -1073,7 +1073,7 @@ addUserDir(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, char *
 		return -1;
 	}
 
-	j9str_printf(PORTLIB, optionsArgumentBuffer, argumentLength, JAVA_USER_DIR_EQUALS "%s", cwd);
+	j9str_printf(optionsArgumentBuffer, argumentLength, JAVA_USER_DIR_EQUALS "%s", cwd);
 
 	optArg = newJavaVMArgInfo(vmArgumentsList, optionsArgumentBuffer, ARG_MEMORY_ALLOCATION|CONSUMABLE_ARG);
 	if (NULL == optArg) {

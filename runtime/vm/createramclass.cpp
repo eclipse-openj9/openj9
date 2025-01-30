@@ -1478,7 +1478,7 @@ setCurrentExceptionForBadClass(J9VMThread *vmThread, J9UTF8 *badClassName, UDATA
 		U_16 badClassNameLength = J9UTF8_LENGTH(badClassName);
 		U_8 * badClassNameStr = J9UTF8_DATA(badClassName);
 
-		UDATA errorMsgLen = j9str_printf(PORTLIB, NULL, 0, nlsMessage, badClassNameLength, badClassNameStr);
+		UDATA errorMsgLen = j9str_printf(NULL, 0, nlsMessage, badClassNameLength, badClassNameStr);
 		errorMsg = (char*)j9mem_allocate_memory(errorMsgLen, OMRMEM_CATEGORY_VM);
 		if (NULL == errorMsg) {
 			J9MemoryManagerFunctions *gcFuncs = vmThread->javaVM->memoryManagerFunctions;
@@ -1486,7 +1486,7 @@ setCurrentExceptionForBadClass(J9VMThread *vmThread, J9UTF8 *badClassName, UDATA
 			setCurrentException(vmThread, exceptionIndex, (UDATA *)detailMessage);
 			return;
 		}
-		j9str_printf(PORTLIB, errorMsg, errorMsgLen, nlsMessage, badClassNameLength, badClassNameStr);
+		j9str_printf(errorMsg, errorMsgLen, nlsMessage, badClassNameLength, badClassNameStr);
 	}
 
 	setCurrentExceptionUTF(vmThread, exceptionIndex, errorMsg);

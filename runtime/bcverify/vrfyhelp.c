@@ -850,14 +850,14 @@ j9bcv_createVerifyErrorString(J9PortLibrary * portLib, J9BytecodeVerificationDat
 		J9UTF8 * romMethodSignatureString = J9ROMMETHOD_SIGNATURE(error->romMethod);
 
 		if (NULL == error->errorSignatureString) {
-			errStrLength = j9str_printf(PORTLIB, (char*) verifyError, stringLength, formatString, errorString,
+			errStrLength = j9str_printf((char *)verifyError, stringLength, formatString, errorString,
 					(U_32) J9UTF8_LENGTH(romClassName), J9UTF8_DATA(romClassName),
 					(U_32) J9UTF8_LENGTH(romMethodName), J9UTF8_DATA(romMethodName),
 					(U_32) J9UTF8_LENGTH(romMethodSignatureString), J9UTF8_DATA(romMethodSignatureString),
 					error->errorPC);
 		} else {
 			/* Jazz 82615: Print the corresponding NLS message to buffer for type mismatch error */
-			errStrLength = j9str_printf(PORTLIB, (char*) verifyError, stringLength, formatString, errorString,
+			errStrLength = j9str_printf((char *)verifyError, stringLength, formatString, errorString,
 					(U_32) J9UTF8_LENGTH(romClassName), J9UTF8_DATA(romClassName),
 					(U_32) J9UTF8_LENGTH(romMethodName), J9UTF8_DATA(romMethodName),
 					(U_32) J9UTF8_LENGTH(romMethodSignatureString), J9UTF8_DATA(romMethodSignatureString),
@@ -870,7 +870,7 @@ j9bcv_createVerifyErrorString(J9PortLibrary * portLib, J9BytecodeVerificationDat
 
 		/* Jazz 82615: Print the error message framework to the existing error buffer */
 		if (detailedErrMsgLength > 0) {
-			j9str_printf(PORTLIB, (char*)&verifyError[errStrLength], stringLength - errStrLength, "%.*s", detailedErrMsgLength, detailedErrMsg);
+			j9str_printf((char *)&verifyError[errStrLength], stringLength - errStrLength, "%.*s", detailedErrMsgLength, detailedErrMsg);
 		}
 	}
 
