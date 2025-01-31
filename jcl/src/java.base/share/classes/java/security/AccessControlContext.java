@@ -318,37 +318,49 @@ public AccessControlContext(ProtectionDomain[] fromContext) {
 }
 
 AccessControlContext(ProtectionDomain[] context, int authorizeState) {
-	super();
-	switch (authorizeState) {
-	default:
-		// authorizeState can't be STATE_UNKNOWN, callerPD always is NULL
-		throw new IllegalArgumentException();
-	case STATE_AUTHORIZED:
-	case STATE_NOT_AUTHORIZED:
-		break;
-	}
-	this.context = context;
-	this.authorizeState = authorizeState;
-	this.containPrivilegedContext = true;
+	this(context, null, null, authorizeState);
 }
 
 AccessControlContext(AccessControlContext acc, ProtectionDomain[] context, int authorizeState) {
+	this(context, null, acc, authorizeState);
+}
+
+AccessControlContext(ProtectionDomain[] context, AccessControlContext parentAcc, AccessControlContext acc, int authorizeState) {
 	super();
 	switch (authorizeState) {
 	default:
-		// authorizeState can't be STATE_UNKNOWN, callerPD always is NULL
+		// authorizeState can't be STATE_UNKNOWN, callerPD is always NULL
 		throw new IllegalArgumentException();
 	case STATE_AUTHORIZED:
-		if (null != acc) {
-			// inherit the domain combiner when authorized
-			this.domainCombiner = acc.domainCombiner;
+		if (acc != null) {
+			if (parentAcc == null) {
+				// inherit the domain combiner when authorized
+				this.domainCombiner = acc.domainCombiner;
+				this.context = context;
+			} else {
+				// when parent combiner is not null, use parent combiner to combine the current context
+				DomainCombiner parentCombiner = parentAcc.getCombiner();
+				if (parentCombiner != null) {
+					this.context = parentCombiner.combine(context, acc.context);
+					this.domainCombiner = parentCombiner;
+				} else {
+					this.context = combinePDObjs(context, acc.context);
+					this.domainCombiner = acc.domainCombiner;
+				}
+			}
+		} else {
+			if (parentAcc != null) {
+				this.domainCombiner = parentAcc.domainCombiner;
+				this.nextStackAcc = parentAcc;
+			}
+			this.context = context;
 		}
 		break;
 	case STATE_NOT_AUTHORIZED:
+		this.context = context;
 		break;
 	}
 	this.doPrivilegedAcc = acc;
-	this.context = context;
 	this.authorizeState = authorizeState;
 	this.containPrivilegedContext = true;
 }
