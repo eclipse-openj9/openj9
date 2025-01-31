@@ -25,7 +25,9 @@ package com.ibm.lang.management.internal;
 import java.lang.management.MemoryManagerMXBean;
 import java.lang.management.MemoryNotificationInfo;
 import java.lang.management.MemoryUsage;
+/*[IF JAVA_SPEC_VERSION < 24]*/
 import java.security.PrivilegedAction;
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 import javax.management.Notification;
 
@@ -154,11 +156,24 @@ final class MemoryNotificationThread implements Runnable {
 	 */
 	private native void processNotificationLoop();
 
-	/*[IF JAVA_SPEC_VERSION >= 17]*/
+	/*[IF (17 <= JAVA_SPEC_VERSION) & (JAVA_SPEC_VERSION < 24)]*/
 	@SuppressWarnings("removal")
-	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
+	/*[ENDIF] (17 <= JAVA_SPEC_VERSION) & (JAVA_SPEC_VERSION < 24) */
 	private static boolean registerShutdownHandler() {
 		Thread notifier = new MemoryNotificationThreadShutdown(Thread.currentThread());
+		/*[IF JAVA_SPEC_VERSION >= 24]*/
+		try {
+			Runtime.getRuntime().addShutdownHook(notifier);
+			return Boolean.TRUE.booleanValue();
+		} catch (IllegalStateException e) {
+			/*
+				* This exception will occur if the VM is already shutting down:
+				* by returning false we avoid starting the notification loop
+				* that cannot be signalled to terminate.
+				*/
+			return Boolean.FALSE.booleanValue();
+		}
+		/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 		PrivilegedAction<Boolean> action = () -> {
 			try {
 				Runtime.getRuntime().addShutdownHook(notifier);
@@ -174,6 +189,7 @@ final class MemoryNotificationThread implements Runnable {
 		};
 
 		return java.security.AccessController.doPrivileged(action).booleanValue();
+		/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 	}
 
 	/**

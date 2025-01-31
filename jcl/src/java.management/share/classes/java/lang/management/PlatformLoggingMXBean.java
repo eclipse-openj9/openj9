@@ -121,6 +121,7 @@ public interface PlatformLoggingMXBean extends PlatformManagedObject{
 	 * @throws IllegalArgumentException if there is no <code>Logger</code>
 	 * with the name <code>loggerName</code>. Also may be thrown if
 	 * <code>loggerName</code> is not a known log level name.
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException if there is a security manager active and
 	 * the caller does not have
 	/*[IF JAVA_SPEC_VERSION >= 17]
@@ -129,6 +130,7 @@ public interface PlatformLoggingMXBean extends PlatformManagedObject{
 	 * {@link java.util.logging.LoggingPermission}
 	/*[ENDIF] JAVA_SPEC_VERSION >= 17
 	 * of &quot;control&quot;.
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public void setLoggerLevel(String loggerName, String levelName);
 

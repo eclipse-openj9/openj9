@@ -25,7 +25,9 @@ package com.ibm.lang.management.internal;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.MemoryType;
+/*[IF JAVA_SPEC_VERSION < 24]*/
 import java.security.PrivilegedAction;
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.management.NotificationFilter;
@@ -79,14 +81,20 @@ public final class ExtendedMemoryMXBeanImpl extends MemoryMXBeanImpl implements 
 	@Override
 	protected void startNotificationThread() {
 		if (!notificationThreadStarted.getAndSet(true)) {
+			Thread notifier;
+			/*[IF JAVA_SPEC_VERSION >= 24]*/
+			notifier = VM.getVMLangAccess().createThread(new MemoryNotificationThread(this),
+					"MemoryMXBean notification dispatcher", true, false, true, ClassLoader.getSystemClassLoader()); //$NON-NLS-1$
+			notifier.setPriority(Thread.NORM_PRIORITY + 1);
+			/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 			PrivilegedAction<Thread> createThread = () -> {
 				Thread thread = VM.getVMLangAccess().createThread(new MemoryNotificationThread(this),
 					"MemoryMXBean notification dispatcher", true, false, true, ClassLoader.getSystemClassLoader()); //$NON-NLS-1$
 				thread.setPriority(Thread.NORM_PRIORITY + 1);
 				return thread;
 			};
-
-			Thread notifier = java.security.AccessController.doPrivileged(createThread);
+			notifier = java.security.AccessController.doPrivileged(createThread);
+			/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 			notifier.start();
 		}
 	}

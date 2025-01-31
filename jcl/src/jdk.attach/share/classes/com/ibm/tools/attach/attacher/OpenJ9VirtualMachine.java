@@ -33,10 +33,12 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
+/*[IF JAVA_SPEC_VERSION < 24]*/
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 import java.util.List;
 import java.util.Properties;
 import java.util.regex.Matcher;
@@ -96,12 +98,17 @@ public final class OpenJ9VirtualMachine extends VirtualMachine implements Respon
 	private Socket targetSocket;
 
 	static {
+		/*[IF JAVA_SPEC_VERSION >= 24]*/
+		MAXIMUM_ATTACH_TIMEOUT = Integer.getInteger("com.ibm.tools.attach.timeout", DEFAULT_ATTACH_TIMEOUT).intValue(); //$NON-NLS-1$
+		COMMAND_TIMEOUT = Integer.getInteger("com.ibm.tools.attach.command_timeout", DEFAULT_COMMAND_TIMEOUT).intValue(); //$NON-NLS-1$
+		/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 		PrivilegedAction<Object> action = () -> {
 			MAXIMUM_ATTACH_TIMEOUT = Integer.getInteger("com.ibm.tools.attach.timeout", DEFAULT_ATTACH_TIMEOUT).intValue(); //$NON-NLS-1$
 			COMMAND_TIMEOUT = Integer.getInteger("com.ibm.tools.attach.command_timeout", DEFAULT_COMMAND_TIMEOUT).intValue(); //$NON-NLS-1$
 			return null;
 		};
 		AccessController.doPrivileged(action);
+		/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 	}
 
 	/**
@@ -129,6 +136,9 @@ public final class OpenJ9VirtualMachine extends VirtualMachine implements Respon
 	 *             if the descriptor is null the target does not respond.
 	 */
 	void attachTarget() throws IOException, AttachNotSupportedException {
+		/*[IF JAVA_SPEC_VERSION >= 24]*/
+		attachTargetImpl();
+		/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 		PrivilegedExceptionAction<Object> action = () -> {attachTargetImpl(); return null;};
 		try {
 			AccessController.doPrivileged(action);
@@ -146,6 +156,7 @@ public final class OpenJ9VirtualMachine extends VirtualMachine implements Respon
 				throw new RuntimeException(cause);
 			}
 		}
+		/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 	}
 
 	private void attachTargetImpl() throws AttachNotSupportedException, IOException {
@@ -624,10 +635,12 @@ public final class OpenJ9VirtualMachine extends VirtualMachine implements Respon
 	 * @return byte stream containing the UTF-8 text of the formatted output
 	 */
 	public InputStream heapHisto(Object... opts) {
-		InputStream ret = null;
+		/*[IF JAVA_SPEC_VERSION >= 24]*/
+		return heapHistoImpl(opts);
+		/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 		PrivilegedExceptionAction<InputStream> action = () -> heapHistoImpl(opts);
 		try {
-			ret = AccessController.doPrivileged(action);
+			return AccessController.doPrivileged(action);
 		} catch (PrivilegedActionException e) {
 			Throwable cause = e.getCause();
 			if (cause instanceof RuntimeException) {
@@ -638,7 +651,7 @@ public final class OpenJ9VirtualMachine extends VirtualMachine implements Respon
 				throw new RuntimeException(cause);
 			}
 		}
-		return ret;
+		/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 	}
 
 	private InputStream heapHistoImpl(Object... opts) {

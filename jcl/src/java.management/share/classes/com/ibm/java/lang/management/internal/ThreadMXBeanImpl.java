@@ -28,8 +28,10 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.lang.reflect.Constructor;
+/*[IF JAVA_SPEC_VERSION < 24]*/
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 import java.util.Arrays;
 
 import javax.management.ObjectName;
@@ -296,10 +298,16 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 	 * @return ThreadInfo array whose elements wrap the elements of infoBases
 	 */
 	private static ThreadInfo[] makeThreadInfos(ThreadInfoBase[] infoBases) {
+		/*[IF JAVA_SPEC_VERSION >= 24]*/
+		return Arrays.stream(infoBases)
+				.map(ThreadMXBeanImpl::makeThreadInfo)
+				.toArray(ThreadInfo[]::new);
+		/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 		PrivilegedAction<ThreadInfo[]> action = () -> Arrays.stream(infoBases)
 				.map(ThreadMXBeanImpl::makeThreadInfo)
 				.toArray(ThreadInfo[]::new);
 		return AccessController.doPrivileged(action);
+		/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 	}
 
 	/**
@@ -395,8 +403,12 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 			/*[MSG "K05F8", "maxDepth value cannot be negative."]*/
 			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K05F8")); //$NON-NLS-1$
 		}
+		/*[IF JAVA_SPEC_VERSION >= 24]*/
+		return makeThreadInfo(getThreadInfoImpl(id, maxDepth));
+		/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 		PrivilegedAction<ThreadInfo> action = () -> makeThreadInfo(getThreadInfoImpl(id, maxDepth));
 		return AccessController.doPrivileged(action);
+		/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 	}
 
 	/**
@@ -834,10 +846,12 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 	}
 
 	private static MethodHandle getThreadInfoConstructorHandle() {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		return AccessController.doPrivileged(new PrivilegedAction<MethodHandle>() {
 			@Override
 			public MethodHandle run() {
-				MethodHandle myHandle = null;
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
+				MethodHandle myHandle;
 				try {
 					Constructor<ThreadInfo> threadInfoConstructor = ThreadInfo.class
 							.getDeclaredConstructor(ThreadInfoBase.class);
@@ -848,8 +862,10 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 					throw new RuntimeException(com.ibm.oti.util.Msg.getString("K0617"), e); //$NON-NLS-1$
 				}
 				return myHandle;
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 			}
 		});
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	}
 
 	/**

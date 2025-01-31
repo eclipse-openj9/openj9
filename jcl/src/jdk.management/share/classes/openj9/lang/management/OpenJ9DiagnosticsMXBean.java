@@ -61,7 +61,9 @@ public interface OpenJ9DiagnosticsMXBean extends PlatformManagedObject {
 	 * handled.
 	 *
 	 * @throws ConfigurationUnavailableException if the configuration cannot be changed because a dump is already in progress
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to change the dump settings
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public void resetDumpOptions() throws ConfigurationUnavailableException;
 
@@ -72,7 +74,9 @@ public interface OpenJ9DiagnosticsMXBean extends PlatformManagedObject {
 	 * the documentation for the OpenJ9 JVM.
 	 *
 	 * @return the dump configuration as an array of Strings
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to read the dump settings
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public String[] queryDumpOptions();
 
@@ -85,7 +89,9 @@ public interface OpenJ9DiagnosticsMXBean extends PlatformManagedObject {
 	 *
 	 * @return the dump configuration as a String, with multiple options separated by
 	 * a vertical bar
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to read the dump settings
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public String getDumpOptions();
 
@@ -99,7 +105,9 @@ public interface OpenJ9DiagnosticsMXBean extends PlatformManagedObject {
 	 * @param dumpOptions the options string to be set
 	 * @throws InvalidOptionException if the specified dumpOptions cannot be set or is incorrect
 	 * @throws ConfigurationUnavailableException if the configuration cannot be changed because a dump is already in progress
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to change the dump settings
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 * @throws NullPointerException if dumpOptions is null
 	 */
 	public void setDumpOptions(String dumpOptions) throws InvalidOptionException, ConfigurationUnavailableException;
@@ -115,7 +123,9 @@ public interface OpenJ9DiagnosticsMXBean extends PlatformManagedObject {
 	 * @param dumpAgent the dump agent to be triggered
 	 * @throws IllegalArgumentException if the specified dump agent is invalid or unsupported by this method
 	 * @throws RuntimeException if the vm does not contain RAS dump support
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to trigger this dump
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 * @throws NullPointerException if dumpAgent is null
 	 */
 	public void triggerDump(String dumpAgent) throws IllegalArgumentException;
@@ -141,15 +151,19 @@ public interface OpenJ9DiagnosticsMXBean extends PlatformManagedObject {
 	 *  the command line.</li>
 	 * </ul>
 	 *
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * If a security manager exists a permission check for com.ibm.jvm.DumpPermission will be
 	 * made, if this fails a SecurityException will be thrown.
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 *
 	 * @return the file name that the dump was actually written to
 	 * @param dumpAgent the dump agent to be triggered
 	 * @param fileNamePattern the filename to write to, which may be null, empty or include replacement tokens
 	 * @throws InvalidOptionException if the fileNamePattern was invalid
 	 * @throws IllegalArgumentException if the specified dump agent is invalid or unsupported by this method
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to trigger this dump
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 * @throws NullPointerException if dumpAgent is null
 	 */
 	public String triggerDumpToFile(String dumpAgent, String fileNamePattern) throws IllegalArgumentException, InvalidOptionException;
@@ -160,7 +174,9 @@ public interface OpenJ9DiagnosticsMXBean extends PlatformManagedObject {
 	 * @return the file name of the dump that was created
 	 * @throws InvalidOptionException if the dump operation fails
 	 * @throws RuntimeException if the JVM does not contain RAS dump support
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to trigger this dump
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public String triggerClassicHeapDump() throws InvalidOptionException;
 }

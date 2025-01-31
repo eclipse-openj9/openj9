@@ -24,8 +24,10 @@ package openj9.internal.tools.attach.target;
  */
 
 import java.lang.reflect.Field;
+/*[IF JAVA_SPEC_VERSION < 24]*/
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 import java.util.Timer;
 
 /**
@@ -42,7 +44,16 @@ final class FilelockTimer extends Timer {
 	 */
 	FilelockTimer(String name) {
 		super(name, true);
-
+		/*[IF JAVA_SPEC_VERSION >= 24]*/
+		try {
+			/*[PR CMVC 194420, 195081 Java 7&8 use the RI Timer implementation which calls the thread object "thread"]*/
+			String timerThreadFieldName = "thread"; //$NON-NLS-1$
+			timerThreadField = Timer.class.getDeclaredField(timerThreadFieldName);
+			timerThreadField.setAccessible(true);
+		} catch (Exception e) {
+			IPC.logMessage("FilelockTimer: get field exception " + e.getClass().getName() + ":" + e.getMessage()); //$NON-NLS-1$ //$NON-NLS-2$
+		}
+		/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 		timerThreadField = AccessController.doPrivileged(new PrivilegedAction<Field>() {
 			@Override
 			public Field run() {
@@ -53,11 +64,12 @@ final class FilelockTimer extends Timer {
 					impl.setAccessible(true);
 					return impl;
 				} catch (Exception e) {
-					IPC.logMessage("FilelockTimer: get field exception "+e.getClass().getName()+":"+e.getMessage()); //$NON-NLS-1$ //$NON-NLS-2$
+					IPC.logMessage("FilelockTimer: get field exception " + e.getClass().getName() + ":" + e.getMessage()); //$NON-NLS-1$ //$NON-NLS-2$
 				}
 				return null;
 			}
 		});
+		/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 	}
 
 	@Override

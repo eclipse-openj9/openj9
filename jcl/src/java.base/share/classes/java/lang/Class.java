@@ -23,9 +23,6 @@
 package java.lang;
 
 import java.io.InputStream;
-import java.security.AccessControlContext;
-import java.security.ProtectionDomain;
-import java.security.Permissions;
 /*[IF JAVA_SPEC_VERSION >= 12]*/
 import java.lang.constant.ClassDesc;
 /*[ENDIF] JAVA_SPEC_VERSION >= 12*/
@@ -35,6 +32,15 @@ import jdk.internal.reflect.ReflectionFactory;
 import java.lang.reflect.*;
 import java.net.URL;
 import java.lang.annotation.*;
+/*[IF JAVA_SPEC_VERSION < 24]*/
+import java.security.AccessControlContext;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
+import java.security.Permissions;
+import java.security.ProtectionDomain;
 import java.util.Collection;
 import java.util.HashMap;
 /*[IF JAVA_SPEC_VERSION >= 16]*/
@@ -49,9 +55,6 @@ import java.util.Optional;
 /*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.security.AccessController;
-import java.security.PrivilegedExceptionAction;
-import java.security.PrivilegedAction;
 import java.lang.ref.*;
 /*[IF JAVA_SPEC_VERSION >= 12]*/
 import java.lang.constant.ClassDesc;
@@ -91,7 +94,6 @@ import java.util.ArrayList;
 import java.lang.annotation.Repeatable;
 import java.lang.invoke.*;
 import com.ibm.oti.reflect.TypeAnnotationParser;
-import java.security.PrivilegedActionException;
 import sun.security.util.SecurityConstants;
 
 /*[IF JAVA_SPEC_VERSION >= 18]*/
@@ -484,7 +486,16 @@ boolean casAnnotationType(AnnotationType oldType, AnnotationType newType) {
 	AnnotationVars localAnnotationVars = getAnnotationVars();
 	long localTypeOffset = AnnotationVars.annotationTypeOffset;
 	if (-1 == localTypeOffset) {
-		Field field = AccessController.doPrivileged(new PrivilegedAction<Field>() {
+		Field field;
+		/*[IF JAVA_SPEC_VERSION >= 24]*/
+		try {
+			field = AnnotationVars.class.getDeclaredField("annotationType"); //$NON-NLS-1$
+		} catch (Exception e) {
+			throw newInternalError(e);
+		}
+		/*[ELSE] JAVA_SPEC_VERSION >= 24 */
+		field = AccessController.doPrivileged(new PrivilegedAction<Field>() {
+			@Override
 			public Field run() {
 				try {
 					return AnnotationVars.class.getDeclaredField("annotationType"); //$NON-NLS-1$
@@ -493,6 +504,7 @@ boolean casAnnotationType(AnnotationType oldType, AnnotationType newType) {
 				}
 			}
 		});
+		/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 		localTypeOffset = getUnsafe().objectFieldOffset(field);
 		AnnotationVars.annotationTypeOffset = localTypeOffset;
 	}
@@ -509,7 +521,9 @@ boolean casAnnotationType(AnnotationType oldType, AnnotationType newType) {
  * of a class as described in the class definition of
  * java.lang.Class, however Classes representing base
  * types can not be found using this method.
+/*[IF JAVA_SPEC_VERSION < 24]
  * Security rules will be obeyed.
+/*[ENDIF] JAVA_SPEC_VERSION < 24
  *
  * @param		className			The name of the non-base type class to find
  * @param		initializeBoolean	A boolean indicating whether the class should be
@@ -614,7 +628,9 @@ private static Class<?> forNameHelper(
  * It does not invoke the class initializer.
  * Note that this method does not check whether the
  * requested class is accessible to its caller.
+/*[IF JAVA_SPEC_VERSION < 24]
  * Security rules will be obeyed.
+/*[ENDIF] JAVA_SPEC_VERSION < 24
  *
  * @param module The name of the module
  * @param name The name of the non-base type class to find
@@ -629,14 +645,15 @@ public static Class<?> forName(Module module, String name)
 /*[IF JAVA_SPEC_VERSION >= 18]*/
 	return forNameHelper(module, name, null, false);
 /*[ELSE] JAVA_SPEC_VERSION >= 18 */
-	@SuppressWarnings("removal")
-	SecurityManager sm = null;
 	ClassLoader classLoader;
 	Class<?> c;
 
 	if ((null == module) || (null == name)) {
 		throw new NullPointerException();
 	}
+	/*[IF JAVA_SPEC_VERSION < 24]*/
+	@SuppressWarnings("removal")
+	SecurityManager sm = null;
 	if (J9VMInternals.initialized) {
 		sm = System.getSecurityManager();
 	}
@@ -651,7 +668,9 @@ public static Class<?> forName(Module module, String name)
 				return module.getClassLoader();
 			}
 		});
-	} else {
+	} else
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
+	{
 		classLoader = module.getClassLoader();
 	}
 
@@ -694,7 +713,7 @@ private static Class<?> forNameHelper(Module module, String name, Class<?> calle
 	if ((null == module) || (null == name)) {
 		throw new NullPointerException();
 	}
-/*[IF JAVA_SPEC_VERSION < 24]*/
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	@SuppressWarnings("removal")
 	SecurityManager sm = null;
 	if (J9VMInternals.initialized) {
@@ -714,7 +733,7 @@ private static Class<?> forNameHelper(Module module, String name, Class<?> calle
 			}
 		});
 	} else
-/*[ENDIF] JAVA_SPEC_VERSION < 24 */
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	{
 		classLoader = module.getClassLoader();
 	}
@@ -840,7 +859,9 @@ public ClassLoader getClassLoader() {
 /**
  * Returns the classloader used to load the receiver's class.
  * Returns null if the class was loaded by the bootstrap (system) class loader.
+/*[IF JAVA_SPEC_VERSION < 24]
  * This skips security checks.
+/*[ENDIF] JAVA_SPEC_VERSION < 24
  * @return the receiver's class loader or null
  * @see java.lang.ClassLoader
  */
@@ -1848,7 +1869,9 @@ private Method throwExceptionOrReturnNull(boolean throwException, String name, C
  *	public Method getMethod(String name, Class<?>... parameterTypes)
  *	List<Method> getDeclaredPublicMethods(String name, Class<?>... parameterTypes)
  *	Method findMethod(boolean publicOnly, String methodName, Class<?>... parameterTypes)
+/*[IF JAVA_SPEC_VERSION < 24]
  * without going thorough security checking
+/*[ENDIF] JAVA_SPEC_VERSION < 24
  *
  * @param	throwException boolean
  *				true - throw exception in this helper;
@@ -2428,8 +2451,10 @@ public String getName() {
  * Note: In order to conserve space in embedded targets, we allow this
  * method to answer null for classes in the system protection domain
  * (i.e. for system classes). System classes are always given full
- * permissions (i.e. AllPermission). This is not changeable via the
- * java.security.Policy.
+ * permissions (i.e. AllPermission).
+/*[IF JAVA_SPEC_VERSION < 24]
+ * This is not changeable via the java.security.Policy.
+/*[ENDIF] JAVA_SPEC_VERSION < 24
  *
  * @return		ProtectionDomain
  *					the receiver's ProtectionDomain.
@@ -3573,9 +3598,12 @@ private MethodHandle getValueMethod(final Class<? extends Annotation> containedT
 	MethodHandle valueMethod = localAnnotationVars.valueMethod;
 	if (valueMethod == null) {
 		final MethodType methodType = MethodType.methodType(Array.newInstance(containedType, 0).getClass());
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		valueMethod = AccessController.doPrivileged(new PrivilegedAction<MethodHandle>() {
 			@Override
 			public MethodHandle run() {
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
+				MethodHandle handle;
 				try {
 					MethodHandles.Lookup localImplLookup = implLookup;
 					if (localImplLookup == null) {
@@ -3592,7 +3620,7 @@ private MethodHandle getValueMethod(final Class<? extends Annotation> containedT
 						getUnsafe().putOrderedObject(Class.class, implLookupOffset, localImplLookup);
 						/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 					}
-					MethodHandle handle = localImplLookup.findVirtual(Class.this, "value", methodType); //$NON-NLS-1$
+					handle = localImplLookup.findVirtual(Class.this, "value", methodType); //$NON-NLS-1$
 					if (AnnotationVars.valueMethodOffset == -1) {
 						Field valueMethodField = AnnotationVars.class.getDeclaredField("valueMethod"); //$NON-NLS-1$
 						AnnotationVars.valueMethodOffset = getUnsafe().objectFieldOffset(valueMethodField);
@@ -3604,14 +3632,18 @@ private MethodHandle getValueMethod(final Class<? extends Annotation> containedT
 					/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 					getUnsafe().putOrderedObject(localAnnotationVars, AnnotationVars.valueMethodOffset, handle);
 					/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
-					return handle;
 				} catch (NoSuchMethodException e) {
-					return null;
+					handle = null;
 				} catch (IllegalAccessException | NoSuchFieldException e) {
 					throw newInternalError(e);
 				}
+		/*[IF JAVA_SPEC_VERSION >= 24]*/
+				valueMethod = handle;
+		/*[ELSE] JAVA_SPEC_VERSION >= 24 */
+				return handle;
 			}
 		});
+		/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 	}
 	return valueMethod;
 }
@@ -3981,6 +4013,10 @@ T[] getEnumConstantsShared() {
 	T[] enums = localEnumVars.cachedEnumConstants;
 	if (null == enums && isEnum()) {
 		try {
+			/*[IF JAVA_SPEC_VERSION >= 24]*/
+			Method values = getMethod("values"); //$NON-NLS-1$
+			values.setAccessible(true);
+			/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 			final PrivilegedExceptionAction<Method> privilegedAction = new PrivilegedExceptionAction<Method>() {
 				@Override
 				public Method run() throws Exception {
@@ -3993,6 +4029,7 @@ T[] getEnumConstantsShared() {
 			};
 
 			Method values = AccessController.doPrivileged(privilegedAction);
+			/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 			Object rawEnums = values.invoke(this);
 			if ((rawEnums == null) || !rawEnums.getClass().isArray()) {
 				return null;
@@ -4016,7 +4053,14 @@ T[] getEnumConstantsShared() {
 			/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 			getUnsafe().putOrderedObject(localEnumVars, localEnumConstantsOffset, enums);
 			/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
-		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | PrivilegedActionException e) {
+		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException
+		/*[IF JAVA_SPEC_VERSION >= 24]*/
+			| NoSuchMethodException
+		/*[ELSE] JAVA_SPEC_VERSION >= 24 */
+			| PrivilegedActionException
+		/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
+			e
+		) {
 			enums = null;
 		}
 	}

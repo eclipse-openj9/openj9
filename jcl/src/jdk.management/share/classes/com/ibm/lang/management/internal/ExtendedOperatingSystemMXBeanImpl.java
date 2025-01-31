@@ -22,7 +22,9 @@
  */
 package com.ibm.lang.management.internal;
 
+/*[IF JAVA_SPEC_VERSION < 24]*/
 import java.security.PrivilegedAction;
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 import java.util.Objects;
 
 import javax.management.MBeanNotificationInfo;
@@ -112,6 +114,11 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 		super();
 		// only launch the notification thread if the environment could change
 		if (isDLPAREnabled()) {
+			/*[IF JAVA_SPEC_VERSION >= 24]*/
+			Thread thread = VM.getVMLangAccess().createThread(new OperatingSystemNotificationThread(this),
+					"OperatingSystemMXBean notification dispatcher", true, false, true, ClassLoader.getSystemClassLoader()); //$NON-NLS-1$
+			thread.setPriority(Thread.NORM_PRIORITY + 1);
+			/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 			PrivilegedAction<Thread> createThread = () -> {
 				Thread thread = VM.getVMLangAccess().createThread(new OperatingSystemNotificationThread(this),
 					"OperatingSystemMXBean notification dispatcher", true, false, true, ClassLoader.getSystemClassLoader()); //$NON-NLS-1$
@@ -123,6 +130,7 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 			@SuppressWarnings("removal")
 			/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 			Thread thread = java.security.AccessController.doPrivileged(createThread);
+			/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 			thread.start();
 		}
 	}
