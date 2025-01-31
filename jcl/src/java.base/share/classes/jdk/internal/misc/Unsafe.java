@@ -45,52 +45,92 @@ public final class Unsafe {
 	/**
 	 * Represents an invalid field offset value.
 	 */
+	/*[IF JAVA_SPEC_VERSION >= 25]*/
+	public static final long INVALID_FIELD_OFFSET;
+	/*[ELSE] JAVA_SPEC_VERSION >= 25 */
 	public static final int INVALID_FIELD_OFFSET;
+	/*[ENDIF] JAVA_SPEC_VERSION >= 25 */
 
 	/**
 	 * Starting offset of byte array.
 	 */
+	/*[IF JAVA_SPEC_VERSION >= 25]*/
+	public static final long ARRAY_BYTE_BASE_OFFSET;
+	/*[ELSE] JAVA_SPEC_VERSION >= 25 */
 	public static final int ARRAY_BYTE_BASE_OFFSET;
+	/*[ENDIF] JAVA_SPEC_VERSION >= 25 */
 
 	/**
 	 * Starting offset of int array.
 	 */
+	/*[IF JAVA_SPEC_VERSION >= 25]*/
+	public static final long ARRAY_INT_BASE_OFFSET;
+	/*[ELSE] JAVA_SPEC_VERSION >= 25 */
 	public static final int ARRAY_INT_BASE_OFFSET;
+	/*[ENDIF] JAVA_SPEC_VERSION >= 25 */
 
 	/**
 	 * Starting offset of long array.
 	 */
+	/*[IF JAVA_SPEC_VERSION >= 25]*/
+	public static final long ARRAY_LONG_BASE_OFFSET;
+	/*[ELSE] JAVA_SPEC_VERSION >= 25 */
 	public static final int ARRAY_LONG_BASE_OFFSET;
+	/*[ENDIF] JAVA_SPEC_VERSION >= 25 */
 
 	/**
 	 * Starting offset of float array.
 	 */
+	/*[IF JAVA_SPEC_VERSION >= 25]*/
+	public static final long ARRAY_FLOAT_BASE_OFFSET;
+	/*[ELSE] JAVA_SPEC_VERSION >= 25 */
 	public static final int ARRAY_FLOAT_BASE_OFFSET;
+	/*[ENDIF] JAVA_SPEC_VERSION >= 25 */
 
 	/**
 	 * Starting offset of double array.
 	 */
+	/*[IF JAVA_SPEC_VERSION >= 25]*/
+	public static final long ARRAY_DOUBLE_BASE_OFFSET;
+	/*[ELSE] JAVA_SPEC_VERSION >= 25 */
 	public static final int ARRAY_DOUBLE_BASE_OFFSET;
+	/*[ENDIF] JAVA_SPEC_VERSION >= 25 */
 
 	/**
 	 * Starting offset of short array.
 	 */
+	/*[IF JAVA_SPEC_VERSION >= 25]*/
+	public static final long ARRAY_SHORT_BASE_OFFSET;
+	/*[ELSE] JAVA_SPEC_VERSION >= 25 */
 	public static final int ARRAY_SHORT_BASE_OFFSET;
+	/*[ENDIF] JAVA_SPEC_VERSION >= 25 */
 
 	/**
 	 * Starting offset of char array.
 	 */
+	/*[IF JAVA_SPEC_VERSION >= 25]*/
+	public static final long ARRAY_CHAR_BASE_OFFSET;
+	/*[ELSE] JAVA_SPEC_VERSION >= 25 */
 	public static final int ARRAY_CHAR_BASE_OFFSET;
+	/*[ENDIF] JAVA_SPEC_VERSION >= 25 */
 
 	/**
 	 * Starting offset of boolean array.
 	 */
+	/*[IF JAVA_SPEC_VERSION >= 25]*/
+	public static final long ARRAY_BOOLEAN_BASE_OFFSET;
+	/*[ELSE] JAVA_SPEC_VERSION >= 25 */
 	public static final int ARRAY_BOOLEAN_BASE_OFFSET;
+	/*[ENDIF] JAVA_SPEC_VERSION >= 25 */
 
 	/**
 	 * Starting offset of Object array.
 	 */
+	/*[IF JAVA_SPEC_VERSION >= 25]*/
+	public static final long ARRAY_OBJECT_BASE_OFFSET;
+	/*[ELSE] JAVA_SPEC_VERSION >= 25 */
 	public static final int ARRAY_OBJECT_BASE_OFFSET;
+	/*[ENDIF] JAVA_SPEC_VERSION >= 25 */
 
 	/**
 	 * Index size of byte array in bytes.
@@ -1565,7 +1605,11 @@ public final class Unsafe {
 	 * @throws NullPointerException if the class parameter is null
 	 * @throws IllegalArgumentException if class is not an array
 	 */
+	/*[IF JAVA_SPEC_VERSION >= 25]*/
+	public long arrayBaseOffset(Class<?> c) {
+	/*[ELSE] JAVA_SPEC_VERSION >= 25 */
 	public int arrayBaseOffset(Class<?> c) {
+	/*[ENDIF] JAVA_SPEC_VERSION >= 25 */
 		Objects.requireNonNull(c);
 		return arrayBaseOffset0(c);
 	}
