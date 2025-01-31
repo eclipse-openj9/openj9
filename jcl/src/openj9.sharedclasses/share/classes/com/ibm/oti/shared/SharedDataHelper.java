@@ -47,7 +47,9 @@ import java.nio.ByteBuffer;
  *
  * @see SharedHelper
  * @see SharedDataHelperFactory
+/*[IF JAVA_SPEC_VERSION < 24]
  * @see SharedClassPermission
+/*[ENDIF] JAVA_SPEC_VERSION < 24
  */
 public interface SharedDataHelper extends SharedHelper {
 
@@ -55,8 +57,10 @@ public interface SharedDataHelper extends SharedHelper {
 	 * Find data in the shared cache using a specific token.<p>
 	 * Data will be returned only for an exact String match of the token. Otherwise, null is returned.<br>
 	 * The ByteBuffer returned is read-only and cannot be modified.<br>
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * If a SecurityManager is installed, findSharedData can only be called by code whose caller-classloader
 	 * has been granted <q>read</q> permissions to the shared class cache.
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 *
 	 * @param token a token to be used as a key
 	 *
@@ -70,8 +74,10 @@ public interface SharedDataHelper extends SharedHelper {
 	 * If data already exists for the token specified, the old data is marked <q>stale</q> in the cache and is replaced by the new data.<br>
 	 * If the exact same data already exists in the cache under the same token, the data is not duplicated and the cached version is returned.<br>
 	 * If null is passed as the data argument, the data currently stored against that token is marked <q>stale</q> and null is returned.<br>
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * If a SecurityManager is installed, storeSharedData can only be called by code whose caller-classloader
 	 * has been granted <q>write</q> permissions to the shared class cache.
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 *
 	 * @param token a token to be used as a key
 	 * @param data a ByteBuffer of data to copy to the cache

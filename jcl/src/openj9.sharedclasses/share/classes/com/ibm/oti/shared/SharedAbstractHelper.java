@@ -23,7 +23,9 @@
 package com.ibm.oti.shared;
 
 import java.lang.ref.WeakReference;
+/*[IF JAVA_SPEC_VERSION < 24]*/
 import java.security.AccessControlException;
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 import com.ibm.oti.util.Msg;
 
@@ -36,11 +38,12 @@ import com.ibm.oti.util.Msg;
 public abstract class SharedAbstractHelper implements SharedHelper {
 	private Boolean verbose;
 	private WeakReference<ClassLoader> loaderRef;
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	private SharedClassPermission readPerm;
 	private SharedClassPermission writePerm;
-
 	boolean canFind;
 	boolean canStore;
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	int id;
 
 	/**
@@ -50,14 +53,23 @@ public abstract class SharedAbstractHelper implements SharedHelper {
 		super();
 	}
 
+	/*[IF JAVA_SPEC_VERSION >= 24]*/
+	void initialize(ClassLoader loader, int loaderId) {
+		this.id = loaderId;
+		this.loaderRef = new WeakReference<>(loader);
+		/*[MSG "K0591", "Created {0} with id {1}"]*/
+		printVerboseInfo(Msg.getString("K0591", getHelperType(), Integer.valueOf(id))); //$NON-NLS-1$
+	}
+	/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 	void initialize(ClassLoader loader, int loaderId, boolean canLoaderFind, boolean canLoaderStore) {
 		this.id = loaderId;
 		this.canFind = canLoaderFind;
 		this.canStore = canLoaderStore;
-		loaderRef = new WeakReference<>(loader);
+		this.loaderRef = new WeakReference<>(loader);
 		/*[MSG "K0591", "Created {0} with id {1}"]*/
 		printVerboseInfo(Msg.getString("K0591", getHelperType(), Integer.valueOf(id))); //$NON-NLS-1$
 	}
+	/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 
 	/**
 	 * Utility function. Returns the ClassLoader that owns this SharedHelper.
@@ -73,6 +85,7 @@ public abstract class SharedAbstractHelper implements SharedHelper {
 
 	private native boolean getIsVerboseImpl();
 
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	/* Do not cache the permission objects, else classloader references will prevent class GC */
 	@SuppressWarnings("removal")
 	private static boolean checkPermission(SecurityManager sm, ClassLoader loader, String type) {
@@ -103,6 +116,7 @@ public abstract class SharedAbstractHelper implements SharedHelper {
 		}
 		return true; // no security manager means the check is successful
 	}
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 	private boolean isVerbose() {
 		if (verbose == null) {

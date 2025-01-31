@@ -47,10 +47,17 @@ final class SharedClassURLHelperImpl extends SharedClassAbstractHelper implement
 	// This field is examined using the CDS adaptor
 	public static final boolean MINIMIZE_ENABLED = true;
 
+	/*[IF JAVA_SPEC_VERSION >= 24]*/
+	SharedClassURLHelperImpl(ClassLoader loader, int id) {
+		initialize(loader, id);
+		initializeShareableClassloader(loader);
+	}
+	/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 	SharedClassURLHelperImpl(ClassLoader loader, int id, boolean canFind, boolean canStore) {
 		initialize(loader, id, canFind, canStore);
 		initializeShareableClassloader(loader);
 	}
+	/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 
 	private static native void init();
 
@@ -109,9 +116,11 @@ final class SharedClassURLHelperImpl extends SharedClassAbstractHelper implement
 			printVerboseInfo(Msg.getString("K059f")); //$NON-NLS-1$
 			return null;
 		}
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		if (!canFind) {
 			return null;
 		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		if (path==null) {
 			/*[MSG "K05b3", "Cannot call findSharedClass with null URL. Returning null."]*/
 			printVerboseError(Msg.getString("K05b3")); //$NON-NLS-1$
@@ -160,9 +169,11 @@ final class SharedClassURLHelperImpl extends SharedClassAbstractHelper implement
 
 	@Override
 	public boolean storeSharedClass(String partition, URL path, Class<?> clazz) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		if (!canStore) {
 			return false;
 		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		if (path==null) {
 			/*[MSG "K05b4", "Cannot call storeSharedClass with null URL. Returning false."]*/
 			printVerboseError(Msg.getString("K05b4")); //$NON-NLS-1$

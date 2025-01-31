@@ -41,7 +41,9 @@ import javax.management.ObjectName;
 /*[IF JAVA_SPEC_VERSION >= 9]*/
 import com.ibm.sharedclasses.spi.SharedClassProvider;
 import java.net.URL;
+/*[IF JAVA_SPEC_VERSION < 24]*/
 import java.security.BasicPermission;
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 import java.util.ServiceLoader;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.IntConsumer;
@@ -106,10 +108,12 @@ public class MemoryMXBeanImpl extends LazyDelegatingNotifier implements MemoryMX
 			super();
 		}
 
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		@Override
 		public BasicPermission createPermission(String classLoaderClassName, String actions) {
 			return null;
 		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		@Override
 		public byte[] findSharedClassURL(URL path, String className) {

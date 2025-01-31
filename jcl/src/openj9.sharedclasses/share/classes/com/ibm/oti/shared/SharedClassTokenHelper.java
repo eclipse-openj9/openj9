@@ -40,8 +40,10 @@ package com.ibm.oti.shared;
  * <p>If a ClassLoader stores multiple versions of the same class by using the same token, only the most recent will be returned by findSharedClass. </p>
  * <h2>Security</h2>
  * <p>A SharedClassHelper will only allow classes to be stored in the cache which were defined by the ClassLoader that owns the SharedClassHelper.</p>
+/*[IF JAVA_SPEC_VERSION < 24]
  * <p>If a SecurityManager is installed, SharedClassPermissions must be used to permit read/write access to the shared class cache.
  * Permissions are granted by ClassLoader classname in the java.policy file and are fixed when the SharedClassHelper is created.</p>
+/*[ENDIF] JAVA_SPEC_VERSION < 24
  * <p>Note also that if the createClassLoader RuntimePermission is not granted, ClassLoaders cannot be created,
  * which in turn means that SharedClassHelpers cannot be created.</p>
  * <h2>Compatibility with other SharedClassHelpers</h2>
@@ -49,7 +51,9 @@ package com.ibm.oti.shared;
  *
  * @see SharedClassHelper
  * @see SharedClassHelperFactory
+/*[IF JAVA_SPEC_VERSION < 24]
  * @see SharedClassPermission
+/*[ENDIF] JAVA_SPEC_VERSION < 24
  */
 public interface SharedClassTokenHelper extends SharedClassHelper {
 
