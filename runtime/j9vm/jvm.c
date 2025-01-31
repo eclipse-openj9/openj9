@@ -28,37 +28,36 @@
 #if defined(J9ZTPF)
 /*
  * setup USE_BSD_SELECT_PROTOTYPE so z/tpf's sys/socket.h gives us the *right* select() api.
-*/
-#include <tpf/icstk.h>
-#include <tpf/c_eb0eb.h>
+ */
 #define USE_BSD_SELECT_PROTOTYPE 1
+#include <time.h>
+#include <tpf/c_eb0eb.h>
+#include <tpf/icstk.h>
 #include <tpf/sysapi.h>
 #include <tpf/tpfapi.h>
-#include <time.h>
 #endif /* defined(J9ZTPF) */
 
-#include "j9vm_internal.h"
-#include "j9pool.h"
-#include "util_api.h"
-#include "j9lib.h"
 #include "exelib_api.h"
-#include "j9.h"
-#include "j9protos.h"
-#include "j9consts.h"
 #include "fltconst.h"
-#include "j9comp.h"
-#include "omrthread.h"
-#include "j9cp.h"
-#include "j2sever.h"
-#include "j2senls.h"
 #include "hashtable_api.h"
+#include "j2senls.h"
+#include "j2sever.h"
+#include "j9.h"
+#include "j9comp.h"
+#include "j9consts.h"
+#include "j9cp.h"
+#include "j9lib.h"
+#include "j9pool.h"
+#include "j9protos.h"
+#include "j9vm_internal.h"
+#include "jvminit.h"
+#include "mmhook.h"
+#include "omrformatconsts.h"
+#include "omrthread.h"
 #include "rommeth.h"
+#include "sunvmi_api.h"
 #include "util_api.h"
 #include "vmargs_api.h"
-#include "mmhook.h"
-#include "jvminit.h"
-#include "sunvmi_api.h"
-#include "omrformatconsts.h"
 #ifdef J9VM_OPT_ZIP_SUPPORT
 #include "vmi.h"
 #include "vmzipcachehook.h"
@@ -108,7 +107,7 @@ mainlineLanguageIsC(void)
 	/* Locate the common anchor area. */
 	const char *caa = (const char *)_gtca();
 	/* Fetch the pointer to the C/C++ environment data block. */
-	const char *cedb = *(const char * const *)(caa + OFFSET_CAA_CEDB);
+	const char *cedb = *(const char *const *)(caa + OFFSET_CAA_CEDB);
 
 	/* Do some basic checking of the cedb pointer. */
 	if ((NULL != cedb) && (0 == memcmp(cedb, cedb_eye, sizeof(cedb_eye)))) {
@@ -123,14 +122,12 @@ mainlineLanguageIsC(void)
 	return result;
 }
 
-struct arg_string
-{
+struct arg_string {
 	uint32_t length; /* length of value, including NUL terminator */
 	char value[];
 };
 
-struct arg_list
-{
+struct arg_list {
 	uint32_t argc; /* number of command-line arguments */
 	uint32_t env_size; /* number of environment variables */
 	const struct arg_string *string[];
@@ -138,8 +135,8 @@ struct arg_list
 #endif /* defined(J9ZOS390) */
 
 #if defined(OSX)
-#include <sys/types.h>
 #include <sys/sysctl.h>
+#include <sys/types.h>
 #endif /* defined(OSX) */
 
 #if defined(WIN32)
@@ -167,7 +164,7 @@ struct arg_list
 #if defined(LINUX) && !defined(J9VM_ENV_DATA64)
 #include <unistd.h>
 /* glibc 2.4 and on provide lseek64(), do not use the syscall hack */
-#if !__GLIBC_PREREQ(2,4)
+#if !__GLIBC_PREREQ(2, 4)
 /* Support code for CMVC 104382. */
 #include <linux/unistd.h>
 _syscall5(int, _llseek, uint, fd, ulong, hi, ulong, lo, loff_t *, res, uint, wh);
@@ -188,28 +185,28 @@ _syscall5(int, _llseek, uint, fd, ulong, hi, ulong, lo, loff_t *, res, uint, wh)
 #define CREATE_JAVA_VM_ENTRYPOINT "J9_CreateJavaVM"
 #define GET_JAVA_VMS_ENTRYPOINT "J9_GetCreatedJavaVMs"
 
-typedef jint (JNICALL *CreateVM)(JavaVM ** p_vm, void ** p_env, J9CreateJavaVMParams *createparams);
-typedef jint (JNICALL *GetVMs)(JavaVM**, jsize, jsize*);
+typedef jint (JNICALL *CreateVM)(JavaVM **p_vm, void **p_env, J9CreateJavaVMParams *createparams);
+typedef jint (JNICALL *GetVMs)(JavaVM **, jsize, jsize *);
 typedef jint (JNICALL *DetachThread)(JavaVM *);
 
 typedef jint (JNICALL *DestroyVM)(JavaVM *);
-typedef int (*SigAction) (int signum, const struct sigaction *act, struct sigaction *oldact);
+typedef int (*SigAction)(int signum, const struct sigaction *act, struct sigaction *oldact);
 
 #ifdef J9ZOS390
-typedef jint (JNICALL *pGetStringPlatform)(JNIEnv*, jstring, char*, jint, const char *);
-typedef jint (JNICALL *pGetStringPlatformLength)(JNIEnv*, jstring, jint *, const char *);
-typedef jint (JNICALL *pNewStringPlatform)(JNIEnv*, const char*, jstring *, const char *);
+typedef jint (JNICALL *pGetStringPlatform)(JNIEnv *, jstring, char *, jint, const char *);
+typedef jint (JNICALL *pGetStringPlatformLength)(JNIEnv *, jstring, jint *, const char *);
+typedef jint (JNICALL *pNewStringPlatform)(JNIEnv *, const char *, jstring *, const char *);
 typedef jint (JNICALL *p_a2e_vsprintf)(char *, const char *, va_list);
 #endif
 
-typedef UDATA* (*ThreadGlobal)(const char* name);
+typedef UDATA *(*ThreadGlobal)(const char *name);
 typedef IDATA (*ThreadAttachEx)(omrthread_t *handle, omrthread_attr_t *attr);
 typedef void (*ThreadDetach)(omrthread_t thread);
 typedef IDATA (*MonitorEnter)(omrthread_monitor_t monitor);
 typedef IDATA (*MonitorExit)(omrthread_monitor_t monitor);
-typedef IDATA (*MonitorInit)(omrthread_monitor_t* handle, UDATA flags, char* name);
+typedef IDATA (*MonitorInit)(omrthread_monitor_t *handle, UDATA flags, char *name);
 typedef IDATA (*MonitorDestroy)(omrthread_monitor_t monitor);
-typedef IDATA (* ThreadLibControl)(const char * key, UDATA value);
+typedef IDATA (*ThreadLibControl)(const char *key, UDATA value);
 typedef IDATA (*SetCategory)(omrthread_t thread, UDATA category, UDATA type);
 typedef IDATA (*LibEnableCPUMonitor)(omrthread_t thread);
 typedef IDATA (*ThreadSleep)(I_64 millis);
@@ -218,12 +215,12 @@ typedef I_32 (*PortInitLibrary)(J9PortLibrary *portLib, J9PortLibraryVersion *ve
 typedef UDATA (*PortGetSize)(struct J9PortLibraryVersion *version);
 typedef I_32 (*PortGetVersion)(struct J9PortLibrary *portLibrary, struct J9PortLibraryVersion *version);
 
-typedef void* (*J9GetInterface)(J9_INTERFACE_SELECTOR interfaceSelector, J9PortLibrary* portLib, void *userData);
+typedef void *(*J9GetInterface)(J9_INTERFACE_SELECTOR interfaceSelector, J9PortLibrary *portLib, void *userData);
 
 #if defined(J9ZOS390)
-#define ZOS_THR_WEIGHT_NOT_FOUND   ((UDATA) 0U)
-#define ZOS_THR_WEIGHT_MEDIUM      ((UDATA) 1U)
-#define ZOS_THR_WEIGHT_HEAVY       ((UDATA) 2U)
+#define ZOS_THR_WEIGHT_NOT_FOUND ((UDATA)0U)
+#define ZOS_THR_WEIGHT_MEDIUM ((UDATA)1U)
+#define ZOS_THR_WEIGHT_HEAVY ((UDATA)2U)
 
 static UDATA checkZOSThrWeightEnvVar(void);
 static BOOLEAN setZOSThrWeight(void);
@@ -232,20 +229,20 @@ static BOOLEAN setZOSThrWeight(void);
 #ifdef WIN32
 #define J9_MAX_ENV 32767
 #define J9_MAX_PATH _MAX_PATH
-static HINSTANCE j9vm_dllHandle = (HINSTANCE) 0;
-static HINSTANCE thread_dllHandle = (HINSTANCE) 0;
+static HINSTANCE j9vm_dllHandle = (HINSTANCE)0;
+static HINSTANCE thread_dllHandle = (HINSTANCE)0;
 static HANDLE jvm_dllHandle;
 #else /* WIN32 */
 #define J9_MAX_PATH PATH_MAX
 static void *j9vm_dllHandle = NULL;
 static void *thread_dllHandle = NULL;
 #endif /* WIN32 */
-static J9StringBuffer * j9binBuffer = NULL;
-static J9StringBuffer * jrebinBuffer = NULL;
-static J9StringBuffer * j9libBuffer = NULL;
-static J9StringBuffer * j9libvmBuffer = NULL;
-static J9StringBuffer * j9Buffer = NULL;
-static BOOLEAN jvmInSubdir=TRUE;
+static J9StringBuffer *j9binBuffer = NULL;
+static J9StringBuffer *jrebinBuffer = NULL;
+static J9StringBuffer *j9libBuffer = NULL;
+static J9StringBuffer *j9libvmBuffer = NULL;
+static J9StringBuffer *j9Buffer = NULL;
+static BOOLEAN jvmInSubdir = TRUE;
 
 static CreateVM globalCreateVM;
 static GetVMs globalGetVMs;
@@ -281,7 +278,7 @@ static UDATA monitor = 0;
 static J9InternalVMFunctions globalInvokeInterface;
 
 static struct J9PortLibrary j9portLibrary;
-static char * newPath = NULL;
+static char *newPath = NULL;
 
 /* cannot be static because it's declared extern in vmi.c */
 J9JavaVM *BFUjavaVM = NULL;
@@ -323,7 +320,7 @@ typedef struct J9LibpathBackup {
 	size_t j9prefixLen; /* length of the j9 prefix, including trailing ':' when needed */
 } J9LibpathBackup;
 
-static J9LibpathBackup libpathBackup = { NULL, 0 };
+static J9LibpathBackup libpathBackup = {NULL, 0};
 
 static void backupLibpath(J9LibpathBackup *, size_t origLibpathLen);
 static void freeBackupLibpath(J9LibpathBackup *);
@@ -343,9 +340,9 @@ extern void resetThreadCategories(void);
 
 void exitHook(J9JavaVM *vm);
 static jint JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITServer);
-static void* preloadLibrary(char* dllName, BOOLEAN inJVMDir);
-static UDATA protectedStrerror(J9PortLibrary* portLib, void* savedErrno);
-static UDATA strerrorSignalHandler(struct J9PortLibrary* portLibrary, U_32 gpType, void* gpInfo, void* userData);
+static void *preloadLibrary(char *dllName, BOOLEAN inJVMDir);
+static UDATA protectedStrerror(J9PortLibrary *portLib, void *savedErrno);
+static UDATA strerrorSignalHandler(struct J9PortLibrary *portLibrary, U_32 gpType, void *gpInfo, void *userData);
 static void throwNewUnsatisfiedLinkError(JNIEnv *env, char *message);
 static int findDirContainingFile(J9StringBuffer **result, char *paths, char pathSeparator, char *fileToFind, int elementsToSkip);
 static int findDirUplevelToDirContainingFile(J9StringBuffer **result, char *pathEnvar, char pathSeparator, char *fileInPath, int upLevels, int elementsToSkip);
@@ -410,9 +407,9 @@ typedef struct {
 } J9SignalMapping;
 
 #if defined(WIN32)
-#define J9_SIGNAL_MAP_ENTRY(name, value) { name, value }
+#define J9_SIGNAL_MAP_ENTRY(name, value) {name, value}
 #else /* defined(WIN32) */
-#define J9_SIGNAL_MAP_ENTRY(name, value) { "SIG" name, value }
+#define J9_SIGNAL_MAP_ENTRY(name, value) {"SIG" name, value}
 #endif /* defined(WIN32) */
 
 static const J9SignalMapping signalMap[] = {
@@ -678,7 +675,7 @@ captureCommandLine(void)
 			}
 		}
 		captured = storeCommandLine(buffer);
-done:
+	done:
 		if (NULL != buffer) {
 			free(buffer);
 		}
@@ -769,7 +766,8 @@ done:
 	}
 }
 
-static void freeGlobals(void)
+static void
+freeGlobals(void)
 {
 	free(newPath);
 	newPath = NULL;
@@ -792,12 +790,13 @@ static void freeGlobals(void)
 	resetThreadCategories();
 }
 
-static J9StringBuffer* jvmBufferEnsure(J9StringBuffer* buffer, UDATA len) {
-
-	if (buffer == NULL) {
+static J9StringBuffer *
+jvmBufferEnsure(J9StringBuffer *buffer, UDATA len)
+{
+	if (NULL == buffer) {
 		UDATA newSize = len > MIN_GROWTH ? len : MIN_GROWTH;
-		buffer = (J9StringBuffer*) malloc( newSize + 1 + sizeof(UDATA));	/* 1 for null terminator */
-		if (buffer != NULL) {
+		buffer = (J9StringBuffer *)malloc(newSize + 1 + sizeof(UDATA)); /* + 1 for null-terminator. */
+		if (NULL != buffer) {
 			buffer->remaining = newSize;
 			buffer->data[0] = '\0';
 		}
@@ -806,26 +805,25 @@ static J9StringBuffer* jvmBufferEnsure(J9StringBuffer* buffer, UDATA len) {
 
 	if (len > buffer->remaining) {
 		UDATA newSize = len > MIN_GROWTH ? len : MIN_GROWTH;
-		J9StringBuffer* new = (J9StringBuffer*) malloc( strlen((const char*)buffer->data) + newSize + sizeof(UDATA) + 1 );
-		if (new) {
-			new->remaining = newSize;
-			strcpy(new->data, (const char*)buffer->data);
+		J9StringBuffer *newBuffer = (J9StringBuffer *)malloc(strlen((const char *)buffer->data) + newSize + sizeof(UDATA) + 1);
+		if (NULL != newBuffer) {
+			newBuffer->remaining = newSize;
+			strcpy(newBuffer->data, (const char *)buffer->data);
 		}
 		free(buffer);
-		return new;
+		return newBuffer;
 	}
 
 	return buffer;
 }
 
-
-static J9StringBuffer*
-jvmBufferCat(J9StringBuffer* buffer, const char* string)
+static J9StringBuffer *
+jvmBufferCat(J9StringBuffer *buffer, const char *string)
 {
 	UDATA len = strlen(string);
 
 	buffer = jvmBufferEnsure(buffer, len);
-	if (buffer) {
+	if (NULL != buffer) {
 		strcat(buffer->data, string);
 		buffer->remaining -= len;
 	}
@@ -833,16 +831,18 @@ jvmBufferCat(J9StringBuffer* buffer, const char* string)
 	return buffer;
 }
 
-
-static char* jvmBufferData(J9StringBuffer* buffer) {
-	return buffer ? buffer->data : NULL;
+static char *
+jvmBufferData(J9StringBuffer *buffer)
+{
+	return (NULL != buffer) ? buffer->data : NULL;
 }
 
-jint JNICALL DestroyJavaVM(JavaVM * javaVM)
+jint JNICALL
+DestroyJavaVM(JavaVM *javaVM)
 {
-	jint rc;
+	jint rc = 0;
 
-	UT_MODULE_UNLOADED(J9_UTINTERFACE_FROM_VM((J9JavaVM*)javaVM));
+	UT_MODULE_UNLOADED(J9_UTINTERFACE_FROM_VM((J9JavaVM *)javaVM));
 	rc = globalDestroyVM(javaVM);
 
 	if (JNI_OK == rc) {
@@ -888,13 +888,13 @@ librariesLoaded(void)
 }
 
 #ifdef WIN32
-
-BOOL APIENTRY DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)
+BOOL APIENTRY
+DllMain(HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
 	BOOL rcDllMain = TRUE;
 	jvm_dllHandle = hModule;
 
-	if (ul_reason_for_call == DLL_PROCESS_ATTACH) {
+	if (DLL_PROCESS_ATTACH = ul_reason_for_call) {
 		/* Disable DLL_THREAD_ATTACH and DLL_THREAD_DETACH notifications for WIN32*/
 		DisableThreadLibraryCalls(hModule);
 	}
@@ -902,36 +902,35 @@ BOOL APIENTRY DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserv
 	return rcDllMain;
 }
 
-
 static BOOLEAN
 preloadLibraries(void)
 {
-	char* tempchar = 0;
+	char *tempchar = NULL;
 	char jvmDLLName[J9_MAX_PATH];
-	J9StringBuffer * jvmDLLNameBuffer = NULL;
-	wchar_t unicodeDLLName[J9_MAX_PATH + 1] = {0}; /*extra character is added to check if path is truncated by GetModuleFileNameW()*/
+	J9StringBuffer *jvmDLLNameBuffer = NULL;
+	wchar_t unicodeDLLName[J9_MAX_PATH + 1] = {0}; /* extra character is added to check if path is truncated by GetModuleFileNameW() */
 	DWORD unicodeDLLNameLength = 0;
 	UINT prevMode;
 	HINSTANCE vmDLL = 0;
 	HINSTANCE threadDLL = 0;
 	HINSTANCE portDLL = 0;
-	char* vmDllName = J9_VM_DLL_NAME;
-	char* vmName = NULL;
-	static beenRun=FALSE;
-	if(beenRun) {
+	static BOOLEAN beenRun = FALSE;
+	if (beenRun) {
 		return TRUE;
 	}
 	beenRun = TRUE;
+	char *vmDllName = J9_VM_DLL_NAME;
+	char *vmName = NULL;
 
 	unicodeDLLNameLength = GetModuleFileNameW(jvm_dllHandle, unicodeDLLName, (J9_MAX_PATH + 1));
 	/* Don't use truncated path */
 	if (unicodeDLLNameLength > (DWORD)J9_MAX_PATH) {
-		fprintf(stderr,"ERROR: failed to load library. Path is too long: %ls\n", unicodeDLLName);
+		fprintf(stderr, "ERROR: failed to load library. Path is too long: %ls\n", unicodeDLLName);
 		return FALSE;
 	}
 
 	/* Use of jvmDLLName is safe as the length is passed in */
-	WideCharToMultiByte(OS_ENCODING_CODE_PAGE, OS_ENCODING_WC_FLAGS, unicodeDLLName, -1,  jvmDLLName, J9_MAX_PATH, NULL, NULL);
+	WideCharToMultiByte(OS_ENCODING_CODE_PAGE, OS_ENCODING_WC_FLAGS, unicodeDLLName, -1, jvmDLLName, J9_MAX_PATH, NULL, NULL);
 
 	jvmDLLNameBuffer = jvmBufferCat(NULL, jvmDLLName);
 	j9binBuffer = jvmBufferCat(j9binBuffer, jvmDLLName);
@@ -944,20 +943,20 @@ preloadLibraries(void)
 
 	/* Last argument tells Windows the size of the buffer */
 	MultiByteToWideChar(OS_ENCODING_CODE_PAGE, OS_ENCODING_MB_FLAGS, jvmBufferData(jvmDLLNameBuffer), -1, unicodeDLLName, J9_MAX_PATH);
-	if(INVALID_FILE_ATTRIBUTES != GetFileAttributesW(unicodeDLLName)) {
+	if (INVALID_FILE_ATTRIBUTES != GetFileAttributesW(unicodeDLLName)) {
 		jvmInSubdir = TRUE;
 	} else {
 		jvmInSubdir = FALSE;
 	}
 
-	prevMode = SetErrorMode( SEM_NOOPENFILEERRORBOX|SEM_FAILCRITICALERRORS );
+	prevMode = SetErrorMode(SEM_NOOPENFILEERRORBOX | SEM_FAILCRITICALERRORS);
 
 	free(jvmDLLNameBuffer);
 	jvmDLLNameBuffer = NULL;
 	free(jrebinBuffer);
 	jrebinBuffer = NULL;
 
-	if(jvmInSubdir) {
+	if (jvmInSubdir) {
 		/* truncate the \<my vm name>\jvm.dll from the string */
 		truncatePath(jvmBufferData(j9binBuffer));
 		jrebinBuffer = jvmBufferCat(NULL, jvmBufferData(j9binBuffer));
@@ -988,56 +987,66 @@ preloadLibraries(void)
 	DBG_MSG(("j9libvmBuffer = <%s>\n", jvmBufferData(j9libvmBuffer)));
 	DBG_MSG(("j9Buffer      = <%s>\n", jvmBufferData(j9Buffer)));
 
-	vmDLL = (HINSTANCE) preloadLibrary(vmDllName, TRUE);
+	vmDLL = (HINSTANCE)preloadLibrary(vmDllName, TRUE);
 	preloadLibrary(J9_HOOKABLE_DLL_NAME, TRUE);
 
-	SetErrorMode( prevMode );
+	SetErrorMode(prevMode);
 
 	if (vmDLL < (HINSTANCE)HINSTANCE_ERROR) {
-		fprintf(stderr,"jvm.dll failed to load: %s\n", vmDllName);
+		fprintf(stderr, "jvm.dll failed to load: %s\n", vmDllName);
 		return FALSE;
 	}
-	globalCreateVM = (CreateVM) GetProcAddress (vmDLL, (LPCSTR) CREATE_JAVA_VM_ENTRYPOINT );
-	globalGetVMs = (GetVMs) GetProcAddress (vmDLL, (LPCSTR) GET_JAVA_VMS_ENTRYPOINT);
+	globalCreateVM = (CreateVM)GetProcAddress(vmDLL, (LPCSTR)CREATE_JAVA_VM_ENTRYPOINT);
+	globalGetVMs = (GetVMs)GetProcAddress(vmDLL, (LPCSTR)GET_JAVA_VMS_ENTRYPOINT);
 	if (!globalCreateVM || !globalGetVMs) {
 		FreeLibrary(vmDLL);
-		fprintf(stderr,"jvm.dll failed to load: global entrypoints not found\n");
+		fprintf(stderr, "jvm.dll failed to load: global entrypoints not found\n");
 		return FALSE;
 	}
 	j9vm_dllHandle = vmDLL;
 
-	threadDLL = (HINSTANCE) preloadLibrary(J9_THREAD_DLL_NAME, TRUE);
-	f_threadGlobal = (ThreadGlobal) GetProcAddress (threadDLL, (LPCSTR) "omrthread_global");
-	f_threadAttachEx = (ThreadAttachEx) GetProcAddress (threadDLL, (LPCSTR) "omrthread_attach_ex");
-	f_threadDetach = (ThreadDetach) GetProcAddress (threadDLL, (LPCSTR) "omrthread_detach");
-	f_monitorEnter = (MonitorEnter) GetProcAddress (threadDLL, (LPCSTR) "omrthread_monitor_enter");
-	f_monitorExit = (MonitorExit) GetProcAddress (threadDLL, (LPCSTR) "omrthread_monitor_exit");
-	f_monitorInit = (MonitorInit) GetProcAddress (threadDLL, (LPCSTR) "omrthread_monitor_init_with_name");
-	f_monitorDestroy = (MonitorDestroy) GetProcAddress (threadDLL, (LPCSTR) "omrthread_monitor_destroy");
-	f_threadLibControl = (ThreadLibControl) GetProcAddress (threadDLL, (LPCSTR) "omrthread_lib_control");
-	f_setCategory = (SetCategory) GetProcAddress (threadDLL, (LPCSTR) "omrthread_set_category");
-	f_libEnableCPUMonitor = (LibEnableCPUMonitor) GetProcAddress (threadDLL, (LPCSTR) "omrthread_lib_enable_cpu_monitor");
-	f_threadSleep = (ThreadSleep) GetProcAddress (threadDLL, (LPCSTR) "omrthread_sleep");
-	if (!f_threadGlobal || !f_threadAttachEx || !f_threadDetach || !f_monitorEnter || !f_monitorExit || !f_monitorInit
-		|| !f_monitorDestroy || !f_threadLibControl || !f_setCategory || !f_libEnableCPUMonitor || !f_threadSleep
+	threadDLL = (HINSTANCE)preloadLibrary(J9_THREAD_DLL_NAME, TRUE);
+	f_threadGlobal = (ThreadGlobal)GetProcAddress(threadDLL, (LPCSTR) "omrthread_global");
+	f_threadAttachEx = (ThreadAttachEx)GetProcAddress(threadDLL, (LPCSTR) "omrthread_attach_ex");
+	f_threadDetach = (ThreadDetach)GetProcAddress(threadDLL, (LPCSTR) "omrthread_detach");
+	f_monitorEnter = (MonitorEnter)GetProcAddress(threadDLL, (LPCSTR) "omrthread_monitor_enter");
+	f_monitorExit = (MonitorExit)GetProcAddress(threadDLL, (LPCSTR) "omrthread_monitor_exit");
+	f_monitorInit = (MonitorInit)GetProcAddress(threadDLL, (LPCSTR) "omrthread_monitor_init_with_name");
+	f_monitorDestroy = (MonitorDestroy)GetProcAddress(threadDLL, (LPCSTR) "omrthread_monitor_destroy");
+	f_threadLibControl = (ThreadLibControl)GetProcAddress(threadDLL, (LPCSTR) "omrthread_lib_control");
+	f_setCategory = (SetCategory)GetProcAddress(threadDLL, (LPCSTR) "omrthread_set_category");
+	f_libEnableCPUMonitor = (LibEnableCPUMonitor)GetProcAddress(threadDLL, (LPCSTR) "omrthread_lib_enable_cpu_monitor");
+	f_threadSleep = (ThreadSleep)GetProcAddress(threadDLL, (LPCSTR) "omrthread_sleep");
+	if (
+		(NULL == f_threadGlobal)
+		|| (NULL == f_threadAttachEx)
+		|| (NULL == f_threadDetach)
+		|| (NULL == f_monitorEnter)
+		|| (NULL == f_monitorExit)
+		|| (NULL == f_monitorInit)
+		|| (NULL == f_monitorDestroy)
+		|| (NULL == f_threadLibControl)
+		|| (NULL == f_setCategory)
+		|| (NULL == f_libEnableCPUMonitor)
+		|| (NULL == f_threadSleep)
 	) {
 		FreeLibrary(vmDLL);
 		FreeLibrary(threadDLL);
-		fprintf(stderr,"jvm.dll failed to load: thread library entrypoints not found\n");
+		fprintf(stderr, "jvm.dll failed to load: thread library entrypoints not found\n");
 		return FALSE;
 	}
 	thread_dllHandle = threadDLL;
 
 	/* pre-load port library for memorycheck */
-	portDLL = (HINSTANCE) preloadLibrary(J9_PORT_DLL_NAME, TRUE);
-	portInitLibrary = (PortInitLibrary) GetProcAddress (portDLL, (LPCSTR) "j9port_init_library");
-	portGetSizeFn = (PortGetSize) GetProcAddress (portDLL, (LPCSTR) "j9port_getSize");
-	portGetVersionFn = (PortGetVersion) GetProcAddress (portDLL, (LPCSTR) "j9port_getVersion");
-	if (!portInitLibrary) {
+	portDLL = (HINSTANCE)preloadLibrary(J9_PORT_DLL_NAME, TRUE);
+	portInitLibrary = (PortInitLibrary)GetProcAddress(portDLL, (LPCSTR) "j9port_init_library");
+	portGetSizeFn = (PortGetSize)GetProcAddress(portDLL, (LPCSTR) "j9port_getSize");
+	portGetVersionFn = (PortGetVersion)GetProcAddress(portDLL, (LPCSTR) "j9port_getVersion");
+	if (NULL == portInitLibrary) {
 		FreeLibrary(vmDLL);
 		FreeLibrary(threadDLL);
 		FreeLibrary(portDLL);
-		fprintf(stderr,"jvm.dll failed to load: %s entrypoints not found\n", J9_PORT_DLL_NAME);
+		fprintf(stderr, "jvm.dll failed to load: %s entrypoints not found\n", J9_PORT_DLL_NAME);
 		return FALSE;
 	}
 	preloadLibrary(J9_ZIP_DLL_NAME, TRUE);
@@ -1048,13 +1057,13 @@ preloadLibraries(void)
 }
 
 static void
-bfuThreadStart(J9HookInterface** vmHooks, UDATA eventNum, void* eventData, void* userData)
+bfuThreadStart(J9HookInterface **vmHooks, UDATA eventNum, void *eventData, void *userData)
 {
-	J9VMThreadCreatedEvent* event = eventData;
-	if (event->continueInitialization) {
+	J9VMThreadCreatedEvent *event = eventData;
+	if (NULL != event->continueInitialization) {
 		HANDLE win32Event = CreateEvent(NULL, FALSE, FALSE, NULL);
 
-		if (win32Event == NULL) {
+		if (NULL == win32Event) {
 			/* abort the creation of this thread */
 			event->continueInitialization = 0;
 		} else {
@@ -1063,51 +1072,51 @@ bfuThreadStart(J9HookInterface** vmHooks, UDATA eventNum, void* eventData, void*
 	}
 }
 
-
 static void
-bfuThreadEnd(J9HookInterface** vmHooks, UDATA eventNum, void* eventData, void* userData)
+bfuThreadEnd(J9HookInterface **vmHooks, UDATA eventNum, void *eventData, void *userData)
 {
-	J9VMThread* vmThread = ((J9VMThreadDestroyEvent*)eventData)->vmThread;
-	HANDLE event = (HANDLE) vmThread->sidecarEvent;
+	J9VMThread *vmThread = ((J9VMThreadDestroyEvent *)eventData)->vmThread;
+	HANDLE event = (HANDLE)vmThread->sidecarEvent;
 
-	if (event) {
+	if (NULL != event) {
 		CloseHandle(event);
 		vmThread->sidecarEvent = NULL;
 	}
 }
 
-
-static void bfuInterrupt(J9VMThread * vmThread)
+static void
+bfuInterrupt(J9VMThread *vmThread)
 {
-	HANDLE event = (HANDLE) vmThread->sidecarEvent;
+	HANDLE event = (HANDLE)vmThread->sidecarEvent;
 
-	if (event) {
+	if (NULL != event) {
 		SetEvent(event);
 	}
 }
 
-static void bfuClearInterrupt(J9VMThread * vmThread)
+static void
+bfuClearInterrupt(J9VMThread *vmThread)
 {
-	HANDLE event = (HANDLE) vmThread->sidecarEvent;
+	HANDLE event = (HANDLE)vmThread->sidecarEvent;
 
-	if (event) {
+	if (NULL != event) {
 		ResetEvent(event);
 	}
 }
 
 static jint
-initializeWin32ThreadEvents(J9JavaVM* javaVM)
+initializeWin32ThreadEvents(J9JavaVM *javaVM)
 {
-	J9VMThread* aThread;
-	J9HookInterface** hookInterface = javaVM->internalVMFunctions->getVMHookInterface(javaVM);
+	J9VMThread *aThread;
+	J9HookInterface **hookInterface = javaVM->internalVMFunctions->getVMHookInterface(javaVM);
 
 	javaVM->sidecarInterruptFunction = bfuInterrupt;
 	javaVM->sidecarClearInterruptFunction = bfuClearInterrupt;
 
-	if ((*hookInterface)->J9HookRegisterWithCallSite(hookInterface, J9HOOK_VM_THREAD_CREATED, bfuThreadStart, OMR_GET_CALLSITE(), NULL)) {
+	if (0 != (*hookInterface)->J9HookRegisterWithCallSite(hookInterface, J9HOOK_VM_THREAD_CREATED, bfuThreadStart, OMR_GET_CALLSITE(), NULL)) {
 		return JNI_ERR;
 	}
-	if ((*hookInterface)->J9HookRegisterWithCallSite(hookInterface, J9HOOK_VM_THREAD_DESTROY, bfuThreadEnd, OMR_GET_CALLSITE(), NULL)) {
+	if (0 != (*hookInterface)->J9HookRegisterWithCallSite(hookInterface, J9HOOK_VM_THREAD_DESTROY, bfuThreadEnd, OMR_GET_CALLSITE(), NULL)) {
 		return JNI_ERR;
 	}
 
@@ -1115,7 +1124,7 @@ initializeWin32ThreadEvents(J9JavaVM* javaVM)
 	aThread = javaVM->mainThread;
 	do {
 		aThread->sidecarEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
-		if (aThread->sidecarEvent == NULL) {
+		if (NULL == aThread->sidecarEvent) {
 			return JNI_ERR;
 		}
 		aThread = aThread->linkNext;
@@ -1131,7 +1140,6 @@ J9StringBuffer *
 getj9bin()
 {
 	/* misnamed - returns the directory that the jvm DLL is found in, NOT the directory that the J9 VM itself is in. */
-
 	J9StringBuffer *result = NULL;
 #if (defined(LINUX) && !defined(J9ZTPF)) || defined(OSX)
 	Dl_info libraryInfo;
@@ -1151,7 +1159,7 @@ getj9bin()
 	int foundPosition = 0;
 
 	/* assumes LIBPATH (or LD_LIBRARY_PATH for z/TPF) points to where all libjvm.so can be found */
-	while(foundPosition = findDirUplevelToDirContainingFile(&result, LD_ENV_PATH, ':', "libjvm.so", 0, foundPosition)) {
+	while (foundPosition = findDirUplevelToDirContainingFile(&result, LD_ENV_PATH, ':', "libjvm.so", 0, foundPosition)) {
 		/* now screen to see if match is the right libjvm.so - it needs to have a j9vm DLL either in this dir, or in the parent. */
 		DBG_MSG(("found a libjvm.so at offset %d - looking at elem: %s\n", foundPosition, result));
 
@@ -1173,39 +1181,39 @@ getj9bin()
 
 #else /* must be AIX / RS6000 */
 	struct ld_info *linfo, *linfop;
-	int             linfoSize, rc;
-	char           *myAddress, *filename, *membername;
+	int linfoSize, rc;
+	char *myAddress, *filename, *membername;
 
 	/* get loader information */
 	linfoSize = 1024;
 	linfo = malloc(linfoSize);
-	for(;;) {
+	for (;;) {
 		rc = loadquery(L_GETINFO, linfo, linfoSize);
-		if (rc != -1) {
+		if (-1 != rc) {
 			break;
 		}
-		linfoSize *=2; /* insufficient buffer size - increase */
+		linfoSize *= 2; /* insufficient buffer size - increase */
 		linfo = realloc(linfo, linfoSize);
 	}
 
 	/* find entry for my loaded object */
 	myAddress = ((char **)&getj9bin)[0];
 	for (linfop = linfo;;) {
-		char *textorg  = (char *)linfop->ldinfo_textorg;
-		char *textend  = textorg + (unsigned long)linfop->ldinfo_textsize;
-		if (myAddress >=textorg && (myAddress < textend)) {
+		char *textorg = (char *)linfop->ldinfo_textorg;
+		char *textend = textorg + (unsigned long)linfop->ldinfo_textsize;
+		if ((textorg <= myAddress) && (myAddress < textend)) {
 			break;
 		}
-		if (!linfop->ldinfo_next) {
+		if (NULL == linfop->ldinfo_next) {
 			abort();
 		}
 		linfop = (struct ld_info *)((char *)linfop + linfop->ldinfo_next);
 	}
 
-	filename   = linfop->ldinfo_filename;
-	membername = filename+strlen(filename)+1;
+	filename = linfop->ldinfo_filename;
+	membername = filename + strlen(filename) + 1;
 #ifdef DEBUG
-	printf("ldinfo: filename is %s. membername is %s\n",  filename, membername);
+	printf("ldinfo: filename is %s. membername is %s\n", filename, membername);
 #endif
 
 	result = jvmBufferCat(NULL, filename);
@@ -1213,7 +1221,7 @@ getj9bin()
 	truncatePath(jvmBufferData(result));
 
 	free(linfo);
-#endif  /* defined(LINUX) && !defined(J9ZTPF) */
+#endif /* defined(LINUX) && !defined(J9ZTPF) */
 	return result;
 }
 #endif /* ifndef WIN32*/
@@ -1281,12 +1289,12 @@ static BOOLEAN
 preloadLibraries(void)
 {
 	void *vmDLL, *threadDLL, *portDLL;
-	char* lastSep = 0;
-	char* tempchar = 0;
-	char* exeInBuf;
-	J9StringBuffer * jvmDLLNameBuffer = NULL;
+	char *lastSep = 0;
+	char *tempchar = 0;
+	char *exeInBuf;
+	J9StringBuffer *jvmDLLNameBuffer = NULL;
 	char *lastDirName;
-	char* vmDllName = J9_VM_DLL_NAME;
+	char *vmDllName = J9_VM_DLL_NAME;
 	struct stat statBuf;
 #if defined(J9ZOS390)
 	void *javaDLL;
@@ -1297,7 +1305,7 @@ preloadLibraries(void)
 	const char *origLibpath = NULL;
 #endif /* defined(AIXPPC) */
 
-	if (j9vm_dllHandle != 0) {
+	if (NULL != j9vm_dllHandle) {
 		return FALSE;
 	}
 
@@ -1321,13 +1329,13 @@ preloadLibraries(void)
 	lastDirName = strrchr(jvmBufferData(j9binBuffer), DIR_SEPARATOR);
 
 	if (NULL == lastDirName) {
-		fprintf(stderr, "Preload libraries failed to find a valid J9 binary location\n" );
-		exit( -1 ); /* failed */
+		fprintf(stderr, "Preload libraries failed to find a valid J9 binary location\n");
+		exit(-1); /* failed */
 	}
 
 	if (0 == strcmp(lastDirName + 1, "classic")) {
 		truncatePath(jvmBufferData(j9binBuffer)); /* at jre/bin or jre/lib/<arch> */
-		truncatePath(jvmBufferData(j9binBuffer)); /* at jre     or jre/lib        */
+		truncatePath(jvmBufferData(j9binBuffer)); /* at jre or jre/lib */
 #if JAVA_SPEC_VERSION == 8
 		/* remove /lib if present */
 		removeSuffix(jvmBufferData(j9binBuffer), "/lib"); /* at jre */
@@ -1349,7 +1357,7 @@ preloadLibraries(void)
 	jvmDLLNameBuffer = jvmBufferCat(jvmDLLNameBuffer, vmDllName);
 	jvmDLLNameBuffer = jvmBufferCat(jvmDLLNameBuffer, J9PORT_LIBRARY_SUFFIX);
 
-	if(-1 != stat (jvmBufferData(jvmDLLNameBuffer), &statBuf)) {
+	if (-1 != stat(jvmBufferData(jvmDLLNameBuffer), &statBuf)) {
 		jvmInSubdir = TRUE;
 	} else {
 		jvmInSubdir = FALSE;
@@ -1361,7 +1369,7 @@ preloadLibraries(void)
 	jrebinBuffer = NULL;
 
 	/* set up jre bin based on result of subdir knowledge */
-	if(jvmInSubdir) {
+	if (jvmInSubdir) {
 		jrebinBuffer = jvmBufferCat(NULL, jvmBufferData(j9binBuffer));
 		truncatePath(jvmBufferData(jrebinBuffer));
 	} else {
@@ -1396,109 +1404,121 @@ preloadLibraries(void)
 
 	omrsigDLL = preloadLibrary("omrsig", TRUE);
 	if (NULL == omrsigDLL) {
-		fprintf(stderr, "libomrsig failed to load: omrsig\n" );
-		exit( -1 ); /* failed */
+		fprintf(stderr, "libomrsig failed to load: omrsig\n");
+		exit(-1); /* failed */
 	}
 
 	vmDLL = preloadLibrary(vmDllName, TRUE);
 	if (NULL == vmDLL) {
-		fprintf(stderr,"libjvm.so failed to load: %s\n", vmDllName);
-		exit( -1 );	/* failed */
+		fprintf(stderr, "libjvm.so failed to load: %s\n", vmDllName);
+		exit(-1); /* failed */
 	}
 
-	globalCreateVM = (CreateVM) dlsym (vmDLL, CREATE_JAVA_VM_ENTRYPOINT );
-	globalGetVMs = (GetVMs) dlsym (vmDLL,  GET_JAVA_VMS_ENTRYPOINT);
+	globalCreateVM = (CreateVM)dlsym(vmDLL, CREATE_JAVA_VM_ENTRYPOINT);
+	globalGetVMs = (GetVMs)dlsym(vmDLL, GET_JAVA_VMS_ENTRYPOINT);
 	if ((NULL == globalCreateVM) || (NULL == globalGetVMs)) {
 		dlclose(vmDLL);
-		fprintf(stderr,"libjvm.so failed to load: global entrypoints not found\n");
-		exit( -1 );	/* failed */
+		fprintf(stderr, "libjvm.so failed to load: global entrypoints not found\n");
+		exit(-1); /* failed */
 	}
 	j9vm_dllHandle = vmDLL;
 
 #ifdef J9ZOS390
 	/* pre-load libjava.so for IMBZOS functions */
 	javaDLL = preloadLibrary("java", FALSE);
-	if (!javaDLL) {
-	   fprintf(stderr,"libjava.dll failed to load: %s\n", "java");
-	   exit( -1 );     /* failed */
+	if (NULL == javaDLL) {
+		fprintf(stderr, "libjava.dll failed to load: %s\n", "java");
+		exit(-1); /* failed */
 	}
-	globalGetStringPlatform = (pGetStringPlatform) dlsym (javaDLL,  "IBMZOS_GetStringPlatform");
-	globalGetStringPlatformLength = (pGetStringPlatformLength) dlsym (javaDLL,  "IBMZOS_GetStringPlatformLength");
-	globalNewStringPlatform = (pNewStringPlatform) dlsym (javaDLL,  "IBMZOS_NewStringPlatform");
-	global_a2e_vsprintf = (p_a2e_vsprintf) dlsym (javaDLL,  "IBMZOS_a2e_vsprintf");
-	if (!globalGetStringPlatform || !globalGetStringPlatformLength || !globalNewStringPlatform || !global_a2e_vsprintf) {
-	   dlclose(vmDLL);
-	   dlclose(javaDLL);
-	   fprintf(stderr,"libjava.dll failed to load: global entrypoints not found\n");
-	   exit( -1 );     /* failed */
+	globalGetStringPlatform = (pGetStringPlatform)dlsym(javaDLL, "IBMZOS_GetStringPlatform");
+	globalGetStringPlatformLength = (pGetStringPlatformLength)dlsym(javaDLL, "IBMZOS_GetStringPlatformLength");
+	globalNewStringPlatform = (pNewStringPlatform)dlsym(javaDLL, "IBMZOS_NewStringPlatform");
+	global_a2e_vsprintf = (p_a2e_vsprintf)dlsym(javaDLL, "IBMZOS_a2e_vsprintf");
+	if (
+		(NULL == globalGetStringPlatform)
+		|| (NULL == globalGetStringPlatformLength)
+		|| (NULL == globalNewStringPlatform)
+		|| (NULL == global_a2e_vsprintf)
+	) {
+		dlclose(vmDLL);
+		dlclose(javaDLL);
+		fprintf(stderr, "libjava.dll failed to load: global entrypoints not found\n");
+		exit(-1); /* failed */
 	}
 #endif
 
 	threadDLL = preloadLibrary(J9_THREAD_DLL_NAME, TRUE);
-	f_threadGlobal = (ThreadGlobal) dlsym (threadDLL, "omrthread_global");
-	f_threadAttachEx = (ThreadAttachEx) dlsym (threadDLL, "omrthread_attach_ex");
-	f_threadDetach = (ThreadDetach) dlsym (threadDLL, "omrthread_detach");
-	f_monitorEnter = (MonitorEnter) dlsym (threadDLL, "omrthread_monitor_enter");
-	f_monitorExit = (MonitorExit) dlsym (threadDLL, "omrthread_monitor_exit");
-	f_monitorInit = (MonitorInit) dlsym (threadDLL, "omrthread_monitor_init_with_name");
-	f_monitorDestroy = (MonitorDestroy) dlsym (threadDLL, "omrthread_monitor_destroy");
-	f_threadLibControl = (ThreadLibControl) dlsym (threadDLL, "omrthread_lib_control");
-	f_setCategory = (SetCategory) dlsym (threadDLL, "omrthread_set_category");
-	f_libEnableCPUMonitor = (LibEnableCPUMonitor) dlsym (threadDLL, "omrthread_lib_enable_cpu_monitor");
-	f_threadSleep = (ThreadSleep) dlsym (threadDLL, "omrthread_sleep");
-	if (!f_threadGlobal || !f_threadAttachEx || !f_threadDetach || !f_monitorEnter || !f_monitorExit || !f_monitorInit
-		|| !f_monitorDestroy || !f_threadLibControl || !f_setCategory || !f_libEnableCPUMonitor || !f_threadSleep
+	f_threadGlobal = (ThreadGlobal)dlsym(threadDLL, "omrthread_global");
+	f_threadAttachEx = (ThreadAttachEx)dlsym(threadDLL, "omrthread_attach_ex");
+	f_threadDetach = (ThreadDetach)dlsym(threadDLL, "omrthread_detach");
+	f_monitorEnter = (MonitorEnter)dlsym(threadDLL, "omrthread_monitor_enter");
+	f_monitorExit = (MonitorExit)dlsym(threadDLL, "omrthread_monitor_exit");
+	f_monitorInit = (MonitorInit)dlsym(threadDLL, "omrthread_monitor_init_with_name");
+	f_monitorDestroy = (MonitorDestroy)dlsym(threadDLL, "omrthread_monitor_destroy");
+	f_threadLibControl = (ThreadLibControl)dlsym(threadDLL, "omrthread_lib_control");
+	f_setCategory = (SetCategory)dlsym(threadDLL, "omrthread_set_category");
+	f_libEnableCPUMonitor = (LibEnableCPUMonitor)dlsym(threadDLL, "omrthread_lib_enable_cpu_monitor");
+	f_threadSleep = (ThreadSleep)dlsym(threadDLL, "omrthread_sleep");
+	if (
+		(NULL == f_threadGlobal)
+		|| (NULL == f_threadAttachEx)
+		|| (NULL == f_threadDetach)
+		|| (NULL == f_monitorEnter)
+		|| (NULL == f_monitorExit)
+		|| (NULL == f_monitorInit)
+		|| (NULL == f_monitorDestroy)
+		|| (NULL == f_threadLibControl)
+		|| (NULL == f_setCategory)
+		|| (NULL == f_libEnableCPUMonitor)
+		|| (NULL == f_threadSleep)
 	) {
 		dlclose(vmDLL);
 #ifdef J9ZOS390
 		dlclose(javaDLL);
 #endif
 		dlclose(threadDLL);
-		fprintf(stderr,"libjvm.so failed to load: thread library entrypoints not found\n");
-		exit( -1 );	/* failed */
+		fprintf(stderr, "libjvm.so failed to load: thread library entrypoints not found\n");
+		exit(-1); /* failed */
 	}
 	thread_dllHandle = threadDLL;
 
 	portDLL = preloadLibrary(J9_PORT_DLL_NAME, TRUE);
-	portInitLibrary = (PortInitLibrary) dlsym (portDLL, "j9port_init_library");
-	portGetSizeFn = (PortGetSize) dlsym (portDLL, "j9port_getSize");
-	portGetVersionFn = (PortGetVersion) dlsym (portDLL, "j9port_getVersion");
-	if (!portInitLibrary) {
+	portInitLibrary = (PortInitLibrary)dlsym(portDLL, "j9port_init_library");
+	portGetSizeFn = (PortGetSize)dlsym(portDLL, "j9port_getSize");
+	portGetVersionFn = (PortGetVersion)dlsym(portDLL, "j9port_getVersion");
+	if (NULL == portInitLibrary) {
 		dlclose(vmDLL);
 #ifdef J9ZOS390
 		dlclose(javaDLL);
 #endif
 		dlclose(threadDLL);
 		dlclose(portDLL);
-		fprintf(stderr,"libjvm.so failed to load: %s entrypoints not found\n", J9_PORT_DLL_NAME);
-		exit( -1 );	/* failed */
+		fprintf(stderr, "libjvm.so failed to load: %s entrypoints not found\n", J9_PORT_DLL_NAME);
+		exit(-1); /* failed */
 	}
 
 	return TRUE;
 }
 #endif /* defined(J9UNIX) || defined(J9ZOS390) */
 
-
-
-
-int jio_fprintf(FILE * stream, const char * format, ...) {
+int
+jio_fprintf(FILE *stream, const char *format, ...)
+{
 	va_list args;
 
 	Trc_SC_fprintf_Entry();
 
-	va_start( args, format );
+	va_start(args, format);
 	vfprintf(stream, format, args);
-	va_end( args );
+	va_end(args);
 
 	Trc_SC_fprintf_Exit(0);
 
 	return 0;
 }
 
-
-
 int
-jio_snprintf(char * str, int n, const char * format, ...)
+jio_snprintf(char *str, int n, const char *format, ...)
 {
 	va_list args;
 	int result;
@@ -1506,21 +1526,17 @@ jio_snprintf(char * str, int n, const char * format, ...)
 	Trc_SC_snprintf_Entry();
 
 	va_start(args, format);
-	result = vsnprintf( str, n, format, args );
+	result = vsnprintf(str, n, format, args);
 	va_end(args);
 
 	Trc_SC_snprintf_Exit(result);
 
 	return result;
-
 }
 
-
-
 int
-jio_vfprintf(FILE * stream, const char * format, va_list args)
+jio_vfprintf(FILE *stream, const char *format, va_list args)
 {
-
 	Trc_SC_vfprintf_Entry(stream, format);
 
 	vfprintf(stream, format, args);
@@ -1530,16 +1546,14 @@ jio_vfprintf(FILE * stream, const char * format, va_list args)
 	return 0;
 }
 
-
-
 int
-jio_vsnprintf(char * str, int n, const char * format, va_list args)
+jio_vsnprintf(char *str, int n, const char *format, va_list args)
 {
 	int result;
 
 	Trc_SC_vsnprintf_Entry(str, n, format);
 
-	result = vsnprintf( str, n, format, args );
+	result = vsnprintf(str, n, format, args);
 
 	Trc_SC_vsnprintf_Exit(result);
 
@@ -1554,13 +1568,17 @@ typedef struct J9SpecialArguments {
 	const char *executableJarPath;
 	BOOLEAN captureCommandLine;
 } J9SpecialArguments;
+
 /**
- * Look for special options:
- * -verbose:init
- * -Xoss
- * argument encoding
- * -Xcheck:memory
- * and return the total size required for the strings
+ * Scan for an initial set of command-line arguments, including but not limited to
+ * those contained in J9SpecialArguments, and calculate the length of the command-line
+ * arguments string.
+ *
+ * @param args pointer to JavaVMInitArgs
+ * @param specialArgs pointer to J9SpecialArguments
+ * @param createParams pointer to J9CreateJavaVMParams
+ *
+ * @return length of the command-line arguments string
  */
 static UDATA
 initialArgumentScan(JavaVMInitArgs *args, J9SpecialArguments *specialArgs, J9CreateJavaVMParams *createParams)
@@ -1571,18 +1589,17 @@ initialArgumentScan(JavaVMInitArgs *args, J9SpecialArguments *specialArgs, J9Cre
 	const char *javaCommandValue = NULL;
 	const char *classPath = "-Djava.class.path=";
 	const char *classPathValue = NULL;
-	jint argCursor;
+	jint argCursor = 0;
 	UDATA argumentsSize = 0;
 
 #ifdef WIN32
 	Assert_SC_notNull(specialArgs->argEncoding);
 #endif
-	for (argCursor=0; argCursor < args->nOptions; argCursor++) {
-		argumentsSize += strlen(args->options[argCursor].optionString) + 1; /* add space for the \0 */
-		/* scan for -Xoss */
+	for (argCursor = 0; argCursor < args->nOptions; argCursor++) {
+		argumentsSize += strlen(args->options[argCursor].optionString) + 1; /* + 1 for null-termination. */
 		if (0 == strncmp(args->options[argCursor].optionString, "-Xoss", 5)) {
 			*(specialArgs->xoss) = argCursor;
-		} else if (strncmp(args->options[argCursor].optionString, OPT_VERBOSE_INIT, strlen(OPT_VERBOSE_INIT))==0) {
+		} else if (0 == strncmp(args->options[argCursor].optionString, OPT_VERBOSE_INIT, strlen(OPT_VERBOSE_INIT))) {
 			specialArgs->localVerboseLevel = VERBOSE_INIT;
 			createParams->flags |= J9_CREATEJAVAVM_VERBOSE_INIT;
 		} else if (0 == strncmp(args->options[argCursor].optionString, javaCommand, strlen(javaCommand))) {
@@ -1611,26 +1628,30 @@ initialArgumentScan(JavaVMInitArgs *args, J9SpecialArguments *specialArgs, J9Cre
 		}
 	}
 
-	if ((NULL != classPathValue) && (NULL != javaCommandValue) && (strcmp(javaCommandValue, classPathValue) == 0)) {
+	if ((NULL != classPathValue) && (NULL != javaCommandValue) && (0 == strcmp(javaCommandValue, classPathValue))) {
 		specialArgs->executableJarPath = javaCommandValue;
 	}
 
-	if (TRUE == xCheckFound) {
-		/* scan backwards for -Xcheck:memory.  There may be multiple -Xcheck options, so check them all, stop when we hit -Xcheck:memory */
-		for( argCursor = args->nOptions - 1 ; argCursor >= 0; argCursor-- ) {
-			char* memcheckArgs[2];
+	if (xCheckFound) {
+		/* Scan backwards for -Xcheck:memory.
+		 * There may be multiple -Xcheck options, so check them all, stop when we hit -Xcheck:memory.
+		 */
+		for (argCursor = args->nOptions - 1; argCursor >= 0; argCursor--) {
+			/* Set up dummy command-line args for parseCmdLine. */
+			char *memcheckArgs[2] = {
+					"", /* Program name -- unused. */
+					args->options[argCursor].optionString
+			};
 
-			/* fake up command-line args for parseCmdLine */
-			memcheckArgs[0] = ""; /* program name -- unused */
-			memcheckArgs[1] = args->options[argCursor].optionString;
-			if (memoryCheck_parseCmdLine(&j9portLibrary, 1, memcheckArgs) != 0) {
-				/* Abandon -Xcheck processing */
-				/* -Xcheck:memory overrides env var */
+			if (0 != memoryCheck_parseCmdLine(&j9portLibrary, 1, memcheckArgs)) {
+				/* Abandon -Xcheck processing. */
+				/* -Xcheck:memory overrides env var. */
 				*(specialArgs->ibmMallocTraceSet) = FALSE;
 				break;
 			}
 		}
 	}
+
 	return argumentsSize;
 }
 
@@ -1640,21 +1661,24 @@ printVmArgumentsList(J9VMInitArgs *argList)
 	UDATA i;
 	JavaVMInitArgs *actualArgs = argList->actualVMArgs;
 	for (i = 0; i < argList->nOptions; ++i) {
-		J9CmdLineOption* j9Option = &(argList->j9Options[i]);
+		J9CmdLineOption *j9Option = &(argList->j9Options[i]);
 		char *envVar = j9Option->fromEnvVar;
 
 		if (NULL == envVar) {
 			envVar = "N/A";
 		}
-		fprintf(stderr, "Option %" OMR_PRIuPTR " optionString=\"%s\" extraInfo=%p from environment variable =\"%s\"\n", i,
-				actualArgs->options[i].optionString,
-				actualArgs->options[i].extraInfo,
-				envVar);
+		fprintf(
+			stderr,
+			"Option %" OMR_PRIuPTR " optionString=\"%s\" extraInfo=%p from environment variable =\"%s\"\n",
+			i,
+			actualArgs->options[i].optionString,
+			actualArgs->options[i].extraInfo,
+			envVar);
 	}
 }
 
 static void
-setNLSCatalog(struct J9PortLibrary* portLib)
+setNLSCatalog(struct J9PortLibrary *portLib)
 {
 	J9StringBuffer *nlsSearchPathBuffer = NULL;
 	const char *nlsSearchPaths = NULL;
@@ -1681,93 +1705,94 @@ setNLSCatalog(struct J9PortLibrary* portLib)
 	nlsSearchPathBuffer = NULL;
 }
 
-
-static jint initializeReflectionGlobals(JNIEnv * env, BOOLEAN includeAccessors) {
-	J9VMThread *vmThread = (J9VMThread *) env;
-	J9JavaVM * vm = vmThread->javaVM;
+static jint
+initializeReflectionGlobals(JNIEnv *env, BOOLEAN includeAccessors)
+{
+	J9VMThread *vmThread = (J9VMThread *)env;
+	J9JavaVM *vm = vmThread->javaVM;
 	jclass clazz, clazzConstructorAccessorImpl, clazzMethodAccessorImpl;
 
 	clazz = (*env)->FindClass(env, "java/lang/Class");
-	if (!clazz) {
+	if (NULL == clazz) {
 		return JNI_ERR;
 	}
 
 	jlClass = (*env)->NewGlobalRef(env, clazz);
-	if (!jlClass) {
+	if (NULL == jlClass) {
 		return JNI_ERR;
 	}
 
 #ifdef J9VM_IVE_RAW_BUILD /* J9VM_IVE_RAW_BUILD is not enabled by default */
 	classNameFID = (*env)->GetFieldID(env, clazz, "name", "Ljava/lang/String;");
-	if (!classNameFID) {
+	if (NULL == classNameFID) {
 		return JNI_ERR;
 	}
 #else /* J9VM_IVE_RAW_BUILD */
 	classDepthMID = (*env)->GetStaticMethodID(env, clazz, "classDepth", "(Ljava/lang/String;)I");
-	if (!classDepthMID) {
+	if (NULL == classDepthMID) {
 		return JNI_ERR;
 	}
 
 	classLoaderDepthMID = (*env)->GetStaticMethodID(env, clazz, "classLoaderDepth", "()I");
-	if (!classLoaderDepthMID) {
+	if (NULL == classLoaderDepthMID) {
 		return JNI_ERR;
 	}
 
 	currentClassLoaderMID = (*env)->GetStaticMethodID(env, clazz, "currentClassLoader", "()Ljava/lang/ClassLoader;");
-	if (!currentClassLoaderMID) {
+	if (NULL == currentClassLoaderMID) {
 		return JNI_ERR;
 	}
 
 	currentLoadedClassMID = (*env)->GetStaticMethodID(env, clazz, "currentLoadedClass", "()Ljava/lang/Class;");
-	if (!currentLoadedClassMID) {
+	if (NULL == currentLoadedClassMID) {
 		return JNI_ERR;
 	}
 #endif /* J9VM_IVE_RAW_BUILD */
 
 	getNameMID = (*env)->GetMethodID(env, clazz, "getName", "()Ljava/lang/String;");
-	if (!getNameMID) {
+	if (NULL == getNameMID) {
 		return JNI_ERR;
 	}
 
 	clazz = (*env)->FindClass(env, "java/lang/Thread");
-	if (!clazz) {
+	if (NULL == clazz) {
 		return JNI_ERR;
 	}
 
 	jlThread = (*env)->NewGlobalRef(env, clazz);
-	if (!jlThread) {
+	if (NULL == jlThread) {
 		return JNI_ERR;
 	}
 
 #if JAVA_SPEC_VERSION < 21
 	sleepMID = (*env)->GetStaticMethodID(env, clazz, "sleep", "(J)V");
-	if (!sleepMID) {
+	if (NULL == sleepMID) {
 		return JNI_ERR;
 	}
 #else /* JAVA_SPEC_VERSION < 21 */
 	sleepNanosMID = (*env)->GetStaticMethodID(env, clazz, "sleep", "(JI)V");
-	if (!sleepNanosMID) {
+	if (NULL == sleepNanosMID) {
 		return JNI_ERR;
 	}
 #endif /* JAVA_SPEC_VERSION < 21 */
 
 	clazz = (*env)->FindClass(env, "java/lang/Object");
-	if (!clazz) {
+	if (NULL == clazz) {
 		return JNI_ERR;
 	}
 
 	waitMID = (*env)->GetMethodID(env, clazz, "wait", "(J)V");
-	if (!waitMID) {
+	if (NULL == waitMID) {
 		return JNI_ERR;
 	}
 
 	notifyMID = (*env)->GetMethodID(env, clazz, "notify", "()V");
-	if (!notifyMID) {
+	if (NULL == notifyMID) {
 		return JNI_ERR;
 	}
 
 	notifyAllMID = (*env)->GetMethodID(env, clazz, "notifyAll", "()V");
-	if (!notifyAllMID) {
+	if (NULL == notifyAllMID) {
 		return JNI_ERR;
 	}
 
@@ -1779,7 +1804,7 @@ static jint initializeReflectionGlobals(JNIEnv * env, BOOLEAN includeAccessors) 
 			clazzConstructorAccessorImpl = (*env)->FindClass(env, "sun/reflect/ConstructorAccessorImpl");
 			clazzMethodAccessorImpl = (*env)->FindClass(env, "sun/reflect/MethodAccessorImpl");
 		}
-		if ( (NULL == clazzConstructorAccessorImpl) || (NULL == clazzMethodAccessorImpl))	{
+		if ((NULL == clazzConstructorAccessorImpl) || (NULL == clazzMethodAccessorImpl)) {
 			return JNI_ERR;
 		}
 		vm->srConstructorAccessor = (*env)->NewGlobalRef(env, clazzConstructorAccessorImpl);
@@ -1951,7 +1976,7 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 	jint result = JNI_OK;
 	IDATA xoss = -1;
 	IDATA ibmMallocTraceSet = FALSE;
- 	char cwd[J9_MAX_PATH];
+	char cwd[J9_MAX_PATH];
 #if defined(WIN32)
 	wchar_t unicodeTemp[J9_MAX_PATH];
 	char *altLibraryPathBuffer = NULL;
@@ -1995,12 +2020,12 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 
 	result = tpf_eownrc(TPF_SET_EOWNR, "IBMRT4J                        ");
 
-	if (result < 0)  {
+	if (result < 0) {
 		fprintf(stderr, "Failed to issue tpf_eownrc.");
 		return JNI_ERR;
 	}
-	result = tmslc(TMSLC_ENABLE+TMSLC_HOLD, "IBMRT4J");
-	if (result < 0)  {
+	result = tmslc(TMSLC_ENABLE + TMSLC_HOLD, "IBMRT4J");
+	if (result < 0) {
 		fprintf(stderr, "Failed to start time slicing.");
 		return JNI_ERR;
 	}
@@ -2015,7 +2040,7 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 #if defined(AIXPPC) || defined(J9ZOS390)
 	libpathValue = getenv(ENV_LIBPATH);
 	if (NULL != libpathValue) {
-		size_t pathLength = strlen(libpathValue) +1;
+		size_t pathLength = strlen(libpathValue) + 1;
 		char *envTemp = malloc(pathLength);
 		if (NULL == envTemp) {
 			result = JNI_ERR;
@@ -2028,7 +2053,7 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 #if defined(J9UNIX)
 	ldLibraryPathValue = getenv(ENV_LD_LIB_PATH);
 	if (NULL != ldLibraryPathValue) {
-		size_t pathLength = strlen(ldLibraryPathValue) +1;
+		size_t pathLength = strlen(ldLibraryPathValue) + 1;
 		char *envTemp = malloc(pathLength);
 		if (NULL == envTemp) {
 			result = JNI_ERR;
@@ -2039,7 +2064,7 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 	}
 #endif /* defined(J9UNIX) */
 
-	if (BFUjavaVM != NULL) {
+	if (NULL != BFUjavaVM) {
 		result = JNI_ERR;
 		goto exit;
 	}
@@ -2048,9 +2073,9 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 	/* debug code */
 	Xj9BreakPoint("jvm");
 	/* Force iSeries create JVM flow */
-	if (Xj9IleCreateJavaVmCalled() == 0) {
-	    result = Xj9CallIleCreateJavaVm(pvm, penv, vm_args);
-	    goto exit;
+	if (0 == Xj9IleCreateJavaVmCalled()) {
+		result = Xj9CallIleCreateJavaVm(pvm, penv, vm_args);
+		goto exit;
 	}
 #endif
 
@@ -2092,7 +2117,7 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 				 */
 				const ptrdiff_t offsetFromStart = needle - currentLibPath;
 				if ((0 == offsetFromStart) || (':' == needle[-1])) {
-					if  ((':' == needle[usrLibLength]) || ('\0' == needle[usrLibLength])) {
+					if ((':' == needle[usrLibLength]) || ('\0' == needle[usrLibLength])) {
 						/* Found a match */
 						appendToLibPath = FALSE;
 						break;
@@ -2118,13 +2143,13 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 	preloadLibraries();
 
 #ifdef WIN32
-	if (GetCurrentDirectoryW(J9_MAX_PATH, unicodeTemp) == 0) {
+	if (0 == GetCurrentDirectoryW(J9_MAX_PATH, unicodeTemp)) {
 		strcpy(cwd, "\\");
 	} else {
-		WideCharToMultiByte(OS_ENCODING_CODE_PAGE, OS_ENCODING_WC_FLAGS, unicodeTemp, -1,  cwd, J9_MAX_PATH, NULL, NULL);
+		WideCharToMultiByte(OS_ENCODING_CODE_PAGE, OS_ENCODING_WC_FLAGS, unicodeTemp, -1, cwd, J9_MAX_PATH, NULL, NULL);
 	}
 #else
-	if (getcwd(cwd, J9_MAX_PATH) == NULL) {
+	if (NULL == getcwd(cwd, J9_MAX_PATH)) {
 		strcpy(cwd, ".");
 	}
 #endif
@@ -2170,26 +2195,34 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 		case J9PORT_ERROR_INIT_WRONG_MAJOR_VERSION: {
 			portGetVersionFn(&j9portLibrary, &actualVersion);
 
-			fprintf(stderr,"Error: Port Library failed to initialize: expected major version %u, actual version is %u\n",
-					portLibraryVersion.majorVersionNumber, actualVersion.majorVersionNumber);
+			fprintf(
+					stderr,
+					"Error: Port Library failed to initialize: expected major version %u, actual version is %u\n",
+					portLibraryVersion.majorVersionNumber,
+					actualVersion.majorVersionNumber);
 			break;
 		}
 		case J9PORT_ERROR_INIT_WRONG_SIZE: {
 			UDATA actualSize = portGetSizeFn(&portLibraryVersion);
-			fprintf(stderr,"Error: Port Library failed to initialize: expected library size %" OMR_PRIuPTR ", actual size is %" OMR_PRIuPTR "\n",
-					expectedLibrarySize, actualSize);
+			fprintf(
+					stderr,
+					"Error: Port Library failed to initialize: expected library size %" OMR_PRIuPTR ", actual size is %" OMR_PRIuPTR "\n",
+					expectedLibrarySize,
+					actualSize);
 			break;
 		}
 		case J9PORT_ERROR_INIT_WRONG_CAPABILITIES: {
-			fprintf(stderr,"Error: Port Library failed to initialize: capabilities do not match\n");
+			fprintf(stderr, "Error: Port Library failed to initialize: capabilities do not match\n");
 			break;
 		}
-		default: fprintf(stderr,"Error: Port Library failed to initialize: %i\n", portLibraryInitStatus); break;
-		/* need this to handle legacy port libraries */
+		default:
+			fprintf(stderr, "Error: Port Library failed to initialize: %i\n", portLibraryInitStatus);
+			break;
+			/* need this to handle legacy port libraries */
 		}
 
 #if defined(AIXPPC)
-		/* Release memory if allocated by strdup() in backupLibpath() previously */
+		/* Release memory if allocated by strdup() in backupLibpath() previously. */
 		freeBackupLibpath(&libpathBackup);
 
 		/* restore LIBPATH to avoid polluting child processes */
@@ -2203,8 +2236,8 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 	{
 		IDATA threadCategoryResult = f_threadLibControl(J9THREAD_LIB_CONTROL_GET_MEM_CATEGORIES, (UDATA)&j9MainMemCategorySet);
 
-		if (threadCategoryResult) {
-			fprintf(stderr,"Error: Couldn't get memory categories from thread library.\n");
+		if (0 != threadCategoryResult) {
+			fprintf(stderr, "Error: Couldn't get memory categories from thread library.\n");
 #if defined(AIXPPC)
 			/* Release memory if allocated by strdup() in backupLibpath() previously */
 			freeBackupLibpath(&libpathBackup);
@@ -2222,14 +2255,13 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 	Assert_SC_true(J2SE_CURRENT_VERSION >= J2SE_18);
 	setNLSCatalog(&j9portLibrary);
 
-
 #ifdef WIN32
-	if (GetEnvironmentVariableW(IBM_MALLOCTRACE_STR, NULL, 0) > 0)
+	if (0 < GetEnvironmentVariableW(IBM_MALLOCTRACE_STR, NULL, 0))
 		ibmMallocTraceSet = TRUE;
 	altJavaHomeSpecified = (GetEnvironmentVariableW(ALT_JAVA_HOME_DIR_STR, NULL, 0) > 0);
 #endif
 #if defined(J9UNIX) || defined(J9ZOS390)
-	if (getenv(IBM_MALLOCTRACE_STR)) {
+	if (NULL != getenv(IBM_MALLOCTRACE_STR)) {
 		ibmMallocTraceSet = TRUE;
 	}
 #endif /* defined(J9UNIX) || defined(J9ZOS390) */
@@ -2277,13 +2309,13 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 		if (NULL != specialArgs.executableJarPath) {
 			if (NULL == f_j9_GetInterface) {
 #ifdef WIN32
-				f_j9_GetInterface = (J9GetInterface) GetProcAddress (j9vm_dllHandle, (LPCSTR) "J9_GetInterface");
+				f_j9_GetInterface = (J9GetInterface)GetProcAddress(j9vm_dllHandle, (LPCSTR) "J9_GetInterface");
 #else
-				f_j9_GetInterface = (J9GetInterface) dlsym (j9vm_dllHandle, "J9_GetInterface");
+				f_j9_GetInterface = (J9GetInterface)dlsym(j9vm_dllHandle, "J9_GetInterface");
 #endif /* WIN32 */
 			}
 			/* j9binBuffer->data is null terminated */
-			zipFuncs = (J9ZipFunctionTable*) f_j9_GetInterface(IF_ZIPSUP, &j9portLibrary, j9binBuffer->data);
+			zipFuncs = (J9ZipFunctionTable *)f_j9_GetInterface(IF_ZIPSUP, &j9portLibrary, j9binBuffer->data);
 #if defined(WIN32)
 			{
 				BOOLEAN conversionSucceed = FALSE;
@@ -2329,13 +2361,27 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 			/* Add the default options file */
 			(0 != addOptionsDefaultFile(&j9portLibrary, &vmArgumentsList, optionsDefaultFileLocation, localVerboseLevel))
 			|| (0 != addXjcl(&j9portLibrary, &vmArgumentsList, J2SE_CURRENT_VERSION))
-			|| (0 != addBootLibraryPath(&j9portLibrary, &vmArgumentsList, "-Dcom.ibm.oti.vm.bootstrap.library.path=",
-					jvmBufferData(j9binBuffer), jvmBufferData(jrebinBuffer)))
-			|| (0 != addBootLibraryPath(&j9portLibrary, &vmArgumentsList, "-Dsun.boot.library.path=",
-					jvmBufferData(j9binBuffer), jvmBufferData(jrebinBuffer)))
-			|| (0 != addJavaLibraryPath(&j9portLibrary, &vmArgumentsList, argEncoding, jvmInSubdir,
-					jvmBufferData(j9binBuffer), jvmBufferData(jrebinBuffer),
-					libpathValue, ldLibraryPathValue))
+			|| (0 != addBootLibraryPath(
+						&j9portLibrary,
+						&vmArgumentsList,
+						"-Dcom.ibm.oti.vm.bootstrap.library.path=",
+						jvmBufferData(j9binBuffer),
+						jvmBufferData(jrebinBuffer)))
+			|| (0 != addBootLibraryPath(
+						&j9portLibrary,
+						&vmArgumentsList,
+						"-Dsun.boot.library.path=",
+						jvmBufferData(j9binBuffer),
+						jvmBufferData(jrebinBuffer)))
+			|| (0 != addJavaLibraryPath(
+						&j9portLibrary,
+						&vmArgumentsList,
+						argEncoding,
+						jvmInSubdir,
+						jvmBufferData(j9binBuffer),
+						jvmBufferData(jrebinBuffer),
+						libpathValue,
+						ldLibraryPathValue))
 			|| (0 != addJavaHome(&j9portLibrary, &vmArgumentsList, altJavaHomeSpecified, jvmBufferData(j9libBuffer)))
 			|| (doAddExtDir && (0 != addExtDir(&j9portLibrary, &vmArgumentsList, jvmBufferData(j9libBuffer), args, J2SE_CURRENT_VERSION)))
 			|| (0 != addUserDir(&j9portLibrary, &vmArgumentsList, cwd))
@@ -2344,8 +2390,14 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 #endif /* defined(OPENJ9_BUILD) */
 			|| (0 != addJarArguments(&j9portLibrary, &vmArgumentsList, specialArgs.executableJarPath, zipFuncs, localVerboseLevel))
 			|| (0 != addEnvironmentVariables(&j9portLibrary, args, &vmArgumentsList, localVerboseLevel))
-			|| (0 != addLauncherArgs(&j9portLibrary, args, launcherArgumentsSize, &vmArgumentsList,
-					&xServiceBuffer, argEncoding, localVerboseLevel))
+			|| (0 != addLauncherArgs(
+						&j9portLibrary,
+						args,
+						launcherArgumentsSize,
+						&vmArgumentsList,
+						&xServiceBuffer,
+						argEncoding,
+						localVerboseLevel))
 #if (JAVA_SPEC_VERSION != 8) || defined(OPENJ9_BUILD)
 			|| (0 != addEnvironmentVariableArguments(&j9portLibrary, ENVVAR_JAVA_OPTIONS, &vmArgumentsList, localVerboseLevel))
 #endif /* (JAVA_SPEC_VERSION != 8) || defined(OPENJ9_BUILD) */
@@ -2389,23 +2441,25 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 	createParams.globalJavaVM = &BFUjavaVM;
 
 	if (VERBOSE_INIT == localVerboseLevel) {
-		fprintf(stderr, "VM known paths\t- j9libvm directory: %s\n\t\t- j2seRoot directory: %s\n",
-			createParams.j9libvmDirectory,
-			createParams.j2seRootDirectory);
+		fprintf(
+				stderr,
+				"VM known paths\t- j9libvm directory: %s\n\t\t- j2seRoot directory: %s\n",
+				createParams.j9libvmDirectory,
+				createParams.j2seRootDirectory);
 
 		printVmArgumentsList(j9ArgList);
 	}
 	createParams.vm_args = j9ArgList;
 
-	result = globalCreateVM((JavaVM**)&BFUjavaVM, penv, &createParams);
+	result = globalCreateVM((JavaVM **)&BFUjavaVM, penv, &createParams);
 
 #ifdef DEBUG
-	fprintf(stdout,"Finished, result %d, env %llx\n", result, (long long)*penv);
+	fprintf(stdout, "Finished, result %d, env %llx\n", result, (long long)*penv);
 	fflush(stdout);
 #endif
-	if (result == JNI_OK) {
+	if (JNI_OK == result) {
 		BOOLEAN initializeReflectAccessors = TRUE;
-		JavaVM * vm = (JavaVM*)BFUjavaVM;
+		JavaVM *vm = (JavaVM *)BFUjavaVM;
 		*pvm = vm;
 
 		/* Initialize the Sun VMI */
@@ -2415,11 +2469,11 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 		globalDestroyVM = globalInvokeInterface.DestroyJavaVM;
 		globalInvokeInterface.DestroyJavaVM = DestroyJavaVM;
 		issueWriteBarrier();
-		*vm = (struct JNIInvokeInterface_ *) &globalInvokeInterface;
+		*vm = (struct JNIInvokeInterface_ *)&globalInvokeInterface;
 
 #ifdef WIN32
 		result = initializeWin32ThreadEvents(BFUjavaVM);
-		if (result != JNI_OK) {
+		if (JNI_OK != result) {
 			(**pvm)->DestroyJavaVM(*pvm);
 			goto exit;
 		}
@@ -2427,7 +2481,7 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 
 		/* Initialize the VM interface */
 		result = initializeReflectionGlobals(*penv, initializeReflectAccessors);
-		if (result != JNI_OK) {
+		if (JNI_OK != result) {
 			(**pvm)->DestroyJavaVM(*pvm);
 			goto exit;
 		}
@@ -2435,16 +2489,16 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 		freeGlobals();
 	}
 
-	if ((result == JNI_OK) && (BFUjavaVM->runtimeFlags & J9_RUNTIME_SHOW_VERSION)) {
-		JNIEnv * env = *penv;
+	if ((JNI_OK == result) && J9_ARE_ANY_BITS_SET(BFUjavaVM->runtimeFlags, J9_RUNTIME_SHOW_VERSION)) {
+		JNIEnv *env = *penv;
 		jclass clazz = (*env)->FindClass(env, "sun/misc/Version");
 
-		if (clazz == NULL) {
+		if (NULL == clazz) {
 			(*env)->ExceptionClear(env);
 		} else {
 			jmethodID mid = (*env)->GetStaticMethodID(env, clazz, "print", "()V");
 
-			if (mid != NULL) {
+			if (NULL != mid) {
 				(*env)->CallStaticVoidMethod(env, clazz, mid);
 				if (!(*env)->ExceptionCheck(env)) {
 					j9portLibrary.omrPortLibrary.tty_printf(&j9portLibrary.omrPortLibrary, "\n");
@@ -2464,7 +2518,7 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 #endif /* defined(AIXPPC) */
 
 	if (JNI_OK == result) {
-		J9JavaVM *env = (J9JavaVM *) BFUjavaVM;
+		J9JavaVM *env = (J9JavaVM *)BFUjavaVM;
 		J9VMThread *currentThread = env->mainThread;
 		omrthread_t thread = currentThread->osThread;
 		f_setCategory(thread, J9THREAD_CATEGORY_APPLICATION_THREAD, J9THREAD_TYPE_SET_MODIFY);
@@ -2489,7 +2543,6 @@ exit:
 	return result;
 }
 
-
 /**
  *	jint JNICALL JNI_GetCreatedJavaVMs(JavaVM **vmBuf, jsize bufLen, jsize *nVMs)
  *  Return pointers to all the virtual machine instances that have been
@@ -2505,7 +2558,6 @@ exit:
  *
  *	DLL: jvm
  */
-
 
 jint JNICALL
 JNI_GetCreatedJavaVMs(JavaVM **vmBuf, jsize bufLen, jsize *nVMs)
@@ -2529,7 +2581,6 @@ JNI_GetCreatedJavaVMs(JavaVM **vmBuf, jsize bufLen, jsize *nVMs)
 	return result;
 }
 
-
 /**
  *	jint JNICALL JNI_GetDefaultJavaVMInitArgs(void *vm_args)
  *  Return a default configuration for the java virtual machine
@@ -2544,7 +2595,8 @@ JNI_GetCreatedJavaVMs(JavaVM **vmBuf, jsize bufLen, jsize *nVMs)
  *	DLL: jvm
  */
 
-jint JNICALL JNI_GetDefaultJavaVMInitArgs(void *vm_args)
+jint JNICALL
+JNI_GetDefaultJavaVMInitArgs(void *vm_args)
 {
 	jint requestedVersion = ((JavaVMInitArgs *)vm_args)->version;
 
@@ -2582,21 +2634,18 @@ jint JNICALL JNI_GetDefaultJavaVMInitArgs(void *vm_args)
 	return JNI_EVERSION;
 }
 
-
-
-
 #ifdef J9ZOS390
 /**
- *      jint JNICALL GetStringPlatform(JNIEnv*, jstring, char*, jint, const char *);
- *      This provides an invocation API that runs the J9 VM in BFU/sidecar mode
+ * jint JNICALL GetStringPlatform(JNIEnv*, jstring, char*, jint, const char *);
+ * This provides an invocation API that runs the J9 VM in BFU/sidecar mode
  *
- *  @returns zero on success; otherwise, return a negative number
+ * @returns zero on success; otherwise, return a negative number
  *
- *      DLL: java
+ * DLL: java
  */
 
 jint
-GetStringPlatform(JNIEnv* env, jstring instr, char* outstr, jint outlen, const char* encoding)
+GetStringPlatform(JNIEnv *env, jstring instr, char *outstr, jint outlen, const char *encoding)
 {
 	jint result;
 
@@ -2611,19 +2660,16 @@ GetStringPlatform(JNIEnv* env, jstring instr, char* outstr, jint outlen, const c
 	return result;
 }
 
-
-
 /**
- *      jint JNICALL GetStringPlatformLength(JNIEnv*, jstring, char*, jint, const char *);
- *      This provides an invocation API that runs the J9 VM in BFU/sidecar mode
+ * jint JNICALL GetStringPlatformLength(JNIEnv*, jstring, char*, jint, const char *);
+ * This provides an invocation API that runs the J9 VM in BFU/sidecar mode
  *
- *  @returns zero on success; otherwise, return a negative number
+ * @returns zero on success; otherwise, return a negative number
  *
- *      DLL: java
+ * DLL: java
  */
-
 jint
-GetStringPlatformLength(JNIEnv* env, jstring instr, jint* outlen, const char* encoding)
+GetStringPlatformLength(JNIEnv *env, jstring instr, jint *outlen, const char *encoding)
 {
 	jint result;
 
@@ -2636,19 +2682,17 @@ GetStringPlatformLength(JNIEnv* env, jstring instr, jint* outlen, const char* en
 	return result;
 }
 
-
-
 /**
- *      jint JNICALL NewStringPlatform(JNIEnv*, const char *, jstring*, const char*);
- *      This provides an invocation API that runs the J9 VM in BFU/sidecar mode
+ * jint JNICALL NewStringPlatform(JNIEnv*, const char *, jstring*, const char*);
+ * This provides an invocation API that runs the J9 VM in BFU/sidecar mode
  *
- *  @returns zero on success; otherwise, return a negative number
+ * @returns zero on success; otherwise, return a negative number
  *
- *      DLL: java
+ * DLL: java
  */
 
 jint
-NewStringPlatform(JNIEnv* env, const char* instr, jstring* outstr, const char* encoding)
+NewStringPlatform(JNIEnv *env, const char *instr, jstring *outstr, const char *encoding)
 {
 	jint result;
 
@@ -2660,17 +2704,14 @@ NewStringPlatform(JNIEnv* env, const char* instr, jstring* outstr, const char* e
 	return result;
 }
 
-
-
 /**
- *      jint JNICALL JNI_a2e_vsprintf(char *, const char *, va_list)
- *      This provides an invocation API that runs the J9 VM in BFU/sidecar mode
+ * jint JNICALL JNI_a2e_vsprintf(char *, const char *, va_list)
+ * This provides an invocation API that runs the J9 VM in BFU/sidecar mode
  *
- *  @returns zero on success; otherwise, return a negative number
+ * @returns zero on success; otherwise, return a negative number
  *
- *      DLL: java
+ * DLL: java
  */
-
 jint
 JNI_a2e_vsprintf(char *target, const char *format, va_list args)
 {
@@ -2688,58 +2729,60 @@ JNI_a2e_vsprintf(char *target, const char *format, va_list args)
 }
 #endif /* J9ZOS390 */
 
+static BOOLEAN
+isFileInDir(const char *dir, const char *file)
+{
+	BOOLEAN foundFile = FALSE;
+	size_t dirLen = strlen(dir);
+	size_t pathLen = 0;
+	char *path = NULL;
+	FILE *handle = NULL;
 
-int isFileInDir(char *dir, char *file){
-	size_t length, dirLength;
-	char *fullpath = NULL;
-	FILE *f = NULL;
-	int foundFile = 0;
-
-	dirLength = strlen(dir);
-	/* Construct 'full' path */
-	if (dir[dirLength-1] == DIR_SEPARATOR) {
-		/* remove trailing '/' */
-		dir[dirLength-1] = '\0';
-		dirLength--;
+	/* Remove trailing DIR_SEPARATOR. */
+	if ((dirLen > 0) && (DIR_SEPARATOR == dir[dirLen - 1])) {
+		dirLen -= 1;
 	}
 
-	length = dirLength + strlen(file) + 2; /* 2= '/' + null char */
-	fullpath = malloc(length);
-	if (NULL != fullpath) {
-		strcpy(fullpath, dir);
-		fullpath[dirLength] = DIR_SEPARATOR;
-		strcpy(fullpath+dirLength+1, file);
+	/* Construct 'full' path. */
+	pathLen = dirLen + strlen(file) + 2; /* +2 for DIR_SEPARATOR and null-terminator. */
+	path = malloc(pathLen);
+	if (NULL != path) {
+		memcpy(path, dir, dirLen);
+		path[dirLen] = DIR_SEPARATOR;
+		strcpy(&path[dirLen + 1], file);
 
-		/* See if file exists - use fopen() for portability */
-		f = fopen(fullpath, "rb");
-		if (NULL != f) {
-			foundFile = 1;
-			fclose(f);
+		/* See if file exists - use fopen() for portability. */
+		handle = fopen(path, "rb");
+		free(path);
+		if (NULL != handle) {
+			foundFile = TRUE;
+			fclose(handle);
 		}
-		free(fullpath);
 	}
+
 	return foundFile;
 }
-
 
 /*
  * find directory containing a given file.
  * @returns 0 for not found, and a positive integer on success, which represents which path element the file was found in.
  **/
-int findDirContainingFile(J9StringBuffer **result, char *paths, char pathSeparator, char *fileToFind, int elementsToSkip) {
+int
+findDirContainingFile(J9StringBuffer **result, char *paths, char pathSeparator, char *fileToFind, int elementsToSkip)
+{
 	char *startOfDir, *endOfDir, *pathsCopy;
-	int   isEndOfPaths, foundIt, count=elementsToSkip;
+	int isEndOfPaths, foundIt, count = elementsToSkip;
 
 	/* Copy input as it is modified */
 	paths = strdup(paths);
-	if (!paths) {
+	if (NULL == paths) {
 		return FALSE;
 	}
 
 	pathsCopy = paths;
-	while(elementsToSkip--) {
+	while (elementsToSkip--) {
 		pathsCopy = strchr(pathsCopy, pathSeparator);
-		if(pathsCopy) {
+		if (NULL != pathsCopy) {
 			pathsCopy++; /* advance past separator */
 		} else {
 			free(paths);
@@ -2749,10 +2792,9 @@ int findDirContainingFile(J9StringBuffer **result, char *paths, char pathSeparat
 
 	/* Search each dir in the list for fileToFind */
 	startOfDir = endOfDir = pathsCopy;
-	for (isEndOfPaths=FALSE, foundIt=FALSE; !foundIt && !isEndOfPaths; endOfDir++) {
-
+	for (isEndOfPaths = FALSE, foundIt = FALSE; !foundIt && !isEndOfPaths; endOfDir++) {
 		isEndOfPaths = endOfDir[0] == '\0';
-		if (isEndOfPaths || (endOfDir[0] == pathSeparator))  {
+		if (isEndOfPaths || (endOfDir[0] == pathSeparator)) {
 			endOfDir[0] = '\0';
 			if (strlen(startOfDir) && isFileInDir(startOfDir, fileToFind)) {
 				foundIt = TRUE;
@@ -2762,39 +2804,39 @@ int findDirContainingFile(J9StringBuffer **result, char *paths, char pathSeparat
 				}
 				*result = jvmBufferCat(NULL, startOfDir);
 			}
-			startOfDir = endOfDir+1;
-			count+=1;
+			startOfDir = endOfDir + 1;
+			count += 1;
 		}
 	}
 
 	free(paths); /* from strdup() */
-	if(foundIt) {
+	if (foundIt) {
 		return count;
 	} else {
 		return 0;
 	}
 }
 
-
-
-int findDirUplevelToDirContainingFile(J9StringBuffer **result, char *pathEnvar, char pathSeparator, char *fileInPath, int upLevels, int elementsToSkip) {
-	char *paths;
-	int   rc;
+int
+findDirUplevelToDirContainingFile(J9StringBuffer **result, char *pathEnvar, char pathSeparator, char *fileInPath, int upLevels, int elementsToSkip)
+{
+	char *paths = NULL;
+	int rc = 0;
 
 	/* Get the list of paths */
 	paths = getenv(pathEnvar);
-	if (!paths) {
-		return FALSE;
+	if (NULL == paths) {
+		return rc;
 	}
 
 	/* find the directory */
 	rc = findDirContainingFile(result, paths, pathSeparator, fileInPath, elementsToSkip);
 
 	/* Now move upLevel to it - this may not work for directories of form
-		/aaa/bbb/..      ... and so on.
-		If that is a problem, could always use /.. to move up.
-	*/
-	if (rc) {
+	 *  /aaa/bbb/..      ... and so on.
+	 *  If that is a problem, could always use /.. to move up.
+	 */
+	if (0 != rc) {
 		for (; upLevels > 0; upLevels--) {
 			truncatePath(jvmBufferData(*result));
 		}
@@ -2802,12 +2844,11 @@ int findDirUplevelToDirContainingFile(J9StringBuffer **result, char *pathEnvar, 
 	return rc;
 }
 
-
 void
 exitHook(J9JavaVM *vm)
 {
 	while (f_monitorEnter(vm->vmThreadListMutex), vm->sidecarExitFunctions) {
-		J9SidecarExitFunction * current = vm->sidecarExitFunctions;
+		J9SidecarExitFunction *current = vm->sidecarExitFunctions;
 
 		vm->sidecarExitFunctions = current->next;
 		f_monitorExit(vm->vmThreadListMutex);
@@ -2818,18 +2859,18 @@ exitHook(J9JavaVM *vm)
 	f_monitorExit(vm->vmThreadListMutex);
 }
 
-static void*
-preloadLibrary(char* dllName, BOOLEAN inJVMDir)
+static void *
+preloadLibrary(char *dllName, BOOLEAN inJVMDir)
 {
 	J9StringBuffer *buffer = NULL;
-	void* handle = NULL;
+	void *handle = NULL;
 #ifdef WIN32
 	wchar_t unicodePath[J9_MAX_PATH];
-	char * bufferData;
+	char *bufferData;
 	size_t bufferLength;
 #endif
 
-	if(inJVMDir) {
+	if (inJVMDir) {
 		buffer = jvmBufferCat(buffer, jvmBufferData(j9binBuffer));
 	} else {
 		buffer = jvmBufferCat(buffer, jvmBufferData(jrebinBuffer));
@@ -2841,9 +2882,9 @@ preloadLibrary(char* dllName, BOOLEAN inJVMDir)
 	bufferData = jvmBufferData(buffer);
 	bufferLength = strlen(bufferData);
 	MultiByteToWideChar(OS_ENCODING_CODE_PAGE, OS_ENCODING_MB_FLAGS, bufferData, -1, unicodePath, (int)bufferLength + 1);
-	handle = (void*)LoadLibraryExW (unicodePath, NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
-	if (handle == NULL) {
-		fprintf(stderr,"jvm.dll preloadLibrary: LoadLibrary(%s) error: %x\n", buffer->data, GetLastError());
+	handle = (void *)LoadLibraryExW(unicodePath, NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
+	if (NULL == handle) {
+		fprintf(stderr, "jvm.dll preloadLibrary: LoadLibrary(%s) error: %x\n", buffer->data, GetLastError());
 	}
 #endif
 #if defined(J9UNIX)
@@ -2853,33 +2894,34 @@ preloadLibrary(char* dllName, BOOLEAN inJVMDir)
 #ifdef AIXPPC
 	loadAndInit(jvmBufferData(buffer), L_RTLD_LOCAL, NULL);
 #endif
- 	handle = (void*)dlopen(jvmBufferData(buffer), RTLD_NOW);
+	handle = (void *)dlopen(jvmBufferData(buffer), RTLD_NOW);
 #ifdef AIXPPC
-	if (handle == NULL) {
+	if (NULL == handle) {
 		int len = strlen(buffer->data);
 		buffer->data[len - 2] = 'a';
 		buffer->data[len - 1] = '\0';
 		loadAndInit(buffer->data, L_RTLD_LOCAL, NULL);
-		handle = (void*)dlopen(buffer->data, RTLD_NOW);
-		if (handle == NULL) {
-			/* get original error, otherwise the error displayed will be for a missing .a library. */
+		handle = (void *)dlopen(buffer->data, RTLD_NOW);
+		if (NULL == handle) {
+			/* get original error, otherwise the error displayed will be for a
+			 * missing .a library. */
 			buffer->data[len - 2] = 's';
 			buffer->data[len - 1] = 'o';
 			loadAndInit(buffer->data, L_RTLD_LOCAL, NULL);
-			handle = (void*)dlopen(buffer->data, RTLD_NOW);
+			handle = (void *)dlopen(buffer->data, RTLD_NOW);
 		}
 	}
 #endif /* defined(AIXPPC) */
-	if (handle == NULL) {
-		fprintf(stderr,"libjvm.so preloadLibrary(%s): %s\n", buffer->data, dlerror());
+	if (NULL == handle) {
+		fprintf(stderr, "libjvm.so preloadLibrary(%s): %s\n", buffer->data, dlerror());
 	}
 #endif /* defined(J9UNIX) */
 #ifdef J9ZOS390
 	buffer = jvmBufferCat(buffer, "/lib");
 	buffer = jvmBufferCat(buffer, dllName);
 	buffer = jvmBufferCat(buffer, ".so");
-	handle = (void*)dllload(jvmBufferData(buffer));
-	if (handle == NULL) {
+	handle = (void *)dllload(jvmBufferData(buffer));
+	if (NULL == handle) {
 		perror("libjvm.so preloadLibrary: dllload() failed");
 	}
 #endif
@@ -2889,9 +2931,9 @@ preloadLibrary(char* dllName, BOOLEAN inJVMDir)
 }
 
 /*
- *	This section contains a bunch of 'extra' symbols that Linux needs above and beyond Windows.
- *	Included everywhere because the makefile generator makes it hard to create different export lists
- *	for different platforms.
+ * This section contains a bunch of 'extra' symbols that Linux needs above and beyond Windows.
+ * Included everywhere because the makefile generator makes it hard to create different export lists
+ * for different platforms.
  */
 int
 pre_block(pre_block_t buf)
@@ -2899,10 +2941,9 @@ pre_block(pre_block_t buf)
 	return 0;
 }
 
-
-
 int
-post_block() {
+post_block()
+{
 	return 0;
 }
 
@@ -2929,15 +2970,15 @@ addToLibpath(const char *dir, BOOLEAN isPrepend)
 #ifdef DEBUG
 	printf("\nLIBPATH before = %s\n", oldPath ? oldPath : "<empty>");
 #endif
-	newSize = (oldPath ? strlen(oldPath) : 0) + strlen(dir) + 2;  /* 1 for :, 1 for \0 terminator */
+	newSize = (oldPath ? strlen(oldPath) : 0) + strlen(dir) + 2; /* 1 for :, 1 for \0 terminator */
 	newPath = malloc(newSize);
 
-	if(!newPath) {
+	if (NULL == newPath) {
 		fprintf(stderr, "addToLibpath malloc(%d) 1 failed, aborting\n", newSize);
 		abort();
 	}
 #if defined(AIXPPC)
-	if (oldPath) {
+	if (NULL != oldPath) {
 		if (isPrepend) {
 			strcpy(newPath, dir);
 			strcat(newPath, ":");
@@ -2953,7 +2994,7 @@ addToLibpath(const char *dir, BOOLEAN isPrepend)
 
 #else
 	/* ZOS doesn't like it when we pre-pend to LIBPATH */
-	if (oldPath) {
+	if (NULL != oldPath) {
 		strcpy(newPath, oldPath);
 		strcat(newPath, ":");
 	} else {
@@ -2965,12 +3006,12 @@ addToLibpath(const char *dir, BOOLEAN isPrepend)
 #if defined(J9ZOS390)
 	putenvSize = newSize + strlen("LIBPATH=");
 	putenvPath = malloc(putenvSize);
-	if(!putenvPath) {
+	if (NULL == putenvPath) {
 		fprintf(stderr, "addToLibpath malloc(%d) 2 failed, aborting\n", putenvSize);
 		abort();
 	}
 
-	strcpy(putenvPath,"LIBPATH=");
+	strcpy(putenvPath, "LIBPATH=");
 	strcat(putenvPath, newPath);
 	rc = putenv(putenvPath);
 	free(putenvPath);
@@ -3725,53 +3766,60 @@ testBackupAndRestoreLibpath(void)
 static jint
 formatErrorMessage(int errorCode, char *inBuffer, jint inBufferLength)
 {
-	size_t i=0;
-	int rc = 0, j=0;
+	size_t i = 0;
+	int rc = 0, j = 0;
 	size_t outLength, lastChar;
 	_TCHAR buffer[JVM_DEFAULT_ERROR_BUFFER_SIZE];
 	_TCHAR noCRLFbuffer[JVM_DEFAULT_ERROR_BUFFER_SIZE];
 
 	if (inBufferLength <= 1) {
-		if (inBufferLength == 1) {
+		if (1 == inBufferLength) {
 			inBuffer[0] = '\0';
 		}
 		return 0;
 	}
 
-	rc = FormatMessage( FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, errorCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), buffer, JVM_DEFAULT_ERROR_BUFFER_SIZE, NULL );
-	if (rc == 0) {
+	rc = FormatMessage(
+			FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+			NULL,
+			errorCode,
+			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+			buffer,
+			JVM_DEFAULT_ERROR_BUFFER_SIZE,
+			NULL);
+	if (0 == rc) {
 		inBuffer[0] = '\0';
 		return 0;
 	}
 
-	j=0;
-	for (i = 0; i < _tcslen(buffer)+1 ; i++) {
-		if(buffer[i] == _TEXT('\n') ) {
-			noCRLFbuffer[j++]=_TEXT(' ');
-		} else if(buffer[i] == _TEXT('\r')) {
+	j = 0;
+	for (i = 0; i < _tcslen(buffer) + 1; i++) {
+		if (buffer[i] == _TEXT('\n')) {
+			noCRLFbuffer[j++] = _TEXT(' ');
+		} else if (buffer[i] == _TEXT('\r')) {
 			continue;
 		} else {
-			noCRLFbuffer[j++]=buffer[i];
+			noCRLFbuffer[j++] = buffer[i];
 		}
 	}
 
-	lastChar = _tcslen(noCRLFbuffer)-1;
+	lastChar = _tcslen(noCRLFbuffer) - 1;
 
-	if(_istspace(noCRLFbuffer[lastChar])) {
+	if (_istspace(noCRLFbuffer[lastChar])) {
 		noCRLFbuffer[lastChar] = _TEXT('\0');
 	}
 
-/* We always return multibyte */
+	/* We always return multibyte */
 
 #ifdef UNICODE
-	outLength = WideCharToMultiByte(CP_UTF8, 0, noCRLFbuffer, -1, inBuffer, inBufferLength-1, NULL, NULL);
+	outLength = WideCharToMultiByte(CP_UTF8, 0, noCRLFbuffer, -1, inBuffer, inBufferLength - 1, NULL, NULL);
 #else
-	outLength = strlen(noCRLFbuffer)+1;
-	if(outLength > (size_t)inBufferLength) {
+	outLength = strlen(noCRLFbuffer) + 1;
+	if (outLength > (size_t)inBufferLength) {
 		outLength = (size_t)inBufferLength;
 	}
 	strncpy(inBuffer, noCRLFbuffer, outLength);
-	inBuffer[inBufferLength-1]='\0';
+	inBuffer[inBufferLength - 1] = '\0';
 #endif
 
 	Assert_SC_true(outLength <= I_32_MAX);
@@ -3781,14 +3829,13 @@ formatErrorMessage(int errorCode, char *inBuffer, jint inBufferLength)
 #endif /* WIN32 */
 
 static UDATA
-protectedStrerror(J9PortLibrary* portLib, void* savedErrno)
+protectedStrerror(J9PortLibrary *portLib, void *savedErrno)
 {
-	return (UDATA) strerror((int) (IDATA) savedErrno);
+	return (UDATA)strerror((int)(IDATA)savedErrno);
 }
 
-
 static UDATA
-strerrorSignalHandler(struct J9PortLibrary* portLibrary, U_32 gpType, void* gpInfo, void* userData)
+strerrorSignalHandler(struct J9PortLibrary *portLibrary, U_32 gpType, void *gpInfo, void *userData)
 {
 	return J9PORT_SIG_EXCEPTION_RETURN;
 }
@@ -3806,7 +3853,8 @@ throwNewUnsatisfiedLinkError(JNIEnv *env, char *message)
  * Remove one segment of a path.
  */
 static void
-truncatePath(char *inputPath) {
+truncatePath(char *inputPath)
+{
 	char *lastOccurence = strrchr(inputPath, DIR_SEPARATOR);
 	/* strrchr() returns NULL if it cannot find the character */
 	if (NULL != lastOccurence) {
@@ -3832,12 +3880,12 @@ truncatePath(char *inputPath) {
 void JNICALL
 JVM_OnExit(void (*func)(void))
 {
-	J9SidecarExitFunction * newFunc;
+	J9SidecarExitFunction *newFunc;
 
 	Trc_SC_OnExit_Entry(func);
 
-	newFunc = (J9SidecarExitFunction *) malloc(sizeof(J9SidecarExitFunction));
-	if (newFunc) {
+	newFunc = (J9SidecarExitFunction *)malloc(sizeof(J9SidecarExitFunction));
+	if (NULL != newFunc) {
 		newFunc->func = func;
 
 		f_monitorEnter(BFUjavaVM->vmThreadListMutex);
@@ -3865,7 +3913,7 @@ JVM_OnExit(void (*func)(void))
  *
  *	@return the shared library's handle if successful, throws java/lang/UnsatisfiedLinkError on failure
  */
-void* JNICALL
+void *JNICALL
 JVM_LoadSystemLibrary(const char *libName)
 {
 #ifdef WIN32
@@ -3875,12 +3923,13 @@ JVM_LoadSystemLibrary(const char *libName)
 
 	Trc_SC_LoadSystemLibrary_Entry(libName);
 
-	if ((libNameLen <= 4) ||
-			('.' != libName[libNameLen - 4]) ||
-			('d' != j9_cmdla_tolower(libName[libNameLen - 3])) ||
-			('l' != j9_cmdla_tolower(libName[libNameLen - 2])) ||
-			('l' != j9_cmdla_tolower(libName[libNameLen - 1])))
-	{
+	if (
+		(libNameLen <= 4)
+		|| ('.' != libName[libNameLen - 4])
+		|| ('d' != j9_cmdla_tolower(libName[libNameLen - 3]))
+		|| ('l' != j9_cmdla_tolower(libName[libNameLen - 2]))
+		|| ('l' != j9_cmdla_tolower(libName[libNameLen - 1]))
+	) {
 		flags = J9PORT_SLOPEN_DECORATE;
 	}
 
@@ -3957,7 +4006,7 @@ JVM_LoadSystemLibrary(const char *libName)
  * NOTE this is required by jdk15+ jdk.internal.loader.NativeLibraries.load().
  * It is only invoked by jdk.internal.loader.BootLoader.loadLibrary().
  */
-void * JNICALL
+void *JNICALL
 #if JAVA_SPEC_VERSION < 11
 JVM_LoadLibrary(const char *libName)
 #else /* JAVA_SPEC_VERSION < 11 */
@@ -4056,14 +4105,15 @@ JVM_LoadLibrary(const char *libName, jboolean throwOnFailure)
 							doOpenLibrary = FALSE;
 							Trc_SC_allocate_memory_failed(libPathLength);
 						} else {
-							j9str_printf(PORTLIB,
-									libNameNotDecorated,
-									libPathLength,
-									"%.*s%.*s",
-									libDirLength,
-									libName,
-									fileNameNotDecoratedLength,
-									fileNameNoPrefix);
+							j9str_printf(
+								PORTLIB,
+								libNameNotDecorated,
+								libPathLength,
+								"%.*s%.*s",
+								libDirLength,
+								libName,
+								fileNameNotDecoratedLength,
+								fileNameNoPrefix);
 						}
 					}
 				}
@@ -4103,7 +4153,7 @@ JVM_LoadLibrary(const char *libName, jboolean throwOnFailure)
 #if defined(WIN32) && (JAVA_SPEC_VERSION >= 17)
 				!attemptedLoad ? "" :
 #endif /* defined(WIN32) && (JAVA_SPEC_VERSION >= 17) */
-				j9error_last_error_message();
+			j9error_last_error_message();
 			const char *space = ('\0' == *portMsg) ? "" : " ";
 			bufSize = jio_snprintf(errMsg, bufSize, "Failed to load library (\"%s\")%s%s", libName, space, portMsg);
 			errBuf[sizeof(errBuf) - 1] = '\0';
@@ -4132,9 +4182,11 @@ JVM_LoadLibrary(const char *libName, jboolean throwOnFailure)
 /* NOTE this is required by JDK15+ jdk.internal.loader.NativeLibraries.unload().
  */
 #if JAVA_SPEC_VERSION >= 15
-void JNICALL JVM_UnloadLibrary(void *handle)
+void JNICALL
+JVM_UnloadLibrary(void *handle)
 #else /* JAVA_SPEC_VERSION >= 15 */
-jobject JNICALL JVM_UnloadLibrary(jint arg0)
+jobject JNICALL
+JVM_UnloadLibrary(jint arg0)
 #endif /* JAVA_SPEC_VERSION >= 15 */
 {
 #if JAVA_SPEC_VERSION >= 15
@@ -4179,7 +4231,7 @@ jobject JNICALL JVM_UnloadLibrary(jint arg0)
  *
  * DLL: jvm
  */
-void * JNICALL
+void *JNICALL
 JVM_ValidateJNILibrary(const char *libName, void *handle, jboolean isStatic)
 {
 	void *result = NULL;
@@ -4198,7 +4250,6 @@ JVM_ValidateJNILibrary(const char *libName, void *handle, jboolean isStatic)
 }
 #endif /* defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT) && (JAVA_SPEC_VERSION >= 17) */
 
-
 /**
  *  Returns a pointer to a function specified by the string
  *  functionName within a given library specified by handle.
@@ -4213,8 +4264,8 @@ JVM_ValidateJNILibrary(const char *libName, void *handle, jboolean isStatic)
 
 /* NOTE THIS IS NOT REQUIRED FOR 1.4 */
 
-void* JNICALL
-JVM_FindLibraryEntry(void* handle, const char *functionName)
+void *JNICALL
+JVM_FindLibraryEntry(void *handle, const char *functionName)
 {
 	void *result = NULL;
 #if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT) && (JAVA_SPEC_VERSION >= 17)
@@ -4232,7 +4283,7 @@ JVM_FindLibraryEntry(void* handle, const char *functionName)
 #endif /* defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT) && (JAVA_SPEC_VERSION >= 17) */
 
 #if defined(WIN32)
-	result = GetProcAddress ((HINSTANCE)handle, (LPCSTR)functionName);
+	result = GetProcAddress((HINSTANCE)handle, (LPCSTR)functionName);
 #elif defined(J9ZOS390) /* defined(WIN32) */
 	PORT_ACCESS_FROM_JAVAVM(BFUjavaVM);
 	/* Call j9sl_lookup_name to handle potential 31-bit interoperability targets. */
@@ -4257,7 +4308,6 @@ JVM_FindLibraryEntry(void* handle, const char *functionName)
 	return result;
 }
 
-
 /**
  * JVM_SetLength
  */
@@ -4268,7 +4318,7 @@ JVM_SetLength(jint fd, jlong length)
 
 	Trc_SC_SetLength_Entry(fd, length);
 
-	if (fd == -1) {
+	if (-1 == fd) {
 		Trc_SC_SetLength_bad_descriptor();
 		return -1;
 	}
@@ -4292,19 +4342,18 @@ JVM_SetLength(jint fd, jlong length)
 	return result;
 }
 
-
 /**
-* JVM_Write
-*/
+ * JVM_Write
+ */
 jint JNICALL
-JVM_Write(jint descriptor, const char* buffer, jint length)
+JVM_Write(jint descriptor, const char *buffer, jint length)
 {
 	PORT_ACCESS_FROM_JAVAVM(BFUjavaVM);
 	jint result = 0;
 
 	Trc_SC_Write_Entry(descriptor, buffer, length);
 
-	if (descriptor == -1) {
+	if (-1 == descriptor) {
 		Trc_SC_Write_bad_descriptor();
 		return JVM_IO_ERR;
 	}
@@ -4315,10 +4364,10 @@ JVM_Write(jint descriptor, const char* buffer, jint length)
 	 * Map stdout, stderr to the port library as using the
 	 * C library causes CR/LF translation and CR LF turns into CR CR LF.
 	 */
-	if ( (descriptor == 1) || (descriptor == 2) ) {
+	if ((-1 == descriptor) || (2 == descriptor)) {
 		IDATA retval = j9file_write(descriptor, (char *)buffer, length);
-		if(retval<0) {
-			result = -1;  /* callers seem to expect -1 on failure */
+		if (retval < 0) {
+			result = -1; /* callers seem to expect -1 on failure */
 		} else {
 			result = (jint)retval;
 			Assert_SC_true(retval == (IDATA)result);
@@ -4337,7 +4386,6 @@ JVM_Write(jint descriptor, const char* buffer, jint length)
 	return result;
 }
 
-
 /**
  * JVM_Close
  */
@@ -4348,7 +4396,7 @@ JVM_Close(jint descriptor)
 
 	Trc_SC_Close_Entry(descriptor);
 
-	if (descriptor == -1) {
+	if (-1 == descriptor) {
 		Trc_SC_Close_bad_descriptor();
 		return JVM_IO_ERR;
 	}
@@ -4358,7 +4406,7 @@ JVM_Close(jint descriptor)
 	 * api/java_io/FileInputStream/index.html#CtorFD
 	 * also ignore close of stdout and stderr */
 
-	if (descriptor >= 0 && descriptor <= 2) {
+	if ((0 <= descriptor) && (descriptor <= 2)) {
 		Trc_SC_Close_std_descriptor();
 		return 0;
 	}
@@ -4370,12 +4418,11 @@ JVM_Close(jint descriptor)
 	return result;
 }
 
-
 /**
  * JVM_Available
  */
 jint JNICALL
-JVM_Available(jint descriptor, jlong* bytes)
+JVM_Available(jint descriptor, jlong *bytes)
 {
 	jlong curr = 0;
 	jlong end = 0;
@@ -4395,7 +4442,7 @@ JVM_Available(jint descriptor, jlong* bytes)
 
 	Trc_SC_Available_Entry(descriptor, bytes);
 
-	if (descriptor == -1) {
+	if (-1 == descriptor) {
 		Trc_SC_Available_bad_descriptor();
 		*bytes = 0;
 		return JNI_FALSE;
@@ -4403,8 +4450,8 @@ JVM_Available(jint descriptor, jlong* bytes)
 
 #if defined(WIN32) && !defined(__IBMC__)
 	curr = _lseeki64(descriptor, 0, SEEK_CUR);
-	if (curr==-1L) {
-		if (descriptor == 0) {
+	if (-1L == curr) {
+		if (0 == descriptor) {
 			/* Failed on stdin, check input queue. */
 			DWORD result = 0;
 			if (GetNumberOfConsoleInputEvents(GetStdHandle(STD_INPUT_HANDLE), &result)) {
@@ -4416,79 +4463,82 @@ JVM_Available(jint descriptor, jlong* bytes)
 			return 1;
 		}
 		Trc_SC_Available_lseek_failed(descriptor);
-		return 0;		/* Returning zero causes JNU_ThrowIOExceptionWithLastError() */
+		return 0; /* Returning zero causes JNU_ThrowIOExceptionWithLastError() */
 	}
 	end = _lseeki64(descriptor, 0, SEEK_END);
 	_lseeki64(descriptor, curr, SEEK_SET);
 #else
-		if (J9FSTAT(descriptor, &tempStat) == -1) {
-			Trc_SC_Available_fstat_failed(descriptor, errno);
-			*bytes = 0;
-			return 0;
-		}
-		else if (S_ISFIFO(tempStat.st_mode) || S_ISSOCK(tempStat.st_mode) || S_ISCHR(tempStat.st_mode)) {
-			/*
-				arg3 is the third argument to ioctl.  The type of this argument is dependent upon the information
-				being requested.  FIONREAD specifies that the argument be a pointer to an int
-			*/
-			int arg3FIONREAD = 0;
+	if (-1 == J9FSTAT(descriptor, &tempStat)) {
+		Trc_SC_Available_fstat_failed(descriptor, errno);
+		*bytes = 0;
+		return 0;
+	} else if (S_ISFIFO(tempStat.st_mode) || S_ISSOCK(tempStat.st_mode) || S_ISCHR(tempStat.st_mode)) {
+		/*
+		 * arg3 is the third argument to ioctl. The type of this argument is
+		 * dependent upon the information being requested. FIONREAD specifies
+		 * that the argument be a pointer to an int.
+		 */
+		int arg3FIONREAD = 0;
 
 #if defined(J9ZOS390)
-			/* CMVC 100066:  FIONREAD on z/OS only works for sockets so we need to use fstat, instead */
-			if (!S_ISSOCK(tempStat.st_mode)) {
-				/* we already performed the stat, so just return the st_size */
+		/* CMVC 100066:  FIONREAD on z/OS only works for sockets so we need to
+		 * use fstat, instead */
+		if (!S_ISSOCK(tempStat.st_mode)) {
+			/* we already performed the stat, so just return the st_size */
+			*bytes = tempStat.st_size;
+			Trc_SC_Available_Exit(1, *bytes);
+			return 1;
+		}
+#endif
+		if (-1 == ioctl(descriptor, FIONREAD, &(arg3FIONREAD))) {
+			if (0 == descriptor) {
+				/* Failed on stdin, just return st_size. */
 				*bytes = tempStat.st_size;
 				Trc_SC_Available_Exit(1, *bytes);
 				return 1;
 			}
-#endif
-			if (ioctl(descriptor, FIONREAD, &(arg3FIONREAD)) == -1) {
-				if (descriptor == 0) {
-					/* Failed on stdin, just return st_size. */
-					*bytes = tempStat.st_size;
-					Trc_SC_Available_Exit(1, *bytes);
-					return 1;
-				}
 #if (defined(LINUX) && !defined(J9ZTPF)) || defined(AIXPPC) || defined(J9ZOS390)
-				else {
-					struct pollfd pollOne;
-					int  ret = 0;
-					pollOne.fd = descriptor;
-					pollOne.events = POLLRDNORM | POLLRDBAND | POLLPRI;
-					pollOne.revents = 0;
-					if (-1 != poll(&pollOne, 1, 0)) {
-						/* poll succeeded (-1 is failure) */
-						if(0 != (pollOne.events & pollOne.revents)) {
-							/* if the one descriptor we were looking at returns a modified revents
-									which matches a read operation, return at least one byte readable */
-							*bytes = 1;
-							Trc_SC_Available_Exit(1, *bytes);
-							return 1;
-						} else {
-							/* none of the events are ready so this is 0 bytes readable */
-							*bytes = 0;
-							Trc_SC_Available_Exit(1, *bytes);
-							return 1;
-						}
+			else {
+				struct pollfd pollOne;
+				int ret = 0;
+				pollOne.fd = descriptor;
+				pollOne.events = POLLRDNORM | POLLRDBAND | POLLPRI;
+				pollOne.revents = 0;
+				if (-1 != poll(&pollOne, 1, 0)) {
+					/* poll succeeded (-1 is failure) */
+					if (0 != (pollOne.events & pollOne.revents)) {
+						/* if the one descriptor we were looking at returns a
+						 * modified revents which matches a read operation,
+						 * return at least one byte readable
+						 */
+						*bytes = 1;
+						Trc_SC_Available_Exit(1, *bytes);
+						return 1;
 					} else {
-						/* poll failed so use a poll failure trace point and return failure */
-						Trc_SC_Available_poll_failed(descriptor, errno);
+						/* none of the events are ready so this is 0 bytes readable */
 						*bytes = 0;
-						return 0;
+						Trc_SC_Available_Exit(1, *bytes);
+						return 1;
 					}
+				} else {
+					/* poll failed so use a poll failure trace point and return failure */
+					Trc_SC_Available_poll_failed(descriptor, errno);
+					*bytes = 0;
+					return 0;
 				}
-#endif
-				Trc_SC_Available_ioctl_failed(descriptor, errno);
-				*bytes = 0;
-				return 0;
 			}
-
-			*bytes = (jlong) arg3FIONREAD;
-			Trc_SC_Available_Exit(1, *bytes);
-			return 1;
+#endif
+			Trc_SC_Available_ioctl_failed(descriptor, errno);
+			*bytes = 0;
+			return 0;
 		}
+
+		*bytes = (jlong)arg3FIONREAD;
+		Trc_SC_Available_Exit(1, *bytes);
+		return 1;
+	}
 #if defined(LINUX) && !defined(J9VM_ENV_DATA64)
-#if __GLIBC_PREREQ(2,4)
+#if __GLIBC_PREREQ(2, 4)
 	/* glibc 2.4 (sles 10) and on provide lseek64() */
 	curr = lseek64(descriptor, 0, SEEK_CUR);
 #else
@@ -4496,34 +4546,32 @@ JVM_Available(jint descriptor, jlong* bytes)
 	curr = _llseek(descriptor, 0, 0, &longResult, SEEK_CUR);
 	if (0 == curr) {
 		/* the call was successful so set the result to what we read */
-		curr = (jlong) longResult;
+		curr = (jlong)longResult;
 	}
 #endif
-#else	/* defined(LINUX) && !defined(J9VM_ENV_DATA64) */
+#else /* defined(LINUX) && !defined(J9VM_ENV_DATA64) */
 	curr = lseek(descriptor, 0, SEEK_CUR);
 #endif /*!defined (LINUX) || defined(J9VM_ENV_DATA64) */
-	if (curr==-1L) {
-		if (descriptor == 0) {
+	if (-1L == curr) {
+		if (0 == descriptor) {
 			/* Failed on stdin, just return 0. */
 			*bytes = 0;
 			Trc_SC_Available_Exit(1, *bytes);
 			return 1;
 		}
 		Trc_SC_Available_lseek_failed(descriptor);
-		return 0;		/* Returning zero causes JNU_ThrowIOExceptionWithLastError() */
+		return 0; /* Returning zero causes JNU_ThrowIOExceptionWithLastError() */
 	}
 
-	end = tempStat.st_size;     /* size from previous fstat                                      */
+	end = tempStat.st_size; /* size from previous fstat */
 #endif
 
-	*bytes = (end-curr);
+	*bytes = (end - curr);
 
 	Trc_SC_Available_Exit(1, *bytes);
 
 	return 1;
 }
-
-
 
 /**
  * JVM_Lseek
@@ -4532,40 +4580,40 @@ jlong JNICALL
 JVM_Lseek(jint descriptor, jlong bytesToSeek, jint origin)
 {
 	jlong result = 0;
-#if defined (LINUX)
+#if defined(LINUX)
 	loff_t longResult = 0;
 #endif
 
 	Trc_SC_Lseek_Entry(descriptor, bytesToSeek, origin);
 
-	if (descriptor == -1) {
+	if (-1 == descriptor) {
 		Trc_SC_Lseek_bad_descriptor();
 		return JVM_IO_ERR;
 	}
 
 #if defined(WIN32)
 #if defined(__IBMC__)
-	result = lseek(descriptor, (long) bytesToSeek, origin);
+	result = lseek(descriptor, (long)bytesToSeek, origin);
 #else /* defined(__IBMC__) */
 	result = _lseeki64(descriptor, bytesToSeek, origin);
 #endif /* defined(__IBMC__) */
 #elif defined(J9UNIX) || defined(J9ZOS390) /* defined(WIN32) */
 #if defined(LINUX) && !defined(J9VM_ENV_DATA64)
 
-#if __GLIBC_PREREQ(2,4)
+#if __GLIBC_PREREQ(2, 4)
 	/* glibc 2.4 (sles 10) and on provide lseek64() */
 	result = lseek64(descriptor, bytesToSeek, origin);
 #else
 	/* CMVC 104382:  Linux lseek uses native word size off_t so we need to use the 64-bit _llseek on 32-bit Linux.  AIX and z/OS use 64-bit API implicitly when we define _LARGE_FILES. */
-	result = _llseek(descriptor, (unsigned long) ((bytesToSeek >> 32) & 0xFFFFFFFF), (unsigned long) (bytesToSeek & 0xFFFFFFFF), &longResult, origin);
+	result = _llseek(descriptor, (unsigned long)((bytesToSeek >> 32) & 0xFFFFFFFF), (unsigned long)(bytesToSeek & 0xFFFFFFFF), &longResult, origin);
 	if (0 == result) {
 		/* the call was successful so set the result to what we read */
-		result = (jlong) longResult;
+		result = (jlong)longResult;
 	}
 #endif
 
 #else /* defined(LINUX) && !defined(J9VM_ENV_DATA64) */
-	result = lseek(descriptor, (off_t) bytesToSeek, origin);
+	result = lseek(descriptor, (off_t)bytesToSeek, origin);
 #endif /* !defined(LINUX) ||defined(J9VM_ENV_DATA64) */
 #else /* defined(WIN32) */
 #error No JVM_Lseek provided
@@ -4575,7 +4623,6 @@ JVM_Lseek(jint descriptor, jlong bytesToSeek, jint origin)
 
 	return result;
 }
-
 
 /**
  * JVM_Read
@@ -4588,7 +4635,7 @@ JVM_Read(jint descriptor, char *buffer, jint bytesToRead)
 
 	Trc_SC_Read_Entry(descriptor, buffer, bytesToRead);
 
-	if (descriptor == -1) {
+	if (-1 == descriptor) {
 		Trc_SC_Read_bad_descriptor();
 		return -1;
 	}
@@ -4599,7 +4646,7 @@ JVM_Read(jint descriptor, char *buffer, jint bytesToRead)
 	 * Map stdin to the port library, so we avoid any CR/LF translation.
 	 * See JVM_WRITE
 	 */
-	if (descriptor == 0) {
+	if (0 == descriptor) {
 		IDATA charsRead = j9tty_get_chars(buffer, bytesToRead);
 		result = (jint)charsRead;
 		Assert_SC_true(charsRead == (IDATA)result);
@@ -4617,12 +4664,11 @@ JVM_Read(jint descriptor, char *buffer, jint bytesToRead)
 	return result;
 }
 
-
 /**
  * JVM_Open method
  */
 jint JNICALL
-JVM_Open(const char* filename, jint flags, jint mode)
+JVM_Open(const char *filename, jint flags, jint mode)
 {
 	int errorVal = 0;
 	jint returnVal = 0;
@@ -4671,7 +4717,8 @@ JVM_Open(const char* filename, jint flags, jint mode)
 #endif /* defined(J9UNIX) || defined(J9ZOS390) */
 
 	/* For some reason, although JVM_NativePath is called on the filenames, some of them seem to
-		get mangled between JVM_NativePath being called and JVM_open being called */
+	 * get mangled between JVM_NativePath being called and JVM_open being called.
+	 */
 	filename = JVM_NativePath((char *)filename);
 
 #if defined(J9UNIX) || defined(J9ZOS390)
@@ -4689,47 +4736,47 @@ JVM_Open(const char* filename, jint flags, jint mode)
 	}
 
 #if defined(J9UNIX) || defined(J9ZOS390)
-	/* Unix open() call does not reject directories, so extra checks required */
-	if ((returnVal>=0) && (J9FSTAT(returnVal, &tempStat)==-1)) {
-		Trc_SC_Open_fstat64(filename);
-		close(returnVal);
-		return -1;
-	}
-	if ((returnVal>=0) && S_ISDIR(tempStat.st_mode)) {
-		char buf[1];
+		/* Unix open() call does not reject directories, so extra checks required */
+		if ((0 <= returnVal) && (-1 == J9FSTAT(returnVal, &tempStat))) {
+			Trc_SC_Open_fstat64(filename);
+			close(returnVal);
+			return -1;
+		}
+		if ((0 <= returnVal) && S_ISDIR(tempStat.st_mode)) {
+			char buf[1];
 
-		Trc_SC_Open_isDirectory(filename);
+			Trc_SC_Open_isDirectory(filename);
 
-		/* force errno to be EISDIR in case JVM_GetLastErrorString is called */
-		errno = EISDIR;
+			/* force errno to be EISDIR in case JVM_GetLastErrorString is called */
+			errno = EISDIR;
 
-		close(returnVal);
-		return -1;
-	}
+			close(returnVal);
+			return -1;
+		}
 
-	/* On unices, open() may return EAGAIN or EINTR, and should then be re-invoked */
-	}
-	while ((-1 == returnVal) && ((EAGAIN == errorVal) || (EINTR == errorVal)));
+		/* On unices, open() may return EAGAIN or EINTR, and should then be re-invoked */
+	} while ((-1 == returnVal) && ((EAGAIN == errorVal) || (EINTR == errorVal)));
 
 	/* Unix does not have an O_TEMPORARY flag. Unlink if Sovereign O_TEMPORARY flag passed in. */
-	if ((returnVal>=0) && doUnlink)
+	if ((0 <= returnVal) && doUnlink) {
 		unlink(filename);
+	}
 #endif /* defined(J9UNIX) || defined(J9ZOS390) */
 
-	if (returnVal<0) {
+	if (returnVal < 0) {
 		Trc_SC_Open_error(filename, errorVal);
 	} else {
 		Trc_SC_Open_Exit(filename, returnVal);
 	}
 
-	if (returnVal>=0)
+	if (0 <= returnVal) {
 		return returnVal;
-	else if (EEXIST == errorVal)
+	} else if (EEXIST == errorVal) {
 		return JVM_EEXIST;
-	else
+	} else {
 		return -1;
+	}
 }
-
 
 /**
  * JVM_Sync
@@ -4741,7 +4788,7 @@ JVM_Sync(jint descriptor)
 
 	Trc_SC_Sync_Entry(descriptor);
 
-	if (descriptor == -1) {
+	if (-1 == descriptor) {
 		Trc_SC_Sync_bad_descriptor();
 		return -1;
 	}
@@ -4764,40 +4811,40 @@ JVM_Sync(jint descriptor)
 	return result;
 }
 
-
 /**
-* Change a pathname into platform specific format and do some canonicalization such as
-* removing redundant separators.  Claims to modify the pathname in-place.
-* arg1 = char* = pathname
-* rtn = char* = ?
-*/
-char* JNICALL
-JVM_NativePath(char* path)
+ * Change a pathname into platform specific format and do some canonicalization such as
+ * removing redundant separators. Claims to modify the pathname in-place.
+ * arg1 = char* = pathname
+ * rtn = char* = ?
+ */
+char *JNICALL
+JVM_NativePath(char *path)
 {
-	char * pathIndex;
+	char *pathIndex;
 	size_t length = strlen(path);
 
 	Trc_SC_NativePath_Entry(path);
 
-	if (jclSeparator == '/') {
+	if ('/' == jclSeparator) {
 		Trc_SC_NativePath_Exit(path);
 		return path; /* Do not do POSIX platforms */
 	}
 
 	/* Convert all separators to the same type */
 	pathIndex = path;
-	while (*pathIndex != '\0') {
-		if ((*pathIndex == '\\' || *pathIndex == '/') && (*pathIndex != jclSeparator))
+	while ('\0' != *pathIndex) {
+		if ((('\\' == *pathIndex) || ('/' == *pathIndex)) && (jclSeparator != *pathIndex)) {
 			*pathIndex = jclSeparator;
+		}
 		pathIndex++;
 	}
 
 	/* Remove duplicate initial separators */
 	pathIndex = path;
-	while ((*pathIndex != '\0') && (*pathIndex == jclSeparator)) {
+	while (('\0' != *pathIndex) && (jclSeparator == *pathIndex)) {
 		pathIndex++;
 	}
-	if ((pathIndex > path) && (length > (size_t)(pathIndex - path)) && (*(pathIndex + 1) == ':')) {
+	if ((pathIndex > path) && (length > (size_t)(pathIndex - path)) && (':' == pathIndex[1])) {
 		/* For Example '////c:\*' */
 		size_t newlen = length - (pathIndex - path);
 		memmove(path, pathIndex, newlen);
@@ -4987,7 +5034,7 @@ JVM_RaiseSignal(jint sigNum)
  * @returns address of the old signal handler on success
  *          J9_SIG_ERR (-1) in case of error
  */
-void* JNICALL
+void *JNICALL
 JVM_RegisterSignal(jint sigNum, void *handler)
 {
 	void *oldHandler = (void *)J9_SIG_ERR;
@@ -5053,7 +5100,6 @@ exit:
 	return oldHandler;
 }
 
-
 /**
  * Return the integer value of the signal given the name of the
  * signal.
@@ -5115,14 +5161,11 @@ exit:
 	return signalValue;
 }
 
-
-
-
 /**
  * Gets last O/S or C error
  */
 jint JNICALL
-JVM_GetLastErrorString(char* buffer, jint length)
+JVM_GetLastErrorString(char *buffer, jint length)
 {
 	int savedErrno = errno;
 #ifdef WIN32
@@ -5135,18 +5178,24 @@ JVM_GetLastErrorString(char* buffer, jint length)
 	memset(buffer, 0, length);
 
 #ifdef WIN32
-	if (errorCode) {
+	if (0 != errorCode) {
 		retVal = formatErrorMessage(errorCode, buffer, length);
 	} else
 #endif
-	if (savedErrno) {
+	if (0 != savedErrno) {
 		PORT_ACCESS_FROM_JAVAVM(BFUjavaVM);
 		I_32 sigRC;
 		UDATA fnRC;
 
-		sigRC = j9sig_protect(protectedStrerror, (void *) (IDATA) savedErrno, strerrorSignalHandler, NULL, J9PORT_SIG_FLAG_SIGALLSYNC | J9PORT_SIG_FLAG_MAY_RETURN, &fnRC);
-		if (sigRC == 0) {
-			strncat(buffer, (char *) fnRC, (length-1));
+		sigRC = j9sig_protect(
+					protectedStrerror,
+					(void *)(IDATA)savedErrno,
+					strerrorSignalHandler,
+					NULL,
+					J9PORT_SIG_FLAG_SIGALLSYNC | J9PORT_SIG_FLAG_MAY_RETURN,
+					&fnRC);
+		if (0 == sigRC) {
+			strncat(buffer, (char *)fnRC, (length - 1));
 			/* casting to jint is safe since we know that the result is <= length */
 			retVal = (jint)strlen(buffer);
 		}
@@ -5156,8 +5205,6 @@ JVM_GetLastErrorString(char* buffer, jint length)
 
 	return retVal;
 }
-
-
 
 /**
  * jobject JVM_CurrentClassLoader(JNIEnv *)
@@ -5181,7 +5228,6 @@ JVM_CurrentClassLoader(JNIEnv *env)
 	return result;
 }
 
-
 /**
  * jclass JVM_CurrentLoadedClass(JNIEnv *)
  */
@@ -5203,9 +5249,6 @@ JVM_CurrentLoadedClass(JNIEnv *env)
 
 	return result;
 }
-
-
-
 
 /**
  * jint JVM_ClassLoaderDepth(JNIEnv *)
@@ -5229,7 +5272,6 @@ JVM_ClassLoaderDepth(JNIEnv *env)
 	return result;
 }
 
-
 /**
  * jint JVM_ClassDepth(JNIEnv *, jstring)
  */
@@ -5252,7 +5294,6 @@ JVM_ClassDepth(JNIEnv *env, jstring name)
 	return result;
 }
 
-
 /**
  * Method stub for method not yet implemented.
  */
@@ -5261,7 +5302,6 @@ JVM_TraceInstructions(jboolean on)
 {
 	Trc_SC_TraceInstructions(on);
 }
-
 
 /**
  * Method stub for method not yet implemented.
@@ -5272,26 +5312,20 @@ JVM_TraceMethodCalls(jboolean on)
 	Trc_SC_TraceMethodCalls(on);
 }
 
-
-
-
-
-
 /**
  * Destroy the monitor
  *
  * @param mon pointer of the monitor
  */
 void JNICALL
-JVM_RawMonitorDestroy(void* mon)
+JVM_RawMonitorDestroy(void *mon)
 {
 	Trc_SC_RawMonitorDestroy_Entry(mon);
 
-	f_monitorDestroy((omrthread_monitor_t) mon);
+	f_monitorDestroy((omrthread_monitor_t)mon);
 
 	Trc_SC_RawMonitorDestroy_Exit();
 }
-
 
 /**
  * Monitor enter
@@ -5300,7 +5334,7 @@ JVM_RawMonitorDestroy(void* mon)
  * @return 0
  */
 jint JNICALL
-JVM_RawMonitorEnter(void* mon)
+JVM_RawMonitorEnter(void *mon)
 {
 	Trc_SC_RawMonitorEnter_Entry(mon);
 
@@ -5311,14 +5345,13 @@ JVM_RawMonitorEnter(void* mon)
 	return 0;
 }
 
-
 /**
  * Monitor exit
  *
  * @param mon pointer of the monitor
  */
 void JNICALL
-JVM_RawMonitorExit(void* mon)
+JVM_RawMonitorExit(void *mon)
 {
 	Trc_SC_RawMonitorExit_Entry(mon);
 
@@ -5327,34 +5360,34 @@ JVM_RawMonitorExit(void* mon)
 	Trc_SC_RawMonitorExit_Exit();
 }
 
-
 /**
  * Create a new monitor
  *
  * @return pointer of the monitor
  */
-void* JNICALL
+void *JNICALL
 JVM_RawMonitorCreate(void)
 {
 	omrthread_monitor_t newMonitor;
 
 	Trc_SC_RawMonitorCreate_Entry();
 
-	if (f_monitorInit(&newMonitor, 0, "JVM_RawMonitor")) {
+	if (0 != f_monitorInit(&newMonitor, 0, "JVM_RawMonitor")) {
 		Trc_SC_RawMonitorCreate_Error();
 		printf("error initializing raw monitor\n");
 		exit(1);
 	}
 
 	Trc_SC_RawMonitorCreate_Exit(newMonitor);
-	return (void *) newMonitor;
+	return (void *)newMonitor;
 }
-
 
 /**
  * JVM_MonitorWait
  */
-void JNICALL JVM_MonitorWait(JNIEnv *env, jobject anObject, jlong timeout) {
+void JNICALL
+JVM_MonitorWait(JNIEnv *env, jobject anObject, jlong timeout)
+{
 	Trc_SC_MonitorWait_Entry(env, anObject, timeout);
 
 	(*env)->CallVoidMethod(env, anObject, waitMID, timeout);
@@ -5362,11 +5395,12 @@ void JNICALL JVM_MonitorWait(JNIEnv *env, jobject anObject, jlong timeout) {
 	Trc_SC_MonitorWait_Exit(env);
 }
 
-
 /**
  * JVM_MonitorNotify
  */
-void JNICALL JVM_MonitorNotify(JNIEnv *env, jobject anObject) {
+void JNICALL
+JVM_MonitorNotify(JNIEnv *env, jobject anObject)
+{
 	Trc_SC_MonitorNotify_Entry(env, anObject);
 
 	(*env)->CallVoidMethod(env, anObject, notifyMID);
@@ -5374,25 +5408,24 @@ void JNICALL JVM_MonitorNotify(JNIEnv *env, jobject anObject) {
 	Trc_SC_MonitorNotify_Exit(env);
 }
 
-
 /**
  * JVM_MonitorNotifyAll
  */
-void JNICALL JVM_MonitorNotifyAll(JNIEnv *env, jobject anObject) {
+void JNICALL
+JVM_MonitorNotifyAll(JNIEnv *env, jobject anObject)
+{
 	Trc_SC_MonitorNotifyAll_Entry(env, anObject);
 
 	(*env)->CallVoidMethod(env, anObject, notifyAllMID);
 
 	Trc_SC_MonitorNotifyAll_Exit(env);
-
 }
-
 
 /**
  * JVM_Accept
  */
 jint JNICALL
-JVM_Accept(jint descriptor, struct sockaddr* address, int* length)
+JVM_Accept(jint descriptor, struct sockaddr *address, int *length)
 {
 	jint retVal;
 
@@ -5400,7 +5433,7 @@ JVM_Accept(jint descriptor, struct sockaddr* address, int* length)
 
 #if defined(AIXPPC)
 	{
-		int returnVal=0;
+		int returnVal = 0;
 		fd_set fdset;
 		struct timeval tval;
 		socklen_t socklen = (socklen_t)*length;
@@ -5412,8 +5445,8 @@ JVM_Accept(jint descriptor, struct sockaddr* address, int* length)
 			FD_ZERO(&fdset);
 			FD_SET((u_int)descriptor, &fdset);
 
-			returnVal = select(descriptor+1, &fdset, 0, 0, &tval);
-		} while(returnVal == 0);
+			returnVal = select(descriptor + 1, &fdset, 0, 0, &tval);
+		} while (returnVal == 0);
 
 		do {
 			retVal = accept(descriptor, address, &socklen);
@@ -5421,7 +5454,7 @@ JVM_Accept(jint descriptor, struct sockaddr* address, int* length)
 
 		*length = (int)socklen;
 	}
-#elif defined (WIN32)
+#elif defined(WIN32)
 	{
 		SOCKET socketResult = accept(descriptor, address, length);
 		retVal = (jint)socketResult;
@@ -5442,18 +5475,17 @@ JVM_Accept(jint descriptor, struct sockaddr* address, int* length)
 	return retVal;
 }
 
-
 /**
  * JVM_Connect
  */
 jint JNICALL
-JVM_Connect(jint descriptor, const struct sockaddr*address, int length)
+JVM_Connect(jint descriptor, const struct sockaddr *address, int length)
 {
 	jint retVal;
 
 	Trc_SC_Connect_Entry(descriptor, address, length);
 
-#if defined (WIN32)
+#if defined(WIN32)
 	retVal = connect(descriptor, address, length);
 #else /* defined (WIN32) */
 	do {
@@ -5466,7 +5498,6 @@ JVM_Connect(jint descriptor, const struct sockaddr*address, int length)
 	return retVal;
 }
 
-
 /**
  * JVM_CurrentTimeMillis
  */
@@ -5475,24 +5506,22 @@ JVM_CurrentTimeMillis(JNIEnv *env, jint unused1)
 {
 	jlong result;
 
-	if (env != NULL) {
+	if (NULL != env) {
 		PORT_ACCESS_FROM_ENV(env);
 
 		Trc_SC_CurrentTimeMillis_Entry(env, unused1);
 
-		result = (jlong) j9time_current_time_millis();
+		result = (jlong)j9time_current_time_millis();
 
 		Trc_SC_CurrentTimeMillis_Exit(env, result);
 	} else {
 		PORT_ACCESS_FROM_JAVAVM(BFUjavaVM);
 
-		result = (jlong) j9time_current_time_millis();
+		result = (jlong)j9time_current_time_millis();
 	}
 
 	return result;
 }
-
-
 
 /**
  * Initialized in port library startup.
@@ -5504,11 +5533,12 @@ JVM_InitializeSocketLibrary(void)
 	return 0;
 }
 
-
 /**
  * JVM_Listen
  */
-jint JNICALL JVM_Listen(jint descriptor, jint count) {
+jint JNICALL
+JVM_Listen(jint descriptor, jint count)
+{
 	jint retVal;
 
 	Trc_SC_Listen_Entry(descriptor, count);
@@ -5520,17 +5550,16 @@ jint JNICALL JVM_Listen(jint descriptor, jint count) {
 	return retVal;
 }
 
-
 /**
  * JVM_Recv
  */
 jint JNICALL
-JVM_Recv(jint descriptor, char* buffer, jint length, jint flags)
+JVM_Recv(jint descriptor, char *buffer, jint length, jint flags)
 {
 	jint retVal;
 
 #ifdef AIXPPC
-	int returnVal=0;
+	int returnVal = 0;
 	fd_set fdset;
 	struct timeval tval;
 #endif
@@ -5545,8 +5574,8 @@ JVM_Recv(jint descriptor, char* buffer, jint length, jint flags)
 		FD_ZERO(&fdset);
 		FD_SET((u_int)descriptor, &fdset);
 
-		returnVal = select(descriptor+1, &fdset, 0, 0, &tval);
-	} while(returnVal == 0);
+		returnVal = select(descriptor + 1, &fdset, 0, 0, &tval);
+	} while (returnVal == 0);
 #endif
 
 #ifdef WIN32
@@ -5562,18 +5591,17 @@ JVM_Recv(jint descriptor, char* buffer, jint length, jint flags)
 	return retVal;
 }
 
-
 /**
  * JVM_RecvFrom
  */
 jint JNICALL
-JVM_RecvFrom(jint descriptor, char* buffer, jint length, jint flags, struct sockaddr* fromAddr, int* fromLength)
+JVM_RecvFrom(jint descriptor, char *buffer, jint length, jint flags, struct sockaddr *fromAddr, int *fromLength)
 {
 	jint retVal;
 
 	Trc_SC_RecvFrom_Entry(descriptor, buffer, length, flags, fromAddr, fromLength);
 
-#if defined (WIN32)
+#if defined(WIN32)
 	retVal = recvfrom(descriptor, buffer, length, flags, fromAddr, fromLength);
 #else
 	{
@@ -5590,18 +5618,17 @@ JVM_RecvFrom(jint descriptor, char* buffer, jint length, jint flags, struct sock
 	return retVal;
 }
 
-
 /**
  * JVM_Send
  */
 jint JNICALL
-JVM_Send(jint descriptor, const char* buffer, jint numBytes, jint flags)
+JVM_Send(jint descriptor, const char *buffer, jint numBytes, jint flags)
 {
 	jint retVal;
 
 	Trc_SC_Send_Entry(descriptor, buffer, numBytes, flags);
 
-#if defined (WIN32)
+#if defined(WIN32)
 	retVal = send(descriptor, buffer, numBytes, flags);
 #else /* defined (WIN32) */
 	do {
@@ -5614,16 +5641,17 @@ JVM_Send(jint descriptor, const char* buffer, jint numBytes, jint flags)
 	return retVal;
 }
 
-
 /**
  * JVM_SendTo
  */
-jint JNICALL JVM_SendTo(jint descriptor, const char* buffer, jint length, jint flags, const struct sockaddr* toAddr, int toLength) {
+jint JNICALL
+JVM_SendTo(jint descriptor, const char *buffer, jint length, jint flags, const struct sockaddr *toAddr, int toLength)
+{
 	jint retVal;
 
 	Trc_SC_SendTo_Entry(descriptor, buffer, length, flags, toAddr, toLength);
 
-#if defined (WIN32)
+#if defined(WIN32)
 	retVal = sendto(descriptor, buffer, length, flags, toAddr, toLength);
 #else /* defined (WIN32) */
 	do {
@@ -5635,7 +5663,6 @@ jint JNICALL JVM_SendTo(jint descriptor, const char* buffer, jint length, jint f
 
 	return retVal;
 }
-
 
 /**
  * JVM_Socket
@@ -5663,7 +5690,6 @@ JVM_Socket(jint domain, jint type, jint protocol)
 	return result;
 }
 
-
 /**
  * JVM_SocketAvailable
  * Note: Java 9 and beyond don't use this JVM method.
@@ -5674,7 +5700,7 @@ JVM_Socket(jint domain, jint type, jint protocol)
  * @return result of this JVM method, 0 for failure, 1 (or non-zero value) for success
  */
 jint JNICALL
-JVM_SocketAvailable(jint descriptor, jint* result)
+JVM_SocketAvailable(jint descriptor, jint *result)
 {
 	jint retVal = 0;
 
@@ -5705,7 +5731,6 @@ JVM_SocketAvailable(jint descriptor, jint* result)
 	return retVal;
 }
 
-
 /**
  * JVM_SocketClose
  */
@@ -5716,7 +5741,7 @@ JVM_SocketClose(jint descriptor)
 
 	Trc_SC_SocketClose_Entry(descriptor);
 
-	if (descriptor<=0) {
+	if (0 <= descriptor) {
 		Trc_SC_SocketClose_bad_descriptor();
 		return 1;
 	}
@@ -5735,7 +5760,6 @@ JVM_SocketClose(jint descriptor)
 
 	return retVal;
 }
-
 
 /**
  * JVM_Timeout
@@ -5764,20 +5788,20 @@ JVM_Timeout(jint descriptor, jint timeout)
 #if defined(WIN32)
 	result = select(0, &fdset, 0, 0, &tval);
 #elif defined(J9ZTPF) /* defined(WIN32) */
-	if (-1 == timeout)  {
+	if (-1 == timeout) {
 		result = select(0, &fdset, 0, 0, NULL);
-	} else  {
+	} else {
 		result = select(0, &fdset, 0, 0, &tval);
 	}
 #elif defined(J9UNIX) || defined(J9ZOS390) /* defined(WIN32) */
 	do {
 		crazyCntr--;
-		returnVal = select(descriptor+1, &fdset, 0, 0, &tval);
-		if (returnVal==1 && !FD_ISSET((u_int)descriptor, &fdset)) {
+		returnVal = select(descriptor + 1, &fdset, 0, 0, &tval);
+		if ((1 == returnVal) && !FD_ISSET((u_int)descriptor, &fdset)) {
 			result = 0;
 			break;
 		}
-		if (!(returnVal<0 && errno==EINTR)) {
+		if (!((returnVal < 0) && (errno == EINTR))) {
 			result = returnVal;
 			break;
 		}
@@ -5788,7 +5812,6 @@ JVM_Timeout(jint descriptor, jint timeout)
 
 	return result;
 }
-
 
 #if JAVA_SPEC_VERSION < 22
 /**
@@ -5834,7 +5857,8 @@ JVM_ActiveProcessorCount(void)
 	return num;
 }
 
-J9Class* java_lang_Class_vmRef(JNIEnv* env, jobject clazz);
+J9Class *
+java_lang_Class_vmRef(JNIEnv *env, jobject clazz);
 
 /**
  * JVM_GetClassName / JVM_InitClassName
@@ -5844,30 +5868,29 @@ J9Class* java_lang_Class_vmRef(JNIEnv* env, jobject clazz);
  */
 jstring JNICALL
 #if JAVA_SPEC_VERSION < 11
-JVM_GetClassName
+JVM_GetClassName(JNIEnv *env, jclass theClass)
 #else /* JAVA_SPEC_VERSION < 11 */
-JVM_InitClassName
+JVM_InitClassName(JNIEnv *env, jclass theClass)
 #endif /* JAVA_SPEC_VERSION < 11 */
-(JNIEnv *env, jclass theClass)
 {
-	J9JavaVM* vm = ((J9VMThread*)env)->javaVM;
+	J9JavaVM *vm = ((J9VMThread *)env)->javaVM;
 	jstring result;
 
 	Trc_SC_GetClassName_Entry(env, theClass);
 
 #ifdef J9VM_IVE_RAW_BUILD /* J9VM_IVE_RAW_BUILD is not enabled by default */
 	{
-		J9Class* ramClass = java_lang_Class_vmRef(env, theClass);
-		J9ROMClass* romClass = ramClass->romClass;
+		J9Class *ramClass = java_lang_Class_vmRef(env, theClass);
+		J9ROMClass *romClass = ramClass->romClass;
 		PORT_ACCESS_FROM_JAVAVM(vm);
 
 		if (J9ROMCLASS_IS_ARRAY(romClass)) {
-			J9ArrayClass* arrayClass = (J9ArrayClass*) ramClass;
-			J9ArrayClass* elementClass = (J9ArrayClass*)arrayClass->leafComponentType;
+			J9ArrayClass *arrayClass = (J9ArrayClass *)ramClass;
+			J9ArrayClass *elementClass = (J9ArrayClass *)arrayClass->leafComponentType;
 			UDATA arity = arrayClass->arity;
 			UDATA nameLength, prefixSkip;
-			J9UTF8* nameUTF;
-			char* name;
+			J9UTF8 *nameUTF;
+			char *name;
 			UDATA finalLength;
 
 			if (J9ROMCLASS_IS_PRIMITIVE_TYPE(elementClass->romClass)) {
@@ -5882,18 +5905,18 @@ JVM_InitClassName
 			}
 
 			finalLength = nameLength + J9UTF8_LENGTH(nameUTF) + 1;
-			name = (char*)j9mem_allocate_memory(nameLength + J9UTF8_LENGTH(nameUTF) + 1, OMRMEM_CATEGORY_VM);
+			name = (char *)j9mem_allocate_memory(nameLength + J9UTF8_LENGTH(nameUTF) + 1, OMRMEM_CATEGORY_VM);
 			if (NULL != name) {
-				memset(name,'[', nameLength);
-				memcpy(name+nameLength, J9UTF8_DATA(nameUTF), J9UTF8_LENGTH(nameUTF));
+				memset(name, '[', nameLength);
+				memcpy(name + nameLength, J9UTF8_DATA(nameUTF), J9UTF8_LENGTH(nameUTF));
 				name[J9UTF8_LENGTH(nameUTF)] = 0;
 			}
 			return NULL;
 		} else {
-			J9UTF8* nameUTF = J9ROMCLASS_CLASSNAME(ramClass->romClass);
+			J9UTF8 *nameUTF = J9ROMCLASS_CLASSNAME(ramClass->romClass);
 			jobject result = NULL;
 
-			char* name = (char*)j9mem_allocate_memory(J9UTF8_LENGTH(nameUTF) + 1, OMRMEM_CATEGORY_VM);
+			char *name = (char *)j9mem_allocate_memory(J9UTF8_LENGTH(nameUTF) + 1, OMRMEM_CATEGORY_VM);
 			if (NULL != name) {
 				memcpy(name, J9UTF8_DATA(nameUTF), J9UTF8_LENGTH(nameUTF));
 				name[J9UTF8_LENGTH(nameUTF)] = 0;
@@ -5902,7 +5925,7 @@ JVM_InitClassName
 			result = (*env)->NewStringUTF(env, name);
 			j9mem_free_memory(name);
 #if JAVA_SPEC_VERSION >= 11
-			// JVM_InitClassName is expected to also cache the result in the 'name' field
+			/* JVM_InitClassName is expected to also cache the result in the 'name' field. */
 			(*env)->SetObjectField(env, theClass, classNameFID, result);
 			if ((*env)->ExceptionCheck(env)) {
 				result = NULL;
@@ -5925,7 +5948,6 @@ JVM_InitClassName
 	return result;
 }
 
-
 #if JAVA_SPEC_VERSION < 17
 /**
  * Return the JVM_INTERFACE_VERSION. This function should not lock, gc or throw exception.
@@ -5934,7 +5956,7 @@ JVM_InitClassName
 jint JNICALL
 JVM_GetInterfaceVersion(void)
 {
-	jint result = 4;	/* JDK8 */
+	jint result = 4; /* JDK8 */
 
 	Trc_SC_GetInterfaceVersion_Entry();
 	if (J2SE_CURRENT_VERSION >= J2SE_V11) {
@@ -5946,11 +5968,9 @@ JVM_GetInterfaceVersion(void)
 }
 #endif /* JAVA_SPEC_VERSION < 17 */
 
-
 /* jclass parameter 2 is apparently not used */
-
 void JNICALL
-JVM_Sleep(JNIEnv* env, jclass thread, jlong timeout)
+JVM_Sleep(JNIEnv *env, jclass thread, jlong timeout)
 {
 	Trc_SC_Sleep_Entry(env, thread, timeout);
 
@@ -5967,36 +5987,34 @@ JVM_Sleep(JNIEnv* env, jclass thread, jlong timeout)
 	Trc_SC_Sleep_Exit(env);
 }
 
-
-
 jint JNICALL
-JVM_UcsOpen(const jchar* filename, jint flags, jint mode)
+JVM_UcsOpen(const jchar *filename, jint flags, jint mode)
 {
 #ifdef WIN32
 	WCHAR *prefixStr;
-	DWORD prefixLen ;
+	DWORD prefixLen;
 
 	DWORD fullPathLen, rc;
-	WCHAR* longFilename;
+	WCHAR *longFilename;
 	DWORD newFlags, disposition, attributes;
 	HANDLE hFile;
 	jint returnVal;
 	int isUNC = FALSE;
 	int isDosDevices = FALSE;
 
-	if (filename==NULL) {
+	if (NULL == filename) {
 		Trc_SC_UcsOpen_nullName();
 		return -1;
 	}
 
 	Trc_SC_UcsOpen_Entry(filename, flags, mode);
 
-	if (filename[0] == L'\\' && filename[1] == L'\\') {
+	if ((L'\\' == filename[0]) && (L'//' == filename[1])) {
 		/* found a UNC path */
-		if (filename[2] == L'?') {
+		if (L'?' == filename[2]) {
 			prefixStr = L"";
 			prefixLen = 0;
-		} else if (filename[2] == L'.' && filename[3] == L'\\') {
+		} else if ((L'.' == filename[2]) && ( L'\\' == filename[3])) {
 			isDosDevices = TRUE;
 			prefixStr = L"";
 			prefixLen = 0;
@@ -6013,50 +6031,62 @@ JVM_UcsOpen(const jchar* filename, jint flags, jint mode)
 	/* Query size of full path name and allocate space accordingly */
 	fullPathLen = GetFullPathNameW(filename, 0, NULL, NULL);
 	/*[CMVC 74127] Workaround for 1 character filenames on Windows 2000 */
-	if (filename[0] == L'\0' || filename[1] == L'\0') fullPathLen += 3;
+	if ((L'\0' == filename[0]) || (L'\0' == filename[1])) {
+		fullPathLen += 3;
+	}
 	/*[CMVC 77501] Workaround for "\\.\" - reported length is off by 4 characters */
-	if (isDosDevices) fullPathLen += 4;
-	longFilename = malloc(sizeof(WCHAR) * (prefixLen+fullPathLen));
+	if (isDosDevices) {
+		fullPathLen += 4;
+	}
+	longFilename = malloc(sizeof(WCHAR) * (prefixLen + fullPathLen));
 
 	/* Prefix "\\?\" to allow for very long filenames */
 	wcscpy(longFilename, prefixStr);
 
 	/* Finally append full path name */
-	if (isUNC) prefixLen--;
+	if (isUNC) {
+		prefixLen--;
+	}
 	rc = GetFullPathNameW(filename, fullPathLen, &longFilename[prefixLen], NULL);
 	if (!rc || rc >= fullPathLen) {
 		Trc_SC_UcsOpen_GetFullPathNameW(rc);
 		return -1;
 	}
 
-	if (isUNC) longFilename[prefixLen] = L'C';
+	if (isUNC) {
+		longFilename[prefixLen] = L'C';
+	}
 
-	if (!flags || (flags & O_RDONLY) || (flags == O_TEMPORARY))
+	if (!flags || (flags & O_RDONLY) || (flags == O_TEMPORARY)) {
 		newFlags = GENERIC_READ;
-	else if (flags & O_WRONLY)
+	} else if (flags & O_WRONLY) {
 		newFlags = GENERIC_WRITE;
-	else if (flags & O_RDWR)
+	} else if (flags & O_RDWR) {
 		newFlags = (GENERIC_READ | GENERIC_WRITE);
+	}
 
-	if (flags & O_TRUNC)
+	if (flags & O_TRUNC) {
 		disposition = CREATE_ALWAYS;
-	else if (flags & O_CREAT)
+	} else if (flags & O_CREAT) {
 		disposition = OPEN_ALWAYS;
-	else
+	} else {
 		disposition = OPEN_EXISTING;
+	}
 
-	if (flags & (O_SYNC | O_DSYNC))
+	if (flags & (O_SYNC | O_DSYNC)) {
 		attributes = FILE_FLAG_WRITE_THROUGH;
-	else
+	} else {
 		attributes = FILE_ATTRIBUTE_NORMAL;
+	}
 
-	if (flags & O_TEMPORARY)
+	if (flags & O_TEMPORARY) {
 		attributes |= FILE_FLAG_DELETE_ON_CLOSE;
+	}
 
 	hFile = CreateFileW(longFilename, newFlags, mode, NULL, disposition, attributes, NULL);
 	returnVal = _open_osfhandle((UDATA)hFile, flags);
 
-	if (returnVal<0) {
+	if (returnVal < 0) {
 		Trc_SC_UcsOpen_error(returnVal);
 	} else {
 		Trc_SC_UcsOpen_Exit(returnVal);
@@ -6064,22 +6094,18 @@ JVM_UcsOpen(const jchar* filename, jint flags, jint mode)
 
 	free(longFilename);
 
-	if (returnVal>=0)
+	if (0 <= returnVal) {
 		return returnVal;
-	else if (errno==EEXIST)
+	} else if (EEXIST == errno) {
 		return JVM_EEXIST;
-	else
+	} else {
 		return -1;
+	}
 #else
 	printf("JVM_UcsOpen is only supported on Win32 platforms\n");
 	return -1;
 #endif
 }
-
-
-
-
-
 
 /**
  * jclass JVM_ConstantPoolGetClassAt(JNIEnv *, jobject, jobject, jint)
@@ -6091,7 +6117,6 @@ JVM_ConstantPoolGetClassAt(JNIEnv *env, jobject anObject, jobject constantPool, 
 	exit(207);
 }
 
-
 /**
  * jclass JVM_ConstantPoolGetClassAtIfLoaded(JNIEnv *, jobject, jobject, jint)
  */
@@ -6101,7 +6126,6 @@ JVM_ConstantPoolGetClassAtIfLoaded(JNIEnv *env, jobject anObject, jobject consta
 	Trc_SC_ConstantPoolGetClassAtIfLoaded(env);
 	exit(208);
 }
-
 
 /**
  * jdouble JVM_ConstantPoolGetDoubleAt(JNIEnv *, jobject, jobject, jint)
@@ -6113,7 +6137,6 @@ JVM_ConstantPoolGetDoubleAt(JNIEnv *env, jobject anObject, jobject constantPool,
 	exit(217);
 }
 
-
 /**
  * jobject JVM_ConstantPoolGetFieldAt(JNIEnv *, jobject, jobject, jint)
  */
@@ -6123,7 +6146,6 @@ JVM_ConstantPoolGetFieldAt(JNIEnv *env, jobject anObject, jobject constantPool, 
 	Trc_SC_ConstantPoolGetFieldAt(env);
 	exit(211);
 }
-
 
 /**
  * jobject JVM_ConstantPoolGetFieldAtIfLoaded(JNIEnv *, jobject, jobject, jint)
@@ -6135,7 +6157,6 @@ JVM_ConstantPoolGetFieldAtIfLoaded(JNIEnv *env, jobject anObject, jobject consta
 	exit(212);
 }
 
-
 /**
  * jfloat JVM_ConstantPoolGetFloatAt(JNIEnv *, jobject, jobject, jint)
  */
@@ -6145,7 +6166,6 @@ JVM_ConstantPoolGetFloatAt(JNIEnv *env, jobject anObject, jobject constantPool, 
 	Trc_SC_ConstantPoolGetFloatAt(env);
 	exit(216);
 }
-
 
 /**
  * jint JVM_ConstantPoolGetIntAt(JNIEnv *, jobject, jobject, jint)
@@ -6157,7 +6177,6 @@ JVM_ConstantPoolGetIntAt(JNIEnv *env, jobject anObject, jobject constantPool, ji
 	exit(214);
 }
 
-
 /**
  * jlong JVM_ConstantPoolGetLongAt(JNIEnv *, jobject, jobject, jint)
  */
@@ -6167,7 +6186,6 @@ JVM_ConstantPoolGetLongAt(JNIEnv *env, jobject anObject, jobject constantPool, j
 	Trc_SC_ConstantPoolGetLongAt(env);
 	exit(215);
 }
-
 
 /**
  * jobjectArray JVM_ConstantPoolGetMemberRefInfoAt(JNIEnv *, jobject, jobject, jint)
@@ -6179,7 +6197,6 @@ JVM_ConstantPoolGetMemberRefInfoAt(JNIEnv *env, jobject anObject, jobject consta
 	exit(213);
 }
 
-
 /**
  * jobject JVM_ConstantPoolGetMethodAt(JNIEnv *, jobject, jobject, jint)
  */
@@ -6189,7 +6206,6 @@ JVM_ConstantPoolGetMethodAt(JNIEnv *env, jobject anObject, jobject constantPool,
 	Trc_SC_ConstantPoolGetMethodAt(env);
 	exit(209);
 }
-
 
 /**
  * jobject JVM_ConstantPoolGetMethodAtIfLoaded(JNIEnv *, jobject, jobject, jint)
@@ -6201,7 +6217,6 @@ JVM_ConstantPoolGetMethodAtIfLoaded(JNIEnv *env, jobject anObject, jobject const
 	exit(210);
 }
 
-
 /**
  * jint JVM_ConstantPoolGetSize(JNIEnv *, jobject, jobject)
  */
@@ -6211,7 +6226,6 @@ JVM_ConstantPoolGetSize(JNIEnv *env, jobject anObject, jobject constantPool)
 	Trc_SC_ConstantPoolGetSize(env);
 	exit(206);
 }
-
 
 /**
  * jstring JVM_ConstantPoolGetStringAt(JNIEnv *, jobject, jobject, jint)
@@ -6223,7 +6237,6 @@ JVM_ConstantPoolGetStringAt(JNIEnv *env, jobject anObject, jobject constantPool,
 	exit(218);
 }
 
-
 /**
  * jstring JVM_ConstantPoolGetUTF8At(JNIEnv *, jstring)
  */
@@ -6234,19 +6247,18 @@ JVM_ConstantPoolGetUTF8At(JNIEnv *env, jobject anObject, jobject constantPool, j
 	exit(219);
 }
 
-
 /**
  * jclass JVM_DefineClassWithSource(JNIEnv *, const char *, jobject, const jbyte *, jsize, jobject, const char *)
  */
 jclass JNICALL
-JVM_DefineClassWithSource(JNIEnv *env, const char * className, jobject classLoader, const jbyte * classArray, jsize length, jobject domain, const char * source)
+JVM_DefineClassWithSource(JNIEnv *env, const char *className, jobject classLoader, const jbyte *classArray, jsize length, jobject domain, const char *source)
 {
-	J9VMThread* currentThread = (J9VMThread*) env;
-	J9JavaVM*  vm = currentThread->javaVM;
+	J9VMThread *currentThread = (J9VMThread *)env;
+	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
-	J9ClassLoader* vmLoader;
+	J9ClassLoader *vmLoader;
 	j9object_t loaderObject;
-	jstring classNameString = (*env)->NewStringUTF(env,className);
+	jstring classNameString = (*env)->NewStringUTF(env, className);
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 
@@ -6261,9 +6273,8 @@ JVM_DefineClassWithSource(JNIEnv *env, const char * className, jobject classLoad
 	}
 	vmFuncs->internalExitVMToJNI(currentThread);
 
-	return jvmDefineClassHelper(env, classLoader, classNameString, (jbyte*)classArray, 0, length, domain, 0);
+	return jvmDefineClassHelper(env, classLoader, classNameString, (jbyte *)classArray, 0, length, domain, 0);
 }
-
 
 /**
  * jobjectArray JVM_DumpThreads(JNIEnv *, jclass, jobjectArray)
@@ -6275,7 +6286,6 @@ JVM_DumpThreads(JNIEnv *env, jclass thread, jobjectArray threadArray)
 	exit(224);
 }
 
-
 /**
  * jobjectArray JVM_GetAllThreads(JNIEnv *, jclass)
  */
@@ -6285,7 +6295,6 @@ JVM_GetAllThreads(JNIEnv *env, jclass aClass)
 	Trc_SC_GetAllThreads(env);
 	exit(223);
 }
-
 
 /**
  * jbyteArray JVM_GetClassAnnotations(JNIEnv *, jclass)
@@ -6297,7 +6306,6 @@ JVM_GetClassAnnotations(JNIEnv *env, jclass target)
 	exit(221);
 }
 
-
 /**
  * jobject JVM_GetClassConstantPool(JNIEnv *, jclass)
  */
@@ -6308,7 +6316,6 @@ JVM_GetClassConstantPool(JNIEnv *env, jclass target)
 	exit(205);
 }
 
-
 /**
  * jstring JVM_GetClassSignature(JNIEnv *, jclass)
  */
@@ -6318,7 +6325,6 @@ JVM_GetClassSignature(JNIEnv *env, jclass target)
 	Trc_SC_GetClassSignature(env);
 	exit(220);
 }
-
 
 /**
  * jobjectArray JVM_GetEnclosingMethodInfo(JNIEnv *, jclass)
@@ -6337,8 +6343,8 @@ managementVMIVersion(JNIEnv *env)
 }
 
 typedef struct ManagementVMI {
-	void * unused1;
-	void * unused2;
+	void *unused1;
+	void *unused2;
 	jint (JNICALL *getManagementVMIVersion)(JNIEnv *env);
 } ManagementVMI;
 
@@ -6347,13 +6353,12 @@ static ManagementVMI globalManagementVMI = {NULL, NULL, &managementVMIVersion};
 /**
  * void* JVM_GetManagement(jint)
  */
-void* JNICALL
+void *JNICALL
 JVM_GetManagement(jint version)
 {
 	Trc_SC_GetManagement();
 	return &globalManagementVMI;
 }
-
 
 /**
  * jlong JVM_NanoTime(JNIEnv *, jclass)
@@ -6371,23 +6376,20 @@ JVM_NanoTime(JNIEnv *env, jclass aClass)
 	freq = j9time_hires_frequency();
 
 	/* freq is "ticks per s" */
-	if ( freq == 1000000000L ) {
+	if (freq == 1000000000L) {
 		return ticks;
-	} else if ( freq < 1000000000L ) {
+	} else if (freq < 1000000000L) {
 		return ticks * (1000000000L / freq);
 	} else {
 		return ticks / (freq / 1000000000L);
 	}
 }
 
-
-
-struct J9PortLibrary*
-JNICALL JVM_GetPortLibrary(void)
+struct J9PortLibrary *JNICALL
+JVM_GetPortLibrary(void)
 {
 	return &j9portLibrary;
 }
-
 
 jint JNICALL
 JVM_ExpandFdTable(jint fd)
@@ -6395,41 +6397,39 @@ JVM_ExpandFdTable(jint fd)
 	return 0;
 }
 
-
-
 void JNICALL
-JVM_ZipHook(JNIEnv *env, const char* filename, jint newState)
+JVM_ZipHook(JNIEnv *env, const char *filename, jint newState)
 {
 #ifdef J9VM_OPT_ZIP_SUPPORT
 	VMI_ACCESS_FROM_ENV(env);
-	J9JavaVM *vm = (J9JavaVM*)((J9VMThread*)env)->javaVM;
-	J9HookInterface ** hook = (*VMI)->GetZipFunctions(VMI)->zip_getZipHookInterface(VMI);
+	J9JavaVM *vm = (J9JavaVM *)((J9VMThread *)env)->javaVM;
+	J9HookInterface **hook = (*VMI)->GetZipFunctions(VMI)->zip_getZipHookInterface(VMI);
 
-	if (hook != NULL) {
-		UDATA state;
+	if (NULL != hook) {
+		UDATA state = 0;
 
 		switch (newState) {
-		case JVM_ZIP_HOOK_STATE_OPEN :
+		case JVM_ZIP_HOOK_STATE_OPEN:
 			state = J9ZIP_STATE_OPEN;
 			break;
-		case JVM_ZIP_HOOK_STATE_CLOSED :
+		case JVM_ZIP_HOOK_STATE_CLOSED:
 			state = J9ZIP_STATE_CLOSED;
 			break;
-		case JVM_ZIP_HOOK_STATE_RESET :
+		case JVM_ZIP_HOOK_STATE_RESET:
 			state = J9ZIP_STATE_RESET;
 			break;
-		default :
+		default:
 			state = 0;
 		}
 		/* Can't use hook trigger macros as can't include vmzipcachehook_internal.h */
-		if (state) {
+		if (0 != state) {
 			struct J9VMZipLoadEvent eventData;
 
 			eventData.portlib = vm->portLibrary;
 			eventData.userData = vm;
 			eventData.zipfile = NULL;
 			eventData.newState = state;
-			eventData.cpPath = (U_8*)filename;
+			eventData.cpPath = (U_8 *)filename;
 			eventData.returnCode = 0;
 
 			(*hook)->J9HookDispatch(hook, J9HOOK_VM_ZIP_LOAD, &eventData);
@@ -6438,51 +6438,54 @@ JVM_ZipHook(JNIEnv *env, const char* filename, jint newState)
 #endif /* J9VM_OPT_ZIP_SUPPORT */
 }
 
-
-void * JNICALL
-JVM_RawAllocate(size_t size, const char * callsite)
+void *JNICALL
+JVM_RawAllocate(size_t size, const char *callsite)
 {
-	return j9portLibrary.omrPortLibrary.mem_allocate_memory(&j9portLibrary.omrPortLibrary, (UDATA) size, (char *) ((callsite == NULL) ? J9_GET_CALLSITE() : callsite), J9MEM_CATEGORY_SUN_JCL);
+	return j9portLibrary.omrPortLibrary.mem_allocate_memory(
+				&j9portLibrary.omrPortLibrary,
+				(UDATA)size,
+				(char *)((NULL == callsite) ? J9_GET_CALLSITE() : callsite),
+				J9MEM_CATEGORY_SUN_JCL);
 }
 
-void * JNICALL
-JVM_RawRealloc(void * ptr, size_t size, const char * callsite)
+void *JNICALL
+JVM_RawRealloc(void *ptr, size_t size, const char *callsite)
 {
-	return j9portLibrary.omrPortLibrary.mem_reallocate_memory(&j9portLibrary.omrPortLibrary, ptr, (UDATA) size, callsite, J9MEM_CATEGORY_SUN_JCL);
+	return j9portLibrary.omrPortLibrary.mem_reallocate_memory(&j9portLibrary.omrPortLibrary, ptr, (UDATA)size, callsite, J9MEM_CATEGORY_SUN_JCL);
 }
 
-void * JNICALL
-JVM_RawCalloc(size_t nmemb, size_t size, const char * callsite)
+void *JNICALL
+JVM_RawCalloc(size_t nmemb, size_t size, const char *callsite)
 {
 	size_t byteSize = nmemb * size;
-	void * mem = JVM_RawAllocate(byteSize, callsite);
+	void *mem = JVM_RawAllocate(byteSize, callsite);
 
-	if (mem != NULL) {
+	if (NULL != mem) {
 		memset(mem, 0, byteSize);
 	}
 
 	return mem;
 }
 
-void * JNICALL
-JVM_RawAllocateInCategory(size_t size, const char * callsite, jint category)
+void *JNICALL
+JVM_RawAllocateInCategory(size_t size, const char *callsite, jint category)
 {
-	return j9portLibrary.omrPortLibrary.mem_allocate_memory(&j9portLibrary.omrPortLibrary, (UDATA) size, (char *) ((callsite == NULL) ? J9_GET_CALLSITE() : callsite), category);
+	return j9portLibrary.omrPortLibrary.mem_allocate_memory(&j9portLibrary.omrPortLibrary, (UDATA)size, (char *)((NULL == callsite) ? J9_GET_CALLSITE() : callsite), category);
 }
 
-void * JNICALL
-JVM_RawReallocInCategory(void * ptr, size_t size, const char * callsite, jint category)
+void *JNICALL
+JVM_RawReallocInCategory(void *ptr, size_t size, const char *callsite, jint category)
 {
-	return j9portLibrary.omrPortLibrary.mem_reallocate_memory(&j9portLibrary.omrPortLibrary, ptr, (UDATA) size, callsite, category);
+	return j9portLibrary.omrPortLibrary.mem_reallocate_memory(&j9portLibrary.omrPortLibrary, ptr, (UDATA)size, callsite, category);
 }
 
-void * JNICALL
-JVM_RawCallocInCategory(size_t nmemb, size_t size, const char * callsite, jint category)
+void *JNICALL
+JVM_RawCallocInCategory(size_t nmemb, size_t size, const char *callsite, jint category)
 {
 	size_t byteSize = nmemb * size;
-	void * mem = JVM_RawAllocateInCategory(byteSize, callsite, category);
+	void *mem = JVM_RawAllocateInCategory(byteSize, callsite, category);
 
-	if (mem != NULL) {
+	if (NULL != mem) {
 		memset(mem, 0, byteSize);
 	}
 
@@ -6490,11 +6493,10 @@ JVM_RawCallocInCategory(size_t nmemb, size_t size, const char * callsite, jint c
 }
 
 void JNICALL
-JVM_RawFree(void * ptr)
+JVM_RawFree(void *ptr)
 {
 	j9portLibrary.omrPortLibrary.mem_free_memory(&j9portLibrary.omrPortLibrary, ptr);
 }
-
 
 /**
  * JVM_IsNaN
@@ -6502,10 +6504,9 @@ JVM_RawFree(void * ptr)
 jboolean JNICALL
 JVM_IsNaN(jdouble dbl)
 {
-	Trc_SC_IsNaN(*(jlong*)&dbl);
+	Trc_SC_IsNaN(*(jlong *)&dbl);
 	return IS_NAN_DBL(dbl);
 }
-
 
 /*
  * Called before class library initialization to allow the JVM interface layer to
@@ -6515,7 +6516,7 @@ JVM_IsNaN(jdouble dbl)
  * 		however, this function must be retained in order to satisfy the redirector.
  */
 jint JNICALL
-JVM_Startup(JavaVM* vm, JNIEnv* env)
+JVM_Startup(JavaVM *vm, JNIEnv *env)
 {
 	return JNI_OK;
 }
@@ -6569,7 +6570,7 @@ checkZOSThrWeightEnvVar(void)
 	UDATA retVal = ZOS_THR_WEIGHT_NOT_FOUND;
 #pragma convlit(suspend)
 #undef getenv
-	const char * const val = getenv("JAVA_THREAD_MODEL");
+	const char *const val = getenv("JAVA_THREAD_MODEL");
 
 	if (NULL != val) {
 		/*
