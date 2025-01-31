@@ -24,9 +24,9 @@ package jdk.internal.ref;
 
 import java.lang.ref.Cleaner;
 import java.lang.ref.Cleaner.Cleanable;
-/*[IF JAVA_SPEC_VERSION < 24]*/
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+/*[IF JAVA_SPEC_VERSION < 24]*/
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 /*[ENDIF] JAVA_SPEC_VERSION < 24 */
@@ -47,8 +47,12 @@ public class CleanerShutdown {
 			}
 		}
 
-		/*[IF JAVA_SPEC_VERSION < 24]*/
 		try {
+			/*[IF JAVA_SPEC_VERSION >= 24]*/
+			Method cleanableListReset = CleanerImpl.CleanableList.class.getDeclaredMethod("reset"); //$NON-NLS-1$
+			cleanableListReset.setAccessible(true);
+			cleanableListReset.invoke(commonCleanerImpl.activeList);
+			/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 			Method phantomRemove = PhantomCleanable.class.getDeclaredMethod("remove"); //$NON-NLS-1$
 			AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
 				phantomRemove.setAccessible(true);
@@ -57,8 +61,11 @@ public class CleanerShutdown {
 			while (!commonCleanerImpl.phantomCleanableList.isListEmpty()) {
 				phantomRemove.invoke(commonCleanerImpl.phantomCleanableList);
 			}
+			/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 		} catch (NoSuchMethodException
+				/*[IF JAVA_SPEC_VERSION < 24]*/
 				| SecurityException
+				/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 				| IllegalAccessException
 				| IllegalArgumentException
 				| InvocationTargetException e)
@@ -66,6 +73,5 @@ public class CleanerShutdown {
 			/* should not fail */
 			e.printStackTrace();
 		}
-		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	}
 }
