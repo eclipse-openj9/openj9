@@ -2347,23 +2347,28 @@ bool TR::CompilationInfo::shouldRetryCompilation(J9VMThread *vmThread, TR_Method
                bodyInfo = 0;
                if (comp->allowRecompilation() && entry->_optimizationPlan && entry->_optimizationPlan->getOptLevel() > minHotness)
                   {
-                  // Compile only if the method is interpreted or if it's compiled with
-                  // profiling information.
+                  // Compile if the method is interpreted.
                   if (entry->_oldStartPC == 0) // interpreter method
                      {
                      tryCompilingAgain = true;
                      }
-                  else // Does the existing body contain profiling info?
+                  else
                      {
+                     // Try again if existing body is compiled with profiling information
+                     // because we don't want to be stuck in profiling mode forever.
                      bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(entry->_oldStartPC);
                      if (bodyInfo->getIsProfilingBody())
                         tryCompilingAgain = true;
-                     // if existing body is invalidated, retry the compilation
+                     // If existing body is invalidated, retry the compilation.
                      else if (bodyInfo->getIsInvalidated())
                         tryCompilingAgain = true;
-                     // if the existing body uses pre-existence, retry the compilation
-                     // otherwise we will revert to interpreted when failing this compilation
+                     // If the existing body uses pre-existence, retry the compilation,
+                     // otherwise we will revert to interpreted when failing this compilation.
                      else if (bodyInfo->getUsesPreexistence())
+                        tryCompilingAgain = true;
+                     // If the compilation that failed is at a higher opt level than hot
+                     // but the existing compiled body is lower than hot, try to recompile at hot.
+                     else if (comp->getOptLevel() > hot && bodyInfo->getHotness() <= warm)
                         tryCompilingAgain = true;
                      }
                   }
@@ -2373,11 +2378,30 @@ bool TR::CompilationInfo::shouldRetryCompilation(J9VMThread *vmThread, TR_Method
                   TR_Hotness hotness = entry->_optimizationPlan->getOptLevel();
                   TR_Hotness newHotness;
                   if (hotness == veryHot)
-                     newHotness = warm; // skip over hot and go down two levels
+                     {
+                     if (comp->isProfilingCompilation())
+                        {
+                        // A hot compilation might succeed where a
+                        // profiled very-hot compilation might fail.
+                        newHotness = hot;
+                        // Prevent internal switching to profiling.
+                        entry->_optimizationPlan->setDoNotSwitchToProfiling(true);
+                        }
+                     else
+                        {
+                        // Very-hot without profiling is as expensive as hot,
+                        // so we should not retry at hot because it may fail again.
+                        newHotness = warm;
+                        }
+                     }
                   else if (hotness <= scorching)
+                     {
                      newHotness = (TR_Hotness)(hotness - 1);
+                     }
                   else // Why would we use hotness greater than scorching
+                     {
                      newHotness = noOpt;
+                     }
                   entry->_optimizationPlan->setOptLevel(newHotness);
                   entry->_optimizationPlan->setInsertInstrumentation(false); // prevent profiling
                   entry->_optimizationPlan->setUseSampling(false); // disable recompilation of this method
