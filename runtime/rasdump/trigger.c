@@ -416,7 +416,7 @@ matchesExceptionFilter(J9VMThread *vmThread, J9RASdumpEventData *eventData, UDAT
 					if (stackOffsetFilter) {
 						end += J9UTF8_LENGTH(throwMethodName) + 1;
 						buf[end] = '#';
-						j9str_printf(PORTLIB, buf + end + 1, buflen - end, "%d", throwSite.desiredOffset);
+						j9str_printf(buf + end + 1, buflen - end, "%d", throwSite.desiredOffset);
 					}
 					buf[buflen] = '\0';
 				}
@@ -1233,7 +1233,7 @@ rasDumpHookVmShutdown(J9HookInterface** hookInterface, UDATA eventNum, void* eve
 	char details[32];
 	PORT_ACCESS_FROM_VMC(vmThread);
 
-	length = j9str_printf(PORTLIB, details, sizeof(details), "#%0*zx", sizeof(UDATA) * 2, data->exitCode);
+	length = j9str_printf(details, sizeof(details), "#%0*zx", sizeof(UDATA) * 2, data->exitCode);
 
 	dumpData.detailLength = length;
 	dumpData.detailData = details;
@@ -1438,17 +1438,17 @@ rasDumpHookAllocationThreshold(J9HookInterface** hookInterface, UDATA eventNum, 
 
 		/* For arrays we print the name of the leaf class then add enough '[]' to describe the arity */
 
-		length = j9str_printf(PORTLIB, details, sizeof(details), "%zu bytes, type %.*s", data->size, J9UTF8_LENGTH(leafClassName), J9UTF8_DATA(leafClassName));
+		length = j9str_printf(details, sizeof(details), "%zu bytes, type %.*s", data->size, J9UTF8_LENGTH(leafClassName), J9UTF8_DATA(leafClassName));
 
 		for (i=0;i<arrayClass->arity;i++) {
-			length += j9str_printf(PORTLIB, details + length, sizeof(details) - length, "[]");
+			length += j9str_printf(details + length, sizeof(details) - length, "[]");
 		}
 	} else {
 		J9UTF8 *className = J9ROMCLASS_CLASSNAME(romClass);
 
 		/* For regular objects, we just print the name from the ROMclass */
 
-		length = j9str_printf(PORTLIB, details, sizeof(details), "%zu bytes, type %.*s", data->size, J9UTF8_LENGTH(className), J9UTF8_DATA(className));
+		length = j9str_printf(details, sizeof(details), "%zu bytes, type %.*s", data->size, J9UTF8_LENGTH(className), J9UTF8_DATA(className));
 	}
 
 	/* Change any /s to .s so class names are in customer-friendly format */
@@ -1486,7 +1486,7 @@ rasDumpHookSlowExclusive(J9HookInterface** hookInterface, UDATA eventNum, void* 
 	char details[32];
 	PORT_ACCESS_FROM_VMC(vmThread);
 
-	length = j9str_printf(PORTLIB, details, sizeof(details), "%zums", data->timeTaken);
+	length = j9str_printf(details, sizeof(details), "%zums", data->timeTaken);
 
 	dumpData.detailLength = length;
 	dumpData.detailData = details;

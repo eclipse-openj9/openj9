@@ -133,7 +133,7 @@ classHashEqualFn(void *tableNode, void *queryNode, void *userData)
 	if (isTableNodeHiddenClass) {
 		/* Hidden class is keyed on its rom address, not on its name. */
 		PORT_ACCESS_FROM_JAVAVM(javaVM);
-		j9str_printf(PORTLIB, buf, ROM_ADDRESS_LENGTH + 1, ROM_ADDRESS_FORMAT, (UDATA)((KeyHashTableClassEntry *)tableNode)->ramClass->romClass);
+		j9str_printf(buf, ROM_ADDRESS_LENGTH + 1, ROM_ADDRESS_FORMAT, (UDATA)((KeyHashTableClassEntry *)tableNode)->ramClass->romClass);
 		tableNodeName = (const U_8 *)buf;
 		tableNodeLength = ROM_ADDRESS_LENGTH;
 	}
@@ -232,7 +232,7 @@ classHashFn(void *key, void *userData)
 	if (isTableNodeHiddenClass) {
 		/* for hidden class, do not key on its name, key on its rom address */
 		PORT_ACCESS_FROM_JAVAVM(javaVM);
-		j9str_printf(PORTLIB, buf, ROM_ADDRESS_LENGTH + 1, ROM_ADDRESS_FORMAT, (UDATA)((KeyHashTableClassEntry *)key)->ramClass->romClass);
+		j9str_printf(buf, ROM_ADDRESS_LENGTH + 1, ROM_ADDRESS_FORMAT, (UDATA)((KeyHashTableClassEntry *)key)->ramClass->romClass);
 		name = (const U_8 *)buf;
 		length = ROM_ADDRESS_LENGTH;
 	}

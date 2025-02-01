@@ -378,7 +378,7 @@ j9shmem_test4(J9PortLibrary *portLibrary, char* argv0)
 	}
 
 	regionChar = (char*) region;
-	j9str_printf(PORTLIB, regionChar, 30, TESTSTRING);
+	j9str_printf(regionChar, 30, TESTSTRING);
 	termstat = waitForTestProcess(portLibrary, pid);
 
 	if(termstat != 0) {
@@ -497,7 +497,7 @@ int j9shmem_test5(J9PortLibrary *portLibrary) {
 		goto exit;
 	}
 
-	j9str_printf(PORTLIB, mybaseFilePath, J9SH_MAXPATH, "%s%s", cacheDir, TESTMEM_NAME);
+	j9str_printf(mybaseFilePath, J9SH_MAXPATH, "%s%s", cacheDir, TESTMEM_NAME);
 	rc = j9file_attr(mybaseFilePath);
 
 	if(rc != EsIsFile) {
@@ -634,7 +634,7 @@ j9shmem_test6(J9PortLibrary *portLibrary)
 	 * maybe we should have a private interface so that porttest can get the
 	 * basefile name
 	 */
-	j9str_printf(PORTLIB, mybaseFilePath, J9SH_MAXPATH, "%s%s", cacheDir, TESTMEM_NAME);
+	j9str_printf(mybaseFilePath, J9SH_MAXPATH, "%s%s", cacheDir, TESTMEM_NAME);
 	rc = j9file_attr(mybaseFilePath);
 
 	if(rc != EsIsFile) {
@@ -1531,8 +1531,8 @@ j9shmem_test15(J9PortLibrary *portLibrary, char* argv0)
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "Cannot create the directory");
 		goto cleanup;
 	}
-	
-	j9str_printf(PORTLIB, mybaseFilePath, J9SH_MAXPATH, "%s%s", cacheDir, TEST15_MEM_NAME);
+
+	j9str_printf(mybaseFilePath, J9SH_MAXPATH, "%s%s", cacheDir, TEST15_MEM_NAME);
 
 	/*This first call to j9shxxx_open is simply to ensure that we don't use any old SysV objects. If j9shxxx_open returns 'OPENED' then we destroy the object.*/
 	rc = j9shmem_open(cacheDir, 0, &mem0, TEST15_MEM_NAME, TEST15_MEM_SIZE, 0600, OMRMEM_CATEGORY_PORT_LIBRARY, J9SHMEM_NO_FLAGS, NULL);
@@ -2165,4 +2165,3 @@ j9shmem_runTests(J9PortLibrary *portLibrary, char* argv0, const char* shmem_chil
 	j9tty_printf(PORTLIB, "\nShared Memory test done%s\n\n", rc == TEST_PASS ? "." : ", failures detected.");
 	return TEST_PASS == rc ? 0 : -1;
 }
-

@@ -89,10 +89,10 @@ char* getDefaultBootstrapClassPath(J9JavaVM * vm, char* javaHome)
 			lastEntry = *entry;
 
 			if ('!' == lastEntry[0]) {
-				j9str_printf(PORTLIB, subPath, (U_32)pathLength, "%s", lastEntry + 1);
+				j9str_printf(subPath, (U_32)pathLength, "%s", lastEntry + 1);
 				j9mem_free_memory(*entry);
 			} else {
-				j9str_printf(PORTLIB, subPath, (U_32)pathLength,
+				j9str_printf(subPath, (U_32)pathLength,
 								"%s" DIR_SEPARATOR_STR "lib" DIR_SEPARATOR_STR "%s",
 								/* classes.zip */ javaHome, *entry);
 				/* if this entry was allocated then free it as we will not use it

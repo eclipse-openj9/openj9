@@ -507,10 +507,10 @@ public:
 		 */
 		nlsMessage = OMRPORT_FROM_J9PORT(PORTLIB)->nls_lookup_message(OMRPORT_FROM_J9PORT(PORTLIB), J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, module_name, message_num, NULL);
 		if(NULL != nlsMessage) {
-			UDATA messageLength = j9str_printf(PORTLIB, NULL, 0, nlsMessage, memberNameLength, memberName, classNameLength, className);
+			UDATA messageLength = j9str_printf(NULL, 0, nlsMessage, memberNameLength, memberName, classNameLength, className);
 			U_8* message = (U_8*)j9mem_allocate_memory(messageLength, OMRMEM_CATEGORY_VM);
 			if(NULL != message) {
-				j9str_printf(PORTLIB, (char*)message, messageLength, nlsMessage, memberNameLength, memberName, classNameLength, className);
+				j9str_printf((char *)message, messageLength, nlsMessage, memberNameLength, memberName, classNameLength, className);
 				recordCFRError(message);
 			}
 		}

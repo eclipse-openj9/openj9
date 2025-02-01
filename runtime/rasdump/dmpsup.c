@@ -1443,9 +1443,9 @@ initDumpDirectory(J9JavaVM *vm)
 			printDumpUsage(vm);
 			return OMR_ERROR_INTERNAL;
 		} else {
-			dumpDirectoryPrefix = (char *)j9mem_allocate_memory(strlen(optionString)+1, OMRMEM_CATEGORY_VM);
-			if( dumpDirectoryPrefix != NULL ) {
-				j9str_printf(PORTLIB, dumpDirectoryPrefix, strlen(optionString)+1, "%s", optionString);
+			dumpDirectoryPrefix = (char *)j9mem_allocate_memory(strlen(optionString) + 1, OMRMEM_CATEGORY_VM);
+			if (NULL != dumpDirectoryPrefix) {
+				j9str_printf(dumpDirectoryPrefix, strlen(optionString) + 1, "%s", optionString);
 			} else {
 				retVal = OMR_ERROR_INTERNAL;
 			}

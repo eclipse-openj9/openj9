@@ -2801,7 +2801,7 @@ SH_CacheMap::addROMClassResourceToCache(J9VMThread* currentThread, const void* r
 		/* TODO: In offline mode, should be fatal */
 		if (NULL != p_subcstr) {
 			const char* tmpstr = j9nls_lookup_message((J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG),J9NLS_SHRC_CM_CANNOT_ALLOC_DATA_SIZE,"no space in cache for %d bytes");
-			j9str_printf(PORTLIB, (char *)*p_subcstr, VERBOSE_BUFFER_SIZE, tmpstr, dataLength);
+			j9str_printf((char *)*p_subcstr, VERBOSE_BUFFER_SIZE, tmpstr, dataLength);
 		}
 		return (void*)J9SHR_RESOURCE_STORE_ERROR;
 	}
@@ -2833,7 +2833,7 @@ SH_CacheMap::addROMClassResourceToCache(J9VMThread* currentThread, const void* r
 	if (itemInCache == NULL) {
 		if (NULL != p_subcstr) {
 			const char* tmpstr = j9nls_lookup_message((J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG),J9NLS_SHRC_CM_CANNOT_ALLOC_DATA_SIZE, "no space in cache for %d bytes");
-			j9str_printf(PORTLIB, (char *)*p_subcstr, VERBOSE_BUFFER_SIZE, tmpstr, dataLength);
+			j9str_printf((char *)*p_subcstr, VERBOSE_BUFFER_SIZE, tmpstr, dataLength);
 		}
 		Trc_SHR_CM_addROMClassResourceToCache_Exit_Null(currentThread);
 		return (void*)J9SHR_RESOURCE_STORE_FULL;
@@ -2990,7 +2990,7 @@ SH_CacheMap::updateROMClassResource(J9VMThread* currentThread, const void* addre
 			if ((UDATA)updateAtOffset+data->length > dataLength) {
 				if (NULL != p_subcstr) {
 					const char* tmpcstr = j9nls_lookup_message((J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG), J9NLS_SHRC_CM_DATA_SIZE_LARGER, "data %d larger than available %d");
-					j9str_printf(PORTLIB, (char *)*p_subcstr, VERBOSE_BUFFER_SIZE, tmpcstr, updateAtOffset+(data->length), dataLength);
+					j9str_printf((char *)*p_subcstr, VERBOSE_BUFFER_SIZE, tmpcstr, updateAtOffset+(data->length), dataLength);
 				}
 				Trc_SHR_CM_updateROMClassResource_Exit4(currentThread, updateAtOffset, data->length, dataLength);
 				result = J9SHR_RESOURCE_STORE_ERROR;
@@ -3596,7 +3596,7 @@ SH_CacheMap::findAttachedData(J9VMThread* currentThread, const void* addressInCa
 				result = (U_8 *)J9SHR_RESOURCE_STORE_ERROR;
 				if (NULL != p_subcstr) {
 					const char *tmpcstr = j9nls_lookup_message((J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG), J9NLS_SHRC_CM_DATA_SIZE_LARGER, "data %d larger than available %d");
-					j9str_printf(PORTLIB, (char *)*p_subcstr, VERBOSE_BUFFER_SIZE, tmpcstr, dataLength, data->length);
+					j9str_printf((char *)*p_subcstr, VERBOSE_BUFFER_SIZE, tmpcstr, dataLength, data->length);
 				}
 				goto _exitWithError;
 			}
@@ -3606,7 +3606,7 @@ SH_CacheMap::findAttachedData(J9VMThread* currentThread, const void* addressInCa
 				result = (const U_8 *)J9SHR_RESOURCE_BUFFER_ALLOC_FAILED;
 				if (NULL != p_subcstr) {
 					const char *tmpcstr = j9nls_lookup_message((J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG), J9NLS_SHRC_CM_MEMORY_ALLOC_FAILED, "memory allocation of %d bytes failed");
-					j9str_printf(PORTLIB, (char *)*p_subcstr, VERBOSE_BUFFER_SIZE, tmpcstr, dataLength);
+					j9str_printf((char *)*p_subcstr, VERBOSE_BUFFER_SIZE, tmpcstr, dataLength);
 				}
 				goto _exit;
 			}
@@ -6139,7 +6139,7 @@ formatAttachedDataString(J9VMThread* currentThread, U_8 *attachedData, UDATA att
 
 	*stringCursor = '\0'; /* handle the zero-length case */
 	while ((bytesRemaining > 0) && ((stringCursor+BYTE_STRING_LENGTH) < stringBufferEnd)){
-		stringCursor += j9str_printf(PORTLIB, stringCursor, bufferLength, "0x%#02x ", *dataCursor); /* increment does not include the trailing '\0' */
+		stringCursor += j9str_printf(stringCursor, bufferLength, "0x%#02x ", *dataCursor); /* increment does not include the trailing '\0' */
 		++dataCursor;
 		--bytesRemaining;
 	}

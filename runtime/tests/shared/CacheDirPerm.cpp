@@ -104,14 +104,14 @@ CacheDirPerm::getTempCacheDir(J9JavaVM *vm, I_32 cacheType, bool useDefaultDir, 
 		goto _end;
 	}
 	if (useDefaultDir) {
-		j9str_printf(PORTLIB, cacheDir, sizeof(cacheDir), "%s", baseDir);
+		j9str_printf(cacheDir, sizeof(cacheDir), "%s", baseDir);
 	} else {
-		j9str_printf(PORTLIB, cacheDir, sizeof(cacheDir), "%s%s/%s/", baseDir, TEST_PARENTDIR, TEST_TEMPDIR);
+		j9str_printf(cacheDir, sizeof(cacheDir), "%s%s/%s/", baseDir, TEST_PARENTDIR, TEST_TEMPDIR);
 		if (J9PORT_SHR_CACHE_TYPE_NONPERSISTENT == cacheType) {
 			/* for non-persistent cache, actual cache dir is cacheDir/J9SH_BASEDIR. So parent dir is same as cacheDir. */
-			j9str_printf(PORTLIB, parentDir, sizeof(parentDir), "%s%s/%s/", baseDir, TEST_PARENTDIR, TEST_TEMPDIR);
+			j9str_printf(parentDir, sizeof(parentDir), "%s%s/%s/", baseDir, TEST_PARENTDIR, TEST_TEMPDIR);
 		} else {
-			j9str_printf(PORTLIB, parentDir, sizeof(parentDir), "%s%s/", baseDir, TEST_PARENTDIR);
+			j9str_printf(parentDir, sizeof(parentDir), "%s%s/", baseDir, TEST_PARENTDIR);
 		}
 	}
 _end:
@@ -128,12 +128,12 @@ CacheDirPerm::createTempCacheDir(I_32 cacheType, bool useDefaultDir)
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
 	if (useDefaultDir) {
-		j9str_printf(PORTLIB, actualCacheDir, sizeof(actualCacheDir), "%s", cacheDir);
+		j9str_printf(actualCacheDir, sizeof(actualCacheDir), "%s", cacheDir);
 	} else {
 		if (J9PORT_SHR_CACHE_TYPE_NONPERSISTENT == cacheType) {
-			j9str_printf(PORTLIB, actualCacheDir, sizeof(actualCacheDir), "%s/%s", cacheDir, J9SH_BASEDIR);
+			j9str_printf(actualCacheDir, sizeof(actualCacheDir), "%s/%s", cacheDir, J9SH_BASEDIR);
 		} else {
-			j9str_printf(PORTLIB, actualCacheDir, sizeof(actualCacheDir), "%s", cacheDir);
+			j9str_printf(actualCacheDir, sizeof(actualCacheDir), "%s", cacheDir);
 		}
 	}
 
@@ -161,12 +161,12 @@ CacheDirPerm::getCacheDirPerm(I_32 cacheType, bool isDefaultDir)
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
 	if (isDefaultDir) {
-		j9str_printf(PORTLIB, actualCacheDir, sizeof(actualCacheDir), "%s", cacheDir);
+		j9str_printf(actualCacheDir, sizeof(actualCacheDir), "%s", cacheDir);
 	} else {
 		if (J9PORT_SHR_CACHE_TYPE_NONPERSISTENT == cacheType) {
-			j9str_printf(PORTLIB, actualCacheDir, sizeof(actualCacheDir), "%s/%s", cacheDir, J9SH_BASEDIR);
+			j9str_printf(actualCacheDir, sizeof(actualCacheDir), "%s/%s", cacheDir, J9SH_BASEDIR);
 		} else {
-			j9str_printf(PORTLIB, actualCacheDir, sizeof(actualCacheDir), "%s", cacheDir);
+			j9str_printf(actualCacheDir, sizeof(actualCacheDir), "%s", cacheDir);
 		}
 	}
 
@@ -219,7 +219,7 @@ removeTempDir(J9JavaVM *vm, char *dir)
 		char resultBuffer[J9SH_MAXPATH];
 		UDATA rc, handle;
 
-		j9str_printf(PORTLIB, baseFilePath, sizeof(baseFilePath), "%s", dir);
+		j9str_printf(baseFilePath, sizeof(baseFilePath), "%s", dir);
 		rc = handle = j9file_findfirst(baseFilePath, resultBuffer);
 		while ((UDATA)-1 != rc) {
 			char nextEntry[J9SH_MAXPATH];
@@ -228,7 +228,7 @@ removeTempDir(J9JavaVM *vm, char *dir)
 				rc = j9file_findnext(handle, resultBuffer);
 				continue;
 			}
-			j9str_printf(PORTLIB, nextEntry, sizeof(nextEntry), "%s/%s", baseFilePath, resultBuffer);
+			j9str_printf(nextEntry, sizeof(nextEntry), "%s/%s", baseFilePath, resultBuffer);
 			removeTempDir(vm, nextEntry);
 			rc = j9file_findnext(handle, resultBuffer);
 		}

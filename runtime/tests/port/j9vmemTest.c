@@ -362,7 +362,7 @@ j9vmem_test1(struct J9PortLibrary *portLibrary)
 		}
 		
 		/* can we read and write to the memory? */
-		(void) j9str_printf(PORTLIB, allocName, allocNameSize, "j9vmem_reserve_memory(%d)", pageSizes[i]);
+		(void) j9str_printf(allocName, allocNameSize, "j9vmem_reserve_memory(%d)", pageSizes[i]);
 		verifyMemory(portLibrary, testName, memPtr, pageSizes[i], allocName);
 		
 		/* free the memory (reuse the vmemID) */
@@ -848,7 +848,7 @@ j9vmem_decommit_memory_test(struct J9PortLibrary *portLibrary)
 		}
 		
 		/* can we read and write to the memory? */
-		(void) j9str_printf(PORTLIB, allocName, allocNameSize, "j9vmem_reserve_memory(%d)", pageSizes[i]);
+		(void) j9str_printf(allocName, allocNameSize, "j9vmem_reserve_memory(%d)", pageSizes[i]);
 		verifyMemory(portLibrary, testName, memPtr, pageSizes[i], allocName);
 		
 		/* decommit the memory */
@@ -1126,7 +1126,7 @@ j9vmem_testReserveMemoryEx_impl(struct J9PortLibrary *portLibrary, const char* t
 				}
 
 				/* can we read and write to the memory? */
-				j9str_printf(PORTLIB, allocName, allocNameSize, "j9vmem_reserve_memory(%d)", pageSizes[i]);
+				j9str_printf(allocName, allocNameSize, "j9vmem_reserve_memory(%d)", pageSizes[i]);
 				verifyMemory(portLibrary, testName, memPtr[j], pageSizes[i], allocName);
 
 				/* Have the memory categories been updated properly */
@@ -1317,7 +1317,7 @@ j9vmem_testReserveMemoryEx_zOSLargePageBelowBar(struct J9PortLibrary *portLibrar
 		}
 	
 		/* can we read and write to the memory? */
-		j9str_printf(PORTLIB, allocName, allocNameSize, "j9vmem_reserve_memory(%d)", params.byteAmount);
+		j9str_printf(allocName, allocNameSize, "j9vmem_reserve_memory(%d)", params.byteAmount);
 		verifyMemory(portLibrary, testName, memPtr, params.byteAmount, allocName);
 	
 		/* free the memory */
@@ -1421,7 +1421,7 @@ j9vmem_testReserveMemoryExStrictAddress_zOSLargePageBelowBar(struct J9PortLibrar
 		}
 
 		/* can we read and write to the memory? */
-		j9str_printf(PORTLIB, allocName, allocNameSize, "j9vmem_reserve_memory(%d)", params.byteAmount);
+		j9str_printf(allocName, allocNameSize, "j9vmem_reserve_memory(%d)", params.byteAmount);
 		verifyMemory(portLibrary, testName, memPtr, params.byteAmount, allocName);
 
 		/* free the memory */
@@ -1512,7 +1512,7 @@ j9vmem_testReserveMemoryEx_zOS_useExtendedPrivateAreaMemoryLargePage(struct J9Po
 		}
 
 		/* can we read and write to the memory? */
-		j9str_printf(PORTLIB, allocName, allocNameSize, "j9vmem_reserve_memory(%d)", params.byteAmount);
+		j9str_printf(allocName, allocNameSize, "j9vmem_reserve_memory(%d)", params.byteAmount);
 		verifyMemory(portLibrary, testName, memPtr, params.byteAmount, allocName);
 
 		/* free the memory */
@@ -1867,7 +1867,7 @@ j9vmem_test_numa(struct J9PortLibrary *portLibrary)
 				/* ideally we'd test that the memory actually has some NUMA characteristics, but that's difficult to prove */
 
 				/* can we read and write to the memory? */
-				j9str_printf(PORTLIB, allocName, allocNameSize, "j9vmem_reserve_memory(%d)", pageSize);
+				j9str_printf(allocName, allocNameSize, "j9vmem_reserve_memory(%d)", pageSize);
 				verifyMemory(portLibrary, testName, memPtr, reserveSizeInBytes, allocName);
 				
 				/* free the memory (reuse the vmemID) */

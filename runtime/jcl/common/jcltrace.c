@@ -240,7 +240,7 @@ processAndCheckNameString(JNIEnv *env, jobject name, const char **applicationNam
 		PORT_ACCESS_FROM_ENV(env);
 
 		memset(messageBuffer, 0, sizeof(messageBuffer));
-		j9str_printf(PORTLIB, messageBuffer, ERROR_MESSAGE_BUFFER_LENGTH, "Application name is too long. Maximum length %d characters, supplied string was %d characters.\n", MAX_APPLICATION_NAME_CHARS, strlen(*applicationName));
+		j9str_printf(messageBuffer, ERROR_MESSAGE_BUFFER_LENGTH, "Application name is too long. Maximum length %d characters, supplied string was %d characters.\n", MAX_APPLICATION_NAME_CHARS, strlen(*applicationName));
 		throwIllegalArgumentException(env, messageBuffer);
 		return 2;
 	}
@@ -515,7 +515,7 @@ extractAndProcessFormatStrings(JNIEnv *env, jarray templates, char ***const form
 			char messageBuffer[ERROR_MESSAGE_BUFFER_LENGTH + 1];
 
 			memset(messageBuffer, 0, sizeof(messageBuffer));
-			j9str_printf(PORTLIB, messageBuffer, ERROR_MESSAGE_BUFFER_LENGTH, "Error: template %d does not have a valid trace prefix. Trace templates should start with one of Trace.EVENT, Trace.EXIT, Trace.ENTRY, Trace.EXCEPTION or Trace.EXCEPTION_EXIT", i);
+			j9str_printf(messageBuffer, ERROR_MESSAGE_BUFFER_LENGTH, "Error: template %d does not have a valid trace prefix. Trace templates should start with one of Trace.EVENT, Trace.EXIT, Trace.ENTRY, Trace.EXCEPTION or Trace.EXCEPTION_EXIT", i);
 			throwIllegalArgumentException(env, messageBuffer);
 		}
 
@@ -721,7 +721,7 @@ Java_com_ibm_jvm_Trace_registerApplicationImpl(JNIEnv *env, jobject this, jobjec
 		char messageBuffer[ERROR_MESSAGE_BUFFER_LENGTH + 1];
 
 		memset(messageBuffer, 0, sizeof(messageBuffer));
-		j9str_printf(PORTLIB, messageBuffer, ERROR_MESSAGE_BUFFER_LENGTH, "Failed to register application with trace engine: %d", err);
+		j9str_printf(messageBuffer, ERROR_MESSAGE_BUFFER_LENGTH, "Failed to register application with trace engine: %d", err);
 		throwRuntimeException(env, messageBuffer);
 		toReturn = JNI_ERR;
 		goto error;
@@ -840,7 +840,7 @@ trace(JNIEnv *const env, const jint handle, const jint traceId, const UDATA meth
 		PORT_ACCESS_FROM_ENV(env);
 
 		memset(messageBuffer, 0, sizeof(messageBuffer));
-		j9str_printf(PORTLIB, messageBuffer, ERROR_MESSAGE_BUFFER_LENGTH, "Specified tracepoint: %d outside of valid range 0<=x<%d\n", traceId, modInfo->count);
+		j9str_printf(messageBuffer, ERROR_MESSAGE_BUFFER_LENGTH, "Specified tracepoint: %d outside of valid range 0<=x<%d\n", traceId, modInfo->count);
 		throwIllegalArgumentException(env, messageBuffer);
 		return;
 	}
@@ -854,7 +854,7 @@ trace(JNIEnv *const env, const jint handle, const jint traceId, const UDATA meth
 		PORT_ACCESS_FROM_ENV(env);
 
 		memset(messageBuffer, 0, sizeof(messageBuffer));
-		j9str_printf(PORTLIB, messageBuffer, ERROR_MESSAGE_BUFFER_LENGTH, "Wrong number of arguments passed to tracepoint %s.%d expected %d received %d.", modInfo->name, traceId, numberOfArgumentsExpected, numberOfArgumentsSupplied);
+		j9str_printf(messageBuffer, ERROR_MESSAGE_BUFFER_LENGTH, "Wrong number of arguments passed to tracepoint %s.%d expected %d received %d.", modInfo->name, traceId, numberOfArgumentsExpected, numberOfArgumentsSupplied);
 		throwIllegalArgumentException(env, messageBuffer);
 		return;
 	}
@@ -867,7 +867,7 @@ trace(JNIEnv *const env, const jint handle, const jint traceId, const UDATA meth
 		PORT_ACCESS_FROM_ENV(env);
 
 		memset(messageBuffer, 0, sizeof(messageBuffer));
-		j9str_printf(PORTLIB, messageBuffer, ERROR_MESSAGE_BUFFER_LENGTH, "Invalid arguments passed to tracepoint %s.%d. Tracepoint expects: ", modInfo->name, traceId);
+		j9str_printf(messageBuffer, ERROR_MESSAGE_BUFFER_LENGTH, "Invalid arguments passed to tracepoint %s.%d. Tracepoint expects: ", modInfo->name, traceId);
 
 		p = messageBuffer + strlen(messageBuffer);
 		formatCallPattern(p, end, callPatternsArray[traceId]);

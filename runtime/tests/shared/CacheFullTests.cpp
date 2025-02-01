@@ -209,7 +209,7 @@ IDATA test1(J9JavaVM* vm) {
 	/* Add a ROMClass with size more than available bytes */
 	romClassSize = CC_MIN_SPACE_BEFORE_CACHE_FULL + (2 * ONE_K_BYTES);
 	romClassSize = ROUND_UP_TO(sizeof(U_64), romClassSize);
-	j9str_printf(PORTLIB, romClassName, ROMCLASS_NAME_LEN, "%s_DummyClass1", testName);
+	j9str_printf(romClassName, ROMCLASS_NAME_LEN, "%s_DummyClass1", testName);
 	if (PASS == cacheHelper.addDummyROMClass(romClassName, romClassSize)) {
 		ERRPRINTF("Error: Successfully added dummy class twice the size of cache!");
 		rc = FAIL;
@@ -411,7 +411,7 @@ IDATA test2(J9JavaVM* vm) {
 	requiredFreeBytes = CC_MIN_SPACE_BEFORE_CACHE_FULL - ONE_K_BYTES;
 	romClassSize = (U_32)((ca->updateSRP - requiredFreeBytes) - ca->segmentSRP);
 	romClassSize = ROUND_UP_TO(sizeof(U_64), romClassSize);
-	j9str_printf(PORTLIB, romClassName, ROMCLASS_NAME_LEN, "%s_DummyClass1", testName);
+	j9str_printf(romClassName, ROMCLASS_NAME_LEN, "%s_DummyClass1", testName);
 	if (FAIL == cacheHelper.addDummyROMClass(romClassName, romClassSize)) {
 		ERRPRINTF("Error: Failed to add dummy class to the cache.");
 		rc = FAIL;
@@ -774,7 +774,7 @@ IDATA test3(J9JavaVM* vm) {
 	/* Add a ROMClass of size (1 page - 8 bytes). This will bring cache to the state shown in Fig 3-2 */
 	romClassSize = (U_32) (pageSizeToUse - (2*sizeof(U_32)));
 	romClassSize = ROUND_UP_TO(sizeof(U_64), romClassSize);
-	j9str_printf(PORTLIB, romClassName, ROMCLASS_NAME_LEN, "%s_DummyClass1", testName);
+	j9str_printf(romClassName, ROMCLASS_NAME_LEN, "%s_DummyClass1", testName);
 	if (FAIL == cacheHelper.addDummyROMClass(romClassName, romClassSize)) {
 		ERRPRINTF("Error: Failed to add dummy class to the cache.");
 		rc = FAIL;
@@ -1090,7 +1090,7 @@ IDATA test4(J9JavaVM* vm) {
 	/* Add a ROMClass to set segmentSRP and updateSRP to same value as shown in Fig 3-2 */
 	romClassSize = (U_32) pageSizeToUse;
 	romClassSize = ROUND_UP_TO(sizeof(U_64), romClassSize);
-	j9str_printf(PORTLIB, romClassName, ROMCLASS_NAME_LEN, "%s_DummyClass1", testName);
+	j9str_printf(romClassName, ROMCLASS_NAME_LEN, "%s_DummyClass1", testName);
 	if (FAIL == cacheHelper.addDummyROMClass(romClassName, romClassSize)) {
 		ERRPRINTF("Error: Failed to add dummy class to the cache.");
 		rc = FAIL;
@@ -2815,7 +2815,7 @@ IDATA test9(J9JavaVM* vm)
 	 * unstoredBytes in phase 3 can take effect. Otherwise, it has no effect as free available space can still be less than CC_MIN_SPACE_BEFORE_CACHE_FULL. */
 	romClassSize = (TEST9_SOFTMX_SIZE - usedBytes - CC_MIN_SPACE_BEFORE_CACHE_FULL + romClassSize2/2);
 	romClassSize = ROUND_UP_TO(sizeof(U_64), romClassSize);
-	j9str_printf(PORTLIB, romClassName, ROMCLASS_NAME_LEN, "%s_DummyClass1", testName);
+	j9str_printf(romClassName, ROMCLASS_NAME_LEN, "%s_DummyClass1", testName);
 	if (PASS == cacheHelper.addDummyROMClass(romClassName, romClassSize)) {
 		INFOPRINTF("Successfully added dummy class1 into the cache");
 	} else {
@@ -2882,7 +2882,7 @@ IDATA test9(J9JavaVM* vm)
 	 */
 
 	/* Try adding a ROMClass when the cache is soft full */
-	j9str_printf(PORTLIB, romClassName, ROMCLASS_NAME_LEN, "%s_DummyClass2", testName);
+	j9str_printf(romClassName, ROMCLASS_NAME_LEN, "%s_DummyClass2", testName);
 	if (FAIL == cacheHelper.addDummyROMClass(romClassName, romClassSize2)) {
 		INFOPRINTF("Dummy class2 is not added into the cache as the cache is soft full");
 	} else {

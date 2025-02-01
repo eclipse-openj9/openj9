@@ -2649,7 +2649,7 @@ defineClass(JNIEnv *env, const char *name, jobject loader, const jbyte *buf, jsi
 					msgChars = (char *)j9mem_allocate_memory(msgCharLength + 1, J9MEM_CATEGORY_JNI);
 
 					if (NULL != msgChars) {
-						j9str_printf(PORTLIB, msgChars, msgCharLength, nlsMsgFormat, classNameLength, className, JAVA_PACKAGE_NAME_LENGTH, javaPackageName);
+						j9str_printf(msgChars, msgCharLength, nlsMsgFormat, classNameLength, className, JAVA_PACKAGE_NAME_LENGTH, javaPackageName);
 					}
 				}
 

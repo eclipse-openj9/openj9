@@ -316,7 +316,7 @@ getStringForShcModlevel(J9PortLibrary* portlib, uint32_t modlevel, char* buffer,
 		break;
 	default :
 		if (modlevel >= 10) {
-			j9str_printf(portlib, buffer, buffSize, "%s%u", "Java", modlevel);
+			j9str_printf(buffer, buffSize, "%s%u", "Java", modlevel);
 		} else {
 			/* J9SH_MODLEVEL_JAVA9 is 5. Does not have modlevel that is 7,8,9 */
 			strncpy(buffer, "Unknown", buffSize);

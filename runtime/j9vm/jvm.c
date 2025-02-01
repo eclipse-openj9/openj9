@@ -4056,7 +4056,7 @@ JVM_LoadLibrary(const char *libName, jboolean throwOnFailure)
 							doOpenLibrary = FALSE;
 							Trc_SC_allocate_memory_failed(libPathLength);
 						} else {
-							j9str_printf(PORTLIB,
+							j9str_printf(
 									libNameNotDecorated,
 									libPathLength,
 									"%.*s%.*s",

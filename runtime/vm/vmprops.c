@@ -342,7 +342,7 @@ addPropertyForOptionWithModuleListArg(J9JavaVM *vm, const char *optionName, IDAT
 					listSize += strlen(prevList);
 					modulesList = j9mem_allocate_memory(listSize + 2, OMRMEM_CATEGORY_VM); /* +1 for ',' and +1 for '\0' */
 					if (NULL != modulesList) {
-						j9str_printf(PORTLIB, modulesList, listSize + 2, "%s,%s", prevList, optionArg);
+						j9str_printf(modulesList, listSize + 2, "%s,%s", prevList, optionArg);
 						j9mem_free_memory(prevList);
 					} else {
 						j9mem_free_memory(optionArg);
@@ -427,7 +427,7 @@ addPropertiesForOptionWithAssignArg(J9JavaVM *vm, const char *optionName, UDATA 
 					rc = J9SYSPROP_ERROR_OUT_OF_MEMORY;
 					goto _end;
 				}
-				j9str_printf(PORTLIB, propName, propNameLen, "%s%zu", basePropName, index);
+				j9str_printf(propName, propNameLen, "%s%zu", basePropName, index);
 				rc = addSystemProperty(vm, propName, optionArg, J9SYSPROP_FLAG_NAME_ALLOCATED | J9SYSPROP_FLAG_VALUE_ALLOCATED );
 				if (J9SYSPROP_ERROR_NONE != rc) {
 					goto _end;
@@ -441,7 +441,7 @@ addPropertiesForOptionWithAssignArg(J9JavaVM *vm, const char *optionName, UDATA 
 
 			argIndex = FIND_NEXT_ARG_IN_VMARGS_FORWARD(OPTIONAL_LIST_MATCH_USING_EQUALS, optionName, NULL, argIndex);
 			index += 1;
-			indexLen = j9str_printf(PORTLIB, NULL, 0, "%zu", index); /* get number of digits in 'index' */
+			indexLen = j9str_printf(NULL, 0, "%zu", index); /* get number of digits in 'index' */
 		} while (argIndex >= 0);
 		if (NULL != propertyCount) {
 			*propertyCount = index;

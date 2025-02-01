@@ -2095,10 +2095,10 @@ freeDir:
 	 * Pending exceptions will be set by the JVM hooks, these exception will take precedence.
 	 */
 	if ((NULL != currentExceptionClass) && (NULL == currentThread->currentException)) {
-		msgCharLength = j9str_printf(PORTLIB, NULL, 0, nlsMsgFormat, systemReturnCode);
+		msgCharLength = j9str_printf(NULL, 0, nlsMsgFormat, systemReturnCode);
 		exceptionMsg = (char*) j9mem_allocate_memory(msgCharLength, J9MEM_CATEGORY_VM);
 
-		j9str_printf(PORTLIB, exceptionMsg, msgCharLength, nlsMsgFormat, systemReturnCode);
+		j9str_printf(exceptionMsg, msgCharLength, nlsMsgFormat, systemReturnCode);
 
 		jmethodID init = NULL;
 		if (vm->checkpointState.criuJVMCheckpointExceptionClass == currentExceptionClass) {

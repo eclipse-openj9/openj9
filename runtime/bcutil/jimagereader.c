@@ -167,7 +167,7 @@ j9bcutil_loadJImage(J9PortLibrary *portlib, const char *fileName, J9JImage **pji
 	memset(jimage, 0, sizeof(J9JImage));
 	jimage->fd = jimagefd;
 	jimage->fileName = (char *)(jimage + 1);
-	j9str_printf(PORTLIB, jimage->fileName, fileNameLen + 1, "%s", fileName);
+	j9str_printf(jimage->fileName, fileNameLen + 1, "%s", fileName);
 	jimage->fileLength = fileSize;
 	j9jimageHeader = jimage->j9jimageHeader = (J9JImageHeader *)((U_8 *)jimage + sizeof(J9JImage) + (fileNameLen + 1));
 
@@ -703,20 +703,20 @@ j9bcutil_getJImageResourceName(J9PortLibrary *portlib, J9JImage *jimage, const c
 	cursor = fullName;
 	spaceLeft = fullNameLen;
 	if (NULL != module) {
-		count = j9str_printf(PORTLIB, cursor, spaceLeft, "/%s/", module);
+		count = j9str_printf(cursor, spaceLeft, "/%s/", module);
 		cursor += count;
 		spaceLeft -= count;
 	}
 	if (NULL != parent) {
-		count = j9str_printf(PORTLIB, cursor, spaceLeft, "%s/", parent);
+		count = j9str_printf(cursor, spaceLeft, "%s/", parent);
 		cursor += count;
 		spaceLeft -= count;
 	}
-	count = j9str_printf(PORTLIB, cursor, spaceLeft, "%s", base);
+	count = j9str_printf(cursor, spaceLeft, "%s", base);
 	cursor += count;
 	spaceLeft -= count;
 	if (NULL != extension) {
-		count = j9str_printf(PORTLIB, cursor, spaceLeft, ".%s", extension);
+		count = j9str_printf(cursor, spaceLeft, ".%s", extension);
 	}
 
 	*resourceName = fullName;
@@ -761,7 +761,7 @@ j9bcutil_findModuleForPackage(J9PortLibrary *portlib, J9JImage *jimage, const ch
 		goto _end;
 	}
 
-	j9str_printf(PORTLIB, packageName, packageNameLen, "%s", packagePrefix);
+	j9str_printf(packageName, packageNameLen, "%s", packagePrefix);
 
 	for (i = 0; i <= strlen(package); i++) { /* include '\0' character as well */
 		/* convert any '/' to '.' */

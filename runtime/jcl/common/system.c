@@ -82,7 +82,7 @@ Java_java_lang_System_initJCLPlatformEncoding(JNIEnv *env, jclass clazz)
 	encoding = getPlatformFileEncoding(env, property, sizeof(property), 1); /* platform encoding */
 #endif /* defined(OSX) */
 	/* libjava.[so|dylib] is in the jdk/lib/ directory, one level up from the default/ & compressedrefs/ directories */
-	written = j9str_printf(PORTLIB, dllPath, sizeof(dllPath), "%s/../java", vm->j2seRootDirectory);
+	written = j9str_printf(dllPath, sizeof(dllPath), "%s/../java", vm->j2seRootDirectory);
 	/* Assert the number of characters written (not including the null) fit within the dllPath buffer */
 	Assert_JCL_true(written < (sizeof(dllPath) - 1));
 	if (0 == j9sl_open_shared_library(dllPath, &handle, J9PORT_SLOPEN_DECORATE)) {
@@ -531,7 +531,7 @@ jobject getPropertyList(JNIEnv *env)
 		if ((~(UDATA)0) == javaVM->directByteBufferMemoryMax) {
 			strcpy(maxDirectMemBuff, "-1");
 		} else {
-			j9str_printf(PORTLIB, maxDirectMemBuff, sizeof(maxDirectMemBuff), "%zu", javaVM->directByteBufferMemoryMax);
+			j9str_printf(maxDirectMemBuff, sizeof(maxDirectMemBuff), "%zu", javaVM->directByteBufferMemoryMax);
 		}
 		strings[propIndex] = maxDirectMemBuff;
 		propIndex += 1;

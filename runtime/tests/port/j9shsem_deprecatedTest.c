@@ -168,8 +168,8 @@ j9shsem_deprecated_test2(J9PortLibrary *portLibrary)
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "cannot create initial semaphore");
 		goto cleanup;
 	}
-	
-	j9str_printf(PORTLIB, mybaseFilePath, J9SH_MAXPATH, "%s%s", cacheDir, TESTSEM_NAME);
+
+	j9str_printf(mybaseFilePath, J9SH_MAXPATH, "%s%s", cacheDir, TESTSEM_NAME);
 	fd = j9file_open(mybaseFilePath, EsOpenRead, 0);
 
 	if(-1 == fd) {
@@ -476,8 +476,8 @@ j9shsem_deprecated_test5(J9PortLibrary *portLibrary)
 		goto cleanup;
 	}
 
-	j9str_printf(PORTLIB, mybaseFilePath, J9SH_MAXPATH, "%s%s", cacheDir, TESTSEM_NAME);
-	j9str_printf(PORTLIB, myNewFilePath, J9SH_MAXPATH, "%s%s_new", cacheDir, TESTSEM_NAME);
+	j9str_printf(mybaseFilePath, J9SH_MAXPATH, "%s%s", cacheDir, TESTSEM_NAME);
+	j9str_printf(myNewFilePath, J9SH_MAXPATH, "%s%s_new", cacheDir, TESTSEM_NAME);
 
 	j9file_move(mybaseFilePath, myNewFilePath);
 
@@ -655,12 +655,11 @@ j9shsem_deprecated_test7(J9PortLibrary *portLibrary, char* argv0)
 	reportTestEntry(portLibrary, testName);	
 
 	if (j9shmem_getDir(NULL, J9SHMEM_GETDIR_APPEND_BASEDIR, basedir, 1024) >= 0) {
-		j9str_printf(PORTLIB, mybaseFilePath, 1024, "%s%s", basedir, TEST7_SEMAPHORE_NAME);
+		j9str_printf(mybaseFilePath, 1024, "%s%s", basedir, TEST7_SEMAPHORE_NAME);
 	} else {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "Cannot get a directory");
 		goto cleanup;
 	}
-	
 
 	/* This first call to j9shxxx_open is simply to ensure that we don't use any old SysV objects.*/
 	rc = j9shsem_deprecated_open(basedir, 0, &sem0, TEST7_SEMAPHORE_NAME, TEST7_SEMAPHORE_SIZE, 0600, J9SHSEM_NO_FLAGS, NULL);
@@ -1179,8 +1178,7 @@ j9shsem_deprecated_runTests(struct J9PortLibrary *portLibrary, char* argv0, char
 #if !(defined(WIN32) || defined(WIN64))
 	rc |= j9shsem_deprecated_test8(portLibrary);
 #endif /* !(defined(WIN32) || defined(WIN64)) */
-	
+
 	j9tty_printf(PORTLIB, "\nDeprecated Shared Semaphore test done%s\n\n", rc == TEST_PASS ? "." : ", failures detected.");
 	return TEST_PASS == rc ? 0 : -1;
 }
-

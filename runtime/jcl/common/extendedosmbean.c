@@ -138,12 +138,12 @@ handle_error(JNIEnv *env, IDATA error, jint type)
 					J9NLS_PORT_SYSINFO_USAGE_RETRIEVAL_ERROR_MSG,
 					NULL);
 	/* Add in the specific error and the type. */
-	j9str_printf(PORTLIB,
-		exceptionMessage,
-		sizeof(exceptionMessage),
-		(char *)formatString,
-		error,
-		objType[type].name);
+	j9str_printf(
+			exceptionMessage,
+			sizeof(exceptionMessage),
+			(char *)formatString,
+			error,
+			objType[type].name);
 
 	if (PROCESSOR_USAGE_ERROR == type) {
 		exceptionClass = (*env)->FindClass(env, "com/ibm/lang/management/ProcessorUsageRetrievalException");

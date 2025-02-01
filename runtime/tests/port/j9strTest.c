@@ -386,14 +386,14 @@ j9str_test1(struct J9PortLibrary *portLibrary)
 	/* Save the real function, put in a fake one, call it, restore old one */
 	realVprintf = OMRPORT_FROM_J9PORT(portLibrary)->str_vprintf;
 	OMRPORT_FROM_J9PORT(portLibrary)->str_vprintf = fake_j9str_vprintf;
-	j9strRC = j9str_printf(PORTLIB, NULL, 0, "Simple test");
+	j9strRC = j9str_printf(NULL, 0, "Simple test");
 	OMRPORT_FROM_J9PORT(portLibrary)->str_vprintf = realVprintf;
 
 	if (J9STR_PRIVATE_RETURN_VALUE != j9strRC) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "j9str_printf() does not call j9str_vprintf()\n");
 	}
 
-	j9strRC = j9str_printf(PORTLIB, NULL, 0, "Simple test");
+	j9strRC = j9str_printf(NULL, 0, "Simple test");
 	if ((strlen("Simple test")+1) != j9strRC) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "j9str_vprintf() not restored\n");
 	}

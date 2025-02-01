@@ -260,7 +260,7 @@ printHeapStatistics(JNIEnv *env,J9HeapStatisticsTableEntry **statsArray,
 
 	PORT_ACCESS_FROM_ENV(env);
 
-	result = j9str_printf(PORTLIB, bufferCursor, bufferSize,
+	result = j9str_printf(bufferCursor, bufferSize,
 			"%5s %14s %14s    %s\n-------------------------------------------------\n",
 			"num", "object count", "total size", "class name"
 	);
@@ -268,7 +268,7 @@ printHeapStatistics(JNIEnv *env,J9HeapStatisticsTableEntry **statsArray,
 	bufferSize -= result;
 	for (classCursor = 0; (result > 0) && (classCursor < numClasses); ++classCursor) {
 		J9Class *currentClass = statsArray[classCursor]->clazz;
-		result = j9str_printf(PORTLIB, bufferCursor, bufferSize,
+		result = j9str_printf(bufferCursor, bufferSize,
 				"%5d %14zu %14zu    ",
 				classCursor + 1, statsArray[classCursor]->objectCount,
 				statsArray[classCursor]->aggregateSize
@@ -284,20 +284,20 @@ printHeapStatistics(JNIEnv *env,J9HeapStatisticsTableEntry **statsArray,
 			UDATA isPrimitive = J9ROMCLASS_IS_PRIMITIVE_TYPE(leafROMClass);
 			UDATA i = 0;
 			for (i = 0; i < arity; ++i) {
-				result = j9str_printf(PORTLIB, bufferCursor, bufferSize, "[");
+				result = j9str_printf(bufferCursor, bufferSize, "[");
 				bufferCursor += result;
 				bufferSize -= result;
 			}
 			if (isPrimitive) {
-				result = j9str_printf(PORTLIB, bufferCursor, bufferSize, "%c\n",
+				result = j9str_printf(bufferCursor, bufferSize, "%c\n",
 						J9UTF8_DATA(J9ROMCLASS_CLASSNAME(leafComponentType->arrayClass->romClass))[1]);
 			} else {
-				result = j9str_printf(PORTLIB, bufferCursor, bufferSize, "L%.*s;\n",
+				result = j9str_printf(bufferCursor, bufferSize, "L%.*s;\n",
 						J9UTF8_LENGTH(leafName), J9UTF8_DATA(leafName));
 			}
 		} else {
 			J9UTF8 *className = J9ROMCLASS_CLASSNAME(currentClass->romClass);
-			result = j9str_printf(PORTLIB, bufferCursor, bufferSize, "%.*s\n",
+			result = j9str_printf(bufferCursor, bufferSize, "%.*s\n",
 					J9UTF8_LENGTH(className), J9UTF8_DATA(className));
 		}
 		bufferCursor += result;
@@ -305,7 +305,7 @@ printHeapStatistics(JNIEnv *env,J9HeapStatisticsTableEntry **statsArray,
 		cumulativeCount += statsArray[classCursor]->objectCount;
 		cumulativeSize += statsArray[classCursor]->aggregateSize;
 	}
-	result = j9str_printf(PORTLIB, bufferCursor, bufferSize,
+	result = j9str_printf(bufferCursor, bufferSize,
 			"%5s %14zd %14zd\n",
 			"Total", cumulativeCount, cumulativeSize
 	);

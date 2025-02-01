@@ -339,7 +339,7 @@ jimageFindResource(J9JImageIntf *jimageIntf, UDATA handle, const char *moduleNam
 		IDATA resourceNameLen = 1 + strlen(moduleName) + 1 + strlen(name) + 1; /* +1 for preceding '/' and, +1 for '/' between module and resource name, and +1 for \0 character */
 		char *resourceName = j9mem_allocate_memory(resourceNameLen, J9MEM_CATEGORY_CLASSES);
 		if ((NULL != j9jimageLocation) && (NULL != resourceName)) {
-			j9str_printf(PORTLIB, resourceName, resourceNameLen, "/%s/%s", moduleName, name);
+			j9str_printf(resourceName, resourceNameLen, "/%s/%s", moduleName, name);
 			rc = j9bcutil_lookupJImageResource(PORTLIB, jimage, j9jimageLocation, resourceName);
 			j9mem_free_memory(resourceName);
 			if (J9JIMAGE_NO_ERROR == rc) {

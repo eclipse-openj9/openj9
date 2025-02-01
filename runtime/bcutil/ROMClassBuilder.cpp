@@ -420,7 +420,7 @@ ROMClassBuilder::handleAnonClassName(J9CfrClassFile *classfile, ROMClassCreation
 	 * 0x<romAddress> will be appended to anon/hidden class name.
 	 * Initialize the 0x<romAddress> part to 0x00000000 or 0x0000000000000000 (depending on the platforms).
 	 */
-	j9str_printf(PORTLIB, buf, ROM_ADDRESS_LENGTH + 1, ROM_ADDRESS_FORMAT, 0);
+	j9str_printf(buf, ROM_ADDRESS_LENGTH + 1, ROM_ADDRESS_FORMAT, 0);
 	memcpy(constantPool[newUtfCPEntry].bytes + newHostPackageLength + originalStringLength + 1, buf, ROM_ADDRESS_LENGTH + 1);
 
 	/* Mark if the class is a Lambda class. */
@@ -900,7 +900,7 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 			 * write the name into a buffer first because j9str_printf automatically adds a NULL terminator
 			 * at the end, and J9UTF8 are not NULL terminated
 			 */
-			j9str_printf(PORTLIB, message, ROM_ADDRESS_LENGTH + 1, ROM_ADDRESS_FORMAT, (UDATA)romClassBuffer);
+			j9str_printf(message, ROM_ADDRESS_LENGTH + 1, ROM_ADDRESS_FORMAT, (UDATA)romClassBuffer);
 			nameString = (char*) message;
 		}
 		memcpy((char*) (classNameBytes + classNameRealLenghth), nameString, ROM_ADDRESS_LENGTH);

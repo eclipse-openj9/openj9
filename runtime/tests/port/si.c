@@ -212,7 +212,7 @@ int j9sysinfo_test1 (J9PortLibrary* portLibrary) {
 		return reportTestExit(portLibrary, testName);
 	} else {
 		char msg[256]= "";
-		j9str_printf(PORTLIB, msg, sizeof(msg), "User name returned = \"%s\"\n", username);
+		j9str_printf(msg, sizeof(msg), "User name returned = \"%s\"\n", username);
 		outputComment(PORTLIB, msg);
 	}
 	
@@ -243,7 +243,7 @@ int j9sysinfo_test2 (J9PortLibrary* portLibrary) {
 		return reportTestExit(portLibrary, testName);
 	} else {
 		char msg[256]= "";
-		j9str_printf(PORTLIB, msg, sizeof(msg), "Group name returned = \"%s\"\n", groupname);
+		j9str_printf(msg, sizeof(msg), "Group name returned = \"%s\"\n", groupname);
 		outputComment(PORTLIB, msg);
 	}
 	
@@ -273,7 +273,7 @@ int j9sysinfo_get_OS_type_test (J9PortLibrary* portLibrary) {
 		return reportTestExit(portLibrary, testName);
 	} else {
 		char msg[256];
-		j9str_printf(PORTLIB, msg, sizeof(msg), "j9sysinfo_get_OS_type returned : \"%s\"\n", osName);
+		j9str_printf(msg, sizeof(msg), "j9sysinfo_get_OS_type returned : \"%s\"\n", osName);
 		outputComment(PORTLIB, msg);
 	}
 	
@@ -283,7 +283,7 @@ int j9sysinfo_get_OS_type_test (J9PortLibrary* portLibrary) {
 		return reportTestExit(portLibrary, testName);
 	} else {
 		char msg[256];
-		j9str_printf(PORTLIB, msg, sizeof(msg), "j9sysinfo_get_OS_version returned : \"%s\"\n", osVersion);
+		j9str_printf(msg, sizeof(msg), "j9sysinfo_get_OS_version returned : \"%s\"\n", osVersion);
 		outputComment(PORTLIB, msg);
 	}
 

@@ -1804,7 +1804,7 @@ initializeModulesPath(J9JavaVM *vm)
 	}
 	memset(vm->modulesPathEntry, 0, sizeof(J9ClassPathEntry));
 	modulesPath = (U_8 *)(vm->modulesPathEntry + 1);
-	j9str_printf(PORTLIB, (char*)modulesPath, (U_32)modulesPathLen + 1, "%s" DIR_SEPARATOR_STR "lib" DIR_SEPARATOR_STR "modules", javaHomeValue);
+	j9str_printf((char *)modulesPath, (U_32)modulesPathLen + 1, "%s" DIR_SEPARATOR_STR "lib" DIR_SEPARATOR_STR "modules", javaHomeValue);
 
 	vm->modulesPathEntry->path = modulesPath;
 	vm->modulesPathEntry->pathLength = (U_32)modulesPathLen;
@@ -1813,7 +1813,7 @@ initializeModulesPath(J9JavaVM *vm)
 		vm->modulesPathEntry->type = CPE_TYPE_UNKNOWN;
 		/* If <JAVA_HOME>/lib/modules is not usable, try to use <JAVA_HOME>/modules dir */
 		modulesPathLen = javaHomeValueLen + LITERAL_STRLEN(DIR_SEPARATOR_STR) + LITERAL_STRLEN("modules");
-		j9str_printf(PORTLIB, (char*)modulesPath, (U_32)modulesPathLen + 1, "%s" DIR_SEPARATOR_STR "modules", javaHomeValue);
+		j9str_printf((char *)modulesPath, (U_32)modulesPathLen + 1, "%s" DIR_SEPARATOR_STR "modules", javaHomeValue);
 		vm->modulesPathEntry->pathLength = (U_32)modulesPathLen;
 		rc = initializeModulesPathEntry(vm, vm->modulesPathEntry);
 		if (CPE_TYPE_UNUSABLE == rc) {
@@ -3613,7 +3613,7 @@ modifyDllLoadTable(J9JavaVM * vm, J9Pool* loadTable, J9VMInitArgs* j9vm_args)
 					return JNI_ERR;
 				}
 			}
-			j9str_printf(PORTLIB, zlibDllDir, expectedZlibPathLength, "%s%s%s",
+			j9str_printf(zlibDllDir, expectedZlibPathLength, "%s%s%s",
 					vm->j9libvmDirectory, DIR_SEPARATOR_STR, J9_ZIP_DLL_NAME);
 			zlibFileHandle = j9sl_open_shared_library(zlibDllDir, &(entry->descriptor), openFlags);
 			if (0 != zlibFileHandle) {
@@ -3645,7 +3645,7 @@ modifyDllLoadTable(J9JavaVM * vm, J9Pool* loadTable, J9VMInitArgs* j9vm_args)
 					return JNI_ERR;
 				}
 			}
-			j9str_printf(PORTLIB, dllCheckPathPtr, expectedPathLength, "%s%s%s",
+			j9str_printf(dllCheckPathPtr, expectedPathLength, "%s%s%s",
 					jitdirectoryValue, DIR_SEPARATOR_STR, entry->dllName);
 
 			jitFileHandle = j9sl_open_shared_library(dllCheckPathPtr, &(entry->descriptor), openFlags);

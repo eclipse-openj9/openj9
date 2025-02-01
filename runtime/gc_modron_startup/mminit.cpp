@@ -361,7 +361,7 @@ j9gc_initialize_heap(J9JavaVM *vm, IDATA *memoryParameterTable, UDATA heapBytesR
 
 			char *buffer = (char *)j9mem_allocate_memory(formatLength, OMRMEM_CATEGORY_MM);
 			if (NULL != buffer) {
-				j9str_printf(PORTLIB, buffer, formatLength, format, size, qualifier);
+				j9str_printf(buffer, formatLength, format, size, qualifier);
 			}
 			vm->internalVMFunctions->setErrorJ9dll(PORTLIB, loadInfo, buffer, TRUE);
 			break;
@@ -383,7 +383,7 @@ j9gc_initialize_heap(J9JavaVM *vm, IDATA *memoryParameterTable, UDATA heapBytesR
 
 			char *buffer = (char *)j9mem_allocate_memory(formatLength, OMRMEM_CATEGORY_MM);
 			if (NULL != buffer) {
-				j9str_printf(PORTLIB, buffer, formatLength, format, size, qualifier);
+				j9str_printf(buffer, formatLength, format, size, qualifier);
 			}
 			vm->internalVMFunctions->setErrorJ9dll(PORTLIB, loadInfo, buffer, TRUE);
 			break;
@@ -409,7 +409,7 @@ j9gc_initialize_heap(J9JavaVM *vm, IDATA *memoryParameterTable, UDATA heapBytesR
 
 			char *buffer = (char *)j9mem_allocate_memory(formatLength, OMRMEM_CATEGORY_MM);
 			if (NULL != buffer) {
-				j9str_printf(PORTLIB, buffer, formatLength, format, heapSize, heapSizeQualifier, pageSize, pageSizeQualifier);
+				j9str_printf(buffer, formatLength, format, heapSize, heapSizeQualifier, pageSize, pageSizeQualifier);
 			}
 			vm->internalVMFunctions->setErrorJ9dll(PORTLIB, loadInfo, buffer, TRUE);
 			extensions->largePageFailedToSatisfy = true;
@@ -435,11 +435,11 @@ j9gc_initialize_heap(J9JavaVM *vm, IDATA *memoryParameterTable, UDATA heapBytesR
 			UDATA newSpaceSize = extensions->newSpaceSize;
 			const char* newQualifier = NULL;
 			qualifiedSize(&newSpaceSize, &newQualifier);
-			UDATA formatLength = j9str_printf(PORTLIB, NULL, 0, format, splitFailure, newSpaceSize, newQualifier, oldSpaceSize, oldQualifier);
+			UDATA formatLength = j9str_printf(NULL, 0, format, splitFailure, newSpaceSize, newQualifier, oldSpaceSize, oldQualifier);
 
 			char *buffer = (char *)j9mem_allocate_memory(formatLength, OMRMEM_CATEGORY_MM);
 			if (NULL != buffer) {
-				j9str_printf(PORTLIB, buffer, formatLength, format, splitFailure, newSpaceSize, newQualifier, oldSpaceSize, oldQualifier);
+				j9str_printf(buffer, formatLength, format, splitFailure, newSpaceSize, newQualifier, oldSpaceSize, oldQualifier);
 			}
 			vm->internalVMFunctions->setErrorJ9dll(PORTLIB, loadInfo, buffer, TRUE);
 		}

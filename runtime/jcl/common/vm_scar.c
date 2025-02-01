@@ -521,7 +521,7 @@ loadClasslibPropertiesFile(J9JavaVM *vm, UDATA *cursor)
 
 #define RELATIVE_PROPSPATH DIR_SEPARATOR_STR "lib" DIR_SEPARATOR_STR "classlib.properties"
 
-	j9str_printf(PORTLIB, propsPath, sizeof(propsPath), "%s" RELATIVE_PROPSPATH, vm->javaHome);
+	j9str_printf(propsPath, sizeof(propsPath), "%s" RELATIVE_PROPSPATH, vm->javaHome);
 
 #undef RELATIVE_PROPSPATH
 

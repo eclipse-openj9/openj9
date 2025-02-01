@@ -141,7 +141,7 @@ jint computeFullVersionString(J9JavaVM* vm)
 	#define VENDOR_INFO ""
 #endif /* VENDOR_SHORT_NAME && VENDOR_SHA */
 
-	if (BUFFER_SIZE <= j9str_printf(PORTLIB, vminfo, BUFFER_SIZE + 1,
+	if (BUFFER_SIZE <= j9str_printf(vminfo, BUFFER_SIZE + 1,
 			"JRE %s %s %s-%s %s" JIT_INFO J9VM_VERSION_STRING OMR_INFO VENDOR_INFO OPENJDK_INFO,
 			j2se_version_info,
 			(NULL != osname ? osname : " "),
@@ -810,13 +810,13 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 				/* this is implicitly an unused property */
 				vmFuncs->setSystemProperty(vm, systemProperty, moduleName);
 			} else {
-				UDATA indexLen = j9str_printf(PORTLIB, NULL, 0, "%zu", vm->addModulesCount); /* get the length of the number string */
+				UDATA indexLen = j9str_printf(NULL, 0, "%zu", vm->addModulesCount); /* get the length of the number string */
 				char *propNameBuffer = j9mem_allocate_memory(sizeof(ADDMODS_PROPERTY_BASE) + indexLen, OMRMEM_CATEGORY_VM);
 				if (NULL == propNameBuffer) {
 					Trc_JCL_initializeRequiredClasses_addAgentModuleOutOfMemory(vmThread);
 					return 1;
 				}
-				j9str_printf(PORTLIB, propNameBuffer, sizeof(ADDMODS_PROPERTY_BASE) + indexLen, ADDMODS_PROPERTY_BASE "%zu", vm->addModulesCount);
+				j9str_printf(propNameBuffer, sizeof(ADDMODS_PROPERTY_BASE) + indexLen, ADDMODS_PROPERTY_BASE "%zu", vm->addModulesCount);
 				Trc_JCL_initializeRequiredClasses_addAgentModuleSetProperty(vmThread, propNameBuffer, moduleName);
 				vmFuncs->addSystemProperty(vm, propNameBuffer, moduleName, J9SYSPROP_FLAG_NAME_ALLOCATED);
 			}
@@ -849,13 +849,13 @@ initializeRequiredClasses(J9VMThread *vmThread, char* dllName)
 				/* this is implicitly an unused property */
 				vmFuncs->setSystemProperty(vm, systemProperty, moduleName);
 			} else {
-				UDATA indexLen = j9str_printf(PORTLIB, NULL, 0, "%zu", vm->addModulesCount); /* get the length of the number string */
+				UDATA indexLen = j9str_printf(NULL, 0, "%zu", vm->addModulesCount); /* get the length of the number string */
 				char *propNameBuffer = j9mem_allocate_memory(sizeof(ADDMODS_PROPERTY_BASE) + indexLen, OMRMEM_CATEGORY_VM);
 				if (NULL == propNameBuffer) {
 					Trc_JCL_initializeRequiredClasses_addAgentModuleOutOfMemory(vmThread);
 					return 1;
 				}
-				j9str_printf(PORTLIB, propNameBuffer, sizeof(ADDMODS_PROPERTY_BASE) + indexLen, ADDMODS_PROPERTY_BASE "%zu", vm->addModulesCount);
+				j9str_printf(propNameBuffer, sizeof(ADDMODS_PROPERTY_BASE) + indexLen, ADDMODS_PROPERTY_BASE "%zu", vm->addModulesCount);
 				Trc_JCL_initializeRequiredClasses_addAgentModuleSetProperty(vmThread, propNameBuffer, moduleName);
 				vmFuncs->addSystemProperty(vm, propNameBuffer, moduleName, J9SYSPROP_FLAG_NAME_ALLOCATED);
 			}

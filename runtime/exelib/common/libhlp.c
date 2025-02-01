@@ -513,7 +513,7 @@ char * vmDetailString( J9PortLibrary *portLib, char *detailString, UDATA detailS
 	osversion = j9sysinfo_get_OS_version();
 	osarch = j9sysinfo_get_CPU_architecture();
 
-	j9str_printf (PORTLIB, detailString, detailStringLength, "%s (%s %s %s)", EsBuildVersionString, ostype ? ostype : "unknown", osversion ? osversion : "unknown", osarch ? osarch : "unknown");
+	j9str_printf(detailString, detailStringLength, "%s (%s %s %s)", EsBuildVersionString, ostype ? ostype : "unknown", osversion ? osversion : "unknown", osarch ? osarch : "unknown");
 	return detailString;
 }
 

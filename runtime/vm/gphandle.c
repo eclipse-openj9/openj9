@@ -971,13 +971,13 @@ writeGPInfo(struct J9PortLibrary* portLibrary, void *writeGPInfoCrashData)
 
 		switch (infoKind) {
 		case J9PORT_SIG_VALUE_16:
-				n = j9str_printf(PORTLIB, cursor, length, "%s=%04X%c", name, *(U_16 *)value, c);
+				n = j9str_printf(cursor, length, "%s=%04X%c", name, *(U_16 *)value, c);
 			break;
 		case J9PORT_SIG_VALUE_32:
-				n = j9str_printf(PORTLIB, cursor, length, "%s=%08.8x%c", name, *(U_32 *)value, c);
+				n = j9str_printf(cursor, length, "%s=%08.8x%c", name, *(U_32 *)value, c);
 			break;
 		case J9PORT_SIG_VALUE_64:
-				n = j9str_printf(PORTLIB, cursor, length, "%s=%016.16llx%c", name, *(U_64 *)value, c);
+				n = j9str_printf(cursor, length, "%s=%016.16llx%c", name, *(U_64 *)value, c);
 			break;
 		case J9PORT_SIG_VALUE_128:
 			{
@@ -985,22 +985,22 @@ writeGPInfo(struct J9PortLibrary* portLibrary, void *writeGPInfoCrashData)
 				const U_64 h = v->high64;
 				const U_64 l = v->low64;
 
-				n = j9str_printf(PORTLIB, cursor, length, "%s=%016.16llx%016.16llx%c", name, h, l, c);
+				n = j9str_printf(cursor, length, "%s=%016.16llx%016.16llx%c", name, h, l, c);
 			}
 			break;
 		case J9PORT_SIG_VALUE_STRING:
-				n = j9str_printf(PORTLIB, cursor, length, "%s=%s%c", name, (char *)value, c);
+				n = j9str_printf(cursor, length, "%s=%s%c", name, (char *)value, c);
 			break;
 		case J9PORT_SIG_VALUE_ADDRESS:
-				n = j9str_printf(PORTLIB, cursor, length, "%s=%p%c", name, *(void**)value, c);
+				n = j9str_printf(cursor, length, "%s=%p%c", name, *(void**)value, c);
 			break;
 		case J9PORT_SIG_VALUE_FLOAT_64:
 			/* make sure when casting to a float that we get least significant 32-bits. */
-				n = j9str_printf(PORTLIB, cursor, length, "%s=%016.16llx (f: %f, d: %e)%c", name, *(U_64 *)value, (float)LOW_U32_FROM_DBL_PTR(value), *(double *)value, c);
+				n = j9str_printf(cursor, length, "%s=%016.16llx (f: %f, d: %e)%c", name, *(U_64 *)value, (float)LOW_U32_FROM_DBL_PTR(value), *(double *)value, c);
 			break;
 		case J9PORT_SIG_VALUE_UNDEFINED:
 		default:
-				n = j9str_printf(PORTLIB, cursor, length, "%s=<UNDEFINED>%c", name, c);
+				n = j9str_printf(cursor, length, "%s=<UNDEFINED>%c", name, c);
 			break;
 		}
 
@@ -1044,12 +1044,12 @@ writeJITInfo(J9VMThread* vmThread, char* s, UDATA length, void* gpInfo)
 			J9UTF8 *methSig = J9ROMMETHOD_SIGNATURE(romMethod);
 			J9UTF8 *className = J9ROMCLASS_CLASSNAME(clazz->romClass);
 
-			n = j9str_printf(PORTLIB, s, length, "\nMethod_being_compiled=%.*s.%.*s%.*s\n",
+			n = j9str_printf(s, length, "\nMethod_being_compiled=%.*s.%.*s%.*s\n",
 					(UDATA)J9UTF8_LENGTH(className), J9UTF8_DATA(className),
 					(UDATA)J9UTF8_LENGTH(methName), J9UTF8_DATA(methName),
 					(UDATA)J9UTF8_LENGTH(methSig), J9UTF8_DATA(methSig));
 		} else {
-			n = j9str_printf(PORTLIB, s, length, "\nMethod_being_compiled=<unknown>\n");
+			n = j9str_printf(s, length, "\nMethod_being_compiled=<unknown>\n");
 		}
 		numBytesWritten += n;
 		return numBytesWritten;
@@ -1076,7 +1076,7 @@ writeJITInfo(J9VMThread* vmThread, char* s, UDATA length, void* gpInfo)
 			J9UTF8 *methSig = J9ROMMETHOD_SIGNATURE(romMethod);
 			J9UTF8 *className = J9ROMCLASS_CLASSNAME(romClass);
 
-			n = j9str_printf(PORTLIB, s, length, "\nCompiled_method=%.*s.%.*s%.*s\n",
+			n = j9str_printf(s, length, "\nCompiled_method=%.*s.%.*s%.*s\n",
 					(UDATA)J9UTF8_LENGTH(className), J9UTF8_DATA(className),
 					(UDATA)J9UTF8_LENGTH(methName), J9UTF8_DATA(methName),
 					(UDATA)J9UTF8_LENGTH(methSig), J9UTF8_DATA(methSig));
@@ -1085,7 +1085,7 @@ writeJITInfo(J9VMThread* vmThread, char* s, UDATA length, void* gpInfo)
 			/* scan code segments to see if we're in a segment but somehow not in a method */
 			MEMORY_SEGMENT_LIST_DO(jitConfig->codeCacheList, seg);
 			if((pc >= (UDATA) seg->heapBase) && (pc < (UDATA) seg->heapTop)) {
-				n = j9str_printf(PORTLIB, s, length, "\nCompiled_method=unknown (In JIT code segment %p but no method found)\n", seg);
+				n = j9str_printf(s, length, "\nCompiled_method=unknown (In JIT code segment %p but no method found)\n", seg);
 				numBytesWritten += n;
 				return numBytesWritten;
 			}
@@ -1109,22 +1109,22 @@ writeVMInfo(J9JavaVM* vm, char* s, UDATA length)
 		UDATA n;
 
 		/* show number of options */
-		n = j9str_printf(PORTLIB, s, length, "\nJavaVMInitArgs.nOptions=%i:\n", numOptions);  
+		n = j9str_printf(s, length, "\nJavaVMInitArgs.nOptions=%i:\n", numOptions);
 		length -= n;
 		s += n;
 		numBytesWritten += n;
 
 		for (optionCount = 0; optionCount < numOptions; optionCount++) {
-			n = j9str_printf(PORTLIB, s, length, "    %s", j9vm_args->actualVMArgs->options[optionCount].optionString);
+			n = j9str_printf(s, length, "    %s", j9vm_args->actualVMArgs->options[optionCount].optionString);
 			length -= n;
 			s += n;
 			numBytesWritten += n;
 
 			/* append option with only non-zero extra info */
 			if (j9vm_args->actualVMArgs->options[optionCount].extraInfo != 0) {
-				n = j9str_printf(PORTLIB, s, length, " (extra info: %p)\n", j9vm_args->actualVMArgs->options[optionCount].extraInfo);
+				n = j9str_printf(s, length, " (extra info: %p)\n", j9vm_args->actualVMArgs->options[optionCount].extraInfo);
 			} else {
-				n = j9str_printf(PORTLIB, s, length, "\n");
+				n = j9str_printf(s, length, "\n");
 			}
 			numBytesWritten += n;
 
@@ -1370,7 +1370,7 @@ javaAndCStacksMustBeInSync(J9VMThread *vmThread, BOOLEAN fromJIT)
 
 	j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_TERMINATING_PROCESS_USING_CEEAB2, code, reason, cleanup);
 	CEE3AB2(&code, &reason, &cleanup); /* terminate the process, no chance for anyone to resume */
-	
+
 	/* can't get here */
 }
 #endif

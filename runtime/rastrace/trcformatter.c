@@ -395,34 +395,34 @@ readConsumeAndSPrintfParameter(J9PortLibrary *portLib, char *rawParameterData, u
 		/* handling a generic 64 bit integer */
 		u64data = getU_64FromBuffer((UtTraceRecord *)rawParameterData, *offsetInParameterData, isBigEndian);
 		if (nWidthAndPrecisions == 2) {
-			temp = j9str_printf(PORTLIB, NULL, 0, format, precisionOrWidth1, precisionOrWidth2, u64data);
+			temp = j9str_printf(NULL, 0, format, precisionOrWidth1, precisionOrWidth2, u64data);
 			if (temp > destBufferLength) {
 				/* can't write data to dest buffer - it's too full, be cautious and just return */
 				UT_DBGOUT_CHECKED(1,
 						("<UT> readConsumeAndSPrintfParameter destination buffer exhausted: %d [%s]\n", dataType, format));
 				return 0;
 			}
-			temp = j9str_printf(PORTLIB, destBuffer + (*offsetInDestBuffer), destBufferLength - (*offsetInDestBuffer),
+			temp = j9str_printf(destBuffer + (*offsetInDestBuffer), destBufferLength - (*offsetInDestBuffer),
 					format, precisionOrWidth1, precisionOrWidth2, u64data);
 		} else if (nWidthAndPrecisions == 1) {
-			temp = j9str_printf(PORTLIB, NULL, 0, format, precisionOrWidth1, u64data);
+			temp = j9str_printf(NULL, 0, format, precisionOrWidth1, u64data);
 			if (temp > destBufferLength) {
 				/* can't write data to dest buffer - it's too full, be cautious and just return */
 				UT_DBGOUT_CHECKED(1,
 						("<UT> readConsumeAndSPrintfParameter destination buffer exhausted: %d [%s]\n", dataType, format));
 				return 0;
 			}
-			temp = j9str_printf(PORTLIB, destBuffer + (*offsetInDestBuffer), destBufferLength - (*offsetInDestBuffer),
+			temp = j9str_printf(destBuffer + (*offsetInDestBuffer), destBufferLength - (*offsetInDestBuffer),
 					format, precisionOrWidth1, u64data);
 		} else {
-			temp = j9str_printf(PORTLIB, NULL, 0, format, u64data);
+			temp = j9str_printf(NULL, 0, format, u64data);
 			if (temp > destBufferLength) {
 				/* can't write data to dest buffer - it's too full, be cautious and just return */
 				UT_DBGOUT_CHECKED(1,
 						("<UT> readConsumeAndSPrintfParameter destination buffer exhausted: %d [%s]\n", dataType, format));
 				return 0;
 			}
-			temp = j9str_printf(PORTLIB, destBuffer + (*offsetInDestBuffer), destBufferLength - (*offsetInDestBuffer),
+			temp = j9str_printf(destBuffer + (*offsetInDestBuffer), destBufferLength - (*offsetInDestBuffer),
 					format, u64data);
 		}
 		*offsetInParameterData += 8;
@@ -430,48 +430,48 @@ readConsumeAndSPrintfParameter(J9PortLibrary *portLib, char *rawParameterData, u
 		/* handling a generic 32 bit integer */
 		u32data = getU_32FromBuffer((UtTraceRecord *)rawParameterData, *offsetInParameterData, isBigEndian);
 		if (nWidthAndPrecisions == 2) {
-			temp = j9str_printf(PORTLIB, NULL, 0, format, precisionOrWidth1, precisionOrWidth2, u32data);
+			temp = j9str_printf(NULL, 0, format, precisionOrWidth1, precisionOrWidth2, u32data);
 			if (temp > destBufferLength) {
 				/* can't write data to dest buffer - it's too full, be cautious and just return */
 				UT_DBGOUT_CHECKED(1,
 						("<UT> readConsumeAndSPrintfParameter destination buffer exhausted: %d [%s]\n", dataType, format));
 				return 0;
 			}
-			temp = j9str_printf(PORTLIB, destBuffer + (*offsetInDestBuffer), destBufferLength - (*offsetInDestBuffer),
+			temp = j9str_printf(destBuffer + (*offsetInDestBuffer), destBufferLength - (*offsetInDestBuffer),
 					format, precisionOrWidth1, precisionOrWidth2, u32data);
 		} else if (nWidthAndPrecisions == 1) {
-			temp = j9str_printf(PORTLIB, NULL, 0, format, precisionOrWidth1, u32data);
+			temp = j9str_printf(NULL, 0, format, precisionOrWidth1, u32data);
 			if (temp > destBufferLength) {
 				/* can't write data to dest buffer - it's too full, be cautious and just return */
 				UT_DBGOUT_CHECKED(1,
 						("<UT> readConsumeAndSPrintfParameter destination buffer exhausted: %d [%s]\n", dataType, format));
 				return 0;
 			}
-			temp = j9str_printf(PORTLIB, destBuffer + (*offsetInDestBuffer), destBufferLength - (*offsetInDestBuffer),
+			temp = j9str_printf(destBuffer + (*offsetInDestBuffer), destBufferLength - (*offsetInDestBuffer),
 					format, precisionOrWidth1, u32data);
 		} else {
-			temp = j9str_printf(PORTLIB, NULL, 0, format, u32data);
+			temp = j9str_printf(NULL, 0, format, u32data);
 			if (temp > destBufferLength) {
 				/* can't write data to dest buffer - it's too full, be cautious and just return */
 				UT_DBGOUT_CHECKED(1,
 						("<UT> readConsumeAndSPrintfParameter destination buffer exhausted: %d [%s]\n", dataType, format));
 				return 0;
 			}
-			temp = j9str_printf(PORTLIB, destBuffer + (*offsetInDestBuffer), destBufferLength - (*offsetInDestBuffer),
+			temp = j9str_printf(destBuffer + (*offsetInDestBuffer), destBufferLength - (*offsetInDestBuffer),
 					format, u32data);
 		}
 		*offsetInParameterData += 4;
 	} else if (dataType == UT_TRACE_FORMATTER_8BIT_DATA) {
 		/* handling a char */
 		u8data = getUnsignedByteFromBuffer((UtTraceRecord *)rawParameterData, *offsetInParameterData);
-		temp = j9str_printf(PORTLIB, NULL, 0, format, u8data);
+		temp = j9str_printf(NULL, 0, format, u8data);
 		if (temp > destBufferLength) {
 			/* can't write data to dest buffer - it's too full, be cautious and just return */
 			UT_DBGOUT_CHECKED(1,
 					("<UT> readConsumeAndSPrintfParameter destination buffer exhausted: %d [%s]\n", dataType, format));
 			return 0;
 		}
-		temp = j9str_printf(PORTLIB, destBuffer + (*offsetInDestBuffer), destBufferLength - (*offsetInDestBuffer),
+		temp = j9str_printf(destBuffer + (*offsetInDestBuffer), destBufferLength - (*offsetInDestBuffer),
 				format, u8data);
 		*offsetInParameterData += 1;
 	} else if (dataType == UT_TRACE_FORMATTER_STRING_DATA) {
@@ -482,26 +482,26 @@ readConsumeAndSPrintfParameter(J9PortLibrary *portLib, char *rawParameterData, u
 			i16data = (int16_t)getU_16FromBuffer((UtTraceRecord *)rawParameterData, *offsetInParameterData, isBigEndian);
 			*offsetInParameterData += 2;
 			strValue = rawParameterData + (*offsetInParameterData);
-			temp = j9str_printf(PORTLIB, NULL, 0, format, i16data, strValue);
+			temp = j9str_printf(NULL, 0, format, i16data, strValue);
 			if (temp > destBufferLength) {
 				/* can't write data to dest buffer - it's too full, be cautious and just return */
 				UT_DBGOUT_CHECKED(1,
 						("<UT> readConsumeAndSPrintfParameter destination buffer exhausted: %d [%s]\n", dataType, format));
 				return 0;
 			}
-			temp = j9str_printf(PORTLIB, destBuffer + (*offsetInDestBuffer), destBufferLength - (*offsetInDestBuffer),
+			temp = j9str_printf(destBuffer + (*offsetInDestBuffer), destBufferLength - (*offsetInDestBuffer),
 					format, i16data, strValue);
 		} else {
 			/* it's just a plain string */
 			strValue = rawParameterData + (*offsetInParameterData);
-			temp = j9str_printf(PORTLIB, NULL, 0, format, strValue);
+			temp = j9str_printf(NULL, 0, format, strValue);
 			if (temp > destBufferLength) {
 				/* can't write data to dest buffer - it's too full, be cautious and just return */
 				UT_DBGOUT_CHECKED(1,
 						("<UT> readConsumeAndSPrintfParameter destination buffer exhausted: %d [%s]\n", dataType, format));
 				return 0;
 			}
-			temp = j9str_printf(PORTLIB, destBuffer + (*offsetInDestBuffer), destBufferLength - (*offsetInDestBuffer),
+			temp = j9str_printf(destBuffer + (*offsetInDestBuffer), destBufferLength - (*offsetInDestBuffer),
 					format, strValue);
 			/* for the null in the parm data */
 			*offsetInParameterData += 1;
@@ -806,7 +806,7 @@ parseTracePoint(J9PortLibrary *portLib, UtTraceRecord *record, uint32_t offset, 
 
 	nanos = (uint32_t)((millis * ONEMILLION) + (splitTimeRem * ONEMILLION / iter->timeConversion));
 
-	offsetOfParameters = (uint32_t) j9str_printf(PORTLIB, NULL, 0, "%02u:%02u:%02u:%09u GMT %.*s.%u - ", hours, minutes,
+	offsetOfParameters = (uint32_t) j9str_printf(NULL, 0, "%02u:%02u:%02u:%09u GMT %.*s.%u - ", hours, minutes,
 			seconds, nanos, modNameLength, modName, traceId);
 
 	if (offsetOfParameters > bufferLength) {
@@ -815,7 +815,7 @@ parseTracePoint(J9PortLibrary *portLib, UtTraceRecord *record, uint32_t offset, 
 		return NULL;
 	}
 
-	offsetOfParameters = (uint32_t) j9str_printf(PORTLIB, buffer, bufferLength, "%02u:%02u:%02u:%09u GMT %.*s.%u - ", hours,
+	offsetOfParameters = (uint32_t) j9str_printf(buffer, bufferLength, "%02u:%02u:%02u:%09u GMT %.*s.%u - ", hours,
 			minutes, seconds, nanos, modNameLength, modName, traceId);
 
 	rawParameterData = tempPtr + offset + TRACEPOINT_RAW_DATA_MODULE_NAME_DATA_OFFSET + modNameLength;
