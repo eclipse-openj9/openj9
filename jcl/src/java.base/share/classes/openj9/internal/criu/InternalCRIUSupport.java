@@ -33,8 +33,10 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+/*[IF JAVA_SPEC_VERSION < 24]*/
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -240,17 +242,25 @@ public final class InternalCRIUSupport {
 	private static native String[] getRestoreSystemProperites();
 
 	private static void initializeUnsafe() {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 			try {
 				Field f = Unsafe.class.getDeclaredField("theUnsafe"); //$NON-NLS-1$
 				f.setAccessible(true);
 				unsafe = (Unsafe) f.get(null);
-			} catch (NoSuchFieldException | SecurityException | IllegalArgumentException
-					| IllegalAccessException e) {
+			} catch (IllegalAccessException | IllegalArgumentException | NoSuchFieldException
+				/*[IF JAVA_SPEC_VERSION < 24]*/
+				| SecurityException
+				/*[ENDIF] JAVA_SPEC_VERSION < 24 */
+				e
+			) {
 				throw new InternalError(e);
 			}
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 			return null;
 		});
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	}
 
 	/**
@@ -940,7 +950,17 @@ public final class InternalCRIUSupport {
 	}
 
 	private static void clearInetAddressCache() {
-		Field jniaa = AccessController.doPrivileged((PrivilegedAction<Field>) () -> {
+		Field jniaa;
+		/*[IF JAVA_SPEC_VERSION >= 24]*/
+		try {
+			jniaa = SharedSecrets.class.getDeclaredField("javaNetInetAddressAccess"); //$NON-NLS-1$
+			jniaa.setAccessible(true);
+		} catch (NoSuchFieldException e) {
+			// ignore exceptions
+			jniaa = null;
+		}
+		/*[ELSE] JAVA_SPEC_VERSION >= 24 */
+		jniaa = AccessController.doPrivileged((PrivilegedAction<Field>) () -> {
 			Field jniaaTmp = null;
 			try {
 				jniaaTmp = SharedSecrets.class.getDeclaredField("javaNetInetAddressAccess"); //$NON-NLS-1$
@@ -950,6 +970,7 @@ public final class InternalCRIUSupport {
 			}
 			return jniaaTmp;
 		});
+		/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 		try {
 			if ((jniaa != null) && (jniaa.get(null) != null)) {
 				// InetAddress static initializer invokes SharedSecrets.setJavaNetInetAddressAccess().

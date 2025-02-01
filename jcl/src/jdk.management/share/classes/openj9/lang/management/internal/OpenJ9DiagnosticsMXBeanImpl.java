@@ -27,7 +27,9 @@ import javax.management.ObjectName;
 /*[IF JAVA_SPEC_VERSION >= 9]*/
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+/*[IF JAVA_SPEC_VERSION < 24]*/
 import java.security.PrivilegedAction;
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 import java.util.Optional;
 /*[ELSE] JAVA_SPEC_VERSION >= 9 */
 import com.ibm.jvm.Dump;
@@ -81,6 +83,13 @@ public final class OpenJ9DiagnosticsMXBeanImpl implements OpenJ9DiagnosticsMXBea
 			return null;
 		}
 
+		/*[IF JAVA_SPEC_VERSION >= 24]*/
+		try {
+			return new OpenJ9DiagnosticsMXBeanImpl(openj9_jvm.get());
+		} catch (Exception e) {
+			throw handleError(e);
+		}
+		/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 		PrivilegedAction<OpenJ9DiagnosticsMXBean> action = new PrivilegedAction<OpenJ9DiagnosticsMXBean>() {
 			@Override
 			public OpenJ9DiagnosticsMXBean run() {
@@ -93,6 +102,7 @@ public final class OpenJ9DiagnosticsMXBeanImpl implements OpenJ9DiagnosticsMXBea
 		};
 
 		return java.security.AccessController.doPrivileged(action);
+		/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 		/*[ELSE] JAVA_SPEC_VERSION > 8
 		return new OpenJ9DiagnosticsMXBeanImpl();
 		/*[ENDIF] JAVA_SPEC_VERSION > 8 */

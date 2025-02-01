@@ -35,7 +35,6 @@ import java.lang.StringConcatHelper;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Executable;
 import java.lang.reflect.Method;
-import java.security.AccessControlContext;
 import java.util.Map;
 
 import com.ibm.oti.reflect.AnnotationParser;
@@ -173,7 +172,7 @@ final class Access implements JavaLangAccess {
 /*[IF JAVA_SPEC_VERSION < 24]*/
 	/*[PR CMVC 199693] Prevent trusted method chain attack. */
 	@SuppressWarnings("removal")
-	public Thread newThreadWithAcc(Runnable runnable, AccessControlContext acc) {
+	public Thread newThreadWithAcc(Runnable runnable, java.security.AccessControlContext acc) {
 		return new Thread(runnable, acc);
 	}
 /*[ENDIF] JAVA_SPEC_VERSION < 24 */

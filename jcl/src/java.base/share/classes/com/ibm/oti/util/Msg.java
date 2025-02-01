@@ -24,7 +24,9 @@ package com.ibm.oti.util;
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  */
 
+/*[IF JAVA_SPEC_VERSION < 24]*/
 import java.security.AccessController;
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 import java.util.*;
 import com.ibm.oti.vm.*;
 
@@ -61,9 +63,18 @@ public class Msg {
 	static private Hashtable messages;
 
 	static {
+		String resourceName = "com/ibm/oti/util/ExternalMessages"; //$NON-NLS-1$
 		// Attempt to load the messages.
+		/*[IF JAVA_SPEC_VERSION >= 24]*/
+		try {
+			messages = MsgHelp.loadMessages(resourceName);
+		} catch (java.io.IOException e) {
+			// ignore: continue without messages
+		}
+		/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 		messages = (Hashtable) AccessController.doPrivileged(
-				PriviAction.loadMessages("com/ibm/oti/util/ExternalMessages")); //$NON-NLS-1$
+				PriviAction.loadMessages(resourceName));
+		/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 	}
 
 	/**

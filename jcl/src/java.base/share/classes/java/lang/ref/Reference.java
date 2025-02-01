@@ -22,8 +22,10 @@
  */
 package java.lang.ref;
 
+/*[IF JAVA_SPEC_VERSION < 24]*/
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 /*[IF JAVA_SPEC_VERSION >= 12]*/
 import jdk.internal.access.JavaLangRefAccess;
@@ -65,11 +67,16 @@ public abstract sealed class Reference<T> extends Object permits PhantomReferenc
 	 */
 	static class ClearBeforeEnqueue {
 		@SuppressWarnings("boxing")
+		/*[IF JAVA_SPEC_VERSION >= 24]*/
+		static final boolean ENABLED = !Boolean.getBoolean("jdk.lang.ref.disableClearBeforeEnqueue"); //$NON-NLS-1$
+		/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 		static final boolean ENABLED = AccessController.doPrivileged(new PrivilegedAction<Boolean>() {
-			@Override public Boolean run() {
+			@Override
+			public Boolean run() {
 				return !Boolean.getBoolean("jdk.lang.ref.disableClearBeforeEnqueue"); //$NON-NLS-1$
 			}
 		});
+		/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 	}
 
 	/*[IF Sidecar18-SE-OpenJ9 | (JAVA_SPEC_VERSION >= 9)]*/

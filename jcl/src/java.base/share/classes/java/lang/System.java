@@ -561,24 +561,33 @@ static void initGPUAssist() {
 		return;
 	}
 
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	PrivilegedAction<GPUAssist> finder = new PrivilegedAction<GPUAssist>() {
 		@Override
 		public GPUAssist run() {
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 			ServiceLoader<GPUAssist.Provider> loaded = ServiceLoader.load(GPUAssist.Provider.class);
-
+			GPUAssist assist = null;
 			for (GPUAssist.Provider provider : loaded) {
-				GPUAssist assist = provider.getGPUAssist();
+				assist = provider.getGPUAssist();
 
 				if (assist != null) {
-					return assist;
+					break;
 				}
 			}
 
-			return GPUAssist.NONE;
+			if (null == assist) {
+				assist = GPUAssist.NONE;
+			}
+	/*[IF JAVA_SPEC_VERSION >= 24]*/
+			GPUAssistHolder.instance = assist;
+	/*[ELSE] JAVA_SPEC_VERSION >= 24 */
+			return assist;
 		}
 	};
 
 	GPUAssistHolder.instance = AccessController.doPrivileged(finder);
+	/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 }
 /*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
@@ -1991,10 +2000,14 @@ public abstract static class LoggerFinder {
 		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		LoggerFinder localFinder = loggerFinder;
 		if (localFinder == null) {
+			/*[IF JAVA_SPEC_VERSION >= 24]*/
+			localFinder = jdk.internal.logger.LoggerFinderLoader.getLoggerFinder();
+			/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 			localFinder = AccessController.doPrivileged(
 								(PrivilegedAction<LoggerFinder>) () -> jdk.internal.logger.LoggerFinderLoader.getLoggerFinder(),
 								AccessController.getContext(),
 								com.ibm.oti.util.RuntimePermissions.permissionLoggerFinder);
+			/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 			/*[IF JAVA_SPEC_VERSION >= 11]*/
 			if (localFinder instanceof jdk.internal.logger.LoggerFinderLoader.TemporaryLoggerFinder) {
 				return localFinder;

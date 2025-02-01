@@ -30,8 +30,10 @@ import java.util.List;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+/*[IF JAVA_SPEC_VERSION < 24]*/
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 import java.util.Optional;
 /*[ELSE] JAVA_SPEC_VERSION >= 9 */
 import java.util.logging.LoggingMXBean;
@@ -59,9 +61,9 @@ public final class LoggingMXBeanImpl
 
 	private static final LoggingMXBeanImpl instance = createInstance();
 
-	/*[IF JAVA_SPEC_VERSION >= 17]*/
+	/*[IF (17 <= JAVA_SPEC_VERSION) & (JAVA_SPEC_VERSION < 24)]*/
 	@SuppressWarnings("removal")
-	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
+	/*[ENDIF] (17 <= JAVA_SPEC_VERSION) & (JAVA_SPEC_VERSION < 24) */
 	private static LoggingMXBeanImpl createInstance() {
 		/*[IF JAVA_SPEC_VERSION >= 9]*/
 		final Optional<Module> java_logging = ModuleLayer.boot().findModule("java.logging"); //$NON-NLS-1$
@@ -69,7 +71,13 @@ public final class LoggingMXBeanImpl
 		if (!java_logging.isPresent()) {
 			return null;
 		}
-
+		/*[IF JAVA_SPEC_VERSION >= 24]*/
+		try {
+			return new LoggingMXBeanImpl(java_logging.get());
+		} catch (Exception e) {
+			throw handleError(e);
+		}
+		/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 		PrivilegedAction<LoggingMXBeanImpl> action = new PrivilegedAction<LoggingMXBeanImpl>() {
 			@Override
 			public LoggingMXBeanImpl run() {
@@ -82,6 +90,7 @@ public final class LoggingMXBeanImpl
 		};
 
 		return AccessController.doPrivileged(action);
+		/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 		/*[ELSE] JAVA_SPEC_VERSION >= 9 */
 		return new LoggingMXBeanImpl();
 		/*[ENDIF] JAVA_SPEC_VERSION >= 9 */

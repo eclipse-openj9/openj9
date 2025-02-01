@@ -33,8 +33,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.Socket;
+/*[IF JAVA_SPEC_VERSION < 24]*/
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 import java.util.Objects;
 import java.util.Properties;
 import java.util.ServiceLoader;
@@ -75,7 +77,9 @@ final class Attachment extends Thread implements Response {
 		static Method startRemoteManagementAgentMethod = null;
 		static final Throwable managementAgentMethodThrowable;
 		static {
+			/*[IF JAVA_SPEC_VERSION < 24]*/
 			managementAgentMethodThrowable = AccessController.doPrivileged((PrivilegedAction<Throwable>) () -> {
+			/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 				String agentClassName =
 						/*[IF JAVA_SPEC_VERSION >= 9]*/
 						"jdk.internal.agent.Agent"; //$NON-NLS-1$
@@ -117,8 +121,12 @@ final class Attachment extends Thread implements Response {
 					IPC.logMessage("Error loading " + agentClassName, e); //$NON-NLS-1$
 					mamtTemp = e;
 				}
+			/*[IF JAVA_SPEC_VERSION >= 24]*/
+				managementAgentMethodThrowable = mamtTemp;
+			/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 				return mamtTemp;
 			});
+			/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 		}
 	}
 

@@ -24,8 +24,6 @@ package com.ibm.oti.vm;
 
 import java.util.*;
 
-import com.ibm.oti.util.PriviAction;
-
 import java.io.FilePermission;
 import java.lang.reflect.Method;
 import java.security.AccessController;

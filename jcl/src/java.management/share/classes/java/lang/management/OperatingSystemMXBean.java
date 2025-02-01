@@ -52,9 +52,11 @@ public interface OperatingSystemMXBean extends PlatformManagedObject {
 	 * supplying the value &quot;os.arch&quot; for the key.
 	 *
 	 * @return the identifier for the operating system architecture.
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException
 	 *             if there is a security manager in operation and the caller
 	 *             does not have permission to check system properties.
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 * @see System#getProperty(java.lang.String)
 	 */
 	public String getArch();
@@ -76,9 +78,11 @@ public interface OperatingSystemMXBean extends PlatformManagedObject {
 	 * &quot;os.name&quot; for the key.
 	 *
 	 * @return the name of the operating system.
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException
 	 *             if there is a security manager in operation and the caller
 	 *             does not have permission to check system properties.
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 * @see System#getProperty(java.lang.String)
 	 */
 	public String getName();
@@ -90,9 +94,11 @@ public interface OperatingSystemMXBean extends PlatformManagedObject {
 	 * &quot;os.version&quot; for the key.
 	 *
 	 * @return the version of the operating system.
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException
 	 *             if there is a security manager in operation and the caller
 	 *             does not have permission to check system properties.
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 * @see System#getProperty(java.lang.String)
 	 */
 	public String getVersion();

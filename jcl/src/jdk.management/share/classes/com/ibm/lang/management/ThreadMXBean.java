@@ -39,11 +39,17 @@ public interface ThreadMXBean extends com.sun.management.ThreadMXBean
 	 * 			given set of IDs is no longer alive or does not exist, a -1 is set in the corresponding
 	 * 			element of the returned array.
 	 * @throws IllegalArgumentException is thrown if any of the thread identifiers passed is invalid (&lt;=0).
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException is thrown if the caller does not have sufficient permissions
 	 * (ManagementPermission("monitor"))
+	/*[ENDIF] JAVA_SPEC_VERSION >= 24
 	 */
 	public long[] getNativeThreadIds(long[] threadIDs)
-			throws IllegalArgumentException, SecurityException;
+			throws IllegalArgumentException
+			/*[IF JAVA_SPEC_VERSION < 24]*/
+			, SecurityException
+			/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
+			;
 
 	/**
 	 * Find the native (operating system assigned) thread identifiers corresponding
@@ -53,11 +59,17 @@ public interface ThreadMXBean extends com.sun.management.ThreadMXBean
 	 * @return Operating system assigned native thread identifier. If the thread corresponding to the
 	 * 			ID is no longer alive or does not exist, -1 is returned.
 	 * @throws IllegalArgumentException is thrown if the thread identifier passed is invalid (&lt;=0).
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException is thrown if the caller does not have sufficient permissions
 	 * (ManagementPermission("monitor"))
+	/*[ENDIF] JAVA_SPEC_VERSION >= 24
 	 */
 	public long getNativeThreadId(long threadId)
-			throws IllegalArgumentException, SecurityException;
+			throws IllegalArgumentException
+			/*[IF JAVA_SPEC_VERSION < 24]*/
+			, SecurityException
+			/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
+			;
 
 	/**
 	 * API method that fetches an array of ExtendedThreadInfo objects corresponding to
@@ -75,13 +87,20 @@ public interface ThreadMXBean extends com.sun.management.ThreadMXBean
 	 *					currently locked ownable synchronizers is to be included in
 	 *					the returned array
 	 * @return  Array of ExtendedThreadInfo objects.
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException is thrown if the caller does not have sufficient permissions
 	 * (ManagementPermission("monitor"))
+	/*[ENDIF] JAVA_SPEC_VERSION >= 24
 	 * @throws UnsupportedOperationException is thrown if the JVM does not support monitoring
 	 * object monitor usage or ownable synchronizer usage, even as it has been specified.
 	 * @throws InternalError is thrown in case an error occurs while fetching thread information,
 	 * typically, an internal error resulting from an inconsistency in the class library.
 	 */
 	public ExtendedThreadInfo[] dumpAllExtendedThreads(boolean lockedMonitors, boolean lockedSynchronizers)
-			throws SecurityException, UnsupportedOperationException, InternalError;
+		throws
+			InternalError,
+			/*[IF JAVA_SPEC_VERSION < 24]*/
+			SecurityException,
+			/*[ENDIF] JAVA_SPEC_VERSION < 24 */
+			UnsupportedOperationException;
 }

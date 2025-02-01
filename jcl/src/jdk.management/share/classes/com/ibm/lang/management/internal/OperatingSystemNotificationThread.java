@@ -22,7 +22,9 @@
  */
 package com.ibm.lang.management.internal;
 
+/*[IF JAVA_SPEC_VERSION < 24]*/
 import java.security.PrivilegedAction;
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 import javax.management.Notification;
 
 import com.ibm.lang.management.AvailableProcessorsNotificationInfo;
@@ -49,13 +51,16 @@ final class OperatingSystemNotificationThread implements Runnable {
 	 * then enter the native that services an internal notification queue.
 	 */
 	@Override
-	/*[IF JAVA_SPEC_VERSION >= 17]*/
+	/*[IF (17 <= JAVA_SPEC_VERSION) & (JAVA_SPEC_VERSION < 24)]*/
 	@SuppressWarnings("removal")
-	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
+	/*[ENDIF] (17 <= JAVA_SPEC_VERSION) & (JAVA_SPEC_VERSION < 24) */
 	public void run() {
 		Thread myShutdownNotifier = new OperatingSystemNotificationThreadShutdown(Thread.currentThread());
 
 		try {
+			/*[IF JAVA_SPEC_VERSION >= 24]*/
+			Runtime.getRuntime().addShutdownHook(myShutdownNotifier);
+			/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 			java.security.AccessController.doPrivileged(new PrivilegedAction<Void>() {
 				@Override
 				public Void run() {
@@ -63,6 +68,7 @@ final class OperatingSystemNotificationThread implements Runnable {
 					return null;
 				}
 			});
+			/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 		} catch (IllegalStateException e) {
 			/* if by chance we are already shutting down when we try to
 			 * register the shutdown hook, allow this thread to terminate

@@ -25,8 +25,10 @@ package openj9.internal.tools.attach.target;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+/*[IF JAVA_SPEC_VERSION < 24]*/
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 import java.util.Comparator;
 import java.util.Properties;
 
@@ -60,10 +62,14 @@ public class DiagnosticProperties {
 	public static boolean isDebug;
 
 	static {
+		/*[IF JAVA_SPEC_VERSION >= 24]*/
+		isDebug = Boolean.getBoolean(DEBUG_PROPERTY);
+		/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 		AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
 			isDebug = Boolean.getBoolean(DEBUG_PROPERTY);
 			return null;
 		});
+		/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 	}
 
 	/**

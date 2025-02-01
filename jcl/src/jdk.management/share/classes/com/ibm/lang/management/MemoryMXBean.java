@@ -67,10 +67,12 @@ public interface MemoryMXBean extends java.lang.management.MemoryMXBean {
 	 * @throws IllegalArgumentException
 	 *             if input value <code>size</code> is either less than
 	 *             getMinHeapSize() or greater than getMaxHeapSizeLimit().
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException
 	 *             if a {@link SecurityManager} is being used and the caller
 	 *             does not have the <code>ManagementPermission</code> value
 	 *             of "control".
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public void setMaxHeapSize( long size );
 
@@ -140,10 +142,12 @@ public interface MemoryMXBean extends java.lang.management.MemoryMXBean {
 	 * @return whether the requested operation has been completed.
 	 * @throws IllegalArgumentException
 	 *             if input value <code>value</code> is less than 0.
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException
 	 *             if a {@link SecurityManager} is being used and the caller
 	 *             does not have the <code>ManagementPermission</code> value
 	 *             of "control".
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public boolean setSharedClassCacheSoftmxBytes(long value);
 
@@ -156,10 +160,12 @@ public interface MemoryMXBean extends java.lang.management.MemoryMXBean {
 	 * @return whether the requested operation has been completed.
 	 * @throws IllegalArgumentException
 	 *             if input value <code>value</code> is less than 0.
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException
 	 *             if a {@link SecurityManager} is being used and the caller
 	 *             does not have the <code>ManagementPermission</code> value
 	 *             of "control".
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public boolean setSharedClassCacheMinAotBytes(long value);
 
@@ -172,10 +178,12 @@ public interface MemoryMXBean extends java.lang.management.MemoryMXBean {
 	 * @return whether the requested operation has been completed.
 	 * @throws IllegalArgumentException
 	 *             if input value <code>value</code> is less than 0.
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException
 	 *             if a {@link SecurityManager} is being used and the caller
 	 *             does not have the <code>ManagementPermission</code> value
 	 *             of "control".
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public boolean setSharedClassCacheMaxAotBytes(long value);
 
@@ -188,10 +196,12 @@ public interface MemoryMXBean extends java.lang.management.MemoryMXBean {
 	 * @return whether the requested operation has been completed.
 	 * @throws IllegalArgumentException
 	 *             if input value <code>value</code> is less than 0.
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException
 	 *             if a {@link SecurityManager} is being used and the caller
 	 *             does not have the <code>ManagementPermission</code> value
 	 *             of "control".
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public boolean setSharedClassCacheMinJitDataBytes(long value);
 
@@ -204,10 +214,12 @@ public interface MemoryMXBean extends java.lang.management.MemoryMXBean {
 	 * @return whether the requested operation has been completed.
 	 * @throws IllegalArgumentException
 	 *             if input value <code>value</code> is less than 0.
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException
 	 *             if a {@link SecurityManager} is being used and the caller
 	 *             does not have the <code>ManagementPermission</code> value
 	 *             of "control".
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public boolean setSharedClassCacheMaxJitDataBytes(long value);
 

@@ -23,9 +23,6 @@
 package com.ibm.lang.management.internal;
 
 import java.lang.management.ThreadInfo;
-import java.lang.reflect.Field;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 
 import com.ibm.lang.management.ExtendedThreadInfo;
 

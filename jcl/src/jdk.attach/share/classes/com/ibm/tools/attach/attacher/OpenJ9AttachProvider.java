@@ -24,10 +24,12 @@ package com.ibm.tools.attach.attacher;
 
 import java.io.File;
 import java.io.IOException;
+/*[IF JAVA_SPEC_VERSION < 24]*/
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 import java.util.ArrayList;
 import java.util.List;
 
@@ -101,6 +103,9 @@ public class OpenJ9AttachProvider extends AttachProvider {
 
 	@Override
 	public List<VirtualMachineDescriptor> listVirtualMachines() {
+		/*[IF JAVA_SPEC_VERSION >= 24]*/
+		return listVirtualMachinesImp();
+		/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 		List<VirtualMachineDescriptor> ret = null;
 		PrivilegedExceptionAction<List<VirtualMachineDescriptor>> action = () -> listVirtualMachinesImp();
 		try {
@@ -116,6 +121,7 @@ public class OpenJ9AttachProvider extends AttachProvider {
 			}
 		}
 		return ret;
+		/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 	}
 
 	private List<VirtualMachineDescriptor> listVirtualMachinesImp() {
@@ -228,7 +234,6 @@ public class OpenJ9AttachProvider extends AttachProvider {
 
 	/*[IF JAVA_SPEC_VERSION < 24]*/
 	private static void checkAttachSecurity() {
-		@SuppressWarnings("removal")
 		final SecurityManager securityManager = System.getSecurityManager();
 		if (securityManager != null) {
 			securityManager.checkPermission(Permissions.ATTACH_VM);
