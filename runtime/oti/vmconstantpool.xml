@@ -267,7 +267,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 
 	<!-- Field references for JEP491 -->
 	<fieldref class="java/lang/VirtualThread" name="next" signature="Ljava/lang/VirtualThread;" versions="24-"/>
-	<fieldref class="java/lang/VirtualThread" name="onWaitingList" signature="Ljava/lang/VirtualThread;" versions="24-"/>
+	<fieldref class="java/lang/VirtualThread" name="onWaitingList" signature="Z" versions="24-"/>
 
 	<fieldref class="java/lang/Throwable" name="cause" signature="Ljava/lang/Throwable;"/>
 	<fieldref class="java/lang/Throwable" name="detailMessage" signature="Ljava/lang/String;"/>
@@ -429,6 +429,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	<fieldref class="jdk/internal/vm/Continuation" name="parent" signature="Ljdk/internal/vm/Continuation;" versions="19-"/>
 	<fieldref class="jdk/internal/vm/Continuation" name="vthread" signature="Ljava/lang/Thread;" versions="19-"/>
 	<fieldref class="jdk/internal/vm/Continuation" name="scopedValueCache" signature="[Ljava/lang/Object;" versions="19-"/>
+
+	<!-- Field references for JEP491 -->
+	<fieldref class="jdk/internal/vm/Continuation" name="blocker" signature="Ljava/lang/Object;" versions="24-"/>
 
 	<!-- Field references needed to support Foreign Linker API. -->
 	<fieldref class="java/lang/invoke/NativeMethodHandle" name="invokeCache" signature="[Ljava/lang/Object;" flags="opt_openjdkFfi" versions="22-"/>

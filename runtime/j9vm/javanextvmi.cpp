@@ -729,8 +729,64 @@ JVM_VirtualThreadPinnedEvent(JNIEnv* env, jclass clazz, jstring op)
 JNIEXPORT jobject JNICALL
 JVM_TakeVirtualThreadListToUnblock(JNIEnv* env, jclass ignored)
 {
-	// TODO: return the unblocked list
-	return NULL;
+	J9VMThread *currentThread = (J9VMThread *)env;
+	J9JavaVM *vm = currentThread->javaVM;
+	j9object_t unblockedList = NULL;
+
+	while (NULL == unblockedList) {
+		if (NULL != vm->blockedVirtualThreads) {
+			omrthread_monitor_enter(vm->blockedVirtualThreadsMutex);
+restart:
+			j9object_t listHead = vm->blockedVirtualThreads;
+			j9object_t next = NULL;
+			vm->blockedVirtualThreads = NULL;
+			while (NULL != listHead) {
+				next = J9VMJAVALANGVIRTUALTHREAD_NEXT(currentThread, listHead);
+				bool unblocked = false;
+				if (JNI_TRUE == J9VMJAVALANGVIRTUALTHREAD_ONWAITINGLIST(currentThread, listHead)) {
+					unblocked = true;
+				} else {
+					j9object_t continuationObj = J9VMJAVALANGVIRTUALTHREAD_CONT(currentThread, listHead);
+					j9object_t syncObject = J9VMJDKINTERALVMCONTINUATION_BLOCKER(currentThread, continuationObj);
+					J9ObjectMonitor* syncObjectMonitor = NULL;
+					if (!LN_HAS_LOCKWORD(currentThread, syncObj)) {
+						syncObjectMonitor = monitorTablePeek(currentThread->javaVM, syncObject);
+						if (syncObjectMonitor != NULL){
+							lock = J9_LOAD_LOCKWORD_VM(vm, &objectMonitor->alternateLockword);
+						}
+					} else {
+						lock = J9OBJECT_MONITOR(currentThread, syncObject);
+					}
+					J9ThreadAbstractMonitor *monitor = getInflatedObjectMonitor(vm, object, lock);
+					if (0 == monitor->count) {
+						unblocked = true;
+						if (syncObjectMonitor->virtualThreadWaitCount >= 1) {
+							syncObjectMonitor->virtualThreadWaitCount -= 1;
+						}
+						J9VMJAVALANGVIRTUALTHREAD_SET_ONWAITINGLIST(currentThread, listHead, JNI_TRUE);
+					}
+				}
+
+				if (unblocked) {
+					J9VMJAVALANGVIRTUALTHREAD_SET_NEXT(currentThread, listHead, unblockedList);
+					unblockedList = listHead;
+				} else {
+					J9VMJAVALANGVIRTUALTHREAD_SET_NEXT(currentThread, listHead, vm->blockedVirtualThreadsMutex);
+					vm->blockedVirtualThreadsMutex = listHead;
+				}
+				listHead = next;
+			}
+			if (NULL == unblockedList) {
+				omrthread_monitor_wait(vm->blockedVirtualThreadsMutex);
+				goto restart;
+			} else {
+				omrthread_monitor_exit(vm->blockedVirtualThreadsMutex);
+				break;
+			}
+		}
+	}
+
+	return unblockedList;
 }
 #endif /* JAVA_SPEC_VERSION >= 24 */
 

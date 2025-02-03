@@ -351,6 +351,15 @@ struct J9UpcallNativeSignature;
 struct J9VMContinuation;
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
+#if JAVA_SPEC_VERSION >= 24
+/* Constants from java.lang.VirutalThread.state that is used by VM. */
+/* Full mapping under jvmtiInternals.h <JVMTI_VTHREAD_STATE_*> */
+#define JAVA_LANG_VIRTUALTHREAD_BLOCKING 12
+#define JAVA_LANG_VIRTUALTHREAD_WAITING  13
+#define JAVA_LANG_VIRTUALTHREAD_TIMED_WAITING 17
+
+#endif /* JAVA_SPEC_VERSION >= 24 */
+
 #if defined(J9VM_OPT_JFR)
 
 typedef struct J9ThreadJFRState {
@@ -1706,6 +1715,9 @@ typedef struct J9ObjectMonitor {
 #endif /* defined(J9VM_THR_SMART_DEFLATION) */
 	j9objectmonitor_t alternateLockword;
 	U_32 hash;
+#if JAVA_SPEC_VERSION >= 24
+	U_32 virtualThreadWaitCount;
+#endif /* JAVA_SPEC_VERSION >= 24 */
 } J9ObjectMonitor;
 
 typedef struct J9ClassWalkState {
@@ -5401,6 +5413,11 @@ typedef struct J9VMContinuation {
 	struct J9I2JState i2jState;
 	struct J9VMEntryLocalStorage* oldEntryLocalStorage;
 	UDATA dropFlags;
+#if JAVA_SPEC_VERSION >= 24
+	UDATA ownedMonitorCount;
+	J9Pool* monitorEnterRecordPool;
+	J9MonitorEnterRecord* monitorEnterRecords;
+#endif /* JAVA_SPEC_VERSION >= 24 */
 } J9VMContinuation;
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
@@ -6318,6 +6335,10 @@ typedef struct J9JavaVM {
 #if defined(J9VM_OPT_JFR)
 	UDATA loadedClassCount;
 #endif /* defined(J9VM_OPT_JFR) */
+#if JAVA_SPEC_VERSION >= 24
+	j9object_t blockedVirtualThreads;
+	omrthread_monitor_t blockedVirtualThreadsMutex;
+#endif /* JAVA_SPEC_VERSION >= 24 */
 } J9JavaVM;
 
 #define J9JFR_SAMPLER_STATE_UNINITIALIZED 0
@@ -6357,7 +6378,10 @@ typedef struct J9JavaVM {
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 #define J9_OBJECT_MONITOR_CRIU_SINGLE_THREAD_MODE_THROW 2
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
-#define J9_OBJECT_MONITOR_BLOCKING 3
+#if JAVA_SPEC_VERSION >= 24
+#define J9_OBJECT_MONTIOR_YIELD_VIRTUAL 3
+#endif /* JAVA_SPEC_VERSION >= 24 */
+#define J9_OBJECT_MONITOR_BLOCKING 4
 
 #if (JAVA_SPEC_VERSION >= 16) || defined(J9VM_OPT_CRIU_SUPPORT)
 #define J9_OBJECT_MONITOR_ENTER_FAILED(rc) ((UDATA)(rc) < J9_OBJECT_MONITOR_BLOCKING)

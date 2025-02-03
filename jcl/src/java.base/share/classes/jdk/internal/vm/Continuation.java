@@ -38,6 +38,10 @@ public class Continuation {
 	private long vmRef; /* J9VMContinuation */
 	protected Thread vthread; /* Parent VirtualThread */
 
+/*[IF JAVA_SPEC_VERSION >= 24]*/
+	private Object blocker;
+/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
+
 	/* The live thread's scopedValueCache is always kept in J9VMThread->scopedValueCache
 	 * whereas the unmounted thread's scopedValueCache is stored in this field. This
 	 * field is modified in ContinuationHelpers.hpp::swapFieldsWithContinuation. This
