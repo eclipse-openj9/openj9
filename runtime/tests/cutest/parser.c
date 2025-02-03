@@ -40,7 +40,7 @@ cutest_parseCmdLine( J9PortLibrary *portLibrary, UDATA lastLegalArg , char **arg
 		/* new style -Xcheck:memory options */
 		if (0 == strcmp("-verbose", argv[i])) {
 			verbose = 1;
-			j9tty_err_printf(PORTLIB, "cutest: verbose output enabled.\n");
+			j9tty_err_printf("cutest: verbose output enabled.\n");
 			return i;
 		}
 	}

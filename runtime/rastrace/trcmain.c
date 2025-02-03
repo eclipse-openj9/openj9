@@ -678,13 +678,13 @@ threadStop(UtThreadData **thr)
 
 		/* Cannot use UT_DEBUG macro as utGlobal has been set to NULL */
 		if (global->traceDebug >= 2) {
-			j9tty_err_printf(PORTLIB, "<UT> ThreadStop entered for final thread " UT_POINTER_SPEC ", freeing buffers\n", thr);
+			j9tty_err_printf("<UT> ThreadStop entered for final thread " UT_POINTER_SPEC ", freeing buffers\n", thr);
 		}
 
 		while (current != NULL) {
 			UtTraceBuffer *gNext = NULL;
 			if (global->traceDebug >= 2) {
-				j9tty_err_printf(PORTLIB, "<UT>   ThreadStop freeing buffer " UT_POINTER_SPEC "\n", current);
+				j9tty_err_printf("<UT>   ThreadStop freeing buffer " UT_POINTER_SPEC "\n", current);
 			}
 			next = current->next;
 
@@ -693,7 +693,7 @@ threadStop(UtThreadData **thr)
 				gNext = global->traceGlobal;
 				if (gNext == NULL) {
 					if (global->traceDebug >= 1) {
-						j9tty_err_printf(PORTLIB, "<UT> NULL global buffer list! " UT_POINTER_SPEC " not found in global list\n", current);
+						j9tty_err_printf("<UT> NULL global buffer list! " UT_POINTER_SPEC " not found in global list\n", current);
 					}
 				} else if (gNext == current) {
 					global->traceGlobal = gNext->globalNext;
@@ -703,7 +703,7 @@ threadStop(UtThreadData **thr)
 						gNext->globalNext = current->globalNext;
 					} else {
 						if (global->traceDebug >= 1) {
-							j9tty_err_printf(PORTLIB, "<UT> trace buffer " UT_POINTER_SPEC " not found in global list\n", current);
+							j9tty_err_printf("<UT> trace buffer " UT_POINTER_SPEC " not found in global list\n", current);
 						}
 					}
 				}
@@ -720,8 +720,8 @@ threadStop(UtThreadData **thr)
 		/* output anything left on global if running with debug */
 		if (global->traceDebug >= 1) {
 			for (current = global->traceGlobal; current != NULL; current = current->globalNext) {
-				j9tty_err_printf(PORTLIB, "<UT> trace buffer " UT_POINTER_SPEC " not freed!\n", current);
-				j9tty_err_printf(PORTLIB, "<UT> owner: " UT_POINTER_SPEC " - %s\n", current->thr, current->record.threadName);
+				j9tty_err_printf("<UT> trace buffer " UT_POINTER_SPEC " not freed!\n", current);
+				j9tty_err_printf("<UT> owner: " UT_POINTER_SPEC " - %s\n", current->thr, current->record.threadName);
 			}
 		}
 

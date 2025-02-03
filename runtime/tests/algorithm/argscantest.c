@@ -57,13 +57,13 @@ verify_scan_udata(J9PortLibrary *portLib, UDATA *passCount, UDATA *failCount)
 	start = cursor = "2147483647";
 	rc = scan_udata(&cursor, &result);
 	if (rc != 0) {
-		j9tty_err_printf(PORTLIB, "Unexpected error parsing \"%s\": %d\n", start, rc);
+		j9tty_err_printf("Unexpected error parsing \"%s\": %d\n", start, rc);
 		(*failCount)++;
 	} else if (result != (UDATA)I_32_MAX) {
-		j9tty_err_printf(PORTLIB, "Unexpected result parsing \"%s\": %zd\n", start, result);
+		j9tty_err_printf("Unexpected result parsing \"%s\": %zd\n", start, result);
 		(*failCount)++;
 	} else if (cursor != start + strlen(start)) {
-		j9tty_err_printf(PORTLIB, "Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
+		j9tty_err_printf("Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
 		(*failCount)++;
 	} else {
 		(*passCount)++;
@@ -72,13 +72,13 @@ verify_scan_udata(J9PortLibrary *portLib, UDATA *passCount, UDATA *failCount)
 	start = cursor = "4294967295 ";
 	rc = scan_udata(&cursor, &result);
 	if (rc != 0) {
-		j9tty_err_printf(PORTLIB, "Unexpected error parsing \"%s\": %d\n", start, rc);
+		j9tty_err_printf("Unexpected error parsing \"%s\": %d\n", start, rc);
 		(*failCount)++;
 	} else if (result != U_32_MAX) {
-		j9tty_err_printf(PORTLIB, "Unexpected result parsing \"%s\": %zu\n", start, result);
+		j9tty_err_printf("Unexpected result parsing \"%s\": %zu\n", start, result);
 		(*failCount)++;
 	} else if (cursor != start + strlen(start) - 1) {
-		j9tty_err_printf(PORTLIB, "Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
+		j9tty_err_printf("Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
 		(*failCount)++;
 	} else {
 		(*passCount)++;
@@ -87,13 +87,13 @@ verify_scan_udata(J9PortLibrary *portLib, UDATA *passCount, UDATA *failCount)
 	start = cursor = "0";
 	rc = scan_udata(&cursor, &result);
 	if (rc != 0) {
-		j9tty_err_printf(PORTLIB, "Unexpected error parsing \"%s\": %d\n", start, rc);
+		j9tty_err_printf("Unexpected error parsing \"%s\": %d\n", start, rc);
 		(*failCount)++;
 	} else if (result != 0) {
-		j9tty_err_printf(PORTLIB, "Unexpected result parsing \"%s\": %zu\n", start, result);
+		j9tty_err_printf("Unexpected result parsing \"%s\": %zu\n", start, result);
 		(*failCount)++;
 	} else if (cursor != start + strlen(start)) {
-		j9tty_err_printf(PORTLIB, "Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
+		j9tty_err_printf("Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
 		(*failCount)++;
 	} else {
 		(*passCount)++;
@@ -102,13 +102,13 @@ verify_scan_udata(J9PortLibrary *portLib, UDATA *passCount, UDATA *failCount)
 	start = cursor = "0000";
 	rc = scan_udata(&cursor, &result);
 	if (rc != 0) {
-		j9tty_err_printf(PORTLIB, "Unexpected error parsing \"%s\": %d\n", start, rc);
+		j9tty_err_printf("Unexpected error parsing \"%s\": %d\n", start, rc);
 		(*failCount)++;
 	} else if (result != 0) {
-		j9tty_err_printf(PORTLIB, "Unexpected result parsing \"%s\": %zu\n", start, result);
+		j9tty_err_printf("Unexpected result parsing \"%s\": %zu\n", start, result);
 		(*failCount)++;
 	} else if (cursor != start + strlen(start)) {
-		j9tty_err_printf(PORTLIB, "Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
+		j9tty_err_printf("Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
 		(*failCount)++;
 	} else {
 		(*passCount)++;
@@ -117,10 +117,10 @@ verify_scan_udata(J9PortLibrary *portLib, UDATA *passCount, UDATA *failCount)
 	start = cursor = "";
 	rc = scan_udata(&cursor, &result);
 	if (rc != 1) {
-		j9tty_err_printf(PORTLIB, "Unexpected rc parsing \"%s\": %d\n", start, rc);
+		j9tty_err_printf("Unexpected rc parsing \"%s\": %d\n", start, rc);
 		(*failCount)++;
 	} if (cursor != start) {
-		j9tty_err_printf(PORTLIB, "Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
+		j9tty_err_printf("Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
 		(*failCount)++;
 	} else {
 		(*passCount)++;
@@ -130,13 +130,13 @@ verify_scan_udata(J9PortLibrary *portLib, UDATA *passCount, UDATA *failCount)
 	start = cursor = "18446744073709551615";
 	rc = scan_udata(&cursor, &result);
 	if (rc != 0) {
-		j9tty_err_printf(PORTLIB, "Unexpected error parsing \"%s\": %d\n", start, rc);
+		j9tty_err_printf("Unexpected error parsing \"%s\": %d\n", start, rc);
 		(*failCount)++;
 	} else if (result != U_64_MAX) {
-		j9tty_err_printf(PORTLIB, "Unexpected result parsing \"%s\": %zu\n", start, result);
+		j9tty_err_printf("Unexpected result parsing \"%s\": %zu\n", start, result);
 		(*failCount)++;
 	} else if (cursor != start + strlen(start)) {
-		j9tty_err_printf(PORTLIB, "Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
+		j9tty_err_printf("Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
 		(*failCount)++;
 	} else {
 		(*passCount)++;
@@ -145,13 +145,13 @@ verify_scan_udata(J9PortLibrary *portLib, UDATA *passCount, UDATA *failCount)
 	start = cursor = "18446744073709551615 ";
 	rc = scan_udata(&cursor, &result);
 	if (rc != 0) {
-		j9tty_err_printf(PORTLIB, "Unexpected error parsing \"%s\": %d\n", start, rc);
+		j9tty_err_printf("Unexpected error parsing \"%s\": %d\n", start, rc);
 		(*failCount)++;
 	} else if (result != U_64_MAX) {
-		j9tty_err_printf(PORTLIB, "Unexpected result parsing \"%s\": %zu\n", start, result);
+		j9tty_err_printf("Unexpected result parsing \"%s\": %zu\n", start, result);
 		(*failCount)++;
 	} else if (cursor != start + strlen(start) - 1) {
-		j9tty_err_printf(PORTLIB, "Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
+		j9tty_err_printf("Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
 		(*failCount)++;
 	} else {
 		(*passCount)++;
@@ -160,10 +160,10 @@ verify_scan_udata(J9PortLibrary *portLib, UDATA *passCount, UDATA *failCount)
 	start = cursor = "18446744073709551616";
 	rc = scan_udata(&cursor, &result);
 	if (rc != 2) {
-		j9tty_err_printf(PORTLIB, "Unexpected rc parsing \"%s\": %d\n", start, rc);
+		j9tty_err_printf("Unexpected rc parsing \"%s\": %d\n", start, rc);
 		(*failCount)++;
 	} if (cursor != start) {
-		j9tty_err_printf(PORTLIB, "Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
+		j9tty_err_printf("Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
 		(*failCount)++;
 	} else {
 		(*passCount)++;
@@ -171,10 +171,10 @@ verify_scan_udata(J9PortLibrary *portLib, UDATA *passCount, UDATA *failCount)
 	start = cursor = "111111111111111111111";
 	rc = scan_udata(&cursor, &result);
 	if (rc != 2) {
-		j9tty_err_printf(PORTLIB, "Unexpected rc parsing \"%s\": %d\n", start, rc);
+		j9tty_err_printf("Unexpected rc parsing \"%s\": %d\n", start, rc);
 		(*failCount)++;
 	} if (cursor != start) {
-		j9tty_err_printf(PORTLIB, "Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
+		j9tty_err_printf("Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
 		(*failCount)++;
 	} else {
 		(*passCount)++;
@@ -183,10 +183,10 @@ verify_scan_udata(J9PortLibrary *portLib, UDATA *passCount, UDATA *failCount)
 	start = cursor = "4294967296";
 	rc = scan_udata(&cursor, &result);
 	if (rc != 2) {
-		j9tty_err_printf(PORTLIB, "Unexpected rc parsing \"%s\": %d\n", start, rc);
+		j9tty_err_printf("Unexpected rc parsing \"%s\": %d\n", start, rc);
 		(*failCount)++;
 	} if (cursor != start) {
-		j9tty_err_printf(PORTLIB, "Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
+		j9tty_err_printf("Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
 		(*failCount)++;
 	} else {
 		(*passCount)++;
@@ -194,10 +194,10 @@ verify_scan_udata(J9PortLibrary *portLib, UDATA *passCount, UDATA *failCount)
 	start = cursor = "11111111111";
 	rc = scan_udata(&cursor, &result);
 	if (rc != 2) {
-		j9tty_err_printf(PORTLIB, "Unexpected rc parsing \"%s\": %d\n", start, rc);
+		j9tty_err_printf("Unexpected rc parsing \"%s\": %d\n", start, rc);
 		(*failCount)++;
 	} if (cursor != start) {
-		j9tty_err_printf(PORTLIB, "Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
+		j9tty_err_printf("Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
 		(*failCount)++;
 	} else {
 		(*passCount)++;
@@ -219,13 +219,13 @@ verify_scan_idata(J9PortLibrary *portLib, UDATA *passCount, UDATA *failCount)
 	start = cursor = "2147483647";
 	rc = scan_idata(&cursor, &result);
 	if (rc != 0) {
-		j9tty_err_printf(PORTLIB, "Unexpected error parsing \"%s\": %d\n", start, rc);
+		j9tty_err_printf("Unexpected error parsing \"%s\": %d\n", start, rc);
 		(*failCount)++;
 	} else if (result != I_32_MAX) {
-		j9tty_err_printf(PORTLIB, "Unexpected result parsing \"%s\": %zd\n", start, result);
+		j9tty_err_printf("Unexpected result parsing \"%s\": %zd\n", start, result);
 		(*failCount)++;
 	} else if (cursor != start + strlen(start)) {
-		j9tty_err_printf(PORTLIB, "Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
+		j9tty_err_printf("Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
 		(*failCount)++;
 	} else {
 		(*passCount)++;
@@ -234,13 +234,13 @@ verify_scan_idata(J9PortLibrary *portLib, UDATA *passCount, UDATA *failCount)
 	start = cursor = "2147483647 ";
 	rc = scan_idata(&cursor, &result);
 	if (rc != 0) {
-		j9tty_err_printf(PORTLIB, "Unexpected error parsing \"%s\": %d\n", start, rc);
+		j9tty_err_printf("Unexpected error parsing \"%s\": %d\n", start, rc);
 		(*failCount)++;
 	} else if (result != I_32_MAX) {
-		j9tty_err_printf(PORTLIB, "Unexpected result parsing \"%s\": %zd\n", start, result);
+		j9tty_err_printf("Unexpected result parsing \"%s\": %zd\n", start, result);
 		(*failCount)++;
 	} else if (cursor != start + strlen(start) - 1) {
-		j9tty_err_printf(PORTLIB, "Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
+		j9tty_err_printf("Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
 		(*failCount)++;
 	} else {
 		(*passCount)++;
@@ -249,13 +249,13 @@ verify_scan_idata(J9PortLibrary *portLib, UDATA *passCount, UDATA *failCount)
 	start = cursor = "0";
 	rc = scan_idata(&cursor, &result);
 	if (rc != 0) {
-		j9tty_err_printf(PORTLIB, "Unexpected error parsing \"%s\": %d\n", start, rc);
+		j9tty_err_printf("Unexpected error parsing \"%s\": %d\n", start, rc);
 		(*failCount)++;
 	} else if (result != 0) {
-		j9tty_err_printf(PORTLIB, "Unexpected result parsing \"%s\": %zu\n", start, result);
+		j9tty_err_printf("Unexpected result parsing \"%s\": %zu\n", start, result);
 		(*failCount)++;
 	} else if (cursor != start + strlen(start)) {
-		j9tty_err_printf(PORTLIB, "Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
+		j9tty_err_printf("Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
 		(*failCount)++;
 	} else {
 		(*passCount)++;
@@ -264,13 +264,13 @@ verify_scan_idata(J9PortLibrary *portLib, UDATA *passCount, UDATA *failCount)
 	start = cursor = "0000";
 	rc = scan_idata(&cursor, &result);
 	if (rc != 0) {
-		j9tty_err_printf(PORTLIB, "Unexpected error parsing \"%s\": %d\n", start, rc);
+		j9tty_err_printf("Unexpected error parsing \"%s\": %d\n", start, rc);
 		(*failCount)++;
 	} else if (result != 0) {
-		j9tty_err_printf(PORTLIB, "Unexpected result parsing \"%s\": %zu\n", start, result);
+		j9tty_err_printf("Unexpected result parsing \"%s\": %zu\n", start, result);
 		(*failCount)++;
 	} else if (cursor != start + strlen(start)) {
-		j9tty_err_printf(PORTLIB, "Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
+		j9tty_err_printf("Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
 		(*failCount)++;
 	} else {
 		(*passCount)++;
@@ -279,10 +279,10 @@ verify_scan_idata(J9PortLibrary *portLib, UDATA *passCount, UDATA *failCount)
 	start = cursor = "";
 	rc = scan_idata(&cursor, &result);
 	if (rc != 1) {
-		j9tty_err_printf(PORTLIB, "Unexpected rc parsing \"%s\": %d\n", start, rc);
+		j9tty_err_printf("Unexpected rc parsing \"%s\": %d\n", start, rc);
 		(*failCount)++;
 	} if (cursor != start) {
-		j9tty_err_printf(PORTLIB, "Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
+		j9tty_err_printf("Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
 		(*failCount)++;
 	} else {
 		(*passCount)++;
@@ -291,10 +291,10 @@ verify_scan_idata(J9PortLibrary *portLib, UDATA *passCount, UDATA *failCount)
 	start = cursor = "-";
 	rc = scan_idata(&cursor, &result);
 	if (rc != 1) {
-		j9tty_err_printf(PORTLIB, "Unexpected rc parsing \"%s\": %d\n", start, rc);
+		j9tty_err_printf("Unexpected rc parsing \"%s\": %d\n", start, rc);
 		(*failCount)++;
 	} if (cursor != start) {
-		j9tty_err_printf(PORTLIB, "Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
+		j9tty_err_printf("Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
 		(*failCount)++;
 	} else {
 		(*passCount)++;
@@ -303,10 +303,10 @@ verify_scan_idata(J9PortLibrary *portLib, UDATA *passCount, UDATA *failCount)
 	start = cursor = "+";
 	rc = scan_idata(&cursor, &result);
 	if (rc != 1) {
-		j9tty_err_printf(PORTLIB, "Unexpected rc parsing \"%s\": %d\n", start, rc);
+		j9tty_err_printf("Unexpected rc parsing \"%s\": %d\n", start, rc);
 		(*failCount)++;
 	} if (cursor != start) {
-		j9tty_err_printf(PORTLIB, "Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
+		j9tty_err_printf("Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
 		(*failCount)++;
 	} else {
 		(*passCount)++;
@@ -315,10 +315,10 @@ verify_scan_idata(J9PortLibrary *portLib, UDATA *passCount, UDATA *failCount)
 	start = cursor = "--0";
 	rc = scan_idata(&cursor, &result);
 	if (rc != 1) {
-		j9tty_err_printf(PORTLIB, "Unexpected rc parsing \"%s\": %d\n", start, rc);
+		j9tty_err_printf("Unexpected rc parsing \"%s\": %d\n", start, rc);
 		(*failCount)++;
 	} if (cursor != start) {
-		j9tty_err_printf(PORTLIB, "Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
+		j9tty_err_printf("Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
 		(*failCount)++;
 	} else {
 		(*passCount)++;
@@ -327,10 +327,10 @@ verify_scan_idata(J9PortLibrary *portLib, UDATA *passCount, UDATA *failCount)
 	start = cursor = "++0";
 	rc = scan_idata(&cursor, &result);
 	if (rc != 1) {
-		j9tty_err_printf(PORTLIB, "Unexpected rc parsing \"%s\": %d\n", start, rc);
+		j9tty_err_printf("Unexpected rc parsing \"%s\": %d\n", start, rc);
 		(*failCount)++;
 	} if (cursor != start) {
-		j9tty_err_printf(PORTLIB, "Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
+		j9tty_err_printf("Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
 		(*failCount)++;
 	} else {
 		(*passCount)++;
@@ -339,13 +339,13 @@ verify_scan_idata(J9PortLibrary *portLib, UDATA *passCount, UDATA *failCount)
 	start = cursor = "-0";
 	rc = scan_idata(&cursor, &result);
 	if (rc != 0) {
-		j9tty_err_printf(PORTLIB, "Unexpected error parsing \"%s\": %d\n", start, rc);
+		j9tty_err_printf("Unexpected error parsing \"%s\": %d\n", start, rc);
 		(*failCount)++;
 	} else if (result != 0) {
-		j9tty_err_printf(PORTLIB, "Unexpected result parsing \"%s\": %zu\n", start, result);
+		j9tty_err_printf("Unexpected result parsing \"%s\": %zu\n", start, result);
 		(*failCount)++;
 	} else if (cursor != start + strlen(start)) {
-		j9tty_err_printf(PORTLIB, "Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
+		j9tty_err_printf("Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
 		(*failCount)++;
 	} else {
 		(*passCount)++;
@@ -354,13 +354,13 @@ verify_scan_idata(J9PortLibrary *portLib, UDATA *passCount, UDATA *failCount)
 	start = cursor = "+0";
 	rc = scan_idata(&cursor, &result);
 	if (rc != 0) {
-		j9tty_err_printf(PORTLIB, "Unexpected error parsing \"%s\": %d\n", start, rc);
+		j9tty_err_printf("Unexpected error parsing \"%s\": %d\n", start, rc);
 		(*failCount)++;
 	} else if (result != 0) {
-		j9tty_err_printf(PORTLIB, "Unexpected result parsing \"%s\": %zu\n", start, result);
+		j9tty_err_printf("Unexpected result parsing \"%s\": %zu\n", start, result);
 		(*failCount)++;
 	} else if (cursor != start + strlen(start)) {
-		j9tty_err_printf(PORTLIB, "Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
+		j9tty_err_printf("Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
 		(*failCount)++;
 	} else {
 		(*passCount)++;
@@ -369,13 +369,13 @@ verify_scan_idata(J9PortLibrary *portLib, UDATA *passCount, UDATA *failCount)
 	start = cursor = "-2147483647";
 	rc = scan_idata(&cursor, &result);
 	if (rc != 0) {
-		j9tty_err_printf(PORTLIB, "Unexpected error parsing \"%s\": %d\n", start, rc);
+		j9tty_err_printf("Unexpected error parsing \"%s\": %d\n", start, rc);
 		(*failCount)++;
 	} else if (result != -I_32_MAX) {
-		j9tty_err_printf(PORTLIB, "Unexpected result parsing \"%s\": %zd\n", start, result);
+		j9tty_err_printf("Unexpected result parsing \"%s\": %zd\n", start, result);
 		(*failCount)++;
 	} else if (cursor != start + strlen(start)) {
-		j9tty_err_printf(PORTLIB, "Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
+		j9tty_err_printf("Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
 		(*failCount)++;
 	} else {
 		(*passCount)++;
@@ -384,13 +384,13 @@ verify_scan_idata(J9PortLibrary *portLib, UDATA *passCount, UDATA *failCount)
 	start = cursor = "-2147483648";
 	rc = scan_idata(&cursor, &result);
 	if (rc != 0) {
-		j9tty_err_printf(PORTLIB, "Unexpected error parsing \"%s\": %d\n", start, rc);
+		j9tty_err_printf("Unexpected error parsing \"%s\": %d\n", start, rc);
 		(*failCount)++;
 	} else if (result != I_32_MIN) {
-		j9tty_err_printf(PORTLIB, "Unexpected result parsing \"%s\": %zd\n", start, result);
+		j9tty_err_printf("Unexpected result parsing \"%s\": %zd\n", start, result);
 		(*failCount)++;
 	} else if (cursor != start + strlen(start)) {
-		j9tty_err_printf(PORTLIB, "Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
+		j9tty_err_printf("Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
 		(*failCount)++;
 	} else {
 		(*passCount)++;
@@ -400,13 +400,13 @@ verify_scan_idata(J9PortLibrary *portLib, UDATA *passCount, UDATA *failCount)
 	start = cursor = "9223372036854775807";
 	rc = scan_idata(&cursor, &result);
 	if (rc != 0) {
-		j9tty_err_printf(PORTLIB, "Unexpected error parsing \"%s\": %d\n", start, rc);
+		j9tty_err_printf("Unexpected error parsing \"%s\": %d\n", start, rc);
 		(*failCount)++;
 	} else if (result != I_64_MAX) {
-		j9tty_err_printf(PORTLIB, "Unexpected result parsing \"%s\": %zd\n", start, result);
+		j9tty_err_printf("Unexpected result parsing \"%s\": %zd\n", start, result);
 		(*failCount)++;
 	} else if (cursor != start + strlen(start)) {
-		j9tty_err_printf(PORTLIB, "Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
+		j9tty_err_printf("Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
 		(*failCount)++;
 	} else {
 		(*passCount)++;
@@ -415,13 +415,13 @@ verify_scan_idata(J9PortLibrary *portLib, UDATA *passCount, UDATA *failCount)
 	start = cursor = "-9223372036854775808";
 	rc = scan_idata(&cursor, &result);
 	if (rc != 0) {
-		j9tty_err_printf(PORTLIB, "Unexpected error parsing \"%s\": %d\n", start, rc);
+		j9tty_err_printf("Unexpected error parsing \"%s\": %d\n", start, rc);
 		(*failCount)++;
 	} else if (result != I_64_MIN) {
-		j9tty_err_printf(PORTLIB, "Unexpected result parsing \"%s\": %zd\n", start, result);
+		j9tty_err_printf("Unexpected result parsing \"%s\": %zd\n", start, result);
 		(*failCount)++;
 	} else if (cursor != start + strlen(start)) {
-		j9tty_err_printf(PORTLIB, "Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
+		j9tty_err_printf("Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
 		(*failCount)++;
 	} else {
 		(*passCount)++;
@@ -430,10 +430,10 @@ verify_scan_idata(J9PortLibrary *portLib, UDATA *passCount, UDATA *failCount)
 	start = cursor = "9223372036854775808";
 	rc = scan_idata(&cursor, &result);
 	if (rc != 2) {
-		j9tty_err_printf(PORTLIB, "Unexpected rc parsing \"%s\": %d\n", start, rc);
+		j9tty_err_printf("Unexpected rc parsing \"%s\": %d\n", start, rc);
 		(*failCount)++;
 	} if (cursor != start) {
-		j9tty_err_printf(PORTLIB, "Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
+		j9tty_err_printf("Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
 		(*failCount)++;
 	} else {
 		(*passCount)++;
@@ -442,10 +442,10 @@ verify_scan_idata(J9PortLibrary *portLib, UDATA *passCount, UDATA *failCount)
 	start = cursor = "-9223372036854775809";
 	rc = scan_idata(&cursor, &result);
 	if (rc != 2) {
-		j9tty_err_printf(PORTLIB, "Unexpected rc parsing \"%s\": %d\n", start, rc);
+		j9tty_err_printf("Unexpected rc parsing \"%s\": %d\n", start, rc);
 		(*failCount)++;
 	} if (cursor != start) {
-		j9tty_err_printf(PORTLIB, "Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
+		j9tty_err_printf("Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
 		(*failCount)++;
 	} else {
 		(*passCount)++;
@@ -454,10 +454,10 @@ verify_scan_idata(J9PortLibrary *portLib, UDATA *passCount, UDATA *failCount)
 	start = cursor = "2147483648";
 	rc = scan_idata(&cursor, &result);
 	if (rc != 2) {
-		j9tty_err_printf(PORTLIB, "Unexpected rc parsing \"%s\": %d\n", start, rc);
+		j9tty_err_printf("Unexpected rc parsing \"%s\": %d\n", start, rc);
 		(*failCount)++;
 	} if (cursor != start) {
-		j9tty_err_printf(PORTLIB, "Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
+		j9tty_err_printf("Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
 		(*failCount)++;
 	} else {
 		(*passCount)++;
@@ -466,10 +466,10 @@ verify_scan_idata(J9PortLibrary *portLib, UDATA *passCount, UDATA *failCount)
 	start = cursor = "-2147483649";
 	rc = scan_idata(&cursor, &result);
 	if (rc != 2) {
-		j9tty_err_printf(PORTLIB, "Unexpected rc parsing \"%s\": %d\n", start, rc);
+		j9tty_err_printf("Unexpected rc parsing \"%s\": %d\n", start, rc);
 		(*failCount)++;
 	} if (cursor != start) {
-		j9tty_err_printf(PORTLIB, "Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
+		j9tty_err_printf("Unexpected length parsing \"%s\": %zu\n", start, cursor - start);
 		(*failCount)++;
 	} else {
 		(*passCount)++;
@@ -477,6 +477,3 @@ verify_scan_idata(J9PortLibrary *portLib, UDATA *passCount, UDATA *failCount)
 #endif
 
 }
-
-
-

@@ -66,7 +66,7 @@ verifyWildcards(J9PortLibrary *portLib, UDATA *passCount, UDATA *failCount)
 
 	/* test NULL and 0 length */
 	if (parseWildcard(NULL, 0, &needleString, &needleLength, &matchFlags)) {
-		j9tty_err_printf(PORTLIB, "Unexpected error parsing NULL pattern\n");
+		j9tty_err_printf("Unexpected error parsing NULL pattern\n");
 		(*failCount)++;
 	} else {
 		(*passCount)++;
@@ -75,7 +75,7 @@ verifyWildcards(J9PortLibrary *portLib, UDATA *passCount, UDATA *failCount)
 	/* test expected error cases */
 	pattern = "X*X";
 	if (!parseWildcard(pattern, strlen(pattern), &needleString, &needleLength, &matchFlags)) {
-		j9tty_err_printf(PORTLIB, "Unexpected success parsing \"%s\"\n", pattern);
+		j9tty_err_printf("Unexpected success parsing \"%s\"\n", pattern);
 		(*failCount)++;
 	} else {
 		(*passCount)++;
@@ -86,9 +86,7 @@ verifyWildcards(J9PortLibrary *portLib, UDATA *passCount, UDATA *failCount)
 	return rc;
 }
 
-
-
-static I_32 
+static I_32
 verifyWildcard(J9PortLibrary *portLib, const char* pattern, const char* expectedMatch, const char* expectedMismatch, UDATA *passCount, UDATA *failCount) 
 {
 	const char* needleString;
@@ -97,13 +95,13 @@ verifyWildcard(J9PortLibrary *portLib, const char* pattern, const char* expected
 	PORT_ACCESS_FROM_PORT(portLib);
 
 	if (parseWildcard(pattern, strlen(pattern), &needleString, &needleLength, &matchFlags)) {
-		j9tty_err_printf(PORTLIB, "Unexpected error parsing \"%s\"\n", pattern);
+		j9tty_err_printf("Unexpected error parsing \"%s\"\n", pattern);
 		return -1;
 	}
 
 	if (expectedMatch) {
 		if (!wildcardMatch(matchFlags, needleString, needleLength, expectedMatch, strlen(expectedMatch))) {
-			j9tty_err_printf(PORTLIB, "Failed to match \"%s\" with \"%s\"\n", expectedMatch, pattern);
+			j9tty_err_printf("Failed to match \"%s\" with \"%s\"\n", expectedMatch, pattern);
 			(*failCount)++;
 			return 0;
 		}
@@ -111,7 +109,7 @@ verifyWildcard(J9PortLibrary *portLib, const char* pattern, const char* expected
 
 	if (expectedMismatch) {
 		if (wildcardMatch(matchFlags, needleString, needleLength, expectedMismatch, strlen(expectedMismatch))) {
-			j9tty_err_printf(PORTLIB, "Unexpectedly matched \"%s\" with \"%s\"\n", expectedMismatch, pattern);
+			j9tty_err_printf("Unexpectedly matched \"%s\" with \"%s\"\n", expectedMismatch, pattern);
 			(*failCount)++;
 			return 0;
 		}
@@ -120,6 +118,3 @@ verifyWildcard(J9PortLibrary *portLib, const char* pattern, const char* expected
 	(*passCount)++;
 	return 0;
 }
-
-
-

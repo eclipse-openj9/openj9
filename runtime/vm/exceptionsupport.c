@@ -571,7 +571,7 @@ internalSetCurrentExceptionWithCause(J9VMThread *currentThread, UDATA exceptionN
 		if (J9_ARE_NO_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_CLASS_OBJECT_ASSIGNED)) {
 			/* This is JVM startup stage, exit with message now. */
 			PORT_ACCESS_FROM_JAVAVM(vm);
-			j9tty_err_printf(PORTLIB, "%s\n", utfMessage);
+			j9tty_err_printf("%s\n", utfMessage);
 			goto done;
 		}
 	}

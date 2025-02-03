@@ -329,19 +329,20 @@ _couldnotparse:
 
 	return rc;
 }
+
 static void
-printXlogUsage(struct J9PortLibrary* PORTLIB)
+printXlogUsage(struct J9PortLibrary *PORTLIB)
 {
-	j9tty_err_printf(PORTLIB, j9nls_lookup_message(J9NLS_INFO|J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_VM_XLOG_HELP01, NULL));
-	j9tty_err_printf(PORTLIB, j9nls_lookup_message(J9NLS_INFO|J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_VM_XLOG_HELP02, NULL));
-	j9tty_err_printf(PORTLIB, j9nls_lookup_message(J9NLS_INFO|J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_VM_XLOG_HELP03, NULL));
-	j9tty_err_printf(PORTLIB, j9nls_lookup_message(J9NLS_INFO|J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_VM_XLOG_HELP04, NULL));
-	j9tty_err_printf(PORTLIB, j9nls_lookup_message(J9NLS_INFO|J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_VM_XLOG_HELP05, NULL));
-	j9tty_err_printf(PORTLIB, j9nls_lookup_message(J9NLS_INFO|J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_VM_XLOG_HELP06, NULL));
-	j9tty_err_printf(PORTLIB, j9nls_lookup_message(J9NLS_INFO|J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_VM_XLOG_HELP07, NULL));
-	j9tty_err_printf(PORTLIB, j9nls_lookup_message(J9NLS_INFO|J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_VM_XLOG_HELP08, NULL));
-	j9tty_err_printf(PORTLIB, j9nls_lookup_message(J9NLS_INFO|J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_VM_XLOG_HELP09, NULL));
-	j9tty_err_printf(PORTLIB, j9nls_lookup_message(J9NLS_INFO|J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_VM_XLOG_HELP10, NULL));
-	j9tty_err_printf(PORTLIB, j9nls_lookup_message(J9NLS_INFO|J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_VM_XLOG_HELP11, NULL));
-	j9tty_err_printf(PORTLIB, j9nls_lookup_message(J9NLS_INFO|J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_VM_XLOG_HELP12, NULL));
+	j9tty_err_printf(j9nls_lookup_message(J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_VM_XLOG_HELP01, NULL));
+	j9tty_err_printf(j9nls_lookup_message(J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_VM_XLOG_HELP02, NULL));
+	j9tty_err_printf(j9nls_lookup_message(J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_VM_XLOG_HELP03, NULL));
+	j9tty_err_printf(j9nls_lookup_message(J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_VM_XLOG_HELP04, NULL));
+	j9tty_err_printf(j9nls_lookup_message(J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_VM_XLOG_HELP05, NULL));
+	j9tty_err_printf(j9nls_lookup_message(J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_VM_XLOG_HELP06, NULL));
+	j9tty_err_printf(j9nls_lookup_message(J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_VM_XLOG_HELP07, NULL));
+	j9tty_err_printf(j9nls_lookup_message(J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_VM_XLOG_HELP08, NULL));
+	j9tty_err_printf(j9nls_lookup_message(J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_VM_XLOG_HELP09, NULL));
+	j9tty_err_printf(j9nls_lookup_message(J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_VM_XLOG_HELP10, NULL));
+	j9tty_err_printf(j9nls_lookup_message(J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_VM_XLOG_HELP11, NULL));
+	j9tty_err_printf(j9nls_lookup_message(J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_VM_XLOG_HELP12, NULL));
 }

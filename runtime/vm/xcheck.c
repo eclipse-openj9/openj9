@@ -138,7 +138,7 @@ processXCheckOptions(J9JavaVM * vm, J9Pool* loadTable, J9VMInitArgs* j9vm_args)
 	nocheckCPIndex = OMR_MAX(OMR_MAX(nocheckCPIndex, noneIndex), helpIndex);
 
 	if (checkCPHelpIndex > nocheckCPIndex) {
-		j9tty_err_printf(PORTLIB, "\nUsage: -Xcheck:classpath[:help|none]\n\n");
+		j9tty_err_printf("\nUsage: -Xcheck:classpath[:help|none]\n\n");
 		rc = -1;
 	}
 	
@@ -163,7 +163,7 @@ processXCheckOptions(J9JavaVM * vm, J9Pool* loadTable, J9VMInitArgs* j9vm_args)
 	dumpNoneIndex = OMR_MAX(OMR_MAX(dumpNoneIndex, noneIndex), helpIndex);
 
 	if (dumpHelpIndex > dumpNoneIndex) {
-		j9tty_err_printf(PORTLIB, "\nUsage: -Xcheck:dump\nRun JVM start-up checks for OS system dump settings\n\n");
+		j9tty_err_printf("\nUsage: -Xcheck:dump\nRun JVM start-up checks for OS system dump settings\n\n");
 		rc = -1;
 	}
 
@@ -183,28 +183,28 @@ processXCheckOptions(J9JavaVM * vm, J9Pool* loadTable, J9VMInitArgs* j9vm_args)
 
 static IDATA printXcheckUsage(J9JavaVM *vm)
 {
-        PORT_ACCESS_FROM_JAVAVM(vm);
- 
-        j9tty_err_printf(PORTLIB, "\n-Xcheck usage:\n\n");
- 
-        j9tty_err_printf(PORTLIB, "  -Xcheck:help                  Print general Xcheck help\n");
-        j9tty_err_printf(PORTLIB, "  -Xcheck:none                  Ignore all previous/default Xcheck options\n");
- 
-        j9tty_err_printf(PORTLIB, "  -Xcheck:<component>:help      Print detailed Xcheck help\n");
-        j9tty_err_printf(PORTLIB, "  -Xcheck:<component>:none      Ignore previous Xcheck options of this type\n");
- 
-        j9tty_err_printf(PORTLIB, "\nXcheck enabled components:\n\n");
+	PORT_ACCESS_FROM_JAVAVM(vm);
 
-        j9tty_err_printf(PORTLIB, "  classpath\n");
-        j9tty_err_printf(PORTLIB, "  dump\n");
-        j9tty_err_printf(PORTLIB, "  gc\n");
-        j9tty_err_printf(PORTLIB, "  jni\n");
-        j9tty_err_printf(PORTLIB, "  memory\n");
-        j9tty_err_printf(PORTLIB, "  vm\n\n");
+	j9tty_err_printf("\n-Xcheck usage:\n\n");
 
-        return JNI_OK;
+	j9tty_err_printf("  -Xcheck:help                  Print general Xcheck help\n");
+	j9tty_err_printf("  -Xcheck:none                  Ignore all previous/default Xcheck options\n");
+
+	j9tty_err_printf("  -Xcheck:<component>:help      Print detailed Xcheck help\n");
+	j9tty_err_printf("  -Xcheck:<component>:none      Ignore previous Xcheck options of this type\n");
+
+	j9tty_err_printf("\nXcheck enabled components:\n\n");
+
+	j9tty_err_printf("  classpath\n");
+	j9tty_err_printf("  dump\n");
+	j9tty_err_printf("  gc\n");
+	j9tty_err_printf("  jni\n");
+	j9tty_err_printf("  memory\n");
+	j9tty_err_printf("  vm\n\n");
+
+	return JNI_OK;
 }
- 
+
 /**
  * Non-consuming search for "-verbose:jni"
  * @param list of arguments
@@ -220,7 +220,7 @@ isVerboseJni(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, IDATA *verbose
 	if (NULL != verboseIndexPtr) {
 		*verboseIndexPtr = argIndex;
 	}
-	 if (argIndex >= 0) {
+	if (argIndex >= 0) {
 		return 1;
 	} else {
 		return 0;

@@ -379,8 +379,7 @@ mapDumpActions(J9JavaVM *vm, J9RASdumpOption agentOpts[], IDATA *agentNum, char 
 				length = eventStringLength + countChars;
 				eventString = j9mem_allocate_memory(length, OMRMEM_CATEGORY_VM);
 				if (NULL == eventString) {
-					j9tty_err_printf(PORTLIB, 
-						"Could not allocate memory to handle JAVA_DUMP_OPTS dump count option, option ignored.\n");
+					j9tty_err_printf("Could not allocate memory to handle JAVA_DUMP_OPTS dump count option, option ignored.\n");
 					countChars = 0;
 				} else {
 					/* eventString ends with "..0"; the '0' is replaced by countChars */
@@ -401,8 +400,7 @@ mapDumpActions(J9JavaVM *vm, J9RASdumpOption agentOpts[], IDATA *agentNum, char 
 					agentOpts[*agentNum].flags = J9RAS_DUMP_OPT_ARGS_ALLOC;
 					agentOpts[*agentNum].args = j9mem_allocate_memory(strlen(eventString) + 1, OMRMEM_CATEGORY_VM);
 					if(NULL == agentOpts[*agentNum].args) {
-						j9tty_err_printf(PORTLIB, 
-							"Could not allocate memory to handle JAVA_DUMP_OPTS dump count option, option ignored (extra copy failed).\n");
+						j9tty_err_printf("Could not allocate memory to handle JAVA_DUMP_OPTS dump count option, option ignored (extra copy failed).\n");
 						countChars = 0;
 						agentOpts[*agentNum].args = dgConditions[condition].eventString;
 						agentOpts[*agentNum].flags = J9RAS_DUMP_OPT_ARGS_STATIC;

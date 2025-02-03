@@ -569,7 +569,7 @@ extern J9_CFUNC int32_t j9port_isCompatible(struct J9PortLibraryVersion *expecte
 #define j9tty_printf(param1,...) OMRPORT_FROM_J9PORT(privatePortLibrary)->tty_printf(OMRPORT_FROM_J9PORT(param1), ## __VA_ARGS__)
 #define j9tty_vprintf(param1,param2) OMRPORT_FROM_J9PORT(privatePortLibrary)->tty_vprintf(OMRPORT_FROM_J9PORT(privatePortLibrary),param1,param2)
 #define j9tty_get_chars(param1,param2) OMRPORT_FROM_J9PORT(privatePortLibrary)->tty_get_chars(OMRPORT_FROM_J9PORT(privatePortLibrary),param1,param2)
-#define j9tty_err_printf(param1,...) OMRPORT_FROM_J9PORT(privatePortLibrary)->tty_err_printf(OMRPORT_FROM_J9PORT(param1), ## __VA_ARGS__)
+#define j9tty_err_printf(param1,...) OMRPORT_FROM_J9PORT(privatePortLibrary)->tty_err_printf(OMRPORT_FROM_J9PORT(privatePortLibrary), param1, ## __VA_ARGS__)
 #define j9tty_err_vprintf(param1,param2) OMRPORT_FROM_J9PORT(privatePortLibrary)->tty_err_vprintf(OMRPORT_FROM_J9PORT(privatePortLibrary),param1,param2)
 #define j9tty_available() OMRPORT_FROM_J9PORT(privatePortLibrary)->tty_available(OMRPORT_FROM_J9PORT(privatePortLibrary))
 #define j9tty_daemonize() OMRPORT_FROM_J9PORT(privatePortLibrary)->tty_daemonize(OMRPORT_FROM_J9PORT(privatePortLibrary))
