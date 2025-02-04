@@ -118,7 +118,7 @@ public:
 
    static bool isAlreadyBeingCompiled(TR_OpaqueMethodBlock *methodInfo, void *startPC, TR_FrontEnd *fe);
    static void methodCannotBeRecompiled(void *oldStartPC, TR_FrontEnd *fe);
-   static void invalidateMethodBody(void *startPC, TR_FrontEnd *fe);
+   static void invalidateMethodBody(void *startPC, TR_FrontEnd *fe, TR_JitBodyInvalidations::Reason reason);
 
    // Called at runtime to sample a method
    //

@@ -305,7 +305,7 @@ j9jit_testarossa_err(
          // Obsolete method bodies are invalid.
          //
          TR::Recompilation::fixUpMethodCode(oldStartPC);
-         jbi->setIsInvalidated();
+         jbi->setIsInvalidated(TR_JitBodyInvalidations::HCR);
          }
 
       if (jbi->getIsInvalidated())

@@ -33,6 +33,7 @@
 #endif
 
 #include "control/OMRCompilationStrategy.hpp"
+#include "control/RecompilationInfo.hpp"
 #include "compile/CompilationTypes.hpp"
 #include "runtime/CodeCacheManager.hpp"
 

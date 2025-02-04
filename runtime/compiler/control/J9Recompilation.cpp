@@ -588,7 +588,7 @@ TR_PersistentMethodInfo::TR_PersistentMethodInfo(TR::Compilation *comp) :
    _bestProfileInfo(0),
    _optimizationPlan(0),
    _catchBlockCounter(0),
-   _numberOfInvalidations(0),
+   _numberOfPreexistenceInvalidations(0),
    _numberOfInlinedMethodRedefinition(0),
    _numPrexAssumptions(0)
    {
@@ -619,7 +619,7 @@ TR_PersistentMethodInfo::TR_PersistentMethodInfo(TR_OpaqueMethodBlock *methodInf
    _bestProfileInfo(0),
    _optimizationPlan(0),
    _catchBlockCounter(0),
-   _numberOfInvalidations(0),
+   _numberOfPreexistenceInvalidations(0),
    _numberOfInlinedMethodRedefinition(0),
    _numPrexAssumptions(0)
    {
@@ -654,7 +654,6 @@ TR_PersistentJittedBodyInfo::TR_PersistentJittedBodyInfo(
    _flags(0),
    _sampleIntervalCount(0),
    _startCount(0),
-   _isInvalidated(false),
    _aggressiveRecompilationChances((uint8_t)TR::Options::_aggressiveRecompilationChances),
    _startPCAfterPreviousCompile(0),
    _longRunningInterpreted(false),

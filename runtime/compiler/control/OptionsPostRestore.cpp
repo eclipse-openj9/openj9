@@ -437,9 +437,8 @@ J9::OptionsPostRestore::invalidateCompiledMethod(J9Method *method, TR_J9VMBase *
          }
 
       TR_PersistentMethodInfo *pmi = bodyInfo->getMethodInfo();
-      pmi->setIsExcludedPostRestore();
-
-      TR::Recompilation::invalidateMethodBody(startPC, fej9);
+      TR::Recompilation::invalidateMethodBody(
+         startPC, fej9, TR_JitBodyInvalidations::PostRestoreExclude);
 
       // TODO: add method to a list to check the stack of java threads to print out message
       }

@@ -70,6 +70,25 @@ static int32_t profilingFreqTable  [] = {  19,  29,   47,   47,   47,    53 }; /
 namespace OMR { class Recompilation; }
 namespace J9 { class Recompilation; }
 
+class TR_JitBodyInvalidations
+   {
+   public:
+   enum Reason
+      {
+      HCR, // outermost method has been obsoleted by HCR
+      Preexistence, // preexistence assumption has been invalidated
+      PostRestoreExclude, // method is excluded post-restore, should be interpreted
+      };
+
+   bool isEmpty() const { return _flags.getValue() == 0; }
+   bool contains(Reason reason) const { return _flags.testAny(1 << reason); }
+   void add(Reason reason) { _flags.set(1 << reason); }
+   void add(TR_JitBodyInvalidations reasons) { _flags.set(reasons._flags.getValue()); }
+
+   private:
+   flags8_t _flags;
+   };
+
 // Persistent information associated with a method for recompilation
 //
 class TR_PersistentMethodInfo
@@ -157,8 +176,16 @@ class TR_PersistentMethodInfo
 
    bool doesntKillAnything() { return _flags.testAll(RefinedAliasesMask); }
 
-   bool isExcludedPostRestore() { return _flags.testAny(IsExcludedPostRestore); }
-   void setIsExcludedPostRestore(bool b = true) { _flags.set(IsExcludedPostRestore, b); }
+   bool isExcludedPostRestore()
+      {
+      return _invalidationReasons.contains(TR_JitBodyInvalidations::PostRestoreExclude);
+      }
+
+   /**
+    * \brief Get the set of all reasons for prior invalidations of JIT bodies
+    * belonging to this method.
+    */
+   TR_JitBodyInvalidations invalidationReasons() { return _invalidationReasons; }
 
    uint16_t getTimeStamp() { return _timeStamp; }
 
@@ -167,12 +194,20 @@ class TR_PersistentMethodInfo
    uint32_t getCatchBlockCounter() const { return _catchBlockCounter; }
    uint32_t *getCatchBlockCounterAddress() { return &_catchBlockCounter; }
    void incrementCatchBlockCounter() { _catchBlockCounter++; }
-   uint8_t getNumberOfInvalidations() {return _numberOfInvalidations;}
-   void incrementNumberOfInvalidations() {_numberOfInvalidations++;}
+   uint8_t getNumberOfPreexistenceInvalidations() {return _numberOfPreexistenceInvalidations;}
    uint8_t getNumberOfInlinedMethodRedefinition() {return _numberOfInlinedMethodRedefinition;}
    void incrementNumberOfInlinedMethodRedefinition() {_numberOfInlinedMethodRedefinition++;}
    int16_t getNumPrexAssumptions() {return _numPrexAssumptions;}
    void incNumPrexAssumptions() {_numPrexAssumptions++;}
+
+   void addInvalidationReasons(TR_JitBodyInvalidations reasons)
+      {
+      _invalidationReasons.add(reasons);
+      if (reasons.contains(TR_JitBodyInvalidations::Preexistence))
+         {
+         _numberOfPreexistenceInvalidations++;
+         }
+      }
 
    enum InfoBits
       {
@@ -245,10 +280,6 @@ class TR_PersistentMethodInfo
       WasScannedForInlining                = 0x00400000, // New scanning for warm method inlining
       IsInDataCache                        = 0x00800000, // This TR_PersistentMethodInfo is stored in the datacache for AOT
 
-      IsExcludedPostRestore                = 0x01000000, // Post-restore, if a method should be excluded, this bit will allow
-                                                         // J9::Recompilation::methodCannotBeRecompiled to patch the startPC
-                                                         // to call the interpreter
-
       lastFlag                             = 0x80000000
       };
 
@@ -295,9 +326,10 @@ class TR_PersistentMethodInfo
    TR_OptimizationPlan            *_optimizationPlan;
    uint32_t                        _catchBlockCounter; // how many times a catch block was executed
    uint16_t                        _timeStamp;
-   uint8_t                         _numberOfInvalidations; // how many times this method has been invalidated
+   uint8_t                         _numberOfPreexistenceInvalidations; // how many times this method has been invalidated due to preexistence
    uint8_t                         _numberOfInlinedMethodRedefinition; // how many times this method triggers recompilation because of its inlined callees being redefined
    int16_t                         _numPrexAssumptions;
+   TR_JitBodyInvalidations         _invalidationReasons;
 
    TR_PersistentProfileInfo       *_bestProfileInfo;
    TR_PersistentProfileInfo       *_recentProfileInfo;
@@ -305,7 +337,6 @@ class TR_PersistentMethodInfo
    TR_PersistentProfileInfo * getForSharedInfo(TR_PersistentProfileInfo** ptr);
    void setForSharedInfo(TR_PersistentProfileInfo** ptr, TR_PersistentProfileInfo *newInfo);
    };
-
 
 // This information is kept for every jitted method that can be recompiled
 // It may be garbage collected along with the jitted method
@@ -346,8 +377,18 @@ class TR_PersistentJittedBodyInfo
    void setSamplingRecomp()         { _flags.set(SamplingRecomp, true); }
    bool getIsPushedForRecompilation(){ return _flags.testAny(IsPushedForRecompilation); }
    void setIsPushedForRecompilation(){ _flags.set(IsPushedForRecompilation, true); }
-   bool getIsInvalidated()          { return _isInvalidated; }
-   void setIsInvalidated()          { _isInvalidated = true; }
+
+   /**
+    * \brief Get the set of all reasons (there may be multiple) for which this
+    * JIT body has been invalidated.
+    */
+   TR_JitBodyInvalidations invalidationReasons() { return _invalidationReasons; }
+
+   bool getIsInvalidated() { return !_invalidationReasons.isEmpty(); }
+   void setIsInvalidated(TR_JitBodyInvalidations::Reason reason)
+      {
+      _invalidationReasons.add(reason);
+      }
 
    bool getFastHotRecompilation()   { return _flags.testAny(FastHotRecompilation); }
    void setFastHotRecompilation(bool b){ _flags.set(FastHotRecompilation, b); }
@@ -472,7 +513,7 @@ class TR_PersistentJittedBodyInfo
    uint8_t                  _aggressiveRecompilationChances;
    TR_Hotness               _hotness;
    uint8_t                  _numScorchingIntervals; // How many times we reached scorching recompilation decision points
-   bool                     _isInvalidated;
+   TR_JitBodyInvalidations  _invalidationReasons;
    bool                     _longRunningInterpreted; // This cannot be moved into _flags due to synchronization issues
    TR_PersistentProfileInfo * _profileInfo;
    public:
