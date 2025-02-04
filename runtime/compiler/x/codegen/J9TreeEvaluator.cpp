@@ -12754,6 +12754,7 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
                }
          }
          break;
+#if JAVA_SPEC_VERSION < 19
       case TR::java_lang_StringCoding_hasNegatives:
          {
             if (comp->target().cpu.supportsAVX())
@@ -12762,6 +12763,7 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
                }
          }
          break;
+#endif
       case TR::java_nio_Bits_keepAlive:
       case TR::java_lang_ref_Reference_reachabilityFence:
          {
