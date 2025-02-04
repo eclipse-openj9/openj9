@@ -5398,6 +5398,13 @@ typedef struct J9JITGPRSpillArea {
 typedef uintptr_t ContinuationState;
 
 #if JAVA_SPEC_VERSION >= 19
+#define J9VM_CONTINUATION_RETURN_FROM_YIELD 0
+#if JAVA_SPEC_VERSION >= 24
+#define J9VM_CONTINUATION_RETURN_FROM_MONITOR_ENTER 1
+#define J9VM_CONTINUATION_RETURN_FROM_OBJECT_WAIT   2
+#define J9VM_CONTINUATION_RETURN_FROM_SYNC_METHOD   3
+#endif /* JAVA_SPEC_VERSION >= 24 */
+
 typedef struct J9VMContinuation {
 	UDATA* arg0EA;
 	UDATA* bytecodes;
@@ -5414,6 +5421,7 @@ typedef struct J9VMContinuation {
 	struct J9VMEntryLocalStorage* oldEntryLocalStorage;
 	UDATA dropFlags;
 #if JAVA_SPEC_VERSION >= 24
+	UDATA returnState;
 	UDATA ownedMonitorCount;
 	J9Pool* monitorEnterRecordPool;
 	J9MonitorEnterRecord* monitorEnterRecords;

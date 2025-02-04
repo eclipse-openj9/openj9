@@ -4549,10 +4549,11 @@ enterContinuation(struct J9VMThread *currentThread, j9object_t continuationObjec
  *
  * @param currentThread
  * @param isFinished true if it is last unmount
+ * @param returnState thread execution state when it is re-mounted
  * @return BOOLEAN
  */
 BOOLEAN
-yieldContinuation(struct J9VMThread *currentThread, BOOLEAN isFinished);
+yieldContinuation(struct J9VMThread *currentThread, BOOLEAN isFinished, UDATA returnState);
 
 /**
  * @brief Free the native memory allocated by Continuation.
@@ -4637,6 +4638,17 @@ void
 releaseVThreadInspector(J9VMThread *currentThread, jobject thread);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
+#if JAVA_SPEC_VERSION >= 24
+/**
+ * @brief Inflate all monitors and prepare for VirtualThread yield.
+ *
+ * @param currentThread
+ * @param syncObj object to block/wait on
+ * @param isObjectWait if the call is from Object.wait()
+ */
+UDATA
+preparePinnedVirtualThreadForUnmount(J9VMThread *currentThread, j9object_t syncObj, BOOLEAN isObjectWait);
+#endif /* JAVA_SPEC_VERSION >= 24 */
 /* ---------------- hookableAsync.c ---------------- */
 
 /**
