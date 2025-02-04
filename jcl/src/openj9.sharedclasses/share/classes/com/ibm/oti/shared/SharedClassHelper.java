@@ -35,9 +35,11 @@ public interface SharedClassHelper extends SharedHelper {
 	/**
 	 * Applies the sharing filter to the SharedClassHelper.
 	 *
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * <p>If a SecurityManager is installed, this method can only be called
 	 * by an object whose caller ClassLoader has shared
 	 * class "read,write" permissions.
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 *
 	 * <p>If a SharedClassFilter is already set, it is replaced by the new filter.
 	 *

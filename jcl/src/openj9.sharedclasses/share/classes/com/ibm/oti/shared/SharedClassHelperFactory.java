@@ -69,8 +69,10 @@ public interface SharedClassHelperFactory {
 	 * <p>Returns a SharedClassTokenHelper for a given ClassLoader.</p>
 	 * <p>Creates a new SharedClassTokenHelper if one cannot be found, otherwise returns an existing SharedClassTokenHelper.</p>
 	 * <p>Throws a HelperAlreadyDefinedException if the ClassLoader already has a different type of helper.</p>
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * <p>Returns null if a SecurityManager is installed and there is no
 	 * SharedClassPermission for the ClassLoader specified.</p>
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 *
 	 * @see SharedClassTokenHelper
 	 *
@@ -95,8 +97,10 @@ public interface SharedClassHelperFactory {
 	 * <p>Returns a SharedClassTokenHelper for a given ClassLoader.</p>
 	 * <p>Creates a new SharedClassTokenHelper if one cannot be found, otherwise returns existing SharedClassTokenHelper.</p>
 	 * <p>Throws a HelperAlreadyDefinedException if the ClassLoader already has a different type of helper.</p>
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * <p>Returns null if a SecurityManager is installed and there is no
 	 * SharedClassPermission for the ClassLoader specified.</p>
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 *
 	 * @see SharedClassTokenHelper
 	 *
@@ -124,8 +128,10 @@ public interface SharedClassHelperFactory {
 	 * <p>Returns a SharedClassURLHelper for a given ClassLoader.</p>
 	 * <p>Creates a new SharedClassURLHelper if one cannot be found, otherwise returns existing SharedClassURLHelper.</p>
 	 * <p>Throws a HelperAlreadyDefinedException if the ClassLoader already has a different type of helper.</p>
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * <p>Returns null if a SecurityManager is installed and there is no
 	 * SharedClassPermission for the ClassLoader specified.</p>
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 *
 	 * @see SharedClassURLHelper
 	 *
@@ -152,8 +158,10 @@ public interface SharedClassHelperFactory {
 	 *   otherwise if the classpath specified matches the classpath of an existing helper, returns existing SharedClassURLClasspathHelper.</p>
 	 * <p>Throws a HelperAlreadyDefinedException if the ClassLoader already has a different type of helper, or
 	 *   if the ClassLoader has a SharedClassURLClasspathHelper with a different classpath.</p>
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * <p>Returns null if a SecurityManager is installed and there is no
 	 * SharedClassPermission for the ClassLoader specified.</p>
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 *
 	 * @see SharedClassURLClasspathHelper
 	 *
@@ -182,8 +190,10 @@ public interface SharedClassHelperFactory {
 	 * <p>If a new SharedClassHelper is created, the specified SharedClassURLFilter is applied to it. If the filter argument is null, no filter is applied.</p>
 	 * <p>Throws a HelperAlreadyDefinedException if the ClassLoader already has a different type of helper OR
 	 *   if the ClassLoader has a SharedClassURLClasspathHelper with a different classpath.</p>
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * <p>Returns null if a SecurityManager is installed and there is no
 	 * SharedClassPermission for the ClassLoader specified.</p>
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 *
 	 * @see SharedClassURLClasspathHelper
 	 * @see SharedClassFilter
@@ -214,8 +224,10 @@ public interface SharedClassHelperFactory {
 	 * <p>Creates a new SharedClassURLHelper if one cannot be found, otherwise returns existing SharedClassURLHelper.</p>
 	 * <p>If a new SharedClassHelper is created, the specified SharedClassURLFilter is applied to it. If the filter argument is null, no filter is applied.</p>
 	 * <p>Throws a HelperAlreadyDefinedException if the ClassLoader already has a different type of helper.</p>
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * <p>Returns null if a SecurityManager is installed and there is no
 	 * SharedClassPermission for the ClassLoader specified.</p>
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 *
 	 * @see SharedClassURLHelper
 	 * @see SharedClassFilter

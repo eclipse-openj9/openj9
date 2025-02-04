@@ -520,17 +520,21 @@ public final class CudaDevice {
 	 *          the peer device
 	 * @throws CudaException
 	 *          if a CUDA exception occurs
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException
 	 *          if a security manager exists and the calling thread
 	 *          does not have permission to disable peer access
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public void disablePeerAccess(CudaDevice peerDevice) throws CudaException {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 
 		if (security != null) {
 			security.checkPermission(CudaPermission.DisablePeerAccess);
 		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		disablePeerAccess(deviceId, peerDevice.deviceId);
 	}
@@ -542,17 +546,21 @@ public final class CudaDevice {
 	 *          the peer device
 	 * @throws CudaException
 	 *          if a CUDA exception occurs
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException
 	 *          if a security manager exists and the calling thread
 	 *          does not have permission to enable peer access
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public void enablePeerAccess(CudaDevice peerDevice) throws CudaException {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 
 		if (security != null) {
 			security.checkPermission(CudaPermission.EnablePeerAccess);
 		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		enablePeerAccess(deviceId, peerDevice.deviceId);
 	}
@@ -733,17 +741,21 @@ public final class CudaDevice {
 	 *          the desired cache configuration
 	 * @throws CudaException
 	 *          if a CUDA exception occurs
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException
 	 *          if a security manager exists and the calling thread
 	 *          does not have permission to set device cache configurations
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public void setCacheConfig(CacheConfig config) throws CudaException {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 
 		if (security != null) {
 			security.checkPermission(CudaPermission.SetCacheConfig);
 		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		setCacheConfig(deviceId, config.nativeValue);
 	}
@@ -757,17 +769,21 @@ public final class CudaDevice {
 	 *          the desired limit value
 	 * @throws CudaException
 	 *          if a CUDA exception occurs
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException
 	 *          if a security manager exists and the calling thread
 	 *          does not have permission to set device limits
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public void setLimit(Limit limit, long value) throws CudaException {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 
 		if (security != null) {
 			security.checkPermission(CudaPermission.SetLimit);
 		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		setLimit(deviceId, limit.nativeValue, value);
 	}
@@ -779,17 +795,21 @@ public final class CudaDevice {
 	 *          the desired shared memory configuration
 	 * @throws CudaException
 	 *          if a CUDA exception occurs
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException
 	 *          if a security manager exists and the calling thread does
 	 *          not have permission to set device shared memory configurations
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public void setSharedMemConfig(SharedMemConfig config) throws CudaException {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		@SuppressWarnings("removal")
 		SecurityManager security = System.getSecurityManager();
 
 		if (security != null) {
 			security.checkPermission(CudaPermission.SetSharedMemConfig);
 		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		setSharedMemConfig(deviceId, config.nativeValue);
 	}

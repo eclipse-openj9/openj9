@@ -112,15 +112,21 @@ public class Dump {
 	 * Trigger a java dump. A java dump is in a human-readable format, and
 	 * summarizes the state of the JVM.
 	 *
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * A security manager check will be made only if the system property
 	 * com.ibm.jvm.enableLegacyDumpSecurity is set to "true" in which case
 	 * a check will be made for com.ibm.jvm.DumpPermission
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 *
 	 * @throws RuntimeException if the vm does not contain RAS dump support
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to trigger this dump
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public static void JavaDump() {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		JavaDumpImpl();
 	}
 
@@ -128,15 +134,21 @@ public class Dump {
 	 * Trigger a heap dump. The default heap dump format (a phd file) is not
 	 * human-readable.
 	 *
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * A security manager check will be made only if the system property
 	 * com.ibm.jvm.enableLegacyDumpSecurity is set to "true" in which case
 	 * a check will be made for com.ibm.jvm.DumpPermission
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 *
 	 * @throws RuntimeException if the vm does not contain RAS dump support
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to trigger this dump
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public static void HeapDump() {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		HeapDumpImpl();
 	}
 
@@ -145,15 +157,21 @@ public class Dump {
 	 * file that contains information about the active processes, threads, and
 	 * system memory. System dumps are usually large.
 	 *
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * A security manager check will be made only if the system property
 	 * com.ibm.jvm.enableLegacyDumpSecurity is set to "true" in which case
 	 * a check will be made for com.ibm.jvm.DumpPermission
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 *
 	 * @throws RuntimeException if the vm does not contain RAS dump support
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to trigger this dump
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public static void SystemDump() {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		SystemDumpImpl();
 	}
 
@@ -169,21 +187,29 @@ public class Dump {
 	 * and must be processed using the trace formatting tool supplied
 	 * with the OpenJ9 JVM.
 	 *
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * A security manager check will be made only if the system property
 	 * com.ibm.jvm.enableLegacyDumpSecurity is set to "true" in which case
 	 * a check will be made for com.ibm.jvm.DumpPermission
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 *
 	 * @throws RuntimeException if the vm does not contain RAS dump support
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to trigger this dump
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public static void SnapDump() {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		checkLegacySecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		SnapDumpImpl();
 	}
 
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	private static final DumpPermission DUMP_PERMISSION = new DumpPermission();
 	private static final ToolDumpPermission TOOL_DUMP_PERMISSION = new ToolDumpPermission();
 	private static final String LEGACY_DUMP_PERMISSION_PROPERTY = "com.ibm.jvm.enableLegacyDumpSecurity"; //$NON-NLS-1$
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 	private static final class DumpOptionsLock {
 		DumpOptionsLock() {
@@ -215,13 +241,17 @@ public class Dump {
 	 *  the command line.</li>
 	 * </ul>
 	 *
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * If a security manager exists a permission check for com.ibm.jvm.DumpPermission will be
 	 * made, if this fails a SecurityException will be thrown.
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 *
 	 * @param fileNamePattern the file name to write to, which may be null, empty or include replacement tokens
 	 * @return the file name that the dump was actually written to
 	 * @throws InvalidDumpOptionException if the filename was invalid
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to trigger this dump
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public static String javaDumpToFile(String fileNamePattern ) throws InvalidDumpOptionException {
 		String request = null;
@@ -249,11 +279,15 @@ public class Dump {
 	 *
 	 * A string containing the actual file name written to is returned.
 	 *
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * If a security manager exists a permission check for com.ibm.jvm.DumpPermission will be
 	 * made, if this fails a SecurityException will be thrown.
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 *
 	 * @return the file name that the dump was actually written to
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to trigger this dump
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public static String javaDumpToFile() {
 		try {
@@ -288,13 +322,17 @@ public class Dump {
 	 *  the command line.</li>
 	 * </ul>
 	 *
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * If a security manager exists a permission check for com.ibm.jvm.DumpPermission will be
 	 * made, if this fails a SecurityException will be thrown.
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 *
 	 * @param fileNamePattern the file name to write to, which may be null, empty or include replacement tokens
 	 * @return the file name that the dump was actually written to
 	 * @throws InvalidDumpOptionException if the filename was invalid
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to trigger this dump
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public static String heapDumpToFile(String fileNamePattern ) throws InvalidDumpOptionException {
 		String request = null;
@@ -323,11 +361,15 @@ public class Dump {
 	 *
 	 * A string containing the actual file name written to is returned.
 	 *
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * If a security manager exists a permission check for com.ibm.jvm.DumpPermission will be
 	 * made, if this fails a SecurityException will be thrown.
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 *
 	 * @return the file name that the dump was actually written to
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to trigger this dump
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public static String heapDumpToFile() {
 		try {
@@ -363,13 +405,17 @@ public class Dump {
 	 *  the command line.</li>
 	 * </ul>
 	 *
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * If a security manager exists a permission check for com.ibm.jvm.DumpPermission will be
 	 * made, if this fails a SecurityException will be thrown.
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 *
 	 * @param fileNamePattern the file name to write to, which may be null, empty or include replacement tokens
 	 * @return the file name that the dump was actually written to
 	 * @throws InvalidDumpOptionException if the filename was invalid
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to trigger this dump
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public static String systemDumpToFile(String fileNamePattern) throws InvalidDumpOptionException {
 		String request = null;
@@ -398,11 +444,15 @@ public class Dump {
 	 *
 	 * A string containing the actual file name written to is returned.
 	 *
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * If a security manager exists a permission check for com.ibm.jvm.DumpPermission will be
 	 * made, if this fails a SecurityException will be thrown.
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 *
 	 * @return the file name that the dump was actually written to
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to trigger this dump
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public static String systemDumpToFile() {
 		try {
@@ -438,13 +488,17 @@ public class Dump {
 	 *  the command line.</li>
 	 * </ul>
 	 *
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * If a security manager exists a permission check for com.ibm.jvm.DumpPermission will be
 	 * made, if this fails a SecurityException will be thrown.
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 *
 	 * @param fileNamePattern the file name to write to, which may be null, empty or include replacement tokens
 	 * @return the file name that the dump was actually written to
 	 * @throws InvalidDumpOptionException if the filename was invalid
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to trigger this dump
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public static String snapDumpToFile(String fileNamePattern) throws InvalidDumpOptionException {
 		String request = null;
@@ -473,12 +527,16 @@ public class Dump {
 	 *
 	 * A string containing the actual file name written to is returned.
 	 *
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * If a security manager exists a permission check for com.ibm.jvm.DumpPermission will be
 	 * made, if this fails a SecurityException will be thrown.
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 *
 	 * @return the file name that the dump was actually written to
 	 *
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to trigger this dump
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public static String snapDumpToFile() {
 		try {
@@ -497,6 +555,7 @@ public class Dump {
 		}
 	}
 
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	private static void checkDumpSecurityPermssion() throws SecurityException {
 		/* Check the caller has DumpPermission. */
 		@SuppressWarnings("removal")
@@ -522,6 +581,7 @@ public class Dump {
 			checkDumpSecurityPermssion();
 		}
 	}
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 	/**
 	 * Trigger a dump with the specified options.
@@ -544,16 +604,20 @@ public class Dump {
 	 * For these reasons you should always use the file name that is returned from this function
 	 * when looking for the dump rather than the name you supplied.
 	 *
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * If a security manager exists a permission check for com.ibm.jvm.DumpPermission will be
 	 * made, if this fails a SecurityException will be thrown. If a "tool" dump is requested an
 	 * additional check for com.ibm.jvm.ToolDumpPermission will also be made.
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 *
 	 * @param dumpOptions a dump settings string
 	 *
 	 * @return The file name of the dump that was created. The String "-" means the dump was written to stderr.
 	 *
 	 * @throws RuntimeException if the vm does not contain RAS dump support
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to trigger this dump
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 * @throws InvalidDumpOptionException If the dump options are invalid or the dump operation fails
 	 * @throws NullPointerException if dumpSettings is null
 	 */
@@ -561,17 +625,20 @@ public class Dump {
 		if( dumpOptions == null ) {
 			throw new NullPointerException();
 		}
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		// All the other permissions will be checked in triggerDump(dumpSettings, event);
 		if (isToolDump(dumpOptions)) {
 			checkToolSecurityPermssion();
 		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		return triggerDump(dumpOptions, "triggerDump"); //$NON-NLS-1$
 	}
 
 	private static String triggerDump(String dumpSettings, String event) throws InvalidDumpOptionException {
-
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		/* Check the caller is allowed to trigger a dump. */
 		checkDumpSecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		try {
 			return triggerDumpsImpl(dumpSettings, event);
@@ -593,24 +660,29 @@ public class Dump {
 	 * exception is thrown rather than this call blocking the calling thread potentially for
 	 * minutes.
 	 *
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * If a security manager exists a permission check for com.ibm.jvm.DumpPermission will be
 	 * made, if this fails a SecurityException will be thrown. If a "tool" dump is specified an
 	 * additional check for com.ibm.jvm.ToolDumpPermission will also be made.
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 *
 	 * @param dumpOptions the options string to set
 	 * @throws InvalidDumpOptionException if the specified option cannot be set or is incorrect
 	 * @throws DumpConfigurationUnavailableException If the dump configuration cannot be changed because a dump is currently in progress
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to change the dump settings
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 * @throws NullPointerException if options is null
 	 */
 	public static void setDumpOptions(String dumpOptions) throws InvalidDumpOptionException, DumpConfigurationUnavailableException {
-
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		/* Check the caller is allowed to trigger a dump. */
 		checkDumpSecurityPermssion();
 
 		if (isToolDump(dumpOptions)) {
 			checkToolSecurityPermssion();
 		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		if( dumpOptions == null ) {
 			throw new NullPointerException();
@@ -638,15 +710,21 @@ public class Dump {
 	 * with the initial -Xdump: omitted. See the -Xdump option
 	 * section on dump agents in the documentation for the OpenJ9 JVM.
 	 *
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * If a security manager exists a permission check for com.ibm.jvm.DumpPermission will be
 	 * made, if this fails a SecurityException will be thrown.
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 *
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to read the dump settings
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 * @return the options strings
 	 */
 	public static String[] queryDumpOptions() {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		/* Check the caller is allowed to query dump settings. */
 		checkDumpSecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		String options = queryDumpOptionsImpl();
 		if( options != null ) {
@@ -670,16 +748,21 @@ public class Dump {
 	 * exception is thrown rather than this call blocking the calling thread potentially for
 	 * minutes.
 	 *
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * If a security manager exists a permission check for com.ibm.jvm.DumpPermission will be
 	 * made, if this fails a SecurityException will be thrown.
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 *
 	 * @throws com.ibm.jvm.DumpConfigurationUnavailableException if the dump configuration cannot be changed because a dump is currently in progress
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException if there is a security manager and it doesn't allow the checks required to change the dump settings
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	public static void resetDumpOptions() throws DumpConfigurationUnavailableException {
-
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		/* Check the caller is allowed to reset dump settings. */
 		checkDumpSecurityPermssion();
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		/* Synchronised to prevent two Java threads trying to update dump settings at once.
 		 * setDumpOptions is also synchronised in this way.

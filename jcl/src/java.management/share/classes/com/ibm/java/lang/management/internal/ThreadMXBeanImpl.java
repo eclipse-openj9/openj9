@@ -872,7 +872,9 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 	 * Wrap a ThreadInfoBase object in a ThreadInfo object.
 	 * @param base container for the ThreadInfo data
 	 * @return ThreadInfo object, or null if base is null
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @note this must be wrapped in a doPrivileged().
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	private static ThreadInfo makeThreadInfo(ThreadInfoBase base) {
 		ThreadInfo newThreadInfo = null;

@@ -900,9 +900,11 @@ private static native void rasInitializeVersion(String javaRuntimeVersion);
  *
  * @param		code		the return code.
  *
+/*[IF JAVA_SPEC_VERSION < 24]
  * @throws		SecurityException 	if the running thread is not allowed to cause the vm to exit.
  *
  * @see			SecurityManager#checkExit
+/*[ENDIF] JAVA_SPEC_VERSION < 24
  */
 public static void exit(int code) {
 	RUNTIME.exit(code);

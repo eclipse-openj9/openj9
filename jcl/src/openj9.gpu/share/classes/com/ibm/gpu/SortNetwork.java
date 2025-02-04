@@ -24,8 +24,10 @@ package com.ibm.gpu;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+/*[IF JAVA_SPEC_VERSION < 24]*/
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -44,9 +46,9 @@ import com.ibm.oti.vm.VM;
  * This class provides access to a GPU implementation of the bitonic sort
  * network.
  */
-/*[IF JAVA_SPEC_VERSION >= 17]*/
+/*[IF (17 <= JAVA_SPEC_VERSION) & (JAVA_SPEC_VERSION < 24)]*/
 @SuppressWarnings("removal")
-/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
+/*[ENDIF] (17 <= JAVA_SPEC_VERSION) & (JAVA_SPEC_VERSION < 24) */
 final class SortNetwork {
 
 	private static final class LoadKey {
@@ -102,11 +104,14 @@ final class SortNetwork {
 				ptxBuffer.write(0);
 
 				byte[] ptxCode = ptxBuffer.toByteArray();
-
+				/*[IF JAVA_SPEC_VERSION >= 24]*/
+				return load(device, ptxCode);
+				/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 				PrivilegedAction<LoadResult> loader = () -> load(device, ptxCode);
 
 				// we assert privilege to load a module
 				return AccessController.doPrivileged(loader);
+				/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 			} catch (CudaException | IOException e) {
 				return failure(e);
 			}
@@ -187,12 +192,16 @@ final class SortNetwork {
 		static {
 			modules = new ConcurrentLinkedQueue<>();
 
+			/*[IF JAVA_SPEC_VERSION < 24]*/
 			AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
+			/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 				Thread shutdownThread = VM.getVMLangAccess().createThread(new ShutdownHook(),
 					"GPU sort shutdown helper", true, false, false, ClassLoader.getSystemClassLoader()); //$NON-NLS-1$
 				Runtime.getRuntime().addShutdownHook(shutdownThread);
+			/*[IF JAVA_SPEC_VERSION < 24]*/
 				return null;
 			});
+			/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		}
 
 		public static void unloadOnShutdown(CudaModule module) {

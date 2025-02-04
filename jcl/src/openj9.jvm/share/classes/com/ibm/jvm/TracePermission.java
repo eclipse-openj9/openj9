@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar17]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 package com.ibm.jvm;
 
 /*
@@ -28,8 +28,15 @@ import java.security.BasicPermission;
 /**
  * The permission class for operations on the com.ibm.jvm.Trace class.
  * Allowing code access to this permission will allow changes to be made
- * to system wide trace settings
+ * to system wide trace settings.
+ *
+/*[IF JAVA_SPEC_VERSION >= 24]
+ * @deprecated Checking permissions is not supported.
+/*[ENDIF] JAVA_SPEC_VERSION >= 24
  */
+/*[IF JAVA_SPEC_VERSION >= 24]*/
+@Deprecated(since = "24", forRemoval = true)
+/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 public class TracePermission extends BasicPermission {
 
 	private static final long serialVersionUID = -5769946009244520469L;

@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar17]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*
  * Copyright IBM Corp. and others 2016
  *
@@ -40,7 +40,14 @@ import java.security.Permission;
  *     See {@link CUDAManager#instance()}.</td>
  * </tr>
  * </table>
+ *
+/*[IF JAVA_SPEC_VERSION >= 24]
+ * @deprecated Checking permissions is not supported.
+/*[ENDIF] JAVA_SPEC_VERSION >= 24
  */
+/*[IF JAVA_SPEC_VERSION >= 24]*/
+@Deprecated(since = "24", forRemoval = true)
+/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 public final class GPUPermission extends BasicPermission {
 
 	static final Permission Access = new GPUPermission("access"); //$NON-NLS-1$
