@@ -65,7 +65,7 @@ TR_VectorAPIExpansion::perform()
    }
 
 bool
-TR_VectorAPIExpansion::isVectorAPIMethod(TR::MethodSymbol * methodSymbol)
+TR_VectorAPIExpansion::isVectorAPIMethod(TR::MethodSymbol *methodSymbol)
    {
    TR::RecognizedMethod index = methodSymbol->getRecognizedMethod();
 
@@ -74,7 +74,7 @@ TR_VectorAPIExpansion::isVectorAPIMethod(TR::MethodSymbol * methodSymbol)
    }
 
 TR_VectorAPIExpansion::vapiObjType
-TR_VectorAPIExpansion::getReturnType(TR::MethodSymbol * methodSymbol)
+TR_VectorAPIExpansion::getReturnType(TR::MethodSymbol *methodSymbol)
    {
    if (!isVectorAPIMethod(methodSymbol)) return Unknown;
 
@@ -84,7 +84,7 @@ TR_VectorAPIExpansion::getReturnType(TR::MethodSymbol * methodSymbol)
    }
 
 TR_VectorAPIExpansion::vapiObjType
-TR_VectorAPIExpansion::getArgumentType(TR::MethodSymbol * methodSymbol, int32_t i)
+TR_VectorAPIExpansion::getArgumentType(TR::MethodSymbol *methodSymbol, int32_t i)
    {
    TR_ASSERT_FATAL(i < _maxNumberArguments, "Wrong argument index");
 
@@ -367,7 +367,7 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node, bool verify
       }
    else if (opCode.isFunctionCall())
       {
-      TR::MethodSymbol * methodSymbol = node->getSymbolReference()->getSymbol()->castToMethodSymbol();
+      TR::MethodSymbol *methodSymbol = node->getSymbolReference()->getSymbol()->castToMethodSymbol();
       TR::DataType methodElementType = TR::NoType;
       int32_t methodNumLanes = 0;
       int32_t methodRefNum = node->getSymbolReference()->getReferenceNumber();
@@ -665,7 +665,7 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node, bool verify
             bool scalarResult = false;
             if (child->getOpCode().isFunctionCall())
                {
-               TR::MethodSymbol * methodSymbol = child->getSymbolReference()->getSymbol()->castToMethodSymbol();
+               TR::MethodSymbol *methodSymbol = child->getSymbolReference()->getSymbol()->castToMethodSymbol();
                if (getReturnType(methodSymbol) ==  Scalar) continue; // OK to use by any other parent node
                }
 
@@ -712,7 +712,7 @@ TR_VectorAPIExpansion::visitNodeToBuildVectorAliases(TR::Node *node, bool verify
 
 void
 TR_VectorAPIExpansion::findAllAliases(int32_t classId, int32_t id,
-                                      TR_BitVector * vectorAliasTableElement::* aliasesField,
+                                      TR_BitVector *vectorAliasTableElement::* aliasesField,
                                       int32_t vectorAliasTableElement::* classField)
    {
    bool tempAliases = &vectorAliasTableElement::_tempAliases == aliasesField;
@@ -788,7 +788,7 @@ TR_VectorAPIExpansion::buildAliasClasses()
 
    int32_t symRefCount = comp()->getSymRefTab()->getNumSymRefs();
 
-   TR_BitVector * vectorAliasTableElement::* aliasesField = &vectorAliasTableElement::_aliases;
+   TR_BitVector *vectorAliasTableElement::* aliasesField = &vectorAliasTableElement::_aliases;
    int32_t vectorAliasTableElement::* classField = &vectorAliasTableElement::_classId;
 
    for (int32_t i = 0; i < symRefCount; i++)
@@ -960,7 +960,7 @@ TR_VectorAPIExpansion::findVectorMethods(TR::Compilation *comp)
 
       if (opCode.isFunctionCall())
          {
-         TR::MethodSymbol * methodSymbol = node->getSymbolReference()->getSymbol()->castToMethodSymbol();
+         TR::MethodSymbol *methodSymbol = node->getSymbolReference()->getSymbol()->castToMethodSymbol();
 
          if (isVectorAPIMethod(methodSymbol))
             {
@@ -1085,7 +1085,7 @@ TR_VectorAPIExpansion::validateSymRef(int32_t id, int32_t i, vec_sz_t &classLeng
 
 
 void
-TR_VectorAPIExpansion::validateVectorAliasClasses(TR_BitVector * vectorAliasTableElement::* aliasesField,
+TR_VectorAPIExpansion::validateVectorAliasClasses(TR_BitVector *vectorAliasTableElement::* aliasesField,
                                                   int32_t vectorAliasTableElement::* classField)
    {
    bool tempClasses = &vectorAliasTableElement::_tempAliases == aliasesField;
@@ -1666,13 +1666,77 @@ TR_VectorAPIExpansion::transformIL(bool checkBoxing)
          continue;
 
       bool scalarized;
-      bool vectorizedNode;
-
       TR::DataType elementType;
       int32_t bitsLength;
       vapiObjType objectType;
 
       bool vectorizedOrScalarizedNode = isVectorizedOrScalarizedNode(node, elementType, bitsLength, objectType, scalarized);
+
+      // Vectorize intrinsic if its operands are known
+      if (boxingAllowed() &&
+         !vectorizedOrScalarizedNode &&
+         opCode.isFunctionCall())
+         {
+         TR::MethodSymbol *methodSymbol = node->getSymbolReference()->getSymbol()->castToMethodSymbol();
+         if (isVectorAPIMethod(methodSymbol))
+             {
+             if (methodSymbol->getRecognizedMethod() == TR::jdk_internal_vm_vector_VectorSupport_compare)
+                {
+                // compare has 2 operands that we can use
+                for (int i = 0; i < 2; i++)
+                   {
+                   TR::Node *operand = node->getChild(getFirstOperandIndex(methodSymbol) + i);
+
+                   bool operandScalarized;
+                   TR::DataType operandElementType;
+                   int32_t operandBitsLength;
+                   vapiObjType operandObjectType;
+
+                   bool operandVectorizedOrScalarized = isVectorizedOrScalarizedNode(operand, operandElementType, operandBitsLength,
+                                                                                operandObjectType, operandScalarized);
+
+                   if (operandVectorizedOrScalarized &&
+                       !operandScalarized)
+                      {
+                      TR::MethodSymbol *methodSymbol = node->getSymbolReference()->getSymbol()->castToMethodSymbol();
+                      TR::RecognizedMethod index = methodSymbol->getRecognizedMethod();
+                      int32_t handlerIndex = static_cast <int32_t>(index) - _firstMethod;
+
+                      TR::VectorLength operandVectorLength = OMR::DataType::bitsToVectorLength(operandBitsLength);
+                      int32_t operandElementSize = OMR::DataType::getSize(operandElementType);
+                      int32_t operandNumLanes = bitsLength/8/operandElementSize;
+
+                      bool canVectorizeMethod = methodTable[handlerIndex]._methodHandler(this, NULL, node, operandElementType, operandVectorLength,
+                                                                                         operandObjectType, operandNumLanes,
+                                                                                         checkVectorization);
+
+                      if (canVectorizeMethod)
+                         {
+                         ncount_t nodeIndex = node->getGlobalIndex();
+
+                         _nodeTable[nodeIndex]._canVectorize = true;
+                         _nodeTable[nodeIndex]._elementType = operandElementType;
+                         _nodeTable[nodeIndex]._vecLen = operandBitsLength;
+                         _nodeTable[nodeIndex]._objectType = operandObjectType;
+
+                         createClassesForBoxing(node->getSymbolReference()->getOwningMethod(comp()), operandElementType, operandBitsLength);
+
+                         vectorizedOrScalarizedNode = true;
+                         scalarized = false;
+                         elementType = operandElementType;
+                         bitsLength = operandBitsLength;
+                         objectType = operandObjectType;
+
+                         if (_trace)
+                            traceMsg(comp(), "Vectorized node %p based on operand %d\n", node, i);
+
+                         break;
+                         }
+                      }
+                   }
+                }
+             }
+         }
 
       // Handle non-vectorized nodes by boxing their children
       if (boxingAllowed() &&
