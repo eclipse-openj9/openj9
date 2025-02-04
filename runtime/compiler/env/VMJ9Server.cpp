@@ -2518,11 +2518,37 @@ TR_J9ServerVM::isLambdaFormGeneratedMethod(TR_ResolvedMethod *method)
    }
 
 bool
-TR_J9ServerVM::isStable(J9Class *fieldClass, int cpIndex)
+TR_J9ServerVM::isStable(J9Class *fieldClass, int32_t cpIndex)
    {
+   // See if we cached the presence of the annotation for this class and cpIndex
+      {
+      OMR::CriticalSection getRemoteROMClass(_compInfoPT->getClientData()->getROMMapMonitor());
+      // The fieldClass is guaranteed to be cached at the server because this
+      // method is called from a ResolvedMethod
+      auto &cache = JITServerHelpers::getJ9ClassInfo(_compInfoPT, fieldClass)._isStableCache;
+      auto it = cache.find(cpIndex);
+      if (it != cache.end())
+         return it->second;
+      }
+   // At the moment, @Stable annotations are only used in bootstrap classes (this can change though).
+   // To limit the number of VM_isStable messages further and to reduce the number of values that
+   // are cached in "_isStableCache" cache, we return 'false' when the `fieldClass` is not a bootstrap class.
+   static char *dontIgnore = feGetEnv("TR_DontIgnoreStableAnnotationForUserClasses");
+   if (!dontIgnore && !isClassLibraryClass((TR_OpaqueClassBlock*)fieldClass))
+      return false;
+
+   // Not cached; send a message and obtain the value
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JITServer::MessageType::VM_isStable, fieldClass, cpIndex);
-   return std::get<0>(stream->read<bool>());
+   bool answer = std::get<0>(stream->read<bool>());
+
+   // Cache the answer
+      {
+      OMR::CriticalSection getRemoteROMClass(_compInfoPT->getClientData()->getROMMapMonitor());
+      auto &cache = JITServerHelpers::getJ9ClassInfo(_compInfoPT, fieldClass)._isStableCache;
+      cache.insert({cpIndex, answer});
+      }
+   return answer;
    }
 
 bool

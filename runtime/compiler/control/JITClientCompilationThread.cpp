@@ -1275,7 +1275,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          {
          auto recv = client->getRecvData<J9Class *, int>();
          J9Class *fieldClass = std::get<0>(recv);
-         int cpIndex = std::get<1>(recv);
+         int32_t cpIndex = std::get<1>(recv);
 
          bool isStable = fe->isStable(fieldClass, cpIndex);
          client->write(response, isStable);

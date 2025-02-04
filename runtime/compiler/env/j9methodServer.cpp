@@ -31,17 +31,6 @@
 #include "ilgen/J9ByteCodeIterator.hpp"
 #include "net/ServerStream.hpp"
 
-ClientSessionData::ClassInfo &
-getJ9ClassInfo(TR::CompilationInfoPerThread *threadCompInfo, J9Class *clazz)
-   {
-   // This function assumes that you are inside of _romMapMonitor
-   // Do not use it otherwise
-   auto &classMap = threadCompInfo->getClientData()->getROMClassMap();
-   auto it = classMap.find(clazz);
-   TR_ASSERT_FATAL(it != classMap.end(),"compThreadID %d, ClientData %p, clazz %p: ClassInfo is not in the class map %p!!\n",
-      threadCompInfo->getCompThreadId(), threadCompInfo->getClientData(), clazz, &classMap);
-   return it->second;
-   }
 
 static J9ROMMethod *
 romMethodAtClassIndex(J9ROMClass *romClass, uint64_t methodIndex)
@@ -151,7 +140,7 @@ TR_ResolvedJ9JITServerMethod::definingClassFromCPFieldRef(TR::Compilation *comp,
    TR::CompilationInfoPerThread *compInfoPT = _fe->_compInfoPT;
       {
       OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor());
-      auto &cache = getJ9ClassInfo(compInfoPT, _ramClass)._fieldOrStaticDefiningClassCache;
+      auto &cache = JITServerHelpers::getJ9ClassInfo(compInfoPT, _ramClass)._fieldOrStaticDefiningClassCache;
       auto it = cache.find(cpIndex);
       if (it != cache.end())
          {
@@ -166,7 +155,7 @@ TR_ResolvedJ9JITServerMethod::definingClassFromCPFieldRef(TR::Compilation *comp,
    if (resolvedClass)
       {
       OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor());
-      auto &cache = getJ9ClassInfo(compInfoPT, _ramClass)._fieldOrStaticDefiningClassCache;
+      auto &cache = JITServerHelpers::getJ9ClassInfo(compInfoPT, _ramClass)._fieldOrStaticDefiningClassCache;
       cache.insert({cpIndex, resolvedClass});
       }
    if (fromResolvedJ9Method != NULL)
@@ -193,7 +182,7 @@ TR_ResolvedJ9JITServerMethod::getClassFromConstantPool(TR::Compilation * comp, u
       // This persistent cache must only be checked when doRuntimeResolve is false,
       // otherwise a non method handle thunk compilation can return cached value, instead of NULL.
       OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor());
-      auto &constantClassPoolCache = getJ9ClassInfo(compInfoPT, _ramClass)._constantClassPoolCache;
+      auto &constantClassPoolCache = JITServerHelpers::getJ9ClassInfo(compInfoPT, _ramClass)._constantClassPoolCache;
       auto it = constantClassPoolCache.find(cpIndex);
       if (it != constantClassPoolCache.end())
          return it->second;
@@ -204,7 +193,7 @@ TR_ResolvedJ9JITServerMethod::getClassFromConstantPool(TR::Compilation * comp, u
    if (resolvedClass)
       {
       OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor());
-      auto &constantClassPoolCache = getJ9ClassInfo(compInfoPT, _ramClass)._constantClassPoolCache;
+      auto &constantClassPoolCache = JITServerHelpers::getJ9ClassInfo(compInfoPT, _ramClass)._constantClassPoolCache;
       constantClassPoolCache.insert({cpIndex, resolvedClass});
       }
    return resolvedClass;
@@ -216,7 +205,7 @@ TR_ResolvedJ9JITServerMethod::getDeclaringClassFromFieldOrStatic(TR::Compilation
    TR::CompilationInfoPerThread *compInfoPT = _fe->_compInfoPT;
       {
       OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor());
-      auto &cache = getJ9ClassInfo(compInfoPT, _ramClass)._fieldOrStaticDeclaringClassCache;
+      auto &cache = JITServerHelpers::getJ9ClassInfo(compInfoPT, _ramClass)._fieldOrStaticDeclaringClassCache;
       auto it = cache.find(cpIndex);
       if (it != cache.end())
          return it->second;
@@ -226,7 +215,7 @@ TR_ResolvedJ9JITServerMethod::getDeclaringClassFromFieldOrStatic(TR::Compilation
    if (declaringClass)
       {
       OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor());
-      auto &cache = getJ9ClassInfo(compInfoPT, _ramClass)._fieldOrStaticDeclaringClassCache;
+      auto &cache = JITServerHelpers::getJ9ClassInfo(compInfoPT, _ramClass)._fieldOrStaticDeclaringClassCache;
       cache.insert({cpIndex, declaringClass});
       }
    return declaringClass;
@@ -242,7 +231,7 @@ TR_ResolvedJ9JITServerMethod::classOfStatic(I_32 cpIndex, bool returnClassForAOT
    auto compInfoPT = static_cast<TR::CompilationInfoPerThreadRemote *>(_fe->_compInfoPT);
       {
       OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor());
-      auto &classOfStaticCache = getJ9ClassInfo(compInfoPT, _ramClass)._classOfStaticCache;
+      auto &classOfStaticCache = JITServerHelpers::getJ9ClassInfo(compInfoPT, _ramClass)._classOfStaticCache;
       auto it = classOfStaticCache.find(cpIndex);
       if (it != classOfStaticCache.end())
          return it->second;
@@ -260,7 +249,7 @@ TR_ResolvedJ9JITServerMethod::classOfStatic(I_32 cpIndex, bool returnClassForAOT
       // if client returned NULL, don't cache, because class might not be fully initialized,
       // so the result may change in the future
       OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor());
-      auto &classOfStaticCache = getJ9ClassInfo(compInfoPT, _ramClass)._classOfStaticCache;
+      auto &classOfStaticCache = JITServerHelpers::getJ9ClassInfo(compInfoPT, _ramClass)._classOfStaticCache;
       classOfStaticCache.insert({cpIndex, classOfStatic});
       }
    else
@@ -534,8 +523,8 @@ TR_ResolvedJ9JITServerMethod::getAttributesCache(bool isStatic, bool unresolvedI
    // Return a persistent attributes cache for regular JIT compilations
    TR::CompilationInfoPerThread *compInfoPT = _fe->_compInfoPT;
    auto &attributesCache = isStatic ?
-      getJ9ClassInfo(compInfoPT, _ramClass)._staticAttributesCache :
-      getJ9ClassInfo(compInfoPT, _ramClass)._fieldAttributesCache;
+      JITServerHelpers::getJ9ClassInfo(compInfoPT, _ramClass)._staticAttributesCache :
+      JITServerHelpers::getJ9ClassInfo(compInfoPT, _ramClass)._fieldAttributesCache;
    return attributesCache;
    }
 
@@ -2738,8 +2727,8 @@ TR_ResolvedRelocatableJ9JITServerMethod::getAttributesCache(bool isStatic, bool 
    // Return persistent attributes cache for AOT compilations
    TR::CompilationInfoPerThread *compInfoPT = _fe->_compInfoPT;
    auto &attributesCache = isStatic ?
-      getJ9ClassInfo(compInfoPT, _ramClass)._staticAttributesCacheAOT :
-      getJ9ClassInfo(compInfoPT, _ramClass)._fieldAttributesCacheAOT;
+      JITServerHelpers::getJ9ClassInfo(compInfoPT, _ramClass)._staticAttributesCacheAOT :
+      JITServerHelpers::getJ9ClassInfo(compInfoPT, _ramClass)._fieldAttributesCacheAOT;
    return attributesCache;
    }
 
@@ -2775,7 +2764,7 @@ TR_J9ServerMethod::TR_J9ServerMethod(TR_FrontEnd * fe, TR_Memory * trMemory, J9C
       {
       // look up parameters for construction of this method in a cache first
       OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor());
-      auto &cache = getJ9ClassInfo(compInfoPT, aClazz)._J9MethodNameCache;
+      auto &cache = JITServerHelpers::getJ9ClassInfo(compInfoPT, aClazz)._J9MethodNameCache;
       // search the cache for existing method parameters
       auto it = cache.find(cpIndex);
       if (it != cache.end())
@@ -2799,7 +2788,7 @@ TR_J9ServerMethod::TR_J9ServerMethod(TR_FrontEnd * fe, TR_Memory * trMemory, J9C
       methodSignatureStr = std::get<2>(recv);
 
       OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor());
-      auto &cache = getJ9ClassInfo(compInfoPT, aClazz)._J9MethodNameCache;
+      auto &cache = JITServerHelpers::getJ9ClassInfo(compInfoPT, aClazz)._J9MethodNameCache;
       cache.insert({cpIndex, {classNameStr, methodNameStr, methodSignatureStr}});
       }
 

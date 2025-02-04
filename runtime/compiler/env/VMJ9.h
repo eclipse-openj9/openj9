@@ -1081,8 +1081,7 @@ public:
     *    the method accessing the field
     *
     */
-   virtual bool isStable(int cpIndex, TR_ResolvedMethod *owningMethod, TR::Compilation *comp);
-   virtual bool isStable(J9Class *fieldClass, int cpIndex);
+   virtual bool isStable(J9Class *fieldClass, int32_t cpIndex);
 
    /*
     * \brief
@@ -1671,8 +1670,8 @@ public:
    virtual bool               supportsJitMethodEntryAlignment()               { return false; }
    virtual bool               isBenefitInliningCheckIfFinalizeObject()        { return true; }
    virtual bool               needsContiguousCodeAndDataCacheAllocation()     { return true; }
-   virtual bool               needRelocatableTarget()                          { return true; }
-   virtual bool               isStable(int cpIndex, TR_ResolvedMethod *owningMethod, TR::Compilation *comp) { return false; }
+   virtual bool               needRelocatableTarget()                         { return true; }
+   virtual bool               isStable(J9Class *fieldClass, int32_t cpIndex)  { return false; }
 
    virtual bool               isResolvedDirectDispatchGuaranteed(TR::Compilation *comp);
    virtual bool               isResolvedVirtualDispatchGuaranteed(TR::Compilation *comp);

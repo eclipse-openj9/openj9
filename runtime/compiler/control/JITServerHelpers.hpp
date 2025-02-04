@@ -116,6 +116,7 @@ public:
    static bool getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *clientSessionData,
                                        JITServer::ServerStream *stream, ClassInfoDataType dataType1, void *data1,
                                        ClassInfoDataType dataType2, void *data2);
+   static ClientSessionData::ClassInfo &getJ9ClassInfo(TR::CompilationInfoPerThread *threadCompInfo, J9Class *clazz);
    static J9ROMMethod *romMethodOfRamMethod(J9Method* method);
 
    static void insertIntoOOSequenceEntryList(ClientSessionData *clientData, TR_MethodToBeCompiled *entry);

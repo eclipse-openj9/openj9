@@ -1280,6 +1280,18 @@ JITServerHelpers::getROMClassData(const ClientSessionData::ClassInfo &classInfo,
       }
    }
 
+ClientSessionData::ClassInfo &
+JITServerHelpers::getJ9ClassInfo(TR::CompilationInfoPerThread *threadCompInfo, J9Class *clazz)
+   {
+   // This function assumes that you are inside of _romMapMonitor
+   // Do not use it otherwise
+   auto &classMap = threadCompInfo->getClientData()->getROMClassMap();
+   auto it = classMap.find(clazz);
+   TR_ASSERT_FATAL(it != classMap.end(),"compThreadID %d, ClientData %p, clazz %p: ClassInfo is not in the class map %p!!\n",
+      threadCompInfo->getCompThreadId(), threadCompInfo->getClientData(), clazz, &classMap);
+   return it->second;
+   }
+
 J9ROMMethod *
 JITServerHelpers::romMethodOfRamMethod(J9Method* method)
    {

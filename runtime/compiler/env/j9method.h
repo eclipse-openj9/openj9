@@ -412,6 +412,7 @@ public:
    virtual void *                  callSiteTableEntryAddress(int32_t callSiteIndex);
    virtual bool                    isUnresolvedMethodTypeTableEntry(int32_t cpIndex);
    virtual void *                  methodTypeTableEntryAddress(int32_t cpIndex);
+   virtual bool                    isStable(int32_t cpIndex, TR::Compilation *comp) override;
 #if defined(J9VM_OPT_METHOD_HANDLE)
    virtual bool                    isUnresolvedVarHandleMethodTypeTableEntry(int32_t cpIndex);
    virtual void *                  varHandleMethodTypeTableEntryAddress(int32_t cpIndex);
