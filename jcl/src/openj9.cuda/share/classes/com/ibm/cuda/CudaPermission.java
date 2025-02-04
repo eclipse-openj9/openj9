@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar18-SE]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 /*
  * Copyright IBM Corp. and others 2014
  *
@@ -68,7 +68,14 @@ import com.ibm.cuda.CudaDevice.SharedMemConfig;
  *     See {@link CudaDevice#setLimit(Limit, long)}.</td>
  * </tr>
  * </table>
+ *
+/*[IF JAVA_SPEC_VERSION >= 24]
+ * @deprecated Checking permissions is not supported.
+/*[ENDIF] JAVA_SPEC_VERSION >= 24
  */
+/*[IF JAVA_SPEC_VERSION >= 24]*/
+@Deprecated(since = "24", forRemoval = true)
+/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 public final class CudaPermission extends BasicPermission {
 
 	private static final long serialVersionUID = 5769765985242116236L;

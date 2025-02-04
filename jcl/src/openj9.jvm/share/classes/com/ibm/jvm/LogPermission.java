@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar17]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 package com.ibm.jvm;
 
 /*
@@ -29,7 +29,14 @@ import java.security.BasicPermission;
  * The permission class for operations on the com.ibm.jvm.Log class.
  * Allowing code access to this permission will allow changes to be made
  * to system wide log settings.
+ *
+/*[IF JAVA_SPEC_VERSION >= 24]
+ * @deprecated Checking permissions is not supported.
+/*[ENDIF] JAVA_SPEC_VERSION >= 24
  */
+/*[IF JAVA_SPEC_VERSION >= 24]*/
+@Deprecated(since = "24", forRemoval = true)
+/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 public class LogPermission extends BasicPermission {
 
 	private static final long serialVersionUID = 6864546600195718020L;

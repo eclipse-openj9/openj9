@@ -24,8 +24,10 @@ package com.ibm.gpu;
 
 import java.io.IOException;
 import java.io.InputStream;
+/*[IF JAVA_SPEC_VERSION < 24]*/
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
@@ -60,9 +62,13 @@ public final class CUDAManager {
 		private static final int DEFAULT_THRESHOLD = 30000;
 
 		private static void loadProperties(Properties properties, String resourceName) throws IOException {
+			/*[IF JAVA_SPEC_VERSION >= 24]*/
+			try (InputStream input = CUDAManager.class.getResourceAsStream(resourceName)) {
+			/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 			PrivilegedAction<InputStream> action = () -> CUDAManager.class.getResourceAsStream(resourceName);
 
 			try (InputStream input = AccessController.doPrivileged(action)) {
+			/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 				if (input != null) {
 					properties.load(input);
 				}
@@ -311,9 +317,13 @@ public final class CUDAManager {
 	}
 
 	static String getProperty(String name) {
+		/*[IF JAVA_SPEC_VERSION >= 24]*/
+		return System.getProperty(name);
+		/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 		PrivilegedAction<String> action = () -> System.getProperty(name);
 
 		return AccessController.doPrivileged(action);
+		/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 	}
 
 	/**

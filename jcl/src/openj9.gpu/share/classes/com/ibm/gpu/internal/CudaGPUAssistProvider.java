@@ -22,8 +22,10 @@
  */
 package com.ibm.gpu.internal;
 
+/*[IF JAVA_SPEC_VERSION < 24]*/
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 import com.ibm.gpu.CUDAManager;
 import com.ibm.gpu.spi.GPUAssist;
@@ -48,12 +50,17 @@ public final class CudaGPUAssistProvider implements GPUAssist.Provider {
 	}
 
 	@Override
-	/*[IF JAVA_SPEC_VERSION >= 17]*/
+	/*[IF (17 <= JAVA_SPEC_VERSION) & (JAVA_SPEC_VERSION < 24)]*/
 	@SuppressWarnings("removal")
-	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
+	/*[ENDIF] (17 <= JAVA_SPEC_VERSION) & (JAVA_SPEC_VERSION < 24) */
 	public GPUAssist getGPUAssist() {
+		CUDAManager manager;
+		/*[IF JAVA_SPEC_VERSION >= 24]*/
+		manager = CUDAManager.instance();
+		/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 		PrivilegedAction<CUDAManager> getInstance = () -> CUDAManager.instance();
-		CUDAManager manager = AccessController.doPrivileged(getInstance);
+		manager = AccessController.doPrivileged(getInstance);
+		/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 
 		if (manager.isSortEnabledOnGPU() || manager.isSortEnforcedOnGPU()) {
 			if (manager.getDeviceCount() > 0) {

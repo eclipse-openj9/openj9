@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar17]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 package com.ibm.jvm;
 
 /*
@@ -28,8 +28,15 @@ import java.security.BasicPermission;
  * The permission class for allowing "tool" dump agents to be run or
  * configured via the com.ibm.jvm.Dump class.
  * Granting this permission should be considered equivalent to granting
- * permission to call java.lang.Runtime.exec(String)
+ * permission to call java.lang.Runtime.exec(String).
+ *
+/*[IF JAVA_SPEC_VERSION >= 24]
+ * @deprecated Checking permissions is not supported.
+/*[ENDIF] JAVA_SPEC_VERSION >= 24
  */
+/*[IF JAVA_SPEC_VERSION >= 24]*/
+@Deprecated(since = "24", forRemoval = true)
+/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 public class ToolDumpPermission extends BasicPermission {
 
 	private static final long serialVersionUID = -1819639790350383056L;

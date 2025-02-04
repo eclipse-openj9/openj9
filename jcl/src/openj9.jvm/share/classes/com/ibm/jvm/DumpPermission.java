@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar17]*/
+/*[INCLUDE-IF JAVA_SPEC_VERSION >= 8]*/
 package com.ibm.jvm;
 
 /*
@@ -37,7 +37,14 @@ import java.security.BasicPermission;
  * access to dump files produced by com.ibm.jvm.Dump should be considered as having
  * access to any information that was within the application at the time the dump
  * was taken.
+ *
+/*[IF JAVA_SPEC_VERSION >= 24]
+ * @deprecated Checking permissions is not supported.
+/*[ENDIF] JAVA_SPEC_VERSION >= 24
  */
+/*[IF JAVA_SPEC_VERSION >= 24]*/
+@Deprecated(since = "24", forRemoval = true)
+/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 public class DumpPermission extends BasicPermission {
 
 	private static final long serialVersionUID = -7467700398466970030L;

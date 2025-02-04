@@ -36,8 +36,10 @@ public interface SharedDataHelperFactory {
 	 * if a SharedDataHelper already exists for the ClassLoader, the
 	 * existing Helper is returned.
 	 *
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * <p>Returns null if a SecurityManager is installed and there is no
 	 * SharedClassPermission for the ClassLoader specified.
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 *
 	 * @see SharedDataHelper
 	 *

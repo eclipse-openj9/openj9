@@ -5655,11 +5655,11 @@ public boolean isNestmateOf(Class<?> that) {
 /**
  * Answers the nest member classes of the receiver's nest host.
  *
- * @throws SecurityException if a SecurityManager is present and package access is not allowed
 /*[IF JAVA_SPEC_VERSION < 15]
  * @throws LinkageError if there is any problem loading or validating a nest member or the nest host
 /*[ENDIF]
 /*[IF JAVA_SPEC_VERSION < 24]
+ * @throws SecurityException if a SecurityManager is present and package access is not allowed
  * @throws SecurityException if a returned class is not the current class, a security manager is enabled,
  *	the caller's class loader is not the same or an ancestor of that returned class, and the
  * 	checkPackageAccess() denies access
@@ -5924,7 +5924,9 @@ public Class<?>[] getNestMembers()
 	 *
 	 * @return array of Class objects if permitted subclasses exist or null if not a sealed class.
 	 *
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * @throws SecurityException if access to any of the classes returned in the array is denied
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 *
 	 * @since 16
 	 */
