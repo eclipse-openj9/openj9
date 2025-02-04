@@ -1717,6 +1717,7 @@ typedef struct J9ObjectMonitor {
 	U_32 hash;
 #if JAVA_SPEC_VERSION >= 24
 	U_32 virtualThreadWaitCount;
+	j9object_t vthread;
 	j9object_t waitingVirtualThreads;
 #endif /* JAVA_SPEC_VERSION >= 24 */
 } J9ObjectMonitor;
@@ -5321,6 +5322,9 @@ typedef struct J9InternalVMFunctions {
 	struct J9Class * (*initializeSnapshotClassObject)(struct J9JavaVM *javaVM, struct J9ClassLoader *classLoader, struct J9Class *clazz);
 	BOOLEAN (*loadWarmClassFromSnapshot)(struct J9VMThread *vmThread, struct J9ClassLoader *classLoader, struct J9Class *clazz);
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
+#if JAVA_SPEC_VERSION >= 24
+	J9ObjectMonitor * (*monitorTablePeek)(struct J9JavaVM *vm, j9object_t object);
+#endif /* JAVA_SPEC_VERSION >= 24 */
 } J9InternalVMFunctions;
 
 /* Jazz 99339: define a new structure to replace JavaVM so as to pass J9NativeLibrary to JVMTIEnv  */
@@ -6388,7 +6392,7 @@ typedef struct J9JavaVM {
 #define J9_OBJECT_MONITOR_CRIU_SINGLE_THREAD_MODE_THROW 2
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 #if JAVA_SPEC_VERSION >= 24
-#define J9_OBJECT_MONTIOR_YIELD_VIRTUAL 3
+#define J9_OBJECT_MONITOR_YIELD_VIRTUAL 3
 #endif /* JAVA_SPEC_VERSION >= 24 */
 #define J9_OBJECT_MONITOR_BLOCKING 4
 

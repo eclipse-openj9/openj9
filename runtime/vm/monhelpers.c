@@ -225,7 +225,7 @@ restart:
 		}
 		rc = omrthread_monitor_exit((omrthread_monitor_t)monitor);
 		if (0 != objectMonitor->virtualThreadWaitCount) {
-			omrthread_monitor_notify(vmStruct->blockedVirtualThreadsMutex);
+			omrthread_monitor_notify(vmStruct->javaVM->blockedVirtualThreadsMutex);
 		}
 		Trc_VM_objectMonitorExit_Exit_InflatedLock(vmStruct, rc);
 		goto done;

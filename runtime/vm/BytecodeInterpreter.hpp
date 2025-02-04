@@ -1188,7 +1188,7 @@ obj:
 				&& (0 == _currentThread->callOutCount)
 				) {
 					/* Try to yield virtual thread if it will be blocked */
-					rc = VM_ContinuationHelpers::preparePinnedVirtualThreadForUnmount(_currentThread, obj);
+					rc = preparePinnedVirtualThreadForUnmount(_currentThread, obj, false);
 				} else
 #endif /* JAVA_SPEC_VERSION >= 24 */
 				{
@@ -1718,6 +1718,7 @@ obj:
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 #if JAVA_SPEC_VERSION >= 24
 					case J9_OBJECT_MONITOR_YIELD_VIRTUAL:
+					{
 						rc = EXECUTE_BYTECODE;
 						buildInternalNativeStackFrame(REGISTER_ARGS);
 						updateVMStruct(REGISTER_ARGS);
@@ -1740,6 +1741,7 @@ obj:
 						 */
 						returnSingleFromINL(REGISTER_ARGS, JNI_FALSE, 1);
 						break;
+					}
 #endif /* JAVA_SPEC_VERSION >= 24 */
 					case J9_OBJECT_MONITOR_OOM:
 						rc = THROW_MONITOR_ALLOC_FAIL;
@@ -1820,6 +1822,7 @@ done:
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 #if JAVA_SPEC_VERSION >= 24
 			case J9_OBJECT_MONITOR_YIELD_VIRTUAL:
+			{
 				rc = EXECUTE_BYTECODE;
 				buildInternalNativeStackFrame(REGISTER_ARGS);
 				updateVMStruct(REGISTER_ARGS);
@@ -1842,6 +1845,7 @@ done:
 				 */
 				returnSingleFromINL(REGISTER_ARGS, JNI_FALSE, 1);
 				break;
+			}
 #endif /* JAVA_SPEC_VERSION >= 24 */
 			case J9_OBJECT_MONITOR_OOM:
 				/* Monitor was not entered - hide the frame to prevent exception throw from processing it.
@@ -1974,6 +1978,7 @@ throwStackOverflow:
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 #if JAVA_SPEC_VERSION >= 24
 					case J9_OBJECT_MONITOR_YIELD_VIRTUAL:
+					{
 						rc = EXECUTE_BYTECODE;
 						buildInternalNativeStackFrame(REGISTER_ARGS);
 						updateVMStruct(REGISTER_ARGS);
@@ -1996,6 +2001,7 @@ throwStackOverflow:
 						 */
 						returnSingleFromINL(REGISTER_ARGS, JNI_FALSE, 1);
 						break;
+					}
 #endif /* JAVA_SPEC_VERSION >= 24 */
 					case J9_OBJECT_MONITOR_OOM:
 						rc = THROW_MONITOR_ALLOC_FAIL;
@@ -2369,6 +2375,7 @@ done:
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 #if JAVA_SPEC_VERSION >= 24
 				case J9_OBJECT_MONITOR_YIELD_VIRTUAL:
+				{
 					rc = EXECUTE_BYTECODE;
 					buildInternalNativeStackFrame(REGISTER_ARGS);
 					updateVMStruct(REGISTER_ARGS);
@@ -2391,6 +2398,7 @@ done:
 					 */
 					returnSingleFromINL(REGISTER_ARGS, JNI_FALSE, 1);
 					break;
+				}
 #endif /* JAVA_SPEC_VERSION >= 24 */
 				case J9_OBJECT_MONITOR_OOM:
 					rc = THROW_MONITOR_ALLOC_FAIL;
@@ -2984,7 +2992,7 @@ done:
 				if ((NULL != objectMonitor) && (NULL != objectMonitor->waitingVirtualThreads)) {
 					omrthread_monitor_enter(_vm->blockedVirtualThreadsMutex);
 					j9object_t head = objectMonitor->waitingVirtualThreads;
-					if (operation = J9_SINGLE_THREAD_MODE_OP_NOTIFY) {
+					if (omrthread_monitor_notify == notifyFunction) {
 						objectMonitor->waitingVirtualThreads = J9VMJAVALANGVIRTUALTHREAD_NEXT(_currentThread, head);
 						J9VMJAVALANGVIRTUALTHREAD_SET_NEXT(_currentThread, head, _vm->blockedVirtualThreads);
 						_vm->blockedVirtualThreads = head;
@@ -3001,7 +3009,7 @@ done:
 					omrthread_monitor_notify(_vm->blockedVirtualThreadsMutex);
 					omrthread_monitor_exit(_vm->blockedVirtualThreadsMutex);
 
-					if (operation = J9_SINGLE_THREAD_MODE_OP_NOTIFY) {
+					if (omrthread_monitor_notify == notifyFunction) {
 						returnVoidFromINL(REGISTER_ARGS, 1);
 						goto done;
 					}
@@ -5204,8 +5212,8 @@ done:
 				newState = JAVA_LANG_VIRTUALTHREAD_TIMED_WAITING;
 			}
 			/* Try to yield virtual thread if it will be blocked */
-			rc = VM_ContinuationHelpers::preparePinnedVirtualThreadForUnmount(_currentThread, obj, true);
-			if (rc != J9_OBJECT_MONITOR_OOM) {
+			UDATA result = preparePinnedVirtualThreadForUnmount(_currentThread, object, true);
+			if (result != J9_OBJECT_MONITOR_OOM) {
 				rc = EXECUTE_BYTECODE;
 				/* Handle virutal thread Object.wait call. */
 				buildInternalNativeStackFrame(REGISTER_ARGS);
@@ -5713,9 +5721,6 @@ ffi_OOM:
 		VM_BytecodeAction rc = EXECUTE_BYTECODE;
 
 		j9object_t continuationObject = *(j9object_t*)_sp;
-#if JAVA_SPEC_VERSION >= 24
-		bool handleReturnCases = false;
-#endif /* JAVA_SPEC_VERSION >= 24 */
 
 		buildInternalNativeStackFrame(REGISTER_ARGS);
 		updateVMStruct(REGISTER_ARGS);
@@ -5724,11 +5729,6 @@ ffi_OOM:
 			_sendMethod = J9VMJDKINTERNALVMCONTINUATION_ENTER_METHOD(_currentThread->javaVM);
 			rc = GOTO_RUN_METHOD;
 		}
-#if JAVA_SPEC_VERSION >= 24
-		else {
-			handleReturnCases = true;
-		}
-#endif /* JAVA_SPEC_VERSION >= 24 */
 
 		VMStructHasBeenUpdated(REGISTER_ARGS);
 
@@ -8882,6 +8882,7 @@ done:
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 #if JAVA_SPEC_VERSION >= 24
 				case J9_OBJECT_MONITOR_YIELD_VIRTUAL:
+				{
 					rc = EXECUTE_BYTECODE;
 					buildInternalNativeStackFrame(REGISTER_ARGS);
 					updateVMStruct(REGISTER_ARGS);
@@ -8904,6 +8905,7 @@ done:
 					 */
 					returnSingleFromINL(REGISTER_ARGS, JNI_FALSE, 1);
 					break;
+				}
 #endif /* JAVA_SPEC_VERSION >= 24 */
 				case J9_OBJECT_MONITOR_OOM:
 					rc = THROW_MONITOR_ALLOC_FAIL;

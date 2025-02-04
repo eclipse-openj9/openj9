@@ -2419,6 +2419,16 @@ monitorTableAt(J9VMThread* vmStruct, j9object_t object);
 void
 cacheObjectMonitorForLookup(J9JavaVM* vm, J9VMThread* vmStruct, J9ObjectMonitor* objectMonitor);
 
+/* ---------------- thrinfo.c ---------------- */
+
+/**
+ * @brief Search vm->monitorTable for the inflated monitor corresponding to an object.
+ * @param vm
+ * @param object
+ * @return J9ObjectMonitor *
+ */
+J9ObjectMonitor *
+monitorTablePeek(J9JavaVM *vm, j9object_t object);
 
 /* ---------------- PackageIDHashTable.c ---------------- */
 
