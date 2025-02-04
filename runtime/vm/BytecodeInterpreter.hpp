@@ -2967,6 +2967,46 @@ done:
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 		{
 			if (VM_ObjectMonitor::getMonitorForNotify(_currentThread, receiver, &monitorPtr, true)) {
+#if JAVA_SPEC_VERSION >= 24
+				j9objectmonitor_t lock;
+				j9objectmonitor_t *lockEA = NULL;
+				J9ObjectMonitor *objectMonitor = NULL;
+				if (!LN_HAS_LOCKWORD(_currentThread, receiver)) {
+					objectMonitor = monitorTableAt(_currentThread, receiver);
+				} else {
+					lockEA = J9OBJECT_MONITOR_EA(_currentThread, receiver);
+					lock = J9_LOAD_LOCKWORD(_currentThread, lockEA);
+					if (J9_LOCK_IS_INFLATED(lock)) {
+						objectMonitor = J9_INFLLOCK_OBJECT_MONITOR(lock);
+					}
+				}
+
+				if ((NULL != objectMonitor) && (NULL != objectMonitor->waitingVirtualThreads)) {
+					omrthread_monitor_enter(_vm->blockedVirtualThreadsMutex);
+					j9object_t head = objectMonitor->waitingVirtualThreads;
+					if (operation = J9_SINGLE_THREAD_MODE_OP_NOTIFY) {
+						objectMonitor->waitingVirtualThreads = J9VMJAVALANGVIRTUALTHREAD_NEXT(_currentThread, head);
+						J9VMJAVALANGVIRTUALTHREAD_SET_NEXT(_currentThread, head, _vm->blockedVirtualThreads);
+						_vm->blockedVirtualThreads = head;
+					} else {
+						j9object_t next = J9VMJAVALANGVIRTUALTHREAD_NEXT(_currentThread, head);
+						while (NULL != next) {
+							head = next;
+							next = J9VMJAVALANGVIRTUALTHREAD_NEXT(_currentThread, head);
+						}
+						J9VMJAVALANGVIRTUALTHREAD_SET_NEXT(_currentThread, head, _vm->blockedVirtualThreads);
+						_vm->blockedVirtualThreads = head;
+						objectMonitor->waitingVirtualThreads = NULL;
+					}
+					omrthread_monitor_notify(_vm->blockedVirtualThreadsMutex);
+					omrthread_monitor_exit(_vm->blockedVirtualThreadsMutex);
+
+					if (operation = J9_SINGLE_THREAD_MODE_OP_NOTIFY) {
+						returnVoidFromINL(REGISTER_ARGS, 1);
+						goto done;
+					}
+				}
+#endif /* JAVA_SPEC_VERSION >= 24 */
 				if (0 != notifyFunction(monitorPtr)) {
 					buildInternalNativeStackFrame(REGISTER_ARGS);
 					rc = THROW_ILLEGAL_MONITOR_STATE;

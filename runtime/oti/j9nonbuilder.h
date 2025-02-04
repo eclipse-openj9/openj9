@@ -1717,6 +1717,7 @@ typedef struct J9ObjectMonitor {
 	U_32 hash;
 #if JAVA_SPEC_VERSION >= 24
 	U_32 virtualThreadWaitCount;
+	j9object_t waitingVirtualThreads;
 #endif /* JAVA_SPEC_VERSION >= 24 */
 } J9ObjectMonitor;
 
