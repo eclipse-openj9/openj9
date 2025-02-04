@@ -107,6 +107,15 @@ Where can I learn more?
 Videos and Presentations
 ------------------------
 
+- [JCON 2024: Could your Java workloads be missing out on something?](https://www.youtube.com/watch?v=_UL-bdAkGH0)
+- [Java Virtual Threads: a Case Study](https://www.infoq.com/articles/java-virtual-threads-a-case-study/)
+- [Devnexus 2024: Cache Me If You Can ](https://www.youtube.com/watch?v=SWjpoz_soVc)
+- [Rapid Startup of Your Cloud-Native Java Applications without Compromise](https://www.infoq.com/articles/rapid-startup-of-your-cloud-native-java/)
+- [Devnexus 2023: Journey to Cloud: Leave No Java Workload behind](https://www.youtube.com/watch?v=P4AuOw5KNd0)
+- [Devnexus 2023: Enhancing Java Applications for the Cloud](https://www.youtube.com/watch?v=X9Lma7PB23I)
+- [JCONF 2022: Fast JVM Startup With Checkpoint and Restore](https://www.youtube.com/watch?v=SH7aUaTFNlc)
+- [JVMLS 2019: JIT and AOT in the JVM with Mark Stoodley](https://www.youtube.com/watch?v=gx8DVVFPkcQ)
+- [JVMLS 2018: LWorld: the next steps on the journey to Valhalla with David Simms & Tobi Ajila](https://www.youtube.com/watch?v=_26KZAegYRM)
 - [JavaOne 2017: John Duimovich and Mike Milinkovich having fun chatting about Eclipse OpenJ9 (and EE4J)](https://www.youtube.com/watch?v=4g9SdVCPlnk)
 - [JavaOne 2017: Holly Cummins interviewing Dan Heidinga and Mark Stoodley on Eclipse OpenJ9 and OMR](https://www.youtube.com/watch?v=c1LVXqD3cII)
 - [JavaOne 2017: Open sourcing the IBM J9 Java Virtual Machine](https://www.slideshare.net/MarkStoodley/javaone-2017-mark-stoodley-open-sourcing-ibm-j9-jvm)
