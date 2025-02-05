@@ -118,6 +118,8 @@ J9MemoryManagerFunctions MemoryManagerFunctions = {
 	j9gc_get_softmx,
 	j9gc_get_initial_heap_size,
 	j9gc_get_maximum_heap_size,
+	j9gc_get_minimum_young_generation_size,
+	j9gc_get_maximum_young_generation_size,
 	j9gc_objaccess_checkClassLive,
 #if defined(J9VM_GC_OBJECT_ACCESS_BARRIER)
 	j9gc_objaccess_indexableReadI8,
