@@ -3639,6 +3639,32 @@ typedef struct J9ClassLoader {
 #if defined(J9VM_OPT_JFR)
 	J9HashTable *typeIDs;
 #endif /* defined(J9VM_OPT_JFR) */
+
+	/**
+	 * The set of class loaders directly observed to outlive this one.
+	 *
+	 * These are the defining loaders of classes for which this loader is an
+	 * initiating loader but not itself the defining loader. As long as this
+	 * loader remains live, such classes and therefore their defining loaders
+	 * are also live. Every loader in the transitive closure will outlive this
+	 * loader.
+	 *
+	 * Here the term "outlive" should be understood to be non-strict. That is,
+	 * two loaders with the exact same lifetime outlive each other.
+	 *
+	 * Permanent loaders are excluded, since they would be uninformative
+	 * (systemClassLoader, applicationClassLoader, and extensionClassLoader).
+	 * Similarly, there's no need to maintain a graph of the permanent loaders,
+	 * so they have an empty outliving loader set.
+	 *
+	 * The value is one of the following representations:
+	 * - empty set: null
+	 * - singleton set: J9ClassLoader pointer tagged with J9CLASSLOADER_OUTLIVING_LOADERS_SINGLE_TAG
+	 * - set of two or more: untagged pointer to J9HashTable of J9ClassLoader pointers
+	 *
+	 * Protected by J9JavaVM.classTableMutex.
+	 */
+	void *outlivingLoaders;
 } J9ClassLoader;
 
 #define J9CLASSLOADER_SHARED_CLASSES_ENABLED  8
@@ -3654,6 +3680,8 @@ typedef struct J9ClassLoader {
 #define J9CLASSLOADER_CLASSLOADEROBJECT(currentThread, object) J9VMTHREAD_JAVAVM(currentThread)->memoryManagerFunctions->j9gc_objaccess_readObjectFromInternalVMSlot((currentThread), J9VMTHREAD_JAVAVM(currentThread), (j9object_t*)&((object)->classLoaderObject))
 #define J9CLASSLOADER_SET_CLASSLOADEROBJECT(currentThread, object, value) J9VMTHREAD_JAVAVM(currentThread)->memoryManagerFunctions->j9gc_objaccess_storeObjectToInternalVMSlot((currentThread), (j9object_t*)&((object)->classLoaderObject), (value))
 #define TMP_J9CLASSLOADER_CLASSLOADEROBJECT(object) ((object)->classLoaderObject)
+
+#define J9CLASSLOADER_OUTLIVING_LOADERS_SINGLE_TAG 1
 
 #if defined(_MSC_VER)
 #pragma warning(push)
