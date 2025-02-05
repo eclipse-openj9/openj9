@@ -38,6 +38,7 @@
 #include "env/PersistentInfo.hpp"
 #include "env/jittypes.h"
 #include "env/j9method.h"
+#include "env/J9RetainedMethodSet.hpp"
 #include "env/ClassTableCriticalSection.hpp"
 #include "env/VMAccessCriticalSection.hpp"
 #include "env/VMJ9.h"
@@ -59,6 +60,13 @@ void
 TR_PreXRecompile::dumpInfo()
    {
    OMR::RuntimeAssumption::dumpInfo("TR_PreXRecompile");
+   TR_VerboseLog::write(" startPC=%p", _startPC);
+   }
+
+void
+TR_ClassUnloadRecompile::dumpInfo()
+   {
+   OMR::RuntimeAssumption::dumpInfo("TR_ClassUnloadRecompile");
    TR_VerboseLog::write(" startPC=%p", _startPC);
    }
 
@@ -158,6 +166,14 @@ TR_PreXRecompileOnMethodOverride *TR_PreXRecompileOnMethodOverride::make(
    return result;
    }
 
+TR_ClassUnloadRecompile *TR_ClassUnloadRecompile::make(
+   TR_FrontEnd *fe, TR_PersistentMemory *pm, TR_OpaqueClassBlock *clazz, uint8_t *startPC, OMR::RuntimeAssumption **sentinel)
+   {
+   TR_ClassUnloadRecompile *result = new (pm) TR_ClassUnloadRecompile(pm, clazz, startPC);
+   result->addToRAT(pm, RuntimeAssumptionOnClassUnload, fe, sentinel);
+   return result;
+   }
+
 TR_PatchNOPedGuardSiteOnMutableCallSiteChange *TR_PatchNOPedGuardSiteOnMutableCallSiteChange::make(
       TR_FrontEnd *fe, TR_PersistentMemory *pm, uintptr_t key, uint8_t *location, uint8_t *destination, OMR::RuntimeAssumption **sentinel)
    {
@@ -253,10 +269,18 @@ void TR_CHTable::cleanupNewlyExtendedInfo(TR::Compilation *comp)
 
 bool TR_CHTable::canSkipCommit(TR::Compilation *comp)
    {
+   TR_ResolvedMethod *bondMethod = NULL;
+
    return comp->compileRelocatableCode() ||
+#if defined(J9VM_OPT_JITSERVER)
+         // Remote compilations use JITClientCHTableCommit() instead. Exclude
+         // them here to avoid calling comp->retainedMethods() on the client.
+         comp->isRemoteCompilation() ||
+#endif
          (comp->getVirtualGuards().empty() &&
           comp->getSideEffectGuardPatchSites()->empty() &&
-          !_preXMethods && !_classes && !_classesThatShouldNotBeNewlyExtended);
+          !_preXMethods && !_classes && !_classesThatShouldNotBeNewlyExtended &&
+          !comp->retainedMethods()->bondMethods().next(&bondMethod));
    }
 
 
@@ -329,7 +353,7 @@ bool TR_CHTable::commit(TR::Compilation *comp)
          }
       }
 
-    if (_classesThatShouldNotBeNewlyExtended)
+   if (_classesThatShouldNotBeNewlyExtended)
       {
       int32_t last = _classesThatShouldNotBeNewlyExtended->lastIndex();
 
@@ -374,6 +398,21 @@ bool TR_CHTable::commit(TR::Compilation *comp)
 
       if (invalidAssumption) return false;
       } //  if (_classesThatShouldNotBeNewlyExtended)
+
+   // Invalidate the body and recompile if any inlined method is unloaded.
+   TR_ResolvedMethod *bondMethod = NULL;
+   auto bondIter = comp->retainedMethods()->bondMethods();
+   while (bondIter.next(&bondMethod))
+      {
+      TR_ClassUnloadRecompile::make(
+         comp->fe(),
+         comp->trPersistentMemory(),
+         bondMethod->containingClass(),
+         startPC,
+         comp->getMetadataAssumptionList());
+
+      comp->setHasClassUnloadAssumptions();
+      }
 
    // Check if the assumptions for static final field are still valid
    // Returning false will cause CHTable opts to be disabled in the next compilation of this method,
@@ -866,6 +905,12 @@ TR_CHTable::computeDataForCHTableCommit(TR::Compilation *comp)
    for (int i = 0; i < compClassesForStaticFinalFieldModification->size(); ++i)
       classesForStaticFinalFieldModification[i] = (*compClassesForStaticFinalFieldModification)[i];
 
+   std::vector<J9::RepeatRetainedMethodsAnalysis::InlinedSiteInfo> inlinedSiteInfo;
+   std::vector<TR_ResolvedMethod*> keepaliveMethods;
+   std::vector<TR_ResolvedMethod*> bondMethods;
+   J9::RepeatRetainedMethodsAnalysis::getDataForClient(
+      comp, inlinedSiteInfo, keepaliveMethods, bondMethods);
+
    uint8_t *startPC = comp->cg()->getCodeStart();
 
    return std::make_tuple(classes,
@@ -877,6 +922,9 @@ TR_CHTable::computeDataForCHTableCommit(TR::Compilation *comp)
                           compClassesThatShouldNotBeNewlyExtended,
                           classesForOSRRedefinition,
                           classesForStaticFinalFieldModification,
+                          inlinedSiteInfo,
+                          keepaliveMethods,
+                          bondMethods,
                           startPC);
    }
 #endif /* defined(J9VM_OPT_JITSERVER) */

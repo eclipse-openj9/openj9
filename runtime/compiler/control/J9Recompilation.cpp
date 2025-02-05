@@ -30,6 +30,7 @@
 #include "compile/Compilation.hpp"
 #include "control/Options.hpp"
 #include "compile/SymbolReferenceTable.hpp"
+#include "env/OMRRetainedMethodSet.hpp"
 #include "env/VMJ9.h"
 #include "env/VerboseLog.hpp"
 #include "runtime/J9Profiler.hpp"
@@ -456,10 +457,12 @@ J9::Recompilation::createProfilers()
 bool
 J9::Recompilation::couldBeCompiledAgain()
    {
+   TR_ResolvedMethod *bondMethod = NULL;
    return
       self()->shouldBeCompiledAgain() ||
       _compilation->usesPreexistence() ||
-      _compilation->getOption(TR_EnableHCR);
+      _compilation->getOption(TR_EnableHCR) ||
+      _compilation->retainedMethods()->bondMethods().next(&bondMethod);
    }
 
 

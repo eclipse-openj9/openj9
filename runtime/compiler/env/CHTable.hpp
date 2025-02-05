@@ -304,6 +304,39 @@ class TR_PreXRecompileOnMethodOverride : public TR_PreXRecompile
       TR_FrontEnd *fe, TR_PersistentMemory *pm, TR_OpaqueMethodBlock *method, uint8_t *startPC, OMR::RuntimeAssumption **sentinel);
    };
 
+class TR_ClassUnloadRecompile : public OMR::LocationRedirectRuntimeAssumption
+   {
+   protected:
+   TR_ClassUnloadRecompile(TR_PersistentMemory *pm, TR_OpaqueClassBlock *clazz, uint8_t *startPC)
+      : OMR::LocationRedirectRuntimeAssumption(pm, (uintptr_t)clazz), _startPC(startPC) {}
+
+   public:
+   static TR_ClassUnloadRecompile *make(
+      TR_FrontEnd *fe,
+      TR_PersistentMemory *pm,
+      TR_OpaqueClassBlock *clazz,
+      uint8_t *startPC,
+      OMR::RuntimeAssumption **sentinel);
+
+   virtual TR_ClassUnloadRecompile *asCURecompile() { return this; }
+   virtual TR_RuntimeAssumptionKind getAssumptionKind() { return RuntimeAssumptionOnClassUnload; }
+   virtual void compensate(TR_FrontEnd *vm, bool isSMP, void *newAddress);
+   virtual void dumpInfo();
+
+   virtual bool equals(OMR::RuntimeAssumption &otherAssumption)
+         {
+         TR_ClassUnloadRecompile *other = otherAssumption.asCURecompile();
+         return other != NULL && _startPC == other->_startPC;
+         }
+
+   virtual uint8_t *getFirstAssumingPC() { return getStartPC(); }
+   virtual uint8_t *getLastAssumingPC() { return getStartPC(); }
+   uint8_t *getStartPC() { return _startPC; }
+
+   private:
+   uint8_t *_startPC;
+   };
+
 class TR_CHTable
    {
    public:

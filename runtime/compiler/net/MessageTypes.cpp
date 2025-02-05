@@ -262,7 +262,7 @@ const char *messageNames[] =
    "AOTCache_getROMClassBatch",
    "AOTCache_getRAMClassFromClassRecordBatch",
    "AOTCacheMap_request",
-   "AOTCacheMap_reply"
+   "AOTCacheMap_reply",
    };
 
    static_assert(sizeof(messageNames) / sizeof(messageNames[0]) == MessageType_MAXTYPE,

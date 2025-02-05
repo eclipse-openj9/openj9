@@ -37,6 +37,7 @@ namespace J9 { typedef J9::Compilation CompilationConnector; }
 #include "compile/CompilationTypes.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
+#include "infra/set.hpp"
 #include "infra/Statistics.hpp"
 #include "infra/vector.hpp"
 #include "env/CompilerEnv.hpp"
@@ -45,7 +46,7 @@ namespace J9 { typedef J9::Compilation CompilationConnector; }
 #include "runtime/SymbolValidationManager.hpp"
 #include "env/PersistentCollections.hpp"
 
-
+namespace J9 { class RetainedMethodSet; }
 class TR_AOTGuardSite;
 class TR_FrontEnd;
 class TR_ResolvedMethod;
@@ -397,6 +398,52 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
 
    TR::SymbolValidationManager *getSymbolValidationManager() { return _symbolValidationManager; }
 
+   // overrides OMR::Compilation::createRetainedMethods(TR_ResolvedMethod*)
+   OMR::RetainedMethodSet *createRetainedMethods(TR_ResolvedMethod *method);
+
+   /**
+    * \brief Determine whether retained methods need to be tracked.
+    *
+    * If they do, then J9::RetainedMethodSet will be used. Otherwise, the base
+    * OMR::RetainedMethodSet will be used instead, which does no tracking.
+    *
+    * \return true if tracking is needed, false otherwise
+    */
+   bool mustTrackRetainedMethods();
+
+   // overrides OMR::Compilation::bondMethodsTraceNote().
+   const char *bondMethodsTraceNote();
+
+   /**
+    * \brief Get the set of classes to keep alive.
+    *
+    * During optimization, these are classes that should be kept alive due to
+    * IL transformations, as opposed to the keepalives in retainedMethods(),
+    * which are due to inlining. They are kept separately because the API of
+    * OMR::RetainedMethodSet is designed to avoid assuming that unloading
+    * proceeds at any granularity coarser than per-method.
+    *
+    * \return the set of classes to keep alive
+    */
+   const TR::set<TR_OpaqueClassBlock*> &keepaliveClasses() { return _keepaliveClasses; }
+
+   /**
+    * \brief Add a keepalive class.
+    *
+    * This is only for cases where an IL transformation based on known objects
+    * causes the IL to directly use a class (i.e. with loadaddr) or one of
+    * its members, when it didn't previously. After such a transformation, the
+    * known objects could end up being unused, in which case they wouldn't
+    * guarantee on their own that the class remains loaded at the point of use.
+    *
+    * If the IL is modified to use a member that will necessarily remain loaded
+    * at the point of use anyway, e.g. an instance method, then no keepalive is
+    * needed.
+    *
+    * \param c the class to keep alive
+    */
+   void addKeepaliveClass(TR_OpaqueClassBlock *c);
+
    /**
     * \brief Determine whether it's currently expected to be possible to add
     * OSR assumptions and corresponding fear points somewhere in the method.
@@ -524,6 +571,8 @@ private:
 
    TR_Array<List<TR::RegisterMappedSymbol> *> _monitorAutos;
    TR::list<TR::SymbolReference*>             _monitorAutoSymRefsInCompiledMethod;
+
+   TR::set<TR_OpaqueClassBlock*>        _keepaliveClasses;
 
    TR_Array<TR_OpaqueClassBlock*>       _classForOSRRedefinition;
    // Classes that have their static final fields folded and need assumptions
