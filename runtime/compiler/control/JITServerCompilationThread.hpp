@@ -41,7 +41,7 @@ using CompilationRequest = std::tuple<
    J9::IlGeneratorMethodDetailsType, std::vector<TR_OpaqueClassBlock *>, std::vector<TR_OpaqueClassBlock *>,
    JITServerHelpers::ClassInfoTuple, std::string, std::string, std::string, std::string,
    bool, bool, bool, bool, uint32_t, uintptr_t, std::vector<J9Class *>, std::vector<J9Class *>,
-   std::vector<JITServerHelpers::ClassInfoTuple>, std::vector<uintptr_t>
+   std::vector<JITServerHelpers::ClassInfoTuple>, std::vector<uintptr_t>, std::vector<J9ClassLoader *>
 >;
 
 void outOfProcessCompilationEnd(TR_MethodToBeCompiled *entry, TR::Compilation *comp);

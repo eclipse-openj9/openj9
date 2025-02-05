@@ -281,6 +281,10 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             // Do not forbid AOT cache stores or loads (this server might be able to fulfill them)
             compInfo->getPersistentInfo()->setDoNotRequestJITServerAOTCacheLoad(false);
             compInfo->getPersistentInfo()->setDoNotRequestJITServerAOTCacheStore(false);
+
+            auto loaderTable = compInfo->getPersistentInfo()->getPersistentClassLoaderTable();
+            OMR::CriticalSection lock(compInfo->getSequencingMonitor());
+            loaderTable->resetPermanentLoadersSentToServer(compInfo);
             }
 
          client->write(response, ranges, unloadedClasses->getMaxRanges(), serializedCHTable, dltedMethods);
@@ -3449,9 +3453,11 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
    std::vector<uintptr_t> newKnownIds = deserializer ? deserializer->getNewKnownIds(compiler) : std::vector<uintptr_t>();
 
    auto chTable = (JITClientPersistentCHTable *)persistentInfo->getPersistentCHTable();
+   auto permanentLoaders = compiler->permanentLoaders();
    std::vector<TR_OpaqueClassBlock *> unloadedClasses;
    std::vector<TR_OpaqueClassBlock *> illegalModificationList;
    std::pair<std::string, std::string> chtableUpdates("", "");
+   std::vector<J9ClassLoader *> newPermanentLoaders; // doesn't affect critical seq. no.
    uint32_t seqNo = 0;
    uint32_t lastCriticalSeqNo = 0;
 
@@ -3488,6 +3494,27 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
          {
          compInfo->setLastCriticalSeqNo(seqNo);
          }
+
+      // Determine which permanent loaders (if any) to send to the server.
+      auto loaderTable = persistentInfo->getPersistentClassLoaderTable();
+      size_t numPermanentLoadersSent =
+         loaderTable->numPermanentLoadersSentToServer(compInfo);
+
+      // It's possible to have numPermanentLoadersSent > permanentLoaders.size()
+      // in some interleavings. Only send loaders if our permanentLoaders contains
+      // entries that haven't been sent yet. This also prevents the subtraction
+      // from overflowing.
+      if (numPermanentLoadersSent < permanentLoaders.size())
+         {
+         size_t n = permanentLoaders.size() - numPermanentLoadersSent;
+         newPermanentLoaders.reserve(n);
+         newPermanentLoaders.insert(
+            newPermanentLoaders.end(),
+            permanentLoaders.begin() + numPermanentLoadersSent,
+            permanentLoaders.end());
+
+         loaderTable->addPermanentLoadersSentToServer(n, compInfo);
+         }
       }
 
    uint32_t statusCode = compilationFailure;
@@ -3521,7 +3548,7 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
          detailsStr, details.getType(), unloadedClasses, illegalModificationList, classInfoTuple, optionsStr,
          recompMethodInfoStr, chtableUpdates.first, chtableUpdates.second, useAotCompilation,
          TR::Compiler->vm.isVMInStartupPhase(compInfoPT->getJitConfig()), aotCacheStore, aotCacheLoad, methodIndex,
-         classChainOffset, ramClassChain, uncachedRAMClasses, uncachedClassInfos, newKnownIds
+         classChainOffset, ramClassChain, uncachedRAMClasses, uncachedClassInfos, newKnownIds, newPermanentLoaders
       );
 
       JITServer::MessageType response;

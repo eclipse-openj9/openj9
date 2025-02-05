@@ -2276,6 +2276,43 @@ hashClassLocationTableNew(J9JavaVM *javaVM, U_32 initialSize);
 J9ClassLocation *
 findClassLocationForClass(J9VMThread *currentThread, J9Class *clazz);
 
+/**
+ * @brief Add outlivingLoader to the set of loaders known to outlive classLoader.
+ *
+ * The addition could fail due to OOM, but such failures are ignored because the
+ * set of outliving loaders is not required to be complete.
+ *
+ * If outlivingLoader is permanent, then it is ignored because the few permanent
+ * loaders trivially outlive all loaders.
+ *
+ * If classLoader is permanent, then outlivingLoader must also be permanent, so
+ * mark it as such.
+ *
+ * The caller must hold the classTableMutex.
+ *
+ * @param currentThread the J9VMThread of the current thread
+ * @param classLoader the initiating class loader
+ * @param outlivingLoader the loader that will outlive classLoader
+ *
+ * @see markLoaderPermanent(J9VMThread *currentThread, J9ClassLoader *classLoader)
+ */
+void
+addOutlivingLoader(J9VMThread *currentThread, J9ClassLoader *classLoader, J9ClassLoader *outlivingLoader);
+
+/**
+ * @brief Take note that classLoader is permanent.
+ *
+ * Any loader already known to outlive classLoader is also permanent, and will
+ * be marked as such, transitively.
+ *
+ * The caller must hold the classTableMutex.
+ *
+ * @param currentThread the J9VMThread of the current thread
+ * @param classLoader the permanent class loader
+ */
+void
+markLoaderPermanent(J9VMThread *currentThread, J9ClassLoader *classLoader);
+
 /* ---------------- ModularityHashTables.c ---------------- */
 
 /**

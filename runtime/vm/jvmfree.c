@@ -461,6 +461,15 @@ cleanUpClassLoader(J9VMThread *vmThread, J9ClassLoader* classLoader)
 		freeSharedCacheCLEntries(vmThread, classLoader);
 	}
 
+	/* Free the outliving loader set. */
+	Assert_VM_false(J9CLASSLOADER_OUTLIVING_LOADERS_PERMANENT == classLoader->outlivingLoaders);
+	if (NULL != classLoader->outlivingLoaders) {
+		if (J9_ARE_NO_BITS_SET((UDATA)classLoader->outlivingLoaders, J9CLASSLOADER_OUTLIVING_LOADERS_SINGLE_TAG)) {
+			hashTableFree((J9HashTable *)classLoader->outlivingLoaders);
+		}
+		classLoader->outlivingLoaders = NULL;
+	}
+
 	Trc_VM_cleanUpClassLoaders_Exit(vmThread);
 }
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */

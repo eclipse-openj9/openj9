@@ -90,6 +90,7 @@ UDATA writeExceptionFrameCallBack (J9VMThread* vmThread, void* userData, UDATA b
 void  writeLoaderCallBack         (void* classLoader, void* userData);
 void  writeLibrariesCallBack      (void* classLoader, void* userData);
 void  writeClassesCallBack        (void* classLoader, void* userData);
+void  writeOutlivingLoadersCallBack(void *classLoader, void *userData);
 static UDATA outerMemCategoryCallBack (U_32 categoryCode, const char * categoryName, UDATA liveBytes, UDATA liveAllocations, BOOLEAN isRoot, U_32 parentCategoryCode, OMRMemCategoryWalkState * state);
 static UDATA innerMemCategoryCallBack (U_32 categoryCode, const char * categoryName, UDATA liveBytes, UDATA liveAllocations, BOOLEAN isRoot, U_32 parentCategoryCode, OMRMemCategoryWalkState * state);
 
@@ -244,6 +245,7 @@ private :
 	friend void  writeLoaderCallBack         (void* classLoader, void* userData);
 	friend void  writeLibrariesCallBack      (void* classLoader, void* userData);
 	friend void  writeClassesCallBack        (void* classLoader, void* userData);
+	friend void  writeOutlivingLoadersCallBack(void *classLoader, void *userData);
 	friend UDATA outerMemCategoryCallBack (U_32 categoryCode, const char * categoryName, UDATA liveBytes, UDATA liveAllocations, BOOLEAN isRoot, U_32 parentCategoryCode, OMRMemCategoryWalkState * state);
 	friend UDATA innerMemCategoryCallBack (U_32 categoryCode, const char * categoryName, UDATA liveBytes, UDATA liveAllocations, BOOLEAN isRoot, U_32 parentCategoryCode, OMRMemCategoryWalkState * state);
 
@@ -346,6 +348,7 @@ private :
 	void        writeLoader                  (J9ClassLoader* classLoader);
 	void        writeLibraries               (J9ClassLoader* classLoader);
 	void        writeClasses                 (J9ClassLoader* classLoader);
+	void        writeOutlivingLoaders        (J9ClassLoader *classLoader);
 	void        writeEventDrivenTitle        (void);
 	void        writeUserRequestedTitle      (void);
 	void        writeNativeAllocator         (const char * name, U_32 depth, BOOLEAN isRoot, UDATA liveBytes, UDATA liveAllocations);
@@ -2799,6 +2802,16 @@ JavaCoreDumpWriter::writeClassSection(void)
 	);
 
 	pool_do(_VirtualMachine->classLoaderBlocks, writeClassesCallBack, this);
+
+	/* Write the sub-section header. */
+	_OutputStream.writeCharacters(
+		"1CLTEXTCLOLL   \tClassLoader outliving loaders\n"
+	);
+
+	if (!avoidLocks() && !omrthread_monitor_try_enter(_VirtualMachine->classTableMutex)) {
+		pool_do(_VirtualMachine->classLoaderBlocks, writeOutlivingLoadersCallBack, this);
+		omrthread_monitor_exit(_VirtualMachine->classTableMutex);
+	}
 
 	/* Write the section trailer */
 	_OutputStream.writeCharacters(
@@ -5538,6 +5551,54 @@ JavaCoreDumpWriter::writeClasses(J9ClassLoader* classLoader)
 
 /**************************************************************************************************/
 /*                                                                                                */
+/* JavaCoreDumpWriter::writeOutlivingLoaders() method implementation                              */
+/*                                                                                                */
+/**************************************************************************************************/
+void
+JavaCoreDumpWriter::writeOutlivingLoaders(J9ClassLoader *classLoader)
+{
+	_OutputStream.writeCharacters("2CLTEXTJ9CLLOAD\t\t");
+
+	_OutputStream.writeCharacters("J9ClassLoader(");
+	_OutputStream.writePointer(classLoader);
+	_OutputStream.writeCharacters(") obj(");
+	_OutputStream.writePointer(getClassLoaderObject(classLoader));
+	_OutputStream.writeCharacters(")");
+	if (classLoader == _VirtualMachine->systemClassLoader) {
+		_OutputStream.writeCharacters(" system");
+	} else if (classLoader == _VirtualMachine->applicationClassLoader) {
+		_OutputStream.writeCharacters(" application");
+	} else if (classLoader == _VirtualMachine->extensionClassLoader) {
+		_OutputStream.writeCharacters(" extension");
+	} else if (classLoader == _VirtualMachine->anonClassLoader) {
+		_OutputStream.writeCharacters(" anonymous");
+	}
+
+	if (J9CLASSLOADER_OUTLIVING_LOADERS_PERMANENT == classLoader->outlivingLoaders) {
+		_OutputStream.writeCharacters(" (permanent)\n");
+		return;
+	}
+
+	_OutputStream.writeCharacters("\n");
+	if (J9_ARE_ANY_BITS_SET((UDATA)classLoader->outlivingLoaders, J9CLASSLOADER_OUTLIVING_LOADERS_SINGLE_TAG)) {
+		_OutputStream.writeCharacters("3CLTEXTOUTLIVIN\t\t\t");
+		_OutputStream.writePointer((J9ClassLoader *)((UDATA)classLoader->outlivingLoaders & ~(UDATA)J9CLASSLOADER_OUTLIVING_LOADERS_SINGLE_TAG));
+		_OutputStream.writeCharacters("\n");
+	} else if (NULL != classLoader->outlivingLoaders) {
+		J9HashTable *table = (J9HashTable *)classLoader->outlivingLoaders;
+		J9HashTableState state;
+		J9ClassLoader **entry = (J9ClassLoader **)hashTableStartDo(table, &state);
+		while (NULL != entry) {
+			_OutputStream.writeCharacters("3CLTEXTOUTLIVIN\t\t\t");
+			_OutputStream.writePointer(*entry);
+			_OutputStream.writeCharacters("\n");
+			entry = (J9ClassLoader **)hashTableNextDo(&state);
+		}
+	}
+}
+
+/**************************************************************************************************/
+/*                                                                                                */
 /* JavaCoreDumpWriter::getClassLoaderObject() method implementation                               */
 /*                                                                                                */
 /**************************************************************************************************/
@@ -5761,6 +5822,12 @@ void
 writeClassesCallBack(void* classLoader, void* userData)
 {
 	((JavaCoreDumpWriter*)(userData))->writeClasses((J9ClassLoader*)classLoader);
+}
+
+void
+writeOutlivingLoadersCallBack(void *classLoader, void *userData)
+{
+	((JavaCoreDumpWriter *)userData)->writeOutlivingLoaders((J9ClassLoader *)classLoader);
 }
 
 UDATA
