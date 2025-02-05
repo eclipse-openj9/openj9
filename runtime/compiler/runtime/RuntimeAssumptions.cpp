@@ -140,6 +140,17 @@ TR_PreXRecompile::compensate(TR_FrontEnd *fe, bool, void *)
 
 
 void
+TR_ClassUnloadRecompile::compensate(TR_FrontEnd *fe, bool, void *)
+   {
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)fe;
+   TR::Recompilation::invalidateMethodBody(
+      _startPC, fe, TR_JitBodyInvalidations::Unloading);
+
+   fej9->reportUnloadInvalidation(_startPC);
+   }
+
+
+void
 TR_PatchJNICallSite::compensate(
       TR_FrontEnd *fe,
       bool isSMP,

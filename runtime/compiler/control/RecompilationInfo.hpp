@@ -78,6 +78,7 @@ class TR_JitBodyInvalidations
       HCR, // outermost method has been obsoleted by HCR
       Preexistence, // preexistence assumption has been invalidated
       PostRestoreExclude, // method is excluded post-restore, should be interpreted
+      Unloading, // an inlined method has been unloaded
       };
 
    bool isEmpty() const { return _flags.getValue() == 0; }
