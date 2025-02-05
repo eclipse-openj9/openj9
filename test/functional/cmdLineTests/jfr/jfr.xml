@@ -24,7 +24,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 
 <!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
 
-<suite id="JFR Tests" timeout="1800">
+<suite id="JFR Tests" timeout="2400">
 	<envvar name="OPENJ9_METADATA_BLOB_FILE_PATH" value="$METADATA_BLOB_PATH$" />
 	<test id="triggerExecutionSample">
 		<command>$EXE$ -XX:StartFlightRecording --add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED -cp $RESJAR$ org.openj9.test.TriggerExecutionSample</command>
@@ -42,6 +42,16 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	</test>
 	<test id="VM API Test - approx 2mins">
 		<command>$EXE$ --add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED -cp $RESJAR$ org.openj9.test.VMAPITest</command>
+		<output type="success" caseSensitive="yes" regex="no">All runs complete.</output>
+		<output type="failure" caseSensitive="yes" regex="no">Failed</output>
+	</test>
+	<test id="VM API Test aggressive start and stop - approx 2mins">
+		<command>$EXE$ --add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED -cp $RESJAR$ org.openj9.test.VMAPITest 1</command>
+		<output type="success" caseSensitive="yes" regex="no">All runs complete.</output>
+		<output type="failure" caseSensitive="yes" regex="no">Failed</output>
+	</test>
+	<test id="VM API Test2 - approx 2mins">
+		<command>$EXE$ --add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED -cp $RESJAR$ org.openj9.test.VMAPITest2</command>
 		<output type="success" caseSensitive="yes" regex="no">All runs complete.</output>
 		<output type="failure" caseSensitive="yes" regex="no">Failed</output>
 	</test>

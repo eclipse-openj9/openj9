@@ -23,51 +23,55 @@ package org.openj9.test;
 
 import com.ibm.oti.vm.VM;
 
-public class VMAPITest {
+public class VMAPITest2 {
 	public static void main(String[] args) throws Throwable {
 		final WorkLoad workLoad = new WorkLoad(200, 20000, 200);
-		int sleepDuration = 1000;
-
-		if (args.length > 1) {
-			sleepDuration = Integer.parseInt(args[0]);
-		}
-
-		if (VM.isJFRRecordingStarted()) {
-			System.out.println("Failed should not be recording.");
-			return;
-		}
 
 		Thread app = new Thread(() -> {
 			workLoad.runWork();
 		});
 		app.start();
 
-		for (int i = 0; i < 15; i++) {
-			Thread.sleep(100);
-
-			if (VM.startJFR() != 0) {
-				System.out.println("Failed to start.");
-				return;
-			}
-
-			if (!VM.isJFRRecordingStarted()) {
-				System.out.println("Failed to record.");
-				return;
-			}
-
-			if (!VM.setJFRRecordingFileName("sample" + i + ".jfr")) {
-				System.out.println("Failed to set name.");
-				return;
-			}
-
-			Thread.sleep(sleepDuration);
-			VM.jfrDump();
-			VM.stopJFR();
-
-			if (VM.isJFRRecordingStarted()) {
-				System.out.println("Failed to stop recording.");
-				return;
-			}
+		try {
+			Thread.sleep(3000);
+		} catch(Throwable t) {
+			t.printStackTrace();
 		}
+
+		if (VM.isJFRRecordingStarted()) {
+			System.out.println("Failed should not be recording 1.");
+			System.exit(0);
+		}
+
+		/* attempt a stop recording before it has started */
+		VM.stopJFR();
+
+		if (VM.isJFRRecordingStarted()) {
+			System.out.println("Failed should not be recording 2.");
+			System.exit(0);
+		}
+
+		VM.startJFR();
+		if (!VM.isJFRRecordingStarted()) {
+			System.out.println("Failed should be recording 3.");
+			System.exit(0);
+		}
+
+
+		/* attempt another start recording after one has already started */
+		VM.startJFR();
+		if (!VM.isJFRRecordingStarted()) {
+			System.out.println("Failed should be recording 4.");
+			System.exit(0);
+		}
+
+		VM.stopJFR();
+		if (VM.isJFRRecordingStarted()) {
+			System.out.println("Failed should not be recording 5.");
+			System.exit(0);
+		}
+
+		/* attempt a stop recording before it has started */
+		VM.stopJFR();
 	}
 }

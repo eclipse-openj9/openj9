@@ -484,7 +484,9 @@ public class DiagnosticUtils {
 						Timer timer = new Timer();
 						TimerTask jfrDumpTask = new TimerTask() {
 							public void run() {
-								VM.stopJFR();
+								if (VM.isJFRRecordingStarted()) {
+									VM.stopJFR();
+								}
 							}
 						};
 						timer.schedule(jfrDumpTask, duration);

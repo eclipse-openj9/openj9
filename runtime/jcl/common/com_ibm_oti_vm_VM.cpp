@@ -255,8 +255,10 @@ Java_com_ibm_oti_vm_VM_startJFR(JNIEnv *env, jclass unused)
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 
-	/* this is to initalize JFR late after VM startup */
-	rc = vmFuncs->initializeJFR(vm, TRUE);
+	if (!vmFuncs->isJFRRecordingStarted(vm)) {
+		/* this is to initalize JFR late after VM startup */
+		rc = vmFuncs->initializeJFR(vm, TRUE);
+	}
 
 	return rc;
 }
@@ -268,12 +270,14 @@ Java_com_ibm_oti_vm_VM_stopJFR(JNIEnv *env, jclass unused)
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 
-	vmFuncs->internalEnterVMFromJNI(currentThread);
-	vmFuncs->acquireExclusiveVMAccess(currentThread);
-	vmFuncs->jfrDump(currentThread, TRUE);
-	vmFuncs->releaseExclusiveVMAccess(currentThread);
-	vmFuncs->tearDownJFR(vm);
-	vmFuncs->internalExitVMToJNI(currentThread);
+	if (vmFuncs->isJFRRecordingStarted(vm)) {
+		vmFuncs->internalEnterVMFromJNI(currentThread);
+		vmFuncs->acquireExclusiveVMAccess(currentThread);
+		vmFuncs->jfrDump(currentThread, TRUE);
+		vmFuncs->releaseExclusiveVMAccess(currentThread);
+		vmFuncs->tearDownJFR(vm);
+		vmFuncs->internalExitVMToJNI(currentThread);
+	}
 }
 
 void JNICALL
