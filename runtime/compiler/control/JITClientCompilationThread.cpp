@@ -35,6 +35,7 @@
 #include "env/j9methodServer.hpp"
 #include "env/JITServerPersistentCHTable.hpp"
 #include "env/JSR292Methods.h"
+#include "env/J9RetainedMethodSet.hpp"
 #include "env/StackMemoryRegion.hpp"
 #include "env/TypeLayout.hpp"
 #include "env/ut_j9jit.h"
@@ -3060,6 +3061,52 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
                }
             }
          client->write(response, ramClasses);
+         }
+         break;
+      case MessageType::RetainedMethodSet_createMirror:
+         {
+         auto recv = client->getRecvData<void*, void*>();
+         auto parent = (J9::RetainedMethodSet*)std::get<0>(recv);
+         auto method = (TR_ResolvedJ9Method*)std::get<1>(recv);
+         J9::RetainedMethodSet *mirror = NULL;
+         J9::RetainedMethodSet::ScanLog scanLog;
+         if (parent == NULL)
+            {
+            mirror = J9::RetainedMethodSet::create(comp, method, &scanLog);
+            }
+         else
+            {
+            mirror = parent->createChild(method, &scanLog);
+            }
+
+         client->write(
+            response, mirror, scanLog._addedAnonClass, scanLog._addedLoaders);
+         }
+         break;
+      case MessageType::RetainedMethodSet_scan:
+         {
+         auto recv = client->getRecvData<void*, J9Class*>();
+         auto mirror = (J9::RetainedMethodSet*)std::get<0>(recv);
+         auto clazz = std::get<1>(recv);
+         J9::RetainedMethodSet::ScanLog scanLog;
+         mirror->scanForClient(clazz, &scanLog);
+         client->write(response, scanLog._addedAnonClass, scanLog._addedLoaders);
+         }
+         break;
+      case MessageType::RetainedMethodSet_keepalive:
+         {
+         auto recv = client->getRecvData<void*>();
+         auto mirror = (J9::RetainedMethodSet*)std::get<0>(recv);
+         mirror->keepalive();
+         client->write(response, JITServer::Void());
+         }
+         break;
+      case MessageType::RetainedMethodSet_bond:
+         {
+         auto recv = client->getRecvData<void*>();
+         auto mirror = (J9::RetainedMethodSet*)std::get<0>(recv);
+         mirror->bond();
+         client->write(response, JITServer::Void());
          }
          break;
       default:
