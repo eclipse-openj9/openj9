@@ -864,6 +864,12 @@ public class Test_Class {
 	public void test_getDeclaringClass() {
 		// Test for method java.lang.Class.getDeclaringClass()
 		AssertJUnit.assertTrue(ClassTest.class.getDeclaringClass().equals(Test_Class.class));
+		// Test caching of java.lang.Class java.lang.Class.getDeclaringClass() null result
+		AssertJUnit.assertTrue(ClassTest.class.getDeclaringClass().equals(Test_Class.class));
+		// Test for method java.lang.Class java.lang.Class.getDeclaringClass() with null DeclaringClass
+		AssertJUnit.assertTrue(Test_Class.class.getDeclaringClass().equals(null));
+		// Test caching of method java.lang.Class java.lang.Class.getDeclaringClass() null result
+		AssertJUnit.assertTrue(Test_Class.class.getDeclaringClass().equals(null));
 	}
 
 	/**
