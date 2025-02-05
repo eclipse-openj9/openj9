@@ -317,7 +317,6 @@ void
 TR_JProfilingValue::lowerCalls()
    {
    TR::TreeTop *cursor = comp()->getStartTree();
-   TR_BitVector *backwardAnalyzedAddressNodesToCheck = new (comp()->trStackMemory()) TR_BitVector();
    while (cursor)
       {
       TR::Node * node = cursor->getNode();
@@ -328,32 +327,6 @@ TR_JProfilingValue::lowerCalls()
          (comp()->getSymRefTab()->isNonHelper(node->getFirstChild()->getSymbolReference(), TR::SymbolReferenceTable::jProfileValueSymbol) ||
             comp()->getSymRefTab()->isNonHelper(node->getFirstChild()->getSymbolReference(), TR::SymbolReferenceTable::jProfileValueWithNullCHKSymbol)))
          {
-         // Backward Analysis in the extended basic block to get list of address nodes
-         for (TR::TreeTop *iter = cursor->getPrevTreeTop();
-            iter && (iter->getNode()->getOpCodeValue() != TR::BBStart || iter->getNode()->getBlock()->isExtensionOfPreviousBlock());
-            iter = iter->getPrevTreeTop())
-            {
-            TR::Node *currentTreeTopNode = iter->getNode();
-            if (currentTreeTopNode->getNumChildren() >= 1 && currentTreeTopNode->getFirstChild()->getType() == TR::Address)
-               backwardAnalyzedAddressNodesToCheck->set(currentTreeTopNode->getFirstChild()->getGlobalIndex());
-            }
-         // Forward walk to check for compressedref anchors of any evaluated address nodes identified above
-         for (TR::TreeTop *iter = cursor->getNextTreeTop();
-            iter && (iter->getNode()->getOpCodeValue() != TR::BBStart || iter->getNode()->getBlock()->isExtensionOfPreviousBlock());
-            iter = iter->getNextTreeTop())
-            {
-            TR::Node *currentTreeTopNode = iter->getNode();
-            if (currentTreeTopNode->getOpCodeValue() == TR::compressedRefs
-               && backwardAnalyzedAddressNodesToCheck->isSet(currentTreeTopNode->getFirstChild()->getGlobalIndex()))
-               {
-               dumpOptDetails(comp(), "%s Moving treetop node n%dn above the profiling call to avoid uncommoning\n",
-                  optDetailString(), iter->getNode()->getGlobalIndex());
-               iter->unlink(false);
-               cursor->insertBefore(iter);
-               }
-            }
-
-         backwardAnalyzedAddressNodesToCheck->empty();
          TR::Node *child = node->getFirstChild();
          dumpOptDetails(comp(), "%s Replacing profiling placeholder n%dn with value profiling trees\n",
             optDetailString(), child->getGlobalIndex());
