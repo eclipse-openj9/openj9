@@ -4096,7 +4096,7 @@ private:
 				Assert_MM_mustBeClass(_extensions->objectModel.getPreservedClass(&forwardedHeader));
 				env->_copyForwardStats._offHeapRegionsCleared += 1;
 				void *dataAddr = _extensions->indexableObjectModel.getDataAddrForContiguous((J9IndexableObject *)objectPtr);
-				_extensions->largeObjectVirtualMemory->freeSparseRegionAndUnmapFromHeapObject(_env, dataAddr);
+				_extensions->largeObjectVirtualMemory->freeSparseRegionAndUnmapFromHeapObject(_env, dataAddr, objectPtr, _extensions->indexableObjectModel.getDataSizeInBytes((J9IndexableObject *)objectPtr));
 				*sparseHeapAllocation = false;
 			} else {
 				void *dataAddr = _extensions->indexableObjectModel.getDataAddrForContiguous((J9IndexableObject *)fwdOjectPtr);
@@ -4104,8 +4104,7 @@ private:
 					/* There might be the case that GC finds a floating arraylet, which was a result of an allocation
 					 * failure (reason why this GC cycle is happening).
 					 */
-					_extensions->largeObjectVirtualMemory->updateSparseDataEntryAfterObjectHasMoved(dataAddr, fwdOjectPtr);
-				}
+					_extensions->largeObjectVirtualMemory->updateSparseDataEntryAfterObjectHasMoved(dataAddr, objectPtr,  _extensions->indexableObjectModel.getDataSizeInBytes((J9IndexableObject *)fwdOjectPtr), fwdOjectPtr);				}
 			}
 		}
 	}

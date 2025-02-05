@@ -1697,7 +1697,7 @@ public:
 				/* There might be the case that GC finds a floating arraylet, which was a result of an allocation
 				 * failure (reason why this GC cycle is happening).
 				 */
-				_extensions->largeObjectVirtualMemory->updateSparseDataEntryAfterObjectHasMoved(dataAddr, fwdOjectPtr);
+				_extensions->largeObjectVirtualMemory->updateSparseDataEntryAfterObjectHasMoved(dataAddr, objectPtr, _extensions->indexableObjectModel.getDataSizeInBytes((J9IndexableObject *)fwdOjectPtr), fwdOjectPtr);
 			}
 		}
 	}
