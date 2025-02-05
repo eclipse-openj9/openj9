@@ -24,6 +24,7 @@
 #define JIT_CLIENT_SESSION_H
 
 #include "infra/Monitor.hpp"  // TR::Monitor
+#include "infra/vector.hpp"  // TR::vector
 #include "env/PersistentCollections.hpp" // for PersistentUnorderedMap
 #include "il/DataTypes.hpp" // for DataType
 #include "env/VMJ9.h" // for TR_StaticFinalData
@@ -467,6 +468,24 @@ public:
    TR::Monitor *getStaticMapMonitor() { return _staticMapMonitor; }
    PersistentUnorderedMap<void *, TR_StaticFinalData> &getStaticFinalDataMap() { return _staticFinalDataMap; }
 
+   /**
+    * \brief Remember that each client class loader in \p loaders is permanent.
+    *
+    * They will be included in the result of later calls to getPermanentLoaders().
+    * Any class loader already known to be permanent will be ignored.
+    *
+    * \param loaders a batch of pointers to permanent class loaders from the client
+    */
+   void addPermanentLoaders(const std::vector<J9ClassLoader*> &loaders);
+
+   /**
+    * \brief Populate \p dest with the class loaders that are known to be
+    * permanent on the client.
+    *
+    * \param[out] dest the resulting vector of class loader pointers
+    */
+   void getPermanentLoaders(TR::vector<J9ClassLoader*, TR::Region&> &dest) const;
+
    bool getRtResolve() { return _rtResolve; }
    void setRtResolve(bool rtResolve) { _rtResolve = rtResolve; }
 
@@ -619,6 +638,12 @@ private:
    TR::Monitor *_thunkSetMonitor;
    PersistentUnorderedMap<std::pair<std::string, bool>, void *> _registeredJ2IThunksMap; // stores a map of J2I thunks created for this client
    PersistentUnorderedSet<std::pair<std::string, bool>> _registeredInvokeExactJ2IThunksSet; // stores a set of invoke exact J2I thunks created for this client
+
+   // Addresses of class loaders that are permanent in the client VM. This is a
+   // set because it's necessary to remove duplicates. Each permanent loader
+   // will be sent once for each ClientStream that connects.
+   PersistentUnorderedSet<J9ClassLoader*> _permanentLoaders;
+   TR::Monitor *_permanentLoadersMonitor;
 
    omrthread_rwmutex_t _classUnloadRWMutex;
    volatile bool _bClassUnloadingAttempt;

@@ -38,6 +38,7 @@ namespace J9 { typedef J9::Compilation CompilationConnector; }
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "infra/Statistics.hpp"
+#include "infra/vector.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/OMRMemory.hpp"
 #include "compile/AOTClassInfo.hpp"
@@ -442,6 +443,12 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
    uintptr_t populateAOTMethodDependencies(TR_OpaqueClassBlock *definingClass, Vector<uintptr_t> &chainBuffer);
 #endif
 
+   /**
+    * \brief Get the class loaders that are known to be permanent.
+    * \return a vector of pointers to all known-permanent class loaders
+    */
+   const TR::vector<J9ClassLoader*, TR::Region&> &permanentLoaders();
+
 private:
    enum CachedClassPointerId
       {
@@ -584,8 +591,10 @@ private:
 #endif /* defined(PERSISTENT_COLLECTIONS_UNSUPPORTED) */
 
    TR::SymbolValidationManager *_symbolValidationManager;
+   TR::vector<J9ClassLoader*, TR::Region&> _permanentLoaders;
    bool _osrProhibitedOverRangeOfTrees;
    bool _wasFearPointAnalysisDone;
+   bool _permanentLoadersInitialized;
    };
 
 }
