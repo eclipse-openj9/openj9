@@ -30,6 +30,7 @@
 #include "env/CompilerEnv.hpp"
 #include "env/CHTable.hpp"
 #include "env/HeuristicRegion.hpp"
+#include "env/J9RetainedMethodSet.hpp"
 #include "env/PersistentCHTable.hpp"
 #include "env/VMJ9.h"
 #include "env/jittypes.h"
@@ -158,6 +159,10 @@ TR_CallSite* TR_CallSite::create(TR::TreeTop* callNodeTreeTop,
    TR::MethodSymbol *calleeSymbol = symRef->getSymbol()->castToMethodSymbol();
    TR_ResolvedMethod* lCaller = caller ? caller : symRef->getOwningMethod(comp);
 
+   // It could have previously been refined, but since the call is already in
+   // the trees, we must have already taken account of that.
+   bool wasRefinedFromKnownObject = false;
+
    if (callNode->getOpCode().isCallIndirect())
       {
       if (calleeSymbol->isInterface() )
@@ -177,7 +182,9 @@ TR_CallSite* TR_CallSite::create(TR::TreeTop* callNodeTreeTop,
                               callNode->getByteCodeInfo(),
                               comp,
                               depth,
-                              allConsts);
+                              allConsts,
+                              comp->retainedMethods(),
+                              wasRefinedFromKnownObject);
          }
       else
          {
@@ -200,7 +207,9 @@ TR_CallSite* TR_CallSite::create(TR::TreeTop* callNodeTreeTop,
                      callNode->getByteCodeInfo(),
                      comp,
                      depth,
-                     allConsts) ;
+                     allConsts,
+                     comp->retainedMethods(),
+                     wasRefinedFromKnownObject);
             }
 
          if (calleeSymbol->getResolvedMethodSymbol() && calleeSymbol->getResolvedMethodSymbol()->getRecognizedMethod() == TR::java_lang_invoke_MethodHandle_invokeExact)
@@ -220,7 +229,9 @@ TR_CallSite* TR_CallSite::create(TR::TreeTop* callNodeTreeTop,
                   callNode->getByteCodeInfo(),
                   comp,
                   depth,
-                  allConsts) ;
+                  allConsts,
+                  comp->retainedMethods(),
+                  wasRefinedFromKnownObject);
             }
 
          return new (trMemory, kind) TR_J9VirtualCallSite  (lCaller,
@@ -238,7 +249,9 @@ TR_CallSite* TR_CallSite::create(TR::TreeTop* callNodeTreeTop,
                               callNode->getByteCodeInfo(),
                               comp,
                               depth,
-                              allConsts) ;
+                              allConsts,
+                              comp->retainedMethods(),
+                              wasRefinedFromKnownObject);
 
          }
       }
@@ -258,7 +271,9 @@ TR_CallSite* TR_CallSite::create(TR::TreeTop* callNodeTreeTop,
                               callNode->getByteCodeInfo(),
                               comp,
                               depth,
-                              allConsts) ;
+                              allConsts,
+                              comp->retainedMethods(),
+                              wasRefinedFromKnownObject);
 
    }
 
