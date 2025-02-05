@@ -170,6 +170,7 @@ In the end code generators perform binary encoding to write the appropriate bits
   * [Dynamic Loop Transfer (DLT) (OpenJ9)](https://github.com/eclipse-openj9/openj9/issues/12505)
   * Stack Walker
   * [J9JITExceptionTable (OpenJ9)](runtime/J9JITExceptionTable.md)
+  * [Bootstrap (OpenJ9)](runtime/Bootstrap.md)
 </details>
 
 * <details><summary><b>8. Memory</b></summary>
