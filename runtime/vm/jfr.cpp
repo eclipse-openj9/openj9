@@ -1127,12 +1127,15 @@ jfrSamplingThreadProc(void *entryArg)
 jboolean
 setJFRRecordingFileName(J9JavaVM *vm, char *fileName)
 {
-	UDATA defaultFileNameLen = strlen(DEFAULT_JFR_FILE_NAME);
-	if ((defaultFileNameLen != strlen(vm->jfrState.jfrFileName))
-	|| (0 != strncmp(DEFAULT_JFR_FILE_NAME, vm->jfrState.jfrFileName, defaultFileNameLen))
-	) {
-		PORT_ACCESS_FROM_JAVAVM(vm);
-		j9mem_free_memory(vm->jfrState.jfrFileName);
+	if (NULL != vm->jfrState.jfrFileName) {
+		UDATA defaultFileNameLen = strlen(DEFAULT_JFR_FILE_NAME);
+		const char *jfrFileName = vm->jfrState.jfrFileName;
+		if ((defaultFileNameLen != strlen(jfrFileName))
+				|| (0 != strncmp(DEFAULT_JFR_FILE_NAME, jfrFileName, defaultFileNameLen))
+		) {
+			PORT_ACCESS_FROM_JAVAVM(vm);
+			j9mem_free_memory(vm->jfrState.jfrFileName);
+		}
 	}
 	vm->jfrState.jfrFileName = fileName;
 	VM_JFRWriter::closeJFRFile(vm);

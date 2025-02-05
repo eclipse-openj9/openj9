@@ -448,35 +448,33 @@ public class DiagnosticUtils {
 
 	private static DiagnosticProperties doJFR(String diagnosticCommand) {
 		DiagnosticProperties result = null;
-
 		// split the command and arguments
 		String[] parts = diagnosticCommand.split(DIAGNOSTICS_OPTION_SEPARATOR);
 		IPC.logMessage("doJFR: ", diagnosticCommand);
-
 		// ensure there's at least one part for the command
 		if (parts.length == 0) {
 			return DiagnosticProperties.makeErrorProperties("Error: No JFR command specified");
 		}
-
 		String command = parts[0].trim();
 		String[] parameters = Arrays.copyOfRange(parts, 1, parts.length);
-
 		String fileName = parseStringParameter("filename", parameters, null);
 		IPC.logMessage("doJFR: filename = ", fileName);
-		boolean setFileName = (fileName != null) && !fileName.isEmpty();
-		if (setFileName) {
-			if (!VM.setJFRRecordingFileName(fileName)) {
-				return DiagnosticProperties.makeErrorProperties("setJFRRecordingFileName failed");
-			} else {
-				jfrRecordingFileName = fileName;
-			}
-		}
 
 		try {
 			if (command.equalsIgnoreCase(DIAGNOSTICS_JFR_START)) {
 				if (VM.isJFRRecordingStarted()) {
 					result = DiagnosticProperties.makeErrorProperties("One JFR recording is in progress [" + jfrRecordingFileName + "], only one recording is allowed at a time.");
 				} else {
+					// only JFR.start command is allowed to change the recording filename
+					boolean setFileName = (fileName != null) && !fileName.isEmpty();
+					if (setFileName) {
+						// the recording filename should be set before VM.startJFR() which invokes JFRWriter:openJFRFile()
+						if (!VM.setJFRRecordingFileName(fileName)) {
+							return DiagnosticProperties.makeErrorProperties("setJFRRecordingFileName() failed");
+						} else {
+							jfrRecordingFileName = fileName;
+						}
+					}
 					VM.startJFR();
 					long duration = parseTimeParameter("duration", parameters);
 					IPC.logMessage("doJFR: duration = " + duration);
