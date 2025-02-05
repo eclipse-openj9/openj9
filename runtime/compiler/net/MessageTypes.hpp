@@ -294,6 +294,10 @@ enum MessageType : uint16_t
    AOTCacheMap_request,
    AOTCacheMap_reply,
 
+   RetainedMethodSet_createMirror,
+   RetainedMethodSet_scan,
+   RetainedMethodSet_keepalive,
+   RetainedMethodSet_bond,
 
    MessageType_MAXTYPE
    };

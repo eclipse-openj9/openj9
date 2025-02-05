@@ -23,6 +23,7 @@
 #include "env/CHTable.hpp"
 #include "env/JITServerPersistentCHTable.hpp"
 #include "env/j9methodServer.hpp"
+#include "env/J9RetainedMethodSet.hpp"
 #include "infra/List.hpp"                      // for TR::list
 #include "compile/VirtualGuard.hpp"            // for TR_VirtualGuard
 #include "il/SymbolReference.hpp"              // for SymbolReference
@@ -100,11 +101,20 @@ bool JITClientCHTableCommit(
    FlatClassExtendCheck &compClassesThatShouldNotBeNewlyExtended = std::get<6>(data);
    std::vector<TR_OpaqueClassBlock*> &classesForOSRRedefinition = std::get<7>(data);
    std::vector<TR_OpaqueClassBlock*> &classesForStaticFinalFieldModification = std::get<8>(data);
-   uint8_t *serverStartPC = std::get<9>(data);
+   auto retainedMethods = (J9::RetainedMethodSet*)std::get<9>(data);
+   uint8_t *serverStartPC = std::get<10>(data);
    uint8_t *startPC = (uint8_t*) metaData->startPC;
 
-   if (vguards.empty() && sideEffectPatchSites.empty() && preXMethods.empty() && classes.empty() && classesThatShouldNotBeNewlyExtended.empty())
+   TR_ResolvedMethod *bondMethod = NULL;
+   if (vguards.empty()
+       && sideEffectPatchSites.empty()
+       && preXMethods.empty()
+       && classes.empty()
+       && classesThatShouldNotBeNewlyExtended.empty()
+       && (retainedMethods == NULL || !retainedMethods->bondMethods().next(&bondMethod)))
+      {
       return true;
+      }
 
    cleanupNewlyExtendedInfo(comp, classesThatShouldNotBeNewlyExtended);
    if (comp->getFailCHTableCommit())
@@ -198,6 +208,23 @@ bool JITClientCHTableCommit(
 
       if (invalidAssumption) return false;
       } //  if (classesThatShouldNotBeNewlyExtended)
+
+   // Invalidate the body and recompile if any inlined method is unloaded.
+   if (retainedMethods != NULL)
+      {
+      auto bondIter = retainedMethods->bondMethods();
+      while (bondIter.next(&bondMethod))
+         {
+         TR_ClassUnloadRecompile::make(
+            comp->fe(),
+            comp->trPersistentMemory(),
+            bondMethod->containingClass(),
+            startPC,
+            comp->getMetadataAssumptionList());
+
+         comp->setHasClassUnloadAssumptions();
+         }
+      }
 
    // Check if the assumptions for static final field are still valid
    // Returning false will cause CHTable opts to be disabled in the next compilation of this method,
