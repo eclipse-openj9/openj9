@@ -1420,11 +1420,13 @@ InterpreterEmulator::visitInvokedynamic()
       if (_currentCallMethod->numberOfExplicitParameters() > 0 && _currentCallMethod->numberOfExplicitParameters() <= _pca.getNumPrevConstArgs(_currentCallMethod->numberOfExplicitParameters()))
          allconsts = true;
 
+      OMR::RetainedMethodSet *retainedMethods = _calltarget->_retainedMethods;
+      bool wasRefinedFromKnownObject = false;
       TR_CallSite *callsite = new (comp()->trHeapMemory()) TR_J9MethodHandleCallSite(_calltarget->_calleeMethod, callNodeTreeTop,   parent,
                                                                         callNode, interfaceMethod, _currentCallMethod->classOfMethod(),
                                                                         -1, -1, _currentCallMethod,
                                                                         resolvedSymbol, isIndirectCall, isInterface, *_newBCInfo, comp(),
-                                                                        _recursionDepth, allconsts);
+                                                                        _recursionDepth, allconsts, retainedMethods, wasRefinedFromKnownObject);
 
       findTargetAndUpdateInfoForCallsite(callsite);
       }
@@ -1469,11 +1471,14 @@ InterpreterEmulator::updateKnotAndCreateCallSiteUsingInvokeCacheArray(TR_Resolve
    bool allconsts = false;
    if (targetMethod->numberOfExplicitParameters() > 0 && targetMethod->numberOfExplicitParameters() <= _pca.getNumPrevConstArgs(targetMethod->numberOfExplicitParameters()))
          allconsts = true;
+
+   OMR::RetainedMethodSet *retainedMethods = _calltarget->_retainedMethods;
+   bool wasRefinedFromKnownObject = false;
    TR_CallSite *callsite = new (comp()->trHeapMemory()) TR_DirectCallSite(_calltarget->_calleeMethod, callNodeTreeTop,   parent,
                                                                         callNode, interfaceMethod, targetMethod->classOfMethod(),
                                                                         -1, cpIndex, targetMethod,
                                                                         resolvedSymbol, isIndirectCall, isInterface, *_newBCInfo, comp(),
-                                                                        _recursionDepth, allconsts);
+                                                                        _recursionDepth, allconsts, retainedMethods, wasRefinedFromKnownObject);
 
    findTargetAndUpdateInfoForCallsite(callsite, idx);
    }
@@ -1577,8 +1582,13 @@ InterpreterEmulator::visitInvokevirtual()
    else if (_currentCallMethod)
       {
       bool isIndirectCall = !_currentCallMethod->isFinal() && !_currentCallMethod->isPrivate();
+      bool wasRefinedFromKnownObject = false;
       if (_iteratorWithState)
+         {
          refineResolvedCalleeForInvokevirtual(_currentCallMethod, isIndirectCall);
+         wasRefinedFromKnownObject =
+            _currentCallMethod != _currentCallMethodUnrefined;
+         }
 
       // Customization logic is not needed in customized thunk or in inlining
       // with known MethodHandle object
@@ -1610,6 +1620,7 @@ InterpreterEmulator::visitInvokevirtual()
       TR::Node *parent = 0;
       TR::Node *callNode = 0;
       TR::ResolvedMethodSymbol *resolvedSymbol = 0;
+      OMR::RetainedMethodSet *retainedMethods = _calltarget->_retainedMethods;
 
       Operand *receiver = NULL;
       if (_iteratorWithState)
@@ -1621,7 +1632,7 @@ InterpreterEmulator::visitInvokevirtual()
                                                                         callNode, interfaceMethod, _currentCallMethod->classOfMethod(),
                                                                         -1, cpIndex, _currentCallMethod,
                                                                         resolvedSymbol, isIndirectCall, isInterface, *_newBCInfo, comp(),
-                                                                        _recursionDepth, allconsts);
+                                                                        _recursionDepth, allconsts, retainedMethods, wasRefinedFromKnownObject);
          }
       else if (_currentCallMethod->getRecognizedMethod() == TR::java_lang_invoke_MethodHandle_invokeExact
                || (_currentCallMethod->getRecognizedMethod() == TR::java_lang_invoke_MethodHandle_invokeBasic
@@ -1631,7 +1642,7 @@ InterpreterEmulator::visitInvokevirtual()
                                                       callNode, interfaceMethod, _currentCallMethod->classOfMethod(),
                                                       -1, cpIndex, _currentCallMethod,
                                                       resolvedSymbol, isIndirectCall, isInterface, *_newBCInfo, comp(),
-                                                      _recursionDepth, allconsts);
+                                                      _recursionDepth, allconsts, retainedMethods, wasRefinedFromKnownObject);
          if (_currentCallMethod->getRecognizedMethod() == TR::java_lang_invoke_MethodHandle_invokeBasic)
             {
             // Set the MCS reference location so that TR_J9MutableCallSite
@@ -1661,7 +1672,7 @@ InterpreterEmulator::visitInvokevirtual()
                                                                         callNode, interfaceMethod, _currentCallMethod->classOfMethod(),
                                                                         (int32_t) _currentCallMethod->virtualCallSelector(), cpIndex, _currentCallMethod,
                                                                         resolvedSymbol, isIndirectCall, isInterface, *_newBCInfo, comp(),
-                                                                        _recursionDepth, allconsts);
+                                                                        _recursionDepth, allconsts, retainedMethods, wasRefinedFromKnownObject);
 
          }
       else
@@ -1670,7 +1681,7 @@ InterpreterEmulator::visitInvokevirtual()
                                                                         callNode, interfaceMethod, _currentCallMethod->classOfMethod(),
                                                                         -1, cpIndex, _currentCallMethod,
                                                                         resolvedSymbol, isIndirectCall, isInterface, *_newBCInfo, comp(),
-                                                                        _recursionDepth, allconsts);
+                                                                        _recursionDepth, allconsts, retainedMethods, wasRefinedFromKnownObject);
 
          }
 
@@ -1706,10 +1717,12 @@ InterpreterEmulator::visitInvokespecial()
       TR::Node *parent = 0;
       TR::Node *callNode = 0;
       TR::ResolvedMethodSymbol *resolvedSymbol = 0;
+      OMR::RetainedMethodSet *retainedMethods = _calltarget->_retainedMethods;
+      bool wasRefinedFromKnownObject = false;
       TR_CallSite *callsite = new (comp()->trHeapMemory()) TR_DirectCallSite(_calltarget->_calleeMethod, callNodeTreeTop, parent,
                                                                         callNode, interfaceMethod, _currentCallMethod->classOfMethod(), -1, cpIndex,
                                                                         _currentCallMethod, resolvedSymbol, isIndirectCall, isInterface, *_newBCInfo, comp(),
-                                                                        _recursionDepth, allconsts);
+                                                                        _recursionDepth, allconsts, retainedMethods, wasRefinedFromKnownObject);
       findTargetAndUpdateInfoForCallsite(callsite);
       }
    }
@@ -1737,6 +1750,7 @@ InterpreterEmulator::visitInvokestatic()
       TR::KnownObjectTable::Index mcsIndex = TR::KnownObjectTable::UNKNOWN;
       TR_OpaqueClassBlock *receiverClass = NULL;
       bool isIndirectCall = false;
+      bool wasRefinedFromKnownObject = false;
       if (_iteratorWithState)
          {
          refineResolvedCalleeForInvokestatic(
@@ -1745,6 +1759,9 @@ InterpreterEmulator::visitInvokestatic()
             mhIndex,
             isIndirectCall,
             receiverClass);
+
+         wasRefinedFromKnownObject =
+            _currentCallMethod != _currentCallMethodUnrefined;
          }
 
       if (receiverClass == NULL)
@@ -1757,6 +1774,7 @@ InterpreterEmulator::visitInvokestatic()
       TR::Node *parent = 0;
       TR::Node *callNode = 0;
       TR::ResolvedMethodSymbol *resolvedSymbol = 0;
+      OMR::RetainedMethodSet *retainedMethods = _calltarget->_retainedMethods;
 
       if (_currentCallMethod->convertToMethod()->isArchetypeSpecimen() &&
             _currentCallMethod->getMethodHandleLocation() &&
@@ -1766,7 +1784,7 @@ InterpreterEmulator::visitInvokestatic()
                callNode, interfaceMethod, receiverClass,
                -1, cpIndex, _currentCallMethod,
                resolvedSymbol, isIndirectCall, isInterface, *_newBCInfo, comp(),
-               _recursionDepth, allconsts);
+               _recursionDepth, allconsts, retainedMethods, wasRefinedFromKnownObject);
          }
       else if (_currentCallMethod->convertToMethod()->isArchetypeSpecimen() &&
             _currentCallMethod->getMethodHandleLocation() &&
@@ -1776,7 +1794,7 @@ InterpreterEmulator::visitInvokestatic()
                callNode, interfaceMethod, receiverClass,
                -1, cpIndex, _currentCallMethod,
                resolvedSymbol, isIndirectCall, isInterface, *_newBCInfo, comp(),
-               _recursionDepth, allconsts);
+               _recursionDepth, allconsts, retainedMethods, wasRefinedFromKnownObject);
          if (mcsIndex != TR::KnownObjectTable::UNKNOWN)
             {
             if (comp()->getKnownObjectTable())
@@ -1791,15 +1809,16 @@ InterpreterEmulator::visitInvokestatic()
                _calltarget->_calleeMethod, callNodeTreeTop, parent, callNode,
                interfaceMethod, receiverClass, (int32_t) _currentCallMethod->virtualCallSelector(), noCPIndex,
                _currentCallMethod, resolvedSymbol, isIndirectCall, isInterface,
-               *_newBCInfo, comp(), _recursionDepth, allconsts);
+               *_newBCInfo, comp(), _recursionDepth, allconsts, retainedMethods, wasRefinedFromKnownObject);
          }
       else
          {
          callsite = new (comp()->trHeapMemory()) TR_DirectCallSite(_calltarget->_calleeMethod, callNodeTreeTop, parent, callNode, interfaceMethod,
                receiverClass, -1, cpIndex, _currentCallMethod, resolvedSymbol,
                isIndirectCall, isInterface, *_newBCInfo, comp(),
-               _recursionDepth, allconsts);
+               _recursionDepth, allconsts, retainedMethods, wasRefinedFromKnownObject);
          }
+
       findTargetAndUpdateInfoForCallsite(callsite);
       }
 
@@ -1841,6 +1860,8 @@ InterpreterEmulator::visitInvokeinterface()
    if (explicitParams > 0 && explicitParams <= _pca.getNumPrevConstArgs(explicitParams))
       allconsts = true;
 
+   OMR::RetainedMethodSet *retainedMethods = _calltarget->_retainedMethods;
+   bool wasRefinedFromKnownObject = false;
    TR_CallSite *callsite = NULL;
    if (isInterface)
       {
@@ -1849,7 +1870,7 @@ InterpreterEmulator::visitInvokeinterface()
          _calltarget->_calleeMethod, callNodeTreeTop, parent, callNode,
          interfaceMethod, thisClass, -1, cpIndex, _currentCallMethod,
          resolvedSymbol, isIndirectCall, isInterface, *_newBCInfo,
-         comp(), _recursionDepth, allconsts);
+         comp(), _recursionDepth, allconsts, retainedMethods, wasRefinedFromKnownObject);
       }
    else if (isIndirectCall)
       {
@@ -1857,7 +1878,7 @@ InterpreterEmulator::visitInvokeinterface()
          _calltarget->_calleeMethod, callNodeTreeTop, parent, callNode,
          interfaceMethod, _currentCallMethod->classOfMethod(), (int32_t) _currentCallMethod->virtualCallSelector(), cpIndex,
          _currentCallMethod, resolvedSymbol, isIndirectCall, isInterface,
-         *_newBCInfo, comp(), _recursionDepth, allconsts);
+         *_newBCInfo, comp(), _recursionDepth, allconsts, retainedMethods, wasRefinedFromKnownObject);
       }
    else
       {
@@ -1865,7 +1886,7 @@ InterpreterEmulator::visitInvokeinterface()
          _calltarget->_calleeMethod, callNodeTreeTop, parent, callNode,
          interfaceMethod, _currentCallMethod->classOfMethod(), -1, cpIndex,
          _currentCallMethod, resolvedSymbol, isIndirectCall, isInterface,
-         *_newBCInfo, comp(), _recursionDepth, allconsts);
+         *_newBCInfo, comp(), _recursionDepth, allconsts, retainedMethods, wasRefinedFromKnownObject);
       }
 
    if(tracer()->debugLevel())
