@@ -331,6 +331,8 @@ JVM_DisableCompiler(jint arg0, jint arg1)
 	return NULL;
 }
 
+#if (JAVA_SPEC_VERSION == 8) && defined(WIN32)
+/* Do not remove: this method is required by Windows IBM Java 8 builds. */
 static jclass
 java_lang_J9VMInternals(JNIEnv* env)
 {
@@ -354,6 +356,7 @@ java_lang_J9VMInternals(JNIEnv* env)
 	return cached;
 }
 
+/* Do not remove: this method is required by Windows IBM Java 8 builds. */
 static jmethodID
 java_lang_J9VMInternals_doPrivileged(JNIEnv* env)
 {
@@ -367,6 +370,7 @@ java_lang_J9VMInternals_doPrivileged(JNIEnv* env)
 	return cached;
 }
 
+/* Do not remove: this method is required by Windows IBM Java 8 builds. */
 static jmethodID
 java_lang_J9VMInternals_doPrivilegedWithException(JNIEnv* env)
 {
@@ -380,7 +384,6 @@ java_lang_J9VMInternals_doPrivilegedWithException(JNIEnv* env)
 	return cached;
 }
 
-#if (JAVA_SPEC_VERSION == 8) && defined(WIN32)
 /* Do not remove: this method is required by Windows IBM Java 8 builds. */
 jobject JNICALL
 JVM_DoPrivileged(JNIEnv* env, jobject java_security_AccessController, jobject action, jboolean unknown, jboolean isExceptionAction)
