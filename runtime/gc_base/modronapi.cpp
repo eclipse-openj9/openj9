@@ -840,6 +840,92 @@ j9gc_get_maximum_heap_size(J9JavaVM *javaVM)
 }
 
 /**
+ * API to return the minimum young generation memory size
+ * for all GC policies that apply:
+ * - Nursery minimum size for Gencon
+ * - Eden minimum size for Balanced
+ * - 0 for all other policies
+ */
+UDATA
+j9gc_get_minimum_young_generation_size(J9JavaVM *javaVM)
+{
+	MM_GCExtensions *ext = MM_GCExtensions::getExtensions(javaVM);
+	OMR_VM *omrVM = javaVM->omrVM;
+	UDATA result = 0;
+
+	switch (omrVM->gcPolicy) {
+	case OMR_GC_POLICY_OPTTHRUPUT:
+		break;
+
+	case OMR_GC_POLICY_OPTAVGPAUSE:
+		break;
+
+	case OMR_GC_POLICY_GENCON:
+		result = ext->minNewSpaceSize;
+		break;
+
+	case OMR_GC_POLICY_METRONOME:
+		break;
+
+	case OMR_GC_POLICY_BALANCED:
+		result = ext->tarokIdealEdenMinimumBytes;
+		break;
+
+	case OMR_GC_POLICY_NOGC:
+		break;
+
+	default:
+		/* Undefined or unknown GC policy */
+		Assert_MM_unreachable();
+		break;
+	}
+	return result;
+}
+
+/**
+ * API to return the maximum young generation memory size
+ * for all GC policies that apply:
+ * - Nursery maximum size for Gencon
+ * - Eden maximum size for Balanced
+ * - 0 for all other policies
+ */
+UDATA
+j9gc_get_maximum_young_generation_size(J9JavaVM *javaVM)
+{
+	MM_GCExtensions *ext = MM_GCExtensions::getExtensions(javaVM);
+	OMR_VM *omrVM = javaVM->omrVM;
+	UDATA result = 0;
+
+	switch (omrVM->gcPolicy) {
+	case OMR_GC_POLICY_OPTTHRUPUT:
+		break;
+
+	case OMR_GC_POLICY_OPTAVGPAUSE:
+		break;
+
+	case OMR_GC_POLICY_GENCON:
+		result = ext->maxNewSpaceSize;
+		break;
+
+	case OMR_GC_POLICY_METRONOME:
+		break;
+
+	case OMR_GC_POLICY_BALANCED:
+		result = ext->tarokIdealEdenMaximumBytes;
+		break;
+
+	case OMR_GC_POLICY_NOGC:
+		break;
+
+	default:
+		/* Undefined or unknown GC policy */
+		Assert_MM_unreachable();
+		break;
+	}
+	return result;
+}
+
+/**
  * API to return a string representing the current GC mode.
  * Examples of the string returned are "optthruput", and "gencon".
  */
