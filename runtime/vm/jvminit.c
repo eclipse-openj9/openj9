@@ -763,6 +763,11 @@ freeJavaVM(J9JavaVM * vm)
 	}
 #endif
 
+#if defined(J9VM_OPT_JFR)
+	j9mem_free_memory(vm->jfrState.jfrFileName);
+	vm->jfrState.jfrFileName = NULL;
+#endif /* defined(J9VM_OPT_JFR) */
+
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH)
 	shutDownExclusiveAccess(vm);
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH */
@@ -1181,6 +1186,7 @@ initializeJavaVM(void * osMainThread, J9JavaVM ** vmPtr, J9CreateJavaVMParams *c
 	vm->threadDllHandle = createParams->threadDllHandle;
 #if defined(J9VM_OPT_JFR)
 	vm->loadedClassCount = 0;
+	vm->jfrState.blobFileDescriptor = -1;
 #endif /* defined(J9VM_OPT_JFR) */
 
 #if JAVA_SPEC_VERSION >= 19
