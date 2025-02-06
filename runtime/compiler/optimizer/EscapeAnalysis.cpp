@@ -242,10 +242,6 @@ int32_t TR_EscapeAnalysis::perform()
    if (comp()->incompleteOptimizerSupportForReadWriteBarriers())
       return 0;
 
-   static char *doESCNonQuiet = feGetEnv("TR_ESCAPENONQUIET");
-   if (doESCNonQuiet && !comp()->getLoggingEnabled())
-      return 0;
-
    OMR::Logger *log = comp()->log();
 
    int32_t nodeCount = 0;

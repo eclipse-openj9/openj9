@@ -640,7 +640,7 @@ TR_J9InlinerPolicy::createTempsForUnsafePutGet(TR::Node*& unsafeAddress,
                       1, 1, unsafeAddress, newSymbolReference);
    TR::TreeTop *storeTree = TR::TreeTop::create(comp(), storeNode);
 
-   if (tracer()->debugLevel() && comp()->getLoggingEnabled())
+   if (tracer()->debugLevel())
       {
       debugTrace(tracer(), "\tIn createTempsForUnsafePutGet.  inserting store Tree before callNodeTT:\n");
       comp()->getDebug()->print(log, storeTree);
@@ -666,7 +666,7 @@ TR_J9InlinerPolicy::createTempsForUnsafePutGet(TR::Node*& unsafeAddress,
                                1, 1, offset, newSymbolReference);
    storeTree = TR::TreeTop::create(comp(), storeNode);
 
-   if (tracer()->debugLevel() && comp()->getLoggingEnabled())
+   if (tracer()->debugLevel())
       {
       log->prints("\tIn createTempsForUnsafePutGet.  inserting store Tree before callNodeTT 2:\n");
       comp()->getDebug()->print(log, storeTree);
@@ -1485,7 +1485,7 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
       }
 
    TR::Node * unsafeAddress = createUnsafeAddressWithOffset(unsafeCall);
-   if (tracer()->debugLevel() && comp()->getLoggingEnabled())
+   if (tracer()->debugLevel())
       {
       debugTrace(tracer(), "\t After createUnsafeAddressWithOffset, unsafeAddress = %p : \n", unsafeAddress);
       TR::TreeTop *tmpUnsafeAddressTT = TR::TreeTop::create(comp(), unsafeAddress);
@@ -1524,7 +1524,7 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
 
    callNodeTreeTop->setNode(unsafeNode);
 
-   if (tracer()->debugLevel() && comp()->getLoggingEnabled())
+   if (tracer()->debugLevel())
       {
       debugTrace(tracer(), "\t After callNodeTreeTop setNode callNodeTreeTop dump:\n");
       debug->print(log, callNodeTreeTop);
@@ -1534,7 +1534,7 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
 
    TR::TreeTop* directAccessTreeTop = genDirectAccessCodeForUnsafeGetPut(unsafeNode, false, false);
 
-   if (tracer()->debugLevel() && comp()->getLoggingEnabled())
+   if (tracer()->debugLevel())
       {
       debugTrace(tracer(), "\t After genDirectAccessCodeForUnsafeGetPut, directAccessTreeTop dump:\n");
       debug->print(log, directAccessTreeTop);
@@ -1579,7 +1579,7 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
 
    TR::TreeTop* indirectAccessTreeTop = genIndirectAccessCodeForUnsafeGetPut(callNodeTreeTop->getNode(), unsafeAddress);
 
-   if (tracer()->debugLevel() && comp()->getLoggingEnabled())
+   if (tracer()->debugLevel())
       {
       debugTrace(tracer(), "\t After genIndirectAccessCodeForUnsafeGetPut, indirectAccessTreeTop dump:\n");
       debug->print(log, indirectAccessTreeTop);

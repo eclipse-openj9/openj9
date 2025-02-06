@@ -1935,7 +1935,7 @@ TR_IProfiler::getSearchPCFromMethodAndBCIndex(TR_OpaqueMethodBlock *method, uint
 
    uintptr_t pc = getSearchPCFromMethodAndBCIndex(method, byteCodeIndex);
    // Diagnostic in case of error
-   if (pc == 0 && comp->getLoggingEnabled())
+   if (pc == 0 && traceIProfiling)
       {
       OMR::Logger *log = comp->log();
       TR_Stack<int32_t> & stack = comp->getInlinedCallStack();

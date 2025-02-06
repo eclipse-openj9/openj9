@@ -57,7 +57,7 @@ class AOTCacheWellKnownClassesRecord;
          if (!(nonfatal) && ::TR::SymbolValidationManager::assertionsAreFatal())                \
             ::TR::fatal_assertion(__FILE__, __LINE__, condStr, "" format "", ##__VA_ARGS__);    \
          else                                                                                   \
-            if (::TR::comp()->getLoggingEnabled())                                              \
+            if (::TR::comp()->log()->isEnabled_DEPRECATED())                                              \
                ::TR::comp()->log()->printf("" format "\n", ##__VA_ARGS__);                      \
                                                                                                 \
          ::TR::comp()->failCompilation< ::J9::AOTSymbolValidationManagerFailure>(               \

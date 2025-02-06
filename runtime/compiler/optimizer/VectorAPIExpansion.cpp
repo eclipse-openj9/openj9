@@ -736,7 +736,7 @@ TR_VectorAPIExpansion::findAllAliases(int32_t classId, int32_t id,
       return;
       }
 
-   if (_trace && comp()->getLoggingEnabled())
+   if (_trace)
       {
       log->printf("Iterating through %s aliases for #%d:\n", tempAliases ? "temp" : "whole", id);
       (_aliasTable[id].*aliasesField)->print(log, comp());

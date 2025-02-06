@@ -302,7 +302,7 @@ ChangeAlignmentOfRegion(TR_CISCTransformer *trans)
    // Move the region ("from" - "to") to the last
    trans->moveCISCNodes(from, to, NULL);
 
-   if (disptrace && changed && comp->getLoggingEnabled())
+   if (disptrace && changed)
       {
       log->prints("After ChangeAlignmentOfRegion\n");
       T->dump(log, comp);
@@ -532,7 +532,7 @@ reorderTargetNodesInBB(TR_CISCTransformer *trans)
          }
       if (!anyChanged) break;
       }
-   if (disptrace && changed && comp->getLoggingEnabled())
+   if (disptrace && changed)
       {
       log->prints("After reorderTargetNodesInBB\n");
       T->dump(log, comp);
