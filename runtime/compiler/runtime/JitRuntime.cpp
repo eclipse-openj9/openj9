@@ -120,8 +120,8 @@ void setDllSlip(const char *CodeStart, const char *CodeEnd, const char *dllName,
 
    TR_ASSERT(comp, "Logging requires a compilation object");
 
-   bool trace = comp->getLoggingEnabled();
    OMR::Logger *log = comp->log();
+   bool trace = log->isEnabled_DEPRECATED();
 
    logprintf(trace, log, "code start 0x%016p , code end 0x%016p ,size = %d\n", CodeStart, CodeEnd, CodeStart - CodeEnd);
 

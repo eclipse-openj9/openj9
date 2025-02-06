@@ -4293,7 +4293,7 @@ J9::CodeGenerator::allocateLinkageRegisters()
          }
       }
 
-   if (comp->getOption(TR_TraceOptDetails) && comp->getLoggingEnabled())
+   if (comp->getOption(TR_TraceOptDetails))
       {
       dumpOptDetails(comp, "  Initial globalRegsWithRegLoad: ");
       self()->getDebug()->print(log, &globalRegsWithRegLoad);
@@ -4314,7 +4314,7 @@ J9::CodeGenerator::allocateLinkageRegisters()
       if (node->getOpCode().isStoreDirect() && node->getSymbol()->isParm())
          {
          killedParms.set(node->getSymbol()->getParmSymbol()->getOrdinal());
-         if (comp->getOption(TR_TraceOptDetails) && comp->getLoggingEnabled())
+         if (comp->getOption(TR_TraceOptDetails))
             {
             dumpOptDetails(comp, "  Found store %s\n  killedParms is now ", comp->getDebug()->getName(node));
             self()->getDebug()->print(log, &killedParms);
@@ -4418,7 +4418,7 @@ J9::CodeGenerator::changeParmLoadsToRegLoads(TR::Node *node, TR::Node **regLoads
    if (node->getOpCode().isLoadAddr() && node->getOpCode().hasSymbolReference() && node->getSymbol()->isParm())
       {
       killedParms.set(node->getSymbol()->getParmSymbol()->getOrdinal());
-      if (comp->getOption(TR_TraceOptDetails) && comp->getLoggingEnabled())
+      if (comp->getOption(TR_TraceOptDetails))
          {
          dumpOptDetails(comp, "  Found loadaddr %s\n  killedParms is now ", comp->getDebug()->getName(node));
          self()->getDebug()->print(comp->log(), &killedParms);
