@@ -160,11 +160,12 @@ public final class Class<T> implements java.io.Serializable, GenericDeclaration,
 /*[ENDIF] JAVA_SPEC_VERSION >= 12 */
 {
 	private static final long serialVersionUID = 3206093459760846163L;
-	private static ProtectionDomain AllPermissionsPD;
 	private static final int SYNTHETIC = 0x1000;
 	private static final int ANNOTATION = 0x2000;
 	private static final int ENUM = 0x4000;
 	private static final int MEMBER_INVALID_TYPE = -1;
+
+	private static volatile ProtectionDomain allPermissionsPD;
 
 /*[IF]*/
 	/**
@@ -2484,16 +2485,24 @@ ProtectionDomain getProtectionDomainInternal() {
 	if (result != null) {
 		return result;
 	}
-	if (AllPermissionsPD == null) {
+	if (allPermissionsPD == null) {
 		allocateAllPermissionsPD();
 	}
-	return AllPermissionsPD;
+	return allPermissionsPD;
 }
 
 private void allocateAllPermissionsPD() {
-	Permissions collection = new Permissions();
-	collection.add(SecurityConstants.ALL_PERMISSION);
-	AllPermissionsPD = new ProtectionDomain(null, collection);
+	/* Synchronization to ensure safe initialization and safe publication of
+	 * allPermissionsPD. This addresses the locking contention on allPermissionsPD
+	 * in getProtectionDomain().
+	 */
+	synchronized(this) {
+		if (allPermissionsPD == null) {
+			Permissions collection = new Permissions();
+			collection.add(SecurityConstants.ALL_PERMISSION);
+			allPermissionsPD = new ProtectionDomain(null, collection);
+		}
+	}
 }
 
 /**
