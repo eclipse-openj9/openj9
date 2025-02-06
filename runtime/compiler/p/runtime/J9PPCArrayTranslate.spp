@@ -680,18 +680,18 @@ __arrayTranslateTROT255:
 .L.__simple_TROT255:
 	cmpi            cr0, 0, r5, 0
 	beq             cr0, .L.__done_TROT255			! exit if done with input
+	addi            r3, r3, -1				! adjust so we can use lbzu
+	addi            r4, r4, -2				! adjust so we can use sthu
 .L.__residue_TROT255:
-      lbz             r6, 0(r3)
-      sth             r6, 0(r4)
-      addi            r3, r3, 1
-      addi            r4, r4, 2
-      addi            r5, r5, -1
-      cmpi            cr0, 0, r5, 0
-      bne             cr0, .L.__residue_TROT255
+	lbzu            r6, 1(r3)
+	sthu            r6, 2(r4)
+	addi            r5, r5, -1
+	cmpi            cr0, 0, r5, 0
+	bne             cr0, .L.__residue_TROT255
 
 .L.__done_TROT255:
 	laddr           r3, -ALen(J9SP)					! Return number of elements processed.
-    blr
+	blr
 
 #ifdef AIXPPC
         .machine "pop"
