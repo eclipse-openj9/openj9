@@ -165,8 +165,6 @@ public final class Class<T> implements java.io.Serializable, GenericDeclaration,
 	private static final int ENUM = 0x4000;
 	private static final int MEMBER_INVALID_TYPE = -1;
 
-	private static volatile ProtectionDomain allPermissionsPD;
-
 /*[IF]*/
 	/**
 	 * It is important that these remain static final
@@ -2485,23 +2483,16 @@ ProtectionDomain getProtectionDomainInternal() {
 	if (result != null) {
 		return result;
 	}
-	if (allPermissionsPD == null) {
-		allocateAllPermissionsPD();
-	}
-	return allPermissionsPD;
+	return AllPermissionsPDHolder.allPermissionsPD;
 }
 
-private void allocateAllPermissionsPD() {
-	/* Synchronization to ensure safe initialization and safe publication of
-	 * allPermissionsPD. This addresses the locking contention on allPermissionsPD
-	 * in getProtectionDomain().
-	 */
-	synchronized(this) {
-		if (allPermissionsPD == null) {
-			Permissions collection = new Permissions();
-			collection.add(SecurityConstants.ALL_PERMISSION);
-			allPermissionsPD = new ProtectionDomain(null, collection);
-		}
+private static final class AllPermissionsPDHolder {
+	static final ProtectionDomain allPermissionsPD;
+	private AllPermissionsPDHolder() {}
+	static {
+		Permissions collection = new Permissions();
+		collection.add(SecurityConstants.ALL_PERMISSION);
+		allPermissionsPD = new ProtectionDomain(null, collection);
 	}
 }
 
