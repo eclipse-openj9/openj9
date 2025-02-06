@@ -106,13 +106,6 @@ int32_t TR_NewInitialization::performAnalysis(bool doGlobalAnalysis)
    if (comp()->fej9()->tlhHasBeenCleared())
       return 0;
 
-   // Debug option to only do new initialization for methods that don't have
-   // the "quiet" option set in the limit file
-   //
-   static char *nonQuiet = feGetEnv("TR_NonQuietNew");
-   if (nonQuiet && !comp()->getLoggingEnabled())
-      return 0;
-
    if (trace())
       comp()->log()->prints("Starting Explicit Initialization for New\n");
 
