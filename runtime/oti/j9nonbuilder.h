@@ -4364,6 +4364,7 @@ typedef struct J9JITConfig {
 	void *serverAOTMethodSet;
 	UDATA serverAOTQueryThread;
 #endif /* defined(J9VM_OPT_JITSERVER) */
+	I_32 lowCodeCacheFreeSpace; /* bool set to 1 when the JIT detects a very low amount of free code cache space; never reset */
 } J9JITConfig;
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
