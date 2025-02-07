@@ -23,6 +23,75 @@
 #ifndef J9ACCESSBARRIERHELPERS_H
 #define J9ACCESSBARRIERHELPERS_H
 
+#if defined (J9VM_ENV_DATA64)
+#if (defined(__GNUC__) && (defined(J9HAMMER) || defined(S390)))
+/* Forcing non-inlining on GNU for X and Z, where inlining seems to create much register or code cache pressure within Bytecode Interpreter */
+__attribute__ ((noinline))
+#else /* (defined(__GNUC__) && (defined(J9HAMMER) || defined(S390))) */
+VMINLINE
+#endif /* (defined(__GNUC__) && (defined(J9HAMMER) || defined(S390))) */
+static UDATA j9javaArray_BA(J9VMThread *vmThread, J9IndexableObject *array, UDATA *index, U_8 elementSize)
+{
+	UDATA baseAddress = (UDATA)array;
+
+	if (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread)) {
+		baseAddress += sizeof(J9IndexableObjectContiguousCompressed);
+	} else {
+		baseAddress += sizeof(J9IndexableObjectContiguousFull);
+	}
+
+	if (J9IndexableObjectLayout_NoDataAddr_NoArraylet == vmThread->indexableObjectLayout) {
+		/* Standard GCs: nothing extra to do - just explicitly listed for clarity */
+	} else if (J9IndexableObjectLayout_DataAddr_NoArraylet == vmThread->indexableObjectLayout) {
+		/* Balanced Offheap; dereference dataAddr that is just after the (base) header */
+		baseAddress = *(UDATA *)baseAddress;
+	} else {
+		/* GCs that may have arraylet (Balanced arraylet or Metronome) - will recalculate baseAddress from scratch */
+		if (J9ISCONTIGUOUSARRAY(vmThread, array)) {
+			baseAddress = (UDATA)array + vmThread->contiguousIndexableHeaderSize;
+		} else {
+			fj9object_t *arrayoid = (fj9object_t *)((UDATA)array + vmThread->discontiguousIndexableHeaderSize);
+			/* While arrayletLeafSize is UDATA, the result of this division will fit into U_32 (simply because Java can't have more array elements) */
+			U_32 elementsPerLeaf = (U_32)(J9VMTHREAD_JAVAVM(vmThread)->arrayletLeafSize / elementSize);
+			U_32 leafIndex = ((U_32)*index) / elementsPerLeaf;
+			*index = ((U_32)*index) % elementsPerLeaf;
+
+			if (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread)) {
+				U_32 leafToken = *((U_32 *)arrayoid + leafIndex);
+				baseAddress = (UDATA)J9_CONVERT_POINTER_FROM_TOKEN__(vmThread, leafToken);
+			} else {
+				UDATA leafToken = *((UDATA *)arrayoid + leafIndex);
+				baseAddress = leafToken;
+			}
+		}
+	}
+
+
+	return baseAddress;
+}
+
+#define J9JAVAARRAY_C_EA(elemType)																					\
+VMINLINE static elemType *j9javaArray_##elemType##_EA(J9VMThread *vmThread, J9IndexableObject *array, UDATA index)	\
+{																													\
+	UDATA baseAddress = j9javaArray_BA(vmThread, array, &index, (U_8)sizeof(elemType));								\
+	/* Intentionally inlining this to treat sizeof value as an immediate value */									\
+	return (elemType *)(baseAddress + index * sizeof(elemType));													\
+} 																													\
+
+/* generate C bodies */
+
+J9JAVAARRAY_C_EA(I_8)
+J9JAVAARRAY_C_EA(U_8)
+J9JAVAARRAY_C_EA(I_16)
+J9JAVAARRAY_C_EA(U_16)
+J9JAVAARRAY_C_EA(I_32)
+J9JAVAARRAY_C_EA(U_32)
+J9JAVAARRAY_C_EA(I_64)
+J9JAVAARRAY_C_EA(U_64)
+J9JAVAARRAY_C_EA(IDATA)
+J9JAVAARRAY_C_EA(UDATA)
+#endif /* defined (J9VM_ENV_DATA64) */
+
 /**
  * These helpers could be written as macros (where the body of methods would be wrapped around oval parenthesis, which would mean that the last expression in the block
  * is return value of the block). However, it is not fully supported by ANSI, but only select C compilers, like GNU C: https://gcc.gnu.org/onlinedocs/gcc/Statement-Exprs.html).
