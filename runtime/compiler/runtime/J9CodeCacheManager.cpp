@@ -743,13 +743,15 @@ J9::CodeCacheManager::almostOutOfCodeCache()
 
    TR::CodeCacheConfig &config = self()->codeCacheConfig();
 
-   // If we can allocate another code cache we are fine
-   // Put common case first
+   // If we can allocate another code cache we are fine.
+   // Put common case first.
    if (self()->canAddNewCodeCache())
+      {
       return false;
+      }
    else
       {
-      // Check the space in the most current code cache
+      // Check the space in the most current code cache.
       bool foundSpace = false;
 
          {
@@ -767,6 +769,7 @@ J9::CodeCacheManager::almostOutOfCodeCache()
       if (!foundSpace)
          {
          _lowCodeCacheSpaceThresholdReached = true;   // Flag can be checked under debugger
+         _jitConfig->lowCodeCacheFreeSpace = 1;
          if (config.verbosePerformance())
             {
             TR_VerboseLog::writeLineLocked(TR_Vlog_CODECACHE,"Reached code cache space threshold. Disabling JIT profiling.");
