@@ -234,7 +234,37 @@ namespace JITServer
 {
 void *loadLibssl()
    {
-   void *result = NULL;
+   // We want to load libssl.so and get access to the functions inside.
+   // When libssl3 (or higher) is bundled with the JDK, we want to load that version
+   // in preference over the one present on the system. `dlopen` will do that because
+   // the RUNPATH for the JIT dll (from which `dlopen` is invoked) includes the
+   // "JDK/lib" path where libssl is bundled. However, as part of loading libssl3,
+   // `dlopen` will also attempt to load libcrypto3 (because it is a dependency).
+   // This is searched in the RPATH of the jitserver executable for a server,
+   // or in the RPATH of the java executable for a client. Currently, the jitserver
+   // executable does not include an RPATH, so libcrypto3 is searched on the system
+   // and this may fail on systems that do not have version 3 installed. This problem
+   // can be circumvented by performing an explicit `dlopen` for the crypto library,
+   // in which case the RUNPATH for the JIT is going to be used as search path.
+
+   // Library names for CryptoSSL 3, 1.1.1, 1.1.0, 1.0.2 and symbolic links
+   static const char * const cryptoLibNames[] =
+      {
+      "libcrypto.so.3",     // 3.x library name
+      "libcrypto.so.1.1",   // 1.1.x library name
+      "libcrypto.so.1.0.0", // 1.0.x library name
+      "libcrypto.so.10",    // 1.0.x library name on RHEL
+      "libcrypto.so"        // general symlink library name
+      };
+
+   int numOfLibraries = sizeof(cryptoLibNames) / sizeof(cryptoLibNames[0]);
+
+   for (int i = 0; i < numOfLibraries; ++i)
+      {
+      if (dlopen(cryptoLibNames[i], RTLD_NOW))
+         break; // Break out of the loop as soon as the library is loaded
+      }
+
 
    // Library names for OpenSSL 3, 1.1.1, 1.1.0, 1.0.2 and symbolic links
    static const char * const libNames[] =
@@ -246,16 +276,13 @@ void *loadLibssl()
       "libssl.so"        // general symlink library name
       };
 
-   int numOfLibraries = sizeof(libNames) / sizeof(libNames[0]);
-
+   numOfLibraries = sizeof(libNames) / sizeof(libNames[0]);
+   void *result = NULL;
    for (int i = 0; i < numOfLibraries; ++i)
       {
       result = dlopen(libNames[i], RTLD_NOW);
-
       if (result)
-         {
-         return result;
-         }
+         break;
       }
    return result;
    }
