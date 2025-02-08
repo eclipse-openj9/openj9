@@ -76,11 +76,13 @@ CONFIGURE_ARGS += 'AR=$(AR)'
 CONFIGURE_ARGS += 'OMR_HOST_OS=aix'
 CONFIGURE_ARGS += 'OMR_HOST_ARCH=ppc'
 CONFIGURE_ARGS += 'OMR_TARGET_DATASIZE=$(TEMP_TARGET_DATASIZE)'
-CONFIGURE_ARGS += 'OMR_TOOLCHAIN=xlc'
-ifeq ($(OMR_ENV_OPENXL),1)
+
+ifneq (,$(findstring ibm-clang,$(notdir $(CC))))
+    CONFIGURE_ARGS += 'OMR_TOOLCHAIN=openxl'
     CONFIGURE_ARGS += 'GLOBAL_CFLAGS=-fstack-protector'
     CONFIGURE_ARGS += 'GLOBAL_CXXFLAGS=-fstack-protector'
 else
+    CONFIGURE_ARGS += 'OMR_TOOLCHAIN=xlc'
     CONFIGURE_ARGS += 'GLOBAL_CFLAGS=-qstackprotect'
     CONFIGURE_ARGS += 'GLOBAL_CXXFLAGS=-qstackprotect'
 endif

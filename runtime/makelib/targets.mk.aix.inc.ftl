@@ -55,7 +55,7 @@ endif
 ifeq ($(j9vm_env_data64),1)
   UMA_ASPP_DEBUG += -g
   UMA_LIB_LINKER_FLAGS += -X64
-  ifeq ($(OMR_ENV_OPENXL),1)
+  ifeq (openxl,$(OMR_TOOLCHAIN))
     UMA_CC_MODE += -m64
   else
     UMA_CC_MODE += -q64
@@ -102,7 +102,7 @@ else
 endif
 
 ifeq (,$(findstring xlclang,$(notdir $(CC))))
-  ifeq ($(OMR_ENV_OPENXL),1)
+  ifeq (openxl,$(OMR_TOOLCHAIN))
     # for openxl do nothing
   else
     # xlc options
@@ -112,7 +112,7 @@ else
   # xlclang options
   CFLAGS += -qxlcompatmacros
 endif
-ifeq ($(OMR_ENV_OPENXL),1)
+ifeq (openxl,$(OMR_TOOLCHAIN))
   #openxl options
   CFLAGS += -std=c89 -qarch=ppc -fno-strict-aliasing -fstack-protector
 else
@@ -127,7 +127,7 @@ else
 endif
 
 ifeq (,$(findstring xlclang++,$(notdir $(CXX))))
-  ifeq ($(OMR_ENV_OPENXL),1)
+  ifeq (openxl,$(OMR_TOOLCHAIN))
     # openxl options
     CXXFLAGS += -fno-rtti -fno-exceptions
   else
@@ -138,7 +138,7 @@ else
   # xlclang++ options
   CXXFLAGS += -qxlcompatmacros -fno-rtti -fno-exceptions
 endif
-ifeq ($(OMR_ENV_OPENXL),1)
+ifeq (openxl,$(OMR_TOOLCHAIN))
   # openxl options
   CXXFLAGS += -std=c++11 -qarch=ppc -fno-strict-aliasing -fstack-protector
 else
@@ -166,7 +166,7 @@ endif
 UMA_SYS_LINK_PATH := -L/usr/lib/threads
 
 ifeq ($(j9vm_env_data64),1)
-  ifeq ($(OMR_ENV_OPENXL),1)
+  ifeq (openxl,$(OMR_TOOLCHAIN))
     UMA_DLL_LINK_FLAGS += -m64
   else
     UMA_DLL_LINK_FLAGS += -q64
@@ -205,7 +205,7 @@ $(patsubst %.s,%.o,$(filter %.s,$(UMA_FILES_TO_PREPROCESS))) : %$(UMA_DOT_O) : %
 
 ifdef UMA_TREAT_WARNINGS_AS_ERRORS
   ifndef UMA_SUPPRESS_WARNINGS_AS_ERRORS
-    ifeq ($(OMR_ENV_OPENXL),1)
+    ifeq (openxl,$(OMR_TOOLCHAIN))
       CFLAGS += -Werror
       CXXFLAGS += -Werror
     else
