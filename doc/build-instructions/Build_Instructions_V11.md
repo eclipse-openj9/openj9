@@ -427,7 +427,7 @@ bash get_source.sh
 :ledger:
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
 ```
-bash configure --disable-warnings-as-errors --with-toolchain-version=2019
+bash configure --with-toolchain-version=2022
 ```
 
 :pencil: If Java 11 is not available on the path, add the `--with-boot-jdk=<path_to_jdk11>` configuration option.
