@@ -107,7 +107,6 @@ public class DeadlockTest {
 		}
 
 		try {
-			System.out.println("Pre-checkpoint");
 			CRIUTestUtils.showThreadCurrentTime("Pre-checkpoint with testResult.lockStatus = "
 					+ testResult.lockStatus.get());
 			CRIUTestUtils.checkPointJVM(criuSupport, path, true);
@@ -161,14 +160,16 @@ public class DeadlockTest {
 
 		Thread t1 = new Thread(() -> {
 			Runnable run = () -> {
+				CRIUTestUtils.showThreadCurrentTime("notCheckpointSafeDeadlock.t1 started with testResult.lockStatus = "
+						+ testResult.lockStatus.get());
 				synchronized (lock) {
 					testResult.lockStatus.set(1);
-					try {
-						Thread.sleep(20000);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
+					CRIUTestUtils.showThreadCurrentTime("notCheckpointSafeDeadlock.t1 locked with testResult.lockStatus = "
+							+ testResult.lockStatus.get());
+					// Wait until the lockStatus value is changed.
+					while (testResult.lockStatus.get() == 1) {
+						Thread.yield();
 					}
-
 				}
 			};
 
@@ -184,14 +185,25 @@ public class DeadlockTest {
 		}
 
 		try {
-			System.out.println("Pre-checkpoint");
+			CRIUTestUtils.showThreadCurrentTime("Pre-checkpoint with testResult.lockStatus = "
+					+ testResult.lockStatus.get());
 			CRIUTestUtils.checkPointJVM(criuSupport, path, true);
+			CRIUTestUtils.showThreadCurrentTime("Post-restore with testResult.lockStatus = "
+					+ testResult.lockStatus.get());
 			testResult.testPassed = false;
 		} catch (JVMCheckpointException e) {
 			if (!e.getMessage().contains("The JVM attempted to checkpoint but was unable to due to code being executed")) {
+				CRIUTestUtils.showThreadCurrentTime("notCheckpointSafeDeadlock test failed with testResult.lockStatus = "
+						+ testResult.lockStatus.get());
 				testResult.testPassed = false;
 				e.printStackTrace();
 			}
+		}
+		testResult.lockStatus.set(3);
+		try {
+			t1.join();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
 		}
 
 		if (testResult.testPassed) {
