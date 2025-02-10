@@ -108,15 +108,7 @@ version used in the build.
 export CC=gcc-11 CXX=g++-11
 ```
 
-3. Only when building with `--with-cmake=no`, download and setup `freemarker.jar` into a directory.
-```
-cd <my_home_dir>
-wget https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download -O freemarker.tgz
-tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip-components=2
-rm -f freemarker.tgz
-```
-
-4. Download and setup the boot JDK using the latest AdoptOpenJDK v11 build.
+3. Download and setup the boot JDK using the latest AdoptOpenJDK v11 build.
 ```
 cd <my_home_dir>
 wget -O bootjdk11.tar.gz "https://api.adoptopenjdk.net/v3/binary/latest/11/ga/linux/x64/jdk/openj9/normal/adoptopenjdk"
@@ -159,7 +151,7 @@ For more information see [OpenJDK build troubleshooting](https://htmlpreview.git
 - non-compressed references (only)
 - mixed references, either compressed or non-compressed references is selected when starting Java
 
-Mixed references is the default to build when no options are specified. _Note that `--with-cmake=no` cannot be used to build mixed references._ `configure` options include:
+Mixed references is the default to build when no options are specified. `configure` options include:
 - `--with-mixedrefs` create a mixed references static build (equivalent to `--with-mixedrefs=static`)
 - `--with-mixedrefs=no` create a build supporting compressed references only
 - `--with-mixedrefs=dynamic` create a mixed references build that uses runtime checks
@@ -175,8 +167,6 @@ Mixed references is the default to build when no options are specified. _Note th
   - `path_to_library` uses a custom OpenSSL library that's already built.
 
   If you want to include the OpenSSL cryptographic library in the OpenJDK binary, you must include `--enable-openssl-bundling`.
-
-:pencil: When building using `--with-cmake=no`, you must specify `freemarker.jar` with an absolute path, such as `--with-freemarker-jar=/root/freemarker.jar`.
 
 ### 4. Build
 :penguin:
@@ -258,15 +248,6 @@ yum shell yum_install_aix-ppc64.txt
 
 It is important to take the list of package dependencies from this file because it is kept right up to date by our developers.
 
-Only when building with `--with-cmake=no`, download and setup `freemarker.jar` into your home directory by running the following commands:
-
-```
-cd <my_home_dir>
-wget https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download -O freemarker.tgz
-tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip-components=2
-rm -f freemarker.tgz
-```
-
 ### 2. Get the source
 :blue_book:
 First you need to clone the Extensions for OpenJDK for OpenJ9 project. This repository is a git mirror of OpenJDK without the HotSpot JVM, but with an **openj9** branch that contains a few necessary patches. Run the following command:
@@ -303,7 +284,7 @@ For more information see [OpenJDK build troubleshooting](https://htmlpreview.git
 - non-compressed references (only)
 - mixed references, either compressed or non-compressed references is selected when starting Java
 
-Mixed references is the default to build when no options are specified. _Note that `--with-cmake=no` cannot be used to build mixed references._ `configure` options include:
+Mixed references is the default to build when no options are specified. `configure` options include:
 - `--with-mixedrefs` create a mixed references static build (equivalent to `--with-mixedrefs=static`)
 - `--with-mixedrefs=no` create a build supporting compressed references only
 - `--with-mixedrefs=dynamic` create a mixed references build that uses runtime checks
@@ -319,8 +300,6 @@ where:
 - `path_to_library` uses a custom OpenSSL library that's already built.
 
   If you want to include the OpenSSL cryptographic library in the OpenJDK binary, you must include `--enable-openssl-bundling`.
-
-:pencil: When building using `--with-cmake=no`, you must specify `freemarker.jar` with an absolute path, such as `--with-freemarker-jar=<my_home_dir>/freemarker.jar`, where `<my_home_dir>` is the location where you stored `freemarker.jar`.
 
 ### 4. build
 :blue_book:
@@ -386,7 +365,6 @@ You must install a number of software dependencies to create a suitable build en
 - [Cygwin](https://cygwin.com/install.html), which provides a Unix-style command line interface. Install all packages in the `Devel` category. In the `Archive` category, install the packages `zip` and `unzip`. In the `Utils` category, install the `cpio` package. Install any further package dependencies that are identified by the installer. More information about using Cygwin can be found [here](https://cygwin.com/docs.html).
 - [Windows JDK 11](https://api.adoptopenjdk.net/v3/binary/latest/11/ga/windows/x64/jdk/openj9/normal/adoptopenjdk), which is used as the boot JDK.
 - [Microsoft Visual Studio 2022](https://aka.ms/vs/17/release/vs_community.exe), which is the version currently used by OpenJ9 builds.
-- [Freemarker V2.3.8](https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download) - only when building with `--with-cmake=no`
 - [LLVM/Clang](https://releases.llvm.org/7.0.0/LLVM-7.0.0-win64.exe)
 - [NASM Assembler v2.13.03 or newer](https://www.nasm.us/pub/nasm/releasebuilds/?C=M;O=D)
 
@@ -420,11 +398,6 @@ In particular, the `msdia140.dll` libraries must be registered manually by runni
 ```
 regsvr32 "C:\Program Files\Microsoft Visual Studio\2022\Community\DIA SDK\bin\msdia140.dll"
 regsvr32 "C:\Program Files\Microsoft Visual Studio\2022\Community\DIA SDK\bin\amd64\msdia140.dll"
-```
-
-- When building with `--with-cmake=no`, unpack the Freemarker archive:
-```
-tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip-components=2
 ```
 
 ### 2. Get the source
@@ -468,7 +441,7 @@ For more information see [OpenJDK build troubleshooting](https://htmlpreview.git
 - non-compressed references (only)
 - mixed references, either compressed or non-compressed references is selected when starting Java
 
-Mixed references is the default to build when no options are specified. _Note that `--with-cmake=no` cannot be used to build mixed references._ `configure` options include:
+Mixed references is the default to build when no options are specified. `configure` options include:
 - `--with-mixedrefs` create a mixed references static build (equivalent to `--with-mixedrefs=static`)
 - `--with-mixedrefs=no` create a build supporting compressed references only
 - `--with-mixedrefs=dynamic` create a mixed references build that uses runtime checks
@@ -483,8 +456,6 @@ Mixed references is the default to build when no options are specified. _Note th
   - `path_to_library` uses a custom OpenSSL library that's already built.
 
   If you want to include the OpenSSL cryptographic library in the OpenJDK binary, you must include `--enable-openssl-bundling`.
-
-:pencil: When building using `--with-cmake=no`, you must specify `freemarker.jar` with an absolute path, such as `--with-freemarker-jar=/cygdrive/c/temp/freemarker.jar`.
 
 ### 4. build
 :ledger:
@@ -562,14 +533,6 @@ The following dependencies can be installed by using [Homebrew](https://brew.sh/
 - [pkg-config 0.29.2](https://formulae.brew.sh/formula/pkg-config)
 - [wget 1.19.5](https://formulae.brew.sh/formula/wget)
 
-Only when building with `--with-cmake=no`, [Freemarker V2.3.8](https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download) is also required, which can be obtained and installed with the following commands:
-
-```
-wget https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download -O freemarker.tgz
-gtar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip-components=2
-rm -f freemarker.tgz
-```
-
 Bash version 4 is required by the `./get_source.sh` script that you will use in step 2, which is installed to `/usr/local/bin/bash`. To prevent problems during the build process, make Bash v4 your default shell by typing the following commands:
 
 ```
@@ -620,7 +583,7 @@ For more information see [OpenJDK build troubleshooting](https://htmlpreview.git
 - non-compressed references (only)
 - mixed references, either compressed or non-compressed references is selected when starting Java
 
-Mixed references is the default to build when no options are specified. _Note that `--with-cmake=no` cannot be used to build mixed references._ `configure` options include:
+Mixed references is the default to build when no options are specified. `configure` options include:
 - `--with-mixedrefs` create a mixed references static build (equivalent to `--with-mixedrefs=static`)
 - `--with-mixedrefs=no` create a build supporting compressed references only
 - `--with-mixedrefs=dynamic` create a mixed references build that uses runtime checks
@@ -629,7 +592,6 @@ Mixed references is the default to build when no options are specified. _Note th
 
 :pencil: **AArch64 macOS only:**
   - Please specify `--with-noncompressedrefs` because compressed references are not supported on AArch64 macOS yet.
-  - `--with-cmake=no` is not supported on AArch64 macOS.  Please use cmake.
 
 :pencil: **OpenSSL support:** If you want to build an OpenJDK that includes OpenSSL, you must specify `--with-openssl={fetched|path_to_library}`
 
@@ -639,8 +601,6 @@ Mixed references is the default to build when no options are specified. _Note th
   - `path_to_library` uses a custom OpenSSL library that's already built.
 
   If you want to include the OpenSSL cryptographic library in the OpenJDK binary, you must include `--enable-openssl-bundling`.
-
-:pencil: When building using `--with-cmake=no`, you must specify `freemarker.jar` with an absolute path, such as `--with-freemarker-jar=<path_to>/freemarker.jar`, where `<path_to>` is the location where you stored `freemarker.jar`.
 
 ### 4. build
 :apple:
@@ -731,7 +691,6 @@ You must install a number of software dependencies to create a suitable build en
 
 - GNU C/C++ compiler 10.3 (The Docker image uses GCC 7.5)
 - [AArch64 Linux JDK](https://api.adoptopenjdk.net/v3/binary/latest/11/ga/linux/aarch64/jdk/openj9/normal/adoptopenjdk), which is used as the boot JDK.
-- [Freemarker V2.3.8](https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download) - Only when building with `--with-cmake=no`
 
 See [Setting up your build environment without Docker](#setting-up-your-build-environment-without-docker) in [Linux section](#linux) for other dependencies to be installed.
 
@@ -784,7 +743,7 @@ For more information see [OpenJDK build troubleshooting](https://htmlpreview.git
 - non-compressed references (only)
 - mixed references, either compressed or non-compressed references is selected when starting Java
 
-Mixed references is the default to build when no options are specified. _Note that `--with-cmake=no` cannot be used to build mixed references._ `configure` options include:
+Mixed references is the default to build when no options are specified. `configure` options include:
 - `--with-mixedrefs` create a mixed references static build (equivalent to `--with-mixedrefs=static`)
 - `--with-mixedrefs=no` create a build supporting compressed references only
 - `--with-mixedrefs=dynamic` create a mixed references build that uses runtime checks
@@ -806,8 +765,6 @@ Mixed references is the default to build when no options are specified. _Note th
 :pencil: **CUDA support:** You can enable CUDA support if you are building on NVIDIA Jetson Developer Kit series.  Add `--enable-cuda --with-cuda=/usr/local/cuda` when you run `configure`.  The path `/usr/local/cuda` may be different depending on the version of JetPack.
 
 :pencil: You may need to add `--disable-warnings-as-errors-openj9` depending on the toolchain version.
-
-:pencil: When building using `--with-cmake=no`, you must specify `freemarker.jar` with an absolute path, such as `--with-freemarker-jar=<path_to>/freemarker.jar`, where `<path_to>` is the location where you stored `freemarker.jar`.
 
 ### 6. Build
 :penguin:
@@ -881,7 +838,6 @@ A number of software packages/dependencies must be installed on the host system 
 - [QEMU](https://www.qemu.org/download/#source), which is an open source emulator that converts the RISC-V instructions to the opcode on the host system
 - [Fedora_Stage4](https://fedorapeople.org/groups/risc-v/disk-images/), which contains the 1st Fedora bootstrap image on RISC-V and the corresponding BBL (Berkeley Boot Loader) binary file
 - [Fedora_Developer_Rawhide](https://dl.fedoraproject.org/pub/alt/risc-v/repo/virt-builder-images/images/), which contains the latest Fedora disk images for development and the corresponding firmware image files
-- [Freemarker V2.3.8](https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download)
 
 :bulb:
 There are two types of Fedora/RISC-V images for downloading, both of which work good when booted via QEMU. As the 1st Fedora/RISC-V image, the bootstrap process of `Fedora_Stage4` is much faster than that of `Fedora_Developer_Rawhide` which comes with quite a lot new features (needs over 30 minutes in bootstrap). Thus, it is recommended to use `Fedora_Stage4` if your preference is to verify/test the generated JDK on the emulator. `Fedora_Developer_Rawhide` is required for whoever working on both the emulator and the real hardware given that Fedora_Stage4 is obsolete (only used for archive on the Fedora/RISC-V website) in which case there is no more technical support on this image (please contact developers involved via #fedora-riscv/IRC for help if any issue).
@@ -1244,10 +1200,10 @@ bash get_source.sh
 :rocket:
 When you have all the source files on the host system, run the following configure command to set up the compilation environment as follows:
 ```
-export JAVA_HOME=<path_to_build_JDK>  # the build JDK here is downloaded from https://api.vm.net/v3/binary/latest/11/ga/linux/x64/jdk/openj9/normal/adoptopenjdk
+export JAVA_HOME=<path_to_build_JDK> # the build JDK here is downloaded from https://api.vm.net/v3/binary/latest/11/ga/linux/x64/jdk/openj9/normal/adoptopenjdk
 export PATH="$JAVA_HOME/bin:$PATH"
 
-bash configure --disable-warnings-as-errors --with-freemarker-jar=<path_to>/freemarker.jar
+bash configure --disable-warnings-as-errors
 ```
 
 Generate the build-JDK intended for later cross-compilation:
@@ -1272,8 +1228,7 @@ bash configure --disable-warnings-as-errors \
                --with-boot-jdk=<path_to_build_JDK_for_cross_compilation> \   #the `build-JDK` created at step 5
                --with-build-jdk=<path_to_build_JDK_for_cross_compilation> \  #the `build-JDK` created at step 5
                --openjdk-target=riscv64-unknown-linux-gnu \                   #the prefix for the compiled cross-toolchain
-               --with-sysroot=<path_to_your_fedora_mount_directory> \
-               --with-freemarker-jar=<path_to>/freemarker.jar
+               --with-sysroot=<path_to_your_fedora_mount_directory>
 ```
 
 :bulb:
@@ -1286,8 +1241,7 @@ bash configure --disable-warnings-as-errors \
                --with-boot-jdk=<path_to_build_JDK_for_cross_compilation> \   #the `build-JDK` created at step 5
                --with-build-jdk=<path_to_build_JDK_for_cross_compilation> \  #the `build-JDK` created at step 5
                --openjdk-target=riscv64-linux-gnu \                           #the prefix for the installed cross-toolchain
-               --with-sysroot=<path_to_your_fedora_mount_directory> \
-               --with-freemarker-jar=<path_to>/freemarker.jar
+               --with-sysroot=<path_to_your_fedora_mount_directory>
 ```
 
 :pencil: Configuring and building is not specific to OpenJ9 but uses the OpenJDK build infrastructure with OpenJ9 added.
@@ -1395,7 +1349,7 @@ Please remove `/usr/lib64/ccache` from the PATH environment variable as `/usr/li
 
 The boot JDK set up in `JAVA_HOME` is the cross-built jdk uploaded to Fedora after cross-compiled on your host system.
 ```
-bash configure --disable-warnings-as-errors --with-freemarker-jar=<path_to>/freemarker.jar
+bash configure --disable-warnings-as-errors
 ```
 
 :pencil:

@@ -31,11 +31,7 @@ can be followed with the following modifications:
 - Ensure that CMake version 3.4 or greater is installed
   - The docker images will already have this provided
   - Windows users need to have the Cygwin CMake package via the Cygwin installer, rather than downloading
-  the native windows version from the CMake website.
-- Downloading freemarker is not required.
-- Modify the provided configure command by:
-  - removing the `--with-free-marker-jar=` argument
-  - adding `--with-cmake`
+    the native windows version from the CMake website.
 
 :pencil: For more CMake info see [OMR CMake documentation](https://github.com/eclipse-omr/omr/blob/master/doc/BuildingWithCMake.md)
 
