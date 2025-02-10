@@ -84,7 +84,6 @@ This folder contains Jenkins pipeline scripts that are used in the OpenJ9 Jenkin
     - ALL
         - Launches a subset of 'all' platforms
         - ppc64le_linux, s390x_linux, x86-64_linux, aarch64_linux, ppc64_aix, x86-64_windows, x86-32_windows, x86-64_mac, aarch64_mac
-- Many specs support a suffix of `_cm` or `_uma` (omit the leading underscore for shortnames) to override the default build system.
 - OpenJ9 committers can request builds by commenting in a pull request
     - Format: `Jenkins <build type> <level>.<group>[+<test_flag>] <platform>[,<platform>,...,<platform>] jdk<version>[,jdk<version>,...,jdk<version>]`
     - `<build type>` is compile | test
