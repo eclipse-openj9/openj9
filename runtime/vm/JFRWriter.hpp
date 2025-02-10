@@ -134,8 +134,13 @@ public:
 	{
 		PORT_ACCESS_FROM_JAVAVM(vm);
 		bool result = true;
+		const char *jfrFileName = vm->jfrState.jfrFileName;
 
-		vm->jfrState.blobFileDescriptor = j9file_open(vm->jfrState.jfrFileName, EsOpenWrite | EsOpenCreate | EsOpenTruncate , 0666);
+		if (NULL == jfrFileName) {
+			jfrFileName = DEFAULT_JFR_FILE_NAME;
+		}
+
+		vm->jfrState.blobFileDescriptor = j9file_open(jfrFileName, EsOpenWrite | EsOpenCreate | EsOpenTruncate , 0666);
 
 		if (-1 == vm->jfrState.blobFileDescriptor) {
 			result = false;
@@ -148,10 +153,6 @@ public:
 	initializaJFRWriter(J9JavaVM *vm)
 	{
 		bool result = true;
-
-		if (NULL == vm->jfrState.jfrFileName) {
-			vm->jfrState.jfrFileName = (char*)DEFAULT_JFR_FILE_NAME;
-		}
 
 		if (!openJFRFile(vm)) {
 			result = false;
