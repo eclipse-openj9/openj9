@@ -6072,6 +6072,18 @@ TR_InlinerFailureReason
       return Recognized_Callee;
       }
 
+   if (rm == TR::java_lang_StringCoding_countPositives)
+      {
+      if (callsite->_callerResolvedMethod->getRecognizedMethod() == TR::java_lang_StringCoding_hasNegatives)
+         {
+         return InlineableTarget;
+         }
+      else
+         {
+         return DontInline_Callee;
+         }
+      }
+
    return InlineableTarget;
    }
 
