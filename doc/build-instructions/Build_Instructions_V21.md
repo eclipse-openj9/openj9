@@ -107,13 +107,13 @@ version used in the build.
 export CC=gcc-11 CXX=g++-11
 ```
 
-3. Download and setup the boot JDK using the latest AdoptOpenJDK v20 build.
+3. Download and setup the boot JDK using the latest AdoptOpenJDK v21 build.
 ```
 cd <my_home_dir>
-wget -O bootjdk20.tar.gz "https://api.adoptopenjdk.net/v3/binary/latest/20/ga/linux/x64/jdk/openj9/normal/adoptopenjdk"
-tar -xzf bootjdk20.tar.gz
-rm -f bootjdk20.tar.gz
-mv $(ls | grep -i jdk-20) bootjdk20
+wget -O bootjdk21.tar.gz "https://api.adoptopenjdk.net/v3/binary/latest/21/ga/linux/x64/jdk/openj9/normal/adoptopenjdk"
+tar -xzf bootjdk21.tar.gz
+rm -f bootjdk21.tar.gz
+mv $(ls | grep -i jdk-21) bootjdk21
 ```
 
 ### 2. Get the source
@@ -234,7 +234,7 @@ You must install the following AIX Licensed Program Products (LPPs):
 - [xlc/C++ 16](https://www.ibm.com/developerworks/downloads/r/xlcplusaix/)
 - x11.adt.ext
 
-You must also install the boot JDK: [Java20_AIX_PPC64](https://api.adoptopenjdk.net/v3/binary/latest/20/ga/aix/ppc64/jdk/openj9/normal/adoptopenjdk).
+You must also install the boot JDK: [Java21_AIX_PPC64](https://api.adoptopenjdk.net/v3/binary/latest/21/ga/aix/ppc64/jdk/openj9/normal/adoptopenjdk).
 
 A number of RPM packages are also required. The easiest method for installing these packages is to use `yum`, because `yum` takes care of any additional dependent packages for you.
 
@@ -270,7 +270,7 @@ bash get_source.sh
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
 ```
 bash configure \
-    --with-boot-jdk=<path_to_boot_JDK20> \
+    --with-boot-jdk=<path_to_boot_JDK> \
     --with-cups-include=<cups_include_path> \
     --disable-warnings-as-errors
 ```
@@ -364,7 +364,7 @@ The following instructions guide you through the process of building a Windows *
 You must install a number of software dependencies to create a suitable build environment on your system:
 
 - [Cygwin](https://cygwin.com/install.html), which provides a Unix-style command line interface. Install all packages in the `Devel` category. In the `Archive` category, install the packages `zip` and `unzip`. In the `Utils` category, install the `cpio` package. Install any further package dependencies that are identified by the installer. More information about using Cygwin can be found [here](https://cygwin.com/docs.html).
-- [Windows JDK 20](https://api.adoptopenjdk.net/v3/binary/latest/20/ga/windows/x64/jdk/openj9/normal/adoptopenjdk), which is used as the boot JDK.
+- [Windows JDK 21](https://api.adoptopenjdk.net/v3/binary/latest/21/ga/windows/x64/jdk/openj9/normal/adoptopenjdk), which is used as the boot JDK.
 - [Microsoft Visual Studio 2022](https://aka.ms/vs/17/release/vs_community.exe), which is the default compiler level used by OpenJDK21.
 - [LLVM/Clang](https://releases.llvm.org/7.0.0/LLVM-7.0.0-win64.exe)
 - [NASM Assembler v2.13.03 or newer](https://www.nasm.us/pub/nasm/releasebuilds/?C=M;O=D)
@@ -429,9 +429,7 @@ bash get_source.sh
 :ledger:
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
 ```
-bash configure \
-    --with-boot-jdk=<path_to_boot_JDK20> \
-    --disable-warnings-as-errors
+bash configure --with-boot-jdk=<path_to_boot_JDK>
 ```
 Note: If you have multiple versions of Visual Studio installed, you can enforce a specific version to be used by setting `--with-toolchain-version`, i.e., by including `--with-toolchain-version=2022` option in the configure command.
 
@@ -521,7 +519,7 @@ The following instructions guide you through the process of building a macOS **O
 You must install a number of software dependencies to create a suitable build environment on your system (the specified versions are minimums):
 
 - [Xcode 10.3, use >= 11.4.1 to support code signing](https://developer.apple.com/download/more/) (requires an Apple account to log in).
-- [macOS JDK 20](https://api.adoptopenjdk.net/v3/binary/latest/20/ga/mac/x64/jdk/openj9/normal/adoptopenjdk), which is used as the boot JDK.
+- [macOS JDK 21](https://api.adoptopenjdk.net/v3/binary/latest/21/ga/mac/x64/jdk/openj9/normal/adoptopenjdk), which is used as the boot JDK.
 
 The following dependencies can be installed by using [Homebrew](https://brew.sh/) (the specified versions are minimums):
 
@@ -574,7 +572,7 @@ bash get_source.sh
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
 
 ```
-bash configure --with-boot-jdk=<path_to_boot_JDK20>
+bash configure --with-boot-jdk=<path_to_boot_JDK>
 ```
 
 :pencil: Configuring and building is not specific to OpenJ9 but uses the OpenJDK build infrastructure with OpenJ9 added.
@@ -692,7 +690,7 @@ bash get_source.sh
 You must install a number of software dependencies to create a suitable build environment on your AArch64 Linux system:
 
 - GNU C/C++ compiler 10.3 (The Docker image uses GCC 7.5)
-- [AArch64 Linux JDK](https://api.adoptopenjdk.net/v3/binary/latest/20/ga/linux/aarch64/jdk/openj9/normal/adoptopenjdk), which is used as the boot JDK.
+- [AArch64 Linux JDK](https://api.adoptopenjdk.net/v3/binary/latest/21/ga/linux/aarch64/jdk/openj9/normal/adoptopenjdk), which is used as the boot JDK.
 
 See [Setting up your build environment without Docker](#setting-up-your-build-environment-without-docker) in [Linux section](#linux) for other dependencies to be installed.
 

@@ -429,11 +429,9 @@ bash get_source.sh
 :ledger:
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
 ```
-bash configure \
-    --with-boot-jdk=<path_to_boot_JDK17> \
-    --disable-warnings-as-errors
+bash configure --with-boot-jdk=<path_to_boot_JDK17>
 ```
-Note: If you have multiple versions of Visual Studio installed, you can enforce a specific version to be used by setting `--with-toolchain-version`, i.e., by including `--with-toolchain-version=2019` option in the configure command.
+Note: If you have multiple versions of Visual Studio installed, you can enforce a specific version to be used by setting `--with-toolchain-version`, i.e., by including `--with-toolchain-version=2022` option in the configure command.
 
 :pencil: Configuring and building is not specific to OpenJ9 but uses the OpenJDK build infrastructure with OpenJ9 added.
 Many other configuration options are available, including options to increase the verbosity of the build output to include command lines (`LOG=cmdlines`), more info or debug information.
