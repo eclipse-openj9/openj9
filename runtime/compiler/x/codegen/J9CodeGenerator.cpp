@@ -154,7 +154,7 @@ J9::X86::CodeGenerator::initialize()
       {
       cg->setSupportsInlineStringCodingCountPositives();
       }
-#endif
+#endif /* JAVA_SPEC_VERSION < 19 */
 
    static bool disableInlineVectorizedMismatch = feGetEnv("TR_disableInlineVectorizedMismatch") != NULL;
    if (cg->getSupportsArrayCmpLen() &&
