@@ -586,6 +586,65 @@ void J9::RecognizedCallTransformer::process_java_lang_StringUTF16_toBytes(TR::Tr
    fallbackPathBlock->setIsCold();
    }
 
+// helper function for process_jdk_internal_util_ArraysSupport_vectorizedMismatch
+// see comments there for more details
+static TR::Node* insertVectorizedMisMatchArgumentChecksAndAdjustForOffHeap(TR::Compilation* comp,
+                     TR::Node* node,               // node of the parameter a/b
+                     TR::Block* currentBlock,      // the block before callBlock
+                     TR::Block* callBlock,         // original callBlock
+                     bool insertArrayCheck,        // whether we need to do a type check
+                     TR::CFG* cfg)
+   {
+   // create the storeTree to store the value of the array in a symRef
+   TR::SymbolReference* symRef = comp->getSymRefTab()->createTemporary(comp->getMethodSymbol(), TR::Address);
+   symRef->getSymbol()->setNotCollected();
+   TR::Node* storeNode = TR::Node::createStore(symRef, node);
+   TR::TreeTop* storeTree = TR::TreeTop::create(comp, storeNode);
+   currentBlock->getExit()->insertBefore(storeTree);
+
+   // insert the trees 0/3
+   TR::Block* nullCheckBlock = callBlock;
+   TR::Block* newCallBlock =
+      nullCheckBlock->split(nullCheckBlock->getEntry()->getNextTreeTop(), cfg);
+   TR::Block* adjustBlock = nullCheckBlock->split(nullCheckBlock->getExit(), cfg);
+
+   // insert null check tree 1/3
+   TR::Node* nullCheckNode = TR::Node::createif(TR::ifacmpeq,
+                                                node->duplicateTree(),
+                                                TR::Node::aconst(node, 0),
+                                                newCallBlock->getEntry());
+   nullCheckBlock->append(TR::TreeTop::create(comp, nullCheckNode));
+   cfg->addEdge(nullCheckBlock, newCallBlock);
+
+   // insert array check tree 2/3
+   if (insertArrayCheck)
+      {
+      TR::Block* arrayCheckBlock = callBlock->split(callBlock->getExit(), cfg);
+
+      TR::Node* vftLoad = TR::Node::createWithSymRef(TR::aloadi, 1, 1,
+         node->duplicateTree(), comp->getSymRefTab()->findOrCreateVftSymbolRef());
+      TR::Node* maskedIsArrayClassNode = comp->fej9()->testIsClassArrayType(vftLoad);
+      TR::Node* arrayCheckNode = TR::Node::createif(TR::ificmpeq, maskedIsArrayClassNode,
+                                                   TR::Node::iconst(node, 0),
+                                                   newCallBlock->getEntry());
+
+      arrayCheckBlock->append(TR::TreeTop::create(comp, arrayCheckNode, NULL, NULL));
+      cfg->addEdge(callBlock, newCallBlock);
+      }
+
+   // insert newStoreTree 3/3
+   TR::Node* adjustedNode = TR::TransformUtil::generateDataAddrLoadTrees(comp,
+                                                                  node->duplicateTree());
+   TR::Node* newStore = TR::Node::createStore(symRef, adjustedNode);
+   TR::TreeTop* newStoreTree = TR::TreeTop::create(comp, newStore);
+   adjustBlock->append(newStoreTree);
+
+   TR::Node* resultNode = TR::Node::createLoad(node, symRef);
+   return resultNode;
+   }
+
+
+
 void J9::RecognizedCallTransformer::process_jdk_internal_util_ArraysSupport_vectorizedMismatch(TR::TreeTop* treetop, TR::Node* node)
    {
    TR::Node* a = node->getChild(0);
@@ -611,8 +670,99 @@ void J9::RecognizedCallTransformer::process_jdk_internal_util_ArraysSupport_vect
       TR::Node::create(node, TR::lxor, 2, mask, TR::Node::lconst(node, -1)));
 
    TR::Node* mismatchByteIndex = TR::Node::create(node, TR::arraycmplen, 3);
-   // TODO: replace the following aladd's with generateDataAddrLoadTrees when off-heap memory changes come in
-   // See OpenJ9 issue #16717 https://github.com/eclipse-openj9/openj9/issues/16717
+
+   anchorAllChildren(node, treetop);
+
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+   if (TR::Compiler->om.isOffHeapAllocationEnabled())
+      {
+      int aLen, bLen;
+      const char* aObjTypeSig = a->getSymbolReference() ?
+         a->getSymbolReference()->getTypeSignature(aLen) : NULL;
+      const char* bObjTypeSig = b->getSymbolReference() ?
+         b->getSymbolReference()->getTypeSignature(bLen) : NULL;
+
+      // if the object type is not known at compile time we need to check for arrays at runtime
+      bool aCheckNeeded = (aObjTypeSig == NULL);
+      bool bCheckNeeded = (bObjTypeSig == NULL);
+      if (!aCheckNeeded) // we do know it on compile
+         {
+         TR_OpaqueClassBlock* aClass = comp()->fej9()->getClassFromSignature(aObjTypeSig,
+            aLen, a->getSymbolReference()->getOwningMethod(comp()));
+         aCheckNeeded = aClass == NULL ||
+                        aClass == comp()->getObjectClassPointer() ||
+                        TR::Compiler->cls.isInterfaceClass(comp(), aClass);
+         }
+
+      if (!bCheckNeeded)
+         {
+         TR_OpaqueClassBlock* bClass = comp()->fej9()->getClassFromSignature(bObjTypeSig,
+            bLen, b->getSymbolReference()->getOwningMethod(comp()));
+         bCheckNeeded = bClass == NULL ||
+                        bClass == comp()->getObjectClassPointer() ||
+                        TR::Compiler->cls.isInterfaceClass(comp(), bClass);
+         }
+
+
+      // true if the object type is either an array, or not known at compile time
+      bool aAdjustmentNeeded = aCheckNeeded || (aObjTypeSig[0] == '[');
+      bool bAdjustmentNeeded = bCheckNeeded || (bObjTypeSig[0] == '[');
+
+      TR::TransformUtil::separateNullCheck(comp(), treetop);
+
+      // If neither a nor b is an array, then the address is simply ref + offset, identical to
+      // the default implementation, allowing us to skip the adjustments
+      //
+      // If we are certain a or b is an array during compile time, we just need to load its
+      // starting point when needed after a null check.
+      //
+      // Otherwise, we will do an additional check at run time, and skip the loading if the objects
+      // are not an array and fall through to the default implementation.
+      //
+      // The resulting blocks should look like this:
+      // CurrentBlock:
+      //    Trees anchoring the callNode's children
+      //    Trees preceding the callNode's tree
+      // ------ done by insertVectorizedMisMatchArgumentChecksAndAdjustForOffHeap
+      //    storeTree
+      // callBlock i.e. nullCheckBlock:
+      //    Tree for null check
+      // arrayCheckBlock (only if type is uncertain on compile):
+      //    Tree for type check
+      // adjustBlock:
+      //    newStoreTree
+      // newCallBlock:
+      //    Tree containing callNode (later transformed into iselect)
+      // ------ back to mainline
+      // nextBlock:
+      //    Trees after callNode's tree
+      if (aAdjustmentNeeded || bAdjustmentNeeded)
+         {
+         // callBlock should contain the tree of this treetop only
+         TR::CFG* cfg = comp()->getFlowGraph();
+         TR::Block* currentBlock = treetop->getEnclosingBlock();
+         TR::Block* callBlock = currentBlock->split(treetop, cfg, true);
+         TR::Block* nextBlock = callBlock->split(treetop->getNextTreeTop(), cfg, true);
+
+         if (aAdjustmentNeeded)
+            {
+            // create and arrange nullCheckBlock, arrayCheckBlock, adjustBlock, and newCallBlock
+            // also create storeTree in currentBlock
+            a = insertVectorizedMisMatchArgumentChecksAndAdjustForOffHeap(comp(),
+               a, currentBlock, callBlock, aCheckNeeded, cfg);
+            }
+
+         if (bAdjustmentNeeded)
+            {
+            // create and arrange nullCheckBlock, arrayCheckBlock, adjustBlock, and newCallBlock
+            // also create storeTree in currentBlock
+            b = insertVectorizedMisMatchArgumentChecksAndAdjustForOffHeap(comp(),
+               b, currentBlock, callBlock, bCheckNeeded, cfg);
+            }
+         }
+      }
+#endif
+
    mismatchByteIndex->setAndIncChild(0, TR::Node::create(node, TR::aladd, 2, a, aOffset));
    mismatchByteIndex->setAndIncChild(1, TR::Node::create(node, TR::aladd, 2, b, bOffset));
    mismatchByteIndex->setAndIncChild(2, lengthToCompare);
@@ -628,7 +778,6 @@ void J9::RecognizedCallTransformer::process_jdk_internal_util_ArraysSupport_vect
    TR::Node* mismatchElementIndex = TR::Node::create(node, TR::l2i, 1, TR::Node::create(node, TR::lshr, 2, mismatchByteIndex, log2ArrayIndexScale));
    TR::Node* noMismatchFound = TR::Node::create(node, TR::lcmpeq, 2, mismatchByteIndex, lengthToCompare);
 
-   anchorAllChildren(node, treetop);
    prepareToReplaceNode(node);
 
    TR::Node::recreate(node, TR::iselect);
