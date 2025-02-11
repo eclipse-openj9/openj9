@@ -22,6 +22,7 @@
 
 ifeq (8, $(JDK_VERSION))
   TEST_JAVA=$(REPORTDIR_NQ)/testJava/jre
+  THRSTATETEST_JRE_HOME = $(SQ)$(TEST_JDK_HOME)$(D)jre$(D)$(SQ)
   ifneq (,$(findstring -64, $(SPEC)))
     ZOS_SPEC=s390x
   else
@@ -35,6 +36,7 @@ ifeq (8, $(JDK_VERSION))
     LIBJ9IFA29=/jre/lib/$(ZOS_SPEC)/default/libj9ifa29.so
   endif
 else
+  THRSTATETEST_JRE_HOME = $(SQ)$(TEST_JDK_HOME)$(D)$(SQ)
   TEST_JAVA=$(REPORTDIR_NQ)/testJava
   PATH_TO_LIB=$(TEST_JAVA)/lib/j9vm:$(TEST_JAVA)/lib/default:$(TEST_JAVA)/lib
   LIBJ9IFA29=/lib/default/libj9ifa29.so
