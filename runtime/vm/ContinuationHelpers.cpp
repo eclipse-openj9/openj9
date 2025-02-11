@@ -111,6 +111,7 @@ createContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 #undef VMTHR_INITIAL_STACK_SIZE
 
 #if JAVA_SPEC_VERSION >= 24
+		continuation->nextWaitingContinuation = NULL;
 		continuation->monitorEnterRecordPool = pool_new(sizeof(J9MonitorEnterRecord), 0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(PORTLIB));
 #endif /* JAVA_SPEC_VERSION >= 24 */
 
@@ -233,6 +234,9 @@ enterContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 		currentThread->javaVM->memoryManagerFunctions->continuationObjectStarted(currentThread, continuationObject);
 
 		continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, continuationObject);
+#if JAVA_SPEC_VERSION >= 24
+		continuation->vthread = currentThread->threadObject;
+#endif /* JAVA_SPEC_VERSION >= 24 */
 	}
 	Assert_VM_notNull(continuation);
 
@@ -353,6 +357,11 @@ freeContinuation(J9VMThread *currentThread, j9object_t continuationObject, BOOLE
 					!VM_ContinuationHelpers::isConcurrentlyScanned(continuationState)
 					&& (NULL == VM_ContinuationHelpers::getCarrierThread(continuationState)));
 
+#if JAVA_SPEC_VERSION >= 24
+		/* Remove reverse link to vthread object. */
+		continuation->vthread = NULL;
+		Assert_VM_true(NULL == continuation->nextWaitingContinuation);
+#endif /* JAVA_SPEC_VERSION >= 24 */
 		/* Free old stack used by continuation. */
 		J9JavaStack *currentStack = continuation->stackObject->previous;
 		while (NULL != currentStack) {
@@ -649,7 +658,7 @@ detachMonitorInfo(J9VMThread *currentThread, J9ObjectMonitor *objectMonitor)
 {
 	J9ThreadAbstractMonitor *monitor = (J9ThreadAbstractMonitor*)objectMonitor->monitor;
 	monitor->owner = (J9Thread*)1;
-	objectMonitor->vthread = currentThread->threadObject;
+	objectMonitor->ownerContinuation = currentThread->currentContinuation;
 }
 
 void
@@ -657,7 +666,7 @@ updateMonitorInfo(J9VMThread *currentThread, J9ObjectMonitor *objectMonitor)
 {
 	J9ThreadAbstractMonitor *monitor = (J9ThreadAbstractMonitor*)objectMonitor->monitor;
 	monitor->owner = currentThread->osThread;
-	objectMonitor->vthread = NULL;
+	objectMonitor->ownerContinuation = NULL;
 }
 
 void
@@ -744,10 +753,10 @@ preparePinnedVirtualThreadForUnmount(J9VMThread *currentThread, j9object_t syncO
 	J9VMJDKINTERNALVMCONTINUATION_SET_BLOCKER(currentThread, continuationObj, syncObj);
 
 	if (isObjectWait) {
-		/* Add thread object to monitor's waiting list. */
+		/* Add Continuation struct to monitor's waiting list. */
 		omrthread_monitor_enter(currentThread->javaVM->blockedVirtualThreadsMutex);
-		J9VMJAVALANGVIRTUALTHREAD_SET_NEXT(currentThread, currentThread->threadObject, syncObjectMonitor->waitingVirtualThreads);
-		syncObjectMonitor->waitingVirtualThreads = currentThread->threadObject;
+		currentThread->currentContinuation->nextWaitingContinuation = syncObjectMonitor->waitingContinuations);
+		syncObjectMonitor->waitingContinuations = currentThread->currentContinuation;
 		omrthread_monitor_exit(currentThread->javaVM->blockedVirtualThreadsMutex);
 	}
 

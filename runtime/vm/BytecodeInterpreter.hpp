@@ -2989,22 +2989,24 @@ done:
 					}
 				}
 
-				if ((NULL != objectMonitor) && (NULL != objectMonitor->waitingVirtualThreads)) {
+				if ((NULL != objectMonitor) && (NULL != objectMonitor->waitingContinuations)) {
 					omrthread_monitor_enter(_vm->blockedVirtualThreadsMutex);
-					j9object_t head = objectMonitor->waitingVirtualThreads;
+					J9VMContinuation *head = objectMonitor->waitingContinuations;
 					if (omrthread_monitor_notify == notifyFunction) {
-						objectMonitor->waitingVirtualThreads = J9VMJAVALANGVIRTUALTHREAD_NEXT(_currentThread, head);
-						J9VMJAVALANGVIRTUALTHREAD_SET_NEXT(_currentThread, head, _vm->blockedVirtualThreads);
-						_vm->blockedVirtualThreads = head;
+						objectMonitor->waitingContinuations = head->nextWaitingContinuation;
+						J9VMJAVALANGVIRTUALTHREAD_SET_NEXT(_currentThread, head->vthread, _vm->blockedVirtualThreads);
+						_vm->blockedVirtualThreads = head->vthread;
 					} else {
-						j9object_t next = J9VMJAVALANGVIRTUALTHREAD_NEXT(_currentThread, head);
+						J9VMContinuation *next = J9VMJAVALANGVIRTUALTHREAD_NEXT(_currentThread, head);
+						J9VMContinuation *temp = head;
 						while (NULL != next) {
-							head = next;
-							next = J9VMJAVALANGVIRTUALTHREAD_NEXT(_currentThread, head);
+							J9VMJAVALANGVIRTUALTHREAD_SET_NEXT(_currentThread, temp->vthread, next->vthread);
+							temp = next;
+							next = next->nextWaitingContinuation;
 						}
-						J9VMJAVALANGVIRTUALTHREAD_SET_NEXT(_currentThread, head, _vm->blockedVirtualThreads);
-						_vm->blockedVirtualThreads = head;
-						objectMonitor->waitingVirtualThreads = NULL;
+						J9VMJAVALANGVIRTUALTHREAD_SET_NEXT(_currentThread, head->vthread, _vm->blockedVirtualThreads);
+						_vm->blockedVirtualThreads = head->vthread;
+						objectMonitor->waitingContinuations = NULL;
 					}
 					omrthread_monitor_notify(_vm->blockedVirtualThreadsMutex);
 					omrthread_monitor_exit(_vm->blockedVirtualThreadsMutex);
