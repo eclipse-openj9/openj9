@@ -47,6 +47,9 @@
 extern "C" {
 #endif
 
+/* Forward declaration. */
+struct jvmtiClassDefinition;
+
 typedef enum
 {
 	ONLY_SPEC_MODIFIERS,
