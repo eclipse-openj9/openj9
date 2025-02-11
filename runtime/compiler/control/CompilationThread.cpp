@@ -9427,8 +9427,7 @@ else
 
          if (debug("traceInfo") && optionSetIndex > 0)
             {
-            if (compiler->getLoggingEnabled())
-               diagnostic("Forced Option Set %d\n", optionSetIndex);
+            diagnostic("Forced Option Set %d\n", optionSetIndex);
             }
          }
       }
@@ -10975,7 +10974,7 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
       if (TR::Options::_largeTranslationTime > 0 && translationTime > (uintptr_t)TR::Options::_largeTranslationTime)
          {
          TR::Logger *log = compiler->log();
-         if (compiler->getLoggingEnabled())
+         if (log->isEnabled_DEPRECATED())
             log->printf("Compilation took %d usec\n", (int32_t)translationTime);
          compiler->dumpMethodTrees(log, "Post optimization trees for large computing method");
          }
