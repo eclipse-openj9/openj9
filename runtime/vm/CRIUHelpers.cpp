@@ -1003,6 +1003,8 @@ setupJNIFieldIDsAndCRIUAPI(JNIEnv *env, jclass *currentExceptionClass, IDATA *sy
 		|| j9sl_lookup_name(vmCheckpointState->libCRIUHandle, (char*)"criu_init_opts", (UDATA*)&vmCheckpointState->criuInitOptsFunctionPointerType, "IV")
 		|| j9sl_lookup_name(vmCheckpointState->libCRIUHandle, (char*)"criu_set_ghost_limit", (UDATA*)&vmCheckpointState->criuSetGhostFileLimitFunctionPointerType, "Vi")
 		|| j9sl_lookup_name(vmCheckpointState->libCRIUHandle, (char*)"criu_dump", (UDATA*)&vmCheckpointState->criuDumpFunctionPointerType, "IV")
+		|| j9sl_lookup_name(vmCheckpointState->libCRIUHandle, (char*)"criu_set_tcp_close", (UDATA*)&vmCheckpointState->criuSetTcpCloseFunctionPointerType, "VZ")
+		|| j9sl_lookup_name(vmCheckpointState->libCRIUHandle, (char*)"criu_set_tcp_skip_in_flight", (UDATA*)&vmCheckpointState->criuSetTcpTcpSkipInFlightFunctionPointerType, "VZ")
 	) {
 		*currentExceptionClass = criuSystemCheckpointExceptionClass;
 		*systemReturnCode = 1;
@@ -1528,7 +1530,9 @@ criuCheckpointJVMImpl(JNIEnv *env,
 		jboolean unprivileged,
 		jstring optionsFile,
 		jstring environmentFile,
-		jlong ghostFileLimit)
+		jlong ghostFileLimit,
+		jboolean tcpClose,
+		jboolean tcpSkipInFlight)
 {
 	J9VMThread *currentThread = (J9VMThread*)env;
 	J9JavaVM *vm = currentThread->javaVM;
@@ -1723,6 +1727,8 @@ criuCheckpointJVMImpl(JNIEnv *env,
 		vm->checkpointState.criuSetTcpEstablishedFunctionPointerType(JNI_FALSE != tcpEstablished);
 		vm->checkpointState.criuSetAutoDedupFunctionPointerType(JNI_FALSE != autoDedup);
 		vm->checkpointState.criuSetTrackMemFunctionPointerType(JNI_FALSE != trackMemory);
+		vm->checkpointState.criuSetTcpCloseFunctionPointerType(JNI_FALSE != tcpClose);
+		vm->checkpointState.criuSetTcpTcpSkipInFlightFunctionPointerType(JNI_FALSE != tcpSkipInFlight);
 
 		if (-1 != ghostFileLimit) {
 			intGhostFileLimit = (U_32)(U_64)ghostFileLimit;

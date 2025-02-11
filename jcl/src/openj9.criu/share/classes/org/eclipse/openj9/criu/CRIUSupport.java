@@ -323,6 +323,32 @@ public final class CRIUSupport {
 	}
 
 	/**
+	 * Controls whether to restore TCP sockets in closed state.
+	 * <p>
+	 * Default: false
+	 *
+	 * @param tcpClose
+	 * @return this
+	 */
+	public CRIUSupport setTCPClose(boolean tcpClose) {
+		internalCRIUSupport = internalCRIUSupport.setTCPClose(tcpClose);
+		return this;
+	}
+
+	/**
+	 * Controls whether to skip in-flight TCP connections.
+	 * <p>
+	 * Default: false
+	 *
+	 * @param tcpSkipInFlight
+	 * @return this
+	 */
+	public CRIUSupport setTCPSkipInFlight(boolean tcpSkipInFlight) {
+		internalCRIUSupport = internalCRIUSupport.setTCPSkipInFlight(tcpSkipInFlight);
+		return this;
+	}
+
+	/**
 	 * Append new environment variables to the set returned by ProcessEnvironment.getenv(...) upon
 	 * restore. All pre-existing (environment variables from checkpoint run) env
 	 * vars are retained. All environment variables specified in the envFile are
