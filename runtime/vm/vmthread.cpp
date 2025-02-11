@@ -1596,7 +1596,7 @@ void printThreadInfo(J9JavaVM *vm, J9VMThread *self, char *toFile, BOOLEAN allTh
 
 	if ( !vm->mainThread ) {
 		/* No main thread, so not much we can do here */
-		j9tty_err_printf(PORTLIB, "Thread info not available\n");
+		j9tty_err_printf("Thread info not available\n");
 		return;
 	}
 
@@ -1624,13 +1624,13 @@ void printThreadInfo(J9JavaVM *vm, J9VMThread *self, char *toFile, BOOLEAN allTh
 	if (toFile != NULL) {
 		strcpy(fileName, toFile);
 		if ((tracefd = j9file_open(fileName, EsOpenWrite | EsOpenCreate | EsOpenTruncate, 0666))==-1) {
-			j9tty_err_printf(PORTLIB, "Error: Failed to open dump file %s.\nWill output to stderr instead:\n", fileName);
+			j9tty_err_printf("Error: Failed to open dump file %s.\nWill output to stderr instead:\n", fileName);
 		}
 	} else if (vm->sigquitToFileDir != NULL) {
 		j9str_printf(fileName, EsMaxPath, "%s%s%s%d%s",
 				vm->sigquitToFileDir, DIR_SEPARATOR_STR, SIGQUIT_FILE_NAME, j9time_usec_clock(), SIGQUIT_FILE_EXT);
 		if ((tracefd = j9file_open(fileName, EsOpenWrite | EsOpenCreate | EsOpenTruncate, 0666))==-1) {
-			j9tty_err_printf(PORTLIB, "Error: Failed to open trace file %s.\nWill output to stderr instead:\n", fileName);
+			j9tty_err_printf("Error: Failed to open trace file %s.\nWill output to stderr instead:\n", fileName);
 		}
 	}
 
@@ -1668,7 +1668,7 @@ void printThreadInfo(J9JavaVM *vm, J9VMThread *self, char *toFile, BOOLEAN allTh
 
 	if (tracefd != -1) {
 		j9file_close(tracefd);
-		j9tty_err_printf(PORTLIB, "Thread info written to: %s\n", fileName);
+		j9tty_err_printf("Thread info written to: %s\n", fileName);
 	}
 
 	if(exclusiveRequestedLocally) {
@@ -1787,7 +1787,7 @@ static void trace_printf(struct J9PortLibrary *portLib, IDATA tracefd, char * fo
 	if (tracefd != -1)
 		wroteToFile = (j9file_write_text(tracefd, buffer, strlen(buffer)) != -1);
 	if (!wroteToFile)
-		j9tty_err_printf(PORTLIB, buffer);
+		j9tty_err_printf(buffer);
 }
 
 j9object_t

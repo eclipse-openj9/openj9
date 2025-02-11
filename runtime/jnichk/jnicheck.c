@@ -129,7 +129,7 @@ J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 			}
 
 			if ((*hook)->J9HookRegisterWithCallSite(hook, J9HOOK_VM_NATIVE_METHOD_RETURN, methodExitHook, OMR_GET_CALLSITE(), NULL)) {
-				j9tty_err_printf(PORTLIB, "<JNI check utility: unable to hook event>\n");
+				j9tty_err_printf("<JNI check utility: unable to hook event>\n");
 				return J9VMDLLMAIN_FAILED;
 			}
 

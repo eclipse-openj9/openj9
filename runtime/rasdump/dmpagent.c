@@ -20,7 +20,6 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
-
 /*
  * Note: remove this when portlib supports launching of executables
  */
@@ -625,7 +624,7 @@ doConsoleDump(J9RASdumpAgent *agent, char *label, J9RASdumpContext *context)
 	J9JavaVM *vm = context->javaVM;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
-	j9tty_err_printf(PORTLIB, "-------- Console dump --------\n");
+	j9tty_err_printf("-------- Console dump --------\n");
 
 	/* Fatal dumps to stderr default to the old-style gpThreadDump */
 	if ( (context->eventFlags & J9RAS_DUMP_ON_GP_FAULT) && *label == '-' && FIND_DUMP_QUEUE(vm, queue) ) {
@@ -647,7 +646,7 @@ doConsoleDump(J9RASdumpAgent *agent, char *label, J9RASdumpContext *context)
 		vm->internalVMFunctions->printThreadInfo(vm, self, *label == '-' ? NULL : label, TRUE);
 	}
 
-	j9tty_err_printf(PORTLIB, "\n^^^^^^^^ Console dump ^^^^^^^^\n");
+	j9tty_err_printf("\n^^^^^^^^ Console dump ^^^^^^^^\n");
 
 	return OMR_ERROR_NONE;
 }
@@ -1836,18 +1835,18 @@ printDumpSpec(struct J9JavaVM *vm, IDATA kind, IDATA verboseLevel)
 
 			if ( verboseLevel > 1 ) {
 
-				j9tty_err_printf(PORTLIB,
+				j9tty_err_printf(
 					"\n%s:\n\n"
 					"  -Xdump:%s[:defaults][:<option>=<value>, ...]\n",
 					spec->summary,
 					spec->name
 				);
 
-				j9tty_err_printf(PORTLIB, "\nDump options:\n\n");
+				j9tty_err_printf("\nDump options:\n\n");
 
-				j9tty_err_printf(PORTLIB, "  events=<name>        Trigger dump on named events\n"
+				j9tty_err_printf("  events=<name>        Trigger dump on named events\n"
 					"       [+<name>...]      (see -Xdump:events)\n\n");
-				j9tty_err_printf(PORTLIB, "  filter=[*]<name>[*]  Filter on class (for load)\n"
+				j9tty_err_printf("  filter=[*]<name>[*]  Filter on class (for load)\n"
 					"         [*]<name>[*]  Filter on exception (for throw,systhrow,uncaught)\n"
 					"         [*]<name>#<class>.<method>[*]  with throwing class and method\n"
 					"         [*]<name>#<class>.<method>#<offset>  with throwing class stack offset\n"
@@ -1856,36 +1855,34 @@ printDumpSpec(struct J9JavaVM *vm, IDATA kind, IDATA verboseLevel)
 					"         #<n>[..<m>]            Filter on exit codes (for vmstop)\n"
 					"         #<msecs>ms             Filter on time (for slow)\n"
 					"         #<i>[k|m][..<j>[k|m]]  Filter on object size (for allocation)\n\n");
-				j9tty_err_printf(PORTLIB, "  msg_filter=[*]<string>[*] Filter based on the exception message string\n");
-				j9tty_err_printf(PORTLIB, "  %s<label>         %s\n",
+				j9tty_err_printf("  msg_filter=[*]<string>[*] Filter based on the exception message string\n");
+				j9tty_err_printf("  %s<label>         %s\n",
 					spec->labelTag, spec->labelDescription);
-				j9tty_err_printf(PORTLIB, "  range=<n>..<m>       Limit dumps\n");
-				j9tty_err_printf(PORTLIB, "  priority=<n>         Highest first\n");
-				j9tty_err_printf(PORTLIB, "  request=<name>       Request additional VM actions\n"
+				j9tty_err_printf("  range=<n>..<m>       Limit dumps\n");
+				j9tty_err_printf("  priority=<n>         Highest first\n");
+				j9tty_err_printf("  request=<name>       Request additional VM actions\n"
 					"        [+<name>...]     (see -Xdump:request)\n");
 
 				if (strcmp(spec->name, "heap") == 0) {
-					j9tty_err_printf(PORTLIB, "\n  opts=PHD|CLASSIC\n");
+					j9tty_err_printf("\n  opts=PHD|CLASSIC\n");
 				} else if (strcmp(spec->name, "tool") == 0) {
-					j9tty_err_printf(PORTLIB, "\n  opts=WAIT<msec>|ASYNC\n");
+					j9tty_err_printf("\n  opts=WAIT<msec>|ASYNC\n");
 #ifdef J9ZOS390
 				} else if (strcmp(spec->name, "system") == 0) {
-					j9tty_err_printf(PORTLIB, "\n  opts=IEATDUMP|CEEDUMP\n");
+					j9tty_err_printf("\n  opts=IEATDUMP|CEEDUMP\n");
 #endif
 				} else {
-					j9tty_err_printf(PORTLIB, "\n  opts=<NONE>\n");
+					j9tty_err_printf("\n  opts=<NONE>\n");
 				}
 			}
 
-			j9tty_err_printf(PORTLIB,
-				"\nDefault -Xdump:%s settings:\n\n",
-				spec->name);
+			j9tty_err_printf("\nDefault -Xdump:%s settings:\n\n", spec->name);
 
 			/* Use compact form */
-			j9tty_err_printf(PORTLIB, "  events=");
+			j9tty_err_printf("  events=");
 			printDumpEvents(vm, tmpSettings.eventMask, 0);
 
-			j9tty_err_printf(PORTLIB,
+			j9tty_err_printf(
 				"\n"
 				"  filter=%s\n"
 				"  %s%s\n"
@@ -1898,14 +1895,14 @@ printDumpSpec(struct J9JavaVM *vm, IDATA kind, IDATA verboseLevel)
 			);
 
 			/* Use compact form */
-			j9tty_err_printf(PORTLIB, "  request=");
+			j9tty_err_printf("  request=");
 			printDumpRequests(vm, tmpSettings.requestMask, 0);
 
-			j9tty_err_printf(PORTLIB, "\n  opts=%s\n\n",
+			j9tty_err_printf("\n  opts=%s\n\n",
 				tmpSettings.dumpOptions ? tmpSettings.dumpOptions : "");
 
 		} else {
-			j9tty_err_printf(PORTLIB, "  -Xdump:%s%*c%s\n", spec->name, 17-strlen(spec->name), ' ', spec->summary);
+			j9tty_err_printf("  -Xdump:%s%*c%s\n", spec->name, 17-strlen(spec->name), ' ', spec->summary);
 		}
 
 		return OMR_ERROR_NONE;
@@ -1940,15 +1937,15 @@ printDumpEvents(struct J9JavaVM *vm, UDATA bits, IDATA verbose)
 
 	/* Header */
 	if (verbose) {
-		j9tty_err_printf(PORTLIB, "  Name%*cEvent hook\n  ", maxNameLength - 2, ' ');
+		j9tty_err_printf("  Name%*cEvent hook\n  ", maxNameLength - 2, ' ');
 		for (i = 0; i < maxNameLength; i++) {
-			j9tty_err_printf(PORTLIB, "-");
+			j9tty_err_printf("-");
 		}
-		j9tty_err_printf(PORTLIB, "  ");
+		j9tty_err_printf("  ");
 		for (i = 0; i < maxDetailLength; i++) {
-			j9tty_err_printf(PORTLIB, "-");
+			j9tty_err_printf("-");
 		}
-		j9tty_err_printf(PORTLIB, "\n");
+		j9tty_err_printf("\n");
 	}
 
 	/* Events */
@@ -1956,9 +1953,9 @@ printDumpEvents(struct J9JavaVM *vm, UDATA bits, IDATA verbose)
 		if (bits & rasDumpEvents[i].bits) {
 			/* Switch between multi-line and single-line styles */
 			if (verbose) {
-				j9tty_err_printf(PORTLIB, "  %s%*c%s\n", rasDumpEvents[i].name, maxNameLength - strlen(rasDumpEvents[i].name) + 2, ' ', rasDumpEvents[i].detail);
+				j9tty_err_printf("  %s%*c%s\n", rasDumpEvents[i].name, maxNameLength - strlen(rasDumpEvents[i].name) + 2, ' ', rasDumpEvents[i].detail);
 			} else {
-				j9tty_err_printf(PORTLIB, "%s%s", separator, rasDumpEvents[i].name);
+				j9tty_err_printf("%s%s", separator, rasDumpEvents[i].name);
 			}
 
 			separator = "+";
@@ -1967,7 +1964,7 @@ printDumpEvents(struct J9JavaVM *vm, UDATA bits, IDATA verbose)
 
 	/* Footer */
 	if (verbose) {
-		j9tty_err_printf(PORTLIB, "\n");
+		j9tty_err_printf("\n");
 	}
 
 	return OMR_ERROR_NONE;
@@ -1981,7 +1978,9 @@ printDumpRequests(struct J9JavaVM *vm, UDATA bits, IDATA verbose)
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
 	/* Header */
-	if (verbose) {j9tty_err_printf( PORTLIB, "  Name      VM action\n  --------  -----------------------\n" );}
+	if (verbose) {
+		j9tty_err_printf("  Name      VM action\n  --------  -----------------------\n" );
+	}
 
 	for (i = 0; i < J9RAS_DUMP_KNOWN_REQUESTS; i++)
 	{
@@ -1989,9 +1988,9 @@ printDumpRequests(struct J9JavaVM *vm, UDATA bits, IDATA verbose)
 		{
 			/* Switch between multi-line and single-line styles */
 			if (verbose) {
-				j9tty_err_printf( PORTLIB, "  %s%*c%s\n", rasDumpRequests[i].name, 10-strlen(rasDumpRequests[i].name), ' ', rasDumpRequests[i].detail );
+				j9tty_err_printf("  %s%*c%s\n", rasDumpRequests[i].name, 10-strlen(rasDumpRequests[i].name), ' ', rasDumpRequests[i].detail );
 			} else {
-				j9tty_err_printf( PORTLIB, "%s%s", separator, rasDumpRequests[i].name );
+				j9tty_err_printf("%s%s", separator, rasDumpRequests[i].name );
 			}
 
 			separator = "+";
@@ -1999,7 +1998,9 @@ printDumpRequests(struct J9JavaVM *vm, UDATA bits, IDATA verbose)
 	}
 
 	/* Footer */
-	if (verbose) {j9tty_err_printf( PORTLIB, "\n" );}
+	if (verbose) {
+		j9tty_err_printf("\n" );
+	}
 
 	return OMR_ERROR_NONE;
 }
@@ -2162,49 +2163,49 @@ printDumpAgent(struct J9JavaVM *vm, struct J9RASdumpAgent *agent)
 {
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
-	j9tty_err_printf(PORTLIB, "-Xdump:");
+	j9tty_err_printf("-Xdump:");
 
 	if (agent->dumpFn == doSystemDump) {
-		j9tty_err_printf(PORTLIB, "system:\n");
+		j9tty_err_printf("system:\n");
 	} else if (agent->dumpFn == doHeapDump) {
-		j9tty_err_printf(PORTLIB, "heap:\n");
+		j9tty_err_printf("heap:\n");
 	} else if (agent->dumpFn == doJavaDump) {
-		j9tty_err_printf(PORTLIB, "java:\n");
+		j9tty_err_printf("java:\n");
 	} else if (agent->dumpFn == doToolDump) {
-		j9tty_err_printf(PORTLIB, "tool:\n");
+		j9tty_err_printf("tool:\n");
 	} else if (agent->dumpFn == doJitDump) {
-		j9tty_err_printf(PORTLIB, "jit:\n");
+		j9tty_err_printf("jit:\n");
 	} else if (agent->dumpFn == doConsoleDump) {
-		j9tty_err_printf(PORTLIB, "console:\n");
+		j9tty_err_printf("console:\n");
 	} else if (agent->dumpFn == doSilentDump) {
-		j9tty_err_printf(PORTLIB, "silent:\n");
+		j9tty_err_printf("silent:\n");
 #if defined(J9ZOS390)
 	} else if (agent->dumpFn == doCEEDump) {
-		j9tty_err_printf(PORTLIB, "ceedump:\n");
+		j9tty_err_printf("ceedump:\n");
 #endif
 	} else if(agent->dumpFn == doSnapDump) {
-		j9tty_err_printf(PORTLIB, "snap:\n");
+		j9tty_err_printf("snap:\n");
 	} else if (agent->dumpFn == doStackDump) {
-		j9tty_err_printf(PORTLIB, "stack:\n");
+		j9tty_err_printf("stack:\n");
 	} else if (agent->dumpFn == doJavaVMExit) {
-		j9tty_err_printf(PORTLIB, "exit:\n");
+		j9tty_err_printf("exit:\n");
 	} else {
-		j9tty_err_printf(PORTLIB, "dumpFn=%p\n", agent->dumpFn);
+		j9tty_err_printf("dumpFn=%p\n", agent->dumpFn);
 	}
 
-	j9tty_err_printf(PORTLIB, "    events=");
+	j9tty_err_printf("    events=");
 	printDumpEvents(vm, agent->eventMask, 0);
-	j9tty_err_printf(PORTLIB, ",");
+	j9tty_err_printf(",");
 
 	if (agent->detailFilter != NULL) {
-		j9tty_err_printf(PORTLIB, "\n    filter=%s,",	agent->detailFilter);
+		j9tty_err_printf("\n    filter=%s,",	agent->detailFilter);
 	}
 	
 	if (agent->subFilter != NULL) {
-		j9tty_err_printf(PORTLIB, "\n    msg_filter=%s,", agent->subFilter);
+		j9tty_err_printf("\n    msg_filter=%s,", agent->subFilter);
 	}
 
-	j9tty_err_printf(PORTLIB,
+	j9tty_err_printf(
 		"\n"
 		"    %s%s,\n"
 		"    range=%d..%d,\n"
@@ -2215,15 +2216,15 @@ printDumpAgent(struct J9JavaVM *vm, struct J9RASdumpAgent *agent)
 		agent->priority
 	);
 
-	j9tty_err_printf(PORTLIB, "    request=");
+	j9tty_err_printf("    request=");
 	printDumpRequests(vm, agent->requestMask, 0);
 
 	if (agent->dumpOptions != NULL) {
-		j9tty_err_printf(PORTLIB, ",");
-		j9tty_err_printf(PORTLIB, "\n    opts=%s",
+		j9tty_err_printf(",");
+		j9tty_err_printf("\n    opts=%s",
 			agent->dumpOptions ? agent->dumpOptions : "");
 	}
-	j9tty_err_printf(PORTLIB, "\n");
+	j9tty_err_printf("\n");
 
 	return OMR_ERROR_NONE;
 }
@@ -2961,14 +2962,14 @@ reportDumpRequest(struct J9PortLibrary* portLibrary, J9RASdumpContext * context,
 static char *
 scanSubFilter(J9JavaVM *vm, const J9RASdumpSettings *settings, const char **cursor, UDATA *actionPtr)
 {
-        UDATA eventMask = settings->eventMask;
-        char *subFilter = NULL;
+	UDATA eventMask = settings->eventMask;
+	char *subFilter = NULL;
 
-        subFilter = scanString(vm, cursor);
+	subFilter = scanString(vm, cursor);
 
-        if (0 == (eventMask & J9RAS_DUMP_EXCEPTION_EVENT_GROUP)) {
-            *actionPtr = BOGUS_DUMP_OPTION;
-        }
+	if (0 == (eventMask & J9RAS_DUMP_EXCEPTION_EVENT_GROUP)) {
+		*actionPtr = BOGUS_DUMP_OPTION;
+	}
 
-        return subFilter;
+	return subFilter;
 }

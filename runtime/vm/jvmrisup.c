@@ -799,7 +799,7 @@ rasThreadProtectedStartFuncWrapper(J9PortLibrary* portLib, void *arg_struct )
 	result = (*vm)->AttachCurrentThread(vm, (void **)&env, NULL); 
 	if (result != JNI_OK) {
 		PORT_ACCESS_FROM_JAVAVM((J9JavaVM*)vm);
-		j9tty_err_printf(PORTLIB, "J9RI0018: jvmri->CreateThread cannot attach new thread\n");
+		j9tty_err_printf("J9RI0018: jvmri->CreateThread cannot attach new thread\n");
 
 		arg_s->started = JVMRI_THREAD_ERROR;
 		omrthread_monitor_notify(arg_s->monitor);

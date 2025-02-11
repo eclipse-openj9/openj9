@@ -415,7 +415,7 @@ j9tty_test4(struct J9PortLibrary *portLibrary)
 	OMRPORT_FROM_J9PORT(portLibrary)->tty_err_vprintf = fake_j9tty_vprintf;
 	
 	/* Verify tty_startup was correctly overridden, the parameters passed should not matter */
-	j9tty_err_printf(PORTLIB, "You should not see this\n");
+	j9tty_err_printf("You should not see this\n");
 	rc = j9tty_startup();
 
 	/* Restore the function pointers */
@@ -461,7 +461,7 @@ j9tty_test5(struct J9PortLibrary *portLibrary)
 	OMRPORT_FROM_J9PORT(portLibrary)->file_vprintf = fake_j9file_vprintf;
 	
 	/* Verify tty_startup was correctly overridden, the parameters passed should not matter */
-	j9tty_err_printf(PORTLIB, "You should not see this\n");
+	j9tty_err_printf("You should not see this\n");
 	rc = j9tty_startup();
 
 	/* Restore the function pointers */

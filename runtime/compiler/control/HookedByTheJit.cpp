@@ -1770,7 +1770,7 @@ static void initThreadAfterCreation(J9VMThread *vmThread)
 
          if ((tracefp = j9file_open(fileName, EsOpenWrite | EsOpenAppend | EsOpenCreate, 0644)) == -1)
             {
-            j9tty_err_printf(PORTLIB, "Error: Failed to open jit trace file %s.\n", fileName);
+            j9tty_err_printf("Error: Failed to open jit trace file %s.\n", fileName);
             }
 
          VMTHREAD_TRACINGBUFFER_FH(vmThread) = tracefp;

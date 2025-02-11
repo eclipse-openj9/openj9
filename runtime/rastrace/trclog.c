@@ -1407,7 +1407,7 @@ tracePrint(UtThreadData **thr, UtModuleInfo *modInfo, uint32_t traceId, va_list 
 		/*
 		 *  Indented print
 		 */
-		j9tty_err_printf(PORTLIB, "%02d:%02d:%02d.%03d%c" UT_POINTER_SPEC
+		j9tty_err_printf("%02d:%02d:%02d.%03d%c" UT_POINTER_SPEC
 				"%16s.%-6d %c %s %c ", hh, mm, ss, millis, threadSwitch, (*thr)->id, qualifiedModuleName,
 				id, excpt, indent, entryexit);
 		j9tty_err_vprintf(format + 2, var);
@@ -1419,13 +1419,13 @@ tracePrint(UtThreadData **thr, UtModuleInfo *modInfo, uint32_t traceId, va_list 
 		excpt = format[0];
 		format[1] == ' ' ? (entryexit = '-') : (entryexit = format[1]);
 
-		j9tty_err_printf(PORTLIB, "%02d:%02d:%02d.%03d%c" UT_POINTER_SPEC
-				   "%16s.%-6d %c %c ", hh, mm, ss, millis, threadSwitch, (*thr)->id, qualifiedModuleName,
-				   id, excpt, entryexit);
+		j9tty_err_printf("%02d:%02d:%02d.%03d%c" UT_POINTER_SPEC
+				"%16s.%-6d %c %c ", hh, mm, ss, millis, threadSwitch, (*thr)->id, qualifiedModuleName,
+				id, excpt, entryexit);
 		j9tty_err_vprintf(format + 2, var);
 
 	}
-	j9tty_err_printf(PORTLIB, "\n");
+	j9tty_err_printf("\n");
 	freeTraceLock(thr);
 }
 
@@ -1472,12 +1472,11 @@ traceAssertion(UtThreadData **thr, UtModuleInfo *modInfo, uint32_t traceId, va_l
 	/*
 	 *  Non-indented print
 	 */
-	j9tty_err_printf(PORTLIB, "%02d:%02d:%02d.%03d " UT_POINTER_SPEC
-			   "%8s.%-6d *   ", hh, mm, ss, millis, (*thr)->id, qualifiedModuleName,
-			   id);
+	j9tty_err_printf(
+			"%02d:%02d:%02d.%03d " UT_POINTER_SPEC "%8s.%-6d *   ",
+			hh, mm, ss, millis, (*thr)->id, qualifiedModuleName, id);
 	j9tty_err_vprintf(format + 2, var);
-
-	j9tty_err_printf(PORTLIB, "\n");
+	j9tty_err_printf("\n");
 
 	freeTraceLock(thr);
 }
@@ -2595,8 +2594,8 @@ void omrTraceMem(void *env, UtModuleInfo *modInfo, uint32_t traceId, uintptr_t l
 		strncpy(qualifiedModuleName, modInfo->name, MAX_QUALIFIED_NAME_LENGTH);
 	}
 
-	j9tty_err_printf(PORTLIB, "* ** ASSERTION FAILED ** Obsolete trace function TraceMem called for trace point %s.%-6d", qualifiedModuleName, id);
-	j9tty_err_printf(PORTLIB, "\n");
+	j9tty_err_printf("* ** ASSERTION FAILED ** Obsolete trace function TraceMem called for trace point %s.%-6d", qualifiedModuleName, id);
+	j9tty_err_printf("\n");
 
 	raiseAssertion(thr, modInfo, traceId);
 }
@@ -2627,8 +2626,8 @@ void omrTraceState(void *env, UtModuleInfo *modInfo, uint32_t traceId, const cha
 		strncpy(qualifiedModuleName, modInfo->name, MAX_QUALIFIED_NAME_LENGTH);
 	}
 
-	j9tty_err_printf(PORTLIB, "* ** ASSERTION FAILED ** Obsolete trace function TraceState called for trace point %s.%-6d", qualifiedModuleName, id);
-	j9tty_err_printf(PORTLIB, "\n");
+	j9tty_err_printf("* ** ASSERTION FAILED ** Obsolete trace function TraceState called for trace point %s.%-6d", qualifiedModuleName, id);
+	j9tty_err_printf("\n");
 
 	raiseAssertion(thr, modInfo, traceId);
 }

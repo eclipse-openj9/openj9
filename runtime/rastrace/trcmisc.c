@@ -192,7 +192,7 @@ listCounters(void)
 			for (i = 0; i < compData->tracepointCount; i++) {
 				if ( compData->tracepointcounters[i] > 0 ) {
 					if (f < 0) {
-						j9tty_err_printf(PORTLIB, "%s.%d %ld \n", compData->qualifiedComponentName, i, compData->tracepointcounters[i]);
+						j9tty_err_printf("%s.%d %ld \n", compData->qualifiedComponentName, i, compData->tracepointcounters[i]);
 					} else {
 						j9str_printf(tempBuf, TEMPBUFLEN, "%s.%d %lld \n", compData->qualifiedComponentName, i, compData->tracepointcounters[i]);
 						/* convert to ebcdic if on zos */
@@ -211,7 +211,7 @@ listCounters(void)
 			for (i = 0; i < compData->tracepointCount; i++) {
 				if ( compData->tracepointcounters[i] > 0 ) {
 					if (f < 0) {
-						j9tty_err_printf(PORTLIB, "%s.%d %ld \n", compData->qualifiedComponentName, i, compData->tracepointcounters[i]);
+						j9tty_err_printf("%s.%d %ld \n", compData->qualifiedComponentName, i, compData->tracepointcounters[i]);
 					} else {
 						j9str_printf(tempBuf, TEMPBUFLEN, "%s.%d %lld \n", compData->qualifiedComponentName, i, compData->tracepointcounters[i]);
 						/* convert to ebcdic if on zos */

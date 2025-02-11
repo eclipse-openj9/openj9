@@ -59,8 +59,8 @@ printExceptionInThread(J9VMThread* vmThread)
 
 	name = getOMRVMThreadName(vmThread->omrVMThread);
 
-	j9tty_err_printf(PORTLIB, format, name);
-	j9tty_err_printf(PORTLIB, " ");
+	j9tty_err_printf(format, name);
+	j9tty_err_printf(" ");
 
 	releaseOMRVMThreadName(vmThread->omrVMThread);
 }
@@ -87,7 +87,7 @@ printExceptionMessage(J9VMThread* vmThread, j9object_t exception) {
 		}
 	}
 
-	j9tty_err_printf(PORTLIB, "%.*s%s%.*s\n",
+	j9tty_err_printf("%.*s%s%.*s\n",
 		(UDATA)J9UTF8_LENGTH(exceptionClassName),
 		J9UTF8_DATA(exceptionClassName),
 		separator,
@@ -113,7 +113,7 @@ printStackTraceEntry(J9VMThread * vmThread, void * voidUserData, UDATA bytecodeO
 			J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG,
 			J9NLS_VM_STACK_TRACE_UNKNOWN,
 			NULL);
-		j9tty_err_printf(PORTLIB, (char*)format);
+		j9tty_err_printf(format);
 	} else {
 		J9UTF8* className = J9ROMCLASS_CLASSNAME(romClass);
 		J9UTF8* methodName = J9ROMMETHOD_NAME(romMethod);
@@ -182,7 +182,7 @@ printStackTraceEntry(J9VMThread * vmThread, void * voidUserData, UDATA bytecodeO
 					J9NLS_VM_STACK_TRACE_WITH_MODULE_VERSION,
 					"\tat %.*s.%.*s (%s@%s/%.*s)\n");
 			}
-			j9tty_err_printf(PORTLIB, (char*)format,
+			j9tty_err_printf(format,
 				(UDATA)J9UTF8_LENGTH(className), J9UTF8_DATA(className),
 				(UDATA)J9UTF8_LENGTH(methodName), J9UTF8_DATA(methodName),
 				moduleNameUTF, moduleVersionUTF,
@@ -200,7 +200,7 @@ printStackTraceEntry(J9VMThread * vmThread, void * voidUserData, UDATA bytecodeO
 					J9NLS_VM_STACK_TRACE,
 					"\tat %.*s.%.*s (%.*s)\n");
 			}
-			j9tty_err_printf(PORTLIB, (char*)format,
+			j9tty_err_printf(format,
 				(UDATA)J9UTF8_LENGTH(className), J9UTF8_DATA(className),
 				(UDATA)J9UTF8_LENGTH(methodName), J9UTF8_DATA(methodName),
 				sourceFileNameLen, sourceFileName,

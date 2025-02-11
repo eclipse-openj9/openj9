@@ -910,10 +910,10 @@ generateSystemDump(struct J9PortLibrary* portLibrary, void* gpInfo)
 			j9tty_printf(PORTLIB, "\nGenerated system dump: %s\n", dumpName);
 		} else {
 			/* failed, error message in dumpName */
-			j9tty_err_printf(PORTLIB, "\nError: %s\n", dumpName);
+			j9tty_err_printf("\nError: %s\n", dumpName);
 		}
 	} else {
-		j9tty_err_printf(PORTLIB, "\nSystem dump not written since \""J9DO_NOT_WRITE_DUMP"\" was defined in the environment\n");
+		j9tty_err_printf("\nSystem dump not written since \""J9DO_NOT_WRITE_DUMP"\" was defined in the environment\n");
 	}
 }
 

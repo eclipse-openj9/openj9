@@ -541,7 +541,7 @@ printLabelSpec(struct J9JavaVM *vm)
 			"  %%last  last dump\n"
 			"  %%event dump event\n"
 			"\n";
-	j9tty_err_printf(PORTLIB, labelSpec);
+	j9tty_err_printf(labelSpec);
 	return OMR_ERROR_NONE;
 }
 

@@ -300,7 +300,7 @@ I_32 j9jit_vfprintf(TR::FILE *pFile, const char *format, va_list args)
    if (!pFile || pFile == TR::IO::Stdout)
       j9tty_printf(privatePortLibrary, "%s", buf);
    else if (pFile == TR::IO::Stderr)
-      j9tty_err_printf(privatePortLibrary, "%s", buf);
+      j9tty_err_printf("%s", buf);
    else
       {
       char *bufPtr = buf;

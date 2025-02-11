@@ -402,7 +402,7 @@ IDATA J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
 			J9JVMTIData *jvmtiData = J9JVMTI_DATA_FROM_VM(vm);
 			if (hookGlobalEvents(jvmtiData)) {
 				PORT_ACCESS_FROM_JAVAVM(vm);
-				j9tty_err_printf(PORTLIB, "Need NLS message here\n");
+				j9tty_err_printf("Need NLS message here\n");
 				goto _error;
 			}
 

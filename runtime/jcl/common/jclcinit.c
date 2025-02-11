@@ -150,7 +150,7 @@ jint computeFullVersionString(J9JavaVM* vm)
 			EsBuildVersionString,
 			jitEnabled,
 			aotEnabled)) {
-		j9tty_err_printf(PORTLIB, "\n%s - %d: %s: Error: Java VM info string exceeds buffer size\n", __FILE__, __LINE__, __FUNCTION__);
+		j9tty_err_printf("\n%s - %d: %s: Error: Java VM info string exceeds buffer size\n", __FILE__, __LINE__, __FUNCTION__);
 		return JNI_ERR;
 	}
 

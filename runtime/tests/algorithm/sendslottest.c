@@ -60,9 +60,7 @@ verifySendSlots(J9PortLibrary *portLib, UDATA *passCount, UDATA *failCount)
 	return rc;
 }
 
-
-
-static I_32 
+static I_32
 testSignature(J9PortLibrary *portLib, const char* sig, UDATA expectedSlots, UDATA *passCount, UDATA *failCount)
 {
 	PORT_ACCESS_FROM_PORT(portLib);
@@ -71,7 +69,7 @@ testSignature(J9PortLibrary *portLib, const char* sig, UDATA expectedSlots, UDAT
 	result = getSendSlotsFromSignature((const U_8*)sig);
 
 	if (result != expectedSlots) {
-		j9tty_err_printf(PORTLIB, "Incorrect result for \"%s\". Expected %u, got %u\n", sig, expectedSlots, result);
+		j9tty_err_printf("Incorrect result for \"%s\". Expected %u, got %u\n", sig, expectedSlots, result);
 		(*failCount)++;
 	} else {
 		(*passCount)++;
@@ -79,6 +77,3 @@ testSignature(J9PortLibrary *portLib, const char* sig, UDATA expectedSlots, UDAT
 
 	return 0;
 }
-
-
-

@@ -507,7 +507,7 @@ createVMArgs(J9PortLibrary *portLib, int argc, char **argv, UDATA handle, jint v
 
 	options = j9mem_allocate_memory(argc * sizeof(*options), OMRMEM_CATEGORY_THREADS);
 	if (options == NULL) {
-		j9tty_err_printf (PORTLIB, "Failed to allocate memory for options\n");
+		j9tty_err_printf("Failed to allocate memory for options\n");
 		return 1;
 	}
 

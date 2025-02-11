@@ -910,44 +910,44 @@ static void displayTraceHelp(J9JavaVM *vm)
 {
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
-	j9tty_err_printf(PORTLIB, "\nUsage:\n\n");
-	j9tty_err_printf(PORTLIB, "  java -Xtrace[:option,...]\n\n");
-	j9tty_err_printf(PORTLIB, "  Valid options are:\n\n");
-	j9tty_err_printf(PORTLIB, "     help                                Print general trace help\n");
-	j9tty_err_printf(PORTLIB, "     what                                Print current trace configuration\n");
-	j9tty_err_printf(PORTLIB, "     none[=tp_spec[,...]]                Ignore all previous/default trace options\n");
-	j9tty_err_printf(PORTLIB, "     properties[=filespec]               Use file for trace options\n");
-	j9tty_err_printf(PORTLIB, "     buffers=nnk|nnm|dynamic|nodynamic[,...] Buffer size and nature\n\n");
-	j9tty_err_printf(PORTLIB, "     minimal=[!]tp_spec[,...]            Minimal trace data (time and id)\n");
-	j9tty_err_printf(PORTLIB, "     maximal=[!]tp_spec[,...]            Time,id and parameters traced\n");
-	j9tty_err_printf(PORTLIB, "     count=[!]tp_spec[,...]              Count tracepoints\n");
-	j9tty_err_printf(PORTLIB, "     print=[!]tp_spec[,...]              Direct unindented trace data to stderr\n");
-	j9tty_err_printf(PORTLIB, "     iprint=[!]tp_spec[,...]             Indented version of print option\n");
-	j9tty_err_printf(PORTLIB, "     external=[!]tp_spec[,...]           Direct trace data to a JVMRI listener\n");
-	j9tty_err_printf(PORTLIB, "     exception=[!]tp_spec[,...]          Use reserved in-core buffer\n");
-	j9tty_err_printf(PORTLIB, "     methods=method_spec[,..]            Trace specified class(es) and methods\n\n");
-	j9tty_err_printf(PORTLIB, "     trigger=[!]clause[,clause]...       Enables triggering events (including dumps) on tracepoints\n");
-	j9tty_err_printf(PORTLIB, "     suspend                             Global trace suspend used with trigger\n");
-	j9tty_err_printf(PORTLIB, "     resume                              Global trace resume used with trigger\n");
-	j9tty_err_printf(PORTLIB, "     suspendcount=nn                     Trigger count for \"trace suspend\"\n");
-	j9tty_err_printf(PORTLIB, "     resumecount=nn                      Trigger count for \"trace resume\"\n");
-	j9tty_err_printf(PORTLIB, "     output=filespec[,nnm[,generations]] Sends maximal and minimal trace to a file\n");
-	j9tty_err_printf(PORTLIB, "     exception.output=filespec[,nnnm]    Sends exception trace to a file\n");
-	j9tty_err_printf(PORTLIB, "     maxstringlength=nn                  Limit length of string values to capture\n");
-	j9tty_err_printf(PORTLIB, "                                         "
+	j9tty_err_printf("\nUsage:\n\n");
+	j9tty_err_printf("  java -Xtrace[:option,...]\n\n");
+	j9tty_err_printf("  Valid options are:\n\n");
+	j9tty_err_printf("     help                                Print general trace help\n");
+	j9tty_err_printf("     what                                Print current trace configuration\n");
+	j9tty_err_printf("     none[=tp_spec[,...]]                Ignore all previous/default trace options\n");
+	j9tty_err_printf("     properties[=filespec]               Use file for trace options\n");
+	j9tty_err_printf("     buffers=nnk|nnm|dynamic|nodynamic[,...] Buffer size and nature\n\n");
+	j9tty_err_printf("     minimal=[!]tp_spec[,...]            Minimal trace data (time and id)\n");
+	j9tty_err_printf("     maximal=[!]tp_spec[,...]            Time,id and parameters traced\n");
+	j9tty_err_printf("     count=[!]tp_spec[,...]              Count tracepoints\n");
+	j9tty_err_printf("     print=[!]tp_spec[,...]              Direct unindented trace data to stderr\n");
+	j9tty_err_printf("     iprint=[!]tp_spec[,...]             Indented version of print option\n");
+	j9tty_err_printf("     external=[!]tp_spec[,...]           Direct trace data to a JVMRI listener\n");
+	j9tty_err_printf("     exception=[!]tp_spec[,...]          Use reserved in-core buffer\n");
+	j9tty_err_printf("     methods=method_spec[,..]            Trace specified class(es) and methods\n\n");
+	j9tty_err_printf("     trigger=[!]clause[,clause]...       Enables triggering events (including dumps) on tracepoints\n");
+	j9tty_err_printf("     suspend                             Global trace suspend used with trigger\n");
+	j9tty_err_printf("     resume                              Global trace resume used with trigger\n");
+	j9tty_err_printf("     suspendcount=nn                     Trigger count for \"trace suspend\"\n");
+	j9tty_err_printf("     resumecount=nn                      Trigger count for \"trace resume\"\n");
+	j9tty_err_printf("     output=filespec[,nnm[,generations]] Sends maximal and minimal trace to a file\n");
+	j9tty_err_printf("     exception.output=filespec[,nnnm]    Sends exception trace to a file\n");
+	j9tty_err_printf("     maxstringlength=nn                  Limit length of string values to capture\n");
+	j9tty_err_printf("                                         "
 			"Maximum " J9_STR(RAS_MAX_STRING_LENGTH_LIMIT)
 			", use 0 to disable."
 			" Default: " J9_STR(RAS_MAX_STRING_LENGTH_DEFAULT) "\n");
-	j9tty_err_printf(PORTLIB, "     stackdepth=nn                       Set number of frames output by jstacktrace trigger action\n");
-	j9tty_err_printf(PORTLIB, "     sleeptime=nnt                       Time delay for sleep trigger action\n");
-	j9tty_err_printf(PORTLIB, "                                         Recognised suffixes: ms (milliseconds), s (seconds). Default: ms\n");
-	j9tty_err_printf(PORTLIB, "\n     where tp_spec is, for example, j9vm.111 or {j9vm.111-114,j9trc.5}\n");
-	j9tty_err_printf(PORTLIB, "\n     IMPORTANT: Where an option value contains one or more commas, it must\n");
-	j9tty_err_printf(PORTLIB, "     be enclosed in curly braces, for example:\n\n");
-	j9tty_err_printf(PORTLIB, "         -Xtrace:maximal={j9vm,mt},methods={*.*,!java/lang/*},output=trace\n");
-	j9tty_err_printf(PORTLIB, "\n     You may need to enclose options in quotation marks to prevent the shell\n");
-	j9tty_err_printf(PORTLIB, "     intercepting and fragmenting comma-separated command lines, for example:\n\n");
-	j9tty_err_printf(PORTLIB, "         \"-Xtrace:methods={java/lang/*,java/util/*},print=mt\"\n\n");
+	j9tty_err_printf("     stackdepth=nn                       Set number of frames output by jstacktrace trigger action\n");
+	j9tty_err_printf("     sleeptime=nnt                       Time delay for sleep trigger action\n");
+	j9tty_err_printf("                                         Recognised suffixes: ms (milliseconds), s (seconds). Default: ms\n");
+	j9tty_err_printf("\n     where tp_spec is, for example, j9vm.111 or {j9vm.111-114,j9trc.5}\n");
+	j9tty_err_printf("\n     IMPORTANT: Where an option value contains one or more commas, it must\n");
+	j9tty_err_printf("     be enclosed in curly braces, for example:\n\n");
+	j9tty_err_printf("         -Xtrace:maximal={j9vm,mt},methods={*.*,!java/lang/*},output=trace\n");
+	j9tty_err_printf("\n     You may need to enclose options in quotation marks to prevent the shell\n");
+	j9tty_err_printf("     intercepting and fragmenting comma-separated command lines, for example:\n\n");
+	j9tty_err_printf("         \"-Xtrace:methods={java/lang/*,java/util/*},print=mt\"\n\n");
 }
 
 static void
@@ -1224,8 +1224,8 @@ printTraceWhat(J9PortLibrary* portLibrary)
 	void* cursor_ptr = NULL;
 	void** cursor = &cursor_ptr;
 	const char* option = walkTraceConfig(cursor);
-	j9tty_err_printf(PORTLIB, "Trace engine configuration\n");
-	j9tty_err_printf(PORTLIB, "--------------------------\n");
+	j9tty_err_printf("Trace engine configuration\n");
+	j9tty_err_printf("--------------------------\n");
 	if( NULL != option) {
 		while ( NULL != *cursor ) {
 			option = walkTraceConfig(cursor);
@@ -1236,13 +1236,13 @@ printTraceWhat(J9PortLibrary* portLibrary)
 			cursor = &cursor_ptr;
 			option = walkTraceConfig(cursor);
 		}
-		j9tty_err_printf(PORTLIB, "-Xtrace:%s\n", option);
+		j9tty_err_printf("-Xtrace:%s\n", option);
 		while ( NULL != *cursor ) {
 			option = walkTraceConfig(cursor);
-			j9tty_err_printf(PORTLIB, "-Xtrace:%s\n", option);
+			j9tty_err_printf("-Xtrace:%s\n", option);
 		}
 	}
-	j9tty_err_printf(PORTLIB, "--------------------------\n");
+	j9tty_err_printf("--------------------------\n");
 }
 
 /**************************************************************************
