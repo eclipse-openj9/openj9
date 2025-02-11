@@ -277,10 +277,9 @@ bool J9::TransformUtil::avoidFoldingInstanceField(
 
    TR_ASSERT_FATAL(
       fej9->canDereferenceAtCompileTimeWithFieldSymbol(field, cpIndex, owningMethod),
-      "avoidFoldingInstanceField: symbol %p is never foldable (expected possibly foldable)\n",
-      field);
+      "avoidFoldingInstanceField: symbol %p is never foldable (expected possibly foldable)\n", field);
 
-   if (fej9->isStable(cpIndex, owningMethod, comp) && !field->isFinal())
+   if (owningMethod->isStable(cpIndex, comp) && !field->isFinal())
       {
       uintptr_t fieldAddress = object + fieldOffset;
       TR::DataType loadType = field->getDataType();
@@ -386,30 +385,27 @@ static bool isArrayWithConstantElements(TR::SymbolReference *symRef, TR::Compila
 static int32_t isArrayWithStableElements(int32_t cpIndex, TR_ResolvedMethod *owningMethod, TR::Compilation *comp)
    {
    TR_J9VMBase *fej9 = comp->fej9();
-   if (fej9->isStable(cpIndex, owningMethod, comp))
+   // First determine if we are dealing with an array
+   int32_t signatureLength = 0;
+   char *signature = owningMethod->classSignatureOfFieldOrStatic(cpIndex, signatureLength);
+   if (!signature || signature[0] != '[')
+      return 0;
+   // Then, check the stable annotation
+   if (!owningMethod->isStable(cpIndex, comp))
+      return 0;
+   // Finally, determine the rank
+   int32_t rank = 1;
+   for (; rank < signatureLength; rank++)
       {
-      int32_t signatureLength = 0;
-      char *signature = owningMethod->classSignatureOfFieldOrStatic(cpIndex, signatureLength);
-
-      if (signature)
-         {
-         int32_t rank = 0;
-         for (int32_t i = 0; i < signatureLength; i++)
-            {
-            if (signature[i] != '[') break;
-            rank++;
-            }
-
-         if (comp->getOption(TR_TraceOptDetails) && rank > 0)
-            traceMsg(comp, "Stable array with rank %d: %.*s\n", rank, signatureLength, signature);
-
-         return rank;
-         }
+      if (signature[rank] != '[')
+         break;
       }
 
-   return 0;
-   }
+   if (comp->getOption(TR_TraceOptDetails))
+      traceMsg(comp, "Stable array with rank %d: %.*s\n", rank, signatureLength, signature);
 
+   return rank;
+   }
 
 static bool verifyFieldAccess(void *curStruct, TR::SymbolReference *field, bool isStableArrayElement, TR::Compilation *comp)
    {
@@ -2192,7 +2188,6 @@ J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp,
                   node->setSymbolReference(improvedSymRef);
                   node->setIsNull(false);
                   node->setIsNonNull(true);
-
                   int32_t stableArrayRank = isArrayWithStableElements(symRef->getCPIndex(),
                                                                      symRef->getOwningMethod(comp),
                                                                      comp);

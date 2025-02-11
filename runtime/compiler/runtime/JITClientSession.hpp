@@ -225,6 +225,7 @@ public:
       // a different API to populate it. In the future we may want to unify these two caches
       PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *> _fieldOrStaticDefiningClassCache;
       PersistentUnorderedMap<int32_t, J9MethodNameAndSignature> _J9MethodNameCache; // key is a cpIndex
+      PersistentUnorderedMap<int32_t, bool> _isStableCache; // Store the presence of the Stable annotation for the field indicated by a cpIndex
       PersistentUnorderedSet<J9ClassLoader *> _referencingClassLoaders;
       }; // struct ClassInfo
 

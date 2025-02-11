@@ -1250,9 +1250,8 @@ TR_J9VMBase::getObjectClassInfoFromObjectReferenceLocation(TR::Compilation *comp
    if (knot)
       {
       TR::VMAccessCriticalSection getObjectReferenceLocation(comp);
-      uintptr_t objectReference = getStaticReferenceFieldAtAddress
-         (objectReferenceLocation);
-      ci.clazz   = getObjectClass(objectReference);
+      uintptr_t objectReference = getStaticReferenceFieldAtAddress(objectReferenceLocation);
+      ci.clazz = getObjectClass(objectReference);
       ci.isString = isString(ci.clazz);
       ci.jlClass = getClassClassPointer(ci.clazz);
       ci.isFixedJavaLangClass = (ci.jlClass == ci.clazz);
@@ -3936,7 +3935,7 @@ TR_J9VMBase::canDereferenceAtCompileTimeWithFieldSymbol(TR::Symbol * fieldSymbol
    {
    TR::Compilation *comp = TR::comp();
 
-   if (isStable(cpIndex, owningMethod, comp))
+   if (owningMethod->isStable(cpIndex, comp))
       return true;
 
    switch (fieldSymbol->getRecognizedField())
@@ -4013,37 +4012,7 @@ TR_J9VMBase::canDereferenceAtCompileTime(TR::SymbolReference *fieldRef, TR::Comp
    }
 
 bool
-TR_J9VMBase::isStable(int cpIndex, TR_ResolvedMethod *owningMethod, TR::Compilation *comp)
-   {
-   // NOTE: the field must be resolved!
-
-   if (comp->getOption(TR_DisableStableAnnotations))
-      return false;
-
-   if (cpIndex < 0)
-      return false;
-
-   J9Class *fieldClass = (J9Class*)owningMethod->classOfMethod();
-   if (!fieldClass)
-      return false;
-
-   bool isFieldStable = isStable(fieldClass, cpIndex);
-
-   if (isFieldStable && comp->getOption(TR_TraceOptDetails))
-      {
-      int classLen;
-      const char * className= owningMethod->classNameOfFieldOrStatic(cpIndex, classLen);
-      int fieldLen;
-      const char * fieldName = owningMethod->fieldNameChars(cpIndex, fieldLen);
-      traceMsg(comp, "   Found stable field: %.*s.%.*s\n", classLen, className, fieldLen, fieldName);
-      }
-
-   // Not checking for JCL classes since @Stable annotation only visible inside JCL
-   return isFieldStable;
-   }
-
-bool
-TR_J9VMBase::isStable(J9Class *fieldClass, int cpIndex)
+TR_J9VMBase::isStable(J9Class *fieldClass, int32_t cpIndex)
    {
    TR_ASSERT_FATAL(fieldClass, "fieldClass must not be NULL");
    return jitIsFieldStable(vmThread(), fieldClass, cpIndex);

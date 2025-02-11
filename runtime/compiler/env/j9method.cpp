@@ -6449,6 +6449,33 @@ TR_ResolvedJ9Method::getClassFromCP(TR_J9VMBase *fej9, J9ConstantPool *cp, TR::C
    return result;
    }
 
+bool
+TR_ResolvedJ9Method::isStable(int32_t cpIndex, TR::Compilation *comp)
+   {
+   if (comp->getOption(TR_DisableStableAnnotations))
+      return false;
+
+   if (cpIndex < 0)
+      return false;
+
+   J9Class *fieldClass = (J9Class*)classOfMethod();
+   if (!fieldClass)
+      return false;
+
+   bool isFieldStable = fej9()->isStable(fieldClass, cpIndex);
+
+   if (isFieldStable && comp->getOption(TR_TraceOptDetails))
+      {
+      int classLen;
+      const char * className= classNameOfFieldOrStatic(cpIndex, classLen);
+      int fieldLen;
+      const char * fieldName = fieldNameChars(cpIndex, fieldLen);
+      traceMsg(comp, "   Found stable field: %.*s.%.*s\n", classLen, className, fieldLen, fieldName);
+      }
+
+   return isFieldStable;
+   }
+
 TR_OpaqueClassBlock *
 TR_ResolvedJ9Method::getClassFromConstantPool(TR::Compilation * comp, uint32_t cpIndex, bool)
    {
