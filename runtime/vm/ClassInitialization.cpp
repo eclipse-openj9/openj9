@@ -271,7 +271,10 @@ performVerification(J9VMThread *currentThread, J9Class *clazz)
 		}
 	}
 done:
+#if defined(J9VM_OPT_INCLUDE_CLASSVERIFY_EXIT_TRACEPOINT)
+	/* This tracepoint can introduce startup regressions even when disabled, so don't build into the VM by default */
 	Trc_VM_performVerification_Exit(currentThread);
+#endif
 	return;
 }
 
