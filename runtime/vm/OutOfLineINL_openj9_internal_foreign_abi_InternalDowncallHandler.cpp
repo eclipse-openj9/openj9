@@ -104,6 +104,7 @@ OutOfLineINL_openj9_internal_foreign_abi_InternalDowncallHandler_initCifNativeTh
 	UDATA returnLayoutSize = 0;
 
 	PORT_ACCESS_FROM_JAVAVM(vm);
+	VM_OutOfLineINL_Helpers::buildInternalNativeStackFrame(currentThread, method);
 
 	/* Set up the ffi_type of the return layout in the case of primitive or struct */
 	returnLayoutSize = ffiTypeHelpers.getLayoutFFIType(&returnType, retLayoutStrObject);
@@ -188,7 +189,9 @@ OutOfLineINL_openj9_internal_foreign_abi_InternalDowncallHandler_initCifNativeTh
 	}
 	if (FFI_OK != status) {
 		rc = GOTO_THROW_CURRENT_EXCEPTION;
-		setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
+		VM_OutOfLineINL_Helpers::buildInternalNativeStackFrame(currentThread, method);
+		setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, NULL);
+		VM_OutOfLineINL_Helpers::restoreInternalNativeStackFrame(currentThread);
 		goto freeAllMemoryThenExit;
 	}
 
@@ -220,6 +223,7 @@ OutOfLineINL_openj9_internal_foreign_abi_InternalDowncallHandler_initCifNativeTh
 	J9VMOPENJ9INTERNALFOREIGNABIINTERNALDOWNCALLHANDLER_SET_CIFNATIVETHUNKADDR(currentThread, nativeInvoker, (intptr_t)cif);
 
 done:
+	VM_OutOfLineINL_Helpers::restoreInternalNativeStackFrame(currentThread);
 	VM_OutOfLineINL_Helpers::returnVoid(currentThread, 5);
 	return rc;
 
