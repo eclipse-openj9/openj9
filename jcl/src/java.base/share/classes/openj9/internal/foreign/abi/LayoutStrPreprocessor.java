@@ -216,11 +216,13 @@ final class LayoutStrPreprocessor {
 			long elementCount = arrayLayout.elementCount().getAsLong();
 			/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 
-			/* The padding bytes is required in the native signature for upcall thunk generation. */
-			if (isPaddingLayout(elementLayout) && !isDownCall) {
-				targetLayoutStr.append('(').append(arrayLayout.byteSize()).append(')');
-			} else {
-				targetLayoutStr.append(elementCount).append(':').append(preprocessLayout(elementLayout, isDownCall));
+			if (0 < elementCount) {
+				/* The padding bytes is required in the native signature for upcall thunk generation. */
+				if (isPaddingLayout(elementLayout) && !isDownCall) {
+					targetLayoutStr.append('(').append(arrayLayout.byteSize()).append(')');
+				} else {
+					targetLayoutStr.append(elementCount).append(':').append(preprocessLayout(elementLayout, isDownCall));
+				}
 			}
 		/*[IF JAVA_SPEC_VERSION >= 21]*/
 		} else if (targetLayout instanceof UnionLayout unionLayout) { /* Intended for the nested union since JDK21. */
