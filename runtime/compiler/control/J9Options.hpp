@@ -52,87 +52,123 @@ namespace J9
  */
 enum ExternalOptions
    {
-   TR_FirstExternalOption                      = 0,
-   Xnodfpbd                                    = 0,
-   Xdfpbd                                      = 1,
-   Xhysteresis                                 = 2,
-   Xnoquickstart                               = 3,
-   Xquickstart                                 = 4,
-   Xtuneelastic                                = 5,
-   XtlhPrefetch                                = 6,
-   XnotlhPrefetch                              = 7,
-   Xlockword                                   = 8,
-   XlockReservation                            = 9,
-   XjniAcc                                     = 10,
-   Xlp                                         = 11,
-   Xlpcodecache                                = 12,
-   Xcodecache                                  = 13,
-   Xcodecachetotal                             = 14,
-   XXcodecachetotal                            = 15,
-   XXplusPrintCodeCache                        = 16,
-   XXminusPrintCodeCache                       = 17,
-   XsamplingExpirationTime                     = 18,
-   XcompilationThreads                         = 19,
-   XaggressivenessLevel                        = 20,
-   Xnoclassgc                                  = 21,
-   Xjit                                        = 22,
-   Xnojit                                      = 23,
-   Xjitcolon                                   = 24,
-   Xaot                                        = 25,
-   Xnoaot                                      = 26,
-   Xaotcolon                                   = 27,
-   XXdeterministic                             = 28,
-   XXplusRuntimeInstrumentation                = 29,
-   XXminusRuntimeInstrumentation               = 30,
-   XXplusPerfTool                              = 31,
-   XXminusPerfTool                             = 32,
-   XXdoNotProcessJitEnvVars                    = 33,
-   XXplusMergeCompilerOptions                  = 34,
-   XXminusMergeCompilerOptions                 = 35,
-   XXLateSCCDisclaimTimeOption                 = 36,
-   XXplusUseJITServerOption                    = 37,
-   XXminusUseJITServerOption                   = 38,
-   XXplusJITServerTechPreviewMessageOption     = 39,
-   XXminusJITServerTechPreviewMessageOption    = 40,
-   XXJITServerAddressOption                    = 41,
-   XXJITServerPortOption                       = 42,
-   XXJITServerTimeoutOption                    = 43,
-   XXJITServerSSLKeyOption                     = 44,
-   XXJITServerSSLCertOption                    = 45,
-   XXJITServerSSLRootCertsOption               = 46,
-   XXplusJITServerUseAOTCacheOption            = 47,
-   XXminusJITServerUseAOTCacheOption           = 48,
-   XXplusRequireJITServerOption                = 49,
-   XXminusRequireJITServerOption               = 50,
-   XXplusJITServerLogConnections               = 51,
-   XXminusJITServerLogConnections              = 52,
-   XXJITServerAOTmxOption                      = 53,
-   XXplusJITServerLocalSyncCompilesOption      = 54,
-   XXminusJITServerLocalSyncCompilesOption     = 55,
-   XXplusMetricsServer                         = 56,
-   XXminusMetricsServer                        = 57,
-   XXJITServerMetricsPortOption                = 58,
-   XXJITServerMetricsSSLKeyOption              = 59,
-   XXJITServerMetricsSSLCertOption             = 60,
-   XXplusJITServerShareROMClassesOption        = 61,
-   XXminusJITServerShareROMClassesOption       = 62,
-   XXplusJITServerAOTCachePersistenceOption    = 63,
-   XXminusJITServerAOTCachePersistenceOption   = 64,
-   XXJITServerAOTCacheDirOption                = 65,
-   XXJITServerAOTCacheNameOption               = 66,
-   XXcodecachetotalMaxRAMPercentage            = 67,
+   TR_FirstExternalOption                        = 0,
+   Xnodfpbd                                      = 0,
+   Xdfpbd                                        = 1,
+   Xhysteresis                                   = 2,
+   Xnoquickstart                                 = 3,
+   Xquickstart                                   = 4,
+   Xtuneelastic                                  = 5,
+   XtlhPrefetch                                  = 6,
+   XnotlhPrefetch                                = 7,
+   Xlockword                                     = 8,
+   XlockReservation                              = 9,
+   XjniAcc                                       = 10,
+   Xlp                                           = 11,
+   Xlpcodecache                                  = 12,
+   Xcodecache                                    = 13,
+   Xcodecachetotal                               = 14,
+   XXcodecachetotal                              = 15,
+   XXplusPrintCodeCache                          = 16,
+   XXminusPrintCodeCache                         = 17,
+   XsamplingExpirationTime                       = 18,
+   XcompilationThreads                           = 19,
+   XaggressivenessLevel                          = 20,
+   Xnoclassgc                                    = 21,
+   Xjit                                          = 22,
+   Xnojit                                        = 23,
+   Xjitcolon                                     = 24,
+   Xaot                                          = 25,
+   Xnoaot                                        = 26,
+   Xaotcolon                                     = 27,
+   XXdeterministic                               = 28,
+   XXplusRuntimeInstrumentation                  = 29,
+   XXminusRuntimeInstrumentation                 = 30,
+   XXplusPerfTool                                = 31,
+   XXminusPerfTool                               = 32,
+   XXdoNotProcessJitEnvVars                      = 33,
+   XXplusMergeCompilerOptions                    = 34,
+   XXminusMergeCompilerOptions                   = 35,
+   XXLateSCCDisclaimTimeOption                   = 36,
+   XXplusUseJITServerOption                      = 37,
+   XXminusUseJITServerOption                     = 38,
+   XXplusJITServerTechPreviewMessageOption       = 39,
+   XXminusJITServerTechPreviewMessageOption      = 40,
+   XXJITServerAddressOption                      = 41,
+   XXJITServerPortOption                         = 42,
+   XXJITServerTimeoutOption                      = 43,
+   XXJITServerSSLKeyOption                       = 44,
+   XXJITServerSSLCertOption                      = 45,
+   XXJITServerSSLRootCertsOption                 = 46,
+   XXplusJITServerUseAOTCacheOption              = 47,
+   XXminusJITServerUseAOTCacheOption             = 48,
+   XXplusRequireJITServerOption                  = 49,
+   XXminusRequireJITServerOption                 = 50,
+   XXplusJITServerLogConnections                 = 51,
+   XXminusJITServerLogConnections                = 52,
+   XXJITServerAOTmxOption                        = 53,
+   XXplusJITServerLocalSyncCompilesOption        = 54,
+   XXminusJITServerLocalSyncCompilesOption       = 55,
+   XXplusMetricsServer                           = 56,
+   XXminusMetricsServer                          = 57,
+   XXJITServerMetricsPortOption                  = 58,
+   XXJITServerMetricsSSLKeyOption                = 59,
+   XXJITServerMetricsSSLCertOption               = 60,
+   XXplusJITServerShareROMClassesOption          = 61,
+   XXminusJITServerShareROMClassesOption         = 62,
+   XXplusJITServerAOTCachePersistenceOption      = 63,
+   XXminusJITServerAOTCachePersistenceOption     = 64,
+   XXJITServerAOTCacheDirOption                  = 65,
+   XXJITServerAOTCacheNameOption                 = 66,
+   XXcodecachetotalMaxRAMPercentage              = 67,
    XXplusJITServerAOTCacheDelayMethodRelocation  = 68,
    XXminusJITServerAOTCacheDelayMethodRelocation = 69,
-   XXplusIProfileDuringStartupPhase            = 70,
-   XXminusIProfileDuringStartupPhase           = 71,
-   XXplusJITServerAOTCacheIgnoreLocalSCC       = 72,
-   XXminusJITServerAOTCacheIgnoreLocalSCC      = 73,
-   XXplusHealthProbes                          = 74,
-   XXminusHealthProbes                         = 75,
-   XXJITServerHealthProbePortOption            = 76,
-   XXplusTrackAOTDependencies                  = 77,
-   XXminusTrackAOTDependencies                 = 78,
-   TR_NumExternalOptions                       = 79
+   XXplusIProfileDuringStartupPhase              = 70,
+   XXminusIProfileDuringStartupPhase             = 71,
+   XXplusJITServerAOTCacheIgnoreLocalSCC         = 72,
+   XXminusJITServerAOTCacheIgnoreLocalSCC        = 73,
+   XXplusHealthProbes                            = 74,
+   XXminusHealthProbes                           = 75,
+   XXJITServerHealthProbePortOption              = 76,
+   XXplusTrackAOTDependencies                    = 77,
+   XXminusTrackAOTDependencies                   = 78,
+   TR_NumExternalOptions                         = 79
+   };
+
+/**
+ * @brief This data structure is used to describe external JVM options that
+ *        the JIT processes. An option is considered external if it is not part
+ *        of the -Xjit or -Xaot flag. These options are found and/or consumed
+ *        using FIND_AND_CONSUME_VMARG / FIND_ARG_IN_VMARGS.
+ */
+struct ExternalOptionsMetadata
+   {
+   /** @brief The external option string */
+   const char * const _externalOption;
+
+   /**
+    * @brief The way an option should be matched when using
+    *        FIND_AND_CONSUME_VMARG / FIND_ARG_IN_VMARGS. Can be one of the
+    *        following:
+    *        - EXACT_MATCH
+    *        - STARTSWITH_MATCH
+    *        - EXACT_MEMORY_MATCH
+    *        - OPTIONAL_LIST_MATCH
+    *        - OPTIONAL_LIST_MATCH_USING_EQUALS
+    */
+   const int8_t       _match;
+
+   /** @brief The index into the args array of this option, if it exists. */
+   int32_t            _argIndex;
+
+   /**
+    * @brief Indicates whether this option should be consumed by the JIT;
+    *        every valid external option has to be consumed or the JVM will
+    *        exit with an error when using
+    *        -XX:-IgnoreUnrecognizedXXColonOptions. This just amounts to
+    *        using FIND_AND_CONSUME_VMARG rather than FIND_ARG_IN_VMARGS.
+    */
+   const bool         _consumedByJIT;
    };
 
 class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
@@ -457,6 +493,41 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    static bool _xrsSync;
 
    static const char * _externalOptionStrings[ExternalOptions::TR_NumExternalOptions];
+
+   static ExternalOptionsMetadata _externalOptionsMetadata[ExternalOptions::TR_NumExternalOptions];
+
+   /**
+    * @brief This static method iterates over the _externalOptionsMetadata table
+    *        to find (and possibly consume) the string indicated by
+    *        _externalOption, as well as updates the _argIndex with the
+    *        index into the args array of the external option if it exists (-1
+    *        otherwise).
+    *
+    * @param vm The J9JavaVM pointer
+    * @param consume Specifies whether to use FIND_AND_CONSUME_VMARG or
+    *                FIND_ARG_IN_VMARGS; default value is true
+    */
+   static void findExternalOptions(J9JavaVM *vm, bool consume = true);
+
+   /**
+    * @brief Returns the string associated with the ExternalOptions option
+    *
+    * @param option The ExternalOptions enum representing the external option
+    *
+    * @return The string associated with the ExternalOptions option
+    */
+   static const char * getExternalOptionString(ExternalOptions option)
+      { return _externalOptionsMetadata[option]._externalOption; }
+
+   /**
+    * @brief Returns the index into the args array of the ExternalOptions option
+    *
+    * @param option The ExternalOptions enum representing the external option
+    *
+    * @return The cached arg index
+    */
+   static int32_t getExternalOptionIndex(ExternalOptions option)
+      { return _externalOptionsMetadata[option]._argIndex; }
 
    static void  printPID();
 
