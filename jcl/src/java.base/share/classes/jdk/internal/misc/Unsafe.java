@@ -7129,5 +7129,89 @@ public final class Unsafe {
 	public int nullMarkerOffset(Field f) {
 		throw new Error("jdk.internal.misc.Unsafe.nullMarkerOffset unimplemented"); //$NON-NLS-1$
 	}
+
+	public int arrayLayout(Class<?> arrayClass) {
+		throw new Error("jdk.internal.misc.Unsafe.arrayLayout unimplemented"); //$NON-NLS-1$
+	}
+
+	public int fieldLayout(Field f) {
+		throw new Error("jdk.internal.misc.Unsafe.fieldLayout unimplemented"); //$NON-NLS-1$
+	}
+
+	public <V> V getFlatValue(Object obj, long offset, int layoutKind, Class<?> valueType) {
+		throw new Error("jdk.internal.misc.Unsafe.getFlatValue unimplemented"); //$NON-NLS-1$
+	}
+
+	public <V> void putFlatValue(Object obj, long offset, int layoutKind, Class<?> valueType, V v) {
+		throw new Error("jdk.internal.misc.Unsafe.putFlatValue unimplemented"); //$NON-NLS-1$
+	}
+
+	public <V> Object getFlatValueVolatile(Object base, long offset, int layout, Class<?> valueType) {
+		throw new Error("jdk.internal.misc.Unsafe.getFlatValueVolatile unimplemented"); //$NON-NLS-1$
+	}
+
+	public <V> Object getFlatValueOpaque(Object base, long offset, int layout, Class<?> valueType) {
+		return getFlatValueVolatile(base, offset, layout, valueType);
+	}
+
+	public <V> Object getFlatValueAcquire(Object base, long offset, int layout, Class<?> valueType) {
+		return getFlatValueVolatile(base, offset, layout, valueType);
+	}
+
+	public <V> void putFlatValueVolatile(Object obj, long offset, int layout, Class<?> valueType, V x) {
+		throw new Error("jdk.internal.misc.Unsafe.putFlatValueVolatile unimplemented"); //$NON-NLS-1$
+	}
+
+	public <V> void putFlatValueOpaque(Object obj, long offset, int layout, Class<?> valueType, V x) {
+		putFlatValueVolatile(obj, offset, layout, valueType, x);
+	}
+
+	public <V> void putFlatValueRelease(Object obj, long offset, int layout, Class<?> valueType, V x) {
+		putFlatValueVolatile(obj, offset, layout, valueType, x);
+	}
+
+	public <V> Object compareAndExchangeFlatValue(Object obj, long offset, int layout, Class<?> valueType, V expected, V x) {
+		throw new Error("jdk.internal.misc.Unsafe.compareAndExchangeFlatValue unimplemented"); //$NON-NLS-1$
+	}
+
+	public <V> Object compareAndExchangeFlatValueAcquire(Object obj, long offset, int layout, Class<?> valueType, V expected, V x) {
+		return compareAndExchangeFlatValue(obj, offset, layout, valueType, expected, x);
+	}
+
+	public <V> Object compareAndExchangeFlatValueRelease(Object obj, long offset, int layout, Class<?> valueType, V expected, V x) {
+		return compareAndExchangeFlatValue(obj, offset, layout, valueType, expected, x);
+	}
+
+	public <V> boolean compareAndSetFlatValue(Object obj, long offset, int layout, Class<?> valueType, V expected, V x) {
+		throw new Error("jdk.internal.misc.Unsafe.compareAndSetFlatValue unimplemented"); //$NON-NLS-1$
+	}
+
+	public <V> boolean weakCompareAndSetFlatValuePlain(Object obj, long offset, int layout, Class<?> valueType, V expected, V x) {
+		return compareAndSetFlatValue(obj, offset, layout, valueType, expected, x);
+	}
+
+	public <V> boolean weakCompareAndSetFlatValue(Object obj, long offset, int layout, Class<?> valueType, V expected, V x) {
+		return compareAndSetFlatValue(obj, offset, layout, valueType, expected, x);
+	}
+
+	public <V> boolean weakCompareAndSetFlatValueRelease(Object obj, long offset, int layout, Class<?> valueType, V expected, V x) {
+		return compareAndSetFlatValue(obj, offset, layout, valueType, expected, x);
+	}
+
+	public <V> boolean weakCompareAndSetFlatValueAcquire(Object obj, long offset, int layout, Class<?> valueType, V expected, V x) {
+		return compareAndSetFlatValue(obj, offset, layout, valueType, expected, x);
+	}
+
+	public <V> Object getAndSetFlatValue(Object obj, long offset, int layout, Class<?> valueType, V newValue) {
+		throw new Error("jdk.internal.misc.Unsafe.getAndSetFlatValue unimplemented"); //$NON-NLS-1$
+	}
+
+	public <V> Object getAndSetFlatValueRelease(Object obj, long offset, int layout, Class<?> valueType, V newValue) {
+		return getAndSetFlatValue(obj, offset, layout, valueType, newValue);
+	}
+
+	public <V> Object getAndSetFlatValueAcquire(Object obj, long offset, int layout, Class<?> valueType, V newValue) {
+		return getAndSetFlatValue(obj, offset, layout, valueType, newValue);
+	}
 	/*[ENDIF] INLINE-TYPES */
 }
