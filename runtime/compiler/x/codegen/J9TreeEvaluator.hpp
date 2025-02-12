@@ -146,6 +146,7 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *awrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *awrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *inlineStringLatin1Inflate(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *inlineMathFma(TR::Node* node, TR::CodeGenerator* cg);
    static TR::Register *inlineVectorizedHashCode(TR::Node* node, TR::CodeGenerator* cg);
    static TR::Register *vectorizedHashCodeReductionHelper(TR::Node* node,
                                                           TR::Register **vectorRegisters,
