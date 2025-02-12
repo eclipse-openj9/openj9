@@ -172,6 +172,10 @@ traceMethodEnter(J9VMThread *thr, J9Method *method, void *receiverAddress, UDATA
 	J9UTF8* methodName = J9ROMMETHOD_NAME(J9_ROM_METHOD_FROM_RAM_METHOD(method));
 	J9UTF8* methodSignature = J9ROMMETHOD_SIGNATURE(J9_ROM_METHOD_FROM_RAM_METHOD(method));
 	UDATA modifiers = J9_ROM_METHOD_FROM_RAM_METHOD(method)->modifiers;
+	j9object_t receiver = *(j9object_t*)receiverAddress;
+	J9Class* receiverClazz = J9OBJECT_CLAZZ(thr, receiver);
+	J9JavaVM *vm = thr->javaVM;
+	const unsigned int maxStringLength = RAS_GLOBAL_FROM_JAVAVM(maxStringLength, vm);
 
 	if (isCompiled) {
 		if (modifiers & J9AccStatic) {
@@ -193,8 +197,6 @@ traceMethodEnter(J9VMThread *thr, J9Method *method, void *receiverAddress, UDATA
 				Trc_MethodArgumentsS(thr, traceMethodArguments(thr, methodSignature, (UDATA*)receiverAddress, buf, buf + sizeof(buf)));
 			}
 		} else {
-			j9object_t receiver = *(j9object_t*)receiverAddress;
-			J9Class* receiverClazz = J9OBJECT_CLAZZ(thr, receiver);
 			J9UTF8* receiverClassName = J9ROMCLASS_CLASSNAME(receiverClazz->romClass);
 
 			if (modifiers & J9AccNative) {
@@ -205,11 +207,44 @@ traceMethodEnter(J9VMThread *thr, J9Method *method, void *receiverAddress, UDATA
 
 			if (doParameters) {
 				Trc_MethodArguments(
-						thr, 
+						thr,
 						(U_32)J9UTF8_LENGTH(receiverClassName),
 						J9UTF8_DATA(receiverClassName),
 						receiver,
 						traceMethodArguments(thr, methodSignature, (UDATA*)receiverAddress - 1, buf, buf + sizeof(buf)));
+			}
+		}
+	}
+
+	if (doParameters) {
+		if ((receiverClazz == J9VMJAVALANGSTRING_OR_NULL(vm))
+			&& (0 != maxStringLength)
+			&& !J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(methodName), J9UTF8_LENGTH(methodName), "<init>")
+		) {
+			PORT_ACCESS_FROM_VMC(thr);
+			char utf8Buffer[RAS_MAX_STRING_LENGTH_LIMIT + 1];
+			char outputString[RAS_MAX_STRING_LENGTH_LIMIT + 1];
+			UDATA utf8Length = 0;
+
+			char *utf8String = vm->internalVMFunctions->copyStringToUTF8WithMemAlloc(
+					thr,
+					receiver,
+					0,
+					"",
+					0,
+					utf8Buffer,
+					sizeof(utf8Buffer),
+					&utf8Length);
+			if (NULL == utf8String) {
+				j9str_printf(outputString, RAS_MAX_STRING_LENGTH_LIMIT + 1, "(String)@%p - <Memory allocation error>", receiver);
+			} else if (utf8Length > maxStringLength) {
+				j9str_printf(outputString, RAS_MAX_STRING_LENGTH_LIMIT + 1, "(String)@%p - \"%.*s\"...", receiver, (U_32)maxStringLength, utf8String);
+			} else {
+				j9str_printf(outputString, RAS_MAX_STRING_LENGTH_LIMIT + 1, "(String)@%p - \"%.*s\"", receiver, (U_32)utf8Length, utf8String);
+			}
+			Trc_MethodEntryStr(thr, J9UTF8_LENGTH(className), J9UTF8_DATA(className), J9UTF8_LENGTH(methodName), J9UTF8_DATA(methodName), J9UTF8_LENGTH(methodSignature), J9UTF8_DATA(methodSignature), J9UTF8_LENGTH(outputString), outputString);
+			if (utf8Buffer != utf8String) {
+				j9mem_free_memory(utf8String);
 			}
 		}
 	}
@@ -496,11 +531,11 @@ traceMethodArgObject(J9VMThread *thr, UDATA* arg0EA, char* cursor, UDATA length)
 					&utf8Length);
 
 			if (NULL == utf8String) {
-				j9str_printf(cursor, length, "(String)<Memory allocation error>");
+				j9str_printf(cursor, length, "(String)@%p - <Memory allocation error>", object);
 			} else if (utf8Length > maxStringLength) {
-				j9str_printf(cursor, length, "(String)\"%.*s\"...", (U_32)maxStringLength, utf8String);
+				j9str_printf(cursor, length, "(String)@%p - \"%.*s\"...", object, (U_32)maxStringLength, utf8String);
 			} else {
-				j9str_printf(cursor, length, "(String)\"%.*s\"", (U_32)utf8Length, utf8String);
+				j9str_printf(cursor, length, "(String)@%p - \"%.*s\"", object, (U_32)utf8Length, utf8String);
 			}
 
 			if (utf8Buffer != utf8String) {
