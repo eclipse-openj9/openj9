@@ -399,6 +399,121 @@ const char * J9::Options::_externalOptionStrings[J9::ExternalOptions::TR_NumExte
    // TR_NumExternalOptions                  = 79
    };
 
+void
+J9::Options::findExternalOptions(J9JavaVM *vm, bool consume)
+   {
+   int32_t start = static_cast<int32_t>(J9::ExternalOptions::TR_FirstExternalOption);
+   int32_t end = static_cast<int32_t>(J9::ExternalOptions::TR_NumExternalOptions);
+   for (int32_t option = start; option < end; option++)
+      {
+      J9::ExternalOptionsMetadata &opt = J9::Options::_externalOptionsMetadata[option];
+
+      if (consume)
+         {
+         if (opt._consumedByJIT)
+            {
+            opt._argIndex = FIND_AND_CONSUME_VMARG(opt._match, opt._externalOption, 0);
+            }
+         }
+      else
+         {
+         if (!opt._consumedByJIT)
+            {
+            opt._argIndex = FIND_ARG_IN_VMARGS(opt._match, opt._externalOption, 0);
+            }
+         }
+      }
+   }
+
+/**
+ * This array should be kept in sync with the
+ * J9::ExternalOptions enum in J9Options.hpp
+ */
+J9::ExternalOptionsMetadata J9::Options::_externalOptionsMetadata[J9::ExternalOptions::TR_NumExternalOptions] =
+   {
+   // TR_FirstExternalOption                                                             = 0
+   { "-Xnodfpbd",                                   EXACT_MATCH,         -1, true  }, // = 0
+   { "-Xdfpbd",                                     EXACT_MATCH,         -1, false }, // = 1
+   { "-Xhysteresis",                                EXACT_MATCH,         -1, true  }, // = 2
+   { "-Xnoquickstart",                              EXACT_MATCH,         -1, true  }, // = 3
+   { "-Xquickstart",                                EXACT_MATCH,         -1, true  }, // = 4
+   { "-Xtune:elastic",                              STARTSWITH_MATCH,    -1, true  }, // = 5
+   { "-XtlhPrefetch",                               EXACT_MATCH,         -1, true  }, // = 6
+   { "-XnotlhPrefetch",                             EXACT_MATCH,         -1, true  }, // = 7
+   { VMOPT_XLOCKWORD,                               STARTSWITH_MATCH,    -1, false }, // = 8
+   { "-XlockReservation",                           EXACT_MATCH,         -1, true  }, // = 9
+   { "-XjniAcc:",                                   STARTSWITH_MATCH,    -1, true  }, // = 10
+   { "-Xlp",                                        EXACT_MEMORY_MATCH,  -1, false }, // = 11
+   { "-Xlp:codecache:",                             STARTSWITH_MATCH,    -1, true  }, // = 12
+   { "-Xcodecache",                                 EXACT_MEMORY_MATCH,  -1, true  }, // = 13
+   { "-Xcodecachetotal",                            EXACT_MEMORY_MATCH,  -1, true  }, // = 14
+   { "-XX:codecachetotal=",                         EXACT_MEMORY_MATCH,  -1, true  }, // = 15
+   { "-XX:+PrintCodeCache",                         EXACT_MATCH,         -1, true  }, // = 16
+   { "-XX:-PrintCodeCache",                         EXACT_MATCH,         -1, true  }, // = 17
+   { "-XsamplingExpirationTime",                    EXACT_MEMORY_MATCH,  -1, true  }, // = 18
+   { "-XcompilationThreads",                        EXACT_MEMORY_MATCH,  -1, true  }, // = 19
+   { "-XaggressivenessLevel",                       EXACT_MEMORY_MATCH,  -1, true  }, // = 20
+   { "-Xnoclassgc",                                 EXACT_MATCH,         -1, true  }, // = 21
+   { VMOPT_XJIT,                                    OPTIONAL_LIST_MATCH, -1, true  }, // = 22
+   { VMOPT_XNOJIT,                                  EXACT_MATCH,         -1, true  }, // = 23
+   { VMOPT_XJIT_COLON,                              STARTSWITH_MATCH,    -1, true  }, // = 24
+   { VMOPT_XAOT,                                    OPTIONAL_LIST_MATCH, -1, true  }, // = 25
+   { VMOPT_XNOAOT,                                  EXACT_MATCH,         -1, true  }, // = 26
+   { VMOPT_XAOT_COLON,                              STARTSWITH_MATCH,    -1, true  }, // = 27
+   { "-XX:deterministic=",                          EXACT_MEMORY_MATCH,  -1, true  }, // = 28
+   { "-XX:+RuntimeInstrumentation",                 EXACT_MATCH,         -1, true  }, // = 29
+   { "-XX:-RuntimeInstrumentation",                 EXACT_MATCH,         -1, true  }, // = 30
+   { "-XX:+PerfTool",                               EXACT_MATCH,         -1, true  }, // = 31
+   { "-XX:-PerfTool",                               EXACT_MATCH,         -1, true  }, // = 32
+   { "-XX:doNotProcessJitEnvVars",                  EXACT_MATCH,         -1, true  }, // = 33
+   { "-XX:+MergeCompilerOptions",                   EXACT_MATCH,         -1, true  }, // = 34
+   { "-XX:-MergeCompilerOptions",                   EXACT_MATCH,         -1, true  }, // = 35
+   { "-XX:LateSCCDisclaimTime=",                    STARTSWITH_MATCH,    -1, true  }, // = 36
+   { "-XX:+UseJITServer",                           EXACT_MATCH,         -1, true  }, // = 37
+   { "-XX:-UseJITServer",                           EXACT_MATCH,         -1, true  }, // = 38
+   { "-XX:+JITServerTechPreviewMessage",            EXACT_MATCH,         -1, true  }, // = 39
+   { "-XX:-JITServerTechPreviewMessage",            EXACT_MATCH,         -1, true  }, // = 40
+   { "-XX:JITServerAddress=",                       STARTSWITH_MATCH,    -1, true  }, // = 41
+   { "-XX:JITServerPort=",                          STARTSWITH_MATCH,    -1, true  }, // = 42
+   { "-XX:JITServerTimeout=",                       STARTSWITH_MATCH,    -1, true  }, // = 43
+   { "-XX:JITServerSSLKey=",                        STARTSWITH_MATCH,    -1, true  }, // = 44
+   { "-XX:JITServerSSLCert=",                       STARTSWITH_MATCH,    -1, true  }, // = 45
+   { "-XX:JITServerSSLRootCerts=",                  STARTSWITH_MATCH,    -1, true  }, // = 46
+   { "-XX:+JITServerUseAOTCache",                   EXACT_MATCH,         -1, true  }, // = 47
+   { "-XX:-JITServerUseAOTCache",                   EXACT_MATCH,         -1, true  }, // = 48
+   { "-XX:+RequireJITServer",                       EXACT_MATCH,         -1, true  }, // = 49
+   { "-XX:-RequireJITServer",                       EXACT_MATCH,         -1, true  }, // = 50
+   { "-XX:+JITServerLogConnections",                EXACT_MATCH,         -1, true  }, // = 51
+   { "-XX:-JITServerLogConnections",                EXACT_MATCH,         -1, true  }, // = 52
+   { "-XX:JITServerAOTmx=",                         STARTSWITH_MATCH,    -1, true  }, // = 53
+   { "-XX:+JITServerLocalSyncCompiles",             EXACT_MATCH,         -1, true  }, // = 54
+   { "-XX:-JITServerLocalSyncCompiles",             EXACT_MATCH,         -1, true  }, // = 55
+   { "-XX:+JITServerMetrics",                       EXACT_MATCH,         -1, true  }, // = 56
+   { "-XX:-JITServerMetrics",                       EXACT_MATCH,         -1, true  }, // = 57
+   { "-XX:JITServerMetricsPort=",                   STARTSWITH_MATCH,    -1, true  }, // = 58
+   { "-XX:JITServerMetricsSSLKey=",                 STARTSWITH_MATCH,    -1, true  }, // = 59
+   { "-XX:JITServerMetricsSSLCert=",                STARTSWITH_MATCH,    -1, true  }, // = 60
+   { "-XX:+JITServerShareROMClasses",               EXACT_MATCH,         -1, true  }, // = 61
+   { "-XX:-JITServerShareROMClasses",               EXACT_MATCH,         -1, true  }, // = 62
+   { "-XX:+JITServerAOTCachePersistence",           EXACT_MATCH,         -1, true  }, // = 63
+   { "-XX:-JITServerAOTCachePersistence",           EXACT_MATCH,         -1, true  }, // = 64
+   { "-XX:JITServerAOTCacheDir=",                   STARTSWITH_MATCH,    -1, true  }, // = 65
+   { "-XX:JITServerAOTCacheName=",                  STARTSWITH_MATCH,    -1, true  }, // = 66
+   { "-XX:codecachetotalMaxRAMPercentage=",         STARTSWITH_MATCH,    -1, true  }, // = 67
+   { "-XX:+JITServerAOTCacheDelayMethodRelocation", EXACT_MATCH,         -1, true  }, // = 68
+   { "-XX:-JITServerAOTCacheDelayMethodRelocation", EXACT_MATCH,         -1, true  }, // = 69
+   { "-XX:+IProfileDuringStartupPhase",             EXACT_MATCH,         -1, true  }, // = 70
+   { "-XX:-IProfileDuringStartupPhase",             EXACT_MATCH,         -1, true  }, // = 71
+   { "-XX:+JITServerAOTCacheIgnoreLocalSCC",        EXACT_MATCH,         -1, true  }, // = 72
+   { "-XX:-JITServerAOTCacheIgnoreLocalSCC",        EXACT_MATCH,         -1, true  }, // = 73
+   { "-XX:+JITServerHealthProbes",                  EXACT_MATCH,         -1, true  }, // = 74
+   { "-XX:-JITServerHealthProbes",                  EXACT_MATCH,         -1, true  }, // = 75
+   { "-XX:JITServerHealthProbePort=",               STARTSWITH_MATCH,    -1, true  }, // = 76
+   { "-XX:+TrackAOTDependencies",                   EXACT_MATCH,         -1, true  }, // = 77
+   { "-XX:-TrackAOTDependencies",                   EXACT_MATCH,         -1, true  }  // = 78
+   // TR_NumExternalOptions                                                              = 79
+   };
+
 //************************************************************************
 //
 // Options handling - the following code implements the VM-specific
