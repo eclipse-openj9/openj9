@@ -318,6 +318,7 @@
 		<variations>
 			<variation>-Xint</variation>
 			<variation>-Xjit:count=1,disableAsyncCompilation</variation>
+			<variation>-Xjit:count=1,disableGRA,disableLinkageRegisterAllocation,disableLocalCSE,disableAsyncCompilation</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
