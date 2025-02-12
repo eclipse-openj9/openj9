@@ -9431,9 +9431,10 @@ J9::X86::TreeEvaluator::vectorizedHashCodeLoopHelper(TR::Node *node,
    generateLabelInstruction(TR::InstOpCode::JGE4, node, endLabel, cg);
 
    // Initialize Constants outside of loop body but after the first compare
-   generateRegRegInstruction(TR::InstOpCode::MOVDRegReg4, node, hashRegsVRF[0], initialHash, cg);
-   for (int32_t i = 1; i < unrollCount; i++)
+   for (int32_t i = 0; i < unrollCount; i++)
       generateRegRegInstruction(TR::InstOpCode::PXORRegReg, node, hashRegsVRF[i], hashRegsVRF[i], cg, vectorEncoding);
+
+   generateRegRegInstruction(TR::InstOpCode::MOVDRegReg4, node, hashRegsVRF[0], initialHash, cg);
 
    int32_t multiplier31PowNData[16];
    // Fill multiplier array with 31^numElements
