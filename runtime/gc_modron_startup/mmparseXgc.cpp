@@ -305,6 +305,16 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		goto _exit;
 	}
 
+	if(try_scan(scan_start, "concurrentScavengeAllocAverageBoost=")) {
+		UDATA value;
+		if(!scan_udata_helper(javaVM, scan_start, &value, "concurrentScavengeAllocAverageBoost=")) {
+			goto _error;
+		}
+
+		extensions->concurrentScavengerAllocAverageBoost = value / (float)10.0;
+		goto _exit;
+	}
+
 	if(try_scan(scan_start, "concurrentScavengeAllocDeviationBoost=")) {
 		UDATA value;
 		if(!scan_udata_helper(javaVM, scan_start, &value, "concurrentScavengeAllocDeviationBoost=")) {
