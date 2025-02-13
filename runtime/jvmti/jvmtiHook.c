@@ -155,8 +155,6 @@ static BOOLEAN shouldPostEvent(J9VMThread *currentThread, J9Method *method);
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 static void jvmtiHookVMCheckpoint(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
 static void jvmtiHookVMRestore(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
-static void jvmtiHookVMRestoreCRIUInit(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
-static void jvmtiHookVMRestoreStartAgent(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
 static void hookDisableHelper(J9JavaVM *vm, J9HookInterface **vmHook, UDATA eventNum, J9HookFunction function, BOOLEAN unreserve, void *userData);
 
 static void
@@ -555,37 +553,6 @@ jvmtiHookVMCheckpoint(J9HookInterface **hook, UDATA eventNum, void *eventData, v
 	}
 
 	TRACE_JVMTI_EVENT_RETURN(jvmtiHookVMCheckpoint);
-}
-
-static void
-jvmtiHookVMRestoreCRIUInit(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData)
-{
-	Trc_JVMTI_jvmtiHookVMRestoreCRIUInit_Entry();
-	criuRestoreInitializeLib(((J9RestoreEvent *)eventData)->currentThread->javaVM, (J9JVMTIEnv *)userData);
-	TRACE_JVMTI_EVENT_RETURN(jvmtiHookVMRestoreCRIUInit);
-}
-
-static void
-jvmtiHookVMRestoreStartAgent(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData)
-{
-	J9VMThread *currentThread = ((J9RestoreEvent *)eventData)->currentThread;
-	J9JavaVM *vm = currentThread->javaVM;
-	J9InternalVMFunctions const * const vmFuncs = vm->internalVMFunctions;
-
-	Trc_JVMTI_jvmtiHookVMRestoreStartAgent_Entry();
-	vmFuncs->internalExitVMToJNI(currentThread);
-	if (J9_ARE_ANY_BITS_SET(vm->checkpointState.flags, J9VM_CRIU_IS_JDWP_ENABLED)) {
-		criuRestoreStartAgent(vm);
-	} else {
-		/* Last part of cleanup if there was no JDWP agent specified.
-		 * This releases VM access hence can't be invoked within criuDisableHooks() from
-		 * J9HOOK_VM_PREPARING_FOR_RESTORE.
-		 */
-		jvmtiEnv *jvmti_env = vm->checkpointState.jvmtienv;
-		(*jvmti_env)->DisposeEnvironment(jvmti_env);
-	}
-	vmFuncs->internalEnterVMFromJNI(currentThread);
-	TRACE_JVMTI_EVENT_RETURN(jvmtiHookVMRestoreStartAgent);
 }
 
 static void
@@ -1075,6 +1042,21 @@ jvmtiHookClassLoad(J9HookInterface** hook, UDATA eventNum, void* eventData, void
 UDATA
 isEventHookable(J9JVMTIEnv * j9env, jvmtiEvent event)
 {
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	J9JavaVM *vm = j9env->vm;
+	if (vm->internalVMFunctions->isDebugAgentDisabled(vm)) {
+		switch(event) {
+			case JVMTI_EVENT_FRAME_POP: /* fall through */
+			case JVMTI_EVENT_FIELD_ACCESS: /* fall through */
+			case JVMTI_EVENT_FIELD_MODIFICATION: /* fall through */
+			case JVMTI_EVENT_SINGLE_STEP: /* fall through */
+			case JVMTI_EVENT_BREAKPOINT:
+				return FALSE;
+			default:
+				break;
+		}
+	}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 	return processEvent(j9env, event, hookIsDisabled) == 0;
 }
 
@@ -1135,6 +1117,18 @@ hookNonEventCapabilities(J9JVMTIEnv * j9env, jvmtiCapabilities * capabilities)
 	J9JVMTIHookInterfaceWithID * vmHook = &j9env->vmHook;
 	J9JVMTIHookInterfaceWithID * gcOmrHook = &j9env->gcOmrHook;
 	J9JVMTIData * jvmtiData = J9JVMTI_DATA_FROM_VM(vm);
+
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	if (vm->internalVMFunctions->isDebugAgentDisabled(vm)) {
+		if (capabilities->can_pop_frame
+			|| capabilities->can_force_early_return
+			|| capabilities->can_access_local_variables
+			|| capabilities->can_generate_breakpoint_events
+		) {
+			return 1;
+		}
+	}
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 	if (capabilities->can_generate_breakpoint_events) {
 		if (hookRegister(vmHook, J9HOOK_VM_BREAKPOINT, jvmtiHookBreakpoint, OMR_GET_CALLSITE(), j9env)) {
@@ -2045,17 +2039,6 @@ hookGlobalEvents(J9JVMTIData * jvmtiData)
 	if ((*vmHook)->J9HookRegisterWithCallSite(vmHook, J9HOOK_TAG_AGENT_ID | J9HOOK_VM_STARTED, jvmtiHookVMStartedFirst, OMR_GET_CALLSITE(), jvmtiData, J9HOOK_AGENTID_FIRST)) {
 		return 1;
 	}
-
-#if defined(J9VM_OPT_CRIU_SUPPORT)
-	if (vm->internalVMFunctions->isDebugOnRestoreEnabled(vm)) {
-		if ((*vmHook)->J9HookRegisterWithCallSite(vmHook, J9HOOK_TAG_AGENT_ID | J9HOOK_VM_PREPARING_FOR_RESTORE, jvmtiHookVMRestoreCRIUInit, OMR_GET_CALLSITE(), jvmtiData, J9HOOK_AGENTID_FIRST)) {
-			return 1;
-		}
-		if ((*vmHook)->J9HookRegisterWithCallSite(vmHook, J9HOOK_TAG_AGENT_ID | J9HOOK_VM_CRIU_RESTORE, jvmtiHookVMRestoreStartAgent, OMR_GET_CALLSITE(), jvmtiData, J9HOOK_AGENTID_FIRST)) {
-			return 1;
-		}
-	}
-#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 	if ((*vmHook)->J9HookRegisterWithCallSite(vmHook, J9HOOK_TAG_AGENT_ID | J9HOOK_VM_SHUTTING_DOWN, jvmtiHookVMShutdownLast, OMR_GET_CALLSITE(), jvmtiData, J9HOOK_AGENTID_LAST)) {
 		return 1;

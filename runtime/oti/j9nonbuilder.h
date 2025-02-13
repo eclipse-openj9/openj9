@@ -4462,6 +4462,7 @@ typedef struct J9CRIUCheckpointState {
 	UDATA javaDebugThreadCount;
 	jvmtiEnv *jvmtienv;
 	jvmtiCapabilities requiredCapabilities;
+	BOOLEAN isDebugOnRestoreEnabled;
 } J9CRIUCheckpointState;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
@@ -5256,6 +5257,7 @@ typedef struct J9InternalVMFunctions {
 	BOOLEAN (*isNonPortableRestoreMode)(struct J9VMThread *currentThread);
 	BOOLEAN (*isJVMInPortableRestoreMode)(struct J9VMThread *currentThread);
 	BOOLEAN (*isDebugOnRestoreEnabled)(struct J9JavaVM *vm);
+	BOOLEAN (*isDebugAgentDisabled)(struct J9JavaVM *vm);
 	void (*setRequiredGhostFileLimit)(struct J9VMThread *currentThread, U_32 ghostFileLimit);
 	BOOLEAN (*runInternalJVMCheckpointHooks)(struct J9VMThread *currentThread, const char **nlsMsgFormat);
 	BOOLEAN (*runInternalJVMRestoreHooks)(struct J9VMThread *currentThread, const char **nlsMsgFormat);

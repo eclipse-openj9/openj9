@@ -2209,23 +2209,15 @@ jint JNICALL JVM_OnLoad(JavaVM *jvm, char* options, void *reserved);
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 /**
 * Check if any agent library is specified in the CRIU restore option file,
-* if so, the checkpointState flag J9VM_CRIU_IS_JDWP_ENABLED is set, but the
-* actual library loading is deferred at criuRestoreStartAgent() invoked via
-* TRIGGER_J9HOOK_VM_CRIU_RESTORE().
+* if so, the checkpointState flag J9VM_CRIU_IS_JDWP_ENABLED is set, and
+* load/start the library loading.
+*
 * @param[in] vm the pointer to the J9JavaVM struct
 * @param[in] j9env - pointer to the current JVMTI environment
 * @return void
 */
 void
 criuRestoreInitializeLib(J9JavaVM *vm, J9JVMTIEnv *j9env);
-
-/**
- * Load and initialize libraries from CRIU restore option file.
- * @param[in] vm the pointer to the J9JavaVM struct
- * @return void
- */
-void
-criuRestoreStartAgent(J9JavaVM *vm);
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 /* ---------------- jvmtiSystemProperties.c ---------------- */

@@ -115,7 +115,8 @@ jvmtiGetPotentialCapabilities(jvmtiEnv* env, jvmtiCapabilities* capabilities_ptr
 	J9JavaVM * vm = j9env->vm;
 	J9JVMTIData * jvmtiData = J9JVMTI_DATA_FROM_VM(vm);
 	jvmtiCapabilities rv_capabilities;
-	J9HookInterface ** vmHook = vm->internalVMFunctions->getVMHookInterface(vm);
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	J9HookInterface **vmHook = vmFuncs->getVMHookInterface(vm);
 	jvmtiError rc;
 
 	Trc_JVMTI_jvmtiGetPotentialCapabilities_Entry(env);
@@ -206,8 +207,13 @@ jvmtiGetPotentialCapabilities(jvmtiEnv* env, jvmtiCapabilities* capabilities_ptr
 	}
 
 	if ((*vmHook)->J9HookIsEnabled(vmHook, J9HOOK_VM_POP_FRAMES_INTERRUPT)) {
-		rv_capabilities.can_pop_frame = 1;
-		rv_capabilities.can_force_early_return = 1;
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+		if (!vmFuncs->isDebugAgentDisabled(vm))
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+		{
+			rv_capabilities.can_pop_frame = 1;
+			rv_capabilities.can_force_early_return = 1;
+		}
 	}
 
 	if ((*vmHook)->J9HookIsEnabled(vmHook, J9HOOK_VM_REQUIRED_DEBUG_ATTRIBUTES) ||
@@ -231,7 +237,12 @@ jvmtiGetPotentialCapabilities(jvmtiEnv* env, jvmtiCapabilities* capabilities_ptr
 	if ((*vmHook)->J9HookIsEnabled(vmHook, J9HOOK_VM_REQUIRED_DEBUG_ATTRIBUTES) ||
 		(vm->requiredDebugAttributes & J9VM_DEBUG_ATTRIBUTE_CAN_ACCESS_LOCALS)
 	) {
-		rv_capabilities.can_access_local_variables = 1;
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+		if (!vmFuncs->isDebugAgentDisabled(vm))
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+		{
+			rv_capabilities.can_access_local_variables = 1;
+		}
 	}
 
 	rv_capabilities.can_tag_objects = 1;
@@ -548,16 +559,13 @@ mapCapabilitiesToEvents(J9JVMTIEnv * j9env, jvmtiCapabilities * capabilities, J9
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 	J9JavaVM *vm = j9env->vm;
-	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
-	BOOLEAN skipHookReserve = vmFuncs->isCheckpointAllowed(vm)
-			&& vmFuncs->isDebugOnRestoreEnabled(vm);
-	/* Skip J9HookReserve for the events required by JDWP agent pre-checkpoint when DebugOnRestore is enabled,
+	/* Skip J9HookReserve for the events required by JDWP agent pre-checkpoint when isDebugAgentDisabled() returns TRUE,
 	 * these events will be registered post-restore if a JDWP agent is specified in the restore option file,
 	 * otherwise they are going to be unregistered by J9HookUnregister() which only clears J9HOOK_FLAG_HOOKED,
 	 * but not J9HOOK_FLAG_RESERVED.
 	 * J9HookUnreserve() might clear the flag set by other callers.
 	 */
-	if (!skipHookReserve)
+	if (!vm->internalVMFunctions->isDebugAgentDisabled(vm))
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT)*/
 	{
 		if (capabilities->can_generate_single_step_events) {

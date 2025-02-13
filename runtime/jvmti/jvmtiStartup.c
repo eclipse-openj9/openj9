@@ -65,6 +65,10 @@ I_32 JNICALL loadAgentLibraryOnAttach(struct J9JavaVM *vm, const char *library, 
 static BOOLEAN isAgentLibraryLoaded(J9JavaVM *vm, const char *library, BOOLEAN decorate);
 static jint createAgentLibraryWithOption(J9JavaVM *vm, J9VMInitArgs *argsList, IDATA agentIndex, J9JVMTIAgentLibrary **agentLibrary, CreateAgentOption createAgentOption, BOOLEAN *isJDWPagent);
 static BOOLEAN processAgentLibraryFromArgsList(J9JavaVM *vm, J9VMInitArgs *argsList, BOOLEAN loadLibrary, CreateAgentOption createAgentOption);
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+static void jvmtiHookVMPreparingForRestore(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
+static void jvmtiHookVMCRIURestore(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 #define INSTRUMENT_LIBRARY "instrument"
 
@@ -268,6 +272,51 @@ processAgentLibraryFromArgsList(J9JavaVM *vm, J9VMInitArgs *argsList, BOOLEAN lo
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 /**
+ * A hook method to invoke criuRestoreInitializeLib().
+ *
+ * @param[in] hook the VM hook interface, not used
+ * @param[in] eventNum the event number, not used
+ * @param[in] eventData the event data, not used
+ * @param[in] userData the registered user data
+ */
+static void
+jvmtiHookVMPreparingForRestore(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData)
+{
+	Trc_JVMTI_jvmtiHookVMPreparingForRestore_Entry();
+	criuRestoreInitializeLib(((J9RestoreEvent *)eventData)->currentThread->javaVM, (J9JVMTIEnv *)userData);
+	Trc_JVMTI_jvmtiHookVMPreparingForRestore_Exit();
+}
+
+/**
+ * A hook method to cleanup post-restore.
+ *
+ * @param[in] hook the VM hook interface, not used
+ * @param[in] eventNum the event number, not used
+ * @param[in] eventData the event data
+ * @param[in] userData the registered user data, not used
+ */
+static void
+jvmtiHookVMCRIURestore(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData)
+{
+	J9VMThread *currentThread = ((J9RestoreEvent *)eventData)->currentThread;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions const * const vmFuncs = vm->internalVMFunctions;
+
+	Trc_JVMTI_jvmtiHookVMCRIURestore_Entry();
+	vmFuncs->internalExitVMToJNI(currentThread);
+	if (J9_ARE_NO_BITS_SET(vm->checkpointState.flags, J9VM_CRIU_IS_JDWP_ENABLED)) {
+		/* Last part of cleanup if there was no JDWP agent specified.
+		 * This releases VM access hence can't be invoked within criuDisableHooks() from
+		 * J9HOOK_VM_PREPARING_FOR_RESTORE.
+		 */
+		jvmtiEnv *jvmti_env = vm->checkpointState.jvmtienv;
+		(*jvmti_env)->DisposeEnvironment(jvmti_env);
+	}
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+	Trc_JVMTI_jvmtiHookVMCRIURestore_Exit();
+}
+
+/**
  * Add JVMTI capabilities before checkpoint.
  * This is required for debugger support when JIT is enabled.
  * This function can be removed when JIT allows capabilities to be added after restore.
@@ -301,9 +350,7 @@ criuAddCapabilities(J9JavaVM *vm, BOOLEAN jitEnabled) {
 		requiredCapabilities->can_get_line_numbers = 1;
 		requiredCapabilities->can_get_source_debug_extension = 1;
 		requiredCapabilities->can_maintain_original_method_order = 1;
-		requiredCapabilities->can_generate_single_step_events = 1;
 		requiredCapabilities->can_generate_exception_events = 1;
-		requiredCapabilities->can_generate_frame_pop_events = 1;
 		requiredCapabilities->can_generate_breakpoint_events = 1;
 		requiredCapabilities->can_generate_method_entry_events = 1;
 		requiredCapabilities->can_generate_method_exit_events = 1;
@@ -317,8 +364,6 @@ criuAddCapabilities(J9JavaVM *vm, BOOLEAN jitEnabled) {
 		if (JVMTI_ERROR_NONE != jvmtiRet) {
 			return JNI_ERR;
 		}
-		requiredCapabilities->can_generate_field_modification_events = potentialCapabilities.can_generate_field_modification_events;
-		requiredCapabilities->can_generate_field_access_events = potentialCapabilities.can_generate_field_access_events;
 		requiredCapabilities->can_pop_frame = potentialCapabilities.can_pop_frame;
 	}
 	jvmtiRet = (*jvmti_env)->AddCapabilities(jvmti_env, requiredCapabilities);
@@ -334,10 +379,9 @@ void
 criuRestoreInitializeLib(J9JavaVM *vm, J9JVMTIEnv *j9env)
 {
 	J9VMInitArgs *criuRestoreArgsList = vm->checkpointState.restoreArgsList;
-
-	processAgentLibraryFromArgsList(vm, criuRestoreArgsList, FALSE, OPTION_AGENTLIB);
-	processAgentLibraryFromArgsList(vm, criuRestoreArgsList, FALSE, OPTION_AGENTPATH);
-	processAgentLibraryFromArgsList(vm, criuRestoreArgsList, FALSE, OPTION_XRUNJDWP);
+	processAgentLibraryFromArgsList(vm, criuRestoreArgsList, TRUE, OPTION_AGENTLIB);
+	processAgentLibraryFromArgsList(vm, criuRestoreArgsList, TRUE, OPTION_AGENTPATH);
+	processAgentLibraryFromArgsList(vm, criuRestoreArgsList, TRUE, OPTION_XRUNJDWP);
 
 	if (J9_ARE_NO_BITS_SET(vm->checkpointState.flags, J9VM_CRIU_IS_JDWP_ENABLED)) {
 		J9JVMTIData * jvmtiData = vm->jvmtiData;
@@ -345,16 +389,6 @@ criuRestoreInitializeLib(J9JavaVM *vm, J9JVMTIEnv *j9env)
 			criuDisableHooks(jvmtiData, j9env);
 		}
 	}
-}
-
-void
-criuRestoreStartAgent(J9JavaVM *vm)
-{
-	J9VMInitArgs *criuRestoreArgsList = vm->checkpointState.restoreArgsList;
-
-	processAgentLibraryFromArgsList(vm, criuRestoreArgsList, TRUE, OPTION_AGENTLIB);
-	processAgentLibraryFromArgsList(vm, criuRestoreArgsList, TRUE, OPTION_AGENTPATH);
-	processAgentLibraryFromArgsList(vm, criuRestoreArgsList, TRUE, OPTION_XRUNJDWP);
 }
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
@@ -418,14 +452,45 @@ IDATA J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
 			hshelpUTRegister(vm);
 
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-			/*
-			 * Adding capabilities is required before checkpoint if JIT is enabled.
-			 * Following code can be removed when JIT allows capabilities to be added after restore.
-			 */
-			if (vm->internalVMFunctions->isDebugOnRestoreEnabled(vm)) {
-				Trc_JVMTI_criuAddCapabilities_invoked();
-				/* ignore the failure, it won't cause a problem if JDWP is not enabled later */
-				criuAddCapabilities(vm, NULL != vm->jitConfig);
+			{
+				/* The isDebugEventOrFlagEnabled calculation matches a part of J9::Options::isFSDNeeded()
+				 * in compiler/control/J9Options.cpp.
+				 */
+				BOOLEAN isDebugEventOrFlagEnabled = J9_EVENT_IS_HOOKED_OR_RESERVED(vm->hookInterface, J9HOOK_VM_BREAKPOINT)
+						|| J9_EVENT_IS_HOOKED_OR_RESERVED(vm->hookInterface, J9HOOK_VM_FRAME_POP)
+						|| J9_EVENT_IS_HOOKED_OR_RESERVED(vm->hookInterface, J9HOOK_VM_FRAME_POPPED)
+						|| J9_EVENT_IS_HOOKED_OR_RESERVED(vm->hookInterface, J9HOOK_VM_GET_FIELD)
+						|| J9_EVENT_IS_HOOKED_OR_RESERVED(vm->hookInterface, J9HOOK_VM_PUT_FIELD)
+						|| J9_EVENT_IS_HOOKED_OR_RESERVED(vm->hookInterface, J9HOOK_VM_GET_STATIC_FIELD)
+						|| J9_EVENT_IS_HOOKED_OR_RESERVED(vm->hookInterface, J9HOOK_VM_PUT_STATIC_FIELD)
+#if defined (J9VM_INTERP_HOT_CODE_REPLACEMENT)
+						|| J9_EVENT_IS_HOOKED_OR_RESERVED(vm->hookInterface, J9HOOK_VM_POP_FRAMES_INTERRUPT)
+#endif
+#if defined(J9VM_JIT_FULL_SPEED_DEBUG)
+						|| (vm->requiredDebugAttributes & J9VM_DEBUG_ATTRIBUTE_CAN_ACCESS_LOCALS)
+#endif
+						|| J9_EVENT_IS_HOOKED_OR_RESERVED(vm->hookInterface, J9HOOK_VM_SINGLE_STEP);
+				J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+				BOOLEAN isDebugOnRestoreEnabled = !isDebugEventOrFlagEnabled
+						&& J9_ARE_ALL_BITS_SET(vm->checkpointState.flags, J9VM_CRIU_SUPPORT_DEBUG_ON_RESTORE)
+						&& vmFuncs->isCRaCorCRIUSupportEnabled(vm);
+
+				if (isDebugOnRestoreEnabled) {
+					J9HookInterface ** vmHook = vmFuncs->getVMHookInterface(vm);
+					if ((*vmHook)->J9HookRegisterWithCallSite(vmHook, J9HOOK_TAG_AGENT_ID | J9HOOK_VM_PREPARING_FOR_RESTORE, jvmtiHookVMPreparingForRestore, OMR_GET_CALLSITE(), jvmtiData, J9HOOK_AGENTID_FIRST)) {
+						goto _error;
+					}
+					if ((*vmHook)->J9HookRegisterWithCallSite(vmHook, J9HOOK_TAG_AGENT_ID | J9HOOK_VM_CRIU_RESTORE, jvmtiHookVMCRIURestore, OMR_GET_CALLSITE(), jvmtiData, J9HOOK_AGENTID_FIRST)) {
+						goto _error;
+					}
+					/* Adding capabilities is required before checkpoint if JIT is enabled.
+					 * Following code can be removed when JIT allows capabilities to be added after restore.
+					 */
+					Trc_JVMTI_criuAddCapabilities_invoked();
+					/* ignore the failure, it won't cause a problem if JDWP is not enabled later */
+					criuAddCapabilities(vm, NULL != vm->jitConfig);
+					vm->checkpointState.isDebugOnRestoreEnabled = isDebugOnRestoreEnabled;
+				}
 			}
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
