@@ -297,12 +297,6 @@ public:
    void setSpineCheckWithArrayElementChild(bool v, TR::Compilation *comp);
    bool chkSpineCheckWithArrayElementChild();
 
-   // Flags used by call nodes
-   bool isUnsafePutOrderedCall();
-   bool isDontInlinePutOrderedCall();
-   void setDontInlinePutOrderedCall(TR::Compilation *comp);
-   bool chkDontInlineUnsafePutOrderedCall();
-
    /**
     * Checks  and return true if the callNode is JNI Call to Unsafe.copyMemory
     */
@@ -457,7 +451,6 @@ protected:
       spineCHKWithArrayElementChild         = 0x00004000,
 
       // Flags used by call nodes
-      dontInlineUnsafePutOrderedCall        = 0x00000800, ///< unsafe putOrdered calls
       processedByCallCloneConstrain         = 0x00100000,
       unsafeGetPutOnNonArray                = 0x00200000,
       DAAVariableSlowCall                   = 0x00400000, ///< Used to avoid Variable precision DAA optimization

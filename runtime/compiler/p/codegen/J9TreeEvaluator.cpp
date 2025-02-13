@@ -436,11 +436,6 @@ TR::Register *outlinedHelperWrtbarEvaluator(TR::Node *node, TR::CodeGenerator *c
    TR::Register *dstObjectReg = cg->gprClobberEvaluate(node->getSecondChild());
    TR::Compilation* comp = cg->comp();
 
-   TR::Symbol *storeSym = node->getSymbolReference()->getSymbol();
-   const bool isOrderedShadowStore = storeSym->isShadow() && storeSym->isOrdered();
-   const bool needSync = comp->target().isSMP() && (storeSym->isSyncVolatile() || isOrderedShadowStore);
-   const bool lazyVolatile = comp->target().isSMP() && isOrderedShadowStore;
-
    // Under real-time, store happens after the wrtbar
    // For other GC modes, store happens before the wrtbar
    if (comp->getOptions()->realTimeGC())
@@ -1536,7 +1531,7 @@ TR::Register *iGenerateSoftwareReadBarrier(TR::Node *node, TR::CodeGenerator *cg
    generateDepLabelInstruction(cg, TR::InstOpCode::label, node, endLabel, deps);
 
    // TODO: Allow this to be patched or skipped at runtime for unresolved symrefs
-   if (node->getSymbol()->isSyncVolatile() && comp->target().isSMP())
+   if (node->getSymbol()->isAtLeastOrStrongerThanAcquireRelease() && comp->target().isSMP())
       {
       generateInstruction(cg, comp->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P7) ? TR::InstOpCode::lwsync : TR::InstOpCode::isync, node);
       }
@@ -1633,7 +1628,7 @@ TR::Register *aGenerateSoftwareReadBarrier(TR::Node *node, TR::CodeGenerator *cg
    generateDepLabelInstruction(cg, TR::InstOpCode::label, node, endLabel, deps);
 
    // TODO: Allow this to be patched or skipped at runtime for unresolved symrefs
-   if (node->getSymbol()->isSyncVolatile() && comp->target().isSMP())
+   if (node->getSymbol()->isAtLeastOrStrongerThanAcquireRelease() && comp->target().isSMP())
       {
       generateInstruction(cg, comp->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P7) ? TR::InstOpCode::lwsync : TR::InstOpCode::isync, node);
       }
@@ -3352,20 +3347,25 @@ TR::Register *J9::Power::TreeEvaluator::flushEvaluator(TR::Node *node, TR::CodeG
          TR::Node *child = (node->getNumChildren() >= 1) ? node->getFirstChild() : NULL;
          if (!child || (node->getOpCodeValue() != TR::monexit && child->getOpCodeValue() != TR::monexit))
             {
-            // Iterate the next tree to see if there is a resolved volatile load/store node that has yet to be evaluated
-            // An unresolved volatile might not actually be a volatile access, and therefore can not replace the AllocationFence
-            // An node that is already evaluated will not actually emit an 'lwsync' so it can not replace the AllocationFence
-            bool volatileAccessFound = false;
+            // Iterate the next tree to see if there is a resolved acquire/release load/store node that has yet to be evaluated
+            // An unresolved acquire/release might not actually be an acquire/release access, and therefore can not replace the AllocationFence
+            // A node that is already evaluated will not actually emit an 'lwsync' so it can not replace the AllocationFence
+            // NOTE: As things currently stand, we won't ever encounter an unresolved symref that is strictly acquire/release,
+            // but the following code will handle unresolved volatile symrefs as well
+            bool fencedAccessFound = false;
             for (TR::PreorderNodeIterator it(tt, cg->comp()); it.currentTree() == tt; ++it)
                {
                node = it.currentNode();
-               if (node->getOpCode().hasSymbolReference() && !node->hasUnresolvedSymbolReference() && node->getSymbolReference()->getSymbol()->isVolatile() && !node->getRegister())
+               if (node->getOpCode().hasSymbolReference() &&
+                   !node->hasUnresolvedSymbolReference() &&
+                   node->getSymbolReference()->getSymbol()->isAtLeastOrStrongerThanAcquireRelease() &&
+                   !node->getRegister())
                   {
-                  volatileAccessFound = true;
+                  fencedAccessFound = true;
                   break;
                   }
                }
-            if (!volatileAccessFound)
+            if (!fencedAccessFound)
                generateInstruction(cg, TR::InstOpCode::lwsync, node);
             }
          }
