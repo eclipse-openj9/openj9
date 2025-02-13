@@ -4359,6 +4359,23 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 		if (flightRecorder < noFlightRecorder) {
 			vm->extendedRuntimeFlags2 &= ~(UDATA)J9_EXTENDED_RUNTIME2_JFR_ENABLED;
 		}
+
+		IDATA jfrOptionIndex = FIND_AND_CONSUME_VMARG(STARTSWITH_MATCH, VMOPT_XXSTARTFLIGHTRECORDING, NULL);
+		if (0 <= jfrOptionIndex) {
+			char* jfrOptionBuffer = NULL;
+			if (0 <= FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, VMOPT_XXSTARTFLIGHTRECORDING_EQUALS, NULL)) {
+				GET_OPTION_VALUE(jfrOptionIndex, '=', &jfrOptionBuffer);
+			}
+			else if (0 <= FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, VMOPT_XXSTARTFLIGHTRECORDING_COLON, NULL)) {
+				GET_OPTION_OPTION(jfrOptionIndex, ':', ':', &jfrOptionBuffer);
+			}
+			if (NULL == jfrOptionBuffer) {
+				vm->jfrState.jfrCMDLineOption = (char*)"dumponexit=false";
+			}
+			else {
+				vm->jfrState.jfrCMDLineOption = jfrOptionBuffer;
+			}
+		}
 	}
 	{
 		if (0 <= FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXSTARTFLIGHTRECORDING, NULL)) {

@@ -22,6 +22,7 @@
 <exports group="se6_vm-side_natives">
 	<export name="Java_com_ibm_oti_vm_BootstrapClassLoader_addJar" />
 	<export name="Java_com_ibm_oti_vm_VM_dumpString" />
+	<export name="Java_com_ibm_oti_vm_VM_getjfrCMDLineOption" />
 	<export name="Java_com_ibm_oti_vm_VM_getClassNameImpl" />
 	<export name="Java_com_ibm_oti_vm_VM_getNonBootstrapClassLoader" />
 	<export name="Java_com_ibm_oti_vm_VM_getVMArgsImpl" />
