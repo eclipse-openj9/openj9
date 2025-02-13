@@ -227,6 +227,13 @@ public:
       PersistentUnorderedMap<int32_t, J9MethodNameAndSignature> _J9MethodNameCache; // key is a cpIndex
       PersistentUnorderedMap<int32_t, bool> _isStableCache; // Store the presence of the Stable annotation for the field indicated by a cpIndex
       PersistentUnorderedSet<J9ClassLoader *> _referencingClassLoaders;
+      // The following vector caches information about the offsets of the reference slots in the class.
+      // An empty vector means I don't have any information yet.
+      // The information is encoded with a zero terminator element. Thus, if the vector contains
+      // exactly one element (which must be the 0 terminator), it means that the class contains no reference fields.
+      // This information is not collected when the class is sent from the client to server. Rather, it is
+      // populated when the server needs it.
+      PersistentVector<int32_t> _referenceSlotsInClass; // Array of N int32_t values. The last one has a value of 0.
       }; // struct ClassInfo
 
    /**
