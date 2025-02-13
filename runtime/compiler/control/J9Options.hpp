@@ -47,7 +47,7 @@ struct J9VMInitArgs;
 namespace J9
 {
 /**
- * This enum and the associated string array _externalOptionStrings
+ * This enum and the associated string array _externalOptionsMetadata
  * in J9Options.cpp should be kept in sync.
  */
 enum ExternalOptions
@@ -491,8 +491,6 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    static bool _aggressiveLockReservation;
 
    static bool _xrsSync;
-
-   static const char * _externalOptionStrings[ExternalOptions::TR_NumExternalOptions];
 
    static ExternalOptionsMetadata _externalOptionsMetadata[ExternalOptions::TR_NumExternalOptions];
 
