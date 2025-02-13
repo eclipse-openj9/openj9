@@ -294,14 +294,15 @@ __arrayTranslateTRTO:
 ! Residue loop, single element per iter
 .L.__vectorResidue_TRTO:
         mfctr           r6
-        rlwimi.         r5, r6, 4, 0, 27                ! add remaining elements from vector loop to residue loop
-        beq             cr0, .L.__done_TRTO               ! if 0 elements left, we are done
+        rlwimi          r5, r6, 4, 0, 27                ! add remaining elements from vector loop to residue loop
 .L.__alignResidue_TRTO:
+        cmpi            cr0, 0, r5, 0
+        beq             cr0, .L.__done_TRTO             ! if 0 elements left, we are done
         mtctr           r5
         addi            r3, r3, -2                      ! adjust so we can use lhzu
 .L.__residueLoop_TRTO:
         lhzu            r5, 2(r3)
-        and.	        r6, r5, r8
+        and.            r6, r5, r8
         bne-            .L.__done_TRTO
         stb             r5, 0(r4)
         addi            r4, r4, 1
