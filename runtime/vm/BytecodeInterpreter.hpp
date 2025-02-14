@@ -1724,11 +1724,10 @@ obj:
 						updateVMStruct(REGISTER_ARGS);
 						J9VMJAVALANGVIRTUALTHREAD_SET_STATE(_currentThread, _currentThread->threadObject, JAVA_LANG_VIRTUALTHREAD_BLOCKING);
 
-						/* Add thread object to blocked list. */
+						/* Add continuation struct to blocked list. */
 						omrthread_monitor_enter(_vm->blockedVirtualThreadsMutex);
-						j9object_t listHead = _vm->blockedVirtualThreads;
-						J9VMJAVALANGVIRTUALTHREAD_SET_NEXT(_currentThread, _currentThread->threadObject, listHead);
-						_vm->blockedVirtualThreads = _currentThread->threadObject;
+						_currentThread->currentContinuation->nextWaitingContinuation = _vm->blockedContinuations;
+						_vm->blockedContinuations = _currentThread->currentContinuation;
 						omrthread_monitor_exit(_vm->blockedVirtualThreadsMutex);
 
 						/* store the current Continuation state and swap to carrier thread stack */
@@ -1830,9 +1829,8 @@ done:
 
 				/* Add thread object to blocked list. */
 				omrthread_monitor_enter(_vm->blockedVirtualThreadsMutex);
-				j9object_t listHead = _vm->blockedVirtualThreads;
-				J9VMJAVALANGVIRTUALTHREAD_SET_NEXT(_currentThread, _currentThread->threadObject, listHead);
-				_vm->blockedVirtualThreads = _currentThread->threadObject;
+				_currentThread->currentContinuation->nextWaitingContinuation = _vm->blockedContinuations;
+				_vm->blockedContinuations = _currentThread->currentContinuation;
 				omrthread_monitor_exit(_vm->blockedVirtualThreadsMutex);
 
 				/* store the current Continuation state and swap to carrier thread stack */
@@ -1986,9 +1984,8 @@ throwStackOverflow:
 
 						/* Add thread object to blocked list. */
 						omrthread_monitor_enter(_vm->blockedVirtualThreadsMutex);
-						j9object_t listHead = _vm->blockedVirtualThreads;
-						J9VMJAVALANGVIRTUALTHREAD_SET_NEXT(_currentThread, _currentThread->threadObject, listHead);
-						_vm->blockedVirtualThreads = _currentThread->threadObject;
+						_currentThread->currentContinuation->nextWaitingContinuation = _vm->blockedContinuations;
+						_vm->blockedContinuations = _currentThread->currentContinuation;
 						omrthread_monitor_exit(_vm->blockedVirtualThreadsMutex);
 
 						/* store the current Continuation state and swap to carrier thread stack */
@@ -2383,9 +2380,8 @@ done:
 
 					/* Add thread object to blocked list. */
 					omrthread_monitor_enter(_vm->blockedVirtualThreadsMutex);
-					j9object_t listHead = _vm->blockedVirtualThreads;
-					J9VMJAVALANGVIRTUALTHREAD_SET_NEXT(_currentThread, _currentThread->threadObject, listHead);
-					_vm->blockedVirtualThreads = _currentThread->threadObject;
+					_currentThread->currentContinuation->nextWaitingContinuation = _vm->blockedContinuations;
+					_vm->blockedContinuations = _currentThread->currentContinuation;
 					omrthread_monitor_exit(_vm->blockedVirtualThreadsMutex);
 
 					/* store the current Continuation state and swap to carrier thread stack */
@@ -2993,19 +2989,19 @@ done:
 					omrthread_monitor_enter(_vm->blockedVirtualThreadsMutex);
 					J9VMContinuation *head = objectMonitor->waitingContinuations;
 					if (omrthread_monitor_notify == notifyFunction) {
-						objectMonitor->waitingContinuations = head->nextWaitingContinuation;
-						J9VMJAVALANGVIRTUALTHREAD_SET_NEXT(_currentThread, head->vthread, _vm->blockedVirtualThreads);
-						_vm->blockedVirtualThreads = head->vthread;
+						objectMonitor->nextWaitingContinuations = head->nextWaitingContinuation;
+						head->nextWaitingContinuation = _vm->blockedContinuations;
+						_vm->blockedContinuations = head;
+						J9VMJAVALANGVIRTUALTHREAD_SET_ONWAITINGLIST(_currentThread, head->vthread, JNI_TRUE);
 					} else {
-						J9VMContinuation *next = J9VMJAVALANGVIRTUALTHREAD_NEXT(_currentThread, head);
-						J9VMContinuation *temp = head;
-						while (NULL != next) {
-							J9VMJAVALANGVIRTUALTHREAD_SET_NEXT(_currentThread, temp->vthread, next->vthread);
-							temp = next;
+						J9VMContinuation *next = head;
+						J9VMJAVALANGVIRTUALTHREAD_SET_ONWAITINGLIST(_currentThread, head->vthread, JNI_TRUE);
+						while (NULL != next->nextWaitingContinuation) {
+							J9VMJAVALANGVIRTUALTHREAD_SET_ONWAITINGLIST(_currentThread, next->vthread, JNI_TRUE);
 							next = next->nextWaitingContinuation;
 						}
-						J9VMJAVALANGVIRTUALTHREAD_SET_NEXT(_currentThread, head->vthread, _vm->blockedVirtualThreads);
-						_vm->blockedVirtualThreads = head->vthread;
+						next->nextWaitingContinuation = _vm->blockedContinuations;
+						_vm->blockedContinuations = head;
 						objectMonitor->waitingContinuations = NULL;
 					}
 					omrthread_monitor_notify(_vm->blockedVirtualThreadsMutex);
@@ -8892,9 +8888,8 @@ done:
 
 					/* Add thread object to blocked list. */
 					omrthread_monitor_enter(_vm->blockedVirtualThreadsMutex);
-					j9object_t listHead = _vm->blockedVirtualThreads;
-					J9VMJAVALANGVIRTUALTHREAD_SET_NEXT(_currentThread, _currentThread->threadObject, listHead);
-					_vm->blockedVirtualThreads = _currentThread->threadObject;
+					_currentThread->currentContinuation->nextWaitingContinuation = _vm->blockedContinuations;
+					_vm->blockedContinuations = _currentThread->currentContinuation;
 					omrthread_monitor_exit(_vm->blockedVirtualThreadsMutex);
 
 					/* store the current Continuation state and swap to carrier thread stack */

@@ -1717,8 +1717,8 @@ typedef struct J9ObjectMonitor {
 	U_32 hash;
 #if JAVA_SPEC_VERSION >= 24
 	U_32 virtualThreadWaitCount;
-	J9VMContinuation* ownerContinuation;
-	J9VMContinuation* waitingContinuations;
+	struct J9VMContinuation* ownerContinuation;
+	struct J9VMContinuation* waitingContinuations;
 #endif /* JAVA_SPEC_VERSION >= 24 */
 } J9ObjectMonitor;
 
@@ -6351,7 +6351,7 @@ typedef struct J9JavaVM {
 	UDATA loadedClassCount;
 #endif /* defined(J9VM_OPT_JFR) */
 #if JAVA_SPEC_VERSION >= 24
-	j9object_t blockedVirtualThreads;
+	J9VMContinuation *blockedContinuations;
 	omrthread_monitor_t blockedVirtualThreadsMutex;
 #endif /* JAVA_SPEC_VERSION >= 24 */
 } J9JavaVM;

@@ -740,19 +740,19 @@ JVM_TakeVirtualThreadListToUnblock(JNIEnv* env, jclass ignored)
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	while (NULL == unblockedList) {
-		if (NULL != vm->blockedVirtualThreads) {
+		if (NULL != vm->blockedContinuations) {
 			omrthread_monitor_enter(vm->blockedVirtualThreadsMutex);
 restart:
-			j9object_t listHead = vm->blockedVirtualThreads;
-			j9object_t next = NULL;
-			vm->blockedVirtualThreads = NULL;
+			J9VMContinuation *listHead = vm->blockedContinuations;
+			J9VMContinuation *next = NULL;
+			vm->blockedContinuations = NULL;
 			while (NULL != listHead) {
-				next = J9VMJAVALANGVIRTUALTHREAD_NEXT(currentThread, listHead);
+				next = listHead->nextWaitingContinuation;
 				bool unblocked = false;
-				if (JNI_TRUE == J9VMJAVALANGVIRTUALTHREAD_ONWAITINGLIST(currentThread, listHead)) {
+				if (JNI_TRUE == J9VMJAVALANGVIRTUALTHREAD_ONWAITINGLIST(currentThread, listHead->vthread)) {
 					unblocked = true;
 				} else {
-					j9object_t continuationObj = J9VMJAVALANGVIRTUALTHREAD_CONT(currentThread, listHead);
+					j9object_t continuationObj = J9VMJAVALANGVIRTUALTHREAD_CONT(currentThread, listHead->vthread);
 					j9object_t syncObject = J9VMJDKINTERNALVMCONTINUATION_BLOCKER(currentThread, continuationObj);
 					J9ObjectMonitor* syncObjectMonitor = NULL;
 					j9objectmonitor_t lock = 0;
@@ -770,16 +770,16 @@ restart:
 						if (syncObjectMonitor->virtualThreadWaitCount >= 1) {
 							syncObjectMonitor->virtualThreadWaitCount -= 1;
 						}
-						J9VMJAVALANGVIRTUALTHREAD_SET_ONWAITINGLIST(currentThread, listHead, JNI_TRUE);
+						J9VMJAVALANGVIRTUALTHREAD_SET_ONWAITINGLIST(currentThread, listHead->vthread, JNI_TRUE);
 					}
 				}
 
 				if (unblocked) {
-					J9VMJAVALANGVIRTUALTHREAD_SET_NEXT(currentThread, listHead, unblockedList);
-					unblockedList = listHead;
+					J9VMJAVALANGVIRTUALTHREAD_SET_NEXT(currentThread, listHead->vthread, unblockedList);
+					unblockedList = listHead->vthread;
 				} else {
-					J9VMJAVALANGVIRTUALTHREAD_SET_NEXT(currentThread, listHead, vm->blockedVirtualThreads);
-					vm->blockedVirtualThreads = listHead;
+					listHead->nextWaitingContinuation = vm->blockedContinuations;
+					vm->blockedContinuations = listHead;
 				}
 				listHead = next;
 			}
