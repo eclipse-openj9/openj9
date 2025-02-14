@@ -147,6 +147,12 @@ J9::Power::CodeGenerator::initialize()
       cg->setIsDualTLH();
       }
 
+   static bool disableInlineMath_MaxMin_FD = feGetEnv("TR_disableInlineMaxMin") != NULL;
+   if (!disableInlineMath_MaxMin_FD && comp->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P7))
+      {
+      cg->setSupportsInlineMath_MaxMin_FD();
+      }
+
    /*
     * "Statically" initialize the FE-specific tree evaluator functions.
     * This code only needs to execute once per JIT lifetime.
