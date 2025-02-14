@@ -6033,13 +6033,28 @@ TR_InlinerFailureReason
 
    if (rm == TR::java_lang_StringCoding_countPositives)
       {
-      if (callsite->_callerResolvedMethod->getRecognizedMethod() == TR::java_lang_StringCoding_hasNegatives)
+      if (!comp->target().is64Bit() || callsite->_callerResolvedMethod->getRecognizedMethod() == TR::java_lang_StringCoding_hasNegatives)
          {
          return InlineableTarget;
          }
       else
          {
          return DontInline_Callee;
+         }
+      }
+   if (rm == TR::java_lang_StringCoding_hasNegatives)
+      {
+      if (!comp->target().is64Bit())
+         {
+         return InlineableTarget;
+         }
+      else
+         {
+#if JAVA_SPEC_VERSION >= 19
+         return InlineableTarget;
+#else
+         return DontInline_Callee;
+#endif /* JAVA_SPEC_VERSION >= 19 */
          }
       }
 
