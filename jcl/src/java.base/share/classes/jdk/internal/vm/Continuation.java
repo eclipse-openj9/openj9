@@ -182,6 +182,7 @@ public class Continuation {
 	}
 
 	@Hidden
+	@JvmtiMountTransition
 	private static void enter(Continuation cont) {
 		try {
 			cont.runnable.run();
@@ -229,6 +230,7 @@ public class Continuation {
 	 * @return {@link true} or {@link false} based on success/failure
 	 */
 	@Hidden
+	@JvmtiMountTransition
 	public static boolean yield(ContinuationScope scope) {
 		/* TODO find matching scope to yield */
 		Thread carrierThread = JLA.currentCarrierThread();
@@ -238,6 +240,7 @@ public class Continuation {
 	}
 
 	@Hidden
+	@JvmtiMountTransition
 	private boolean yield0() {
 		int rcPinned = isPinnedImpl();
 		if (rcPinned != 0) {

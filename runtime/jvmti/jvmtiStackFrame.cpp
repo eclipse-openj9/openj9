@@ -31,6 +31,7 @@ extern "C" {
 
 static UDATA popFrameCheckIterator (J9VMThread * currentThread, J9StackWalkState * walkState);
 static UDATA jvmtiInternalGetStackTraceIterator (J9VMThread * currentThread, J9StackWalkState * walkState);
+static UDATA jvmtiGetFrameLocationIterator(J9VMThread *currentThread, J9StackWalkState *walkState);
 static jvmtiError jvmtiInternalGetStackTrace(
 	jvmtiEnv *env, J9VMThread *currentThread, J9VMThread *targetThread, j9object_t threadObject,
 	jint start_depth, UDATA max_frame_count, jvmtiFrameInfo *frame_buffer, jint *count_ptr);
@@ -548,9 +549,10 @@ jvmtiGetFrameLocation(jvmtiEnv *env,
 		if (rc == JVMTI_ERROR_NONE) {
 			j9object_t threadObject = (NULL == thread) ? currentThread->threadObject : J9_JNI_UNWRAP_REFERENCE(thread);
 			J9StackWalkState walkState = {0};
-			walkState.flags = J9_STACKWALK_INCLUDE_NATIVES | J9_STACKWALK_VISIBLE_ONLY | J9_STACKWALK_COUNT_SPECIFIED | J9_STACKWALK_RECORD_BYTECODE_PC_OFFSET;
-			walkState.skipCount = (UDATA) depth;
-			walkState.maxFrames = 1;
+			walkState.flags = J9_STACKWALK_INCLUDE_NATIVES | J9_STACKWALK_VISIBLE_ONLY | J9_STACKWALK_RECORD_BYTECODE_PC_OFFSET | J9_STACKWALK_ITERATE_FRAMES;
+			walkState.userData1 = (void *)(UDATA)depth;
+			walkState.userData2 = 0;
+			walkState.frameWalkFunction = jvmtiGetFrameLocationIterator;
 
 #if JAVA_SPEC_VERSION >= 19
 			if (NULL != targetThread)
@@ -566,7 +568,7 @@ jvmtiGetFrameLocation(jvmtiEnv *env,
 				vmFuncs->resumeThreadForInspection(currentThread, targetThread);
 			}
 
-			if (1 == walkState.framesWalked) {
+			if (1 == (UDATA)walkState.userData2) {
 				jmethodID methodID = getCurrentMethodID(currentThread, walkState.method);
 
 				if (NULL == methodID) {
@@ -798,6 +800,31 @@ popFrameCheckIterator(J9VMThread * currentThread, J9StackWalkState * walkState)
 	return J9_STACKWALK_KEEP_ITERATING;
 }
 
+static UDATA
+jvmtiGetFrameLocationIterator(J9VMThread *currentThread, J9StackWalkState *walkState)
+{
+#if JAVA_SPEC_VERSION >= 21
+	J9Method *method = walkState->method;
+	/* walkState->method can never be NULL since the J9_STACKWALK_VISIBLE_ONLY flag is set. */
+	Assert_JVMTI_true(NULL != method);
+
+	J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+	U_32 extendedModifiers = getExtendedModifiersDataFromROMMethod(romMethod);
+
+	if (J9_ARE_NO_BITS_SET(extendedModifiers, CFR_METHOD_EXT_JVMTIMOUNTTRANSITION_ANNOTATION))
+#endif /* JAVA_SPEC_VERSION >= 21 */
+	{
+		UDATA depth = (UDATA)walkState->userData1;
+		if (0 == depth) {
+			/* Stores if the target frame has been reached */
+			walkState->userData2 = (void *)1;
+			return J9_STACKWALK_STOP_ITERATING;
+		}
+		walkState->userData1 = (void *)(depth - 1);
+	}
+
+	return J9_STACKWALK_KEEP_ITERATING;
+}
 
 static jvmtiError
 jvmtiInternalGetStackTrace(
