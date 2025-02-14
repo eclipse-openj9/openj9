@@ -96,6 +96,7 @@ public:
 		SWAP_MEMBER(ownedMonitorCount, UDATA, vmThread, continuation);
 		SWAP_MEMBER(monitorEnterRecordPool, J9Pool*, vmThread, continuation);
 		SWAP_MEMBER(monitorEnterRecords, J9MonitorEnterRecord*, vmThread, continuation);
+		SWAP_MEMBER(jniMonitorEnterRecords, J9MonitorEnterRecord*, vmThread, continuation);
 #endif /* JAVA_SPEC_VERSION >= 24 */
 	}
 

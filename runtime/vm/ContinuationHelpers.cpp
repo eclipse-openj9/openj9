@@ -483,6 +483,7 @@ copyFieldsFromContinuation(J9VMThread *currentThread, J9VMThread *vmThread, J9VM
 #if JAVA_SPEC_VERSION >= 24
 	vmThread->ownedMonitorCount = continuation->ownedMonitorCount;
 	vmThread->monitorEnterRecords = continuation->monitorEnterRecords;
+	vmThread->jniMonitorEnterRecords = continuation->jniMonitorEnterRecords;
 #endif /* JAVA_SPEC_VERSION >= 24 */
 }
 
@@ -687,6 +688,21 @@ preparePinnedVirtualThreadForMount(J9VMThread *currentThread, j9object_t contObj
 			}
 			updateMonitorInfo(currentThread, objectMonitor);
 		}
+		// repeat for jni monitor records
+		monitorRecords = currentThread->jniMonitorEnterRecords;
+		while (NULL != monitorRecords) {
+			j9object_t object = monitorRecords->object;
+			j9objectmonitor_t lock = 0;
+			J9ObjectMonitor *objectMonitor = NULL;
+
+			if (!LN_HAS_LOCKWORD(currentThread, object)) {
+				objectMonitor = monitorTablePeek(currentThread->javaVM, object);
+			} else {
+				lock = J9OBJECT_MONITOR(currentThread, object);
+				objectMonitor = J9_INFLLOCK_OBJECT_MONITOR(lock);
+			}
+			updateMonitorInfo(currentThread, objectMonitor);
+		}
 	}
 	J9VMJDKINTERNALVMCONTINUATION_SET_BLOCKER(currentThread, contObj, NULL);
 }
@@ -702,6 +718,33 @@ preparePinnedVirtualThreadForUnmount(J9VMThread *currentThread, j9object_t syncO
 	if (0 < currentThread->ownedMonitorCount) {
 		/* Inflate all owned monitors */
 		J9MonitorEnterRecord *monitorRecords = currentThread->monitorEnterRecords;
+		while (NULL != monitorRecords) {
+			j9object_t object = monitorRecords->object;
+			J9ObjectMonitor *objectMonitor = NULL;
+
+			if (!LN_HAS_LOCKWORD(currentThread, object)) {
+				objectMonitor = monitorTablePeek(currentThread->javaVM, object);
+				if (objectMonitor != NULL){
+					lock = J9_LOAD_LOCKWORD(currentThread, objectMonitor->alternateLockword);
+				} else {
+					lock = 0;
+				}
+			} else {
+				lock = J9OBJECT_MONITOR(currentThread, object);
+			}
+
+			if (!J9_LOCK_IS_INFLATED(lock)) {
+				objectMonitor = objectMonitorInflate(currentThread, object, lock);
+				if (NULL == objectMonitor) {
+					result = J9_OBJECT_MONITOR_OOM;
+					goto done;
+				}
+			}
+
+			detachMonitorInfo(currentThread, objectMonitor);
+		}
+		// repeat for jni monitor records
+		monitorRecords = currentThread->jniMonitorEnterRecords;
 		while (NULL != monitorRecords) {
 			j9object_t object = monitorRecords->object;
 			J9ObjectMonitor *objectMonitor = NULL;

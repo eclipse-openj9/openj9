@@ -5428,8 +5428,9 @@ typedef struct J9VMContinuation {
 #if JAVA_SPEC_VERSION >= 24
 	UDATA returnState;
 	UDATA ownedMonitorCount;
-	J9Pool* monitorEnterRecordPool;
-	J9MonitorEnterRecord* monitorEnterRecords;
+	struct J9Pool* monitorEnterRecordPool;
+	struct J9MonitorEnterRecord* monitorEnterRecords;
+	struct J9MonitorEnterRecord* jniMonitorEnterRecords;
 	j9object_t vthread;
 	struct J9VMContinuation* nextWaitingContinuation;
 #endif /* JAVA_SPEC_VERSION >= 24 */
