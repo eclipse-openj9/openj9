@@ -43,7 +43,7 @@ extern "C" {
  */
 extern int getstfle(int lastDoubleWord, uint64_t *bits);
 
-typedef __packed struct J9LPDat {
+typedef __attribute__((packed)) struct J9LPDat {
 	int32_t length; 					/**< 0:4 length of area */
 	uint8_t version; 					/**< 4:1 version */
 	uint8_t flags; 						/**< 5:1 flags */
@@ -76,7 +76,7 @@ typedef __packed struct J9LPDat {
 	uint8_t reserved2[8]; /* 96:8 reserved for future use */
 } J9LPDat;
 
-typedef __packed struct J9LPDatServiceTableEntry {
+typedef __attribute__((packed)) struct J9LPDatServiceTableEntry {
 	int32_t serviceUncapped;			/**< 0:4 basic-mode service units accumulated while the partition
 									 * was uncapped
 									 */
