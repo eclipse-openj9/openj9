@@ -39,7 +39,7 @@ if ($^O eq 'cygwin') {
 	open3($in, $out, $err, $javaCmd);
 	$javaPid = <$out>;
 	# Command gets the list of PIDs of the Java processes system is running
-	$perlPid = `wmic process where "name='java.exe'" get ProcessID`;
+	$perlPid = `powershell -Command "& { Get-Process java | Select-Object -ExpandProperty Id }"`;
 	print $in "getPid finished";
 	# String trim both sides of javaPid and perlPid for the index check
 	$javaPid =~ s/^\s+|\s+$//g;
