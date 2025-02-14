@@ -2989,7 +2989,7 @@ done:
 					omrthread_monitor_enter(_vm->blockedVirtualThreadsMutex);
 					J9VMContinuation *head = objectMonitor->waitingContinuations;
 					if (omrthread_monitor_notify == notifyFunction) {
-						objectMonitor->nextWaitingContinuations = head->nextWaitingContinuation;
+						objectMonitor->waitingContinuations = head->nextWaitingContinuation;
 						head->nextWaitingContinuation = _vm->blockedContinuations;
 						_vm->blockedContinuations = head;
 						J9VMJAVALANGVIRTUALTHREAD_SET_ONWAITINGLIST(_currentThread, head->vthread, JNI_TRUE);

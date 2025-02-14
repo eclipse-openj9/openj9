@@ -755,7 +755,7 @@ preparePinnedVirtualThreadForUnmount(J9VMThread *currentThread, j9object_t syncO
 	if (isObjectWait) {
 		/* Add Continuation struct to monitor's waiting list. */
 		omrthread_monitor_enter(currentThread->javaVM->blockedVirtualThreadsMutex);
-		currentThread->currentContinuation->nextWaitingContinuation = syncObjectMonitor->waitingContinuations);
+		currentThread->currentContinuation->nextWaitingContinuation = syncObjectMonitor->waitingContinuations;
 		syncObjectMonitor->waitingContinuations = currentThread->currentContinuation;
 		omrthread_monitor_exit(currentThread->javaVM->blockedVirtualThreadsMutex);
 	}
