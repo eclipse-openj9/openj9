@@ -138,20 +138,6 @@ J9::X86::CodeGenerator::initialize()
       cg->setSupportsBigDecimalLongLookasideVersioning();
       cg->setSupportsBDLLHardwareOverflowCheck();
       }
-#if JAVA_SPEC_VERSION < 19
-   static bool disableInlineStringCodingHasNegatives = feGetEnv("TR_DisableInlineStringCodingHasNegatives") != NULL;
-   if (comp->target().cpu.supportsAVX() && !disableInlineStringCodingHasNegatives &&
-        !TR::Compiler->om.canGenerateArraylets())
-      {
-      cg->setSupportsInlineStringCodingHasNegatives();
-      }
-   static bool disableInlineStringCodingCountPositives = feGetEnv("TR_DisableInlineStringCodingCountPositives") != NULL;
-   if (comp->target().cpu.supportsAVX() && !disableInlineStringCodingCountPositives &&
-         !TR::Compiler->om.canGenerateArraylets())
-      {
-      cg->setSupportsInlineStringCodingCountPositives();
-      }
-#endif /* JAVA_SPEC_VERSION < 19 */
 
    static bool disableInlineVectorizedMismatch = feGetEnv("TR_disableInlineVectorizedMismatch") != NULL;
    if (cg->getSupportsArrayCmpLen() &&
