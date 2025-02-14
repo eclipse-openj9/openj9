@@ -321,6 +321,11 @@ monitorTableAt(J9VMThread* vmStruct, j9object_t object)
 				key_objectMonitor.proDeflationCount = 0;
 				key_objectMonitor.antiDeflationCount = 0;
 #endif
+#if JAVA_SPEC_VERSION >= 24
+				key_objectMonitor.virtualThreadWaitCount = 0;
+				key_objectMonitor.ownerContinuation = NULL;
+				key_objectMonitor.waitingContinuations = NULL;
+#endif /* JAVA_SPEC_VERSION >= 24 */
 
 				objectMonitor = hashTableAdd(monitorTable, &key_objectMonitor);
 				if (objectMonitor == NULL) {
