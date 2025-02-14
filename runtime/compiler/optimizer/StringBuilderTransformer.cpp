@@ -142,6 +142,15 @@ int32_t TR_StringBuilderTransformer::performOnBlock(TR::Block* block)
                   {
                   int32_t capacity = computeHeuristicStringBuilderInitCapacity(appendArguments);
 
+                  // Guard against the possibility that the computed capacity has overflowed,
+                  // as StringBuilder.<init>(I) will throw a NegativeArraySizeException if the
+                  // capacity argument is negative.  It is extremely unlikely that the capacity
+                  // calculation will overflow, but possible.
+                  if (capacity < 0)
+                     {
+                     return 1;
+                     }
+
                   if (performTransformation(comp(), "%sTransforming java/lang/StringBuilder.<init>()V call at node [0x%p] to java/lang/StringBuilder.<init>(I)V with capacity = %d\n", OPT_DETAILS, initNode, capacity))
                      {
                      static const bool collectAppendStatistics = feGetEnv("TR_StringBuilderTransformerCollectAppendStatistics") != NULL;
@@ -465,14 +474,23 @@ TR::Node* TR_StringBuilderTransformer::findStringBuilderChainedAppendArguments(T
  *     The heuristic used in the non-constant case is hard coded per object type and was determined using the
  *     statistics collection mechanisms implemented by this optimization. See TR_StringBuilderTransformer Environment
  *     Variables section for more details.
+ *
+ * \returns A non-negative computed capacity or a negative value if the capacity estimate resulted in an integer overflow
  */
 int32_t TR_StringBuilderTransformer::computeHeuristicStringBuilderInitCapacity(List<TR_Pair<TR::Node*, TR::RecognizedMethod> >& appendArguments)
    {
-   int32_t capacity = 0;
+   uint32_t capacity = 0;
 
    ListIterator<TR_Pair<TR::Node*, TR::RecognizedMethod> > iter(&appendArguments);
 
-   for (TR_Pair<TR::Node*, TR::RecognizedMethod>* pair = iter.getFirst(); pair != NULL; pair = iter.getNext())
+   // Iterate over pairs of recognized methods and arguments that can be used
+   // to estimate the size of the StringBuilder buffer that will be needed.
+   // If the estimated capacity ever exceeds the maximum int32_t value, the
+   // calculation has overflowed, so halt early.
+   //
+   for (TR_Pair<TR::Node*, TR::RecognizedMethod>* pair = iter.getFirst();
+        (pair != NULL) && (capacity <= std::numeric_limits<int32_t>::max());
+        pair = iter.getNext())
       {
       TR::Node* argument = pair->getKey();
 
@@ -595,7 +613,7 @@ int32_t TR_StringBuilderTransformer::computeHeuristicStringBuilderInitCapacity(L
                         {
                         uintptr_t stringObjectLocation = (uintptr_t)symbol->castToStaticSymbol()->getStaticAddress();
                         uintptr_t stringObject = comp()->fej9()->getStaticReferenceFieldAtAddress(stringObjectLocation);
-                        capacity += comp()->fe()->getStringUTF8Length(stringObject);
+                        capacity += comp()->fej9()->getStringLength(stringObject);
 
                         break;
                         }
@@ -625,5 +643,8 @@ int32_t TR_StringBuilderTransformer::computeHeuristicStringBuilderInitCapacity(L
          }
       }
 
-   return capacity;
+   // If the loop has halted early because the value of capacity is greater than the
+   // int32_t value, casting the capacity to int32_t will yield a negative result,
+   // signalling that the capacity calculation has failed.
+   return (int32_t) capacity;
    }

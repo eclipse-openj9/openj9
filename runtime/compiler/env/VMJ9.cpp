@@ -5537,18 +5537,33 @@ TR_J9VMBase::getStringCharacter(uintptr_t objectPointer, int32_t index)
       }
    }
 
-intptr_t
+int32_t
 TR_J9VMBase::getStringUTF8Length(uintptr_t objectPointer)
    {
    TR_ASSERT(haveAccess(), "Must have VM access to call getStringUTF8Length");
    TR_ASSERT(objectPointer, "assertion failure");
-   return vmThread()->javaVM->internalVMFunctions->getStringUTF8Length(vmThread(), (j9object_t)objectPointer);
+   uint64_t actualLength = vmThread()->javaVM->internalVMFunctions->getStringUTF8LengthTruncated(vmThread(), (j9object_t)objectPointer, INT64_MAX);
+
+   // Fail if length+1 cannot be represented as an int32_t value.  The extra byte accounts for
+   // any NUL terminator that might be needed in copying the UTF-8 encoded string into a buffer
+   TR_ASSERT_FATAL(actualLength+1 <= std::numeric_limits<int32_t>::max(), "UTF8-encoded String length of " UINT64_PRINTF_FORMAT " must be in the range permitted for type int32_t, also allowing for a NUL terminator.\n", actualLength);
+
+   return (int32_t) actualLength;
+   }
+
+
+uint64_t
+TR_J9VMBase::getStringUTF8UnabbreviatedLength(uintptr_t objectPointer)
+   {
+   TR_ASSERT(haveAccess(), "Must have VM access to call getStringUTF8Length");
+   TR_ASSERT(objectPointer, "assertion failure");
+   return vmThread()->javaVM->internalVMFunctions->getStringUTF8LengthTruncated(vmThread(), (j9object_t)objectPointer, INT64_MAX);
    }
 
 char *
-TR_J9VMBase::getStringUTF8(uintptr_t objectPointer, char *buffer, intptr_t bufferSize)
+TR_J9VMBase::getStringUTF8(uintptr_t objectPointer, char *buffer, uintptr_t bufferSize)
    {
-   TR_ASSERT(haveAccess(), "Must have VM access to call getStringAscii");
+   TR_ASSERT(haveAccess(), "Must have VM access to call getStringUTF8");
 
    vmThread()->javaVM->internalVMFunctions->copyStringToUTF8Helper(vmThread(), (j9object_t)objectPointer, J9_STR_NULL_TERMINATE_RESULT, 0, J9VMJAVALANGSTRING_LENGTH(vmThread(), objectPointer), (U_8*)buffer, (UDATA)bufferSize);
 
