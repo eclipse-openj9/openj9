@@ -164,6 +164,19 @@ public:
 
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 	/**
+	 * Sets enable double mapping status. Note that the double map
+	 * status value may differ from the requested one in certain
+	 * circuntances.
+	 *
+	 * @param enableDoubleMapping
+	 */
+	MMINLINE void
+	setEnableDoubleMapping(bool enableDoubleMapping)
+	{
+		_enableDoubleMapping = enableDoubleMapping;
+	}
+
+	/**
 	 * Returns enable double mapping status
 	 * 
 	 * @return true if double mapping status is set to true, false otherwise.
