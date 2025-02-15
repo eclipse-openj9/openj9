@@ -44,7 +44,6 @@
 #include "control/Options_inlines.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
-#include "cs2/bitvectr.h"
 #include "env/CompilerEnv.hpp"
 #include "env/ObjectModel.hpp"
 #include "env/TRMemory.hpp"
