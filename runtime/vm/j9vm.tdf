@@ -1012,3 +1012,8 @@ TraceEntry=Trc_VM_snapshot_subAllocateSnapshotMemory_Entry NoEnv Overhead=1 Leve
 TraceExit=Trc_VM_snapshot_subAllocateSnapshotMemory_Exit NoEnv Overhead=1 Level=3 Template="subAllocateMemory() Memory allocated = %p."
 TraceEvent=Trc_VM_snapshot_loadWarmClassFromSnapshot_ClassLoadHookFailed Overhead=1 Level=3 Template="loadWarmClassFromSnapshot() Warm class load hook failed class=%p, %s"
 TraceEvent=Trc_VM_snapshot_loadWarmClassFromSnapshot_ClassInfo Overhead=1 Level=3 Template="loadWarmClassFromSnapshot() LoadClass clazz=%p, %s"
+
+TraceEntry=Trc_VM_getTypeIdUTF8_Entry Overhead=1 Level=5 Template="getTypeIdUTF8 className %.*s"
+TraceExit=Trc_VM_getTypeIdUTF8_Exit Overhead=1 Level=5 Template="getTypeIdUTF8 className %.*s clazz=%p result=%lli"
+TraceEntry=Trc_VM_getTypeId_Entry Overhead=1 Level=5 Template="getTypeId clazz=%p"
+TraceExit=Trc_VM_getTypeId_Exit Overhead=1 Level=5 Template="getTypeId clazz=%p result=%lli"

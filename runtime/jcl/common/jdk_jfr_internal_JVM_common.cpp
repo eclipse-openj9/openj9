@@ -350,8 +350,20 @@ Java_jdk_jfr_internal_JVM_getTypeId(JNIEnv *env, jobject obj, jclass clazz)
 Java_jdk_jfr_internal_JVM_getTypeId__Ljava_lang_Class_2(JNIEnv *env, jobject obj, jclass clazz)
 #endif /* JAVA_SPEC_VERSION == 11 */
 {
-	// TODO: implementation
-	return 0;
+	J9VMThread *currentThread = (J9VMThread *)env;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+
+	j9object_t classObject = J9_JNI_UNWRAP_REFERENCE(clazz);
+	J9Class *ramClass = J9VMJAVALANGCLASS_VMREF(currentThread, classObject);
+
+	jlong result = vmFuncs->getTypeId(currentThread, ramClass);
+
+	vmFuncs->internalExitVMToJNI(currentThread);
+
+	return result;
 }
 
 jobject JNICALL

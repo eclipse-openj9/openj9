@@ -5519,6 +5519,44 @@ setJFRRecordingFileName(J9JavaVM *vm, char *fileName);
 void
 tearDownJFR(J9JavaVM *vm);
 
+/**
+ * Get the type ID for the JFR event type. This operation is
+ * thread safe as it internally acquires a mutex. Only
+ * subclasses of jdk.jfr.event.Event can be called with this
+ * function, this is enforced at the JCL level.
+ *
+ * @param currentThread[in] the current J9VMThread
+ * @param clazz JFR event class
+ */
+jlong
+getTypeId(J9VMThread *currentThread, J9Class *clazz);
+
+/**
+ * Get the type ID for the JFR event type. This operation is
+ * thread safe as it internally acquires a mutex.
+ *
+ * @param currentThread[in] the current J9VMThread
+ * @param className name of JFR event class
+ */
+jlong
+getTypeIdUTF8(J9VMThread *currentThread, const J9UTF8 *className);
+
+/**
+ * Initialize JFR ID structures
+ *
+ * @param vm[in] the J9JavaVM
+ */
+UDATA
+initializeJFRIDs(J9JavaVM *vm);
+
+/**
+ * Shutdown JFR ID structures
+ *
+ * @param vm[in] the J9JavaVM
+ */
+void
+shutdownJFRIDs(J9JavaVM *vm);
+
 #endif /* defined(J9VM_OPT_JFR) */
 
 #ifdef __cplusplus

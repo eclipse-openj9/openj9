@@ -471,6 +471,8 @@ J9InternalVMFunctions J9InternalFunctions = {
 	jfrExecutionSample,
 	setJFRRecordingFileName,
 	tearDownJFR,
+	getTypeIdUTF8,
+	getTypeId,
 #endif /* defined(J9VM_OPT_JFR) */
 #if defined(J9VM_OPT_SNAPSHOTS)
 	initializeSnapshotClassLoaderObject,
