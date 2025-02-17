@@ -235,7 +235,7 @@ public class ValhallaAttributeTests {
 	/* Test to verify JVM_IsImplicitlyConstructibleClass. */
 	@Test
 	public static void testValueClassIsImplicitlyConstructible() {
-		ImplicitClass ic = (ImplicitClass)jdk.internal.value.ValueClass.zeroInstance(ImplicitClass.class);
+		Assert.assertTrue(jdk.internal.value.ValueClass.isImplicitlyConstructible(ImplicitClass.class));
 	}
 
 	static value class NonImplicitClass {
@@ -246,8 +246,8 @@ public class ValhallaAttributeTests {
 	}
 
 	/* Test to verify JVM_IsImplicitlyConstructibleClass. */
-	@Test(expectedExceptions = IllegalArgumentException.class)
+	@Test
 	public static void testValueClassIsImplicitlyConstructible2() {
-		jdk.internal.value.ValueClass.zeroInstance(NonImplicitClass.class);
+		Assert.assertFalse(jdk.internal.value.ValueClass.isImplicitlyConstructible(NonImplicitClass.class));
 	}
 }
