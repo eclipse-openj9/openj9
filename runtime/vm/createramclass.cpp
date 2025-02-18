@@ -2922,7 +2922,7 @@ fail:
 			allocationRequests[RAM_METHODS_FRAGMENT].alignment = sizeof(UDATA);
 			allocationRequests[RAM_METHODS_FRAGMENT].alignedSize = (romClass->romMethodCount + defaultConflictCount) * sizeof(J9Method);
 			allocationRequests[RAM_METHODS_FRAGMENT].address = NULL;
-			allocationRequests[RAM_METHODS_FRAGMENT].segmentKind = FREQUENTLY_ACCESSED;
+			allocationRequests[RAM_METHODS_FRAGMENT].segmentKind = INFREQUENTLY_ACCESSED;
 
 			/* superclasses fragment */
 			allocationRequests[RAM_SUPERCLASSES_FRAGMENT].prefixSize = 0;
@@ -2962,14 +2962,14 @@ fail:
 			allocationRequests[RAM_CONSTANT_POOL_FRAGMENT].alignment = REQUIRED_CONSTANT_POOL_ALIGNMENT;
 			allocationRequests[RAM_CONSTANT_POOL_FRAGMENT].alignedSize = romClass->ramConstantPoolCount * 2 * sizeof(UDATA);
 			allocationRequests[RAM_CONSTANT_POOL_FRAGMENT].address = NULL;
-			allocationRequests[RAM_CONSTANT_POOL_FRAGMENT].segmentKind = FREQUENTLY_ACCESSED;
+			allocationRequests[RAM_CONSTANT_POOL_FRAGMENT].segmentKind = INFREQUENTLY_ACCESSED;
 
 			/* call sites fragment */
 			allocationRequests[RAM_CALL_SITES_FRAGMENT].prefixSize = 0;
 			allocationRequests[RAM_CALL_SITES_FRAGMENT].alignment = sizeof(UDATA);
 			allocationRequests[RAM_CALL_SITES_FRAGMENT].alignedSize = romClass->callSiteCount * sizeof(UDATA);
 			allocationRequests[RAM_CALL_SITES_FRAGMENT].address = NULL;
-			allocationRequests[RAM_CALL_SITES_FRAGMENT].segmentKind = FREQUENTLY_ACCESSED;
+			allocationRequests[RAM_CALL_SITES_FRAGMENT].segmentKind = INFREQUENTLY_ACCESSED;
 
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
 			/* invoke cache fragment */
