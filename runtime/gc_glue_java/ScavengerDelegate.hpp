@@ -43,6 +43,9 @@
 #include "MarkingScheme.hpp"
 #include "ScanClassesMode.hpp"
 
+#if JAVA_SPEC_VERSION >= 24
+class GC_ContinuationSlotIterator;
+#endif /* JAVA_SPEC_VERSION >= 24 */
 class GC_ObjectScanner;
 class GC_VMThreadIterator;
 class MM_CompactScheme;
@@ -177,7 +180,11 @@ public:
 	void poisonSlots(MM_EnvironmentBase *env);
 	void healSlots(MM_EnvironmentBase *env);
 #endif /* defined(OMR_ENV_DATA64) && defined(OMR_GC_FULL_POINTERS) */
-	void doStackSlot(MM_EnvironmentStandard *env, omrobjectptr_t *slotPtr, MM_ScavengeScanReason reason, bool *shouldRemember);
+	MMINLINE void doSlot(MM_EnvironmentStandard *env, omrobjectptr_t *slotPtr, MM_ScavengeScanReason reason, bool *shouldRemember);
+#if JAVA_SPEC_VERSION >= 24
+	void doContinuationSlot(MM_EnvironmentStandard *env, omrobjectptr_t *slotPtr, MM_ScavengeScanReason reason, bool *shouldRemember, GC_ContinuationSlotIterator *continuationSlotIterator);
+#endif /* JAVA_SPEC_VERSION >= 24 */
+	void doStackSlot(MM_EnvironmentStandard *env, omrobjectptr_t *slotPtr, MM_ScavengeScanReason reason, bool *shouldRemember, void *walkState, const void* stackLocation);
 
 	bool initialize(MM_EnvironmentBase *env);
 	void tearDown(MM_EnvironmentBase *env);

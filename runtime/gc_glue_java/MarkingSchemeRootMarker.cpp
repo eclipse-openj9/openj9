@@ -46,20 +46,32 @@ MM_MarkingSchemeRootMarker::doStackSlot(omrobjectptr_t *slotPtr, void *walkState
 	if (_markingScheme->isHeapObject(object) && !_extensions->heap->objectIsInGap(object)) {
 		/* heap object - validate and mark */
 		Assert_MM_validStackSlot(MM_StackSlotValidator(0, object, stackLocation, walkState).validate(_env));
-		_markingScheme->inlineMarkObject(_env, object);
-
+		doSlot(slotPtr);
 	} else if (NULL != object) {
 		/* stack object - just validate */
 		Assert_MM_validStackSlot(MM_StackSlotValidator(MM_StackSlotValidator::NOT_ON_HEAP, object, stackLocation, walkState).validate(_env));
 	}
 }
 
+#if JAVA_SPEC_VERSION >= 24
+void
+MM_MarkingSchemeRootMarker::doContinuationSlot(J9Object **slotPtr, GC_ContinuationSlotIterator *continuationSlotIterator)
+{
+	omrobjectptr_t object = *slotPtr;
+	if (_markingScheme->isHeapObject(object) && !_extensions->heap->objectIsInGap(object)) {
+		doSlot(slotPtr);
+	} else if (NULL != object) {
+		Assert_MM_true(GC_ContinuationSlotIterator::state_monitor_records == continuationSlotIterator->getState());
+	}
+}
+#endif /* JAVA_SPEC_VERSION >= 24 */
+
 void
 MM_MarkingSchemeRootMarker::doVMThreadSlot(omrobjectptr_t *slotPtr, GC_VMThreadIterator *vmThreadIterator)
 {
 	omrobjectptr_t object = *slotPtr;
 	if (_markingScheme->isHeapObject(object) && !_extensions->heap->objectIsInGap(object)) {
-		_markingScheme->inlineMarkObject(_env, object);
+		doSlot(slotPtr);
 	} else if (NULL != object) {
 		Assert_MM_true(vmthreaditerator_state_monitor_records == vmThreadIterator->getState());
 	}
