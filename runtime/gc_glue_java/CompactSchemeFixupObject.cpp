@@ -26,6 +26,9 @@
 #include "objectdescription.h"
 
 #include "CollectorLanguageInterfaceImpl.hpp"
+#if JAVA_SPEC_VERSION >= 24
+#include "ContinuationSlotIterator.hpp"
+#endif /* JAVA_SPEC_VERSION >= 24 */
 #include "EnvironmentStandard.hpp"
 #include "Debug.hpp"
 #include "HeapRegionIteratorStandard.hpp"
@@ -85,6 +88,16 @@ MM_CompactSchemeFixupObject::fixupContinuationNativeSlots(MM_EnvironmentStandard
 		localData.fromObject = objectPtr;
 
 		GC_VMThreadStackSlotIterator::scanContinuationSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForCompactScheme, false, false);
+
+#if JAVA_SPEC_VERSION >= 24
+		J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, objectPtr);
+		GC_ContinuationSlotIterator continuationSlotIterator(currentThread, continuation);
+
+		while (J9Object **slotPtr = continuationSlotIterator.nextSlot()) {
+			doStackSlot(env, objectPtr, slotPtr);
+		}
+#endif /* JAVA_SPEC_VERSION >= 24 */
+
 	}
 }
 

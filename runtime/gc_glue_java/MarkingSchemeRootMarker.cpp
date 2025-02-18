@@ -45,10 +45,12 @@ MM_MarkingSchemeRootMarker::doStackSlot(omrobjectptr_t *slotPtr, void *walkState
 	omrobjectptr_t object = *slotPtr;
 	if (_markingScheme->isHeapObject(object) && !_extensions->heap->objectIsInGap(object)) {
 		/* heap object - validate and mark */
-		Assert_MM_validStackSlot(MM_StackSlotValidator(0, object, stackLocation, walkState).validate(_env));
+		if (NULL != walkState) {
+			Assert_MM_validStackSlot(MM_StackSlotValidator(0, object, stackLocation, walkState).validate(_env));
+		}
 		_markingScheme->inlineMarkObject(_env, object);
 
-	} else if (NULL != object) {
+	} else if ((NULL != object) && (NULL != walkState)) {
 		/* stack object - just validate */
 		Assert_MM_validStackSlot(MM_StackSlotValidator(MM_StackSlotValidator::NOT_ON_HEAP, object, stackLocation, walkState).validate(_env));
 	}

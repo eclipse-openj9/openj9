@@ -24,6 +24,9 @@
 #include "HeapWalkerDelegate.hpp"
 
 #include "j9.h"
+#if JAVA_SPEC_VERSION >= 24
+#include "ContinuationSlotIterator.hpp"
+#endif /* JAVA_SPEC_VERSION >= 24 */
 #include "EnvironmentBase.hpp"
 #include "GCExtensions.hpp"
 #include "ObjectModel.hpp"
@@ -72,5 +75,15 @@ MM_HeapWalkerDelegate::doContinuationNativeSlots(MM_EnvironmentBase *env, omrobj
 		localData.userData = userData;
 
 		GC_VMThreadStackSlotIterator::scanContinuationSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForHeapWalker, false, false);
+
+#if JAVA_SPEC_VERSION >= 24
+		J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, objectPtr);
+		GC_ContinuationSlotIterator continuationSlotIterator(currentThread, continuation);
+
+		while (J9Object **slotPtr = continuationSlotIterator.nextSlot()) {
+			_heapWalker->heapWalkerSlotCallback(env, slotPtr, function, userData);
+		}
+#endif /* JAVA_SPEC_VERSION >= 24 */
+
 	}
 }

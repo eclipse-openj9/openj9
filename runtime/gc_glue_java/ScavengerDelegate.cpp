@@ -53,6 +53,9 @@
 #include "ConcurrentSweepScheme.hpp"
 #endif /* J9VM_GC_CONCURRENT_SWEEP */
 #include "ConfigurationDelegate.hpp"
+#if JAVA_SPEC_VERSION >= 24
+#include "ContinuationSlotIterator.hpp"
+#endif /* JAVA_SPEC_VERSION >= 24 */
 #include "ContinuationStats.hpp"
 #include "EnvironmentStandard.hpp"
 #include "ExcessiveGCStats.hpp"
@@ -369,6 +372,16 @@ MM_ScavengerDelegate::scanContinuationNativeSlots(MM_EnvironmentStandard *env, o
 		localData.shouldRemember = &shouldRemember;
 
 		GC_VMThreadStackSlotIterator::scanContinuationSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForScavenge, false, false);
+
+#if JAVA_SPEC_VERSION >= 24
+		J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, objectPtr);
+		GC_ContinuationSlotIterator continuationSlotIterator(currentThread, continuation);
+
+		while (J9Object **slotPtr = continuationSlotIterator.nextSlot()) {
+			doStackSlot(env, slotPtr,reason, &shouldRemember);
+		}
+#endif /* JAVA_SPEC_VERSION >= 24 */
+
 		if (isConcurrentGC) {
 			MM_GCExtensions::exitContinuationConcurrentGCScan(currentThread, objectPtr, isGlobalGC);
 		}

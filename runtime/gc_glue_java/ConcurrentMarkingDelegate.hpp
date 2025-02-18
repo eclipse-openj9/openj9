@@ -87,7 +87,7 @@ public:
 	};
 
 	typedef struct markSchemeStackIteratorData {
-		MM_MarkingScheme *markingScheme;
+		MM_ConcurrentMarkingDelegate *concurrentMarkingDelegate;
 		MM_EnvironmentBase *env;
 	} markSchemeStackIteratorData;
 
@@ -114,6 +114,7 @@ public:
 	 */
 	bool initialize(MM_EnvironmentBase *env, MM_ConcurrentGC *collector);
 
+	void doStackSlot(MM_EnvironmentBase *env, omrobjectptr_t *slotPtr, J9StackWalkState *walkState, const void *stackLocation);
 	/**
 	 * In the case of Weak Consistency platforms we require this method to bring mutator threads to a safe point. A safe
 	 * point is a point at which a GC may occur.

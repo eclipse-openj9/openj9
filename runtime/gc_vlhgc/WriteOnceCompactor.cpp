@@ -45,6 +45,9 @@
 #include "CompactGroupManager.hpp"
 #include "ContinuationObjectBuffer.hpp"
 #include "ContinuationObjectList.hpp"
+#if JAVA_SPEC_VERSION >= 24
+#include "ContinuationSlotIterator.hpp"
+#endif /* JAVA_SPEC_VERSION >= 24 */
 #include "VMHelpers.hpp"
 #include "WriteOnceCompactor.hpp"
 #include "Debug.hpp"
@@ -1253,6 +1256,16 @@ MM_WriteOnceCompactor::fixupContinuationNativeSlots(MM_EnvironmentVLHGC* env, J9
 		localData.fromObject = objectPtr;
 
 		GC_VMThreadStackSlotIterator::scanContinuationSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForWriteOnceCompactor, false, false);
+
+#if JAVA_SPEC_VERSION >= 24
+		J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, objectPtr);
+		GC_ContinuationSlotIterator continuationSlotIterator(currentThread, continuation);
+
+		while (J9Object **slotPtr = continuationSlotIterator.nextSlot()) {
+			doStackSlot(env, objectPtr, slotPtr);
+		}
+#endif /* JAVA_SPEC_VERSION >= 24 */
+
 	}
 }
 

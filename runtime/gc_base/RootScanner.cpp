@@ -36,6 +36,9 @@
 #include "ClassIterator.hpp"
 #include "ClassHeapIterator.hpp"
 #include "ClassLoaderIterator.hpp"
+#if JAVA_SPEC_VERSION >= 24
+#include "ContinuationSlotIterator.hpp"
+#endif /* JAVA_SPEC_VERSION >= 24 */
 #include "Debug.hpp"
 #include "EnvironmentBase.hpp"
 #if defined(J9VM_GC_FINALIZATION)
@@ -552,6 +555,13 @@ MM_RootScanner::scanOneThread(MM_EnvironmentBase *env, J9VMThread *walkThread, v
 		/* At this point we know that a virtual thread is mounted. We previously scanned its stack,
 		 * and now we will scan carrier's stack, that continuation struct is currently pointing to. */
 		GC_VMThreadStackSlotIterator::scanSlots(currentThread, walkThread, walkThread->currentContinuation, localData, stackSlotIterator, isStackFrameClassWalkNeeded(), _trackVisibleStackFrameDepth);
+#if JAVA_SPEC_VERSION >= 24
+		GC_ContinuationSlotIterator continuationSlotIterator(walkThread, walkThread->currentContinuation);
+
+		while (J9Object **slot = continuationSlotIterator.nextSlot()) {
+			doStackSlot(slot, NULL, walkThread);
+		}
+#endif /* JAVA_SPEC_VERSION >= 24 */
 	}
 #endif /* JAVA_SPEC_VERSION >= 19 */
 	return false;

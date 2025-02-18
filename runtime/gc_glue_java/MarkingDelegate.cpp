@@ -39,6 +39,9 @@
 #include "CollectorLanguageInterfaceImpl.hpp"
 #endif /* defined(J9VM_GC_FINALIZATION) */
 #include "ConfigurationDelegate.hpp"
+#if JAVA_SPEC_VERSION >= 24
+#include "ContinuationSlotIterator.hpp"
+#endif /* JAVA_SPEC_VERSION >= 24 */
 #include "EnvironmentDelegate.hpp"
 #include "FinalizableReferenceBuffer.hpp"
 #include "GlobalCollector.hpp"
@@ -281,6 +284,16 @@ MM_MarkingDelegate::scanContinuationNativeSlots(MM_EnvironmentBase *env, omrobje
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 
 		GC_VMThreadStackSlotIterator::scanContinuationSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForMarkingDelegate, stackFrameClassWalkNeeded, false);
+
+#if JAVA_SPEC_VERSION >= 24
+		J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, objectPtr);
+		GC_ContinuationSlotIterator continuationSlotIterator(currentThread, continuation);
+
+		while (J9Object **slotPtr = continuationSlotIterator.nextSlot()) {
+			doStackSlot(env, objectPtr, slotPtr);
+		}
+#endif /* JAVA_SPEC_VERSION >= 24 */
+
 		if (isConcurrentGC) {
 			MM_GCExtensions::exitContinuationConcurrentGCScan(currentThread, objectPtr, isGlobalGC);
 		}
