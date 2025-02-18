@@ -809,7 +809,7 @@ public:
 	MMINLINE void **
 	dataAddrSlotForContiguous(J9IndexableObject *arrayPtr)
 	{
-		AssertContiguousArrayletLayout(arrayPtr);
+		/* Not safe to access class data or size - this may be a forwarded object! */
 		bool const compressed = compressObjectReferences();
 		void **dataAddrPtr = NULL;
 		if (compressed) {
@@ -1310,11 +1310,6 @@ public:
 	 * Asserts that an Arraylet has indeed discontiguous layout
 	 */
 	void AssertArrayletIsDiscontiguous(J9IndexableObject *objPtr);
-
-	/**
-	 * Asserts that an Arraylet has true contiguous layout
-	 */
-	void AssertContiguousArrayletLayout(J9IndexableObject *objPtr);
 
 	/**
 	 * Asserts that an Arraylet has true discontiguous layout

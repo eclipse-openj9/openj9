@@ -68,12 +68,6 @@ GC_ArrayletObjectModel::AssertArrayletIsDiscontiguous(J9IndexableObject *objPtr)
 }
 
 void
-GC_ArrayletObjectModel::AssertContiguousArrayletLayout(J9IndexableObject *objPtr)
-{
-	Assert_MM_true(InlineContiguous == getArrayLayout(objPtr));
-}
-
-void
 GC_ArrayletObjectModel::AssertVirtualLargeObjectHeapEnabled()
 {
 	Assert_MM_true(isVirtualLargeObjectHeapEnabled());

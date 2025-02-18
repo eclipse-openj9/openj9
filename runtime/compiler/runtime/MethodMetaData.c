@@ -1395,7 +1395,6 @@ void walkJITFrameSlotsForInternalPointers(J9StackWalkState * walkState,  U_8 ** 
       internalPointersInRegisters = 1;
 
 
-   BOOLEAN offHeapAllocationEnabled = walkState->walkThread->javaVM->memoryManagerFunctions->j9gc_off_heap_allocation_enabled(walkState->walkThread->javaVM);
    while (i < numDistinctPinningArrays)
       {
       U_8 currPinningArrayIndex = *(tempJitDescriptionCursor++);
@@ -1413,8 +1412,9 @@ void walkJITFrameSlotsForInternalPointers(J9StackWalkState * walkState,  U_8 ** 
 
       IDATA displacement = 0;
 
-      if (newPinningArrayAddress)
-         displacement = walkState->walkThread->javaVM->memoryManagerFunctions->j9gc_objaccess_indexableDataDisplacement(walkState->walkThread, (J9IndexableObject*)oldPinningArrayAddress, (J9IndexableObject*)newPinningArrayAddress);
+      /* ignore walkers that don't move objects - if object has not moved, displacement for sure won't change */
+      if (oldPinningArrayAddress != newPinningArrayAddress)
+         displacement = walkState->walkThread->javaVM->memoryManagerFunctions->j9gc_objaccess_indexableDataDisplacement(walkState, (J9IndexableObject*)oldPinningArrayAddress, (J9IndexableObject*)newPinningArrayAddress);
 
       ++(walkState->slotIndex);
 

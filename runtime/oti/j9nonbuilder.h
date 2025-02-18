@@ -4736,7 +4736,7 @@ typedef struct J9MemoryManagerFunctions {
 #endif /* !defined(J9VM_ENV_DATA64) */
 	void  ( *j9gc_objaccess_indexableStoreObject)(struct J9VMThread *vmThread, J9IndexableObject *destObject, I_32 index, j9object_t value, UDATA isVolatile) ;
 	void  ( *j9gc_objaccess_indexableStoreAddress)(struct J9VMThread *vmThread, J9IndexableObject *destObject, I_32 index, void *value, UDATA isVolatile) ;
-	IDATA  ( *j9gc_objaccess_indexableDataDisplacement)(struct J9VMThread *vmThread, J9IndexableObject *src, J9IndexableObject *dst) ;
+	IDATA  ( *j9gc_objaccess_indexableDataDisplacement)(struct J9StackWalkState *walkState, J9IndexableObject *src, J9IndexableObject *dst) ;
 	IDATA  ( *j9gc_objaccess_mixedObjectReadI32)(struct J9VMThread *vmThread, j9object_t srcObject, UDATA offset, UDATA isVolatile) ;
 	UDATA  ( *j9gc_objaccess_mixedObjectReadU32)(struct J9VMThread *vmThread, j9object_t srcObject, UDATA offset, UDATA isVolatile) ;
 	I_64  ( *j9gc_objaccess_mixedObjectReadI64)(struct J9VMThread *vmThread, j9object_t srcObject, UDATA offset, UDATA isVolatile) ;
