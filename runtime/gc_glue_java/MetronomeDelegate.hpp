@@ -37,6 +37,9 @@
 #include "Scheduler.hpp"
 #include "StackSlotValidator.hpp"
 
+#if JAVA_SPEC_VERSION >= 24
+class GC_ContinuationSlotIterator;
+#endif /* JAVA_SPEC_VERSION >= 24 */
 class MM_HeapRegionDescriptorRealtime;
 class MM_RealtimeMarkingSchemeRootMarker;
 class MM_RealtimeRootScanner;
@@ -57,6 +60,12 @@ public:
 	void yieldWhenRequested(MM_EnvironmentBase *env);
 	static int J9THREAD_PROC metronomeAlarmThreadWrapper(void *userData);
 	static uintptr_t signalProtectedFunction(J9PortLibrary *privatePortLibrary, void *userData);
+
+	MMINLINE void doSlot(MM_EnvironmentRealtime *env, J9Object **slotPtr);
+#if JAVA_SPEC_VERSION >= 24
+	void doContinuationSlot(MM_EnvironmentRealtime *env, J9Object **slotPtr, GC_ContinuationSlotIterator *continuationSlotIterator);
+#endif /* JAVA_SPEC_VERSION >= 24 */
+	void doStackSlot(MM_EnvironmentRealtime *env, J9Object **slotPtr, J9StackWalkState *walkState, const void *stackLocation);
 
 	MM_MetronomeDelegate(MM_EnvironmentBase *env) :
 		_extensions(MM_GCExtensions::getExtensions(env)),
@@ -580,7 +589,7 @@ private:
 };
 
 typedef struct StackIteratorData4RealtimeMarkingScheme {
-	MM_RealtimeMarkingScheme *realtimeMarkingScheme;
+	MM_MetronomeDelegate *metronomeDelegate;
 	MM_EnvironmentRealtime *env;
 	J9Object *fromObject;
 } StackIteratorData4RealtimeMarkingScheme;

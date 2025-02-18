@@ -47,6 +47,9 @@
 
 #if defined(J9VM_GC_MODRON_COMPACTION)
 
+#if JAVA_SPEC_VERSION >= 24
+class GC_ContinuationSlotIterator;
+#endif /* JAVA_SPEC_VERSION >= 24 */
 class MM_AllocateDescription;
 class MM_WriteOnceCompactor;
 class MM_ParallelDispatcher;
@@ -608,7 +611,11 @@ public:
 	 * @param workStackBaseHighPriority[in/out] The "high priority" work stack base.  This reference parameter will be updated before the function returns is region is high priority
 	 */
 	void pushRegionOntoWorkStack(MM_HeapRegionDescriptorVLHGC **workStackBase, MM_HeapRegionDescriptorVLHGC **workStackBaseHighPriority, MM_HeapRegionDescriptorVLHGC *region);
-	void doStackSlot(MM_EnvironmentVLHGC *env, J9Object *fromObject, J9Object** slot);
+	MMINLINE void doSlot(MM_EnvironmentVLHGC *env, J9Object *fromObject, J9Object** slotPtr);
+#if JAVA_SPEC_VERSION >= 24
+	void doContinuationSlot(MM_EnvironmentVLHGC *env, J9Object *fromObject, J9Object** slotPtr, GC_ContinuationSlotIterator *continuationSlotIterator);
+#endif /* JAVA_SPEC_VERSION >= 24 */
+	void doStackSlot(MM_EnvironmentVLHGC *env, J9Object *fromObject, J9Object** slotPtr, J9StackWalkState *walkState, const void *stackLocation);
 
 	friend class MM_WriteOnceCompactFixupRoots;
 	friend class MM_ParallelWriteOnceCompactTask;

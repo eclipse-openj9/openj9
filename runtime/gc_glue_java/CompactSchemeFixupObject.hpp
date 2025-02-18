@@ -29,6 +29,10 @@
 #include "CompactScheme.hpp"
 #include "GCExtensions.hpp"
 
+#if JAVA_SPEC_VERSION >= 24
+class GC_ContinuationSlotIterator;
+#endif /* JAVA_SPEC_VERSION >= 24 */
+
 class MM_CompactSchemeFixupObject {
 public:
 protected:
@@ -38,7 +42,11 @@ private:
 	MM_CompactScheme *_compactScheme;
 public:
 
-	void doStackSlot(MM_EnvironmentBase *env, omrobjectptr_t fromObject, omrobjectptr_t *slot);
+	MMINLINE void doSlot(MM_EnvironmentBase *env, omrobjectptr_t fromObject, omrobjectptr_t *slotPtr);
+#if JAVA_SPEC_VERSION >= 24
+	void doContinuationSlot(MM_EnvironmentBase *env, omrobjectptr_t fromObject, omrobjectptr_t *slotPtr, GC_ContinuationSlotIterator *continuationSlotIterator);
+#endif /* JAVA_SPEC_VERSION >= 24 */
+	void doStackSlot(MM_EnvironmentBase *env, omrobjectptr_t fromObject, omrobjectptr_t *slotPtr, J9StackWalkState *walkState, const void *stackLocation);
 	/**
 	 * Perform fixup for a single object
 	 * @param env[in] the current thread
@@ -82,6 +90,15 @@ private:
 	 * @param object -- The object of type or subclass of java.util.concurrent.locks.AbstractOwnableSynchronizer.
 	 */
 	MMINLINE void addOwnableSynchronizerObjectInList(MM_EnvironmentBase *env, omrobjectptr_t objectPtr);
+
+	/**
+	 * Determine whether the object pointer is found within the heap proper.
+	 * @return Boolean indicating if the object pointer is within the heap boundaries.
+	 */
+	MMINLINE bool isHeapObject(J9Object *objectPtr)
+	{
+		return (_extensions->heap->getHeapBase() <= (uint8_t *)objectPtr) && (_extensions->heap->getHeapTop() > (uint8_t *)objectPtr);
+	}
 };
 
 typedef struct StackIteratorData4CompactSchemeFixupObject {
