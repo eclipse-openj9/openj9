@@ -4161,7 +4161,7 @@ internalAllocateRAMClass(J9JavaVM *javaVM, J9ClassLoader *classLoader, RAMClassA
 				return NULL;
 			}
 			Trc_VM_internalAllocateRAMClass_AllocatedClassMemorySegment(newSegment, newSegment->size, newSegment->heapBase, newSegment->heapTop);
-			
+
 			printf("4168<<<<<newSegment = %p, newSegment->size = %d, newSegment->heapBase = %p, newSegment->heapTop = %p>>>>>\n",newSegment, (int)newSegment->size, newSegment->heapBase, newSegment->heapTop);
 			/* Initialize the "lastAllocatedClass" pointer */
 			*(J9Class **) newSegment->heapBase = NULL;
