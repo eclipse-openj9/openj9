@@ -30,6 +30,9 @@
 #include "CardTable.hpp"
 #include "ClassLoaderClassesIterator.hpp"
 #include "ClassIterator.hpp"
+#if JAVA_SPEC_VERSION >= 24
+#include "ContinuationSlotIterator.hpp"
+#endif /* JAVA_SPEC_VERSION >= 24 */
 #include "CycleState.hpp"
 #include "EnvironmentVLHGC.hpp"
 #include "HeapMapWordIterator.hpp"
@@ -203,6 +206,18 @@ bool MM_GlobalMarkCardScrubber::scrubContinuationNativeSlots(MM_EnvironmentVLHGC
 		localData.fromObject = objectPtr;
 
 		GC_VMThreadStackSlotIterator::scanContinuationSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForGlobalMarkCardScrubber, false, false);
+
+#if JAVA_SPEC_VERSION >= 24
+		J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, objectPtr);
+		GC_ContinuationSlotIterator continuationSlotIterator(currentThread, continuation);
+
+		while (J9Object **slotPtr = continuationSlotIterator.nextSlot()) {
+			if (doScrub) {
+				doScrub = mayScrubReference(env, objectPtr, *slotPtr);
+			}
+		}
+#endif /* JAVA_SPEC_VERSION >= 24 */
+
 	}
 	return doScrub;
 }

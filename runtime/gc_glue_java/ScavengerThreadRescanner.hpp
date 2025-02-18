@@ -54,6 +54,12 @@ public:
 		_scavenger->rescanThreadSlot(MM_EnvironmentStandard::getEnvironment(_env), slotPtr);
 	}
 
+#if JAVA_SPEC_VERSION >= 24
+	virtual void doContinuationSlot(J9Object **slotPtr, GC_ContinuationSlotIterator *continuationSlotIterator) {
+		_scavenger->rescanThreadSlot(MM_EnvironmentStandard::getEnvironment(_env), slotPtr);
+	}
+#endif /* JAVA_SPEC_VERSION >= 24 */
+
 	virtual void doVMThreadSlot(omrobjectptr_t *slotPtr, GC_VMThreadIterator *vmThreadIterator) {
 		_scavenger->rescanThreadSlot(MM_EnvironmentStandard::getEnvironment(_env), slotPtr);
 	}
