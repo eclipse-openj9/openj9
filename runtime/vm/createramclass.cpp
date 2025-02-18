@@ -3962,12 +3962,10 @@ allocateRemainingFragments(RAMClassAllocationRequest *requests, UDATA allocation
 		RAMClassAllocationRequest *request = NULL;
 		UDATA fragmentsLeftToAllocate = 0;
 		for (request = requests; NULL != request; request = request->next) {
-			if(NULL == request->address) {
-				if (request->segmentKind == segmentKind)
-				{
-					fragmentsLeftToAllocate++;
-					newSegmentSize += request->fragmentSize + request->alignment;
-				}
+			if (request->segmentKind == segmentKind)
+			{
+				fragmentsLeftToAllocate++;
+				newSegmentSize += request->fragmentSize + request->alignment;
 			}
 		}
 
@@ -3985,6 +3983,7 @@ allocateRemainingFragments(RAMClassAllocationRequest *requests, UDATA allocation
 		}
 
 		Trc_VM_internalAllocateRAMClass_AllocateClassMemorySegment(fragmentsLeftToAllocate, newSegmentSize, classAllocationIncrement);
+		printf("3988<<<<<newSegmentSize = %d, fragmentsLeftToAllocate = %d>>>>>\n",(int)newSegmentSize, (int)fragmentsLeftToAllocate);
 		newSegment = allocateClassMemorySegment(javaVM, newSegmentSize, MEMORY_TYPE_RAM_CLASS, classLoader, classAllocationIncrement);
 
 		if (NULL == newSegment) {
@@ -4011,30 +4010,28 @@ allocateRemainingFragments(RAMClassAllocationRequest *requests, UDATA allocation
 		/* Allocate the remaining fragments in the new segment, adding holes to the free list */
 		allocAddress = ((UDATA) newSegment->heapBase) + sizeof(UDATA);
 		for (request = requests; NULL != request; request = request->next) {
-			if(NULL == request->address) {
-				if (request->segmentKind == segmentKind)
-				{
-					/* Allocate from the start of the segment */
-					UDATA addressForAlignedArea = allocAddress + request->prefixSize;
-					UDATA alignmentMod = addressForAlignedArea & (request->alignment - 1);
-					UDATA alignmentShift = (0 == alignmentMod) ? 0 : (request->alignment - alignmentMod);
+			if (request->segmentKind == segmentKind)
+			{
+				/* Allocate from the start of the segment */
+				UDATA addressForAlignedArea = allocAddress + request->prefixSize;
+				UDATA alignmentMod = addressForAlignedArea & (request->alignment - 1);
+				UDATA alignmentShift = (0 == alignmentMod) ? 0 : (request->alignment - alignmentMod);
 
-					request->address = (UDATA *) (addressForAlignedArea + alignmentShift);
+				request->address = (UDATA *) (addressForAlignedArea + alignmentShift);
 
-					Trc_VM_internalAllocateRAMClass_AllocatedFromNewSegment(request->index, newSegment, request->address, request->prefixSize, request->alignedSize, request->alignment);
+				Trc_VM_internalAllocateRAMClass_AllocatedFromNewSegment(request->index, newSegment, request->address, request->prefixSize, request->alignedSize, request->alignment);
 
-					/* Add a new block with the remaining space at the start of this block, if any, to an appropriate free list */
-					if (0 != alignmentShift) {
-						addBlockToFreeList(classLoader, (UDATA) allocAddress, alignmentShift, j9RamClassFreeList, ramClassUDATABlockFreelist);
-					}
-
-					allocAddress += alignmentShift + request->fragmentSize;
-
-					fragmentsLeftToAllocate--;
+				/* Add a new block with the remaining space at the start of this block, if any, to an appropriate free list */
+				if (0 != alignmentShift) {
+					addBlockToFreeList(classLoader, (UDATA) allocAddress, alignmentShift, j9RamClassFreeList, ramClassUDATABlockFreelist);
 				}
+
+				allocAddress += alignmentShift + request->fragmentSize;
+
+				fragmentsLeftToAllocate--;
 			}
 		}
-
+		printf("4038<<<<<fragmentsLeftToAllocate = %d>>>>>\n", (int)fragmentsLeftToAllocate);
 		/* Add a new block with the remaining space at the end of this segment, if any, to an appropriate free list */
 		if (allocAddress != (UDATA) newSegment->heapTop) {
 			addBlockToFreeList(classLoader, allocAddress, ((UDATA) newSegment->heapTop) - allocAddress, j9RamClassFreeList, ramClassUDATABlockFreelist);
@@ -4101,6 +4098,7 @@ internalAllocateRAMClass(J9JavaVM *javaVM, J9ClassLoader *classLoader, RAMClassA
 	}
 
 	Trc_VM_internalAllocateRAMClass_Entry(classLoader, fragmentsLeftToAllocate);
+	printf("4104<<<<<classLoader = %p, fragmentsLeftToAllocate = %d>>>>>\n",classLoader, (int)fragmentsLeftToAllocate);
 	/* make sure we always make a new segment if its an anonClass */
 
 	if (isNotLoadedByAnonClassLoader) {
@@ -4118,10 +4116,11 @@ internalAllocateRAMClass(J9JavaVM *javaVM, J9ClassLoader *classLoader, RAMClassA
 		}
 		requests = dummyHead.next;
 	}
-
+	printf("4122<<<<<classLoader = %p, fragmentsLeftToAllocate = %d>>>>>\n",classLoader, (int)fragmentsLeftToAllocate);
 	/* If any fragments remain unallocated, allocate a new segment to (at least) fit them */
 	if(!isNotLoadedByAnonClassLoader)
 	{
+		printf("4126<<<<<classLoader = %p, fragmentsLeftToAllocate = %d>>>>>\n",classLoader, (int)fragmentsLeftToAllocate);
 		if (NULL != requests) {
 			/* Calculate required space in new segment, including maximum alignment padding */
 			UDATA newSegmentSize = 0;
@@ -4145,6 +4144,7 @@ internalAllocateRAMClass(J9JavaVM *javaVM, J9ClassLoader *classLoader, RAMClassA
 			}
 
 			Trc_VM_internalAllocateRAMClass_AllocateClassMemorySegment(fragmentsLeftToAllocate, newSegmentSize, classAllocationIncrement);
+			printf("4150<<<<<newSegmentSize = %d, fragmentsLeftToAllocate = %d, classAllocationIncrement = %d>>>>>\n",(int)newSegmentSize, (int)fragmentsLeftToAllocate, (int)classAllocationIncrement);
 			newSegment = allocateClassMemorySegment(javaVM, newSegmentSize, MEMORY_TYPE_RAM_CLASS, classLoader, classAllocationIncrement);
 
 			if (NULL == newSegment) {
@@ -4161,7 +4161,8 @@ internalAllocateRAMClass(J9JavaVM *javaVM, J9ClassLoader *classLoader, RAMClassA
 				return NULL;
 			}
 			Trc_VM_internalAllocateRAMClass_AllocatedClassMemorySegment(newSegment, newSegment->size, newSegment->heapBase, newSegment->heapTop);
-
+			
+			printf("4168<<<<<newSegment = %p, newSegment->size = %d, newSegment->heapBase = %p, newSegment->heapTop = %p>>>>>\n",newSegment, (int)newSegment->size, newSegment->heapBase, newSegment->heapTop);
 			/* Initialize the "lastAllocatedClass" pointer */
 			*(J9Class **) newSegment->heapBase = NULL;
 
@@ -4179,6 +4180,7 @@ internalAllocateRAMClass(J9JavaVM *javaVM, J9ClassLoader *classLoader, RAMClassA
 				request->address = (UDATA *) (addressForAlignedArea + alignmentShift);
 
 				Trc_VM_internalAllocateRAMClass_AllocatedFromNewSegment(request->index, newSegment, request->address, request->prefixSize, request->alignedSize, request->alignment);
+				printf("4150<<<<<request->index = %d, newSegment = %p, request->address = %p, request->prefixSize = %d, request->alignedSize = %d, request->alignment = %d>>>>>\n",(int)request->index, newSegment, request->address, (int)request->prefixSize, (int)request->alignedSize, (int)request->alignment);
 
 				/* Add a new block with the remaining space at the start of this block, if any, to an appropriate free list */
 				if (0 != alignmentShift) {
@@ -4196,6 +4198,7 @@ internalAllocateRAMClass(J9JavaVM *javaVM, J9ClassLoader *classLoader, RAMClassA
 			}
 		}
 	} else {
+		printf("4204<<<<<classLoader = %p, fragmentsLeftToAllocate = %d>>>>>\n",classLoader, (int)fragmentsLeftToAllocate);
 		memoryAllocationSuccess = allocateRemainingFragments(requests, allocationRequestCount, javaVM, classLoader, allocationRequests, &classLoader->sub4gBlock, classLoader->sub4gBlock.ramClassUDATABlockFreeList, SUB4G);
 		if(!memoryAllocationSuccess) {
 			return NULL;
@@ -4216,7 +4219,7 @@ internalAllocateRAMClass(J9JavaVM *javaVM, J9ClassLoader *classLoader, RAMClassA
 			memset((void *) (((UDATA)allocationRequests[i].address) - allocationRequests[i].prefixSize), 0, allocationRequests[i].fragmentSize);
 		}
 	}
-
+	printf("4225<<<<<classLoader = %p, fragmentsLeftToAllocate = %d>>>>>\n",classLoader, (int)fragmentsLeftToAllocate);
 	/* Find the segment containing the first fragment */
 	classStart = (UDATA)allocationRequests[0].address;
 
