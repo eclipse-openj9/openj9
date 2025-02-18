@@ -40,6 +40,9 @@
 #include "ClassLoaderRememberedSet.hpp"
 #include "ClassLoaderSegmentIterator.hpp"
 #include "ClassModel.hpp"
+#if JAVA_SPEC_VERSION >= 24
+#include "ContinuationSlotIterator.hpp"
+#endif /* JAVA_SPEC_VERSION >= 24 */
 #include "CycleState.hpp"
 #include "Debug.hpp"
 #include "EnvironmentVLHGC.hpp"
@@ -775,17 +778,29 @@ MM_GlobalMarkingScheme::scanPointerArrayObject(MM_EnvironmentVLHGC *env, J9Index
 }
 
 void
-MM_GlobalMarkingScheme::doStackSlot(MM_EnvironmentVLHGC *env, J9Object *fromObject, J9Object** slotPtr, J9StackWalkState *walkState, const void *stackLocation)
+MM_GlobalMarkingScheme::doSlot(MM_EnvironmentVLHGC *env, J9Object *fromObject, J9Object **slotPtr)
 {
-	J9Object *object = *slotPtr;
-	if (isHeapObject(object)) {
-		/* heap object - validate and mark */
-		Assert_MM_validStackSlot(MM_StackSlotValidator(0, *slotPtr, stackLocation, walkState).validate(env));
-		markObject(env, object);
-		rememberReferenceIfRequired(env, fromObject, object);
-	} else if (NULL != object) {
-		/* stack object - just validate */
-		Assert_MM_validStackSlot(MM_StackSlotValidator(MM_StackSlotValidator::NOT_ON_HEAP, *slotPtr, stackLocation, walkState).validate(env));
+	markObject(env, *slotPtr);
+	rememberReferenceIfRequired(env, fromObject, *slotPtr);
+}
+
+#if JAVA_SPEC_VERSION >= 24
+void
+MM_GlobalMarkingScheme::doContinuationSlot(MM_EnvironmentVLHGC *env, J9Object *fromObject, J9Object **slotPtr, GC_ContinuationSlotIterator *continuationSlotIterator)
+{
+	if (isHeapObject(*slotPtr)) {
+		doSlot(env, fromObject, slotPtr);
+	} else if (NULL != *slotPtr) {
+		Assert_MM_true(GC_ContinuationSlotIterator::state_monitor_records == continuationSlotIterator->getState());
+	}
+}
+#endif /* JAVA_SPEC_VERSION >= 24 */
+
+void
+MM_GlobalMarkingScheme::doStackSlot(MM_EnvironmentVLHGC *env, J9Object *fromObject, J9Object **slotPtr, J9StackWalkState *walkState, const void *stackLocation)
+{
+	if (isHeapObject(*slotPtr)) {
+		doSlot(env, fromObject, slotPtr);
 	}
 }
 
@@ -815,6 +830,16 @@ MM_GlobalMarkingScheme::scanContinuationNativeSlots(MM_EnvironmentVLHGC *env, J9
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 
 		GC_VMThreadStackSlotIterator::scanContinuationSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForGlobalMarkingScheme, stackFrameClassWalkNeeded, false);
+
+#if JAVA_SPEC_VERSION >= 24
+		J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, objectPtr);
+		GC_ContinuationSlotIterator continuationSlotIterator(currentThread, continuation);
+
+		while (J9Object **slotPtr = continuationSlotIterator.nextSlot()) {
+			doContinuationSlot(env, objectPtr, slotPtr, &continuationSlotIterator);
+		}
+#endif /* JAVA_SPEC_VERSION >= 24 */
+
 		if (isConcurrentGC) {
 			MM_GCExtensions::exitContinuationConcurrentGCScan(currentThread, objectPtr, isGlobalGC);
 		}
@@ -1163,7 +1188,18 @@ private:
 			Assert_MM_validStackSlot(MM_StackSlotValidator(MM_StackSlotValidator::NOT_ON_HEAP, *slotPtr, stackLocation, walkState).validate(_env));
 		}
 	}
-	
+
+#if JAVA_SPEC_VERSION >= 24
+	virtual void doContinuationSlot(J9Object **slotPtr, GC_ContinuationSlotIterator *continuationSlotIterator) {
+		J9Object *object = *slotPtr;
+		if (_markingScheme->isHeapObject(object)) {
+			_markingScheme->markObject((MM_EnvironmentVLHGC *)_env, object);
+		} else if (NULL != object) {
+			Assert_MM_true(GC_ContinuationSlotIterator::state_monitor_records == continuationSlotIterator->getState());
+		}
+	}
+#endif /* JAVA_SPEC_VERSION >= 24 */
+
 	virtual void doVMThreadSlot(J9Object **slotPtr, GC_VMThreadIterator *vmThreadIterator) {
 		J9Object *object = *slotPtr;
 		if (_markingScheme->isHeapObject(object)) {

@@ -51,6 +51,9 @@
 #include "CompactGroupManager.hpp"
 #include "CompactGroupPersistentStats.hpp"
 #include "CompressedCardTable.hpp"
+#if JAVA_SPEC_VERSION >= 24
+#include "ContinuationSlotIterator.hpp"
+#endif /* JAVA_SPEC_VERSION >= 24 */
 #include "CopyForwardCompactGroup.hpp"
 #include "CopyForwardGMPCardCleaner.hpp"
 #include "CopyForwardNoGMPCardCleaner.hpp"
@@ -2310,17 +2313,30 @@ MM_CopyForwardScheme::scanOwnableSynchronizerObjectSlots(MM_EnvironmentVLHGC *en
 }
 
 void
+MM_CopyForwardScheme::doSlot(MM_EnvironmentVLHGC *env, J9Object *fromObject, J9Object **slotPtr)
+{
+	/* the reservingContext is base on related Continuation object */
+	MM_AllocationContextTarok *reservingContext = getContextForHeapAddress(fromObject);
+	copyAndForward(env, reservingContext, fromObject, slotPtr);
+}
+
+#if JAVA_SPEC_VERSION >= 24
+void
+MM_CopyForwardScheme::doContinuationSlot(MM_EnvironmentVLHGC *env, J9Object *fromObject, J9Object **slotPtr, GC_ContinuationSlotIterator *continuationSlotIterator)
+{
+	if (isHeapObject(*slotPtr)) {
+		doSlot(env, fromObject, slotPtr);
+	} else if (NULL != *slotPtr) {
+		Assert_MM_true(GC_ContinuationSlotIterator::state_monitor_records == continuationSlotIterator->getState());
+	}
+}
+#endif /* JAVA_SPEC_VERSION >= 24 */
+
+void
 MM_CopyForwardScheme::doStackSlot(MM_EnvironmentVLHGC *env, J9Object *fromObject, J9Object **slotPtr, J9StackWalkState *walkState, const void *stackLocation)
 {
 	if (isHeapObject(*slotPtr)) {
-		/* heap object - validate and copyforward */
-		Assert_MM_validStackSlot(MM_StackSlotValidator(MM_StackSlotValidator::COULD_BE_FORWARDED, *slotPtr, stackLocation, walkState).validate(env));
-		J9VMThread *thread = ((J9StackWalkState *)walkState)->currentThread;
-		MM_AllocationContextTarok *reservingContext = (MM_AllocationContextTarok *)MM_EnvironmentVLHGC::getEnvironment(thread)->getAllocationContext();
-		copyAndForward(MM_EnvironmentVLHGC::getEnvironment(env), reservingContext, fromObject, slotPtr);
-	} else if (NULL != *slotPtr) {
-		/* stack object - just validate */
-		Assert_MM_validStackSlot(MM_StackSlotValidator(MM_StackSlotValidator::NOT_ON_HEAP, *slotPtr, stackLocation, walkState).validate(env));
+		doSlot(env, fromObject, slotPtr);
 	}
 }
 
@@ -2355,6 +2371,15 @@ MM_CopyForwardScheme::scanContinuationNativeSlots(MM_EnvironmentVLHGC *env, MM_A
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 
 		GC_VMThreadStackSlotIterator::scanContinuationSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForCopyForwardScheme, stackFrameClassWalkNeeded, false);
+
+#if JAVA_SPEC_VERSION >= 24
+		J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, objectPtr);
+		GC_ContinuationSlotIterator continuationSlotIterator(currentThread, continuation);
+
+		while (J9Object **slotPtr = continuationSlotIterator.nextSlot()) {
+			doContinuationSlot(env, objectPtr, slotPtr, &continuationSlotIterator);
+		}
+#endif /* JAVA_SPEC_VERSION >= 24 */
 	}
 }
 
@@ -3830,6 +3855,18 @@ private:
 		}
 	}
 
+#if JAVA_SPEC_VERSION >= 24
+	virtual void doContinuationSlot(J9Object **slotPtr, GC_ContinuationSlotIterator *continuationSlotIterator) {
+		if (_copyForwardScheme->isHeapObject(*slotPtr)) {
+			J9VMThread *thread = continuationSlotIterator->getVMThread();
+			MM_AllocationContextTarok *reservingContext = (MM_AllocationContextTarok *)MM_EnvironmentVLHGC::getEnvironment(thread)->getAllocationContext();
+			_copyForwardScheme->copyAndForward(MM_EnvironmentVLHGC::getEnvironment(_env), reservingContext, slotPtr);
+		} else if (NULL != *slotPtr) {
+			Assert_MM_true(GC_ContinuationSlotIterator::state_monitor_records == continuationSlotIterator->getState());
+		}
+	}
+#endif /* JAVA_SPEC_VERSION >= 24 */
+
 	virtual void doVMThreadSlot(J9Object **slotPtr, GC_VMThreadIterator *vmThreadIterator) {
 		if (_copyForwardScheme->isHeapObject(* slotPtr)) {
 			/* we know that threads are bound to nodes so relocalize this object into the node of the thread which directly references it */
@@ -4578,6 +4615,16 @@ private:
 			Assert_MM_validStackSlot(MM_StackSlotValidator(MM_StackSlotValidator::NOT_ON_HEAP, *slotPtr, stackLocation, walkState).validate(_env));
 		}
 	}
+
+#if JAVA_SPEC_VERSION >= 24
+	virtual void doContinuationSlot(J9Object **slotPtr, GC_ContinuationSlotIterator *continuationSlotIterator) {
+		if (_copyForwardScheme->isHeapObject(*slotPtr)) {
+			verifyObject(slotPtr);
+		} else if (NULL != *slotPtr) {
+			Assert_MM_true(GC_ContinuationSlotIterator::state_monitor_records == continuationSlotIterator->getState());
+		}
+	}
+#endif /* JAVA_SPEC_VERSION >= 24 */
 
 	virtual void doVMThreadSlot(J9Object **slotPtr, GC_VMThreadIterator *vmThreadIterator) {
 		if (_copyForwardScheme->isHeapObject(*slotPtr)) {

@@ -35,6 +35,9 @@
 
 #include "BaseVirtual.hpp"
 
+#if JAVA_SPEC_VERSION >= 24
+#include "ContinuationSlotIterator.hpp"
+#endif /* JAVA_SPEC_VERSION >= 24 */
 #include "EnvironmentBase.hpp"
 #include "GCExtensions.hpp"
 #include "JVMTIObjectTagTableIterator.hpp"
@@ -604,6 +607,10 @@ public:
 	 */
 	virtual void doDoubleMappedObjectSlot(J9Object *objectPtr, struct J9PortVmemIdentifier *identifier);
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
+
+#if JAVA_SPEC_VERSION >= 24
+	virtual void doContinuationSlot(J9Object **slotPtr, GC_ContinuationSlotIterator *continuationSlotIterator);
+#endif /* JAVA_SPEC_VERSION >= 24 */
 
 	/**
 	 * Called for each object stack slot. Subclasses may override.

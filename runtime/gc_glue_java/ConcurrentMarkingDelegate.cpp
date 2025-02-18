@@ -25,6 +25,9 @@
 #include "AsyncCallbackHandler.hpp"
 #include "ClassLoaderIterator.hpp"
 #include "ConfigurationDelegate.hpp"
+#if JAVA_SPEC_VERSION >= 24
+#include "ContinuationSlotIterator.hpp"
+#endif /* JAVA_SPEC_VERSION >= 24 */
 #include "FinalizeListManager.hpp"
 #include "Heap.hpp"
 #include "HeapRegionDescriptorStandard.hpp"
@@ -35,6 +38,32 @@
 #include "VMInterface.hpp"
 #include "VMThreadListIterator.hpp"
 
+void
+MM_ConcurrentMarkingDelegate::doSlot(MM_EnvironmentBase *env, omrobjectptr_t *slotPtr)
+{
+	_markingScheme->markObject(env, *slotPtr);
+}
+
+#if JAVA_SPEC_VERSION >= 24
+void
+MM_ConcurrentMarkingDelegate::doContinuationSlot(MM_EnvironmentBase *env, omrobjectptr_t *slotPtr, GC_ContinuationSlotIterator *continuationSlotIterator)
+{
+	if (_markingScheme->isHeapObject(*slotPtr) && !env->getExtensions()->heap->objectIsInGap(*slotPtr)) {
+		doSlot(env, slotPtr);
+	} else if (NULL != *slotPtr) {
+		Assert_MM_true(GC_ContinuationSlotIterator::state_monitor_records == continuationSlotIterator->getState());
+	}
+}
+#endif /* JAVA_SPEC_VERSION >= 24 */
+
+void
+MM_ConcurrentMarkingDelegate::doStackSlot(MM_EnvironmentBase *env, omrobjectptr_t *slotPtr, J9StackWalkState *walkState, const void *stackLocation)
+{
+	omrobjectptr_t object = *slotPtr;
+	if (_markingScheme->isHeapObject(object) && !env->getExtensions()->heap->objectIsInGap(object)) {
+		doSlot(env, slotPtr);
+	}
+}
 /**
  * Concurrents stack slot iterator.
  * Called for each slot in a threads active stack frames which contains a object reference.
@@ -48,19 +77,7 @@ void
 concurrentStackSlotIterator(J9JavaVM *javaVM, omrobjectptr_t *objectIndirect, void *localData, J9StackWalkState *walkState, const void *stackLocation)
 {
 	MM_ConcurrentMarkingDelegate::markSchemeStackIteratorData *data = (MM_ConcurrentMarkingDelegate::markSchemeStackIteratorData *)localData;
-
-	omrobjectptr_t object = *objectIndirect;
-	if (data->env->getExtensions()->heap->objectIsInGap(object)) {
-		/* CMVC 136483:  Ensure that the object is not in the gap of a split heap (stack-allocated object) since we can't mark that part of the address space */
-		Assert_MM_validStackSlot(MM_StackSlotValidator(MM_StackSlotValidator::NOT_ON_HEAP, object, stackLocation, walkState).validate(data->env));
-	} else if (data->markingScheme->isHeapObject(object)) {
-		/* heap object - validate and mark */
-		Assert_MM_validStackSlot(MM_StackSlotValidator(0, object, stackLocation, walkState).validate(data->env));
-		data->markingScheme->markObject(data->env, object);
-	} else if (NULL != object) {
-		/* stack object - just validate */
-		Assert_MM_validStackSlot(MM_StackSlotValidator(MM_StackSlotValidator::NOT_ON_HEAP, object, stackLocation, walkState).validate(data->env));
-	}
+	data->concurrentMarkingDelegate->doStackSlot(data->env, objectIndirect, walkState, stackLocation);
 }
 
 bool
@@ -150,7 +167,7 @@ MM_ConcurrentMarkingDelegate::scanThreadRoots(MM_EnvironmentBase *env)
 	}
 
 	markSchemeStackIteratorData localData;
-	localData.markingScheme = _markingScheme;
+	localData.concurrentMarkingDelegate = this;
 	localData.env = env;
 	/* In a case this thread is a carrier thread, and a virtual thread is mounted, we will scan virtual thread's stack. */
 	GC_VMThreadStackSlotIterator::scanSlots(vmThread, vmThread, (void *)&localData, concurrentStackSlotIterator, true, false);
@@ -158,6 +175,13 @@ MM_ConcurrentMarkingDelegate::scanThreadRoots(MM_EnvironmentBase *env)
 #if JAVA_SPEC_VERSION >= 19
 	if (NULL != vmThread->currentContinuation) {
 		GC_VMThreadStackSlotIterator::scanSlots(vmThread, vmThread, vmThread->currentContinuation, (void *)&localData, concurrentStackSlotIterator, true, false);
+#if JAVA_SPEC_VERSION >= 24
+		GC_ContinuationSlotIterator continuationSlotIterator(vmThread, vmThread->currentContinuation);
+
+		while (J9Object **slot = continuationSlotIterator.nextSlot()) {
+			doContinuationSlot(env, slot, &continuationSlotIterator);
+		}
+#endif /* JAVA_SPEC_VERSION >= 24 */
 	}
 #endif /* JAVA_SPEC_VERSION >= 19 */
 

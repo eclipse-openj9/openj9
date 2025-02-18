@@ -26,17 +26,21 @@
 #include "objectdescription.h"
 
 #include "CollectorLanguageInterfaceImpl.hpp"
-#include "EnvironmentStandard.hpp"
+#if JAVA_SPEC_VERSION >= 24
+#include "ContinuationSlotIterator.hpp"
+#endif /* JAVA_SPEC_VERSION >= 24 */
 #include "Debug.hpp"
+#include "EnvironmentStandard.hpp"
+#include "FlattenedContiguousArrayIterator.hpp"
 #include "HeapRegionIteratorStandard.hpp"
 #include "MixedObjectIterator.hpp"
 #include "ObjectAccessBarrier.hpp"
 #include "OwnableSynchronizerObjectBuffer.hpp"
-#include "VMHelpers.hpp"
 #include "ParallelDispatcher.hpp"
 #include "PointerContiguousArrayIterator.hpp"
-#include "FlattenedContiguousArrayIterator.hpp"
+#include "StackSlotValidator.hpp"
 #include "Task.hpp"
+#include "VMHelpers.hpp"
 
 void
 MM_CompactSchemeFixupObject::fixupMixedObject(omrobjectptr_t objectPtr)
@@ -50,11 +54,30 @@ MM_CompactSchemeFixupObject::fixupMixedObject(omrobjectptr_t objectPtr)
 }
 
 void
-MM_CompactSchemeFixupObject::doStackSlot(MM_EnvironmentBase *env, omrobjectptr_t fromObject, omrobjectptr_t *slot)
+MM_CompactSchemeFixupObject::doSlot(MM_EnvironmentBase *env, omrobjectptr_t fromObject, omrobjectptr_t *slotPtr)
 {
-	*slot = _compactScheme->getForwardingPtr(*slot);
+	*slotPtr = _compactScheme->getForwardingPtr(*slotPtr);
 }
 
+#if JAVA_SPEC_VERSION >= 24
+void
+MM_CompactSchemeFixupObject::doContinuationSlot(MM_EnvironmentBase *env, omrobjectptr_t fromObject, omrobjectptr_t *slotPtr, GC_ContinuationSlotIterator *continuationSlotIterator)
+{
+	if (isHeapObject(*slotPtr) && !_extensions->heap->objectIsInGap(*slotPtr)) {
+		doSlot(env, fromObject, slotPtr);
+	} else if (NULL != *slotPtr) {
+		Assert_MM_true(GC_ContinuationSlotIterator::state_monitor_records == continuationSlotIterator->getState());
+	}
+}
+#endif /* JAVA_SPEC_VERSION >= 24 */
+
+void
+MM_CompactSchemeFixupObject::doStackSlot(MM_EnvironmentBase *env, omrobjectptr_t fromObject, omrobjectptr_t *slotPtr, J9StackWalkState *walkState, const void *stackLocation)
+{
+	if (isHeapObject(*slotPtr) && !_extensions->heap->objectIsInGap(*slotPtr)) {
+		doSlot(env, fromObject, slotPtr);
+	}
+}
 /**
  * @todo Provide function documentation
  */
@@ -62,7 +85,7 @@ void
 stackSlotIteratorForCompactScheme(J9JavaVM *javaVM, J9Object **slotPtr, void *localData, J9StackWalkState *walkState, const void *stackLocation)
 {
 	StackIteratorData4CompactSchemeFixupObject *data = (StackIteratorData4CompactSchemeFixupObject *)localData;
-	data->compactSchemeFixupObject->doStackSlot(data->env, data->fromObject, slotPtr);
+	data->compactSchemeFixupObject->doStackSlot(data->env, data->fromObject, slotPtr, walkState, stackLocation);
 }
 
 
@@ -85,6 +108,16 @@ MM_CompactSchemeFixupObject::fixupContinuationNativeSlots(MM_EnvironmentStandard
 		localData.fromObject = objectPtr;
 
 		GC_VMThreadStackSlotIterator::scanContinuationSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForCompactScheme, false, false);
+
+#if JAVA_SPEC_VERSION >= 24
+		J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, objectPtr);
+		GC_ContinuationSlotIterator continuationSlotIterator(currentThread, continuation);
+
+		while (J9Object **slotPtr = continuationSlotIterator.nextSlot()) {
+			doContinuationSlot(env, objectPtr, slotPtr, &continuationSlotIterator);
+		}
+#endif /* JAVA_SPEC_VERSION >= 24 */
+
 	}
 }
 
