@@ -186,14 +186,14 @@ GC_ArrayletObjectModel::shouldFixupDataAddrForContiguous(MM_ForwardedHeader *for
 }
 
 bool
-GC_ArrayletObjectModel::isDataAdjacentToHeader(J9IndexableObject *arrayPtr)
+GC_ArrayletObjectModel::shouldDataBeAdjacentToHeader(J9IndexableObject *arrayPtr)
 {
 	uintptr_t dataSizeInBytes = getDataSizeInBytes(arrayPtr);
-	return isDataAdjacentToHeader(dataSizeInBytes);
+	return shouldDataBeAdjacentToHeader(dataSizeInBytes);
 }
 
 bool
-GC_ArrayletObjectModel::isDataAdjacentToHeader(uintptr_t dataSizeInBytes)
+GC_ArrayletObjectModel::shouldDataBeAdjacentToHeader(uintptr_t dataSizeInBytes)
 {
 	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(_omrVM);
 	uintptr_t minimumSpineSizeAfterGrowing = extensions->getObjectAlignmentInBytes();
