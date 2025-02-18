@@ -4173,7 +4173,7 @@ internalAllocateRAMClass(J9JavaVM *javaVM, J9ClassLoader *classLoader, RAMClassA
 				request->address = (UDATA *) (addressForAlignedArea + alignmentShift);
 
 				Trc_VM_internalAllocateRAMClass_AllocatedFromNewSegment(request->index, newSegment, request->address, request->prefixSize, request->alignedSize, request->alignment);
-				
+
 				/* Add a new block with the remaining space at the start of this block, if any, to an appropriate free list */
 				if (0 != alignmentShift) {
 					addBlockToFreeList(classLoader, (UDATA) allocAddress, alignmentShift, &classLoader->sub4gBlock, classLoader->sub4gBlock.ramClassUDATABlockFreeList);
