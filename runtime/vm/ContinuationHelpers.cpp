@@ -112,7 +112,9 @@ createContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 
 #if JAVA_SPEC_VERSION >= 24
 		continuation->nextWaitingContinuation = NULL;
-		continuation->monitorEnterRecordPool = pool_new(sizeof(J9MonitorEnterRecord), 0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(PORTLIB));
+		if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)) {
+			continuation->monitorEnterRecordPool = pool_new(sizeof(J9MonitorEnterRecord), 0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(PORTLIB));
+		}
 #endif /* JAVA_SPEC_VERSION >= 24 */
 
 #if defined(J9VM_PROF_CONTINUATION_ALLOCATION)
@@ -261,7 +263,9 @@ enterContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 
 	if (started) {
 #if JAVA_SPEC_VERSION >= 24
-		preparePinnedVirtualThreadForMount(currentThread, continuationObject);
+		if (J9_ARE_ANY_BITS_SET(currentThread->javaVM->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)) {
+			preparePinnedVirtualThreadForMount(currentThread, continuationObject);
+		}
 		VM_OutOfLineINL_Helpers::restoreInternalNativeStackFrame(currentThread);
 		result = FALSE;
 #elif
@@ -428,7 +432,9 @@ T2:
 			/* Caching failed, free the J9VMContinuation struct. */
 			freeJavaStack(vm, continuation->stackObject);
 #if JAVA_SPEC_VERSION >= 24
-			pool_kill(continuation->monitorEnterRecordPool);
+			if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)) {
+				pool_kill(continuation->monitorEnterRecordPool);
+			}
 #endif /* JAVA_SPEC_VERSION >= 24 */
 			j9mem_free_memory(continuation);
 		}
@@ -481,9 +487,11 @@ copyFieldsFromContinuation(J9VMThread *currentThread, J9VMThread *vmThread, J9VM
 	vmThread->jitArtifactSearchCache = (void*)((UDATA)vmThread->jitArtifactSearchCache | J9_STACKWALK_NO_JIT_CACHE);
 
 #if JAVA_SPEC_VERSION >= 24
-	vmThread->ownedMonitorCount = continuation->ownedMonitorCount;
-	vmThread->monitorEnterRecords = continuation->monitorEnterRecords;
-	vmThread->jniMonitorEnterRecords = continuation->jniMonitorEnterRecords;
+	if (J9_ARE_ANY_BITS_SET(currentThread->javaVM->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)) {
+		vmThread->ownedMonitorCount = continuation->ownedMonitorCount;
+		vmThread->monitorEnterRecords = continuation->monitorEnterRecords;
+		vmThread->jniMonitorEnterRecords = continuation->jniMonitorEnterRecords;
+	}
 #endif /* JAVA_SPEC_VERSION >= 24 */
 }
 
