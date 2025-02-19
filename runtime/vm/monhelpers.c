@@ -227,7 +227,9 @@ restart:
 		if (J9_ARE_ANY_BITS_SET(vmStruct->javaVM->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)
 		&& (0 != objectMonitor->virtualThreadWaitCount)
 		) {
+			omrthread_monitor_enter(vmStruct->javaVM->blockedVirtualThreadsMutex);
 			omrthread_monitor_notify(vmStruct->javaVM->blockedVirtualThreadsMutex);
+			omrthread_monitor_exit(vmStruct->javaVM->blockedVirtualThreadsMutex);
 		}
 		Trc_VM_objectMonitorExit_Exit_InflatedLock(vmStruct, rc);
 		goto done;

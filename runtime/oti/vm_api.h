@@ -4682,6 +4682,15 @@ releaseVThreadInspector(J9VMThread *currentThread, jobject thread);
 
 #if JAVA_SPEC_VERSION >= 24
 /**
+ * @brief Attach all yielded VirtualThread monitors to carrier thread.
+ *
+ * @param currentThread
+ * @param contObj
+ */
+void
+preparePinnedVirtualThreadForMount(J9VMThread *currentThread, j9object_t contObj);
+
+/**
  * @brief Inflate all monitors and prepare for VirtualThread yield.
  *
  * @param currentThread

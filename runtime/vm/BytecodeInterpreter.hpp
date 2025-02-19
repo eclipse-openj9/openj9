@@ -5679,9 +5679,52 @@ ffi_OOM:
 		case J9VM_CONTINUATION_RETURN_FROM_MONITOR_ENTER:
 			break;
 		case J9VM_CONTINUATION_RETURN_FROM_OBJECT_WAIT:
+		{
 			restoreInternalNativeStackFrame(REGISTER_ARGS);
-			returnVoidFromINL(REGISTER_ARGS, 4);
+			j9object_t waitObject = *(j9object_t*)(_sp + 3);
+			
+			UDATA monitorRC = enterObjectMonitor(REGISTER_ARGS, waitObject);
+			/* Monitor enter can only fail in the nonblocking case, which does not
+			 * release VM access, so the immediate async and failed enter cases are
+			 * mutually exclusive.
+			 */
+			if (J9_OBJECT_MONITOR_ENTER_FAILED(monitorRC)) {
+				switch (monitorRC) {
+#if JAVA_SPEC_VERSION >= 16
+				case J9_OBJECT_MONITOR_VALUE_TYPE_IMSE:
+					_currentThread->tempSlot = (UDATA) obj;
+					rc = THROW_VALUE_TYPE_ILLEGAL_MONITOR_STATE;
+					break;
+#endif /* JAVA_SPEC_VERSION >= 16 */
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+				case J9_OBJECT_MONITOR_CRIU_SINGLE_THREAD_MODE_THROW:
+					rc = THROW_CRIU_SINGLE_THREAD_MODE;
+					break;
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+#if JAVA_SPEC_VERSION >= 24
+				case J9_OBJECT_MONITOR_YIELD_VIRTUAL:
+				{
+					rc = yieldPinnedContinuation(REGISTER_ARGS, JAVA_LANG_VIRTUALTHREAD_BLOCKING, J9VM_CONTINUATION_RETURN_FROM_OBJECT_WAIT);
+					omrthread_monitor_enter(_vm->blockedVirtualThreadsMutex);
+					omrthread_monitor_notify(_vm->blockedVirtualThreadsMutex);
+					omrthread_monitor_exit(_vm->blockedVirtualThreadsMutex);
+					break;
+				}
+#endif /* JAVA_SPEC_VERSION >= 24 */
+				case J9_OBJECT_MONITOR_OOM:
+					rc = THROW_MONITOR_ALLOC_FAIL;
+					break;
+				default:
+					Assert_VM_unreachable();
+				}
+			} else {
+				omrthread_monitor_t monitor = getMonitorForWait(_currentThread, waitObject);
+				monitor->count = _currentThread->currentContinuation->waitingMonitorEnterCount;
+				_currentThread->currentContinuation->waitingMonitorEnterCount = 0;
+				returnVoidFromINL(REGISTER_ARGS, 4);
+			}
 			break;
+		}
 		case J9VM_CONTINUATION_RETURN_FROM_SYNC_METHOD:
 			UDATA *bp = ((UDATA*)(((J9SFMethodFrame*)_sp) + 1)) - 1;
 			restoreSpecialStackFrameLeavingArgs(REGISTER_ARGS, bp);

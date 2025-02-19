@@ -263,8 +263,8 @@ enterContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 
 	if (started) {
 #if JAVA_SPEC_VERSION >= 24
-		if (J9_ARE_ANY_BITS_SET(currentThread->javaVM->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)) {
-			preparePinnedVirtualThreadForMount(currentThread, continuationObject);
+		if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)) {
+			continuation->monitorEnterRecordPool = pool_new(sizeof(J9MonitorEnterRecord), 0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(PORTLIB));
 		}
 		VM_OutOfLineINL_Helpers::restoreInternalNativeStackFrame(currentThread);
 		result = FALSE;
@@ -681,6 +681,7 @@ updateMonitorInfo(J9VMThread *currentThread, J9ObjectMonitor *objectMonitor)
 void
 preparePinnedVirtualThreadForMount(J9VMThread *currentThread, j9object_t contObj)
 {
+	UDATA monitorCount = 0;
 	if (0 < currentThread->ownedMonitorCount) {
 		J9MonitorEnterRecord *monitorRecords = currentThread->monitorEnterRecords;
 		while (NULL != monitorRecords) {
@@ -695,6 +696,7 @@ preparePinnedVirtualThreadForMount(J9VMThread *currentThread, j9object_t contObj
 				objectMonitor = J9_INFLLOCK_OBJECT_MONITOR(lock);
 			}
 			updateMonitorInfo(currentThread, objectMonitor);
+			monitorCount++;
 		}
 		// repeat for jni monitor records
 		monitorRecords = currentThread->jniMonitorEnterRecords;
@@ -710,9 +712,13 @@ preparePinnedVirtualThreadForMount(J9VMThread *currentThread, j9object_t contObj
 				objectMonitor = J9_INFLLOCK_OBJECT_MONITOR(lock);
 			}
 			updateMonitorInfo(currentThread, objectMonitor);
+			monitorCount++;
 		}
 	}
-	J9VMJDKINTERNALVMCONTINUATION_SET_BLOCKER(currentThread, contObj, NULL);
+	J9VMJDKINTERNALVMCONTINUATION_SET_BLOCKER(currentThread, continuationObject, NULL);
+
+	/* Added the attached monitor to carrier thread's lockedmonitorcount. */
+	currentThread->osThread->lockedmonitorcount += monitorCount;
 }
 
 UDATA
@@ -722,6 +728,7 @@ preparePinnedVirtualThreadForUnmount(J9VMThread *currentThread, j9object_t syncO
 	J9ObjectMonitor *syncObjectMonitor = NULL;
 	j9objectmonitor_t lock = 0;
 	j9object_t continuationObj = NULL;
+	UDATA monitorCount = 0;
 
 	if (0 < currentThread->ownedMonitorCount) {
 		/* Inflate all owned monitors */
@@ -750,6 +757,7 @@ preparePinnedVirtualThreadForUnmount(J9VMThread *currentThread, j9object_t syncO
 			}
 
 			detachMonitorInfo(currentThread, objectMonitor);
+			monitorCount++;
 		}
 		// repeat for jni monitor records
 		monitorRecords = currentThread->jniMonitorEnterRecords;
@@ -777,6 +785,7 @@ preparePinnedVirtualThreadForUnmount(J9VMThread *currentThread, j9object_t syncO
 			}
 
 			detachMonitorInfo(currentThread, objectMonitor);
+			monitorCount++
 		}
 	}
 
@@ -799,17 +808,31 @@ preparePinnedVirtualThreadForUnmount(J9VMThread *currentThread, j9object_t syncO
 		}
 	}
 
-	syncObjectMonitor->virtualThreadWaitCount += 1;
 	continuationObj = J9VMJAVALANGVIRTUALTHREAD_CONT(currentThread, currentThread->threadObject);
 	J9VMJDKINTERNALVMCONTINUATION_SET_BLOCKER(currentThread, continuationObj, syncObj);
 
 	if (isObjectWait) {
+		J9VMContinuation *continuation = currentThread->currentContinuation;
+		omrthread_monitor_t monitor = syncObjectMonitor->monitor;
+		
+		/* Record wait monitor state. */
+		continuation->waitingMonitorEnterCount = monitor->count;
+		/* Reset monitor entry count to 1.*/
+		monitor->count = 1;
+		omrthread_monitor_exit(monitor);
 		/* Add Continuation struct to monitor's waiting list. */
 		omrthread_monitor_enter(currentThread->javaVM->blockedVirtualThreadsMutex);
 		currentThread->currentContinuation->nextWaitingContinuation = syncObjectMonitor->waitingContinuations;
 		syncObjectMonitor->waitingContinuations = currentThread->currentContinuation;
 		omrthread_monitor_exit(currentThread->javaVM->blockedVirtualThreadsMutex);
+	} else {
+		syncObjectMonitor->virtualThreadWaitCount += 1;
 	}
+
+	/* Subtract the detached monitor from carrier thread's lockedmonitorcount. */
+	currentThread->osThread->lockedmonitorcount -= monitorCount;
+	/* Clear the blocking object on carrier thread. */
+	J9VMTHREAD_SET_BLOCKINGENTEROBJECT(currentThread, currentThread, NULL);
 
 done:
 	return result;

@@ -5436,6 +5436,7 @@ typedef struct J9VMContinuation {
 	UDATA dropFlags;
 #if JAVA_SPEC_VERSION >= 24
 	UDATA returnState;
+	IDATA waitingMonitorEnterCount;
 	UDATA ownedMonitorCount;
 	struct J9Pool* monitorEnterRecordPool;
 	struct J9MonitorEnterRecord* monitorEnterRecords;
