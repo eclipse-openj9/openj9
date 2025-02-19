@@ -275,6 +275,13 @@ public:
 	}
 
 #if JAVA_SPEC_VERSION >= 24
+	/**
+	 * Check if the threadObject mounted on a J9VMThread is a virtual thread and can be yielded.
+	 *
+	 * @param[in] vmThread the J9VMThread
+	 *
+	 * @return true if the virtual thread is yieldable, otherwise false
+	 */
 	static VMINLINE bool
 	isYieldableVirtualThread(J9VMThread *vmThread)
 	{

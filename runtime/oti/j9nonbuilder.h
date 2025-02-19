@@ -298,6 +298,15 @@
 typedef void(*j9_tls_finalizer_t)(void *);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
+#if JAVA_SPEC_VERSION >= 24
+/* Constants from java.lang.VirutalThread.state that are used by the VM.
+ * The full mapping is under jvmtiInternals.h <JVMTI_VTHREAD_STATE_*>.
+ */
+#define JAVA_LANG_VIRTUALTHREAD_BLOCKING 12
+#define JAVA_LANG_VIRTUALTHREAD_WAITING  13
+#define JAVA_LANG_VIRTUALTHREAD_TIMED_WAITING 17
+#endif /* JAVA_SPEC_VERSION >= 24 */
+
 typedef enum {
 	J9FlushCompQueueDataBreakpoint
 } J9JITFlushCompilationQueueReason;
@@ -350,15 +359,6 @@ struct J9UpcallNativeSignature;
 #if JAVA_SPEC_VERSION >= 19
 struct J9VMContinuation;
 #endif /* JAVA_SPEC_VERSION >= 19 */
-
-#if JAVA_SPEC_VERSION >= 24
-/* Constants from java.lang.VirutalThread.state that is used by VM. */
-/* Full mapping under jvmtiInternals.h <JVMTI_VTHREAD_STATE_*> */
-#define JAVA_LANG_VIRTUALTHREAD_BLOCKING 12
-#define JAVA_LANG_VIRTUALTHREAD_WAITING  13
-#define JAVA_LANG_VIRTUALTHREAD_TIMED_WAITING 17
-
-#endif /* JAVA_SPEC_VERSION >= 24 */
 
 #if defined(J9VM_OPT_JFR)
 
@@ -5332,7 +5332,8 @@ typedef struct J9InternalVMFunctions {
 	BOOLEAN (*loadWarmClassFromSnapshot)(struct J9VMThread *vmThread, struct J9ClassLoader *classLoader, struct J9Class *clazz);
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
 #if JAVA_SPEC_VERSION >= 24
-	J9ObjectMonitor * (*monitorTablePeek)(struct J9JavaVM *vm, j9object_t object);
+	struct J9ObjectMonitor * (*monitorTablePeek)(struct J9JavaVM *vm, j9object_t object);
+	jobject (*takeVirtualThreadListToUnblock)(struct J9VMThread *currentThread, struct J9JavaVM *vm);
 #endif /* JAVA_SPEC_VERSION >= 24 */
 } J9InternalVMFunctions;
 
@@ -5412,9 +5413,9 @@ typedef struct J9JITGPRSpillArea {
 typedef uintptr_t ContinuationState;
 
 #if JAVA_SPEC_VERSION >= 19
-#define J9VM_CONTINUATION_RETURN_FROM_YIELD 0
+#define J9VM_CONTINUATION_RETURN_FROM_YIELD 1
 #if JAVA_SPEC_VERSION >= 24
-#define J9VM_CONTINUATION_RETURN_FROM_MONITOR_ENTER 1
+#define J9VM_CONTINUATION_RETURN_FROM_MONITOR_ENTER 0
 #define J9VM_CONTINUATION_RETURN_FROM_OBJECT_WAIT   2
 #define J9VM_CONTINUATION_RETURN_FROM_SYNC_METHOD   3
 #endif /* JAVA_SPEC_VERSION >= 24 */
@@ -5434,8 +5435,8 @@ typedef struct J9VMContinuation {
 	struct J9I2JState i2jState;
 	struct J9VMEntryLocalStorage* oldEntryLocalStorage;
 	UDATA dropFlags;
-#if JAVA_SPEC_VERSION >= 24
 	UDATA returnState;
+#if JAVA_SPEC_VERSION >= 24
 	IDATA waitingMonitorEnterCount;
 	UDATA ownedMonitorCount;
 	struct J9Pool* monitorEnterRecordPool;

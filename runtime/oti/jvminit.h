@@ -472,9 +472,9 @@ enum INIT_STAGE {
 #endif /* JAVA_SPEC_VERSION >= 21 */
 
 #if JAVA_SPEC_VERSION >= 24
-/* Option to control if unmounted thread stacktraces are shown in java core dumps. */
-#define VMOPT_XXYIELDPINNEDCONTINUATION "-XX:+YieldPinnedContinuation"
-#define VMOPT_XXNOYIELDPINNEDCONTINUATION "-XX:-YieldPinnedContinuation"
+/* Option to toggle on/off the feature to yield pinned virtual threads. */
+#define VMOPT_XXYIELDPINNEDVIRTUALTHREADS "-XX:+YieldPinnedVirtualThreads"
+#define VMOPT_XXNOYIELDPINNEDVIRTUALTHREADS "-XX:-YieldPinnedVirtualThreads"
 #endif /* JAVA_SPEC_VERSION >= 24 */
 
 /* Option to turn on exception on synchronization on instances of value-based classes */

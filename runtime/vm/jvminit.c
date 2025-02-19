@@ -2824,11 +2824,10 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 #endif /* JAVA_SPEC_VERSION >= 19 */
 #if JAVA_SPEC_VERSION >= 24
 			{
-				argIndex = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXYIELDPINNEDCONTINUATION, NULL);
-				argIndex2 = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXNOYIELDPINNEDCONTINUATION, NULL);
-
+				argIndex = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXYIELDPINNEDVIRTUALTHREADS, NULL);
+				argIndex2 = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXNOYIELDPINNEDVIRTUALTHREADS, NULL);
 				if (argIndex > argIndex2) {
-					// Enable yielding of pinned continuation.
+					/* Enable yielding of pinned continuation. */
 					vm->extendedRuntimeFlags3 |= J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION;
 				}
 			}

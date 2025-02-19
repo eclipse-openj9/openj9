@@ -723,79 +723,19 @@ JVM_IsStaticallyLinked(void)
 }
 
 JNIEXPORT void JNICALL
-JVM_VirtualThreadPinnedEvent(JNIEnv* env, jclass clazz, jstring op)
+JVM_VirtualThreadPinnedEvent(JNIEnv *env, jclass clazz, jstring op)
 {
 	// TODO: emit JFR Event
 	return;
 }
 
 JNIEXPORT jobject JNICALL
-JVM_TakeVirtualThreadListToUnblock(JNIEnv* env, jclass ignored)
+JVM_TakeVirtualThreadListToUnblock(JNIEnv *env, jclass ignored)
 {
 	J9VMThread *currentThread = (J9VMThread *)env;
 	J9JavaVM *vm = currentThread->javaVM;
-	J9InternalVMFunctions const * const vmFuncs = vm->internalVMFunctions;
-	j9object_t unblockedList = NULL;
-	jobject result = NULL;
 
-	vmFuncs->internalEnterVMFromJNI(currentThread);
-	while (NULL == unblockedList) {
-		if (NULL != vm->blockedContinuations) {
-			omrthread_monitor_enter(vm->blockedVirtualThreadsMutex);
-restart:
-			J9VMContinuation *listHead = vm->blockedContinuations;
-			J9VMContinuation *next = NULL;
-			vm->blockedContinuations = NULL;
-			while (NULL != listHead) {
-				next = listHead->nextWaitingContinuation;
-				bool unblocked = false;
-				if (JNI_TRUE == J9VMJAVALANGVIRTUALTHREAD_ONWAITINGLIST(currentThread, listHead->vthread)) {
-					unblocked = true;
-				} else {
-					j9object_t continuationObj = J9VMJAVALANGVIRTUALTHREAD_CONT(currentThread, listHead->vthread);
-					j9object_t syncObject = J9VMJDKINTERNALVMCONTINUATION_BLOCKER(currentThread, continuationObj);
-					J9ObjectMonitor* syncObjectMonitor = NULL;
-					j9objectmonitor_t lock = 0;
-					if (!LN_HAS_LOCKWORD(currentThread, syncObject)) {
-						syncObjectMonitor = vmFuncs->monitorTablePeek(vm, syncObject);
-						if (syncObjectMonitor != NULL){
-							lock = J9_LOAD_LOCKWORD_VM(vm, syncObjectMonitor->alternateLockword);
-						}
-					} else {
-						lock = J9OBJECT_MONITOR(currentThread, syncObject);
-					}
-					J9ThreadAbstractMonitor *monitor = getInflatedObjectMonitor(vm, syncObject, lock);
-					if (0 == monitor->count) {
-						unblocked = true;
-						if (syncObjectMonitor->virtualThreadWaitCount >= 1) {
-							syncObjectMonitor->virtualThreadWaitCount -= 1;
-						}
-						J9VMJAVALANGVIRTUALTHREAD_SET_ONWAITINGLIST(currentThread, listHead->vthread, JNI_TRUE);
-					}
-				}
-
-				if (unblocked) {
-					J9VMJAVALANGVIRTUALTHREAD_SET_NEXT(currentThread, listHead->vthread, unblockedList);
-					unblockedList = listHead->vthread;
-				} else {
-					listHead->nextWaitingContinuation = vm->blockedContinuations;
-					vm->blockedContinuations = listHead;
-				}
-				listHead = next;
-			}
-			if (NULL == unblockedList) {
-				omrthread_monitor_wait(vm->blockedVirtualThreadsMutex);
-				goto restart;
-			} else {
-				omrthread_monitor_exit(vm->blockedVirtualThreadsMutex);
-				result = vmFuncs->j9jni_createLocalRef(env, unblockedList);
-				break;
-			}
-		}
-	}
-	vmFuncs->internalExitVMToJNI(currentThread);
-
-	return result;
+	return vm->internalVMFunctions->takeVirtualThreadListToUnblock(currentThread, vm);
 }
 #endif /* JAVA_SPEC_VERSION >= 24 */
 

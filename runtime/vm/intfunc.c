@@ -482,5 +482,6 @@ J9InternalVMFunctions J9InternalFunctions = {
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
 #if JAVA_SPEC_VERSION >= 24
 	monitorTablePeek,
+	takeVirtualThreadListToUnblock,
 #endif /* JAVA_SPEC_VERSION >= 24 */
 };
