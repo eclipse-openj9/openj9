@@ -583,16 +583,46 @@ BOOLEAN
 isJVMInPortableRestoreMode(J9VMThread *currentThread);
 
 /**
- * @brief Queries if debug on restore (specified via
- * -XX:+DebugOnRestore) is supported. If so, the JVM
- * will run in FSD mode pre-checkpoint and will transition out
- * FSD mode on restore (unless debug is specified post restore).
+ * @brief This is a helper to query if debug on restore mode is enabled.
+ *
+ * A few use scenarios:
+ * 1. If CRIU is not enabled, FSD is disabled by default unless JDWP or some
+ *    debug-specific flags/events are enabled/hooked, there is no notion of
+ *    DebugOnRestore;
+ * 2. If CRIU is enabled (via -XX:+EnableCRIUSupport) but -XX:+DebugOnRestore
+ *    is not specified, this is the same as use case #1;
+ * 3. If CRIU is enabled and -XX:+DebugOnRestore is specified,
+ *    3.1 If JDWP or some debug-specific flags/events are enabled/hooked, FSD
+ *        mode is enabled, and JIT doesn't do any pre-emptive recompilation
+ *        and debugging is enabled.
+ *    3.2 Otherwise FSD code is generated but FSD mode is not enabled,
+ *        3.2.1 If FSD is enabled via the post-restore option file, JIT will
+ *              transmit to the interpreter as soon as possible, or VM triggers
+ *              a transition via the FSD code generated pre-checkpoint;
+ *        3.2.2 Otherwise JIT throws all FSD code and uses the pre-emptively
+ *              recompiled code in default mode.
+ *
+ * This helper method returns TRUE if CRIU is enabled, -XX:+DebugOnRestore is
+ * specified, JDWP is not enabled, and no debug-specific flags/events are
+ * enabled/hooked. JIT generates FSD code but FSD mode is not enabled.
+ * Otherwise, this returns FALSE, JIT checks if debug related flags/events are
+ * enabled/hooked and determines if FSD mode is to be enabled.
  *
  * @param vm javaVM token
  * @return TRUE if enabled, FALSE otherwise
  */
 BOOLEAN
 isDebugOnRestoreEnabled(J9JavaVM *vm);
+
+/**
+ * @brief This is a helper to query if the debug agent is disabled.
+ *
+ * @param vm javaVM token
+ * @return TRUE if isDebugOnRestoreEnabled() and isCheckpointAllowed() return TRUE,
+ *         FALSE otherwise
+ */
+BOOLEAN
+isDebugAgentDisabled(J9JavaVM *vm);
 
 /**
  * @brief Sets the maximum size for the CRIU ghost files.
