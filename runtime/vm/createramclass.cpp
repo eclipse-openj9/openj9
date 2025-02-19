@@ -3963,8 +3963,7 @@ allocateRemainingFragments(RAMClassAllocationRequest *requests, UDATA allocation
 		UDATA fragmentsLeftToAllocate = 0;
 		for (request = requests; NULL != request; request = request->next) {
 			if ((request->address == NULL) 
-				&& (request->segmentKind == segmentKind))
-			{
+				&& (request->segmentKind == segmentKind)) {
 				fragmentsLeftToAllocate++;
 				newSegmentSize += request->fragmentSize + request->alignment;
 			}
@@ -4122,16 +4121,12 @@ internalAllocateRAMClass(J9JavaVM *javaVM, J9ClassLoader *classLoader, RAMClassA
 	/* If any fragments remain unallocated, allocate a new segment to (at least) fit them */
 	if (fragmentsLeftToAllocate)
 	{
-		fragmentsLeftToAllocate = 0;
-		for (request = requests; NULL != request; request = request->next) {
-			fragmentsLeftToAllocate = request->address == NULL ? fragmentsLeftToAllocate + 1 : fragmentsLeftToAllocate;
-		}
 		if(!isNotLoadedByAnonClassLoader)
 		{
 			for (request = requests; NULL != request; request = request->next) {
 				request->segmentKind = SUB4G;
 			}
-		} 
+		}
 		memoryAllocationSuccess = allocateRemainingFragments(requests, allocationRequestCount, javaVM, classLoader, allocationRequests, &classLoader->sub4gBlock, classLoader->sub4gBlock.ramClassUDATABlockFreeList, SUB4G);
 		if(!memoryAllocationSuccess) {
 			return NULL;
@@ -4144,10 +4139,6 @@ internalAllocateRAMClass(J9JavaVM *javaVM, J9ClassLoader *classLoader, RAMClassA
 
 		if(!memoryAllocationSuccess) {
 			return NULL;
-		}
-		fragmentsLeftToAllocate = 0;
-		for (request = requests; NULL != request; request = request->next) {
-			fragmentsLeftToAllocate = request->address == NULL ? fragmentsLeftToAllocate + 1 : fragmentsLeftToAllocate;
 		}
 	}
 	/* Clear all allocated fragments */
