@@ -47,7 +47,6 @@ namespace J9 { typedef J9::CodeGenerator CodeGeneratorConnector; }
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
 #include "optimizer/Dominators.hpp"
-#include "cs2/arrayof.h"
 
 class NVVMIRBuffer;
 class TR_BitVector;

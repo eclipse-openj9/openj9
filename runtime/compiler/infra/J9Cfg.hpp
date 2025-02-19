@@ -36,7 +36,6 @@ namespace J9 { typedef J9::CFG CFGConnector; }
 
 #include <stddef.h>
 #include <stdint.h>
-#include "cs2/listof.h"
 #include "env/TRMemory.hpp"
 #include "il/Node.hpp"
 #include "infra/Assert.hpp"
