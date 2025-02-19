@@ -3962,13 +3962,13 @@ allocateRemainingFragments(RAMClassAllocationRequest *requests, UDATA allocation
 		RAMClassAllocationRequest *request = NULL;
 		UDATA fragmentsLeftToAllocate = 0;
 		for (request = requests; NULL != request; request = request->next) {
-			if (request->segmentKind == segmentKind)
+			if ((request->address == NULL) 
+				&& (request->segmentKind == segmentKind))
 			{
 				fragmentsLeftToAllocate++;
 				newSegmentSize += request->fragmentSize + request->alignment;
 			}
 		}
-
 		/* Add sizeof(UDATA) to hold the "lastAllocatedClass" pointer */
 		if (SUB4G == segmentKind)
 		{
@@ -4097,7 +4097,6 @@ internalAllocateRAMClass(J9JavaVM *javaVM, J9ClassLoader *classLoader, RAMClassA
 
 	Trc_VM_internalAllocateRAMClass_Entry(classLoader, fragmentsLeftToAllocate);
 	/* make sure we always make a new segment if its an anonClass */
-
 	if (isNotLoadedByAnonClassLoader) {
 		dummyHead.next = requests;
 		prev = &dummyHead;
