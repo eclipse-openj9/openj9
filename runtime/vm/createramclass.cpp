@@ -4009,8 +4009,8 @@ allocateRemainingFragments(RAMClassAllocationRequest *requests, UDATA allocation
 		/* Allocate the remaining fragments in the new segment, adding holes to the free list */
 		allocAddress = ((UDATA) newSegment->heapBase) + sizeof(UDATA);
 		for (request = requests; NULL != request; request = request->next) {
-			if (request->segmentKind == segmentKind)
-			{
+			if ((request->address == NULL)
+				&& (request->segmentKind == segmentKind)) {
 				/* Allocate from the start of the segment */
 				UDATA addressForAlignedArea = allocAddress + request->prefixSize;
 				UDATA alignmentMod = addressForAlignedArea & (request->alignment - 1);
