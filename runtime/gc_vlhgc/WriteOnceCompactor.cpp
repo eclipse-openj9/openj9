@@ -1380,16 +1380,15 @@ MM_WriteOnceCompactor::fixupPointerArrayObject(MM_EnvironmentVLHGC* env, J9Objec
 	GC_ArrayletObjectModel::ArrayLayout layout = indexableObjectModel->getArrayLayout((J9IndexableObject *)objectPtr);
 
 	if (GC_ArrayletObjectModel::InlineContiguous == layout) {
-		/* For offheap we need a special check for the case of a partially offheap allocated array that caused the current GC
-		 * (its dataAddr field will still be NULL), with offheap heap we will fixup camouflaged discontiguous arrays) - DM, like default
-		 * balanced, wants to fixup only truly contiguous arrays
+		/* For offheap enabled, a special check is needed for the case of a partially offheap allocated array that caused the current GC
+		 * (its dataAddr field will still be NULL).
+		 * For offheap disabled, any contiguous is scanned.
 		 */
-		if (indexableObjectModel->isDataAdjacentToHeader((J9IndexableObject *)objectPtr)
 #if defined(J9VM_ENV_DATA64)
-			|| (indexableObjectModel->isVirtualLargeObjectHeapEnabled()
-				&& (NULL != indexableObjectModel->getDataAddrForContiguous((J9IndexableObject *)objectPtr)))
+		if (!indexableObjectModel->isVirtualLargeObjectHeapEnabled()
+			|| (NULL != indexableObjectModel->getDataAddrForContiguous((J9IndexableObject *)objectPtr)))
 #endif /* defined(J9VM_ENV_DATA64) */
-		 ) {
+		{
 			uintptr_t elementsToWalk = indexableObjectModel->getSizeInElements((J9IndexableObject *)objectPtr);
 			GC_PointerArrayIterator it(_javaVM, objectPtr);
 			uintptr_t previous = 0;
