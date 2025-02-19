@@ -404,6 +404,7 @@ public final class InternalCRIUSupport {
 	private static final int RESTORE_CLEAR_INETADDRESS_CACHE_PRIORITY = HIGHEST_USER_HOOK_PRIORITY + 1;
 	private static final int RESTORE_ENVIRONMENT_VARIABLES_PRIORITY = HIGHEST_USER_HOOK_PRIORITY + 1;
 	private static final int RESTORE_SYSTEM_PROPERTIES_PRIORITY = HIGHEST_USER_HOOK_PRIORITY + 1;
+	private static boolean isThirdPartyProviderInserted = false;
 	/* RESET_CRIUSEC_PRIORITY and RESTORE_SECURITY_PROVIDERS_PRIORITY need to
 	 * be higher than any other JVM hook that may require security providers.
 	 */
@@ -1029,6 +1030,10 @@ public final class InternalCRIUSupport {
 	public synchronized void checkpointJVM() {
 		if (isCRaCorCRIUSupportEnabledAndNativeLoaded()) {
 			if (isCheckpointAllowed()) {
+				if (enableCRIUSecProvider() && this.isThirdPartyProviderInserted) {
+					throw new JVMCheckpointException("Inserting a non-CRIUSEC provider is not allowed.");
+				}
+
 				/* Add env variables restore hook. */
 				String envFilePath = null;
 				if (envFile != null) {
@@ -1102,5 +1107,13 @@ public final class InternalCRIUSupport {
 		} else {
 			throw new UnsupportedOperationException("CRaC or CRIU support is not enabled"); //$NON-NLS-1$
 		}
+	}
+
+	public static void setThirdPartyProviderIsInserted(boolean flag) {
+		isThirdPartyProviderInserted = flag;
+	}
+
+	public static boolean getThirdPartyProviderIsInserted() {
+		return isThirdPartyProviderInserted;
 	}
 }
