@@ -1413,11 +1413,11 @@ getMUtf8String(J9JavaVM *vm, const char *userString, UDATA stringLength)
 		}
 		result = mutf8Buffer;
 	} else {
-#if defined(WIN32)
+#if defined(OSX) || defined(WIN32)
 		I_32 fromCode = J9STR_CODE_UTF8; /* command-line arguments should be in UTF-8 */
-#else /* defined(WIN32) */
+#else /* defined(OSX) || defined(WIN32) */
 		I_32 fromCode = J9STR_CODE_PLATFORM_RAW;
-#endif /* defined(WIN32) */
+#endif /* defined(OSX) || defined(WIN32) */
 		if (J9_ARE_ANY_BITS_SET(vm->runtimeFlags, J9_RUNTIME_ARGENCODING_UTF8)) {
 			fromCode = J9STR_CODE_UTF8;
 		} else if (J9_ARE_ANY_BITS_SET(vm->runtimeFlags, J9_RUNTIME_ARGENCODING_LATIN)) {
