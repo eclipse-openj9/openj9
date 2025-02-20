@@ -377,7 +377,7 @@ export PATH="/cygdrive/c/Program Files/NASM:$PATH" (in Cygwin)
 Update your `INCLUDE` environment variable to provide a path to the Windows debugging tools with the following command:
 
 ```
-set INCLUDE=C:\Program Files\Debugging Tools for Windows (x64)\sdk\inc;%INCLUDE%
+export INCLUDE='C:\Program Files\Microsoft Visual Studio\2022\Community\DIA SDK\include'
 ```
 
    You can download Visual Studio manually or obtain it using the [wget](https://www.gnu.org/software/wget/faq.html#download) utility. If you choose to use `wget`, follow these steps:
