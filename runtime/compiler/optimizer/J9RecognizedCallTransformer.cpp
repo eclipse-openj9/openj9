@@ -65,6 +65,8 @@ void J9::RecognizedCallTransformer::processConvertingUnaryIntrinsicFunction(TR::
 
 void J9::RecognizedCallTransformer::process_java_lang_Class_IsAssignableFrom(TR::TreeTop* treetop, TR::Node* node)
    {
+   static char *use_new= feGetEnv("use_new");
+   if (use_new == NULL) return;
    auto toClass = node->getChild(0);
    auto fromClass = node->getChild(1);
    auto nullchk = comp()->getSymRefTab()->findOrCreateNullCheckSymbolRef(comp()->getMethodSymbol());

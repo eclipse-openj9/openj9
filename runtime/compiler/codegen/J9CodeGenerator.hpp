@@ -419,6 +419,11 @@ public:
    bool supportsInliningOfIsAssignableFrom() { return false; } // no virt, default
 
    /** \brief
+    *    Determines whether code generators support an inline iTable walk for checkcast
+    */
+   bool supportsCheckcastInlineItableWalk() { return false; } // no virt, default
+
+   /** \brief
     *     Determines whether the code generator must generate the switch to interpreter snippet in the preprologue.
     */
    bool mustGenerateSwitchToInterpreterPrePrologue();
