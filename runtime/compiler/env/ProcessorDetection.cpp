@@ -348,6 +348,7 @@ TR_J9VM::initializeProcessorType()
       bool disableAVX = true;
       bool disableAVX512 = true;
 
+#if defined(TR_TARGET_X86)
       // Check XCRO register for OS support of xmm/ymm/zmm
       if (TRUE == omrsysinfo_processor_has_feature(&processorDescription, OMR_FEATURE_X86_OSXSAVE))
          {
@@ -356,6 +357,7 @@ TR_J9VM::initializeProcessorType()
          // 'e6' = (mask for XCR0[7:5]='111b' (Opmask, ZMM_Hi256, Hi16_ZMM) + XCR0[2:1]='11b' (XMM/YMM))
          disableAVX512 = ((0xe6 & _xgetbv(0)) != 0xe6);
          }
+#endif
 
       if (disableAVX)
          {
