@@ -5574,6 +5574,23 @@ TR_J9InlinerPolicy::supressInliningRecognizedInitialCallee(TR_CallSite* callsite
          return true;
       case TR::java_lang_Class_cast:
          return true; // Call will be transformed into checkcast
+      case TR::java_lang_J9VMInternals_identityHashCode:
+      case TR::java_lang_J9VMInternals_fastIdentityHashCode:
+         {
+         TR_PrexArgInfo *callerArgInfo = comp->getCurrentInlinedCallArgInfo();
+         if (callsite->_callerResolvedMethod->getRecognizedMethod() == TR::java_lang_Object_hashCode &&
+            callerArgInfo &&
+            callerArgInfo->get(0))
+            {
+            if (callerArgInfo->get(0)->hasKnownObjectIndex())
+               {
+               if (comp->trace(OMR::inlining))
+                  traceMsg(comp, "Suppressing inlining identityHashCode helper call as it can be evaluated in VP.\n");
+               return true;
+               }
+            }
+         return false;
+         }
       case TR::java_lang_String_hashCodeImplDecompressed:
          /*
           * X86 and z want to avoid inlining both java_lang_String_hashCodeImplDecompressed and java_lang_String_hashCodeImplCompressed
