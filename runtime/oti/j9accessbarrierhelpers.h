@@ -71,7 +71,8 @@ static UDATA j9javaArray_BA(J9VMThread *vmThread, J9IndexableObject *array, UDAT
 }
 
 #define J9JAVAARRAY_C_EA(elemType)																					\
-VMINLINE static elemType *j9javaArray_##elemType##_EA(J9VMThread *vmThread, J9IndexableObject *array, UDATA index)	\
+__attribute__ ((__unused__)) VMINLINE static elemType																\
+*j9javaArray_##elemType##_EA(J9VMThread *vmThread, J9IndexableObject *array, UDATA index)							\
 {																													\
 	UDATA baseAddress = j9javaArray_BA(vmThread, array, &index, (U_8)sizeof(elemType));								\
 	/* Intentionally inlining this to treat sizeof value as an immediate value */									\
@@ -107,10 +108,10 @@ J9JAVAARRAY_C_EA(UDATA)
  * Note that Microsoft compilers do not allow this attribute.
  */
 VMINLINE static j9object_t
-j9javaArrayOfObject_load(J9VMThread *vmThread, J9IndexableObject *array, I_32 index)   __attribute__ ((__unused__));
+j9javaArrayOfObject_load(J9VMThread *vmThread, J9IndexableObject *array, I_32 index) __attribute__ ((__unused__));
 
 VMINLINE static j9object_t
-j9javaArrayOfObject_load_VM(J9JavaVM *vm, J9IndexableObject *array, I_32 index)  __attribute__ ((__unused__));
+j9javaArrayOfObject_load_VM(J9JavaVM *vm, J9IndexableObject *array, I_32 index) __attribute__ ((__unused__));
 #endif /* __GNUC__ */
 
 VMINLINE static j9object_t
@@ -137,7 +138,7 @@ j9javaArrayOfObject_load_VM(J9JavaVM *vm, J9IndexableObject *array, I_32 index)
 	} else {
 		UDATA *loadAddress = J9JAVAARRAY_EA_VM(vm, array, index, UDATA);
 		J9OBJECT__PRE_OBJECT_LOAD_ADDRESS_VM(vm, array, loadAddress);
-		return (j9object_t)*loadAddress;	
+		return (j9object_t)*loadAddress;
 	}
 }
 
