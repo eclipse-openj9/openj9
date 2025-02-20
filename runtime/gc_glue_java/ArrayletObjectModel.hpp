@@ -1237,22 +1237,42 @@ public:
 	void fixupInternalLeafPointersAfterCopy(J9IndexableObject *destinationPtr, J9IndexableObject *sourcePtr);
 
 	/**
-	 * Used to determine if the array data is adjacent to its header or in offheap.
-	 * The determination is based on the actual value of dataAddr field in the header.
+	 * Used to determine if the array data should be adjacent to its header or in offheap.
+	 * The determination is based on the size field in the header.
+	 * This API is meant to be used during object construction, when size is already initialized, but dataAddr is not initialized yet.
 	 *
 	 * @param arrayPtr Pointer to the indexable object
-	 * @return true if the arraylet data is adjacent to the header, false otherwise
+	 * @return true if the data should be adjacent to the header, false otherwise
 	 */
-	bool isDataAdjacentToHeader(J9IndexableObject *arrayPtr);
+	bool shouldDataBeAdjacentToHeader(J9IndexableObject *arrayPtr);
 
 	/**
 	 * Used to determine if the array data should be adjacent to its header or in offheap.
-	 * The determination is based on the size, same how it would be done during the allocation of an object of such a size.
+	 * The determination is based on provided size (coming from allocation request).
+	 * This API is primarily meant to be used during object allocation/construction.
 	 *
 	 * @param dataSizeInBytes the size of data in an indexable object, in bytes, including leaves and alignment padding
 	 * @return true if based on the value of dataSizeInBytes, the arraylet data is adjacent to the header, false otherwise
 	 */
-	bool isDataAdjacentToHeader(uintptr_t dataSizeInBytes);
+	bool shouldDataBeAdjacentToHeader(uintptr_t dataSizeInBytes);
+
+	/**
+	 * Check if data is adjacent to the header, based on dataAddr value (rather then on its size).
+	 * This API is faster/simpler than the one based on the size, and is meant to be used at any point
+	 * after object is constructed (for example GC points to fixup dataAddr etc).
+	 * This API makes sense to use only if offheap is enabled.
+	 *
+	 * @param arrayPtr Pointer to the indexable object
+	 * @return true if dataAddr point to the end of header, false otherwise
+	 */
+	bool isDataAdjacentToHeader(J9IndexableObject *arrayPtr) {
+#if defined(J9VM_ENV_DATA64)
+		return ((void *)((uintptr_t)arrayPtr + contiguousIndexableHeaderSize()) == getDataAddrForContiguous(arrayPtr));
+#else /* defined(J9VM_ENV_DATA64) */
+		return true;
+#endif /* defined(J9VM_ENV_DATA64) */
+	}
+
 
 	/**
 	 * Check if the data address for the contiguous indexable object should be fixed up.

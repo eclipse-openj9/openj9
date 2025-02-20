@@ -106,7 +106,7 @@ GC_ArrayletObjectModelBase::getSpineSizeWithoutHeader(ArrayLayout layout, uintpt
 
 	uintptr_t spineDataSize = 0;
 	if (InlineContiguous == layout) {
-		if (!isVirtualLargeObjectHeapEnabled || extensions->indexableObjectModel.isDataAdjacentToHeader(dataSize)) {
+		if (!isVirtualLargeObjectHeapEnabled || extensions->indexableObjectModel.shouldDataBeAdjacentToHeader(dataSize)) {
 			spineDataSize = dataSize; // All data in spine
 		}
 	} else if (Hybrid == layout) {
