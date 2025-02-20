@@ -749,11 +749,13 @@ setupJNIFieldIDsAndCRIUAPI(JNIEnv *env, jclass *currentExceptionClass, IDATA *sy
  * @param[in] optionsFile the file that contains the new JVM options to be added on restore
  * @param[in] environmentFile the file that contains the new environment variables to be added
  * @param[in] ghostFileLimit the size limit for ghost files
- *
+ * @param[in] tcpClose controls whether to restore TCP sockets in closed state
+ * @param[in] tcpSkipInFlight controls whether to skip in-flight TCP connections
  */
 void JNICALL
 criuCheckpointJVMImpl(JNIEnv *env, jstring imagesDir, jboolean leaveRunning, jboolean shellJob, jboolean extUnixSupport, jint logLevel, jstring logFile, jboolean fileLocks,
-		jstring workDir, jboolean tcpEstablished, jboolean autoDedup, jboolean trackMemory, jboolean unprivileged, jstring optionsFile, jstring environmentFile, jlong ghostFileLimit);
+		jstring workDir, jboolean tcpEstablished, jboolean autoDedup, jboolean trackMemory, jboolean unprivileged, jstring optionsFile,
+		jstring environmentFile, jlong ghostFileLimit, jboolean tcpClose, jboolean tcpSkipInFlight);
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 /* ---------------- classloadersearch.c ---------------- */

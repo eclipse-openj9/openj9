@@ -236,7 +236,9 @@ public final class InternalCRIUSupport {
 			boolean unprivileged,
 			String optionsFile,
 			String envFile,
-			long ghostFileLimit);
+			long ghostFileLimit,
+			boolean tcpClose,
+			boolean tcpSkipInFlight);
 	private static native boolean setupJNIFieldIDsAndCRIUAPI();
 
 	private static native String[] getRestoreSystemProperites();
@@ -423,6 +425,8 @@ public final class InternalCRIUSupport {
 	private Path envFile;
 	private String optionsFile;
 	private long ghostFileLimit = -1;
+	private boolean tcpClose;
+	private boolean tcpSkipInFlight;
 
 	/**
 	 * Set the size limit for ghost files when taking a checkpoint. File limit
@@ -634,6 +638,32 @@ public final class InternalCRIUSupport {
 		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		this.workDir = dir;
+		return this;
+	}
+
+	/**
+	 * Controls whether to restore TCP sockets in closed state.
+	 * <p>
+	 * Default: false
+	 *
+	 * @param tcpClose
+	 * @return this
+	 */
+	public InternalCRIUSupport setTCPClose(boolean tcpClose) {
+		this.tcpClose = tcpClose;
+		return this;
+	}
+
+	/**
+	 * Controls whether to skip in-flight TCP connections.
+	 * <p>
+	 * Default: false
+	 *
+	 * @param tcpSkipInFlight
+	 * @return this
+	 */
+	public InternalCRIUSupport setTCPSkipInFlight(boolean tcpSkipInFlight) {
+		this.tcpSkipInFlight = tcpSkipInFlight;
 		return this;
 	}
 
@@ -1045,6 +1075,16 @@ public final class InternalCRIUSupport {
 					setLogFile(logFileOpt);
 				}
 
+				String tcpCloseOpt = props.getProperty("openj9.internal.criu.tcpClose"); //$NON-NLS-1$
+				if (tcpCloseOpt != null) {
+					setTCPClose(Boolean.parseBoolean(tcpCloseOpt));
+				}
+
+				String tcpSkipInFlightOpt = props.getProperty("openj9.internal.criu.tcpSkipInFlight"); //$NON-NLS-1$
+				if (tcpSkipInFlightOpt  != null) {
+					setTCPSkipInFlight(Boolean.parseBoolean(tcpSkipInFlightOpt));
+				}
+
 				/* Add security provider hooks. */
 				SecurityProviders.registerResetCRIUState();
 				SecurityProviders.registerRestoreSecurityProviders();
@@ -1052,7 +1092,8 @@ public final class InternalCRIUSupport {
 				J9InternalCheckpointHookAPI.runPreCheckpointHooksConcurrentThread();
 				System.gc();
 				checkpointJVMImpl(imageDir, leaveRunning, shellJob, extUnixSupport, logLevel, logFile, fileLocks,
-						workDir, tcpEstablished, autoDedup, trackMemory, unprivileged, optionsFile, envFilePath, ghostFileLimit);
+						workDir, tcpEstablished, autoDedup, trackMemory, unprivileged, optionsFile, envFilePath, ghostFileLimit,
+						tcpClose, tcpSkipInFlight);
 				J9InternalCheckpointHookAPI.runPostRestoreHooksConcurrentThread();
 			} else {
 				throw new UnsupportedOperationException(
