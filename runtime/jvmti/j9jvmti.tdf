@@ -702,3 +702,6 @@ TraceEntry=Trc_JVMTI_jvmtiHookVMPreparingForRestore_Entry Overhead=1 Level=3 Noe
 TraceExit=Trc_JVMTI_jvmtiHookVMPreparingForRestore_Exit Overhead=1 Level=3 Noenv Template="jvmtiHookVMPreparingForRestore"
 TraceEntry=Trc_JVMTI_jvmtiHookVMCRIURestore_Entry Overhead=1 Level=3 Noenv Template="jvmtiHookVMCRIURestore"
 TraceExit=Trc_JVMTI_jvmtiHookVMCRIURestore_Exit Overhead=1 Level=3 Noenv Template="jvmtiHookVMCRIURestore"
+
+TraceEntry=Trc_JVMTI_jvmtiClearAllFramePops_Entry Overhead=1 Level=5 Noenv Template="ClearAllFramePops env=%p"
+TraceExit=Trc_JVMTI_jvmtiClearAllFramePops_Exit Overhead=1 Level=5 Noenv Template="ClearAllFramePops returning %d"

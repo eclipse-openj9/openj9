@@ -41,6 +41,12 @@
 #define JVMTI_19_ENTRY(name) NULL
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
+#if JAVA_SPEC_VERSION >= 25
+#define JVMTI_25_ENTRY(name) name
+#else /* JAVA_SPEC_VERSION >= 25 */
+#define JVMTI_25_ENTRY(name) NULL
+#endif /* JAVA_SPEC_VERSION >= 25 */
+
 jvmtiNativeInterface jvmtiFunctionTable = {
 	NULL,
 	jvmtiSetEventNotificationMode,
@@ -158,7 +164,7 @@ jvmtiNativeInterface jvmtiFunctionTable = {
 	jvmtiGetObjectsWithTags,
 	jvmtiFollowReferences,
 	jvmtiIterateThroughHeap,
-	NULL,
+	JVMTI_25_ENTRY(jvmtiClearAllFramePops),
 	JVMTI_19_ENTRY(jvmtiSuspendAllVirtualThreads),
 	JVMTI_19_ENTRY(jvmtiResumeAllVirtualThreads),
 	jvmtiSetJNIFunctionTable,
