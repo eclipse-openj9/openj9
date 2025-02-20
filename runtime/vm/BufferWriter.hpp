@@ -194,7 +194,7 @@ class VM_BufferWriter {
 	}
 
 	void
-	writeData(U_8 *data, UDATA size)
+	writeData(const U_8 *data, UDATA size)
 	{
 		if (checkBounds(size)) {
 			memcpy(_cursor, data, size);
@@ -290,7 +290,9 @@ class VM_BufferWriter {
 	void
 	writeLEB128PaddedU64(U_64 val)
 	{
-		if (checkBounds(sizeof(U_64))) {
+		if (0 != (val >> 56)) {
+			_overflow = true;
+		} else if (checkBounds(8)) {
 			U_64 newVal = val;
 
 			writeU8NoCheck((newVal & 0x7F) | 0x80);
@@ -305,7 +307,7 @@ class VM_BufferWriter {
 	}
 
 	void
-	writeLEB128PaddedU32(U_8 *cursor, U_32 val)
+	writeLEB128PaddedU32(U_8 *cursor, U_64 val)
 	{
 		U_8 *old = _cursor;
 		_cursor = cursor;
@@ -314,9 +316,11 @@ class VM_BufferWriter {
 	}
 
 	void
-	writeLEB128PaddedU32(U_32 val)
+	writeLEB128PaddedU32(U_64 val)
 	{
-		if (checkBounds(sizeof(U_32))) {
+		if (0 != (val >> 28)) {
+			_overflow = true;
+		} else if (checkBounds(4)) {
 			U_64 newVal = val;
 
 			writeU8NoCheck((newVal & 0x7F) | 0x80);
@@ -331,6 +335,11 @@ class VM_BufferWriter {
 	{
 		U_32 newVal = *(U_32 *)&val;
 		writeU32(newVal);
+	}
+
+	void writeBoolean(BOOLEAN val)
+	{
+		writeU8(val ? 1 : 0);
 	}
 
 	static U_32
@@ -406,4 +415,4 @@ class VM_BufferWriter {
 
 };
 
-#endif /* BUFFERWRITER_HPP_ */
+#endif /* !defined(BUFFERWRITER_HPP_) */

@@ -965,8 +965,12 @@ jfrCPULoad(J9VMThread *currentThread)
 				jfrEvent->jvmSystem = 0;
 			} else {
 				int64_t timeDelta = currentTime - jfrState->prevProcTimestamp;
-				jfrEvent->jvmUser = OMR_MIN((currentProcCPUTimes._userTime - jfrState->prevProcCPUTimes._userTime) / ((double)numberOfCpus * timeDelta), 1.0);
-				jfrEvent->jvmSystem = OMR_MIN((currentProcCPUTimes._systemTime - jfrState->prevProcCPUTimes._systemTime) / ((double)numberOfCpus * timeDelta), 1.0);
+				float timeElapsedAllCores = (float)numberOfCpus * timeDelta;
+				float userTime = (currentProcCPUTimes._userTime - jfrState->prevProcCPUTimes._userTime) / timeElapsedAllCores;
+				float systemTime = (currentProcCPUTimes._systemTime - jfrState->prevProcCPUTimes._systemTime) / timeElapsedAllCores;
+
+				jfrEvent->jvmUser = OMR_MIN(userTime, 1.0f);
+				jfrEvent->jvmSystem = OMR_MIN(systemTime, 1.0f);
 			}
 			jfrState->prevProcCPUTimes = currentProcCPUTimes;
 			jfrState->prevProcTimestamp = currentTime;
@@ -974,7 +978,11 @@ jfrCPULoad(J9VMThread *currentThread)
 			if (-1 == jfrState->prevSysCPUTime.timestamp) {
 				jfrEvent->machineTotal = 0;
 			} else {
-				jfrEvent->machineTotal = OMR_MIN((currentSysCPUTime.cpuTime - jfrState->prevSysCPUTime.cpuTime) / ((double)numberOfCpus * (currentSysCPUTime.timestamp - jfrState->prevSysCPUTime.timestamp)), 1.0);
+				float machineTotal =
+						(currentSysCPUTime.cpuTime - jfrState->prevSysCPUTime.cpuTime)
+						/ ((float)numberOfCpus
+						* (currentSysCPUTime.timestamp - jfrState->prevSysCPUTime.timestamp));
+				jfrEvent->machineTotal = OMR_MIN(machineTotal, 1.0f);
 			}
 			jfrState->prevSysCPUTime = currentSysCPUTime;
 		}
@@ -1003,9 +1011,11 @@ jfrThreadCPULoad(J9VMThread *currentThread, J9VMThread *sampleThread)
 				jfrEvent->userCPULoad = 0;
 				jfrEvent->systemCPULoad = 0;
 			} else {
-				int64_t timeDelta = currentTime - jfrState->prevTimestamp;
-				jfrEvent->userCPULoad = OMR_MIN((threadTimes.userTime - jfrState->prevThreadCPUTimes.userTime) / (double)timeDelta, 1.0);
-				jfrEvent->systemCPULoad = OMR_MIN((threadTimes.sysTime - jfrState->prevThreadCPUTimes.sysTime) / (double)timeDelta, 1.0);
+				float timeDelta = (float)(currentTime - jfrState->prevTimestamp);
+				float userCPULoad = (threadTimes.userTime - jfrState->prevThreadCPUTimes.userTime) / timeDelta;
+				float systemCPULoad = (threadTimes.sysTime - jfrState->prevThreadCPUTimes.sysTime) / timeDelta;
+				jfrEvent->userCPULoad = OMR_MIN(userCPULoad, 1.0f);
+				jfrEvent->systemCPULoad = OMR_MIN(systemCPULoad, 1.0f);
 			}
 			jfrState->prevTimestamp = currentTime;
 			jfrState->prevThreadCPUTimes = threadTimes;

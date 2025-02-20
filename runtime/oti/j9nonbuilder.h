@@ -462,10 +462,10 @@ typedef struct J9JFRClassLoadingStatistics {
 
 typedef struct J9JFRThreadStatistics {
 	J9JFR_EVENT_COMMON_FIELDS
-	U_32 activeThreadCount;
-	U_32 daemonThreadCount;
-	U_32 accumulatedThreadCount;
-	U_32 peakThreadCount;
+	U_64 activeThreadCount;
+	U_64 daemonThreadCount;
+	U_64 accumulatedThreadCount;
+	U_64 peakThreadCount;
 } J9JFRThreadStatistics;
 
 typedef struct J9JFRThreadContextSwitchRate {
