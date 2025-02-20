@@ -122,6 +122,25 @@ class RecognizedCallTransformer : public OMR::RecognizedCallTransformer
     */
    void process_java_lang_StringCoding_encodeASCII(TR::TreeTop* treetop, TR::Node* node);
    /** \brief
+    *     Transforms java/lang/StringLatin1.inflate([BI[BII)V using arraytranslate
+    *
+    *  \param treetop
+    *     The treetop which anchors the call node.
+    *
+    *  \param node
+    *     The call node representing a call to java/lang/StringLatin1.inflate([BI[BII)V which has the following shape:
+    *
+    *     \code
+    *     acall <java/lang/StringLatin1.inflate([BI[BII)V>
+    *       <src byte array>
+    *       <src offset>
+    *       <dst byte array>
+    *       <dst offset>
+    *       <length>
+    *     \endcode
+    */
+   void process_java_lang_StringLatin1_inflate_BIBII(TR::TreeTop* treetop, TR::Node* node);
+   /** \brief
     *     Transforms java/lang/StringUTF16.toBytes([CII)[B into a fast allocate and arraycopy sequence with equivalent
     *     semantics.
     *
