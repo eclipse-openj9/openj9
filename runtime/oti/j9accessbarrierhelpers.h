@@ -23,6 +23,18 @@
 #ifndef J9ACCESSBARRIERHELPERS_H
 #define J9ACCESSBARRIERHELPERS_H
 
+/*
+ * Source files which include (directly or indirectly) this file
+ * but do not use the functions defined here may fail to compile
+ * unless the "unused" attribute is applied.
+ * Note that Microsoft compilers do not allow this attribute.
+ */
+#if defined(__GNUC__)
+#define GNU_UNUSED __attribute__ ((__unused__))
+#else /* defined(__GNUC__) */
+#define GNU_UNUSED
+#endif /* defined(__GNUC__) */
+
 #if defined (J9VM_ENV_DATA64)
 #if (defined(__GNUC__) && (defined(J9HAMMER) || defined(S390)))
 /* Forcing non-inlining on GNU for X and Z, where inlining seems to create much register or code cache pressure within Bytecode Interpreter */
@@ -70,14 +82,14 @@ static UDATA j9javaArray_BA(J9VMThread *vmThread, J9IndexableObject *array, UDAT
 	return baseAddress;
 }
 
-#define J9JAVAARRAY_C_EA(elemType)																					\
-__attribute__ ((__unused__)) VMINLINE static elemType																\
-*j9javaArray_##elemType##_EA(J9VMThread *vmThread, J9IndexableObject *array, UDATA index)							\
-{																													\
-	UDATA baseAddress = j9javaArray_BA(vmThread, array, &index, (U_8)sizeof(elemType));								\
-	/* Intentionally inlining this to treat sizeof value as an immediate value */									\
-	return (elemType *)(baseAddress + index * sizeof(elemType));													\
-} 																													\
+#define J9JAVAARRAY_C_EA(elemType)															\
+GNU_UNUSED VMINLINE static elemType *														\
+j9javaArray_##elemType##_EA(J9VMThread *vmThread, J9IndexableObject *array, UDATA index)	\
+{																							\
+	UDATA baseAddress = j9javaArray_BA(vmThread, array, &index, (U_8)sizeof(elemType));		\
+	/* Intentionally inlining this to treat sizeof value as an immediate value */			\
+	return (elemType *)(baseAddress + index * sizeof(elemType));							\
+}
 
 /* generate C bodies */
 
@@ -100,19 +112,8 @@ J9JAVAARRAY_C_EA(UDATA)
  * is not known type in j9accessbarrier.h).
  */
 
-#if defined(__GNUC__)
-/*
- * Source files which include (directly or indirectly) this file
- * but do not use the functions defined below may fail to compile unless the "unused" attribute
- * is applied.
- * Note that Microsoft compilers do not allow this attribute.
- */
 VMINLINE static j9object_t
-j9javaArrayOfObject_load(J9VMThread *vmThread, J9IndexableObject *array, I_32 index) __attribute__ ((__unused__));
-
-VMINLINE static j9object_t
-j9javaArrayOfObject_load_VM(J9JavaVM *vm, J9IndexableObject *array, I_32 index) __attribute__ ((__unused__));
-#endif /* __GNUC__ */
+j9javaArrayOfObject_load(J9VMThread *vmThread, J9IndexableObject *array, I_32 index) GNU_UNUSED;
 
 VMINLINE static j9object_t
 j9javaArrayOfObject_load(J9VMThread *vmThread, J9IndexableObject *array, I_32 index)
@@ -127,6 +128,9 @@ j9javaArrayOfObject_load(J9VMThread *vmThread, J9IndexableObject *array, I_32 in
 		return (j9object_t)*loadAddress;
 	}
 }
+
+VMINLINE static j9object_t
+j9javaArrayOfObject_load_VM(J9JavaVM *vm, J9IndexableObject *array, I_32 index) GNU_UNUSED;
 
 VMINLINE static j9object_t
 j9javaArrayOfObject_load_VM(J9JavaVM *vm, J9IndexableObject *array, I_32 index)
