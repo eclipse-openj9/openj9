@@ -882,4 +882,16 @@ jvmtiInternalGetStackTrace(
 	return JVMTI_ERROR_NONE;
 }
 
+#if JAVA_SPEC_VERSION >= 25
+jvmtiError JNICALL
+jvmtiClearAllFramePops(jvmtiEnv *env, jthread thread)
+{
+	jvmtiError rc = JVMTI_ERROR_NONE;
+
+	Trc_JVMTI_jvmtiClearAllFramePops_Entry(env);
+
+	TRACE_JVMTI_RETURN(jvmtiClearAllFramePops);
+}
+#endif /* JAVA_SPEC_VERSION >= 25 */
+
 } /* extern "C" */

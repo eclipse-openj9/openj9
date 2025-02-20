@@ -2173,6 +2173,18 @@ jvmtiNotifyFramePop(jvmtiEnv* env,
 	jthread thread,
 	jint depth);
 
+#if JAVA_SPEC_VERSION >= 25
+/**
+ * @brief Clear all frame pop request to prevent generation of
+ * FramePop events for any frames.
+ *
+ * @param env The JVMTI environment pointer
+ * @param thread The thread whose FramePop events will be cleared
+ * @return jvmtiError Error code returned by JVMTI function
+ */
+jvmtiError JNICALL
+jvmtiClearAllFramePops(jvmtiEnv *env, jthread thread);
+#endif /* JAVA_SPEC_VERSION >= 25 */
 
 /**
 * @brief
