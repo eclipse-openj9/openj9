@@ -61,6 +61,7 @@ TR_VectorAPIExpansion::perform()
        findVectorMethods(comp()))
       expandVectorAPI();
 
+   findVectorMethods(comp(), true);
    return 0;
    }
 
@@ -938,7 +939,7 @@ TR_VectorAPIExpansion::getObjectTypeFromClassNode(TR::Compilation *comp, TR::Nod
 
 
 bool
-TR_VectorAPIExpansion::findVectorMethods(TR::Compilation *comp)
+TR_VectorAPIExpansion::findVectorMethods(TR::Compilation *comp, bool reportFoundMethods)
    {
    bool trace = comp->getOption(TR_TraceVectorAPIExpansion);
 
@@ -964,9 +965,19 @@ TR_VectorAPIExpansion::findVectorMethods(TR::Compilation *comp)
 
          if (isVectorAPIMethod(methodSymbol))
             {
-            if (trace)
-               traceMsg(comp, "%s found Vector API method\n", OPT_DETAILS_VECTOR);
-            return true;
+            if (reportFoundMethods &&
+                TR::Options::getVerboseOption(TR_VerboseVectorAPI))
+               {
+               TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "Did not vectorize intrinsic in %s at %s %s",
+                                        comp->signature(), comp->getHotnessName(comp->getMethodHotness()),
+                                        comp->isDLT() ? "DLT" : "");
+               }
+            else
+               {
+               if (trace)
+                  traceMsg(comp, "%s found Vector API method\n", OPT_DETAILS_VECTOR);
+               return true;
+               }
             }
          }
       }

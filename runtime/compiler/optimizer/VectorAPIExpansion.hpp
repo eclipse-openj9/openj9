@@ -388,11 +388,14 @@ class TR_VectorAPIExpansion : public TR::Optimization
     *  \param comp
     *     Compilation
     *
+    *  \param reportFoundMethods
+    *     Report found Vector API intrinsics
+    *
     *  \return
     *     \c true if it finds any methods,
     *     \c false otherwise
     */
-   static bool findVectorMethods(TR::Compilation *comp);
+   static bool findVectorMethods(TR::Compilation *comp, bool reportFoundMethods = false);
 
    /** \brief
     *     Checks if boxing/unboxing is supported
