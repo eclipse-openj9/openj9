@@ -22,6 +22,7 @@
 
 #include "j9cel4ro64.h"
 #include <assert.h> /* Required for __gtca() */
+#include <stdlib.h>
 
 /* Function descriptor of CEL4RO64 runtime call from GTCA control block */
 typedef void cel4ro64_cwi_func(void*);

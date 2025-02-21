@@ -71,4 +71,3 @@ J9VM_LD RMODE ANY
 * to trick the compiler in doing it for us.
          EDCEPIL
          END
-
