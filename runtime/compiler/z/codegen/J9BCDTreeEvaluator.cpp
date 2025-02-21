@@ -2070,7 +2070,7 @@ J9::Z::TreeEvaluator::BCDCHKEvaluatorImpl(TR::Node * node,
       callNode->setAndIncChild(i, childRootNode->getChild(i + callChildStartIndex));
 
    // Evaluate secondChild's children, if the secondChild is an address node into a byte[]
-   if(isResultPD && secondChild->getNumChildren() == 2)
+   if(isResultPD && secondChild->getNumChildren() == 2 && secondChild->getReferenceCount() > 1)
       {
       cg->evaluate(secondChild->getFirstChild());
       cg->evaluate(secondChild->getSecondChild());
