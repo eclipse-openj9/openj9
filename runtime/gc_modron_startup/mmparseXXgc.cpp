@@ -1002,6 +1002,29 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 			extensions->concurrentScavengeExhaustiveTermination = false;
 			continue;
 		}
+
+		if (try_scan(&scan_start, "concurrentScavengeAllocAverageBoost=")) {
+			UDATA value = 0;
+			if (!scan_udata_helper(vm, &scan_start, &value, "concurrentScavengeAllocAverageBoost=")) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+
+			extensions->concurrentScavengerAllocAverageBoost = value / 100.0f;
+			continue;
+		}
+
+		if (try_scan(&scan_start, "concurrentScavengeAllocDeviationBoost=")) {
+			UDATA value = 0;
+			if (!scan_udata_helper(vm, &scan_start, &value, "concurrentScavengeAllocDeviationBoost=")) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+
+			extensions->concurrentScavengerAllocDeviationBoost = value / 100.0f;
+			continue;
+		}
+
 #endif /* defined(OMR_GC_CONCURRENT_SCAVENGER) */
 
 #endif /* defined(J9VM_GC_MODRON_SCAVENGER) */
