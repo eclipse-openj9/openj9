@@ -242,7 +242,7 @@ MM_MarkingDelegate::startRootListProcessing(MM_EnvironmentBase *env)
 }
 
 void
-MM_MarkingDelegate::doStackSlot(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, omrobjectptr_t *slotPtr)
+MM_MarkingDelegate::doContinuationSlot(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, omrobjectptr_t *slotPtr)
 {
 	omrobjectptr_t object = *slotPtr;
 	if (_markingScheme->isHeapObject(object) && !_extensions->heap->objectIsInGap(object)) {
@@ -251,6 +251,12 @@ MM_MarkingDelegate::doStackSlot(MM_EnvironmentBase *env, omrobjectptr_t objectPt
 		}
 		_markingScheme->inlineMarkObject(env, *slotPtr);
 	}
+}
+
+void
+MM_MarkingDelegate::doStackSlot(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, omrobjectptr_t *slotPtr)
+{
+	doContinuationSlot(env, objectPtr, slotPtr);
 }
 
 /**
@@ -290,7 +296,7 @@ MM_MarkingDelegate::scanContinuationNativeSlots(MM_EnvironmentBase *env, omrobje
 		GC_ContinuationSlotIterator continuationSlotIterator(currentThread, continuation);
 
 		while (J9Object **slotPtr = continuationSlotIterator.nextSlot()) {
-			doStackSlot(env, objectPtr, slotPtr);
+			doContinuationSlot(env, objectPtr, slotPtr);
 		}
 #endif /* JAVA_SPEC_VERSION >= 24 */
 

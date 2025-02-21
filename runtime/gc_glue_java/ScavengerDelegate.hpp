@@ -177,6 +177,7 @@ public:
 	void poisonSlots(MM_EnvironmentBase *env);
 	void healSlots(MM_EnvironmentBase *env);
 #endif /* defined(OMR_ENV_DATA64) && defined(OMR_GC_FULL_POINTERS) */
+	MMINLINE void doContinuationSlot(MM_EnvironmentStandard *env, omrobjectptr_t *slotPtr, MM_ScavengeScanReason reason, bool *shouldRemember);
 	void doStackSlot(MM_EnvironmentStandard *env, omrobjectptr_t *slotPtr, MM_ScavengeScanReason reason, bool *shouldRemember);
 
 	bool initialize(MM_EnvironmentBase *env);

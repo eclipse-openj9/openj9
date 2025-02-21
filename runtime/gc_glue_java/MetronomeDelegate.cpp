@@ -1636,14 +1636,10 @@ MM_MetronomeDelegate::unsetUnmarkedImpliesCleared()
 }
 
 void
-MM_MetronomeDelegate::doStackSlot(MM_EnvironmentRealtime *env, J9Object **slotPtr, J9StackWalkState *walkState, const void *stackLocation)
+MM_MetronomeDelegate::doContinuationSlot(MM_EnvironmentRealtime *env, J9Object **slotPtr)
 {
 	J9Object *object = *slotPtr;
 	if (_markingScheme->isHeapObject(object)) {
-		/* heap object - validate and mark */
-		if (NULL != walkState) {
-			Assert_MM_validStackSlot(MM_StackSlotValidator(0, object, stackLocation, walkState).validate(env));
-		}
 		if (MUTATOR_THREAD == env->getThreadType()) {
 			/* special handle by mutator thread for preMountContinuation case */
 			MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
@@ -1652,7 +1648,18 @@ MM_MetronomeDelegate::doStackSlot(MM_EnvironmentRealtime *env, J9Object **slotPt
 			/* scan object by the GC Thread */
 			_markingScheme->markObject(env, object);
 		}
-	} else if ((NULL != object) && (NULL != walkState)) {
+	}
+}
+
+void
+MM_MetronomeDelegate::doStackSlot(MM_EnvironmentRealtime *env, J9Object **slotPtr, J9StackWalkState *walkState, const void *stackLocation)
+{
+	J9Object *object = *slotPtr;
+	if (_markingScheme->isHeapObject(object)) {
+		/* heap object - validate and mark */
+		Assert_MM_validStackSlot(MM_StackSlotValidator(0, object, stackLocation, walkState).validate(env));
+		doContinuationSlot(env, slotPtr);
+	} else if (NULL != object) {
 		/* stack object - just validate */
 		Assert_MM_validStackSlot(MM_StackSlotValidator(MM_StackSlotValidator::NOT_ON_HEAP, object, stackLocation, walkState).validate(env));
 	}
@@ -1690,7 +1697,7 @@ MM_MetronomeDelegate::scanContinuationNativeSlots(MM_EnvironmentRealtime *env, J
 		GC_ContinuationSlotIterator continuationSlotIterator(currentThread, continuation);
 
 		while (J9Object **slotPtr = continuationSlotIterator.nextSlot()) {
-			doStackSlot(env, slotPtr, NULL, NULL);
+			doContinuationSlot(env, slotPtr);
 		}
 #endif /* JAVA_SPEC_VERSION >= 24 */
 

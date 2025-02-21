@@ -608,6 +608,7 @@ public:
 	 * @param workStackBaseHighPriority[in/out] The "high priority" work stack base.  This reference parameter will be updated before the function returns is region is high priority
 	 */
 	void pushRegionOntoWorkStack(MM_HeapRegionDescriptorVLHGC **workStackBase, MM_HeapRegionDescriptorVLHGC **workStackBaseHighPriority, MM_HeapRegionDescriptorVLHGC *region);
+	MMINLINE void doContinuationSlot(MM_EnvironmentVLHGC *env, J9Object *fromObject, J9Object** slot);
 	void doStackSlot(MM_EnvironmentVLHGC *env, J9Object *fromObject, J9Object** slot);
 
 	friend class MM_WriteOnceCompactFixupRoots;

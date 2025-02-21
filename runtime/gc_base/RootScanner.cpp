@@ -559,7 +559,8 @@ MM_RootScanner::scanOneThread(MM_EnvironmentBase *env, J9VMThread *walkThread, v
 		GC_ContinuationSlotIterator continuationSlotIterator(walkThread, walkThread->currentContinuation);
 
 		while (J9Object **slot = continuationSlotIterator.nextSlot()) {
-			doStackSlot(slot, NULL, walkThread);
+			/* do current continuation slot (mounted vthread case, the slot for saved carrier thread) */
+			doVMThreadSlot(slot, &vmThreadIterator);
 		}
 #endif /* JAVA_SPEC_VERSION >= 24 */
 	}

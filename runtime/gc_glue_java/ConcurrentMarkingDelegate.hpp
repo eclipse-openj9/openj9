@@ -114,6 +114,7 @@ public:
 	 */
 	bool initialize(MM_EnvironmentBase *env, MM_ConcurrentGC *collector);
 
+	MMINLINE void doContinuationSlot(MM_EnvironmentBase *env, omrobjectptr_t *slotPtr);
 	void doStackSlot(MM_EnvironmentBase *env, omrobjectptr_t *slotPtr, J9StackWalkState *walkState, const void *stackLocation);
 	/**
 	 * In the case of Weak Consistency platforms we require this method to bring mutator threads to a safe point. A safe

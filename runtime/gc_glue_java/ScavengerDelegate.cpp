@@ -308,7 +308,7 @@ MM_ScavengerDelegate::internalGarbageCollect_shouldPercolateGarbageCollect(MM_En
 }
 
 void
-MM_ScavengerDelegate::doStackSlot(MM_EnvironmentStandard *env, omrobjectptr_t *slotPtr, MM_ScavengeScanReason reason, bool *shouldRemember)
+MM_ScavengerDelegate::doContinuationSlot(MM_EnvironmentStandard *env, omrobjectptr_t *slotPtr, MM_ScavengeScanReason reason, bool *shouldRemember)
 {
 	MM_Scavenger *scavenger = _extensions->scavenger;
 	if (scavenger->isHeapObject(*slotPtr) && !_extensions->heap->objectIsInGap(*slotPtr)) {
@@ -336,6 +336,12 @@ MM_ScavengerDelegate::doStackSlot(MM_EnvironmentStandard *env, omrobjectptr_t *s
 			break;
 		}
 	}
+}
+
+void
+MM_ScavengerDelegate::doStackSlot(MM_EnvironmentStandard *env, omrobjectptr_t *slotPtr, MM_ScavengeScanReason reason, bool *shouldRemember)
+{
+	doContinuationSlot(env, slotPtr, reason, shouldRemember);
 }
 
 /**
@@ -378,7 +384,7 @@ MM_ScavengerDelegate::scanContinuationNativeSlots(MM_EnvironmentStandard *env, o
 		GC_ContinuationSlotIterator continuationSlotIterator(currentThread, continuation);
 
 		while (J9Object **slotPtr = continuationSlotIterator.nextSlot()) {
-			doStackSlot(env, slotPtr,reason, &shouldRemember);
+			doContinuationSlot(env, slotPtr,reason, &shouldRemember);
 		}
 #endif /* JAVA_SPEC_VERSION >= 24 */
 

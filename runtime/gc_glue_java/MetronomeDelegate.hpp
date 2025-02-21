@@ -58,6 +58,7 @@ public:
 	static int J9THREAD_PROC metronomeAlarmThreadWrapper(void *userData);
 	static uintptr_t signalProtectedFunction(J9PortLibrary *privatePortLibrary, void *userData);
 
+	MMINLINE void doContinuationSlot(MM_EnvironmentRealtime *env, J9Object **slotPtr);
 	void doStackSlot(MM_EnvironmentRealtime *env, J9Object **slotPtr, J9StackWalkState *walkState, const void *stackLocation);
 
 	MM_MetronomeDelegate(MM_EnvironmentBase *env) :

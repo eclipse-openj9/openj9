@@ -427,7 +427,7 @@ MM_ReferenceChainWalker::scanContinuationNativeSlots(J9Object *objectPtr)
 		GC_ContinuationSlotIterator continuationSlotIterator(currentThread, continuation);
 
 		while (J9Object **slotPtr = continuationSlotIterator.nextSlot()) {
-			doStackSlot(slotPtr, NULL, NULL);
+			doSlot(slotPtr, J9GC_ROOT_TYPE_UNKNOWN, -1, NULL);
 		}
 #endif /* JAVA_SPEC_VERSION >= 24 */
 
@@ -674,21 +674,17 @@ MM_ReferenceChainWalker::doStackSlot(J9Object **slotPtr, void *walkState, const 
 
 	/* Only report heap objects */
 	if (isHeapObject(slotValue) && !_heap->objectIsInGap(slotValue)) {
-		if (NULL != walkState) {
 #if JAVA_SPEC_VERSION >= 19
-			if (_includeVThreadObject && (NULL == ((J9StackWalkState *)walkState)->walkThread->threadObject)) {
-				/* Fill in the virtual thread object for jvmtiFollowReferences calls. */
-				((J9StackWalkState *)walkState)->walkThread->threadObject = _vThreadObject;
-			}
+		if (_includeVThreadObject && (NULL == ((J9StackWalkState *)walkState)->walkThread->threadObject)) {
+			/* Fill in the virtual thread object for jvmtiFollowReferences calls. */
+			((J9StackWalkState *)walkState)->walkThread->threadObject = _vThreadObject;
+		}
 #endif /* JAVA_SPEC_VERSION >= 19 */
-			J9MM_StackSlotDescriptor stackSlotDescriptor = {((J9StackWalkState *)walkState)->walkThread, (J9StackWalkState *)walkState};
-			if (J9_STACKWALK_SLOT_TYPE_JNI_LOCAL == ((J9StackWalkState *)walkState)->slotType) {
-				doSlot(slotPtr, J9GC_ROOT_TYPE_JNI_LOCAL, -1, (J9Object *)&stackSlotDescriptor);
-			} else {
-				doSlot(slotPtr, J9GC_ROOT_TYPE_STACK_SLOT, -1, (J9Object *)&stackSlotDescriptor);
-			}
+		J9MM_StackSlotDescriptor stackSlotDescriptor = {((J9StackWalkState *)walkState)->walkThread, (J9StackWalkState *)walkState};
+		if (J9_STACKWALK_SLOT_TYPE_JNI_LOCAL == ((J9StackWalkState *)walkState)->slotType) {
+			doSlot(slotPtr, J9GC_ROOT_TYPE_JNI_LOCAL, -1, (J9Object *)&stackSlotDescriptor);
 		} else {
-			doSlot(slotPtr, J9GC_ROOT_TYPE_UNKNOWN, -1, NULL);
+			doSlot(slotPtr, J9GC_ROOT_TYPE_STACK_SLOT, -1, (J9Object *)&stackSlotDescriptor);
 		}
 	}
 }

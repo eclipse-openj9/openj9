@@ -28,6 +28,7 @@
 
 #include "j9.h"
 #include "j9cfg.h"
+#if JAVA_SPEC_VERSION >= 24
 
 #if JAVA_SPEC_VERSION >= 24
 #include "ContinuationSlotIterator.hpp"

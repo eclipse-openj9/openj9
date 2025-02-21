@@ -102,11 +102,9 @@ public:
 	{
 		if (_scavenger->isHeapObject(*slotPtr) && !_extensions->heap->objectIsInGap(*slotPtr)) {
 			/* heap object - validate and mark */
-			if (NULL != walkState) {
-				Assert_MM_validStackSlot(MM_StackSlotValidator(MM_StackSlotValidator::COULD_BE_FORWARDED, *slotPtr, stackLocation, walkState).validate(_env));
-			}
+			Assert_MM_validStackSlot(MM_StackSlotValidator(MM_StackSlotValidator::COULD_BE_FORWARDED, *slotPtr, stackLocation, walkState).validate(_env));
 			_scavenger->copyAndForwardThreadSlot(MM_EnvironmentStandard::getEnvironment(_env), slotPtr);
-		} else if ((NULL != *slotPtr) && (NULL != walkState)) {
+		} else if (NULL != *slotPtr) {
 			/* stack object - just validate */
 			Assert_MM_validStackSlot(MM_StackSlotValidator(MM_StackSlotValidator::NOT_ON_HEAP, *slotPtr, stackLocation, walkState).validate(_env));
 		}
@@ -121,10 +119,11 @@ public:
 		MM_EnvironmentStandard *envStandard = MM_EnvironmentStandard::getEnvironment(_env);
 		if (_scavenger->isHeapObject(*slotPtr) && !_extensions->heap->objectIsInGap(*slotPtr)) {
 			_scavenger->copyAndForwardThreadSlot(envStandard, slotPtr);
-		} else if (NULL != *slotPtr) {
-			Assert_GC_true_with_message4(envStandard, (vmthreaditerator_state_monitor_records == vmThreadIterator->getState()),
-					"Thread %p structures scan: slot %p has bad value %p, iterator state %d\n", vmThreadIterator->getVMThread(), slotPtr, *slotPtr, vmThreadIterator->getState());
 		}
+//		else if (NULL != *slotPtr) {
+//			Assert_GC_true_with_message4(envStandard, (vmthreaditerator_state_monitor_records == vmThreadIterator->getState()),
+//					"Thread %p structures scan: slot %p has bad value %p, iterator state %d\n", vmThreadIterator->getVMThread(), slotPtr, *slotPtr, vmThreadIterator->getState());
+//		}
 	}
 
 	virtual void

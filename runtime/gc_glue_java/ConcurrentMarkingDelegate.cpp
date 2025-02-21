@@ -38,6 +38,13 @@
 #include "VMInterface.hpp"
 #include "VMThreadListIterator.hpp"
 
+void
+MM_ConcurrentMarkingDelegate::doContinuationSlot(MM_EnvironmentBase *env, omrobjectptr_t *slotPtr)
+{
+	if (_markingScheme->isHeapObject(*slotPtr) && !env->getExtensions()->heap->objectIsInGap(*slotPtr)) {
+		_markingScheme->markObject(env, *slotPtr);
+	}
+}
 
 void
 MM_ConcurrentMarkingDelegate::doStackSlot(MM_EnvironmentBase *env, omrobjectptr_t *slotPtr, J9StackWalkState *walkState, const void *stackLocation)
@@ -45,16 +52,12 @@ MM_ConcurrentMarkingDelegate::doStackSlot(MM_EnvironmentBase *env, omrobjectptr_
 	omrobjectptr_t object = *slotPtr;
 	if (env->getExtensions()->heap->objectIsInGap(object)) {
 		/* CMVC 136483:  Ensure that the object is not in the gap of a split heap (stack-allocated object) since we can't mark that part of the address space */
-		if (NULL != walkState) {
-			Assert_MM_validStackSlot(MM_StackSlotValidator(MM_StackSlotValidator::NOT_ON_HEAP, object, stackLocation, walkState).validate(env));
-		}
+		Assert_MM_validStackSlot(MM_StackSlotValidator(MM_StackSlotValidator::NOT_ON_HEAP, object, stackLocation, walkState).validate(env));
 	} else if (_markingScheme->isHeapObject(object)) {
 		/* heap object - validate and mark */
-		if (NULL != walkState) {
-			Assert_MM_validStackSlot(MM_StackSlotValidator(0, object, stackLocation, walkState).validate(env));
-		}
+		Assert_MM_validStackSlot(MM_StackSlotValidator(0, object, stackLocation, walkState).validate(env));
 		_markingScheme->markObject(env, object);
-	} else if ((NULL != object) && (NULL != walkState)) {
+	} else if (NULL != object) {
 		/* stack object - just validate */
 		Assert_MM_validStackSlot(MM_StackSlotValidator(MM_StackSlotValidator::NOT_ON_HEAP, object, stackLocation, walkState).validate(env));
 	}
@@ -174,7 +177,7 @@ MM_ConcurrentMarkingDelegate::scanThreadRoots(MM_EnvironmentBase *env)
 		GC_ContinuationSlotIterator continuationSlotIterator(vmThread, vmThread->currentContinuation);
 
 		while (J9Object **slot = continuationSlotIterator.nextSlot()) {
-			doStackSlot(env, slot, NULL, NULL);
+			doContinuationSlot(env, slot);
 		}
 #endif /* JAVA_SPEC_VERSION >= 24 */
 	}

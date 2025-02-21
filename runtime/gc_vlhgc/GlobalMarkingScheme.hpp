@@ -513,6 +513,7 @@ public:
 	 */
 	void flushBuffers(MM_EnvironmentVLHGC *env);
 	
+	MMINLINE void doContinuationSlot(MM_EnvironmentVLHGC *env, J9Object *fromObject, J9Object** slotPtr);
 	void doStackSlot(MM_EnvironmentVLHGC *env, J9Object *fromObject, J9Object** slotPtr, J9StackWalkState *walkState, const void *stackLocation);
 	/**
 	 * Create a GlobalMarkingScheme object.

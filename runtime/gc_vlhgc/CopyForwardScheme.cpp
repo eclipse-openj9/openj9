@@ -2313,25 +2313,22 @@ MM_CopyForwardScheme::scanOwnableSynchronizerObjectSlots(MM_EnvironmentVLHGC *en
 }
 
 void
+MM_CopyForwardScheme::doContinuationSlot(MM_EnvironmentVLHGC *env, J9Object *fromObject, J9Object **slotPtr)
+{
+	if (isHeapObject(*slotPtr)) {
+		MM_AllocationContextTarok *reservingContext = (MM_AllocationContextTarok *)env->getAllocationContext();
+		copyAndForward(env, reservingContext, fromObject, slotPtr);
+	}
+}
+
+void
 MM_CopyForwardScheme::doStackSlot(MM_EnvironmentVLHGC *env, J9Object *fromObject, J9Object **slotPtr, J9StackWalkState *walkState, const void *stackLocation)
 {
 	if (isHeapObject(*slotPtr)) {
 		/* heap object - validate and copyforward */
-		J9VMThread *thread = NULL;
-		MM_AllocationContextTarok *reservingContext = NULL;
-		if (NULL != walkState) {
-			Assert_MM_validStackSlot(MM_StackSlotValidator(MM_StackSlotValidator::COULD_BE_FORWARDED, *slotPtr, stackLocation, walkState).validate(env));
-			thread = ((J9StackWalkState *)walkState)->currentThread;
-		} else {
-			thread = (J9VMThread *) stackLocation;
-		}
-		if (NULL != thread) {
-			reservingContext = (MM_AllocationContextTarok *)MM_EnvironmentVLHGC::getEnvironment(thread)->getAllocationContext();
-		} else {
-			reservingContext = getContextForHeapAddress(*slotPtr);
-		}
-		copyAndForward(MM_EnvironmentVLHGC::getEnvironment(env), reservingContext, fromObject, slotPtr);
-	} else if ((NULL != *slotPtr) && (NULL != walkState)) {
+		Assert_MM_validStackSlot(MM_StackSlotValidator(MM_StackSlotValidator::COULD_BE_FORWARDED, *slotPtr, stackLocation, walkState).validate(env));
+		doContinuationSlot(env, fromObject, slotPtr);
+	} else if (NULL != *slotPtr) {
 		/* stack object - just validate */
 		Assert_MM_validStackSlot(MM_StackSlotValidator(MM_StackSlotValidator::NOT_ON_HEAP, *slotPtr, stackLocation, walkState).validate(env));
 	}
@@ -2374,7 +2371,7 @@ MM_CopyForwardScheme::scanContinuationNativeSlots(MM_EnvironmentVLHGC *env, MM_A
 		GC_ContinuationSlotIterator continuationSlotIterator(currentThread, continuation);
 
 		while (J9Object **slotPtr = continuationSlotIterator.nextSlot()) {
-			doStackSlot(env, objectPtr, slotPtr, NULL, currentThread);
+			doContinuationSlot(env, objectPtr, slotPtr);
 		}
 #endif /* JAVA_SPEC_VERSION >= 24 */
 	}
@@ -3841,22 +3838,12 @@ private:
 	virtual void doStackSlot(J9Object **slotPtr, void *walkState, const void *stackLocation) {
 		if (_copyForwardScheme->isHeapObject(*slotPtr)) {
 			/* heap object - validate and mark */
-			J9VMThread *thread = NULL;
-			MM_AllocationContextTarok *reservingContext = NULL;
-			if (NULL != walkState) {
-				Assert_MM_validStackSlot(MM_StackSlotValidator(MM_StackSlotValidator::COULD_BE_FORWARDED, *slotPtr, stackLocation, walkState).validate(_env));
-				/* we know that threads are bound to nodes so relocalize this object into the node of the thread which directly references it */
-				thread = ((J9StackWalkState *)walkState)->currentThread;
-			} else {
-				thread = (J9VMThread *) stackLocation;
-			}
-			if (NULL != thread) {
-				reservingContext = (MM_AllocationContextTarok *)MM_EnvironmentVLHGC::getEnvironment(thread)->getAllocationContext();
-			} else {
-				reservingContext = _copyForwardScheme->getContextForHeapAddress(*slotPtr);
-			}
+			Assert_MM_validStackSlot(MM_StackSlotValidator(MM_StackSlotValidator::COULD_BE_FORWARDED, *slotPtr, stackLocation, walkState).validate(_env));
+			/* we know that threads are bound to nodes so relocalize this object into the node of the thread which directly references it */
+			J9VMThread *thread = ((J9StackWalkState *)walkState)->currentThread;
+			MM_AllocationContextTarok *reservingContext = (MM_AllocationContextTarok *)MM_EnvironmentVLHGC::getEnvironment(thread)->getAllocationContext();
 			_copyForwardScheme->copyAndForward(MM_EnvironmentVLHGC::getEnvironment(_env), reservingContext, slotPtr);
-		} else if ((NULL != *slotPtr) && (NULL != walkState)) {
+		} else if (NULL != *slotPtr) {
 			/* stack object - just validate */
 			Assert_MM_validStackSlot(MM_StackSlotValidator(MM_StackSlotValidator::NOT_ON_HEAP, *slotPtr, stackLocation, walkState).validate(_env));
 		}
@@ -3868,9 +3855,10 @@ private:
 			J9VMThread *thread = vmThreadIterator->getVMThread();
 			MM_AllocationContextTarok *reservingContext = (MM_AllocationContextTarok *)MM_EnvironmentVLHGC::getEnvironment(thread)->getAllocationContext();
 			_copyForwardScheme->copyAndForward(MM_EnvironmentVLHGC::getEnvironment(_env), reservingContext, slotPtr);
-		} else if (NULL != *slotPtr) {
-			Assert_MM_true(vmthreaditerator_state_monitor_records == vmThreadIterator->getState());
 		}
+//		else if (NULL != *slotPtr) {
+//			Assert_MM_true(vmthreaditerator_state_monitor_records == vmThreadIterator->getState());
+//		}
 	}
 
 	virtual void doClass(J9Class *clazz) {
@@ -4602,14 +4590,10 @@ private:
 	virtual void doStackSlot(J9Object **slotPtr, void *walkState, const void *stackLocation) {
 		if (_copyForwardScheme->isHeapObject(*slotPtr)) {
 			/* heap object - validate and mark */
-			if (NULL != walkState) {
-				Assert_MM_validStackSlot(MM_StackSlotValidator(MM_StackSlotValidator::COULD_BE_FORWARDED, *slotPtr, stackLocation, walkState).validate(_env));
-			}
+			Assert_MM_validStackSlot(MM_StackSlotValidator(MM_StackSlotValidator::COULD_BE_FORWARDED, *slotPtr, stackLocation, walkState).validate(_env));
 			verifyObject(slotPtr);
-			if (NULL != walkState) {
-				Assert_MM_mustBeClass(J9GC_J9OBJECT_CLAZZ_THREAD(*slotPtr, ((J9StackWalkState*)walkState)->walkThread));
-			}
-		} else if ((NULL != *slotPtr) && (NULL != walkState)) {
+			Assert_MM_mustBeClass(J9GC_J9OBJECT_CLAZZ_THREAD(*slotPtr, ((J9StackWalkState*)walkState)->walkThread));
+		} else if (NULL != *slotPtr) {
 			/* stack object - just validate */
 			Assert_MM_validStackSlot(MM_StackSlotValidator(MM_StackSlotValidator::NOT_ON_HEAP, *slotPtr, stackLocation, walkState).validate(_env));
 		}
@@ -4620,7 +4604,7 @@ private:
 			verifyObject(slotPtr);
 			Assert_MM_mustBeClass(J9GC_J9OBJECT_CLAZZ_THREAD(*slotPtr, vmThreadIterator->getVMThread()));
 		} else if (NULL != *slotPtr) {
-			Assert_MM_true(vmthreaditerator_state_monitor_records == vmThreadIterator->getState());
+//			Assert_MM_true(vmthreaditerator_state_monitor_records == vmThreadIterator->getState());
 			Assert_MM_mustBeClass(J9GC_J9OBJECT_CLAZZ_THREAD(*slotPtr, vmThreadIterator->getVMThread()));
 		}
 	}

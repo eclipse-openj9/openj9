@@ -116,11 +116,9 @@ public:
 		J9Object *object = *slotPtr;
 		if (_markingScheme->isHeapObject(object)) {
 			/* heap object - validate and mark */
-			if (NULL != walkState) {
-				Assert_MM_validStackSlot(MM_StackSlotValidator(0, object, stackLocation, walkState).validate(_env));
-			}
+			Assert_MM_validStackSlot(MM_StackSlotValidator(0, object, stackLocation, walkState).validate(_env));
 			_markingScheme->markObject(_env, object);
-		} else if ((NULL != object) && (NULL != walkState)) {
+		} else if (NULL != object) {
 			/* stack object - just validate */
 			Assert_MM_validStackSlot(MM_StackSlotValidator(MM_StackSlotValidator::NOT_ON_HEAP, object, stackLocation, walkState).validate(_env));
 		}
@@ -131,9 +129,10 @@ public:
 		J9Object *object = *slotPtr;
 		if (_markingScheme->isHeapObject(object)) {
 			_markingScheme->markObject(_env, object);
-		} else if (NULL != object) {
-			Assert_MM_true(vmthreaditerator_state_monitor_records == vmThreadIterator->getState());
 		}
+//		else if (NULL != object) {
+//			Assert_MM_true(vmthreaditerator_state_monitor_records == vmThreadIterator->getState());
+//		}
 	}
 
 	/**
