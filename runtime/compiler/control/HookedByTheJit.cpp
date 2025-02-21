@@ -1574,6 +1574,19 @@ static void jitMethodSampleInterrupt(J9VMThread* vmThread, IDATA handlerKey, voi
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 static void jitHookClassesUnloadEnd(J9HookInterface * * hookInterface, UDATA eventNum, void * eventData, void * userData)
    {
+   MM_ClassUnloadingEndEvent *event = (MM_ClassUnloadingEndEvent*)eventData;
+   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseClassUnloading))
+      {
+      if (TR::Options::getCmdLineOptions()->getOption(TR_PrintCodeCacheUsage) ||
+          TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCodeCache))
+         {
+         size_t currTotalUsedKB = TR::CodeCacheManager::instance()->getCurrTotalUsedInBytes()/1024;
+         size_t maxUsedKB = TR::CodeCacheManager::instance()->getMaxUsedInBytes()/1024;
+         size_t codeCacheTotalKB = event->currentThread->javaVM->jitConfig->codeCacheTotalKB;
+         TR_VerboseLog::writeLineLocked(TR_Vlog_GC, "CodeCache after  class unloading: size=%zuKb used=%zuKb max_used=%zuKb free=%zuKb",
+                                        codeCacheTotalKB, currTotalUsedKB, maxUsedKB, codeCacheTotalKB - currTotalUsedKB);
+         }
+      }
    }
 #endif
 
@@ -2030,12 +2043,38 @@ static void jitHookPrepareRestore(J9HookInterface * * hookInterface, UDATA event
 static void jitHookClassesUnload(J9HookInterface * * hookInterface, UDATA eventNum, void * eventData, void * userData)
    {
    J9VMClassesUnloadEvent * unloadedEvent = (J9VMClassesUnloadEvent *)eventData;
+   UDATA classUnloadCount = unloadedEvent->classUnloadCount; // includes the annon classes
    J9VMThread * vmThread = unloadedEvent->currentThread;
    J9JITConfig * jitConfig = vmThread->javaVM->jitConfig;
 
    TR_J9VMBase * vmj9 = TR_J9VMBase::get(jitConfig, vmThread);
    TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
    TR::PersistentInfo * persistentInfo = compInfo->getPersistentInfo();
+
+   persistentInfo->incNumUnloadedClasses(classUnloadCount);
+
+   if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseClassUnloading))
+      {
+      static int32_t numLoadedClassesOld = 0;
+      TR_VerboseLog::writeLineLocked(TR_Vlog_GC, "t=%lu classLoaderID=%d. Unloaded classes=%u (Total=%d). Loaded classes since last unload op=%d (Total=%d)",
+         (unsigned long)compInfo->getPersistentInfo()->getElapsedTime(),
+         (int)persistentInfo->getGlobalClassUnloadID(),
+         (unsigned int)classUnloadCount,
+         (int)persistentInfo->getNumUnloadedClasses(),
+         (int)(persistentInfo->getNumLoadedClasses() - numLoadedClassesOld),
+         (int)persistentInfo->getNumLoadedClasses());
+      numLoadedClassesOld = persistentInfo->getNumLoadedClasses();
+      if (TR::Options::getCmdLineOptions()->getOption(TR_PrintCodeCacheUsage) ||
+          TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCodeCache))
+         {
+         size_t currTotalUsedKB = TR::CodeCacheManager::instance()->getCurrTotalUsedInBytes()/1024;
+         size_t maxUsedKB = TR::CodeCacheManager::instance()->getMaxUsedInBytes()/1024;
+         size_t codeCacheTotalKB = jitConfig->codeCacheTotalKB;
+         TR_VerboseLog::writeLineLocked(TR_Vlog_GC, "CodeCache before class unloading: size=%zuKb used=%zuKb max_used=%zuKb free=%zuKb",
+                                        codeCacheTotalKB, currTotalUsedKB, maxUsedKB, codeCacheTotalKB - currTotalUsedKB);
+         }
+
+      }
 
    // Here we need to set CompilationShouldBeInterrupted. Currently if the TR_EnableNoVMAccess is not
    // set the compilation is stopped, but should be notify not to continue afterwards.
