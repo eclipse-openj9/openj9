@@ -2431,23 +2431,25 @@ typedef struct J9ROMMethodHandleRef {
 #define MH_REF_INVOKEVIRTUAL  5
 #define MH_REF_PUTFIELD  3
 
-/* Constants mapped from java.lang.invoke.MethodHandleNatives$Constants
+/* Constants mapped from java.lang.invoke.MethodHandleNatives$Constants.
  * These constants are validated by the MethodHandleNatives$Constants.verifyConstants()
- * method when Java assertions are enabled
+ * method when Java assertions are enabled.
  */
-#define MN_IS_METHOD		0x00010000
-#define MN_IS_CONSTRUCTOR	0x00020000
-#define MN_IS_FIELD			0x00040000
-#define MN_IS_TYPE			0x00080000
-#define MN_CALLER_SENSITIVE	0x00100000
-#define MN_TRUSTED_FINAL	0x00200000
-#define MN_HIDDEN_MEMBER	0x00400000
+#define MN_IS_METHOD            0x00010000
+#define MN_IS_CONSTRUCTOR       0x00020000
+#define MN_IS_FIELD             0x00040000
+#define MN_IS_TYPE              0x00080000
+#define MN_CALLER_SENSITIVE     0x00100000
+#define MN_TRUSTED_FINAL        0x00200000
+#define MN_HIDDEN_MEMBER        0x00400000
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-#define MN_NULL_RESTRICTED	0x00800000
+#define MN_NULL_RESTRICTED      0x00800000
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
-#define MN_REFERENCE_KIND_SHIFT	24
-/* (flag >> MN_REFERENCE_KIND_SHIFT) & MN_REFERENCE_KIND_MASK */
-#define MN_REFERENCE_KIND_MASK	(0x0F000000 >> MN_REFERENCE_KIND_SHIFT)
+#define MN_REFERENCE_KIND_SHIFT 24
+#define MN_REFERENCE_KIND_MASK  (0x0F000000 >> MN_REFERENCE_KIND_SHIFT)
+
+#define MN_GET_REFERENCE_KIND(flags) \
+	(((flags) >> MN_REFERENCE_KIND_SHIFT) & MN_REFERENCE_KIND_MASK)
 
 typedef struct J9ROMMethodRef {
 	U_32 classRefCPIndex;
@@ -3574,7 +3576,6 @@ typedef struct J9ArrayClass {
 	struct J9Class *companionArray;
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 } J9ArrayClass;
-
 
 #if defined(LINUX) && defined(J9VM_ARCH_X86) && !defined(OSX)
 /* Only enable the assert on linux x86 as not all the versions

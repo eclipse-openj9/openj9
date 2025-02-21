@@ -1039,7 +1039,7 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 			j9object_t clazzObject = J9VMJAVALANGINVOKEMEMBERNAME_CLAZZ(currentThread, membernameObject);
 			J9Class *resolvedClass = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, clazzObject);
 
-			jint ref_kind = (flags >> MN_REFERENCE_KIND_SHIFT) & MN_REFERENCE_KIND_MASK;
+			jint ref_kind = MN_GET_REFERENCE_KIND(flags);
 
 			J9Class *typeClass = J9OBJECT_CLAZZ(currentThread, typeObject);
 
