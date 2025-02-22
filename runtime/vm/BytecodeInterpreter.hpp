@@ -1525,7 +1525,6 @@ obj:
 
 		/* Store the current Continuation state and swap to the carrier thread stack. */
 		yieldContinuation(_currentThread, FALSE, returnState);
-
 		VMStructHasBeenUpdated(REGISTER_ARGS);
 		restoreInternalNativeStackFrame(REGISTER_ARGS);
 

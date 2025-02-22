@@ -303,7 +303,7 @@ typedef void(*j9_tls_finalizer_t)(void *);
  * The full mapping is under jvmtiInternals.h <JVMTI_VTHREAD_STATE_*>.
  */
 #define JAVA_LANG_VIRTUALTHREAD_BLOCKING 12
-#define JAVA_LANG_VIRTUALTHREAD_WAITING  13
+#define JAVA_LANG_VIRTUALTHREAD_WAITING  15
 #define JAVA_LANG_VIRTUALTHREAD_TIMED_WAITING 17
 #endif /* JAVA_SPEC_VERSION >= 24 */
 
@@ -5321,6 +5321,8 @@ typedef struct J9InternalVMFunctions {
 	UDATA (*walkAllStackFrames)(struct J9VMThread *currentThread, J9StackWalkState *walkState);
 	BOOLEAN (*acquireVThreadInspector)(struct J9VMThread *currentThread, jobject thread, BOOLEAN spin);
 	void (*releaseVThreadInspector)(struct J9VMThread *currentThread, jobject thread);
+	void (*enterVThreadTransitionCritical)(struct J9VMThread *currentThread, jobject thread);
+	void (*exitVThreadTransitionCritical)(struct J9VMThread *currentThread, jobject thread);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 	UDATA (*checkArgsConsumed)(struct J9JavaVM * vm, struct J9PortLibrary* portLibrary, struct J9VMInitArgs* j9vm_args);
 #if defined(J9VM_ZOS_3164_INTEROPERABILITY) && (JAVA_SPEC_VERSION >= 17)
