@@ -661,6 +661,71 @@ releaseVThreadInspector(J9VMThread *currentThread, jobject thread)
 	}
 }
 
+void
+enterVThreadTransitionCritical(J9VMThread *currentThread, jobject thread)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	MM_ObjectAccessBarrierAPI objectAccessBarrier = MM_ObjectAccessBarrierAPI(currentThread);
+	j9object_t threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
+
+retry:
+	if (!VM_VMHelpers::isThreadSuspended(currentThread, threadObj)) {
+		while (!objectAccessBarrier.inlineMixedObjectCompareAndSwapU64(currentThread, threadObj, vm->virtualThreadInspectorCountOffset, 0, ~(U_64)0)) {
+			/* Thread is being inspected or unmounted, wait. */
+			vmFuncs->internalReleaseVMAccess(currentThread);
+			VM_AtomicSupport::yieldCPU();
+			/* After wait, the thread may suspend here. */
+			vmFuncs->internalAcquireVMAccess(currentThread);
+			threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
+		}
+
+		/* Now we have locked access to virtualThreadInspectorCount, check if the vthread is suspended.
+		* If suspended, release the access and spin-wait until the vthread is resumed.
+		* If not suspended, link the current J9VMThread with the virtual thread object.
+		*/
+		if (!VM_VMHelpers::isThreadSuspended(currentThread, threadObj)
+		&& objectAccessBarrier.inlineMixedObjectCompareAndSwapU64(currentThread, threadObj, vm->internalSuspendStateOffset, J9_VIRTUALTHREAD_INTERNAL_STATE_NONE, (U_64)currentThread)
+		) {
+			return;
+		}
+		J9OBJECT_I64_STORE(currentThread, threadObj, vm->virtualThreadInspectorCountOffset, 0);
+	}
+	vmFuncs->internalReleaseVMAccess(currentThread);
+	/* Spin is used instead of the halt flag as we cannot guarantee suspend flag is still set now.
+	*
+	* TODO: Dynamically increase the sleep time to a bounded maximum.
+	*/
+	j9thread_sleep(10);
+	/* After wait, the thread may suspend here. */
+	vmFuncs->internalAcquireVMAccess(currentThread);
+	threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
+	goto retry;
+}
+
+void
+exitVThreadTransitionCritical(J9VMThread *currentThread, jobject thread)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	j9object_t vthread = J9_JNI_UNWRAP_REFERENCE(thread);
+	MM_ObjectAccessBarrierAPI objectAccessBarrier = MM_ObjectAccessBarrierAPI(currentThread);
+
+	/* Remove J9VMThread address from internalSuspendedState field, as the thread state is no longer in a transition. */
+	while (!objectAccessBarrier.inlineMixedObjectCompareAndSwapU64(currentThread, vthread, vm->internalSuspendStateOffset, (U_64)currentThread, J9_VIRTUALTHREAD_INTERNAL_STATE_NONE)) {
+		/* Wait if the suspend flag is set. */
+		vmFuncs->internalReleaseVMAccess(currentThread);
+		VM_AtomicSupport::yieldCPU();
+		/* After wait, the thread may suspend here. */
+		vmFuncs->internalAcquireVMAccess(currentThread);
+		vthread = J9_JNI_UNWRAP_REFERENCE(thread);
+	}
+
+	/* Update to virtualThreadInspectorCount must be after clearing isSuspendedInternal field to retain sync ordering. */
+	Assert_VM_true(-1 == J9OBJECT_I64_LOAD(currentThread, vthread, vm->virtualThreadInspectorCountOffset));
+	J9OBJECT_I64_STORE(currentThread, vthread, vm->virtualThreadInspectorCountOffset, 0);
+}
+
 #if JAVA_SPEC_VERSION >= 24
 void
 detachMonitorInfo(J9VMThread *currentThread, J9ObjectMonitor *objectMonitor)
@@ -682,7 +747,7 @@ void
 preparePinnedVirtualThreadForMount(J9VMThread *currentThread, j9object_t continuationObject)
 {
 	UDATA monitorCount = 0;
-	if (0 < currentThread->ownedMonitorCount) {
+	if (currentThread->ownedMonitorCount > 0) {
 		/* Inflate all owned monitors. */
 		J9MonitorEnterRecord *monitorRecords = currentThread->monitorEnterRecords;
 		while (NULL != monitorRecords) {
@@ -737,7 +802,8 @@ preparePinnedVirtualThreadForUnmount(J9VMThread *currentThread, j9object_t syncO
 	j9object_t continuationObj = NULL;
 	UDATA monitorCount = 0;
 
-	if (0 < currentThread->ownedMonitorCount) {
+	enterVThreadTransitionCritical(currentThread, (jobject)&currentThread->threadObject);
+	if (currentThread->ownedMonitorCount > 0) {
 		/* Inflate all owned monitors. */
 		J9MonitorEnterRecord *monitorRecords = currentThread->monitorEnterRecords;
 		while (NULL != monitorRecords) {
@@ -816,6 +882,8 @@ preparePinnedVirtualThreadForUnmount(J9VMThread *currentThread, j9object_t syncO
 			result = J9_OBJECT_MONITOR_OOM;
 			goto done;
 		}
+	} else {
+		syncObjectMonitor = J9_INFLLOCK_OBJECT_MONITOR(lock);
 	}
 
 	continuationObj = J9VMJAVALANGVIRTUALTHREAD_CONT(currentThread, currentThread->threadObject);
@@ -828,7 +896,7 @@ preparePinnedVirtualThreadForUnmount(J9VMThread *currentThread, j9object_t syncO
 		/* Record wait monitor state. */
 		continuation->waitingMonitorEnterCount = monitor->count;
 
-		/* Reset monitor entry count to 1.*/
+		/* Reset monitor entry count to 1. */
 		monitor->count = 1;
 
 		/* Add Continuation struct to the monitor's waiting list. */
@@ -846,8 +914,10 @@ preparePinnedVirtualThreadForUnmount(J9VMThread *currentThread, j9object_t syncO
 
 	/* Clear the blocking object on the carrier thread. */
 	J9VMTHREAD_SET_BLOCKINGENTEROBJECT(currentThread, currentThread, NULL);
-
 done:
+	if (J9_OBJECT_MONITOR_YIELD_VIRTUAL != result) {
+		exitVThreadTransitionCritical(currentThread, (jobject)&currentThread->threadObject);
+	}
 	return result;
 }
 

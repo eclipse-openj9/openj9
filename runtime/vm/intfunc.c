@@ -459,6 +459,8 @@ J9InternalVMFunctions J9InternalFunctions = {
 	walkAllStackFrames,
 	acquireVThreadInspector,
 	releaseVThreadInspector,
+	enterVThreadTransitionCritical,
+	exitVThreadTransitionCritical,
 #endif /* JAVA_SPEC_VERSION >= 19 */
 	checkArgsConsumed,
 #if defined(J9VM_ZOS_3164_INTEROPERABILITY) && (JAVA_SPEC_VERSION >= 17)
