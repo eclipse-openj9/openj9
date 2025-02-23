@@ -7272,6 +7272,10 @@ J9::Z::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node * node, TR::CodeGenerator 
 
    bool doCrdMrk = ((gcMode == gc_modron_wrtbar_cardmark || gcMode == gc_modron_wrtbar_cardmark_and_oldcheck || gcMode == gc_modron_wrtbar_cardmark_incremental) && !firstChild->isNonHeapObjectWrtBar());
 
+   // OffHeap runs defer destination evaluation after GC point.
+   static char *disableDeferDestinationEvaluation = feGetEnv("TR_DisableDeferDestinationEvaluation");
+   bool deferDestinationEvaluation = TR::Compiler->om.isOffHeapAllocationEnabled() && !disableDeferDestinationEvaluation;
+
    TR::Node * litPoolBaseChild=NULL;
    TR::Node * sourceChild = firstChild->getSecondChild();
    TR::Node * classChild  = firstChild->getChild(2);
@@ -7351,7 +7355,42 @@ J9::Z::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node * node, TR::CodeGenerator 
    TR::Node *callNode = TR::Node::createWithSymRef(node, TR::call, 2, node->getSymbolReference());
    callNode->setChild(0, sourceChild);
    callNode->setChild(1, classChild);
-   mr1 = TR::MemoryReference::create(cg, firstChild);
+
+   TR::Node *dstArrayNode, *offsetNode = NULL;
+   if (!deferDestinationEvaluation)
+      mr1 = TR::MemoryReference::create(cg, firstChild);
+   else
+      {
+      /* Evaluate destination subtrees
+      * ArrayStoreCHK
+      *    awrtbari  // firstChild
+      *      aloadi  <contiguousArrayDataAddrField>
+      *        aload     // dstArrayNode
+      *      ...
+      * OR
+      * ArrayStoreCHK
+      *    awrtbari  // firstChild
+      *      aladd (internalPtr )
+      *        aloadi  <contiguousArrayDataAddrField>
+      *          aload     // dstArrayNode
+      *        <offset>  // offsetNode
+      *      ...
+      */
+      if (firstChild->getFirstChild()->isDataAddrPointer())
+         dstArrayNode = firstChild->getFirstChild()->getFirstChild();
+      else
+         {
+         dstArrayNode = firstChild->getFirstChild()->getFirstChild()->getFirstChild();
+         offsetNode = firstChild->getFirstChild()->getSecondChild();
+         }
+
+      cg->evaluate(dstArrayNode);
+      if (offsetNode &&
+            !(offsetNode->getOpCode().isLoadConst() &&
+            offsetNode->getIntegerNodeValue<uint64_t>() >= MINDISP &&
+            offsetNode->getIntegerNodeValue<uint64_t>() <= MAXDISP))
+         cg->evaluate(offsetNode);
+      }
 
    TR::Register *compressedReg = srcReg;
    if (usingCompressedPointers)
@@ -7363,7 +7402,11 @@ J9::Z::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node * node, TR::CodeGenerator 
    //  A seventh, eighth and ninth post dep may be needed to manufacture imm values
    //  used by the inlined version of arrayStoreCHK
    //  The tenth post dep may be needed to generateDirectCall if it creates a RegLitRefInstruction.
-   conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 11, cg);
+   //  One more if deferDestinationEvaluation for original destination base array register.
+   if (deferDestinationEvaluation)
+      conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 12, cg);
+   else
+      conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 11, cg);
    conditions->addPostCondition(classReg, linkage->getIntegerArgumentRegister(0));
    conditions->addPostCondition(srcReg, linkage->getIntegerArgumentRegister(1));
    if (usingCompressedPointers)
@@ -7391,7 +7434,10 @@ J9::Z::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node * node, TR::CodeGenerator 
       {
       // Note the use of 64-bit compare for compressedRefs and use of the decompressed `srcReg` register
       // Compare object with NULL. If NULL, branch around ASC, WrtBar and CrdMrk as they are not required
-      generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpOpCode(), node, srcReg, 0, TR::InstOpCode::COND_BE, (doWrtBar || doCrdMrk)?simpleStoreLabel:wbLabel, false, true);
+      // For OffHeap we use wbLabel store for null stores to consolidate store paths and defer
+      // destination evaluation. OffHeap will perform redundant wrtbar on null stores.
+      TR::LabelSymbol * nullStoreTarget = (doWrtBar || doCrdMrk) && !deferDestinationEvaluation ? simpleStoreLabel : wbLabel;
+      generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::getCmpOpCode(), node, srcReg, 0, TR::InstOpCode::COND_BE, nullStoreTarget, false, true);
       }
 
    J9::Z::CHelperLinkage *helperLink = static_cast<J9::Z::CHelperLinkage*>(cg->getLinkage(TR_CHelper));
@@ -7421,6 +7467,14 @@ J9::Z::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node * node, TR::CodeGenerator 
       VMarrayStoreCHKEvaluator(node, helperLink, callNode, srcReg, classReg, txReg, tyReg, litPoolBaseReg, owningObjectRegVal, srcRegVal, wbLabel, conditions, cg);
 
    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, wbLabel);
+
+   // Perform deferred destination evaluation
+   if (deferDestinationEvaluation)
+      {
+      mr1 = TR::MemoryReference::create(cg, firstChild);
+      // In OffHeap dstArray and baseReg (=dataAddrPtr) are not the same.
+      conditions->addPostConditionIfNotAlreadyInserted(dstArrayNode->getRegister(), TR::RealRegister::AssignAny);
+      }
 
    if (mr1->getBaseRegister())
       {
@@ -7452,10 +7506,9 @@ J9::Z::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node * node, TR::CodeGenerator 
       VMCardCheckEvaluator(firstChild, classReg, NULL, conditions, cg, true, cFlowRegionEnd);
       }
 
-   // Store for case where we have a NULL ptr detected at runtime and
-   // branches around the wrtbar
-
-   if (!sourceChild->isNonNull() && (doWrtBar || doCrdMrk))
+   // Store for case where we have a NULL ptr detected at runtime and branches around the wrtbar
+   // For OffHeap null stores use the wbLabel store path.
+   if (!sourceChild->isNonNull() && (doWrtBar || doCrdMrk) && !deferDestinationEvaluation)
       {
       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, cFlowRegionEnd);
 
