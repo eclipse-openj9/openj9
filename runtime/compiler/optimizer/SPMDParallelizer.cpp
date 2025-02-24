@@ -1503,9 +1503,6 @@ bool TR_SPMDKernelParallelizer::processSPMDKernelLoopForSIMDize(TR::Compilation 
    // need scalar loop for handling residual iterations
    // piggybacking on loop unroller implementation
 
-   //void *stackMark = trMemory()->markStack();
-   TR::StackMemoryRegion stackMemoryRegion(*trMemory());
-
    unroller.unroll(loop, branchNode);
 
 #if 0
@@ -1515,11 +1512,14 @@ bool TR_SPMDKernelParallelizer::processSPMDKernelLoopForSIMDize(TR::Compilation 
    unroller._optimizer->setEnableOptimization(inductionVariableAnalysis, true, NULL);
 #endif
 
-   //trMemory()->releaseStack(stackMark);
-
    TR_ScratchList<TR::Block> blocksInLoop(trMemory());
    loop->getBlocks(&blocksInLoop);
    ListIterator<TR::Block> blocksIt1(&blocksInLoop);
+
+   {
+   // Narrow scope of StackMemoryRegion for manipulation of TR_HashTab pointed to by entries
+   //
+   TR::StackMemoryRegion stackMemoryRegion(*trMemory());
 
    TR_HashTab* entries = new (comp->trStackMemory()) TR_HashTab(comp->trMemory(), stackAlloc);
 
@@ -1624,6 +1624,7 @@ bool TR_SPMDKernelParallelizer::processSPMDKernelLoopForSIMDize(TR::Compilation 
          }
          entries->clear();
       }
+   }
 
    ListIterator<TR::Block> blocksIt(&blocksInLoop);
 
