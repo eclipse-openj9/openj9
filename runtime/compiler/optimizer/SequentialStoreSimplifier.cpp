@@ -4160,6 +4160,8 @@ bool mayKillInterferenceBetweenNodes(TR::Compilation * comp,
                                      vcount_t newVisitCount,
                                      bool trace)
    {
+   OMR::Logger *log = comp->log();
+
    LexicalTimer lt("mayKillInterferenceBetweenNodes", comp->phaseTimer());
    TR::Node * n1 = 0;
    TR::Node * n2 = 0;
@@ -4175,19 +4177,17 @@ bool mayKillInterferenceBetweenNodes(TR::Compilation * comp,
 
    if (trace)
       {
-      comp->getDebug()->trace(" --- resetVisitCounts on %p done\n", n1);
-      comp->getDebug()->trace(" --- does node %p get killed somewhere in the subtree of node %p?\n", n2, n1);
+      log->printf(" --- resetVisitCounts on %p done\n", n1);
+      log->printf(" --- does node %p get killed somewhere in the subtree of node %p?\n", n2, n1);
       }
 
    if (n1->referencesMayKillAliasInSubTree(n2, newVisitCount, comp))
       {
-      if (trace)
-         comp->getDebug()->trace(" ---- node %p is killed somewhere in the subtree of node %p\n", n2, n1);
+      logprintf(trace, log, " ---- node %p is killed somewhere in the subtree of node %p\n", n2, n1);
 
       if (!fineGrainedOverlap(comp, n1, n2))
          {
-         if (trace)
-            comp->getDebug()->trace(" ----- n1 %p and n2 %p return false for fineGrainedOverlap\n", n1, n2);
+         logprintf(trace, log, " ----- n1 %p and n2 %p return false for fineGrainedOverlap\n", n1, n2);
          }
       else
          {
@@ -4208,19 +4208,17 @@ bool mayKillInterferenceBetweenNodes(TR::Compilation * comp,
 
    if (trace)
       {
-      comp->getDebug()->trace(" --- resetVisitCounts on %p done\n", n1);
-      comp->getDebug()->trace(" --- does node %p get killed somewhere in the subtree of node %p?\n", n2, n1);
+      log->printf(" --- resetVisitCounts on %p done\n", n1);
+      log->printf(" --- does node %p get killed somewhere in the subtree of node %p?\n", n2, n1);
       }
 
    if (n1->referencesMayKillAliasInSubTree(n2, newVisitCount, comp))
       {
-      if (trace)
-         comp->getDebug()->trace(" ---- node %p is killed somewhere in the subtree of node %p\n", n2, n1);
+      logprintf(trace, log, " ---- node %p is killed somewhere in the subtree of node %p\n", n2, n1);
 
       if (!fineGrainedOverlap(comp, n1, n2))
          {
-         if (trace)
-            comp->getDebug()->trace(" ----- n1 %p and n2 %p return false for fineGrainedOverlap\n", n1, n2);
+         logprintf(trace, log, " ----- n1 %p and n2 %p return false for fineGrainedOverlap\n", n1, n2);
          }
       else
          {

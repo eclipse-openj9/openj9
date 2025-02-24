@@ -3522,9 +3522,10 @@ J9::Z::CodeGenerator::incRefCountForOpaquePseudoRegister(TR::Node * node)
       TR_StorageReference *ref = reg->getStorageReference();
       if (ref && ref->isNodeBased() && ref->getNodeReferenceCount() > 0)
          {
-         if (self()->traceBCDCodeGen())
-            self()->comp()->getDebug()->trace("\tnode %s (%p) with storageRef #%d (%s): increment nodeRefCount %d->%d when artificially incrementing ref count\n",
-               node->getOpCode().getName(),node,ref->getReferenceNumber(),self()->comp()->getDebug()->getName(ref->getSymbol()),ref->getNodeReferenceCount(),ref->getNodeReferenceCount()+1);
+         logprintf(self()->traceBCDCodeGen(), self()->comp()->log(),
+               "\tnode %s (%p) with storageRef #%d (%s): increment nodeRefCount %d->%d when artificially incrementing ref count\n",
+               node->getOpCode().getName(), node, ref->getReferenceNumber(), self()->comp()->getDebug()->getName(ref->getSymbol()),
+               ref->getNodeReferenceCount(), ref->getNodeReferenceCount()+1);
          ref->incrementNodeReferenceCount();
          }
       }
