@@ -144,7 +144,7 @@ bash configure --with-boot-jdk=/home/jenkins/bootjdks/jdk11
 
 :pencil: Configuring and building is not specific to OpenJ9 but uses the OpenJDK build infrastructure with OpenJ9 added.
 Many other configuration options are available, including options to increase the verbosity of the build output to include command lines (`LOG=cmdlines`), more info or debug information.
-For more information see [OpenJDK build troubleshooting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/openjdk/jdk11u/master/doc/building.html#troubleshooting).
+For more information see [OpenJDK build troubleshooting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/ibmruntimes/openj9-openjdk-jdk11/blob/openj9/doc/building.html#troubleshooting).
 
 :pencil: **Mixed and compressed references support:** Different types of 64-bit builds can be created:
 - [compressed references](https://www.eclipse.org/openj9/docs/gc_overview/#compressed-references) (only)
@@ -277,7 +277,7 @@ where `<cups_include_path>` is the absolute path to CUPS. For example, `/opt/fre
 
 :pencil: Configuring and building is not specific to OpenJ9 but uses the OpenJDK build infrastructure with OpenJ9 added.
 Many other configuration options are available, including options to increase the verbosity of the build output to include command lines (`LOG=cmdlines`), more info or debug information.
-For more information see [OpenJDK build troubleshooting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/openjdk/jdk11u/master/doc/building.html#troubleshooting).
+For more information see [OpenJDK build troubleshooting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/ibmruntimes/openj9-openjdk-jdk11/blob/openj9/doc/building.html#troubleshooting).
 
 :pencil: **Mixed and compressed references support:** Different types of 64-bit builds can be created:
 - [compressed references](https://www.eclipse.org/openj9/docs/gc_overview/#compressed-references) (only)
@@ -434,7 +434,7 @@ bash configure --with-toolchain-version=2022
 
 :pencil: Configuring and building is not specific to OpenJ9 but uses the OpenJDK build infrastructure with OpenJ9 added.
 Many other configuration options are available, including options to increase the verbosity of the build output to include command lines (`LOG=cmdlines`), more info or debug information.
-For more information see [OpenJDK build troubleshooting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/openjdk/jdk11u/master/doc/building.html#troubleshooting).
+For more information see [OpenJDK build troubleshooting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/ibmruntimes/openj9-openjdk-jdk11/blob/openj9/doc/building.html#troubleshooting).
 
 :pencil: **Mixed and compressed references support:** Different types of 64-bit builds can be created:
 - [compressed references](https://www.eclipse.org/openj9/docs/gc_overview/#compressed-references) (only)
@@ -576,7 +576,7 @@ bash configure --with-boot-jdk=<path_to_boot_JDK11>
 
 :pencil: Configuring and building is not specific to OpenJ9 but uses the OpenJDK build infrastructure with OpenJ9 added.
 Many other configuration options are available, including options to increase the verbosity of the build output to include command lines (`LOG=cmdlines`), more info or debug information.
-For more information see [OpenJDK build troubleshooting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/openjdk/jdk11u/master/doc/building.html#troubleshooting).
+For more information see [OpenJDK build troubleshooting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/ibmruntimes/openj9-openjdk-jdk11/blob/openj9/doc/building.html#troubleshooting).
 
 :pencil: **Mixed and compressed references support:** Different types of 64-bit builds can be created:
 - [compressed references](https://www.eclipse.org/openj9/docs/gc_overview/#compressed-references) (only)
@@ -736,7 +736,7 @@ bash configure --openjdk-target=${OPENJ9_CC_PREFIX} \
 
 :pencil: Configuring and building is not specific to OpenJ9 but uses the OpenJDK build infrastructure with OpenJ9 added.
 Many other configuration options are available, including options to increase the verbosity of the build output to include command lines (`LOG=cmdlines`), more info or debug information.
-For more information see [OpenJDK build troubleshooting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/openjdk/jdk11u/master/doc/building.html#troubleshooting).
+For more information see [OpenJDK build troubleshooting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/ibmruntimes/openj9-openjdk-jdk11/blob/openj9/doc/building.html#troubleshooting).
 
 :pencil: **Mixed and compressed references support:** Different types of 64-bit builds can be created:
 - [compressed references](https://www.eclipse.org/openj9/docs/gc_overview/#compressed-references) (only)
@@ -1246,7 +1246,7 @@ bash configure --disable-warnings-as-errors \
 
 :pencil: Configuring and building is not specific to OpenJ9 but uses the OpenJDK build infrastructure with OpenJ9 added.
 Many other configuration options are available, including options to increase the verbosity of the build output to include command lines (`LOG=cmdlines`),, more info or debug information.
-For more information see [OpenJDK build troubleshooting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/openjdk/jdk11u/master/doc/building.html#troubleshooting).
+For more information see [OpenJDK build troubleshooting](https://htmlpreview.github.io/?https://raw.githubusercontent.com/ibmruntimes/openj9-openjdk-jdk11/blob/openj9/doc/building.html#troubleshooting).
 
 :pencil:
 If you want to build an OpenJDK that uses OpenSSL, you must specify `--with-openssl=<path_to_library>`
