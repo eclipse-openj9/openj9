@@ -353,11 +353,10 @@ j9gc_objaccess_staticStoreU64Split(J9VMThread *vmThread, J9Class *clazz, U_64 *d
  * @return displacement
  */
 IDATA
-j9gc_objaccess_indexableDataDisplacement(J9VMThread *vmThread, J9IndexableObject *src, J9IndexableObject *dst)
+j9gc_objaccess_indexableDataDisplacement(J9StackWalkState *walkState, J9IndexableObject *src, J9IndexableObject *dst)
 {
-	MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(vmThread)->accessBarrier;
-	return barrier->indexableDataDisplacement(vmThread, src, dst);
-
+	MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(walkState->walkThread)->accessBarrier;
+	return barrier->indexableDataDisplacement(walkState, src, dst);
 }
 
 /* TODO: After all array accesses in the VM have been made arraylet safe, 

@@ -269,7 +269,7 @@ public:
 	virtual void staticStoreU64(J9VMThread *vmThread, J9Class *clazz, U_64 *destSlot, U_64 value, bool isVolatile=false);
 	virtual void staticStoreI64(J9VMThread *vmThread, J9Class *clazz, I_64 *destSlot, I_64 value, bool isVolatile=false);
 
-	MMINLINE virtual IDATA indexableDataDisplacement(J9VMThread *vmThread, J9IndexableObject *src, J9IndexableObject *dst)
+	MMINLINE virtual IDATA indexableDataDisplacement(J9StackWalkState *walkState, J9IndexableObject *src, J9IndexableObject *dst)
 	{
 		return (IDATA)(((UDATA)dst) - ((UDATA)src));
 	}

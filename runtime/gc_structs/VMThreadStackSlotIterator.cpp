@@ -45,8 +45,8 @@ extern "C" {
  * Simply massages the arguments and calls the function that was passed by the user into
  * GC_VMThreadStackSlotIterator::scanSlots()
  */
-static void
-vmThreadStackDoOSlotIterator(J9VMThread *vmThread, J9StackWalkState *walkState, j9object_t *oSlotPointer, const void * stackLocation) 
+void
+gc_vmThreadStackDoOSlotIterator(J9VMThread *vmThread, J9StackWalkState *walkState, j9object_t *oSlotPointer, const void * stackLocation)
 {
 	J9MODRON_OSLOTITERATOR *oSlotIterator = (J9MODRON_OSLOTITERATOR*)walkState->userData1;
 
@@ -79,7 +79,7 @@ GC_VMThreadStackSlotIterator::initializeStackWalkState(
 {
 	J9JavaVM *vm = vmThread->javaVM;
 
-	stackWalkState->objectSlotWalkFunction = vmThreadStackDoOSlotIterator;
+	stackWalkState->objectSlotWalkFunction = gc_vmThreadStackDoOSlotIterator;
 	stackWalkState->userData1 = (void *)oSlotIterator;
 	stackWalkState->userData2 = (void *)vm;
 	stackWalkState->userData3 = userData;

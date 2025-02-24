@@ -37,6 +37,13 @@
  */
 typedef void J9MODRON_OSLOTITERATOR(J9JavaVM *javaVM, J9Object **objectIndirect, void *localData, J9StackWalkState *walkState, const void *stackLocation);
 
+extern "C" {
+
+void gc_vmThreadStackDoOSlotIterator(J9VMThread *vmThread, J9StackWalkState *walkState, j9object_t *oSlotPointer, const void * stackLocation);
+
+} /* extern "C" */
+
+
 /**
  * Iterate over all slots on the stack of a given thread which contain object references.
  * @ingroup GC_Structs
