@@ -237,7 +237,7 @@ def test(JOB_NAME, UPSTREAM_JOB_NAME, UPSTREAM_JOB_NUMBER, NODE, OPENJ9_REPO, OP
             string(name: 'VENDOR_TEST_DIRS', value: VENDOR_TEST_DIRS),
             string(name: 'USER_CREDENTIALS_ID', value: USER_CREDENTIALS_ID),
             string(name: 'TEST_FLAG', value: TEST_FLAG),
-            string(name: 'KEEP_REPORTDIR', value: keepReportDir),
+            booleanParam(name: 'KEEP_REPORTDIR', value: keepReportDir.toBoolean()),
             string(name: 'BUILD_IDENTIFIER', value: BUILD_IDENTIFIER),
             string(name: 'PARALLEL', value: PARALLEL),
             string(name: 'NUM_MACHINES', value: NUM_MACHINES),
