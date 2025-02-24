@@ -32,7 +32,8 @@
 		-DEXEP=$(Q)$(TEST_JDK_HOME)$(D)bin$(D)javap$(Q) -DOLWMODE=standard -DJDK_VERSION=$(JDK_VERSION) \
 		-DTESTSJARPATH=$(Q)$(TEST_RESROOT)$(D)alignment.jar$(Q) \
 		-DOBJECTJARPATH= -jar $(CMDLINETESTER_JAR) -DRESDIR=$(Q)$(JVM_TEST_ROOT)$(D)cmdline_options_testresources$(Q) \
-		-DRESJAR=$(CMDLINETESTER_RESJAR) -config $(Q)$(TEST_RESROOT)$(D)alignment.xml$(Q) -explainExcludes -nonZeroExitWhenError; \
+		-DRESJAR=$(CMDLINETESTER_RESJAR) -config $(Q)$(TEST_RESROOT)$(D)alignment.xml$(Q) \
+		-xids all,$(PLATFORM),$(JDK_VERSION) -xlist $(Q)$(TEST_RESROOT)$(D)exclude.xml$(Q) -explainExcludes -nonZeroExitWhenError; \
 		$(TEST_STATUS)</command>
 		<platformRequirements>^arch.arm</platformRequirements>
 		<levels>
@@ -48,12 +49,6 @@
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_lockWordAlignment_Object_i</testCaseName>
-		<disables>
-			<disable>
-				<comment>https://github.com/eclipse-openj9/openj9/issues/20539</comment>
-				<version>24+</version>
-			</disable>
-		</disables>
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
@@ -63,7 +58,7 @@
 		-DTESTSJARPATH=$(Q)$(TEST_RESROOT)$(D)alignment.jar$(Q) \
 		-DOBJECTJARPATH=$(Q)$(TEST_RESROOT)$(D)object_i.jar$(Q) \
 		-jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)alignment.xml$(Q) \
-		-explainExcludes -nonZeroExitWhenError; \
+		-xids all,$(PLATFORM),$(JDK_VERSION) -xlist $(Q)$(TEST_RESROOT)$(D)exclude.xml$(Q) -explainExcludes -nonZeroExitWhenError; \
 		$(TEST_STATUS)</command>
 		<platformRequirements>^arch.arm</platformRequirements>
 		<levels>
@@ -79,12 +74,6 @@
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_lockWordAlignment_Object_ii</testCaseName>
-		<disables>
-			<disable>
-				<comment>https://github.com/eclipse-openj9/openj9/issues/20539</comment>
-				<version>24+</version>
-			</disable>
-		</disables>
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
@@ -94,7 +83,7 @@
 		-DTESTSJARPATH=$(Q)$(TEST_RESROOT)$(D)alignment.jar$(Q) \
 		-DOBJECTJARPATH=$(Q)$(TEST_RESROOT)$(D)object_ii.jar$(Q) \
 		-jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)alignment.xml$(Q) \
-		-explainExcludes -nonZeroExitWhenError; \
+		-xids all,$(PLATFORM),$(JDK_VERSION) -xlist $(Q)$(TEST_RESROOT)$(D)exclude.xml$(Q) -explainExcludes -nonZeroExitWhenError; \
 		$(TEST_STATUS)</command>
 		<platformRequirements>^arch.arm</platformRequirements>
 		<levels>
@@ -110,12 +99,6 @@
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_lockWordAlignment_Object_iii</testCaseName>
-		<disables>
-			<disable>
-				<comment>https://github.com/eclipse-openj9/openj9/issues/20539</comment>
-				<version>24+</version>
-			</disable>
-		</disables>
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
@@ -125,7 +108,7 @@
 		-DTESTSJARPATH=$(Q)$(TEST_RESROOT)$(D)alignment.jar$(Q) \
 		-DOBJECTJARPATH=$(Q)$(TEST_RESROOT)$(D)object_iii.jar$(Q) \
 		-jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)alignment.xml$(Q) \
-		-explainExcludes -nonZeroExitWhenError; \
+		-xids all,$(PLATFORM),$(JDK_VERSION) -xlist $(Q)$(TEST_RESROOT)$(D)exclude.xml$(Q) -explainExcludes -nonZeroExitWhenError; \
 		$(TEST_STATUS)</command>
 		<platformRequirements>^arch.arm</platformRequirements>
 		<levels>
@@ -141,12 +124,6 @@
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_lockWordAlignment_Object_d</testCaseName>
-		<disables>
-			<disable>
-				<comment>https://github.com/eclipse-openj9/openj9/issues/20539</comment>
-				<version>24+</version>
-			</disable>
-		</disables>
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
@@ -156,7 +133,7 @@
 		-DTESTSJARPATH=$(Q)$(TEST_RESROOT)$(D)alignment.jar$(Q) \
 		-DOBJECTJARPATH=$(Q)$(TEST_RESROOT)$(D)object_d.jar$(Q) \
 		-jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)alignment.xml$(Q) \
-		-explainExcludes -nonZeroExitWhenError; \
+		-xids all,$(PLATFORM),$(JDK_VERSION) -xlist $(Q)$(TEST_RESROOT)$(D)exclude.xml$(Q) -explainExcludes -nonZeroExitWhenError; \
 		$(TEST_STATUS)</command>
 		<platformRequirements>^arch.arm</platformRequirements>
 		<levels>
