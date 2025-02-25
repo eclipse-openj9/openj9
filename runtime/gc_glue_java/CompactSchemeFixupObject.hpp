@@ -38,7 +38,7 @@ private:
 	MM_CompactScheme *_compactScheme;
 public:
 
-	MMINLINE void doContinuationSlot(MM_EnvironmentBase *env, omrobjectptr_t fromObject, omrobjectptr_t *slot);
+	MMINLINE void doSlot(MM_EnvironmentBase *env, omrobjectptr_t fromObject, omrobjectptr_t *slot);
 	void doStackSlot(MM_EnvironmentBase *env, omrobjectptr_t fromObject, omrobjectptr_t *slot);
 	/**
 	 * Perform fixup for a single object

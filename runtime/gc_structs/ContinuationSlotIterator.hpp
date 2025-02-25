@@ -35,6 +35,17 @@
 #include "modron.h"
 
 /**
+ * State constants representing the current stage of the iteration process
+ * @anchor ContinuationSlotIteratorState
+ */
+enum {
+	continuationslotiterator_state_start = 0,
+	continuationslotiterator_state_monitor_records,
+	continuationslotiterator_state_vthread,
+	continuationslotiterator_state_end
+};
+
+/**
  * Iterate over monitor records slots and vthread slot in a J9VMContinuation.
  * Used by ScanContinuationNativeSlots() (JAVA_SPEC_VERSION >= 24 only).
  * @ingroup GC_Structs
@@ -42,6 +53,8 @@
 class GC_ContinuationSlotIterator
 {
 	J9VMThread *_vmThread;
+	int _state;
+
 	j9object_t *_vthread;
 	J9MonitorEnterRecord *_monitorRecord;
 	J9MonitorEnterRecord *_jniMonitorRecord;
@@ -49,10 +62,31 @@ class GC_ContinuationSlotIterator
 public:
 	GC_ContinuationSlotIterator(J9VMThread *vmThread, J9VMContinuation *continuation)
 		: _vmThread(vmThread)
+		, _state(continuationslotiterator_state_start)
 		, _vthread(&continuation->vthread)
 		, _monitorRecord(continuation->monitorEnterRecords)
 		, _jniMonitorRecord(continuation->jniMonitorEnterRecords)
 	{};
+
+	/**
+	 * @return @ref ContinuationSlotIteratorState representing the current state (stage
+	 * of the iteration process)
+	 */
+	MMINLINE int
+	getState()
+	{
+		return _state;
+	}
+
+	/**
+	 * Get the J9VMThread * for the thread being iterated
+	 * @return _vmThread - the J9VMThread being iterated.
+	 */
+	MMINLINE J9VMThread *
+	getVMThread()
+	{
+		return _vmThread;
+	}
 
 	j9object_t *nextSlot();
 };

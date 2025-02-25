@@ -36,9 +36,6 @@
 #include "ClassIterator.hpp"
 #include "ClassHeapIterator.hpp"
 #include "ClassLoaderIterator.hpp"
-#if JAVA_SPEC_VERSION >= 24
-#include "ContinuationSlotIterator.hpp"
-#endif /* JAVA_SPEC_VERSION >= 24 */
 #include "Debug.hpp"
 #include "EnvironmentBase.hpp"
 #if defined(J9VM_GC_FINALIZATION)
@@ -359,6 +356,20 @@ MM_RootScanner::doClassSlot(J9Class *classPtr)
 	/* ignore class slots by default */
 }
 
+#if JAVA_SPEC_VERSION >= 24
+/**
+ * @todo Provide function documentation
+ */
+void
+MM_RootScanner::doContinuationSlot(J9Object **slotPtr, GC_ContinuationSlotIterator *continuationSlotIterator)
+{
+	/* ensure that this isn't a slot pointing into the gap (only matters for split heap VMs) */
+	if (!_extensions->heap->objectIsInGap(*slotPtr)) {
+		doSlot(slotPtr);
+	}
+}
+#endif /* JAVA_SPEC_VERSION >= 24 */
+
 /**
  * @todo Provide function documentation
  */
@@ -560,7 +571,7 @@ MM_RootScanner::scanOneThread(MM_EnvironmentBase *env, J9VMThread *walkThread, v
 
 		while (J9Object **slot = continuationSlotIterator.nextSlot()) {
 			/* do current continuation slot (mounted vthread case, the slot for saved carrier thread) */
-			doVMThreadSlot(slot, &vmThreadIterator);
+			doContinuationSlot(slot, &continuationSlotIterator);
 		}
 #endif /* JAVA_SPEC_VERSION >= 24 */
 	}

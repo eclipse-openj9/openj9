@@ -242,21 +242,32 @@ MM_MarkingDelegate::startRootListProcessing(MM_EnvironmentBase *env)
 }
 
 void
-MM_MarkingDelegate::doContinuationSlot(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, omrobjectptr_t *slotPtr)
+MM_MarkingDelegate::doSlot(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, omrobjectptr_t *slotPtr)
 {
-	omrobjectptr_t object = *slotPtr;
-	if (_markingScheme->isHeapObject(object) && !_extensions->heap->objectIsInGap(object)) {
-		if (_extensions->isConcurrentScavengerEnabled() && _extensions->isScavengerBackOutFlagRaised()) {
-			_markingScheme->fixupForwardedSlot(slotPtr);
-		}
-		_markingScheme->inlineMarkObject(env, *slotPtr);
+	if (_extensions->isConcurrentScavengerEnabled() && _extensions->isScavengerBackOutFlagRaised()) {
+		_markingScheme->fixupForwardedSlot(slotPtr);
+	}
+	_markingScheme->inlineMarkObject(env, *slotPtr);
+}
+
+#if JAVA_SPEC_VERSION >= 24
+void
+MM_MarkingDelegate::doContinuationSlot(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, omrobjectptr_t *slotPtr, GC_ContinuationSlotIterator *continuationSlotIterator)
+{
+	if (_markingScheme->isHeapObject(*slotPtr) && !_extensions->heap->objectIsInGap(*slotPtr)) {
+		doSlot(env, objectPtr, slotPtr);
+	} else if (NULL != *slotPtr) {
+		Assert_MM_true(continuationslotiterator_state_monitor_records == continuationSlotIterator->getState());
 	}
 }
+#endif /* JAVA_SPEC_VERSION >= 24 */
 
 void
 MM_MarkingDelegate::doStackSlot(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, omrobjectptr_t *slotPtr)
 {
-	doContinuationSlot(env, objectPtr, slotPtr);
+	if (_markingScheme->isHeapObject(*slotPtr) && !_extensions->heap->objectIsInGap(*slotPtr)) {
+		doSlot(env, objectPtr, slotPtr);
+	}
 }
 
 /**
@@ -296,7 +307,7 @@ MM_MarkingDelegate::scanContinuationNativeSlots(MM_EnvironmentBase *env, omrobje
 		GC_ContinuationSlotIterator continuationSlotIterator(currentThread, continuation);
 
 		while (J9Object **slotPtr = continuationSlotIterator.nextSlot()) {
-			doContinuationSlot(env, objectPtr, slotPtr);
+			doContinuationSlot(env, objectPtr, slotPtr, &continuationSlotIterator);
 		}
 #endif /* JAVA_SPEC_VERSION >= 24 */
 

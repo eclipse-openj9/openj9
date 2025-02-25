@@ -1216,7 +1216,7 @@ MM_WriteOnceCompactor::fixupMixedObject(MM_EnvironmentVLHGC* env, J9Object *obje
 }
 
 void
-MM_WriteOnceCompactor::doContinuationSlot(MM_EnvironmentVLHGC *env, J9Object *fromObject, J9Object** slot)
+MM_WriteOnceCompactor::doSlot(MM_EnvironmentVLHGC *env, J9Object *fromObject, J9Object** slot)
 {
 	J9Object *pointer = *slot;
 	if (isHeapObject(pointer)) {
@@ -1231,7 +1231,7 @@ MM_WriteOnceCompactor::doContinuationSlot(MM_EnvironmentVLHGC *env, J9Object *fr
 void
 MM_WriteOnceCompactor::doStackSlot(MM_EnvironmentVLHGC *env, J9Object *fromObject, J9Object** slot)
 {
-	doContinuationSlot(env, fromObject, slot);
+	doSlot(env, fromObject, slot);
 }
 
 /**
@@ -1268,7 +1268,7 @@ MM_WriteOnceCompactor::fixupContinuationNativeSlots(MM_EnvironmentVLHGC* env, J9
 		GC_ContinuationSlotIterator continuationSlotIterator(currentThread, continuation);
 
 		while (J9Object **slotPtr = continuationSlotIterator.nextSlot()) {
-			doContinuationSlot(env, objectPtr, slotPtr);
+			doSlot(env, objectPtr, slotPtr);
 		}
 #endif /* JAVA_SPEC_VERSION >= 24 */
 

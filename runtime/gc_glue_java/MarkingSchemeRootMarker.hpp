@@ -52,6 +52,9 @@ public:
 
 	virtual void doSlot(omrobjectptr_t *slotPtr);
 	virtual void doStackSlot(omrobjectptr_t *slotPtr, void *walkState, const void* stackLocation);
+#if JAVA_SPEC_VERSION >= 24
+	virtual void doContinuationSlot(J9Object **slotPtr, GC_ContinuationSlotIterator *continuationSlotIterator);
+#endif /* JAVA_SPEC_VERSION >= 24 */
 	virtual void doVMThreadSlot(omrobjectptr_t *slotPtr, GC_VMThreadIterator *vmThreadIterator);
 	virtual void doClass(J9Class *clazz);
 	virtual void doClassLoader(J9ClassLoader *classLoader);

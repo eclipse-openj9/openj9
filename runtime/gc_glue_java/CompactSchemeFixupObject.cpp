@@ -53,7 +53,7 @@ MM_CompactSchemeFixupObject::fixupMixedObject(omrobjectptr_t objectPtr)
 }
 
 void
-MM_CompactSchemeFixupObject::doContinuationSlot(MM_EnvironmentBase *env, omrobjectptr_t fromObject, omrobjectptr_t *slot)
+MM_CompactSchemeFixupObject::doSlot(MM_EnvironmentBase *env, omrobjectptr_t fromObject, omrobjectptr_t *slot)
 {
 	*slot = _compactScheme->getForwardingPtr(*slot);
 }
@@ -61,7 +61,7 @@ MM_CompactSchemeFixupObject::doContinuationSlot(MM_EnvironmentBase *env, omrobje
 void
 MM_CompactSchemeFixupObject::doStackSlot(MM_EnvironmentBase *env, omrobjectptr_t fromObject, omrobjectptr_t *slot)
 {
-	doContinuationSlot(env, fromObject, slot);
+	doSlot(env, fromObject, slot);
 }
 /**
  * @todo Provide function documentation
@@ -99,7 +99,7 @@ MM_CompactSchemeFixupObject::fixupContinuationNativeSlots(MM_EnvironmentStandard
 		GC_ContinuationSlotIterator continuationSlotIterator(currentThread, continuation);
 
 		while (J9Object **slotPtr = continuationSlotIterator.nextSlot()) {
-			doContinuationSlot(env, objectPtr, slotPtr);
+			doSlot(env, objectPtr, slotPtr);
 		}
 #endif /* JAVA_SPEC_VERSION >= 24 */
 

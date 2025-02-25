@@ -39,12 +39,22 @@
 #include "VMThreadListIterator.hpp"
 
 void
-MM_ConcurrentMarkingDelegate::doContinuationSlot(MM_EnvironmentBase *env, omrobjectptr_t *slotPtr)
+MM_ConcurrentMarkingDelegate::doSlot(MM_EnvironmentBase *env, omrobjectptr_t *slotPtr)
+{
+	_markingScheme->markObject(env, *slotPtr);
+}
+
+#if JAVA_SPEC_VERSION >= 24
+void
+MM_ConcurrentMarkingDelegate::doContinuationSlot(MM_EnvironmentBase *env, omrobjectptr_t *slotPtr, GC_ContinuationSlotIterator *continuationSlotIterator)
 {
 	if (_markingScheme->isHeapObject(*slotPtr) && !env->getExtensions()->heap->objectIsInGap(*slotPtr)) {
-		_markingScheme->markObject(env, *slotPtr);
+		doSlot(env, slotPtr);
+	} else if (NULL != *slotPtr) {
+		Assert_MM_true(continuationslotiterator_state_monitor_records == continuationSlotIterator->getState());
 	}
 }
+#endif /* JAVA_SPEC_VERSION >= 24 */
 
 void
 MM_ConcurrentMarkingDelegate::doStackSlot(MM_EnvironmentBase *env, omrobjectptr_t *slotPtr, J9StackWalkState *walkState, const void *stackLocation)
@@ -56,7 +66,7 @@ MM_ConcurrentMarkingDelegate::doStackSlot(MM_EnvironmentBase *env, omrobjectptr_
 	} else if (_markingScheme->isHeapObject(object)) {
 		/* heap object - validate and mark */
 		Assert_MM_validStackSlot(MM_StackSlotValidator(0, object, stackLocation, walkState).validate(env));
-		_markingScheme->markObject(env, object);
+		doSlot(env, slotPtr);
 	} else if (NULL != object) {
 		/* stack object - just validate */
 		Assert_MM_validStackSlot(MM_StackSlotValidator(MM_StackSlotValidator::NOT_ON_HEAP, object, stackLocation, walkState).validate(env));
@@ -177,7 +187,7 @@ MM_ConcurrentMarkingDelegate::scanThreadRoots(MM_EnvironmentBase *env)
 		GC_ContinuationSlotIterator continuationSlotIterator(vmThread, vmThread->currentContinuation);
 
 		while (J9Object **slot = continuationSlotIterator.nextSlot()) {
-			doContinuationSlot(env, slot);
+			doContinuationSlot(env, slot, &continuationSlotIterator);
 		}
 #endif /* JAVA_SPEC_VERSION >= 24 */
 	}
