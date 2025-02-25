@@ -60,28 +60,11 @@ typedef struct J9JFRTypeID {
 #define DOUBLE_TYPE_ID 8
 #define STACKTRACE_TYPE_ID 9
 
-static UDATA jfrEventSize(J9JFREvent *jfrEvent);
-static bool flushBufferToGlobal(J9VMThread *currentThread, J9VMThread *flushThread);
-static bool flushAllThreadBuffers(J9VMThread *currentThread, bool freeBuffers);
-static U_8* reserveBuffer(J9VMThread *currentThread, UDATA size);
-static J9JFREvent* reserveBufferWithStackTrace(J9VMThread *currentThread, J9VMThread *sampleThread, UDATA eventType, UDATA eventFixedSize);
-static void jfrThreadCreated(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
-static void jfrClassesUnload(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
-static void jfrVMShutdown(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
-static void jfrThreadStarting(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
-static void jfrThreadEnd(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
-static void jfrVMInitialized(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
-static void jfrVMMonitorWaited(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
-static void jfrVMThreadParked(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
 static void jfrStartSamplingThread(J9JavaVM *vm);
 static void initializeEventFields(J9VMThread *currentThread, J9JFREvent *jfrEvent, UDATA eventType);
 static int J9THREAD_PROC jfrSamplingThreadProc(void *entryArg);
 static void jfrExecutionSampleCallback(J9VMThread *currentThread, IDATA handlerKey, void *userData);
 static void jfrThreadCPULoadCallback(J9VMThread *currentThread, IDATA handlerKey, void *userData);
-static bool areJFRBuffersReadyForWrite(J9VMThread *currentThread);
-
-static UDATA jfrTypeIDHashFn(void *key, void *userData);
-static UDATA jfrTypeIDHashEqualFn(void *tableNode, void *queryNode, void *userData);
 
 /**
  * Calculate the size in bytes of a JFR event.
@@ -961,7 +944,7 @@ jfrExecutionSampleCallback(J9VMThread *currentThread, IDATA handlerKey, void *us
 	jfrExecutionSample(currentThread, currentThread);
 }
 
-void
+static void
 jfrCPULoad(J9VMThread *currentThread)
 {
 	PORT_ACCESS_FROM_VMC(currentThread);
@@ -1011,7 +994,7 @@ jfrCPULoad(J9VMThread *currentThread)
 	}
 }
 
-void
+static void
 jfrThreadCPULoad(J9VMThread *currentThread, J9VMThread *sampleThread)
 {
 	PORT_ACCESS_FROM_VMC(currentThread);
@@ -1051,7 +1034,7 @@ jfrThreadCPULoadCallback(J9VMThread *currentThread, IDATA handlerKey, void *user
 	jfrThreadCPULoad(currentThread, currentThread);
 }
 
-void
+static void
 jfrClassLoadingStatistics(J9VMThread *currentThread)
 {
 	J9JavaVM *vm = currentThread->javaVM;
@@ -1068,7 +1051,7 @@ jfrClassLoadingStatistics(J9VMThread *currentThread)
 	}
 }
 
-void
+static void
 jfrThreadContextSwitchRate(J9VMThread *currentThread)
 {
 	PORT_ACCESS_FROM_VMC(currentThread);
@@ -1099,7 +1082,7 @@ jfrThreadContextSwitchRate(J9VMThread *currentThread)
 	}
 }
 
-void
+static void
 jfrThreadStatistics(J9VMThread *currentThread)
 {
 	J9JavaVM *vm = currentThread->javaVM;
@@ -1229,7 +1212,7 @@ shutdownJFRIDs(J9JavaVM *vm)
  * support for known JVM event types. Currently, the types supported are
  * the ones needed to bootstrap JFR JCL initialization.
  */
-jlong
+static jlong
 getKnownJFREventType(const J9UTF8 *className)
 {
 	jlong result = INVALID_TYPE_ID;
