@@ -152,10 +152,7 @@ For more information see [OpenJDK build troubleshooting](https://htmlpreview.git
 - mixed references, either compressed or non-compressed references is selected when starting Java
 
 Mixed references is the default to build when no options are specified. `configure` options include:
-- `--with-mixedrefs` create a mixed references static build (equivalent to `--with-mixedrefs=static`)
-- `--with-mixedrefs=no` create a build supporting compressed references only
-- `--with-mixedrefs=dynamic` create a mixed references build that uses runtime checks
-- `--with-mixedrefs=static` (this is the default) create a mixed references build which avoids runtime checks by compiling source twice
+- `--with-noncompressedrefs=no` create a build supporting compressed references only
 - `--with-noncompressedrefs` create a build supporting non-compressed references only
 
 :pencil: **OpenSSL support:** If you want to build an OpenJDK that includes OpenSSL, you must specify `--with-openssl={fetched|system|path_to_library}`
@@ -285,10 +282,7 @@ For more information see [OpenJDK build troubleshooting](https://htmlpreview.git
 - mixed references, either compressed or non-compressed references is selected when starting Java
 
 Mixed references is the default to build when no options are specified. `configure` options include:
-- `--with-mixedrefs` create a mixed references static build (equivalent to `--with-mixedrefs=static`)
-- `--with-mixedrefs=no` create a build supporting compressed references only
-- `--with-mixedrefs=dynamic` create a mixed references build that uses runtime checks
-- `--with-mixedrefs=static` (this is the default) create a mixed references build which avoids runtime checks by compiling source twice
+- `--with-noncompressedrefs=no` create a build supporting compressed references only
 - `--with-noncompressedrefs` create a build supporting non-compressed references only
 
 :pencil: **OpenSSL support:** If you want to build an OpenJDK that includes OpenSSL, you must specify `--with-openssl={fetched|system|path_to_library}`
@@ -442,10 +436,7 @@ For more information see [OpenJDK build troubleshooting](https://htmlpreview.git
 - mixed references, either compressed or non-compressed references is selected when starting Java
 
 Mixed references is the default to build when no options are specified. `configure` options include:
-- `--with-mixedrefs` create a mixed references static build (equivalent to `--with-mixedrefs=static`)
-- `--with-mixedrefs=no` create a build supporting compressed references only
-- `--with-mixedrefs=dynamic` create a mixed references build that uses runtime checks
-- `--with-mixedrefs=static` (this is the default) create a mixed references build which avoids runtime checks by compiling source twice
+- `--with-noncompressedrefs=no` create a build supporting compressed references only
 - `--with-noncompressedrefs` create a build supporting non-compressed references only
 
 :pencil: **OpenSSL support:** If you want to build an OpenJDK that includes OpenSSL, you must specify `--with-openssl={fetched|path_to_library}`
@@ -584,10 +575,7 @@ For more information see [OpenJDK build troubleshooting](https://htmlpreview.git
 - mixed references, either compressed or non-compressed references is selected when starting Java
 
 Mixed references is the default to build when no options are specified. `configure` options include:
-- `--with-mixedrefs` create a mixed references static build (equivalent to `--with-mixedrefs=static`)
-- `--with-mixedrefs=no` create a build supporting compressed references only
-- `--with-mixedrefs=dynamic` create a mixed references build that uses runtime checks
-- `--with-mixedrefs=static` (this is the default) create a mixed references build which avoids runtime checks by compiling source twice
+- `--with-noncompressedrefs=no` create a build supporting compressed references only
 - `--with-noncompressedrefs` create a build supporting non-compressed references only
 
 :pencil: **AArch64 macOS only:**
@@ -744,10 +732,7 @@ For more information see [OpenJDK build troubleshooting](https://htmlpreview.git
 - mixed references, either compressed or non-compressed references is selected when starting Java
 
 Mixed references is the default to build when no options are specified. `configure` options include:
-- `--with-mixedrefs` create a mixed references static build (equivalent to `--with-mixedrefs=static`)
-- `--with-mixedrefs=no` create a build supporting compressed references only
-- `--with-mixedrefs=dynamic` create a mixed references build that uses runtime checks
-- `--with-mixedrefs=static` (this is the default) create a mixed references build which avoids runtime checks by compiling source twice
+- `--with-noncompressedrefs=no` create a build supporting compressed references only
 - `--with-noncompressedrefs` create a build supporting non-compressed references only
 
 ::pencil: **OpenSSL support:** If you want to build an OpenJDK that uses OpenSSL, you must specify `--with-openssl={fetched|system|path_to_library}`
