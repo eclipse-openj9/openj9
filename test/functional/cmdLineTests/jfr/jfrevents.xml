@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+
+<!--
+Copyright IBM Corp. and others 2025
+
+This program and the accompanying materials are made available under
+the terms of the Eclipse Public License 2.0 which accompanies this
+distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+or the Apache License, Version 2.0 which accompanies this distribution and
+is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+This Source Code may also be made available under the following
+Secondary Licenses when the conditions for such availability set
+forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+General Public License, version 2 with the GNU Classpath
+Exception [1] and GNU General Public License, version 2 with the
+OpenJDK Assembly Exception [2].
+
+[1] https://www.gnu.org/software/classpath/license.html
+[2] https://openjdk.org/legal/assembly-exception.html
+
+SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
+-->
+
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+
+<suite id="JFR Tests" timeout="3000">
+	<test id="runWorkload - approx 300 seconds">
+		<command>$EXE$ -XX:StartFlightRecording -Dibm.java9.forceCommonCleanerShutdown=true -Xint -Xcheck:memory --add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED -cp $RESJAR$ org.openj9.test.WorkLoad 10 100 10</command>
+		<output type="required" caseSensitive="yes" regex="no">All runs complete.</output>
+		<output type="required" caseSensitive="yes" regex="no">Memory checker statistics:</output>
+		<output type="failure" caseSensitive="yes" regex="no">unfreed blocks remaining at shutdown!</output>
+		<output type="success" caseSensitive="yes" regex="no">All allocated blocks were freed.</output>
+	</test>
+	<test id="test jfr summary - approx 30seconds">
+		<command>$JFR_EXE$ summary defaultJ9recording.jfr</command>
+		<output type="required" caseSensitive="yes" regex="no">Version: 2.1</output>
+		<output type="required" caseSensitive="yes" regex="no">jdk.ExecutionSample</output>
+		<output type="success" caseSensitive="yes" regex="no">jdk.CPULoad</output>
+		<output type="success" caseSensitive="yes" regex="no">jdk.JavaThreadStatistics</output>
+		<output type="success" caseSensitive="yes" regex="no">jdk.ClassLoadingStatistics</output>
+		<output type="success" caseSensitive="yes" regex="no">jdk.ThreadCPULoad</output>
+		<output type="required" caseSensitive="yes" regex="no">jdk.Metadata</output>
+	</test>
+	<test id="test jfr execution sample - approx 30seconds">
+		<command>$JFR_EXE$ print --xml --events "ExecutionSample" --stack-depth 1 defaultJ9recording.jfr</command>
+		<output type="required" caseSensitive="yes" regex="no">http://www.w3.org/2001/XMLSchema-instance</output>
+		<output type="required" caseSensitive="yes" regex="no">jdk.ExecutionSample</output>
+		<output type="required" caseSensitive="yes" regex="no">startTime</output>
+		<output type="required" caseSensitive="yes" regex="no">sampledThread</output>
+		<output type="required" caseSensitive="yes" regex="no">stackTrace</output>
+		<output type="required" caseSensitive="yes" regex="no">frames</output>
+		<output type="success" caseSensitive="yes" regex="no">STATE_RUNNABLE</output>
+		<output type="failure" caseSensitive="yes" regex="no">jfr print: could not read recording</output>
+	</test>
+	<test id="test jfr thread start - approx 30seconds">
+		<command>$JFR_EXE$ print --xml --events "ThreadStart" --stack-depth 1 defaultJ9recording.jfr</command>
+		<output type="required" caseSensitive="yes" regex="no">http://www.w3.org/2001/XMLSchema-instance</output>
+		<output type="required" caseSensitive="yes" regex="no">jdk.ThreadStart</output>
+		<output type="required" caseSensitive="yes" regex="no">eventThread</output>
+		<output type="required" caseSensitive="yes" regex="no">osName</output>
+		<output type="required" caseSensitive="yes" regex="no">osThreadId</output>
+		<output type="required" caseSensitive="yes" regex="no">javaName</output>
+		<output type="success" caseSensitive="yes" regex="no">stackTrace</output>
+		<output type="failure" caseSensitive="yes" regex="no">jfr print: could not read recording</output>
+	</test>
+</suite>
