@@ -433,18 +433,24 @@ public:
 	calculateFieldDataStart(void)
 	{
 		U_32 fieldDataStart = 0;
-		if (!isContendedClassLayout()) {
+		if (isContendedClassLayout()) {
+			if (TrcEnabled_Trc_VM_contendedClass) {
+				J9UTF8 *className = J9ROMCLASS_CLASSNAME(_romClass);
+				U_32 utfLength = J9UTF8_LENGTH(className);
+				U_8 *utfData = J9UTF8_DATA(className);
+				Trc_VM_contendedClass(utfLength, utfData);
+			}
+			fieldDataStart = getPaddedTrueNonContendedSize() - _objectHeaderSize;
+		} else {
 			bool doubleAlignment = (_totalDoubleCount > 0);
 			bool hasObjects = _totalObjectCount > 0;
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-
 			/* If the type has double field the doubles need to start on an 8-byte boundary. In the case of valuetypes
 			 * there is no lockword so the super class field size will be zero. This means that valueTypes in compressedrefs
 			 * mode with double alignment fields need to be pre-padded.
 			 */
 			doubleAlignment = (doubleAlignment || (_totalFlatFieldDoubleBytes > 0));
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
-
 			fieldDataStart = getSuperclassFieldsSize();
 			if (((getSuperclassObjectSize() % OBJECT_SIZE_INCREMENT_IN_BYTES) != 0) /* superclass is not end-aligned */
 				&& (doubleAlignment || (!_objectCanUseBackfill && hasObjects))
@@ -464,14 +470,6 @@ public:
 				fieldDataStart += BACKFILL_SIZE;
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 			}
-		} else {
-			if (TrcEnabled_Trc_VM_contendedClass) {
-				J9UTF8 *className = J9ROMCLASS_CLASSNAME(_romClass);
-				U_32	utfLength = J9UTF8_LENGTH(className);
-				U_8 *utfData = J9UTF8_DATA(className);
-				Trc_VM_contendedClass(utfLength, utfData);
-			}
-			fieldDataStart = getPaddedTrueNonContendedSize() - _objectHeaderSize;
 		}
 		return fieldDataStart;
 	}
