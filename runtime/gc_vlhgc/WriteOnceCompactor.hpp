@@ -547,6 +547,14 @@ private:
 	void clearClassLoaderRememberedSetsForCompactSet(MM_EnvironmentVLHGC *env);
 	
 	/**
+	 * Determine whether the object pointer is found within the heap proper.
+	 * @return Boolean indicating if the object pointer is within the heap boundaries.
+	 */
+	MMINLINE bool isHeapObject(J9Object *objectPtr)
+	{
+		return (_heapBase <= (uint8_t *)objectPtr) && (_heapTop > (uint8_t *)objectPtr);
+	}
+	/**
 	 * Create a WriteOnceCompactor object.
 	 */
 	MM_WriteOnceCompactor(MM_EnvironmentVLHGC *env);
