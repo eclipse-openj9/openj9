@@ -813,10 +813,12 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                               || (lhs != NULL && rhs != NULL && lhs->mustBeEqual(rhs, this));
 
       if (trace())
-         traceMsg(comp(), "%s: callNode n%dn: lhsNode n%dn (lhsClass 0x%p)(isLhsValue %d)(lhs %p ValueNumber %d), rhsNode n%dn (rhsClass 0x%p)(isRhsValue %d)(rhs %p ValueNumber %d), areSameRef %d\n",
-               __FUNCTION__, node->getGlobalIndex(),
-               lhsNode->getGlobalIndex(), lhsClass, isLhsValue, lhs, getValueNumber(lhsNode),
-               rhsNode->getGlobalIndex(), rhsClass, isRhsValue, rhs, getValueNumber(rhsNode), areSameRef);
+         {
+         traceMsg(comp(), "%s: callNode n%dn: lhsNode n%dn (lhsClass 0x%p)(isLhsValue %s)(lhs %p ValueNumber %d) ",
+               __FUNCTION__, node->getGlobalIndex(), lhsNode->getGlobalIndex(), lhsClass, comp()->getDebug()->getName(isLhsValue), lhs, getValueNumber(lhsNode));
+         traceMsg(comp(), "rhsNode n%dn (rhsClass 0x%p)(isRhsValue %s)(rhs %p ValueNumber %d), areSameRef %d\n",
+               rhsNode->getGlobalIndex(), rhsClass, comp()->getDebug()->getName(isRhsValue), rhs, getValueNumber(rhsNode), areSameRef);
+         }
 
       // Non-helper equality/inequality comparison call is not needed if
       // either operand is definitely not an instance of a value type or
@@ -3059,7 +3061,7 @@ J9::ValuePropagation::isArrayNullRestricted(TR::VPConstraint *arrayConstraint)
       {
       ret = (arrayConstraint->isFixedClass()) ? TR_no : TR_maybe;
       if (trace())
-         traceMsg(comp(), "%s: return %s. java.lang.Object\n", __FUNCTION__, (ret == TR_no) ? "TR_no" : "TR_maybe");
+         traceMsg(comp(), "%s: return %s. java.lang.Object\n", __FUNCTION__, comp()->getDebug()->getName(ret));
       return ret;
       }
 
@@ -3069,7 +3071,7 @@ J9::ValuePropagation::isArrayNullRestricted(TR::VPConstraint *arrayConstraint)
    //
    ret = TR::Compiler->cls.classHasIdentity(arrayComponentClass) ? TR_no : TR_maybe;
    if (trace())
-      traceMsg(comp(), "%s: return %s. Concrete class\n", __FUNCTION__, (ret == TR_no) ? "TR_no" : "TR_maybe");
+      traceMsg(comp(), "%s: return %s. Concrete class\n", __FUNCTION__, comp()->getDebug()->getName(ret));
    return ret;
    }
 
