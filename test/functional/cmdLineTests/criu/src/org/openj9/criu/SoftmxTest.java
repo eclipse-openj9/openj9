@@ -96,8 +96,8 @@ public class SoftmxTest {
 		Path optionsFilePath = CRIUTestUtils.createOptionsFile("options", optionsContents);
 		Path imagePath = Paths.get("cpData");
 		CRIUTestUtils.createCheckpointDirectory(imagePath);
-		CRIUSupport criuSupport = new CRIUSupport(imagePath);
-		criuSupport.registerRestoreOptionsFile(optionsFilePath);
+		CRIUSupport criuSupport = CRIUSupport.getCRIUSupport().setImageDir(imagePath)
+				.registerRestoreOptionsFile(optionsFilePath);
 
 		System.out.println("Pre-checkpoint");
 		CRIUTestUtils.checkPointJVM(criuSupport, imagePath, true);
