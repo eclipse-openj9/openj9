@@ -73,8 +73,8 @@ public class Core {
 class CRIUSupportContext<R extends Resource> extends Context<R> {
 	// InternalCRIUSupport.getCRaCCheckpointToDir() is not null if
 	// InternalCRIUSupport.isCRaCSupportEnabled() returns true before creating CRIUSupportContext<>().
-	private final InternalCRIUSupport internalCRIUSupport = new InternalCRIUSupport(
-			Paths.get(InternalCRIUSupport.getCRaCCheckpointToDir()))
+	private final InternalCRIUSupport internalCRIUSupport = InternalCRIUSupport.getInternalCRIUSupport()
+			.setImageDir(Paths.get(InternalCRIUSupport.getCRaCCheckpointToDir()))
 			.setLeaveRunning(false)
 			.setShellJob(true)
 			.setTCPEstablished(true)
