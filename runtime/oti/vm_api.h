@@ -2451,6 +2451,26 @@ monitorTableAt(J9VMThread* vmStruct, j9object_t object);
 void
 cacheObjectMonitorForLookup(J9JavaVM* vm, J9VMThread* vmStruct, J9ObjectMonitor* objectMonitor);
 
+/* ---------------- thrinfo.c ---------------- */
+
+/**
+ * @brief Search the monitor tables in vm->monitorTable for the inflated monitor corresponding to an
+ * object. Similar to monitorTableAt(), but doesn't add the monitor if it isn't found in the hashtable.
+ *
+ * This function may block on vm->monitorTableMutex.
+ * This function can work out-of-process.
+ *
+ * @param[in] vm the JavaVM. For out-of-process: may be a local or target pointer.
+ * vm->monitorTable must be a target value.
+ * @param[in] object the object. For out-of-process: a target pointer.
+ *
+ * @return a J9ObjectMonitor from the monitor hashtable or a NULL if there is no corresponding monitor
+ * in vm->monitorTable.
+ *
+ * @see monitorTablePeekMonitor in util_internal.h
+ */
+J9ObjectMonitor *
+monitorTablePeek(J9JavaVM *vm, j9object_t object);
 
 /* ---------------- PackageIDHashTable.c ---------------- */
 
@@ -4579,12 +4599,13 @@ enterContinuation(struct J9VMThread *currentThread, j9object_t continuationObjec
 /**
  * @brief Suspends the Continuation runnable.
  *
- * @param currentThread
+ * @param currentThread the thread whose Continuation is being yielded
  * @param isFinished true if it is last unmount
+ * @param returnState thread execution state when it is re-mounted
  * @return BOOLEAN
  */
 BOOLEAN
-yieldContinuation(struct J9VMThread *currentThread, BOOLEAN isFinished);
+yieldContinuation(struct J9VMThread *currentThread, BOOLEAN isFinished, UDATA returnState);
 
 /**
  * @brief Free the native memory allocated by Continuation.
@@ -4669,6 +4690,41 @@ void
 releaseVThreadInspector(J9VMThread *currentThread, jobject thread);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
+#if JAVA_SPEC_VERSION >= 24
+/**
+ * @brief Attach all yielded VirtualThread monitors to carrier thread.
+ *
+ * @param currentThread the current thread
+ * @param continuationObject the Continuation object
+ */
+void
+preparePinnedVirtualThreadForMount(J9VMThread *currentThread, j9object_t continuationObject);
+
+/**
+ * @brief Inflate all monitors and prepare the VirtualThread to yield.
+ *
+ * @param currentThread the current thread
+ * @param syncObj object to block/wait on
+ * @param isObjectWait if the call is from Object.wait()
+ *
+ * @return J9_OBJECT_MONITOR_YIELD_VIRTUAL if the can be successfully yielded;
+ * otherwise, an error code is returned
+ */
+UDATA
+preparePinnedVirtualThreadForUnmount(J9VMThread *currentThread, j9object_t syncObj, BOOLEAN isObjectWait);
+
+/**
+ * @brief Find a list of virtual thread to be unblocked. This is a helper method for
+ * JVM_TakeVirtualThreadListToUnblock (see javanextvmi.cpp).
+ *
+ * @param currentThread the current thread
+ * @param vm pointer to J9JavaVM
+ *
+ * @return a list of virtual threads to be unblocked
+ */
+jobject
+takeVirtualThreadListToUnblock(J9VMThread *currentThread, J9JavaVM *vm);
+#endif /* JAVA_SPEC_VERSION >= 24 */
 /* ---------------- hookableAsync.c ---------------- */
 
 /**
