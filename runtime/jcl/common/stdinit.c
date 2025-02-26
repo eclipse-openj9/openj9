@@ -1047,9 +1047,6 @@ computeFinalBootstrapClassPath(J9JavaVM *vm)
 
 #endif /* OPT_DYNAMIC_LOAD_SUPPORT */
 
-/* Prototype properties helper */
-jobject getPropertyList(JNIEnv *env);
-
 jint
 completeInitialization(J9JavaVM * vm)
 {
