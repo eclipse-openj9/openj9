@@ -1083,16 +1083,15 @@ JVM_GetClassInterfaces(jint arg0, jint arg1)
 	return NULL;
 }
 
-
-
+#if JAVA_SPEC_VERSION < 25
 jint JNICALL
-JVM_GetClassModifiers(JNIEnv* env, jclass clazz)
+JVM_GetClassModifiers(JNIEnv *env, jclass clazz)
 {
-	J9Class* ramClass = java_lang_Class_vmRef(env, clazz);
-	J9ROMClass* romClass = ramClass->romClass;
+	J9Class *ramClass = java_lang_Class_vmRef(env, clazz);
+	J9ROMClass *romClass = ramClass->romClass;
 
 	if (J9ROMCLASS_IS_ARRAY(romClass)) {
-		J9ArrayClass* arrayClass = (J9ArrayClass*)ramClass;
+		J9ArrayClass *arrayClass = (J9ArrayClass *)ramClass;
 		jint result = 0;
 		J9ROMClass *leafRomClass = arrayClass->leafComponentType->romClass;
 		if (J9_ARE_ALL_BITS_SET(leafRomClass->extraModifiers, J9AccClassInnerClass)) {
@@ -1111,8 +1110,7 @@ JVM_GetClassModifiers(JNIEnv* env, jclass clazz)
 		}
 	}
 }
-
-
+#endif /* JAVA_SPEC_VERSION < 25 */
 
 jobject JNICALL
 JVM_GetClassSigners(jint arg0, jint arg1)
@@ -1344,14 +1342,14 @@ JVM_GetPrimitiveArrayElement(JNIEnv *env, jobject array, jint index, jint wCode)
 	return value;
 }
 
-
-
+#if JAVA_SPEC_VERSION < 25
 jobject JNICALL
 JVM_GetProtectionDomain(jint arg0, jint arg1)
 {
 	assert(!"JVM_GetProtectionDomain() stubbed!");
 	return NULL;
 }
+#endif /* JAVA_SPEC_VERSION < 25 */
 
 #if JAVA_SPEC_VERSION < 24
 jobject JNICALL
@@ -1584,33 +1582,21 @@ JVM_Interrupt(jint arg0, jint arg1)
 	return NULL;
 }
 
-
+#if JAVA_SPEC_VERSION < 25
+jboolean JNICALL
+JVM_IsArrayClass(JNIEnv *env, jclass clazz)
+{
+	J9Class *ramClass = java_lang_Class_vmRef(env, clazz);
+	return J9ROMCLASS_IS_ARRAY(ramClass->romClass) ? JNI_TRUE : JNI_FALSE;
+}
+#endif /* JAVA_SPEC_VERSION < 25 */
 
 jboolean JNICALL
-JVM_IsArrayClass(JNIEnv* env, jclass clazz)
+JVM_IsInterface(JNIEnv *env, jclass clazz)
 {
-	J9Class * ramClass = java_lang_Class_vmRef(env, clazz);
-	if (J9ROMCLASS_IS_ARRAY(ramClass->romClass)) {
-		return JNI_TRUE;
-	} else {
-		return JNI_FALSE;
-	}
+	J9Class *ramClass = java_lang_Class_vmRef(env, clazz);
+	return J9ROMCLASS_IS_INTERFACE(ramClass->romClass) ? JNI_TRUE : JNI_FALSE;
 }
-
-
-
-jboolean JNICALL
-JVM_IsInterface(JNIEnv* env, jclass clazz)
-{
-	J9Class * ramClass = java_lang_Class_vmRef(env, clazz);
-	if (J9ROMCLASS_IS_INTERFACE(ramClass->romClass)) {
-		return JNI_TRUE;
-	} else {
-		return JNI_FALSE;
-	}
-}
-
-
 
 jboolean JNICALL
 JVM_IsInterrupted(JNIEnv* env, jobject thread, jboolean unknown)
@@ -1639,19 +1625,14 @@ JVM_IsInterrupted(JNIEnv* env, jobject thread, jboolean unknown)
 	}
 }
 
-
-
+#if JAVA_SPEC_VERSION < 25
 jboolean JNICALL
-JVM_IsPrimitiveClass(JNIEnv* env, jclass clazz)
+JVM_IsPrimitiveClass(JNIEnv *env, jclass clazz)
 {
-	J9Class * ramClass = java_lang_Class_vmRef(env, clazz);
-	if (J9ROMCLASS_IS_PRIMITIVE_TYPE(ramClass->romClass)) {
-		return JNI_TRUE;
-	} else {
-		return JNI_FALSE;
-	}
+	J9Class *ramClass = java_lang_Class_vmRef(env, clazz);
+	return J9ROMCLASS_IS_PRIMITIVE_TYPE(ramClass->romClass) ? JNI_TRUE : JNI_FALSE;
 }
-
+#endif /* JAVA_SPEC_VERSION < 25 */
 
 /**
  * Check whether the JNI version is supported.

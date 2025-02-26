@@ -178,14 +178,10 @@ jvm_add_exports(jvm
 	_JVM_IsInterface@8
 	_JVM_GetClassSigners@8
 	_JVM_SetClassSigners@12
-	_JVM_IsArrayClass@8
-	_JVM_IsPrimitiveClass@8
 	_JVM_GetComponentType@8
-	_JVM_GetClassModifiers@8
 	_JVM_GetClassDeclaredFields@12
 	_JVM_GetClassDeclaredMethods@12
 	_JVM_GetClassDeclaredConstructors@12
-	_JVM_GetProtectionDomain@8
 	_JVM_SetProtectionDomain@12
 	_JVM_GetDeclaredClasses@8
 	_JVM_GetDeclaringClass@8
@@ -470,6 +466,15 @@ else()
 		JVM_IsStaticallyLinked
 		JVM_VirtualThreadPinnedEvent
 		JVM_TakeVirtualThreadListToUnblock
+	)
+endif()
+
+if(JAVA_SPEC_VERSION LESS 25)
+	jvm_add_exports(jvm
+		_JVM_GetClassModifiers@8
+		_JVM_GetProtectionDomain@8
+		_JVM_IsArrayClass@8
+		_JVM_IsPrimitiveClass@8
 	)
 endif()
 
