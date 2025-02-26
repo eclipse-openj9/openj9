@@ -2052,6 +2052,7 @@ static void jitHookClassesUnload(J9HookInterface * * hookInterface, UDATA eventN
    TR::PersistentInfo * persistentInfo = compInfo->getPersistentInfo();
 
    persistentInfo->incNumUnloadedClasses(classUnloadCount);
+   persistentInfo->incGlobalClassUnloadID();
 
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseClassUnloading))
       {
@@ -2244,7 +2245,6 @@ static void jitHookAnonClassesUnload(J9HookInterface * * hookInterface, UDATA ev
 
    compInfo->getLowPriorityCompQueue().purgeEntriesOnClassLoaderUnloading(&dummyClassLoader);
 
-   compInfo->getPersistentInfo()->incGlobalClassUnloadID();
 #if defined(J9VM_INTERP_PROFILING_BYTECODES)
    if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableIProfilerThread))
       {
@@ -2406,7 +2406,6 @@ static void jitHookClassLoaderUnload(J9HookInterface * * hookInterface, UDATA ev
       {
       TR_VerboseLog::writeLineLocked(TR_Vlog_HD, "Class unloading for classLoader=0x%p", classLoader);
       }
-   compInfo->getPersistentInfo()->incGlobalClassUnloadID();
 
    PORT_ACCESS_FROM_JAVAVM(vmThread->javaVM);
 
