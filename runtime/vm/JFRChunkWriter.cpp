@@ -137,7 +137,9 @@ VM_JFRChunkWriter::writeCheckpointEventHeader(CheckpointTypeMask typeMask, U_32 
 {
 	/* write delta offset in previous checkpoint event */
 	if (NULL != _previousCheckpointDelta) {
-		writeEventSize(_previousCheckpointDelta);
+		_bufferWriter->writeLEB128PaddedU72(
+				_previousCheckpointDelta,
+				_bufferWriter->getFileOffset(_bufferWriter->getCursor(), _lastDataStart));
 	}
 
 	/* reserve size field */
@@ -161,7 +163,8 @@ VM_JFRChunkWriter::writeCheckpointEventHeader(CheckpointTypeMask typeMask, U_32 
 	_bufferWriter->writeLEB128((U_64)0);
 
 	/* reserve delta offset to next checkpoint event */
-	_previousCheckpointDelta = reserveEventSize();
+	_previousCheckpointDelta = _bufferWriter->getCursor();
+	_bufferWriter->writeLEB128PaddedU72(0);
 
 	if (_debug) {
 		j9tty_printf(
