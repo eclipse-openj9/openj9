@@ -48,13 +48,17 @@ target_include_directories(ffi PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 #platform specific stuff hacked in
 if(OMR_ARCH_X86)
-	if(NOT (OMR_ENV_DATA64 OR OMR_OS_WINDOWS))
+	if(NOT (OMR_ENV_DATA64 OR OMR_OS_LINUX OR OMR_OS_WINDOWS))
 		message(SEND_ERROR "Only x86-64 is currently supported")
 	endif()
 
 	target_include_directories(ffi PUBLIC x86)
 	if(OMR_OS_LINUX)
-		target_include_directories(ffi PUBLIC preconf/xa)
+		if(OMR_ENV_DATA64)
+			target_include_directories(ffi PUBLIC preconf/xa)
+		else()
+			target_include_directories(ffi PUBLIC preconf/xi)
+		endif()
 	elseif(OMR_OS_OSX)
 		target_include_directories(ffi PUBLIC preconf/oa)
 	elseif(OMR_OS_WINDOWS)
@@ -74,19 +78,15 @@ if(OMR_ARCH_X86)
 	endif()
 
 	if(OMR_OS_LINUX OR OMR_OS_OSX)
-		target_sources(ffi
-			PRIVATE
-			x86/ffi64.c
-		)
-		target_sources(ffi
-			PRIVATE
-			x86/unix64.S
-		)
 		if(OMR_ENV_DATA64)
 			target_sources(ffi
 				PRIVATE
-				x86/win64.S
+					x86/ffi64.c
+					x86/unix64.S
+					x86/win64.S
 			)
+		else()
+			target_sources(ffi PRIVATE x86/win32.S)
 		endif()
 	endif()
 
