@@ -800,10 +800,7 @@ jcharArray JNICALL Java_com_ibm_oti_io_NativeCharacterConverter_convertBytesToCh
 
 /* BBjclNativesWin32SystemHelpers*/
 char* getPlatformFileEncoding (JNIEnv *env, char *codepage, int size, int encodingType);
-I_32
-convertToUTF8 (J9PortLibrary* portLibrary, const wchar_t* unicodeString, char* utf8Buffer, UDATA size);
 char * getTmpDir (JNIEnv *env, char **tempdir);
-jobject getPlatformPropertyList (JNIEnv *env, const char *strings[], int propIndex);
 void mapLibraryToPlatformName (const char *inPath, char *outPath);
 
 /************************************************************
@@ -813,7 +810,6 @@ void mapLibraryToPlatformName (const char *inPath, char *outPath);
 /* BBjclNativesUNIXSystemHelpers*/
 char *getPlatformFileEncoding (JNIEnv * env, char *codepageProp, int propSize, int encodingType);
 char * getTmpDir (JNIEnv *env, char**envSpace);
-jobject getPlatformPropertyList (JNIEnv * env, const char *strings[], int propIndex);
 void mapLibraryToPlatformName (const char *inPath, char *outPath);
 
 /* orbvmhelpers.c */
