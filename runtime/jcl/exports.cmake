@@ -350,7 +350,6 @@ omr_add_exports(jclse
 	Java_java_lang_J9VMInternals_getStackTrace
 	Java_java_lang_J9VMInternals_newInstance
 	Java_java_lang_System_getSysPropBeforePropertiesInitialized
-	Java_java_lang_System_getPropertyList
 	Java_java_lang_System_mapLibraryName
 	Java_java_lang_System_rasInitializeVersion
 	Java_java_lang_System_setFieldImpl
@@ -434,6 +433,7 @@ omr_add_exports(jclse
 
 if(JAVA_SPEC_VERSION LESS 17)
 omr_add_exports(jclse
+	Java_java_lang_System_getPropertyList
 	Java_sun_misc_Unsafe_defineAnonymousClass
 )
 endif()
@@ -599,13 +599,18 @@ if(NOT JAVA_SPEC_VERSION LESS 9)
 	)
 endif()
 
+if(JAVA_SPEC_VERSION EQUAL 11)
+	omr_add_exports(jclse
+		Java_java_lang_System_initJCLPlatformEncoding
+	)
+endif()
+
 # java 11+
 if(NOT JAVA_SPEC_VERSION LESS 11)
 	omr_add_exports(jclse
 		Java_java_lang_Class_getNestHostImpl
 		Java_java_lang_Class_getNestMembersImpl
 		Java_java_lang_invoke_MethodHandleResolver_getCPConstantDynamicAt
-		Java_java_lang_System_initJCLPlatformEncoding
 	)
 endif()
 
