@@ -1216,7 +1216,7 @@ void
 MM_WriteOnceCompactor::doStackSlot(MM_EnvironmentVLHGC *env, J9Object *fromObject, J9Object** slot)
 {
 	J9Object *pointer = *slot;
-	if (NULL != pointer) {
+	if (isHeapObject(pointer)) {
 		J9Object *forwardedPtr = getForwardingPtr(pointer);
 		if (pointer != forwardedPtr) {
 			*slot = forwardedPtr;
