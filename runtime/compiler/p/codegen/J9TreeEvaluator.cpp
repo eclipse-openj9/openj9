@@ -6525,7 +6525,7 @@ TR::Register *J9::Power::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeG
                TR::LabelSymbol *dataAddrInitDoneLabel = generateLabelSymbol(cg);
                TR::LabelSymbol *nonZeroArrayLabel = generateLabelSymbol(cg);
 
-               iCursor = generateTrg1Src1ImmInstruction(cg,TR::InstOpCode::cmpi8, node, condReg, enumReg, 0, iCursor);
+               iCursor = generateTrg1Src1ImmInstruction(cg,TR::InstOpCode::cmpli4, node, condReg, enumReg, 0, iCursor);
                iCursor = generateConditionalBranchInstruction(cg, TR::InstOpCode::bgt, node, nonZeroArrayLabel, condReg, iCursor);
                // Clear dataAddr field of 0 size array
                if (needZeroInit)
