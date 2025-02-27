@@ -4983,7 +4983,7 @@ TR_J9VMBase::getMemberNameMethodInfo(
    out->vmtarget = (TR_OpaqueMethodBlock*)(uintptr_t)tgt;
    out->vmindex = (uintptr_t)ix;
    out->clazz = getClassFromJavaLangClass(jlClass);
-   out->refKind = (flags >> MN_REFERENCE_KIND_SHIFT) & MN_REFERENCE_KIND_MASK;
+   out->refKind = MN_GET_REFERENCE_KIND(flags);
    return true;
    }
 

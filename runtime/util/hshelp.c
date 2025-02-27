@@ -1821,7 +1821,7 @@ fixMemberNames(J9VMThread *currentThread, j9object_t *memberNamesToFix)
 jlong
 vmindexValueForMethodMemberName(J9JNIMethodID *methodID, J9Class *clazz, jint flags)
 {
-	jint refKind = (flags >> MN_REFERENCE_KIND_SHIFT) & MN_REFERENCE_KIND_MASK;
+	jint refKind = MN_GET_REFERENCE_KIND(flags);
 	jlong result = (jlong)-2; /* Invalid result (must be replaced). */
 
 	Assert_hshelp_true(J9_ARE_ANY_BITS_SET(flags, MN_IS_METHOD | MN_IS_CONSTRUCTOR));
