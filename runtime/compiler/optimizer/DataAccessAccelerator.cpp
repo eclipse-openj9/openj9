@@ -90,6 +90,21 @@ int32_t TR_DataAccessAccelerator::perform()
    {
    int32_t result = 0;
 
+   /* Disable DAA if vector packed decimal facilities aren't available to avoid
+    *
+    * Disabling the DAA optimization for non-vectorized paths temporarily to unblock
+    * off-heap enablement while we continue to investigate the bug in non-vectorized
+    * pdload evaluator.
+    */
+   if (comp()->target().cpu.isZ() && TR::Compiler->om.isOffHeapAllocationEnabled() &&
+      !(comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL) &&
+         comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY) &&
+         comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY_2) &&
+         comp()->target().cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY_3)))
+      {
+      return result;
+      }
+
    if (!comp()->getOption(TR_DisableIntrinsics) &&
        !comp()->getOption(TR_MimicInterpreterFrameShape) &&
 
