@@ -135,7 +135,7 @@ public:
 #if JAVA_SPEC_VERSION >= 24
 	void doContinuationSlot(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, omrobjectptr_t *slotPtr, GC_ContinuationSlotIterator *continuationSlotIterator);
 #endif /* JAVA_SPEC_VERSION >= 24 */
-	void doStackSlot(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, omrobjectptr_t *slotPtr);
+	void doStackSlot(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, omrobjectptr_t *slotPtr, void *walkState, const void* stackLocation);
 	void scanContinuationNativeSlots(MM_EnvironmentBase *env, omrobjectptr_t objectPtr);
 
 	MMINLINE GC_ObjectScanner *
