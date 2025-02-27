@@ -128,6 +128,20 @@ class TR_MultipleCallTargetInliner : public TR_InlinerBase
        *    True if the given calltarget should be inlined
        */
       bool inlineSubCallGraph(TR_CallTarget* calltarget);
+
+      /*
+       * \brief
+       *   For some call targets and their sub call graphs, it may be possible to simplify them into simple operations in
+       *   certain situations, such as when known object info is being passed as arg. In such cases, the node count
+       *   obtained via generateNodeEstimate would not truly reflect the number of nodes that are actually introduced. This
+       *   function provides a mechanism for examining call targets and evaluating whether it is safe to skip counting nodes.
+       *
+       * \param callTarget
+       *    the call target to examine
+       * \return
+       *    true if node counting can be skipped for callTarget, false otherwise
+       */
+      bool canSkipCountingNodes(TR_CallTarget* callTarget);
    };
 
 class TR_J9InlinerUtil: public OMR_InlinerUtil

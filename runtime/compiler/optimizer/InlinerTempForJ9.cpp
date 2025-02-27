@@ -3327,6 +3327,9 @@ void TR_MultipleCallTargetInliner::recursivelyWalkCallTargetAndPerformAction(TR_
 
    debugTrace(tracer(),"recursivelyWalkingCallTargetAndPerformAction: Considering Target %p. node estimate before = %d maxbcindex = %d",ct,action.getNodeEstimate(),getPolicy()->getInitialBytecodeSize(ct->_calleeMethod, 0, comp()));
 
+   if (canSkipCountingNodes(ct))
+      return;
+
    action(ct,comp());
 
    TR_CallSite *callsite = 0;
@@ -3941,9 +3944,9 @@ bool TR_MultipleCallTargetInliner::inlineCallTargets(TR::ResolvedMethodSymbol *c
          estimatedNumberOfNodes += myEstimate.getNodeEstimate();
 
          if (comp()->trace(OMR::inlining))
-            traceMsg(comp(), "Estimated Number of Nodes is %d after calltarget %p", estimatedNumberOfNodes,calltarget);
+            traceMsg(comp(), "Estimated Number of Nodes is %d after calltarget %p\n", estimatedNumberOfNodes,calltarget);
 
-         debugTrace(tracer(),"Estimated Number of Nodes is %d after calltarget %p", estimatedNumberOfNodes,calltarget);
+         debugTrace(tracer(),"Estimated Number of Nodes is %d after calltarget %p\n", estimatedNumberOfNodes,calltarget);
 
          float factor = 1.1F;          // this factor was chosen based on a study of a large WAS app that showed that getMaxBytecodeindex was 92% accurate compared to nodes generated
 
@@ -4044,6 +4047,33 @@ bool TR_MultipleCallTargetInliner::inlineCallTargets(TR::ResolvedMethodSymbol *c
 
    callStack.commit();
    return anySuccess;
+   }
+
+bool
+TR_MultipleCallTargetInliner::canSkipCountingNodes(TR_CallTarget* callTarget)
+   {
+   TR::RecognizedMethod rm = callTarget->_calleeMethod->getRecognizedMethod();
+   switch (rm)
+      {
+      case TR::java_lang_Object_hashCode:
+         {
+         if (callTarget->_myCallSite &&
+               callTarget->_myCallSite->_ecsPrexArgInfo)
+            {
+            TR_PrexArgument* arg  = callTarget->_myCallSite->_ecsPrexArgInfo->get(0);
+            if (arg && arg->getClass() && arg->classIsFixed() && arg->hasKnownObjectIndex())
+               {
+               if (comp()->trace(OMR::inlining))
+                  traceMsg(comp(), "Skipping node counting for sub call graph of java/lang/Object.hashCode()I\n");
+               return true;
+               }
+            }
+         }
+         break;
+      default:
+         break;
+      }
+   return false;
    }
 
 void TR_MultipleCallTargetInliner::weighCallSite( TR_CallStack * callStack , TR_CallSite *callsite, bool currentBlockHasExceptionSuccessors, bool dontAddCalls)
