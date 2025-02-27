@@ -301,7 +301,9 @@ static inlMapping mappings[] = {
 	{ "Java_sun_reflect_Reflection_getClassAccessFlags__Ljava_lang_Class_2", J9_BCLOOP_SEND_TARGET_INL_REFLECTION_GETCLASSACCESSFLAGS },
 #endif /* JAVA_SPEC_VERSION >= 11 */
 
-#if JAVA_SPEC_VERSION >= 22
+#if JAVA_SPEC_VERSION >= 24
+	{ "Java_openj9_internal_foreign_abi_InternalDowncallHandler_invokeNative__Ljava_lang_Object_2_3Ljava_lang_Object_2_3JZJJJJ_3J", J9_BCLOOP_SEND_TARGET_INL_INTERNALDOWNCALLHANDLER_INVOKENATIVE },
+#elif JAVA_SPEC_VERSION >= 22
 	{ "Java_openj9_internal_foreign_abi_InternalDowncallHandler_invokeNative___3Ljava_lang_Object_2_3JZJJJJ_3J", J9_BCLOOP_SEND_TARGET_INL_INTERNALDOWNCALLHANDLER_INVOKENATIVE },
 #elif JAVA_SPEC_VERSION == 21
 	{ "Java_openj9_internal_foreign_abi_InternalDowncallHandler_invokeNative__ZJJJJ_3J", J9_BCLOOP_SEND_TARGET_INL_INTERNALDOWNCALLHANDLER_INVOKENATIVE },

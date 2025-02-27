@@ -5185,7 +5185,11 @@ done:
 	}
 
 #if JAVA_SPEC_VERSION >= 16
-#if JAVA_SPEC_VERSION >= 22
+#if JAVA_SPEC_VERSION >= 24
+	/* openj9.internal.foreign.abi.InternalDowncallHandler:
+	 * private native long invokeNative(Object returnStateMemBase, Object[] bases, long[] offsets, boolean isInCriticalDownCall, long returnStateMemAddr, long returnStructMemAddr, long functionAddr, long calloutThunk, long[] argValues);
+	 */
+#elif JAVA_SPEC_VERSION >= 22
 	/* openj9.internal.foreign.abi.InternalDowncallHandler:
 	 * private native long invokeNative(Object[] bases, long[] offsets, boolean isInCriticalDownCall, long returnStateMemAddr, long returnStructMemAddr, long functionAddr, long calloutThunk, long[] argValues);
 	 */
@@ -5227,7 +5231,13 @@ done:
 		U_64 *ffiArgs = _currentThread->ffiArgs;
 		U_64 sFfiArgs[16];
 #if JAVA_SPEC_VERSION >= 22
+#if JAVA_SPEC_VERSION >= 24
+		UDATA argSlots = 14;
+		UDATA returnStateMemAddr;
+		j9object_t returnStateMemBase = NULL;
+#else /* JAVA_SPEC_VERSION >= 24 */
 		UDATA argSlots = 13;
+#endif /* JAVA_SPEC_VERSION >= 24 */
 		I_32 *returnState = NULL;
 		UDATA curPtrArgIdx = 0;
 		j9object_t heapBase = NULL;
@@ -5258,9 +5268,19 @@ done:
 
 #if JAVA_SPEC_VERSION >= 21
 		/* The native memory is allocated at java level to save the execution state after performing the downcall. */
+#if JAVA_SPEC_VERSION >= 24
+		returnStateMemAddr = (UDATA)*(I_64 *)(_sp + 7); /* returnStateMemAddr */
+		returnStateMemBase = *(j9object_t *)(_sp + 12); /* returnStateMemBase */
+		if (NULL != returnStateMemBase) {
+			returnState = (I_32 *)((UDATA)returnStateMemBase + returnStateMemAddr);
+		} else {
+			returnState = (I_32 *)returnStateMemAddr;
+		}
+#else /* JAVA_SPEC_VERSION >= 24 */
 		returnState = (I_32 *)(UDATA)*(I_64 *)(_sp + 7); /* returnStateMemAddr */
+#endif /* JAVA_SPEC_VERSION >= 24 */
 
-		/* Set the linker option to the current thread for the trivial downcall. */
+		/* Set the linker option to the current thread for the critical downcall. */
 		_currentThread->isInCriticalDownCall = (0 == *(U_32*)(_sp + 9)) ? FALSE : TRUE;
 #endif /* JAVA_SPEC_VERSION >= 21 */
 
@@ -5465,7 +5485,7 @@ done:
 
 done:
 #if JAVA_SPEC_VERSION >= 21
-		/* Clear the trivial downcall flag. */
+		/* Clear the critical downcall flag. */
 		_currentThread->isInCriticalDownCall = FALSE;
 #endif /* JAVA_SPEC_VERSION >= 21 */
 
