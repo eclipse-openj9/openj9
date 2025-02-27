@@ -1890,3 +1890,17 @@ JVM_IsUseContainerSupport(void)
 
 	return result;
 }
+
+#if JAVA_SPEC_VERSION >= 17
+/**
+ * @brief Get the default system properties.
+ *
+ * @return an Object array of system property key value pairs
+ */
+JNIEXPORT jobjectArray JNICALL
+JVM_GetProperties(JNIEnv *env)
+{
+	assert(!"JVM_GetProperties");
+	return NULL;
+}
+#endif /* JAVA_SPEC_VERSION >= 17 */
