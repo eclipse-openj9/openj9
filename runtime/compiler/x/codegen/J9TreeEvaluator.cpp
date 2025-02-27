@@ -9086,6 +9086,150 @@ inlineNanoTime(
 #endif
 #endif // LINUX
 
+TR::Register* J9::X86::TreeEvaluator::inlineMathFma(TR::Node* node, TR::CodeGenerator* cg)
+   {
+   TR::Node *firstChild = node->getFirstChild();
+   TR::Node *secondChild = node->getSecondChild();
+   TR::Node *thirdChild = node->getThirdChild();
+
+   TR::Register *lhsReg = NULL;
+   TR::Register *midReg = NULL;
+   TR::Register *rhsReg = NULL;
+   TR::Register *result = cg->allocateRegister(TR_FPR);
+
+   bool memLoadLhs = !firstChild->getRegister() && firstChild->getReferenceCount() == 1
+                     && firstChild->getOpCode().isLoadVar();
+
+   bool memLoadMiddle = !secondChild->getRegister() && secondChild->getReferenceCount() == 1
+                        && secondChild->getOpCode().isLoadVar();
+
+   bool memLoadRhs = !thirdChild->getRegister() && thirdChild->getReferenceCount() == 1
+                     && thirdChild->getOpCode().isLoadVar();
+
+   bool is64Bit = node->getDataType().isDouble();
+
+   TR::InstOpCode::Mnemonic fpMovRegRegOpcode = is64Bit ? TR::InstOpCode::MOVSDRegReg : TR::InstOpCode::MOVSSRegReg;
+   result->setIsSinglePrecision(!is64Bit);
+
+   TR_ASSERT_FATAL(cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_X86_FMA), "Cannot generate inline fma implementation without FMA extensions");
+
+   // Choose fma instruction carefully, based on operand form, to reduce number of copies
+   if (memLoadLhs)
+      {
+      TR::InstOpCode::Mnemonic opcode = is64Bit ? TR::InstOpCode::VFMADD231SDRegRegMem : TR::InstOpCode::VFMADD231SSRegRegMem;
+      TR::MemoryReference *lhsMR = generateX86MemoryReference(firstChild, cg);
+
+      if (memLoadRhs)
+         {
+         // a (2) * b (3) + c (1)
+         TR::MemoryReference *rhsMR = generateX86MemoryReference(thirdChild, cg);
+         generateRegMemInstruction(TR::InstOpCode::MOVSRegMem(is64Bit), node, result, rhsMR, cg);
+
+         midReg = cg->evaluate(secondChild);
+         memLoadMiddle = false; // No choice but to evaluate;
+         generateRegRegMemInstruction(opcode, node, result, midReg, lhsMR, cg);
+         }
+      else if (memLoadMiddle)
+         {
+         // fma = a (1) * b (3) + c (2)
+         opcode = is64Bit ? TR::InstOpCode::VFMADD132SDRegRegMem : TR::InstOpCode::VFMADD132SSRegRegMem;
+
+         TR::MemoryReference *midMR = generateX86MemoryReference(secondChild, cg);
+         rhsReg = cg->evaluate(thirdChild);
+
+         generateRegMemInstruction(TR::InstOpCode::MOVSRegMem(is64Bit), node, result, lhsMR, cg);
+         generateRegRegMemInstruction(opcode, node, result, rhsReg, midMR, cg);
+         }
+      else
+         {
+         // fma = a (2) * b (3) + c (1)
+         midReg = cg->evaluate(secondChild);
+         rhsReg = cg->evaluate(thirdChild);
+         generateRegRegInstruction(fpMovRegRegOpcode, node, result, rhsReg, cg);
+         generateRegRegMemInstruction(opcode, node, result, midReg, lhsMR, cg);
+         }
+      }
+   else if (memLoadMiddle)
+      {
+      TR::MemoryReference *midMR = generateX86MemoryReference(secondChild, cg);
+      lhsReg = cg->evaluate(firstChild);
+
+      if (memLoadRhs)
+         {
+         // fma = a (2) * b (1) + c (3)
+         TR::InstOpCode::Mnemonic opcode = is64Bit ? TR::InstOpCode::VFMADD213SDRegRegMem : TR::InstOpCode::VFMADD213SSRegRegMem;
+         TR::MemoryReference *rhsMR = generateX86MemoryReference(thirdChild, cg);
+
+         generateRegMemInstruction(TR::InstOpCode::MOVSRegMem(is64Bit), node, result, midMR, cg);
+         generateRegRegMemInstruction(opcode, node, result, lhsReg, rhsMR, cg);
+         }
+      else
+         {
+         // fma = a (1) * b (3) + c (2)
+         TR::InstOpCode::Mnemonic opcode = is64Bit ? TR::InstOpCode::VFMADD132SDRegRegMem : TR::InstOpCode::VFMADD132SSRegRegMem;
+         rhsReg = cg->evaluate(thirdChild);
+
+         generateRegRegInstruction(fpMovRegRegOpcode, node, result, lhsReg, cg);
+         generateRegRegMemInstruction(opcode, node, result, rhsReg, midMR, cg);
+         }
+      }
+   else if (memLoadRhs)
+      {
+      // fma = a (2) * b (1) + c (3)
+      TR::InstOpCode::Mnemonic opcode = is64Bit ? TR::InstOpCode::VFMADD213SDRegRegMem : TR::InstOpCode::VFMADD213SSRegRegMem;
+
+      TR::MemoryReference *rhsMR = generateX86MemoryReference(thirdChild, cg);
+      lhsReg = cg->evaluate(firstChild);
+      midReg = cg->evaluate(secondChild);
+
+      generateRegRegInstruction(fpMovRegRegOpcode, node, result, lhsReg, cg);
+      generateRegRegMemInstruction(opcode, node, result, midReg, rhsMR, cg);
+      }
+   else
+      {
+      // fma = a (2) * b (1) + c (3)
+      TR::InstOpCode::Mnemonic opcode = is64Bit ? TR::InstOpCode::VFMADD213SDRegRegReg : TR::InstOpCode::VFMADD213SSRegRegReg;
+
+      lhsReg = cg->evaluate(firstChild);
+      midReg = cg->evaluate(secondChild);
+      rhsReg = cg->evaluate(thirdChild);
+
+      generateRegRegInstruction(fpMovRegRegOpcode, node, result, lhsReg, cg);
+      generateRegRegRegInstruction(opcode, node, result, midReg, rhsReg, cg);
+      }
+
+   if (memLoadLhs)
+      {
+      cg->recursivelyDecReferenceCount(firstChild);
+      }
+   else
+      {
+      cg->decReferenceCount(firstChild);
+      }
+
+   if (memLoadMiddle)
+      {
+      cg->recursivelyDecReferenceCount(secondChild);
+      }
+   else
+      {
+      cg->decReferenceCount(secondChild);
+      }
+
+   if (memLoadRhs)
+      {
+      cg->recursivelyDecReferenceCount(thirdChild);
+      }
+   else
+      {
+      cg->decReferenceCount(thirdChild);
+      }
+
+   node->setRegister(result);
+
+   return result;
+   }
+
 // Convert serial String.hashCode computation into vectorization copy and implement with SSE instruction
 //
 // Conversion process example:
@@ -12155,6 +12299,18 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
             return TR::TreeEvaluator::inlineStringLatin1Inflate(node, cg);
             }
          break;
+      case TR::java_lang_Math_fma_F:
+      case TR::java_lang_Math_fma_D:
+      case TR::java_lang_StrictMath_fma_F:
+      case TR::java_lang_StrictMath_fma_D:
+         {
+         static bool disableInlineFMA = feGetEnv("TR_DisableInlineFMA") != NULL;
+
+         if (!disableInlineFMA && cg->comp()->target().cpu.supportsFeature(OMR_FEATURE_X86_FMA))
+            return inlineMathFma(node, cg);
+
+         break;
+         }
       case TR::jdk_internal_util_ArraysSupport_vectorizedHashCode:
          {
          if (cg->getSupportsInlineVectorizedHashCode())
