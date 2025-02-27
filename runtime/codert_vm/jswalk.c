@@ -136,6 +136,10 @@ static jvmtiIterationControl stackAllocatedObjectSlotWalkFunction(J9JavaVM *java
 static UDATA countOwnedObjectMonitors(J9StackWalkState *walkState);
 static UDATA walkLiveMonitorSlots(J9StackWalkState *walkState, J9JITStackAtlas *gcStackAtlas,
 		U_8 *liveMonitorMap, U_8 *monitorMask, U_16 numberOfMapBits);
+#if JAVA_SPEC_VERSION >= 24
+static UDATA walkLiveMonitorSlotsForYield(J9StackWalkState *walkState, J9JITStackAtlas *gcStackAtlas,
+		U_8 *liveMonitorMap, U_8 *monitorMask, U_16 numberOfMapBits);
+#endif /* JAVA_SPEC_VERSION >= 24 */
 static void countLiveMonitorSlots(J9StackWalkState *walkState, J9JITStackAtlas *gcStackAtlas, U_8 *liveMonitorMap, U_8 *monitorMask, U_16 numberOfMapBits);
 static j9object_t *getSlotAddress(J9StackWalkState *walkState, J9JITStackAtlas *gcStackAtlas, U_16 slot);
 static void jitWalkOSRBuffer(J9StackWalkState *walkState, J9OSRBuffer *osrBuffer);
@@ -1665,8 +1669,17 @@ jitGetOwnedObjectMonitors(J9StackWalkState *walkState)
 	/* If -XX:+ShowHiddenFrames option has not been set, skip hidden method frames */
 	UDATA skipHiddenFrames = J9_ARE_NO_BITS_SET(walkState->javaVM->runtimeFlags, J9_RUNTIME_SHOW_HIDDEN_FRAMES);
 
-	if (NULL == walkState->userData1) {
-		return countOwnedObjectMonitors(walkState);
+#if JAVA_SPEC_VERSION >= 24
+	BOOLEAN prepareForYield = FALSE;
+	if (J9_ARE_ANY_BITS_SET(walkState->flags, J9_STACKWALK_PREPARE_FOR_YIELD)) {
+		skipHiddenFrames = FALSE;
+		prepareForYield = TRUE;
+	} else
+#endif /* JAVA_SPEC_VERSION >= 24 */
+	{
+		if (NULL == walkState->userData1) {
+			return countOwnedObjectMonitors(walkState);
+		}
 	}
 
 	/* get the stackmap and inline map for the given pc (this is a single walk of jit metadata) */
@@ -1696,14 +1709,26 @@ jitGetOwnedObjectMonitors(J9StackWalkState *walkState)
 				if (liveMonitorMap) {
 					U_8 *inlineMonitorMask = getMonitorMask(gcStackAtlas, inlinedCallSite);
 					if (NULL != inlineMonitorMask) {
-						rc = walkLiveMonitorSlots(walkState, gcStackAtlas, liveMonitorMap, inlineMonitorMask, numberOfMapBits);
+#if JAVA_SPEC_VERSION >= 24
+						if (prepareForYield) {
+							rc = walkLiveMonitorSlotsForYield(walkState, gcStackAtlas, liveMonitorMap, inlineMonitorMask, numberOfMapBits);
+						} else
+#endif /* JAVA_SPEC_VERSION >= 24 */
+						{
+							rc = walkLiveMonitorSlots(walkState, gcStackAtlas, liveMonitorMap, inlineMonitorMask, numberOfMapBits);
+						}
 						if (J9_STACKWALK_STOP_ITERATING == rc) {
 							return rc;
 						}
 					}
 				}
-				/* increment stack depth */
-				walkState->userData4 = (void *)(((UDATA)walkState->userData4) + 1);
+#if JAVA_SPEC_VERSION >= 24
+				if (!prepareForYield)
+#endif /* JAVA_SPEC_VERSION >= 24 */
+				{
+					/* increment stack depth */
+					walkState->userData4 = (void *)(((UDATA)walkState->userData4) + 1);
+				}
 			}
 		}
 	}
@@ -1715,7 +1740,14 @@ jitGetOwnedObjectMonitors(J9StackWalkState *walkState)
 	} else {
 		/* Get the live monitors for the outer frame */
 		if (liveMonitorMap) {
-			rc = walkLiveMonitorSlots(walkState, gcStackAtlas, liveMonitorMap, getMonitorMask(gcStackAtlas, NULL), numberOfMapBits);
+#if JAVA_SPEC_VERSION >= 24
+			if (prepareForYield) {
+				rc = walkLiveMonitorSlotsForYield(walkState, gcStackAtlas, liveMonitorMap, getMonitorMask(gcStackAtlas, NULL), numberOfMapBits);
+			} else
+#endif /* JAVA_SPEC_VERSION >= 24 */
+			{
+				rc = walkLiveMonitorSlots(walkState, gcStackAtlas, liveMonitorMap, getMonitorMask(gcStackAtlas, NULL), numberOfMapBits);
+			}
 		}
 	}
 
@@ -1822,6 +1854,49 @@ walkLiveMonitorSlots(J9StackWalkState *walkState, J9JITStackAtlas *gcStackAtlas,
 
 	return J9_STACKWALK_KEEP_ITERATING;
 }
+
+#if JAVA_SPEC_VERSION >= 24
+static UDATA
+walkLiveMonitorSlotsForYield(J9StackWalkState *walkState, J9JITStackAtlas *gcStackAtlas,
+		U_8 *liveMonitorMap, U_8 *monitorMask, U_16 numberOfMapBits)
+{
+	J9ObjectMonitor *objMonitorHead = (J9ObjectMonitor*)walkState->userData1;
+	j9object_t targetSyncObject = (j9object_t)walkState->userData2;
+	UDATA monitorCount = (UDATA)walkState->userData4;
+	j9object_t *objAddress;
+	U_16 i;
+	U_8 bit;
+	J9VMThread *currentThread = walkState->currentThread;
+	J9InternalVMFunctions const * const vmFuncs = walkState->javaVM->internalVMFunctions;
+
+	for (i = 0; i < numberOfMapBits; ++i) {
+		bit = liveMonitorMap[i >> 3] & monitorMask[i >> 3] & (1 << (i & 7));
+		if (bit) {
+			objAddress = getSlotAddress(walkState, gcStackAtlas, i);
+
+			/* CMVC 188386 : if the object is stack allocates and the object is discontiguous on stack,
+			 * the jit just stores a null in the slot. Skip this slot.
+			 */
+			if (NULL != objAddress) {
+				j9object_t obj = *objAddress;
+
+				if ((NULL != obj) && (targetSyncObject != obj)) {
+					J9ObjectMonitor *mon = vmFuncs->detachMonitorInfo(currentThread, obj);
+					if (NULL == mon) {
+						return J9_STACKWALK_RC_NO_MEMORY;
+					}
+					mon->next = objMonitorHead;
+					objMonitorHead = mon;
+					monitorCount++;
+				}
+			}
+		}
+	}
+	walkState->userData1 = objMonitorHead;
+	walkState->userData4 = (void*)monitorCount;
+	return J9_STACKWALK_KEEP_ITERATING;
+}
+#endif /* JAVA_SPEC_VERSION >= 24 */
 
 static void
 countLiveMonitorSlots(J9StackWalkState *walkState, J9JITStackAtlas *gcStackAtlas, U_8 *liveMonitorMap, U_8 *monitorMask, U_16 numberOfMapBits)

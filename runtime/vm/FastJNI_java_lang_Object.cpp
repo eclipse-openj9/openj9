@@ -57,6 +57,47 @@ Fast_java_lang_Object_notifyAll(J9VMThread *currentThread, j9object_t receiverOb
 		omrthread_monitor_t monitorPtr = NULL;
 
 		if (VM_ObjectMonitor::getMonitorForNotify(currentThread, receiverObject, &monitorPtr, true)) {
+#if JAVA_SPEC_VERSION >= 24
+			J9JavaVM *vm = currentThread->javaVM;
+			if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)) {
+				j9objectmonitor_t lock = 0;
+				j9objectmonitor_t *lockEA = NULL;
+				J9ObjectMonitor *objectMonitor = NULL;
+
+				if (!LN_HAS_LOCKWORD(currentThread, receiverObject)) {
+					objectMonitor = monitorTablePeek(vm, receiverObject);
+				} else {
+					lockEA = J9OBJECT_MONITOR_EA(currentThread, receiverObject);
+					lock = J9_LOAD_LOCKWORD(currentThread, lockEA);
+					if (J9_LOCK_IS_INFLATED(lock)) {
+						objectMonitor = J9_INFLLOCK_OBJECT_MONITOR(lock);
+					}
+				}
+
+				if ((NULL != objectMonitor) && (NULL != objectMonitor->waitingContinuations)) {
+					omrthread_monitor_enter(vm->blockedVirtualThreadsMutex);
+					J9VMContinuation *head = objectMonitor->waitingContinuations;
+					if (NULL != head) {
+						J9VMContinuation *next = head;
+						J9VMJAVALANGVIRTUALTHREAD_SET_ONWAITINGLIST(currentThread, head->vthread, JNI_TRUE);
+						J9VMJAVALANGVIRTUALTHREAD_SET_NOTIFIED(currentThread, head->vthread, JNI_TRUE);
+						while (NULL != next->nextWaitingContinuation) {
+							J9VMJAVALANGVIRTUALTHREAD_SET_ONWAITINGLIST(currentThread, next->vthread, JNI_TRUE);
+							J9VMJAVALANGVIRTUALTHREAD_SET_NOTIFIED(currentThread, next->vthread, JNI_TRUE);
+							next = next->nextWaitingContinuation;
+						}
+						next->nextWaitingContinuation = vm->blockedContinuations;
+						vm->blockedContinuations = head;
+						objectMonitor->waitingContinuations = NULL;
+
+						omrthread_monitor_notify(vm->blockedVirtualThreadsMutex);
+						omrthread_monitor_exit(vm->blockedVirtualThreadsMutex);
+					} else {
+						omrthread_monitor_exit(vm->blockedVirtualThreadsMutex);
+					}
+				}
+			}
+#endif /* JAVA_SPEC_VERSION >= 24 */
 			if (0 != omrthread_monitor_notify_all(monitorPtr)) {
 				setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALMONITORSTATEEXCEPTION, NULL);
 			}
@@ -80,6 +121,41 @@ Fast_java_lang_Object_notify(J9VMThread *currentThread, j9object_t receiverObjec
 		omrthread_monitor_t monitorPtr = NULL;
 
 		if (VM_ObjectMonitor::getMonitorForNotify(currentThread, receiverObject, &monitorPtr, true)) {
+#if JAVA_SPEC_VERSION >= 24
+			J9JavaVM *vm = currentThread->javaVM;
+			if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)) {
+				j9objectmonitor_t lock = 0;
+				j9objectmonitor_t *lockEA = NULL;
+				J9ObjectMonitor *objectMonitor = NULL;
+
+				if (!LN_HAS_LOCKWORD(currentThread, receiverObject)) {
+					objectMonitor = monitorTablePeek(vm, receiverObject);
+				} else {
+					lockEA = J9OBJECT_MONITOR_EA(currentThread, receiverObject);
+					lock = J9_LOAD_LOCKWORD(currentThread, lockEA);
+					if (J9_LOCK_IS_INFLATED(lock)) {
+						objectMonitor = J9_INFLLOCK_OBJECT_MONITOR(lock);
+					}
+				}
+
+				if ((NULL != objectMonitor) && (NULL != objectMonitor->waitingContinuations)) {
+					omrthread_monitor_enter(vm->blockedVirtualThreadsMutex);
+					J9VMContinuation *head = objectMonitor->waitingContinuations;
+					if (NULL != head) {
+						objectMonitor->waitingContinuations = head->nextWaitingContinuation;
+						head->nextWaitingContinuation = vm->blockedContinuations;
+						vm->blockedContinuations = head;
+						J9VMJAVALANGVIRTUALTHREAD_SET_ONWAITINGLIST(currentThread, head->vthread, JNI_TRUE);
+						J9VMJAVALANGVIRTUALTHREAD_SET_NOTIFIED(currentThread, head->vthread, JNI_TRUE);
+
+						omrthread_monitor_notify(vm->blockedVirtualThreadsMutex);
+						omrthread_monitor_exit(vm->blockedVirtualThreadsMutex);
+					} else {
+						omrthread_monitor_exit(vm->blockedVirtualThreadsMutex);
+					}
+				}
+			}
+#endif /* JAVA_SPEC_VERSION >= 24 */
 			if (0 != omrthread_monitor_notify(monitorPtr)) {
 				setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALMONITORSTATEEXCEPTION, NULL);
 			}
