@@ -419,6 +419,13 @@ public final class System {
 		Properties props = internalGetProperties();
 		/*[IF JAVA_SPEC_VERSION >= 11]*/
 		/*[IF JAVA_SPEC_VERSION >= 18]*/
+		/* support for console.encoding property start */
+		String consoleEncoding = props.getProperty("console.encoding");
+		if (consoleEncoding != null) {
+		    stderrProp = stderrProp !=null ? stderrProp : consoleEncoding;
+		    stdoutProp = stdoutProp !=null ? stdoutProp : consoleEncoding;
+		}
+		/* support for console.encoding property end */
 		consoleDefaultEncoding = props.getProperty("native.encoding"); //$NON-NLS-1$
 		consoleDefaultCharset = Charset.forName(consoleDefaultEncoding, sun.nio.cs.UTF_8.INSTANCE);
 		/*[ELSE] JAVA_SPEC_VERSION >= 18 */
