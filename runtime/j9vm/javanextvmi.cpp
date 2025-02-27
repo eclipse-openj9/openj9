@@ -35,9 +35,6 @@
 #include "VMHelpers.hpp"
 #include "ContinuationHelpers.hpp"
 #endif /* JAVA_SPEC_VERSION >= 19 */
-#if JAVA_SPEC_VERSION >= 24
-#include "j9protos.h"
-#endif /* JAVA_SPEC_VERSION >= 24 */
 
 extern "C" {
 
@@ -723,19 +720,17 @@ JVM_IsStaticallyLinked(void)
 }
 
 JNIEXPORT void JNICALL
-JVM_VirtualThreadPinnedEvent(JNIEnv *env, jclass clazz, jstring op)
+JVM_VirtualThreadPinnedEvent(JNIEnv* env, jclass clazz, jstring op)
 {
 	// TODO: emit JFR Event
 	return;
 }
 
 JNIEXPORT jobject JNICALL
-JVM_TakeVirtualThreadListToUnblock(JNIEnv *env, jclass ignored)
+JVM_TakeVirtualThreadListToUnblock(JNIEnv* env, jclass ignored)
 {
-	J9VMThread *currentThread = (J9VMThread *)env;
-	J9JavaVM *vm = currentThread->javaVM;
-
-	return vm->internalVMFunctions->takeVirtualThreadListToUnblock(currentThread, vm);
+	// TODO: return the unblocked list
+	return NULL;
 }
 #endif /* JAVA_SPEC_VERSION >= 24 */
 

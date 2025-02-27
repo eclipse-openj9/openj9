@@ -178,11 +178,7 @@ restart:
 		 *   iff the deflation policy in effect decides it's ok.
 		 */
 		if (monitor->count == 1) {
-			if ((0 == monitor->pinCount)
-#if JAVA_SPEC_VERSION >= 24
-			&& (0 == objectMonitor->virtualThreadWaitCount)
-#endif /* JAVA_SPEC_VERSION >= 24 */
-			) {
+			if (0 == monitor->pinCount) {
 				if (deflate) {
 					deflate = 0;
 					switch (vmStruct->javaVM->thrDeflationPolicy) {
@@ -224,15 +220,6 @@ restart:
 			}
 		}
 		rc = omrthread_monitor_exit((omrthread_monitor_t)monitor);
-#if JAVA_SPEC_VERSION >= 24
-		if (J9_ARE_ANY_BITS_SET(vmStruct->javaVM->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)
-		&& (0 != objectMonitor->virtualThreadWaitCount)
-		) {
-			omrthread_monitor_enter(vmStruct->javaVM->blockedVirtualThreadsMutex);
-			omrthread_monitor_notify(vmStruct->javaVM->blockedVirtualThreadsMutex);
-			omrthread_monitor_exit(vmStruct->javaVM->blockedVirtualThreadsMutex);
-		}
-#endif /* JAVA_SPEC_VERSION >= 24 */
 		Trc_VM_objectMonitorExit_Exit_InflatedLock(vmStruct, rc);
 		goto done;
 	} else {

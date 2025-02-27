@@ -30,9 +30,6 @@
 #define J9VM_CONTINUATION_PINNED_REASON_NATIVE 1
 #define J9VM_CONTINUATION_PINNED_REASON_MONITOR 2
 #define J9VM_CONTINUATION_PINNED_REASON_CRITICAL_SECTION 3
-#if JAVA_SPEC_VERSION >= 24
-#define J9VM_CONTINUATION_PINNED_REASON_EXCEPTION 4
-#endif /* JAVA_SPEC_VERSION >= 24 */
 
 class VM_ContinuationHelpers {
 	/*
@@ -91,15 +88,6 @@ public:
 		j9object_t scopedValueCache = J9VMJDKINTERNALVMCONTINUATION_SCOPEDVALUECACHE(vmThread, continuationObject);
 		J9VMJDKINTERNALVMCONTINUATION_SET_SCOPEDVALUECACHE(vmThread, continuationObject, vmThread->scopedValueCache);
 		vmThread->scopedValueCache = scopedValueCache;
-
-#if JAVA_SPEC_VERSION >= 24
-		if (J9_ARE_ANY_BITS_SET(vmThread->javaVM->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)) {
-			SWAP_MEMBER(ownedMonitorCount, UDATA, vmThread, continuation);
-			SWAP_MEMBER(monitorEnterRecordPool, J9Pool*, vmThread, continuation);
-			SWAP_MEMBER(monitorEnterRecords, J9MonitorEnterRecord*, vmThread, continuation);
-			SWAP_MEMBER(jniMonitorEnterRecords, J9MonitorEnterRecord*, vmThread, continuation);
-		}
-#endif /* JAVA_SPEC_VERSION >= 24 */
 	}
 
 	static VMINLINE ContinuationState volatile *
@@ -273,24 +261,6 @@ public:
 
 		return threadObject;
 	}
-
-#if JAVA_SPEC_VERSION >= 24
-	/**
-	 * Check if the threadObject mounted on a J9VMThread is a virtual thread and can be yielded.
-	 *
-	 * @param[in] vmThread the J9VMThread
-	 *
-	 * @return true if the virtual thread is yieldable, otherwise false
-	 */
-	static VMINLINE bool
-	isYieldableVirtualThread(J9VMThread *vmThread)
-	{
-		return (J9_ARE_ANY_BITS_SET(vmThread->javaVM->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)
-				&& IS_JAVA_LANG_VIRTUALTHREAD(vmThread, vmThread->threadObject)
-				&& (0 == vmThread->continuationPinCount)
-				&& (0 == vmThread->callOutCount));
-	}
-#endif /* JAVA_SPEC_VERSION >= 24 */
 };
 
 #endif /* CONTINUATIONHELPERS_HPP_ */

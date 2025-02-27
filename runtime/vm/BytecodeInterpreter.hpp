@@ -78,12 +78,6 @@
 #if JAVA_SPEC_VERSION >= 16
 #include "LayoutFFITypeHelpers.hpp"
 #endif /* JAVA_SPEC_VERSION >= 16 */
-#if JAVA_SPEC_VERSION >= 21
-#include "ContinuationHelpers.hpp"
-#endif /* JAVA_SPEC_VERSION >= 21 */
-#if JAVA_SPEC_VERSION >= 24
-#include "thrtypes.h"
-#endif /* JAVA_SPEC_VERSION >= 24 */
 
 #if 0
 #define DEBUG_MUST_HAVE_VM_ACCESS(vmThread) Assert_VM_mustHaveVMAccess(vmThread)
@@ -1188,17 +1182,9 @@ obj:
 		if (!VM_ObjectMonitor::inlineFastObjectMonitorEnter(_currentThread, obj)) {
 			rc = objectMonitorEnterNonBlocking(_currentThread, obj);
 			if (J9_OBJECT_MONITOR_BLOCKING == rc) {
-#if JAVA_SPEC_VERSION >= 24
-				if (VM_ContinuationHelpers::isYieldableVirtualThread(_currentThread)) {
-					/* Try to yield the virtual thread if it will be blocked. */
-					rc = preparePinnedVirtualThreadForUnmount(_currentThread, obj, false);
-				} else
-#endif /* JAVA_SPEC_VERSION >= 24 */
-				{
-					updateVMStruct(REGISTER_ARGS);
-					rc = objectMonitorEnterBlocking(_currentThread);
-					VMStructHasBeenUpdated(REGISTER_ARGS);
-				}
+				updateVMStruct(REGISTER_ARGS);
+				rc = objectMonitorEnterBlocking(_currentThread);
+				VMStructHasBeenUpdated(REGISTER_ARGS);
 			}
 		}
 		return rc;
@@ -1507,37 +1493,6 @@ obj:
 	}
 #endif /* DEBUG_VERSION */
 
-#if JAVA_SPEC_VERSION >= 24
-	VMINLINE VM_BytecodeAction
-	yieldPinnedContinuation(REGISTER_ARGS_LIST, U_32 newThreadState, UDATA returnState)
-	{
-		buildInternalNativeStackFrame(REGISTER_ARGS);
-		updateVMStruct(REGISTER_ARGS);
-		J9VMJAVALANGVIRTUALTHREAD_SET_STATE(_currentThread, _currentThread->threadObject, newThreadState);
-
-		if (JAVA_LANG_VIRTUALTHREAD_BLOCKING == newThreadState) {
-			/* Add the thread object to the blocked list. */
-			omrthread_monitor_enter(_vm->blockedVirtualThreadsMutex);
-			_currentThread->currentContinuation->nextWaitingContinuation = _vm->blockedContinuations;
-			_vm->blockedContinuations = _currentThread->currentContinuation;
-			omrthread_monitor_exit(_vm->blockedVirtualThreadsMutex);
-		}
-
-		/* Store the current Continuation state and swap to the carrier thread stack. */
-		yieldContinuation(_currentThread, FALSE, returnState);
-
-		VMStructHasBeenUpdated(REGISTER_ARGS);
-		restoreInternalNativeStackFrame(REGISTER_ARGS);
-
-		/* The return behavior will mimic that of continuation.enterImpl(), requiring the
-		 * boolean return value to be pushed.
-		 */
-		returnSingleFromINL(REGISTER_ARGS, JNI_FALSE, 1);
-
-		return EXECUTE_BYTECODE;
-	}
-#endif /* JAVA_SPEC_VERSION >= 24 */
-
 	VMINLINE VM_BytecodeAction
 	checkAsync(REGISTER_ARGS_LIST)
 	{
@@ -1750,12 +1705,6 @@ obj:
 						rc = THROW_CRIU_SINGLE_THREAD_MODE;
 						break;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
-#if JAVA_SPEC_VERSION >= 24
-					case J9_OBJECT_MONITOR_YIELD_VIRTUAL: {
-						rc = yieldPinnedContinuation(REGISTER_ARGS, JAVA_LANG_VIRTUALTHREAD_BLOCKING, J9VM_CONTINUATION_RETURN_FROM_SYNC_METHOD);
-						break;
-					}
-#endif /* JAVA_SPEC_VERSION >= 24 */
 					case J9_OBJECT_MONITOR_OOM:
 						rc = THROW_MONITOR_ALLOC_FAIL;
 						break;
@@ -1833,12 +1782,6 @@ done:
 				rc = THROW_CRIU_SINGLE_THREAD_MODE;
 				break;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
-#if JAVA_SPEC_VERSION >= 24
-			case J9_OBJECT_MONITOR_YIELD_VIRTUAL: {
-				rc = yieldPinnedContinuation(REGISTER_ARGS, JAVA_LANG_VIRTUALTHREAD_BLOCKING, J9VM_CONTINUATION_RETURN_FROM_MONITOR_ENTER);
-				break;
-			}
-#endif /* JAVA_SPEC_VERSION >= 24 */
 			case J9_OBJECT_MONITOR_OOM:
 				/* Monitor was not entered - hide the frame to prevent exception throw from processing it.
 				 * Note that BP can not have changed during a failed enter.
@@ -1968,12 +1911,6 @@ throwStackOverflow:
 						rc = THROW_CRIU_SINGLE_THREAD_MODE;
 						break;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
-#if JAVA_SPEC_VERSION >= 24
-					case J9_OBJECT_MONITOR_YIELD_VIRTUAL: {
-						rc = yieldPinnedContinuation(REGISTER_ARGS, JAVA_LANG_VIRTUALTHREAD_BLOCKING, J9VM_CONTINUATION_RETURN_FROM_MONITOR_ENTER);
-						break;
-					}
-#endif /* JAVA_SPEC_VERSION >= 24 */
 					case J9_OBJECT_MONITOR_OOM:
 						rc = THROW_MONITOR_ALLOC_FAIL;
 						break;
@@ -2344,12 +2281,6 @@ done:
 					rc = THROW_CRIU_SINGLE_THREAD_MODE;
 					break;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
-#if JAVA_SPEC_VERSION >= 24
-				case J9_OBJECT_MONITOR_YIELD_VIRTUAL: {
-					rc = yieldPinnedContinuation(REGISTER_ARGS, JAVA_LANG_VIRTUALTHREAD_BLOCKING, J9VM_CONTINUATION_RETURN_FROM_MONITOR_ENTER);
-					break;
-				}
-#endif /* JAVA_SPEC_VERSION >= 24 */
 				case J9_OBJECT_MONITOR_OOM:
 					rc = THROW_MONITOR_ALLOC_FAIL;
 					break;
@@ -2925,51 +2856,6 @@ done:
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 		{
 			if (VM_ObjectMonitor::getMonitorForNotify(_currentThread, receiver, &monitorPtr, true)) {
-#if JAVA_SPEC_VERSION >= 24
-				if (J9_ARE_ANY_BITS_SET(_vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)) {
-					j9objectmonitor_t lock = 0;
-					j9objectmonitor_t *lockEA = NULL;
-					J9ObjectMonitor *objectMonitor = NULL;
-
-					if (!LN_HAS_LOCKWORD(_currentThread, receiver)) {
-						objectMonitor = monitorTablePeek(_vm, receiver);
-					} else {
-						lockEA = J9OBJECT_MONITOR_EA(_currentThread, receiver);
-						lock = J9_LOAD_LOCKWORD(_currentThread, lockEA);
-						if (J9_LOCK_IS_INFLATED(lock)) {
-							objectMonitor = J9_INFLLOCK_OBJECT_MONITOR(lock);
-						}
-					}
-
-					if ((NULL != objectMonitor) && (NULL != objectMonitor->waitingContinuations)) {
-						omrthread_monitor_enter(_vm->blockedVirtualThreadsMutex);
-						J9VMContinuation *head = objectMonitor->waitingContinuations;
-						if (omrthread_monitor_notify == notifyFunction) {
-							objectMonitor->waitingContinuations = head->nextWaitingContinuation;
-							head->nextWaitingContinuation = _vm->blockedContinuations;
-							_vm->blockedContinuations = head;
-							J9VMJAVALANGVIRTUALTHREAD_SET_ONWAITINGLIST(_currentThread, head->vthread, JNI_TRUE);
-						} else {
-							J9VMContinuation *next = head;
-							J9VMJAVALANGVIRTUALTHREAD_SET_ONWAITINGLIST(_currentThread, head->vthread, JNI_TRUE);
-							while (NULL != next->nextWaitingContinuation) {
-								J9VMJAVALANGVIRTUALTHREAD_SET_ONWAITINGLIST(_currentThread, next->vthread, JNI_TRUE);
-								next = next->nextWaitingContinuation;
-							}
-							next->nextWaitingContinuation = _vm->blockedContinuations;
-							_vm->blockedContinuations = head;
-							objectMonitor->waitingContinuations = NULL;
-						}
-						omrthread_monitor_notify(_vm->blockedVirtualThreadsMutex);
-						omrthread_monitor_exit(_vm->blockedVirtualThreadsMutex);
-
-						if (omrthread_monitor_notify == notifyFunction) {
-							returnVoidFromINL(REGISTER_ARGS, 1);
-							goto done;
-						}
-					}
-				}
-#endif /* JAVA_SPEC_VERSION >= 24 */
 				if (0 != notifyFunction(monitorPtr)) {
 					buildInternalNativeStackFrame(REGISTER_ARGS);
 					rc = THROW_ILLEGAL_MONITOR_STATE;
@@ -5157,23 +5043,6 @@ done:
 		j9object_t object = *(j9object_t*)(_sp + 3);
 		buildInternalNativeStackFrame(REGISTER_ARGS);
 		updateVMStruct(REGISTER_ARGS);
-#if JAVA_SPEC_VERSION >= 24
-		if (VM_ContinuationHelpers::isYieldableVirtualThread(_currentThread)) {
-			UDATA newState = JAVA_LANG_VIRTUALTHREAD_WAITING;
-			if ((millis > 0) || (nanos > 0)) {
-				newState = JAVA_LANG_VIRTUALTHREAD_TIMED_WAITING;
-			}
-			/* Try to yield the virtual thread if it will be blocked. */
-			UDATA result = preparePinnedVirtualThreadForUnmount(_currentThread, object, true);
-			if (J9_OBJECT_MONITOR_OOM != result) {
-				/* Handle the virutal thread Object.wait call. */
-				rc = yieldPinnedContinuation(REGISTER_ARGS, newState, J9VM_CONTINUATION_RETURN_FROM_OBJECT_WAIT);
-			} else {
-				rc = THROW_MONITOR_ALLOC_FAIL;
-			}
-			return rc;
-		}
-#endif /* JAVA_SPEC_VERSION >= 24 */
 		IDATA waitResult = monitorWaitImpl(_currentThread, object, millis, nanos, TRUE);
 		VMStructHasBeenUpdated(REGISTER_ARGS);
 		if (0 == waitResult) {
@@ -5675,61 +5544,6 @@ ffi_OOM:
 		} else if (VM_VMHelpers::exceptionPending(_currentThread)) {
 			rc = GOTO_THROW_CURRENT_EXCEPTION;
 		}
-#if JAVA_SPEC_VERSION >= 24
-		switch (_currentThread->currentContinuation->returnState) {
-		case J9VM_CONTINUATION_RETURN_FROM_YIELD:
-			returnSingleFromINL(REGISTER_ARGS, JNI_TRUE, 1);
-			break;
-		case J9VM_CONTINUATION_RETURN_FROM_MONITOR_ENTER:
-			break;
-		case J9VM_CONTINUATION_RETURN_FROM_OBJECT_WAIT: {
-			restoreInternalNativeStackFrame(REGISTER_ARGS);
-			j9object_t waitObject = *(j9object_t *)(_sp + 3);
-			UDATA monitorRC = enterObjectMonitor(REGISTER_ARGS, waitObject);
-
-			/* Monitor enter can only fail in the non-blocking case, which does not
-			 * release VM access. So, the immediate async and failed enter cases are
-			 * mutually exclusive.
-			 */
-			if (J9_OBJECT_MONITOR_ENTER_FAILED(monitorRC)) {
-				switch (monitorRC) {
-				case J9_OBJECT_MONITOR_VALUE_TYPE_IMSE:
-					_currentThread->tempSlot = (UDATA)waitObject;
-					rc = THROW_VALUE_TYPE_ILLEGAL_MONITOR_STATE;
-					break;
-#if defined(J9VM_OPT_CRIU_SUPPORT)
-				case J9_OBJECT_MONITOR_CRIU_SINGLE_THREAD_MODE_THROW:
-					rc = THROW_CRIU_SINGLE_THREAD_MODE;
-					break;
-#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
-				case J9_OBJECT_MONITOR_YIELD_VIRTUAL: {
-					rc = yieldPinnedContinuation(REGISTER_ARGS, JAVA_LANG_VIRTUALTHREAD_BLOCKING, J9VM_CONTINUATION_RETURN_FROM_OBJECT_WAIT);
-					omrthread_monitor_enter(_vm->blockedVirtualThreadsMutex);
-					omrthread_monitor_notify(_vm->blockedVirtualThreadsMutex);
-					omrthread_monitor_exit(_vm->blockedVirtualThreadsMutex);
-					break;
-				}
-				case J9_OBJECT_MONITOR_OOM:
-					rc = THROW_MONITOR_ALLOC_FAIL;
-					break;
-				default:
-					Assert_VM_unreachable();
-				}
-			} else {
-				omrthread_monitor_t monitor = getMonitorForWait(_currentThread, waitObject);
-				monitor->count = _currentThread->currentContinuation->waitingMonitorEnterCount;
-				_currentThread->currentContinuation->waitingMonitorEnterCount = 0;
-				returnVoidFromINL(REGISTER_ARGS, 4);
-			}
-			break;
-		}
-		case J9VM_CONTINUATION_RETURN_FROM_SYNC_METHOD:
-			UDATA *bp = ((UDATA *)(((J9SFMethodFrame *)_sp) + 1)) - 1;
-			restoreSpecialStackFrameLeavingArgs(REGISTER_ARGS, bp);
-			rc = inlineSendTarget(REGISTER_ARGS, VM_MAYBE, VM_MAYBE, VM_MAYBE, VM_MAYBE);
-			break;
-		}
-#endif /* JAVA_SPEC_VERSION >= 24 */
 		return rc;
 	}
 
@@ -5743,14 +5557,14 @@ ffi_OOM:
 		buildInternalNativeStackFrame(REGISTER_ARGS);
 		updateVMStruct(REGISTER_ARGS);
 
-		/* Store the current Continuation state and swap to the carrier thread stack. */
-		yieldContinuation(_currentThread, isFinished, J9VM_CONTINUATION_RETURN_FROM_YIELD);
+		/* store the current Continuation state and swap to carrier thread stack */
+		yieldContinuation(_currentThread, isFinished);
 
 		VMStructHasBeenUpdated(REGISTER_ARGS);
 		restoreInternalNativeStackFrame(REGISTER_ARGS);
 
-		/* The return behavior will mimic that of continuation.enterImpl(), requiring the
-		 * boolean return value to be pushed.
+		/* its going to return as if it were returning from continuation.enterImpl()
+		 * so we need to push the boolean return val
 		 */
 		returnSingleFromINL(REGISTER_ARGS, JNI_FALSE, 1);
 		return rc;
@@ -8857,12 +8671,6 @@ done:
 					rc = THROW_CRIU_SINGLE_THREAD_MODE;
 					break;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
-#if JAVA_SPEC_VERSION >= 24
-				case J9_OBJECT_MONITOR_YIELD_VIRTUAL: {
-					rc = yieldPinnedContinuation(REGISTER_ARGS, JAVA_LANG_VIRTUALTHREAD_BLOCKING, J9VM_CONTINUATION_RETURN_FROM_MONITOR_ENTER);
-					break;
-				}
-#endif /* JAVA_SPEC_VERSION >= 24 */
 				case J9_OBJECT_MONITOR_OOM:
 					rc = THROW_MONITOR_ALLOC_FAIL;
 					break;
