@@ -747,7 +747,7 @@ preparePinnedVirtualThreadForUnmount(J9VMThread *currentThread, j9object_t syncO
 			if (!LN_HAS_LOCKWORD(currentThread, object)) {
 				objectMonitor = monitorTablePeek(currentThread->javaVM, object);
 				if (NULL != objectMonitor) {
-					lock = J9_LOAD_LOCKWORD(currentThread, &objectMonitor->alternateLockword);
+					lock = J9_LOAD_LOCKWORD(currentThread, objectMonitor->alternateLockword);
 				} else {
 					lock = 0;
 				}
@@ -777,7 +777,7 @@ preparePinnedVirtualThreadForUnmount(J9VMThread *currentThread, j9object_t syncO
 			if (!LN_HAS_LOCKWORD(currentThread, object)) {
 				objectMonitor = monitorTablePeek(currentThread->javaVM, object);
 				if (NULL != objectMonitor) {
-					lock = J9_LOAD_LOCKWORD(currentThread, &objectMonitor->alternateLockword);
+					lock = J9_LOAD_LOCKWORD(currentThread, objectMonitor->alternateLockword);
 				} else {
 					lock = 0;
 				}
@@ -802,7 +802,7 @@ preparePinnedVirtualThreadForUnmount(J9VMThread *currentThread, j9object_t syncO
 	if (!LN_HAS_LOCKWORD(currentThread, syncObj)) {
 		syncObjectMonitor = monitorTablePeek(currentThread->javaVM, syncObj);
 		if (NULL != syncObjectMonitor) {
-			lock = J9_LOAD_LOCKWORD(currentThread, &syncObjectMonitor->alternateLockword);
+			lock = J9_LOAD_LOCKWORD(currentThread, syncObjectMonitor->alternateLockword);
 		} else {
 			lock = 0;
 		}
@@ -879,7 +879,7 @@ restart:
 					if (!LN_HAS_LOCKWORD(currentThread, syncObject)) {
 						syncObjectMonitor = vmFuncs->monitorTablePeek(vm, syncObject);
 						if (NULL != syncObjectMonitor){
-							lock = J9_LOAD_LOCKWORD_VM(vm, &syncObjectMonitor->alternateLockword);
+							lock = J9_LOAD_LOCKWORD_VM(vm, syncObjectMonitor->alternateLockword);
 						}
 					} else {
 						lock = J9OBJECT_MONITOR(currentThread, syncObject);
