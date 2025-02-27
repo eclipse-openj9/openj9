@@ -99,6 +99,28 @@ MM_ConfigurationIncrementalGenerational::createHeapWithManager(MM_EnvironmentBas
 		return NULL;
 	}
 
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+	/* Enable double mapping if glibc version 2.27 or newer is found. For double map to
+	 * work we need a file descriptor, to get one we use shm_open(3)  or memfd_create(2);
+	 * shm_open(3) has 2 drawbacks: [I] shared memory is used; [II] does not support
+	 * anonymous huge pages. [I] shared memory in Linux systems has a limit (half of
+	 * physical memory). [II] if we create a file descriptor using shm_open(3) and then
+	 * try to mmap with huge pages with the respective file descriptor the mmap call
+	 * fails. It would only succeed if MAP_ANON flag was provided, but doing so ignores
+	 * the file descriptor which is the opposite of what we want. In a newer glibc
+	 * version (glibc 2.27 onwards) there's a new function that does exactly what we
+	 * want, and that's memfd_create(2); however that's only supported in glibc 2.27. We
+	 * also need to check if region size is a bigger or equal to multiple of page size.
+	 *
+	 */
+	if (!extensions->isVirtualLargeObjectHeapRequested && extensions->isArrayletDoubleMapRequested && extensions->isArrayletDoubleMapAvailable) {
+		uintptr_t pagesize = heap->getPageSize();
+		if (!extensions->memoryManager->isLargePage(env, pagesize) || (pagesize <= extensions->getOmrVM()->_arrayletLeafSize)) {
+			extensions->indexableObjectModel.setEnableDoubleMapping(true);
+		}
+	}
+#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
+
 	/* when we try to attach this heap to a region manager, we will need the card table since it needs to be NUMA-affinitized using the same logic as the heap so initialize it here */
 	extensions->cardTable = MM_IncrementalCardTable::newInstance(MM_EnvironmentVLHGC::getEnvironment(env), heap);
 	if (NULL == extensions->cardTable) {
