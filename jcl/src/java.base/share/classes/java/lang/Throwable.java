@@ -62,6 +62,8 @@ public class Throwable implements java.io.Serializable {
 
 	/**
 	 * The message provided when the exception was created.
+	 *
+	 * @serial
 	 */
 	private String detailMessage;
 
@@ -75,24 +77,30 @@ public class Throwable implements java.io.Serializable {
 	/**
 	 * The cause of this Throwable. Null when there is
 	 * no cause.
+	 *
+	 * @serial
 	 */
 	private Throwable cause = this;
+
+	/** @serial */
 	private StackTraceElement[] stackTrace;
 
 	private static final Throwable[] ZeroElementArray = new Throwable[0];
 	private static final StackTraceElement[] ZeroStackTraceElementArray = new StackTraceElement[0];
 	/**
-	 * The list containing the exceptions suppressed
+	 * The list containing the exceptions suppressed.
+	 *
+	 * @serial
 	 */
-	private List<Throwable> suppressedExceptions = Collections.EMPTY_LIST;
+	private List<Throwable> suppressedExceptions = Collections.emptyList();
 	private transient boolean disableWritableStackTrace;
 
 /**
  * Constructs a new instance of this class with its
  * walkback filled in.
  */
-public Throwable () {
-	super ();
+public Throwable() {
+	super();
 	fillInStackTrace();
 }
 
@@ -103,8 +111,8 @@ public Throwable () {
  * @param		detailMessage String
  *				The detail message for the exception.
  */
-public Throwable (String detailMessage) {
-	this ();
+public Throwable(String detailMessage) {
+	this();
 	this.detailMessage = detailMessage;
 }
 
@@ -116,8 +124,8 @@ public Throwable (String detailMessage) {
  *				The detail message for the exception.
  * @param		throwable The cause of this Throwable
  */
-public Throwable (String detailMessage, Throwable throwable) {
-	this ();
+public Throwable(String detailMessage, Throwable throwable) {
+	this();
 	this.detailMessage = detailMessage;
 	cause = throwable;
 }
@@ -128,9 +136,9 @@ public Throwable (String detailMessage, Throwable throwable) {
  *
  * @param		throwable The cause of this Throwable
  */
-public Throwable (Throwable throwable) {
-	this ();
-	this.detailMessage = throwable==null ? null : throwable.toString();
+public Throwable(Throwable throwable) {
+	this();
+	this.detailMessage = throwable == null ? null : throwable.toString();
 	cause = throwable;
 }
 
@@ -160,16 +168,16 @@ public Throwable (Throwable throwable) {
  */
 protected Throwable(String detailMessage, Throwable throwable,
 		boolean enableSuppression, boolean enableWritableStackTrace) {
-	super ();
+	super();
 
 	this.detailMessage = detailMessage;
 	cause = throwable;
 
-	if (enableSuppression == false)	{
+	if (enableSuppression == false) {
 		suppressedExceptions = null;
 	}
 
-	if (enableWritableStackTrace == false)	{
+	if (enableWritableStackTrace == false) {
 		this.disableWritableStackTrace = true;
 	} else {
 		fillInStackTrace();
@@ -221,7 +229,7 @@ public String getLocalizedMessage() {
  * @return an array of StackTraceElement representing the stack
  */
 public StackTraceElement[] getStackTrace() {
-	return (StackTraceElement[])getInternalStackTrace().clone();
+	return getInternalStackTrace().clone();
 }
 
 /**
@@ -237,7 +245,7 @@ public void setStackTrace(StackTraceElement[] trace) {
 		throw new NullPointerException();
 	}
 	StackTraceElement[] localCopy = trace.clone();
-	for (int i=0; i<localCopy.length; i++)	{
+	for (int i = 0; i < localCopy.length; i++) {
 		if (localCopy[i] == null) {
 			throw new NullPointerException();
 		}
@@ -254,7 +262,7 @@ public void setStackTrace(StackTraceElement[] trace) {
  * Outputs a printable representation of the receiver's
  * walkback on the System.err stream.
  */
-public void printStackTrace () {
+public void printStackTrace() {
 	printStackTrace(System.err);
 }
 
@@ -270,7 +278,7 @@ public void printStackTrace () {
 private static int countDuplicates(StackTraceElement[] currentStack, StackTraceElement[] parentStack) {
 	int duplicates = 0;
 	int parentIndex = parentStack.length;
-	for (int i=currentStack.length; --i >= 0 && --parentIndex >= 0;) {
+	for (int i = currentStack.length; --i >= 0 && --parentIndex >= 0;) {
 		StackTraceElement parentFrame = parentStack[parentIndex];
 		if (parentFrame.equals(currentStack[i])) {
 			duplicates++;
@@ -290,7 +298,7 @@ private static int countDuplicates(StackTraceElement[] currentStack, StackTraceE
  */
 StackTraceElement[] getInternalStackTrace() {
 	if (disableWritableStackTrace) {
-		return	ZeroStackTraceElementArray;
+		return ZeroStackTraceElementArray;
 	}
 
 	StackTraceElement[] localStackTrace = stackTrace;
@@ -311,7 +319,7 @@ StackTraceElement[] getInternalStackTrace() {
  * @param		err PrintStream
  *				The stream to write the walkback on.
  */
-public void printStackTrace (PrintStream err) {
+public void printStackTrace(PrintStream err) {
 	printStackTraceHelper(err);
 }
 
@@ -338,7 +346,7 @@ private void printStackTraceHelper(Appendable appendable) {
 	Set<Throwable> exceptionChainSet = null;
 	try {
 		exceptionChainSet = Collections.newSetFromMap(new IdentityHashMap<Throwable, Boolean>());
-	} catch(OutOfMemoryError e) {
+	} catch (OutOfMemoryError e) {
 		/* If OOM is thrown when creating exception set, then we won't be able to check for circular exception chain,
 		 * which can cause OOM to be thrown again. This should be ok as we are already running out of heap memory.
 		 */
@@ -360,7 +368,7 @@ private void printStackTraceHelper(Appendable appendable) {
  *				a printable representation for the receiver.
  */
 @Override
-public String toString () {
+public String toString() {
 	/*[PR 102230] Should call getLocalizedMessage() */
 	String msg = getLocalizedMessage();
 	String name = getClass().getName();
@@ -433,7 +441,7 @@ private void writeObject(ObjectOutputStream s) throws IOException {
 }
 
 private void readObject(ObjectInputStream s)
-	throws IOException, ClassNotFoundException	{
+	throws IOException, ClassNotFoundException {
 	s.defaultReadObject();
 
 	disableWritableStackTrace = (stackTrace == null);
@@ -448,7 +456,7 @@ private void readObject(ObjectInputStream s)
 				stackTrace = null;
 			}
 		} else {
-			for (int i=0; i<stackTrace.length; i++) {
+			for (int i = 0; i < stackTrace.length; i++) {
 				if (stackTrace[i] == null) {
 					/*[MSG "K0560", "Null stack trace element not permitted in serial stream"]*/
 					throw new NullPointerException(com.ibm.oti.util.Msg.getString("K0560")); //$NON-NLS-1$
@@ -458,7 +466,7 @@ private void readObject(ObjectInputStream s)
 	}
 
 	if (suppressedExceptions != null) {
-		List<Throwable> newList = Collections.EMPTY_LIST;
+		List<Throwable> newList = Collections.emptyList();
 		try {
 /*[IF JAVA_SPEC_VERSION >= 9]*/
 			Module classModule = suppressedExceptions.getClass().getModule();
@@ -470,7 +478,7 @@ private void readObject(ObjectInputStream s)
 /*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 				int listSize = suppressedExceptions.size();
 				if (listSize != 0) {
-					newList = new ArrayList<Throwable>(listSize);
+					newList = new ArrayList<>(listSize);
 					for (Throwable t : suppressedExceptions) {
 						if (t == null) {
 							/*[MSG "K0561", "Null entries not permitted in suppressedExceptions serial stream"]*/
@@ -486,7 +494,11 @@ private void readObject(ObjectInputStream s)
 			} else {
 				/*[MSG "K0C00", "Non-standard List class not permitted in suppressedExceptions serial stream"]*/
 				throw new java.io.StreamCorruptedException(com.ibm.oti.util.Msg.getString("K0C00")); //$NON-NLS-1$
+/*[IF JAVA_SPEC_VERSION >= 9]*/
 			}
+/*[ELSE] JAVA_SPEC_VERSION >= 9 */
+			}
+/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 		} finally {
 			suppressedExceptions = newList;
 		}
@@ -523,8 +535,8 @@ private StackTraceElement[] printStackTrace(
 	if ((exceptionChainSet != null) && (exceptionChainSet.contains(this))) {
 		if (!outOfMemory) {
 			try {
-				appendTo(err, "\t[CIRCULAR REFERENCE:" + toString() + "]", 0); //$NON-NLS-1$
-			} catch(OutOfMemoryError e) {
+				appendTo(err, "\t[CIRCULAR REFERENCE:" + toString() + "]", 0); //$NON-NLS-1$ //$NON-NLS-2$
+			} catch (OutOfMemoryError e) {
 				outOfMemory = true;
 			}
 		}
@@ -532,17 +544,19 @@ private StackTraceElement[] printStackTrace(
 			appendTo(err, "\t[CIRCULAR REFERENCE:"); //$NON-NLS-1$
 			try {
 				appendTo(err, getClass().getName());
-			} catch(OutOfMemoryError e) {
-				appendTo(err, "java.lang.OutOfMemoryError(?)");
+			} catch (OutOfMemoryError e) {
+				appendTo(err, "java.lang.OutOfMemoryError(?)"); //$NON-NLS-1$
 			}
-			appendTo(err, "]");
+			appendTo(err, "]"); //$NON-NLS-1$
 		}
 		appendLnTo(err);
 		return null;
 	}
 	try {
-		exceptionChainSet.add(this);
-	} catch(OutOfMemoryError e) {
+		if (exceptionChainSet != null) {
+			exceptionChainSet.add(this);
+		}
+	} catch (OutOfMemoryError e) {
 		/* If OOM is thrown when adding Throwable to exception set, then we may not be able to identify circular exception chain,
 		 * which can cause OOM to be thrown again. This should be ok as we are already running out of heap memory.
 		 */
@@ -564,9 +578,9 @@ private StackTraceElement[] printStackTrace(
 	if (outOfMemory) {
 		try {
 			appendTo(err, getClass().getName());
-		} catch(OutOfMemoryError e) {
+		} catch (OutOfMemoryError e) {
 			outOfMemory = true;
-			appendTo(err, "java.lang.OutOfMemoryError(?)");			 //$NON-NLS-1$
+			appendTo(err, "java.lang.OutOfMemoryError(?)"); //$NON-NLS-1$
 		}
 		try {
 			String message = getLocalizedMessage();
@@ -574,7 +588,7 @@ private StackTraceElement[] printStackTrace(
 				appendTo(err, ": "); //$NON-NLS-1$
 				appendTo(err, message);
 			}
-		} catch(OutOfMemoryError e) {
+		} catch (OutOfMemoryError e) {
 			outOfMemory = true;
 		}
 	}
@@ -588,17 +602,17 @@ private StackTraceElement[] printStackTrace(
 		if (parentStack != null) {
 			duplicates = countDuplicates(stack, parentStack);
 		}
-	} catch(OutOfMemoryError e) {
+	} catch (OutOfMemoryError e) {
 		appendTo(err, "\tat ?", indents); //$NON-NLS-1$
 		appendLnTo(err);
 		return null;
 	}
-	for (int i=0; i < stack.length - duplicates; i++) {
+	for (int i = 0; i < stack.length - duplicates; i++) {
 		StackTraceElement element = stack[i];
 		if (!outOfMemory) {
 			try {
 				appendTo(err, "\tat " + element, indents); //$NON-NLS-1$
-			} catch(OutOfMemoryError e) {
+			} catch (OutOfMemoryError e) {
 				outOfMemory = true;
 			}
 		}
@@ -612,7 +626,7 @@ private StackTraceElement[] printStackTrace(
 		if (!outOfMemory) {
 			try {
 				appendTo(err, "\t... " + duplicates + " more", indents); //$NON-NLS-1$ //$NON-NLS-2$
-			} catch(OutOfMemoryError e) {
+			} catch (OutOfMemoryError e) {
 				outOfMemory = true;
 			}
 		}
@@ -675,7 +689,7 @@ public final void addSuppressed(Throwable exception) {
 	synchronized (this) {
 		if (suppressedExceptions != null) {
 			if (suppressedExceptions.size() == 0) {
-				suppressedExceptions = new ArrayList<Throwable>(2);
+				suppressedExceptions = new ArrayList<>(2);
 			}
 			suppressedExceptions.add(exception);
 		}
