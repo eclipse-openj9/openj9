@@ -9569,15 +9569,23 @@ J9::X86::TreeEvaluator::vectorizedHashCodeLoopHelper(TR::Node *node,
    TR::Register *tmpVRF = cg->allocateRegister(TR_VRF);
    TR::Register *multiplierVRF = cg->allocateRegister(TR_VRF);
 
-   TR::Register *hashRegsVRF[]             = {cg->allocateRegister(TR_VRF), cg->allocateRegister(TR_VRF), cg->allocateRegister(TR_VRF), cg->allocateRegister(TR_VRF) };
-   TR::Register *multiplier31PowNRegsVRF[] = {cg->allocateRegister(TR_VRF), cg->allocateRegister(TR_VRF), cg->allocateRegister(TR_VRF), cg->allocateRegister(TR_VRF) };
+   TR::Register *hashRegsVRF[4];
+   TR::Register *multiplier31PowNRegsVRF[4];
 
    deps->addPostCondition(tmp, TR::RealRegister::NoReg, cg);
    deps->addPostCondition(tmpVRF, TR::RealRegister::NoReg, cg);
    deps->addPostCondition(multiplierVRF, TR::RealRegister::NoReg, cg);
 
-   for (int32_t i = 0; i < 4; i++) deps->addPostCondition(multiplier31PowNRegsVRF[i], TR::RealRegister::NoReg, cg);
-   for (int32_t i = 0; i < 4; i++) deps->addPostCondition(hashRegsVRF[i], TR::RealRegister::NoReg, cg);
+   for (int32_t i = 0; i < unrollCount; i++)
+      {
+      hashRegsVRF[i] = cg->allocateRegister(TR_VRF);
+      multiplier31PowNRegsVRF[i] = cg->allocateRegister(TR_VRF);
+
+      deps->addPostCondition(hashRegsVRF[i], TR::RealRegister::NoReg, cg);
+      deps->addPostCondition(multiplier31PowNRegsVRF[i], TR::RealRegister::NoReg, cg);
+      }
+
+   deps->stopAddingConditions();
 
    TR::LabelSymbol *begLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *endLabel = generateLabelSymbol(cg);
@@ -9687,8 +9695,8 @@ J9::X86::TreeEvaluator::vectorizedHashCodeLoopHelper(TR::Node *node,
    cg->stopUsingRegister(tmpVRF);
    cg->stopUsingRegister(multiplierVRF);
 
-   for (int32_t i = 0; i < 4; i++) cg->stopUsingRegister(multiplier31PowNRegsVRF[i]);
-   for (int32_t i = 0; i < 4; i++) cg->stopUsingRegister(hashRegsVRF[i]);
+   for (int32_t i = 0; i < unrollCount; i++) cg->stopUsingRegister(multiplier31PowNRegsVRF[i]);
+   for (int32_t i = 0; i < unrollCount; i++) cg->stopUsingRegister(hashRegsVRF[i]);
 
    return result;
    }
@@ -9781,14 +9789,19 @@ J9::X86::TreeEvaluator::vectorizedHashCodeHelper(TR::Node *node, TR::DataType dt
 
    // Generate Main Loop; 4x Unrolled seems to yield the best performance for large arrays
    static char *unrollVar = feGetEnv("TR_setInlineVectorHashCodeUnrollCount");
+
+#ifdef TR_TARGET_64BIT
    int32_t unrollCount = unrollVar ? atoi(unrollVar) : 4;
+#else
+   int32_t unrollCount = 1;
+#endif
 
    vectorizedHashCodeLoopHelper(node, dt, vl, isSigned, result, initHash, index, length, address, unrollCount, cg);
 
    static bool disableSecondLoop = feGetEnv("TR_disableVectorHashCodeSecondLoop") != NULL;
 
-   // Generate a second vectorized loop;
-   if (!disableSecondLoop)
+   // Generate a second vectorized loop if not disabled and Vl/unrollCount are not the same as the first loop
+   if (!disableSecondLoop && (unrollCount != 1 || vl != TR::VectorLength128))
       {
       generateRegRegInstruction(TR::InstOpCode::MOV4RegReg, node, initHash, result, cg);
       vectorizedHashCodeLoopHelper(node, dt, TR::VectorLength128, isSigned, result, initHash, index, length, address, 1, cg);
