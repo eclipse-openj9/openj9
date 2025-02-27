@@ -32,15 +32,22 @@ import com.ibm.oti.util.Util;
 public final class StackTraceElement implements java.io.Serializable {
 	private static final long serialVersionUID = 6992337162326171013L;
 	/*[IF JAVA_SPEC_VERSION >= 11]*/
+	/** @serial */
 	private final String moduleName;
+	/** @serial */
 	private final String moduleVersion;
+	/** @serial */
 	private final String classLoaderName;
 	private transient boolean includeClassLoaderName;
 	private transient boolean includeModuleVersion;
 	/*[ENDIF] JAVA_SPEC_VERSION >= 11*/
+	/** @serial */
 	private final String declaringClass;
+	/** @serial */
 	private final String methodName;
+	/** @serial */
 	private final String fileName;
+	/** @serial */
 	private final int lineNumber;
 	transient Object source;
 
@@ -284,8 +291,10 @@ public String getMethodName() {
 @Override
 public int hashCode() {
 	// either both methodName and declaringClass are null, or neither are null
-	if (methodName == null) return 0;	// all unknown methods hash the same
-	int hashCode = methodName.hashCode() ^ declaringClass.hashCode();	// declaringClass never null if methodName is non-null
+	if (methodName == null) {
+		return 0; // all unknown methods hash the same
+	}
+	int hashCode = methodName.hashCode() ^ declaringClass.hashCode(); // declaringClass never null if methodName is non-null
 	/*[IF JAVA_SPEC_VERSION >= 11]*/
 	if (null != moduleName) {
 		hashCode ^= moduleName.hashCode();

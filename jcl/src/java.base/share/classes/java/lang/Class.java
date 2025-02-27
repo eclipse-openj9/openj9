@@ -300,7 +300,7 @@ public final class Class<T> implements java.io.Serializable, GenericDeclaration,
 	}
 
 /*[IF JAVA_SPEC_VERSION >= 11]*/
-	private Class<?> nestHost;
+	private transient Class<?> nestHost;
 /*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 
 /*[IF JAVA_SPEC_VERSION >= 15]*/
