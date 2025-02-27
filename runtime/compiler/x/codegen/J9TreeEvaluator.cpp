@@ -9423,13 +9423,9 @@ static TR::Register* inlineStringHashCode(TR::Node* node, bool isCompressed, TR:
 
 TR::Register* J9::X86::TreeEvaluator::inlineVectorizedHashCode(TR::Node* node, TR::CodeGenerator* cg)
    {
-   TR::Node *fromIndexNode = node->getChild(1);
    TR::Node *initialValueNode = node->getChild(3);
    TR::Node *elementTypeNode = node->getChild(4);
    TR::Register* registerHash = NULL;
-
-   if (!(fromIndexNode->getOpCodeValue() == TR::iconst && fromIndexNode->getInt() == 0))
-      return NULL; // only supporting offset of const 0
 
    switch (elementTypeNode->getConstValue())
       {
@@ -9751,7 +9747,6 @@ J9::X86::TreeEvaluator::vectorizedHashCodeHelper(TR::Node *node, TR::DataType dt
    {
    int32_t shift = dt - TR::Int8; /* i8 -> 0, i16 -> 1, i32 -> 2 */
 
-   TR_ASSERT_FATAL(node->getChild(1)->getOpCodeValue() == TR::iconst && node->getChild(1)->getInt() == 0, "vector hashcode offset can only be const zero.");
    TR_ASSERT_FATAL(shift >= 0 && shift <= 2, "Unsupported datatype for vectorized hashcode");
 
    TR::Compilation *comp = cg->comp();
@@ -9762,7 +9757,12 @@ J9::X86::TreeEvaluator::vectorizedHashCodeHelper(TR::Node *node, TR::DataType dt
    else if (comp->target().cpu.supportsFeature(OMR_FEATURE_X86_AVX2))
       vl = TR::VectorLength256;
 
-   TR::Register *address = cg->evaluate(node->getChild(0));
+   TR::Node *addressNode = node->getChild(0);
+
+   bool nonZeroOffset = node->getChild(1)->getOpCodeValue() != TR::iconst || node->getChild(1)->getInt() != 0;
+   bool addressIs64bits = TR::TreeEvaluator::getNodeIs64Bit(addressNode, cg);
+
+   TR::Register *address = nonZeroOffset ? TR::TreeEvaluator::intOrLongClobberEvaluate(addressNode, addressIs64bits, cg) : cg->evaluate(addressNode);
    TR::Register *length = cg->evaluate(node->getChild(2));
    TR::Register *initHash = nodeHash ? cg->intClobberEvaluate(nodeHash) : cg->allocateRegister(TR_GPR);
    TR::Register *index = cg->allocateRegister();
@@ -9777,6 +9777,14 @@ J9::X86::TreeEvaluator::vectorizedHashCodeHelper(TR::Node *node, TR::DataType dt
    deps->addPostCondition(tmp, TR::RealRegister::NoReg, cg);
    deps->addPostCondition(initHash, TR::RealRegister::NoReg, cg);
    deps->addPostCondition(length, TR::RealRegister::NoReg, cg);
+   deps->stopAddingConditions();
+
+   if (nonZeroOffset)
+      {
+      TR::Register *offset = cg->evaluate(node->getChild(1));
+      TR::MemoryReference *memRef = generateX86MemoryReference(address, offset, shift, 0, cg);
+      generateRegMemInstruction(TR::InstOpCode::LEARegMem(), node, address, memRef, cg);
+      }
 
    if (!nodeHash)
       {
@@ -9840,6 +9848,11 @@ J9::X86::TreeEvaluator::vectorizedHashCodeHelper(TR::Node *node, TR::DataType dt
    generateLabelInstruction(TR::InstOpCode::JL4, node, residueLoopLabel, cg);
    generateLabelInstruction(TR::InstOpCode::label, node, residueEndLoopLabel, deps, cg);
    }
+
+   if (nonZeroOffset)
+      {
+      cg->stopUsingRegister(address);
+      }
 
    cg->stopUsingRegister(initHash);
    cg->stopUsingRegister(index);
