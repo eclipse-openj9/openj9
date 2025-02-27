@@ -198,6 +198,24 @@ char *node_key(node *aNode);
 J9ThreadAbstractMonitor *
 monitorTablePeekMonitor(J9JavaVM *vm, j9object_t object);
 
+/**
+ * Search the monitor tables in vm->monitorTableList for the inflated monitor corresponding to an object.
+ * Similar to monitorTableAt(), but doesn't add the monitor if it isn't found in the hashtable.
+ *
+ * This function may block on vm->monitorTableMutex.
+ * This function can work out-of-process.
+ *
+ * @param[in] vm the JavaVM. For out-of-process: may be a local or target pointer.
+ * vm->monitorTable must be a target value.
+ * @param[in] object the object. For out-of-process: a target pointer.
+ * @returns a J9ObjectMonitor from the monitor hashtable
+ * @retval NULL There is no corresponding monitor in vm->monitorTable.
+ *
+ * @see monitorTablePeekMonitor
+ */
+J9ObjectMonitor *
+monitorTablePeek(J9JavaVM *vm, j9object_t object);
+
 #ifdef __cplusplus
 }
 #endif
