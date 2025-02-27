@@ -216,14 +216,22 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<export name="_JVM_IsInterface@8"/>
 		<export name="_JVM_GetClassSigners@8"/>
 		<export name="_JVM_SetClassSigners@12"/>
-		<export name="_JVM_IsArrayClass@8"/>
-		<export name="_JVM_IsPrimitiveClass@8"/>
+		<export name="_JVM_GetClassModifiers@8">
+			<exclude-if condition="spec.java25"/>
+		</export>
+		<export name="_JVM_GetProtectionDomain@8">
+			<exclude-if condition="spec.java25"/>
+		</export>
+		<export name="_JVM_IsArrayClass@8">
+			<exclude-if condition="spec.java25"/>
+		</export>
+		<export name="_JVM_IsPrimitiveClass@8">
+			<exclude-if condition="spec.java25"/>
+		</export>
 		<export name="_JVM_GetComponentType@8"/>
-		<export name="_JVM_GetClassModifiers@8"/>
 		<export name="_JVM_GetClassDeclaredFields@12"/>
 		<export name="_JVM_GetClassDeclaredMethods@12"/>
 		<export name="_JVM_GetClassDeclaredConstructors@12"/>
-		<export name="_JVM_GetProtectionDomain@8"/>
 		<export name="_JVM_SetProtectionDomain@12"/>
 		<export name="_JVM_GetDeclaredClasses@8"/>
 		<export name="_JVM_GetDeclaringClass@8"/>

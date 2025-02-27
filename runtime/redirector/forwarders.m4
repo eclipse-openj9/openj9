@@ -165,7 +165,8 @@ _X(JVM_GetClassDeclaredConstructors,JNICALL,true,jobject,JNIEnv *env, jclass cla
 _X(JVM_GetClassDeclaredFields,JNICALL,true,jobject,JNIEnv *env, jobject clazz, jint arg2)
 _X(JVM_GetClassDeclaredMethods,JNICALL,true,jobject,JNIEnv *env, jobject clazz, jboolean unknown)
 _X(JVM_GetClassInterfaces,JNICALL,true,jobject,jint arg0, jint arg1)
-_X(JVM_GetClassModifiers,JNICALL,true,jint,JNIEnv *env, jclass clazz)
+_IF([JAVA_SPEC_VERSION < 25],
+	[_X(JVM_GetClassModifiers,JNICALL,true,jint,JNIEnv *env, jclass clazz)])
 _X(JVM_GetClassSigners,JNICALL,true,jobject,jint arg0, jint arg1)
 _X(JVM_GetComponentType,JNICALL,true,jobject,JNIEnv *env, jclass cls)
 _X(JVM_GetDeclaredClasses,JNICALL,true,jobject,jint arg0, jint arg1)
@@ -173,7 +174,8 @@ _X(JVM_GetDeclaringClass,JNICALL,true,jobject,jint arg0, jint arg1)
 _IF([JAVA_SPEC_VERSION < 24],
 	[_X(JVM_GetInheritedAccessControlContext,JNICALL,true,jobject,jint arg0, jint arg1)])
 _X(JVM_GetPrimitiveArrayElement,JNICALL,true,jvalue,JNIEnv *env, jobject arr, jint index, jint wCode)
-_X(JVM_GetProtectionDomain,JNICALL,true,jobject,jint arg0, jint arg1)
+_IF([JAVA_SPEC_VERSION < 25],
+	[_X(JVM_GetProtectionDomain,JNICALL,true,jobject,jint arg0, jint arg1)])
 _IF([JAVA_SPEC_VERSION < 24],
 	[_X(JVM_GetStackAccessControlContext,JNICALL,true,jobject,JNIEnv *env, jclass java_security_AccessController)])
 _X(JVM_GetStackTraceDepth,JNICALL,true,jint,JNIEnv *env, jobject throwable)
@@ -183,10 +185,12 @@ _X(JVM_IHashCode,JNICALL,true,jint,JNIEnv *env, jobject obj)
 _X(JVM_InitProperties,JNICALL,true,jobject,JNIEnv *env, jobject properties)
 _X(JVM_InternString,JNICALL,true,jstring,JNIEnv *env, jstring str)
 _X(JVM_Interrupt,JNICALL,true,jobject,jint arg0, jint arg1)
-_X(JVM_IsArrayClass,JNICALL,true,jboolean,JNIEnv *env, jclass clazz)
+_IF([JAVA_SPEC_VERSION < 25],
+	[_X(JVM_IsArrayClass,JNICALL,true,jboolean,JNIEnv *env, jclass clazz)])
 _X(JVM_IsInterface,JNICALL,true,jboolean,JNIEnv *env, jclass clazz)
 _X(JVM_IsInterrupted,JNICALL,true,jboolean,JNIEnv *env, jobject thread, jboolean unknown)
-_X(JVM_IsPrimitiveClass,JNICALL,true,jboolean,JNIEnv *env, jclass clazz)
+_IF([JAVA_SPEC_VERSION < 25],
+	[_X(JVM_IsPrimitiveClass,JNICALL,true,jboolean,JNIEnv *env, jclass clazz)])
 _X(JVM_IsSupportedJNIVersion,JNICALL,true,jboolean,jint jniVersion)
 _IF([JAVA_SPEC_VERSION < 17],
 	[_X(JVM_IsThreadAlive,JNICALL,true,jboolean,JNIEnv *env, jobject targetThread)])
