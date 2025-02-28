@@ -1536,6 +1536,60 @@ StoreArrayElementTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
       }
    }
 
+class IsIdentityObjectTransformer: public TR::TreeLowering::Transformer
+   {
+   public:
+   explicit IsIdentityObjectTransformer(TR::TreeLowering* opt)
+      : TR::TreeLowering::Transformer(opt)
+      {}
+
+   void lower(TR::Node* const node, TR::TreeTop* const tt);
+   };
+
+
+/**
+ * @brief Perform lowering of calls to the <isIdentityObject> non-helper function
+ *
+ * A call like the following
+ *
+ * @verbatim
+   n88n  icall  <isIdentityObject>
+   n77n    aload  x
+ * @endverbatim
+ *
+ * will be transformed into
+ *
+ * @verbatim
+   n88n  PassThrough
+   n99n    iand
+   n98n      iloadi  <isClassFlags>
+   n97n        aloadi  <vft-symbol>
+   n77n          aload x
+   n96n    iconst 0x80000       // Test whether class is an identity class
+ * @endverbatim
+ */
+void
+IsIdentityObjectTransformer::lower(TR::Node* const node, TR::TreeTop* const tt)
+   {
+   // If the argument to the call of the <isIdentityObject> non-helper is the
+   // object of a NULLCHK, pull the NULLCHK into a separate tree before
+   // transforming the call to <isIdentityObject>.  Otherwise, we'll end up
+   // with the NULLCHK operating on something meaningless.
+   //
+   if (tt->getNode()->getOpCode().isNullCheck() && tt->getNode()->getFirstChild() == node)
+      {
+      J9::TransformUtil::separateNullCheck(comp(), tt, trace());
+      }
+
+   TR::SymbolReference *vftSymRef = comp()->getSymRefTab()->findOrCreateVftSymbolRef();
+   TR::Node *objNode = node->getFirstChild();
+   TR::Node *vftNode = TR::Node::createWithSymRef(TR::aloadi, 1, 1, objNode, vftSymRef);
+   TR::Node *testFlagsNode = comp()->fej9()->testIsClassIdentityType(vftNode);
+   TR::Node::recreate(node, TR::PassThrough);
+   objNode->decReferenceCount();
+   node->setAndIncChild(0, testFlagsNode);
+   }
+
 /**
  * @brief Perform lowering related to Valhalla value types
  *
@@ -1600,6 +1654,10 @@ TR::TreeLowering::lowerValueTypeOperations(TransformationManager& transformation
                                       "StoreArrayElementTransformer cannot process the treetop node that is neither a treetop nor a NULLCHK\n");
             transformations.addTransformation(getTransformer<StoreArrayElementTransformer>(), node, tt);
             }
+         }
+      else if (symRefTab->isNonHelper(node->getSymbolReference(), TR::SymbolReferenceTable::isIdentityObjectNonHelperSymbol))
+         {
+         transformations.addTransformation(getTransformer<IsIdentityObjectTransformer>(), node, tt);
          }
       }
    }

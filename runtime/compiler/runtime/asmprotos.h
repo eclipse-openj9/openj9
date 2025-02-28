@@ -143,6 +143,9 @@ JIT_HELPER(jitThrowCurrentException);  // asm calling-convention helper
 JIT_HELPER(jitThrowException);  // asm calling-convention helper
 JIT_HELPER(jitThrowUnreportedException);  // asm calling-convention helper
 JIT_HELPER(jitThrowExceptionInInitializerError);  // asm calling-convention helper
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+JIT_HELPER(jitThrowIdentityException);  // asm calling-convention helper
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 JIT_HELPER(jitThrowInstantiationException);  // asm calling-convention helper
 JIT_HELPER(jitThrowNullPointerException);  // asm calling-convention helper
 JIT_HELPER(jitThrowWrongMethodTypeException);  // asm calling-convention helper
