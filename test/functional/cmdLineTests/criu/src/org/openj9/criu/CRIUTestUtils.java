@@ -86,7 +86,7 @@ public class CRIUTestUtils {
 			createCheckpointDirectory(path);
 			try {
 				if (criu == null) {
-					criu = new CRIUSupport(path);
+					criu = CRIUSupport.getCRIUSupport().setImageDir(path);
 				}
 				showThreadCurrentTime("Performing CRIUSupport.checkpointJVM()");
 				criu.setLogLevel(4).setLeaveRunning(false).setShellJob(true).setFileLocks(true).checkpointJVM();
@@ -108,7 +108,7 @@ public class CRIUTestUtils {
 		if (CRIUSupport.isCRIUSupportEnabled()) {
 			deleteCheckpointDirectory(path);
 			createCheckpointDirectory(path);
-			return (new CRIUSupport(path)).setLeaveRunning(false).setShellJob(true).setFileLocks(true);
+			return CRIUSupport.getCRIUSupport().setImageDir(path).setLeaveRunning(false).setShellJob(true).setFileLocks(true);
 		} else {
 			throw new RuntimeException("CRIU is not enabled");
 		}

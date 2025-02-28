@@ -87,6 +87,55 @@ public final class InternalCRIUSupport {
 /*[ENDIF] CRAC_SUPPORT */
 
 	/**
+	 * A singleton {@code InternalCRIUSupport} instance.
+	 *
+	 * The default CRIU dump options are:
+	 * <p>
+	 * {@code imageDir} = CWD, current Java process working directory.
+	 * <p>
+	 * {@code leaveRunning} = false
+	 * <p>
+	 * {@code shellJob} = false
+	 * <p>
+	 * {@code extUnixSupport} = false
+	 * <p>
+	 * {@code logLevel} = 2
+	 * <p>
+	 * {@code logFile} = criu.log
+	 * <p>
+	 * {@code fileLocks} = false
+	 * <p>
+	 * {@code ghostFileLimit} = 1 MB
+	 * <p>
+	 * {@code workDir} = imageDir, the directory where the images are to be created.
+	 */
+	private static final InternalCRIUSupport singletonInternalCRIUSupport = new InternalCRIUSupport();
+
+	// no public construtors
+	private InternalCRIUSupport() {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
+		SecurityManager manager = System.getSecurityManager();
+		if (manager != null) {
+			manager.checkPermission(CRIU_DUMP_PERMISSION);
+		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
+		// use current working directory
+		setImageDir(java.nio.file.FileSystems.getDefault().getPath("").toAbsolutePath());
+	}
+
+	/**
+	 * Returns the singleton InternalCRIUSupport object.
+	 *
+	 * Most methods of class {@code InternalCRIUSupport} are instance methods and
+	 * must be invoked via this object.
+	 *
+	 * @return the singleton {@code InternalCRIUSupport} object
+	 */
+	public static InternalCRIUSupport getInternalCRIUSupport() {
+		return singletonInternalCRIUSupport;
+	}
+
+	/**
 	 * Retrieve the elapsed time between Checkpoint and Restore.
 	 * Only support one Checkpoint.
 	 *
@@ -297,47 +346,6 @@ public final class InternalCRIUSupport {
 			loadNativeLibrary();
 			initComplete = true;
 		}
-	}
-
-	/**
-	 * Constructs a new {@code InternalCRIUSupport}.
-	 *
-	 * The default CRIU dump options are:
-	 * <p>
-	 * {@code imageDir} = imageDir, the directory where the images are to be
-	 * created.
-	 * <p>
-	 * {@code leaveRunning} = false
-	 * <p>
-	 * {@code shellJob} = false
-	 * <p>
-	 * {@code extUnixSupport} = false
-	 * <p>
-	 * {@code logLevel} = 2
-	 * <p>
-	 * {@code logFile} = criu.log
-	 * <p>
-	 * {@code fileLocks} = false
-	 * <p>
-	 * {@code workDir} = imageDir, the directory where the images are to be created.
-	 *
-	 * @param imageDir the directory that will hold the dump files as a
-	 *                 java.nio.file.Path
-	 * @throws NullPointerException     if imageDir is null
-	/*[IF JAVA_SPEC_VERSION < 24]
-	 * @throws SecurityException        if no permission to access imageDir or no
-	 *                                  CRIU_DUMP_PERMISSION
-	/*[ENDIF] JAVA_SPEC_VERSION < 24
-	 * @throws IllegalArgumentException if imageDir is not a valid directory
-	 */
-	public InternalCRIUSupport(Path imageDir) {
-		/*[IF JAVA_SPEC_VERSION < 24]*/
-		SecurityManager manager = System.getSecurityManager();
-		if (manager != null) {
-			manager.checkPermission(CRIU_DUMP_PERMISSION);
-		}
-		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
-		setImageDir(imageDir);
 	}
 
 	/**

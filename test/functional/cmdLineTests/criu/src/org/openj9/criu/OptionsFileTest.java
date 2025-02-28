@@ -86,8 +86,8 @@ public class OptionsFileTest {
 
 		Path imagePath = Paths.get("cpData");
 		CRIUTestUtils.createCheckpointDirectory(imagePath);
-		CRIUSupport criuSupport = new CRIUSupport(imagePath);
-		criuSupport.registerRestoreOptionsFile(optionsFilePath);
+		CRIUSupport criuSupport = CRIUSupport.getCRIUSupport().setImageDir(imagePath)
+				.registerRestoreOptionsFile(optionsFilePath);
 
 		System.out.println("Pre-checkpoint");
 		CRIUTestUtils.checkPointJVM(criuSupport, imagePath, true);
@@ -112,8 +112,8 @@ public class OptionsFileTest {
 
 		Path imagePath = Paths.get("cpData");
 		CRIUTestUtils.createCheckpointDirectory(imagePath);
-		CRIUSupport criuSupport = new CRIUSupport(imagePath);
-		criuSupport.registerRestoreOptionsFile(optionsFilePath);
+		CRIUSupport criuSupport = CRIUSupport.getCRIUSupport().setImageDir(imagePath)
+				.registerRestoreOptionsFile(optionsFilePath);
 
 		System.setProperty("prop1", "val1");
 		System.setProperty("prop2", "val2");
@@ -142,8 +142,8 @@ public class OptionsFileTest {
 
 		Path imagePath = Paths.get("cpData");
 		CRIUTestUtils.createCheckpointDirectory(imagePath);
-		CRIUSupport criuSupport = new CRIUSupport(imagePath);
-		criuSupport.registerRestoreOptionsFile(optionsFilePath);
+		CRIUSupport criuSupport = CRIUSupport.getCRIUSupport().setImageDir(imagePath)
+				.registerRestoreOptionsFile(optionsFilePath);
 
 		System.out.println("Pre-checkpoint");
 		CRIUTestUtils.checkPointJVM(criuSupport, imagePath, true);
@@ -168,8 +168,8 @@ public class OptionsFileTest {
 
 		Path imagePath = Paths.get("cpData");
 		CRIUTestUtils.createCheckpointDirectory(imagePath);
-		CRIUSupport criuSupport = new CRIUSupport(imagePath);
-		criuSupport.registerRestoreOptionsFile(optionsFilePath);
+		CRIUSupport criuSupport = CRIUSupport.getCRIUSupport().setImageDir(imagePath)
+				.registerRestoreOptionsFile(optionsFilePath);
 
 		System.out.println("Pre-checkpoint");
 		CRIUTestUtils.checkPointJVM(criuSupport, imagePath, true);
@@ -189,8 +189,8 @@ public class OptionsFileTest {
 
 		Path imagePath = Paths.get("cpData");
 		CRIUTestUtils.createCheckpointDirectory(imagePath);
-		CRIUSupport criuSupport = new CRIUSupport(imagePath);
-		criuSupport.registerRestoreOptionsFile(optionsFilePath);
+		CRIUSupport criuSupport = CRIUSupport.getCRIUSupport().setImageDir(imagePath)
+				.registerRestoreOptionsFile(optionsFilePath);
 
 		System.out.println("Pre-checkpoint");
 		CRIUTestUtils.checkPointJVM(criuSupport, imagePath, true);
@@ -211,8 +211,8 @@ public class OptionsFileTest {
 
 		Path imagePath = Paths.get("cpData");
 		CRIUTestUtils.createCheckpointDirectory(imagePath);
-		CRIUSupport criuSupport = new CRIUSupport(imagePath);
-		criuSupport.registerRestoreOptionsFile(optionsFilePath);
+		CRIUSupport criuSupport = CRIUSupport.getCRIUSupport().setImageDir(imagePath)
+				.registerRestoreOptionsFile(optionsFilePath);
 
 		System.out.println("Pre-checkpoint");
 		CRIUTestUtils.checkPointJVM(criuSupport, imagePath, true);
@@ -231,8 +231,8 @@ public class OptionsFileTest {
 
 		Path imagePath = Paths.get("cpData");
 		CRIUTestUtils.createCheckpointDirectory(imagePath);
-		CRIUSupport criuSupport = new CRIUSupport(imagePath);
-		criuSupport.registerRestoreOptionsFile(optionsFilePath);
+		CRIUSupport criuSupport = CRIUSupport.getCRIUSupport().setImageDir(imagePath)
+				.registerRestoreOptionsFile(optionsFilePath);
 
 		System.out.println("Pre-checkpoint");
 		CRIUTestUtils.checkPointJVM(criuSupport, imagePath, true);
@@ -246,8 +246,8 @@ public class OptionsFileTest {
 
 		Path imagePath = Paths.get("cpData");
 		CRIUTestUtils.createCheckpointDirectory(imagePath);
-		CRIUSupport criuSupport = new CRIUSupport(imagePath);
-		criuSupport.registerRestoreOptionsFile(optionsFilePath);
+		CRIUSupport criuSupport = CRIUSupport.getCRIUSupport().setImageDir(imagePath)
+				.registerRestoreOptionsFile(optionsFilePath);
 
 		System.out.println("Pre-checkpoint");
 		CRIUTestUtils.checkPointJVM(criuSupport, imagePath, true);
@@ -262,7 +262,7 @@ public class OptionsFileTest {
 	static void criuDumpOptionsTest() {
 		Path imagePath = Paths.get("cpData");
 		CRIUTestUtils.createCheckpointDirectory(imagePath);
-		CRIUSupport criuSupport = new CRIUSupport(imagePath);
+		CRIUSupport criuSupport = CRIUSupport.getCRIUSupport().setImageDir(imagePath);
 
 		System.out.println("Pre-checkpoint");
 		CRIUTestUtils.checkPointJVM(criuSupport, imagePath, true);
@@ -275,8 +275,8 @@ public class OptionsFileTest {
 
 		Path imagePath = Paths.get("cpData");
 		CRIUTestUtils.createCheckpointDirectory(imagePath);
-		CRIUSupport criuSupport = new CRIUSupport(imagePath);
-		criuSupport.registerRestoreOptionsFile(optionsFilePath);
+		CRIUSupport criuSupport = CRIUSupport.getCRIUSupport().setImageDir(imagePath)
+				.registerRestoreOptionsFile(optionsFilePath);
 
 		System.out.println("Pre-checkpoint");
 		CRIUTestUtils.checkPointJVM(criuSupport, imagePath, true);
@@ -291,8 +291,8 @@ public class OptionsFileTest {
 
 		Path imagePath = Paths.get("cpData");
 		CRIUTestUtils.createCheckpointDirectory(imagePath);
-		CRIUSupport criuSupport = new CRIUSupport(imagePath);
-		criuSupport.registerRestoreOptionsFile(optionsFilePath);
+		CRIUSupport criuSupport = CRIUSupport.getCRIUSupport().setImageDir(imagePath)
+				.registerRestoreOptionsFile(optionsFilePath);
 
 		System.out.println("Pre-checkpoint");
 		CRIUTestUtils.checkPointJVM(criuSupport, imagePath, true);
@@ -320,8 +320,8 @@ public class OptionsFileTest {
 
 		Path imagePath = Paths.get("cpData");
 		CRIUTestUtils.createCheckpointDirectory(imagePath);
-		CRIUSupport criuSupport = new CRIUSupport(imagePath);
-		criuSupport.registerRestoreOptionsFile(optionsFilePath);
+		CRIUSupport criuSupport = CRIUSupport.getCRIUSupport().setImageDir(imagePath)
+				.registerRestoreOptionsFile(optionsFilePath);
 
 		System.out.println("Pre-checkpoint");
 		CRIUTestUtils.checkPointJVM(criuSupport, imagePath, true);
@@ -341,8 +341,8 @@ public class OptionsFileTest {
 
 		Path imagePath = Paths.get("cpData");
 		CRIUTestUtils.createCheckpointDirectory(imagePath);
-		CRIUSupport criuSupport = new CRIUSupport(imagePath);
-		criuSupport.registerRestoreOptionsFile(optionsFilePath);
+		CRIUSupport criuSupport = CRIUSupport.getCRIUSupport().setImageDir(imagePath)
+				.registerRestoreOptionsFile(optionsFilePath);
 
 		System.out.println("Pre-checkpoint");
 		CRIUTestUtils.checkPointJVM(criuSupport, imagePath, true);
