@@ -5462,7 +5462,7 @@ TR_J9ByteCodeIlGenerator::loadStatic(int32_t cpIndex)
    TR::Node * treeTopNode = 0;
    if (symRef->isUnresolved())
       treeTopNode = genResolveCheck(load);
-   else if (symbol->isVolatile() || _generateReadBarriersForFieldWatch)
+   else if (!symbol->isTransparent() || _generateReadBarriersForFieldWatch)
       treeTopNode = load;
 
    if (treeTopNode)
