@@ -67,6 +67,16 @@ J9::X86::CPU::detectRelocatable(OMRPortLibrary * const omrPortLib)
    return TR::CPU::customize(portableProcessorDescription);
    }
 
+TR::CPU
+J9::X86::CPU::detect(OMRPortLibrary * const omrPortLib)
+   {
+   if (omrPortLib == NULL)
+      return TR::CPU();
+
+   TR::CPU::enableFeatureMasks();
+   return OMR::X86::CPU::detect(omrPortLib);
+   }
+
 void
 J9::X86::CPU::enableFeatureMasks()
    {
