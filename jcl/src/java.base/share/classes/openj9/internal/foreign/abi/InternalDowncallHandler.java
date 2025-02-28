@@ -189,6 +189,9 @@ public class InternalDowncallHandler {
 	private static synchronized native void resolveRequiredFields();
 	private native void initCifNativeThunkData(String[] argLayouts, String retLayout, boolean newArgTypes, int varArgIndex);
 	private native long invokeNative(
+			/*[IF JAVA_SPEC_VERSION >= 24]*/
+			Object returnStateMemBase,
+			/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 			/*[IF JAVA_SPEC_VERSION >= 22]*/
 			Object[] bases,
 			long[] offsets,
@@ -887,9 +890,29 @@ public class InternalDowncallHandler {
 		 * Note: memArgScopeSet is not empty with the downcall address added to the set.
 		 */
 		/*[IF JAVA_SPEC_VERSION >= 21]*/
+		/*[IF JAVA_SPEC_VERSION >= 24]*/
+		long returnStateMemAddr;
+		Object returnStateMemBase;
+		if (linkerOpts.hasCapturedCallState() && !stateSegmt.isNative()) {
+			/* The CaptureCallState option can only use heap memory if allowed by the Critical option. */
+			if (!linkerOpts.isCritical()) {
+				throw new IllegalArgumentException("Heap segment not allowed");
+			}
+			AbstractMemorySegmentImpl segment = (AbstractMemorySegmentImpl)stateSegmt;
+			returnStateMemAddr = segment.unsafeGetOffset();
+			returnStateMemBase = segment.unsafeGetBase();
+		} else {
+			returnStateMemAddr = getValidDowncallMemAddr(stateSegmt);
+			returnStateMemBase = null;
+		}
+		/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
+
 		try (Arena arena = Arena.ofConfined()) {
 			SetDependency(arena.scope());
 			returnVal = invokeNative(
+					/*[IF JAVA_SPEC_VERSION >= 24]*/
+					returnStateMemBase,
+					/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 					/*[IF JAVA_SPEC_VERSION >= 22]*/
 					(info != null) ? info.bases : null,
 					(info != null) ? info.offsets : null,
@@ -897,7 +920,11 @@ public class InternalDowncallHandler {
 					/*[ELSE] JAVA_SPEC_VERSION >= 22 */
 					linkerOpts.isTrivial(),
 					/*[ENDIF] JAVA_SPEC_VERSION >= 22 */
+					/*[IF JAVA_SPEC_VERSION >= 24]*/
+					returnStateMemAddr,
+					/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 					getValidDowncallMemAddr(stateSegmt),
+					/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 					retMemAddr,
 					getValidDowncallMemAddr(downcallAddr),
 					cifNativeThunkAddr,
