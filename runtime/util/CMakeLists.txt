@@ -107,13 +107,30 @@ j9vm_add_library(j9util STATIC
 )
 
 if(OMR_OS_LINUX)
-	target_sources(j9util PRIVATE linux/osinfo.c)
+	target_sources(j9util
+		PRIVATE
+			linux/osinfo.c
+			unix/filehelp.c
+	)
 elseif(OMR_OS_WINDOWS)
-	target_sources(j9util PRIVATE win32/openlibrary.c)
+	target_sources(j9util
+		PRIVATE
+			win32/filehelp.c
+			win32/openlibrary.c
+	)
 elseif(OMR_OS_AIX)
-	target_sources(j9util PRIVATE aix/sethwprefetch.c)
+	target_sources(j9util
+		PRIVATE
+			aix/sethwprefetch.c
+			unix/filehelp.c
+	)
+elseif(OMR_OS_OSX)
+	target_sources(j9util PRIVATE unix/filehelp.c)
 elseif(OMR_OS_ZOS)
-	target_sources(j9util PRIVATE zos/freessp.c)
+	target_sources(j9util
+		PRIVATE
+			unix/filehelp.c
+			zos/freessp.c)
 endif()
 
 if(OMR_ARCH_X86)

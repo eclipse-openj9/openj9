@@ -50,6 +50,12 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			</makefilestub>
 		</makefilestubs>
 		<vpaths>
+			<vpath pattern="filehelp.c" path="unix" augmentObjects="true" type="relativepath">
+				<exclude-if condition="spec.win_x86.*"/>
+			</vpath>
+			<vpath pattern="filehelp.c" path="win32" augmentObjects="true" type="relativepath">
+				<include-if condition="spec.win_x86.*"/>
+			</vpath>
 			<vpath pattern="freessp.c" path="zos" augmentObjects="true" type="relativepath">
 				<include-if condition="spec.zos.*"/>
 			</vpath>
