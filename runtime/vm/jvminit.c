@@ -136,8 +136,8 @@ extern vmiError J9VMI_Initialize(J9JavaVM* vm);
 void sidecarInit (J9VMThread *mainThread);
 #endif
 
-typedef void (JNICALL * J9_EXIT_HANDLER_PROC) (jint);
-typedef void (JNICALL * J9_ABORT_HANDLER_PROC) (void);
+typedef void (JNICALL *J9_EXIT_HANDLER_PROC)(jint);
+typedef void (JNICALL *J9_ABORT_HANDLER_PROC)(void);
 
 struct J9VMIgnoredOption {
 	char *optionName;
@@ -8110,6 +8110,28 @@ setSignalOptions(J9JavaVM *vm, J9PortLibrary *portLibrary)
 			sigOptions |= (J9PORT_SIG_OPTIONS_REDUCED_SIGNALS_SYNCHRONOUS | J9PORT_SIG_OPTIONS_REDUCED_SIGNALS_ASYNCHRONOUS);
 		}
 	}
+
+#if defined(WIN32) && defined(_WIN32_WINNT_WINBLUE) && (_WIN32_WINNT_MAXVER >= _WIN32_WINNT_WINBLUE)
+	HMODULE h_kernel32 = GetModuleHandle(TEXT("kernel32.dll"));
+
+	if ((NULL != h_kernel32) && IsWindows8OrGreater()) {
+		typedef BOOL (WINAPI *PMP_func)(HANDLE, PROCESS_MITIGATION_POLICY, PVOID, SIZE_T);
+		PMP_func getProcessMitigationPolicyFunc = (PMP_func)GetProcAddress(h_kernel32, "GetProcessMitigationPolicy");
+
+		PROCESS_MITIGATION_CONTROL_FLOW_GUARD_POLICY cfgPolicy = {0};
+
+		if (((PMP_func)NULL != getProcessMitigationPolicyFunc)
+			&& getProcessMitigationPolicyFunc(
+					GetCurrentProcess(),
+					ProcessControlFlowGuardPolicy,
+					&cfgPolicy,
+					sizeof(cfgPolicy))
+			&& cfgPolicy.EnableControlFlowGuard
+		) {
+			vm->sigFlags |= J9_SIG_WINDOWS_MITIGATION_POLICY_CFG_ENABLED;
+		}
+	}
+#endif /* defined(WIN32) && defined(_WIN32_WINNT_WINBLUE) && (_WIN32_WINNT_MAXVER >= _WIN32_WINNT_WINBLUE) */
 
 	argIndex = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXNOHANDLESIGABRT, NULL);
 	argIndex2 = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXHANDLESIGABRT, NULL);
