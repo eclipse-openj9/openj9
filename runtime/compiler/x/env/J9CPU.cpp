@@ -67,6 +67,56 @@ J9::X86::CPU::detectRelocatable(OMRPortLibrary * const omrPortLib)
    return TR::CPU::customize(portableProcessorDescription);
    }
 
+TR::CPU
+J9::X86::CPU::detect(OMRPortLibrary * const omrPortLib)
+   {
+   if (omrPortLib == NULL)
+      return TR::CPU();
+
+   OMRPORT_ACCESS_FROM_OMRPORT(omrPortLib);
+   OMRProcessorDesc processorDescription;
+   omrsysinfo_get_processor_description(&processorDescription);
+
+   TR::CPU::enableFeatureMasks();
+
+   bool disableAVX = true;
+   bool disableAVX512 = true;
+
+   // Check XCRO register for OS support of xmm/ymm/zmm
+   if (TRUE == omrsysinfo_processor_has_feature(&processorDescription, OMR_FEATURE_X86_OSXSAVE))
+      {
+      // '6' = mask for XCR0[2:1]='11b' (XMM state and YMM state are enabled)
+      disableAVX = ((6 & _xgetbv(0)) != 6);
+      // 'e6' = (mask for XCR0[7:5]='111b' (Opmask, ZMM_Hi256, Hi16_ZMM) + XCR0[2:1]='11b' (XMM/YMM))
+      disableAVX512 = ((0xe6 & _xgetbv(0)) != 0xe6);
+      }
+
+   if (disableAVX)
+      {
+      // Unset AVX/AVX2 if not enabled via CR0 or otherwise disabled
+      omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_X86_AVX, FALSE);
+      omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_X86_AVX2, FALSE);
+      }
+
+   if (disableAVX512)
+      {
+      // Unset AVX-512 if not enabled via CR0 or otherwise disabled
+      // If other AVX-512 extensions are supported in the port library, they need to be disabled here
+      omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_X86_AVX512F, FALSE);
+      omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_X86_AVX512VL, FALSE);
+      omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_X86_AVX512BW, FALSE);
+      omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_X86_AVX512CD, FALSE);
+      omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_X86_AVX512DQ, FALSE);
+      omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_X86_AVX512_BITALG, FALSE);
+      omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_X86_AVX512_VBMI, FALSE);
+      omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_X86_AVX512_VBMI2, FALSE);
+      omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_X86_AVX512_VNNI, FALSE);
+      omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_X86_AVX512_VPOPCNTDQ, FALSE);
+      }
+
+   return TR::CPU::customize(processorDescription);
+   }
+
 void
 J9::X86::CPU::enableFeatureMasks()
    {
