@@ -28,6 +28,7 @@ import org.testng.AssertJUnit;
 import java.lang.invoke.*;
 import java.lang.reflect.*;
 import org.openj9.test.java.lang.invoke.helpers.*;
+import org.openj9.test.util.VersionCheck;
 import static java.lang.invoke.MethodHandles.*;
 import static java.lang.invoke.MethodType.*;
 
@@ -688,6 +689,25 @@ public class Test_MethodHandleInfo {
 			IAEThrown = true;
 		}
 		AssertJUnit.assertTrue(IAEThrown);
+	}
+
+	/**
+	 * Check that IMPL_LOOKUP.findGetter() works for an instance field at offset 0.
+	 *
+	 * @throws Throwable
+	 */
+	@Test(groups = { "level.sanity" })
+	public void test_ReflectAs_Field_Offset0() throws Throwable {
+		Class<?> fieldType;
+		if (VersionCheck.major() > 8) {
+			fieldType = byte[].class;
+		} else {
+			fieldType = char[].class;
+		}
+		Field field = MethodHandles.Lookup.class.getDeclaredField("IMPL_LOOKUP");
+		field.setAccessible(true);
+		MethodHandles.Lookup lookup = (MethodHandles.Lookup) field.get(null);
+		System.out.println(lookup.findGetter(String.class, "value", fieldType));
 	}
 
 	enum EnumTest {TEST1, TEST2}
