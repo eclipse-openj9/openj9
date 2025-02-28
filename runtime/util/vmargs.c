@@ -863,6 +863,8 @@ addJavaLibraryPath(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList
 		substringLength += strlen(pathBuffer);
 		substringIndex;
 		substringIndex += 1;
+	} else {
+		j9mem_free_memory(pathBuffer);
 	}
 
 #else /* defined(J9UNIX) || defined(J9ZOS390) */
