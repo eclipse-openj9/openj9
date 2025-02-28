@@ -127,6 +127,9 @@ private:
 	virtual void doStringTableSlot(J9Object **slotPtr, GC_StringTableIterator *stringTableIterator);
 	virtual void doVMClassSlot(J9Class *classPtr);
 	virtual void doVMThreadSlot(J9Object **slotPtr, GC_VMThreadIterator *vmThreadIterator);
+#if JAVA_SPEC_VERSION >= 24
+	virtual void doContinuationSlot(J9Object **slotPtr, GC_ContinuationSlotIterator *continuationSlotIterator);
+#endif /* JAVA_SPEC_VERSION >= 24 */
 	virtual void doStackSlot(J9Object **slotPtr, void *walkState, const void* stackLocation);
 	virtual void doSlot(J9Object **slotPtr);
 	virtual void doClassSlot(J9Class *classPtr);
