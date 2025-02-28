@@ -1081,9 +1081,7 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_typeCheckArrayStore,        (void *)jitTypeCheckArrayStoreWithNullCheck,   TR_Helper);
 #endif
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
    SET(TR_identityException,          (void *)jitThrowIdentityException, TR_Helper);
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 #if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM64)
    SET(TR_softwareReadBarrier,                              (void *)jitSoftwareReadBarrier,                         TR_Helper);

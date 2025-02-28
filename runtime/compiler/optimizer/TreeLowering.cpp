@@ -1561,11 +1561,11 @@ class IsIdentityObjectTransformer: public TR::TreeLowering::Transformer
  *
  * @verbatim
    n88n  PassThrough
-   n99n    iand
+   n99n    iand       // Test whether class is an identity class
    n98n      iloadi  <isClassFlags>
    n97n        aloadi  <vft-symbol>
    n77n          aload x
-   n96n    iconst 0x80000       // Test whether class is an identity class
+   n96n      iconst 0x80000
  * @endverbatim
  */
 void
