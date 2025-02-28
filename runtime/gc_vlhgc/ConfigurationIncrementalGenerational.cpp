@@ -98,15 +98,7 @@ MM_ConfigurationIncrementalGenerational::createHeapWithManager(MM_EnvironmentBas
 	if (NULL == heap) {
 		return NULL;
 	}
-#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
-	/* set off-heap enabled as default for balanced GC */
-#if !defined(J9ZTPF)
-	extensions->isVirtualLargeObjectHeapEnabled = true;
-#endif /* !defined(J9ZTPF) */
-	if (extensions->virtualLargeObjectHeap._wasSpecified) {
-		extensions->isVirtualLargeObjectHeapEnabled = extensions->virtualLargeObjectHeap._valueSpecified;
-	}
-#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
+
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 	/* Enable double mapping if glibc version 2.27 or newer is found. For double map to
 	 * work we need a file descriptor, to get one we use shm_open(3)  or memfd_create(2);
@@ -121,7 +113,7 @@ MM_ConfigurationIncrementalGenerational::createHeapWithManager(MM_EnvironmentBas
 	 * also need to check if region size is a bigger or equal to multiple of page size.
 	 *
 	 */
-	if (!extensions->isVirtualLargeObjectHeapEnabled && extensions->isArrayletDoubleMapRequested && extensions->isArrayletDoubleMapAvailable) {
+	if (!extensions->isVirtualLargeObjectHeapRequested && extensions->isArrayletDoubleMapRequested && extensions->isArrayletDoubleMapAvailable) {
 		uintptr_t pagesize = heap->getPageSize();
 		if (!extensions->memoryManager->isLargePage(env, pagesize) || (pagesize <= extensions->getOmrVM()->_arrayletLeafSize)) {
 			extensions->indexableObjectModel.setEnableDoubleMapping(true);
@@ -172,12 +164,13 @@ MM_ConfigurationIncrementalGenerational::createHeapWithManager(MM_EnvironmentBas
 	 */
 	vm->indexableObjectLayout = J9IndexableObjectLayout_DataAddr_Arraylet;
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
-	if (extensions->isVirtualLargeObjectHeapEnabled) {
+	if (extensions->isVirtualLargeObjectHeapRequested) {
 		/* Create off-heap */
 		MM_SparseVirtualMemory *largeObjectVirtualMemory = MM_SparseVirtualMemory::newInstance(env, OMRMEM_CATEGORY_MM_RUNTIME_HEAP, heap);
 		if (NULL != largeObjectVirtualMemory) {
 			extensions->largeObjectVirtualMemory = largeObjectVirtualMemory;
 			extensions->indexableObjectModel.setEnableVirtualLargeObjectHeap(true);
+			extensions->isVirtualLargeObjectHeapEnabled = true;
 			/* Overriding the original assumption that Balanced has arraylets. */
 			vm->indexableObjectLayout = J9IndexableObjectLayout_DataAddr_NoArraylet;
 			/* reset vm->unsafeIndexableHeaderSize for off-heap case */
