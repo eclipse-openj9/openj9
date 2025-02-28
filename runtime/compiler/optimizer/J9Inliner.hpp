@@ -69,17 +69,12 @@ class TR_MultipleCallTargetInliner : public TR_InlinerBase
    {
    public:
 
-      template <typename FunctObj>
-      void recursivelyWalkCallTargetAndPerformAction(TR_CallTarget *ct, FunctObj &action);
-
-      //void generateNodeEstimate(TR_CallTarget *ct, TR::Compilation *comp);
-
-      class generateNodeEstimate
+      struct NodeEstimate
          {
-         public:
-            generateNodeEstimate() : _nodeEstimate(0){ }
-            void operator()(TR_CallTarget *ct, TR::Compilation *comp);
-            int32_t getNodeEstimate() { return _nodeEstimate; }
+         NodeEstimate() : _nodeEstimate(0){ }
+         void operator()(TR_CallTarget *ct, TR::Compilation *comp);
+         int32_t getNodeEstimate() { return _nodeEstimate; }
+
          private:
             int32_t _nodeEstimate;
          };
@@ -90,6 +85,16 @@ class TR_MultipleCallTargetInliner : public TR_InlinerBase
       virtual bool exceedsSizeThreshold(TR_CallSite *callSite, int bytecodeSize, TR::Block * callNodeBlock, TR_ByteCodeInfo & bcInfo, int32_t numLocals=0, TR_ResolvedMethod * caller = 0, TR_ResolvedMethod * calleeResolvedMethod = 0, TR::Node * callNode = 0, bool allConsts = false);
 
       TR_LinkHead<TR_CallTarget> _callTargets; // This list only contains the call targets from top most level
+
+      /*
+       * \brief Recursively walks call target and estimates the number of nodes of a call graph.
+       *
+       * \param ct
+       *    the TR_CallTarget to evaluate
+       * \param estimate
+       *    the NodeEstimate to keep track of the number of nodes
+       */
+      void recursivelyWalkCallTargetAndGenerateNodeEstimate(TR_CallTarget *ct, NodeEstimate &estimate);
 
    protected:
       virtual int32_t scaleSizeBasedOnBlockFrequency(int32_t bytecodeSize, int32_t frequency, int32_t borderFrequency, TR_ResolvedMethod * calleeResolvedMethod, TR::Node *callNode, int32_t coldBorderFrequency = 0);
@@ -133,7 +138,7 @@ class TR_MultipleCallTargetInliner : public TR_InlinerBase
        * \brief
        *   For some call targets and their sub call graphs, it may be possible to simplify them into simple operations in
        *   certain situations, such as when known object info is being passed as arg. In such cases, the node count
-       *   obtained via generateNodeEstimate would not truly reflect the number of nodes that are actually introduced. This
+       *   obtained via NodeEstimate would not truly reflect the number of nodes that are actually introduced. This
        *   function provides a mechanism for examining call targets and evaluating whether it is safe to skip counting nodes.
        *
        * \param callTarget

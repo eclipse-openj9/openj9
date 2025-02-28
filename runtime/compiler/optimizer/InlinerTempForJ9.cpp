@@ -267,7 +267,8 @@ TR_J9InlinerPolicy::determineInliningHeuristic(TR::ResolvedMethodSymbol *callerS
    return;
    }
 
-void TR_MultipleCallTargetInliner::generateNodeEstimate::operator ()(TR_CallTarget *ct, TR::Compilation *comp)
+void
+TR_MultipleCallTargetInliner::NodeEstimate::operator ()(TR_CallTarget *ct, TR::Compilation *comp)
    {
    static const char *qq1 = feGetEnv("TR_NodeEstimateNumerator");
    static const uint32_t userNumer = ( qq1 ) ? atoi(qq1) : 1;
@@ -3321,27 +3322,25 @@ TR_Inliner::optDetailString() const throw()
    return "O^O INLINER: ";
    }
 
-template <typename FunctObj>
-void TR_MultipleCallTargetInliner::recursivelyWalkCallTargetAndPerformAction(TR_CallTarget *ct, FunctObj &action)
+void
+TR_MultipleCallTargetInliner::recursivelyWalkCallTargetAndGenerateNodeEstimate(TR_CallTarget *ct, NodeEstimate &estimate)
    {
 
-   debugTrace(tracer(),"recursivelyWalkingCallTargetAndPerformAction: Considering Target %p. node estimate before = %d maxbcindex = %d",ct,action.getNodeEstimate(),getPolicy()->getInitialBytecodeSize(ct->_calleeMethod, 0, comp()));
+   debugTrace(tracer(),"recursivelyWalkCallTargetAndGenerateNodeEstimate: Considering Target %p. node estimate before = %d maxbcindex = %d",ct,estimate.getNodeEstimate(),getPolicy()->getInitialBytecodeSize(ct->_calleeMethod, 0, comp()));
 
    if (canSkipCountingNodes(ct))
       return;
 
-   action(ct,comp());
+   estimate(ct,comp());
 
    TR_CallSite *callsite = 0;
    for(callsite = ct->_myCallees.getFirst() ; callsite ; callsite = callsite->getNext()   )
       {
       for (int32_t i = 0 ; i < callsite->numTargets() ; i++)
          {
-         recursivelyWalkCallTargetAndPerformAction(callsite->getTarget(i),action);
+         recursivelyWalkCallTargetAndGenerateNodeEstimate(callsite->getTarget(i),estimate);
          }
       }
-
-
    }
 
 int32_t
@@ -3939,8 +3938,8 @@ bool TR_MultipleCallTargetInliner::inlineCallTargets(TR::ResolvedMethodSymbol *c
       debugTrace(tracer(), "Initially, estimatedNumberOfNodes = %d\n", estimatedNumberOfNodes);
       for (calltarget = _callTargets.getFirst(); calltarget != callTargetToChop; prev = calltarget, calltarget = calltarget->getNext())
          {
-         generateNodeEstimate myEstimate;
-         recursivelyWalkCallTargetAndPerformAction(calltarget, myEstimate);
+         NodeEstimate myEstimate;
+         recursivelyWalkCallTargetAndGenerateNodeEstimate(calltarget, myEstimate);
          estimatedNumberOfNodes += myEstimate.getNodeEstimate();
 
          if (comp()->trace(OMR::inlining))
@@ -4659,8 +4658,8 @@ void TR_MultipleCallTargetInliner::processChoppedOffCallTargets(TR_CallTarget *l
          {
          if (inlineSubCallGraph(calltarget))
             {
-            generateNodeEstimate myEstimate;
-            recursivelyWalkCallTargetAndPerformAction(calltarget, myEstimate);
+            NodeEstimate myEstimate;
+            recursivelyWalkCallTargetAndGenerateNodeEstimate(calltarget, myEstimate);
             estimatedNumberOfNodes += myEstimate.getNodeEstimate();
             /*
              * ForceInline targets and JSR292 methods should always be inlined regarless of budget. However, with
