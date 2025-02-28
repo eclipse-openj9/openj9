@@ -182,7 +182,6 @@ public class Continuation {
 	}
 
 	@Hidden
-	@JvmtiMountTransition
 	private static void enter(Continuation cont) {
 		try {
 			cont.runnable.run();
