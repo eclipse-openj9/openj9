@@ -482,6 +482,10 @@ cleanUpClassLoader(J9VMThread *vmThread, J9ClassLoader* classLoader)
 		}
 	}
 
+	if ((NULL != classLoader->outlivingLoaders) && J9_ARE_NO_BITS_SET((UDATA)classLoader->outlivingLoaders, J9CLASSLOADER_OUTLIVING_LOADERS_SINGLE_TAG)) {
+		hashTableFree((J9HashTable *)classLoader->outlivingLoaders);
+	}
+
 	Trc_VM_cleanUpClassLoaders_Exit(vmThread);
 }
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
