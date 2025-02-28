@@ -6523,28 +6523,27 @@ TR::Register *J9::Power::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeG
                   traceMsg(comp, "Node (%p): Dealing with full/compressed refs variable length array.\n", node);
 
                TR::LabelSymbol *dataAddrInitDoneLabel = generateLabelSymbol(cg);
-               TR::LabelSymbol *nonZeroArrayLabel = generateLabelSymbol(cg);
+               TR::LabelSymbol *zeroArrayLabel = needZeroInit ? generateLabelSymbol(cg) : dataAddrInitDoneLabel;
 
                iCursor = generateTrg1Src1ImmInstruction(cg,TR::InstOpCode::cmpli4, node, condReg, enumReg, 0, iCursor);
-               iCursor = generateConditionalBranchInstruction(cg, TR::InstOpCode::bgt, node, nonZeroArrayLabel, condReg, iCursor);
-               // Clear dataAddr field of 0 size array
-               if (needZeroInit)
-                  {
-                  // Use zeroReg to clear the field
-                  iCursor = generateMemSrc1Instruction(cg, TR::InstOpCode::std,
-                     node,
-                     TR::MemoryReference::createWithDisplacement(cg, resReg, fej9->getOffsetOfDiscontiguousDataAddrField(), 8),
-                     zeroReg, iCursor);
-                  }
-               iCursor = generateLabelInstruction(cg, TR::InstOpCode::b, node, dataAddrInitDoneLabel);
+               iCursor = generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, zeroArrayLabel, condReg, iCursor);
 
-               // Init dataAddr field for non-zero size array
-               iCursor = generateLabelInstruction(cg, TR::InstOpCode::label, node, nonZeroArrayLabel, iCursor);
                // Load first data element address
                iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, firstDataElementReg, resReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), iCursor);
                dataAddrSlotMR = TR::MemoryReference::createWithDisplacement(cg, resReg, fej9->getOffsetOfContiguousDataAddrField(), 8);
                // Store the first data element address to dataAddr slot
                iCursor = generateMemSrc1Instruction(cg, TR::InstOpCode::std, node, dataAddrSlotMR, firstDataElementReg, iCursor);
+
+               if (needZeroInit)
+                  {
+                  iCursor = generateLabelInstruction(cg, TR::InstOpCode::b, node, dataAddrInitDoneLabel);
+                  // Init dataAddr field for zero size array
+                  iCursor = generateLabelInstruction(cg, TR::InstOpCode::label, node, zeroArrayLabel, iCursor);
+                  // Clear dataAddr field of 0 size array. Use zeroReg to clear the field
+                  iCursor = generateMemSrc1Instruction(cg, TR::InstOpCode::std, node,
+                     TR::MemoryReference::createWithDisplacement(cg, resReg, fej9->getOffsetOfDiscontiguousDataAddrField(), 8),
+                     zeroReg, iCursor);
+                  }
 
                iCursor = generateLabelInstruction(cg, TR::InstOpCode::label, node, dataAddrInitDoneLabel, iCursor);
                }
