@@ -66,7 +66,7 @@ MM_CompactSchemeFixupObject::doContinuationSlot(MM_EnvironmentBase *env, omrobje
 	if (isHeapObject(*slotPtr)) {
 		doSlot(env, fromObject, slotPtr);
 	} else if (NULL != *slotPtr) {
-		Assert_MM_true(continuationslotiterator_state_monitor_records == continuationSlotIterator->getState());
+		Assert_MM_true(GC_ContinuationSlotIterator::state_monitor_records == continuationSlotIterator->getState());
 	}
 }
 #endif /* JAVA_SPEC_VERSION >= 24 */

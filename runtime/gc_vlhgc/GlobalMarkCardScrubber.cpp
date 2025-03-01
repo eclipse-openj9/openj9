@@ -185,7 +185,9 @@ void
 stackSlotIteratorForGlobalMarkCardScrubber(J9JavaVM *javaVM, J9Object **slotPtr, void *localData, J9StackWalkState *walkState, const void *stackLocation)
 {
 	StackIteratorData4GlobalMarkCardScrubber *data = (StackIteratorData4GlobalMarkCardScrubber *)localData;
-	if (*data->doScrub) {
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(javaVM);
+	if (*data->doScrub && (extensions->heap->getHeapBase() <= *slotPtr) && (extensions->heap->getHeapTop() > *slotPtr)) {
+		/* *slotPtr is heap object */
 		*data->doScrub = data->globalMarkCardScrubber->mayScrubReference(data->env, data->fromObject, *slotPtr);
 	}
 	/* It's unfortunate, but we probably cannot terminate iteration of slots once we do see for one slot that we cannot scurb */
@@ -210,9 +212,12 @@ bool MM_GlobalMarkCardScrubber::scrubContinuationNativeSlots(MM_EnvironmentVLHGC
 #if JAVA_SPEC_VERSION >= 24
 		J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, objectPtr);
 		GC_ContinuationSlotIterator continuationSlotIterator(currentThread, continuation);
+		MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
 
-		while (J9Object **slotPtr = continuationSlotIterator.nextSlot()) {
-			if (doScrub) {
+		J9Object **slotPtr = NULL;
+		while (doScrub && (NULL != (slotPtr = continuationSlotIterator.nextSlot()))) {
+			if ((extensions->heap->getHeapBase() <= *slotPtr) && (extensions->heap->getHeapTop() > *slotPtr)) {
+				/* *slotPtr is heap object */
 				doScrub = mayScrubReference(env, objectPtr, *slotPtr);
 			}
 		}

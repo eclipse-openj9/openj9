@@ -675,11 +675,11 @@ MM_ReferenceChainWalker::doContinuationSlot(J9Object **slotPtr, GC_ContinuationS
 	/* Only report heap objects */
 	if (isHeapObject(slotValue) && !_heap->objectIsInGap(slotValue)) {
 		switch(continuationSlotIterator->getState()) {
-		case continuationslotiterator_state_monitor_records:
+		case GC_ContinuationSlotIterator::state_monitor_records:
 			doSlot(slotPtr, J9GC_ROOT_TYPE_CONTINUATION_MONITOR, -1, NULL);
 			break;
-		case continuationslotiterator_state_vthread:
-			doSlot(slotPtr, J9GC_ROOT_TYPE_CONTINUATION_SLOT, -1, NULL);
+		case GC_ContinuationSlotIterator::state_vthread:
+			doSlot(slotPtr, J9GC_ROOT_TYPE_CONTINUATION_VTHREAD, -1, NULL);
 			break;
 		default:
 			doSlot(slotPtr, J9GC_ROOT_TYPE_UNKNOWN, -1, NULL);

@@ -346,7 +346,7 @@ MM_ScavengerDelegate::doContinuationSlot(MM_EnvironmentStandard *env, omrobjectp
 	if (_extensions->scavenger->isHeapObject(*slotPtr) && !_extensions->heap->objectIsInGap(*slotPtr)) {
 		doSlot(env, slotPtr, reason, shouldRemember);
 	} else if (NULL != *slotPtr) {
-		Assert_MM_true(continuationslotiterator_state_monitor_records == continuationSlotIterator->getState());
+		Assert_MM_true(GC_ContinuationSlotIterator::state_monitor_records == continuationSlotIterator->getState());
 	}
 }
 #endif /* JAVA_SPEC_VERSION >= 24 */

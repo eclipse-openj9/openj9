@@ -35,25 +35,26 @@
 #include "modron.h"
 
 /**
- * State constants representing the current stage of the iteration process
- * @anchor ContinuationSlotIteratorState
- */
-enum {
-	continuationslotiterator_state_start = 0,
-	continuationslotiterator_state_monitor_records,
-	continuationslotiterator_state_vthread,
-	continuationslotiterator_state_end
-};
-
-/**
  * Iterate over monitor records slots and vthread slot in a J9VMContinuation.
  * Used by ScanContinuationNativeSlots() (JAVA_SPEC_VERSION >= 24 only).
  * @ingroup GC_Structs
  */
 class GC_ContinuationSlotIterator
 {
+public:
+	/**
+	 * State constants representing the current stage of the iteration process
+	 */
+	enum State {
+		state_start = 0,
+		state_monitor_records,
+		state_vthread,
+		state_end
+	};
+
+protected:
 	J9VMThread *_vmThread;
-	int _state;
+	State _state;
 
 	j9object_t *_vthread;
 	J9MonitorEnterRecord *_monitorRecord;
@@ -62,7 +63,7 @@ class GC_ContinuationSlotIterator
 public:
 	GC_ContinuationSlotIterator(J9VMThread *vmThread, J9VMContinuation *continuation)
 		: _vmThread(vmThread)
-		, _state(continuationslotiterator_state_start)
+		, _state(state_start)
 		, _vthread(&continuation->vthread)
 		, _monitorRecord(continuation->monitorEnterRecords)
 		, _jniMonitorRecord(continuation->jniMonitorEnterRecords)

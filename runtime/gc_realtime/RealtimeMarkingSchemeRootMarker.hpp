@@ -105,7 +105,7 @@ public:
 	 * @see MM_Metronome::markObject()
 	 */
 	virtual void
-	doSlot(J9Object** slotPtr)
+	doSlot(J9Object **slotPtr)
 	{
 		_markingScheme->markObject(_env, *slotPtr);
 	}
@@ -130,7 +130,7 @@ public:
 		if (_markingScheme->isHeapObject(object)) {
 			doSlot(slotPtr);
 		} else if (NULL != object) {
-			Assert_MM_true(continuationslotiterator_state_monitor_records == continuationSlotIterator->getState());
+			Assert_MM_true(GC_ContinuationSlotIterator::state_monitor_records == continuationSlotIterator->getState());
 		}
 	}
 #endif /* JAVA_SPEC_VERSION >= 24 */

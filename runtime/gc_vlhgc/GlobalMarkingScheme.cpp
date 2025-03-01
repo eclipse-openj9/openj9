@@ -778,7 +778,7 @@ MM_GlobalMarkingScheme::scanPointerArrayObject(MM_EnvironmentVLHGC *env, J9Index
 }
 
 void
-MM_GlobalMarkingScheme::doSlot(MM_EnvironmentVLHGC *env, J9Object *fromObject, J9Object** slotPtr)
+MM_GlobalMarkingScheme::doSlot(MM_EnvironmentVLHGC *env, J9Object *fromObject, J9Object **slotPtr)
 {
 	markObject(env, *slotPtr);
 	rememberReferenceIfRequired(env, fromObject, *slotPtr);
@@ -786,18 +786,18 @@ MM_GlobalMarkingScheme::doSlot(MM_EnvironmentVLHGC *env, J9Object *fromObject, J
 
 #if JAVA_SPEC_VERSION >= 24
 void
-MM_GlobalMarkingScheme::doContinuationSlot(MM_EnvironmentVLHGC *env, J9Object *fromObject, J9Object** slotPtr, GC_ContinuationSlotIterator *continuationSlotIterator)
+MM_GlobalMarkingScheme::doContinuationSlot(MM_EnvironmentVLHGC *env, J9Object *fromObject, J9Object **slotPtr, GC_ContinuationSlotIterator *continuationSlotIterator)
 {
 	if (isHeapObject(*slotPtr)) {
 		doSlot(env, fromObject, slotPtr);
 	} else if (NULL != *slotPtr) {
-		Assert_MM_true(continuationslotiterator_state_monitor_records == continuationSlotIterator->getState());
+		Assert_MM_true(GC_ContinuationSlotIterator::state_monitor_records == continuationSlotIterator->getState());
 	}
 }
 #endif /* JAVA_SPEC_VERSION >= 24 */
 
 void
-MM_GlobalMarkingScheme::doStackSlot(MM_EnvironmentVLHGC *env, J9Object *fromObject, J9Object** slotPtr, J9StackWalkState *walkState, const void *stackLocation)
+MM_GlobalMarkingScheme::doStackSlot(MM_EnvironmentVLHGC *env, J9Object *fromObject, J9Object **slotPtr, J9StackWalkState *walkState, const void *stackLocation)
 {
 	if (isHeapObject(*slotPtr)) {
 		/* heap object - validate and mark */
@@ -1200,7 +1200,7 @@ private:
 		if (_markingScheme->isHeapObject(object)) {
 			_markingScheme->markObject((MM_EnvironmentVLHGC *)_env, object);
 		} else if (NULL != object) {
-			Assert_MM_true(continuationslotiterator_state_monitor_records == continuationSlotIterator->getState());
+			Assert_MM_true(GC_ContinuationSlotIterator::state_monitor_records == continuationSlotIterator->getState());
 		}
 	}
 #endif /* JAVA_SPEC_VERSION >= 24 */

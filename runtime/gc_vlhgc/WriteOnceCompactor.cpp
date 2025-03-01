@@ -1217,7 +1217,7 @@ MM_WriteOnceCompactor::fixupMixedObject(MM_EnvironmentVLHGC* env, J9Object *obje
 }
 
 void
-MM_WriteOnceCompactor::doSlot(MM_EnvironmentVLHGC *env, J9Object *fromObject, J9Object** slotPtr)
+MM_WriteOnceCompactor::doSlot(MM_EnvironmentVLHGC *env, J9Object *fromObject, J9Object **slotPtr)
 {
 	J9Object *pointer = *slotPtr;
 	if (NULL != pointer) {
@@ -1231,21 +1231,20 @@ MM_WriteOnceCompactor::doSlot(MM_EnvironmentVLHGC *env, J9Object *fromObject, J9
 
 #if JAVA_SPEC_VERSION >= 24
 void
-MM_WriteOnceCompactor::doContinuationSlot(MM_EnvironmentVLHGC *env, J9Object *fromObject, J9Object** slotPtr, GC_ContinuationSlotIterator *continuationSlotIterator)
+MM_WriteOnceCompactor::doContinuationSlot(MM_EnvironmentVLHGC *env, J9Object *fromObject, J9Object **slotPtr, GC_ContinuationSlotIterator *continuationSlotIterator)
 {
 	if (isHeapObject(*slotPtr)) {
 		doSlot(env, fromObject, slotPtr);
 	} else if (NULL != *slotPtr) {
-		Assert_MM_true(continuationslotiterator_state_monitor_records == continuationSlotIterator->getState());
+		Assert_MM_true(GC_ContinuationSlotIterator::state_monitor_records == continuationSlotIterator->getState());
 	}
 }
 #endif /* JAVA_SPEC_VERSION >= 24 */
 
 void
-MM_WriteOnceCompactor::doStackSlot(MM_EnvironmentVLHGC *env, J9Object *fromObject, J9Object** slotPtr, J9StackWalkState *walkState, const void *stackLocation)
+MM_WriteOnceCompactor::doStackSlot(MM_EnvironmentVLHGC *env, J9Object *fromObject, J9Object **slotPtr, J9StackWalkState *walkState, const void *stackLocation)
 {
 	if (isHeapObject(*slotPtr)) {
-		Assert_MM_validStackSlot(MM_StackSlotValidator(0, *slotPtr, stackLocation, walkState).validate(env));
 		doSlot(env, fromObject, slotPtr);
 	} else if (NULL != *slotPtr) {
 		/* stack object - just validate */
@@ -1702,7 +1701,7 @@ public:
 
 	}
 	
-	virtual void doSlot(J9Object** slot)
+	virtual void doSlot(J9Object **slot)
 	{
 		J9Object *pointer = *slot;
 		if ((pointer >= _heapBase) && (pointer < _heapTop)) {
@@ -1882,7 +1881,7 @@ public:
 		_typeId = __FUNCTION__;
 	}
 
-	virtual void doSlot(J9Object** slot)
+	virtual void doSlot(J9Object **slot)
 	{
 	}
 
