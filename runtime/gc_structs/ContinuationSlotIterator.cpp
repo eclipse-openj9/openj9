@@ -42,19 +42,19 @@ GC_ContinuationSlotIterator::nextSlot()
 	if (NULL != _monitorRecord) {
 		J9MonitorEnterRecord *currentMonitorRecord = _monitorRecord;
 		_monitorRecord = currentMonitorRecord->next;
-		_state = continuationslotiterator_state_monitor_records;
+		_state = state_monitor_records;
 		ret = &currentMonitorRecord->object;
 	} else if (NULL != _jniMonitorRecord) {
 		J9MonitorEnterRecord *currentMonitorRecord = _jniMonitorRecord;
 		_jniMonitorRecord = currentMonitorRecord->next;
-		_state = continuationslotiterator_state_monitor_records;
+		_state = state_monitor_records;
 		ret = &currentMonitorRecord->object;
 	} else if (NULL != _vthread) {
-		_state = continuationslotiterator_state_vthread;
+		_state = state_vthread;
 		ret = _vthread;
 		_vthread = NULL;
 	} else {
-		_state = continuationslotiterator_state_end;
+		_state = state_end;
 	}
 	return ret;
 }

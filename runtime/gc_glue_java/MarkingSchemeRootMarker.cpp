@@ -61,7 +61,7 @@ MM_MarkingSchemeRootMarker::doContinuationSlot(J9Object **slotPtr, GC_Continuati
 	if (_markingScheme->isHeapObject(object) && !_extensions->heap->objectIsInGap(object)) {
 		doSlot(slotPtr);
 	} else if (NULL != object) {
-		Assert_MM_true(continuationslotiterator_state_monitor_records == continuationSlotIterator->getState());
+		Assert_MM_true(GC_ContinuationSlotIterator::state_monitor_records == continuationSlotIterator->getState());
 	}
 }
 #endif /* JAVA_SPEC_VERSION >= 24 */

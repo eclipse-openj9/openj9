@@ -51,7 +51,7 @@ MM_ConcurrentMarkingDelegate::doContinuationSlot(MM_EnvironmentBase *env, omrobj
 	if (_markingScheme->isHeapObject(*slotPtr) && !env->getExtensions()->heap->objectIsInGap(*slotPtr)) {
 		doSlot(env, slotPtr);
 	} else if (NULL != *slotPtr) {
-		Assert_MM_true(continuationslotiterator_state_monitor_records == continuationSlotIterator->getState());
+		Assert_MM_true(GC_ContinuationSlotIterator::state_monitor_records == continuationSlotIterator->getState());
 	}
 }
 #endif /* JAVA_SPEC_VERSION >= 24 */

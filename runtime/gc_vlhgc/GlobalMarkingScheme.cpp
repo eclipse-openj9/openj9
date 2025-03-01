@@ -791,7 +791,7 @@ MM_GlobalMarkingScheme::doContinuationSlot(MM_EnvironmentVLHGC *env, J9Object *f
 	if (isHeapObject(*slotPtr)) {
 		doSlot(env, fromObject, slotPtr);
 	} else if (NULL != *slotPtr) {
-		Assert_MM_true(continuationslotiterator_state_monitor_records == continuationSlotIterator->getState());
+		Assert_MM_true(GC_ContinuationSlotIterator::state_monitor_records == continuationSlotIterator->getState());
 	}
 }
 #endif /* JAVA_SPEC_VERSION >= 24 */
@@ -1200,7 +1200,7 @@ private:
 		if (_markingScheme->isHeapObject(object)) {
 			_markingScheme->markObject((MM_EnvironmentVLHGC *)_env, object);
 		} else if (NULL != object) {
-			Assert_MM_true(continuationslotiterator_state_monitor_records == continuationSlotIterator->getState());
+			Assert_MM_true(GC_ContinuationSlotIterator::state_monitor_records == continuationSlotIterator->getState());
 		}
 	}
 #endif /* JAVA_SPEC_VERSION >= 24 */
