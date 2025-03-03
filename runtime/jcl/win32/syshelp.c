@@ -186,9 +186,6 @@ char* getPlatformFileEncoding(JNIEnv *env, char *codepage, int size, int encodin
 #endif
 	int length;
 
-	/* Called with codepage == NULL to initialize the locale */
-	if (!codepage) return NULL;
-
     if (encodingType == 2) {
     	/* file.encoding */
     	threadLocale = GetUserDefaultLCID();

@@ -252,11 +252,6 @@ char *getPlatformFileEncoding(JNIEnv * env, char *codepageProp, int propSize, in
 	PORT_ACCESS_FROM_ENV(env);
 #endif /* defined(LINUX) || defined(OSX) */
 
-	/* Called with codepageProp == NULL to initialize the locale */
-	if (NULL == codepageProp) {
-		return NULL;
-	}
-
 #if defined(LINUX)
 	/*[PR 104520] Return EUC_JP when LC_CTYPE is not set, and the LANG environment variable is "ja" */
 	ctype = setlocale(LC_CTYPE, NULL);
