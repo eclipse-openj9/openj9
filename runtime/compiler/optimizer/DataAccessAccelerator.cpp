@@ -90,11 +90,19 @@ int32_t TR_DataAccessAccelerator::perform()
    {
    int32_t result = 0;
 
+   /* Disable DAA optimization for non-vectorized paths to unblock off-heap
+    * enablement while we continue to investigate the bug in non-vectorized
+    * pdload evaluator.
+    *
+    * TODO: Enable non-vectorized paths for off-heap.
+    *     - Issue: https://github.com/eclipse-openj9/openj9/issues/21246
+    */
    if (!comp()->getOption(TR_DisableIntrinsics) &&
        !comp()->getOption(TR_MimicInterpreterFrameShape) &&
 
        // We cannot handle arraylets because hardware intrinsics act on contiguous memory
-       !comp()->generateArraylets()&& !TR::Compiler->om.useHybridArraylets())
+       !comp()->generateArraylets() && !TR::Compiler->om.useHybridArraylets() &&
+       (!TR::Compiler->om.isOffHeapAllocationEnabled() || comp()->getOption(TR_DisableVectorBCD)))
      {
 
      // A vector to keep track of variable packed decimal calls
