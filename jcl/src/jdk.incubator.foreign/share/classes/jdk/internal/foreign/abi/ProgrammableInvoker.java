@@ -25,7 +25,6 @@ package jdk.internal.foreign.abi;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 
-import jdk.incubator.foreign.Addressable;
 import jdk.incubator.foreign.FunctionDescriptor;
 import openj9.internal.foreign.abi.InternalDowncallHandler;
 
@@ -38,7 +37,6 @@ public class ProgrammableInvoker {
 	 * The method is ultimately invoked by Clinker on the specific platforms to generate the requested
 	 * method handle to the underlying C function.
 	 *
-	 * @param downcallAddr the downcall symbol
 	 * @param functionMethodType the MethodType of the specified native function
 	 * @param funcDesc the function descriptor of the specified native function
 	 * @return a method handle bound to the native method
