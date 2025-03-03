@@ -167,15 +167,22 @@ jvmtiGetObjectMonitorUsage(jvmtiEnv *env,
 			walkThread = J9_LINKED_LIST_NEXT_DO(vm->mainThread, walkThread);
 		}
 
-		stats.waiting = j9mem_allocate_memory(sizeof(jthread) * stats.numWaiting, J9MEM_CATEGORY_JVMTI_ALLOCATE);
-		if (NULL == stats.waiting) {
-			rc = JVMTI_ERROR_OUT_OF_MEMORY;
-		} else {
-			stats.blocked = j9mem_allocate_memory(sizeof(jthread) * stats.numBlocked, J9MEM_CATEGORY_JVMTI_ALLOCATE);
-			if (NULL == stats.blocked) {
-				j9mem_free_memory(stats.waiting);
+		if (stats.numWaiting > 0) {
+			stats.waiting = j9mem_allocate_memory(sizeof(jthread) * stats.numWaiting, J9MEM_CATEGORY_JVMTI_ALLOCATE);
+			if (NULL == stats.waiting) {
 				rc = JVMTI_ERROR_OUT_OF_MEMORY;
-			} else {
+			}
+		}
+
+		if (JVMTI_ERROR_NONE == rc) {
+			if (stats.numBlocked > 0) {
+				stats.blocked = j9mem_allocate_memory(sizeof(jthread) * stats.numBlocked, J9MEM_CATEGORY_JVMTI_ALLOCATE);
+				if (NULL == stats.blocked) {
+					j9mem_free_memory(stats.waiting);
+					rc = JVMTI_ERROR_OUT_OF_MEMORY;
+				}
+			}
+			if ((JVMTI_ERROR_NONE == rc) && ((stats.numWaiting > 0) || (stats.numBlocked > 0))) {
 				rv_notify_waiters = stats.waiting;
 				rv_waiters = stats.blocked;
 
