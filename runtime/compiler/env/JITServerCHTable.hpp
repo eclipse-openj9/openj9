@@ -77,6 +77,7 @@ using CHTableCommitData = std::tuple<
       FlatClassExtendCheck, // comp->getClassesThatShouldNotBeNewlyExtended
       std::vector<TR_OpaqueClassBlock*>, // classesForOSRRedefinition
       std::vector<TR_OpaqueClassBlock*>, // classesForStaticFinalFieldModification
+      void*, // remote mirror of comp->retainedMethods(), if any
       uint8_t*>; // startPC
 
 /** 

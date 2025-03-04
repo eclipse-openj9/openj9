@@ -42,6 +42,7 @@
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "ilgen/J9ByteCodeIterator.hpp"
+#include "env/OMRRetainedMethodSet.hpp"
 #include "env/VMAccessCriticalSection.hpp"
 #include "env/VMJ9.h"
 #include "env/j9method.h"
@@ -2124,6 +2125,28 @@ J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp,
                   TR_OpaqueClassBlock *clazz = *(TR_OpaqueClassBlock**)valuePtr;
                   value = (uintptr_t)clazz;
                   node->setSymbolReference(comp->getSymRefTab()->findOrCreateClassSymbol(comp->getMethodSymbol(), -1, clazz));
+
+                  // This loadaddr came from constant folding, so a keepalive
+                  // is needed in general to ensure that the class will still
+                  // be loaded when we reach this program point at runtime.
+                  //
+                  // It's OK to prevent the class from being unloaded (while
+                  // this JIT body is still valid) because we're allowed to
+                  // remember the original java/lang/Class instance, which
+                  // would do the same.
+                  //
+                  // If node was loading from a J9Class, e.g. if it was loading
+                  // <componentClass>, then it's possible for the J9Class to be
+                  // constant but for no known object to have been involved in
+                  // the determination of that constant. If so, the value must
+                  // have originated from a class ref CP entry in the constant
+                  // pool of some method in this compilation or from the JIT
+                  // fabricating a loaddadr of a class loaded by the bootstrap
+                  // loader. In either of these cases, we already know that the
+                  // class won't be unloaded while this body is still valid, so
+                  // the keepalive is redundant but harmless.
+                  //
+                  comp->addKeepaliveClass(clazz);
                   }
                else
                   {
@@ -2838,6 +2861,26 @@ J9::TransformUtil::specializeInvokeExactSymbol(TR::Compilation *comp, TR::Node *
       return false;
    }
 
+static void
+keepaliveRefinedCallee(TR::Compilation *comp, TR_ResolvedMethod *callee)
+   {
+   // We only need to keepalive static methods this way. For an instance
+   // method, we can't reach the callee without a receiver of the correct type
+   // at runtime, and that receiver will ensure that the method is loaded.
+   if (callee->isStatic() && !comp->retainedMethods()->willRemainLoaded(callee))
+      {
+      // The call has been refined based on known object information, i.e.
+      // constants that we're allowed to retain, and therefore we can also
+      // retain callee.
+      //
+      // Because the call is getting refined in the trees, it's necessary to
+      // take note of the keepalive immediately even if the refined call never
+      // gets inlined.
+      //
+      comp->addKeepaliveClass(callee->containingClass());
+      }
+   }
+
 bool
 J9::TransformUtil::refineMethodHandleInvokeBasic(TR::Compilation* comp, TR::TreeTop* treetop, TR::Node* node, TR::KnownObjectTable::Index mhIndex, bool trace)
    {
@@ -2875,6 +2918,8 @@ J9::TransformUtil::refineMethodHandleInvokeBasic(TR::Compilation* comp, TR::Tree
    auto refinedMethod = fej9->createResolvedMethod(comp->trMemory(), targetMethod, symRef->getOwningMethod(comp));
    if (!performTransformation(comp, "O^O Refine invokeBasic n%dn %p with known MH object\n", node->getGlobalIndex(), node))
       return false;
+
+   keepaliveRefinedCallee(comp, refinedMethod);
 
    // Preserve NULLCHK
    TR::TransformUtil::separateNullCheck(comp, treetop, trace);
@@ -3031,6 +3076,8 @@ J9::TransformUtil::refineMethodHandleLinkTo(TR::Compilation* comp, TR::TreeTop* 
       return false;
 
    auto resolvedMethod = fej9->createResolvedMethodWithVTableSlot(comp->trMemory(), vTableSlot, info.vmtarget, symRef->getOwningMethod(comp));
+   keepaliveRefinedCallee(comp, resolvedMethod);
+
    newSymRef = comp->getSymRefTab()->findOrCreateMethodSymbol(symRef->getOwningMethodIndex(), -1, resolvedMethod, callKind);
    if (callKind == TR::MethodSymbol::Virtual)
       newSymRef->setOffset(jitVTableOffset);
