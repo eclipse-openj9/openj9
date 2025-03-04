@@ -10412,227 +10412,664 @@ static TR::Register *inlineIsAssignableFrom(TR::Node *node, TR::CodeGenerator *c
    return resultReg;
    }
 
-static TR::Register *inlineStringHashcode(TR::Node *node, TR::CodeGenerator *cg)
-{
-    TR::Compilation *comp = cg->comp();
-    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
-    bool isLE = comp->target().cpu.isLittleEndian();
+static TR::Register*
+hashCodeHelper(TR::Node *node, TR::CodeGenerator *cg, TR::DataType elementType,
+               TR::Node *hashNode, bool isSigned)
+   {
+   TR::Compilation *comp = cg->comp();
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
+   bool isLE = comp->target().cpu.isLittleEndian();
+   const bool nonZeroInitial = hashNode != NULL && !hashNode->isConstZeroValue();
 
-    TR::Node *valueNode = node->getFirstChild();
-    TR::Node *offsetNode = node->getSecondChild();
-    TR::Node *countNode = node->getThirdChild();
 
-    TR::Register *valueReg = cg->gprClobberEvaluate(valueNode);
-    TR::Register *endReg = cg->gprClobberEvaluate(offsetNode);
-    TR::Register *vendReg = cg->gprClobberEvaluate(countNode);
-    TR::Register *hashReg = cg->allocateRegister();
-    TR::Register *tempReg = cg->allocateRegister();
-    TR::Register *constant0Reg = cg->allocateRegister();
-    TR::Register *multiplierAddrReg = cg->allocateRegister();
-    TR::Register *condReg = cg->allocateRegister(TR_CCR);
+   TR::Node *valueNode = node->getFirstChild();
+   TR::Node *offsetNode = node->getSecondChild();
+   TR::Node *countNode = node->getThirdChild();
 
-    TR::Register *multiplierReg = cg->allocateRegister(TR_VRF);
-    TR::Register *high4Reg = cg->allocateRegister(TR_VRF);
-    TR::Register *low4Reg = cg->allocateRegister(TR_VRF);
-    TR::Register *vtmp1Reg = cg->allocateRegister(TR_VRF);
-    TR::Register *vtmp2Reg = cg->allocateRegister(TR_VRF);
-    TR::Register *vconstant0Reg = cg->allocateRegister(TR_VRF);
-    TR::Register *vconstantNegReg = cg->allocateRegister(TR_VRF);
-    TR::Register *vunpackMaskReg = cg->allocateRegister(TR_VRF);
+   TR::Register *valueReg = cg->gprClobberEvaluate(valueNode);
+   TR::Register *endReg = cg->gprClobberEvaluate(offsetNode);
+   TR::Register *vendReg = cg->gprClobberEvaluate(countNode);
+   TR::Register *tempReg = cg->allocateRegister();
+   TR::Register *constant0Reg = cg->allocateRegister();
+   TR::Register *multiplierAddrReg = cg->allocateRegister();
+   TR::Register *condReg = cg->allocateRegister(TR_CCR);
 
-    TR::LabelSymbol *serialLabel = generateLabelSymbol(cg);
-    TR::LabelSymbol *VSXLabel = generateLabelSymbol(cg);
-    TR::LabelSymbol *POSTVSXLabel = generateLabelSymbol(cg);
-    TR::LabelSymbol *endLabel = generateLabelSymbol(cg);
+   TR::Register *multiplierReg = cg->allocateRegister(TR_VRF);
+   TR::Register *vtmp1Reg = cg->allocateRegister(TR_VRF);
+   TR::Register *vtmp2Reg = cg->allocateRegister(TR_VRF);
+   TR::Register *vconstant0Reg = cg->allocateRegister(TR_VRF);
+   TR::Register *vconstantNegReg = cg->allocateRegister(TR_VRF);
+   TR::Register *vunpackMaskReg = cg->allocateRegister(TR_VRF);
 
-    // Skip header of the array
-    // v = v + offset<<1
-    // end = v + count<<1
-    // hash = 0
-    // temp = 0
-    intptr_t hdrSize = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
-    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, valueReg, valueReg, hdrSize);
-    generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, endReg, endReg, endReg);
-    generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, valueReg, valueReg, endReg);
-    generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, vendReg, vendReg, vendReg);
-    generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, endReg, valueReg, vendReg);
-    generateTrg1Src2Instruction(cg, TR::InstOpCode::XOR, node, hashReg, hashReg, hashReg);
-    generateTrg1Src2Instruction(cg, TR::InstOpCode::XOR, node, tempReg, tempReg, tempReg);
-    loadConstant(cg, node, 0x0, constant0Reg);
+   // we can load 16 bytes at once, but each register can only accumulate 4 values
+   // so for smaller datatypes we need more than one registers
+   TR::Register *low4Reg = cg->allocateRegister(TR_VRF);
+   TR::Register *high4Reg, *third4Reg, *fourth4Reg;
+   TR::Register *vtmp3Reg;
+   switch (elementType)
+      {
+      case TR::Int8:
+         vtmp3Reg = cg->allocateRegister(TR_VRF); // a third register for unpacking
+         third4Reg = cg->allocateRegister(TR_VRF);
+         fourth4Reg = cg->allocateRegister(TR_VRF);
+         // fall through
+      case TR::Int16:
+         high4Reg = cg->allocateRegister(TR_VRF);
+         // fall through
+      case TR::Int32:
+         break;
+      default:
+         TR_ASSERT_FATAL(false, "Unsupported hashCodeHelper elementType");
+      }
 
-    // if count<<1 < 16 goto serial
-    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, condReg, vendReg, 0x10);
-    generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, serialLabel, condReg);
+   // the hashReg is zero initially, unless specified otherwise
+   TR::Register *hashReg = NULL;
+   if (nonZeroInitial)
+      {
+      hashReg = cg->gprClobberEvaluate(hashNode);
+      }
+   else
+      {
+      hashReg = cg->allocateRegister();
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::XOR, node, hashReg, hashReg, hashReg);
+      }
 
-    // load multiplier, clear high4 low4
-    static uint32_t multiplierVectors_be[12] = {0x94446F01, 0x94446F01, 0x94446F01, 0x94446F01, 0x67E12CDF, 887503681, 28629151, 923521, 29791, 961, 31, 1};
-    static uint32_t multiplierVectors_le[12] = {0x94446F01, 0x94446F01, 0x94446F01, 0x94446F01, 1, 31, 961, 29791, 923521, 28629151, 887503681, 0x67E12CDF};
+   TR::LabelSymbol *serialLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *VSXLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *POSTVSXLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *endLabel = generateLabelSymbol(cg);
 
-    if (isLE){
-        loadAddressConstant(cg, false, node, (intptr_t)multiplierVectors_le, multiplierAddrReg);
-    }else{
-        loadAddressConstant(cg, false, node, (intptr_t)multiplierVectors_be, multiplierAddrReg);
-    }
-    generateTrg1MemInstruction(cg, TR::InstOpCode::lxvw4x, node, multiplierReg, TR::MemoryReference::createWithIndexReg(cg, multiplierAddrReg, constant0Reg, 16));
-    generateTrg1Src2Instruction(cg, TR::InstOpCode::vxor, node, high4Reg, high4Reg, high4Reg);
-    generateTrg1Src2Instruction(cg, TR::InstOpCode::vxor, node, low4Reg, low4Reg, low4Reg);
-    generateTrg1Src2Instruction(cg, TR::InstOpCode::vxor, node, vconstant0Reg, vconstant0Reg, vconstant0Reg);
-    generateTrg1Src2Instruction(cg, TR::InstOpCode::vnor, node, vconstantNegReg, vconstant0Reg, vconstant0Reg);
-    generateTrg1Src2ImmInstruction(cg, TR::InstOpCode::vsldoi, node, vunpackMaskReg, vconstant0Reg, vconstantNegReg, 2);
-    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::vspltw, node, vunpackMaskReg, vunpackMaskReg, 3);
+   // Skip header of the array
+   intptr_t hdrSize = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, valueReg, valueReg, hdrSize);
 
-    // vend = end & (~0xf)
-    // if v is 16byte aligned goto VSX_LOOP
-    generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, tempReg, 0xFFFFFFF0);
-    generateTrg1Src2Instruction(cg, TR::InstOpCode::AND, node, vendReg, endReg, tempReg);
-    loadConstant(cg, node, 0xF, tempReg);
-    generateTrg1Src2Instruction(cg, TR::InstOpCode::AND, node, tempReg, valueReg, tempReg);
-    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, condReg, tempReg, 0x0);
-    generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, VSXLabel, condReg);
+   // v = v + offset<<lg(elementSize)
+   // end = v + count<<lg(elementSize)
+   switch (elementType)
+      {
+      case TR::Int8:
+         break;
+      case TR::Int16:
+         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, endReg, endReg, 1,
+                                         0xFFFFFFFFFFFFFFFE);
+         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, vendReg, vendReg, 1,
+                                         0xFFFFFFFFFFFFFFFE);
+         break;
+      case TR::Int32:
+         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, endReg, endReg, 2,
+                                         0xFFFFFFFFFFFFFFFC);
+         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, vendReg, vendReg, 2,
+                                         0xFFFFFFFFFFFFFFFC);
+         break;
+      default:
+         TR_ASSERT_FATAL(false, "Unsupported hashCodeHelper elementType");
+      }
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, valueReg, valueReg, endReg);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, endReg, valueReg, vendReg);
 
-    // The reason we don't do VSX loop directly is we want to avoid loading unaligned data and deal it with vperm.
-    // Instead, we load the first unaligned part, let VSX handle the rest aligned part.
-    // load unaligned v, mask out unwanted part
-    // for example, if value = 0x12345, we mask out 0x12340~0x12344, keep 0x12345~0x1234F
-    generateTrg1MemInstruction(cg, TR::InstOpCode::lvx, node, vtmp1Reg, TR::MemoryReference::createWithIndexReg(cg, valueReg, constant0Reg, 16));
-    loadConstant(cg, node, 0xF, tempReg);
-    generateTrg1Src2Instruction(cg, TR::InstOpCode::AND, node, tempReg, valueReg, tempReg);
-    generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, tempReg, tempReg, 3, 0xFFFFFFFFFFFFFFF8);
-    generateTrg1Src1Instruction(cg, TR::InstOpCode::mtvsrd, node, vtmp2Reg, tempReg);
-    generateTrg1Src2ImmInstruction(cg, TR::InstOpCode::vsldoi, node, vtmp2Reg, vconstant0Reg, vtmp2Reg, 8);
-    if (isLE) {
-        generateTrg1Src2Instruction(cg, TR::InstOpCode::vslo, node, vtmp2Reg, vconstantNegReg, vtmp2Reg);
-    } else {
-        generateTrg1Src2Instruction(cg, TR::InstOpCode::vsro, node, vtmp2Reg, vconstantNegReg, vtmp2Reg);
-    }
-    generateTrg1Src2Instruction(cg, TR::InstOpCode::vand, node, vtmp1Reg, vtmp1Reg, vtmp2Reg);
+   // temp = 0
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::XOR, node, tempReg, tempReg, tempReg);
+   loadConstant(cg, node, 0x0, constant0Reg);
 
-    // unpack masked v to high4 low4
-    generateTrg1Src1Instruction(cg, TR::InstOpCode::vupkhsh, node, high4Reg, vtmp1Reg);
-    generateTrg1Src2Instruction(cg, TR::InstOpCode::vand, node, high4Reg, high4Reg, vunpackMaskReg);
-    generateTrg1Src1Instruction(cg, TR::InstOpCode::vupklsh, node, low4Reg, vtmp1Reg);
-    generateTrg1Src2Instruction(cg, TR::InstOpCode::vand, node, low4Reg, low4Reg, vunpackMaskReg);
+   // if count<<lg(elementSize) < 16 goto serial
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, condReg, vendReg, 0x10);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, serialLabel, condReg);
 
-    // advance v to next aligned pointer
-    // if v >= vend goto POST_VSX
-    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, valueReg, valueReg, 0xF);
-    generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, tempReg, 0xFFFFFFF0);
-    generateTrg1Src2Instruction(cg, TR::InstOpCode::AND, node, valueReg, valueReg, tempReg);
-    generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp8, node, condReg, valueReg, vendReg);
-    generateConditionalBranchInstruction(cg, TR::InstOpCode::bge, node, POSTVSXLabel, condReg);
+   // load multiplier (anything with more than 4 bytes can be truncated)
+   // 31^0-6 = 1 31 961 29791 923521 28629151 887503681
+   // 31^7 = 667E12CDF           31^8 = C694446F01         31^9 = 180BF449711F 31^10 = 2E97294E4B2C1
+   // 31^11 = 5A44E007B1A55F     31^12 = AEE5720EE830681     31^13 = 152DC8CFCE1DDC99F
+   // 31^14 = 2908B5129F59DB6A41 31^15 = 4F80DED414BE191DDDF 31^16 = 9A09AFBAE83050A9DE01
+   static uint32_t multiplierVectors_be8[24] = {0x50A9DE01, 0x50A9DE01, 0x50A9DE01, 0x50A9DE01,
+      0xE191DDDF, 0x59DB6A41, 0xE1DDC99F, 0xEE830681, 0x07B1A55F, 0x94E4B2C1, 0xF449711F, 0x94446F01,
+      0x67E12CDF, 887503681, 28629151, 923521, 29791, 961, 31, 1, 0, 0, 0, 0};
+   static uint32_t multiplierVectors_le8[24] = {0x50A9DE01, 0x50A9DE01, 0x50A9DE01, 0x50A9DE01,
+      1, 31, 961, 29791, 923521, 28629151, 887503681, 0x67E12CDF,
+      0x94446F01, 0xF449711F, 0x94E4B2C1, 0x07B1A55F, 0xEE830681, 0xE1DDC99F, 0x59DB6A41, 0xE191DDDF,
+      0, 0, 0, 0};
+   static uint32_t multiplierVectors_be16[16] = {0x94446F01, 0x94446F01, 0x94446F01, 0x94446F01,
+      0x67E12CDF, 887503681, 28629151, 923521, 29791, 961, 31, 1, 0, 0, 0, 0};
+   static uint32_t multiplierVectors_le16[16] = {0x94446F01, 0x94446F01, 0x94446F01, 0x94446F01,
+      1, 31, 961, 29791, 923521, 28629151, 887503681, 0x67E12CDF, 0, 0, 0, 0};
+   static uint32_t multiplierVectors_be32[12] = {923521, 923521, 923521, 923521,
+                                                29791, 961, 31, 1, 0, 0, 0, 0};
+   static uint32_t multiplierVectors_le32[12] = {923521, 923521, 923521, 923521,
+                                                1, 31, 961, 29791, 0, 0, 0, 0};
+   intptr_t multiplierVector;
+   switch (elementType)
+      {
+      case TR::Int8:
+         multiplierVector = (intptr_t) (isLE ?  multiplierVectors_le8 : multiplierVectors_be8);
+         break;
+      case TR::Int16:
+         multiplierVector = (intptr_t) (isLE ?  multiplierVectors_le16 : multiplierVectors_be16);
+         break;
+      case TR::Int32:
+         multiplierVector = (intptr_t) (isLE ?  multiplierVectors_le32 : multiplierVectors_be32);
+         break;
+      default:
+         TR_ASSERT_FATAL(false, "Unsupported hashCodeHelper elementType");
+      }
+   // load the first 4 elements into the 4 words of the multiplier
+   loadAddressConstant(cg, false, node, multiplierVector, multiplierAddrReg);
+   generateTrg1MemInstruction(cg, TR::InstOpCode::lxvw4x, node, multiplierReg, TR::MemoryReference::createWithIndexReg(cg, multiplierAddrReg, constant0Reg, 16));
 
-    //VSX_LOOP:
-    //load v (here v must be aligned)
-    //unpack v to temphigh4 templow4
-    //high4 = high4 * multiplier
-    //low4 = low4 * multiplier
-    //high4 = high4 + temphigh4
-    //low4 = low4 + templow4
-    //v = v + 0x10
-    //if v < vend goto VSX_LOOP
-    generateLabelInstruction(cg, TR::InstOpCode::label, node, VSXLabel);
-    generateTrg1MemInstruction(cg, TR::InstOpCode::lvx, node, vtmp1Reg, TR::MemoryReference::createWithIndexReg(cg, valueReg, constant0Reg, 16));
-    generateTrg1Src1Instruction(cg, TR::InstOpCode::vupkhsh, node, vtmp2Reg, vtmp1Reg);
-    generateTrg1Src2Instruction(cg, TR::InstOpCode::vand, node, vtmp2Reg, vtmp2Reg, vunpackMaskReg);
-    generateTrg1Src2Instruction(cg, TR::InstOpCode::vmuluwm, node, high4Reg, high4Reg, multiplierReg);
-    generateTrg1Src2Instruction(cg, TR::InstOpCode::vadduwm, node, high4Reg, high4Reg, vtmp2Reg);
-    generateTrg1Src1Instruction(cg, TR::InstOpCode::vupklsh, node, vtmp2Reg, vtmp1Reg);
-    generateTrg1Src2Instruction(cg, TR::InstOpCode::vand, node, vtmp2Reg, vtmp2Reg, vunpackMaskReg);
-    generateTrg1Src2Instruction(cg, TR::InstOpCode::vmuluwm, node, low4Reg, low4Reg, multiplierReg);
-    generateTrg1Src2Instruction(cg, TR::InstOpCode::vadduwm, node, low4Reg, low4Reg, vtmp2Reg);
-    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, valueReg, valueReg, 0x10);
-    generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp8, node, condReg, valueReg, vendReg);
-    generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, VSXLabel, condReg);
+   // clear accumulator registers
+   switch (elementType)
+      {
+      case TR::Int8:
+         generateTrg1Src2Instruction(cg, TR::InstOpCode::vxor, node, third4Reg, third4Reg, third4Reg);
+         generateTrg1Src2Instruction(cg, TR::InstOpCode::vxor, node, fourth4Reg, fourth4Reg, fourth4Reg);
+         //fall through
+      case TR::Int16:
+         generateTrg1Src2Instruction(cg, TR::InstOpCode::vxor, node, high4Reg, high4Reg, high4Reg);
+         //fall through
+      case TR::Int32:
+         generateTrg1Src2Instruction(cg, TR::InstOpCode::vxor, node, low4Reg, low4Reg, low4Reg);
+         break;
+      default:
+         TR_ASSERT_FATAL(false, "Unsupported hashCodeHelper elementType");
+      }
+   // ready all zeros and ones registers
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::vxor, node, vconstant0Reg, vconstant0Reg, vconstant0Reg);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::vnor, node, vconstantNegReg, vconstant0Reg, vconstant0Reg);
+   // all four words in vunpackMaskReg a mask for the length of elementType
+   generateTrg1Src2ImmInstruction(cg, TR::InstOpCode::vsldoi, node, vunpackMaskReg, vconstant0Reg, vconstantNegReg, TR::DataType::getSize(elementType));
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::vspltw, node, vunpackMaskReg, vunpackMaskReg, 3);
+   // vend = end & (~0xf) = end of aligned data
+   generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, tempReg, 0xFFFFFFF0);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::AND, node, vendReg, endReg, tempReg);
 
-    // POST_VSX:
-    // shift and sum low4 and high4
-    // move result to hashReg
-    generateLabelInstruction(cg, TR::InstOpCode::label, node, POSTVSXLabel);
+   // load the initial value
+   TR::Register *initialValueReg = low4Reg;
+   if (nonZeroInitial)
+      {
+      if (isLE) // in LE, load into the highest word of the highest vector
+         {
+         switch (elementType)
+            {
+            case TR::Int8:
+               initialValueReg = fourth4Reg;
+               break;
+            case TR::Int16:
+               initialValueReg = high4Reg;
+               break;
+            case TR::Int32:
+               //initialValueReg = low4Reg; by default
+               break;
+            default:
+               TR_ASSERT_FATAL(false, "Unsupported hashCodeHelper elementType");
+            }
+         generateTrg1Src1Instruction(cg, TR::InstOpCode::mtvsrwz, node, initialValueReg, hashReg);
+         generateTrg1Src2ImmInstruction(cg, TR::InstOpCode::vsldoi, node, initialValueReg, vconstant0Reg, initialValueReg, 8);
+         generateTrg1Src2ImmInstruction(cg, TR::InstOpCode::vsldoi, node, initialValueReg, initialValueReg, vconstant0Reg, 12);
+         }
+      else // in BE, load into the lowest word
+         {
+         //initialValueReg = low4Reg; by default
+         generateTrg1Src1Instruction(cg, TR::InstOpCode::mtvsrwz, node, low4Reg, hashReg);
+         generateTrg1Src2ImmInstruction(cg, TR::InstOpCode::vsldoi, node, low4Reg, vconstant0Reg, low4Reg, 8);
+         }
+      }
 
-    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, multiplierAddrReg, multiplierAddrReg, 0x10);
-    generateTrg1MemInstruction(cg, TR::InstOpCode::lxvw4x, node, multiplierReg, TR::MemoryReference::createWithIndexReg(cg, multiplierAddrReg, constant0Reg, 16));
-    generateTrg1Src2Instruction(cg, TR::InstOpCode::vmuluwm, node, high4Reg, high4Reg, multiplierReg);
-    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, multiplierAddrReg, multiplierAddrReg, 0x10);
-    generateTrg1MemInstruction(cg, TR::InstOpCode::lxvw4x, node, multiplierReg, TR::MemoryReference::createWithIndexReg(cg, multiplierAddrReg, constant0Reg, 16));
-    generateTrg1Src2Instruction(cg, TR::InstOpCode::vmuluwm, node, low4Reg, low4Reg, multiplierReg);
+   // if v is 16byte aligned, goto the VSX_Loop
+   loadConstant(cg, node, 0xF, tempReg);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::AND, node, tempReg, valueReg, tempReg);
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, condReg, tempReg, 0x0);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node,
+      VSXLabel, condReg);
 
-    generateTrg1Src2Instruction(cg, TR::InstOpCode::vadduwm, node, high4Reg, high4Reg, low4Reg);
-    generateTrg1Src2ImmInstruction(cg, TR::InstOpCode::vsldoi, node, vtmp1Reg, vconstant0Reg, high4Reg, 8);
-    generateTrg1Src2Instruction(cg, TR::InstOpCode::vadduwm, node, high4Reg, high4Reg, vtmp1Reg);
-    generateTrg1Src2ImmInstruction(cg, TR::InstOpCode::vsldoi, node, vtmp1Reg, vconstant0Reg, high4Reg, 12);
-    generateTrg1Src2Instruction(cg, TR::InstOpCode::vadduwm, node, high4Reg, high4Reg, vtmp1Reg);
+   // deal with misaligned data
+   // The reason we don't do VSX loop directly is we want to avoid loading unaligned data
+   // and deal with it with vperm.
+   // Instead, we load the first unaligned part, let VSX handle the rest aligned part.
+   // load unaligned v, mask out unwanted part
+   // for example, if value = 0x12345, we mask out 0x12340~0x12344, keep 0x12345~0x1234F
 
-    generateTrg1Src2ImmInstruction(cg, TR::InstOpCode::vsldoi, node, vtmp1Reg, high4Reg, vconstant0Reg, 8);
-    generateTrg1Src1Instruction(cg, TR::InstOpCode::mfvsrwz, node, hashReg, vtmp1Reg);
+   // vtmp1Reg = mem(valueReg & 0xFFFFFFFFFFFFFFF0)
+   generateTrg1MemInstruction(cg, TR::InstOpCode::lvx, node, vtmp1Reg, TR::MemoryReference::createWithIndexReg(cg, valueReg, constant0Reg, 16));
+   // vtmp2Reg = tempReg = (valueReg & 0xF) << 3 i.e. the number of bits that are mis-aligned
+   loadConstant(cg, node, 0xF, tempReg);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::AND, node, tempReg, valueReg, tempReg);
+   generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, tempReg, tempReg, 3, 0xFFFFFFFFFFFFFFF8);
+   generateTrg1Src1Instruction(cg, TR::InstOpCode::mtvsrd, node, vtmp2Reg, tempReg);
+   generateTrg1Src2ImmInstruction(cg, TR::InstOpCode::vsldoi, node, vtmp2Reg, vconstant0Reg, vtmp2Reg, 8);
+   // mask out the mis-aligned bits in vtmp1Reg
+   if (isLE) {
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::vslo, node, vtmp2Reg, vconstantNegReg, vtmp2Reg);
+   } else {
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::vsro, node, vtmp2Reg, vconstantNegReg, vtmp2Reg);
+   }
+   // we can save a move for 32 bit values if we don't need to worry about overwriting
+   if (elementType == TR::Int32 && !nonZeroInitial)
+      {
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::vand, node, low4Reg, vtmp1Reg, vtmp2Reg);
+      }
+   else
+      {
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::vand, node, vtmp1Reg, vtmp1Reg, vtmp2Reg);
+      }
 
-    // Head of the serial loop
-    generateLabelInstruction(cg, TR::InstOpCode::label, node, serialLabel);
+   // Since we are putting the initial value at the most significant word in our
+   // accumulators, we must multiply it by 31 for every element inserted from the mis-aligned batch
+   if (nonZeroInitial)
+      {
+      // tempReg = (128 - tempReg) = number of bits in the mis-aligned batch
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::nor, node, tempReg, tempReg, tempReg);
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, tempReg, tempReg, 129);
+      // tempReg = tempReg / size * 4 = tempReg >> (lg(size)-2) = power of 31 we want * 4 bytes
+      switch (elementType)
+         {
+         case TR::Int8:
+            generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::srawi, node, tempReg, tempReg, 1);
+            break;
+         case TR::Int16:
+            generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::srawi, node, tempReg, tempReg, 2);
+            break;
+         case TR::Int32:
+            generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::srawi, node, tempReg, tempReg, 3);
+            break;
+         default:
+            TR_ASSERT_FATAL(false, "Unsupported hashCodeHelper elementType");
+         }
+      // make it so that tempReg point it to the appropriate byte in the multiplierVectors
+      if (isLE) {
+         // for LE, we first index by 4*4=16 bytes for the highest powers, then we index by
+         // the value of tempReg
+         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, tempReg, tempReg, 16);
+      } else {
+         // for BE, we will index all the way to the back of the array, subtract by the value
+         // of tempReg, then subtract by an additional 16 bytes for the 4 padded zeros, and then
+         // index backward by 12 bytes to make sure the value we want is in word[3]
+         // tempReg = -tempReg - 1, so we should add the one back later
+         generateTrg1Src2Instruction(cg, TR::InstOpCode::nor, node, tempReg, tempReg, tempReg);
+         switch (elementType)
+            {
+            case TR::Int8:
+               // 24 * 4 - 12 - 16 + 1 = 92
+               generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, tempReg, tempReg, 69);
+               break;
+            case TR::Int16:
+               // 16 * 4 - 12 - 16 + 1 = 60
+               generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, tempReg, tempReg, 37);
+               break;
+            case TR::Int32:
+               // 8 * 4 - 12 - 16 + 1 = 28
+               generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, tempReg, tempReg, 5);
+               break;
+            default:
+               TR_ASSERT_FATAL(false, "Unsupported hashCodeHelper elementType");
+            }
+      }
 
-    // temp = hash
-    // hash = hash << 5
-    // hash = hash - temp
-    // temp = v[i]
-    // hash = hash + temp
+      // move the value into a temporary register
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::vor, node, vtmp2Reg, initialValueReg, initialValueReg);
+      // multiply
+      generateTrg1MemInstruction(cg, TR::InstOpCode::lxvw4x, node, multiplierReg,
+         TR::MemoryReference::createWithIndexReg(cg, multiplierAddrReg, tempReg, 16));
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::vmuluwm, node, vtmp2Reg, vtmp2Reg, multiplierReg);
+      // restore the multiplier reg
+      generateTrg1MemInstruction(cg, TR::InstOpCode::lxvw4x, node, multiplierReg,
+         TR::MemoryReference::createWithIndexReg(cg, multiplierAddrReg, constant0Reg, 16));
+      }
 
-    generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp8, node, condReg, valueReg, endReg);
-    generateConditionalBranchInstruction(cg, TR::InstOpCode::bge, node, endLabel, condReg);
-    generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, tempReg, hashReg);
-    generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, hashReg, hashReg, 5, 0xFFFFFFFFFFFFFFE0);
-    generateTrg1Src2Instruction(cg, TR::InstOpCode::subf, node, hashReg, tempReg, hashReg);
-    generateTrg1MemInstruction(cg, TR::InstOpCode::lhzx, node, tempReg, TR::MemoryReference::createWithIndexReg(cg, valueReg, constant0Reg, 2));
-    generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, hashReg, hashReg, tempReg);
-    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, valueReg, valueReg, 0x2);
-    generateLabelInstruction(cg, TR::InstOpCode::b, node, serialLabel);
+   // unpack masked v to accumulators
+   // unpacking is signed by default, but we can use the mask for unsigned cases
+   switch (elementType)
+      {
+      case TR::Int8: // unpack into halfwords, then words
+         generateTrg1Src1Instruction(cg, TR::InstOpCode::vupkhsb, node, vtmp3Reg, vtmp1Reg);
+         // fourth4Reg
+         generateTrg1Src1Instruction(cg, TR::InstOpCode::vupkhsh, node, fourth4Reg, vtmp3Reg);
+         if (!isSigned)
+            {
+            generateTrg1Src2Instruction(cg, TR::InstOpCode::vand, node, fourth4Reg, fourth4Reg, vunpackMaskReg);
+            }
+         // third4Reg
+         generateTrg1Src1Instruction(cg, TR::InstOpCode::vupklsh, node, third4Reg, vtmp3Reg);
+         if (!isSigned)
+            {
+            generateTrg1Src2Instruction(cg, TR::InstOpCode::vand, node, third4Reg, third4Reg, vunpackMaskReg);
+            }
 
-    // End of this method
-    TR::RegisterDependencyConditions *dependencies = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 16, cg->trMemory());
-    dependencies->addPostCondition(valueReg, TR::RealRegister::NoReg);
-    dependencies->getPostConditions()->getRegisterDependency(0)->setExcludeGPR0(); // valueReg
+         generateTrg1Src1Instruction(cg, TR::InstOpCode::vupklsb, node, vtmp3Reg, vtmp1Reg);
+         // high4Reg
+         generateTrg1Src1Instruction(cg, TR::InstOpCode::vupkhsh, node, high4Reg, vtmp3Reg);
+         if (!isSigned)
+            {
+            generateTrg1Src2Instruction(cg, TR::InstOpCode::vand, node, high4Reg, high4Reg, vunpackMaskReg);
+            }
+         // low4Reg
+         generateTrg1Src1Instruction(cg, TR::InstOpCode::vupklsh, node, low4Reg, vtmp3Reg);
+         if (!isSigned)
+            {
+            generateTrg1Src2Instruction(cg, TR::InstOpCode::vand, node, low4Reg, low4Reg, vunpackMaskReg);
+            }
+         break;
+      case TR::Int16:
+         generateTrg1Src1Instruction(cg, TR::InstOpCode::vupkhsh, node, high4Reg, vtmp1Reg);
+         if (!isSigned)
+            {
+            generateTrg1Src2Instruction(cg, TR::InstOpCode::vand, node, high4Reg, high4Reg, vunpackMaskReg);
+            }
+         generateTrg1Src1Instruction(cg, TR::InstOpCode::vupklsh, node, low4Reg, vtmp1Reg);
+         if (!isSigned)
+            {
+            generateTrg1Src2Instruction(cg, TR::InstOpCode::vand, node, low4Reg, low4Reg, vunpackMaskReg);
+            }
+         break;
+      case TR::Int32:
+         // no unpacking required, but we do need to move if we haven't due to nonZeroInitial
+         if (nonZeroInitial)
+            generateTrg1Src2Instruction(cg, TR::InstOpCode::vand, node, low4Reg, vtmp1Reg, vtmp1Reg);
+         break;
+      default:
+         TR_ASSERT_FATAL(false, "Unsupported hashCodeHelper elementType");
+      }
 
-    dependencies->addPostCondition(endReg, TR::RealRegister::NoReg);
-    dependencies->addPostCondition(vendReg, TR::RealRegister::NoReg);
-    dependencies->addPostCondition(hashReg, TR::RealRegister::NoReg);
-    dependencies->addPostCondition(tempReg, TR::RealRegister::NoReg);
-    dependencies->addPostCondition(constant0Reg, TR::RealRegister::NoReg);
-    dependencies->addPostCondition(condReg, TR::RealRegister::NoReg);
+   // plug in the initial value now that we are done unpacking
+   if (nonZeroInitial)
+      {
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::vadduwm, node, initialValueReg, initialValueReg, vtmp2Reg);
+      }
 
-    dependencies->addPostCondition(multiplierAddrReg, TR::RealRegister::NoReg);
-    dependencies->getPostConditions()->getRegisterDependency(7)->setExcludeGPR0(); // multiplierAddrReg
+   // advance v to next aligned pointer
+   // if v >= vend goto POST_VSX
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, valueReg, valueReg, 0xF);
+   generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, tempReg, 0xFFFFFFF0);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::AND, node, valueReg, valueReg, tempReg);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp8, node, condReg, valueReg, vendReg);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::bge, node, POSTVSXLabel, condReg);
 
-    dependencies->addPostCondition(multiplierReg, TR::RealRegister::NoReg);
-    dependencies->addPostCondition(high4Reg, TR::RealRegister::NoReg);
-    dependencies->addPostCondition(low4Reg, TR::RealRegister::NoReg);
-    dependencies->addPostCondition(vtmp1Reg, TR::RealRegister::NoReg);
-    dependencies->addPostCondition(vtmp2Reg, TR::RealRegister::NoReg);
-    dependencies->addPostCondition(vconstant0Reg, TR::RealRegister::NoReg);
-    dependencies->addPostCondition(vconstantNegReg, TR::RealRegister::NoReg);
-    dependencies->addPostCondition(vunpackMaskReg, TR::RealRegister::NoReg);
+   // ------ VSX_LOOP:
+   // load v (here v must be aligned)
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, VSXLabel);
+   generateTrg1MemInstruction(cg, TR::InstOpCode::lvx, node, vtmp1Reg, TR::MemoryReference::createWithIndexReg(cg, valueReg, constant0Reg, 16));
 
-    generateDepLabelInstruction(cg, TR::InstOpCode::label, node, endLabel, dependencies);
+   // for each high/low register
+   // unpack v to vtmp2Reg
+   // accumulator = accumulator * 31^n + vtmp2Reg
+   switch (elementType)
+      {
+      case TR::Int8:
+         generateTrg1Src1Instruction(cg, TR::InstOpCode::vupkhsb, node, vtmp2Reg, vtmp1Reg);
+         // fourth4
+         generateTrg1Src1Instruction(cg, TR::InstOpCode::vupkhsh, node, vtmp3Reg, vtmp2Reg);
+         if (!isSigned)
+            {
+            generateTrg1Src2Instruction(cg, TR::InstOpCode::vand, node, vtmp3Reg, vtmp3Reg, vunpackMaskReg);
+            }
+         generateTrg1Src2Instruction(cg, TR::InstOpCode::vmuluwm, node, fourth4Reg, fourth4Reg, multiplierReg);
+         generateTrg1Src2Instruction(cg, TR::InstOpCode::vadduwm, node, fourth4Reg, fourth4Reg, vtmp3Reg);
+         // third4
+         generateTrg1Src1Instruction(cg, TR::InstOpCode::vupklsh, node, vtmp3Reg, vtmp2Reg);
+         if (!isSigned)
+            {
+            generateTrg1Src2Instruction(cg, TR::InstOpCode::vand, node, vtmp3Reg, vtmp3Reg, vunpackMaskReg);
+            }
+         generateTrg1Src2Instruction(cg, TR::InstOpCode::vmuluwm, node, third4Reg, third4Reg, multiplierReg);
+         generateTrg1Src2Instruction(cg, TR::InstOpCode::vadduwm, node, third4Reg, third4Reg, vtmp3Reg);
 
-    node->setRegister(hashReg);
-    cg->decReferenceCount(valueNode);
-    cg->decReferenceCount(offsetNode);
-    cg->decReferenceCount(countNode);
+         generateTrg1Src1Instruction(cg, TR::InstOpCode::vupklsb, node, vtmp2Reg, vtmp1Reg);
+         // high4
+         generateTrg1Src1Instruction(cg, TR::InstOpCode::vupkhsh, node, vtmp3Reg, vtmp2Reg);
+         if (!isSigned)
+            {
+            generateTrg1Src2Instruction(cg, TR::InstOpCode::vand, node, vtmp3Reg, vtmp3Reg, vunpackMaskReg);
+            }
+         generateTrg1Src2Instruction(cg, TR::InstOpCode::vmuluwm, node, high4Reg, high4Reg, multiplierReg);
+         generateTrg1Src2Instruction(cg, TR::InstOpCode::vadduwm, node, high4Reg, high4Reg, vtmp3Reg);
+         // low4
+         generateTrg1Src1Instruction(cg, TR::InstOpCode::vupklsh, node, vtmp3Reg, vtmp2Reg);
+         if (!isSigned)
+            {
+            generateTrg1Src2Instruction(cg, TR::InstOpCode::vand, node, vtmp3Reg, vtmp3Reg, vunpackMaskReg);
+            }
+         generateTrg1Src2Instruction(cg, TR::InstOpCode::vmuluwm, node, low4Reg, low4Reg, multiplierReg);
+         generateTrg1Src2Instruction(cg, TR::InstOpCode::vadduwm, node, low4Reg, low4Reg, vtmp3Reg);
+         break;
+      case TR::Int16:
+         // high4
+         generateTrg1Src1Instruction(cg, TR::InstOpCode::vupkhsh, node, vtmp2Reg, vtmp1Reg);
+         if (!isSigned)
+            {
+            generateTrg1Src2Instruction(cg, TR::InstOpCode::vand, node, vtmp2Reg, vtmp2Reg, vunpackMaskReg);
+            }
+         generateTrg1Src2Instruction(cg, TR::InstOpCode::vmuluwm, node, high4Reg, high4Reg, multiplierReg);
+         generateTrg1Src2Instruction(cg, TR::InstOpCode::vadduwm, node, high4Reg, high4Reg, vtmp2Reg);
+         // low4
+         generateTrg1Src1Instruction(cg, TR::InstOpCode::vupklsh, node, vtmp2Reg, vtmp1Reg);
+         if (!isSigned)
+            {
+            generateTrg1Src2Instruction(cg, TR::InstOpCode::vand, node, vtmp2Reg, vtmp2Reg, vunpackMaskReg);
+            }
+         generateTrg1Src2Instruction(cg, TR::InstOpCode::vmuluwm, node, low4Reg, low4Reg, multiplierReg);
+         generateTrg1Src2Instruction(cg, TR::InstOpCode::vadduwm, node, low4Reg, low4Reg, vtmp2Reg);
+         break;
+      case TR::Int32:
+         // no need to unpack
+         generateTrg1Src2Instruction(cg, TR::InstOpCode::vmuluwm, node, low4Reg, low4Reg, multiplierReg);
+         generateTrg1Src2Instruction(cg, TR::InstOpCode::vadduwm, node, low4Reg, low4Reg, vtmp1Reg);
+         break;
+      default:
+         TR_ASSERT_FATAL(false, "Unsupported hashCodeHelper elementType");
+      }
 
-    cg->stopUsingRegister(valueReg);
-    cg->stopUsingRegister(endReg);
-    cg->stopUsingRegister(vendReg);
-    cg->stopUsingRegister(tempReg);
-    cg->stopUsingRegister(constant0Reg);
-    cg->stopUsingRegister(condReg);
-    cg->stopUsingRegister(multiplierAddrReg);
+   // v = v + 0x10
+   // if v < vend goto VSX_LOOP
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, valueReg, valueReg, 0x10);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp8, node, condReg, valueReg, vendReg);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, VSXLabel, condReg);
 
-    cg->stopUsingRegister(multiplierReg);
-    cg->stopUsingRegister(high4Reg);
-    cg->stopUsingRegister(low4Reg);
-    cg->stopUsingRegister(vtmp1Reg);
-    cg->stopUsingRegister(vtmp2Reg);
-    cg->stopUsingRegister(vconstant0Reg);
-    cg->stopUsingRegister(vconstantNegReg);
-    cg->stopUsingRegister(vunpackMaskReg);
-    return hashReg;
-}
+   // POST_VSX:
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, POSTVSXLabel);
+
+   // shift the high/low registers
+   switch (elementType)
+      {
+      case TR::Int8:
+         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, multiplierAddrReg, multiplierAddrReg, 0x10);
+         generateTrg1MemInstruction(cg, TR::InstOpCode::lxvw4x, node, multiplierReg, TR::MemoryReference::createWithIndexReg(cg, multiplierAddrReg, constant0Reg, 16));
+         generateTrg1Src2Instruction(cg, TR::InstOpCode::vmuluwm, node, fourth4Reg, fourth4Reg, multiplierReg);
+         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, multiplierAddrReg, multiplierAddrReg, 0x10);
+         generateTrg1MemInstruction(cg, TR::InstOpCode::lxvw4x, node, multiplierReg, TR::MemoryReference::createWithIndexReg(cg, multiplierAddrReg, constant0Reg, 16));
+         generateTrg1Src2Instruction(cg, TR::InstOpCode::vmuluwm, node, third4Reg, third4Reg, multiplierReg);
+         // fall through
+      case TR::Int16:
+         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, multiplierAddrReg, multiplierAddrReg, 0x10);
+         generateTrg1MemInstruction(cg, TR::InstOpCode::lxvw4x, node, multiplierReg, TR::MemoryReference::createWithIndexReg(cg, multiplierAddrReg, constant0Reg, 16));
+         generateTrg1Src2Instruction(cg, TR::InstOpCode::vmuluwm, node, high4Reg, high4Reg, multiplierReg);
+         // fall through
+      case TR::Int32:
+         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, multiplierAddrReg, multiplierAddrReg, 0x10);
+         generateTrg1MemInstruction(cg, TR::InstOpCode::lxvw4x, node, multiplierReg, TR::MemoryReference::createWithIndexReg(cg, multiplierAddrReg, constant0Reg, 16));
+         generateTrg1Src2Instruction(cg, TR::InstOpCode::vmuluwm, node, low4Reg, low4Reg, multiplierReg);
+         break;
+      default:
+         TR_ASSERT_FATAL(false, "Unsupported hashCodeHelper elementType");
+      }
+
+   // sum the registers
+   switch (elementType)
+      {
+      case TR::Int8:
+         generateTrg1Src2Instruction(cg, TR::InstOpCode::vadduwm, node, low4Reg, low4Reg, third4Reg);
+         generateTrg1Src2Instruction(cg, TR::InstOpCode::vadduwm, node, low4Reg, low4Reg, fourth4Reg);
+         // fall through
+      case TR::Int16:
+         generateTrg1Src2Instruction(cg, TR::InstOpCode::vadduwm, node, low4Reg, low4Reg, high4Reg);
+      case TR::Int32:
+         break;
+      default:
+         TR_ASSERT_FATAL(false, "Unsupported hashCodeHelper elementType");
+      }
+   generateTrg1Src2ImmInstruction(cg, TR::InstOpCode::vsldoi, node, vtmp1Reg, vconstant0Reg, low4Reg, 8);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::vadduwm, node, low4Reg, low4Reg, vtmp1Reg);
+   generateTrg1Src2ImmInstruction(cg, TR::InstOpCode::vsldoi, node, vtmp1Reg, vconstant0Reg, low4Reg, 12);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::vadduwm, node, low4Reg, low4Reg, vtmp1Reg);
+
+   // move result to hashReg
+   generateTrg1Src2ImmInstruction(cg, TR::InstOpCode::vsldoi, node, vtmp1Reg, low4Reg, vconstant0Reg, 8);
+   generateTrg1Src1Instruction(cg, TR::InstOpCode::mfvsrwz, node, hashReg, vtmp1Reg);
+
+   // Head of the serial loop
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, serialLabel);
+   // temp = hash
+   // hash = hash << 5
+   // hash = hash - temp
+   // temp = v[i]
+   // hash = hash + temp
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp8, node, condReg, valueReg, endReg);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::bge, node, endLabel, condReg);
+   generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, tempReg, hashReg);
+   generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, hashReg, hashReg, 5, 0xFFFFFFFFFFFFFFE0);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::subf, node, hashReg, tempReg, hashReg);
+   switch (elementType)
+      {
+      case TR::Int8:
+         generateTrg1MemInstruction(cg, TR::InstOpCode::lbzx, node, tempReg, TR::MemoryReference::createWithIndexReg(cg, valueReg, constant0Reg, 1));
+         if (isSigned)
+            {
+            generateTrg1Src1Instruction(cg, TR::InstOpCode::extsb, node, tempReg, tempReg);
+            }
+         break;
+      case TR::Int16:
+         generateTrg1MemInstruction(cg, isSigned ? TR::InstOpCode::lhax : TR::InstOpCode::lhzx, node, tempReg, TR::MemoryReference::createWithIndexReg(cg, valueReg, constant0Reg, 2));
+         break;
+      case TR::Int32:
+         generateTrg1MemInstruction(cg, TR::InstOpCode::lwzx, node, tempReg, TR::MemoryReference::createWithIndexReg(cg, valueReg, constant0Reg, 4));
+         break;
+      default:
+         TR_ASSERT_FATAL(false, "Unsupported hashCodeHelper elementType");
+      }
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, hashReg, hashReg, tempReg);
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, valueReg, valueReg, TR::DataType::getSize(elementType));
+   generateLabelInstruction(cg, TR::InstOpCode::b, node, serialLabel);
+
+   // End of this method
+   TR::RegisterDependencyConditions *dependencies =
+      new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0,
+         (TR::Int8 == elementType ? 19 : (TR::Int16 == elementType ? 16 : 15)), // extra vector regs
+         cg->trMemory());
+
+   dependencies->addPostCondition(valueReg, TR::RealRegister::NoReg);
+   dependencies->getPostConditions()->getRegisterDependency(0)->setExcludeGPR0(); // valueReg
+
+   dependencies->addPostCondition(endReg, TR::RealRegister::NoReg);
+   dependencies->addPostCondition(vendReg, TR::RealRegister::NoReg);
+   dependencies->addPostCondition(hashReg, TR::RealRegister::NoReg);
+   dependencies->addPostCondition(tempReg, TR::RealRegister::NoReg);
+   dependencies->addPostCondition(constant0Reg, TR::RealRegister::NoReg);
+   dependencies->addPostCondition(condReg, TR::RealRegister::NoReg);
+
+   dependencies->addPostCondition(multiplierAddrReg, TR::RealRegister::NoReg);
+   dependencies->getPostConditions()->getRegisterDependency(7)->setExcludeGPR0(); // multiplierAddrReg
+
+   dependencies->addPostCondition(multiplierReg, TR::RealRegister::NoReg);
+   dependencies->addPostCondition(vtmp1Reg, TR::RealRegister::NoReg);
+   dependencies->addPostCondition(vtmp2Reg, TR::RealRegister::NoReg);
+   dependencies->addPostCondition(vconstant0Reg, TR::RealRegister::NoReg);
+   dependencies->addPostCondition(vconstantNegReg, TR::RealRegister::NoReg);
+   dependencies->addPostCondition(vunpackMaskReg, TR::RealRegister::NoReg);
+
+   dependencies->addPostCondition(low4Reg, TR::RealRegister::NoReg);
+   switch (elementType)
+      {
+      case TR::Int8:
+         dependencies->addPostCondition(vtmp3Reg, TR::RealRegister::NoReg);
+         dependencies->addPostCondition(third4Reg, TR::RealRegister::NoReg);
+         dependencies->addPostCondition(fourth4Reg, TR::RealRegister::NoReg);
+         // fall through
+      case TR::Int16:
+         dependencies->addPostCondition(high4Reg, TR::RealRegister::NoReg);
+         // fall through
+      case TR::Int32:
+         break;
+      default:
+         TR_ASSERT_FATAL(false, "Unsupported hashCodeHelper elementType");
+      }
+
+   generateDepLabelInstruction(cg, TR::InstOpCode::label, node, endLabel, dependencies);
+
+   node->setRegister(hashReg);
+   cg->decReferenceCount(valueNode);
+   cg->decReferenceCount(offsetNode);
+   cg->decReferenceCount(countNode);
+   if (hashNode)
+      cg->decReferenceCount(hashNode);
+
+   cg->stopUsingRegister(valueReg);
+   cg->stopUsingRegister(endReg);
+   cg->stopUsingRegister(vendReg);
+   cg->stopUsingRegister(tempReg);
+   cg->stopUsingRegister(constant0Reg);
+   cg->stopUsingRegister(condReg);
+   cg->stopUsingRegister(multiplierAddrReg);
+
+   cg->stopUsingRegister(multiplierReg);
+   cg->stopUsingRegister(vtmp1Reg);
+   cg->stopUsingRegister(vtmp2Reg);
+   cg->stopUsingRegister(vconstant0Reg);
+   cg->stopUsingRegister(vconstantNegReg);
+   cg->stopUsingRegister(vunpackMaskReg);
+
+   cg->stopUsingRegister(low4Reg);
+   switch (elementType)
+      {
+      case TR::Int8:
+         cg->stopUsingRegister(vtmp3Reg);
+         cg->stopUsingRegister(third4Reg);
+         cg->stopUsingRegister(fourth4Reg);
+         // fall through
+      case TR::Int16:
+         cg->stopUsingRegister(high4Reg);
+         // fall through
+      case TR::Int32:
+         break;
+      default:
+         TR_ASSERT_FATAL(false, "Unsupported hashCodeHelper elementType");
+      }
+
+   return hashReg;
+   }
+
+static TR::Register*
+inlineStringHashCode(TR::Node *node, TR::CodeGenerator *cg, bool isCompressed)
+   {
+   return hashCodeHelper(node, cg, isCompressed ? TR::Int8 : TR::Int16, NULL, false);
+   }
+
+static TR::Register*
+inlineVectorizedHashCode(TR::Node* node, TR::CodeGenerator* cg)
+   {
+   TR::Register* hashReg = NULL;
+
+   switch (node->getChild(4)->getConstValue())
+      {
+      // The following constants come from the values for the
+      // type operand of the NEWARRAY instruction
+      // See https://docs.oracle.com/javase/specs/jvms/se9/html/jvms-6.html#jvms-6.5.newarray.
+      case 4: // T_BOOLEAN
+         hashReg = hashCodeHelper(node, cg, TR::Int8, node->getChild(3), false);
+         break;
+      case 8: // T_BYTE
+         hashReg = hashCodeHelper(node, cg, TR::Int8, node->getChild(3), true);
+         break;
+      case 5: // T_CHAR
+         hashReg = hashCodeHelper(node, cg, TR::Int16, node->getChild(3), false);
+         break;
+      case 9: // T_SHORT
+         hashReg = hashCodeHelper(node, cg, TR::Int16, node->getChild(3), true);
+         break;
+      case 10: // T_INT
+         hashReg = hashCodeHelper(node, cg, TR::Int32, node->getChild(3), true);
+         break;
+      }
+   if (hashReg != NULL)
+      cg->decReferenceCount(node->getChild(4));
+
+   return hashReg;
+   }
 
 static TR::Register *inlineEncodeUTF16(TR::Node *node, TR::CodeGenerator *cg)
    {
@@ -12208,19 +12645,21 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
          resultReg = inlineFPTrg1Src3(node, TR::InstOpCode::fmadds, cg);
          return true;
 
+      case TR::java_lang_String_hashCodeImplCompressed:
       case TR::java_lang_String_hashCodeImplDecompressed:
-         if (!TR::Compiler->om.canGenerateArraylets()
-             && !TR::Compiler->om.isOffHeapAllocationEnabled()
-             && comp->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P8)
-             && comp->target().cpu.supportsFeature(OMR_FEATURE_PPC_HAS_VSX)
-             && !comp->compileRelocatableCode()
-#ifdef J9VM_OPT_JITSERVER
-             && !comp->isOutOfProcessCompilation()
-#endif
-            )
+         if (cg->getSupportsInlineStringHashCode())
             {
-            resultReg = inlineStringHashcode(node, cg);
+            resultReg = inlineStringHashCode(node, cg,
+               methodSymbol->getRecognizedMethod() == TR::java_lang_String_hashCodeImplCompressed);
             return true;
+            }
+         break;
+
+      case TR::jdk_internal_util_ArraysSupport_vectorizedHashCode:
+         if (cg->getSupportsInlineVectorizedHashCode())
+            {
+            resultReg = inlineVectorizedHashCode(node, cg);
+            return resultReg != NULL;
             }
          break;
 
