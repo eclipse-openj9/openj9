@@ -1087,6 +1087,37 @@ done:
 }
 
 void
+VM_JFRConstantPoolTypes::addMonitorEnterEntry(J9JFRMonitorEntered *monitorEnterData)
+{
+	MonitorEnterEntry *entry = (MonitorEnterEntry *)pool_newElement(_monitorEnterTable);
+
+	if (NULL == entry) {
+		_buildResult = OutOfMemory;
+		goto done;
+	}
+	entry->ticks = monitorEnterData->startTicks;
+	entry->duration = monitorEnterData->duration;
+	entry->monitorAddress = monitorEnterData->monitorAddress;
+
+	entry->threadIndex = addThreadEntry(monitorEnterData->vmThread);
+	if (isResultNotOKay()) goto done;
+
+	entry->eventThreadIndex = addThreadEntry(monitorEnterData->vmThread);
+	if (isResultNotOKay()) goto done;
+
+	entry->stackTraceIndex = consumeStackTrace(monitorEnterData->vmThread, J9JFRMONITORENTERED_STACKTRACE(monitorEnterData), monitorEnterData->stackTraceSize);
+	if (isResultNotOKay()) goto done;
+
+	entry->monitorClass = getClassEntry(monitorEnterData->monitorClass);
+	if (isResultNotOKay()) goto done;
+
+	_monitorEnterCount += 1;
+
+done:
+	return;
+}
+
+void
 VM_JFRConstantPoolTypes::addThreadParkEntry(J9JFRThreadParked* threadParkData)
 {
 	ThreadParkEntry *entry = (ThreadParkEntry*)pool_newElement(_threadParkTable);
