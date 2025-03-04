@@ -60,6 +60,13 @@ public:
    static TR::CPU detectRelocatable(OMRPortLibrary * const omrPortLib);
 
    /**
+    * @brief A factory method used to construct a CPU object based on the underlying hardware
+    * @param[in] omrPortLib : the port library
+    * @return TR::CPU
+    */
+   static TR::CPU detect(OMRPortLibrary * const omrPortLib);
+
+   /**
     * @brief Intialize _supportedFeatureMasks to the list of processor features that will be exploited by the compiler and set _isSupportedFeatureMasksEnabled to true
     * @return void
     */
