@@ -5329,6 +5329,7 @@ typedef struct J9InternalVMFunctions {
 	struct J9Class * (*initializeSnapshotClassObject)(struct J9JavaVM *javaVM, struct J9ClassLoader *classLoader, struct J9Class *clazz);
 	BOOLEAN (*loadWarmClassFromSnapshot)(struct J9VMThread *vmThread, struct J9ClassLoader *classLoader, struct J9Class *clazz);
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
+	jobject (*getSystemPropertyList)(JNIEnv *env);
 } J9InternalVMFunctions;
 
 /* Jazz 99339: define a new structure to replace JavaVM so as to pass J9NativeLibrary to JVMTIEnv  */

@@ -480,4 +480,5 @@ J9InternalVMFunctions J9InternalFunctions = {
 	initializeSnapshotClassObject,
 	loadWarmClassFromSnapshot,
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
+	getSystemPropertyList,
 };
