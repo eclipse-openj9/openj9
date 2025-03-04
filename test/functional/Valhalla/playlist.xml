@@ -36,7 +36,7 @@
 			<variation>-Xnocompressedrefs -Xgcpolicy:gencon</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
-		-Xint -Xdump:system+java+snap:events=systhrow,filter=java/lang/LinkageError,msg_filter=*Triangle2D* --enable-preview \
+		-Xint --enable-preview \
 		--add-opens java.base/jdk.internal.misc=ALL-UNNAMED \
 		--add-exports java.base/jdk.internal.value=ALL-UNNAMED \
 		--patch-module java.base=$(TEST_JDK_HOME)$(D)lib$(D)valueclasses$(D)java.base-valueclasses.jar \
@@ -74,7 +74,7 @@
 			<variation>-Xjit:count=1,disableAsyncCompilation -Xnocompressedrefs -Xgcpolicy:gencon</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
-		-Xdump:system+java+snap:events=systhrow,filter=java/lang/LinkageError,msg_filter=*Triangle2D* --enable-preview \
+		--enable-preview \
 		--add-opens java.base/jdk.internal.misc=ALL-UNNAMED \
 		--add-exports java.base/jdk.internal.value=ALL-UNNAMED \
 		--patch-module java.base=$(TEST_JDK_HOME)$(D)lib$(D)valueclasses$(D)java.base-valueclasses.jar \
