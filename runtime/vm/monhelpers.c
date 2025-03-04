@@ -181,6 +181,7 @@ restart:
 			if ((0 == monitor->pinCount)
 #if JAVA_SPEC_VERSION >= 24
 			&& (0 == objectMonitor->virtualThreadWaitCount)
+			&& (NULL == objectMonitor->waitingContinuations)
 #endif /* JAVA_SPEC_VERSION >= 24 */
 			) {
 				if (deflate) {

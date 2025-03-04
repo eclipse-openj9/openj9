@@ -4714,9 +4714,10 @@ exitVThreadTransitionCritical(J9VMThread *currentThread, jobject thread);
  *
  * @param currentThread the current thread
  * @param continuationObject the Continuation object
+ * @param isObjectWait if the call is from Object.wait()
  */
 void
-preparePinnedVirtualThreadForMount(J9VMThread *currentThread, j9object_t continuationObject);
+preparePinnedVirtualThreadForMount(J9VMThread *currentThread, j9object_t continuationObject, BOOLEAN isObjectWait);
 
 /**
  * @brief Inflate all monitors and prepare the VirtualThread to yield.
