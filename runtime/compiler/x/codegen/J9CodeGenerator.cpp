@@ -439,6 +439,18 @@ J9::X86::CodeGenerator::suppressInliningOfRecognizedMethod(TR::RecognizedMethod 
       {
       case TR::java_lang_Object_clone:
          return true;
+      case TR::java_lang_Math_fma_F:
+      case TR::java_lang_Math_fma_D:
+      case TR::java_lang_StrictMath_fma_F:
+      case TR::java_lang_StrictMath_fma_D:
+         {
+         static bool disableInlineFMA = feGetEnv("TR_DisableInlineFMA");
+
+         if (disableInlineFMA || !self()->comp()->target().cpu.supportsFeature(OMR_FEATURE_X86_FMA))
+            return false;
+         }
+
+         return true;
       default:
          return false;
       }
