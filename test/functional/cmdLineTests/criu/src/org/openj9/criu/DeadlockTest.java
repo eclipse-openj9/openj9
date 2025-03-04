@@ -92,8 +92,7 @@ public class DeadlockTest {
 
 		t1.start();
 
-		CRIUSupport criuSupport = new CRIUSupport(path);
-		criuSupport.registerPreCheckpointHook(() -> {
+		CRIUSupport criuSupport = CRIUSupport.getCRIUSupport().setImageDir(path).registerPreCheckpointHook(() -> {
 			synchronized (lock) {
 				CRIUTestUtils.showThreadCurrentTime("Precheckpoint hook inside monitor with testResult.lockStatus = "
 						+ testResult.lockStatus.get());
@@ -178,7 +177,7 @@ public class DeadlockTest {
 
 		t1.start();
 
-		CRIUSupport criuSupport = new CRIUSupport(path);
+		CRIUSupport criuSupport = CRIUSupport.getCRIUSupport().setImageDir(path);
 
 		while (testResult.lockStatus.get() == 0) {
 			Thread.yield();
@@ -243,8 +242,7 @@ public class DeadlockTest {
 		byte[] bytes = getClassBytesFromResource(A.class);
 		Class clazz = unsafe.defineClass(A.class.getName(), bytes, 0, bytes.length, loader, null);
 
-		CRIUSupport criuSupport = new CRIUSupport(path);
-		criuSupport.registerPreCheckpointHook(()->{
+		CRIUSupport criuSupport = CRIUSupport.getCRIUSupport().setImageDir(path).registerPreCheckpointHook(() -> {
 			MethodType type = MethodType.methodType(clazz);
 		});
 

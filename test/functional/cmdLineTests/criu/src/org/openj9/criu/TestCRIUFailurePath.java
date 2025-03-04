@@ -52,7 +52,7 @@ public class TestCRIUFailurePath {
 		Path path = Paths.get("badDir");
 		path.toFile().mkdir();
 		Files.setPosixFilePermissions(path, PosixFilePermissions.fromString("r--r--r--"));
-		CRIUSupport criu = new CRIUSupport(path);
+		CRIUSupport criu = CRIUSupport.getCRIUSupport().setImageDir(path);
 
 		try {
 			CRIUTestUtils.checkPointJVMNoSetup(criu, path, true);
