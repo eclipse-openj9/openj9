@@ -10366,9 +10366,8 @@ static TR::Register* inlineHasNegativesOrCountPositives(TR::Node* node, TR::Reco
    TR::Register *indexReg = cg->allocateRegister();
    TR::Register *xmmChunkReg = cg->allocateRegister(TR_VRF);
    TR::Register *chunkReg = cg->allocateRegister();
-   TR::Register *bytesLeftReg = cg->allocateRegister();
 
-   TR::RegisterDependencyConditions *dependencies = generateRegisterDependencyConditions((uint8_t)8, (uint8_t)8, cg);
+   TR::RegisterDependencyConditions *dependencies = generateRegisterDependencyConditions((uint8_t)7, (uint8_t)7, cg);
    dependencies->addPreCondition(loopLimitReg, TR::RealRegister::NoReg, cg);
    dependencies->addPreCondition(limitReg, TR::RealRegister::NoReg, cg);
    dependencies->addPreCondition(xmmMaskReg, TR::RealRegister::NoReg, cg);
@@ -10376,7 +10375,6 @@ static TR::Register* inlineHasNegativesOrCountPositives(TR::Node* node, TR::Reco
    dependencies->addPreCondition(indexReg, TR::RealRegister::NoReg, cg);
    dependencies->addPreCondition(xmmChunkReg, TR::RealRegister::NoReg, cg);
    dependencies->addPreCondition(chunkReg, TR::RealRegister::NoReg, cg);
-   dependencies->addPreCondition(bytesLeftReg, TR::RealRegister::NoReg, cg);
    dependencies->addPostCondition(loopLimitReg, TR::RealRegister::NoReg, cg);
    dependencies->addPostCondition(limitReg, TR::RealRegister::NoReg, cg);
    dependencies->addPostCondition(xmmMaskReg, TR::RealRegister::NoReg, cg);
@@ -10384,7 +10382,6 @@ static TR::Register* inlineHasNegativesOrCountPositives(TR::Node* node, TR::Reco
    dependencies->addPostCondition(indexReg, TR::RealRegister::NoReg, cg);
    dependencies->addPostCondition(xmmChunkReg, TR::RealRegister::NoReg, cg);
    dependencies->addPostCondition(chunkReg, TR::RealRegister::NoReg, cg);
-   dependencies->addPostCondition(bytesLeftReg, TR::RealRegister::NoReg, cg);
 
    // Labels
    TR::LabelSymbol *begLabel = generateLabelSymbol(cg);
@@ -10395,7 +10392,11 @@ static TR::Register* inlineHasNegativesOrCountPositives(TR::Node* node, TR::Reco
    TR::LabelSymbol *fiveOrMoreBytesLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *nineOrMoreBytesLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *residualTestLabel = generateLabelSymbol(cg);
-   TR::LabelSymbol *foundNegativeLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *foundNegativeLabel = NULL;
+   if (recognizedMethod == TR::java_lang_StringCoding_countPositives)
+      {
+      foundNegativeLabel = generateLabelSymbol(cg);
+      }
    TR::LabelSymbol *returnNoNegativesLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *returnHasNegativesLabel = generateLabelSymbol(cg);
    begLabel->setStartInternalControlFlow();
@@ -10406,7 +10407,7 @@ static TR::Register* inlineHasNegativesOrCountPositives(TR::Node* node, TR::Reco
    generateLabelInstruction(TR::InstOpCode::label, node, begLabel, cg);
 
    // index = offset
-   generateRegRegInstruction(TR::InstOpCode::MOV8RegReg, node, indexReg, offsetReg, cg);
+   generateRegRegInstruction(TR::InstOpCode::MOV4RegReg, node, indexReg, offsetReg, cg);
 
    // limit = offset + length
    generateRegRegInstruction(TR::InstOpCode::MOV4RegReg, node, limitReg, offsetReg, cg);
@@ -10422,7 +10423,7 @@ static TR::Register* inlineHasNegativesOrCountPositives(TR::Node* node, TR::Reco
    generateLabelInstruction(TR::InstOpCode::label, node, loopLabel, cg);
 
    // if index >= loopLimit, jump to handling the residual bytes
-   generateRegRegInstruction(TR::InstOpCode::CMP8RegReg, node, indexReg, loopLimitReg, cg);
+   generateRegRegInstruction(TR::InstOpCode::CMP4RegReg, node, indexReg, loopLimitReg, cg);
    generateLabelInstruction(TR::InstOpCode::JGE1, node, residualLabel, cg);
 
    // Load 16 bytes from address [buf + index]
@@ -10453,7 +10454,7 @@ static TR::Register* inlineHasNegativesOrCountPositives(TR::Node* node, TR::Reco
       }
 
    // index += 16
-   generateRegImmInstruction(TR::InstOpCode::ADD8RegImm4, node, indexReg, 16, cg);
+   generateRegImmInstruction(TR::InstOpCode::ADD4RegImm4, node, indexReg, 16, cg);
 
    // Jump back to loopLabel
    generateLabelInstruction(TR::InstOpCode::JMP1, node, loopLabel, cg);
@@ -10474,23 +10475,23 @@ static TR::Register* inlineHasNegativesOrCountPositives(TR::Node* node, TR::Reco
    // Deal with the residual (last 15 or fewer) bytes
    generateLabelInstruction(TR::InstOpCode::label, node, residualLabel, cg);
 
-   // bytesLeft = limit - loopLimit
-   generateRegRegInstruction(TR::InstOpCode::MOV8RegReg, node, bytesLeftReg, limitReg, cg);
-   generateRegRegInstruction(TR::InstOpCode::SUB8RegReg, node, bytesLeftReg, loopLimitReg, cg);
+   // Calculate bytes remaining: loopLimit = -(loopLimit - limit)
+   generateRegRegInstruction(TR::InstOpCode::SUB4RegReg, node, loopLimitReg, limitReg, cg);
+   generateRegInstruction(TR::InstOpCode::NEG4Reg, node, loopLimitReg, cg);
 
    /*
-    *    if bytesLeft == 0
+    *    if loopLimit == 0
     *       jmp returnNoNegativesLabel
-    *    if bytesLeft > 8
+    *    if loopLimit > 8
     *       jmp nineOrMoreBytesLabel ----+
-    *    if bytesLeft > 2                |
+    *    if loopLimit > 2                |
     *       jmp threeOrMoreBytesLabel -+ |
     *                                  | |
     *    load 1-2 bytes                | |
     *    jmp residualTestLabel         | |
     *                                  | |
     *    threeOrMoreBytesLabel: <------+ |
-    *       if bytesLeft > 4             |
+    *       if loopLimit > 4             |
     *       jmp fiveOrMoreBytesLabel --+ |
     *                                  | |
     *       load 3-4 bytes             | |
@@ -10504,22 +10505,22 @@ static TR::Register* inlineHasNegativesOrCountPositives(TR::Node* node, TR::Reco
     *       load 9-16 bytes
     */
 
-   // if bytesLeft = 0, jump to returnNoNegativesLabel
-   generateRegImmInstruction(TR::InstOpCode::CMP8RegImm4, node, bytesLeftReg, 0, cg);
+   // if loopLimit = 0, jump to returnNoNegativesLabel
+   generateRegImmInstruction(TR::InstOpCode::CMP4RegImm4, node, loopLimitReg, 0, cg);
    generateLabelInstruction(TR::InstOpCode::JE4, node, returnNoNegativesLabel, cg);
 
    // Prepare an 8 byte sign bit mask
    generateRegImm64Instruction(TR::InstOpCode::MOV8RegImm64, node, maskReg, 0x8080808080808080, cg);
 
-   // if bytesLeft > 8, jump to nineOrMoreBytesLabel
-   generateRegImmInstruction(TR::InstOpCode::CMP8RegImm4, node, bytesLeftReg, 8, cg);
+   // if loopLimit > 8, jump to nineOrMoreBytesLabel
+   generateRegImmInstruction(TR::InstOpCode::CMP4RegImm4, node, loopLimitReg, 8, cg);
    generateLabelInstruction(TR::InstOpCode::JG4, node, nineOrMoreBytesLabel, cg);
 
    // Zero out the chunk register
    generateRegRegInstruction(TR::InstOpCode::XOR8RegReg, node, chunkReg, chunkReg, cg);
 
-   // if bytesLeft > 2, jump to threeOrMoreBytesLabel
-   generateRegImmInstruction(TR::InstOpCode::CMP8RegImm4, node, bytesLeftReg, 2, cg);
+   // if loopLimit > 2, jump to threeOrMoreBytesLabel
+   generateRegImmInstruction(TR::InstOpCode::CMP4RegImm4, node, loopLimitReg, 2, cg);
    generateLabelInstruction(TR::InstOpCode::JG4, node, threeOrMoreBytesLabel, cg);
 
 
@@ -10537,8 +10538,8 @@ static TR::Register* inlineHasNegativesOrCountPositives(TR::Node* node, TR::Reco
    // Case in which there are three or more residual bytes
    generateLabelInstruction(TR::InstOpCode::label, node, threeOrMoreBytesLabel, cg);
 
-   // if bytesLeft > 4, jump to fiveOrMoreBytesLabel
-   generateRegImmInstruction(TR::InstOpCode::CMP8RegImm4, node, bytesLeftReg, 4, cg);
+   // if loopLimit > 4, jump to fiveOrMoreBytesLabel
+   generateRegImmInstruction(TR::InstOpCode::CMP4RegImm4, node, loopLimitReg, 4, cg);
    generateLabelInstruction(TR::InstOpCode::JG1, node, fiveOrMoreBytesLabel, cg);
 
    // Load the first two bytes at address [buf + index] into the chunk register
@@ -10622,12 +10623,12 @@ static TR::Register* inlineHasNegativesOrCountPositives(TR::Node* node, TR::Reco
    // end label
    generateLabelInstruction(TR::InstOpCode::label, node, endLabel, cg);
 
+   cg->stopUsingRegister(loopLimitReg);
    cg->stopUsingRegister(limitReg);
    cg->stopUsingRegister(xmmMaskReg);
    cg->stopUsingRegister(maskReg);
    cg->stopUsingRegister(xmmChunkReg);
    cg->stopUsingRegister(chunkReg);
-   cg->stopUsingRegister(bytesLeftReg);
 
    node->setRegister(indexReg);
    for (int32_t i = 0; i < node->getNumChildren(); i++)
