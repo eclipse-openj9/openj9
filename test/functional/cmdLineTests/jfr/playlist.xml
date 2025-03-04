@@ -79,9 +79,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
-		<!-- For the time being, JFR tests are only limited to JDK11+. -->
+		<!-- For the time being, these tests are limited to JDK17+. -->
 		<versions>
-			<version>11+</version>
+			<version>17+</version>
 		</versions>
 		<features>
 			<feature>JFR:required</feature>
