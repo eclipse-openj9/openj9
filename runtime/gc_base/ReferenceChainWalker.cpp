@@ -32,6 +32,9 @@
 
 #include "ClassIteratorClassSlots.hpp"
 #include "ClassIteratorDeclarationOrder.hpp"
+#if JAVA_SPEC_VERSION >= 24
+#include "ContinuationSlotIterator.hpp"
+#endif /* JAVA_SPEC_VERSION >= 24 */
 #include "EnvironmentBase.hpp"
 #include "Forge.hpp"
 #include "GCExtensions.hpp"
@@ -418,6 +421,16 @@ MM_ReferenceChainWalker::scanContinuationNativeSlots(J9Object *objectPtr)
 		}
 #endif /* JAVA_SPEC_VERSION >= 19 */
 		GC_VMThreadStackSlotIterator::scanContinuationSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForReferenceChainWalker, false, _trackVisibleStackFrameDepth);
+
+#if JAVA_SPEC_VERSION >= 24
+		J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, objectPtr);
+		GC_ContinuationSlotIterator continuationSlotIterator(currentThread, continuation);
+
+		while (J9Object **slotPtr = continuationSlotIterator.nextSlot()) {
+			doContinuationSlot(slotPtr, &continuationSlotIterator);
+		}
+#endif /* JAVA_SPEC_VERSION >= 24 */
+
 	}
 }
 
@@ -650,6 +663,31 @@ MM_ReferenceChainWalker::doVMClassSlot(J9Class *classPtr)
 {
 	doClassSlot(classPtr, J9GC_ROOT_TYPE_VM_CLASS_SLOT, -1, NULL);
 }
+
+#if JAVA_SPEC_VERSION >= 24
+/**
+ * @todo Provide function documentation
+ */
+void
+MM_ReferenceChainWalker::doContinuationSlot(J9Object **slotPtr, GC_ContinuationSlotIterator *continuationSlotIterator)
+{
+	J9Object *slotValue = *slotPtr;
+	/* Only report heap objects */
+	if (isHeapObject(slotValue) && !_heap->objectIsInGap(slotValue)) {
+		switch(continuationSlotIterator->getState()) {
+		case GC_ContinuationSlotIterator::state_monitor_records:
+			doSlot(slotPtr, J9GC_ROOT_TYPE_CONTINUATION_MONITOR, -1, NULL);
+			break;
+		case GC_ContinuationSlotIterator::state_vthread:
+			doSlot(slotPtr, J9GC_ROOT_TYPE_CONTINUATION_VTHREAD, -1, NULL);
+			break;
+		default:
+			doSlot(slotPtr, J9GC_ROOT_TYPE_UNKNOWN, -1, NULL);
+			break;
+		}
+	}
+}
+#endif /* JAVA_SPEC_VERSION >= 24 */
 
 /**
  * @todo Provide function documentation

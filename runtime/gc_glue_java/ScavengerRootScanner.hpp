@@ -110,6 +110,22 @@ public:
 		}
 	}
 
+#if JAVA_SPEC_VERSION >= 24
+	/*
+	 * Handle continuation slots specially so that we can auto-remember referenced objects
+	 */
+	virtual void
+	doContinuationSlot(J9Object **slotPtr, GC_ContinuationSlotIterator *continuationSlotIterator)
+	{
+		MM_EnvironmentStandard *envStandard = MM_EnvironmentStandard::getEnvironment(_env);
+		if (_scavenger->isHeapObject(*slotPtr) && !_extensions->heap->objectIsInGap(*slotPtr)) {
+			_scavenger->copyAndForwardThreadSlot(envStandard, slotPtr);
+		} else if (NULL != *slotPtr) {
+			Assert_MM_true(GC_ContinuationSlotIterator::state_monitor_records == continuationSlotIterator->getState());
+		}
+	}
+#endif /* JAVA_SPEC_VERSION >= 24 */
+
 	/*
 	 * Handle stack and thread slots specially so that we can auto-remember stack-referenced objects
 	 */
