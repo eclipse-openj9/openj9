@@ -293,7 +293,8 @@ J9::AliasBuilder::createAliasInfo()
       TR_methodTypeCheck,
       TR_incompatibleReceiver,
       TR_IncompatibleClassChangeError,
-      TR_multiANewArray
+      TR_multiANewArray,
+      TR_identityException
       };
 
    for (i = 0; i < (sizeof(helpersThatMayThrow) / 4); ++i)

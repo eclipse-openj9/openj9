@@ -143,6 +143,7 @@ JIT_HELPER(jitThrowCurrentException);  // asm calling-convention helper
 JIT_HELPER(jitThrowException);  // asm calling-convention helper
 JIT_HELPER(jitThrowUnreportedException);  // asm calling-convention helper
 JIT_HELPER(jitThrowExceptionInInitializerError);  // asm calling-convention helper
+JIT_HELPER(jitThrowIdentityException);  // asm calling-convention helper
 JIT_HELPER(jitThrowInstantiationException);  // asm calling-convention helper
 JIT_HELPER(jitThrowNullPointerException);  // asm calling-convention helper
 JIT_HELPER(jitThrowWrongMethodTypeException);  // asm calling-convention helper

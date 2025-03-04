@@ -6047,11 +6047,31 @@ TR_J9ByteCodeIlGenerator::genMonitorEnter()
       }
    */
 
-   node = TR::Node::createWithSymRef(TR::monent, 1, 1, node, monitorEnterSymbolRef);
-   if (isStatic)
-      node->setStaticMonitor(true);
+   static const bool disableMonentIdentityException = (feGetEnv("TR_disableMonentIdentityException") != NULL);
 
-   genTreeTop(genNullCheck(node));
+   if (disableMonentIdentityException || !TR::Compiler->om.areValueTypesEnabled())
+      {
+      node = TR::Node::createWithSymRef(TR::monent, 1, 1, node, monitorEnterSymbolRef);
+      if (isStatic)
+         node->setStaticMonitor(true);
+
+      genTreeTop(genNullCheck(node));
+      }
+   else
+      {
+      genTreeTop(genNullCheck(TR::Node::create(TR::PassThrough, 1, node)));
+
+      TR::SymbolReference *isIdentitySymRef = comp()->getSymRefTab()->findOrCreateIsIdentityObjectNonHelperSymbolRef();
+      TR::Node *isIdentityObjectTestNode = TR::Node::createWithSymRef(TR::icall, 1, 1, node, isIdentitySymRef);
+      TR::SymbolReference *identityExceptionSymRef = comp()->getSymRefTab()->findOrCreateIdentityExceptionSymbolRef(_methodSymbol);
+      genTreeTop(TR::Node::createWithSymRef(TR::ZEROCHK, 1, 1, isIdentityObjectTestNode, identityExceptionSymRef));
+
+      node = TR::Node::createWithSymRef(TR::monent, 1, 1, node, monitorEnterSymbolRef);
+      if (isStatic)
+         node->setStaticMonitor(true);
+
+      genTreeTop(node);
+      }
 
    if (!comp()->getOption(TR_DisableLiveMonitorMetadata))
       {

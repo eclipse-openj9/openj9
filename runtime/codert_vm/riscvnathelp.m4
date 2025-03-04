@@ -356,6 +356,7 @@ EXCEPTION_THROW_HELPER(jitThrowIncompatibleClassChangeError,0)
 EXCEPTION_THROW_HELPER(jitThrowInstantiationException,0)
 EXCEPTION_THROW_HELPER(jitThrowNullPointerException,0)
 EXCEPTION_THROW_HELPER(jitThrowWrongMethodTypeException,0)
+EXCEPTION_THROW_HELPER(jitThrowIdentityException,0)
 EXCEPTION_THROW_HELPER(jitThrowIncompatibleReceiver,2)
 
 dnl Write barrier helpers
