@@ -2943,28 +2943,35 @@ done:
 					if ((NULL != objectMonitor) && (NULL != objectMonitor->waitingContinuations)) {
 						omrthread_monitor_enter(_vm->blockedVirtualThreadsMutex);
 						J9VMContinuation *head = objectMonitor->waitingContinuations;
-						if (omrthread_monitor_notify == notifyFunction) {
-							objectMonitor->waitingContinuations = head->nextWaitingContinuation;
-							head->nextWaitingContinuation = _vm->blockedContinuations;
-							_vm->blockedContinuations = head;
-							J9VMJAVALANGVIRTUALTHREAD_SET_ONWAITINGLIST(_currentThread, head->vthread, JNI_TRUE);
-						} else {
-							J9VMContinuation *next = head;
-							J9VMJAVALANGVIRTUALTHREAD_SET_ONWAITINGLIST(_currentThread, head->vthread, JNI_TRUE);
-							while (NULL != next->nextWaitingContinuation) {
-								J9VMJAVALANGVIRTUALTHREAD_SET_ONWAITINGLIST(_currentThread, next->vthread, JNI_TRUE);
-								next = next->nextWaitingContinuation;
+						if (NULL != head) {
+							if (omrthread_monitor_notify == notifyFunction) {
+								objectMonitor->waitingContinuations = head->nextWaitingContinuation;
+								head->nextWaitingContinuation = _vm->blockedContinuations;
+								_vm->blockedContinuations = head;
+								J9VMJAVALANGVIRTUALTHREAD_SET_ONWAITINGLIST(_currentThread, head->vthread, JNI_TRUE);
+								J9VMJAVALANGVIRTUALTHREAD_SET_NOTIFIED(_currentThread, head->vthread, JNI_TRUE);
+							} else {
+								J9VMContinuation *next = head;
+								J9VMJAVALANGVIRTUALTHREAD_SET_ONWAITINGLIST(_currentThread, head->vthread, JNI_TRUE);
+								J9VMJAVALANGVIRTUALTHREAD_SET_NOTIFIED(_currentThread, head->vthread, JNI_TRUE);
+								while (NULL != next->nextWaitingContinuation) {
+									J9VMJAVALANGVIRTUALTHREAD_SET_ONWAITINGLIST(_currentThread, next->vthread, JNI_TRUE);
+									J9VMJAVALANGVIRTUALTHREAD_SET_NOTIFIED(_currentThread, next->vthread, JNI_TRUE);
+									next = next->nextWaitingContinuation;
+								}
+								next->nextWaitingContinuation = _vm->blockedContinuations;
+								_vm->blockedContinuations = head;
+								objectMonitor->waitingContinuations = NULL;
 							}
-							next->nextWaitingContinuation = _vm->blockedContinuations;
-							_vm->blockedContinuations = head;
-							objectMonitor->waitingContinuations = NULL;
-						}
-						omrthread_monitor_notify(_vm->blockedVirtualThreadsMutex);
-						omrthread_monitor_exit(_vm->blockedVirtualThreadsMutex);
+							omrthread_monitor_notify(_vm->blockedVirtualThreadsMutex);
+							omrthread_monitor_exit(_vm->blockedVirtualThreadsMutex);
 
-						if (omrthread_monitor_notify == notifyFunction) {
-							returnVoidFromINL(REGISTER_ARGS, 1);
-							goto done;
+							if (omrthread_monitor_notify == notifyFunction) {
+								returnVoidFromINL(REGISTER_ARGS, 1);
+								goto done;
+							}
+						} else {
+							omrthread_monitor_exit(_vm->blockedVirtualThreadsMutex);
 						}
 					}
 				}
@@ -5164,8 +5171,11 @@ done:
 			}
 			/* Try to yield the virtual thread if it will be blocked. */
 			UDATA result = preparePinnedVirtualThreadForUnmount(_currentThread, object, true);
+			VMStructHasBeenUpdated(REGISTER_ARGS);
 			if (J9_OBJECT_MONITOR_OOM != result) {
+				restoreInternalNativeStackFrame(REGISTER_ARGS);
 				/* Handle the virutal thread Object.wait call. */
+				J9VMJAVALANGVIRTUALTHREAD_SET_NOTIFIED(_currentThread, _currentThread->threadObject, JNI_FALSE);
 				rc = yieldPinnedContinuation(REGISTER_ARGS, newState, J9VM_CONTINUATION_RETURN_FROM_OBJECT_WAIT);
 			} else {
 				rc = THROW_MONITOR_ALLOC_FAIL;
@@ -5702,7 +5712,6 @@ ffi_OOM:
 		case J9VM_CONTINUATION_RETURN_FROM_MONITOR_ENTER:
 			break;
 		case J9VM_CONTINUATION_RETURN_FROM_OBJECT_WAIT: {
-			restoreInternalNativeStackFrame(REGISTER_ARGS);
 			j9object_t waitObject = *(j9object_t *)(_sp + 3);
 			UDATA monitorRC = enterObjectMonitor(REGISTER_ARGS, waitObject);
 

@@ -303,8 +303,11 @@ typedef void(*j9_tls_finalizer_t)(void *);
  * The full mapping is under jvmtiInternals.h <JVMTI_VTHREAD_STATE_*>.
  */
 #define JAVA_LANG_VIRTUALTHREAD_BLOCKING 12
+#define JAVA_LANG_VIRTUALTHREAD_BLOCKED  13
 #define JAVA_LANG_VIRTUALTHREAD_WAITING  15
+#define JAVA_LANG_VIRTUALTHREAD_WAIT     16
 #define JAVA_LANG_VIRTUALTHREAD_TIMED_WAITING 17
+#define JAVA_LANG_VIRTUALTHREAD_TIMED_WAIT 18
 #endif /* JAVA_SPEC_VERSION >= 24 */
 
 typedef enum {
