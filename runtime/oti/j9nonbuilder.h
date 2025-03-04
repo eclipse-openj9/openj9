@@ -441,6 +441,17 @@ typedef struct J9JFRThreadParked {
 
 #define J9JFRTHREADPARKED_STACKTRACE(jfrEvent) ((UDATA*)(((J9JFRThreadParked*)(jfrEvent)) + 1))
 
+typedef struct J9JFRMonitorEntered {
+	J9JFR_EVENT_WITH_STACKTRACE_FIELDS
+	I_64 duration;
+	struct J9VMThread *thread;
+	struct J9Class *monitorClass;
+	struct J9VMThread *previousOwner;
+	UDATA monitorAddress;
+} J9JFRMonitorEntered;
+
+#define J9JFRMONITORENTERED_STACKTRACE(jfrEvent) ((UDATA *)(((J9JFRMonitorEntered *)(jfrEvent)) + 1))
+
 typedef struct J9JFRCPULoad {
 	J9JFR_EVENT_COMMON_FIELDS
 	float jvmUser;
