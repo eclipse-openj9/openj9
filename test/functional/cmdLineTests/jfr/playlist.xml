@@ -50,9 +50,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<versions>
 			<version>11+</version>
 		</versions>
-		<features>
-			<feature>JFR:required</feature>
-		</features>
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_jfrEvents</testCaseName>
@@ -83,8 +80,5 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<versions>
 			<version>17+</version>
 		</versions>
-		<features>
-			<feature>JFR:required</feature>
-		</features>
 	</test>
 </playlist>
