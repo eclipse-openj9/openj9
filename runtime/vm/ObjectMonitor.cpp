@@ -140,6 +140,9 @@ objectMonitorEnterBlocking(J9VMThread *currentThread)
 	UDATA result = 0;
 	j9object_t object = J9VMTHREAD_BLOCKINGENTEROBJECT(currentThread, currentThread);
 	J9Class *ramClass = J9OBJECT_CLAZZ(currentThread, object);
+	J9JavaVM *vm = currentThread->javaVM;
+	PORT_ACCESS_FROM_JAVAVM(vm);
+	I_64 startTicks = j9time_nano_time();
 	/* Throughout this function, note that inlineGetLockAddress cannot run into out of memory case because
 	 * an entry in monitor table will have been created by the earlier call in objectMonitorEnterNonBlocking.
 	 */
@@ -159,7 +162,6 @@ objectMonitorEnterBlocking(J9VMThread *currentThread)
 	}
 #endif /* J9VM_THR_LOCK_RESERVATION */
 	{
-		J9JavaVM *vm = currentThread->javaVM;
 		J9ObjectMonitor *objectMonitor = monitorTableAt(currentThread, object);
 		/* Table entry was created by the nonblocking case, so this peek cannot fail */
 		Assert_VM_notNull(objectMonitor);
@@ -289,8 +291,9 @@ done:
 		((J9ThreadMonitor*)monitor)->flags &= ~(UDATA)J9THREAD_MONITOR_SUPPRESS_CONTENDED_EXIT;
 		VM_AtomicSupport::subtract(&monitor->pinCount, 1);
 		if (J9_EVENT_IS_HOOKED(vm->hookInterface, J9HOOK_VM_MONITOR_CONTENDED_ENTERED)) {
+			J9VMThread *ownerThread = getVMThreadFromOMRThread(vm, ((J9ThreadMonitor *)monitor)->owner);
 			bool frameBuilt = saveBlockingEnterObject(currentThread);
-			ALWAYS_TRIGGER_J9HOOK_VM_MONITOR_CONTENDED_ENTERED(vm->hookInterface, currentThread, monitor);
+			ALWAYS_TRIGGER_J9HOOK_VM_MONITOR_CONTENDED_ENTERED(vm->hookInterface, currentThread, monitor, startTicks, ramClass, ownerThread);
 			restoreBlockingEnterObject(currentThread, frameBuilt);
 		}
 	}

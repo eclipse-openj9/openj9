@@ -66,6 +66,7 @@ enum MetadataTypeID {
 	ThreadEndID = 3,
 	ThreadSleepID = 4,
 	ThreadParkID = 5,
+	MonitorEnterID = 6,
 	MonitorWaitID = 7,
 	JVMInformationID = 87,
 	OSInformationID = 88,
@@ -140,6 +141,8 @@ private:
 	static constexpr int JFR_CHUNK_HEADER_SIZE = 68;
 
 	/* conservative sizing for JFR chunk */
+	static constexpr int LEB128_32_SIZE = 5;
+	static constexpr int LEB128_64_SIZE = 9;
 	static constexpr int STRING_HEADER_LENGTH = sizeof(U_64);
 	static constexpr int CHECKPOINT_EVENT_HEADER_AND_FOOTER = 68;
 	static constexpr int STRING_CONSTANT_SIZE = 128;
@@ -159,6 +162,7 @@ private:
 	static constexpr int THREAD_END_EVENT_SIZE = (4 * sizeof(U_64)) + sizeof(U_32);
 	static constexpr int THREAD_SLEEP_EVENT_SIZE = (7 * sizeof(U_64)) + sizeof(U_32);
 	static constexpr int MONITOR_WAIT_EVENT_SIZE = (9 * sizeof(U_64)) + sizeof(U_32);
+	static constexpr int MONITOR_ENTER_EVENT_SIZE = sizeof(U_32) + (3 * LEB128_64_SIZE) + (5 * LEB128_32_SIZE);
 	static constexpr int THREAD_PARK_EVENT_SIZE = (9 * sizeof(U_64)) + sizeof(U_32);
 	static constexpr int JVM_INFORMATION_EVENT_SIZE = 3000;
 	static constexpr int PHYSICAL_MEMORY_EVENT_SIZE = (4 * sizeof(U_64)) + sizeof(U_32);
@@ -365,6 +369,8 @@ done:
 			pool_do(_constantPoolTypes.getThreadSleepTable(), &writeThreadSleepEvent, _bufferWriter);
 
 			pool_do(_constantPoolTypes.getMonitorWaitTable(), &writeMonitorWaitEvent, _bufferWriter);
+
+			pool_do(_constantPoolTypes.getMonitorEnterTable(), &writeMonitorEnterEvent, _bufferWriter);
 
 			pool_do(_constantPoolTypes.getThreadParkTable(), &writeThreadParkEvent, _bufferWriter);
 
@@ -575,6 +581,45 @@ done:
 
 		/* timedout bool */
 		_bufferWriter->writeLEB128(entry->timedOut);
+
+		/* address of monitor */
+		_bufferWriter->writeLEB128(entry->monitorAddress);
+
+		/* write size */
+		writeEventSize(_bufferWriter, dataStart);
+	}
+
+	static void
+	writeMonitorEnterEvent(void *anElement, void *userData)
+	{
+		MonitorEnterEntry *entry = (MonitorEnterEntry *)anElement;
+		VM_BufferWriter *_bufferWriter = (VM_BufferWriter *)userData;
+
+		/* reserve size field */
+		U_8 *dataStart = _bufferWriter->getAndIncCursor(sizeof(U_32));
+
+		/* write event type */
+		_bufferWriter->writeLEB128(MonitorEnterID);
+
+		/* write start time - this is when the sleep started not when it ended so we
+		 * need to subtract the duration since the event is emitted when the sleep ends.
+		 */
+		_bufferWriter->writeLEB128(entry->ticks - entry->duration);
+
+		/* write duration time which is always in ticks, in our case nanos */
+		_bufferWriter->writeLEB128(entry->duration);
+
+		/* write event thread index */
+		_bufferWriter->writeLEB128(entry->eventThreadIndex);
+
+		/* stacktrace index */
+		_bufferWriter->writeLEB128(entry->stackTraceIndex);
+
+		/* monitor class index */
+		_bufferWriter->writeLEB128(entry->monitorClass);
+
+		/* notifier thread index */
+		_bufferWriter->writeLEB128(entry->previousOwnerThread);
 
 		/* address of monitor */
 		_bufferWriter->writeLEB128(entry->monitorAddress);
@@ -796,6 +841,8 @@ done:
 		requiredBufferSize += (_constantPoolTypes.getThreadSleepCount() * THREAD_SLEEP_EVENT_SIZE);
 
 		requiredBufferSize += (_constantPoolTypes.getMonitorWaitCount() * MONITOR_WAIT_EVENT_SIZE);
+
+		requiredBufferSize += (_constantPoolTypes.getMonitorEnterCount() * MONITOR_ENTER_EVENT_SIZE);
 
 		requiredBufferSize += (_constantPoolTypes.getThreadParkCount() * THREAD_PARK_EVENT_SIZE);
 

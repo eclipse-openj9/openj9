@@ -229,6 +229,9 @@ typedef UDATA (* lookupNativeAddressCallback)(struct J9VMThread *currentThread, 
 		<struct>J9VMMonitorContendedEnteredEvent</struct>
 		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
 		<data type="omrthread_monitor_t" name="monitor" description="the contended monitor" />
+		<data type="I_64" name="startTicks" description="current ticks when wait began" />
+		<data type="struct J9Class*" name="monitorClass" description="object monitor class" />
+		<data type="struct J9VMThread*" name="previousOwner" description="previous owner thread" />
 	</event>
 
 	<event>
