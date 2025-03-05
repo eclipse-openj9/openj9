@@ -471,6 +471,12 @@ enum INIT_STAGE {
 #define VMOPT_XXNOSHOWUNMOUNTEDTHREADSTACKS "-XX:-ShowUnmountedThreadStacks"
 #endif /* JAVA_SPEC_VERSION >= 21 */
 
+#if JAVA_SPEC_VERSION >= 24
+/* Option to toggle on/off the feature to yield pinned virtual threads. */
+#define VMOPT_XXYIELDPINNEDVIRTUALTHREADS "-XX:+YieldPinnedVirtualThreads"
+#define VMOPT_XXNOYIELDPINNEDVIRTUALTHREADS "-XX:-YieldPinnedVirtualThreads"
+#endif /* JAVA_SPEC_VERSION >= 24 */
+
 /* Option to turn on exception on synchronization on instances of value-based classes */
 #define VMOPT_XXDIAGNOSE_SYNC_ON_VALUEBASED_CLASSES_EQUALS1 "-XX:DiagnoseSyncOnValueBasedClasses=1"
 /* Option to turn on warning on synchronization on instances of value-based classes */
