@@ -4718,12 +4718,11 @@ preparePinnedVirtualThreadForUnmount(J9VMThread *currentThread, j9object_t syncO
  * JVM_TakeVirtualThreadListToUnblock (see javanextvmi.cpp).
  *
  * @param currentThread the current thread
- * @param vm pointer to J9JavaVM
  *
  * @return a list of virtual threads to be unblocked
  */
 jobject
-takeVirtualThreadListToUnblock(J9VMThread *currentThread, J9JavaVM *vm);
+takeVirtualThreadListToUnblock(J9VMThread *currentThread);
 #endif /* JAVA_SPEC_VERSION >= 24 */
 /* ---------------- hookableAsync.c ---------------- */
 
