@@ -852,10 +852,11 @@ done:
 }
 
 jobject
-takeVirtualThreadListToUnblock(J9VMThread *currentThread, J9JavaVM *vm)
+takeVirtualThreadListToUnblock(J9VMThread *currentThread)
 {
 	j9object_t unblockedList = NULL;
 	jobject result = NULL;
+	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions const * const vmFuncs = vm->internalVMFunctions;
 
 	if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)

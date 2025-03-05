@@ -735,7 +735,7 @@ JVM_TakeVirtualThreadListToUnblock(JNIEnv *env, jclass ignored)
 	J9VMThread *currentThread = (J9VMThread *)env;
 	J9JavaVM *vm = currentThread->javaVM;
 
-	return vm->internalVMFunctions->takeVirtualThreadListToUnblock(currentThread, vm);
+	return vm->internalVMFunctions->takeVirtualThreadListToUnblock(currentThread);
 }
 #endif /* JAVA_SPEC_VERSION >= 24 */
 
