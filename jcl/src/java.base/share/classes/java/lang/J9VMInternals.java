@@ -173,7 +173,7 @@ final class J9VMInternals {
 			Runtime.getRuntime().addShutdownHook(new Thread(runnable, "CommonCleanerShutdown", true, false, false, null)); //$NON-NLS-1$
 		}
 		/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
-/*[IF CRAC_SUPPORT]*/
+		/*[IF CRAC_SUPPORT]*/
 		if (openj9.internal.criu.InternalCRIUSupport.isCRaCSupportEnabled()) {
 			// export java.base/jdk.crac unconditionally
 			J9VMInternals.class.getModule().implAddExports("jdk.crac"); //$NON-NLS-1$
@@ -184,7 +184,17 @@ final class J9VMInternals {
 				om.get().implAddExports("jdk.crac.management"); //$NON-NLS-1$
 			}
 		}
-/*[ENDIF] CRAC_SUPPORT */
+		/*[ENDIF] CRAC_SUPPORT */
+		/*[IF (11 <= JAVA_SPEC_VERSION) & (JAVA_SPEC_VERSION <= 17)]*/
+		/* ImageReader should be initialized before main() is called to
+		 * avoid being affected by a potential invalid java.home path.
+		 */
+		try {
+			jdk.internal.jimage.ImageReaderFactory.getImageReader();
+		} catch (java.io.UncheckedIOException e) {
+			// Ignored deliberately.
+		}
+		/*[ENDIF] (11 <= JAVA_SPEC_VERSION) & (JAVA_SPEC_VERSION <= 17) */
 	}
 
 	/**
