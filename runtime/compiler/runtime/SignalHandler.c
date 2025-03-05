@@ -194,17 +194,17 @@ static IDATA jitX86decodeIdivInstruction(J9PortLibrary* portLib, void* sigInfo, 
 		U_8 rm = modRM & 0x7;
 
 		/*
-		 Mod R/M	  SIB	 Total Instruction Size
-		 1 11xxxxxx	 n/a			   2
-		 2 00xxx101	 n/a			   6
-		 3 00xxx100   xxxxx101			7
-		 4 00xxx100   xxxxxyyy			3
-		 5 00xxxyyy	 n/a			   2
-		 6 01xxx100   xxxxxxxx			4
-		 7 01xxxyyy	 n/a			   3
-		 8 10xxx100   xxxxxxxx			7
-		 9 10xxxyyy	 n/a			   6
-	*/
+			Mod R/M      SIB     Total Instruction Size
+			1 11xxxxxx   n/a             2
+			2 00xxx101   n/a             6
+			3 00xxx100   xxxxx101        7
+			4 00xxx100   xxxxxyyy        3
+			5 00xxxyyy   n/a             2
+			6 01xxx100   xxxxxxxx        4
+			7 01xxxyyy   n/a             3
+			8 10xxx100   xxxxxxxx        7
+			9 10xxxyyy   n/a             6
+		 */
 
 
 		reg = rm;
@@ -241,15 +241,15 @@ static IDATA jitX86decodeIdivInstruction(J9PortLibrary* portLib, void* sigInfo, 
 
 		}
 
-	 if (mod == 1) {
-		 /* one byte displacement */
-		 disp = *(signed char *)eip;
-	 } else if (mod == 2 || (mod==0 && rm ==5)) {
-		 /* 4 byte displacement */
-		 disp = *(int *)eip;
-	 } else {
-		 /* no disp */
-	 }
+		if (mod == 1) {
+			/* one byte displacement */
+			disp = *(signed char *)eip;
+		} else if (mod == 2 || (mod==0 && rm ==5)) {
+			/* 4 byte displacement */
+			disp = *(int *)eip;
+		} else {
+			/* no disp */
+		}
 
 
 		if (rm==4) {
@@ -337,86 +337,93 @@ UDATA jitX86Handler(J9VMThread* vmThread, U_32 sigType, void* sigInfo)
 		} else {
 			void * stackMap;
 			UDATA registerMap;
+			/*
+			 * When Control Flow Guard (CFG) is enabled in Windows, it can terminate the program unexpectedly
+			 * if the stack pointer is not within the system stack limit and no log files will be generated.
+			 * We should skip the attempt to throw an exception here so that the log files can be generated.
+			 */
+			BOOLEAN isCFGEnabled = J9_ARE_ANY_BITS_SET(vmThread->javaVM->sigFlags, J9_SIG_WINDOWS_MITIGATION_POLICY_CFG_ENABLED);
 
-			switch (sigType) {
-			case J9PORT_SIG_FLAG_SIGFPE_DIV_BY_ZERO:
-			case J9PORT_SIG_FLAG_SIGFPE_INT_DIV_BY_ZERO:
-				if (0xF7 == *eip ) {
-					/* find the divisor */
-					UDATA div = jitX86decodeIdivInstruction(PORTLIB, sigInfo, eip);
-					if (div != 0 ) {
+			if (!isCFGEnabled) {
+				switch (sigType) {
+				case J9PORT_SIG_FLAG_SIGFPE_DIV_BY_ZERO:
+				case J9PORT_SIG_FLAG_SIGFPE_INT_DIV_BY_ZERO:
+					if (0xF7 == *eip ) {
+						/* find the divisor */
+						UDATA div = jitX86decodeIdivInstruction(PORTLIB, sigInfo, eip);
+						if (div != 0 ) {
+							*eipPtr += jitX86decodeInstruction(eip);
+							*eaxPtr = 0x80000000;
+							*edxPtr = 0;
+							return J9PORT_SIG_EXCEPTION_CONTINUE_EXECUTION;
+						}
+					}
+
+					if (((J9JITExceptionTable *)1) == exceptionTable) {
+						/* did we come from the long divide helper? */
+
+						vmThread->jitException = (J9Object *) *((UDATA *) *espPtr);
+						/* 4 pushes + ret addr */
+						*espPtr += 5 * sizeof(UDATA);
+					} else if (((J9JITExceptionTable *)2) == exceptionTable) {
+						/* did we come from the long remainder helper? */
+
+						vmThread->jitException = (J9Object *) *(((UDATA *) *espPtr) + 3);
+						*ecxPtr = *(((UDATA *) *espPtr) + 1);
+						*espPtr += 8 * sizeof(UDATA); /* 7 pushes + ret addr */
+					} else {
+						/* add 1 so as to move past the instruction so that the exception thrower will -1 like it would in all other cases. */
+						vmThread->jitException = (J9Object *) ((UDATA)eip + 1);
+					}
+
+					*eipPtr = (UDATA) ((void *) &jitHandleIntegerDivideByZeroTrap);
+					((J9VMJITRegisterState*)vmThread->entryLocalStorage->jitGlobalStorageBase)->jit_ebp = *ebpPtr;
+					*ebpPtr = (UDATA) vmThread;
+
+					return J9PORT_SIG_EXCEPTION_CONTINUE_EXECUTION;
+
+				case J9PORT_SIG_FLAG_SIGFPE_INT_OVERFLOW:
+					if (0xF7 == *eip) {
 						*eipPtr += jitX86decodeInstruction(eip);
 						*eaxPtr = 0x80000000;
 						*edxPtr = 0;
 						return J9PORT_SIG_EXCEPTION_CONTINUE_EXECUTION;
 					}
-				}
-
-				if (((J9JITExceptionTable *)1) == exceptionTable) {
-					/* did we come from the long divide helper? */
-
-					vmThread->jitException = (J9Object *) *((UDATA *) *espPtr);
-					/* 4 pushes + ret addr */
-					*espPtr += 5 * sizeof(UDATA);
-				} else if (((J9JITExceptionTable *)2) == exceptionTable) {
-					/* did we come from the long remainder helper? */
-
-					vmThread->jitException = (J9Object *) *(((UDATA *) *espPtr) + 3);
-					*ecxPtr = *(((UDATA *) *espPtr) + 1);
-					*espPtr += 8 * sizeof(UDATA); /* 7 pushes + ret addr */
-				} else {
-					/* add 1 so as to move past the instruction so that the exception thrower will -1 like it would in all other cases. */
-					vmThread->jitException = (J9Object *) ((UDATA)eip + 1);
-				}
-
-				*eipPtr = (UDATA) ((void *) &jitHandleIntegerDivideByZeroTrap);
-				((J9VMJITRegisterState*)vmThread->entryLocalStorage->jitGlobalStorageBase)->jit_ebp = *ebpPtr;
-				*ebpPtr = (UDATA) vmThread;
-
-				return J9PORT_SIG_EXCEPTION_CONTINUE_EXECUTION;
-
-			case J9PORT_SIG_FLAG_SIGFPE_INT_OVERFLOW:
-				if (0xF7 == *eip) {
-					*eipPtr += jitX86decodeInstruction(eip);
-					*eaxPtr = 0x80000000;
-					*edxPtr = 0;
-					return J9PORT_SIG_EXCEPTION_CONTINUE_EXECUTION;
-				}
-				/* unexpected SIGFPE */
-				break;
-
-			case J9PORT_SIG_FLAG_SIGSEGV:
-				if (isDfSet(vmThread, sigInfo) == TRUE)
+					/* unexpected SIGFPE */
 					break;
-			case J9PORT_SIG_FLAG_SIGBUS:
 
-				infoType = j9sig_info(sigInfo, J9PORT_SIG_SIGNAL, J9PORT_SIG_SIGNAL_INACCESSIBLE_ADDRESS, &infoName, &infoValue);
-				if (sigType == J9PORT_SIG_FLAG_SIGSEGV && infoType == J9PORT_SIG_VALUE_ADDRESS) {
-					if ( *(UDATA*)infoValue > 0xFFFF ) {
-						/* we know where the fault occurred, and it wasn't within the first page. This is an unexpected error */
+				case J9PORT_SIG_FLAG_SIGSEGV:
+					if (isDfSet(vmThread, sigInfo) == TRUE)
 						break;
+				case J9PORT_SIG_FLAG_SIGBUS:
+
+					infoType = j9sig_info(sigInfo, J9PORT_SIG_SIGNAL, J9PORT_SIG_SIGNAL_INACCESSIBLE_ADDRESS, &infoName, &infoValue);
+					if (sigType == J9PORT_SIG_FLAG_SIGSEGV && infoType == J9PORT_SIG_VALUE_ADDRESS) {
+						if ( *(UDATA*)infoValue > 0xFFFF ) {
+							/* we know where the fault occurred, and it wasn't within the first page. This is an unexpected error */
+							break;
+						}
 					}
+
+					stackMap = jitConfig->jitGetStackMapFromPC(vmThread, vmThread->javaVM, exceptionTable, (UDATA) (eip + 1));
+					if (stackMap ) {
+						registerMap = jitConfig->getJitRegisterMap(exceptionTable, stackMap);
+						*espPtr += (((registerMap >> 16) & 0xFF) * sizeof(UDATA));
+					}
+
+					vmThread->jitException = (J9Object *) ((UDATA) eip + 1);
+					*eipPtr = (UDATA)(void*)(sigType == J9PORT_SIG_FLAG_SIGSEGV ? jitHandleNullPointerExceptionTrap : jitHandleInternalErrorTrap);
+					((J9VMJITRegisterState*)vmThread->entryLocalStorage->jitGlobalStorageBase)->jit_ebp = (UDATA) *ebpPtr;
+					*ebpPtr = (UDATA) vmThread;
+
+					return J9PORT_SIG_EXCEPTION_CONTINUE_EXECUTION;
+
+				case J9PORT_SIG_FLAG_SIGILL:
+					/* unexpected SIGILL */
+					break;
+
 				}
-
-				stackMap = jitConfig->jitGetStackMapFromPC(vmThread, vmThread->javaVM, exceptionTable, (UDATA) (eip + 1));
-				if (stackMap ) {
-					registerMap = jitConfig->getJitRegisterMap(exceptionTable, stackMap);
-					*espPtr += (((registerMap >> 16) & 0xFF) * sizeof(UDATA));
-				}
-
-				vmThread->jitException = (J9Object *) ((UDATA) eip + 1);
-				*eipPtr = (UDATA)(void*)(sigType == J9PORT_SIG_FLAG_SIGSEGV ? jitHandleNullPointerExceptionTrap : jitHandleInternalErrorTrap);
-				((J9VMJITRegisterState*)vmThread->entryLocalStorage->jitGlobalStorageBase)->jit_ebp = (UDATA) *ebpPtr;
-				*ebpPtr = (UDATA) vmThread;
-
-				return J9PORT_SIG_EXCEPTION_CONTINUE_EXECUTION;
-
-			case J9PORT_SIG_FLAG_SIGILL:
-				/* unexpected SIGILL */
-				break;
-
 			}
-
 			/*
 			 * if we reached here, then this is an unexpected error. Build a resolve
 			 * frame so that the stack is walkable and allow normal fault handling
@@ -1699,7 +1706,7 @@ static I_64 jitAMD64decodeDiv(J9PortLibrary* portLib, U_8 *rip, void *sigInfo, U
 
 		/* calculate scale*index except when index = 0x4, and REX.X is not set
 		 * i.e., can't encode index = rSP
-		*/
+		 */
 		if ((index == 0x4) && !(IS_REXX(REX_PREFIX))) {
 			/* do nothing  */
 		} else {
@@ -1777,105 +1784,114 @@ UDATA jitAMD64Handler(J9VMThread* vmThread, U_32 sigType, void *sigInfo)
 		} else {
 			void * stackMap;
 			UDATA registerMap;
-			switch (sigType) {
-			case J9PORT_SIG_FLAG_SIGFPE_DIV_BY_ZERO:
-			case J9PORT_SIG_FLAG_SIGFPE_INT_DIV_BY_ZERO:
+			/*
+			 * When Control Flow Guard (CFG) is enabled in Windows, it can terminate the program unexpectedly
+			 * if the stack pointer is not within the system stack limit and no log files will be generated.
+			 * We should skip the attempt to throw an exception here so that the log files can be generated.
+			 */
+			BOOLEAN isCFGEnabled = J9_ARE_ANY_BITS_SET(vmThread->javaVM->sigFlags, J9_SIG_WINDOWS_MITIGATION_POLICY_CFG_ENABLED);
+
+			if (!isCFGEnabled) {
+				switch (sigType) {
+				case J9PORT_SIG_FLAG_SIGFPE_DIV_BY_ZERO:
+				case J9PORT_SIG_FLAG_SIGFPE_INT_DIV_BY_ZERO:
 #if !defined(LINUX)
-			case J9PORT_SIG_FLAG_SIGFPE_INT_OVERFLOW:
+				case J9PORT_SIG_FLAG_SIGFPE_INT_OVERFLOW:
 #endif
-				if (jitAMD64isDivInstruction(rip)) {
+					if (jitAMD64isDivInstruction(rip)) {
 
-					IDATA div;
-					UDATA ins_size, operand_size;
+						IDATA div;
+						UDATA ins_size, operand_size;
 
-	 				/* find divisor */
-					div = jitAMD64decodeDiv(PORTLIB, rip, sigInfo, &ins_size, &operand_size);
+						/* find divisor */
+						div = jitAMD64decodeDiv(PORTLIB, rip, sigInfo, &ins_size, &operand_size);
 
-					if (div != 0 ) {
+						if (div != 0 ) {
 
-						*ripPtr += ins_size;
-						switch (operand_size) {
-						case 64:
-							*raxPtr = 0x8000000000000000;
-							break;
-						case 32:
-							*raxPtr = 0x80000000;
-							 break;
-						case 16:
-							*raxPtr = 0x8000;
-							break;
-						case 8:
-							*raxPtr = 0x80;
-							break;
-						default:
-				   			/* error */
-							break;
+							*ripPtr += ins_size;
+							switch (operand_size) {
+							case 64:
+								*raxPtr = 0x8000000000000000;
+								break;
+							case 32:
+								*raxPtr = 0x80000000;
+								break;
+							case 16:
+								*raxPtr = 0x8000;
+								break;
+							case 8:
+								*raxPtr = 0x80;
+								break;
+							default:
+								/* error */
+								break;
+							}
+							*rdxPtr = 0;
+
+							return J9PORT_SIG_EXCEPTION_CONTINUE_EXECUTION;
 						}
-						*rdxPtr = 0;
-
-						return J9PORT_SIG_EXCEPTION_CONTINUE_EXECUTION;
 					}
-				}
 
-	 			/* Add 1 to make rip point inside the instruction
-	 			*   since we assume most pc values are after a call instruction
-	 			*   the first byte of an instruction might not be in the exception range
-	 			*   Note, adding the instruction length is also incorrect, since it is possible
-	 			*   that exactly one instruction was in the range
-				*/
-				vmThread->jitException = (J9Object *) (*ripPtr + 1);
+					/* Add 1 to make rip point inside the instruction
+					*   since we assume most pc values are after a call instruction
+					*   the first byte of an instruction might not be in the exception range
+					*   Note, adding the instruction length is also incorrect, since it is possible
+					*   that exactly one instruction was in the range
+					*/
+					vmThread->jitException = (J9Object *) (*ripPtr + 1);
 
-				*ripPtr = (U_64) ((void *) &jitHandleIntegerDivideByZeroTrap);
-				((J9VMJITRegisterState*)vmThread->entryLocalStorage->jitGlobalStorageBase)->jit_rbp = (UDATA) *rbpPtr;
-				*rbpPtr = (U_64) vmThread;
-				return J9PORT_SIG_EXCEPTION_CONTINUE_EXECUTION;
+					*ripPtr = (U_64) ((void *) &jitHandleIntegerDivideByZeroTrap);
+					((J9VMJITRegisterState*)vmThread->entryLocalStorage->jitGlobalStorageBase)->jit_rbp = (UDATA) *rbpPtr;
+					*rbpPtr = (U_64) vmThread;
+					return J9PORT_SIG_EXCEPTION_CONTINUE_EXECUTION;
 
 #ifdef LINUX
-			case J9PORT_SIG_FLAG_SIGFPE_INT_OVERFLOW:
+				case J9PORT_SIG_FLAG_SIGFPE_INT_OVERFLOW:
 
-				if (jitAMD64isDivInstruction(rip)) {
-					I_64 div;
-					UDATA ins_size, operand_size;
-					div = jitAMD64decodeDiv(PORTLIB, rip, sigInfo, &ins_size, &operand_size);
+					if (jitAMD64isDivInstruction(rip)) {
+						I_64 div;
+						UDATA ins_size, operand_size;
+						div = jitAMD64decodeDiv(PORTLIB, rip, sigInfo, &ins_size, &operand_size);
 
-					if ( div != 0) {
-						*ripPtr += ins_size;
-						switch (operand_size) {
-						case 64:
-							*raxPtr = 0x8000000000000000;
-							 break;
-						case 32:
-							*raxPtr = 0x80000000;
-							break;
-						case 16:
-							*raxPtr = 0x8000;
-							break;
-						case 8:
-							*raxPtr = 0x80;
-							break;
-						default:
-							/* error */
-							break;
+						if ( div != 0) {
+							*ripPtr += ins_size;
+							switch (operand_size) {
+							case 64:
+								*raxPtr = 0x8000000000000000;
+								break;
+							case 32:
+								*raxPtr = 0x80000000;
+								break;
+							case 16:
+								*raxPtr = 0x8000;
+								break;
+							case 8:
+								*raxPtr = 0x80;
+								break;
+							default:
+								/* error */
+								break;
+							}
+							*rdxPtr = 0;
+							return J9PORT_SIG_EXCEPTION_CONTINUE_EXECUTION;
 						}
-						*rdxPtr = 0;
-						return J9PORT_SIG_EXCEPTION_CONTINUE_EXECUTION;
 					}
-				}
-				break;
-#endif
-			case J9PORT_SIG_FLAG_SIGSEGV:
-				if (isDfSet(vmThread, sigInfo) == TRUE)
 					break;
-			case J9PORT_SIG_FLAG_SIGBUS:
+#endif
+				case J9PORT_SIG_FLAG_SIGSEGV:
+					if (isDfSet(vmThread, sigInfo) == TRUE)
+						break;
+				case J9PORT_SIG_FLAG_SIGBUS:
 
-				vmThread->jitException = (J9Object *) ((UDATA) rip + 1);
-				*ripPtr = (U_64)(void*)(sigType == J9PORT_SIG_FLAG_SIGSEGV ? jitHandleNullPointerExceptionTrap : jitHandleInternalErrorTrap);
-				((J9VMJITRegisterState*)vmThread->entryLocalStorage->jitGlobalStorageBase)->jit_rbp = (UDATA) *rbpPtr;
-				*rbpPtr = (U_64) vmThread;
-				return J9PORT_SIG_EXCEPTION_CONTINUE_EXECUTION;
+					vmThread->jitException = (J9Object *) ((UDATA) rip + 1);
+					*ripPtr = (U_64)(void*)(sigType == J9PORT_SIG_FLAG_SIGSEGV ? jitHandleNullPointerExceptionTrap : jitHandleInternalErrorTrap);
+					((J9VMJITRegisterState*)vmThread->entryLocalStorage->jitGlobalStorageBase)->jit_rbp = (UDATA) *rbpPtr;
+					*rbpPtr = (U_64) vmThread;
+					return J9PORT_SIG_EXCEPTION_CONTINUE_EXECUTION;
 
-			case J9PORT_SIG_FLAG_SIGILL:
-				break;
+				case J9PORT_SIG_FLAG_SIGILL:
+					break;
+				}
 			}
 
 			/*

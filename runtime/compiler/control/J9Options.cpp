@@ -3280,7 +3280,13 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
       vm->initializeHasResumableTrapHandler();
       }
 
-   // The trap handler currently is working (jitt fails) on Ottawa's IA32 Hardhat machine.
+   // If Control Flow Guard (CFG) is enabled in Windows, set TR_NoResumableTrapHandler.
+   if (J9_ARE_ANY_BITS_SET(javaVM->sigFlags, J9_SIG_WINDOWS_MITIGATION_POLICY_CFG_ENABLED))
+      {
+      self()->setOption(TR_NoResumableTrapHandler);
+      }
+
+   // The trap handler currently is working (jit fails) on Ottawa's IA32 Hardhat machine.
    // The platform isn't shipping so the priority of fixing the problem is currently low.
    //
    #if defined(HARDHAT) && defined(TR_TARGET_X86)
