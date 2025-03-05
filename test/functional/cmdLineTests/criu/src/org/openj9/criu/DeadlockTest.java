@@ -33,6 +33,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.concurrent.CountDownLatch;
 
 import openj9.internal.criu.InternalCRIUSupport;
 
@@ -50,6 +51,9 @@ public class DeadlockTest {
 		switch (test) {
 		case "CheckpointDeadlock":
 			checkpointDeadlock();
+			break;
+		case "notCheckpointSafeBySystemProp":
+			notCheckpointSafeBySystemProp();
 			break;
 		case "NotCheckpointSafeDeadlock":
 			notCheckpointSafeDeadlock();
@@ -150,6 +154,62 @@ public class DeadlockTest {
 			System.out.println("TEST FAILED");
 		}
 		System.exit(0);
+	}
+
+	public static void notCheckpointSafeBySystemProp() {
+		final TestResult testResult = new TestResult(true, 0);
+		Path path = Paths.get("cpData");
+		CountDownLatch startSignal = new CountDownLatch(1);
+		CountDownLatch doneSignal = new CountDownLatch(1);
+
+		Thread t1 = new Thread(() -> {
+			CRIUTestUtils.showThreadCurrentTime("notCheckpointSafeBySystemProp.t1 started");
+			startSignal.countDown();
+			try {
+				CRIUTestUtils.showThreadCurrentTime("notCheckpointSafeBySystemProp.t1 before await()");
+				doneSignal.await();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			CRIUTestUtils.showThreadCurrentTime("notCheckpointSafeBySystemProp.t1 ended");
+		});
+		t1.start();
+
+		CRIUSupport criuSupport = CRIUSupport.getCRIUSupport().setImageDir(path);
+
+		try {
+			startSignal.await();
+		} catch (InterruptedException e1) {
+			e1.printStackTrace();
+		}
+
+		try {
+			CRIUTestUtils.showThreadCurrentTime("notCheckpointSafeBySystemProp() pre-checkpoint");
+			CRIUTestUtils.checkPointJVM(criuSupport, path, true);
+			CRIUTestUtils.showThreadCurrentTime("notCheckpointSafeBySystemProp() post-restore");
+			testResult.testPassed = false;
+		} catch (JVMCheckpointException e) {
+			if (!e.getMessage()
+					.contains("The JVM attempted to checkpoint but was unable to due to code being executed")) {
+				CRIUTestUtils.showThreadCurrentTime("notCheckpointSafeBySystemProp() test failed");
+				testResult.testPassed = false;
+				e.printStackTrace();
+			}
+		}
+
+		doneSignal.countDown();
+
+		try {
+			t1.join();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+
+		if (testResult.testPassed) {
+			System.out.println("TEST PASSED");
+		} else {
+			System.out.println("TEST FAILED");
+		}
 	}
 
 	public static void notCheckpointSafeDeadlock() {
