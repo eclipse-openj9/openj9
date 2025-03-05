@@ -398,13 +398,9 @@ x86-64_mac:
     8: '--with-toolchain-type=clang'
   openjdk_reference_repo: '/Users/jenkins/openjdk_cache'
   node_labels:
-    build: 'ci.role.build && hw.arch.x86 && sw.os.mac.10_15'
+    build: 'ci.role.build && hw.arch.x86 && sw.os.mac && sw.tool.xcode.15_2'
   build_env:
     vars: 'OPENJ9_JAVA_OPTIONS=-Xdump:system+java:events=systhrow,filter=java/lang/ClassCastException,request=exclusive+prepwalk+preempt'
-  extra_test_labels:
-    23: '!sw.os.mac.10_15'
-    24: '!sw.os.mac.10_15'
-    next: '!sw.os.mac.10_15'
   fail_pattern: 'IOException caught during compilation: Resource deadlock avoided'
 #========================================#
 # Mac Aarch64
@@ -424,7 +420,7 @@ aarch64_mac:
     all: '--with-noncompressedrefs'
   openjdk_reference_repo: '/Users/jenkins/openjdk_cache'
   node_labels:
-    build: 'ci.role.build && hw.arch.aarch64 && sw.os.mac'
+    build: 'ci.role.build && hw.arch.aarch64 && sw.os.mac && sw.tool.xcode.15_2'
   fail_pattern: 'IOException caught during compilation: Resource deadlock avoided'
 #========================================#
 # Linux PPCLE 64bits /w OpenJDK JSR292
