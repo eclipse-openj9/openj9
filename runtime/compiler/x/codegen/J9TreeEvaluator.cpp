@@ -10387,10 +10387,10 @@ static TR::Register* inlineHasNegativesOrCountPositives(TR::Node* node, TR::Reco
    TR::LabelSymbol *endLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *loopLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *residualLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *residualLoopLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *threeOrMoreBytesLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *fiveOrMoreBytesLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *nineOrMoreBytesLabel = generateLabelSymbol(cg);
-   TR::LabelSymbol *residualTestLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *foundNegativeLabel = NULL;
    if (recognizedMethod == TR::java_lang_StringCoding_countPositives)
       {
@@ -10402,7 +10402,6 @@ static TR::Register* inlineHasNegativesOrCountPositives(TR::Node* node, TR::Reco
    endLabel->setEndInternalControlFlow();
 
 
-   // Beginning label
    generateLabelInstruction(TR::InstOpCode::label, node, begLabel, cg);
 
    // index = offset
@@ -10417,7 +10416,6 @@ static TR::Register* inlineHasNegativesOrCountPositives(TR::Node* node, TR::Reco
    generateRegRegInstruction(TR::InstOpCode::ADD4RegReg, node, loopLimitReg, offsetReg, cg);
 
 
-   // loopLabel
    generateLabelInstruction(TR::InstOpCode::label, node, loopLabel, cg);
 
    // if index >= loopLimit, jump to handling the residual bytes
@@ -10451,10 +10449,8 @@ static TR::Register* inlineHasNegativesOrCountPositives(TR::Node* node, TR::Reco
       generateLabelInstruction(TR::InstOpCode::JNE4, node, foundNegativeLabel, cg);
       }
 
-   // index += 16
+   // Increment index by 16 and jump back to the top of the loop
    generateRegImmInstruction(TR::InstOpCode::ADD4RegImm4, node, indexReg, 16, cg);
-
-   // Jump back to loopLabel
    generateLabelInstruction(TR::InstOpCode::JMP4, node, loopLabel, cg);
 
 
@@ -10462,10 +10458,14 @@ static TR::Register* inlineHasNegativesOrCountPositives(TR::Node* node, TR::Reco
    if (recognizedMethod == TR::java_lang_StringCoding_countPositives)
       {
       generateLabelInstruction(TR::InstOpCode::label, node, foundNegativeLabel, cg);
+
+      // Calculate the index of the first negative byte within the chunk
       generateRegRegInstruction(TR::InstOpCode::TZCNT4RegReg, node, maskReg, maskReg, cg);
+
+      // Add the index, which points to the beginning of the chunk,
+      // for the overall index of the first negative
       generateRegRegInstruction(TR::InstOpCode::ADD4RegReg, node, indexReg, maskReg, cg);
 
-      // Jump to returnHasNegativesLabel
       generateLabelInstruction(TR::InstOpCode::JMP4, node, returnHasNegativesLabel, cg);
       }
 
@@ -10473,154 +10473,51 @@ static TR::Register* inlineHasNegativesOrCountPositives(TR::Node* node, TR::Reco
    // Deal with the residual (last 15 or fewer) bytes
    generateLabelInstruction(TR::InstOpCode::label, node, residualLabel, cg);
 
-   // Calculate bytes remaining: loopLimit = -(loopLimit - limit)
-   generateRegRegInstruction(TR::InstOpCode::SUB4RegReg, node, loopLimitReg, limitReg, cg);
-   generateRegInstruction(TR::InstOpCode::NEG4Reg, node, loopLimitReg, cg);
-
-   /*
-    *    if loopLimit == 0
-    *       jmp returnNoNegativesLabel
-    *    if loopLimit > 8
-    *       jmp nineOrMoreBytesLabel -------+
-    *    if loopLimit > 2                   |
-    *       jmp threeOrMoreBytesLabel ----+ |
-    *                                     | |
-    *    load 1-2 bytes                   | |
-    *    jmp residualTestLabel            | |
-    *                                     | |
-    *    threeOrMoreBytesLabel: <---------+ |
-    *       if loopLimit > 4                |
-    *          jmp fiveOrMoreBytesLabel --+ |
-    *                                     | |
-    *       load 3-4 bytes                | |
-    *       jmp residualTestLabel         | |
-    *                                     | |
-    *    fiveOrMoreBytesLabel: <----------+ |
-    *       load 5-8 Bytes                  |
-    *       jmp residualTestLabel           |
-    *                                       |
-    *    nineOrMoreBytesLabel: <------------+
-    *       load 9-16 bytes
-    *
-    *    residualTestLabel:
-    *       AND chunkReg with maskReg
-    *       if != 0
-    *          jmp returnHasNegativesLabel
-    *
-    *    returnNoNegativesLabel:
-    *       set result register to false (if hasNegatives) or length (if countPositives)
-    *       jmp endLabel
-    *
-    *    returnHasNegativesLabel:
-    *       set result register to true (if hasNegatives) or index - offset (if countPositives)
-    */
-
-   // if loopLimit = 0, jump to returnNoNegativesLabel
-   generateRegRegInstruction(TR::InstOpCode::TEST4RegReg, node, loopLimitReg, loopLimitReg, cg);
-   generateLabelInstruction(TR::InstOpCode::JE4, node, returnNoNegativesLabel, cg);
-
-   // Prepare an 8 byte sign bit mask
-   generateRegImm64Instruction(TR::InstOpCode::MOV8RegImm64, node, maskReg, 0x8080808080808080, cg);
-
-   // if loopLimit > 8, jump to nineOrMoreBytesLabel
-   generateRegImmInstruction(TR::InstOpCode::CMP4RegImm4, node, loopLimitReg, 8, cg);
-   generateLabelInstruction(TR::InstOpCode::JG4, node, nineOrMoreBytesLabel, cg);
-
-   // Zero out the chunk register
-   generateRegRegInstruction(TR::InstOpCode::XOR8RegReg, node, chunkReg, chunkReg, cg);
-
-   // if loopLimit > 2, jump to threeOrMoreBytesLabel
-   generateRegImmInstruction(TR::InstOpCode::CMP4RegImm4, node, loopLimitReg, 2, cg);
-   generateLabelInstruction(TR::InstOpCode::JG4, node, threeOrMoreBytesLabel, cg);
+   // Zero out chunk register
+   generateRegRegInstruction(TR::InstOpCode::XOR1RegReg, node, chunkReg, chunkReg, cg);
 
 
-   // Case in which there are one or two residual bytes
+   generateLabelInstruction(TR::InstOpCode::label, node, residualLoopLabel, cg);
+
+   // If index >= limit, we have not found any negative bytes, so jump to returnNoNegativesLabel
+   generateRegRegInstruction(TR::InstOpCode::CMP4RegReg, node, indexReg, limitReg, cg);
+   generateLabelInstruction(TR::InstOpCode::JGE4, node, returnNoNegativesLabel, cg);
+
    // Load the byte at address [buf + index] into the chunk register
    generateRegMemInstruction(TR::InstOpCode::L1RegMem, node, chunkReg, generateX86MemoryReference(bufReg, indexReg, 0, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cg);
 
-   // OR the second byte (which is the same byte again in the 1 byte case)
-   generateRegMemInstruction(TR::InstOpCode::OR1RegMem, node, chunkReg, generateX86MemoryReference(bufReg, limitReg, 0, TR::Compiler->om.contiguousArrayHeaderSizeInBytes() - 1, cg), cg);
+   // Check if the byte is negative, and jump to returnHasNegativesLabel if it is
+   generateRegImmInstruction(TR::InstOpCode::CMP1RegImm1, node, chunkReg, 0, cg);
+   generateLabelInstruction(TR::InstOpCode::JL4, node, returnHasNegativesLabel, cg);
 
-   // Jump to residualTestLabel
-   generateLabelInstruction(TR::InstOpCode::JMP4, node, residualTestLabel, cg);
-
-
-   // Case in which there are three or more residual bytes
-   generateLabelInstruction(TR::InstOpCode::label, node, threeOrMoreBytesLabel, cg);
-
-   // if loopLimit > 4, jump to fiveOrMoreBytesLabel
-   generateRegImmInstruction(TR::InstOpCode::CMP4RegImm4, node, loopLimitReg, 4, cg);
-   generateLabelInstruction(TR::InstOpCode::JG4, node, fiveOrMoreBytesLabel, cg);
-
-   // Load the first two bytes at address [buf + index] into the chunk register
-   generateRegMemInstruction(TR::InstOpCode::L2RegMem, node, chunkReg, generateX86MemoryReference(bufReg, indexReg, 0, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cg);
-
-   // OR the second two bytes at address [buf + (limit - 2)] into the chunk register
-   generateRegMemInstruction(TR::InstOpCode::OR2RegMem, node, chunkReg, generateX86MemoryReference(bufReg, limitReg, 0, TR::Compiler->om.contiguousArrayHeaderSizeInBytes() - 2, cg), cg);
-
-   // Jump to residualTestLabel
-   generateLabelInstruction(TR::InstOpCode::JMP4, node, residualTestLabel, cg);
+   // Otherwise, increment index and jump back to the start of the loop
+   generateRegInstruction(TR::InstOpCode::INC4Reg, node, indexReg, cg);
+   generateLabelInstruction(TR::InstOpCode::JMP4, node, residualLoopLabel, cg);
 
 
-   // Case in which there are five or more residual bytes
-   generateLabelInstruction(TR::InstOpCode::label, node, fiveOrMoreBytesLabel, cg);
-
-   // Load the first four bytes at address [buf + index] into the chunk register
-   generateRegMemInstruction(TR::InstOpCode::L4RegMem, node, chunkReg, generateX86MemoryReference(bufReg, indexReg, 0, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cg);
-
-   // OR the second four bytes at address [buf + (limit - 4)] into the chunk register
-   generateRegMemInstruction(TR::InstOpCode::OR4RegMem, node, chunkReg, generateX86MemoryReference(bufReg, limitReg, 0, TR::Compiler->om.contiguousArrayHeaderSizeInBytes() - 4, cg), cg);
-
-   // Jump to residualTestLabel
-   generateLabelInstruction(TR::InstOpCode::JMP4, node, residualTestLabel, cg);
-
-
-   // Case in which there are nine or more residual bytes
-   generateLabelInstruction(TR::InstOpCode::label, node, nineOrMoreBytesLabel, cg);
-
-   // Load the first eight bytes at address [buf + index] into the chunk register
-   generateRegMemInstruction(TR::InstOpCode::L8RegMem, node, chunkReg, generateX86MemoryReference(bufReg, indexReg, 0, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cg);
-
-   // OR the second eight bytes at address [buf + (limit - 8)] into the chunk register
-   generateRegMemInstruction(TR::InstOpCode::OR8RegMem, node, chunkReg, generateX86MemoryReference(bufReg, limitReg, 0, TR::Compiler->om.contiguousArrayHeaderSizeInBytes() - 8, cg), cg);
-
-
-   // Examine the chunk register now that all of the residual bytes have been ORed into it
-   generateLabelInstruction(TR::InstOpCode::label, node, residualTestLabel, cg);
-
-   // AND the residual bytes with the new mask
-   generateRegRegInstruction(TR::InstOpCode::TEST8RegReg, node, chunkReg, maskReg, cg);
-
-   // If the result is nonzero (i.e. at least one of the sign bits is set), jump to returnHasNegativesLabel
-   generateLabelInstruction(TR::InstOpCode::JNE4, node, returnHasNegativesLabel, cg);
-
-
-   // returnNoNegatives label
    generateLabelInstruction(TR::InstOpCode::label, node, returnNoNegativesLabel, cg);
 
-   // Set result
+   // Set result in the case that no negatives were found
    if (recognizedMethod == TR::java_lang_StringCoding_hasNegatives)
       {
-      // Return false
+      // result = false
       generateRegRegInstruction(TR::InstOpCode::XOR4RegReg, node, indexReg, indexReg, cg);
       }
    else
       {
-      // Return length
+      // result = length
       generateRegRegInstruction(TR::InstOpCode::MOV4RegReg, node, indexReg, lengthReg, cg);
       }
 
-   // Jump to end
    generateLabelInstruction(TR::InstOpCode::JMP4, node, endLabel, cg);
 
 
-   // returnHasNegatives label
    generateLabelInstruction(TR::InstOpCode::label, node, returnHasNegativesLabel, cg);
 
-   // Set result
+   // Set result in the case that at least one negative was found
    if (recognizedMethod == TR::java_lang_StringCoding_hasNegatives)
       {
-      // result = 1
+      // result = true
       generateRegImmInstruction(TR::InstOpCode::MOV4RegImm4, node, indexReg, 1, cg);
       }
    else
@@ -10630,7 +10527,6 @@ static TR::Register* inlineHasNegativesOrCountPositives(TR::Node* node, TR::Reco
       }
 
 
-   // end label
    generateLabelInstruction(TR::InstOpCode::label, node, endLabel, cg);
 
    cg->stopUsingRegister(loopLimitReg);
