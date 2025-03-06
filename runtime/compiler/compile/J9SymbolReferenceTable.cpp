@@ -1319,6 +1319,12 @@ J9::SymbolReferenceTable::findOrCreateIncompatibleReceiverSymbolRef(TR::Resolved
    }
 
 TR::SymbolReference *
+J9::SymbolReferenceTable::findOrCreateIdentityExceptionSymbolRef(TR::ResolvedMethodSymbol *)
+   {
+   return findOrCreateRuntimeHelper(TR_identityException, false, true, true);
+   }
+
+TR::SymbolReference *
 J9::SymbolReferenceTable::findOrCreateIncompatibleClassChangeErrorSymbolRef(TR::ResolvedMethodSymbol *)
    {
    return findOrCreateRuntimeHelper(TR_IncompatibleClassChangeError, false, true, true);
@@ -2709,6 +2715,19 @@ J9::SymbolReferenceTable::findOrCreateStoreFlattenableArrayElementNonHelperSymbo
 
    symRef = self()->findOrCreateCodeGenInlinedHelper(storeFlattenableArrayElementNonHelperSymbol);
    symRef->setCanGCandExcept();
+   return symRef;
+   }
+
+TR::SymbolReference *
+J9::SymbolReferenceTable::findOrCreateIsIdentityObjectNonHelperSymbolRef()
+   {
+   TR::SymbolReference *symRef = element(isIdentityObjectNonHelperSymbol);
+   if (symRef != NULL)
+      {
+      return symRef;
+      }
+
+   symRef = self()->findOrCreateCodeGenInlinedHelper(isIdentityObjectNonHelperSymbol);
    return symRef;
    }
 
