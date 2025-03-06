@@ -102,6 +102,11 @@ MM_ConfigurationIncrementalGenerational::createHeapWithManager(MM_EnvironmentBas
 	/* set off-heap disabled as default for balanced GC */
 	extensions->isVirtualLargeObjectHeapEnabled = false;
 
+	if (extensions->virtualLargeObjectHeap._wasSpecified) {
+		extensions->isVirtualLargeObjectHeapEnabled = extensions->virtualLargeObjectHeap._valueSpecified;
+	}
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
+
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 	/* Enable double mapping if glibc version 2.27 or newer is found. For double map to
 	 * work we need a file descriptor, to get one we use shm_open(3)  or memfd_create(2);
