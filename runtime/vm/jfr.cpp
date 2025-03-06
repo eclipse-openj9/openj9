@@ -704,10 +704,12 @@ jfrVMThreadParked(J9HookInterface **hook, UDATA eventNum, void *eventData, void*
 	J9JFRThreadParked *jfrEvent = (J9JFRThreadParked*)reserveBufferWithStackTrace(currentThread, currentThread, J9JFR_EVENT_TYPE_THREAD_PARK, sizeof(*jfrEvent));
 	if (NULL != jfrEvent) {
 		// TODO: worry about overflow?
-		jfrEvent->time = (event->millis * 1000000) + event->nanos;
-		jfrEvent->duration = j9time_nano_time() - event->startTicks;
-		jfrEvent->parkedAddress = event->parkedAddress;
+		I_64 currentTime = j9time_nano_time();
+		jfrEvent->duration = currentTime - event->startTicks;
 		jfrEvent->parkedClass = event->parkedClass;
+		jfrEvent->timeOut = (event->millis * 1000000) + event->nanos;
+		jfrEvent->untilTime = currentTime;
+		jfrEvent->parkedAddress = event->parkedAddress;
 	}
 }
 
