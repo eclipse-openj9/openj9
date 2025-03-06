@@ -6103,7 +6103,8 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
 #if defined(J9VM_OPT_CRIU_SUPPORT)
         || getCRRuntime()->shouldSuspendThreadsForCheckpoint()
 #endif
-        || getPersistentInfo()->getDisableFurtherCompilation())
+        || getPersistentInfo()->getDisableFurtherCompilation()
+        || (_jitConfig->runtimeFlags & (J9JIT_CODE_CACHE_FULL | J9JIT_DATA_CACHE_FULL)))
        && !details.isJitDumpMethod())
       {
       bool shouldReturn = true;
@@ -8532,12 +8533,9 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
          }
       else if (jitConfig->runtimeFlags & (J9JIT_CODE_CACHE_FULL | J9JIT_DATA_CACHE_FULL))
          {
-         // Optimization to disable future first time compilations from reaching the queue
-         that->getCompilationInfo()->getPersistentInfo()->setDisableFurtherCompilation(true);
-
          if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompileEnd, TR_VerboseCompFailure, TR_VerbosePerformance))
             {
-            TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,"t=%6u <WARNING: JIT CACHES FULL> Disable further compilation",
+            TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,"t=%6u <WARNING: JIT CACHES FULL>",
                (uint32_t)that->getCompilationInfo()->getPersistentInfo()->getElapsedTime());
             }
          if (jitConfig->runtimeFlags & J9JIT_CODE_CACHE_FULL)

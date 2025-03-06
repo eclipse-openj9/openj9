@@ -103,6 +103,10 @@ UDATA initializeVMThreading(J9JavaVM *vm)
 		omrthread_monitor_init_with_name(&vm->closeScopeMutex, 0, "ScopedMemoryAccess closeScope0 mutex") ||
 #endif /* JAVA_SPEC_VERSION >= 22 */
 
+#if JAVA_SPEC_VERSION >= 24
+		omrthread_monitor_init_with_name(&vm->blockedVirtualThreadsMutex, 0, "Blocked VirtualThreads mutex") ||
+#endif /* JAVA_SPEC_VERSION >= 24 */
+
 		initializeMonitorTable(vm)
 	)
 	{

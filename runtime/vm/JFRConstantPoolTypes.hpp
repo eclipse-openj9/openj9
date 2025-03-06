@@ -204,6 +204,17 @@ struct MonitorWaitEntry {
 	BOOLEAN timedOut;
 };
 
+struct MonitorEnterEntry {
+	I_64 ticks;
+	I_64 duration;
+	I_64 monitorAddress;
+	U_32 monitorClass;
+	U_32 previousOwnerThread;
+	U_32 threadIndex;
+	U_32 eventThreadIndex;
+	U_32 stackTraceIndex;
+};
+
 struct ThreadParkEntry {
 	I_64 ticks;
 	I_64 duration;
@@ -336,6 +347,8 @@ private:
 	UDATA _threadSleepCount;
 	J9Pool *_monitorWaitTable;
 	UDATA _monitorWaitCount;
+	J9Pool *_monitorEnterTable;
+	UDATA _monitorEnterCount;
 	J9Pool *_threadParkTable;
 	UDATA _threadParkCount;
 	J9Pool *_cpuLoadTable;
@@ -611,6 +624,8 @@ public:
 
 	void addMonitorWaitEntry(J9JFRMonitorWaited* threadWaitData);
 
+	void addMonitorEnterEntry(J9JFRMonitorEntered *monitorEnterData);
+
 	void addThreadParkEntry(J9JFRThreadParked* threadParkData);
 
 	void addCPULoadEntry(J9JFRCPULoad *cpuLoadData);
@@ -646,6 +661,11 @@ public:
 	J9Pool *getMonitorWaitTable()
 	{
 		return _monitorWaitTable;
+	}
+
+	J9Pool *getMonitorEnterTable()
+	{
+		return _monitorEnterTable;
 	}
 
 	J9Pool *getThreadParkTable()
@@ -701,6 +721,11 @@ public:
 	UDATA getMonitorWaitCount()
 	{
 		return _monitorWaitCount;
+	}
+
+	UDATA getMonitorEnterCount()
+	{
+		return _monitorEnterCount;
 	}
 
 	UDATA getThreadParkCount()
@@ -875,6 +900,9 @@ public:
 				break;
 			case J9JFR_EVENT_TYPE_OBJECT_WAIT:
 				addMonitorWaitEntry((J9JFRMonitorWaited*) event);
+				break;
+			case J9JFR_EVENT_TYPE_MONITOR_ENTER:
+				addMonitorEnterEntry((J9JFRMonitorEntered *) event);
 				break;
 			case J9JFR_EVENT_TYPE_THREAD_PARK:
 				addThreadParkEntry((J9JFRThreadParked*) event);
@@ -1216,6 +1244,8 @@ done:
 		, _threadSleepCount(0)
 		, _monitorWaitTable(NULL)
 		, _monitorWaitCount(0)
+		, _monitorEnterTable(NULL)
+		, _monitorEnterCount(0)
 		, _threadParkTable(NULL)
 		, _threadParkCount(0)
 		, _cpuLoadTable(NULL)
@@ -1326,6 +1356,12 @@ done:
 
 		_monitorWaitTable = pool_new(sizeof(MonitorWaitEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
 		if (NULL == _monitorWaitTable) {
+			_buildResult = OutOfMemory;
+			goto done;
+		}
+
+		_monitorEnterTable = pool_new(sizeof(MonitorEnterEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		if (NULL == _monitorEnterTable) {
 			_buildResult = OutOfMemory;
 			goto done;
 		}
@@ -1452,6 +1488,7 @@ done:
 		pool_kill(_threadEndTable);
 		pool_kill(_threadSleepTable);
 		pool_kill(_monitorWaitTable);
+		pool_kill(_monitorEnterTable);
 		pool_kill(_threadParkTable);
 		pool_kill(_cpuLoadTable);
 		pool_kill(_threadCPULoadTable);

@@ -163,7 +163,9 @@ public final class System {
 	/*[IF JAVA_SPEC_VERSION >= 11]*/
 	private static boolean hasSetErrEncoding;
 	private static boolean hasSetOutEncoding;
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	private static String consoleDefaultEncoding;
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	/* The consoleDefaultCharset is different from the default console encoding when the encoding
 	 * doesn't exist, or isn't available at startup. Some character sets are not available in the
 	 * java.base module, there are more in the jdk.charsets module, and so are not used at startup.
@@ -228,7 +230,9 @@ public final class System {
 	 * if different from the default console Charset.
 	 *
 	 * consoleDefaultCharset must be initialized before calling.
+	/*[IF JAVA_SPEC_VERSION < 24]
 	 * consoleDefaultEncoding must be initialized before calling with fallback set to true.
+	/*[ENDIF] JAVA_SPEC_VERSION < 24
 	 */
 	static Charset getCharset(boolean isStdout, boolean fallback) {
 		/*[IF JAVA_SPEC_VERSION >= 19]*/
@@ -248,6 +252,7 @@ public final class System {
 				// ignore unsupported or invalid encodings
 			}
 		}
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		if (fallback && (consoleDefaultEncoding != null)) {
 			try {
 				Charset newCharset = Charset.forName(consoleDefaultEncoding);
@@ -260,6 +265,7 @@ public final class System {
 				// ignore unsupported or invalid encodings
 			}
 		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		return null;
 	}
 
@@ -419,8 +425,12 @@ public final class System {
 		Properties props = internalGetProperties();
 		/*[IF JAVA_SPEC_VERSION >= 11]*/
 		/*[IF JAVA_SPEC_VERSION >= 18]*/
+		/*[IF JAVA_SPEC_VERSION >= 24]*/
+		consoleDefaultCharset = sun.nio.cs.UTF_8.INSTANCE;
+		/*[ELSE] JAVA_SPEC_VERSION >= 24 */
 		consoleDefaultEncoding = props.getProperty("native.encoding"); //$NON-NLS-1$
 		consoleDefaultCharset = Charset.forName(consoleDefaultEncoding, sun.nio.cs.UTF_8.INSTANCE);
+		/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 		/*[ELSE] JAVA_SPEC_VERSION >= 18 */
 		String fileEncodingProp = props.getProperty("file.encoding"); //$NON-NLS-1$
 		// Do not call Charset.defaultEncoding() since this would initialize the default encoding

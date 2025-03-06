@@ -322,7 +322,7 @@ public:
 #endif
    virtual void createPersistentCopy(TR_J9SharedCache *sharedCache, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info);
    virtual void loadFromPersistentCopy(TR_IPBCDataStorageHeader *storage, TR::Compilation *comp);
-   int16_t getSumBranchCount();
+   int32_t getSumBranchCount();
    virtual void copyFromEntry(TR_IPBytecodeHashTableEntry * originalEntry, TR::Compilation *comp);
 private:
    uint32_t data;

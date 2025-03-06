@@ -2683,11 +2683,11 @@ TR_IPBCDataFourBytes::copyFromEntry(TR_IPBytecodeHashTableEntry* originalEntry, 
    data = entry->data;
    }
 
-int16_t
+int32_t
 TR_IPBCDataFourBytes::getSumBranchCount()
    {
-   uint16_t fallThroughCount = (uint16_t)(data & 0x0000FFFF) | 0x1;
-   uint16_t branchToCount = (uint16_t)((data & 0xFFFF0000)>>16) | 0x1;
+   int32_t fallThroughCount = (int32_t)(data & 0x0000FFFF) | 0x1;
+   int32_t branchToCount = (int32_t)((data & 0xFFFF0000)>>16) | 0x1;
    return (fallThroughCount + branchToCount);
    }
 
