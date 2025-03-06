@@ -261,8 +261,7 @@ enterContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 
 	if (started) {
 #if JAVA_SPEC_VERSION >= 24
-		if (J9_ARE_ANY_BITS_SET(currentThread->javaVM->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)
-		&& (J9VM_CONTINUATION_RETURN_FROM_YIELD != continuation->returnState)) {
+		if (J9_ARE_ANY_BITS_SET(currentThread->javaVM->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)) {
 			preparePinnedVirtualThreadForMount(currentThread, continuationObject, (J9VM_CONTINUATION_RETURN_FROM_OBJECT_WAIT == continuation->returnState));
 		}
 		VM_OutOfLineINL_Helpers::restoreInternalNativeStackFrame(currentThread);
@@ -448,13 +447,17 @@ isPinnedContinuation(J9VMThread *currentThread)
 
 	if (currentThread->continuationPinCount > 0) {
 		result = J9VM_CONTINUATION_PINNED_REASON_CRITICAL_SECTION;
-	} else if (currentThread->ownedMonitorCount > 0) {
-		result = J9VM_CONTINUATION_PINNED_REASON_MONITOR;
 	} else if (currentThread->callOutCount > 0) {
 		/* TODO: This check should be changed from > 1 to > 0 once the call-ins are no
 		 * longer used and the new design for single cInterpreter is implemented.
 		 */
 		result = J9VM_CONTINUATION_PINNED_REASON_NATIVE;
+	} else if ((currentThread->ownedMonitorCount > 0)
+#if JAVA_SPEC_VERSION >= 24
+	&& J9_ARE_NO_BITS_SET(currentThread->javaVM->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)
+#endif /* JAVA_SPEC_VERSION >= 24 */
+	) {
+		result = J9VM_CONTINUATION_PINNED_REASON_MONITOR;
 	} else {
 		/* Do nothing. */
 	}
@@ -800,7 +803,9 @@ preparePinnedVirtualThreadForMount(J9VMThread *currentThread, j9object_t continu
 
 	/* Add the attached monitor to the carrier thread's lockedmonitorcount. */
 	currentThread->osThread->lockedmonitorcount += monitorCount;
-	exitVThreadTransitionCritical(currentThread, (jobject)&currentThread->threadObject);
+	if (J9VM_CONTINUATION_RETURN_FROM_YIELD != currentThread->currentContinuation->returnState) {
+		exitVThreadTransitionCritical(currentThread, (jobject)&currentThread->threadObject);
+	}
 }
 
 UDATA
@@ -812,7 +817,9 @@ preparePinnedVirtualThreadForUnmount(J9VMThread *currentThread, j9object_t syncO
 	j9object_t continuationObj = NULL;
 	UDATA monitorCount = 0;
 
-	enterVThreadTransitionCritical(currentThread, (jobject)&currentThread->threadObject);
+	if (NULL != syncObj) {
+		enterVThreadTransitionCritical(currentThread, (jobject)&currentThread->threadObject);
+	}
 	if (currentThread->ownedMonitorCount > 0) {
 		/* Inflate all owned monitors. */
 		J9MonitorEnterRecord *monitorRecords = currentThread->monitorEnterRecords;
@@ -879,60 +886,63 @@ preparePinnedVirtualThreadForUnmount(J9VMThread *currentThread, j9object_t syncO
 		}
 	}
 
-	if (!LN_HAS_LOCKWORD(currentThread, syncObj)) {
-		syncObjectMonitor = monitorTablePeek(currentThread->javaVM, syncObj);
-		if (NULL != syncObjectMonitor) {
-			lock = J9_LOAD_LOCKWORD(currentThread, &syncObjectMonitor->alternateLockword);
+	if (NULL != syncObj) {
+		if (!LN_HAS_LOCKWORD(currentThread, syncObj)) {
+			syncObjectMonitor = monitorTablePeek(currentThread->javaVM, syncObj);
+			if (NULL != syncObjectMonitor) {
+				lock = J9_LOAD_LOCKWORD(currentThread, &syncObjectMonitor->alternateLockword);
+			} else {
+				lock = 0;
+			}
 		} else {
-			lock = 0;
+			lock = J9OBJECT_MONITOR(currentThread, syncObj);
 		}
-	} else {
-		lock = J9OBJECT_MONITOR(currentThread, syncObj);
-	}
 
-	if (!J9_LOCK_IS_INFLATED(lock)) {
-		syncObjectMonitor = objectMonitorInflate(currentThread, syncObj, lock);
-		if (NULL == syncObjectMonitor) {
-			result = J9_OBJECT_MONITOR_OOM;
-			goto done;
+		if (!J9_LOCK_IS_INFLATED(lock)) {
+			syncObjectMonitor = objectMonitorInflate(currentThread, syncObj, lock);
+			if (NULL == syncObjectMonitor) {
+				result = J9_OBJECT_MONITOR_OOM;
+				goto done;
+			}
+		} else {
+			syncObjectMonitor = J9_INFLLOCK_OBJECT_MONITOR(lock);
 		}
-	} else {
-		syncObjectMonitor = J9_INFLLOCK_OBJECT_MONITOR(lock);
-	}
 
-	continuationObj = J9VMJAVALANGVIRTUALTHREAD_CONT(currentThread, currentThread->threadObject);
-	J9VMJDKINTERNALVMCONTINUATION_SET_BLOCKER(currentThread, continuationObj, syncObj);
+		continuationObj = J9VMJAVALANGVIRTUALTHREAD_CONT(currentThread, currentThread->threadObject);
+		J9VMJDKINTERNALVMCONTINUATION_SET_BLOCKER(currentThread, continuationObj, syncObj);
 
-	if (isObjectWait) {
-		J9VMContinuation *continuation = currentThread->currentContinuation;
-		omrthread_monitor_t monitor = syncObjectMonitor->monitor;
+		if (isObjectWait) {
+			J9VMContinuation *continuation = currentThread->currentContinuation;
+			omrthread_monitor_t monitor = syncObjectMonitor->monitor;
 
-		/* Record wait monitor state. */
-		continuation->waitingMonitorEnterCount = monitor->count;
+			/* Record wait monitor state. */
+			continuation->waitingMonitorEnterCount = monitor->count;
 
-		/* Reset monitor entry count to 1. */
-		monitor->count = 1;
-		/* Reset monitor state to pre-detach state so omrthread_monitor_exit behave correctly. */
-		monitor->owner = currentThread->osThread;
-		syncObjectMonitor->ownerContinuation = NULL;
+			/* Reset monitor entry count to 1.*/
+			monitor->count = 1;
+			/* Reset monitor state to pre-detach state so omrthread_monitor_exit behave correctly. */
+			monitor->owner = currentThread->osThread;
+			syncObjectMonitor->ownerContinuation = NULL;
 
-		/* Add Continuation struct to the monitor's waiting list. */
-		omrthread_monitor_exit(monitor);
-		omrthread_monitor_enter(currentThread->javaVM->blockedVirtualThreadsMutex);
-		currentThread->currentContinuation->nextWaitingContinuation = syncObjectMonitor->waitingContinuations;
-		syncObjectMonitor->waitingContinuations = currentThread->currentContinuation;
-		omrthread_monitor_exit(currentThread->javaVM->blockedVirtualThreadsMutex);
-	} else {
-		syncObjectMonitor->virtualThreadWaitCount += 1;
+			/* Add Continuation struct to the monitor's waiting list. */
+			omrthread_monitor_exit(monitor);
+			omrthread_monitor_enter(currentThread->javaVM->blockedVirtualThreadsMutex);
+			currentThread->currentContinuation->nextWaitingContinuation = syncObjectMonitor->waitingContinuations;
+			syncObjectMonitor->waitingContinuations = currentThread->currentContinuation;
+			omrthread_monitor_exit(currentThread->javaVM->blockedVirtualThreadsMutex);
+		} else {
+			syncObjectMonitor->virtualThreadWaitCount += 1;
+		}
+
+		/* Clear the blocking object on the carrier thread. */
+		J9VMTHREAD_SET_BLOCKINGENTEROBJECT(currentThread, currentThread, NULL);
 	}
 
 	/* Subtract the detached monitor from the carrier thread's lockedmonitorcount. */
 	currentThread->osThread->lockedmonitorcount -= monitorCount;
 
-	/* Clear the blocking object on the carrier thread. */
-	J9VMTHREAD_SET_BLOCKINGENTEROBJECT(currentThread, currentThread, NULL);
 done:
-	if (J9_OBJECT_MONITOR_YIELD_VIRTUAL != result) {
+	if ((NULL != syncObj) && (J9_OBJECT_MONITOR_YIELD_VIRTUAL != result)) {
 		exitVThreadTransitionCritical(currentThread, (jobject)&currentThread->threadObject);
 	}
 	return result;
