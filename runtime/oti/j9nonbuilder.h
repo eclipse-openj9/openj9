@@ -430,7 +430,6 @@ typedef struct J9JFRMonitorWaited {
 
 typedef struct J9JFRThreadParked {
 	J9JFR_EVENT_WITH_STACKTRACE_FIELDS
-	I_64 time;
 	I_64 duration;
 	struct J9VMThread *thread;
 	struct J9Class *parkedClass;
