@@ -5770,7 +5770,14 @@ ffi_OOM:
 
 		buildInternalNativeStackFrame(REGISTER_ARGS);
 		updateVMStruct(REGISTER_ARGS);
-
+#if JAVA_SPEC_VERSION >= 24
+		if (J9_ARE_ANY_BITS_SET(_vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)
+		&& (_currentThread->ownedMonitorCount > 0)
+		&& !isFinished
+		) {
+			preparePinnedVirtualThreadForUnmount(_currentThread, NULL, false);
+		}
+#endif /* JAVA_SPEC_VERSION >= 24 */
 		/* Store the current Continuation state and swap to the carrier thread stack. */
 		yieldContinuation(_currentThread, isFinished, J9VM_CONTINUATION_RETURN_FROM_YIELD);
 
