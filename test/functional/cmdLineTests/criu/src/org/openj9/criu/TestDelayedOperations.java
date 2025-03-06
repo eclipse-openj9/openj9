@@ -38,7 +38,7 @@ public class TestDelayedOperations {
 			Path imagePath = Paths.get("cpData");
 			CRIUTestUtils.deleteCheckpointDirectory(imagePath);
 			CRIUTestUtils.createCheckpointDirectory(imagePath);
-			CRIUSupport criu = new CRIUSupport(imagePath);
+			CRIUSupport criu = CRIUSupport.getCRIUSupport().setImageDir(imagePath);
 			final Thread currentThread = Thread.currentThread();
 			CRIUTestUtils.showThreadCurrentTime(
 					"currentThread : " + currentThread + " with name : " + currentThread.getName());
