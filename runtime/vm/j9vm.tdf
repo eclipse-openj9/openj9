@@ -1017,5 +1017,3 @@ TraceEntry=Trc_VM_getTypeIdUTF8_Entry Overhead=1 Level=5 Template="getTypeIdUTF8
 TraceExit=Trc_VM_getTypeIdUTF8_Exit Overhead=1 Level=5 Template="getTypeIdUTF8 className %.*s clazz=%p result=%lli"
 TraceEntry=Trc_VM_getTypeId_Entry Overhead=1 Level=5 Template="getTypeId clazz=%p"
 TraceExit=Trc_VM_getTypeId_Exit Overhead=1 Level=5 Template="getTypeId clazz=%p result=%lli"
-
-TraceEvent=Trc_systemPropertyIterator Overhead=1 Level=10 Template="systemPropertyIterator: added VM system property '%s'='%s'"

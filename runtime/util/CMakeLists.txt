@@ -116,12 +116,6 @@ elseif(OMR_OS_ZOS)
 	target_sources(j9util PRIVATE zos/freessp.c)
 endif()
 
-if(OMR_OS_WINDOWS)
-	target_sources(j9util PRIVATE win32/filehelp.c)
-else()
-	target_sources(j9util PRIVATE unix/filehelp.c)
-endif()
-
 if(OMR_ARCH_X86)
 	target_sources(j9util
 		PRIVATE

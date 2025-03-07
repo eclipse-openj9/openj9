@@ -467,7 +467,7 @@ TraceEvent=Trc_Java_com_ibm_lang_management_OperatingSystemMXBeanImpl_getProcess
 TraceExit=Trc_Java_com_ibm_lang_management_OperatingSystemMXBeanImpl_getProcessPrivateMemorySizeImpl_Exit Overhead=1 Level=3 Template="getProcessPrivateMemorySizeImpl Exit"
 
 TraceEvent=Trc_JCL_java_lang_J9VMInternals_mtTrace Overhead=1 Level=1 Template="J9VMInternals.mtTraceImpl: tenant = %s, message = %s"
-TraceEvent=Trc_JCL_systemPropertyIterator Obsolete Overhead=1 Level=10 Template="systemPropertyIterator: added VM system property '%s'='%s'"
+TraceEvent=Trc_JCL_systemPropertyIterator Overhead=1 Level=10 Template="systemPropertyIterator: added VM system property '%s'='%s'"
 
 TraceEvent=Trc_JCL_mtTrace Overhead=1 Level=1 Template="MT-trace: tenant = %s, message = %s"
 
