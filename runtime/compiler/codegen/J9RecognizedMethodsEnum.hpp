@@ -345,6 +345,8 @@
    java_util_HashMap_getNode,
    java_util_HashMap_getNode_Object,
    java_util_HashMap_findNonNullKeyEntry,
+   java_util_HashMap_hash,
+   java_util_HashMap_put,
    java_util_HashMap_putImpl,
    java_util_HashMap_resize,
    java_util_HashMap_prepareArray,
