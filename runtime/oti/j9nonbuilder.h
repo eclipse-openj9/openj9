@@ -5347,6 +5347,7 @@ typedef struct J9InternalVMFunctions {
 	struct J9ObjectMonitor * (*monitorTablePeek)(struct J9JavaVM *vm, j9object_t object);
 	jobject (*takeVirtualThreadListToUnblock)(struct J9VMThread *currentThread);
 #endif /* JAVA_SPEC_VERSION >= 24 */
+	jobject (*getSystemPropertyList)(JNIEnv *env);
 } J9InternalVMFunctions;
 
 /* Jazz 99339: define a new structure to replace JavaVM so as to pass J9NativeLibrary to JVMTIEnv  */
