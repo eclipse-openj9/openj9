@@ -99,10 +99,8 @@ MM_ConfigurationIncrementalGenerational::createHeapWithManager(MM_EnvironmentBas
 		return NULL;
 	}
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
-#if defined(J9HAMMER) || defined(PPC64)
-	/* Set off-heap enabled as default for balanced GC */
-	extensions->isVirtualLargeObjectHeapEnabled = true;
-#endif /* defined(J9HAMMER) || defined(PPC64) */
+	/* set off-heap disabled as default for balanced GC */
+	extensions->isVirtualLargeObjectHeapEnabled = false;
 
 	if (extensions->virtualLargeObjectHeap._wasSpecified) {
 		extensions->isVirtualLargeObjectHeapEnabled = extensions->virtualLargeObjectHeap._valueSpecified;
