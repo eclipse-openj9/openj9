@@ -632,7 +632,7 @@ done:
 	writeThreadParkEvent(void *anElement, void *userData)
 	{
 		ThreadParkEntry *entry = (ThreadParkEntry *)anElement;
-		VM_BufferWriter *_bufferWriter = (VM_BufferWriter *) userData;
+		VM_BufferWriter *_bufferWriter = (VM_BufferWriter *)userData;
 
 		/* reserve size field */
 		U_8 *dataStart = reserveEventSize(_bufferWriter);
@@ -658,10 +658,10 @@ done:
 		_bufferWriter->writeLEB128(entry->parkedClass);
 
 		/* timeout value which is always in millis */
-		_bufferWriter->writeLEB128(entry->timeOut/1000000);
+		_bufferWriter->writeLEB128(entry->timeOut / 1000000);
 
 		/* until value which is always in millis */
-		_bufferWriter->writeLEB128(entry->untilTime/1000000);
+		_bufferWriter->writeLEB128(entry->untilTime / 1000000);
 
 		/* address of monitor */
 		_bufferWriter->writeLEB128(entry->parkedAddress);
