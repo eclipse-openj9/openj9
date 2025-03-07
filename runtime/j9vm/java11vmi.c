@@ -1900,6 +1900,7 @@ JVM_IsUseContainerSupport(void)
 JNIEXPORT jobjectArray JNICALL
 JVM_GetProperties(JNIEnv *env)
 {
-	return ((J9VMThread *)env)->javaVM->internalVMFunctions->getSystemPropertyList(env);
+	assert(!"JVM_GetProperties");
+	return NULL;
 }
 #endif /* JAVA_SPEC_VERSION >= 17 */

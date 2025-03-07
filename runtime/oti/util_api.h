@@ -2665,12 +2665,6 @@ j9util_open_system_library(char *name, UDATA *descriptor, UDATA flags);
 
 #endif /*if defined(WIN32)*/
 
-/* ---------------- filehelp.c ---------------- */
-/**
- * Try to find the 'correct' unix temp directory, as taken from the man page for tmpnam.
- * As a last resort, '.' representing the current directory is returned.
- */
-char * getTmpDir(JNIEnv *env, char **envSpace);
 
 #if defined(J9VM_JIT_FREE_SYSTEM_STACK_POINTER)
 /* ---------------- freessp.c ---------------- */

@@ -249,9 +249,7 @@
 	<export name="Java_java_lang_reflect_Proxy_defineClassImpl" />
 	<export name="Java_java_lang_reflect_Array_multiNewArrayImpl" />
 	<export name="Java_java_lang_System_getSysPropBeforePropertiesInitialized" />
-	<export name="Java_java_lang_System_getPropertyList">
-		<exclude-if condition="spec.java17" />
-	</export>
+	<export name="Java_java_lang_System_getPropertyList" />
 	<export name="Java_java_lang_System_mapLibraryName" />
 	<export name="Java_java_lang_System_setFieldImpl" />
 	<export name="Java_java_lang_System_rasInitializeVersion" />

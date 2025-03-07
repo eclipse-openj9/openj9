@@ -41,6 +41,9 @@
 #include "atoe.h"
 #endif
 
+/* JCL_J2SE */
+#define JCL_J2SE
+
 /* defineCodepageTable */
 /* NULL separated list of code page aliases. The first name is */
 /* the name of the System property, the names following before */
@@ -59,6 +62,159 @@ char* CodepageTable[] = {
 	NULL
 #endif
 };
+
+/**
+ * Try to find the 'correct' unix temp directory, as taken from the man page for tmpnam.
+ * As a last resort, the '.' representing the current directory is returned.
+ */
+char * getTmpDir(JNIEnv *env, char**envSpace) {
+	PORT_ACCESS_FROM_ENV(env);
+	I_32 envSize;
+	if ((envSize = j9sysinfo_get_env("TMPDIR", NULL, 0))> 0) {
+		*envSpace = jclmem_allocate_memory(env,envSize);	/* trailing null taken into account */
+		if(*envSpace==NULL) return ".";
+		j9sysinfo_get_env("TMPDIR", *envSpace, envSize);
+		if (j9file_attr(*envSpace) > -1)
+			return *envSpace;
+		/* directory was not there, free up memory and continue */
+		jclmem_free_memory(env,*envSpace);
+		*envSpace = NULL;
+		}
+	if (j9file_attr(P_tmpdir) > -1)
+		return P_tmpdir;
+	if (j9file_attr("/tmp") > -1)
+		return "/tmp";
+	return ".";
+}
+
+jobject getPlatformPropertyList(JNIEnv *env, const char *strings[], int propIndex)
+{
+	PORT_ACCESS_FROM_ENV(env);
+	char *charResult = NULL;
+	char *envSpace = NULL;
+	jobject plist = NULL;
+	char userdir[EsMaxPath] = {0};
+	char home[EsMaxPath] = {0};
+	char *homeAlloc = NULL;
+	J9VMThread *currentThread = (J9VMThread*)env;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+
+	/* Hard coded file/path separators and other values */
+
+#if defined(J9ZOS390)
+	if (J2SE_VERSION_FROM_ENV(env)) {
+		strings[propIndex++] = "platform.notASCII";
+		strings[propIndex++] = "true";
+
+		strings[propIndex++] = "os.encoding";
+		strings[propIndex++] = "ISO8859_1";
+	}
+#endif
+
+	strings[propIndex++] = "file.separator";
+	strings[propIndex++] = "/";
+
+	strings[propIndex++] = "line.separator";
+	strings[propIndex++] = "\n";
+
+	/* Get the directory where the executable was started */
+	strings[propIndex++] = "user.dir";
+	charResult = getcwd(userdir, EsMaxPath);
+	if (charResult == NULL) {
+		strings[propIndex++] = ".";
+	} else {
+		strings[propIndex++] = charResult;
+	}
+
+	strings[propIndex++] = "user.home";
+	charResult = NULL;
+#if defined(J9ZOS390)
+	charResult = getenv("HOME");
+	if (NULL != charResult) {
+		strings[propIndex++] = charResult;
+	} else {
+		uid_t uid = geteuid();
+		if (0 != uid) {
+			struct passwd *userDescription = getpwuid(uid);
+			if (NULL != userDescription) {
+				charResult = userDescription->pw_dir;
+				strings[propIndex++] = charResult;
+			}
+		} else {
+			char *loginID = getlogin();
+			if (NULL != loginID) {
+				struct passwd *userDescription = getpwnam(loginID);
+				if (NULL != userDescription) {
+					charResult = userDescription->pw_dir;
+					strings[propIndex++] = charResult;
+				}
+			}
+		}
+	}
+
+	/* there exist situations where one of the above calls will fail.  Fall through to the Unix solution for those cases */
+#endif
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+	/* Skip getpwuid if a checkpoint can be taken.
+	 * https://github.com/eclipse-openj9/openj9/issues/15800
+	 */
+	if (!vmFuncs->isCheckpointAllowed(vm))
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+	{
+		/*[PR 101939] user.home not set correctly when j9 invoked via execve(x,y,null) */
+		if (NULL == charResult) {
+			struct passwd *pwentry = getpwuid(getuid());
+			if (NULL != pwentry) {
+				charResult = pwentry->pw_dir;
+				strings[propIndex++] = charResult;
+			}
+		}
+	}
+
+	if (NULL == charResult) {
+		IDATA result = j9sysinfo_get_env("HOME", home, sizeof(home));
+		strings[propIndex] = ".";
+		if (0 == result) {
+			if (strlen(home) > 0) {
+				strings[propIndex] = home;
+			}
+		} else if (result > 0) {
+			homeAlloc = j9mem_allocate_memory(result, J9MEM_CATEGORY_VM_JCL);
+			if (NULL != homeAlloc) {
+				result = j9sysinfo_get_env("HOME", homeAlloc, result);
+				if (0 == result) {
+					strings[propIndex] = homeAlloc;
+				}
+			} else {
+				vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+				goto failed;
+			}
+		}
+		propIndex += 1;
+	}
+
+	/* Get the Temp Dir name */
+	strings[propIndex++] = "java.io.tmpdir";
+	strings[propIndex++] = getTmpDir(env, &envSpace);
+
+	if (JAVA_SPEC_VERSION < 12) {
+		/* Get the timezone */
+		strings[propIndex++] = "user.timezone";
+		strings[propIndex++] = "";
+	}
+
+	plist = createSystemPropertyList(env, strings, propIndex);
+	if (NULL != envSpace) {
+		jclmem_free_memory(env,envSpace);
+	}
+
+failed:
+	if (NULL != homeAlloc) {
+		jclmem_free_memory(env, homeAlloc);
+	}
+	return plist;
+}
 
 /**
  * Turns a platform independent DLL name into a platform specific one.
