@@ -116,17 +116,6 @@
 #include <strings.h>
 #endif
 
-#if defined(OMR_OS_WINDOWS) && defined(TR_TARGET_X86)
-#include <intrin.h>
-#elif defined(TR_TARGET_X86)
-inline unsigned long long _xgetbv(unsigned int ecx)
-   {
-   unsigned int eax, edx;
-   __asm__ __volatile__("xgetbv" : "=a"(eax), "=d"(edx) : "c"(ecx));
-   return ((unsigned long long)edx << 32) | eax;
-   }
-#endif
-
 #if defined(J9ZOS390)
 extern "C" bool _isPSWInProblemState();  /* 390 asm stub */
 #endif
@@ -344,43 +333,6 @@ TR_J9VM::initializeProcessorType()
       {
       OMRProcessorDesc processorDescription = TR::Compiler->target.cpu.getProcessorDescription();
       OMRPORT_ACCESS_FROM_OMRPORT(TR::Compiler->omrPortLib);
-
-      bool disableAVX = true;
-      bool disableAVX512 = true;
-
-#if defined(TR_TARGET_X86)
-      // Check XCRO register for OS support of xmm/ymm/zmm
-      if (TRUE == omrsysinfo_processor_has_feature(&processorDescription, OMR_FEATURE_X86_OSXSAVE))
-         {
-         // '6' = mask for XCR0[2:1]='11b' (XMM state and YMM state are enabled)
-         disableAVX = ((6 & _xgetbv(0)) != 6);
-         // 'e6' = (mask for XCR0[7:5]='111b' (Opmask, ZMM_Hi256, Hi16_ZMM) + XCR0[2:1]='11b' (XMM/YMM))
-         disableAVX512 = ((0xe6 & _xgetbv(0)) != 0xe6);
-         }
-#endif
-
-      if (disableAVX)
-         {
-         // Unset AVX/AVX2 if not enabled via CR0 or otherwise disabled
-         omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_X86_AVX, FALSE);
-         omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_X86_AVX2, FALSE);
-         }
-
-      if (disableAVX512)
-         {
-         // Unset AVX-512 if not enabled via CR0 or otherwise disabled
-         // If other AVX-512 extensions are supported in the port library, they need to be disabled here
-         omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_X86_AVX512F, FALSE);
-         omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_X86_AVX512VL, FALSE);
-         omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_X86_AVX512BW, FALSE);
-         omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_X86_AVX512CD, FALSE);
-         omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_X86_AVX512DQ, FALSE);
-         omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_X86_AVX512_BITALG, FALSE);
-         omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_X86_AVX512_VBMI, FALSE);
-         omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_X86_AVX512_VBMI2, FALSE);
-         omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_X86_AVX512_VNNI, FALSE);
-         omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_X86_AVX512_VPOPCNTDQ, FALSE);
-         }
 
       TR::Compiler->target.cpu = TR::CPU::customize(processorDescription);
 
