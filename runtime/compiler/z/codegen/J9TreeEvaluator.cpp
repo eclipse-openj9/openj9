@@ -7228,10 +7228,14 @@ J9::Z::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node * node, TR::CodeGenerator 
       */
       if (firstChild->getFirstChild()->isDataAddrPointer())
          dstArrayNode = firstChild->getFirstChild()->getFirstChild();
-      else
+      else if (firstChild->getFirstChild()->getOpCodeValue() == TR::aladd && firstChild->getFirstChild()->getFirstChild()->isDataAddrPointer())
          {
          dstArrayNode = firstChild->getFirstChild()->getFirstChild()->getFirstChild();
          offsetNode = firstChild->getFirstChild()->getSecondChild();
+         }
+      else
+         {
+         TR_ASSERT_FATAL(false, "Unexpected array access tree shape for OffHeap in ArrayStoreCHKEvaluator");
          }
 
       cg->evaluate(dstArrayNode);
