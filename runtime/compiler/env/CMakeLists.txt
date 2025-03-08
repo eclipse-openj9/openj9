@@ -46,6 +46,7 @@ j9jit_files(
 	env/j9method.cpp
 	env/J9ObjectModel.cpp
 	env/J9PersistentInfo.cpp
+	env/J9RetainedMethodSet.cpp
 	env/J9SegmentAllocator.cpp
 	env/J9SegmentCache.cpp
 	env/J9SegmentProvider.cpp
