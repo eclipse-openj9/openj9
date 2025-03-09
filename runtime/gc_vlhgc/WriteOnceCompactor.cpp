@@ -1715,13 +1715,6 @@ public:
 	}
 #endif /* J9VM_GC_FINALIZATION */
 
-#if defined(J9VM_ENV_DATA64)
-	virtual bool isDataAdjacentToHeader(J9IndexableObject *src, J9IndexableObject *dst) {
-		/* Checking against dst object since src object may be overwritten. */
-		return _extensions->indexableObjectModel.isDataAdjacentToHeader(dst);
-	}
-#endif /* defined(J9VM_ENV_DATA64) */
-
 };
 
 void
