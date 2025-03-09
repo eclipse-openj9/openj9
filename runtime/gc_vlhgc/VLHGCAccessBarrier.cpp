@@ -259,15 +259,29 @@ MM_VLHGCAccessBarrier::indexableDataDisplacement(J9StackWalkState *walkState, J9
 
 #if defined(J9VM_ENV_DATA64)
 	Assert_MM_true(_extensions->isVirtualLargeObjectHeapEnabled);
-	/* Potential danger in future of this not being called by a GC RootScanner - hence this assert */
+	/* Potential danger in future of this not being called by a GC Stack Walker - hence this assert */
 	Assert_MM_true(walkState->objectSlotWalkFunction == gc_vmThreadStackDoOSlotIterator);
 
-	/* When checking adjacency, we pass both src and dst address, since depending on RootScanner only one is safe to use.
+	/* When checking adjacency, we pass both src and dst address, since depending on movement type (evacuate vs sliding) only one is safe to use.
 	 * If we implement concurrent copy-forward, which will require copying of dataAddr before forwarding,
 	 * consider this simplifying to always do adjacency against dst.
 	 */
-	MM_RootScanner *rootScanner = ((StackIteratorData *)walkState->userData3)->rootScanner;
-	if (rootScanner->isDataAdjacentToHeader(src, dst))
+	MM_HeapRegionManager *regionManager = _extensions->getHeap()->getHeapRegionManager();
+	MM_HeapRegionDescriptorVLHGC *srcRegion = (MM_HeapRegionDescriptorVLHGC *)regionManager->regionDescriptorForAddress(src);
+
+	J9IndexableObject *objectToCheckAdjacency = NULL;
+
+	if (srcRegion->_copyForwardData._evacuateSet) {
+		/* Moved (or still being moved) by copy-forward - destination may not be fully copied yet. */
+		objectToCheckAdjacency = src;
+	} else if (srcRegion->_compactData._shouldCompact) {
+		/* Moved by sliding compact - source may be overwritten. */
+		objectToCheckAdjacency = dst;
+	} else {
+		Assert_MM_unreachable();
+	}
+
+	if (_extensions->indexableObjectModel.isDataAdjacentToHeader(objectToCheckAdjacency))
 #endif /* defined(J9VM_ENV_DATA64) */
 	{
 		displacement = MM_ObjectAccessBarrier::indexableDataDisplacement(walkState, src, dst);
