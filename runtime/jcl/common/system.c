@@ -152,12 +152,8 @@ Java_java_lang_System_getSysPropBeforePropertiesInitialized(JNIEnv *env, jclass 
 		}
 		break;
 
-	case 4: /* default value of java.io.tmpDir before any -D options */
-		sysPropValue = getTmpDir(env, &envSpace);
-		break;
-
 #if defined(J9ZOS390) && (JAVA_SPEC_VERSION >= 21)
-	case 5: /* com.ibm.autocvt setting on z/OS */
+	case 4: /* com.ibm.autocvt setting on z/OS */
 		sysPropValue = getDefinedArgumentFromJavaVMInitArgs(vmInitArgs, "com.ibm.autocvt");
 		if (NULL == sysPropValue) {
 			/* As part of better handling of JEP400 constraints on z/OS, the com.ibm.autocvt property

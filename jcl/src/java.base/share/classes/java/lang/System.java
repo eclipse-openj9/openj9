@@ -154,11 +154,8 @@ public final class System {
 	private static final int sysPropID_OSEncoding = 3;
 	private static String osEncoding;
 
-	private static final int sysPropID_DefaultTmpDir = 4;
-	private static String defaultTmpDir;
-
 	/*[IF (JAVA_SPEC_VERSION >= 21) & (PLATFORM-mz31 | PLATFORM-mz64)]*/
-	private static final int sysPropID_zOSAutoConvert = 5;
+	private static final int sysPropID_zOSAutoConvert = 4;
 	private static String zOSAutoConvert;
 	/*[ENDIF] (JAVA_SPEC_VERSION >= 21) & (PLATFORM-mz31 | PLATFORM-mz64) */
 
@@ -211,7 +208,6 @@ public final class System {
 		if (osEncoding == null) {
 			osEncoding = definedOSEncoding;
 		}
-		defaultTmpDir = getSysPropBeforePropertiesInitialized(sysPropID_DefaultTmpDir);
 
 		/*[IF (JAVA_SPEC_VERSION >= 21) & (PLATFORM-mz31 | PLATFORM-mz64)]*/
 		/* As part of better handling of JEP400 constraints on z/OS, the com.ibm.autocvt property
@@ -1274,18 +1270,8 @@ public static void setProperties(Properties p) {
 
 static void checkTmpDir() {
 	/*[IF JAVA_SPEC_VERSION >= 20]*/
-	String tmpDir = internalGetProperties().getProperty("java.io.tmpdir"); //$NON-NLS-1$
-	if (!defaultTmpDir.equals(tmpDir)) {
-		try {
-			Field systemProps = SystemProps.class.getDeclaredField("customTmpdir"); //$NON-NLS-1$
-			systemProps.setAccessible(true);
-			systemProps.set(null, tmpDir);
-			if (SystemProps.isBadIoTmpdir()) {
-				System.err.println("WARNING: java.io.tmpdir directory does not exist"); //$NON-NLS-1$
-			}
-		} catch (IllegalAccessException | NoSuchFieldException e) {
-			throw new InternalError(e);
-		}
+	if (SystemProps.isBadIoTmpdir()) {
+		System.err.println("WARNING: java.io.tmpdir directory does not exist"); //$NON-NLS-1$
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 }
