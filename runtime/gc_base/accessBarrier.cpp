@@ -355,6 +355,8 @@ j9gc_objaccess_staticStoreU64Split(J9VMThread *vmThread, J9Class *clazz, U_64 *d
 IDATA
 j9gc_objaccess_indexableDataDisplacement(J9StackWalkState *walkState, J9IndexableObject *src, J9IndexableObject *dst)
 {
+	PORT_ACCESS_FROM_VMC(walkState->walkThread);
+	j9tty_printf(PORTLIB, "j9gc_objaccess_indexableDataDisplacement src %p dst %p\n", src, dst);
 	MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(walkState->walkThread)->accessBarrier;
 	return barrier->indexableDataDisplacement(walkState, src, dst);
 }
