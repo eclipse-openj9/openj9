@@ -258,16 +258,32 @@ MM_VLHGCAccessBarrier::indexableDataDisplacement(J9StackWalkState *walkState, J9
 	IDATA displacement = 0;
 
 #if defined(J9VM_ENV_DATA64)
+	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(walkState->walkThread->omrVMThread);
 	Assert_MM_true(_extensions->isVirtualLargeObjectHeapEnabled);
-	/* Potential danger in future of this not being called by a GC RootScanner - hence this assert */
+	/* Potential danger in future of this not being called by a GC Stack Walker - hence this assert */
 	Assert_MM_true(walkState->objectSlotWalkFunction == gc_vmThreadStackDoOSlotIterator);
 
-	/* When checking adjacency, we pass both src and dst address, since depending on RootScanner only one is safe to use.
+	/* When checking adjacency, we pass both src and dst address, since depending on movement type (evacuate vs sliding) only one is safe to use.
 	 * If we implement concurrent copy-forward, which will require copying of dataAddr before forwarding,
 	 * consider this simplifying to always do adjacency against dst.
 	 */
-	MM_RootScanner *rootScanner = ((StackIteratorData *)walkState->userData3)->rootScanner;
-	if (rootScanner->isDataAdjacentToHeader(src, dst))
+	MM_HeapRegionManager *regionManager = _extensions->getHeap()->getHeapRegionManager();
+	MM_HeapRegionDescriptorVLHGC *srcRegion = (MM_HeapRegionDescriptorVLHGC *)regionManager->regionDescriptorForAddress(src);
+
+	J9IndexableObject *objectToCheckAdjacency = NULL;
+
+	if (srcRegion->_compactData._shouldCompact) {
+		Assert_GC_true_with_message3(env, !srcRegion->_copyForwardData._evacuateSet, "Evac set for compact src region %p src obj %p dst obj%p\n", srcRegion, src, dst);
+		/* Moved by sliding compact - source may be overwritten. */
+		objectToCheckAdjacency = dst;
+	} else if (srcRegion->_copyForwardData._evacuateSet) {
+		/* Moved (or still being moved) by copy-forward - destination may not be fully copied yet. */
+		objectToCheckAdjacency = src;
+	} else {
+		Assert_GC_true_with_message3(env, false, "Neither evac nor compact set src region %p src obj %p dst obj%p\n", srcRegion, src, dst);
+	}
+
+	if (_extensions->indexableObjectModel.isDataAdjacentToHeader(objectToCheckAdjacency))
 #endif /* defined(J9VM_ENV_DATA64) */
 	{
 		displacement = MM_ObjectAccessBarrier::indexableDataDisplacement(walkState, src, dst);

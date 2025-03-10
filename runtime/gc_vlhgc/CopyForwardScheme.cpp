@@ -3875,13 +3875,6 @@ private:
 	}
 #endif /* J9VM_GC_FINALIZATION */
 
-#if defined(J9VM_ENV_DATA64)
-	virtual bool isDataAdjacentToHeader(J9IndexableObject *src, J9IndexableObject *dst) {
-		/* Checking against src object since dst is not guarantied to be completely copied (by a racing thread that won f/w operaton). */
-		return _extensions->indexableObjectModel.isDataAdjacentToHeader(src);
-	}
-#endif /* defined(J9VM_ENV_DATA64) */
-
 public:
 	MM_CopyForwardSchemeRootScanner(MM_EnvironmentVLHGC *env, MM_CopyForwardScheme *copyForwardScheme) :
 		MM_RootScanner(env),
