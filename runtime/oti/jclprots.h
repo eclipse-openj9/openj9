@@ -190,11 +190,13 @@ Java_com_ibm_java_lang_management_internal_MemoryManagerMXBeanImpl_isManagedPool
 /* BBjclNativesCommonSystem*/
 void JNICALL Java_java_lang_System_setFieldImpl (JNIEnv * env, jclass cls, jstring name, jobject stream);
 jobject createSystemPropertyList (JNIEnv *env, const char *defaultValues[], int defaultCount);
-#if JAVA_SPEC_VERSION >= 11
+#if JAVA_SPEC_VERSION == 11
 void JNICALL Java_java_lang_System_initJCLPlatformEncoding (JNIEnv *env, jclass clazz);
-#endif /* JAVA_SPEC_VERSION >= 11 */
+#endif /* JAVA_SPEC_VERSION == 11 */
 jstring JNICALL Java_java_lang_System_getSysPropBeforePropertiesInitialized(JNIEnv *env, jclass clazz, jint sysPropID);
+#if JAVA_SPEC_VERSION < 17
 jobject JNICALL Java_java_lang_System_getPropertyList (JNIEnv *env, jclass clazz);
+#endif /* JAVA_SPEC_VERSION < 17 */
 jstring JNICALL Java_java_lang_System_mapLibraryName (JNIEnv * env, jclass unusedClass, jstring inName);
 void JNICALL Java_java_lang_System_initLocale (JNIEnv *env, jclass clazz);
 
@@ -800,10 +802,6 @@ jcharArray JNICALL Java_com_ibm_oti_io_NativeCharacterConverter_convertBytesToCh
 
 /* BBjclNativesWin32SystemHelpers*/
 char* getPlatformFileEncoding (JNIEnv *env, char *codepage, int size, int encodingType);
-I_32
-convertToUTF8 (J9PortLibrary* portLibrary, const wchar_t* unicodeString, char* utf8Buffer, UDATA size);
-char * getTmpDir (JNIEnv *env, char **tempdir);
-jobject getPlatformPropertyList (JNIEnv *env, const char *strings[], int propIndex);
 void mapLibraryToPlatformName (const char *inPath, char *outPath);
 
 /************************************************************
@@ -812,8 +810,6 @@ void mapLibraryToPlatformName (const char *inPath, char *outPath);
 
 /* BBjclNativesUNIXSystemHelpers*/
 char *getPlatformFileEncoding (JNIEnv * env, char *codepageProp, int propSize, int encodingType);
-char * getTmpDir (JNIEnv *env, char**envSpace);
-jobject getPlatformPropertyList (JNIEnv * env, const char *strings[], int propIndex);
 void mapLibraryToPlatformName (const char *inPath, char *outPath);
 
 /* orbvmhelpers.c */
