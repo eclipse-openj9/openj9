@@ -804,34 +804,14 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
 
       // At this point I know that all preceeding requests have been processed
       // and only one thread with critical information can ever be present in this section
-      if (!clientSession->cachesAreCleared())
-         {
-         // Free data for all classes that were unloaded for this sequence number
-         // Redefined classes are marked as unloaded, since they need to be cleared
-         // from the ROM class cache.
-         if (!unloadedClasses.empty())
-            {
-            clientSession->processUnloadedClasses(unloadedClasses, true); // this locks getROMMapMonitor()
-            }
+      bool initializedCHTable = false;
 
-         if (!illegalModificationList.empty())
-            {
-            clientSession->processIllegalFinalFieldModificationList(illegalModificationList); // this locks getROMMapMonitor()
-            }
-
-         // Process the CHTable updates in order
-         // Note that applying the updates will acquire the CHTable monitor and VMAccess
-         if ((!chtableUnloads.empty() || !chtableMods.empty())
-             && !serverDetails->isJitDumpMethod())
-            {
-            auto chTable = (JITServerPersistentCHTable*)clientSession->getCHTable(); // Will create CHTable if it doesn't exist
-            TR_ASSERT_FATAL(chTable->isInitialized(), "CHTable must have been initialized for clientUID=%llu", (unsigned long long)clientId);
-            chTable->doUpdate(_vm, chtableUnloads, chtableMods);
-            }
-         }
-      else // Internal caches are empty
+      // Check first without acquring the monitor
+      if (clientSession->cachesAreCleared())
          {
          OMR::CriticalSection cs(clientSession->getCacheInitMonitor());
+
+         // Internal caches are empty
          if (clientSession->cachesAreCleared())
             {
             if (TR::Options::getVerboseOption(TR_VerboseJITServer))
@@ -861,6 +841,34 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
                   getCompThreadId(), (unsigned long long)clientId, serializedCHTable.size());
             chTable->initializeCHTable(_vm, serializedCHTable);
             clientSession->setCachesAreCleared(false);
+            initializedCHTable = true;
+            }
+         }
+
+      TR_ASSERT_FATAL(!clientSession->cachesAreCleared(), "Client Session caches should not be cleared at this point for clientUID=%llu", (unsigned long long)clientId);
+      if (!initializedCHTable)
+         {
+         // Free data for all classes that were unloaded for this sequence number
+         // Redefined classes are marked as unloaded, since they need to be cleared
+         // from the ROM class cache.
+         if (!unloadedClasses.empty())
+            {
+            clientSession->processUnloadedClasses(unloadedClasses, true); // this locks getROMMapMonitor()
+            }
+
+         if (!illegalModificationList.empty())
+            {
+            clientSession->processIllegalFinalFieldModificationList(illegalModificationList); // this locks getROMMapMonitor()
+            }
+
+         // Process the CHTable updates in order
+         // Note that applying the updates will acquire the CHTable monitor and VMAccess
+         if ((!chtableUnloads.empty() || !chtableMods.empty())
+             && !serverDetails->isJitDumpMethod())
+            {
+            auto chTable = (JITServerPersistentCHTable*)clientSession->getCHTable(); // Will create CHTable if it doesn't exist
+            TR_ASSERT_FATAL(chTable->isInitialized(), "CHTable must have been initialized for clientUID=%llu", (unsigned long long)clientId);
+            chTable->doUpdate(_vm, chtableUnloads, chtableMods);
             }
          }
 
