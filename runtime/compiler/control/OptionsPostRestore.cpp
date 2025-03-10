@@ -104,7 +104,7 @@ J9::OptionsPostRestore::iterateOverExternalOptions()
    int32_t end = static_cast<int32_t>(J9::ExternalOptions::TR_NumExternalOptions);
    for (int32_t option = start; option < end; option++)
       {
-      const char *optString = J9::Options::_externalOptionStrings[option];
+      const char *optString = J9::Options::getExternalOptionString(static_cast<J9::ExternalOptions>(option));
       switch (option)
          {
          case J9::ExternalOptions::Xjit:
@@ -135,7 +135,9 @@ J9::OptionsPostRestore::iterateOverExternalOptions()
          case J9::ExternalOptions::XXplusJITServerLocalSyncCompilesOption:
          case J9::ExternalOptions::XXminusJITServerLocalSyncCompilesOption:
             {
-            // These will be processed in processJitServerOptions
+            // These will be processed in processJitServerOptions; however,
+            // consume them here
+            FIND_AND_CONSUME_RESTORE_ARG(OPTIONAL_LIST_MATCH, optString, 0);
             }
             break;
 
@@ -297,7 +299,7 @@ J9::OptionsPostRestore::iterateOverExternalOptions()
             break;
 
          default:
-            TR_ASSERT_FATAL(false, "Option %s not addressed post restore\n", TR::Options::_externalOptionStrings[option]);
+            TR_ASSERT_FATAL(false, "Option %s not addressed post restore\n", optString);
          }
       }
    }
@@ -318,7 +320,7 @@ J9::OptionsPostRestore::processJitServerOptions()
       J9JavaVM *vm = _jitConfig->javaVM;
 
       // Parse common options
-      if (!TR::Options::JITServerParseCommonOptions(vm->checkpointState.restoreArgsList, vm, _compInfo))
+      if (!TR::Options::JITServerParseCommonOptions(vm->checkpointState.restoreArgsList, vm, _compInfo, true))
          {
          // TODO: Error condition
          }
@@ -327,7 +329,8 @@ J9::OptionsPostRestore::processJitServerOptions()
       TR::Options::JITServerParseLocalSyncCompiles(vm->checkpointState.restoreArgsList,
                                                    vm,
                                                    _compInfo,
-                                                   TR::Options::getCmdLineOptions()->getOption(TR_FullSpeedDebug));
+                                                   TR::Options::getCmdLineOptions()->getOption(TR_FullSpeedDebug),
+                                                   true);
 
       if (_argIndexJITServerAddress >= 0)
          {
@@ -397,9 +400,9 @@ J9::OptionsPostRestore::processInternalCompilerOptions(bool isAOT)
 
    int32_t argIndex;
    if (isAOT)
-      argIndex = FIND_ARG_IN_RESTORE_ARGS( STARTSWITH_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xaotcolon], 0);
+      argIndex = FIND_ARG_IN_RESTORE_ARGS( STARTSWITH_MATCH, J9::Options::getExternalOptionString(J9::ExternalOptions::Xaotcolon), 0);
    else
-      argIndex = FIND_ARG_IN_RESTORE_ARGS( STARTSWITH_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xjitcolon], 0);
+      argIndex = FIND_ARG_IN_RESTORE_ARGS( STARTSWITH_MATCH, J9::Options::getExternalOptionString(J9::ExternalOptions::Xjitcolon), 0);
 
    if (argIndex >= 0)
       {
@@ -679,8 +682,8 @@ J9::OptionsPostRestore::preProcessInternalCompilerOptions()
    TR::Compiler->relocatableTarget.setNumberOfProcessors(numProc);
 
    // Find and consume -XX:[+|-]MergeCompilerOptions
-   _argIndexMergeOptionsEnabled = FIND_AND_CONSUME_RESTORE_ARG(EXACT_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::XXplusMergeCompilerOptions], 0);
-   _argIndexMergeOptionsDisabled = FIND_AND_CONSUME_RESTORE_ARG(EXACT_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::XXminusMergeCompilerOptions], 0);
+   _argIndexMergeOptionsEnabled = FIND_AND_CONSUME_RESTORE_ARG(EXACT_MATCH, J9::Options::getExternalOptionString(J9::ExternalOptions::XXplusMergeCompilerOptions), 0);
+   _argIndexMergeOptionsDisabled = FIND_AND_CONSUME_RESTORE_ARG(EXACT_MATCH, J9::Options::getExternalOptionString(J9::ExternalOptions::XXminusMergeCompilerOptions), 0);
    }
 
 void
@@ -850,10 +853,10 @@ J9::OptionsPostRestore::processCompilerOptions()
    bool jitEnabled = TR::Options::canJITCompile();
    bool aotEnabled = aotEnabledPreCheckpoint;
 
-   _argIndexXjit = FIND_AND_CONSUME_RESTORE_ARG(OPTIONAL_LIST_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xjit], 0);
-   _argIndexXnojit = FIND_AND_CONSUME_RESTORE_ARG(OPTIONAL_LIST_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xnojit], 0);
-   _argIndexXaot = FIND_AND_CONSUME_RESTORE_ARG(OPTIONAL_LIST_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xaot], 0);
-   _argIndexXnoaot = FIND_AND_CONSUME_RESTORE_ARG(OPTIONAL_LIST_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xnoaot], 0);
+   _argIndexXjit = FIND_AND_CONSUME_RESTORE_ARG(OPTIONAL_LIST_MATCH, J9::Options::getExternalOptionString(J9::ExternalOptions::Xjit), 0);
+   _argIndexXnojit = FIND_AND_CONSUME_RESTORE_ARG(OPTIONAL_LIST_MATCH, J9::Options::getExternalOptionString(J9::ExternalOptions::Xnojit), 0);
+   _argIndexXaot = FIND_AND_CONSUME_RESTORE_ARG(OPTIONAL_LIST_MATCH, J9::Options::getExternalOptionString(J9::ExternalOptions::Xaot), 0);
+   _argIndexXnoaot = FIND_AND_CONSUME_RESTORE_ARG(OPTIONAL_LIST_MATCH, J9::Options::getExternalOptionString(J9::ExternalOptions::Xnoaot), 0);
 
    if (_argIndexXjit != _argIndexXnojit)
       jitEnabled = (_argIndexXjit > _argIndexXnojit);

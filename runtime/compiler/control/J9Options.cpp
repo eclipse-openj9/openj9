@@ -310,93 +310,119 @@ bool J9::Options::_aggressiveLockReservation = false;
 
 bool J9::Options::_xrsSync = false;
 
+void
+J9::Options::findExternalOptions(J9JavaVM *vm, bool consume)
+   {
+   int32_t start = static_cast<int32_t>(J9::ExternalOptions::TR_FirstExternalOption);
+   int32_t end = static_cast<int32_t>(J9::ExternalOptions::TR_NumExternalOptions);
+   for (int32_t option = start; option < end; option++)
+      {
+      J9::ExternalOptionsMetadata &opt = J9::Options::_externalOptionsMetadata[option];
+
+      if (consume)
+         {
+         if (opt._consumedByJIT)
+            {
+            opt._argIndex = FIND_AND_CONSUME_VMARG(opt._match, opt._externalOption, 0);
+            }
+         }
+      else
+         {
+         if (!opt._consumedByJIT)
+            {
+            opt._argIndex = FIND_ARG_IN_VMARGS(opt._match, opt._externalOption, 0);
+            }
+         }
+      }
+   }
+
 /**
- * This string array should be kept in sync with the
+ * This array should be kept in sync with the
  * J9::ExternalOptions enum in J9Options.hpp
  */
-const char * J9::Options::_externalOptionStrings[J9::ExternalOptions::TR_NumExternalOptions] =
+J9::ExternalOptionsMetadata J9::Options::_externalOptionsMetadata[J9::ExternalOptions::TR_NumExternalOptions] =
    {
-   // TR_FirstExternalOption                 = 0
-   "-Xnodfpbd",                           // = 0
-   "-Xdfpbd",                             // = 1
-   "-Xhysteresis",                        // = 2
-   "-Xnoquickstart",                      // = 3
-   "-Xquickstart",                        // = 4
-   "-Xtune:elastic",                      // = 5
-   "-XtlhPrefetch",                       // = 6
-   "-XnotlhPrefetch",                     // = 7
-   "-Xlockword",                          // = 8
-   "-XlockReservation",                   // = 9
-   "-XjniAcc:",                           // = 10
-   "-Xlp",                                // = 11
-   "-Xlp:codecache:",                     // = 12
-   "-Xcodecache",                         // = 13
-   "-Xcodecachetotal",                    // = 14
-   "-XX:codecachetotal=",                 // = 15
-   "-XX:+PrintCodeCache",                 // = 16
-   "-XX:-PrintCodeCache",                 // = 17
-   "-XsamplingExpirationTime",            // = 18
-   "-XcompilationThreads",                // = 19
-   "-XaggressivenessLevel",               // = 20
-   "-Xnoclassgc",                         // = 21
-   VMOPT_XJIT,                            // = 22
-   VMOPT_XNOJIT,                          // = 23
-   VMOPT_XJIT_COLON,                      // = 24
-   VMOPT_XAOT,                            // = 25
-   VMOPT_XNOAOT,                          // = 26
-   VMOPT_XAOT_COLON,                      // = 27
-   "-XX:deterministic=",                  // = 28
-   "-XX:+RuntimeInstrumentation",         // = 29
-   "-XX:-RuntimeInstrumentation",         // = 30
-   "-XX:+PerfTool",                       // = 31
-   "-XX:-PerfTool",                       // = 32
-   "-XX:doNotProcessJitEnvVars",          // = 33
-   "-XX:+MergeCompilerOptions",           // = 34
-   "-XX:-MergeCompilerOptions",           // = 35
-   "-XX:LateSCCDisclaimTime=",            // = 36
-   "-XX:+UseJITServer",                   // = 37
-   "-XX:-UseJITServer",                   // = 38
-   "-XX:+JITServerTechPreviewMessage",    // = 39
-   "-XX:-JITServerTechPreviewMessage",    // = 40
-   "-XX:JITServerAddress=",               // = 41
-   "-XX:JITServerPort=",                  // = 42
-   "-XX:JITServerTimeout=",               // = 43
-   "-XX:JITServerSSLKey=",                // = 44
-   "-XX:JITServerSSLCert=",               // = 45
-   "-XX:JITServerSSLRootCerts=",          // = 46
-   "-XX:+JITServerUseAOTCache",           // = 47
-   "-XX:-JITServerUseAOTCache",           // = 48
-   "-XX:+RequireJITServer",               // = 49
-   "-XX:-RequireJITServer",               // = 50
-   "-XX:+JITServerLogConnections",        // = 51
-   "-XX:-JITServerLogConnections",        // = 52
-   "-XX:JITServerAOTmx=",                 // = 53
-   "-XX:+JITServerLocalSyncCompiles",     // = 54
-   "-XX:-JITServerLocalSyncCompiles",     // = 55
-   "-XX:+JITServerMetrics",               // = 56
-   "-XX:-JITServerMetrics",               // = 57
-   "-XX:JITServerMetricsPort=",           // = 58
-   "-XX:JITServerMetricsSSLKey=",         // = 59
-   "-XX:JITServerMetricsSSLCert=",        // = 60
-   "-XX:+JITServerShareROMClasses",       // = 61
-   "-XX:-JITServerShareROMClasses",       // = 62
-   "-XX:+JITServerAOTCachePersistence",   // = 63
-   "-XX:-JITServerAOTCachePersistence",   // = 64
-   "-XX:JITServerAOTCacheDir=",           // = 65
-   "-XX:JITServerAOTCacheName=",          // = 66
-   "-XX:codecachetotalMaxRAMPercentage=", // = 67
-   "-XX:+JITServerAOTCacheDelayMethodRelocation", // = 68
-   "-XX:-JITServerAOTCacheDelayMethodRelocation", // = 69
-   "-XX:+IProfileDuringStartupPhase",     // = 70
-   "-XX:-IProfileDuringStartupPhase",     // = 71
-   "-XX:+JITServerAOTCacheIgnoreLocalSCC", // = 72
-   "-XX:-JITServerAOTCacheIgnoreLocalSCC", // = 73
-   "-XX:+JITServerHealthProbes",          // = 74
-   "-XX:-JITServerHealthProbes",          // = 75
-   "-XX:JITServerHealthProbePort=",       // = 76
-   "-XX:+TrackAOTDependencies",           // = 77
-   "-XX:-TrackAOTDependencies"            // = 78
-   // TR_NumExternalOptions                  = 79
+   // TR_FirstExternalOption                                                             = 0
+   { "-Xnodfpbd",                                   EXACT_MATCH,         -1, true  }, // = 0
+   { "-Xdfpbd",                                     EXACT_MATCH,         -1, false }, // = 1
+   { "-Xhysteresis",                                EXACT_MATCH,         -1, true  }, // = 2
+   { "-Xnoquickstart",                              EXACT_MATCH,         -1, true  }, // = 3
+   { "-Xquickstart",                                EXACT_MATCH,         -1, true  }, // = 4
+   { "-Xtune:elastic",                              STARTSWITH_MATCH,    -1, true  }, // = 5
+   { "-XtlhPrefetch",                               EXACT_MATCH,         -1, true  }, // = 6
+   { "-XnotlhPrefetch",                             EXACT_MATCH,         -1, true  }, // = 7
+   { VMOPT_XLOCKWORD,                               STARTSWITH_MATCH,    -1, false }, // = 8
+   { "-XlockReservation",                           EXACT_MATCH,         -1, true  }, // = 9
+   { "-XjniAcc:",                                   STARTSWITH_MATCH,    -1, true  }, // = 10
+   { "-Xlp",                                        EXACT_MEMORY_MATCH,  -1, false }, // = 11
+   { "-Xlp:codecache:",                             STARTSWITH_MATCH,    -1, true  }, // = 12
+   { "-Xcodecache",                                 EXACT_MEMORY_MATCH,  -1, true  }, // = 13
+   { "-Xcodecachetotal",                            EXACT_MEMORY_MATCH,  -1, true  }, // = 14
+   { "-XX:codecachetotal=",                         EXACT_MEMORY_MATCH,  -1, true  }, // = 15
+   { "-XX:+PrintCodeCache",                         EXACT_MATCH,         -1, true  }, // = 16
+   { "-XX:-PrintCodeCache",                         EXACT_MATCH,         -1, true  }, // = 17
+   { "-XsamplingExpirationTime",                    EXACT_MEMORY_MATCH,  -1, true  }, // = 18
+   { "-XcompilationThreads",                        EXACT_MEMORY_MATCH,  -1, true  }, // = 19
+   { "-XaggressivenessLevel",                       EXACT_MEMORY_MATCH,  -1, true  }, // = 20
+   { "-Xnoclassgc",                                 EXACT_MATCH,         -1, true  }, // = 21
+   { VMOPT_XJIT,                                    OPTIONAL_LIST_MATCH, -1, true  }, // = 22
+   { VMOPT_XNOJIT,                                  EXACT_MATCH,         -1, true  }, // = 23
+   { VMOPT_XJIT_COLON,                              STARTSWITH_MATCH,    -1, true  }, // = 24
+   { VMOPT_XAOT,                                    OPTIONAL_LIST_MATCH, -1, true  }, // = 25
+   { VMOPT_XNOAOT,                                  EXACT_MATCH,         -1, true  }, // = 26
+   { VMOPT_XAOT_COLON,                              STARTSWITH_MATCH,    -1, true  }, // = 27
+   { "-XX:deterministic=",                          EXACT_MEMORY_MATCH,  -1, true  }, // = 28
+   { "-XX:+RuntimeInstrumentation",                 EXACT_MATCH,         -1, true  }, // = 29
+   { "-XX:-RuntimeInstrumentation",                 EXACT_MATCH,         -1, true  }, // = 30
+   { "-XX:+PerfTool",                               EXACT_MATCH,         -1, true  }, // = 31
+   { "-XX:-PerfTool",                               EXACT_MATCH,         -1, true  }, // = 32
+   { "-XX:doNotProcessJitEnvVars",                  EXACT_MATCH,         -1, true  }, // = 33
+   { "-XX:+MergeCompilerOptions",                   EXACT_MATCH,         -1, true  }, // = 34
+   { "-XX:-MergeCompilerOptions",                   EXACT_MATCH,         -1, true  }, // = 35
+   { "-XX:LateSCCDisclaimTime=",                    STARTSWITH_MATCH,    -1, true  }, // = 36
+   { "-XX:+UseJITServer",                           EXACT_MATCH,         -1, true  }, // = 37
+   { "-XX:-UseJITServer",                           EXACT_MATCH,         -1, true  }, // = 38
+   { "-XX:+JITServerTechPreviewMessage",            EXACT_MATCH,         -1, true  }, // = 39
+   { "-XX:-JITServerTechPreviewMessage",            EXACT_MATCH,         -1, true  }, // = 40
+   { "-XX:JITServerAddress=",                       STARTSWITH_MATCH,    -1, true  }, // = 41
+   { "-XX:JITServerPort=",                          STARTSWITH_MATCH,    -1, true  }, // = 42
+   { "-XX:JITServerTimeout=",                       STARTSWITH_MATCH,    -1, true  }, // = 43
+   { "-XX:JITServerSSLKey=",                        STARTSWITH_MATCH,    -1, true  }, // = 44
+   { "-XX:JITServerSSLCert=",                       STARTSWITH_MATCH,    -1, true  }, // = 45
+   { "-XX:JITServerSSLRootCerts=",                  STARTSWITH_MATCH,    -1, true  }, // = 46
+   { "-XX:+JITServerUseAOTCache",                   EXACT_MATCH,         -1, true  }, // = 47
+   { "-XX:-JITServerUseAOTCache",                   EXACT_MATCH,         -1, true  }, // = 48
+   { "-XX:+RequireJITServer",                       EXACT_MATCH,         -1, true  }, // = 49
+   { "-XX:-RequireJITServer",                       EXACT_MATCH,         -1, true  }, // = 50
+   { "-XX:+JITServerLogConnections",                EXACT_MATCH,         -1, true  }, // = 51
+   { "-XX:-JITServerLogConnections",                EXACT_MATCH,         -1, true  }, // = 52
+   { "-XX:JITServerAOTmx=",                         STARTSWITH_MATCH,    -1, true  }, // = 53
+   { "-XX:+JITServerLocalSyncCompiles",             EXACT_MATCH,         -1, true  }, // = 54
+   { "-XX:-JITServerLocalSyncCompiles",             EXACT_MATCH,         -1, true  }, // = 55
+   { "-XX:+JITServerMetrics",                       EXACT_MATCH,         -1, true  }, // = 56
+   { "-XX:-JITServerMetrics",                       EXACT_MATCH,         -1, true  }, // = 57
+   { "-XX:JITServerMetricsPort=",                   STARTSWITH_MATCH,    -1, true  }, // = 58
+   { "-XX:JITServerMetricsSSLKey=",                 STARTSWITH_MATCH,    -1, true  }, // = 59
+   { "-XX:JITServerMetricsSSLCert=",                STARTSWITH_MATCH,    -1, true  }, // = 60
+   { "-XX:+JITServerShareROMClasses",               EXACT_MATCH,         -1, true  }, // = 61
+   { "-XX:-JITServerShareROMClasses",               EXACT_MATCH,         -1, true  }, // = 62
+   { "-XX:+JITServerAOTCachePersistence",           EXACT_MATCH,         -1, true  }, // = 63
+   { "-XX:-JITServerAOTCachePersistence",           EXACT_MATCH,         -1, true  }, // = 64
+   { "-XX:JITServerAOTCacheDir=",                   STARTSWITH_MATCH,    -1, true  }, // = 65
+   { "-XX:JITServerAOTCacheName=",                  STARTSWITH_MATCH,    -1, true  }, // = 66
+   { "-XX:codecachetotalMaxRAMPercentage=",         STARTSWITH_MATCH,    -1, true  }, // = 67
+   { "-XX:+JITServerAOTCacheDelayMethodRelocation", EXACT_MATCH,         -1, true  }, // = 68
+   { "-XX:-JITServerAOTCacheDelayMethodRelocation", EXACT_MATCH,         -1, true  }, // = 69
+   { "-XX:+IProfileDuringStartupPhase",             EXACT_MATCH,         -1, true  }, // = 70
+   { "-XX:-IProfileDuringStartupPhase",             EXACT_MATCH,         -1, true  }, // = 71
+   { "-XX:+JITServerAOTCacheIgnoreLocalSCC",        EXACT_MATCH,         -1, true  }, // = 72
+   { "-XX:-JITServerAOTCacheIgnoreLocalSCC",        EXACT_MATCH,         -1, true  }, // = 73
+   { "-XX:+JITServerHealthProbes",                  EXACT_MATCH,         -1, true  }, // = 74
+   { "-XX:-JITServerHealthProbes",                  EXACT_MATCH,         -1, true  }, // = 75
+   { "-XX:JITServerHealthProbePort=",               STARTSWITH_MATCH,    -1, true  }, // = 76
+   { "-XX:+TrackAOTDependencies",                   EXACT_MATCH,         -1, true  }, // = 77
+   { "-XX:-TrackAOTDependencies",                   EXACT_MATCH,         -1, true  }  // = 78
+   // TR_NumExternalOptions                                                              = 79
    };
 
 //************************************************************************
@@ -1348,38 +1374,35 @@ static std::string readFileToString(char *fileName)
       }
    }
 
-bool
-J9::Options::JITServerParseCommonOptions(J9VMInitArgs *vmArgsArray, J9JavaVM *vm, TR::CompilationInfo *compInfo)
+static int32_t getArgIndex(J9JavaVM *vm, J9::ExternalOptions option, J9VMInitArgs *vmArgsArray, bool postRestore)
    {
-   const char *xxJITServerPortOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXJITServerPortOption];
-   const char *xxJITServerTimeoutOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXJITServerTimeoutOption];
-   const char *xxJITServerSSLKeyOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXJITServerSSLKeyOption];
-   const char *xxJITServerSSLCertOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXJITServerSSLCertOption];
-   const char *xxJITServerSSLRootCertsOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXJITServerSSLRootCertsOption];
-   const char *xxJITServerUseAOTCacheOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXplusJITServerUseAOTCacheOption];
-   const char *xxDisableJITServerUseAOTCacheOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXminusJITServerUseAOTCacheOption];
-   const char *xxRequireJITServerOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXplusRequireJITServerOption];
-   const char *xxDisableRequireJITServerOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXminusRequireJITServerOption];
-   const char *xxJITServerLogConnections = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXplusJITServerLogConnections];
-   const char *xxDisableJITServerLogConnections = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXminusJITServerLogConnections];
-   const char *xxJITServerAOTmxOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXJITServerAOTmxOption];
+   return
+      postRestore ?
+         FIND_ARG_IN_ARGS(vmArgsArray, J9::Options::getExternalOptionMatch(option), J9::Options::getExternalOptionString(option), 0)
+         :
+         J9::Options::getExternalOptionIndex(option);
+   }
 
-   int32_t xxJITServerPortArgIndex = FIND_ARG_IN_ARGS(vmArgsArray, STARTSWITH_MATCH, xxJITServerPortOption, 0);
-   int32_t xxJITServerTimeoutArgIndex = FIND_ARG_IN_ARGS(vmArgsArray, STARTSWITH_MATCH, xxJITServerTimeoutOption, 0);
-   int32_t xxJITServerSSLKeyArgIndex = FIND_ARG_IN_ARGS(vmArgsArray, STARTSWITH_MATCH, xxJITServerSSLKeyOption, 0);
-   int32_t xxJITServerSSLCertArgIndex = FIND_ARG_IN_ARGS(vmArgsArray, STARTSWITH_MATCH, xxJITServerSSLCertOption, 0);
-   int32_t xxJITServerSSLRootCertsArgIndex = FIND_ARG_IN_ARGS(vmArgsArray, STARTSWITH_MATCH, xxJITServerSSLRootCertsOption, 0);
-   int32_t xxJITServerUseAOTCacheArgIndex = FIND_ARG_IN_ARGS(vmArgsArray, EXACT_MATCH, xxJITServerUseAOTCacheOption, 0);
-   int32_t xxDisableJITServerUseAOTCacheArgIndex = FIND_ARG_IN_ARGS(vmArgsArray, EXACT_MATCH, xxDisableJITServerUseAOTCacheOption, 0);
-   int32_t xxRequireJITServerArgIndex = FIND_ARG_IN_ARGS(vmArgsArray, EXACT_MATCH, xxRequireJITServerOption, 0);
-   int32_t xxDisableRequireJITServerArgIndex = FIND_ARG_IN_ARGS(vmArgsArray, EXACT_MATCH, xxDisableRequireJITServerOption, 0);
-   int32_t xxJITServerLogConnectionsArgIndex = FIND_ARG_IN_ARGS(vmArgsArray, EXACT_MATCH, xxJITServerLogConnections, 0);
-   int32_t xxDisableJITServerLogConnectionsArgIndex = FIND_ARG_IN_ARGS(vmArgsArray, EXACT_MATCH, xxDisableJITServerLogConnections, 0);
-   int32_t xxJITServerAOTmxArgIndex = FIND_ARG_IN_ARGS(vmArgsArray, STARTSWITH_MATCH, xxJITServerAOTmxOption, 0);
+bool
+J9::Options::JITServerParseCommonOptions(J9VMInitArgs *vmArgsArray, J9JavaVM *vm, TR::CompilationInfo *compInfo, bool postRestore)
+   {
+   int32_t xxJITServerPortArgIndex = getArgIndex(vm, J9::ExternalOptions::XXJITServerPortOption, vmArgsArray, postRestore);
+   int32_t xxJITServerTimeoutArgIndex = getArgIndex(vm, J9::ExternalOptions::XXJITServerTimeoutOption, vmArgsArray, postRestore);
+   int32_t xxJITServerSSLKeyArgIndex = getArgIndex(vm, J9::ExternalOptions::XXJITServerSSLKeyOption, vmArgsArray, postRestore);
+   int32_t xxJITServerSSLCertArgIndex = getArgIndex(vm, J9::ExternalOptions::XXJITServerSSLCertOption, vmArgsArray, postRestore);
+   int32_t xxJITServerSSLRootCertsArgIndex = getArgIndex(vm, J9::ExternalOptions::XXJITServerSSLRootCertsOption, vmArgsArray, postRestore);
+   int32_t xxJITServerUseAOTCacheArgIndex = getArgIndex(vm, J9::ExternalOptions::XXplusJITServerUseAOTCacheOption, vmArgsArray, postRestore);
+   int32_t xxDisableJITServerUseAOTCacheArgIndex = getArgIndex(vm, J9::ExternalOptions::XXminusJITServerUseAOTCacheOption, vmArgsArray, postRestore);
+   int32_t xxRequireJITServerArgIndex = getArgIndex(vm, J9::ExternalOptions::XXplusRequireJITServerOption, vmArgsArray, postRestore);
+   int32_t xxDisableRequireJITServerArgIndex = getArgIndex(vm, J9::ExternalOptions::XXminusRequireJITServerOption, vmArgsArray, postRestore);
+   int32_t xxJITServerLogConnectionsArgIndex = getArgIndex(vm, J9::ExternalOptions::XXplusJITServerLogConnections, vmArgsArray, postRestore);
+   int32_t xxDisableJITServerLogConnectionsArgIndex = getArgIndex(vm, J9::ExternalOptions::XXminusJITServerLogConnections, vmArgsArray, postRestore);
+   int32_t xxJITServerAOTmxArgIndex = getArgIndex(vm, J9::ExternalOptions::XXJITServerAOTmxOption, vmArgsArray, postRestore);
 
    if (xxJITServerPortArgIndex >= 0)
       {
       UDATA port=0;
+      const char *xxJITServerPortOption = J9::Options::getExternalOptionString(J9::ExternalOptions::XXJITServerPortOption);
       IDATA ret = GET_INTEGER_VALUE_ARGS(vmArgsArray, xxJITServerPortArgIndex, xxJITServerPortOption, port);
       if (ret == OPTION_OK)
          compInfo->getPersistentInfo()->setJITServerPort(port);
@@ -1397,6 +1420,7 @@ J9::Options::JITServerParseCommonOptions(J9VMInitArgs *vmArgsArray, J9JavaVM *vm
    if (xxJITServerTimeoutArgIndex >= 0)
       {
       UDATA timeoutMs=0;
+      const char *xxJITServerTimeoutOption = J9::Options::getExternalOptionString(J9::ExternalOptions::XXJITServerTimeoutOption);
       IDATA ret = GET_INTEGER_VALUE_ARGS(vmArgsArray, xxJITServerTimeoutArgIndex, xxJITServerTimeoutOption, timeoutMs);
       if (ret == OPTION_OK)
          compInfo->getPersistentInfo()->setSocketTimeout(timeoutMs);
@@ -1452,6 +1476,7 @@ J9::Options::JITServerParseCommonOptions(J9VMInitArgs *vmArgsArray, J9JavaVM *vm
    if (xxJITServerAOTmxArgIndex >= 0)
       {
       uint32_t aotMaxBytes = 0;
+      const char *xxJITServerAOTmxOption = J9::Options::getExternalOptionString(J9::ExternalOptions::XXJITServerAOTmxOption);
       if (GET_MEMORY_VALUE_ARGS(vmArgsArray, xxJITServerAOTmxArgIndex, xxJITServerAOTmxOption, aotMaxBytes) == OPTION_OK)
          {
          JITServerAOTCacheMap::setCacheMaxBytes(aotMaxBytes);
@@ -1462,13 +1487,10 @@ J9::Options::JITServerParseCommonOptions(J9VMInitArgs *vmArgsArray, J9JavaVM *vm
    }
 
 void
-J9::Options::JITServerParseLocalSyncCompiles(J9VMInitArgs *vmArgsArray, J9JavaVM *vm, TR::CompilationInfo *compInfo, bool isFSDEnabled)
+J9::Options::JITServerParseLocalSyncCompiles(J9VMInitArgs *vmArgsArray, J9JavaVM *vm, TR::CompilationInfo *compInfo, bool isFSDEnabled, bool postRestore)
    {
-   const char *xxJITServerLocalSyncCompilesOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXplusJITServerLocalSyncCompilesOption];
-   const char *xxDisableJITServerLocalSyncCompilesOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXminusJITServerLocalSyncCompilesOption];
-
-   int32_t xxJITServerLocalSyncCompilesArgIndex = FIND_ARG_IN_ARGS(vmArgsArray, EXACT_MATCH, xxJITServerLocalSyncCompilesOption, 0);
-   int32_t xxDisableJITServerLocalSyncCompilesArgIndex = FIND_ARG_IN_ARGS(vmArgsArray, EXACT_MATCH, xxDisableJITServerLocalSyncCompilesOption, 0);
+   int32_t xxJITServerLocalSyncCompilesArgIndex = getArgIndex(vm, J9::ExternalOptions::XXplusJITServerLocalSyncCompilesOption, vmArgsArray, postRestore);
+   int32_t xxDisableJITServerLocalSyncCompilesArgIndex = getArgIndex(vm, J9::ExternalOptions::XXminusJITServerLocalSyncCompilesOption, vmArgsArray, postRestore);
 
    // We either obey the command line option, or make sure to disable LocalSyncCompiles if
    // something is set that interferes with remote async recompilations.
@@ -1598,11 +1620,11 @@ void J9::Options::preProcessMode(J9JavaVM *vm, J9JITConfig *jitConfig)
          // The aggressivenessLevel can be set directly with -XaggressivenessLevel
          // This option is a second hand citizen option; if other options contradict it, this option is
          // ignored even if it appears later
-         const char *aggressiveOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XaggressivenessLevel];
-         int32_t argIndex = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, aggressiveOption, 0);
+         int32_t argIndex = J9::Options::getExternalOptionIndex(J9::ExternalOptions::XaggressivenessLevel);
          if (argIndex >= 0)
             {
             UDATA aggressivenessValue = 0;
+            const char *aggressiveOption = J9::Options::getExternalOptionString(J9::ExternalOptions::XaggressivenessLevel);
             IDATA ret = GET_INTEGER_VALUE(argIndex, aggressiveOption, aggressivenessValue);
             if (ret == OPTION_OK && aggressivenessValue < LAST_AGGRESSIVENESS_LEVEL)
                {
@@ -1616,10 +1638,9 @@ void J9::Options::preProcessMode(J9JavaVM *vm, J9JITConfig *jitConfig)
 void J9::Options::preProcessJniAccelerator(J9JavaVM *vm)
    {
    static bool doneWithJniAcc = false;
-   const char *jniAccOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XjniAcc];
    if (!doneWithJniAcc)
       {
-      int32_t argIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, jniAccOption, 0);
+      int32_t argIndex = J9::Options::getExternalOptionIndex(J9::ExternalOptions::XjniAcc);
       if (argIndex >= 0)
          {
          const char *optValue;
@@ -1653,10 +1674,10 @@ double getCodeCacheMaxPercentageOfAvailableMemory(J9JavaVM *vm)
    OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
 
    double codeCacheTotalPercentage = CODECACHE_DEFAULT_MAXRAMPERCENTAGE;
-   const char *xxccPercentOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXcodecachetotalMaxRAMPercentage];
-   int32_t XXcodeCacheTotalPercentArg = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxccPercentOption, 0);
+   int32_t XXcodeCacheTotalPercentArg = J9::Options::getExternalOptionIndex(J9::ExternalOptions::XXcodecachetotalMaxRAMPercentage);
    if (XXcodeCacheTotalPercentArg >= 0)
       {
+      const char *xxccPercentOption = J9::Options::getExternalOptionString(J9::ExternalOptions::XXcodecachetotalMaxRAMPercentage);
       IDATA returnCode = GET_DOUBLE_VALUE(XXcodeCacheTotalPercentArg, xxccPercentOption, codeCacheTotalPercentage);
       if (OPTION_OK == returnCode)
          {
@@ -1666,8 +1687,10 @@ double getCodeCacheMaxPercentageOfAvailableMemory(J9JavaVM *vm)
             codeCacheTotalPercentage = CODECACHE_DEFAULT_MAXRAMPERCENTAGE;
             }
          }
-	 else
-            j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_JIT_OPTIONS_INCORRECT_MEMORY_SIZE, xxccPercentOption);
+      else
+         {
+         j9nls_printf(PORTLIB, J9NLS_WARNING, J9NLS_JIT_OPTIONS_INCORRECT_MEMORY_SIZE, xxccPercentOption);
+         }
       }
    return codeCacheTotalPercentage;
    }
@@ -1698,15 +1721,15 @@ void J9::Options::preProcessCodeCacheIncreaseTotalSize(J9JavaVM *vm, J9JITConfig
             }
          }
 #endif
-      const char *xccOption  = J9::Options::_externalOptionStrings[J9::ExternalOptions::Xcodecachetotal];
-      const char *xxccOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXcodecachetotal];
-      int32_t codeCacheTotalArgIndex   = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, xccOption, 0);
-      int32_t XXcodeCacheTotalArgIndex = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, xxccOption, 0);
+      int32_t codeCacheTotalArgIndex   = J9::Options::getExternalOptionIndex(J9::ExternalOptions::Xcodecachetotal);
+      int32_t XXcodeCacheTotalArgIndex = J9::Options::getExternalOptionIndex(J9::ExternalOptions::XXcodecachetotal);
       int32_t argIndex = 0;
       // Check if option is at all specified
       if (codeCacheTotalArgIndex >= 0 || XXcodeCacheTotalArgIndex >= 0)
          {
          const char *ccTotalOption;
+         const char *xccOption  = J9::Options::getExternalOptionString(J9::ExternalOptions::Xcodecachetotal);
+         const char *xxccOption = J9::Options::getExternalOptionString(J9::ExternalOptions::XXcodecachetotal);
          if (XXcodeCacheTotalArgIndex > codeCacheTotalArgIndex)
             {
             argIndex = XXcodeCacheTotalArgIndex;
@@ -1759,10 +1782,8 @@ void J9::Options::preProcessCodeCacheIncreaseTotalSize(J9JavaVM *vm, J9JITConfig
 void J9::Options::preProcessCodeCachePrintCodeCache(J9JavaVM *vm)
    {
    // -XX:+PrintCodeCache will be parsed twice into both AOT and JIT options here.
-   const char *xxPrintCodeCacheOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXplusPrintCodeCache];
-   const char *xxDisablePrintCodeCacheOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXminusPrintCodeCache];
-   int32_t xxPrintCodeCacheArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxPrintCodeCacheOption, 0);
-   int32_t xxDisablePrintCodeCacheArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxDisablePrintCodeCacheOption, 0);
+   int32_t xxPrintCodeCacheArgIndex = J9::Options::getExternalOptionIndex(J9::ExternalOptions::XXplusPrintCodeCache);
+   int32_t xxDisablePrintCodeCacheArgIndex = J9::Options::getExternalOptionIndex(J9::ExternalOptions::XXminusPrintCodeCache);
 
    if (xxPrintCodeCacheArgIndex > xxDisablePrintCodeCacheArgIndex)
       {
@@ -1790,8 +1811,8 @@ bool J9::Options::preProcessCodeCacheXlpCodeCache(J9JavaVM *vm, J9JITConfig *jit
       UDATA requestedLargeCodePageFlags = J9PORT_VMEM_PAGE_FLAG_NOT_USED;
       UDATA largePageSize = 0;
       UDATA largePageFlags = 0;
-      int32_t xlpCodeCacheIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xlpcodecache], NULL);
-      int32_t xlpIndex = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xlp], NULL);
+      int32_t xlpCodeCacheIndex = J9::Options::getExternalOptionIndex(J9::ExternalOptions::Xlpcodecache);
+      int32_t xlpIndex = J9::Options::getExternalOptionIndex(J9::ExternalOptions::Xlp);
 
       // Parse -Xlp:codecache:pagesize=<size> as the right most option
       if (xlpCodeCacheIndex > xlpIndex)
@@ -2122,11 +2143,11 @@ bool J9::Options::preProcessCodeCache(J9JavaVM *vm, J9JITConfig *jitConfig)
    PORT_ACCESS_FROM_JAVAVM(vm);
    OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
 
-   const char *ccOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::Xcodecache];
-   int32_t argIndex = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, ccOption, 0);
+   int32_t argIndex = J9::Options::getExternalOptionIndex(J9::ExternalOptions::Xcodecache);
    if (argIndex >= 0)
       {
       UDATA ccSize;
+      const char *ccOption = J9::Options::getExternalOptionString(J9::ExternalOptions::Xcodecache);
       GET_MEMORY_VALUE(argIndex, ccOption, ccSize);
       ccSize >>= 10;
       jitConfig->codeCacheKB = ccSize;
@@ -2146,11 +2167,11 @@ bool J9::Options::preProcessCodeCache(J9JavaVM *vm, J9JITConfig *jitConfig)
 
 void J9::Options::preProcessSamplingExpirationTime(J9JavaVM *vm)
    {
-   const char *samplingOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XsamplingExpirationTime];
-   int32_t argIndex = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, samplingOption, 0);
+   int32_t argIndex = J9::Options::getExternalOptionIndex(J9::ExternalOptions::XsamplingExpirationTime);
    if (argIndex >= 0)
       {
       UDATA expirationTime;
+      const char *samplingOption = J9::Options::getExternalOptionString(J9::ExternalOptions::XsamplingExpirationTime);
       IDATA ret = GET_INTEGER_VALUE(argIndex, samplingOption, expirationTime);
       if (ret == OPTION_OK)
          _samplingThreadExpirationTime = expirationTime;
@@ -2164,11 +2185,11 @@ void J9::Options::preProcessCompilationThreads(J9JavaVM *vm, J9JITConfig *jitCon
       {
       notYetParsed = false;
       TR::CompilationInfo *compInfo = getCompilationInfo(jitConfig);
-      const char *compThreadsOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XcompilationThreads];
-      int32_t argIndex = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, compThreadsOption, 0);
+      int32_t argIndex = J9::Options::getExternalOptionIndex(J9::ExternalOptions::XcompilationThreads);
       if (argIndex >= 0)
          {
          UDATA numCompThreads;
+         const char *compThreadsOption = J9::Options::getExternalOptionString(J9::ExternalOptions::XcompilationThreads);
          IDATA ret = GET_INTEGER_VALUE(argIndex, compThreadsOption, numCompThreads);
 
          if (ret == OPTION_OK && numCompThreads > 0)
@@ -2207,8 +2228,8 @@ void J9::Options::preProcessTLHPrefetch(J9JavaVM *vm)
       preferTLHPrefetch = false;
       }
 
-   IDATA notlhPrefetch = FIND_ARG_IN_VMARGS(EXACT_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::XnotlhPrefetch], 0);
-   IDATA tlhPrefetch = FIND_ARG_IN_VMARGS(EXACT_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::XtlhPrefetch], 0);
+   IDATA notlhPrefetch = J9::Options::getExternalOptionIndex(J9::ExternalOptions::XnotlhPrefetch);
+   IDATA tlhPrefetch = J9::Options::getExternalOptionIndex(J9::ExternalOptions::XtlhPrefetch);
    if (preferTLHPrefetch)
       {
       if (notlhPrefetch <= tlhPrefetch)
@@ -2271,12 +2292,12 @@ void J9::Options::preProcessDeterministicMode(J9JavaVM *vm)
    // Process the deterministic mode
    if (TR::Options::_deterministicMode == -1) // not yet set
       {
-      const char *deterministicOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXdeterministic];
       const UDATA MAX_DETERMINISTIC_MODE = 9; // only levels 0-9 are allowed
-      int32_t argIndex = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, deterministicOption, 0);
+      int32_t argIndex = J9::Options::getExternalOptionIndex(J9::ExternalOptions::XXdeterministic);
       if (argIndex >= 0)
          {
          UDATA deterministicMode;
+         const char *deterministicOption = J9::Options::getExternalOptionString(J9::ExternalOptions::XXdeterministic);
          IDATA ret = GET_INTEGER_VALUE(argIndex, deterministicOption, deterministicMode);
          if (ret == OPTION_OK && deterministicMode <= MAX_DETERMINISTIC_MODE)
             {
@@ -2305,18 +2326,16 @@ bool J9::Options::preProcessJitServer(J9JavaVM *vm, J9JITConfig *jitConfig)
          // It can be overridden with -XX:JITServerTimeout= option in JITServerParseCommonOptions().
          compInfo->getPersistentInfo()->setSocketTimeout(DEFAULT_JITSERVER_TIMEOUT);
 
-         const char *xxEnableHealthProbes  = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXplusHealthProbes];
-         const char *xxDisableHealthProbes = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXminusHealthProbes];
-         int32_t xxEnableProbesArgIndex  = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxEnableHealthProbes, 0);
-         int32_t xxDisableProbesArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxDisableHealthProbes, 0);
+         int32_t xxEnableProbesArgIndex  = J9::Options::getExternalOptionIndex(J9::ExternalOptions::XXplusHealthProbes);
+         int32_t xxDisableProbesArgIndex = J9::Options::getExternalOptionIndex(J9::ExternalOptions::XXminusHealthProbes);
          if (xxEnableProbesArgIndex >= xxDisableProbesArgIndex) // probes are enabled by default
             {
             // Default port is already set at 38600; see if the user wants to change that
-            const char *xxJITServerHealthPortOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXJITServerHealthProbePortOption];
-            int32_t xxJITServerHealthPortArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerHealthPortOption, 0);
+            int32_t xxJITServerHealthPortArgIndex = J9::Options::getExternalOptionIndex(J9::ExternalOptions::XXJITServerHealthProbePortOption);
             if (xxJITServerHealthPortArgIndex >= 0)
                {
                UDATA port = 0;
+               const char *xxJITServerHealthPortOption = J9::Options::getExternalOptionString(J9::ExternalOptions::XXJITServerHealthProbePortOption);
                IDATA ret = GET_INTEGER_VALUE(xxJITServerHealthPortArgIndex, xxJITServerHealthPortOption, port);
                if (ret == OPTION_OK)
                   compInfo->getPersistentInfo()->setJITServerHealthPort(port);
@@ -2328,28 +2347,24 @@ bool J9::Options::preProcessJitServer(J9JavaVM *vm, J9JITConfig *jitConfig)
             }
 
          // Check if we should open the port for the MetricsServer
-         const char *xxEnableMetricsServer  = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXplusMetricsServer];
-         const char *xxDisableMetricsServer = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXminusMetricsServer];
-         int32_t xxEnableMetricsServerArgIndex  = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxEnableMetricsServer, 0);
-         int32_t xxDisableMetricsServerArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxDisableMetricsServer, 0);
+         int32_t xxEnableMetricsServerArgIndex  = J9::Options::getExternalOptionIndex(J9::ExternalOptions::XXplusMetricsServer);
+         int32_t xxDisableMetricsServerArgIndex = J9::Options::getExternalOptionIndex(J9::ExternalOptions::XXminusMetricsServer);
          if (xxEnableMetricsServerArgIndex > xxDisableMetricsServerArgIndex)
             {
             // Default port is already set at 38500; see if the user wants to change that
-            const char *xxJITServerMetricsPortOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXJITServerMetricsPortOption];
-            int32_t xxJITServerMetricsPortArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerMetricsPortOption, 0);
+            int32_t xxJITServerMetricsPortArgIndex = J9::Options::getExternalOptionIndex(J9::ExternalOptions::XXJITServerMetricsPortOption);
             if (xxJITServerMetricsPortArgIndex >= 0)
                {
                UDATA port = 0;
+               const char *xxJITServerMetricsPortOption = J9::Options::getExternalOptionString(J9::ExternalOptions::XXJITServerMetricsPortOption);
                IDATA ret = GET_INTEGER_VALUE(xxJITServerMetricsPortArgIndex, xxJITServerMetricsPortOption, port);
                if (ret == OPTION_OK)
                   compInfo->getPersistentInfo()->setJITServerMetricsPort(port);
                }
 
             // For optional metrics server encryption. Key and cert have to be set as a pair.
-            const char *xxJITServerMetricsSSLKeyOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXJITServerMetricsSSLKeyOption];
-            const char *xxJITServerMetricsSSLCertOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXJITServerMetricsSSLCertOption];
-            int32_t xxJITServerMetricsSSLKeyArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerMetricsSSLKeyOption, 0);
-            int32_t xxJITServerMetricsSSLCertArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerMetricsSSLCertOption, 0);
+            int32_t xxJITServerMetricsSSLKeyArgIndex = J9::Options::getExternalOptionIndex(J9::ExternalOptions::XXJITServerMetricsSSLKeyOption);
+            int32_t xxJITServerMetricsSSLCertArgIndex = J9::Options::getExternalOptionIndex(J9::ExternalOptions::XXJITServerMetricsSSLCertOption);
 
             if ((xxJITServerMetricsSSLKeyArgIndex >= 0) && (xxJITServerMetricsSSLCertArgIndex >= 0))
                {
@@ -2378,11 +2393,8 @@ bool J9::Options::preProcessJitServer(J9JavaVM *vm, J9JITConfig *jitConfig)
             }
 
          // Check if cached ROM classes should be shared between clients
-         const char *xxJITServerShareROMClassesOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXplusJITServerShareROMClassesOption];
-         const char *xxDisableJITServerShareROMClassesOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXminusJITServerShareROMClassesOption];
-
-         int32_t xxJITServerShareROMClassesArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxJITServerShareROMClassesOption, 0);
-         int32_t xxDisableJITServerShareROMClassesArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxDisableJITServerShareROMClassesOption, 0);
+         int32_t xxJITServerShareROMClassesArgIndex = J9::Options::getExternalOptionIndex(J9::ExternalOptions::XXplusJITServerShareROMClassesOption);
+         int32_t xxDisableJITServerShareROMClassesArgIndex = J9::Options::getExternalOptionIndex(J9::ExternalOptions::XXminusJITServerShareROMClassesOption);
          if (xxJITServerShareROMClassesArgIndex > xxDisableJITServerShareROMClassesArgIndex)
             {
             _shareROMClasses = true;
@@ -2393,17 +2405,14 @@ bool J9::Options::preProcessJitServer(J9JavaVM *vm, J9JITConfig *jitConfig)
             }
 
          // Check if the JITServer AOT cache persistence feature is enabled
-         const char *xxJITServerAOTCachePersistenceOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXplusJITServerAOTCachePersistenceOption];
-         const char *xxDisableJITServerAOTCachePersistenceOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXminusJITServerAOTCachePersistenceOption];
-         int32_t xxJITServerAOTCachePersistenceArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxJITServerAOTCachePersistenceOption, 0);
-         int32_t xxDisableJITServerAOTCachePersistenceArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxDisableJITServerAOTCachePersistenceOption, 0);
+         int32_t xxJITServerAOTCachePersistenceArgIndex = J9::Options::getExternalOptionIndex(J9::ExternalOptions::XXplusJITServerAOTCachePersistenceOption);
+         int32_t xxDisableJITServerAOTCachePersistenceArgIndex = J9::Options::getExternalOptionIndex(J9::ExternalOptions::XXminusJITServerAOTCachePersistenceOption);
          if (xxJITServerAOTCachePersistenceArgIndex > xxDisableJITServerAOTCachePersistenceArgIndex)
             {
             compInfo->getPersistentInfo()->setJITServerUseAOTCachePersistence(true);
 
             // If enabled, get the name of the directory where the AOT cache files will be stored
-            const char *xxJITServerAOTCacheDirOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXJITServerAOTCacheDirOption];
-            int32_t xxJITServerAOTCacheDirArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerAOTCacheDirOption, 0);
+            int32_t xxJITServerAOTCacheDirArgIndex = J9::Options::getExternalOptionIndex(J9::ExternalOptions::XXJITServerAOTCacheDirOption);
             if (xxJITServerAOTCacheDirArgIndex >= 0)
                {
                char *directory = NULL;
@@ -2416,11 +2425,8 @@ bool J9::Options::preProcessJitServer(J9JavaVM *vm, J9JITConfig *jitConfig)
          {
          // Check option -XX:+UseJITServer
          // -XX:-UseJITServer disables JITServer at the client
-         const char *xxUseJITServerOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXplusUseJITServerOption];
-         const char *xxDisableUseJITServerOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXminusUseJITServerOption];
-
-         int32_t xxUseJITServerArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxUseJITServerOption, 0);
-         int32_t xxDisableUseJITServerArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxDisableUseJITServerOption, 0);
+         int32_t xxUseJITServerArgIndex = J9::Options::getExternalOptionIndex(J9::ExternalOptions::XXplusUseJITServerOption);
+         int32_t xxDisableUseJITServerArgIndex = J9::Options::getExternalOptionIndex(J9::ExternalOptions::XXminusUseJITServerOption);
 
          bool useJitServerExplicitlySpecified = xxUseJITServerArgIndex > xxDisableUseJITServerArgIndex;
 
@@ -2455,19 +2461,15 @@ bool J9::Options::preProcessJitServer(J9JavaVM *vm, J9JITConfig *jitConfig)
             compInfo->getPersistentInfo()->setSocketTimeout(DEFAULT_JITCLIENT_TIMEOUT);
 
             // Check if the technology preview message should be displayed.
-            const char *xxJITServerTechPreviewMessageOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXplusJITServerTechPreviewMessageOption];
-            const char *xxDisableJITServerTechPreviewMessageOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXminusJITServerTechPreviewMessageOption];
-
-            int32_t xxJITServerTechPreviewMessageArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxJITServerTechPreviewMessageOption, 0);
-            int32_t xxDisableJITServerTechPreviewMessageArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxDisableJITServerTechPreviewMessageOption, 0);
+            int32_t xxJITServerTechPreviewMessageArgIndex = J9::Options::getExternalOptionIndex(J9::ExternalOptions::XXplusJITServerTechPreviewMessageOption);
+            int32_t xxDisableJITServerTechPreviewMessageArgIndex = J9::Options::getExternalOptionIndex(J9::ExternalOptions::XXminusJITServerTechPreviewMessageOption);
 
             if (xxJITServerTechPreviewMessageArgIndex > xxDisableJITServerTechPreviewMessageArgIndex)
                {
                j9tty_printf(PORTLIB, "JITServer is currently a technology preview. Its use is not yet supported\n");
                }
 
-            const char *xxJITServerAddressOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXJITServerAddressOption];
-            int32_t xxJITServerAddressArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerAddressOption, 0);
+            int32_t xxJITServerAddressArgIndex = J9::Options::getExternalOptionIndex(J9::ExternalOptions::XXJITServerAddressOption);
 
             if (xxJITServerAddressArgIndex >= 0)
                {
@@ -2476,8 +2478,7 @@ bool J9::Options::preProcessJitServer(J9JavaVM *vm, J9JITConfig *jitConfig)
                compInfo->getPersistentInfo()->setJITServerAddress(address);
                }
 
-            const char *xxJITServerAOTCacheNameOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXJITServerAOTCacheNameOption];
-            int32_t xxJITServerAOTCacheNameArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerAOTCacheNameOption, 0);
+            int32_t xxJITServerAOTCacheNameArgIndex = J9::Options::getExternalOptionIndex(J9::ExternalOptions::XXJITServerAOTCacheNameOption);
 
             if (xxJITServerAOTCacheNameArgIndex >= 0)
                {
@@ -2486,28 +2487,20 @@ bool J9::Options::preProcessJitServer(J9JavaVM *vm, J9JITConfig *jitConfig)
                compInfo->getPersistentInfo()->setJITServerAOTCacheName(name);
                }
 
-            const char *xxJITServerAOTCacheDelayMethodRelocation =
-               J9::Options::_externalOptionStrings[J9::ExternalOptions::XXplusJITServerAOTCacheDelayMethodRelocation];
-            const char *xxDisableJITServerAOTCacheDelayMethodRelocation =
-               J9::Options::_externalOptionStrings[J9::ExternalOptions::XXminusJITServerAOTCacheDelayMethodRelocation];
             int32_t xxJITServerAOTCacheDelayMethodRelocationArgIndex =
-               FIND_ARG_IN_VMARGS(EXACT_MATCH, xxJITServerAOTCacheDelayMethodRelocation, 0);
+               J9::Options::getExternalOptionIndex(J9::ExternalOptions::XXplusJITServerAOTCacheDelayMethodRelocation);
             int32_t xxDisableJITServerAOTCacheDelayMethodRelocationArgIndex =
-               FIND_ARG_IN_VMARGS(EXACT_MATCH, xxDisableJITServerAOTCacheDelayMethodRelocation, 0);
+               J9::Options::getExternalOptionIndex(J9::ExternalOptions::XXminusJITServerAOTCacheDelayMethodRelocation);
 
             if (xxJITServerAOTCacheDelayMethodRelocationArgIndex > xxDisableJITServerAOTCacheDelayMethodRelocationArgIndex)
                {
                compInfo->getPersistentInfo()->setJITServerAOTCacheDelayMethodRelocation(true);
                }
 
-            const char *xxJITServerAOTCacheIgnoreLocalSCC =
-               J9::Options::_externalOptionStrings[J9::ExternalOptions::XXplusJITServerAOTCacheIgnoreLocalSCC];
-            const char *xxDisableJITServerAOTCacheIgnoreLocalSCC =
-               J9::Options::_externalOptionStrings[J9::ExternalOptions::XXminusJITServerAOTCacheIgnoreLocalSCC];
             int32_t xxJITServerAOTCacheIgnoreLocalSCCArgIndex =
-               FIND_ARG_IN_VMARGS(EXACT_MATCH, xxJITServerAOTCacheIgnoreLocalSCC, 0);
+               J9::Options::getExternalOptionIndex(J9::ExternalOptions::XXplusJITServerAOTCacheIgnoreLocalSCC);
             int32_t xxDisableJITServerAOTCacheIgnoreLocalSCCArgIndex =
-               FIND_ARG_IN_VMARGS(EXACT_MATCH, xxDisableJITServerAOTCacheIgnoreLocalSCC, 0);
+               J9::Options::getExternalOptionIndex(J9::ExternalOptions::XXminusJITServerAOTCacheIgnoreLocalSCC);
 
             if (xxDisableJITServerAOTCacheIgnoreLocalSCCArgIndex > xxJITServerAOTCacheIgnoreLocalSCCArgIndex)
                {
@@ -2596,11 +2589,11 @@ J9::Options::fePreProcess(void * base)
       bool forceSuffixLogs = true;
    #endif
 
-   const char *xxLateSCCDisclaimTimeOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXLateSCCDisclaimTimeOption];
-   int32_t xxLateSCCDisclaimTime = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxLateSCCDisclaimTimeOption, 0);
+   int32_t xxLateSCCDisclaimTime = J9::Options::getExternalOptionIndex(J9::ExternalOptions::XXLateSCCDisclaimTimeOption);
    if (xxLateSCCDisclaimTime >= 0)
       {
       UDATA disclaimMs = 0;
+      const char *xxLateSCCDisclaimTimeOption = J9::Options::getExternalOptionString(J9::ExternalOptions::XXLateSCCDisclaimTimeOption);
       IDATA ret = GET_INTEGER_VALUE(xxLateSCCDisclaimTime, xxLateSCCDisclaimTimeOption, disclaimMs);
       if (ret == OPTION_OK)
          {
@@ -2613,8 +2606,8 @@ J9::Options::fePreProcess(void * base)
       self()->setOption(TR_EnableSharedCacheDisclaiming);
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
-   int32_t xxEnableTrackAOTDependenciesArgIndex  = FIND_ARG_IN_VMARGS(EXACT_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::XXplusTrackAOTDependencies], 0);
-   int32_t xxDisableTrackAOTDependenciesArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::XXminusTrackAOTDependencies], 0);
+   int32_t xxEnableTrackAOTDependenciesArgIndex  = J9::Options::getExternalOptionIndex(J9::ExternalOptions::XXplusTrackAOTDependencies);
+   int32_t xxDisableTrackAOTDependenciesArgIndex = J9::Options::getExternalOptionIndex(J9::ExternalOptions::XXminusTrackAOTDependencies);
    if (xxEnableTrackAOTDependenciesArgIndex > xxDisableTrackAOTDependenciesArgIndex)
       {
       compInfo->getPersistentInfo()->setTrackAOTDependencies(true);
@@ -2661,7 +2654,7 @@ J9::Options::fePreProcess(void * base)
 
    self()->preProcessMmf(vm, jitConfig);
 
-   if (FIND_ARG_IN_VMARGS(EXACT_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xnoclassgc], 0) >= 0)
+   if (J9::Options::getExternalOptionIndex(J9::ExternalOptions::Xnoclassgc) >= 0)
       self()->setOption(TR_NoClassGC);
 
    self()->preProcessMode(vm, jitConfig);
@@ -2954,9 +2947,8 @@ J9::Options::fePostProcessJIT(void * base)
       TR::Options::disableMemoryDisclaimIfNeeded(jitConfig);
       }
 
-   const char *ccOption = J9::Options::_externalOptionStrings[J9::ExternalOptions::Xcodecache];
    J9JavaVM *vm = javaVM; // needed by FIND_ARG_IN_VMARGS macro
-   int32_t argIndex = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, ccOption, 0);
+   int32_t argIndex = J9::Options::getExternalOptionIndex(J9::ExternalOptions::Xcodecache);
 
    if (argIndex >= 0)
       {
@@ -3392,10 +3384,8 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
    // The FIND_ARG_IN_VMARGS macro expect the J9JavaVM to be in the `vm` variable, instead of `javaVM`
    // The method uses the `vm` variable for the TR_J9VMBase
    J9JavaVM * vm = javaVM;
-   const char *xxIProfileDuringStartupPhase  = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXplusIProfileDuringStartupPhase];
-   const char *xxDisableIProfileDuringStartupPhase = J9::Options::_externalOptionStrings[J9::ExternalOptions::XXminusIProfileDuringStartupPhase];
-   int32_t xxIProfileDuringStartupPhaseArgIndex  = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxIProfileDuringStartupPhase, 0);
-   int32_t xxDisableIProfileDuringStartupPhaseArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxDisableIProfileDuringStartupPhase, 0);
+   int32_t xxIProfileDuringStartupPhaseArgIndex  = J9::Options::getExternalOptionIndex(J9::ExternalOptions::XXplusIProfileDuringStartupPhase);
+   int32_t xxDisableIProfileDuringStartupPhaseArgIndex = J9::Options::getExternalOptionIndex(J9::ExternalOptions::XXminusIProfileDuringStartupPhase);
    if (xxIProfileDuringStartupPhaseArgIndex > xxDisableIProfileDuringStartupPhaseArgIndex)
       self()->setOption(TR_NoIProfilerDuringStartupPhase, false); // Override -Xjit:noIProfilerDuringStartupPhase
    else if (xxDisableIProfileDuringStartupPhaseArgIndex >= 0)
