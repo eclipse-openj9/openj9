@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright IBM Corp. and others 1991
+ * Copyright IBM Corp. and others 2025
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,47 +21,41 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
-#if !defined(MARKINGSCHEMEROOTMARKER_HPP_)
-#define MARKINGSCHEMEROOTMARKER_HPP_
+/**
+ * @file
+ * @ingroup GC_Structs
+ */
 
 #include "j9.h"
-
-#include "RootScanner.hpp"
-
-class MM_MarkingScheme;
-class MM_MarkingDelegate;
-
-class MM_MarkingSchemeRootMarker : public MM_RootScanner
-{
-/* Data members & types */
-public:
-protected:
-private:
-	MM_MarkingScheme *_markingScheme;
-	MM_MarkingDelegate *_markingDelegate;
-
-/* Methods */
-public:
-	MM_MarkingSchemeRootMarker(MM_EnvironmentBase *env, MM_MarkingScheme *markingScheme, MM_MarkingDelegate *markingDelegate) :
-		  MM_RootScanner(env)
-		, _markingScheme(markingScheme)
-		, _markingDelegate(markingDelegate)
-	{
-		_typeId = __FUNCTION__;
-	};
-
-	virtual void doSlot(omrobjectptr_t *slotPtr);
-	virtual void doStackSlot(omrobjectptr_t *slotPtr, void *walkState, const void* stackLocation);
+#include "j9cfg.h"
 #if JAVA_SPEC_VERSION >= 24
-	virtual void doContinuationSlot(J9Object **slotPtr, GC_ContinuationSlotIterator *continuationSlotIterator);
+#include "ContinuationSlotIterator.hpp"
+
+/**
+ * @return the next slot in the J9VMContinuation
+ * @return NULL if there are no more such slots
+ */
+j9object_t *
+GC_ContinuationSlotIterator::nextSlot()
+{
+	j9object_t *ret = NULL;
+	if (NULL != _monitorRecord) {
+		J9MonitorEnterRecord *currentMonitorRecord = _monitorRecord;
+		_monitorRecord = currentMonitorRecord->next;
+		_state = state_monitor_records;
+		ret = &currentMonitorRecord->object;
+	} else if (NULL != _jniMonitorRecord) {
+		J9MonitorEnterRecord *currentMonitorRecord = _jniMonitorRecord;
+		_jniMonitorRecord = currentMonitorRecord->next;
+		_state = state_monitor_records;
+		ret = &currentMonitorRecord->object;
+	} else if (NULL != _vthread) {
+		_state = state_vthread;
+		ret = _vthread;
+		_vthread = NULL;
+	} else {
+		_state = state_end;
+	}
+	return ret;
+}
 #endif /* JAVA_SPEC_VERSION >= 24 */
-	virtual void doVMThreadSlot(omrobjectptr_t *slotPtr, GC_VMThreadIterator *vmThreadIterator);
-	virtual void doClass(J9Class *clazz);
-	virtual void doClassLoader(J9ClassLoader *classLoader);
-	virtual void doFinalizableObject(omrobjectptr_t object);
-
-protected:
-private:
-};
-
-#endif /* MARKINGSCHEMEROOTMARKER_HPP_ */
