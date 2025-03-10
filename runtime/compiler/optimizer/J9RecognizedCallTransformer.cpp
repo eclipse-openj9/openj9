@@ -314,19 +314,6 @@ void J9::RecognizedCallTransformer::process_java_lang_StringLatin1_inflate_BIBII
    TR::Node *dstOff = node->getChild(3);
    TR::Node *length = node->getChild(4);
 
-   TR::Node *hdrSize = createHdrSizeNode(comp(), node);
-
-   TR::Node *strideNode;
-   if (is64BitTarget)
-      {
-      strideNode = TR::Node::create(node, TR::lconst);
-      strideNode->setLongInt(2);
-      }
-   else
-      {
-      strideNode = TR::Node::create(node, TR::iconst, 0, 2);
-      }
-
    TR::Node *arrayTranslateNode = TR::Node::create(node, TR::arraytranslate, 6);
    arrayTranslateNode->setSourceIsByteArrayTranslate(true);
    arrayTranslateNode->setTargetIsByteArrayTranslate(false);
@@ -335,42 +322,11 @@ void J9::RecognizedCallTransformer::process_java_lang_StringLatin1_inflate_BIBII
    arrayTranslateNode->setTableBackedByRawStorage(true);
    arrayTranslateNode->setSymbolReference(comp()->getSymRefTab()->findOrCreateArrayTranslateSymbol());
 
-   TR::Node *srcAddr, *dstAddr;
+   TR::Node *tmpNode = TR::TransformUtil::generateConvertArrayElementIndexToOffsetTrees(comp(), srcOff, NULL, 1, false);
+   TR::Node *srcAddr = TR::TransformUtil::generateArrayElementAddressTrees(comp(), srcObj, tmpNode);
+   tmpNode = TR::TransformUtil::generateConvertArrayElementIndexToOffsetTrees(comp(), dstOff, NULL, 2, false);
+   TR::Node *dstAddr = TR::TransformUtil::generateArrayElementAddressTrees(comp(), dstObj, tmpNode);
 
-#if defined(OMR_GC_SPARSE_HEAP_ALLOCATION)
-   if (TR::Compiler->om.isOffHeapAllocationEnabled())
-      {
-      dstOff = TR::TransformUtil::generateConvertArrayElementIndexToOffsetTrees(comp(), dstOff, strideNode, 0, false);
-      srcAddr = TR::TransformUtil::generateArrayElementAddressTrees(comp(), srcObj, srcOff);
-      dstAddr = TR::TransformUtil::generateArrayElementAddressTrees(comp(), dstObj, dstOff);
-      }
-   else
-#endif /* OMR_GC_SPARSE_HEAP_ALLOCATION */
-      {
-      TR::Node *tmpNode;
-      if (is64BitTarget)
-         {
-         tmpNode = TR::Node::create(node, TR::i2l, 1, srcOff);
-         tmpNode = TR::Node::create(node, TR::ladd, 2, tmpNode, hdrSize);
-         }
-      else
-         {
-         tmpNode = TR::Node::create(node, TR::iadd, 2, srcOff, hdrSize);
-         }
-      srcAddr = TR::Node::create(node, is64BitTarget ? TR::aladd : TR::aiadd, 2, srcObj, tmpNode);
-
-      if (is64BitTarget)
-         {
-         tmpNode = TR::Node::create(node, TR::i2l, 1, dstOff);
-         tmpNode = TR::Node::create(node, TR::lmul, 2, tmpNode, strideNode);
-         }
-      else
-         {
-         tmpNode = TR::Node::create(node, TR::imul, 2, dstOff, strideNode);
-         }
-      tmpNode = TR::Node::create(node, is64BitTarget ? TR::ladd : TR::iadd, 2, tmpNode, hdrSize);
-      dstAddr = TR::Node::create(node, is64BitTarget ? TR::aladd : TR::aiadd, 2, dstObj, tmpNode);
-      }
    TR::Node *termCharNode = TR::Node::create(node, TR::iconst, 0, 0xffff); // mask for ISO 8859-1 decoder
    TR::Node *tableNode = TR::Node::create(node, TR::iconst, 0, 0); // dummy table node
    TR::Node *stoppingNode = TR::Node::create(node, TR::iconst, 0, -1); // dummy stop index node
