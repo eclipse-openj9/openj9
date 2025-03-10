@@ -404,6 +404,13 @@ MM_ConfigurationIncrementalGenerational::tearDown(MM_EnvironmentBase *env)
 	}
 #endif /* defined(OMR_GC_VLHGC_CONCURRENT_COPY_FORWARD) */
 
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+	if (NULL != extensions->largeObjectVirtualMemory) {
+		extensions->largeObjectVirtualMemory->kill(env);
+		extensions->largeObjectVirtualMemory = NULL;
+	}
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
+
 	MM_Configuration::tearDown(env);
 
 	// cleanup after extensions->heapRegionManager
