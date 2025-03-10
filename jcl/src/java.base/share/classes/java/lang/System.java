@@ -1043,7 +1043,6 @@ public static String getProperty(String prop, String defaultValue) {
 
 	if (!propertiesInitialized
 			&& !prop.equals("com.ibm.IgnoreMalformedInput") //$NON-NLS-1$
-			&& !prop.equals("file.encoding.pkg") //$NON-NLS-1$
 			&& !prop.equals("sun.nio.cs.map") //$NON-NLS-1$
 	) {
 		/*[IF JAVA_SPEC_VERSION >= 17]*/
