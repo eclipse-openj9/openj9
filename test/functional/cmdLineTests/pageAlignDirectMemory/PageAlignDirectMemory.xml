@@ -26,9 +26,9 @@
 
 <suite id="PageAlignDirectMemory Command-Line Option Tests" timeout="2400">
 
- <variable name="SUNPROP_TRUE" value="j9jcl.352      - systemPropertyIterator: added VM system property 'sun.nio.PageAlignDirectMemory'='true'" />
- <variable name="SUNPROP_FALSE" value="j9jcl.352      - systemPropertyIterator: added VM system property 'sun.nio.PageAlignDirectMemory'='false'" />
- <variable name="CLASS" value="-Xtrace:print={j9jcl.352} -cp $Q$$RESJAR$$Q$ SystemProperties" />
+ <variable name="SUNPROP_TRUE" value="j9vm.791      - systemPropertyIterator: added VM system property 'sun.nio.PageAlignDirectMemory'='true'" />
+ <variable name="SUNPROP_FALSE" value="j9vm.791      - systemPropertyIterator: added VM system property 'sun.nio.PageAlignDirectMemory'='false'" />
+ <variable name="CLASS" value="-Xtrace:print={j9vm.791} -cp $Q$$RESJAR$$Q$ SystemProperties" />
 
  <variable name="ALIGNED" value="-XX:+PageAlignDirectMemory" />
  <variable name="UNALIGNED" value="-XX:-PageAlignDirectMemory" />
