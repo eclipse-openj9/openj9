@@ -4335,6 +4335,14 @@ setSystemPropertyValue(J9JavaVM * vm, J9VMSystemProperty * property, char * newV
  */
 UDATA
 addSystemProperty(J9JavaVM * vm, const char* propName,  const char* propValue, UDATA flags);
+
+/**
+ * @brief Get the default system properties.
+ *
+ * @return an Object array of system property key value pairs
+ */
+jobjectArray getSystemPropertyList(JNIEnv *env);
+
 /* ---------------- vmruntimestate.c ---------------- */
 
 /**

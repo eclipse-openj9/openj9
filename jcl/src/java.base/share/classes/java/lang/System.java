@@ -65,8 +65,10 @@ import com.ibm.jvm.io.ConsolePrintStream;
 
 /*[IF JAVA_SPEC_VERSION >= 20]*/
 import java.lang.reflect.Field;
-import jdk.internal.util.SystemProps;
 /*[ENDIF] JAVA_SPEC_VERSION >= 20 */
+/*[IF JAVA_SPEC_VERSION >= 17]*/
+import jdk.internal.util.SystemProps;
+/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 
 /*[IF JAVA_SPEC_VERSION >= 24]*/
 import java.net.URL;
@@ -152,11 +154,8 @@ public final class System {
 	private static final int sysPropID_OSEncoding = 3;
 	private static String osEncoding;
 
-	private static final int sysPropID_DefaultTmpDir = 4;
-	private static String defaultTmpDir;
-
 	/*[IF (JAVA_SPEC_VERSION >= 21) & (PLATFORM-mz31 | PLATFORM-mz64)]*/
-	private static final int sysPropID_zOSAutoConvert = 5;
+	private static final int sysPropID_zOSAutoConvert = 4;
 	private static String zOSAutoConvert;
 	/*[ENDIF] (JAVA_SPEC_VERSION >= 21) & (PLATFORM-mz31 | PLATFORM-mz64) */
 
@@ -172,10 +171,6 @@ public final class System {
 	 */
 	private static Charset consoleDefaultCharset;
 	/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
-	/*[IF JAVA_SPEC_VERSION >= 19]*/
-	private static String stdoutProp;
-	private static String stderrProp;
-	/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
 
 /*[IF JAVA_SPEC_VERSION >= 9]*/
 	static java.lang.ModuleLayer	bootLayer;
@@ -213,7 +208,6 @@ public final class System {
 		if (osEncoding == null) {
 			osEncoding = definedOSEncoding;
 		}
-		defaultTmpDir = getSysPropBeforePropertiesInitialized(sysPropID_DefaultTmpDir);
 
 		/*[IF (JAVA_SPEC_VERSION >= 21) & (PLATFORM-mz31 | PLATFORM-mz64)]*/
 		/* As part of better handling of JEP400 constraints on z/OS, the com.ibm.autocvt property
@@ -236,7 +230,7 @@ public final class System {
 	 */
 	static Charset getCharset(boolean isStdout, boolean fallback) {
 		/*[IF JAVA_SPEC_VERSION >= 19]*/
-		String primary = isStdout ? stdoutProp : stderrProp;
+		String primary = internalGetProperties().getProperty(isStdout ? "stdout.encoding" : "stderr.encoding"); //$NON-NLS-1$  //$NON-NLS-2$
 		/*[ELSE] JAVA_SPEC_VERSION >= 19 */
 		String primary = internalGetProperties().getProperty(isStdout ? "sun.stdout.encoding" : "sun.stderr.encoding"); //$NON-NLS-1$  //$NON-NLS-2$
 		/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
@@ -279,20 +273,6 @@ public final class System {
 		BufferedOutputStream bufStream = new BufferedOutputStream(new FileOutputStream(desc));
 		Charset consoleCharset = charset == null ? consoleDefaultCharset : charset;
 
-		/*[IF JAVA_SPEC_VERSION >= 19]*/
-		Properties props = internalGetProperties();
-		// If the user didn't set the encoding property, set it now.
-		if (FileDescriptor.out == desc) {
-			if (null == stdoutProp) {
-				props.put("stdout.encoding", consoleCharset.name()); //$NON-NLS-1$
-			}
-		} else if (FileDescriptor.err == desc) {
-			if (null == stderrProp) {
-				props.put("stderr.encoding", consoleCharset.name()); //$NON-NLS-1$
-			}
-		}
-		/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
-
 		/*[IF PLATFORM-mz31 | PLATFORM-mz64]*/
 		return ConsolePrintStream.localize(bufStream, true, consoleCharset);
 		/*[ELSE]*/
@@ -323,12 +303,6 @@ public final class System {
 				setOut(createConsole(FileDescriptor.out, stdoutCharset));
 			}
 		}
-
-		/*[IF JAVA_SPEC_VERSION >= 19]*/
-		// Cache the final system property values so they can be restored if ensureProperties(false) is called.
-		stdoutProp = systemProperties.getProperty("stdout.encoding"); //$NON-NLS-1$
-		stderrProp = systemProperties.getProperty("stderr.encoding"); //$NON-NLS-1$
-		/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
 	}
 	/*[ELSE]*/
 	/*[IF Sidecar18-SE-OpenJ9]*/
@@ -389,9 +363,9 @@ public final class System {
 		// Fill in the properties from the VM information.
 		ensureProperties(true);
 
-		/*[IF JAVA_SPEC_VERSION >= 11]*/
+		/*[IF JAVA_SPEC_VERSION == 11]*/
 		initJCLPlatformEncoding();
-		/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
+		/*[ENDIF] JAVA_SPEC_VERSION == 11 */
 
 		/*[REM] Initialize the JITHelpers needed in J9VMInternals since the class can't do it itself */
 		try {
@@ -729,7 +703,7 @@ private static void ensureProperties(boolean isInitialization) {
 /*[ENDIF] OpenJ9-RawBuild */
 
 /*[IF JAVA_SPEC_VERSION > 11]*/
-	Map<String, String> initializedProperties = new Hashtable<String, String>();
+	Map<String, String> initializedProperties = new HashMap<>();
 /*[ELSE] JAVA_SPEC_VERSION > 11
 	Properties initializedProperties = new Properties();
 /*[ENDIF] JAVA_SPEC_VERSION > 11 */
@@ -741,9 +715,11 @@ private static void ensureProperties(boolean isInitialization) {
 	if (osEncoding != null) {
 		initializedProperties.put("os.encoding", osEncoding); //$NON-NLS-1$
 	}
-	/*[PR The launcher apparently needs sun.jnu.encoding property or it does not work]*/
 	initializedProperties.put("ibm.system.encoding", platformEncoding); //$NON-NLS-1$
+	/*[IF JAVA_SPEC_VERSION < 17]*/
+	/*[PR The launcher apparently needs sun.jnu.encoding property or it does not work]*/
 	initializedProperties.put("sun.jnu.encoding", platformEncoding); //$NON-NLS-1$
+	/*[ENDIF] JAVA_SPEC_VERSION < 17 */
 	/*[IF JAVA_SPEC_VERSION == 8]*/
 	initializedProperties.put("file.encoding.pkg", "sun.io"); //$NON-NLS-1$ //$NON-NLS-2$
 	/*[ENDIF] JJAVA_SPEC_VERSION == 8 */
@@ -769,6 +745,9 @@ private static void ensureProperties(boolean isInitialization) {
 	initializedProperties.put("jfr.unsupported.vm", "true"); //$NON-NLS-1$ //$NON-NLS-2$
 	/*[ENDIF] JFR_SUPPORT */
 
+	/*[IF JAVA_SPEC_VERSION >= 17]*/
+	initializedProperties.putAll(SystemProps.initProperties());
+	/*[ELSE] JAVA_SPEC_VERSION >= 17 */
 	String[] list = getPropertyList();
 	for (int i = 0; i < list.length; i += 2) {
 		String key = list[i];
@@ -779,42 +758,11 @@ private static void ensureProperties(boolean isInitialization) {
 		initializedProperties.put(key, list[i+1]);
 	}
 	initializedProperties.put("file.encoding", fileEncoding); //$NON-NLS-1$
-
-	/*[IF JAVA_SPEC_VERSION >= 17]*/
-	/* Set native.encoding after setting all the defined properties, it can't be modified by using -D on the command line */
-	initializedProperties.put("native.encoding", platformEncoding); //$NON-NLS-1$
 	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 
 	/*[IF (JAVA_SPEC_VERSION >= 21) & (PLATFORM-mz31 | PLATFORM-mz64)]*/
 	initializedProperties.put("com.ibm.autocvt", zOSAutoConvert); //$NON-NLS-1$
 	/*[ENDIF] (JAVA_SPEC_VERSION >= 21) & (PLATFORM-mz31 | PLATFORM-mz64) */
-
-	/*[IF JAVA_SPEC_VERSION >= 19]*/
-	if (null != stdoutProp) {
-		// Reinitialize required properties if ensureProperties(false) is called.
-		initializedProperties.put("stdout.encoding", stdoutProp); //$NON-NLS-1$
-	} else {
-		stdoutProp = initializedProperties.get("stdout.encoding"); //$NON-NLS-1$
-		if (null == stdoutProp) {
-			stdoutProp = initializedProperties.get("sun.stdout.encoding"); //$NON-NLS-1$
-			if (null != stdoutProp) {
-				initializedProperties.put("stdout.encoding", stdoutProp); //$NON-NLS-1$
-			}
-		}
-	}
-	if (null != stderrProp) {
-		// Reinitialize required properties if ensureProperties(false) is called.
-		initializedProperties.put("stderr.encoding", stderrProp); //$NON-NLS-1$
-	} else {
-		stderrProp = initializedProperties.get("stderr.encoding");
-		if (null == stderrProp) { //$NON-NLS-1$
-			stderrProp = initializedProperties.get("sun.stderr.encoding"); //$NON-NLS-1$
-			if (null != stderrProp) {
-				initializedProperties.put("stderr.encoding", stderrProp); //$NON-NLS-1$
-			}
-		}
-	}
-	/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
 
 	/* java.lang.VersionProps.init() eventually calls into System.setProperty() where propertiesInitialized needs to be true */
 	propertiesInitialized = true;
@@ -1088,6 +1036,7 @@ public static String setProperty(String prop, String value) {
 	return (String)systemProperties.setProperty(prop, value);
 }
 
+/*[IF JAVA_SPEC_VERSION < 17]*/
 /**
  * Answers an array of Strings containing key..value pairs
  * (in consecutive array elements) which represent the
@@ -1097,13 +1046,14 @@ public static String setProperty(String prop, String value) {
  * @return		the default values for the system properties.
  */
 private static native String [] getPropertyList();
+/*[ENDIF] JAVA_SPEC_VERSION < 17 */
 
-/*[IF JAVA_SPEC_VERSION >= 11]*/
+/*[IF JAVA_SPEC_VERSION == 11]*/
 /**
  * Invoke JCL native to initialize platform encoding explicitly.
  */
 private static native void initJCLPlatformEncoding();
-/*[ENDIF] JAVA_SPEC_VERSION >= 11 */
+/*[ENDIF] JAVA_SPEC_VERSION == 11 */
 
 /**
  * Before propertiesInitialized is set to true,
@@ -1320,18 +1270,8 @@ public static void setProperties(Properties p) {
 
 static void checkTmpDir() {
 	/*[IF JAVA_SPEC_VERSION >= 20]*/
-	String tmpDir = internalGetProperties().getProperty("java.io.tmpdir"); //$NON-NLS-1$
-	if (!defaultTmpDir.equals(tmpDir)) {
-		try {
-			Field systemProps = SystemProps.class.getDeclaredField("customTmpdir"); //$NON-NLS-1$
-			systemProps.setAccessible(true);
-			systemProps.set(null, tmpDir);
-			if (SystemProps.isBadIoTmpdir()) {
-				System.err.println("WARNING: java.io.tmpdir directory does not exist"); //$NON-NLS-1$
-			}
-		} catch (IllegalAccessException | NoSuchFieldException e) {
-			throw new InternalError(e);
-		}
+	if (SystemProps.isBadIoTmpdir()) {
+		System.err.println("WARNING: java.io.tmpdir directory does not exist"); //$NON-NLS-1$
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
 }
