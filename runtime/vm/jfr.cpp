@@ -177,7 +177,7 @@ areJFRBuffersReadyForWrite(J9VMThread *currentThread)
  * @returns true on success, false on failure
  */
 static bool
-writeOutGlobalBuffer(J9VMThread *currentThread, bool finalWrite)
+writeOutGlobalBuffer(J9VMThread *currentThread, bool finalWrite, bool dumpCalled)
 {
 	J9JavaVM *vm = currentThread->javaVM;
 
@@ -187,7 +187,7 @@ writeOutGlobalBuffer(J9VMThread *currentThread, bool finalWrite)
 #endif /* defined(DEBUG) */
 
 	if (areJFRBuffersReadyForWrite(currentThread)) {
-		VM_JFRWriter::flushJFRDataToFile(currentThread, finalWrite);
+		VM_JFRWriter::flushJFRDataToFile(currentThread, finalWrite, dumpCalled);
 
 		/* Reset the buffer */
 		vm->jfrBuffer.bufferRemaining = vm->jfrBuffer.bufferSize;
@@ -231,7 +231,7 @@ flushBufferToGlobal(J9VMThread *currentThread, J9VMThread *flushThread)
 
 	omrthread_monitor_enter(vm->jfrBufferMutex);
 	if (vm->jfrBuffer.bufferRemaining < bufferSize) {
-		if (!writeOutGlobalBuffer(currentThread, false)) {
+		if (!writeOutGlobalBuffer(currentThread, false, false)) {
 			omrthread_monitor_exit(vm->jfrBufferMutex);
 			success = false;
 			goto done;
@@ -442,7 +442,7 @@ jfrClassesUnload(J9HookInterface **hook, UDATA eventNum, void *eventData, void *
 	 * invalid, so write out all of the available data now.
 	 */
 	flushAllThreadBuffers(currentThread, false);
-	writeOutGlobalBuffer(currentThread, false);
+	writeOutGlobalBuffer(currentThread, false, false);
 }
 
 /**
@@ -477,7 +477,7 @@ jfrVMShutdown(J9HookInterface **hook, UDATA eventNum, void *eventData, void *use
 
 	/* Flush and free all the thread buffers and write out the global buffer */
 	flushAllThreadBuffers(currentThread, true);
-	writeOutGlobalBuffer(currentThread, true);
+	writeOutGlobalBuffer(currentThread, true, false);
 
 	if (acquiredExclusive) {
 		releaseExclusiveVMAccess(currentThread);
@@ -544,7 +544,7 @@ jfrThreadEnd(J9HookInterface **hook, UDATA eventNum, void *eventData, void *user
 	PORT_ACCESS_FROM_VMC(currentThread);
 	acquireExclusiveVMAccess(currentThread);
 	flushAllThreadBuffers(currentThread, false);
-	writeOutGlobalBuffer(currentThread, false);
+	writeOutGlobalBuffer(currentThread, false, false);
 
 	/* Free the thread local buffer */
 	j9mem_free_memory((void*)currentThread->jfrBuffer.bufferStart);
@@ -1194,7 +1194,7 @@ jfrDump(J9VMThread *currentThread, BOOLEAN finalWrite)
 {
 	/* Flush all the thread buffers and write out the global buffer. */
 	flushAllThreadBuffers(currentThread, finalWrite);
-	writeOutGlobalBuffer(currentThread, finalWrite);
+	writeOutGlobalBuffer(currentThread, finalWrite, true);
 }
 
 static UDATA
