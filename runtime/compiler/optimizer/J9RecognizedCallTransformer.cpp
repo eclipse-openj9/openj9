@@ -340,9 +340,9 @@ void J9::RecognizedCallTransformer::process_java_lang_StringLatin1_inflate_BIBII
 #if defined(OMR_GC_SPARSE_HEAP_ALLOCATION)
    if (TR::Compiler->om.isOffHeapAllocationEnabled())
       {
-      dstOff = TR::TransformUtil::generateConvertArrayElementIndexToOffsetTrees(comp(), dstOff, strideNode, 0, false);
+      TR::Node *tmpNode = TR::TransformUtil::generateConvertArrayElementIndexToOffsetTrees(comp(), dstOff, strideNode, 0, false);
       srcAddr = TR::TransformUtil::generateArrayElementAddressTrees(comp(), srcObj, srcOff);
-      dstAddr = TR::TransformUtil::generateArrayElementAddressTrees(comp(), dstObj, dstOff);
+      dstAddr = TR::TransformUtil::generateArrayElementAddressTrees(comp(), dstObj, tmpNode);
       }
    else
 #endif /* OMR_GC_SPARSE_HEAP_ALLOCATION */
