@@ -12036,14 +12036,14 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
          return TR::TreeEvaluator::encodeUTF16Evaluator(node, cg);
 
       case TR::java_lang_String_hashCodeImplDecompressed:
-         if (cg->getSupportsInlineStringHashCode() && !node->getBlock()->isCold())
+         if (cg->getSupportsInlineStringHashCode() && !cg->getCurrentBlock()->isCold())
             returnRegister = inlineStringHashCode(node, false, cg);
 
          callInlined = (returnRegister != NULL);
          break;
 
       case TR::java_lang_String_hashCodeImplCompressed:
-         if (cg->getSupportsInlineStringHashCode() && !node->getBlock()->isCold())
+         if (cg->getSupportsInlineStringHashCode() && !cg->getCurrentBlock()->isCold())
             returnRegister = inlineStringHashCode(node, true, cg);
 
          callInlined = (returnRegister != NULL);
