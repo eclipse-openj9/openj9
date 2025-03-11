@@ -911,7 +911,7 @@ TR_RelocationRuntime::fillAOTHeader(J9JavaVM *vm, TR_FrontEnd *fe, TR_AOTHeader 
 uint32_t
 TR_RelocationRuntime::getCurrentLockwordOptionHashValue(J9JavaVM *vm)
    {
-   IDATA currentLockwordArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, J9::Options::_externalOptionStrings[J9::ExternalOptions::Xlockword], NULL);
+   IDATA currentLockwordArgIndex = J9::Options::getExternalOptionIndex(J9::ExternalOptions::Xlockword);
    uint32_t currentLockwordOptionHashValue = 0;
    if (currentLockwordArgIndex >= 0)
       {
