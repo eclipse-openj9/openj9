@@ -583,64 +583,38 @@ TR_RelocationRecordGroup::checkInliningTable(TR_RelocationRuntime *reloRuntime)
    // after an AOT compilation (disableDelayRelocationForAOTCompilations)
    // then it will be the OMR base implementation, which does no actual
    // tracking.
-   OMR::RetainedMethodSet *root =
-      J9::RetainedMethodSet::create(comp, comp->getMethodBeingCompiled());
+   auto &inliningTable = J9::RetainedMethodSet::copyInliningTable(comp, metadata);
+   OMR::RetainedMethodSet *root = J9::RetainedMethodSet::create(
+      comp, comp->getMethodBeingCompiled(), inliningTable);
 
    TR::vector<OMR::RetainedMethodSet*, TR::Region&> retainedMethods(comp->region());
    retainedMethods.resize(numSites, NULL);
 
-   TR::vector<bool, TR::Region&> needsBond(comp->region());
-   needsBond.resize(numSites, false);
-
    // Build the tree of RetainedMethodSets that would exist during inlining if
-   // this were a regular JIT compilation.
+   // this were a regular JIT compilation and determine bonds.
    for (uint32_t i = 0; i < numSites; i++)
       {
-      auto *site = (TR_InlinedCallSite *)getInlinedCallSiteArrayElement(metadata, i);
-      TR_OpaqueMethodBlock *opaqueCallee = site->_methodInfo;
-      TR_ByteCodeInfo bci = site->_byteCodeInfo;
-
-      int32_t caller = bci.getCallerIndex();
+      J9::ResolvedInlinedCallSite site = inliningTable[i];
+      int32_t caller = site._bci.getCallerIndex();
       OMR::RetainedMethodSet *parent = caller < 0 ? root : retainedMethods[caller];
 
-      // NOTE: Don't attestLinkedCalleeWillRemainLoaded(bci). That would try to
-      // get the inlined site from comp, which doesn't have it. Attesting here
-      // would require some way to make the attestation get the inlined site
-      // from metadata instead. For now, just skip it because it should only
-      // make a difference when an invokehandle/invokedynamic call site adapter
-      // method is inlined. So far (at time of writing), AOT compilations have
-      // only experimental support for resolved invokehandle/invokedynamic,
-      // enabled by a debug option -Xshareclasses:shareLambdaForm. Even if a
-      // call site adapter method is inlined, skipping the attestation will
-      // only cause an unnecessary bond.
+      // NOTE: There are no keepalives because there is not (yet) any support
+      // for the known object table in AOT.
+      OMR::RetainedMethodSet *callSiteSet = parent->withLinkedCalleeAttested(site._bci);
+      OMR::RetainedMethodSet *callTargetSet = callSiteSet;
+      TR_ResolvedMethod *callee = site._method;
+      if (!callTargetSet->willRemainLoaded(callee))
+         {
+         if (restrictInlining)
+            {
+            return TR_RelocationErrorCode::inlinedMethodRelocationFailure;
+            }
 
-      TR_ResolvedMethod *callee = new (comp->trHeapMemory())
-         TR_ResolvedJ9Method(opaqueCallee, comp->fe(), comp->trMemory());
+         callTargetSet = callTargetSet->createChild(callee);
+         callTargetSet->bond();
+         }
 
-      if (parent->willRemainLoaded(callee))
-         {
-         retainedMethods[i] = parent;
-         }
-      else if (restrictInlining)
-         {
-         return TR_RelocationErrorCode::inlinedMethodRelocationFailure;
-         }
-      else
-         {
-         retainedMethods[i] = parent->createChild(callee);
-         needsBond[i] = true;
-         }
-      }
-
-   // Collapse the tree to collect bonds. Iterate in reverse to ensure
-   // that the collapse is bottom-up.
-   for (uint32_t i = numSites; i != 0;)
-      {
-      i--;
-      if (needsBond[i])
-         {
-         retainedMethods[i]->bond();
-         }
+      retainedMethods[i] = callTargetSet;
       }
 
    // Create an assumption for each bond.

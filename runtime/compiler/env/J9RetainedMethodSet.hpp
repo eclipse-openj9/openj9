@@ -24,14 +24,13 @@
 #define J9_RETAINEDMETHODSET_INCL
 
 #include "env/OMRRetainedMethodSet.hpp"
+#include "env/ResolvedInlinedCallSite.hpp"
 #include "infra/set.hpp"
-
-#if defined(J9VM_OPT_JITSERVER)
-#include <vector>
-#endif
+#include "infra/vector.hpp"
 
 struct J9Class;
 struct J9ClassLoader;
+struct J9JITExceptionTable;
 namespace TR { class Compilation; }
 class TR_ResolvedMethod;
 
@@ -47,67 +46,72 @@ class RetainedMethodSet : public OMR::RetainedMethodSet
    {
    private:
 
+   class InliningTable;
+   class CompInliningTable;
+   class VectorInliningTable;
+
    RetainedMethodSet(
       TR::Compilation *comp,
       TR_ResolvedMethod *method,
-      J9::RetainedMethodSet *parent);
+      J9::RetainedMethodSet *parent,
+      InliningTable *inliningTable);
 
    public:
 
-#if defined(J9VM_OPT_JITSERVER)
-   // This is used on the client for collecting any new entries added by scan()
-   // so that they can be sent to the server.
-   struct ScanLog
-      {
-      // NOTE: A single scan will add at most one anonymous class.
-      J9Class *_addedAnonClass; // NULL if none
-      std::vector<J9ClassLoader*> _addedLoaders;
-
-      ScanLog() : _addedAnonClass(NULL) {}
-      };
-#endif
+   static J9::RetainedMethodSet *create(
+      TR::Compilation *comp, TR_ResolvedMethod *method);
 
    static J9::RetainedMethodSet *create(
-      TR::Compilation *comp, TR_ResolvedMethod *method
-#if defined(J9VM_OPT_JITSERVER)
-      , ScanLog *scanLog = NULL
-#endif
-      );
+      TR::Compilation *comp,
+      TR_ResolvedMethod *method,
+      const TR::vector<J9::ResolvedInlinedCallSite, TR::Region&> &inliningTable);
 
-#if defined(J9VM_OPT_JITSERVER)
-   virtual J9::RetainedMethodSet *createChild(TR_ResolvedMethod *method)
-      {
-      return createChild(method, NULL);
-      }
+   static const TR::vector<J9::ResolvedInlinedCallSite, TR::Region&> &
+      copyInliningTable(TR::Compilation *comp, J9JITExceptionTable *metadata);
 
-   J9::RetainedMethodSet *createChild(TR_ResolvedMethod *method, ScanLog *scanLog);
-#else
    virtual J9::RetainedMethodSet *createChild(TR_ResolvedMethod *method);
-#endif
-
-   virtual J9::RetainedMethodSet *withKeepalivesAttested();
 
    virtual bool willRemainLoaded(TR_ResolvedMethod *method);
    bool willRemainLoaded(J9Class *clazz);
    bool willRemainLoaded(J9ClassLoader *loader);
-   virtual void attestLinkedCalleeWillRemainLoaded(TR_ByteCodeInfo bci);
+   virtual J9::RetainedMethodSet *withLinkedCalleeAttested(TR_ByteCodeInfo bci);
    virtual void keepalive();
    virtual void bond();
+   virtual J9::RetainedMethodSet *withKeepalivesAttested();
+   virtual J9::RetainedMethodSet *withBondsAttested();
 
-#if defined(J9VM_OPT_JITSERVER)
-   void scanForClient(J9Class *clazz, ScanLog *scanLog);
-   void *remoteMirror() { return _remoteMirror; }
-#endif
+   // This is protected in OMR::RetainedMethodSet, but it's useful for
+   // J9::RepeatRetainedMethodsAnalysis::analyzeOnClient(), and it doesn't hurt
+   // for it to be public.
+   virtual void *unloadingKey(TR_ResolvedMethod *method);
 
    protected:
+
+   struct KeepalivesAndBonds : public OMR::RetainedMethodSet::KeepalivesAndBonds
+      {
+      // Set contents implied by the keepalives, for withKeepalivesAttested().
+      TR::set<J9ClassLoader*> _keepaliveLoaders;
+      TR::set<J9Class*> _keepaliveAnonClasses;
+
+      // Set contents implied by the bonds, for withBondsAttested().
+      TR::set<J9ClassLoader*> _bondLoaders;
+      TR::set<J9Class*> _bondAnonClasses;
+
+      KeepalivesAndBonds(TR::Region &heapRegion);
+      };
 
    J9::RetainedMethodSet *parent()
       {
       return static_cast<J9::RetainedMethodSet*>(OMR::RetainedMethodSet::parent());
       }
 
-   virtual void mergeIntoParent();
-   virtual void *unloadingKey(TR_ResolvedMethod *method);
+   J9::RetainedMethodSet::KeepalivesAndBonds *keepalivesAndBonds()
+      {
+      return static_cast<J9::RetainedMethodSet::KeepalivesAndBonds*>(
+         OMR::RetainedMethodSet::keepalivesAndBonds());
+      }
+
+   virtual J9::RetainedMethodSet::KeepalivesAndBonds *createKeepalivesAndBonds();
 
    private:
 
@@ -120,21 +124,9 @@ class RetainedMethodSet : public OMR::RetainedMethodSet
    J9ClassLoader *getLoader(J9Class *clazz);
    bool isAnonymousClass(J9Class *clazz);
 
-#if defined(J9VM_OPT_JITSERVER)
-   void initWithScanLog(ScanLog *scanLog);
-   void logAddedLoader(J9ClassLoader *loader);
-#endif
-
    TR::set<J9ClassLoader*> _loaders;
    TR::set<J9Class*> _anonClasses;
-
-#if defined(J9VM_OPT_JITSERVER)
-   union
-      {
-      void *_remoteMirror; // used on the server
-      ScanLog *_scanLog; // used on the client
-      };
-#endif
+   InliningTable * const _inliningTable;
    };
 
 } // namespace TR
