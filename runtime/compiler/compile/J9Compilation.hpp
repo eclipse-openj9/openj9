@@ -410,6 +410,9 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
     */
    bool mustTrackRetainedMethods();
 
+   // overrides OMR::Compilation::bondMethodsTraceNote().
+   const char *bondMethodsTraceNote();
+
    /**
     * \brief Get the set of classes to keep alive.
     *

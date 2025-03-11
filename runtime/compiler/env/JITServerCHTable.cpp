@@ -101,9 +101,15 @@ bool JITClientCHTableCommit(
    FlatClassExtendCheck &compClassesThatShouldNotBeNewlyExtended = std::get<6>(data);
    std::vector<TR_OpaqueClassBlock*> &classesForOSRRedefinition = std::get<7>(data);
    std::vector<TR_OpaqueClassBlock*> &classesForStaticFinalFieldModification = std::get<8>(data);
-   auto retainedMethods = (J9::RetainedMethodSet*)std::get<9>(data);
-   uint8_t *serverStartPC = std::get<10>(data);
+   std::vector<J9::RepeatRetainedMethodsAnalysis::InlinedSiteInfo> &inlinedSiteInfo = std::get<9>(data);
+   std::vector<TR_ResolvedMethod*> &serverKeepaliveMethods = std::get<10>(data);
+   std::vector<TR_ResolvedMethod*> &serverBondMethods = std::get<11>(data);
+   uint8_t *serverStartPC = std::get<12>(data);
    uint8_t *startPC = (uint8_t*) metaData->startPC;
+
+   OMR::RetainedMethodSet *retainedMethods =
+      J9::RepeatRetainedMethodsAnalysis::analyzeOnClient(
+         comp, metaData, inlinedSiteInfo, serverKeepaliveMethods, serverBondMethods);
 
    TR_ResolvedMethod *bondMethod = NULL;
    if (vguards.empty()
@@ -111,7 +117,7 @@ bool JITClientCHTableCommit(
        && preXMethods.empty()
        && classes.empty()
        && classesThatShouldNotBeNewlyExtended.empty()
-       && (retainedMethods == NULL || !retainedMethods->bondMethods().next(&bondMethod)))
+       && !retainedMethods->bondMethods().next(&bondMethod))
       {
       return true;
       }
@@ -210,20 +216,17 @@ bool JITClientCHTableCommit(
       } //  if (classesThatShouldNotBeNewlyExtended)
 
    // Invalidate the body and recompile if any inlined method is unloaded.
-   if (retainedMethods != NULL)
+   auto bondIter = retainedMethods->bondMethods();
+   while (bondIter.next(&bondMethod))
       {
-      auto bondIter = retainedMethods->bondMethods();
-      while (bondIter.next(&bondMethod))
-         {
-         TR_ClassUnloadRecompile::make(
-            comp->fe(),
-            comp->trPersistentMemory(),
-            bondMethod->containingClass(),
-            startPC,
-            comp->getMetadataAssumptionList());
+      TR_ClassUnloadRecompile::make(
+         comp->fe(),
+         comp->trPersistentMemory(),
+         bondMethod->containingClass(),
+         startPC,
+         comp->getMetadataAssumptionList());
 
-         comp->setHasClassUnloadAssumptions();
-         }
+      comp->setHasClassUnloadAssumptions();
       }
 
    // Check if the assumptions for static final field are still valid

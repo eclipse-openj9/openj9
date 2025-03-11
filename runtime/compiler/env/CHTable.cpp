@@ -899,12 +899,11 @@ TR_CHTable::computeDataForCHTableCommit(TR::Compilation *comp)
    for (int i = 0; i < compClassesForStaticFinalFieldModification->size(); ++i)
       classesForStaticFinalFieldModification[i] = (*compClassesForStaticFinalFieldModification)[i];
 
-   void *retainedMethodsMirror = NULL;
-   if (comp->mustTrackRetainedMethods())
-      {
-      auto retainedMethods = (J9::RetainedMethodSet*)comp->retainedMethods();
-      retainedMethodsMirror = retainedMethods->remoteMirror();
-      }
+   std::vector<J9::RepeatRetainedMethodsAnalysis::InlinedSiteInfo> inlinedSiteInfo;
+   std::vector<TR_ResolvedMethod*> keepaliveMethods;
+   std::vector<TR_ResolvedMethod*> bondMethods;
+   J9::RepeatRetainedMethodsAnalysis::getDataForClient(
+      comp, inlinedSiteInfo, keepaliveMethods, bondMethods);
 
    uint8_t *startPC = comp->cg()->getCodeStart();
 
@@ -917,7 +916,9 @@ TR_CHTable::computeDataForCHTableCommit(TR::Compilation *comp)
                           compClassesThatShouldNotBeNewlyExtended,
                           classesForOSRRedefinition,
                           classesForStaticFinalFieldModification,
-                          retainedMethodsMirror,
+                          inlinedSiteInfo,
+                          keepaliveMethods,
+                          bondMethods,
                           startPC);
    }
 #endif /* defined(J9VM_OPT_JITSERVER) */
