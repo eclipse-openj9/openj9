@@ -34,10 +34,11 @@
 #include "infra/MonitorTable.hpp"
 #include "infra/TRlist.hpp"
 #include "infra/vector.hpp"
+#include "runtime/MethodMetaData.h"
 
 #if defined(J9VM_OPT_JITSERVER)
 #include "env/j9methodServer.hpp"
-#include "net/ServerStream.hpp"
+#include "env/RepeatRetainedMethodsAnalysis.hpp"
 #endif
 
 static J9Class *
@@ -45,6 +46,62 @@ definingJ9Class(TR_ResolvedMethod *method)
    {
    return reinterpret_cast<J9Class*>(method->classOfMethod());
    }
+
+class J9::RetainedMethodSet::InliningTable
+   {
+   public:
+   InliningTable(TR::Compilation *comp) : _comp(comp) {}
+   virtual TR_ResolvedMethod *inlinedResolvedMethod(uint32_t i) = 0;
+
+   protected:
+   TR::Compilation * const _comp;
+   };
+
+class J9::RetainedMethodSet::CompInliningTable
+   : public J9::RetainedMethodSet::InliningTable
+   {
+   public:
+   CompInliningTable(TR::Compilation *comp) : InliningTable(comp) {}
+
+   virtual TR_ResolvedMethod *inlinedResolvedMethod(uint32_t i)
+      {
+      TR_ASSERT_FATAL(
+         i < numInlinedSites(),
+         "out of bounds index %u >= %u",
+         i,
+         numInlinedSites());
+
+      return _comp->getInlinedResolvedMethod(i);
+      }
+
+   private:
+   uint32_t numInlinedSites() { return _comp->getNumInlinedCallSites(); }
+   };
+
+class J9::RetainedMethodSet::VectorInliningTable
+   : public J9::RetainedMethodSet::InliningTable
+   {
+   public:
+   VectorInliningTable(
+      TR::Compilation *comp,
+      const TR::vector<J9::ResolvedInlinedCallSite, TR::Region&> &vec)
+      : InliningTable(comp), _vec(vec)
+      {}
+
+   virtual TR_ResolvedMethod *inlinedResolvedMethod(uint32_t i)
+      {
+      TR_ASSERT_FATAL(
+         i < _vec.size(),
+         "out of bounds index %u >= %u\n",
+         i,
+         (uint32_t)_vec.size());
+
+      return _vec[i]._method;
+      }
+
+   private:
+   const TR::vector<J9::ResolvedInlinedCallSite, TR::Region&> &_vec;
+   };
 
 static void
 traceMethod(TR::Compilation *comp, TR_ResolvedMethod *method)
@@ -65,22 +122,13 @@ traceMethod(TR::Compilation *comp, TR_ResolvedMethod *method)
 J9::RetainedMethodSet::RetainedMethodSet(
    TR::Compilation *comp,
    TR_ResolvedMethod *method,
-   J9::RetainedMethodSet *parent)
+   J9::RetainedMethodSet *parent,
+   InliningTable *inliningTable)
    : OMR::RetainedMethodSet(comp, method, parent)
    , _loaders(comp->trMemory()->heapMemoryRegion())
    , _anonClasses(comp->trMemory()->heapMemoryRegion())
+   , _inliningTable(inliningTable)
    {
-#if defined(J9VM_OPT_JITSERVER)
-   if (comp->isOutOfProcessCompilation())
-      {
-      _remoteMirror = NULL;
-      }
-   else if (comp->isRemoteCompilation())
-      {
-      _scanLog = NULL;
-      }
-#endif
-
    if (comp->getOption(TR_TraceRetainedMethods))
       {
       traceMsg(comp, "RetainedMethodSet %p: created with parent=%p, method=", this, parent);
@@ -90,70 +138,57 @@ J9::RetainedMethodSet::RetainedMethodSet(
    }
 
 J9::RetainedMethodSet *
-J9::RetainedMethodSet::create(
-   TR::Compilation *comp,
-   TR_ResolvedMethod *method
-#if defined(J9VM_OPT_JITSERVER)
-   , ScanLog *scanLog
-#endif
-   )
+J9::RetainedMethodSet::create(TR::Compilation *comp, TR_ResolvedMethod *method)
    {
    TR::Region &region = comp->trMemory()->heapMemoryRegion();
-   auto *result = new (region) J9::RetainedMethodSet(comp, method, NULL);
-
-#if defined(J9VM_OPT_JITSERVER)
-   if (comp->isRemoteCompilation())
-      {
-      result->initWithScanLog(scanLog);
-      }
-   else
-#endif
-      {
-      result->init();
-      }
-
+   auto *inlTab = new (region) CompInliningTable(comp);
+   auto *result = new (region) J9::RetainedMethodSet(comp, method, NULL, inlTab);
+   result->init();
    return result;
    }
 
 J9::RetainedMethodSet *
-J9::RetainedMethodSet::createChild(
-   TR_ResolvedMethod *method
-#if defined(J9VM_OPT_JITSERVER)
-   , ScanLog *scanLog
-#endif
-   )
+J9::RetainedMethodSet::create(
+   TR::Compilation *comp,
+   TR_ResolvedMethod *method,
+   const TR::vector<J9::ResolvedInlinedCallSite, TR::Region&> &inliningTable)
+   {
+   TR::Region &region = comp->trMemory()->heapMemoryRegion();
+   auto *inlTab = new (region) VectorInliningTable(comp, inliningTable);
+   auto *result = new (region) J9::RetainedMethodSet(comp, method, NULL, inlTab);
+   result->init();
+   return result;
+   }
+
+const TR::vector<J9::ResolvedInlinedCallSite, TR::Region&> &
+J9::RetainedMethodSet::copyInliningTable(
+   TR::Compilation *comp, J9JITExceptionTable *metadata)
+   {
+   auto &inliningTable = *new (comp->region())
+      TR::vector<J9::ResolvedInlinedCallSite, TR::Region&>(comp->region());
+
+   uint32_t n = getNumInlinedCallSites(metadata);
+   inliningTable.reserve(n);
+   for (uint32_t i = 0; i < n; i++)
+      {
+      auto *site = (TR_InlinedCallSite *)getInlinedCallSiteArrayElement(metadata, i);
+      TR_ResolvedMethod *method = new (comp->trHeapMemory())
+         TR_ResolvedJ9Method(site->_methodInfo, comp->fe(), comp->trMemory());
+
+      J9::ResolvedInlinedCallSite resolvedSite = { method, site->_byteCodeInfo };
+      inliningTable.push_back(resolvedSite);
+      }
+
+   return inliningTable;
+   }
+
+J9::RetainedMethodSet *
+J9::RetainedMethodSet::createChild(TR_ResolvedMethod *method)
    {
    TR::Region &region = comp()->trMemory()->heapMemoryRegion();
-   auto *result = new (region) J9::RetainedMethodSet(comp(), method, this);
-
-#if defined(J9VM_OPT_JITSERVER)
-   if (comp()->isRemoteCompilation())
-      {
-      result->initWithScanLog(scanLog);
-      }
-   else
-#endif
-      {
-      result->init();
-      }
-
-   return result;
-   }
-
-J9::RetainedMethodSet *
-J9::RetainedMethodSet::withKeepalivesAttested()
-   {
-   J9::RetainedMethodSet *result = createChild(method());
-   auto keepalives = keepaliveMethods();
-   TR_ResolvedMethod *m = NULL;
-   while (keepalives.next(&m))
-      {
-      result->attestWillRemainLoaded(m);
-      }
-
-   // NOTE: We don't need to take account of the global keepalive classes here.
-   // They haven't been used to justify inlining.
-
+   auto *result = new (region) J9::RetainedMethodSet(
+      comp(), method, this, _inliningTable);
+   result->init();
    return result;
    }
 
@@ -170,49 +205,12 @@ traceNamedLoader(
 void
 J9::RetainedMethodSet::init()
    {
-#if defined(J9VM_OPT_JITSERVER)
-   if (comp()->isOutOfProcessCompilation())
-      {
-      void *remoteParent = parent() == NULL ? NULL : parent()->_remoteMirror;
-      void *remoteMethod =
-         static_cast<TR_ResolvedJ9JITServerMethod*>(method())->getRemoteMirror();
-
-      JITServer::ServerStream *stream = comp()->getStream();
-      stream->write(
-         JITServer::MessageType::RetainedMethodSet_createMirror, remoteParent, remoteMethod);
-
-      auto recv = stream->read<void*, J9Class*, std::vector<J9ClassLoader*>>();
-      _remoteMirror = std::get<0>(recv);
-
-      if (comp()->getOption(TR_TraceRetainedMethods))
-         {
-         traceMsg(
-            comp(),
-            "RetainedMethodSet %p: remote mirror %p\n",
-            this,
-            _remoteMirror);
-         }
-
-      // No need to "log" added items here, since we're on the server.
-      J9Class *anonClass = std::get<1>(recv);
-      if (anonClass != NULL)
-         {
-         _anonClasses.insert(anonClass);
-         }
-
-      auto &loaders = std::get<2>(recv);
-      _loaders.insert(loaders.begin(), loaders.end());
-
-      return;
-      }
-#endif
-
    if (parent() == NULL)
       {
-      J9JavaVM *vm = comp()->fej9()->vmThread()->javaVM;
-      addPermanentLoader(vm->systemClassLoader, "system");
-      addPermanentLoader(vm->extensionClassLoader, "extension");
-      addPermanentLoader(vm->applicationClassLoader, "application");
+      TR_J9VMBase *fe = comp()->fej9();
+      addPermanentLoader((J9ClassLoader*)fe->getSystemClassLoader(), "system");
+      addPermanentLoader((J9ClassLoader*)fe->getExtensionClassLoader(), "extension");
+      addPermanentLoader((J9ClassLoader*)fe->getApplicationClassLoader(), "application");
       }
 
    attestWillRemainLoaded(method());
@@ -237,9 +235,6 @@ J9::RetainedMethodSet::addPermanentLoader(J9ClassLoader *loader, const char *nam
          }
 
       _loaders.insert(loader);
-#if defined(J9VM_OPT_JITSERVER)
-      logAddedLoader(loader);
-#endif
       }
    }
 
@@ -270,14 +265,16 @@ static T loadBc(
    return *(T*)(bcStart + (bcIndex + offset));
    }
 
-void
-J9::RetainedMethodSet::attestLinkedCalleeWillRemainLoaded(TR_ByteCodeInfo bci)
+J9::RetainedMethodSet *
+J9::RetainedMethodSet::withLinkedCalleeAttested(TR_ByteCodeInfo bci)
    {
+   TR_ResolvedMethod *linkedCallee = NULL;
+
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
    TR_ResolvedMethod *caller =
       bci.getCallerIndex() == -1
       ? comp()->getMethodBeingCompiled()
-      : comp()->getInlinedResolvedMethod(bci.getCallerIndex());
+      : _inliningTable->inlinedResolvedMethod(bci.getCallerIndex());
 
    if (caller->isNewInstanceImplThunk())
       {
@@ -285,7 +282,7 @@ J9::RetainedMethodSet::attestLinkedCalleeWillRemainLoaded(TR_ByteCodeInfo bci)
       // occur in the bytecode. In fact, there will appear to be bytecode, but
       // it won't correspond to the generated IL at all (unless the class for
       // newInstance isn't suitable, e.g. no default constructor).
-      return;
+      return this;
       }
 
    uint8_t *bcStart = caller->bytecodeStart();
@@ -295,8 +292,6 @@ J9::RetainedMethodSet::attestLinkedCalleeWillRemainLoaded(TR_ByteCodeInfo bci)
    TR_J9ByteCode bcOp =
       TR_J9ByteCodeIterator::convertOpCodeToByteCodeEnum(
          loadBc<uint8_t>(caller, bcStart, bcSize, bcIndex));
-
-   TR_ResolvedMethod *linkedCallee = NULL;
 
    switch (bcOp)
       {
@@ -379,12 +374,16 @@ J9::RetainedMethodSet::attestLinkedCalleeWillRemainLoaded(TR_ByteCodeInfo bci)
 
          break;
       }
-
-   if (linkedCallee != NULL)
-      {
-      attestWillRemainLoaded(linkedCallee);
-      }
 #endif
+
+   if (linkedCallee == NULL || willRemainLoaded(linkedCallee))
+      {
+      return this;
+      }
+   else
+      {
+      return createChild(linkedCallee);
+      }
    }
 
 void
@@ -403,40 +402,7 @@ J9::RetainedMethodSet::attestWillRemainLoaded(TR_ResolvedMethod *method)
 void
 J9::RetainedMethodSet::scan(J9Class *clazz)
    {
-   J9ClassLoader *loader = getLoader(clazz);
-   bool loaderWillRemain = willRemainLoaded(loader);
-   bool isAnonymous = isAnonymousClass(clazz);
-   bool anonClassWillRemain = isAnonymous && willAnonymousClassRemainLoaded(clazz);
-
-#if defined(J9VM_OPT_JITSERVER)
-   if (comp()->isOutOfProcessCompilation())
-      {
-      if (loaderWillRemain && (!isAnonymous || anonClassWillRemain))
-         {
-         return; // save a round trip if nothing will happen
-         }
-
-      JITServer::ServerStream *stream = comp()->getStream();
-      stream->write(
-         JITServer::MessageType::RetainedMethodSet_scan, _remoteMirror, clazz);
-
-      auto recv = stream->read<J9Class*, std::vector<J9ClassLoader*>>();
-
-      // No need to "log" added items here, since we're on the server.
-      J9Class *anonClass = std::get<0>(recv);
-      if (anonClass != NULL)
-         {
-         _anonClasses.insert(anonClass);
-         }
-
-      auto &loaders = std::get<1>(recv);
-      _loaders.insert(loaders.begin(), loaders.end());
-
-      return;
-      }
-#endif
-
-   if (isAnonymous && !anonClassWillRemain)
+   if (isAnonymousClass(clazz) && !willAnonymousClassRemainLoaded(clazz))
       {
       if (comp()->getOption(TR_TraceRetainedMethods))
          {
@@ -448,21 +414,10 @@ J9::RetainedMethodSet::scan(J9Class *clazz)
          }
 
       _anonClasses.insert(clazz);
-#if defined(J9VM_OPT_JITSERVER)
-      if (comp()->isRemoteCompilation() && _scanLog != NULL)
-         {
-         TR_ASSERT_FATAL(
-            _scanLog->_addedAnonClass == NULL,
-            "RetainedMethodSet %p: multiple anonymous classes in the same scan",
-            this);
-
-         _scanLog->_addedAnonClass = clazz;
-         }
-#endif
       }
 
    // Scan the class loader graph starting from the loader of clazz.
-
+   J9ClassLoader *loader = getLoader(clazz);
    if (comp()->getOption(TR_TraceRetainedMethods))
       {
       traceMsg(
@@ -473,7 +428,7 @@ J9::RetainedMethodSet::scan(J9Class *clazz)
          loader);
       }
 
-   if (loaderWillRemain)
+   if (willRemainLoaded(loader))
       {
       return;
       }
@@ -485,7 +440,27 @@ J9::RetainedMethodSet::scan(J9Class *clazz)
 
    _loaders.insert(loader);
 #if defined(J9VM_OPT_JITSERVER)
-   logAddedLoader(loader);
+   if (comp()->isOutOfProcessCompilation())
+      {
+      // Scanning the graph of class loaders here would require us to query
+      // the client. Just skip it instead and do a less precise analysis. The
+      // client will repeat the analysis at/near the end of the compilation,
+      // and when it does it will be able to scan the loader graph. The client's
+      // results will be compatible with the server's results, i.e. the client's
+      // set of bonds will be a subset of the server's, and likewise for the
+      // set of keepalives.
+      //
+      // This does restrict inlining more than strictly necessary when
+      // dontInlineUnloadableMethods is enabled. However, that option will not
+      // be enabled often. It will only be used in the following cases:
+      // - when recompiling after a JIT body has been invalidated by unloading,
+      // - when the compilation can't be invalidated (e.g. newInstance thunk), and
+      // - when the option has been explicitly set for debugging.
+      //
+      // So there isn't much point implementing a message for this.
+      //
+      return;
+      }
 #endif
 
    TR::StackMemoryRegion stackRegion(*comp()->trMemory());
@@ -578,40 +553,10 @@ J9::RetainedMethodSet::scan(J9Class *clazz)
             }
 
          _loaders.insert(outlivingLoader);
-#if defined(J9VM_OPT_JITSERVER)
-         logAddedLoader(outlivingLoader);
-#endif
-
          queue.push_back(outlivingLoader);
          }
       }
    }
-
-#if defined(J9VM_OPT_JITSERVER)
-void
-J9::RetainedMethodSet::scanForClient(J9Class *clazz, ScanLog *scanLog)
-   {
-   TR_ASSERT_FATAL(
-      comp()->isRemoteCompilation(),
-      "RetainedMethodSet %p: can only scanForClient on the client",
-      this);
-
-   TR_ASSERT_FATAL(
-      scanLog != NULL, "RetainedMethodSet %p: scanForClient missing scanLog", this);
-
-   _scanLog = scanLog;
-   try
-      {
-      scan(clazz);
-      _scanLog = NULL;
-      }
-   catch (...)
-      {
-      _scanLog = NULL;
-      throw;
-      }
-   }
-#endif
 
 bool
 J9::RetainedMethodSet::willRemainLoaded(TR_ResolvedMethod *method)
@@ -666,36 +611,19 @@ void
 J9::RetainedMethodSet::keepalive()
    {
    OMR::RetainedMethodSet::keepalive();
-
-#if defined(J9VM_OPT_JITSERVER)
-   if (comp()->isOutOfProcessCompilation())
-      {
-      // Repeat keealive on the client to keep the remote mirrors in sync.
-      JITServer::ServerStream *stream = comp()->getStream();
-      stream->write(
-         JITServer::MessageType::RetainedMethodSet_keepalive, _remoteMirror);
-
-      stream->read<JITServer::Void>();
-      }
-#endif
+   keepalivesAndBonds()->_keepaliveLoaders.insert(
+      _loaders.begin(), _loaders.end());
+   keepalivesAndBonds()->_keepaliveAnonClasses.insert(
+      _anonClasses.begin(), _anonClasses.end());
    }
 
 void
 J9::RetainedMethodSet::bond()
    {
    OMR::RetainedMethodSet::bond();
-
-#if defined(J9VM_OPT_JITSERVER)
-   if (comp()->isOutOfProcessCompilation())
-      {
-      // Repeat bond on the client to keep the remote mirrors in sync.
-      JITServer::ServerStream *stream = comp()->getStream();
-      stream->write(
-         JITServer::MessageType::RetainedMethodSet_bond, _remoteMirror);
-
-      stream->read<JITServer::Void>();
-      }
-#endif
+   keepalivesAndBonds()->_bondLoaders.insert(_loaders.begin(), _loaders.end());
+   keepalivesAndBonds()->_bondAnonClasses.insert(
+      _anonClasses.begin(), _anonClasses.end());
    }
 
 J9ClassLoader *
@@ -712,19 +640,6 @@ J9::RetainedMethodSet::isAnonymousClass(J9Class *clazz)
    return comp()->fej9()->isAnonymousClass(c);
    }
 
-void
-J9::RetainedMethodSet::mergeIntoParent()
-   {
-   // No need to "log" added items here, since the entire mergeIntoParent()
-   // operation will be repeated on both server and client (because bond() will
-   // be repeated on both server and client), and the sets will be in sync
-   // beforehand, so they will remain in sync afterward.
-   parent()->_loaders.insert(_loaders.begin(), _loaders.end());
-   parent()->_anonClasses.insert(_anonClasses.begin(), _anonClasses.end());
-   _loaders.clear();
-   _anonClasses.clear();
-   }
-
 void *
 J9::RetainedMethodSet::unloadingKey(TR_ResolvedMethod *method)
    {
@@ -732,42 +647,280 @@ J9::RetainedMethodSet::unloadingKey(TR_ResolvedMethod *method)
    return isAnonymousClass(c) ? (void*)c : (void*)getLoader(c);
    }
 
+J9::RetainedMethodSet::KeepalivesAndBonds *
+J9::RetainedMethodSet::createKeepalivesAndBonds()
+   {
+   return new (comp()->region()) KeepalivesAndBonds(comp()->region());
+   }
+
+J9::RetainedMethodSet::KeepalivesAndBonds::KeepalivesAndBonds(TR::Region &heapRegion)
+   : OMR::RetainedMethodSet::KeepalivesAndBonds(heapRegion)
+   , _keepaliveLoaders(heapRegion)
+   , _keepaliveAnonClasses(heapRegion)
+   , _bondLoaders(heapRegion)
+   , _bondAnonClasses(heapRegion)
+   {
+   // empty
+   }
+
+J9::RetainedMethodSet *
+J9::RetainedMethodSet::withKeepalivesAttested()
+   {
+   J9::RetainedMethodSet *result = createChild(method());
+   KeepalivesAndBonds *kb = keepalivesAndBonds();
+   result->_loaders.insert(kb->_keepaliveLoaders.begin(), kb->_keepaliveLoaders.end());
+   result->_anonClasses.insert(kb->_keepaliveAnonClasses.begin(), kb->_keepaliveAnonClasses.end());
+
+   // NOTE: We don't need to take account of the compilation's keepalive
+   // classes here. They haven't been used to justify inlining.
+
+   return result;
+   }
+
+J9::RetainedMethodSet *
+J9::RetainedMethodSet::withBondsAttested()
+   {
+   J9::RetainedMethodSet *result = createChild(method());
+   KeepalivesAndBonds *kb = keepalivesAndBonds();
+   result->_loaders.insert(kb->_bondLoaders.begin(), kb->_bondLoaders.end());
+   result->_anonClasses.insert(kb->_bondAnonClasses.begin(), kb->_bondAnonClasses.end());
+   return result;
+   }
+
 #if defined(J9VM_OPT_JITSERVER)
-void
-J9::RetainedMethodSet::initWithScanLog(ScanLog *scanLog)
-   {
-   TR_ASSERT_FATAL(comp()->isRemoteCompilation(), "client-only path");
 
-   // Usually scanLog is required because we should be creating a remote mirror
-   // of a J9::RetainedMethodSet that was created on the server. However, in an
-   // AOT load, we need to be able to analyze the inlining table independently
-   // of what the server may have been doing.
+void
+J9::RepeatRetainedMethodsAnalysis::getDataForClient(
+   TR::Compilation *comp,
+   std::vector<InlinedSiteInfo> &inlinedSiteInfo,
+   std::vector<TR_ResolvedMethod*> &keepaliveMethods,
+   std::vector<TR_ResolvedMethod*> &bondMethods)
+   {
+   TR_ASSERT_FATAL(comp->isOutOfProcessCompilation(), "server only");
+
+   inlinedSiteInfo.clear();
+   keepaliveMethods.clear();
+   bondMethods.clear();
+
+   uint32_t numInlinedSites = comp->getNumInlinedCallSites();
+   for (uint32_t i = 0; i < numInlinedSites; i++)
+      {
+      TR_ResolvedMethod *refinedMethod = comp->getInlinedCallSiteRefinedMethod(i);
+      bool generatedKeepalive = comp->didInlinedSiteGenerateKeepalive(i);
+      bool generatedBond = comp->didInlinedSiteGenerateBond(i);
+
+      TR_ResolvedMethod *refinedMethodMirror = NULL;
+      if (refinedMethod != NULL)
+         {
+         auto serverMethod = static_cast<TR_ResolvedJ9JITServerMethod*>(refinedMethod);
+         refinedMethodMirror = serverMethod->getRemoteMirror();
+         }
+
+      if (refinedMethodMirror != NULL || generatedKeepalive || generatedBond)
+         {
+         InlinedSiteInfo info = {};
+         info._inlinedSiteIndex = i;
+         info._refinedMethod = refinedMethodMirror;
+         info._generatedKeepalive = generatedKeepalive;
+         info._generatedBond = generatedBond;
+         inlinedSiteInfo.push_back(info);
+         }
+      }
+
+   TR_ResolvedMethod *keepaliveMethod = NULL;
+   auto keepaliveMethodsIter = comp->retainedMethods()->keepaliveMethods();
+   while (keepaliveMethodsIter.next(&keepaliveMethod))
+      {
+      keepaliveMethods.push_back(
+         static_cast<TR_ResolvedJ9JITServerMethod*>(keepaliveMethod)->getRemoteMirror());
+      }
+
+   TR_ResolvedMethod *bondMethod = NULL;
+   auto bondMethodsIter = comp->retainedMethods()->bondMethods();
+   while (bondMethodsIter.next(&bondMethod))
+      {
+      bondMethods.push_back(
+         static_cast<TR_ResolvedJ9JITServerMethod*>(bondMethod)->getRemoteMirror());
+      }
+   }
+
+static void
+assertSubset(
+   const char *what,
+   TR::vector<void*, TR::Region&> clientKeys,
+   TR::vector<void*, TR::Region&> serverKeys)
+   {
+   std::sort(clientKeys.begin(), clientKeys.end());
+   std::sort(serverKeys.begin(), serverKeys.end());
+
+   std::less<void*> ptrLt;
+   auto sIt = serverKeys.begin();
+   for (auto cIt = clientKeys.begin(); cIt != clientKeys.end(); cIt++)
+      {
+      while (sIt != serverKeys.end() && ptrLt(*sIt, *cIt))
+         {
+         sIt++;
+         }
+
+      bool match = sIt != serverKeys.end() && *sIt == *cIt;
+      TR_ASSERT_FATAL(
+         match,
+         "client %s method key %p has no corresponding server key",
+         what,
+         *cIt);
+      }
+   }
+
+// inliningTable must have been allocated in the compilation's heap region.
+// Otherwise the resulting RetainedMethodSet will outlive it and end up with a
+// dangling reference to it.
+OMR::RetainedMethodSet *
+J9::RepeatRetainedMethodsAnalysis::analyzeOnClient(
+   TR::Compilation *comp,
+   const TR::vector<J9::ResolvedInlinedCallSite, TR::Region&> &inliningTable,
+   const std::vector<InlinedSiteInfo> &inlinedSiteInfo,
+   const std::vector<TR_ResolvedMethod*> &serverKeepaliveMethods,
+   const std::vector<TR_ResolvedMethod*> &serverBondMethods)
+   {
+   TR_ASSERT_FATAL(comp->isRemoteCompilation(), "client only");
+
+   if (!comp->mustTrackRetainedMethods())
+      {
+      // Use the base implementation (no tracking).
+      OMR::RetainedMethodSet *result = new (comp->region())
+         OMR::RetainedMethodSet(comp, comp->getMethodBeingCompiled(), NULL);
+
+      return result;
+      }
+
+   J9::RetainedMethodSet *root = J9::RetainedMethodSet::create(
+      comp, comp->getMethodBeingCompiled(), inliningTable);
+
+   uint32_t n = (uint32_t)inliningTable.size();
+   TR::vector<J9::RetainedMethodSet*, TR::Region&> retainedMethods(comp->region());
+   retainedMethods.reserve(n);
+   retainedMethods.resize(n, NULL);
+
+   auto infoIt = inlinedSiteInfo.begin();
+   auto infoItEnd = inlinedSiteInfo.end();
+
+   for (uint32_t siteIndex = 0; siteIndex < n; siteIndex++)
+      {
+      const InlinedSiteInfo *info = NULL;
+      if (infoIt != infoItEnd && infoIt->_inlinedSiteIndex == siteIndex)
+         {
+         info = &*infoIt++;
+         }
+
+      const J9::ResolvedInlinedCallSite &inlinedSite = inliningTable[siteIndex];
+      TR_ResolvedMethod *targetMethod = inlinedSite._method;
+      TR_ByteCodeInfo bci = inlinedSite._bci;
+
+      int32_t callerIndex = bci.getCallerIndex();
+      J9::RetainedMethodSet *surroundingSet =
+         callerIndex == -1 ? root : retainedMethods[callerIndex];
+
+      surroundingSet = surroundingSet->withLinkedCalleeAttested(bci);
+
+      J9::RetainedMethodSet *callSiteSet = surroundingSet;
+      if (info != NULL
+          && info->_refinedMethod != NULL
+          && !surroundingSet->willRemainLoaded(info->_refinedMethod))
+         {
+         TR_ASSERT_FATAL(
+            info->_generatedKeepalive,
+            "client attempting to generate keepalive for inlined site %u, "
+            "whose call site did not generate a corresponding keepalive on "
+            "the server",
+            siteIndex);
+
+         callSiteSet = surroundingSet->createChild(info->_refinedMethod);
+         callSiteSet->keepalive();
+         }
+
+      J9::RetainedMethodSet *callTargetSet = callSiteSet;
+      if (!callSiteSet->willRemainLoaded(targetMethod))
+         {
+         TR_ASSERT_FATAL(
+            info != NULL && info->_generatedBond,
+            "client attempting to generate bond for inlined site %u, "
+            "which did not generate a corresponding bond on the server",
+            siteIndex);
+
+         callTargetSet = callSiteSet->createChild(targetMethod);
+         callTargetSet->bond();
+         }
+
+      retainedMethods[siteIndex] = callTargetSet;
+      }
+
+   // The inlinedSiteInfo must be sorted by inlined site index,
+   // and it must contain no duplicate indices.
    TR_ASSERT_FATAL(
-      scanLog != NULL
-         || comp()->compileRelocatableCode()
-         || comp()->isDeserializedAOTMethod(),
-      "RetainedMethodSet %p: init missing scanLog on client (non-AOT)",
-      this);
+      infoIt == infoItEnd,
+      "failed to reach the end of inlinedSiteInfo");
 
-   _scanLog = scanLog;
-   try
+   // Check that the resulting sets of keepalive methods and bond methods
+   // correspond properly with what the server had. The actual choice of
+   // methods can differ, since if multiple call paths requested (say) bonds
+   // for different methods defined by the same loader (or the same anonymous
+   // class), then an arbitrary one would be kept and the others discarded.
+   // But the loaders (or anonymous classes) for the methods found by this
+   // repeat analysis must be a subset of those for the methods found on the
+   // server.
+
+   TR::vector<void*, TR::Region&> serverKeepaliveKeys(comp->region());
+   for (auto it = serverKeepaliveMethods.begin();
+        it != serverKeepaliveMethods.end();
+        it++)
       {
-      init();
-      _scanLog = NULL;
+      serverKeepaliveKeys.push_back(root->unloadingKey(*it));
       }
-   catch (...)
+
+   TR::vector<void*, TR::Region&> clientKeepaliveKeys(comp->region());
+   TR_ResolvedMethod *m = NULL;
+   auto clientKeepaliveMethodsIter = root->keepaliveMethods();
+   while (clientKeepaliveMethodsIter.next(&m))
       {
-      _scanLog = NULL;
-      throw;
+      clientKeepaliveKeys.push_back(root->unloadingKey(m));
       }
+
+   assertSubset("keepalive", clientKeepaliveKeys, serverKeepaliveKeys);
+
+   TR::vector<void*, TR::Region&> serverBondKeys(comp->region());
+   for (auto it = serverBondMethods.begin(); it != serverBondMethods.end(); it++)
+      {
+      serverBondKeys.push_back(root->unloadingKey(*it));
+      }
+
+   TR::vector<void*, TR::Region&> clientBondKeys(comp->region());
+   auto clientBondMethodsIter = root->bondMethods();
+   while (clientBondMethodsIter.next(&m))
+      {
+      clientBondKeys.push_back(root->unloadingKey(m));
+      }
+
+   assertSubset("bond", clientBondKeys, serverBondKeys);
+
+   return root;
    }
 
-void
-J9::RetainedMethodSet::logAddedLoader(J9ClassLoader *loader)
+OMR::RetainedMethodSet *
+J9::RepeatRetainedMethodsAnalysis::analyzeOnClient(
+   TR::Compilation *comp,
+   J9JITExceptionTable *metadata,
+   const std::vector<InlinedSiteInfo> &inlinedSiteInfo,
+   const std::vector<TR_ResolvedMethod*> &serverKeepaliveMethods,
+   const std::vector<TR_ResolvedMethod*> &serverBondMethods)
    {
-   if (comp()->isRemoteCompilation() && _scanLog != NULL)
-      {
-      _scanLog->_addedLoaders.push_back(loader);
-      }
+   // Copy the inlining table from metadata into a vector usable for the analysis.
+   auto &inliningTable = J9::RetainedMethodSet::copyInliningTable(comp, metadata);
+   return analyzeOnClient(
+      comp,
+      inliningTable,
+      inlinedSiteInfo,
+      serverKeepaliveMethods,
+      serverBondMethods);
    }
-#endif
+
+#endif // defined(J9VM_OPT_JITSERVER)

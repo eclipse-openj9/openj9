@@ -1719,7 +1719,7 @@ J9::Compilation::createRetainedMethods(TR_ResolvedMethod *method)
       }
 #endif
 
-   if (mustTrackRetainedMethods())
+   if (self()->mustTrackRetainedMethods())
       {
       return J9::RetainedMethodSet::create(self(), method);
       }
@@ -1748,6 +1748,22 @@ J9::Compilation::mustTrackRetainedMethods()
 
    return !self()->getOption(TR_AllowJitBodyToOutliveInlinedCode)
       || self()->getOption(TR_DontInlineUnloadableMethods);
+   }
+
+const char *
+J9::Compilation::bondMethodsTraceNote()
+   {
+#if defined(J9VM_OPT_JITSERVER)
+   TR_ResolvedMethod *m = NULL;
+   if (self()->isOutOfProcessCompilation()
+       && self()->mustTrackRetainedMethods()
+       && self()->retainedMethods()->bondMethods().next(&m))
+      {
+      return "approximate; client may find a more precise (smaller) set";
+      }
+#endif
+
+   return NULL;
    }
 
 void
