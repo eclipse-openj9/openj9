@@ -6809,6 +6809,8 @@ SH_CompositeCacheImpl::setExtraStartupHints(J9VMThread* currentThread, U_32 val)
 		return;
 	}
 	Trc_SHR_Assert_True(hasWriteMutex(currentThread));
+	unprotectHeaderReadWriteArea(currentThread, false);
 	_theca->extraStartupHints = val;
+	protectHeaderReadWriteArea(currentThread, false);
 	Trc_SHR_CC_setExtraStartupHints_Event(currentThread, val);
 }
