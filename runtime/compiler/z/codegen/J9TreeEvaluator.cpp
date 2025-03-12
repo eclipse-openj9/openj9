@@ -11045,7 +11045,10 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
                TR::Register *offsetReg = cg->allocateRegister();
                iCursor = generateRRInstruction(cg, TR::InstOpCode::getXORRegOpCode(), node, offsetReg, offsetReg, iCursor);
-               iCursor = generateRILInstruction(cg, TR::InstOpCode::getCmpImmOpCode(), node, enumReg, 0, iCursor);
+               /* Use 32 bit compare because the upper half can either be NULL/garbage/J9class pointer
+                * and array size should always be in 32-63 bits of enumReg.
+                */
+               iCursor = generateRIInstruction(cg, TR::InstOpCode::CHI, node, enumReg, 0, iCursor);
 
                // Load address of first array element
                iCursor = generateRXInstruction(cg,
