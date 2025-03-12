@@ -81,6 +81,7 @@ enum MetadataTypeID {
 	ClassLoadingStatisticsID = 100,
 	PhysicalMemoryID = 108,
 	ExecutionSampleID = 109,
+	ThreadDumpID = 111,
 	ThreadID = 164,
 	ThreadGroupID = 165,
 	ClassID = 166,
@@ -176,6 +177,7 @@ private:
 	static constexpr int CLASS_LOADING_STATISTICS_EVENT_SIZE = 5 * sizeof(I_64);
 	static constexpr int THREAD_CONTEXT_SWITCH_RATE_SIZE = sizeof(float) + (3 * sizeof(I_64));
 	static constexpr int THREAD_STATISTICS_EVENT_SIZE = (6 * sizeof(U_64)) + sizeof(U_32);
+	static constexpr int THREAD_DUMP_EVENT_SIZE_PER_THREAD = 1000;
 
 	static constexpr int METADATA_ID = 1;
 
@@ -290,7 +292,7 @@ done:
 
 	}
 
-	void writeJFRChunk()
+	void writeJFRChunk(bool dumpCalled)
 	{
 		U_8 *buffer = NULL;
 		UDATA requiredBufferSize = 0;
@@ -328,7 +330,7 @@ done:
 		if (NULL == buffer) {
 			_buildResult = OutOfMemory;
 		} else {
-			VM_BufferWriter writer(buffer, requiredBufferSize);
+			VM_BufferWriter writer(privatePortLibrary, buffer, requiredBufferSize);
 
 			_bufferWriter = &writer;
 
@@ -400,6 +402,10 @@ done:
 			}
 
 			writePhysicalMemoryEvent();
+
+			if (dumpCalled) {
+				writeThreadDumpEvent();
+			}
 
 			writeJFRHeader();
 
@@ -758,6 +764,8 @@ done:
 
 	void writeStringLiteral(const char *string, UDATA len);
 
+	void writeFormattedString(const char *format, ...);
+
 	U_8 *writeThreadStateCheckpointEvent();
 
 	U_8 *writePackageCheckpointEvent();
@@ -789,6 +797,8 @@ done:
 	U_8 *writeVirtualizationInformationEvent();
 
 	U_8 *writeOSInformationEvent();
+
+	U_8 *writeThreadDumpEvent();
 
 	void writeInitialSystemPropertyEvents(J9JavaVM *vm);
 
@@ -868,7 +878,9 @@ done:
 
 		requiredBufferSize += _constantPoolTypes.getThreadContextSwitchRateCount() * THREAD_CONTEXT_SWITCH_RATE_SIZE;
 
-		requiredBufferSize += (_constantPoolTypes.getThreadStatisticsCount() * THREAD_STATISTICS_EVENT_SIZE);
+		requiredBufferSize += _constantPoolTypes.getThreadStatisticsCount() * THREAD_STATISTICS_EVENT_SIZE;
+
+		requiredBufferSize += _vm->peakThreadCount * THREAD_DUMP_EVENT_SIZE_PER_THREAD;
 
 		return requiredBufferSize;
 	}
