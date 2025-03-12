@@ -2769,7 +2769,7 @@ void TR::CompilationInfo::resumeCompilationThread()
       TR_ASSERT(curCompThreadInfoPT, "a thread's compinfo is missing\n");
 
       TR_YesNoMaybe activate = shouldActivateNewCompThread();
-      if (activate == TR_no)
+      if (activate == TR_no || (activate == TR_maybe && _queueWeight == 0))
          break;
 
       curCompThreadInfoPT->resumeCompilationThread();
