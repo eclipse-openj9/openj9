@@ -10687,7 +10687,6 @@ hashCodeHelper_P10(TR::Node *node, TR::CodeGenerator *cg, TR::DataType elementTy
    // lxvll will use the highest 8 bits
    generateShiftLeftImmediateLong(cg, node, tempReg, vendReg, 56);
 
-   
    // load the remaining elements
    generateTrg1Src2Instruction(cg, TR::InstOpCode::lxvll, node, vtmp1Reg, valueReg, tempReg);
 
@@ -10708,7 +10707,7 @@ hashCodeHelper_P10(TR::Node *node, TR::CodeGenerator *cg, TR::DataType elementTy
       switch (elementType)
          {
          case TR::Int32:
-            // first swap around the halfwords 
+            // first swap around the halfwords
             generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, tempReg, 16);
             generateTrg1Src1Instruction(cg, TR::InstOpCode::mtvsrd, node, vtmp2Reg, tempReg);
             generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::vspltw, node, vtmp2Reg, vtmp2Reg, 1);
@@ -10822,7 +10821,7 @@ hashCodeHelper_P10(TR::Node *node, TR::CodeGenerator *cg, TR::DataType elementTy
          TR_ASSERT_FATAL(false, "Unsupported hashCodeHelper elementType");
       }
 
-   // at this point we have our results in low/high/third/fourth accumulators 
+   // at this point we have our results in low/high/third/fourth accumulators
    generateLabelInstruction(cg, TR::InstOpCode::label, node, resultLabel);
 
    // shift the high/low registers
