@@ -26,8 +26,7 @@
 #include "stackwalk.h"
 #include "jclglob.h"
 #include "jclprots.h"
-
-extern char * getTmpDir(JNIEnv *env, char**envSpace);
+#include "util_api.h"
 
 /**
  * Test if the file is owned by this process's owner or the process is running as root.
