@@ -7479,7 +7479,7 @@ static void handleOffHeapDataForArrays(
 
       TR::Register *discontiguousDataAddrOffsetReg = srm->findOrCreateScratchRegister();
       generateRegRegInstruction(TR::InstOpCode::XOR4RegReg, node, discontiguousDataAddrOffsetReg, discontiguousDataAddrOffsetReg, cg);
-      // Since array size is capped at 32 bits, we only need to check lower half (0-31 bits) of of sizeReg.
+      // Since array size is capped at 32 bits, we only need to check lower half (0-31 bits) of sizeReg.
       generateRegImmInstruction(TR::InstOpCode::CMP4RegImm4, node, sizeReg, 1, cg);
       generateRegImmInstruction(TR::InstOpCode::ADCRegImm4(), node, discontiguousDataAddrOffsetReg, 0, cg);
 
@@ -7491,7 +7491,7 @@ static void handleOffHeapDataForArrays(
       // Clear out tempReg if dealing with 0 length array
       zeroReg = srm->findOrCreateScratchRegister();
       generateRegRegInstruction(TR::InstOpCode::XOR4RegReg, node, zeroReg, zeroReg, cg);
-      // Since array size is capped at 32 bits, we only need to check lower half (0-31 bits) of of sizeReg.
+      // Since array size is capped at 32 bits, we only need to check lower half (0-31 bits) of sizeReg.
       generateRegRegInstruction(TR::InstOpCode::TEST4RegReg, node, sizeReg, sizeReg, cg);
       generateRegRegInstruction(TR::InstOpCode::CMOVERegReg(), node, tempReg, zeroReg, cg);
       srm->reclaimScratchRegister(zeroReg);
@@ -7536,7 +7536,7 @@ static void handleOffHeapDataForArrays(
          // Clear out tempReg if dealing with 0 length array
          zeroReg = srm->findOrCreateScratchRegister();
          generateRegRegInstruction(TR::InstOpCode::XORRegReg(), node, zeroReg, zeroReg, cg);
-         // Since array size is capped at 32 bits, we only need to check lower half (0-31 bits) of of sizeReg.
+         // Since array size is capped at 32 bits, we only need to check lower half (0-31 bits) of sizeReg.
          generateRegRegInstruction(TR::InstOpCode::TEST4RegReg, node, sizeReg, sizeReg, cg);
          generateRegRegInstruction(TR::InstOpCode::CMOVERegReg(), node, tempReg, zeroReg, cg);
          srm->reclaimScratchRegister(zeroReg);
