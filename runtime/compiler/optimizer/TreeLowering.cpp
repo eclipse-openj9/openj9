@@ -155,7 +155,7 @@ TR::TreeLowering::Transformer::splitForFastpath(TR::Block* const block, TR::Tree
  * (substituted). That is, if a register dependency is found under `sourceNode`
  * for the same register that is set on `substituteNode`, then `substituteNode`
  * will be used instead of the dependency from `sourceNode`. Note that the
- * reference of of `substituteNode` is incremented if/when it gets added. If
+ * reference of `substituteNode` is incremented if/when it gets added. If
  * `substituteNode` is NULL the no substitution will be attempted.
  *
  * @param targetNode is the GlRegDeps node that reg deps are copied to

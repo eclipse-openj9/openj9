@@ -2,7 +2,7 @@
 
 # -----------------------------------------------------------------------
 #  gentramp.sh - Copyright (c) 2010, Plausible Labs Cooperative, Inc.
-#  
+#
 #  ARM Trampoline Page Generator
 #
 #  Permission is hereby granted, free of charge, to any person obtaining
@@ -41,7 +41,7 @@ PAGE_SIZE=4096
 # are unreachable due to our maximum pc-relative ldr offset.
 PAGE_AVAIL=`expr $PAGE_SIZE - 16`
 
-# Compute the number of of available trampolines. 
+# Compute the number of available trampolines.
 TRAMPOLINE_COUNT=`expr $PAGE_AVAIL / $TRAMPOLINE_SIZE`
 
 header () {
@@ -52,7 +52,7 @@ header () {
     # Write out the license header
 cat << EOF
 #  Copyright (c) 2010, Plausible Labs Cooperative, Inc.
-#  
+#
 #  Permission is hereby granted, free of charge, to any person obtaining
 #  a copy of this software and associated documentation files (the
 #  ``Software''), to deal in the Software without restriction, including
