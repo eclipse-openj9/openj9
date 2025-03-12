@@ -596,13 +596,13 @@ done:
 		VM_BufferWriter *_bufferWriter = (VM_BufferWriter *)userData;
 
 		/* reserve size field */
-		U_8 *dataStart = _bufferWriter->getAndIncCursor(sizeof(U_32));
+		U_8 *dataStart = reserveEventSize(_bufferWriter);
 
 		/* write event type */
 		_bufferWriter->writeLEB128(MonitorEnterID);
 
-		/* write start time - this is when the sleep started not when it ended so we
-		 * need to subtract the duration since the event is emitted when the sleep ends.
+		/* write start time - this is when the monitor enter started not when it ended so we
+		 * need to subtract the duration since the event is emitted when the monitor enter ends.
 		 */
 		_bufferWriter->writeLEB128(entry->ticks - entry->duration);
 
