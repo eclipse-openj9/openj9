@@ -11743,7 +11743,10 @@ hashCodeHelper(TR::Node *node, TR::CodeGenerator *cg, TR::DataType elementType,
 static TR::Register*
 inlineStringHashCode(TR::Node *node, TR::CodeGenerator *cg, bool isCompressed)
    {
-   return hashCodeHelper(node, cg, isCompressed ? TR::Int8 : TR::Int16, NULL, false);
+   if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P10))
+      return hashCodeHelper_P10(node, cg, isCompressed ? TR::Int8 : TR::Int16, NULL, false);
+   else
+      return hashCodeHelper(node, cg, isCompressed ? TR::Int8 : TR::Int16, NULL, false);
    }
 
 static TR::Register*
@@ -11757,22 +11760,34 @@ inlineVectorizedHashCode(TR::Node* node, TR::CodeGenerator* cg)
       // type operand of the NEWARRAY instruction
       // See https://docs.oracle.com/javase/specs/jvms/se9/html/jvms-6.html#jvms-6.5.newarray.
       case 4: // T_BOOLEAN
-         hashReg = hashCodeHelper(node, cg, TR::Int8, node->getChild(3), false);
+         if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P10))
+            hashReg = hashCodeHelper_P10(node, cg, TR::Int8, node->getChild(3), false);
+         else
+            hashReg = hashCodeHelper(node, cg, TR::Int8, node->getChild(3), false);
          break;
       case 8: // T_BYTE
-         hashReg = hashCodeHelper(node, cg, TR::Int8, node->getChild(3), true);
+         if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P10))
+            hashReg = hashCodeHelper_P10(node, cg, TR::Int8, node->getChild(3), true);
+         else
+            hashReg = hashCodeHelper(node, cg, TR::Int8, node->getChild(3), true);
          break;
       case 5: // T_CHAR
-         hashReg = hashCodeHelper(node, cg, TR::Int16, node->getChild(3), false);
+         if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P10))
+            hashReg = hashCodeHelper_P10(node, cg, TR::Int16, node->getChild(3), false);
+         else
+            hashReg = hashCodeHelper(node, cg, TR::Int16, node->getChild(3), false);
          break;
       case 9: // T_SHORT
-         hashReg = hashCodeHelper(node, cg, TR::Int16, node->getChild(3), true);
+         if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P10))
+            hashReg = hashCodeHelper_P10(node, cg, TR::Int16, node->getChild(3), true);
+         else
+            hashReg = hashCodeHelper(node, cg, TR::Int16, node->getChild(3), true);
          break;
       case 10: // T_INT
-	    if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P10))
-		 hashReg = hashCodeHelper_P10(node, cg, TR::Int32, node->getChild(3), true);
-	    else
-		 hashReg = hashCodeHelper(node, cg, TR::Int32, node->getChild(3), true);
+         if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P10))
+            hashReg = hashCodeHelper_P10(node, cg, TR::Int32, node->getChild(3), true);
+         else
+            hashReg = hashCodeHelper(node, cg, TR::Int32, node->getChild(3), true);
          break;
       }
    if (hashReg != NULL)
