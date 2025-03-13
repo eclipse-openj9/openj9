@@ -31,6 +31,9 @@
 #include "ClassLoaderLinkedListIterator.hpp"
 #include "ClassLoaderManager.hpp"
 #include "ClassLoaderSegmentIterator.hpp"
+#if JAVA_SPEC_VERSION >= 24
+#include "ContinuationSlotIterator.hpp"
+#endif /* JAVA_SPEC_VERSION >= 24 */
 #include "EnvironmentRealtime.hpp"
 #include "FinalizableClassLoaderBuffer.hpp"
 #include "FinalizableObjectBuffer.hpp"
@@ -1633,28 +1636,44 @@ MM_MetronomeDelegate::unsetUnmarkedImpliesCleared()
 }
 
 void
+MM_MetronomeDelegate::doSlot(MM_EnvironmentRealtime *env, J9Object **slotPtr)
+{
+	J9Object *object = *slotPtr;
+	if (MUTATOR_THREAD == env->getThreadType()) {
+		/* special handle by mutator thread for preMountContinuation case */
+		MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
+		((MM_RealtimeAccessBarrier *)extensions->accessBarrier)->rememberObject(env, object);
+	} else {
+		/* scan object by the GC Thread */
+		_markingScheme->markObject(env, object);
+	}
+}
+
+#if JAVA_SPEC_VERSION >= 24
+void
+MM_MetronomeDelegate::doContinuationSlot(MM_EnvironmentRealtime *env, J9Object **slotPtr, GC_ContinuationSlotIterator *continuationSlotIterator)
+{
+	if (_markingScheme->isHeapObject(*slotPtr)) {
+		doSlot(env, slotPtr);
+	} else if (NULL != *slotPtr) {
+		Assert_MM_true(GC_ContinuationSlotIterator::state_monitor_records == continuationSlotIterator->getState());
+	}
+}
+#endif /* JAVA_SPEC_VERSION >= 24 */
+
+void
+MM_MetronomeDelegate::doStackSlot(MM_EnvironmentRealtime *env, J9Object **slotPtr, J9StackWalkState *walkState, const void *stackLocation)
+{
+	if (_markingScheme->isHeapObject(*slotPtr)) {
+		doSlot(env, slotPtr);
+	}
+}
+
+void
 stackSlotIteratorForRealtimeGC(J9JavaVM *javaVM, J9Object **slotPtr, void *localData, J9StackWalkState *walkState, const void *stackLocation)
 {
 	StackIteratorData4RealtimeMarkingScheme *data = (StackIteratorData4RealtimeMarkingScheme *)localData;
-	MM_RealtimeMarkingScheme *realtimeMarkingScheme = data->realtimeMarkingScheme;
-	MM_EnvironmentRealtime *env = data->env;
-
-	J9Object *object = *slotPtr;
-	if (realtimeMarkingScheme->isHeapObject(object)) {
-		/* heap object - validate and mark */
-		Assert_MM_validStackSlot(MM_StackSlotValidator(0, object, stackLocation, walkState).validate(env));
-		if (MUTATOR_THREAD == env->getThreadType()) {
-			/* special handle by mutator thread for preMountContinuation case */
-			MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
-			((MM_RealtimeAccessBarrier *)extensions->accessBarrier)->rememberObject(env, object);
-		} else {
-			/* scan object by the GC Thread */
-			realtimeMarkingScheme->markObject(env, object);
-		}
-	} else if (NULL != object) {
-		/* stack object - just validate */
-		Assert_MM_validStackSlot(MM_StackSlotValidator(MM_StackSlotValidator::NOT_ON_HEAP, object, stackLocation, walkState).validate(env));
-	}
+	data->metronomeDelegate->doStackSlot(data->env, slotPtr, walkState, stackLocation);
 }
 
 void
@@ -1665,7 +1684,7 @@ MM_MetronomeDelegate::scanContinuationNativeSlots(MM_EnvironmentRealtime *env, J
 	const bool isGlobalGC = true;
 	if (MM_GCExtensions::needScanStacksForContinuationObject(currentThread, objectPtr, isConcurrentGC, isGlobalGC, beingMounted)) {
 		StackIteratorData4RealtimeMarkingScheme localData;
-		localData.realtimeMarkingScheme = _markingScheme;
+		localData.metronomeDelegate = this;
 		localData.env = env;
 		localData.fromObject = objectPtr;
 
@@ -1676,6 +1695,16 @@ MM_MetronomeDelegate::scanContinuationNativeSlots(MM_EnvironmentRealtime *env, J
 		/* In STW GC there are no racing carrier threads doing mount and no need for the synchronization. */
 
 		GC_VMThreadStackSlotIterator::scanContinuationSlots(currentThread, objectPtr, (void *)&localData, stackSlotIteratorForRealtimeGC, stackFrameClassWalkNeeded, false);
+
+#if JAVA_SPEC_VERSION >= 24
+		J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, objectPtr);
+		GC_ContinuationSlotIterator continuationSlotIterator(currentThread, continuation);
+
+		while (J9Object **slotPtr = continuationSlotIterator.nextSlot()) {
+			doContinuationSlot(env, slotPtr, &continuationSlotIterator);
+		}
+#endif /* JAVA_SPEC_VERSION >= 24 */
+
 		if (isConcurrentGC) {
 			MM_GCExtensions::exitContinuationConcurrentGCScan(currentThread, objectPtr, isGlobalGC);
 		}

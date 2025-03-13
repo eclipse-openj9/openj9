@@ -44,6 +44,9 @@
 /**
  * @}
  */
+#if JAVA_SPEC_VERSION >= 24
+class GC_ContinuationSlotIterator;
+#endif /* JAVA_SPEC_VERSION >= 24 */
 class MM_CardCleaner;
 class MM_Collector;
 class MM_CycleState;
@@ -513,6 +516,10 @@ public:
 	 */
 	void flushBuffers(MM_EnvironmentVLHGC *env);
 	
+	MMINLINE void doSlot(MM_EnvironmentVLHGC *env, J9Object *fromObject, J9Object** slotPtr);
+#if JAVA_SPEC_VERSION >= 24
+	void doContinuationSlot(MM_EnvironmentVLHGC *env, J9Object *fromObject, J9Object** slotPtr, GC_ContinuationSlotIterator *continuationSlotIterator);
+#endif /* JAVA_SPEC_VERSION >= 24 */
 	void doStackSlot(MM_EnvironmentVLHGC *env, J9Object *fromObject, J9Object** slotPtr, J9StackWalkState *walkState, const void *stackLocation);
 	/**
 	 * Create a GlobalMarkingScheme object.

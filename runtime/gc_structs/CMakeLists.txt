@@ -38,6 +38,7 @@ set(gc_structs_sources
 	ConstantDynamicSlotIterator.cpp
 	ConstantPoolClassSlotIterator.cpp
 	ConstantPoolObjectSlotIterator.cpp
+	ContinuationSlotIterator.cpp
 	JVMTIObjectTagTableIterator.cpp
 	MethodTypesIterator.cpp
 	MixedObjectDeclarationOrderIterator.cpp

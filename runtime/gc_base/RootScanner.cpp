@@ -356,6 +356,20 @@ MM_RootScanner::doClassSlot(J9Class *classPtr)
 	/* ignore class slots by default */
 }
 
+#if JAVA_SPEC_VERSION >= 24
+/**
+ * @todo Provide function documentation
+ */
+void
+MM_RootScanner::doContinuationSlot(J9Object **slotPtr, GC_ContinuationSlotIterator *continuationSlotIterator)
+{
+	/* ensure that this isn't a slot pointing into the gap (only matters for split heap VMs) */
+	if (!_extensions->heap->objectIsInGap(*slotPtr)) {
+		doSlot(slotPtr);
+	}
+}
+#endif /* JAVA_SPEC_VERSION >= 24 */
+
 /**
  * @todo Provide function documentation
  */
@@ -552,6 +566,14 @@ MM_RootScanner::scanOneThread(MM_EnvironmentBase *env, J9VMThread *walkThread, v
 		/* At this point we know that a virtual thread is mounted. We previously scanned its stack,
 		 * and now we will scan carrier's stack, that continuation struct is currently pointing to. */
 		GC_VMThreadStackSlotIterator::scanSlots(currentThread, walkThread, walkThread->currentContinuation, localData, stackSlotIterator, isStackFrameClassWalkNeeded(), _trackVisibleStackFrameDepth);
+#if JAVA_SPEC_VERSION >= 24
+		GC_ContinuationSlotIterator continuationSlotIterator(walkThread, walkThread->currentContinuation);
+
+		while (J9Object **slot = continuationSlotIterator.nextSlot()) {
+			/* do current continuation slot (mounted vthread case, the slot for saved carrier thread) */
+			doContinuationSlot(slot, &continuationSlotIterator);
+		}
+#endif /* JAVA_SPEC_VERSION >= 24 */
 	}
 #endif /* JAVA_SPEC_VERSION >= 19 */
 	return false;
