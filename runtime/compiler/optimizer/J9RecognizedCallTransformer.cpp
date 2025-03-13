@@ -1693,6 +1693,14 @@ bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop* treetop)
          case TR::java_lang_Long_rotateLeft:
          case TR::java_lang_Long_rotateRight:
             return comp()->target().cpu.getSupportsHardware64bitRotate();
+         case TR::java_lang_Integer_compress:
+            return comp()->target().cpu.getSupportsHardware32bitCompress();
+         case TR::java_lang_Long_compress:
+            return comp()->target().cpu.getSupportsHardware64bitCompress();
+         case TR::java_lang_Integer_expand:
+            return comp()->target().cpu.getSupportsHardware32bitExpand();
+         case TR::java_lang_Long_expand:
+            return comp()->target().cpu.getSupportsHardware64bitExpand();
          case TR::java_lang_Math_abs_I:
          case TR::java_lang_Math_abs_L:
             return cg()->supportsIntAbs();
@@ -1815,6 +1823,18 @@ void J9::RecognizedCallTransformer::transform(TR::TreeTop* treetop)
 
             break;
             }
+         case TR::java_lang_Integer_compress:
+            processIntrinsicFunction(treetop, node, TR::icompressbits);
+            break;
+         case TR::java_lang_Long_compress:
+            processIntrinsicFunction(treetop, node, TR::lcompressbits);
+            break;
+         case TR::java_lang_Integer_expand:
+            processIntrinsicFunction(treetop, node, TR::iexpandbits);
+            break;
+         case TR::java_lang_Long_expand:
+            processIntrinsicFunction(treetop, node, TR::lexpandbits);
+            break;
          case TR::java_lang_Math_abs_I:
             processIntrinsicFunction(treetop, node, TR::iabs);
             break;
