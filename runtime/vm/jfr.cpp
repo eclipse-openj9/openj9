@@ -679,6 +679,7 @@ jfrVMMonitorEntered(J9HookInterface **hook, UDATA eventNum, void *eventData, voi
 		jfrEvent->duration = j9time_nano_time() - event->startTicks;
 		jfrEvent->monitorClass = event->monitorClass;
 		jfrEvent->monitorAddress = (UDATA)event->monitor;
+		jfrEvent->previousOwner = event->previousOwner;
 	}
 }
 

@@ -770,12 +770,25 @@ VM_JFRConstantPoolTypes::addThreadEntry(J9VMThread *vmThread)
 	U_32 index = U_32_MAX;
 	ThreadEntry *entry = NULL;
 	ThreadEntry entryBuffer = {0};
+	omrthread_t osThread = NULL;
+	j9object_t threadObject = NULL;
+
+	if (NULL == vmThread) {
+		index = 0;
+		goto done;
+	}
 
 	entry = &entryBuffer;
 	entry->vmThread = vmThread;
 	_buildResult = OK;
-	omrthread_t osThread = vmThread->osThread;
-	j9object_t threadObject = vmThread->threadObject;
+	osThread = vmThread->osThread;
+	threadObject = vmThread->threadObject;
+
+	if ((NULL == osThread) || (NULL == threadObject)) {
+		/* this can happen if a thread dies during a monitor enter */
+		index = 0;
+		goto done;
+	}
 
 	entry = (ThreadEntry *) hashTableFind(_threadTable, entry);
 	if (NULL != entry) {
@@ -1100,6 +1113,9 @@ VM_JFRConstantPoolTypes::addMonitorEnterEntry(J9JFRMonitorEntered *monitorEnterD
 	entry->monitorAddress = monitorEnterData->monitorAddress;
 
 	entry->threadIndex = addThreadEntry(monitorEnterData->vmThread);
+	if (isResultNotOKay()) goto done;
+
+	entry->previousOwnerThread = addThreadEntry(monitorEnterData->previousOwner);
 	if (isResultNotOKay()) goto done;
 
 	entry->eventThreadIndex = addThreadEntry(monitorEnterData->vmThread);
