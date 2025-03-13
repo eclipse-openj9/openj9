@@ -845,6 +845,8 @@ preparePinnedVirtualThreadForUnmount(J9VMThread *currentThread, j9object_t syncO
 						result = J9_OBJECT_MONITOR_OOM;
 						goto done;
 					}
+				} else {
+					objectMonitor = J9_INFLLOCK_OBJECT_MONITOR(lock);
 				}
 
 				detachMonitorInfo(currentThread, objectMonitor);
@@ -877,6 +879,8 @@ preparePinnedVirtualThreadForUnmount(J9VMThread *currentThread, j9object_t syncO
 						result = J9_OBJECT_MONITOR_OOM;
 						goto done;
 					}
+				} else {
+					objectMonitor = J9_INFLLOCK_OBJECT_MONITOR(lock);
 				}
 
 				detachMonitorInfo(currentThread, objectMonitor);
