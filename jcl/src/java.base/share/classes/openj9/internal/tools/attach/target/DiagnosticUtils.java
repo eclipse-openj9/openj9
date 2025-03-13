@@ -35,9 +35,10 @@ import java.util.function.Function;
 
 import com.ibm.oti.vm.VM;
 
-/*[IF CRAC_SUPPORT]*/
+/*[IF CRAC_SUPPORT | CRIU_SUPPORT]*/
+import java.util.Properties;
 import openj9.internal.criu.InternalCRIUSupport;
-/*[ENDIF] CRAC_SUPPORT */
+/*[ENDIF] CRAC_SUPPORT | CRIU_SUPPORT */
 import openj9.internal.management.ClassLoaderInfoBaseImpl;
 import openj9.management.internal.IDCacheInitializer;
 import openj9.management.internal.InvalidDumpOptionExceptionBase;
@@ -111,12 +112,17 @@ public class DiagnosticUtils {
 	 */
 	private static final String DIAGNOSTICS_THREAD_PRINT = "Thread.print";
 
-/*[IF CRAC_SUPPORT]*/
+/*[IF CRAC_SUPPORT | CRIU_SUPPORT]*/
 	/**
 	 * Generate a checkpoint via CRIUSupport using a compatability name.
 	 */
 	private static final String DIAGNOSTICS_JDK_CHECKPOINT = "JDK.checkpoint";
-/*[ENDIF] CRAC_SUPPORT */
+
+	/**
+	 * The system property prefix for the key/value pairs specified via JDK.checkpoint.
+	 */
+	private static final String CRIU_SYSTEM_PROPERTY_PREFIX = "openj9.internal.criu.";
+/*[ENDIF] CRAC_SUPPORT | CRIU_SUPPORT */
 
 	/**
 	 * Run System.gc();
@@ -160,9 +166,10 @@ public class DiagnosticUtils {
 	public static final String COMMAND_STRING = "command_string";
 
 	/**
-	 * Use this to separate arguments in a diagnostic command string.
+	 * Use these to separate arguments in a diagnostic command string.
 	 */
 	public static final String DIAGNOSTICS_OPTION_SEPARATOR = ",";
+	public static final String DIAGNOSTICS_PROPERTY_SEPARATOR = "=";
 
 	/**
 	 * Report live or all heap objects.
@@ -579,20 +586,47 @@ public class DiagnosticUtils {
 
 	}
 
-/*[IF CRAC_SUPPORT]*/
+/*[IF CRAC_SUPPORT | CRIU_SUPPORT]*/
 	private static DiagnosticProperties doCheckpointJVM(String diagnosticCommand) {
-		Thread checkpointThread = new Thread(() -> {
-			try {
-				jdk.crac.Core.checkpointRestore();
-			} catch (Throwable t) {
-				t.printStackTrace();
+		DiagnosticProperties result;
+		if (InternalCRIUSupport.isCRaCorCRIUSupportEnabled()) {
+			String[] parts = diagnosticCommand.split(DIAGNOSTICS_OPTION_SEPARATOR);
+			// parts[0] is DIAGNOSTICS_JDK_CHECKPOINT
+			if (parts.length > 1) {
+				// the command format: JDK.checkpoint,imageDir=/path/to/cpData,logLevel=4
+				for (int index = 1; index < parts.length; index++) {
+					IPC.logMessage("doCheckpointJVM: ", "parts[" + index + "] : " + parts[index]);
+					String[] sysPropValue = parts[index].split(DIAGNOSTICS_PROPERTY_SEPARATOR);
+					if (sysPropValue.length != 2) {
+						return DiagnosticProperties
+								.makeErrorProperties("Expected Jcmd format: JDK.checkpoint,imageDir=/path/to/cpData,logLevel=4"
+										+ " that creates system properties <openj9.internal.criu.imageDir> with the value </path/to/cpData>"
+										+ " and <openj9.internal.criu.logLevel> with the value <4>, but got: " + diagnosticCommand);
+					}
+					Properties props = VM.internalGetProperties();
+					props.setProperty(CRIU_SYSTEM_PROPERTY_PREFIX + sysPropValue[0], sysPropValue[1]);
+				}
 			}
-		});
-		checkpointThread.start();
+			Thread checkpointThread = new Thread(() -> {
+				try {
+					if (InternalCRIUSupport.isCRaCSupportEnabled()) {
+						jdk.crac.Core.checkpointRestore();
+					} else {
+						InternalCRIUSupport.getInternalCRIUSupport().setCheckpointDefaultParams().checkpointJVM();
+					}
+				} catch (Throwable t) {
+					t.printStackTrace();
+				}
+			});
+			checkpointThread.start();
+			result = DiagnosticProperties.makeStringResult("JVM checkpoint requested");
+		} else {
+			result = DiagnosticProperties.makeStringResult("CRaC or CRIU support is not enabled, JVM can't perform a checkpoint");
+		}
 
-		return DiagnosticProperties.makeStringResult("JVM checkpoint requested");
+		return result;
 	}
-/*[ENDIF] CRAC_SUPPORT */
+/*[ENDIF] CRAC_SUPPORT | CRIU_SUPPORT */
 
 	/* Help strings for the jcmd utilities */
 	private static final String DIAGNOSTICS_HELP_HELP = "Show help for a command%n"
@@ -636,11 +670,15 @@ public class DiagnosticUtils {
 			+ "          agentLibrary: the absolute path of the agent%n"
 			+ "          agent option: (Optional) the agent option string%n";
 
-/*[IF CRAC_SUPPORT]*/
-	private static final String DIAGNOSTICS_JDK_CHECKPOINT_HELP = "Produce a JVM checkpoint via CRIUSupport.%n"
-			+ FORMAT_PREFIX + DIAGNOSTICS_JDK_CHECKPOINT + "%n"
+/*[IF CRAC_SUPPORT | CRIU_SUPPORT]*/
+	private static final String DIAGNOSTICS_JDK_CHECKPOINT_HELP = "Produce a JVM checkpoint via CRIUSupport, optionally set system properties.%n"
+			+ FORMAT_PREFIX + DIAGNOSTICS_JDK_CHECKPOINT + "[,imageDir=/path/to/cpData][,logLevel=4]" + "%n"
+			+ "          A prefix <" + CRIU_SYSTEM_PROPERTY_PREFIX + "> is added to the each key specified.%n"
+			+ "          The sample options above create following system properties:%n"
+			+ "          - a system property <openj9.internal.criu.imageDir> with the value </path/to/cpData>%n"
+			+ "          - a system property <openj9.internal.criu.logLevel> with the value <4>%n"
 			+ "NOTE: this utility might significantly affect the performance of the target VM.%n";
-/*[ENDIF] CRAC_SUPPORT */
+/*[ENDIF] CRAC_SUPPORT | CRIU_SUPPORT */
 
 /*[IF JFR_SUPPORT]*/
 	private static final String DIAGNOSTICS_JFR_START_HELP = "Start a new Recording%n%n"
@@ -692,12 +730,12 @@ public class DiagnosticUtils {
 		commandTable.put(DIAGNOSTICS_LOAD_JVMTI_AGENT, DiagnosticUtils::loadJVMTIAgent);
 		helpTable.put(DIAGNOSTICS_LOAD_JVMTI_AGENT, DIAGNOSTICS_LOAD_JVMTI_AGENT_HELP);
 
-/*[IF CRAC_SUPPORT]*/
-		if (InternalCRIUSupport.isCRaCSupportEnabled()) {
+/*[IF CRAC_SUPPORT | CRIU_SUPPORT]*/
+		if (InternalCRIUSupport.isCRaCorCRIUSupportEnabled()) {
 			commandTable.put(DIAGNOSTICS_JDK_CHECKPOINT, DiagnosticUtils::doCheckpointJVM);
 			helpTable.put(DIAGNOSTICS_JDK_CHECKPOINT, DIAGNOSTICS_JDK_CHECKPOINT_HELP);
 		}
-/*[ENDIF] CRAC_SUPPORT */
+/*[ENDIF] CRAC_SUPPORT | CRIU_SUPPORT */
 
 /*[IF JFR_SUPPORT]*/
 		if (VM.isJFREnabled()) {
