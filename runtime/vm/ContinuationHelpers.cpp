@@ -220,6 +220,7 @@ synchronizeWithConcurrentGCScan(J9VMThread *currentThread, j9object_t continuati
 BOOLEAN
 enterContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 {
+	J9JavaVM *vm = currentThread->javaVM;
 	BOOLEAN result = TRUE;
 	J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, continuationObject);
 	ContinuationState volatile *continuationStatePtr = VM_ContinuationHelpers::getContinuationStateAddress(currentThread, continuationObject);
@@ -232,7 +233,7 @@ enterContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 			/* Directly return result if the create code failed, exception is already set. */
 			return result;
 		}
-		currentThread->javaVM->memoryManagerFunctions->continuationObjectStarted(currentThread, continuationObject);
+		vm->memoryManagerFunctions->continuationObjectStarted(currentThread, continuationObject);
 
 		continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, continuationObject);
 #if JAVA_SPEC_VERSION >= 24
@@ -240,6 +241,33 @@ enterContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 #endif /* JAVA_SPEC_VERSION >= 24 */
 	}
 	Assert_VM_notNull(continuation);
+
+#if JAVA_SPEC_VERSION >= 24
+	if (NULL != continuation->nextWaitingContinuation) {
+		/* Continuation is still in a blocked list. This can happen with TIMED_WAIT.
+		 * It must be removed from the waiting list.
+		 */
+		bool foundInBlockedContinuationList = false;
+		bool foundInMonitorList = false;
+
+		omrthread_monitor_enter(vm->blockedVirtualThreadsMutex);
+
+		foundInBlockedContinuationList = VM_ContinuationHelpers::removeContinuationFromList(
+				&vm->blockedContinuations, continuation);
+
+		foundInMonitorList = VM_ContinuationHelpers::removeContinuationFromList(
+				&continuation->objectWaitMonitor->waitingContinuations, continuation);
+
+		omrthread_monitor_exit(vm->blockedVirtualThreadsMutex);
+
+		Assert_VM_true(foundInMonitorList || foundInMonitorList);
+
+		/* Virtual can only be in one list at a time. */
+		Assert_VM_false(foundInBlockedContinuationList && foundInMonitorList);
+
+		continuation->objectWaitMonitor = NULL;
+	}
+#endif /* JAVA_SPEC_VERSION >= 24 */
 
 	/* let GC know we are mounting, so they don't need to scan us, or if there is already ongoing scan wait till it's complete. */
 	continuationObject = synchronizeWithConcurrentGCScan(currentThread, continuationObject, continuationStatePtr);
@@ -816,6 +844,7 @@ preparePinnedVirtualThreadForUnmount(J9VMThread *currentThread, j9object_t syncO
 	j9objectmonitor_t lock = 0;
 	j9object_t continuationObj = NULL;
 	UDATA monitorCount = 0;
+	J9JavaVM *vm = currentThread->javaVM;
 
 	if (NULL != syncObj) {
 		enterVThreadTransitionCritical(currentThread, (jobject)&currentThread->threadObject);
@@ -829,7 +858,7 @@ preparePinnedVirtualThreadForUnmount(J9VMThread *currentThread, j9object_t syncO
 
 			if (syncObj != object) {
 				if (!LN_HAS_LOCKWORD(currentThread, object)) {
-					objectMonitor = monitorTablePeek(currentThread->javaVM, object);
+					objectMonitor = monitorTablePeek(vm, object);
 					if (NULL != objectMonitor) {
 						lock = J9_LOAD_LOCKWORD(currentThread, &objectMonitor->alternateLockword);
 					} else {
@@ -863,7 +892,7 @@ preparePinnedVirtualThreadForUnmount(J9VMThread *currentThread, j9object_t syncO
 
 			if (syncObj != object) {
 				if (!LN_HAS_LOCKWORD(currentThread, object)) {
-					objectMonitor = monitorTablePeek(currentThread->javaVM, object);
+					objectMonitor = monitorTablePeek(vm, object);
 					if (NULL != objectMonitor) {
 						lock = J9_LOAD_LOCKWORD(currentThread, &objectMonitor->alternateLockword);
 					} else {
@@ -892,7 +921,7 @@ preparePinnedVirtualThreadForUnmount(J9VMThread *currentThread, j9object_t syncO
 
 	if (NULL != syncObj) {
 		if (!LN_HAS_LOCKWORD(currentThread, syncObj)) {
-			syncObjectMonitor = monitorTablePeek(currentThread->javaVM, syncObj);
+			syncObjectMonitor = monitorTablePeek(vm, syncObj);
 			if (NULL != syncObjectMonitor) {
 				lock = J9_LOAD_LOCKWORD(currentThread, &syncObjectMonitor->alternateLockword);
 			} else {
@@ -930,10 +959,11 @@ preparePinnedVirtualThreadForUnmount(J9VMThread *currentThread, j9object_t syncO
 
 			/* Add Continuation struct to the monitor's waiting list. */
 			omrthread_monitor_exit(monitor);
-			omrthread_monitor_enter(currentThread->javaVM->blockedVirtualThreadsMutex);
+			omrthread_monitor_enter(vm->blockedVirtualThreadsMutex);
 			currentThread->currentContinuation->nextWaitingContinuation = syncObjectMonitor->waitingContinuations;
 			syncObjectMonitor->waitingContinuations = currentThread->currentContinuation;
-			omrthread_monitor_exit(currentThread->javaVM->blockedVirtualThreadsMutex);
+			currentThread->currentContinuation->objectWaitMonitor = syncObjectMonitor;
+			omrthread_monitor_exit(vm->blockedVirtualThreadsMutex);
 		} else {
 			syncObjectMonitor->virtualThreadWaitCount += 1;
 		}
@@ -970,33 +1000,32 @@ takeVirtualThreadListToUnblock(J9VMThread *currentThread, J9JavaVM *vm)
 	while (NULL == unblockedList) {
 		if (NULL != vm->blockedContinuations) {
 restart:
-			J9VMContinuation *listHead = vm->blockedContinuations;
+			J9VMContinuation *previous = NULL;
+			J9VMContinuation *current = vm->blockedContinuations;
 			J9VMContinuation *next = NULL;
-			vm->blockedContinuations = NULL;
-			while (NULL != listHead) {
+			while (NULL != current) {
 				bool unblocked = false;
-				next = listHead->nextWaitingContinuation;
-				U_32 state = J9VMJAVALANGVIRTUALTHREAD_STATE(currentThread, listHead->vthread);
+				U_32 state = J9VMJAVALANGVIRTUALTHREAD_STATE(currentThread, current->vthread);
+				next = current->nextWaitingContinuation;
 				/* Skip vthreads that are still in transition. */
 				switch (state) {
 				case JAVA_LANG_VIRTUALTHREAD_BLOCKING:
 				case JAVA_LANG_VIRTUALTHREAD_WAITING:
 				case JAVA_LANG_VIRTUALTHREAD_TIMED_WAITING:
-					listHead->nextWaitingContinuation = vm->blockedContinuations;
-					vm->blockedContinuations = listHead;
-					listHead = next;
+					previous = current;
+					current = next;
 					continue;
 				case JAVA_LANG_VIRTUALTHREAD_WAIT:
 				case JAVA_LANG_VIRTUALTHREAD_TIMED_WAIT:
-					J9VMJAVALANGVIRTUALTHREAD_SET_STATE(currentThread, listHead->vthread, JAVA_LANG_VIRTUALTHREAD_BLOCKED);
+					J9VMJAVALANGVIRTUALTHREAD_SET_STATE(currentThread, current->vthread, JAVA_LANG_VIRTUALTHREAD_BLOCKED);
 					/* FALLTHROUGH */
 				default:
 					break;
 				}
-				if (J9VMJAVALANGVIRTUALTHREAD_ONWAITINGLIST(currentThread, listHead->vthread)) {
+				if (J9VMJAVALANGVIRTUALTHREAD_ONWAITINGLIST(currentThread, current->vthread)) {
 					unblocked = true;
 				} else {
-					j9object_t continuationObj = J9VMJAVALANGVIRTUALTHREAD_CONT(currentThread, listHead->vthread);
+					j9object_t continuationObj = J9VMJAVALANGVIRTUALTHREAD_CONT(currentThread, current->vthread);
 					j9object_t syncObject = J9VMJDKINTERNALVMCONTINUATION_BLOCKER(currentThread, continuationObj);
 					J9ObjectMonitor *syncObjectMonitor = NULL;
 					j9objectmonitor_t lock = 0;
@@ -1015,18 +1044,29 @@ restart:
 						if (syncObjectMonitor->virtualThreadWaitCount >= 1) {
 							syncObjectMonitor->virtualThreadWaitCount -= 1;
 						}
-						J9VMJAVALANGVIRTUALTHREAD_SET_ONWAITINGLIST(currentThread, listHead->vthread, JNI_TRUE);
+						J9VMJAVALANGVIRTUALTHREAD_SET_ONWAITINGLIST(currentThread, current->vthread, JNI_TRUE);
 					}
 				}
 
 				if (unblocked) {
-					J9VMJAVALANGVIRTUALTHREAD_SET_NEXT(currentThread, listHead->vthread, unblockedList);
-					unblockedList = listHead->vthread;
+					/* Add to Java unblock list. */
+					J9VMJAVALANGVIRTUALTHREAD_SET_NEXT(currentThread, current->vthread, unblockedList);
+					unblockedList = current->vthread;
+
+					/* Remove from native blocking list. */
+					current->nextWaitingContinuation = NULL;
+
+					if (NULL == previous) {
+						vm->blockedContinuations = next;
+					} else {
+						previous->nextWaitingContinuation = next;
+					}
 				} else {
-					listHead->nextWaitingContinuation = vm->blockedContinuations;
-					vm->blockedContinuations = listHead;
+					/* Keep in native blocking list. */
+					previous = current;
 				}
-				listHead = next;
+
+				current = next;
 			}
 			if (NULL == unblockedList) {
 				vmFuncs->internalExitVMToJNI(currentThread);

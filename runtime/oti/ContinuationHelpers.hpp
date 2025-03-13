@@ -290,6 +290,39 @@ public:
 				&& (0 == vmThread->continuationPinCount)
 				&& (0 == vmThread->callOutCount));
 	}
+
+	/**
+	 * Remove a continuation from the provided list.
+	 *
+	 * @param[in] list the list from which the continuation should be removed
+	 * @param[in] continuation the continuation to be removed
+	 *
+	 * @return true if the continuation is found and removed from the list, otherwise false
+	 */
+	static bool
+	removeContinuationFromList(J9VMContinuation **list, J9VMContinuation *continuation)
+	{
+		bool foundInList = false;
+		J9VMContinuation *previous = NULL;
+		J9VMContinuation *current = *list;
+
+		while (NULL != current) {
+			if (continuation == current) {
+				foundInList = true;
+				if (NULL == previous) {
+					*list = current->nextWaitingContinuation;
+				} else {
+					previous->nextWaitingContinuation = current->nextWaitingContinuation;
+				}
+				current->nextWaitingContinuation = NULL;
+				break;
+			}
+			previous = current;
+			current = current->nextWaitingContinuation;
+		}
+
+		return foundInList;
+	}
 #endif /* JAVA_SPEC_VERSION >= 24 */
 };
 
