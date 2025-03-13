@@ -63,6 +63,11 @@ enum FrameType {
 	FrameTypeCount,
 };
 
+enum OOPModeType {
+	ZeroBased = 0,
+	OOPModeTypeCount,
+};
+
 enum ThreadState {
 	NEW = 0,
 	TERMINATED,
@@ -288,6 +293,16 @@ struct CPUInformationEntry {
 	U_32 hwThreads;
 };
 
+struct GCHeapConfigurationEntry {
+	U_64 minSize;
+	U_64 maxSize;
+	U_64 initialSize;
+	BOOLEAN usesCompressedOops;
+	OOPModeType compressedOopsMode;
+	U_64 objectAlignment;
+	UDATA heapAddressBits;
+};
+
 struct VirtualizationInformationEntry {
 	const char *name;
 };
@@ -301,6 +316,7 @@ struct JFRConstantEvents {
 	CPUInformationEntry CPUInfoEntry;
 	VirtualizationInformationEntry VirtualizationInfoEntry;
 	OSInformationEntry OSInfoEntry;
+	GCHeapConfigurationEntry GCHeapConfigEntry;
 };
 
 class VM_JFRConstantPoolTypes {
@@ -989,6 +1005,7 @@ done:
 		initializeCPUInformationEvent(vm, currentThread, result);
 		initializeVirtualizationInformation(vm);
 		initializeOSInformation(vm, result);
+		initializeGCHeapConfigurationEvent(vm, result);
 	}
 
 	/**
@@ -1207,6 +1224,26 @@ done:
 			j9mem_free_memory(jfrConstantEvents->OSInfoEntry.osVersion);
 			jfrConstantEvents->OSInfoEntry.osVersion = NULL;
 		}
+	}
+
+	/**
+	 * Initialize GCHeapConfigurationEntry
+	 *
+	 * @param vm[in] the J9JavaVM
+	 */
+	static void initializeGCHeapConfigurationEvent(J9JavaVM *vm, BuildResult *result)
+	{
+		J9MemoryManagerFunctions *mmFuncs = vm->memoryManagerFunctions;
+		GCHeapConfigurationEntry *gcConfiguration = &(getJFRConstantEvents(vm)->GCHeapConfigEntry);
+
+		gcConfiguration->minSize = mmFuncs->j9gc_get_initial_heap_size(vm);
+		gcConfiguration->maxSize = mmFuncs->j9gc_get_maximum_heap_size(vm);
+		gcConfiguration->initialSize = gcConfiguration->minSize;
+		uintptr_t value;
+		gcConfiguration->usesCompressedOops = mmFuncs->j9gc_modron_getConfigurationValueForKey(vm, j9gc_modron_configuration_compressObjectReferences, &value) ? value : 0;
+		gcConfiguration->compressedOopsMode = ZeroBased;
+		gcConfiguration->objectAlignment = vm->objectAlignmentInBytes;
+		gcConfiguration->heapAddressBits = J9JAVAVM_REFERENCE_SIZE(vm) * 8;
 	}
 
 	VM_JFRConstantPoolTypes(J9VMThread *currentThread)
