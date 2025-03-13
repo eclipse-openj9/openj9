@@ -52,6 +52,10 @@ static constexpr const char * const threadStateNames[] = {
 	"STATE_BLOCKED_ON_MONITOR_ENTER"
 };
 
+static constexpr const char * const oopModeTypeNames[] = {
+	"Zero based"
+};
+
 enum StringEnconding {
 	NullString = 0,
 	EmptyString,
@@ -82,6 +86,7 @@ enum MetadataTypeID {
 	PhysicalMemoryID = 108,
 	ExecutionSampleID = 109,
 	ThreadDumpID = 111,
+	GCHeapConfigID = 133,
 	ThreadID = 164,
 	ThreadGroupID = 165,
 	ClassID = 166,
@@ -89,6 +94,7 @@ enum MetadataTypeID {
 	MethodID = 168,
 	SymbolID = 169,
 	ThreadStateID = 170,
+	NarrowOopModesID = 180,
 	ModuleID = 186,
 	PackageID = 187,
 	StackTraceID = 188,
@@ -148,6 +154,7 @@ private:
 	static constexpr int CHECKPOINT_EVENT_HEADER_AND_FOOTER = 68;
 	static constexpr int STRING_CONSTANT_SIZE = 128;
 	static constexpr int THREADSTATE_ENTRY_LENGTH = CHECKPOINT_EVENT_HEADER_AND_FOOTER + sizeof(threadStateNames) + (THREADSTATE_COUNT * STRING_HEADER_LENGTH);
+	static constexpr int OOP_MODES_ENTRY_SIZE = CHECKPOINT_EVENT_HEADER_AND_FOOTER + sizeof(oopModeTypeNames) + (OOPModeTypeCount * STRING_HEADER_LENGTH);
 	static constexpr int CLASS_ENTRY_ENTRY_SIZE = (5 * sizeof(U_64)) + sizeof(U_8);
 	static constexpr int CLASSLOADER_ENTRY_SIZE = 3 * sizeof(U_64);
 	static constexpr int PACKAGE_ENTRY_SIZE = (3 * sizeof(U_64)) + sizeof(U_8);
@@ -344,6 +351,10 @@ done:
 
 			writeFrameTypeCheckpointEvent();
 
+			if (0 == _vm->jfrState.jfrChunkCount) {
+				writeNarrowOOPModeTypesEvent();
+			}
+
 			writeThreadCheckpointEvent();
 
 			writeThreadGroupCheckpointEvent();
@@ -399,6 +410,8 @@ done:
 				writeInitialSystemPropertyEvents(_vm);
 
 				writeInitialEnvironmentVariableEvents();
+
+				writeGCHeapConfigurationEvent();
 			}
 
 			writePhysicalMemoryEvent();
@@ -799,6 +812,10 @@ done:
 	U_8 *writeOSInformationEvent();
 
 	U_8 *writeThreadDumpEvent();
+
+	void writeNarrowOOPModeTypesEvent();
+
+	void writeGCHeapConfigurationEvent();
 
 	void writeInitialSystemPropertyEvents(J9JavaVM *vm);
 
