@@ -43,8 +43,6 @@ import java.nio.file.Path;
 import java.util.stream.Stream;
 /*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
-import jdk.internal.org.objectweb.asm.ClassReader;
-
 import com.ibm.java.diagnostics.utils.commands.CommandException;
 import com.ibm.java.diagnostics.utils.plugins.ClassInfo;
 import com.ibm.java.diagnostics.utils.plugins.ClassListener;
@@ -72,14 +70,14 @@ public class PluginManagerImpl implements PluginManager {
 	 */
 	protected final ArrayList<File> pluginSearchPath = new ArrayList<>();
 
-	private static PluginManagerImpl instance = null;
+	private static PluginManagerImpl instance;
 
 	/**
 	 * listeners for moving over classes
 	 */
 	private final Set<ClassListener> listeners = new HashSet<>();
 
-	private URL[] classpath = null;
+	private URL[] classpath;
 
 	public static PluginManager getPluginManager() {
 		if (instance == null) {
@@ -179,7 +177,9 @@ public class PluginManagerImpl implements PluginManager {
 	}
 
 	void listClassFiles(Path path) {
-		try (Stream<Path> paths = Files.list(path).filter(filePath -> !filePath.endsWith("module-info.class"))) { //$NON-NLS-1$
+		try (Stream<Path> files = Files.list(path);
+			Stream<Path> paths = files.filter(filePath -> !filePath.endsWith("module-info.class")) //$NON-NLS-1$
+		) {
 			paths.forEach(filePath -> {
 				if (Files.isRegularFile(filePath)) {
 					try {
@@ -312,10 +312,7 @@ public class PluginManagerImpl implements PluginManager {
 	/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 	private ClassInfo scanClassFile(InputStream file, URL url) throws IOException {
-		ClassScanner scanner = new ClassScanner(url, listeners);
-		ClassReader cr = new ClassReader(file);
-		cr.accept(scanner, 0);
-		return scanner.getClassInfo();
+		return ClassScanner.getClassInfo(file, url, listeners);
 	}
 
 	/**

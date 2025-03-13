@@ -23,6 +23,8 @@ package com.ibm.j9ddr;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -33,12 +35,29 @@ import com.ibm.j9ddr.StructureReader.FieldDescriptor;
 import com.ibm.j9ddr.StructureReader.StructureDescriptor;
 import com.ibm.j9ddr.tools.FlagStructureList;
 
+/*[IF JAVA_SPEC_VERSION < 24]*/
 import jdk.internal.org.objectweb.asm.AnnotationVisitor;
 import jdk.internal.org.objectweb.asm.ClassWriter;
 import jdk.internal.org.objectweb.asm.Label;
 import jdk.internal.org.objectweb.asm.MethodVisitor;
 import jdk.internal.org.objectweb.asm.Opcodes;
 import jdk.internal.org.objectweb.asm.Type;
+/*[ELSE] JAVA_SPEC_VERSION < 24 */
+import java.lang.classfile.Annotation;
+import java.lang.classfile.AnnotationElement;
+import java.lang.classfile.ClassBuilder;
+import java.lang.classfile.ClassFile;
+import java.lang.classfile.CodeBuilder;
+import java.lang.classfile.Label;
+import java.lang.classfile.MethodBuilder;
+import java.lang.classfile.Opcode;
+import java.lang.classfile.attribute.ExceptionsAttribute;
+import java.lang.classfile.attribute.RuntimeVisibleAnnotationsAttribute;
+import java.lang.constant.ClassDesc;
+import java.lang.constant.ConstantDescs;
+import java.lang.constant.MethodTypeDesc;
+import java.util.function.Consumer;
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 /**
  * Generates the class bytecodes needed by DDR to represent, as Java classes,
@@ -138,14 +157,6 @@ outer:
 final class FlagsHelper extends HelperBase {
 
 	public static byte[] getClassBytes(StructureDescriptor structure, String className) {
-		ClassWriter clazz = new ClassWriter(0);
-
-		clazz.visit(V1_8, ACC_PUBLIC | ACC_FINAL | ACC_SUPER, className, null, "java/lang/Object", null);
-
-		MethodVisitor clinit = clazz.visitMethod(ACC_STATIC, "<clinit>", voidMethod, null, null);
-
-		clinit.visitCode();
-
 		boolean useCName = BytecodeGenerator.shouldUseCNameFor(structure.getName());
 		Map<String, Boolean> values = new TreeMap<>();
 
@@ -159,11 +170,20 @@ final class FlagsHelper extends HelperBase {
 			values.put(name, Boolean.valueOf(constant.getValue() != 0));
 		}
 
+		/*[IF JAVA_SPEC_VERSION < 24]*/
+		ClassWriter clazz = new ClassWriter(0);
+
+		clazz.visit(V1_8, ACC_PUBLIC | ACC_FINAL | ACC_SUPER, className, null, "java/lang/Object", null);
+
+		MethodVisitor clinit = clazz.visitMethod(ACC_STATIC, "<clinit>", voidMethod, null, null);
+
+		clinit.visitCode();
+
 		for (Map.Entry<String, Boolean> entry : values.entrySet()) {
 			String name = entry.getKey();
 			Boolean value = entry.getValue();
 
-			clazz.visitField(ACC_PUBLIC | ACC_FINAL | ACC_STATIC, name, "Z", null, null).visitEnd();
+			clazz.visitField(ACC_PUBLIC | ACC_STATIC | ACC_FINAL, name, "Z", null, null).visitEnd();
 
 			clinit.visitInsn(value.booleanValue() ? ICONST_1 : ICONST_0);
 			clinit.visitFieldInsn(PUTSTATIC, className, name, Type.BOOLEAN_TYPE.getDescriptor());
@@ -185,33 +205,72 @@ final class FlagsHelper extends HelperBase {
 		clazz.visitEnd();
 
 		return clazz.toByteArray();
+		/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		ClassDesc classDesc = ClassDesc.ofInternalName(className);
+
+		Consumer<CodeBuilder> clinit = body -> {
+			for (Map.Entry<String, Boolean> entry : values.entrySet()) {
+				body.loadConstant(entry.getValue().booleanValue() ? 1 : 0);
+				body.putstatic(classDesc, entry.getKey(), ConstantDescs.CD_boolean);
+			}
+
+			body.return_();
+		};
+
+		Consumer<CodeBuilder> init = body -> {
+			body.aload(0);
+			body.invokespecial(ConstantDescs.CD_Object, ConstantDescs.INIT_NAME, ConstantDescs.MTD_void);
+			body.return_();
+		};
+
+		Consumer<ClassBuilder> builder = body -> {
+			body.withFlags(ClassFile.ACC_PUBLIC | ClassFile.ACC_FINAL | ClassFile.ACC_SUPER);
+
+			for (String name : values.keySet()) {
+				body.withField(name, ConstantDescs.CD_boolean,
+						ClassFile.ACC_PUBLIC | ClassFile.ACC_STATIC | ClassFile.ACC_FINAL);
+			}
+
+			body.withMethodBody(ConstantDescs.CLASS_INIT_NAME, ConstantDescs.MTD_void, ClassFile.ACC_STATIC, clinit);
+
+			body.withMethodBody(ConstantDescs.INIT_NAME, ConstantDescs.MTD_void, ClassFile.ACC_PRIVATE, init);
+		};
+
+		return ClassFile.of().build(classDesc, builder);
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	}
 
 }
 
-abstract class HelperBase implements Opcodes {
+abstract class HelperBase
+		/*[IF JAVA_SPEC_VERSION < 24]*/
+		implements Opcodes
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
+{
 
-	static final String byteFromLong = Type.getMethodDescriptor(Type.BYTE_TYPE, Type.LONG_TYPE);
+	static final String byteFromLong = "(J)B";
 
-	static final String doubleFromLong = Type.getMethodDescriptor(Type.DOUBLE_TYPE, Type.LONG_TYPE);
+	static final String doubleFromLong = "(J)D";
 
-	static final String doubleFromVoid = Type.getMethodDescriptor(Type.DOUBLE_TYPE);
+	static final String doubleFromVoid = "()D";
 
-	static final String floatFromLong = Type.getMethodDescriptor(Type.FLOAT_TYPE, Type.LONG_TYPE);
+	static final String floatFromLong = "(J)F";
 
-	static final String floatFromVoid = Type.getMethodDescriptor(Type.FLOAT_TYPE);
+	static final String floatFromVoid = "()F";
 
-	static final String intFromLong = Type.getMethodDescriptor(Type.INT_TYPE, Type.LONG_TYPE);
+	static final String intFromLong = "(J)I";
 
-	static final String longFromLong = Type.getMethodDescriptor(Type.LONG_TYPE, Type.LONG_TYPE);
+	static final String longFromLong = "(J)J";
 
-	static final String longFromVoid = Type.getMethodDescriptor(Type.LONG_TYPE);
+	static final String longFromVoid = "()J";
 
-	static final String shortFromLong = Type.getMethodDescriptor(Type.SHORT_TYPE, Type.LONG_TYPE);
+	static final String shortFromLong = "(J)S";
 
-	static final String voidFromLong = Type.getMethodDescriptor(Type.VOID_TYPE, Type.LONG_TYPE);
+	static final String voidFromLong = "(J)V";
 
-	static final String voidMethod = Type.getMethodDescriptor(Type.VOID_TYPE);
+	static final String voidMethod = "()V";
+
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 
 	static final void addLong(MethodVisitor method, long value) {
 		if (value != 0) {
@@ -244,7 +303,13 @@ abstract class HelperBase implements Opcodes {
 			method.visitInsn(ICONST_5);
 			break;
 		default:
-			method.visitLdcInsn(Integer.valueOf(value));
+			if ((Byte.MIN_VALUE <= value) && (value <= Byte.MAX_VALUE)) {
+				method.visitIntInsn(BIPUSH, value);
+			} else if ((Short.MIN_VALUE <= value) && (value <= Short.MAX_VALUE)) {
+				method.visitIntInsn(SIPUSH, value);
+			} else {
+				method.visitLdcInsn(Integer.valueOf(value));
+			}
 			break;
 		}
 	}
@@ -258,6 +323,16 @@ abstract class HelperBase implements Opcodes {
 			method.visitLdcInsn(Long.valueOf(value));
 		}
 	}
+
+	/*[ELSE] JAVA_SPEC_VERSION < 24 */
+
+	static final void addLong(CodeBuilder code, long value) {
+		if (value != 0) {
+			code.loadConstant(value).ladd();
+		}
+	}
+
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 }
 
@@ -287,6 +362,7 @@ final class PointerHelper extends HelperBase {
 		return set;
 	}
 
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	private static boolean checkPresent(FieldDescriptor field, MethodVisitor method) {
 		if (field.isPresent()) {
 			return true;
@@ -302,6 +378,20 @@ final class PointerHelper extends HelperBase {
 
 		return false;
 	}
+	/*[ELSE] JAVA_SPEC_VERSION < 24 */
+	private static boolean checkPresent(FieldDescriptor field, CodeBuilder body) {
+		if (field.isPresent()) {
+			return true;
+		}
+
+		body.new_(noSuchFieldDesc);
+		body.dup();
+		body.invokespecial(noSuchFieldDesc, ConstantDescs.INIT_NAME, ConstantDescs.MTD_void);
+		body.athrow();
+
+		return false;
+	}
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 	/*
 	 * The new DDR tooling doesn't always distinguish between IDATA and I32 or I64
@@ -367,29 +457,47 @@ final class PointerHelper extends HelperBase {
 		return TypeTagPattern.matcher(type).replaceAll("").trim();
 	}
 
-	private final Type abstractPointerType;
-
 	private final String basePrefix;
 
 	private final String className;
 
-	private final Type classType;
-
-	private final ClassWriter clazz;
-
-	private final String[] normalThrows;
-
-	private final String[] optionalThrows;
-
 	private final StructureReader reader;
-
-	private final Type scalarType;
 
 	private final StructureDescriptor structure;
 
 	private final StructureTypeManager typeManager;
 
+	/*[IF JAVA_SPEC_VERSION < 24]*/
+	private final Type abstractPointerType;
+	private final Type classType;
+	private final ClassWriter clazz;
+	private final String[] normalThrows;
+	private final String[] optionalThrows;
+	private final Type scalarType;
 	private final Type udataType;
+	/*[ELSE] JAVA_SPEC_VERSION < 24 */
+	private static final ClassDesc corruptDataDesc = ClassDesc.of("com.ibm.j9ddr.CorruptDataException");
+	private static final ClassDesc fieldAccessorDesc = ClassDesc.of("com.ibm.j9ddr.GeneratedFieldAccessor");
+	private static final ClassDesc generatedPointerDesc = ClassDesc.of("com.ibm.j9ddr.GeneratedPointerClass");
+	private static final ClassDesc noSuchFieldDesc = ClassDesc.of("java.lang.NoSuchFieldException");
+
+	private static final List<ClassDesc> normalThrows = List.of(corruptDataDesc);
+	private static final List<ClassDesc> optionalThrows = List.of(corruptDataDesc, noSuchFieldDesc);
+
+	private static final MethodTypeDesc long2int = MethodTypeDesc.of(ConstantDescs.CD_int, ConstantDescs.CD_long);
+	private static final MethodTypeDesc long2long = MethodTypeDesc.of(ConstantDescs.CD_long, ConstantDescs.CD_long);
+	private static final MethodTypeDesc long2void = MethodTypeDesc.of(ConstantDescs.CD_void, ConstantDescs.CD_long);
+	private static final MethodTypeDesc void2long = MethodTypeDesc.of(ConstantDescs.CD_long);
+
+	private final ClassDesc abstractPointerDesc;
+	private ClassBuilder classBuilder;
+	private final ClassDesc classDesc;
+	private final MethodTypeDesc long2abstact;
+	private final MethodTypeDesc scalar2abstract;
+	private final ClassDesc scalarDesc;
+	private ClassDesc superDesc;
+	private final ClassDesc udataDesc;
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 	private PointerHelper(StructureReader reader, StructureTypeManager typeManager, StructureDescriptor structure,
 			String className) {
@@ -403,19 +511,31 @@ final class PointerHelper extends HelperBase {
 
 		String prefix = className.substring(0, index + 1); // ends with '/vmNN/'
 
-		this.abstractPointerType = Type.getObjectType(prefix + "pointer/AbstractPointer");
 		this.basePrefix = prefix;
 		this.className = className;
+		this.reader = reader;
+		this.structure = structure;
+		this.typeManager = typeManager;
+
+		/*[IF JAVA_SPEC_VERSION < 24]*/
+		this.abstractPointerType = Type.getObjectType(prefix + "pointer/AbstractPointer");
 		this.classType = Type.getObjectType(className);
 		this.clazz = new ClassWriter(0);
 		this.normalThrows = new String[] { "com/ibm/j9ddr/CorruptDataException" };
 		this.optionalThrows = new String[] { "com/ibm/j9ddr/CorruptDataException", "java/lang/NoSuchFieldException" };
-		this.reader = reader;
 		this.scalarType = Type.getObjectType(prefix + "types/Scalar");
-		this.structure = structure;
-		this.typeManager = typeManager;
 		this.udataType = Type.getObjectType(prefix + "types/UDATA");
+		/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		this.abstractPointerDesc = ClassDesc.ofInternalName(prefix + "pointer/AbstractPointer");
+		this.classDesc = ClassDesc.ofInternalName(className);
+		this.long2abstact = MethodTypeDesc.of(abstractPointerDesc, ConstantDescs.CD_long);
+		this.scalarDesc = ClassDesc.ofInternalName(prefix + "types/Scalar");
+		this.scalar2abstract = MethodTypeDesc.of(abstractPointerDesc, scalarDesc);
+		this.udataDesc = ClassDesc.ofInternalName(prefix + "types/UDATA");
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	}
+
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 
 	private MethodVisitor beginAnnotatedMethod(FieldDescriptor field, String name, String descriptor) {
 		MethodVisitor method = beginMethod(field, name, descriptor);
@@ -437,6 +557,43 @@ final class PointerHelper extends HelperBase {
 
 		return clazz.visitMethod(ACC_PUBLIC, name, descriptor, null, exceptions);
 	}
+
+	/*[ELSE] JAVA_SPEC_VERSION < 24 */
+
+	private void addAnnotatedMethod(FieldDescriptor field, String name, MethodTypeDesc type,
+			Consumer<CodeBuilder> code) {
+		Consumer<MethodBuilder> method = builder -> {
+			List<ClassDesc> exceptions = field.isOptional() ? optionalThrows : normalThrows;
+
+			builder.with(ExceptionsAttribute.ofSymbols(exceptions));
+
+			if (field.isPresent()) {
+				Annotation annotation = Annotation.of( //
+						fieldAccessorDesc, //
+						AnnotationElement.ofString("offsetFieldName", String.format("_%sOffset_", field.getName())), //
+						AnnotationElement.ofString("declaredType", field.getDeclaredType()));
+
+				builder.with(RuntimeVisibleAnnotationsAttribute.of(annotation));
+			}
+
+			builder.withCode(code);
+		};
+
+		classBuilder.withMethod(name, type, ClassFile.ACC_PUBLIC, method);
+	}
+
+	private void addMethod(FieldDescriptor field, String name, MethodTypeDesc type, Consumer<CodeBuilder> code) {
+		Consumer<MethodBuilder> method = builder -> {
+			List<ClassDesc> exceptions = field.isOptional() ? optionalThrows : normalThrows;
+
+			builder.with(ExceptionsAttribute.ofSymbols(exceptions));
+			builder.withCode(code);
+		};
+
+		classBuilder.withMethod(name, type, ClassFile.ACC_PUBLIC, method);
+	}
+
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 	private void doAccessorMethods() {
 		for (FieldDescriptor field : structure.getFields()) {
@@ -602,13 +759,14 @@ final class PointerHelper extends HelperBase {
 	 */
 	private void doBitfieldMethod(FieldDescriptor field, String baseType, int width) {
 		String fieldName = field.getName();
+		String startFieldName = String.format("_%s_s_", fieldName);
+		String accessorName = String.format("get%sBitfield", baseType);
+
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		Type qualifiedBaseType = Type.getObjectType(qualifyType(baseType));
 		Type qualifiedReturnType = Type.getObjectType(qualifyType(generalizeSimpleType(baseType)));
 		String returnDesc = Type.getMethodDescriptor(qualifiedReturnType);
-		String startFieldName = String.format("_%s_s_", fieldName);
-		String accessorName = String.format("get%sBitfield", baseType);
 		String accessorDesc = Type.getMethodDescriptor(qualifiedBaseType, Type.INT_TYPE, Type.INT_TYPE);
-
 		MethodVisitor method = beginAnnotatedMethod(field, fieldName, returnDesc);
 
 		method.visitCode();
@@ -621,6 +779,26 @@ final class PointerHelper extends HelperBase {
 		}
 		method.visitMaxs(3, 1);
 		method.visitEnd();
+		/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		ClassDesc qualifiedBaseDesc = ClassDesc.ofInternalName(qualifyType(baseType));
+		ClassDesc qualifiedReturnDesc = ClassDesc.ofInternalName(qualifyType(generalizeSimpleType(baseType)));
+		MethodTypeDesc accessorDesc = MethodTypeDesc.of(qualifiedBaseDesc, ConstantDescs.CD_int, ConstantDescs.CD_int);
+		ClassDesc structureDesc = ClassDesc.ofInternalName(getStructureClassName());
+
+		MethodTypeDesc methodDesc = MethodTypeDesc.of(qualifiedReturnDesc);
+
+		Consumer<CodeBuilder> accessor = body -> {
+			if (checkPresent(field, body)) {
+				body.aload(0);
+				body.getstatic(structureDesc, startFieldName, ConstantDescs.CD_int);
+				body.loadConstant(width);
+				body.invokevirtual(classDesc, accessorName, accessorDesc);
+				body.areturn();
+			}
+		};
+
+		addAnnotatedMethod(field, field.getName(), methodDesc, accessor);
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		// no EA method for a bitfield
 	}
@@ -633,9 +811,9 @@ final class PointerHelper extends HelperBase {
 	 * }
 	 */
 	private void doBooleanMethod(FieldDescriptor field) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		String returnDesc = Type.getMethodDescriptor(Type.BOOLEAN_TYPE);
 		String accessorDesc = Type.getMethodDescriptor(Type.BOOLEAN_TYPE, Type.LONG_TYPE);
-
 		MethodVisitor method = beginAnnotatedMethod(field, field.getName(), returnDesc);
 
 		method.visitCode();
@@ -647,28 +825,56 @@ final class PointerHelper extends HelperBase {
 		}
 		method.visitMaxs(3, 1);
 		method.visitEnd();
+		/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		MethodTypeDesc methodDesc = MethodTypeDesc.of(ConstantDescs.CD_boolean);
+		MethodTypeDesc long2boolean = MethodTypeDesc.of(ConstantDescs.CD_boolean, ConstantDescs.CD_long);
+
+		Consumer<CodeBuilder> accessor = body -> {
+			if (checkPresent(field, body)) {
+				body.aload(0);
+				body.loadConstant((long) field.getOffset());
+				body.invokevirtual(classDesc, "getBoolAtOffset", long2boolean);
+				body.ireturn();
+			}
+		};
+
+		addAnnotatedMethod(field, field.getName(), methodDesc, accessor);
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		doEAMethod("Bool", field);
 	}
 
 	private void doClassAnnotation() {
 		// @com.ibm.j9ddr.GeneratedPointerClass(structureClass=BASE.class)
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		Type annotationType = Type.getObjectType("com/ibm/j9ddr/GeneratedPointerClass");
 		AnnotationVisitor annotation = clazz.visitAnnotation(annotationType.getDescriptor(), true);
 		Type structureType = Type.getObjectType(getStructureClassName());
 
 		annotation.visit("structureClass", structureType);
 		annotation.visitEnd();
+		/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		ClassDesc structureDesc = ClassDesc.ofInternalName(getStructureClassName());
+		AnnotationElement element = AnnotationElement.ofClass("structureClass", structureDesc);
+
+		classBuilder.with(RuntimeVisibleAnnotationsAttribute.of(Annotation.of(generatedPointerDesc, element)));
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	}
 
 	private void doConstructors(String superClassName) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		final String abstractPointerFromLong = Type.getMethodDescriptor(abstractPointerType, Type.LONG_TYPE);
 		final String abstractPointerFromScalar = Type.getMethodDescriptor(abstractPointerType, scalarType);
 		final String classFromLong = Type.getMethodDescriptor(classType, Type.LONG_TYPE);
 		final String classFromScalar = Type.getMethodDescriptor(classType, scalarType);
 		MethodVisitor method;
+		/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		MethodTypeDesc long2self = MethodTypeDesc.of(classDesc, ConstantDescs.CD_long);
+		MethodTypeDesc scalar2self = MethodTypeDesc.of(classDesc, scalarDesc);
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		// protected SELF(long address) { super(address); }
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		{
 			method = clazz.visitMethod(ACC_PROTECTED, "<init>", voidFromLong, null, null);
 
@@ -680,8 +886,21 @@ final class PointerHelper extends HelperBase {
 			method.visitMaxs(3, 3);
 			method.visitEnd();
 		}
+		/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		{
+			Consumer<CodeBuilder> init = body -> {
+				body.aload(0);
+				body.lload(1);
+				body.invokespecial(superDesc, ConstantDescs.INIT_NAME, long2void);
+				body.return_();
+			};
+
+			classBuilder.withMethodBody(ConstantDescs.INIT_NAME, long2void, ClassFile.ACC_PROTECTED, init);
+		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		// public static SELF cast(long address) { if (address == 0) return NULL; return new SELF(address); }
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		{
 			method = clazz.visitMethod(ACC_PUBLIC | ACC_STATIC, "cast", classFromLong, null, null);
 
@@ -706,8 +925,32 @@ final class PointerHelper extends HelperBase {
 			method.visitMaxs(4, 2);
 			method.visitEnd();
 		}
+		/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		{
+			Consumer<CodeBuilder> cast = body -> {
+				Label nonNull = body.newLabel();
+
+				body.lload(0);
+				body.lconst_0();
+				body.lcmp();
+				body.ifne(nonNull);
+				body.getstatic(classDesc, "NULL", classDesc);
+				body.areturn();
+
+				body.labelBinding(nonNull);
+				body.new_(classDesc);
+				body.dup();
+				body.lload(0);
+				body.invokespecial(classDesc, ConstantDescs.INIT_NAME, long2void);
+				body.areturn();
+			};
+
+			classBuilder.withMethodBody("cast", long2self, ClassFile.ACC_PUBLIC | ClassFile.ACC_STATIC, cast);
+		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		// public static SELF cast(AbstractPointer structure) { return cast(structure.getAddress()); }
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		{
 			method = clazz.visitMethod(ACC_PUBLIC | ACC_STATIC, "cast",
 					Type.getMethodDescriptor(classType, abstractPointerType), null, null);
@@ -721,8 +964,23 @@ final class PointerHelper extends HelperBase {
 			method.visitMaxs(2, 1);
 			method.visitEnd();
 		}
+		/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		{
+			MethodTypeDesc abstract2self = MethodTypeDesc.of(classDesc, abstractPointerDesc);
+
+			Consumer<CodeBuilder> cast = body -> {
+				body.aload(0);
+				body.invokevirtual(abstractPointerDesc, "getAddress", void2long);
+				body.invokestatic(classDesc, "cast", long2self);
+				body.areturn();
+			};
+
+			classBuilder.withMethodBody("cast", abstract2self, ClassFile.ACC_PUBLIC | ClassFile.ACC_STATIC, cast);
+		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		// public static SELF cast(UDATA udata) { return cast(udata.longValue()); }
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		{
 			method = clazz.visitMethod(ACC_PUBLIC | ACC_STATIC, "cast", Type.getMethodDescriptor(classType, udataType),
 					null, null);
@@ -735,8 +993,24 @@ final class PointerHelper extends HelperBase {
 			method.visitMaxs(2, 1);
 			method.visitEnd();
 		}
+		/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		{
+			MethodTypeDesc udata2self = MethodTypeDesc.of(classDesc, udataDesc);
+
+			Consumer<CodeBuilder> cast = body -> {
+				body.aload(0);
+				body.invokevirtual(udataDesc, "longValue", void2long);
+				body.invokestatic(classDesc, "cast", long2self);
+				body.areturn();
+			};
+
+			classBuilder.withMethodBody("cast", udata2self, ClassFile.ACC_PUBLIC | ClassFile.ACC_STATIC, cast);
+		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		// public SELF add(long count) { return addOffset(count * BASE.SIZEOF); }
+		// bridge: AbstractPointer add(long count)
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		{
 			method = clazz.visitMethod(ACC_PUBLIC, "add", classFromLong, null, null);
 
@@ -750,7 +1024,6 @@ final class PointerHelper extends HelperBase {
 			method.visitMaxs(5, 3);
 			method.visitEnd();
 
-			// bridge: AbstractPointer add(long count)
 			method = clazz.visitMethod(ACC_PUBLIC | ACC_BRIDGE | ACC_SYNTHETIC, "add", abstractPointerFromLong, null, null);
 
 			method.visitCode();
@@ -761,8 +1034,34 @@ final class PointerHelper extends HelperBase {
 			method.visitMaxs(3, 3);
 			method.visitEnd();
 		}
+		/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		{
+			Consumer<CodeBuilder> add = body -> {
+				body.aload(0);
+				body.lload(1);
+				body.loadConstant((long) structure.getSizeOf());
+				body.lmul();
+				body.invokevirtual(classDesc, "addOffset", long2self);
+				body.areturn();
+			};
+
+			classBuilder.withMethodBody("add", long2self, ClassFile.ACC_PUBLIC, add);
+
+			Consumer<CodeBuilder> bridge = body -> {
+				body.aload(0);
+				body.lload(1);
+				body.invokevirtual(classDesc, "add", long2self);
+				body.areturn();
+			};
+
+			classBuilder.withMethodBody("add", long2abstact,
+					ClassFile.ACC_PUBLIC | ClassFile.ACC_BRIDGE | ClassFile.ACC_SYNTHETIC, bridge);
+		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		// public SELF add(Scalar count) { return add(count.longValue()); }
+		// bridge: AbstractPointer add(Scalar count)
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		{
 			method = clazz.visitMethod(ACC_PUBLIC, "add", classFromScalar, null, null);
 
@@ -775,7 +1074,6 @@ final class PointerHelper extends HelperBase {
 			method.visitMaxs(3, 2);
 			method.visitEnd();
 
-			// bridge: AbstractPointer add(Scalar count)
 			method = clazz.visitMethod(ACC_PUBLIC | ACC_BRIDGE | ACC_SYNTHETIC, "add", abstractPointerFromScalar, null, null);
 
 			method.visitCode();
@@ -786,8 +1084,33 @@ final class PointerHelper extends HelperBase {
 			method.visitMaxs(2, 2);
 			method.visitEnd();
 		}
+		/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		{
+			Consumer<CodeBuilder> add = body -> {
+				body.aload(0);
+				body.aload(1);
+				body.invokevirtual(scalarDesc, "longValue", void2long);
+				body.invokevirtual(classDesc, "add", long2self);
+				body.areturn();
+			};
+
+			classBuilder.withMethodBody("add", scalar2self, ClassFile.ACC_PUBLIC, add);
+
+			Consumer<CodeBuilder> bridge = body -> {
+				body.aload(0);
+				body.aload(1);
+				body.invokevirtual(classDesc, "add", scalar2self);
+				body.areturn();
+			};
+
+			classBuilder.withMethodBody("add", scalar2abstract,
+					ClassFile.ACC_PUBLIC | ClassFile.ACC_BRIDGE | ClassFile.ACC_SYNTHETIC, bridge);
+		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		// public SELF addOffset(long offset) { return cast(address + offset); }
+		// bridge: AbstractPointer addOffset(long offset)
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		{
 			method = clazz.visitMethod(ACC_PUBLIC, "addOffset", classFromLong, null, null);
 
@@ -801,7 +1124,6 @@ final class PointerHelper extends HelperBase {
 			method.visitMaxs(4, 3);
 			method.visitEnd();
 
-			// bridge: AbstractPointer addOffset(long offset)
 			method = clazz.visitMethod(ACC_PUBLIC | ACC_BRIDGE | ACC_SYNTHETIC, "addOffset", abstractPointerFromLong, null, null);
 
 			method.visitCode();
@@ -812,8 +1134,35 @@ final class PointerHelper extends HelperBase {
 			method.visitMaxs(3, 3);
 			method.visitEnd();
 		}
+		/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		{
+			Consumer<CodeBuilder> addOffset = body -> {
+				body.aload(0);
+				body.getfield(classDesc, "address", ConstantDescs.CD_long);
+				body.lload(1);
+				body.ladd();
+				body.invokestatic(classDesc, "cast", long2self);
+				body.areturn();
+			};
+
+			classBuilder.withMethodBody("addOffset", long2self, ClassFile.ACC_PUBLIC, addOffset);
+
+			Consumer<CodeBuilder> bridge = body -> {
+				body.aload(0);
+				body.lload(1);
+				body.invokevirtual(classDesc, "addOffset", long2self);
+				body.areturn();
+			};
+
+			classBuilder.withMethodBody(
+					"addOffset", long2abstact,
+					ClassFile.ACC_PUBLIC | ClassFile.ACC_BRIDGE | ClassFile.ACC_SYNTHETIC, bridge);
+		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		// public SELF addOffset(Scalar offset) { return addOffset(offset.longValue()); }
+		// bridge: AbstractPointer addOffset(Scalar offset)
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		{
 			method = clazz.visitMethod(ACC_PUBLIC, "addOffset", classFromScalar, null, null);
 
@@ -826,7 +1175,6 @@ final class PointerHelper extends HelperBase {
 			method.visitMaxs(3, 2);
 			method.visitEnd();
 
-			// bridge: AbstractPointer addOffset(Scalar offset)
 			method = clazz.visitMethod(ACC_PUBLIC | ACC_BRIDGE | ACC_SYNTHETIC, "addOffset", abstractPointerFromScalar, null, null);
 
 			method.visitCode();
@@ -837,8 +1185,33 @@ final class PointerHelper extends HelperBase {
 			method.visitMaxs(2, 2);
 			method.visitEnd();
 		}
+		/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		{
+			Consumer<CodeBuilder> addOffset = body -> {
+				body.aload(0);
+				body.aload(1);
+				body.invokevirtual(scalarDesc, "longValue", void2long);
+				body.invokevirtual(classDesc, "addOffset", long2self);
+				body.areturn();
+			};
+
+			classBuilder.withMethodBody("addOffset", scalar2self, ClassFile.ACC_PUBLIC, addOffset);
+
+			Consumer<CodeBuilder> bridge = body -> {
+				body.aload(0);
+				body.aload(1);
+				body.invokevirtual(classDesc, "addOffset", scalar2self);
+				body.areturn();
+			};
+
+			classBuilder.withMethodBody("addOffset", scalar2abstract,
+					ClassFile.ACC_PUBLIC | ClassFile.ACC_BRIDGE | ClassFile.ACC_SYNTHETIC, bridge);
+		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		// public SELF sub(long count) { return subOffset(count * SIZEOF); }
+		// bridge: AbstractPointer sub(long count)
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		{
 			method = clazz.visitMethod(ACC_PUBLIC, "sub", classFromLong, null, null);
 
@@ -852,7 +1225,6 @@ final class PointerHelper extends HelperBase {
 			method.visitMaxs(5, 3);
 			method.visitEnd();
 
-			// bridge: AbstractPointer sub(long count)
 			method = clazz.visitMethod(ACC_PUBLIC | ACC_BRIDGE | ACC_SYNTHETIC, "sub", abstractPointerFromLong, null, null);
 
 			method.visitCode();
@@ -863,8 +1235,34 @@ final class PointerHelper extends HelperBase {
 			method.visitMaxs(3, 3);
 			method.visitEnd();
 		}
+		/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		{
+			Consumer<CodeBuilder> sub = body -> {
+				body.aload(0);
+				body.lload(1);
+				body.loadConstant((long) structure.getSizeOf());
+				body.lmul();
+				body.invokevirtual(classDesc, "subOffset", long2self);
+				body.areturn();
+			};
+
+			classBuilder.withMethodBody("sub", long2self, ClassFile.ACC_PUBLIC, sub);
+
+			Consumer<CodeBuilder> bridge = body -> {
+				body.aload(0);
+				body.lload(1);
+				body.invokevirtual(classDesc, "sub", long2self);
+				body.areturn();
+			};
+
+			classBuilder.withMethodBody("sub", long2abstact,
+					ClassFile.ACC_PUBLIC | ClassFile.ACC_BRIDGE | ClassFile.ACC_SYNTHETIC, bridge);
+		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		// public SELF sub(Scalar count) { return sub(count.longValue()); }
+		// bridge: AbstractPointer sub(Scalar count)
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		{
 			method = clazz.visitMethod(ACC_PUBLIC, "sub", classFromScalar, null, null);
 
@@ -877,7 +1275,6 @@ final class PointerHelper extends HelperBase {
 			method.visitMaxs(3, 2);
 			method.visitEnd();
 
-			// bridge: AbstractPointer sub(Scalar count)
 			method = clazz.visitMethod(ACC_PUBLIC | ACC_BRIDGE | ACC_SYNTHETIC, "sub", abstractPointerFromScalar, null, null);
 
 			method.visitCode();
@@ -888,8 +1285,33 @@ final class PointerHelper extends HelperBase {
 			method.visitMaxs(2, 2);
 			method.visitEnd();
 		}
+		/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		{
+			Consumer<CodeBuilder> sub = body -> {
+				body.aload(0);
+				body.aload(1);
+				body.invokevirtual(scalarDesc, "longValue", void2long);
+				body.invokevirtual(classDesc, "sub", long2self);
+				body.areturn();
+			};
+
+			classBuilder.withMethodBody("sub", scalar2self, ClassFile.ACC_PUBLIC, sub);
+
+			Consumer<CodeBuilder> bridge = body -> {
+				body.aload(0);
+				body.aload(1);
+				body.invokevirtual(classDesc, "sub", scalar2self);
+				body.areturn();
+			};
+
+			classBuilder.withMethodBody("sub", scalar2abstract,
+					ClassFile.ACC_PUBLIC | ClassFile.ACC_BRIDGE | ClassFile.ACC_SYNTHETIC, bridge);
+		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		// public SELF subOffset(long offset) { return cast(address - offset); }
+		// bridge: AbstractPointer subOffset(long offset)
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		{
 			method = clazz.visitMethod(ACC_PUBLIC, "subOffset", classFromLong, null, null);
 
@@ -900,10 +1322,9 @@ final class PointerHelper extends HelperBase {
 			method.visitInsn(LSUB);
 			method.visitMethodInsn(INVOKESTATIC, className, "cast", classFromLong, false);
 			method.visitInsn(ARETURN);
-			method.visitMaxs(5, 3);
+			method.visitMaxs(4, 3);
 			method.visitEnd();
 
-			// bridge: AbstractPointer subOffset(long offset)
 			method = clazz.visitMethod(ACC_PUBLIC | ACC_BRIDGE | ACC_SYNTHETIC, "subOffset", abstractPointerFromLong, null, null);
 
 			method.visitCode();
@@ -914,8 +1335,34 @@ final class PointerHelper extends HelperBase {
 			method.visitMaxs(3, 3);
 			method.visitEnd();
 		}
+		/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		{
+			Consumer<CodeBuilder> subOffset = body -> {
+				body.aload(0);
+				body.getfield(classDesc, "address", ConstantDescs.CD_long);
+				body.lload(1);
+				body.lsub();
+				body.invokestatic(classDesc, "cast", long2self);
+				body.areturn();
+			};
+
+			classBuilder.withMethodBody("subOffset", long2self, ClassFile.ACC_PUBLIC, subOffset);
+
+			Consumer<CodeBuilder> bridge = body -> {
+				body.aload(0);
+				body.lload(1);
+				body.invokevirtual(classDesc, "subOffset", long2self);
+				body.areturn();
+			};
+
+			classBuilder.withMethodBody("subOffset", long2abstact,
+					ClassFile.ACC_PUBLIC | ClassFile.ACC_BRIDGE | ClassFile.ACC_SYNTHETIC, bridge);
+		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		// public SELF subOffset(Scalar offset) { return subOffset(offset.longValue()); }
+		// bridge: AbstractPointer subOffset(Scalar offset)
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		{
 			method = clazz.visitMethod(ACC_PUBLIC, "subOffset", classFromScalar, null, null);
 
@@ -928,7 +1375,6 @@ final class PointerHelper extends HelperBase {
 			method.visitMaxs(3, 2);
 			method.visitEnd();
 
-			// bridge: AbstractPointer subOffset(Scalar offset)
 			method = clazz.visitMethod(ACC_PUBLIC | ACC_BRIDGE | ACC_SYNTHETIC, "subOffset", abstractPointerFromScalar, null, null);
 
 			method.visitCode();
@@ -939,8 +1385,33 @@ final class PointerHelper extends HelperBase {
 			method.visitMaxs(2, 2);
 			method.visitEnd();
 		}
+		/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		{
+			Consumer<CodeBuilder> subOffset = body -> {
+				body.aload(0);
+				body.aload(1);
+				body.invokevirtual(scalarDesc, "longValue", void2long);
+				body.invokevirtual(classDesc, "subOffset", long2self);
+				body.areturn();
+			};
+
+			classBuilder.withMethodBody("subOffset", scalar2self, ClassFile.ACC_PUBLIC, subOffset);
+
+			Consumer<CodeBuilder> bridge = body -> {
+				body.aload(0);
+				body.aload(1);
+				body.invokevirtual(classDesc, "subOffset", scalar2self);
+				body.areturn();
+			};
+
+			classBuilder.withMethodBody("subOffset", scalar2abstract,
+					ClassFile.ACC_PUBLIC | ClassFile.ACC_BRIDGE | ClassFile.ACC_SYNTHETIC, bridge);
+		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		// public SELF untag(long mask) { return cast(address & ~mask); }
+		// bridge: AbstractPointer untag(long tagBits)
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		{
 			method = clazz.visitMethod(ACC_PUBLIC, "untag", classFromLong, null, null);
 
@@ -957,7 +1428,6 @@ final class PointerHelper extends HelperBase {
 			method.visitMaxs(6, 3);
 			method.visitEnd();
 
-			// bridge: AbstractPointer untag(long tagBits)
 			method = clazz.visitMethod(ACC_PUBLIC | ACC_BRIDGE | ACC_SYNTHETIC, "untag", abstractPointerFromLong, null, null);
 
 			method.visitCode();
@@ -968,8 +1438,36 @@ final class PointerHelper extends HelperBase {
 			method.visitMaxs(3, 3);
 			method.visitEnd();
 		}
+		/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		{
+			Consumer<CodeBuilder> untag = body -> {
+				body.aload(0);
+				body.getfield(classDesc, "address", ConstantDescs.CD_long);
+				body.lload(1);
+				body.loadConstant(-1L);
+				body.lxor();
+				body.land();
+				body.invokestatic(classDesc, "cast", long2self);
+				body.areturn();
+			};
+
+			classBuilder.withMethodBody("untag", long2self, ClassFile.ACC_PUBLIC, untag);
+
+			Consumer<CodeBuilder> bridge = body -> {
+				body.aload(0);
+				body.lload(1);
+				body.invokevirtual(classDesc, "untag", long2self);
+				body.areturn();
+			};
+
+			classBuilder.withMethodBody("untag", long2abstact,
+					ClassFile.ACC_PUBLIC | ClassFile.ACC_BRIDGE | ClassFile.ACC_SYNTHETIC, bridge);
+		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		// public SELF untag() { return untag(UDATA.SIZEOF - 1); }
+		// bridge: AbstractPointer untag()
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		{
 			String classFromVoid = Type.getMethodDescriptor(classType);
 
@@ -983,7 +1481,6 @@ final class PointerHelper extends HelperBase {
 			method.visitMaxs(3, 1);
 			method.visitEnd();
 
-			// bridge: AbstractPointer untag()
 			method = clazz.visitMethod(ACC_PUBLIC | ACC_BRIDGE | ACC_SYNTHETIC, "untag", Type.getMethodDescriptor(abstractPointerType), null, null);
 
 			method.visitCode();
@@ -993,8 +1490,32 @@ final class PointerHelper extends HelperBase {
 			method.visitMaxs(1, 1);
 			method.visitEnd();
 		}
+		/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		{
+			MethodTypeDesc void2self = MethodTypeDesc.of(classDesc);
+
+			Consumer<CodeBuilder> untag = body -> {
+				body.aload(0);
+				body.loadConstant((long) (reader.getSizeOfUDATA() - 1));
+				body.invokevirtual(classDesc, "untag", long2self);
+				body.areturn();
+			};
+
+			classBuilder.withMethodBody("untag", void2self, ClassFile.ACC_PUBLIC, untag);
+
+			Consumer<CodeBuilder> bridge = body -> {
+				body.aload(0);
+				body.invokevirtual(classDesc, "untag", void2self);
+				body.areturn();
+			};
+
+			classBuilder.withMethodBody("untag", MethodTypeDesc.of(abstractPointerDesc),
+					ClassFile.ACC_PUBLIC | ClassFile.ACC_BRIDGE | ClassFile.ACC_SYNTHETIC, bridge);
+		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		// protected long sizeOfBaseType() { return BASE.SIZEOF; }
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		{
 			method = clazz.visitMethod(ACC_PROTECTED, "sizeOfBaseType", longFromVoid, null, null);
 
@@ -1004,6 +1525,16 @@ final class PointerHelper extends HelperBase {
 			method.visitMaxs(2, 1);
 			method.visitEnd();
 		}
+		/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		{
+			Consumer<CodeBuilder> sizeof = body -> {
+				body.loadConstant((long) structure.getSizeOf());
+				body.lreturn();
+			};
+
+			classBuilder.withMethodBody("sizeOfBaseType", void2long, ClassFile.ACC_PROTECTED, sizeof);
+		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	}
 
 	/* Sample generated code:
@@ -1014,6 +1545,7 @@ final class PointerHelper extends HelperBase {
 	 * }
 	 */
 	private void doDoubleMethod(FieldDescriptor field) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		MethodVisitor method = beginAnnotatedMethod(field, field.getName(), doubleFromVoid);
 
 		method.visitCode();
@@ -1025,6 +1557,21 @@ final class PointerHelper extends HelperBase {
 		}
 		method.visitMaxs(3, 1);
 		method.visitEnd();
+		/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		MethodTypeDesc methodDesc = MethodTypeDesc.of(ConstantDescs.CD_double);
+		MethodTypeDesc long2double = MethodTypeDesc.of(ConstantDescs.CD_double, ConstantDescs.CD_long);
+
+		Consumer<CodeBuilder> accessor = body -> {
+			if (checkPresent(field, body)) {
+				body.aload(0);
+				body.loadConstant((long) field.getOffset());
+				body.invokevirtual(classDesc, "getDoubleAtOffset", long2double);
+				body.dreturn();
+			}
+		};
+
+		addAnnotatedMethod(field, field.getName(), methodDesc, accessor);
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		doEAMethod("Double", field);
 	}
@@ -1041,6 +1588,7 @@ final class PointerHelper extends HelperBase {
 		String qualifiedReturnType = qualifyPointerType(returnType);
 		String qualifiedActualType = qualifyPointerType(actualType);
 
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		String returnDesc = Type.getMethodDescriptor(Type.getObjectType(qualifiedReturnType));
 		String actualDesc = Type.getMethodDescriptor(Type.getObjectType(qualifiedActualType), Type.LONG_TYPE);
 
@@ -1056,17 +1604,37 @@ final class PointerHelper extends HelperBase {
 		}
 		method.visitMaxs(3, 1);
 		method.visitEnd();
+		/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		ClassDesc returnDesc = ClassDesc.ofInternalName(qualifiedReturnType);
+		ClassDesc actualDesc = ClassDesc.ofInternalName(qualifiedActualType);
+		MethodTypeDesc methodDesc = MethodTypeDesc.of(returnDesc);
+		MethodTypeDesc castDesc = MethodTypeDesc.of(actualDesc, ConstantDescs.CD_long);
+
+		Consumer<CodeBuilder> accessor = body -> {
+			if (checkPresent(field, body)) {
+				body.aload(0);
+				body.loadConstant((long) field.getOffset());
+				body.invokevirtual(classDesc, "nonNullFieldEA", long2long);
+				body.invokestatic(actualDesc, "cast", castDesc);
+				body.areturn();
+			}
+		};
+
+		addMethod(field, accessorName, methodDesc, accessor);
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	}
 
 	/* Sample generated code:
 	 *
 	 * public EnumPointer _buildResultEA() throws CorruptDataException {
-	 *     return EnumPointer.cast(nonNullFieldEA(ClassFileWriter.__buildResultOffset_, BuildResult.class));
+	 *     return EnumPointer.cast(nonNullFieldEA(ClassFileWriter.__buildResultOffset_), BuildResult.class);
 	 * }
 	 */
 	private void doEnumEAMethod(FieldDescriptor field) {
 		String accessorName = field.getName() + "EA";
 		String enumPointerDesc = qualifyPointerType("Enum");
+
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		Type enumPointerType = Type.getObjectType(enumPointerDesc);
 		String returnDesc = Type.getMethodDescriptor(enumPointerType);
 		String castDesc = Type.getMethodDescriptor(enumPointerType, Type.LONG_TYPE, Type.getType(Class.class));
@@ -1085,6 +1653,24 @@ final class PointerHelper extends HelperBase {
 		}
 		method.visitMaxs(3, 1);
 		method.visitEnd();
+		/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		ClassDesc enumDesc = ClassDesc.ofInternalName(qualifyType(getEnumType(field.getType())));
+		MethodTypeDesc castDesc = MethodTypeDesc.of(enumDesc, ConstantDescs.CD_long, ConstantDescs.CD_Class);
+		MethodTypeDesc methodDesc = MethodTypeDesc.of(enumDesc);
+
+		Consumer<CodeBuilder> accessor = body -> {
+			if (checkPresent(field, body)) {
+				body.aload(0);
+				body.loadConstant((long) field.getOffset());
+				body.invokevirtual(classDesc, "nonNullFieldEA", long2long);
+				body.ldc(enumDesc);
+				body.invokestatic(enumDesc, "cast", castDesc);
+				body.areturn();
+			}
+		};
+
+		addMethod(field, accessorName, methodDesc, accessor);
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	}
 
 	/* Sample generated code:
@@ -1102,6 +1688,7 @@ final class PointerHelper extends HelperBase {
 		int enumSize = reader.getStructureSizeOf(enumType);
 		PrimitiveAccessor accessor = PrimitiveAccessor.forSize(enumSize);
 
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		MethodVisitor method = beginAnnotatedMethod(field, field.getName(), longFromVoid);
 
 		method.visitCode();
@@ -1116,6 +1703,21 @@ final class PointerHelper extends HelperBase {
 		}
 		method.visitMaxs(3, 1);
 		method.visitEnd();
+		/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		Consumer<CodeBuilder> code = body -> {
+			if (checkPresent(field, body)) {
+				body.aload(0);
+				body.loadConstant((long) field.getOffset());
+				body.invokevirtual(classDesc, accessor.methodName, accessor.descriptor);
+				if (!accessor.returnsLong) {
+					body.i2l();
+				}
+				body.lreturn();
+			}
+		};
+
+		addAnnotatedMethod(field, field.getName(), void2long, code);
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		doEnumEAMethod(field);
 	}
@@ -1129,6 +1731,8 @@ final class PointerHelper extends HelperBase {
 	 */
 	private void doEnumPointerMethod(FieldDescriptor field) {
 		String enumPointerDesc = qualifyPointerType("Enum");
+
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		Type enumPointerType = Type.getObjectType(enumPointerDesc);
 		String returnDesc = Type.getMethodDescriptor(enumPointerType);
 		String castDesc = Type.getMethodDescriptor(enumPointerType, Type.LONG_TYPE, Type.getType(Class.class));
@@ -1148,6 +1752,24 @@ final class PointerHelper extends HelperBase {
 		}
 		method.visitMaxs(3, 2);
 		method.visitEnd();
+		/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		ClassDesc enumDesc = ClassDesc.ofInternalName(enumPointerDesc);
+		MethodTypeDesc methodDesc = MethodTypeDesc.of(enumDesc);
+		MethodTypeDesc castDesc = MethodTypeDesc.of(enumDesc, ConstantDescs.CD_long);
+
+		Consumer<CodeBuilder> code = body -> {
+			if (checkPresent(field, body)) {
+				body.aload(0);
+				body.loadConstant((long) field.getOffset());
+				body.invokevirtual(classDesc, "getPointerAtOffset", long2long);
+				body.ldc(enumDesc);
+				body.invokestatic(enumDesc, "cast", castDesc);
+				body.areturn();
+			}
+		};
+
+		addAnnotatedMethod(field, field.getName(), methodDesc, code);
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		doEAMethod("Pointer", field);
 	}
@@ -1160,6 +1782,7 @@ final class PointerHelper extends HelperBase {
 	 * }
 	 */
 	private void doFJ9ObjectMethod(FieldDescriptor field) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		Type objectType = Type.getObjectType(qualifyPointerType("J9Object"));
 		String returnDesc = Type.getMethodDescriptor(objectType);
 		String accessorDesc = Type.getMethodDescriptor(objectType, Type.LONG_TYPE);
@@ -1175,6 +1798,22 @@ final class PointerHelper extends HelperBase {
 		}
 		method.visitMaxs(3, 1);
 		method.visitEnd();
+		/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		ClassDesc objectDesc = ClassDesc.ofInternalName(qualifyPointerType("J9Object"));
+		MethodTypeDesc methodDesc = MethodTypeDesc.of(objectDesc);
+		MethodTypeDesc accessorDesc = MethodTypeDesc.of(objectDesc, ConstantDescs.CD_long);
+
+		Consumer<CodeBuilder> code = body -> {
+			if (checkPresent(field, body)) {
+				body.aload(0);
+				body.loadConstant((long) field.getOffset());
+				body.invokevirtual(classDesc, "getObjectReferenceAtOffset", accessorDesc);
+				body.areturn();
+			}
+		};
+
+		addAnnotatedMethod(field, field.getName(), methodDesc, code);
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		doEAMethod("ObjectReference", field);
 	}
@@ -1188,6 +1827,8 @@ final class PointerHelper extends HelperBase {
 	 */
 	private void doFJ9ObjectPointerMethod(FieldDescriptor field) {
 		String returnType = qualifyPointerType("ObjectReference");
+
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		Type objectType = Type.getObjectType(returnType);
 		String returnDesc = Type.getMethodDescriptor(objectType);
 		String castDesc = Type.getMethodDescriptor(objectType, Type.LONG_TYPE);
@@ -1204,6 +1845,23 @@ final class PointerHelper extends HelperBase {
 		}
 		method.visitMaxs(3, 1);
 		method.visitEnd();
+		/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		ClassDesc returnDesc = ClassDesc.ofInternalName(returnType);
+		MethodTypeDesc methodDesc = MethodTypeDesc.of(returnDesc);
+		MethodTypeDesc castDesc = MethodTypeDesc.of(returnDesc, ConstantDescs.CD_long);
+
+		Consumer<CodeBuilder> code = body -> {
+			if (checkPresent(field, body)) {
+				body.aload(0);
+				body.loadConstant((long) field.getOffset());
+				body.invokevirtual(classDesc, "getPointerAtOffset", long2long);
+				body.invokestatic(returnDesc, "cast", castDesc);
+				body.areturn();
+			}
+		};
+
+		addAnnotatedMethod(field, field.getName(), methodDesc, code);
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		doEAMethod("Pointer", field);
 	}
@@ -1216,6 +1874,7 @@ final class PointerHelper extends HelperBase {
 	 * }
 	 */
 	private void doFloatMethod(FieldDescriptor field) {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		MethodVisitor method = beginAnnotatedMethod(field, field.getName(), floatFromVoid);
 
 		method.visitCode();
@@ -1227,6 +1886,21 @@ final class PointerHelper extends HelperBase {
 		}
 		method.visitMaxs(3, 1);
 		method.visitEnd();
+		/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		MethodTypeDesc methodDesc = MethodTypeDesc.of(ConstantDescs.CD_float);
+		MethodTypeDesc long2double = MethodTypeDesc.of(ConstantDescs.CD_float, ConstantDescs.CD_long);
+
+		Consumer<CodeBuilder> accessor = body -> {
+			if (checkPresent(field, body)) {
+				body.aload(0);
+				body.loadConstant((long) field.getOffset());
+				body.invokevirtual(classDesc, "getFloatAtOffset", long2double);
+				body.freturn();
+			}
+		};
+
+		addAnnotatedMethod(field, field.getName(), methodDesc, accessor);
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		doEAMethod("Float", field);
 	}
@@ -1240,6 +1914,8 @@ final class PointerHelper extends HelperBase {
 	 */
 	private void doJ9ObjectClassMethod(FieldDescriptor field) {
 		String returnType = qualifyPointerType("J9Class");
+
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		Type objectType = Type.getObjectType(returnType);
 		String returnDesc = Type.getMethodDescriptor(objectType);
 		String accessorDesc = Type.getMethodDescriptor(objectType, Type.LONG_TYPE);
@@ -1255,6 +1931,22 @@ final class PointerHelper extends HelperBase {
 		}
 		method.visitMaxs(3, 1);
 		method.visitEnd();
+		/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		ClassDesc objectDesc = ClassDesc.ofInternalName(returnType);
+		MethodTypeDesc methodDesc = MethodTypeDesc.of(objectDesc);
+		MethodTypeDesc accessorDesc = MethodTypeDesc.of(objectDesc, ConstantDescs.CD_long);
+
+		Consumer<CodeBuilder> code = body -> {
+			if (checkPresent(field, body)) {
+				body.aload(0);
+				body.loadConstant((long) field.getOffset());
+				body.invokevirtual(classDesc, "getObjectClassAtOffset", accessorDesc);
+				body.areturn();
+			}
+		};
+
+		addAnnotatedMethod(field, field.getName(), methodDesc, code);
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		doEAMethod("ObjectClassReference", field);
 	}
@@ -1268,6 +1960,8 @@ final class PointerHelper extends HelperBase {
 	 */
 	private void doJ9ObjectClassPointerMethod(FieldDescriptor field) {
 		String returnType = qualifyPointerType("ObjectClassReference");
+
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		Type objectType = Type.getObjectType(returnType);
 		String returnDesc = Type.getMethodDescriptor(objectType);
 		String accessorDesc = Type.getMethodDescriptor(objectType, Type.LONG_TYPE);
@@ -1284,6 +1978,23 @@ final class PointerHelper extends HelperBase {
 		}
 		method.visitMaxs(3, 1);
 		method.visitEnd();
+		/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		ClassDesc objectDesc = ClassDesc.ofInternalName(returnType);
+		MethodTypeDesc methodDesc = MethodTypeDesc.of(objectDesc);
+		MethodTypeDesc accessorDesc = MethodTypeDesc.of(objectDesc, ConstantDescs.CD_long);
+
+		Consumer<CodeBuilder> code = body -> {
+			if (checkPresent(field, body)) {
+				body.aload(0);
+				body.loadConstant((long) field.getOffset());
+				body.invokevirtual(classDesc, "getPointerAtOffset", long2long);
+				body.invokestatic(objectDesc, "cast", accessorDesc);
+				body.areturn();
+			}
+		};
+
+		addAnnotatedMethod(field, field.getName(), methodDesc, code);
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		doEAMethod("Pointer", field);
 	}
@@ -1297,6 +2008,8 @@ final class PointerHelper extends HelperBase {
 	 */
 	private void doJ9ObjectMonitorMethod(FieldDescriptor field) {
 		String returnType = qualifyPointerType("J9ObjectMonitor");
+
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		Type objectType = Type.getObjectType(returnType);
 		String returnDesc = Type.getMethodDescriptor(objectType);
 		String accessorDesc = Type.getMethodDescriptor(objectType, Type.LONG_TYPE);
@@ -1312,6 +2025,22 @@ final class PointerHelper extends HelperBase {
 		}
 		method.visitMaxs(3, 1);
 		method.visitEnd();
+		/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		ClassDesc objectDesc = ClassDesc.ofInternalName(returnType);
+		MethodTypeDesc methodDesc = MethodTypeDesc.of(objectDesc);
+		MethodTypeDesc accessorDesc = MethodTypeDesc.of(objectDesc, ConstantDescs.CD_long);
+
+		Consumer<CodeBuilder> code = body -> {
+			if (checkPresent(field, body)) {
+				body.aload(0);
+				body.loadConstant((long) field.getOffset());
+				body.invokevirtual(classDesc, "getObjectMonitorAtOffset", accessorDesc);
+				body.areturn();
+			}
+		};
+
+		addAnnotatedMethod(field, field.getName(), methodDesc, code);
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		doEAMethod("ObjectMonitorReference", field);
 	}
@@ -1325,6 +2054,8 @@ final class PointerHelper extends HelperBase {
 	 */
 	private void doJ9ObjectMonitorPointerMethod(FieldDescriptor field) {
 		String returnType = qualifyPointerType("ObjectMonitorReference");
+
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		Type objectType = Type.getObjectType(returnType);
 		String returnDesc = Type.getMethodDescriptor(objectType);
 		String castDesc = Type.getMethodDescriptor(objectType, Type.LONG_TYPE);
@@ -1341,25 +2072,63 @@ final class PointerHelper extends HelperBase {
 		}
 		method.visitMaxs(3, 1);
 		method.visitEnd();
+		/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		ClassDesc objectDesc = ClassDesc.ofInternalName(returnType);
+		MethodTypeDesc methodDesc = MethodTypeDesc.of(objectDesc);
+		MethodTypeDesc accessorDesc = MethodTypeDesc.of(objectDesc, ConstantDescs.CD_long);
+
+		Consumer<CodeBuilder> code = body -> {
+			if (checkPresent(field, body)) {
+				body.aload(0);
+				body.loadConstant((long) field.getOffset());
+				body.invokevirtual(classDesc, "getPointerAtOffset", long2long);
+				body.invokestatic(objectDesc, "cast", accessorDesc);
+				body.areturn();
+			}
+		};
+
+		addAnnotatedMethod(field, field.getName(), methodDesc, code);
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		doEAMethod("Pointer", field);
 	}
 
 	private void doNullInstance() {
 		// public static final SELF NULL = new SELF(0);
-		clazz.visitField(ACC_PUBLIC | ACC_FINAL | ACC_STATIC, "NULL", classType.getDescriptor(), null, null).visitEnd();
+		/*[IF JAVA_SPEC_VERSION < 24]*/
+		{
+			clazz.visitField(ACC_PUBLIC | ACC_STATIC | ACC_FINAL, "NULL", classType.getDescriptor(), null, null).visitEnd();
 
-		MethodVisitor clinit = clazz.visitMethod(ACC_STATIC, "<clinit>", voidMethod, null, null);
+			MethodVisitor clinit = clazz.visitMethod(ACC_STATIC, "<clinit>", voidMethod, null, null);
 
-		clinit.visitCode();
-		clinit.visitTypeInsn(NEW, className);
-		clinit.visitInsn(DUP);
-		clinit.visitInsn(LCONST_0);
-		clinit.visitMethodInsn(INVOKESPECIAL, className, "<init>", voidFromLong, false);
-		clinit.visitFieldInsn(PUTSTATIC, className, "NULL", classType.getDescriptor());
-		clinit.visitInsn(RETURN);
-		clinit.visitMaxs(4, 0);
-		clinit.visitEnd();
+			clinit.visitCode();
+			clinit.visitTypeInsn(NEW, className);
+			clinit.visitInsn(DUP);
+			clinit.visitInsn(LCONST_0);
+			clinit.visitMethodInsn(INVOKESPECIAL, className, "<init>", voidFromLong, false);
+			clinit.visitFieldInsn(PUTSTATIC, className, "NULL", classType.getDescriptor());
+			clinit.visitInsn(RETURN);
+			clinit.visitMaxs(4, 0);
+			clinit.visitEnd();
+		}
+		/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		{
+			classBuilder.withField("NULL", classDesc,
+					ClassFile.ACC_PUBLIC | ClassFile.ACC_STATIC | ClassFile.ACC_FINAL);
+
+			Consumer<CodeBuilder> clinit = body -> {
+				body.new_(classDesc);
+				body.dup();
+				body.lconst_0();
+				body.invokespecial(classDesc, ConstantDescs.INIT_NAME, long2void);
+				body.putstatic(classDesc, "NULL", classDesc);
+				body.return_();
+			};
+
+			classBuilder.withMethodBody(ConstantDescs.CLASS_INIT_NAME, ConstantDescs.MTD_void, ClassFile.ACC_STATIC,
+					clinit);
+		}
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	}
 
 	/* Sample generated code:
@@ -1372,12 +2141,13 @@ final class PointerHelper extends HelperBase {
 	private void doPointerMethod(FieldDescriptor field) {
 		String targetType = getTargetType(removeTypeTags(field.getType()));
 		String qualifiedTargetType = qualifyPointerType(targetType);
-		String castDesc = Type.getMethodDescriptor(Type.getObjectType(qualifiedTargetType), Type.LONG_TYPE);
 
 		String returnType = generalizeSimpleType(targetType);
 		String qualifiedReturnType = qualifyPointerType(returnType);
-		String returnDesc = Type.getMethodDescriptor(Type.getObjectType(qualifiedReturnType));
 
+		/*[IF JAVA_SPEC_VERSION < 24]*/
+		String castDesc = Type.getMethodDescriptor(Type.getObjectType(qualifiedTargetType), Type.LONG_TYPE);
+		String returnDesc = Type.getMethodDescriptor(Type.getObjectType(qualifiedReturnType));
 		MethodVisitor method = beginAnnotatedMethod(field, field.getName(), returnDesc);
 
 		method.visitCode();
@@ -1390,6 +2160,24 @@ final class PointerHelper extends HelperBase {
 		}
 		method.visitMaxs(3, 1);
 		method.visitEnd();
+		/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		ClassDesc returnDesc = ClassDesc.ofInternalName(qualifiedReturnType);
+		ClassDesc targetDesc = ClassDesc.ofInternalName(qualifiedTargetType);
+		MethodTypeDesc castDesc = MethodTypeDesc.of(targetDesc, ConstantDescs.CD_long);
+		MethodTypeDesc methodDesc = MethodTypeDesc.of(returnDesc);
+
+		Consumer<CodeBuilder> code = body -> {
+			if (checkPresent(field, body)) {
+				body.aload(0);
+				body.loadConstant((long) field.getOffset());
+				body.invokevirtual(classDesc, "getPointerAtOffset", long2long);
+				body.invokestatic(targetDesc, "cast", castDesc);
+				body.areturn();
+			}
+		};
+
+		addAnnotatedMethod(field, field.getName(), methodDesc, code);
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		doEAMethod("Pointer", field);
 	}
@@ -1407,8 +2195,9 @@ final class PointerHelper extends HelperBase {
 		String qualifiedFieldType = qualifyType(fieldType);
 		String qualifiedReturnType = qualifyType(returnType);
 		PrimitiveAccessor accessor = simpleTypeAccessor(type);
-		String returnDesc = Type.getMethodDescriptor(Type.getObjectType(qualifiedReturnType));
 
+		/*[IF JAVA_SPEC_VERSION < 24]*/
+		String returnDesc = Type.getMethodDescriptor(Type.getObjectType(qualifiedReturnType));
 		MethodVisitor method = beginAnnotatedMethod(field, field.getName(), returnDesc);
 
 		method.visitCode();
@@ -1426,6 +2215,28 @@ final class PointerHelper extends HelperBase {
 		}
 		method.visitMaxs(5, 1);
 		method.visitEnd();
+		/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		ClassDesc returnDesc = ClassDesc.ofInternalName(qualifiedReturnType);
+		ClassDesc qualifiedFieldDesc = ClassDesc.ofInternalName(qualifiedFieldType);
+		MethodTypeDesc methodDesc = MethodTypeDesc.of(returnDesc);
+
+		Consumer<CodeBuilder> code = body -> {
+			if (checkPresent(field, body)) {
+				body.new_(qualifiedFieldDesc);
+				body.dup();
+				body.aload(0);
+				body.loadConstant((long) field.getOffset());
+				body.invokevirtual(classDesc, accessor.methodName, accessor.descriptor);
+				if (!accessor.returnsLong) {
+					body.i2l();
+				}
+				body.invokespecial(qualifiedFieldDesc, ConstantDescs.INIT_NAME, long2void);
+				body.areturn();
+			}
+		};
+
+		addAnnotatedMethod(field, field.getName(), methodDesc, code);
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		doEAMethod(fieldType, field);
 	}
@@ -1439,10 +2250,11 @@ final class PointerHelper extends HelperBase {
 	private void doSRPEAMethod(FieldDescriptor field, boolean isWide) {
 		String accessorName = field.getName() + "EA";
 		String returnTypeName = qualifyPointerType(isWide ? "WideSelfRelative" : "SelfRelative");
+
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		Type returnType = Type.getObjectType(returnTypeName);
 		String returnDesc = Type.getMethodDescriptor(returnType);
 		String castDesc = Type.getMethodDescriptor(returnType, Type.LONG_TYPE);
-
 		MethodVisitor method = beginMethod(field, accessorName, returnDesc);
 
 		method.visitCode();
@@ -1455,6 +2267,23 @@ final class PointerHelper extends HelperBase {
 		}
 		method.visitMaxs(3, 1);
 		method.visitEnd();
+		/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		ClassDesc returnDesc = ClassDesc.ofInternalName(returnTypeName);
+		MethodTypeDesc castDesc = MethodTypeDesc.of(returnDesc, ConstantDescs.CD_long);
+		MethodTypeDesc methodDesc = MethodTypeDesc.of(returnDesc);
+
+		Consumer<CodeBuilder> code = body -> {
+			if (checkPresent(field, body)) {
+				body.aload(0);
+				body.loadConstant((long) field.getOffset());
+				body.invokevirtual(classDesc, "nonNullFieldEA", long2long);
+				body.invokestatic(returnDesc, "cast", castDesc);
+				body.areturn();
+			}
+		};
+
+		addMethod(field, accessorName, methodDesc, code);
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	}
 
 	/* Sample generated code:
@@ -1505,11 +2334,12 @@ final class PointerHelper extends HelperBase {
 		}
 
 		String returnTypeName = qualifyPointerType(generalizeSimpleType(targetType));
+		String qualifiedPointerName = qualifyPointerType(targetType);
+
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		Type returnType = Type.getObjectType(returnTypeName);
 		String returnDesc = Type.getMethodDescriptor(returnType);
-		String qualifiedPointerName = qualifyPointerType(targetType);
 		String qualifiedPointerDesc = Type.getObjectType(qualifiedPointerName).getDescriptor();
-
 		MethodVisitor method = beginAnnotatedMethod(field, field.getName(), returnDesc);
 
 		method.visitCode();
@@ -1557,6 +2387,54 @@ final class PointerHelper extends HelperBase {
 		}
 		method.visitMaxs(4, isWide ? 3 : 2);
 		method.visitEnd();
+		/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		ClassDesc returnDesc = ClassDesc.ofInternalName(returnTypeName);
+		ClassDesc qualifiedPointerDesc = ClassDesc.ofInternalName(qualifiedPointerName);
+		MethodTypeDesc castDesc = MethodTypeDesc.of(returnDesc, ConstantDescs.CD_long);
+		MethodTypeDesc methodDesc = MethodTypeDesc.of(returnDesc);
+
+		Consumer<CodeBuilder> code = body -> {
+			if (checkPresent(field, body)) {
+				Label nonNull = body.newLabel();
+
+				body.aload(0);
+				body.loadConstant((long) field.getOffset());
+				if (isWide) {
+					body.invokevirtual(classDesc, "getPointerAtOffset", long2long);
+					body.lstore(1);
+
+					body.lload(1);
+					body.lconst_0();
+					body.lcmp();
+				} else {
+					body.invokevirtual(classDesc, "getIntAtOffset", long2int);
+					body.istore(1);
+
+					body.iload(1);
+				}
+				body.ifne(nonNull);
+
+				body.getstatic(qualifiedPointerDesc, "NULL", qualifiedPointerDesc);
+				body.areturn();
+
+				body.labelBinding(nonNull);
+				body.aload(0);
+				body.getfield(classDesc, "address", ConstantDescs.CD_long);
+				addLong(body, field.getOffset());
+				if (isWide) {
+					body.lload(1);
+				} else {
+					body.iload(1).i2l();
+				}
+				body.ladd();
+
+				body.invokestatic(qualifiedPointerDesc, "cast", castDesc);
+				body.areturn();
+			}
+		};
+
+		addAnnotatedMethod(field, field.getName(), methodDesc, code);
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		doSRPEAMethod(field, isWide);
 	}
@@ -1570,10 +2448,11 @@ final class PointerHelper extends HelperBase {
 	 */
 	private void doSRPPointerMethod(FieldDescriptor field, boolean wide) {
 		String returnType = qualifyPointerType(wide ? "WideSelfRelative" : "SelfRelative");
+
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		Type objectType = Type.getObjectType(returnType);
 		String returnDesc = Type.getMethodDescriptor(objectType);
 		String castDesc = Type.getMethodDescriptor(objectType, Type.LONG_TYPE);
-
 		MethodVisitor method = beginAnnotatedMethod(field, field.getName(), returnDesc);
 
 		method.visitCode();
@@ -1586,6 +2465,23 @@ final class PointerHelper extends HelperBase {
 		}
 		method.visitMaxs(3, 1);
 		method.visitEnd();
+		/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		ClassDesc returnDesc = ClassDesc.ofInternalName(returnType);
+		MethodTypeDesc methodDesc = MethodTypeDesc.of(returnDesc);
+		MethodTypeDesc castDesc = MethodTypeDesc.of(returnDesc, ConstantDescs.CD_long);
+
+		Consumer<CodeBuilder> code = body -> {
+			if (checkPresent(field, body)) {
+				body.aload(0);
+				body.loadConstant((long) field.getOffset());
+				body.invokevirtual(classDesc, "getPointerAtOffset", long2long);
+				body.invokestatic(returnDesc, "cast", castDesc);
+				body.areturn();
+			}
+		};
+
+		addAnnotatedMethod(field, field.getName(), methodDesc, code);
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		doEAMethod("Pointer", field);
 	}
@@ -1601,10 +2497,11 @@ final class PointerHelper extends HelperBase {
 		String fieldType = removeTypeTags(field.getType());
 		String returnType = "void".equals(fieldType) ? "Void" : fieldType;
 		String qualifiedReturnType = qualifyPointerType(returnType);
+
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		Type objectType = Type.getObjectType(qualifiedReturnType);
 		String returnDesc = Type.getMethodDescriptor(objectType);
 		String castDesc = Type.getMethodDescriptor(objectType, Type.LONG_TYPE);
-
 		MethodVisitor method = beginAnnotatedMethod(field, field.getName(), returnDesc);
 
 		method.visitCode();
@@ -1617,6 +2514,23 @@ final class PointerHelper extends HelperBase {
 		}
 		method.visitMaxs(3, 1);
 		method.visitEnd();
+		/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		ClassDesc returnDesc = ClassDesc.ofInternalName(qualifiedReturnType);
+		MethodTypeDesc castDesc = MethodTypeDesc.of(returnDesc, ConstantDescs.CD_long);
+		MethodTypeDesc methodDesc = MethodTypeDesc.of(returnDesc);
+
+		Consumer<CodeBuilder> accessor = body -> {
+			if (checkPresent(field, body)) {
+				body.aload(0);
+				body.loadConstant((long) field.getOffset());
+				body.invokevirtual(classDesc, "nonNullFieldEA", long2long);
+				body.invokestatic(returnDesc, "cast", castDesc);
+				body.areturn();
+			}
+		};
+
+		addAnnotatedMethod(field, field.getName(), methodDesc, accessor);
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		doEAMethod("Pointer", field);
 	}
@@ -1631,10 +2545,11 @@ final class PointerHelper extends HelperBase {
 	private void doStructurePointerMethod(FieldDescriptor field) {
 		String returnType = getTargetType(removeTypeTags(field.getType()));
 		String qualifiedReturnType = qualifyPointerType(returnType);
+
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		Type objectType = Type.getObjectType(qualifiedReturnType);
 		String returnDesc = Type.getMethodDescriptor(objectType);
 		String castDesc = Type.getMethodDescriptor(objectType, Type.LONG_TYPE);
-
 		MethodVisitor method = beginAnnotatedMethod(field, field.getName(), returnDesc);
 
 		method.visitCode();
@@ -1647,19 +2562,31 @@ final class PointerHelper extends HelperBase {
 		}
 		method.visitMaxs(3, 1);
 		method.visitEnd();
+		/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		ClassDesc returnDesc = ClassDesc.ofInternalName(qualifiedReturnType);
+		MethodTypeDesc castDesc = MethodTypeDesc.of(returnDesc, ConstantDescs.CD_long);
+		MethodTypeDesc methodDesc = MethodTypeDesc.of(returnDesc);
+
+		Consumer<CodeBuilder> accessor = body -> {
+			if (checkPresent(field, body)) {
+				body.aload(0);
+				body.loadConstant((long) field.getOffset());
+				body.invokevirtual(classDesc, "getPointerAtOffset", long2long);
+				body.invokestatic(returnDesc, "cast", castDesc);
+				body.areturn();
+			}
+		};
+
+		addAnnotatedMethod(field, field.getName(), methodDesc, accessor);
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 		doEAMethod("Pointer", field);
 	}
 
 	private byte[] generate() {
-		String superClassName = structure.getSuperName();
+		String superClassName = getSuperClassName();
 
-		if (superClassName.isEmpty()) {
-			superClassName = basePrefix + "pointer/StructurePointer";
-		} else {
-			superClassName = basePrefix + "pointer/generated/" + superClassName + "Pointer";
-		}
-
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		clazz.visit(V1_8, ACC_PUBLIC | ACC_SUPER, className, null, superClassName, null);
 
 		doClassAnnotation();
@@ -1670,10 +2597,40 @@ final class PointerHelper extends HelperBase {
 		clazz.visitEnd();
 
 		return clazz.toByteArray();
+		/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		superDesc = ClassDesc.ofInternalName(superClassName);
+
+		Consumer<ClassBuilder> builder = body -> {
+			classBuilder = body;
+
+			body.withFlags(ClassFile.ACC_PUBLIC | ClassFile.ACC_SUPER);
+			body.withSuperclass(superDesc);
+
+			doClassAnnotation();
+			doNullInstance();
+			doConstructors(superClassName);
+			doAccessorMethods();
+		};
+
+		return ClassFile.of().build(classDesc, builder);
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	}
 
 	private String getStructureClassName() {
 		return basePrefix + "structure/" + structure.getName();
+	}
+
+	private String getSuperClassName() {
+		String superName = structure.getSuperName();
+		String superClassName;
+
+		if (superName.isEmpty()) {
+			superClassName = basePrefix + "pointer/StructurePointer";
+		} else {
+			superClassName = basePrefix + "pointer/generated/" + superName + "Pointer";
+		}
+
+		return superClassName;
 	}
 
 	private String qualifyPointerType(String type) {
@@ -1746,7 +2703,11 @@ enum PrimitiveAccessor {
 		}
 	}
 
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	final String descriptor;
+	/*[ELSE] JAVA_SPEC_VERSION < 24 */
+	final MethodTypeDesc descriptor;
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 	final String methodName;
 
@@ -1754,7 +2715,11 @@ enum PrimitiveAccessor {
 
 	PrimitiveAccessor(String methodName, String descriptor, boolean returnsLong) {
 		this.methodName = methodName;
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		this.descriptor = descriptor;
+		/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		this.descriptor = MethodTypeDesc.ofDescriptor(descriptor);
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		this.returnsLong = returnsLong;
 	}
 
@@ -1770,26 +2735,32 @@ final class StructureHelper extends HelperBase {
 
 	private final String className;
 
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	private final ClassWriter clazz;
 
 	private final MethodVisitor clinit;
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 	private final StructureDescriptor structure;
 
 	private StructureHelper(StructureDescriptor structure, String className) {
 		super();
 		this.className = className;
+		this.structure = structure;
+
+		/*[IF JAVA_SPEC_VERSION < 24]*/
 		this.clazz = new ClassWriter(0);
 		this.clazz.visit(V1_8, ACC_PUBLIC | ACC_FINAL | ACC_SUPER, className, null, "java/lang/Object", null);
 		this.clinit = clazz.visitMethod(ACC_STATIC, "<clinit>", voidMethod, null, null);
 		this.clinit.visitCode();
-		this.structure = structure;
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 	}
 
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	private void defineField(String name, Type type, long value) {
 		String typeDescriptor = type.getDescriptor();
 
-		clazz.visitField(ACC_PUBLIC | ACC_FINAL | ACC_STATIC, name, typeDescriptor, null, null).visitEnd();
+		clazz.visitField(ACC_PUBLIC | ACC_STATIC | ACC_FINAL, name, typeDescriptor, null, null).visitEnd();
 
 		if (type.getSort() == Type.INT) {
 			loadInt(clinit, (int) value);
@@ -1809,6 +2780,93 @@ final class StructureHelper extends HelperBase {
 		}
 
 		// offsets
+		for (Map.Entry<String, Integer> entry : getFieldMap().entrySet()) {
+			String fieldName = entry.getKey();
+			int fieldValue = entry.getValue().intValue();
+
+			defineField(fieldName, Type.INT_TYPE, fieldValue);
+		}
+
+		clinit.visitInsn(RETURN);
+		clinit.visitMaxs(2, 0);
+		clinit.visitEnd();
+	}
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
+
+	private byte[] generate() {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
+		defineFields();
+
+		MethodVisitor method = clazz.visitMethod(ACC_PUBLIC, "<init>", voidMethod, null, null);
+
+		method.visitCode();
+		method.visitVarInsn(ALOAD, 0);
+		method.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", voidMethod, false);
+		method.visitInsn(RETURN);
+		method.visitMaxs(1, 1);
+		method.visitEnd();
+
+		clazz.visitEnd();
+
+		return clazz.toByteArray();
+		/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		ClassDesc classDesc = ClassDesc.ofInternalName(className);
+		Map<String, Integer> fieldMap = getFieldMap();
+
+		Consumer<CodeBuilder> clinit = body -> {
+			body.loadConstant((long) structure.getSizeOf());
+			body.putstatic(classDesc, "SIZEOF", ConstantDescs.CD_long);
+
+			// other constants
+			for (ConstantDescriptor constant : structure.getConstants()) {
+				body.loadConstant(constant.getValue());
+				body.putstatic(classDesc, constant.getName(), ConstantDescs.CD_long);
+			}
+
+			for (Map.Entry<String, Integer> entry : fieldMap.entrySet()) {
+				body.loadConstant(entry.getValue().intValue());
+				body.putstatic(classDesc, entry.getKey(), ConstantDescs.CD_int);
+			}
+
+			body.return_();
+		};
+
+		Consumer<CodeBuilder> init = body -> {
+			body.aload(0);
+			body.invokespecial(ConstantDescs.CD_Object, ConstantDescs.INIT_NAME, ConstantDescs.MTD_void);
+			body.return_();
+		};
+
+		Consumer<ClassBuilder> builder = classBody -> {
+			classBody.withFlags(ClassFile.ACC_PUBLIC | ClassFile.ACC_FINAL | ClassFile.ACC_SUPER);
+
+			classBody.withField("SIZEOF", ConstantDescs.CD_long,
+					ClassFile.ACC_PUBLIC | ClassFile.ACC_STATIC | ClassFile.ACC_FINAL);
+
+			// other constants
+			for (ConstantDescriptor constant : structure.getConstants()) {
+				classBody.withField(constant.getName(), ConstantDescs.CD_long,
+						ClassFile.ACC_PUBLIC | ClassFile.ACC_STATIC | ClassFile.ACC_FINAL);
+			}
+
+			for (String fieldName : fieldMap.keySet()) {
+				classBody.withField(fieldName, ConstantDescs.CD_int,
+						ClassFile.ACC_PUBLIC | ClassFile.ACC_STATIC | ClassFile.ACC_FINAL);
+			}
+
+			classBody.withMethodBody(ConstantDescs.CLASS_INIT_NAME, ConstantDescs.MTD_void, ClassFile.ACC_STATIC,
+					clinit);
+
+			classBody.withMethodBody(ConstantDescs.INIT_NAME, ConstantDescs.MTD_void, ClassFile.ACC_PUBLIC, init);
+		};
+
+		return ClassFile.of().build(classDesc, builder);
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
+	}
+
+	private Map<String, Integer> getFieldMap() {
+		Map<String, Integer> fields = new LinkedHashMap<>();
+
 		int bitFieldBitCount = 0;
 		for (FieldDescriptor field : structure.getFields()) {
 			if (!field.isPresent()) {
@@ -1823,7 +2881,7 @@ final class StructureHelper extends HelperBase {
 			// make sure match a bitfield, not a C++ namespace
 			if (colonIndex <= 0 || type.charAt(colonIndex - 1) == ':') {
 				// regular offset field
-				defineField(String.format("_%sOffset_", fieldName), Type.INT_TYPE, fieldOffset);
+				fields.put(String.format("_%sOffset_", fieldName), fieldOffset);
 			} else {
 				// bitfield
 				int bitSize = Integer.parseInt(type.substring(colonIndex + 1).trim());
@@ -1842,35 +2900,16 @@ final class StructureHelper extends HelperBase {
 				}
 
 				// 's' field
-				defineField(String.format("_%s_s_", fieldName), Type.INT_TYPE, bitFieldBitCount);
+				fields.put(String.format("_%s_s_", fieldName), bitFieldBitCount);
 
 				// 'b' field
-				defineField(String.format("_%s_b_", fieldName), Type.INT_TYPE, bitSize);
+				fields.put(String.format("_%s_b_", fieldName), bitSize);
 
 				bitFieldBitCount += bitSize;
 			}
 		}
 
-		clinit.visitInsn(RETURN);
-		clinit.visitMaxs(2, 0);
-		clinit.visitEnd();
-	}
-
-	private byte[] generate() {
-		defineFields();
-
-		MethodVisitor method = clazz.visitMethod(ACC_PUBLIC, "<init>", voidMethod, null, null);
-
-		method.visitCode();
-		method.visitVarInsn(ALOAD, 0);
-		method.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", voidMethod, false);
-		method.visitInsn(RETURN);
-		method.visitMaxs(1, 1);
-		method.visitEnd();
-
-		clazz.visitEnd();
-
-		return clazz.toByteArray();
+		return fields;
 	}
 
 }

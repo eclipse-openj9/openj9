@@ -33,18 +33,22 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/*[IF JAVA_SPEC_VERSION < 24]*/
 import jdk.internal.org.objectweb.asm.AnnotationVisitor;
-import jdk.internal.org.objectweb.asm.Attribute;
 import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.internal.org.objectweb.asm.ClassVisitor;
-import jdk.internal.org.objectweb.asm.FieldVisitor;
-import jdk.internal.org.objectweb.asm.MethodVisitor;
 import jdk.internal.org.objectweb.asm.Opcodes;
+/*[ELSE] JAVA_SPEC_VERSION < 24 */
+import java.lang.classfile.Attributes;
+import java.lang.classfile.ClassModel;
+import java.lang.classfile.attribute.RuntimeVisibleAnnotationsAttribute;
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 import com.ibm.j9ddr.IVMData;
 import com.ibm.j9ddr.tools.ddrinteractive.DDRInteractiveCommandException;
@@ -53,7 +57,7 @@ import com.ibm.j9ddr.tools.ddrinteractive.annotations.DebugExtension;
 
 /**
  * DDR Interactive classloader which is responsible for finding all classes specified by the plugins property.
- * 
+ *
  * @author apilkington
  */
 public class DDRInteractiveClassLoader extends ClassLoader {
@@ -78,6 +82,9 @@ public class DDRInteractiveClassLoader extends ClassLoader {
 	protected static ArrayList<String> runtimeCommandClasses = new ArrayList<>(); //classes that implement ICommand and are added after startup
 	private final ArrayList<File> pluginSearchPath = new ArrayList<>(); //specify classloader paths by URI as this can be used by the File class and converted into a URL
 
+	static final String extensionClassname = DebugExtension.class.getName().replace('.', '/');
+	static final String extensionDescriptor = "L" + extensionClassname + ";";
+
 	public DDRInteractiveClassLoader(IVMData vmdata) throws DDRInteractiveCommandException {
 		this(vmdata, vmdata.getClassLoader());
 	}
@@ -91,11 +98,11 @@ public class DDRInteractiveClassLoader extends ClassLoader {
 		configureSearchPath();
 		loadPlugins();
 	}
-	
+
 	/**
 	 * Check to see if a class has the version annotation and if so whether it matches the version of the currently
 	 * running vm.
-	 * 
+	 *
 	 * @param url
 	 * @param clazz
 	 */
@@ -140,11 +147,11 @@ public class DDRInteractiveClassLoader extends ClassLoader {
 	}
 
 	/**
-	 * At the bottom of this file is a main and a special constructor which is useful for running and testing 
+	 * At the bottom of this file is a main and a special constructor which is useful for running and testing
 	 * this class loader as a stand-alone application
 	 */
 
-	//if the required system property has been set then parse it and add the paths to the classloader search path
+	// if the required system property has been set then parse it and add the paths to the classloader search path
 	private void configureSearchPath() {
 		// The search path can be set by a system property or environment variable with the sys prop taking precedence
 		// TODO handle quoted string, blanks in the file name
@@ -173,26 +180,28 @@ public class DDRInteractiveClassLoader extends ClassLoader {
 		}
 	}
 
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	/**
-	 * Used with asm's ClassReader - checks if a given class has a DTFJPlugin annotation and reads its name.
+	 * Used with ASM's ClassReader - checks if a given class has a DTFJPlugin annotation and reads its name.
 	 *
 	 * @author blazejc
 	 */
-	private static class DTFJPluginSnifferVisitor extends ClassVisitor {
-		private boolean isDebugExtension = false;
-		private String className;
+	private static final class DTFJPluginSnifferVisitor extends ClassVisitor {
 
-		public DTFJPluginSnifferVisitor() {
+		boolean isDebugExtension;
+		String className;
+
+		DTFJPluginSnifferVisitor() {
 			super(Opcodes.ASM4, null);
 		}
 
+		@Override
 		public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
-			String extensionClassname = DebugExtension.class.getName().replace(".", "/");
 			logger.finest("Inspecting annotation " + desc + " looking for annotation " + extensionClassname);
 
-			// check if the annotation on this class contains the class name of the DebugExtension annotation
+			// check if the annotation on this class matches the class name of the DebugExtension annotation
 			// this amounts to the annotation being present or not on the visited class
-			if (desc.contains(extensionClassname)) {
+			if (extensionDescriptor.equals(desc)) {
 				logger.finest("Found DebugExtension annotation");
 				isDebugExtension = true;
 			} else {
@@ -202,18 +211,46 @@ public class DDRInteractiveClassLoader extends ClassLoader {
 			return null;
 		}
 
+		@Override
 		public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-			className = name.replace("/", ".");
+			className = name.replace('/', '.');
 		}
 
-		public void visitAttribute(Attribute attr) {}
-		public void visitEnd() {}
-		public FieldVisitor visitField(int arg0, String arg1, String arg2, String arg3, Object arg4) { return null; }
-		public void visitInnerClass(String arg0, String arg1, String arg2, int arg3) {}
-		public MethodVisitor visitMethod(int arg0, String arg1, String arg2, String arg3, String[] arg4) { return null; }
-		public void visitOuterClass(String arg0, String arg1, String arg2) {}
-		public void visitSource(String arg0, String arg1) {}
 	}
+
+	/*[ELSE] JAVA_SPEC_VERSION < 24 */
+
+	/**
+	 * Used with classfile API - checks if a given class has a DTFJPlugin annotation and reads its name.
+	 */
+	private static final class DTFJPluginSnifferVisitor {
+
+		boolean isDebugExtension;
+		String className;
+
+		DTFJPluginSnifferVisitor() {
+			super();
+		}
+
+		void visit(ClassModel model) {
+			className = model.thisClass().asInternalName().replace('/', '.');
+
+			Optional<RuntimeVisibleAnnotationsAttribute> attribute = model
+					.findAttribute(Attributes.runtimeVisibleAnnotations());
+
+			if (attribute.isPresent()) {
+				for (java.lang.classfile.Annotation annotation : attribute.get().annotations()) {
+					if (annotation.className().equalsString(extensionDescriptor)) {
+						isDebugExtension = true;
+						break;
+					}
+				}
+			}
+		}
+
+	}
+
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
 	//******************************************************************************************************
 	//******************************************************************************************************
@@ -248,9 +285,9 @@ public class DDRInteractiveClassLoader extends ClassLoader {
 		public abstract URL toURL();
 
 		/**
-		 * Load the code into a buffer then pass the buffer to 
+		 * Load the code into a buffer then pass the buffer to
 		 * loadByteCodeFromBuffer(String...) for loading
-		 * 
+		 *
 		 * @return the class if loaded OK, otherwise null
 		 */
 		public Class<?> loadByteCode() {
@@ -288,6 +325,7 @@ public class DDRInteractiveClassLoader extends ClassLoader {
 		 * @throws IOException
 		 */
 		private byte[] readByteCodeFromStream(InputStream in) throws IOException {
+			/*[IF JAVA_SPEC_VERSION == 8]*/
 			byte[] buffer = new byte[4096];
 			ByteArrayOutputStream out = new ByteArrayOutputStream(4096);
 			int bytesRead = 0;
@@ -295,6 +333,9 @@ public class DDRInteractiveClassLoader extends ClassLoader {
 				out.write(buffer, 0, bytesRead);
 			}
 			return out.toByteArray();
+			/*[ELSE] JAVA_SPEC_VERSION == 8 */
+			return in.readAllBytes();
+			/*[ENDIF] JAVA_SPEC_VERSION == 8 */
 		}
 
 		/**
@@ -347,7 +388,7 @@ public class DDRInteractiveClassLoader extends ClassLoader {
 	}
 
 	/**
-	 * Represents the information we need to locate a class within a jar file 
+	 * Represents the information we need to locate a class within a jar file
 	 */
 	private class ClassFileWithinJarFile extends ClassFile {
 		private File jarFile;
@@ -404,18 +445,21 @@ public class DDRInteractiveClassLoader extends ClassLoader {
 	}
 
 	/**
-	 * Scans the plugins classpath and loads any DTFJPlugins found 
+	 * Scans the plugins classpath and loads any DTFJPlugins found
 	 * @throws CommandException if any location on the plugins search path does not exist
 	 */
 	public void loadPlugins() throws DDRInteractiveCommandException {
 		scanForClassFiles();
 
-		for (String str : classFilesOnClasspath.keySet()) {
+		for (Map.Entry<String, ClassFile> entry : classFilesOnClasspath.entrySet()) {
+			String className = entry.getKey();
+			ClassFile classFile = entry.getValue();
+
 			try {
-				DTFJPluginSnifferVisitor sniffer = sniffClassFile(classFilesOnClasspath.get(str).getStreamForByteCode());
+				DTFJPluginSnifferVisitor sniffer = sniffClassFile(classFile.getStreamForByteCode());
 				if (sniffer.isDebugExtension) {
-					Class<?> clazz = loadClass(str);
-					examineClass(classFilesOnClasspath.get(str).toURL(), clazz);
+					Class<?> clazz = loadClass(className);
+					examineClass(classFile.toURL(), clazz);
 				}
 			} catch (ClassNotFoundException e) {
 				logger.log(logLevelForPluginLoadFailures, "Exception while loading plugins : " + e.getMessage());
@@ -423,6 +467,7 @@ public class DDRInteractiveClassLoader extends ClassLoader {
 				logger.fine(e.getMessage());
 			}
 		}
+
 		addRuntimeCommands();
 	}
 
@@ -441,13 +486,13 @@ public class DDRInteractiveClassLoader extends ClassLoader {
 
 	/**
 	 * Scan the supplied plugin path to find commands which are written.
-	 * This method does not support MVS on z/OS, the path needs to point to HFS locations 
+	 * This method does not support MVS on z/OS, the path needs to point to HFS locations
 	 * @param urls
-	 * 
+	 *
 	 * @throws CommandException if any location on the plugins search path does not exist
 	 */
 	private void scanForClassFiles() throws DDRInteractiveCommandException {
-		for (File file : pluginSearchPath) { //a path entry can be null if the URI was malformed
+		for (File file : pluginSearchPath) { // a path entry can be null if the URI was malformed
 			logger.fine("Scanning path " + file + " in search of DDR plugins");
 			if (!file.exists()) {
 				//log that the entry does not exist and skip
@@ -533,10 +578,17 @@ public class DDRInteractiveClassLoader extends ClassLoader {
 		}
 	}
 
-	private DTFJPluginSnifferVisitor sniffClassFile(InputStream in) throws IOException {
+	private static DTFJPluginSnifferVisitor sniffClassFile(InputStream in) throws IOException {
 		DTFJPluginSnifferVisitor sniffer = new DTFJPluginSnifferVisitor();
-		ClassReader cr = new ClassReader(in);
-		cr.accept(sniffer, 0);
+		/*[IF JAVA_SPEC_VERSION < 24]*/
+		ClassReader reader = new ClassReader(in);
+		reader.accept(sniffer, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+		/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		byte[] content = in.readAllBytes();
+		ClassModel model = java.lang.classfile.ClassFile.of().parse(content);
+
+		sniffer.visit(model);
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 		return sniffer;
 	}
 
@@ -597,7 +649,7 @@ public class DDRInteractiveClassLoader extends ClassLoader {
 		return pluginFailures;
 	}
 
-	/** 
+	/**
 	 * Searches for and loads a class from the plugins search path.
 	 * @return the loaded class or null
 	 */
@@ -652,7 +704,7 @@ public class DDRInteractiveClassLoader extends ClassLoader {
 //	vmversion = "any old rubbish";
 //	logger.setLevel(Level.FINEST);
 //	Handler handler = new ConsoleHandler();
-//	handler.setFormatter(new Formatter(){ 
+//	handler.setFormatter(new Formatter(){
 //		public String format(LogRecord logRecord) {
 //			return logRecord.getLevel() + " " + formatMessage(logRecord) + "\n";
 //		} // log message is a single line with level then text

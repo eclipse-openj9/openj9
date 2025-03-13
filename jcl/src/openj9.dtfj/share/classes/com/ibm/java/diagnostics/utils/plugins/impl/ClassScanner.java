@@ -22,28 +22,99 @@
  */
 package com.ibm.java.diagnostics.utils.plugins.impl;
 
+import java.io.InputStream;
+import java.io.IOException;
 import java.net.URL;
 import java.util.Set;
-
-import jdk.internal.org.objectweb.asm.AnnotationVisitor;
-import jdk.internal.org.objectweb.asm.Attribute;
-import jdk.internal.org.objectweb.asm.ClassVisitor;
-import jdk.internal.org.objectweb.asm.FieldVisitor;
-import jdk.internal.org.objectweb.asm.MethodVisitor;
-import jdk.internal.org.objectweb.asm.Opcodes;
+/*[IF JAVA_SPEC_VERSION >= 24]*/
+import java.util.Optional;
+/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 
 import com.ibm.java.diagnostics.utils.plugins.Annotation;
 import com.ibm.java.diagnostics.utils.plugins.ClassInfo;
 import com.ibm.java.diagnostics.utils.plugins.ClassListener;
 
-public class ClassScanner extends ClassVisitor {
+/*[IF JAVA_SPEC_VERSION < 24]*/
+import jdk.internal.org.objectweb.asm.AnnotationVisitor;
+import jdk.internal.org.objectweb.asm.ClassReader;
+import jdk.internal.org.objectweb.asm.ClassVisitor;
+import jdk.internal.org.objectweb.asm.Opcodes;
+/*[ELSE] JAVA_SPEC_VERSION < 24 */
+import java.lang.classfile.AnnotationElement;
+import java.lang.classfile.AnnotationValue;
+import java.lang.classfile.Attributes;
+import java.lang.classfile.ClassFile;
+import java.lang.classfile.ClassModel;
+import java.lang.classfile.attribute.RuntimeVisibleAnnotationsAttribute;
+import java.lang.classfile.constantpool.ClassEntry;
+import java.util.function.Function;
+/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
+public final class ClassScanner
+		/*[IF JAVA_SPEC_VERSION < 24]*/
+		extends ClassVisitor
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
+{
+
+	public static ClassInfo getClassInfo(InputStream file, URL url, Set<ClassListener> listeners) throws IOException {
+		/*[IF JAVA_SPEC_VERSION < 24]*/
+		ClassScanner scanner = new ClassScanner(url, listeners);
+		ClassReader reader = new ClassReader(file);
+
+		reader.accept(scanner, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+
+		return scanner.info;
+		/*[ELSE] JAVA_SPEC_VERSION < 24 */
+		Function<ClassEntry, String> toDotted = entry -> entry.asInternalName().replace('/', '.');
+		ClassModel model = ClassFile.of().parse(file.readAllBytes());
+		int version = model.majorVersion() + (model.minorVersion() << 16);
+		int access = model.flags().flagsMask();
+		String dotName = toDotted.apply(model.thisClass());
+		String signature = null; // not currently used
+		String dotSuperName = model.superclass().map(toDotted).orElse(null);
+		String[] interfaces = model.interfaces().stream().map(toDotted).toArray(String[]::new);
+
+		ClassInfo info = new ClassInfo(dotName, url);
+
+		for (String iface : interfaces) {
+			info.addInterface(iface);
+		}
+
+		for (ClassListener listener : listeners) {
+			listener.visit(version, access, dotName, signature, dotSuperName, interfaces);
+		}
+
+		Optional<RuntimeVisibleAnnotationsAttribute> attribute = model
+				.findAttribute(Attributes.runtimeVisibleAnnotations());
+
+		if (attribute.isPresent()) {
+			for (java.lang.classfile.Annotation annotation : attribute.get().annotations()) {
+				String classDescriptor = annotation.className().stringValue();
+				Annotation current = info.addAnnotation(classDescriptor);
+
+				for (ClassListener listener : listeners) {
+					listener.visitAnnotation(classDescriptor, true /* visible */);
+				}
+
+				for (AnnotationElement element : annotation.elements()) {
+					if (element.value() instanceof AnnotationValue.OfConstant constant) {
+						current.addEntry(element.name().stringValue(), constant.resolvedValue());
+					}
+				}
+			}
+		}
+
+		return info;
+		/*[ENDIF] JAVA_SPEC_VERSION < 24 */
+	}
+
+	/*[IF JAVA_SPEC_VERSION < 24]*/
 	private ClassInfo info;
-	private Annotation currentAnnotation = null;
+	private Annotation currentAnnotation;
 	private final URL url; // where the class is being scanned from
 	private final Set<ClassListener> listeners;
 
-	public ClassScanner(URL url, Set<ClassListener> listeners) {
+	private ClassScanner(URL url, Set<ClassListener> listeners) {
 		/*[IF JAVA_SPEC_VERSION >= 19]*/
 		super(Opcodes.ASM9, null);
 		/*[ELSEIF JAVA_SPEC_VERSION >= 15]*/
@@ -58,12 +129,31 @@ public class ClassScanner extends ClassVisitor {
 	}
 
 	@Override
-	public AnnotationVisitor visitAnnotation(String classname, boolean visible) {
-		currentAnnotation = info.addAnnotation(classname);
-		for (ClassListener listener : listeners) {
-			listener.visitAnnotation(classname, visible);
+	public AnnotationVisitor visitAnnotation(String className, boolean visible) {
+		final class ClassScannerAnnotation extends AnnotationVisitor {
+
+			ClassScannerAnnotation(int api) {
+				super(api);
+			}
+
+			@Override
+			public void visit(String name, Object value) {
+				ClassScanner.this.visitAnnotationValue(name, value);
+			}
 		}
-		return new ClassScannerAnnotation(Opcodes.ASM4);
+
+		currentAnnotation = info.addAnnotation(className);
+		for (ClassListener listener : listeners) {
+			listener.visitAnnotation(className, visible);
+		}
+		return new ClassScannerAnnotation(api);
+	}
+
+	final void visitAnnotationValue(String name, Object value) {
+		currentAnnotation.addEntry(name, value);
+		for (ClassListener listener : listeners) {
+			listener.visitAnnotationValue(name, value);
+		}
 	}
 
 	@Override
@@ -71,82 +161,12 @@ public class ClassScanner extends ClassVisitor {
 		String dotName = name.replace('/', '.');
 		String dotSuperName = superName.replace('/', '.');
 		info = new ClassInfo(dotName, url);
-		//record all interfaces supplied by this class
-		for(String iface : interfaces) {
+		// record all interfaces supplied by this class
+		for (String iface : interfaces) {
 			info.addInterface(iface);
 		}
-		for(ClassListener listener : listeners) {
+		for (ClassListener listener : listeners) {
 			listener.visit(version, access, dotName, signature, dotSuperName, interfaces);
-		}
-	}
-
-	@Override
-	public void visitAttribute(Attribute attr) {
-		return;
-	}
-
-	@Override
-	public void visitEnd() {
-		return;
-	}
-
-	@Override
-	public FieldVisitor visitField(int arg0, String arg1, String arg2, String arg3, Object arg4) {
-		return null;
-	}
-
-	@Override
-	public void visitInnerClass(String arg0, String arg1, String arg2, int arg3) {
-		return;
-	}
-
-	@Override
-	public MethodVisitor visitMethod(int arg0, String arg1, String arg2, String arg3, String[] arg4) {
-		return null;
-	}
-
-	@Override
-	public void visitOuterClass(String arg0, String arg1, String arg2) {
-		return;
-	}
-
-	@Override
-	public void visitSource(String arg0, String arg1) {
-		return;
-	}
-
-	public ClassInfo getClassInfo() {
-		return info;
-	}
-
-	class ClassScannerAnnotation extends AnnotationVisitor {
-
-		public ClassScannerAnnotation(int arg0) {
-			super(arg0);
-		}
-
-		@Override
-		public AnnotationVisitor visitAnnotation(String name, String desc) {
-			return null; //not interested in nested annotations
-		}
-
-		@Override
-		public AnnotationVisitor visitArray(String name) {
-			return null; //not interested in arrays
-		}
-
-		@Override
-		public void visitEnum(String name, String desc, String value) {
-			return;
-		}
-
-		@Override
-		public void visit(String name, Object value) {
-			currentAnnotation.addEntry(name, value);
-			for (ClassListener listener : listeners) {
-				listener.visitAnnotationValue(name, value);
-			}
-
 		}
 	}
 
@@ -165,4 +185,11 @@ public class ClassScanner extends ClassVisitor {
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION == 17 */
 
+	/*[ELSE] JAVA_SPEC_VERSION < 24 */
+
+	private ClassScanner() {
+		super();
+	}
+
+	/*[ENDIF] JAVA_SPEC_VERSION < 24 */
 }
