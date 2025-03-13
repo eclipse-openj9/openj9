@@ -401,11 +401,10 @@ MM_IndexableObjectAllocationModel::getSparseAddressAndDecommitLeaves(MM_Environm
 		void *virtualLargeObjectHeapAddress = extensions->largeObjectVirtualMemory->allocateSparseFreeEntryAndMapToHeapObject(spine, byteAmount);
 		if (NULL != virtualLargeObjectHeapAddress) {
 			indexableObjectModel->setDataAddrForContiguous((J9IndexableObject *)spine, virtualLargeObjectHeapAddress);
+		} else {
+			_allocateDescription.setSpine(NULL);
+			spine = NULL;
 		}
-		/*
-		 * TODO:we might need a special state for this regions (different from just plain ARRAYLET),
-		 * such as ARRAYLET_DECOMMITED or just DECOMMITED
-		 */
 	}
 
 	Trc_MM_getSparseAddressAndDecommitLeaves_Exit(env->getLanguageVMThread(), spine, (void *)bytesRemaining);
