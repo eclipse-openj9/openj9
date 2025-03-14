@@ -599,12 +599,6 @@ if(NOT JAVA_SPEC_VERSION LESS 9)
 	)
 endif()
 
-if(JAVA_SPEC_VERSION EQUAL 11)
-	omr_add_exports(jclse
-		Java_java_lang_System_initJCLPlatformEncoding
-	)
-endif()
-
 # java 11+
 if(NOT JAVA_SPEC_VERSION LESS 11)
 	omr_add_exports(jclse
