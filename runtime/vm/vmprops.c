@@ -1609,7 +1609,7 @@ convertToUTF8(J9PortLibrary *portLibrary, const wchar_t *unicodeString, char *ut
 	return 0;
 }
 
-jobject
+static jobject
 getPlatformPropertyList(JNIEnv *env, const char *strings[], int propIndex)
 {
 	PORT_ACCESS_FROM_ENV(env);
@@ -1623,9 +1623,9 @@ getPlatformPropertyList(JNIEnv *env, const char *strings[], int propIndex)
 	char userhome[EsMaxPath];
 	wchar_t unicodeTemp[EsMaxPath];
 	int i = 0;
-#if JAVA_SPEC_VERSION < 17
+#if JAVA_SPEC_VERSION < 11
 	char userdir[EsMaxPath];
-#endif /* JAVA_SPEC_VERSION < 17 */
+#endif /* JAVA_SPEC_VERSION < 11 */
 	wchar_t unicodeHome[EsMaxPath];
 	HANDLE process = 0;
 	HANDLE token = 0;
@@ -1634,7 +1634,7 @@ getPlatformPropertyList(JNIEnv *env, const char *strings[], int propIndex)
 
 	/* Hard coded file/path separators and other values */
 
-#if JAVA_SPEC_VERSION < 17
+#if JAVA_SPEC_VERSION < 11
 	strings[propIndex++] = "file.separator";
 	strings[propIndex++] = "\\";
 
@@ -1644,7 +1644,7 @@ getPlatformPropertyList(JNIEnv *env, const char *strings[], int propIndex)
 	/* Get the Temp Dir name */
 	strings[propIndex++] = "java.io.tmpdir";
 	strings[propIndex++] = getTmpDir(env, &tempdir);
-#endif /* JAVA_SPEC_VERSION < 17 */
+#endif /* JAVA_SPEC_VERSION < 11 */
 
 	strings[propIndex++] = "user.home";
 	i = propIndex;
@@ -1711,7 +1711,7 @@ getPlatformPropertyList(JNIEnv *env, const char *strings[], int propIndex)
 		}
 	}
 
-#if JAVA_SPEC_VERSION < 17
+#if JAVA_SPEC_VERSION < 11
 	/* Get the directory where the executable was started */
 	strings[propIndex++] = "user.dir";
 	if (0 == GetCurrentDirectoryW(EsMaxPath, unicodeTemp)) {
@@ -1720,13 +1720,7 @@ getPlatformPropertyList(JNIEnv *env, const char *strings[], int propIndex)
 		convertToUTF8(PORTLIB, unicodeTemp, userdir, EsMaxPath);
 		strings[propIndex++] = userdir;
 	}
-#endif /* JAVA_SPEC_VERSION < 17 */
-
-	if (JAVA_SPEC_VERSION < 12) {
-		/* Get the timezone */
-		strings[propIndex++] = "user.timezone";
-		strings[propIndex++] = "";
-	}
+#endif /* JAVA_SPEC_VERSION < 11 */
 
 	result = createSystemPropertyList(env, strings, propIndex);
 	j9mem_free_memory(tempdir);
@@ -1736,16 +1730,16 @@ getPlatformPropertyList(JNIEnv *env, const char *strings[], int propIndex)
 
 #else /* defined(WIN32) */
 
-jobject
+static jobject
 getPlatformPropertyList(JNIEnv *env, const char *strings[], int propIndex)
 {
 	PORT_ACCESS_FROM_ENV(env);
 	char *charResult = NULL;
 	char *envSpace = NULL;
 	jobject plist = NULL;
-#if JAVA_SPEC_VERSION < 17
+#if JAVA_SPEC_VERSION < 11
 	char userdir[EsMaxPath] = {0};
-#endif /* JAVA_SPEC_VERSION < 17 */
+#endif /* JAVA_SPEC_VERSION < 11 */
 	char home[EsMaxPath] = {0};
 	char *homeAlloc = NULL;
 	J9VMThread *currentThread = (J9VMThread*)env;
@@ -1764,7 +1758,7 @@ getPlatformPropertyList(JNIEnv *env, const char *strings[], int propIndex)
 	}
 #endif /* defined(J9ZOS390) */
 
-#if JAVA_SPEC_VERSION < 17
+#if JAVA_SPEC_VERSION < 11
 	strings[propIndex++] = "file.separator";
 	strings[propIndex++] = "/";
 
@@ -1779,7 +1773,7 @@ getPlatformPropertyList(JNIEnv *env, const char *strings[], int propIndex)
 	} else {
 		strings[propIndex++] = charResult;
 	}
-#endif /* JAVA_SPEC_VERSION < 17 */
+#endif /* JAVA_SPEC_VERSION < 11 */
 
 	strings[propIndex++] = "user.home";
 	charResult = NULL;
@@ -1850,17 +1844,11 @@ getPlatformPropertyList(JNIEnv *env, const char *strings[], int propIndex)
 		propIndex += 1;
 	}
 
-#if JAVA_SPEC_VERSION < 17
+#if JAVA_SPEC_VERSION < 11
 	/* Get the Temp Dir name */
 	strings[propIndex++] = "java.io.tmpdir";
 	strings[propIndex++] = getTmpDir(env, &envSpace);
-#endif /* JAVA_SPEC_VERSION < 17 */
-
-	if (JAVA_SPEC_VERSION < 12) {
-		/* Get the timezone */
-		strings[propIndex++] = "user.timezone";
-		strings[propIndex++] = "";
-	}
+#endif /* JAVA_SPEC_VERSION < 11 */
 
 	plist = createSystemPropertyList(env, strings, propIndex);
 	if (NULL != envSpace) {
@@ -1888,12 +1876,12 @@ getSystemPropertyList(JNIEnv *env)
 	int propIndex = 0;
 	jobject propertyList = NULL;
 #define PROPERTY_COUNT 137
-#if JAVA_SPEC_VERSION < 17
+#if JAVA_SPEC_VERSION < 11
 	char *propertyKey = NULL;
 	const char *language = NULL;
 	const char *region = NULL;
 	const char *variant = NULL;
-#endif /* JAVA_SPEC_VERSION < 17 */
+#endif /* JAVA_SPEC_VERSION < 11 */
 	const char *strings[PROPERTY_COUNT] = {0};
 #define USERNAME_LENGTH 128
 	char username[USERNAME_LENGTH] = {0};
@@ -1967,7 +1955,7 @@ getSystemPropertyList(JNIEnv *env)
 	strings[propIndex++] = "big";
 #endif /* defined(J9VM_ENV_LITTLE_ENDIAN) */
 
-#if JAVA_SPEC_VERSION < 17
+#if JAVA_SPEC_VERSION < 11
 	strings[propIndex++] = "sun.cpu.endian";
 #if defined(J9VM_ENV_LITTLE_ENDIAN)
 	strings[propIndex++] = "little";
@@ -1998,7 +1986,11 @@ getSystemPropertyList(JNIEnv *env)
 	/* Get the variant */
 	strings[propIndex++] = "user.variant";
 	strings[propIndex++] = variant;
-#endif /* JAVA_SPEC_VERSION < 17 */
+
+	/* Get the timezone */
+	strings[propIndex++] = "user.timezone";
+	strings[propIndex++] = "";
+#endif /* JAVA_SPEC_VERSION < 11 */
 
 	/* Get the User name */
 	strings[propIndex++] = "user.name";
