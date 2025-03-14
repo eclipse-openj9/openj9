@@ -2952,14 +2952,14 @@ done:
 								J9VMJAVALANGVIRTUALTHREAD_SET_NOTIFIED(_currentThread, head->vthread, JNI_TRUE);
 							} else {
 								J9VMContinuation *next = head;
-								J9VMJAVALANGVIRTUALTHREAD_SET_ONWAITINGLIST(_currentThread, head->vthread, JNI_TRUE);
-								J9VMJAVALANGVIRTUALTHREAD_SET_NOTIFIED(_currentThread, head->vthread, JNI_TRUE);
-								while (NULL != next->nextWaitingContinuation) {
+								J9VMContinuation *prev = NULL;
+								while (NULL != next) {
 									J9VMJAVALANGVIRTUALTHREAD_SET_ONWAITINGLIST(_currentThread, next->vthread, JNI_TRUE);
 									J9VMJAVALANGVIRTUALTHREAD_SET_NOTIFIED(_currentThread, next->vthread, JNI_TRUE);
+									prev = next;
 									next = next->nextWaitingContinuation;
 								}
-								next->nextWaitingContinuation = _vm->blockedContinuations;
+								prev->nextWaitingContinuation = _vm->blockedContinuations;
 								_vm->blockedContinuations = head;
 								objectMonitor->waitingContinuations = NULL;
 							}
@@ -5174,7 +5174,7 @@ done:
 			VMStructHasBeenUpdated(REGISTER_ARGS);
 			if (J9_OBJECT_MONITOR_OOM != result) {
 				restoreInternalNativeStackFrame(REGISTER_ARGS);
-				/* Handle the virutal thread Object.wait call. */
+				/* Handle the virtual thread Object.wait call. */
 				J9VMJAVALANGVIRTUALTHREAD_SET_NOTIFIED(_currentThread, _currentThread->threadObject, JNI_FALSE);
 				rc = yieldPinnedContinuation(REGISTER_ARGS, newState, J9VM_CONTINUATION_RETURN_FROM_OBJECT_WAIT);
 			} else {
