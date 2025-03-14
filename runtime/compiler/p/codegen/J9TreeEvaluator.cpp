@@ -10509,6 +10509,10 @@ hashCodeHelper_P10(TR::Node *node, TR::CodeGenerator *cg, TR::DataType elementTy
    generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, valueReg, valueReg, endReg);
    generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, endReg, valueReg, vendReg);
 
+   // initialisations
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::XOR, node, tempReg, tempReg, tempReg);
+   loadConstant(cg, node, 0x0, constant0Reg);
+
    // size-2 special case
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, condReg, vendReg, 2*elementSize);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::bgt, node, special2Label, condReg);
@@ -10559,10 +10563,6 @@ hashCodeHelper_P10(TR::Node *node, TR::CodeGenerator *cg, TR::DataType elementTy
    generateLabelInstruction(cg, TR::InstOpCode::b, node, endLabel);
 
    generateLabelInstruction(cg, TR::InstOpCode::label, node, special2Label);
-
-   // initialisations
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::XOR, node, tempReg, tempReg, tempReg);
-   loadConstant(cg, node, 0x0, constant0Reg);
 
    // load multiplier (anything with more than 4 bytes can be truncated)
    // 31^0-6 = 1 31 961 29791 923521 28629151 887503681
