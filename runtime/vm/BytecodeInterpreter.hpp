@@ -2943,7 +2943,7 @@ done:
 					if ((NULL != objectMonitor) && (NULL != objectMonitor->waitingContinuations)) {
 						omrthread_monitor_enter(_vm->blockedVirtualThreadsMutex);
 						J9VMContinuation *head = objectMonitor->waitingContinuations;
-						if (NULL != head) {
+						if ((NULL != head) && (NULL != head->vthread)) {
 							if (omrthread_monitor_notify == notifyFunction) {
 								objectMonitor->waitingContinuations = head->nextWaitingContinuation;
 								head->nextWaitingContinuation = _vm->blockedContinuations;
