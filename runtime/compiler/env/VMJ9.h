@@ -1465,6 +1465,8 @@ public:
    virtual int32_t maxInternalPlusPinningArrayPointers(TR::Compilation* comp);
 
    virtual void *getSystemClassLoader();
+   virtual void *getExtensionClassLoader();
+   virtual void *getApplicationClassLoader();
 
    virtual TR_EstimateCodeSize *getCodeEstimator( TR::Compilation *comp);
    virtual void releaseCodeEstimator( TR::Compilation *comp, TR_EstimateCodeSize *estimator);

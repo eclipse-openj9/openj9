@@ -2103,6 +2103,35 @@ ClientSessionData::printSharedProfileCacheStats() const
       }
    }
 
+void
+ClientSessionData::setExtensionClassLoader(void *loader)
+   {
+   if (_vmInfo != NULL)
+      {
+      setClassLoader(&_vmInfo->_extensionClassLoader, loader, "extension");
+      }
+   }
+
+void
+ClientSessionData::setApplicationClassLoader(void *loader)
+   {
+   if (_vmInfo != NULL)
+      {
+      setClassLoader(&_vmInfo->_applicationClassLoader, loader, "application");
+      }
+   }
+
+void
+ClientSessionData::setClassLoader(void **slot, void *loader, const char *which)
+   {
+   TR_ASSERT_FATAL(
+      *slot == NULL || *slot == loader,
+      "inconsistent %s loaders: %p vs %p",
+      *slot,
+      loader);
+
+   *slot = loader;
+   }
 
 ClientSessionHT*
 ClientSessionHT::allocate()

@@ -443,6 +443,8 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          ClientSessionData::VMInfo vmInfo = {};
          J9JavaVM * javaVM = vmThread->javaVM;
          vmInfo._systemClassLoader = fe->getSystemClassLoader();
+         vmInfo._extensionClassLoader = fe->getExtensionClassLoader();
+         vmInfo._applicationClassLoader = fe->getApplicationClassLoader();
          vmInfo._processID = fe->getProcessID();
          vmInfo._canMethodEnterEventBeHooked = fe->canMethodEnterEventBeHooked();
          vmInfo._canMethodExitEventBeHooked = fe->canMethodExitEventBeHooked();
@@ -3510,6 +3512,13 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
    ((TR::CompilationInfoPerThread *)compInfoPT)->clearDeserializerWasReset();
    std::vector<uintptr_t> newKnownIds = deserializer ? deserializer->getNewKnownIds(compiler) : std::vector<uintptr_t>();
 
+   // The server might have cached the VMInfo for this client before the
+   // extension and/or application class loader existed. Send the class loader
+   // pointers with the compilation request so that in that case, if they have
+   // since been created, the server will have a chance to become aware of them.
+   void *extensionClassLoader = compiler->fej9vm()->getExtensionClassLoader();
+   void *applicationClassLoader = compiler->fej9vm()->getApplicationClassLoader();
+
    // TODO: make this a synchronized region to avoid bad_alloc exceptions
    compInfo->getSequencingMonitor()->enter();
    // Collect the list of unloaded classes
@@ -3564,7 +3573,8 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
          detailsStr, details.getType(), unloadedClasses, illegalModificationList, classInfoTuple, optionsStr,
          recompMethodInfoStr, chtableUpdates.first, chtableUpdates.second, useAotCompilation,
          TR::Compiler->vm.isVMInStartupPhase(compInfoPT->getJitConfig()), aotCacheStore, aotCacheLoad, methodIndex,
-         classChainOffset, ramClassChain, uncachedRAMClasses, uncachedClassInfos, newKnownIds
+         classChainOffset, ramClassChain, uncachedRAMClasses, uncachedClassInfos, newKnownIds,
+         extensionClassLoader, applicationClassLoader
       );
 
       JITServer::MessageType response;

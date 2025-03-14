@@ -588,6 +588,8 @@ TR::CompilationInfoPerThreadRemote::processCompilationRequest(CompilationRequest
    auto &uncachedRAMClasses      = std::get<22>(req);
    auto &uncachedClassInfos      = std::get<23>(req);
    auto &newKnownIds             = std::get<24>(req);
+   void *extensionClassLoader    = std::get<25>(req);
+   void *applicationClassLoader  = std::get<26>(req);
 
    TR_ASSERT_FATAL(TR::Compiler->persistentMemory() == compInfo->persistentMemory(),
                      "per-client persistent memory must not be set at this point");
@@ -640,6 +642,8 @@ TR::CompilationInfoPerThreadRemote::processCompilationRequest(CompilationRequest
          throw std::bad_alloc();
 
       setClientData(clientSession); // Cache the session data into CompilationInfoPerThreadRemote object
+      clientSession->setExtensionClassLoader(extensionClassLoader);
+      clientSession->setApplicationClassLoader(applicationClassLoader);
 
       // After this line, all persistent allocations are made per-client,
       // until exitPerClientAllocationRegion is called
