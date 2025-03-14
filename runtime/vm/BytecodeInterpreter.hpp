@@ -5216,21 +5216,26 @@ done:
 		updateVMStruct(REGISTER_ARGS);
 #if JAVA_SPEC_VERSION >= 24
 		if (VM_ContinuationHelpers::isYieldableVirtualThread(_currentThread)) {
-			UDATA newState = JAVA_LANG_VIRTUALTHREAD_WAITING;
-			if ((millis > 0) || (nanos > 0)) {
-				newState = JAVA_LANG_VIRTUALTHREAD_TIMED_WAITING;
-			}
-			/* Try to yield the virtual thread if it will be blocked. */
-			UDATA result = preparePinnedVirtualThreadForUnmount(_currentThread, object, true);
-			VMStructHasBeenUpdated(REGISTER_ARGS);
-			if (J9_OBJECT_MONITOR_OOM != result) {
-				restoreInternalNativeStackFrame(REGISTER_ARGS);
-				/* Handle the virtual thread Object.wait call. */
-				J9VMJAVALANGVIRTUALTHREAD_SET_NOTIFIED(_currentThread, _currentThread->threadObject, JNI_FALSE);
-				rc = yieldPinnedContinuation(REGISTER_ARGS, newState, J9VM_CONTINUATION_RETURN_FROM_OBJECT_WAIT);
+			if (getObjectMonitorOwner(_vm, object, NULL) == _currentThread) {
+				UDATA newState = JAVA_LANG_VIRTUALTHREAD_WAITING;
+				if ((millis > 0) || (nanos > 0)) {
+					newState = JAVA_LANG_VIRTUALTHREAD_TIMED_WAITING;
+				}
+				/* Try to yield the virtual thread if it will be blocked. */
+				UDATA result = preparePinnedVirtualThreadForUnmount(_currentThread, object, true);
+				VMStructHasBeenUpdated(REGISTER_ARGS);
+				if (J9_OBJECT_MONITOR_OOM != result) {
+					restoreInternalNativeStackFrame(REGISTER_ARGS);
+					/* Handle the virtual thread Object.wait call. */
+					J9VMJAVALANGVIRTUALTHREAD_SET_NOTIFIED(_currentThread, _currentThread->threadObject, JNI_FALSE);
+					rc = yieldPinnedContinuation(REGISTER_ARGS, newState, J9VM_CONTINUATION_RETURN_FROM_OBJECT_WAIT);
+				} else {
+					rc = THROW_MONITOR_ALLOC_FAIL;
+				}
 			} else {
-				rc = THROW_MONITOR_ALLOC_FAIL;
+				rc = THROW_ILLEGAL_MONITOR_STATE;
 			}
+
 			return rc;
 		}
 #endif /* JAVA_SPEC_VERSION >= 24 */
