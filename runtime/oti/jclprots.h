@@ -190,9 +190,6 @@ Java_com_ibm_java_lang_management_internal_MemoryManagerMXBeanImpl_isManagedPool
 /* BBjclNativesCommonSystem*/
 void JNICALL Java_java_lang_System_setFieldImpl (JNIEnv * env, jclass cls, jstring name, jobject stream);
 jobject createSystemPropertyList (JNIEnv *env, const char *defaultValues[], int defaultCount);
-#if JAVA_SPEC_VERSION == 11
-void JNICALL Java_java_lang_System_initJCLPlatformEncoding (JNIEnv *env, jclass clazz);
-#endif /* JAVA_SPEC_VERSION == 11 */
 jstring JNICALL Java_java_lang_System_getSysPropBeforePropertiesInitialized(JNIEnv *env, jclass clazz, jint sysPropID);
 #if JAVA_SPEC_VERSION < 17
 jobject JNICALL Java_java_lang_System_getPropertyList (JNIEnv *env, jclass clazz);
