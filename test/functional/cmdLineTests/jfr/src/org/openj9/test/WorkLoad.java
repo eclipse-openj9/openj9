@@ -35,6 +35,10 @@ public class WorkLoad {
 	public static double average;
 	public static double stdDev;
 
+	private static long globalCounter = 0;
+	static interface GlobalLoack {};
+	private static Object globalLock = new GlobalLoack(){};
+
 	public WorkLoad(int numberOfThreads, int sizeOfNumberList, int repeats) {
 		this.numberOfThreads = numberOfThreads;
 		this.sizeOfNumberList = sizeOfNumberList;
@@ -93,7 +97,19 @@ public class WorkLoad {
 			generateTimedSleep();
 			generateTimedWait();
 			throwThrowables();
+			contendOnLock();
 			burnCPU();
+		}
+	}
+
+	private void contendOnLock() {
+		synchronized (globalLock) {
+			globalCounter++;
+			try {
+				Thread.sleep(1);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
