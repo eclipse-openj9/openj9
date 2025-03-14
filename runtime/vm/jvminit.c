@@ -3008,7 +3008,7 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 			/* systemClassLoader is already set during the restore run. */
 			if (!IS_RESTORE_RUN(vm)) {
 				if (NULL == (vm->systemClassLoader = allocateClassLoader(vm))) {
-					loadInfo->fatalErrorStr = "cannot allocate system classloader";
+					setErrorJ9dll(PORTLIB, loadInfo, "cannot allocate system classloader", FALSE);
 					goto _error;
 				}
 			}
