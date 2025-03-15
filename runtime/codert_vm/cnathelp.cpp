@@ -34,6 +34,9 @@
 #include "ObjectAccessBarrierAPI.hpp"
 #include "MethodMetaData.h"
 #include "ut_j9codertvm.h"
+#if JAVA_SPEC_VERSION >= 24
+#include "ContinuationHelpers.hpp"
+#endif /* JAVA_SPEC_VERSION >= 24 */
 
 #undef DEBUG
 
@@ -44,8 +47,14 @@ old_slow_jitThrowNullPointerException(J9VMThread *currentThread);
 
 J9_EXTERN_BUILDER_SYMBOL(throwCurrentExceptionFromJIT);
 J9_EXTERN_BUILDER_SYMBOL(handlePopFramesFromJIT);
+#if JAVA_SPEC_VERSION >= 24
+J9_EXTERN_BUILDER_SYMBOL(yieldAtMonitorEnter);
+#endif /* JAVA_SPEC_VERSION >= 24 */
 #define J9_JITHELPER_ACTION_THROW		J9_BUILDER_SYMBOL(throwCurrentExceptionFromJIT)
 #define J9_JITHELPER_ACTION_POP_FRAMES	J9_BUILDER_SYMBOL(handlePopFramesFromJIT)
+#if JAVA_SPEC_VERSION >= 24
+#define J9_JITHELPER_ACTION_YIELD_AT_MONENT	J9_BUILDER_SYMBOL(yieldAtMonitorEnter)
+#endif /* JAVA_SPEC_VERSION >= 24 */
 
 J9_EXTERN_BUILDER_SYMBOL(jitRunOnJavaStack);
 #define JIT_RUN_ON_JAVA_STACK(x) (currentThread->tempSlot = (UDATA)(x), J9_BUILDER_SYMBOL(jitRunOnJavaStack))
@@ -1703,6 +1712,12 @@ slow_jitMonitorEnterImpl(J9VMThread *currentThread, bool forMethod)
 	UDATA flags = J9_STACK_FLAGS_JIT_RESOLVE_FRAME | (forMethod ? J9_STACK_FLAGS_JIT_METHOD_MONITOR_ENTER_RESOLVE : J9_STACK_FLAGS_JIT_MONITOR_ENTER_RESOLVE);
 	IDATA monstatus = (IDATA)(UDATA)currentThread->floatTemp1;
 	void *oldPC = buildJITResolveFrame(currentThread, flags, parmCount);
+#if JAVA_SPEC_VERSION >= 24
+	if ((J9_OBJECT_MONITOR_BLOCKING == monstatus) && VM_ContinuationHelpers::isYieldableVirtualThread(currentThread)) {
+		/* Try to yield the virtual thread if it will be blocked. */
+		monstatus = currentThread->javaVM->internalVMFunctions->preparePinnedVirtualThreadForUnmount(currentThread, (j9object_t)currentThread->floatTemp2, false);
+	}
+#endif /* JAVA_SPEC_VERSION >= 24 */
 	if (monstatus < J9_OBJECT_MONITOR_BLOCKING) {
 		if (forMethod) {
 			/* Only mark the outer frame for failed method monitor enter - inline frames have correct maps */
@@ -1748,6 +1763,11 @@ slow_jitMonitorEnterImpl(J9VMThread *currentThread, bool forMethod)
 		case J9_OBJECT_MONITOR_OOM:
 			addr = setNativeOutOfMemoryErrorFromJIT(currentThread, J9NLS_VM_FAILED_TO_ALLOCATE_MONITOR);
 			break;
+#if JAVA_SPEC_VERSION >= 24
+		case J9_OBJECT_MONITOR_YIELD_VIRTUAL:
+			addr = J9_JITHELPER_ACTION_YIELD_AT_MONENT;
+			break;
+#endif /* JAVA_SPEC_VERSION >= 24 */
 		default:
 			Assert_CodertVM_unreachable();
 		}

@@ -292,7 +292,10 @@ enterContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 		if (J9_ARE_ANY_BITS_SET(currentThread->javaVM->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)) {
 			preparePinnedVirtualThreadForMount(currentThread, continuationObject, (J9VM_CONTINUATION_RETURN_FROM_OBJECT_WAIT == continuation->returnState));
 		}
-		VM_OutOfLineINL_Helpers::restoreInternalNativeStackFrame(currentThread);
+		/* InternalNative frame only build for non-jit calls. */
+		if (J9VM_CONTINUATION_RETURN_FROM_JIT_MONITOR_ENTER != continuation->returnState) {
+			VM_OutOfLineINL_Helpers::restoreInternalNativeStackFrame(currentThread);
+		}
 		result = FALSE;
 #else /* JAVA_SPEC_VERSION >= 24 */
 		/* resuming Continuation from yieldImpl */
@@ -758,12 +761,37 @@ exitVThreadTransitionCritical(J9VMThread *currentThread, jobject thread)
 }
 
 #if JAVA_SPEC_VERSION >= 24
-void
-detachMonitorInfo(J9VMThread *currentThread, J9ObjectMonitor *objectMonitor)
+J9ObjectMonitor *
+detachMonitorInfo(J9VMThread *currentThread, j9object_t lockObject)
 {
+	J9ObjectMonitor *objectMonitor = NULL;
+	j9objectmonitor_t lock = 0;
+
+	if (!LN_HAS_LOCKWORD(currentThread, lockObject)) {
+		objectMonitor = monitorTablePeek(currentThread->javaVM, lockObject);
+		if (NULL != objectMonitor) {
+			lock = J9_LOAD_LOCKWORD(currentThread, &objectMonitor->alternateLockword);
+		} else {
+			lock = 0;
+		}
+	} else {
+		lock = J9OBJECT_MONITOR(currentThread, lockObject);
+	}
+
+	if (!J9_LOCK_IS_INFLATED(lock)) {
+		objectMonitor = objectMonitorInflate(currentThread, lockObject, lock);
+		if (NULL == objectMonitor) {
+			return NULL;
+		}
+	} else {
+		objectMonitor = J9_INFLLOCK_OBJECT_MONITOR(lock);
+	}
+
 	J9ThreadAbstractMonitor *monitor = (J9ThreadAbstractMonitor *)objectMonitor->monitor;
 	monitor->owner = (J9Thread*)1;
 	objectMonitor->ownerContinuation = currentThread->currentContinuation;
+
+	return objectMonitor;
 }
 
 void
@@ -774,59 +802,112 @@ updateMonitorInfo(J9VMThread *currentThread, J9ObjectMonitor *objectMonitor)
 	objectMonitor->ownerContinuation = NULL;
 }
 
+UDATA
+walkFrameMonitorEnterRecords(J9VMThread *currentThread, J9StackWalkState *walkState)
+{
+	J9MonitorEnterRecord *monitorEnterRecords = (J9MonitorEnterRecord*)walkState->userData3;
+	J9ObjectMonitor *objMonitorHead = (J9ObjectMonitor*)walkState->userData1;
+	j9object_t targetSyncObject = (j9object_t)walkState->userData2;
+	UDATA monitorCount = (UDATA)walkState->userData4;
+	U_32 modifiers;
+	UDATA *frameID;
+
+	frameID = walkState->arg0EA;
+#ifdef J9VM_INTERP_NATIVE_SUPPORT
+	if (walkState->jitInfo != NULL) {
+		frameID = walkState->unwindSP;
+	}
+#endif
+
+	while (monitorEnterRecords &&
+			(frameID == CONVERT_FROM_RELATIVE_STACK_OFFSET(walkState->walkThread, monitorEnterRecords->arg0EA))
+		) {
+		j9object_t obj = monitorEnterRecords->object;
+		if (obj != targetSyncObject) {
+			J9ObjectMonitor *mon = detachMonitorInfo(currentThread, obj);
+			if (NULL == mon) {
+				return J9_STACKWALK_RC_NO_MEMORY;
+			}
+			mon->next = objMonitorHead;
+			objMonitorHead = mon;
+			monitorCount++;
+		}
+		monitorEnterRecords = monitorEnterRecords->next;
+	}
+
+	/* If the current method is synchronized, add the syncObject to the array. */
+	modifiers = J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method)->modifiers;
+	if (modifiers & J9AccSynchronized) {
+		j9object_t syncObject;
+
+		if ((modifiers & J9AccNative)
+#ifdef J9VM_INTERP_NATIVE_SUPPORT
+			|| (walkState->jitInfo != NULL)
+#endif
+		) {
+			if (modifiers & J9AccStatic) {
+				syncObject = J9VM_J9CLASS_TO_HEAPCLASS(walkState->constantPool->ramClass);
+			} else {
+				syncObject = *((j9object_t *) walkState->arg0EA);
+			}
+		} else {
+			syncObject = (j9object_t) (walkState->bp[1]);
+		}
+
+		if (syncObject != targetSyncObject) {
+			J9ObjectMonitor *mon = detachMonitorInfo(currentThread, syncObject);
+			if (NULL == mon) {
+				return J9_STACKWALK_RC_NO_MEMORY;
+			}
+			mon->next = objMonitorHead;
+			objMonitorHead = mon;
+			monitorCount++;
+		}
+	}
+
+	walkState->userData1 = objMonitorHead;
+	walkState->userData3 = monitorEnterRecords;
+	walkState->userData4 = (void*)monitorCount;
+	return J9_STACKWALK_KEEP_ITERATING;
+}
+
+UDATA
+ownedMonitorsIterator(J9VMThread *currentThread, J9StackWalkState *walkState)
+{
+	UDATA rc = J9_STACKWALK_KEEP_ITERATING;
+
+	/* Take the J9JavaVM from the targetThread as currentThread may be null. */
+	J9JavaVM* javaVM = walkState->walkThread->javaVM;
+#ifdef J9VM_INTERP_NATIVE_SUPPORT
+	if (walkState->jitInfo) {
+		/* The jit walk may increment/decrement the stack depth */
+		rc = javaVM->jitGetOwnedObjectMonitors(walkState);
+	} else
+#endif
+	{
+		/* The walk function may decrement the stack depth if a hidden frame is skipped */
+		rc = walkFrameMonitorEnterRecords(currentThread, walkState);
+	}
+
+	return rc;
+}
+
 void
 preparePinnedVirtualThreadForMount(J9VMThread *currentThread, j9object_t continuationObject, BOOLEAN isObjectWait)
 {
 	UDATA monitorCount = 0;
-	j9object_t syncObject = J9VMJDKINTERNALVMCONTINUATION_BLOCKER(currentThread, continuationObject);
 
 	if (currentThread->ownedMonitorCount > 0) {
-		/* Inflate all owned monitors. */
-		J9MonitorEnterRecord *monitorRecords = currentThread->monitorEnterRecords;
-		while (NULL != monitorRecords) {
-			j9object_t object = monitorRecords->object;
-			j9objectmonitor_t lock = 0;
-			J9ObjectMonitor *objectMonitor = NULL;
-
-			if (syncObject != object) {
-				if (!LN_HAS_LOCKWORD(currentThread, object)) {
-					objectMonitor = monitorTablePeek(currentThread->javaVM, object);
-				} else {
-					lock = J9OBJECT_MONITOR(currentThread, object);
-					objectMonitor = J9_INFLLOCK_OBJECT_MONITOR(lock);
-				}
-
-				updateMonitorInfo(currentThread, objectMonitor);
-				monitorCount++;
-			}
-			monitorRecords = monitorRecords->next;
+		/* Update all owned monitors. */
+		J9ObjectMonitor *head = currentThread->currentContinuation->enteredMonitors;
+		while (NULL != head) {
+			updateMonitorInfo(currentThread, head);
+			monitorCount++;
+			J9ObjectMonitor *next = head->next;
+			head->next = NULL;
+			head = next;
 		}
-
-		/* Repeat for JNI monitor records. */
-		monitorRecords = currentThread->jniMonitorEnterRecords;
-		while (NULL != monitorRecords) {
-			j9object_t object = monitorRecords->object;
-			j9objectmonitor_t lock = 0;
-			J9ObjectMonitor *objectMonitor = NULL;
-
-			if (syncObject != object) {
-				if (!LN_HAS_LOCKWORD(currentThread, object)) {
-					objectMonitor = monitorTablePeek(currentThread->javaVM, object);
-				} else {
-					lock = J9OBJECT_MONITOR(currentThread, object);
-					objectMonitor = J9_INFLLOCK_OBJECT_MONITOR(lock);
-				}
-
-				updateMonitorInfo(currentThread, objectMonitor);
-				monitorCount++;
-			}
-			monitorRecords = monitorRecords->next;
-		}
-	}
-
-	J9VMJDKINTERNALVMCONTINUATION_SET_BLOCKER(currentThread, continuationObject, NULL);
-	if (isObjectWait) {
-		currentThread->ownedMonitorCount -= 1;
+		currentThread->currentContinuation->enteredMonitors = NULL;
 	}
 
 	/* Add the attached monitor to the carrier thread's lockedmonitorcount. */
@@ -841,6 +922,7 @@ preparePinnedVirtualThreadForUnmount(J9VMThread *currentThread, j9object_t syncO
 {
 	UDATA result = J9_OBJECT_MONITOR_YIELD_VIRTUAL;
 	J9ObjectMonitor *syncObjectMonitor = NULL;
+	J9ObjectMonitor *enteredMonitorsList = NULL;
 	j9objectmonitor_t lock = 0;
 	j9object_t continuationObj = NULL;
 	UDATA monitorCount = 0;
@@ -850,73 +932,50 @@ preparePinnedVirtualThreadForUnmount(J9VMThread *currentThread, j9object_t syncO
 		enterVThreadTransitionCritical(currentThread, (jobject)&currentThread->threadObject);
 	}
 	if (currentThread->ownedMonitorCount > 0) {
+		J9StackWalkState walkState;
+
+		walkState.userData1 = NULL;
+		walkState.userData2 = syncObj;
+
+		walkState.userData3 = currentThread->monitorEnterRecords;
+		walkState.userData4 = (void *)1;
+		walkState.walkThread = currentThread;
+		walkState.skipCount = 0;
+		walkState.flags = J9_STACKWALK_VISIBLE_ONLY
+			| J9_STACKWALK_SKIP_INLINES
+			| J9_STACKWALK_ITERATE_FRAMES
+			| J9_STACKWALK_NO_ERROR_REPORT
+			| J9_STACKWALK_PREPARE_FOR_YIELD;
+
+		walkState.frameWalkFunction = ownedMonitorsIterator;
+
+		if (vm->walkStackFrames(currentThread, &walkState) != J9_STACKWALK_RC_NONE) {
+			result = J9_OBJECT_MONITOR_OOM;
+			goto done;
+		}
+
+		enteredMonitorsList = (J9ObjectMonitor*)walkState.userData1;
+		monitorCount = (UDATA)walkState.userData4;
+
 		/* Inflate all owned monitors. */
-		J9MonitorEnterRecord *monitorRecords = currentThread->monitorEnterRecords;
-		while (NULL != monitorRecords) {
-			j9object_t object = monitorRecords->object;
-			J9ObjectMonitor *objectMonitor = NULL;
-
-			if (syncObj != object) {
-				if (!LN_HAS_LOCKWORD(currentThread, object)) {
-					objectMonitor = monitorTablePeek(vm, object);
-					if (NULL != objectMonitor) {
-						lock = J9_LOAD_LOCKWORD(currentThread, &objectMonitor->alternateLockword);
-					} else {
-						lock = 0;
-					}
-				} else {
-					lock = J9OBJECT_MONITOR(currentThread, object);
-				}
-
-				if (!J9_LOCK_IS_INFLATED(lock)) {
-					objectMonitor = objectMonitorInflate(currentThread, object, lock);
-					if (NULL == objectMonitor) {
-						result = J9_OBJECT_MONITOR_OOM;
-						goto done;
-					}
-				} else {
-					objectMonitor = J9_INFLLOCK_OBJECT_MONITOR(lock);
-				}
-
-				detachMonitorInfo(currentThread, objectMonitor);
-				monitorCount++;
-			}
-			monitorRecords = monitorRecords->next;
-		}
-
 		/* Repeat for JNI monitor records. */
-		monitorRecords = currentThread->jniMonitorEnterRecords;
+		J9MonitorEnterRecord *monitorRecords = currentThread->jniMonitorEnterRecords;
 		while (NULL != monitorRecords) {
 			j9object_t object = monitorRecords->object;
-			J9ObjectMonitor *objectMonitor = NULL;
 
 			if (syncObj != object) {
-				if (!LN_HAS_LOCKWORD(currentThread, object)) {
-					objectMonitor = monitorTablePeek(vm, object);
-					if (NULL != objectMonitor) {
-						lock = J9_LOAD_LOCKWORD(currentThread, &objectMonitor->alternateLockword);
-					} else {
-						lock = 0;
-					}
-				} else {
-					lock = J9OBJECT_MONITOR(currentThread, object);
+				J9ObjectMonitor *objectMonitor = detachMonitorInfo(currentThread, object);
+				if (NULL == objectMonitor) {
+					result = J9_OBJECT_MONITOR_OOM;
+					goto done;
 				}
-
-				if (!J9_LOCK_IS_INFLATED(lock)) {
-					objectMonitor = objectMonitorInflate(currentThread, object, lock);
-					if (NULL == objectMonitor) {
-						result = J9_OBJECT_MONITOR_OOM;
-						goto done;
-					}
-				} else {
-					objectMonitor = J9_INFLLOCK_OBJECT_MONITOR(lock);
-				}
-
-				detachMonitorInfo(currentThread, objectMonitor);
+				objectMonitor->next = enteredMonitorsList;
+				enteredMonitorsList = objectMonitor;
 				monitorCount++;
 			}
 			monitorRecords = monitorRecords->next;
 		}
+		currentThread->currentContinuation->enteredMonitors = enteredMonitorsList;
 	}
 
 	if (NULL != syncObj) {

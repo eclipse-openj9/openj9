@@ -598,6 +598,15 @@ BEGIN_HELPER(jitTranslateNewInstanceMethod)
 	jmp uword ptr J9TR_VMThread_tempSlot[_rbp]
 END_HELPER(jitTranslateNewInstanceMethod,0)
 
+ifelse(eval(ASM_JAVA_SPEC_VERSION >= 24), 1, {
+BEGIN_RETURN_POINT(jitExitInterpreter0RestoreAll)
+dnl java stack is active on entry
+	SWITCH_TO_C_STACK
+	RESTORE_ALL_REGS
+	SWITCH_TO_JAVA_STACK
+END_RETURN_POINT(jitExitInterpreter0RestoreAll)
+}) dnl jitExitInterpreter0RestoreAll is only supported on JAVA 24+
+
 BEGIN_RETURN_POINT(jitExitInterpreter0)
 END_RETURN_POINT(jitExitInterpreter0)
 
@@ -908,6 +917,13 @@ START_PROC(jitDecompileAfterMonitorEnter)
 	CALL_C_WITH_VMTHREAD(c_jitDecompileAfterMonitorEnter)
 	jmp uword ptr J9TR_VMThread_tempSlot[_rbp]
 END_PROC(jitDecompileAfterMonitorEnter)
+
+ifelse(eval(ASM_JAVA_SPEC_VERSION >= 24), 1, {
+START_PROC(yieldAtMonitorEnter)
+	mov uword ptr J9TR_VMThread_returnValue[_rbp],J9TR_bcloop_yield_monent
+	CINTERP
+END_PROC(yieldAtMonitorEnter)
+}) dnl yieldAtMonitorEnter is only supported on JAVA 24+
 
 START_PROC(executeCurrentBytecodeFromJIT)
 	mov uword ptr J9TR_VMThread_returnValue[_rbp],J9TR_bcloop_execute_bytecode

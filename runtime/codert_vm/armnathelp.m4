@@ -434,6 +434,12 @@ START_PROC(cInterpreterFromJIT)
 	ldr r15,[r3,{#}J9TR_JavaVM_cInterpreter]
 END_PROC(cInterpreterFromJIT)
 
+ifelse(eval(ASM_JAVA_SPEC_VERSION >= 24), 1, {
+BEGIN_RETURN_POINT(jitExitInterpreter0RestoreAll)
+	RESTORE_ALL_REGS
+END_RETURN_POINT(jitExitInterpreter0RestoreAll)
+}) dnl jitExitInterpreter0RestoreAll is only supported on JAVA 24+
+
 BEGIN_RETURN_POINT(jitExitInterpreter0)
 END_RETURN_POINT(jitExitInterpreter0)
 
@@ -791,6 +797,12 @@ END_PROC(jitDecompileAfterMonitorEnter)
 START_PROC(executeCurrentBytecodeFromJIT)
 	CINTERP(J9TR_bcloop_execute_bytecode, 0)
 END_PROC(executeCurrentBytecodeFromJIT)
+
+ifelse(eval(ASM_JAVA_SPEC_VERSION >= 24), 1, {
+START_PROC(yieldAtMonitorEnter)
+	CINTERP(J9TR_bcloop_yield_monent, 0)
+END_PROC(yieldAtMonitorEnter)
+}) dnl yieldAtMonitorEnter is only supported on JAVA 24+
 
 START_PROC(handlePopFramesFromJIT)
 	CINTERP(J9TR_bcloop_handle_pop_frames, 0)
