@@ -3006,10 +3006,50 @@ TR::Register *J9::X86::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, TR:
    // -------------------------------------------------------------------------
 
    TR::MemoryReference *tempMR = NULL;
+   TR::Node *dstArrayNode, *offsetNode = NULL;
 
-   if (generateWriteBarrier && !deferDestinationEvaluation)
+   if (generateWriteBarrier)
       {
-      tempMR = generateX86MemoryReference(firstChild, cg);
+      if (!deferDestinationEvaluation)
+         {
+         tempMR = generateX86MemoryReference(firstChild, cg);
+         }
+      else
+         {
+         /* Evaluate destination subtrees
+         * ArrayStoreCHK
+         *    awrtbari  // firstChild
+         *      aloadi  <contiguousArrayDataAddrField>
+         *        aload     // dstArrayNode
+         *      ...
+         * OR
+         * ArrayStoreCHK
+         *    awrtbari  // firstChild
+         *      aladd (internalPtr )
+         *        aloadi  <contiguousArrayDataAddrField>
+         *          aload     // dstArrayNode
+         *        <offset>  // offsetNode
+         *      ...
+         */
+         if (firstChild->getFirstChild()->isDataAddrPointer())
+            dstArrayNode = firstChild->getFirstChild()->getFirstChild();
+         else if (firstChild->getFirstChild()->getOpCodeValue() == TR::aladd && firstChild->getFirstChild()->getFirstChild()->isDataAddrPointer())
+            {
+            dstArrayNode = firstChild->getFirstChild()->getFirstChild()->getFirstChild();
+            offsetNode = firstChild->getFirstChild()->getSecondChild();
+            }
+         else
+            {
+            TR_ASSERT_FATAL(false, "Unexpected array access tree shape for OffHeap in ArrayStoreCHKEvaluator");
+            }
+
+         cg->evaluate(dstArrayNode);
+         if (offsetNode &&
+               !(offsetNode->getOpCode().isLoadConst() &&
+               offsetNode->getLongInt() >= TR::getMinSigned<TR::Int32>() &&
+               offsetNode->getLongInt() <= TR::getMaxSigned<TR::Int32>()))
+            cg->evaluate(offsetNode);
+         }
       }
 
    TR::Node *destinationChild = firstChild->getChild(2);
@@ -3232,7 +3272,7 @@ TR::Register *J9::X86::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, TR:
    //
    // -------------------------------------------------------------------------
 
-   TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions(12, 12, cg);
+   TR::RegisterDependencyConditions *deps = generateRegisterDependencyConditions(13, 13, cg);
    deps->unionPostCondition(destinationRegister, TR::RealRegister::NoReg, cg);
    deps->unionPostCondition(sourceRegister, TR::RealRegister::NoReg, cg);
 
@@ -3255,6 +3295,12 @@ TR::Register *J9::X86::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, TR:
       if (tempMR->getIndexRegister() && tempMR->getIndexRegister() != destinationRegister)
          {
          deps->unionPostCondition(tempMR->getIndexRegister(), TR::RealRegister::NoReg, cg);
+         }
+
+      if (deferDestinationEvaluation && dstArrayNode->getRegister() != destinationRegister)
+         {
+         // For OffHeap tempMR->getBaseRegister() would be the dataAddrPtr not the baseArray.
+         deps->unionPostCondition(dstArrayNode->getRegister(), TR::RealRegister::NoReg, cg);
          }
 
       if (comp->target().is64Bit())
