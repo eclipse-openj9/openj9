@@ -10874,6 +10874,7 @@ hashCodeHelper_P10(TR::Node *node, TR::CodeGenerator *cg, TR::DataType elementTy
    // move result to hashReg
    generateTrg1Src2ImmInstruction(cg, TR::InstOpCode::vsldoi, node, vtmp1Reg, low4Reg, vconstant0Reg, 8);
    generateTrg1Src1Instruction(cg, TR::InstOpCode::mfvsrwz, node, hashReg, vtmp1Reg);
+   generateLabelInstruction(cg, TR::InstOpCode::b, node, endLabel);
 
 
    // special cases
