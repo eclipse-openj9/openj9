@@ -5460,6 +5460,7 @@ typedef struct J9VMContinuation {
 	struct J9MonitorEnterRecord* jniMonitorEnterRecords;
 	j9object_t vthread;
 	struct J9VMContinuation* nextWaitingContinuation;
+	struct J9ObjectMonitor* objectWaitMonitor;
 #endif /* JAVA_SPEC_VERSION >= 24 */
 } J9VMContinuation;
 #endif /* JAVA_SPEC_VERSION >= 19 */
