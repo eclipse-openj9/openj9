@@ -1104,13 +1104,14 @@ writeThreadInfo(J9VMThread *currentThread, J9VMThread *walkThread, VM_BufferWrit
 		releaseOMRVMThreadName(walkThread->omrVMThread);
 	}
 	bufferWriter->writeFormattedString(
-			"\"%s\" J9VMThread: %p tid: %zd nid: %zd prio: %zd state: %s",
+			"\"%s\" J9VMThread: %p tid: %zd nid: %zd prio: %zd state: %s raw state: 0x%zX",
 			threadName,
 			walkThread,
 			javaTID,
 			osTID,
 			javaPriority,
-			stateStr);
+			stateStr,
+			state);
 
 	if (J9VMTHREAD_STATE_BLOCKED == state) {
 		bufferWriter->writeFormattedString(" blocked on: ");
