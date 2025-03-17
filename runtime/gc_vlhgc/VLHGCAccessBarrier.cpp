@@ -258,7 +258,7 @@ MM_VLHGCAccessBarrier::indexableDataDisplacement(J9StackWalkState *walkState, J9
 	IDATA displacement = 0;
 
 #if defined(J9VM_ENV_DATA64)
-	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(walkState->walkThread->omrVMThread);
+	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(walkState->currentThread->omrVMThread);
 	Assert_MM_true(_extensions->isVirtualLargeObjectHeapEnabled);
 	/* Potential danger in future of this not being called by a GC Stack Walker - hence this assert */
 	Assert_MM_true(walkState->objectSlotWalkFunction == gc_vmThreadStackDoOSlotIterator);
