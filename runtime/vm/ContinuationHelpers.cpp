@@ -542,6 +542,8 @@ walkContinuationStackFrames(J9VMThread *currentThread, J9VMContinuation *continu
 
 		copyFieldsFromContinuation(currentThread, &stackThread, &els, continuation);
 		stackThread.threadObject = threadObject;
+		/* stackThread is "fake thread" there is no related omrThread and currentContinuation, so reuse stackThread.currentContinuation for recording relate walk continuation structure. */
+		stackThread.currentContinuation = continuation;
 		walkState->walkThread = &stackThread;
 		rc = currentThread->javaVM->walkStackFrames(currentThread, walkState);
 	}
