@@ -485,6 +485,8 @@ J9InternalVMFunctions J9InternalFunctions = {
 #if JAVA_SPEC_VERSION >= 24
 	monitorTablePeek,
 	takeVirtualThreadListToUnblock,
+	preparePinnedVirtualThreadForUnmount,
+	detachMonitorInfo,
 #endif /* JAVA_SPEC_VERSION >= 24 */
 	getSystemPropertyList,
 };

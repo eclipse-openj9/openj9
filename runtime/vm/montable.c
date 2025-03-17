@@ -326,6 +326,7 @@ monitorTableAt(J9VMThread* vmStruct, j9object_t object)
 				key_objectMonitor.virtualThreadWaitCount = 0;
 				key_objectMonitor.ownerContinuation = NULL;
 				key_objectMonitor.waitingContinuations = NULL;
+				key_objectMonitor.next = NULL;
 #endif /* JAVA_SPEC_VERSION >= 24 */
 
 				objectMonitor = hashTableAdd(monitorTable, &key_objectMonitor);

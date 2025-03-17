@@ -71,6 +71,9 @@ J9_EXTERN_BUILDER_SYMBOL(returnFromJITD);
 J9_EXTERN_BUILDER_SYMBOL(returnFromJITL);
 #endif /* J9VM_ENV_DATA64 */
 J9_EXTERN_BUILDER_SYMBOL(returnFromJITConstructor0);
+#if JAVA_SPEC_VERSION >= 24
+J9_EXTERN_BUILDER_SYMBOL(jitExitInterpreter0RestoreAll);
+#endif /* JAVA_SPEC_VERSION >= 24 */
 J9_EXTERN_BUILDER_SYMBOL(jitExitInterpreter0);
 J9_EXTERN_BUILDER_SYMBOL(jitExitInterpreter1);
 J9_EXTERN_BUILDER_SYMBOL(jitExitInterpreterJ);
@@ -124,6 +127,9 @@ initializeCodertFunctionTable(J9JavaVM *javaVM)
 #endif /* J9SW_NEEDS_JIT_2_INTERP_THUNKS */
 	jitConfig->j2iInvokeWithArguments = (void*)-1;
 	jitConfig->jitFillOSRBufferReturn = J9_BUILDER_SYMBOL(jitFillOSRBufferReturn);
+#if JAVA_SPEC_VERSION >= 24
+	jitConfig->jitExitInterpreter0RestoreAll = J9_BUILDER_SYMBOL(jitExitInterpreter0RestoreAll);
+#endif /* JAVA_SPEC_VERSION >= 24 */
 	jitConfig->jitExitInterpreter0 = J9_BUILDER_SYMBOL(jitExitInterpreter0);
 	jitConfig->jitExitInterpreter1 = J9_BUILDER_SYMBOL(jitExitInterpreter1);
 	jitConfig->jitExitInterpreterJ = J9_BUILDER_SYMBOL(jitExitInterpreterJ);

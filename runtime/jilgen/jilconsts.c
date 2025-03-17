@@ -764,6 +764,9 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 			writeConstant(OMRPORTLIB, fd, "J9TR_bcloop_report_method_enter", J9_BCLOOP_REPORT_METHOD_ENTER) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_bcloop_exit_interpreter", J9_BCLOOP_EXIT_INTERPRETER) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_bcloop_reenter_interpreter", J9_BCLOOP_REENTER_INTERPRETER) |
+#if JAVA_SPEC_VERSION >= 24
+			writeConstant(OMRPORTLIB, fd, "J9TR_bcloop_yield_monent", J9_BCLOOP_YIELD_FOR_JIT_MONENT) |
+#endif /* JAVA_SPEC_VERSION >= 24 */
 			writeConstant(OMRPORTLIB, fd, "J9TR_MethodNotCompiledBit", J9_STARTPC_NOT_TRANSLATED) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_InterpVTableOffset", J9JIT_INTERP_VTABLE_OFFSET) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_RequiredClassAlignment", J9_REQUIRED_CLASS_ALIGNMENT) |
