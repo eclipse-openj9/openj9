@@ -375,16 +375,7 @@ accessCheckFieldSignature(J9VMThread *currentThread, J9Class* lookupClass, UDATA
 				U_32 sigLength = J9UTF8_LENGTH(lookupSig) - sigOffset - 1;
 				
 				omrthread_monitor_enter(vm->classTableMutex);
-				if (0 != verifyData->checkClassLoadingConstraintForNameFunction(
-						currentThread,
-						targetClassloader,
-						ramClass->classLoader,
-						&lookupSigData[sigOffset],
-						&lookupSigData[sigOffset],
-						sigLength,
-						TRUE,
-						TRUE)
-				) {
+				if(verifyData->checkClassLoadingConstraintForNameFunction(currentThread, targetClassloader, ramClass->classLoader, &lookupSigData[sigOffset], &lookupSigData[sigOffset], sigLength, TRUE) != 0) {
 					result = FALSE;
 				}
 				omrthread_monitor_exit(vm->classTableMutex);
@@ -454,16 +445,7 @@ accessCheckMethodSignature(J9VMThread *currentThread, J9Method *method, j9object
 
 				/* Check if we really need to check this classloader constraint */
 				if (argumentRamClass->classLoader != targetClassloader) {
-					if(0 != verifyData->checkClassLoadingConstraintForNameFunction(
-						currentThread,
-						targetClassloader,
-						argumentRamClass->classLoader,
-						&J9UTF8_DATA(targetSig)[index],
-						&lookupSigData[index],
-						endIndex - index,
-						TRUE,
-						TRUE)
-					) {
+					if(verifyData->checkClassLoadingConstraintForNameFunction(currentThread, targetClassloader, argumentRamClass->classLoader, &J9UTF8_DATA(targetSig)[index], &lookupSigData[index], endIndex - index, TRUE) != 0) {
 						result = FALSE;
 						goto releaseMutexAndReturn;
 					}
@@ -495,16 +477,7 @@ accessCheckMethodSignature(J9VMThread *currentThread, J9Method *method, j9object
 					endIndex++;
 				}
 
-				if(0 != verifyData->checkClassLoadingConstraintForNameFunction(
-						currentThread,
-						targetClassloader,
-						returnRamClass->classLoader,
-						&J9UTF8_DATA(targetSig)[index],
-						&lookupSigData[index],
-						endIndex - index,
-						TRUE,
-						TRUE)
-				) {
+				if(verifyData->checkClassLoadingConstraintForNameFunction(currentThread, targetClassloader, returnRamClass->classLoader, &J9UTF8_DATA(targetSig)[index], &lookupSigData[index], endIndex - index, TRUE) != 0) {
 					result = FALSE;
 					goto releaseMutexAndReturn;
 				}
