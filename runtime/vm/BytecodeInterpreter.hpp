@@ -1519,7 +1519,7 @@ obj:
 
 #if JAVA_SPEC_VERSION >= 24
 	VMINLINE VM_BytecodeAction
-	yieldPinnedContinuation(REGISTER_ARGS_LIST, U_32 newThreadState, UDATA returnState)
+	yieldPinnedContinuation(REGISTER_ARGS_LIST, U_32 newThreadState, UDATA returnState, I_64 timeout)
 	{
 		/* InternalNative frame only build for non-jit calls. */
 		if (J9VM_CONTINUATION_RETURN_FROM_JIT_MONITOR_ENTER != returnState) {
@@ -1527,6 +1527,10 @@ obj:
 		}
 		updateVMStruct(REGISTER_ARGS);
 		J9VMJAVALANGVIRTUALTHREAD_SET_STATE(_currentThread, _currentThread->threadObject, newThreadState);
+
+		if (0 != returnState) {
+			J9VMJAVALANGVIRTUALTHREAD_SET_TIMEOUT(_currentThread, _currentThread->threadObject, timeout);
+		}
 
 		if (JAVA_LANG_VIRTUALTHREAD_BLOCKING == newThreadState) {
 			/* Add the thread object to the blocked list. */
@@ -1571,7 +1575,7 @@ obj:
 				break;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 			case J9_OBJECT_MONITOR_YIELD_VIRTUAL: {
-				rc = yieldPinnedContinuation(REGISTER_ARGS, JAVA_LANG_VIRTUALTHREAD_BLOCKING, returnState);
+				rc = yieldPinnedContinuation(REGISTER_ARGS, JAVA_LANG_VIRTUALTHREAD_BLOCKING, returnState, 0);
 				omrthread_monitor_enter(_vm->blockedVirtualThreadsMutex);
 				omrthread_monitor_notify(_vm->blockedVirtualThreadsMutex);
 				omrthread_monitor_exit(_vm->blockedVirtualThreadsMutex);
@@ -1802,7 +1806,7 @@ obj:
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 #if JAVA_SPEC_VERSION >= 24
 					case J9_OBJECT_MONITOR_YIELD_VIRTUAL: {
-						rc = yieldPinnedContinuation(REGISTER_ARGS, JAVA_LANG_VIRTUALTHREAD_BLOCKING, J9VM_CONTINUATION_RETURN_FROM_SYNC_METHOD);
+						rc = yieldPinnedContinuation(REGISTER_ARGS, JAVA_LANG_VIRTUALTHREAD_BLOCKING, J9VM_CONTINUATION_RETURN_FROM_SYNC_METHOD, 0);
 						break;
 					}
 #endif /* JAVA_SPEC_VERSION >= 24 */
@@ -1885,7 +1889,7 @@ done:
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 #if JAVA_SPEC_VERSION >= 24
 			case J9_OBJECT_MONITOR_YIELD_VIRTUAL: {
-				rc = yieldPinnedContinuation(REGISTER_ARGS, JAVA_LANG_VIRTUALTHREAD_BLOCKING, J9VM_CONTINUATION_RETURN_FROM_MONITOR_ENTER);
+				rc = yieldPinnedContinuation(REGISTER_ARGS, JAVA_LANG_VIRTUALTHREAD_BLOCKING, J9VM_CONTINUATION_RETURN_FROM_MONITOR_ENTER, 0);
 				break;
 			}
 #endif /* JAVA_SPEC_VERSION >= 24 */
@@ -2020,7 +2024,7 @@ throwStackOverflow:
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 #if JAVA_SPEC_VERSION >= 24
 					case J9_OBJECT_MONITOR_YIELD_VIRTUAL: {
-						rc = yieldPinnedContinuation(REGISTER_ARGS, JAVA_LANG_VIRTUALTHREAD_BLOCKING, J9VM_CONTINUATION_RETURN_FROM_MONITOR_ENTER);
+						rc = yieldPinnedContinuation(REGISTER_ARGS, JAVA_LANG_VIRTUALTHREAD_BLOCKING, J9VM_CONTINUATION_RETURN_FROM_MONITOR_ENTER, 0);
 						break;
 					}
 #endif /* JAVA_SPEC_VERSION >= 24 */
@@ -2396,7 +2400,7 @@ done:
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 #if JAVA_SPEC_VERSION >= 24
 				case J9_OBJECT_MONITOR_YIELD_VIRTUAL: {
-					rc = yieldPinnedContinuation(REGISTER_ARGS, JAVA_LANG_VIRTUALTHREAD_BLOCKING, J9VM_CONTINUATION_RETURN_FROM_MONITOR_ENTER);
+					rc = yieldPinnedContinuation(REGISTER_ARGS, JAVA_LANG_VIRTUALTHREAD_BLOCKING, J9VM_CONTINUATION_RETURN_FROM_MONITOR_ENTER, 0);
 					break;
 				}
 #endif /* JAVA_SPEC_VERSION >= 24 */
@@ -5228,7 +5232,7 @@ done:
 					restoreInternalNativeStackFrame(REGISTER_ARGS);
 					/* Handle the virtual thread Object.wait call. */
 					J9VMJAVALANGVIRTUALTHREAD_SET_NOTIFIED(_currentThread, _currentThread->threadObject, JNI_FALSE);
-					rc = yieldPinnedContinuation(REGISTER_ARGS, newState, J9VM_CONTINUATION_RETURN_FROM_OBJECT_WAIT);
+					rc = yieldPinnedContinuation(REGISTER_ARGS, newState, J9VM_CONTINUATION_RETURN_FROM_OBJECT_WAIT, millis + (nanos * 1000000));
 				} else {
 					rc = THROW_MONITOR_ALLOC_FAIL;
 				}
@@ -8933,7 +8937,7 @@ done:
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 #if JAVA_SPEC_VERSION >= 24
 				case J9_OBJECT_MONITOR_YIELD_VIRTUAL: {
-					rc = yieldPinnedContinuation(REGISTER_ARGS, JAVA_LANG_VIRTUALTHREAD_BLOCKING, J9VM_CONTINUATION_RETURN_FROM_MONITOR_ENTER);
+					rc = yieldPinnedContinuation(REGISTER_ARGS, JAVA_LANG_VIRTUALTHREAD_BLOCKING, J9VM_CONTINUATION_RETURN_FROM_MONITOR_ENTER, 0);
 					break;
 				}
 #endif /* JAVA_SPEC_VERSION >= 24 */
@@ -10780,7 +10784,7 @@ public:
 #endif /* JAVA_SPEC_VERSION >= 16 */
 #if JAVA_SPEC_VERSION >= 24
 	case J9_BCLOOP_YIELD_FOR_JIT_MONENT:
-		PERFORM_ACTION(yieldPinnedContinuation(REGISTER_ARGS, JAVA_LANG_VIRTUALTHREAD_BLOCKING, J9VM_CONTINUATION_RETURN_FROM_JIT_MONITOR_ENTER));
+		PERFORM_ACTION(yieldPinnedContinuation(REGISTER_ARGS, JAVA_LANG_VIRTUALTHREAD_BLOCKING, J9VM_CONTINUATION_RETURN_FROM_JIT_MONITOR_ENTER, 0));
 #endif /* JAVA_SPEC_VERSION >= 24 */
 	default:
 #if defined(TRACE_TRANSITIONS)

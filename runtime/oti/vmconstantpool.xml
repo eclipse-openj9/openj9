@@ -270,6 +270,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	<fieldref class="java/lang/VirtualThread" name="next" signature="Ljava/lang/VirtualThread;" versions="24-"/>
 	<fieldref class="java/lang/VirtualThread" name="notified" signature="Z" versions="24-"/>
 	<fieldref class="java/lang/VirtualThread" name="onWaitingList" signature="Z" versions="24-"/>
+	<fieldref class="java/lang/VirtualThread" name="timeout" signature="J" versions="24-"/>
 
 	<fieldref class="java/lang/Throwable" name="cause" signature="Ljava/lang/Throwable;"/>
 	<fieldref class="java/lang/Throwable" name="detailMessage" signature="Ljava/lang/String;"/>
