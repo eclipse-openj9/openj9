@@ -184,7 +184,7 @@ public:
 #if JAVA_SPEC_VERSION >= 24
 	void doContinuationSlot(MM_EnvironmentStandard *env, omrobjectptr_t *slotPtr, MM_ScavengeScanReason reason, bool *shouldRemember, GC_ContinuationSlotIterator *continuationSlotIterator);
 #endif /* JAVA_SPEC_VERSION >= 24 */
-	void doStackSlot(MM_EnvironmentStandard *env, omrobjectptr_t *slotPtr, MM_ScavengeScanReason reason, bool *shouldRemember, void *walkState, const void* stackLocation);
+	void doStackSlot(MM_EnvironmentStandard *env, omrobjectptr_t *slotPtr, MM_ScavengeScanReason reason, bool *shouldRemember, void *walkState, const void *stackLocation);
 
 	bool initialize(MM_EnvironmentBase *env);
 	void tearDown(MM_EnvironmentBase *env);

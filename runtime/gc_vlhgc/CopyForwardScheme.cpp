@@ -2336,7 +2336,12 @@ void
 MM_CopyForwardScheme::doStackSlot(MM_EnvironmentVLHGC *env, J9Object *fromObject, J9Object **slotPtr, J9StackWalkState *walkState, const void *stackLocation)
 {
 	if (isHeapObject(*slotPtr)) {
+		/* heap object - validate and copyforward */
+		Assert_MM_validStackSlot(MM_StackSlotValidator(MM_StackSlotValidator::COULD_BE_FORWARDED, *slotPtr, stackLocation, walkState).validate(env));
 		doSlot(env, fromObject, slotPtr);
+	} else if (NULL != *slotPtr) {
+		/* stack object - just validate */
+		Assert_MM_validStackSlot(MM_StackSlotValidator(MM_StackSlotValidator::NOT_ON_HEAP, *slotPtr, stackLocation, walkState).validate(env));
 	}
 }
 
