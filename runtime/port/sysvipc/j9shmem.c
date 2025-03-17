@@ -47,6 +47,7 @@
 #include "portpriv.h"
 #include "j9sharedhelper.h"
 #include "j9shmem.h"
+#include "omrutil.h"
 #include "protect_helpers.h"
 #include "j9SysvIPCWrappers.h"
 #include "shchelp.h"
@@ -1726,7 +1727,7 @@ openSharedMemory (J9PortLibrary *portLibrary, intptr_t fd, const char *baseFile,
 				goto failDontUnlink;
 			}
 		} else {
-#if defined(__GNUC__) || defined(AIXPPC)
+#if (defined(__GNUC__) && !defined(J9ZOS390)) || defined(AIXPPC)
 #if defined(OSX)
 			/*Use ._key for OSX*/
 			if (buf.shm_perm._key != controlinfo->common.ftok_key)
