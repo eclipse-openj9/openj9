@@ -77,8 +77,6 @@ J9::SymbolReferenceTable::SymbolReferenceTable(size_t sizeHint, TR::Compilation 
      _immutableInfo(c->trMemory()),
      _immutableSymRefNumbers(c->trMemory(), _numImmutableClasses),
      _dynamicMethodSymrefsByCallSiteIndex(c->trMemory()),
-     _unsafeJavaStaticSymRefs(NULL),
-     _unsafeJavaStaticVolatileSymRefs(NULL),
      _currentThreadDebugEventDataSymbol(0),
      _currentThreadDebugEventDataSymbolRefs(c->trMemory()),
      _constantPoolAddressSymbolRefs(c->trMemory()),
@@ -92,6 +90,9 @@ J9::SymbolReferenceTable::SymbolReferenceTable(size_t sizeHint, TR::Compilation 
    {
    for (uint32_t i = 0; i < _numImmutableClasses; i++)
       _immutableSymRefNumbers[i] = new (trHeapMemory()) TR_BitVector(sizeHint, c->trMemory(), heapAlloc, growable);
+
+   for (int i = 0; i < TR::Symbol::numberOfMemoryOrderings; i++)
+      _unsafeJavaStaticSymRefs[i] = NULL;
    }
 
 
@@ -2212,24 +2213,15 @@ J9::SymbolReferenceTable::findOrCreateThreadDebugEventData(int32_t index)
    }
 
 TR::SymbolReference *
-J9::SymbolReferenceTable::findUnsafeSymbolRef(TR::DataType type, bool javaObjectReference, bool javaStaticReference, bool isVolatile)
+J9::SymbolReferenceTable::findUnsafeSymbolRef(TR::DataType type, bool javaObjectReference, bool javaStaticReference, TR::Symbol::MemoryOrdering ordering)
    {
    TR_Array<TR::SymbolReference *> * unsafeSymRefs = NULL;
 
-   if (isVolatile)
-      {
-      unsafeSymRefs =
-            javaStaticReference ?
-                  _unsafeJavaStaticVolatileSymRefs :
-                  _unsafeVolatileSymRefs;
-      }
-   else
-      {
-      unsafeSymRefs =
-            javaStaticReference ?
-                  _unsafeJavaStaticSymRefs :
-                  _unsafeSymRefs;
-      }
+   unsafeSymRefs =
+         javaStaticReference ?
+               _unsafeJavaStaticSymRefs[static_cast<int>(ordering)] :
+               _unsafeSymRefs[static_cast<int>(ordering)];
+
 
    TR::SymbolReference * symRef = NULL;
 
@@ -2242,39 +2234,21 @@ J9::SymbolReferenceTable::findUnsafeSymbolRef(TR::DataType type, bool javaObject
    }
 
 TR::SymbolReference *
-J9::SymbolReferenceTable::findOrCreateUnsafeSymbolRef(TR::DataType type, bool javaObjectReference, bool javaStaticReference, bool isVolatile)
+J9::SymbolReferenceTable::findOrCreateUnsafeSymbolRef(TR::DataType type, bool javaObjectReference, bool javaStaticReference, TR::Symbol::MemoryOrdering ordering)
    {
    TR_Array<TR::SymbolReference *> * unsafeSymRefs = NULL;
 
-   if (isVolatile)
+   if (javaStaticReference)
       {
-      if (javaStaticReference)
-         {
-         if (_unsafeJavaStaticVolatileSymRefs == NULL)
-            _unsafeJavaStaticVolatileSymRefs = new (trHeapMemory()) TR_Array<TR::SymbolReference *>(comp()->trMemory(), TR::NumAllTypes);
-         unsafeSymRefs = _unsafeJavaStaticVolatileSymRefs;
-         }
-      else
-         {
-         if (_unsafeVolatileSymRefs == NULL)
-            _unsafeVolatileSymRefs = new (trHeapMemory()) TR_Array<TR::SymbolReference *>(comp()->trMemory(), TR::NumAllTypes);
-         unsafeSymRefs = _unsafeVolatileSymRefs;
-         }
+      if (_unsafeJavaStaticSymRefs[static_cast<int>(ordering)] == NULL)
+         _unsafeJavaStaticSymRefs[static_cast<int>(ordering)] = new (trHeapMemory()) TR_Array<TR::SymbolReference *>(comp()->trMemory(), TR::NumAllTypes);
+      unsafeSymRefs = _unsafeJavaStaticSymRefs[static_cast<int>(ordering)];
       }
    else
       {
-      if (javaStaticReference)
-         {
-         if (_unsafeJavaStaticSymRefs == NULL)
-            _unsafeJavaStaticSymRefs = new (trHeapMemory()) TR_Array<TR::SymbolReference *>(comp()->trMemory(), TR::NumAllTypes);
-         unsafeSymRefs = _unsafeJavaStaticSymRefs;
-         }
-      else
-         {
-         if (_unsafeSymRefs == NULL)
-            _unsafeSymRefs = new (trHeapMemory()) TR_Array<TR::SymbolReference *>(comp()->trMemory(), TR::NumAllTypes);
-         unsafeSymRefs = _unsafeSymRefs;
-         }
+      if (_unsafeSymRefs[static_cast<int>(ordering)] == NULL)
+         _unsafeSymRefs[static_cast<int>(ordering)] = new (trHeapMemory()) TR_Array<TR::SymbolReference *>(comp()->trMemory(), TR::NumAllTypes);
+      unsafeSymRefs = _unsafeSymRefs[static_cast<int>(ordering)];
       }
 
    TR::SymbolReference * symRef = (*unsafeSymRefs)[type];
@@ -2284,8 +2258,7 @@ J9::SymbolReferenceTable::findOrCreateUnsafeSymbolRef(TR::DataType type, bool ja
       TR::Symbol * sym = TR::Symbol::createShadow(trHeapMemory(),type);
       sym->setUnsafeShadowSymbol();
       sym->setArrayShadowSymbol();
-      if (isVolatile)
-         sym->setVolatile();
+      sym->setMemoryOrdering(ordering);
       (*unsafeSymRefs)[type] = symRef = new (trHeapMemory()) TR::SymbolReference(self(), sym, comp()->getMethodSymbol()->getResolvedMethodIndex(), -1);
       aliasBuilder.unsafeSymRefNumbers().set(symRef->getReferenceNumber());
       }

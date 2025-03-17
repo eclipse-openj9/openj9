@@ -9362,7 +9362,7 @@ void TR_FlowSensitiveEscapeAnalysis::analyzeNode(TR::Node *node, TR::TreeTop *tr
    if (opCode.hasSymbolReference())
       {
       TR::SymbolReference *symReference = node->getSymbolReference();
-      if (symReference->getSymbol()->isVolatile())
+      if (!symReference->getSymbol()->isTransparent())
          {
          _blocksWithSyncs->set(blockNum);
          // Keep track of this volatile load/store node tt, prefer volatile load/store over monexits since monexits can skip sync in some cases
@@ -9690,11 +9690,8 @@ bool TR_LocalFlushElimination::examineNode(TR::Node *node, TR::TreeTop *tt, TR::
          if (opCode.hasSymbolReference())
             {
             TR::SymbolReference *symReference = node->getSymbolReference();
-            if (symReference->getSymbol()->isVolatile())
-               {
-               nodeHasSync = true;
-               nodeHasVolatile = true;
-               }
+            nodeHasSync = symReference->getSymbol()->isAtLeastOrStrongerThanAcquireRelease();
+            nodeHasVolatile = symReference->getSymbol()->isVolatile();
             }
          // Due to lock-reservation and lock reentry it's not guaranteed that a synchronised method will issue a flush
          //if (opCode.isCall() &&

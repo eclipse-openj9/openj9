@@ -344,13 +344,13 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
     *  \param javaStaticReference
     *     Determines whether this symbol reference is referencing a Java object static field.
     *
-    *  \param isVolatile
-    *     Determines whether this symbol should be treated with volatile semantics.
+    *  \param mode
+    *     Determines which access mode memory semantics this symbol should be treated with.
     *
     *  \return
     *     The unsafe symbol reference with given constraints if it exists; <c>NULL</c> otherwise.
     */
-   TR::SymbolReference* findUnsafeSymbolRef(TR::DataType type, bool javaObjectReference = false, bool javaStaticReference = false, bool isVolatile = false);
+   TR::SymbolReference* findUnsafeSymbolRef(TR::DataType type, bool javaObjectReference, bool javaStaticReference, TR::Symbol::MemoryOrdering mode);
 
    /** \brief
     *     Finds an unsafe symbol reference with given constraints if it exists, or creates one if no such symbol
@@ -371,7 +371,7 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
     *  \return
     *     The unsafe symbol reference with given constraints if it exists.
     */
-   TR::SymbolReference* findOrCreateUnsafeSymbolRef(TR::DataType type, bool javaObjectReference = false, bool javaStaticReference = false, bool isVolatile = false);
+   TR::SymbolReference* findOrCreateUnsafeSymbolRef(TR::DataType type, bool javaObjectReference = false, bool javaStaticReference = false, TR::Symbol::MemoryOrdering mode = TR::Symbol::MemoryOrdering::Transparent);
 
    TR::SymbolReference * findOrCreateImmutableGenericIntShadowSymbolReference(intptr_t offset); // "Immutable" means no aliasing issues; ie. reads from these shadows can be freely reordered wrt anything else
 
@@ -613,14 +613,9 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
    TR_Array<TR_BitVector *>            _immutableSymRefNumbers;
 
    /** \brief
-    *     Represents the set of symbol references to static fields of Java objects.
+    *     Represents the set of symbol references to static fields of Java objects for each access mode.
     */
-   TR_Array<TR::SymbolReference *> * _unsafeJavaStaticSymRefs;
-
-   /** \brief
-    *     Represents the set of symbol references to static volatile fields of Java objects.
-    */
-   TR_Array<TR::SymbolReference *> * _unsafeJavaStaticVolatileSymRefs;
+   TR_Array<TR::SymbolReference *> * _unsafeJavaStaticSymRefs[TR::Symbol::numberOfMemoryOrderings];
 
    ResolvedFieldShadows _resolvedFieldShadows;
 
