@@ -105,9 +105,9 @@ public:
 	 * @see MM_Metronome::markObject()
 	 */
 	virtual void
-	doSlot(J9Object** slot)
+	doSlot(J9Object **slotPtr)
 	{
-		_markingScheme->markObject(_env, *slot);
+		_markingScheme->markObject(_env, *slotPtr);
 	}
 	
 	virtual void
@@ -117,18 +117,29 @@ public:
 		if (_markingScheme->isHeapObject(object)) {
 			/* heap object - validate and mark */
 			Assert_MM_validStackSlot(MM_StackSlotValidator(0, object, stackLocation, walkState).validate(_env));
-			_markingScheme->markObject(_env, object);
+			doSlot(slotPtr);
 		} else if (NULL != object) {
 			/* stack object - just validate */
 			Assert_MM_validStackSlot(MM_StackSlotValidator(MM_StackSlotValidator::NOT_ON_HEAP, object, stackLocation, walkState).validate(_env));
 		}
 	}
 
+#if JAVA_SPEC_VERSION >= 24
+	virtual void doContinuationSlot(J9Object **slotPtr, GC_ContinuationSlotIterator *continuationSlotIterator) {
+		J9Object *object = *slotPtr;
+		if (_markingScheme->isHeapObject(object)) {
+			doSlot(slotPtr);
+		} else if (NULL != object) {
+			Assert_MM_true(GC_ContinuationSlotIterator::state_monitor_records == continuationSlotIterator->getState());
+		}
+	}
+#endif /* JAVA_SPEC_VERSION >= 24 */
+
 	virtual void
 	doVMThreadSlot(J9Object **slotPtr, GC_VMThreadIterator *vmThreadIterator) {
 		J9Object *object = *slotPtr;
 		if (_markingScheme->isHeapObject(object)) {
-			_markingScheme->markObject(_env, object);
+			doSlot(slotPtr);
 		} else if (NULL != object) {
 			Assert_MM_true(vmthreaditerator_state_monitor_records == vmThreadIterator->getState());
 		}
