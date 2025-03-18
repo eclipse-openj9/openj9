@@ -27,6 +27,18 @@
 
 typedef struct j9csrsi_t j9csrsi_t;
 
+/** Assembler glue routine to call CSRSI (an AMODE31 service) from an
+ * AMODE64/31 C program.
+ * CSRSI is a system information service to request information about
+ * the machine, LPAR, and VM. The returned information is mapped by
+ * DSECTs in CSRSIIDF macro. SIV1V2V3 DSECT maps the data returned
+ * when MACHINE, LPAR and VM data are requested.
+ * See MVS Data Areas Volume 1 (ABEP-DDRCOM).
+ * @param[in] session Address of a structure containing packed arguments
+ * to CSRSI for SIV1V2V3 DSECT.
+ */
+void j9csrsi_wrp(j9csrsi_t *session);
+
 /** Init a j9csrsi session
  *  @param[out] ret Optional. If supplied, it will be used to return any error
  *  code CSRSI returns
