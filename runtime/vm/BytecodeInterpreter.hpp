@@ -503,6 +503,16 @@ retry:
 		restoreSpecialStackFrameLeavingArgs(REGISTER_ARGS, ((UDATA*)(nativeMethodFrame + 1)) - 1);
 	}
 
+	VMINLINE void*
+	restoreJITResolveFrame(REGISTER_ARGS_LIST)
+	{
+		J9SFJITResolveFrame *resolveFrame = (J9SFJITResolveFrame*)_currentThread->sp;
+		void* addr = resolveFrame->returnAddress;
+		_currentThread->jitException = resolveFrame->savedJITException;
+		_currentThread->sp = (UDATA*)(resolveFrame + 1);
+		return addr;
+	}
+
 	VMINLINE J9SFJNINativeMethodFrame*
 	recordJNIReturn(REGISTER_ARGS_LIST, UDATA *bp)
 	{
@@ -1511,7 +1521,10 @@ obj:
 	VMINLINE VM_BytecodeAction
 	yieldPinnedContinuation(REGISTER_ARGS_LIST, U_32 newThreadState, UDATA returnState)
 	{
-		buildInternalNativeStackFrame(REGISTER_ARGS);
+		/* InternalNative frame only build for non-jit calls. */
+		if (J9VM_CONTINUATION_RETURN_FROM_JIT_MONITOR_ENTER != returnState) {
+			buildInternalNativeStackFrame(REGISTER_ARGS);
+		}
 		updateVMStruct(REGISTER_ARGS);
 		J9VMJAVALANGVIRTUALTHREAD_SET_STATE(_currentThread, _currentThread->threadObject, newThreadState);
 
@@ -1534,6 +1547,44 @@ obj:
 		returnSingleFromINL(REGISTER_ARGS, JNI_FALSE, 1);
 
 		return EXECUTE_BYTECODE;
+	}
+
+	VMINLINE VM_BytecodeAction
+	tryEnterBlockingMonitor(REGISTER_ARGS_LIST, j9object_t syncObject, UDATA returnState)
+	{
+		VM_BytecodeAction rc = EXECUTE_BYTECODE;
+		UDATA monitorRC = enterObjectMonitor(REGISTER_ARGS, syncObject);
+
+		/* Monitor enter can only fail in the non-blocking case, which does not
+		 * release VM access. So, the immediate async and failed enter cases are
+		 * mutually exclusive.
+		 */
+		if (J9_OBJECT_MONITOR_ENTER_FAILED(monitorRC)) {
+			switch (monitorRC) {
+			case J9_OBJECT_MONITOR_VALUE_TYPE_IMSE:
+				_currentThread->tempSlot = (UDATA)syncObject;
+				rc = THROW_VALUE_TYPE_ILLEGAL_MONITOR_STATE;
+				break;
+#if defined(J9VM_OPT_CRIU_SUPPORT)
+			case J9_OBJECT_MONITOR_CRIU_SINGLE_THREAD_MODE_THROW:
+				rc = THROW_CRIU_SINGLE_THREAD_MODE;
+				break;
+#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+			case J9_OBJECT_MONITOR_YIELD_VIRTUAL: {
+				rc = yieldPinnedContinuation(REGISTER_ARGS, JAVA_LANG_VIRTUALTHREAD_BLOCKING, returnState);
+				omrthread_monitor_enter(_vm->blockedVirtualThreadsMutex);
+				omrthread_monitor_notify(_vm->blockedVirtualThreadsMutex);
+				omrthread_monitor_exit(_vm->blockedVirtualThreadsMutex);
+				break;
+			}
+			case J9_OBJECT_MONITOR_OOM:
+				rc = THROW_MONITOR_ALLOC_FAIL;
+				break;
+			default:
+				Assert_VM_unreachable();
+			}
+		}
+		return rc;
 	}
 #endif /* JAVA_SPEC_VERSION >= 24 */
 
@@ -5705,6 +5756,9 @@ ffi_OOM:
 			rc = GOTO_THROW_CURRENT_EXCEPTION;
 		}
 #if JAVA_SPEC_VERSION >= 24
+		j9object_t syncObject = J9VMJDKINTERNALVMCONTINUATION_BLOCKER(_currentThread, continuationObject);
+		J9VMJDKINTERNALVMCONTINUATION_SET_BLOCKER(_currentThread, continuationObject, NULL);
+
 		switch (_currentThread->currentContinuation->returnState) {
 		case J9VM_CONTINUATION_RETURN_FROM_YIELD:
 			returnSingleFromINL(REGISTER_ARGS, JNI_TRUE, 1);
@@ -5713,37 +5767,8 @@ ffi_OOM:
 			break;
 		case J9VM_CONTINUATION_RETURN_FROM_OBJECT_WAIT: {
 			j9object_t waitObject = *(j9object_t *)(_sp + 3);
-			UDATA monitorRC = enterObjectMonitor(REGISTER_ARGS, waitObject);
-
-			/* Monitor enter can only fail in the non-blocking case, which does not
-			 * release VM access. So, the immediate async and failed enter cases are
-			 * mutually exclusive.
-			 */
-			if (J9_OBJECT_MONITOR_ENTER_FAILED(monitorRC)) {
-				switch (monitorRC) {
-				case J9_OBJECT_MONITOR_VALUE_TYPE_IMSE:
-					_currentThread->tempSlot = (UDATA)waitObject;
-					rc = THROW_VALUE_TYPE_ILLEGAL_MONITOR_STATE;
-					break;
-#if defined(J9VM_OPT_CRIU_SUPPORT)
-				case J9_OBJECT_MONITOR_CRIU_SINGLE_THREAD_MODE_THROW:
-					rc = THROW_CRIU_SINGLE_THREAD_MODE;
-					break;
-#endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
-				case J9_OBJECT_MONITOR_YIELD_VIRTUAL: {
-					rc = yieldPinnedContinuation(REGISTER_ARGS, JAVA_LANG_VIRTUALTHREAD_BLOCKING, J9VM_CONTINUATION_RETURN_FROM_OBJECT_WAIT);
-					omrthread_monitor_enter(_vm->blockedVirtualThreadsMutex);
-					omrthread_monitor_notify(_vm->blockedVirtualThreadsMutex);
-					omrthread_monitor_exit(_vm->blockedVirtualThreadsMutex);
-					break;
-				}
-				case J9_OBJECT_MONITOR_OOM:
-					rc = THROW_MONITOR_ALLOC_FAIL;
-					break;
-				default:
-					Assert_VM_unreachable();
-				}
-			} else {
+			rc = tryEnterBlockingMonitor(REGISTER_ARGS, waitObject, J9VM_CONTINUATION_RETURN_FROM_OBJECT_WAIT);
+			if ((NULL != _currentThread->currentContinuation) && (EXECUTE_BYTECODE == rc)) {
 				omrthread_monitor_t monitor = getMonitorForWait(_currentThread, waitObject);
 				monitor->count = _currentThread->currentContinuation->waitingMonitorEnterCount;
 				_currentThread->currentContinuation->waitingMonitorEnterCount = 0;
@@ -5751,11 +5776,20 @@ ffi_OOM:
 			}
 			break;
 		}
-		case J9VM_CONTINUATION_RETURN_FROM_SYNC_METHOD:
+		case J9VM_CONTINUATION_RETURN_FROM_SYNC_METHOD: {
 			UDATA *bp = ((UDATA *)(((J9SFMethodFrame *)_sp) + 1)) - 1;
 			restoreSpecialStackFrameLeavingArgs(REGISTER_ARGS, bp);
 			rc = inlineSendTarget(REGISTER_ARGS, VM_MAYBE, VM_MAYBE, VM_MAYBE, VM_MAYBE);
 			break;
+		}
+		case J9VM_CONTINUATION_RETURN_FROM_JIT_MONITOR_ENTER: {
+			rc = tryEnterBlockingMonitor(REGISTER_ARGS, syncObject, J9VM_CONTINUATION_RETURN_FROM_JIT_MONITOR_ENTER);
+			if ((NULL != _currentThread->currentContinuation) && (EXECUTE_BYTECODE == rc)) {
+				void *returnAddress = restoreJITResolveFrame(REGISTER_ARGS);
+				rc = promotedMethodOnTransitionFromJIT(REGISTER_ARGS, returnAddress, _vm->jitConfig->jitExitInterpreter0RestoreAll);
+			}
+			break;
+		}
 		}
 #endif /* JAVA_SPEC_VERSION >= 24 */
 		return rc;
@@ -10739,6 +10773,10 @@ public:
 	case J9_BCLOOP_N2I_TRANSITION:
 		PERFORM_ACTION(native2InterpreterTransition(REGISTER_ARGS));
 #endif /* JAVA_SPEC_VERSION >= 16 */
+#if JAVA_SPEC_VERSION >= 24
+	case J9_BCLOOP_YIELD_FOR_JIT_MONENT:
+		PERFORM_ACTION(yieldPinnedContinuation(REGISTER_ARGS, JAVA_LANG_VIRTUALTHREAD_BLOCKING, J9VM_CONTINUATION_RETURN_FROM_JIT_MONITOR_ENTER));
+#endif /* JAVA_SPEC_VERSION >= 24 */
 	default:
 #if defined(TRACE_TRANSITIONS)
 		j9tty_printf(PORTLIB, "<%p> enter: UNKNOWN %d\n", vmThread, vmThread->returnValue);

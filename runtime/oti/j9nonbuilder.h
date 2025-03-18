@@ -1732,6 +1732,7 @@ typedef struct J9ObjectMonitor {
 	U_32 virtualThreadWaitCount;
 	struct J9VMContinuation* ownerContinuation;
 	struct J9VMContinuation* waitingContinuations;
+	struct J9ObjectMonitor* next;
 #endif /* JAVA_SPEC_VERSION >= 24 */
 } J9ObjectMonitor;
 
@@ -4356,6 +4357,9 @@ typedef struct J9JITConfig {
 	UDATA osrStackFrameMaximumSize;
 	void* jitFillOSRBufferReturn;
 	IDATA  ( *launchGPU)(struct J9VMThread *vmThread, jobject invokeObject, J9Method *method, int deviceId, I_32 gridDimX, I_32 gridDimY, I_32 gridDimZ, I_32 blockDimX, I_32 blockDimY, I_32 blockDimZ, void **args) ;
+#if JAVA_SPEC_VERSION >= 24
+	void* jitExitInterpreter0RestoreAll;
+#endif /* JAVA_SPEC_VERSION >= 24 */
 	void* jitExitInterpreter0;
 	void* jitExitInterpreter1;
 	void* jitExitInterpreterF;
@@ -5349,6 +5353,8 @@ typedef struct J9InternalVMFunctions {
 #if JAVA_SPEC_VERSION >= 24
 	struct J9ObjectMonitor * (*monitorTablePeek)(struct J9JavaVM *vm, j9object_t object);
 	jobject (*takeVirtualThreadListToUnblock)(struct J9VMThread *currentThread, struct J9JavaVM *vm);
+	UDATA (*preparePinnedVirtualThreadForUnmount)(struct J9VMThread *currentThread, j9object_t syncObj, BOOLEAN isObjectWait);
+	J9ObjectMonitor * (*detachMonitorInfo)(struct J9VMThread *currentThread, j9object_t lockObject);
 #endif /* JAVA_SPEC_VERSION >= 24 */
 	jobjectArray (*getSystemPropertyList)(JNIEnv *env);
 } J9InternalVMFunctions;
@@ -5434,6 +5440,7 @@ typedef uintptr_t ContinuationState;
 #define J9VM_CONTINUATION_RETURN_FROM_MONITOR_ENTER 0
 #define J9VM_CONTINUATION_RETURN_FROM_OBJECT_WAIT   2
 #define J9VM_CONTINUATION_RETURN_FROM_SYNC_METHOD   3
+#define J9VM_CONTINUATION_RETURN_FROM_JIT_MONITOR_ENTER 4
 #endif /* JAVA_SPEC_VERSION >= 24 */
 
 typedef struct J9VMContinuation {
@@ -5461,6 +5468,7 @@ typedef struct J9VMContinuation {
 	j9object_t vthread;
 	struct J9VMContinuation* nextWaitingContinuation;
 	struct J9ObjectMonitor* objectWaitMonitor;
+	struct J9ObjectMonitor* enteredMonitors;
 #endif /* JAVA_SPEC_VERSION >= 24 */
 } J9VMContinuation;
 #endif /* JAVA_SPEC_VERSION >= 19 */

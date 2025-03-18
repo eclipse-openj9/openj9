@@ -4751,6 +4751,17 @@ preparePinnedVirtualThreadForUnmount(J9VMThread *currentThread, j9object_t syncO
  */
 jobject
 takeVirtualThreadListToUnblock(J9VMThread *currentThread, J9JavaVM *vm);
+
+/**
+ * @brief Inflate and detach the monitor for current vthread.
+ *
+ * @param currentThread the current thread
+ * @param lockObject the object with monitor to detach
+ *
+ * @return the inflated J9ObjectMonitor pointer
+ */
+J9ObjectMonitor *
+detachMonitorInfo(J9VMThread *currentThread, j9object_t lockObject);
 #endif /* JAVA_SPEC_VERSION >= 24 */
 /* ---------------- hookableAsync.c ---------------- */
 
