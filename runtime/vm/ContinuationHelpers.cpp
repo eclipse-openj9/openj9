@@ -1024,7 +1024,7 @@ preparePinnedVirtualThreadForUnmount(J9VMThread *currentThread, j9object_t syncO
 			currentThread->currentContinuation->objectWaitMonitor = syncObjectMonitor;
 			omrthread_monitor_exit(vm->blockedVirtualThreadsMutex);
 		} else {
-			syncObjectMonitor->virtualThreadWaitCount += 1;
+			VM_AtomicSupport::addU32(&syncObjectMonitor->virtualThreadWaitCount, 1);
 		}
 
 		/* Clear the blocking object on the carrier thread. */
@@ -1096,15 +1096,20 @@ restart:
 						}
 					} else {
 						lock = J9OBJECT_MONITOR(currentThread, syncObject);
-						syncObjectMonitor = J9_INFLLOCK_OBJECT_MONITOR(lock);
-					}
-					omrthread_monitor_t monitor = syncObjectMonitor->monitor;
-					if (0 == monitor->count) {
-						unblocked = true;
-						if (syncObjectMonitor->virtualThreadWaitCount >= 1) {
-							syncObjectMonitor->virtualThreadWaitCount -= 1;
+						if (J9_LOCK_IS_INFLATED(lock)) {
+							syncObjectMonitor = J9_INFLLOCK_OBJECT_MONITOR(lock);
 						}
-						J9VMJAVALANGVIRTUALTHREAD_SET_ONWAITINGLIST(currentThread, current->vthread, JNI_TRUE);
+					}
+					/* Only perform the below operations for inflated monitors. */
+					if (NULL != syncObjectMonitor) {
+						omrthread_monitor_t monitor = syncObjectMonitor->monitor;
+						if (0 == monitor->count) {
+							unblocked = true;
+							if (syncObjectMonitor->virtualThreadWaitCount >= 1) {
+								VM_AtomicSupport::subtractU32(&syncObjectMonitor->virtualThreadWaitCount, 1);
+							}
+							J9VMJAVALANGVIRTUALTHREAD_SET_ONWAITINGLIST(currentThread, current->vthread, JNI_TRUE);
+						}
 					}
 				}
 
