@@ -4385,9 +4385,13 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 	{
 		IDATA enableYieldPinning = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXYIELDPINNEDVIRTUALTHREADS, NULL);
 		IDATA disableYieldPinning = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXNOYIELDPINNEDVIRTUALTHREADS, NULL);
-		if (enableYieldPinning > disableYieldPinning) {
-			/* Enable yielding of pinned continuation. */
-			vm->extendedRuntimeFlags3 |= J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION;
+
+		/* Enable yielding of pinned continuations by default. */
+		vm->extendedRuntimeFlags3 |= J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION;
+
+		if (enableYieldPinning < disableYieldPinning) {
+			/* Disable yielding of pinned continuations. */
+			vm->extendedRuntimeFlags3 &= ~J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION;
 		}
 	}
 #endif /* JAVA_SPEC_VERSION >= 24 */
