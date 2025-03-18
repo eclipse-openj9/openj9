@@ -27,6 +27,9 @@
 
 typedef struct j9csrsi_t j9csrsi_t;
 
+/* defined in j9csrsi_wrp.s. */
+extern void j9csrsi_wrp(struct j9csrsi_t *session);
+
 /** Init a j9csrsi session
  *  @param[out] ret Optional. If supplied, it will be used to return any error
  *  code CSRSI returns
