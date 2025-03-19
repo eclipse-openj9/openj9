@@ -4544,6 +4544,8 @@ JavaCoreDumpWriter::writeThread(J9VMThread* vmThread, J9PlatformThread *nativeTh
 		/* Replace vmstate with java state in the "3XMTHREADINFO" entry */
 		_OutputStream.writeCharacters(", state:");
 		writeThreadState(javaState);
+		_OutputStream.writeCharacters(", raw state:");
+		_OutputStream.writeInteger(javaState);
 
 		_OutputStream.writeCharacters(", prio=");
 		_OutputStream.writeInteger(javaPriority, "%zu");

@@ -965,4 +965,248 @@ VM_JFRChunkWriter::writeThreadStatisticsEvent(void *anElement, void *userData)
 	writeEventSize(_bufferWriter, dataStart);
 }
 
+static void
+writeObject(J9JavaVM *vm, j9object_t obj, VM_BufferWriter *bufferWriter)
+{
+	J9ROMClass *romClass = NULL;
+	if (J9VM_IS_INITIALIZED_HEAPCLASS_VM(vm, obj)) {
+		romClass = J9VM_J9CLASS_FROM_HEAPCLASS_VM(vm, obj)->romClass;
+	} else {
+		romClass = J9OBJECT_CLAZZ_VM(vm, obj)->romClass;
+	}
+
+	J9UTF8 *className = J9ROMCLASS_CLASSNAME(romClass);
+	bufferWriter->writeFormattedString("%.*s@%p", J9UTF8_LENGTH(className), J9UTF8_DATA(className), obj);
+}
+
+static UDATA
+stackWalkCallback(J9VMThread *vmThread, J9StackWalkState *state)
+{
+	J9JavaVM *vm = vmThread->javaVM;
+	J9ObjectMonitorInfo *monitorInfo = (J9ObjectMonitorInfo *)state->userData2;
+	IDATA *monitorCount = (IDATA *)(&state->userData3);
+	J9Method *method = state->method;
+	J9Class *methodClass = J9_CLASS_FROM_METHOD(method);
+	J9UTF8 *className = J9ROMCLASS_CLASSNAME(methodClass->romClass);
+	J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+	J9UTF8 *methodName = J9ROMMETHOD_NAME(romMethod);
+
+	VM_BufferWriter *bufferWriter = (VM_BufferWriter *)state->userData1;
+
+	bufferWriter->writeFormattedString(
+			"at %.*s.%.*s",
+			J9UTF8_LENGTH(className), J9UTF8_DATA(className),
+			J9UTF8_LENGTH(methodName), J9UTF8_DATA(methodName));
+
+	if (J9_ARE_ANY_BITS_SET(romMethod->modifiers, J9AccNative)) {
+		bufferWriter->writeFormattedString("(Native Method)\n");
+	} else {
+		UDATA offsetPC = state->bytecodePCOffset;
+		bool compiledMethod = (NULL != state->jitInfo);
+		J9UTF8 *sourceFile = getSourceFileNameForROMClass(vm, methodClass->classLoader, methodClass->romClass);
+		if (NULL != sourceFile) {
+			bufferWriter->writeFormattedString(
+					"(%.*s", J9UTF8_LENGTH(sourceFile), J9UTF8_DATA(sourceFile));
+
+			UDATA lineNumber = getLineNumberForROMClass(vm, method, offsetPC);
+
+			if ((UDATA)-1 != lineNumber) {
+				bufferWriter->writeFormattedString(":%zu", lineNumber);
+			}
+
+			if (compiledMethod) {
+				bufferWriter->writeFormattedString("(Compiled Code)");
+			}
+
+			bufferWriter->writeFormattedString(")\n");
+		} else {
+			bufferWriter->writeFormattedString("(Bytecode PC: %zu", offsetPC);
+			if (compiledMethod) {
+				bufferWriter->writeFormattedString("(Compiled Code)");
+			}
+			bufferWriter->writeFormattedString(")\n");
+		}
+
+		/* Use a while loop as there may be more than one lock taken in a stack frame. */
+		while ((0 != *monitorCount) && ((UDATA)monitorInfo->depth == state->framesWalked)) {
+			bufferWriter->writeFormattedString("\t(entered lock: ");
+			writeObject(vm, monitorInfo->object, bufferWriter);
+			bufferWriter->writeFormattedString(")\n");
+
+			monitorInfo += 1;
+			state->userData2 = monitorInfo;
+
+			(*monitorCount) -= 1;
+		}
+	}
+
+	return J9_STACKWALK_KEEP_ITERATING;
+}
+
+static void
+writeThreadInfo(J9VMThread *currentThread, J9VMThread *walkThread, VM_BufferWriter *bufferWriter)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	UDATA javaTID = J9VMJAVALANGTHREAD_TID(currentThread, walkThread->threadObject);
+	UDATA osTID = ((J9AbstractThread *)walkThread->osThread)->tid;
+	UDATA javaPriority = vmFuncs->getJavaThreadPriority(vm, walkThread);
+	UDATA state = J9VMTHREAD_STATE_UNKNOWN;
+	const char *stateStr = "?";
+	j9object_t monitorObject = NULL;
+	char *threadName = NULL;
+
+	/* Get thread state and monitor */
+	state = getVMThreadObjectState(walkThread, &monitorObject, NULL, NULL);
+	switch (state) {
+	case J9VMTHREAD_STATE_RUNNING:
+		stateStr = "R";
+		break;
+	case J9VMTHREAD_STATE_BLOCKED:
+		stateStr = "B";
+		break;
+	case J9VMTHREAD_STATE_WAITING:
+	case J9VMTHREAD_STATE_WAITING_TIMED:
+	case J9VMTHREAD_STATE_SLEEPING:
+		stateStr = "CW";
+		break;
+	case J9VMTHREAD_STATE_PARKED:
+	case J9VMTHREAD_STATE_PARKED_TIMED:
+		stateStr = "P";
+		break;
+	case J9VMTHREAD_STATE_SUSPENDED:
+		stateStr = "S";
+		break;
+	case J9VMTHREAD_STATE_DEAD:
+		stateStr = "Z";
+		break;
+	case J9VMTHREAD_STATE_INTERRUPTED:
+		stateStr = "I";
+		break;
+	case J9VMTHREAD_STATE_UNKNOWN:
+		stateStr = "?";
+		break;
+	default:
+		stateStr = "??";
+		break;
+	}
+
+/* Get thread name */
+#if JAVA_SPEC_VERSION >= 21
+	if (IS_JAVA_LANG_VIRTUALTHREAD(currentThread, walkThread->threadObject)) {
+		/* For VirtualThread, get name from threadObject directly. */
+		j9object_t nameObject = J9VMJAVALANGTHREAD_NAME(currentThread, walkThread->threadObject);
+		threadName = getVMThreadNameFromString(currentThread, nameObject);
+	} else
+#endif /* JAVA_SPEC_VERSION >= 21 */
+	{
+		threadName = getOMRVMThreadName(walkThread->omrVMThread);
+		releaseOMRVMThreadName(walkThread->omrVMThread);
+	}
+	bufferWriter->writeFormattedString(
+			"\"%s\" J9VMThread: %p tid: %zd nid: %zd prio: %zd state: %s raw state: 0x%zX",
+			threadName,
+			walkThread,
+			javaTID,
+			osTID,
+			javaPriority,
+			stateStr,
+			state);
+
+	if (J9VMTHREAD_STATE_BLOCKED == state) {
+		bufferWriter->writeFormattedString(" blocked on: ");
+	} else if ((J9VMTHREAD_STATE_WAITING == state) || (J9VMTHREAD_STATE_WAITING_TIMED == state)) {
+		bufferWriter->writeFormattedString(" waiting on: ");
+	} else if ((J9VMTHREAD_STATE_PARKED == state) || (J9VMTHREAD_STATE_PARKED_TIMED == state)) {
+		bufferWriter->writeFormattedString(" parked on: ");
+	} else {
+		bufferWriter->writeFormattedString("\n");
+		return;
+	}
+
+	if (NULL != monitorObject) {
+		writeObject(vm, monitorObject, bufferWriter);
+	} else {
+		bufferWriter->writeFormattedString("<unknown>");
+	}
+	bufferWriter->writeFormattedString("\n");
+}
+
+static void
+writeStacktrace(J9VMThread *currentThread, J9VMThread *walkThread, VM_BufferWriter *bufferWriter)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	J9StackWalkState stackWalkState = {0};
+	const size_t maxMonitorInfosPerThread = 32;
+	J9ObjectMonitorInfo monitorInfos[maxMonitorInfosPerThread];
+	memset(monitorInfos, 0, sizeof(monitorInfos));
+
+	IDATA monitorCount = vmFuncs->getOwnedObjectMonitors(currentThread, walkThread, monitorInfos, maxMonitorInfosPerThread, FALSE);
+
+	stackWalkState.walkThread = walkThread;
+	stackWalkState.flags =
+			J9_STACKWALK_ITERATE_FRAMES
+			| J9_STACKWALK_INCLUDE_NATIVES
+			| J9_STACKWALK_VISIBLE_ONLY
+			| J9_STACKWALK_RECORD_BYTECODE_PC_OFFSET
+			| J9_STACKWALK_NO_ERROR_REPORT;
+	stackWalkState.skipCount = 0;
+	stackWalkState.frameWalkFunction = stackWalkCallback;
+	stackWalkState.userData1 = bufferWriter;
+	stackWalkState.userData2 = monitorInfos;
+	stackWalkState.userData3 = (void *)monitorCount;
+
+	vmFuncs->haltThreadForInspection(currentThread, walkThread);
+	vm->walkStackFrames(currentThread, &stackWalkState);
+	vmFuncs->resumeThreadForInspection(currentThread, walkThread);
+
+	bufferWriter->writeFormattedString("\n");
+}
+
+U_8 *
+VM_JFRChunkWriter::writeThreadDumpEvent()
+{
+	/* reserve size field */
+	U_8 *dataStart = reserveEventSize();
+
+	_bufferWriter->writeLEB128(ThreadDumpID);
+
+	/* write start time */
+	_bufferWriter->writeLEB128(j9time_current_time_millis());
+
+	const U_64 bufferSize = THREAD_DUMP_EVENT_SIZE_PER_THREAD * _vm->peakThreadCount;
+	U_8 *resultBuffer = (U_8 *)j9mem_allocate_memory(sizeof(U_8) * bufferSize, OMRMEM_CATEGORY_VM);
+
+	if (NULL != resultBuffer) {
+		VM_BufferWriter resultWriter(privatePortLibrary, resultBuffer, bufferSize);
+		J9VMThread *walkThread = J9_LINKED_LIST_START_DO(_vm->mainThread);
+		UDATA numThreads = 0;
+		J9InternalVMFunctions *vmFuncs = _vm->internalVMFunctions;
+
+		Assert_VM_mustHaveVMAccess(_currentThread);
+		vmFuncs->acquireExclusiveVMAccess(_currentThread);
+
+		while (NULL != walkThread) {
+			writeThreadInfo(_currentThread, walkThread, &resultWriter);
+			writeStacktrace(_currentThread, walkThread, &resultWriter);
+
+			walkThread = J9_LINKED_LIST_NEXT_DO(_vm->mainThread, walkThread);
+			numThreads += 1;
+		}
+		resultWriter.writeFormattedString("Number of threads: %zd", numThreads);
+
+		vmFuncs->releaseExclusiveVMAccess(_currentThread);
+
+		writeUTF8String(resultWriter.getBufferStart(), resultWriter.getSize());
+		j9mem_free_memory(resultBuffer);
+	} else {
+		_buildResult = OutOfMemory;
+	}
+
+	/* write size */
+	writeEventSize(dataStart);
+
+	return dataStart;
+}
 #endif /* defined(J9VM_OPT_JFR) */
