@@ -113,6 +113,7 @@ public final class CRIUSupport {
 	@Deprecated(forRemoval=true)
 	public CRIUSupport(Path imageDir) {
 		System.err.println("WARNING: CRIUSupport(imageDir) constructor is deprecated, please use CRIUSupport.getCRIUSupport() and setImageDir(imageDir)"); //$NON-NLS-1$
+		singletonInternalCRIUSupport.setImageDir(imageDir);
 	}
 
 	/**
