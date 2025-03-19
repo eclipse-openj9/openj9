@@ -10593,10 +10593,12 @@ hashCodeHelper(TR::Node *node, TR::CodeGenerator *cg, TR::DataType elementType,
       {
       case TR::Int8:
       case TR::Int16:
-         loadConstant(cg, node, (int64_t) 0x10 << 56, tempReg);
+         generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, tempReg, 16);
+         generateShiftLeftImmediateLong(cg, node, tempReg, tempReg, 56);
          break;
       case TR::Int32:
-         loadConstant(cg, node, (int64_t) 0x0, tempReg);
+         generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, tempReg, 0);
+         break;
       default:
          TR_ASSERT_FATAL(false, "Unsupported hashCodeHelper elementType");
       }
