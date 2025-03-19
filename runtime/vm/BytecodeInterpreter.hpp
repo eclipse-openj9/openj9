@@ -2998,37 +2998,15 @@ done:
 					}
 
 					if ((NULL != objectMonitor) && (NULL != objectMonitor->waitingContinuations)) {
-						omrthread_monitor_enter(_vm->blockedVirtualThreadsMutex);
-						J9VMContinuation *head = objectMonitor->waitingContinuations;
-						if ((NULL != head) && (NULL != head->vthread)) {
-							if (omrthread_monitor_notify == notifyFunction) {
-								objectMonitor->waitingContinuations = head->nextWaitingContinuation;
-								head->nextWaitingContinuation = _vm->blockedContinuations;
-								_vm->blockedContinuations = head;
-								J9VMJAVALANGVIRTUALTHREAD_SET_ONWAITINGLIST(_currentThread, head->vthread, JNI_TRUE);
-								J9VMJAVALANGVIRTUALTHREAD_SET_NOTIFIED(_currentThread, head->vthread, JNI_TRUE);
-							} else {
-								J9VMContinuation *next = head;
-								J9VMContinuation *prev = NULL;
-								while (NULL != next) {
-									J9VMJAVALANGVIRTUALTHREAD_SET_ONWAITINGLIST(_currentThread, next->vthread, JNI_TRUE);
-									J9VMJAVALANGVIRTUALTHREAD_SET_NOTIFIED(_currentThread, next->vthread, JNI_TRUE);
-									prev = next;
-									next = next->nextWaitingContinuation;
-								}
-								prev->nextWaitingContinuation = _vm->blockedContinuations;
-								_vm->blockedContinuations = head;
-								objectMonitor->waitingContinuations = NULL;
-							}
-							omrthread_monitor_notify(_vm->blockedVirtualThreadsMutex);
-							omrthread_monitor_exit(_vm->blockedVirtualThreadsMutex);
+						bool isNotifyAll = (omrthread_monitor_notify_all == notifyFunction);
+						bool notified = VM_ContinuationHelpers::notifyVirtualThread(_currentThread, objectMonitor, isNotifyAll);
 
-							if (omrthread_monitor_notify == notifyFunction) {
-								returnVoidFromINL(REGISTER_ARGS, 1);
-								goto done;
-							}
-						} else {
-							omrthread_monitor_exit(_vm->blockedVirtualThreadsMutex);
+						/* If a virtual thread has been successfully notified, return directly without
+						 * triggering the native notify API.
+						 */
+						if (notified && !isNotifyAll) {
+							returnVoidFromINL(REGISTER_ARGS, 1);
+							goto done;
 						}
 					}
 				}
@@ -5788,7 +5766,11 @@ ffi_OOM:
 				monitor->count = _currentThread->currentContinuation->waitingMonitorEnterCount;
 				_currentThread->currentContinuation->waitingMonitorEnterCount = 0;
 				_currentThread->ownedMonitorCount -= 1;
-				if (J9VMJAVALANGTHREAD_DEADINTERRUPT(_currentThread, _currentThread->threadObject)) {
+
+				/* Only throw an exception if the virtual thread has not been notified. */
+				if (J9VMJAVALANGTHREAD_DEADINTERRUPT(_currentThread, _currentThread->threadObject)
+				&& !J9VMJAVALANGVIRTUALTHREAD_NOTIFIED(_currentThread, _currentThread->threadObject)
+				) {
 					/* Build a native frame on vthread stack before throwing exception. */
 					buildInternalNativeStackFrame(REGISTER_ARGS);
 					updateVMStruct(REGISTER_ARGS);
