@@ -1043,6 +1043,40 @@
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
 
+	<test id="Test 208-i: Test with mptotect=all that the header page is correctly unprotected when adjusting extraStartupHints" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,mprotect=all,extraStartupHints=42</command>
+		<output type="success" caseSensitive="yes" regex="no">JVMSHRC864I The number of additional startup hints that can be stored into the shared cache is set to 42</output>
+
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<!-- Since running Hanoi with -Xjit option does not store the startup hint to the shared chache, we use -Xint here -->
+	<test id="Test 208-j: Run the test again with mprotect=all" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,mprotect=all -Xint $CP_HANOI$ $PROGRAM_HANOI_2$</command>
+		<output type="success" caseSensitive="yes" regex="no">Puzzle solved!</output>
+
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="Test 208-k: Make sure new startup hints are stored into the cache" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,printStats=startuphint</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">STARTUP HINTS KEY:</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes"># Startup hints[\s]*= 3</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes"># Additional startup hints allowed[\s]*= 41</output>
+
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Startup hint bytes[\s]*= 0</output>
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes"># Startup hints[\s]*= 0</output>
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes"># Startup hints[\s]*= 1</output>
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes"># Startup hints[\s]*= 1</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
 	<test id="Test 208 cleanup" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,destroy</command>
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
