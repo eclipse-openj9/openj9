@@ -52,6 +52,10 @@ static constexpr const char * const threadStateNames[] = {
 	"STATE_BLOCKED_ON_MONITOR_ENTER"
 };
 
+static constexpr const char * const oopModeTypeNames[] = {
+	"Zero based"
+};
+
 enum StringEnconding {
 	NullString = 0,
 	EmptyString,
@@ -82,6 +86,7 @@ enum MetadataTypeID {
 	PhysicalMemoryID = 108,
 	ExecutionSampleID = 109,
 	ThreadDumpID = 111,
+	GCHeapConfigID = 133,
 	ThreadID = 164,
 	ThreadGroupID = 165,
 	ClassID = 166,
@@ -89,6 +94,7 @@ enum MetadataTypeID {
 	MethodID = 168,
 	SymbolID = 169,
 	ThreadStateID = 170,
+	NarrowOopModesID = 180,
 	ModuleID = 186,
 	PackageID = 187,
 	StackTraceID = 188,
@@ -344,6 +350,8 @@ done:
 
 			writeFrameTypeCheckpointEvent();
 
+			writeNarrowOOPModeTypesEvent();
+
 			writeThreadCheckpointEvent();
 
 			writeThreadGroupCheckpointEvent();
@@ -399,6 +407,8 @@ done:
 				writeInitialSystemPropertyEvents(_vm);
 
 				writeInitialEnvironmentVariableEvents();
+
+				writeGCHeapConfigurationEvent();
 			}
 
 			writePhysicalMemoryEvent();
@@ -799,6 +809,10 @@ done:
 	U_8 *writeOSInformationEvent();
 
 	U_8 *writeThreadDumpEvent();
+
+	void writeNarrowOOPModeTypesEvent();
+
+	void writeGCHeapConfigurationEvent();
 
 	void writeInitialSystemPropertyEvents(J9JavaVM *vm);
 
