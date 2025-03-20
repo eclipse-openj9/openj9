@@ -10510,6 +10510,7 @@ hashCodeHelper(TR::Node *node, TR::CodeGenerator *cg, TR::DataType elementType,
    // initialisations
    generateTrg1Src2Instruction(cg, TR::InstOpCode::XOR, node, tempReg, tempReg, tempReg);
 
+   // we have specialised code for a size-2 special case
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, condReg, vendReg, 2*elementSize);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, special2Label, condReg);
 
@@ -10583,28 +10584,17 @@ hashCodeHelper(TR::Node *node, TR::CodeGenerator *cg, TR::DataType elementType,
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, vendReg, endReg,
                                   elementSize - 16);
 
+   // load 0 for lxvw4x
+   generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, tempReg, 0);
+
    // if v >= vend goto residueLabel
    generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp8, node, condReg, valueReg, vendReg);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::bge, node, residueLabel, condReg);
 
-   // for bytes and shorts: load 16 into the highest byte for lxvll
-   // for ints: load 0 for lxvw4x
-   switch (elementType)
-      {
-      case TR::Int8:
-      case TR::Int16:
-         generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, tempReg, 16);
-         generateShiftLeftImmediateLong(cg, node, tempReg, tempReg, 56);
-         break;
-      case TR::Int32:
-         generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, tempReg, 0);
-         break;
-      default:
-         TR_ASSERT_FATAL(false, "Unsupported hashCodeHelper elementType");
-      }
-
    // ------ VSXLabel:
    generateLabelInstruction(cg, TR::InstOpCode::label, node, VSXLabel);
+   // load v
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::lxvw4x, node, vtmp1Reg, valueReg, tempReg);
 
    // for each high/low register
    // unpack v to vtmp2Reg
@@ -10612,8 +10602,15 @@ hashCodeHelper(TR::Node *node, TR::CodeGenerator *cg, TR::DataType elementType,
    switch (elementType)
       {
       case TR::Int8:
-         // load v
-         generateTrg1Src2Instruction(cg, TR::InstOpCode::lxvll, node, vtmp1Reg, valueReg, tempReg);
+         if (isLE)
+            {
+            // swap around the shorts in each word
+            generateTrg1ImmInstruction(cg, TR::InstOpCode::vspltisw, node, vtmp2Reg, 16);
+            generateTrg1Src2Instruction(cg, TR::InstOpCode::vrlw, node, vtmp1Reg, vtmp1Reg, vtmp2Reg);
+            // then swap around the bytes in each short
+            generateTrg1ImmInstruction(cg, TR::InstOpCode::vspltish, node, vtmp2Reg, 8);
+            generateTrg1Src2Instruction(cg, TR::InstOpCode::vrlh, node, vtmp1Reg, vtmp1Reg, vtmp2Reg);
+            }
 
          // unpack
          generateTrg1Src1Instruction(cg, TR::InstOpCode::vupkhsb, node, vtmp2Reg, vtmp1Reg);
@@ -10653,11 +10650,12 @@ hashCodeHelper(TR::Node *node, TR::CodeGenerator *cg, TR::DataType elementType,
          generateTrg1Src2Instruction(cg, TR::InstOpCode::vadduwm, node, low4Reg, low4Reg, vtmp3Reg);
          break;
       case TR::Int16:
-         // load v
-         generateTrg1Src2Instruction(cg, TR::InstOpCode::lxvll, node, vtmp1Reg, valueReg, tempReg);
-         // then swap around the bytes
-         generateTrg1ImmInstruction(cg, TR::InstOpCode::vspltish, node, vtmp2Reg, 8);
-         generateTrg1Src2Instruction(cg, TR::InstOpCode::vrlh, node, vtmp1Reg, vtmp1Reg, vtmp2Reg);
+         if (isLE)
+            {
+            // swap around the shorts in each word
+            generateTrg1ImmInstruction(cg, TR::InstOpCode::vspltisw, node, vtmp2Reg, 16);
+            generateTrg1Src2Instruction(cg, TR::InstOpCode::vrlw, node, vtmp1Reg, vtmp1Reg, vtmp2Reg);
+            }
 
          // high4
          generateTrg1Src1Instruction(cg, TR::InstOpCode::vupkhsh, node, vtmp2Reg, vtmp1Reg);
@@ -10677,8 +10675,6 @@ hashCodeHelper(TR::Node *node, TR::CodeGenerator *cg, TR::DataType elementType,
          generateTrg1Src2Instruction(cg, TR::InstOpCode::vadduwm, node, low4Reg, low4Reg, vtmp2Reg);
          break;
       case TR::Int32:
-         // load v
-         generateTrg1Src2Instruction(cg, TR::InstOpCode::lxvw4x, node, vtmp1Reg, valueReg, tempReg);
          // no need to unpack
          generateTrg1Src2Instruction(cg, TR::InstOpCode::vmuluwm, node, low4Reg, low4Reg, multiplierReg);
          generateTrg1Src2Instruction(cg, TR::InstOpCode::vadduwm, node, low4Reg, low4Reg, vtmp1Reg);
@@ -10699,48 +10695,51 @@ hashCodeHelper(TR::Node *node, TR::CodeGenerator *cg, TR::DataType elementType,
    generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp8, node, condReg, valueReg, endReg);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, resultLabel, condReg);
 
-   // vend = remaining bytes
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::subf, node, vendReg, valueReg, endReg);
-   //generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, hashReg, vendReg);
-   //generateLabelInstruction(cg, TR::InstOpCode::b, node, endLabel);
-   // lxvll will use the highest 8 bits
-   generateShiftLeftImmediateLong(cg, node, tempReg, vendReg, 56);
-
-   // load the remaining elements
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::lxvll, node, vtmp1Reg, valueReg, tempReg);
-
-   // the results of lxvll are left-adjusted items with the last element in the lowest non-zero byte
-   // we want the them to be right-adjusted with the last element in the lowest byte
-   // vtmp2Reg = tempReg = (16-vend) << 3 i.e. the number of bits that are zero
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::nor, node, tempReg, vendReg, vendReg);
-   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, tempReg, tempReg, 17);
-   generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, tempReg, tempReg, 3, 0xFFFFFFFFFFFFFFF8);
-   generateTrg1Src1Instruction(cg, TR::InstOpCode::mtvsrd, node, vtmp2Reg, tempReg);
-   generateTrg1Src2ImmInstruction(cg, TR::InstOpCode::vsldoi, node, vtmp2Reg, vconstant0Reg, vtmp2Reg, 8);
-   // shift by the bits
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::vsro, node, vtmp1Reg, vtmp1Reg, vtmp2Reg);
-
-   // for LE, the bytes within each element are the wrong way around
-   if (isLE && elementType != TR::Int8)
+   // we now have less than 16 bytes of data after v, so instead of risk loading
+   // invalid memory, we just load the last 16 bytes
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, vendReg, endReg, -16);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::lxvw4x, node, vtmp1Reg, vendReg, tempReg);
+   if (isLE)
       {
       switch (elementType)
          {
-         case TR::Int32:
-            // first swap around the halfwords
-            generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, tempReg, 16);
-            generateTrg1Src1Instruction(cg, TR::InstOpCode::mtvsrd, node, vtmp2Reg, tempReg);
-            generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::vspltw, node, vtmp2Reg, vtmp2Reg, 1);
-            generateTrg1Src2Instruction(cg, TR::InstOpCode::vrlw, node, vtmp1Reg, vtmp1Reg, vtmp2Reg);
-            // fall through
          case TR::Int16:
-            // then swap around the bytes
+            // swap around the shorts in each word
+            generateTrg1ImmInstruction(cg, TR::InstOpCode::vspltisw, node, vtmp2Reg, 16);
+            generateTrg1Src2Instruction(cg, TR::InstOpCode::vrlw, node, vtmp1Reg, vtmp1Reg, vtmp2Reg);
+            break;
+         case TR::Int8:
+            // swap around the shorts in each word
+            generateTrg1ImmInstruction(cg, TR::InstOpCode::vspltisw, node, vtmp2Reg, 16);
+            generateTrg1Src2Instruction(cg, TR::InstOpCode::vrlw, node, vtmp1Reg, vtmp1Reg, vtmp2Reg);
+            // then swap around the bytes in each short
             generateTrg1ImmInstruction(cg, TR::InstOpCode::vspltish, node, vtmp2Reg, 8);
             generateTrg1Src2Instruction(cg, TR::InstOpCode::vrlh, node, vtmp1Reg, vtmp1Reg, vtmp2Reg);
             break;
+         case TR::Int32:
+            break;
          default:
-            TR_ASSERT_FATAL(false, "Unsupported hashCodeHelper elementType or is Int8");
+            TR_ASSERT_FATAL(false, "Unsupported hashCodeHelper elementType");
          }
       }
+
+   // vend = remaining bytes
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::subf, node, vendReg, valueReg, endReg);
+
+   // we have loaded the last 16 bytes, but only the last (vend) bytes need to be taken account for
+   // the rest should be masked into zero:
+   // vtmp2Reg = tempReg = (16-vend) << 3 = number of bits to be masked 
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::nor, node, tempReg, vendReg, vendReg);
+         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, tempReg, tempReg, 17);
+   generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, tempReg, vendReg, 3, 0xFFFFFFFFFFFFFFF8);
+   generateTrg1Src1Instruction(cg, TR::InstOpCode::mtvsrd, node, vtmp2Reg, tempReg);
+   generateTrg1Src2ImmInstruction(cg, TR::InstOpCode::vsldoi, node, vtmp2Reg, vconstant0Reg, vtmp2Reg, 8);
+   // use vconstant0Reg for all 1s because we are out of registers; restore it aftewards
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::vnor, node, vconstant0Reg, vconstant0Reg, vconstant0Reg);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::vsro, node, vtmp2Reg, vconstant0Reg, vtmp2Reg);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::vxor, node, vconstant0Reg, vconstant0Reg, vconstant0Reg);
+
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::vand, node, vtmp1Reg, vtmp1Reg, vtmp2Reg);
 
    // for each new element we are about to add, we must multiply every element in the accumulators
    // by 31, to find this multiplier
@@ -10748,7 +10747,6 @@ hashCodeHelper(TR::Node *node, TR::CodeGenerator *cg, TR::DataType elementType,
    // 2. walk 16/32/64 bytes on the multiplierVector to the location where the third word is 1
    // 3. walk back by the value contained in tempReg
    // 4. load the value and splat it for all elements in the multiplierReg
-
    switch (elementType)
       {
       case TR::Int8:
@@ -10891,7 +10889,6 @@ hashCodeHelper(TR::Node *node, TR::CodeGenerator *cg, TR::DataType elementType,
    generateTrg1Src2ImmInstruction(cg, TR::InstOpCode::vsldoi, node, vtmp1Reg, low4Reg, vconstant0Reg, 8);
    generateTrg1Src1Instruction(cg, TR::InstOpCode::mfvsrwz, node, hashReg, vtmp1Reg);
    generateLabelInstruction(cg, TR::InstOpCode::b, node, endLabel);
-
 
    // special cases
    // 2: do load and shift twice
