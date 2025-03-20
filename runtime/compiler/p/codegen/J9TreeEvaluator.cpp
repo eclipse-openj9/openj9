@@ -10604,8 +10604,9 @@ hashCodeHelper(TR::Node *node, TR::CodeGenerator *cg, TR::DataType elementType,
       case TR::Int8:
          if (isLE)
             {
-            // swap around the shorts in each word
-            generateTrg1ImmInstruction(cg, TR::InstOpCode::vspltisw, node, vtmp2Reg, 16);
+            // swap around the shorts in each word; we need 2 instructions to load 16
+            generateTrg1ImmInstruction(cg, TR::InstOpCode::vspltisw, node, vtmp2Reg, 8);
+            generateTrg1Src2Instruction(cg, TR::InstOpCode::vadduwm, node, vtmp2Reg, vtmp2Reg, vtmp2Reg);
             generateTrg1Src2Instruction(cg, TR::InstOpCode::vrlw, node, vtmp1Reg, vtmp1Reg, vtmp2Reg);
             // then swap around the bytes in each short
             generateTrg1ImmInstruction(cg, TR::InstOpCode::vspltish, node, vtmp2Reg, 8);
@@ -10652,9 +10653,9 @@ hashCodeHelper(TR::Node *node, TR::CodeGenerator *cg, TR::DataType elementType,
       case TR::Int16:
          if (isLE)
             {
-            // swap around the shorts in each word
-            generateTrg1ImmInstruction(cg, TR::InstOpCode::vspltisw, node, vtmp2Reg, 16);
-            generateTrg1Src2Instruction(cg, TR::InstOpCode::vrlw, node, vtmp1Reg, vtmp1Reg, vtmp2Reg);
+            // swap around the shorts in each word; we need 2 instructions to load 16
+            generateTrg1ImmInstruction(cg, TR::InstOpCode::vspltisw, node, vtmp2Reg, 8);
+            generateTrg1Src2Instruction(cg, TR::InstOpCode::vadduwm, node, vtmp2Reg, vtmp2Reg, vtmp2Reg);
             }
 
          // high4
@@ -10704,14 +10705,14 @@ hashCodeHelper(TR::Node *node, TR::CodeGenerator *cg, TR::DataType elementType,
       switch (elementType)
          {
          case TR::Int16:
-            // swap around the shorts in each word
-            generateTrg1ImmInstruction(cg, TR::InstOpCode::vspltisw, node, vtmp2Reg, 16);
-            generateTrg1Src2Instruction(cg, TR::InstOpCode::vrlw, node, vtmp1Reg, vtmp1Reg, vtmp2Reg);
+            // swap around the shorts in each word; we need 2 instructions to load 16
+            generateTrg1ImmInstruction(cg, TR::InstOpCode::vspltisw, node, vtmp2Reg, 8);
+            generateTrg1Src2Instruction(cg, TR::InstOpCode::vadduwm, node, vtmp2Reg, vtmp2Reg, vtmp2Reg);
             break;
          case TR::Int8:
-            // swap around the shorts in each word
-            generateTrg1ImmInstruction(cg, TR::InstOpCode::vspltisw, node, vtmp2Reg, 16);
-            generateTrg1Src2Instruction(cg, TR::InstOpCode::vrlw, node, vtmp1Reg, vtmp1Reg, vtmp2Reg);
+            // swap around the shorts in each word; we need 2 instructions to load 16
+            generateTrg1ImmInstruction(cg, TR::InstOpCode::vspltisw, node, vtmp2Reg, 8);
+            generateTrg1Src2Instruction(cg, TR::InstOpCode::vadduwm, node, vtmp2Reg, vtmp2Reg, vtmp2Reg);
             // then swap around the bytes in each short
             generateTrg1ImmInstruction(cg, TR::InstOpCode::vspltish, node, vtmp2Reg, 8);
             generateTrg1Src2Instruction(cg, TR::InstOpCode::vrlh, node, vtmp1Reg, vtmp1Reg, vtmp2Reg);
