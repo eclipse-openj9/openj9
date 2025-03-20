@@ -10491,16 +10491,14 @@ hashCodeHelper(TR::Node *node, TR::CodeGenerator *cg, TR::DataType elementType,
       case TR::Int8:
          break;
       case TR::Int16:
-         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, endReg, endReg, 1,
-                                         0xFFFFFFFFFFFFFFFE);
-         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, vendReg, vendReg, 1,
-                                         0xFFFFFFFFFFFFFFFE);
+         generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, endReg, endReg, endReg);
+         generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, vendReg, vendReg, vendReg);
          break;
       case TR::Int32:
-         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, endReg, endReg, 2,
-                                         0xFFFFFFFFFFFFFFFC);
-         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, vendReg, vendReg, 2,
-                                         0xFFFFFFFFFFFFFFFC);
+         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldic, node, endReg, endReg, 2,
+                                         CONSTANT64(0x00000003FFFFFFFC));
+         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldic, node, vendReg, vendReg, 2,
+                                         CONSTANT64(0x00000003FFFFFFFC));
          break;
       default:
          TR_ASSERT_FATAL(false, "Unsupported hashCodeHelper elementType");
