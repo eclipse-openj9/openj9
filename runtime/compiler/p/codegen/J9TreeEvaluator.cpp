@@ -10797,17 +10797,20 @@ hashCodeHelper(TR::Node *node, TR::CodeGenerator *cg, TR::DataType elementType,
    switch (elementType)
       {
       case TR::Int8:
-         generateTrg1MemInstruction(cg, TR::InstOpCode::lbzx, node, tempReg, TR::MemoryReference::createWithIndexReg(cg, valueReg, constant0Reg, 1));
+         generateTrg1MemInstruction(cg, TR::InstOpCode::lbzx, node, tempReg,
+            TR::MemoryReference::createWithIndexReg(cg, NULL, valueReg, 1));
          if (isSigned)
             {
             generateTrg1Src1Instruction(cg, TR::InstOpCode::extsb, node, tempReg, tempReg);
             }
          break;
       case TR::Int16:
-         generateTrg1MemInstruction(cg, isSigned ? TR::InstOpCode::lhax : TR::InstOpCode::lhzx, node, tempReg, TR::MemoryReference::createWithIndexReg(cg, valueReg, constant0Reg, 2));
+         generateTrg1MemInstruction(cg, isSigned ? TR::InstOpCode::lhax : TR::InstOpCode::lhzx, node, tempReg,
+            TR::MemoryReference::createWithIndexReg(cg, NULL, valueReg, 2));
          break;
       case TR::Int32:
-         generateTrg1MemInstruction(cg, TR::InstOpCode::lwzx, node, tempReg, TR::MemoryReference::createWithIndexReg(cg, valueReg, constant0Reg, 4));
+         generateTrg1MemInstruction(cg, TR::InstOpCode::lwzx, node, tempReg,
+            TR::MemoryReference::createWithIndexReg(cg, NULL, valueReg, 4));
          break;
       default:
          TR_ASSERT_FATAL(false, "Unsupported hashCodeHelper elementType");
