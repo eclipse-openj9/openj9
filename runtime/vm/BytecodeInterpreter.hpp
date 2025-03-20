@@ -1201,7 +1201,13 @@ obj:
 #if JAVA_SPEC_VERSION >= 24
 				if (VM_ContinuationHelpers::isYieldableVirtualThread(_currentThread)) {
 					/* Try to yield the virtual thread if it will be blocked. */
+					buildInternalNativeStackFrame(REGISTER_ARGS);
+					updateVMStruct(REGISTER_ARGS);
+
 					rc = preparePinnedVirtualThreadForUnmount(_currentThread, obj, false);
+
+					VMStructHasBeenUpdated(REGISTER_ARGS);
+					restoreInternalNativeStackFrame(REGISTER_ARGS);
 				} else
 #endif /* JAVA_SPEC_VERSION >= 24 */
 				{
