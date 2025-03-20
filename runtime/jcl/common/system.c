@@ -43,38 +43,6 @@
 #include <_Ccsid.h>
 #endif
 
-
-#if JAVA_SPEC_VERSION == 11
-void JNICALL
-Java_java_lang_System_initJCLPlatformEncoding(JNIEnv *env, jclass clazz)
-{
-	UDATA handle = 0;
-	J9JavaVM * const vm = ((J9VMThread*)env)->javaVM;
-	char dllPath[EsMaxPath] = {0};
-	UDATA written = 0;
-	const char *encoding = NULL;
-	PORT_ACCESS_FROM_ENV(env);
-
-#if defined(OSX)
-	encoding = "UTF-8";
-#else
-	char property[128] = {0};
-	encoding = getPlatformFileEncoding(env, property, sizeof(property), 1); /* platform encoding */
-#endif /* defined(OSX) */
-	/* libjava.[so|dylib] is in the jdk/lib/ directory, one level up from the default/ & compressedrefs/ directories */
-	written = j9str_printf(dllPath, sizeof(dllPath), "%s/../java", vm->j2seRootDirectory);
-	/* Assert the number of characters written (not including the null) fit within the dllPath buffer */
-	Assert_JCL_true(written < (sizeof(dllPath) - 1));
-	if (0 == j9sl_open_shared_library(dllPath, &handle, J9PORT_SLOPEN_DECORATE)) {
-		void (JNICALL *nativeFuncAddrJNU)(JNIEnv *env, const char *str) = NULL;
-		if (0 == j9sl_lookup_name(handle, "InitializeEncoding", (UDATA*) &nativeFuncAddrJNU, "VLL")) {
-			/* invoke JCL native to initialize platform encoding explicitly */
-			nativeFuncAddrJNU(env, encoding);
-		}
-	}
-}
-#endif /* JAVA_SPEC_VERSION == 11 */
-
 /**
  * sysPropID
  *    0 - os.version

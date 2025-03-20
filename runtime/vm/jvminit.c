@@ -2822,16 +2822,6 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 				goto _memParseError;
 			}
 #endif /* JAVA_SPEC_VERSION >= 19 */
-#if JAVA_SPEC_VERSION >= 24
-			{
-				argIndex = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXYIELDPINNEDVIRTUALTHREADS, NULL);
-				argIndex2 = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXNOYIELDPINNEDVIRTUALTHREADS, NULL);
-				if (argIndex > argIndex2) {
-					/* Enable yielding of pinned continuation. */
-					vm->extendedRuntimeFlags3 |= J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION;
-				}
-			}
-#endif /* JAVA_SPEC_VERSION >= 24 */
 			if ((argIndex = FIND_AND_CONSUME_VMARG(STARTSWITH_MATCH, VMOPT_XXDUMPLOADEDCLASSLIST, NULL)) >= 0) {
 				J9HookInterface **vmHooks = vm->internalVMFunctions->getVMHookInterface(vm);
 				GET_OPTION_VALUE(argIndex, '=', &optionValue);
@@ -4389,8 +4379,22 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 			vm->extendedRuntimeFlags3 |= J9_EXTENDED_RUNTIME3_START_FLIGHT_RECORDING;
 		}
 	}
-
 #endif /* defined(J9VM_OPT_JFR) */
+
+#if JAVA_SPEC_VERSION >= 24
+	{
+		IDATA enableYieldPinning = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXYIELDPINNEDVIRTUALTHREADS, NULL);
+		IDATA disableYieldPinning = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXNOYIELDPINNEDVIRTUALTHREADS, NULL);
+
+		/* Enable yielding of pinned continuations by default. */
+		vm->extendedRuntimeFlags3 |= J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION;
+
+		if (enableYieldPinning < disableYieldPinning) {
+			/* Disable yielding of pinned continuations. */
+			vm->extendedRuntimeFlags3 &= ~J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION;
+		}
+	}
+#endif /* JAVA_SPEC_VERSION >= 24 */
 
 	if (FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXKEEPJNIIDS, NULL) != -1) {
 		vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_ALWAYS_KEEP_JNI_IDS;

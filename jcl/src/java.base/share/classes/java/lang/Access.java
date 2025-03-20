@@ -594,10 +594,12 @@ final class Access implements JavaLangAccess {
 		return ClassLoader.findNative0(loader, entryName);
 	}
 
+	/*[IF (JAVA_SPEC_VERSION < 25) | INLINE-TYPES]*/
 	@Override
 	public void exit(int status) {
 		Shutdown.exit(status);
 	}
+	/*[ENDIF] (JAVA_SPEC_VERSION < 25) | INLINE-TYPES */
 
 	public int encodeASCII(char[] sa, int sp, byte[] da, int dp, int len) {
 		return StringCoding.implEncodeAsciiArray(sa, sp, da, dp, len);

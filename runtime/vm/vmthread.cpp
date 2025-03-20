@@ -574,7 +574,23 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 	vm->thrMaxTryEnterYieldsBeforeBlocking = 45;
 	vm->thrNestedSpinning = 1;
 	vm->thrTryEnterNestedSpinning = 1;
-	vm->thrDeflationPolicy = J9VM_DEFLATION_POLICY_ASAP;
+
+#if JAVA_SPEC_VERSION >= 24
+	/* Currently, there are timing holes between JVM_TakeVirtualThreadListToUnblock and monitor deflation.
+	 * A monitor can be deflated while it is being accessed in JVM_TakeVirtualThreadListToUnblock. This
+	 * leads to a NULL dereference causing a segfault. Adding more synchronization will cause a significant
+	 * overhead in the object monitor exit path. Until an efficient solution is developed, the policy to never
+	 * deflate will be employed in order to support Synchronize Virtual Threads without Pinning (JEP491).
+	 * Since the current JEP491 implementation always inflates monitors before usage, deflating will be
+	 * counter-productive.
+	 */
+	if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)) {
+		vm->thrDeflationPolicy = J9VM_DEFLATION_POLICY_NEVER;
+	} else
+#endif /* JAVA_SPEC_VERSION >= 24 */
+	{
+		vm->thrDeflationPolicy = J9VM_DEFLATION_POLICY_ASAP;
+	}
 
 	if (cpus > 1) {
 #if (defined(LINUXPPC)) && !defined(J9VM_ENV_LITTLE_ENDIAN)

@@ -23,7 +23,4 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	<export name="Java_java_lang_Class_getNestHostImpl"/>
 	<export name="Java_java_lang_Class_getNestMembersImpl"/>
 	<export name="Java_java_lang_invoke_MethodHandleResolver_getCPConstantDynamicAt"/>
-	<export name="Java_java_lang_System_initJCLPlatformEncoding">
-		<exclude-if condition="spec.java12"/>
-	</export>
 </exports>

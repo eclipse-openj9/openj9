@@ -363,10 +363,6 @@ public final class System {
 		// Fill in the properties from the VM information.
 		ensureProperties(true);
 
-		/*[IF JAVA_SPEC_VERSION == 11]*/
-		initJCLPlatformEncoding();
-		/*[ENDIF] JAVA_SPEC_VERSION == 11 */
-
 		/*[REM] Initialize the JITHelpers needed in J9VMInternals since the class can't do it itself */
 		try {
 			java.lang.reflect.Field f1 = J9VMInternals.class.getDeclaredField("jitHelpers"); //$NON-NLS-1$
@@ -681,15 +677,9 @@ private static void arraycopy(Object[] A1, int offset1, Object[] A2, int offset2
  */
 public static native long currentTimeMillis();
 
-/*[IF OpenJ9-RawBuild]*/
-	/* This is a JCL native required only by OpenJ9 raw build.
-	 * OpenJ9 raw build is a combination of OpenJ9 and OpenJDK binaries without JCL patches within extension repo.
-	 * Currently OpenJ9 depends on a JCL patch to initialize platform encoding which is not available to raw build.
-	 * A workaround for raw build is to invoke this JCL native which initializes platform encoding.
-	 * This workaround can be removed if that JCL patch is not required.
-	 */
+/*[IF JAVA_SPEC_VERSION == 11]*/
 private static native Properties initProperties(Properties props);
-/*[ENDIF] OpenJ9-RawBuild */
+/*[ENDIF] JAVA_SPEC_VERSION == 11 */
 
 /**
  * If systemProperties is unset, then create a new one based on the values
@@ -697,16 +687,16 @@ private static native Properties initProperties(Properties props);
  */
 @SuppressWarnings("nls")
 private static void ensureProperties(boolean isInitialization) {
-/*[IF OpenJ9-RawBuild]*/
-	// invoke JCL native to initialize platform encoding
-	initProperties(new Properties());
-/*[ENDIF] OpenJ9-RawBuild */
+	/*[IF JAVA_SPEC_VERSION == 11]*/
+	Properties jclProps = new Properties();
+	initProperties(jclProps);
+	/*[ENDIF] JAVA_SPEC_VERSION == 11 */
 
-/*[IF JAVA_SPEC_VERSION > 11]*/
+	/*[IF JAVA_SPEC_VERSION > 11]*/
 	Map<String, String> initializedProperties = new HashMap<>();
-/*[ELSE] JAVA_SPEC_VERSION > 11
+	/*[ELSE] JAVA_SPEC_VERSION > 11
 	Properties initializedProperties = new Properties();
-/*[ENDIF] JAVA_SPEC_VERSION > 11 */
+	/*[ENDIF] JAVA_SPEC_VERSION > 11 */
 
 	/*[IF JAVA_SPEC_VERSION >= 17]*/
 	initializedProperties.put("os.version", sysPropOSVersion); //$NON-NLS-1$
@@ -716,17 +706,13 @@ private static void ensureProperties(boolean isInitialization) {
 		initializedProperties.put("os.encoding", osEncoding); //$NON-NLS-1$
 	}
 	initializedProperties.put("ibm.system.encoding", platformEncoding); //$NON-NLS-1$
-	/*[IF JAVA_SPEC_VERSION < 17]*/
+	/*[IF JAVA_SPEC_VERSION == 8]*/
 	/*[PR The launcher apparently needs sun.jnu.encoding property or it does not work]*/
 	initializedProperties.put("sun.jnu.encoding", platformEncoding); //$NON-NLS-1$
-	/*[ENDIF] JAVA_SPEC_VERSION < 17 */
-	/*[IF JAVA_SPEC_VERSION == 8]*/
 	initializedProperties.put("file.encoding.pkg", "sun.io"); //$NON-NLS-1$ //$NON-NLS-2$
-	/*[ENDIF] JJAVA_SPEC_VERSION == 8 */
-	/*[IF JAVA_SPEC_VERSION < 12]*/
 	/* System property java.specification.vendor is set via VersionProps.init(systemProperties) since JDK12 */
 	initializedProperties.put("java.specification.vendor", "Oracle Corporation"); //$NON-NLS-1$ //$NON-NLS-2$
-	/*[ENDIF] JAVA_SPEC_VERSION < 12 */
+	/*[ENDIF] JAVA_SPEC_VERSION == 8 */
 	initializedProperties.put("java.specification.name", "Java Platform API Specification"); //$NON-NLS-1$ //$NON-NLS-2$
 	initializedProperties.put("com.ibm.oti.configuration", "scar"); //$NON-NLS-1$
 
@@ -757,7 +743,13 @@ private static void ensureProperties(boolean isInitialization) {
 		}
 		initializedProperties.put(key, list[i+1]);
 	}
+	/*[IF JAVA_SPEC_VERSION == 11]*/
+	for (Map.Entry<?, ?> entry : jclProps.entrySet()) {
+		initializedProperties.putIfAbsent(entry.getKey(), entry.getValue());
+	}
+	/*[ELSE] JAVA_SPEC_VERSION == 11 */
 	initializedProperties.put("file.encoding", fileEncoding); //$NON-NLS-1$
+	/*[ENDIF] JAVA_SPEC_VERSION == 11 */
 	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 
 	/*[IF (JAVA_SPEC_VERSION >= 21) & (PLATFORM-mz31 | PLATFORM-mz64)]*/
@@ -1046,13 +1038,6 @@ public static String setProperty(String prop, String value) {
  */
 private static native String [] getPropertyList();
 /*[ENDIF] JAVA_SPEC_VERSION < 17 */
-
-/*[IF JAVA_SPEC_VERSION == 11]*/
-/**
- * Invoke JCL native to initialize platform encoding explicitly.
- */
-private static native void initJCLPlatformEncoding();
-/*[ENDIF] JAVA_SPEC_VERSION == 11 */
 
 /**
  * Before propertiesInitialized is set to true,
