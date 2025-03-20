@@ -10506,9 +10506,6 @@ hashCodeHelper(TR::Node *node, TR::CodeGenerator *cg, TR::DataType elementType,
    generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, valueReg, valueReg, endReg);
    generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, endReg, valueReg, vendReg);
 
-   // initialisations
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::XOR, node, tempReg, tempReg, tempReg);
-
    // using the serial loop is faster if there are less than 16 items
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, condReg, vendReg, 16*elementSize);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, serialLabel, condReg);
@@ -10585,7 +10582,6 @@ hashCodeHelper(TR::Node *node, TR::CodeGenerator *cg, TR::DataType elementType,
 
    // load 0 for lxvw4x
    generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, tempReg, 0);
-
 
    // ------ VSXLabel:
    generateLabelInstruction(cg, TR::InstOpCode::label, node, VSXLabel);
