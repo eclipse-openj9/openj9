@@ -753,6 +753,7 @@ TR_J9EstimateCodeSize::processBytecodeAndGenerateCFG(TR_CallTarget *calltarget, 
                TR::RecognizedMethod rm = resolvedMethod->getRecognizedMethod();
                if (rm == TR::java_util_HashMap_put ||
                    rm == TR::java_util_HashMap_get ||
+                   rm == TR::java_util_concurrent_ConcurrentHashMap_get ||
                    rm == TR::java_lang_Object_hashCode)
                   {
                   nph.setNeedsPeekingToTrue();
