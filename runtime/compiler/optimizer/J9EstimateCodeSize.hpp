@@ -43,7 +43,7 @@ class TR_J9EstimateCodeSize : public TR_EstimateCodeSize
    {
    public:
 
-      TR_J9EstimateCodeSize() : TR_EstimateCodeSize(), _analyzedSize(0), _lastCallBlockFrequency(-1) { }
+      TR_J9EstimateCodeSize() : TR_EstimateCodeSize(), _analyzedSize(0), _bigCalleesSize(0), _lastCallBlockFrequency(-1) { }
 
       int32_t getOptimisticSize()       { return _analyzedSize; }
 
@@ -165,6 +165,7 @@ class TR_J9EstimateCodeSize : public TR_EstimateCodeSize
 
       int32_t _lastCallBlockFrequency;
       int32_t _analyzedSize;          // size if we assume we are doing a partial inline
+      int32_t _bigCalleesSize;
    };
 
 #define NUM_PREV_BC 5
