@@ -10522,23 +10522,35 @@ hashCodeHelper(TR::Node *node, TR::CodeGenerator *cg, TR::DataType elementType,
       0x67E12CDF, 887503681, 28629151, 923521, 29791, 961, 31, 1};
    static uint32_t multiplierVectors32[8] = {923521, 923521, 923521, 923521,
                                                29791, 961, 31, 1};
-   intptr_t multiplierVector;
+   uint32_t *multiplierVector;
+   int mvSize; // multiplierVector's size
    switch (elementType)
       {
       case TR::Int8:
-         multiplierVector = (intptr_t) (multiplierVectors8);
+         multiplierVector = (multiplierVectors8);
+         mvSize = 20;
          break;
       case TR::Int16:
-         multiplierVector = (intptr_t) (multiplierVectors16);
+         multiplierVector = (multiplierVectors16);
+         mvSize = 12;
          break;
       case TR::Int32:
-         multiplierVector = (intptr_t) (multiplierVectors32);
+         multiplierVector = (multiplierVectors32);
+         mvSize = 8;
          break;
       default:
          TR_ASSERT_FATAL(false, "Unsupported hashCodeHelper elementType");
       }
+
+   // use a similar concept the the TableOfConstants to load the multiplierPtr into the memory
+   // TOC uses relocation data, so we use the same here
+   uint32_t *multiplierPtr = (uint32_t*) fej9->allocateRelocationData(comp, mvSize * sizeof(uint32_t));
+   if (!multiplierPtr)
+      return NULL;
+   memcpy((void *) multiplierPtr, (void *) multiplierVector, mvSize * sizeof(uint32_t));
+
    // point to the beginning of the array
-   loadAddressConstant(cg, false, node, multiplierVector, multiplierAddrReg);
+   loadAddressConstant(cg, false, node, (intptr_t) multiplierPtr, multiplierAddrReg);
    // load the multiplierReg
    generateTrg1MemInstruction(cg, TR::InstOpCode::lxvw4x, node, multiplierReg,
       TR::MemoryReference::createWithIndexReg(cg, NULL, multiplierAddrReg, 16));
@@ -12565,7 +12577,7 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
             {
             resultReg = inlineStringHashCode(node, cg,
                methodSymbol->getRecognizedMethod() == TR::java_lang_String_hashCodeImplCompressed);
-            return true;
+            return resultReg != NULL;
             }
          break;
 
