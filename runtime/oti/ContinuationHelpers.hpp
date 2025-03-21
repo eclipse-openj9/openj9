@@ -303,22 +303,18 @@ public:
 	removeContinuationFromList(J9VMContinuation **list, J9VMContinuation *continuation)
 	{
 		bool foundInList = false;
-		J9VMContinuation *previous = NULL;
 		J9VMContinuation *current = *list;
 
 		while (NULL != current) {
 			if (continuation == current) {
 				foundInList = true;
-				if (NULL == previous) {
-					*list = current->nextWaitingContinuation;
-				} else {
-					previous->nextWaitingContinuation = current->nextWaitingContinuation;
-				}
+				/* Remove Continuation from the linked list. */
+				*list = current->nextWaitingContinuation;
 				current->nextWaitingContinuation = NULL;
 				break;
 			}
-			previous = current;
-			current = current->nextWaitingContinuation;
+			link = &current->nextWaitingContinuation;
+			current = *link;
 		}
 
 		return foundInList;
