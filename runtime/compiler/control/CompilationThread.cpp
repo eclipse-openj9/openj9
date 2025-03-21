@@ -480,10 +480,25 @@ int32_t TR::CompilationInfo::computeDynamicDumbInlinerBytecodeSizeCutoff(TR::Opt
 TR_YesNoMaybe TR::CompilationInfo::shouldActivateNewCompThread()
    {
 #if defined(J9VM_OPT_CRIU_SUPPORT)
-   // Don't activate any threads until the restore if the threads should be suspended for checkpoint
+   // Only allow a single comp thread pre-checkpoint if -XX:+DebugOnRestore
+   // is specified. This prevents carving up more code caches than needed
+   // which reduces the RSS footprint. However, this does will increase the
+   // time to checkpoint, which may impact scenarios where the checkpoint is
+   // part of the runtime and not part of the container image build process.
+   J9JavaVM *javaVM = getJITConfig()->javaVM;
+   if (getNumCompThreadsActive() > 0
+       && javaVM->internalVMFunctions->isDebugOnRestoreEnabled(javaVM)
+       && javaVM->internalVMFunctions->isCheckpointAllowed(javaVM))
+      {
+      return TR_no;
+      }
+
+   // Don't activate any threads until the restore if the threads should be
+   // suspended for checkpoint
    if (getCRRuntime()->shouldSuspendThreadsForCheckpoint())
       return TR_no;
 #endif
+
    if (isInShutdownMode())
       return TR_no;
 
