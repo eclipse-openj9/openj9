@@ -991,10 +991,19 @@ preparePinnedVirtualThreadForUnmount(J9VMThread *currentThread, j9object_t syncO
 		}
 
 		if (!J9_LOCK_IS_INFLATED(lock)) {
-			syncObjectMonitor = objectMonitorInflate(currentThread, syncObj, lock);
-			if (NULL == syncObjectMonitor) {
-				result = J9_OBJECT_MONITOR_OOM;
-				goto done;
+			/* A monitor can only be inflated by a thread that owns it. */
+			if (isObjectWait) {
+				/* Object.wait() implies ownership of the monitor. */
+				syncObjectMonitor = objectMonitorInflate(currentThread, syncObj, lock);
+				if (NULL == syncObjectMonitor) {
+					result = J9_OBJECT_MONITOR_OOM;
+					goto done;
+				}
+			} else {
+				/* This must be a monitor enter case, so this implies that a monitor entry was
+					* created as the non-blocking path would have failed.
+					*/
+				syncObjectMonitor = monitorTableAt(currentThread, syncObj);
 			}
 		} else {
 			syncObjectMonitor = J9_INFLLOCK_OBJECT_MONITOR(lock);
