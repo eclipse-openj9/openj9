@@ -1024,6 +1024,7 @@
    java_util_concurrent_ConcurrentHashMap_tabAt,
    java_util_concurrent_ConcurrentHashMap_casTabAt,
    java_util_concurrent_ConcurrentHashMap_setTabAt,
+   java_util_concurrent_ConcurrentHashMap_get,
 
    java_util_concurrent_ConcurrentHashMap_TreeBin_lockRoot,
    java_util_concurrent_ConcurrentHashMap_TreeBin_contendedLock,
