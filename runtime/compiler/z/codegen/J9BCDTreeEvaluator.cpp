@@ -2070,10 +2070,47 @@ J9::Z::TreeEvaluator::BCDCHKEvaluatorImpl(TR::Node * node,
       callNode->setAndIncChild(i, childRootNode->getChild(i + callChildStartIndex));
 
    // Evaluate secondChild's children, if the secondChild is an address node into a byte[]
-   if(isResultPD && secondChild->getNumChildren() == 2 && secondChild->getReferenceCount() > 1)
+   if(isResultPD && secondChild->getNumChildren() == 2)
       {
-      cg->evaluate(secondChild->getFirstChild());
-      cg->evaluate(secondChild->getSecondChild());
+      /* Expected second child (address) node trees
+       * off-heap mode:
+       *     aladd
+       *      aloadi  <contiguousArrayDataAddrFieldSymbol>
+       *        arrayObject
+       *      offset
+       *
+       * non off-heap mode:
+       *     aladd
+       *      arrayObject
+       *      offset
+       *
+       * contiguousArrayDataAddrFieldSymbol isn't being commoned at the moment so it shouldn't
+       * have reference count > 1; arrayObject and offset nodes are the only nodes we need to
+       * check for early evaluation.
+       */
+
+      // Check reference count of array object node to determine if it qualifies for early evaluation
+      if (secondChild->getFirstChild()->isDataAddrPointer())
+         {
+         TR_ASSERT_FATAL_WITH_NODE(node,
+            secondChild->getFirstChild()->getReferenceCount() <= 1,
+            "DataAddr pointer isn't being commend so it shouldn't have reference count greater than 1.\n");
+
+         if (secondChild->getFirstChild()->getFirstChild()->getReferenceCount() > 1)
+            {
+            cg->evaluate(secondChild->getFirstChild()->getFirstChild());
+            }
+         }
+      else if (secondChild->getFirstChild()->getReferenceCount() > 1)
+         {
+         cg->evaluate(secondChild->getFirstChild());
+         }
+
+      // Check reference count of offset node to determine if it qualifies for early evaluation
+      if (secondChild->getSecondChild()->getReferenceCount() > 1)
+         {
+         cg->evaluate(secondChild->getSecondChild());
+         }
       }
 
    // Evaluate intrinsics node
