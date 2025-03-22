@@ -4734,7 +4734,8 @@ preparePinnedVirtualThreadForMount(J9VMThread *currentThread, j9object_t continu
  * @param syncObj object to block/wait on
  * @param isObjectWait if the call is from Object.wait()
  *
- * @return J9_OBJECT_MONITOR_YIELD_VIRTUAL if the can be successfully yielded;
+ * @return syncObj if isObjectWait is false and monitor can be acquired;
+ * J9_OBJECT_MONITOR_YIELD_VIRTUAL if the virtual thread can be successfully yielded;
  * otherwise, an error code is returned
  */
 UDATA
