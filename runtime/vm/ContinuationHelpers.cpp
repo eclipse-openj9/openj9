@@ -923,14 +923,108 @@ preparePinnedVirtualThreadForUnmount(J9VMThread *currentThread, j9object_t syncO
 	UDATA result = J9_OBJECT_MONITOR_YIELD_VIRTUAL;
 	J9ObjectMonitor *syncObjectMonitor = NULL;
 	J9ObjectMonitor *enteredMonitorsList = NULL;
-	j9objectmonitor_t lock = 0;
-	j9object_t continuationObj = NULL;
 	UDATA monitorCount = 0;
 	J9JavaVM *vm = currentThread->javaVM;
 
 	if (NULL != syncObj) {
+		j9objectmonitor_t volatile *lwEA = VM_ObjectMonitor::inlineGetLockAddress(currentThread, syncObj);
+		j9objectmonitor_t lock = J9_LOAD_LOCKWORD(currentThread, lwEA);
+		omrthread_monitor_t monitor = NULL;
+
 		enterVThreadTransitionCritical(currentThread, (jobject)&currentThread->threadObject);
+
+		if (J9_LOCK_IS_INFLATED(lock)) {
+			syncObjectMonitor = J9_INFLLOCK_OBJECT_MONITOR(lock);
+		} else {
+			if (isObjectWait) {
+				syncObjectMonitor = objectMonitorInflate(currentThread, syncObj, lock);
+				if (NULL == syncObjectMonitor) {
+					result = J9_OBJECT_MONITOR_OOM;
+					goto done;
+				}
+			} else {
+				/* This must be a monitor enter case, so this implies that a monitor entry was
+				 * created as the non-blocking path would have failed.
+				 * Since a monitor can only be inflated by a thread that owns it, we can't directly
+				 * inflate the blocking monitor.
+				 */
+restart:
+#if defined(J9VM_THR_LOCK_RESERVATION)
+				{
+					while (OBJECT_HEADER_LOCK_RESERVED == (lock & (OBJECT_HEADER_LOCK_RESERVED | OBJECT_HEADER_LOCK_INFLATED))) {
+						cancelLockReservation(currentThread);
+						/* Calculate the new lock word, since the object may have moved. */
+						syncObj = J9VMTHREAD_BLOCKINGENTEROBJECT(currentThread, currentThread);
+						lwEA = VM_ObjectMonitor::inlineGetLockAddress(currentThread, syncObj);
+						lock = J9_LOAD_LOCKWORD(currentThread, lwEA);
+						if (VM_ObjectMonitor::inlineFastInitAndEnterMonitor(currentThread, lwEA)) {
+							result = (UDATA)syncObj;
+							goto done;
+						}
+					}
+				}
+#endif /* J9VM_THR_LOCK_RESERVATION */
+				syncObjectMonitor = monitorTableAt(currentThread, syncObj);
+				monitor = syncObjectMonitor->monitor;
+
+				/* Try acquire the inflated monitor */
+				if (0 == omrthread_monitor_try_enter(monitor)) {
+					/* If the INFLATED bit is set, then it is already inflated and we own the object monitor. */
+					if (J9_ARE_ANY_BITS_SET(((J9ThreadMonitor *)monitor)->flags, J9THREAD_MONITOR_INFLATED)) {
+						currentThread->ownedMonitorCount += 1;
+						result = (UDATA)syncObj;
+						goto done;
+					}
+
+					/* Loop until either lock is inflated or FLC bit is set. */
+					while (!J9_LOCK_IS_INFLATED(lock)) {
+						/* The monitor isn't inflated yet, but we can update the lockword now. */
+						UDATA newLockword = 0;
+						UDATA count = J9_FLATLOCK_COUNT(lock);
+						if (0 == count) {
+							/* Lock is unlocked, so try to directly acquire it as a flatlock. */
+							newLockword = (UDATA)currentThread;
+						} else {
+							/* Change the lock to flat with FLC bit set so it will be inflated during exit. */
+							newLockword = (UDATA)J9_FLATLOCK_OWNER(lock)
+										| ((count - 1) << OBJECT_HEADER_LOCK_V2_RECURSION_OFFSET)
+										| OBJECT_HEADER_LOCK_FLC;
+						}
+						j9objectmonitor_t const oldValue = lock;
+						lock = VM_ObjectMonitor::compareAndSwapLockword(currentThread, lwEA, lock, (j9objectmonitor_t)newLockword);
+						if (lock == oldValue) {
+							/* CAS succeeded, we can proceed with using the inflated monitor. */
+							VM_ObjectMonitor::incrementCancelCounter(J9OBJECT_CLAZZ(currentThread, syncObj));
+
+							if (J9_FLATLOCK_OWNER(lock) == currentThread) {
+								/* Lock is acquired. */
+								currentThread->ownedMonitorCount += 1;
+								result = (UDATA)syncObj;
+								goto done;
+							}
+							break;
+#if defined(J9VM_THR_LOCK_RESERVATION)
+						} else if (OBJECT_HEADER_LOCK_RESERVED == (lock & (OBJECT_HEADER_LOCK_RESERVED | OBJECT_HEADER_LOCK_INFLATED))) {
+							/* Lock is now reserved, exit the inflated monitor and restart to cancel lock reservation. */
+							omrthread_monitor_exit(monitor);
+							goto restart;
+#endif /* J9VM_THR_LOCK_RESERVATION */
+						}
+						/* CAS failed, another thread must have updated the lockword, retry the check. */
+					}
+				} else {
+					/* Inflated monitor owned by another thread, so the lockword update will be completed by them. */
+					lock = J9_LOAD_LOCKWORD(currentThread, lwEA);
+					/* We can safely continue if the lock is inflated or FLC bit is set. */
+					if (0 == (lock & (OBJECT_HEADER_LOCK_FLC | OBJECT_HEADER_LOCK_INFLATED))) {
+						goto restart;
+					}
+				}
+			}
+		}
 	}
+
+	/* Walk all owned monitors and detach from current carrier thread. */
 	if (currentThread->ownedMonitorCount > 0) {
 		J9StackWalkState walkState;
 
@@ -979,28 +1073,7 @@ preparePinnedVirtualThreadForUnmount(J9VMThread *currentThread, j9object_t syncO
 	}
 
 	if (NULL != syncObj) {
-		if (!LN_HAS_LOCKWORD(currentThread, syncObj)) {
-			syncObjectMonitor = monitorTablePeek(vm, syncObj);
-			if (NULL != syncObjectMonitor) {
-				lock = J9_LOAD_LOCKWORD(currentThread, &syncObjectMonitor->alternateLockword);
-			} else {
-				lock = 0;
-			}
-		} else {
-			lock = J9OBJECT_MONITOR(currentThread, syncObj);
-		}
-
-		if (!J9_LOCK_IS_INFLATED(lock)) {
-			syncObjectMonitor = objectMonitorInflate(currentThread, syncObj, lock);
-			if (NULL == syncObjectMonitor) {
-				result = J9_OBJECT_MONITOR_OOM;
-				goto done;
-			}
-		} else {
-			syncObjectMonitor = J9_INFLLOCK_OBJECT_MONITOR(lock);
-		}
-
-		continuationObj = J9VMJAVALANGVIRTUALTHREAD_CONT(currentThread, currentThread->threadObject);
+		j9object_t continuationObj = J9VMJAVALANGVIRTUALTHREAD_CONT(currentThread, currentThread->threadObject);
 		J9VMJDKINTERNALVMCONTINUATION_SET_BLOCKER(currentThread, continuationObj, syncObj);
 
 		if (isObjectWait) {
@@ -1024,19 +1097,24 @@ preparePinnedVirtualThreadForUnmount(J9VMThread *currentThread, j9object_t syncO
 			currentThread->currentContinuation->objectWaitMonitor = syncObjectMonitor;
 			omrthread_monitor_exit(vm->blockedVirtualThreadsMutex);
 		} else {
+			/* Increment the wait count on inflated monitor. */
 			VM_AtomicSupport::addU32(&syncObjectMonitor->virtualThreadWaitCount, 1);
+			currentThread->currentContinuation->objectWaitMonitor = syncObjectMonitor;
 		}
-
-		/* Clear the blocking object on the carrier thread. */
-		J9VMTHREAD_SET_BLOCKINGENTEROBJECT(currentThread, currentThread, NULL);
 	}
 
 	/* Subtract the detached monitor from the carrier thread's lockedmonitorcount. */
 	currentThread->osThread->lockedmonitorcount -= monitorCount;
 
 done:
-	if ((NULL != syncObj) && (J9_OBJECT_MONITOR_YIELD_VIRTUAL != result)) {
-		exitVThreadTransitionCritical(currentThread, (jobject)&currentThread->threadObject);
+	if (NULL != syncObj) {
+		if (J9_OBJECT_MONITOR_YIELD_VIRTUAL != result) {
+			exitVThreadTransitionCritical(currentThread, (jobject)&currentThread->threadObject);
+		}
+		if (!isObjectWait) {
+			/* Clear the blocking object on the carrier thread. */
+			J9VMTHREAD_SET_BLOCKINGENTEROBJECT(currentThread, currentThread, NULL);
+		}
 	}
 	return result;
 }

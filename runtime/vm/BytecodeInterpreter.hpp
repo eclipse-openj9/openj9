@@ -1527,6 +1527,8 @@ obj:
 	VMINLINE VM_BytecodeAction
 	yieldPinnedContinuation(REGISTER_ARGS_LIST, U_32 newThreadState, UDATA returnState)
 	{
+		J9VMContinuation *continuation = _currentThread->currentContinuation;
+
 		/* InternalNative frame only build for non-jit calls. */
 		if (J9VM_CONTINUATION_RETURN_FROM_JIT_MONITOR_ENTER != returnState) {
 			buildInternalNativeStackFrame(REGISTER_ARGS);
@@ -1537,8 +1539,13 @@ obj:
 		if (JAVA_LANG_VIRTUALTHREAD_BLOCKING == newThreadState) {
 			/* Add the thread object to the blocked list. */
 			omrthread_monitor_enter(_vm->blockedVirtualThreadsMutex);
-			_currentThread->currentContinuation->nextWaitingContinuation = _vm->blockedContinuations;
-			_vm->blockedContinuations = _currentThread->currentContinuation;
+			continuation->nextWaitingContinuation = _vm->blockedContinuations;
+			_vm->blockedContinuations = continuation;
+
+			if (NULL == continuation->objectWaitMonitor->monitor->owner) {
+				/* notify unblocker if the blocking monitor is unlocked. */
+				omrthread_monitor_notify(_vm->blockedVirtualThreadsMutex);
+			}
 			omrthread_monitor_exit(_vm->blockedVirtualThreadsMutex);
 		}
 
@@ -1578,9 +1585,6 @@ obj:
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 			case J9_OBJECT_MONITOR_YIELD_VIRTUAL: {
 				rc = yieldPinnedContinuation(REGISTER_ARGS, JAVA_LANG_VIRTUALTHREAD_BLOCKING, returnState);
-				omrthread_monitor_enter(_vm->blockedVirtualThreadsMutex);
-				omrthread_monitor_notify(_vm->blockedVirtualThreadsMutex);
-				omrthread_monitor_exit(_vm->blockedVirtualThreadsMutex);
 				break;
 			}
 			case J9_OBJECT_MONITOR_OOM:
@@ -5763,6 +5767,7 @@ ffi_OOM:
 			j9object_t waitObject = *(j9object_t *)(_sp + 3);
 			rc = tryEnterBlockingMonitor(REGISTER_ARGS, waitObject, J9VM_CONTINUATION_RETURN_FROM_OBJECT_WAIT);
 			if ((NULL != _currentThread->currentContinuation) && (EXECUTE_BYTECODE == rc)) {
+				waitObject = *(j9object_t *)(_sp + 3);
 				omrthread_monitor_t monitor = getMonitorForWait(_currentThread, waitObject);
 				monitor->count = _currentThread->currentContinuation->waitingMonitorEnterCount;
 				_currentThread->currentContinuation->waitingMonitorEnterCount = 0;
