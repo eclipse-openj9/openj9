@@ -677,9 +677,9 @@ private static void arraycopy(Object[] A1, int offset1, Object[] A2, int offset2
  */
 public static native long currentTimeMillis();
 
-/*[IF JAVA_SPEC_VERSION == 11]*/
+/*[IF (JAVA_SPEC_VERSION <= 11) & Sidecar18-SE-OpenJ9]*/
 private static native Properties initProperties(Properties props);
-/*[ENDIF] JAVA_SPEC_VERSION == 11 */
+/*[ENDIF] (JAVA_SPEC_VERSION <= 11) & Sidecar18-SE-OpenJ9 */
 
 /**
  * If systemProperties is unset, then create a new one based on the values
@@ -687,10 +687,10 @@ private static native Properties initProperties(Properties props);
  */
 @SuppressWarnings("nls")
 private static void ensureProperties(boolean isInitialization) {
-	/*[IF JAVA_SPEC_VERSION == 11]*/
+	/*[IF (JAVA_SPEC_VERSION <= 11) & Sidecar18-SE-OpenJ9]*/
 	Properties jclProps = new Properties();
 	initProperties(jclProps);
-	/*[ENDIF] JAVA_SPEC_VERSION == 11 */
+	/*[ENDIF] (JAVA_SPEC_VERSION <= 11) & Sidecar18-SE-OpenJ9 */
 
 	/*[IF JAVA_SPEC_VERSION > 11]*/
 	Map<String, String> initializedProperties = new HashMap<>();
@@ -706,13 +706,13 @@ private static void ensureProperties(boolean isInitialization) {
 		initializedProperties.put("os.encoding", osEncoding); //$NON-NLS-1$
 	}
 	initializedProperties.put("ibm.system.encoding", platformEncoding); //$NON-NLS-1$
-	/*[IF JAVA_SPEC_VERSION == 8]*/
+	/*[IF !Sidecar18-SE-OpenJ9]*/
 	/*[PR The launcher apparently needs sun.jnu.encoding property or it does not work]*/
 	initializedProperties.put("sun.jnu.encoding", platformEncoding); //$NON-NLS-1$
 	initializedProperties.put("file.encoding.pkg", "sun.io"); //$NON-NLS-1$ //$NON-NLS-2$
 	/* System property java.specification.vendor is set via VersionProps.init(systemProperties) since JDK12 */
 	initializedProperties.put("java.specification.vendor", "Oracle Corporation"); //$NON-NLS-1$ //$NON-NLS-2$
-	/*[ENDIF] JAVA_SPEC_VERSION == 8 */
+	/*[ENDIF] !Sidecar18-SE-OpenJ9 */
 	initializedProperties.put("java.specification.name", "Java Platform API Specification"); //$NON-NLS-1$ //$NON-NLS-2$
 	initializedProperties.put("com.ibm.oti.configuration", "scar"); //$NON-NLS-1$
 
@@ -743,13 +743,13 @@ private static void ensureProperties(boolean isInitialization) {
 		}
 		initializedProperties.put(key, list[i+1]);
 	}
-	/*[IF JAVA_SPEC_VERSION == 11]*/
+	/*[IF Sidecar18-SE-OpenJ9]*/
 	for (Map.Entry<?, ?> entry : jclProps.entrySet()) {
 		initializedProperties.putIfAbsent(entry.getKey(), entry.getValue());
 	}
-	/*[ELSE] JAVA_SPEC_VERSION == 11 */
+	/*[ELSE] Sidecar18-SE-OpenJ9 */
 	initializedProperties.put("file.encoding", fileEncoding); //$NON-NLS-1$
-	/*[ENDIF] JAVA_SPEC_VERSION == 11 */
+	/*[ENDIF] Sidecar18-SE-OpenJ9 */
 	/*[ENDIF] JAVA_SPEC_VERSION >= 17 */
 
 	/*[IF (JAVA_SPEC_VERSION >= 21) & (PLATFORM-mz31 | PLATFORM-mz64)]*/
