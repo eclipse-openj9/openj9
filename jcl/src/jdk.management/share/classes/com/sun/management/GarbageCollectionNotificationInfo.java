@@ -56,7 +56,7 @@ import com.sun.management.internal.GarbageCollectionNotificationInfoUtil;
  * a {@code CompositeData} to a {@code GarbageCollectionNotificationInfo}
  * object. For example:
  *
- * <blockquote><pre>
+ * <pre>
  *      Notification notif;
  *
  *      // receive the notification emitted by a GarbageCollectorMXBean and save in notif
@@ -69,7 +69,7 @@ import com.sun.management.internal.GarbageCollectionNotificationInfoUtil;
  *          GarbageCollectionNotificationInfo info = GarbageCollectionNotificationInfo.from(cd);
  *          ...
  *      }
- * </pre></blockquote>
+ * </pre>
  *
  * <p>
  * The type of the notification emitted by a {@code GarbageCollectorMXBean} is:
@@ -175,8 +175,7 @@ public class GarbageCollectionNotificationInfo implements CompositeDataView {
 	 * Returns a {@code GarbageCollectionNotificationInfo} object represented by the
 	 * given {@code CompositeData}.
 	 * The given {@code CompositeData} must contain the following attributes:
-	 * <blockquote>
-	 * <table border=1>
+	 * <br><br><table border=1>
 	 * <caption>CompositeData attributes</caption>
 	 * <tr>
 	 *   <th style="text-align:left">Attribute Name</th>
@@ -199,7 +198,6 @@ public class GarbageCollectionNotificationInfo implements CompositeDataView {
 	 *   <td>{@code com.ibm.lang.management.GcInfo}</td>
 	 * </tr>
 	 * </table>
-	 * </blockquote>
 	 *
 	 * @param cd {@code CompositeData} representing a
 	 *     {@code GarbageCollectionNotificationInfo}

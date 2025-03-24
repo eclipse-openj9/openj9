@@ -27,7 +27,7 @@ import java.lang.management.PlatformManagedObject;
 
 /**
  * This interface provides information on whether the current Operating System is running directly on physical hardware
- * or running as a Guest (Virtual Machine (VM)/Logical Partition (LPAR)) on top of a Hypervisor.
+ * or running as a Guest (Virtual Machine (VM)/Logical Partition (LPAR)) on a Hypervisor.
  * If the Operating System is running as a Guest, the interface provides information about the Hypervisor.
  * <b>Where there are multiple levels of Hypervisor, only the top level Hypervisor information is returned.</b>
  * The supported Hypervisors and the platforms on which they are supported:

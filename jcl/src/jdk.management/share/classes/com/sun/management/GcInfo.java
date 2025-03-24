@@ -39,7 +39,6 @@ import com.sun.management.internal.GcInfoUtil;
  * Garbage collection information.  It contains the following
  * information for one garbage collection as well as GC-specific
  * attributes:
- * <blockquote>
  * <ul>
  *   <li>Start time</li>
  *   <li>End time</li>
@@ -47,7 +46,6 @@ import com.sun.management.internal.GcInfoUtil;
  *   <li>Memory usage before the collection starts</li>
  *   <li>Memory usage after the collection ends</li>
  * </ul>
- * </blockquote>
  *
  * @since 9
  */
@@ -187,8 +185,7 @@ public class GcInfo implements CompositeData, CompositeDataView {
 	 * <code>CompositeData</code> must contain
 	 * all the following attributes:
 	 *
-	 * <blockquote>
-	 * <table border=1>
+	 * <br><br><table border=1>
 	 * <caption>CompositeData attributes</caption>
 	 * <tr>
 	 *   <th style="text-align:left">Attribute Name</th>
@@ -215,7 +212,7 @@ public class GcInfo implements CompositeData, CompositeDataView {
 	 *   <td><code>javax.management.openmbean.TabularData</code></td>
 	 * </tr>
 	 * </table>
-	 * </blockquote>
+	 *
 	 * @param cd <code>CompositeData</code> representing a <code>GcInfo</code>
 	 *
 	 * @throws IllegalArgumentException if <code>cd</code> does not
