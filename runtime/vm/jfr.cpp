@@ -203,7 +203,7 @@ writeOutGlobalBuffer(J9VMThread *currentThread, bool finalWrite, bool dumpCalled
 	j9tty_printf(PORTLIB, "\n!!! writing global buffer %p of size %p\n", currentThread, vm->jfrBuffer.bufferSize - vm->jfrBuffer.bufferRemaining);
 #endif /* defined(DEBUG) */
 
-	if (areJFRBuffersReadyForWrite(currentThread)) {
+	if (vm->jfrState.isStarted && (NULL != vm->jfrBuffer.bufferCurrent)) {
 		VM_JFRWriter::flushJFRDataToFile(currentThread, finalWrite, dumpCalled);
 
 		/* Reset the buffer */
@@ -226,7 +226,7 @@ writeOutGlobalBuffer(J9VMThread *currentThread, bool finalWrite, bool dumpCalled
  * paused (e.g. by exclusive VM access).
  *
  * @param currentThread[in] the current J9VMThread
- * @param flushThread[in] the J9VMThread to fluah
+ * @param flushThread[in] the J9VMThread to flush
  *
  * @returns true on success, false on failure
  */
@@ -494,7 +494,7 @@ jfrVMShutdown(J9HookInterface **hook, UDATA eventNum, void *eventData, void *use
 
 	/* Flush and free all the thread buffers and write out the global buffer */
 	flushAllThreadBuffers(currentThread, true);
-	writeOutGlobalBuffer(currentThread, true, false);
+	writeOutGlobalBuffer(currentThread, true, true);
 
 	if (acquiredExclusive) {
 		releaseExclusiveVMAccess(currentThread);
