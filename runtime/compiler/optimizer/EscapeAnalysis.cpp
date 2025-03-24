@@ -420,7 +420,11 @@ int32_t TR_EscapeAnalysis::perform()
 
          heapificationBlock->getExit()->insertBefore(TR::TreeTop::create(comp(), TR::Node::create(node, TR::Goto, 0, callBlock->getEntry())));
          tools.insertFakeEscapeForLoads(heapificationBlock, node, *nodeLookup->second.second);
-         traceMsg(comp(), "Created heapification block_%d\n", heapificationBlock->getNumber());
+
+         if (trace())
+            {
+            traceMsg(comp(), "Created heapification block_%d\n", heapificationBlock->getNumber());
+            }
 
          ((TR_EscapeAnalysis::PersistentData*)manager()->getOptData())->_peekableCalls->set(node->getGlobalIndex());
          _callsToProtect->erase(nodeLookup);
@@ -1492,7 +1496,7 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
    if (trace())
       {
       comp()->dumpMethodTrees("Trees after Escape Analysis");
-      traceMsg(comp(), "Ending Escape Analysis");
+      traceMsg(comp(), "Ending Escape Analysis\n");
       }
 
    return cost; // actual cost
@@ -6474,7 +6478,7 @@ bool TR_EscapeAnalysis::fixupFieldAccessForNonContiguousAllocation(TR::Node *nod
             }
          }
       if (trace())
-         traceMsg(comp(), "Change node [%p] into a direct load or store of #%d (%d bytes) field %d cand %p\n", node, autoSymRef->getReferenceNumber(), autoSymRef->getSymbol()->getSize(), i, candidate);
+         traceMsg(comp(), "Change node [%p] into a direct load or store of #%d (%d bytes) field %d cand %p\n", node, autoSymRef->getReferenceNumber(), autoSymRef->getSymbol()->getSize(), i, candidate->_node);
 
       if (parent)
          {
@@ -8977,7 +8981,7 @@ TR_FlowSensitiveEscapeAnalysis::TR_FlowSensitiveEscapeAnalysis(TR::Compilation *
                      int32_t succBlockNum = succFlushCandidate->getBlockNum();
 
                      //if (trace())
-                     //   traceMsg(comp, "succCandidate %p succCandidate num %d succCandidate Flush reqd %d succBlockNum %d\n", succCandidate, succCandidate->_index, succCandidate->_flushRequired, succBlockNum);
+                     //   traceMsg(comp, "succCandidate %p succCandidate num %d succCandidate Flush reqd %d succBlockNum %d\n", succCandidate->_node, succCandidate->_index, succCandidate->_flushRequired, succBlockNum);
 
                      if ((succBlockNum == nextSucc) &&
                          succCandidate->_flushRequired)
@@ -8995,7 +8999,7 @@ TR_FlowSensitiveEscapeAnalysis::TR_FlowSensitiveEscapeAnalysis(TR::Compilation *
                            }
 
                         //if (trace())
-                        //    traceMsg(comp, "succ candidate %p nextAllocCanReach %d\n", succCandidate, nextAllocCanReach);
+                        //    traceMsg(comp, "succ candidate %p nextAllocCanReach %d\n", succCandidate->_node, nextAllocCanReach);
 
                         if (nextAllocCanReach)
                            {
@@ -9013,7 +9017,7 @@ TR_FlowSensitiveEscapeAnalysis::TR_FlowSensitiveEscapeAnalysis(TR::Compilation *
                   }
 
                //if (trace())
-               //   traceMsg(comp, "succCandidate %p _blocksWithSyncs bit %d\n", succCandidate, _blocksWithSyncs->get(nextSucc));
+               //   traceMsg(comp, "succCandidate %p _blocksWithSyncs bit %d\n", succCandidate->_node, _blocksWithSyncs->get(nextSucc));
                TR::TreeTop *tt = _syncNodeTTForBlock[nextSucc];
                // If we have a sync node where the flush is not already optimally placed or we have a successor flush candidate
                if ((_blocksWithSyncs->get(nextSucc) && flushCandidate->getFlush()->getNode() != tt->getPrevTreeTop()->getNode()) ||
@@ -9072,7 +9076,7 @@ TR_FlowSensitiveEscapeAnalysis::TR_FlowSensitiveEscapeAnalysis(TR::Compilation *
                      }
                   //if (trace())
                   //   {
-                  //   traceMsg(comp, "0reaching candidate %p index %d does not need Flush\n", candidate, candidate->_index);
+                  //   traceMsg(comp, "0reaching candidate %p index %d does not need Flush\n", candidate->_node, candidate->_index);
                   //   }
 
                   if (trace())
@@ -9105,7 +9109,7 @@ TR_FlowSensitiveEscapeAnalysis::TR_FlowSensitiveEscapeAnalysis(TR::Compilation *
          if (trace())
             {
             traceMsg(comp, "Processing flush edge from %d to %d\n", pair->getEdge()->getFrom()->getNumber(), pair->getEdge()->getTo()->getNumber());
-            traceMsg(comp, "Processing flush alloc %p vs candidate %p\n", pair->getAllocation(), candidate);
+            traceMsg(comp, "Processing flush alloc %p vs candidate %p\n", pair->getAllocation(), candidate->_node);
             }
 
          if (pair->getAllocation() == candidate)
@@ -9834,7 +9838,7 @@ bool TR_LocalFlushElimination::examineNode(TR::Node *node, TR::TreeTop *tt, TR::
 
                   //if (trace())
                   //   {
-                  //   traceMsg(comp(), "1reaching candidate %p index %d does not need Flush\n", reachingCandidate, reachingCandidate->_index);
+                  //   traceMsg(comp(), "1reaching candidate %p index %d does not need Flush\n", reachingCandidate->_node, reachingCandidate->_index);
                   //   }
 
                   if (!nodeHasSync)
