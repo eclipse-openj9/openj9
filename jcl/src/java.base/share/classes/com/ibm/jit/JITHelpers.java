@@ -38,7 +38,7 @@ import sun.reflect.CallerSensitive;
 /*[ENDIF] JAVA_SPEC_VERSION >= 9 */
 
 /**
- * The <code>JITHelpers</code> class contains methods used by the JIT to optimize certain primitive operations.
+ * The {@code JITHelpers} class contains methods used by the JIT to optimize certain primitive operations.
  */
 @SuppressWarnings("javadoc")
 @J9UnmodifiableClass
@@ -585,13 +585,13 @@ public final class JITHelpers {
 	 * offset.
 	 *
 	 * <p>This API implicitly assumes the following:
-	 * <blockquote><pre>
-	 *     - s1Value != null
-	 *     - s2Value != null
-	 *     - 0 <= s1len <= s1Value.length * 2
-	 *     - 1 <= s2len <= s2Value.length * 2
-	 *     - 0 <= start < s1len
-	 * <blockquote><pre>
+	 * <ul>
+	 * <li>{@code s1Value != null}</li>
+	 * <li>{@code s2Value != null}</li>
+	 * <li>{@code 0 <= s1len <= s1Value.length * 2}</li>
+	 * <li>{@code 1 <= s2len <= s2Value.length * 2}</li>
+	 * <li>{@code 0 <= start < s1len}</li>
+	 * </ul>
 	 *
 	 * @param s1Value the source character array to search in.
 	 * @param s1len   the length (in number of characters) of the source array.
@@ -631,13 +631,13 @@ public final class JITHelpers {
 	 * offset.
 	 *
 	 * <p>This API implicitly assumes the following:
-	 * <blockquote><pre>
-	 *     - s1Value != null
-	 *     - s2Value != null
-	 *     - 0 <= s1len <= s1Value.length
-	 *     - 1 <= s2len <= s2Value.length
-	 *     - 0 <= start < s1len
-	 * <blockquote><pre>
+	 * <ul>
+	 * <li>{@code s1Value != null}</li>
+	 * <li>{@code s2Value != null}</li>
+	 * <li>{@code 0 <= s1len <= s1Value.length}</li>
+	 * <li>{@code 1 <= s2len <= s2Value.length}</li>
+	 * <li>{@code 0 <= start < s1len}</li>
+	 * </ul>
 	 *
 	 * @param s1Value the source character array to search in.
 	 * @param s1len   the length (in number of characters) of the source array.
@@ -676,11 +676,11 @@ public final class JITHelpers {
 	 * Returns the first index of the character within the source character array starting from the specified offset.
 	 *
 	 * <p>This API implicitly assumes the following:
-	 * <blockquote><pre>
-	 *     - array != null
-	 *     - 0 <= offset < length <= array.length * 1 (if array instanceof byte[])
-	 *     - 0 <= offset < length <= array.length * 2 (if array instanceof char[])
-	 * <blockquote><pre>
+	 * <ul>
+	 * <li>{@code array != null}</li>
+	 * <li>{@code 0 <= offset < length <= array.length * 1 (if array instanceof byte[])}</li>
+	 * <li>{@code 0 <= offset < length <= array.length * 2 (if array instanceof char[])}</li>
+	 * </ul>
 	 *
 	 * @param array  the source character array to search in.
 	 * @param ch     the character to search for.
@@ -702,11 +702,11 @@ public final class JITHelpers {
 	 * Returns the first index of the character within the source character array starting from the specified offset.
 	 *
 	 * <p>This API implicitly assumes the following:
-	 * <blockquote><pre>
-	 *     - array != null
-	 *     - 0 <= offset < length <= array.length * 1 (if array instanceof byte[])
-	 *     - 0 <= offset < length <= array.length * 2 (if array instanceof char[])
-	 * <blockquote><pre>
+	 * <ul>
+	 * <li>{@code array != null}</li>
+	 * <li>{@code 0 <= offset < length <= array.length * 1 (if array instanceof byte[])}</li>
+	 * <li>{@code 0 <= offset < length <= array.length * 2 (if array instanceof char[])}</li>
+	 * </ul>
 	 *
 	 * @param array  the source character array to search in.
 	 * @param ch     the character to search for.
