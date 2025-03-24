@@ -88,12 +88,12 @@ public class LockInfo {
 	/**
 	 * Returns a {@code LockInfo} object represented by the given
 	 * {@code CompositeData}. The given {@code CompositeData} must contain the
-	 * following attributes: <blockquote>
-	 * <table>
+	 * following attributes:
+	 * <br><br><table border=1>
 	 * <caption>The attributes and the types the given CompositeData contains</caption>
 	 * <tr>
-	 * <th style="float:left">Attribute Name</th>
-	 * <th style="float:left">Type</th>
+	 * <th style="text-align:left">Attribute Name</th>
+	 * <th style="text-align:left">Type</th>
 	 * </tr>
 	 * <tr>
 	 * <td>className</td>
@@ -104,7 +104,6 @@ public class LockInfo {
 	 * <td><code>java.lang.Integer</code></td>
 	 * </tr>
 	 * </table>
-	 * </blockquote>
 	 *
 	 * @param compositeData
 	 *            {@code CompositeData} representing a {@code LockInfo}

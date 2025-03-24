@@ -279,11 +279,11 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Latin1 string.
 	 *
 	 * <p>This API implicitly assumes the following:
-	 * <blockquote><pre>
-	 *     - {@code length >= 0}
-	 *     - {@code start >= 0}
-	 *     - {@code start + length <= data.length}
-	 * <blockquote><pre>
+	 * <ul>
+	 * <li>{@code length >= 0}</li>
+	 * <li>{@code start >= 0}</li>
+	 * <li>{@code start + length <= c.length}</li>
+	 * </ul>
 	 *
 	 * @param c      the array of characters to check
 	 * @param start  the starting offset in the character array
@@ -4252,11 +4252,11 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Latin1 string.
 	 *
 	 * <p>This API implicitly assumes the following:
-	 * <blockquote><pre>
-	 *     - {@code length >= 0}
-	 *     - {@code start >= 0}
-	 *     - {@code start + length <= data.length}
-	 * <blockquote><pre>
+	 * <ul>
+	 * <li>{@code length >= 0}</li>
+	 * <li>{@code start >= 0}</li>
+	 * <li>{@code start + length <= c.length}</li>
+	 * </ul>
 	 *
 	 * @param c      the array of characters to check
 	 * @param start  the starting offset in the character array
