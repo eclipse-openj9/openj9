@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -580,6 +581,20 @@ public final class StructureReader {
 				break;
 			default:
 				throw new IllegalArgumentException("Superset stream contains unknown line: " + line);
+			}
+		}
+	}
+
+	public void removeReservedTypeNames() {
+		for (Iterator<String> names = structures.keySet().iterator(); names.hasNext();) {
+			switch (names.next()) {
+			case "module":
+			case "record":
+			case "var":
+				names.remove();
+				break;
+			default:
+				break;
 			}
 		}
 	}

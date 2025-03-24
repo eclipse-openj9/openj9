@@ -145,6 +145,8 @@ public class PointerGenerator {
 			return;
 		}
 
+		structureReader.removeReservedTypeNames();
+
 		String auxFieldInfo = opts.get("-a");
 
 		if (auxFieldInfo != null) {
