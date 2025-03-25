@@ -2473,8 +2473,10 @@ TR::Register *J9::X86::PrivateLinkage::buildCallPostconditions(TR::X86CallSite &
             }
          }
 
-      TR_LiveRegisters *lr = cg()->getLiveRegisters(TR_FPR);
-      if(!lr || lr->getNumberOfLiveRegisters() > 0)
+      TR_LiveRegisters *liveFPRs = cg()->getLiveRegisters(TR_FPR);
+      TR_LiveRegisters *liveVRFs = cg()->getLiveRegisters(TR_VRF);
+
+      if (!liveFPRs || liveFPRs->getNumberOfLiveRegisters() > 0 || !liveVRFs || liveVRFs->getNumberOfLiveRegisters() > 0)
          {
          for (regIndex = TR::RealRegister::FirstXMMR; regIndex <= TR::RealRegister::LastXMMR; regIndex = (TR::RealRegister::RegNum)(regIndex + 1))
             {
