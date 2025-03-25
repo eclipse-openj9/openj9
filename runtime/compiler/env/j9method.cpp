@@ -3604,6 +3604,7 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_util_concurrent_ConcurrentHashMap_tabAt,       "tabAt",        "([Ljava/util/concurrent/ConcurrentHashMap$Node;I)Ljava/util/concurrent/ConcurrentHashMap$Node;")},
       {x(TR::java_util_concurrent_ConcurrentHashMap_casTabAt,    "casTabAt",     "([Ljava/util/concurrent/ConcurrentHashMap$Node;ILjava/util/concurrent/ConcurrentHashMap$Node;Ljava/util/concurrent/ConcurrentHashMap$Node;)Z")},
       {x(TR::java_util_concurrent_ConcurrentHashMap_setTabAt,    "setTabAt",     "([Ljava/util/concurrent/ConcurrentHashMap$Node;ILjava/util/concurrent/ConcurrentHashMap$Node;)V")},
+      {x(TR::java_util_concurrent_ConcurrentHashMap_get,         "get",          "(Ljava/lang/Object;)Ljava/lang/Object;")},
       {TR::unknownMethod}
       };
 
