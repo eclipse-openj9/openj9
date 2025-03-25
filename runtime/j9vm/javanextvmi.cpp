@@ -678,4 +678,13 @@ JVM_TakeVirtualThreadListToUnblock(JNIEnv *env, jclass ignored)
 }
 #endif /* JAVA_SPEC_VERSION >= 24 */
 
+#if JAVA_SPEC_VERSION >= 25
+JNIEXPORT jboolean JNICALL
+JVM_NeedsClassInitBarrierForCDS(JNIEnv *env, jclass cls)
+{
+	Assert_SC_true(!"JVM_NeedsClassInitBarrierForCDS unimplemented");
+	return JNI_FALSE;
+}
+#endif /* JAVA_SPEC_VERSION >= 25 */
+
 } /* extern "C" */
