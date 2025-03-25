@@ -3072,6 +3072,15 @@ bool TR_J9InlinerPolicy::tryToInlineTrivialMethod (TR_CallStack* callStack, TR_C
    }
 
 bool
+TR_J9InlinerPolicy::trivialInliningOnly(
+   TR_CallStack *callStack, TR_CallTarget *callTarget)
+   {
+   TR::Node *callNode = callTarget->_myCallSite->_callNode;
+   TR::ResolvedMethodSymbol *calleeSymbol = callTarget->_calleeSymbol;
+   return isInlineableJNI(calleeSymbol->getResolvedMethod(), callNode);
+   }
+
+bool
 TR_J9InlinerPolicy::adjustFanInSizeInExceedsSizeThreshold(int bytecodeSize,
                                                       uint32_t& calculatedSize,
                                                       TR_ResolvedMethod* callee,
