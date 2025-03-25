@@ -3053,21 +3053,39 @@ bool TR_J9InlinerPolicy::tryToInlineTrivialMethod (TR_CallStack* callStack, TR_C
    TR_VirtualGuardSelection *guard = calltarget->_guard;
    TR::ResolvedMethodSymbol * callerSymbol = callStack->_methodSymbol;
 
-   if (isInlineableJNI(calleeSymbol->getResolvedMethod(),callNode))
+   if (!isInlineableJNI(calleeSymbol->getResolvedMethod(), callNode))
       {
-      if (performTransformation(comp(), "%sInlining jni %s into %s\n", OPT_DETAILS, calleeSymbol->signature(comp()->trMemory()), callerSymbol->signature(comp()->trMemory())))
-         {
-         if (calltarget->_myCallSite->isIndirectCall())
-            return true;
+      return false;
+      }
 
-         if (inlineGetClassAccessFlags(calleeSymbol, callerSymbol, callNodeTreeTop, callNode))
-            guard->_kind = TR_NoGuard;
-         else if (inlineUnsafeCall(calleeSymbol, callerSymbol, callNodeTreeTop, callNode))
-            guard->_kind = TR_NoGuard;
-         }
+   if (calltarget->_myCallSite->isIndirectCall())
+      {
+      return false;
+      }
+
+   if (!performTransformation(
+         comp(),
+         "%sInlining jni %s into %s\n",
+         OPT_DETAILS,
+         calleeSymbol->signature(comp()->trMemory()),
+         callerSymbol->signature(comp()->trMemory())))
+      {
+      return false;
+      }
+
+   if (inlineGetClassAccessFlags(calleeSymbol, callerSymbol, callNodeTreeTop, callNode))
+      {
+      guard->_kind = TR_NoGuard;
       return true;
       }
 
+   if (inlineUnsafeCall(calleeSymbol, callerSymbol, callNodeTreeTop, callNode))
+      {
+      guard->_kind = TR_NoGuard;
+      return true;
+      }
+
+   dumpOptDetails(comp(), "JNI inlining failed\n");
    return false;
    }
 
