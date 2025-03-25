@@ -96,6 +96,8 @@ public class StructureStubGenerator {
 			return;
 		}
 
+		structureReader.removeReservedTypeNames();
+
 		adjustForCompatibility();
 		adjustForOptionalFields();
 
