@@ -22,5 +22,4 @@
 
 grant {
     permission java.lang.RuntimePermission "createClassLoader";
-    permission java.lang.RuntimePermission "accessClassInPackage.jdk.internal.org.objectweb.asm";
 };

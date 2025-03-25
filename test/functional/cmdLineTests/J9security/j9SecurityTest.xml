@@ -28,14 +28,12 @@
 
 	<variable name="CLASSPATH" value="-cp $Q$$TESTJ9SECURITYJARPATH$$Q$j9security.jar" />
 	<variable name="CLASSPATH_JEP140" value="-cp $Q$$TESTJ9SECURITYJARPATH$$Q$j9JEP140Tests.jar" />
-	<variable name="CLASSPATH_JSR292" value="-cp $Q$$TESTJ9SECURITYJARPATH$$Q$TestJSR292Security.jar" />
+	<variable name="CLASSPATH_JSR292" value="-cp $Q$$ASMJARPATH$$TESTJ9SECURITYJARPATH$$Q$TestJSR292Security.jar" />
 	<variable name="BOOTCLASSPATH_CodeNotTrusted" value="-Xbootclasspath/a:$Q$$TESTJ9SECURITYJARPATH$$Q$CodeNotTrusted.jar" />
 	<variable name="BOOTCLASSPATH_CodeTrusted_JEP140" value="-Xbootclasspath/a:$Q$$TESTJ9SECURITYJARPATH$$Q$j9JEP140CodeTrusted.jar" />
 	<variable name="BOOTCLASSPATH_CodeTrusted_doPrivilegedWithCombiner" value="-Xbootclasspath/a:$Q$$TESTJ9SECURITYJARPATH$$Q$CodeTrusted.jar" />
 	<variable name="SECURITYMANAGER" value="-Djava.security.manager" />
 	<variable name="JSR292_PERMISSION_POLICY" value="-Djava.security.policy=$Q$$TESTJ9SECURITYJARPATH$$Q$jsr292.policy" />
-	<variable name="ADDEXPORTS_OPTION" value="$Q$$MODULE_ADDEXPORTS_OPTION$$Q$" />
-	<variable name="ADDEXPORTS_VALUE" value="$Q$$MODULE_ADDEXPORTS_VALUE$$Q$" />
 
 	<test id="testJ9Security">
 		<command>$EXE$ $CLASSPATH$ com.ibm.j9.security.TestImplies</command>
@@ -87,7 +85,7 @@
 	</test>
 
 	<test id="testJSR292Permissions">
-		<command>$EXE$ $SECURITYMANAGER$ $JSR292_PERMISSION_POLICY$ $ADDEXPORTS_OPTION$ $ADDEXPORTS_VALUE$ $BOOTCLASSPATH_CodeNotTrusted$ $CLASSPATH_JSR292$ com.ibm.j9.jsr292.indyn.TestJSR292</command>
+		<command>$EXE$ $SECURITYMANAGER$ $JSR292_PERMISSION_POLICY$ $BOOTCLASSPATH_CodeNotTrusted$ $CLASSPATH_JSR292$ com.ibm.j9.jsr292.indyn.TestJSR292</command>
 		<output type="success" caseSensitive="no" regex="no">AccessControlException</output>
 		<output type="failure" caseSensitive="no" regex="no">Expected exception wasn't thrown, the test failed!</output>
 		<output type="failure" caseSensitive="no" regex="no">ClassNotFoundException</output>

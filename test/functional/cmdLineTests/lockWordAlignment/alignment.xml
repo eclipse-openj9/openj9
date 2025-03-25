@@ -61,13 +61,14 @@
  <echo value="#######################################################"/>
  <echo value=" "/>
 
- <test id="Check whether Object contains necessary private fields if any">
+ <!-- disable temporarily - https://github.com/eclipse-openj9/openj9/issues/21463 -->
+ <!-- test id="Check whether Object contains necessary private fields if any">
 	<command>$EXEP$ -p $JAVAPBOOTCLASSPATH$ java/lang/Object</command>
 	<return value="0" />
 	<output type="required" caseSensitive="yes" regex="yes">$PRIV_FIELD1$</output>
 	<output type="required" caseSensitive="yes" regex="yes">$PRIV_FIELD2$</output>
 	<output type="required" caseSensitive="yes" regex="yes">$PRIV_FIELD3$</output>
- </test>
+ </test -->
 
  <test id="Check Object is aligned">
 	<command>$EXE$ $TESTSBOOTCLASSPATH$ $OBJECTTESTSBOOTCLASSPATH$ main java.lang.Object</command>

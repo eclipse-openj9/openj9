@@ -60,6 +60,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 					<src path="${transformerListener}" />
 					<classpath>
 						<pathelement location="${LIB_DIR}/testng.jar" />
+						<pathelement location="${LIB_DIR}/asm.jar"/>
 					</classpath>
 				</javac>
 			</then>
@@ -83,11 +84,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 					<src path="${src_util}" />
 					<classpath>
 						<pathelement location="${LIB_DIR}/testng.jar" />
+						<pathelement location="${LIB_DIR}/asm.jar"/>
 					</classpath>
 					<compilerarg value="--add-exports" />
 					<compilerarg value="java.base/jdk.internal.misc=ALL-UNNAMED" />
-					<compilerarg value="--add-exports" />
-					<compilerarg value="java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED" />
 				</javac>
 			</else>
 		</if>
