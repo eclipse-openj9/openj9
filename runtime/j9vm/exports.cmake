@@ -477,6 +477,10 @@ if(JAVA_SPEC_VERSION LESS 25)
 		_JVM_IsArrayClass@8
 		_JVM_IsPrimitiveClass@8
 	)
+else()
+	jvm_add_exports(jvm
+		JVM_NeedsClassInitBarrierForCDS
+	)
 endif()
 
 if(J9VM_OPT_JITSERVER)
