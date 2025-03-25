@@ -1535,14 +1535,10 @@ JVM_IHashCode(JNIEnv *env, jobject obj)
 jobject JNICALL
 JVM_InitProperties(JNIEnv* env, jobject properties)
 {
-	/* This JVM method is invoked by JCL native Java_java_lang_System_initProperties
-	 * only for initialization of platform encoding.
-	 * This is only required by Java 11 raw builds.
-	 * This method is not invoked by other Java levels.
-	 */
-#if JAVA_SPEC_VERSION < 11
+	/* This JVM method is invoked by JCL native Java_java_lang_System_initProperties. */
+#if !defined(OPENJ9_BUILD)
 	assert(!"JVM_InitProperties should not be called!");
-#endif /* JAVA_SPEC_VERSION < 11 */
+#endif /* !defined(OPENJ9_BUILD) */
 	return properties;
 }
 
