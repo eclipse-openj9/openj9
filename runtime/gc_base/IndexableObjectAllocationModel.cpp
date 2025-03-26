@@ -161,22 +161,19 @@ MM_IndexableObjectAllocationModel::initializeIndexableObject(MM_EnvironmentBase 
 #endif /* defined(J9VM_ENV_DATA64) */
 		} else {
 			indexableObjectModel->setSizeInElementsForContiguous(spine, _numberOfIndexedFields);
-			shouldDataBeAdjacentToHeader = indexableObjectModel->shouldDataBeAdjacentToHeader(spine);
-			if (shouldDataBeAdjacentToHeader) {
 #if defined(J9VM_ENV_DATA64)
-				if (((J9JavaVM *)env->getLanguageVM())->isIndexableDataAddrPresent) {
+			if (((J9JavaVM *)env->getLanguageVM())->isIndexableDataAddrPresent) {
+				shouldDataBeAdjacentToHeader = indexableObjectModel->shouldDataBeAdjacentToHeader(spine);
+				if (shouldDataBeAdjacentToHeader) {
 					indexableObjectModel->setDataAddrForContiguous(spine);
+				} else {
+					/* Set NULL temporarily to avoid possible complication with GC occurring while the object is partially initialized. */
+					indexableObjectModel->setDataAddrForContiguous(spine, NULL);
 				}
-#endif /* defined(J9VM_ENV_DATA64) */
-			} else if (isVirtualLargeObjectHeapEnabled) {
-#if defined(J9VM_ENV_DATA64)
-				/* Set NULL temporarily to avoid possible complication with GC occurring while the object is partially initialized? */
-				indexableObjectModel->setDataAddrForContiguous(spine, NULL);
-#endif /* defined(J9VM_ENV_DATA64) */
 			}
+#endif /* defined(J9VM_ENV_DATA64) */
 		}
 	}
-
 
 	/* Lay out arraylet and arrayoid pointers */
 	switch (_layout) {
