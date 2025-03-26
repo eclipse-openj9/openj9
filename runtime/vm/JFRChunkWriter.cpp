@@ -810,6 +810,77 @@ VM_JFRChunkWriter::writeOSInformationEvent()
 }
 
 void
+VM_JFRChunkWriter::writeNarrowOOPModeTypesEvent()
+{
+	U_8 *dataStart = writeCheckpointEventHeader(Generic, 1);
+
+	/* class ID */
+	_bufferWriter->writeLEB128(NarrowOopModesID);
+
+	/* number of states */
+	_bufferWriter->writeLEB128(OOPMODETYPE_COUNT);
+
+	for (int i = 0; i < OOPMODETYPE_COUNT; i++) {
+		/* constant index */
+		_bufferWriter->writeLEB128(i);
+
+		/* string encoding */
+		_bufferWriter->writeLEB128(UTF8);
+
+		/* string length */
+		UDATA len = strlen(oopModeTypeNames[i]);
+		_bufferWriter->writeLEB128(len);
+
+		/* write string */
+		_bufferWriter->writeData((U_8 *)oopModeTypeNames[i], len);
+	}
+
+	/* write size */
+	writeEventSize(dataStart);
+
+}
+
+void
+VM_JFRChunkWriter::writeGCHeapConfigurationEvent()
+{
+	GCHeapConfigurationEntry *gcConfig = &(VM_JFRConstantPoolTypes::getJFRConstantEvents(_vm)->GCHeapConfigEntry);
+
+	/* reserve size field */
+	U_8 *dataStart = reserveEventSize();
+
+	/* write event type */
+	_bufferWriter->writeLEB128(GCHeapConfigID);
+
+	/* write event start time */
+	_bufferWriter->writeLEB128(j9time_nano_time());
+
+	/* write heap min size */
+	_bufferWriter->writeLEB128(gcConfig->minSize);
+
+	/* write heap max size */
+	_bufferWriter->writeLEB128(gcConfig->maxSize);
+
+	/* write heap initial size */
+	_bufferWriter->writeLEB128(gcConfig->initialSize);
+
+	/* write whether oops are used or not */
+	_bufferWriter->writeLEB128(gcConfig->usesCompressedOops);
+
+	/* write oops type being used */
+	_bufferWriter->writeLEB128(gcConfig->compressedOopsMode);
+
+	/* write how object alignment is on the heap */
+	_bufferWriter->writeLEB128(gcConfig->objectAlignment);
+
+	/* write how many bits head addresses are */
+	_bufferWriter->writeLEB128(gcConfig->heapAddressBits);
+
+	/* write event size */
+	writeEventSize(dataStart);
+
+}
+
+void
 VM_JFRChunkWriter::writeInitialSystemPropertyEvents(J9JavaVM *vm)
 {
 	pool_state walkState;
