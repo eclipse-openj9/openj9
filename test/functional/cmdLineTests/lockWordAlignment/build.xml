@@ -54,13 +54,19 @@
 			<then>
 				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 					<src path="${src}" />
+					<classpath>
+						<pathelement location="${LIB_DIR}/asm.jar"/>
+					</classpath>
 				</javac>
 			</then>
 			<else>
-				<property name="addExports" value="--add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED --add-exports java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED" />
+				<property name="addExports" value="--add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED" />
 				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 					<src path="${src}" />
 					<compilerarg line='${addExports}' />
+					<classpath>
+						<pathelement location="${LIB_DIR}/asm.jar"/>
+					</classpath>
 				</javac>
 			</else>
 		</if>
@@ -73,7 +79,7 @@
 				<property name="addExports" value="" />
 			</then>
 			<else>
-				<property name="addExports" value="--add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED --add-exports java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED" />
+				<property name="addExports" value="--add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED" />
 			</else>
 		</if>			
 		<property name="build.javaexecutable" value="${TEST_JDK_HOME}/bin/java"/>
@@ -81,6 +87,7 @@
 			<jvmarg line='${addExports}' />
 			<classpath>
 				<pathelement path="${build}"/>
+				<pathelement location="${LIB_DIR}/asm.jar"/>
 			</classpath>
 		</java>
 	</target>

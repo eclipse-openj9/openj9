@@ -71,10 +71,10 @@
 	<test>
 		<testCaseName>JEP358NPEMessageTests</testCaseName>
 		<variations>
-			<variation>-XX:+ShowCodeDetailsInExceptionMessages --add-exports java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED</variation>
+			<variation>-XX:+ShowCodeDetailsInExceptionMessages</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -DhasDebugInfo=true \
-            -cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+            -cp $(Q)$(LIB_DIR)$(D)asm.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
             org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames JEP358NPEMessageTests \
             -groups $(TEST_GROUP) \
             -excludegroups $(DEFAULT_EXCLUDE); \
@@ -97,10 +97,10 @@
 	<test>
 		<testCaseName>JEP358NPEMessageTests-noDebugInfo</testCaseName>
 		<variations>
-			<variation>-XX:+ShowCodeDetailsInExceptionMessages --add-exports java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED</variation>
+			<variation>-XX:+ShowCodeDetailsInExceptionMessages</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -DhasDebugInfo=false \
-            -cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest-noDebugInfo.jar$(Q) \
+            -cp $(Q)$(LIB_DIR)$(D)asm.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest-noDebugInfo.jar$(Q) \
             org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames JEP358NPEMessageTests \
             -groups $(TEST_GROUP) \
             -excludegroups $(DEFAULT_EXCLUDE); \

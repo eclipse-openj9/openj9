@@ -23,16 +23,16 @@
 import java.lang.IllegalArgumentException;
 import java.io.File;
 
-import static jdk.internal.org.objectweb.asm.Opcodes.ACC_PRIVATE;
+import static org.objectweb.asm.Opcodes.ACC_PRIVATE;
 
 import java.io.FileOutputStream;
 import java.io.ByteArrayInputStream;
 import java.util.zip.ZipOutputStream;
 import java.util.zip.ZipEntry;
 
-import jdk.internal.org.objectweb.asm.ClassWriter;
-import jdk.internal.org.objectweb.asm.FieldVisitor;
-import jdk.internal.org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.ClassReader;
 
 public class CreateTestObjectJar {
 

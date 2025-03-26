@@ -52,7 +52,7 @@
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) $(ADD_EXPORTS_ASM) -cp $(Q)$(TEST_RESROOT)$(D)alignment.jar$(Q) CreateTestObjectJar $(Q)$(TEST_RESROOT)$(D)$(Q) i; \
+		<command>$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -cp $(Q)$(TEST_RESROOT)$(D)alignment.jar$(Q) CreateTestObjectJar $(Q)$(TEST_RESROOT)$(D)$(Q) i; \
 		$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -DJVM_TEST_ROOT=$(JVM_TEST_ROOT) -DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) $(ADD_EXPORTS_VM)$(SQ) \
 		-DEXEP=$(SQ)$(TEST_JDK_HOME)$(D)bin$(D)javap$(SQ) -DOLWMODE=i -DJDK_VERSION=$(JDK_VERSION) \
 		-DTESTSJARPATH=$(Q)$(TEST_RESROOT)$(D)alignment.jar$(Q) \
@@ -77,7 +77,7 @@
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) $(ADD_EXPORTS_ASM) -cp $(Q)$(TEST_RESROOT)$(D)alignment.jar$(Q) CreateTestObjectJar $(Q)$(TEST_RESROOT)$(D)$(Q) ii; \
+		<command>$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -cp $(Q)$(TEST_RESROOT)$(D)alignment.jar$(Q) CreateTestObjectJar $(Q)$(TEST_RESROOT)$(D)$(Q) ii; \
 		$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -DJVM_TEST_ROOT=$(JVM_TEST_ROOT) -DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) $(ADD_EXPORTS_VM)$(SQ) \
 		-DEXEP=$(SQ)$(TEST_JDK_HOME)$(D)bin$(D)javap$(SQ) -DOLWMODE=ii -DJDK_VERSION=$(JDK_VERSION) \
 		-DTESTSJARPATH=$(Q)$(TEST_RESROOT)$(D)alignment.jar$(Q) \
@@ -102,7 +102,7 @@
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) $(ADD_EXPORTS_ASM) -cp $(Q)$(TEST_RESROOT)$(D)alignment.jar$(Q) CreateTestObjectJar $(Q)$(TEST_RESROOT)$(D)$(Q) iii; \
+		<command>$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -cp $(Q)$(TEST_RESROOT)$(D)alignment.jar$(Q) CreateTestObjectJar $(Q)$(TEST_RESROOT)$(D)$(Q) iii; \
 		$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -DJVM_TEST_ROOT=$(JVM_TEST_ROOT) -DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) $(ADD_EXPORTS_VM)$(SQ) \
 		-DEXEP=$(SQ)$(TEST_JDK_HOME)$(D)bin$(D)javap$(SQ) -DOLWMODE=iii -DJDK_VERSION=$(JDK_VERSION) \
 		-DTESTSJARPATH=$(Q)$(TEST_RESROOT)$(D)alignment.jar$(Q) \
@@ -127,7 +127,7 @@
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) $(ADD_EXPORTS_ASM) -cp $(Q)$(TEST_RESROOT)$(D)alignment.jar$(Q) CreateTestObjectJar $(Q)$(TEST_RESROOT)$(D)$(Q) d; \
+		<command>$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -cp $(Q)$(TEST_RESROOT)$(D)alignment.jar$(Q) CreateTestObjectJar $(Q)$(TEST_RESROOT)$(D)$(Q) d; \
 		$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -DJVM_TEST_ROOT=$(JVM_TEST_ROOT) -DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) $(ADD_EXPORTS_VM)$(SQ) \
 		-DEXEP=$(SQ)$(TEST_JDK_HOME)$(D)bin$(D)javap$(SQ) -DOLWMODE=d -DJDK_VERSION=$(JDK_VERSION) \
 		-DTESTSJARPATH=$(Q)$(TEST_RESROOT)$(D)alignment.jar$(Q) \

@@ -31,9 +31,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	<property name="REPORTDIR" value="${REPORTDIR}" />
 	<property name="JDK_VERSION" value="${JDK_VERSION}" />
 	<property name="EXTRADUMPOPT" value="" />
-	<condition property="ADDITIONALEXPORTS" value="" else="--add-exports=java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED">
-		<equals arg1="${JDK_VERSION}" arg2="8" />
-	</condition>
 	<property name="JVM_OPTIONS" value="" />
 	<property name="TESTNUM" value="" />
 	<property name="COREGEN" value="j9vm.test.corehelper.CoreGen" />
@@ -143,7 +140,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<java-wrapper fork="true" jvm="${JAVA_COMMAND}" classname="j9vm.test.ddrext.AutoRun"
 			timeout="1200000" failonerror="true">
 			<common-elements>
-				<jvmarg line="${ADDITIONALEXPORTS} ${StartOnFirstThread}" />
+				<jvmarg line="${StartOnFirstThread}" />
 				<arg value="${system.dump}" />
 				<arg value="${test.list}" />
 				<arg value="${TEST_RESROOT}/ddrplugin.jar" />

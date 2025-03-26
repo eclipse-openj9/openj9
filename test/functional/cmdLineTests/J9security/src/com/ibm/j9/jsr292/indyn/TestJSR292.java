@@ -22,19 +22,19 @@
 
 package com.ibm.j9.jsr292.indyn;
 
-import static jdk.internal.org.objectweb.asm.Opcodes.ACC_PUBLIC;
-import static jdk.internal.org.objectweb.asm.Opcodes.ACC_STATIC;
-import static jdk.internal.org.objectweb.asm.Opcodes.ACC_SUPER;
-import static jdk.internal.org.objectweb.asm.Opcodes.H_INVOKESTATIC;
-import static jdk.internal.org.objectweb.asm.Opcodes.RETURN;
-import static jdk.internal.org.objectweb.asm.Opcodes.V1_7;
+import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
+import static org.objectweb.asm.Opcodes.ACC_STATIC;
+import static org.objectweb.asm.Opcodes.ACC_SUPER;
+import static org.objectweb.asm.Opcodes.H_INVOKESTATIC;
+import static org.objectweb.asm.Opcodes.RETURN;
+import static org.objectweb.asm.Opcodes.V1_7;
 
 import java.lang.reflect.Method;
 
-import jdk.internal.org.objectweb.asm.ClassWriter;
-import jdk.internal.org.objectweb.asm.Handle;
-import jdk.internal.org.objectweb.asm.MethodVisitor;
-import jdk.internal.org.objectweb.asm.Type;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Handle;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Type;
 
 public class TestJSR292 {
 

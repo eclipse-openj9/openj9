@@ -28,8 +28,7 @@
 			<variation>NoOptions</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -Xdump \
-		-DMODULE_ADDEXPORTS_OPTION= -DMODULE_ADDEXPORTS_VALUE= \
-		-DTESTJ9SECURITYJARPATH=$(Q)$(TEST_RESROOT)$(D)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) \
+		-DTESTJ9SECURITYJARPATH=$(Q)$(TEST_RESROOT)$(D)$(Q) -DASMJARPATH=$(Q)$(LIB_DIR)$(D)asm.jar$(P)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) \
 		-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump$(SQ) -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)j9SecurityTest.xml$(Q) \
 		-explainExcludes -nonZeroExitWhenError; \
 		$(TEST_STATUS)</command>
@@ -54,8 +53,7 @@
 			<variation>NoOptions</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -Xdump \
-		-DMODULE_ADDEXPORTS_OPTION=$(Q)--add-exports$(Q) -DMODULE_ADDEXPORTS_VALUE=$(Q)java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED$(Q) \
-		-DTESTJ9SECURITYJARPATH=$(Q)$(TEST_RESROOT)$(D)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) \
+		-DTESTJ9SECURITYJARPATH=$(Q)$(TEST_RESROOT)$(D)$(Q) -DASMJARPATH=$(Q)$(LIB_DIR)$(D)asm.jar$(P)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) \
 		-DEXE=$(SQ)$(JAVA_COMMAND) $(JAVA_SECURITY_MANAGER) $(JVM_OPTIONS) -Xdump$(SQ) -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)j9SecurityTest.xml$(Q) \
 		-explainExcludes -nonZeroExitWhenError; \
 		$(TEST_STATUS)</command>

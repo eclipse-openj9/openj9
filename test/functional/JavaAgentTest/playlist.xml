@@ -44,7 +44,7 @@
 			<group>functional</group>
 		</groups>
 		<versions>
-			<version>11+</version>
+			<version>[11,24]</version>
 		</versions>
 		<impls>
 			<impl>openj9</impl>
@@ -73,7 +73,7 @@
 			<group>functional</group>
 		</groups>
 		<versions>
-			<version>11+</version>
+			<version>[11,24]</version>
 		</versions>
 		<impls>
 			<impl>openj9</impl>
@@ -101,7 +101,7 @@
 			<group>functional</group>
 		</groups>
 		<versions>
-			<version>11+</version>
+			<version>[11,24]</version>
 		</versions>
 		<impls>
 			<impl>openj9</impl>
@@ -132,7 +132,7 @@
 			<group>functional</group>
 		</groups>
 		<versions>
-			<version>11+</version>
+			<version>[11,24]</version>
 		</versions>
 		<impls>
 			<impl>openj9</impl>
@@ -163,7 +163,7 @@
 			<group>functional</group>
 		</groups>
 		<versions>
-			<version>11+</version>
+			<version>[11,24]</version>
 		</versions>
 		<impls>
 			<impl>openj9</impl>
@@ -199,7 +199,7 @@
 			<group>functional</group>
 		</groups>
 		<versions>
-			<version>11+</version>
+			<version>[11,24]</version>
 		</versions>
 		<impls>
 			<impl>openj9</impl>
@@ -234,7 +234,7 @@
 			<group>functional</group>
 		</groups>
 		<versions>
-			<version>11+</version>
+			<version>[11,24]</version>
 		</versions>
 		<impls>
 			<impl>openj9</impl>
