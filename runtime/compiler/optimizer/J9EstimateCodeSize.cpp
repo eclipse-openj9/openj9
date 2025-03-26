@@ -1755,6 +1755,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
 
                int32_t origAnalyzedSize = _analyzedSize;
                int32_t origRealSize = _realSize;
+               int32_t origBigCalleesSize = _bigCalleesSize;
                bool prevNonColdCalls = _hasNonColdCalls;
                bool estimateSuccess = estimateCodeSize(targetCallee, &callStack); //recurseDown = true
                bool calltargetSetTooBig = false;
@@ -1799,11 +1800,18 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                         }
                      }
 
-
-                  if (_analyzedSize - origAnalyzedSize > bigCalleeThreshold)
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+                  int32_t bigCalleesSizeBelowMe = _bigCalleesSize - origBigCalleesSize;
+#else
+                  // Temporarily disable bigCalleeSize adjustment for OpenJ9 MethodHandle implementation as it exposes a functional issue
+                  // with the change in inlining behaviour resulting from this big callee adjustment.
+                  int32_t bigCalleesSizeBelowMe = 0;
+#endif /* J9VM_OPT_OPENJDK_METHODHANDLE */
+                  if ((_analyzedSize - origAnalyzedSize - bigCalleesSizeBelowMe) > bigCalleeThreshold)
                      {
                      ///printf("set warmcallgraphtoobig for method %s at index %d\n", calleeName, newBCInfo._byteCodeIndex);fflush(stdout);
                      calltarget->_calleeMethod->setWarmCallGraphTooBig( newBCInfo.getByteCodeIndex(), comp());
+                     _bigCalleesSize = _bigCalleesSize + _analyzedSize - origAnalyzedSize - bigCalleesSizeBelowMe;
                      heuristicTrace(tracer(), "set warmcallgraphtoobig for method %s at index %d\n", calleeName, newBCInfo.getByteCodeIndex());
                      //_analyzedSize = origAnalyzedSize;
                      //_realSize = origRealSize;
