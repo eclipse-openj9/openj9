@@ -22,6 +22,7 @@
 
 #include "j9.h"
 #include "util_internal.h"
+#include <stdint.h>
 
 /* there is no error checking: the signature MUST be well-formed */
 UDATA
@@ -30,13 +31,17 @@ getSendSlotsFromSignature(const U_8* signature)
 	UDATA sendArgs = 0;
 	UDATA i = 1; /* 1 to skip the opening '(' */
 
-	for (; ; i++) {
+	/* All UTF8 in the class file have a size represented by uint16_t. The size check
+	 * is only necessary for ASGCT where the signature provided may not be valid,
+	 * but is harmless in the normal runtime case.
+	 */
+	for (; i <= UINT16_MAX; i++) {
 		switch (signature[i]) {
 		case ')':
-			return sendArgs;
+			goto done;
 		case '[':
 			/* skip all '['s */
-			for (i++; signature[i] == '['; i++);
+			for (i++; (i <= UINT16_MAX) && (signature[i] == '['); i++);
 			if (signature[i] == 'L') {
 				/* FALL THRU */
 			} else {
@@ -44,7 +49,7 @@ getSendSlotsFromSignature(const U_8* signature)
 				break;
 			}
 		case 'L':
-			for (i++; signature[i] != ';'; i++);
+			for (i++; (i <= UINT16_MAX) && (signature[i] != ';'); i++);
 			sendArgs++;
 			break;
 		case 'D':
@@ -57,5 +62,7 @@ getSendSlotsFromSignature(const U_8* signature)
 			break;
 		}
 	}
+done:
+	return sendArgs;
 }
 
