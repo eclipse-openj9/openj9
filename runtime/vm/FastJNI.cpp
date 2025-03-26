@@ -147,7 +147,7 @@ jniNativeMethodProperties(J9VMThread *currentThread, J9Method *jniNativeMethod, 
 found:
 #if JAVA_SPEC_VERSION >= 24
 							/* Fast implementation located - if wait can unmount the continuation, check to see if this
-							 * native is the wait implememnation and reject it if so.
+							 * native is the wait implementation and reject it if so.
 							 */
 							if (J9_ARE_ANY_BITS_SET(currentThread->javaVM->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)
 							&& J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "waitImpl")
@@ -212,7 +212,7 @@ found:
 					methodDescriptor += 1;
 				}
 			}
-			classDescriptor	+= 1;
+			classDescriptor += 1;
 		}
 
 		/* If the method has no fast JNI optimizations and is a bound JNI native, return the bound address */
