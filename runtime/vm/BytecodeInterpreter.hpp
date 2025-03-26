@@ -5227,14 +5227,15 @@ done:
 				if ((millis > 0) || (nanos > 0)) {
 					newState = JAVA_LANG_VIRTUALTHREAD_TIMED_WAITING;
 				}
+				/* Reset the virtual thread's notified field before releasing Object monitor. */
+				J9VMJAVALANGVIRTUALTHREAD_SET_NOTIFIED(_currentThread, _currentThread->threadObject, JNI_FALSE);
 				/* Try to yield the virtual thread if it will be blocked. */
 				UDATA result = preparePinnedVirtualThreadForUnmount(_currentThread, object, true);
 				VMStructHasBeenUpdated(REGISTER_ARGS);
 				if (J9_OBJECT_MONITOR_OOM != result) {
 					restoreInternalNativeStackFrame(REGISTER_ARGS);
-					/* Handle the virtual thread Object.wait call. */
-					J9VMJAVALANGVIRTUALTHREAD_SET_NOTIFIED(_currentThread, _currentThread->threadObject, JNI_FALSE);
-					/* VirtualThread.timeout is a private field used by both VM and JCL to temporarily hold
+					/* Handle the virtual thread Object.wait call.
+					 * VirtualThread.timeout is a private field used by both VM and JCL to temporarily hold
 					 * the value of expected wait/park time before a wake up task is scheduled using the value.
 					 */
 					J9VMJAVALANGVIRTUALTHREAD_SET_TIMEOUT(_currentThread, _currentThread->threadObject, millis + (nanos / 1000000));
