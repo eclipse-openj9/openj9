@@ -30,6 +30,9 @@
 #if defined(J9VM_OPT_CRIU_SUPPORT)
 #include "CRIUHelpers.hpp"
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
+#if JAVA_SPEC_VERSION >= 24
+#include "ContinuationHelpers.hpp"
+#endif /* JAVA_SPEC_VERSION >= 24 */
 
 extern "C" {
 
@@ -75,26 +78,7 @@ Fast_java_lang_Object_notifyAll(J9VMThread *currentThread, j9object_t receiverOb
 				}
 
 				if ((NULL != objectMonitor) && (NULL != objectMonitor->waitingContinuations)) {
-					omrthread_monitor_enter(vm->blockedVirtualThreadsMutex);
-					J9VMContinuation *head = objectMonitor->waitingContinuations;
-					if (NULL != head) {
-						J9VMContinuation *next = head;
-						J9VMJAVALANGVIRTUALTHREAD_SET_ONWAITINGLIST(currentThread, head->vthread, JNI_TRUE);
-						J9VMJAVALANGVIRTUALTHREAD_SET_NOTIFIED(currentThread, head->vthread, JNI_TRUE);
-						while (NULL != next->nextWaitingContinuation) {
-							J9VMJAVALANGVIRTUALTHREAD_SET_ONWAITINGLIST(currentThread, next->vthread, JNI_TRUE);
-							J9VMJAVALANGVIRTUALTHREAD_SET_NOTIFIED(currentThread, next->vthread, JNI_TRUE);
-							next = next->nextWaitingContinuation;
-						}
-						next->nextWaitingContinuation = vm->blockedContinuations;
-						vm->blockedContinuations = head;
-						objectMonitor->waitingContinuations = NULL;
-
-						omrthread_monitor_notify(vm->blockedVirtualThreadsMutex);
-						omrthread_monitor_exit(vm->blockedVirtualThreadsMutex);
-					} else {
-						omrthread_monitor_exit(vm->blockedVirtualThreadsMutex);
-					}
+					VM_ContinuationHelpers::notifyVirtualThread(currentThread, objectMonitor, true);
 				}
 			}
 #endif /* JAVA_SPEC_VERSION >= 24 */
@@ -139,19 +123,11 @@ Fast_java_lang_Object_notify(J9VMThread *currentThread, j9object_t receiverObjec
 				}
 
 				if ((NULL != objectMonitor) && (NULL != objectMonitor->waitingContinuations)) {
-					omrthread_monitor_enter(vm->blockedVirtualThreadsMutex);
-					J9VMContinuation *head = objectMonitor->waitingContinuations;
-					if (NULL != head) {
-						objectMonitor->waitingContinuations = head->nextWaitingContinuation;
-						head->nextWaitingContinuation = vm->blockedContinuations;
-						vm->blockedContinuations = head;
-						J9VMJAVALANGVIRTUALTHREAD_SET_ONWAITINGLIST(currentThread, head->vthread, JNI_TRUE);
-						J9VMJAVALANGVIRTUALTHREAD_SET_NOTIFIED(currentThread, head->vthread, JNI_TRUE);
-
-						omrthread_monitor_notify(vm->blockedVirtualThreadsMutex);
-						omrthread_monitor_exit(vm->blockedVirtualThreadsMutex);
-					} else {
-						omrthread_monitor_exit(vm->blockedVirtualThreadsMutex);
+					if (VM_ContinuationHelpers::notifyVirtualThread(currentThread, objectMonitor, false)) {
+						/* If a virtual thread has been successfully notified, return directly without
+						 * triggering the native notify API.
+						 */
+						return;
 					}
 				}
 			}

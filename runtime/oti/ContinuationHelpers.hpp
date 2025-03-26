@@ -56,7 +56,7 @@ public:
 	static VMINLINE void
 	swapFieldsWithContinuation(J9VMThread *vmThread, J9VMContinuation *continuation, j9object_t continuationObject, bool swapJ9VMthreadSavedRegisters = true)
 	{
-	/* Helper macro to swap fields between the two J9Class structs. */
+	/* Helper macro to swap fields between the two J9VMContinuation structs. */
 #define SWAP_MEMBER(fieldName, fieldType, class1, class2) \
 	do { \
 		fieldType temp = (fieldType)((class1)->fieldName); \
@@ -322,6 +322,65 @@ public:
 		}
 
 		return foundInList;
+	}
+
+	/**
+	 * Logic to notify virtual threads waiting on an object monitor.
+	 *
+	 * @param[in] vmThread the J9VMThread
+	 * @param[in] objectMonitor the object monitor on which the virtual threads are waiting
+	 * @param[in] notifyAll indicates if all virtual threads should be notified
+	 *
+	 * @return true if any virtual threads are notified, otherwise false
+	 */
+	static VMINLINE bool
+	notifyVirtualThread(J9VMThread *vmThread, J9ObjectMonitor *objectMonitor, bool notifyAll)
+	{
+		bool notified = false;
+		J9JavaVM *vm = vmThread->javaVM;
+
+		omrthread_monitor_enter(vm->blockedVirtualThreadsMutex);
+		J9VMContinuation **link = &objectMonitor->waitingContinuations;
+		J9VMContinuation *current = NULL;
+
+		while (NULL != *link) {
+			current = *link;
+			if (J9VMJAVALANGTHREAD_DEADINTERRUPT(vmThread, current->vthread)) {
+				/* Remove virtual threads that have been interrupted. */
+				*link = current->nextWaitingContinuation;
+				current->nextWaitingContinuation = NULL;
+			} else {
+				/* Set the notified and onWaitingList flags for virtual threads that have not been interrupted. */
+				J9VMJAVALANGVIRTUALTHREAD_SET_NOTIFIED(vmThread, current->vthread, JNI_TRUE);
+				J9VMJAVALANGVIRTUALTHREAD_SET_ONWAITINGLIST(vmThread, current->vthread, JNI_TRUE);
+				notified = true;
+
+				if (!notifyAll) {
+					/* For Object.notify, exit the loop with current pointer set to the notified Continuation. */
+					break;
+				}
+
+				link = &current->nextWaitingContinuation;
+			}
+		}
+
+		if (notified) {
+			/* Move notified virtual threads to the blockedContinuations list for unblocking. */
+			if (notifyAll) {
+				current->nextWaitingContinuation = vm->blockedContinuations;
+				vm->blockedContinuations = objectMonitor->waitingContinuations;
+				objectMonitor->waitingContinuations = NULL;
+			} else {
+				objectMonitor->waitingContinuations = current->nextWaitingContinuation;
+				current->nextWaitingContinuation = vm->blockedContinuations;
+				vm->blockedContinuations = current;
+			}
+			omrthread_monitor_notify(vm->blockedVirtualThreadsMutex);
+		}
+
+		omrthread_monitor_exit(vm->blockedVirtualThreadsMutex);
+
+		return notified;
 	}
 #endif /* JAVA_SPEC_VERSION >= 24 */
 };
