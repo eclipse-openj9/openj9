@@ -48,6 +48,7 @@ private:
 	const uint32_t _numberOfIndexedFields;
 	const uintptr_t _dataSize;
 	const GC_ArrayletObjectModel::ArrayLayout _layout;
+	const bool _isDataAdjacent;
 	const bool _alignSpineDataSection;
 	const uintptr_t _numberOfArraylets;
 
@@ -110,6 +111,7 @@ public:
 		, _dataSize(env->getExtensions()->indexableObjectModel.getDataSizeInBytes(_class, _numberOfIndexedFields))
 		, _layout(env->getExtensions()->indexableObjectModel.getArrayletLayout(_class, _numberOfIndexedFields,
 				_allocateDescription.getMemorySpace()->getDefaultMemorySubSpace()->largestDesirableArraySpine()))
+		, _isDataAdjacent(env->getExtensions()->indexableObjectModel.shouldDataBeAdjacentToHeader(_dataSize))
 		, _alignSpineDataSection(env->getExtensions()->indexableObjectModel.shouldAlignSpineDataSection(_class))
 		, _numberOfArraylets(env->getExtensions()->indexableObjectModel.numArraylets(_dataSize))
 	{
