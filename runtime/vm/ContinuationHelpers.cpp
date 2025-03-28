@@ -1074,11 +1074,11 @@ restart:
 
 	if (NULL != syncObj) {
 		j9object_t continuationObj = J9VMJAVALANGVIRTUALTHREAD_CONT(currentThread, currentThread->threadObject);
+		omrthread_monitor_t monitor = syncObjectMonitor->monitor;
 		J9VMJDKINTERNALVMCONTINUATION_SET_BLOCKER(currentThread, continuationObj, syncObj);
 
 		if (isObjectWait) {
 			J9VMContinuation *continuation = currentThread->currentContinuation;
-			omrthread_monitor_t monitor = syncObjectMonitor->monitor;
 
 			/* Record wait monitor state. */
 			continuation->waitingMonitorEnterCount = monitor->count;
@@ -1100,6 +1100,11 @@ restart:
 			/* Increment the wait count on inflated monitor. */
 			VM_AtomicSupport::addU32(&syncObjectMonitor->virtualThreadWaitCount, 1);
 			currentThread->currentContinuation->objectWaitMonitor = syncObjectMonitor;
+
+			if (NULL != monitor) {
+				/* If we are blocking to wait on a contended monitor then we can't be the owner. */
+				Assert_VM_false(monitor->owner == currentThread->osThread);
+			}
 		}
 	}
 
