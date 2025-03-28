@@ -87,4 +87,13 @@ Java_jdk_jfr_internal_JVM_hostTotalMemory(JNIEnv *env, jobject obj)
 	return 0;
 }
 
+#if JAVA_SPEC_VERSION >= 25
+jboolean JNICALL
+Java_jdk_jfr_internal_JVM_isProduct(JNIEnv *env, jclass jlClass)
+{
+	// TODO: implementation
+	return JNI_FALSE;
+}
+#endif /* JAVA_SPEC_VERSION >= 25 */
+
 } /* extern "C" */
