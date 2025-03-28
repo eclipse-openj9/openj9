@@ -51,7 +51,7 @@ extern omrthread_tls_key_t j9rasTLSKey;
  * returns     - int32_t
  ******************************************************************************/
 omr_error_t
-initEvent(UtEventSem **sem, char* name) 
+initEvent(UtEventSem **sem, char* name)
 {
 	PORT_ACCESS_FROM_PORT(UT_GLOBAL(portLibrary));
 	omr_error_t ret = OMR_ERROR_NONE;
@@ -148,7 +148,7 @@ postEvent(UtEventSem * sem)
  * returns     - void
  ******************************************************************************/
 void
-postEventAll(UtEventSem * sem) 
+postEventAll(UtEventSem * sem)
 {
 
 	UT_DBGOUT(2, ("<UT> postEventAll called for semaphore %p\n", sem));
@@ -438,7 +438,7 @@ freeBuffers(qMessage *msg)
 		}
 
 		omrthread_monitor_enter(UT_GLOBAL(freeQueueLock));
-		
+
 		trcBuf->next = UT_GLOBAL(freeQueue);
 		UT_GLOBAL(freeQueue) = nextBuf;
 
@@ -598,8 +598,8 @@ openSnap(char *label)
 		int64_t curTime = j9time_current_time_millis();
 		struct J9StringTokens* stringTokens = j9str_create_tokens(curTime);
 
-		j9str_set_token(PORTLIB, stringTokens, "pid", "%lld", pid);
-		j9str_set_token(PORTLIB, stringTokens, "sid", "%04.4d", UT_GLOBAL(snapSequence));
+		j9str_set_token(stringTokens, "pid", "%lld", pid);
+		j9str_set_token(stringTokens, "sid", "%04.4d", UT_GLOBAL(snapSequence));
 
 		j9str_subst_tokens(fileName, FILENAMELEN, "Snap%sid.%Y%m%d%H%M%S.%pid.trc", stringTokens);
 		j9str_free_tokens(stringTokens);
@@ -729,7 +729,7 @@ cleanup:
 	} else {
 		destroyRecordSubscriber(thr, subscription);
 	}
-	
+
 	UT_DBGOUT(5, ("<UT thr="UT_POINTER_SPEC"> Releasing lock for cleanup on handler exit\n", thr));
 
 	/* Need to exit the trace lock first as detaching a thread needs the vm thread list lock.
@@ -830,7 +830,7 @@ writeBuffer(UtSubscription *subscription)
 		if (*wrap != 0 && *fileSize >= *wrap) {
 			/* Trace options may have changed, re-initialize the trace file header data if necessary */
 			initTraceHeader();
-			
+
 			if ((bufferType == UT_NORMAL_BUFFER) && (UT_GLOBAL(traceGenerations) > 1)) {
 				/* For multiple-generation file mode, open the next file */
 				j9file_close(outputFile);
@@ -847,7 +847,7 @@ writeBuffer(UtSubscription *subscription)
 					return OMR_ERROR_INTERNAL;
 				}
 			} else {
-				/* For single file wrap mode, seek back to start of file */ 
+				/* For single file wrap mode, seek back to start of file */
 				*maxFileSize = *fileSize;
 				*fileSize = j9file_seek(outputFile, 0, SEEK_SET);
 				if (*fileSize != 0 ) {
@@ -863,7 +863,7 @@ writeBuffer(UtSubscription *subscription)
 					*fileSize = -1;
 					return OMR_ERROR_INTERNAL;
 				}
-			} 
+			}
 		}
 
 		if (*fileSize > *maxFileSize) {
@@ -988,14 +988,14 @@ getTrcBuf(UtThreadData **thr, UtTraceBuffer * oldBuf, int bufferType)
 	 * Reuse buffer if there is one
 	 */
 	omrthread_monitor_enter(UT_GLOBAL(freeQueueLock));
-	
+
 	trcBuf = UT_GLOBAL(freeQueue);
 	if (NULL != trcBuf) {
 		UT_GLOBAL(freeQueue) = trcBuf->next;
 	}
-	
+
 	omrthread_monitor_exit(UT_GLOBAL(freeQueueLock));
-	
+
 	if (trcBuf != NULL) {
 		DBG_ASSERT(trcBuf->queueData.next == NULL || trcBuf->queueData.next == CLEANING_MSG_FLAG);
 		DBG_ASSERT(trcBuf->queueData.referenceCount == 0);
@@ -1201,7 +1201,7 @@ copyToBuffer(UtThreadData **thr,
 
 			if (nextBuf != NULL) {
 				*trcBuf = nextBuf; /* update caller's trace buffer pointer to point to next buffer */
-				
+
 				/* we're about to copy stuff into it so mark the buffer as not new so it can be queued */
 				UT_ATOMIC_AND((volatile uint32_t *)(&(*trcBuf)->flags), ~UT_TRC_BUFFER_NEW);
 				(*trcBuf)->thr = thr;
@@ -1678,7 +1678,7 @@ traceV(UtThreadData **thr, UtModuleInfo *modInfo, uint32_t traceId, const char *
 
 		/* write name to buffer */
 		copyToBuffer(thr, bufferType, stringVar, &p,
-				 	 (int)stringVarLen, &entryLength, &trcBuf);
+					 (int)stringVarLen, &entryLength, &trcBuf);
 
 		if (containerModuleVar != NULL){
 			copyToBuffer(thr, bufferType, "(", &p, 1, &entryLength, &trcBuf);
@@ -1763,14 +1763,14 @@ traceV(UtThreadData **thr, UtModuleInfo *modInfo, uint32_t traceId, const char *
 					/*
 					 *  Doubles
 					 */
-		        	 /* CMVC 164940 All %f tracepoints are internally promoted to double.
-		        	  * Affects:
-		        	  *  TraceFormat  com/ibm/jvm/format/Message.java
-		        	  *  TraceFormat  com/ibm/jvm/trace/format/api/Message.java
-		        	  *  runtime    ute/ut_trace.c
-		        	  *  TraceGen     OldTrace.java
-		        	  * Intentional fall through to next case. 
-		        	  */
+					/* CMVC 164940 All %f tracepoints are internally promoted to double.
+					 * Affects:
+					 *  TraceFormat  com/ibm/jvm/format/Message.java
+					 *  TraceFormat  com/ibm/jvm/trace/format/api/Message.java
+					 *  runtime    ute/ut_trace.c
+					 *  TraceGen     OldTrace.java
+					 * Intentional fall through to next case.
+					 */
 
 				case UT_TRACE_DATA_TYPE_DOUBLE:
 					{
@@ -2095,7 +2095,7 @@ static void logTracePoint(UtThreadData **thr, UtModuleInfo *modInfo, uint32_t tr
 				traceExternal(thr, listener->listener, listener->userData, modInfo->name, traceId >> 8, spec, var);
 			}
 		}
-		
+
 		/* Find and call all registered tracepoint subscribers (public JVMTI interface) */
 		getTraceLock(thr);
 		for (subscription = UT_GLOBAL(tracePointSubscribers); subscription != NULL; subscription = subscription->next) {
@@ -2190,8 +2190,8 @@ doTracePoint(UtThreadData **thr, UtModuleInfo *modInfo, uint32_t traceId, const 
 	} else {
 		/* This block only executed for auxiliary tracepoints*/
 
-		/* The primary user of auxiliary tracepoints is jstacktrace. Sending jstacktrace data to 
-		 * minimal (i.e. throwing away all the stack data) makes no sense - so it is converted to 
+		/* The primary user of auxiliary tracepoints is jstacktrace. Sending jstacktrace data to
+		 * minimal (i.e. throwing away all the stack data) makes no sense - so it is converted to
 		 * maximal. currentOutputMask is reset below.
 		 */
 		savedOutputMask = (*thr)->currentOutputMask;
@@ -2656,7 +2656,7 @@ callSubscriber(UtThreadData **thr, UtSubscription *subscription, UtModuleInfo *m
 	PORT_ACCESS_FROM_PORT(UT_GLOBAL(portLibrary));
 
 	getTimestamp(j9time_current_time_millis(), &hours, &mins, &secs, &msecs);
-	
+
 	/* Format the tracepoint module name, includes support for submodules */
 	memset(qualifiedModuleName, '\0', sizeof(qualifiedModuleName));
 	if (modInfo == NULL){
@@ -2681,7 +2681,7 @@ callSubscriber(UtThreadData **thr, UtSubscription *subscription, UtModuleInfo *m
 	/* Calculate the size of buffer we need to hold the tracepoint header plus formatted tracepoint data */
 	headerSize = j9str_printf(NULL, 0, "%02d:%02d:%02d.%03d 0x%x %s.%3d", hours, mins, secs, msecs, (*thr)->id, qualifiedModuleName, id);
 	COPY_VA_LIST(argsCopy, args);
-	dataSize = j9str_vprintf(NULL, 0, format, argsCopy); 
+	dataSize = j9str_vprintf(NULL, 0, format, argsCopy);
 
 	/* Allocate a temporary buffer for the formatted tracepoint */
 	buffer = j9mem_allocate_memory(headerSize + dataSize + 1, OMRMEM_CATEGORY_TRACE);
@@ -2696,7 +2696,7 @@ callSubscriber(UtThreadData **thr, UtSubscription *subscription, UtModuleInfo *m
 	j9str_printf(cursor, headerSize, "%02d:%02d:%02d.%03d 0x%x %s.%3d", hours, mins, secs, msecs, (*thr)->id, qualifiedModuleName, id);
 	cursor += headerSize - 1;
 	COPY_VA_LIST(argsCopy, args);
-	j9str_vprintf(cursor, dataSize, format, argsCopy); 
+	j9str_vprintf(cursor, dataSize, format, argsCopy);
 
 	/* Update the subscription data with the buffer location and length */
 	subscription->data = buffer;

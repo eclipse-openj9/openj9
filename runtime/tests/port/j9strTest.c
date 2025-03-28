@@ -30,12 +30,12 @@
  * @file
  * @ingroup PortTest
  * @brief Verify port library string operations.
- * 
- * Exercise the API for port library string operations.  These functions 
- * can be found in the file @ref j9str.c and in file @ref j9strftime.c 
- * 
+ *
+ * Exercise the API for port library string operations.  These functions
+ * can be found in the file @ref j9str.c and in file @ref j9strftime.c
+ *
  * @note port library string operations are not optional in the port library table.
- * 
+ *
  */
 #if defined(WIN32)
 #include <windows.h>
@@ -73,10 +73,10 @@ typedef UDATA (* J9STR_VPRINTF_FUNC) (struct OMRPortLibrary *portLibrary, char *
 
 /**
  * Verify helpers functions call correct functions.
- * 
+ *
  * Override @ref j9str.c::j9str_vprintf "j9str_vprintf()" and return a known value to verify any helper
  * functions that  should be calling this function truly are.
- * 
+ *
  * @param[in] portLibrary The port library.
  * @param[in, out] buf The string buffer to be written.
  * @param[in] bufLen The size of the string buffer to be written.
@@ -91,13 +91,13 @@ fake_j9str_vprintf(struct OMRPortLibrary *portLibrary, char *buf, UDATA bufLen, 
 	return J9STR_PRIVATE_RETURN_VALUE;
 }
 
-/** 
+/**
  * @internal
  * Helper function for string verification.
- * 
+ *
  * Given a format string and it's arguments create the requested output message and
  * put it in the provided buffer.
- * 
+ *
  * @param[in] portLibrary The port library under test
  * @param[in] testName The name of the test requesting this functionality
  * @param[in,out] buffer buffer to write to
@@ -130,10 +130,10 @@ validate_j9str_vprintf(struct J9PortLibrary *portLibrary, const char *testName, 
 /**
  * @internal
  * Helper function for string verification.
- * 
+ *
  * Given a format string and it's arguments create the requested output message and
  * try to store it in a null buffer.
- * 
+ *
  * @param[in] portLibrary The port library under test
  * @param[in] testName The name of the test requesting this functionality
  * @param[in,out] buffer buffer to write to
@@ -158,12 +158,12 @@ validate_j9str_vprintf_with_NULL(struct J9PortLibrary *portLibrary, const char *
 /**
  * @internal
  * Helper function for string verification.
- * 
+ *
  * Given a format string and it's arguments verify the following behaviour
  * \args Given a larger buffer formatting is correct
  * \args Given a buffer of exact size the formatting is correct
  * \args Given a smaller buffer the formatting is truncated
- * 
+ *
  * @param[in] portLibrary The port library under test
  * @param[in] testName The name of the test requesting this functionality
  * @param[in] format The format string
@@ -171,10 +171,10 @@ validate_j9str_vprintf_with_NULL(struct J9PortLibrary *portLibrary, const char *
  * @param[in] ... arguments for format
  */
 static void
-test_j9str_vprintf(struct J9PortLibrary *portLibrary, const char *testName, const char *format, const char *expectedResult, ...) 
+test_j9str_vprintf(struct J9PortLibrary *portLibrary, const char *testName, const char *format, const char *expectedResult, ...)
 {
 	char truncatedExpectedResult[512];
-	char actualResult[512]; 
+	char actualResult[512];
 	va_list args;
 
 	/* Buffer larger than required */
@@ -227,11 +227,11 @@ test_j9str_vprintf(struct J9PortLibrary *portLibrary, const char *testName, cons
 /**
  * @internal
  * Helper function for string verification.
- * 
+ *
  * @param[in] portLibrary The port library under test
  * @param[in] testName The name of the test requesting this functionality
  * @param[in] ... arguments for format string
- * 
+ *
  * @note Pretty bogus to pass an argument for a format string you don't know about
  */
 static void
@@ -243,18 +243,18 @@ test_j9str_vprintfNulChar(struct J9PortLibrary *portLibrary, const char* testNam
 	const char* format = "ab%cde";
 	const char* expectedResult = "ab";
 	va_list args;
-	
+
 	va_start(args, testName);
 	rc = j9str_vprintf(actualResult, sizeof(actualResult), format, args);
 	va_end(args);
 	if (5 != rc) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "j9str_vprintf(\"%s\") returned %d expected 5\n", format, rc);
 	}
-	
+
 	if (strlen(actualResult) != 2) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "j9str_vprintf(\"%s\") returned %d expected 2\n", format, rc);
 	}
-	
+
 	if (strcmp(actualResult, expectedResult) != 0) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "j9str_vprintf(\"%s\") returned \"%s\" expected \"%s\"\n", format, expectedResult, actualResult);
 	}
@@ -319,11 +319,11 @@ test_j9str_tokens(struct J9PortLibrary *portLibrary, const char *testName, char 
 
 /**
  * Verify port library string operations.
- * 
+ *
  * Ensure the port library is properly setup to run string operations.
- * 
+ *
  * @param[in] portLibrary The port library under test
- * 
+ *
  * @return TEST_PASS on success, TEST_FAIL on error
  */
 int
@@ -332,9 +332,9 @@ j9str_test0(struct J9PortLibrary *portLibrary)
 	const char* testName = "j9str_test0";
 
 	reportTestEntry(portLibrary, testName);
-	 
+
 	/* Verify that the string function pointers are non NULL */
-	
+
 	/* Not tested, implementation dependent.  No known functionality.
 	 * Startup is private to the portlibrary, it is not re-entrant safe
 	 */
@@ -363,24 +363,24 @@ j9str_test0(struct J9PortLibrary *portLibrary)
 /**
  * Verify port library string operations.
  *
- * @ref j9str.c::j9str_printf "j9str_printf()" is a helper function for 
+ * @ref j9str.c::j9str_printf "j9str_printf()" is a helper function for
  * j9str.c::j9str_vprintf "j9str_vprintf().  It only makes sense to implement
- * one in terms of the other.  To verify this has indeed been done, replace 
+ * one in terms of the other.  To verify this has indeed been done, replace
  * j9str_printf with a fake one that returns a known value.  If that value is
  * not returned then fail the test.
- * 
+ *
  * @param[in] portLibrary The port library under test
- * 
+ *
  * @return TEST_PASS on success, TEST_FAIL on error
  */
 int
-j9str_test1(struct J9PortLibrary *portLibrary) 
+j9str_test1(struct J9PortLibrary *portLibrary)
 {
 	PORT_ACCESS_FROM_PORT(portLibrary);
 	const char* testName = "j9str_test1";
 	UDATA j9strRC;
 	J9STR_VPRINTF_FUNC realVprintf;
-	
+
 	reportTestEntry(portLibrary, testName);
 
 	/* Save the real function, put in a fake one, call it, restore old one */
@@ -406,13 +406,13 @@ j9str_test1(struct J9PortLibrary *portLibrary)
  *
  * Run various format strings through @ref j9str.c::j9str_vprintf "j9str_vprintf()".
  * Tests include basic printing of characters, strings, numbers and Unicode characters.
- * 
+ *
  * @param[in] portLibrary The port library under test
- * 
+ *
  * @return TEST_PASS on success, TEST_FAIL on error
  */
 int
-j9str_test2(struct J9PortLibrary *portLibrary) 
+j9str_test2(struct J9PortLibrary *portLibrary)
 {
 	PORT_ACCESS_FROM_PORT(portLibrary);
 	const char* testName = "j9str_test2";
@@ -516,17 +516,17 @@ j9str_test2(struct J9PortLibrary *portLibrary)
  * Verify port library string operations.
  *
  * Exercise @ref j9strftime.c::j9strftime "j9strftime()" with various format strings and times.
- * Tests include 
+ * Tests include
  * 	1. too short a dest buffer
- * 	2. ime 0 
+ * 	2. ime 0
  * 	3. a known time (February 29th 2004 01:23:45)
- * 	4. Tokens that are not valid for str_ftime but are set by default in j9str_create_tokens. 
+ * 	4. Tokens that are not valid for str_ftime but are set by default in j9str_create_tokens.
  * 		Check that these are not substituted.
  *  5. Tokens that are not valid by default anywhere.
- * 
- * 
+ *
+ *
  * @param[in] portLibrary The port library under test
- * 
+ *
  * @return TEST_PASS on success, TEST_FAIL on error
  */
 int
@@ -539,11 +539,11 @@ j9str_test3(struct J9PortLibrary *portLibrary)
 	char expected[J9STR_BUFFER_SIZE];
 	U_64 timeMillis;
 	UDATA ret;
-	
+
 	reportTestEntry(portLibrary, testName);
-	
+
 	/* First test: The epoch */
-	j9tty_printf(PORTLIB, "\t This test could fail if you abut the international dateline (westside of dateline)\n"); 
+	j9tty_printf(PORTLIB, "\t This test could fail if you abut the international dateline (westside of dateline)\n");
 	timeMillis = 0;
 	strncpy(expected, "1970 01 Jan 01 XX:00:00", J9STR_BUFFER_SIZE);
 	test_str_ftime(portLibrary, testName, buf, J9STR_BUFFER_SIZE, "%Y %m %b %d XX:%M:%S", timeMillis, OMRSTR_FTIME_FLAG_LOCAL, expected);
@@ -564,19 +564,19 @@ j9str_test3(struct J9PortLibrary *portLibrary)
 	timeMillis = J9CONST64(1078056000000);
 	strncpy(expected, "2004 02 Feb 29 00 %pid %uid %job %home %last %seq", J9STR_BUFFER_SIZE);
 	test_str_ftime(portLibrary, testName, buf, J9STR_BUFFER_SIZE, "%Y %m %b %d %S %pid %uid %job %home %last %seq", timeMillis, OMRSTR_FTIME_FLAG_LOCAL, expected);
-		
+
 	/* Fifth Test: Pass in Tokens that are not valid by default anywhere.
 	 * Use the time February 29th, 2004, 12:00:00, UTC. */
 	timeMillis = J9CONST64(1078056000000);
 	strncpy(expected, "2004 02 Feb 29 00 %zzz = %zzz", J9STR_BUFFER_SIZE);
 	test_str_ftime(portLibrary, testName, buf, J9STR_BUFFER_SIZE, "%Y %m %b %d %S %zzz = %%zzz", timeMillis, OMRSTR_FTIME_FLAG_LOCAL, expected);
-		
+
 	/* Sixth Test: Pass in all time tokens.
 	 * Use the time February 29th, 2004, 12:00:00, UTC. */
 	timeMillis = J9CONST64(1078056000000);
 	strncpy(expected, "04,(2004) 02,(Feb) 29 XX:00:00 %", J9STR_BUFFER_SIZE);
 	test_str_ftime(portLibrary, testName, buf, J9STR_BUFFER_SIZE, "%y,(%Y) %m,(%b) %d XX:%M:%S %", timeMillis, OMRSTR_FTIME_FLAG_LOCAL, expected);
-			
+
 	return reportTestExit(portLibrary, testName);
 }
 
@@ -585,9 +585,9 @@ j9str_test3(struct J9PortLibrary *portLibrary)
  *
  * Exercise @ref j9str.c::j9str_subst_tokens "j9str_subst_tokens" with various tokens.
  * Tests include simple token tests, too short a dest buffer and token precedence
- * 
+ *
  * @param[in] portLibrary The port library under test
- * 
+ *
  * @return TEST_PASS on success, TEST_FAIL on error
  */
 int
@@ -602,82 +602,81 @@ j9str_test4(struct J9PortLibrary *portLibrary)
 	char buf[TEST_BUF_LEN];
 	char bufOverflow[TEST_OVERFLOW_LEN];
 
-	
 	reportTestEntry(portLibrary, testName);
-	
+
 	/* February 29th, 2004, 12:00:00, UTC */
 	timeMillis = J9CONST64(1078056000000);
-	
+
 	j9tty_printf(PORTLIB, "\t This test will fail if you abut the international dateline\n");
 	tokens = j9str_create_tokens(timeMillis);
-	j9str_set_token(portLibrary, tokens, "longtkn", "Long Token Value");
-	j9str_set_token(portLibrary, tokens, "yyy", "nope nope nope");
-	j9str_set_token(portLibrary, tokens, "yyy", "yup yup yup");
-	j9str_set_token(portLibrary, tokens, "empty", "");
+	j9str_set_token(tokens, "longtkn", "Long Token Value");
+	j9str_set_token(tokens, "yyy", "nope nope nope");
+	j9str_set_token(tokens, "yyy", "yup yup yup");
+	j9str_set_token(tokens, "empty", "");
 	if (NULL == tokens) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "Failed to create tokens\n");
 	} else {
 		/* Test 1: No tokens */
 		test_j9str_tokens(portLibrary, testName, buf, TEST_BUF_LEN,
-		                  "Teststring", tokens,
-		                  "Teststring", 10);
+						  "Teststring", tokens,
+						  "Teststring", 10);
 		/* Test 2: Single token */
 		test_j9str_tokens(portLibrary, testName, buf, TEST_BUF_LEN,
-		                  "%Y", tokens,
-		                  "2004", 4);
+						  "%Y", tokens,
+						  "2004", 4);
 		/* Test 3: End with a token */
 		test_j9str_tokens(portLibrary, testName, buf, TEST_BUF_LEN,
-		                  "Teststring %Y", tokens,
-		                  "Teststring 2004", 15);
+						  "Teststring %Y", tokens,
+						  "Teststring 2004", 15);
 		/* Test 4: Start with a token */
 		test_j9str_tokens(portLibrary, testName, buf, TEST_BUF_LEN,
-		                  "%y Teststring", tokens,
-		                  "04 Teststring", 13);
+						  "%y Teststring", tokens,
+						  "04 Teststring", 13);
 		/* Test 5: Many tokens */
 		test_j9str_tokens(portLibrary, testName, buf, TEST_BUF_LEN,
-		                  "%Y/%m/%d %S seconds %longtkn", tokens,
-		                  "2004/02/29 00 seconds Long Token Value", 38);
+						  "%Y/%m/%d %S seconds %longtkn", tokens,
+						  "2004/02/29 00 seconds Long Token Value", 38);
 		/* Test 6: Tokens and strings combined */
 		test_j9str_tokens(portLibrary, testName, buf, TEST_BUF_LEN,
-		                  "Test1 %Y Test2-%m%d%y-%S %longtkn, %longtkn", tokens,
-		                  "Test1 2004 Test2-022904-00 Long Token Value, Long Token Value",
-		                  61);
+						  "Test1 %Y Test2-%m%d%y-%S %longtkn, %longtkn", tokens,
+						  "Test1 2004 Test2-022904-00 Long Token Value, Long Token Value",
+						  61);
 		/* Test 7: %% and end with % */
 		test_j9str_tokens(portLibrary, testName, buf, TEST_BUF_LEN,
-		                  "99%% is the same as 99%", tokens,
-		                  "99% is the same as 99%", 22);
+						  "99%% is the same as 99%", tokens,
+						  "99% is the same as 99%", 22);
 		/* Test 8: Invalid tokens */
 		test_j9str_tokens(portLibrary, testName, buf, TEST_BUF_LEN,
-		                  "%zzz = %%zzz", tokens,
-		                  "%zzz = %zzz", 11);
+						  "%zzz = %%zzz", tokens,
+						  "%zzz = %zzz", 11);
 		/* Test 9: Excessive % stuff */
 		test_j9str_tokens(portLibrary, testName, buf, TEST_BUF_LEN,
-		                  "%Y%%%m%%%d %zzz% %%%%%%", tokens,
-		                  "2004%02%29 %zzz% %%%", 20);
+						  "%Y%%%m%%%d %zzz% %%%%%%", tokens,
+						  "2004%02%29 %zzz% %%%", 20);
 		/* Test 10: Simple string, buffer too short */
 		test_j9str_tokens(portLibrary, testName, buf, 7, "Teststring", tokens, "Testst", 11);
 		/* Test 11: Single token, buffer too short */
-		test_j9str_tokens(portLibrary, testName, buf, 3, "%Y", tokens, "20", 5);	
+		test_j9str_tokens(portLibrary, testName, buf, 3, "%Y", tokens, "20", 5);
 		/* Test 12: Test for overflow with an actual short buffer (simple string) */
 		test_j9str_tokens(portLibrary, testName, bufOverflow, TEST_OVERFLOW_LEN,
-		                  "Teststring", tokens,
-		                  "Teststr", 11);
+						  "Teststring", tokens,
+						  "Teststr", 11);
 		/* Test 13: Test for overflow with an actual short buffer (token) */
 		test_j9str_tokens(portLibrary, testName, bufOverflow, TEST_OVERFLOW_LEN,
-		                  "Test %Y", tokens,
-		                  "Test 20", 10);
+						  "Test %Y", tokens,
+						  "Test 20", 10);
 		/* Test 14: Test for token precedence based on length */
 		test_j9str_tokens(portLibrary, testName, buf, TEST_BUF_LEN,
-		                  "%yyy is not %yy is not %y", tokens,
-		                  "yup yup yup is not 04y is not 04", 32);
+						  "%yyy is not %yy is not %y", tokens,
+						  "yup yup yup is not 04y is not 04", 32);
 		/* Test 15: Test the read only mode (should return the required buf len) */
 		test_j9str_tokens(portLibrary, testName, NULL, 0,
-		                  "%yyy is not %yy is not %y", tokens,
-		                  NULL, 33); /* 33 because must include \0 */
+						  "%yyy is not %yy is not %y", tokens,
+						  NULL, 33); /* 33 because must include \0 */
 		/* Test 16: Test an empty token */
 		test_j9str_tokens(portLibrary, testName, buf, TEST_BUF_LEN,
-		                  "x%emptyx == xx", tokens,
-		                  "xx == xx", 8);
+						  "x%emptyx == xx", tokens,
+						  "xx == xx", 8);
 
 		/* Test 17: All tokens that we get for free in j9str_create_tokens (and that the user may be relying on) */
 		{
@@ -692,19 +691,19 @@ j9str_test4(struct J9PortLibrary *portLibrary)
 
 			UDATA i = 0;
 			UDATA rc;
-			char *timePortionOfFormatString = "%y,(%Y) %m,(%b) %d XX:%M:%S %"; 
+			char *timePortionOfFormatString = "%y,(%Y) %m,(%b) %d XX:%M:%S %";
 			char *fullFormatString = NULL;
 			UDATA sizeOfFullFormatString = 0;
-		
+
 			strncpy(expected, "04,(2004) 02,(Feb) 29 XX:00:00 %", J9STR_BUFFER_SIZE);
-			
+
 			/* build the format string (tack on the default tokens) */
-			
+
 			/* how large does it need to be? */
 			sizeOfFullFormatString = strlen(timePortionOfFormatString);
 			for (i = 0 ; i < (sizeof(default_tokens)/sizeof(char *)) ; i++) {
 				sizeOfFullFormatString = sizeOfFullFormatString + strlen(default_tokens[i]);
-			}	
+			}
 			sizeOfFullFormatString = sizeOfFullFormatString + 1 /* null terminator */;
 
 			/* ok, now build the format string */
@@ -712,11 +711,11 @@ j9str_test4(struct J9PortLibrary *portLibrary)
 			strncpy(fullFormatString, timePortionOfFormatString, sizeOfFullFormatString);
 			for (i = 0 ; i < (sizeof(default_tokens)/sizeof(char *)) ; i++) {
 				strncat(fullFormatString, default_tokens[i], sizeOfFullFormatString - strlen(fullFormatString));
-			}		
-			
+			}
+
 			rc = j9str_subst_tokens(buf, TEST_BUF_LEN, fullFormatString, tokens);
-			
-			/* We don't know how long the returned string will be, 
+
+			/* We don't know how long the returned string will be,
 			 * but make sure that something has been substituted for each token and that the time is substituted properly .
 			 * Do this by making sure that %<token> is not present in the output buffer*/
 			if (rc > TEST_BUF_LEN) {
@@ -733,7 +732,7 @@ j9str_test4(struct J9PortLibrary *portLibrary)
 			j9mem_free_memory(fullFormatString);
 			fullFormatString = NULL;
 		}
-	
+
 		/* We're done, let's cleanup */
 		j9str_free_tokens(tokens);
 	}
@@ -746,11 +745,11 @@ j9str_test4(struct J9PortLibrary *portLibrary)
 /**
  * Verify port library token operations.
  *
- * j9str_test5 isn't really a test. Just want to do the normal use case of j9time_current_time_millis() followed 
+ * j9str_test5 isn't really a test. Just want to do the normal use case of j9time_current_time_millis() followed
  *  by j9str_create_tokens().
- * 
+ *
  * @param[in] portLibrary The port library under test
- * 
+ *
  * @return TEST_PASS on success, TEST_FAIL on error
  */
 int
@@ -763,27 +762,27 @@ j9str_test5(struct J9PortLibrary *portLibrary)
 	I_64 timeMillis;
 	struct J9StringTokens *tokens;
 	char buf[TEST_BUF_LEN];
-		
+
 	reportTestEntry(portLibrary, testName);
-	
+
 	j9tty_printf(PORTLIB, "\n\tThe results of j9str_test5 are not evaluated as time conversions are specific to a time zone.\n");
 	j9tty_printf(PORTLIB, "\tTherefore, this is for your viewing pleasure only.\n");
-	
+
 	timeMillis = j9time_current_time_millis();
 	j9tty_printf(PORTLIB, "\n\tj9time_current_time_millis returned: %lli\n", timeMillis);
 	j9tty_printf(PORTLIB, "\t...creating and substituting tokens...\n");
 	tokens = j9str_create_tokens(timeMillis);
 	(void)j9str_subst_tokens(buf, TEST_BUF_LEN, "%Y/%m/%d %H:%M:%S", tokens);
 	j9tty_printf(PORTLIB, "\tThe current time was converted to: %s\n",buf);
-	
- 	timeMillis = J9CONST64(1139952606740);
+
+	timeMillis = J9CONST64(1139952606740);
 	j9tty_printf(PORTLIB, "\n\t using UTC timeMillis = %lli. \n\t", timeMillis);
 	j9tty_printf(PORTLIB, "\t...creating and substituting tokens...\n");
 	tokens = j9str_create_tokens(timeMillis);
 	(void)j9str_subst_tokens(buf, TEST_BUF_LEN, "%Y/%m/%d %H:%M:%S", tokens);
 	j9tty_printf(PORTLIB, "\tExpecting local time (in Ottawa, Eastern Standard Time): 2006/02/14 16:30:06 \n", timeMillis);
 	j9tty_printf(PORTLIB, "\t                                       ... converted to: %s\n",buf);
-	
+
 	timeMillis = J9CONST64(1150320606740);
 	j9tty_printf(PORTLIB, "\n\t using UTC timeMillis = %lli. \n\t ", timeMillis);
 	j9tty_printf(PORTLIB, "\t...creating and substituting tokens...\n");
@@ -791,7 +790,7 @@ j9str_test5(struct J9PortLibrary *portLibrary)
 	(void)j9str_subst_tokens(buf, TEST_BUF_LEN, "%Y/%m/%d %H:%M:%S", tokens);
 	j9tty_printf(PORTLIB, "\tExpecting local time (in Ottawa, Eastern Daylight Time): 2006/06/14 17:30:06 \n", timeMillis);
 	j9tty_printf(PORTLIB, "\t                                       ... converted to: %s\n",buf);
-	
+
 	timeMillis = J9CONST64(1160688606740);
 	j9tty_printf(PORTLIB, "\n\t using UTC timeMillis = %lli. \n\t ", timeMillis);
 	j9tty_printf(PORTLIB, "\t...creating and substituting tokens...\n");
@@ -807,19 +806,19 @@ j9str_test5(struct J9PortLibrary *portLibrary)
 	(void)j9str_subst_tokens(buf, TEST_BUF_LEN, "%Y/%m/%d %H:%M:%S", tokens);
 	j9tty_printf(PORTLIB, "\tExpecting local time (in Ottawa, Eastern Standard Time): 2006/12/11 16:30:06 \n", timeMillis);
 	j9tty_printf(PORTLIB, "\t                                       ... converted to: %s\n",buf);
-	
+
 	j9tty_printf(PORTLIB, "\n");
 	return reportTestExit(portLibrary, testName);
-	
+
 }
 
 /**
  * Verify port library token operations.
  *
  * Test  (-)ive value of  0-12 hours and make sure we get UTC time in millis a
- * 
+ *
  * @param[in] portLibrary The port library under test
- * 
+ *
  * @return TEST_PASS on success, TEST_FAIL on error
  */
 int
@@ -832,15 +831,15 @@ j9str_test6(struct J9PortLibrary *portLibrary)
 	I_64 timeMillis;
 	struct J9StringTokens *tokens;
 	char buf[TEST_BUF_LEN];
-		
+
 	reportTestEntry(portLibrary, testName);
-	
+
 	/* anything less than 12 hours before Epoch should come back as Epoch */
 	timeMillis = 0 - 12*60*60*1000;
 	tokens = j9str_create_tokens(timeMillis);
 	test_j9str_tokens(portLibrary, testName, buf, TEST_BUF_LEN,
 			"%Y/%m/%d %H:%M:%S", tokens,
-	                  "1970/01/01 00:00:00", 19);	
+					  "1970/01/01 00:00:00", 19);
 	return reportTestExit(portLibrary, testName);
 }
 
@@ -1689,15 +1688,15 @@ j9str_test_atoe_vsnprintf(struct J9PortLibrary *portLibrary)
 
 /**
  * Verify port library string operations.
- * 
+ *
  * Exercise all API related to port library string operations found in
  * @ref j9str.c
- * 
+ *
  * @param[in] portLibrary The port library under test
- * 
+ *
  * @return 0 on success, -1 on failure
  */
-I_32 
+I_32
 j9str_runTests(struct J9PortLibrary *portLibrary)
 {
 	PORT_ACCESS_FROM_PORT(portLibrary);

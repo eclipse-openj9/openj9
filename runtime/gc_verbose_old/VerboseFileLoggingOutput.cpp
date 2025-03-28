@@ -39,7 +39,7 @@ MM_VerboseFileLoggingOutput *
 MM_VerboseFileLoggingOutput::newInstance(MM_EnvironmentBase *env, char *filename, UDATA numFiles, UDATA numCycles)
 {
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env->getOmrVM());
-	
+
 	MM_VerboseFileLoggingOutput *agent = (MM_VerboseFileLoggingOutput *)extensions->getForge()->allocate(sizeof(MM_VerboseFileLoggingOutput), MM_AllocationCategory::DIAGNOSTIC, J9_GET_CALLSITE());
 	if(agent) {
 		new(agent) MM_VerboseFileLoggingOutput(env);
@@ -60,35 +60,35 @@ MM_VerboseFileLoggingOutput::initialize(MM_EnvironmentBase *env, const char *fil
 {
 	_numFiles = numFiles;
 	_numCycles = numCycles;
-	
+
 	if((_numFiles > 0) && (_numCycles > 0)) {
 		_mode = rotating_files;
 	} else {
 		_mode = single_file;
 	}
-	
+
 	if (!initializeTokens(env)) {
 		return false;
 	}
-	
+
 	if (!initializeFilename(env, filename)) {
 		return false;
 	}
-	
+
 	IDATA initialFile = findInitialFile(env);
 	if (initialFile < 0) {
 		return false;
 	}
 	_currentFile = initialFile;
-	
+
 	if(!openFile(env)) {
 		return false;
 	}
-	
+
 	if(NULL == (_buffer = MM_VerboseBuffer::newInstance(env, INITIAL_BUFFER_SIZE))) {
 		return false;
 	}
-	
+
 	return true;
 }
 
@@ -101,11 +101,11 @@ MM_VerboseFileLoggingOutput::tearDown(MM_EnvironmentBase *env)
 {
 	PORT_ACCESS_FROM_ENVIRONMENT(env);
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env->getOmrVM());
-	
+
 	if(NULL != _buffer) {
 		_buffer->kill(env);
 	}
-	
+
 	j9str_free_tokens(_tokens);
 	extensions->getForge()->free(_filename);
 }
@@ -114,54 +114,54 @@ MM_VerboseFileLoggingOutput::tearDown(MM_EnvironmentBase *env)
  * Initialize the _tokens field.
  * for backwards compatibility with Sovereign, alias %p to be the same as %pid
  */
-bool 
+bool
 MM_VerboseFileLoggingOutput::initializeTokens(MM_EnvironmentBase *env)
 {
 	PORT_ACCESS_FROM_ENVIRONMENT(env);
 	char pidBuffer[64];
-	
+
 	_tokens = j9str_create_tokens(j9time_current_time_millis());
 	if (_tokens == NULL) {
 		return false;
 	}
-	
+
 	if (sizeof(pidBuffer) < j9str_subst_tokens(pidBuffer, sizeof(pidBuffer), "%pid", _tokens)) {
 		return false;
 	}
-	
-	if (j9str_set_token(PORTLIB, _tokens, "p", "%s", pidBuffer)) {
+
+	if (0 != j9str_set_token(_tokens, "p", "%s", pidBuffer)) {
 		return false;
 	}
-	
+
 	return true;
 }
 
 /**
  * Initialize the _filename field based on filename.
  *
- * Since token substitution only supports tokens starting with %, all # characters in the 
- * filename will be replaced with %seq (unless the # is already preceded by an odd number 
+ * Since token substitution only supports tokens starting with %, all # characters in the
+ * filename will be replaced with %seq (unless the # is already preceded by an odd number
  * of % signs, in which case it is replaced with seq).
  *
  * e.g.  foo#   --> foo%seq
  *       foo%#  --> foo%seq
  *       foo%%# --> foo%%%seq
- * 
- * If %seq or %# is not specified, and if rotating logs have been requested, ".%seq" is 
+ *
+ * If %seq or %# is not specified, and if rotating logs have been requested, ".%seq" is
  * appended to the log name.
- * 
+ *
  * If the resulting filename is too large to fit in the buffer, it is truncated.
- * 
+ *
  * @param[in] env the current environment
  * @param[in] filename the user specified filename
- * 
+ *
  * @return true on success, false on failure
  */
-bool 
+bool
 MM_VerboseFileLoggingOutput::initializeFilename(MM_EnvironmentBase *env, const char *filename)
 {
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env->getOmrVM());
-	
+
 	if (_mode == rotating_files) {
 		const char* read = filename;
 
@@ -172,8 +172,8 @@ MM_VerboseFileLoggingOutput::initializeFilename(MM_EnvironmentBase *env, const c
 				hashCount++;
 			}
 		}
-		
-		/* allocate memory for the copied template filename */ 
+
+		/* allocate memory for the copied template filename */
 		UDATA nameLen = strlen(filename) + 1;
 		if (hashCount > 0) {
 			/* each # expands into %seq, so for each # add 3 to len */
@@ -187,7 +187,7 @@ MM_VerboseFileLoggingOutput::initializeFilename(MM_EnvironmentBase *env, const c
 		if (NULL == _filename) {
 			return false;
 		}
-		
+
 		/* copy the original filename into the allocated memory, expanding #s to %seq */
 		bool foundSeq = false;
 		bool oddPercents = false;
@@ -208,7 +208,7 @@ MM_VerboseFileLoggingOutput::initializeFilename(MM_EnvironmentBase *env, const c
 		}
 
 		*write = '\0';
-		
+
 		if ( (false == foundSeq) && (0 == hashCount) ) {
 			strcpy(write, ".%seq");
 		}
@@ -236,7 +236,7 @@ MM_VerboseFileLoggingOutput::formatAndOutput(J9VMThread *vmThread, UDATA indent,
 	char localBuf[VGC_INPUT_STRING_SIZE];
 	UDATA length;
 	va_list args;
-	
+
 	MM_EnvironmentBase* env = MM_EnvironmentBase::getEnvironment((OMR_VMThread *)vmThread->omrVMThread);
 	PORT_ACCESS_FROM_ENVIRONMENT(env);
 
@@ -244,15 +244,15 @@ MM_VerboseFileLoggingOutput::formatAndOutput(J9VMThread *vmThread, UDATA indent,
 	for(UDATA i=0; i < indent; i++) {
 		strcat(localBuf, VGC_INDENT_SPACER);
 	}
-	
+
 	va_start(args, format);
 	j9str_vprintf(inputString, VGC_INPUT_STRING_SIZE - strlen(localBuf), format, args);
 	va_end(args);
-	
+
 	strcat(localBuf, inputString);
 	strcat(localBuf, "\n");
 	length = strlen(localBuf);
-	
+
 	if(NULL != _buffer) {
 		if(_buffer->add(env, localBuf)) {
 			/* Added successfully - return */
@@ -271,29 +271,28 @@ MM_VerboseFileLoggingOutput::formatAndOutput(J9VMThread *vmThread, UDATA indent,
 /**
  * Generate an expanded filename based on currentFile.
  * The caller is responsible for freeing the returned memory.
- * 
+ *
  * @param env the current thread
  * @param currentFile the current file number to substitute into the filename template
- * 
- * @return NULL on failure, allocated memory on success 
+ *
+ * @return NULL on failure, allocated memory on success
  */
-char* 
+char*
 MM_VerboseFileLoggingOutput::expandFilename(MM_EnvironmentBase *env, UDATA currentFile)
 {
 	PORT_ACCESS_FROM_ENVIRONMENT(env);
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env->getOmrVM());
 
 	if (_mode == rotating_files) {
-		j9str_set_token(PORTLIB, _tokens, "seq", "%03zu", currentFile + 1); /* plus one so the filenames start from .001 instead of .000 */
+		j9str_set_token(_tokens, "seq", "%03zu", currentFile + 1); /* plus one so the filenames start from .001 instead of .000 */
 	}
-	
+
 	UDATA len = j9str_subst_tokens(NULL, 0, _filename, _tokens);
 	char *filenameToOpen = (char*)extensions->getForge()->allocate(len, MM_AllocationCategory::DIAGNOSTIC, J9_GET_CALLSITE());
 	if (NULL != filenameToOpen) {
 		j9str_subst_tokens(filenameToOpen, len, _filename, _tokens);
 	}
 	return filenameToOpen;
-	
 }
 
 /**
@@ -302,7 +301,7 @@ MM_VerboseFileLoggingOutput::expandFilename(MM_EnvironmentBase *env, UDATA curre
  * file if all numbers are used.
  * @return the first file number to use (starting at 0), or -1 on failure
  */
-IDATA 
+IDATA
 MM_VerboseFileLoggingOutput::findInitialFile(MM_EnvironmentBase *env)
 {
 	PORT_ACCESS_FROM_ENVIRONMENT(env);
@@ -323,7 +322,7 @@ MM_VerboseFileLoggingOutput::findInitialFile(MM_EnvironmentBase *env)
 
 		I_64 thisTime = j9file_lastmod(filenameToOpen);
 		extensions->getForge()->free(filenameToOpen);
-		
+
 		if (thisTime < 0) {
 			/* file doesn't exist, or some other problem reading the file */
 			oldestFile = currentFile;
@@ -333,8 +332,8 @@ MM_VerboseFileLoggingOutput::findInitialFile(MM_EnvironmentBase *env)
 			oldestFile = currentFile;
 		}
 	}
-	
-	return oldestFile; 
+
+	return oldestFile;
 }
 
 /**
@@ -348,12 +347,12 @@ MM_VerboseFileLoggingOutput::openFile(MM_EnvironmentBase *env)
 	J9JavaVM* javaVM = (J9JavaVM *)env->getOmrVM()->_language_vm;
 	MM_GCExtensions* extensions = MM_GCExtensions::getExtensions(javaVM);
 	const char* version = javaVM->memoryManagerFunctions->omrgc_get_version(env->getOmrVM());
-	
+
 	char *filenameToOpen = expandFilename(env, _currentFile);
 	if (NULL == filenameToOpen) {
 		return false;
 	}
-	
+
 	_logFileDescriptor = j9file_open(filenameToOpen, EsOpenRead | EsOpenWrite | EsOpenCreate | EsOpenTruncate, 0666);
 	if(-1 == _logFileDescriptor) {
 		char *cursor = filenameToOpen;
@@ -377,9 +376,9 @@ MM_VerboseFileLoggingOutput::openFile(MM_EnvironmentBase *env)
 	}
 
 	extensions->getForge()->free(filenameToOpen);
-	
+
 	j9file_printf(PORTLIB, _logFileDescriptor, VERBOSEGC_HEADER_TEXT_ALL, version);
-	
+
 	return true;
 }
 
@@ -390,7 +389,7 @@ void
 MM_VerboseFileLoggingOutput::closeFile(MM_EnvironmentBase *env)
 {
 	PORT_ACCESS_FROM_ENVIRONMENT(env);
-	
+
 	if(-1 != _logFileDescriptor){
 		UDATA length = strlen(VERBOSEGC_FOOTER_TEXT "\n");
 		j9file_write_text(_logFileDescriptor, VERBOSEGC_FOOTER_TEXT "\n", length);
@@ -417,12 +416,12 @@ MM_VerboseFileLoggingOutput::endOfCycle(J9VMThread *vmThread)
 {
 	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment((OMR_VMThread *)vmThread->omrVMThread);
 	PORT_ACCESS_FROM_ENVIRONMENT(env);
-	
+
 	if(-1 == _logFileDescriptor) {
 		/* we open the file at the end of the cycle so can't have a final empty file at the end of a run */
 		openFile(env);
 	}
-	
+
 	if(NULL != _buffer) {
 		if(-1 != _logFileDescriptor){
 			j9file_write_text(_logFileDescriptor, _buffer->contents(), _buffer->currentSize());
@@ -433,7 +432,7 @@ MM_VerboseFileLoggingOutput::endOfCycle(J9VMThread *vmThread)
 		}
 		_buffer->reset();
 	}
-	
+
 	if(rotating_files == _mode) {
 		_currentCycle = (_currentCycle + 1) % _numCycles;
 		if(0 == _currentCycle) {

@@ -1651,7 +1651,7 @@ initializeClassPath(J9JavaVM *vm, char *classPath, U_8 classPathSeparator, U_16 
 	}
 
 _end:
-        return classPathEntryCount;
+	return classPathEntryCount;
 }
 
 IDATA
@@ -7190,8 +7190,8 @@ xlogerr:
 				}
 				j9str_subst_tokens(timeBuf, sizeof(timeBuf), "%Y-%m-%d_%H-%M-%S", stringTokens);
 
-				if (j9str_set_token(PORTLIB, stringTokens, "p", "%lld", j9sysinfo_get_pid())
-					|| j9str_set_token(PORTLIB, stringTokens, "t", "%s", timeBuf)
+				if ((0 != j9str_set_token(stringTokens, "p", "%lld", j9sysinfo_get_pid()))
+				||  (0 != j9str_set_token(stringTokens, "t", "%s", timeBuf))
 				) {
 					j9str_free_tokens(stringTokens);
 					rc = JNI_ERR;
