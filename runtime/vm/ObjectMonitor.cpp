@@ -493,6 +493,9 @@ restart:
 				} else {
 					/* the monitor is already inflated */
 					objectMonitor = J9_INFLLOCK_OBJECT_MONITOR(lock);
+
+					/* Monitor must be owned by valid thread */
+					Assert_VM_true(1 != (UDATA)objectMonitor->monitor->owner);
 				}
 				if (!spinOnTryEnter(currentThread, objectMonitor, lwEA, object)) {
 					goto wouldBlock;
