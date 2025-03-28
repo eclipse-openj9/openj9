@@ -135,7 +135,9 @@ block:
 				}
 			}
 #if JAVA_SPEC_VERSION >= 19
-			currentThread->ownedMonitorCount += 1;
+			if (UDATA_MAX != currentThread->continuationPinCount) {
+				currentThread->continuationPinCount += 1;
+			}
 #endif /* JAVA_SPEC_VERSION >= 19 */
 		} else {
 #if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
@@ -174,7 +176,9 @@ jvmtiRawMonitorExit(jvmtiEnv* env,
 			rc = JVMTI_ERROR_NOT_MONITOR_OWNER;
 #if JAVA_SPEC_VERSION >= 19
 		} else {
-			currentThread->ownedMonitorCount -= 1;
+			if (0 != currentThread->continuationPinCount) {
+				currentThread->continuationPinCount -= 1;
+			}
 #endif /* JAVA_SPEC_VERSION >= 19 */
 		}
 
