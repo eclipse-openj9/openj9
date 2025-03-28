@@ -599,8 +599,171 @@ void J9::RecognizedCallTransformer::process_jdk_internal_util_ArraysSupport_vect
       TR::Node::create(node, TR::lxor, 2, mask, TR::Node::lconst(node, -1)));
 
    TR::Node* mismatchByteIndex = TR::Node::create(node, TR::arraycmplen, 3);
-   // TODO: replace the following aladd's with generateDataAddrLoadTrees when off-heap memory changes come in
-   // See OpenJ9 issue #16717 https://github.com/eclipse-openj9/openj9/issues/16717
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+   if (TR::Compiler->om.isOffHeapAllocationEnabled())
+      {
+      int aLen, bLen;
+      const char *aObjTypeSig = a->getSymbolReference() ?
+         a->getSymbolReference()->getTypeSignature(aLen) : 0;
+      const char *bObjTypeSig = b->getSymbolReference() ?
+         b->getSymbolReference()->getTypeSignature(aLen) : 0;
+
+      bool aCheckNeeded, bCheckNeeded; // true if object type not known at compile time
+      if (!aObjTypeSig)
+         aCheckNeeded = true;
+      else
+         {
+         TR_OpaqueClassBlock *aClass = comp()->fej9()->getClassFromSignature(aObjTypeSig,
+            aLen, a->getSymbolReference()->getOwningMethod(comp()));
+         aCheckNeeded = aClass == NULL ||
+                        aClass == comp()->getObjectClassPointer() ||
+                        TR::Compiler->cls.isInterfaceClass(comp(), aClass);
+         }
+      if (!bObjTypeSig)
+         bCheckNeeded = true;
+      else
+         {
+         TR_OpaqueClassBlock *bClass = comp()->fej9()->getClassFromSignature(bObjTypeSig,
+            bLen, b->getSymbolReference()->getOwningMethod(comp()));
+         bCheckNeeded = bClass == NULL ||
+                        bClass == comp()->getObjectClassPointer() ||
+                        TR::Compiler->cls.isInterfaceClass(comp(), bClass);
+         }
+
+
+      // true if the object type is either an array, or not known at compile time
+      bool aAdjustmentNeeded = aCheckNeeded || aObjTypeSig[0] == '[';
+      bool bAdjustmentNeeded = bCheckNeeded || bObjTypeSig[0] == '[';
+
+      TR::TransformUtil::separateNullCheck(comp(), treetop);
+
+      // If neither a nor b is an array, then the address is simply ref + offset, identical to
+      // the default implementation, allowing us to skip the adjustments
+      //
+      // If we are certain a or b is an array during compile time, we just need to load its
+      // starting point when needed after a null check.
+      //
+      // Otherwise, we will do an additional check at run time, and skip the loading if the objects
+      // are not an array and fall through to the default implementation.
+      if (aAdjustmentNeeded || bAdjustmentNeeded)
+         {
+         // Anchor nodes
+         for (int32_t i=1; i < node->getNumChildren(); i++)
+            {
+            TR::Node* childNode = node->getChild(i);
+            if ( !(childNode->getOpCode().isLoadConst() ||
+                  (childNode->getOpCode().isLoadVarDirect() &&
+                     childNode->getSymbolReference()->getSymbol()->isAutoOrParm())) )
+               {
+               treetop->insertBefore(
+                  TR::TreeTop::create(comp(), TR::Node::create(TR::treetop, 1, childNode)));
+               }
+            }
+
+         // callBlock should contain the tree of this treetop only
+         TR::CFG *cfg = comp()->getFlowGraph();
+         TR::Block *currentBlock = treetop->getEnclosingBlock();
+         TR::Block *callBlock = currentBlock->split(treetop, cfg, true);
+         TR::Block *nextBlock = callBlock->split(treetop->getNextTreeTop(), cfg, true);
+
+         TR::SymbolReference *aTempRef = NULL;
+         TR::SymbolReference *bTempRef = NULL;
+         if (aAdjustmentNeeded)
+            {
+            aTempRef = comp()->getSymRefTab()->createTemporary(comp()->getMethodSymbol(), TR::Address);
+            aTempRef->getSymbol()->setNotCollected();
+            TR::Node* storeNode = TR::Node::createStore(aTempRef, a);
+            TR::TreeTop* storeTree = TR::TreeTop::create(comp(), storeNode);
+            currentBlock->getExit()->insertBefore(storeTree);
+
+            // insert the trees 0/3
+            TR::Block *nullCheckBlock = callBlock;
+            TR::Block *newCallBlock =
+               nullCheckBlock->split(nullCheckBlock->getEntry()->getNextTreeTop(), cfg);
+            TR::Block *adjustBlock = nullCheckBlock->split(nullCheckBlock->getExit(), cfg);
+
+            // insert null check tree 1/3
+            TR::Node* nullCheckNode = TR::Node::createif(TR::ifacmpeq,
+                                                         a->duplicateTree(),
+                                                         TR::Node::create(a, TR::aconst, 0, 0),
+                                                         newCallBlock->getEntry());
+            nullCheckBlock->append(TR::TreeTop::create(comp(), nullCheckNode));
+            cfg->addEdge(nullCheckBlock, newCallBlock);
+
+            // insert array check tree 2/3
+            if (aCheckNeeded)
+               {
+               TR::Block* arrayCheckBlock = callBlock->split(callBlock->getExit(), cfg);
+
+               TR::Node *vftLoad = TR::Node::createWithSymRef(TR::aloadi, 1, 1, a->duplicateTree(), comp()->getSymRefTab()->findOrCreateVftSymbolRef());
+               TR::Node *maskedIsArrayClassNode = comp()->fej9()->testIsClassArrayType(vftLoad);
+               TR::Node *arrayCheckNode = TR::Node::createif(TR::ificmpeq, maskedIsArrayClassNode,
+                                                            TR::Node::create(a, TR::iconst, 0),
+                                                            newCallBlock->getEntry());
+
+               arrayCheckBlock->append(TR::TreeTop::create(comp(), arrayCheckNode, NULL, NULL));
+               cfg->addEdge(callBlock, newCallBlock);
+               }
+
+            // insert symref loading tree 3/3
+            TR::Node* adjustedNode = TR::TransformUtil::generateDataAddrLoadTrees(comp(),
+                                                                           a->duplicateTree());
+            TR::Node *newStore = TR::Node::createStore(aTempRef, adjustedNode);
+            TR::TreeTop *newStoreTree = TR::TreeTop::create(comp(), newStore);
+            adjustBlock->append(newStoreTree);
+
+            a = TR::Node::createLoad(node, aTempRef);
+            }
+         if (bAdjustmentNeeded)
+            {
+            bTempRef = comp()->getSymRefTab()->createTemporary(comp()->getMethodSymbol(), TR::Address);
+            bTempRef->getSymbol()->setNotCollected();
+            TR::Node* storeNode = TR::Node::createStore(bTempRef, b);
+            TR::TreeTop* storeTree = TR::TreeTop::create(comp(), storeNode);
+            currentBlock->getExit()->insertBefore(storeTree);
+
+            // insert the trees 0/3
+            TR::Block *nullCheckBlock = callBlock;
+            TR::Block *newCallBlock =
+               nullCheckBlock->split(nullCheckBlock->getEntry()->getNextTreeTop(), cfg);
+            TR::Block *adjustBlock = nullCheckBlock->split(nullCheckBlock->getExit(), cfg);
+
+            // insert null check tree 1/3
+            TR::Node* nullCheckNode = TR::Node::createif(TR::ifacmpeq,
+                                                         b->duplicateTree(),
+                                                         TR::Node::create(b, TR::aconst, 0, 0),
+                                                         newCallBlock->getEntry());
+            nullCheckBlock->append(TR::TreeTop::create(comp(), nullCheckNode));
+            cfg->addEdge(nullCheckBlock, newCallBlock);
+
+            // insert array check tree 2/3
+            if (bCheckNeeded)
+               {
+               TR::Block* arrayCheckBlock = callBlock->split(callBlock->getExit(), cfg);
+
+               TR::Node *vftLoad = TR::Node::createWithSymRef(TR::aloadi, 1, 1, b->duplicateTree(), comp()->getSymRefTab()->findOrCreateVftSymbolRef());
+               TR::Node *maskedIsArrayClassNode = comp()->fej9()->testIsClassArrayType(vftLoad);
+               TR::Node *arrayCheckNode = TR::Node::createif(TR::ificmpeq, maskedIsArrayClassNode,
+                                                            TR::Node::create(b, TR::iconst, 0),
+                                                            newCallBlock->getEntry());
+
+               arrayCheckBlock->append(TR::TreeTop::create(comp(), arrayCheckNode, NULL, NULL));
+               cfg->addEdge(callBlock, newCallBlock);
+               }
+
+            // insert symref loading tree 3/3
+            TR::Node* adjustedNode = TR::TransformUtil::generateDataAddrLoadTrees(comp(),
+                                                                           b->duplicateTree());
+            TR::Node *newStore = TR::Node::createStore(bTempRef, adjustedNode);
+            TR::TreeTop *newStoreTree = TR::TreeTop::create(comp(), newStore);
+            adjustBlock->append(newStoreTree);
+
+            b = TR::Node::createLoad(node, bTempRef);
+            }
+         }
+      }
+#endif
+
    mismatchByteIndex->setAndIncChild(0, TR::Node::create(node, TR::aladd, 2, a, aOffset));
    mismatchByteIndex->setAndIncChild(1, TR::Node::create(node, TR::aladd, 2, b, bOffset));
    mismatchByteIndex->setAndIncChild(2, lengthToCompare);
