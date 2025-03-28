@@ -1716,6 +1716,11 @@ slow_jitMonitorEnterImpl(J9VMThread *currentThread, bool forMethod)
 	if ((J9_OBJECT_MONITOR_BLOCKING == monstatus) && VM_ContinuationHelpers::isYieldableVirtualThread(currentThread)) {
 		/* Try to yield the virtual thread if it will be blocked. */
 		monstatus = currentThread->javaVM->internalVMFunctions->preparePinnedVirtualThreadForUnmount(currentThread, (j9object_t)currentThread->floatTemp2, false);
+		if (monstatus > J9_OBJECT_MONITOR_BLOCKING) {
+			/* Monitor has been acquired. */
+			addr = restoreJITResolveFrame(currentThread, oldPC, forMethod, false);
+			goto done;
+		}
 	}
 #endif /* JAVA_SPEC_VERSION >= 24 */
 	if (monstatus < J9_OBJECT_MONITOR_BLOCKING) {
