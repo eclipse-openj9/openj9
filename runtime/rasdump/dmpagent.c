@@ -235,7 +235,7 @@ static const J9RASdumpSpec rasDumpSpecs[] =
 		  NULL,
 		  NULL,
 		  5,
-		  J9RAS_DUMP_DO_EXCLUSIVE_VM_ACCESS, 
+		  J9RAS_DUMP_DO_EXCLUSIVE_VM_ACCESS,
 		  NULL }
 	},
 	{
@@ -277,7 +277,7 @@ static const J9RASdumpSpec rasDumpSpecs[] =
 		  NULL,
 #else
 		  "%uid.JVM.TDUMP.%job.D%y%m%d.T%H" "%M" "%S",
-		  NULL,		  
+		  NULL,
 #endif
 #else
 		  "core.%Y" "%m%d.%H" "%M" "%S.%pid.%seq.dmp",
@@ -445,7 +445,7 @@ static const J9RASdumpSpec rasDumpSpecs[] =
 		doJavaVMExit,
 		{ 0,
 		  NULL,
-		  1, 0, 
+		  1, 0,
 		  NULL,
 		  NULL,
 		  0,
@@ -469,21 +469,21 @@ static void
 updatePercentLastToken(J9JavaVM *vm, char *label)
 {
 	PORT_ACCESS_FROM_JAVAVM(vm);
-	
+
 	struct J9StringTokens* stringTokens;
 
-	/* write the label into the %last token */ 
+	/* write the label into the %last token */
 	if (NULL != vm->j9rasdumpGlobalStorage) {
 		RasDumpGlobalStorage* dump_storage = (RasDumpGlobalStorage*)vm->j9rasdumpGlobalStorage;
 
-        /* lock access to the tokens */
-        omrthread_monitor_enter(dump_storage->dumpLabelTokensMutex);
-        stringTokens = dump_storage->dumpLabelTokens;
-        
-        j9str_set_token(PORTLIB, stringTokens, "last", "%s", label);
-        
-        /* release access to the tokens */
-        omrthread_monitor_exit(dump_storage->dumpLabelTokensMutex);
+		/* lock access to the tokens */
+		omrthread_monitor_enter(dump_storage->dumpLabelTokensMutex);
+		stringTokens = dump_storage->dumpLabelTokens;
+
+		j9str_set_token(stringTokens, "last", "%s", label);
+
+		/* release access to the tokens */
+		omrthread_monitor_exit(dump_storage->dumpLabelTokensMutex);
 	}
 }
 
@@ -696,7 +696,7 @@ doJavaVMExit(J9RASdumpAgent *agent, char *label, J9RASdumpContext *context)
 		j9nls_printf(PORTLIB, J9NLS_INFO | J9NLS_STDERR, J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN);
 	}
 	vm->internalVMFunctions->exitJavaVM(vmThread, 3);
-	
+
 	return OMR_ERROR_NONE;
 }
 
@@ -726,7 +726,7 @@ doSystemDump(J9RASdumpAgent *agent, char *label, J9RASdumpContext *context)
 
 #if defined(J9VM_OPT_SHARED_CLASSES) && (defined(LINUX) || defined(OSX))
 	J9SharedClassJavacoreDataDescriptor sharedClassData;
-	
+
 	/* set up cacheDir with the Shared Classes Cache file if it is in use. */
 	if ((NULL != vm->sharedClassConfig) && (NULL != vm->sharedClassConfig->getJavacoreData)) {
 		if (1 == vm->sharedClassConfig->getJavacoreData(vm, &sharedClassData)) {
@@ -739,7 +739,7 @@ doSystemDump(J9RASdumpAgent *agent, char *label, J9RASdumpContext *context)
 #endif /* defined(J9VM_OPT_SHARED_CLASSES) && (defined(LINUX) || defined(OSX)) */
 
 	reportDumpRequest(privatePortLibrary,context,"System",label);
-	
+
 	if ( *label != '-' ) {
 		UDATA retVal;
 
@@ -795,7 +795,7 @@ doSystemDump(J9RASdumpAgent *agent, char *label, J9RASdumpContext *context)
 }
 /*
  * Function: doToolDump - launches a tool command as specified via a -Xdump:tool agent
- * 
+ *
  * Parameters:
  *  agent [in]	 - dump agent structure
  *  label [in]	 - tool command to be executed
@@ -832,11 +832,11 @@ doToolDump(J9RASdumpAgent *agent, char *label, J9RASdumpContext *context)
 			PROCESS_INFORMATION pinfo;
 			wchar_t localUnicodePath[J9_MAX_DUMP_PATH];
 			wchar_t *unicodePath = localUnicodePath;
-	
+
 			memset( &sinfo, 0, sizeof(sinfo) );
 			memset( &pinfo, 0, sizeof(pinfo) );
 			sinfo.cb = sizeof(sinfo);
-			
+
 			/* Copy the tool command line into a unicode string, allocating additional memory if needed */
 			if (strlen(label) >= J9_MAX_DUMP_PATH) {
 				unicodePath = j9mem_allocate_memory((strlen(label) + 1) * sizeof(wchar_t), OMRMEM_CATEGORY_VM);
@@ -845,25 +845,25 @@ doToolDump(J9RASdumpAgent *agent, char *label, J9RASdumpContext *context)
 				}
 			}
 			MultiByteToWideChar(OS_ENCODING_CODE_PAGE, OS_ENCODING_MB_FLAGS, label, -1, unicodePath, (int)strlen(label) + 1);
-	
+
 			retVal = CreateProcessW(NULL, unicodePath, NULL, NULL, TRUE, 0, NULL, NULL, &sinfo, &pinfo);
-	
+
 			if (retVal) {
 				j9nls_printf(PORTLIB, J9NLS_INFO | J9NLS_STDERR, J9NLS_DMP_SPAWNED_DUMP_STR, "Tool", pinfo.dwProcessId);
-	
+
 				/* Give it a chance to start */
 				if (async == FALSE) {
 					WaitForSingleObject(pinfo.hProcess, INFINITE);
 				}
 				omrthread_sleep(msec);
-	
+
 				/* Clean up unused handles */
 				CloseHandle(pinfo.hThread);
 				CloseHandle(pinfo.hProcess);
 			} else {
 				j9nls_printf(PORTLIB, J9NLS_ERROR | J9NLS_STDERR, J9NLS_DMP_ERROR_IN_DUMP_STR_RC, "Tool", "CreateProcessW()", GetLastError());
 			}
-			
+
 			if (unicodePath != localUnicodePath) {
 				j9mem_free_memory(unicodePath);
 			}
@@ -873,15 +873,15 @@ doToolDump(J9RASdumpAgent *agent, char *label, J9RASdumpContext *context)
 			IDATA retVal;
 
 			if ( (retVal = fork()) == 0 ) {
-	
+
 				retVal = execl("/bin/sh", "/bin/sh", "-c", label, NULL);
-	
+
 				j9nls_printf(PORTLIB, J9NLS_ERROR | J9NLS_STDERR, J9NLS_DMP_ERROR_IN_DUMP_STR_RC, "Tool", "execl()", errno);
 				exit( (int)retVal );
-	
+
 			} else {
 				j9nls_printf(PORTLIB, J9NLS_INFO | J9NLS_STDERR, J9NLS_DMP_SPAWNED_DUMP_STR, "Tool", retVal);
-	
+
 				/* Give it a chance to start */
 				if (async == FALSE) {
 					waitpid(retVal, NULL, 0);
@@ -894,21 +894,21 @@ doToolDump(J9RASdumpAgent *agent, char *label, J9RASdumpContext *context)
 			const char *argv[] = {"/bin/sh", "-c", NULL, NULL};
 			extern const char **environ;
 			IDATA retVal;
-	
+
 			struct inheritance inherit;
 			memset( &inherit, 0, sizeof(inherit) );
-	
+
 			/* Set actual command */
 			argv[2] = label;
-	
+
 			/* Use spawn instead of fork on z/OS */
 			retVal = spawnp("/bin/sh", 0, NULL, &inherit, argv, environ);
-	
+
 			if ( retVal == -1) {
 				j9nls_printf(PORTLIB, J9NLS_ERROR | J9NLS_STDERR, J9NLS_DMP_ERROR_IN_DUMP_STR_RC, "Tool", "spawnp()", errno);
 			} else {
 				j9nls_printf(PORTLIB, J9NLS_INFO | J9NLS_STDERR, J9NLS_DMP_SPAWNED_DUMP_STR, "Tool", retVal);
-	
+
 				/* Give it a chance to start */
 				if (async == FALSE) {
 					waitpid(retVal, NULL, 0);
@@ -941,7 +941,7 @@ doJavaDump(J9RASdumpAgent *agent, char *label, J9RASdumpContext *context)
 			return OMR_ERROR_INTERNAL;
 		}
 	}
-	
+
 	runJavadump(label, context, agent);
 
 	return OMR_ERROR_NONE;
@@ -1048,7 +1048,7 @@ doCEEDump(J9RASdumpAgent *agent, char *label, J9RASdumpContext *context)
 
 /*
  * Function: doJitDump - runs a JIT dump
- * 
+ *
  * Parameters:
  *  agent [in]	 - dump agent structure
  *  label [in]	 - tool command to be executed
@@ -1062,7 +1062,7 @@ doJitDump(J9RASdumpAgent *agent, char *label, J9RASdumpContext *context)
 	J9JavaVM *vm = context->javaVM;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	omr_error_t result = OMR_ERROR_NONE;
-	
+
 #ifdef J9VM_INTERP_NATIVE_SUPPORT
 	if (NULL != vm->jitConfig) {
 		if (makePath(vm, label) == OMR_ERROR_INTERNAL) {
@@ -1256,11 +1256,11 @@ void
 setAllocationThreshold(J9VMThread *vmThread, UDATA min, UDATA max)
 {
 	J9MemoryManagerFunctions *fns;
-	
+
 	if (vmThread == NULL) {
 		return;
 	}
-	
+
 	fns = vmThread->javaVM->memoryManagerFunctions;
 	if (fns) {
 		fns->j9gc_set_allocation_threshold(vmThread, min, max);
@@ -1272,28 +1272,28 @@ scanFilter(J9JavaVM *vm, const J9RASdumpSettings *settings, const char **cursor,
 {
 	UDATA eventMask = settings->eventMask;
 	char *filter = NULL;
-	
+
 	filter = scanString(vm, cursor);
-	
+
 	if (eventMask & J9RAS_DUMP_ON_OBJECT_ALLOCATION) {
 		RasDumpGlobalStorage *dumpGlobal = vm->j9rasdumpGlobalStorage;
 		UDATA min, max;
-		
+
 		if (!filter) {
 			/* Filter must be supplied for this event */
 			goto err;
 		}
-		
+
 		if (eventMask != J9RAS_DUMP_ON_OBJECT_ALLOCATION) {
 			/* Filter cannot be applied to more than one event type */
 			goto err;
 		}
-		
+
 		/* Parse the filter */
 		if (!parseAllocationRange(filter, &min, &max)) {
 			goto err;
 		}
-		
+
 		if (dumpGlobal->allocationRangeMin || dumpGlobal->allocationRangeMax) {
 			/* A range has already been set. Widen it if necessary */
 			if (min < dumpGlobal->allocationRangeMin) {
@@ -1551,11 +1551,11 @@ processSettings(J9JavaVM *vm, IDATA kind, char *optionString, J9RASdumpSettings 
 			settings->subFilter = scanSubFilter(vm, settings, (const char **)cursor, &action);
 		}
 	} while ( try_scan(cursor, ",") );
-	
+
 	if( action == REMOVE_DUMP_AGENTS ) {
 		if( settings->eventMask == 0 ) {
 			/* For removal, we want to mask out *all* events if none were specified.*/
-			settings->eventMask = ~0; 
+			settings->eventMask = ~0;
 		}
 	}
 
@@ -1563,11 +1563,11 @@ processSettings(J9JavaVM *vm, IDATA kind, char *optionString, J9RASdumpSettings 
 		j9nls_printf(PORTLIB, J9NLS_INFO | J9NLS_STDERR, J9NLS_DMP_INVALID_OR_MISSING_FILTER);
 		action = BOGUS_DUMP_OPTION;
 	}
-	
+
 	if ( action != REMOVE_DUMP_AGENTS && (0 == (settings->eventMask & J9RAS_DUMP_EXCEPTION_EVENT_GROUP)) && (settings->subFilter != NULL)) {
-        j9nls_printf(PORTLIB, J9NLS_INFO | J9NLS_STDERR, J9NLS_DMP_INCORRECT_USE_MSG_FILTER);
-        action = BOGUS_DUMP_OPTION;
-    }	
+		j9nls_printf(PORTLIB, J9NLS_INFO | J9NLS_STDERR, J9NLS_DMP_INCORRECT_USE_MSG_FILTER);
+		action = BOGUS_DUMP_OPTION;
+	}
 
 	/* verify start..stop range (allow n..n-1 to indicate open-ended range) */
 	if ( settings->stopOnCount < settings->startOnCount ) {
@@ -1605,23 +1605,23 @@ findAgent(J9JavaVM *vm, IDATA kind, const J9RASdumpSettings *settings)
 		/* Event mask can always be merged UNLESS there is no overlap and agent has a limited range, otherwise */
 		/*   -Xdump:java:events=load,range=1..4  and  -Xdump:java:events=thrstart,range=1..4  would get merged */
 		if ( (agent->eventMask != settings->eventMask) &&
-		     (agent->startOnCount <= agent->stopOnCount) ) {
+			(agent->startOnCount <= agent->stopOnCount) ) {
 			continue;
 		}
 
 		/* Can't merge different detail filters */
-		if ( ((agent->detailFilter != NULL) && (settings->detailFilter == NULL)                                                              ) || 
-         ((agent->detailFilter == NULL) && (settings->detailFilter != NULL)                                                              ) || 
-		     ((agent->detailFilter != NULL) && (settings->detailFilter != NULL) && (strcmp(agent->detailFilter, settings->detailFilter) != 0))    ) {
+		if ( ((agent->detailFilter != NULL) && (settings->detailFilter == NULL)                                                              ) ||
+			((agent->detailFilter == NULL) && (settings->detailFilter != NULL)                                                              ) ||
+			((agent->detailFilter != NULL) && (settings->detailFilter != NULL) && (strcmp(agent->detailFilter, settings->detailFilter) != 0))    ) {
 			continue;
 		}
-		
+
 		/* Can't merge different sub filters */
 		if ( ((agent->subFilter != NULL) && (settings->subFilter == NULL)) ||
-		     ((agent->subFilter == NULL) && (settings->subFilter != NULL)) ||
-		     ((agent->subFilter != NULL) && (settings->subFilter != NULL) && (strcmp(agent->subFilter, settings->subFilter) != 0))) {
-		     	continue;
-		}		 
+			((agent->subFilter == NULL) && (settings->subFilter != NULL)) ||
+			((agent->subFilter != NULL) && (settings->subFilter != NULL) && (strcmp(agent->subFilter, settings->subFilter) != 0))) {
+			continue;
+		}
 
 		/* Can't merge different ranges */
 		if ( agent->startOnCount != settings->startOnCount ) {
@@ -1634,16 +1634,16 @@ findAgent(J9JavaVM *vm, IDATA kind, const J9RASdumpSettings *settings)
 		}
 
 		/* Can't merge different labels */
-		if ( ((agent->labelTemplate != NULL) && (settings->labelTemplate == NULL)                                                                ) || 
-         ((agent->labelTemplate == NULL) && (settings->labelTemplate != NULL)                                                                ) || 
-		     ((agent->labelTemplate != NULL) && (settings->labelTemplate != NULL) && (strcmp(agent->labelTemplate, settings->labelTemplate) != 0))    ) {
+		if ( ((agent->labelTemplate != NULL) && (settings->labelTemplate == NULL)                                                                ) ||
+			((agent->labelTemplate == NULL) && (settings->labelTemplate != NULL)                                                                ) ||
+			((agent->labelTemplate != NULL) && (settings->labelTemplate != NULL) && (strcmp(agent->labelTemplate, settings->labelTemplate) != 0))    ) {
 			continue;
 		}
 
 		/* Can't merge different dump options */
-		if ( ((agent->dumpOptions != NULL) && (settings->dumpOptions == NULL)                                                            ) || 
-         ((agent->dumpOptions == NULL) && (settings->dumpOptions != NULL)                                                            ) || 
-		     ((agent->dumpOptions != NULL) && (settings->dumpOptions != NULL) && (strcmp(agent->dumpOptions, settings->dumpOptions) != 0))    ) {
+		if ( ((agent->dumpOptions != NULL) && (settings->dumpOptions == NULL)                                                            ) ||
+			((agent->dumpOptions == NULL) && (settings->dumpOptions != NULL)                                                            ) ||
+			((agent->dumpOptions != NULL) && (settings->dumpOptions != NULL) && (strcmp(agent->dumpOptions, settings->dumpOptions) != 0))    ) {
 			continue;
 		}
 
@@ -1724,12 +1724,12 @@ findAgentToDelete(J9JavaVM *vm, IDATA kind, J9RASdumpAgent *agent, const J9RASdu
 		/* Check the ranges are set and match */
 		if ( settings->startOnCount != 0 && agent->stopOnCount != settings->stopOnCount ) {
 			continue;
-		} 
+		}
 
 		/* Check the priority is set and matches */
 		if ( settings->priority != 0 && agent->priority != settings->priority ) {
 			continue;
-		} 
+		}
 
 		/* Passed all tests, matched. */
 		matchingAgent = agent;
@@ -1795,8 +1795,8 @@ mergeAgent(J9JavaVM *vm, J9RASdumpAgent *agent, const J9RASdumpSettings *setting
 		agent->dumpOptions = settings->dumpOptions;
 	}
 	if (settings->subFilter) {
-        agent->subFilter = settings->subFilter;
-    }
+		agent->subFilter = settings->subFilter;
+	}
 
 	/* Merge request bitmask */
 	agent->requestMask |= settings->requestMask;
@@ -1920,7 +1920,7 @@ printDumpEvents(struct J9JavaVM *vm, UDATA bits, IDATA verbose)
 	UDATA i;
 
 	PORT_ACCESS_FROM_JAVAVM(vm);
-	
+
 	if (verbose) {
 		/* Find the lengths of the longest dump event name and detail */
 		for (i = 0; i < J9RAS_DUMP_KNOWN_EVENTS; i++) {
@@ -2010,7 +2010,7 @@ writeIntoBuffer(void* buffer, IDATA buffer_length, IDATA* index, char* data) {
 	IDATA len;
 	IDATA next_char = *index;
 	char* cbuffer = (char*)buffer;
-	
+
 	len = strlen(data);
 	if ((next_char + len) < buffer_length) {
 		strcpy(&cbuffer[next_char], data);
@@ -2058,7 +2058,7 @@ queryAgent(struct J9JavaVM *vm, struct J9RASdumpAgent *agent, IDATA buffer_size,
 		/* no space in buffer, so abandon at this point */
 		return rc;
 	}
-	
+
 	/* copy in the events */
 	separator = "";
 	len = j9str_printf(temp_buf, sizeof(temp_buf), "%s", ":events=");
@@ -2097,15 +2097,15 @@ queryAgent(struct J9JavaVM *vm, struct J9RASdumpAgent *agent, IDATA buffer_size,
 
 	/* copy in the subfilters */
 	len = 0;
-	if (agent->subFilter != NULL) {                
+	if (agent->subFilter != NULL) {
 		len = j9str_printf(temp_buf, sizeof(temp_buf), "msg_filter=%.1000s,", agent->subFilter);
 	}
 	if (len > 0) {
 		rc = writeIntoBuffer(buffer, buffer_size, &next_char, temp_buf);
-		if (rc == FALSE) {                        
+		if (rc == FALSE) {
 			return rc;
 		}
-	}	
+	}
 
 	/* copy in the label, range and priority */
 	len = 0;
@@ -2200,7 +2200,7 @@ printDumpAgent(struct J9JavaVM *vm, struct J9RASdumpAgent *agent)
 	if (agent->detailFilter != NULL) {
 		j9tty_err_printf("\n    filter=%s,",	agent->detailFilter);
 	}
-	
+
 	if (agent->subFilter != NULL) {
 		j9tty_err_printf("\n    msg_filter=%s,", agent->subFilter);
 	}
@@ -2264,7 +2264,7 @@ copyDumpSettings(struct J9JavaVM *vm, J9RASdumpSettings *src, J9RASdumpSettings 
 	} else {
 		dst->detailFilter = NULL;
 	}
-	
+
 	if (src->subFilter != NULL){
 		dst->subFilter = allocString(vm, strlen(src->subFilter) + 1);
 		if (dst->subFilter == NULL){
@@ -2274,10 +2274,10 @@ copyDumpSettings(struct J9JavaVM *vm, J9RASdumpSettings *src, J9RASdumpSettings 
 	} else {
 		dst->subFilter = NULL;
 	}
-        
+
 	dst->startOnCount = src->startOnCount;
 	dst->stopOnCount = src->stopOnCount;
-	
+
 	if (src->labelTemplate != NULL){
 		dst->labelTemplate  = allocString(vm, strlen(src->labelTemplate ) + 1);
 		if (dst->labelTemplate  == NULL){
@@ -2289,7 +2289,7 @@ copyDumpSettings(struct J9JavaVM *vm, J9RASdumpSettings *src, J9RASdumpSettings 
 	} else {
 		dst->labelTemplate = NULL;
 	}
-	
+
 	if (src->dumpOptions != NULL){
 		dst->dumpOptions = allocString(vm, strlen(src->dumpOptions) + 1);
 		if (dst->dumpOptions == NULL){
@@ -2301,7 +2301,7 @@ copyDumpSettings(struct J9JavaVM *vm, J9RASdumpSettings *src, J9RASdumpSettings 
 	} else {
 		dst->dumpOptions = NULL;
 	}
-	
+
 	dst->priority = src->priority;
 	dst->requestMask = src->requestMask;
 
@@ -2315,7 +2315,7 @@ copyDumpSettingsQueue(J9JavaVM *vm, J9RASdumpSettings *toCopy)
 	int i;
 	omr_error_t retVal = OMR_ERROR_NONE;
 	J9RASdumpSettings *queue = (J9RASdumpSettings *)j9mem_allocate_memory( sizeof(J9RASdumpSettings) * J9RAS_DUMP_KNOWN_SPECS , OMRMEM_CATEGORY_VM);
-	
+
 	if (queue == NULL){
 		return NULL;
 	}
@@ -2325,7 +2325,7 @@ copyDumpSettingsQueue(J9JavaVM *vm, J9RASdumpSettings *toCopy)
 			return NULL;
 		}
 	}
-	
+
 	return queue;
 }
 
@@ -2422,8 +2422,8 @@ scanDumpType(char **optionStringPtr)
 
 			/* Check well-formed dump option */
 			if ( try_scan(optionStringPtr, "+") ||
-			     try_scan(optionStringPtr, ":") ||
-			     *optionStringPtr[0] == '\0' ) {
+				 try_scan(optionStringPtr, ":") ||
+				 *optionStringPtr[0] == '\0' ) {
 				retVal = kind;
 			/* Not well-formed, so backtrack */
 			} else {
@@ -2442,63 +2442,63 @@ copyDumpAgent(struct J9JavaVM *vm, J9RASdumpAgent *src, J9RASdumpAgent *dst)
 {
 	memset(dst, 0, sizeof(*dst));
 
-    dst->nextPtr = NULL;
-    dst->shutdownFn = src->shutdownFn;
-    dst->eventMask = src->eventMask;
-    
-    if (src->detailFilter != NULL){
-    	dst->detailFilter = allocString(vm, strlen(src->detailFilter) + 1);
-    	if (dst->detailFilter == NULL){
-    		return OMR_ERROR_OUT_OF_NATIVE_MEMORY;
-    	}
-    	strcpy(dst->detailFilter, src->detailFilter);
-    } else {
-    	dst->detailFilter = NULL;
-    }
-    
-	if (src->subFilter != NULL){
+	dst->nextPtr = NULL;
+	dst->shutdownFn = src->shutdownFn;
+	dst->eventMask = src->eventMask;
+
+	if (src->detailFilter != NULL) {
+		dst->detailFilter = allocString(vm, strlen(src->detailFilter) + 1);
+		if (dst->detailFilter == NULL){
+			return OMR_ERROR_OUT_OF_NATIVE_MEMORY;
+		}
+		strcpy(dst->detailFilter, src->detailFilter);
+	} else {
+		dst->detailFilter = NULL;
+	}
+
+	if (src->subFilter != NULL) {
 		dst->subFilter = allocString(vm, strlen(src->subFilter) + 1);
-		if (dst->subFilter == NULL){
+		if (dst->subFilter == NULL) {
 			return OMR_ERROR_OUT_OF_NATIVE_MEMORY;
 		}
 		strcpy(dst->subFilter, src->subFilter);
-    } else {
-        dst->subFilter = NULL;
-    }
+	} else {
+		dst->subFilter = NULL;
+	}
 
-    dst->startOnCount = src->startOnCount;
-    dst->stopOnCount = src->stopOnCount;
+	dst->startOnCount = src->startOnCount;
+	dst->stopOnCount = src->stopOnCount;
 
-    if (src->labelTemplate != NULL){
+	if (src->labelTemplate != NULL) {
 		dst->labelTemplate  = allocString(vm, strlen(src->labelTemplate ) + 1);
-		if (dst->labelTemplate  == NULL){
-			/* previous strings alloc'ed in this func are stored in the dump string 
+		if (dst->labelTemplate  == NULL) {
+			/* previous strings alloc'ed in this func are stored in the dump string
 			 * table and so will be freed automatically at shutdown */
 			return OMR_ERROR_OUT_OF_NATIVE_MEMORY;
 		}
 		strcpy(dst->labelTemplate , src->labelTemplate );
-    } else {
-    	dst->labelTemplate = NULL;
-    }
-	
-    dst->dumpFn = src->dumpFn;
-    
-    if (src->dumpOptions != NULL){
-	    dst->dumpOptions = allocString(vm, strlen(src->dumpOptions) + 1);
+	} else {
+		dst->labelTemplate = NULL;
+	}
+
+	dst->dumpFn = src->dumpFn;
+
+	if (src->dumpOptions != NULL){
+		dst->dumpOptions = allocString(vm, strlen(src->dumpOptions) + 1);
 		if (dst->dumpOptions == NULL){
-			/* previous strings alloc'ed in this func are stored in the dump string 
+			/* previous strings alloc'ed in this func are stored in the dump string
 			 * table and so will be freed automatically at shutdown */
 			return OMR_ERROR_OUT_OF_NATIVE_MEMORY;
 		}
 		strcpy(dst->dumpOptions, src->dumpOptions);
-    } else {
-    	dst->dumpOptions = NULL;
-    }
-    
-    dst->userData = src->userData;
-    dst->priority = src->priority;
-    dst->requestMask = src->requestMask;
-    
+	} else {
+		dst->dumpOptions = NULL;
+	}
+
+	dst->userData = src->userData;
+	dst->priority = src->priority;
+	dst->requestMask = src->requestMask;
+
 	return OMR_ERROR_NONE;
 }
 
@@ -2506,7 +2506,7 @@ static void
 freeQueueWithoutRunningShutdown(J9JavaVM *vm, J9RASdumpAgent *toFree)
 {
 	PORT_ACCESS_FROM_JAVAVM(vm);
-	
+
 	J9RASdumpAgent *currentAgent = toFree;
 	if (currentAgent != NULL){
 		J9RASdumpAgent *nextAgent = currentAgent->nextPtr;
@@ -2521,7 +2521,7 @@ copyDumpAgentsQueue(J9JavaVM *vm, J9RASdumpAgent *toCopy)
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	J9RASdumpAgent *queue = NULL;
 	J9RASdumpAgent **queueNextPtr = &queue;
-	
+
 	while (toCopy != NULL) {
 		omr_error_t retVal = OMR_ERROR_NONE;
 		J9RASdumpAgent *newAgent = (J9RASdumpAgent *)j9mem_allocate_memory(sizeof(J9RASdumpAgent), OMRMEM_CATEGORY_VM);
@@ -2529,19 +2529,19 @@ copyDumpAgentsQueue(J9JavaVM *vm, J9RASdumpAgent *toCopy)
 			freeQueueWithoutRunningShutdown(vm, queue);
 			return NULL;
 		}
-		
+
 		retVal = copyDumpAgent(vm, toCopy, newAgent);
 		if (OMR_ERROR_NONE != retVal) {
 			freeQueueWithoutRunningShutdown(vm, queue);
 			return NULL;
 		}
-		
+
 		newAgent->nextPtr = NULL;
 		*queueNextPtr = newAgent;
 		queueNextPtr = &newAgent->nextPtr;
 		toCopy = toCopy->nextPtr;
 	}
-	
+
 	return queue;
 }
 
@@ -2646,15 +2646,15 @@ unloadDumpAgent(struct J9JavaVM *vm, IDATA kind)
 
 /*
  * Function: createAndRunOneOffDumpAgent - creates a temporary dump agent and runs it
- * 
- * A wrapper around runDumpAgent used for triggering one-off dumps. 
- * 
+ *
+ * A wrapper around runDumpAgent used for triggering one-off dumps.
+ *
  * Parameters:
- * 
+ *
  * vm [in] - VM pointer
  * context [in] - dump context
  * kind [in] - type code for dump being produced
- * 
+ *
  * Returns: OMR_ERROR_NONE on success, OMR_ERROR_INTERNAL or OMR_ERROR_OUT_OF_NATIVE_MEMORY if there was a problem.
  */
 omr_error_t
@@ -2668,7 +2668,7 @@ createAndRunOneOffDumpAgent(struct J9JavaVM *vm,J9RASdumpContext * context,IDATA
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	U_64 now = j9time_current_time_millis();
 	omr_error_t rc = OMR_ERROR_NONE;
-	
+
 	/* Need temporary agent */
 	action = processSettings(vm, kind, optionString, &tmpSettings);
 	if( action == BOGUS_DUMP_OPTION ) {
@@ -2678,13 +2678,13 @@ createAndRunOneOffDumpAgent(struct J9JavaVM *vm,J9RASdumpContext * context,IDATA
 
 	if ( agent ) {
 		rc = runDumpAgent(vm,agent,context,&state,"",now);
-					
+
 		/*Undo state, release locks*/
 		state = unwindAfterDump(vm, context, state);
-					
+
 		/* Clean up temporary agent */
 		agent->shutdownFn(vm, &agent);
-		
+
 		return rc;
 	} else {
 		return OMR_ERROR_OUT_OF_NATIVE_MEMORY;
@@ -2693,17 +2693,17 @@ createAndRunOneOffDumpAgent(struct J9JavaVM *vm,J9RASdumpContext * context,IDATA
 
 /*
  * Function: runDumpAgent - executes a single dump agent
- * 
+ *
  * Takes care of acquiring exclusive, performing prepwalk & compact and some final validation/warning
- * messages. 
- * 
+ * messages.
+ *
  * Parameters:
  * vm [in] -       VM pointer
  * agent [in] -    Agent to be executed
  * context [in] -  Dump context (what triggered the dump)
- * state [inout] - State bit flags. Used to maintain state between multiple calls of runDumpAgent. 
+ * state [inout] - State bit flags. Used to maintain state between multiple calls of runDumpAgent.
  *                 When you've performed all runDumpAgent calls you must call unwindAfterDump passing
- *                 the state variable to make sure all locks are cleaned up. The first time runDumpAgent 
+ *                 the state variable to make sure all locks are cleaned up. The first time runDumpAgent
  *                 is called, state should be initialized to 0.
  * detail    -     Detail string for dump cause
  * timeNow [in] -  Time value as returned from j9time_current_time_millis. Used to timestamp the dumps.
@@ -2749,13 +2749,13 @@ runDumpAgent(struct J9JavaVM *vm, J9RASdumpAgent * agent, J9RASdumpContext * con
 		gotExclusive = *state & J9RAS_DUMP_GOT_EXCLUSIVE_VM_ACCESS;
 
 		/* If the dump is a system dump and the customer either requested exclusive and we couldn't get it, or they requested
-		 * prepwalk or compact without exclusive, print a warning message (although, unlike heapdump, we still take the dump). 
+		 * prepwalk or compact without exclusive, print a warning message (although, unlike heapdump, we still take the dump).
 		 */
 		if (agent->dumpFn == doSystemDump) {
 			if (userRequestedExclusive && !gotExclusive) {
 				j9nls_printf(PORTLIB, J9NLS_WARNING | J9NLS_STDERR, J9NLS_DMP_SYSTEM_DUMP_EXCLUSIVE_FAILED);
 			}
-									
+
 			if (userRequestedPrepwalkOrCompact && !userRequestedExclusive) {
 				j9nls_printf(PORTLIB, J9NLS_WARNING | J9NLS_STDERR, J9NLS_DMP_SYSTEM_DUMP_COMPACT_PREPWALK_WITHOUT_EXCLUSIVE);
 			}
@@ -2806,7 +2806,7 @@ runDumpAgent(struct J9JavaVM *vm, J9RASdumpAgent * agent, J9RASdumpContext * con
 			/* cjvm_dumpagent_finished_hook will be removed in the future (currently deprecated). */
 			cjvm_dumpagent_finished_hook((jvmDumpAgentInfo *)agent, label, (jvmDumpContext *)context);
 #endif /* defined(J9ZTPF) */
-			
+
 			if (context->dumpList) {
 				if (agent->dumpFn == doHeapDump) {
 					if (agent->dumpOptions && strstr(agent->dumpOptions, "PHD")) {
@@ -2845,7 +2845,7 @@ runDumpAgent(struct J9JavaVM *vm, J9RASdumpAgent * agent, J9RASdumpContext * con
 		}
 
 	}
-	
+
 	/* If we allocated a longer label (actually only for tool dumps) then free it now */
 	if (label != localLabel) {
 		j9mem_free_memory(label);
@@ -2873,13 +2873,13 @@ runDumpFunction(J9RASdumpAgent *agent, char *label, J9RASdumpContext *context)
 		dumpData.agent = agent;
 		dumpData.label = label;
 		dumpData.context = context;
-		
+
 		protectedResult = j9sig_protect(
-			protectedDumpFunction, &dumpData, 
-			signalHandler, NULL, 
-			J9PORT_SIG_FLAG_MAY_RETURN | J9PORT_SIG_FLAG_SIGALLSYNC, 
+			protectedDumpFunction, &dumpData,
+			signalHandler, NULL,
+			J9PORT_SIG_FLAG_MAY_RETURN | J9PORT_SIG_FLAG_SIGALLSYNC,
 			&rc);
-		
+
 		if (protectedResult != 0) {
 			return OMR_ERROR_INTERNAL;
 		} else {
@@ -2911,7 +2911,7 @@ signalHandler(struct J9PortLibrary* portLibrary, U_32 gpType, void* gpInfo, void
 /**
  * Writes the appropriate "we're about to write a dump" message to the console depending on whether the
  * dump was event driven or user requested.
- * 
+ *
  * Parameters:
  * portLibrary [in] library to use to write dump
  * context [in] context that dump was taken in
@@ -2928,16 +2928,16 @@ reportDumpRequest(struct J9PortLibrary* portLibrary, J9RASdumpContext * context,
 			/*User driven dump*/
 			j9nls_printf(PORTLIB,
 				J9NLS_INFO | J9NLS_STDERR | J9NLS_VITAL,
-				J9NLS_DMP_USER_REQUESTED_DUMP_STR, 
-				dumpType, 
-				fileName, 
+				J9NLS_DMP_USER_REQUESTED_DUMP_STR,
+				dumpType,
+				fileName,
 				context->eventData != NULL ? context->eventData->detailData : NULL);
-			
+
 			Trc_dump_reportDumpStart_FromUser(dumpType,fileName,context->eventData != NULL ? context->eventData->detailData : NULL);
 		} else {
 			/*Event driven dump*/
 			j9nls_printf(PORTLIB, J9NLS_INFO | J9NLS_STDERR | J9NLS_VITAL, J9NLS_DMP_EVENT_TRIGGERED_DUMP_STR, dumpType, fileName);
-			
+
 			Trc_dump_reportDumpStart_FromEvent(dumpType,fileName);
 		}
 	} else {
@@ -2945,15 +2945,15 @@ reportDumpRequest(struct J9PortLibrary* portLibrary, J9RASdumpContext * context,
 			/*User driven dump*/
 			j9nls_printf(PORTLIB,
 				J9NLS_INFO | J9NLS_STDERR | J9NLS_VITAL,
-				J9NLS_DMP_USER_REQUESTED_DUMP_STR_NOFILE, 
-				dumpType,  
+				J9NLS_DMP_USER_REQUESTED_DUMP_STR_NOFILE,
+				dumpType,
 				context->eventData != NULL ? context->eventData->detailData : NULL);
-			
+
 			Trc_dump_reportDumpStart_FromUser_NoFile(dumpType,context->eventData != NULL ? context->eventData->detailData : NULL);
 		} else {
 			/*Event driven dump*/
 			j9nls_printf(PORTLIB, J9NLS_INFO | J9NLS_STDERR | J9NLS_VITAL, J9NLS_DMP_EVENT_TRIGGERED_DUMP_STR_NOFILE, dumpType);
-			
+
 			Trc_dump_reportDumpStart_FromEvent_NoFile(dumpType);
 		}
 	}

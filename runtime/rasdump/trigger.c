@@ -495,11 +495,11 @@ matchesFilter(J9VMThread *vmThread, J9RASdumpEventData *eventData, UDATA eventFl
 	/* For exception specific events the filter and subfilter default(null) matches to all
 	 * For non exception specific events the filter default(null) matches to all
 	 */
-    if (((0 != (eventFlags & J9RAS_DUMP_EXCEPTION_EVENT_GROUP)) && NULL == filter && NULL == subFilter) ||
-        ((0 == (eventFlags & J9RAS_DUMP_EXCEPTION_EVENT_GROUP)) && NULL == filter))
-    {
-    	return J9RAS_DUMP_MATCH;
-    }
+	if (((0 != (eventFlags & J9RAS_DUMP_EXCEPTION_EVENT_GROUP)) && NULL == filter && NULL == subFilter) ||
+		((0 == (eventFlags & J9RAS_DUMP_EXCEPTION_EVENT_GROUP)) && NULL == filter))
+	{
+		return J9RAS_DUMP_MATCH;
+	}
 
 	if (eventFlags & J9RAS_DUMP_ON_SLOW_EXCLUSIVE_ENTER) {
 		return matchesSlowExclusiveEnterFilter(eventData, filter);
@@ -804,28 +804,28 @@ dumpLabel(struct J9JavaVM *vm, J9RASdumpAgent *agent, J9RASdumpContext *context,
 
 	seqNum += 1; /* Atomicity guaranteed as we are inside the dumpLabelTokensMutex */
 
-	if (j9str_set_token(PORTLIB, stringTokens, "seq", "%04u", seqNum)) {
+	if (0 != j9str_set_token(stringTokens, "seq", "%04u", seqNum)) {
 		omrthread_monitor_exit(dump_storage->dumpLabelTokensMutex);
 		return OMR_ERROR_INTERNAL;
 	}
 
-	if (j9str_set_token(PORTLIB, stringTokens, "home", "%s", (vm->javaHome == NULL) ? "" : (char *)vm->javaHome)) {
+	if (0 != j9str_set_token(stringTokens, "home", "%s", (vm->javaHome == NULL) ? "" : (const char *)vm->javaHome)) {
 		omrthread_monitor_exit(dump_storage->dumpLabelTokensMutex);
 		return OMR_ERROR_INTERNAL;
 	}
 
-	if (j9str_set_token(PORTLIB, stringTokens, "event", "%s", mapDumpEvent(context->eventFlags))) {
+	if (0 != j9str_set_token(stringTokens, "event", "%s", mapDumpEvent(context->eventFlags))) {
 		omrthread_monitor_exit(dump_storage->dumpLabelTokensMutex);
 		return OMR_ERROR_INTERNAL;
 	}
 
-	if (j9str_set_token(PORTLIB, stringTokens, "list", "%s", (context->dumpList == NULL) ? "" : context->dumpList)) {
+	if (0 != j9str_set_token(stringTokens, "list", "%s", (context->dumpList == NULL) ? "" : context->dumpList)) {
 		omrthread_monitor_exit(dump_storage->dumpLabelTokensMutex);
 		return OMR_ERROR_INTERNAL;
 	}
 
 	/* %vmbin is not listed in printLabelSpec as it is only useful for loading internal tools that live in the vm directory. */
-	if (j9str_set_token(PORTLIB, stringTokens, "vmbin", "%s", (vm->j2seRootDirectory == NULL) ? "" : (char *)vm->j2seRootDirectory)) {
+	if (0 != j9str_set_token(stringTokens, "vmbin", "%s", (vm->j2seRootDirectory == NULL) ? "" : (const char *)vm->j2seRootDirectory)) {
 		omrthread_monitor_exit(dump_storage->dumpLabelTokensMutex);
 		return OMR_ERROR_INTERNAL;
 	}
@@ -842,12 +842,12 @@ dumpLabel(struct J9JavaVM *vm, J9RASdumpAgent *agent, J9RASdumpContext *context,
 		return OMR_ERROR_OUT_OF_NATIVE_MEMORY;
 	}
 
-	 if (agent->dumpFn != doToolDump ) {
-		 /* Cache last dump label (but not for tool dumps!) */
-		 if (j9str_set_token(PORTLIB, stringTokens, "last", "%s", buf)) {
-			 omrthread_monitor_exit(dump_storage->dumpLabelTokensMutex);
-			 return OMR_ERROR_INTERNAL;
-		 }
+	if (agent->dumpFn != doToolDump) {
+		/* Cache last dump label (but not for tool dumps!) */
+		if (0 != j9str_set_token(stringTokens, "last", "%s", buf)) {
+			omrthread_monitor_exit(dump_storage->dumpLabelTokensMutex);
+			return OMR_ERROR_INTERNAL;
+		}
 	}
 
 	/* release access to the tokens */

@@ -623,7 +623,7 @@ extern J9_CFUNC int32_t j9port_isCompatible(struct J9PortLibraryVersion *expecte
 #define j9str_printf(param1,param2,param3,...) OMRPORT_FROM_J9PORT(privatePortLibrary)->str_printf(OMRPORT_FROM_J9PORT(privatePortLibrary), param1, param2, param3, ## __VA_ARGS__)
 #define j9str_vprintf(param1,param2,param3,param4) OMRPORT_FROM_J9PORT(privatePortLibrary)->str_vprintf(OMRPORT_FROM_J9PORT(privatePortLibrary),param1,param2,param3,param4)
 #define j9str_create_tokens(param1) OMRPORT_FROM_J9PORT(privatePortLibrary)->str_create_tokens(OMRPORT_FROM_J9PORT(privatePortLibrary),param1)
-#define j9str_set_token(param1,...) OMRPORT_FROM_J9PORT(privatePortLibrary)->str_set_token(OMRPORT_FROM_J9PORT(param1), ## __VA_ARGS__)
+#define j9str_set_token(param1,param2,param3,...) OMRPORT_FROM_J9PORT(privatePortLibrary)->str_set_token(OMRPORT_FROM_J9PORT(privatePortLibrary), param1, param2, param3, ## __VA_ARGS__)
 #define j9str_subst_tokens(param1,param2,param3,param4) OMRPORT_FROM_J9PORT(privatePortLibrary)->str_subst_tokens(OMRPORT_FROM_J9PORT(privatePortLibrary),param1,param2,param3,param4)
 #define j9str_free_tokens(param1) OMRPORT_FROM_J9PORT(privatePortLibrary)->str_free_tokens(OMRPORT_FROM_J9PORT(privatePortLibrary),param1)
 #define j9str_set_time_tokens(param1,param2) OMRPORT_FROM_J9PORT(privatePortLibrary)->str_set_time_tokens(OMRPORT_FROM_J9PORT(privatePortLibrary),param1,param2)
