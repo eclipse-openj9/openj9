@@ -140,6 +140,15 @@ restart:
 				TRIGGER_J9HOOK_VM_MONITOR_CONTENDED_EXIT(vmStruct->javaVM->hookInterface, vmStruct, monitor);
 
 				omrthread_monitor_exit(monitor);
+#if JAVA_SPEC_VERSION >= 24
+				if (J9_ARE_ANY_BITS_SET(vmStruct->javaVM->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)
+				&& (0 != objectMonitor->virtualThreadWaitCount)
+				) {
+					omrthread_monitor_enter(vmStruct->javaVM->blockedVirtualThreadsMutex);
+					omrthread_monitor_notify(vmStruct->javaVM->blockedVirtualThreadsMutex);
+					omrthread_monitor_exit(vmStruct->javaVM->blockedVirtualThreadsMutex);
+				}
+#endif /* JAVA_SPEC_VERSION >= 24 */
 			}
 		}
 		Trc_VM_objectMonitorExit_Exit_FCBSet(vmStruct);
