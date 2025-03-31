@@ -100,22 +100,22 @@ MM_VerboseStandardStreamOutput::newInstance(MM_EnvironmentBase *env, const char 
 bool
 MM_VerboseStandardStreamOutput::initialize(MM_EnvironmentBase *env, const char *filename)
 {
-	J9JavaVM* javaVM = (J9JavaVM *)env->getOmrVM()->_language_vm;
+	J9JavaVM *javaVM = (J9JavaVM *)env->getOmrVM()->_language_vm;
 	PORT_ACCESS_FROM_JAVAVM(javaVM);
-	const char* version = javaVM->memoryManagerFunctions->omrgc_get_version(env->getOmrVM());
-	
+	const char *version = javaVM->memoryManagerFunctions->omrgc_get_version(env->getOmrVM());
+
 	setStream(getStreamID(env, filename));
-	
-	if(STDERR == _currentStream){
-		j9file_printf(PORTLIB, J9PORT_TTY_ERR, "\n" VERBOSEGC_HEADER_TEXT_ALL, version);
+
+	if (STDERR == _currentStream) {
+		j9file_printf(J9PORT_TTY_ERR, "\n" VERBOSEGC_HEADER_TEXT_ALL, version);
 	} else {
-		j9file_printf(PORTLIB, J9PORT_TTY_OUT, "\n" VERBOSEGC_HEADER_TEXT_ALL, version);
+		j9file_printf(J9PORT_TTY_OUT, "\n" VERBOSEGC_HEADER_TEXT_ALL, version);
 	}
-	
-	if(NULL == (_buffer = MM_VerboseBuffer::newInstance(env, INITIAL_BUFFER_SIZE))) {
+
+	if (NULL == (_buffer = MM_VerboseBuffer::newInstance(env, INITIAL_BUFFER_SIZE))) {
 		return false;
 	}
-	
+
 	return true;
 }
 

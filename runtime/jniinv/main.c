@@ -78,10 +78,10 @@ UDATA signalProtectedMain(struct J9PortLibrary *portLibrary, void *arg)
 	PORT_ACCESS_FROM_PORT(args->portLibrary);
 
 	if (argc <= 1) {
-		j9file_printf(PORTLIB, J9PORT_TTY_OUT, "jniinv test program\n");
-		j9file_printf(PORTLIB, J9PORT_TTY_OUT, J9_COPYRIGHT_STRING "\n");
-		j9file_printf(PORTLIB, J9PORT_TTY_OUT, "usage: jniinv [-D... [-X...]] [-io:\n");
-		j9file_printf(PORTLIB, J9PORT_TTY_OUT, "minimally, you need to used -Djava.home=..\n");
+		j9file_printf(J9PORT_TTY_OUT, "jniinv test program\n");
+		j9file_printf(J9PORT_TTY_OUT, J9_COPYRIGHT_STRING "\n");
+		j9file_printf(J9PORT_TTY_OUT, "usage: jniinv [-D... [-X...]] [-io:\n");
+		j9file_printf(J9PORT_TTY_OUT, "minimally, you need to used -Djava.home=..\n");
 		return 0;
 	}
 

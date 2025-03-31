@@ -104,7 +104,7 @@ public:
 	/**
 	 * This method should be called when Agent_OnUnLoad is invoked by the JVM.
 	 */
-	virtual void shutdown(){};
+	virtual void shutdown() {}
 
 	/**
 	 * Helper to output error messages
@@ -138,8 +138,8 @@ public:
 	virtual void message(const char* string)
 	{
 		PORT_ACCESS_FROM_JAVAVM(getJavaVM());
-		if (_outputFileNameFD != -1){
-			j9file_printf(PORTLIB,_outputFileNameFD, string);
+		if (_outputFileNameFD != -1) {
+			j9file_printf(_outputFileNameFD, string);
 		} else {
 			j9tty_printf(PORTLIB, string);
 		}
@@ -152,8 +152,8 @@ public:
 	virtual void messageUDATA(UDATA val)
 	{
 		PORT_ACCESS_FROM_JAVAVM(getJavaVM());
-		if (_outputFileNameFD != -1){
-					j9file_printf(PORTLIB,_outputFileNameFD, "%zu",val);
+		if (_outputFileNameFD != -1) {
+			j9file_printf(_outputFileNameFD, "%zu",val);
 		} else {
 			j9tty_printf(PORTLIB, "%zu",val);
 		}
@@ -167,8 +167,8 @@ public:
 	virtual void messageU64(U_64 val)
 	{
 		PORT_ACCESS_FROM_JAVAVM(getJavaVM());
-		if (_outputFileNameFD != -1){
-					j9file_printf(PORTLIB,_outputFileNameFD, "%llu",val);
+		if (_outputFileNameFD != -1) {
+			j9file_printf(_outputFileNameFD, "%llu",val);
 		} else {
 			j9tty_printf(PORTLIB, "%llu",val);
 		}
@@ -181,8 +181,8 @@ public:
 	virtual void messageIDATA(IDATA val)
 	{
 		PORT_ACCESS_FROM_JAVAVM(getJavaVM());
-		if (_outputFileNameFD != -1){
-			j9file_printf(PORTLIB,_outputFileNameFD, "%zd",val);
+		if (_outputFileNameFD != -1) {
+			j9file_printf(_outputFileNameFD, "%zd",val);
 		} else {
 			j9tty_printf(PORTLIB, "%zd",val);
 		}

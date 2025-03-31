@@ -1992,7 +1992,7 @@ dumpClassLoader(J9JavaVM *vm, J9ClassLoader *loader, IDATA fd)
 	while (NULL != clazz) {
 		J9ROMClass* romClass = clazz->romClass;
 		J9UTF8* utf = J9ROMCLASS_CLASSNAME(romClass);
-		j9file_printf(PORTLIB, fd, "%.*s\n", (UDATA)J9UTF8_LENGTH(utf), J9UTF8_DATA(utf));
+		j9file_printf(fd, "%.*s\n", (UDATA)J9UTF8_LENGTH(utf), J9UTF8_DATA(utf));
 		clazz = vmFuncs->hashClassTableNextDo(&walkState);
 	}
 }
@@ -7460,7 +7460,7 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 		 * write the bit flags as a string rather than as a single byte for this to work.
 		 * 0x7F includes ELF headers (kernel 2.6.24) and huge pages (kernel 2.6.28).
 		 */
-		j9file_printf(PORTLIB, filter, "0x7F\n");
+		j9file_printf(filter, "0x7F\n");
 		/* the only expected error is that we're on a system where coredump_filter doesn't exist (ENOENT) */
 
 		j9file_close(filter);
@@ -7913,15 +7913,15 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 			 * NOTE that Hotspot produces this output on STDOUT, and applications
 			 * expect to parse it there, which means this code does not use
 			 * j9tty_printf() like most of the VM (which prints to STDERR).
-			 * Instead, j9file_printf(PORTLIB, J9PORT_TTY_OUT, ...) is used.
+			 * Instead, j9file_printf(J9PORT_TTY_OUT, ...) is used.
 			 */
 
 #define PRINT_FLAG(fmt, type, name, value, howset) \
-	j9file_printf(PORTLIB, J9PORT_TTY_OUT, \
+	j9file_printf(J9PORT_TTY_OUT, \
 			"%9s %-40s = %-41" fmt " {product} {%s}\n", \
 			(type), (name), (value), (howset))
 
-			j9file_printf(PORTLIB, J9PORT_TTY_OUT, "[Global flags]\n");
+			j9file_printf(J9PORT_TTY_OUT, "[Global flags]\n");
 
 			PRINT_FLAG("zu", "size_t", "MaxHeapSize",
 					maxHeapSize,

@@ -2150,9 +2150,9 @@ j9file_test17(struct J9PortLibrary *portLibrary)
 		goto exit;
 	}
 
-	j9file_printf(portLibrary, fd1, "Try a number - %d", 1);
-	j9file_printf(portLibrary, fd1, "Try a string - %s", "abc");
-	j9file_printf(portLibrary, fd1, "Try a mixture - %d %s %d", 1, "abc", 2);
+	j9file_printf(fd1, "Try a number - %d", 1);
+	j9file_printf(fd1, "Try a string - %s", "abc");
+	j9file_printf(fd1, "Try a mixture - %d %s %d", 1, "abc", 2);
 
 	/* having hopefully shoved this stuff onto file we need to read it back and check its as expected! */
 	rc = FILE_CLOSE_FUNCTION(portLibrary, fd1);
@@ -4325,7 +4325,7 @@ j9file_test34(struct J9PortLibrary *portLibrary)
 	memset(stringToWrite, 'a', J9FILETEST_FILESIZE);
 	stringToWrite[J9FILETEST_FILESIZE - 1] = '\0';
 
-	j9file_printf(portLibrary, fd, "%s", stringToWrite);
+	j9file_printf(fd, "%s", stringToWrite);
 	j9file_sync(fd); /* flush data written to disk */
 
 #if defined(LINUX)
