@@ -995,6 +995,8 @@ restart:
 						if (lock == oldValue) {
 							/* CAS succeeded, we can proceed with using the inflated monitor. */
 							VM_ObjectMonitor::incrementCancelCounter(J9OBJECT_CLAZZ(currentThread, syncObj));
+							/* Either the lock is acquired or FLC bit set, safe to release the inflated monitor. */
+							omrthread_monitor_exit(monitor);
 
 							if (J9_FLATLOCK_OWNER(lock) == currentThread) {
 								/* Lock is acquired. */
