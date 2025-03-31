@@ -49,9 +49,9 @@ public:
 	MMINLINE MM_CopyScanCacheChunkVLHGC *getNext() const { return _nextChunk; }
 	MMINLINE void setNext(MM_CopyScanCacheChunkVLHGC *newNext) { _nextChunk = newNext; }
 	
-	static MM_CopyScanCacheChunkVLHGC *newInstance(MM_EnvironmentVLHGC *env, UDATA cacheEntryCount, MM_CopyScanCacheVLHGC **nextCacheAddr, MM_CopyScanCacheChunkVLHGC *nextChunk);
+	static MM_CopyScanCacheChunkVLHGC *newInstance(MM_EnvironmentVLHGC *env, uintptr_t cacheEntryCount, MM_CopyScanCacheVLHGC **tailCacheAddr, MM_CopyScanCacheChunkVLHGC *nextChunk);
 	virtual void kill(MM_EnvironmentVLHGC *env);
-	bool initialize(MM_EnvironmentVLHGC *env, UDATA cacheEntryCount, MM_CopyScanCacheVLHGC **nextCacheAddr, MM_CopyScanCacheChunkVLHGC *nextChunk);
+	bool initialize(MM_EnvironmentVLHGC *env, uintptr_t cacheEntryCount, MM_CopyScanCacheVLHGC **tailCacheAddr, MM_CopyScanCacheChunkVLHGC *nextChunk);
 	virtual void tearDown(MM_EnvironmentVLHGC *env);
 
 	/**
