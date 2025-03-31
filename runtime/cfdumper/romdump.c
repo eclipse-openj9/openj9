@@ -20,6 +20,8 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
+#define _AE_BIMODAL
+
 #include "j9.h"
 #include "cfdumper_internal.h"
 #include "util_api.h"
@@ -698,14 +700,14 @@ parseROMQuery(J9Pool *allocator, const char *query)
 
 		if ('[' == *query) {
 			query++;
-			if (!isdigit(*query)) {
+			if (!__isdigit_a(*query)) {
 				return NULL;
 			}
 
 			component->arrayIndex = atoi(query);
 			do {
 				query++;
-			} while (isdigit(*query));
+			} while (__isdigit_a(*query));
 
 			if (']' != *query) {
 				return NULL;

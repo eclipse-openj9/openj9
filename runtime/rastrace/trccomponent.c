@@ -24,6 +24,7 @@
 #if defined(LINUX) && !defined(J9ZTPF)
 #define _GNU_SOURCE
 #endif /* defined(LINUX) && !defined(J9ZTPF) */
+#define _AE_BIMODAL
 
 #include <limits.h>
 #include <string.h>
@@ -734,7 +735,7 @@ parseAndSetTracePointsInRange(const char *componentName,
 
 		ret = 0;
 		temp = p;
-		while (isdigit((int)*temp)) {
+		while (__isdigit_a((int)*temp)) {
 			ret++;
 			temp++;
 		}
@@ -747,11 +748,11 @@ parseAndSetTracePointsInRange(const char *componentName,
 			p += ret + 1;
 			length++; /* plus one for the dash */
 			ret = 0;
-			if (!isdigit(*temp)) {
+			if (!__isdigit_a(*temp)) {
 				reportCommandLineError(suppressMessages, "Expecting tracepoint range specified as tpnid{componentName.offset1-offset2} e.g. tpnid{j9trc.2-6}");
 				return OMR_ERROR_ILLEGAL_ARGUMENT;
 			}
-			while (isdigit(*temp)) {
+			while (__isdigit_a(*temp)) {
 				ret++;
 				temp++;
 			}
@@ -913,7 +914,7 @@ setTracePointsToParsed(const char *componentName, UtComponentList *componentList
 
 		if (0 == j9_cmdla_strnicmp(tempstr, UT_LEVEL_KEYWORD, strlen(UT_LEVEL_KEYWORD)) ||
 			  *tempstr == 'l' || *tempstr == 'L') {
-			while (!isdigit(*tempstr)) {
+			while (!__isdigit_a(*tempstr)) {
 				if (*tempstr == ',' || *tempstr == '}' || *tempstr == '\0') {
 					reportCommandLineError(suppressMessages, "Trace level required without an integer level specifier");
 					return OMR_ERROR_ILLEGAL_ARGUMENT;
