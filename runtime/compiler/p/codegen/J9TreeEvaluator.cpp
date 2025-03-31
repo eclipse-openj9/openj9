@@ -10507,7 +10507,7 @@ hashCodeHelper(TR::Node *node, TR::CodeGenerator *cg, TR::DataType elementType,
    generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, endReg, valueReg, vendReg);
 
    // using the serial loop is faster if there are less than 16 items
-   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, condReg, vendReg, 16*elementSize);
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, condReg, vendReg, 16);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, serialLabel, condReg);
 
    // load multiplier (anything with more than 4 bytes can be truncated)
@@ -10522,35 +10522,44 @@ hashCodeHelper(TR::Node *node, TR::CodeGenerator *cg, TR::DataType elementType,
       0x67E12CDF, 887503681, 28629151, 923521, 29791, 961, 31, 1};
    static uint32_t multiplierVectors32[8] = {923521, 923521, 923521, 923521,
                                                29791, 961, 31, 1};
-   uint32_t *multiplierVector;
-   int mvSize; // multiplierVector's size
+   static uint32_t *multiplierPtr8 = NULL;
+   static uint32_t *multiplierPtr16 = NULL;
+   static uint32_t *multiplierPtr32 = NULL;
    switch (elementType)
       {
       case TR::Int8:
-         multiplierVector = (multiplierVectors8);
-         mvSize = 20;
+         if (!multiplierPtr8)
+            {
+            multiplierPtr8 = (uint32_t*) cg->allocateCodeMemory(20*sizeof(uint32_t),
+               cg->getCurrentEvaluationBlock()->isCold());
+            memcpy((void *) multiplierPtr8, (void *) multiplierVectors8, 20*sizeof(uint32_t));
+            }
+         // point to the beginning of the array
+         loadAddressConstant(cg, false, node, (intptr_t) multiplierPtr8, multiplierAddrReg);
          break;
       case TR::Int16:
-         multiplierVector = (multiplierVectors16);
-         mvSize = 12;
+         if (!multiplierPtr16)
+            {
+            multiplierPtr16 = (uint32_t*) cg->allocateCodeMemory(12*sizeof(uint32_t),
+               cg->getCurrentEvaluationBlock()->isCold());
+            memcpy((void *) multiplierPtr16, (void *) multiplierVectors16, 12*sizeof(uint32_t));
+            }
+         // point to the beginning of the array
+         loadAddressConstant(cg, false, node, (intptr_t) multiplierPtr16, multiplierAddrReg);
          break;
       case TR::Int32:
-         multiplierVector = (multiplierVectors32);
-         mvSize = 8;
+         if (!multiplierPtr32)
+            {
+            multiplierPtr32 = (uint32_t*) cg->allocateCodeMemory(8*sizeof(uint32_t),
+               cg->getCurrentEvaluationBlock()->isCold());
+            memcpy((void *) multiplierPtr32, (void *) multiplierVectors32, 8*sizeof(uint32_t));
+            }
+         // point to the beginning of the array
+         loadAddressConstant(cg, false, node, (intptr_t) multiplierPtr32, multiplierAddrReg);
          break;
       default:
          TR_ASSERT_FATAL(false, "Unsupported hashCodeHelper elementType");
       }
-
-   // use a similar concept the the TableOfConstants to load the multiplierPtr into the memory
-   // TOC uses relocation data, so we use the same here
-   uint32_t *multiplierPtr = (uint32_t*) fej9->allocateRelocationData(comp, mvSize * sizeof(uint32_t));
-   if (!multiplierPtr)
-      return NULL;
-   memcpy((void *) multiplierPtr, (void *) multiplierVector, mvSize * sizeof(uint32_t));
-
-   // point to the beginning of the array
-   loadAddressConstant(cg, false, node, (intptr_t) multiplierPtr, multiplierAddrReg);
    // load the multiplierReg
    generateTrg1MemInstruction(cg, TR::InstOpCode::lxvw4x, node, multiplierReg,
       TR::MemoryReference::createWithIndexReg(cg, NULL, multiplierAddrReg, 16));
