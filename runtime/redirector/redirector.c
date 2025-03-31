@@ -381,8 +381,7 @@ scan_u64(char **scan_start, U_64* result)
 	UDATA rc = 1;
 	char *c = *scan_start;
 
-	/* isdigit isn't properly supported everywhere */
-	while ( *c >= '0' && *c <= '9' ) {
+	while (OMR_ISDIGIT(*c)) {
 		UDATA digitValue = *c - '0';
 
 		if (total > ((U_64)-1) / 10 ) {

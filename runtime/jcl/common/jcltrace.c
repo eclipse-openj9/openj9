@@ -367,7 +367,7 @@ buildCallPattern(const char *const templateString, UDATA *const result)
 				/*Reparse this letter in the READING_MODIFIER state*/
 				state = READING_MODIFIER;
 				continue;
-			} else if (('.' != *p) && !isdigit(*p)) {
+			} else if (('.' != *p) && !OMR_ISDIGIT(*p)) {
 				state = READING_TYPE;
 				continue;
 			}
