@@ -142,7 +142,10 @@ objectMonitorEnterBlocking(J9VMThread *currentThread)
 	J9Class *ramClass = J9OBJECT_CLAZZ(currentThread, object);
 	J9JavaVM *vm = currentThread->javaVM;
 	PORT_ACCESS_FROM_JAVAVM(vm);
-	I_64 startTicks = j9time_nano_time();
+	I_64 startTicks = 0;
+	if (J9_EVENT_IS_HOOKED(vm->hookInterface, J9HOOK_VM_MONITOR_CONTENDED_ENTERED)) {
+		startTicks = j9time_nano_time();
+	}
 	/* Throughout this function, note that inlineGetLockAddress cannot run into out of memory case because
 	 * an entry in monitor table will have been created by the earlier call in objectMonitorEnterNonBlocking.
 	 */
