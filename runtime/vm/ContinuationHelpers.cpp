@@ -897,13 +897,6 @@ preparePinnedVirtualThreadForMount(J9VMThread *currentThread, j9object_t continu
 {
 	UDATA monitorCount = 0;
 
-	if (isObjectWait) {
-		/* If this is a Object::wait then we need to add the waiting monitor which will not be
-		 * in the loop below.
-		 */
-		monitorCount += 1;
-	}
-
 	if (currentThread->ownedMonitorCount > 0) {
 		/* Update all owned monitors. */
 		J9ObjectMonitor *head = currentThread->currentContinuation->enteredMonitors;
@@ -916,7 +909,7 @@ preparePinnedVirtualThreadForMount(J9VMThread *currentThread, j9object_t continu
 		}
 		currentThread->currentContinuation->enteredMonitors = NULL;
 	}
-	Assert_VM_true(monitorCount == currentThread->ownedMonitorCount);
+	Assert_VM_true(monitorCount <= currentThread->ownedMonitorCount);
 
 	/* Add the attached monitor to the carrier thread's lockedmonitorcount. */
 	currentThread->osThread->lockedmonitorcount += monitorCount;
@@ -1053,13 +1046,6 @@ restart:
 
 		walkState.frameWalkFunction = ownedMonitorsIterator;
 
-		if (isObjectWait) {
-			/* If this is a Object::wait then we need to add the waiting monitor which will not be
-			 * in the loop below.
-			 */
-			walkState.userData4 = (void *)1;
-		}
-
 		if (vm->walkStackFrames(currentThread, &walkState) != J9_STACKWALK_RC_NONE) {
 			result = J9_OBJECT_MONITOR_OOM;
 			goto done;
@@ -1088,7 +1074,7 @@ restart:
 		}
 		currentThread->currentContinuation->enteredMonitors = enteredMonitorsList;
 	}
-	Assert_VM_true(monitorCount == currentThread->ownedMonitorCount);
+	Assert_VM_true(monitorCount <= currentThread->ownedMonitorCount);
 
 	if (NULL != syncObj) {
 		j9object_t continuationObj = J9VMJAVALANGVIRTUALTHREAD_CONT(currentThread, currentThread->threadObject);
