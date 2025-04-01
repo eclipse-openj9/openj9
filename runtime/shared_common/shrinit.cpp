@@ -1190,14 +1190,14 @@ j9shr_dump_help(J9JavaVM* vm, UDATA more)
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
 	const char* tmpcstr = j9nls_lookup_message((J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG), J9NLS_SHRC_SHRINIT_HELP_HEADER, NULL);
-	j9file_printf(PORTLIB, J9PORT_TTY_OUT, "%s", tmpcstr);
+	j9file_printf(J9PORT_TTY_OUT, "%s", tmpcstr);
 
 	IDATA i=0;
 	while(J9SHAREDCLASSESHELPTEXT[i].option != NULL) {
 		const char* helptext, *morehelptext;
 
 		if (!(J9SHAREDCLASSESHELPTEXT[i].nlsHelp1 | J9SHAREDCLASSESHELPTEXT[i].nlsMoreHelp1)) {
-			j9file_printf(PORTLIB, J9PORT_TTY_OUT, " %s\n", J9SHAREDCLASSESHELPTEXT[i].option);
+			j9file_printf(J9PORT_TTY_OUT, " %s\n", J9SHAREDCLASSESHELPTEXT[i].option);
 		} else {
 			helptext = OMRPORT_FROM_J9PORT(PORTLIB)->nls_lookup_message(OMRPORT_FROM_J9PORT(PORTLIB), (J9NLS_INFO | J9NLS_DO_NOT_APPEND_NEWLINE | J9NLS_DO_NOT_PRINT_MESSAGE_TAG),
 					(J9SHAREDCLASSESHELPTEXT[i].nlsHelp1), (J9SHAREDCLASSESHELPTEXT[i].nlsHelp2), NULL);
@@ -1206,29 +1206,29 @@ j9shr_dump_help(J9JavaVM* vm, UDATA more)
 
 			if (J9SHAREDCLASSESHELPTEXT[i].nlsHelp1) {
 				if (strlen(J9SHAREDCLASSESHELPTEXT[i].option) > 27) {
-				/* Some help text has more than 28 chars, print them in two lines, e.g.
-				 * invalidateAotMethods=<method_specification>[,<method_specification>]
-				 * Invalidate the AOT method(s) specified by the user.
-				 */
-					j9file_printf(PORTLIB, J9PORT_TTY_OUT, " %s\n", J9SHAREDCLASSESHELPTEXT[i].option);
-					j9file_printf(PORTLIB, J9PORT_TTY_OUT, " %28s", "");
-					j9file_printf(PORTLIB, J9PORT_TTY_OUT, helptext);
+					/* Some help text has more than 28 chars, print them in two lines, e.g.
+					 * invalidateAotMethods=<method_specification>[,<method_specification>]
+					 * Invalidate the AOT method(s) specified by the user.
+					 */
+					j9file_printf(J9PORT_TTY_OUT, " %s\n", J9SHAREDCLASSESHELPTEXT[i].option);
+					j9file_printf(J9PORT_TTY_OUT, " %28s", "");
+					j9file_printf(J9PORT_TTY_OUT, helptext);
 				} else {
-					j9file_printf(PORTLIB, J9PORT_TTY_OUT, " %-28.28s", J9SHAREDCLASSESHELPTEXT[i].option);
-					j9file_printf(PORTLIB, J9PORT_TTY_OUT, helptext);
+					j9file_printf(J9PORT_TTY_OUT, " %-28.28s", J9SHAREDCLASSESHELPTEXT[i].option);
+					j9file_printf(J9PORT_TTY_OUT, helptext);
 				}
-				j9file_printf(PORTLIB, J9PORT_TTY_OUT, "\n");
+				j9file_printf(J9PORT_TTY_OUT, "\n");
 			}
 			if (more && (J9SHAREDCLASSESHELPTEXT[i].nlsMoreHelp1)) {
 				if (strlen(J9SHAREDCLASSESHELPTEXT[i].option) > 27) {
-					j9file_printf(PORTLIB, J9PORT_TTY_OUT, " %s\n", J9SHAREDCLASSESHELPTEXT[i].option);
-					j9file_printf(PORTLIB, J9PORT_TTY_OUT, " %28s", "");
-					j9file_printf(PORTLIB, J9PORT_TTY_OUT, morehelptext);
+					j9file_printf(J9PORT_TTY_OUT, " %s\n", J9SHAREDCLASSESHELPTEXT[i].option);
+					j9file_printf(J9PORT_TTY_OUT, " %28s", "");
+					j9file_printf(J9PORT_TTY_OUT, morehelptext);
 				} else {
-					j9file_printf(PORTLIB, J9PORT_TTY_OUT, " %-28.28s", J9SHAREDCLASSESHELPTEXT[i].option);
-					j9file_printf(PORTLIB, J9PORT_TTY_OUT, morehelptext);
+					j9file_printf(J9PORT_TTY_OUT, " %-28.28s", J9SHAREDCLASSESHELPTEXT[i].option);
+					j9file_printf(J9PORT_TTY_OUT, morehelptext);
 				}
-				j9file_printf(PORTLIB, J9PORT_TTY_OUT, "\n");
+				j9file_printf(J9PORT_TTY_OUT, "\n");
 			}
 		}
 		i++;
@@ -1236,71 +1236,71 @@ j9shr_dump_help(J9JavaVM* vm, UDATA more)
 
 	/*Display other JVM arguments that are useful when using -Xshareclasses*/
 	tmpcstr = j9nls_lookup_message((J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG), J9NLS_SHRC_SHRINIT_HELP_OTHEROPTS_HEADER, NULL);
-	j9file_printf(PORTLIB, J9PORT_TTY_OUT, "%s", tmpcstr);
+	j9file_printf(J9PORT_TTY_OUT, "%s", tmpcstr);
 
 	tmpcstr = j9nls_lookup_message((J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG), J9NLS_EXELIB_INTERNAL_HELP_XSCMX_V1, NULL);
-	j9file_printf(PORTLIB, J9PORT_TTY_OUT, "%s", tmpcstr);
+	j9file_printf(J9PORT_TTY_OUT, "%s", tmpcstr);
 
 	tmpcstr = j9nls_lookup_message((J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG), J9NLS_EXELIB_INTERNAL_HELP_XSCDMX, NULL);
-	j9file_printf(PORTLIB, J9PORT_TTY_OUT, "%s", tmpcstr);
+	j9file_printf(J9PORT_TTY_OUT, "%s", tmpcstr);
 
 	tmpcstr = j9nls_lookup_message((J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG), J9NLS_EXELIB_INTERNAL_HELP_XSCMINAOT, NULL);
-	j9file_printf(PORTLIB, J9PORT_TTY_OUT, "%s", tmpcstr);
+	j9file_printf(J9PORT_TTY_OUT, "%s", tmpcstr);
 
 	tmpcstr = j9nls_lookup_message((J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG), J9NLS_EXELIB_INTERNAL_HELP_XSCMAXAOT, NULL);
-	j9file_printf(PORTLIB, J9PORT_TTY_OUT, "%s", tmpcstr);
+	j9file_printf(J9PORT_TTY_OUT, "%s", tmpcstr);
 
 	tmpcstr = j9nls_lookup_message((J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG), J9NLS_EXELIB_INTERNAL_HELP_XSCMINJITDATA, NULL);
-	j9file_printf(PORTLIB, J9PORT_TTY_OUT, "%s", tmpcstr);
+	j9file_printf(J9PORT_TTY_OUT, "%s", tmpcstr);
 
 	tmpcstr = j9nls_lookup_message((J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG), J9NLS_EXELIB_INTERNAL_HELP_XSCMAXJITDATA, NULL);
-	j9file_printf(PORTLIB, J9PORT_TTY_OUT, "%s", tmpcstr);
+	j9file_printf(J9PORT_TTY_OUT, "%s", tmpcstr);
 
 	tmpcstr = j9nls_lookup_message((J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG), J9NLS_EXELIB_INTERNAL_HELP_XZERONOSHAREZIP, NULL);
-	j9file_printf(PORTLIB, J9PORT_TTY_OUT, "%s", tmpcstr);
+	j9file_printf(J9PORT_TTY_OUT, "%s", tmpcstr);
 
 	tmpcstr = j9nls_lookup_message((J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG), J9NLS_EXELIB_INTERNAL_HELP_XXSHARED_CACHE_HARD_LIMIT_EQUALS, NULL);
-	j9file_printf(PORTLIB, J9PORT_TTY_OUT, "%s", tmpcstr);
+	j9file_printf(J9PORT_TTY_OUT, "%s", tmpcstr);
 
 	tmpcstr = j9nls_lookup_message((J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG), J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESENABLEBCI, NULL);
-	j9file_printf(PORTLIB, J9PORT_TTY_OUT, "%s", tmpcstr);
+	j9file_printf(J9PORT_TTY_OUT, "%s", tmpcstr);
 
 	tmpcstr = j9nls_lookup_message((J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG), J9NLS_EXELIB_INTERNAL_HELP_XXSHARECLASSESDISABLEBCI, NULL);
-	j9file_printf(PORTLIB, J9PORT_TTY_OUT, "%s", tmpcstr);
+	j9file_printf(J9PORT_TTY_OUT, "%s", tmpcstr);
 
 	tmpcstr = j9nls_lookup_message((J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG), J9NLS_EXELIB_INTERNAL_HELP_XXENABLESHAREANONYMOUSCLASSES, NULL);
-	j9file_printf(PORTLIB, J9PORT_TTY_OUT, "%s", tmpcstr);
+	j9file_printf(J9PORT_TTY_OUT, "%s", tmpcstr);
 
 	tmpcstr = j9nls_lookup_message((J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG), J9NLS_EXELIB_INTERNAL_HELP_XXDISABLESHAREANONYMOUSCLASSES, NULL);
-	j9file_printf(PORTLIB, J9PORT_TTY_OUT, "%s", tmpcstr);
+	j9file_printf(J9PORT_TTY_OUT, "%s", tmpcstr);
 
 	tmpcstr = j9nls_lookup_message((J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG), J9NLS_EXELIB_INTERNAL_HELP_XXENABLESHAREUNSAFECLASSES, NULL);
-	j9file_printf(PORTLIB, J9PORT_TTY_OUT, "%s", tmpcstr);
+	j9file_printf(J9PORT_TTY_OUT, "%s", tmpcstr);
 
 	tmpcstr = j9nls_lookup_message((J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG), J9NLS_EXELIB_INTERNAL_HELP_XXDISABLESHAREUNSAFECLASSES, NULL);
-	j9file_printf(PORTLIB, J9PORT_TTY_OUT, "%s", tmpcstr);
+	j9file_printf(J9PORT_TTY_OUT, "%s", tmpcstr);
 
 	tmpcstr = j9nls_lookup_message((J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG), J9NLS_EXELIB_INTERNAL_HELP_XXENABLESHAREORPAH, NULL);
-	j9file_printf(PORTLIB, J9PORT_TTY_OUT, "%s", tmpcstr);
+	j9file_printf(J9PORT_TTY_OUT, "%s", tmpcstr);
 
 	tmpcstr = j9nls_lookup_message((J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG), J9NLS_EXELIB_INTERNAL_HELP_XXDISABLESHAREORPAHN, NULL);
-	j9file_printf(PORTLIB, J9PORT_TTY_OUT, "%s", tmpcstr);
+	j9file_printf(J9PORT_TTY_OUT, "%s", tmpcstr);
 
 	tmpcstr = j9nls_lookup_message((J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG), J9NLS_EXELIB_INTERNAL_HELP_XXENABLEUSEGCSTARTUPHINTS, NULL);
-	j9file_printf(PORTLIB, J9PORT_TTY_OUT, "%s", tmpcstr);
+	j9file_printf(J9PORT_TTY_OUT, "%s", tmpcstr);
 
 	tmpcstr = j9nls_lookup_message((J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG), J9NLS_EXELIB_INTERNAL_HELP_XXDISABLEUSEGCSTARTUPHINTS, NULL);
-	j9file_printf(PORTLIB, J9PORT_TTY_OUT, "%s", tmpcstr);
+	j9file_printf(J9PORT_TTY_OUT, "%s", tmpcstr);
 
 #if defined(J9VM_OPT_PORTABLE_SHARED_CACHE)
 	tmpcstr = j9nls_lookup_message((J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG), J9NLS_EXELIB_INTERNAL_HELP_XXPORTABLESHAREDCACHE, NULL);
-	j9file_printf(PORTLIB, J9PORT_TTY_OUT, "%s", tmpcstr);
+	j9file_printf(J9PORT_TTY_OUT, "%s", tmpcstr);
 
 	tmpcstr = j9nls_lookup_message((J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG), J9NLS_EXELIB_INTERNAL_HELP_XXNOPORTABLESHAREDCACHE, NULL);
-	j9file_printf(PORTLIB, J9PORT_TTY_OUT, "%s", tmpcstr);
+	j9file_printf(J9PORT_TTY_OUT, "%s", tmpcstr);
 #endif /* defined(J9VM_OPT_PORTABLE_SHARED_CACHE) */
 
-	j9file_printf(PORTLIB, J9PORT_TTY_OUT, "\n\n");
+	j9file_printf(J9PORT_TTY_OUT, "\n\n");
 }
 
 /**
@@ -4607,7 +4607,7 @@ addTestJitHint(J9HookInterface** hookInterface, UDATA eventNum, void* voidData, 
 
 	J9ROMClass * romclass = eventData->result;
 	if (NULL == romclass) {
-		j9file_printf(PORTLIB, J9PORT_TTY_OUT, "addTestJitHint class %.*s not in the cache\n",
+		j9file_printf(J9PORT_TTY_OUT, "addTestJitHint class %.*s not in the cache\n",
 				eventData->classNameLength, eventData->className);
 		return;
 	}
@@ -4620,7 +4620,7 @@ addTestJitHint(J9HookInterface** hookInterface, UDATA eventNum, void* voidData, 
 	if (NULL != romMethod) {
 		J9UTF8 *methodName = J9ROMMETHOD_NAME(romMethod);
 
-		j9file_printf(PORTLIB, J9PORT_TTY_OUT, "addTestJitHint adding hint to %.*s.%.*s\n",
+		j9file_printf(J9PORT_TTY_OUT, "addTestJitHint adding hint to %.*s.%.*s\n",
 				J9UTF8_LENGTH(romclassName), J9UTF8_DATA(romclassName), J9UTF8_LENGTH(methodName), J9UTF8_DATA(methodName));
 		J9SharedDataDescriptor newHint;
 		U_8 hintData[] = {0xDE, 0xAD, 0xBE, 0xEF};

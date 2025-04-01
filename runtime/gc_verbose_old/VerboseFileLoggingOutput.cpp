@@ -377,7 +377,7 @@ MM_VerboseFileLoggingOutput::openFile(MM_EnvironmentBase *env)
 
 	extensions->getForge()->free(filenameToOpen);
 
-	j9file_printf(PORTLIB, _logFileDescriptor, VERBOSEGC_HEADER_TEXT_ALL, version);
+	j9file_printf(_logFileDescriptor, VERBOSEGC_HEADER_TEXT_ALL, version);
 
 	return true;
 }

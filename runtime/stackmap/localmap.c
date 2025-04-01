@@ -147,15 +147,15 @@ mapAllLocals(J9PortLibrary * portLibrary, J9ROMMethod * romMethod, PARALLEL_TYPE
 #if defined(DEBUG)
 				{
 					UDATA bitIndex;
-					j9file_printf(PORTLIB, J9PORT_TTY_OUT, "\n");
-					j9file_printf(PORTLIB, J9PORT_TTY_OUT, "handler[%d] unknowns raw=0x%X masked=0x%X [", e, rawUnknowns, unknownLocals);
+					j9file_printf(J9PORT_TTY_OUT, "\n");
+					j9file_printf(J9PORT_TTY_OUT, "handler[%d] unknowns raw=0x%X masked=0x%X [", e, rawUnknowns, unknownLocals);
 					for (bitIndex=0; bitIndex < 32; bitIndex++) {
 						UDATA bit = 1 << bitIndex;
 						if (unknownLocals & bit) {
-							j9file_printf(PORTLIB, J9PORT_TTY_OUT, "%d ", bitIndex + localIndexBase);
+							j9file_printf(J9PORT_TTY_OUT, "%d ", bitIndex + localIndexBase);
 						}
 					}
-					j9file_printf(PORTLIB, J9PORT_TTY_OUT, "]\n");
+					j9file_printf(J9PORT_TTY_OUT, "]\n");
 				}
 #endif
 					
@@ -248,16 +248,16 @@ mapLocalSet(J9PortLibrary * portLibrary, J9ROMMethod * romMethod, PARALLEL_TYPE 
 		{
 			UDATA shouldBeWalked = ~unknownsByPC[pc] & seekLocals;
 			UDATA bitIndex;
-			j9file_printf(PORTLIB, J9PORT_TTY_OUT, "pc=%d walk=%s seekLocals=0x%X [", pc, (shouldBeWalked ? "true" : "false"), seekLocals);
+			j9file_printf(J9PORT_TTY_OUT, "pc=%d walk=%s seekLocals=0x%X [", pc, (shouldBeWalked ? "true" : "false"), seekLocals);
 	
 			for (bitIndex=0; bitIndex < 32; bitIndex++) {
 				UDATA bit = 1 << bitIndex;
 				if (seekLocals & bit) {
-					j9file_printf(PORTLIB, J9PORT_TTY_OUT, "%d ", bitIndex);
+					j9file_printf(J9PORT_TTY_OUT, "%d ", bitIndex);
 				}
 			}
 	
-			j9file_printf(PORTLIB, J9PORT_TTY_OUT, "]\n");
+			j9file_printf(J9PORT_TTY_OUT, "]\n");
 		}
 #endif
 		
@@ -302,27 +302,27 @@ _doubleAccess:
 							/* Stop looking for this local */
 							seekLocals &= (~setBit);
 #if defined(DEBUG)
-							j9file_printf(PORTLIB, J9PORT_TTY_OUT, "  stop looking for local=%d\n", index);
+							j9file_printf(J9PORT_TTY_OUT, "  stop looking for local=%d\n", index);
 #endif
 
 							/* Know what the local is if it is read */
 							if ((temp1 & WRITE_ACCESS) == 0) {
 								*knownLocals |= setBit;
 #if defined(DEBUG)
-								j9file_printf(PORTLIB, J9PORT_TTY_OUT, "  add local=%d to known locals.\n", index);
+								j9file_printf(J9PORT_TTY_OUT, "  add local=%d to known locals.\n", index);
 #endif
 
 								/* Is it an Object */
 								if (temp1 & OBJECT_ACCESS) {
 									*knownObjects |= setBit;
 #if defined(DEBUG)
-									j9file_printf(PORTLIB, J9PORT_TTY_OUT, "  add local=%d to known objects.\n", index);
+									j9file_printf(J9PORT_TTY_OUT, "  add local=%d to known objects.\n", index);
 #endif
 								}
 							}
 						} else {
 #if defined(DEBUG)
-							j9file_printf(PORTLIB, J9PORT_TTY_OUT, "  skipping reference to local=%d\n", index);
+							j9file_printf(J9PORT_TTY_OUT, "  skipping reference to local=%d\n", index);
 #endif
 						}
 					}
@@ -457,7 +457,7 @@ j9localmap_LocalBitsForPC(J9PortLibrary * portLib, J9ROMClass * romClass, J9ROMM
 
 	scratchSize = (romClass->maxBranchCount * (2 * sizeof(U_32))) + (length * sizeof(U_32));
 
-	if(scratchSize < LOCAL_SCRATCH) {
+	if (scratchSize < LOCAL_SCRATCH) {
 		scratch = localScratch;
 	} else {
 		allocScratch = j9mem_allocate_memory(scratchSize, OMRMEM_CATEGORY_VM);
@@ -483,9 +483,9 @@ j9localmap_LocalBitsForPC(J9PortLibrary * portLib, J9ROMClass * romClass, J9ROMM
 		*resultArrayBase |= 1;
 	}
 
- 	if (globalScratch) {
+	if (globalScratch) {
 		(releaseBuffer) (userData);
- 	}
+	}
 
 	j9mem_free_memory(allocScratch);
 
@@ -493,4 +493,3 @@ j9localmap_LocalBitsForPC(J9PortLibrary * portLib, J9ROMClass * romClass, J9ROMM
 }
 
 #undef LOCAL_SCRATCH
-
