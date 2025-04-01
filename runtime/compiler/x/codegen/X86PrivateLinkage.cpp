@@ -1473,7 +1473,11 @@ void TR::X86CallSite::computeProfiledTargets()
                 (!profiledInterfaceMethod->isInterpreted() ||
                  profiledInterfaceMethod->isJITInternalNative()))
                {
-               if (frequency < getMinProfiledCallFrequency())
+               float minProfiledCallFrequency = getMinProfiledCallFrequency();
+               if (comp()->getMethodHotness() > warm)
+                  minProfiledCallFrequency = 0.0f;
+
+               if (frequency < minProfiledCallFrequency)
                   {
                   if (comp()->getOption(TR_TraceCG))
                      traceMsg(comp(), " - Too infrequent");
@@ -1508,7 +1512,10 @@ void TR::X86CallSite::computeProfiledTargets()
 
       _useLastITableCache = !comp()->getOption(TR_DisableLastITableCache) ? true : false;
       // Disable lastITable logic if all the implementers can fit into the pic slots during non-startup state
-      if (_useLastITableCache && comp()->target().is64Bit() && _interfaceClassOfMethod && comp()->getPersistentInfo()->getJitState() != STARTUP_STATE)
+      // Since instruction cache pressure is not very significant at higher opt levels, and new classes could be loaded in the future.
+      // So, keep this opt enabled at higher opt levels to save path length.
+      //
+      if (_useLastITableCache && comp()->target().is64Bit() && (comp()->getMethodHotness() <= warm) && _interfaceClassOfMethod && comp()->getPersistentInfo()->getJitState() != STARTUP_STATE)
          {
          J9::X86::PrivateLinkage *privateLinkage = static_cast<J9::X86::PrivateLinkage *>(getLinkage());
          int32_t numPICSlots = numStaticPICSlots + privateLinkage->IPicParameters.defaultNumberOfSlots;
