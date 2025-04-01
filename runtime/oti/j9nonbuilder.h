@@ -302,8 +302,10 @@ typedef void(*j9_tls_finalizer_t)(void *);
 /* Constants from java.lang.VirutalThread.state that are used by the VM.
  * The full mapping is under jvmtiInternals.h <JVMTI_VTHREAD_STATE_*>.
  */
+#define JAVA_LANG_VIRTUALTHREAD_RUNNING  2
 #define JAVA_LANG_VIRTUALTHREAD_BLOCKING 12
 #define JAVA_LANG_VIRTUALTHREAD_BLOCKED  13
+#define JAVA_LANG_VIRTUALTHREAD_UNBLOCKED 14
 #define JAVA_LANG_VIRTUALTHREAD_WAITING  15
 #define JAVA_LANG_VIRTUALTHREAD_WAIT     16
 #define JAVA_LANG_VIRTUALTHREAD_TIMED_WAITING 17
@@ -1729,7 +1731,7 @@ typedef struct J9ObjectMonitor {
 	j9objectmonitor_t alternateLockword;
 	U_32 hash;
 #if JAVA_SPEC_VERSION >= 24
-	U_32 virtualThreadWaitCount;
+	volatile U_32 virtualThreadWaitCount;
 	volatile U_32 platformThreadWaitCount;
 	struct J9VMContinuation* ownerContinuation;
 	struct J9VMContinuation* waitingContinuations;

@@ -1539,6 +1539,8 @@ obj:
 		if (JAVA_LANG_VIRTUALTHREAD_BLOCKING == newThreadState) {
 			/* Add the thread object to the blocked list. */
 			omrthread_monitor_enter(_vm->blockedVirtualThreadsMutex);
+			/* Increment the wait count on inflated monitor. */
+			continuation->objectWaitMonitor->virtualThreadWaitCount += 1;
 			continuation->nextWaitingContinuation = _vm->blockedContinuations;
 			_vm->blockedContinuations = continuation;
 
