@@ -1542,8 +1542,12 @@ obj:
 			continuation->nextWaitingContinuation = _vm->blockedContinuations;
 			_vm->blockedContinuations = continuation;
 
-			if (NULL == continuation->objectWaitMonitor->monitor->owner) {
-				/* notify unblocker if the blocking monitor is unlocked. */
+			if ((NULL == continuation->objectWaitMonitor->monitor->owner)
+			|| (continuation->objectWaitMonitor->platformThreadWaitCount > 0)
+			) {
+				/* Notify unblocker if the blocking monitor is unlocked or
+				 * if a platform thread is currently waiting on the monitor.
+				 */
 				omrthread_monitor_notify(_vm->blockedVirtualThreadsMutex);
 			}
 			omrthread_monitor_exit(_vm->blockedVirtualThreadsMutex);
@@ -5770,8 +5774,8 @@ ffi_OOM:
 				waitObject = *(j9object_t *)(_sp + 3);
 				omrthread_monitor_t monitor = getMonitorForWait(_currentThread, waitObject);
 				monitor->count = _currentThread->currentContinuation->waitingMonitorEnterCount;
+				_currentThread->ownedMonitorCount += monitor->count - 1;
 				_currentThread->currentContinuation->waitingMonitorEnterCount = 0;
-				_currentThread->ownedMonitorCount -= 1;
 
 				/* Only throw an exception if the virtual thread has not been notified. */
 				if (J9VMJAVALANGTHREAD_DEADINTERRUPT(_currentThread, _currentThread->threadObject)
