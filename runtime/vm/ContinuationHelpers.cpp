@@ -1095,6 +1095,8 @@ restart:
 
 			/* Add Continuation struct to the monitor's waiting list. */
 			omrthread_monitor_exit(monitor);
+			currentThread->ownedMonitorCount -= continuation->waitingMonitorEnterCount;
+
 			omrthread_monitor_enter(vm->blockedVirtualThreadsMutex);
 			currentThread->currentContinuation->nextWaitingContinuation = syncObjectMonitor->waitingContinuations;
 			syncObjectMonitor->waitingContinuations = currentThread->currentContinuation;
@@ -1150,10 +1152,21 @@ restart:
 			J9VMContinuation *previous = NULL;
 			J9VMContinuation *current = vm->blockedContinuations;
 			J9VMContinuation *next = NULL;
+			bool hasPlatformThreadWaiting = false;
 			while (NULL != current) {
 				bool unblocked = false;
 				U_32 state = J9VMJAVALANGVIRTUALTHREAD_STATE(currentThread, current->vthread);
 				next = current->nextWaitingContinuation;
+
+				/* Check if the blocking monitor has platform thread waiting,
+				 * which doesn't notify the unblocker when exiting monitor.
+				 */
+				if (((JAVA_LANG_VIRTUALTHREAD_BLOCKING == state)
+					|| (JAVA_LANG_VIRTUALTHREAD_BLOCKED == state))
+				&& (current->objectWaitMonitor->platformThreadWaitCount > 0)
+				) {
+					hasPlatformThreadWaiting = true;
+				}
 				/* Skip vthreads that are still in transition. */
 				switch (state) {
 				case JAVA_LANG_VIRTUALTHREAD_BLOCKING:
@@ -1220,7 +1233,7 @@ restart:
 
 				current = next;
 			}
-			if (NULL == unblockedList) {
+			if ((NULL == unblockedList) && !hasPlatformThreadWaiting) {
 				vmFuncs->internalExitVMToJNI(currentThread);
 				omrthread_monitor_wait(vm->blockedVirtualThreadsMutex);
 				vmFuncs->internalEnterVMFromJNI(currentThread);
