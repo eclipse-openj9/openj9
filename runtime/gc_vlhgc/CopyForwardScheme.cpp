@@ -164,6 +164,7 @@ MM_CopyForwardScheme::MM_CopyForwardScheme(MM_EnvironmentVLHGC *env, MM_HeapRegi
 	, _scanCacheListSize(_extensions->_numaManager.getMaximumNodeNumber() + 1)
 	, _scanCacheWaitCount(0)
 	, _scanCacheMonitor(NULL)
+	, _freeCacheMonitor(NULL)
 	, _workQueueWaitCountPtr(&_scanCacheWaitCount)
 	, _workQueueMonitorPtr(&_scanCacheMonitor)
 	, _doneIndex(0)
@@ -217,8 +218,6 @@ MM_CopyForwardScheme::kill(MM_EnvironmentVLHGC *env)
 bool
 MM_CopyForwardScheme::initialize(MM_EnvironmentVLHGC *env)
 {
-	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
-
 	if (!_cacheFreeList.initialize(env)) {
 		return false;
 	}
@@ -239,14 +238,18 @@ MM_CopyForwardScheme::initialize(MM_EnvironmentVLHGC *env)
 			return false;
 		}
 	}
-	if (0 != omrthread_monitor_init_with_name(&_scanCacheMonitor, 0, "MM_CopyForwardScheme::cache")) {
+	if (0 != omrthread_monitor_init_with_name(&_scanCacheMonitor, 0, "MM_CopyForwardScheme::_scanCacheMonitor")) {
+		return false;
+	}
+
+	if (0 != omrthread_monitor_init_with_name(&_freeCacheMonitor, 0, "MM_CopyForwardScheme::_freeCacheMonitor")) {
 		return false;
 	}
 	
 	/* Get the estimated cache count required.  The cachesPerThread argument is used to ensure there are at least enough active
 	 * caches for all working threads (threadCount * cachesPerThread)
 	 */
-	uintptr_t threadCount = extensions->dispatcher->threadCountMaximum();
+	uintptr_t threadCount = _extensions->dispatcher->threadCountMaximum();
 	uintptr_t compactGroupCount = MM_CompactGroupManager::getCompactGroupMaxCount(env);
 
 	/* Each thread can have a scan cache and compactGroupCount copy caches. In hierarchical, there could also be a deferred cache. */
@@ -266,13 +269,7 @@ MM_CopyForwardScheme::initialize(MM_EnvironmentVLHGC *env)
 	
 	uintptr_t minCacheCount = threadCount * cachesPerThread;
 	
-	/* Estimate how many caches we might need to describe the entire heap */
-	uintptr_t heapCaches = extensions->memoryMax / extensions->scavengerScanCacheMaximumSize;
-
-	/* use whichever value is higher */
-	uintptr_t totalCacheCount = OMR_MAX(minCacheCount, heapCaches);
-
-	if (!_cacheFreeList.resizeCacheEntries(env, totalCacheCount)) {
+	if (!_cacheFreeList.resizeCacheEntries(env, minCacheCount)) {
 		return false;
 	}
 
@@ -353,6 +350,11 @@ MM_CopyForwardScheme::tearDown(MM_EnvironmentVLHGC *env)
 	if (NULL != _scanCacheMonitor) {
 		omrthread_monitor_destroy(_scanCacheMonitor);
 		_scanCacheMonitor = NULL;
+	}
+
+	if (NULL != _freeCacheMonitor) {
+		omrthread_monitor_destroy(_freeCacheMonitor);
+		_freeCacheMonitor = NULL;
 	}
 
 	if (NULL != _reservedRegionList) {
@@ -1729,29 +1731,43 @@ MM_CopyForwardScheme::getFreeCache(MM_EnvironmentVLHGC *env)
 #endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
 	/* Check the free list */
 	MM_CopyScanCacheVLHGC *cache = _cacheFreeList.popCache(env);
-	if (NULL != cache) {
-		return cache;
-	}
-
-	/* No thread can use more than _cachesPerThread cache entries at 1 time (flip, tenure, scan, large, possibly deferred)
-	 * So long as (N * _cachesPerThread) cache entries exist,
-	 * the head of the scan list will contain a valid entry */
-	env->_copyForwardStats._scanCacheOverflow = true;
-
 	if (NULL == cache) {
-		/* we couldn't get a free cache so we must be in an overflow scenario.  Try creating new cache structures on the heap */
-		cache = createScanCacheForOverflowInHeap(env);
+		bool resizePerformed = false;
+
+		omrthread_monitor_enter(_freeCacheMonitor);
+		/* Acquires a cache to check if other threads have resized the cache pool */
+		cache = _cacheFreeList.popCache(env);
 		if (NULL == cache) {
-			/* we couldn't overflow so we have no choice but to abort the copy-forward */
-			raiseAbortFlag(env);
+			uintptr_t heapCachesIncrement = OMR_MAX(16, 4 * _extensions->dispatcher->threadCountMaximum());
+
+			resizePerformed = _cacheFreeList.resizeCacheEntries(env, _cacheFreeList.getTotalCacheCount() + heapCachesIncrement);
+		}
+		omrthread_monitor_exit(_freeCacheMonitor);
+
+		if (resizePerformed) {
+			cache = _cacheFreeList.popCache(env);
+		}
+
+		if (NULL == cache) {
+			env->_copyForwardStats._scanCacheOverflow = true;
+
+			/* we couldn't get a free cache so we must be in an overflow scenario.  Try creating new cache structures on the heap */
+			cache = createScanCacheForOverflowInHeap(env);
+			if (NULL == cache) {
+				/* we couldn't overflow so we have no choice but to abort the copy-forward */
+				raiseAbortFlag(env);
+			}
+
+			/* Overflow or abort was hit so alert other threads that are waiting */
+			omrthread_monitor_enter(*_workQueueMonitorPtr);
+			if (0 != *_workQueueWaitCountPtr) {
+				omrthread_monitor_notify(*_workQueueMonitorPtr);
+			}
+			omrthread_monitor_exit(*_workQueueMonitorPtr);
+
 		}
 	}
-	/* Overflow or abort was hit so alert other threads that are waiting */
-	omrthread_monitor_enter(*_workQueueMonitorPtr);
-	if (0 != *_workQueueWaitCountPtr) {
-		omrthread_monitor_notify(*_workQueueMonitorPtr);
-	}
-	omrthread_monitor_exit(*_workQueueMonitorPtr);
+
 	return cache;
 }
 

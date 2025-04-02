@@ -122,6 +122,7 @@ private:
 	uintptr_t _scanCacheListSize;	/**< The number of entries in _cacheScanLists */
 	volatile uintptr_t _scanCacheWaitCount;	/**< The number of threads currently sleeping on _scanCacheMonitor, awaiting scan cache work */
 	omrthread_monitor_t _scanCacheMonitor;	/**< Used when waiting on work on any of the _cacheScanLists */
+	omrthread_monitor_t _freeCacheMonitor; /**< Monitor to synchronize threads while resizing free list */
 
 	volatile uintptr_t *_workQueueWaitCountPtr;	/**< The number of threads currently sleeping on *_workQueueMonitorPtr, awaiting scan cache work or work from packets*/
 	omrthread_monitor_t *_workQueueMonitorPtr;	/**< Used when waiting on work on any of the _cacheScanLists or workPackets*/

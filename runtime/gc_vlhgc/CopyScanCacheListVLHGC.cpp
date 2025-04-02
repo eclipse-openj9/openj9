@@ -90,9 +90,24 @@ MM_CopyScanCacheListVLHGC::tearDown(MM_EnvironmentVLHGC *env)
 bool
 MM_CopyScanCacheListVLHGC::appendCacheEntries(MM_EnvironmentVLHGC *env, uintptr_t cacheEntryCount)
 {
-	CopyScanCacheSublist *cacheList = &_sublists[getSublistIndex(env)];
-	MM_CopyScanCacheChunkVLHGC *chunk = MM_CopyScanCacheChunkVLHGC::newInstance(env, cacheEntryCount, &cacheList->_cacheHead, _chunkHead);
+	MM_CopyScanCacheVLHGC *tailCache = NULL;
+	/* Create a chunk of cacheEntryCount caches. Initialize the chunk and connect all the internal caches and return the tailCache. */
+	MM_CopyScanCacheChunkVLHGC *chunk = MM_CopyScanCacheChunkVLHGC::newInstance(env, cacheEntryCount, &tailCache, _chunkHead);
+
 	if (NULL != chunk) {
+		CopyScanCacheSublist *cacheList = &_sublists[getSublistIndex(env)];
+
+		Assert_MM_true(NULL != tailCache);
+		Assert_MM_true(NULL == tailCache->next);
+
+		cacheList->_cacheLock.acquire();
+		/* Attach sublist of caches in new chunk to main sublist */
+		tailCache->next = cacheList->_cacheHead;
+		cacheList->_cacheHead = chunk->getBase();
+		cacheList->_cacheLock.release();
+
+		/* New chunk already points to _chunkHead. Make this one the head.
+		 * Chunk list manipulation is not contended, since it's caller protected by a list specific mutex */
 		_chunkHead = chunk;
 		_totalEntryCount += cacheEntryCount;
 	}
@@ -117,8 +132,6 @@ MM_CopyScanCacheListVLHGC::resizeCacheEntries(MM_EnvironmentVLHGC *env, uintptr_
 	}
 	
 	if (totalCacheEntryCount > _totalEntryCount) {
-		/* TODO: consider appending at least by some minimum entry count
-		 * or having total entry count a multiple of let say 16 or so */
 		return appendCacheEntries(env, totalCacheEntryCount - _totalEntryCount);
 	}
 
