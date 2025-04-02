@@ -117,7 +117,7 @@ void setAllocationThreshold(J9VMThread *vmThread, UDATA min, UDATA max);
 #define J9RAS_SCHED_COMPAT_YIELD_FILE "/proc/sys/kernel/sched_compat_yield"
 #define J9RAS_CORE_PATTERN_FILE       "/proc/sys/kernel/core_pattern"
 #define J9RAS_CORE_USES_PID_FILE      "/proc/sys/kernel/core_uses_pid"
-#define J9RAS_CORE_ORIGINAL_PATTERN   ".../oneagent/agent/conf/original_core_pattern"
+#define J9RAS_CORE_ORIGINAL_PATTERN   "original_core_pattern"
 
 #if defined(WIN32)
 #define ALT_DIR_SEPARATOR '/'
