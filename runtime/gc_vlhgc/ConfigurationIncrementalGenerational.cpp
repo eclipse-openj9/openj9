@@ -185,15 +185,7 @@ MM_ConfigurationIncrementalGenerational::createHeapWithManager(MM_EnvironmentBas
 			/* reset vm->unsafeIndexableHeaderSize for off-heap case */
 			vm->unsafeIndexableHeaderSize = 0;
 		} else {
-#if defined(OMR_GC_VLHGC_CONCURRENT_COPY_FORWARD)
-			extensions->heapRegionStateTable->kill(env->getForge());
-			extensions->heapRegionStateTable = NULL;
-#endif /* defined(OMR_GC_VLHGC_CONCURRENT_COPY_FORWARD) */
-			extensions->compressedCardTable->kill(env);
-			extensions->compressedCardTable = NULL;
-			extensions->cardTable->kill(env);
-			extensions->cardTable = NULL;
-			heap->kill(env);
+			tearDown(env);
 			return NULL;
 		}
 	}
