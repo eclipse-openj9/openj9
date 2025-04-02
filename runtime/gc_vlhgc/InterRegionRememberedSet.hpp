@@ -57,6 +57,8 @@ private:
 public:
 	MM_HeapRegionManager *_heapRegionManager;				/**< cached pointer to heap region manager */
 
+	MM_MemoryHandle _rsclBufferControlBlockPoolMemoryHandle;	/**< memory handle for Control Blocks (but not Buffers) backing store */
+
 	MM_CardBufferControlBlock *_rsclBufferControlBlockPool; /**< starting address of the global pool of control blocks (kept around to be able to release memory at the end) */
 	MM_CardBufferControlBlock * volatile _rsclBufferControlBlockHead; /**< current head of BufferControlBlock global pool list */
 	volatile UDATA _freeBufferCount;							/**< current count of Buffers in the global free pool */
@@ -69,7 +71,7 @@ public:
 
 	UDATA _regionSize;  			/**< Cached region size */
 
-	bool _shouldFlushBuffersForDecommitedRegions;			/**< set to true at the end of a GC, if contraction occured. this is a signal for the next GC to perform flush buffers from regions contracted */
+	bool _shouldFlushBuffersForDecommitedRegions;			/**< set to true at the end of a GC, if contraction occurred. this is a signal for the next GC to perform flush buffers from regions contracted */
 
 	volatile UDATA _overflowedRegionCount;					/**< count of regions overflowed as full */
 	UDATA _stableRegionCount;								/**< count of regions overflowed as stable */
