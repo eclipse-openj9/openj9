@@ -909,6 +909,7 @@ preparePinnedVirtualThreadForMount(J9VMThread *currentThread, j9object_t continu
 		}
 		currentThread->currentContinuation->enteredMonitors = NULL;
 	}
+	Assert_VM_true(monitorCount <= currentThread->ownedMonitorCount);
 
 	/* Add the attached monitor to the carrier thread's lockedmonitorcount. */
 	currentThread->osThread->lockedmonitorcount += monitorCount;
@@ -1034,7 +1035,7 @@ restart:
 		walkState.userData2 = syncObj;
 
 		walkState.userData3 = currentThread->monitorEnterRecords;
-		walkState.userData4 = (void *)1;
+		walkState.userData4 = (void *)0;
 		walkState.walkThread = currentThread;
 		walkState.skipCount = 0;
 		walkState.flags = J9_STACKWALK_VISIBLE_ONLY
@@ -1073,6 +1074,7 @@ restart:
 		}
 		currentThread->currentContinuation->enteredMonitors = enteredMonitorsList;
 	}
+	Assert_VM_true(monitorCount <= currentThread->ownedMonitorCount);
 
 	if (NULL != syncObj) {
 		j9object_t continuationObj = J9VMJAVALANGVIRTUALTHREAD_CONT(currentThread, currentThread->threadObject);
