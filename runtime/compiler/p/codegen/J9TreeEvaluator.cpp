@@ -10767,40 +10767,41 @@ hashCodeHelper(TR::Node *node, TR::CodeGenerator *cg, TR::DataType elementType,
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, vendReg, endReg,
       (unrollFactor-1) * elementSize * -1);
 
-   // --- unrolled loop
-   generateLabelInstruction(cg, TR::InstOpCode::label, node, serialUnrollLabel);
-   // temp = hash << 5
-   // hash = temp - hash
-   // temp = v[i]
-   // hash = hash + temp
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp8, node, condReg, valueReg, vendReg);
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::bge, node, serialLoopLabel, condReg);
-   for (int i = 0; i < unrollFactor; i++)
+   // pointless for Int32s since there can only be 3 remaining elements at most
+   if (elementType != TR::Int32)
       {
-      generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, tempReg, hashReg, 5, 0xFFFFFFFFFFFFFFE0);
-      generateTrg1Src2Instruction(cg, TR::InstOpCode::subf, node, hashReg, hashReg, tempReg);
-      switch (elementType)
+      // --- unrolled loop
+      generateLabelInstruction(cg, TR::InstOpCode::label, node, serialUnrollLabel);
+      // temp = hash << 5
+      // hash = temp - hash
+      // temp = v[i]
+      // hash = hash + temp
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp8, node, condReg, valueReg, vendReg);
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::bge, node, serialLoopLabel, condReg);
+      for (int i = 0; i < unrollFactor; i++)
          {
-         case TR::Int8:
-            generateTrg1MemInstruction(cg, TR::InstOpCode::lbz, node, tempReg, TR::MemoryReference::createWithDisplacement(cg, valueReg, i, 1));
-            if (isSigned)
-               {
-               generateTrg1Src1Instruction(cg, TR::InstOpCode::extsb, node, tempReg, tempReg);
-               }
-            break;
-         case TR::Int16:
-            generateTrg1MemInstruction(cg, isSigned ? TR::InstOpCode::lha : TR::InstOpCode::lhz, node, tempReg, TR::MemoryReference::createWithDisplacement(cg, valueReg, i*2, 2));
-            break;
-         case TR::Int32:
-            generateTrg1MemInstruction(cg, TR::InstOpCode::lwz, node, tempReg, TR::MemoryReference::createWithDisplacement(cg, valueReg, i*4, 4));
-            break;
-         default:
-            TR_ASSERT_FATAL(false, "Unsupported hashCodeHelper elementType");
+         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, tempReg, hashReg, 5, 0xFFFFFFFFFFFFFFE0);
+         generateTrg1Src2Instruction(cg, TR::InstOpCode::subf, node, hashReg, hashReg, tempReg);
+         switch (elementType)
+            {
+            case TR::Int8:
+               generateTrg1MemInstruction(cg, TR::InstOpCode::lbz, node, tempReg, TR::MemoryReference::createWithDisplacement(cg, valueReg, i, 1));
+               if (isSigned)
+                  {
+                  generateTrg1Src1Instruction(cg, TR::InstOpCode::extsb, node, tempReg, tempReg);
+                  }
+               break;
+            case TR::Int16:
+               generateTrg1MemInstruction(cg, isSigned ? TR::InstOpCode::lha : TR::InstOpCode::lhz, node, tempReg, TR::MemoryReference::createWithDisplacement(cg, valueReg, i*2, 2));
+               break;
+            default:
+               TR_ASSERT_FATAL(false, "Unsupported hashCodeHelper elementType");
+            }
+         generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, hashReg, hashReg, tempReg);
          }
-      generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, hashReg, hashReg, tempReg);
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, valueReg, valueReg, elementSize * unrollFactor);
+      generateLabelInstruction(cg, TR::InstOpCode::b, node, serialUnrollLabel);
       }
-   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, valueReg, valueReg, elementSize * unrollFactor);
-   generateLabelInstruction(cg, TR::InstOpCode::b, node, serialUnrollLabel);
 
 
    // --- single loop
@@ -10856,7 +10857,9 @@ hashCodeHelper(TR::Node *node, TR::CodeGenerator *cg, TR::DataType elementType,
       default:
          TR_ASSERT_FATAL(false, "Unsupported hashCodeHelper elementType");
       }
-   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::mulli, node, tempReg, tempReg, 31);
+   // shift then subtract is slightly faster than mul 31
+   generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, vendReg, tempReg, 5, 0xFFFFFFFFFFFFFFE0);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::subf, node, tempReg, tempReg, vendReg);
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, valueReg, valueReg, elementSize);
    switch (elementType)
       {
