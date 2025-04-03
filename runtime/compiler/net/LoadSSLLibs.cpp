@@ -250,6 +250,7 @@ void *loadLibssl()
    // Library names for CryptoSSL 3, 1.1.1, 1.1.0, 1.0.2 and symbolic links
    static const char * const cryptoLibNames[] =
       {
+      "libcrypto-semeru.so",// JVM embedded library
       "libcrypto.so.3",     // 3.x library name
       "libcrypto.so.1.1",   // 1.1.x library name
       "libcrypto.so.1.0.0", // 1.0.x library name
@@ -269,6 +270,7 @@ void *loadLibssl()
    // Library names for OpenSSL 3, 1.1.1, 1.1.0, 1.0.2 and symbolic links
    static const char * const libNames[] =
       {
+      "libssl-semeru.so",// JVM embedded library
       "libssl.so.3",     // 3.x library name
       "libssl.so.1.1",   // 1.1.x library name
       "libssl.so.1.0.0", // 1.0.x library name
