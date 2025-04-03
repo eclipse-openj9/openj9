@@ -171,7 +171,7 @@ class X86CallSite
    uint8_t *getThunkAddress() {return _thunkAddress;}
    void setThunkAddress(uint8_t *t) {_thunkAddress = t;}
 
-   float getMinProfiledCallFrequency(){ return .075F; }  // Tuned for megamorphic site in jess; so bear in mind before changing
+   float getMinProfiledCallFrequency(){ return .025F; }
 
    public:
 
