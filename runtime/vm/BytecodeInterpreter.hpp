@@ -771,9 +771,13 @@ done:
 	}
 
 	VMINLINE VM_BytecodeAction
-	promotedMethodOnTransitionFromJIT(REGISTER_ARGS_LIST, void *returnAddress, void *jumpAddress)
+	promotedMethodOnTransitionFromJIT(REGISTER_ARGS_LIST, void *returnAddress, void *jumpAddress, bool writeJITReturnToTemp = false)
 	{
-		VM_JITInterface::restoreJITReturnAddress(_currentThread, _sp, returnAddress);
+		if (writeJITReturnToTemp) {
+			_currentThread->floatTemp1 = returnAddress;
+		} else {
+			VM_JITInterface::restoreJITReturnAddress(_currentThread, _sp, returnAddress);
+		}
 		_currentThread->tempSlot =  (UDATA)jumpAddress;
 		_nextAction = J9_BCLOOP_LOAD_PRESERVED_AND_BRANCH;
 		VM_JITInterface::enableRuntimeInstrumentation(_currentThread);
@@ -1201,13 +1205,7 @@ obj:
 #if JAVA_SPEC_VERSION >= 24
 				if (VM_ContinuationHelpers::isYieldableVirtualThread(_currentThread)) {
 					/* Try to yield the virtual thread if it will be blocked. */
-					buildInternalNativeStackFrame(REGISTER_ARGS);
-					updateVMStruct(REGISTER_ARGS);
-
 					rc = preparePinnedVirtualThreadForUnmount(_currentThread, obj, false);
-
-					VMStructHasBeenUpdated(REGISTER_ARGS);
-					restoreInternalNativeStackFrame(REGISTER_ARGS);
 				} else
 #endif /* JAVA_SPEC_VERSION >= 24 */
 				{
@@ -1529,10 +1527,6 @@ obj:
 	{
 		J9VMContinuation *continuation = _currentThread->currentContinuation;
 
-		/* InternalNative frame only build for non-jit calls. */
-		if (J9VM_CONTINUATION_RETURN_FROM_JIT_MONITOR_ENTER != returnState) {
-			buildInternalNativeStackFrame(REGISTER_ARGS);
-		}
 		updateVMStruct(REGISTER_ARGS);
 		J9VMJAVALANGVIRTUALTHREAD_SET_STATE(_currentThread, _currentThread->threadObject, newThreadState);
 
@@ -2034,6 +2028,7 @@ throwStackOverflow:
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 #if JAVA_SPEC_VERSION >= 24
 					case J9_OBJECT_MONITOR_YIELD_VIRTUAL: {
+						printf("stack overflow thread=%p currentcont= %p method=%p\n", _currentThread, _currentThread->currentContinuation, _sendMethod);
 						rc = yieldPinnedContinuation(REGISTER_ARGS, JAVA_LANG_VIRTUALTHREAD_BLOCKING, J9VM_CONTINUATION_RETURN_FROM_MONITOR_ENTER);
 						break;
 					}
@@ -2410,6 +2405,7 @@ done:
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 #if JAVA_SPEC_VERSION >= 24
 				case J9_OBJECT_MONITOR_YIELD_VIRTUAL: {
+					printf("JNI callout thread=%p currentcont= %p method=%p\n", _currentThread, _currentThread->currentContinuation, _sendMethod);
 					rc = yieldPinnedContinuation(REGISTER_ARGS, JAVA_LANG_VIRTUALTHREAD_BLOCKING, J9VM_CONTINUATION_RETURN_FROM_MONITOR_ENTER);
 					break;
 				}
@@ -5219,7 +5215,6 @@ done:
 				UDATA result = preparePinnedVirtualThreadForUnmount(_currentThread, object, true);
 				VMStructHasBeenUpdated(REGISTER_ARGS);
 				if (J9_OBJECT_MONITOR_OOM != result) {
-					restoreInternalNativeStackFrame(REGISTER_ARGS);
 					/* Handle the virtual thread Object.wait call.
 					 * VirtualThread.timeout is a private field used by both VM and JCL to temporarily hold
 					 * the value of expected wait/park time before a wake up task is scheduled using the value.
@@ -5749,6 +5744,8 @@ ffi_OOM:
 			_sendMethod = J9VMJDKINTERNALVMCONTINUATION_ENTER_METHOD(_currentThread->javaVM);
 			rc = GOTO_RUN_METHOD;
 		}
+		printf("enterContinuationImpl thread=%p currentcont= %p method=%p contobj=%p\n", _currentThread, _currentThread->currentContinuation, _sendMethod, continuationObject);
+
 
 		VMStructHasBeenUpdated(REGISTER_ARGS);
 
@@ -5761,13 +5758,19 @@ ffi_OOM:
 		j9object_t syncObject = J9VMJDKINTERNALVMCONTINUATION_BLOCKER(_currentThread, continuationObject);
 		J9VMJDKINTERNALVMCONTINUATION_SET_BLOCKER(_currentThread, continuationObject, NULL);
 
+		Assert_VM_notNull(_currentThread->currentContinuation);
+
 		switch (_currentThread->currentContinuation->returnState) {
 		case J9VM_CONTINUATION_RETURN_FROM_YIELD:
+			//printf("J9VM_CONTINUATION_RETURN_FROM_YIELD thread=%p currentcont= %p method=%p\n", _currentThread, _currentThread->currentContinuation, _sendMethod);
 			returnSingleFromINL(REGISTER_ARGS, JNI_TRUE, 1);
 			break;
 		case J9VM_CONTINUATION_RETURN_FROM_MONITOR_ENTER:
+			//printf("J9VM_CONTINUATION_RETURN_FROM_MONITOR_ENTER thread=%p currentcont= %p method=%p\n", _currentThread, _currentThread->currentContinuation, _sendMethod);
 			break;
 		case J9VM_CONTINUATION_RETURN_FROM_OBJECT_WAIT: {
+			//printf("J9VM_CONTINUATION_RETURN_FROM_OBJECT_WAIT thread=%p currentcont= %p method=%p\n", _currentThread, _currentThread->currentContinuation, _sendMethod);
+			restoreInternalNativeStackFrame(REGISTER_ARGS);
 			j9object_t waitObject = *(j9object_t *)(_sp + 3);
 			rc = tryEnterBlockingMonitor(REGISTER_ARGS, waitObject, J9VM_CONTINUATION_RETURN_FROM_OBJECT_WAIT);
 			if ((NULL != _currentThread->currentContinuation) && (EXECUTE_BYTECODE == rc)) {
@@ -5795,16 +5798,24 @@ ffi_OOM:
 			break;
 		}
 		case J9VM_CONTINUATION_RETURN_FROM_SYNC_METHOD: {
+			//printf("J9VM_CONTINUATION_RETURN_FROM_SYNC_METHOD thread=%p currentcont=%p method=%p\n", _currentThread, _currentThread->currentContinuation, _sendMethod);
 			UDATA *bp = ((UDATA *)(((J9SFMethodFrame *)_sp) + 1)) - 1;
 			restoreSpecialStackFrameLeavingArgs(REGISTER_ARGS, bp);
 			rc = inlineSendTarget(REGISTER_ARGS, VM_MAYBE, VM_MAYBE, VM_MAYBE, VM_MAYBE);
 			break;
 		}
 		case J9VM_CONTINUATION_RETURN_FROM_JIT_MONITOR_ENTER: {
+			printf("J9VM_CONTINUATION_RETURN_FROM_JIT_MONITOR_ENTER thread=%p currentcont= %p method=%p\n", _currentThread, _currentThread->currentContinuation, _sendMethod);
 			rc = tryEnterBlockingMonitor(REGISTER_ARGS, syncObject, J9VM_CONTINUATION_RETURN_FROM_JIT_MONITOR_ENTER);
 			if ((NULL != _currentThread->currentContinuation) && (EXECUTE_BYTECODE == rc)) {
 				void *returnAddress = restoreJITResolveFrame(REGISTER_ARGS);
-				rc = promotedMethodOnTransitionFromJIT(REGISTER_ARGS, returnAddress, _vm->jitConfig->jitExitInterpreter0RestoreAll);
+				if (returnAddress != _currentThread->currentContinuation->oldPC) {
+					printf("pc is different start thread=%p currentcont= %p method=%p\n", _currentThread, _currentThread->currentContinuation, _sendMethod);
+				}
+				updateVMStruct(REGISTER_ARGS);
+				printf("promotedMethodOnTransitionFromJIT start thread=%p currentcont= %p method=%p\n", _currentThread, _currentThread->currentContinuation, _sendMethod);
+				rc = promotedMethodOnTransitionFromJIT(REGISTER_ARGS, returnAddress, _vm->jitConfig->jitExitInterpreter0RestoreAll, true);
+				printf("promotedMethodOnTransitionFromJIT end thread=%p currentcont= %p method=%p\n", _currentThread, _currentThread->currentContinuation, _sendMethod);
 			}
 			break;
 		}
@@ -8946,6 +8957,7 @@ done:
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 #if JAVA_SPEC_VERSION >= 24
 				case J9_OBJECT_MONITOR_YIELD_VIRTUAL: {
+					printf("monitor entert thread=%p currentcont= %p method=%p\n", _currentThread, _currentThread->currentContinuation, _sendMethod);
 					rc = yieldPinnedContinuation(REGISTER_ARGS, JAVA_LANG_VIRTUALTHREAD_BLOCKING, J9VM_CONTINUATION_RETURN_FROM_MONITOR_ENTER);
 					break;
 				}

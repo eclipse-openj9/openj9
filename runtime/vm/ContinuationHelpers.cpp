@@ -292,10 +292,6 @@ enterContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 		if (J9_ARE_ANY_BITS_SET(currentThread->javaVM->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)) {
 			preparePinnedVirtualThreadForMount(currentThread, continuationObject, (J9VM_CONTINUATION_RETURN_FROM_OBJECT_WAIT == continuation->returnState));
 		}
-		/* InternalNative frame only build for non-jit calls. */
-		if (J9VM_CONTINUATION_RETURN_FROM_JIT_MONITOR_ENTER != continuation->returnState) {
-			VM_OutOfLineINL_Helpers::restoreInternalNativeStackFrame(currentThread);
-		}
 		result = FALSE;
 #else /* JAVA_SPEC_VERSION >= 24 */
 		/* resuming Continuation from yieldImpl */
@@ -341,7 +337,13 @@ yieldContinuation(J9VMThread *currentThread, BOOLEAN isFinished, UDATA returnSta
 		VM_ContinuationHelpers::setFinished(continuationStatePtr);
 	}
 
+	printf("yieldContinuation thread=%p currentcont=%p returnState=%lu\n", currentThread, currentThread->currentContinuation, returnState);
+
 	currentThread->currentContinuation = NULL;
+
+
+
+
 	VM_ContinuationHelpers::swapFieldsWithContinuation(currentThread, continuation, continuationObject);
 
 	/* We need a full fence here to preserve happens-before relationship on PPC and other weakly

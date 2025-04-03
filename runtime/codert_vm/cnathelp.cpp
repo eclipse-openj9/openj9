@@ -1721,6 +1721,8 @@ slow_jitMonitorEnterImpl(J9VMThread *currentThread, bool forMethod)
 			addr = restoreJITResolveFrame(currentThread, oldPC, forMethod, false);
 			goto done;
 		}
+		currentThread->currentContinuation->oldPC = oldPC;
+		currentThread->currentContinuation->forMethod = forMethod;
 	}
 #endif /* JAVA_SPEC_VERSION >= 24 */
 	if (monstatus < J9_OBJECT_MONITOR_BLOCKING) {
