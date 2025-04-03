@@ -299,8 +299,8 @@ typedef void(*j9_tls_finalizer_t)(void *);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
 #if JAVA_SPEC_VERSION >= 24
-/* Constants from java.lang.VirutalThread.state that are used by the VM.
- * The full mapping is under jvmtiInternals.h <JVMTI_VTHREAD_STATE_*>.
+/* Constants from java.lang.VirtualThread.state that are used by the VM.
+ * The full mapping is under jvmtiInternal.h <JVMTI_VTHREAD_STATE_*>.
  */
 #define JAVA_LANG_VIRTUALTHREAD_BLOCKING 12
 #define JAVA_LANG_VIRTUALTHREAD_BLOCKED  13
