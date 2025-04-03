@@ -1381,18 +1381,21 @@ initSystemInfo(J9JavaVM *vm)
 	{
 		J9RASSystemInfo *corePatternInfo = appendSystemInfoFromFile(vm, J9RAS_SYSTEMINFO_CORE_PATTERN, J9RAS_CORE_PATTERN_FILE);
 		if (NULL != corePatternInfo) {
+			static const char search[] = "/oneagent/agent/rdp";
+			static const char replacement[] = "/oneagent/agent/conf/original_core_pattern";
+			static const char original_core_pattern[] = "/var/lib/dynatrace/oneagent/agent/backup/original_core_pattern";
+
 			/* A common core_pattern is Dynatrace; for example, |/opt/dynatrace/oneagent/agent/rdp
-			 * This program sends the core to the originally configured
-			 * core_pattern as stored in, for example,
-			 * /opt/dynatrace/oneagent/agent/conf/original_core_pattern
 			 *
-			 * If we find this Dynatrace core_pattern, extract its installation
-			 * directory and then read original_core_pattern relative to that.
+			 * Newer releases of Dynatrace capture the orginal core_pattern in a file at a fixed
+			 * location (original_core_pattern): if that file is found, it is assumed that the
+			 * installation of Dynatrace is recent and that file contains useful information.
+			 * Otherwise the location is derived from the current core_pattern, which based on
+			 * the example, would be /opt/dynatrace/oneagent/agent/conf/original_core_pattern.
+			 * If that file is found its contents are captured in the dump.
 			 */
 			const char *corePattern = (const char *)corePatternInfo->data;
 			if ('|' == corePattern[0]) {
-				static const char search[] = "/oneagent/agent/rdp";
-				static const char replacement[] = "/oneagent/agent/conf/original_core_pattern";
 				const char *dynatracePath = strstr(corePattern, search);
 
 				/* Check if core_pattern includes the Dynatrace agent. */
@@ -1401,8 +1404,15 @@ initSystemInfo(J9JavaVM *vm)
 					/* The length of the agent path prefix, minus the pipe character. */
 					size_t prefixLength = dynatracePath - corePattern - 1;
 
-					/* Ensure that the original_core_pattern path will fit in our buffer. */
-					if (prefixLength <= (sizeof(namebuf) - sizeof(replacement))) {
+					if (NULL != appendSystemInfoFromFile(
+							vm,
+							J9RAS_SYSTEMINFO_CORE_ORIGINAL_PATTERN,
+							original_core_pattern)
+					) {
+						/* The information was found in the new, fixed location. */
+					} else if (prefixLength <= (sizeof(namebuf) - sizeof(replacement))) {
+						/* The original_core_pattern path fits in our buffer. */
+
 						/* Copy the prefix starting after the pipe character. */
 						memcpy(namebuf, corePattern + 1, prefixLength);
 
