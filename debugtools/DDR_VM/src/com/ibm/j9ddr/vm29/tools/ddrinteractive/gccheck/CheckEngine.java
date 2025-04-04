@@ -1029,7 +1029,7 @@ class CheckEngine
 		}
 
 		// Short circuit if we've recently checked this class.
-		int cacheIndex = (int) (clazz.longValue() % CLASS_CACHE_SIZE);
+		int cacheIndex = new UDATA(clazz.longValue()).mod(CLASS_CACHE_SIZE).intValue();
 		if (allowUndead && clazz.eq(_checkedClassCacheAllowUndead[cacheIndex])) {
 			return J9MODRON_GCCHK_RC_OK;
 		} else if (clazz.eq(_checkedClassCache[cacheIndex])) {
