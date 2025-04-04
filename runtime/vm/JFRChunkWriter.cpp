@@ -1237,7 +1237,7 @@ VM_JFRChunkWriter::writeThreadDumpEvent()
 	_bufferWriter->writeLEB128(ThreadDumpID);
 
 	/* write start time */
-	_bufferWriter->writeLEB128(j9time_current_time_millis());
+	_bufferWriter->writeLEB128(j9time_nano_time());
 
 	const U_64 bufferSize = THREAD_DUMP_EVENT_SIZE_PER_THREAD * _vm->peakThreadCount;
 	U_8 *resultBuffer = (U_8 *)j9mem_allocate_memory(sizeof(U_8) * bufferSize, OMRMEM_CATEGORY_VM);
