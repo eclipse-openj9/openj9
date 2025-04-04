@@ -11024,6 +11024,8 @@ hashCodeHelper(TR::Node *node, TR::CodeGenerator *cg, TR::DataType elementType,
    dependencies->getPostConditions()->getRegisterDependency(0)->setExcludeGPR0(); // valueReg
 
    dependencies->addPostCondition(endReg, TR::RealRegister::NoReg);
+   dependencies->getPostConditions()->getRegisterDependency(1)->setExcludeGPR0(); // endReg
+
    dependencies->addPostCondition(vendReg, TR::RealRegister::NoReg);
    dependencies->addPostCondition(hashReg, TR::RealRegister::NoReg);
    dependencies->addPostCondition(tempReg, TR::RealRegister::NoReg);
