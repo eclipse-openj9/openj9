@@ -61,7 +61,12 @@ MM_ConcurrentMarkingDelegate::doStackSlot(MM_EnvironmentBase *env, omrobjectptr_
 {
 	omrobjectptr_t object = *slotPtr;
 	if (_markingScheme->isHeapObject(object) && !env->getExtensions()->heap->objectIsInGap(object)) {
+		/* heap object - validate and mark */
+		Assert_MM_validStackSlot(MM_StackSlotValidator(0, object, stackLocation, walkState).validate(env));
 		doSlot(env, slotPtr);
+	} else if (NULL != object) {
+		/* stack object - just validate */
+		Assert_MM_validStackSlot(MM_StackSlotValidator(MM_StackSlotValidator::NOT_ON_HEAP, object, stackLocation, walkState).validate(env));
 	}
 }
 /**
