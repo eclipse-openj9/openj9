@@ -47,6 +47,7 @@
 
 MM_InterRegionRememberedSet::MM_InterRegionRememberedSet(MM_HeapRegionManager *heapRegionManager)
 	: _heapRegionManager(heapRegionManager)
+	, _rsclBufferControlBlockPoolMemoryHandle()
 	, _rsclBufferControlBlockPool(NULL)
 	, _rsclBufferControlBlockHead(NULL)
 	, _freeBufferCount(0)
@@ -239,7 +240,7 @@ MM_InterRegionRememberedSet::allocateRegionBuffers(MM_EnvironmentVLHGC* env, MM_
 }
 
 bool
-MM_InterRegionRememberedSet::initialize(MM_EnvironmentVLHGC* env)
+MM_InterRegionRememberedSet::initialize(MM_EnvironmentVLHGC *env)
 {
 	MM_GCExtensions *ext = MM_GCExtensions::getExtensions(env);
 
@@ -255,8 +256,17 @@ MM_InterRegionRememberedSet::initialize(MM_EnvironmentVLHGC* env)
 	UDATA bufferSize = MM_RememberedSetCardBucket::MAX_BUFFER_SIZE * cardSize;
 	Assert_MM_true(((UDATA)1 << MM_Bits::leadingZeroes(bufferSize)) == bufferSize);
 
-	/* All Buffer Control Block are pre-allocated on startup. Buffers themselves are allocated as regions are commited */
-	_rsclBufferControlBlockPool = (MM_CardBufferControlBlock *)ext->getForge()->allocate(rsclBufferControlBlockPoolSize, MM_AllocationCategory::REMEMBERED_SET, J9_GET_CALLSITE());
+	/* All Buffer Control Block are pre-allocated on startup, based on maximum heap size. Buffers themselves are allocated as regions are used first time.
+	 * Since Control Blocks consume considerable amount of memory, they are allocated as virtual memory,
+	 * so they can be lazily committed as regions are effectively used (when their RSCL is first time initialized). */
+	MM_MemoryManager *memoryManager = ext->memoryManager;
+	if (memoryManager->createVirtualMemoryForMetadata(env, &_rsclBufferControlBlockPoolMemoryHandle, ext->heapAlignment, rsclBufferControlBlockPoolSize)) {
+		_rsclBufferControlBlockPool = (MM_CardBufferControlBlock *)memoryManager->getHeapBase(&_rsclBufferControlBlockPoolMemoryHandle);
+		if (!memoryManager->commitMemory(&_rsclBufferControlBlockPoolMemoryHandle, _rsclBufferControlBlockPool, rsclBufferControlBlockPoolSize)) {
+			_rsclBufferControlBlockPool = NULL;
+		}
+	}
+
 	if (NULL == _rsclBufferControlBlockPool) {
 		return false;
 	}
@@ -468,15 +478,15 @@ MM_InterRegionRememberedSet::releaseCardBufferControlBlockLocalPools(MM_Environm
 
 
 void
-MM_InterRegionRememberedSet::tearDown(MM_EnvironmentBase* env)
+MM_InterRegionRememberedSet::tearDown(MM_EnvironmentBase *env)
 {
 	MM_GCExtensions *ext = MM_GCExtensions::getExtensions(env);
 
 	if (NULL != _rsclBufferControlBlockPool) {
-		ext->getForge()->free(_rsclBufferControlBlockPool);
+		ext->memoryManager->destroyVirtualMemory(env, &_rsclBufferControlBlockPoolMemoryHandle);
+		_rsclBufferControlBlockPool = NULL;
 	}
 
-	/* TODO: _lock initialize might have failed */
 	_lock.tearDown();
 }
 
