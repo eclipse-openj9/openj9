@@ -871,6 +871,17 @@ processEvent(J9JVMTIEnv* j9env, jint event, J9HookRedirectorFunction redirectorF
 			return redirectorFunction(vmHook, J9HOOK_VM_CRIU_CHECKPOINT, jvmtiHookVMCheckpoint, OMR_GET_CALLSITE(), j9env);
 
 		case J9JVMTI_EVENT_OPENJ9_VM_RESTORE:
+			if (hookRegister == redirectorFunction) {
+				/* This occurs when jdk.jdwp.agent/share/native/libjdwp/debugInit.c:DEF_Agent_OnLoad()
+				 * enables extension event EI_VM_RESTORE and set callback cbEarlyVMRestore().
+				 * It indicates a JDWP agent is being loaded and enabled.
+				 * This covers following cases:
+				 *   -Xrunjdwp:transport=dt_socket,server=y,suspend=n
+				 *   -agentlib:jdwp=transport=dt_socket,server=y,suspend=n
+				 *   -agentpath:/path/to/libjdwp.so=transport=dt_socket,server=y,suspend=n
+				 */
+				j9env->vm->checkpointState.flags |= J9VM_CRIU_IS_JDWP_ENABLED;
+			}
 			return redirectorFunction(vmHook, J9HOOK_VM_CRIU_RESTORE, jvmtiHookVMRestore, OMR_GET_CALLSITE(), j9env);
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
