@@ -20,6 +20,8 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
+#define _AE_BIMODAL
+
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
@@ -367,7 +369,7 @@ buildCallPattern(const char *const templateString, UDATA *const result)
 				/*Reparse this letter in the READING_MODIFIER state*/
 				state = READING_MODIFIER;
 				continue;
-			} else if (('.' != *p) && !isdigit(*p)) {
+			} else if (('.' != *p) && !__isdigit_a(*p)) {
 				state = READING_TYPE;
 				continue;
 			}
