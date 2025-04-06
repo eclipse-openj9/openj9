@@ -242,8 +242,12 @@ class TR_VectorAPIExpansion : public TR::Optimization
       BroadcastInt,
       Convert,
       Compress,
-      Other
+      Unary,
+      Binary,
+      Ternary
       };
+
+  static const char *vapiOpCodeTypeNames[];
 
 
   /** \brief
@@ -1666,6 +1670,43 @@ class TR_VectorAPIExpansion : public TR::Optimization
          }
 
       return result;
+      }
+
+  /** \brief
+   *    Reports missing opcode and returns TR::BadILOp
+   *
+   *   \param comp
+   *      Compilation
+   *
+   *   \param vectorAPIOpCode
+   *      Vector API opcode number in VectorSupport.java
+   *
+   *   \param objectType
+   *      object type (Vector, Mask, Shuffle, etc.)
+   *
+   *   \param opCodeType
+   *      opcode type (Unary, Binary, etc.)
+   *
+   *   \param withMask
+   *     true if opcode is with mask
+   *
+   *   \return
+   *      TR::BadILOp
+   */
+   static TR::ILOpCodes reportMissingOpCode(TR::Compilation *comp, int32_t vectorAPIOpCode, vapiObjType objectType,
+                                     vapiOpCodeType opCodeType, bool withMask)
+      {
+      if (TR::Options::getVerboseOption(TR_VerboseVectorAPI))
+         {
+         TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "IL is missing for vectorAPIOpCode %s %d on %s %s in %s\n",
+                                  vapiOpCodeTypeNames[opCodeType],
+                                  vectorAPIOpCode,
+                                  vapiObjTypeNames[objectType],
+                                  withMask ? "with Mask" : "",
+                                  comp->signature());
+         }
+
+      return TR::BadILOp;
       }
    };
 #endif /* VECTORAPIEXPANSION_INCL */
