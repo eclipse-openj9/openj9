@@ -28,7 +28,6 @@
 #include "compile/ResolvedMethod.hpp"
 #include "env/StackMemoryRegion.hpp"
 #include "env/TypeLayout.hpp"
-#include "env/VerboseLog.hpp"
 #include "env/VMAccessCriticalSection.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
@@ -2242,7 +2241,7 @@ TR::Node *TR_VectorAPIExpansion::loadIntrinsicHandler(TR_VectorAPIExpansion *opt
          TR::DataType vectorType = TR::DataType::createVectorType(elementType, vectorLength);
          TR::ILOpCodes vectorOpCode = TR::ILOpCode::createVectorOpCode(TR::vloadi, vectorType);
 
-         if (!comp->cg()->getSupportsOpCodeForAutoSIMD(vectorOpCode))
+         if (!isOpCodeImplemented(comp, vectorOpCode))
             return NULL;
 
          return node;
@@ -2284,7 +2283,7 @@ TR::Node *TR_VectorAPIExpansion::loadIntrinsicHandler(TR_VectorAPIExpansion *opt
                return NULL;
             }
 
-         if (!comp->cg()->getSupportsOpCodeForAutoSIMD(maskConversionOpCode))
+         if (!isOpCodeImplemented(comp, maskConversionOpCode))
             return NULL;
 
          return node;
@@ -2447,7 +2446,7 @@ TR::Node *TR_VectorAPIExpansion::storeIntrinsicHandler(TR_VectorAPIExpansion *op
          TR::DataType vectorType = TR::DataType::createVectorType(elementType, vectorLength);
          TR::ILOpCodes vectorOpCode = TR::ILOpCode::createVectorOpCode(TR::vstorei, vectorType);
 
-         if (!comp->cg()->getSupportsOpCodeForAutoSIMD(vectorOpCode))
+         if (!isOpCodeImplemented(comp, vectorOpCode))
             return NULL;
 
          return node;
@@ -2489,7 +2488,7 @@ TR::Node *TR_VectorAPIExpansion::storeIntrinsicHandler(TR_VectorAPIExpansion *op
                return NULL;
             }
 
-         if (!comp->cg()->getSupportsOpCodeForAutoSIMD(maskConversionOpCode))
+         if (!isOpCodeImplemented(comp, maskConversionOpCode))
             return NULL;
 
          return node;
@@ -2855,7 +2854,7 @@ TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt
          vectorOpCode = ILOpcodeFromVectorAPIOpcode(comp, vectorAPIOpcode, opType, vectorLength, objectType, opCodeType, withMask,
                                                     resultElementType, resultVectorLength);
 
-         if (vectorOpCode == TR::BadILOp || !comp->cg()->getSupportsOpCodeForAutoSIMD(vectorOpCode))
+         if (vectorOpCode == TR::BadILOp || !isOpCodeImplemented(comp, vectorOpCode))
             {
             if (opt->_trace) traceMsg(comp, "Unsupported vector opcode in node %p %s\n", node,
                                       vectorOpCode == TR::BadILOp ? "(no IL)" : "(no codegen)");
@@ -2867,7 +2866,7 @@ TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt
             TR::ILOpCodes splatsOpCode = TR::ILOpCode::createVectorOpCode(TR::vsplats,
                                                                           TR::DataType::createVectorType(elementType, vectorLength));
 
-            if (!comp->cg()->getSupportsOpCodeForAutoSIMD(splatsOpCode))
+            if (!isOpCodeImplemented(comp, splatsOpCode))
                {
                if (opt->_trace) traceMsg(comp, "Unsupported vsplats opcode in node %p (no codegen)\n", node);
 
@@ -2881,8 +2880,8 @@ TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt
             TR::ILOpCodes splatsOpCode = TR::ILOpCode::createVectorOpCode(TR::vsplats, vectorType);
             TR::ILOpCodes subOpCode = TR::ILOpCode::createVectorOpCode(TR::vsub, vectorType);
 
-            if (!comp->cg()->getSupportsOpCodeForAutoSIMD(splatsOpCode) ||
-                !comp->cg()->getSupportsOpCodeForAutoSIMD(subOpCode))
+            if (!isOpCodeImplemented(comp, splatsOpCode) ||
+                !isOpCodeImplemented(comp, subOpCode))
                {
                if (opt->_trace) traceMsg(comp, "Unsupported vsplats or vsub opcode in node %p (no codegen)\n", node);
 
@@ -2960,7 +2959,7 @@ TR::Node *TR_VectorAPIExpansion::fromBitsCoercedIntrinsicHandler(TR_VectorAPIExp
       TR::ILOpCodes splatsOpCode = TR::ILOpCode::createVectorOpCode(mask ? TR::mLongBitsToMask : TR::vsplats,
                                                                     TR::DataType::createVectorType(elementType, vectorLength));
 
-      if (!comp->cg()->getSupportsOpCodeForAutoSIMD(splatsOpCode))
+      if (!isOpCodeImplemented(comp, splatsOpCode))
          return NULL;
 
       return node;
