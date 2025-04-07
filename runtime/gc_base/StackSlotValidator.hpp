@@ -41,8 +41,8 @@ class MM_StackSlotValidator : public MM_Validator {
 /* data members */
 private:
 	const UDATA _flags; /**< Flags for this validator: COULD_BE_FORWARDED / NOT_ON_HEAP */
-	J9Object *const _slotValue; /**< The object in the stack slot being validated */
-	const void* const _stackLocation; /**< The actual stack slot pointer */
+	J9Object * const _slotValue; /**< The object in the stack slot being validated */
+	const void * const _stackLocation; /**< The actual stack slot pointer */
 	J9StackWalkState * const _walkState; /**< The current stack walk state */
 protected:
 public:
@@ -59,11 +59,14 @@ private:
 	 * @param env[in] the current thread (not necessarily the thread whose stack is being inspected)
 	 * @param message[in] a message to include with the report
 	 */
-	void reportStackSlot(MM_EnvironmentBase* env, const char* message);
-	
+	void reportStackSlot(MM_EnvironmentBase *env, const char *message);
+#if JAVA_SPEC_VERSION >= 19
+	char *getContinuationThreadName(MM_EnvironmentBase *env, J9VMContinuation *continuation);
+	void releaseContinuationThreadName(MM_EnvironmentBase *env, char *threadName);
+#endif /* JAVA_SPEC_VERSION >= 19 */
 protected:
 public:
-	virtual void threadCrash(MM_EnvironmentBase* env);
+	virtual void threadCrash(MM_EnvironmentBase *env);
 
 	/**
 	 * Construct a new StackSlotValidator
@@ -72,7 +75,7 @@ public:
 	 * @param stackLocation[in] The actual stack slot pointer
 	 * @param walkState[in] The current stack walk state 
 	 */
-	MM_StackSlotValidator(UDATA flags, J9Object *slotValue, const void* stackLocation, void *walkState)
+	MM_StackSlotValidator(UDATA flags, J9Object *slotValue, const void *stackLocation, void *walkState)
 		: MM_Validator()
 		, _flags(flags)
 		, _slotValue(slotValue)
@@ -113,7 +116,7 @@ public:
 		} else if (shouldCheckRegionValidity && onHeap && ( (NULL == region) || !region->containsObjects())) {
 			reportStackSlot(env, "Object not in valid region");
 			result = false;
-		} else if ( !onHeap && (((U_8*)_slotValue >= (U_8*)stack->end) || ((U_8*)_slotValue < (U_8*)(stack + 1)))) {
+		} else if ( !onHeap && (((U_8*)_slotValue >= (U_8 *)stack->end) || ((U_8 *)_slotValue < (U_8 *)(stack + 1)))) {
 			reportStackSlot(env, "Object neither in heap nor stack-allocated");
 			result = false;
 		} else if ( !onHeap && (0 != ((UDATA)_slotValue & (sizeof(UDATA) - 1)))) {
