@@ -42,6 +42,7 @@
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
 #include "env/ClassLoaderTable.hpp"
+#include "env/J9ConstProvenanceGraph.hpp"
 #include "env/j9method.h"
 #include "env/J9RetainedMethodSet.hpp"
 #include "env/TRMemory.hpp"
@@ -218,6 +219,7 @@ J9::Compilation::Compilation(int32_t id,
    _aotMethodDependencies(decltype(_aotMethodDependencies)::allocator_type(heapMemoryRegion)),
 #endif /* !defined(PERSISTENT_COLLECTIONS_UNSUPPORTED) */
    _permanentLoaders(self()->region()),
+   _constProvenanceGraph(new (heapMemoryRegion) J9::ConstProvenanceGraph(self())),
    _osrProhibitedOverRangeOfTrees(false),
    _wasFearPointAnalysisDone(false),
    _permanentLoadersInitialized(false)
