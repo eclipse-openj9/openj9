@@ -47,6 +47,7 @@ namespace J9 { typedef J9::Compilation CompilationConnector; }
 #include "env/PersistentCollections.hpp"
 
 namespace J9 { class RetainedMethodSet; }
+namespace J9 { class ConstProvenanceGraph; }
 class TR_AOTGuardSite;
 class TR_FrontEnd;
 class TR_ResolvedMethod;
@@ -448,6 +449,11 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
     */
    void addKeepaliveClass(TR_OpaqueClassBlock *c);
 
+   J9::ConstProvenanceGraph *constProvenanceGraph()
+      {
+      return _constProvenanceGraph;
+      }
+
    /**
     * \brief Determine whether it's currently expected to be possible to add
     * OSR assumptions and corresponding fear points somewhere in the method.
@@ -648,6 +654,7 @@ private:
 
    TR::SymbolValidationManager *_symbolValidationManager;
    TR::vector<J9ClassLoader*, TR::Region&> _permanentLoaders;
+   ConstProvenanceGraph *_constProvenanceGraph;
    bool _osrProhibitedOverRangeOfTrees;
    bool _wasFearPointAnalysisDone;
    bool _permanentLoadersInitialized;
