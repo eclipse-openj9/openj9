@@ -57,6 +57,13 @@
 #include "j2sever.h"
 #include "j9relationship.h"
 
+/* Macros for converting a pointer to a value of type jlong or vice-versa. */
+#define JLONG_FROM_POINTER(ptr) ((jlong)(U_64)(UDATA)(ptr))
+#define JLONG_TO_POINTER(value) ((void *)(UDATA)(U_64)(value))
+
+/* Like JLONG_TO_POINTER, but the source is of type jint. */
+#define JINT_TO_POINTER(value) ((void *)(UDATA)(U_32)(value))
+
 /* Function used to map object fields during clone */
 typedef j9object_t (*MM_objectMapFunction)(struct J9VMThread *currentThread, j9object_t obj, void *objectMapData);
 

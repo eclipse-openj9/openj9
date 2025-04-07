@@ -807,7 +807,7 @@ BOOLEAN isSystemPropertyEqual(JNIEnv* env, const char* utfPropName,  const char*
 jobject JNICALL
 Java_j9vm_utils_JNI_NewDirectByteBuffer(JNIEnv *env, jclass clazz, jlong address, jlong capacity)
 {
-	return (*env)->NewDirectByteBuffer(env, (void*)(UDATA)address, capacity);
+	return (*env)->NewDirectByteBuffer(env, JLONG_TO_POINTER(address), capacity);
 }
 
 /*
@@ -818,7 +818,7 @@ Java_j9vm_utils_JNI_NewDirectByteBuffer(JNIEnv *env, jclass clazz, jlong address
 jlong JNICALL
 Java_j9vm_utils_JNI_GetDirectBufferAddress(JNIEnv *env, jclass clazz, jobject buffer)
 {
-	return (jlong)(UDATA)((*env)->GetDirectBufferAddress(env, buffer));
+	return JLONG_FROM_POINTER((*env)->GetDirectBufferAddress(env, buffer));
 }
 
 /*

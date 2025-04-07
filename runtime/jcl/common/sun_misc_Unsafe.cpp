@@ -239,7 +239,7 @@ Java_sun_misc_Unsafe_allocateMemory(JNIEnv *env, jobject receiver, jlong size)
 	if ((size < 0) || (size != (jlong)actualSize)) {
 		vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, NULL);
 	} else {
-		result = (jlong)(UDATA)unsafeAllocateMemory(currentThread, actualSize, TRUE);
+		result = JLONG_FROM_POINTER(unsafeAllocateMemory(currentThread, actualSize, TRUE));
 	}
 	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
@@ -258,7 +258,7 @@ Java_sun_misc_Unsafe_allocateDBBMemory(JNIEnv *env, jobject receiver, jlong size
 	if ((size < 0) || (size != (jlong)actualSize)) {
 		vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, NULL);
 	} else {
-		result = (jlong)(UDATA)unsafeAllocateDBBMemory(currentThread, actualSize, TRUE);
+		result = JLONG_FROM_POINTER(unsafeAllocateDBBMemory(currentThread, actualSize, TRUE));
 	}
 	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
@@ -274,16 +274,16 @@ Java_jdk_internal_misc_Unsafe_allocateDBBMemory(JNIEnv *env, jobject receiver, j
 void JNICALL
 Java_sun_misc_Unsafe_freeMemory(JNIEnv *env, jobject receiver, jlong address)
 {
-	J9VMThread *currentThread = (J9VMThread*)env;
-	unsafeFreeMemory(currentThread, (void*)(UDATA)address);
+	J9VMThread *currentThread = (J9VMThread *)env;
+	unsafeFreeMemory(currentThread, JLONG_TO_POINTER(address));
 }
 
 
 void JNICALL
 Java_sun_misc_Unsafe_freeDBBMemory(JNIEnv *env, jobject receiver, jlong address)
 {
-	J9VMThread *currentThread = (J9VMThread*)env;
-	unsafeFreeDBBMemory(currentThread, (void*)(UDATA)address);
+	J9VMThread *currentThread = (J9VMThread *)env;
+	unsafeFreeDBBMemory(currentThread, JLONG_TO_POINTER(address));
 }
 
 void JNICALL
@@ -304,7 +304,7 @@ Java_sun_misc_Unsafe_reallocateMemory(JNIEnv *env, jobject receiver, jlong addre
 	if ((size < 0) || (size != (jlong)actualSize)) {
 		vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, NULL);
 	} else {
-		result = (jlong)(UDATA)unsafeReallocateMemory(currentThread, (void*)(UDATA)address, actualSize);
+		result = JLONG_FROM_POINTER(unsafeReallocateMemory(currentThread, JLONG_TO_POINTER(address), actualSize));
 	}
 	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
@@ -323,7 +323,7 @@ Java_sun_misc_Unsafe_reallocateDBBMemory(JNIEnv *env, jobject receiver, jlong ad
 	if ((size < 0) || (size != (jlong)actualSize)) {
 		vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, NULL);
 	} else {
-		result = (jlong)(UDATA)unsafeReallocateDBBMemory(currentThread, (void*)(UDATA)address, actualSize);
+		result = JLONG_FROM_POINTER(unsafeReallocateDBBMemory(currentThread, JLONG_TO_POINTER(address), actualSize));
 	}
 	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;

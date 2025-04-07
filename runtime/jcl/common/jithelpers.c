@@ -245,7 +245,7 @@ Java_com_ibm_jit_JITHelpers_getJ9ClassFromClass64(JNIEnv *env, jobject rcv, jcla
 	vmThread->javaVM->internalVMFunctions->internalEnterVMFromJNI(vmThread);
 	clazz = J9VM_J9CLASS_FROM_HEAPCLASS(vmThread, J9_JNI_UNWRAP_REFERENCE(c));
 	vmThread->javaVM->internalVMFunctions->internalExitVMToJNI(vmThread);
-	return (jlong)(UDATA)clazz;
+	return JLONG_FROM_POINTER(clazz);
 }
 
 jobject JNICALL
@@ -256,7 +256,7 @@ Java_com_ibm_jit_JITHelpers_getClassFromJ9Class64(JNIEnv *env, jobject rcv, jlon
 	jobject classRef;
 
 	vmfns->internalEnterVMFromJNI(vmThread);
-	classRef = vmfns->j9jni_createLocalRef(env, J9VM_J9CLASS_TO_HEAPCLASS((J9Class*)(UDATA)j9clazz));
+	classRef = vmfns->j9jni_createLocalRef(env, J9VM_J9CLASS_TO_HEAPCLASS((J9Class *)JLONG_TO_POINTER(j9clazz)));
 	if (NULL == classRef) {
 		vmfns->setNativeOutOfMemoryError(vmThread, 0, 0);
 	}
@@ -267,7 +267,7 @@ Java_com_ibm_jit_JITHelpers_getClassFromJ9Class64(JNIEnv *env, jobject rcv, jlon
 jlong JNICALL
 Java_com_ibm_jit_JITHelpers_getTotalInstanceSizeFromJ9Class64(JNIEnv *env, jobject rcv, jlong j9clazz)
 {
-	J9Class * clazz = (J9Class *)(UDATA)j9clazz;
+	J9Class * clazz = (J9Class *)JLONG_TO_POINTER(j9clazz);
 
 	return (jlong)clazz->totalInstanceSize;
 }
@@ -275,37 +275,37 @@ Java_com_ibm_jit_JITHelpers_getTotalInstanceSizeFromJ9Class64(JNIEnv *env, jobje
 jlong JNICALL
 Java_com_ibm_jit_JITHelpers_getInstanceDescriptionFromJ9Class64(JNIEnv *env, jobject rcv, jlong j9clazz)
 {
-	J9Class * clazz = (J9Class *)(UDATA)j9clazz;
+	J9Class * clazz = (J9Class *)JLONG_TO_POINTER(j9clazz);
 
-	return (jlong)(UDATA)clazz->instanceDescription;
+	return JLONG_FROM_POINTER(clazz->instanceDescription);
 }
 
 jlong JNICALL
 Java_com_ibm_jit_JITHelpers_getDescriptionWordFromPtr64(JNIEnv *env, jobject rcv, jlong descriptorPtr)
 {
-	return *(jlong*)(UDATA)descriptorPtr;
+	return *(jlong *)JLONG_TO_POINTER(descriptorPtr);
 }
 
 jlong JNICALL
 Java_com_ibm_jit_JITHelpers_getRomClassFromJ9Class64(JNIEnv *env, jobject rcv, jlong j9clazz)
 {
-	J9Class * clazz = (J9Class *)(UDATA)j9clazz;
+	J9Class * clazz = (J9Class *)JLONG_TO_POINTER(j9clazz);
 
-	return (jlong)(UDATA)clazz->romClass;
+	return JLONG_FROM_POINTER(clazz->romClass);
 }
 
 jlong JNICALL
 Java_com_ibm_jit_JITHelpers_getSuperClassesFromJ9Class64(JNIEnv *env, jobject rcv, jlong j9clazz)
 {
-	J9Class * clazz = (J9Class *)(UDATA)j9clazz;
+	J9Class * clazz = (J9Class *)JLONG_TO_POINTER(j9clazz);
 
-	return (jlong)(UDATA)clazz->superclasses;
+	return JLONG_FROM_POINTER(clazz->superclasses);
 }
 
 jlong JNICALL
 Java_com_ibm_jit_JITHelpers_getClassDepthAndFlagsFromJ9Class64(JNIEnv *env, jobject rcv, jlong j9clazz)
 {
-	J9Class * clazz = (J9Class *)(UDATA)j9clazz;
+	J9Class * clazz = (J9Class *)JLONG_TO_POINTER(j9clazz);
 
 	return (jlong)clazz->classDepthAndFlags;
 }
@@ -313,7 +313,7 @@ Java_com_ibm_jit_JITHelpers_getClassDepthAndFlagsFromJ9Class64(JNIEnv *env, jobj
 jlong JNICALL
 Java_com_ibm_jit_JITHelpers_getBackfillOffsetFromJ9Class64(JNIEnv *env, jobject rcv, jlong j9clazz)
 {
-	J9Class * clazz = (J9Class *)(UDATA)j9clazz;
+	J9Class * clazz = (J9Class *)JLONG_TO_POINTER(j9clazz);
 
 	return (jlong)clazz->backfillOffset;
 }
@@ -321,7 +321,7 @@ Java_com_ibm_jit_JITHelpers_getBackfillOffsetFromJ9Class64(JNIEnv *env, jobject 
 jint JNICALL
 Java_com_ibm_jit_JITHelpers_getArrayShapeFromRomClass64(JNIEnv *env, jobject rcv, jlong j9romclazz)
 {
-	J9ROMArrayClass * romArrayClass = (J9ROMArrayClass *)(UDATA)j9romclazz;
+	J9ROMArrayClass * romArrayClass = (J9ROMArrayClass *)JLONG_TO_POINTER(j9romclazz);
 
 	return (jint)romArrayClass->arrayShape;
 }
@@ -329,7 +329,7 @@ Java_com_ibm_jit_JITHelpers_getArrayShapeFromRomClass64(JNIEnv *env, jobject rcv
 jint JNICALL
 Java_com_ibm_jit_JITHelpers_getModifiersFromRomClass64(JNIEnv *env, jobject rcv, jlong j9romclazz)
 {
-	J9ROMClass * romClass = (J9ROMClass *)(UDATA)j9romclazz;
+	J9ROMClass * romClass = (J9ROMClass *)JLONG_TO_POINTER(j9romclazz);
 
 	return (jint)romClass->modifiers;
 }
@@ -337,7 +337,7 @@ Java_com_ibm_jit_JITHelpers_getModifiersFromRomClass64(JNIEnv *env, jobject rcv,
 jint JNICALL
 Java_com_ibm_jit_JITHelpers_getClassFlagsFromJ9Class64(JNIEnv *env, jobject rcv, jlong j9clazz)
 {
-	J9Class *clazz = (J9Class *)(UDATA)j9clazz;
+	J9Class *clazz = (J9Class *)JLONG_TO_POINTER(j9clazz);
 	return clazz->classFlags;
 }
 #else
@@ -362,7 +362,7 @@ Java_com_ibm_jit_JITHelpers_getClassFromJ9Class32(JNIEnv *env, jobject rcv, jint
 	jobject classRef;
 
 	vmfns->internalEnterVMFromJNI(vmThread);
-	classRef = vmfns->j9jni_createLocalRef(env, J9VM_J9CLASS_TO_HEAPCLASS((J9Class*)(UDATA)j9clazz));
+	classRef = vmfns->j9jni_createLocalRef(env, J9VM_J9CLASS_TO_HEAPCLASS((J9Class *)JINT_TO_POINTER(j9clazz)));
 	if (NULL == classRef) {
 		vmfns->setNativeOutOfMemoryError(vmThread, 0, 0);
 	}
@@ -373,7 +373,7 @@ Java_com_ibm_jit_JITHelpers_getClassFromJ9Class32(JNIEnv *env, jobject rcv, jint
 jint JNICALL
 Java_com_ibm_jit_JITHelpers_getTotalInstanceSizeFromJ9Class32(JNIEnv *env, jobject rcv, jint j9clazz)
 {
-	J9Class * clazz = (J9Class *)(UDATA)j9clazz;
+	J9Class * clazz = (J9Class *)JINT_TO_POINTER(j9clazz);
 
 	return (jint)clazz->totalInstanceSize;
 }
@@ -381,7 +381,7 @@ Java_com_ibm_jit_JITHelpers_getTotalInstanceSizeFromJ9Class32(JNIEnv *env, jobje
 jint JNICALL
 Java_com_ibm_jit_JITHelpers_getInstanceDescriptionFromJ9Class32(JNIEnv *env, jobject rcv, jint j9clazz)
 {
-	J9Class * clazz = (J9Class *)(UDATA)j9clazz;
+	J9Class * clazz = (J9Class *)JINT_TO_POINTER(j9clazz);
 
 	return (jint)(UDATA)clazz->instanceDescription;
 }
@@ -395,7 +395,7 @@ Java_com_ibm_jit_JITHelpers_getDescriptionWordFromPtr32(JNIEnv *env, jobject rcv
 jint JNICALL
 Java_com_ibm_jit_JITHelpers_getRomClassFromJ9Class32(JNIEnv *env, jobject rcv, jint j9clazz)
 {
-	J9Class * clazz = (J9Class *)(UDATA)j9clazz;
+	J9Class * clazz = (J9Class *)JINT_TO_POINTER(j9clazz);
 
 	return (jint)(UDATA)clazz->romClass;
 }
@@ -403,7 +403,7 @@ Java_com_ibm_jit_JITHelpers_getRomClassFromJ9Class32(JNIEnv *env, jobject rcv, j
 jint JNICALL
 Java_com_ibm_jit_JITHelpers_getSuperClassesFromJ9Class32(JNIEnv *env, jobject rcv, jint j9clazz)
 {
-	J9Class * clazz = (J9Class *)(UDATA)j9clazz;
+	J9Class * clazz = (J9Class *)JINT_TO_POINTER(j9clazz);
 
 	return (jint)(UDATA)clazz->superclasses;
 }
@@ -411,7 +411,7 @@ Java_com_ibm_jit_JITHelpers_getSuperClassesFromJ9Class32(JNIEnv *env, jobject rc
 jint JNICALL
 Java_com_ibm_jit_JITHelpers_getClassDepthAndFlagsFromJ9Class32(JNIEnv *env, jobject rcv, jint j9clazz)
 {
-	J9Class * clazz = (J9Class *)(UDATA)j9clazz;
+	J9Class * clazz = (J9Class *)JINT_TO_POINTER(j9clazz);
 
 	return (jint)clazz->classDepthAndFlags;
 }
@@ -419,7 +419,7 @@ Java_com_ibm_jit_JITHelpers_getClassDepthAndFlagsFromJ9Class32(JNIEnv *env, jobj
 jint JNICALL
 Java_com_ibm_jit_JITHelpers_getBackfillOffsetFromJ9Class32(JNIEnv *env, jobject rcv, jint j9clazz)
 {
-	J9Class * clazz = (J9Class *)(UDATA)j9clazz;
+	J9Class * clazz = (J9Class *)JINT_TO_POINTER(j9clazz);
 
 	return (jint)clazz->backfillOffset;
 }
@@ -427,7 +427,7 @@ Java_com_ibm_jit_JITHelpers_getBackfillOffsetFromJ9Class32(JNIEnv *env, jobject 
 jint JNICALL
 Java_com_ibm_jit_JITHelpers_getArrayShapeFromRomClass32(JNIEnv *env, jobject rcv, jint j9romclazz)
 {
-	J9ROMArrayClass * romArrayClass = (J9ROMArrayClass *)(UDATA)j9romclazz;
+	J9ROMArrayClass * romArrayClass = (J9ROMArrayClass *)JINT_TO_POINTER(j9romclazz);
 
 	return (jint)romArrayClass->arrayShape;
 }
@@ -435,7 +435,7 @@ Java_com_ibm_jit_JITHelpers_getArrayShapeFromRomClass32(JNIEnv *env, jobject rcv
 jint JNICALL
 Java_com_ibm_jit_JITHelpers_getModifiersFromRomClass32(JNIEnv *env, jobject rcv, jint j9romclazz)
 {
-	J9ROMClass * romClass = (J9ROMClass *)(UDATA)j9romclazz;
+	J9ROMClass * romClass = (J9ROMClass *)JINT_TO_POINTER(j9romclazz);
 
 	return (jint)romClass->modifiers;
 }
@@ -443,7 +443,7 @@ Java_com_ibm_jit_JITHelpers_getModifiersFromRomClass32(JNIEnv *env, jobject rcv,
 jint JNICALL
 Java_com_ibm_jit_JITHelpers_getClassFlagsFromJ9Class32(JNIEnv *env, jobject rcv, jint j9clazz)
 {
-	J9Class *clazz = (J9Class *)(UDATA)j9clazz;
+	J9Class *clazz = (J9Class *)JINT_TO_POINTER(j9clazz);
 	return clazz->classFlags;
 }
 

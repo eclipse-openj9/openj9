@@ -53,13 +53,13 @@ Java_com_ibm_java_lang_management_internal_CompilationMXBeanImpl_isCompilationTi
 jboolean JNICALL
 Java_com_ibm_java_lang_management_internal_CompilationMXBeanImpl_isJITEnabled(JNIEnv *env, jobject beanInstance)
 {
-	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
+#if defined(J9VM_INTERP_NATIVE_SUPPORT)
+	J9JavaVM *javaVM = ((J9VMThread *)env)->javaVM;
 
-#if defined (J9VM_INTERP_NATIVE_SUPPORT)
-	if( javaVM->jitConfig != NULL ) {
+	if (NULL != javaVM->jitConfig) {
 		return JNI_TRUE;
 	}
-#endif
+#endif /* defined(J9VM_INTERP_NATIVE_SUPPORT) */
 
 	return JNI_FALSE;
 }

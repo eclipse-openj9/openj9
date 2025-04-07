@@ -9760,13 +9760,13 @@ jlong JNICALL Java_java_lang_invoke_ThunkTuple_initialInvokeExactThunk
    (JNIEnv *env, jclass clazz)
    {
 #if defined(J9ZOS390)
-   return (jlong)TOC_UNWRAP_ADDRESS(_initialInvokeExactThunkGlue);
+   return JLONG_FROM_POINTER(TOC_UNWRAP_ADDRESS(_initialInvokeExactThunkGlue));
 #elif defined(TR_HOST_POWER) && (defined(TR_HOST_64BIT) || defined(AIXPPC)) && !defined(__LITTLE_ENDIAN__)
-   return (jlong)(*(void **)_initialInvokeExactThunkGlue);
+   return JLONG_FROM_POINTER(*(void **)_initialInvokeExactThunkGlue));
 #elif defined(TR_HOST_X86)
-   return (jlong)initialInvokeExactThunkGlue;
+   return JLONG_FROM_POINTER(initialInvokeExactThunkGlue);
 #else
-   return (jlong)_initialInvokeExactThunkGlue;
+   return JLONG_FROM_POINTER(_initialInvokeExactThunkGlue);
 #endif
    }
 
@@ -9777,8 +9777,8 @@ jlong JNICALL Java_java_lang_invoke_ThunkTuple_initialInvokeExactThunk
 jint JNICALL Java_java_lang_invoke_InterfaceHandle_convertITableIndexToVTableIndex
   (JNIEnv *env, jclass InterfaceMethodHandle, jlong interfaceArg, jint itableIndex, jlong receiverClassArg)
    {
-   J9Class  *interfaceClass = (J9Class*)(intptr_t)interfaceArg;
-   J9Class  *receiverClass  = (J9Class*)(intptr_t)receiverClassArg;
+   J9Class  *interfaceClass = (J9Class *)JLONG_TO_POINTER(interfaceArg);
+   J9Class  *receiverClass  = (J9Class *)JLONG_TO_POINTER(receiverClassArg);
    J9ITable *itableEntry;
    for (itableEntry = (J9ITable*)receiverClass->iTable; itableEntry; itableEntry = itableEntry->next)
       if (itableEntry->interfaceClass == interfaceClass)

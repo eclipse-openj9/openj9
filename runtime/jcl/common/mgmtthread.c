@@ -861,14 +861,12 @@ getArrayOfThreadInfo(JNIEnv *env, jlong *threadIDs, jint numThreads,
 	Assert_JCL_true(sizeof(J9VMThread *) <= sizeof(jlong));
 
 	for (i = 0; (jint)i < numThreads; ++i) {
-		J9VMThread *vmThread;
-
-		vmThread = getThread(env, threadIDs[i]);
+		J9VMThread *vmThread = getThread(env, threadIDs[i]);
 		/*
 		 * Dead threads should not be removed from the array.
 		 * They should get a null entry in the corresponding ThreadInfo array.
 		 */
-		threadIDs[i] = (jlong)(UDATA)vmThread;
+		threadIDs[i] = JLONG_FROM_POINTER(vmThread);
 	}
 
 	/* build array of ThreadInfo */

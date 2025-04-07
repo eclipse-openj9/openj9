@@ -85,10 +85,10 @@ getJclThreadState(UDATA vmstate, jboolean started)
 jint JNICALL 
 Java_java_lang_Thread_getStateImpl(JNIEnv *env, jobject recv, jlong threadRef)
 {
-	UDATA status;
-	J9VMThread* vmThread = (J9VMThread *)(UDATA)threadRef;
-	J9VMThread* currentThread = (J9VMThread*)env;
-	jint state;
+	UDATA status = 0;
+	J9VMThread *vmThread = (J9VMThread *)JLONG_TO_POINTER(threadRef);
+	J9VMThread *currentThread = (J9VMThread *)env;
+	jint state = 0;
 
 	Trc_JCL_Thread_getStateImpl_Entry(currentThread, vmThread);
 	
@@ -125,7 +125,7 @@ Java_java_lang_Thread_setPriorityNoVMAccessImpl(JNIEnv *env, jobject thread, jlo
 {
 	J9VMThread *currentThread = (J9VMThread *)env;
 	const UDATA *prioMap = currentThread->javaVM->java2J9ThreadPriorityMap;
-	J9VMThread *vmThread = (J9VMThread *)(UDATA)threadRef;
+	J9VMThread *vmThread = (J9VMThread *)JLONG_TO_POINTER(threadRef);
 	
 	if (currentThread->javaVM->runtimeFlags & J9_RUNTIME_NO_PRIORITIES) {
 		return;
@@ -151,7 +151,7 @@ void JNICALL
 Java_java_lang_Thread_setNameImpl(JNIEnv *env, jobject thread, jlong threadRef, jstring threadName)
 {
 	J9VMThread *currentThread = (J9VMThread *)env; 
-	J9VMThread *vmThread = (J9VMThread *)(UDATA)threadRef;
+	J9VMThread *vmThread = (J9VMThread *)JLONG_TO_POINTER(threadRef);
 	J9JavaVM *javaVM = currentThread->javaVM;
 	J9InternalVMFunctions *internalVMFunctions = javaVM->internalVMFunctions;
 	j9object_t threadNameString;
@@ -512,7 +512,7 @@ jlong JNICALL
 Java_java_lang_Thread_getNextThreadIdOffset(JNIEnv *env, jclass clazz)
 {
 	J9JavaVM *vm = ((J9VMThread *)env)->javaVM;
-	return (U_64)(uintptr_t)&(vm->nextTID);
+	return JLONG_FROM_POINTER(&(vm->nextTID));
 }
 
 void JNICALL
