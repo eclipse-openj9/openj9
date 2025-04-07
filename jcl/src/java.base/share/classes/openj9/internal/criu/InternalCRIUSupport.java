@@ -1021,6 +1021,25 @@ public final class InternalCRIUSupport {
 	}
 
 	/**
+	 * Set a few default checkpoint parameters for the CRaC and Jcmd CRIU.checkpoint
+	 * and JDK.checkpoint commands.
+	 *
+	 * leaveRunning = false, override any existing value
+	 * shellJob = true
+	 * tcpEstablished = true
+	 * fileLocks = true
+	 *
+	 * @return this
+	 */
+	public InternalCRIUSupport setCheckpointDefaultParams() {
+		this.leaveRunning = false;
+		this.shellJob = true;
+		this.tcpEstablished = true;
+		this.fileLocks = true;
+		return this;
+	}
+
+	/**
 	 * Checkpoint the JVM. This operation will use the CRIU options set by the
 	 * options setters.
 	 *
@@ -1037,22 +1056,91 @@ public final class InternalCRIUSupport {
 	public synchronized void checkpointJVM() {
 		if (isCRaCorCRIUSupportEnabledAndNativeLoaded()) {
 			if (isCheckpointAllowed()) {
+				/* Add option overrides. */
+				Properties props = VM.internalGetProperties();
+
 				/* Add env variables restore hook. */
 				String envFilePath = null;
+				String envFileOpt = props.getProperty("openj9.internal.criu.envFile"); //$NON-NLS-1$
+				if (envFileOpt != null) {
+					Path envFilePathOpt = Path.of(envFileOpt);
+					if (!envFilePathOpt.toFile().exists()) {
+						throw new IllegalArgumentException(envFileOpt + " doesn't exist"); //$NON-NLS-1$
+					}
+					this.envFile = envFilePathOpt;
+				}
 				if (envFile != null) {
 					envFilePath = envFile.toAbsolutePath().toString();
 					registerRestoreEnvVariables();
 				}
 
-				J9InternalCheckpointHookAPI.registerPostRestoreHook(HookMode.SINGLE_THREAD_MODE, RESTORE_CLEAR_INETADDRESS_CACHE_PRIORITY, "Clear InetAddress cache on restore", InternalCRIUSupport::clearInetAddressCache); //$NON-NLS-1$
-				J9InternalCheckpointHookAPI.registerPostRestoreHook(HookMode.SINGLE_THREAD_MODE, RESTORE_ENVIRONMENT_VARIABLES_PRIORITY, "Restore system properties", InternalCRIUSupport::setRestoreJavaProperties); //$NON-NLS-1$
+				J9InternalCheckpointHookAPI.registerPostRestoreHook(HookMode.SINGLE_THREAD_MODE,
+						RESTORE_CLEAR_INETADDRESS_CACHE_PRIORITY, "Clear InetAddress cache on restore", //$NON-NLS-1$
+						InternalCRIUSupport::clearInetAddressCache);
+				J9InternalCheckpointHookAPI.registerPostRestoreHook(HookMode.SINGLE_THREAD_MODE,
+						RESTORE_ENVIRONMENT_VARIABLES_PRIORITY, "Restore system properties", //$NON-NLS-1$
+						InternalCRIUSupport::setRestoreJavaProperties);
 
-				/* Add option overrides. */
-				Properties props = VM.internalGetProperties();
+				String imageDirOpt = props.getProperty("openj9.internal.criu.imageDir"); //$NON-NLS-1$
+				if (imageDirOpt != null) {
+					File file = new File(imageDirOpt);
+					if (!file.isDirectory()) {
+						throw new IllegalArgumentException(imageDirOpt + " is not a valid directory"); //$NON-NLS-1$
+					}
+					this.imageDir = imageDirOpt;
+				}
+
+				String leaveRunningOpt = props.getProperty("openj9.internal.criu.leaveRunning"); //$NON-NLS-1$
+				if (leaveRunningOpt != null) {
+					setLeaveRunning(Boolean.parseBoolean(leaveRunningOpt));
+				}
+
+				String shellJobOpt = props.getProperty("openj9.internal.criu.shellJob"); //$NON-NLS-1$
+				if (shellJobOpt != null) {
+					setShellJob(Boolean.parseBoolean(shellJobOpt));
+				}
+
+				String extUnixSupportOpt = props.getProperty("openj9.internal.criu.extUnixSupport"); //$NON-NLS-1$
+				if (extUnixSupportOpt != null) {
+					setExtUnixSupport(Boolean.parseBoolean(extUnixSupportOpt));
+				}
+
+				String fileLocksOpt = props.getProperty("openj9.internal.criu.fileLocks"); //$NON-NLS-1$
+				if (fileLocksOpt != null) {
+					setFileLocks(Boolean.parseBoolean(fileLocksOpt));
+				}
+
+				String workDirOpt = props.getProperty("openj9.internal.criu.workDir"); //$NON-NLS-1$
+				if (workDirOpt != null) {
+					File file = new File(workDirOpt);
+					if (!file.isDirectory()) {
+						throw new IllegalArgumentException(workDirOpt + " is not a valid directory"); //$NON-NLS-1$
+					}
+					this.workDir = workDirOpt;
+				}
+
+				String autoDedupOpt = props.getProperty("openj9.internal.criu.autoDedup"); //$NON-NLS-1$
+				if (autoDedupOpt != null) {
+					setAutoDedup(Boolean.parseBoolean(autoDedupOpt));
+				}
+
+				String trackMemoryOpt = props.getProperty("openj9.internal.criu.trackMemory"); //$NON-NLS-1$
+				if (trackMemoryOpt != null) {
+					setTrackMemory(Boolean.parseBoolean(trackMemoryOpt));
+				}
+
+				String optionsFileOpt = props.getProperty("openj9.internal.criu.optionsFile"); //$NON-NLS-1$
+				if (optionsFileOpt != null) {
+					File file = new File(optionsFileOpt);
+					if (!file.exists()) {
+						throw new IllegalArgumentException(optionsFileOpt + " doesn't exist"); //$NON-NLS-1$
+					}
+					this.optionsFile = "-Xoptionsfile=" + optionsFileOpt; //$NON-NLS-1$
+				}
 
 				String unprivilegedOpt = props.getProperty("openj9.internal.criu.unprivilegedMode"); //$NON-NLS-1$
 				if (unprivilegedOpt != null) {
-						setUnprivileged(Boolean.parseBoolean(unprivilegedOpt));
+					setUnprivileged(Boolean.parseBoolean(unprivilegedOpt));
 				}
 
 				String tcpEstablishedOpt = props.getProperty("openj9.internal.criu.tcpEstablished"); //$NON-NLS-1$
@@ -1065,20 +1153,22 @@ public final class InternalCRIUSupport {
 					try {
 						setGhostFileLimit(Long.parseLong(ghostFileLimitOpt));
 					} catch (NumberFormatException e) {
-						System.err.println("Invalid value specified: `-Dopenj9.internal.criu.ghostFileLimit=" + ghostFileLimitOpt + "`."); //$NON-NLS-1$ //$NON-NLS-2$
+						System.err.println("Invalid value specified: `-Dopenj9.internal.criu.ghostFileLimit=" //$NON-NLS-1$
+								+ ghostFileLimitOpt + "`."); //$NON-NLS-1$
 					}
 				}
 
-				String logLevelOpt =  props.getProperty("openj9.internal.criu.logLevel"); //$NON-NLS-1$
+				String logLevelOpt = props.getProperty("openj9.internal.criu.logLevel"); //$NON-NLS-1$
 				if (logLevelOpt != null) {
 					try {
 						setLogLevel(Integer.parseInt(logLevelOpt));
 					} catch (NumberFormatException e) {
-						System.err.println("Invalid value specified: `-Dopenj9.internal.criu.logLevel=" + logLevelOpt + "` ."); //$NON-NLS-1$ //$NON-NLS-2$
+						System.err.println(
+								"Invalid value specified: `-Dopenj9.internal.criu.logLevel=" + logLevelOpt + "` ."); //$NON-NLS-1$ //$NON-NLS-2$
 					}
 				}
 
-				String logFileOpt =  props.getProperty("openj9.internal.criu.logFile"); //$NON-NLS-1$
+				String logFileOpt = props.getProperty("openj9.internal.criu.logFile"); //$NON-NLS-1$
 				if (logFileOpt != null) {
 					setLogFile(logFileOpt);
 				}
@@ -1089,7 +1179,7 @@ public final class InternalCRIUSupport {
 				}
 
 				String tcpSkipInFlightOpt = props.getProperty("openj9.internal.criu.tcpSkipInFlight"); //$NON-NLS-1$
-				if (tcpSkipInFlightOpt  != null) {
+				if (tcpSkipInFlightOpt != null) {
 					setTCPSkipInFlight(Boolean.parseBoolean(tcpSkipInFlightOpt));
 				}
 
@@ -1100,8 +1190,8 @@ public final class InternalCRIUSupport {
 				J9InternalCheckpointHookAPI.runPreCheckpointHooksConcurrentThread();
 				System.gc();
 				checkpointJVMImpl(imageDir, leaveRunning, shellJob, extUnixSupport, logLevel, logFile, fileLocks,
-						workDir, tcpEstablished, autoDedup, trackMemory, unprivileged, optionsFile, envFilePath, ghostFileLimit,
-						tcpClose, tcpSkipInFlight);
+						workDir, tcpEstablished, autoDedup, trackMemory, unprivileged, optionsFile, envFilePath,
+						ghostFileLimit, tcpClose, tcpSkipInFlight);
 				J9InternalCheckpointHookAPI.runPostRestoreHooksConcurrentThread();
 			} else {
 				throw new UnsupportedOperationException(
