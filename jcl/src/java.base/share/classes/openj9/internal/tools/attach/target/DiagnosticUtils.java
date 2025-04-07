@@ -23,8 +23,12 @@
 
 package openj9.internal.tools.attach.target;
 
+import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -161,6 +165,9 @@ public class DiagnosticUtils {
 	private static final String DIAGNOSTICS_JFR_START = "JFR.start";
 	private static final String DIAGNOSTICS_JFR_DUMP = "JFR.dump";
 	private static final String DIAGNOSTICS_JFR_STOP = "JFR.stop";
+
+	private static final int ERROR_NO_TIME_UNIT = -1;
+	private static final int ERROR_NO_TIME_DURATION = -2;
 /*[ENDIF] JFR_SUPPORT */
 
 	/**
@@ -227,7 +234,39 @@ public class DiagnosticUtils {
 	 * @return formatted string
 	 */
 	public static String makeJcmdCommand(String[] options, int skip) {
-		String cmd = String.join(DIAGNOSTICS_OPTION_SEPARATOR, Arrays.asList(options).subList(skip, options.length));
+		int optionsLength = options.length;
+/*[IF JFR_SUPPORT]*/
+		if (optionsLength >= 2) {
+			// there is a jcmd command
+			if (DIAGNOSTICS_JFR_START.equalsIgnoreCase(options[1])) {
+				// search JFR.start options
+				for (int i = 2; i < optionsLength; i++) {
+					String option = options[i];
+					IPC.logMessage("makeJcmdCommand: option = ", option);
+					if (option.startsWith("filename=")) {
+						String fileName = option.substring(option.indexOf("=") + 1);
+						try {
+							Path filePath = Paths.get(fileName);
+							if (!filePath.isAbsolute()) {
+								// default recording file path is jcmd current working directory
+								String jcmdPWD = Paths.get("").toAbsolutePath().toString();
+								fileName = jcmdPWD + File.separator + fileName;
+								IPC.logMessage("makeJcmdCommand: absolute filename = ", fileName);
+								// replace existing entry with an absolute jcmd pwd path for the target VM
+								options[i] = "filename=" + fileName;
+							}
+						} catch (InvalidPathException ipe) {
+							// ignore this exception and keep the original entry
+							IPC.logMessage("makeJcmdCommand: ipe = ", ipe.getMessage());
+						}
+						// only one filename is allowed
+						break;
+					}
+				}
+			}
+		}
+/*[ENDIF] JFR_SUPPORT */
+		String cmd = String.join(DIAGNOSTICS_OPTION_SEPARATOR, Arrays.asList(options).subList(skip, optionsLength));
 		return cmd;
 	}
 
@@ -433,13 +472,25 @@ public class DiagnosticUtils {
 			timeInMilli = TimeUnit.DAYS.toMillis(time);
 			break;
 		default:
-			// no unit or unrecognized unit, assume milliseconds
-			timeInMilli = time;
+			// no unit or unrecognized unit, return ERROR_NO_TIME_UNIT
+			timeInMilli = ERROR_NO_TIME_UNIT;
 			break;
 		}
 		return timeInMilli;
 	}
 
+	/**
+	 * Parse a time parameter, and return the duration in milliseconds.
+	 * If the time unit is missing, ERROR_NO_TIME_UNIT is returned.
+	 * If the paramName is not in parameters, ERROR_NO_TIME_DURATION is returned.
+	 *
+	 * @param paramName the parameter name
+	 * @param parameters the parameter array
+	 *
+	 * @return the duration in milliseconds,
+	 *         ERROR_NO_TIME_UNIT if no time unit,
+	 *         ERROR_NO_TIME_DURATION if paramName wasn't found.
+	 */
 	private static long parseTimeParameter(String paramName, String[] parameters) {
 		for (String param : parameters) {
 			if (param.startsWith(paramName + "=")) {
@@ -449,7 +500,7 @@ public class DiagnosticUtils {
 				}
 			}
 		}
-		return -1;
+		return ERROR_NO_TIME_DURATION;
 	}
 
 	private static String parseStringParameter(String paramName, String[] parameters, String defaultValue) {
@@ -493,9 +544,12 @@ public class DiagnosticUtils {
 							jfrRecordingFileName = fileName;
 						}
 					}
-					VM.startJFR();
 					long duration = parseTimeParameter("duration", parameters);
 					IPC.logMessage("doJFR: duration = " + duration);
+					if (duration == ERROR_NO_TIME_UNIT) {
+						return DiagnosticProperties.makeErrorProperties("The duration doesn't have a time unit.");
+					}
+					VM.startJFR();
 					if (duration > 0) {
 						Timer timer = new Timer();
 						TimerTask jfrDumpTask = new TimerTask() {
