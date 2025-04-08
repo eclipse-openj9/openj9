@@ -539,10 +539,10 @@ void TR_RelocationRuntime::relocationFailureCleanup()
 
 static int32_t strHash(const char *str)
    {
-   // The string hash from Java
+   // The string hash from Java.
    int32_t result = 0;
-   for (const unsigned char *s = reinterpret_cast<const unsigned char*>(str); *s; s++)
-      result = result * 33 + *s;
+   for (const unsigned char *s = reinterpret_cast<const unsigned char *>(str); '\0' != *s; ++s)
+      result = (result * 31) + *s;
    return result;
    }
 
