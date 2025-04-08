@@ -1082,6 +1082,15 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 			extensions->virtualLargeObjectHeap._valueSpecified = false;
 			continue;
 		}
+
+		/* Offheap size ratio (relative to max size of main heap). Expressed in percentages (for example, 650 means that offheap is 6.5x larger than main heap) */
+		if (try_scan(&scan_start, "virtualLargeObjectHeapRatio=")) {
+			if (!scan_udata_helper(vm, &scan_start, &extensions->sparseHeapSizeRatio, "virtualLargeObjectHeapRatio=")) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			continue;
+		}
 #endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 
 		if (try_scan(&scan_start, "largeObjectAllocationProfilingThreshold=")) {
