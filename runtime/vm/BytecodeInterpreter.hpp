@@ -5243,11 +5243,16 @@ done:
 				UDATA result = preparePinnedVirtualThreadForUnmount(_currentThread, object, true);
 				VMStructHasBeenUpdated(REGISTER_ARGS);
 				if (J9_OBJECT_MONITOR_OOM != result) {
+					PORT_ACCESS_FROM_JAVAVM(_vm);
 					/* Handle the virtual thread Object.wait call.
 					 * VirtualThread.timeout is a private field used by both VM and JCL to temporarily hold
 					 * the value of expected wait/park time before a wake up task is scheduled using the value.
 					 */
 					J9VMJAVALANGVIRTUALTHREAD_SET_TIMEOUT(_currentThread, _currentThread->threadObject, millis + (nanos / 1000000));
+					_currentThread->currentContinuation->startTicks = j9time_nano_time();
+					omrthread_monitor_t monitor = _currentThread->currentContinuation->objectWaitMonitor->monitor;
+					/* Trigger MonitorWait hook. */
+					TRIGGER_J9HOOK_VM_MONITOR_WAIT(_vm->hookInterface, _currentThread, monitor, millis + (nanos / 1000000), 0);
 					rc = yieldPinnedContinuation(REGISTER_ARGS, newState, J9VM_CONTINUATION_RETURN_FROM_OBJECT_WAIT);
 				} else {
 					rc = THROW_MONITOR_ALLOC_FAIL;
@@ -5791,19 +5796,27 @@ ffi_OOM:
 		case J9VM_CONTINUATION_RETURN_FROM_MONITOR_ENTER:
 			break;
 		case J9VM_CONTINUATION_RETURN_FROM_OBJECT_WAIT: {
-			j9object_t waitObject = *(j9object_t *)(_sp + 3);
-			rc = tryEnterBlockingMonitor(REGISTER_ARGS, waitObject, J9VM_CONTINUATION_RETURN_FROM_OBJECT_WAIT);
+			rc = tryEnterBlockingMonitor(REGISTER_ARGS, syncObject, J9VM_CONTINUATION_RETURN_FROM_OBJECT_WAIT);
 			if ((NULL != _currentThread->currentContinuation) && (EXECUTE_BYTECODE == rc)) {
-				waitObject = *(j9object_t *)(_sp + 3);
-				omrthread_monitor_t monitor = getMonitorForWait(_currentThread, waitObject);
+				syncObject = *(j9object_t *)(_sp + 3);
+				omrthread_monitor_t monitor = getMonitorForWait(_currentThread, syncObject);
 				monitor->count = _currentThread->currentContinuation->waitingMonitorEnterCount;
 				_currentThread->ownedMonitorCount += monitor->count - 1;
 				_currentThread->currentContinuation->waitingMonitorEnterCount = 0;
 
+				bool interrupted = J9VMJAVALANGTHREAD_DEADINTERRUPT(_currentThread, _currentThread->threadObject);
+				bool notified = J9VMJAVALANGVIRTUALTHREAD_NOTIFIED(_currentThread, _currentThread->threadObject);
+
+				if (J9_EVENT_IS_HOOKED(_vm->hookInterface, J9HOOK_VM_MONITOR_WAITED)) {
+					IDATA rc = (interrupted ? J9THREAD_INTERRUPTED : (notified ? 0 : J9THREAD_TIMED_OUT));
+					UDATA millis = J9VMJAVALANGVIRTUALTHREAD_TIMEOUT(_currentThread, _currentThread->threadObject);
+
+					/* Dispatch MonitorWaited hook, with stored metadata. */
+					TRIGGER_J9HOOK_VM_MONITOR_WAITED(_vm->hookInterface, _currentThread, monitor, millis, 0, rc, _currentThread->currentContinuation->startTicks, (UDATA) monitor, J9OBJECT_CLAZZ(_currentThread, syncObject));
+				}
+
 				/* Only throw an exception if the virtual thread has not been notified. */
-				if (J9VMJAVALANGTHREAD_DEADINTERRUPT(_currentThread, _currentThread->threadObject)
-				&& !J9VMJAVALANGVIRTUALTHREAD_NOTIFIED(_currentThread, _currentThread->threadObject)
-				) {
+				if (interrupted	&& !notified) {
 					/* Build a native frame on vthread stack before throwing exception. */
 					buildInternalNativeStackFrame(REGISTER_ARGS);
 					updateVMStruct(REGISTER_ARGS);
