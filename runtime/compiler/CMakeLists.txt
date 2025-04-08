@@ -263,6 +263,10 @@ if(OMR_OS_LINUX OR OMR_OS_OSX)
 		-fno-threadsafe-statics
 		-Wno-invalid-offsetof
 	)
+	if(OMR_ENV_DATA32)
+		# avoid memset warnings, for warnings as errors
+		list(APPEND J9_CXXFLAGS -Wno-stringop-overflow)
+	endif()
 	if(NOT J9VM_OPT_JITSERVER)
 		list(APPEND J9_CXXFLAGS -fno-rtti)
 	endif()
