@@ -3011,6 +3011,20 @@ gcInitializeDefaults(J9JavaVM* vm)
 		memoryParameterTable[opt_Xmx] = memoryParameterTable[opt_maxRAMPercent];
 	}
 
+	if (-1 == memoryParameterTable[opt_Xmx]) {
+		/* set default max heap for Java */
+		extensions->memoryMax = extensions->computeDefaultMaxHeapForJava(extensions->enableOriginalJDK8HeapSizeCompatibilityOption);
+		/* if max heap size smaller than specified initial size adjust it */
+		if ((-1 != memoryParameterTable[opt_Xms]) && (extensions->initialMemorySize > extensions->memoryMax)) {
+			extensions->memoryMax = extensions->initialMemorySize;
+		}
+	}
+
+	/* Since the user is not specifying a value, ensure that -Xmdx is set to the same value
+	 * as -Xmx.  It does not matter whether -Xmx was specified or not.
+	 */
+	extensions->maxSizeDefaultMemorySpace = extensions->memoryMax;
+
 	if (gc_policy_metronome == extensions->configurationOptions._gcPolicy) {
 		/* Heap is segregated; take into account segregatedAllocationCache. */
 		vm->segregatedAllocationCacheSize = (J9VMGC_SIZECLASSES_NUM_SMALL + 1)*sizeof(J9VMGCSegregatedAllocationCacheEntry);

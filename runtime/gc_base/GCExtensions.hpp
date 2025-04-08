@@ -248,6 +248,7 @@ public:
 	TimingAddContinuationInList timingAddContinuationInList;
 	bool testContainerMemLimit; /**< if set simulates a container with memory limit set - for GC testing only*/
 	double testRAMSizePercentage; /**< a percentage to increase/decrease usablePhysicalMemory - for GC testing only, only applies to CRIU restore VM */
+	bool enableOriginalJDK8HeapSizeCompatibilityOption; /**< if set use JDK8 heap size default */
 protected:
 private:
 protected:
@@ -449,6 +450,7 @@ public:
 		, timingAddContinuationInList(onCreated)
 		, testContainerMemLimit(false)
 		, testRAMSizePercentage(-1.0)
+		, enableOriginalJDK8HeapSizeCompatibilityOption(false)
 	{
 		_typeId = __FUNCTION__;
 	}
