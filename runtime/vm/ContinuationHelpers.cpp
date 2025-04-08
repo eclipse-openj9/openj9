@@ -243,7 +243,7 @@ enterContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 	Assert_VM_notNull(continuation);
 
 #if JAVA_SPEC_VERSION >= 24
-	if (NULL != continuation->nextWaitingContinuation) {
+	if (started && (J9VM_CONTINUATION_RETURN_FROM_YIELD != continuation->returnState)) {
 		/* Continuation is still in a blocked list. This can happen with TIMED_WAIT.
 		 * It must be removed from the waiting list.
 		 */
@@ -255,12 +255,17 @@ enterContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 		foundInBlockedContinuationList = VM_ContinuationHelpers::removeContinuationFromList(
 				&vm->blockedContinuations, continuation);
 
-		foundInMonitorList = VM_ContinuationHelpers::removeContinuationFromList(
-				&continuation->objectWaitMonitor->waitingContinuations, continuation);
+		if (foundInBlockedContinuationList) {
+			continuation->objectWaitMonitor->virtualThreadWaitCount -= 1;
+			Assert_VM_true(continuation->objectWaitMonitor->virtualThreadWaitCount >= 0);
+		}
+
+		if (NULL != continuation->objectWaitMonitor->waitingContinuations) {
+			foundInMonitorList = VM_ContinuationHelpers::removeContinuationFromList(
+					&continuation->objectWaitMonitor->waitingContinuations, continuation);
+		}
 
 		omrthread_monitor_exit(vm->blockedVirtualThreadsMutex);
-
-		Assert_VM_true(foundInMonitorList || foundInMonitorList);
 
 		/* Virtual can only be in one list at a time. */
 		Assert_VM_false(foundInBlockedContinuationList && foundInMonitorList);
@@ -1105,8 +1110,6 @@ restart:
 			currentThread->currentContinuation->objectWaitMonitor = syncObjectMonitor;
 			omrthread_monitor_exit(vm->blockedVirtualThreadsMutex);
 		} else {
-			/* Increment the wait count on inflated monitor. */
-			VM_AtomicSupport::addU32(&syncObjectMonitor->virtualThreadWaitCount, 1);
 			currentThread->currentContinuation->objectWaitMonitor = syncObjectMonitor;
 
 			if (NULL != monitor) {
@@ -1157,6 +1160,7 @@ restart:
 			bool hasPlatformThreadWaiting = false;
 			while (NULL != current) {
 				bool unblocked = false;
+				J9ObjectMonitor *syncObjectMonitor = current->objectWaitMonitor;
 				U_32 state = J9VMJAVALANGVIRTUALTHREAD_STATE(currentThread, current->vthread);
 				next = current->nextWaitingContinuation;
 
@@ -1164,55 +1168,46 @@ restart:
 				 * which doesn't notify the unblocker when exiting monitor.
 				 */
 				if (((JAVA_LANG_VIRTUALTHREAD_BLOCKING == state)
-					|| (JAVA_LANG_VIRTUALTHREAD_BLOCKED == state))
-				&& (current->objectWaitMonitor->platformThreadWaitCount > 0)
+					|| (JAVA_LANG_VIRTUALTHREAD_BLOCKED == state)
+					|| (JAVA_LANG_VIRTUALTHREAD_WAIT == state)
+					|| (JAVA_LANG_VIRTUALTHREAD_TIMED_WAIT == state))
+				&& (syncObjectMonitor->platformThreadWaitCount > 0)
 				) {
 					hasPlatformThreadWaiting = true;
 				}
+
 				/* Skip vthreads that are still in transition. */
 				switch (state) {
 				case JAVA_LANG_VIRTUALTHREAD_BLOCKING:
 				case JAVA_LANG_VIRTUALTHREAD_WAITING:
 				case JAVA_LANG_VIRTUALTHREAD_TIMED_WAITING:
+					J9VMJAVALANGVIRTUALTHREAD_SET_BLOCKPERMIT(currentThread, current->vthread, JNI_TRUE);
 					previous = current;
 					current = next;
 					continue;
 				case JAVA_LANG_VIRTUALTHREAD_WAIT:
 				case JAVA_LANG_VIRTUALTHREAD_TIMED_WAIT:
 					J9VMJAVALANGVIRTUALTHREAD_SET_STATE(currentThread, current->vthread, JAVA_LANG_VIRTUALTHREAD_BLOCKED);
-					/* FALLTHROUGH */
-				default:
-					break;
-				}
-				if (J9VMJAVALANGVIRTUALTHREAD_ONWAITINGLIST(currentThread, current->vthread)) {
-					unblocked = true;
-				} else {
-					j9object_t continuationObj = J9VMJAVALANGVIRTUALTHREAD_CONT(currentThread, current->vthread);
-					j9object_t syncObject = J9VMJDKINTERNALVMCONTINUATION_BLOCKER(currentThread, continuationObj);
-					J9ObjectMonitor *syncObjectMonitor = NULL;
-					j9objectmonitor_t lock = 0;
-					if (!LN_HAS_LOCKWORD(currentThread, syncObject)) {
-						syncObjectMonitor = vmFuncs->monitorTablePeek(vm, syncObject);
-						if (NULL != syncObjectMonitor){
-							lock = J9_LOAD_LOCKWORD_VM(vm, &syncObjectMonitor->alternateLockword);
-						}
-					} else {
-						lock = J9OBJECT_MONITOR(currentThread, syncObject);
-						if (J9_LOCK_IS_INFLATED(lock)) {
-							syncObjectMonitor = J9_INFLLOCK_OBJECT_MONITOR(lock);
-						}
-					}
-					/* Only perform the below operations for inflated monitors. */
-					if (NULL != syncObjectMonitor) {
-						omrthread_monitor_t monitor = syncObjectMonitor->monitor;
+					/* Fall-through */
+				case JAVA_LANG_VIRTUALTHREAD_BLOCKED:
+				{
+					Assert_VM_true(syncObjectMonitor->virtualThreadWaitCount > 0);
+					omrthread_monitor_t monitor = syncObjectMonitor->monitor;
+					/* All blocking/waiting monitor have to be inflated, if the monitor has not been inflated,
+					 * then the owner have not yet released the flatlock.
+					 */
+					if (J9_ARE_ANY_BITS_SET(((J9ThreadMonitor *)monitor)->flags, J9THREAD_MONITOR_INFLATED)) {
 						if (0 == monitor->count) {
 							unblocked = true;
-							if (syncObjectMonitor->virtualThreadWaitCount >= 1) {
-								VM_AtomicSupport::subtractU32(&syncObjectMonitor->virtualThreadWaitCount, 1);
-							}
+							syncObjectMonitor->virtualThreadWaitCount -= 1;
 							J9VMJAVALANGVIRTUALTHREAD_SET_ONWAITINGLIST(currentThread, current->vthread, JNI_TRUE);
 						}
 					}
+					break;
+				}
+				default:
+					/* Thread must be unblocked by AfterYield(), hence it can only be UNBLOCKED or RUNNING. */
+					Assert_VM_true((JAVA_LANG_VIRTUALTHREAD_RUNNING == state) || (JAVA_LANG_VIRTUALTHREAD_UNBLOCKED == state));
 				}
 
 				if (unblocked) {
