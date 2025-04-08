@@ -1217,6 +1217,15 @@ obj:
 				}
 			}
 		}
+#if JAVA_SPEC_VERSION >= 24
+		if (rc == (UDATA)obj) {
+			J9VMContinuation *continuation = _currentThread->currentContinuation;
+			if (NULL != continuation) {
+				/* Do not need to record whether contended monitor enter event is triggered after entered the monitor. */
+				continuation->runtimeFlags &= ~J9VM_CONTINUATION_RUNTIMEFLAG_JVMTI_CONTENDED_MONITOR_ENTER_RECORDED;
+			}
+		}
+#endif /* JAVA_SPEC_VERSION >= 24 */
 		return rc;
 	}
 
@@ -1537,6 +1546,16 @@ obj:
 		J9VMJAVALANGVIRTUALTHREAD_SET_STATE(_currentThread, _currentThread->threadObject, newThreadState);
 
 		if (JAVA_LANG_VIRTUALTHREAD_BLOCKING == newThreadState) {
+			if (J9_EVENT_IS_HOOKED(_vm->hookInterface, J9HOOK_VM_MONITOR_CONTENDED_ENTER)
+				&& J9_ARE_NO_BITS_SET(continuation->runtimeFlags, J9VM_CONTINUATION_RUNTIMEFLAG_JVMTI_CONTENDED_MONITOR_ENTER_RECORDED)
+			) {
+				ALWAYS_TRIGGER_J9HOOK_VM_MONITOR_CONTENDED_ENTER(_vm->hookInterface, _currentThread, continuation->objectWaitMonitor->monitor);
+				/* It is possible that a continuation reaches yieldPinnedContinuation multiple times trying to enter the same monitor.
+				 * The MONITOR_CONTENDED_ENTER event should be triggered only once.
+				 * J9VM_CONTINUATION_RUNTIMEFLAG_JVMTI_CONTENDED_MONITOR_ENTER_RECORDED is cleared once entered the monitor.
+				 */
+				continuation->runtimeFlags |= J9VM_CONTINUATION_RUNTIMEFLAG_JVMTI_CONTENDED_MONITOR_ENTER_RECORDED;
+			}
 			/* Add the thread object to the blocked list. */
 			omrthread_monitor_enter(_vm->blockedVirtualThreadsMutex);
 			/* Increment the wait count on inflated monitor. */
