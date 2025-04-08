@@ -923,6 +923,7 @@ preparePinnedVirtualThreadForMount(J9VMThread *currentThread, j9object_t continu
 	/* Add the attached monitor to the carrier thread's lockedmonitorcount. */
 	currentThread->osThread->lockedmonitorcount += monitorCount;
 	if (J9VM_CONTINUATION_RETURN_FROM_YIELD != currentThread->currentContinuation->returnState) {
+		VM_VMHelpers::virtualThreadHideFrames(currentThread, JNI_FALSE);
 		exitVThreadTransitionCritical(currentThread, (jobject)&currentThread->threadObject);
 	}
 }
@@ -1139,6 +1140,8 @@ done:
 	if (NULL != syncObj) {
 		if (J9_OBJECT_MONITOR_YIELD_VIRTUAL != result) {
 			exitVThreadTransitionCritical(currentThread, (jobject)&currentThread->threadObject);
+		} else {
+			VM_VMHelpers::virtualThreadHideFrames(currentThread, JNI_TRUE);
 		}
 		if (!isObjectWait) {
 			/* Clear the blocking object on the carrier thread. */
