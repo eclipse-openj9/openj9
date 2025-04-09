@@ -20,7 +20,6 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
-
 #include "j9cfg.h"
 #include "j9.h"
 #include "modron.h"
@@ -33,22 +32,31 @@
 #include "GCExtensions.hpp"
 
 void 
-MM_StackSlotValidator::threadCrash(MM_EnvironmentBase* env)
+MM_StackSlotValidator::threadCrash(MM_EnvironmentBase *env)
 {
 	reportStackSlot(env, "Unhandled exception while validating object in stack frame");
 }
 
 void
-MM_StackSlotValidator::reportStackSlot(MM_EnvironmentBase* env, const char* message)
+MM_StackSlotValidator::reportStackSlot(MM_EnvironmentBase *env, const char *message)
 {
 	PORT_ACCESS_FROM_ENVIRONMENT(env);
-	J9VMThread* walkThread = _walkState->walkThread;
+	J9VMThread *walkThread = _walkState->walkThread;
 	Trc_MM_StackSlotValidator_reportStackSlot_Entry(env->getLanguageVMThread(), walkThread);
 
-	char* threadName = getOMRVMThreadName(walkThread->omrVMThread);
+	char *threadName = NULL;
+	if (NULL != walkThread->omrVMThread) {
+		threadName = getOMRVMThreadName(walkThread->omrVMThread);
+	}
+#if JAVA_SPEC_VERSION >= 19
+	else if (NULL != walkThread->currentContinuation) {
+		threadName = getContinuationThreadName(env, walkThread->currentContinuation);
+	}
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
 	j9tty_printf(PORTLIB, "%p: %s in thread %s\n", walkThread, message, NULL == threadName ? "NULL" : threadName);
 	Trc_MM_StackSlotValidator_thread(env->getLanguageVMThread(), message, NULL == threadName ? "NULL" : threadName);
-	
+
 	j9tty_printf(PORTLIB, "%p:\tO-Slot=%p\n", walkThread, _stackLocation);
 	Trc_MM_StackSlotValidator_OSlot(env->getLanguageVMThread(), _stackLocation);
 	
@@ -75,13 +83,13 @@ MM_StackSlotValidator::reportStackSlot(MM_EnvironmentBase* env, const char* mess
 	Trc_MM_StackSlotValidator_jitInfo(env->getLanguageVMThread(), _walkState->jitInfo);
 #endif /* J9VM_INTERP_NATIVE_SUPPORT */
 
-	J9Method * method = _walkState->method;
+	J9Method *method = _walkState->method;
 	if (NULL != method) {
-		J9UTF8 * className = J9ROMCLASS_CLASSNAME(J9_CP_FROM_METHOD(method)->ramClass->romClass);
-		J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
-		J9UTF8 * name = J9ROMMETHOD_NAME(romMethod);
-		J9UTF8 * sig = J9ROMMETHOD_SIGNATURE(romMethod);
-		const char* type = "Interpreted";
+		J9UTF8 *className = J9ROMCLASS_CLASSNAME(J9_CP_FROM_METHOD(method)->ramClass->romClass);
+		J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+		J9UTF8 *name = J9ROMMETHOD_NAME(romMethod);
+		J9UTF8 *sig = J9ROMMETHOD_SIGNATURE(romMethod);
+		const char*type = "Interpreted";
 #ifdef J9VM_INTERP_NATIVE_SUPPORT
 		if (NULL != _walkState->jitInfo) {
 			type = "JIT";
@@ -100,8 +108,35 @@ MM_StackSlotValidator::reportStackSlot(MM_EnvironmentBase* env, const char* mess
 	j9tty_printf(PORTLIB, "%p:\tstack=%p-%p\n", walkThread, walkThread->stackObject + 1, walkThread->stackObject->end);
 	Trc_MM_StackSlotValidator_stack(env->getLanguageVMThread(), walkThread->stackObject + 1, walkThread->stackObject->end);
 
-	releaseOMRVMThreadName(walkThread->omrVMThread);
-	
+	if (NULL != walkThread->omrVMThread) {
+		releaseOMRVMThreadName(walkThread->omrVMThread);
+	}
+#if JAVA_SPEC_VERSION >= 19
+	else if (NULL != walkThread->currentContinuation) {
+		releaseContinuationThreadName(env, threadName);
+	}
+#endif /* JAVA_SPEC_VERSION >= 19 */
+
 	Trc_MM_StackSlotValidator_reportStackSlot_Exit(env->getLanguageVMThread());
 }
 
+#if JAVA_SPEC_VERSION >= 19
+char *
+MM_StackSlotValidator::getContinuationThreadName(MM_EnvironmentBase *env, J9VMContinuation *continuation)
+{
+	char *threadName = NULL;
+	threadName = (char *) env->getForge()->allocate(64, MM_AllocationCategory::DIAGNOSTIC, J9_GET_CALLSITE());
+	if (NULL != threadName) {
+		snprintf(threadName, 64, "J9VMContinuation@%p", continuation);
+	}
+	return threadName;
+}
+
+void
+MM_StackSlotValidator::releaseContinuationThreadName(MM_EnvironmentBase *env, char *threadName)
+{
+	if (NULL != threadName) {
+		env->getForge()->free(threadName);
+	}
+}
+#endif /* JAVA_SPEC_VERSION >= 19 */
