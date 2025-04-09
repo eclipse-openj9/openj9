@@ -44,14 +44,13 @@ set(J9VM_OPT_SWITCH_STACKS_FOR_SIGNAL_HANDLER OFF CACHE BOOL "")
 set(J9VM_PORT_RUNTIME_INSTRUMENTATION ON CACHE BOOL "")
 set(J9VM_THR_ASYNC_NAME_UPDATE OFF CACHE BOOL "")
 
-
 set(OMR_GC_CONCURRENT_SCAVENGER ON CACHE BOOL "")
 set(OMR_GC_HEAP_CARD_TABLE ON CACHE BOOL "")
 set(OMR_THR_SPIN_WAKE_CONTROL OFF CACHE BOOL "")
 set(OMR_THR_THREE_TIER_LOCKING OFF CACHE BOOL "")
 
 # Note: In CMake, 'set's on cache variables only apply if the cache variable
-# is not already set. Thus any cache varaibles set in this file, override
+# is not already set. Thus any cache variables set in this file, override
 # anything set in common.cmake
 
 include("${CMAKE_CURRENT_LIST_DIR}/common.cmake")
