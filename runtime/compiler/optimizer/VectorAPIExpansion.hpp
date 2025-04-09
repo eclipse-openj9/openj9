@@ -27,6 +27,7 @@
 #include "optimizer/OptimizationManager.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/RecognizedMethods.hpp"
+#include "env/VerboseLog.hpp"
 #include "il/SymbolReference.hpp"
 #include "infra/Assert.hpp"
 
@@ -1638,5 +1639,33 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *      Transformed node
    */
    static TR::Node *transformNary(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node, TR::DataType elementType, TR::VectorLength vectorLength, int32_t numLanes, handlerMode mode, TR::ILOpCodes scalarOpCode, TR::ILOpCodes vectorOpCode, int32_t firstOperand, int32_t numOperands, vapiOpCodeType opCodeType, bool transformRORtoROL);
+
+  /** \brief
+   *    Checks if opcode is implemented on current platform and issues
+   *    verbose message if not
+   *
+   *   \param comp
+   *      Compilation
+   *
+   *   \param opCode
+   *      opcode
+   *
+   *   \return
+   *      opcode is supported
+   */
+   static bool isOpCodeImplemented(TR::Compilation *comp, TR::ILOpCode opCode)
+      {
+      bool result = comp->cg()->getSupportsOpCodeForAutoSIMD(opCode);
+
+      if (!result && TR::Options::getVerboseOption(TR_VerboseVectorAPI))
+         {
+         TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "%s%s is not implemented in %s\n",
+                                  opCode.getName(),
+                                  TR::DataType::getName(opCode.getVectorResultDataType()),
+                                  comp->signature());
+         }
+
+      return result;
+      }
    };
 #endif /* VECTORAPIEXPANSION_INCL */
