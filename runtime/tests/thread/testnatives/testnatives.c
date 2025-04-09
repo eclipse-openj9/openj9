@@ -549,7 +549,7 @@ Java_com_ibm_j9_monitor_tests_TestNatives_getLockWordValue(JNIEnv* env, jobject 
 
 	vm->internalVMFunctions->internalExitVMToJNI((J9VMThread *)env);
 
-	return (jlong)(UDATA)lock;
+	return JLONG_FROM_POINTER(lock);
 }
 
 jlong JNICALL

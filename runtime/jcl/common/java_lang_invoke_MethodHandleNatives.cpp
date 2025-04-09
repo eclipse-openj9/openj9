@@ -199,7 +199,7 @@ initImpl(J9VMThread *currentThread, j9object_t membernameObject, j9object_t refO
 				offset |= J9_SUN_FINAL_FIELD_OFFSET_TAG;
 			}
 		}
-		vmindex = (jlong)fieldID;
+		vmindex = JLONG_FROM_POINTER(fieldID);
 		target = (jlong)offset;
 
 		flags = fieldID->field->modifiers & CFR_FIELD_ACCESS_MASK;
@@ -220,7 +220,7 @@ initImpl(J9VMThread *currentThread, j9object_t membernameObject, j9object_t refO
 		clazzObject = J9VM_J9CLASS_TO_HEAPCLASS(fieldID->declaringClass);
 	} else if (refClass == J9VMJAVALANGREFLECTMETHOD(vm)) {
 		J9JNIMethodID *methodID = vm->reflectFunctions.idFromMethodObject(currentThread, refObject);
-		target = (jlong)methodID->method;
+		target = JLONG_FROM_POINTER(methodID->method);
 
 		J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(methodID->method);
 
@@ -258,7 +258,7 @@ initImpl(J9VMThread *currentThread, j9object_t membernameObject, j9object_t refO
 	} else if (refClass == J9VMJAVALANGREFLECTCONSTRUCTOR(vm)) {
 		J9JNIMethodID *methodID = vm->reflectFunctions.idFromConstructorObject(currentThread, refObject);
 		vmindex = -1;
-		target = (jlong)methodID->method;
+		target = JLONG_FROM_POINTER(methodID->method);
 
 		J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(methodID->method);
 
@@ -896,7 +896,7 @@ Java_java_lang_invoke_MethodHandleNatives_expand(JNIEnv *env, jclass clazz, jobj
 	} else {
 		j9object_t membernameObject = J9_JNI_UNWRAP_REFERENCE(self);
 		jint flags = J9VMJAVALANGINVOKEMEMBERNAME_FLAGS(currentThread, membernameObject);
-		jlong vmindex = (jlong)J9OBJECT_ADDRESS_LOAD(currentThread, membernameObject, vm->vmindexOffset);
+		jlong vmindex = JLONG_FROM_POINTER(J9OBJECT_ADDRESS_LOAD(currentThread, membernameObject, vm->vmindexOffset));
 
 		Trc_JCL_java_lang_invoke_MethodHandleNatives_expand_Data(env, membernameObject, flags, vmindex);
 		if (J9_ARE_ANY_BITS_SET(flags, MN_IS_FIELD)) {
@@ -1021,8 +1021,8 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 		vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
 	} else {
 		j9object_t membernameObject = J9_JNI_UNWRAP_REFERENCE(self);
-		jlong vmindex = (jlong)(UDATA)J9OBJECT_U64_LOAD(currentThread, membernameObject, vm->vmindexOffset);
-		jlong target = (jlong)(UDATA)J9OBJECT_U64_LOAD(currentThread, membernameObject, vm->vmtargetOffset);
+		jlong vmindex = (jlong)J9OBJECT_U64_LOAD(currentThread, membernameObject, vm->vmindexOffset);
+		jlong target = (jlong)J9OBJECT_U64_LOAD(currentThread, membernameObject, vm->vmtargetOffset);
 
 		jint flags = J9VMJAVALANGINVOKEMEMBERNAME_FLAGS(currentThread, membernameObject);
 		jint new_flags = 0;
@@ -1179,7 +1179,7 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 							new_flags = flags;
 
 							/* Load special sendTarget to throw the exception during invocation */
-							target = (jlong)(UDATA)vm->initialMethods.throwDefaultConflict;
+							target = JLONG_FROM_POINTER(vm->initialMethods.throwDefaultConflict);
 						} else {
 							goto done;
 						}
@@ -1188,7 +1188,7 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 					}
 				} else if (NULL != method) {
 					J9JNIMethodID *methodID = vmFuncs->getJNIMethodID(currentThread, method);
-					target = (jlong)(UDATA)method;
+					target = JLONG_FROM_POINTER(method);
 
 					J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(methodID->method);
 					J9UTF8 *methodName = J9ROMMETHOD_NAME(romMethod);
@@ -1334,7 +1334,7 @@ Java_java_lang_invoke_MethodHandleNatives_resolve(
 
 					UDATA inconsistentData = 0;
 					J9JNIFieldID *fieldID = vmFuncs->getJNIFieldID(currentThread, declaringClass, romField, offset, &inconsistentData);
-					vmindex = (jlong)(UDATA)fieldID;
+					vmindex = JLONG_FROM_POINTER(fieldID);
 
 					new_clazz = J9VM_J9CLASS_TO_HEAPCLASS(declaringClass);
 					new_flags = MN_IS_FIELD | (fieldID->field->modifiers & CFR_FIELD_ACCESS_MASK);
@@ -1803,7 +1803,7 @@ Java_java_lang_invoke_MethodHandleNatives_staticFieldOffset(JNIEnv *env, jclass 
 		} else {
 			jint flags = J9VMJAVALANGINVOKEMEMBERNAME_FLAGS(currentThread, membernameObject);
 			if (J9_ARE_ALL_BITS_SET(flags, MN_IS_FIELD & J9AccStatic)) {
-				result = (jlong)(UDATA)J9OBJECT_U64_LOAD(currentThread, membernameObject, vm->vmtargetOffset);
+				result = (jlong)J9OBJECT_U64_LOAD(currentThread, membernameObject, vm->vmtargetOffset);
 			} else {
 				vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, NULL);
 			}
@@ -1893,7 +1893,7 @@ Java_java_lang_invoke_MethodHandleNatives_getMemberVMInfo(JNIEnv *env, jclass cl
 				 * (vTable offset for MH_REF_INVOKEVIRTUAL, iTable index for MH_REF_INVOKEINTERFACE,
 				 * and -1 for other ref kinds).
 				 */
-				jlong vmindex = (jlong)(UDATA)J9OBJECT_U64_LOAD(currentThread, membernameObject, vm->vmindexOffset);
+				jlong vmindex = (jlong)J9OBJECT_U64_LOAD(currentThread, membernameObject, vm->vmindexOffset);
 
 				if (J9_ARE_ANY_BITS_SET(flags, MN_IS_FIELD)) {
 					/* vmindex points to the field offset. */

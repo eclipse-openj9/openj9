@@ -84,13 +84,13 @@ Java_com_ibm_oti_vm_ORBVMHelpers_getJ9ClassFromClass64(JNIEnv *env, jclass rcv, 
 
 	vmFuncs->internalExitVMToJNI(vmThread);
 
-	return (jlong)(UDATA)clazz;
+	return JLONG_FROM_POINTER(clazz);
 }
 
 jlong JNICALL
 Java_com_ibm_oti_vm_ORBVMHelpers_getTotalInstanceSizeFromJ9Class64(JNIEnv *env, jclass rcv, jlong j9clazz)
 {
-	J9Class * clazz = (J9Class *)(UDATA)j9clazz;
+	J9Class * clazz = (J9Class *)JLONG_TO_POINTER(j9clazz);
 
 	return (jlong)clazz->totalInstanceSize;
 }
@@ -98,15 +98,15 @@ Java_com_ibm_oti_vm_ORBVMHelpers_getTotalInstanceSizeFromJ9Class64(JNIEnv *env, 
 jlong JNICALL
 Java_com_ibm_oti_vm_ORBVMHelpers_getInstanceDescriptionFromJ9Class64(JNIEnv *env, jclass rcv, jlong j9clazz)
 {
-	J9Class * clazz = (J9Class *)(UDATA)j9clazz;
+	J9Class * clazz = (J9Class *)JLONG_TO_POINTER(j9clazz);
 
-	return (jlong)(UDATA)clazz->instanceDescription;
+	return JLONG_FROM_POINTER(clazz->instanceDescription);
 }
 
 jlong JNICALL
 Java_com_ibm_oti_vm_ORBVMHelpers_getDescriptionWordFromPtr64(JNIEnv *env, jclass rcv, jlong descriptorPtr)
 {
-	return *(jlong*)(UDATA)descriptorPtr;
+	return *(jlong *)JLONG_TO_POINTER(descriptorPtr);
 }
 
 #else

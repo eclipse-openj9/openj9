@@ -3340,7 +3340,7 @@ static void fillInChildAndSiblingCategories(jvmtiMemoryCategory * categories_buf
 				/* We are adding the first child */
 				parent->firstChild = thisCategory;
 			}
-			parent->liveBytesDeep = (jlong)(UDATA) thisCategory;
+			parent->liveBytesDeep = JLONG_FROM_POINTER(thisCategory);
 		}
 	}
 }

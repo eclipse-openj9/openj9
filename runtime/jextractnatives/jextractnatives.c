@@ -87,7 +87,7 @@ dbgFindPattern(U_8 *pattern, UDATA patternLength, UDATA patternAlignment, U_8 *s
 
 	*bytesSearched = 0;
 
-	if (callFindPattern(pattern, (jint) patternLength, (jint) patternAlignment, (jlong) (UDATA) startSearchFrom, &result)) {
+	if (callFindPattern(pattern, (jint)(IDATA)patternLength, (jint)(IDATA)patternAlignment, JLONG_FROM_POINTER(startSearchFrom), &result)) {
 		return NULL;
 	}
 
@@ -244,8 +244,8 @@ callFindPattern(U_8* pattern, jint patternLength, jint patternAlignment, jlong s
 		globalDumpObj,
 		globalFindPatternMid,
 		patternArray,
-		(jint)patternAlignment,
-		(jlong)startSearchFrom);
+		patternAlignment,
+		startSearchFrom);
 
 	(*globalEnv)->DeleteLocalRef(globalEnv, patternArray);
 
@@ -322,11 +322,7 @@ Java_com_ibm_jvm_j9_dump_extract_Main_getEnvironmentPointer(JNIEnv * env, jobjec
 		goto end;
 	}
 
-#if defined(J9VM_ENV_DATA64)
-	toReturn = (jlong)(IDATA)localRAS->environment;
-#else
-	toReturn = (jlong)(IDATA)localRAS->environment & J9CONST64(0xFFFFFFFF);
-#endif
+	toReturn = JLONG_FROM_POINTER(localRAS->environment);
 
 end:
 	flushCache();
@@ -360,7 +356,7 @@ static void
 callGetMemoryBytes(UDATA address, void *structure, UDATA size, UDATA *bytesRead)
 {
 	jbyteArray data = NULL;
-	jlong ja = address;
+	jlong ja = JLONG_FROM_POINTER(address);
 	jint js = (jsize)size;
 
 	*bytesRead = 0;

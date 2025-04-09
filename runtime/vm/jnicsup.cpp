@@ -839,7 +839,7 @@ static jobject JNICALL newDirectByteBuffer(JNIEnv *env, void *address, jlong cap
 	}
 #endif /* JAVA_SPEC_VERSION < 21 */
 
-	result = env->NewObject(javaVM->java_nio_DirectByteBuffer, javaVM->java_nio_DirectByteBuffer_init, (jlong)(UDATA)address, actualCapacity);
+	result = env->NewObject(javaVM->java_nio_DirectByteBuffer, javaVM->java_nio_DirectByteBuffer_init, JLONG_FROM_POINTER(address), actualCapacity);
 	Trc_VM_JNI_NewDirectByteBuffer_Exit(env, result);
 	return result;
 }

@@ -53,10 +53,10 @@ Java_jdk_internal_foreign_abi_UpcallStubs_freeUpcallStub0(JNIEnv *env, jclass cl
 	/* The first element of the function pointer holds the thunk memory address,
 	 * as specified in vm/ap64/UpcallThunkGen.cpp and vm/mz64/UpcallThunkGen.cpp.
 	 */
-	void **functionPtr = (void **)(intptr_t)address;
+	void **functionPtr = (void **)JLONG_TO_POINTER(address);
 	void *thunkAddr = *functionPtr;
 #else /* defined(AIXPPC) || defined(J9ZOS390) */
-	void *thunkAddr = (void *)(intptr_t)address;
+	void *thunkAddr = JLONG_TO_POINTER(address);
 #endif /* defined(AIXPPC) || defined(J9ZOS390) */
 
 	PORT_ACCESS_FROM_JAVAVM(vm);

@@ -419,11 +419,11 @@ Java_j9vm_test_jni_CriticalRegionTest_acquireDiscardAndGC(JNIEnv * env, jclass c
 		result = JNI_TRUE;
 	}
 
-	addressesElems = (jlong*)(*env)->GetPrimitiveArrayCritical(env, addresses, &isCopy);
-	if(NULL != addressesElems) {
-		addressesElems[0] = (jlong)(UDATA)elems1;
-		addressesElems[1] = (jlong)(UDATA)elems2;
-		(*env)->ReleasePrimitiveArrayCritical(env, addresses, (void*)addressesElems, 0);
+	addressesElems = (jlong *)(*env)->GetPrimitiveArrayCritical(env, addresses, &isCopy);
+	if (NULL != addressesElems) {
+		addressesElems[0] = JLONG_FROM_POINTER(elems1);
+		addressesElems[1] = JLONG_FROM_POINTER(elems2);
+		(*env)->ReleasePrimitiveArrayCritical(env, addresses, (void *)addressesElems, 0);
 	}
 
 	(*env)->ReleasePrimitiveArrayCritical(env, array, elems2, 0);
