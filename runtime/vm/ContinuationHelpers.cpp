@@ -936,13 +936,12 @@ preparePinnedVirtualThreadForUnmount(J9VMThread *currentThread, j9object_t syncO
 	J9ObjectMonitor *enteredMonitorsList = NULL;
 	UDATA monitorCount = 0;
 	J9JavaVM *vm = currentThread->javaVM;
+	J9VMContinuation *continuation = currentThread->currentContinuation;
 
 	if (NULL != syncObj) {
 		j9objectmonitor_t volatile *lwEA = VM_ObjectMonitor::inlineGetLockAddress(currentThread, syncObj);
 		j9objectmonitor_t lock = J9_LOAD_LOCKWORD(currentThread, lwEA);
 		omrthread_monitor_t monitor = NULL;
-
-		enterVThreadTransitionCritical(currentThread, (jobject)&currentThread->threadObject);
 
 		if (J9_LOCK_IS_INFLATED(lock)) {
 			syncObjectMonitor = J9_INFLLOCK_OBJECT_MONITOR(lock);
@@ -970,7 +969,7 @@ restart:
 						lock = J9_LOAD_LOCKWORD(currentThread, lwEA);
 						if (VM_ObjectMonitor::inlineFastInitAndEnterMonitor(currentThread, lwEA)) {
 							result = (UDATA)syncObj;
-							goto done;
+							goto success;
 						}
 					}
 				}
@@ -984,7 +983,7 @@ restart:
 					if (J9_ARE_ANY_BITS_SET(((J9ThreadMonitor *)monitor)->flags, J9THREAD_MONITOR_INFLATED)) {
 						currentThread->ownedMonitorCount += 1;
 						result = (UDATA)syncObj;
-						goto done;
+						goto success;
 					}
 
 					/* Loop until either lock is inflated or FLC bit is set. */
@@ -1013,7 +1012,7 @@ restart:
 								/* Lock is acquired. */
 								currentThread->ownedMonitorCount += 1;
 								result = (UDATA)syncObj;
-								goto done;
+								goto success;
 							}
 							break;
 #if defined(J9VM_THR_LOCK_RESERVATION)
@@ -1082,7 +1081,7 @@ restart:
 			}
 			monitorRecords = monitorRecords->next;
 		}
-		currentThread->currentContinuation->enteredMonitors = enteredMonitorsList;
+		continuation->enteredMonitors = enteredMonitorsList;
 	}
 	Assert_VM_true(monitorCount <= currentThread->ownedMonitorCount);
 
@@ -1090,10 +1089,9 @@ restart:
 		j9object_t continuationObj = J9VMJAVALANGVIRTUALTHREAD_CONT(currentThread, currentThread->threadObject);
 		omrthread_monitor_t monitor = syncObjectMonitor->monitor;
 		J9VMJDKINTERNALVMCONTINUATION_SET_BLOCKER(currentThread, continuationObj, syncObj);
+		continuation->objectWaitMonitor = syncObjectMonitor;
 
 		if (isObjectWait) {
-			J9VMContinuation *continuation = currentThread->currentContinuation;
-
 			/* Record wait monitor state. */
 			continuation->waitingMonitorEnterCount = monitor->count;
 
@@ -1108,13 +1106,10 @@ restart:
 			currentThread->ownedMonitorCount -= continuation->waitingMonitorEnterCount;
 
 			omrthread_monitor_enter(vm->blockedVirtualThreadsMutex);
-			currentThread->currentContinuation->nextWaitingContinuation = syncObjectMonitor->waitingContinuations;
-			syncObjectMonitor->waitingContinuations = currentThread->currentContinuation;
-			currentThread->currentContinuation->objectWaitMonitor = syncObjectMonitor;
+			continuation->nextWaitingContinuation = syncObjectMonitor->waitingContinuations;
+			syncObjectMonitor->waitingContinuations = continuation;
 			omrthread_monitor_exit(vm->blockedVirtualThreadsMutex);
 		} else {
-			currentThread->currentContinuation->objectWaitMonitor = syncObjectMonitor;
-
 			if (NULL != monitor) {
 				/* If we are blocking to wait on a contended monitor then we can't be the owner. */
 				Assert_VM_false(monitor->owner == currentThread->osThread);
@@ -1122,21 +1117,20 @@ restart:
 		}
 	}
 
-	/* Subtract the detached monitor from the carrier thread's lockedmonitorcount. */
+	/* Subtract the detached monitors from the carrier thread's lockedmonitorcount. */
 	currentThread->osThread->lockedmonitorcount -= monitorCount;
 
 done:
 	if (NULL != syncObj) {
 		if (J9_OBJECT_MONITOR_YIELD_VIRTUAL != result) {
+			VM_VMHelpers::virtualThreadHideFrames(currentThread, JNI_FALSE);
 			exitVThreadTransitionCritical(currentThread, (jobject)&currentThread->threadObject);
-		} else {
-			VM_VMHelpers::virtualThreadHideFrames(currentThread, JNI_TRUE);
-		}
-		if (!isObjectWait) {
-			/* Clear the blocking object on the carrier thread. */
-			J9VMTHREAD_SET_BLOCKINGENTEROBJECT(currentThread, currentThread, NULL);
 		}
 	}
+success:
+	/* Clear the blocking object on the carrier thread. */
+	J9VMTHREAD_SET_BLOCKINGENTEROBJECT(currentThread, currentThread, NULL);
+
 	return result;
 }
 
