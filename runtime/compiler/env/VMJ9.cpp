@@ -9762,7 +9762,7 @@ jlong JNICALL Java_java_lang_invoke_ThunkTuple_initialInvokeExactThunk
 #if defined(J9ZOS390)
    return JLONG_FROM_POINTER(TOC_UNWRAP_ADDRESS(_initialInvokeExactThunkGlue));
 #elif defined(TR_HOST_POWER) && (defined(TR_HOST_64BIT) || defined(AIXPPC)) && !defined(__LITTLE_ENDIAN__)
-   return JLONG_FROM_POINTER(*(void **)_initialInvokeExactThunkGlue));
+   return JLONG_FROM_POINTER(*(void **)_initialInvokeExactThunkGlue);
 #elif defined(TR_HOST_X86)
    return JLONG_FROM_POINTER(initialInvokeExactThunkGlue);
 #else
