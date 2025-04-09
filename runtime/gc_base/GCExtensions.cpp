@@ -240,8 +240,8 @@ MM_GCExtensions::updateIdentityHashDataForSaltIndex(uintptr_t index)
 }
 
 /*
- * computeDefaultMaxHeapForJava is for Java only, it will be called during gcParseCommandLineAndInitializeWithValues(),
- * computeDefaultMaxHeap() will still be called during MM_GCExtensionsBase::initialize(), computeDefaultMaxHeapForJava() can overwrite value of memoryMax.
+ * computeDefaultMaxHeapForJava() is used for Java only.
+ * computeDefaultMaxHeap() will still be called during MM_GCExtensionsBase::initialize().
  */
 uintptr_t
 MM_GCExtensions::computeDefaultMaxHeapForJava(bool enableOriginalJDK8HeapSizeCompatibilityOption)

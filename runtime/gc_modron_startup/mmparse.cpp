@@ -1729,29 +1729,24 @@ gcParseCommandLineAndInitializeWithValues(J9JavaVM *vm, IDATA *memoryParameters)
 
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
-	/* Parse the command line
-	 * Order is important for parameters that match as substrings (-Xmrx/-Xmr)
-	 */
-	{
-		bool enableOriginalJDK8HeapSizeCompatibilityOption = false;
-		/* only parse VMOPT_XXENABLEORIGINALJDK8HEAPSIZECOMPATIBILITY option for Java 8 and below */
-		if (J2SE_18 >= J2SE_VERSION(vm)) {
+	/* only parse VMOPT_XXENABLEORIGINALJDK8HEAPSIZECOMPATIBILITY option for Java 8 and below */
+	if (J2SE_18 >= J2SE_VERSION(vm)) {
 
-			IDATA enabled = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXENABLEORIGINALJDK8HEAPSIZECOMPATIBILITY, NULL);
-			IDATA disabled = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXDISABLEORIGINALJDK8HEAPSIZECOMPATIBILITY, NULL);
-			if (enabled > disabled) {
-				enableOriginalJDK8HeapSizeCompatibilityOption = true;
-			}
+		IDATA enabled = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXENABLEORIGINALJDK8HEAPSIZECOMPATIBILITY, NULL);
+		IDATA disabled = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXDISABLEORIGINALJDK8HEAPSIZECOMPATIBILITY, NULL);
+		if (enabled > disabled) {
+			extensions->enableOriginalJDK8HeapSizeCompatibilityOption = true;
 		}
+	}
+
+	{
 		IDATA testContainerMemLimitEnabled = FIND_AND_CONSUME_VMARG(EXACT_MATCH, "-XX:+fvtest_testContainerMemLimit", NULL);
 		IDATA testContainerMemLimitDisabled = FIND_AND_CONSUME_VMARG(EXACT_MATCH, "-XX:-fvtest_testContainerMemLimit", NULL);
 		if (testContainerMemLimitEnabled > testContainerMemLimitDisabled) {
 			extensions->testContainerMemLimit = true;
 		}
-		/* set default max heap for Java */
-		extensions->memoryMax = extensions->computeDefaultMaxHeapForJava(enableOriginalJDK8HeapSizeCompatibilityOption);
-		extensions->maxSizeDefaultMemorySpace = extensions->memoryMax;
 	}
+
 	result = option_set_to_opt(vm, OPT_XMCA, &index, EXACT_MEMORY_MATCH, &vm->ramClassAllocationIncrement);
 	if (OPTION_OK != result) {
 		goto _error;
@@ -1962,10 +1957,6 @@ gcParseCommandLineAndInitializeWithValues(J9JavaVM *vm, IDATA *memoryParameters)
 		extensions->numaForced = true;
 #endif /* defined(J9VM_GC_VLHGC) || defined(J9VM_GC_GENERATIONAL) */
 	}
-	/* Since the user is not specifying a value, ensure that -Xmdx is set to the same value
-	 * as -Xmx.  It does not matter whether -Xmx was specified or not.
-	 */
-	extensions->maxSizeDefaultMemorySpace = extensions->memoryMax;
 
 	/* Parse for recognized Sovereign command line options.  Any duplication with an Xgc option
 	 * will be overwritten.  This currently must be done after check for resource management so we can
