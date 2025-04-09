@@ -771,9 +771,13 @@ done:
 	}
 
 	VMINLINE VM_BytecodeAction
-	promotedMethodOnTransitionFromJIT(REGISTER_ARGS_LIST, void *returnAddress, void *jumpAddress)
+	promotedMethodOnTransitionFromJIT(REGISTER_ARGS_LIST, void *returnAddress, void *jumpAddress, bool writeJITReturnToTemp = false)
 	{
-		VM_JITInterface::restoreJITReturnAddress(_currentThread, _sp, returnAddress);
+		if (writeJITReturnToTemp) {
+			_currentThread->floatTemp1 = returnAddress;
+		} else {
+			VM_JITInterface::restoreJITReturnAddress(_currentThread, _sp, returnAddress);
+		}
 		_currentThread->tempSlot =  (UDATA)jumpAddress;
 		_nextAction = J9_BCLOOP_LOAD_PRESERVED_AND_BRANCH;
 		VM_JITInterface::enableRuntimeInstrumentation(_currentThread);
@@ -1201,13 +1205,8 @@ obj:
 #if JAVA_SPEC_VERSION >= 24
 				if (VM_ContinuationHelpers::isYieldableVirtualThread(_currentThread)) {
 					/* Try to yield the virtual thread if it will be blocked. */
-					buildInternalNativeStackFrame(REGISTER_ARGS);
 					updateVMStruct(REGISTER_ARGS);
-
 					rc = preparePinnedVirtualThreadForUnmount(_currentThread, obj, false);
-
-					VMStructHasBeenUpdated(REGISTER_ARGS);
-					restoreInternalNativeStackFrame(REGISTER_ARGS);
 				} else
 #endif /* JAVA_SPEC_VERSION >= 24 */
 				{
@@ -1538,10 +1537,6 @@ obj:
 	{
 		J9VMContinuation *continuation = _currentThread->currentContinuation;
 
-		/* InternalNative frame only build for non-jit calls. */
-		if (J9VM_CONTINUATION_RETURN_FROM_JIT_MONITOR_ENTER != returnState) {
-			buildInternalNativeStackFrame(REGISTER_ARGS);
-		}
 		updateVMStruct(REGISTER_ARGS);
 		J9VMJAVALANGVIRTUALTHREAD_SET_STATE(_currentThread, _currentThread->threadObject, newThreadState);
 
@@ -5240,7 +5235,6 @@ done:
 				UDATA result = preparePinnedVirtualThreadForUnmount(_currentThread, object, true);
 				VMStructHasBeenUpdated(REGISTER_ARGS);
 				if (J9_OBJECT_MONITOR_OOM != result) {
-					restoreInternalNativeStackFrame(REGISTER_ARGS);
 					/* Handle the virtual thread Object.wait call.
 					 * VirtualThread.timeout is a private field used by both VM and JCL to temporarily hold
 					 * the value of expected wait/park time before a wake up task is scheduled using the value.
@@ -5825,7 +5819,8 @@ ffi_OOM:
 			rc = tryEnterBlockingMonitor(REGISTER_ARGS, syncObject, J9VM_CONTINUATION_RETURN_FROM_JIT_MONITOR_ENTER);
 			if ((NULL != _currentThread->currentContinuation) && (EXECUTE_BYTECODE == rc)) {
 				void *returnAddress = restoreJITResolveFrame(REGISTER_ARGS);
-				rc = promotedMethodOnTransitionFromJIT(REGISTER_ARGS, returnAddress, _vm->jitConfig->jitExitInterpreter0RestoreAll);
+				VMStructHasBeenUpdated(REGISTER_ARGS);
+				rc = promotedMethodOnTransitionFromJIT(REGISTER_ARGS, returnAddress, _vm->jitConfig->jitExitInterpreter0RestoreAll, true);
 			}
 			break;
 		}
