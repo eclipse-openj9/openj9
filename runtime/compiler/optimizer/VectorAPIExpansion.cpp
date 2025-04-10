@@ -2650,14 +2650,14 @@ TR::Node *TR_VectorAPIExpansion::unaryIntrinsicHandler(TR_VectorAPIExpansion *op
                                                        TR::DataType elementType, TR::VectorLength vectorLength, vapiObjType objectType,
                                                        int32_t numLanes, handlerMode mode)
    {
-   return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, objectType, numLanes, mode, 1, Other);
+   return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, objectType, numLanes, mode, 1, Unary);
    }
 
 TR::Node *TR_VectorAPIExpansion::binaryIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
                                                         TR::DataType elementType, TR::VectorLength vectorLength, vapiObjType objectType,
                                                         int32_t numLanes, handlerMode mode)
    {
-   return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, objectType, numLanes, mode, 2, Other);
+   return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, objectType, numLanes, mode, 2, Binary);
    }
 
 TR::Node *TR_VectorAPIExpansion::maskReductionCoercedIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
@@ -2679,7 +2679,7 @@ TR::Node *TR_VectorAPIExpansion::ternaryIntrinsicHandler(TR_VectorAPIExpansion *
                                                          TR::DataType elementType, TR::VectorLength vectorLength, vapiObjType objectType,
                                                          int32_t numLanes, handlerMode mode)
    {
-   return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, objectType, numLanes, mode, 3, Other);
+   return naryIntrinsicHandler(opt, treeTop, node, elementType, vectorLength, objectType, numLanes, mode, 3, Ternary);
    }
 
 TR::Node *TR_VectorAPIExpansion::testIntrinsicHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
@@ -3075,7 +3075,7 @@ TR::ILOpCodes TR_VectorAPIExpansion::ILOpcodeFromVectorAPIOpcode(TR::Compilation
        opCodeType != MaskReduction &&
        opCodeType != Compare)  // for Compare, objectType is Mask (the result) but the operands are always vectors
       {
-      return TR::BadILOp;
+      return reportMissingOpCode(comp, vectorAPIOpCode, objectType, opCodeType, withMask);
       }
 
    // TODO: support more scalarization
@@ -3092,8 +3092,9 @@ TR::ILOpCodes TR_VectorAPIExpansion::ILOpcodeFromVectorAPIOpcode(TR::Compilation
       {
       switch (vectorAPIOpCode)
          {
-         case VECTOR_OP_CAST: return TR::BadILOp;
-         case VECTOR_OP_UCAST: return TR::BadILOp;
+         case VECTOR_OP_CAST:
+         case VECTOR_OP_UCAST:
+            return reportMissingOpCode(comp, vectorAPIOpCode, objectType, opCodeType, withMask);
          case VECTOR_OP_REINTERPRET:
             if (scalar) return TR::BadILOp;
 
@@ -3103,12 +3104,12 @@ TR::ILOpCodes TR_VectorAPIExpansion::ILOpcodeFromVectorAPIOpcode(TR::Compilation
                traceMsg(comp, "\nCalling VECTOR_OP_REINTERPRET on %s to %s in %s\n", TR::DataType::getName(vectorType),
                                                                             TR::DataType::getName(resultVectorType),
                                                                             comp->signature());
-               return TR::BadILOp;
+               return reportMissingOpCode(comp, vectorAPIOpCode, objectType, opCodeType, withMask);
                }
 
             return TR::ILOpCode::createVectorOpCode(TR::vcast, vectorType, resultVectorType);
          default:
-            return TR::BadILOp;
+            return reportMissingOpCode(comp, vectorAPIOpCode, objectType, opCodeType, withMask);
          }
       }
    else if (opCodeType == Blend)
@@ -3125,7 +3126,7 @@ TR::ILOpCodes TR_VectorAPIExpansion::ILOpcodeFromVectorAPIOpcode(TR::Compilation
          case BT_ne:       return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::mmAnyTrue, vectorType);
          case BT_overflow: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::mmAllTrue, vectorType);
          default:
-            return TR::BadILOp;
+            return reportMissingOpCode(comp, vectorAPIOpCode, objectType, opCodeType, withMask);;
          }
       }
    else if ((opCodeType == BroadcastInt) && withMask)
@@ -3138,7 +3139,7 @@ TR::ILOpCodes TR_VectorAPIExpansion::ILOpcodeFromVectorAPIOpcode(TR::Compilation
          case VECTOR_OP_LROTATE: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vmrol, vectorType);
          case VECTOR_OP_RROTATE: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vmrol, vectorType);
          default:
-            return TR::BadILOp;
+            return reportMissingOpCode(comp, vectorAPIOpCode, objectType, opCodeType, withMask);
          }
       }
    else if (opCodeType == BroadcastInt)
@@ -3151,7 +3152,7 @@ TR::ILOpCodes TR_VectorAPIExpansion::ILOpcodeFromVectorAPIOpcode(TR::Compilation
          case VECTOR_OP_LROTATE: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vrol, vectorType);
          case VECTOR_OP_RROTATE: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vrol, vectorType);
          default:
-            return TR::BadILOp;
+            return reportMissingOpCode(comp, vectorAPIOpCode, objectType, opCodeType, withMask);
          }
       }
    else if ((opCodeType == Compare) && withMask)
@@ -3167,7 +3168,7 @@ TR::ILOpCodes TR_VectorAPIExpansion::ILOpcodeFromVectorAPIOpcode(TR::Compilation
          case BT_lt: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vmcmplt, vectorType, resultMaskType);
          case BT_gt: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vmcmpgt, vectorType, resultMaskType);
          default:
-            return TR::BadILOp;
+            return reportMissingOpCode(comp, vectorAPIOpCode, objectType, opCodeType, withMask);
          }
       }
    else if (opCodeType == Compare)
@@ -3184,7 +3185,7 @@ TR::ILOpCodes TR_VectorAPIExpansion::ILOpcodeFromVectorAPIOpcode(TR::Compilation
          case BT_lt: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vcmplt, vectorType, resultMaskType);
          case BT_gt: return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vcmpgt, vectorType, resultMaskType);
          default:
-            return TR::BadILOp;
+            return reportMissingOpCode(comp, vectorAPIOpCode, objectType, opCodeType, withMask);
          }
       }
    else if ((opCodeType == Reduction) && withMask)
@@ -3202,7 +3203,7 @@ TR::ILOpCodes TR_VectorAPIExpansion::ILOpcodeFromVectorAPIOpcode(TR::Compilation
             // vreductionOrUnchecked
             // vreductionFirstNonZero
          default:
-            return TR::BadILOp;
+            return reportMissingOpCode(comp, vectorAPIOpCode, objectType, opCodeType, withMask);
          }
       }
    else if (opCodeType == Reduction)
@@ -3220,7 +3221,7 @@ TR::ILOpCodes TR_VectorAPIExpansion::ILOpcodeFromVectorAPIOpcode(TR::Compilation
             // vreductionOrUnchecked
             // vreductionFirstNonZero
          default:
-            return TR::BadILOp;
+            return reportMissingOpCode(comp, vectorAPIOpCode, objectType, opCodeType, withMask);
          }
       }
    else if (opCodeType == MaskReduction)
@@ -3232,7 +3233,7 @@ TR::ILOpCodes TR_VectorAPIExpansion::ILOpcodeFromVectorAPIOpcode(TR::Compilation
          case VECTOR_OP_MASK_LASTTRUE:  return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::mLastTrue, vectorType);
          case VECTOR_OP_MASK_TOLONG:    return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::mToLongBits, vectorType);
          default:
-            return TR::BadILOp;
+            return reportMissingOpCode(comp, vectorAPIOpCode, objectType, opCodeType, withMask);
          }
       }
    else if (withMask)
@@ -3267,7 +3268,7 @@ TR::ILOpCodes TR_VectorAPIExpansion::ILOpcodeFromVectorAPIOpcode(TR::Compilation
          case VECTOR_OP_EXPAND_BITS:   return scalar ? TR::BadILOp : TR::ILOpCode::createVectorOpCode(TR::vmexpandbits, vectorType);
 
          default:
-            return TR::BadILOp;
+            return reportMissingOpCode(comp, vectorAPIOpCode, objectType, opCodeType, withMask);
          // shiftLeftOpCode
          // shiftRightOpCode
          }
@@ -3328,12 +3329,12 @@ TR::ILOpCodes TR_VectorAPIExpansion::ILOpcodeFromVectorAPIOpcode(TR::Compilation
          */
 
          default:
-            return TR::BadILOp;
+            return reportMissingOpCode(comp, vectorAPIOpCode, objectType, opCodeType, withMask);
          // shiftLeftOpCode
          // shiftRightOpCode
          }
       }
-   return TR::BadILOp;
+   return reportMissingOpCode(comp, vectorAPIOpCode, objectType, opCodeType, withMask);
    }
 
 TR::Node *TR_VectorAPIExpansion::transformNary(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop, TR::Node *node,
@@ -3518,6 +3519,23 @@ TR_VectorAPIExpansion::vapiObjTypeNames[] =
    "Shuffle",
    "Invalid"
    };
+
+const char*
+TR_VectorAPIExpansion::vapiOpCodeTypeNames [] =
+      {
+      "Compare",
+      "MaskReduction",
+      "Reduction",
+      "Test",
+      "Blend",
+      "BroadcastInt",
+      "Convert",
+      "Compress",
+      "Unary",
+      "Binary",
+      "Ternary"
+      };
+
 
 // high level methods are disabled because they require exception handling
 TR_VectorAPIExpansion::methodTableEntry
