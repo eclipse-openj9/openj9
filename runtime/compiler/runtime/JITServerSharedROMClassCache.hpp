@@ -48,9 +48,15 @@ public:
    // it will be the cached deterministic hash of packedROMClass received from the client.
    J9ROMClass *getOrCreate(const J9ROMClass *packedROMClass, const JITServerROMClassHash *packedROMClassHash);
    void release(J9ROMClass *romClass);
+   void acquire(J9ROMClass *romClass);
 
    // Get precomputed hash of a shared ROMClass
    static const JITServerROMClassHash &getHash(const J9ROMClass *romClass);
+
+   bool isInitialized() const { return _persistentMemory != NULL; }
+
+   // Print cache content for debugging purposes (ROMMethods pointers, names and hashes)
+   void printContent() const;
 
 private:
    struct Entry;
@@ -59,11 +65,6 @@ private:
    // To reduce lock contention, the cache is divided into a number of
    // partitions, each synchronized with a separate monitor
    Partition &getPartition(const JITServerROMClassHash &hash);
-
-   void createPartitions();
-   void destroyPartitions();
-
-   bool isInitialized() const { return _persistentMemory != NULL; }
 
    const size_t _numPartitions;
    TR_PersistentMemory *_persistentMemory;
