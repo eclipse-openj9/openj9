@@ -1593,6 +1593,14 @@ obj:
 		 * mutually exclusive.
 		 */
 		if (J9_OBJECT_MONITOR_ENTER_FAILED(monitorRC)) {
+			if (J9VM_CONTINUATION_RETURN_FROM_OBJECT_WAIT == returnState) {
+				/* The previous INL frame was removed when we re-mounted the continution. Build another one
+				 * since we will be blocking and un-mounting again.
+				 */
+				buildInternalNativeStackFrame(REGISTER_ARGS);
+				updateVMStruct(REGISTER_ARGS);
+			}
+
 			switch (monitorRC) {
 			case J9_OBJECT_MONITOR_VALUE_TYPE_IMSE:
 				_currentThread->tempSlot = (UDATA)syncObject;
