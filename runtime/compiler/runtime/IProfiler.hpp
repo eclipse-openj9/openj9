@@ -207,6 +207,7 @@ public:
    virtual uintptr_t getData(TR::Compilation *comp = NULL) = 0;
    virtual uint32_t* getDataReference() { return NULL; }
    virtual int32_t setData(uintptr_t value, uint32_t freq = 1) = 0;
+   virtual uint32_t getNumSamples() const = 0;
    virtual bool isInvalid() = 0;
    virtual void setInvalid() = 0;
    virtual bool isCompact() = 0;
@@ -224,12 +225,32 @@ public:
    virtual uint32_t canBeSerialized(TR::PersistentInfo *info) { return IPBC_ENTRY_CAN_PERSIST; }
    virtual void serialize(uintptr_t methodStartAddress, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info) = 0;
    virtual void deserialize(TR_IPBCDataStorageHeader *storage) = 0;
+
+   virtual TR_IPBytecodeHashTableEntry *newEntry(TR::Region &region) const = 0;
+   virtual TR_IPBytecodeHashTableEntry *newEntry(TR_PersistentMemory *persistentMemory,
+                                                 TR_Memory::ObjectType tag = TR_Memory::UnknownType) const = 0;
+   TR_IPBytecodeHashTableEntry *clone(TR::Region &region)
+      {
+      auto entry = newEntry(region);
+      entry->copyFromEntry(this);
+      return entry;
+      }
+
+   TR_IPBytecodeHashTableEntry *clone(TR_PersistentMemory *persistentMemory,
+                                      TR_Memory::ObjectType tag = TR_Memory::UnknownType)
+      {
+      auto entry = newEntry(persistentMemory, tag);
+      if (!entry)
+         throw std::bad_alloc();
+      entry->copyFromEntry(this);
+      return entry;
+      }
 #endif
 
    virtual uint32_t canBePersisted(TR_J9SharedCache *sharedCache, TR::PersistentInfo *info) { return IPBC_ENTRY_CAN_PERSIST; }
    virtual void createPersistentCopy(TR_J9SharedCache *sharedCache, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info)  = 0;
    virtual void loadFromPersistentCopy(TR_IPBCDataStorageHeader *storage, TR::Compilation *comp) {}
-   virtual void copyFromEntry(TR_IPBytecodeHashTableEntry * originalEntry, TR::Compilation *comp) {}
+   virtual void copyFromEntry(TR_IPBytecodeHashTableEntry *originalEntry) = 0;
    void clearEntryFlags(){ _entryFlags = 0;};
    void setPersistentEntryRead(){ _entryFlags |= TR_IPBC_PERSISTENT_ENTRY_READ;};
    bool isPersistentEntryRead(){ return (_entryFlags & TR_IPBC_PERSISTENT_ENTRY_READ) != 0;};
@@ -311,6 +332,7 @@ public:
    virtual uint32_t* getDataReference() { static uint32_t data_copy = data; return &data_copy; }
 
    virtual int32_t setData(uintptr_t value, uint32_t freq = 1) { data = (uint32_t)value; return 0;}
+   virtual uint32_t getNumSamples() const { return getSumBranchCount(); }
    virtual bool isCompact() { return true; }
    virtual bool isInvalid() { if (data == IPROFILING_INVALID) return true; return false; }
    virtual void setInvalid() { data = IPROFILING_INVALID; }
@@ -319,11 +341,22 @@ public:
 #if defined(J9VM_OPT_JITSERVER)
    virtual void serialize(uintptr_t methodStartAddress, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info);
    virtual void deserialize(TR_IPBCDataStorageHeader *storage);
+   virtual TR_IPBytecodeHashTableEntry *newEntry(TR::Region &region) const override
+      {
+      return new (region.allocate(sizeof(*this))) TR_IPBCDataFourBytes(_pc);
+      }
+
+   virtual TR_IPBytecodeHashTableEntry *newEntry(TR_PersistentMemory *persistentMemory,
+                                              TR_Memory::ObjectType tag = TR_Memory::UnknownType) const override
+      {
+      tag = (tag != TR_Memory::UnknownType) ? tag : TR_Memory::IPBCDataFourBytes;
+      return new (persistentMemory->allocatePersistentMemory(sizeof(*this), tag)) TR_IPBCDataFourBytes(_pc);
+      }
 #endif
    virtual void createPersistentCopy(TR_J9SharedCache *sharedCache, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info);
    virtual void loadFromPersistentCopy(TR_IPBCDataStorageHeader *storage, TR::Compilation *comp);
-   int32_t getSumBranchCount();
-   virtual void copyFromEntry(TR_IPBytecodeHashTableEntry * originalEntry, TR::Compilation *comp);
+   int32_t getSumBranchCount() const;
+   virtual void copyFromEntry(TR_IPBytecodeHashTableEntry * originalEntry);
 private:
    uint32_t data;
    };
@@ -365,7 +398,9 @@ public:
    virtual bool hasData() { return getSumSwitchCount() > 1; } // Note: getSumSwitchCount() artificially adds one to the count
    virtual uintptr_t getData(TR::Compilation *comp = NULL) { /*TR_ASSERT(0, "Don't call me, I'm empty"); */return 0;}
    virtual int32_t setData(uintptr_t value, uint32_t freq = 1) { /*TR_ASSERT(0, "Don't call me, I'm empty");*/ return 0;}
+   const uint64_t* getDataPointer() const { return data; }
    uint64_t* getDataPointer() { return data; }
+   virtual uint32_t getNumSamples() const { return getSumSwitchCount(); }
    virtual bool isCompact() { return false; }
    virtual bool isInvalid() { if (data[0] == IPROFILING_INVALID) return true; return false; }
    virtual void setInvalid() { data[0] = IPROFILING_INVALID; }
@@ -374,11 +409,21 @@ public:
 #if defined(J9VM_OPT_JITSERVER)
    virtual void serialize(uintptr_t methodStartAddress, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info);
    virtual void deserialize(TR_IPBCDataStorageHeader *storage);
+   virtual TR_IPBytecodeHashTableEntry *newEntry(TR::Region &region) const override
+      {
+      return new (region.allocate(sizeof(*this))) TR_IPBCDataEightWords(_pc);
+      }
+   virtual TR_IPBytecodeHashTableEntry *newEntry(TR_PersistentMemory *persistentMemory,
+                                                 TR_Memory::ObjectType tag = TR_Memory::UnknownType) const override
+      {
+      tag = (tag != TR_Memory::UnknownType) ? tag : TR_Memory::IPBCDataEightWords;
+      return new (persistentMemory->allocatePersistentMemory(sizeof(*this), tag)) TR_IPBCDataEightWords(_pc);
+      }
 #endif
    virtual void createPersistentCopy(TR_J9SharedCache *sharedCache, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info);
    virtual void loadFromPersistentCopy(TR_IPBCDataStorageHeader *storage, TR::Compilation *comp);
-   int32_t getSumSwitchCount();
-   virtual void copyFromEntry(TR_IPBytecodeHashTableEntry * originalEntry, TR::Compilation *comp);
+   int32_t getSumSwitchCount() const;
+   virtual void copyFromEntry(TR_IPBytecodeHashTableEntry *originalEntry);
 
 private:
    uint64_t data[SWITCH_DATA_COUNT];
@@ -408,9 +453,10 @@ public:
    virtual CallSiteProfileInfo* getCGData() { return &_csInfo; } // overloaded
    virtual int32_t setData(uintptr_t v, uint32_t freq = 1);
    virtual uint32_t* getDataReference() { return NULL; }
+   virtual uint32_t getNumSamples() const { return getSumCount(); }
    virtual bool isCompact() { return false; }
    virtual TR_IPBCDataCallGraph *asIPBCDataCallGraph() { return this; }
-   int32_t getSumCount();
+   int32_t getSumCount() const;
    int32_t getSumCount(TR::Compilation *comp);
    int32_t getEdgeWeight(TR_OpaqueClassBlock *clazz, TR::Compilation *comp);
    void updateEdgeWeight(TR_OpaqueClassBlock *clazz, int32_t weight);
@@ -427,12 +473,24 @@ public:
    virtual uint32_t canBeSerialized(TR::PersistentInfo *info);
    virtual void serialize(uintptr_t methodStartAddress, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info);
    virtual void deserialize(TR_IPBCDataStorageHeader *storage);
+   //TODO: add override to all functions that need it for consistency
+   virtual TR_IPBytecodeHashTableEntry *newEntry(TR::Region &region) const override
+      {
+      return new (region.allocate(sizeof(*this))) TR_IPBCDataCallGraph(_pc);
+      }
+
+   virtual TR_IPBytecodeHashTableEntry *newEntry(TR_PersistentMemory *persistentMemory,
+                                                 TR_Memory::ObjectType tag = TR_Memory::UnknownType) const override
+      {
+      tag = (tag != TR_Memory::UnknownType) ? tag : TR_Memory::IPBCDataCallGraph;
+      return new (persistentMemory->allocatePersistentMemory(sizeof(*this), tag)) TR_IPBCDataCallGraph(_pc);
+      }
 #endif
 
    virtual uint32_t canBePersisted(TR_J9SharedCache *sharedCache, TR::PersistentInfo *info);
    virtual void createPersistentCopy(TR_J9SharedCache *sharedCache, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info);
    virtual void loadFromPersistentCopy(TR_IPBCDataStorageHeader *storage, TR::Compilation *comp);
-   virtual void copyFromEntry(TR_IPBytecodeHashTableEntry * originalEntry, TR::Compilation *comp);
+   virtual void copyFromEntry(TR_IPBytecodeHashTableEntry *originalEntry);
 
    bool lockEntry();
    void releaseEntry();
