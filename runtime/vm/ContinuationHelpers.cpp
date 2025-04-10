@@ -977,6 +977,17 @@ restart:
 				syncObjectMonitor = monitorTableAt(currentThread, syncObj);
 				monitor = syncObjectMonitor->monitor;
 
+				if (J9_EVENT_IS_HOOKED(vm->hookInterface, J9HOOK_VM_MONITOR_CONTENDED_ENTERED)
+					&& J9_ARE_NO_BITS_SET(continuation->runtimeFlags, J9VM_CONTINUATION_RUNTIMEFLAG_JVMTI_CONTENDED_MONITOR_ENTER_RECORDED)
+				) {
+					/* Get owner here since it could be too late within yieldPinnedContinuation(). */
+					if ((void*)1 == monitor->owner) {
+						continuation->previousOwner = NULL;
+					} else {
+						continuation->previousOwner = getVMThreadFromOMRThread(vm, ((J9ThreadMonitor *)monitor)->owner);
+					}
+				}
+
 				/* Try acquire the inflated monitor */
 				if (0 == omrthread_monitor_try_enter(monitor)) {
 					/* If the INFLATED bit is set, then it is already inflated and we own the object monitor. */
