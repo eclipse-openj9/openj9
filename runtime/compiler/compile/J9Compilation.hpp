@@ -435,11 +435,9 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
    bool isOSRProhibitedOverRangeOfTrees() { return _osrProhibitedOverRangeOfTrees; }
 
 #if defined(PERSISTENT_COLLECTIONS_UNSUPPORTED)
-   void addAOTMethodDependency(TR_OpaqueClassBlock *ramClass) {}
-   void addAOTMethodDependency(TR_OpaqueClassBlock *ramClass, uintptr_t chainOffset) {}
+   void addAOTMethodDependency(TR_OpaqueClassBlock *ramClass, uintptr_t chainOffse = TR_SharedCache::INVALID_CLASS_CHAIN_OFFSETt) {}
 #else
-   void addAOTMethodDependency(TR_OpaqueClassBlock *ramClass);
-   void addAOTMethodDependency(TR_OpaqueClassBlock *ramClass, uintptr_t chainOffset);
+   void addAOTMethodDependency(TR_OpaqueClassBlock *ramClass, uintptr_t chainOffset = TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET);
    uintptr_t populateAOTMethodDependencies(TR_OpaqueClassBlock *definingClass, Vector<uintptr_t> &chainBuffer);
    uintptr_t numAOTMethodDependencies() { return _aotMethodDependencies.size(); }
 #endif
@@ -465,6 +463,7 @@ private:
    TR_OpaqueClassBlock *getCachedClassPointer(CachedClassPointerId which);
 
 #if !defined(PERSISTENT_COLLECTIONS_UNSUPPORTED)
+   void insertAOTMethodDependency(uintptr_t dependency, bool classIsInitialized);
    void addAOTMethodDependency(uintptr_t offset, bool classIsInitialized);
 #endif  /*  !defined(PERSISTENT_COLLECTIONS_UNSUPPORTED) */
 
