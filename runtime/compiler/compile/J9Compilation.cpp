@@ -1642,12 +1642,13 @@ J9::Compilation::permanentLoaders()
 
 #if !defined(PERSISTENT_COLLECTIONS_UNSUPPORTED)
 void
-J9::Compilation::addAOTMethodDependency(TR_OpaqueClassBlock *clazz)
+J9::Compilation::addAOTMethodDependency(TR_OpaqueClassBlock *clazz, uintptr_t chainOffset)
    {
    if (getOption(TR_DisableDependencyTracking))
       return;
 
-   auto chainOffset = self()->fej9()->sharedCache()->rememberClass(clazz);
+   if (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET == chainOffset)
+      chainOffset = self()->fej9()->sharedCache()->rememberClass(clazz);
 
    if (TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET == chainOffset)
       self()->failCompilation<J9::ClassChainPersistenceFailure>("classChainOffset == INVALID_CLASS_CHAIN_OFFSET");
@@ -1656,12 +1657,17 @@ J9::Compilation::addAOTMethodDependency(TR_OpaqueClassBlock *clazz)
    }
 
 void
-J9::Compilation::addAOTMethodDependency(TR_OpaqueClassBlock *clazz, uintptr_t chainOffset)
+J9::Compilation::insertAOTMethodDependency(uintptr_t dependency, bool ensureClassIsInitialized)
    {
-   if (getOption(TR_DisableDependencyTracking))
-      return;
-
-   addAOTMethodDependency(chainOffset, self()->fej9()->isClassInitialized(clazz));
+   auto it = _aotMethodDependencies.find(dependency);
+   if (it != _aotMethodDependencies.end())
+      {
+      it->second = it->second || ensureClassIsInitialized;
+      }
+   else
+      {
+      _aotMethodDependencies.insert(it, {dependency, ensureClassIsInitialized});
+      }
    }
 
 void
@@ -1670,19 +1676,7 @@ J9::Compilation::addAOTMethodDependency(uintptr_t chainOffset, bool ensureClassI
    TR_ASSERT(TR_SharedCache::INVALID_CLASS_CHAIN_OFFSET != chainOffset, "Attempted to remember invalid chain offset");
    TR_ASSERT(self()->compileRelocatableCode(), "Must be generating AOT code");
 
-   bool newDependency = false;
-
-   auto it = _aotMethodDependencies.find(chainOffset);
-   if (it != _aotMethodDependencies.end())
-      {
-      newDependency = ensureClassIsInitialized && !it->second;
-      it->second = it->second || ensureClassIsInitialized;
-      }
-   else
-      {
-      newDependency = true;
-      _aotMethodDependencies.insert(it, {chainOffset, ensureClassIsInitialized});
-      }
+   self()->insertAOTMethodDependency(chainOffset, ensureClassIsInitialized);
 
    if (self()->getOptions()->getVerboseOption(TR_VerboseDependencyTrackingDetails))
       {
