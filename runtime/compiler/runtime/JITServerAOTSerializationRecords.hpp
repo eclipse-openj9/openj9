@@ -331,22 +331,39 @@ struct SerializedSCCOffset
    {
 public:
    SerializedSCCOffset(uintptr_t recordId, AOTSerializationRecordType recordType, uintptr_t reloDataOffset) :
-      _recordIdAndType(AOTSerializationRecord::idAndType(recordId, recordType)), _reloDataOffset(reloDataOffset)
+      _recordIdAndType(AOTSerializationRecord::idAndType(recordId, recordType)), _data(reloDataOffset)
       {
       TR_ASSERT(recordType < AOTSerializationRecordType::AOTHeader, "Invalid record type: %u", recordType);
       }
 
    uintptr_t recordId() const { return AOTSerializationRecord::getId(_recordIdAndType); }
    AOTSerializationRecordType recordType() const { return AOTSerializationRecord::getType(_recordIdAndType); }
-   uintptr_t reloDataOffset() const { return _reloDataOffset; }
+   uintptr_t reloDataOffset() const { return _data; }
 
-private:
+protected:
    // ID and type of the corresponding serialization record
    const uintptr_t _recordIdAndType;
-   // Offset into AOT method relocation data where the SCC offset to be updated is stored
-   const uintptr_t _reloDataOffset;
+
+   // Offset into AOT method relocation data where the SCC offset to be updated
+   // is stored
+   //
+   // Child classes may use this to store other data instead
+   const uintptr_t _data;
    };
 
+// Repurpose SerializedSCCOffset to represent dependencies
+struct SerializedAOTDependency : public SerializedSCCOffset
+   {
+public:
+   SerializedAOTDependency(uintptr_t recordId, AOTSerializationRecordType recordType, bool ensureClassIsInitialized) :
+      SerializedSCCOffset(recordId, recordType, (uintptr_t)ensureClassIsInitialized)
+      {
+      TR_ASSERT_FATAL(recordType == AOTSerializationRecordType::Class, "Cannot create AOT depenency using recordType=%d\n", recordType);
+      }
+
+   uintptr_t reloDataOffset() const { TR_ASSERT_FATAL(false, "Should not be called\n"); return 0; }
+   bool ensureClassIsInitialized() const { return (bool)_data; }
+   };
 
 struct SerializedAOTMethod
    {
