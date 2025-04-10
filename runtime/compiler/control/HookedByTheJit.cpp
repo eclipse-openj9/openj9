@@ -6438,7 +6438,10 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
    UDATA samplingPeriod    = std::max(static_cast<UDATA>(TR::Options::_minSamplingPeriod), jitConfig->samplingFrequency);
    uint64_t lastProcNumCheck = 0;
    bool idleMode = false;
+   uint64_t lastSecondCheck = 0;
    uint64_t lastMinuteCheck = 0; // for activities that need to be done rarely (every minute)
+   uint64_t lastVirtualMemoryCheck = 0;
+   uint64_t lastMallocTrimIssueTime = 0;
    // initialize the startTime and elapsedTime here
    PORT_ACCESS_FROM_JAVAVM(vm);
 
@@ -6712,32 +6715,47 @@ static int32_t J9THREAD_PROC samplerThreadProc(void * entryarg)
                   }
                }
 
-            //  Default: Every minute
-            if (crtTime - lastMinuteCheck >= (TR::Options::_virtualMemoryCheckFrequencySec * 1000))
+            // Every second
+            if (crtTime - lastSecondCheck >= 1000)
                {
-               lastMinuteCheck = crtTime;
+               lastSecondCheck = crtTime;
+#ifdef LINUX
+               if (TR::Options::_mallocTrimPeriod > 0) // if enabled
+                  {
+                  if (crtTime - lastMallocTrimIssueTime >= TR::Options::_mallocTrimPeriod * 1000)
+                     {
+                     lastMallocTrimIssueTime = crtTime;
+                     malloc_trim(0);
+                     }
+                  }
+#endif /* LINUX */
 #if defined(TR_TARGET_32BIT) && (defined(WINDOWS) || defined(LINUX) || defined(J9ZOS390))
                // On 32 bit Windows, Linux, and 31 bit z/OS, monitor the virtual memory available to the user
-               lowerCompilationLimitsOnLowVirtualMemory(compInfo, NULL);
-#endif
-
-#if defined(J9VM_OPT_SHARED_CLASSES) && defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT)
-               // Emit SCC tracepoint
-               if (TR::Options::sharedClassCache() && TrcEnabled_Trc_JIT_SCCInfo &&
-                  vm->sharedClassConfig && vm->sharedClassConfig->getJavacoreData)
+               if (crtTime - lastVirtualMemoryCheck >= (TR::Options::_virtualMemoryCheckFrequencySec * 1000))
                   {
-                  J9SharedClassJavacoreDataDescriptor* scc = compInfo->getAddrOfJavacoreData();
-                  memset(scc, 0, sizeof(J9SharedClassJavacoreDataDescriptor));
-                  vm->sharedClassConfig->getJavacoreData(vm, scc); // need to rebuild javacore data or else it will be stale
-                  Trc_JIT_SCCInfo(samplerThread, scc->cacheName, scc->cacheDir, scc->cacheSize, scc->freeBytes, scc->softMaxBytes,
-                        scc->romClassBytes, scc->aotBytes, scc->aotDataBytes, scc->jitHintDataBytes, scc->jitProfileDataBytes,
-                        scc->numROMClasses, scc->numAOTMethods, fe->sharedCache()->getSharedCacheDisabledReason());
+                  lastVirtualMemoryCheck = crtTime;
+                  lowerCompilationLimitsOnLowVirtualMemory(compInfo, NULL);
                   }
 #endif
-               } // Default: Every minute
-            } // every 100 ms
-
-         //classLoadPhaseReanalyzed = classLoadPhaseLogic(jitConfig, compInfo);  // moved down
+               if (crtTime - lastMinuteCheck >= 60 * 1000)
+                  {
+                  lastMinuteCheck = crtTime;
+#if defined(J9VM_OPT_SHARED_CLASSES) && defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT)
+                  // Emit SCC tracepoint
+                  if (TR::Options::sharedClassCache() && TrcEnabled_Trc_JIT_SCCInfo &&
+                     vm->sharedClassConfig && vm->sharedClassConfig->getJavacoreData)
+                     {
+                     J9SharedClassJavacoreDataDescriptor* scc = compInfo->getAddrOfJavacoreData();
+                     memset(scc, 0, sizeof(J9SharedClassJavacoreDataDescriptor));
+                     vm->sharedClassConfig->getJavacoreData(vm, scc); // need to rebuild javacore data or else it will be stale
+                     Trc_JIT_SCCInfo(samplerThread, scc->cacheName, scc->cacheDir, scc->cacheSize, scc->freeBytes, scc->softMaxBytes,
+                           scc->romClassBytes, scc->aotBytes, scc->aotDataBytes, scc->jitHintDataBytes, scc->jitProfileDataBytes,
+                           scc->numROMClasses, scc->numAOTMethods, fe->sharedCache()->getSharedCacheDisabledReason());
+                     }
+#endif
+                  } // Every minute
+               } // Every second
+            } // Every 100 ms
 
          // TODO: Does this need to be synchronized with the one that happens at shutdown?
          // TODO: If this has too much overhead, it can be added to the

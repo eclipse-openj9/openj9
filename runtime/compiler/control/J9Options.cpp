@@ -218,6 +218,7 @@ int32_t J9::Options::_TLHPrefetchBoundaryLineCount = 0;
 int32_t J9::Options::_TLHPrefetchTLHEndLineCount = 0;
 
 int32_t J9::Options::_minTimeBetweenMemoryDisclaims = 500; // ms
+int32_t J9::Options::_mallocTrimPeriod = 0; // seconds; 0 means disabled
 
 int32_t J9::Options::_numFirstTimeCompilationsToExitIdleMode = 25; // Use a large number to disable the feature
 int32_t J9::Options::_waitTimeToEnterIdleMode = 5000; // ms
@@ -1140,6 +1141,8 @@ TR::OptionTable OMR::Options::_feOptions[] = {
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_lowerBoundNumProcForScaling, 0, "F%d", NOT_IN_SUBSET},
    {"lowVirtualMemoryMBThreshold=","M<nnn>\tThreshold when we declare we are running low on virtual memory. Use 0 to disable the feature",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_lowVirtualMemoryMBThreshold, 0, "F%d", NOT_IN_SUBSET},
+   {"mallocTrimPeriod=",  "M<nnn>\tMinimum time (seconds) between two consecutive malloc_trim operations",
+         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_mallocTrimPeriod, 0, "F%d", NOT_IN_SUBSET},
    {"maxCheckcastProfiledClassTests=", "R<nnn>\tnumber inlined profiled classes for profiledclass test in checkcast/instanceof",
         TR::Options::setStaticNumeric, (intptr_t)&TR::Options::_maxCheckcastProfiledClassTests, 0, "F%d", NOT_IN_SUBSET},
    {"maxOnsiteCacheSlotForInstanceOf=", "R<nnn>\tnumber of onsite cache slots for instanceOf",

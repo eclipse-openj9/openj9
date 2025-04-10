@@ -433,6 +433,7 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
 #endif
 
    static int32_t _minTimeBetweenMemoryDisclaims; // ms
+   static int32_t _mallocTrimPeriod; // seconds
 
    static int32_t _waitTimeToEnterIdleMode;
    static int32_t _waitTimeToEnterDeepIdleMode;
