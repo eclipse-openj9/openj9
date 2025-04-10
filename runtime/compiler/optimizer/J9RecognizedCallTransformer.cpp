@@ -1694,13 +1694,25 @@ bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop* treetop)
          case TR::java_lang_Long_rotateRight:
             return comp()->target().cpu.getSupportsHardware64bitRotate();
          case TR::java_lang_Integer_compress:
-            return comp()->target().cpu.getSupportsHardware32bitCompress();
+            {
+            static const bool disabled = feGetEnv("TR_disableIntegerCompressAccelerate") != NULL;
+            return !disabled && comp()->target().cpu.getSupportsHardware32bitCompress();
+            }
          case TR::java_lang_Long_compress:
-            return comp()->target().cpu.getSupportsHardware64bitCompress();
+            {
+            static const bool disabled = feGetEnv("TR_disableLongCompressAccelerate") != NULL;
+            return !disabled && comp()->target().cpu.getSupportsHardware64bitCompress();
+            }
          case TR::java_lang_Integer_expand:
-            return comp()->target().cpu.getSupportsHardware32bitExpand();
+            {
+            static const bool disabled = feGetEnv("TR_disableIntegerExpandAccelerate") != NULL;
+            return !disabled && comp()->target().cpu.getSupportsHardware32bitExpand();
+            }
          case TR::java_lang_Long_expand:
-            return comp()->target().cpu.getSupportsHardware64bitExpand();
+            {
+            static const bool disabled = feGetEnv("TR_disableLongExpandAccelerate") != NULL;
+            return !disabled && comp()->target().cpu.getSupportsHardware64bitExpand();
+            }
          case TR::java_lang_Math_abs_I:
          case TR::java_lang_Math_abs_L:
             return cg()->supportsIntAbs();
