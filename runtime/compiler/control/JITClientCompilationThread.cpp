@@ -545,6 +545,11 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
                }
             }
          vmInfo._useServerOffsets = comp->getPersistentInfo()->getJITServerAOTCacheIgnoreLocalSCC();
+         int32_t enableProfileCacheArgIndex  = J9::Options::getExternalOptionIndex(J9::ExternalOptions::XXplusJITServerUseProfileCache);
+         int32_t disableProfileCacheArgIndex = J9::Options::getExternalOptionIndex(J9::ExternalOptions::XXminusJITServerUseProfileCache);
+         // The profile cache feature needs to be enabled explicitly by the client. The presence of the AOT cache is a pre-requisite.
+         vmInfo._useSharedProfileCache = compInfo->getPersistentInfo()->getJITServerUseAOTCache() &&
+                                         enableProfileCacheArgIndex > disableProfileCacheArgIndex;
          vmInfo._inSnapshotMode = fe->inSnapshotMode();
          vmInfo._isPortableRestoreMode = fe->isPortableRestoreModeEnabled();
          vmInfo._isSnapshotModeEnabled = fe->isSnapshotModeEnabled();

@@ -422,8 +422,10 @@ J9::ExternalOptionsMetadata J9::Options::_externalOptionsMetadata[J9::ExternalOp
    { "-XX:-JITServerHealthProbes",                  EXACT_MATCH,         -1, true  }, // = 75
    { "-XX:JITServerHealthProbePort=",               STARTSWITH_MATCH,    -1, true  }, // = 76
    { "-XX:+TrackAOTDependencies",                   EXACT_MATCH,         -1, true  }, // = 77
-   { "-XX:-TrackAOTDependencies",                   EXACT_MATCH,         -1, true  }  // = 78
-   // TR_NumExternalOptions                                                              = 79
+   { "-XX:-TrackAOTDependencies",                   EXACT_MATCH,         -1, true  }, // = 78
+   { "-XX:+JITServerUseProfileCache",               EXACT_MATCH,         -1, true  }, // = 79
+   { "-XX:-JITServerUseProfileCache",               EXACT_MATCH,         -1, true  }  // = 80
+   // TR_NumExternalOptions                                                              = 81
    };
 
 //************************************************************************

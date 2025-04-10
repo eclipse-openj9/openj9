@@ -333,6 +333,7 @@ public:
       // Should we use server offsets (idAndType of AOT cache serialization records) instead of
       // local SCC offsets during AOT cache compilations?
       bool _useServerOffsets;
+      bool _useSharedProfileCache; // Indicates client's intention to use the global profile cache
       TR_AOTHeader _aotHeader;
       TR_OpaqueClassBlock *_JavaLangObject;
       TR_OpaqueClassBlock *_JavaStringObject;
