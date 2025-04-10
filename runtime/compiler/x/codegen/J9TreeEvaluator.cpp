@@ -10440,13 +10440,18 @@ static TR::Register* inlineHasNegativesOrCountPositives(TR::Node* node, TR::Reco
    TR::LabelSymbol *fiveOrMoreBytesLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *nineOrMoreBytesLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *residualTestLabel = generateLabelSymbol(cg);
-   TR::LabelSymbol *foundNegativeLabel = NULL;
-   if (recognizedMethod == TR::java_lang_StringCoding_countPositives)
+   TR::LabelSymbol *returnNoNegativesLabel = NULL;
+   TR::LabelSymbol *returnHasNegativesLabel = NULL;
+   TR::LabelSymbol *returnBooleanLabel = NULL;
+   if (recognizedMethod == TR::java_lang_StringCoding_hasNegatives)
       {
-      foundNegativeLabel = generateLabelSymbol(cg);
+      returnBooleanLabel = generateLabelSymbol(cg);
       }
-   TR::LabelSymbol *returnNoNegativesLabel = generateLabelSymbol(cg);
-   TR::LabelSymbol *returnHasNegativesLabel = generateLabelSymbol(cg);
+   else
+      {
+      returnNoNegativesLabel = generateLabelSymbol(cg);
+      returnHasNegativesLabel = generateLabelSymbol(cg);
+      }
    begLabel->setStartInternalControlFlow();
    endLabel->setEndInternalControlFlow();
 
@@ -10474,49 +10479,25 @@ static TR::Register* inlineHasNegativesOrCountPositives(TR::Node* node, TR::Reco
    // Load 16 bytes from address [buf + index]
    generateRegMemInstruction(TR::InstOpCode::MOVDQURegMem, node, xmmChunkReg, generateX86MemoryReference(bufReg, indexReg, 0, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cg);
 
-   // Create zero vector
-   generateRegRegInstruction(TR::InstOpCode::PXORRegReg, node, xmmMaskReg, xmmMaskReg, cg);
-
-   // Compare 0 > chunk bytewise
-   generateRegRegInstruction(TR::InstOpCode::PCMPGTBRegReg, node, xmmMaskReg, xmmChunkReg, cg);
-
-   // Extract bitmask of negative values
+   // Extract bitmask of sign bits
    generateRegRegInstruction(TR::InstOpCode::PMOVMSKB4RegReg, node, maskReg, xmmMaskReg, cg);
 
    // Check if any negative values exist
-   generateRegRegInstruction(TR::InstOpCode::TEST4RegReg, node, maskReg, maskReg, cg);
+   generateRegRegInstruction(TR::InstOpCode::TEST2RegReg, node, maskReg, maskReg, cg);
 
-   // If the result is nonzero, handle finding a negative byte
+   // If the result is nonzero, we found at least one negative byte
    if (recognizedMethod == TR::java_lang_StringCoding_hasNegatives)
       {
-      // Jump to returnHasNegativesLabel
-      generateLabelInstruction(TR::InstOpCode::JNE4, node, returnHasNegativesLabel, cg);
+      generateLabelInstruction(TR::InstOpCode::JNE4, node, returnBooleanLabel, cg);
       }
    else
       {
-      // Break and calculate index of first negative byte
-      generateLabelInstruction(TR::InstOpCode::JNE4, node, foundNegativeLabel, cg);
+      generateLabelInstruction(TR::InstOpCode::JNE4, node, returnHasNegativesLabel, cg);
       }
 
    // increment index by 16 and jump back to the top of the loop
    generateRegImmInstruction(TR::InstOpCode::ADD4RegImm4, node, indexReg, 16, cg);
    generateLabelInstruction(TR::InstOpCode::JMP4, node, loopLabel, cg);
-
-
-   // If we found any negative bytes, calculate the index of the first negative byte in the chunk
-   if (recognizedMethod == TR::java_lang_StringCoding_countPositives)
-      {
-      generateLabelInstruction(TR::InstOpCode::label, node, foundNegativeLabel, cg);
-
-      // Calculate the index of the first negative byte within the chunk
-      generateRegRegInstruction(TR::InstOpCode::TZCNT4RegReg, node, maskReg, maskReg, cg);
-
-      // Add the index, which points to the beginning of the chunk,
-      // for the overall index of the first negative byte
-      generateRegRegInstruction(TR::InstOpCode::ADD4RegReg, node, indexReg, maskReg, cg);
-
-      generateLabelInstruction(TR::InstOpCode::JMP4, node, returnHasNegativesLabel, cg);
-      }
 
 
    // Deal with the residual (last 15 or fewer) bytes
@@ -10528,7 +10509,7 @@ static TR::Register* inlineHasNegativesOrCountPositives(TR::Node* node, TR::Reco
 
    /*
     *    if loopLimit == 0
-    *       jmp returnNoNegativesLabel
+    *       return result
     *    if loopLimit > 8
     *       jmp nineOrMoreBytesLabel -------+
     *    if loopLimit > 2                   |
@@ -10553,20 +10534,20 @@ static TR::Register* inlineHasNegativesOrCountPositives(TR::Node* node, TR::Reco
     *
     *    residualTestLabel:
     *       AND chunkReg with maskReg
-    *       if != 0
-    *          jmp returnHasNegativesLabel
     *
-    *    returnNoNegativesLabel:
-    *       set result register to false (if hasNegatives) or length (if countPositives)
-    *       jmp endLabel
-    *
-    *    returnHasNegativesLabel:
-    *       set result register to true (if hasNegatives) or index - offset (if countPositives)
+    *    return result
     */
 
-   // if loopLimit = 0, jump to returnNoNegativesLabel
+   // if loopLimit = 0, we did not find any negative bytes
    generateRegRegInstruction(TR::InstOpCode::TEST4RegReg, node, loopLimitReg, loopLimitReg, cg);
-   generateLabelInstruction(TR::InstOpCode::JE4, node, returnNoNegativesLabel, cg);
+   if (recognizedMethod == TR::java_lang_StringCoding_hasNegatives)
+      {
+      generateLabelInstruction(TR::InstOpCode::JE4, node, returnBooleanLabel, cg);
+      }
+   else
+      {
+      generateLabelInstruction(TR::InstOpCode::JE4, node, returnNoNegativesLabel, cg);
+      }
 
    // Prepare an 8 byte sign bit mask
    generateRegImm64Instruction(TR::InstOpCode::MOV8RegImm64, node, maskReg, 0x8080808080808080, cg);
@@ -10631,35 +10612,30 @@ static TR::Register* inlineHasNegativesOrCountPositives(TR::Node* node, TR::Reco
    generateLabelInstruction(TR::InstOpCode::label, node, residualTestLabel, cg);
    // AND the residual bytes with the new mask
    generateRegRegInstruction(TR::InstOpCode::TEST8RegReg, node, chunkReg, maskReg, cg);
-   // If the result is nonzero (i.e. at least one of the sign bits is set), jump to returnHasNegativesLabel
-   generateLabelInstruction(TR::InstOpCode::JNE4, node, returnHasNegativesLabel, cg);
+   if (recognizedMethod == TR::java_lang_StringCoding_countPositives)
+      {
+      // If the result is nonzero (i.e. at least one of the sign bits is set), jump to returnHasNegativesLabel
+      generateLabelInstruction(TR::InstOpCode::JNE4, node, returnHasNegativesLabel, cg);
+      }
 
 
-   // Set result in the case that no negative bytes were found
-   generateLabelInstruction(TR::InstOpCode::label, node, returnNoNegativesLabel, cg);
+   // Return result
    if (recognizedMethod == TR::java_lang_StringCoding_hasNegatives)
       {
-      // result = false
-      generateRegRegInstruction(TR::InstOpCode::XOR4RegReg, node, indexReg, indexReg, cg);
+      generateLabelInstruction(TR::InstOpCode::label, node, returnBooleanLabel, cg);
+      // If the result of the previous comparison is nonzero, a negative byte has been found somewhere, so return true
+      // Otherwise, return false
+      generateRegInstruction(TR::InstOpCode::SETNE1Reg, node, indexReg, cg);
+      generateRegRegInstruction(TR::InstOpCode::MOVZXReg4Reg1, node, indexReg, indexReg, cg);
       }
    else
       {
-      // result = length
+      // no negatives found case, result = length
+      generateLabelInstruction(TR::InstOpCode::label, node, returnNoNegativesLabel, cg);
       generateRegRegInstruction(TR::InstOpCode::MOV4RegReg, node, indexReg, lengthReg, cg);
-      }
-   generateLabelInstruction(TR::InstOpCode::JMP4, node, endLabel, cg);
 
-
-   // Set result in the case that at least one negative byte was found
-   generateLabelInstruction(TR::InstOpCode::label, node, returnHasNegativesLabel, cg);
-   if (recognizedMethod == TR::java_lang_StringCoding_hasNegatives)
-      {
-      // result = true
-      generateRegImmInstruction(TR::InstOpCode::MOV4RegImm4, node, indexReg, 1, cg);
-      }
-   else
-      {
-      // result = index - offset
+      // negative(s) found case, result = index - offset
+      generateLabelInstruction(TR::InstOpCode::label, node, returnHasNegativesLabel, cg);
       generateRegRegInstruction(TR::InstOpCode::SUB4RegReg, node, indexReg, offsetReg, cg);
       }
 
