@@ -1765,7 +1765,8 @@ obj:
 			VM_YesNoMaybe isObjectConstructor,
 			VM_YesNoMaybe zeroing,
 			bool j2i = false,
-			bool decompileOccurred = false
+			bool decompileOccurred = false,
+			bool skipStackOverflowCheck = false
 	) {
 		VM_BytecodeAction rc = EXECUTE_BYTECODE;
 		J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(_sendMethod);
@@ -1812,7 +1813,7 @@ obj:
 		_literals = _sendMethod;
 		_pc = _sendMethod->bytecodes;
 		UDATA volatile stackOverflowMark = (UDATA)_currentThread->stackOverflowMark;
-		if ((UDATA)_sp >= stackOverflowMark) {
+		if (skipStackOverflowCheck || ((UDATA)_sp >= stackOverflowMark)) {
 			if (methodIsSynchronized) {
 				UDATA monitorRC = enterObjectMonitor(REGISTER_ARGS, syncObject);
 				/* Monitor enter can only fail in the nonblocking case, which does not
@@ -5845,9 +5846,16 @@ ffi_OOM:
 			break;
 		}
 		case J9VM_CONTINUATION_RETURN_FROM_SYNC_METHOD: {
-			UDATA *bp = ((UDATA *)(((J9SFMethodFrame *)_sp) + 1)) - 1;
-			restoreSpecialStackFrameLeavingArgs(REGISTER_ARGS, bp);
-			rc = inlineSendTarget(REGISTER_ARGS, VM_MAYBE, VM_MAYBE, VM_MAYBE, VM_MAYBE);
+			/* Reset interpreter state to what it would have been upon entry to inline send target. */
+			J9SFStackFrame *bytecodeFrame = (J9SFStackFrame *)_sp;
+			J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(_literals);
+			_sp = (UDATA *)((J9SFStackFrame *)_sp + 1) + (romMethod->tempCount + 1);
+			_sendMethod = _literals;
+			_literals = bytecodeFrame->savedCP;
+			_pc = bytecodeFrame->savedPC;
+			bytecodeFrame->savedA0 = (UDATA *)((UDATA)bytecodeFrame->savedA0 & ~((UDATA)J9SF_A0_INVISIBLE_TAG));
+			_arg0EA = bytecodeFrame->savedA0;
+			rc = inlineSendTarget(REGISTER_ARGS, VM_MAYBE, VM_MAYBE, VM_MAYBE, VM_MAYBE, false, false, true);
 			break;
 		}
 		case J9VM_CONTINUATION_RETURN_FROM_JIT_MONITOR_ENTER: {
