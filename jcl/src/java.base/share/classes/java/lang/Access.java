@@ -869,10 +869,12 @@ final class Access implements JavaLangAccess {
 		return VirtualThread.defaultScheduler();
 	}
 
+	/*[IF (JAVA_SPEC_VERSION < 25) | INLINE-TYPES]*/
 	@Override
 	public Stream<ScheduledExecutorService> virtualThreadDelayedTaskSchedulers() {
 		return VirtualThread.delayedTaskSchedulers();
 	}
+	/*[ENDIF] (JAVA_SPEC_VERSION < 25) | INLINE-TYPES */
 /*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 
 /*[ENDIF] JAVA_SPEC_VERSION >= 9 */
