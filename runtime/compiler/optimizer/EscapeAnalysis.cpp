@@ -2049,11 +2049,26 @@ void TR_EscapeAnalysis::checkDefsAndUses()
    _vnTemp = new (trStackMemory()) TR_BitVector( optimizer()->getValueNumberInfo()->getNumberOfNodes(), trMemory(), stackAlloc, notGrowable);
    _vnTemp2 = new (trStackMemory()) TR_BitVector(optimizer()->getValueNumberInfo()->getNumberOfNodes(), trMemory(), stackAlloc, notGrowable);
 
+   // Walk through all trees looking for stores of objects into fields or into
+   // array elements.  If an indirect store happens into some field or element
+   // of unknown provenance, the associated value numbers are recorded in
+   // _notOptimizableLocalObjectsValueNumbers and _notOptimizableLocalObjectsValueNumbers
+   // If an object is stored into an object that was stack allocated by a previous
+   // pass of Escape Analysis or it is stored into itself, and it could be a reference
+   // to a candidate for stack allocation, gather value numbers of uses of that
+   // definition.
+   //
+   // This loop will also check for calls to certain recognized methods.
+   //
    TR::TreeTop *tt = comp()->getStartTree();
    for (; tt; tt = tt->getNextTreeTop())
       {
       bool storeOfObjectIntoField = false;
       TR::Node *node = tt->getNode();
+
+      // Store might be beneath a check node or a compressedrefs node,
+      // so get the first child, if the node is not a store.
+      //
       if (!node->getOpCode().isStore())
          {
          if (node->getNumChildren() > 0)
@@ -2080,7 +2095,12 @@ void TR_EscapeAnalysis::checkDefsAndUses()
 
          if (node->getOpCode().isStoreIndirect() &&
              (baseObject->getFirstChild() == node->getSecondChild()))
+            {
+            // A reference to the object is being stored
+            // into one of its own fields or array elements
+            //
             storeOfObjectIntoField = true;
+            }
          else
             {
             TR::Node *baseChild = baseObject;
@@ -2091,11 +2111,22 @@ void TR_EscapeAnalysis::checkDefsAndUses()
 
             baseChild = resolveSniffedNode(baseChild);
 
+            // Look for stores of an object into a field or array element of an
+            // object that was stack allocated by a previous pass of Escape
+            // Analysis.
+            //
             if ((baseChild && (baseChild->getOpCodeValue() == TR::loadaddr) &&
                 baseChild->getSymbolReference()->getSymbol()->isAuto() &&
                 baseChild->getSymbolReference()->getSymbol()->isLocalObject())
                )
                {
+               // The base of the indirect store is an object that was previously
+               // stack allocated.  Check whether we might be able to trace
+               // further references to the object through subsequent loads.  If
+               // so, set storeOfObjectIntoField and storeIntoOtherLocalObject
+               // true.  We can't trace through an arraycopy operation or if the
+               // base of the indirect store is marked as cannotTrackLocalUses().
+               //
                baseChildVN = _valueNumberInfo->getValueNumber(baseChild);
                if (node->getOpCodeValue() == TR::arraycopy)
                   {
@@ -2131,6 +2162,9 @@ void TR_EscapeAnalysis::checkDefsAndUses()
                   _useDefInfo->getUseDef(defs, baseIndex);
                   if (!defs.IsZero())
                      {
+
+                     // Walk through defs for the base of the indirect store
+                     //
                      TR_UseDefInfo::BitVector::Cursor cursor(defs);
                      for (cursor.SetToFirstOne(); cursor.Valid(); cursor.SetToNextOne())
                         {
@@ -2145,6 +2179,23 @@ void TR_EscapeAnalysis::checkDefsAndUses()
                         TR::TreeTop *defTree = _useDefInfo->getTreeTop(defIndex);
                         TR::Node *defNode = defTree->getNode();
 
+                        // Object allocations are frequently stored into temporary
+                        // variables and subsequent dereferences often use those
+                        // local temporaries.
+                        //
+                        // This code is looking for a pattern like this, where the
+                        // base of the indirect store that led us here is the same
+                        // as that of the address that's being stored.  That means
+                        // the indirect store was a store into the field of a stack
+                        // allocated object.
+                        //
+                        // n100n astore #123 vn=456                         // defNode
+                        // n101n   loadaddr #124 <local-aggregate> vn=456   // defChild
+                        //   ...
+                        // n200n astorei <field>
+                        // n201n   aload #123 vn=456                        // baseChild
+                        // n202n
+                        //
                         if (defNode &&
                             (defNode->getOpCodeValue() == TR::astore) &&
                             (defNode->getNumChildren() > 0))
@@ -2190,8 +2241,15 @@ void TR_EscapeAnalysis::checkDefsAndUses()
             }
          }
 
+      // If this tree stored an object into a field or array element, for each
+      // candidate for stack allocation check whether the value number of the
+      // object that's being stored is one that's known to be associated with the
+      // candidate.  If it is, walk through all trees gathering the value numbers
+      // associated with uses of that definition, and tag the candidate with
+      // those value numbers via collectValueNumbersOfIndirectAccessesToObject.
+      //
       if (storeOfObjectIntoField)
-        {
+         {
             int32_t valueNumber = _valueNumberInfo->getValueNumber(node->getSecondChild());
             Candidate *candidate, *next;
             bool foundAccess = false;
@@ -2218,7 +2276,7 @@ void TR_EscapeAnalysis::checkDefsAndUses()
                      }
                   }
                }
-        }
+         }
 
 
       if (node->getOpCode().isCall() &&
@@ -2378,6 +2436,10 @@ bool TR_EscapeAnalysis::collectValueNumbersOfIndirectAccessesToObject(TR::Node *
 
    if (node->getOpCode().isLoadIndirect())
       {
+      // Test whether the symbol that appears on this indirect load is the same
+      // symbol that appeared on the indirect store that's under consideration
+      // or if they are aliases of one another.
+      //
       bool sameSymbol = false;
       if (node->getSymbolReference()->getReferenceNumber() == indirectStore->getSymbolReference()->getReferenceNumber())
          sameSymbol = true;
@@ -2404,6 +2466,10 @@ bool TR_EscapeAnalysis::collectValueNumbersOfIndirectAccessesToObject(TR::Node *
 
          if (candidate->_valueNumbers)
             {
+            // If a store of an object into one of its own fields or array elements
+            // was the indirect store that prompted this call to
+            // collectValueNumbersOfIndirectAccessesToObject, baseChildVN will be -1.
+            //
             if ((baseChildVN == -1) && usesValueNumber(candidate, baseVN))
                {
                candidate->_valueNumbers->add(_valueNumberInfo->getValueNumber(node));
@@ -2421,6 +2487,12 @@ bool TR_EscapeAnalysis::collectValueNumbersOfIndirectAccessesToObject(TR::Node *
                }
             else if (baseChildVN != -1)
                {
+               // If the value number of the base for this indirect load is the
+               // same as the value number of the indirect store that is under
+               // consideration, this might be loading the candidate, so add
+               // the value number of the load to the set of value numbers
+               // that are associated with the candidate.
+               //
                if (baseChildVN == baseVN)
                   {
                   candidate->_valueNumbers->add(_valueNumberInfo->getValueNumber(node));
@@ -2440,6 +2512,10 @@ bool TR_EscapeAnalysis::collectValueNumbersOfIndirectAccessesToObject(TR::Node *
                      storeBase = storeBase->getFirstChild();
 
 
+                  // If the base of the indirect load is an auto, use use/def info
+                  // to loop through all definitions that are stores and loop
+                  // through all uses of each of those definitions.
+                  //
                   if (base->getOpCode().hasSymbolReference() &&  base->getSymbolReference()->getSymbol()->isAuto())
                      {
                      if (_useDefInfo)
@@ -2452,10 +2528,22 @@ bool TR_EscapeAnalysis::collectValueNumbersOfIndirectAccessesToObject(TR::Node *
                         //_useDefInfo->getUseDef(storeBaseDefs, storeBaseIndex);
                         //traceMsg(comp(), "store base index %d store base %p base index %p base %p\n", storeBaseIndex, storeBase, baseIndex, base);
 
+                        // Add the value number of the base of the indirect store that's
+                        // being considered to _vnTemp.  Iterate until _vnTemp no longer
+                        // changes.  At each iteration, loop over all definitions that
+                        // are stores whose value number is in _vnTemp.  For each such
+                        // store, loop over its uses, and add the value number of that
+                        // use to _vnTemp.
+                        //
+                        // This will add to _vnTemp all value numbers that might be
+                        // reached from the indirect store that's under consideration.
+                        //
+                        // Values will accumulate in _vnTemp over multiple calls to
+                        // collectValueNumbersOfIndirectAccessesToObject.
+                        //
                         _vnTemp->set(_valueNumberInfo->getValueNumber(storeBase));
                         while (*_vnTemp2 != *_vnTemp)
                            {
-                           _vnTemp->print(comp());
                            *_vnTemp2 = *_vnTemp;
                            int32_t i;
                            for (i = _useDefInfo->getNumDefOnlyNodes()-1; i >= 0; --i)
@@ -2488,6 +2576,11 @@ bool TR_EscapeAnalysis::collectValueNumbersOfIndirectAccessesToObject(TR::Node *
                               }
                            }
 
+                        // Loop over the definitions for the base of the indirect load.
+                        // If value number for a definition is found in _vnTemp, add
+                        // that value number to the set of value numbers associated
+                        // with the candidate and stop iterating over the definitions.
+                        //
                         TR_UseDefInfo::BitVector::Cursor cursor(baseDefs);
                         for (cursor.SetToFirstOne(); cursor.Valid(); cursor.SetToNextOne())
                            {
@@ -2515,6 +2608,8 @@ bool TR_EscapeAnalysis::collectValueNumbersOfIndirectAccessesToObject(TR::Node *
       }
 
 
+   // Recursively examine the children of the current node
+   //
    int32_t i;
    for (i=0;i<node->getNumChildren(); i++)
       {
@@ -6450,7 +6545,7 @@ bool TR_EscapeAnalysis::fixupFieldAccessForNonContiguousAllocation(TR::Node *nod
             newTree->join(_curTree);
 
             if (trace())
-               traceMsg(comp(), "Preserve old node [%p] for store to non-contiguous immutable object that escapes in cold block; create new tree [%p] for direct store\n", node, newTree);
+               traceMsg(comp(), "Preserve old node [%p] for store to non-contiguous immutable candidate [%p] that escapes in cold block; create new tree for for direct store [%p]\n", node, candidate->_node, newStore);
             }
          else
             {
@@ -6485,23 +6580,23 @@ bool TR_EscapeAnalysis::fixupFieldAccessForNonContiguousAllocation(TR::Node *nod
          if (parent->getOpCode().isNullCheck())
             TR::Node::recreate(parent, TR::treetop);
          else if (parent->getOpCode().isSpineCheck() && (parent->getFirstChild() == node))
-       {
+            {
             TR::TreeTop *prev = _curTree->getPrevTreeTop();
 
             int32_t i = 1;
             while (i < parent->getNumChildren())
-          {
+               {
                TR::TreeTop *tt = TR::TreeTop::create(comp(), TR::Node::create(TR::treetop, 1, parent->getChild(i)));
                parent->getChild(i)->recursivelyDecReferenceCount();
                prev->join(tt);
                tt->join(_curTree);
                prev = tt;
                i++;
-          }
+               }
 
             TR::Node::recreate(parent, TR::treetop);
             parent->setNumChildren(1);
-       }
+            }
          else if (parent->getOpCodeValue() == TR::ArrayStoreCHK)
             {
             TR::Node::recreate(parent, TR::treetop);
