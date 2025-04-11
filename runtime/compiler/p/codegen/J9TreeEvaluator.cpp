@@ -12253,7 +12253,7 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
    for (int i = 0; i < unroll_factor; i++)
       {
       storeRegs[i] = cg->allocateRegister();
-      } 
+      }
 
    TR::LabelSymbol *VSXLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *serialPrepLabel = generateLabelSymbol(cg);
@@ -12355,14 +12355,29 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
    // do we have enough elements to use the unroll loop?
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, tempReg, lengthReg, -3);
 
+
    generateLabelInstruction(cg, TR::InstOpCode::label, node, serialUnrollLabel);
    generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp4, node, cr6, indexReg, tempReg);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::bge, node, serialLabel, cr6);
+   // loading 4 bytes at once is slightly faster
+   generateTrg1MemInstruction(cg, TR::InstOpCode::lwzx, node, storeRegs[0],
+      TR::MemoryReference::createWithIndexReg(cg, startReg, indexReg, 4));
+   if (isLE)
+      {
+      generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, storeRegs[3], storeRegs[0], 8, 0xff);
+      generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, storeRegs[2], storeRegs[0], 16, 0xff);
+      generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, storeRegs[1], storeRegs[0], 24, 0xff);
+      generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, storeRegs[0], storeRegs[0], 0, 0xff);
+      }
+   else
+      {
+      generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, storeRegs[1], storeRegs[0], 16, 0xff);
+      generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, storeRegs[2], storeRegs[0], 24, 0xff);
+      generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, storeRegs[3], storeRegs[0], 0, 0xff);
+      generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, storeRegs[0], storeRegs[0], 8, 0xff);
+      }
    for (int i = 0; i < unroll_factor; i++)
       {
-      generateTrg1MemInstruction(cg, TR::InstOpCode::lbzx, node, storeRegs[i],
-         TR::MemoryReference::createWithIndexReg(cg, startReg, indexReg, 1));
-      generateTrg1Src1Instruction(cg, TR::InstOpCode::extsb, node, storeRegs[i], storeRegs[i]);
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, cr6, storeRegs[i], 0);
       // when seeking negatives, we need to return 1
       if (!isCountPositives)
