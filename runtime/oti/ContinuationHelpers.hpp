@@ -98,6 +98,24 @@ public:
 			SWAP_MEMBER(monitorEnterRecordPool, J9Pool*, vmThread, continuation);
 			SWAP_MEMBER(monitorEnterRecords, J9MonitorEnterRecord*, vmThread, continuation);
 			SWAP_MEMBER(jniMonitorEnterRecords, J9MonitorEnterRecord*, vmThread, continuation);
+			/* Reset J9VMThread in preserverd register */
+#if defined(J9VM_ARCH_S390)
+			((J9JITGPRSpillArea*)threadELS->jitGlobalStorageBase)->jitGPRs[13] = (UDATA)vmThread;
+#elif defined(J9VM_ARCH_AARCH64) /* defined(J9VM_ARCH_S390) */
+			((J9JITGPRSpillArea*)threadELS->jitGlobalStorageBase)->jitGPRs[19] = (UDATA)vmThread;
+#elif defined(J9VM_ARCH_ARM) /* defined(J9VM_ARCH_S390) */
+			((J9JITGPRSpillArea*)threadELS->jitGlobalStorageBase)->jitGPRs[8] = (UDATA)vmThread;
+#elif defined(J9VM_ARCH_X86) /* defined(J9VM_ARCH_S390) */
+			((J9JITGPRSpillArea*)threadELS->jitGlobalStorageBase)->jitGPRs.named.rbp = (UDATA)vmThread;
+#elif defined(J9VM_ARCH_RISCV)
+			((J9JITGPRSpillArea*)threadELS->jitGlobalStorageBase)->jitGPRs[10] = (UDATA)vmThread;
+#elif defined(J9VM_ARCH_POWER) /* defined(J9VM_ARCH_S390) */
+#if defined(J9VM_ENV_DATA64)
+			((J9JITGPRSpillArea*)threadELS->jitGlobalStorageBase)->jitGPRs[15] = (UDATA)vmThread;
+#else /* defined(J9VM_ENV_DATA64) */
+			((J9JITGPRSpillArea*)threadELS->jitGlobalStorageBase)->jitGPRs[13] = (UDATA)vmThread;
+#endif /* defined(J9VM_ENV_DATA64) */
+#endif /* defined(J9VM_ARCH_S390) */
 		}
 #endif /* JAVA_SPEC_VERSION >= 24 */
 	}
