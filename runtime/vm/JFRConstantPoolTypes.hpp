@@ -285,6 +285,12 @@ struct JVMInformationEntry {
 	I_64 pid;
 };
 
+struct SystemProcessEntry {
+	I_64 ticks;
+	const char *pid;
+	const char *commandLine;
+};
+
 struct CPUInformationEntry {
 	const char *cpu;
 	char *description;
@@ -377,6 +383,8 @@ private:
 	UDATA _threadContextSwitchRateCount;
 	J9Pool *_threadStatisticsTable;
 	UDATA _threadStatisticsCount;
+	J9Pool *_systemProcessTable;
+	UDATA _systemProcessCount;
 
 	/* Processing buffers */
 	StackFrame *_currentStackFrameBuffer;
@@ -501,6 +509,7 @@ private:
 	static UDATA freeThreadGroupNameEntries(void *entry, void *userData);
 
 	U_32 getMethodEntry(J9ROMMethod *romMethod, J9Class *ramClass);
+
 
 	U_32 getClassEntry(J9Class *clazz);
 
@@ -654,6 +663,7 @@ public:
 
 	void addThreadStatisticsEntry(J9JFRThreadStatistics *threadStatisticsData);
 
+
 	J9Pool *getExecutionSampleTable()
 	{
 		return _executionSampleTable;
@@ -714,6 +724,11 @@ public:
 		return _threadStatisticsTable;
 	}
 
+	J9Pool *getSystemProcessTable()
+       	{
+	       	return _systemProcessTable;
+       	}
+
 	UDATA getExecutionSampleCount()
 	{
 		return _executionSampleCount;
@@ -772,6 +787,11 @@ public:
 	UDATA getThreadStatisticsCount()
 	{
 		return _threadStatisticsCount;
+	}
+
+	UDATA getSystemProcessCount()
+	{
+		return _systemProcessCount;
 	}
 
 	ClassloaderEntry *getClassloaderEntry()
@@ -1246,6 +1266,41 @@ done:
 		gcConfiguration->heapAddressBits = J9JAVAVM_REFERENCE_SIZE(vm) * 8;
 	}
 
+	uintptr_t recordSystemProcessEvent(uintptr_t pid, const char *commandLine, void *userData)
+	{
+		VM_JFRConstantPoolTypes *constantPool = static_cast<VM_JFRConstantPoolTypes *>(userData);
+		J9Pool *systemProcessTable = constantPool->getSystemProcessTable();
+
+		SystemProcessEntry *entry = static_cast<SystemProcessEntry *>(pool_newElement(systemProcessTable));
+		if (NULL == entry) {
+			return (uintptr_t)-1;
+		}
+		entry->ticks = j9time_nano_time();
+		char pidString[32];
+		snprintf(pidString, sizeof(pidString), "%lu", (unsigned long)pid);
+		entry->pid = strdup(pidString); 
+		entry->commandLine = strdup(commandLine);
+		constantPool->_systemProcessCount += 1;
+		return 0;
+	}
+
+	static uintptr_t tempProcessCallback(uintptr_t pid, const char *commandLine, void *userData)
+	{
+		VM_JFRConstantPoolTypes *self = static_cast<VM_JFRConstantPoolTypes *>(userData);
+		return self->recordSystemProcessEvent(pid, commandLine, userData);
+	}
+
+	void loadSystemProcesses(J9VMThread *currentThread)
+	{
+		PORT_ACCESS_FROM_VMC(currentThread);
+		OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
+		this->_systemProcessCount = 0;
+		uintptr_t result = omrsysinfo_get_processes(&VM_JFRConstantPoolTypes::tempProcessCallback, this);
+		if (0 != result) {
+			return;
+		}
+	}
+
 	VM_JFRConstantPoolTypes(J9VMThread *currentThread)
 		: _currentThread(currentThread)
 		, _vm(currentThread->javaVM)
@@ -1295,6 +1350,8 @@ done:
 		, _threadContextSwitchRateCount(0)
 		, _threadStatisticsTable(NULL)
 		, _threadStatisticsCount(0)
+		, _systemProcessTable(NULL)
+                , _systemProcessCount(0)
 		, _previousStackTraceEntry(NULL)
 		, _firstStackTraceEntry(NULL)
 		, _previousThreadEntry(NULL)
@@ -1439,6 +1496,14 @@ done:
 			goto done;
 		}
 
+		_systemProcessTable = pool_new(sizeof(SystemProcessEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		if (NULL == _systemProcessTable) {
+			_buildResult = OutOfMemory;
+			goto done;
+		}
+
+		loadSystemProcesses(_currentThread);
+
 		/* Add reserved index for default entries. For strings zero is the empty or NUll string.
 		 * For package zero is the deafult package, for Module zero is the unnamed module. ThreadGroup
 		 * zero is NULL threadGroup.
@@ -1532,6 +1597,7 @@ done:
 		pool_kill(_classLoadingStatisticsTable);
 		pool_kill(_threadContextSwitchRateTable);
 		pool_kill(_threadStatisticsTable);
+		pool_kill(_systemProcessTable);
 		j9mem_free_memory(_globalStringTable);
 	}
 
