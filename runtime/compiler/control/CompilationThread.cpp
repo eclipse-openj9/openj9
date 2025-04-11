@@ -8650,10 +8650,13 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                }
             else
                {
-               // For JitDump compilations, set the log file to the jitdump file,
-               // which has already been created by a thread running JitDump
+               // For JitDump compilations, set the log file and OMR::Logger to
+               // the jitdump file, which has already been created by a thread
+               // running JitDump
+               //
                TR::Options::findOrCreateDebug();
                options->setLogFile(p->_optimizationPlan->getLogCompilation());
+               options->setLogger(p->_optimizationPlan->getLogger());
                }
             // The following is a hack to prevent the JITServer from allocating
             // a sentinel entry for the list of runtime assumptions kept in the compiler object
