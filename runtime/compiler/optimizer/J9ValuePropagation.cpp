@@ -22,6 +22,7 @@
 
 #include "optimizer/J9ValuePropagation.hpp"
 #include "optimizer/VPBCDConstraint.hpp"
+#include "optimizer/PreExistence.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/Method.hpp"
@@ -2420,6 +2421,42 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                }
             break;
             }
+         case TR::java_lang_invoke_MethodHandle_invokeBasic:
+            {
+            TR::Node* mh = node->getFirstArgument();
+            bool isGlobal;
+            TR::VPConstraint* mhConstraint = getConstraint(mh, isGlobal);
+            if (mhConstraint
+               && mhConstraint->getKnownObject()
+               && mhConstraint->isNonNullObject())
+               {
+               if (!J9::TransformUtil::refineMethodHandleInvokeBasic(comp(), _curTree, node, mhConstraint->getKnownObject()->getIndex(), trace()))
+                  return;
+
+               TR_PrexArgInfo *argInfo = new (trStackMemory()) TR_PrexArgInfo(node->getNumChildren(), trMemory());
+               for (int32_t i = 0; i < node->getNumChildren(); i++)
+                  {
+                  TR::Node *argNode = node->getChild(i);
+                  if (argNode && argNode->getDataType() == TR::Address)
+                     {
+                     TR::VPConstraint *argConstraint = getConstraint(argNode, isGlobal);
+                     if (argConstraint
+                         && argConstraint->getKnownObject()
+                         && argConstraint->isNonNullObject())
+                        {
+                        argInfo->set(i, new (trStackMemory()) TR_PrexArgument(argConstraint->getKnownObject()->getIndex(), comp()));
+                        if (trace())
+                           traceMsg(comp(), "PREX.vp:    Child %d [%p] arg is known object obj%d\n", i, argInfo->get(i), argConstraint->getKnownObject()->getIndex());
+                        }
+                     }
+                  }
+               if (trace())
+                  traceMsg(comp(), "PREX.vp: Done populating prex argInfo for %s %p\n", node->getOpCode().getName(), node);
+
+               _refinedMethodHandleINLMethodsToInline.add(new (trStackMemory()) OMR::ValuePropagation::CallInfo(this, mhConstraint->getClass(), argInfo));
+               }
+            break;
+            }
 
          default:
             break;
@@ -3480,6 +3517,18 @@ J9::ValuePropagation::doDelayedTransformations()
       }
 
    _valueTypesHelperCallsToBeFolded.deleteAll();
+
+   for (CallInfo* ci = _refinedMethodHandleINLMethodsToInline.getFirst(); ci; ci = ci->getNext())
+      {
+      TR_InlineCall newInlineCall(optimizer(), this);
+
+      if (!newInlineCall.inlineCall(ci->_tt, ci->_thisType, true, ci->_argInfo, 0))
+         {
+         if (trace())
+            traceMsg(comp(), "Failed to inline refined MH INL call\n");
+         }
+      }
+   _refinedMethodHandleINLMethodsToInline.setFirst(0);
 
    OMR::ValuePropagation::doDelayedTransformations();
    }
