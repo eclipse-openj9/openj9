@@ -12242,13 +12242,22 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
 
    TR::Register *tempReg = cg->allocateRegister();
 
+   const int unroll_factor = 4;
    TR::Register *cr6 = cg->allocateRegister(TR_CCR);
 
    TR::Register *vconstant0Reg = cg->allocateRegister(TR_VRF);
    TR::Register *vtmp1Reg = cg->allocateRegister(TR_VRF);
    TR::Register *vtmp2Reg = cg->allocateRegister(TR_VRF);
 
+   TR::Register *storeRegs[unroll_factor];
+   for (int i = 0; i < unroll_factor; i++)
+      {
+      storeRegs[i] = cg->allocateRegister();
+      } 
+
    TR::LabelSymbol *VSXLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *serialPrepLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *serialUnrollLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *serialLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *vecResultLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *resultLabel = generateLabelSymbol(cg);
@@ -12305,7 +12314,7 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
    generateLabelInstruction(cg, TR::InstOpCode::label, node, VSXLabel);
    // go to residue if we don't have enough items to do one load
    generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp4, node, cr6, indexReg, tempReg);
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::bge, node, serialLabel, cr6);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::bge, node, serialPrepLabel, cr6);
 
    // load 16 items
    generateTrg1Src2Instruction(cg, TR::InstOpCode::lxvw4x, node, vtmp1Reg, startReg, indexReg);
@@ -12333,7 +12342,7 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
       {
       //generateTrg1Src1Instruction(cg, TR::InstOpCode::vclzlsbb, node, returnReg, vtmp1Reg);
       //generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, returnReg, returnReg, indexReg);
-      generateLabelInstruction(cg, TR::InstOpCode::b, node, serialLabel);
+      generateLabelInstruction(cg, TR::InstOpCode::b, node, serialPrepLabel);
       }
    else // just report 1
       {
@@ -12341,7 +12350,29 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
       generateLabelInstruction(cg, TR::InstOpCode::b, node, endLabel);
       }
 
-   // --- serialLabel to deal with whatever remains
+   // --- serialPrepLabel to deal with whatever remains
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, serialPrepLabel);
+   // do we have enough elements to use the unroll loop?
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, tempReg, lengthReg, -3);
+
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, serialUnrollLabel);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp4, node, cr6, indexReg, tempReg);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::bge, node, serialLabel, cr6);
+   for (int i = 0; i < unroll_factor; i++)
+      {
+      generateTrg1MemInstruction(cg, TR::InstOpCode::lbzx, node, storeRegs[i],
+         TR::MemoryReference::createWithIndexReg(cg, startReg, indexReg, 1));
+      generateTrg1Src1Instruction(cg, TR::InstOpCode::extsb, node, storeRegs[i], storeRegs[i]);
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, cr6, storeRegs[i], 0);
+      // when seeking negatives, we need to return 1
+      if (!isCountPositives)
+         generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, tempReg, 1);
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, endLabel, cr6);
+
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, indexReg, indexReg, 1);
+      }
+   generateLabelInstruction(cg, TR::InstOpCode::b, node, serialUnrollLabel);
+
    generateLabelInstruction(cg, TR::InstOpCode::label, node, serialLabel);
    generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp4, node, cr6, indexReg, lengthReg);
    // if we reach the end, indexReg is len already, so we don't need to do anything for countPositives
@@ -12372,7 +12403,7 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
    // end
 
    TR::RegisterDependencyConditions *deps =
-      new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 8, cg->trMemory());
+      new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 8 + unroll_factor, cg->trMemory());
 
    deps->addPostCondition(startReg, TR::RealRegister::NoReg);
    deps->getPostConditions()->getRegisterDependency(deps->getAddCursorForPost() - 1)->setExcludeGPR0();
@@ -12388,6 +12419,11 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
    deps->addPostCondition(vconstant0Reg, TR::RealRegister::NoReg);
    deps->addPostCondition(vtmp1Reg, TR::RealRegister::NoReg);
    deps->addPostCondition(vtmp2Reg, TR::RealRegister::NoReg);
+
+   for (int i = 0; i < unroll_factor; i++)
+      {
+      deps->addPostCondition(storeRegs[i], TR::RealRegister::NoReg);
+      }
 
    generateDepLabelInstruction(cg, TR::InstOpCode::label, node, endLabel, deps);
 
@@ -12408,6 +12444,11 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
    cg->stopUsingRegister(vconstant0Reg);
    cg->stopUsingRegister(vtmp1Reg);
    cg->stopUsingRegister(vtmp2Reg);
+
+   for (int i = 0; i < unroll_factor; i++)
+      {
+      cg->stopUsingRegister(storeRegs[i]);
+      }
 
    for (int32_t i = 0; i < node->getNumChildren(); i++)
       {
