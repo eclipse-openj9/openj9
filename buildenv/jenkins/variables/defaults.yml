@@ -260,6 +260,8 @@ ppc64_aix:
     location: '/opt/bootjdks'
     arch: 'ppc64'
     os: 'aix'
+    url:
+      24: 'https://openj9-artifactory.osuosl.org/artifactory/ci-openj9/Build_JDK24_ppc64_aix_Nightly/56/OpenJ9-JDK24-ppc64_aix-20250411-011534.tar.gz'
   release:
     all: 'aix-ppc64-server-release'
     8: 'aix-ppc64-normal-server-release'
