@@ -20,6 +20,8 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
+#define _AE_BIMODAL
+
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
@@ -149,7 +151,7 @@ parseBufferSize(const char * const str, const int argSize, BOOLEAN atRuntime)
 	const char * p = str;
 
 	for (; '\0' != *p; ++p) {
-		if (isdigit(*p)) {
+		if (__isdigit_a(*p)) {
 			if (-1 == firstDigit) {
 				firstDigit = p - str;
 			}
