@@ -3748,8 +3748,9 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
          if (response == JITServer::MessageType::compilationThreadCrashed)
             {
             // IL of the crashing method generated successfully, proceed with diagnostic recompilation
-            auto recv = client->getRecvData<TR::FILE *>();
+            auto recv = client->getRecvData<TR::FILE *,OMR::Logger *>();
             TR::FILE *jitdumpFile = std::get<0>(recv);
+            OMR::Logger *jitdumpLogger = std::get<1>(recv);
             client->write(response, JITServer::Void());
 
             // Create method details for the JitDump recompilation
@@ -3759,6 +3760,7 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
             // so options haven't changed.
             J9::JitDumpMethodDetails jitDumpDetails(method, NULL, useAotCompilation);
             entry->_optimizationPlan->setLogCompilation(jitdumpFile);
+            entry->_optimizationPlan->setLogger(jitdumpLogger);
 
             if (writeVerboseLog)
                 TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
