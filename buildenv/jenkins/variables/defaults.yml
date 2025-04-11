@@ -40,10 +40,6 @@ openjdk:
     default:
       repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk21.git'
       branch: 'openj9'
-  23:
-    default:
-      repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk23.git'
-      branch: 'openj9'
   24:
     default:
       repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk24.git'
@@ -114,7 +110,6 @@ build_discarder:
     OpenJDK11: 5
     OpenJDK17: 10
     OpenJDK21: 10
-    OpenJDK23: 10
     OpenJDK24: 10
     OpenJDK: 10
     Personal: 30
@@ -162,13 +157,13 @@ boot_jdk_default:
       11: '11'
       17: '17'
       21: '21'
-      23: '21'
-      24: '21'
-      next: '21'
+      24: '24'
+      next: '24'
     dir_strip:
       all: '1'
     url:
       all: 'https://api.adoptopenjdk.net/v3/binary/latest/${bootJDKVersion}/ga/${os}/${arch}/jdk/openj9/normal/adoptopenjdk?project=jdk'
+      24: 'https://api.adoptium.net/v3/binary/latest/${bootJDKVersion}/ga/${os}/${arch}/jdk/hotspot/normal/eclipse'
 #========================================#
 # CUDA
 #========================================#
@@ -188,7 +183,6 @@ disable_javac_server:
     11: '--disable-javac-server'
     17: '--disable-javac-server'
     21: '--disable-javac-server'
-    23: '--disable-javac-server'
     24: '--disable-javac-server'
     next: '--disable-javac-server'
 #========================================#
@@ -266,6 +260,8 @@ ppc64_aix:
     location: '/opt/bootjdks'
     arch: 'ppc64'
     os: 'aix'
+    url:
+      24: 'https://openj9-artifactory.osuosl.org/artifactory/ci-openj9/Build_JDK24_ppc64_aix_Nightly/56/OpenJ9-JDK24-ppc64_aix-20250411-011534.tar.gz'
   release:
     all: 'aix-ppc64-server-release'
     8: 'aix-ppc64-normal-server-release'
@@ -278,7 +274,6 @@ ppc64_aix:
     11: '--disable-warnings-as-errors'
     17: '--disable-warnings-as-errors'
     21: '--disable-warnings-as-errors'
-    23: '--disable-warnings-as-errors'
     24: '--disable-warnings-as-errors'
     next: '--disable-warnings-as-errors'
   build_env:
@@ -310,7 +305,6 @@ x86-64_linux:
     11: '!sw.os.cent.6'
     17: '!sw.os.cent.6'
     21: '!sw.os.cent.6'
-    23: '!sw.os.cent.6'
     24: '!sw.os.cent.6'
     next: '!sw.os.cent.6'
 #========================================#
