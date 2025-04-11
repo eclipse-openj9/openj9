@@ -2047,7 +2047,6 @@ void TR_EscapeAnalysis::checkDefsAndUses()
       }
 
    _vnTemp = new (trStackMemory()) TR_BitVector( optimizer()->getValueNumberInfo()->getNumberOfNodes(), trMemory(), stackAlloc, notGrowable);
-   _vnTemp2 = new (trStackMemory()) TR_BitVector(optimizer()->getValueNumberInfo()->getNumberOfNodes(), trMemory(), stackAlloc, notGrowable);
 
    // Walk through all trees looking for stores of objects into fields or into
    // array elements.  If an indirect store happens into some field or element
@@ -2541,10 +2540,17 @@ bool TR_EscapeAnalysis::collectValueNumbersOfIndirectAccessesToObject(TR::Node *
                         // Values will accumulate in _vnTemp over multiple calls to
                         // collectValueNumbersOfIndirectAccessesToObject.
                         //
-                        _vnTemp->set(_valueNumberInfo->getValueNumber(storeBase));
-                        while (*_vnTemp2 != *_vnTemp)
+                        bool addedNewValueNumbers = false;
+                        int32_t storeBaseVN = _valueNumberInfo->getValueNumber(storeBase);
+                        if (!_vnTemp->isSet(storeBaseVN))
                            {
-                           *_vnTemp2 = *_vnTemp;
+                           _vnTemp->set(storeBaseVN);
+                           addedNewValueNumbers = true;
+                           }
+
+                        while (addedNewValueNumbers)
+                           {
+                           addedNewValueNumbers = false;
                            int32_t i;
                            for (i = _useDefInfo->getNumDefOnlyNodes()-1; i >= 0; --i)
                               {
@@ -2554,7 +2560,7 @@ bool TR_EscapeAnalysis::collectValueNumbersOfIndirectAccessesToObject(TR::Node *
 
                               if (defNode && defNode->getOpCode().isStore())
                                  {
-                                 if (_vnTemp->get(_valueNumberInfo->getValueNumber(defNode)))
+                                 if (_vnTemp->isSet(_valueNumberInfo->getValueNumber(defNode)))
                                     {
                                     TR_UseDefInfo::BitVector usesOfThisDef(comp()->allocator());
                                     _useDefInfo->getUsesFromDef(usesOfThisDef, defNode->getUseDefIndex()+_useDefInfo->getFirstDefIndex());
@@ -2568,7 +2574,11 @@ bool TR_EscapeAnalysis::collectValueNumbersOfIndirectAccessesToObject(TR::Node *
                                           int32_t useNodeVN = _valueNumberInfo->getValueNumber(useNode);
                                           //traceMsg(comp(), "use node %p vn %d\n", useNode, useNodeVN);
 
-                                          _vnTemp->set(useNodeVN);
+                                          if (!_vnTemp->isSet(useNodeVN))
+                                             {
+                                             _vnTemp->set(useNodeVN);
+                                             addedNewValueNumbers = true;
+                                             }
                                           }
                                        }
                                     }
@@ -2590,7 +2600,7 @@ bool TR_EscapeAnalysis::collectValueNumbersOfIndirectAccessesToObject(TR::Node *
                               continue;
 
                            TR::Node *defNode = _useDefInfo->getNode(defIndex);
-                           if (_vnTemp->get(_valueNumberInfo->getValueNumber(defNode)))
+                           if (_vnTemp->isSet(_valueNumberInfo->getValueNumber(defNode)))
                               {
                               candidate->_valueNumbers->add(_valueNumberInfo->getValueNumber(node));
                               break;
