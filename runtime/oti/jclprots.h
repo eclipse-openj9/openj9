@@ -681,7 +681,9 @@ Java_sun_misc_Unsafe_defineClass__Ljava_lang_String_2_3BIILjava_lang_ClassLoader
 void JNICALL
 Java_sun_misc_Unsafe_setMemory__Ljava_lang_Object_2JJB(JNIEnv *env, jobject receiver, jobject obj, jlong offset, jlong size, jbyte value);
 void JNICALL Java_sun_misc_Unsafe_registerNatives(JNIEnv *env, jclass clazz);
+#if JAVA_SPEC_VERSION >= 9
 void JNICALL Java_jdk_internal_misc_Unsafe_registerNatives(JNIEnv *env, jclass clazz);
+#endif /* JAVA_SPEC_VERSION >= 9 */
 jboolean JNICALL Java_sun_misc_Unsafe_shouldBeInitialized(JNIEnv *env, jobject receiver, jclass clazz);
 jint JNICALL Java_sun_misc_Unsafe_pageSize(JNIEnv *env, jobject receiver);
 jint JNICALL Java_sun_misc_Unsafe_getLoadAverage(JNIEnv *env, jobject receiver, jdoubleArray loadavg, jint nelems);
