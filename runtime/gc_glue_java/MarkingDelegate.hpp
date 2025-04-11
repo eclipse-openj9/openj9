@@ -29,6 +29,7 @@
 #include "FlattenedArrayObjectScanner.hpp"
 #include "GCExtensions.hpp"
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
+#include "MarkingDelegateBase.hpp"
 #include "MarkMap.hpp"
 #endif /* defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING) */
 #include "MixedObjectScanner.hpp"
@@ -36,16 +37,13 @@
 #include "ReferenceObjectScanner.hpp"
 #include "PointerArrayObjectScanner.hpp"
 
-#if JAVA_SPEC_VERSION >= 24
-class GC_ContinuationSlotIterator;
-#endif /* JAVA_SPEC_VERSION >= 24 */
 class GC_ObjectScanner;
 class MM_EnvironmentBase;
 class MM_HeapRegionDescriptorStandard;
 class MM_MarkingScheme;
 class MM_ReferenceStats;
 
-class MM_MarkingDelegate
+class MM_MarkingDelegate : public MM_MarkingDelegateBase
 {
 /* Data members & types */
 private:
@@ -87,8 +85,8 @@ private:
 protected:
 
 public:
-	MM_MarkingDelegate()
-		: _omrVM(NULL)
+	MM_MarkingDelegate() : MM_MarkingDelegateBase()
+		, _omrVM(NULL)
 		, _extensions(NULL)
 		, _markingScheme(NULL)
 		, _collectStringConstantsEnabled(false)
@@ -131,11 +129,7 @@ public:
 		return 0;
 	}
 
-	MMINLINE void doSlot(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, omrobjectptr_t *slotPtr);
-#if JAVA_SPEC_VERSION >= 24
-	void doContinuationSlot(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, omrobjectptr_t *slotPtr, GC_ContinuationSlotIterator *continuationSlotIterator);
-#endif /* JAVA_SPEC_VERSION >= 24 */
-	void doStackSlot(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, omrobjectptr_t *slotPtr, void *walkState, const void* stackLocation);
+	virtual void doSlot(MM_EnvironmentBase *env, omrobjectptr_t *slotPtr);
 	void scanContinuationNativeSlots(MM_EnvironmentBase *env, omrobjectptr_t objectPtr);
 
 	MMINLINE GC_ObjectScanner *
@@ -276,7 +270,6 @@ public:
 typedef struct StackIteratorData4MarkingDelegate {
 	MM_MarkingDelegate *markingDelegate;
 	MM_EnvironmentBase *env;
-	omrobjectptr_t fromObject;
 } StackIteratorData4MarkingDelegate;
 
 #endif /* MARKINGDELEGATE_HPP_ */
