@@ -1273,4 +1273,31 @@ VM_JFRChunkWriter::writeThreadDumpEvent()
 
 	return dataStart;
 }
+
+void
+VM_JFRChunkWriter::writeSystemProcessEvent(void *anElement, void *userData)
+{
+	SystemProcessEntry *entry = (SystemProcessEntry *)anElement;
+	VM_JFRChunkWriter *_writer = (VM_JFRChunkWriter *)userData;
+	VM_BufferWriter *_bufferWriter = _writer->_bufferWriter;
+
+	/* Reserve size field */
+	U_8 *dataStart = _writer->reserveEventSize(_bufferWriter);
+
+	/* Write event type */
+	_bufferWriter->writeLEB128(SystemProcessID);
+
+	/* Write start time */
+	_bufferWriter->writeLEB128(entry->ticks);
+
+	/* Write process ID as string */
+	_writer->writeStringLiteral(entry->pid);
+
+	/* Write command line */
+	_writer->writeStringLiteral(entry->commandLine);
+
+	/* Write size */
+	_writer->writeEventSize(_bufferWriter, dataStart);
+}
+
 #endif /* defined(J9VM_OPT_JFR) */
