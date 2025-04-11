@@ -89,6 +89,7 @@ enum MetadataTypeID {
 	ThreadDumpID = 111,
 	NativeLibraryID = 112,
 	GCHeapConfigID = 133,
+	YoungGenerationConfigID = 134,
 	ThreadID = 164,
 	ThreadGroupID = 165,
 	ClassID = 166,
@@ -416,6 +417,8 @@ done:
 				writeInitialEnvironmentVariableEvents();
 
 				writeGCHeapConfigurationEvent();
+
+				writeYoungGenerationConfigurationEvent();
 			}
 
 			writePhysicalMemoryEvent();
@@ -823,6 +826,8 @@ done:
 	void writeNarrowOOPModeTypesEvent();
 
 	void writeGCHeapConfigurationEvent();
+
+	void writeYoungGenerationConfigurationEvent();
 
 	void writeInitialSystemPropertyEvents(J9JavaVM *vm);
 
