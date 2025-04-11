@@ -3403,13 +3403,13 @@ void TR::CompilationInfo::stopCompilationThreads()
    static char * printCCUsage = feGetEnv("TR_PrintCodeCacheUsage");
 
    // Example:
-   // CodeCache: size=262144Kb used=2048Kb max_used=1079Kb free=260096Kb
+   // CodeCache: size=262144kB used=2048kB max_used=1079kB free=260096kB
    if (TR::Options::getCmdLineOptions()->getOption(TR_PrintCodeCacheUsage) || printCompMem || printCCUsage)
       {
-      unsigned long currTotalUsedKB = (unsigned long)(TR::CodeCacheManager::instance()->getCurrTotalUsedInBytes()/1024);
-      unsigned long maxUsedKB = (unsigned long)(TR::CodeCacheManager::instance()->getMaxUsedInBytes()/1024);
+      size_t currTotalUsedKB = TR::CodeCacheManager::instance()->getCurrTotalUsedInBytes() / 1024;
+      size_t maxUsedKB = TR::CodeCacheManager::instance()->getMaxUsedInBytes() / 1024;
 
-      fprintf(stderr, "\nCodeCache: size=%" OMR_PRIuPTR "Kb used=%luKb max_used=%luKb free=%" OMR_PRIuPTR "Kb\n\n",
+      fprintf(stderr, "\nCodeCache: size=%" OMR_PRIuPTR "kB used=%" OMR_PRIuSIZE "kB max_used=%" OMR_PRIuSIZE "kB free=%" OMR_PRIuSIZE "kB\n\n",
               _jitConfig->codeCacheTotalKB,
               currTotalUsedKB,
               maxUsedKB,
@@ -7136,10 +7136,10 @@ TR::CompilationInfoPerThreadBase::generatePerfToolEntry()
       {
       firstAttempt = false;
       uintptr_t jvmPid = getCompilation()->fej9()->getProcessID();
-      static const int maxPerfFilenameSize = 15 + sizeof(jvmPid)* 3; // "/tmp/perf-%ld.map"
+      static const int maxPerfFilenameSize = 15 + sizeof(jvmPid) * 3; // "/tmp/perf-%lu.map"
       char perfFilename[maxPerfFilenameSize] = { 0 };
 
-      bool truncated = TR::snprintfTrunc(perfFilename, maxPerfFilenameSize, "/tmp/perf-%ld.map", jvmPid);
+      bool truncated = TR::snprintfTrunc(perfFilename, maxPerfFilenameSize, "/tmp/perf-%" OMR_PRIuPTR ".map", jvmPid);
       if (!truncated)
          {
          TR::CompilationInfoPerThreadBase::_perfFile = j9jit_fopen(perfFilename, "a", true);

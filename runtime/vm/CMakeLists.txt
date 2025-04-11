@@ -286,15 +286,20 @@ endif()
 if(OMR_ARCH_X86)
 	j9vm_gen_asm(xcinterp.m4)
 
-	if((OMR_OS_LINUX OR OMR_OS_OSX) AND OMR_ENV_DATA64)
-		j9vm_gen_asm(
-			xa64/stackswap.m4
-			xa64/unsafeHelper.m4
-		)
-		target_sources(j9vm PRIVATE
-			unsafeHelper.s
-			xa64/UpcallThunkGen.cpp
-		)
+	if(OMR_OS_LINUX OR OMR_OS_OSX)
+		if(OMR_ENV_DATA64)
+			j9vm_gen_asm(
+				xa64/stackswap.m4
+				xa64/unsafeHelper.m4
+			)
+			target_sources(j9vm PRIVATE
+				unsafeHelper.s
+				xa64/UpcallThunkGen.cpp
+			)
+		else()
+			j9vm_gen_asm(xi32/stackswap.m4)
+			target_sources(j9vm PRIVATE xi32/unsafeHelper.s)
+		endif()
 	elseif(OMR_OS_WINDOWS)
 		if(OMR_ENV_DATA64)
 			j9vm_gen_asm(wa64/stackswap.m4)
