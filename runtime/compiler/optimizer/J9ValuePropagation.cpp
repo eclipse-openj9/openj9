@@ -48,6 +48,8 @@
 #include "env/J9JitMemory.hpp"
 #include "optimizer/HCRGuardAnalysis.hpp"
 #include "optimizer/VectorAPIExpansion.hpp"
+#include "optimizer/Inliner.hpp"
+#include "optimizer/PreExistence.hpp"
 
 
 #define OPT_DETAILS "O^O VALUE PROPAGATION: "
@@ -2420,6 +2422,45 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                }
             break;
             }
+         case TR::java_lang_invoke_MethodHandle_invokeBasic:
+            {
+            TR::Node* mh = node->getFirstArgument();
+            bool isGlobal;
+            TR::VPConstraint* mhConstraint = getConstraint(mh, isGlobal);
+            if (mhConstraint
+               && mhConstraint->getKnownObject()
+               && mhConstraint->isNonNullObject())
+               {
+               if (!J9::TransformUtil::refineMethodHandleInvokeBasic(comp(), _curTree, node, mhConstraint->getKnownObject()->getIndex(), trace()))
+                  return;
+
+               TR_PrexArgInfo *argInfo = new (trStackMemory()) TR_PrexArgInfo(node->getNumChildren(), trMemory());
+               for (int32_t i = 0; i < node->getNumChildren(); i++)
+                  {
+                  TR::Node *argNode = node->getChild(i);
+                  if (argNode && argNode->getDataType() == TR::Address)
+                     {
+                     TR::VPConstraint *argConstraint = getConstraint(argNode, isGlobal);
+                     if (argConstraint
+                         && argConstraint->getKnownObject()
+                         && argConstraint->isNonNullObject())
+                        {
+                        argInfo->set(i, new (trStackMemory()) TR_PrexArgument(argConstraint->getKnownObject()->getIndex(), comp()));
+                        if (trace())
+                           traceMsg(comp(), "PREX.vp:    Child %d [%p] arg is known object obj%d\n", i, argInfo->get(i), argConstraint->getKnownObject()->getIndex());
+                        }
+                     }
+                  }
+               if (trace())
+                  traceMsg(comp(), "PREX.vp: Done populating prex argInfo for %s %p\n", node->getOpCode().getName(), node);
+
+               // Add the refined method CallInfo into the linked list _refinedMethodHandleINLMethodsToInline. Since the call
+               // refinement replaces the call node in-place with a different method call, we do not have to do a lastTimeThrough()
+               // check to deal with cases where the refined INL calls were inside loops
+               _refinedMethodHandleINLMethodsToInline.add(new (trStackMemory()) OMR::ValuePropagation::CallInfo(this, NULL, argInfo));
+               }
+            break;
+            }
 
          default:
             break;
@@ -3480,6 +3521,26 @@ J9::ValuePropagation::doDelayedTransformations()
       }
 
    _valueTypesHelperCallsToBeFolded.deleteAll();
+
+   for (CallInfo* ci = _refinedMethodHandleINLMethodsToInline.getFirst(); ci; ci = ci->getNext())
+      {
+      if(ci->_block->nodeIsRemoved())
+         continue;
+
+      TR_InlineCall newInlineCall(optimizer(), this);
+
+      // Refined MethodHandle INL method inlining at warm have been intentionally set up to not be
+      // affected by other VP inlining control mechanisms such as TR_DisableInliningDuringVPAtWarm
+      // or getMaxSzForVPInliningWarm().They will instead be governed by the existing size limits
+      // based on the opt level set in TR_InlineCall::inlineCall. This can be changed using the
+      // env var TR_DumbInlineThreshold.
+      if (!newInlineCall.inlineCall(ci->_tt, ci->_thisType, true, ci->_argInfo, /* initialMaxSize */ 0))
+         {
+         if (trace())
+            traceMsg(comp(), "Failed to inline refined MH INL call\n");
+         }
+      }
+   _refinedMethodHandleINLMethodsToInline.setFirst(0);
 
    OMR::ValuePropagation::doDelayedTransformations();
    }
