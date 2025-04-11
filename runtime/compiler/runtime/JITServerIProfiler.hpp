@@ -101,7 +101,7 @@ public:
 
    virtual void persistIprofileInfo(TR::ResolvedMethodSymbol *methodSymbol, TR_ResolvedMethod *method, TR::Compilation *comp) override;
 
-   TR_IPBytecodeHashTableEntry *ipBytecodeHashTableEntryFactory(TR_IPBCDataStorageHeader *storage, uintptr_t pc, TR_Memory* mem, TR_AllocationKind allocKind);
+   static TR_IPBytecodeHashTableEntry *ipBytecodeHashTableEntryFactory(TR_IPBCDataStorageHeader *storage, uintptr_t pc, TR_Memory* mem, TR_AllocationKind allocKind);
    TR_IPMethodHashTableEntry *deserializeMethodEntry(TR_ContiguousIPMethodHashTableEntry *serialEntry, TR_Memory *trMemory);
    void printStats();
 

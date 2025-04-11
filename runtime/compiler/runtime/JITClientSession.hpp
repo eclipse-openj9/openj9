@@ -28,6 +28,7 @@
 #include "il/DataTypes.hpp" // for DataType
 #include "env/VMJ9.h" // for TR_StaticFinalData
 #include "runtime/JITServerAOTCache.hpp"
+#include "runtime/JITServerProfileCache.hpp"
 #include "runtime/SymbolValidationManager.hpp"
 
 class J9ROMClass;
@@ -44,6 +45,8 @@ class TR_PersistentCHTable;
 class JITServerPersistentCHTable;
 namespace TR { class CompilationInfoPerThreadBase; }
 namespace JITServer { class ServerStream; }
+class JITServerSharedProfileCache;
+class ProfiledMethodEntry;
 
 using IPTable_t = PersistentUnorderedMap<uint32_t, TR_IPBytecodeHashTableEntry*>;
 using TR_JitFieldsCacheEntry = std::pair<J9Class*, UDATA>;
@@ -186,6 +189,7 @@ public:
       void freeClassInfo(TR_PersistentMemory *persistentMemory); // this method is in place of a destructor. We can't have destructor
       // because it would be called after inserting ClassInfo into the ROM map, freeing romClass
 
+      J9Class *_ramClass; // pointer valid at client side
       J9ROMClass *_romClass; // romClass content exists in persistentMemory at the server
       J9ROMClass *_remoteRomClass; // pointer to the corresponding ROM class on the client
       J9Method *_methodsOfClass;
@@ -242,22 +246,26 @@ public:
    */
    struct J9MethodInfo
       {
-      J9MethodInfo(J9ROMMethod *romMethod, J9ROMMethod *origROMMethod,
-                   TR_OpaqueClassBlock *owningClass, uint32_t index, bool isMethodTracingEnabled) :
-         _romMethod(romMethod), _origROMMethod(origROMMethod), _IPData(NULL),
-         _owningClass(owningClass), _index(index), _isMethodTracingEnabled(isMethodTracingEnabled),
-         _isCompiledWhenProfiling(false), _isLambdaFormGeneratedMethod(false), _aotCacheMethodRecord(NULL) { }
+      J9MethodInfo(J9ROMMethod *romMethod, J9ROMMethod *origROMMethod, ClassInfo &definingClassInfo,
+                   uint32_t index, bool isMethodTracingEnabled) :
+         _romMethod(romMethod), _origROMMethod(origROMMethod), _definingClassInfo(definingClassInfo),
+         _index(index), _isMethodTracingEnabled(isMethodTracingEnabled),
+         _isCompiledWhenProfiling(false), _isLambdaFormGeneratedMethod(false),
+         _IPData(NULL), _aotCacheMethodRecord(NULL) { }
+
+      J9Class *definingClass() const { return _definingClassInfo._ramClass; }
+      J9ROMClass *definingROMClass() const { return _definingClassInfo._romClass; }
 
       J9ROMMethod *_romMethod; // pointer to local/server cache
       J9ROMMethod *_origROMMethod; // pointer to the client-side method
-      // The following is a hashtable that maps a bcIndex to IProfiler data
-      // The hashtable is created on demand (NULL means it is missing)
-      IPTable_t *_IPData;
-      TR_OpaqueClassBlock * _owningClass;
-      uint32_t _index;// Index in the array of methods of the defining class
+      ClassInfo &_definingClassInfo;
+      uint32_t _index;// Index in the array of methods of the defining class`
       bool _isMethodTracingEnabled;
       bool _isCompiledWhenProfiling; // To record if the method is compiled when doing Profiling
       bool _isLambdaFormGeneratedMethod;
+      // The following is a hashtable that maps a bcIndex to IProfiler data
+      // The hashtable is created on demand (NULL means it is missing)
+      IPTable_t *_IPData;
       const AOTCacheMethodRecord * _aotCacheMethodRecord;
       }; // struct J9MethodInfo
 
@@ -405,6 +413,12 @@ public:
    TR::Monitor *getClassChainDataMapMonitor() { return _classChainDataMapMonitor; }
    TR_IPBytecodeHashTableEntry *getCachedIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, bool *methodInfoPresent);
    bool cacheIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR_IPBytecodeHashTableEntry *entry, bool isCompiled);
+   bool cacheIProfilerInfo(TR_OpaqueMethodBlock *method, const Vector<TR_IPBytecodeHashTableEntry *> &entries, bool isCompiled);
+   void checkProfileDataMatching(J9Method *method, const std::string &ipdata);
+   uint64_t getNumSamplesForMethodInSharedProfileCache(J9Method* method);
+   BytecodeProfileSummary getSharedBytecodeProfileSummary(J9Method* method);
+   bool loadBytecodeDataFromSharedProfileCache(J9Method *method, bool stable, TR::Compilation *comp);
+   bool storeBytecodeProfileInSharedRepository(TR_OpaqueMethodBlock *method, const std::string &ipdata, uint64_t numSamples, bool isStable, TR::Compilation *);
    VMInfo *getOrCacheVMInfo(JITServer::ServerStream *stream);
    void clearCaches(bool locked=false); // destroys _chTableClassMap, _romClassMap, _J9MethodMap and _unloadedClassAddresses
    void clearCachesLocked(TR_J9VMBase *fe);
@@ -511,6 +525,8 @@ public:
    const AOTCacheClassRecord *getClassRecord(J9Class *clazz, JITServer::ServerStream *stream, bool &missingLoaderInfo,
                                              J9::J9SegmentProvider *scratchSegmentProvider = NULL);
    const AOTCacheMethodRecord *getMethodRecord(J9Method *method, J9Class *definingClass, JITServer::ServerStream *stream);
+   const AOTCacheMethodRecord *getMethodRecord(J9MethodInfo &methodInfo, J9Method *ramMethod);
+   const AOTCacheMethodRecord *getMethodRecord(J9Method *ramMethod, const J9MethodInfo **methodInfo =  NULL);
    // If this function sets the missingLoaderInfo flag then a NULL result is due to missing class loader info;
    // otherwise that result is due to reaching the AOT cache size limit.
    const AOTCacheClassChainRecord *getClassChainRecord(J9Class *clazz, uintptr_t classChainOffset,
@@ -524,6 +540,15 @@ public:
    TR::Monitor *getAOTCacheKnownIdsMonitor() const { return _aotCacheKnownIdsMonitor; }
 
    bool useServerOffsets(JITServer::ServerStream *stream);
+
+   bool useSharedProfileCache() const { return _sharedProfileCache != NULL; }
+   JITServerSharedProfileCache *getSharedProfileCache() const
+      {
+      TR_ASSERT(_sharedProfileCache, "Must have valid profile store");
+      return _sharedProfileCache;
+      }
+   void printSharedProfileCacheStats() const;
+   void printIProfilerCacheStats();
 
 private:
    void destroyMonitors();
@@ -621,6 +646,14 @@ private:
 
    JITServerAOTCache::KnownIdSet _aotCacheKnownIds;
    TR::Monitor *_aotCacheKnownIdsMonitor;
+
+   JITServerSharedProfileCache *_sharedProfileCache;
+
+   public:
+   uint32_t _numSharedProfileCacheMethodLoads;
+   uint32_t _numSharedProfileCacheMethodLoadsFailed;
+   uint32_t _numSharedProfileCacheMethodStores;
+   uint32_t _numSharedProfileCacheMethodStoresFailed;
    }; // class ClientSessionData
 
 
