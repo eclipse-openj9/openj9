@@ -29,6 +29,7 @@
 #include "env/SystemSegmentProvider.hpp"
 #include "infra/CriticalSection.hpp"
 #include "runtime/JITServerAOTCache.hpp"
+#include "runtime/JITServerProfileCache.hpp"
 #include "runtime/JITServerSharedROMClassCache.hpp"
 #include "net/CommunicationStream.hpp"
 
@@ -726,8 +727,9 @@ freeMapValues(const PersistentUnorderedMap<K, V *, H> &map)
    }
 
 
-JITServerAOTCache::JITServerAOTCache(const std::string &name) :
+JITServerAOTCache::JITServerAOTCache(const std::string &name, J9JavaVM *javaVM) :
    _name(name),
+   _sharedProfileCache(new (TR::Compiler->persistentGlobalMemory()) JITServerSharedProfileCache(this, javaVM)),
    _classLoaderMap(decltype(_classLoaderMap)::allocator_type(TR::Compiler->persistentGlobalAllocator())),
    _classLoaderHead(NULL),
    _classLoaderTail(NULL),
@@ -783,6 +785,9 @@ JITServerAOTCache::JITServerAOTCache(const std::string &name) :
 
 JITServerAOTCache::~JITServerAOTCache()
    {
+   _sharedProfileCache->~JITServerSharedProfileCache();
+   TR::Compiler->persistentGlobalMemory()->freePersistentMemory(_sharedProfileCache);
+
    freeMapValues(_classLoaderMap);
    freeMapValues(_classMap);
    freeMapValues(_methodMap);
@@ -1436,10 +1441,11 @@ JITServerAOTCache::readCache(FILE *f, const std::string &name, TR_Memory &trMemo
       return NULL;
       }
 
+   TR::CompilationInfo *compInfo = TR::CompilationInfo::get();
    JITServerAOTCache *cache = NULL;
    try
       {
-      cache = new (TR::Compiler->persistentGlobalMemory()) JITServerAOTCache(name);
+      cache = new (TR::Compiler->persistentGlobalMemory()) JITServerAOTCache(name, compInfo->getJITConfig()->javaVM);
       }
    catch (const std::exception &e)
       {
@@ -2062,7 +2068,7 @@ JITServerAOTCacheMap::get(const std::string &name, uint64_t clientUID, bool &pen
          }
       }
    // If we reached this point, we need to create a new (empty) cache
-   auto cache = new (TR::Compiler->persistentGlobalMemory()) JITServerAOTCache(name);
+   auto cache = new (TR::Compiler->persistentGlobalMemory()) JITServerAOTCache(name, compInfo->getJITConfig()->javaVM);
    if (!cache)
       throw std::bad_alloc();
 
