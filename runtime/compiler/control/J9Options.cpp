@@ -3869,13 +3869,13 @@ J9::Options::setLogFileForClientOptions(int suffixNumber)
       if (suffixNumber)
          {
          self()->setOption(TR_EnablePIDExtension, true);
-         self()->openLogFile(suffixNumber);
+         self()->openLogFileCreateLogger(suffixNumber);
          }
       else
          {
          _compilationSequenceNumber++;
          self()->setOption(TR_EnablePIDExtension, false);
-         self()->openLogFile(_compilationSequenceNumber);
+         self()->openLogFileCreateLogger(_compilationSequenceNumber);
          }
 
       if (_logFile)
