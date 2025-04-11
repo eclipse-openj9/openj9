@@ -1418,7 +1418,8 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
    }
 
 /**
- * @brief Method executed by JITServer to store bytecode iprofiler info to heap memory (instead of to persistent memory)
+ * @brief Method executed by JITServer to store one entry of bytecode IProfiler info
+ *        to heap memory (instead of to persistent memory)
  *
  * @param method J9Method in question
  * @param byteCodeIndex bytecode in question
@@ -1428,7 +1429,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
 bool
 TR::CompilationInfoPerThreadRemote::cacheIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR_IPBytecodeHashTableEntry *entry)
    {
-   IPTableHeapEntry *entryMap = NULL;
+   IPTableHeapEntry *entryMap = NULL;      // map-to-search                   key     value-to-return
    if(!getCachedValueFromPerCompilationMap(_methodIPDataPerComp, (J9Method *) method, entryMap))
       {
       // Either first time cacheIProfilerInfo called during current compilation,
@@ -1448,6 +1449,34 @@ TR::CompilationInfoPerThreadRemote::cacheIProfilerInfo(TR_OpaqueMethodBlock *met
       {
       // Adding an entry for already seen method (i.e. entryMap exists)
       cacheToPerCompilationMap(entryMap, byteCodeIndex, entry);
+      }
+   return true;
+   }
+
+/**
+ * @brief Method executed by JITServer to store multiple pre-formed bytecode IProfiler entries
+ *        to heap memory (instead of to persistent memory)
+ *
+ * @param method J9Method in question
+ * @param entries vector of IProfile entries to be stored
+ * @return always return true at the moment
+ */
+bool
+TR::CompilationInfoPerThreadRemote::cacheIProfilerInfo(TR_OpaqueMethodBlock *method, const Vector<TR_IPBytecodeHashTableEntry *> &entries)
+   {
+   // Note: no monitor is needed because the data is specific to the compilation thread in action.
+   IPTableHeapEntry *methodMap = NULL;      // map-to-search                   key     value-to-return
+   if(!getCachedValueFromPerCompilationMap(_methodIPDataPerComp, (J9Method *) method, methodMap))
+      {
+      // entryMap must be NULL, let's create it and attach it to the map.
+      initializePerCompilationCache(methodMap);
+      cacheToPerCompilationMap(_methodIPDataPerComp, (J9Method *) method, methodMap);
+      }
+   // At this point I should have a methodMap. Add all IProfiler entries to it.
+   uintptr_t methodStart = (uintptr_t)TR::Compiler->mtd.bytecodeStart(method);
+   for (auto &entry : entries)
+      {
+      cacheToPerCompilationMap(methodMap, (uint32_t)(entry->getPC() - methodStart), entry);
       }
    return true;
    }
