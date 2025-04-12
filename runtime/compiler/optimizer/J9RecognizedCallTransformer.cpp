@@ -306,6 +306,16 @@ void J9::RecognizedCallTransformer::process_java_lang_StringLatin1_inflate_BIBII
 
    TR_ASSERT_FATAL(comp()->cg()->getSupportsArrayTranslateTROTNoBreak(), "Support for arraytranslateTROTNoBreak is required");
 
+   // Anchor a copy of the call node just before treetop so that all of the
+   // children will be commoned across the split point, and all of the temps
+   // will be initialized before the first opportunity to go to the fallback
+   // path. Otherwise, the fallback path could end up using temps that are
+   // sometimes uninitialized. This copy will be removed just after splitting.
+   TR::TreeTop *callCopyTT = TR::TreeTop::create(
+      comp(), TR::Node::create(node, TR::treetop, 1, node->duplicateTree(false)));
+
+   treetop->insertBefore(callCopyTT);
+
    bool is64BitTarget = comp()->target().is64Bit();
 
    TR::Node *srcObj = node->getChild(0);
@@ -376,6 +386,8 @@ void J9::RecognizedCallTransformer::process_java_lang_StringLatin1_inflate_BIBII
    // This block contains the original call node
    TR::Block *fallbackPathBlock = fallThroughPathBlock->split(treetop, cfg, true /* fixUpCommoning */, true /* copyExceptionSuccessors */);
    TR::Block *tailBlock = fallbackPathBlock->split(treetop->getNextTreeTop(), cfg, true /* fixUpCommoning */, true /* copyExceptionSuccessors */);
+
+   TR::TransformUtil::removeTree(comp(), callCopyTT);
 
    // Go to the tail block from the fall-through block
    TR::Node *gotoNode = TR::Node::create(node, TR::Goto);
