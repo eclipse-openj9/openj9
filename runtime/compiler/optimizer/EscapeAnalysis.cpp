@@ -5635,7 +5635,7 @@ bool TR_EscapeAnalysis::fixupNode(TR::Node *node, TR::Node *parent, TR::NodeChec
                {
                // For a candidate that is escaping in a cold block, keep track
                // of fields that are referenced so they can be initialized.
-               // Otherwise, rewrite field references (in else branch_.
+               // Otherwise, rewrite field references (in else branch).
                // Special case handling of stores to fields of immutable objects
                // that are not contiguously allocated - their field references
                // are also rewritten (in else branch), but the original stores
@@ -5714,8 +5714,16 @@ bool TR_EscapeAnalysis::fixupNode(TR::Node *node, TR::Node *parent, TR::NodeChec
                      removeThisNode |= fixupFieldAccessForContiguousAllocation(node, candidate);
                   else
                      {
-                     removeThisNode |= fixupFieldAccessForNonContiguousAllocation(node, candidate, parent);
-                     break; // Can only be one matching candidate
+                     // Only rewrite this reference to a non-contiguous candidate field
+                     // if it is definitely dereferencing the non-contiguous candidate.
+                     // If the value numbers don't match, this is just a potential
+                     // reference via a cold escape.
+                     //
+                     if (_valueNumberInfo->getValueNumber(child)
+                         == _valueNumberInfo->getValueNumber(candidate->_node))
+                        {
+                        removeThisNode |= fixupFieldAccessForNonContiguousAllocation(node, candidate, parent);
+                        }
                      }
                   }
                }
