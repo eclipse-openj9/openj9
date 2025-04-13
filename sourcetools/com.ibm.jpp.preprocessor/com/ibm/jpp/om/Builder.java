@@ -21,6 +21,9 @@
  */
 package com.ibm.jpp.om;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
+import java.lang.reflect.Field;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -375,6 +378,23 @@ public class Builder {
 						getLogger().log("Exception occured in file " + sourceFile.getAbsolutePath() + ", preprocess failed.", 3, t);
 						handleBuildException(t);
 					} finally {
+                                                if (outputFile.exists()) {
+							try {
+								// Load FileAttribute.Tag class and grab constructor
+								Class<?> fileAttributeClass = Class.forName("com.ibm.jzos.FileAttribute");
+								Class<?> fileAttributeTagClass = Class.forName("com.ibm.jzos.FileAttribute$Tag");
+								Constructor<?> constructor = fileAttributeTagClass.getConstructor(char.class, boolean.class);
+
+								Field ccsid = fileAttributeTagClass.getField("CCSID_IBM_1047");
+								char ccsidChar = (char) ccsid.get(null);
+								Object tag = constructor.newInstance(ccsidChar, true);
+
+								Method setTag = fileAttributeClass.getMethod("setTag", String.class, fileAttributeTagClass);
+								setTag.invoke(null, outputFile.getAbsolutePath().toString(), tag);
+							} catch (Exception e) {
+								System.err.println("Reflection error while trying to set FileAttribute.Tag");
+							}
+                                                }
 						notifyBuildFileEnd(sourceFile, outputFile, buildFile);
 					}
 				}
