@@ -156,7 +156,7 @@ public:
       @return Returns a tuple with information sent by the client
    */
    template <typename... T>
-   std::tuple<T...> readCompileRequest()
+   MessageType readCompileRequest(std::tuple<T...> &req)
       {
       readMessage(_cMsg);
       if (_cMsg.fullVersion() != 0 && _cMsg.fullVersion() != getJITServerFullVersion())
@@ -177,8 +177,9 @@ public:
             }
          case MessageType::compilationRequest:
             {
-            return getArgsRaw<T...>(_cMsg);
+            req = getArgsRaw<T...>(_cMsg);
             }
+            break;
          case MessageType::AOTCacheMap_request:
             {
             std::string cacheName = std::get<0>(getArgsRaw<std::string>(_cMsg));
@@ -189,6 +190,8 @@ public:
             throw StreamMessageTypeMismatch(MessageType::compilationRequest, _cMsg.type());
             }
          }
+
+      return _cMsg.type();
       }
 
    /**
