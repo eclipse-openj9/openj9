@@ -144,6 +144,8 @@ segment .text
         DECLARE_GLOBAL jProfile64BitValueWrapper
         DECLARE_EXTERN jProfile32BitValue
         DECLARE_EXTERN jProfile64BitValue
+
+        DECLARE_GLOBAL java_util_zip_CRC32C_updateBytes_impl
 %endif
 
         align 16
@@ -334,6 +336,84 @@ f2l_done:
 
 %endif ; TR_HOST_32BIT
 
+%ifdef TR_HOST_64BIT
+
+; java_util_zip_CRC32C_updateBytes_impl
+;
+; Computes CRC32C checksum for a given buffer and size.
+;
+; This algorithm uses the crc32 instruction to accumulate the checksum in three
+; sections. The first section is unrolled to process 64 bytes at a time. Next,
+; we process 8 bytes at a time. The residue is then processed using a duff device,
+; which uses 7 inlined crc32b instructions and jumps to the correct spot in the
+; instruction sequence, depending on the number of bytes left.
+;
+; Arguments
+; rdi - crc32c checksum
+; rsi - pointer to buffer to process
+; rdx - offset into the buffer
+; rcx - end offset in the buffer
+;
+; Return
+; rax - crc32c checksum
+;
+        align 16
+java_util_zip_CRC32C_updateBytes_impl:
+        mov         rax, rdi                      ; Copy current crc value into rax (result register)
+
+begin512BitLoop:
+        lea         rdi, [rdx+0x40]
+        cmp         rdi, rdx
+        jg          begin64BitLoop                ; Skip loop if less than 64 bytes in buffer
+        crc32       rax, qword [rsi+1*rdx]        ; 64-byte unrolled crc32c loop body
+        crc32       rax, qword [rsi+1*rdx]
+        crc32       rax, qword [rsi+1*rdx]
+        crc32       rax, qword [rsi+1*rdx]
+        crc32       rax, qword [rsi+1*rdx]
+        crc32       rax, qword [rsi+1*rdx]
+        crc32       rax, qword [rsi+1*rdx]
+        crc32       rax, qword [rsi+1*rdx]
+        add         rdx, 0x00000040               ; Increase offset number of bytes written
+        jmp         begin512BitLoop
+
+begin64BitLoop:                                   ;  crc 8 bytes at a time in loop
+        lea         rdi, [rdx+0x8]
+        cmp	        rdi, rcx
+        jg          crc32c_residue
+        crc32	    rax, qword [rsi+1*rdx]
+        add	        rdx, 0x00000008
+        jmp         begin64BitLoop
+
+crc32c_residue:                                   ; Duff device implementation
+%define CRC32C_INC_INSTRUCTION_SIZE 10            ; the size of crc32 + inc instruction
+        mov	        rdi, rcx                      ; Calculate where to jump to, depending on number of bytes left
+        sub     	rdi, rdx
+        imul        rdi, rdi, -CRC32C_INC_INSTRUCTION_SIZE
+        add	        rdi, CRC32C_INC_INSTRUCTION_SIZE * 7
+        lea	        r8, qword [rel crc7b]
+        add	        rdi, r8                       ; jump address = [crc7b label] - (CRC32C_INC_INSTRUCTION_SIZE * n) +
+                                                  ;                (7 * CRC32C_INC_INSTRUCTION_SIZE)
+                                                  ; where n is the number of residual bytes
+        jmp	        rdi                           ; Jump to correct spot
+
+crc7b:
+        crc32       rax, byte [rsi+1*rdx]
+        inc	        rdx                           ; Inc instruction required because num of bytes remaining is
+        crc32       rax, byte [rsi+1*rdx]         ; variable and the bytes must be processed in order
+        inc     	rdx
+        crc32       rax, byte [rsi+1*rdx]
+        inc	        rdx
+        crc32       rax, byte [rsi+1*rdx]
+        inc	        rdx
+        crc32       rax, byte [rsi+1*rdx]
+        inc	        rdx
+        crc32       rax, byte [rsi+1*rdx]
+        inc	        rdx
+        crc32       rax, byte [rsi+1*rdx]
+        inc         rdx
+        retn
+
+%endif ; TR_HOST_64BIT
 
 ; X87floatRemainder, X87doubleRemainder
 ;
