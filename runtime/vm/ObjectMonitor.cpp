@@ -171,12 +171,18 @@ objectMonitorEnterBlocking(J9VMThread *currentThread)
 		object = NULL; // for safety, since object may be moved by the GC at various points after this
 		/* Ensure object monitor isn't deflated while we block */
 		omrthread_monitor_t monitor = objectMonitor->monitor;
-		J9VMThread *previousOwner = getVMThreadFromOMRThread(vm, ((J9ThreadMonitor *)monitor)->owner);
+		J9VMThread *previousOwner = NULL;
+		omrthread_t previousOMRThreadOwner = ((J9ThreadMonitor *)monitor)->owner;
 		VM_AtomicSupport::add(&monitor->pinCount, 1);
 		/* Initialize our wait time to 1ms. Increase it as we have to wait more and more
 		 * using the sequence 1, 4, 16, 64 and then 64 thereafter.
 		 */
 		IDATA waitTime = 1;
+
+		if ((NULL != previousOMRThreadOwner) && (1 != (UDATA)previousOMRThreadOwner)) {
+			previousOwner = getVMThreadFromOMRThread(vm, previousOMRThreadOwner);
+		}
+
 		if (J9_EVENT_IS_HOOKED(vm->hookInterface, J9HOOK_VM_MONITOR_CONTENDED_ENTER)) {
 			bool frameBuilt = saveBlockingEnterObject(currentThread);
 			VM_VMAccess::setPublicFlags(currentThread, J9_PUBLIC_FLAGS_THREAD_BLOCKED);
