@@ -187,6 +187,12 @@ isDebugAgentDisabled(J9JavaVM *vm)
 	return isCheckpointAllowed(vm) && vm->checkpointState.isDebugOnRestoreEnabled;
 }
 
+BOOLEAN
+isTimeCompensationEnabled(J9VMThread *currentThread)
+{
+	return J9_ARE_ANY_BITS_SET(currentThread->javaVM->checkpointState.flags, J9VM_CRIU_ENABLE_TIME_COMPENSATION);
+}
+
 void
 setRequiredGhostFileLimit(J9VMThread *currentThread, U_32 ghostFileLimit)
 {
@@ -1986,7 +1992,9 @@ criuCheckpointJVMImpl(JNIEnv *env,
 		 * if there is no change for j9time_nano_time() start point.
 		 * This value might be negative.
 		 */
-		portLibrary->nanoTimeMonotonicClockDelta = restoreNanoTimeMonotonic - checkpointNanoTimeMonotonic;
+		if (isTimeCompensationEnabled(currentThread)) {
+			portLibrary->nanoTimeMonotonicClockDelta = restoreNanoTimeMonotonic - checkpointNanoTimeMonotonic;
+		}
 		Trc_VM_criu_restore_nano_times(currentThread, restoreNanoUTCTime, checkpointNanoUTCTime, vm->checkpointState.checkpointRestoreTimeDelta,
 				restoreNanoTimeMonotonic, checkpointNanoTimeMonotonic, portLibrary->nanoTimeMonotonicClockDelta);
 

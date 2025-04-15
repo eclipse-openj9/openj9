@@ -126,6 +126,15 @@ public final class CRIUSupport {
 	}
 
 	/**
+	 * Queries if the time compensation is enabled.
+	 *
+	 * @return true if the time compensation is enabled, false otherwise
+	 */
+	public static boolean isTimeCompensationEnabled() {
+		return InternalCRIUSupport.isTimeCompensationEnabled();
+	}
+
+	/**
 	 * Checks if the CRIUSecProvider is enabled when CRIU
 	 * checkpoints are allowed (checks whether -XX:-CRIUSecProvider
 	 * has been specified).

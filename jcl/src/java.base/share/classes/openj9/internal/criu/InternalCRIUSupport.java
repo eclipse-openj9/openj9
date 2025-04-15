@@ -71,6 +71,7 @@ import jdk.internal.misc.SharedSecrets;
 /*[ENDIF] 17 <= JAVA_SPEC_VERSION */
 public final class InternalCRIUSupport {
 	private static final boolean criuSupportEnabled = isCRIUSupportEnabledImpl();
+	private static final boolean timeCompensationEnabled = isTimeCompensationEnabledImpl();
 	private static long checkpointRestoreNanoTimeDelta;
 
 	private static native boolean enableCRIUSecProviderImpl();
@@ -79,6 +80,7 @@ public final class InternalCRIUSupport {
 	private static native long getProcessRestoreStartTimeImpl();
 	private static native boolean isCRIUSupportEnabledImpl();
 	private static native boolean isCheckpointAllowedImpl();
+	private static native boolean isTimeCompensationEnabledImpl();
 /*[IF CRAC_SUPPORT]*/
 	private static final boolean cracSupportEnabled = isCRaCSupportEnabledImpl();
 	private static native boolean isCRaCSupportEnabledImpl();
@@ -249,6 +251,15 @@ public final class InternalCRIUSupport {
 		return cracCheckpointToDir;
 	}
 /*[ENDIF] CRAC_SUPPORT */
+
+	/**
+	 * Queries if the time compensation is enabled.
+	 *
+	 * @return true if the time compensation is enabled, false otherwise
+	 */
+	public static boolean isTimeCompensationEnabled() {
+		return timeCompensationEnabled;
+	}
 
 	/**
 	 *
