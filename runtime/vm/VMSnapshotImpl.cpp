@@ -381,6 +381,9 @@ VMSnapshotImpl::saveModularityData()
 {
 	_snapshotHeader->savedJavaVMStructs.modularityPool = _vm->modularityPool;
 	_snapshotHeader->savedJavaVMStructs.javaBaseModule = _vm->javaBaseModule;
+
+	_vm->unnamedModuleForSystemLoader->moduleObject = NULL;
+	_vm->unnamedModuleForSystemLoader->version = NULL;
 	_snapshotHeader->savedJavaVMStructs.unnamedModuleForSystemLoader = _vm->unnamedModuleForSystemLoader;
 }
 
