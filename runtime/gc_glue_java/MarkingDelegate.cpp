@@ -72,7 +72,7 @@
 bool
 MM_MarkingDelegate::initialize(MM_EnvironmentBase *env, MM_MarkingScheme *markingScheme)
 {
-	MM_MarkingDelegateBase::initialize(env);
+	MM_ScanContinuationSlotsBase::initialize(env);
 	_omrVM = env->getOmrVM();
 	_extensions = MM_GCExtensions::getExtensions(env);
 	_markingScheme = markingScheme;

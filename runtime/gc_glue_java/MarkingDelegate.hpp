@@ -29,7 +29,7 @@
 #include "FlattenedArrayObjectScanner.hpp"
 #include "GCExtensions.hpp"
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
-#include "MarkingDelegateBase.hpp"
+#include "ScanContinuationSlotsBase.hpp"
 #include "MarkMap.hpp"
 #endif /* defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING) */
 #include "MixedObjectScanner.hpp"
@@ -43,7 +43,7 @@ class MM_HeapRegionDescriptorStandard;
 class MM_MarkingScheme;
 class MM_ReferenceStats;
 
-class MM_MarkingDelegate : public MM_MarkingDelegateBase
+class MM_MarkingDelegate : public MM_ScanContinuationSlotsBase
 {
 /* Data members & types */
 private:
@@ -85,7 +85,7 @@ private:
 protected:
 
 public:
-	MM_MarkingDelegate() : MM_MarkingDelegateBase()
+	MM_MarkingDelegate() : MM_ScanContinuationSlotsBase()
 		, _omrVM(NULL)
 		, _extensions(NULL)
 		, _markingScheme(NULL)

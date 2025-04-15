@@ -20,7 +20,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
-#include "MarkingDelegateBase.hpp"
+#include "ScanContinuationSlotsBase.hpp"
 
 #if JAVA_SPEC_VERSION >= 24
 #include "ContinuationSlotIterator.hpp"
@@ -30,7 +30,7 @@
 #include "StackSlotValidator.hpp"
 
 bool
-MM_MarkingDelegateBase::initialize(MM_EnvironmentBase *env)
+MM_ScanContinuationSlotsBase::initialize(MM_EnvironmentBase *env)
 {
 	_heap = MM_GCExtensions::getExtensions(env)->heap;
 	return true;
@@ -38,7 +38,7 @@ MM_MarkingDelegateBase::initialize(MM_EnvironmentBase *env)
 
 #if JAVA_SPEC_VERSION >= 24
 void
-MM_MarkingDelegateBase::doContinuationSlot(MM_EnvironmentBase *env, omrobjectptr_t *slotPtr, GC_ContinuationSlotIterator *continuationSlotIterator)
+MM_ScanContinuationSlotsBase::doContinuationSlot(MM_EnvironmentBase *env, omrobjectptr_t *slotPtr, GC_ContinuationSlotIterator *continuationSlotIterator)
 {
 	if (isHeapObject(*slotPtr) && !_heap->objectIsInGap(*slotPtr)) {
 		doSlot(env, slotPtr);
@@ -49,7 +49,7 @@ MM_MarkingDelegateBase::doContinuationSlot(MM_EnvironmentBase *env, omrobjectptr
 #endif /* JAVA_SPEC_VERSION >= 24 */
 
 void
-MM_MarkingDelegateBase::doStackSlot(MM_EnvironmentBase *env, omrobjectptr_t *slotPtr, J9StackWalkState *walkState, const void *stackLocation)
+MM_ScanContinuationSlotsBase::doStackSlot(MM_EnvironmentBase *env, omrobjectptr_t *slotPtr, J9StackWalkState *walkState, const void *stackLocation)
 {
 	omrobjectptr_t object = *slotPtr;
 	if (isHeapObject(object) && !_heap->objectIsInGap(object)) {

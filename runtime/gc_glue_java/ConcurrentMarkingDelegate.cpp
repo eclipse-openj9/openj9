@@ -63,7 +63,7 @@ concurrentStackSlotIterator(J9JavaVM *javaVM, omrobjectptr_t *objectIndirect, vo
 bool
 MM_ConcurrentMarkingDelegate::initialize(MM_EnvironmentBase *env, MM_ConcurrentGC *collector)
 {
-	MM_MarkingDelegateBase::initialize(env);
+	MM_ScanContinuationSlotsBase::initialize(env);
 	MM_GCExtensionsBase *extensions = env->getExtensions();
 	_javaVM = (J9JavaVM *)extensions->getOmrVM()->_language_vm;
 	_objectModel = &(extensions->objectModel);

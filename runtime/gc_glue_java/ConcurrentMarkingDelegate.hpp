@@ -40,7 +40,7 @@
 #include "ConcurrentSafepointCallbackJava.hpp"
 #include "EnvironmentBase.hpp"
 #include "GCExtensionsBase.hpp"
-#include "MarkingDelegateBase.hpp"
+#include "ScanContinuationSlotsBase.hpp"
 #include "MarkingScheme.hpp"
 #include "ReferenceObjectBuffer.hpp"
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
@@ -54,7 +54,7 @@ class MM_MarkingScheme;
 /**
  * Provides language-specific support for marking.
  */
-class MM_ConcurrentMarkingDelegate : public MM_MarkingDelegateBase
+class MM_ConcurrentMarkingDelegate : public MM_ScanContinuationSlotsBase
 {
 	/*
 	 * Data members
@@ -363,7 +363,7 @@ public:
 	/**
 	 * Constructor.
 	 */
-	MMINLINE MM_ConcurrentMarkingDelegate() : MM_MarkingDelegateBase()
+	MMINLINE MM_ConcurrentMarkingDelegate() : MM_ScanContinuationSlotsBase()
 		, _javaVM(NULL)
 		, _objectModel(NULL)
 		, _collector(NULL)

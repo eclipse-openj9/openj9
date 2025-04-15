@@ -20,9 +20,8 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
-#if !defined(MARKINGDELEGATEBASE_HPP_)
-
-#define MARKINGDELEGATEBASE_HPP_
+#if !defined(SCANCONTINUATIONSLOTSBASE_HPP_)
+#define SCANCONTINUATIONSLOTSBASE_HPP_
 
 #include "j9.h"
 #include "j9nonbuilder.h"
@@ -38,7 +37,7 @@ class MM_EnvironmentBase;
 
 //class MM_MarkingScheme;
 
-class MM_MarkingDelegateBase
+class MM_ScanContinuationSlotsBase
 {
 protected:
 	MM_Heap *_heap;
@@ -71,11 +70,11 @@ public:
 	/**
 	 * Constructor.
 	 */
-	MMINLINE MM_MarkingDelegateBase()
+	MMINLINE MM_ScanContinuationSlotsBase()
 		: _heap(NULL)
 	{}
 };
 
-#endif /* MARKINGDELEGATEBASE_HPP_ */
+#endif /* SCANCONTINUATIONSLOTSBASE_HPP_ */
 
 
