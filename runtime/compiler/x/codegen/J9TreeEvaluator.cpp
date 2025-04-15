@@ -10633,6 +10633,7 @@ static TR::Register* inlineHasNegativesOrCountPositives(TR::Node* node, TR::Reco
       // no negatives found case, result = length
       generateLabelInstruction(TR::InstOpCode::label, node, returnNoNegativesLabel, cg);
       generateRegRegInstruction(TR::InstOpCode::MOV4RegReg, node, indexReg, lengthReg, cg);
+      generateLabelInstruction(TR::InstOpCode::JMP4, node, endLabel, cg);
 
       // negative(s) found case, result = index - offset
       generateLabelInstruction(TR::InstOpCode::label, node, returnHasNegativesLabel, cg);
