@@ -190,6 +190,10 @@ private:
                                   bool& useAotCompilation, bool& isCriticalRequest, bool& hasIncNumActiveThreads,
                                   bool& aotCacheHit, bool& abortCompilation);
 
+   void processAOTCacheMapRequest(const std::string& aotCacheName,
+                                  TR::CompilationInfo *compInfo,
+                                  JITServer::ServerStream *stream);
+
    TR_PersistentMethodInfo *_recompilationMethodInfo;
    uint32_t _seqNo;
    uint32_t _expectedSeqNo; // this request is allowed to go if _expectedSeqNo is processed

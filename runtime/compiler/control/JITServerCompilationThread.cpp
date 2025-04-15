@@ -949,6 +949,75 @@ TR::CompilationInfoPerThreadRemote::processCompilationRequest(CompilationRequest
 
 
 /**
+ * @brief Private method specific to processing a compilation request.
+ */
+void
+TR::CompilationInfoPerThreadRemote::processAOTCacheMapRequest(const std::string& aotCacheName,
+                                                              TR::CompilationInfo *compInfo,
+                                                              JITServer::ServerStream *stream)
+   {
+   if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+      {
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+         "compThreadID=%d handling request for AOT cache %s method list",
+         getCompThreadId(), aotCacheName.c_str());
+      }
+
+   auto aotCacheMap = compInfo->getJITServerAOTCacheMap();
+
+   // When loading the cache from disk, if the cache exists but
+   // is not loaded, get() will set pending to True and return
+   // NULL for aotCache; we treat this NULL as a failure like
+   // any other NULL
+   bool pending = false;
+   auto aotCache = aotCacheMap->get(aotCacheName, 0, pending);
+
+   std::vector<std::string> methodSignaturesV;
+   if (aotCache)
+      {
+      auto cachedMethodMonitor = aotCache->getCachedMethodMonitor();
+      try
+         {
+            {
+            OMR::CriticalSection cs(cachedMethodMonitor);
+
+            auto cachedAOTMethod = aotCache->getCachedMethodHead();
+            methodSignaturesV.reserve(aotCache->getCachedMethodMap().size());
+
+            for (;cachedAOTMethod != NULL;
+               cachedAOTMethod = cachedAOTMethod->getNextRecord())
+               {
+               const SerializedAOTMethod &serializedAOTMethod = cachedAOTMethod->data();
+               methodSignaturesV.emplace_back(std::string(serializedAOTMethod.signature()));
+               }
+            }
+         }
+      catch (const std::bad_alloc &e)
+         {
+         if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE,
+               "std::bad_alloc: %s",
+               e.what());
+         }
+
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         {
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+                                       "Sending the list of AOT methods size %d",
+                                       methodSignaturesV.size());
+         }
+      }
+   else // Failed getting aotCache, treat pending as a failure
+      {
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         {
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Failed getting aotCache");
+         }
+      }
+   stream->write(JITServer::MessageType::AOTCacheMap_reply, methodSignaturesV);
+   }
+
+/**
  * @brief Method executed by JITServer to process the compilation request.
  */
 void
@@ -1024,7 +1093,9 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
    try
       {
       CompilationRequest req;
-      auto messageType = stream->readCompileRequest(req);
+      std::string cacheName;
+
+      auto messageType = stream->readCompileRequest(req, cacheName);
 
       if (messageType == JITServer::MessageType::compilationRequest)
          {
@@ -1033,6 +1104,16 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
                                    clientId, seqNo, hasUpdatedSeqNo, useAotCompilation,
                                    isCriticalRequest, hasIncNumActiveThreads,
                                    aotCacheHit, abortCompilation);
+         }
+      else if (messageType == JITServer::MessageType::AOTCacheMap_request)
+         {
+         processAOTCacheMapRequest(cacheName, compInfo, stream);
+         abortCompilation = true;
+         deleteStream = true;
+         }
+      else
+         {
+         TR_ASSERT_FATAL(false, "Unknown message type %d\n", messageType);
          }
       }
    catch (const JITServer::StreamFailure &e)
@@ -1135,72 +1216,6 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Server out of memory in processEntry: %s", e.what());
       stream->writeError(compilationLowPhysicalMemory, (uint64_t) computeServerMemoryState(getCompilationInfo()));
       abortCompilation = true;
-      }
-   catch (const JITServer::StreamAotCacheMapRequest &e)
-      {
-      const std::string& aotCacheName = e.getCacheName();
-
-      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-         {
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
-            "compThreadID=%d handling request for AOT cache %s method list",
-            getCompThreadId(), aotCacheName.c_str());
-         }
-
-      auto aotCacheMap = compInfo->getJITServerAOTCacheMap();
-
-      // If the cache exists but is not loaded, get() will set
-      // pending to True and return NULL for aotCache;
-      // we treat this NULL as a failure like any other NULL
-      bool pending = false;
-      auto aotCache = aotCacheMap->get(aotCacheName, 0, pending);
-
-      std::vector<std::string> methodSignaturesV;
-      if (aotCache)
-         {
-         auto cachedMethodMonitor = aotCache->getCachedMethodMonitor();
-         try
-            {
-               {
-               OMR::CriticalSection cs(cachedMethodMonitor);
-
-               auto cachedAOTMethod = aotCache->getCachedMethodHead();
-               methodSignaturesV.reserve(aotCache->getCachedMethodMap().size());
-
-               for (;cachedAOTMethod != NULL;
-                  cachedAOTMethod = cachedAOTMethod->getNextRecord())
-                  {
-                  const SerializedAOTMethod &serializedAOTMethod = cachedAOTMethod->data();
-                  methodSignaturesV.push_back(std::string(serializedAOTMethod.signature()));
-                  }
-               }
-            }
-         catch (const std::bad_alloc &e)
-            {
-            if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITServer))
-               TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE,
-                  "std::bad_alloc: %s",
-                  e.what());
-            }
-
-         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-            {
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
-                                          "Sending the list of AOT methods size %d",
-                                          methodSignaturesV.size());
-            }
-         }
-      else // Failed getting aotCache, treat pending as a failure
-         {
-         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-            {
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Failed getting aotCache");
-            }
-         }
-      stream->write(JITServer::MessageType::AOTCacheMap_reply, methodSignaturesV);
-
-      abortCompilation = true;
-      deleteStream = true;
       }
 
    // Acquire VM access
