@@ -227,6 +227,7 @@ J9MemoryManagerFunctions MemoryManagerFunctions = {
 	j9mm_get_guaranteed_nursery_range,
 	j9gc_arraylet_getLeafSize,
 	j9gc_arraylet_getLeafLogSize,
+	j9gc_get_offheap_data,
 	j9gc_set_allocation_sampling_interval,
 	j9gc_set_allocation_threshold,
 	j9gc_objaccess_recentlyAllocatedObject,
