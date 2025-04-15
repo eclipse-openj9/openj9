@@ -10439,10 +10439,13 @@ hashCodeHelper(TR::Node *node, TR::CodeGenerator *cg, TR::DataType elementType,
    TR::Register *vconstant0Reg = cg->allocateRegister(TR_VRF);
 
    // we can load 16 bytes at once, but each register can only accumulate 4 values
-   // so for smaller datatypes we need more than one registers
+   // so for smaller datatypes we need more than one register
    TR::Register *low4Reg = cg->allocateRegister(TR_VRF);
-   TR::Register *high4Reg, *third4Reg, *fourth4Reg;
-   TR::Register *vtmp3Reg, *vunpackMaskReg;
+   TR::Register *high4Reg = NULL;
+   TR::Register *third4Reg = NULL;
+   TR::Register *fourth4Reg = NULL;
+   TR::Register *vtmp3Reg = NULL;
+   TR::Register *vunpackMaskReg = NULL;
    switch (elementType)
       {
       case TR::Int8:
@@ -10860,7 +10863,8 @@ hashCodeHelper(TR::Node *node, TR::CodeGenerator *cg, TR::DataType elementType,
    // vectorLoop
    generateLabelInstruction(cg, TR::InstOpCode::label, node, vectorLoopLabel);
    // load v
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::lxvw4x, node, vtmp1Reg, valueReg, tempReg);
+   generateTrg1MemInstruction(cg, TR::InstOpCode::lxvw4x, node, vtmp1Reg,
+      TR::MemoryReference::createWithIndexReg(cg, NULL, valueReg, 16));
 
    // for each high/low register
    // unpack v to vtmp2Reg
