@@ -862,6 +862,8 @@ ffi_prep_cif_machdep(ffi_cif *cif)
 
       /* Structures are returned in GPR or buffer depending on size.  */
       case FFI_TYPE_STRUCT:
+      case FFI_TYPE_STRUCT_FF:
+      case FFI_TYPE_STRUCT_DD:
 	struct_size = cif->rtype->size;
         if (struct_size <= 24)
 	  cif->flags = FFI390_RET_STRUCT;
@@ -919,14 +921,34 @@ ffi_prep_cif_machdep(ffi_cif *cif)
       /* Check how a structure type is passed.  */
       if (type == FFI_TYPE_STRUCT)
 	{
-		type = ffi_check_struct_type (*ptr);
 
-		(*ptr)->type = ffi_check_struct_for_complex(*ptr);
+	  /* ffi_check_struct_type() will return FFI_TYPE_UINT64 for a structure with
+	     exactly two floating point values of short format which is still OK as
+	     in calculation for how many bytes needed in the stack, it will count GPR
+	     for such parameters and one double word per argument will be requested.
+	     For a structure with two long format floating point values, it will set type to
+	     POINTER and allocate two doublewords which is correct need.
+	     TODO: There is definitely lot of duplication when it comes to calculating
+	     number of bytes needed for parameters, and it will overestimate how much
+	     space it needs. Update this routine to correctly identify how many
+	     GPRs/FPRs and overflow parameters are needed and set bytes accordingly.
+	  */
+	  type = ffi_check_struct_type (*ptr);
+
+	  (*ptr)->type = ffi_check_struct_for_complex(*ptr);
 
 	  /* If we pass the struct via pointer, we must reserve space
 	     to copy its data for proper call-by-value semantics.  */
 	  if (type == FFI_TYPE_POINTER)
 	    struct_size += ROUND_SIZE ((*ptr)->size);
+	}
+      else if (type == FFI_TYPE_STRUCT_FF || type == FFI_TYPE_STRUCT_DD)
+	{
+	  /* If the ffi_type is STRUCT with two floating point parameters of the same type
+	     they will be passed in available FPRs. Logic to calculate bytes for the struct
+	     should be same as normal struct.
+	  */
+	  struct_size += ((*ptr)->size);
 	}
 
       /* Now handle all primitive int/float data types.  */
