@@ -1633,64 +1633,63 @@ JVM_SetBootLoaderUnnamedModule(JNIEnv *env, jobject module)
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	if (NULL == module) {
 		vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, "module is null");
-	} else {
-		j9object_t modObj = J9_JNI_UNWRAP_REFERENCE(module);
+	} else if (NULL == currentThread->currentException) {
 		J9ClassLoader *systemClassLoader = vm->systemClassLoader;
+		J9Class *moduleClass = vmFuncs->internalFindKnownClass(currentThread,
+				J9VMCONSTANTPOOL_JAVALANGMODULE,
+				J9_FINDKNOWNCLASS_FLAG_INITIALIZE);
+		/* fetch module object reference after GC point */
+		j9object_t modObj = J9_JNI_UNWRAP_REFERENCE(module);
 		J9Class *instanceClazz = J9OBJECT_CLAZZ(currentThread, modObj);
-		if (NULL == currentThread->currentException) {
-			J9Class *moduleClass = vmFuncs->internalFindKnownClass(currentThread,
-					J9VMCONSTANTPOOL_JAVALANGMODULE,
-					J9_FINDKNOWNCLASS_FLAG_INITIALIZE);
-			if (!isModuleUnnamed(currentThread, modObj)) {
-				vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, "named module was supplied");
-			} else if (!isSameOrSuperClassOf(moduleClass, instanceClazz)) {
-				vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, "module supplied is not same or sub class of java/lang/Module");
-			} else if (instanceClazz->classLoader != systemClassLoader) {
-				vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, "module was not loaded by the bootclassloader");
-			} else {
+		if (!isModuleUnnamed(currentThread, modObj)) {
+			vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, "named module was supplied");
+		} else if (!isSameOrSuperClassOf(moduleClass, instanceClazz)) {
+			vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, "module supplied is not same or sub class of java/lang/Module");
+		} else if (instanceClazz->classLoader != systemClassLoader) {
+			vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, "module was not loaded by the bootclassloader");
+		} else {
 #if JAVA_SPEC_VERSION >= 21
-				J9Module *unnamedModuleForSystemLoader = vm->unnamedModuleForSystemLoader;
-				/* can't set bootclassloader.unnamedModule since bootclassloader hasn't finished the initialization yet */
-				if (NULL == unnamedModuleForSystemLoader) {
-					vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, "unnamedModuleForSystemLoader was not initialized");
-				} else if (NULL != unnamedModuleForSystemLoader->moduleObject) {
-					vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, "module is already set in the unnamedModuleForSystemLoader");
-				} else {
-					J9Module *j9mod = NULL;
+			J9Module *unnamedModuleForSystemLoader = vm->unnamedModuleForSystemLoader;
+			/* can't set bootclassloader.unnamedModule since bootclassloader hasn't finished the initialization yet */
+			if (NULL == unnamedModuleForSystemLoader) {
+				vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, "unnamedModuleForSystemLoader was not initialized");
+			} else if (NULL != unnamedModuleForSystemLoader->moduleObject) {
+				vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, "module is already set in the unnamedModuleForSystemLoader");
+			} else {
+				J9Module *j9mod = NULL;
 #if defined(J9VM_OPT_SNAPSHOTS)
-					if (IS_RESTORE_RUN(vm)) {
-						j9mod = unnamedModuleForSystemLoader;
-						/* Bind J9Module and module object via the hidden field. */
-						J9OBJECT_ADDRESS_STORE(currentThread, modObj, vm->modulePointerOffset, j9mod);
-					} else
+				if (IS_RESTORE_RUN(vm)) {
+					j9mod = unnamedModuleForSystemLoader;
+					/* Bind J9Module and module object via the hidden field. */
+					J9OBJECT_ADDRESS_STORE(currentThread, modObj, vm->modulePointerOffset, j9mod);
+				} else
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
-					{
-						j9mod = createModule(currentThread, modObj, systemClassLoader, NULL /* NULL name field */);
-					}
-					unnamedModuleForSystemLoader->moduleObject = modObj;
-					Trc_MODULE_setUnnamedModuleForSystemLoaderModuleObject(currentThread, j9mod, unnamedModuleForSystemLoader);
+				{
+					j9mod = createModule(currentThread, modObj, systemClassLoader, NULL /* NULL name field */);
 				}
-#else /* JAVA_SPEC_VERSION >= 21 */
-				if (NULL == J9VMJAVALANGCLASSLOADER_UNNAMEDMODULE(currentThread, systemClassLoader->classLoaderObject)) {
-					J9Module *j9mod = NULL;
-#if defined(J9VM_OPT_SNAPSHOTS)
-					if (IS_RESTORE_RUN(vm)) {
-						j9mod = vm->unnamedModuleForSystemLoader;
-						vm->unnamedModuleForSystemLoader->moduleObject = modObj;
-						/* Bind J9Module and module object via the hidden field. */
-						J9OBJECT_ADDRESS_STORE(currentThread, modObj, vm->modulePointerOffset, j9mod);
-					} else
-#endif /* defined(J9VM_OPT_SNAPSHOTS) */
-					{
-						j9mod = createModule(currentThread, modObj, systemClassLoader, NULL /* NULL name field */);
-					}
-					J9VMJAVALANGCLASSLOADER_SET_UNNAMEDMODULE(currentThread, systemClassLoader->classLoaderObject, modObj);
-					Trc_MODULE_setBootloaderUnnamedModule(currentThread, j9mod);
-				} else {
-					vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, "module is already set in the bootclassloader");
-				}
-#endif /* JAVA_SPEC_VERSION >= 21 */
+				unnamedModuleForSystemLoader->moduleObject = modObj;
+				Trc_MODULE_setUnnamedModuleForSystemLoaderModuleObject(currentThread, j9mod, unnamedModuleForSystemLoader);
 			}
+#else /* JAVA_SPEC_VERSION >= 21 */
+			if (NULL == J9VMJAVALANGCLASSLOADER_UNNAMEDMODULE(currentThread, systemClassLoader->classLoaderObject)) {
+				J9Module *j9mod = NULL;
+#if defined(J9VM_OPT_SNAPSHOTS)
+				if (IS_RESTORE_RUN(vm)) {
+					j9mod = vm->unnamedModuleForSystemLoader;
+					vm->unnamedModuleForSystemLoader->moduleObject = modObj;
+					/* Bind J9Module and module object via the hidden field. */
+					J9OBJECT_ADDRESS_STORE(currentThread, modObj, vm->modulePointerOffset, j9mod);
+				} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+				{
+					j9mod = createModule(currentThread, modObj, systemClassLoader, NULL /* NULL name field */);
+				}
+				J9VMJAVALANGCLASSLOADER_SET_UNNAMEDMODULE(currentThread, systemClassLoader->classLoaderObject, modObj);
+				Trc_MODULE_setBootloaderUnnamedModule(currentThread, j9mod);
+			} else {
+				vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGINTERNALERROR, "module is already set in the bootclassloader");
+			}
+#endif /* JAVA_SPEC_VERSION >= 21 */
 		}
 	}
 	vmFuncs->internalExitVMToJNI(currentThread);
