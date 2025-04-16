@@ -334,15 +334,21 @@ initializeInitialMethods(J9JavaVM *vm)
 	J9Method *cInitialSpecialMethod = NULL;
 	J9Method *cInitialVirtualMethod = NULL;
 
+#if defined(J9VM_OPT_SNAPSHOTS)
 	if (IS_RESTORE_RUN(vm)) {
 		setInitialVMMethods(vm, &cInitialStaticMethod, &cInitialSpecialMethod, &cInitialVirtualMethod);
-	} else {
+	} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+	{
+#if defined(J9VM_OPT_SNAPSHOTS)
 		if (IS_SNAPSHOT_RUN(vm)) {
 			cInitialStaticMethod = (J9Method *)vmsnapshot_allocate_memory(sizeof(J9Method), J9MEM_CATEGORY_CLASSES);
 			cInitialSpecialMethod = (J9Method *)vmsnapshot_allocate_memory(sizeof(J9Method), J9MEM_CATEGORY_CLASSES);
 			cInitialVirtualMethod = (J9Method *)vmsnapshot_allocate_memory(sizeof(J9Method), J9MEM_CATEGORY_CLASSES);
 			storeInitialVMMethods(vm, cInitialStaticMethod, cInitialSpecialMethod, cInitialVirtualMethod);
-		} else {
+		} else
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+		{
 			cInitialStaticMethod = (J9Method *)j9mem_allocate_memory(sizeof(J9Method), J9MEM_CATEGORY_CLASSES);
 			cInitialSpecialMethod = (J9Method *)j9mem_allocate_memory(sizeof(J9Method), J9MEM_CATEGORY_CLASSES);
 			cInitialVirtualMethod = (J9Method *)j9mem_allocate_memory(sizeof(J9Method), J9MEM_CATEGORY_CLASSES);

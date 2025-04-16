@@ -630,10 +630,12 @@ initializeBootstrapClassPath(J9JavaVM *vm)
 	}
 	(*VMI)->GetSystemProperty(VMI, BOOT_PATH_SEPARATOR_SYS_PROP, &classpathSeparator);
 
+#if defined(J9VM_OPT_SNAPSHOTS)
 	if (IS_RESTORE_RUN(vm)) {
 		Assert_JCL_true(J9_ARE_ALL_BITS_SET(loader->flags, J9CLASSLOADER_CLASSPATH_SET));
 		return INIT_BOOTSTRAP_CLASS_PATH_RESTORED;
 	}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 
 	/* Fail if the classpath has already been set. */
 	if (J9_ARE_ALL_BITS_SET(loader->flags, J9CLASSLOADER_CLASSPATH_SET)) {
