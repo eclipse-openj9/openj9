@@ -717,6 +717,22 @@ VMSnapshotImpl::fixupClass(J9Class *clazz)
 	if (NULL != clazz->invokeCache) {
 		memset(clazz->invokeCache, 0, sizeof(UDATA) * clazz->romClass->invokeCacheCount);
 	}
+
+	omrthread_monitor_enter(_vm->memberNameListsMutex);
+	if (NULL != clazz->memberNames) {
+		J9InternalVMFunctions *vmFuncs = _vm->internalVMFunctions;
+		J9MemberNameListNode *node = clazz->memberNames;
+		J9VMThread *vmThread = currentVMThread(_vm);
+		clazz->memberNames = NULL;
+		while (NULL != node) {
+			J9MemberNameListNode *next = node->next;
+			Assert_VM_true(NULL == J9_JNI_UNWRAP_REFERENCE(node->memberName));
+			vmFuncs->j9jni_deleteGlobalRef((JNIEnv*)vmThread, node->memberName, JNI_TRUE);
+			pool_removeElement(_vm->memberNameListNodePool, node);
+			node = next;
+		}
+	}
+	omrthread_monitor_exit(_vm->memberNameListsMutex);
 #else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	if (NULL != clazz->methodTypes) {
 		memset(clazz->methodTypes, 0, sizeof(UDATA) * clazz->romClass->methodTypeCount);
