@@ -2439,7 +2439,7 @@ done:
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 #if JAVA_SPEC_VERSION >= 24
 				case J9_OBJECT_MONITOR_YIELD_VIRTUAL: {
-					rc = yieldPinnedContinuation(REGISTER_ARGS, JAVA_LANG_VIRTUALTHREAD_BLOCKING, J9VM_CONTINUATION_RETURN_FROM_MONITOR_ENTER);
+					rc = yieldPinnedContinuation(REGISTER_ARGS, JAVA_LANG_VIRTUALTHREAD_BLOCKING, J9VM_CONTINUATION_RETURN_FROM_SYNC_METHOD_JNI);
 					break;
 				}
 #endif /* JAVA_SPEC_VERSION >= 24 */
@@ -5843,6 +5843,13 @@ ffi_OOM:
 					returnVoidFromINL(REGISTER_ARGS, 4);
 				}
 			}
+			break;
+		}
+		case J9VM_CONTINUATION_RETURN_FROM_SYNC_METHOD_JNI: {
+			UDATA *bp = (UDATA *)_sp + 4;
+			_sendMethod = *(J9Method **)_sp;
+			restoreSpecialStackFrameLeavingArgs(REGISTER_ARGS, bp);
+			rc = RUN_JNI_NATIVE;
 			break;
 		}
 		case J9VM_CONTINUATION_RETURN_FROM_SYNC_METHOD: {
