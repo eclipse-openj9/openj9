@@ -77,6 +77,7 @@ enum MetadataTypeID {
 	VirtualizationInformationID = 89,
 	InitialSystemPropertyID = 90,
 	InitialEnvironmentVariableID = 91,
+	SystemProcessID = 92,
 	CPUInformationID = 93,
 	CPULoadID = 95,
 	ThreadCPULoadID = 96,
@@ -185,6 +186,7 @@ private:
 	static constexpr int THREAD_CONTEXT_SWITCH_RATE_SIZE = sizeof(float) + (3 * sizeof(I_64));
 	static constexpr int THREAD_STATISTICS_EVENT_SIZE = (6 * sizeof(U_64)) + sizeof(U_32);
 	static constexpr int THREAD_DUMP_EVENT_SIZE_PER_THREAD = 1000;
+	static constexpr int SYSTEM_PROCESS_EVENT_SIZE = (4 * sizeof(U_64)) + 32 /* pid string */;
 
 	static constexpr int METADATA_ID = 1;
 
@@ -396,6 +398,8 @@ done:
 			pool_do(_constantPoolTypes.getThreadContextSwitchRateTable(), &writeThreadContextSwitchRateEvent, _bufferWriter);
 
 			pool_do(_constantPoolTypes.getThreadStatisticsTable(), &writeThreadStatisticsEvent, _bufferWriter);
+
+			pool_do(_constantPoolTypes.getSystemProcessTable(), &writeSystemProcessEvent, this);
 
 			/* Only write constant events in first chunk */
 			if (0 == _vm->jfrState.jfrChunkCount) {
@@ -827,6 +831,8 @@ done:
 
 	static void writeThreadStatisticsEvent(void *anElement, void *userData);
 
+	static void writeSystemProcessEvent(void *anElement, void *userData);
+
 	UDATA
 	calculateRequiredBufferSize()
 	{
@@ -898,6 +904,9 @@ done:
 		requiredBufferSize += _constantPoolTypes.getThreadStatisticsCount() * THREAD_STATISTICS_EVENT_SIZE;
 
 		requiredBufferSize += _vm->peakThreadCount * THREAD_DUMP_EVENT_SIZE_PER_THREAD;
+
+		requiredBufferSize += (_constantPoolTypes.getSystemProcessCount() * SYSTEM_PROCESS_EVENT_SIZE)
+				+ _constantPoolTypes.getSystemProcessStringSizeTotal();
 
 		return requiredBufferSize;
 	}
