@@ -1220,8 +1220,16 @@ obj:
 		if (rc == (UDATA)obj) {
 			J9VMContinuation *continuation = _currentThread->currentContinuation;
 			if (NULL != continuation) {
-				/* Do not need to record whether contended monitor enter event is triggered after entered the monitor. */
-				continuation->runtimeFlags &= ~J9VM_CONTINUATION_RUNTIMEFLAG_JVMTI_CONTENDED_MONITOR_ENTER_RECORDED;
+				if (J9_ARE_ALL_BITS_SET(continuation->runtimeFlags, J9VM_CONTINUATION_RUNTIMEFLAG_JVMTI_CONTENDED_MONITOR_ENTER_RECORDED)) {
+					if (J9_EVENT_IS_HOOKED(_vm->hookInterface, J9HOOK_VM_MONITOR_CONTENDED_ENTERED)) {
+						J9ObjectMonitor *objectMonitor = monitorTableAt(_currentThread, obj);
+						ALWAYS_TRIGGER_J9HOOK_VM_MONITOR_CONTENDED_ENTERED(
+							_vm->hookInterface, _currentThread, objectMonitor->monitor,
+							continuation->startTicks, J9OBJECT_CLAZZ(currentThread, obj), continuation->previousOwner);
+					}
+					/* Clear the runtime flag as contended monitor enter/entered events are already triggered. */
+					continuation->runtimeFlags &= ~J9VM_CONTINUATION_RUNTIMEFLAG_JVMTI_CONTENDED_MONITOR_ENTER_RECORDED;
+				}
 			}
 		}
 #endif /* JAVA_SPEC_VERSION >= 24 */
@@ -1541,12 +1549,16 @@ obj:
 		J9VMJAVALANGVIRTUALTHREAD_SET_STATE(_currentThread, _currentThread->threadObject, newThreadState);
 
 		if (JAVA_LANG_VIRTUALTHREAD_BLOCKING == newThreadState) {
-			if (J9_EVENT_IS_HOOKED(_vm->hookInterface, J9HOOK_VM_MONITOR_CONTENDED_ENTER)
-				&& J9_ARE_NO_BITS_SET(continuation->runtimeFlags, J9VM_CONTINUATION_RUNTIMEFLAG_JVMTI_CONTENDED_MONITOR_ENTER_RECORDED)
-			) {
-				ALWAYS_TRIGGER_J9HOOK_VM_MONITOR_CONTENDED_ENTER(_vm->hookInterface, _currentThread, continuation->objectWaitMonitor->monitor);
+			if (J9_ARE_NO_BITS_SET(continuation->runtimeFlags, J9VM_CONTINUATION_RUNTIMEFLAG_JVMTI_CONTENDED_MONITOR_ENTER_RECORDED)) {
+				if (J9_EVENT_IS_HOOKED(_vm->hookInterface, J9HOOK_VM_MONITOR_CONTENDED_ENTERED)) {
+					PORT_ACCESS_FROM_VMC(_currentThread);
+					continuation->startTicks = j9time_nano_time();
+				}
+				if (J9_EVENT_IS_HOOKED(_vm->hookInterface, J9HOOK_VM_MONITOR_CONTENDED_ENTER)) {
+					ALWAYS_TRIGGER_J9HOOK_VM_MONITOR_CONTENDED_ENTER(_vm->hookInterface, _currentThread, continuation->objectWaitMonitor->monitor);
+				}
 				/* It is possible that a continuation reaches yieldPinnedContinuation multiple times trying to enter the same monitor.
-				 * The MONITOR_CONTENDED_ENTER event should be triggered only once.
+				 * The MONITOR_CONTENDED_ENTER and MONITOR_CONTENDED_ENTERED event should be triggered only once.
 				 * J9VM_CONTINUATION_RUNTIMEFLAG_JVMTI_CONTENDED_MONITOR_ENTER_RECORDED is cleared once entered the monitor.
 				 */
 				continuation->runtimeFlags |= J9VM_CONTINUATION_RUNTIMEFLAG_JVMTI_CONTENDED_MONITOR_ENTER_RECORDED;
