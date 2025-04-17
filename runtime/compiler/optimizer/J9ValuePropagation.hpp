@@ -283,6 +283,19 @@ class ValuePropagation : public OMR::ValuePropagation
    void transformVTObjectEqNeCompare(TR_OpaqueClassBlock *containingClass, TR::Node *callNode);
 
    /**
+    * \brief
+    *    Handles refined MethodHandle.invokeBasic and MethodHandle.linkTo* VM INL calls so that
+    *    they can be inlined during delayed VP transformations. This helper does the following:
+    *       1. Creates and populates TR_PrexArgInfo for the callee
+    *       2. Adds the corresponding OMR::ValuePropagation::CallInfo to
+    *          _refinedMethodHandleINLMethodsToInline
+    *
+    * \param node
+    *    The refined call node
+    */
+   void processRefinedMethodHandleINLCall(TR::Node *node);
+
+   /**
     * Determine the bounds and element size for an array constraint
     *
     * \param[in] arrayConstraint A \ref TR::VPConstraint for an array reference
