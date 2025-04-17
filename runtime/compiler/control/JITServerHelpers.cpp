@@ -946,6 +946,7 @@ JITServerHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Cl
    {
    ClientSessionData::ClassInfo classInfoStruct(clientSessionData->persistentMemory());
 
+   classInfoStruct._ramClass = clazz;
    classInfoStruct._romClass = romClass;
    J9Method *methods = std::get<1>(classInfoTuple);
    classInfoStruct._methodsOfClass = methods;
@@ -973,7 +974,7 @@ JITServerHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Cl
    classInfoStruct._constantPool = (J9ConstantPool *)std::get<18>(classInfoTuple);
    classInfoStruct._classFlags = std::get<19>(classInfoTuple);
    classInfoStruct._classChainOffsetIdentifyingLoader = std::get<20>(classInfoTuple);
-   auto &origROMMethods = std::get<21>(classInfoTuple);
+   auto &origROMMethods = std::get<21>(classInfoTuple); // vector of ROMMethod pointers valid at the client
    classInfoStruct._classNameIdentifyingLoader = std::get<22>(classInfoTuple);
    classInfoStruct._arrayElementSize = std::get<23>(classInfoTuple);
    classInfoStruct._defaultValueSlotAddress = std::get<24>(classInfoTuple);
@@ -986,7 +987,7 @@ JITServerHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Cl
    J9ROMMethod *romMethod = J9ROMCLASS_ROMMETHODS(romClass);
    for (uint32_t i = 0; i < numMethods; i++)
       {
-      ClientSessionData::J9MethodInfo m(romMethod, origROMMethods[i], (TR_OpaqueClassBlock *)clazz,
+      ClientSessionData::J9MethodInfo m(romMethod, origROMMethods[i], result.first->second, /* classInfoStruct */
                                         i, static_cast<bool>(methodTracingInfo[i]));
       methodMap.insert({ &methods[i], m });
       romMethod = nextROMMethod(romMethod);

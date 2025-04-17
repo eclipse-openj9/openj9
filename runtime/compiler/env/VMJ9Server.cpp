@@ -1775,7 +1775,7 @@ TR_J9ServerVM::getClassFromMethodBlock(TR_OpaqueMethodBlock *method)
       auto it = _compInfoPT->getClientData()->getJ9MethodMap().find((J9Method*) method);
       if (it != _compInfoPT->getClientData()->getJ9MethodMap().end())
          {
-         return it->second._owningClass;
+         return (TR_OpaqueClassBlock *)it->second.definingClass();
          }
       }
 

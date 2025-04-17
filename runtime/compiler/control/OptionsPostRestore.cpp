@@ -184,6 +184,8 @@ J9::OptionsPostRestore::iterateOverExternalOptions()
          case J9::ExternalOptions::XXJITServerHealthProbePortOption:
          case J9::ExternalOptions::XXplusTrackAOTDependencies:
          case J9::ExternalOptions::XXminusTrackAOTDependencies:
+         case J9::ExternalOptions::XXplusJITServerUseProfileCache:
+         case J9::ExternalOptions::XXminusJITServerUseProfileCache:
             {
             // do nothing, consume them to prevent errors
             FIND_AND_CONSUME_RESTORE_ARG(OPTIONAL_LIST_MATCH, optString, 0);

@@ -1586,7 +1586,7 @@ TR_IProfiler::profilingSample (TR_OpaqueMethodBlock *method, uint32_t byteCodeIn
                {
                _STATS_IPEntryChoosePersistent++;
                currentEntry = findOrCreateEntry(bcHash(pc), pc, true);
-               currentEntry->copyFromEntry(persistentEntry, comp);
+               currentEntry->copyFromEntry(persistentEntry);
                // Remember that we already looked into the SCC for this PC
                currentEntry->setPersistentEntryRead();
                return currentEntry;
@@ -1613,7 +1613,7 @@ TR_IProfiler::profilingSample (TR_OpaqueMethodBlock *method, uint32_t byteCodeIn
             else
                {
                _STATS_IPEntryChoosePersistent++;
-               currentEntry->copyFromEntry(persistentEntry, comp);
+               currentEntry->copyFromEntry(persistentEntry);
                return currentEntry;
                }
             }
@@ -1645,10 +1645,10 @@ TR_IProfiler::getSamplingCount( TR_IPBytecodeHashTableEntry *entry, TR::Compilat
    }
 
 int32_t
-TR_IPBCDataEightWords::getSumSwitchCount()
+TR_IPBCDataEightWords::getSumSwitchCount() const
    {
    int32_t sum = 1;
-   uint64_t *p = (uint64_t *)(getDataPointer());
+   const uint64_t *p = (const uint64_t *)(getDataPointer());
 
    for (int8_t i=0; i<SWITCH_DATA_COUNT; i++, p++)
       {
@@ -2115,7 +2115,7 @@ TR_IProfiler::getSumSwitchCount (TR::Node *node, TR::Compilation *comp)
 
    if (entry && entry->asIPBCDataEightWords())
       {
-      uint64_t *p = (uint64_t *)(((TR_IPBCDataEightWords *)entry)->getDataPointer());
+      const uint64_t *p = (const uint64_t *)(((TR_IPBCDataEightWords *)entry)->getDataPointer());
 
       for (int8_t i=0; i<SWITCH_DATA_COUNT; i++, p++)
          {
@@ -2123,7 +2123,7 @@ TR_IProfiler::getSumSwitchCount (TR::Node *node, TR::Compilation *comp)
          uint32_t segmentData  = 0;
          uint32_t segmentCount = 0;
 
-         getSwitchSegmentDataAndCount (segment, &segmentData, &segmentCount);
+         getSwitchSegmentDataAndCount(segment, &segmentData, &segmentCount);
          sum += segmentCount;
          }
 
@@ -2676,7 +2676,7 @@ TR_IPBCDataFourBytes::loadFromPersistentCopy(TR_IPBCDataStorageHeader * storage,
    }
 
 void
-TR_IPBCDataFourBytes::copyFromEntry(TR_IPBytecodeHashTableEntry* originalEntry, TR::Compilation *comp)
+TR_IPBCDataFourBytes::copyFromEntry(TR_IPBytecodeHashTableEntry *originalEntry)
    {
    TR_IPBCDataFourBytes *entry = (TR_IPBCDataFourBytes *) originalEntry;
    TR_ASSERT(originalEntry->asIPBCDataFourBytes(), "Incompatible types between storage and loading of iprofile persistent data");
@@ -2684,7 +2684,7 @@ TR_IPBCDataFourBytes::copyFromEntry(TR_IPBytecodeHashTableEntry* originalEntry, 
    }
 
 int32_t
-TR_IPBCDataFourBytes::getSumBranchCount()
+TR_IPBCDataFourBytes::getSumBranchCount() const
    {
    int32_t fallThroughCount = (int32_t)(data & 0x0000FFFF) | 0x1;
    int32_t branchToCount = (int32_t)((data & 0xFFFF0000)>>16) | 0x1;
@@ -2715,7 +2715,7 @@ TR_IPBCDataEightWords::loadFromPersistentCopy(TR_IPBCDataStorageHeader * storage
    }
 
 void
-TR_IPBCDataEightWords::copyFromEntry(TR_IPBytecodeHashTableEntry * originalEntry, TR::Compilation *comp)
+TR_IPBCDataEightWords::copyFromEntry(TR_IPBytecodeHashTableEntry *originalEntry)
    {
    TR_IPBCDataEightWords* entry = (TR_IPBCDataEightWords*) originalEntry;
    TR_ASSERT(originalEntry->asIPBCDataEightWords(), "Incompatible types between storage and loading of iprofile persistent data");
@@ -2812,20 +2812,20 @@ TR_IPBCDataCallGraph::setData(uintptr_t v, uint32_t freq)
    }
 
 int32_t
-TR_IPBCDataCallGraph::getSumCount()
+TR_IPBCDataCallGraph::getSumCount() const
    {
-   int32_t sumWeight = 0;
+   int32_t sumWeight = _csInfo._residueWeight;
    for (int32_t i = 0; i < NUM_CS_SLOTS; i++)
       sumWeight += _csInfo._weight[i];
 
-   return sumWeight + _csInfo._residueWeight;
+   return sumWeight;
    }
 
 int32_t
 TR_IPBCDataCallGraph::getSumCount(TR::Compilation *comp)
    {
    static bool debug = feGetEnv("TR_debugiprofiler_detail") ? true : false;
-   int32_t sumWeight = 0;
+   int32_t sumWeight = _csInfo._residueWeight;
    for (int32_t i = 0; i < NUM_CS_SLOTS; i++)
       {
       if(debug)
@@ -2837,7 +2837,6 @@ TR_IPBCDataCallGraph::getSumCount(TR::Compilation *comp)
          }
       sumWeight += _csInfo._weight[i];
       }
-   sumWeight += _csInfo._residueWeight;
    if(debug)
       {
       fprintf(stderr," residueweight %d\n", _csInfo._residueWeight);
@@ -3289,7 +3288,7 @@ TR_IPBCDataCallGraph::loadFromPersistentCopy(TR_IPBCDataStorageHeader * storage,
    }
 
 void
-TR_IPBCDataCallGraph::copyFromEntry(TR_IPBytecodeHashTableEntry * originalEntry, TR::Compilation *comp)
+TR_IPBCDataCallGraph::copyFromEntry(TR_IPBytecodeHashTableEntry *originalEntry)
    {
    TR_IPBCDataCallGraph * entry = (TR_IPBCDataCallGraph*) originalEntry;
    TR_ASSERT(originalEntry->asIPBCDataCallGraph(), "Incompatible types between storage and loading of iprofile persistent data");
@@ -4554,7 +4553,7 @@ TR_IPHashedCallSite::operator new (size_t size) throw()
    return TR_IProfiler::allocator()->allocate(size, std::nothrow);
    }
 
-inline
+
 uintptr_t CallSiteProfileInfo::getClazz(int index)
    {
    if (TR::Compiler->om.compressObjectReferences())
@@ -4564,7 +4563,7 @@ uintptr_t CallSiteProfileInfo::getClazz(int index)
       return (uintptr_t)_clazz[index]; //things are just stored as regular pointers otherwise
    }
 
-inline
+
 void CallSiteProfileInfo::setClazz(int index, uintptr_t clazzPointer)
    {
    if (TR::Compiler->om.compressObjectReferences())

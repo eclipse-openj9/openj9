@@ -132,7 +132,9 @@ enum ExternalOptions
    XXJITServerHealthProbePortOption              = 76,
    XXplusTrackAOTDependencies                    = 77,
    XXminusTrackAOTDependencies                   = 78,
-   TR_NumExternalOptions                         = 79
+   XXplusJITServerUseProfileCache                = 79,
+   XXminusJITServerUseProfileCache               = 80,
+   TR_NumExternalOptions                         = 81
    };
 
 /**

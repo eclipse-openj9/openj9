@@ -418,6 +418,7 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/runtime/JITServerAOTCache.cpp \
     compiler/runtime/JITServerAOTDeserializer.cpp \
     compiler/runtime/JITServerIProfiler.cpp \
+    compiler/runtime/JITServerProfileCache.cpp \
     compiler/runtime/JITServerROMClassHash.cpp \
     compiler/runtime/JITServerSharedROMClassCache.cpp \
     compiler/runtime/JITServerStatisticsThread.cpp \

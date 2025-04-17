@@ -30,6 +30,8 @@
 #include "env/SystemSegmentProvider.hpp"
 #include "runtime/JITServerAOTSerializationRecords.hpp"
 
+class JITServerSharedProfileCache;
+
 static const uint32_t JITSERVER_AOTCACHE_VERSION = 1;
 static const char JITSERVER_AOTCACHE_EYECATCHER[] = "AOTCACHE";
 // the eye-catcher is not null-terminated in the snapshot files
@@ -424,10 +426,11 @@ class JITServerAOTCache
 public:
    TR_PERSISTENT_ALLOC(TR_Memory::JITServerAOTCache)
 
-   JITServerAOTCache(const std::string &name);
+   JITServerAOTCache(const std::string &name, J9JavaVM *javaVM);
    ~JITServerAOTCache();
 
    const std::string &name() const { return _name; }
+   JITServerSharedProfileCache *sharedProfileCache() const { return _sharedProfileCache; }
 
    // Each get{Type}Record() method except getThunkRecord returns the record for given parameters (which fully identify
    // the unique record), by either looking up the existing record or creating a new one if there is sufficient
@@ -607,6 +610,7 @@ private:
                            PersistentUnorderedMap<K, V *, H> &map, V *&traversalHead, V *&traversalTail, Vector<V *> &records);
 
    const std::string _name;
+   JITServerSharedProfileCache *const _sharedProfileCache;
 
    // Along with each map we also store pointers to the start and end points of a traversal of all the records.
    // The _nextRecord in each record points to the next record in this traversal.
