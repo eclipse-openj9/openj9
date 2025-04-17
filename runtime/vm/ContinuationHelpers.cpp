@@ -1134,6 +1134,32 @@ done:
 	return result;
 }
 
+static VMINLINE void
+waitForSignal(J9VMThread *currentThread)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+
+	/* In all other cases when VM Access and blockedVirtualThreadsMutex are both held
+	 * VM Access is acquired first so we should be consistent here as well otherwise
+	 * we risk deadlocks. Since wait internally acquires the monitor we should release the
+	 * lock once notified and re-acquire after we acquire VM access. While the monitor
+	 * exit before the VM access release isn't strcitly needed I've done it for symmetry.
+	 *
+	 * TODO we should consider refactoring all other uses of blockedVirtualThreadsMutex
+	 * such that VM access is not held while the lock is held. There are complexities involved
+	 * as in many of those cases the method has direct references to objects and it may not
+	 * be trivial to build an object frame to store them when VM access is released.
+	 */
+	omrthread_monitor_exit(vm->blockedVirtualThreadsMutex);
+	vmFuncs->internalExitVMToJNI(currentThread);
+	omrthread_monitor_enter(vm->blockedVirtualThreadsMutex);
+	omrthread_monitor_wait(vm->blockedVirtualThreadsMutex);
+	omrthread_monitor_exit(vm->blockedVirtualThreadsMutex);
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+	omrthread_monitor_enter(vm->blockedVirtualThreadsMutex);
+}
+
 jobject
 takeVirtualThreadListToUnblock(J9VMThread *currentThread, J9JavaVM *vm)
 {
@@ -1147,8 +1173,8 @@ takeVirtualThreadListToUnblock(J9VMThread *currentThread, J9JavaVM *vm)
 		return NULL;
 	}
 
-	omrthread_monitor_enter(vm->blockedVirtualThreadsMutex);
 	vmFuncs->internalEnterVMFromJNI(currentThread);
+	omrthread_monitor_enter(vm->blockedVirtualThreadsMutex);
 	while (NULL == unblockedList) {
 		if (NULL != vm->blockedContinuations) {
 restart:
@@ -1237,18 +1263,19 @@ restart:
 				current = next;
 			}
 			if ((NULL == unblockedList) && !hasPlatformThreadWaiting) {
-				vmFuncs->internalExitVMToJNI(currentThread);
-				omrthread_monitor_wait(vm->blockedVirtualThreadsMutex);
-				vmFuncs->internalEnterVMFromJNI(currentThread);
+
+				waitForSignal(currentThread);
 				goto restart;
 			} else {
 				result = vmFuncs->j9jni_createLocalRef((JNIEnv *)currentThread, unblockedList);
 				break;
 			}
+		} else {
+			waitForSignal(currentThread);
 		}
 	}
-	vmFuncs->internalExitVMToJNI(currentThread);
 	omrthread_monitor_exit(vm->blockedVirtualThreadsMutex);
+	vmFuncs->internalExitVMToJNI(currentThread);
 
 	return result;
 }
