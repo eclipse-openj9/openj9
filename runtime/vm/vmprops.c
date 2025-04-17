@@ -1071,6 +1071,15 @@ initializeSystemProperties(J9JavaVM *vm)
 	}
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
+#if defined(J9VM_OPT_SNAPSHOTS)
+	if (IS_SNAPSHOT_RUN(vm)) {
+		rc = addSystemProperty(vm, "ibm.java9.forceCommonCleanerShutdown", "true", J9SYSPROP_FLAG_WRITEABLE);
+		if (J9SYSPROP_ERROR_NONE != rc) {
+			goto fail;
+		}
+	}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
+
 #if JAVA_SPEC_VERSION >= 23
 	{
 		/* JEP 471: Deprecate the Memory-Access Methods in sun.misc.Unsafe for Removal
