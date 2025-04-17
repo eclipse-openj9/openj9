@@ -40,15 +40,13 @@
 #include "ConcurrentSafepointCallbackJava.hpp"
 #include "EnvironmentBase.hpp"
 #include "GCExtensionsBase.hpp"
+#include "ScanContinuationSlotsBase.hpp"
 #include "MarkingScheme.hpp"
 #include "ReferenceObjectBuffer.hpp"
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 #include "ScanClassesMode.hpp"
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 
-#if JAVA_SPEC_VERSION >= 24
-class GC_ContinuationSlotIterator;
-#endif /* JAVA_SPEC_VERSION >= 24 */
 class GC_VMThreadIterator;
 class MM_ConcurrentGC;
 class MM_MarkingScheme;
@@ -56,7 +54,7 @@ class MM_MarkingScheme;
 /**
  * Provides language-specific support for marking.
  */
-class MM_ConcurrentMarkingDelegate
+class MM_ConcurrentMarkingDelegate : public MM_ScanContinuationSlotsBase
 {
 	/*
 	 * Data members
@@ -117,11 +115,8 @@ public:
 	 */
 	bool initialize(MM_EnvironmentBase *env, MM_ConcurrentGC *collector);
 
-	MMINLINE void doSlot(MM_EnvironmentBase *env, omrobjectptr_t *slotPtr);
-#if JAVA_SPEC_VERSION >= 24
-	void doContinuationSlot(MM_EnvironmentBase *env, omrobjectptr_t *slotPtr, GC_ContinuationSlotIterator *continuationSlotIterator);
-#endif /* JAVA_SPEC_VERSION >= 24 */
-	void doStackSlot(MM_EnvironmentBase *env, omrobjectptr_t *slotPtr, J9StackWalkState *walkState, const void *stackLocation);
+	virtual void doSlot(MM_EnvironmentBase *env, omrobjectptr_t *slotPtr);
+
 	/**
 	 * In the case of Weak Consistency platforms we require this method to bring mutator threads to a safe point. A safe
 	 * point is a point at which a GC may occur.
@@ -368,8 +363,8 @@ public:
 	/**
 	 * Constructor.
 	 */
-	MMINLINE MM_ConcurrentMarkingDelegate()
-		: _javaVM(NULL)
+	MMINLINE MM_ConcurrentMarkingDelegate() : MM_ScanContinuationSlotsBase()
+		, _javaVM(NULL)
 		, _objectModel(NULL)
 		, _collector(NULL)
 		, _markingScheme(NULL)
