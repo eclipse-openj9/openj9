@@ -1469,6 +1469,19 @@ createMethodMetaData(
       tableSize += memoryUsedByMetadataMapping;
       }
 
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   int32_t invokeBasicCallInfoOffset = -1;
+   if (!cg->invokeBasicCallSites().empty())
+      {
+      int32_t align = sizeof(uintptr_t);
+      tableSize += (align - tableSize % align) % align;
+      invokeBasicCallInfoOffset = tableSize;
+      const auto &sites = cg->invokeBasicCallSites();
+      tableSize += sizeof(J9JITInvokeBasicCallInfo);
+      tableSize += sites.size() * sizeof(J9JITInvokeBasicCallSite);
+      }
+#endif
+
    /* Legend of the info stored at "data". From top to bottom, the address increases
 
       Exception info
@@ -1486,6 +1499,8 @@ createMethodMetaData(
       GPU info (if GPU)
       --------------
       Bytecode PC to instruction address map (if enabled for RI)
+      --------------
+      invokeBasic() call info (if any call sites are applicable)
 
    */
 
@@ -1770,6 +1785,48 @@ createMethodMetaData(
       void *bytecodePCToIAMapLocation = (void *)((uint8_t*)data + bytecodePCToIAMapOffset);
       data->riData = bytecodePCToIAMapLocation;
       }
+
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   if (invokeBasicCallInfoOffset >= 0)
+      {
+      data->invokeBasicCallInfo =
+         (J9JITInvokeBasicCallInfo*)((uint8_t*)data + invokeBasicCallInfoOffset);
+
+      TR_ASSERT_FATAL(
+         (uintptr_t)data->invokeBasicCallInfo % sizeof(uintptr_t) == 0,
+         "misaligned allocation for J9JITInvokeBasicCallInfo");
+
+      const auto &sites = cg->invokeBasicCallSites();
+      TR_ASSERT_FATAL(
+         sites.size() <= UINT32_MAX, "too many potential invokeBasic() calls");
+
+      data->invokeBasicCallInfo->numSites = (uint32_t)sites.size();
+      uint32_t destSiteIndex = 0;
+      for (auto it = sites.begin(); it != sites.end(); it++)
+         {
+         void *retAddr = it->_retAddr;
+         if (retAddr == NULL)
+            {
+            retAddr = it->_instr->getNext()->getBinaryEncoding();
+            }
+
+         uintptr_t retAddrOffset = (uintptr_t)retAddr - data->startPC;
+
+         TR_ASSERT_FATAL(
+            retAddrOffset <= UINT32_MAX,
+            "potential invokeBasic call return address %p too far from startPC %p",
+            retAddr,
+            (void*)data->startPC);
+
+         J9JITInvokeBasicCallSite *destSite =
+            &data->invokeBasicCallInfo->sites[destSiteIndex++];
+
+         destSite->jitReturnAddressOffset = retAddrOffset;
+         destSite->numArgSlots = it->_numArgSlots;
+         destSite->j2iThunk = it->_j2iThunk;
+         }
+      }
+#endif
 
    if (comp->getOption(TR_TraceCG) && comp->getOutFile() != NULL)
       {

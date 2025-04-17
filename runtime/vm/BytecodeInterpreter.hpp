@@ -9530,10 +9530,11 @@ done:
 		UDATA mhReceiverIndex = 0;
 
 		if (fromJIT) {
-			/* tempSlot contains the number of stack slots for the arguments, and the MH
+			/* JIT body metadata specifies the number of stack slots for the arguments, and the MH
 			 * receiver is the first argument.
 			 */
-			mhReceiverIndex = _currentThread->tempSlot - 1;
+			J9JITInvokeBasicCallSite *site = _vm->jitConfig->jitGetInvokeBasicCallSiteFromPC(_currentThread, (UDATA)_literals);
+			mhReceiverIndex = site->numArgSlots - 1;
 		} else {
 			U_16 index = *(U_16 *)(_pc + 1);
 			J9ConstantPool *ramConstantPool = J9_CP_FROM_METHOD(_literals);

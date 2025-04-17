@@ -345,6 +345,10 @@ UDATA usesOSR (J9VMThread* currentThread, J9JITExceptionTable *metaData);
 /* returns the size required for the scratch buffer */
 UDATA osrScratchBufferSize(J9VMThread* currentThread, J9JITExceptionTable *metaData, void *pc);
 
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+J9JITInvokeBasicCallSite *jitGetInvokeBasicCallSiteFromPC(struct J9VMThread *vmThread, UDATA jitPC);
+#endif
+
 #if (defined(TR_HOST_ARM))
 #define alignStackMaps 1
 #else
