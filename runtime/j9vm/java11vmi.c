@@ -364,9 +364,8 @@ restoreModule(J9VMThread *currentThread, J9ClassLoader *classLoader, J9UTF8 *mod
 				J9Module *clazzModule = clazz->module;
 
 				if (NULL != clazzModule) {
-					const char *clazzModuleName = (const char *)J9UTF8_DATA(clazzModule->moduleName);
-
-					if (0 == strcmp(clazzModuleName, JAVA_BASE_MODULE)) {
+					J9UTF8 *moduleName = clazzModule->moduleName;
+					if ((NULL != moduleName) && (0 == strcmp(J9UTF8_DATA(moduleName), JAVA_BASE_MODULE))) {
 						J9VMJAVALANGCLASS_SET_MODULE(currentThread, clazz->classObject, moduleObject);
 					} else {
 						if (classLoader == systemClassLoader) {
