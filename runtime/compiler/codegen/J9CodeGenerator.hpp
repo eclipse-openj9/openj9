@@ -40,6 +40,7 @@ namespace J9 { typedef J9::CodeGenerator CodeGeneratorConnector; }
 #include "env/jittypes.h"
 #include "infra/List.hpp"
 #include "infra/HashTab.hpp"
+#include "infra/TRlist.hpp"
 #include "codegen/RecognizedMethods.hpp"
 #if defined(J9VM_OPT_JITSERVER)
 #include "control/CompilationRuntime.hpp"
@@ -708,7 +709,39 @@ public:
    /// Determine whether to stress the J2I path for \c jitDispatchJ9Method.
    bool stressJitDispatchJ9MethodJ2I();
 
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   void addInvokeBasicCallSite(TR::Node *callNode, TR::Instruction *instr)
+      {
+      addInvokeBasicCallSiteImpl(callNode, instr, NULL);
+      }
+
+   void addInvokeBasicCallSite(TR::Node *callNode, uint8_t *retAddr)
+      {
+      addInvokeBasicCallSiteImpl(callNode, NULL, retAddr);
+      }
+
+   struct InvokeBasicCallSite
+      {
+      TR::Instruction *_instr; // for call instruction from an evaluator
+      void *_retAddr; // for call instruction from a snippet
+      uint8_t _numArgSlots;
+      void *_j2iThunk; // for JITHelpers.dispatchVirtual()
+      };
+
+   typedef TR::list<InvokeBasicCallSite, TR::Region&> InvokeBasicCallSiteList;
+
+   const InvokeBasicCallSiteList &invokeBasicCallSites()
+      {
+      return _invokeBasicCallSites;
+      }
+#endif
+
 private:
+
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   void addInvokeBasicCallSiteImpl(
+      TR::Node *callNode, TR::Instruction *instr, uint8_t *retAddr);
+#endif
 
    enum // Flags
       {
@@ -734,6 +767,10 @@ private:
       };
 
    flags32_t _j9Flags;
+
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   InvokeBasicCallSiteList _invokeBasicCallSites;
+#endif
    };
 }
 

@@ -2251,6 +2251,15 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
    if (cg()->getSupportsRuntimeInstrumentation())
       TR::TreeEvaluator::generateRuntimeInstrumentationOnOffSequence(cg(), TR::InstOpCode::RION, callNode);
 
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   // JITHelpers.dispatchVirtual() can target MethodHandle.invokeBasic().
+   auto rm = methodSymbol->getMandatoryRecognizedMethod();
+   if (rm == TR::com_ibm_jit_JITHelpers_dispatchVirtual)
+      {
+      cg()->addInvokeBasicCallSite(callNode, gcPoint);
+      }
+#endif
+
    TR_ASSERT( gcPoint, "Expected GC point for a virtual dispatch");
    gcPoint->setNeedsGCMap(getPreservedRegisterMapForGC());
    }
@@ -2344,6 +2353,14 @@ J9::Z::PrivateLinkage::buildDirectCall(TR::Node * callNode, TR::SymbolReference 
 
 
       gcPoint = generateSnippetCall(cg(), callNode, snippet, dependencies, callSymRef);
+
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+      auto rm = callSymbol->getMandatoryRecognizedMethod();
+      if (rm == TR::java_lang_invoke_MethodHandle_invokeBasic)
+         {
+         cg()->addInvokeBasicCallSite(callNode, gcPoint);
+         }
+#endif
 
       if (cg()->getSupportsRuntimeInstrumentation())
          TR::TreeEvaluator::generateRuntimeInstrumentationOnOffSequence(cg(), TR::InstOpCode::RION, callNode);

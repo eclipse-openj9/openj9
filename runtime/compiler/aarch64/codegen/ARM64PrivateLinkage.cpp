@@ -1430,6 +1430,14 @@ void J9::ARM64::PrivateLinkage::buildDirectCall(TR::Node *callNode,
          new (trHeapMemory()) TR::SymbolReference(comp()->getSymRefTab(), label),
          snippet);
 
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+      auto rm = callSymbol->getMandatoryRecognizedMethod();
+      if (rm == TR::java_lang_invoke_MethodHandle_invokeBasic)
+         {
+         cg()->addInvokeBasicCallSite(callNode, gcPoint);
+         }
+#endif
+
       // Nop is necessary due to confusion when resolving shared slots at a transition
       if (callSymRef->isOSRInductionHelper())
          cg()->generateNop(callNode);
@@ -2089,6 +2097,15 @@ void J9::ARM64::PrivateLinkage::buildVirtualDispatch(TR::Node *callNode,
 
       TR::Instruction *gcPoint = generateRegBranchInstruction(cg(), TR::InstOpCode::blr, callNode, vftReg, dependencies);
       gcPoint->ARM64NeedsGCMap(cg(), regMapForGC);
+
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+      // JITHelpers.dispatchVirtual() can target MethodHandle.invokeBasic().
+      auto rm = methodSymbol->getMandatoryRecognizedMethod();
+      if (rm == TR::com_ibm_jit_JITHelpers_dispatchVirtual)
+         {
+         cg()->addInvokeBasicCallSite(callNode, gcPoint);
+         }
+#endif
 
       return;
       }

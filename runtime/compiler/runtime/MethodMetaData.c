@@ -2506,6 +2506,29 @@ UDATA osrScratchBufferSize(J9VMThread* currentThread, J9JITExceptionTable *metaD
    return (UDATA) maxScratchBufferSize;
    }
 
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+J9JITInvokeBasicCallSite *
+jitGetInvokeBasicCallSiteFromPC(J9VMThread *vmThread, UDATA jitPC)
+   {
+   J9JITExceptionTable *metadata =
+      vmThread->javaVM->jitConfig->jitGetExceptionTableFromPC(vmThread, jitPC);
+
+   uintptr_t queryOffset = jitPC - metadata->startPC;
+   J9JITInvokeBasicCallInfo *info = metadata->invokeBasicCallInfo;
+   uint32_t i;
+   for (i = 0; i < info->numSites; i++)
+      {
+      J9JITInvokeBasicCallSite *site = &info->sites[i];
+      if (site->jitReturnAddressOffset == queryOffset)
+         {
+         return site;
+         }
+      }
+
+   assert(0); // unreachable - the site must exist
+   return NULL;
+   }
+#endif // defined(J9VM_OPT_OPENJDK_METHODHANDLE)
 
 /* New hook for getting a JIT exception table.  This will be used as a pivot to help assimilate the implementation into the JIT. */
 J9JITExceptionTable *
