@@ -773,6 +773,28 @@ static TR::Node *getStoreValueBaseNode(TR::Node *storeValueNode, TR::SymbolRefer
    return storeValueBaseNode;
    }
 
+static void populatePrexArgInfo(OMR::ValuePropagation *vp, TR_PrexArgInfo *argInfo, TR::Node *node, bool isGlobal, bool trace)
+   {
+   for (int32_t i = 0; i < node->getNumChildren(); i++)
+      {
+      TR::Node *argNode = node->getChild(i);
+      if (argNode && argNode->getDataType() == TR::Address)
+         {
+         TR::VPConstraint *argConstraint = vp->getConstraint(argNode, isGlobal);
+         if (argConstraint
+               && argConstraint->getKnownObject()
+               && argConstraint->isNonNullObject())
+            {
+            argInfo->set(i, new (vp->comp()->trStackMemory()) TR_PrexArgument(argConstraint->getKnownObject()->getIndex(), vp->comp()));
+            if (trace)
+               traceMsg(vp->comp(), "PREX.vp:    Child %d [%p] arg is known object obj%d\n", i, argInfo->get(i), argConstraint->getKnownObject()->getIndex());
+            }
+         }
+      }
+   if (trace)
+      traceMsg(vp->comp(), "PREX.vp: Done populating prex argInfo for %s %p\n", node->getOpCode().getName(), node);
+   }
+
 void
 J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
    {
@@ -2435,28 +2457,33 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                   return;
 
                TR_PrexArgInfo *argInfo = new (trStackMemory()) TR_PrexArgInfo(node->getNumChildren(), trMemory());
-               for (int32_t i = 0; i < node->getNumChildren(); i++)
-                  {
-                  TR::Node *argNode = node->getChild(i);
-                  if (argNode && argNode->getDataType() == TR::Address)
-                     {
-                     TR::VPConstraint *argConstraint = getConstraint(argNode, isGlobal);
-                     if (argConstraint
-                         && argConstraint->getKnownObject()
-                         && argConstraint->isNonNullObject())
-                        {
-                        argInfo->set(i, new (trStackMemory()) TR_PrexArgument(argConstraint->getKnownObject()->getIndex(), comp()));
-                        if (trace())
-                           traceMsg(comp(), "PREX.vp:    Child %d [%p] arg is known object obj%d\n", i, argInfo->get(i), argConstraint->getKnownObject()->getIndex());
-                        }
-                     }
-                  }
-               if (trace())
-                  traceMsg(comp(), "PREX.vp: Done populating prex argInfo for %s %p\n", node->getOpCode().getName(), node);
+               populatePrexArgInfo(this, argInfo, node, isGlobal, trace());
 
                // Add the refined method CallInfo into the linked list _refinedMethodHandleINLMethodsToInline. Since the call
                // refinement replaces the call node in-place with a different method call, we do not have to do a lastTimeThrough()
                // check to deal with cases where the refined INL calls were inside loops
+               _refinedMethodHandleINLMethodsToInline.add(new (trStackMemory()) OMR::ValuePropagation::CallInfo(this, NULL, argInfo));
+               }
+            break;
+            }
+         case TR::java_lang_invoke_MethodHandle_linkToSpecial:
+         case TR::java_lang_invoke_MethodHandle_linkToVirtual:
+         case TR::java_lang_invoke_MethodHandle_linkToStatic:
+            {
+            TR::Node* memberNameNode = node->getLastChild();
+            bool isGlobal;
+            TR::VPConstraint* mnConstraint = getConstraint(memberNameNode, isGlobal);
+            if (mnConstraint
+                && mnConstraint->getKnownObject()
+                && mnConstraint->isNonNullObject())
+               {
+               if (!J9::TransformUtil::refineMethodHandleLinkTo(comp(), _curTree, node, mnConstraint->getKnownObject()->getIndex(), trace()))
+                  return;
+
+               TR_PrexArgInfo *argInfo = new (trStackMemory()) TR_PrexArgInfo(node->getNumChildren(), trMemory());
+               populatePrexArgInfo(this, argInfo, node, isGlobal, trace());
+
+               // no need for lastTimeThrough() check as the INL call node gets replaced in-place
                _refinedMethodHandleINLMethodsToInline.add(new (trStackMemory()) OMR::ValuePropagation::CallInfo(this, NULL, argInfo));
                }
             break;
