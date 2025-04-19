@@ -5263,9 +5263,6 @@ TR_ResolvedJ9Method::setInvocationCount(intptr_t oldCount, intptr_t newCount)
 bool
 TR_ResolvedJ9Method::isSameMethod(TR_ResolvedMethod * m2)
    {
-   if (isNative())
-      return false; // A jitted JNI method doesn't call itself
-
    TR_ResolvedJ9Method *other = (TR_ResolvedJ9Method *)m2; // TODO: Use something safer in the presence of multiple inheritance
 
    bool sameRamMethod = ramMethod() == other->ramMethod();
