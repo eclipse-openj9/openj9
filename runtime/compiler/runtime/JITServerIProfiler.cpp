@@ -377,7 +377,7 @@ JITServerIProfiler::profilingSample(TR_OpaqueMethodBlock *method, uint32_t byteC
 
       // If the shared profile cache is enabled, we must compare the "quality" of the data in the
       // shared repository to the "quality" of the data sent by the client.
-      int sharedProfileQuality = -1; // pessimistic; -1 means bad quality
+      int sharedProfileQuality = 0;
       if (clientSession->useSharedProfileCache())
          {
          BytecodeProfileSummary clientProfileSummary(numClientSamples, numProfiledBytecodes, usePersistentCache);
