@@ -1260,9 +1260,6 @@ TR_ResolvedJ9JITServerMethod::shouldFailSetRecognizedMethodInfoBecauseOfHCR()
 bool
 TR_ResolvedJ9JITServerMethod::isSameMethod(TR_ResolvedMethod * m2)
    {
-   if (isNative())
-      return false; // A jitted JNI method doesn't call itself
-
    auto other = static_cast<TR_ResolvedJ9JITServerMethod*>(m2);
 
    bool sameRamMethod = ramMethod() == other->ramMethod();
