@@ -2430,3 +2430,21 @@ J9NLS_VM_OPENJ9_JFR_METADATA_FILE_NOT_LOAD.explanation=Couldn't find or load JFR
 J9NLS_VM_OPENJ9_JFR_METADATA_FILE_NOT_LOAD.system_action=The JVM will not generate a JFR file.
 J9NLS_VM_OPENJ9_JFR_METADATA_FILE_NOT_LOAD.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
+
+# Note: "java.compiler" is a system property name and should not be translated.
+# Note: "-Xjit" is a command line parameter and should not be translated.
+J9NLS_VM_JAVA_COMPILER_WARNING_XJIT=java.compiler \u30b7\u30b9\u30c6\u30e0\u30fb\u30d7\u30ed\u30d1\u30c6\u30a3\u306e\u8a2d\u5b9a\u306f\u30d0\u30fc\u30b8\u30e7\u30f3 21 \u4ee5\u964d\u3067\u306f\u5ec3\u6b62\u3055\u308c\u3066\u3044\u308b\u305f\u3081\u3001\u4ee3\u308f\u308a\u306b -Xjit \u3092\u4f7f\u7528\u3057\u3066\u304f\u3060\u3055\u3044\u3002
+# START NON-TRANSLATABLE
+J9NLS_VM_JAVA_COMPILER_WARNING_XJIT.explanation=The java.compiler system property can no longer be used to enable or disable the JIT.
+J9NLS_VM_JAVA_COMPILER_WARNING_XJIT.system_action=Setting the java.compiler system property is ignored.
+J9NLS_VM_JAVA_COMPILER_WARNING_XJIT.user_response=Use the -Xjit option to enable the JIT.
+# END NON-TRANSLATABLE
+
+# Note: "java.compiler" is a system property name and should not be translated.
+# Note: "-Xint" is a command line parameter and should not be translated.
+J9NLS_VM_JAVA_COMPILER_WARNING_XINT=java.compiler \u30b7\u30b9\u30c6\u30e0\u30fb\u30d7\u30ed\u30d1\u30c6\u30a3\u306e\u8a2d\u5b9a\u306f\u30d0\u30fc\u30b8\u30e7\u30f3 21 \u4ee5\u964d\u3067\u306f\u5ec3\u6b62\u3055\u308c\u3066\u3044\u308b\u305f\u3081\u3001\u4ee3\u308f\u308a\u306b -Xint \u3092\u4f7f\u7528\u3057\u3066\u304f\u3060\u3055\u3044\u3002
+# START NON-TRANSLATABLE
+J9NLS_VM_JAVA_COMPILER_WARNING_XINT.explanation=The java.compiler system property can no longer be used to enable or disable the JIT.
+J9NLS_VM_JAVA_COMPILER_WARNING_XINT.system_action=Setting the java.compiler system property is ignored.
+J9NLS_VM_JAVA_COMPILER_WARNING_XINT.user_response=Use the -Xint option to disable the JIT.
+# END NON-TRANSLATABLE
