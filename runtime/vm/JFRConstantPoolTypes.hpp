@@ -311,6 +311,14 @@ struct OSInformationEntry {
 	char *osVersion;
 };
 
+struct NativeLibraryEntry {
+	I_64 ticks;
+	char *name;
+	UDATA addressLow;
+	UDATA addressHigh;
+	NativeLibraryEntry *next;
+};
+
 struct JFRConstantEvents {
 	JVMInformationEntry JVMInfoEntry;
 	CPUInformationEntry CPUInfoEntry;
@@ -377,6 +385,9 @@ private:
 	UDATA _threadContextSwitchRateCount;
 	J9Pool *_threadStatisticsTable;
 	UDATA _threadStatisticsCount;
+	J9Pool *_nativeLibrariesTable;
+	UDATA _nativeLibrariesCount;
+	UDATA _nativeLibraryPathSizeTotal;
 
 	/* Processing buffers */
 	StackFrame *_currentStackFrameBuffer;
@@ -396,6 +407,8 @@ private:
 	ClassloaderEntry *_firstClassloaderEntry;
 	PackageEntry *_previousPackageEntry;
 	PackageEntry *_firstPackageEntry;
+	NativeLibraryEntry *_firstNativeLibraryEntry;
+	NativeLibraryEntry *_previousNativeLibraryEntry;
 
 	/* default values */
 	ThreadGroupEntry _defaultThreadGroup;
@@ -714,6 +727,11 @@ public:
 		return _threadStatisticsTable;
 	}
 
+	J9Pool *getNativeLibraryTable()
+	{
+		return _nativeLibrariesTable;
+	}
+
 	UDATA getExecutionSampleCount()
 	{
 		return _executionSampleCount;
@@ -772,6 +790,16 @@ public:
 	UDATA getThreadStatisticsCount()
 	{
 		return _threadStatisticsCount;
+	}
+
+	UDATA getNativeLibraryCount()
+	{
+		return _nativeLibrariesCount;
+	}
+
+	UDATA getNativeLibraryPathSizeTotal()
+	{
+		return _nativeLibraryPathSizeTotal;
 	}
 
 	ClassloaderEntry *getClassloaderEntry()
@@ -1246,6 +1274,63 @@ done:
 		gcConfiguration->heapAddressBits = J9JAVAVM_REFERENCE_SIZE(vm) * 8;
 	}
 
+	static uintptr_t processNativeLibrariesCallback(const char *libraryName, void *lowAddress, void *highAddress, void *userData)
+	{
+		VM_JFRConstantPoolTypes *constantPoolTypes = reinterpret_cast<VM_JFRConstantPoolTypes *>(userData);
+		J9Pool *nativeLibrariesTable = constantPoolTypes->_nativeLibrariesTable;
+		NativeLibraryEntry *firstNativeLibraryEntry = constantPoolTypes->_firstNativeLibraryEntry;
+		NativeLibraryEntry *previousNativeLibraryEntry = constantPoolTypes->_previousNativeLibraryEntry;
+		NativeLibraryEntry *entry = firstNativeLibraryEntry;
+		PORT_ACCESS_FROM_JAVAVM(constantPoolTypes->_vm);
+		for (; NULL != entry; entry = entry->next) {
+			if (0 == strcmp(entry->name, libraryName)) {
+				if (entry->addressLow > (UDATA)lowAddress) {
+					entry->addressLow = (UDATA)lowAddress;
+				}
+				if (entry->addressHigh < (UDATA)highAddress) {
+					entry->addressHigh = (UDATA)highAddress;
+				}
+				return 0;
+			}
+		}
+		size_t libraryNameLength = strlen(libraryName);
+		char *libraryNameCopy = (char *)j9mem_allocate_memory(libraryNameLength + 1, OMRMEM_CATEGORY_VM);
+		if (NULL == libraryNameCopy) {
+			/* Allocation for library name failed. */
+			return 1;
+		}
+		NativeLibraryEntry *newEntry = reinterpret_cast<NativeLibraryEntry *>(pool_newElement(nativeLibrariesTable));
+		if (NULL == newEntry) {
+			/* Allocation failed. */
+			j9mem_free_memory(libraryNameCopy);
+			return 1;
+		}
+		memcpy(libraryNameCopy, libraryName, libraryNameLength + 1);
+		newEntry->ticks = j9time_nano_time();
+		newEntry->name = libraryNameCopy;
+		newEntry->addressLow = (UDATA)lowAddress;
+		newEntry->addressHigh = (UDATA)highAddress;
+		newEntry->next = NULL;
+		constantPoolTypes->_nativeLibrariesCount += 1;
+		constantPoolTypes->_nativeLibraryPathSizeTotal += libraryNameLength;
+		if (NULL != previousNativeLibraryEntry) {
+			previousNativeLibraryEntry->next = newEntry;
+		} else {
+			constantPoolTypes->_firstNativeLibraryEntry = newEntry;
+		}
+		constantPoolTypes->_previousNativeLibraryEntry = newEntry;
+		return 0;
+	}
+
+	void loadNativeLibraries(J9VMThread *currentThread)
+	{
+		OMRPORT_ACCESS_FROM_J9VMTHREAD(currentThread);
+		uintptr_t result = omrsl_get_libraries(processNativeLibrariesCallback, this);
+		if (0 != result) {
+			_buildResult = OutOfMemory;
+		}
+	}
+
 	VM_JFRConstantPoolTypes(J9VMThread *currentThread)
 		: _currentThread(currentThread)
 		, _vm(currentThread->javaVM)
@@ -1295,6 +1380,9 @@ done:
 		, _threadContextSwitchRateCount(0)
 		, _threadStatisticsTable(NULL)
 		, _threadStatisticsCount(0)
+		, _nativeLibrariesTable(NULL)
+		, _nativeLibrariesCount(0)
+		, _nativeLibraryPathSizeTotal(0)
 		, _previousStackTraceEntry(NULL)
 		, _firstStackTraceEntry(NULL)
 		, _previousThreadEntry(NULL)
@@ -1311,6 +1399,8 @@ done:
 		, _firstClassloaderEntry(NULL)
 		, _previousPackageEntry(NULL)
 		, _firstPackageEntry(NULL)
+		, _firstNativeLibraryEntry(NULL)
+		, _previousNativeLibraryEntry(NULL)
 		, _requiredBufferSize(0)
 	{
 		_classTable = hashTableNew(OMRPORT_FROM_J9PORT(privatePortLibrary), J9_GET_CALLSITE(), 0, sizeof(ClassEntry), sizeof(ClassEntry *), 0, J9MEM_CATEGORY_CLASSES, jfrClassHashFn, jfrClassHashEqualFn, NULL, _vm);
@@ -1422,22 +1512,30 @@ done:
 		}
 
 		_classLoadingStatisticsTable = pool_new(sizeof(ClassLoadingStatisticsEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
-		if (NULL == _classLoadingStatisticsTable ) {
+		if (NULL == _classLoadingStatisticsTable) {
 			_buildResult = OutOfMemory;
 			goto done;
 		}
 
 		_threadContextSwitchRateTable = pool_new(sizeof(ThreadContextSwitchRateEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
-		if (NULL == _threadContextSwitchRateTable ) {
+		if (NULL == _threadContextSwitchRateTable) {
 			_buildResult = OutOfMemory;
 			goto done;
 		}
 
 		_threadStatisticsTable = pool_new(sizeof(ThreadStatisticsEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
-		if (NULL == _threadStatisticsTable ) {
+		if (NULL == _threadStatisticsTable) {
 			_buildResult = OutOfMemory;
 			goto done;
 		}
+
+		_nativeLibrariesTable = pool_new(sizeof(NativeLibraryEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		if (NULL == _nativeLibrariesTable) {
+			_buildResult = OutOfMemory;
+			goto done;
+		}
+
+		loadNativeLibraries(_currentThread);
 
 		/* Add reserved index for default entries. For strings zero is the empty or NUll string.
 		 * For package zero is the deafult package, for Module zero is the unnamed module. ThreadGroup
@@ -1532,6 +1630,7 @@ done:
 		pool_kill(_classLoadingStatisticsTable);
 		pool_kill(_threadContextSwitchRateTable);
 		pool_kill(_threadStatisticsTable);
+		pool_kill(_nativeLibrariesTable);
 		j9mem_free_memory(_globalStringTable);
 	}
 
