@@ -143,12 +143,18 @@ J9::Power::CodeGenerator::initialize()
       cg->setEnableTLHPrefetching();
       }
 
+   static bool disableInlineStringCodingHasNegatives =
+      feGetEnv("TR_DisableInlineStringCodingHasNegatives") != NULL;
+   static bool disableInlineStringCodingCountPositives =
+      feGetEnv("TR_DisableInlineStringCodingCountPositives") != NULL;
    if (comp->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P8) &&
       comp->target().cpu.supportsFeature(OMR_FEATURE_PPC_HAS_VSX) &&
-      !TR::Compiler->om.canGenerateArraylets() &&
-      !TR::Compiler->om.isOffHeapAllocationEnabled())
+      !TR::Compiler->om.canGenerateArraylets())
       {
-      cg->setSupportsInlineStringCodingCountPositives();
+      if (!disableInlineStringCodingHasNegatives)
+         cg->setSupportsInlineStringCodingHasNegatives();
+      if (!disableInlineStringCodingCountPositives)
+         cg->setSupportsInlineStringCodingCountPositives();
       }
 
    //This env-var does 3 things:
