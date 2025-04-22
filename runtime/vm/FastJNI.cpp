@@ -150,8 +150,8 @@ found:
 							 * native is the wait implementation and reject it if so.
 							 */
 							if (J9_ARE_ANY_BITS_SET(currentThread->javaVM->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)
-							&& J9UTF8_LITERAL_EQUALS(methodName, methodNameLength, "waitImpl")
-							&& J9UTF8_LITERAL_EQUALS(methodSignature, methodSignatureLength, "(JI)V")
+							&& J9UTF8_LITERAL_EQUALS(methodNameData, methodNameLength, "waitImpl")
+							&& J9UTF8_LITERAL_EQUALS(methodSignatureData, methodSignatureLength, "(JI)V")
 							) {
 								goto done;
 							}
