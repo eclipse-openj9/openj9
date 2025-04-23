@@ -211,7 +211,8 @@ gcDumpQualifiedSize(J9PortLibrary* portLib, UDATA byteSize, const char* optionNa
 	/* Format output String */
 	paramSize = j9str_printf(buffer, 16, "%zu%s", size, qualifier);
 	paramSize = 15 - paramSize;
-	paramSize += strlen(optionDescription);
+	/* Handle NULL printed as "<NULL>". */
+	paramSize += (NULL == optionDescription) ? 6 : strlen(optionDescription);
 	paramSize -= strlen(optionName);
 	j9tty_printf(PORTLIB, "  %s%s %*s\n", optionName, buffer, paramSize, optionDescription);
 
