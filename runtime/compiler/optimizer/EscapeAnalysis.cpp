@@ -420,7 +420,11 @@ int32_t TR_EscapeAnalysis::perform()
 
          heapificationBlock->getExit()->insertBefore(TR::TreeTop::create(comp(), TR::Node::create(node, TR::Goto, 0, callBlock->getEntry())));
          tools.insertFakeEscapeForLoads(heapificationBlock, node, *nodeLookup->second.second);
-         traceMsg(comp(), "Created heapification block_%d\n", heapificationBlock->getNumber());
+
+         if (trace())
+            {
+            traceMsg(comp(), "Created heapification block_%d\n", heapificationBlock->getNumber());
+            }
 
          ((TR_EscapeAnalysis::PersistentData*)manager()->getOptData())->_peekableCalls->set(node->getGlobalIndex());
          _callsToProtect->erase(nodeLookup);
@@ -1492,7 +1496,7 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
    if (trace())
       {
       comp()->dumpMethodTrees("Trees after Escape Analysis");
-      traceMsg(comp(), "Ending Escape Analysis");
+      traceMsg(comp(), "Ending Escape Analysis\n");
       }
 
    return cost; // actual cost
@@ -2043,13 +2047,27 @@ void TR_EscapeAnalysis::checkDefsAndUses()
       }
 
    _vnTemp = new (trStackMemory()) TR_BitVector( optimizer()->getValueNumberInfo()->getNumberOfNodes(), trMemory(), stackAlloc, notGrowable);
-   _vnTemp2 = new (trStackMemory()) TR_BitVector(optimizer()->getValueNumberInfo()->getNumberOfNodes(), trMemory(), stackAlloc, notGrowable);
 
+   // Walk through all trees looking for stores of objects into fields or into
+   // array elements.  If an indirect store happens into some field or element
+   // of unknown provenance, the associated value numbers are recorded in
+   // _notOptimizableLocalObjectsValueNumbers and _notOptimizableLocalObjectsValueNumbers
+   // If an object is stored into an object that was stack allocated by a previous
+   // pass of Escape Analysis or it is stored into itself, and it could be a reference
+   // to a candidate for stack allocation, gather value numbers of uses of that
+   // definition.
+   //
+   // This loop will also check for calls to certain recognized methods.
+   //
    TR::TreeTop *tt = comp()->getStartTree();
    for (; tt; tt = tt->getNextTreeTop())
       {
       bool storeOfObjectIntoField = false;
       TR::Node *node = tt->getNode();
+
+      // Store might be beneath a check node or a compressedrefs node,
+      // so get the first child, if the node is not a store.
+      //
       if (!node->getOpCode().isStore())
          {
          if (node->getNumChildren() > 0)
@@ -2076,7 +2094,12 @@ void TR_EscapeAnalysis::checkDefsAndUses()
 
          if (node->getOpCode().isStoreIndirect() &&
              (baseObject->getFirstChild() == node->getSecondChild()))
+            {
+            // A reference to the object is being stored
+            // into one of its own fields or array elements
+            //
             storeOfObjectIntoField = true;
+            }
          else
             {
             TR::Node *baseChild = baseObject;
@@ -2087,11 +2110,22 @@ void TR_EscapeAnalysis::checkDefsAndUses()
 
             baseChild = resolveSniffedNode(baseChild);
 
+            // Look for stores of an object into a field or array element of an
+            // object that was stack allocated by a previous pass of Escape
+            // Analysis.
+            //
             if ((baseChild && (baseChild->getOpCodeValue() == TR::loadaddr) &&
                 baseChild->getSymbolReference()->getSymbol()->isAuto() &&
                 baseChild->getSymbolReference()->getSymbol()->isLocalObject())
                )
                {
+               // The base of the indirect store is an object that was previously
+               // stack allocated.  Check whether we might be able to trace
+               // further references to the object through subsequent loads.  If
+               // so, set storeOfObjectIntoField and storeIntoOtherLocalObject
+               // true.  We can't trace through an arraycopy operation or if the
+               // base of the indirect store is marked as cannotTrackLocalUses().
+               //
                baseChildVN = _valueNumberInfo->getValueNumber(baseChild);
                if (node->getOpCodeValue() == TR::arraycopy)
                   {
@@ -2127,6 +2161,9 @@ void TR_EscapeAnalysis::checkDefsAndUses()
                   _useDefInfo->getUseDef(defs, baseIndex);
                   if (!defs.IsZero())
                      {
+
+                     // Walk through defs for the base of the indirect store
+                     //
                      TR_UseDefInfo::BitVector::Cursor cursor(defs);
                      for (cursor.SetToFirstOne(); cursor.Valid(); cursor.SetToNextOne())
                         {
@@ -2141,6 +2178,23 @@ void TR_EscapeAnalysis::checkDefsAndUses()
                         TR::TreeTop *defTree = _useDefInfo->getTreeTop(defIndex);
                         TR::Node *defNode = defTree->getNode();
 
+                        // Object allocations are frequently stored into temporary
+                        // variables and subsequent dereferences often use those
+                        // local temporaries.
+                        //
+                        // This code is looking for a pattern like this, where the
+                        // base of the indirect store that led us here is the same
+                        // as that of the address that's being stored.  That means
+                        // the indirect store was a store into the field of a stack
+                        // allocated object.
+                        //
+                        // n100n astore #123 vn=456                         // defNode
+                        // n101n   loadaddr #124 <local-aggregate> vn=456   // defChild
+                        //   ...
+                        // n200n astorei <field>
+                        // n201n   aload #123 vn=456                        // baseChild
+                        // n202n
+                        //
                         if (defNode &&
                             (defNode->getOpCodeValue() == TR::astore) &&
                             (defNode->getNumChildren() > 0))
@@ -2186,8 +2240,15 @@ void TR_EscapeAnalysis::checkDefsAndUses()
             }
          }
 
+      // If this tree stored an object into a field or array element, for each
+      // candidate for stack allocation check whether the value number of the
+      // object that's being stored is one that's known to be associated with the
+      // candidate.  If it is, walk through all trees gathering the value numbers
+      // associated with uses of that definition, and tag the candidate with
+      // those value numbers via collectValueNumbersOfIndirectAccessesToObject.
+      //
       if (storeOfObjectIntoField)
-        {
+         {
             int32_t valueNumber = _valueNumberInfo->getValueNumber(node->getSecondChild());
             Candidate *candidate, *next;
             bool foundAccess = false;
@@ -2214,7 +2275,7 @@ void TR_EscapeAnalysis::checkDefsAndUses()
                      }
                   }
                }
-        }
+         }
 
 
       if (node->getOpCode().isCall() &&
@@ -2374,6 +2435,10 @@ bool TR_EscapeAnalysis::collectValueNumbersOfIndirectAccessesToObject(TR::Node *
 
    if (node->getOpCode().isLoadIndirect())
       {
+      // Test whether the symbol that appears on this indirect load is the same
+      // symbol that appeared on the indirect store that's under consideration
+      // or if they are aliases of one another.
+      //
       bool sameSymbol = false;
       if (node->getSymbolReference()->getReferenceNumber() == indirectStore->getSymbolReference()->getReferenceNumber())
          sameSymbol = true;
@@ -2400,6 +2465,10 @@ bool TR_EscapeAnalysis::collectValueNumbersOfIndirectAccessesToObject(TR::Node *
 
          if (candidate->_valueNumbers)
             {
+            // If a store of an object into one of its own fields or array elements
+            // was the indirect store that prompted this call to
+            // collectValueNumbersOfIndirectAccessesToObject, baseChildVN will be -1.
+            //
             if ((baseChildVN == -1) && usesValueNumber(candidate, baseVN))
                {
                candidate->_valueNumbers->add(_valueNumberInfo->getValueNumber(node));
@@ -2417,6 +2486,12 @@ bool TR_EscapeAnalysis::collectValueNumbersOfIndirectAccessesToObject(TR::Node *
                }
             else if (baseChildVN != -1)
                {
+               // If the value number of the base for this indirect load is the
+               // same as the value number of the indirect store that is under
+               // consideration, this might be loading the candidate, so add
+               // the value number of the load to the set of value numbers
+               // that are associated with the candidate.
+               //
                if (baseChildVN == baseVN)
                   {
                   candidate->_valueNumbers->add(_valueNumberInfo->getValueNumber(node));
@@ -2436,6 +2511,10 @@ bool TR_EscapeAnalysis::collectValueNumbersOfIndirectAccessesToObject(TR::Node *
                      storeBase = storeBase->getFirstChild();
 
 
+                  // If the base of the indirect load is an auto, use use/def info
+                  // to loop through all definitions that are stores and loop
+                  // through all uses of each of those definitions.
+                  //
                   if (base->getOpCode().hasSymbolReference() &&  base->getSymbolReference()->getSymbol()->isAuto())
                      {
                      if (_useDefInfo)
@@ -2448,11 +2527,30 @@ bool TR_EscapeAnalysis::collectValueNumbersOfIndirectAccessesToObject(TR::Node *
                         //_useDefInfo->getUseDef(storeBaseDefs, storeBaseIndex);
                         //traceMsg(comp(), "store base index %d store base %p base index %p base %p\n", storeBaseIndex, storeBase, baseIndex, base);
 
-                        _vnTemp->set(_valueNumberInfo->getValueNumber(storeBase));
-                        while (*_vnTemp2 != *_vnTemp)
+                        // Add the value number of the base of the indirect store that's
+                        // being considered to _vnTemp.  Iterate until _vnTemp no longer
+                        // changes.  At each iteration, loop over all definitions that
+                        // are stores whose value number is in _vnTemp.  For each such
+                        // store, loop over its uses, and add the value number of that
+                        // use to _vnTemp.
+                        //
+                        // This will add to _vnTemp all value numbers that might be
+                        // reached from the indirect store that's under consideration.
+                        //
+                        // Values will accumulate in _vnTemp over multiple calls to
+                        // collectValueNumbersOfIndirectAccessesToObject.
+                        //
+                        bool addedNewValueNumbers = false;
+                        int32_t storeBaseVN = _valueNumberInfo->getValueNumber(storeBase);
+                        if (!_vnTemp->isSet(storeBaseVN))
                            {
-                           _vnTemp->print(comp());
-                           *_vnTemp2 = *_vnTemp;
+                           _vnTemp->set(storeBaseVN);
+                           addedNewValueNumbers = true;
+                           }
+
+                        while (addedNewValueNumbers)
+                           {
+                           addedNewValueNumbers = false;
                            int32_t i;
                            for (i = _useDefInfo->getNumDefOnlyNodes()-1; i >= 0; --i)
                               {
@@ -2462,7 +2560,7 @@ bool TR_EscapeAnalysis::collectValueNumbersOfIndirectAccessesToObject(TR::Node *
 
                               if (defNode && defNode->getOpCode().isStore())
                                  {
-                                 if (_vnTemp->get(_valueNumberInfo->getValueNumber(defNode)))
+                                 if (_vnTemp->isSet(_valueNumberInfo->getValueNumber(defNode)))
                                     {
                                     TR_UseDefInfo::BitVector usesOfThisDef(comp()->allocator());
                                     _useDefInfo->getUsesFromDef(usesOfThisDef, defNode->getUseDefIndex()+_useDefInfo->getFirstDefIndex());
@@ -2476,7 +2574,11 @@ bool TR_EscapeAnalysis::collectValueNumbersOfIndirectAccessesToObject(TR::Node *
                                           int32_t useNodeVN = _valueNumberInfo->getValueNumber(useNode);
                                           //traceMsg(comp(), "use node %p vn %d\n", useNode, useNodeVN);
 
-                                          _vnTemp->set(useNodeVN);
+                                          if (!_vnTemp->isSet(useNodeVN))
+                                             {
+                                             _vnTemp->set(useNodeVN);
+                                             addedNewValueNumbers = true;
+                                             }
                                           }
                                        }
                                     }
@@ -2484,6 +2586,11 @@ bool TR_EscapeAnalysis::collectValueNumbersOfIndirectAccessesToObject(TR::Node *
                               }
                            }
 
+                        // Loop over the definitions for the base of the indirect load.
+                        // If value number for a definition is found in _vnTemp, add
+                        // that value number to the set of value numbers associated
+                        // with the candidate and stop iterating over the definitions.
+                        //
                         TR_UseDefInfo::BitVector::Cursor cursor(baseDefs);
                         for (cursor.SetToFirstOne(); cursor.Valid(); cursor.SetToNextOne())
                            {
@@ -2493,7 +2600,7 @@ bool TR_EscapeAnalysis::collectValueNumbersOfIndirectAccessesToObject(TR::Node *
                               continue;
 
                            TR::Node *defNode = _useDefInfo->getNode(defIndex);
-                           if (_vnTemp->get(_valueNumberInfo->getValueNumber(defNode)))
+                           if (_vnTemp->isSet(_valueNumberInfo->getValueNumber(defNode)))
                               {
                               candidate->_valueNumbers->add(_valueNumberInfo->getValueNumber(node));
                               break;
@@ -2511,6 +2618,8 @@ bool TR_EscapeAnalysis::collectValueNumbersOfIndirectAccessesToObject(TR::Node *
       }
 
 
+   // Recursively examine the children of the current node
+   //
    int32_t i;
    for (i=0;i<node->getNumChildren(); i++)
       {
@@ -6454,7 +6563,7 @@ bool TR_EscapeAnalysis::fixupFieldAccessForNonContiguousAllocation(TR::Node *nod
             newTree->join(_curTree);
 
             if (trace())
-               traceMsg(comp(), "Preserve old node [%p] for store to non-contiguous immutable object that escapes in cold block; create new tree [%p] for direct store\n", node, newTree);
+               traceMsg(comp(), "Preserve old node [%p] for store to non-contiguous immutable candidate [%p] that escapes in cold block; create new tree for for direct store [%p]\n", node, candidate->_node, newStore);
             }
          else
             {
@@ -6482,30 +6591,30 @@ bool TR_EscapeAnalysis::fixupFieldAccessForNonContiguousAllocation(TR::Node *nod
             }
          }
       if (trace())
-         traceMsg(comp(), "Change node [%p] into a direct load or store of #%d (%d bytes) field %d cand %p\n", node, autoSymRef->getReferenceNumber(), autoSymRef->getSymbol()->getSize(), i, candidate);
+         traceMsg(comp(), "Change node [%p] into a direct load or store of #%d (%d bytes) field %d cand %p\n", node, autoSymRef->getReferenceNumber(), autoSymRef->getSymbol()->getSize(), i, candidate->_node);
 
       if (parent)
          {
          if (parent->getOpCode().isNullCheck())
             TR::Node::recreate(parent, TR::treetop);
          else if (parent->getOpCode().isSpineCheck() && (parent->getFirstChild() == node))
-       {
+            {
             TR::TreeTop *prev = _curTree->getPrevTreeTop();
 
             int32_t i = 1;
             while (i < parent->getNumChildren())
-          {
+               {
                TR::TreeTop *tt = TR::TreeTop::create(comp(), TR::Node::create(TR::treetop, 1, parent->getChild(i)));
                parent->getChild(i)->recursivelyDecReferenceCount();
                prev->join(tt);
                tt->join(_curTree);
                prev = tt;
                i++;
-          }
+               }
 
             TR::Node::recreate(parent, TR::treetop);
             parent->setNumChildren(1);
-       }
+            }
          else if (parent->getOpCodeValue() == TR::ArrayStoreCHK)
             {
             TR::Node::recreate(parent, TR::treetop);
@@ -8985,7 +9094,7 @@ TR_FlowSensitiveEscapeAnalysis::TR_FlowSensitiveEscapeAnalysis(TR::Compilation *
                      int32_t succBlockNum = succFlushCandidate->getBlockNum();
 
                      //if (trace())
-                     //   traceMsg(comp, "succCandidate %p succCandidate num %d succCandidate Flush reqd %d succBlockNum %d\n", succCandidate, succCandidate->_index, succCandidate->_flushRequired, succBlockNum);
+                     //   traceMsg(comp, "succCandidate %p succCandidate num %d succCandidate Flush reqd %d succBlockNum %d\n", succCandidate->_node, succCandidate->_index, succCandidate->_flushRequired, succBlockNum);
 
                      if ((succBlockNum == nextSucc) &&
                          succCandidate->_flushRequired)
@@ -9003,7 +9112,7 @@ TR_FlowSensitiveEscapeAnalysis::TR_FlowSensitiveEscapeAnalysis(TR::Compilation *
                            }
 
                         //if (trace())
-                        //    traceMsg(comp, "succ candidate %p nextAllocCanReach %d\n", succCandidate, nextAllocCanReach);
+                        //    traceMsg(comp, "succ candidate %p nextAllocCanReach %d\n", succCandidate->_node, nextAllocCanReach);
 
                         if (nextAllocCanReach)
                            {
@@ -9021,7 +9130,7 @@ TR_FlowSensitiveEscapeAnalysis::TR_FlowSensitiveEscapeAnalysis(TR::Compilation *
                   }
 
                //if (trace())
-               //   traceMsg(comp, "succCandidate %p _blocksWithSyncs bit %d\n", succCandidate, _blocksWithSyncs->get(nextSucc));
+               //   traceMsg(comp, "succCandidate %p _blocksWithSyncs bit %d\n", succCandidate->_node, _blocksWithSyncs->get(nextSucc));
                TR::TreeTop *tt = _syncNodeTTForBlock[nextSucc];
                // If we have a sync node where the flush is not already optimally placed or we have a successor flush candidate
                if ((_blocksWithSyncs->get(nextSucc) && flushCandidate->getFlush()->getNode() != tt->getPrevTreeTop()->getNode()) ||
@@ -9080,7 +9189,7 @@ TR_FlowSensitiveEscapeAnalysis::TR_FlowSensitiveEscapeAnalysis(TR::Compilation *
                      }
                   //if (trace())
                   //   {
-                  //   traceMsg(comp, "0reaching candidate %p index %d does not need Flush\n", candidate, candidate->_index);
+                  //   traceMsg(comp, "0reaching candidate %p index %d does not need Flush\n", candidate->_node, candidate->_index);
                   //   }
 
                   if (trace())
@@ -9113,7 +9222,7 @@ TR_FlowSensitiveEscapeAnalysis::TR_FlowSensitiveEscapeAnalysis(TR::Compilation *
          if (trace())
             {
             traceMsg(comp, "Processing flush edge from %d to %d\n", pair->getEdge()->getFrom()->getNumber(), pair->getEdge()->getTo()->getNumber());
-            traceMsg(comp, "Processing flush alloc %p vs candidate %p\n", pair->getAllocation(), candidate);
+            traceMsg(comp, "Processing flush alloc %p vs candidate %p\n", pair->getAllocation(), candidate->_node);
             }
 
          if (pair->getAllocation() == candidate)
@@ -9842,7 +9951,7 @@ bool TR_LocalFlushElimination::examineNode(TR::Node *node, TR::TreeTop *tt, TR::
 
                   //if (trace())
                   //   {
-                  //   traceMsg(comp(), "1reaching candidate %p index %d does not need Flush\n", reachingCandidate, reachingCandidate->_index);
+                  //   traceMsg(comp(), "1reaching candidate %p index %d does not need Flush\n", reachingCandidate->_node, reachingCandidate->_index);
                   //   }
 
                   if (!nodeHasSync)
