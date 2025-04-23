@@ -124,7 +124,7 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, UDATA bytecode
 
 		/* If there is a valid method at this frame, fill in the information for it in the StackTraceElement */
 		if (NULL != romMethod) {
-			J9UTF8 const * utfClassName = J9ROMCLASS_CLASSNAME(romClass);
+			J9UTF8 const *utfClassName = J9ROMCLASS_CLASSNAME(romClass);
 			j9object_t string = NULL;
 
 			PUSH_OBJECT_IN_SPECIAL_FRAME(vmThread, element);
@@ -135,7 +135,7 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, UDATA bytecode
 			 */
 			if (NULL != classLoader) {
 				if (NULL == ramClass) {
-					ramClass = vmFuncs->peekClassHashTable(vmThread, classLoader, J9UTF8_DATA(utfClassName), J9UTF8_LENGTH(utfClassName));
+					ramClass = vmFuncs->peekClassHashTable(vmThread, classLoader, (U_8 *)J9UTF8_DATA(utfClassName), J9UTF8_LENGTH(utfClassName));
 				}
 				if (NULL != ramClass) {
 					/* ramClass can never be an array here as arrays can't define methods so we don't need to
@@ -181,7 +181,7 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, UDATA bytecode
 				} else {
 					UDATA length = packageNameLength(romClass);
 					omrthread_monitor_enter(vm->classLoaderModuleAndLocationMutex);
-					module = vmFuncs->findModuleForPackage(vmThread, classLoader, J9UTF8_DATA(utfClassName), (U_32) length);
+					module = vmFuncs->findModuleForPackage(vmThread, classLoader, (U_8 *)J9UTF8_DATA(utfClassName), (U_32)length);
 					omrthread_monitor_exit(vm->classLoaderModuleAndLocationMutex);
 				}
 				if (NULL != module) {
@@ -209,7 +209,7 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, UDATA bytecode
 				if (J9ROMCLASS_IS_ANON_OR_HIDDEN(romClass)) {
 					flags |= J9_STR_ANON_CLASS_NAME;
 				}
-				string = mmfns->j9gc_createJavaLangString(vmThread, J9UTF8_DATA(utfClassName), J9UTF8_LENGTH(utfClassName), flags);
+				string = mmfns->j9gc_createJavaLangString(vmThread, (U_8 *)J9UTF8_DATA(utfClassName), J9UTF8_LENGTH(utfClassName), flags);
 			}
 			element = PEEK_OBJECT_IN_SPECIAL_FRAME(vmThread, 0);
 			J9VMJAVALANGSTACKTRACEELEMENT_SET_DECLARINGCLASS(vmThread, element, string);

@@ -180,23 +180,22 @@ typedef struct J9ClassLoaderWalkState {
 
 #endif /* JAVA_SPEC_VERSION >= 11 */
 
-
-/* UTF8 access macros - all access to J9UTF8 fields should be done through these macros */
-
-#define J9UTF8_LENGTH(j9UTF8Address) (((struct J9UTF8 *)(j9UTF8Address))->length)
-#define J9UTF8_SET_LENGTH(j9UTF8Address, len) (((struct J9UTF8 *)(j9UTF8Address))->length = (len))
-#define J9UTF8_DATA(j9UTF8Address) (((struct J9UTF8 *)(j9UTF8Address))->data)
-#define J9UTF8_TOTAL_SIZE(j9UTF8Address) (sizeof(J9UTF8) + J9UTF8_LENGTH(j9UTF8Address))
-#define J9UTF8_DATA_EQUALS(data1, length1, data2, length2) ((((length1) == (length2)) && (memcmp((data1), (data2), (length1)) == 0)))
-#define J9UTF8_EQUALS(utf1, utf2) (((utf1) == (utf2)) || (J9UTF8_DATA_EQUALS(J9UTF8_DATA(utf1), J9UTF8_LENGTH(utf1), J9UTF8_DATA(utf2), J9UTF8_LENGTH(utf2))))
-#define J9UTF8_LITERAL_EQUALS(data1, length1, cString) (J9UTF8_DATA_EQUALS((data1), (length1), (cString), sizeof(cString) - 1))
-#define J9UTF8_LITERAL_EQUALS_UTF8(utf8, cString) (J9UTF8_LITERAL_EQUALS(J9UTF8_DATA((utf8)), J9UTF8_LENGTH((utf8)), cString))
-
 /*
  * Equivalent to ((int)strlen(string_literal)) when given a literal string.
  * E.g.: LITERAL_STRLEN("lib") == 3
  */
 #define LITERAL_STRLEN(string_literal) ((IDATA)(sizeof(string_literal) - 1))
+
+/* UTF8 access macros - all access to J9UTF8 fields should be done through these macros. */
+
+#define J9UTF8_LENGTH(j9UTF8Address) ((j9UTF8Address)->length)
+#define J9UTF8_SET_LENGTH(j9UTF8Address, len) ((j9UTF8Address)->length = (len))
+#define J9UTF8_DATA(j9UTF8Address) ((j9UTF8Address)->data)
+#define J9UTF8_TOTAL_SIZE(j9UTF8Address) (sizeof(J9UTF8) + J9UTF8_LENGTH(j9UTF8Address))
+#define J9UTF8_DATA_EQUALS(data1, length1, data2, length2) (((length1) == (length2)) && (0 == memcmp((data1), (data2), (length1))))
+#define J9UTF8_EQUALS(utf1, utf2) (((utf1) == (utf2)) || J9UTF8_DATA_EQUALS(J9UTF8_DATA(utf1), J9UTF8_LENGTH(utf1), J9UTF8_DATA(utf2), J9UTF8_LENGTH(utf2)))
+#define J9UTF8_LITERAL_EQUALS(data1, length1, cString) J9UTF8_DATA_EQUALS((data1), (length1), (cString), LITERAL_STRLEN(cString))
+#define J9UTF8_LITERAL_EQUALS_UTF8(utf8, cString) J9UTF8_LITERAL_EQUALS(J9UTF8_DATA((utf8)), J9UTF8_LENGTH((utf8)), cString)
 
 #define ROUND_UP_TO(granularity, number) ((((number) % (granularity)) ? ((number) + (granularity) - ((number) % (granularity))) : (number)))
 #define ROUND_DOWN_TO(granularity, number) ((number) - ((number) % (granularity)))

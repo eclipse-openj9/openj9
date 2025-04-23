@@ -249,13 +249,13 @@ IDATA storeAndFindTest(J9JavaVM* vm)
 
 	/* Set the method name and signature */
 	methodNameAndSigMem = (BlockPtr)((UDATA)romMethod1 + sizeof(J9ROMMethod));
-	J9UTF8_SET_LENGTH(methodNameAndSigMem, (U_16)strlen(TEST_METHOD_NAME));
-	j9str_printf((BlockPtr) (J9UTF8_DATA(methodNameAndSigMem)), sizeof(TEST_METHOD_NAME), "%s", TEST_METHOD_NAME);
-	NNSRP_SET(romMethod1->nameAndSignature.name, (J9UTF8*)methodNameAndSigMem);
+	J9UTF8_SET_LENGTH((J9UTF8 *)methodNameAndSigMem, (U_16)strlen(TEST_METHOD_NAME));
+	j9str_printf((BlockPtr)J9UTF8_DATA((J9UTF8 *)methodNameAndSigMem), sizeof(TEST_METHOD_NAME), "%s", TEST_METHOD_NAME);
+	NNSRP_SET(romMethod1->nameAndSignature.name, (J9UTF8 *)methodNameAndSigMem);
 
-	J9UTF8_SET_LENGTH((methodNameAndSigMem + METHOD_NAME_SIZE), (U_16)strlen(TEST_METHOD_SIG));
-	j9str_printf((BlockPtr) (J9UTF8_DATA(methodNameAndSigMem + METHOD_NAME_SIZE)), sizeof(TEST_METHOD_SIG), "%s",TEST_METHOD_SIG);
-	NNSRP_SET(romMethod1->nameAndSignature.signature, (J9UTF8*)(methodNameAndSigMem + METHOD_NAME_SIZE));
+	J9UTF8_SET_LENGTH((J9UTF8 *)(methodNameAndSigMem + METHOD_NAME_SIZE), (U_16)strlen(TEST_METHOD_SIG));
+	j9str_printf((BlockPtr)J9UTF8_DATA((J9UTF8 *)(methodNameAndSigMem + METHOD_NAME_SIZE)), sizeof(TEST_METHOD_SIG), "%s", TEST_METHOD_SIG);
+	NNSRP_SET(romMethod1->nameAndSignature.signature, (J9UTF8 *)(methodNameAndSigMem + METHOD_NAME_SIZE));
 
 	/* PHASE 1
   	 * Store the "compiled" methods in the cache

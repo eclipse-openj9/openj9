@@ -111,12 +111,12 @@ getJ9RtvUTF8StringfromCP(J9UTF8Ref* buf, void* constantPool, UDATA index)
  * @param classIndex - class index in the classNameList array
  */
 static void
-getJ9RtvStringfromClassNameList(J9UTF8Ref* buf, void* classNameListPtr, void* romClass, UDATA classIndex)
+getJ9RtvStringfromClassNameList(J9UTF8Ref *buf, void *classNameListPtr, void *romClass, UDATA classIndex)
 {
-	struct J9UTF8** classNameList = (struct J9UTF8**)classNameListPtr;
-	U_32* offset = (U_32*)classNameList[BCV_INDEX_FROM_TYPE(classIndex)];
+	J9UTF8 **classNameList = (J9UTF8 **)classNameListPtr;
+	U_32 *offset = (U_32 *)classNameList[BCV_INDEX_FROM_TYPE(classIndex)];
 
-	buf->length = J9UTF8_LENGTH(offset + 1);
+	buf->length = J9UTF8_LENGTH((J9UTF8 *)(offset + 1));
 
 	/* addClassName() in vrfyhelp.c:
 	 * Note: offset[0] is set up in addClassName() to determine where to obtain the class name (classNameSegment or romClass).
@@ -125,10 +125,10 @@ getJ9RtvStringfromClassNameList(J9UTF8Ref* buf, void* classNameListPtr, void* ro
 	 */
 	if (0 == offset[0]) {
 		/* class name exists in the classNameSegment */
-		buf->bytes = (U_8*)J9UTF8_DATA(offset + 1);
+		buf->bytes = J9UTF8_DATA((J9UTF8 *)(offset + 1));
 	} else {
 		/* class name exists in the ROM class */
-		buf->bytes = (U_8*)((UDATA) offset[0] + (UDATA) romClass);
+		buf->bytes = (U_8 *)((UDATA)offset[0] + (UDATA)romClass);
 	}
 
 	buf->arity = (U_8)BCV_ARITY_FROM_TYPE(classIndex);

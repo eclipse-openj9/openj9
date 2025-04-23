@@ -681,15 +681,20 @@ copyStack (J9BranchTargetStack *source, J9BranchTargetStack *destination)
 static IDATA
 mergeObjectTypes (J9BytecodeVerificationData *verifyData, UDATA sourceType, UDATA * targetTypePointer)
 {
-	J9ROMClass * romClass = verifyData->romClass;
+	J9ROMClass *romClass = verifyData->romClass;
 	UDATA targetType = *targetTypePointer;
-	UDATA sourceIndex, targetIndex;
-	J9UTF8 *name;
-	UDATA classArity, targetArity, classIndex;
+	UDATA sourceIndex = 0;
+	UDATA targetIndex = 0;
+	J9UTF8 *name = NULL;
+	UDATA classArity = 0;
+	UDATA targetArity = 0;
+	UDATA classIndex = 0;
 	IDATA rc = BCV_SUCCESS;
-	U_8 *sourceName, *targetName;
-	UDATA sourceLength, targetLength;
-	U_32 *offset;
+	U_8 *sourceName = NULL;
+	U_8 *targetName = NULL;
+	UDATA sourceLength = 0;
+	UDATA targetLength = 0;
+	U_32 *offset = NULL;
 	IDATA reasonCode = 0;
 
 	/* assume that sourceType and targetType are not equal */
@@ -697,8 +702,8 @@ mergeObjectTypes (J9BytecodeVerificationData *verifyData, UDATA sourceType, UDAT
 	/* if target is more general than source, then its fine */
 	rc =  isClassCompatible( verifyData, sourceType, targetType, &reasonCode ) ;
 
-	if (TRUE == rc) {
-		return BCV_SUCCESS;	/* no merge required */
+	if (rc) {
+		return BCV_SUCCESS; /* no merge required */
 	} else { /* FALSE == rc */
 		/* VM error, no need to continue, return appropriate rc */
 		if (BCV_ERR_INTERNAL_ERROR == reasonCode) {
@@ -776,22 +781,20 @@ mergeObjectTypes (J9BytecodeVerificationData *verifyData, UDATA sourceType, UDAT
 		sourceIndex = (sourceType & BCV_CLASS_INDEX_MASK) >> BCV_CLASS_INDEX_SHIFT;
 		targetIndex = (targetType & BCV_CLASS_INDEX_MASK) >> BCV_CLASS_INDEX_SHIFT;
 
-		offset = (U_32 *) verifyData->classNameList[sourceIndex];
-		sourceLength = (UDATA) J9UTF8_LENGTH(offset + 1);
+		offset = (U_32 *)verifyData->classNameList[sourceIndex];
+		sourceLength = J9UTF8_LENGTH((J9UTF8 *)(offset + 1));
 
-		if (offset[0] == 0) {
-			sourceName = J9UTF8_DATA(offset + 1);
-
+		if (0 == offset[0]) {
+			sourceName = J9UTF8_DATA((J9UTF8 *)(offset + 1));
 		} else {
 			sourceName = (U_8 *) ((UDATA) offset[0] + (UDATA) romClass);
 		}
 
 		offset = (U_32 *) verifyData->classNameList[targetIndex];
-		targetLength = (UDATA) J9UTF8_LENGTH(offset + 1);
+		targetLength = J9UTF8_LENGTH((J9UTF8 *)(offset + 1));
 
-		if (offset[0] == 0) {
-			targetName = J9UTF8_DATA(offset + 1);
-
+		if (0 == offset[0]) {
+			targetName = J9UTF8_DATA((J9UTF8 *)(offset + 1));
 		} else {
 			targetName = (U_8 *) ((UDATA) offset[0] + (UDATA) romClass);
 		}
