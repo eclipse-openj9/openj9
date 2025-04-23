@@ -580,20 +580,16 @@ J9NLS_JCL_FIPS_MODE_SET_TO_INVALID_VALUE.system_action=The JVM will fail to star
 J9NLS_JCL_FIPS_MODE_SET_TO_INVALID_VALUE.user_response=Check the fips mode value is consistent with the FIPS 140-3 preview being enabled / disabled.
 # END NON-TRANSLATABLE
 
-# Note: "java.compiler" is a system property name and should not be translated.
-# Note: "-Xjit" is a command line parameter and should not be translated.
-J9NLS_JCL_JAVA_COMPILER_WARNING_XJIT=java.compiler \u30b7\u30b9\u30c6\u30e0\u30fb\u30d7\u30ed\u30d1\u30c6\u30a3\u30fc\u306e\u8a2d\u5b9a\u306f\u3001\u30d0\u30fc\u30b8\u30e7\u30f3 21 \u4ee5\u964d\u3067\u306f\u5ec3\u6b62\u3055\u308c\u307e\u3057\u305f\u3002\u4ee3\u308f\u308a\u306b -Xjit \u3092\u4f7f\u7528\u3057\u3066\u304f\u3060\u3055\u3044\u3002
+J9NLS_JCL_JAVA_COMPILER_WARNING_XJIT=
 # START NON-TRANSLATABLE
-J9NLS_JCL_JAVA_COMPILER_WARNING_XJIT.explanation=The java.compiler system property can no longer be used to enable or disable the JIT.
-J9NLS_JCL_JAVA_COMPILER_WARNING_XJIT.system_action=Setting the java.compiler system property is ignored.
-J9NLS_JCL_JAVA_COMPILER_WARNING_XJIT.user_response=Use the -Xjit option to enable the JIT.
+J9NLS_JCL_JAVA_COMPILER_WARNING_XJIT.explanation=NOTAG
+J9NLS_JCL_JAVA_COMPILER_WARNING_XJIT.system_action=
+J9NLS_JCL_JAVA_COMPILER_WARNING_XJIT.user_response=
 # END NON-TRANSLATABLE
 
-# Note: "java.compiler" is a system property name and should not be translated.
-# Note: "-Xint" is a command line parameter and should not be translated.
-J9NLS_JCL_JAVA_COMPILER_WARNING_XINT=java.compiler \u30b7\u30b9\u30c6\u30e0\u30fb\u30d7\u30ed\u30d1\u30c6\u30a3\u30fc\u306e\u8a2d\u5b9a\u306f\u3001\u30d0\u30fc\u30b8\u30e7\u30f3 21 \u4ee5\u964d\u3067\u306f\u5ec3\u6b62\u3055\u308c\u3066\u3044\u307e\u3059\u3002\u4ee3\u308f\u308a\u306b -Xint \u3092\u4f7f\u7528\u3057\u3066\u304f\u3060\u3055\u3044\u3002
+J9NLS_JCL_JAVA_COMPILER_WARNING_XINT=
 # START NON-TRANSLATABLE
-J9NLS_JCL_JAVA_COMPILER_WARNING_XINT.explanation=The java.compiler system property can no longer be used to enable or disable the JIT.
-J9NLS_JCL_JAVA_COMPILER_WARNING_XINT.system_action=Setting the java.compiler system property is ignored.
-J9NLS_JCL_JAVA_COMPILER_WARNING_XINT.user_response=Use the -Xint option to disable the JIT.
+J9NLS_JCL_JAVA_COMPILER_WARNING_XINT.explanation=NOTAG
+J9NLS_JCL_JAVA_COMPILER_WARNING_XINT.system_action=
+J9NLS_JCL_JAVA_COMPILER_WARNING_XINT.user_response=
 # END NON-TRANSLATABLE

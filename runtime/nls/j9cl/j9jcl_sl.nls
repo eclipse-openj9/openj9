@@ -580,20 +580,16 @@ J9NLS_JCL_FIPS_MODE_SET_TO_INVALID_VALUE.system_action=The JVM will fail to star
 J9NLS_JCL_FIPS_MODE_SET_TO_INVALID_VALUE.user_response=Check the fips mode value is consistent with the FIPS 140-3 preview being enabled / disabled.
 # END NON-TRANSLATABLE
 
-# Note: "java.compiler" is a system property name and should not be translated.
-# Note: "-Xjit" is a command line parameter and should not be translated.
-J9NLS_JCL_JAVA_COMPILER_WARNING_XJIT=Nastavitev sistemske lastnosti java.compiler je zastarela v razli\u010dici 21 in novej\u0161i, namesto tega uporabite -Xjit.
+J9NLS_JCL_JAVA_COMPILER_WARNING_XJIT=
 # START NON-TRANSLATABLE
-J9NLS_JCL_JAVA_COMPILER_WARNING_XJIT.explanation=The java.compiler system property can no longer be used to enable or disable the JIT.
-J9NLS_JCL_JAVA_COMPILER_WARNING_XJIT.system_action=Setting the java.compiler system property is ignored.
-J9NLS_JCL_JAVA_COMPILER_WARNING_XJIT.user_response=Use the -Xjit option to enable the JIT.
+J9NLS_JCL_JAVA_COMPILER_WARNING_XJIT.explanation=NOTAG
+J9NLS_JCL_JAVA_COMPILER_WARNING_XJIT.system_action=
+J9NLS_JCL_JAVA_COMPILER_WARNING_XJIT.user_response=
 # END NON-TRANSLATABLE
 
-# Note: "java.compiler" is a system property name and should not be translated.
-# Note: "-Xint" is a command line parameter and should not be translated.
-J9NLS_JCL_JAVA_COMPILER_WARNING_XINT=Nastavitev sistemske lastnosti java.compiler je zastarela v razli\u010dici 21 in novej\u0161i, namesto tega uporabite -Xint.
+J9NLS_JCL_JAVA_COMPILER_WARNING_XINT=
 # START NON-TRANSLATABLE
-J9NLS_JCL_JAVA_COMPILER_WARNING_XINT.explanation=The java.compiler system property can no longer be used to enable or disable the JIT.
-J9NLS_JCL_JAVA_COMPILER_WARNING_XINT.system_action=Setting the java.compiler system property is ignored.
-J9NLS_JCL_JAVA_COMPILER_WARNING_XINT.user_response=Use the -Xint option to disable the JIT.
+J9NLS_JCL_JAVA_COMPILER_WARNING_XINT.explanation=NOTAG
+J9NLS_JCL_JAVA_COMPILER_WARNING_XINT.system_action=
+J9NLS_JCL_JAVA_COMPILER_WARNING_XINT.user_response=
 # END NON-TRANSLATABLE

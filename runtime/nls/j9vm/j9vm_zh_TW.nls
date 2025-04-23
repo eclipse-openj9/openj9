@@ -2430,3 +2430,21 @@ J9NLS_VM_OPENJ9_JFR_METADATA_FILE_NOT_LOAD.explanation=Couldn't find or load JFR
 J9NLS_VM_OPENJ9_JFR_METADATA_FILE_NOT_LOAD.system_action=The JVM will not generate a JFR file.
 J9NLS_VM_OPENJ9_JFR_METADATA_FILE_NOT_LOAD.user_response=Contact your service representative.
 # END NON-TRANSLATABLE
+
+# Note: "java.compiler" is a system property name and should not be translated.
+# Note: "-Xjit" is a command line parameter and should not be translated.
+J9NLS_VM_JAVA_COMPILER_WARNING_XJIT=\u8a2d\u5b9a java.compiler \u7cfb\u7d71\u5c6c\u6027\u5728\u7248\u672c 21 \u53ca\u66f4\u65b0\u7248\u672c\u4e2d\u5df2\u7d93\u904e\u6642\uff0c\u8acb\u4f7f\u7528 -Xjit \u4f86\u53d6\u4ee3\u3002
+# START NON-TRANSLATABLE
+J9NLS_VM_JAVA_COMPILER_WARNING_XJIT.explanation=The java.compiler system property can no longer be used to enable or disable the JIT.
+J9NLS_VM_JAVA_COMPILER_WARNING_XJIT.system_action=Setting the java.compiler system property is ignored.
+J9NLS_VM_JAVA_COMPILER_WARNING_XJIT.user_response=Use the -Xjit option to enable the JIT.
+# END NON-TRANSLATABLE
+
+# Note: "java.compiler" is a system property name and should not be translated.
+# Note: "-Xint" is a command line parameter and should not be translated.
+J9NLS_VM_JAVA_COMPILER_WARNING_XINT=\u8a2d\u5b9a java.compiler \u7cfb\u7d71\u5c6c\u6027\u5728\u7248\u672c 21 \u53ca\u66f4\u65b0\u7248\u672c\u4e2d\u5df2\u7d93\u904e\u6642\uff0c\u8acb\u6539\u7528 -Xint\u3002
+# START NON-TRANSLATABLE
+J9NLS_VM_JAVA_COMPILER_WARNING_XINT.explanation=The java.compiler system property can no longer be used to enable or disable the JIT.
+J9NLS_VM_JAVA_COMPILER_WARNING_XINT.system_action=Setting the java.compiler system property is ignored.
+J9NLS_VM_JAVA_COMPILER_WARNING_XINT.user_response=Use the -Xint option to disable the JIT.
+# END NON-TRANSLATABLE

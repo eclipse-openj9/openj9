@@ -580,20 +580,16 @@ J9NLS_JCL_FIPS_MODE_SET_TO_INVALID_VALUE.system_action=The JVM will fail to star
 J9NLS_JCL_FIPS_MODE_SET_TO_INVALID_VALUE.user_response=Check the fips mode value is consistent with the FIPS 140-3 preview being enabled / disabled.
 # END NON-TRANSLATABLE
 
-# Note: "java.compiler" is a system property name and should not be translated.
-# Note: "-Xjit" is a command line parameter and should not be translated.
-J9NLS_JCL_JAVA_COMPILER_WARNING_XJIT=\u8bbe\u7f6e java.compiler \u7cfb\u7edf\u5c5e\u6027\u5728 V21 \u548c\u66f4\u9ad8\u7248\u672c\u4e2d\u5df2\u8fc7\u65f6\uff0c\u8bf7\u6539\u4e3a\u4f7f\u7528 -Xjit\u3002
+J9NLS_JCL_JAVA_COMPILER_WARNING_XJIT=
 # START NON-TRANSLATABLE
-J9NLS_JCL_JAVA_COMPILER_WARNING_XJIT.explanation=The java.compiler system property can no longer be used to enable or disable the JIT.
-J9NLS_JCL_JAVA_COMPILER_WARNING_XJIT.system_action=Setting the java.compiler system property is ignored.
-J9NLS_JCL_JAVA_COMPILER_WARNING_XJIT.user_response=Use the -Xjit option to enable the JIT.
+J9NLS_JCL_JAVA_COMPILER_WARNING_XJIT.explanation=NOTAG
+J9NLS_JCL_JAVA_COMPILER_WARNING_XJIT.system_action=
+J9NLS_JCL_JAVA_COMPILER_WARNING_XJIT.user_response=
 # END NON-TRANSLATABLE
 
-# Note: "java.compiler" is a system property name and should not be translated.
-# Note: "-Xint" is a command line parameter and should not be translated.
-J9NLS_JCL_JAVA_COMPILER_WARNING_XINT=\u8bbe\u7f6e java.compiler \u7cfb\u7edf\u5c5e\u6027\u5728 V21 \u548c\u66f4\u9ad8\u7248\u672c\u4e2d\u5df2\u8fc7\u65f6\uff0c\u8bf7\u6539\u4e3a\u4f7f\u7528 -Xint\u3002
+J9NLS_JCL_JAVA_COMPILER_WARNING_XINT=
 # START NON-TRANSLATABLE
-J9NLS_JCL_JAVA_COMPILER_WARNING_XINT.explanation=The java.compiler system property can no longer be used to enable or disable the JIT.
-J9NLS_JCL_JAVA_COMPILER_WARNING_XINT.system_action=Setting the java.compiler system property is ignored.
-J9NLS_JCL_JAVA_COMPILER_WARNING_XINT.user_response=Use the -Xint option to disable the JIT.
+J9NLS_JCL_JAVA_COMPILER_WARNING_XINT.explanation=NOTAG
+J9NLS_JCL_JAVA_COMPILER_WARNING_XINT.system_action=
+J9NLS_JCL_JAVA_COMPILER_WARNING_XINT.user_response=
 # END NON-TRANSLATABLE
