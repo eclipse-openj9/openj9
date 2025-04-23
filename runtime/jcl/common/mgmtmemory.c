@@ -32,7 +32,7 @@ static UDATA getIndexFromGCID(J9JavaLangManagementData *mgmt, UDATA id);
 jobject JNICALL
 Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getHeapMemoryUsageImpl(JNIEnv *env, jobject beanInstance, jclass memoryUsage, jobject memUsageConstructor)
 {
-	J9JavaVM *javaVM = ((J9VMThread *)env)->javaVM;
+	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
 	jlong used = 0;
 	jlong committed = 0;
 	jmethodID ctor = NULL;
@@ -51,7 +51,7 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getHeapMemoryUsageIm
 jobject JNICALL
 Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getNonHeapMemoryUsageImpl(JNIEnv *env, jobject beanInstance, jclass memoryUsage, jobject memUsageConstructor)
 {
-	J9JavaVM *javaVM = ((J9VMThread *)env)->javaVM;
+	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
 	J9JavaLangManagementData *mgmt = javaVM->managementData;
 	jlong used = 0; 
 	jlong committed = 0;
@@ -76,74 +76,25 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getNonHeapMemoryUsag
 	omrthread_monitor_enter(javaVM->classTableMutex);
 	classLoader = javaVM->internalVMFunctions->allClassLoadersStartDo(&walkState, javaVM, 0);
 	while (NULL != classLoader) {
-		J9RAMClassFreeLists *sub4gBlockPtr = &classLoader->sub4gBlock;
-		J9RAMClassFreeLists *frequentlyAccessedBlockPtr = &classLoader->frequentlyAccessedBlock;
-		J9RAMClassFreeLists *inFrequentlyAccessedBlockPtr = &classLoader->inFrequentlyAccessedBlock;
-		UDATA *ramClassSub4gUDATABlockFreeListPtr = sub4gBlockPtr->ramClassUDATABlockFreeList;
-		UDATA *ramClassFreqUDATABlockFreeListPtr = frequentlyAccessedBlockPtr->ramClassUDATABlockFreeList;
-		UDATA *ramClassInFreqUDATABlockFreeListPtr = inFrequentlyAccessedBlockPtr->ramClassUDATABlockFreeList;
-		while (NULL != ramClassSub4gUDATABlockFreeListPtr) {
+		UDATA *udataFreeListBlock = classLoader->ramClassUDATABlockFreeList;
+		J9RAMClassFreeListBlock *tinyFreeListBlock = classLoader->ramClassTinyBlockFreeList;
+		J9RAMClassFreeListBlock *smallFreeListBlock = classLoader->ramClassSmallBlockFreeList;
+		J9RAMClassFreeListBlock *largeFreeListBlock = classLoader->ramClassLargeBlockFreeList;
+		while (NULL != udataFreeListBlock) {
 			used -= sizeof(UDATA);
-			ramClassSub4gUDATABlockFreeListPtr = *(UDATA **)ramClassSub4gUDATABlockFreeListPtr;
+			udataFreeListBlock = *(UDATA **) udataFreeListBlock;
 		}
-		while (NULL != ramClassFreqUDATABlockFreeListPtr) {
-			used -= sizeof(UDATA);
-			ramClassFreqUDATABlockFreeListPtr = *(UDATA **)ramClassFreqUDATABlockFreeListPtr;
+		while (NULL != tinyFreeListBlock) {
+			used -= tinyFreeListBlock->size;
+			tinyFreeListBlock = tinyFreeListBlock->nextFreeListBlock;
 		}
-		while (NULL != ramClassInFreqUDATABlockFreeListPtr) {
-			used -= sizeof(UDATA);
-			ramClassInFreqUDATABlockFreeListPtr = *(UDATA **)ramClassInFreqUDATABlockFreeListPtr;
+		while (NULL != smallFreeListBlock) {
+			used -= smallFreeListBlock->size;
+			smallFreeListBlock = smallFreeListBlock->nextFreeListBlock;
 		}
-		if (NULL != sub4gBlockPtr) {
-			J9RAMClassFreeListBlock *ramClassTinyBlockFreeListPtr = sub4gBlockPtr->ramClassTinyBlockFreeList;
-			J9RAMClassFreeListBlock *ramClassSmallBlockFreeListPtr = sub4gBlockPtr->ramClassSmallBlockFreeList;
-			J9RAMClassFreeListBlock *ramClassLargeBlockFreeListPtr = sub4gBlockPtr->ramClassLargeBlockFreeList;
-			while (NULL != ramClassTinyBlockFreeListPtr) {
-				used -= ramClassTinyBlockFreeListPtr->size;
-				ramClassTinyBlockFreeListPtr = ramClassTinyBlockFreeListPtr->nextFreeListBlock;
-			}
-			while (NULL != ramClassSmallBlockFreeListPtr) {
-				used -= ramClassSmallBlockFreeListPtr->size;
-				ramClassSmallBlockFreeListPtr = ramClassSmallBlockFreeListPtr->nextFreeListBlock;
-			}
-			while (NULL != ramClassLargeBlockFreeListPtr) {
-				used -= ramClassLargeBlockFreeListPtr->size;
-				ramClassLargeBlockFreeListPtr = ramClassLargeBlockFreeListPtr->nextFreeListBlock;
-			}
-		}
-		if (NULL != frequentlyAccessedBlockPtr) {
-			J9RAMClassFreeListBlock *ramClassTinyBlockFreeListPtr = frequentlyAccessedBlockPtr->ramClassTinyBlockFreeList;
-			J9RAMClassFreeListBlock *ramClassSmallBlockFreeListPtr = frequentlyAccessedBlockPtr->ramClassSmallBlockFreeList;
-			J9RAMClassFreeListBlock *ramClassLargeBlockFreeListPtr = frequentlyAccessedBlockPtr->ramClassLargeBlockFreeList;
-			while (NULL != ramClassTinyBlockFreeListPtr) {
-				used -= ramClassTinyBlockFreeListPtr->size;
-				ramClassTinyBlockFreeListPtr = ramClassTinyBlockFreeListPtr->nextFreeListBlock;
-			}
-			while (NULL != ramClassSmallBlockFreeListPtr) {
-				used -= ramClassSmallBlockFreeListPtr->size;
-				ramClassSmallBlockFreeListPtr = ramClassSmallBlockFreeListPtr->nextFreeListBlock;
-			}
-			while (NULL != ramClassLargeBlockFreeListPtr) {
-				used -= ramClassLargeBlockFreeListPtr->size;
-				ramClassLargeBlockFreeListPtr = ramClassLargeBlockFreeListPtr->nextFreeListBlock;
-			}
-		}
-		if (NULL != inFrequentlyAccessedBlockPtr) {
-			J9RAMClassFreeListBlock *ramClassTinyBlockFreeListPtr = inFrequentlyAccessedBlockPtr->ramClassTinyBlockFreeList;
-			J9RAMClassFreeListBlock *ramClassSmallBlockFreeListPtr = inFrequentlyAccessedBlockPtr->ramClassSmallBlockFreeList;
-			J9RAMClassFreeListBlock *ramClassLargeBlockFreeListPtr = inFrequentlyAccessedBlockPtr->ramClassLargeBlockFreeList;
-			while (NULL != ramClassTinyBlockFreeListPtr) {
-				used -= ramClassTinyBlockFreeListPtr->size;
-				ramClassTinyBlockFreeListPtr = ramClassTinyBlockFreeListPtr->nextFreeListBlock;
-			}
-			while (NULL != ramClassSmallBlockFreeListPtr) {
-				used -= ramClassSmallBlockFreeListPtr->size;
-				ramClassSmallBlockFreeListPtr = ramClassSmallBlockFreeListPtr->nextFreeListBlock;
-			}
-			while (NULL != ramClassLargeBlockFreeListPtr) {
-				used -= ramClassLargeBlockFreeListPtr->size;
-				ramClassLargeBlockFreeListPtr = ramClassLargeBlockFreeListPtr->nextFreeListBlock;
-			}
+		while (NULL != largeFreeListBlock) {
+			used -= largeFreeListBlock->size;
+			largeFreeListBlock = largeFreeListBlock->nextFreeListBlock;
 		}
 		classLoader = javaVM->internalVMFunctions->allClassLoadersNextDo(&walkState);
 	}
@@ -215,7 +166,7 @@ jint JNICALL
 Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getObjectPendingFinalizationCountImpl(JNIEnv *env, jobject beanInstance)
 {
 #if defined(J9VM_GC_FINALIZATION)
-	J9JavaVM *javaVM = ((J9VMThread *)env)->javaVM;
+	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
 	return (jint)javaVM->memoryManagerFunctions->j9gc_get_objects_pending_finalization_count(javaVM);
 #else
 	return (jint)0;
@@ -225,7 +176,7 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getObjectPendingFina
 jboolean JNICALL
 Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_isVerboseImpl(JNIEnv *env, jobject beanInstance)
 {
-	J9JavaVM *javaVM = ((J9VMThread *)env)->javaVM;
+	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
 
 	return VERBOSE_GC == (VERBOSE_GC & javaVM->verboseLevel) ;
 }
@@ -233,7 +184,7 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_isVerboseImpl(JNIEnv
 void JNICALL
 Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_setVerboseImpl(JNIEnv *env, jobject beanInstance, jboolean flag)
 {
-	J9JavaVM *javaVM = ((J9VMThread *)env)->javaVM;
+	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
 	J9VerboseSettings verboseOptions;
 
 	memset(&verboseOptions, 0, sizeof(J9VerboseSettings));
@@ -246,7 +197,7 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_setVerboseImpl(JNIEn
 void JNICALL
 Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_createMemoryManagers(JNIEnv *env, jobject beanInstance)
 {
-	J9JavaVM *javaVM = ((J9VMThread *)env)->javaVM;
+	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
 	jclass memBean = NULL;
 	jstring childName = NULL;
 	jmethodID helperID = NULL;
@@ -283,7 +234,7 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_createMemoryManagers
 	}
 
 	for (idx = 0; idx < mgmt->supportedCollectors; ++idx) {
-		id = (jint)mgmt->garbageCollectors[idx].id;
+		id = (jint) mgmt->garbageCollectors[idx].id;
 		childName = (*env)->NewStringUTF(env, mgmt->garbageCollectors[idx].name);
 		if (NULL == childName) {
 			return;
@@ -296,7 +247,7 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_createMemoryManagers
 void JNICALL
 Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_createMemoryPools(JNIEnv *env, jobject beanInstance)
 {
-	J9JavaVM *javaVM = ((J9VMThread *)env)->javaVM;
+	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
 	jclass memBean = NULL;
 	jstring childName = NULL;
 	jmethodID helperID = NULL;
@@ -316,7 +267,7 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_createMemoryPools(JN
 
 	/* Heap Memory Pools */
 	for (idx = 0; idx < mgmt->supportedMemoryPools; ++idx) {
-		id = (jint)mgmt->memoryPools[idx].id;
+		id = (jint) mgmt->memoryPools[idx].id;
 		childName = (*env)->NewStringUTF(env, mgmt->memoryPools[idx].name);
 		if (NULL == childName) {
 			return;
@@ -330,7 +281,7 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_createMemoryPools(JN
 
 	/* NonHeap Memory Pools */
 	for (idx = 0; idx < mgmt->supportedNonHeapMemoryPools; ++idx) {
-		id = (jint)mgmt->nonHeapMemoryPools[idx].id;
+		id = (jint) mgmt->nonHeapMemoryPools[idx].id;
 		childName = (*env)->NewStringUTF(env, mgmt->nonHeapMemoryPools[idx].name);
 		if (NULL == childName) {
 			return;
@@ -346,7 +297,7 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_createMemoryPools(JN
 jlong JNICALL
 Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getMaxHeapSizeLimitImpl(JNIEnv *env, jobject beanInstance)
 {
-	J9JavaVM *javaVM = ((J9VMThread *)env)->javaVM;
+	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
 
 	return javaVM->memoryManagerFunctions->j9gc_get_maximum_heap_size(javaVM);
 }
@@ -354,7 +305,7 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getMaxHeapSizeLimitI
 jlong JNICALL
 Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getMaxHeapSizeImpl(JNIEnv *env, jobject beanInstance)
 {
-	J9JavaVM *javaVM = ((J9VMThread *)env)->javaVM;
+	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
 	UDATA softmx = javaVM->memoryManagerFunctions->j9gc_get_softmx(javaVM);
 
 	/* if no softmx has been set, report -Xmx instead as it is the current max heap size */
@@ -367,7 +318,7 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getMaxHeapSizeImpl(J
 jlong JNICALL
 Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getMinHeapSizeImpl(JNIEnv *env, jobject beanInstance)
 {
-	J9JavaVM *javaVM = ((J9VMThread *)env)->javaVM;
+	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
 
 	return javaVM->memoryManagerFunctions->j9gc_get_initial_heap_size(javaVM);
 }
@@ -375,7 +326,7 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getMinHeapSizeImpl(J
 void JNICALL
 Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_setMaxHeapSizeImpl(JNIEnv *env, jobject beanInstance, jlong newsoftmx)
 {
-	J9JavaVM *javaVM = ((J9VMThread *)env)->javaVM;
+	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
 
 	javaVM->memoryManagerFunctions->j9gc_set_softmx(javaVM, (UDATA)newsoftmx);
 }
@@ -386,7 +337,7 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_setSharedClassCacheS
 	jboolean ret = JNI_FALSE;
 
 #if defined(J9VM_OPT_SHARED_CLASSES)
-	J9JavaVM *javaVM = ((J9VMThread *)env)->javaVM;
+	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
 
 	if (javaVM->sharedClassConfig) {
 		if (0 != javaVM->sharedClassConfig->setMinMaxBytes(javaVM, (U_32)value, -1, -1, -1, -1)) {
@@ -403,7 +354,7 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_setSharedClassCacheM
 	jboolean ret = JNI_FALSE;
 
 #if defined(J9VM_OPT_SHARED_CLASSES)
-	J9JavaVM *javaVM = ((J9VMThread *)env)->javaVM;
+	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
 
 	if (javaVM->sharedClassConfig) {
 		if (0 != javaVM->sharedClassConfig->setMinMaxBytes(javaVM, (U_32)-1, (I_32)value, -1, -1, -1)) {
@@ -420,7 +371,7 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_setSharedClassCacheM
 	jboolean ret = JNI_FALSE;
 
 #if defined(J9VM_OPT_SHARED_CLASSES)
-	J9JavaVM *javaVM = ((J9VMThread *)env)->javaVM;
+	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
 
 	if (javaVM->sharedClassConfig) {
 		if (0 != javaVM->sharedClassConfig->setMinMaxBytes(javaVM, (U_32)-1, -1, (I_32)value, -1, -1)) {
@@ -437,7 +388,7 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_setSharedClassCacheM
 	jboolean ret = JNI_FALSE;
 
 #if defined(J9VM_OPT_SHARED_CLASSES)
-	J9JavaVM *javaVM = ((J9VMThread *)env)->javaVM;
+	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
 
 	if (javaVM->sharedClassConfig) {
 		if (0 != javaVM->sharedClassConfig->setMinMaxBytes(javaVM, (U_32)-1, -1, -1, (I_32)value, -1)) {
@@ -454,7 +405,7 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_setSharedClassCacheM
 	jboolean ret = JNI_FALSE;
 
 #if defined(J9VM_OPT_SHARED_CLASSES)
-	J9JavaVM *javaVM = ((J9VMThread *)env)->javaVM;
+	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
 
 	if (javaVM->sharedClassConfig) {
 		if (0 != javaVM->sharedClassConfig->setMinMaxBytes(javaVM, (U_32)-1, -1, -1, -1, (I_32)value)) {
@@ -471,7 +422,7 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getSharedClassCacheS
 	U_32 ret = 0;
 
 #if defined(J9VM_OPT_SHARED_CLASSES)
-	J9JavaVM *javaVM = ((J9VMThread *)env)->javaVM;
+	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
 
 	if (javaVM->sharedClassConfig) {
 		javaVM->sharedClassConfig->getUnstoredBytes(javaVM, &ret, NULL, NULL);
@@ -486,7 +437,7 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getSharedClassCacheM
 	U_32 ret = 0;
 
 #if defined(J9VM_OPT_SHARED_CLASSES)
-	J9JavaVM *javaVM = ((J9VMThread *)env)->javaVM;
+	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
 
 	if (javaVM->sharedClassConfig) {
 		javaVM->sharedClassConfig->getUnstoredBytes(javaVM, NULL, &ret, NULL);
@@ -501,7 +452,7 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getSharedClassCacheM
 	U_32 ret = 0;
 
 #if defined(J9VM_OPT_SHARED_CLASSES)
-	J9JavaVM *javaVM = ((J9VMThread *)env)->javaVM;
+	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
 
 	if (javaVM->sharedClassConfig) {
 		javaVM->sharedClassConfig->getUnstoredBytes(javaVM, NULL, NULL, &ret);
@@ -519,7 +470,7 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_isSetMaxHeapSizeSupp
 jstring JNICALL
 Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getGCModeImpl(JNIEnv *env, jobject beanInstance)
 {
-	J9JavaVM *javaVM = ((J9VMThread *)env)->javaVM;
+	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
 	const char *gcMode = javaVM->memoryManagerFunctions->j9gc_get_gcmodestring(javaVM);
 
 	if (NULL != gcMode) {
@@ -532,7 +483,7 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getGCModeImpl(JNIEnv
 jlong JNICALL
 Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getGCMainThreadCpuUsedImpl(JNIEnv *env, jobject beanInstance)
 {
-	J9JavaVM *javaVM = ((J9VMThread *)env)->javaVM;
+	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
 	J9JavaLangManagementData *mgmt = javaVM->managementData;
 	jlong result = 0;
 
@@ -546,12 +497,12 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getGCMainThreadCpuUs
 jlong JNICALL
 Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getGCWorkerThreadsCpuUsedImpl(JNIEnv *env, jobject beanInstance)
 {
-	J9JavaVM *javaVM = ((J9VMThread *)env)->javaVM;
+	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
 	J9JavaLangManagementData *mgmt = javaVM->managementData;
 	jlong result = 0;
 
 	omrthread_rwmutex_enter_read(mgmt->managementDataLock);
-	result = (jlong)mgmt->gcWorkerCpuTime;
+	result = (jlong) mgmt->gcWorkerCpuTime;
 	omrthread_rwmutex_exit_read(mgmt->managementDataLock);
 
 	return result;
@@ -560,12 +511,12 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getGCWorkerThreadsCp
 jint JNICALL
 Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getMaximumGCThreadsImpl(JNIEnv *env, jobject beanInstance)
 {
-	J9JavaVM *javaVM = ((J9VMThread *)env)->javaVM;
+	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
 	J9JavaLangManagementData *mgmt = javaVM->managementData;
 	jint result = 0;
 
 	omrthread_rwmutex_enter_read(mgmt->managementDataLock);
-	result = (jint)mgmt->gcMaxThreads;
+	result = (jint) mgmt->gcMaxThreads;
 	omrthread_rwmutex_exit_read(mgmt->managementDataLock);
 
 	return result;
@@ -574,12 +525,12 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getMaximumGCThreadsI
 jint JNICALL
 Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getCurrentGCThreadsImpl(JNIEnv *env, jobject beanInstance)
 {
-	J9JavaVM *javaVM = ((J9VMThread *)env)->javaVM;
+	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
 	J9JavaLangManagementData *mgmt = javaVM->managementData;
 	jint result = 0;
 
 	omrthread_rwmutex_enter_read(mgmt->managementDataLock);
-	result = (jint)mgmt->gcCurrentThreads;
+	result = (jint) mgmt->gcCurrentThreads;
 	omrthread_rwmutex_exit_read(mgmt->managementDataLock);
 
 	return result;
@@ -590,7 +541,7 @@ void JNICALL
 Java_com_ibm_lang_management_internal_MemoryNotificationThread_processNotificationLoop(JNIEnv *env, jobject threadInstance)
 {
 	/* currently, the only notification queue is for the heap */
-	J9JavaVM *javaVM = ((J9VMThread *)env)->javaVM;
+	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
 	J9JavaLangManagementData *mgmt = javaVM->managementData;
 	jclass threadClass = NULL;
 	jclass stringClass = NULL;
@@ -775,7 +726,7 @@ Java_com_ibm_lang_management_internal_MemoryNotificationThread_processNotificati
 		} else {
 			/* dispatch  usage threshold Notification */
 			memoryPoolUsageThreshold *usageThreshold = notification->usageThreshold;
-			idx = (U_32)getIndexFromMemoryPoolID(mgmt, usageThreshold->poolID);
+			idx = (U_32) getIndexFromMemoryPoolID(mgmt, usageThreshold->poolID);
 			pool = &mgmt->memoryPools[idx];
 			poolName = poolNames[idx];
 			if (THRESHOLD_EXCEEDED == notification->type) {
@@ -837,7 +788,7 @@ void JNICALL
 Java_com_ibm_lang_management_internal_MemoryNotificationThreadShutdown_sendShutdownNotification(JNIEnv *env, jobject instance)
 {
 	/* currently, the only queue is the heap usage notification queue */
-	J9JavaVM *javaVM = ((J9VMThread *)env)->javaVM;
+	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
 	J9JavaLangManagementData *mgmt = javaVM->managementData;
 	J9MemoryNotification *notification = NULL;
 	J9MemoryNotification *next = NULL;
