@@ -12374,19 +12374,19 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
       {
       if (isLE)
          {
-         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, node, maskReg, storeReg, (uint32_t) 0x80);
+         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, node, maskReg, storeReg, 0x80);
          generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, endLabel, cr0);
 
          generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, indexReg, indexReg, 1);
-         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, node, maskReg, storeReg, (uint32_t) 0x8000);
+         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, node, maskReg, storeReg, 0x8000);
          generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, endLabel, cr0);
 
          generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, indexReg, indexReg, 1);
-         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andis_r, node, maskReg, storeReg, (uint32_t) 0x80);
+         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andis_r, node, maskReg, storeReg, 0x80);
          generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, endLabel, cr0);
 
          generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, indexReg, indexReg, 1);
-         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andis_r, node, maskReg, storeReg, (uint32_t) 0x8000);
+         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andis_r, node, maskReg, storeReg, 0x8000);
          generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, endLabel, cr0);
 
          generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, indexReg, indexReg, 1);
