@@ -10842,9 +10842,6 @@ hashCodeHelper(TR::Node *node, TR::CodeGenerator *cg, TR::DataType elementType,
 
    // vectorLoop
    generateLabelInstruction(cg, TR::InstOpCode::label, node, vectorLoopLabel);
-   // load v
-   generateTrg1MemInstruction(cg, TR::InstOpCode::lxvw4x, node, vtmp1Reg,
-      TR::MemoryReference::createWithIndexReg(cg, NULL, valueReg, 16));
 
    // for each high/low register
    // unpack v to vtmp2Reg
@@ -10852,15 +10849,26 @@ hashCodeHelper(TR::Node *node, TR::CodeGenerator *cg, TR::DataType elementType,
    switch (elementType)
       {
       case TR::Int8:
-         if (isLE)
+         // load v
+         if (comp->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P9))
             {
-            // swap around the shorts in each word; we need 2 instructions to load 16
-            generateTrg1ImmInstruction(cg, TR::InstOpCode::vspltisw, node, vtmp2Reg, 8);
-            generateTrg1Src2Instruction(cg, TR::InstOpCode::vadduwm, node, vtmp2Reg, vtmp2Reg, vtmp2Reg);
-            generateTrg1Src2Instruction(cg, TR::InstOpCode::vrlw, node, vtmp1Reg, vtmp1Reg, vtmp2Reg);
-            // then swap around the bytes in each short
-            generateTrg1ImmInstruction(cg, TR::InstOpCode::vspltish, node, vtmp2Reg, 8);
-            generateTrg1Src2Instruction(cg, TR::InstOpCode::vrlh, node, vtmp1Reg, vtmp1Reg, vtmp2Reg);
+            generateTrg1MemInstruction(cg, TR::InstOpCode::lxvb16x, node, vtmp1Reg,
+               TR::MemoryReference::createWithIndexReg(cg, NULL, valueReg, 16));
+            }
+         else // for P8 we only have lxvw4x
+            {
+            generateTrg1MemInstruction(cg, TR::InstOpCode::lxvw4x, node, vtmp1Reg,
+               TR::MemoryReference::createWithIndexReg(cg, NULL, valueReg, 16));
+            if (isLE)
+               {
+               // swap around the shorts in each word; we need 2 instructions to load 16
+               generateTrg1ImmInstruction(cg, TR::InstOpCode::vspltisw, node, vtmp2Reg, 8);
+               generateTrg1Src2Instruction(cg, TR::InstOpCode::vadduwm, node, vtmp2Reg, vtmp2Reg, vtmp2Reg);
+               generateTrg1Src2Instruction(cg, TR::InstOpCode::vrlw, node, vtmp1Reg, vtmp1Reg, vtmp2Reg);
+               // then swap around the bytes in each short
+               generateTrg1ImmInstruction(cg, TR::InstOpCode::vspltish, node, vtmp2Reg, 8);
+               generateTrg1Src2Instruction(cg, TR::InstOpCode::vrlh, node, vtmp1Reg, vtmp1Reg, vtmp2Reg);
+               }
             }
 
          // unpack
@@ -10901,12 +10909,23 @@ hashCodeHelper(TR::Node *node, TR::CodeGenerator *cg, TR::DataType elementType,
          generateTrg1Src2Instruction(cg, TR::InstOpCode::vadduwm, node, low4Reg, low4Reg, vtmp3Reg);
          break;
       case TR::Int16:
-         if (isLE)
+         // load v
+         if (comp->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P9))
             {
-            // swap around the shorts in each word; we need 2 instructions to load 16
-            generateTrg1ImmInstruction(cg, TR::InstOpCode::vspltisw, node, vtmp2Reg, 8);
-            generateTrg1Src2Instruction(cg, TR::InstOpCode::vadduwm, node, vtmp2Reg, vtmp2Reg, vtmp2Reg);
-            generateTrg1Src2Instruction(cg, TR::InstOpCode::vrlw, node, vtmp1Reg, vtmp1Reg, vtmp2Reg);
+            generateTrg1MemInstruction(cg, TR::InstOpCode::lxvh8x, node, vtmp1Reg,
+               TR::MemoryReference::createWithIndexReg(cg, NULL, valueReg, 16));
+            }
+         else // for P8 we only have lxvw4x
+            {
+            generateTrg1MemInstruction(cg, TR::InstOpCode::lxvw4x, node, vtmp1Reg,
+               TR::MemoryReference::createWithIndexReg(cg, NULL, valueReg, 16));
+            if (isLE)
+               {
+               // swap around the shorts in each word; we need 2 instructions to load 16
+               generateTrg1ImmInstruction(cg, TR::InstOpCode::vspltisw, node, vtmp2Reg, 8);
+               generateTrg1Src2Instruction(cg, TR::InstOpCode::vadduwm, node, vtmp2Reg, vtmp2Reg, vtmp2Reg);
+               generateTrg1Src2Instruction(cg, TR::InstOpCode::vrlw, node, vtmp1Reg, vtmp1Reg, vtmp2Reg);
+               }
             }
 
          // high4
@@ -10927,6 +10946,8 @@ hashCodeHelper(TR::Node *node, TR::CodeGenerator *cg, TR::DataType elementType,
          generateTrg1Src2Instruction(cg, TR::InstOpCode::vadduwm, node, low4Reg, low4Reg, vtmp2Reg);
          break;
       case TR::Int32:
+         generateTrg1MemInstruction(cg, TR::InstOpCode::lxvw4x, node, vtmp1Reg,
+            TR::MemoryReference::createWithIndexReg(cg, NULL, valueReg, 16));
          // no need to unpack
          generateTrg1Src2Instruction(cg, TR::InstOpCode::vmuluwm, node, low4Reg, low4Reg, multiplierReg);
          generateTrg1Src2Instruction(cg, TR::InstOpCode::vadduwm, node, low4Reg, low4Reg, vtmp1Reg);
