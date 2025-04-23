@@ -797,7 +797,7 @@ detachMonitorInfo(J9VMThread *currentThread, j9object_t lockObject)
 	}
 
 	J9ThreadAbstractMonitor *monitor = (J9ThreadAbstractMonitor *)objectMonitor->monitor;
-	monitor->owner = (J9Thread*)1;
+	monitor->owner = (J9Thread *)J9_OBJECT_MONITOR_OWNER_DETACHED;
 	objectMonitor->ownerContinuation = currentThread->currentContinuation;
 
 	return objectMonitor;
@@ -981,7 +981,7 @@ restart:
 					&& J9_ARE_NO_BITS_SET(continuation->runtimeFlags, J9VM_CONTINUATION_RUNTIMEFLAG_JVMTI_CONTENDED_MONITOR_ENTER_RECORDED)
 				) {
 					/* Get owner here since it could be too late within yieldPinnedContinuation(). */
-					if ((void*)1 == monitor->owner) {
+					if (IS_J9_OBJECT_MONITOR_OWNER_DETACHED(monitor->owner)) {
 						continuation->previousOwner = NULL;
 					} else {
 						continuation->previousOwner = getVMThreadFromOMRThread(vm, ((J9ThreadMonitor *)monitor)->owner);

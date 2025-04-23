@@ -4313,7 +4313,9 @@ JavaCoreDumpWriter::writeMonitorObject(J9ThreadMonitor* monitor, j9object_t obj,
 	if (NULL != obj) {
 		owner = getObjectMonitorOwner(_VirtualMachine, obj, &count);
 	} else if (NULL != lockOwner) {
-		owner = getVMThreadFromOMRThread(_VirtualMachine, lockOwner);
+		if (!IS_J9_OBJECT_MONITOR_OWNER_DETACHED(lockOwner)) {
+			owner = getVMThreadFromOMRThread(_VirtualMachine, lockOwner);
+		}
 		count = lock->count;
 	}
 
@@ -4338,7 +4340,16 @@ JavaCoreDumpWriter::writeMonitorObject(J9ThreadMonitor* monitor, j9object_t obj,
 	/* Describe its owning thread */
 	bool inflated = J9_ARE_ANY_BITS_SET(lock->flags, J9THREAD_MONITOR_INFLATED);
 
-	if ((NULL != owner) || (NULL != lockOwner)) {
+	if (IS_J9_OBJECT_MONITOR_OWNER_DETACHED(lockOwner)) {
+		if (inflated) {
+			_OutputStream.writeCharacters("owner \"");
+		} else {
+			_OutputStream.writeCharacters("Flat locked by \"");
+		}
+		_OutputStream.writeCharacters("<detached virtual thread>");
+		_OutputStream.writeCharacters(", entry count ");
+		_OutputStream.writeInteger(count, "%zu");
+	} else if ((NULL != owner) || (NULL != lockOwner)) {
 		if (inflated) {
 			_OutputStream.writeCharacters("owner \"");
 		} else {

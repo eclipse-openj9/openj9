@@ -163,7 +163,7 @@ restart:
 		objectMonitor = J9_INFLLOCK_OBJECT_MONITOR(lock);
 		monitor = (J9ThreadAbstractMonitor *)objectMonitor->monitor;
 		Assert_VM_notNull(monitor);
-		Assert_VM_false(monitor->owner == (void*)1);
+		Assert_VM_false(IS_J9_OBJECT_MONITOR_OWNER_DETACHED(monitor->owner));
 
 #ifdef OMR_THR_ADAPTIVE_SPIN
 		/* for now we don't allow deflation if spinning has been disabled for this monitor

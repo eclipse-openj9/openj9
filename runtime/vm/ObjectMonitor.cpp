@@ -179,7 +179,7 @@ objectMonitorEnterBlocking(J9VMThread *currentThread)
 		 */
 		IDATA waitTime = 1;
 
-		if ((NULL != previousOMRThreadOwner) && (1 != (UDATA)previousOMRThreadOwner)) {
+		if ((NULL != previousOMRThreadOwner) && !IS_J9_OBJECT_MONITOR_OWNER_DETACHED(previousOMRThreadOwner)) {
 			previousOwner = getVMThreadFromOMRThread(vm, previousOMRThreadOwner);
 		}
 
