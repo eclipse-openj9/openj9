@@ -733,6 +733,7 @@ jvmtiGetOwnedMonitorInfo(jvmtiEnv *env,
 			vm->internalVMFunctions->haltThreadForInspection(currentThread, targetThread);
 
 #if JAVA_SPEC_VERSION >= 19
+			threadObject = (NULL == thread) ? currentThread->threadObject : J9_JNI_UNWRAP_REFERENCE(thread);
 			continuation = getJ9VMContinuationToWalk(currentThread, targetThread, threadObject);
 			if (NULL != continuation) {
 				memcpy(&stackThread, targetThread, sizeof(J9VMThread));
@@ -827,6 +828,7 @@ jvmtiGetOwnedMonitorStackDepthInfo(jvmtiEnv *env,
 			vm->internalVMFunctions->haltThreadForInspection(currentThread, targetThread);
 
 #if JAVA_SPEC_VERSION >= 19
+			threadObject = (NULL == thread) ? currentThread->threadObject : J9_JNI_UNWRAP_REFERENCE(thread);
 			continuation = getJ9VMContinuationToWalk(currentThread, targetThread, threadObject);
 			if (NULL != continuation) {
 				memcpy(&stackThread, targetThread, sizeof(J9VMThread));
