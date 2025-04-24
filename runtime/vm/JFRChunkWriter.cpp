@@ -1107,39 +1107,6 @@ stackWalkCallback(J9VMThread *vmThread, J9StackWalkState *state)
 	return J9_STACKWALK_KEEP_ITERATING;
 }
 
-void
-VM_JFRChunkWriter::writeNativeLibraryEvent(void *anElement, void *userData)
-{
-	NativeLibraryEntry *entry = (NativeLibraryEntry *)anElement;
-	VM_JFRChunkWriter *writer = (VM_JFRChunkWriter *)userData;
-	VM_BufferWriter *bufferWriter = writer->_bufferWriter;
-	PORT_ACCESS_FROM_JAVAVM(writer->_vm);
-
-	/* reserve size field */
-	U_8 *dataStart = writer->reserveEventSize(bufferWriter);
-
-	/* write event type */
-	bufferWriter->writeLEB128(NativeLibraryID);
-
-	/* write start time */
-	bufferWriter->writeLEB128(entry->ticks);
-
-	/* write library name */
-	writer->writeStringLiteral(entry->name);
-
-	/* write base address */
-	bufferWriter->writeLEB128(entry->addressLow);
-
-	/* write top address */
-	bufferWriter->writeLEB128(entry->addressHigh);
-
-	/* write event size */
-	writer->writeEventSize(bufferWriter, dataStart);
-
-	j9mem_free_memory(entry->name);
-	entry->name = NULL;
-}
-
 static void
 writeThreadInfo(J9VMThread *currentThread, J9VMThread *walkThread, VM_BufferWriter *bufferWriter)
 {
