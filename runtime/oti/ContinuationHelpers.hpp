@@ -400,6 +400,43 @@ public:
 
 		return notified;
 	}
+
+	/**
+	 * Remove a blocking continuation from the VM or monitor blocking list.
+	 *
+	 * @param[in] currentThread the J9VMThread
+	 * @param[in] continuation the continuation to be removed
+	 *
+	 * @return true if the continuation is removed from the lists or not on any list, otherwise false
+	 */
+	static VMINLINE bool
+	removeBlockingContinuationFromLists(J9VMThread *currentThread, J9VMContinuation *continuation)
+	{
+		J9JavaVM *vm = currentThread->javaVM;
+		bool foundInBlockedContinuationList = false;
+		bool foundInMonitorList = false;
+
+		omrthread_monitor_enter(vm->blockedVirtualThreadsMutex);
+
+		foundInBlockedContinuationList = removeContinuationFromList(
+				&vm->blockedContinuations, continuation);
+
+		if (foundInBlockedContinuationList) {
+			continuation->objectWaitMonitor->virtualThreadWaitCount -= 1;
+		}
+
+		if (NULL != continuation->objectWaitMonitor->waitingContinuations) {
+			foundInMonitorList = removeContinuationFromList(
+					&continuation->objectWaitMonitor->waitingContinuations, continuation);
+		}
+
+		omrthread_monitor_exit(vm->blockedVirtualThreadsMutex);
+
+		continuation->objectWaitMonitor = NULL;
+
+		/* Virtual can only be in one list at a time. */
+		return !(foundInBlockedContinuationList && foundInMonitorList);
+	}
 #endif /* JAVA_SPEC_VERSION >= 24 */
 };
 
