@@ -580,20 +580,16 @@ J9NLS_JCL_FIPS_MODE_SET_TO_INVALID_VALUE.system_action=The JVM will fail to star
 J9NLS_JCL_FIPS_MODE_SET_TO_INVALID_VALUE.user_response=Check the fips mode value is consistent with the FIPS 140-3 preview being enabled / disabled.
 # END NON-TRANSLATABLE
 
-# Note: "java.compiler" is a system property name and should not be translated.
-# Note: "-Xjit" is a command line parameter and should not be translated.
-J9NLS_JCL_JAVA_COMPILER_WARNING_XJIT=\u0423\u0441\u0442\u0430\u043d\u043e\u0432\u043a\u0430 \u0441\u0438\u0441\u0442\u0435\u043c\u043d\u043e\u0433\u043e \u0441\u0432\u043e\u0439\u0441\u0442\u0432\u0430 java.compiler \u0443\u0441\u0442\u0430\u0440\u0435\u043b\u0430 \u0432 \u0432\u0435\u0440\u0441\u0438\u0438 21 \u0438 \u0432\u044b\u0448\u0435, \u0432\u043c\u0435\u0441\u0442\u043e \u044d\u0442\u043e\u0433\u043e \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u0443\u0439\u0442\u0435 -Xjit.
+J9NLS_JCL_JAVA_COMPILER_WARNING_XJIT=
 # START NON-TRANSLATABLE
-J9NLS_JCL_JAVA_COMPILER_WARNING_XJIT.explanation=The java.compiler system property can no longer be used to enable or disable the JIT.
-J9NLS_JCL_JAVA_COMPILER_WARNING_XJIT.system_action=Setting the java.compiler system property is ignored.
-J9NLS_JCL_JAVA_COMPILER_WARNING_XJIT.user_response=Use the -Xjit option to enable the JIT.
+J9NLS_JCL_JAVA_COMPILER_WARNING_XJIT.explanation=NOTAG
+J9NLS_JCL_JAVA_COMPILER_WARNING_XJIT.system_action=
+J9NLS_JCL_JAVA_COMPILER_WARNING_XJIT.user_response=
 # END NON-TRANSLATABLE
 
-# Note: "java.compiler" is a system property name and should not be translated.
-# Note: "-Xint" is a command line parameter and should not be translated.
-J9NLS_JCL_JAVA_COMPILER_WARNING_XINT=\u0423\u0441\u0442\u0430\u043d\u043e\u0432\u043a\u0430 \u0441\u0438\u0441\u0442\u0435\u043c\u043d\u043e\u0433\u043e \u0441\u0432\u043e\u0439\u0441\u0442\u0432\u0430 java.compiler \u0443\u0441\u0442\u0430\u0440\u0435\u043b\u0430 \u0432 \u0432\u0435\u0440\u0441\u0438\u0438 21 \u0438 \u0432\u044b\u0448\u0435, \u0432\u043c\u0435\u0441\u0442\u043e \u044d\u0442\u043e\u0433\u043e \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u0443\u0439\u0442\u0435 -Xint.
+J9NLS_JCL_JAVA_COMPILER_WARNING_XINT=
 # START NON-TRANSLATABLE
-J9NLS_JCL_JAVA_COMPILER_WARNING_XINT.explanation=The java.compiler system property can no longer be used to enable or disable the JIT.
-J9NLS_JCL_JAVA_COMPILER_WARNING_XINT.system_action=Setting the java.compiler system property is ignored.
-J9NLS_JCL_JAVA_COMPILER_WARNING_XINT.user_response=Use the -Xint option to disable the JIT.
+J9NLS_JCL_JAVA_COMPILER_WARNING_XINT.explanation=NOTAG
+J9NLS_JCL_JAVA_COMPILER_WARNING_XINT.system_action=
+J9NLS_JCL_JAVA_COMPILER_WARNING_XINT.user_response=
 # END NON-TRANSLATABLE
