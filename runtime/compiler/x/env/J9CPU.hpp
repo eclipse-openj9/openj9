@@ -66,16 +66,6 @@ public:
     */
    static TR::CPU detect(OMRPortLibrary * const omrPortLib);
 
-   /**
-    * @brief Intialize _supportedFeatureMasks to the list of processor features that will be exploited by the compiler and set _isSupportedFeatureMasksEnabled to true
-    * @return void
-    */
-   static void enableFeatureMasks();
-
-   bool is(OMRProcessorArchitecture p);
-   bool supportsFeature(uint32_t feature);
-
-   TR_X86CPUIDBuffer *queryX86TargetCPUID();
    const char * getProcessorVendorId();
    uint32_t getProcessorSignature();
 
@@ -83,12 +73,6 @@ public:
 
    bool isCompatible(const OMRProcessorDesc& processorDescription);
 
-   uint32_t getX86ProcessorFeatureFlags();
-   uint32_t getX86ProcessorFeatureFlags2();
-   uint32_t getX86ProcessorFeatureFlags8();
-
-   bool is_test(OMRProcessorArchitecture p);
-   bool supports_feature_test(uint32_t feature);
    };
 
 }

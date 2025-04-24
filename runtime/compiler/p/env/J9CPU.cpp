@@ -78,21 +78,3 @@ J9::Power::CPU::isCompatible(const OMRProcessorDesc& processorDescription)
       }
    return targetProcessor == processor;
    }
-
-void
-J9::Power::CPU::enableFeatureMasks()
-   {
-   // Only enable the features that compiler currently uses
-   const uint32_t utilizedFeatures [] = {OMR_FEATURE_PPC_HAS_ALTIVEC, OMR_FEATURE_PPC_HAS_DFP,
-                                        OMR_FEATURE_PPC_HTM, OMR_FEATURE_PPC_HAS_VSX};
-
-
-   memset(_supportedFeatureMasks.features, 0, OMRPORT_SYSINFO_FEATURES_SIZE*sizeof(uint32_t));
-   OMRPORT_ACCESS_FROM_OMRPORT(TR::Compiler->omrPortLib);
-   for (size_t i = 0; i < sizeof(utilizedFeatures)/sizeof(uint32_t); i++)
-      {
-      omrsysinfo_processor_set_feature(&_supportedFeatureMasks, utilizedFeatures[i], TRUE);
-      }
-
-   _isSupportedFeatureMasksEnabled = true;
-   }
