@@ -44,31 +44,6 @@ MM_ConcurrentMarkingDelegate::doSlot(MM_EnvironmentBase *env, omrobjectptr_t *sl
 	_markingScheme->markObject(env, *slotPtr);
 }
 
-#if JAVA_SPEC_VERSION >= 24
-void
-MM_ConcurrentMarkingDelegate::doContinuationSlot(MM_EnvironmentBase *env, omrobjectptr_t *slotPtr, GC_ContinuationSlotIterator *continuationSlotIterator)
-{
-	if (_markingScheme->isHeapObject(*slotPtr) && !env->getExtensions()->heap->objectIsInGap(*slotPtr)) {
-		doSlot(env, slotPtr);
-	} else if (NULL != *slotPtr) {
-		Assert_MM_true(GC_ContinuationSlotIterator::state_monitor_records == continuationSlotIterator->getState());
-	}
-}
-#endif /* JAVA_SPEC_VERSION >= 24 */
-
-void
-MM_ConcurrentMarkingDelegate::doStackSlot(MM_EnvironmentBase *env, omrobjectptr_t *slotPtr, J9StackWalkState *walkState, const void *stackLocation)
-{
-	omrobjectptr_t object = *slotPtr;
-	if (_markingScheme->isHeapObject(object) && !env->getExtensions()->heap->objectIsInGap(object)) {
-		/* heap object - validate and mark */
-		Assert_MM_validStackSlot(MM_StackSlotValidator(0, object, stackLocation, walkState).validate(env));
-		doSlot(env, slotPtr);
-	} else if (NULL != object) {
-		/* stack object - just validate */
-		Assert_MM_validStackSlot(MM_StackSlotValidator(MM_StackSlotValidator::NOT_ON_HEAP, object, stackLocation, walkState).validate(env));
-	}
-}
 /**
  * Concurrents stack slot iterator.
  * Called for each slot in a threads active stack frames which contains a object reference.
@@ -88,6 +63,7 @@ concurrentStackSlotIterator(J9JavaVM *javaVM, omrobjectptr_t *objectIndirect, vo
 bool
 MM_ConcurrentMarkingDelegate::initialize(MM_EnvironmentBase *env, MM_ConcurrentGC *collector)
 {
+	MM_ScanContinuationSlotsBase::initialize(env);
 	MM_GCExtensionsBase *extensions = env->getExtensions();
 	_javaVM = (J9JavaVM *)extensions->getOmrVM()->_language_vm;
 	_objectModel = &(extensions->objectModel);

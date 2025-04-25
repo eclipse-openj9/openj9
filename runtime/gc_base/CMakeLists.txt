@@ -46,6 +46,7 @@ set(gc_base_sources
 	ReferenceObjectBuffer.cpp
 	ReferenceObjectList.cpp
 	RootScanner.cpp
+	ScanContinuationSlotsBase.cpp
 	StackSlotValidator.cpp
 	StringTable.cpp
 	UnfinalizedObjectBuffer.cpp
