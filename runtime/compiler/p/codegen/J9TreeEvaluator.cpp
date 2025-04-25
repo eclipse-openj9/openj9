@@ -12254,7 +12254,6 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
    TR::Register *storeReg = cg->allocateRegister();
    TR::Register *maskReg = cg->allocateRegister();
 
-   TR::LabelSymbol *firstLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *VSXLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *serialPrepLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *serialUnrollLabel = generateLabelSymbol(cg);
@@ -12294,13 +12293,11 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
       TR::MemoryReference::createWithIndexReg(cg, startReg, indexReg, 1));
    generateTrg1Src1Instruction(cg, TR::InstOpCode::extsb, node, tempReg, tempReg);
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, cr6, tempReg, 0);
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::bge, node, firstLabel, cr6);
    if (isCountPositives) // when counting positives, just return the index which is 0
-      generateLabelInstruction(cg, TR::InstOpCode::b, node, endLabel);
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::ble, node, endLabel, cr6);
    else // when seeking negatives, we need to return 1
-      generateLabelInstruction(cg, TR::InstOpCode::b, node, matchLabel);
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::ble, node, matchLabel, cr6);
 
-   generateLabelInstruction(cg, TR::InstOpCode::label, node, firstLabel);
    // if we only have one byte end it here, and return 0 for hasNegative
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, indexReg, indexReg, 1);
    generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp4, node, cr6, indexReg, lengthReg);
