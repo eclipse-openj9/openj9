@@ -12294,9 +12294,9 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
    generateTrg1Src1Instruction(cg, TR::InstOpCode::extsb, node, tempReg, tempReg);
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, cr6, tempReg, 0);
    if (isCountPositives) // when counting positives, just return the index which is 0
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::ble, node, endLabel, cr6);
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, endLabel, cr6);
    else // when seeking negatives, we need to return 1
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::ble, node, matchLabel, cr6);
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, matchLabel, cr6);
 
    // if we only have one byte end it here, and return 0 for hasNegative
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, indexReg, indexReg, 1);
