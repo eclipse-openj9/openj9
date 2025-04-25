@@ -12254,11 +12254,12 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
    TR::Register *storeReg = cg->allocateRegister();
    TR::Register *maskReg = cg->allocateRegister();
 
+   TR::LabelSymbol *firstLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *VSXLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *serialPrepLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *serialUnrollLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *serialLabel = generateLabelSymbol(cg);
-   TR::LabelSymbol *vecResultLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *matchLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *resultLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *endLabel = generateLabelSymbol(cg);
 
@@ -12293,16 +12294,20 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
       TR::MemoryReference::createWithIndexReg(cg, startReg, indexReg, 1));
    generateTrg1Src1Instruction(cg, TR::InstOpCode::extsb, node, tempReg, tempReg);
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, cr6, tempReg, 0);
-   // when seeking negatives, we need to return 1
-   if (!isCountPositives)
-      generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, tempReg, 1);
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, endLabel, cr6);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::bge, node, firstLabel, cr6);
+   if (isCountPositives) // when counting positives, just return the index which is 0
+      generateLabelInstruction(cg, TR::InstOpCode::b, node, endLabel);
+   else // when seeking negatives, we need to return 1
+      generateLabelInstruction(cg, TR::InstOpCode::b, node, matchLabel);
+
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, firstLabel);
    // if we only have one byte end it here, and return 0 for hasNegative
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, indexReg, indexReg, 1);
    generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp4, node, cr6, indexReg, lengthReg);
-   if (!isCountPositives)
-      generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, tempReg, 0);
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, endLabel, cr6);
+   if (isCountPositives)
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, endLabel, cr6);
+   else
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, resultLabel, cr6);
 
    // ready the zero reg
    generateTrg1Src2Instruction(cg, TR::InstOpCode::vxor, node, vconstant0Reg, vconstant0Reg, vconstant0Reg);
@@ -12330,13 +12335,13 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
    // bit 2 of cr6 (ZERO) will not be set if any comparison is true
    generateTrg1Src2Instruction(cg, TR::InstOpCode::vcmpgtsb_r, node, vtmp1Reg, vconstant0Reg, vtmp1Reg);
    // branch when the ZERO bit is not set
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, vecResultLabel, cr6);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, matchLabel, cr6);
 
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, indexReg, indexReg, 16);
    generateLabelInstruction(cg, TR::InstOpCode::b, node, VSXLabel);
 
-   // --- this label is only used when we exit from the VSXLoop
-   generateLabelInstruction(cg, TR::InstOpCode::label, node, vecResultLabel);
+   // --- when there is a match but we don't know the exact location yet
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, matchLabel);
    if (isCountPositives) // jump to the serial label which sould soon count to the value we want
       {
       //generateTrg1Src1Instruction(cg, TR::InstOpCode::vclzlsbb, node, returnReg, vtmp1Reg);
@@ -12407,7 +12412,7 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
       generateTrg1Src2Instruction(cg, TR::InstOpCode::AND, node, storeReg, storeReg, maskReg);
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, cr6, storeReg, 0);
       // this label happens to work
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, vecResultLabel, cr6);
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, matchLabel, cr6);
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, indexReg, indexReg, 4);
       }
    generateLabelInstruction(cg, TR::InstOpCode::b, node, serialUnrollLabel);
@@ -12482,7 +12487,8 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
    cg->stopUsingRegister(startReg);
    cg->stopUsingRegister(lengthReg);
    cg->stopUsingRegister(cr6);
-   cg->stopUsingRegister(cr0);
+   if (isCountPositives && isLE)
+      cg->stopUsingRegister(cr0);
    cg->stopUsingRegister(vconstant0Reg);
    cg->stopUsingRegister(vtmp1Reg);
    cg->stopUsingRegister(vtmp2Reg);
