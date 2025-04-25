@@ -24,6 +24,7 @@ package com.ibm.j9.jsr292.indyn;
 import org.openj9.test.util.VersionCheck;
 
 import org.testng.annotations.Test;
+
 import org.testng.Assert;
 import org.testng.AssertJUnit;
 import static org.objectweb.asm.Opcodes.ARETURN;
@@ -403,4 +404,51 @@ public class IndyTest {
 			Assert.assertTrue(VersionCheck.major() >= 11);			
 		}
 	}
+
+	private static long var1 = 1871533038L;
+    private double var2 = 1;
+    private int var3 = 1;
+    private int var4 = 4;
+	private volatile boolean running = true;
+
+	private void stop() {
+		running = false;
+	}
+
+    public void recurse() {
+        if (!running) {
+			return;
+		}
+        for (int i = 1; i < 5; i++) {
+
+            String t = "Test" + var3 + "," + var4;
+            try {
+                java.lang.reflect.Method method = IndyTest.class.getMethod("recurse", void.class);
+                method.invoke(this);
+            } catch (NoSuchMethodException e) {
+                // ...
+            } catch (IllegalAccessException e) {
+                // ...
+            } catch (java.lang.reflect.InvocationTargetException e) {
+                // ...
+            }
+        }
+        String val = "Value: " + IndyTest.var1 + "," + Double.doubleToLongBits(var2) + "," + var3 + "," + var4 + "," + var3;
+    }
+
+	// test that String concatenation doesn't not give wrong callsite (resulting in ILGen assertion error)
+	// when resolution is done in deep recursion
+    @Test(groups = {"level.extended"})
+    public void testOSRRecurseStringConcat() {
+        IndyTest tester = new IndyTest();
+        Thread thread = new Thread(() -> tester.recurse());
+        thread.start();
+
+		try {
+        Thread.sleep(30000); // let thread run for 30s
+		tester.stop();
+		thread.join();
+		} catch (InterruptedException e) {}
+		System.out.println("Ran with no errors");
+    }
 }
