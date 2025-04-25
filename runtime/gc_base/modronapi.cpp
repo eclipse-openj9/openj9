@@ -47,6 +47,10 @@
 #include "MemorySpace.hpp"
 #include "MemorySubSpace.hpp"
 #include "MemoryPoolLargeObjects.hpp"
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+#include "SparseAddressOrderedFixedSizeDataPool.hpp"
+#include "SparseVirtualMemory.hpp"
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 #include "VMInterface.hpp"
 #include "VMThreadListIterator.hpp"
 #include "VMAccess.hpp"
@@ -699,6 +703,19 @@ j9gc_pool_memoryusage(J9JavaVM *javaVM, UDATA poolID, UDATA *free, UDATA *total)
 		break;
 	}
 	return j9gc_pool_maxmemory(javaVM, poolID);
+}
+
+void
+j9gc_get_offheap_data(J9JavaVM *javaVM, void **offheapControlStructure, void **base, void **top, UDATA *usage)
+{
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+	MM_SparseVirtualMemory *largeObjectVirtualMemory = MM_GCExtensions::getExtensions(javaVM)->largeObjectVirtualMemory;
+
+	*offheapControlStructure = (void *)largeObjectVirtualMemory;
+	*base = largeObjectVirtualMemory->getHeapBase();
+	*top = largeObjectVirtualMemory->getHeapTop();
+	*usage = largeObjectVirtualMemory->getSparseDataPool()->getFreeListPoolAllocBytes();
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 }
 
 /**
