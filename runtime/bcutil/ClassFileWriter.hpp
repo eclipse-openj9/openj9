@@ -363,8 +363,8 @@ public:
 			 */
 			if (J9_ARE_ALL_BITS_SET(_romClass->extraModifiers, J9AccClassIsInjectedInvoker)) {
 				_isInjectedInvoker = TRUE;
-				originalNameLength = J9UTF8_LENGTH(&injectedInvokerClassname);
-				anonClassNameData = J9UTF8_DATA(&injectedInvokerClassname);
+				originalNameLength = J9UTF8_LENGTH((J9UTF8 *)&injectedInvokerClassname);
+				anonClassNameData = J9UTF8_DATA((J9UTF8 *)&injectedInvokerClassname);
 			}
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 			/* nameLength field + nameBytes field + NULL terminator */
@@ -373,8 +373,8 @@ public:
 				_buildResult = OutOfMemory;
 			} else {
 				J9UTF8_SET_LENGTH(_originalClassName, originalNameLength);
-				memcpy(((U_8 *)J9UTF8_DATA(_originalClassName)), anonClassNameData, originalNameLength);
-				*(((U_8 *)J9UTF8_DATA(_originalClassName)) + originalNameLength) = '\0';
+				memcpy(J9UTF8_DATA(_originalClassName), anonClassNameData, originalNameLength);
+				J9UTF8_DATA(_originalClassName)[originalNameLength] = '\0';
 			}
 		}
 		if (isOK()) {

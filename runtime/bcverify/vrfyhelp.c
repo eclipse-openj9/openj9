@@ -1095,15 +1095,13 @@ static UDATA compareTwoUTF8s(J9UTF8 * first, J9UTF8 * second)
 
 static void getNameAndLengthFromClassNameList (J9BytecodeVerificationData *verifyData, UDATA listIndex, U_8 ** name, UDATA * length)
 {
-	U_32 * offset;
-
-	offset = (U_32 *) verifyData->classNameList[listIndex];
-	*length = (U_32) J9UTF8_LENGTH(offset + 1);
-	if (offset[0] == 0) {
-		*name = J9UTF8_DATA(offset + 1);
+	U_32 *offset = (U_32 *)verifyData->classNameList[listIndex];
+	*length = J9UTF8_LENGTH((J9UTF8 *)(offset + 1));
+	if (0 == offset[0]) {
+		*name = J9UTF8_DATA((J9UTF8 *)(offset + 1));
 	} else {
-		J9ROMClass * romClass = verifyData->romClass;
-		*name = (U_8 *) ((UDATA) offset[0] + (UDATA) romClass);
+		J9ROMClass *romClass = verifyData->romClass;
+		*name = (U_8 *)((UDATA)offset[0] + (UDATA)romClass);
 	}
 }
 

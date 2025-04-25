@@ -356,18 +356,18 @@ copyStringToUTF8WithMemAlloc(J9VMThread *vmThread, j9object_t string, UDATA stri
 	return (char *)result;
 }
 
-J9UTF8*
+J9UTF8 *
 copyStringToJ9UTF8WithMemAlloc(J9VMThread *vmThread, j9object_t string, UDATA stringFlags, const char *prependStr, UDATA prependStrLength, char *buffer, UDATA bufferLength)
 {
 	Assert_VM_notNull(prependStr);
 	Assert_VM_notNull(string);
 
-	U_8 *result = NULL;
+	J9UTF8 *result = NULL;
 	UDATA stringLength = J9VMJAVALANGSTRING_LENGTH(vmThread, string);
 	U_64 length = sizeof(J9UTF8) + prependStrLength + ((U_64)stringLength * 3);
 
 	if (J9_ARE_ALL_BITS_SET(stringFlags, J9_STR_NULL_TERMINATE_RESULT)) {
-		++length;
+		length += 1;
 	}
 
 #if UDATA_MAX < (3 * INT32_MAX)
@@ -387,27 +387,27 @@ copyStringToJ9UTF8WithMemAlloc(J9VMThread *vmThread, j9object_t string, UDATA st
 	if ((prependStrLength > J9UTF8_MAX_LENGTH) || (length > (J9UTF8_MAX_LENGTH - prependStrLength))) {
 		result = NULL;
 	} else if (length > bufferLength) {
-		result = (U_8 *)j9mem_allocate_memory((UDATA)length, OMRMEM_CATEGORY_VM);
+		result = (J9UTF8 *)j9mem_allocate_memory((UDATA)length, OMRMEM_CATEGORY_VM);
 	} else {
-		result = (U_8 *)buffer;
+		result = (J9UTF8 *)buffer;
 	}
 
 	if (NULL != result) {
 		UDATA computedUtf8Length = 0;
 
 		if (0 < prependStrLength) {
-			memcpy(result + sizeof(J9UTF8), prependStr, prependStrLength);
+			memcpy(J9UTF8_DATA(result), prependStr, prependStrLength);
 		}
 
 		computedUtf8Length = copyStringToUTF8Helper(
 				vmThread, string, stringFlags, 0, stringLength,
-				result + sizeof(J9UTF8) + prependStrLength,
+				J9UTF8_DATA(result) + prependStrLength,
 				(UDATA)(length - sizeof(J9UTF8) - prependStrLength));
 
 		J9UTF8_SET_LENGTH(result, (U_16)computedUtf8Length + (U_16)prependStrLength);
 	}
 
-	return (J9UTF8 *)result;
+	return result;
 }
 
 J9UTF8 *
@@ -416,12 +416,12 @@ copyStringToJ9UTF8WithPortLib(J9VMThread *vmThread, j9object_t string, UDATA str
 	Assert_VM_notNull(prependStr);
 	Assert_VM_notNull(string);
 
-	U_8 *result = NULL;
+	J9UTF8 *result = NULL;
 	UDATA stringLength = J9VMJAVALANGSTRING_LENGTH(vmThread, string);
 	U_64 length = sizeof(J9UTF8) + prependStrLength + ((U_64)stringLength * 3);
 
 	if (J9_ARE_ALL_BITS_SET(stringFlags, J9_STR_NULL_TERMINATE_RESULT)) {
-		++length;
+		length += 1;
 	}
 
 #if UDATA_MAX < (3 * INT32_MAX)
@@ -437,25 +437,25 @@ copyStringToJ9UTF8WithPortLib(J9VMThread *vmThread, j9object_t string, UDATA str
 #endif /* UDATA_MAX < (3 * INT32_MAX) */
 
 	if ((prependStrLength <= J9UTF8_MAX_LENGTH) && (length <= (J9UTF8_MAX_LENGTH - prependStrLength))) {
-		result = (U_8 *)portLib->mem_allocate_memory(portLib, (UDATA)length, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM);
+		result = (J9UTF8 *)portLib->mem_allocate_memory(portLib, (UDATA)length, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM);
 	}
 
 	if (NULL != result) {
 		UDATA computedUtf8Length = 0;
 
 		if (0 < prependStrLength) {
-			memcpy(result + sizeof(J9UTF8), prependStr, prependStrLength);
+			memcpy(J9UTF8_DATA(result), prependStr, prependStrLength);
 		}
 
 		computedUtf8Length = copyStringToUTF8Helper(
 				vmThread, string, stringFlags, 0, stringLength,
-				result + sizeof(J9UTF8) + prependStrLength,
+				J9UTF8_DATA(result) + prependStrLength,
 				(UDATA)(length - sizeof(J9UTF8) - prependStrLength));
 
 		J9UTF8_SET_LENGTH(result, (U_16)computedUtf8Length + (U_16)prependStrLength);
 	}
 
-	return (J9UTF8 *)result;
+	return result;
 }
 
 char *

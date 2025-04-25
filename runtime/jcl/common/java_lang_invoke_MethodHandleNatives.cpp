@@ -823,8 +823,8 @@ setCallSiteTargetImpl(J9VMThread *currentThread, jobject callsite, jobject targe
 		J9Class *mcsClass = vmFuncs->peekClassHashTable(
 			currentThread,
 			javaVM->systemClassLoader,
-			J9UTF8_DATA(&mutableCallSite),
-			J9UTF8_LENGTH(&mutableCallSite));
+			J9UTF8_DATA((J9UTF8 *)&mutableCallSite),
+			J9UTF8_LENGTH((J9UTF8 *)&mutableCallSite));
 
 		if (!isVolatile /* MutableCallSite uses setTargetNormal(). */
 		&& (NULL != jitConfig)

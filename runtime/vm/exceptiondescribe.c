@@ -223,13 +223,13 @@ printStackTraceEntry(J9VMThread * vmThread, void * voidUserData, UDATA bytecodeO
 *
 * @return The J9class, or NULL on failure.
 */
-static J9Class*
+static J9Class *
 findJ9ClassForROMClass(J9VMThread *vmThread, J9ROMClass *romClass, J9ClassLoader **resultClassLoader)
 {
 	J9UTF8 const *utfClassName = J9ROMCLASS_CLASSNAME(romClass);
 	J9JavaVM *vm = vmThread->javaVM;
 	J9SharedClassConfig *config = vm->sharedClassConfig;
-	J9Class* ret = NULL;
+	J9Class *ret = NULL;
 
 	if (_J9ROMCLASS_J9MODIFIER_IS_SET(romClass, J9AccClassAnonClass)) {
 		/* Anonymous classes are not allowed in any class loader hash table. */
@@ -240,10 +240,10 @@ findJ9ClassForROMClass(J9VMThread *vmThread, J9ROMClass *romClass, J9ClassLoader
 		&& (NULL != config->romToRamHashTable)
 	) {
 		J9ClassLoaderWalkState walkState;
-		J9ClassLoader* classLoader = NULL;
+		J9ClassLoader *classLoader = NULL;
 		BOOLEAN fastMode = J9_ARE_ALL_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_FAST_CLASS_HASH_TABLE);
-		J9Class* ramClass = NULL;
-		RomToRamEntry *resultEntry;
+		J9Class *ramClass = NULL;
+		RomToRamEntry *resultEntry = NULL;
 		RomToRamQueryEntry searchEntry;
 		searchEntry.romClass = (J9ROMClass *)((UDATA)romClass | ROM_TO_RAM_QUERY_TAG);
 
@@ -267,7 +267,7 @@ findJ9ClassForROMClass(J9VMThread *vmThread, J9ROMClass *romClass, J9ClassLoader
 		 * All ROMClasses from the SCC are owned by the bootstrap class loader. To minimize the chances to iterate all class loaders, probe
 		 * the booststrap loader, extensionClassLoader and application loader first to determine if they have the J9Class for the current class.
 		 */
-		ramClass = hashClassTableAt(*resultClassLoader, J9UTF8_DATA(utfClassName), J9UTF8_LENGTH(utfClassName));
+		ramClass = hashClassTableAt(*resultClassLoader, (U_8 *)J9UTF8_DATA(utfClassName), J9UTF8_LENGTH(utfClassName));
 		if ((NULL != ramClass)
 			&& (romClass == ramClass->romClass)
 		) {
@@ -278,7 +278,7 @@ findJ9ClassForROMClass(J9VMThread *vmThread, J9ROMClass *romClass, J9ClassLoader
 			goto cacheresult;
 		}
 
-		ramClass = hashClassTableAt(vm->extensionClassLoader, J9UTF8_DATA(utfClassName), J9UTF8_LENGTH(utfClassName));
+		ramClass = hashClassTableAt(vm->extensionClassLoader, (U_8 *)J9UTF8_DATA(utfClassName), J9UTF8_LENGTH(utfClassName));
 		if ((NULL != ramClass)
 			&& (romClass == ramClass->romClass)
 		) {
@@ -290,7 +290,7 @@ findJ9ClassForROMClass(J9VMThread *vmThread, J9ROMClass *romClass, J9ClassLoader
 			goto cacheresult;
 		}
 
-		ramClass = hashClassTableAt(vm->applicationClassLoader, J9UTF8_DATA(utfClassName), J9UTF8_LENGTH(utfClassName));
+		ramClass = hashClassTableAt(vm->applicationClassLoader, (U_8 *)J9UTF8_DATA(utfClassName), J9UTF8_LENGTH(utfClassName));
 		if ((NULL != ramClass)
 			&& (romClass == ramClass->romClass)
 		) {
@@ -308,7 +308,7 @@ findJ9ClassForROMClass(J9VMThread *vmThread, J9ROMClass *romClass, J9ClassLoader
 				&& (classLoader != vm->extensionClassLoader)
 				&& (classLoader != vm->applicationClassLoader)
 			) {
-				ramClass = hashClassTableAt(classLoader, J9UTF8_DATA(utfClassName), J9UTF8_LENGTH(utfClassName));
+				ramClass = hashClassTableAt(classLoader, (U_8 *)J9UTF8_DATA(utfClassName), J9UTF8_LENGTH(utfClassName));
 				if ((NULL != ramClass)
 					&& (romClass == ramClass->romClass)
 				) {
@@ -332,7 +332,7 @@ cacheresult:
 			omrthread_rwmutex_exit_write(config->romToRamHashTableMutex);
 		}
 	} else {
-		ret = peekClassHashTable(vmThread, *resultClassLoader, J9UTF8_DATA(utfClassName), J9UTF8_LENGTH(utfClassName));
+		ret = peekClassHashTable(vmThread, *resultClassLoader, (U_8 *)J9UTF8_DATA(utfClassName), J9UTF8_LENGTH(utfClassName));
 	}
 done:
 	return ret;

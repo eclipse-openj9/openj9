@@ -95,7 +95,7 @@ jvmCheckpointHooks(J9VMThread *currentThread)
 	/* initialize before running checkpoint hooks */
 	initializeCriuHooks(currentThread);
 	/* make sure Java hooks are the first thing run when initiating checkpoint */
-	runStaticMethod(currentThread, J9UTF8_DATA(&j9InternalCheckpointHookAPI_name), &nas, 0, NULL);
+	runStaticMethod(currentThread, J9UTF8_DATA((J9UTF8 *)&j9InternalCheckpointHookAPI_name), &nas, 0, NULL);
 
 	if (VM_VMHelpers::exceptionPending(currentThread)) {
 		result = FALSE;
@@ -116,7 +116,7 @@ jvmRestoreHooks(J9VMThread *currentThread)
 	Assert_VM_true(isCRaCorCRIUSupportEnabled(vm));
 
 	/* make sure Java hooks are the last thing run before restore */
-	runStaticMethod(currentThread, J9UTF8_DATA(&j9InternalCheckpointHookAPI_name), &nas, 0, NULL);
+	runStaticMethod(currentThread, J9UTF8_DATA((J9UTF8 *)&j9InternalCheckpointHookAPI_name), &nas, 0, NULL);
 
 	if (VM_VMHelpers::exceptionPending(currentThread)) {
 		result = FALSE;

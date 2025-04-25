@@ -1600,17 +1600,17 @@ baseTypeToIndex(UDATA encodedType)
  * convert a BCV encoded data type to a human readable string based on specified format.
  */
 static UDATA
-printDataType(J9PortLibrary* portLibrary, VerboseVerificationBuffer* buf, J9BytecodeVerificationData* verifyData, UDATA encodedType, const char* fmt)
+printDataType(J9PortLibrary *portLibrary, VerboseVerificationBuffer *buf, J9BytecodeVerificationData *verifyData, UDATA encodedType, const char *fmt)
 {
-	J9ROMClass* romClass = verifyData->romClass;
-	struct J9UTF8* utf = NULL;
-	U_32* offset = 0;
+	J9ROMClass *romClass = verifyData->romClass;
+	J9UTF8 *utf = NULL;
+	U_32 *offset = NULL;
 	UDATA typeTag = encodedType & BCV_TAG_MASK;
 	UDATA msgLen = 0;
 	UDATA cpIndex = 0;
-	const char* typeString = NULL;
+	const char *typeString = NULL;
 	J9ROMConstantPoolItem *constantPool = NULL;
-	U_8* code = NULL;
+	U_8 *code = NULL;
 	PORT_ACCESS_FROM_PORT(portLibrary);
 
 	switch (typeTag) {
@@ -1646,12 +1646,12 @@ printDataType(J9PortLibrary* portLibrary, VerboseVerificationBuffer* buf, J9Byte
 	case BCV_OBJECT_OR_ARRAY: /* FALLTHROUGH */
 	case BCV_SPECIAL_INIT: /* FALLTHROUGH */
 	default:
-		offset = (U_32*) verifyData->classNameList[BCV_INDEX_FROM_TYPE(encodedType)];
-		msgLen = (U_32) J9UTF8_LENGTH(offset + 1);
-		if (offset[0] == 0) {
-			typeString = (const char*)J9UTF8_DATA(offset + 1);
+		offset = (U_32 *)verifyData->classNameList[BCV_INDEX_FROM_TYPE(encodedType)];
+		msgLen = J9UTF8_LENGTH((J9UTF8 *)(offset + 1));
+		if (0 == offset[0]) {
+			typeString = (const char *)J9UTF8_DATA((J9UTF8 *)(offset + 1));
 		} else {
-			typeString = (const char*)((UDATA) offset[0] + (UDATA) romClass);
+			typeString = (const char *)((UDATA)offset[0] + (UDATA)romClass);
 		}
 		printVerificationInfo(PORTLIB, buf, fmt, msgLen, typeString);
 		break;

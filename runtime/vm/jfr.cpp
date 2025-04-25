@@ -1286,7 +1286,7 @@ getTypeIdUTF8(J9VMThread *currentThread, const J9UTF8 *className)
 	Trc_VM_getTypeIdUTF8_Entry(currentThread, J9UTF8_LENGTH(className), J9UTF8_DATA(className));
 
 	omrthread_monitor_enter(vm->classTableMutex);
-	J9Class *clazz = hashClassTableAt(vm->systemClassLoader, J9UTF8_DATA(className), J9UTF8_LENGTH(className));
+	J9Class *clazz = hashClassTableAt(vm->systemClassLoader, (U_8 *)J9UTF8_DATA(className), J9UTF8_LENGTH(className));
 	omrthread_monitor_exit(vm->classTableMutex);
 
 	if (NULL != clazz) {
