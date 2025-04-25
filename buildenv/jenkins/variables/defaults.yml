@@ -77,7 +77,7 @@ artifactory:
   buildNamePrefix:
     osu: ''
   daysToKeepArtifacts:
-    osu: 40
+    osu: 21
   manualCleanup:
     osu: true
   vpn:
@@ -103,15 +103,15 @@ test_dependencies_job_name: 'test.getDependency'
 slack_channel: '#jenkins'
 build_discarder:
   logs:
-    Nightly: 40
-    Release: 5
-    OMR: 15
-    OpenJDK8: 5
-    OpenJDK11: 5
-    OpenJDK17: 10
-    OpenJDK21: 10
-    OpenJDK24: 10
-    OpenJDK: 10
+    Nightly: 30
+    Release: 3
+    OMR: 3
+    OpenJDK8: 3
+    OpenJDK11: 3
+    OpenJDK17: 3
+    OpenJDK21: 3
+    OpenJDK24: 3
+    OpenJDK: 3
     Personal: 30
     Pipeline: 100
 restart_timeout:
