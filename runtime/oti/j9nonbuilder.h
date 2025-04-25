@@ -4317,7 +4317,6 @@ typedef struct J9JITConfig {
 	void* methodsToDelete;
 	struct J9Method* newInstanceImplMethod;
 	UDATA jitFloatReturnUsage;
-	void* processorInfo;
 	void* i2jReturnTable;
 	void* privateConfig;
 	void  ( *jitExclusiveVMShutdownPending)(struct J9VMThread *vmThread) ;

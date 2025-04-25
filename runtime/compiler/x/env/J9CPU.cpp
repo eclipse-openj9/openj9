@@ -77,18 +77,6 @@ J9::X86::CPU::detect(OMRPortLibrary * const omrPortLib)
    return OMR::X86::CPU::detect(omrPortLib);
    }
 
-const char *
-J9::X86::CPU::getProcessorVendorId()
-   {
-   return self()->getX86ProcessorVendorId();
-   }
-
-uint32_t
-J9::X86::CPU::getProcessorSignature()
-   {
-   return self()->getX86ProcessorSignature();
-   }
-
 bool
 J9::X86::CPU::isCompatible(const OMRProcessorDesc& processorDescription)
    {

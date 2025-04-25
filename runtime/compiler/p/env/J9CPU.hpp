@@ -35,7 +35,6 @@ namespace J9 { typedef J9::Power::CPU CPUConnector; }
 #endif
 
 #include "compiler/env/J9CPU.hpp"
-#include "env/ProcessorInfo.hpp"
 #include "infra/Assert.hpp"
 #include "infra/Flags.hpp"
 

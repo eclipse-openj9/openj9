@@ -153,53 +153,6 @@ TR_J9VMBase::hasFPU()
    return portLibCall_sysinfo_has_floating_point_unit();
    }
 
-
-static TR_Processor
-portLibCall_getX86ProcessorType(const char *vendor, uint32_t processorSignature)
-   {
-   uint32_t familyCode = (processorSignature & 0x00000f00) >> 8;
-   if (!strncmp(vendor, "GenuineIntel", 12))
-      {
-      switch (familyCode)
-         {
-         case 0x05:
-            return TR_X86ProcessorIntelPentium;
-
-         case 0x06:
-            {
-            uint32_t modelCode  = (processorSignature & 0x000000f0) >> 4;
-            if (modelCode == 0xf)
-               return TR_X86ProcessorIntelCore2;
-            return TR_X86ProcessorIntelP6;
-            }
-
-         case 0x0f:
-            return TR_X86ProcessorIntelPentium4;
-         }
-      }
-   else if (!strncmp(vendor, "AuthenticAMD", 12))
-      {
-      switch (familyCode) // pull out the family code
-         {
-         case 0x05:
-            {
-            uint32_t modelCode  = (processorSignature & 0x000000f0) >> 4;
-            if (modelCode < 0x04)
-               return TR_X86ProcessorAMDK5;
-            return TR_X86ProcessorAMDK6;
-            }
-
-         case 0x06:
-            return TR_X86ProcessorAMDAthlonDuron;
-
-         case 0x0f:
-            return TR_X86ProcessorAMDOpteron;
-         }
-      }
-
-   return TR_DefaultX86Processor;
-   }
-
 // -----------------------------------------------------------------------------
 /**
    This routine is currently parsing the "model name" line of /proc/cpuinfo
@@ -332,17 +285,7 @@ TR_J9VM::initializeProcessorType()
    else if (TR::Compiler->target.cpu.isX86())
       {
       OMRProcessorDesc processorDescription = TR::Compiler->target.cpu.getProcessorDescription();
-      OMRPORT_ACCESS_FROM_OMRPORT(TR::Compiler->omrPortLib);
-
       TR::Compiler->target.cpu = TR::CPU::customize(processorDescription);
-
-      const char *vendor = TR::Compiler->target.cpu.getProcessorVendorId();
-      uint32_t processorSignature = TR::Compiler->target.cpu.getProcessorSignature();
-
-      TR::Compiler->target.cpu.setProcessor(portLibCall_getX86ProcessorType(vendor, processorSignature));
-
-      TR_ASSERT(TR::Compiler->target.cpu.id() >= TR_FirstX86Processor
-             && TR::Compiler->target.cpu.id() <= TR_LastX86Processor, "Not a valid X86 Processor Type");
       }
    else if (TR::Compiler->target.cpu.isARM())
       {
