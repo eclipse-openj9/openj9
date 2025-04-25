@@ -11022,7 +11022,7 @@ hashCodeHelper(TR::Node *node, TR::CodeGenerator *cg, TR::DataType elementType,
    // End of this method
    TR::RegisterDependencyConditions *dependencies =
       new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0,
-         (TR::Int8 == elementType ? 16 : (TR::Int16 == elementType ? 13 : 12)) + // accumulators
+         (TR::Int8 == elementType ? 15 : (TR::Int16 == elementType ? 12 : 11)) + // accumulators
             (!isSigned && TR::Int32 != elementType), // vunpackMaskReg
          cg->trMemory());
 
