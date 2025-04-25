@@ -1471,15 +1471,21 @@ createMethodMetaData(
 
    /* Legend of the info stored at "data". From top to bottom, the address increases
 
-      Exception Info
+      Exception info
       --------------
-      Inline Info
+      Inline info
       --------------
-      Stack Atlas
+      Stack atlas
       --------------
-      Stack alloc map (if exists)
+      Stack alloc map (if there are local objects)
       --------------
-      internal pointer map
+      Internal pointer map
+      --------------
+      OSR info (if OSR)
+      --------------
+      GPU info (if GPU)
+      --------------
+      Bytecode PC to instruction address map (if enabled for RI)
 
    */
 
