@@ -4689,7 +4689,7 @@ TR_AggregationHT::add(J9ROMMethod *romMethod, J9ROMClass *romClass, TR_IPBytecod
                {
                TR_IPBCDataCallGraph *cg = cgEntry->asIPBCDataCallGraph();
                int32_t cnt = cg ? cg->getSumCount() : 0;
-               fprintf(stderr, "We cannot find the same PC twice. PC=%zu romMethod=%p sumCount=%d\n",
+               fprintf(stderr, "We cannot find the same PC twice. PC=%" OMR_PRIuPTR " romMethod=%p sumCount=%d\n",
                        cgEntry->getPC(), romMethod, cnt);
                return;
                }
@@ -5188,7 +5188,7 @@ TR_IProfiler::traverseIProfilerTableAndGenerateHistograms(J9JITConfig *jitConfig
             {
             fprintf(stderr, "Entry with no weight\n");
             for (int j = 0; j < NUM_CS_SLOTS; j++)
-               fprintf(stderr, "Class %zu, weight=%u\n", cgData->getClazz(j), cgData->_weight[j]);
+               fprintf(stderr, "Class %" OMR_PRIuPTR ", weight=%u\n", cgData->getClazz(j), cgData->_weight[j]);
             }
 
          double percentage = 0;

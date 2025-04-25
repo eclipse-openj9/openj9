@@ -24,6 +24,7 @@
 #include "CuTest.h"
 #include "exelib_api.h"
 #include <string.h>
+#include "omrformatconsts.h"
 
 extern CuSuite *GetTestSuite(void);
 
@@ -46,7 +47,7 @@ UDATA RunAllTests(J9PortLibrary *portLibrary)
 	CuSuiteDetails(suite, output);
 
 	printf("%s\n", output->buffer);
-	printf("Tests took %zd usec to run.\n", end - start);
+	printf("Tests took %" OMR_PRIuPTR " usec to run.\n", end - start);
 
 	if (suite->failCount == 0){
 		return 0;
