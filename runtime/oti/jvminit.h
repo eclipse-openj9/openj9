@@ -444,6 +444,8 @@ enum INIT_STAGE {
 #define VMOPT_XXSLEEPMILLISECONDSFORNOTCHECKPOINTSAFE_EQUALS "-XX:sleepMillisecondsForNotCheckpointSafe="
 #define VMOPT_XXENABLEDEBUGONRESTORE "-XX:+DebugOnRestore"
 #define VMOPT_XXDISABLEDEBUGONRESTORE "-XX:-DebugOnRestore"
+#define VMOPT_XXENABLETIMECOMPENSATION "-XX:+EnableTimeCompensation"
+#define VMOPT_XXDISABLETIMECOMPENSATION "-XX:-EnableTimeCompensation"
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */
 
 #if defined(J9VM_OPT_CRAC_SUPPORT)

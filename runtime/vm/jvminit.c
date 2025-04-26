@@ -4186,6 +4186,14 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 		vm->checkpointState.javaDebugThreadCount = 0;
 	}
 
+	{
+		IDATA enableTimeCompensation = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXENABLETIMECOMPENSATION, NULL);
+		IDATA disableTimeCompensation = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXDISABLETIMECOMPENSATION, NULL);
+		if (enableTimeCompensation >= disableTimeCompensation) {
+			vm->checkpointState.flags |= J9VM_CRIU_ENABLE_TIME_COMPENSATION;
+		}
+	}
+
 	vm->checkpointState.lastRestoreTimeInNanoseconds = -1;
 	vm->checkpointState.processRestoreStartTimeInNanoseconds = -1;
 #endif /* defined(J9VM_OPT_CRIU_SUPPORT) */

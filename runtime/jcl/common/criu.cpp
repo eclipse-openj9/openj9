@@ -81,6 +81,19 @@ Java_openj9_internal_criu_InternalCRIUSupport_isCRIUSupportEnabledImpl(JNIEnv *e
 }
 
 jboolean JNICALL
+Java_openj9_internal_criu_InternalCRIUSupport_isTimeCompensationEnabledImpl(JNIEnv *env, jclass unused)
+{
+	J9VMThread *currentThread = (J9VMThread *)env;
+	jboolean res = JNI_FALSE;
+
+	if (currentThread->javaVM->internalVMFunctions->isTimeCompensationEnabled(currentThread)) {
+		res = JNI_TRUE;
+	}
+
+	return res;
+}
+
+jboolean JNICALL
 Java_openj9_internal_criu_InternalCRIUSupport_enableCRIUSecProviderImpl(JNIEnv *env, jclass unused)
 {
 	J9VMThread *currentThread = (J9VMThread *)env;

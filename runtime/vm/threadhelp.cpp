@@ -441,7 +441,7 @@ timeCompensationHelper(J9VMThread *vmThread, U_8 threadHelperType, omrthread_mon
 	J9JavaVM *vm = vmThread->javaVM;
 	/* Time compensation only supports CRIURestoreNonPortableMode which is default mode. */
 	bool waitTimed = (millis > 0) || (nanos > 0);
-	bool compensationMightBeRequired = waitTimed && !J9_IS_CRIU_RESTORED(vm);
+	bool compensationMightBeRequired = waitTimed && !J9_IS_CRIU_RESTORED(vm) && isTimeCompensationEnabled(vmThread);
 	I_64 nanoTimeStart = 0;
 	if (compensationMightBeRequired) {
 		PORT_ACCESS_FROM_JAVAVM(vm);

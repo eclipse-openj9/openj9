@@ -1330,6 +1330,9 @@ Java_openj9_internal_criu_InternalCRIUSupport_isCheckpointAllowedImpl(JNIEnv *en
 jboolean JNICALL
 Java_openj9_internal_criu_InternalCRIUSupport_isCRIUSupportEnabledImpl(JNIEnv *env, jclass unused);
 
+jboolean JNICALL
+Java_openj9_internal_criu_InternalCRIUSupport_isTimeCompensationEnabledImpl(JNIEnv *env, jclass unused);
+
 void JNICALL
 Java_openj9_internal_criu_InternalCRIUSupport_checkpointJVMImpl(
 		JNIEnv *env, jclass unused, jstring imagesDir, jboolean leaveRunning, jboolean shellJob, jboolean extUnixSupport,

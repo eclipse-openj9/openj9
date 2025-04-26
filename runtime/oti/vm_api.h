@@ -535,6 +535,16 @@ BOOLEAN
 isCRIUSupportEnabled(J9VMThread *currentThread);
 
 /**
+ * @brief Queries if the time compensation is enabled.
+ * By default the time compensation is enabled, it can be disabled with -XX:-EnableTimeCompensation.
+ *
+ * @param currentThread vmthread token
+ * @return TRUE if enabled, FALSE otherwise
+ */
+BOOLEAN
+isTimeCompensationEnabled(J9VMThread *currentThread);
+
+/**
  * @brief Checks if the CRIU security provider is enabled when CRIU
  * checkpoints are allowed. By default it is enabled, it can be disabled with
  * -XX:-CRIUSecProvider.
