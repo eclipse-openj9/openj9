@@ -56,6 +56,8 @@ The following diagram provides the high level overview. The
 (7) | GPU Info                                            | // If GPU
     |-----------------------------------------------------|
 (8) | Bytecode PC to Instruction Address Map              | // If Hardware Profiling
+    |-----------------------------------------------------|
+(9) | invokeBasic() Call Site Info                        | // If Applicable Call Sites Exist
     +-----------------------------------------------------+
 ```
 
@@ -435,3 +437,10 @@ via the `bodyInfo` field of the `J9JITExceptionTable` struct. This
 structure contains data such as flags used to describe the body,
 as well as data used to implement features such as
 Guarded Counting Recompilation (GCR).
+
+## (9) `invokeBasic()` Call Info
+The `invokeBasic()` Call Info section can be accessed via the
+`invokeBasicCallInfo` field of the `J9JITExceptionTable` struct. This section
+consists of a single instance of the variable-size `J9JITInvokeBasicCallInfo`
+struct, which contains a table of call sites that are capable of calling the
+interpreter's implementation of `MethodHandle.invokeBasic()`.

@@ -1994,6 +1994,15 @@ void J9::X86::PrivateLinkage::buildDirectCall(
          }
 
       callInstr = generateHelperCallInstruction(callNode, TR_j2iTransition, NULL, cg());
+
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+      auto rm = methodSymbol->getMandatoryRecognizedMethod();
+      if (rm == TR::java_lang_invoke_MethodHandle_invokeBasic)
+         {
+         cg()->addInvokeBasicCallSite(callNode, callInstr);
+         }
+#endif
+
       cg()->stopUsingRegister(ramMethodReg);
       }
    else if (comp()->target().is64Bit() && methodSymbol->isJITInternalNative())
@@ -2301,6 +2310,15 @@ TR::Instruction *J9::X86::PrivateLinkage::buildVFTCall(TR::X86CallSite &site, TR
          //
          TR::LabelSymbol *jmpLabel   = TR::LabelSymbol::create(cg()->trHeapMemory(),cg());
          callInstr = generateLabelInstruction(TR::InstOpCode::CALLImm4, callNode, jmpLabel, cg());
+
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+         // JITHelpers.dispatchVirtual() can target MethodHandle.invokeBasic().
+         auto rm = resolvedMethodSymbol->getMandatoryRecognizedMethod();
+         if (rm == TR::com_ibm_jit_JITHelpers_dispatchVirtual)
+            {
+            cg()->addInvokeBasicCallSite(callNode, callInstr);
+            }
+#endif
 
          // Jump outlined
          //

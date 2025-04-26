@@ -897,6 +897,15 @@ TR_RelocationRuntime::relocateMethodMetaData(UDATA codeRelocationAmount, UDATA d
       _exceptionTable->osrInfo = (void *) (((U_8 *)_exceptionTable->osrInfo) + dataRelocationAmount);
       }
 
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   if (_exceptionTable->invokeBasicCallInfo != NULL)
+      {
+      uint8_t *infoAddr = (uint8_t*)_exceptionTable->invokeBasicCallInfo;
+      infoAddr += dataRelocationAmount;
+      _exceptionTable->invokeBasicCallInfo = (J9JITInvokeBasicCallInfo*)infoAddr;
+      }
+#endif
+
    // Reset the uninitialized bit
    _exceptionTable->flags &= ~JIT_METADATA_NOT_INITIALIZED;
    }

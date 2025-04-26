@@ -2320,6 +2320,15 @@ void J9::Power::PrivateLinkage::buildVirtualDispatch(TR::Node                   
       TR::Instruction *gcPoint = generateInstruction(cg(), TR::InstOpCode::bctrl, callNode);
       generateDepLabelInstruction(cg(), TR::InstOpCode::label, callNode, doneLabel, dependencies);
 
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+      // JITHelpers.dispatchVirtual() can target MethodHandle.invokeBasic().
+      auto rm = methodSymbol->getMandatoryRecognizedMethod();
+      if (rm == TR::com_ibm_jit_JITHelpers_dispatchVirtual)
+         {
+         cg()->addInvokeBasicCallSite(callNode, gcPoint);
+         }
+#endif
+
       gcPoint->PPCNeedsGCMap(regMapForGC);
       return;
       }

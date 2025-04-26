@@ -701,6 +701,34 @@ typedef struct J9VTuneInterface {
 
 #define J9VTUNE_TRACE_LINE_NUMBERS  1
 
+/* A description of a call instruction within a JIT body that may land directly
+ * in the interpreter's invokeBasic() INL. From the JIT's perspective, the call
+ * is either a direct call to invokeBasic() (for which the actual call instruction
+ * goes via j2iTransition), or it's a call to JITHelpers.dispatchVirtual().
+ */
+typedef struct J9JITInvokeBasicCallSite {
+	U_32 jitReturnAddressOffset; /* from startPC */
+	U_8 numArgSlots;
+	void *j2iThunk; /* for JITHelpers.dispatchVirtual() */
+} J9JITInvokeBasicCallSite;
+
+#if defined(_MSC_VER)
+#pragma warning(push)
+#pragma warning(disable : 4200)
+#endif /* defined(_MSC_VER) */
+
+/* Metadata describing the calls within a JIT body that may land directly in
+ * the interpreter's invokeBasic() INL.
+ */
+typedef struct J9JITInvokeBasicCallInfo {
+	U_32 numSites;
+	struct J9JITInvokeBasicCallSite sites[];
+} J9JITInvokeBasicCallInfo;
+
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif /* defined(_MSC_VER) */
+
 /* @ddr_namespace: map_to_type=J9JITExceptionTable */
 
 /* This structure is exposed by the compile_info field of CompiledMethodLoad() / JVMTI_EVENT_COMPILED_METHOD_LOAD.
@@ -739,6 +767,11 @@ typedef struct J9JITExceptionTable {
 	UDATA codeCacheAlloc;
 	void* gpuCode;
 	void* riData;
+	/* This is only needed for J9VM_OPT_OPENJDK_METHODHANDLE, but include this
+	 * field unconditionally so that the size and layout of J9JITExceptionTable
+	 * won't depend on configure options.
+	 */
+	struct J9JITInvokeBasicCallInfo* invokeBasicCallInfo;
 } J9JITExceptionTable;
 
 #define JIT_METADATA_FLAGS_USED_FOR_SIZE 0x1
@@ -4262,6 +4295,9 @@ typedef struct J9JITConfig {
 	UDATA  ( *getByteCodeIndexFromStackMap)(struct J9JITExceptionTable *metaData, void *stackMap) ;
 	U_32  ( *getJitRegisterMap)(struct J9JITExceptionTable *metadata, void * stackMap) ;
 	UDATA  ( *getCurrentByteCodeIndexAndIsSameReceiver)(struct J9JITExceptionTable * methodMetaData, void * stackMap, void * currentInlinedCallSite, UDATA * isSameReceiver) ;
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	struct J9JITInvokeBasicCallSite* ( *jitGetInvokeBasicCallSiteFromPC)(struct J9VMThread *vmThread, UDATA jitPC);
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 	void  ( *jitCodeBreakpointAdded)(struct J9VMThread * currentThread, J9Method * method) ;
 	void  ( *jitCodeBreakpointRemoved)(struct J9VMThread * currentThread, J9Method * method) ;
 	void  ( *jitDataBreakpointAdded)(struct J9VMThread * currentThread) ;
