@@ -373,6 +373,14 @@ uint8_t *TR::PPCCallSnippet::emitSnippetBody()
 
    cursor += PPC_INSTRUCTION_LENGTH;
 
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   auto rm = methodSymbol->getMandatoryRecognizedMethod();
+   if (rm == TR::java_lang_invoke_MethodHandle_invokeBasic)
+      {
+      cg()->addInvokeBasicCallSite(callNode, cursor);
+      }
+#endif
+
    if (isNativeStatic)
       {
       // Rather than placing the return address as data after the 'bl', place a 'b' back to main line code

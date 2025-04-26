@@ -81,6 +81,9 @@ J9::CodeGenerator::CodeGenerator(TR::Compilation *comp) :
    _jniCallSites(getTypedAllocator<TR_Pair<TR_ResolvedMethod,TR::Instruction> *>(comp->allocator())),
    _monitorMapping(std::less<ncount_t>(), MonitorMapAllocator(comp->trMemory()->heapMemoryRegion())),
    _dummyTempStorageRefNode(NULL)
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   , _invokeBasicCallSites(comp->region())
+#endif
    {
    /**
     * Do not add CodeGenerator initialization logic here.
@@ -797,15 +800,16 @@ J9::CodeGenerator::lowerTreeIfNeeded(
       {
       TR::RecognizedMethod rm = node->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod();
 
-      if(rm == TR::java_lang_invoke_MethodHandle_invokeBasic ||
-        rm == TR::java_lang_invoke_MethodHandle_linkToStatic ||
+      // There's no need to set tempSlot for invokeBasic(). The number of stack
+      // slots for the arguments will be available from the JIT body metadata.
+
+      if(rm == TR::java_lang_invoke_MethodHandle_linkToStatic ||
         rm == TR::java_lang_invoke_MethodHandle_linkToSpecial ||
         rm == TR::java_lang_invoke_MethodHandle_linkToVirtual ||
         rm == TR::java_lang_invoke_MethodHandle_linkToInterface)
          {
-         // invokeBasic and linkTo* are signature-polymorphic, so the VM needs to know the number of argument slots
-         // for the INL call in order to locate the start of the arguments on the stack. The arg slot count is stored
-         // in vmThread.tempSlot.
+         // linkTo* is signature-polymorphic, so the VM needs to know the number of argument slots for the INL call in order to
+         // locate the start of the arguments on the stack. The arg slot count is stored in vmThread.tempSlot.
          //
          // Furthermore, for unresolved invokedynamic and invokehandle bytecodes, we create a dummy TR_ResolvedMethod call to
          // linkToStatic. The appendix object in the invoke cache array entry could be NULL, which we cannot determine at compile
@@ -5289,3 +5293,111 @@ J9::CodeGenerator::stressJitDispatchJ9MethodJ2I()
    static const bool stress = feGetEnv("TR_stressJitDispatchJ9MethodJ2I") != NULL;
    return stress;
    }
+
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+void
+J9::CodeGenerator::addInvokeBasicCallSiteImpl(
+   TR::Node *callNode, TR::Instruction *instr, uint8_t *retAddr)
+   {
+   TR_ASSERT_FATAL_WITH_NODE(
+      callNode,
+      (instr != NULL) != (retAddr != NULL),
+      "expected exactly one of TR::Instruction or return address");
+
+   if (comp()->getOption(TR_TraceCG))
+      {
+      traceMsg(comp(), "Call instruction ");
+      if (instr != NULL)
+         {
+         traceMsg(comp(), "%p", instr);
+         }
+      else
+         {
+         traceMsg(comp(), "with return address %p", retAddr);
+         }
+
+      traceMsg(
+         comp(),
+         " for n%un [%p] may target VM MethodHandle.invokeBasic\n",
+         callNode->getGlobalIndex(),
+         callNode);
+      }
+
+   TR_J9VMBase *fej9 = comp()->fej9();
+   TR::Node *j2iCallNode = callNode;
+   TR::MethodSymbol *methodSymbol = callNode->getSymbol()->castToMethodSymbol();
+   TR::RecognizedMethod rm = methodSymbol->getMandatoryRecognizedMethod();
+   switch (rm)
+      {
+      case TR::java_lang_invoke_MethodHandle_invokeBasic:
+         break; // ok
+
+      case TR::com_ibm_jit_JITHelpers_dispatchVirtual:
+         j2iCallNode =
+            fej9->getEquivalentVirtualCallNodeForDispatchVirtual(callNode, comp());
+         break;
+
+      default:
+         TR_ASSERT_FATAL_WITH_NODE(
+            callNode,
+            false,
+            "expected MethodHandle.invokeBasic or JITHelpers.dispatchVirtual");
+         break;
+      }
+
+   int32_t numChildren = j2iCallNode->getNumChildren();
+   int32_t firstArgIndex = j2iCallNode->getFirstArgumentIndex();
+   uint32_t numArgSlots32 = 0;
+   for (int32_t i = firstArgIndex; i < numChildren; i++)
+      {
+      TR::Node *child = j2iCallNode->getChild(i);
+
+      // PassThrough nodes will appear to have type TR::NoType. The actual type
+      // of the resulting value is the same as the type of the child.
+      while (child->getOpCodeValue() == TR::PassThrough)
+         {
+         child = child->getChild(0);
+         }
+
+      TR::DataTypes dt = child->getDataType().getDataType();
+      numArgSlots32 += 1 + (uint32_t)(dt == TR::Int64 || dt == TR::Double);
+      }
+
+   if (comp()->getOption(TR_TraceCG))
+      {
+      traceMsg(comp(), "  arg slots: %u\n", numArgSlots32);
+      }
+
+   TR_ASSERT_FATAL_WITH_NODE(
+      callNode,
+      numArgSlots32 <= UINT8_MAX,
+      "too many argument slots (%u)",
+      numArgSlots32);
+
+   uint8_t numArgSlots = (uint8_t)numArgSlots32;
+
+   void *j2iThunk = NULL;
+   if (rm == TR::com_ibm_jit_JITHelpers_dispatchVirtual)
+      {
+      TR::Method *m = methodSymbol->getMethod();
+      char *sig = fej9->getJ2IThunkSignatureForDispatchVirtual(
+         m->signatureChars(), m->signatureLength(), comp());
+
+      int32_t sigLen = strlen(sig);
+      j2iThunk = fej9->getJ2IThunk(sig, sigLen, comp());
+      TR_ASSERT_FATAL_WITH_NODE(callNode, j2iThunk != NULL, "missing J2I thunk");
+
+      if (comp()->getOption(TR_TraceCG))
+         {
+         traceMsg(comp(), "  J2I thunk: %p\n", j2iThunk);
+         }
+      }
+
+   InvokeBasicCallSite site = {};
+   site._instr = instr;
+   site._retAddr = retAddr;
+   site._numArgSlots = numArgSlots;
+   site._j2iThunk = j2iThunk;
+   _invokeBasicCallSites.push_back(site);
+   }
+#endif // defined(J9VM_OPT_OPENJDK_METHODHANDLE)

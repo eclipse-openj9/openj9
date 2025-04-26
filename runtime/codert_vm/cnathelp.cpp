@@ -3383,12 +3383,26 @@ old_slow_icallVMprJavaSendPatchupVirtual(J9VMThread *currentThread)
 	J9Class *clazz = J9OBJECT_CLAZZ(currentThread, receiver);
 	UDATA interpVTableOffset = sizeof(J9Class) - jitVTableOffset;
 	J9Method *method = *(J9Method**)((UDATA)clazz + interpVTableOffset);
-	J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
-	J9ROMNameAndSignature *nas = &romMethod->nameAndSignature;
-	UDATA const thunk = (UDATA)jitConfig->thunkLookUpNameAndSig(jitConfig, nas);
-	UDATA const patchup = (UDATA)jitConfig->patchupVirtual;
-	UDATA *jitVTableSlot = (UDATA*)((UDATA)clazz + jitVTableOffset);
-	VM_AtomicSupport::lockCompareExchange(jitVTableSlot, patchup, thunk);
+	UDATA thunk = 0;
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+	if (J9_BCLOOP_SEND_TARGET_METHODHANDLE_INVOKEBASIC == J9_BCLOOP_DECODE_SEND_TARGET(method->methodRunAddress)) {
+		/* Because invokeBasic() is signature-polymorphic, the signature from the ROM method is irrelevant.
+		 * We need the J2I thunk that corresponds to the signature that the JIT was using at the call site.
+		 * Since this varies depending on the call site, we can't replace the VFT entry with the J2I thunk.
+		 */
+		J9JITInvokeBasicCallSite *site = jitGetInvokeBasicCallSiteFromPC(currentThread, (UDATA)jitReturnAddress);
+		thunk = (UDATA)site->j2iThunk;
+	}
+	else
+#endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
+	{
+		J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+		J9ROMNameAndSignature *nas = &romMethod->nameAndSignature;
+		thunk = (UDATA)jitConfig->thunkLookUpNameAndSig(jitConfig, nas);
+		UDATA const patchup = (UDATA)jitConfig->patchupVirtual;
+		UDATA *jitVTableSlot = (UDATA*)((UDATA)clazz + jitVTableOffset);
+		VM_AtomicSupport::lockCompareExchange(jitVTableSlot, patchup, thunk);
+	}
 	currentThread->tempSlot = thunk;
 }
 

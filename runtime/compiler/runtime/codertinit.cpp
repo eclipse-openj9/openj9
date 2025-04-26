@@ -478,6 +478,9 @@ void codert_init_helpers_and_targets(J9JITConfig * jitConfig, char isSMP)
    jitConfig->getByteCodeIndex = getByteCodeIndex;
    jitConfig->getByteCodeIndexFromStackMap = getByteCodeIndexFromStackMap;
    jitConfig->getCurrentByteCodeIndexAndIsSameReceiver = getCurrentByteCodeIndexAndIsSameReceiver;
+#if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
+   jitConfig->jitGetInvokeBasicCallSiteFromPC = jitGetInvokeBasicCallSiteFromPC;
+#endif
    jitConfig->getJitRegisterMap = getJitRegisterMap;
    jitConfig->jitReportDynamicCodeLoadEvents = jitReportDynamicCodeLoadEvents;
 #if (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
