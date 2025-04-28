@@ -363,15 +363,15 @@ final class Access implements JavaLangAccess {
 		return clz.getDeclaredPublicMethods(name, types);
 	}
 
-	/*[IF JAVA_SPEC_VERSION >= 15]*/
-	public void addOpensToAllUnnamed(Module fromModule, Set<String> concealedPackages, Set<String> exportedPackages) {
-		fromModule.implAddOpensToAllUnnamed(concealedPackages, exportedPackages);
-	}
-	/*[ELSE] JAVA_SPEC_VERSION >= 15 */
+	/*[IF JAVA_SPEC_VERSION < 15]*/
 	public void addOpensToAllUnnamed(Module fromModule, Iterator<String> packages) {
 		fromModule.implAddOpensToAllUnnamed(packages);
 	}
-	/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
+	/*[ELSEIF (JAVA_SPEC_VERSION < 25) | INLINE-TYPES]*/
+	public void addOpensToAllUnnamed(Module fromModule, Set<String> concealedPackages, Set<String> exportedPackages) {
+		fromModule.implAddOpensToAllUnnamed(concealedPackages, exportedPackages);
+	}
+	/*[ENDIF] JAVA_SPEC_VERSION < 15 */
 
 	public boolean isReflectivelyOpened(Module fromModule, String pkg, Module toModule) {
 		return fromModule.isReflectivelyOpened(pkg, toModule);
