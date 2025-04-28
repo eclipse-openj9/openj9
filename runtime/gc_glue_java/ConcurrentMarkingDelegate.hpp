@@ -46,11 +46,9 @@
 #include "ScanClassesMode.hpp"
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 
-#if JAVA_SPEC_VERSION >= 24
-class GC_ContinuationSlotIterator;
-#endif /* JAVA_SPEC_VERSION >= 24 */
 class GC_VMThreadIterator;
 class MM_ConcurrentGC;
+class MM_MarkingDelegate;
 class MM_MarkingScheme;
 
 /**
@@ -67,6 +65,7 @@ protected:
 	J9JavaVM *_javaVM;
 	GC_ObjectModel *_objectModel;
 	MM_ConcurrentGC *_collector;
+	MM_MarkingDelegate *_markingDelegate;
 	MM_MarkingScheme *_markingScheme;
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 	MM_ScanClassesMode _scanClassesMode; /** Support for dynamic class unloading in concurrent mark */
@@ -88,11 +87,6 @@ public:
 		, CONCURRENT_ROOT_TRACING3 = CONCURRENT_ROOT_TRACING + 3
 		, CONCURRENT_ROOT_TRACING4 = CONCURRENT_ROOT_TRACING + 4
 	};
-
-	typedef struct markSchemeStackIteratorData {
-		MM_ConcurrentMarkingDelegate *concurrentMarkingDelegate;
-		MM_EnvironmentBase *env;
-	} markSchemeStackIteratorData;
 
 	/*
 	 * Function members
@@ -117,11 +111,6 @@ public:
 	 */
 	bool initialize(MM_EnvironmentBase *env, MM_ConcurrentGC *collector);
 
-	MMINLINE void doSlot(MM_EnvironmentBase *env, omrobjectptr_t *slotPtr);
-#if JAVA_SPEC_VERSION >= 24
-	void doContinuationSlot(MM_EnvironmentBase *env, omrobjectptr_t *slotPtr, GC_ContinuationSlotIterator *continuationSlotIterator);
-#endif /* JAVA_SPEC_VERSION >= 24 */
-	void doStackSlot(MM_EnvironmentBase *env, omrobjectptr_t *slotPtr, J9StackWalkState *walkState, const void *stackLocation);
 	/**
 	 * In the case of Weak Consistency platforms we require this method to bring mutator threads to a safe point. A safe
 	 * point is a point at which a GC may occur.
@@ -372,6 +361,7 @@ public:
 		: _javaVM(NULL)
 		, _objectModel(NULL)
 		, _collector(NULL)
+		, _markingDelegate(NULL)
 		, _markingScheme(NULL)
 	{ }
 };

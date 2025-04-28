@@ -66,6 +66,14 @@ private:
 protected:
 
 public:
+	struct StackIteratorData {
+		MM_EnvironmentBase *env;
+		MM_MarkingDelegate *markingDelegate;
+		StackIteratorData(MM_EnvironmentBase *envBase, MM_MarkingDelegate *delegate)
+			: env(envBase)
+			, markingDelegate(delegate)
+		{}
+	};
 
 /* Methods */
 
@@ -131,13 +139,14 @@ public:
 		return 0;
 	}
 
-	MMINLINE void doSlot(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, omrobjectptr_t *slotPtr);
+	MMINLINE void doSlot(MM_EnvironmentBase *env, omrobjectptr_t *slotPtr);
 #if JAVA_SPEC_VERSION >= 24
-	void doContinuationSlot(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, omrobjectptr_t *slotPtr, GC_ContinuationSlotIterator *continuationSlotIterator);
+	void doContinuationSlot(MM_EnvironmentBase *env, omrobjectptr_t *slotPtr, GC_ContinuationSlotIterator *continuationSlotIterator);
 #endif /* JAVA_SPEC_VERSION >= 24 */
-	void doStackSlot(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, omrobjectptr_t *slotPtr, void *walkState, const void* stackLocation);
+	void doStackSlot(MM_EnvironmentBase *env, omrobjectptr_t *slotPtr, void *walkState, const void *stackLocation);
 	void scanContinuationNativeSlots(MM_EnvironmentBase *env, omrobjectptr_t objectPtr);
 
+	void scanContinuationNativeSlotsNoSync(MM_EnvironmentBase *env, J9VMThread *walkThread, J9VMContinuation *continuation, bool stackFrameClassWalkNeeded);
 	MMINLINE GC_ObjectScanner *
 	getObjectScanner(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, void *scannerSpace, MM_MarkingSchemeScanReason reason, uintptr_t *sizeToDo)
 	{
@@ -271,12 +280,7 @@ public:
 	static void clearClassLoadersScannedFlag(MM_EnvironmentBase *env);
 	MMINLINE bool isDynamicClassUnloadingEnabled() { return NULL != _markMap; }
 #endif /* defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING) */
+	static void stackSlotIterator(J9JavaVM *javaVM, J9Object **slotPtr, void *localData, J9StackWalkState *walkState, const void *stackLocation);
 };
-
-typedef struct StackIteratorData4MarkingDelegate {
-	MM_MarkingDelegate *markingDelegate;
-	MM_EnvironmentBase *env;
-	omrobjectptr_t fromObject;
-} StackIteratorData4MarkingDelegate;
 
 #endif /* MARKINGDELEGATE_HPP_ */

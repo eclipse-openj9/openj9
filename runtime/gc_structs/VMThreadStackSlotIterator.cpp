@@ -168,6 +168,10 @@ GC_VMThreadStackSlotIterator::scanSlots(
 	J9StackWalkState stackWalkState;
 	initializeStackWalkState(&stackWalkState, vmThread, userData, oSlotIterator, includeStackFrameClassReferences, trackVisibleFrameDepth);
 
-	vmThread->javaVM->internalVMFunctions->walkContinuationStackFrames(vmThread, continuation, walkThread->carrierThreadObject, &stackWalkState);
+	j9object_t threadObject = NULL;
+	if (NULL != walkThread) {
+		threadObject = walkThread->carrierThreadObject;
+	}
+	vmThread->javaVM->internalVMFunctions->walkContinuationStackFrames(vmThread, continuation, threadObject, &stackWalkState);
 }
 #endif /* JAVA_SPEC_VERSION >= 19 */
