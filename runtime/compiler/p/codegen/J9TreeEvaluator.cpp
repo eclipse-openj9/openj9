@@ -12318,7 +12318,10 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
    generateConditionalBranchInstruction(cg, TR::InstOpCode::bge, node, serialPrepLabel, cr6);
 
    // load 16 items; we don't need to worry about endianness since the order doesn't matter
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::lxvw4x, node, vtmp1Reg, startReg, indexReg);
+   if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P9))
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::lxvb16x, node, vtmp1Reg, startReg, indexReg);
+   else
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::lxvw4x, node, vtmp1Reg, startReg, indexReg);
    // bit 2 of cr6 (ZERO) will not be set if any comparison is true
    generateTrg1Src2Instruction(cg, TR::InstOpCode::vcmpgtsb_r, node, vtmp1Reg, vconstant0Reg, vtmp1Reg);
    // branch when the ZERO bit is not set
@@ -12329,9 +12332,18 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
 
    // --- when there is a match but we don't know the exact location yet
    generateLabelInstruction(cg, TR::InstOpCode::label, node, matchLabel);
-   if (isCountPositives) // jump to the serial label which sould soon count to the value we want
+   if (isCountPositives)
       {
-      generateLabelInstruction(cg, TR::InstOpCode::b, node, serialPrepLabel);
+      if (cg->comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P9)) // just count for P9+
+         {
+         generateTrg1Src1Instruction(cg, TR::InstOpCode::vclzlsbb, node, tempReg, vtmp1Reg);
+         generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, indexReg, tempReg, indexReg);
+         generateLabelInstruction(cg, TR::InstOpCode::b, node, endLabel);
+         }
+      else // otherwise, we use the serial loop to go through the items
+         {
+         generateLabelInstruction(cg, TR::InstOpCode::b, node, serialPrepLabel);
+         }
       }
    else // just report 1
       {
