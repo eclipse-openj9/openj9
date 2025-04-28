@@ -284,6 +284,7 @@ MM_MarkingDelegate::stackSlotIterator(J9JavaVM *javaVM, J9Object **slotPtr, void
 	data->markingDelegate->doStackSlot(data->env, slotPtr, walkState, stackLocation);
 }
 
+#if JAVA_SPEC_VERSION >= 19
 void
 MM_MarkingDelegate::scanContinuationNativeSlotsNoSync(MM_EnvironmentBase *env, J9VMThread *walkThread, J9VMContinuation *continuation, bool stackFrameClassWalkNeeded)
 {
@@ -300,6 +301,7 @@ MM_MarkingDelegate::scanContinuationNativeSlotsNoSync(MM_EnvironmentBase *env, J
 	}
 #endif /* JAVA_SPEC_VERSION >= 24 */
 }
+#endif /* JAVA_SPEC_VERSION >= 19 */
 
 void
 MM_MarkingDelegate::scanContinuationNativeSlots(MM_EnvironmentBase *env, omrobjectptr_t objectPtr)
@@ -310,6 +312,7 @@ MM_MarkingDelegate::scanContinuationNativeSlots(MM_EnvironmentBase *env, omrobje
 	const bool isGlobalGC = true;
 	const bool beingMounted = false;
 	if (MM_GCExtensions::needScanStacksForContinuationObject(currentThread, objectPtr, isConcurrentGC, isGlobalGC, beingMounted)) {
+#if JAVA_SPEC_VERSION >= 19
 		bool stackFrameClassWalkNeeded = false;
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 		stackFrameClassWalkNeeded = isDynamicClassUnloadingEnabled();
@@ -318,6 +321,7 @@ MM_MarkingDelegate::scanContinuationNativeSlots(MM_EnvironmentBase *env, omrobje
 		J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, objectPtr);
 		J9VMThread * const walkThread = NULL;
 		scanContinuationNativeSlotsNoSync(env, walkThread, continuation, stackFrameClassWalkNeeded);
+#endif /* JAVA_SPEC_VERSION >= 19 */
 		if (isConcurrentGC) {
 			MM_GCExtensions::exitContinuationConcurrentGCScan(currentThread, objectPtr, isGlobalGC);
 		}

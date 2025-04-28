@@ -146,7 +146,9 @@ public:
 	void doStackSlot(MM_EnvironmentBase *env, omrobjectptr_t *slotPtr, void *walkState, const void *stackLocation);
 	void scanContinuationNativeSlots(MM_EnvironmentBase *env, omrobjectptr_t objectPtr);
 
+#if JAVA_SPEC_VERSION >= 19
 	void scanContinuationNativeSlotsNoSync(MM_EnvironmentBase *env, J9VMThread *walkThread, J9VMContinuation *continuation, bool stackFrameClassWalkNeeded);
+#endif /* JAVA_SPEC_VERSION >= 19 */
 	MMINLINE GC_ObjectScanner *
 	getObjectScanner(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, void *scannerSpace, MM_MarkingSchemeScanReason reason, uintptr_t *sizeToDo)
 	{
