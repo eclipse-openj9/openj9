@@ -1708,5 +1708,24 @@ class TR_VectorAPIExpansion : public TR::Optimization
 
       return TR::BadILOp;
       }
+
+
+  /** \brief
+   *    Returns opcode for converting a load from a byte array into a mask
+   *
+   *   \param numLanes
+   *      Nubmer of lanes
+   *
+   *   \param maskType
+   *      Mask type
+   *
+   *   \param loadOpCode
+   *      Opcode for loading a mask from a byte array
+   *
+   *   \return
+   *      conversion opcode
+   */
+   static TR::ILOpCodes getLoadToMaskConversion(int32_t numLanes, TR::DataType maskType, TR::ILOpCodes &loadOpCode);
+
    };
 #endif /* VECTORAPIEXPANSION_INCL */
