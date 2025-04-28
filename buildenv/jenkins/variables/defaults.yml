@@ -77,7 +77,7 @@ artifactory:
   buildNamePrefix:
     osu: ''
   daysToKeepArtifacts:
-    osu: 21
+    osu: 27
   manualCleanup:
     osu: true
   vpn:
