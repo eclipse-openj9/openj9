@@ -12317,18 +12317,8 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
    generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp4, node, cr6, indexReg, tempReg);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::bge, node, serialPrepLabel, cr6);
 
-   // load 16 items
+   // load 16 items; we don't need to worry about endianness since the order doesn't matter
    generateTrg1Src2Instruction(cg, TR::InstOpCode::lxvw4x, node, vtmp1Reg, startReg, indexReg);
-   if (isLE)
-      {
-      // swap around the shorts in each word; we need 2 instructions to load 16
-      generateTrg1ImmInstruction(cg, TR::InstOpCode::vspltisw, node, vtmp2Reg, 8);
-      generateTrg1Src2Instruction(cg, TR::InstOpCode::vadduwm, node, vtmp2Reg, vtmp2Reg, vtmp2Reg);
-      generateTrg1Src2Instruction(cg, TR::InstOpCode::vrlw, node, vtmp1Reg, vtmp1Reg, vtmp2Reg);
-      // then swap around the bytes in each short
-      generateTrg1ImmInstruction(cg, TR::InstOpCode::vspltish, node, vtmp2Reg, 8);
-      generateTrg1Src2Instruction(cg, TR::InstOpCode::vrlh, node, vtmp1Reg, vtmp1Reg, vtmp2Reg);
-      }
    // bit 2 of cr6 (ZERO) will not be set if any comparison is true
    generateTrg1Src2Instruction(cg, TR::InstOpCode::vcmpgtsb_r, node, vtmp1Reg, vconstant0Reg, vtmp1Reg);
    // branch when the ZERO bit is not set
@@ -12341,8 +12331,6 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
    generateLabelInstruction(cg, TR::InstOpCode::label, node, matchLabel);
    if (isCountPositives) // jump to the serial label which sould soon count to the value we want
       {
-      //generateTrg1Src1Instruction(cg, TR::InstOpCode::vclzlsbb, node, returnReg, vtmp1Reg);
-      //generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, returnReg, returnReg, indexReg);
       generateLabelInstruction(cg, TR::InstOpCode::b, node, serialPrepLabel);
       }
    else // just report 1
