@@ -370,6 +370,8 @@ public:
 			} else {
 				/* Set the notified and onWaitingList flags for virtual threads that have not been interrupted. */
 				J9VMJAVALANGVIRTUALTHREAD_SET_NOTIFIED(vmThread, current->vthread, JNI_TRUE);
+				/* Update the thread state to BLOCKED. */
+				J9VMJAVALANGVIRTUALTHREAD_SET_STATE(vmThread, current->vthread, JAVA_LANG_VIRTUALTHREAD_BLOCKED);
 				current->objectWaitMonitor->virtualThreadWaitCount += 1;
 				notified = true;
 
