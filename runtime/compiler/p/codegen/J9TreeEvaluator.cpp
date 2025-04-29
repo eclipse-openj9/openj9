@@ -10878,7 +10878,7 @@ hashCodeHelper_P10(TR::Node *node, TR::CodeGenerator *cg, TR::DataType elementTy
    //generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, hashReg, tempReg);
    //generateLabelInstruction(cg, TR::InstOpCode::b, node, endLabel);
    // lxvll will use the highest 8 bits
-   generateShiftLeftImmediateLong(cg, node, vendReg, tempReg, 56);
+   generateShiftLeftImmediateLong(cg, node, tempReg, vendReg, 56);
 
    // load the remaining elements
    generateTrg1Src2Instruction(cg, TR::InstOpCode::lxvll, node, vtmp1Reg, valueReg, tempReg);
