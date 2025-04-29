@@ -138,6 +138,11 @@ class AOTRelocationRecordGenerationFailure: public virtual TR::CompilationExcept
    virtual const char* what() const throw() { return "AOT Relocation Record Generation Failed"; }
    };
 
+class AOTThunkPersistenceFailure: public virtual TR::CompilationException
+   {
+   virtual const char* what() const throw() { return "Thunk persistence to SCC failed"; }
+   };
+
 #if defined(J9VM_OPT_JITSERVER)
 /**
  * AOT Cache Deserialization Failure exception type.
