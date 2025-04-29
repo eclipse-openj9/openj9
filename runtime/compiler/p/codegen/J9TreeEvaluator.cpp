@@ -12290,8 +12290,8 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
    generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, indexReg, 0);
 
    // check the first byte
-   generateTrg1MemInstruction(cg, TR::InstOpCode::lbzx, node, tempReg,
-      TR::MemoryReference::createWithIndexReg(cg, startReg, indexReg, 1));
+   generateTrg1MemInstruction(cg, TR::InstOpCode::lbz, node, tempReg,
+      TR::MemoryReference::createWithIndexReg(cg, NULL, startReg, 1));
    generateTrg1Src1Instruction(cg, TR::InstOpCode::extsb, node, tempReg, tempReg);
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, cr6, tempReg, 0);
    if (isCountPositives) // when counting positives, just return the index which is 0
