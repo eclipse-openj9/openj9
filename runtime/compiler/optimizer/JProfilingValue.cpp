@@ -317,23 +317,11 @@ void
 TR_JProfilingValue::lowerCalls()
    {
    TR::TreeTop *cursor = comp()->getStartTree();
-   bool stopProfiling = false;
    TR_BitVector *backwardAnalyzedAddressNodesToCheck = new (comp()->trStackMemory()) TR_BitVector();
    while (cursor)
       {
       TR::Node * node = cursor->getNode();
       TR::TreeTop *nextTreeTop = cursor->getNextTreeTop();
-      int32_t ipMax = comp()->maxInternalPointers()/2;
-      static const char * ipl = feGetEnv("TR_ProfilingIPLimit");
-      if (ipl)
-         {
-         static const int32_t ipLimit = atoi(ipl);
-         ipMax = ipLimit;
-         }
-
-      if (!stopProfiling && (comp()->getSymRefTab()->getNumInternalPointers() >= ipMax))
-         stopProfiling = true;
-
       if (node->isProfilingCode() &&
          node->getOpCodeValue() == TR::treetop &&
          node->getFirstChild()->getOpCode().isCall() &&
@@ -366,20 +354,15 @@ TR_JProfilingValue::lowerCalls()
             }
 
          backwardAnalyzedAddressNodesToCheck->empty();
-
-         if (!stopProfiling)
-            {
-            TR::Node *child = node->getFirstChild();
-            dumpOptDetails(comp(), "%s Replacing profiling placeholder n%dn with value profiling trees\n",
-               optDetailString(), child->getGlobalIndex());
-            // Extract the arguments and add the profiling trees
-            TR::Node *value = child->getFirstChild();
-            TR_AbstractHashTableProfilerInfo *table = (TR_AbstractHashTableProfilerInfo*) child->getSecondChild()->getAddress();
-            bool needNullTest =  comp()->getSymRefTab()->isNonHelper(child->getSymbolReference(), TR::SymbolReferenceTable::jProfileValueWithNullCHKSymbol);
-            addProfilingTrees(comp(), cursor, value, table, needNullTest, true, trace());
-            // Remove the original trees and continue from the tree after the profiling
-            }
-
+         TR::Node *child = node->getFirstChild();
+         dumpOptDetails(comp(), "%s Replacing profiling placeholder n%dn with value profiling trees\n",
+            optDetailString(), child->getGlobalIndex());
+         // Extract the arguments and add the profiling trees
+         TR::Node *value = child->getFirstChild();
+         TR_AbstractHashTableProfilerInfo *table = (TR_AbstractHashTableProfilerInfo*) child->getSecondChild()->getAddress();
+         bool needNullTest =  comp()->getSymRefTab()->isNonHelper(child->getSymbolReference(), TR::SymbolReferenceTable::jProfileValueWithNullCHKSymbol);
+         addProfilingTrees(comp(), cursor, value, table, needNullTest, true, trace());
+         // Remove the original trees and continue from the tree after the profiling
          TR::TransformUtil::removeTree(comp(), cursor);
          if (trace())
             comp()->dumpMethodTrees("After Adding Profiling Trees");
