@@ -264,7 +264,9 @@ getVMThreadStateHelper(J9VMThread *targetThread,
 							 * owned by a competing thread.
 							 */
 							vmstate = J9VMTHREAD_STATE_BLOCKED;
-							lockOwner = getVMThreadFromOMRThread(targetThread->javaVM, j9owner);
+							if (!IS_J9_OBJECT_MONITOR_OWNER_DETACHED(j9owner)) {
+								lockOwner = getVMThreadFromOMRThread(targetThread->javaVM, j9owner);
+							}
 							rawLock = (omrthread_monitor_t)objmon;
 						}
 					} else {
@@ -274,7 +276,9 @@ getVMThreadStateHelper(J9VMThread *targetThread,
 							} else {
 								vmstate = J9VMTHREAD_STATE_WAITING;
 							}
-							lockOwner = getVMThreadFromOMRThread(targetThread->javaVM, j9owner);
+							if (!IS_J9_OBJECT_MONITOR_OWNER_DETACHED(j9owner)) {
+								lockOwner = getVMThreadFromOMRThread(targetThread->javaVM, j9owner);
+							}
 							rawLock = (omrthread_monitor_t)objmon;
 							
 						} else if ((omrthread_monitor_t)objmon == j9state.blocker) {
