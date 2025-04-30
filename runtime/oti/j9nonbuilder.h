@@ -5523,6 +5523,13 @@ typedef struct J9VMContinuation {
 } J9VMContinuation;
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
+#if JAVA_SPEC_VERSION >= 24
+#define J9_OBJECT_MONITOR_OWNER_DETACHED 0x1
+#define IS_J9_OBJECT_MONITOR_OWNER_DETACHED(owner) (J9_OBJECT_MONITOR_OWNER_DETACHED == (UDATA)(owner))
+#else /* JAVA_SPEC_VERSION >= 24 */
+#define IS_J9_OBJECT_MONITOR_OWNER_DETACHED(owner) FALSE
+#endif /* JAVA_SPEC_VERSION >= 24 */
+
 /* @ddr_namespace: map_to_type=J9VMThread */
 
 typedef struct J9VMThread {
