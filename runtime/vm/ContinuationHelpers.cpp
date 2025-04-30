@@ -1223,8 +1223,9 @@ restart:
 					continue;
 				case JAVA_LANG_VIRTUALTHREAD_WAIT:
 				case JAVA_LANG_VIRTUALTHREAD_TIMED_WAIT:
-					J9VMJAVALANGVIRTUALTHREAD_SET_STATE(currentThread, current->vthread, JAVA_LANG_VIRTUALTHREAD_BLOCKED);
-					/* Fall-through */
+					/* WAIT/TIMED_WAIT can only be added to blocked list if they have been notifed and threads updated. */
+					Assert_VM_unreachable();
+					break;
 				case JAVA_LANG_VIRTUALTHREAD_BLOCKED:
 				{
 					Assert_VM_true(syncObjectMonitor->virtualThreadWaitCount > 0);
