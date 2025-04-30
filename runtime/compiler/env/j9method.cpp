@@ -1085,7 +1085,6 @@ bool TR_ResolvedRelocatableJ9Method::isSynchronized()      { return methodModifi
 bool TR_ResolvedRelocatableJ9Method::isPrivate()           { return methodModifiers() & J9AccPrivate ? true : false; }
 bool TR_ResolvedRelocatableJ9Method::isProtected()         { return methodModifiers() & J9AccProtected ? true : false; }
 bool TR_ResolvedRelocatableJ9Method::isPublic()            { return methodModifiers() & J9AccPublic ? true : false; }
-bool TR_ResolvedRelocatableJ9Method::isStrictFP()          { return methodModifiers() & J9AccStrict ? true : false; }
 
 bool TR_ResolvedRelocatableJ9Method::isFinal()             { return (methodModifiers() & J9AccFinal) || (classModifiers() & J9AccFinal) ? true : false;}
 
@@ -5348,7 +5347,6 @@ bool TR_ResolvedJ9Method::isSynchronized()      { return methodModifiers() & J9A
 bool TR_ResolvedJ9Method::isPrivate()           { return methodModifiers() & J9AccPrivate ? true : false; }
 bool TR_ResolvedJ9Method::isProtected()         { return methodModifiers() & J9AccProtected ? true : false; }
 bool TR_ResolvedJ9Method::isPublic()            { return methodModifiers() & J9AccPublic ? true : false; }
-bool TR_ResolvedJ9Method::isStrictFP()          { return methodModifiers() & J9AccStrict ? true : false; }
 bool TR_ResolvedJ9Method::isSubjectToPhaseChange(TR::Compilation *comp)
    {
    if (comp->getOptLevel() >= warm)
