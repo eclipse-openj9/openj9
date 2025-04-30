@@ -1165,7 +1165,7 @@ waitForSignal(J9VMThread *currentThread)
 	omrthread_monitor_exit(vm->blockedVirtualThreadsMutex);
 	vmFuncs->internalExitVMToJNI(currentThread);
 	omrthread_monitor_enter(vm->blockedVirtualThreadsMutex);
-	omrthread_monitor_wait(vm->blockedVirtualThreadsMutex);
+	omrthread_monitor_wait_interruptable(vm->blockedVirtualThreadsMutex, 0, 0);
 	omrthread_monitor_exit(vm->blockedVirtualThreadsMutex);
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	omrthread_monitor_enter(vm->blockedVirtualThreadsMutex);
