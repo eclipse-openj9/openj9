@@ -86,9 +86,7 @@ getObjectMonitorOwner(J9JavaVM *vm, j9object_t object, UDATA *pcount)
 		if (monitor) {
 			omrthread_t osOwner = monitor->owner;
 			if (osOwner) {
-				if (!IS_J9_OBJECT_MONITOR_OWNER_DETACHED(osOwner)) {
-					owner = getVMThreadFromOMRThread(vm, osOwner);
-				}
+				owner = getVMThreadFromOMRThread(vm, osOwner);
 				/* possible timing hole -- owner might exit monitor */
 				count = monitor->count;
 				if (count == 0) {
