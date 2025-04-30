@@ -1227,9 +1227,16 @@ restart:
 					break;
 				}
 				default:
-					/* Thread must be unblocked by AfterYield(), hence it can only be UNBLOCKED or RUNNING. */
-					Assert_VM_true((JAVA_LANG_VIRTUALTHREAD_RUNNING == state) || (JAVA_LANG_VIRTUALTHREAD_UNBLOCKED == state));
+				{
+					if (J9_ARE_ANY_BITS_SET(state, JAVA_LANG_VIRTUALTHREAD_SUSPENDED)) {
+						J9VMJAVALANGVIRTUALTHREAD_SET_BLOCKPERMIT(currentThread, current->vthread, JNI_TRUE);
+					} else {
+						/* Thread must be unblocked by AfterYield(), hence it can only be UNBLOCKED or RUNNING. */
+						Assert_VM_true((JAVA_LANG_VIRTUALTHREAD_RUNNING == state) || (JAVA_LANG_VIRTUALTHREAD_UNBLOCKED == state));
+					}
+					break;
 				}
+				} /* switch (state) */
 
 				if (unblocked) {
 					/* Add to Java unblock list. */

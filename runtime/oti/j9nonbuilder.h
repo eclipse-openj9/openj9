@@ -310,6 +310,7 @@ typedef void(*j9_tls_finalizer_t)(void *);
 #define JAVA_LANG_VIRTUALTHREAD_WAIT     16
 #define JAVA_LANG_VIRTUALTHREAD_TIMED_WAITING 17
 #define JAVA_LANG_VIRTUALTHREAD_TIMED_WAIT 18
+#define JAVA_LANG_VIRTUALTHREAD_SUSPENDED (1 << 8)
 #endif /* JAVA_SPEC_VERSION >= 24 */
 
 typedef enum {
