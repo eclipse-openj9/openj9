@@ -115,7 +115,7 @@ J9::Z::CPU::customize(OMRProcessorDesc processorDescription)
 
    if (processorDescription.processor < OMR_PROCESSOR_S390_ZNEXT)
       {
-      omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_S390_MISCELLANEOUS_INSTRUCTION_EXTENSION_3, FALSE);
+      omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_S390_MISCELLANEOUS_INSTRUCTION_EXTENSION_4, FALSE);
       omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_S390_VECTOR_FACILITY_ENHANCEMENT_3, FALSE);
       omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_S390_PLO_EXTENSION, FALSE);
       omrsysinfo_processor_set_feature(&processorDescription, OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY_3, FALSE);
