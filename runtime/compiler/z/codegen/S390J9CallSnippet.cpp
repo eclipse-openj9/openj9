@@ -725,7 +725,7 @@ TR::S390UnresolvedCallSnippet::emitSnippetBody()
       TR::ExternalRelocation::create(
          cursor,
          *(uint8_t **)cursor,
-         getNode() ? (uint8_t *)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
+         getNode() ? (uint8_t *)(intptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)(intptr_t)-1,
          TR_ConstantPool,
          cg()),
       __FILE__,
@@ -1490,9 +1490,11 @@ TR::J9S390InterfaceCallDataSnippet::emitSnippetBody()
                  (TR_OpaqueClassBlock *)(*valuesIt), methodSymRef->getCPIndex());
            numInterfaceCallCacheSlots--;
            updateField = true;
+#if defined(TR_TARGET_64BIT)
            if (comp->target().is64Bit() && TR::Compiler->om.generateCompressedObjectHeaders())
               *(uintptr_t *) cursor = (uintptr_t) (*valuesIt) << 32;
            else
+#endif /* defined(TR_TARGET_64BIT) */
               *(uintptr_t *) cursor = (uintptr_t) (*valuesIt);
 
            if (comp->getOption(TR_EnableHCR))
