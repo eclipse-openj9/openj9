@@ -304,7 +304,6 @@ public:
    virtual bool                    isProtected();
    virtual bool                    isPublic();
    virtual bool                    isFinal();
-   virtual bool                    isStrictFP();
    virtual bool                    isInterpreted();
    virtual bool                    isInterpretedForHeuristics();
    virtual bool                    hasBackwardBranches();
@@ -587,7 +586,6 @@ public:
    virtual bool                    isProtected();
    virtual bool                    isPublic();
    virtual bool                    isFinal();
-   virtual bool                    isStrictFP();
 
    virtual bool                    isInterpreted();
    virtual bool                    isInterpretedForHeuristics();
