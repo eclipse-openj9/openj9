@@ -103,12 +103,12 @@ hashFn(void *entry, void *userData) {
 	char* key = pair->key;
 	UDATA length = strlen(key);
 	UDATA i;
-	
+
 	/* Super-lame xor hash */
 	for (i=0; i < length; i++) {
 		hash ^= key[i];
 	}
-	
+
 	return hash;
 }
 
@@ -117,11 +117,11 @@ static UDATA
 equalsFn(void *leftEntry, void *rightEntry, void *userData) {
 	KeyValuePair* lhs = leftEntry;
 	KeyValuePair* rhs = rightEntry;
-	
+
 	if (strcmp(lhs->key, rhs->key) == 0) {
 		return TRUE;
 	}
-	
+
 	return FALSE;
 }
 
@@ -144,30 +144,29 @@ trimTrailing(char* input)
 			input[index] = 0;
 			index--;
 			break;
-			
+
 		default:
 			return;
 		}
-	}	
+	}
 }
 
 
-j9props_file_t 
+j9props_file_t
 props_file_open(J9PortLibrary* portLibrary, const char* file, char* errorBuf, UDATA errorBufLength)
 {
 	PORT_ACCESS_FROM_PORT(portLibrary);
-	j9props_file_t result = NULL;
 	IDATA fileHandle = -1;
 	UDATA lineNumber = 0;
 	char line[1024] = "";
-	/* points to some place in line */
-	char * linePtr = line;
+	UDATA lineLength = 0;
+	char *linePtr = line;
 
-	/* Allocate the structure */
-	result = (j9props_file_t) j9mem_allocate_memory(sizeof(J9PropsFile), OMRMEM_CATEGORY_VM);
+	j9props_file_t result = (j9props_file_t)j9mem_allocate_memory(sizeof(*result), OMRMEM_CATEGORY_VM);
 	if (NULL == result) {
 		return NULL;
 	}
+	memset(result, 0, sizeof(*result));
 	result->portLibrary = portLibrary;
 
 	/* Allocate the hash table */
@@ -177,54 +176,64 @@ props_file_open(J9PortLibrary* portLibrary, const char* file, char* errorBuf, UD
 	}
 
 	fileHandle = j9file_open(file, EsOpenRead, 0);
-	if (fileHandle == -1) {
+	if (-1 == fileHandle) {
 		goto fail;
 	}
-	
-	/* Read a line at a time */
+
+	/* Read a line at a time. */
 	lineNumber = 0;
-	/* previously had a j9file_read_text here, but functionality to do the charset conversion (for zos) is not there yet
-	 * so we use this hack for now*/
-	while (NULL != propsfile_read_text(portLibrary, fileHandle, linePtr, sizeof(line) - (line - linePtr) )) {
-		char* equalsSign;
-		
-		if(strlen(line) > 1 && line[strlen(line)-1] == '\n' && line[strlen(line)-2] == '\\'){ /* line continuation */
+	/* Previously had a j9file_read_text here, but functionality to do the charset conversion (for zos) is not there yet
+	 * so we use this hack for now.
+	 */
+	while (NULL != propsfile_read_text(portLibrary, fileHandle, linePtr, sizeof(line) - (linePtr - line))) {
+		UDATA allocLength = 0;
+		char *equalsSign = NULL;
+		lineLength += strlen(linePtr);
+
+		if ((lineLength >= 2) && ('\n' == line[lineLength - 1]) && ('\\' == line[lineLength - 2])) { /* line continuation */
 			/* update linePtr to new position and overwrite the '\\' */
-			linePtr = linePtr + strlen(linePtr) - 2;
+			lineLength -= 2;
+			linePtr = line + lineLength;
 			continue;
 		}
 
 		linePtr = line;
-		lineNumber++;
-		equalsSign = strstr(line,"=");
-		if (equalsSign && line[0] != '#') { /*lines starting with # are comments*/
-			UDATA lineLength;
-			char* copiedLine;
-			KeyValuePair pair;
+		allocLength = lineLength + 1; /* + 1 for NULL */
+		lineLength = 0;
+		lineNumber += 1;
 
-			/* Ensure that we have something on the LHS */
+		/* Lines starting with # are comments. */
+		if ('#' == line[0]) {
+			continue;
+		}
+
+		equalsSign = strstr(line, "=");
+		if (NULL != equalsSign) {
+			char *copiedLine = NULL;
+			KeyValuePair pair = { NULL, NULL };
+
+			/* Ensure that we have something on the LHS. */
 			if (equalsSign == line) {
 				goto fail;
 			}
 
 			/* Copy the line */
-			lineLength = strlen(line);
-			copiedLine = j9mem_allocate_memory(lineLength + 1 /* for NULL */, OMRMEM_CATEGORY_VM);
+			copiedLine = j9mem_allocate_memory(allocLength, OMRMEM_CATEGORY_VM);
 			if (NULL == copiedLine) {
 				goto fail;
 			}
-			memcpy(copiedLine, line, lineLength + 1);
-			
-			/* Slam a NULL where the equals sign was */
+			memcpy(copiedLine, line, allocLength);
+
+			/* Slam a NULL where the equals sign was. */
 			pair.key = copiedLine;
-			pair.value = &copiedLine[equalsSign-line+1];
+			pair.value = &copiedLine[equalsSign - line + 1];
 			pair.value[-1] = 0;
-			
-			/* Deal with any trailing whitespace on the value */
+
+			/* Deal with any trailing whitespace on the value. */
 			trimTrailing(pair.key);
 			trimTrailing(pair.value);
-			
-			/* Insert the halves into the hash table */
+
+			/* Insert the halves into the hash table. */
 			if (NULL == hashTableAdd(result->properties, &pair)) {
 				j9mem_free_memory(pair.key);
 				goto fail;
@@ -232,29 +241,29 @@ props_file_open(J9PortLibrary* portLibrary, const char* file, char* errorBuf, UD
 		}
 	}
 
-	/* Done with the file */
+	/* Done with the file. */
 	j9file_close(fileHandle);
 	return result;
 
 fail:
-	if (fileHandle != -1) {
+	if (-1 != fileHandle) {
 		j9file_close(fileHandle);
 	}
-	/* Call close to free memory */
+	/* Call close to free memory. */
 	props_file_close(result);
 	return NULL;
 }
 
 
-void 
+void
 props_file_close(j9props_file_t file)
 {
 	PORT_ACCESS_FROM_PORT(file->portLibrary);
-	
+
 	if (file->properties != NULL) {
 		J9HashTableState walkState;
 		KeyValuePair* pair;
-		
+
 		/* Loop through and free any keys */
 		pair = hashTableStartDo(file->properties, &walkState);
 		while (pair != NULL) {
@@ -265,33 +274,33 @@ props_file_close(j9props_file_t file)
 		/* The free the entries */
 		hashTableFree(file->properties);
 	}
-	
+
 	/* Free the heap allocated structure */
 	j9mem_free_memory(file);
 }
 
 
-const char* 
+const char*
 props_file_get(j9props_file_t file, const char* key)
 {
 	KeyValuePair pair, *result;
 	pair.key = (char*)key;
-	
+
 	result = hashTableFind(file->properties, &pair);
 	if (result == NULL) {
 		return NULL;
 	}
-	
+
 	return result->value;
 }
 
 
-void 
+void
 props_file_do(j9props_file_t file, j9props_file_iterator iterator, void* userData)
 {
 	J9HashTableState walkState;
 	KeyValuePair* pair;
-	
+
 	pair = hashTableStartDo(file->properties, &walkState);
 	while (pair != NULL) {
 		BOOLEAN keepGoing = (*iterator)(file, pair->key, pair->value, userData);
