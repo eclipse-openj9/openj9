@@ -490,13 +490,6 @@
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_criu_nonPortableRestoreJDK20Up</testCaseName>
-		<disables>
-			<disable>
-				<comment>https://github.com/eclipse-openj9/openj9/issues/21443</comment>
-				<platform>ppc64le.*</platform>
-				<version>24+</version>
-			</disable>
-		</disables>
 		<variations>
 			<variation>-Xjit -XX:+CRIURestoreNonPortableMode</variation>
 			<variation>-Xint -XX:+CRIURestoreNonPortableMode</variation>
