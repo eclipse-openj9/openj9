@@ -247,30 +247,7 @@ enterContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 		/* Continuation is still in a blocked list. This can happen with TIMED_WAIT.
 		 * It must be removed from the waiting list.
 		 */
-		bool foundInBlockedContinuationList = false;
-		bool foundInMonitorList = false;
-
-		omrthread_monitor_enter(vm->blockedVirtualThreadsMutex);
-
-		foundInBlockedContinuationList = VM_ContinuationHelpers::removeContinuationFromList(
-				&vm->blockedContinuations, continuation);
-
-		if (foundInBlockedContinuationList) {
-			continuation->objectWaitMonitor->virtualThreadWaitCount -= 1;
-			Assert_VM_true(continuation->objectWaitMonitor->virtualThreadWaitCount >= 0);
-		}
-
-		if (NULL != continuation->objectWaitMonitor->waitingContinuations) {
-			foundInMonitorList = VM_ContinuationHelpers::removeContinuationFromList(
-					&continuation->objectWaitMonitor->waitingContinuations, continuation);
-		}
-
-		omrthread_monitor_exit(vm->blockedVirtualThreadsMutex);
-
-		/* Virtual can only be in one list at a time. */
-		Assert_VM_false(foundInBlockedContinuationList && foundInMonitorList);
-
-		continuation->objectWaitMonitor = NULL;
+		Assert_VM_true(VM_ContinuationHelpers::removeBlockingContinuationFromLists(currentThread, continuation));
 	}
 #endif /* JAVA_SPEC_VERSION >= 24 */
 
@@ -401,6 +378,10 @@ freeContinuation(J9VMThread *currentThread, j9object_t continuationObject, BOOLE
 #if JAVA_SPEC_VERSION >= 24
 		/* Remove reverse link to vthread object. */
 		continuation->vthread = NULL;
+
+		if (NULL != continuation->objectWaitMonitor) {
+			Assert_VM_true(VM_ContinuationHelpers::removeBlockingContinuationFromLists(currentThread, continuation));
+		}
 		Assert_VM_true(NULL == continuation->nextWaitingContinuation);
 #endif /* JAVA_SPEC_VERSION >= 24 */
 		/* Free old stack used by continuation. */
