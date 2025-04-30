@@ -9572,7 +9572,7 @@ TR_J9SharedCacheVM::setJ2IThunk(char *signatureChars, uint32_t signatureLength, 
       {
       TR::Compilation* comp = _compInfoPT->getCompilation();
       if (comp)
-         comp->failCompilation<TR::CompilationException>("Failed to persist thunk");
+         comp->failCompilation<J9::AOTThunkPersistenceFailure>("Failed to persist thunk");
       else
          throw TR::CompilationException();
       }
@@ -9612,7 +9612,7 @@ TR_J9SharedCacheVM::persistMHJ2IThunk(void *thunk)
       {
       TR::Compilation* comp = _compInfoPT->getCompilation();
       if (comp)
-         comp->failCompilation<TR::CompilationException>("Failed to persist thunk");
+         comp->failCompilation<J9::AOTThunkPersistenceFailure>("Failed to persist MH thunk");
       else
          throw TR::CompilationException();
       }

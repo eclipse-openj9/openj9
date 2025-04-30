@@ -2288,6 +2288,7 @@ bool TR::CompilationInfo::shouldRetryCompilation(J9VMThread *vmThread, TR_Method
             case compilationAOTNoSupportForAOTFailure:
             case compilationAOTRelocationRecordGenerationFailure:
             case compilationRelocationFailure:
+            case compilationAOTThunkPersistenceFailure:
                // switch to JIT for these cases (we don't want to relocate again)
                entry->_doNotAOTCompile = true;
                tryCompilingAgain = true;
@@ -11450,6 +11451,10 @@ TR::CompilationInfoPerThreadBase::processException(
    catch (const J9::AOTRelocationRecordGenerationFailure &e)
       {
       _methodBeingCompiled->_compErrCode = compilationAOTRelocationRecordGenerationFailure;
+      }
+   catch (const J9::AOTThunkPersistenceFailure &e)
+      {
+      _methodBeingCompiled->_compErrCode = compilationAOTThunkPersistenceFailure;
       }
    catch (const J9::ClassChainPersistenceFailure &e)
       {
