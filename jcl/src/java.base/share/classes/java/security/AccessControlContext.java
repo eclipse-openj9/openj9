@@ -29,10 +29,10 @@ import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+/*[IF JAVA_SPEC_VERSION < 24]*/
 /*[IF JAVA_SPEC_VERSION >= 9]*/
 import sun.security.util.FilePermCompat;
 /*[ENDIF] JAVA_SPEC_VERSION >= 9 */
-/*[IF JAVA_SPEC_VERSION < 24]*/
 import sun.security.util.SecurityConstants;
 /*[ENDIF] JAVA_SPEC_VERSION < 24 */
 
