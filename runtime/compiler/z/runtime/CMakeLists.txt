@@ -66,7 +66,7 @@ j9jit_files(
 	${CMAKE_CURRENT_BINARY_DIR}/ValueProf.s
 )
 
-if(J9VM_JIT_EMULATE_ZNEXT)
+if(J9VM_JIT_EMULATE_Z17)
 	j9jit_files(
 		z/runtime/Emulation.cpp
 	)
