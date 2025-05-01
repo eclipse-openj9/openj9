@@ -1706,13 +1706,13 @@ bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop* treetop)
          case TR::java_lang_Long_rotateRight:
             return comp()->target().cpu.getSupportsHardware64bitRotate();
          case TR::java_lang_Integer_compress:
-            return comp()->target().cpu.getSupportsHardware32bitCompress();
+            return cg()->getSupports32BitCompress();
          case TR::java_lang_Long_compress:
-            return comp()->target().cpu.getSupportsHardware64bitCompress();
+            return cg()->getSupports64BitCompress();
          case TR::java_lang_Integer_expand:
-            return comp()->target().cpu.getSupportsHardware32bitExpand();
+            return cg()->getSupports32BitExpand();
          case TR::java_lang_Long_expand:
-            return comp()->target().cpu.getSupportsHardware64bitExpand();
+            return cg()->getSupports64BitExpand();
          case TR::java_lang_Math_abs_I:
          case TR::java_lang_Math_abs_L:
             return cg()->supportsIntAbs();
