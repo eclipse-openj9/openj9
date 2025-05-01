@@ -10493,8 +10493,10 @@ hashCodeHelper(TR::Node *node, TR::CodeGenerator *cg, TR::DataType elementType,
    switch (elementType)
       {
       case TR::Int8:
-         generateTrg1Src1Instruction(cg, TR::InstOpCode::extsw, node, endReg, endReg);
-         generateTrg1Src1Instruction(cg, TR::InstOpCode::extsw, node, tempReg, tempReg);
+         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldic, node, endReg, endReg, 0,
+                                         CONSTANT64(0x00000000FFFFFFFF));
+         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldic, node, tempReg, tempReg, 0,
+                                         CONSTANT64(0x00000000FFFFFFFF));
          break;
       case TR::Int16:
          generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldic, node, endReg, endReg, 1,
