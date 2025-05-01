@@ -10493,22 +10493,33 @@ hashCodeHelper(TR::Node *node, TR::CodeGenerator *cg, TR::DataType elementType,
    switch (elementType)
       {
       case TR::Int8:
-         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldic, node, endReg, endReg, 0,
-                                         CONSTANT64(0x00000000FFFFFFFF));
-         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldic, node, tempReg, tempReg, 0,
-                                         CONSTANT64(0x00000000FFFFFFFF));
+         if (comp->target().is64Bit()) // no need to clear garbage bits in 32-bit
+            {
+            generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldic, node, endReg, endReg, 0,
+                                          CONSTANT64(0x00000000FFFFFFFF));
+            generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldic, node, tempReg, tempReg, 0,
+                                          CONSTANT64(0x00000000FFFFFFFF));
+            }
          break;
       case TR::Int16:
-         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldic, node, endReg, endReg, 1,
-                                         CONSTANT64(0x00000001FFFFFFFE));
-         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldic, node, tempReg, tempReg, 1,
-                                         CONSTANT64(0x00000001FFFFFFFE));
+         generateTrg1Src1Imm2Instruction(cg,
+            comp->target().is64Bit() ? TR::InstOpCode::rldic : TR::InstOpCode::rlwinm,
+            node, endReg, endReg, 1,
+            comp->target().is64Bit() ? CONSTANT64(0x00000001FFFFFFFE) : 0xFFFFFFFE);
+         generateTrg1Src1Imm2Instruction(cg,
+            comp->target().is64Bit() ? TR::InstOpCode::rldic : TR::InstOpCode::rlwinm,
+            node, tempReg, tempReg, 1,
+            comp->target().is64Bit() ? CONSTANT64(0x00000001FFFFFFFE) : 0xFFFFFFFE);
          break;
       case TR::Int32:
-         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldic, node, endReg, endReg, 2,
-                                         CONSTANT64(0x00000003FFFFFFFC));
-         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldic, node, tempReg, tempReg, 2,
-                                         CONSTANT64(0x00000003FFFFFFFC));
+         generateTrg1Src1Imm2Instruction(cg,
+            comp->target().is64Bit() ? TR::InstOpCode::rldic : TR::InstOpCode::rlwinm,
+            node, endReg, endReg, 2,
+            comp->target().is64Bit() ? CONSTANT64(0x00000003FFFFFFFC) : 0xFFFFFFFE);
+         generateTrg1Src1Imm2Instruction(cg,
+            comp->target().is64Bit() ? TR::InstOpCode::rldic : TR::InstOpCode::rlwinm,
+            node, tempReg, tempReg, 2,
+            comp->target().is64Bit() ? CONSTANT64(0x00000003FFFFFFFC) : 0xFFFFFFFE);
          break;
       default:
          TR_ASSERT_FATAL(false, "Unsupported hashCodeHelper elementType");
