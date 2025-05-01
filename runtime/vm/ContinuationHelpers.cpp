@@ -1096,13 +1096,14 @@ restart:
 			syncObjectMonitor->ownerContinuation = NULL;
 
 			/* Add Continuation struct to the monitor's waiting list. */
-			omrthread_monitor_exit(monitor);
 			currentThread->ownedMonitorCount -= continuation->waitingMonitorEnterCount;
 
 			omrthread_monitor_enter(vm->blockedVirtualThreadsMutex);
 			continuation->nextWaitingContinuation = syncObjectMonitor->waitingContinuations;
 			syncObjectMonitor->waitingContinuations = continuation;
 			omrthread_monitor_exit(vm->blockedVirtualThreadsMutex);
+
+			omrthread_monitor_exit(monitor);
 		} else {
 			if (NULL != monitor) {
 				/* If we are blocking to wait on a contended monitor then we can't be the owner. */

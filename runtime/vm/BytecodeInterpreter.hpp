@@ -5256,6 +5256,10 @@ done:
 				}
 				/* Reset the virtual thread's notified field before releasing Object monitor. */
 				J9VMJAVALANGVIRTUALTHREAD_SET_NOTIFIED(_currentThread, _currentThread->threadObject, JNI_FALSE);
+				/* Prevent Object.notify() calls between prepareVirtualThreadForUnmount() and
+				 * yieldPinnedContinuation() from being ignored by the unblocker.
+				 */
+				J9VMJAVALANGVIRTUALTHREAD_SET_STATE(_currentThread, _currentThread->threadObject, newState);
 				/* Try to yield the virtual thread if it will be blocked. */
 				UDATA result = preparePinnedVirtualThreadForUnmount(_currentThread, object, true);
 				VMStructHasBeenUpdated(REGISTER_ARGS);
