@@ -403,21 +403,21 @@ jvmtiStopThread(jvmtiEnv *env,
 #if JAVA_SPEC_VERSION >= 21
 			j9object_t threadObject = (NULL == thread) ? currentThread->threadObject : J9_JNI_UNWRAP_REFERENCE(thread);
 
-			/* Error if a virtual thread is not suspended and not the current thread. */
-			if ((currentThread != targetThread)
-			&& (!VM_VMHelpers::isThreadSuspended(currentThread, threadObject))
-			&& IS_JAVA_LANG_VIRTUALTHREAD(currentThread, threadObject)
-			) {
-				rc = JVMTI_ERROR_THREAD_NOT_SUSPENDED;
-				goto release;
-			}
+			/* Error cases for a virtual thread that is not the current thread. */
+			if ((currentThread != targetThread) && IS_JAVA_LANG_VIRTUALTHREAD(currentThread, threadObject)) {
+				/* Error if a virtual thread is not suspended. */
+				if (!VM_VMHelpers::isThreadSuspended(currentThread, threadObject)) {
+					rc = JVMTI_ERROR_THREAD_NOT_SUSPENDED;
+					goto release;
+				}
 
-			/* Error if a virtual thread is unmounted since it won't be able to throw an
-			 * asynchronous exception from the current frame.
-			 */
-			if (NULL == targetThread) {
-				rc = JVMTI_ERROR_OPAQUE_FRAME;
-				goto release;
+				/* Error if a virtual thread is unmounted since it won't be able to throw an
+				 * asynchronous exception from the current frame.
+				 */
+				if (NULL == targetThread) {
+					rc = JVMTI_ERROR_OPAQUE_FRAME;
+					goto release;
+				}
 			}
 #endif /* JAVA_SPEC_VERSION >= 21 */
 			omrthread_monitor_enter(targetThread->publicFlagsMutex);
