@@ -1139,7 +1139,7 @@ waitForSignal(J9VMThread *currentThread)
 	 * VM Access is acquired first so we should be consistent here as well otherwise
 	 * we risk deadlocks. Since wait internally acquires the monitor we should release the
 	 * lock once notified and re-acquire after we acquire VM access. While the monitor
-	 * exit before the VM access release isn't strcitly needed I've done it for symmetry.
+	 * exit before the VM access release isn't strictly needed I've done it for symmetry.
 	 *
 	 * TODO we should consider refactoring all other uses of blockedVirtualThreadsMutex
 	 * such that VM access is not held while the lock is held. There are complexities involved
