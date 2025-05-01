@@ -12386,7 +12386,6 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
             // 4 means we need to keep checking
             generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, cr6, storeReg, 4);
             generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, endLabel, cr6);
-            
             }
          else // before P9, we cannot count trailing zeroes
             {
