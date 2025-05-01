@@ -143,6 +143,7 @@ struct ClassUnloadedData
    TR_OpaqueClassBlock* _class;
    ClassLoaderStringPair _pair;
    J9ConstantPool *_cp;
+   const AOTCacheClassRecord *_record;
    bool _cached;
    };
 
@@ -417,7 +418,7 @@ public:
    void checkProfileDataMatching(J9Method *method, const std::string &ipdata);
    uint64_t getNumSamplesForMethodInSharedProfileCache(J9Method* method);
    BytecodeProfileSummary getSharedBytecodeProfileSummary(J9Method* method);
-   bool loadBytecodeDataFromSharedProfileCache(J9Method *method, bool stable, TR::Compilation *comp);
+   bool loadBytecodeDataFromSharedProfileCache(J9Method *method, bool stable, TR::Compilation *comp, const std::string &ipdata);
    bool storeBytecodeProfileInSharedRepository(TR_OpaqueMethodBlock *method, const std::string &ipdata, uint64_t numSamples, bool isStable, TR::Compilation *);
    VMInfo *getOrCacheVMInfo(JITServer::ServerStream *stream);
    void clearCaches(bool locked=false); // destroys _chTableClassMap, _romClassMap, _J9MethodMap and _unloadedClassAddresses
@@ -472,7 +473,7 @@ public:
    PersistentUnorderedSet<std::pair<std::string, bool>> &getRegisteredInvokeExactJ2IThunkSet() { return _registeredInvokeExactJ2IThunksSet; }
 
    template <typename map, typename key>
-   void purgeCache(std::vector<ClassUnloadedData> *unloadedClasses, map& m, key ClassUnloadedData::*k);
+   void purgeCache(const std::vector<ClassUnloadedData> &unloadedClasses, map& m, const key ClassUnloadedData::*k);
 
    J9SharedClassCacheDescriptor * reconstructJ9SharedClassCacheDescriptorList(const std::vector<CacheDescriptor> &listOfCacheDescriptors);
    void destroyJ9SharedClassCacheDescriptorList();
@@ -649,6 +650,11 @@ private:
 
    JITServerSharedProfileCache *_sharedProfileCache;
 
+   // The following map is needed for converting AOT cache records to actual entities on the client.
+   // It is used for the sharedProfileCache.
+   // NOTE: This map is synchronized with _romMapMonitor
+   PersistentUnorderedMap<const AOTCacheClassRecord *, TR_OpaqueClassBlock *> _classRecordMap;
+   // Statistics per client regarding the sharedProfileCache
    public:
    uint32_t _numSharedProfileCacheMethodLoads;
    uint32_t _numSharedProfileCacheMethodLoadsFailed;

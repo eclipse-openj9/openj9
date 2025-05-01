@@ -69,6 +69,9 @@ public:
 
    TR_Memory &classLoadTRMemory();
 
+   bool cacheRecords(const uint8_t *records, size_t recordsSize, TR::Compilation *comp,
+                     bool ignoreFailures, bool &wasReset);
+
    // Deserializes in place a serialized AOT method received from JITServer. Returns true on success.
    // Caches new serialization records and adds their IDs to the set of new known IDs.
    bool deserialize(SerializedAOTMethod *method, const std::vector<std::string> &records,
@@ -92,6 +95,9 @@ public:
    // or otherwise use the cached data in the deserializer
    void reset(TR::CompilationInfoPerThread *compInfoPT);
 
+   // Adds the given IDs to the set of new known IDs maintained by the deserializer.
+   void addNewKnownIds(const Vector<uintptr_t> &newIds, TR::Compilation *comp);
+
    // IDs of records newly cached during deserialization of an AOT method are sent to the JITServer with
    // the next compilation request, so that the server can update its set of known IDs for this client.
    // This function returns the list of IDs cached since the last call, and clears the set of new known IDs.
@@ -110,6 +116,8 @@ public:
    size_t getNumDeserializedMethods() const { return _numDeserializedMethods; }
 
    void printStats(FILE *f) const;
+
+   virtual J9Class *getRAMClass(uintptr_t id, TR::Compilation *comp, bool &wasReset) = 0;
 
 protected:
    // Keeps track of runtime-generated classes for a specific class loader and deterministic class name prefix.
@@ -253,6 +261,8 @@ public:
 
    virtual J9Class *getGeneratedClass(J9ClassLoader *loader, uintptr_t romClassSccOffset, TR::Compilation *comp) override;
 
+   virtual J9Class *getRAMClass(uintptr_t id, TR::Compilation *comp, bool &wasReset) override;
+
 private:
    virtual void clearCachedData() override;
 
@@ -280,9 +290,6 @@ private:
    // looked up using the cached SCC offset if the class loader was unloaded.
    // The SCC offset of the identifying class chain is returned in loaderSCCOffset.
    J9ClassLoader *getClassLoader(uintptr_t id, uintptr_t &loaderSCCOffset, TR::Compilation *comp, bool &wasReset);
-   // Returns the RAMClass for given class ID, either cached or
-   // looked up using the cached SCC offsets if the class was unloaded.
-   J9Class *getRAMClass(uintptr_t id, TR::Compilation *comp, bool &wasReset);
 
    virtual bool updateSCCOffsets(SerializedAOTMethod *method, TR::Compilation *comp, bool &wasReset, bool &usesSVM) override;
 
@@ -330,6 +337,8 @@ public:
    void invalidateMethod(J9Method *method);
 
    virtual J9Class *getGeneratedClass(J9ClassLoader *loader, uintptr_t romClassSccOffset, TR::Compilation *comp) override;
+
+   virtual J9Class *getRAMClass(uintptr_t id, TR::Compilation *comp, bool &wasReset) override;
 
    static uintptr_t offsetId(uintptr_t offset)
       { return AOTSerializationRecord::getId(offset); }

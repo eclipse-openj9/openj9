@@ -265,6 +265,7 @@ const char *messageNames[] =
    "KnownObjectTable_addFieldAddressFromBaseIndex",
    "KnownObjectTable_getFieldAddressData",
    "AOTCache_getROMClassBatch",
+   "AOTCache_getRAMClassFromClassRecordBatch",
    "AOTCacheMap_request",
    "AOTCacheMap_reply"
    };

@@ -976,6 +976,7 @@ TR_IProfiler::addSampleData(TR_IPBytecodeHashTableEntry *entry, uintptr_t data, 
                // Overflow detected; divide both counters by 2
                existingData >>= 1;
                existingData &= 0x7FFF7FFF;
+               entry->setOverflow();
                }
 
             entry->setData(existingData + (1<<16));
@@ -988,6 +989,7 @@ TR_IProfiler::addSampleData(TR_IPBytecodeHashTableEntry *entry, uintptr_t data, 
                // Overflow detected; divide both counters by 2
                existingData >>= 1;
                existingData &= 0x7FFF7FFF;
+               entry->setOverflow();
                }
 
             entry->setData(existingData + 1);
@@ -2759,7 +2761,10 @@ TR_IPBCDataCallGraph::setData(uintptr_t v, uint32_t freq)
          uint16_t oldWeight = _csInfo._weight[i];
          uint16_t newWeight = oldWeight + freq;
          if (newWeight < oldWeight)
-            newWeight = 0xFFFF;
+            {
+            newWeight = 0xFFFF; // capped to 0xFFFF
+            setOverflow();
+            }
          _csInfo._weight[i] = newWeight;
          returnCount = newWeight;
          found = true;
@@ -2783,8 +2788,11 @@ TR_IPBCDataCallGraph::setData(uintptr_t v, uint32_t freq)
       // Must update the `residue` bucket
       uint16_t oldResidueWeight = _csInfo._residueWeight;
       uint16_t newResidueWeight = oldResidueWeight + freq;
-      if (newResidueWeight > 0x7FFF)
+      if (newResidueWeight > 0x7FFF) // _residueWeight is kept on 15 bits
+         {
          newResidueWeight = 0x7FFF;
+         setOverflow();
+         }
       _csInfo._residueWeight = newResidueWeight;
       returnCount = newResidueWeight;
 
@@ -2803,6 +2811,7 @@ TR_IPBCDataCallGraph::setData(uintptr_t v, uint32_t freq)
             _csInfo.setClazz(0, v);
             _csInfo._residueWeight = 0;
             returnCount = freq;
+            setCountersWereReset();
             releaseEntry();
             }
          }
@@ -3001,7 +3010,7 @@ TR_IPBCDataCallGraph::canBeSerialized(TR::PersistentInfo *info)
 
 
 /**
- * API used by JITClient to serialize IP data of a method
+ * @brief API used by JITClient to serialize IP data of a method
  *
  * @param methodStartAddress Start address of the bytecodes for the method
  * @param storage Storage area where we serialize entries
@@ -3018,7 +3027,7 @@ TR_IPBCDataCallGraph::serialize(uintptr_t methodStartAddress, TR_IPBCDataStorage
    storage->ID = TR_IPBCD_CALL_GRAPH;
    storage->left = 0;
    storage->right = 0;
-   for (int32_t i=0; i < NUM_CS_SLOTS;i++)
+   for (int32_t i = 0; i < NUM_CS_SLOTS; i++)
       {
       J9Class *clazz = (J9Class *) _csInfo.getClazz(i);
       if (clazz)
@@ -4554,30 +4563,6 @@ TR_IPHashedCallSite::operator new (size_t size) throw()
    }
 
 
-uintptr_t CallSiteProfileInfo::getClazz(int index)
-   {
-   if (TR::Compiler->om.compressObjectReferences())
-      //support for convert code, when it is implemented, "uncompress"
-      return (uintptr_t)TR::Compiler->cls.convertClassOffsetToClassPtr((TR_OpaqueClassBlock *)(uintptr_t)_clazz[index]);
-   else
-      return (uintptr_t)_clazz[index]; //things are just stored as regular pointers otherwise
-   }
-
-
-void CallSiteProfileInfo::setClazz(int index, uintptr_t clazzPointer)
-   {
-   if (TR::Compiler->om.compressObjectReferences())
-      {
-      //support for convert code, when it is implemented, do compression
-      TR_OpaqueClassBlock * compressedOffset = J9JitMemory::convertClassPtrToClassOffset((J9Class *)clazzPointer); //compressed 32bit pointer
-      //if we end up with something in the top 32bits, our compression is no good...
-      TR_ASSERT((!(0xFFFFFFFF00000000 & (uintptr_t)compressedOffset)), "Class pointer contains bits in the top word. Pointer given: %p Compressed: %p", clazzPointer, compressedOffset);
-      _clazz[index] = (uint32_t)((uintptr_t)compressedOffset); //ditch the top zeros
-      }
-   else
-      _clazz[index] = (uintptr_t)clazzPointer;
-   }
-
 uintptr_t
 CallSiteProfileInfo::getDominantClass(int32_t &sumW, int32_t &maxW)
    {
@@ -4601,6 +4586,22 @@ CallSiteProfileInfo::getDominantClass(int32_t &sumW, int32_t &maxW)
    sumW = sumWeight;
    maxW = maxWeight;
    return data;
+   }
+
+uint32_t
+CallSiteProfileInfo::getDominantSlot() const
+   {
+   uint32_t maxWeight = _residueWeight;
+   uint32_t maxIndex = NUM_CS_SLOTS;
+   for (uint32_t i = 0; i < NUM_CS_SLOTS; i++)
+      {
+      if (_weight[i] > maxWeight)
+         {
+         maxWeight = _weight[i];
+         maxIndex = i;
+         }
+      }
+   return maxIndex;
    }
 
 // Supporting code for dumping IProfiler data to stderr to track possible

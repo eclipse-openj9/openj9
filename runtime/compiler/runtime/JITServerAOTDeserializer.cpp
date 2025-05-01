@@ -34,12 +34,6 @@
 #include "runtime/JITServerAOTDeserializer.hpp"
 #include "runtime/RelocationTarget.hpp"
 
-#define RECORD_NAME(record) (int)(record)->nameLength(), (const char *)(record)->name()
-#define LENGTH_AND_DATA(str) J9UTF8_LENGTH(str), (const char *)J9UTF8_DATA(str)
-#define ROMCLASS_NAME(romClass) LENGTH_AND_DATA(J9ROMCLASS_CLASSNAME(romClass))
-#define ROMMETHOD_NAS(romMethod) \
-   LENGTH_AND_DATA(J9ROMMETHOD_NAME(romMethod)), LENGTH_AND_DATA(J9ROMMETHOD_SIGNATURE(romMethod))
-
 
 JITServerAOTDeserializer::JITServerAOTDeserializer(TR_PersistentClassLoaderTable *loaderTable, J9JITConfig *jitConfig) :
    _loaderTable(loaderTable),
@@ -130,6 +124,19 @@ JITServerAOTDeserializer::reset(TR::CompilationInfoPerThread *compInfoPT)
 
    clearCachedData();
    }
+/**
+ * @brief Add the given IDs to the list of _newKnownIds that will be sent to the server
+ */
+void
+JITServerAOTDeserializer::addNewKnownIds(const Vector<uintptr_t> &newIds, TR::Compilation *comp)
+   {
+   OMR::CriticalSection cs(_newKnownIdsMonitor);
+   // Check again that a reset operation has not started.
+   bool wasReset = false;
+   if (deserializerWasReset(comp, wasReset))
+      return;
+   _newKnownIds.insert(newIds.begin(), newIds.end());
+   }
 
 std::vector<uintptr_t>
 JITServerAOTDeserializer::getNewKnownIds(TR::Compilation *comp)
@@ -144,12 +151,77 @@ JITServerAOTDeserializer::getNewKnownIds(TR::Compilation *comp)
    return result;
    }
 
+// Invalidating classes and class loaders during GC can be done without locking since the current (GC) thread
+// has exclusive VM access, and compilation threads have shared VM access during deserialization.
+static void
+assertExclusiveVmAccess(J9VMThread *vmThread)
+   {
+   TR_ASSERT((vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS) && vmThread->omrVMThread->exclusiveCount,
+             "Must have exclusive VM access");
+   }
+
+static void
+assertSharedVmAccess(J9VMThread *vmThread)
+   {
+   TR_ASSERT((vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS) && !vmThread->omrVMThread->exclusiveCount,
+             "Must have shared VM access");
+   }
+
+
+/**
+ * @brief Cache multiple serialization records sent by the server
+ *
+ * @param records The serialization records in packed format (just a stream of bytes)
+ * @param recordsSize The size of all the serialization records received
+ * @param comp Compilation object
+ * @param ignoreFailures Do not stop at the first encountered failure
+ * @param wasReset OUT. Boolean flag indicating that we must abort the entire deserialization process
+ * @return false if deserializer was reset or if we encountered some failures during caching
+ */
+bool
+JITServerAOTDeserializer::cacheRecords(const uint8_t *records, size_t recordsSize, TR::Compilation *comp,
+                                       bool ignoreFailures, bool &wasReset)
+   {
+   TR::StackMemoryRegion region(*comp->trMemory());
+   Vector<uintptr_t> newIds(region);
+   bool success = true;
+
+   // Deserialize/validate and cache serialization records, keeping track of IDs of the new ones.
+   // Since the records are sorted in "dependency order", by the time a given record is about
+   // to be cached, all the records that it depends on are already successfully cached.
+   const uint8_t *current = records;
+   while (current < records + recordsSize)
+      {
+      auto record = (const AOTSerializationRecord *)current;
+      bool isNew = false;
+      bool result = cacheRecord(record, comp, isNew, wasReset);
+      if (isNew && result && !wasReset)
+         newIds.push_back(record->idAndType());
+      if (!result)
+         {
+         success = false;
+         if (!ignoreFailures || wasReset)
+            break;
+         }
+      current += record->size();
+      }
+   TR_ASSERT_FATAL((current == records + recordsSize) || !success, "Serialization records size mismatch: %zu != %zu",
+                   (size_t)(current - records), recordsSize);
+
+   // Remember IDs of newly cached records to be sent to the server with the next
+   // compilation request, unless caching a record failed because of a concurrent reset.
+   // If we encountered an invalid record (i.e. adding it failed, but not because of a
+   // concurrent reset), remember IDs of new records that were successfully cached so far.
+   if (!wasReset && !newIds.empty())
+      addNewKnownIds(newIds, comp);
+   return success;
+   }
+
 bool
 JITServerAOTDeserializer::deserialize(SerializedAOTMethod *method, const std::vector<std::string> &records,
                                       TR::Compilation *comp, bool &usesSVM)
    {
-   TR_ASSERT((comp->j9VMThread()->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS) &&
-             !comp->j9VMThread()->omrVMThread->exclusiveCount, "Must have shared VM access");
+   assertSharedVmAccess(comp->j9VMThread());
    ++_numCacheHits;
 
    TR::StackMemoryRegion stackMemoryRegion(*comp->trMemory());
@@ -199,22 +271,6 @@ JITServerAOTDeserializer::deserialize(SerializedAOTMethod *method, const std::ve
    return true;
    }
 
-
-// Invalidating classes and class loaders during GC can be done without locking since current thread
-// has exclusive VM access, and compilation threads have shared VM access during deserialization.
-static void
-assertExclusiveVmAccess(J9VMThread *vmThread)
-   {
-   TR_ASSERT((vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS) && vmThread->omrVMThread->exclusiveCount,
-             "Must have exclusive VM access");
-   }
-
-static void
-assertSharedVmAccess(J9VMThread *vmThread)
-   {
-   TR_ASSERT((vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS) && !vmThread->omrVMThread->exclusiveCount,
-             "Must have shared VM access");
-   }
 
 
 void
@@ -669,7 +725,7 @@ JITServerLocalSCCAOTDeserializer::cacheRecord(const ClassLoaderSerializationReco
       {
       if (TR::Options::getVerboseOption(TR_VerboseJITServer))
          TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
-            "ERROR: Failed to find class loader for first loaded class %.*s", RECORD_NAME(record)
+            "ERROR: Failed to find class loader ID %" OMR_PRIuPTR " for first loaded class %.*s", record->id(), RECORD_NAME(record)
          );
       return false;
       }
@@ -683,6 +739,8 @@ JITServerLocalSCCAOTDeserializer::cacheRecord(const ClassLoaderSerializationReco
       }
 
    uintptr_t offset = _sharedCache->offsetInSharedCacheFromPointer(chain);
+   //        map0               map1                it  ID            value              key
+   // will add {ID, {loader,offset}} to first map and  {loader, ID} in the second map
    addToMaps(_classLoaderIdMap, _classLoaderPtrMap, it, record->id(), { loader, offset }, loader);
 
    if (TR::Options::getVerboseOption(TR_VerboseJITServer))
@@ -1498,6 +1556,30 @@ addToChainMap(PersistentUnorderedMap<K, V *, H> &map,
       TR::Compiler->persistentGlobalMemory()->freePersistentMemory(value);
       throw;
       }
+   }
+
+J9Class *
+JITServerNoSCCAOTDeserializer::getRAMClass(uintptr_t id, TR::Compilation *comp, bool &wasReset)
+   {
+   OMR::CriticalSection cs(getClassMonitor());
+   if (deserializerWasReset(comp, wasReset))
+      return NULL;
+
+   auto it = _classIdMap.find(id);
+   if (it != _classIdMap.end())
+      {
+      if (it->second._ramClass)
+         {
+         return it->second._ramClass;
+         }
+      else
+         {
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "ERROR: Mismatching class ID %" OMR_PRIuPTR, id);
+         return NULL;
+         }
+      }
+   return NULL;
    }
 
 bool

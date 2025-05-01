@@ -210,7 +210,7 @@ ProfiledMethodEntry::cloneBytecodeData(TR_Memory &trMemory, bool stable,
          }
       newEntries.push_back(newEntry);
       // Remember the callGraph entries so that we can adjust the slots
-      TR_IPBCDataCallGraph *cgEntry = entry->asIPBCDataCallGraph();
+      TR_IPBCDataCallGraph *cgEntry = newEntry->asIPBCDataCallGraph();
       if (cgEntry)
          cgEntries.push_back(cgEntry);
       } // end for
@@ -335,6 +335,21 @@ JITServerSharedProfileCache::printStats(FILE *f) const
 int
 JITServerSharedProfileCache::compareBytecodeProfiles(const BytecodeProfileSummary &profile1, const BytecodeProfileSummary &profile2)
    {
+   // If one source has something and the other one has nothing, it's an easy choice
+   if (profile1._numSamples == 0)
+      {
+      if (profile2._numSamples > 0)
+         return -1;
+      else
+         return 0;
+      }
+   else
+      {
+      if (profile2._numSamples == 0)
+         return 1;
+      }
+
+
    if (profile1._numSamples > profile2._numSamples + 10 && profile1._numSamples * 15 > profile2._numSamples * 16) // 6.7% more samples
       {
       if (profile1._numProfiledBytecodes >= profile2._numProfiledBytecodes)

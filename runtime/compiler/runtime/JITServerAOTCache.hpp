@@ -480,6 +480,9 @@ public:
    Vector<const AOTSerializationRecord *>
    getSerializationRecords(const CachedAOTMethod *method, const KnownIdSet &knownIds, TR_Memory &trMemory) const;
 
+   // Pack a vector of serialization records into a linear buffer
+   static void packSerializationRecords(const Vector<const AOTSerializationRecord *> &records, uint8_t *buffer, size_t bufferSize);
+
    void incNumCacheBypasses() { ++_numCacheBypasses; }
    void incNumCacheMisses() { ++_numCacheMisses; }
    size_t getNumDeserializedMethods() const { return _numDeserializedMethods; }

@@ -417,7 +417,18 @@ private:
    //         uint8_t             data[_dataSize]
    //         char*               signature[_signatureSize]
    uint8_t _varSizedData[];
-   };
+   }; // struct SerializedAOTMethod
 
+// Helper macros to make the code for printing class and method names to vlog more concise
+#define RECORD_NAME(record) (int)(record)->nameLength(), (const char *)(record)->name()
+#define LENGTH_AND_DATA(str) J9UTF8_LENGTH(str), (const char *)J9UTF8_DATA(str)
+#define ROMCLASS_NAME(romClass) LENGTH_AND_DATA(J9ROMCLASS_CLASSNAME(romClass))
+#define ROMMETHOD_NAS(romMethod) LENGTH_AND_DATA(J9ROMMETHOD_NAME(romMethod)), LENGTH_AND_DATA(J9ROMMETHOD_SIGNATURE(romMethod))
+#define RAMCLASS_NAME(ramClass) ROMCLASS_NAME((ramClass)->romClass)
+#define FULL_RAMCLASS_NAME(ramClass, region) LENGTH_AND_DATA(JITServerHelpers::getFullClassName(ramClass, region))
+#define RAMMETHOD_SIGNATURE(ramMethod) \
+   RAMCLASS_NAME(J9_CLASS_FROM_METHOD(ramMethod)), ROMMETHOD_NAS(J9_ROM_METHOD_FROM_RAM_METHOD(ramMethod))
+#define OPTLEVEL_NAME(comp) (comp)->compileRelocatableCode() ? "AOT " : "", (comp)->getHotnessName()
+#define SIGNATURE_AND_OPTLEVEL(comp) (comp)->signature(), OPTLEVEL_NAME(comp)
 
 #endif /* defined(JITSERVER_AOT_SERIALIZATION_RECORDS_H) */

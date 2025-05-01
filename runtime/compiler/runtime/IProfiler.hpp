@@ -136,9 +136,10 @@ public:
          _tooBigToBeInlined=0;
          }
 
-   uintptr_t getClazz(int index);
-   void setClazz(int index, uintptr_t clazzPtr);
+   uintptr_t getClazz(int index) const { return _clazz[index]; }
+   void setClazz(int index, uintptr_t clazzPtr) { _clazz[index] = clazzPtr; }
    uintptr_t getDominantClass(int32_t &sumW, int32_t &maxW);
+   uint32_t getDominantSlot() const;
 
 private:
    uintptr_t _clazz[NUM_CS_SLOTS]; // store them in either 64 or 32 bits
@@ -186,6 +187,8 @@ enum TR_EntryStatusInfo
    };
 
 #define TR_IPBC_PERSISTENT_ENTRY_READ  0x1 // used to check if the persistent entry has been read, if so we want to avoid the overhead introduced by calculating sample counts
+#define TR_IPBC_OVERFLOW 0x1 // Set and never reset
+#define TR_IPBC_COUNTERS_RESET 0x2 // Set and never reset
 
 // Hash table for bytecodes
 class TR_IPBytecodeHashTableEntry
@@ -196,7 +199,7 @@ public:
    void * operator new (size_t size, void * placement) {return placement;}
    void operator delete(void *p, void *) {}
 
-   TR_IPBytecodeHashTableEntry(uintptr_t pc) : _next(NULL), _pc(pc), _lastSeenClassUnloadID(-1), _entryFlags(0), _persistFlags(IPBC_ENTRY_CAN_PERSIST_FLAG) {}
+   TR_IPBytecodeHashTableEntry(uintptr_t pc) : _next(NULL), _pc(pc), _lastSeenClassUnloadID(-1), _entryFlags(0), _persistFlags(IPBC_ENTRY_CAN_PERSIST_FLAG), _overflowFlags(0) {}
    virtual ~TR_IPBytecodeHashTableEntry() {}
    uintptr_t getPC() const { return _pc; }
    TR_IPBytecodeHashTableEntry * getNext() const { return _next; }
@@ -251,7 +254,6 @@ public:
    virtual void createPersistentCopy(TR_J9SharedCache *sharedCache, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info)  = 0;
    virtual void loadFromPersistentCopy(TR_IPBCDataStorageHeader *storage, TR::Compilation *comp) {}
    virtual void copyFromEntry(TR_IPBytecodeHashTableEntry *originalEntry) = 0;
-   void clearEntryFlags(){ _entryFlags = 0;};
    void setPersistentEntryRead(){ _entryFlags |= TR_IPBC_PERSISTENT_ENTRY_READ;};
    bool isPersistentEntryRead(){ return (_entryFlags & TR_IPBC_PERSISTENT_ENTRY_READ) != 0;};
 
@@ -260,6 +262,10 @@ public:
    bool isLockedEntry() const { return (_persistFlags & IPBC_ENTRY_PERSIST_LOCK_FLAG) != 0; }
    void setLockedEntry() { _persistFlags |= IPBC_ENTRY_PERSIST_LOCK_FLAG; }
    void resetLockedEntry() { _persistFlags &= ~IPBC_ENTRY_PERSIST_LOCK_FLAG; }
+   void setOverflow() { _overflowFlags |= TR_IPBC_OVERFLOW; }
+   bool hasOverflowed() const { return (_overflowFlags & TR_IPBC_OVERFLOW) != 0; }
+   void setCountersWereReset() { _overflowFlags |= TR_IPBC_COUNTERS_RESET; }
+   bool countersWereReset() const { return (_overflowFlags & TR_IPBC_COUNTERS_RESET) != 0; } // only for CallGraph entries
 
 protected:
    TR_IPBytecodeHashTableEntry *_next;
@@ -274,6 +280,7 @@ protected:
 
    uint8_t _entryFlags;
    uint8_t _persistFlags;
+   uint8_t _overflowFlags; // indicates whether sample counters overflowed or were reset
    }; // class TR_IPBytecodeHashTableEntry
 
 class TR_IPMethodData
@@ -438,14 +445,6 @@ public:
       {
       _csInfo.initialize();
       }
-
-   // Set the higher 32 bits to zero under compressedref to avoid assertion in
-   // CallSiteProfileInfo::setClazz, which is called by setInvalid with IPROFILING_INVALID
-   //
-   // Set the higher 32 bits to zero under compressedref to avoid assertion in
-   // CallSiteProfileInfo::setClazz, which is called by setInvalid with IPROFILING_INVALID
-   //
-   static const uintptr_t IPROFILING_INVALID_COMPRESSED = 0x00000000FFFFFFFF;
    static const uintptr_t IPROFILING_INVALID = ~0;
 
    virtual bool hasData() { return getData(NULL) != 0; }
@@ -465,8 +464,8 @@ public:
    void setWarmCallGraphTooBig(bool set=true) { _csInfo._tooBigToBeInlined = (set) ? 1 : 0; }
    bool isWarmCallGraphTooBig() { return (_csInfo._tooBigToBeInlined == 1); }
 
-   virtual bool isInvalid() { if (_csInfo.getClazz(0) == (TR::Compiler->om.compressObjectReferences() ? IPROFILING_INVALID_COMPRESSED : IPROFILING_INVALID)) return true; return false; }
-   virtual void setInvalid() { _csInfo.setClazz(0, (TR::Compiler->om.compressObjectReferences() ? IPROFILING_INVALID_COMPRESSED : IPROFILING_INVALID)); }
+   virtual bool isInvalid() { return (_csInfo.getClazz(0) == IPROFILING_INVALID); }
+   virtual void setInvalid() { _csInfo.setClazz(0, IPROFILING_INVALID); }
    virtual uint32_t getBytesFootprint() {return sizeof (TR_IPBCDataCallGraphStorage);}
 
 #if defined(J9VM_OPT_JITSERVER)

@@ -173,6 +173,43 @@ JITServerIProfiler::profilingSample(uintptr_t pc, uintptr_t data, bool addIt, bo
    }
 
 /**
+ * @brief Deserialize bytecode profile data sent by client into a vector of entries (stack allocated)
+ *
+ * @param method The j9method for which we collect profiling data
+ * @param ipdata Serialized bytecode profile data
+ * @param ipEntries OUPUT. Vector which will contain the deserialized profiling entries. Uses stack memory.
+ * @param trMemory TR_Memory object used to allocate memory for deserialized entries
+ * @param cgEntriesOnly If true, only call graph entries will be deserialized.
+ */
+void
+JITServerIProfiler::deserializeIProfilerData(J9Method *method, const std::string &ipdata,
+                                             Vector<TR_IPBytecodeHashTableEntry *> &ipEntries,
+                                             TR_Memory *trMemory, bool cgEntriesOnly)
+   {
+   if (ipdata.empty())
+      return;
+   const char *bufferPtr = &ipdata[0];
+   TR_IPBCDataStorageHeader *storage = NULL;
+   uintptr_t methodStart = TR::Compiler->mtd.bytecodeStart((TR_OpaqueMethodBlock*)method); // TODO: avoid this costly function
+   do {
+      storage = (TR_IPBCDataStorageHeader *)bufferPtr;
+      if (!cgEntriesOnly || storage->ID == TR_IPBCD_CALL_GRAPH)
+         {
+         // Allocate a new entry with stack memory
+         TR_IPBytecodeHashTableEntry *entry = ipBytecodeHashTableEntryFactory(storage, methodStart + storage->pc, trMemory, stackAlloc);
+         if (entry)
+            {
+            // Fill the new entry with data sent by client
+            entry->deserialize(storage);
+            ipEntries.push_back(entry);
+            }
+         }
+      // Advance to the next entry
+      bufferPtr += storage->left;
+      } while (storage->left != 0);
+   }
+
+/**
  * @brief Walk the serialized data sent by client and add new entries to our internal profile hashtable
  *        Entries are added one by one and for each entry we need to acquire the ROMMapMonitor
  *        TODO: consider writing the entries in a vector of pointers and then write them in bulk.
@@ -306,14 +343,16 @@ JITServerIProfiler::profilingSample(TR_OpaqueMethodBlock *method, uint32_t byteC
          // sanity check
          // Ask the client again and see if the two sources of information match
          auto stream = comp->getStream();
-         stream->write(JITServer::MessageType::IProfiler_profilingSample, method, byteCodeIndex, (uintptr_t)1);
-         auto recv = stream->read<std::string, uint64_t, size_t, bool, bool, bool>();
+         stream->write(JITServer::MessageType::IProfiler_profilingSample, method, byteCodeIndex, _useCaching, _useCaching && clientSession->usesProfileCache());
+         auto recv = stream->read<std::string, uint64_t, size_t, bool, bool, bool, std::vector<J9Class *>, std::vector<JITServerHelpers::ClassInfoTuple>>();
          auto &ipdata = std::get<0>(recv);
          uint64_t numClientSamples = std::get<1>(recv);
          size_t numProfiledBytecodes = std::get<2>(recv);
          bool wholeMethod = std::get<3>(recv); // indicates whether the client sent info for entire method
          bool usePersistentCache = std::get<4>(recv); // indicates whether info can be saved in persistent memory, or only in heap memory
          bool isCompiled = std::get<5>(recv);
+         auto &uncachedRAMClasses = std::get<6>(recv);
+         auto &classInfoTuples = std::get<7>(recv);
          TR_ASSERT(!wholeMethod, "Client should not have sent whole method info");
          uintptr_t methodStart = TR::Compiler->mtd.bytecodeStart(method);
          TR_IPBCDataStorageHeader *clientData = ipdata.empty() ? NULL : (TR_IPBCDataStorageHeader *)ipdata.data();
@@ -353,14 +392,16 @@ JITServerIProfiler::profilingSample(TR_OpaqueMethodBlock *method, uint32_t byteC
 
    // Ask the client.
    auto stream = comp->getStream();
-   stream->write(JITServer::MessageType::IProfiler_profilingSample, method, byteCodeIndex, (uintptr_t)(_useCaching ? 0 : 1));
-   auto recv = stream->read<std::string, uint64_t, size_t, bool, bool, bool>();
+   stream->write(JITServer::MessageType::IProfiler_profilingSample, method, byteCodeIndex, _useCaching, _useCaching && clientSession->useSharedProfileCache());
+   auto recv = stream->read<std::string, uint64_t, size_t, bool, bool, bool, std::vector<J9Class *>, std::vector<JITServerHelpers::ClassInfoTuple>>();
    auto &ipdata = std::get<0>(recv);
    uint64_t numClientSamples = std::get<1>(recv);
    size_t numProfiledBytecodes = std::get<2>(recv);
    bool wholeMethod = std::get<3>(recv); // indicates whether the client sent info for entire method
    bool usePersistentCache = std::get<4>(recv); // indicates whether info can be saved in persistent memory, or only in heap memory
    bool isCompiled = std::get<5>(recv);
+   auto &uncachedRAMClasses = std::get<6>(recv);
+   auto &classInfoTuples = std::get<7>(recv);
    _statsIProfilerInfoMsgToClient++;
 
    bool doCache = _useCaching && wholeMethod;
@@ -392,12 +433,18 @@ JITServerIProfiler::profilingSample(TR_OpaqueMethodBlock *method, uint32_t byteC
                clientProfileSummary._numProfiledBytecodes, clientProfileSummary._numSamples, clientProfileSummary._stable,
                sharedProfileSummary._numProfiledBytecodes, sharedProfileSummary._numSamples, sharedProfileSummary._stable);
             }
+
+         // Process the extra classInfo that the client might have sent us.
+         // TODO: Consider doing this only if the server is likely to store this info into the shared profile cache.
+         // On the other hand, if the server sent us something, why not cache that information.
+         if (!uncachedRAMClasses.empty())
+            JITServerHelpers::cacheRemoteROMClassBatch(clientSession, uncachedRAMClasses, classInfoTuples);
          }
       if (sharedProfileQuality > 0)
          {
          // Ignore the data sent by the client. Just use the data from the shared profile cache.
          // This may send messages to transform the classRecords into J9Class pointers valid at the client
-         bool success = clientSession->loadBytecodeDataFromSharedProfileCache((J9Method*)method, usePersistentCache, comp);
+         bool success = clientSession->loadBytecodeDataFromSharedProfileCache((J9Method*)method, usePersistentCache, comp, ipdata);
          if (!success)
             {
             // We failed to load bytecode profile data shared repository.
@@ -833,19 +880,59 @@ JITClientIProfiler::walkILTreeForIProfilingEntries(uintptr_t *pcEntries, uint32_
    }
 
 /**
+ * @brief Scan the given IProfiler CallGraph entry for j9classes that the server may not have,
+ *        and populate the `uncachedClasses` and `classInfos` vectors with desired information.
+ *
+ * @param cgEntry The IProfiler entry that needs to be scanned
+ * @param comp Compiler object for this compilation
+ * @param uncachedClasses OUTPUT. Vector of classes that server needs but does not have
+ * @param classInfos OUTPUT. Vector of ClassInfos corresponding to elements in `uncachedClasses`
+ */
+void
+JITClientIProfiler::gatherUncachedClassesUsedInCGEntry(TR_IPBCDataCallGraph *cgEntry, TR::Compilation *comp,
+                                                       std::vector<J9Class *> &uncachedClasses,
+                                                       std::vector<JITServerHelpers::ClassInfoTuple> &classInfos)
+   {
+   auto csInfo = cgEntry->getCGData();
+   for (size_t j = 0; j < NUM_CS_SLOTS; ++j)
+      {
+      if (auto ramClass = (J9Class *)csInfo->getClazz((int)j))
+         {
+         bool uncached = false;
+            {
+            OMR::CriticalSection cs(getCompInfo()->getclassesCachedAtServerMonitor());
+            uncached = getCompInfo()->getclassesCachedAtServer().insert(ramClass).second;
+            }
+         // TODO: consider merging all those 3 small critical sections into 1.
+         if (uncached)
+            {
+            uncachedClasses.push_back(ramClass);
+            classInfos.push_back(JITServerHelpers::packRemoteROMClassInfo(ramClass, comp->j9VMThread(), comp->trMemory(), true));
+            }
+         }
+      }
+   }
+
+/**
  * @brief Code to be executed on the JITClient to serialize IP data of a method
  *
  * @param pcEntries Sorted array with PCs that have IProfiler info
  * @param numEntries Number of entries in the above array; guaranteed > 0
  * @param memChunk Storage area where we serialize entries
  * @param methodStartAddress Start address of the bytecodes for the method
- * @param totalSamples Output. Will contain the total number of profiling samples
+ * @param comp The compilation object
+ * @param sharedProfile Boolean indicating whether to collect info about classes the server does not have
+ * @param totalSamples OUTPUT. Will contain the total number of profiling samples
+ * @param uncachedClasses OUTPUT. Vector of classes that server needs but does not have
+ * @param classInfos OUTPUT. Vector of ClassInfos corresponding to elements in `uncachedClasses`
  * @return Total memory space used for serialization
  */
 uintptr_t
 JITClientIProfiler::serializeIProfilerMethodEntries(const uintptr_t *pcEntries, uint32_t numEntries,
                                                     uintptr_t memChunk, uintptr_t methodStartAddress,
-                                                    uint64_t &totalSamples)
+                                                    TR::Compilation *comp, bool sharedProfile, uint64_t &totalSamples,
+                                                    std::vector<J9Class *> &uncachedClasses,
+                                                    std::vector<JITServerHelpers::ClassInfoTuple> &classInfos)
    {
    uintptr_t crtAddr = memChunk;
    TR_IPBCDataStorageHeader * storage = NULL;
@@ -857,6 +944,14 @@ JITClientIProfiler::serializeIProfilerMethodEntries(const uintptr_t *pcEntries, 
       TR_IPBytecodeHashTableEntry *entry = profilingSample(pcEntries[i], 0, false);
       totalSamples += entry->getNumSamples();
       entry->serialize(methodStartAddress, storage, persistentInfo);
+
+      // Collect information about the classes used in these entries that are not yet available at the server.
+      // These additional classInfos will be sent to the server together with the profiling information.
+      if (sharedProfile && (storage->ID == TR_IPBCD_CALL_GRAPH))
+         {
+         TR_IPBCDataCallGraph *cgEntry = entry->asIPBCDataCallGraph();
+         gatherUncachedClassesUsedInCGEntry(cgEntry, comp, uncachedClasses, classInfos);
+         }
 
       // optimistically set link to next entry
       uint32_t bytes = entry->getBytesFootprint();
@@ -875,15 +970,16 @@ JITClientIProfiler::serializeIProfilerMethodEntries(const uintptr_t *pcEntries, 
  * @brief Code to be executed by the JITClient to send all IProfiler info for a method to JITServer
  *
  * @param method J9Method in question
- * @param comp TR::Compilation pointer
+ * @param comp The compilation object
  * @param client Connection to JITServer
- * @param usePersistentCache Whether to use persistent cache
- * @param isCompiled Whether the method is compiled at the moment
+ * @param usePersistentCache Passed to the server to indicate whether or not to use the persistent cache
+ * @param isCompiled Whether the method is compiled at the moment. Passed to the server
+ * @param sharedProfile Boolean indicating whether to collect info about classes the server does not have
  * @return Whether the operation was successful
  */
 bool
 JITClientIProfiler::serializeAndSendIProfileInfoForMethod(TR_OpaqueMethodBlock *method, TR::Compilation *comp, JITServer::ClientStream *client,
-                                                          bool usePersistentCache, bool isCompiled)
+                                                          bool usePersistentCache, bool isCompiled, bool sharedProfile)
    {
    TR::StackMemoryRegion stackMemoryRegion(*comp->trMemory());
    uint32_t numEntries = 0;
@@ -908,18 +1004,25 @@ JITClientIProfiler::serializeAndSendIProfileInfoForMethod(TR_OpaqueMethodBlock *
 
       if (!abort)
          {
+         std::vector<J9Class *> uncachedClasses; // This will be populated and send back to server
+         std::vector<JITServerHelpers::ClassInfoTuple> classInfos; // This will be populated and send back to server
+
          if (numEntries)
             {
             // Serialize the entries
             std::string buffer(bytesFootprint, '\0');
-               intptr_t writtenBytes = serializeIProfilerMethodEntries(pcEntries, numEntries, (uintptr_t)&buffer[0], methodStart, totalSamples);
+            intptr_t writtenBytes = serializeIProfilerMethodEntries(pcEntries, numEntries, (uintptr_t)&buffer[0], methodStart,
+                                                                    comp, sharedProfile, totalSamples,
+                                                                    uncachedClasses, classInfos);
             TR_ASSERT(writtenBytes == bytesFootprint, "BST doesn't match expected footprint");
-            // send the information to the server
-               client->write(JITServer::MessageType::IProfiler_profilingSample, buffer, totalSamples, (size_t)numEntries, true, usePersistentCache, isCompiled);
+            // Send the information to the server
+            client->write(JITServer::MessageType::IProfiler_profilingSample, buffer, totalSamples, (size_t)numEntries,
+                         /*wholeMethod=*/true, usePersistentCache, isCompiled, uncachedClasses, classInfos);
             }
          else// Empty IProfiler data for this method
             {
-            client->write(JITServer::MessageType::IProfiler_profilingSample, std::string(), (uint64_t)0, (size_t)0, true, usePersistentCache, isCompiled);
+            client->write(JITServer::MessageType::IProfiler_profilingSample, std::string(), (uint64_t)0, (size_t)0,
+                         /*wholeMethod=*/true, usePersistentCache, isCompiled, uncachedClasses, classInfos);
             }
          }
 
@@ -959,9 +1062,9 @@ JITClientIProfiler::serializeIProfilerMethodEntry(TR_OpaqueMethodBlock *omb)
    if (entry)
       {
       std::string entryStr(sizeof(TR_ContiguousIPMethodHashTableEntry), 0);
-      TR_ContiguousIPMethodHashTableEntry::serialize(
-         entry,
-         reinterpret_cast<TR_ContiguousIPMethodHashTableEntry *>(&entryStr[0]));
+      // TODO: make the following method return the desired string and return it immediately
+      // return TR_ContiguousIPMethodHashTableEntry::serialize(entry)
+      TR_ContiguousIPMethodHashTableEntry::serialize(entry, reinterpret_cast<TR_ContiguousIPMethodHashTableEntry *>(&entryStr[0]));
       return entryStr;
       }
    else
