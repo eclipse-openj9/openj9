@@ -247,7 +247,8 @@ enterContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 		/* Continuation is still in a blocked list. This can happen with TIMED_WAIT.
 		 * It must be removed from the waiting list.
 		 */
-		Assert_VM_true(VM_ContinuationHelpers::removeBlockingContinuationFromLists(currentThread, continuation));
+		bool errorNone = VM_ContinuationHelpers::removeBlockingContinuationFromLists(currentThread, continuation);
+		Assert_VM_true(errorNone);
 	}
 #endif /* JAVA_SPEC_VERSION >= 24 */
 
@@ -380,7 +381,8 @@ freeContinuation(J9VMThread *currentThread, j9object_t continuationObject, BOOLE
 		continuation->vthread = NULL;
 
 		if (NULL != continuation->objectWaitMonitor) {
-			Assert_VM_true(VM_ContinuationHelpers::removeBlockingContinuationFromLists(currentThread, continuation));
+			bool errorNone = VM_ContinuationHelpers::removeBlockingContinuationFromLists(currentThread, continuation);
+			Assert_VM_true(errorNone);
 		}
 		Assert_VM_true(NULL == continuation->nextWaitingContinuation);
 #endif /* JAVA_SPEC_VERSION >= 24 */
