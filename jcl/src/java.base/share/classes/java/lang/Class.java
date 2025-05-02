@@ -6040,9 +6040,9 @@ public Class<?>[] getNestMembers()
 	 *
 	 * @return	the class file version
 	 */
-/*[IF !INLINE-TYPES]*/
+	/*[IF (JAVA_SPEC_VERSION < 25) & !INLINE-TYPES]*/
 	private
-/*[ENDIF] !INLINE-TYPES */
+	/*[ENDIF] (JAVA_SPEC_VERSION < 25) & !INLINE-TYPES */
 	int getClassFileVersion() {
 		Class<?> thisObject = this;
 		while (thisObject.isArray()) {
