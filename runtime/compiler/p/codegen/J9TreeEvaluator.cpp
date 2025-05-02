@@ -12292,12 +12292,12 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
    // check the first byte
    generateTrg1MemInstruction(cg, TR::InstOpCode::lbz, node, tempReg,
       TR::MemoryReference::createWithIndexReg(cg, NULL, startReg, 1));
-   generateTrg1Src1Instruction(cg, TR::InstOpCode::extsb, node, tempReg, tempReg);
-   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, cr6, tempReg, 0);
+   // check the negative bit
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, node, tempReg, tempReg, 0x80);
    if (isCountPositives) // when counting positives, just return the index which is 0
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, endLabel, cr6);
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, endLabel, cr6);
    else // when seeking negatives, we need to return 1
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, matchLabel, cr6);
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, matchLabel, cr6);
 
    // if we only have one byte end it here, and return 0 for hasNegative
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, indexReg, indexReg, 1);
@@ -12437,13 +12437,12 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
 
    generateTrg1MemInstruction(cg, TR::InstOpCode::lbzx, node, tempReg,
       TR::MemoryReference::createWithIndexReg(cg, startReg, indexReg, 1));
-   generateTrg1Src1Instruction(cg, TR::InstOpCode::extsb, node, tempReg, tempReg);
-
-   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, cr6, tempReg, 0);
-   // when seeking negatives, we need to return 1
-   if (!isCountPositives)
-      generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, tempReg, 1);
-   generateConditionalBranchInstruction(cg, TR::InstOpCode::blt, node, endLabel, cr6);
+   // check the negative bit
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, node, tempReg, tempReg, 0x80);
+   if (isCountPositives)
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, endLabel, cr0);
+   else
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, resultLabel, cr0);
 
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, indexReg, indexReg, 1);
    generateLabelInstruction(cg, TR::InstOpCode::b, node, serialLabel);
@@ -13087,6 +13086,7 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
          break;
 
       case TR::java_lang_StringCoding_hasNegatives:
+         return false;
          if (cg->getSupportsInlineStringCodingHasNegatives())
             {
             resultReg = inlineStringCodingHasNegativesOrCountPositives(node, cg, false);
@@ -13094,6 +13094,7 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
             }
          break;
       case TR::java_lang_StringCoding_countPositives:
+         return true;
          if (cg->getSupportsInlineStringCodingCountPositives())
             {
             resultReg = inlineStringCodingHasNegativesOrCountPositives(node, cg, true);
