@@ -22,13 +22,17 @@
 
 list(APPEND OMR_PLATFORM_COMPILE_OPTIONS
 	-O3
-	"\"-Wc,inline(auto,noreport,600,5000)\""
-	"\"-Wc,list(),offset,gonumber\""
+	-qstackprotect
 )
 
-list(APPEND OMR_PLATFORM_CXX_COMPILE_OPTIONS -qnortti)
+if(OMR_OS_ZOS)
+	list(APPEND OMR_PLATFORM_COMPILE_OPTIONS
+		"\"-Wc,inline(auto,noreport,600,5000)\""
+		"\"-Wc,list(),offset,gonumber\""
+	)
+endif()
 
-list(APPEND OMR_PLATFORM_COMPILE_OPTIONS -qstackprotect)
+list(APPEND OMR_PLATFORM_CXX_COMPILE_OPTIONS -qnortti)
 
 if(NOT OMR_OS_ZOS)
 	list(APPEND OMR_PLATFORM_CXX_COMPILE_OPTIONS -qsuppress=1540-1087:1540-1088:1540-1090)
