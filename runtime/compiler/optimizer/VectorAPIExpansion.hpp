@@ -370,19 +370,32 @@ class TR_VectorAPIExpansion : public TR::Optimization
    */
    static TR::VectorLength supportedOnPlatform(TR::Compilation *comp, vec_sz_t vectorLength)
          {
+         TR::VectorLength length;
          // General check for supported infrastructure
          if (!comp->target().cpu.isPower() &&
                !(comp->target().cpu.isZ() && comp->cg()->getSupportsVectorRegisters()) &&
                !comp->target().cpu.isARM64())
-            return TR::NoVectorLength;
+            {
+            length = TR::NoVectorLength;
+            }
+         else if (vectorLength != 128)
+            {
+            length = TR::NoVectorLength;
+            }
+         else
+            {
+            length = OMR::DataType::bitsToVectorLength(vectorLength);
 
-         if (vectorLength != 128)
-            return TR::NoVectorLength;
+            TR_ASSERT_FATAL(length > TR::NoVectorLength && length <= TR::NumVectorLengths,
+                            "VectorAPIExpansion requested invalid vector length %d\n", length);
+            }
 
-         TR::VectorLength length = OMR::DataType::bitsToVectorLength(vectorLength);
-
-         TR_ASSERT_FATAL(length > TR::NoVectorLength && length <= TR::NumVectorLengths,
-                         "VectorAPIExpansion requested invalid vector length %d\n", length);
+         if (length == TR::NoVectorLength &&
+             TR::Options::getVerboseOption(TR_VerboseVectorAPI))
+            {
+            TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "VectorLength%d is not implemented in %s\n",
+                                  vectorLength, comp->signature());
+            }
 
          return length;
          }
@@ -1657,14 +1670,18 @@ class TR_VectorAPIExpansion : public TR::Optimization
    *   \return
    *      opcode is supported
    */
-   static bool isOpCodeImplemented(TR::Compilation *comp, TR::ILOpCode opCode)
+   static bool isOpCodeImplemented(TR::Compilation *comp, TR::ILOpCode opCode, bool check = true)
       {
-      bool result = comp->cg()->getSupportsOpCodeForAutoSIMD(opCode);
+      bool result = check && comp->cg()->getSupportsOpCodeForAutoSIMD(opCode);
 
       if (!result && TR::Options::getVerboseOption(TR_VerboseVectorAPI))
          {
-         TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "%s%s is not implemented in %s\n",
+         bool twoTypes = opCode.isTwoTypeVectorOpCode();
+
+         TR_VerboseLog::writeLine(TR_Vlog_VECTOR_API, "%s%s%s%s is not implemented in %s\n",
                                   opCode.getName(),
+                                  twoTypes? TR::DataType::getName(opCode.getVectorSourceDataType()) : "",
+                                  twoTypes? "_" : "",
                                   TR::DataType::getName(opCode.getVectorResultDataType()),
                                   comp->signature());
          }
