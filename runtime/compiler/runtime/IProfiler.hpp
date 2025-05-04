@@ -61,6 +61,12 @@
  * Interpreter Profiling Framework" by Ian Gartley, Marius Pirvu, Vijay
  * Sundaresan and Nikola Grecvski, published in *Code Generation and Optimization (CGO)*, 2013.
  */
+#define TRACK_SAMPLE_SOURCES
+#if defined(TRACK_SAMPLE_SOURCES)
+#include <list>
+#include <string>
+#include <map>
+#endif // defined(TRACK_SAMPLE_SOURCES)
 
 #include "j9.h"
 #include "j9cfg.h"
@@ -196,9 +202,18 @@ public:
    void * operator new (size_t size, void * placement) {return placement;}
    void operator delete(void *p, void *) {}
 
-   TR_IPBytecodeHashTableEntry(uintptr_t pc) : _next(NULL), _pc(pc), _lastSeenClassUnloadID(-1), _entryFlags(0), _persistFlags(IPBC_ENTRY_CAN_PERSIST_FLAG) {}
+   TR_IPBytecodeHashTableEntry(uintptr_t pc) : _next(NULL), _pc(pc), _lastSeenClassUnloadID(-1), _entryFlags(0), _persistFlags(IPBC_ENTRY_CAN_PERSIST_FLAG)
+      {
+#if defined(TRACK_SAMPLE_SOURCES)
+      _romMethod = NULL;
+#endif
+      }
    virtual ~TR_IPBytecodeHashTableEntry() {}
    uintptr_t getPC() const { return _pc; }
+#if defined(TRACK_SAMPLE_SOURCES)
+   J9ROMMethod *getROMMethod() const { return _romMethod; }
+   void setROMMethod(J9ROMMethod *method) { _romMethod = method; }
+#endif // TRACK_SAMPLE_SOURCES
    TR_IPBytecodeHashTableEntry * getNext() const { return _next; }
    void setNext(TR_IPBytecodeHashTableEntry *n) { _next = n; }
    int32_t getLastSeenClassUnloadID() const { return _lastSeenClassUnloadID; }
@@ -264,6 +279,9 @@ public:
 protected:
    TR_IPBytecodeHashTableEntry *_next;
    uintptr_t _pc;
+#if defined(TRACK_SAMPLE_SOURCES)
+   J9ROMMethod *_romMethod; // romMethod containing the _pc
+#endif // TRACK_SAMPLE_SOURCES
    int32_t    _lastSeenClassUnloadID;
 
    enum TR_PersistenceFlags
@@ -876,6 +894,22 @@ private:
 
    volatile TR_IprofilerThreadLifetimeStates _iprofilerThreadLifetimeState;
 
+#if defined(TRACK_SAMPLE_SOURCES)
+   bool                            _trackProfilingActivity;
+   // Maps ROMMethods to number of samples. Uses malloc underneath
+   std::map<const J9ROMMethod *, uint32_t> _samplesPerMethod;
+   // Maps ROMMethods to their names; this avoids any class unloading concerns
+   std::map<const J9ROMMethod *, std::string> _methodNames;
+   class TopFiveMethods
+      {
+   public:
+      void processElement(const std::pair<const J9ROMMethod*, uint32_t>  & newElem);
+      void print(const std::map<const J9ROMMethod *, std::string> &names);
+   private:
+      std::list<std::pair<const J9ROMMethod*, uint32_t> > _sortedList;
+      }; // class TopFiveMethods
+#endif
+
    public:
    static int32_t                  _STATS_noProfilingInfo;
    static int32_t                  _STATS_doesNotWantToGiveProfilingInfo;
@@ -910,7 +944,7 @@ private:
 
    static int32_t                  _STATS_IPEntryRead;
    static int32_t                  _STATS_IPEntryChoosePersistent;
-   };
+   }; // TR_IProfiler
 
 void printIprofilerStats(TR::Options *options, J9JITConfig * jitConfig, TR_IProfiler *iProfiler, const char *event);
 void turnOffInterpreterProfiling(J9JITConfig *jitConfig);
