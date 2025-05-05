@@ -645,12 +645,11 @@ MM_SchedulingDelegate::updateLiveBytesAfterPartialCollect()
 		J9HashTableState walkState;
 
 		MM_SparseDataTableEntry *sparseDataEntry = (MM_SparseDataTableEntry *)hashTableStartDo(largeObjectVirtualMemory->getSparseDataPool()->getObjectToSparseDataTable(), &walkState);
-		const uintptr_t regionSize = _regionManager->getRegionSize();
 		while (NULL != sparseDataEntry) {
 			J9Object *spineObject = (J9Object *)sparseDataEntry->_proxyObjPtr;
 
 			if (_extensions->objectModel.isObjectArray(spineObject)) {
-				_liveSetBytesAfterPartialCollect += MM_Math::roundToCeiling(regionSize, sparseDataEntry->_size);
+				_liveSetBytesAfterPartialCollect += sparseDataEntry->_size;
 			}
 
 			sparseDataEntry = (MM_SparseDataTableEntry *)hashTableNextDo(&walkState);

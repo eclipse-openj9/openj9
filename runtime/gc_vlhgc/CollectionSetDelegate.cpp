@@ -49,6 +49,7 @@
 #include "MemoryPool.hpp"
 #include "RegionValidator.hpp"
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+#include "AllocationContextBalanced.hpp"
 #include "SparseVirtualMemory.hpp"
 #include "SparseAddressOrderedFixedSizeDataPool.hpp"
 #endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
@@ -572,8 +573,9 @@ MM_CollectionSetDelegate::rateOfReturnCalculationBeforeSweep(MM_EnvironmentVLHGC
 			while (NULL != sparseDataEntry) {
 				J9Object *spineObject = (J9Object *)sparseDataEntry->_proxyObjPtr;
 				uintptr_t dataSize = sparseDataEntry->_size;
-				/* TODO: how fraction is counting here? */
-				arrayReservedRegionCount = MM_Math::roundToCeiling(regionSize, dataSize) / regionSize;
+
+				arrayReservedRegionCount = dataSize / regionSize;
+
 				MM_HeapRegionDescriptorVLHGC *parentRegion = (MM_HeapRegionDescriptorVLHGC *)_regionManager->regionDescriptorForAddress((void *)spineObject);
 				Assert_MM_true(parentRegion->containsObjects());
 				SetSelectionData *stats = &_setSelectionDataTable[MM_CompactGroupManager::getCompactGroupNumber(env, parentRegion)];
@@ -592,6 +594,11 @@ MM_CollectionSetDelegate::rateOfReturnCalculationBeforeSweep(MM_EnvironmentVLHGC
 				sparseDataEntry = (MM_SparseDataTableEntry *)hashTableNextDo(&walkState);
 			}
 
+			MM_AllocationContextBalanced *commonContext = (MM_AllocationContextBalanced *)env->getCommonAllocationContext();
+			uintptr_t sharedArrayReservedRegionCount = commonContext->getSharedArrayReservedRegionsCount();
+			SetSelectionData *stats = &_setSelectionDataTable[compactGroupCount-1];
+			stats->_reclaimStats._regionCountBefore += sharedArrayReservedRegionCount;
+			stats->_reclaimStats._regionCountArrayletLeafBefore += sharedArrayReservedRegionCount;
 		}
 #endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 	}
@@ -601,6 +608,7 @@ void
 MM_CollectionSetDelegate::rateOfReturnCalculationAfterSweep(MM_EnvironmentVLHGC *env)
 {
 	if(_extensions->tarokEnableDynamicCollectionSetSelection) {
+		uintptr_t compactGroupCount = MM_CompactGroupManager::getCompactGroupMaxCount(env);
 		/* Walk and count all regions */
 		GC_HeapRegionIteratorVLHGC regionIterator(_regionManager, MM_HeapRegionDescriptor::ALL);
 		MM_HeapRegionDescriptorVLHGC *region = NULL;
@@ -636,6 +644,7 @@ MM_CollectionSetDelegate::rateOfReturnCalculationAfterSweep(MM_EnvironmentVLHGC 
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
 		if (_extensions->isVirtualLargeObjectHeapEnabled) {
 			const uintptr_t regionSize = _regionManager->getRegionSize();
+
 			MM_SparseVirtualMemory *largeObjectVirtualMemory = _extensions->largeObjectVirtualMemory;
 			uintptr_t arrayReservedRegionCount = 0;
 			J9HashTableState walkState;
@@ -644,8 +653,9 @@ MM_CollectionSetDelegate::rateOfReturnCalculationAfterSweep(MM_EnvironmentVLHGC 
 			while (NULL != sparseDataEntry) {
 				J9Object *spineObject = (J9Object *)sparseDataEntry->_proxyObjPtr;
 				uintptr_t dataSize = sparseDataEntry->_size;
-				/* TODO: how fraction is counting here? */
-				arrayReservedRegionCount = MM_Math::roundToCeiling(regionSize, dataSize) / regionSize;
+
+				arrayReservedRegionCount = dataSize / regionSize;
+
 				MM_HeapRegionDescriptorVLHGC *parentRegion = (MM_HeapRegionDescriptorVLHGC *)_regionManager->regionDescriptorForAddress((void *)spineObject);
 				Assert_MM_true(parentRegion->containsObjects());
 				SetSelectionData *stats = &_setSelectionDataTable[MM_CompactGroupManager::getCompactGroupNumber(env, parentRegion)];
@@ -661,6 +671,12 @@ MM_CollectionSetDelegate::rateOfReturnCalculationAfterSweep(MM_EnvironmentVLHGC 
 				sparseDataEntry = (MM_SparseDataTableEntry *)hashTableNextDo(&walkState);
 			}
 
+			MM_AllocationContextBalanced *commonContext = (MM_AllocationContextBalanced *)env->getCommonAllocationContext();
+			uintptr_t sharedArrayReservedRegionCount = commonContext->getSharedArrayReservedRegionsCount();
+			SetSelectionData *stats = &_setSelectionDataTable[compactGroupCount-1];
+
+			stats->_reclaimStats._regionCountAfter += sharedArrayReservedRegionCount;
+			stats->_reclaimStats._regionCountArrayletLeafAfter += sharedArrayReservedRegionCount;
 		}
 #endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 
@@ -669,9 +685,7 @@ MM_CollectionSetDelegate::rateOfReturnCalculationAfterSweep(MM_EnvironmentVLHGC 
 		 * Use a weighted running average to calculate the ROR, where the weight is the % of regions in an age group that we are examining.
 		 * NOTE: We leave the ROR for the last age group as 0.
 		 */
-		UDATA compactGroupCount = MM_CompactGroupManager::getCompactGroupMaxCount(env);
-
-		for(UDATA compactGroup = 0; compactGroup < compactGroupCount; compactGroup++) {
+		for (uintptr_t compactGroup = 0; compactGroup < compactGroupCount; compactGroup++) {
 			if (MM_CompactGroupManager::getRegionAgeFromGroup(env, compactGroup) < _extensions->tarokRegionMaxAge) {
 				/* We set the compact group for each entry every time through a table.  This is overkill, but allows us to be sure when examining a ROR element whether
 				 * in fact it represents the compact group with think it does.

@@ -4170,14 +4170,20 @@ private:
 			if (NULL == fwdOjectPtr) {
 				const uintptr_t regionSize = _extensions->heapRegionManager->getRegionSize();
 				uintptr_t dataSize = _extensions->indexableObjectModel.getDataSizeInBytes((J9IndexableObject *)objectPtr);
-				uintptr_t reservedRegionCount = MM_Math::roundToCeiling(regionSize, dataSize) / regionSize;
+
+				uintptr_t reservedRegionCount = dataSize / regionSize;
+				uintptr_t fraction = dataSize % regionSize;
+
+				MM_AllocationContextBalanced *commonContext = (MM_AllocationContextBalanced *)env->getCommonAllocationContext();
+				if ((0 != fraction) && commonContext->recycleToSharedArrayReservedRegion(env, fraction)) {
+					reservedRegionCount += 1;
+				}
 
 				Assert_MM_mustBeClass(_extensions->objectModel.getPreservedClass(&forwardedHeader));
 				env->_copyForwardStats._offHeapRegionsCleared += 1;
 				void *dataAddr = _extensions->indexableObjectModel.getDataAddrForContiguous((J9IndexableObject *)objectPtr);
 				_extensions->largeObjectVirtualMemory->freeSparseRegionAndUnmapFromHeapObject(_env, dataAddr, objectPtr, dataSize, sparseDataEntryIterator);
 				/* recycleLeafRegions for off-heap case */
-				MM_AllocationContextBalanced *commonContext = (MM_AllocationContextBalanced *)env->getCommonAllocationContext();
 				commonContext->recycleReservedRegionsForVirtualLargeObjectHeap(env, reservedRegionCount);
 			} else {
 				void *dataAddr = _extensions->indexableObjectModel.getDataAddrForContiguous((J9IndexableObject *)fwdOjectPtr);

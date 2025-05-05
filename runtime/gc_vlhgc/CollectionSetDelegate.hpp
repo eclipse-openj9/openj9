@@ -75,7 +75,6 @@ public:
 
 	protected:
 	private:
-
 	public:
 		RegionReclaimableStats() {};
 

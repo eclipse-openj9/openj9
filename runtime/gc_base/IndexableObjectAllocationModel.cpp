@@ -25,6 +25,10 @@
 #include "IndexableObjectAllocationModel.hpp"
 #include "Math.hpp"
 #include "MemorySpace.hpp"
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+#include "AllocationContextBalanced.hpp"
+#include "EnvironmentVLHGC.hpp"
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) || defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 #include "ArrayletLeafIterator.hpp"
 #include "HeapRegionManagerVLHGC.hpp"
@@ -343,49 +347,57 @@ MM_IndexableObjectAllocationModel::getSparseAddressAndDecommitLeaves(MM_Environm
 	const uintptr_t regionSize = extensions->heapRegionManager->getRegionSize();
 
 	uintptr_t byteAmount = 0;
-	UDATA arrayReservedRegionCount = MM_Math::roundToCeiling(regionSize, _dataSize) / regionSize;
 
 	/* Determine how many bytes to allocate outside of the spine (in arraylet leaves). */
 	Assert_MM_true(_allocateDescription.getBytesRequested() >= _allocateDescription.getContiguousBytes());
 	uintptr_t bytesRemaining = _allocateDescription.getBytesRequested() - _allocateDescription.getContiguousBytes();
 
-	/* Allocate leaf for each arraylet and attach it to its leaf pointer in the spine. */
-	uintptr_t arrayoidIndex = 0;
-	Trc_MM_getSparseAddressAndDecommitLeaves_Entry(envBase->getLanguageVMThread(), spine, (void *)bytesRemaining, arrayReservedRegionCount, (void *)regionSize);
+	MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(envBase);
+	MM_AllocationContextBalanced *commonContext = (MM_AllocationContextBalanced *)env->getCommonAllocationContext();
+
+	Trc_MM_getSparseAddressAndDecommitLeaves_Entry(envBase->getLanguageVMThread(), spine, (void *)bytesRemaining, bytesRemaining / regionSize, (void *)regionSize);
+	uintptr_t arrayReservedRegionCount = 0;
+	uintptr_t fraction = 0;
 	while (0 < bytesRemaining) {
 		/* Allocate the next arraylet leaf - leaves are allocated solely for the purpose of
 		   decommitting the memory later on in this function. */
-		void *leaf = envBase->_objectAllocationInterface->allocateArrayletLeaf(
-				envBase, &_allocateDescription, _allocateDescription.getMemorySpace(), true);
-
-		/* If leaf allocation failed set the result to NULL and return. */
-		if (NULL == leaf) {
-			Trc_MM_allocateAndConnectNonContiguousArraylet_leafFailure(envBase->getLanguageVMThread());
-			_allocateDescription.setSpine(NULL);
-			spine = NULL;
-			break;
+		void *reservedAddressLow = NULL;
+		bool shouldAllocateReservedRegion = true;
+		if (regionSize > bytesRemaining) {
+			fraction = bytesRemaining;
+			/* For code simplicity and lower fragmentation, we always use Common Context. */
+			shouldAllocateReservedRegion = commonContext->allocateFromSharedArrayReservedRegion(envBase, fraction);
 		}
+		if (shouldAllocateReservedRegion) {
+			reservedAddressLow = envBase->_objectAllocationInterface->allocateArrayletLeaf(
+					envBase, &_allocateDescription, _allocateDescription.getMemorySpace(), true);
 
-		/* Disable region for reads and writes, since that'll be done through the contiguous double mapped region */
-		void *highAddress = (void *)((uintptr_t)leaf + regionSize);
-		bool ret = extensions->heap->decommitMemory(leaf, regionSize, leaf, highAddress);
-		if (!ret) {
-			Trc_MM_VirtualMemory_decommitMemory_failure(leaf, regionSize);
+			/* If reservedRegion allocation failed set the result to NULL and return. */
+			if (NULL == reservedAddressLow) {
+				Trc_MM_allocateAndConnectNonContiguousArraylet_leafFailure(envBase->getLanguageVMThread());
+				_allocateDescription.setSpine(NULL);
+				spine = NULL;
+				break;
+			}
+			/* Disable region for reads and writes, since accessing virtualLargeObjectHeapAddress through DataAddrForContiguous */
+			void *reservedAddressHigh = (void *)((uintptr_t)reservedAddressLow + regionSize);
+			bool ret = extensions->heap->decommitMemory(reservedAddressLow, regionSize, reservedAddressLow, reservedAddressHigh);
+			if (!ret) {
+				Trc_MM_VirtualMemory_decommitMemory_failure(reservedAddressLow, regionSize);
+			}
+
+			/* Refresh the spine -- it might move if we GC while allocating the reservedRegion */
+			spine = _allocateDescription.getSpine();
 		}
-
-		/* Refresh the spine -- it might move if we GC while allocating the leaf */
-		spine = _allocateDescription.getSpine();
 
 		bytesRemaining -= OMR_MIN(bytesRemaining, regionSize);
-		arrayoidIndex += 1;
+		arrayReservedRegionCount += 1;
 	}
 
 
 	if (NULL != spine) {
 		Assert_MM_true(_layout == GC_ArrayletObjectModel::InlineContiguous);
 		Assert_MM_true(indexableObjectModel->isVirtualLargeObjectHeapEnabled());
-		/* Number of arraylet leaves in the iterator must match the number of leaves calculated */
-		Assert_MM_true(arrayReservedRegionCount == arrayoidIndex);
 
 		byteAmount = _dataSize;
 		void *virtualLargeObjectHeapAddress = extensions->largeObjectVirtualMemory->allocateSparseFreeEntryAndMapToHeapObject(spine, byteAmount);
@@ -400,10 +412,15 @@ MM_IndexableObjectAllocationModel::getSparseAddressAndDecommitLeaves(MM_Environm
 
 	if (NULL == spine) {
 		/* fail to reserve regions or allocateSparseFreeEntry, clean up reserved regions */
-		if (0 < arrayoidIndex) {
-			((MM_HeapRegionManagerVLHGC *)extensions->heapRegionManager)->recycleReservedRegionsForVirtualLargeObjectHeap(envBase, arrayoidIndex);
+		if (0 != fraction) {
+			/* rollback fraction */
+			commonContext->recycleToSharedArrayReservedRegion(envBase, fraction);
+		}
+		if (0 < arrayReservedRegionCount) {
+			((MM_HeapRegionManagerVLHGC *)extensions->heapRegionManager)->recycleReservedRegionsForVirtualLargeObjectHeap(envBase, arrayReservedRegionCount);
 		}
 	}
+
 	Trc_MM_getSparseAddressAndDecommitLeaves_Exit(envBase->getLanguageVMThread(), spine, (void *)bytesRemaining);
 
 	return spine;
