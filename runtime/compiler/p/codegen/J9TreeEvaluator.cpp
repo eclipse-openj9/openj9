@@ -12248,7 +12248,6 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
 
    TR::Register *vconstant0Reg = cg->allocateRegister(TR_VRF);
    TR::Register *vtmp1Reg = cg->allocateRegister(TR_VRF);
-   TR::Register *vtmp2Reg = cg->allocateRegister(TR_VRF);
 
    TR::Register *storeReg = cg->allocateRegister();
    TR::Register *maskReg = cg->allocateRegister();
@@ -12454,7 +12453,7 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
    // end
 
    TR::RegisterDependencyConditions *deps =
-      new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 11, cg->trMemory());
+      new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 10, cg->trMemory());
 
    deps->addPostCondition(startReg, TR::RealRegister::NoReg);
    deps->getPostConditions()->getRegisterDependency(deps->getAddCursorForPost() - 1)->setExcludeGPR0();
@@ -12472,7 +12471,6 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
 
    deps->addPostCondition(vconstant0Reg, TR::RealRegister::NoReg);
    deps->addPostCondition(vtmp1Reg, TR::RealRegister::NoReg);
-   deps->addPostCondition(vtmp2Reg, TR::RealRegister::NoReg);
 
    deps->addPostCondition(storeReg, TR::RealRegister::NoReg);
    deps->addPostCondition(maskReg, TR::RealRegister::NoReg);
@@ -12496,7 +12494,6 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
    cg->stopUsingRegister(cr0);
    cg->stopUsingRegister(vconstant0Reg);
    cg->stopUsingRegister(vtmp1Reg);
-   cg->stopUsingRegister(vtmp2Reg);
 
    cg->stopUsingRegister(storeReg);
    cg->stopUsingRegister(maskReg);
