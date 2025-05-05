@@ -1431,14 +1431,23 @@ private:
 
 				uintptr_t reservedRegionCount = dataSize / regionSize;
 				uintptr_t fraction = dataSize % regionSize;
-				MM_AllocationContextBalanced *commonContext = (MM_AllocationContextBalanced *)env->getCommonAllocationContext();
 
-				if ((0 != fraction) && commonContext->recycleToSharedArrayReservedRegion(env, fraction)) {
-					reservedRegionCount += 1;
+				MM_SparseVirtualMemory *largeObjectVirtualMemory = _extensions->largeObjectVirtualMemory;
+				/* recycle Reserved Regions */
+				MM_AllocationContext *context = NULL;
+				for (uintptr_t index = 0; index < reservedRegionCount; index++) {
+					context = largeObjectVirtualMemory->getAllocationContextForAddress(dataAddr, index);
+					Assert_MM_true(NULL != context);
+					context->recycleReservedRegionsForVirtualLargeObjectHeap(env, 1, false);
+				}
+
+				/* recycle shared reserved region(fraction) */
+				if (0 != fraction) {
+					context = largeObjectVirtualMemory->getAllocationContextForAddress(dataAddr, reservedRegionCount);
+					context->recycleToSharedArrayReservedRegion(env, fraction);
 				}
 
 				_extensions->largeObjectVirtualMemory->freeSparseRegionAndUnmapFromHeapObject(_env, dataAddr, objectPtr, dataSize, sparseDataEntryIterator);
-				commonContext->recycleReservedRegionsForVirtualLargeObjectHeap(env, reservedRegionCount);
 			}
 		}
 	}
