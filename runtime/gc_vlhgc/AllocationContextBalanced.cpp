@@ -391,18 +391,21 @@ MM_AllocationContextBalanced::lockedAllocateArrayletLeaf(MM_EnvironmentBase *env
 		 * In future, allocations should remember (somewhere in Off-heap meta structures) how many regions came from each AC
 		 * \and release exact same number back to each AC.
 		 */
-		MM_AllocationContextTarok *commonContext = (MM_AllocationContextTarok *)env->getCommonAllocationContext();
-		if (this != commonContext) {
+		MM_AllocationContextTarok *context = this;
+		if (allocateDescription->getSharedReserved()) {
+			context = (MM_AllocationContextTarok *)env->getCommonAllocationContext();
+		}
+		if (this != context) {
 			/* The common allocation context is always an instance of AllocationContextBalanced */
-			((MM_AllocationContextBalanced *)commonContext)->lockCommon();
+			((MM_AllocationContextBalanced *)context)->lockCommon();
 		}
 
-		leafAllocateData->pushRegionToArrayReservedRegionList(env, ((MM_AllocationContextBalanced *)commonContext)->getArrayReservedRegionListAddress());
-		((MM_AllocationContextBalanced *)commonContext)->incrementArrayReservedRegionCount();
+		leafAllocateData->pushRegionToArrayReservedRegionList(env, ((MM_AllocationContextBalanced *)context)->getArrayReservedRegionListAddress());
+		((MM_AllocationContextBalanced *)context)->incrementArrayReservedRegionCount();
 
-		if (this != commonContext) {
+		if (this != context) {
 			/* The common allocation context is always an instance of AllocationContextBalanced */
-			((MM_AllocationContextBalanced *)commonContext)->unlockCommon();
+			((MM_AllocationContextBalanced *)context)->unlockCommon();
 		}
 	}
 #endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
