@@ -1083,6 +1083,8 @@ public:
     */
    virtual bool isStable(J9Class *fieldClass, int32_t cpIndex);
 
+   virtual bool isPrimitiveArray(J9Class *fieldClass, int cpIndex);
+
    /*
     * \brief
     *    tell whether a method was annotated as @ForceInline.
