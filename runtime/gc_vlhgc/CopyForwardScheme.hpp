@@ -57,7 +57,6 @@ class MM_InterRegionRememberedSet;
 class MM_MarkMap;
 class MM_MemoryPoolAddressOrderedList;
 class MM_ReferenceStats;
-
 /* Forward declaration of classes defined within the cpp */
 class MM_CopyForwardSchemeAbortScanner;
 class MM_CopyForwardSchemeRootScanner;
