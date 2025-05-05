@@ -42,10 +42,6 @@ public:
 
 	virtual MM_HeapMemorySnapshot *getHeapMemorySnapshot(MM_GCExtensionsBase *extensions, MM_HeapMemorySnapshot *snapshot, bool gcEnd);
 
-#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
-	void recycleReservedRegionsForVirtualLargeObjectHeap(MM_EnvironmentBase *envBase, uintptr_t reservedRegionCount);
-#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
-
 	static MM_HeapRegionManagerVLHGC *newInstance(MM_EnvironmentBase *env, uintptr_t regionSize, uintptr_t tableDescriptorSize, MM_RegionDescriptorInitializer regionDescriptorInitializer, MM_RegionDescriptorDestructor regionDescriptorDestructor);
 	MM_HeapRegionManagerVLHGC(MM_EnvironmentBase *env, uintptr_t regionSize, uintptr_t tableDescriptorSize, MM_RegionDescriptorInitializer regionDescriptorInitializer, MM_RegionDescriptorDestructor regionDescriptorDestructor);
 

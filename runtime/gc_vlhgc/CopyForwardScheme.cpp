@@ -4174,17 +4174,25 @@ private:
 				uintptr_t reservedRegionCount = dataSize / regionSize;
 				uintptr_t fraction = dataSize % regionSize;
 
-				MM_AllocationContextBalanced *commonContext = (MM_AllocationContextBalanced *)env->getCommonAllocationContext();
-				if ((0 != fraction) && commonContext->recycleToSharedArrayReservedRegion(env, fraction)) {
-					reservedRegionCount += 1;
-				}
-
 				Assert_MM_mustBeClass(_extensions->objectModel.getPreservedClass(&forwardedHeader));
 				env->_copyForwardStats._offHeapRegionsCleared += 1;
 				void *dataAddr = _extensions->indexableObjectModel.getDataAddrForContiguous((J9IndexableObject *)objectPtr);
+
+				MM_SparseVirtualMemory *largeObjectVirtualMemory = _extensions->largeObjectVirtualMemory;
+				/* recycle Reserved Regions */
+				MM_AllocationContextBalanced *context = NULL;
+				for (uintptr_t index = 0; index < reservedRegionCount; index++) {
+					context = (MM_AllocationContextBalanced *) largeObjectVirtualMemory->getAllocationContextForAddress(dataAddr, index);
+					context->recycleReservedRegionsForVirtualLargeObjectHeap(env, 1);
+				}
+
+				/* crecycle shared reserved region(fraction) */
+				context = (MM_AllocationContextBalanced *)env->getCommonAllocationContext();
+				if ((0 != fraction) && context->recycleToSharedArrayReservedRegion(env, fraction)) {
+					context->recycleReservedRegionsForVirtualLargeObjectHeap(env, 1);
+				}
+
 				_extensions->largeObjectVirtualMemory->freeSparseRegionAndUnmapFromHeapObject(_env, dataAddr, objectPtr, dataSize, sparseDataEntryIterator);
-				/* recycleLeafRegions for off-heap case */
-				commonContext->recycleReservedRegionsForVirtualLargeObjectHeap(env, reservedRegionCount);
 			} else {
 				void *dataAddr = _extensions->indexableObjectModel.getDataAddrForContiguous((J9IndexableObject *)fwdOjectPtr);
 				if (NULL != dataAddr) {
