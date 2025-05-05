@@ -12244,9 +12244,7 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
    TR::Register *tempReg = cg->allocateRegister();
 
    TR::Register *cr6 = cg->allocateRegister(TR_CCR);
-   TR::Register *cr0 = NULL;
-   if (isCountPositives && isLE)
-      cr0 = cg->allocateRegister(TR_CCR);
+   TR::Register *cr0 = cg->allocateRegister(TR_CCR);
 
    TR::Register *vconstant0Reg = cg->allocateRegister(TR_VRF);
    TR::Register *vtmp1Reg = cg->allocateRegister(TR_VRF);
@@ -12295,9 +12293,9 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
    // check the negative bit
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andi_r, node, tempReg, tempReg, 0x80);
    if (isCountPositives) // when counting positives, just return the index which is 0
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, endLabel, cr6);
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, endLabel, cr0);
    else // when seeking negatives, we need to return 1
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, matchLabel, cr6);
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, matchLabel, cr0);
 
    // if we only have one byte end it here, and return 0 for hasNegative
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, indexReg, indexReg, 1);
@@ -12442,7 +12440,7 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
    if (isCountPositives)
       generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, endLabel, cr0);
    else
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, resultLabel, cr0);
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, matchLabel, cr0);
 
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, indexReg, indexReg, 1);
    generateLabelInstruction(cg, TR::InstOpCode::b, node, serialLabel);
@@ -12470,9 +12468,8 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
    deps->addPostCondition(tempReg, TR::RealRegister::NoReg);
 
    deps->addPostCondition(cr6, TR::RealRegister::cr6);
+   deps->addPostCondition(cr0, TR::RealRegister::cr0);
 
-   if (isCountPositives && isLE)
-      deps->addPostCondition(cr0, TR::RealRegister::cr0);
    deps->addPostCondition(vconstant0Reg, TR::RealRegister::NoReg);
    deps->addPostCondition(vtmp1Reg, TR::RealRegister::NoReg);
    deps->addPostCondition(vtmp2Reg, TR::RealRegister::NoReg);
@@ -12496,8 +12493,7 @@ static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *no
    cg->stopUsingRegister(startReg);
    cg->stopUsingRegister(lengthReg);
    cg->stopUsingRegister(cr6);
-   if (isCountPositives && isLE)
-      cg->stopUsingRegister(cr0);
+   cg->stopUsingRegister(cr0);
    cg->stopUsingRegister(vconstant0Reg);
    cg->stopUsingRegister(vtmp1Reg);
    cg->stopUsingRegister(vtmp2Reg);
@@ -13086,7 +13082,6 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
          break;
 
       case TR::java_lang_StringCoding_hasNegatives:
-         return false;
          if (cg->getSupportsInlineStringCodingHasNegatives())
             {
             resultReg = inlineStringCodingHasNegativesOrCountPositives(node, cg, false);
@@ -13094,7 +13089,6 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
             }
          break;
       case TR::java_lang_StringCoding_countPositives:
-         return true;
          if (cg->getSupportsInlineStringCodingCountPositives())
             {
             resultReg = inlineStringCodingHasNegativesOrCountPositives(node, cg, true);
