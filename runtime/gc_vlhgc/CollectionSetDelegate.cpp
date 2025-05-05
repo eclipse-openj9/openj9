@@ -48,6 +48,10 @@
 #include "MarkMap.hpp"
 #include "MemoryPool.hpp"
 #include "RegionValidator.hpp"
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+#include "SparseVirtualMemory.hpp"
+#include "SparseAddressOrderedFixedSizeDataPool.hpp"
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 
 MM_CollectionSetDelegate::MM_CollectionSetDelegate(MM_EnvironmentBase *env, MM_HeapRegionManager *manager)
 	: MM_BaseNonVirtual()
@@ -514,7 +518,7 @@ MM_CollectionSetDelegate::getNextRegion(MM_HeapRegionDescriptorVLHGC* cursor)
 void
 MM_CollectionSetDelegate::rateOfReturnCalculationBeforeSweep(MM_EnvironmentVLHGC *env)
 {
-	if(_extensions->tarokEnableDynamicCollectionSetSelection) {
+	if (_extensions->tarokEnableDynamicCollectionSetSelection) {
 		UDATA compactGroupCount = MM_CompactGroupManager::getCompactGroupMaxCount(env);
 		for (UDATA compactGroup = 0; compactGroup < compactGroupCount; compactGroup++) {
 			/* Clear the current trace reclaim rate table information as we'll be building a new set */
@@ -525,21 +529,21 @@ MM_CollectionSetDelegate::rateOfReturnCalculationBeforeSweep(MM_EnvironmentVLHGC
 		GC_HeapRegionIteratorVLHGC regionIterator(_regionManager, MM_HeapRegionDescriptor::ALL);
 		MM_HeapRegionDescriptorVLHGC *region = NULL;
 		while (NULL != (region = regionIterator.nextRegion())) {
-			if(region->containsObjects()) {
+			if (region->containsObjects()) {
 				SetSelectionData *stats = &_setSelectionDataTable[MM_CompactGroupManager::getCompactGroupNumber(env, region)];
 				MM_MemoryPool *memoryPool = region->getMemoryPool();
 
 				stats->_reclaimStats._regionCountBefore += 1;
-				if(!region->_sweepData._alreadySwept) {
+				if (!region->_sweepData._alreadySwept) {
 					stats->_reclaimStats._reclaimableRegionCountBefore += 1;
 
 					stats->_reclaimStats._regionBytesFreeBefore += memoryPool->getActualFreeMemorySize();
 					stats->_reclaimStats._regionDarkMatterBefore +=  memoryPool->getDarkMatterBytes();
 				}
-				if(!region->getRememberedSetCardList()->isAccurate()) {
+				if (!region->getRememberedSetCardList()->isAccurate()) {
 					stats->_reclaimStats._regionCountOverflow += 1;
 				}
-			} else if(region->isArrayletLeaf()) {
+			} else if (region->isArrayletLeaf() && !_extensions->isVirtualLargeObjectHeapEnabled) {
 				MM_HeapRegionDescriptorVLHGC *parentRegion = (MM_HeapRegionDescriptorVLHGC *)_regionManager->regionDescriptorForAddress((void *)region->_allocateData.getSpine());
 				Assert_MM_true(parentRegion->containsObjects());
 				SetSelectionData *stats = &_setSelectionDataTable[MM_CompactGroupManager::getCompactGroupNumber(env, parentRegion)];
@@ -547,15 +551,50 @@ MM_CollectionSetDelegate::rateOfReturnCalculationBeforeSweep(MM_EnvironmentVLHGC
 				stats->_reclaimStats._regionCountBefore += 1;
 				stats->_reclaimStats._regionCountArrayletLeafBefore += 1;
 
-				if(!parentRegion->_sweepData._alreadySwept) {
+				if (!parentRegion->_sweepData._alreadySwept) {
 					stats->_reclaimStats._reclaimableRegionCountBefore += 1;
 					stats->_reclaimStats._reclaimableRegionCountArrayletLeafBefore += 1;
 				}
-				if(!parentRegion->getRememberedSetCardList()->isAccurate()) {
+				if (!parentRegion->getRememberedSetCardList()->isAccurate()) {
 					stats->_reclaimStats._regionCountArrayletLeafOverflow += 1;
 				}
 			}
 		}
+
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+		if (_extensions->isVirtualLargeObjectHeapEnabled) {
+			const uintptr_t arrayletLeafSize = env->getOmrVM()->_arrayletLeafSize;
+			MM_SparseVirtualMemory *largeObjectVirtualMemory = _extensions->largeObjectVirtualMemory;
+			uintptr_t arrayletLeafCount = 0;
+			J9HashTableState walkState;
+
+			MM_SparseDataTableEntry *sparseDataEntry = (MM_SparseDataTableEntry *)hashTableStartDo(largeObjectVirtualMemory->getSparseDataPool()->getObjectToSparseDataTable(), &walkState);
+			while (NULL != sparseDataEntry) {
+				J9Object *spineObject = (J9Object *)sparseDataEntry->_proxyObjPtr;
+				uintptr_t dataSize = sparseDataEntry->_size;
+				/* TODO: how fraction is counting here? */
+//				arrayletLeafCount = MM_Math::roundToFloor(arrayletLeafSize, dataSize) / arrayletLeafSize;
+				arrayletLeafCount = MM_Math::roundToCeiling(arrayletLeafSize, dataSize) / arrayletLeafSize;
+				MM_HeapRegionDescriptorVLHGC *parentRegion = (MM_HeapRegionDescriptorVLHGC *)_regionManager->regionDescriptorForAddress((void *)spineObject);
+				Assert_MM_true(parentRegion->containsObjects());
+				SetSelectionData *stats = &_setSelectionDataTable[MM_CompactGroupManager::getCompactGroupNumber(env, parentRegion)];
+
+				stats->_reclaimStats._regionCountBefore += arrayletLeafCount;
+				stats->_reclaimStats._regionCountArrayletLeafBefore += arrayletLeafCount;
+
+				if (!parentRegion->_sweepData._alreadySwept) {
+					stats->_reclaimStats._reclaimableRegionCountBefore += arrayletLeafCount;
+					stats->_reclaimStats._reclaimableRegionCountArrayletLeafBefore += arrayletLeafCount;
+				}
+				if (!parentRegion->getRememberedSetCardList()->isAccurate()) {
+					stats->_reclaimStats._regionCountArrayletLeafOverflow += arrayletLeafCount;
+				}
+
+				sparseDataEntry = (MM_SparseDataTableEntry *)hashTableNextDo(&walkState);
+			}
+
+		}
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 	}
 }
 
@@ -580,7 +619,7 @@ MM_CollectionSetDelegate::rateOfReturnCalculationAfterSweep(MM_EnvironmentVLHGC 
 					stats->_reclaimStats._regionBytesFreeAfter += memoryPool->getActualFreeMemorySize();
 					stats->_reclaimStats._regionDarkMatterAfter +=  memoryPool->getDarkMatterBytes();
 				}
-			} else if(region->isArrayletLeaf()) {
+			} else if(region->isArrayletLeaf() && !_extensions->isVirtualLargeObjectHeapEnabled) {
 				MM_HeapRegionDescriptorVLHGC *parentRegion = (MM_HeapRegionDescriptorVLHGC *)_regionManager->regionDescriptorForAddress((void *)region->_allocateData.getSpine());
 				Assert_MM_true(parentRegion->containsObjects());
 				SetSelectionData *stats = &_setSelectionDataTable[MM_CompactGroupManager::getCompactGroupNumber(env, parentRegion)];
@@ -594,6 +633,38 @@ MM_CollectionSetDelegate::rateOfReturnCalculationAfterSweep(MM_EnvironmentVLHGC 
 				}
 			}
 		}
+
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+		if (_extensions->isVirtualLargeObjectHeapEnabled) {
+			const uintptr_t arrayletLeafSize = env->getOmrVM()->_arrayletLeafSize;
+			MM_SparseVirtualMemory *largeObjectVirtualMemory = _extensions->largeObjectVirtualMemory;
+			uintptr_t arrayletLeafCount = 0;
+			J9HashTableState walkState;
+
+			MM_SparseDataTableEntry *sparseDataEntry = (MM_SparseDataTableEntry *)hashTableStartDo(largeObjectVirtualMemory->getSparseDataPool()->getObjectToSparseDataTable(), &walkState);
+			while (NULL != sparseDataEntry) {
+				J9Object *spineObject = (J9Object *)sparseDataEntry->_proxyObjPtr;
+				uintptr_t dataSize = sparseDataEntry->_size;
+				/* TODO: how fraction is counting here? */
+//				arrayletLeafCount = MM_Math::roundToFloor(arrayletLeafSize, dataSize) / arrayletLeafSize;
+				arrayletLeafCount = MM_Math::roundToCeiling(arrayletLeafSize, dataSize) / arrayletLeafSize;
+				MM_HeapRegionDescriptorVLHGC *parentRegion = (MM_HeapRegionDescriptorVLHGC *)_regionManager->regionDescriptorForAddress((void *)spineObject);
+				Assert_MM_true(parentRegion->containsObjects());
+				SetSelectionData *stats = &_setSelectionDataTable[MM_CompactGroupManager::getCompactGroupNumber(env, parentRegion)];
+
+				stats->_reclaimStats._regionCountAfter += arrayletLeafCount;
+				stats->_reclaimStats._regionCountArrayletLeafAfter += arrayletLeafCount;
+
+				if(!parentRegion->_sweepData._alreadySwept) {
+					stats->_reclaimStats._reclaimableRegionCountAfter += arrayletLeafCount;
+					stats->_reclaimStats._reclaimableRegionCountArrayletLeafAfter += arrayletLeafCount;
+				}
+
+				sparseDataEntry = (MM_SparseDataTableEntry *)hashTableNextDo(&walkState);
+			}
+
+		}
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 
 		/* We now have an expected change as a result of tracing and sweeping (parts of) the heap.  Calculate the rate-of-return (ROR) on 
 		 * tracing for age groups where work was done.
