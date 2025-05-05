@@ -27,6 +27,7 @@
 #include "MemorySpace.hpp"
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
 #include "AllocationContextBalanced.hpp"
+#include "HeapRegionDataForAllocate.hpp"
 #include "EnvironmentVLHGC.hpp"
 #endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) || defined(J9VM_GC_ENABLE_DOUBLE_MAP)
@@ -345,12 +346,24 @@ MM_IndexableObjectAllocationModel::getSparseAddressAndDecommitLeaves(MM_Environm
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(envBase);
 	GC_ArrayObjectModel *indexableObjectModel = &extensions->indexableObjectModel;
 	const uintptr_t regionSize = extensions->heapRegionManager->getRegionSize();
-
 	uintptr_t byteAmount = 0;
 
 	/* Determine how many bytes to allocate outside of the spine (in arraylet leaves). */
 	Assert_MM_true(_allocateDescription.getBytesRequested() >= _allocateDescription.getContiguousBytes());
 	uintptr_t bytesRemaining = _allocateDescription.getBytesRequested() - _allocateDescription.getContiguousBytes();
+#define REGION_RESERVE_THRESHOLD 64
+	void *allocationContexts[REGION_RESERVE_THRESHOLD];
+	void **reservedRegionAllocationContexts = allocationContexts;
+	uintptr_t reservedRegionCount = bytesRemaining / regionSize;
+
+	if (reservedRegionCount > REGION_RESERVE_THRESHOLD) {
+		reservedRegionAllocationContexts = (void **)envBase->getForge()->allocate(reservedRegionCount * sizeof(uintptr_t), MM_AllocationCategory::GC_HEAP, J9_GET_CALLSITE());
+	}
+
+	if (NULL == reservedRegionAllocationContexts) {
+		/* Handle allocation failure */
+		return NULL;
+	}
 
 	MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(envBase);
 	MM_AllocationContextBalanced *commonContext = (MM_AllocationContextBalanced *)env->getCommonAllocationContext();
@@ -359,16 +372,19 @@ MM_IndexableObjectAllocationModel::getSparseAddressAndDecommitLeaves(MM_Environm
 	uintptr_t arrayReservedRegionCount = 0;
 	uintptr_t fraction = 0;
 	while (0 < bytesRemaining) {
-		/* Allocate the next arraylet leaf - leaves are allocated solely for the purpose of
+		/* Allocate the next reserved region - reserved regions are allocated solely for the purpose of
 		   decommitting the memory later on in this function. */
 		void *reservedAddressLow = NULL;
 		bool shouldAllocateReservedRegion = true;
+
 		if (regionSize > bytesRemaining) {
 			fraction = bytesRemaining;
 			/* For code simplicity and lower fragmentation, we always use Common Context. */
 			shouldAllocateReservedRegion = commonContext->allocateFromSharedArrayReservedRegion(envBase, fraction);
 		}
 		if (shouldAllocateReservedRegion) {
+			_allocateDescription.setSharedReserved(0 != fraction);
+
 			reservedAddressLow = envBase->_objectAllocationInterface->allocateArrayletLeaf(
 					envBase, &_allocateDescription, _allocateDescription.getMemorySpace(), true);
 
@@ -376,9 +392,24 @@ MM_IndexableObjectAllocationModel::getSparseAddressAndDecommitLeaves(MM_Environm
 			if (NULL == reservedAddressLow) {
 				Trc_MM_allocateAndConnectNonContiguousArraylet_leafFailure(envBase->getLanguageVMThread());
 				_allocateDescription.setSpine(NULL);
+				if (0 != fraction) {
+					commonContext->recycleToSharedArrayReservedRegion(envBase, fraction);
+					fraction = 0;
+				}
 				spine = NULL;
 				break;
 			}
+
+			if (0 == fraction) {
+				MM_HeapRegionDescriptorVLHGC *reservedRegion = (MM_HeapRegionDescriptorVLHGC *)extensions->heapRegionManager->regionDescriptorForAddress(reservedAddressLow);
+				MM_HeapRegionDataForAllocate *allocateData = &reservedRegion->_allocateData;
+				if (NULL != allocateData->_originalOwningContext) {
+					reservedRegionAllocationContexts[arrayReservedRegionCount] = allocateData->_originalOwningContext;
+				} else {
+					reservedRegionAllocationContexts[arrayReservedRegionCount] = allocateData->_owningContext;
+				}
+			}
+
 			/* Disable region for reads and writes, since accessing virtualLargeObjectHeapAddress through DataAddrForContiguous */
 			void *reservedAddressHigh = (void *)((uintptr_t)reservedAddressLow + regionSize);
 			bool ret = extensions->heap->decommitMemory(reservedAddressLow, regionSize, reservedAddressLow, reservedAddressHigh);
@@ -391,9 +422,10 @@ MM_IndexableObjectAllocationModel::getSparseAddressAndDecommitLeaves(MM_Environm
 		}
 
 		bytesRemaining -= OMR_MIN(bytesRemaining, regionSize);
-		arrayReservedRegionCount += 1;
+		if (0 == fraction) {
+			arrayReservedRegionCount += 1;
+		}
 	}
-
 
 	if (NULL != spine) {
 		Assert_MM_true(_layout == GC_ArrayletObjectModel::InlineContiguous);
@@ -401,6 +433,10 @@ MM_IndexableObjectAllocationModel::getSparseAddressAndDecommitLeaves(MM_Environm
 
 		byteAmount = _dataSize;
 		void *virtualLargeObjectHeapAddress = extensions->largeObjectVirtualMemory->allocateSparseFreeEntryAndMapToHeapObject(spine, byteAmount);
+
+		for (uintptr_t idx = 0; idx < arrayReservedRegionCount; idx++) {
+			extensions->largeObjectVirtualMemory->setAllocationContextForAddress(virtualLargeObjectHeapAddress, reservedRegionAllocationContexts[idx], idx);
+		}
 
 		if (NULL != virtualLargeObjectHeapAddress) {
 			indexableObjectModel->setDataAddrForContiguous((J9IndexableObject *)spine, virtualLargeObjectHeapAddress);
@@ -414,11 +450,19 @@ MM_IndexableObjectAllocationModel::getSparseAddressAndDecommitLeaves(MM_Environm
 		/* fail to reserve regions or allocateSparseFreeEntry, clean up reserved regions */
 		if (0 != fraction) {
 			/* rollback fraction */
-			commonContext->recycleToSharedArrayReservedRegion(envBase, fraction);
+			if (commonContext->recycleToSharedArrayReservedRegion(envBase, fraction)) {
+				commonContext->recycleReservedRegionsForVirtualLargeObjectHeap(env, 1, true);
+			}
 		}
 		if (0 < arrayReservedRegionCount) {
-			((MM_HeapRegionManagerVLHGC *)extensions->heapRegionManager)->recycleReservedRegionsForVirtualLargeObjectHeap(envBase, arrayReservedRegionCount);
+			for (uintptr_t idx = 0; idx < arrayReservedRegionCount; idx++) {
+				((MM_AllocationContextBalanced *)reservedRegionAllocationContexts[idx])->recycleReservedRegionsForVirtualLargeObjectHeap(env, 1, true);
+			}
 		}
+	}
+
+	if (reservedRegionCount > REGION_RESERVE_THRESHOLD) {
+		env->getForge()->free((void *)reservedRegionAllocationContexts);
 	}
 
 	Trc_MM_getSparseAddressAndDecommitLeaves_Exit(envBase->getLanguageVMThread(), spine, (void *)bytesRemaining);
