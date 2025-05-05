@@ -97,6 +97,7 @@
 #include "SlotObject.hpp"
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
 #include "SparseVirtualMemory.hpp"
+#include "SparseAddressOrderedFixedSizeDataPool.hpp"
 #endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 #include "StackSlotValidator.hpp"
 #include "SublistFragment.hpp"
@@ -433,32 +434,56 @@ MM_CopyForwardScheme::updateLeafRegions(MM_EnvironmentVLHGC *env)
 	GC_HeapRegionIteratorVLHGC regionIterator(_regionManager);
 	MM_HeapRegionDescriptorVLHGC *region = NULL;
 
-	while (NULL != (region = regionIterator.nextRegion())) {
-		if (region->isArrayletLeaf()) {
-			J9Object *spineObject = (J9Object *)region->_allocateData.getSpine();
-			Assert_MM_true(NULL != spineObject);
+	if (MM_GCExtensions::getExtensions(env)->isVirtualLargeObjectHeapEnabled) {
+		const uintptr_t arrayletLeafSize = env->getOmrVM()->_arrayletLeafSize;
+		MM_SparseVirtualMemory *largeObjectVirtualMemory = MM_GCExtensions::getExtensions(env)->largeObjectVirtualMemory;
+		uintptr_t arrayletLeafCount = 0;
+		J9HashTableState walkState;
 
-			J9Object *updatedSpineObject = updateForwardedPointer(spineObject);
-			if (updatedSpineObject != spineObject) {
-				MM_HeapRegionDescriptorVLHGC *spineRegion = (MM_HeapRegionDescriptorVLHGC *)_regionManager->tableDescriptorForAddress(spineObject);
-				MM_HeapRegionDescriptorVLHGC *updatedSpineRegion = (MM_HeapRegionDescriptorVLHGC *)_regionManager->tableDescriptorForAddress(updatedSpineObject);
-
-				Assert_MM_true(spineRegion->_markData._shouldMark);
-				Assert_MM_true(spineRegion != updatedSpineRegion);
-				Assert_MM_true(updatedSpineRegion->containsObjects());
-
-				/* we need to move the leaf to another region's leaf list since its spine has moved */
-				region->_allocateData.removeFromArrayletLeafList(env);
-				region->_allocateData.addToArrayletLeafList(updatedSpineRegion);
-				region->_allocateData.setSpine((J9IndexableObject *)updatedSpineObject);
-			} else if (!isLiveObject(spineObject)) {
-				Assert_MM_true(isObjectInEvacuateMemory(spineObject));
-				/* the spine is in evacuate space so the arraylet is dead => recycle the leaf */
-				/* remove arraylet leaf from list */
-				region->_allocateData.removeFromArrayletLeafList(env);
-				/* recycle */
-				region->_allocateData.setSpine(NULL);
+		MM_SparseDataTableEntry *sparseDataEntry = (MM_SparseDataTableEntry *)hashTableStartDo(largeObjectVirtualMemory->getSparseDataPool()->getObjectToSparseDataTable(), &walkState);
+		while (NULL != sparseDataEntry) {
+			J9Object *spineObject = (J9Object *)sparseDataEntry->_proxyObjPtr;
+			if (!isLiveObject(spineObject)) {
+				uintptr_t dataSize = sparseDataEntry->_size;
+				arrayletLeafCount += MM_Math::roundToCeiling(arrayletLeafSize, dataSize) / arrayletLeafSize;
+			}
+			sparseDataEntry = (MM_SparseDataTableEntry *)hashTableNextDo(&walkState);
+		}
+		while ((arrayletLeafCount > 0) && (NULL != (region = regionIterator.nextRegion()))) {
+			if (region->isArrayletLeaf()) {
 				region->getSubSpace()->recycleRegion(env, region);
+				arrayletLeafCount -= 1;
+			}
+		}
+		Assert_MM_true(0 == arrayletLeafCount);
+	} else {
+		while (NULL != (region = regionIterator.nextRegion())) {
+			if (region->isArrayletLeaf()) {
+				J9Object *spineObject = (J9Object *)region->_allocateData.getSpine();
+				Assert_MM_true(NULL != spineObject);
+
+				J9Object *updatedSpineObject = updateForwardedPointer(spineObject);
+				if (updatedSpineObject != spineObject) {
+					MM_HeapRegionDescriptorVLHGC *spineRegion = (MM_HeapRegionDescriptorVLHGC *)_regionManager->tableDescriptorForAddress(spineObject);
+					MM_HeapRegionDescriptorVLHGC *updatedSpineRegion = (MM_HeapRegionDescriptorVLHGC *)_regionManager->tableDescriptorForAddress(updatedSpineObject);
+
+					Assert_MM_true(spineRegion->_markData._shouldMark);
+					Assert_MM_true(spineRegion != updatedSpineRegion);
+					Assert_MM_true(updatedSpineRegion->containsObjects());
+
+					/* we need to move the leaf to another region's leaf list since its spine has moved */
+					region->_allocateData.removeFromArrayletLeafList(env);
+					region->_allocateData.addToArrayletLeafList(updatedSpineRegion);
+					region->_allocateData.setSpine((J9IndexableObject *)updatedSpineObject);
+				} else if (!isLiveObject(spineObject)) {
+					Assert_MM_true(isObjectInEvacuateMemory(spineObject));
+					/* the spine is in evacuate space so the arraylet is dead => recycle the leaf */
+					/* remove arraylet leaf from list */
+					region->_allocateData.removeFromArrayletLeafList(env);
+					/* recycle */
+					region->_allocateData.setSpine(NULL);
+					region->getSubSpace()->recycleRegion(env, region);
+				}
 			}
 		}
 	}
