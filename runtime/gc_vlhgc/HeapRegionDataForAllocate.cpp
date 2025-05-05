@@ -182,20 +182,13 @@ MM_HeapRegionDataForAllocate::taskAsArrayletLeaf(MM_EnvironmentBase *env)
 void 
 MM_HeapRegionDataForAllocate::removeFromArrayletLeafList(MM_EnvironmentVLHGC *env)
 {
+	Assert_MM_false(MM_GCExtensions::getExtensions(env)->isVirtualLargeObjectHeapEnabled);
 	Assert_MM_true(_region->isArrayletLeaf());
-	
+
 	MM_HeapRegionDescriptorVLHGC *next = _nextArrayletLeafRegion;
 	MM_HeapRegionDescriptorVLHGC *previous = _previousArrayletLeafRegion;
 	
 	Assert_MM_true(NULL != previous);
-	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
-
-	if (extensions->isVirtualLargeObjectHeapEnabled) {
-		/* Restore/Recommit arraylet leaves that have been previously decommitted. */
-		const UDATA arrayletLeafSize = env->getOmrVM()->_arrayletLeafSize;
-		void *leafAddress = _region->getLowAddress();
-		extensions->heap->commitMemory(leafAddress, arrayletLeafSize);
-	}
 
 	previous->_allocateData._nextArrayletLeafRegion = next;
 	if (NULL != next) {
@@ -211,15 +204,16 @@ MM_HeapRegionDataForAllocate::removeFromArrayletLeafList(MM_EnvironmentVLHGC *en
  * Add the receiver's region to the specified spine region's list of arraylet leaves
  */
 void 
-MM_HeapRegionDataForAllocate::addToArrayletLeafList(MM_HeapRegionDescriptorVLHGC* newSpineRegion)
+MM_HeapRegionDataForAllocate::addToArrayletLeafList(MM_EnvironmentVLHGC *env, MM_HeapRegionDescriptorVLHGC* newSpineRegion)
 {
+	Assert_MM_false(MM_GCExtensions::getExtensions(env)->isVirtualLargeObjectHeapEnabled);
 	Assert_MM_true(_region->isArrayletLeaf());
 	Assert_MM_true(NULL != newSpineRegion);
 	Assert_MM_true(newSpineRegion->containsObjects());
 	Assert_MM_true(NULL == newSpineRegion->_allocateData._spine);
 	Assert_MM_true(NULL == _nextArrayletLeafRegion);
 	Assert_MM_true(NULL == _previousArrayletLeafRegion);
-	
+
 	_nextArrayletLeafRegion = newSpineRegion->_allocateData._nextArrayletLeafRegion;
 	if (NULL != _nextArrayletLeafRegion) {
 		Assert_MM_true(_nextArrayletLeafRegion->isArrayletLeaf());
@@ -229,7 +223,31 @@ MM_HeapRegionDataForAllocate::addToArrayletLeafList(MM_HeapRegionDescriptorVLHGC
 	_previousArrayletLeafRegion = newSpineRegion;
 }
 
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
 void 
+MM_HeapRegionDataForAllocate::pushRegionToArrayReservedRegionList(MM_EnvironmentVLHGC *env, MM_HeapRegionDescriptorVLHGC **head)
+{
+	Assert_MM_true(NULL == _nextArrayletLeafRegion);
+
+	uintptr_t previousHead = (uintptr_t) *head;
+	*head = _region;
+	_nextArrayletLeafRegion = (MM_HeapRegionDescriptorVLHGC *) previousHead;
+}
+
+MM_HeapRegionDescriptorVLHGC *
+MM_HeapRegionDataForAllocate::popRegionFromArrayReservedRegionList(MM_EnvironmentVLHGC *env, MM_HeapRegionDescriptorVLHGC **head)
+{
+	Assert_MM_true(NULL != *head);
+	MM_HeapRegionDescriptorVLHGC *region = *head;
+
+	*head = region->_allocateData._nextArrayletLeafRegion;
+	region->_allocateData._nextArrayletLeafRegion = NULL;
+
+	return region;
+}
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
+
+void
 MM_HeapRegionDataForAllocate::setSpine(J9IndexableObject *spineObject)
 {
 	Assert_MM_true(_region->isArrayletLeaf());

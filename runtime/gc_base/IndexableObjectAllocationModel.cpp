@@ -340,9 +340,10 @@ MM_IndexableObjectAllocationModel::getSparseAddressAndDecommitLeaves(MM_Environm
 
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
 	GC_ArrayObjectModel *indexableObjectModel = &extensions->indexableObjectModel;
-	const UDATA arrayletLeafSize = env->getOmrVM()->_arrayletLeafSize;
+	const uintptr_t regionSize = extensions->heapRegionManager->getRegionSize();
+
 	uintptr_t byteAmount = 0;
-	UDATA arrayletLeafCount = MM_Math::roundToCeiling(arrayletLeafSize, _dataSize) / arrayletLeafSize;
+	UDATA arrayReservedRegionCount = MM_Math::roundToCeiling(regionSize, _dataSize) / regionSize;
 
 	/* Determine how many bytes to allocate outside of the spine (in arraylet leaves). */
 	Assert_MM_true(_allocateDescription.getBytesRequested() >= _allocateDescription.getContiguousBytes());
@@ -350,7 +351,7 @@ MM_IndexableObjectAllocationModel::getSparseAddressAndDecommitLeaves(MM_Environm
 
 	/* Allocate leaf for each arraylet and attach it to its leaf pointer in the spine. */
 	uintptr_t arrayoidIndex = 0;
-	Trc_MM_getSparseAddressAndDecommitLeaves_Entry(env->getLanguageVMThread(), spine, (void *)bytesRemaining, arrayletLeafCount, (void *)arrayletLeafSize);
+	Trc_MM_getSparseAddressAndDecommitLeaves_Entry(env->getLanguageVMThread(), spine, (void *)bytesRemaining, arrayReservedRegionCount, (void *)regionSize);
 	while (0 < bytesRemaining) {
 		/* Allocate the next arraylet leaf - leaves are allocated solely for the purpose of
 		   decommitting the memory later on in this function. */
@@ -366,22 +367,17 @@ MM_IndexableObjectAllocationModel::getSparseAddressAndDecommitLeaves(MM_Environm
 			break;
 		}
 
-		if (0 == arrayoidIndex) {
-			MM_HeapRegionDescriptorVLHGC *firstLeafRegionDescriptor = (MM_HeapRegionDescriptorVLHGC *)extensions->getHeap()->getHeapRegionManager()->tableDescriptorForAddress(leaf);
-			firstLeafRegionDescriptor->_sparseHeapAllocation = true;
-		}
-
 		/* Disable region for reads and writes, since that'll be done through the contiguous double mapped region */
-		void *highAddress = (void *)((uintptr_t)leaf + arrayletLeafSize);
-		bool ret = extensions->heap->decommitMemory(leaf, arrayletLeafSize, leaf, highAddress);
+		void *highAddress = (void *)((uintptr_t)leaf + regionSize);
+		bool ret = extensions->heap->decommitMemory(leaf, regionSize, leaf, highAddress);
 		if (!ret) {
-			Trc_MM_VirtualMemory_decommitMemory_failure(leaf, arrayletLeafSize);
+			Trc_MM_VirtualMemory_decommitMemory_failure(leaf, regionSize);
 		}
 
 		/* Refresh the spine -- it might move if we GC while allocating the leaf */
 		spine = _allocateDescription.getSpine();
 
-		bytesRemaining -= OMR_MIN(bytesRemaining, arrayletLeafSize);
+		bytesRemaining -= OMR_MIN(bytesRemaining, regionSize);
 		arrayoidIndex += 1;
 	}
 
@@ -390,10 +386,11 @@ MM_IndexableObjectAllocationModel::getSparseAddressAndDecommitLeaves(MM_Environm
 		Assert_MM_true(_layout == GC_ArrayletObjectModel::InlineContiguous);
 		Assert_MM_true(indexableObjectModel->isVirtualLargeObjectHeapEnabled());
 		/* Number of arraylet leaves in the iterator must match the number of leaves calculated */
-		Assert_MM_true(arrayletLeafCount == arrayoidIndex);
+		Assert_MM_true(arrayReservedRegionCount == arrayoidIndex);
 
 		byteAmount = _dataSize;
 		void *virtualLargeObjectHeapAddress = extensions->largeObjectVirtualMemory->allocateSparseFreeEntryAndMapToHeapObject(spine, byteAmount);
+
 		if (NULL != virtualLargeObjectHeapAddress) {
 			indexableObjectModel->setDataAddrForContiguous((J9IndexableObject *)spine, virtualLargeObjectHeapAddress);
 		} else {
