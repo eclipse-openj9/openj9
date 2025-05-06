@@ -78,6 +78,7 @@ endif()
 
 if(OMR_OS_LINUX)
 	target_link_libraries(j9gc PRIVATE pthread)
+	set_property(TARGET j9gc APPEND_STRING PROPERTY LINK_FLAGS " -Wl,-z,noexecstack")
 endif()
 
 target_include_directories(j9gc
@@ -153,6 +154,7 @@ if(OMR_MIXED_REFERENCES_MODE_STATIC)
 
 	if(OMR_OS_LINUX)
 		target_link_libraries(j9gc_full PRIVATE pthread)
+		set_property(TARGET j9gc_full APPEND_STRING PROPERTY LINK_FLAGS " -Wl,-z,noexecstack")
 	endif()
 
 	target_include_directories(j9gc_full

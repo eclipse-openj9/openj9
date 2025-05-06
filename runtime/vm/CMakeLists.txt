@@ -458,6 +458,10 @@ target_compile_definitions(j9vm
 		-DJ9_EXTENDED_DEBUG
 )
 
+if(OMR_OS_LINUX)
+	set_property(TARGET j9vm APPEND_STRING PROPERTY LINK_FLAGS " -Wl,-z,noexecstack")
+endif()
+
 omr_add_exports(j9vm
 	J9_CreateJavaVM
 	J9_GetCreatedJavaVMs

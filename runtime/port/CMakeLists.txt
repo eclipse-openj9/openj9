@@ -171,6 +171,7 @@ endif()
 
 if(OMR_OS_LINUX)
 	target_link_libraries(j9prt PRIVATE rt)
+	set_property(TARGET j9prt APPEND_STRING PROPERTY LINK_FLAGS " -Wl,-z,noexecstack")
 endif()
 
 if(OMR_OS_OSX OR OMR_OS_AIX)
