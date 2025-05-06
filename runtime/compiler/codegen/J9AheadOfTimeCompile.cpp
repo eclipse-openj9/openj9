@@ -530,7 +530,8 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          uint8_t flags = 0;
 
          TR_ResolvedMethod *resolvedMethod;
-         if (kind == TR_InlinedInterfaceMethodWithNopGuard ||
+         if (comp->getOption(TR_UseSymbolValidationManager) ||
+             kind == TR_InlinedInterfaceMethodWithNopGuard ||
              kind == TR_InlinedInterfaceMethod ||
              kind == TR_InlinedAbstractMethodWithNopGuard ||
              kind == TR_InlinedAbstractMethod)
