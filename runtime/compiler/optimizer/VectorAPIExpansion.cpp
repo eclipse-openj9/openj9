@@ -3117,7 +3117,7 @@ TR::ILOpCodes TR_VectorAPIExpansion::ILOpcodeFromVectorAPIOpcode(TR::Compilation
       if (scalar)
          return TR::BadILOp;
       else
-         return TR::ILOpCode::createVectorOpCode(TR::vbitselect, vectorType);
+         return TR::ILOpCode::createVectorOpCode(TR::vblend, vectorType);
       }
    else if ((opCodeType == Test) && withMask)
       {
