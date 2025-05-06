@@ -36,7 +36,7 @@
             <feature>FIPS140_2:required</feature>
         </features>
         <levels>
-            <level>sanity</level>
+            <level>extended</level>
         </levels>
         <groups>
             <group>functional</group>
