@@ -20,6 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
+#include <limits.h>
 #include <algorithm>
 #include "codegen/CodeGenerator.hpp"
 #include "compile/InlineBlock.hpp"
@@ -57,6 +58,8 @@ const float TR_J9EstimateCodeSize::CONST_ARG_IN_CALLEE_ADJUSTMENT_FACTOR = 0.75f
 #define DEFAULT_GRACE_INLINING_THRESHOLD 100
 
 #define DEFAULT_ANALYZED_ALLOWANCE_FACTOR 2
+
+#define DEFAULT_FORCEINLINE_MULTIPLIER 5
 
 /*
 DEFINEs are ugly in general, but putting
@@ -558,9 +561,9 @@ TR_J9EstimateCodeSize::adjustEstimateForConstArgs(TR_CallTarget * target, int32_
    }
 
 bool
-TR_J9EstimateCodeSize::estimateCodeSize(TR_CallTarget *calltarget, TR_CallStack *prevCallStack, bool recurseDown)
+TR_J9EstimateCodeSize::estimateCodeSize(TR_CallTarget *calltarget, TR_CallStack *prevCallStack, bool recurseDown, int32_t callerAnalyzedSizeThreshold)
    {
-   if (realEstimateCodeSize(calltarget, prevCallStack, recurseDown, comp()->trMemory()->currentStackRegion()))
+   if (realEstimateCodeSize(calltarget, prevCallStack, recurseDown, comp()->trMemory()->currentStackRegion(), callerAnalyzedSizeThreshold))
       {
       if (_isLeaf && _realSize > 1)
          {
@@ -1267,7 +1270,7 @@ TR_J9EstimateCodeSize::processBytecodeAndGenerateCFG(TR_CallTarget *calltarget, 
    }
 
 bool
-TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallStack *prevCallStack, bool recurseDown, TR::Region &cfgRegion)
+TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallStack *prevCallStack, bool recurseDown, TR::Region &cfgRegion, int32_t callerAnalyzedSizeThreshold)
    {
    TR_ASSERT(calltarget->_calleeMethod, "assertion failure");
 
@@ -1298,7 +1301,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
             1024, comp()->trMemory());
 
    heuristicTrace(tracer(),
-         "*** Depth %d: ECS to begin for target %p signature %s size assuming we can partially inline (optimistic size)  = %d total real size so far = %d sizeThreshold %d",
+         "*** Depth %d: ECS to begin for target %p signature %s size assuming we can partially inline (analyzed size)  = %d total real size so far = %d sizeThreshold %d",
          _recursionDepth, calltarget, callerName, _analyzedSize, _realSize,
          _sizeThreshold);
 
@@ -1625,6 +1628,9 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
          break;
       }
 
+   int32_t initialAnalyzedSize = _analyzedSize;
+   int32_t initialRealSize = _realSize;
+
    if (isCandidate)
       _analyzedSize += calltarget->_partialSize;
    else
@@ -1639,10 +1645,28 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
    static const char *af = feGetEnv("TR_AnalyzedAllowanceFactor");
    static const int32_t allowanceFactor = af ? atoi(af) : DEFAULT_ANALYZED_ALLOWANCE_FACTOR;
 
-   if (_analyzedSize > allowanceFactor*sizeThreshold) // even optimistically we've blown our budget
+   int32_t analyzedSizeThreshold = allowanceFactor * sizeThreshold;
+
+   bool callTargetIsForceInline = false;
+
+   if (callerAnalyzedSizeThreshold > analyzedSizeThreshold)
+      {
+      analyzedSizeThreshold = callerAnalyzedSizeThreshold;
+      }
+   else if (_inliner->alwaysWorthInlining(calltarget->_calleeMethod, NULL))
+      {
+      static int32_t forceInlineMultiplier = DEFAULT_FORCEINLINE_MULTIPLIER;
+      static const char *forceInlineMultiplierStr = feGetEnv("TR_ForceInlineMultiplier");
+      if (forceInlineMultiplierStr) forceInlineMultiplier = atoi(forceInlineMultiplierStr);
+
+      analyzedSizeThreshold *= forceInlineMultiplier;
+      callTargetIsForceInline = true;
+      }
+
+   if (_analyzedSize > analyzedSizeThreshold) // even optimistically we've blown our budget
       {
       calltarget->_isPartialInliningCandidate = false;
-      heuristicTrace(tracer(), "*** Depth %d: ECS end for target %p signature %s. analyzedSize exceeds Size Threshold", _recursionDepth, calltarget, callerName);
+      heuristicTrace(tracer(), "*** Depth %d: ECS end for target %p signature %s. analyzedSize exceeds analyzedSize threshold %d", _recursionDepth, calltarget, callerName, analyzedSizeThreshold);
       return returnCleanup(ECS_OPTIMISTIC_SIZE_THRESHOLD_EXCEEDED);
       }
 
@@ -1659,7 +1683,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
       int32_t i = bci.bcIndex();
       //heuristicTrace(tracer(),"--- Depth %d: Checking _real size vs Size Threshold: _realSize %d _sizeThreshold %d sizeThreshold %d ",_recursionDepth, _realSize, _sizeThreshold, sizeThreshold);
 
-      if (_realSize > sizeThreshold)
+      if ((!callTargetIsForceInline && _realSize > sizeThreshold) || (callTargetIsForceInline && _realSize > analyzedSizeThreshold))
          {
          heuristicTrace(tracer(),"*** Depth %d: ECS end for target %p signature %s. real size %d exceeds sizeThreshold %d", _recursionDepth,calltarget, callerName,_realSize,sizeThreshold);
          return returnCleanup(ECS_REAL_SIZE_THRESHOLD_EXCEEDED);
@@ -1742,7 +1766,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                continue;
                }
 
-            if (_analyzedSize <= allowanceFactor*sizeThreshold) // for multiple calltargets, is this the desired behaviour?
+            if (_analyzedSize <= analyzedSizeThreshold) // for multiple calltargets, is this the desired behaviour?
                {
                _recursionDepth++;
                _numOfEstimatedCalls++;
@@ -1757,7 +1781,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                int32_t origRealSize = _realSize;
                int32_t origBigCalleesSize = _bigCalleesSize;
                bool prevNonColdCalls = _hasNonColdCalls;
-               bool estimateSuccess = estimateCodeSize(targetCallee, &callStack); //recurseDown = true
+               bool estimateSuccess = estimateCodeSize(targetCallee, &callStack, /* recurseDown */ true, analyzedSizeThreshold);
                bool calltargetSetTooBig = false;
                bool calleeHasNonColdCalls = _hasNonColdCalls;
                _hasNonColdCalls = prevNonColdCalls;// reset the bool for the parent
@@ -1852,7 +1876,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                      calltarget->addDeadCallee(callSites[i]);
                      j--;
                      _numOfEstimatedCalls--;
-                     heuristicTrace(tracer(),"Depth %d: estimateCodeSize skipping estimated call and resetting _analyzedSize to %d and _realSize to %d", _recursionDepth, _analyzedSize, _realSize);
+                     heuristicTrace(tracer(),"Depth %d: estimateCodeSize skipping estimated call and resetting _realSize to %d", _recursionDepth, _realSize);
                      }
 
                   if(comp()->getVisitCount() > HIGH_VISIT_COUNT)
@@ -1875,7 +1899,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                      _numOfEstimatedCalls--;
 
 
-                     heuristicTrace(tracer(),"Depth %d: estimateCodeSize skipping too big estimated call and resetting _analyzedSize to %d and _realSize to %d", _recursionDepth, _analyzedSize, _realSize);
+                     heuristicTrace(tracer(),"Depth %d: estimateCodeSize skipping too big estimated call and resetting _realSize to %d", _recursionDepth, _realSize);
                      }
 
                   if(comp()->getVisitCount() > HIGH_VISIT_COUNT)
@@ -1897,13 +1921,20 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
          if (callSites[i]->numTargets()) //only add a callSite once, even though it may have more than one call target.
             {
             calltarget->addCallee(callSites[i]);
-            heuristicTrace(tracer(), "Depth %d: Subtracting %d from optimistic and real size to account for eliminating call", _recursionDepth, bci.estimatedCodeSize());
+            heuristicTrace(tracer(), "Depth %d: Subtracting %d from analyzed and real size to account for eliminating call", _recursionDepth, bci.estimatedCodeSize());
             if (_analyzedSize > bci.estimatedCodeSize())
                _analyzedSize -= bci.estimatedCodeSize(); // subtract what we added before for the size of the call instruction
             if (_realSize > bci.estimatedCodeSize())
                _realSize -= bci.estimatedCodeSize();
             }
          }
+      }
+
+   if (callTargetIsForceInline)
+      {
+      heuristicTrace(tracer(), "Depth %d: Restoring analyzed size from %d to pre-analysis size %d because the analyzed method %s is always worth inlining", _recursionDepth, _analyzedSize, initialAnalyzedSize, callerName);
+      _analyzedSize = initialAnalyzedSize;
+      _realSize = initialRealSize;
       }
 
    auto partialSizeBeforeAdjustment = calltarget->_partialSize;
@@ -1962,7 +1993,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
 
    heuristicTrace(tracer(),"--- Depth %d: Checking _real size vs Size Threshold A second Time: _realSize %d _sizeThreshold %d sizeThreshold %d ",_recursionDepth, _realSize, _sizeThreshold, sizeThreshold);
 
-   if (_realSize > sizeThreshold)
+   if ((!callTargetIsForceInline && _realSize > sizeThreshold) || (callTargetIsForceInline && _realSize > analyzedSizeThreshold))
       {
       heuristicTrace(tracer(),"*** Depth %d: ECS end for target %p signature %s. real size exceeds Size Threshold", _recursionDepth,calltarget, callerName);
       return returnCleanup(ECS_REAL_SIZE_THRESHOLD_EXCEEDED);

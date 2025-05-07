@@ -108,7 +108,7 @@ class TR_EstimateCodeSize
 
    protected:
 
-   virtual bool estimateCodeSize(TR_CallTarget *, TR_CallStack * , bool recurseDown = true) = 0;
+   virtual bool estimateCodeSize(TR_CallTarget *, TR_CallStack * , bool recurseDown = true, int32_t callerAnalyzedSizeThreshold = 0) = 0;
 
 
    /*
