@@ -401,10 +401,6 @@ done:
 
 			pool_do(_constantPoolTypes.getThreadStatisticsTable(), &writeThreadStatisticsEvent, _bufferWriter);
 
-			pool_do(_constantPoolTypes.getSystemProcessTable(), &writeSystemProcessEvent, this);
-
-			pool_do(_constantPoolTypes.getNativeLibraryTable(), &writeNativeLibraryEvent, this);
-
 			/* Only write constant events in first chunk */
 			if (0 == _vm->jfrState.jfrChunkCount) {
 				writeJVMInformationEvent();
@@ -426,6 +422,8 @@ done:
 
 			if (dumpCalled) {
 				writeThreadDumpEvent();
+				pool_do(_constantPoolTypes.getSystemProcessTable(), &writeSystemProcessEvent, this);
+				pool_do(_constantPoolTypes.getNativeLibraryTable(), &writeNativeLibraryEvent, this);
 			}
 
 			writeJFRHeader();
