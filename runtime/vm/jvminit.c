@@ -3856,6 +3856,8 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 		}
 	}
 
+	vm->extendedRuntimeFlags3 |= J9_EXTENDED_RUNTIME3_CACHE_MAPS; /* !!! remove me */
+
 #if defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_POWER) || defined(J9VM_ARCH_S390)
 	/* Enabled field watch by default on x86, Power, and S390 platforms */
 	vm->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_JIT_INLINE_WATCHES;
@@ -4403,6 +4405,17 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 		}
 	}
 #endif /* JAVA_SPEC_VERSION >= 24 */
+
+	{
+		IDATA cacheMaps = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXCACHEMAPS, NULL);
+		IDATA noCacheMaps = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXNOCACHEMAPS, NULL);
+
+		if (cacheMaps > noCacheMaps) {
+			vm->extendedRuntimeFlags3 &= ~J9_EXTENDED_RUNTIME3_CACHE_MAPS;
+		} else if (cacheMaps < noCacheMaps) {
+			vm->extendedRuntimeFlags3 |= J9_EXTENDED_RUNTIME3_CACHE_MAPS;
+		}
+	}
 
 	if (FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXKEEPJNIIDS, NULL) != -1) {
 		vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_ALWAYS_KEEP_JNI_IDS;

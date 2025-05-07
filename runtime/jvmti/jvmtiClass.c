@@ -1357,6 +1357,15 @@ redefineClassesCommon(jvmtiEnv* env,
 	J9JVMTI_DATA_FROM_VM(vm)->flags = J9JVMTI_DATA_FROM_VM(vm)->flags & ~J9JVMTI_FLAG_REDEFINE_CLASS_EXTENSIONS_USED;
 
 	if (rc == JVMTI_ERROR_NONE) {
+		J9ClassLoaderWalkState walkState;
+		J9ClassLoader *classLoader = vm->internalVMFunctions->allClassLoadersStartDo(&walkState, vm, 0);
+		while (NULL != classLoader) {
+			/* Free the local map caches */
+			vm->internalVMFunctions->freeMapCaches(classLoader);
+			classLoader = vm->internalVMFunctions->allClassLoadersNextDo(&walkState);
+		}
+		vm->internalVMFunctions->allClassLoadersEndDo(&walkState);
+
 		TRIGGER_J9HOOK_VM_CLASSES_REDEFINED(vm->hookInterface, currentThread);
 	}
 

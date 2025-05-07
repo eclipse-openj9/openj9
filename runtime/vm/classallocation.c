@@ -64,6 +64,19 @@ U_32 classPropagationTable[CLASS_PROPAGATION_TABLE_SIZE] = {
 #error Class propagation size exceeds initial hash table size
 #endif
 
+void
+freeMapCaches(J9ClassLoader *classLoader)
+{
+	if (NULL != classLoader->localMapCache) {
+		hashTableFree(classLoader->localMapCache);
+		classLoader->localMapCache = NULL;
+	}
+	if (NULL != classLoader->argBitsCache) {
+		hashTableFree(classLoader->argBitsCache);
+		classLoader->argBitsCache = NULL;
+	}
+}
+
 static void
 cleanPackage(J9Package *package)
 {
@@ -164,6 +177,7 @@ allocateClassLoader(J9JavaVM *javaVM)
 		UDATA classRelationshipsHashTableResult = -1;
 		/* memset not required as the classLoaderBlocks pool returns zero'd memory */
 
+		omrthread_monitor_init_with_name(&classLoader->mapCacheMutex, 0, "Localmap cache mutex");
 		classLoader->classHashTable = hashClassTableNew(javaVM, INITIAL_CLASSHASHTABLE_SIZE);
 #if JAVA_SPEC_VERSION > 8
 		classLoader->moduleHashTable = hashModuleNameTableNew(javaVM, INITIAL_MODULE_HASHTABLE_SIZE);
@@ -181,6 +195,7 @@ allocateClassLoader(J9JavaVM *javaVM)
 		classRelationshipsHashTableResult = j9bcv_hashClassRelationshipTableNew(classLoader, javaVM);
 
 		if ((NULL == classLoader->classHashTable)
+			|| (NULL == classLoader->mapCacheMutex)
 #if JAVA_SPEC_VERSION > 8
 			|| (NULL == classLoader->moduleHashTable)
 			|| (NULL == classLoader->packageHashTable)
@@ -496,6 +511,12 @@ freeClassLoader(J9ClassLoader *classLoader, J9JavaVM *javaVM, J9VMThread *vmThre
 		j9bcv_hashClassRelationshipTableFree(vmThread, classLoader, javaVM);
 		hashTableFree(classLoader->classRelationshipsHashTable);
 		classLoader->classRelationshipsHashTable = NULL;
+	}
+
+	freeMapCaches(classLoader);
+	if (NULL != classLoader->mapCacheMutex) {
+		omrthread_monitor_destroy(classLoader->mapCacheMutex);
+		classLoader->mapCacheMutex = NULL;
 	}
 
 	TRIGGER_J9HOOK_VM_CLASS_LOADER_DESTROY(javaVM->hookInterface, javaVM, classLoader);

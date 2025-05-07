@@ -672,6 +672,9 @@ enum INIT_STAGE {
 #define VMOPT_XXPRINTFLAGSFINALENABLE "-XX:+PrintFlagsFinal"
 #define VMOPT_XXPRINTFLAGSFINALDISABLE "-XX:-PrintFlagsFinal"
 
+#define VMOPT_XXCACHEMAPS "-XX:+CacheMaps"
+#define VMOPT_XXNOCACHEMAPS "-XX:-CacheMaps"
+
 #define VMOPT_XXLEGACYXLOGOPTION "-XX:+LegacyXlogOption"
 #define VMOPT_XXNOLEGACYXLOGOPTION "-XX:-LegacyXlogOption"
 #define MAPOPT_XLOG_OPT "-Xlog"
