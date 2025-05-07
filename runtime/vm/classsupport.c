@@ -74,7 +74,7 @@ totalStaticSlotsForClass( J9ROMClass *romClass ) {
 /**
  * @internal
  *
- * This function should only be called by internalFindClassUTF8()!
+ * This method has potential GC point.
  *
  * Load the array class with the specified name.
  * If nameData does not refer to a valid array, return NULL.
