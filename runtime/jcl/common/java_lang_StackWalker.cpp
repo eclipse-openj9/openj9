@@ -192,6 +192,7 @@ Java_java_lang_StackWalker_walkContinuationImpl(JNIEnv *env, jclass clazz, jint 
 	J9VMThread stackThread = {0};
 	J9VMEntryLocalStorage els = {0};
 
+	stackThread.javaVM = vm;
 	enterVMFromJNI(vmThread);
 	j9object_t continuationObject = J9_JNI_UNWRAP_REFERENCE(cont);
 	J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(vmThread, continuationObject);

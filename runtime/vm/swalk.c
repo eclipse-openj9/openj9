@@ -42,7 +42,7 @@
 #endif
 
 #ifndef J9VM_INTERP_STACKWALK_TRACING
-#define jitWalkStackFrames walkState->walkThread->javaVM->jitWalkStackFrames
+#define jitWalkStackFrames walkState->javaVM->jitWalkStackFrames
 #endif
 
 #include "rommeth.h"
@@ -129,6 +129,9 @@ UDATA  walkStackFrames(J9VMThread *currentThread, J9StackWalkState *walkState)
 	UDATA * nextA0;
 	UDATA savedFlags = walkState->flags;
 	J9StackWalkState * oldState = NULL;
+	J9JavaVM *vm = walkState->walkThread->javaVM;
+	U_8 *impdep2PC = vm->callInReturnPC;
+
 #if defined(J9VM_INTERP_STACKWALK_TRACING) 
 	void  (*savedOSlotIterator) (struct J9VMThread * vmThread, struct J9StackWalkState * walkState, j9object_t * objectSlot, const void * stackLocation) =
 		walkState->objectSlotWalkFunction;
@@ -162,7 +165,7 @@ UDATA  walkStackFrames(J9VMThread *currentThread, J9StackWalkState *walkState)
 		}
 	}
 
-	walkState->javaVM = walkState->walkThread->javaVM;
+	walkState->javaVM = vm;
 	walkState->currentThread = currentThread;
 	walkState->cache = NULL;
 	walkState->framesWalked = 0;
@@ -191,7 +194,6 @@ UDATA  walkStackFrames(J9VMThread *currentThread, J9StackWalkState *walkState)
 	walkState->resolveFrameFlags = 0;
 #endif
 #endif
-
 
 #ifdef J9VM_INTERP_STACKWALK_TRACING
 	swPrintf(walkState, 1, "\n");
@@ -231,7 +233,7 @@ UDATA  walkStackFrames(J9VMThread *currentThread, J9StackWalkState *walkState)
 			j9object_t detailMessage = J9VMJAVALANGTHROWABLE_DETAILMESSAGE(currentThread, walkState->restartException);
 
 			if (NULL != detailMessage) {
-				detail = walkState->walkThread->javaVM->internalVMFunctions->copyStringToUTF8WithMemAlloc(currentThread, detailMessage, J9_STR_NULL_TERMINATE_RESULT, ": ", 2, detailStackBuffer, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
+				detail = vm->internalVMFunctions->copyStringToUTF8WithMemAlloc(currentThread, detailMessage, J9_STR_NULL_TERMINATE_RESULT, ": ", 2, detailStackBuffer, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
 			}
 			swPrintf(walkState, 2, "\tThrowing exception: %.*s%s\n", J9UTF8_LENGTH(className), J9UTF8_DATA(className), detail ? detail : "");
 			if (detailStackBuffer != detail) {
@@ -289,7 +291,7 @@ UDATA  walkStackFrames(J9VMThread *currentThread, J9StackWalkState *walkState)
 
 #ifdef J9VM_INTERP_LINEAR_STACKWALK_TRACING
 	if (walkState->flags & J9_STACKWALK_LINEAR) {
-		rc = lswInitialize(walkState->walkThread->javaVM, walkState);
+		rc = lswInitialize(vm, walkState);
 		if (rc != SW_ERROR_NONE) {
 			rc = J9_STACKWALK_RC_NO_MEMORY;
 			goto terminationPoint;
@@ -308,7 +310,7 @@ UDATA  walkStackFrames(J9VMThread *currentThread, J9StackWalkState *walkState)
 		walkState->bytecodePCOffset = -1;
 
 #ifdef J9VM_INTERP_LINEAR_STACKWALK_TRACING
-		lswFrameNew(walkState->walkThread->javaVM, walkState, (UDATA)walkState->pc);
+		lswFrameNew(vm, walkState, (UDATA)walkState->pc);
 #endif	
 
 		switch((UDATA) walkState->pc) {
@@ -346,7 +348,7 @@ UDATA  walkStackFrames(J9VMThread *currentThread, J9StackWalkState *walkState)
 				}
 #endif
 
-				if (*(walkState->pc) == 0xFF) /* impdep2 = 0xFF - indicates a JNI call-in frame */
+				if ((impdep2PC == walkState->pc) || ((impdep2PC + 3) == walkState->pc)) /* impdep2 = 0xFF - indicates a JNI call-in frame */
 				{
 					walkJNICallInFrame(walkState);
 				} else {
@@ -419,7 +421,7 @@ endOfStack:
 #if defined(J9VM_INTERP_LINEAR_STACKWALK_TRACING)
 	if (walkState->linearSlotWalker) {
 		lswPrintFrames(walkState->walkThread, walkState);
-		lswCleanup(walkState->walkThread->javaVM, walkState);
+		lswCleanup(vm, walkState);
 	}
 #endif	
 
@@ -468,7 +470,7 @@ UDATA walkFrame(J9StackWalkState * walkState)
 		if (!walkState->jitInfo) {
 #endif
 			if (*walkState->bp & J9SF_A0_INVISIBLE_TAG) {
-				if (!(walkState->flags & J9_STACKWALK_INCLUDE_CALL_IN_FRAMES) || (walkState->pc != walkState->walkThread->javaVM->callInReturnPC)) {
+				if (!(walkState->flags & J9_STACKWALK_INCLUDE_CALL_IN_FRAMES) || (walkState->pc != walkState->javaVM->callInReturnPC)) {
 					return J9_STACKWALK_KEEP_ITERATING;
 				}
 			}
@@ -527,7 +529,7 @@ UDATA walkFrame(J9StackWalkState * walkState)
 					/* If the PC is within the romClass of the method, it's correct (not breakpointed) */
 
 					if ((cachePC < (U_8 *) romClass) || (cachePC >= (((U_8 *) romClass) + romClass->romSize))) {
-						TRIGGER_J9HOOK_VM_PERMANENT_PC(walkState->walkThread->javaVM->hookInterface, walkState->walkThread, cachePC);
+						TRIGGER_J9HOOK_VM_PERMANENT_PC(walkState->javaVM->hookInterface, walkState->walkThread, cachePC);
 					}
 				}
 			}
@@ -585,7 +587,7 @@ static UDATA allocateCache(J9StackWalkState * walkState)
 
 	if ((walkState != walkState->walkThread->stackWalkState) || ((UDATA) (sp - stackStart) < cacheSize)
 #if defined (J9VM_INTERP_VERBOSE) || defined (J9VM_PROF_EVENT_REPORTING)
-		|| (walkState->walkThread->javaVM->runtimeFlags & J9_RUNTIME_PAINT_STACK)
+		|| (walkState->javaVM->runtimeFlags & J9_RUNTIME_PAINT_STACK)
 #endif
 	) {
 #ifdef J9VM_INTERP_STACKWALK_TRACING
@@ -753,11 +755,12 @@ walkMethodFrame(J9StackWalkState * walkState)
 			if (walkState->argCount) {
 				/* Max size as argCount always <= 255 */
 				U_32 result[8];
+				J9Class *methodClass = UNTAGGED_METHOD_CP(walkState->method)->ramClass;
 
 #ifdef J9VM_INTERP_STACKWALK_TRACING
 				swPrintf(walkState, 4, "\tUsing signature mapper\n");
 #endif
-				j9localmap_ArgBitsForPC0(UNTAGGED_METHOD_CP(walkState->method)->ramClass->romClass, romMethod, result);
+				j9cached_ArgBitsForPC0(methodClass->romClass, romMethod, result, walkState->javaVM, methodClass->classLoader);
 
 #ifdef J9VM_INTERP_STACKWALK_TRACING
 				swPrintf(walkState, 4, "\tArguments starting at %p for %d slots\n", walkState->arg0EA, walkState->argCount);
@@ -874,7 +877,7 @@ static void walkGenericSpecialFrame(J9StackWalkState * walkState)
 void
 walkBytecodeFrameSlots(J9StackWalkState *walkState, J9Method *method, UDATA offsetPC, UDATA *pendingBase, UDATA pendingStackHeight, UDATA *localBase, UDATA numberOfLocals, UDATA alwaysLocalMap)
 {
-	J9JavaVM *vm = walkState->walkThread->javaVM;
+	J9JavaVM *vm = walkState->javaVM;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	UDATA *bp = localBase - numberOfLocals;
 	J9Class *ramClass = J9_CLASS_FROM_METHOD(method);
@@ -978,7 +981,7 @@ walkBytecodeFrame(J9StackWalkState * walkState)
 		}
 	} else {
 #if defined(J9VM_OPT_METHOD_HANDLE)
-		J9JavaVM *vm = walkState->walkThread->javaVM;
+		J9JavaVM *vm = walkState->javaVM;
 #endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 		UDATA argTempCount = 0;
 		J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method);
@@ -1070,8 +1073,8 @@ static void walkJNICallInFrame(J9StackWalkState * walkState)
 
 		if (walkState->walkSP != walkState->unwindSP) {
 #ifdef J9VM_INTERP_STACKWALK_TRACING
-			if (walkState->pc != (walkState->walkThread->javaVM->callInReturnPC + 3)) {
-				swPrintf(walkState, 0, "Error: PC should have been advanced in order to push return value, pc = %p, cipc = %p !!!\n", walkState->pc, walkState->walkThread->javaVM->callInReturnPC);
+			if (walkState->pc != (walkState->javaVM->callInReturnPC + 3)) {
+				swPrintf(walkState, 0, "Error: PC should have been advanced in order to push return value, pc = %p, cipc = %p !!!\n", walkState->pc, walkState->javaVM->callInReturnPC);
 			}
 #endif
 			if (walkState->frameFlags & J9_SSF_RETURNS_OBJECT) {
@@ -1256,7 +1259,7 @@ static void walkIndirectDescribedPushes(J9StackWalkState * walkState, UDATA * hi
 #if (defined(J9VM_INTERP_STACKWALK_TRACING)) 
 void swPrintf(J9StackWalkState * walkState, UDATA level, char * format, ...)
 {
-	if (walkState->walkThread->javaVM->stackWalkVerboseLevel >= level) {
+	if (walkState->javaVM->stackWalkVerboseLevel >= level) {
 		PORT_ACCESS_FROM_WALKSTATE(walkState);
 		va_list args;
 		char buf[1024];
@@ -1328,7 +1331,7 @@ static void initializeObjectSlotBitVector(J9StackWalkState * walkState)
 	walkState->objectSlotBitVector = NULL;
 	walkState->elsBitVector = 0;
 
-	if ((walkState->walkThread->javaVM->runtimeFlags & J9_RUNTIME_SNIFF_AND_WHACK) && !(walkState->flags & J9_STACKWALK_DO_NOT_SNIFF_AND_WHACK)) {
+	if ((walkState->javaVM->runtimeFlags & J9_RUNTIME_SNIFF_AND_WHACK) && !(walkState->flags & J9_STACKWALK_DO_NOT_SNIFF_AND_WHACK)) {
 		PORT_ACCESS_FROM_WALKSTATE(walkState);
 		UDATA slotCount = walkState->walkThread->stackObject->end - walkState->walkThread->sp;
 		UDATA byteCount = (slotCount + 7) >> 3;
@@ -1411,17 +1414,17 @@ static void sniffAndWhackPointer(J9StackWalkState * walkState, j9object_t *slotP
 	j9object_t object = *slotPointer;
 
 	if (object) {
-		J9JavaVM * vm = walkState->walkThread->javaVM;
+		J9JavaVM * vm = walkState->javaVM;
 		UDATA rc = vm->memoryManagerFunctions->j9gc_ext_check_is_valid_heap_object(vm, object, 0);
 
 		if ((rc == J9OBJECTCHECK_OBJECT) || (rc == J9OBJECTCHECK_FORWARDED)) {
 #ifdef J9VM_ENV_DATA64
-			((U_32 *) slotPointer)[1] = (U_32) 0xDEAD0000 + (U_16) (walkState->walkThread->javaVM->whackedPointerCounter);
+			((U_32 *) slotPointer)[1] = (U_32) 0xDEAD0000 + (U_16) (vm->whackedPointerCounter);
 #else
-			((U_32 *) slotPointer)[0] = (U_32) 0xDEAD0000 + (U_16) (walkState->walkThread->javaVM->whackedPointerCounter);
+			((U_32 *) slotPointer)[0] = (U_32) 0xDEAD0000 + (U_16) (vm->whackedPointerCounter);
 #endif
 			swPrintf(walkState, 1, "WHACKING I-Slot[%p] = %p --now--> %p\n", slotPointer, object, *slotPointer);
-			walkState->walkThread->javaVM->whackedPointerCounter += 2;
+			vm->whackedPointerCounter += 2;
 		}
 	}
 }
@@ -1519,8 +1522,7 @@ getLocalsMap(J9StackWalkState * walkState, J9ROMClass * romClass, J9ROMMethod * 
 			/* j9localmap_ArgBitsForPC0 only deals with args, so zero out the result array to make sure the temps are non-object */
 
 			memset(result, 0, ((argTempCount + 31) / 32) * sizeof(U_32));
-
-			j9localmap_ArgBitsForPC0(romClass, romMethod, result);
+			j9cached_ArgBitsForPC0(romClass, romMethod, result, walkState->javaVM, UNTAGGED_METHOD_CP(walkState->method)->ramClass->classLoader);
 			return;
 		}
 	}
@@ -1528,7 +1530,7 @@ getLocalsMap(J9StackWalkState * walkState, J9ROMClass * romClass, J9ROMMethod * 
 #ifdef J9VM_INTERP_STACKWALK_TRACING
 	swPrintf(walkState, 4, "\tUsing local mapper\n");
 #endif
-	errorCode = vm->localMapFunction(PORTLIB, romClass, romMethod, offsetPC, result, vm, j9mapmemory_GetBuffer, j9mapmemory_ReleaseBuffer);
+	errorCode = j9cached_LocalBitsForPC(romClass, romMethod, offsetPC, result, vm, j9mapmemory_GetBuffer, j9mapmemory_ReleaseBuffer, vm, J9_CLASS_FROM_METHOD(walkState->method)->classLoader);
 
 	if (errorCode < 0) {
 		if (J9_ARE_NO_BITS_SET(walkState->flags, J9_STACKWALK_NO_ERROR_REPORT)) {
@@ -1552,7 +1554,7 @@ getStackMap(J9StackWalkState * walkState, J9ROMClass * romClass, J9ROMMethod * r
 	PORT_ACCESS_FROM_WALKSTATE(walkState);
 	IDATA errorCode;
 
-	errorCode = j9stackmap_StackBitsForPC(PORTLIB, offsetPC, romClass, romMethod, result, pushCount, walkState->walkThread->javaVM, j9mapmemory_GetBuffer, j9mapmemory_ReleaseBuffer);
+	errorCode = j9cached_StackBitsForPC(offsetPC, romClass, romMethod, result, pushCount, walkState->javaVM, j9mapmemory_GetBuffer, j9mapmemory_ReleaseBuffer, walkState->javaVM, UNTAGGED_METHOD_CP(walkState->method)->ramClass->classLoader);
 	if (errorCode < 0) {
 		if (J9_ARE_NO_BITS_SET(walkState->flags, J9_STACKWALK_NO_ERROR_REPORT)) {
 			/* Local map failed, result = %p - aborting VM */
