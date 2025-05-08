@@ -140,10 +140,6 @@ extern "C" {
 struct J9RASdumpContext;
 }
 
-#if defined(TR_TARGET_X86) && defined(TR_HOST_32BIT)
-extern TR_X86CPUIDBuffer *queryX86TargetCPUID(void * javaVM);
-#endif
-
 extern void setupCodeCacheParameters(int32_t *, OMR::CodeCacheCodeGenCallbacks *callBacks, int32_t *numHelpers, int32_t *CCPreLoadedCodeSize);
 extern "C" void stopInterpreterProfiling(J9JITConfig *jitConfig);
 extern "C" void restartInterpreterProfiling();
@@ -1513,7 +1509,6 @@ onLoadInternal(
       jitConfig->codeCache->heapAlloc = firstCodeCache->getCodeTop();
 #if defined(TR_TARGET_X86) && defined(TR_HOST_32BIT)
       javaVM->jitConfig = (J9JITConfig *)jitConfig;
-      queryX86TargetCPUID(javaVM);
 #endif
       }
 

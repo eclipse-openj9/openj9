@@ -588,7 +588,7 @@ static bool willNotInlineCompareAndSwapNative(TR::Node *node,
       }
    else
       {
-      if (!comp->cg()->getX86ProcessorInfo().supportsCMPXCHG8BInstruction())
+      if (!comp->target().cpu.supportsFeature(OMR_FEATURE_X86_CX8))
          return true;
 
       return false;

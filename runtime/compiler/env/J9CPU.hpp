@@ -76,7 +76,7 @@ public:
    static void enableFeatureMasks();
 
    bool supportsFeature(uint32_t feature);
-   
+
    const char *getProcessorVendorId();
    uint32_t getProcessorSignature();
    };

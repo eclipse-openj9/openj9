@@ -35,7 +35,6 @@ namespace J9 { typedef J9::Power::CPU CPUConnector; }
 #endif
 
 #include "compiler/env/J9CPU.hpp"
-#include "env/ProcessorInfo.hpp"
 #include "infra/Assert.hpp"
 #include "infra/Flags.hpp"
 
@@ -53,12 +52,6 @@ protected:
    CPU(const OMRProcessorDesc& processorDescription) : J9::CPU(processorDescription) {}
 
 public:
-
-   /**
-    * @brief Intialize _supportedFeatureMasks to the list of processor features that will be utilized by the compiler and set _isSupportedFeatureMasksEnabled to true
-    * @return void
-    */
-   static void enableFeatureMasks();
 
    /** 
     * @brief A factory method used to construct a CPU object for portable AOT compilations
