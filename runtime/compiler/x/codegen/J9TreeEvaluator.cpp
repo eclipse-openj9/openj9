@@ -10612,7 +10612,8 @@ static TR::Register* inlineHasNegativesOrCountPositives(TR::Node* node, TR::Reco
       xmmChunkReg = cg->allocateRegister(TR_VRF);
       }
 
-   TR::RegisterDependencyConditions *dependencies = generateRegisterDependencyConditions((uint8_t)6, (uint8_t)6, cg);
+   uint8_t numDependencies = useVectorInstructions ? 6 : 5;
+   TR::RegisterDependencyConditions *dependencies = generateRegisterDependencyConditions(numDependencies, numDependencies, cg);
    dependencies->addPreCondition(loopLimitReg, TR::RealRegister::NoReg, cg);
    dependencies->addPreCondition(limitReg, TR::RealRegister::NoReg, cg);
    dependencies->addPreCondition(maskReg, TR::RealRegister::NoReg, cg);
