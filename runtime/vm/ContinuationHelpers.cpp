@@ -1207,8 +1207,8 @@ restart:
 					continue;
 				case JAVA_LANG_VIRTUALTHREAD_WAIT:
 				case JAVA_LANG_VIRTUALTHREAD_TIMED_WAIT:
-					/* WAIT/TIMED_WAIT can only be added to blocked list if they have been notifed and threads updated. */
-					Assert_VM_unreachable();
+					/* WAIT/TIMED_WAIT can only be added to blocked list if they have been notified. */
+					Assert_VM_true(J9VMJAVALANGVIRTUALTHREAD_NOTIFIED(currentThread, current->vthread));
 					break;
 				case JAVA_LANG_VIRTUALTHREAD_BLOCKED:
 				{
