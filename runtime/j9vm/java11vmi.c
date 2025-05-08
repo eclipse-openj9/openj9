@@ -256,6 +256,9 @@ createPackage(J9VMThread *currentThread, J9Module *fromModule, J9UTF8 *packageNa
 }
 
 /** @note It assumes moduleObject is guaranteed not to be NULL
+ *
+ * This method has potential GC point.
+ *
  *  @return Pointer to module's classloader
  */
 static J9ClassLoader *
@@ -931,9 +934,12 @@ JVM_DefineModule(JNIEnv * env, jobject module, jboolean isOpen, jstring version,
 	} else {
 		j9object_t modObj = J9_JNI_UNWRAP_REFERENCE(module);
 		J9ClassLoader *systemClassLoader = vm->systemClassLoader;
-
 		J9ClassLoader * const classLoader = getModuleObjectClassLoader(currentThread, modObj);
-		j9object_t moduleNameObject = J9VMJAVALANGMODULE_NAME(currentThread, modObj);
+		j9object_t moduleNameObject = NULL;
+
+		/* refetch module object reference after GC point */
+		modObj = J9_JNI_UNWRAP_REFERENCE(module);
+		moduleNameObject = J9VMJAVALANGMODULE_NAME(currentThread, modObj);
 
 		/* extensionClassLoader holds the platform class loader in Java 11+ */
 		if ((classLoader != systemClassLoader) && (classLoader != vm->extensionClassLoader)) {

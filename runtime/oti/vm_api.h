@@ -287,6 +287,9 @@ resolveNativeAddress(J9VMThread *currentThread, J9Method *nativeMethod, UDATA ru
 
 /**
 * @brief
+*
+* This method has potential GC point.
+*
 * @param *javaVM
 * @param *classLoaderObject
 * @return J9ClassLoader
@@ -378,6 +381,8 @@ internalCreateArrayClassWithOptions(J9VMThread *vmThread, J9ROMArrayClass *romCl
 /**
  * Load the class with the specified name in a given module
  *
+ * This method has potential GC point.
+ *
  * @param currentThread Current VM thread
  * @param moduleName j.l.String object representing module name; can be null
  * @param className String object representing name of the class to load
@@ -395,6 +400,8 @@ internalFindClassString(J9VMThread* currentThread, j9object_t moduleName, j9obje
 /**
  * Load the class with the specified name in the given module.
  *
+ * This method has potential GC point.
+ *
  * @param currentThread Current VM thread
  * @param moduleName Pointer to J9Module representing the module containing the class
  * @param className Name of class to load
@@ -408,6 +415,35 @@ internalFindClassString(J9VMThread* currentThread, j9object_t moduleName, j9obje
 J9Class*
 internalFindClassInModule(J9VMThread* vmThread, J9Module* j9module, U_8* className, UDATA classNameLength, J9ClassLoader* classLoader, UDATA options);
 
+/**
+ * It is a wrapper method of internalFindClassInModule().
+ *
+ * This method has potential GC point.
+ *
+ * @param vmThread Current VM thread
+ * @param className Name of class to load
+ * @param classNameLength Length of the class name
+ * @param classLoader J9ClassLoader to use
+ * @param options load options such as J9_FINDCLASS_FLAG_EXISTING_ONLY
+ *
+ * @return pointer to J9Class if success, NULL if fail
+ */
+J9Class*
+internalFindClassUTF8(J9VMThread* vmThread, U_8* className, UDATA classNameLength, J9ClassLoader* classLoader, UDATA options);
+
+/**
+ * Get the class for the index, loading and initializing the class if necessary.
+ *
+ * This method has potential GC point.
+ *
+ * @param vmThread Current VM thread
+ * @param index The class index
+ * @param flags The J9_FINDKNOWNCLASS_FLAG
+ *
+ * @return pointer to J9Class if success, NULL if fail
+ */
+J9Class*
+internalFindKnownClass(J9VMThread *vmThread, UDATA index, UDATA flags);
 
 /**
 * @brief
