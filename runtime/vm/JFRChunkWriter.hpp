@@ -258,9 +258,9 @@ public:
 	}
 
 	void
-	loadEvents()
+	loadEvents(bool dumpCalled)
 	{
-		_constantPoolTypes.loadEvents();
+		_constantPoolTypes.loadEvents(dumpCalled);
 		_buildResult = _constantPoolTypes.getBuildResult();
 	}
 
@@ -422,6 +422,7 @@ done:
 
 			if (dumpCalled) {
 				writeThreadDumpEvent();
+				_constantPoolTypes.loadNativeLibraries(_currentThread);
 				pool_do(_constantPoolTypes.getSystemProcessTable(), &writeSystemProcessEvent, this);
 				pool_do(_constantPoolTypes.getNativeLibraryTable(), &writeNativeLibraryEvent, this);
 			}
