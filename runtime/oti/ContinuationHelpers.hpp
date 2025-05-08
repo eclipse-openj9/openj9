@@ -360,18 +360,25 @@ public:
 		omrthread_monitor_enter(vm->blockedVirtualThreadsMutex);
 		J9VMContinuation **link = &objectMonitor->waitingContinuations;
 		J9VMContinuation *current = NULL;
+		j9object_t vthread = NULL;
 
 		while (NULL != *link) {
 			current = *link;
-			if (J9VMJAVALANGTHREAD_DEADINTERRUPT(vmThread, current->vthread)) {
+			vthread = current->vthread;
+			if (J9VMJAVALANGTHREAD_DEADINTERRUPT(vmThread, vthread)) {
 				/* Remove virtual threads that have been interrupted. */
 				*link = current->nextWaitingContinuation;
 				current->nextWaitingContinuation = NULL;
 			} else {
 				/* Set the notified and onWaitingList flags for virtual threads that have not been interrupted. */
-				J9VMJAVALANGVIRTUALTHREAD_SET_NOTIFIED(vmThread, current->vthread, JNI_TRUE);
-				/* Update the thread state to BLOCKED. */
-				J9VMJAVALANGVIRTUALTHREAD_SET_STATE(vmThread, current->vthread, JAVA_LANG_VIRTUALTHREAD_BLOCKED);
+				J9VMJAVALANGVIRTUALTHREAD_SET_NOTIFIED(vmThread, vthread, JNI_TRUE);
+
+				U_32 state = J9VMJAVALANGVIRTUALTHREAD_STATE(vmThread, vthread);
+				if ((JAVA_LANG_VIRTUALTHREAD_WAIT == state) || (JAVA_LANG_VIRTUALTHREAD_TIMED_WAIT == state)) {
+					/* Update the thread state to BLOCKED. */
+					J9VMJAVALANGVIRTUALTHREAD_SET_STATE(vmThread, vthread, JAVA_LANG_VIRTUALTHREAD_BLOCKED);
+				}
+
 				current->objectWaitMonitor->virtualThreadWaitCount += 1;
 				notified = true;
 
