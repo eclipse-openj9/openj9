@@ -3376,12 +3376,6 @@ TR_IProfiler::setCallCount(TR_OpaqueMethodBlock *method, int32_t bcIndex, int32_
       }
    }
 
-void
-TR_IProfiler::setCallCount(TR_ByteCodeInfo &bcInfo, int32_t count, TR::Compilation *comp)
-   {
-   setCallCount(getMethodFromBCInfo(bcInfo, comp), (int32_t)bcInfo.getByteCodeIndex(), count, comp);
-   }
-
 int32_t
 TR_IProfiler::getCallCount(TR_OpaqueMethodBlock *calleeMethod, TR_OpaqueMethodBlock *method, int32_t bcIndex, TR::Compilation * comp)
    {
