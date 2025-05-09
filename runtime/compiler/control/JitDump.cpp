@@ -118,11 +118,14 @@ traceILOfCrashedCompilationThread(J9VMThread *vmThread, TR::Compilation *comp, T
    comp->setOutFile(jitdumpFile);
    comp->setLogger(jitdumpLogger);
 
+   TR::Options *options = comp->getOptions();
+   options->setLogFile(jitdumpFile);
+   options->setLogger(jitdumpLogger);
+
    TR_Debug *debug = comp->findOrCreateDebug();
    debug->setOutFile(jitdumpFile);
    debug->setLogger(jitdumpLogger);
 
-   TR::Options *options = comp->getOptions();
    options->setOption(TR_TraceAll);
    options->setOption(TR_TraceKnownObjectGraph);
 
