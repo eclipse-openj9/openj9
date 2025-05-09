@@ -422,7 +422,6 @@ done:
 
 			if (dumpCalled) {
 				writeThreadDumpEvent();
-				_constantPoolTypes.loadNativeLibraries(_currentThread);
 				pool_do(_constantPoolTypes.getSystemProcessTable(), &writeSystemProcessEvent, this);
 				pool_do(_constantPoolTypes.getNativeLibraryTable(), &writeNativeLibraryEvent, this);
 			}
