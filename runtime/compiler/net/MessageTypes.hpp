@@ -294,6 +294,7 @@ enum MessageType : uint16_t
    KnownObjectTable_getFieldAddressData,
 
    AOTCache_getROMClassBatch,
+   AOTCache_getRAMClassFromClassRecordBatch,
 
    AOTCacheMap_request,
    AOTCacheMap_reply,

@@ -60,6 +60,7 @@ ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo, TR_Pers
    _aotCacheName(), _aotCache(NULL), _aotHeaderRecord(NULL),
    _aotCacheKnownIds(decltype(_aotCacheKnownIds)::allocator_type(persistentMemory->_persistentAllocator.get())),
    _sharedProfileCache(NULL),
+   _classRecordMap(decltype(_classRecordMap)::allocator_type(persistentMemory->_persistentAllocator.get())),
    _numSharedProfileCacheMethodLoads(0),
    _numSharedProfileCacheMethodLoadsFailed(0),
    _numSharedProfileCacheMethodStores(0),
@@ -185,8 +186,8 @@ ClientSessionData::processUnloadedClasses(const std::vector<TR_OpaqueClassBlock*
          if (it == _romClassMap.end())
             {
             //Class is not cached so this entry will be used to delete the entry from caches by value.
-            ClassLoaderStringPair key;
-            unloadedClasses.push_back({ clazz, key, NULL, false });
+            //                         _class, _pair,                   _cp,_record,_cached
+            unloadedClasses.push_back({ clazz, ClassLoaderStringPair(), NULL, NULL, false });
             continue; // unloaded class was never cached
             }
 
@@ -201,7 +202,6 @@ ClientSessionData::processUnloadedClasses(const std::vector<TR_OpaqueClassBlock*
 
          // copy of classNameToSignature method which can't be used
          // here because compilation object hasn't been initialized yet
-
          std::string sigStr(sigLen, 0);
          if (className[0] == '[')
             {
@@ -214,10 +214,11 @@ ClientSessionData::processUnloadedClasses(const std::vector<TR_OpaqueClassBlock*
             sigStr[sigLen-1]=';';
             }
 
-         J9ClassLoader * cl = (J9ClassLoader *)(it->second._classLoader);
-         ClassLoaderStringPair key = { cl, sigStr };
+         J9ClassLoader *cl = (J9ClassLoader *)(it->second._classLoader);
+         ClassLoaderStringPair key(cl, sigStr);
+         const AOTCacheClassRecord *record = it->second._aotCacheClassRecord;
          //Class is cached, so retain the data to be used for purging the caches.
-         unloadedClasses.push_back({ clazz, key, cp, true });
+         unloadedClasses.push_back({ clazz, key, cp, record, true });
 
          // For _classBySignatureMap entries that were cached by referencing class loader
          // we need to delete them using the correct class loader
@@ -225,7 +226,7 @@ ClientSessionData::processUnloadedClasses(const std::vector<TR_OpaqueClassBlock*
          for (auto it = classLoadersMap.begin(); it != classLoadersMap.end(); ++it)
             {
             ClassLoaderStringPair key = { *it, sigStr };
-            unloadedClasses.push_back({ clazz, key, cp, true });
+            unloadedClasses.push_back({ clazz, key, cp, record, true });
             }
 
          J9Method *methods = it->second._methodsOfClass;
@@ -249,11 +250,15 @@ ClientSessionData::processUnloadedClasses(const std::vector<TR_OpaqueClassBlock*
                   _persistentMemory->freePersistentMemory(ipDataHT);
                   iter->second._IPData = NULL;
                   }
-               _J9MethodMap.erase(j9method);
+               _J9MethodMap.erase(iter);
                }
             }
          it->second.freeClassInfo(_persistentMemory);
          _romClassMap.erase(it);
+         }
+      if (useSharedProfileCache())
+         {
+         purgeCache(unloadedClasses, _classRecordMap, &ClassUnloadedData::_record);
          }
       }
 
@@ -268,13 +273,13 @@ ClientSessionData::processUnloadedClasses(const std::vector<TR_OpaqueClassBlock*
    // purge Class by name cache
    {
    OMR::CriticalSection classMapCS(getClassMapMonitor());
-   purgeCache(&unloadedClasses, getClassBySignatureMap(), &ClassUnloadedData::_pair);
+   purgeCache(unloadedClasses, getClassBySignatureMap(), &ClassUnloadedData::_pair);
    }
 
    // purge Constant pool to class cache
    {
    OMR::CriticalSection constantPoolToClassMap(getConstantPoolMonitor());
-   purgeCache(&unloadedClasses, getConstantPoolToClassMap(), &ClassUnloadedData::_cp);
+   purgeCache(unloadedClasses, getConstantPoolToClassMap(), &ClassUnloadedData::_cp);
    }
 
    if (numOfUnloadedClasses > 0)
@@ -316,7 +321,7 @@ ClientSessionData::processIllegalFinalFieldModificationList(const std::vector<TR
 void
 ClientSessionData::printIProfilerCacheStats()
    {
-   if (!TR::Options::getVerboseOption(TR_VerboseJITServerSharedProfile)) // TODO: is this the right flag?
+   if (!TR::Options::getVerboseOption(TR_VerboseJITServerSharedProfile))
       return;
    size_t numMethodsProfiled = 0;
    size_t numBytecodeEntries = 0;
@@ -630,13 +635,17 @@ ClientSessionData::getSharedBytecodeProfileSummary(J9Method* method)
  * @param method The j9method whose profiling data is copied out
  * @param stable True if the profiling info cannot grow at the client (method has been compiled already)
  * @param comp Compilation object
+ * @param ipdata Profiling data sent by client in serialized form (std::string). Used for validation.
  * @return Returns true if the operation succeeded, false otherwise
  * @note This function may send messages to the client to get missing class information for the call graph entries
  * @note Acquires/releases the following locks: ROMMapMonitor, sharedProfileCache monitor, _aotCacheKnownIdsMonitor
  */
 bool
-ClientSessionData::loadBytecodeDataFromSharedProfileCache(J9Method *method, bool stable, TR::Compilation *comp)
+ClientSessionData::loadBytecodeDataFromSharedProfileCache(J9Method *method, bool stable, TR::Compilation *comp, const std::string &ipdata)
    {
+   //TODO: add trace points
+   if (TR::Options::getVerboseOption(TR_VerboseJITServerSharedProfileDetails))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "comp %p Loading profile for j9method %p", comp, method);
    bool success = true; // optimistic
    TR_Memory &trMemory = *comp->trMemory();
    TR::StackMemoryRegion region(trMemory);
@@ -650,6 +659,8 @@ ClientSessionData::loadBytecodeDataFromSharedProfileCache(J9Method *method, bool
          {
          methodInfo = &it->second;
          methodRecord = getMethodRecord(it->second, method);
+         if (!methodRecord) // Maybe we cannot create it because we reached the AOT cache memory limit
+            return false;
          }
       else
          {
@@ -657,8 +668,12 @@ ClientSessionData::loadBytecodeDataFromSharedProfileCache(J9Method *method, bool
          }
       } // end critical section
 
-   // Get the bytecode profiling info for this j9method
-   Vector<TR_IPBytecodeHashTableEntry *> newEntries(region); // This vector excludes cgEntries
+
+   if (TR::Options::getVerboseOption(TR_VerboseJITServerSharedProfileDetails))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "\tWill clone entries. methodRecord=%p", methodRecord);
+
+   // Get the bytecode profiling info for this j9method.
+   Vector<TR_IPBytecodeHashTableEntry *> newEntries(region); // This vector includes cgEntries
    Vector<TR_IPBCDataCallGraph *> cgEntries(region);
 
       {
@@ -666,33 +681,314 @@ ClientSessionData::loadBytecodeDataFromSharedProfileCache(J9Method *method, bool
       ProfiledMethodEntry *methodEntry = _sharedProfileCache->getProfileForMethod(methodRecord);
       if (methodEntry)
          {
+         // Get profiling entries from shared profile repo and populate 'newEntries' and 'cgEntries'
          methodEntry->cloneBytecodeData(trMemory, stable, newEntries, cgEntries);
+         }
+      else
+         {
+         return false;
          }
       } // end critical section
 
+   // Note: 'newEntries' was populated with pointers to newly allocated entries (using persistent memory or heap memory).
+   // Thus, if something prevents us from storing this data in the per-client profile cache, we must free it.
+   try
+      {
 
+      if (TR::Options::getVerboseOption(TR_VerboseJITServerSharedProfileDetails))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "\tHave cloned entries. Fix ramClasses for numCgEntries=%zu", cgEntries.size());
 
+      // Go over the cgEntries and for each valid class slot
+      // convert class records to RAMClass pointers valid at the client.
+      // NOTE: PC is still valid since it points into shared ROMMethod
+      // I need to hold ROMMapMonitor because I am accessing some maps protected by it
+      // For an entry in uniqueUncachedRecords we have a corresponding entry in uniqueUncachedIndexes.
+      // That entry is a vector of tuples representing the cgEntries where patching needs to happen.
+      Vector<const AOTCacheClassRecord *> uniqueUncachedClassRecords(region);
+      Vector<Vector<std::pair<uint32_t, uint32_t>>> uncachedIndexes(region);
 
+         {
+         OMR::CriticalSection cs(getROMMapMonitor());
+         for (uint32_t i = 0; i < cgEntries.size(); ++i)
+            {
+            auto csInfo = cgEntries[i]->getCGData();
+            for (uint32_t j = 0; j < NUM_CS_SLOTS; ++j)
+               {
+               if (auto record = (const AOTCacheClassRecord *)csInfo->getClazz(j))
+                  {
+                  if (TR::Options::getVerboseOption(TR_VerboseJITServerSharedProfileDetails))
+                     TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "\tLooking at entry %p entryIndex %" OMR_PRIu32  " slot %" OMR_PRIu32 " classRecord %p classLoaderRecord %p",
+                                                   cgEntries[i], i, j, record, record->classLoaderRecord());
+                  auto c_it = _classRecordMap.find(record); // This _classRecordMap is stored for each client
+                  if (c_it != _classRecordMap.end())
+                     {
+                     csInfo->setClazz(j, (uintptr_t)c_it->second); // c_it->second is a j9class
+                     if (TR::Options::getVerboseOption(TR_VerboseJITServerSharedProfileDetails))
+                        TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "\t\tFound classRecord in _classRecordMap. j9class=%p", c_it->second);
+                     continue;
+                     }
 
+                  // We could not find the <AOTCacheClassRecord, j9class> association
+                  // Memorize this fact to ask the client later.
+                  // TODO: maybe we should limit ourselves to just the dominant entry, or maybe the client should only send us the dominant entry (based on some option)
+                  if (TR::Options::getVerboseOption(TR_VerboseJITServerSharedProfileDetails))
+                     TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "\tCould not find the j9clazz so we have to ask the client later");
 
+                  // Update the vector of unique uncached class records.
+                  // Do a linear search since the size of the vector is typically 1-4 entries (most common case is 1).
+                  bool found = false;
+                  for (size_t index = 0; index < uniqueUncachedClassRecords.size(); ++index)
+                     {
+                     if (uniqueUncachedClassRecords[index] == record)
+                        {
+                        uncachedIndexes[index].push_back({i, j}); // cgEntry i, slot j
+                        found = true;
+                        break;
+                        }
+                     }
+                  if (!found) // Unseen record so far
+                     {
+                     uniqueUncachedClassRecords.push_back(record);
+
+                     Vector<std::pair<uint32_t, uint32_t>> locations(region);
+                     locations.push_back({i, j});
+                     uncachedIndexes.emplace_back(locations);
+                     // TODO: make this assert non-fatal after testing
+                     TR_ASSERT_FATAL(uniqueUncachedClassRecords.size() == uncachedIndexes.size(), "The size of the uniqueUncachedRecords and uncachedIndexes vectors must be equal");
+                     }
+                  }
+               } // end for (uint32_t j = 0; j < NUM_CS_SLOTS; ++j)
+            } // end for (uint32_t i = 0; i < cgEntries.size(); ++i)
+         } // end critical section
+      if (uniqueUncachedClassRecords.size())
+         {
+         // At this point we may have a vector of class records that could not be converted to RAMClasses.
+         // Request missing RAMClasses from the client.
+         // The client can use the deserialization mechanism to transform class IDs into RAMClasses.
+         std::vector<uintptr_t> classIds; // This is what we are going to send to the client
+         classIds.reserve(uniqueUncachedClassRecords.size());
+
+         // Build the vector of serialization records that need to be sent to the client for proper deserialization.
+         // Use _aotCacheKnownIds to filter out the IDs that the client already knows about.
+         Vector<const AOTSerializationRecord *> recordsToSend(region);
+         recordsToSend.reserve(uniqueUncachedClassRecords.size() * 2); // *2 because we may send both the class loader records and the class records
+         size_t recordsSize = 0;
+            {
+            OMR::CriticalSection cs(_aotCacheKnownIdsMonitor);  // Because we access _aotCacheKnownIds map
+
+            for (size_t i = 0; i < uniqueUncachedClassRecords.size(); ++i)
+               {
+               auto classRecord = uniqueUncachedClassRecords[i];
+               auto loaderRecord = classRecord->classLoaderRecord();
+               TR_ASSERT_FATAL(loaderRecord, "classRecord=%p has NULL class loader record", classRecord);
+               classIds.push_back(classRecord->data().id()); // Will send the class IDs to the client
+
+               // Serialize class loader record before class record (dependency order)
+               if (_aotCacheKnownIds.find(loaderRecord->data().idAndType()) == _aotCacheKnownIds.end())
+                  {
+                  // The client does not know yet about this record. Send the corresponding serialization record.
+                  recordsToSend.push_back(&loaderRecord->data());
+                  recordsSize += loaderRecord->data().AOTSerializationRecord::size();
+                  }
+               if (_aotCacheKnownIds.find(classRecord->data().idAndType()) == _aotCacheKnownIds.end())
+                  {
+                  // The client does not know yet about this record. Send the corresponding serialization record.
+                  recordsToSend.push_back(&classRecord->data());
+                  recordsSize += classRecord->data().AOTSerializationRecord::size();
+                  }
+               } // end for
+            } // end critical section
+
+         // Pack the serialization records that we gathered in 'recordsToSend' into a format that can be sent over the network.
+         std::string recordsStr(recordsSize, 0);
+         JITServerAOTCache::packSerializationRecords(recordsToSend, (uint8_t *)recordsStr.data(), recordsStr.size());
+
+         if (TR::Options::getVerboseOption(TR_VerboseJITServerSharedProfileDetails))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "\tcomp=%p Will send message to client with %zu serialized records asking for %zu classes",
+                                          comp, recordsToSend.size(), classIds.size());
+
+         // Now, send a message to the client with the classIDs and serialization records and read the reply.
+         auto stream = comp->getStream();
+         stream->write(JITServer::MessageType::AOTCache_getRAMClassFromClassRecordBatch, classIds, recordsStr);
+         auto recv = stream->read<std::vector<J9Class *>>();
+         // Note that we don't get full information about classes at this point,
+         // only j9class pointers valid at the client because we don't need more than that.
+         auto &ramClasses = std::get<0>(recv);
+
+         if (TR::Options::getVerboseOption(TR_VerboseJITServerSharedProfileDetails))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "\tcomp=%p Have received response from client for %zu ramClasses", comp, ramClasses.size());
+
+         if (ramClasses.empty()) // Possible if the deserializer was reset
+            {
+            if (TR::Options::getVerboseOption(TR_VerboseJITServerSharedProfile))
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+                  "ERROR: Failed to get uncached classes for profiled method %p ID %zu "
+                  "while compiling %s for clientUID %llu", method, methodRecord->data().id(),
+                  comp->signature(), (unsigned long long)_clientUID);
+            _numSharedProfileCacheMethodLoadsFailed++;
+            if (stable)
+               {
+               for (auto& profilingEntry : newEntries)
+                  {
+                  trMemory.freeMemory(profilingEntry, persistentAlloc);
+                  }
+               newEntries.clear();
+               }
+            return false;
+            }
+
+         TR_ASSERT_FATAL(ramClasses.size() == uniqueUncachedClassRecords.size(), "Invalid vector length %zu != %zu", ramClasses.size(), uniqueUncachedClassRecords.size());
+         // Update the set of IDs that the client knows about, but consider only the classes that were successfully identified.
+            {
+            OMR::CriticalSection cs(_aotCacheKnownIdsMonitor);
+
+            for (size_t i = 0; i < uniqueUncachedClassRecords.size(); ++i)
+               {
+               if (ramClasses[i])
+                  {
+                  _aotCacheKnownIds.insert(uniqueUncachedClassRecords[i]->data().idAndType());
+                  _aotCacheKnownIds.insert(uniqueUncachedClassRecords[i]->classLoaderRecord()->data().idAndType());
+                  }
+               }
+            } // end critical section
+
+         // Update the _classRecordMap with classRecord-->j9class mappings,
+         // and replace the classRecords with j9classes in the cgEntries.
+         // Note that if the client couldn't find the right j9class once, it's likely that it will not
+         // be able to find the right class in the future too, so we cache classRecord-->NULL mappings in this case.
+         OMR::CriticalSection cs(getROMMapMonitor()); // protect concurrent access to _classRecordMap
+
+         if (TR::Options::getVerboseOption(TR_VerboseJITServerSharedProfileDetails))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "\tWill start patching");
+
+         for (size_t i = 0; i < uniqueUncachedClassRecords.size(); ++i)
+            {
+            auto classRecord = uniqueUncachedClassRecords[i];
+            //if (ramClasses[i]) // TODO: debatable. To be tuned.
+            _classRecordMap.insert({ classRecord, (TR_OpaqueClassBlock *)(ramClasses[i]) });
+
+            // Patch up the cg entries with j9classes that we got from the client
+            const auto &placesToPatch = uncachedIndexes[i];
+            for (const auto& placeToPatch : placesToPatch)
+               {
+               uint32_t cgEntryIndex = placeToPatch.first;
+               uint32_t slotIndex    = placeToPatch.second;
+               uintptr_t ramClassToPatch = (uintptr_t)ramClasses[i];
+
+               if (TR::Options::getVerboseOption(TR_VerboseJITServerSharedProfileDetails))
+                  TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "\t\tWill patch entry %p index %" OMR_PRIu32 " slot %" OMR_PRIu32 " with %p",
+                                                                     cgEntries[cgEntryIndex], cgEntryIndex, slotIndex, (J9Class*)ramClassToPatch);
+
+               CallSiteProfileInfo *csInfo = cgEntries[cgEntryIndex]->getCGData();
+               csInfo->setClazz(slotIndex, ramClassToPatch);
+
+               if (!ramClasses[i])
+                  {
+                  bool isDominantSlot = csInfo->getDominantSlot() == slotIndex;
+                  if (TR::Options::getVerboseOption(TR_VerboseJITServerSharedProfile))
+                     {
+                     TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+                        "Shared Profile ERROR: Failed to get RAMClass for class %.*s ID %zu for profiled method %p ID %" OMR_PRIuPTR
+                        " CG slot index %" OMR_PRIu32 " weight %u relWeight %.0f%% dominant=%d residue=%u while compiling %s",
+                        RECORD_NAME(&classRecord->data()), classRecord->data().id(), method, methodRecord->data().id(),
+                        slotIndex, (unsigned)csInfo->_weight[slotIndex], csInfo->_weight[slotIndex]*100.0/cgEntries[cgEntryIndex]->getSumCount(),
+                        isDominantSlot, (unsigned)csInfo->_residueWeight, comp->signature());
+                     }
+                  if (isDominantSlot)
+                     {
+                     // TODO: We have a slot with RAMClass==0 and this is the dominant class. We may
+                     // need to do some changes: move its samples to the other category, though I don't know if we support
+                     // entries with just one class and the rest being into the other category. There might be some
+                     // implicit assumptions that the 3 slots must be filled before having samples in the "other" category.
+                     // Must check all the IProfiler code.
+                     // If this dominant slot uses 100% of the samples, then we should use profiling info from the client.
+                     // Note: Most of the methods that fall into this category have "lambda" or "proxy" in their name.
+                     }
+                  }
+               }
+            }
+         }
+      // Validate cgEntries against the profiling entries sent by the client.
+      // We want to make sure that the j9class pointers that we materialized are valid.
+      if (!ipdata.empty() && !cgEntries.empty() && TR::Options::getVerboseOption(TR_VerboseJITServerSharedProfileDetails))
+         {
+         Vector<TR_IPBytecodeHashTableEntry *> clientCgEntries(region);
+         JITServerIProfiler::deserializeIProfilerData(method, ipdata, clientCgEntries, comp->trMemory(), /*cgEntriesOnly=*/true);
+
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "\tWill validate %zu cgEntries aganist %zu client entries", cgEntries.size(), clientCgEntries.size());
+
+         for (const auto &cgEntry : cgEntries)
+            {
+            // Search for a matching PC entry in the client's profile.
+            for (const auto &clientCgEntry : clientCgEntries)
+               {
+               if  (cgEntry->getPC() == clientCgEntry->getPC())
+                  {
+                  // Compare the slots holding j9methods.
+                  auto csInfoServer = cgEntry->getCGData();
+                  auto csInfoClient = ((TR_IPBCDataCallGraph*)clientCgEntry)->getCGData();
+                  for (int slot = 0; slot < NUM_CS_SLOTS; ++slot)
+                     {
+                     auto serverClazz = csInfoServer->getClazz(slot);
+                     auto clientClazz = csInfoClient->getClazz(slot);
+                     if (serverClazz && clientClazz && serverClazz != clientClazz)
+                        {
+                        // It may be ok to have discrepancies for highly polymorphic call sites.
+                        // Let's test that by looking at the "other" category as well.
+                        bool isDominantSlot = csInfoClient->getDominantSlot() == slot;
+                        TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Discrepancy for jmethod %p slot %d serverClazz=%p clientClazz=%p samples=%u residue=%u",
+                           method, slot, serverClazz, clientClazz, (unsigned)csInfoClient->_weight[slot], (unsigned)csInfoClient->_residueWeight);
+                        }
+                     }
+                  break;
+                  }
+               }
+            }
+         } // end validation
+      }
+   catch (...)
+      {
+      // Free the entries allocated with persistent memory and rethrow
+      if (stable)
+         {
+         for (auto& profilingEntry : newEntries)
+            {
+            trMemory.freeMemory(profilingEntry, persistentAlloc);
+            }
+         newEntries.clear();
+         }
+      throw;
+      }
    // Put the assembled profile entries into the private profile repository (per-client or per compilation)
    // depending on how "stable" the information at the client is. Note that the shared profile info could
    // have a different "stable" value, so the same client may load the same shared profile several times.
    if (stable)
       {
       success = cacheIProfilerInfo((TR_OpaqueMethodBlock*)method, newEntries, stable);
+      if (!success)
+         {
+         // Delete 'newEntries' because another thread beat us to caching profiling info per client session
+         if (TR::Options::getVerboseOption(TR_VerboseJITServerSharedProfileDetails))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "\tWill delete the newEntries allocated with persistent memory because another thread was faster than us");
+         for (auto& profilingEntry : newEntries)
+            {
+            trMemory.freeMemory(profilingEntry, persistentAlloc);
+            }
+         newEntries.clear();
+         }
       }
    else
       {
       auto compInfoPT = (TR::CompilationInfoPerThreadRemote *)(comp->fej9()->_compInfoPT);
       success = compInfoPT->cacheIProfilerInfo((TR_OpaqueMethodBlock*)method, newEntries);
+      // TODO: transform this into a non-fatal assert after testing
+      TR_ASSERT_FATAL(success, "How we can fail this storage of profiling info?");
       }
    if (success)
       {
       _numSharedProfileCacheMethodLoads++;
       if (TR::Options::getVerboseOption(TR_VerboseJITServerSharedProfile))
          {
-         //uintptr_t methodStart = TR::Compiler->mtd.bytecodeStart((TR_OpaqueMethodBlock*)method); // TODO: simplify this, we have the ROMMethod  (uintptr_t)(J9_BYTECODE_START_FROM_ROM_METHOD(romMethod)
          TR_VerboseLog::CriticalSection vlogLock;
          TR_VerboseLog::write(TR_Vlog_JITServer, "Loaded %zu bytecode entries from shared profile repository for method %p ",
                                                 newEntries.size(), method);
@@ -749,18 +1045,16 @@ ClientSessionData::storeBytecodeProfileInSharedRepository(TR_OpaqueMethodBlock *
          }
       }
    TR::StackMemoryRegion region(*comp->trMemory());
-   Vector<TR_IPBytecodeHashTableEntry *> entries(region);
+   Vector<TR_IPBytecodeHashTableEntry *> entries(region); // These do not include cgEntries
    Vector<TR_IPBCDataCallGraph *>        cgEntries(region);
-   // aotCgEntries are duplicates of cgEntries where the j9class pointers are replaced with class records
-   Vector<TR_IPBCDataCallGraph *>        aotCgEntries(region);
+
    // Go through the entire ipData that we received from the client in serialized format,
-   // deserialize the data and create entries ready to be added to the cache
+   // deserialize the data and create entries with stack memory.
    uintptr_t methodStart = TR::Compiler->mtd.bytecodeStart(method);
    auto bufferPtr = (uint8_t *)ipData.data();
    while (bufferPtr < (uint8_t *)ipData.data() + ipData.size())
       {
       auto storage = (TR_IPBCDataStorageHeader *)bufferPtr;
-      // Note: the entries will contain the byteCodeIndex instead of the PC
       auto entry = JITServerIProfiler::ipBytecodeHashTableEntryFactory(storage, methodStart+storage->pc, comp->trMemory(),
                                                                        stackAlloc);
       entry->deserialize(storage);
@@ -774,17 +1068,166 @@ ClientSessionData::storeBytecodeProfileInSharedRepository(TR_OpaqueMethodBlock *
       bufferPtr += storage->left;
       }
 
-   bool stackAllocatedEntries = true;
+   if (TR::Options::getVerboseOption(TR_VerboseJITServerSharedProfileDetails))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Storing profile to shared repository for method %p. %zu non-cgEntries and %zu cgEntries",
+         method, entries.size(), cgEntries.size());
 
-   // If there are CallGraph entries, create duplicates of these entries, replace the
-   // J9class pointers in these entries with cache class records and add the new entries to aotCgEntries
-   // TODO: create a bigger critical section since we acquire ROMMapMonitor above too.
+   // If there are CallGraph entries, we must replace the J9class pointers in these entries with AOT cache class records.
    if (!cgEntries.empty())
       {
-      // TODO: fill in this code when callGraph entries are passed in by the client
+      struct CGEntryMetadata
+         {
+         J9Class * _ramClass;
+         Vector<std::pair<uint32_t, uint32_t>> _entriesToPatch; // Fields: (1) index of the entry in cgEntries, (2) index of the slot in the CGData structure
+         const AOTCacheClassRecord * _classRecord; // Class record corresponding to _ramClass
+         };
+
+      // Collect all distinct RAM classes that need to be converted into class records.
+      Vector<CGEntryMetadata> uniqueRAMClasses(region);
+      for (uint32_t i = 0; i < cgEntries.size(); ++i)
+         {
+         auto csInfo = cgEntries[i]->getCGData();
+         for (uint32_t j = 0; j < NUM_CS_SLOTS; ++j)
+            {
+            auto ramClass = (J9Class *)csInfo->getClazz((int)j);
+            if (!ramClass)
+               continue; // jump over empty slots
+            // Linear search for duplicates
+            bool found  = false;
+            for (uint32_t k = 0; k < uniqueRAMClasses.size(); ++k)
+               {
+               if (ramClass == uniqueRAMClasses[k]._ramClass) // Already present
+                  {
+                  uniqueRAMClasses[k]._entriesToPatch.push_back({i, j}); // cgEntry 'i', slot 'j'
+                  found = true;
+                  break;
+                  }
+               }
+            if (!found) // New unique ramClass
+               {
+               Vector<std::pair<uint32_t, uint32_t>> patchPoint(region);
+               patchPoint.push_back({i, j}); // cgEntry 'i', slot 'j'
+               uniqueRAMClasses.emplace_back(CGEntryMetadata{ramClass, patchPoint, NULL});
+               }
+            } // end for (uint32_t j = 0; j < NUM_CS_SLOTS; ++j)
+         } // end for (uint32_t i = 0; i < cgEntries.size(); ++i)
+
+      if (!uniqueRAMClasses.empty() && TR::Options::getVerboseOption(TR_VerboseJITServerSharedProfileDetails))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "\tStoring profile: detected %zu unique classes that needs to be converted", uniqueRAMClasses.size());
+
+      // Convert RAM classes from uniqueRAMClasses into class records and put those class records in 'classRecords' vector
+      std::vector<J9Class *> uncachedRAMClasses; // These will be sent to the client
+      Vector<uint32_t> uncachedClassIndexes(region); // Remembers which classes in uniqueRAMClasses need attention
+      {
+      OMR::CriticalSection cs(getROMMapMonitor());
+      for (uint32_t k = 0; k < uniqueRAMClasses.size(); ++k)
+         {
+         J9Class *ramClass = uniqueRAMClasses[k]._ramClass;
+         bool missingLoaderInfo = false;
+         bool uncachedClass = false;
+         J9Class *uncachedBaseComponent = NULL;
+
+         auto classRecord = getClassRecord(ramClass, missingLoaderInfo, uncachedClass, uncachedBaseComponent);
+
+         if (classRecord)
+            {
+            uniqueRAMClasses[k]._classRecord = classRecord;
+            }
+         else if (uncachedClass)
+            {
+            uncachedClassIndexes.push_back(k);
+            uncachedRAMClasses.push_back(ramClass);
+            }
+         else if (uncachedBaseComponent)
+            {
+            uncachedClassIndexes.push_back(k);
+            uncachedRAMClasses.push_back(uncachedBaseComponent);
+            }
+         else
+            {
+            // We could have reached the memory limit for AOT cache
+            if (TR::Options::getVerboseOption(TR_VerboseJITServerSharedProfile))
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+                  "ERROR: Failed to get class record for class %p in profiling data for j9method %p "
+                  "ID %zu while compiling %s for clientUID %llu", ramClass, method,
+                  methodRecord->data().id(), comp->signature(), (unsigned long long)_clientUID
+               );
+            _numSharedProfileCacheMethodStoresFailed++;
+            return false; //debatable if we should continue with this method
+            }
+         } // end for (uint32_t k = 0; k < uniqueRAMClasses.size(); ++k)
+      } // end critical section
+
+
+      // Request uncached classes from the client as a batch and cache them.
+      // Note: this situation happens very rarely.
+      if (!uncachedRAMClasses.empty())
+         {
+         if (TR::Options::getVerboseOption(TR_VerboseJITServerSharedProfileDetails))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "\tSending AOTCache_getROMClassBatch message for %zu classes", uncachedRAMClasses.size());
+
+         JITServer::ServerStream *stream = comp->getStream();
+         stream->write(JITServer::MessageType::AOTCache_getROMClassBatch, uncachedRAMClasses);
+         auto recv = stream->read<std::vector<JITServerHelpers::ClassInfoTuple>, std::vector<J9Class *>>();
+         auto &classInfoTuples = std::get<0>(recv);
+         auto &uncachedBases = std::get<1>(recv);
+         // The classInfoTuples sent by the client also contains the base components that the client
+         // discovered (added at the end), but the 'uncached' vector only contains what the server requested.
+         // We need to add the supplemental base components that the client discovered.
+         uncachedRAMClasses.insert(uncachedRAMClasses.end(), uncachedBases.begin(), uncachedBases.end());
+
+         JITServerHelpers::cacheRemoteROMClassBatch(this, uncachedRAMClasses, classInfoTuples);
+
+         // Get class records for newly cached classes
+            {
+            OMR::CriticalSection cs(getROMMapMonitor());
+            for (auto &idx : uncachedClassIndexes)
+               {
+               J9Class *ramClass = uniqueRAMClasses[idx]._ramClass;
+               bool missingLoaderInfo = false;
+               bool uncachedClass = false;
+               J9Class *uncachedBaseComponent = NULL;
+               auto classRecord = getClassRecord(ramClass, missingLoaderInfo, uncachedClass, uncachedBaseComponent);
+               if (classRecord)
+                  {
+                  uniqueRAMClasses[idx]._classRecord = classRecord;
+                  }
+               else
+                  {
+                  TR_ASSERT_FATAL(!uncachedClass && !uncachedBaseComponent, "Class %p must be already cached", ramClass);
+                  // We could have reached the memory limit for the AOT cache
+                  if (TR::Options::getVerboseOption(TR_VerboseJITServerSharedProfile))
+                     TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+                        "ERROR: Failed to get class record for class %p in profiling data for j9method %p "
+                        "ID %zu while compiling %s for clientUID %llu", ramClass, method,
+                        methodRecord->data().id(), comp->signature(), (unsigned long long)_clientUID);
+                  // TODO: make this a recoverable error if the dominant target is still intact
+                  // Move the samples from this entry to the "other" category.
+                  // Maybe create a fake UNKNOWN class record.
+                  _numSharedProfileCacheMethodStoresFailed++;
+                  return false; //debatable if we should continue with this method
+                  }
+               } // end for loop
+            } // end critical section
+         } // if (!uncachedRAMClasses.empty())
+
+      // Patching cgEntries
+      for (uint32_t k = 0; k < uniqueRAMClasses.size(); ++k)
+         {
+         // Same ramClass can be present in several entries/slots
+         for (const auto &entryToPatch : uniqueRAMClasses[k]._entriesToPatch)
+            {
+            auto idx  = entryToPatch.first;
+            auto slot = entryToPatch.second;
+            auto csInfo = cgEntries[idx]->getCGData();
+            csInfo->setClazz(slot, (uintptr_t)uniqueRAMClasses[k]._classRecord);
+            }
+         }
+
+      // Add the transformed callGraph entries to the branch/switch entries set.
+      entries.insert(entries.end(), cgEntries.begin(), cgEntries.end());
       }
-   // Add the transformed callGraph entries to the branch/switch entries set.
-   entries.insert(entries.end(), aotCgEntries.begin(), aotCgEntries.end());
+
    bool success = true; // optimistic
    // Write the profile data to the shared repository.
    // Note: methodInfo should still be valid because classUnloding cannot happen without us being informed.
@@ -1003,6 +1446,7 @@ ClientSessionData::clearCaches(bool locked)
 
    _wellKnownClasses.clear();
    _aotCacheKnownIds.clear();
+   _classRecordMap.clear();
 
    setCachesAreCleared(true);
    }
@@ -1102,34 +1546,39 @@ ClientSessionData::getCHTable()
    return _chTable;
    }
 
+/**
+ * @brief For each unloaded class in 'unloadedClasses', purge from cache 'm' all elements matching key 'k'
+ *        from the unloadedClasses entry.
+ *        If the class to be unloaded is "cached", we search the cache 'm' for the key 'k'.
+ *        If not cached, we delete from cache 'm' all elements that a "value" equal to 'k'. This is
+ *        used for some reverse maps of the form {someInfo --> j9class}
+ *
+ * @param unloadedClasses List of unloaded classes (and associated info) to process
+ * @param m The cache that needs to be cleaned from unloaded classes
+ * @param k Matching criteria for erasing from cache 'm'
+ */
 template <typename map, typename key>
-void ClientSessionData::purgeCache(std::vector<ClassUnloadedData> *unloadedClasses, map& m, key ClassUnloadedData::*k)
+void ClientSessionData::purgeCache(const std::vector<ClassUnloadedData> &unloadedClasses, map& m, const key ClassUnloadedData::*k)
    {
-   ClassUnloadedData *data = unloadedClasses->data();
-   std::vector<ClassUnloadedData>::iterator it = unloadedClasses->begin();
-   while (it != unloadedClasses->end())
+   for (auto &data : unloadedClasses)
       {
-      if (it->_cached)
+      if (data._cached)
          {
-         m.erase((data->*k));
+         m.erase((data.*k));
          }
       else
          {
-         //If the class is not cached this is the place to iterate the cache(Map) for deleting the entry by value rather then key.
-         auto itClass = m.begin();
-         while (itClass != m.end())
+         //If the class is not cached, this is the place to iterate the cache(Map) for deleting the entry by value rather than key.
+         for (auto it = m.begin(); it != m.end(); ++it)
             {
-            if (itClass->second == data->_class)
+            if (it->second == data._class)
                {
-               m.erase(itClass);
+               m.erase(it);
                break;
                }
-            ++itClass;
             }
          }
       //DO NOT remove the entry from the unloadedClasses as it will be needed to purge other caches.
-      ++it;
-      ++data;
       }
    }
 
@@ -1319,6 +1768,10 @@ ClientSessionData::getClassRecord(ClassInfo &classInfo, bool &missingLoaderInfo,
 
    // The name string is no longer needed; free the memory used by it by setting it to an empty string
    std::string().swap(classInfo._classNameIdentifyingLoader);
+
+   if (useSharedProfileCache())
+      _classRecordMap.insert({ classInfo._aotCacheClassRecord, (TR_OpaqueClassBlock *)classInfo._ramClass });
+
    return classInfo._aotCacheClassRecord;
 }
 
@@ -1531,16 +1984,21 @@ ClientSessionData::getClassChainRecord(J9Class *clazz, uintptr_t classChainOffse
          }
       }
 
-   size_t numUncachedClasses = uncachedRAMClasses.size();
+   size_t numUncachedClasses = uncachedRAMClasses.size(); // This remembers the size without the base component
    if (baseComponent)
-      uncachedRAMClasses.push_back(baseComponent);
+      uncachedRAMClasses.push_back(baseComponent); // The base component is last in the vector
 
    if (!uncachedRAMClasses.empty())
       {
       // Request uncached classes from the client and cache them
       stream->write(JITServer::MessageType::AOTCache_getROMClassBatch, uncachedRAMClasses);
-      auto recv = stream->read<std::vector<JITServerHelpers::ClassInfoTuple>>();
+      auto recv = stream->read<std::vector<JITServerHelpers::ClassInfoTuple>, std::vector<J9Class *>>();
       auto &classInfoTuples = std::get<0>(recv);
+      auto &uncachedBases = std::get<1>(recv);
+      TR_ASSERT_FATAL(uncachedBases.empty(), "Client should not have sent any bases because the server asked for them explicitely");
+      // The client may send us some extra classInfos. Add their corresponding j9classes at the end.
+      uncachedRAMClasses.insert(uncachedRAMClasses.end(), uncachedBases.begin(), uncachedBases.end());
+
       JITServerHelpers::cacheRemoteROMClassBatch(this, uncachedRAMClasses, classInfoTuples);
 
       // Get root class record if its base component class was previously uncached
@@ -1554,7 +2012,7 @@ ClientSessionData::getClassChainRecord(J9Class *clazz, uintptr_t classChainOffse
 
       // Get class records for newly cached classes, remembering classes with missing class loader info
       OMR::CriticalSection cs(getROMMapMonitor());
-      for (size_t i = 0; i < numUncachedClasses; ++i)
+      for (size_t i = 0; i < numUncachedClasses; ++i) // This possibly skips the last entry which could be the base component class which was processed separately
          {
          size_t idx = uncachedIndexes[i];
          bool missingLoaderRecord = false;
@@ -1569,7 +2027,7 @@ ClientSessionData::getClassChainRecord(J9Class *clazz, uintptr_t classChainOffse
             if (uncachedBaseComponent)
                {
                TR_ASSERT_FATAL(!baseComponent && (idx == 0), "Only root class can be an array");
-               baseComponent = uncachedBaseComponent;
+               baseComponent = uncachedBaseComponent; // Can this ever happen?
                }
             else if (missingLoaderRecord)
                {

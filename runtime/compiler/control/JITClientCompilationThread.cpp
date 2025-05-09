@@ -35,6 +35,7 @@
 #include "env/j9methodServer.hpp"
 #include "env/JITServerPersistentCHTable.hpp"
 #include "env/JSR292Methods.h"
+#include "env/StackMemoryRegion.hpp"
 #include "env/TypeLayout.hpp"
 #include "env/ut_j9jit.h"
 #include "env/VerboseLog.hpp"
@@ -113,53 +114,69 @@ findField(J9VMThread *vmStruct, J9ConstantPool *constantPool, UDATA index, BOOLE
 static void
 handler_IProfiler_profilingSample(JITServer::ClientStream *client, TR_J9VM *fe, TR::Compilation *comp)
    {
-   auto recv = client->getRecvData<TR_OpaqueMethodBlock*, uint32_t, uintptr_t>();
+   auto recv = client->getRecvData<TR_OpaqueMethodBlock*, uint32_t, bool, bool>();
    auto method = std::get<0>(recv);
    auto bcIndex = std::get<1>(recv);
-   auto data = std::get<2>(recv); // data==1 means 'send info for 1 bytecode'; data==0 means 'send info for entire method if possible'
+   auto wholeMethodInfo = std::get<2>(recv); // 'send info for entire method if possible'
+   auto sharedProfile = std::get<3>(recv);
 
    JITClientIProfiler *iProfiler = (JITClientIProfiler *)fe->getIProfiler();
 
    bool isCompiled = TR::CompilationInfo::isCompiled((J9Method*)method);
+   bool isQueued = TR::CompilationInfo::getJ9MethodVMExtra((J9Method *)method) == J9_JIT_QUEUED_FOR_COMPILATION;
    bool isInProgress = comp->getMethodBeingCompiled()->getPersistentIdentifier() == method;
    bool abort = false;
-   // Used to tell the server if a profiled entry should be stored in persistent or heap memory
-   bool usePersistentCache = isCompiled || isInProgress;
-   bool wholeMethodInfo = data == 0;
+   // Used to tell the server if a profiled entry should be stored in persistent or heap memory.
+   // Note that if the method is queued for compilation, new interpreter samples will not be collected.
+   bool usePersistentCache = isCompiled || isInProgress || isQueued;
 
    if (wholeMethodInfo)
       {
       // Serialize all the information related to this method
-      abort = iProfiler->serializeAndSendIProfileInfoForMethod(method, comp, client, usePersistentCache, isCompiled);
+      abort = iProfiler->serializeAndSendIProfileInfoForMethod(method, comp, client, usePersistentCache, isCompiled, sharedProfile);
+      if (!abort)
+         return;
       }
-   if (!wholeMethodInfo || abort) // Send information just for this entry
+
+   // Send information just for this entry
+   std::vector<J9Class *> uncachedClasses;
+   std::vector<JITServerHelpers::ClassInfoTuple> classInfoTuples;
+   auto entry = iProfiler->profilingSample(method, bcIndex, comp, 0, /*addIt=*/false);
+   if (entry && !entry->isInvalid())
       {
-      auto entry = iProfiler->profilingSample(method, bcIndex, comp, data, false);
-      if (entry && !entry->isInvalid())
+      uint32_t canPersist = entry->canBeSerialized(comp->getPersistentInfo()); // This may lock the entry
+      if (canPersist == IPBC_ENTRY_CAN_PERSIST)
          {
-         uint32_t canPersist = entry->canBeSerialized(comp->getPersistentInfo()); // This may lock the entry
-         if (canPersist == IPBC_ENTRY_CAN_PERSIST)
+         uint32_t bytes = entry->getBytesFootprint();
+         std::string entryBytes(bytes, '\0');
+         auto storage = (TR_IPBCDataStorageHeader*)&entryBytes[0];
+         uintptr_t methodStartAddress = (uintptr_t)TR::Compiler->mtd.bytecodeStart(method);
+         entry->serialize(methodStartAddress, storage, comp->getPersistentInfo());
+
+         // Collect info about the classes the server needs but does not yet have
+         auto cgEntry = entry->asIPBCDataCallGraph();
+         if (cgEntry && sharedProfile)
             {
-            uint32_t bytes = entry->getBytesFootprint();
-            std::string entryBytes(bytes, '\0');
-            auto storage = (TR_IPBCDataStorageHeader*)&entryBytes[0];
-            uintptr_t methodStartAddress = (uintptr_t)TR::Compiler->mtd.bytecodeStart(method);
-            entry->serialize(methodStartAddress, storage, comp->getPersistentInfo());
-            client->write(JITServer::MessageType::IProfiler_profilingSample, entryBytes, false, usePersistentCache, isCompiled);
+            uncachedClasses.reserve(NUM_CS_SLOTS);
+            classInfoTuples.reserve(NUM_CS_SLOTS);
+            iProfiler->gatherUncachedClassesUsedInCGEntry(cgEntry, comp, uncachedClasses, classInfoTuples);
             }
-         else
-            {
-            client->write(JITServer::MessageType::IProfiler_profilingSample, std::string(), false, usePersistentCache, isCompiled);
-            }
-         // Unlock the entry
-         if (auto callGraphEntry = entry->asIPBCDataCallGraph())
-            if (canPersist != IPBC_ENTRY_PERSIST_LOCK && callGraphEntry->isLocked())
-               callGraphEntry->releaseEntry();
+
+         uint64_t totalSamples = entry->getNumSamples();
+         client->write(JITServer::MessageType::IProfiler_profilingSample, entryBytes, totalSamples, (size_t)1, /*wholeMethod=*/false, usePersistentCache, isCompiled, uncachedClasses, classInfoTuples);
          }
-      else // No valid info for specified bytecode index
+      else
          {
-         client->write(JITServer::MessageType::IProfiler_profilingSample, std::string(), false, usePersistentCache, isCompiled);
+         client->write(JITServer::MessageType::IProfiler_profilingSample, std::string(), (uint64_t)0, (size_t)0, /*wholeMethod=*/false, usePersistentCache, isCompiled, uncachedClasses, classInfoTuples);
          }
+      // Unlock the entry
+      if (auto callGraphEntry = entry->asIPBCDataCallGraph())
+         if (canPersist != IPBC_ENTRY_PERSIST_LOCK && callGraphEntry->isLocked())
+            callGraphEntry->releaseEntry();
+      }
+   else // No valid info for specified bytecode index
+      {
+      client->write(JITServer::MessageType::IProfiler_profilingSample, std::string(), (uint64_t)0, (size_t)0, /*wholeMethod=*/false, usePersistentCache, isCompiled, uncachedClasses, classInfoTuples);
       }
    }
 
@@ -3002,20 +3019,97 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::AOTCache_getROMClassBatch:
          {
+         // The server has asked about N classes but we may send ClassInfos for N+M classes with
+         // M being the number of base component classes that the server does not yet have.
+         // The classes for those extra elements are passed back in extraClasses.
+         std::vector<J9Class *> extraClasses;
          auto recv = client->getRecvData<std::vector<J9Class *>>();
-         auto &ramClasses = std::get<0>(recv);
-         std::vector<JITServerHelpers::ClassInfoTuple> classInfos;
+         auto &ramClasses = std::get<0>(recv); // The classses for which the server requests information
+
+         std::vector<JITServerHelpers::ClassInfoTuple> classInfos; // This will be filled and returned to server
          classInfos.reserve(ramClasses.size());
 
-         for (J9Class *ramClass : ramClasses)
-            classInfos.push_back(JITServerHelpers::packRemoteROMClassInfo(ramClass, fe->vmThread(), trMemory, true));
+         TR::StackMemoryRegion region(*trMemory);
+         Vector<J9Class *> baseComponentClasses(region); // Temporary storage for base classes of arrays
+         baseComponentClasses.reserve(ramClasses.size());
+         Vector<J9Class *> uncachedBaseComponentClasses(region); // Filtered set of base component classes
 
+         for (J9Class *ramClass : ramClasses)
+            {
+            classInfos.push_back(JITServerHelpers::packRemoteROMClassInfo(ramClass, vmThread, trMemory, true/*serializeClass*/));
+
+            // If this is an array class, remember its base component class for later
+            int32_t numDimensions = 0;
+            J9Class *baseComponent = (J9Class *)TR_J9VMBase::staticGetBaseComponentClass((TR_OpaqueClassBlock *)ramClass, numDimensions);
+            if (numDimensions)
+               baseComponentClasses.push_back(baseComponent);
+            }
+
+         // Determine which baseComponent classes the server does not yet have
+         uncachedBaseComponentClasses.reserve(baseComponentClasses.size());
+         if (!baseComponentClasses.empty())
+            {
+            OMR::CriticalSection cs(compInfo->getclassesCachedAtServerMonitor());
+            const auto &classesCachedAtServer = compInfo->getclassesCachedAtServer();
+            for (J9Class *baseComponent : baseComponentClasses)
+               {
+               if (classesCachedAtServer.find(baseComponent) == classesCachedAtServer.end()) // server doesn't have it
+                  {
+                  uncachedBaseComponentClasses.push_back(baseComponent);
+                  }
+               }
+            }
+
+         // Add the uncached baseComponent classes to the classInfos vector
+         extraClasses.reserve(uncachedBaseComponentClasses.size());
+         for (J9Class *baseComponent : uncachedBaseComponentClasses)
+            {
+            classInfos.push_back(JITServerHelpers::packRemoteROMClassInfo(baseComponent, vmThread, trMemory, true/*serializeClass*/));
+            extraClasses.push_back(baseComponent);
+            }
+
+         // Send the information to the server.
+         client->write(response, classInfos, extraClasses);
+
+         // Finally, update client's view of classes cached by the server.
             {
             OMR::CriticalSection cs(compInfo->getclassesCachedAtServerMonitor());
             compInfo->getclassesCachedAtServer().insert(ramClasses.begin(), ramClasses.end());
-            }
+            compInfo->getclassesCachedAtServer().insert(uncachedBaseComponentClasses.begin(), uncachedBaseComponentClasses.end());
+            } // end critical section
+         }
+         break;
 
-         client->write(response, classInfos);
+      case MessageType::AOTCache_getRAMClassFromClassRecordBatch:
+         {
+         // Convert several AOT cache class IDs to this client's RAMClasses
+         auto recv = client->getRecvData<std::vector<uintptr_t>, std::string>();
+         auto &classIds = std::get<0>(recv); // vector of classIDs that need to be converted into j9classes
+         auto &recordsStr = std::get<1>(recv); // packed serialization records that the client is missing
+
+         std::vector<J9Class *> ramClasses;
+         ramClasses.reserve(classIds.size());
+
+         if (auto deserializer = compInfo->getJITServerAOTDeserializer())
+            {
+            bool wasReset = false;
+            deserializer->cacheRecords((const uint8_t *)recordsStr.data(), recordsStr.size(), comp,
+                                       /*ignoreFailures=*/true, wasReset);
+            if (!wasReset)
+               {
+               for (uintptr_t id : classIds)
+                  {
+                  J9Class *ramClass = deserializer->getRAMClass(id, comp, wasReset);
+                  if (wasReset)
+                     {
+                     ramClasses.clear();
+                     break;
+                     }
+                  ramClasses.push_back(ramClass); // possibly NULL
+                  }
+               }
+            }
+         client->write(response, ramClasses);
          }
          break;
       default:
