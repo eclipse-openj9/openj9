@@ -3200,6 +3200,26 @@ static char *suffixedName(char *baseName, char typeSuffix, char *buf, int32_t bu
    return methodName;
    }
 
+static int32_t countParams(unsigned char *sig)
+   {
+   sig++; // skip opening brace
+   int32_t count = 0;
+   while (*sig != ')') {
+      while (*sig == '[')
+         {
+         sig++;
+         }
+      if (*sig == 'L') {
+         while (*sig != ';') {
+            sig++;
+         }
+      }
+      count++;
+      sig++;
+   }
+   return count;
+   }
+
 void
 TR_J9ByteCodeIlGenerator::genInvokeDynamic(int32_t callSiteIndex)
    {
@@ -3261,7 +3281,28 @@ TR_J9ByteCodeIlGenerator::genInvokeDynamic(int32_t callSiteIndex)
    if (comp()->getOption(TR_TraceILGen))
       printStack(comp(), _stack, "(Stack after load from callsite table)");
 
-   TR::Node* callNode = genInvokeDirect(targetMethodSymRef);
+   /* We need to get the expected number of parameters from the signature. There is a case where findOrCreateDynamicMethodSymbol()
+    * returns an error throwing MethodHandle that takes 0 arguments (occurs when an error is thrown during resolveInvokeDynamic()). We cannot use
+    * TR::Method::numberOfExplicitParameters() since that fetches the number of parameters in targetMethodSymRefs (the MH actually returned)
+    * instead of whats expected the invokedynamic call. This can be a problem since the expcected of args are already on the stack and won't be
+    * properly popped.
+   */
+   int32_t paramCount = 0;
+   if (isUnresolved)
+      {
+         paramCount = 2;
+      }
+   else {
+      paramCount = (isInvokeCacheAppendixNull ? 0 : 1);
+   }
+   TR_ResolvedJ9Method* ownerMethod = static_cast<TR_ResolvedJ9Method *>(_methodSymbol->getResolvedMethod());
+   J9ROMClass *ownerROMMethod = ownerMethod->romClassPtr();
+   J9SRP *callSiteData = (J9SRP *) J9ROMCLASS_CALLSITEDATA(ownerROMMethod);
+   J9ROMNameAndSignature *nameAndSig = SRP_PTR_GET(callSiteData + callSiteIndex, J9ROMNameAndSignature*);
+   J9UTF8* sig = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSig);
+   paramCount += countParams(J9UTF8_DATA(sig));
+
+   TR::Node* callNode = genInvokeDirect(targetMethodSymRef, paramCount);
 
 #else
    if (comp()->compileRelocatableCode())
@@ -3659,11 +3700,11 @@ static TR::SymbolReference * getPrimitiveValueFieldSymbolReference(TR_J9ByteCode
    }
 
 TR::Node*
-TR_J9ByteCodeIlGenerator::genInvoke(TR::SymbolReference * symRef, TR::Node *indirectCallFirstChild, TR::Node *invokedynamicReceiver)
+TR_J9ByteCodeIlGenerator::genInvoke(TR::SymbolReference * symRef, TR::Node *indirectCallFirstChild, TR::Node *invokedynamicReceiver, int32_t numExpectedArgs)
    {
    TR::KnownObjectTable::Index requiredKoi;
    TR::Node *callNode = genInvokeInner(
-      symRef, indirectCallFirstChild, invokedynamicReceiver, &requiredKoi);
+      symRef, indirectCallFirstChild, invokedynamicReceiver, &requiredKoi, numExpectedArgs);
 
    if (requiredKoi == TR::KnownObjectTable::UNKNOWN)
       return callNode;
@@ -3682,7 +3723,8 @@ TR_J9ByteCodeIlGenerator::genInvokeInner(
    TR::SymbolReference * symRef,
    TR::Node *indirectCallFirstChild,
    TR::Node *invokedynamicReceiver,
-   TR::KnownObjectTable::Index *requiredKoi)
+   TR::KnownObjectTable::Index *requiredKoi,
+   int32_t numExpectedArgs)
    {
    TR::MethodSymbol * symbol = symRef->getSymbol()->castToMethodSymbol();
    bool isStatic     = symbol->isStatic();
@@ -3690,6 +3732,12 @@ TR_J9ByteCodeIlGenerator::genInvokeInner(
 
    TR::Method * calledMethod = symbol->getMethod();
    int32_t numArgs = calledMethod->numberOfExplicitParameters() + (isStatic ? 0 : 1);
+
+   // need to track stack size at beginning and end of ILGeneration for invokeDynamic for the case
+   // where we get the special error throwing MethodHandle
+   int32_t startingStackSize = _stack->size();
+   if (numExpectedArgs == -1)
+      numExpectedArgs = numArgs;   
 
    if (pushRequiredConst(requiredKoi))
       {
@@ -4600,6 +4648,22 @@ break
       }
    else
       resultNode = callNode;
+
+      /* There is a case where findOrCreateDynamicMethodSymbol() returns an error throwing MethodHandle that 
+       * takes 0 arguments (occurs when an error is thrown during resolveInvokeDynamic()). In that case, we will not have
+       * popped all the arguments off the stack, so we need to pop the expected number.
+       */
+      int32_t numPopped = startingStackSize - _stack->size();
+      if (numPopped < numExpectedArgs)
+         {
+         if (comp()->getOption(TR_TraceILGen))  
+            traceMsg(comp(), "InvokeDynamic recieved error throwing MethodHandle. Popping extra args.\n");
+         while (numPopped < numExpectedArgs)
+            {
+            pop();
+            numPopped++;
+            }
+         }
 
    TR::DataType returnType = calledMethod->returnType();
    if (returnType != TR::NoType)
