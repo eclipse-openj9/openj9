@@ -874,6 +874,28 @@ VM_JFRChunkWriter::writeGCHeapConfigurationEvent()
 }
 
 void
+VM_JFRChunkWriter::writeYoungGenerationConfigurationEvent() {
+	YoungGenerationConfigurationEntry *youngGenConfig = &(VM_JFRConstantPoolTypes::getJFRConstantEvents(_vm)->YoungGenConfigEntry);
+
+	/* reserve size field */
+	U_8 *dataStart = reserveEventSize();
+
+	/* write event type */
+	_bufferWriter->writeLEB128(YoungGenerationConfigID);
+
+	/* write event start time */
+	_bufferWriter->writeLEB128(j9time_nano_time());
+
+	_bufferWriter->writeLEB128(youngGenConfig->minSize);
+
+	_bufferWriter->writeLEB128(youngGenConfig->maxSize);
+
+	_bufferWriter->writeLEB128(youngGenConfig->newRatio);
+
+	writeEventSize(dataStart);
+}
+
+void
 VM_JFRChunkWriter::writeInitialSystemPropertyEvents(J9JavaVM *vm)
 {
 	pool_state walkState;

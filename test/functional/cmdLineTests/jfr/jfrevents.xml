@@ -81,6 +81,12 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<output type="success" caseSensitive="yes" regex="no">jdk.GCHeapConfiguration</output>
 		<output type="failure" caseSensitive="yes" regex="no">jfr print: could not read recording</output>
 	</test>
+	<test id="test jfr young generation configuration - approx 30seconds">
+		<command>$JFR_EXE$ print --xml --events "YoungGenerationConfiguration" defaultJ9recording.jfr</command>
+		<output type="required" caseSensitive="yes" regex="no">http://www.w3.org/2001/XMLSchema-instance</output>
+		<output type="success" caseSensitive="yes" regex="no">jdk.YoungGenerationConfiguration</output>
+		<output type="failure" caseSensitive="yes" regex="no">jfr print: could not read recording</output>
+	</test>
 	<test id="test jfr system process - approx 30 seconds" platforms="linux.*">
 		<command>$JFR_EXE$ print --xml --events "SystemProcess" defaultJ9recording.jfr</command>
 		<output type="required" caseSensitive="yes" regex="no">http://www.w3.org/2001/XMLSchema-instance</output>
