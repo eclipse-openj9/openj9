@@ -185,7 +185,7 @@ done:
 			goto fail;
 		}
 
-		chunkWriter.loadEvents();
+		chunkWriter.loadEvents(dumpCalled);
 		if (!chunkWriter.isOkay()) {
 			result = false;
 			goto fail;

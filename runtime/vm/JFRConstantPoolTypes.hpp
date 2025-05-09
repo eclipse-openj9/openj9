@@ -946,7 +946,7 @@ public:
 
 	BuildResult getBuildResult() { return _buildResult; };
 
-	void loadEvents()
+	void loadEvents(bool dumpCalled)
 	{
 		J9JFRBufferWalkState walkstate = {0};
 		J9Pool *shallowEntries = NULL;
@@ -999,6 +999,11 @@ public:
 
 		if (isResultNotOKay()) {
 			goto done;
+		}
+
+		if (dumpCalled) {
+			loadSystemProcesses(_currentThread);
+			loadNativeLibraries(_currentThread);
 		}
 
 		shallowEntries = pool_new(sizeof(ClassEntry**), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
@@ -1598,9 +1603,6 @@ done:
 			_buildResult = OutOfMemory;
 			goto done;
 		}
-
-		loadSystemProcesses(_currentThread);
-		loadNativeLibraries(_currentThread);
 
 		/* Add reserved index for default entries. For strings zero is the empty or NUll string.
 		 * For package zero is the deafult package, for Module zero is the unnamed module. ThreadGroup
