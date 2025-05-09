@@ -518,6 +518,7 @@ endif
 ifeq ($(OS),linux)
     SOLINK_EXTRA_ARGS+=-Wl,-soname=libj9jit29.so
     SOLINK_EXTRA_ARGS+=-Wl,--version-script=$(SOLINK_VERSION_SCRIPT)
+    SOLINK_EXTRA_ARGS+=-Wl,-z,noexecstack
 endif
 
 SOLINK_FLAGS+=$(SOLINK_FLAGS_EXTRA)

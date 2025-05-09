@@ -404,6 +404,7 @@ endif
   UMA_DLL_LINK_FLAGS += -Wl,-Map=$(UMA_TARGET_NAME).map
   UMA_DLL_LINK_FLAGS += -Wl,--version-script,$(UMA_TARGET_NAME).exp
   UMA_DLL_LINK_FLAGS += -Wl,-soname=$(UMA_DLLFILENAME)
+  UMA_DLL_LINK_FLAGS += -Wl,-z,noexecstack
   UMA_DLL_LINK_FLAGS += -Xlinker -z -Xlinker origin -Xlinker -rpath -Xlinker \$$ORIGIN -Xlinker --disable-new-dtags
 
   UMA_DLL_LINK_POSTFLAGS += -Xlinker --start-group
