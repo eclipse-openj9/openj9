@@ -40,6 +40,7 @@
 #include "control/Options_inlines.hpp"
 #include "env/CHTable.hpp"
 #include "env/ClassLoaderTable.hpp"
+#include "env/ClassTableCriticalSection.hpp"
 #include "env/DependencyTable.hpp"
 #include "env/PersistentCHTable.hpp"
 #include "env/jittypes.h"
@@ -553,6 +554,16 @@ TR_RelocationRecordGroup::handleRelocation(TR_RelocationRuntime *reloRuntime,
       {
       case TR_RelocationRecordAction::apply:
          {
+         // TR::ClassTableCriticalSection takes in an optional parameter that
+         // is normally used to specify whether the lock has already been
+         // acquired and thus to not bother calling acquireClassTableMutex.
+         // However, in this case, we want to use this parameter to only
+         // lock when the relo record needs it. Thus, because the lock is
+         // acquired when the optional paramter is false, we need to negate
+         // needsClassTableMutex(), even though that is counterintuitive.
+         bool lock = !reloRecord->needsClassTableMutex();
+
+         TR::ClassTableCriticalSection cs(reloRuntime->fe(), lock);
          reloRecord->preparePrivateData(reloRuntime, reloTarget);
          return reloRecord->applyRelocationAtAllOffsets(reloRuntime, reloTarget, reloOrigin);
          }
@@ -2814,11 +2825,7 @@ TR_RelocationRecordInlinedMethod::inlinedSiteValid(TR_RelocationRuntime *reloRun
       cp = J9_CP_FROM_METHOD(callerMethod);
    RELO_LOG(reloRuntime->reloLogger(), 6, "\tinlinedSiteValid: cp %p\n", cp);
 
-   if (!cp)
-      {
-      inlinedSiteIsValid = false;
-      }
-   else
+   if (cp)
       {
       TR_RelocationRecordInlinedMethodPrivateData *reloPrivateData = &(privateData()->inlinedMethod);
 
@@ -2836,16 +2843,6 @@ TR_RelocationRecordInlinedMethod::inlinedSiteValid(TR_RelocationRuntime *reloRun
             reloPrivateData->_receiverClass = reloRuntime->comp()->getSymbolValidationManager()->getClassFromID(receiverClassID);
          else
             reloPrivateData->_receiverClass = NULL;
-
-         if (((reloFlags(reloTarget) & inlinedMethodIsStatic) == 0)
-             && ((reloFlags(reloTarget) & inlinedMethodIsSpecial) == 0))
-            {
-            TR_ResolvedMethod *calleeResolvedMethod = reloRuntime->fej9()->createResolvedMethod(reloRuntime->comp()->trMemory(),
-                                                                                                (TR_OpaqueMethodBlock *)currentMethod,
-                                                                                                NULL);
-            if (calleeResolvedMethod->virtualMethodIsOverridden())
-               inlinedSiteIsValid = false;
-            }
          }
       else
          {
@@ -2854,9 +2851,28 @@ TR_RelocationRecordInlinedMethod::inlinedSiteValid(TR_RelocationRuntime *reloRun
             inlinedSiteIsValid = false;
          }
 
+      // Check if currentMethod has been overridden
+      if (inlinedSiteIsValid)
+         {
+         auto flags = reloFlags(reloTarget);
+         if (0 == (flags & (inlinedMethodIsStatic | inlinedMethodIsSpecial)))
+            {
+            TR_ResolvedMethod *calleeResolvedMethod =
+               reloRuntime->fej9()->createResolvedMethod(
+                  reloRuntime->comp()->trMemory(),
+                  (TR_OpaqueMethodBlock *)currentMethod,
+                  NULL);
+
+            if (calleeResolvedMethod->virtualMethodIsOverridden())
+               inlinedSiteIsValid = false;
+            }
+         }
+
+      // Check if the inlined site can be activated
       if (inlinedSiteIsValid)
          inlinedSiteIsValid = inlinedSiteCanBeActivated(reloRuntime, reloTarget, currentMethod);
 
+      // Consistency checks
       if (inlinedSiteIsValid)
          {
          /* Calculate the runtime rom class value from the code cache */
@@ -2883,6 +2899,10 @@ TR_RelocationRecordInlinedMethod::inlinedSiteValid(TR_RelocationRuntime *reloRun
             inlinedSiteIsValid = false;
             }
          }
+      }
+   else
+      {
+      inlinedSiteIsValid = false;
       }
 
    if (!inlinedSiteIsValid)
