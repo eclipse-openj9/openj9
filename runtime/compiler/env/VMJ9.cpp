@@ -5932,14 +5932,6 @@ TR_J9VMBase::setIProfilerCallCount(TR_OpaqueMethodBlock *caller, int32_t bcIndex
       profiler->setCallCount(caller, bcIndex, count, comp);
    }
 
-void
-TR_J9VMBase::setIProfilerCallCount(TR_ByteCodeInfo &bcInfo, int32_t count, TR::Compilation *comp)
-   {
-   TR_IProfiler *profiler = getIProfiler();
-   if (profiler)
-      profiler->setCallCount(bcInfo, count, comp);
-   }
-
 int32_t
 TR_J9VMBase::getCGEdgeWeight(TR::Node *callerNode, TR_OpaqueMethodBlock *callee, TR::Compilation *comp)
    {

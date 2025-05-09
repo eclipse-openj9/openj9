@@ -1222,7 +1222,6 @@ public:
    virtual int32_t getIProfilerCallCount(TR_OpaqueMethodBlock *callee, TR_OpaqueMethodBlock *caller, int32_t bcIndex,  TR::Compilation *);
    virtual void setIProfilerCallCount(TR_OpaqueMethodBlock *caller, int32_t bcIndex, int32_t count,  TR::Compilation *);
    virtual int32_t getIProfilerCallCount(TR_ByteCodeInfo &bcInfo,  TR::Compilation *comp);
-   virtual void    setIProfilerCallCount(TR_ByteCodeInfo &bcInfo, int32_t count,  TR::Compilation *comp);
    virtual bool    isCallGraphProfilingEnabled();
    virtual bool    isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT = false);
    virtual bool    isClassLibraryClass(TR_OpaqueClassBlock *clazz);
