@@ -615,6 +615,7 @@ VMSnapshotImpl::removeUnpersistedClassLoaders()
 	for (UDATA i = 0; i < count; i++) {
 		J9ClassLoader *currentClassLoader = removeLoaders[i];
 
+#if 0
 		J9HashTableState moduleWalkState = {0};
 		J9Module **modulePtr = (J9Module **)hashTableStartDo(currentClassLoader->moduleHashTable, &moduleWalkState);
 		while (NULL != modulePtr) {
@@ -643,6 +644,7 @@ VMSnapshotImpl::removeUnpersistedClassLoaders()
 			j9mem_free_memory(packageDel->packageName);
 			pool_removeElement(_vm->modularityPool, packageDel);
 		}
+#endif
 		freeClassLoader(currentClassLoader, _vm, vmThread, FALSE);
 	}
 
