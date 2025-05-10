@@ -1142,7 +1142,10 @@ J9::Z::TreeEvaluator::inlineVectorizedStringIndexOf(TR::Node* node, TR::CodeGene
    TR::Compilation *comp = cg->comp();
    const uint32_t elementSizeMask = isUTF16 ? 1 : 0;
    const int8_t vectorSize = cg->machine()->getVRFSize();
-   const uintptr_t headerSize = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
+   uintptr_t arrayElementDisplacement = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
+   if (TR::Compiler->om.isOffHeapAllocationEnabled())
+      arrayElementDisplacement = 0;
+
    const bool supportsVSTRS = comp->target().cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_FACILITY_ENHANCEMENT_2);
    TR_Debug *compDebug = comp->getDebug();
    TR::Instruction* cursor;
@@ -1281,14 +1284,14 @@ J9::Z::TreeEvaluator::inlineVectorizedStringIndexOf(TR::Node* node, TR::CodeGene
 
       generateRIEInstruction(cg, TR::InstOpCode::getCmpImmBranchRelOpCode(), node, patternLenReg, (int8_t)vectorSize, labelPatternLoad16Bytes, TR::InstOpCode::COND_BNL);
       generateRIEInstruction(cg, TR::InstOpCode::getAddHalfWordImmDistinctOperandOpCode(), node, loadLenReg, patternLenReg, -1);
-      generateVRSbInstruction(cg, TR::InstOpCode::VLL, node, patternHeadVReg, loadLenReg, generateS390MemoryReference(patternValueReg, headerSize, cg));
+      generateVRSbInstruction(cg, TR::InstOpCode::VLL, node, patternHeadVReg, loadLenReg, generateS390MemoryReference(patternValueReg, arrayElementDisplacement, cg));
       generateRRInstruction(cg, TR::InstOpCode::getLoadRegOpCode(), node, loadLenReg, patternLenReg);
       generateVRSbInstruction(cg, TR::InstOpCode::VLVG, node, patternLenVReg, patternLenReg, generateS390MemoryReference(7, cg), 0);
       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, labelPatternLoadDone);
 
       cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, labelPatternLoad16Bytes);
       iComment("load first 16 bytes of the pattern");
-      generateVRXInstruction(cg, TR::InstOpCode::VL, node, patternHeadVReg, generateS390MemoryReference(patternValueReg, headerSize, cg));
+      generateVRXInstruction(cg, TR::InstOpCode::VL, node, patternHeadVReg, generateS390MemoryReference(patternValueReg, arrayElementDisplacement, cg));
       generateRIInstruction(cg, TR::InstOpCode::LHI, node, loadLenReg, vectorSize);
       generateVRSbInstruction(cg, TR::InstOpCode::VLVG, node, patternLenVReg, loadLenReg, generateS390MemoryReference(7, cg), 0);
       cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, labelPatternLoadDone);
@@ -1307,13 +1310,13 @@ J9::Z::TreeEvaluator::inlineVectorizedStringIndexOf(TR::Node* node, TR::CodeGene
       // e.g. If the load length is 8 bytes, the highest index is 7. Hence, the need for -1.
       cursor = generateRIInstruction(cg, TR::InstOpCode::getAddHalfWordImmOpCode(), node, loadLenReg, -1);
       iComment("needs -1 because VLL's third operand is the highest index to load");
-      generateVRSbInstruction(cg, TR::InstOpCode::VLL, node, stringVReg, loadLenReg, generateS390MemoryReference(stringCharPtrReg, headerSize, cg));
+      generateVRSbInstruction(cg, TR::InstOpCode::VLL, node, stringVReg, loadLenReg, generateS390MemoryReference(stringCharPtrReg, arrayElementDisplacement, cg));
       generateRIInstruction(cg, TR::InstOpCode::getAddHalfWordImmOpCode(), node, loadLenReg, 1);
       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, labelLoadStringLenDone);
       srm->reclaimScratchRegister(stringCharPtrReg);
       cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, labelLoadString16Bytes);
       iComment("load 16 bytes of the string");
-      generateVRXInstruction(cg, TR::InstOpCode::VL, node, stringVReg, generateS390MemoryReference(stringValueReg, stringIndexReg, headerSize, cg));
+      generateVRXInstruction(cg, TR::InstOpCode::VL, node, stringVReg, generateS390MemoryReference(stringValueReg, stringIndexReg, arrayElementDisplacement, cg));
       generateRIInstruction(cg, TR::InstOpCode::getLoadHalfWordImmOpCode(), node, loadLenReg, vectorSize);
       cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, labelLoadStringLenDone);
       iComment("bytes of the string have been loaded");
@@ -1392,7 +1395,7 @@ J9::Z::TreeEvaluator::inlineVectorizedStringIndexOf(TR::Node* node, TR::CodeGene
       /************************************** 1st char of pattern ******************************************/
       cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, labelFindPatternHead);
       iComment("find first character of pattern");
-      generateVRXInstruction(cg, TR::InstOpCode::VLREP, node, patternFirstCharVReg, generateS390MemoryReference(patternValueReg, headerSize, cg), elementSizeMask);
+      generateVRXInstruction(cg, TR::InstOpCode::VLREP, node, patternFirstCharVReg, generateS390MemoryReference(patternValueReg, arrayElementDisplacement, cg), elementSizeMask);
 
       // Determine string load length. loadLenReg is either vectorSize-1 (15) or the 1st_char_matching residue length.
       generateRIEInstruction(cg, TR::InstOpCode::getAddHalfWordImmDistinctOperandOpCode(), node, loadLenReg, stringIndexReg, vectorSize);
@@ -1411,7 +1414,7 @@ J9::Z::TreeEvaluator::inlineVectorizedStringIndexOf(TR::Node* node, TR::CodeGene
       TR::Register* stringCharPtrReg = srm->findOrCreateScratchRegister();
       TR::LabelSymbol* labelExtractFirstCharPos = generateLabelSymbol(cg);
       generateRRRInstruction(cg, TR::InstOpCode::getAddThreeRegOpCode(), node, stringCharPtrReg, stringValueReg, stringIndexReg);
-      generateVRSbInstruction(cg, TR::InstOpCode::VLL, node, stringVReg, loadLenReg, generateS390MemoryReference(stringCharPtrReg, headerSize, cg));
+      generateVRSbInstruction(cg, TR::InstOpCode::VLL, node, stringVReg, loadLenReg, generateS390MemoryReference(stringCharPtrReg, arrayElementDisplacement, cg));
       generateVRRbInstruction(cg, TR::InstOpCode::VFEE, node, searchResultVReg, stringVReg, patternFirstCharVReg, 0x1, elementSizeMask);
       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC1, node, labelExtractFirstCharPos);
       srm->reclaimScratchRegister(stringCharPtrReg);
@@ -1452,11 +1455,11 @@ J9::Z::TreeEvaluator::inlineVectorizedStringIndexOf(TR::Node* node, TR::CodeGene
 
    // Vector loads use load index. And [load_index = load_len - 1]
    generateRIInstruction(cg, TR::InstOpCode::getAddHalfWordImmOpCode(), node, loadLenReg, -1);
-   generateVRSbInstruction(cg, TR::InstOpCode::VLL, node, stringVReg, loadLenReg, generateS390MemoryReference(stringCharPtrReg, headerSize, cg));
+   generateVRSbInstruction(cg, TR::InstOpCode::VLL, node, stringVReg, loadLenReg, generateS390MemoryReference(stringCharPtrReg, arrayElementDisplacement, cg));
    srm->reclaimScratchRegister(stringCharPtrReg);
    // If VSTRS is supported, the first VSTRS already handled the 1st 16 bytes at this point (full match in the 1st 16
-   // bytes). Hence, residue offset starts at 16.
-   uint32_t patternResidueDisp = headerSize + (supportsVSTRS ? vectorSize : 0);
+   // bytes). Hence, residue offset starts at 16. This applies only to non-offheap mode, for off-heap arrayElementDisplacement is 0.
+   uint32_t patternResidueDisp = arrayElementDisplacement + (supportsVSTRS ? vectorSize : 0);
 
    generateVRSbInstruction(cg, TR::InstOpCode::VLL, node, patternVReg, loadLenReg, generateS390MemoryReference(patternValueReg, patternResidueDisp, cg));
    generateRIInstruction(cg, TR::InstOpCode::getAddHalfWordImmOpCode(), node, loadLenReg, 1);
@@ -1504,8 +1507,8 @@ J9::Z::TreeEvaluator::inlineVectorizedStringIndexOf(TR::Node* node, TR::CodeGene
    cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, node, labelMatchPatternLoop);
    iComment("start search for reset of the pattern");
    // Start to match the reset of pattern
-   generateVRXInstruction(cg, TR::InstOpCode::VL, node, stringVReg, generateS390MemoryReference(stringValueReg, stringIndexReg, headerSize, cg));
-   generateVRXInstruction(cg, TR::InstOpCode::VL, node, patternVReg, generateS390MemoryReference(patternValueReg, patternIndexReg, headerSize, cg));
+   generateVRXInstruction(cg, TR::InstOpCode::VL, node, stringVReg, generateS390MemoryReference(stringValueReg, stringIndexReg, arrayElementDisplacement, cg));
+   generateVRXInstruction(cg, TR::InstOpCode::VL, node, patternVReg, generateS390MemoryReference(patternValueReg, patternIndexReg, arrayElementDisplacement, cg));
 
    generateVRRbInstruction(cg, TR::InstOpCode::VCEQ, node, searchResultVReg, stringVReg, patternVReg, 1, elementSizeMask);
    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC0, node, labelPartialPatternMatch);
@@ -1882,6 +1885,10 @@ J9::Z::TreeEvaluator::inlineIntrinsicIndexOf(TR::Node * node, TR::CodeGenerator 
 
    generateVRRfInstruction(cg, TR::InstOpCode::VLVGP, node, valueVector, offset, ch);
 
+   int32_t arrayElementDisplacement = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
+   if (TR::Compiler->om.isOffHeapAllocationEnabled())
+      arrayElementDisplacement = 0;
+
    // Byte or halfword mask
    const int elementSizeMask = isLatin1 ? 0x0 : 0x1;
    generateVRIcInstruction(cg, TR::InstOpCode::VREP, node, valueVector, valueVector, (cg->machine()->getVRFSize() / (1 << elementSizeMask)) - 1, elementSizeMask);
@@ -1913,7 +1920,7 @@ J9::Z::TreeEvaluator::inlineIntrinsicIndexOf(TR::Node * node, TR::CodeGenerator 
    // VLL takes an index, not a count, so subtract 1 from the count
    generateRILInstruction(cg, TR::InstOpCode::SLFI, node, loadLength, 1);
 
-   generateRXInstruction(cg, TR::InstOpCode::LA, node, offsetAddress, generateS390MemoryReference(array, indexRegister, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg));
+   generateRXInstruction(cg, TR::InstOpCode::LA, node, offsetAddress, generateS390MemoryReference(array, indexRegister, arrayElementDisplacement, cg));
    generateVRSbInstruction(cg, TR::InstOpCode::VLL, node, charBufferVector, loadLength, generateS390MemoryReference(offsetAddress, 0, cg));
 
    generateVRRbInstruction(cg, TR::InstOpCode::VFEE, node, resultVector, charBufferVector, valueVector, 0x1, elementSizeMask);
@@ -1941,7 +1948,7 @@ J9::Z::TreeEvaluator::inlineIntrinsicIndexOf(TR::Node * node, TR::CodeGenerator 
 
    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, loopLabel);
 
-   generateVRXInstruction(cg, TR::InstOpCode::VL, node, charBufferVector, generateS390MemoryReference(array, indexRegister, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg));
+   generateVRXInstruction(cg, TR::InstOpCode::VL, node, charBufferVector, generateS390MemoryReference(array, indexRegister, arrayElementDisplacement, cg));
 
    generateVRRbInstruction(cg, TR::InstOpCode::VFEE, node, resultVector, charBufferVector, valueVector, 0x1, elementSizeMask);
    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK4, node, foundLabel);
