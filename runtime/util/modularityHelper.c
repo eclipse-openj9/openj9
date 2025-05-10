@@ -118,7 +118,10 @@ hashPackageTableAt(J9VMThread *currentThread, J9ClassLoader *classLoader, const 
 	targetPtr = hashTableFind(classLoader->packageHashTable, &packagePtr);
 	if ((U_8*)package.packageName != (U_8*)buf) {
 		PORT_ACCESS_FROM_VMC(currentThread);
-		j9mem_free_memory(package.packageName);
+		if (NULL != package.packageName) {
+			j9mem_free_memory(package.packageName);
+			package.packageName = NULL;
+		}
 	}
 	return (NULL != targetPtr) ? *targetPtr : NULL;
 }

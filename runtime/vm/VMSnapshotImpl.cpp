@@ -640,7 +640,10 @@ VMSnapshotImpl::removeUnpersistedClassLoaders()
 				freeJ9Module(_vm, moduleDel);
 			}
 			hashTableFree(packageDel->exportsHashTable);
-			j9mem_free_memory(packageDel->packageName);
+			if (NULL != packageDel->packageName) {
+				j9mem_free_memory(packageDel->packageName);
+				packageDel->packageName = NULL;
+			}
 			pool_removeElement(_vm->modularityPool, packageDel);
 		}
 		freeClassLoader(currentClassLoader, _vm, vmThread, FALSE);

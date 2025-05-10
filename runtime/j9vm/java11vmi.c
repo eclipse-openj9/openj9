@@ -142,7 +142,10 @@ hashPackageTableDelete(J9VMThread * currentThread, J9ClassLoader * classLoader, 
 	rc = hashTableRemove(table, &package);
 
 	if ((U_8 *) package.packageName != (U_8 *)buf) {
-		j9mem_free_memory((void *) package.packageName);
+		if (NULL != package.packageName) {
+			j9mem_free_memory((void *) package.packageName);
+			package.packageName = NULL;
+		}
 	}
 	return rc;
 }
@@ -213,13 +216,17 @@ freePackage(J9VMThread *currentThread, J9Package *j9package)
 			hashTableFree(j9package->exportsHashTable);
 		}
 #if defined(J9VM_OPT_SNAPSHOTS)
-		if (IS_SNAPSHOTTING_ENABLED(vm)) {
+		if (IS_SNAPSHOTTING_ENABLED(vm) && (NULL != j9package->packageName)) {
 			VMSNAPSHOTIMPLPORT_ACCESS_FROM_JAVAVM(vm);
 			vmsnapshot_free_memory((void *)j9package->packageName);
+			j9package->packageName = NULL;
 		} else
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
 		{
-			j9mem_free_memory((void *)j9package->packageName);
+			if (NULL != j9package->packageName) {
+				j9mem_free_memory((void *)j9package->packageName);
+				j9package->packageName = NULL;
+			}
 		}
 		pool_removeElement(vm->modularityPool, j9package);
 	}

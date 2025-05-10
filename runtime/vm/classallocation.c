@@ -471,12 +471,16 @@ freeClassLoader(J9ClassLoader *classLoader, J9JavaVM *javaVM, J9VMThread *vmThre
 			cleanPackage(packageDel);
 			hashTableFree(packageDel->exportsHashTable);
 #if defined(J9VM_OPT_SNAPSHOTS)
-			if (IS_SNAPSHOTTING_ENABLED(javaVM)) {
-				vmsnapshot_free_memory(packageDel->packageName);
+			if (IS_SNAPSHOTTING_ENABLED(javaVM) && (NULL != packageDel->packageName)) {
+					vmsnapshot_free_memory(packageDel->packageName);
+					packageDel->packageName = NULL;
 			} else
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
 			{
-				j9mem_free_memory(packageDel->packageName);
+				if (NULL != packageDel->packageName) {
+					j9mem_free_memory(packageDel->packageName);
+					packageDel->packageName = NULL;
+				}
 			}
 			pool_removeElement(javaVM->modularityPool, packageDel);
 		}
