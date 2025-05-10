@@ -2832,13 +2832,20 @@ TR::Node *TR_VectorAPIExpansion::naryIntrinsicHandler(TR_VectorAPIExpansion *opt
             vec_sz_t bitsLength = resultNumLanesNode->get32bitIntegralValue()*8*elementSize;
 
             if (supportedOnPlatform(comp, bitsLength) == TR::NoVectorLength)
+               {
+               traceMsg(comp, "Platform does not support conversion result length %d in node %p",
+                        bitsLength, node);
                return NULL;
+               }
 
             resultVectorLength = OMR::DataType::bitsToVectorLength(bitsLength);
             }
 
          if (resultElementType == TR::NoType || resultVectorLength == TR::NoVectorLength)
+            {
+            traceMsg(comp, "Unknown conversion result type in node %p", node);
             return NULL;
+            }
          }
 
 
@@ -3095,13 +3102,17 @@ TR::ILOpCodes TR_VectorAPIExpansion::ILOpcodeFromVectorAPIOpcode(TR::Compilation
 
    if (opCodeType == Convert)
       {
+      if (scalar) return TR::BadILOp;
+
       switch (vectorAPIOpCode)
          {
          case VECTOR_OP_CAST:
+            return TR::ILOpCode::createVectorOpCode(TR::vconv, vectorType, resultVectorType);
          case VECTOR_OP_UCAST:
             return reportMissingOpCode(comp, vectorAPIOpCode, objectType, opCodeType, withMask);
          case VECTOR_OP_REINTERPRET:
-            if (scalar) return TR::BadILOp;
+            {
+            TR::ILOpCodes opCode = TR::ILOpCode::createVectorOpCode(TR::vcast, vectorType, resultVectorType);
 
             if (OMR::DataType::getSize(resultElementType) != OMR::DataType::getSize(elementType) ||
                 resultVectorLength != vectorLength)
@@ -3109,10 +3120,12 @@ TR::ILOpCodes TR_VectorAPIExpansion::ILOpcodeFromVectorAPIOpcode(TR::Compilation
                traceMsg(comp, "\nCalling VECTOR_OP_REINTERPRET on %s to %s in %s\n", TR::DataType::getName(vectorType),
                                                                             TR::DataType::getName(resultVectorType),
                                                                             comp->signature());
-               return reportMissingOpCode(comp, vectorAPIOpCode, objectType, opCodeType, withMask);
+               // produce verbose message
+               isOpCodeImplemented(comp, opCode, false);
+               return TR::BadILOp;
                }
-
-            return TR::ILOpCode::createVectorOpCode(TR::vcast, vectorType, resultVectorType);
+            return opCode;
+            }
          default:
             return reportMissingOpCode(comp, vectorAPIOpCode, objectType, opCodeType, withMask);
          }
@@ -3552,7 +3565,7 @@ TR_VectorAPIExpansion::methodTable[] =
 #else
    {storeIntrinsicHandler,                Unknown, 1, 2,  6, 1, -1, {Unknown, ElementType, NumLanes, Unknown, Unknown, Unknown, Vector}},        // jdk_internal_vm_vector_VectorSupport_store
 #endif
-   {binaryIntrinsicHandler,               Unknown,  3, 4,  5, 2,  7, {Unknown, Unknown, Unknown, ElementType, NumLanes, Vector, Vector, Mask}},   // jdk_internal_vm_vector_VectorSupport_binaryOp
+   {binaryIntrinsicHandler,               Unknown, 3, 4,  5, 2,  7, {Unknown, Unknown, Unknown, ElementType, NumLanes, Vector, Vector, Mask}},   // jdk_internal_vm_vector_VectorSupport_binaryOp
    {blendIntrinsicHandler,                Vector,  2, 3,  4, 3, -1, {Unknown, Unknown, ElementType, NumLanes, Vector, Vector, Mask, Unknown}}, // jdk_internal_vm_vector_VectorSupport_blend
    {broadcastIntIntrinsicHandler,         Vector,  3, 4,  5, 2,  7, {Unknown, Unknown, Unknown, ElementType, NumLanes, Vector, Unknown, Mask}},  //jdk_internal_vm_vector_VectorSupport_broadcastInt
    {compareIntrinsicHandler,              Mask,    3, 4,  5, 2,  7, {Unknown, Unknown, Unknown, ElementType, NumLanes, Vector, Vector, Mask}},   // jdk_internal_vm_vector_VectorSupport_compare
