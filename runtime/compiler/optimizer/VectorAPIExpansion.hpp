@@ -1744,5 +1744,24 @@ class TR_VectorAPIExpansion : public TR::Optimization
    */
    static TR::ILOpCodes getLoadToMaskConversion(int32_t numLanes, TR::DataType maskType, TR::ILOpCodes &loadOpCode);
 
+
+   /** \brief
+   *    Returns opcode for storying mask into boolean array
+   *
+   *   \param numLanes
+   *      Nubmer of lanes
+   *
+   *   \param maskType
+   *      Mask type
+   *
+   *   \param storeOpCode
+   *      Opcode for storying mask into boolean array
+   *
+   *   \return
+   *      conversion opcode
+   */
+   static TR::ILOpCodes getMaskToStoreConversion(int32_t numLanes, TR::DataType maskType, TR::ILOpCodes &storeOpCode);
+
    };
+
 #endif /* VECTORAPIEXPANSION_INCL */
