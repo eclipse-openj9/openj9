@@ -575,10 +575,8 @@ class TR_ValueProfileInfoManager
    bool             isColdCall(TR_OpaqueMethodBlock *method, int32_t byteCodeIndex, TR::Compilation *comp);
    bool             isColdCall(TR_OpaqueMethodBlock *calleeMethod, TR_OpaqueMethodBlock *method, int32_t byteCodeIndex, TR::Compilation *comp);
    bool             isColdCall(TR::Node *node, TR::Compilation *comp);
-   bool             isWarmCallGraphCall(TR::Node *node, TR_OpaqueMethodBlock *method, TR::Compilation *comp);
    bool             isWarmCall(TR::Node *node, TR::Compilation *comp);
    bool             isCallGraphProfilingEnabled(TR::Compilation *comp);
-   int32_t          getCallGraphProfilingCount(TR::Node *node, TR_OpaqueMethodBlock *method, TR::Compilation *comp);
    int32_t          getCallGraphProfilingCount(TR::Node *node, TR::Compilation *comp);
    int32_t          getCallGraphProfilingCount(TR_OpaqueMethodBlock *method, int32_t byteCodeIndex, TR::Compilation *comp);
    int32_t          getCallGraphProfilingCount(TR_OpaqueMethodBlock *calleeMethod, TR_OpaqueMethodBlock *method, int32_t byteCodeIndex, TR::Compilation *comp);

@@ -5932,16 +5932,6 @@ TR_J9VMBase::setIProfilerCallCount(TR_OpaqueMethodBlock *caller, int32_t bcIndex
       profiler->setCallCount(caller, bcIndex, count, comp);
    }
 
-int32_t
-TR_J9VMBase::getCGEdgeWeight(TR::Node *callerNode, TR_OpaqueMethodBlock *callee, TR::Compilation *comp)
-   {
-   TR_IProfiler *profiler = getIProfiler();
-   if (profiler)
-      return profiler->getCGEdgeWeight(callerNode, callee, comp);
-
-   return 0;
-   }
-
 bool
 TR_J9VMBase::isCallGraphProfilingEnabled()
    {
