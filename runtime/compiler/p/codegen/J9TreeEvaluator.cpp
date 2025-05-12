@@ -10515,11 +10515,11 @@ hashCodeHelper(TR::Node *node, TR::CodeGenerator *cg, TR::DataType elementType,
          generateTrg1Src1Imm2Instruction(cg,
             comp->target().is64Bit() ? TR::InstOpCode::rldic : TR::InstOpCode::rlwinm,
             node, endReg, endReg, 2,
-            comp->target().is64Bit() ? CONSTANT64(0x00000003FFFFFFFC) : 0xFFFFFFFE);
+            comp->target().is64Bit() ? CONSTANT64(0x00000003FFFFFFFC) : 0xFFFFFFFC);
          generateTrg1Src1Imm2Instruction(cg,
             comp->target().is64Bit() ? TR::InstOpCode::rldic : TR::InstOpCode::rlwinm,
             node, tempReg, tempReg, 2,
-            comp->target().is64Bit() ? CONSTANT64(0x00000003FFFFFFFC) : 0xFFFFFFFE);
+            comp->target().is64Bit() ? CONSTANT64(0x00000003FFFFFFFC) : 0xFFFFFFFC);
          break;
       default:
          TR_ASSERT_FATAL(false, "Unsupported hashCodeHelper elementType");
