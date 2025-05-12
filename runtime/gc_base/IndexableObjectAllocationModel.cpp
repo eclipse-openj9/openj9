@@ -366,11 +366,6 @@ MM_IndexableObjectAllocationModel::getSparseAddressAndDecommitLeaves(MM_Environm
 			break;
 		}
 
-		if (0 == arrayoidIndex) {
-			MM_HeapRegionDescriptorVLHGC *firstLeafRegionDescriptor = (MM_HeapRegionDescriptorVLHGC *)extensions->getHeap()->getHeapRegionManager()->tableDescriptorForAddress(leaf);
-			firstLeafRegionDescriptor->_sparseHeapAllocation = true;
-		}
-
 		/* Disable region for reads and writes, since that'll be done through the contiguous double mapped region */
 		void *highAddress = (void *)((uintptr_t)leaf + arrayletLeafSize);
 		bool ret = extensions->heap->decommitMemory(leaf, arrayletLeafSize, leaf, highAddress);
