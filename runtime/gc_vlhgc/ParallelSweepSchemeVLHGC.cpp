@@ -59,8 +59,10 @@
 #include "SparseVirtualMemory.hpp"
 #include "SparseAddressOrderedFixedSizeDataPool.hpp"
 #include "SweepHeapSectioningVLHGC.hpp"
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
 #include "SweepPoolManagerVLHGC.hpp"
 #include "SweepPoolManagerAddressOrderedList.hpp"
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 #include "SweepPoolState.hpp"
 
 
@@ -1008,9 +1010,10 @@ MM_ParallelSweepSchemeVLHGC::recycleFreeRegions(MM_EnvironmentVLHGC *env)
 	GC_HeapRegionIteratorVLHGC regionIterator(_regionManager);
 	MM_HeapRegionDescriptorVLHGC *region = NULL;
 	
-	if (MM_GCExtensions::getExtensions(env)->isVirtualLargeObjectHeapEnabled) {
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+	if (_extensions->isVirtualLargeObjectHeapEnabled) {
 		const uintptr_t arrayletLeafSize = env->getOmrVM()->_arrayletLeafSize;
-		MM_SparseVirtualMemory *largeObjectVirtualMemory = MM_GCExtensions::getExtensions(env)->largeObjectVirtualMemory;
+		MM_SparseVirtualMemory *largeObjectVirtualMemory = _extensions->largeObjectVirtualMemory;
 		uintptr_t arrayletLeafCount = 0;
 		J9HashTableState walkState;
 
@@ -1034,7 +1037,9 @@ MM_ParallelSweepSchemeVLHGC::recycleFreeRegions(MM_EnvironmentVLHGC *env)
 		}
 		Assert_MM_true(0 == arrayletLeafCount);
 
-	} else {
+	} else
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
+	{
 		while(NULL != (region = regionIterator.nextRegion())) {
 			/* Region must be marked for sweep */
 			if (!region->_sweepData._alreadySwept && region->hasValidMarkMap()) {
