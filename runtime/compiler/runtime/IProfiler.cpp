@@ -3430,24 +3430,6 @@ TR_IProfiler::getCallCount(TR_ByteCodeInfo &bcInfo, TR::Compilation *comp)
    }
 
 int32_t
-TR_IProfiler::getCGEdgeWeight (TR::Node *callerNode, TR_OpaqueMethodBlock *callee, TR::Compilation *comp)
-   {
-   TR_ByteCodeInfo& bcInfo = callerNode->getByteCodeInfo();
-   uintptr_t thisPC = getSearchPC (getMethodFromNode(callerNode, comp), bcInfo.getByteCodeIndex(), comp);
-
-   if (isSpecialOrStatic(*(U_8 *)thisPC))
-      return getCallCount(bcInfo, comp);
-
-   TR_IPBCDataCallGraph *cgData = getCGProfilingData(callerNode->getByteCodeInfo(), comp);
-   if (cgData)
-      {
-      return cgData->getEdgeWeight((TR_OpaqueClassBlock *)J9_CLASS_FROM_METHOD(((J9Method *)callee)), comp);
-      }
-   return 0;
-   }
-
-
-int32_t
 TR_IProfiler::getMaxCallCount()
    {
    return _maxCallFrequency;

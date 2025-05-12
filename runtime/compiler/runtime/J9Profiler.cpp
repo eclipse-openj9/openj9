@@ -960,12 +960,6 @@ TR_ValueProfileInfoManager::getCallGraphProfilingCount(TR_OpaqueMethodBlock *cal
    }
 
 int32_t
-TR_ValueProfileInfoManager::getCallGraphProfilingCount(TR::Node *node, TR_OpaqueMethodBlock *method, TR::Compilation *comp)
-   {
-   return comp->fej9()->getCGEdgeWeight(node, method, comp);
-   }
-
-int32_t
 TR_ValueProfileInfoManager::getCallGraphProfilingCount(TR::Node *node, TR::Compilation *comp)
    {
    return comp->fej9()->getIProfilerCallCount(node->getByteCodeInfo(), comp);
@@ -1032,17 +1026,6 @@ TR_ValueProfileInfoManager::getAdjustedInliningWeight(TR::Node *callNode, int32_
       }
 
    return callGraphAdjustedWeight;
-   }
-
-bool
-TR_ValueProfileInfoManager::isWarmCallGraphCall(TR::Node *node, TR_OpaqueMethodBlock *method, TR::Compilation *comp)
-   {
-   if (node->getSymbolReference() && node->getSymbolReference()->getSymbol() &&
-       ((node->getSymbolReference()->getSymbol()->castToMethodSymbol()->getMethodKind()==TR::MethodSymbol::Special) ||
-        (node->getSymbolReference()->getSymbol()->castToMethodSymbol()->getMethodKind()==TR::MethodSymbol::Static)))
-      return false;
-
-   return (getCallGraphProfilingCount(node, method, comp) < comp->getFlowGraph()->getLowFrequency());
    }
 
 bool

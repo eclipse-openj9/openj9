@@ -1217,7 +1217,6 @@ public:
    uint32_t *getAllocationProfilingDataPointer(TR_ByteCodeInfo &bcInfo, TR_OpaqueClassBlock *clazz, TR_OpaqueMethodBlock *method,  TR::Compilation *comp);
    uint32_t *getGlobalAllocationDataPointer();
    virtual TR_ExternalProfiler   *hasIProfilerBlockFrequencyInfo(TR::Compilation& comp);
-   virtual int32_t getCGEdgeWeight(TR::Node *callerNode, TR_OpaqueMethodBlock *callee,  TR::Compilation *comp);
    virtual int32_t getIProfilerCallCount(TR_OpaqueMethodBlock *caller, int32_t bcIndex,  TR::Compilation *);
    virtual int32_t getIProfilerCallCount(TR_OpaqueMethodBlock *callee, TR_OpaqueMethodBlock *caller, int32_t bcIndex,  TR::Compilation *);
    virtual void setIProfilerCallCount(TR_OpaqueMethodBlock *caller, int32_t bcIndex, int32_t count,  TR::Compilation *);
