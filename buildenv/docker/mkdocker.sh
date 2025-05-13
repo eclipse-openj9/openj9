@@ -512,7 +512,7 @@ fi
   echo " && rm -rf make.tar.gz make-$make_version"
 if [ $arch = x86_64 ] ; then
   echo ""
-  local nasm_version=2.13.03
+  local nasm_version=2.15.05
   echo "# Install nasm."
   echo "RUN cd /tmp \\"
   echo " && $wget_O nasm.tar.gz https://www.nasm.us/pub/nasm/releasebuilds/$nasm_version/nasm-$nasm_version.tar.gz \\"

@@ -361,7 +361,7 @@ You must install a number of software dependencies to create a suitable build en
 - [Windows JDK 17](https://api.adoptopenjdk.net/v3/binary/latest/17/ga/windows/x64/jdk/openj9/normal/adoptopenjdk), which is used as the boot JDK.
 - [Microsoft Visual Studio 2022](https://aka.ms/vs/17/release/vs_community.exe), which is the default compiler level used by OpenJDK17.
 - [LLVM/Clang](https://releases.llvm.org/7.0.0/LLVM-7.0.0-win64.exe)
-- [NASM Assembler v2.13.03 or newer](https://www.nasm.us/pub/nasm/releasebuilds/?C=M;O=D)
+- [NASM Assembler v2.15.05 or newer](https://www.nasm.us/pub/nasm/releasebuilds/?C=M;O=D)
 
 Add the binary path of Clang to the `PATH` environment variable to override the older version of clang integrated in Cygwin. e.g.
 ```
@@ -521,7 +521,7 @@ The following dependencies can be installed by using [Homebrew](https://brew.sh/
 - [freetype 2.9.1](https://formulae.brew.sh/formula/freetype)
 - [git 2.19.2](https://formulae.brew.sh/formula/git)
 - [gnu-tar 1.3](https://formulae.brew.sh/formula/gnu-tar)
-- [nasm 2.13.03](https://formulae.brew.sh/formula/nasm)
+- [nasm 2.15.05](https://formulae.brew.sh/formula/nasm)
 - [pkg-config 0.29.2](https://formulae.brew.sh/formula/pkg-config)
 - [wget 1.19.5](https://formulae.brew.sh/formula/wget)
 
