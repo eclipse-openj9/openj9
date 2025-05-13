@@ -661,7 +661,6 @@ void
 TR_IProfiler::shutdown()
    {
    _isIProfilingEnabled = false; // This is the only instance where we disable the profiler
-
    }
 
 static uint16_t cpIndexFromPC(uintptr_t pc) { return *((uint16_t*)(pc + 1)); }
@@ -939,11 +938,10 @@ TR_IProfiler::getOrSetSwitchData(TR_IPBCDataEightWords *entry, uint32_t value, b
 bool
 TR_IProfiler::addSampleData(TR_IPBytecodeHashTableEntry *entry, uintptr_t data, bool isRIData, uint32_t freq)
    {
-   U_8 *entryPC = (U_8*)entry->getPC();
-
    if (entry->isInvalid())
       return false;
 
+   U_8 *entryPC = (U_8*)entry->getPC();
    U_8 byteCodeType = *(entryPC);
    switch (byteCodeType)
       {
@@ -999,6 +997,12 @@ TR_IProfiler::addSampleData(TR_IPBytecodeHashTableEntry *entry, uintptr_t data, 
       case JBinvokespecial:
       case JBinvokestaticsplit:
       case JBinvokespecialsplit:
+         {
+         int32_t returnCount = entry->setData(data, freq);
+         if (returnCount > _maxCallFrequency)
+            _maxCallFrequency = returnCount;
+         return true;
+         }
       case JBinvokeinterface:
       case JBinvokeinterface2:
       case JBinvokevirtual:
@@ -1097,7 +1101,7 @@ TR_IProfiler::findOrCreateEntry(int32_t bucket, uintptr_t pc, bool addIt)
    {
    TR_IPBytecodeHashTableEntry *entry = NULL;
 
-   entry = searchForSample (pc, bucket);
+   entry = searchForSample(pc, bucket);
    // if we are just searching and we didn't find profile data for the
    // method just go back
    if (!addIt)
@@ -1109,11 +1113,15 @@ TR_IProfiler::findOrCreateEntry(int32_t bucket, uintptr_t pc, bool addIt)
    // Create a new hash table entry
    U_8 byteCode = *(U_8*) pc;
    if (isCompact(byteCode))
+      {
       entry = new TR_IPBCDataFourBytes(pc);
+      }
    else
       {
       if (isSwitch(byteCode))
          entry = new TR_IPBCDataEightWords(pc);
+      else if (isSpecialOrStatic(byteCode))
+         entry = new TR_IPBCDataDirectCall(pc);
       else
          entry = new TR_IPBCDataCallGraph(pc);
       }
@@ -1284,7 +1292,7 @@ TR_IProfiler::invalidateEntryIfInconsistent(TR_IPBytecodeHashTableEntry *entry)
    }
 
 TR_IPBCDataStorageHeader *
-TR_IProfiler::searchForPersistentSample (TR_IPBCDataStorageHeader  *root, uintptr_t pc)
+TR_IProfiler::searchForPersistentSample(TR_IPBCDataStorageHeader  *root, uintptr_t pc)
    {
 
    if (root->pc == pc)
@@ -1349,6 +1357,7 @@ TR_IProfiler::persistentProfilingSample(TR_OpaqueMethodBlock *method, uint32_t b
             // but do not add the entry to the HT just yet
             TR_IPBytecodeHashTableEntry *newEntry = 0;
             U_8 byteCode =  *(U_8 *)pc;
+            TR_ASSERT_FATAL(!isSpecialOrStatic(byteCode), "direct calls are not stored into SCC");
             if (isCompact(byteCode))
                newEntry = new TR_IPBCDataFourBytes(pc);
             else
@@ -1437,10 +1446,10 @@ TR_IProfiler::searchForMethodSample(TR_OpaqueMethodBlock *omb, int32_t bucket)
 // This method is used at compile time to search both the
 // IProfiler/bytecode hash table and the shared cache.
 TR_IPBytecodeHashTableEntry *
-TR_IProfiler::profilingSample (TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR::Compilation *comp, uintptr_t data, bool addIt)
+TR_IProfiler::profilingSample(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR::Compilation *comp, uintptr_t data, bool addIt)
    {
    // Find the bytecode pc we are interested in
-   uintptr_t pc = getSearchPC (method, byteCodeIndex, comp);
+   uintptr_t pc = getSearchPC(method, byteCodeIndex, comp);
 
    // When we just search in the hashtable we don't need to lock,
    // It should work even if someone else is modifying the hashtable bucket entry
@@ -1460,11 +1469,7 @@ TR_IProfiler::profilingSample (TR_OpaqueMethodBlock *method, uint32_t byteCodeIn
          {
          // Increment the number of requests for samples
          // Exclude JBinvokestatic and JBinvokespecial because they are not tracked by interpreter
-         if (bytecode != JBinvokestatic
-            && bytecode != JBinvokespecial
-            && bytecode != JBinvokestaticsplit
-            && bytecode != JBinvokespecialsplit
-            )
+         if (!isSpecialOrStatic(bytecode))
             _readSampleRequestsHistory->incTotalReadSampleRequests();
          // If I prefer HT data, or, if I already searched the SCC for this pc,
          // then just return the entry I found in the hashtable
@@ -1496,15 +1501,11 @@ TR_IProfiler::profilingSample (TR_OpaqueMethodBlock *method, uint32_t byteCodeIn
             entry = persistentProfilingSample(method, byteCodeIndex, comp, &methodProfileExistsInSCC);
             if (!entry) // Desired PC is not in SCC
                {
-               // Increment the number of failed requests for samples
-               // Imprecision due to concurrency is allowed because this is just a heuristic
-               // We should not count the samples if the method is in SCC
+               // Increment the number of failed requests for samples.
+               // Imprecision due to concurrency is allowed because this is just a heuristic.
+               // We should not count the samples if the method is in SCC.
                // Those samples belong to not-taken paths that couldn't have been profiled anyway
-               if (bytecode != JBinvokestatic
-                  && bytecode != JBinvokespecial
-                  && bytecode != JBinvokestaticsplit
-                  && bytecode != JBinvokespecialsplit
-                  && !methodProfileExistsInSCC)
+               if (!isSpecialOrStatic(bytecode) && !methodProfileExistsInSCC)
                   {
                   _readSampleRequestsHistory->incFailedReadSampleRequests();
                   _readSampleRequestsHistory->incTotalReadSampleRequests();
@@ -1520,12 +1521,8 @@ TR_IProfiler::profilingSample (TR_OpaqueMethodBlock *method, uint32_t byteCodeIn
                }
             else // found entry in SCC
                {
-               if (bytecode != JBinvokestatic
-                  && bytecode != JBinvokespecial
-                  && bytecode != JBinvokestaticsplit
-                  && bytecode != JBinvokespecialsplit
-                  )
-                  _readSampleRequestsHistory->incTotalReadSampleRequests();
+               TR_ASSERT_FATAL(!isSpecialOrStatic(bytecode), "Direct calls are not stored in SCC");
+               _readSampleRequestsHistory->incTotalReadSampleRequests();
 #ifdef PERSISTENCE_VERBOSE
                fprintf(stderr, "Entry from SCC\n");
 #endif
@@ -1558,6 +1555,7 @@ TR_IProfiler::profilingSample (TR_OpaqueMethodBlock *method, uint32_t byteCodeIn
             else // We have info in SCC too
                {
                // Load the data from SCC into an entry on stack
+               TR_ASSERT_FATAL(!isSpecialOrStatic(bytecode), "Direct calls are not stored in SCC");
                if (isCompact(bytecode))
                   {
                   persistentEntry = new (&entryBuffer) TR_IPBCDataFourBytes(pc);
@@ -1606,8 +1604,9 @@ TR_IProfiler::profilingSample (TR_OpaqueMethodBlock *method, uint32_t byteCodeIn
             {
             // Remember that we already looked into the SCC for this PC
             currentEntry->setPersistentEntryRead();
-            int32_t currentCount = getSamplingCount(currentEntry, comp);
-            int32_t persistentCount = getSamplingCount(persistentEntry, comp);
+
+            int32_t currentCount = currentEntry->getNumSamples();
+            int32_t persistentCount = persistentEntry->getNumSamples();
             if(currentCount >= persistentCount)
                {
                return currentEntry;
@@ -1626,24 +1625,6 @@ TR_IProfiler::profilingSample (TR_OpaqueMethodBlock *method, uint32_t byteCodeIn
       {
       return profilingSample(pc, data, true);
       }
-   }
-
-int32_t
-TR_IProfiler::getSamplingCount( TR_IPBytecodeHashTableEntry *entry, TR::Compilation *comp)
-   {
-   if(entry->asIPBCDataEightWords())
-      return ((TR_IPBCDataEightWords *)entry)->getSumSwitchCount();
-   else if (entry->asIPBCDataCallGraph())
-      {
-      TR_IPBCDataCallGraph *callGraphEntry = (TR_IPBCDataCallGraph *)entry;
-      return callGraphEntry->getSumCount(comp);
-      }
-   else if (entry->asIPBCDataFourBytes())
-      {
-      TR_IPBCDataFourBytes  *branchEntry = (TR_IPBCDataFourBytes *)entry;
-      return branchEntry->getSumBranchCount();
-      }
-   return 0;
    }
 
 int32_t
@@ -1672,7 +1653,7 @@ TR_IPBCDataEightWords::getSumSwitchCount() const
 
 // this method is used to search only the hash table
 TR_IPBytecodeHashTableEntry *
-TR_IProfiler::profilingSample (uintptr_t pc, uintptr_t data, bool addIt, bool isRIData, uint32_t freq)
+TR_IProfiler::profilingSample(uintptr_t pc, uintptr_t data, bool addIt, bool isRIData, uint32_t freq)
    {
    TR_IPBytecodeHashTableEntry *entry = findOrCreateEntry(bcHash(pc), pc, addIt);
 
@@ -1687,13 +1668,13 @@ TR_IProfiler::profilingSample (uintptr_t pc, uintptr_t data, bool addIt, bool is
    }
 
 TR_IPBytecodeHashTableEntry *
-TR_IProfiler::profilingSampleRI (uintptr_t pc, uintptr_t data, bool addIt, uint32_t freq)
+TR_IProfiler::profilingSampleRI(uintptr_t pc, uintptr_t data, bool addIt, uint32_t freq)
    {
    return profilingSample(pc, data, addIt, true, freq);
    }
 
 TR_IPBCDataAllocation *
-TR_IProfiler::profilingAllocSample (uintptr_t pc, uintptr_t data, bool addIt)
+TR_IProfiler::profilingAllocSample(uintptr_t pc, uintptr_t data, bool addIt)
    {
 #if defined(EXPERIMENTAL_IPROFILER)
    TR_IPBCDataAllocation *entry = NULL;
@@ -1766,7 +1747,7 @@ TR_IProfiler::getBytecodeOpCode(TR::Node *node, TR::Compilation *comp)
    return *((uint8_t *)methodStart + bcInfo.getByteCodeIndex());
    }
 
-static TR::ILOpCodes opCodeForBranchFromBytecode (uint8_t byteCodeOpCode)
+static TR::ILOpCodes opCodeForBranchFromBytecode(uint8_t byteCodeOpCode)
    {
    // the compare is always on compare and branch
    switch (byteCodeOpCode)
@@ -2084,7 +2065,7 @@ TR_IProfiler::getProfilingData(TR_OpaqueMethodBlock *method, uint32_t byteCodeIn
    }
 
 int32_t
-TR_IProfiler::getSwitchCountForValue (TR::Node *node, int32_t value, TR::Compilation *comp)
+TR_IProfiler::getSwitchCountForValue(TR::Node *node, int32_t value, TR::Compilation *comp)
    {
    TR_ByteCodeInfo bcInfo = node->getByteCodeInfo();
    if (bcInfo.doNotProfile())
@@ -2107,7 +2088,7 @@ TR_IProfiler::getSwitchCountForValue (TR::Node *node, int32_t value, TR::Compila
    }
 
 int32_t
-TR_IProfiler::getSumSwitchCount (TR::Node *node, TR::Compilation *comp)
+TR_IProfiler::getSumSwitchCount(TR::Node *node, TR::Compilation *comp)
    {
    int32_t sum = 1;
    TR_ByteCodeInfo bcInfo = node->getByteCodeInfo();
@@ -2134,7 +2115,7 @@ TR_IProfiler::getSumSwitchCount (TR::Node *node, TR::Compilation *comp)
    }
 
 int32_t
-TR_IProfiler::getFlatSwitchProfileCounts (TR::Node *node, TR::Compilation *comp)
+TR_IProfiler::getFlatSwitchProfileCounts(TR::Node *node, TR::Compilation *comp)
    {
    int32_t count = (getSumSwitchCount(node, comp)) / SWITCH_DATA_COUNT;
 
@@ -2142,7 +2123,7 @@ TR_IProfiler::getFlatSwitchProfileCounts (TR::Node *node, TR::Compilation *comp)
    }
 
 bool
-TR_IProfiler::isSwitchProfileFlat (TR::Node *node, TR::Compilation *comp)
+TR_IProfiler::isSwitchProfileFlat(TR::Node *node, TR::Compilation *comp)
    {
    TR_ByteCodeInfo bcInfo = node->getByteCodeInfo();
    if (bcInfo.doNotProfile())
@@ -2191,7 +2172,7 @@ void matchCallStack(TR::Node *node, TR::Node *dest, int32_t *callIndex, int32_t 
 int16_t next2BytesSigned(uintptr_t pc)       { return *(int16_t *)(pc); }
 
 void
-TR_IProfiler::getBranchCounters (TR::Node *node, TR::TreeTop *fallThroughTree, int32_t *taken, int32_t *notTaken, TR::Compilation *comp)
+TR_IProfiler::getBranchCounters(TR::Node *node, TR::TreeTop *fallThroughTree, int32_t *taken, int32_t *notTaken, TR::Compilation *comp)
    {
    static bool traceIProfiling = ((debug("traceIProfiling") != NULL));
    uintptr_t data = getProfilingData (node, comp);
@@ -2345,7 +2326,7 @@ TR_IProfiler::setBlockAndEdgeFrequencies(TR::CFG *cfg, TR::Compilation *comp)
    }
 
 TR_AbstractInfo *
-TR_IProfiler::createIProfilingValueInfo (TR_ByteCodeInfo &bcInfo, TR::Compilation *comp)
+TR_IProfiler::createIProfilingValueInfo(TR_ByteCodeInfo &bcInfo, TR::Compilation *comp)
    {
    if (!isIProfilingEnabled())
       return NULL;
@@ -3318,6 +3299,81 @@ TR_IPBCDataCallGraph::copyFromEntry(TR_IPBytecodeHashTableEntry *originalEntry)
    _csInfo._tooBigToBeInlined = entry->_csInfo._tooBigToBeInlined;
    }
 
+/**
+ * @brief Set the data for a TR_IPBCDataDirectCall entry
+ *        If value 'v' is not 0, use that value to set the _callCount.
+ *        If value 'v' is 0, then add 'freq' to the exiting _callCount value.
+ * @param v Value to set to the _callCount
+ * @param freq Value to increment the existing _callCount with.
+ * @return The new value of _callCount.
+ */
+int32_t
+TR_IPBCDataDirectCall::setData(uintptr_t v, uint32_t freq)
+   {
+   if (v != 0)
+      {
+      if (v > 0xffff)
+         {
+         _callCount = 0xffff;
+         setOverflow();
+         }
+      else
+         {
+         _callCount = (uint16_t)v;
+         }
+      }
+   else
+      {
+      uint64_t futureValue = (uint64_t)_callCount + freq;
+      if (futureValue > 0xffff)
+         {
+         _callCount = 0xffff;
+         setOverflow();
+         }
+      else
+         {
+         _callCount = (uint16_t)futureValue;
+         }
+      }
+   return _callCount;
+   }
+
+void
+TR_IPBCDataDirectCall::copyFromEntry(TR_IPBytecodeHashTableEntry *originalEntry)
+   {
+   TR_IPBCDataDirectCall *entry = (TR_IPBCDataDirectCall *)originalEntry;
+   TR_ASSERT(originalEntry->asIPBCDataDirectCall(), "Incompatible types between storage and loading of iprofile persistent data");
+   _callCount = entry->_callCount;
+   _isInvalid = entry->_isInvalid;
+   _tooBigToBeInlined = entry->_tooBigToBeInlined;
+   }
+
+#if defined(J9VM_OPT_JITSERVER)
+void
+TR_IPBCDataDirectCall::serialize(uintptr_t methodStartAddress, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info)
+   {
+   TR_IPBCDataDirectCallStorage *store = (TR_IPBCDataDirectCallStorage *)storage;
+   storage->pc = _pc - methodStartAddress;
+   storage->left = 0;
+   storage->right = 0;
+   storage->ID = TR_IPBCD_DIRECT_CALL;
+   store->_callCount = _callCount;
+   store->_isInvalid = _isInvalid;
+   store->_tooBigToBeInlined = _tooBigToBeInlined;
+   }
+
+void
+TR_IPBCDataDirectCall::deserialize(TR_IPBCDataStorageHeader *storage)
+   {
+   TR_IPBCDataDirectCallStorage *store = (TR_IPBCDataDirectCallStorage *)storage;
+   TR_ASSERT(storage->ID == TR_IPBCD_DIRECT_CALL, "Incompatible types between storage and loading of iprofile persistent data");
+   _callCount = store->_callCount;
+   _isInvalid= store->_isInvalid;
+   _tooBigToBeInlined = store->_tooBigToBeInlined;
+   }
+
+#endif /* defined(J9VM_OPT_JITSERVER) */
+
 TR_IPBCDataCallGraph*
 TR_IProfiler::getCGProfilingData(TR_ByteCodeInfo &bcInfo, TR::Compilation *comp)
    {
@@ -3355,24 +3411,11 @@ void
 TR_IProfiler::setCallCount(TR_OpaqueMethodBlock *method, int32_t bcIndex, int32_t count, TR::Compilation * comp)
    {
    TR_IPBytecodeHashTableEntry *entry = profilingSample(method, bcIndex, comp, 0, true);
-   if (entry && entry->asIPBCDataCallGraph())
+   if (entry && entry->asIPBCDataDirectCall())
       {
-      CallSiteProfileInfo *csInfo  = NULL;
-      TR_IPBCDataCallGraph *cgData = entry->asIPBCDataCallGraph();
-      cgData->setDoNotPersist();
-      FLUSH_MEMORY(TR::Compiler->target.isSMP());
-
-      if (cgData)
-         csInfo = cgData->getCGData();
-
-      if (csInfo)
-         {
-         csInfo->_weight[0] = count;
-         csInfo->setClazz(0, (uintptr_t)comp->fej9()->getClassOfMethod(method));
-
-         if (count>_maxCallFrequency)
-            _maxCallFrequency = count;
-         }
+      entry->setData(count);
+      if (count > _maxCallFrequency)
+         _maxCallFrequency = count;
       }
    }
 
@@ -3381,8 +3424,8 @@ TR_IProfiler::getCallCount(TR_OpaqueMethodBlock *calleeMethod, TR_OpaqueMethodBl
    {
    TR_IPBytecodeHashTableEntry *entry = profilingSample(method, bcIndex, comp);
 
-   if (entry && entry->asIPBCDataCallGraph())
-      return entry->asIPBCDataCallGraph()->getSumCount();
+   if (entry && (entry->asIPBCDataDirectCall() || entry->asIPBCDataCallGraph()))
+      return entry->getNumSamples();
 
    uint32_t weight = 0;
    bool foundEntry = getCallerWeight(calleeMethod,method, &weight, bcIndex, comp);
@@ -3397,8 +3440,8 @@ TR_IProfiler::getCallCount(TR_OpaqueMethodBlock *method, int32_t bcIndex, TR::Co
    {
    TR_IPBytecodeHashTableEntry *entry = profilingSample(method, bcIndex, comp);
 
-   if (entry && entry->asIPBCDataCallGraph())
-      return entry->asIPBCDataCallGraph()->getSumCount();
+   if (entry && (entry->asIPBCDataDirectCall() || entry->asIPBCDataCallGraph()))
+      return entry->getNumSamples();
 
    return 0;
    }
@@ -3407,9 +3450,8 @@ void
 TR_IProfiler::setWarmCallGraphTooBig(TR_OpaqueMethodBlock *method, int32_t bcIndex, TR::Compilation *comp, bool set)
    {
    TR_IPBytecodeHashTableEntry *entry = profilingSample(method, bcIndex, comp);
-
-   if (entry && entry->asIPBCDataCallGraph())
-      return entry->asIPBCDataCallGraph()->setWarmCallGraphTooBig(set);
+   if (entry)
+      entry->setWarmCallGraphTooBig(set);
    }
 
 bool
@@ -3417,8 +3459,8 @@ TR_IProfiler::isWarmCallGraphTooBig(TR_OpaqueMethodBlock *method, int32_t bcInde
    {
    TR_IPBytecodeHashTableEntry *entry = profilingSample(method, bcIndex, comp);
 
-   if (entry && entry->asIPBCDataCallGraph())
-      return entry->asIPBCDataCallGraph()->isWarmCallGraphTooBig();
+   if (entry)
+      return entry->isWarmCallGraphTooBig();
 
    return false;
    }
@@ -4685,8 +4727,6 @@ TR_AggregationHT::sortByNameAndPrint()
          fprintf(stderr, "\tOffset %" OMR_PRIuSIZE "\t", bcOffset);
          switch (*pc)
             {
-            case JBinvokestatic:     fprintf(stderr, "JBinvokestatic\n"); break;
-            case JBinvokespecial:    fprintf(stderr, "JBinvokespecial\n"); break;
             case JBinvokeinterface:  fprintf(stderr, "JBinvokeinterface\n"); break;
             case JBinvokeinterface2: fprintf(stderr, "JBinvokeinterface2\n"); break;
             case JBinvokevirtual:    fprintf(stderr, "JBinvokevirtual\n"); break;
