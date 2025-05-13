@@ -1934,8 +1934,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    {
    TR::Compilation *comp = cg->comp();
    TR_Debug *compDebug = comp->getDebug();
-   TR_ASSERT_FATAL(comp->target().is64Bit(),
-      "multianewArrayEvaluator is only supported on 64-bit JVMs!");
+   TR_ASSERT_FATAL(comp->target().is64Bit(), "multianewArrayEvaluator is only supported on 64-bit JVMs!");
    TR_J9VMBase *fej9 = comp->fej9();
 
    int32_t referenceFieldSize = TR::Compiler->om.sizeofReferenceField();
@@ -1949,8 +1948,9 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    bool use64BitClasses =
       comp->target().is64Bit() && !TR::Compiler->om.generateCompressedObjectHeaders();
 
-   //printf("constants %d %d %d %d %d\n", referenceFieldSize, addrSize, zeroArraySizeAligned,
-   //      use64BitClasses, TR::Compiler->om.getObjectAlignmentInBytes());
+   // Zero size arrays are considered "discontiguous", and the "mustBeZero" field
+   // of discontiguous arrays must be located where the "size" field of contiguous arrays is.
+   UDATA offsetOfMustBeZeroField = fej9->getOffsetOfContiguousArraySizeField();
 
    // ptr to array of sizes, with the highest dimension in the front
    TR::Register *dimsPtrReg = cg->evaluate(node->getFirstChild());
@@ -2035,7 +2035,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    // initialise the size and mustBeZero ('0') fields in the header to 0
    generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node,
       TR::MemoryReference::createWithDisplacement(cg, targetReg,
-         fej9->getOffsetOfContiguousArraySizeField(), 4), temp3Reg);
+         offsetOfMustBeZeroField, 4), temp3Reg);
    generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node,
       TR::MemoryReference::createWithDisplacement(cg, targetReg,
          fej9->getOffsetOfDiscontiguousArraySizeField(), 4), temp3Reg);
@@ -2140,7 +2140,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, temp3Reg, 0);
    generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node,
       TR::MemoryReference::createWithDisplacement(cg, temp2Reg,
-         fej9->getOffsetOfContiguousArraySizeField(), 4), temp3Reg);
+         offsetOfMustBeZeroField, 4), temp3Reg);
    generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node,
       TR::MemoryReference::createWithDisplacement(cg, temp2Reg,
          fej9->getOffsetOfDiscontiguousArraySizeField(), 4), temp3Reg);
