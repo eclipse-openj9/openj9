@@ -1949,8 +1949,8 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    bool use64BitClasses =
       comp->target().is64Bit() && !TR::Compiler->om.generateCompressedObjectHeaders();
 
-   printf("LLK constants %d %d %d %d %d\n", referenceFieldSize, addrSize, zeroArraySizeAligned,
-         use64BitClasses, TR::Compiler->om.getObjectAlignmentInBytes());
+   //printf("constants %d %d %d %d %d\n", referenceFieldSize, addrSize, zeroArraySizeAligned,
+   //      use64BitClasses, TR::Compiler->om.getObjectAlignmentInBytes());
 
    // ptr to array of sizes, with the highest dimension in the front
    TR::Register *dimsPtrReg = cg->evaluate(node->getFirstChild());
@@ -2237,7 +2237,12 @@ TR::Register *J9::Power::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, 
    // anything with more than 2 dimensions will be replaced by a direct call when lowering trees
    uint32_t nDims = secondChild->get32bitIntegralValue();
    static bool disableInlineMultianewArray = feGetEnv("TR_DisableInlineMultianewArray") != NULL;
-   if (nDims > 1 && !disableInlineMultianewArray)
+
+   if (nDims > 1 && !disableInlineMultianewArray
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) /* offheap not enabled for now */
+         && !TR::Compiler->om.isOffHeapAllocationEnabled()
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
+      )
       {
       return generateMultianewArrayWithInlineAllocators(node, cg);
       }
