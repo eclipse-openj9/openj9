@@ -682,4 +682,14 @@ public static native void stopJFR();
  */
 public static native void triggerExecutionSample();
 /*[ENDIF] JFR_SUPPORT */
+
+/*[IF JAVA_SPEC_VERSION >= 24]*/
+/**
+ * Queries whether -XX:+YieldPinnedVirtualThreads is enabled.
+ * By default, this method returns true, i.e., not in legacy locking mode.
+ *
+ * @return true if -XX:+YieldPinnedVirtualThreads is enabled, false otherwise
+ */
+public static native boolean isYieldBlockedVirtualThreadsEnabled();
+/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
 }
