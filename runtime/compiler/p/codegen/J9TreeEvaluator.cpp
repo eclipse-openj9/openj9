@@ -2119,9 +2119,9 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node,
       TR::MemoryReference::createWithDisplacement(cg, targetReg,
          fej9->getOffsetOfContiguousArraySizeField(), 4), firstDimLenReg);
-   
+
    // TODO: offheap
-   
+
    // temp2Reg = targetReg + temp1Reg = start of the 2nd dimension headers
    generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, temp2Reg, temp1Reg, targetReg);
    // temp1Reg points to the first element of the 1st dimension array by jumping over the header
