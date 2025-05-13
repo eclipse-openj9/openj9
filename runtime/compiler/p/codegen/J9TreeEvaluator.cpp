@@ -10485,8 +10485,22 @@ hashCodeHelper(TR::Node *node, TR::CodeGenerator *cg, TR::DataType elementType,
    TR::LabelSymbol *endLabel = generateLabelSymbol(cg);
 
    // Skip header of the array
-   intptr_t hdrSize = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
-   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, valueReg, valueReg, hdrSize);
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+   if (TR::Compiler->om.isOffHeapAllocationEnabled())
+      {
+      generateTrg1MemInstruction(
+         cg, TR::InstOpCode::Op_load, node, valueReg,
+         TR::MemoryReference::createWithDisplacement(
+            cg, valueReg, TR::Compiler->om.offsetOfContiguousDataAddrField(),
+            comp->target().is64Bit() ? 8 : 4)
+         );
+      }
+   else
+#endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
+      {
+      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, valueReg, valueReg,
+                                     TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+      }
 
    // v = v + offset<<lg(elementSize)
    // end = v + count<<lg(elementSize)
