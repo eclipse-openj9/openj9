@@ -683,7 +683,6 @@ public:
    uint32_t *getAllocationProfilingDataPointer(TR_ByteCodeInfo &bcInfo, TR_OpaqueClassBlock *clazz, TR_OpaqueMethodBlock *method, TR::Compilation *comp);
    uint32_t *getGlobalAllocationDataPointer(bool isAOT);
    TR_ExternalProfiler * canProduceBlockFrequencyInfo(TR::Compilation& comp);
-   void setupEntriesInHashTable(TR_IProfiler *ip);
 
    TR_IPMethodHashTableEntry *findOrCreateMethodEntry(J9Method *, J9Method *, bool addIt, uint32_t pcIndex =  ~0);
    // Returns the number of entries released, and also stores the number of
@@ -762,8 +761,6 @@ private:
    virtual int32_t getFlatSwitchProfileCounts (TR::Node *node, TR::Compilation *comp);
    virtual bool isSwitchProfileFlat (TR::Node *node, TR::Compilation *comp);
    int32_t getSamplingCount( TR_IPBytecodeHashTableEntry *entry, TR::Compilation *comp);
-   // for replay
-   void copyDataFromEntry(TR_IPBytecodeHashTableEntry *oldEntry, TR_IPBytecodeHashTableEntry *newEntry, TR_IProfiler *ip);
 
    TR_IPBCDataStorageHeader *getJ9SharedDataDescriptorForMethod(J9SharedDataDescriptor * descriptor, unsigned char * buffer, uint32_t length, TR_OpaqueMethodBlock * method, TR::Compilation *comp);
 
