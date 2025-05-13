@@ -54,7 +54,8 @@ JITServerAOTDeserializer::JITServerAOTDeserializer(TR_PersistentClassLoaderTable
    _generatedClasses(decltype(_generatedClasses)::allocator_type(TR::Compiler->persistentAllocator())),
    _generatedClassesMonitor(TR::Monitor::create("JIT-JITServerAOTDeserializerGeneratedClassesMonitor")),
    _numCacheBypasses(0), _numCacheHits(0), _numCacheMisses(0), _numDeserializedMethods(0),
-   _numDeserializationFailures(0), _numClassSizeMismatches(0), _numClassHashMismatches(0)
+   _numDeserializationFailures(0), _numClassSizeMismatches(0), _numClassHashMismatches(0),
+   _threadsToNotifyOnReset(decltype(_threadsToNotifyOnReset)::allocator_type(TR::Compiler->persistentAllocator()))
    {
    bool allMonitors = _classLoaderMonitor && _classMonitor && _methodMonitor &&
                       _classChainMonitor && _wellKnownClassesMonitor && _resetMonitor;
@@ -73,6 +74,23 @@ JITServerAOTDeserializer::~JITServerAOTDeserializer()
    TR::Monitor::destroy(_resetMonitor);
    }
 
+void
+JITServerAOTDeserializer::registerThreadToNotifyOnReset(J9VMThread *vmThread)
+   {
+   OMR::CriticalSection rcs(_resetMonitor);
+
+   auto ret = _threadsToNotifyOnReset.insert(vmThread);
+   TR_ASSERT_FATAL(ret.second, "vmThread 0x%p has already been registered\n", vmThread);
+   }
+
+void
+JITServerAOTDeserializer::unregisterThreadToNotifyOnReset(J9VMThread *vmThread)
+   {
+   OMR::CriticalSection rcs(_resetMonitor);
+
+   auto ret = _threadsToNotifyOnReset.erase(vmThread);
+   TR_ASSERT_FATAL(ret, "vmThread 0x%p has not been registered\n", vmThread);
+   }
 
 TR_Memory &
 JITServerAOTDeserializer::classLoadTRMemory()
@@ -83,9 +101,9 @@ JITServerAOTDeserializer::classLoadTRMemory()
 
 
 bool
-JITServerAOTDeserializer::deserializerWasReset(TR::Compilation *comp, bool &wasReset)
+JITServerAOTDeserializer::deserializerWasReset(TR_J9VMBase *vm, bool &wasReset)
    {
-   return comp->fej9vm()->_compInfoPT->getDeserializerWasReset() ? (wasReset = true) : false;
+   return vm->getDeserializerWasReset() ? (wasReset = true) : false;
    }
 
 bool
@@ -118,9 +136,16 @@ JITServerAOTDeserializer::reset(TR::CompilationInfoPerThread *compInfoPT)
 
    // Notify each compilation thread that the deserializer was reset
    compInfoPT->getCompilationInfo()->notifyCompilationThreadsOfDeserializerReset();
+   for (auto vmThread : _threadsToNotifyOnReset)
+      {
+      auto vm = TR_J9VMBase::get(_jitConfig, vmThread);
+      vm->setDeserializerWasReset();
+      }
+
    // This very thread is guaranteed not to be processing any AOT cache records from the old server,
    // so we can clear its deserializer reset flag.
-   compInfoPT->clearDeserializerWasReset();
+   auto vm = TR_J9VMBase::get(_jitConfig, compInfoPT->getCompilationThread());
+   vm->clearDeserializerWasReset();
 
    clearCachedData();
    }
@@ -133,7 +158,7 @@ JITServerAOTDeserializer::addNewKnownIds(const Vector<uintptr_t> &newIds, TR::Co
    OMR::CriticalSection cs(_newKnownIdsMonitor);
    // Check again that a reset operation has not started.
    bool wasReset = false;
-   if (deserializerWasReset(comp, wasReset))
+   if (deserializerWasReset(comp->fej9(), wasReset))
       return;
    _newKnownIds.insert(newIds.begin(), newIds.end());
    }
@@ -143,7 +168,7 @@ JITServerAOTDeserializer::getNewKnownIds(TR::Compilation *comp)
    {
    OMR::CriticalSection cs(_newKnownIdsMonitor);
    bool wasReset = false;
-   if (deserializerWasReset(comp, wasReset))
+   if (deserializerWasReset(comp->fej9(), wasReset))
       return std::vector<uintptr_t>();
 
    std::vector<uintptr_t> result(_newKnownIds.begin(), _newKnownIds.end());
@@ -254,7 +279,7 @@ JITServerAOTDeserializer::deserialize(SerializedAOTMethod *method, const std::ve
    if (!wasReset)
       {
       OMR::CriticalSection cs(getNewKnownIdsMonitor());
-      if (!deserializerWasReset(comp, wasReset))
+      if (!deserializerWasReset(comp->fej9(), wasReset))
          _newKnownIds.insert(newIds.begin(), newIds.end());
       }
 
@@ -555,10 +580,10 @@ addToMaps(PersistentUnorderedMap<uintptr_t, V0> &map0,
 
 // Find a cached entry for the given ID in the map
 template<typename V> V
-JITServerAOTDeserializer::findInMap(const PersistentUnorderedMap<uintptr_t, V> &map, uintptr_t id, TR::Monitor *monitor, TR::Compilation *comp, bool &wasReset)
+JITServerAOTDeserializer::findInMap(const PersistentUnorderedMap<uintptr_t, V> &map, uintptr_t id, TR::Monitor *monitor, TR_J9VMBase *vm, bool &wasReset)
    {
    OMR::CriticalSection cs(monitor);
-   if (deserializerWasReset(comp, wasReset))
+   if (deserializerWasReset(vm, wasReset))
       return V();
 
    auto it = map.find(id);
@@ -709,7 +734,7 @@ bool
 JITServerLocalSCCAOTDeserializer::cacheRecord(const ClassLoaderSerializationRecord *record, TR::Compilation *comp, bool &isNew, bool &wasReset)
    {
    OMR::CriticalSection cs(getClassLoaderMonitor());
-   if (deserializerWasReset(comp, wasReset))
+   if (deserializerWasReset(comp->fej9(), wasReset))
       return false;
 
    auto it = _classLoaderIdMap.find(record->id());
@@ -756,7 +781,7 @@ JITServerLocalSCCAOTDeserializer::cacheRecord(const ClassSerializationRecord *re
                                               bool &isNew, bool &wasReset)
    {
    OMR::CriticalSection cs(getClassMonitor());
-   if (deserializerWasReset(comp, wasReset))
+   if (deserializerWasReset(comp->fej9(), wasReset))
       return false;
 
    auto it = _classIdMap.find(record->id());
@@ -834,7 +859,7 @@ JITServerLocalSCCAOTDeserializer::cacheRecord(const MethodSerializationRecord *r
                                               bool &isNew, bool &wasReset)
 {
    OMR::CriticalSection cs(getMethodMonitor());
-   if (deserializerWasReset(comp, wasReset))
+   if (deserializerWasReset(comp->fej9(), wasReset))
       return false;
 
    auto it = _methodMap.find(record->id());
@@ -868,7 +893,7 @@ JITServerLocalSCCAOTDeserializer::cacheRecord(const ClassChainSerializationRecor
                                               bool &isNew, bool &wasReset)
    {
    OMR::CriticalSection cs(getClassChainMonitor());
-   if (deserializerWasReset(comp, wasReset))
+   if (deserializerWasReset(comp->fej9(), wasReset))
       return false;
 
    auto it = _classChainMap.find(record->id());
@@ -944,7 +969,7 @@ JITServerLocalSCCAOTDeserializer::cacheRecord(const WellKnownClassesSerializatio
                                               TR::Compilation *comp, bool &isNew, bool &wasReset)
    {
    OMR::CriticalSection cs(getWellKnownClassesMonitor());
-   if (deserializerWasReset(comp, wasReset))
+   if (deserializerWasReset(comp->fej9(), wasReset))
       return false;
 
    auto it = _wellKnownClassesMap.find(record->id());
@@ -998,7 +1023,7 @@ JITServerLocalSCCAOTDeserializer::cacheRecord(const ThunkSerializationRecord *re
    // Unlike the rest of the cacheRecord functions, we do not need to acquire a monitor here, as we can rely on
    // the internal synchronization of getJ2IThunk and setJ2IThunk. We use a read barrier here for deserializerWasReset().
    VM_AtomicSupport::readBarrier();
-   if (deserializerWasReset(comp, wasReset))
+   if (deserializerWasReset(comp->fej9(), wasReset))
       return false;
 
    auto fej9vm = comp->fej9vm();
@@ -1020,7 +1045,7 @@ J9ClassLoader *
 JITServerLocalSCCAOTDeserializer::getClassLoader(uintptr_t id, uintptr_t &loaderSCCOffset, TR::Compilation *comp, bool &wasReset)
    {
    OMR::CriticalSection cs(getClassLoaderMonitor());
-   if (deserializerWasReset(comp, wasReset))
+   if (deserializerWasReset(comp->fej9(), wasReset))
       return NULL;
 
    auto it = _classLoaderIdMap.find(id);
@@ -1065,7 +1090,7 @@ J9Class *
 JITServerLocalSCCAOTDeserializer::getRAMClass(uintptr_t id, TR::Compilation *comp, bool &wasReset)
    {
    OMR::CriticalSection cs(getClassMonitor());
-   if (deserializerWasReset(comp, wasReset))
+   if (deserializerWasReset(comp->fej9(), wasReset))
       return NULL;
 
    auto it = _classIdMap.find(id);
@@ -1154,12 +1179,12 @@ JITServerLocalSCCAOTDeserializer::getSCCOffset(AOTSerializationRecordType type, 
       {
       case ClassLoader:
          {
-         uintptr_t offset = findInMap(_classLoaderIdMap, id, getClassLoaderMonitor(), comp, wasReset)._loaderChainSCCOffset;
+         uintptr_t offset = findInMap(_classLoaderIdMap, id, getClassLoaderMonitor(), comp->fej9(), wasReset)._loaderChainSCCOffset;
          return wasReset ? (uintptr_t)-1 : offset;
          }
       case Class:
          {
-         uintptr_t offset = findInMap(_classIdMap, id, getClassMonitor(), comp, wasReset)._romClassSCCOffset;
+         uintptr_t offset = findInMap(_classIdMap, id, getClassMonitor(), comp->fej9(), wasReset)._romClassSCCOffset;
          // Check if this cached ID is for a valid class
          if ((offset == (uintptr_t)-1) && TR::Options::getVerboseOption(TR_VerboseJITServer))
             TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "ERROR: Mismatching class ID %zu", id);
@@ -1167,17 +1192,17 @@ JITServerLocalSCCAOTDeserializer::getSCCOffset(AOTSerializationRecordType type, 
          }
       case Method:
          {
-         uintptr_t offset = findInMap(_methodMap, id, getMethodMonitor(), comp, wasReset);
+         uintptr_t offset = findInMap(_methodMap, id, getMethodMonitor(), comp->fej9(), wasReset);
          return wasReset ? (uintptr_t)-1 : offset;
          }
       case ClassChain:
          {
-         uintptr_t offset = findInMap(_classChainMap, id, getClassChainMonitor(), comp, wasReset);
+         uintptr_t offset = findInMap(_classChainMap, id, getClassChainMonitor(), comp->fej9(), wasReset);
          return wasReset ? (uintptr_t)-1 : offset;
          }
       case WellKnownClasses:
          {
-         uintptr_t offset = findInMap(_wellKnownClassesMap, id, getWellKnownClassesMonitor(), comp, wasReset);
+         uintptr_t offset = findInMap(_wellKnownClassesMap, id, getWellKnownClassesMonitor(), comp->fej9(), wasReset);
          return wasReset ? (uintptr_t)-1 : offset;
          }
       default:
@@ -1377,7 +1402,7 @@ bool
 JITServerNoSCCAOTDeserializer::cacheRecord(const ClassLoaderSerializationRecord *record, TR::Compilation *comp, bool &isNew, bool &wasReset)
    {
    OMR::CriticalSection cs(getClassLoaderMonitor());
-   if (deserializerWasReset(comp, wasReset))
+   if (deserializerWasReset(comp->fej9(), wasReset))
       return false;
 
    auto it = _classLoaderIdMap.find(record->id());
@@ -1410,7 +1435,7 @@ bool
 JITServerNoSCCAOTDeserializer::cacheRecord(const ClassSerializationRecord *record, TR::Compilation *comp, bool &isNew, bool &wasReset)
    {
    OMR::CriticalSection cs(getClassMonitor());
-   if (deserializerWasReset(comp, wasReset))
+   if (deserializerWasReset(comp->fej9(), wasReset))
       return false;
 
    auto it = _classIdMap.find(record->id());
@@ -1432,7 +1457,7 @@ JITServerNoSCCAOTDeserializer::cacheRecord(const ClassSerializationRecord *recor
    // The class loader for this class record should already have been deserialized, so if we can't find a
    // loader for this ID then it must have been marked as unloaded. We don't support loader reloading, so
    // we simply fail to deserialize here.
-   auto loader = findInMap(_classLoaderIdMap, record->classLoaderId(), getClassLoaderMonitor(), comp, wasReset);
+   auto loader = findInMap(_classLoaderIdMap, record->classLoaderId(), getClassLoaderMonitor(), comp->fej9(), wasReset);
    if (!loader)
       {
       if (TR::Options::getVerboseOption(TR_VerboseJITServer))
@@ -1486,7 +1511,7 @@ bool
 JITServerNoSCCAOTDeserializer::cacheRecord(const MethodSerializationRecord *record, TR::Compilation *comp, bool &isNew, bool &wasReset)
    {
    OMR::CriticalSection cs(getMethodMonitor());
-   if (deserializerWasReset(comp, wasReset))
+   if (deserializerWasReset(comp->fej9(), wasReset))
       return false;
 
    auto it = _methodIdMap.find(record->id());
@@ -1508,7 +1533,7 @@ JITServerNoSCCAOTDeserializer::cacheRecord(const MethodSerializationRecord *reco
    // Get the defining RAM class for this method using its ID. If it can't be found,
    // it was marked as invalid. We don't support reloading, so simply fail here in
    // that case.
-   auto ramClass = findInMap(_classIdMap, record->definingClassId(), getClassMonitor(), comp, wasReset)._ramClass;
+   auto ramClass = findInMap(_classIdMap, record->definingClassId(), getClassMonitor(), comp->fej9(), wasReset)._ramClass;
    if (!ramClass)
       return false;
 
@@ -1562,7 +1587,7 @@ J9Class *
 JITServerNoSCCAOTDeserializer::getRAMClass(uintptr_t id, TR::Compilation *comp, bool &wasReset)
    {
    OMR::CriticalSection cs(getClassMonitor());
-   if (deserializerWasReset(comp, wasReset))
+   if (deserializerWasReset(comp->fej9(), wasReset))
       return NULL;
 
    auto it = _classIdMap.find(id);
@@ -1586,7 +1611,7 @@ bool
 JITServerNoSCCAOTDeserializer::cacheRecord(const ClassChainSerializationRecord *record, TR::Compilation *comp, bool &isNew, bool &wasReset)
    {
    OMR::CriticalSection cs(getClassChainMonitor());
-   if (deserializerWasReset(comp, wasReset))
+   if (deserializerWasReset(comp->fej9(), wasReset))
       return false;
 
    auto it = _classChainMap.find(record->id());
@@ -1595,7 +1620,7 @@ JITServerNoSCCAOTDeserializer::cacheRecord(const ClassChainSerializationRecord *
    isNew = true;
 
    // Get the RAM class chain for the first class referenced in the class chain serialization record
-   auto firstClass = findInMap(_classIdMap, record->list().ids()[0], getClassMonitor(), comp, wasReset)._ramClass;
+   auto firstClass = findInMap(_classIdMap, record->list().ids()[0], getClassMonitor(), comp->fej9(), wasReset)._ramClass;
    if (!firstClass)
       return false;
    J9Class *ramClassChain[TR_J9SharedCache::maxClassChainLength];
@@ -1616,7 +1641,7 @@ JITServerNoSCCAOTDeserializer::cacheRecord(const ClassChainSerializationRecord *
    // Validate each class in the server's chain (which should all be cached by now)
    for (size_t i = 0; i < ramClassChainLength; ++i)
       {
-      auto ramClass = findInMap(_classIdMap, record->list().ids()[i], getClassMonitor(), comp, wasReset)._ramClass;
+      auto ramClass = findInMap(_classIdMap, record->list().ids()[i], getClassMonitor(), comp->fej9(), wasReset)._ramClass;
       if (!ramClass)
          {
          if (TR::Options::getVerboseOption(TR_VerboseJITServer))
@@ -1664,7 +1689,7 @@ bool
 JITServerNoSCCAOTDeserializer::cacheRecord(const WellKnownClassesSerializationRecord *record, TR::Compilation *comp, bool &isNew, bool &wasReset)
    {
    OMR::CriticalSection cs(getWellKnownClassesMonitor());
-   if (deserializerWasReset(comp, wasReset))
+   if (deserializerWasReset(comp->fej9(), wasReset))
       return false;
 
    auto it = _wellKnownClassesMap.find(record->id());
@@ -1746,7 +1771,7 @@ JITServerNoSCCAOTDeserializer::updateSCCOffsets(SerializedAOTMethod *method, TR:
       if (serializedOffset.recordType() == AOTSerializationRecordType::Thunk)
          continue;
 
-      if (!revalidateRecord(serializedOffset.recordType(), serializedOffset.recordId(), comp, wasReset))
+      if (!revalidateRecord(serializedOffset.recordType(), serializedOffset.recordId(), comp->fej9(), wasReset))
          return false;
       uintptr_t offset = encodeOffset(serializedOffset);
 
@@ -1770,23 +1795,23 @@ JITServerNoSCCAOTDeserializer::updateSCCOffsets(SerializedAOTMethod *method, TR:
    }
 
 bool
-JITServerNoSCCAOTDeserializer::revalidateRecord(AOTSerializationRecordType type, uintptr_t id, TR::Compilation *comp, bool &wasReset)
+JITServerNoSCCAOTDeserializer::revalidateRecord(AOTSerializationRecordType type, uintptr_t id, TR_J9VMBase *vm, bool &wasReset)
    {
    switch (type)
       {
       case ClassLoader:
          {
-         auto loader = findInMap(_classLoaderIdMap, id, getClassLoaderMonitor(), comp, wasReset);
+         auto loader = findInMap(_classLoaderIdMap, id, getClassLoaderMonitor(), vm, wasReset);
          return !wasReset && (loader != NULL);
          }
       case Class:
          {
-         auto clazz = findInMap(_classIdMap, id, getClassMonitor(), comp, wasReset)._ramClass;
+         auto clazz = findInMap(_classIdMap, id, getClassMonitor(), vm, wasReset)._ramClass;
          return !wasReset && (clazz != NULL);
          }
       case Method:
          {
-         auto method = findInMap(_methodIdMap, id, getMethodMonitor(), comp, wasReset);
+         auto method = findInMap(_methodIdMap, id, getMethodMonitor(), vm, wasReset);
          return !wasReset && (method != NULL);
          }
       case ClassChain:
@@ -1797,7 +1822,7 @@ JITServerNoSCCAOTDeserializer::revalidateRecord(AOTSerializationRecordType type,
          // that we aren't guaranteed to have revalidated every class mentioned in this class chain, and so
          // we must check the entire chain here.
          OMR::CriticalSection cs(getClassChainMonitor());
-         if (deserializerWasReset(comp, wasReset))
+         if (deserializerWasReset(vm, wasReset))
             return false;
 
          auto it = _classChainMap.find(id);
@@ -1808,7 +1833,7 @@ JITServerNoSCCAOTDeserializer::revalidateRecord(AOTSerializationRecordType type,
          uintptr_t *chainData = it->second + 1;
          for (size_t i = 0; i < chainLength; ++i)
             {
-            auto ramClass = findInMap(_classIdMap, offsetId(chainData[i]), getClassMonitor(), comp, wasReset)._ramClass;
+            auto ramClass = findInMap(_classIdMap, offsetId(chainData[i]), getClassMonitor(), vm, wasReset)._ramClass;
             if (!ramClass)
                {
                TR::Compiler->persistentGlobalMemory()->freePersistentMemory(it->second);
@@ -1826,7 +1851,7 @@ JITServerNoSCCAOTDeserializer::revalidateRecord(AOTSerializationRecordType type,
          {
          // See the note for case ClassChain
          OMR::CriticalSection cs(getWellKnownClassesMonitor());
-         if (deserializerWasReset(comp, wasReset))
+         if (deserializerWasReset(vm, wasReset))
             return false;
 
          auto it = _wellKnownClassesMap.find(id);
@@ -1837,7 +1862,7 @@ JITServerNoSCCAOTDeserializer::revalidateRecord(AOTSerializationRecordType type,
          uintptr_t *chainData = it->second + 1;
          for (size_t i = 0; i < chainLength; ++i)
             {
-            auto classChain = findInMap(_classChainMap, offsetId(chainData[i]), getClassChainMonitor(), comp, wasReset);
+            auto classChain = findInMap(_classChainMap, offsetId(chainData[i]), getClassChainMonitor(), vm, wasReset);
             if (!classChain)
                {
                TR::Compiler->persistentGlobalMemory()->freePersistentMemory(it->second);
@@ -1878,7 +1903,7 @@ J9Class *
 JITServerNoSCCAOTDeserializer::classFromOffset(uintptr_t offset, TR::Compilation *comp, bool &wasReset)
    {
    TR_ASSERT_FATAL(offsetType(offset) == AOTSerializationRecordType::Class, "Offset %zu must be to a class", offset);
-   return findInMap(_classIdMap, offsetId(offset), getClassMonitor(), comp, wasReset)._ramClass;
+   return findInMap(_classIdMap, offsetId(offset), getClassMonitor(), comp->fej9(), wasReset)._ramClass;
    }
 
 // Return a pointer to the entity referred to by the given offset. Note that for class chains identifying class loaders,
@@ -1894,15 +1919,15 @@ JITServerNoSCCAOTDeserializer::pointerFromOffsetInSharedCache(uintptr_t offset, 
    switch (ty)
       {
       case AOTSerializationRecordType::ClassLoader:
-         ptr = findInMap(_classLoaderIdMap, id, getClassLoaderMonitor(), comp, wasReset);
+         ptr = findInMap(_classLoaderIdMap, id, getClassLoaderMonitor(), comp->fej9(), wasReset);
          break;
 
       case AOTSerializationRecordType::ClassChain:
-         ptr = findInMap(_classChainMap, id, getClassChainMonitor(), comp, wasReset);
+         ptr = findInMap(_classChainMap, id, getClassChainMonitor(), comp->fej9(), wasReset);
          break;
 
       case AOTSerializationRecordType::WellKnownClasses:
-         ptr = findInMap(_wellKnownClassesMap, id, getWellKnownClassesMonitor(), comp, wasReset);
+         ptr = findInMap(_wellKnownClassesMap, id, getWellKnownClassesMonitor(), comp->fej9(), wasReset);
          break;
 
       default:
@@ -1918,7 +1943,7 @@ J9ROMMethod *
 JITServerNoSCCAOTDeserializer::romMethodFromOffsetInSharedCache(uintptr_t offset, TR::Compilation *comp, bool &wasReset)
    {
    TR_ASSERT_FATAL(offsetType(offset) == AOTSerializationRecordType::Method, "Offset %zu must be to a method", offset);
-   auto romMethod = findInMap(_methodIdMap, offsetId(offset), getMethodMonitor(), comp, wasReset);
+   auto romMethod = findInMap(_methodIdMap, offsetId(offset), getMethodMonitor(), comp->fej9(), wasReset);
    if (romMethod)
       return J9_ROM_METHOD_FROM_RAM_METHOD(romMethod);
 

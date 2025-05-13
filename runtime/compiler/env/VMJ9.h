@@ -1454,6 +1454,12 @@ public:
 
 #if defined(J9VM_OPT_JITSERVER)
    TR_J9DeserializerSharedCache *deserializerSharedCache() const { return _deserializerSharedCache; }
+
+   bool                      getDeserializerWasReset() const { return _deserializerWasReset; }
+   // Called externally by a compilation thread that is resetting the JITServer AOT deserializer
+   void                      setDeserializerWasReset() { _deserializerWasReset = true; }
+   // Called by the current compilation thread at the beginning of a remote compilation to clear the _deserializerWasReset flag
+   void                      clearDeserializerWasReset() { _deserializerWasReset = false; }
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    const char *getByteCodeName(uint8_t opcode);
@@ -1557,6 +1563,10 @@ protected:
 
    flags32_t _flags;
 
+#if defined(J9VM_OPT_JITSERVER)
+   // A flag notifying this thread that the JITServer AOT deserializer was reset.
+   bool _deserializerWasReset;
+#endif // defined(J9VM_OPT_JITSERVER)
    };
 
 class TR_J9VM : public TR_J9VMBase
