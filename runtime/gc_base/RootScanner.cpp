@@ -951,20 +951,20 @@ void
 MM_RootScanner::scanObjectsInVirtualLargeObjectHeap(MM_EnvironmentBase *env)
 {
 	if (_singleThread || J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
-		PORT_ACCESS_FROM_ENVIRONMENT(env);
-		j9tty_printf(PORTLIB, "scanObjectsInVirtualLargeObjectHeap _singleThread=%zu, env=%p\n", _singleThread, env);
+//		PORT_ACCESS_FROM_ENVIRONMENT(env);
+//		j9tty_printf(PORTLIB, "scanObjectsInVirtualLargeObjectHeap _singleThread=%zu, env=%p\n", _singleThread, env);
 		reportScanningStarted(RootScannerEntity_virtualLargeObjectHeapObjects);
 
 		MM_SparseVirtualMemory *largeObjectVirtualMemory = _extensions->largeObjectVirtualMemory;
 		J9HashTableState walkState;
 
 		MM_SparseDataTableEntry *sparseDataEntry = (MM_SparseDataTableEntry *)hashTableStartDo(largeObjectVirtualMemory->getSparseDataPool()->getObjectToSparseDataTable(), &walkState);
-		j9tty_printf(PORTLIB, "hashTableStartDo sparseDataEntry=%p, env=%p\n", sparseDataEntry, env);
+//		j9tty_printf(PORTLIB, "hashTableStartDo sparseDataEntry=%p, env=%p\n", sparseDataEntry, env);
 		while (NULL != sparseDataEntry) {
 			J9Object *spineObject = (J9Object *)sparseDataEntry->_proxyObjPtr;
 			Assert_MM_true(NULL != spineObject);
 			doObjectInVirtualLargeObjectHeap(spineObject);
-			j9tty_printf(PORTLIB, "hashTableNextDo &walkState=%p, spineObject=%p, size=%zu, env=%p\n", &walkState, spineObject, sparseDataEntry->_size, env);
+//			j9tty_printf(PORTLIB, "hashTableNextDo &walkState=%p, spineObject=%p, size=%zu, env=%p\n", &walkState, spineObject, sparseDataEntry->_size, env);
 			sparseDataEntry = (MM_SparseDataTableEntry *)hashTableNextDo(&walkState);
 		}
 		reportScanningEnded(RootScannerEntity_virtualLargeObjectHeapObjects);

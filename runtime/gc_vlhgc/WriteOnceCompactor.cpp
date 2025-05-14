@@ -1737,6 +1737,10 @@ public:
 				 * failure (reason why this GC cycle is happening).
 				 */
 				_extensions->largeObjectVirtualMemory->updateSparseDataEntryAfterObjectHasMoved(dataAddr, objectPtr, _extensions->indexableObjectModel.getDataSizeInBytes((J9IndexableObject *)fwdOjectPtr), fwdOjectPtr);
+
+				PORT_ACCESS_FROM_ENVIRONMENT(_env);
+				j9tty_printf(PORTLIB, "doObjectInVirtualLargeObjectHeap-Compactor updateSparseDataEntryAfterObjectHasMoved objectPtr=%p, fwdOjectPtr=%p, byteAmount=%zu\n", objectPtr, fwdOjectPtr, _extensions->indexableObjectModel.getDataSizeInBytes((J9IndexableObject *)fwdOjectPtr));
+
 			}
 		}
 	}

@@ -434,6 +434,7 @@ MM_CopyForwardScheme::updateLeafRegions(MM_EnvironmentVLHGC *env)
 	GC_HeapRegionIteratorVLHGC regionIterator(_regionManager);
 	MM_HeapRegionDescriptorVLHGC *region = NULL;
 
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
 	if (_extensions->isVirtualLargeObjectHeapEnabled) {
 		const uintptr_t arrayletLeafSize = env->getOmrVM()->_arrayletLeafSize;
 		MM_SparseVirtualMemory *largeObjectVirtualMemory = _extensions->largeObjectVirtualMemory;
@@ -444,6 +445,7 @@ MM_CopyForwardScheme::updateLeafRegions(MM_EnvironmentVLHGC *env)
 		while (NULL != sparseDataEntry) {
 			J9Object *spineObject = (J9Object *)sparseDataEntry->_proxyObjPtr;
 			if (!isLiveObject(spineObject)) {
+				Assert_MM_true(isObjectInEvacuateMemory(spineObject));
 				uintptr_t dataSize = sparseDataEntry->_size;
 				arrayletLeafCount += MM_Math::roundToCeiling(arrayletLeafSize, dataSize) / arrayletLeafSize;
 			}
@@ -456,7 +458,9 @@ MM_CopyForwardScheme::updateLeafRegions(MM_EnvironmentVLHGC *env)
 			}
 		}
 		Assert_MM_true(0 == arrayletLeafCount);
-	} else {
+	} else
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
+	{
 		while (NULL != (region = regionIterator.nextRegion())) {
 			if (region->isArrayletLeaf()) {
 				J9Object *spineObject = (J9Object *)region->_allocateData.getSpine();
@@ -4190,6 +4194,10 @@ private:
 				env->_copyForwardStats._offHeapRegionsCleared += 1;
 				void *dataAddr = _extensions->indexableObjectModel.getDataAddrForContiguous((J9IndexableObject *)objectPtr);
 				_extensions->largeObjectVirtualMemory->freeSparseRegionAndUnmapFromHeapObject(_env, dataAddr, objectPtr, _extensions->indexableObjectModel.getDataSizeInBytes((J9IndexableObject *)objectPtr));
+
+				PORT_ACCESS_FROM_ENVIRONMENT(env);
+				j9tty_printf(PORTLIB, "doObjectInVirtualLargeObjectHeap-copyf freeSparseRegionAndUnmapFromHeapObject objectPtr=%p, byteAmount=%zu\n", objectPtr, _extensions->indexableObjectModel.getDataSizeInBytes((J9IndexableObject *)objectPtr));
+
 			} else {
 				void *dataAddr = _extensions->indexableObjectModel.getDataAddrForContiguous((J9IndexableObject *)fwdOjectPtr);
 				if (NULL != dataAddr) {
@@ -4202,6 +4210,10 @@ private:
 							_extensions->indexableObjectModel.getDataSizeInBytes((J9IndexableObject *)fwdOjectPtr),
 							fwdOjectPtr
 					);
+
+					PORT_ACCESS_FROM_ENVIRONMENT(env);
+					j9tty_printf(PORTLIB, "doObjectInVirtualLargeObjectHeap-copyf updateSparseDataEntryAfterObjectHasMoved objectPtr=%p, fwdOjectPtr=%p, byteAmount=%zu\n", objectPtr, fwdOjectPtr, _extensions->indexableObjectModel.getDataSizeInBytes((J9IndexableObject *)fwdOjectPtr));
+
 				}
 			}
 		}
