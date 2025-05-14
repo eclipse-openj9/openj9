@@ -2228,19 +2228,19 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
       {
       reg = callNode->getFirstChild()->getRegister();
       if (reg)
-         dependencies->unionPostCondition(reg, TR::RealRegister::NoReg, cg);
+         dependencies->addPostCondition(reg, TR::RealRegister::NoReg);
       }
    if (callNode->getSecondChild() == node->getSecondChild())
       {
       reg = callNode->getSecondChild()->getRegister();
       if (reg)
-         dependencies->unionPostCondition(reg, TR::RealRegister::NoReg, cg);
+         dependencies->addPostCondition(reg, TR::RealRegister::NoReg);
       }
    if (callNode->getThirdChild() == node->getThirdChild())
       {
       reg = callNode->getThirdChild()->getRegister();
       if (reg)
-         dependencies->unionPostCondition(reg, TR::RealRegister::NoReg, cg);
+         dependencies->addPostCondition(reg, TR::RealRegister::NoReg);
       }
 
    dependencies->stopAddingConditions();
