@@ -25,7 +25,7 @@ import j9vm.runner.Runner;
 
 public class ArrayletAllocateTestRunner extends Runner {
 
-	private final String customizedHeapOptions = "-Xms71m -Xmx71m";
+	private final String customizedHeapOptions = "-Xms63m -Xmx63m";
 	
 	public ArrayletAllocateTestRunner(String className, String exeName, String bootClassPath, String userClassPath, String javaVersion) {
 		super(className, exeName, bootClassPath, userClassPath, javaVersion);
