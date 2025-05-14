@@ -1029,10 +1029,20 @@ MM_ParallelSweepSchemeVLHGC::recycleFreeRegions(MM_EnvironmentVLHGC *env)
 			sparseDataEntry = (MM_SparseDataTableEntry *)hashTableNextDo(&walkState);
 		}
 
-		while ((arrayletLeafCount > 0) && (NULL != (region = regionIterator.nextRegion()))) {
-			if (region->isArrayletLeaf()) {
+		while (NULL != (region = regionIterator.nextRegion())) {
+			if (region->isArrayletLeaf() && (arrayletLeafCount > 0)) {
 				region->getSubSpace()->recycleRegion(env, region);
 				arrayletLeafCount -= 1;
+			} else if (!region->_sweepData._alreadySwept && region->hasValidMarkMap()) {
+				MM_MemoryPool *regionPool = region->getMemoryPool();
+				Assert_MM_true(NULL != regionPool);
+				/* recycle if empty */
+				if (region->getSize() == regionPool->getActualFreeMemorySize()) {
+					Assert_MM_true(NULL == region->_allocateData.getSpine());
+					Assert_MM_true(NULL == region->_allocateData.getNextArrayletLeafRegion());
+					region->getSubSpace()->recycleRegion(env, region);
+				}
+
 			}
 		}
 		Assert_MM_true(0 == arrayletLeafCount);
