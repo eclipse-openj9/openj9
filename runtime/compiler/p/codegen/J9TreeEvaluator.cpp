@@ -2155,8 +2155,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
          TR::Compiler->om.offsetOfObjectVftField(), use64BitClasses ? 8 : 4), componentClassReg);
    generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, temp3Reg, 0);
    generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node,
-      TR::MemoryReference::createWithDisplacement(cg, temp2Reg,
-         offsetOfMustBeZeroField, 4), temp3Reg);
+      TR::MemoryReference::createWithDisplacement(cg, temp2Reg, offsetOfMustBeZeroField, 4), temp3Reg);
    generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node,
       TR::MemoryReference::createWithDisplacement(cg, temp2Reg,
          fej9->getOffsetOfDiscontiguousArraySizeField(), 4), temp3Reg);
@@ -2172,10 +2171,13 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
 #endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
 
    // Store 2nd dim element into 1st dim array slot, compress temp2 if needed
-   int32_t shiftAmount = TR::Compiler->om.compressedReferenceShift();
-   if (comp->useCompressedPointers() && shiftAmount != 0) // only possible with 64-bit
+   if (comp->useCompressedPointers()) // only possible with 64-bit
       {
-      generateShiftRightLogicalImmediateLong(cg, node, temp3Reg, temp2Reg, shiftAmount);
+      int32_t shiftAmount = TR::Compiler->om.compressedReferenceShift();
+      if (shiftAmount != 0)
+         {
+         generateShiftRightLogicalImmediateLong(cg, node, temp3Reg, temp2Reg, shiftAmount);
+         }
       generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node,
          TR::MemoryReference::createWithDisplacement(cg, temp1Reg, 0, 4), temp3Reg);
       }
@@ -2196,10 +2198,8 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    generateLabelInstruction(cg, TR::InstOpCode::label, node, oolJumpLabel);
    generateLabelInstruction(cg, TR::InstOpCode::b, node, oolFailLabel);
 
-   // end of the function
-
    TR::RegisterDependencyConditions *dependencies =
-      new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 10, cg->trMemory());
+      new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 14, cg->trMemory());
    dependencies->addPostCondition(dimsPtrReg, TR::RealRegister::NoReg);
    dependencies->getPostConditions()->getRegisterDependency(dependencies->getAddCursorForPost() - 1)->setExcludeGPR0();
 
@@ -2220,10 +2220,37 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
 
    dependencies->addPostCondition(temp3Reg, TR::RealRegister::NoReg);
    dependencies->addPostCondition(componentClassReg, TR::RealRegister::NoReg);
+   dependencies->addPostCondition(vmThreadReg, TR::RealRegister::NoReg);
    dependencies->addPostCondition(condReg, TR::RealRegister::NoReg);
+
+   TR::Node *callNode = outlinedHelperCall->getCallNode();
+   TR::Register *reg;
+   if (callNode->getFirstChild() == node->getFirstChild())
+      {
+      reg = callNode->getFirstChild()->getRegister();
+      if (reg)
+         dependencies->addPostCondition(reg, TR::RealRegister::NoReg);
+      }
+   if (callNode->getSecondChild() == node->getSecondChild())
+      {
+      reg = callNode->getSecondChild()->getRegister();
+      if (reg)
+         dependencies->addPostCondition(reg, TR::RealRegister::NoReg);
+      }
+   if (callNode->getThirdChild() == node->getThirdChild())
+      {
+      reg = callNode->getThirdChild()->getRegister();
+      if (reg)
+         dependencies->addPostCondition(reg, TR::RealRegister::NoReg);
+      }
 
    generateDepLabelInstruction(cg, TR::InstOpCode::label, node, endLabel, dependencies);
 
+   // Copy the newly allocated object into a collected reference register
+   TR::Register *targetRegisterFinal = cg->allocateCollectedReferenceRegister();
+   generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, targetRegisterFinal, targetReg);
+
+   cg->stopUsingRegister(targetReg);
    cg->stopUsingRegister(dimsPtrReg);
    cg->stopUsingRegister(classReg);
    cg->stopUsingRegister(firstDimLenReg);
@@ -2238,8 +2265,8 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    cg->decReferenceCount(node->getSecondChild());
    cg->decReferenceCount(node->getThirdChild());
 
-   node->setRegister(targetReg);
-   return targetReg;
+   node->setRegister(targetRegisterFinal);
+   return targetRegisterFinal;
    }
 
 
