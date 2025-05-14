@@ -2247,6 +2247,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    TR::Register *targetRegisterFinal = cg->allocateCollectedReferenceRegister();
    generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, targetRegisterFinal, targetReg);
 
+   cg->stopUsingRegister(targetReg);
    cg->stopUsingRegister(dimsPtrReg);
    cg->stopUsingRegister(classReg);
    cg->stopUsingRegister(firstDimLenReg);
