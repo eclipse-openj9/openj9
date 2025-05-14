@@ -1362,6 +1362,11 @@ void JNICALL
 Java_jdk_internal_vm_Continuation_unpin(JNIEnv *env, jclass unused);
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
+#if JAVA_SPEC_VERSION >= 24
+jboolean JNICALL
+Java_com_ibm_oti_vm_VM_isYieldBlockedVirtualThreadsEnabled(JNIEnv *env, jclass unused);
+#endif /* JAVA_SPEC_VERSION >= 24 */
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

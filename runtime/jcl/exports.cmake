@@ -856,3 +856,10 @@ if(NOT JAVA_SPEC_VERSION LESS 20)
 		Java_java_lang_Thread_setScopedValueCache
 	)
 endif()
+
+# Java 24+
+if(NOT JAVA_SPEC_VERSION LESS 24)
+	omr_add_exports(jclse
+		Java_com_ibm_oti_vm_VM_isYieldBlockedVirtualThreadsEnabled
+	)
+endif()
