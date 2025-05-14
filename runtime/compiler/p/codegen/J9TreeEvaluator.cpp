@@ -2155,8 +2155,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
          TR::Compiler->om.offsetOfObjectVftField(), use64BitClasses ? 8 : 4), componentClassReg);
    generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, temp3Reg, 0);
    generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node,
-      TR::MemoryReference::createWithDisplacement(cg, temp2Reg,
-         offsetOfMustBeZeroField, 4), temp3Reg);
+      TR::MemoryReference::createWithDisplacement(cg, temp2Reg, offsetOfMustBeZeroField, 4), temp3Reg);
    generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node,
       TR::MemoryReference::createWithDisplacement(cg, temp2Reg,
          fej9->getOffsetOfDiscontiguousArraySizeField(), 4), temp3Reg);
@@ -2199,7 +2198,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    // end of the function
 
    TR::RegisterDependencyConditions *dependencies =
-      new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 10, cg->trMemory());
+      new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 14, cg->trMemory());
    dependencies->addPostCondition(dimsPtrReg, TR::RealRegister::NoReg);
    dependencies->getPostConditions()->getRegisterDependency(dependencies->getAddCursorForPost() - 1)->setExcludeGPR0();
 
@@ -2220,8 +2219,31 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
 
    dependencies->addPostCondition(temp3Reg, TR::RealRegister::NoReg);
    dependencies->addPostCondition(componentClassReg, TR::RealRegister::NoReg);
+   dependencies->addPostCondition(vmThreadReg, TR::RealRegister::NoReg);
    dependencies->addPostCondition(condReg, TR::RealRegister::NoReg);
 
+   TR::Node *callNode = outlinedHelperCall->getCallNode();
+   TR::Register *reg;
+   if (callNode->getFirstChild() == node->getFirstChild())
+      {
+      reg = callNode->getFirstChild()->getRegister();
+      if (reg)
+         dependencies->unionPostCondition(reg, TR::RealRegister::NoReg, cg);
+      }
+   if (callNode->getSecondChild() == node->getSecondChild())
+      {
+      reg = callNode->getSecondChild()->getRegister();
+      if (reg)
+         dependencies->unionPostCondition(reg, TR::RealRegister::NoReg, cg);
+      }
+   if (callNode->getThirdChild() == node->getThirdChild())
+      {
+      reg = callNode->getThirdChild()->getRegister();
+      if (reg)
+         dependencies->unionPostCondition(reg, TR::RealRegister::NoReg, cg);
+      }
+
+   dependencies->stopAddingConditions();
    generateDepLabelInstruction(cg, TR::InstOpCode::label, node, endLabel, dependencies);
 
    cg->stopUsingRegister(dimsPtrReg);
