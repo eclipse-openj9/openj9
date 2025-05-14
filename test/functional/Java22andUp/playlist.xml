@@ -51,6 +51,13 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<testCaseName>Jep454Tests_testLinkerFfi_DownCall_HeapArray</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
+			<variation>Mode301</variation>
+			<variation>Mode351</variation>
+			<variation>Mode501</variation>
+			<variation>Mode551</variation>
+			<variation>Mode501 -XXgc:disableVirtualLargeObjectHeap</variation>
+			<variation>Mode551 -XXgc:disableVirtualLargeObjectHeap</variation>
+			<variation>Mode610</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) \
 			-Xmx1G \

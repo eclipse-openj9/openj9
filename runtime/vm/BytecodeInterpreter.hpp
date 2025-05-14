@@ -5606,15 +5606,19 @@ done:
 					 * 1) Only MemorySegment objects representing the on-heap arrays reach here.
 					 * 2) The heap base object must be a contiguous array to be accessed in native.
 					 */
+					/**
+					 * TODO In the future we should refactor this code such that the behaviour is
+					 * encapsulated in a GC helper.
+					 */
 					if (J9ISCONTIGUOUSARRAY(_currentThread, heapBase)) {
-						/* The address is simply the base object plus the offset. */
-						pointerValues[i] = (UDATA)heapBase + heapOffset;
+						U_8 *dataAddr = J9JAVAARRAY_EA_VM(_vm, heapBase, 0, U_8);
+						pointerValues[i] = (UDATA)(dataAddr + (heapOffset - VM_UnsafeAPI::arrayBase(_currentThread)));
 					} else {
 						/* Copy the discontiguous array to native memory to ensure
 						 * its elements can be accessed correctly in the native function.
 						 */
-						void *elems = memcpyFromHeapArray(_currentThread, heapBase, JNI_FALSE);
-						pointerValues[i] = (UDATA)elems;
+						U_8 *elems = (U_8 *)memcpyFromHeapArray(_currentThread, heapBase, JNI_FALSE);
+						pointerValues[i] = (UDATA)(elems + (heapOffset - VM_UnsafeAPI::arrayBase(_currentThread)));
 					}
 					/* Set the flag to obtain the VMAccess so as to prevent the GC from
 					 * updating the heap address during the critical downcall.
