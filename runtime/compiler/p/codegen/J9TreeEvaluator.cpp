@@ -1936,27 +1936,28 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    TR_Debug *compDebug = comp->getDebug();
    TR_ASSERT_FATAL(comp->target().is64Bit(), "multianewArrayEvaluator is only supported on 64-bit JVMs!");
    TR_J9VMBase *fej9 = comp->fej9();
-
+   // size of reference field and address
    int32_t referenceFieldSize = TR::Compiler->om.sizeofReferenceField();
    TR_ASSERT_FATAL(referenceFieldSize <= 8,
       "multianewArrayEvaluator - referenceFieldSize cannot be greater than 8!");
    int32_t addrSize = TR::Compiler->om.sizeofReferenceAddress();
-
    // the size of a length-0 array in bytes taking alignment into account
    int32_t zeroArraySizeAligned = OMR::align(TR::Compiler->om.discontiguousArrayHeaderSizeInBytes(),
                                              TR::Compiler->om.getObjectAlignmentInBytes());
-   bool use64BitClasses =
-      comp->target().is64Bit() && !TR::Compiler->om.generateCompressedObjectHeaders();
-
+   bool use64BitClasses = comp->target().is64Bit() && !TR::Compiler->om.generateCompressedObjectHeaders();
    // Zero size arrays are considered "discontiguous", and the "mustBeZero" field
    // of discontiguous arrays must be located where the "size" field of contiguous arrays is.
    UDATA offsetOfMustBeZeroField = fej9->getOffsetOfContiguousArraySizeField();
+   // offHeap enabled
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+   bool isOffHeapAllocationEnabled = TR::Compiler->om.isOffHeapAllocationEnabled();
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 
    // ptr to array of sizes, with the highest dimension in the front
    TR::Register *dimsPtrReg = cg->evaluate(node->getFirstChild());
    // number of dimensions - compile time constant
    uint32_t nDims = node->getSecondChild()->get32bitIntegralValue();
-   // class pointer of objects in the array
+   // class pointer of objects in the array - in the 2D case this is the class of the 1D array
    TR::Register *classReg = cg->evaluate(node->getThirdChild());
 
    // points to the resulting array allocated
@@ -1982,7 +1983,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    // oolJumpLabel is a common point that all branches will jump to.
    // From this label, we branch to OOL code.
    // We do this instead of jumping directly to OOL code from mainline
-   // since according to the x implementation that is not possible
+   // since according to the x and z implementation that is not possible
    TR::LabelSymbol *oolJumpLabel = generateLabelSymbol(cg);
 
    startLabel->setStartInternalControlFlow();
@@ -2030,9 +2031,8 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    generateMemSrc1Instruction(cg, use64BitClasses ? TR::InstOpCode::std : TR::InstOpCode::stw, node,
       TR::MemoryReference::createWithDisplacement(cg, targetReg,
          TR::Compiler->om.offsetOfObjectVftField(), use64BitClasses ? 8 : 4), classReg);
-
-   generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, temp3Reg, 0);
    // initialise the size and mustBeZero ('0') fields in the header to 0
+   generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, temp3Reg, 0);
    generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node,
       TR::MemoryReference::createWithDisplacement(cg, targetReg,
          offsetOfMustBeZeroField, 4), temp3Reg);
@@ -2040,10 +2040,18 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
       TR::MemoryReference::createWithDisplacement(cg, targetReg,
          fej9->getOffsetOfDiscontiguousArraySizeField(), 4), temp3Reg);
 
-   // TODO: offheap
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+   if (isOffHeapAllocationEnabled) // initialise the dataAddr field to 0 as well
+      {
+      generateMemSrc1Instruction(cg, TR::InstOpCode::Op_st, node,
+         TR::MemoryReference::createWithDisplacement(cg, targetReg,
+            fej9->getOffsetOfDiscontiguousDataAddrField(), addrSize), temp3Reg);
+      }
+#endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
+
    generateLabelInstruction(cg, TR::InstOpCode::b, node, endLabel);
 
-   // if we reach here, the first dimension is not zero
+   // === if we reach here, the first dimension is not zero
    generateLabelInstruction(cg, TR::InstOpCode::label, node, nonZeroFirstDimLabel);
 
    // load the component class
@@ -2120,13 +2128,22 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
       TR::MemoryReference::createWithDisplacement(cg, targetReg,
          fej9->getOffsetOfContiguousArraySizeField(), 4), firstDimLenReg);
 
-   // TODO: offheap
-
    // temp2Reg = targetReg + temp1Reg = start of the 2nd dimension headers
    generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, temp2Reg, temp1Reg, targetReg);
    // temp1Reg points to the first element of the 1st dimension array by jumping over the header
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, temp1Reg, targetReg,
       TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+   if (isOffHeapAllocationEnabled)
+      {
+      // the dataAddr field of the 1st dimension array, which is non-zero and hence contiguous,
+      // should point to the first element of the array i.e. temp1Reg
+      generateMemSrc1Instruction(cg, TR::InstOpCode::Op_st, node,
+         TR::MemoryReference::createWithDisplacement(cg, targetReg,
+            fej9->getOffsetOfContiguousDataAddrField(), addrSize), temp1Reg);
+      }
+#endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
 
    // --- ready the loop
    generateSrc1Instruction(cg, TR::InstOpCode::mtctr, node, firstDimLenReg);
@@ -2145,7 +2162,15 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
       TR::MemoryReference::createWithDisplacement(cg, temp2Reg,
          fej9->getOffsetOfDiscontiguousArraySizeField(), 4), temp3Reg);
 
-   // TODO: offheap
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+   if (isOffHeapAllocationEnabled)
+      {
+      // the dataAddr field of the 2nd dimension array is zero and discontiguous
+      generateMemSrc1Instruction(cg, TR::InstOpCode::Op_st, node,
+         TR::MemoryReference::createWithDisplacement(cg, temp2Reg,
+            fej9->getOffsetOfDiscontiguousDataAddrField(), addrSize), temp3Reg);
+      }
+#endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
 
    // Store 2nd dim element into 1st dim array slot, compress temp2 if needed
    int32_t shiftAmount = TR::Compiler->om.compressedReferenceShift();
@@ -2164,7 +2189,6 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    // index cursors temp1 and temp2
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, temp1Reg, temp1Reg, referenceFieldSize);
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, temp2Reg, temp2Reg, zeroArraySizeAligned);
-   // we count the condition using firstDimLenReg
    generateConditionalBranchInstruction(cg, TR::InstOpCode::bdnz, node, loopLabel, condReg);
 
    generateLabelInstruction(cg, TR::InstOpCode::b, node, endLabel);
@@ -2240,7 +2264,7 @@ TR::Register *J9::Power::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, 
 
    if (nDims > 1 && !disableInlineMultianewArray
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) /* offheap not enabled for now */
-         && !TR::Compiler->om.isOffHeapAllocationEnabled()
+//         && !TR::Compiler->om.isOffHeapAllocationEnabled()
 #endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
       )
       {
