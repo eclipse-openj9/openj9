@@ -2069,8 +2069,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    // check if we have enough space, compensate for alignment if necessary
    int32_t refFieldSizeAligned = OMR::align(referenceFieldSize,
                                            TR::Compiler->om.getObjectAlignmentInBytes());
-   int32_t alignmentCompensation =
-      (referenceFieldSize == refFieldSizeAligned) ? 0 : refFieldSizeAligned - 1;
+   int32_t alignmentCompensation = (referenceFieldSize == refFieldSizeAligned) ? 0 : refFieldSizeAligned-1;
    switch (referenceFieldSize) // get the number of bytes needed for the reference fields
       {
       case 8:
@@ -2234,8 +2233,6 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    cg->stopUsingRegister(temp3Reg);
    cg->stopUsingRegister(componentClassReg);
    cg->stopUsingRegister(condReg);
-
-   cg->stopUsingRegister(vmThreadReg); // do we need this?
 
    cg->decReferenceCount(node->getFirstChild());
    cg->decReferenceCount(node->getSecondChild());
