@@ -498,6 +498,13 @@ typedef struct J9JFRThreadContextSwitchRate {
 	float switchRate;
 } J9JFRThreadContextSwitchRate;
 
+typedef struct J9JFRSystemGC {
+	J9JFR_EVENT_WITH_STACKTRACE_FIELDS
+	I_64 duration;
+} J9JFRSystemGC;
+
+#define J9JFRSYSTEMGC_STACKTRACE(jfrEvent) ((UDATA *)(((J9JFRSystemGC *)(jfrEvent)) + 1))
+
 #endif /* defined(J9VM_OPT_JFR) */
 
 /* @ddr_namespace: map_to_type=J9CfrError */

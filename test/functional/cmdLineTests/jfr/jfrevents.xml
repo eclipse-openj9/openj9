@@ -104,4 +104,11 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<output type="required" caseSensitive="yes" regex="no">topAddress</output>
 		<output type="failure" caseSensitive="yes" regex="no">jfr print: could not read recording</output>
 	</test>
+	<test id="test jfr SystemGC - approx 30 seconds">
+		<command>$JFR_EXE$ print --xml --events "SystemGC" defaultJ9recording.jfr</command>
+		<output type="required" caseSensitive="yes" regex="no">http://www.w3.org/2001/XMLSchema-instance</output>
+		<output type="success" caseSensitive="yes" regex="no">jdk.SystemGC</output>
+		<output type="required" caseSensitive="yes" regex="no">invokedConcurrent</output>
+		<output type="failure" caseSensitive="yes" regex="no">jfr print: could not read recording</output>
+	</test>
 </suite>

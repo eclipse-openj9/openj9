@@ -1421,4 +1421,12 @@ typedef UDATA (* lookupNativeAddressCallback)(struct J9VMThread *currentThread, 
 		<struct>J9VMCRIURestoreEvent</struct>
 		<data type="struct J9VMThread*" name="vmThread" description="current thread" />
 	</event>
+
+	<event>
+		<name>J9HOOK_SYSTEM_GC_CALLED</name>
+		<description>Triggered after GC is done</description>
+		<struct>J9VMSystemGCEvent</struct>
+		<data type="struct J9VMThread*" name="currentThread" description="current thread" />
+		<data type="I_64" name="startTicks" description="current ticks when GC began" />
+	</event>
 </interface>

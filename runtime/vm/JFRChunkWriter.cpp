@@ -1367,4 +1367,35 @@ VM_JFRChunkWriter::writeSystemProcessEvent(void *anElement, void *userData)
 	entry->commandLine = NULL;
 }
 
+void
+VM_JFRChunkWriter::writeSystemGCEvent(void *anElement, void *userData)
+{
+	SystemGCEntry *entry = (SystemGCEntry *)anElement;
+	VM_BufferWriter *bufferWriter = (VM_BufferWriter *)userData;
+
+	/* Reserve size field */
+	U_8 *dataStart = reserveEventSize(bufferWriter);
+
+	/* Write event type */
+	bufferWriter->writeLEB128(SystemGCID);
+
+	/* Write start time */
+	bufferWriter->writeLEB128(entry->ticks);
+
+	/* Write duration time which is always in ticks, in our case nanos */
+	bufferWriter->writeLEB128(entry->duration);
+
+	/* Write event thread index */
+	bufferWriter->writeLEB128(entry->eventThreadIndex);
+
+	/* Wtacktrace index */
+	bufferWriter->writeLEB128(entry->stackTraceIndex);
+
+	/* Write invokedConcurrent which is always false for OpenJ9 */
+	bufferWriter->writeBoolean(false);
+
+	/* Write size */
+	writeEventSize(bufferWriter, dataStart);
+}
+
 #endif /* defined(J9VM_OPT_JFR) */

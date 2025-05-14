@@ -72,6 +72,7 @@ enum MetadataTypeID {
 	ThreadParkID = 5,
 	MonitorEnterID = 6,
 	MonitorWaitID = 7,
+	SystemGCID = 36,
 	JVMInformationID = 87,
 	OSInformationID = 88,
 	VirtualizationInformationID = 89,
@@ -190,6 +191,7 @@ private:
 	static constexpr int THREAD_DUMP_EVENT_SIZE_PER_THREAD = 1000;
 	static constexpr int SYSTEM_PROCESS_EVENT_SIZE = (4 * sizeof(U_64)) + 32 /* pid string */;
 	static constexpr int NATIVE_LIBRARY_ADDRESS_SIZE = (4 * sizeof(U_64)) + (2 * sizeof(UDATA)) + sizeof(U_8);
+	static constexpr int SYSTEM_GC_EVENT_SIZE = (2 * LEB128_64_SIZE) + (3 * LEB128_32_SIZE) + sizeof(U_8);
 
 	static constexpr int METADATA_ID = 1;
 
@@ -401,6 +403,8 @@ done:
 			pool_do(_constantPoolTypes.getThreadContextSwitchRateTable(), &writeThreadContextSwitchRateEvent, _bufferWriter);
 
 			pool_do(_constantPoolTypes.getThreadStatisticsTable(), &writeThreadStatisticsEvent, _bufferWriter);
+
+			pool_do(_constantPoolTypes.getSystemGCTable(), &writeSystemGCEvent, _bufferWriter);
 
 			/* Only write constant events in first chunk */
 			if (0 == _vm->jfrState.jfrChunkCount) {
@@ -842,6 +846,8 @@ done:
 
 	static void writeNativeLibraryEvent(void *anElement, void *userData);
 
+	static void writeSystemGCEvent(void *anElement, void *userData);
+
 	UDATA
 	calculateRequiredBufferSize()
 	{
@@ -919,6 +925,8 @@ done:
 
 		requiredBufferSize += (_constantPoolTypes.getNativeLibraryCount() * NATIVE_LIBRARY_ADDRESS_SIZE)
 				+ _constantPoolTypes.getNativeLibraryPathSizeTotal();
+
+		requiredBufferSize += (_constantPoolTypes.getsystemGCCount() * SYSTEM_GC_EVENT_SIZE);
 
 		return requiredBufferSize;
 	}

@@ -114,6 +114,9 @@ jfrEventSize(J9JFREvent *jfrEvent)
 	case J9JFR_EVENT_TYPE_THREAD_STATISTICS:
 		size = sizeof(J9JFRThreadStatistics);
 		break;
+	case J9JFR_EVENT_TYPE_SYSTEM_GC:
+		size = sizeof(J9JFRSystemGC) + (((J9JFRSystemGC *)jfrEvent)->stackTraceSize * sizeof(UDATA));
+		break;
 	default:
 		Assert_VM_unreachable();
 		break;
@@ -714,6 +717,27 @@ jfrVMThreadParked(J9HookInterface **hook, UDATA eventNum, void *eventData, void*
 	}
 }
 
+/**
+ * Hook for system GC. Called without VM access.
+ *
+ * @param hook[in] the VM hook interface
+ * @param eventNum[in] the event number
+ * @param eventData[in] the event data
+ * @param userData[in] the registered user data
+ */
+static void
+jfrSystemGC(J9HookInterface **hook, UDATA eventNum, void *eventData, void* userData)
+{
+	J9VMSystemGCEvent *event = (J9VMSystemGCEvent *)eventData;
+	J9VMThread *currentThread = event->currentThread;
+	PORT_ACCESS_FROM_VMC(currentThread);
+
+	J9JFRSystemGC *jfrEvent = (J9JFRSystemGC *)reserveBufferWithStackTrace(currentThread, currentThread, J9JFR_EVENT_TYPE_SYSTEM_GC, sizeof(*jfrEvent));
+	if (NULL != jfrEvent) {
+		jfrEvent->startTicks = event->startTicks;
+		jfrEvent->duration = j9time_nano_time() - event->startTicks;
+	}
+}
 
 jint
 initializeJFR(J9JavaVM *vm, BOOLEAN lateInit)
@@ -771,6 +795,9 @@ initializeJFR(J9JavaVM *vm, BOOLEAN lateInit)
 		goto fail;
 	}
 	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_UNPARKED, jfrVMThreadParked, OMR_GET_CALLSITE(), NULL)) {
+		goto fail;
+	}
+	if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_SYSTEM_GC_CALLED, jfrSystemGC, OMR_GET_CALLSITE(), NULL)) {
 		goto fail;
 	}
 
@@ -906,6 +933,7 @@ tearDownJFR(J9JavaVM *vm)
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_MONITOR_WAITED, jfrVMMonitorWaited, NULL);
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_MONITOR_CONTENDED_ENTERED, jfrVMMonitorEntered, NULL);
 	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_VM_UNPARKED, jfrVMThreadParked, NULL);
+	(*vmHooks)->J9HookUnregister(vmHooks, J9HOOK_SYSTEM_GC_CALLED, jfrSystemGC, NULL);
 
 	/* Free global data */
 	VM_JFRConstantPoolTypes::freeJFRConstantEvents(vm);

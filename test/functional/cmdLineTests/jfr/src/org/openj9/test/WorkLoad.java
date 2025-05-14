@@ -64,6 +64,7 @@ public class WorkLoad {
 
 		WorkLoad workload = new WorkLoad(numberOfThreads, sizeOfNumberList, repeats);
 		workload.runWork();
+		System.gc();
 	}
 
 	public void runWork() {
