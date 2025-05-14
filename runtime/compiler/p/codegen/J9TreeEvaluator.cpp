@@ -2195,8 +2195,6 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    generateLabelInstruction(cg, TR::InstOpCode::label, node, oolJumpLabel);
    generateLabelInstruction(cg, TR::InstOpCode::b, node, oolFailLabel);
 
-   // end of the function
-
    TR::RegisterDependencyConditions *dependencies =
       new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 14, cg->trMemory());
    dependencies->addPostCondition(dimsPtrReg, TR::RealRegister::NoReg);
@@ -2243,8 +2241,11 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
          dependencies->addPostCondition(reg, TR::RealRegister::NoReg);
       }
 
-   dependencies->stopAddingConditions();
    generateDepLabelInstruction(cg, TR::InstOpCode::label, node, endLabel, dependencies);
+
+   // Copy the newly allocated object into a collected reference register
+   TR::Register *targetRegisterFinal = cg->allocateCollectedReferenceRegister();
+   generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, targetRegisterFinal, targetReg);
 
    cg->stopUsingRegister(dimsPtrReg);
    cg->stopUsingRegister(classReg);
@@ -2260,8 +2261,8 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    cg->decReferenceCount(node->getSecondChild());
    cg->decReferenceCount(node->getThirdChild());
 
-   node->setRegister(targetReg);
-   return targetReg;
+   node->setRegister(targetRegisterFinal);
+   return targetRegisterFinal;
    }
 
 
