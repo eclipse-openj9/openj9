@@ -2311,17 +2311,14 @@ MM_CopyForwardScheme::updateMarkMapAndCardTableOnCopy(MM_EnvironmentVLHGC *env, 
 MMINLINE void
 MM_CopyForwardScheme::scanOwnableSynchronizerObjectSlots(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, J9Object *objectPtr, ScanReason reason)
 {
-	/*
-	 * If object has been scanned without triggering abort add it to the list.
-	 * If object scan has triggered abort, it is added to work packet
-	 * and it is going to be rescanned again. It should not be added to the list
-	 * in the case of abort to prevent duplication during second scan.
-	 */
-	if (scanMixedObjectSlots(env, reservingContext, objectPtr, reason)) {
-		if ((SCAN_REASON_COPYSCANCACHE == reason) || (SCAN_REASON_PACKET == reason)) {
+	if (SCAN_REASON_COPYSCANCACHE == reason) {
+		addOwnableSynchronizerObjectInList(env, objectPtr);
+	} else if (SCAN_REASON_PACKET == reason) {
+		if (isObjectInEvacuateMemoryNoCheck(objectPtr)) {
 			addOwnableSynchronizerObjectInList(env, objectPtr);
 		}
 	}
+	scanMixedObjectSlots(env, reservingContext, objectPtr, reason);
 }
 
 void
@@ -2472,7 +2469,7 @@ MM_CopyForwardScheme::iterateAndCopyforwardSlotReference(MM_EnvironmentVLHGC *en
 	return success;
 }
 
-bool
+void
 MM_CopyForwardScheme::scanMixedObjectSlots(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, J9Object *objectPtr, ScanReason reason)
 {
 	if (_tracingEnabled) {
@@ -2488,7 +2485,6 @@ MM_CopyForwardScheme::scanMixedObjectSlots(MM_EnvironmentVLHGC *env, MM_Allocati
 	}
 
 	updateScanStats(env, objectPtr, reason);
-	return success;
 }
 
 void
