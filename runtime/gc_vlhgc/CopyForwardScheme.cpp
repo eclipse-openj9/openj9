@@ -4172,6 +4172,10 @@ private:
 				env->_copyForwardStats._offHeapRegionsCleared += 1;
 				void *dataAddr = _extensions->indexableObjectModel.getDataAddrForContiguous((J9IndexableObject *)objectPtr);
 				_extensions->largeObjectVirtualMemory->freeSparseRegionAndUnmapFromHeapObject(_env, dataAddr, objectPtr, _extensions->indexableObjectModel.getDataSizeInBytes((J9IndexableObject *)objectPtr));
+
+				PORT_ACCESS_FROM_ENVIRONMENT(env);
+				j9tty_printf(PORTLIB, "doObjectInVirtualLargeObjectHeap-copyf freeSparseRegionAndUnmapFromHeapObject objectPtr=%p, byteAmount=%zu\n", objectPtr, _extensions->indexableObjectModel.getDataSizeInBytes((J9IndexableObject *)objectPtr));
+
 			} else {
 				void *dataAddr = _extensions->indexableObjectModel.getDataAddrForContiguous((J9IndexableObject *)fwdOjectPtr);
 				if (NULL != dataAddr) {
@@ -4184,6 +4188,10 @@ private:
 							_extensions->indexableObjectModel.getDataSizeInBytes((J9IndexableObject *)fwdOjectPtr),
 							fwdOjectPtr
 					);
+
+					PORT_ACCESS_FROM_ENVIRONMENT(env);
+					j9tty_printf(PORTLIB, "doObjectInVirtualLargeObjectHeap-copyf updateSparseDataEntryAfterObjectHasMoved objectPtr=%p, fwdOjectPtr=%p, byteAmount=%zu\n", objectPtr, fwdOjectPtr, _extensions->indexableObjectModel.getDataSizeInBytes((J9IndexableObject *)fwdOjectPtr));
+
 				}
 			}
 		}
