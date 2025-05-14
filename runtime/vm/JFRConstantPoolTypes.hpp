@@ -309,6 +309,12 @@ struct GCHeapConfigurationEntry {
 	UDATA heapAddressBits;
 };
 
+struct YoungGenerationConfigurationEntry {
+	U_64 minSize;
+	U_64 maxSize;
+	U_64 newRatio;
+};
+
 struct VirtualizationInformationEntry {
 	const char *name;
 };
@@ -331,6 +337,7 @@ struct JFRConstantEvents {
 	VirtualizationInformationEntry VirtualizationInfoEntry;
 	OSInformationEntry OSInfoEntry;
 	GCHeapConfigurationEntry GCHeapConfigEntry;
+	YoungGenerationConfigurationEntry YoungGenConfigEntry;
 };
 
 class VM_JFRConstantPoolTypes {
@@ -1063,6 +1070,7 @@ done:
 		initializeVirtualizationInformation(vm);
 		initializeOSInformation(vm, result);
 		initializeGCHeapConfigurationEvent(vm, result);
+		initializeYoungGenerationConfigurationEvent(vm);
 	}
 
 	/**
@@ -1302,6 +1310,27 @@ done:
 		gcConfiguration->objectAlignment = vm->objectAlignmentInBytes;
 		gcConfiguration->heapAddressBits = J9JAVAVM_REFERENCE_SIZE(vm) * 8;
 	}
+
+	/**
+	 * Initialize YoungGenerationConfigurationEntry
+	 *
+	 * @param vm[in] the J9JavaVM
+	 */
+	static void initializeYoungGenerationConfigurationEvent(J9JavaVM *vm)
+	{
+		J9MemoryManagerFunctions *mmFuncs = vm->memoryManagerFunctions;
+		YoungGenerationConfigurationEntry *youngGenConfiguration = &(getJFRConstantEvents(vm)->YoungGenConfigEntry);
+
+		youngGenConfiguration->minSize = mmFuncs->j9gc_get_minimum_young_generation_size(vm);
+		youngGenConfiguration->maxSize = mmFuncs->j9gc_get_maximum_young_generation_size(vm);
+		if (0 != mmFuncs->j9gc_get_maximum_young_generation_size(vm)) {
+			youngGenConfiguration->newRatio = mmFuncs->j9gc_get_maximum_heap_size(vm)/mmFuncs->j9gc_get_maximum_young_generation_size(vm) - 1;
+		} else {
+			youngGenConfiguration->newRatio = 0;
+		}
+	}
+
+
 
 	static uintptr_t recordSystemProcessEvent(uintptr_t pid, const char *commandLine, void *userData)
 	{
