@@ -2226,6 +2226,13 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	</test>
 	<test>
 		<testCaseName>pthreadDestructor</testCaseName>
+		<disables>
+			<disable>
+				<comment>https://github.ibm.com/runtimes/backlog/issues/1656</comment>
+				<platform>.*aix.*</platform>
+				<impl>ibm</impl>
+			</disable>
+		</disables>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
