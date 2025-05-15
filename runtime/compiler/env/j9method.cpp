@@ -3790,6 +3790,13 @@ void TR_ResolvedJ9Method::construct()
       {  TR::unknownMethod}
       };
 
+   static X SingleByteDecoderMethods[] =
+      {
+      // SingleByteDecoder_decodeToLatin1Impl is used by Semeru Runtime for z/OS.
+      {x(TR::sun_nio_cs_SingleByteDecoder_decodeToLatin1Impl,      "decodeToLatin1Impl", "([BII[BI[B)I")},
+      {  TR::unknownMethod}
+      };
+
    static X IBM1388EncoderMethods[] =
       {
       {x(TR::sun_nio_cs_ext_IBM1388_Encoder_encodeArrayLoop,      "encodeArrayLoop", "(Ljava/nio/CharBuffer;Ljava/nio/ByteBuffer;)Ljava/nio/charset/CoderResult;")},
@@ -4242,6 +4249,7 @@ void TR_ResolvedJ9Method::construct()
       { "java/io/ByteArrayOutputStream", ByteArrayOutputStreamMethods },
       { "java/lang/ScopedValue$Carrier", ScopedValueMethods },
       { "jdk/internal/value/ValueClass", ValueClassMethods },
+      { "sun/nio/cs/SingleByte$Decoder", SingleByteDecoderMethods },
       { 0 }
       };
 

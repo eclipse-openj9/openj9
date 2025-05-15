@@ -141,6 +141,12 @@ J9::Z::CodeGenerator::initialize()
       cg->resetSupportsArrayTranslateTRxx();
       }
 
+   static char *disableInlineDecodeToLatin1Impl = feGetEnv("TR_disableInlineDecodeToLatin1Impl");
+   if (!disableInlineDecodeToLatin1Impl)
+      {
+      cg->setSupportsInlineDecodeToLatin1Impl();
+      }
+
    static char *disableInlineEncodeASCII = feGetEnv("TR_disableInlineEncodeASCII");
    if (comp->fej9()->isStringCompressionEnabledVM() && cg->getSupportsVectorRegisters() && !TR::Compiler->om.canGenerateArraylets() && !disableInlineEncodeASCII)
       {
@@ -3740,6 +3746,11 @@ J9::Z::CodeGenerator::suppressInliningOfRecognizedMethod(TR::RecognizedMethod me
 
    if (self()->isMethodInAtomicLongGroup(method))
       return true;
+
+   if (self()->getSupportsInlineDecodeToLatin1Impl() && method == TR::sun_nio_cs_SingleByteDecoder_decodeToLatin1Impl)
+      {
+      return true;
+      }
 
    if (method == TR::java_lang_Math_fma_D ||
        method == TR::java_lang_StrictMath_fma_D ||
