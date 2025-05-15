@@ -50,6 +50,7 @@
 #endif /* defined(OMR_GC_VLHGC_CONCURRENT_COPY_FORWARD) */
 #include "MemorySpace.hpp"
 #include "MemorySubSpace.hpp"
+#include "ParallelDispatcher.hpp"
 
 extern "C" {
 extern J9MemoryManagerFunctions MemoryManagerFunctions;
@@ -284,12 +285,14 @@ j9gc_modron_getConfigurationValueForKey(J9JavaVM *javaVM, UDATA key, void *value
 {
 	UDATA keyFound = FALSE;
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(javaVM);
+	OMR_VM *omrVm = extensions->getOmrVM();
 
 	switch (key) {
 	case j9gc_modron_configuration_none:
 		/* this is the "safe" invalid value - just return false */
 		keyFound = FALSE;
 		break;
+
 	case j9gc_modron_configuration_heapAddressToCardAddressShift:
 #if defined (J9VM_GC_HEAP_CARD_TABLE)
 		if (NULL != extensions->cardTable) {
@@ -303,6 +306,7 @@ j9gc_modron_getConfigurationValueForKey(J9JavaVM *javaVM, UDATA key, void *value
 		keyFound = FALSE;
 #endif /* defined (J9VM_GC_HEAP_CARD_TABLE) */
 		break;
+
 	case j9gc_modron_configuration_heapBaseForBarrierRange0_isVariable:
 		if (extensions->isVLHGC()) {
 			*((UDATA *)value) = FALSE;
@@ -314,6 +318,7 @@ j9gc_modron_getConfigurationValueForKey(J9JavaVM *javaVM, UDATA key, void *value
 			keyFound = FALSE;
 		}
 		break;
+
 	case j9gc_modron_configuration_activeCardTableBase_isVariable:
 		if (extensions->isVLHGC()) {
 			*((UDATA *)value) = FALSE;
@@ -325,6 +330,7 @@ j9gc_modron_getConfigurationValueForKey(J9JavaVM *javaVM, UDATA key, void *value
 			keyFound = FALSE;
 		}
 		break;
+
 	case j9gc_modron_configuration_heapSizeForBarrierRange0_isVariable:
 		if (extensions->isVLHGC()) {
 			*((UDATA *)value) = FALSE;
@@ -340,6 +346,7 @@ j9gc_modron_getConfigurationValueForKey(J9JavaVM *javaVM, UDATA key, void *value
 			keyFound = FALSE;
 		}
 		break;
+
 	case j9gc_modron_configuration_minimumObjectSize:
 #if defined(J9VM_GC_MINIMUM_OBJECT_SIZE)
 		*((UDATA *)value) = J9_GC_MINIMUM_OBJECT_SIZE;
@@ -348,27 +355,33 @@ j9gc_modron_getConfigurationValueForKey(J9JavaVM *javaVM, UDATA key, void *value
 		keyFound = FALSE;
 #endif /* defined(J9VM_GC_MINIMUM_OBJECT_SIZE) */
 		break;
+
 	case j9gc_modron_configuration_objectAlignment:
 		*((UDATA *)value) = extensions->getObjectAlignmentInBytes();
 		keyFound = TRUE;
 		break;
+
 	case j9gc_modron_configuration_allocationType:
 		Assert_MM_true(j9gc_modron_allocation_type_illegal != javaVM->gcAllocationType);
 		*((UDATA *)value) = javaVM->gcAllocationType;
 		keyFound = TRUE;
 		break;
+
 	case j9gc_modron_configuration_discontiguousArraylets:
 		*((UDATA *)value) = (UDATA_MAX != extensions->getOmrVM()->_arrayletLeafSize) ? TRUE : FALSE;
 		keyFound = TRUE;
 		break;
+
 	case j9gc_modron_configuration_gcThreadCount:
 		*((UDATA *)value) = extensions->gcThreadCount;
 		keyFound = TRUE;
 		break;
+
 	case j9gc_modron_configuration_compressObjectReferences:
 		*((UDATA *)value) = extensions->compressObjectReferences();
 		keyFound = TRUE;
 		break;
+
 	case j9gc_modron_configuration_heapRegionShift:
 		if (extensions->isVLHGC()) {
 			*((UDATA *)value) = extensions->heapRegionManager->getRegionShift();
@@ -378,6 +391,7 @@ j9gc_modron_getConfigurationValueForKey(J9JavaVM *javaVM, UDATA key, void *value
 			keyFound = FALSE;
 		}
 		break;
+
 	case j9gc_modron_configuration_heapRegionStateTable:
 #if defined(OMR_GC_VLHGC_CONCURRENT_COPY_FORWARD)
 		if (extensions->isConcurrentCopyForwardEnabled()) {
@@ -391,8 +405,63 @@ j9gc_modron_getConfigurationValueForKey(J9JavaVM *javaVM, UDATA key, void *value
 		*((UDATA *)value) = 0;
 		keyFound = FALSE;
 #endif /* defined(OMR_GC_VLHGC_CONCURRENT_COPY_FORWARD) */
-
 		break;
+
+	case j9gc_modron_configuration_gcConcurrentThreadCount:
+	{
+		*((UDATA *)value) = 0;
+		keyFound = FALSE;
+
+		switch (omrVm->gcPolicy) {
+		/* These GC policies don't use concurrent GC threads. */
+		case OMR_GC_POLICY_OPTTHRUPUT:
+		case OMR_GC_POLICY_METRONOME:
+		case OMR_GC_POLICY_NOGC:
+			break;
+
+		case OMR_GC_POLICY_OPTAVGPAUSE:
+		case OMR_GC_POLICY_GENCON:
+		{
+#if defined(OMR_GC_MODRON_CONCURRENT_MARK)
+			/* Number of concurrent mark helper threads. */
+			*((UDATA *)value) = extensions->concurrentBackground;
+			keyFound = TRUE;
+#endif /* defined(OMR_GC_MODRON_CONCURRENT_MARK) */
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+			if (extensions->isConcurrentScavengerEnabled()) {
+				/* Concurrent Scavenger also can use concurrent copy helper threads. */
+				*((UDATA *)value) += extensions->concurrentScavengerBackgroundThreads;
+				keyFound = TRUE;
+			}
+#endif /* defined(OMR_GC_CONCURRENT_SCAVENGER) */
+			break;
+		}
+
+		case OMR_GC_POLICY_BALANCED:
+		{
+			/*
+			 * GMP mark increments can be concurrent and use the same
+			 * Dispatcher/Task infrastructure to perform the work
+			 * (as any other GC operation that is in STW increments).
+			 */
+			*((UDATA *)value) = extensions->dispatcher->threadCount();
+			keyFound = TRUE;
+			break;
+		}
+
+		default :
+			/* Unknown GC policy */
+			Assert_MM_unreachable();
+			break;
+		}
+	}
+		break;
+
+	case j9gc_modron_configuration_gcUsesDynamicThreads:
+		*((UDATA *)value) = (extensions->gcThreadCountForced) ? FALSE : TRUE;
+		keyFound = TRUE;
+		break;
+
 	default:
 		/* key is either invalid or unknown for this configuration - should not have been requested */
 		Assert_MM_unreachable();
