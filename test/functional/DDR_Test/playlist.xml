@@ -241,6 +241,13 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<variation>Mode101</variation>
 			<variation>Mode601</variation>
 		</variations>
+		<disables>
+			<disable>
+				<comment>ibm_git/runtimes/backlog/issues/1654</comment>
+				<version>8</version>
+				<impl>ibm</impl>
+			</disable>
+		</disables>
 		<command>cp $(TEST_RESROOT)$(D)tck_ddrext.xml .; \
 	$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_LIB_PATH=$(Q)-Djava.library.path=$(TEST_LIB_PATH_VALUE)$(Q) \
@@ -268,6 +275,13 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<variation>Mode101</variation>
 			<variation>Mode601</variation>
 		</variations>
+		<disables>
+			<disable>
+				<comment>ibm_git/runtimes/backlog/issues/1654</comment>
+				<version>8</version>
+				<impl>ibm</impl>
+			</disable>
+		</disables>
 		<command>cp $(TEST_RESROOT)$(D)tck_ddrext.xml .; \
 	$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 	ant -DJAVA_COMMAND=$(JAVA_COMMAND) -DTEST_LIB_PATH=$(Q)-Djava.library.path=$(TEST_LIB_PATH_VALUE)$(Q) \
