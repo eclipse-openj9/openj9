@@ -1944,7 +1944,11 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    // the size of a length-0 array in bytes taking alignment into account
    int32_t zeroArraySizeAligned = OMR::align(TR::Compiler->om.discontiguousArrayHeaderSizeInBytes(),
                                              TR::Compiler->om.getObjectAlignmentInBytes());
+   // we use 64 bit classes only in 64 bit arch without compression
    bool use64BitClasses = comp->target().is64Bit() && !TR::Compiler->om.generateCompressedObjectHeaders();
+   TR::InstOpCode::Mnemonic storeClassOp = use64BitClasses ? TR::InstOpCode::std : TR::InstOpCode::stw;
+   int8_t classPtrLen = use64BitClasses ? 8 : 4;
+
    // Zero size arrays are considered "discontiguous", and the "mustBeZero" field
    // of discontiguous arrays must be located where the "size" field of contiguous arrays is.
    UDATA offsetOfMustBeZeroField = fej9->getOffsetOfContiguousArraySizeField();
@@ -2028,9 +2032,9 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
          offsetof(J9VMThread, heapAlloc), addrSize), temp1Reg);
 
    // initialise the class field in the header
-   generateMemSrc1Instruction(cg, use64BitClasses ? TR::InstOpCode::std : TR::InstOpCode::stw, node,
+   generateMemSrc1Instruction(cg, storeClassOp, node,
       TR::MemoryReference::createWithDisplacement(cg, targetReg,
-         TR::Compiler->om.offsetOfObjectVftField(), use64BitClasses ? 8 : 4), classReg);
+         TR::Compiler->om.offsetOfObjectVftField(), classPtrLen), classReg);
    // initialise the size and mustBeZero ('0') fields in the header to 0
    generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, temp3Reg, 0);
    generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node,
@@ -2120,9 +2124,9 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
          offsetof(J9VMThread, heapAlloc), addrSize), temp2Reg);
 
    // initialise the first dimension array's header's class and size
-   generateMemSrc1Instruction(cg, use64BitClasses ? TR::InstOpCode::std : TR::InstOpCode::stw, node,
+   generateMemSrc1Instruction(cg, storeClassOp, node,
       TR::MemoryReference::createWithDisplacement(cg, targetReg,
-         TR::Compiler->om.offsetOfObjectVftField(), use64BitClasses ? 8 : 4), classReg);
+         TR::Compiler->om.offsetOfObjectVftField(), classPtrLen), classReg);
    generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node,
       TR::MemoryReference::createWithDisplacement(cg, targetReg,
          fej9->getOffsetOfContiguousArraySizeField(), 4), firstDimLenReg);
@@ -2150,9 +2154,9 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    // === loop
    generateLabelInstruction(cg, TR::InstOpCode::label, node, loopLabel);
    // initialise a header in the second dimension with class = component, size = 0, mustBeZero = 0
-   generateMemSrc1Instruction(cg, use64BitClasses ? TR::InstOpCode::std : TR::InstOpCode::stw, node,
+   generateMemSrc1Instruction(cg, storeClassOp, node,
       TR::MemoryReference::createWithDisplacement(cg, temp2Reg,
-         TR::Compiler->om.offsetOfObjectVftField(), use64BitClasses ? 8 : 4), componentClassReg);
+         TR::Compiler->om.offsetOfObjectVftField(), classPtrLen), componentClassReg);
    generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, temp3Reg, 0);
    generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node,
       TR::MemoryReference::createWithDisplacement(cg, temp2Reg, offsetOfMustBeZeroField, 4), temp3Reg);
@@ -2177,9 +2181,14 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
       if (shiftAmount != 0)
          {
          generateShiftRightLogicalImmediateLong(cg, node, temp3Reg, temp2Reg, shiftAmount);
+         generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node,
+            TR::MemoryReference::createWithDisplacement(cg, temp1Reg, 0, 4), temp3Reg);
          }
-      generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node,
-         TR::MemoryReference::createWithDisplacement(cg, temp1Reg, 0, 4), temp3Reg);
+      else
+         {
+         generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node,
+            TR::MemoryReference::createWithDisplacement(cg, temp1Reg, 0, 4), temp2Reg);
+         }
       }
    else
       {
