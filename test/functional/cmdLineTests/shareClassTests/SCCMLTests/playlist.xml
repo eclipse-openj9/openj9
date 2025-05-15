@@ -204,6 +204,13 @@
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
 		</variations>
+		<disables>
+			<disable>
+				<comment>ibm_git/runtimes/backlog/issues/1654</comment>
+				<version>8</version>
+				<impl>ibm</impl>
+			</disable>
+		</disables>
 		<command>cp $(Q)$(TEST_RESROOT)$(D)..$(D)URLHelperTests$(D)URLHelperTests.jar$(Q) .; \
 	true URLHelperTests.jar ;\
 	$(Q)$(TEST_JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) xf URLHelperTests.jar; \
