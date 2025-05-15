@@ -2171,10 +2171,13 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
 #endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
 
    // Store 2nd dim element into 1st dim array slot, compress temp2 if needed
-   int32_t shiftAmount = TR::Compiler->om.compressedReferenceShift();
-   if (comp->useCompressedPointers() && shiftAmount != 0) // only possible with 64-bit
+   if (comp->useCompressedPointers()) // only possible with 64-bit
       {
-      generateShiftRightLogicalImmediateLong(cg, node, temp3Reg, temp2Reg, shiftAmount);
+      int32_t shiftAmount = TR::Compiler->om.compressedReferenceShift();
+      if (shiftAmount != 0)
+         {
+         generateShiftRightLogicalImmediateLong(cg, node, temp3Reg, temp2Reg, shiftAmount);
+         }
       generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node,
          TR::MemoryReference::createWithDisplacement(cg, temp1Reg, 0, 4), temp3Reg);
       }
