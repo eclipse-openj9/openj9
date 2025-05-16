@@ -129,6 +129,12 @@ JITServerIProfiler::ipBytecodeHashTableEntryFactory(TR_IPBCDataStorageHeader *st
       entry = (TR_IPBytecodeHashTableEntry*)mem->allocateMemory(sizeof(TR_IPBCDataCallGraph), allocKind, TR_Memory::IPBCDataCallGraph);
       entry = new (entry) TR_IPBCDataCallGraph(pc);
       }
+   else if (entryType == TR_IPBCD_DIRECT_CALL)
+      {
+      TR_ASSERT(storage->left == 0 || storage->left == sizeof(TR_IPBCDataDirectCallStorage), "Wrong size for serialized IP entry %u != %u", storage->left, sizeof(TR_IPBCDataDirectCallStorage));
+      entry = (TR_IPBytecodeHashTableEntry*)mem->allocateMemory(sizeof(TR_IPBCDataDirectCall), allocKind, TR_Memory::IPBCDataDirectCall);
+      entry = new (entry) TR_IPBCDataDirectCall(pc);
+      }
    else if (entryType == TR_IPBCD_EIGHT_WORDS)
       {
       TR_ASSERT(storage->left == 0 || storage->left == sizeof(TR_IPBCDataEightWordsStorage), "Wrong size for serialized IP entry %u != %u", storage->left, sizeof(TR_IPBCDataEightWordsStorage));
@@ -657,8 +663,18 @@ JITServerIProfiler::validateCachedIPEntry(TR_IPBytecodeHashTableEntry *entry, TR
                      TR_ASSERT(domClazzClient == domClazzServer, "Missmatch dominant class client=%p server=%p", (void*)domClazzClient, (void*)domClazzServer);
                }
                break;
+            case TR_IPBCD_DIRECT_CALL:
+               {
+               TR_IPBCDataDirectCall *concreteEntry = entry->asIPBCDataDirectCall();
+               TR_ASSERT(concreteEntry, "Cached IP entry is not of type TR_IPBCDataDirectCall");
+               uint32_t sentCount = ((TR_IPBCDataDirectCallStorage *)clientData)->_callCount;
+               uint32_t foundCount = concreteEntry->getNumSamples();
+               if (sentCount > 0 && foundCount == 0 || sentCount == 0 && foundCount > 0)
+                  fprintf(stderr, "Missmatch direct call count: sentCount=%" OMR_PRIu32 " foundCount=%" OMR_PRIu32 "\n", sentCount, foundCount);
+               }
+               break;
             default:
-               TR_ASSERT(false, "Unknown type of IP info %u", clientData->ID);
+               TR_ASSERT_FATAL(false, "Unknown type of IP info %u", clientData->ID);
             }
          }
       }
@@ -684,8 +700,8 @@ JITServerIProfiler::setCallCount(TR_OpaqueMethodBlock *method, int32_t bcIndex, 
    bool sendRemoteMessage = false;
    bool createNewEntry = false;
    bool methodInfoPresentInPersistent = false;
-   ClientSessionData *clientData = TR::compInfoPT->getClientData(); // Find clientSessionData
-   auto compInfoPT = (TR::CompilationInfoPerThreadRemote *) TR::compInfoPT;
+   ClientSessionData *clientData = comp->getClientData(); // Find clientSessionData
+   auto compInfoPT = (TR::CompilationInfoPerThreadRemote *)comp->fej9()->_compInfoPT;
    if (_useCaching)
       {
       OMR::CriticalSection getRemoteROMClass(clientData->getROMMapMonitor());
@@ -699,15 +715,12 @@ JITServerIProfiler::setCallCount(TR_OpaqueMethodBlock *method, int32_t bcIndex, 
       // it does not mean that an entry for a profiled bcIndex is cached.
       if (methodInfoPresentInPersistent || methodInfoPresentInHeap)
          {
-         if (entry && entry->asIPBCDataCallGraph())
+         if (entry && entry->asIPBCDataDirectCall())
             {
-            // These types on entries are special, they may not have a j9class
-            // pointer in the first slot, but they should have a weight
-            CallSiteProfileInfo *csInfo = entry->asIPBCDataCallGraph()->getCGData();
-            TR_ASSERT(csInfo->_weight[0] != 0, "weight of first slot must be non-zero for direct calls");
-            if (csInfo->_weight[0] != count)
+            TR_IPBCDataDirectCall *directCallEntry = entry->asIPBCDataDirectCall();
+            if (directCallEntry->getNumSamples() != count)
                {
-               csInfo->_weight[0] = count; // update
+               directCallEntry->setData(count); // update
                sendRemoteMessage = true;
                }
             else
@@ -743,16 +756,13 @@ JITServerIProfiler::setCallCount(TR_OpaqueMethodBlock *method, int32_t bcIndex, 
          // Create a new entry, add it to the cache and send a remote message as well
          uintptr_t methodStart = TR::Compiler->mtd.bytecodeStart(method);
          TR_AllocationKind allocKind = methodInfoPresentInPersistent ? persistentAlloc : heapAlloc;
-         TR_IPBCDataCallGraph *cgEntry = (TR_IPBCDataCallGraph*)comp->trMemory()->allocateMemory(sizeof(TR_IPBCDataCallGraph), allocKind, TR_Memory::IPBCDataCallGraph);
-         cgEntry = new (cgEntry) TR_IPBCDataCallGraph(methodStart + bcIndex);
-
-         CallSiteProfileInfo *csInfo = cgEntry->getCGData();
-         csInfo->_weight[0] = count;
-         // TODO: we should probably add some class as well
+         auto *directCallEntry = (TR_IPBCDataDirectCall*)comp->trMemory()->allocateMemory(sizeof(TR_IPBCDataDirectCall), allocKind, TR_Memory::IPBCDataDirectCall);
+         directCallEntry = new (directCallEntry) TR_IPBCDataDirectCall(methodStart + bcIndex);
+         directCallEntry->setData(count);
          if (methodInfoPresentInPersistent)
-            clientData->cacheIProfilerInfo(method, bcIndex, cgEntry, isCompiled);
+            clientData->cacheIProfilerInfo(method, bcIndex, directCallEntry, isCompiled);
          else
-            compInfoPT->cacheIProfilerInfo(method, bcIndex, cgEntry);
+            compInfoPT->cacheIProfilerInfo(method, bcIndex, directCallEntry);
          }
       }
    }
@@ -801,7 +811,7 @@ JITClientIProfiler::JITClientIProfiler(J9JITConfig *jitConfig)
  */
 uint32_t
 JITClientIProfiler::walkILTreeForIProfilingEntries(uintptr_t *pcEntries, uint32_t &numEntries, TR_J9ByteCodeIterator *bcIterator,
-                                                       TR_OpaqueMethodBlock *method, TR_BitVector *BCvisit, bool &abort, TR::Compilation *comp)
+                                                   TR_OpaqueMethodBlock *method, TR_BitVector *BCvisit, bool &abort, TR::Compilation *comp)
    {
    abort = false; // optimistic
    uint32_t bytesFootprint = 0;
@@ -836,32 +846,32 @@ JITClientIProfiler::walkILTreeForIProfilingEntries(uintptr_t *pcEntries, uint32_
                {
                switch (canPersist) {
                   case IPBC_ENTRY_PERSIST_LOCK:
-                     // that means the entry is locked by another thread. going to abort the
-                     // storage of iprofiler information for this method
-                  {
-                  // In some corner cases of invoke interface, we may come across the same entry
-                  // twice under 2 different bytecodes. In that case, the other entry has been
-                  // locked by this thread and is in the list of entries, so don't abort.
-                  int32_t i;
-                  bool found = false;
-                  int32_t a1 = 0, a2 = numEntries - 1;
-                  while (a2 >= a1 && !found)
+                     // This means the entry is locked by another thread. We are going to abort the
+                     // storage of iprofiler information for this method.
                      {
-                     i = (a1 + a2) / 2;
-                     if (pcEntries[i] == thisPC)
-                        found = true;
-                     else if (pcEntries[i] < thisPC)
-                        a1 = i + 1;
-                     else
-                        a2 = i - 1;
+                     // In some corner cases of invoke interface, we may come across the same entry
+                     // twice under 2 different bytecodes. In that case, the other entry has been
+                     // locked by this thread and is in the list of entries, so don't abort.
+                     int32_t i;
+                     bool found = false;
+                     int32_t a1 = 0, a2 = numEntries - 1;
+                     while (a2 >= a1 && !found)
+                        {
+                        i = (a1 + a2) / 2;
+                        if (pcEntries[i] == thisPC)
+                           found = true;
+                        else if (pcEntries[i] < thisPC)
+                           a1 = i + 1;
+                        else
+                           a2 = i - 1;
+                        }
+                     if (!found)
+                        {
+                        abort = true;
+                        return 0;
+                        }
                      }
-                  if (!found)
-                     {
-                     abort = true;
-                     return 0;
-                     }
-                  }
-                  break;
+                     break;
                   case IPBC_ENTRY_PERSIST_UNLOADED:
                      _STATS_entriesNotPersisted_Unloaded++;
                      break;
