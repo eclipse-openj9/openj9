@@ -93,11 +93,13 @@ J9::Z::CodeGenerator::initialize()
       cg->setSupportsInlineStringIndexOf();
       }
 
-   if (cg->getSupportsVectorRegisters() && !comp->getOption(TR_DisableSIMDStringHashCode) &&
-       !TR::Compiler->om.canGenerateArraylets() && !TR::Compiler->om.isOffHeapAllocationEnabled())
+   if (cg->getSupportsVectorRegisters() && !comp->getOption(TR_DisableSIMDStringHashCode) && !TR::Compiler->om.canGenerateArraylets())
       {
       cg->setSupportsInlineStringHashCode();
-      cg->setSupportsInlineVectorizedHashCode();
+      if (!TR::Compiler->om.isOffHeapAllocationEnabled())
+         {
+         cg->setSupportsInlineVectorizedHashCode();
+         }
       }
 
    if (cg->getSupportsVectorRegisters() && comp->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z14) &&
