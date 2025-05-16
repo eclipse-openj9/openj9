@@ -83,54 +83,11 @@ restart:
 		Assert_VM_false(lock & OBJECT_HEADER_LOCK_LEARNING);
 #endif /* if !(defined(AIXPPC) || defined(LINUXPPC)) */
 #endif /* ifndef J9VM_THR_LOCK_RESERVATION */
-
-		if (count == 0x00) {
-			/* just release the flatlock */
-			monitorExitWriteBarrier();
-			J9_STORE_LOCKWORD(vmStruct, lockEA, 0);
-		} else if ((count & OBJECT_HEADER_LOCK_LEARNING) && (count & OBJECT_HEADER_LOCK_LEARNING_RECURSION_MASK)) {
-			/* Learning state case */
-			I_32 casSuccess = FALSE;
-
-			if (1 == J9_FLATLOCK_COUNT(lock)) {
-				/* if RC field is 1, this fully unlocks the object so a write barrier is needed */
-				monitorExitWriteBarrier();
-			}
-
-			if (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmStruct)) {
-				casSuccess = (lock == compareAndSwapU32((uint32_t*)lockEA, (uint32_t)lock,
-				                                        (uint32_t)(lock - OBJECT_HEADER_LOCK_LEARNING_FIRST_RECURSION_BIT)));
-			} else {
-				casSuccess = (lock == compareAndSwapUDATA((uintptr_t*)lockEA, (uintptr_t)lock,
-				                                          (uintptr_t)(lock - OBJECT_HEADER_LOCK_LEARNING_FIRST_RECURSION_BIT)));
-			}
-
-			if (!casSuccess) {
-				/*
-				 * Another thread has attempted to get the lock and atomically changed the state to Flat.
-				 * Start over and read the new lockword. The lock can not go back to Learning so this will
-				 * only happen once.
-				 */
-				goto restart;
-			}
-		} else if (count & OBJECT_HEADER_LOCK_LEARNING) {
-			/* Lock is in Learning state but unowned (if it were owned it would have been caught by the first Learning state check) */
-			goto done;
-		} else if (count >= OBJECT_HEADER_LOCK_FIRST_RECURSION_BIT) {
-			/* just decrement the flatlock recursion count */
-			lock -= OBJECT_HEADER_LOCK_FIRST_RECURSION_BIT;
-			J9_STORE_LOCKWORD(vmStruct, lockEA, lock);
-#ifdef J9VM_THR_LOCK_RESERVATION
-		} else if (count & OBJECT_HEADER_LOCK_RESERVED) {
-			/* lock is reserved but unowned (if it were owned the count would be >= OBJECT_HEADER_LOCK_FIRST_RECURSION_BIT) */
-			Trc_VM_objectMonitorExit_Exit_ReservedButUnownedFlatLock(vmStruct, lock, object);
-			goto done;
-#endif
-		} else {
+		if (0x02 == count) {
 			/* FLC set, non-recursive */
 			J9ObjectMonitor *objectMonitor = objectMonitorInflate(vmStruct, object, lock);
 
-			if (objectMonitor == NULL) {
+			if (NULL == objectMonitor) {
 				/* out of memory - impossible? */
 				monitorExitWriteBarrier();
 				J9_STORE_LOCKWORD(vmStruct, lockEA, 0);
@@ -149,6 +106,39 @@ restart:
 					omrthread_monitor_exit(vmStruct->javaVM->blockedVirtualThreadsMutex);
 				}
 #endif /* JAVA_SPEC_VERSION >= 24 */
+			}
+		} else {
+			j9objectmonitor_t newLock = 0;
+			I_32 casSuccess = FALSE;
+			if (0x00 == count) {
+				/* Just release the flatlock. */
+			} else if ((count & OBJECT_HEADER_LOCK_LEARNING) && J9_ARE_ANY_BITS_SET(count, OBJECT_HEADER_LOCK_LEARNING_RECURSION_MASK)) {
+				/* Learning state case */
+				newLock = lock - OBJECT_HEADER_LOCK_LEARNING_FIRST_RECURSION_BIT;
+			} else if (count & OBJECT_HEADER_LOCK_LEARNING) {
+				/* Lock is in Learning state but unowned (if it were owned it would have been caught by the first Learning state check) */
+				goto done;
+			} else if (count >= OBJECT_HEADER_LOCK_FIRST_RECURSION_BIT) {
+				/* Just decrement the flatlock recursion count. */
+				newLock = lock - OBJECT_HEADER_LOCK_FIRST_RECURSION_BIT;
+#ifdef J9VM_THR_LOCK_RESERVATION
+			} else if (count & OBJECT_HEADER_LOCK_RESERVED) {
+				/* Lock is reserved but unowned (if it were owned the count would be >= OBJECT_HEADER_LOCK_FIRST_RECURSION_BIT) */
+				Trc_VM_objectMonitorExit_Exit_ReservedButUnownedFlatLock(vmStruct, lock, object);
+				goto done;
+#endif /* J9VM_THR_LOCK_RESERVATION */
+			}
+
+			monitorExitWriteBarrier();
+			if (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmStruct)) {
+				casSuccess = (lock == compareAndSwapU32((uint32_t *)lockEA, (uint32_t)lock, (uint32_t)newLock));
+			} else {
+				casSuccess = (lock == compareAndSwapUDATA((uintptr_t *)lockEA, (uintptr_t)lock, (uintptr_t)newLock));
+			}
+
+			if (!casSuccess) {
+				/* Another thread has attempted to get the lock and may have update the FLC flag. */
+				goto restart;
 			}
 		}
 		Trc_VM_objectMonitorExit_Exit_FCBSet(vmStruct);
