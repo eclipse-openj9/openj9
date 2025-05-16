@@ -1971,7 +1971,6 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    TR::Register *secondDimLenReg = cg->allocateRegister();
    TR::Register *temp1Reg = cg->allocateRegister();
    TR::Register *temp2Reg = cg->allocateRegister();
-   TR::Register *componentClassReg = cg->allocateRegister();
 
    TR::Register *vmThreadReg = cg->getMethodMetaDataRegister();
    TR::Register *condReg = cg->allocateRegister(TR_CCR);
@@ -2057,11 +2056,6 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    // === if we reach here, the first dimension is not zero
    generateLabelInstruction(cg, TR::InstOpCode::label, node, nonZeroFirstDimLabel);
 
-   // load the component class
-   generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, componentClassReg,
-      TR::MemoryReference::createWithDisplacement(cg, classReg,
-         offsetof(J9ArrayClass, componentType), addrSize));
-
    // the maximum number of elements we can handle without risking an overflow
    uintptr_t maxObjectSizeInElements = cg->getMaxObjectSizeGuaranteedNotToOverflow() / referenceFieldSize;
    // static cast and unsigned cmp copied from the x86 evaluator
@@ -2130,6 +2124,11 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
       TR::MemoryReference::createWithDisplacement(cg, targetReg,
          fej9->getOffsetOfContiguousArraySizeField(), 4), firstDimLenReg);
 
+   // load the component class
+   generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, classReg,
+      TR::MemoryReference::createWithDisplacement(cg, classReg,
+         offsetof(J9ArrayClass, componentType), addrSize));
+
    // temp2Reg = targetReg + temp1Reg = start of the 2nd dimension headers
    generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, temp2Reg, temp1Reg, targetReg);
    // temp1Reg points to the first element of the 1st dimension array by jumping over the header
@@ -2156,7 +2155,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    // initialise a header in the second dimension with class = component, size = 0, mustBeZero = 0
    generateMemSrc1Instruction(cg, storeClassOp, node,
       TR::MemoryReference::createWithDisplacement(cg, temp2Reg,
-         TR::Compiler->om.offsetOfObjectVftField(), classPtrLen), componentClassReg);
+         TR::Compiler->om.offsetOfObjectVftField(), classPtrLen), classReg);
    generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node,
       TR::MemoryReference::createWithDisplacement(cg, temp2Reg, offsetOfMustBeZeroField, 4), secondDimLenReg);
    generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node,
@@ -2208,7 +2207,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    generateLabelInstruction(cg, TR::InstOpCode::b, node, oolFailLabel);
 
    TR::RegisterDependencyConditions *dependencies =
-      new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 13, cg->trMemory());
+      new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 12, cg->trMemory());
    dependencies->addPostCondition(dimsPtrReg, TR::RealRegister::NoReg);
    dependencies->getPostConditions()->getRegisterDependency(dependencies->getAddCursorForPost() - 1)->setExcludeGPR0();
 
@@ -2227,7 +2226,6 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    dependencies->addPostCondition(temp2Reg, TR::RealRegister::NoReg);
    dependencies->getPostConditions()->getRegisterDependency(dependencies->getAddCursorForPost() - 1)->setExcludeGPR0();
 
-   dependencies->addPostCondition(componentClassReg, TR::RealRegister::NoReg);
    dependencies->addPostCondition(vmThreadReg, TR::RealRegister::NoReg);
    dependencies->addPostCondition(condReg, TR::RealRegister::NoReg);
 
@@ -2265,7 +2263,6 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    cg->stopUsingRegister(secondDimLenReg);
    cg->stopUsingRegister(temp1Reg);
    cg->stopUsingRegister(temp2Reg);
-   cg->stopUsingRegister(componentClassReg);
    cg->stopUsingRegister(condReg);
 
    cg->decReferenceCount(node->getFirstChild());
