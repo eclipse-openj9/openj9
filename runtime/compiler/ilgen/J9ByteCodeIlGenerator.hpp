@@ -149,14 +149,15 @@ private:
 
    bool         runMacro(TR::SymbolReference *);
    bool         runFEMacro(TR::SymbolReference *);
-   TR::Node *    genInvoke(TR::SymbolReference *, TR::Node *indirectCallFirstChild, TR::Node *invokedynamicReceiver = NULL);
+   TR::Node *    genInvoke(TR::SymbolReference *, TR::Node *indirectCallFirstChild, TR::Node *invokedynamicReceiver = NULL, int32_t numExpectedArgs = -1);
    TR::Node *    genInvokeInner(
       TR::SymbolReference *,
       TR::Node *indirectCallFirstChild,
       TR::Node *invokedynamicReceiver,
-      TR::KnownObjectTable::Index *requiredKoi);
+      TR::KnownObjectTable::Index *requiredKoi,
+      int32_t numExpectedArgs = -1);
 
-   TR::Node *    genInvokeDirect(TR::SymbolReference *symRef){ return genInvoke(symRef, NULL); }
+   TR::Node *    genInvokeDirect(TR::SymbolReference *symRef, int32_t numExpectedArgs = -1){ return genInvoke(symRef, NULL, NULL, numExpectedArgs); }
    TR::Node *    genInvokeWithVFTChild(TR::SymbolReference *);
    TR::Node *    getReceiverFor(TR::SymbolReference *);
    void          stashArgumentsForOSR(TR_J9ByteCode byteCode);
