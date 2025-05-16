@@ -391,7 +391,15 @@ j9gc_modron_getConfigurationValueForKey(J9JavaVM *javaVM, UDATA key, void *value
 		*((UDATA *)value) = 0;
 		keyFound = FALSE;
 #endif /* defined(OMR_GC_VLHGC_CONCURRENT_COPY_FORWARD) */
-
+		break;
+	case j9gc_modron_configuration_gcConcurrentMarkThreadCount:
+#if defined(OMR_GC_MODRON_CONCURRENT_MARK)
+		*((UDATA *)value) = extensions->concurrentBackground;
+		keyFound = TRUE;
+#else /* defined(OMR_GC_MODRON_CONCURRENT_MARK) */
+		*((UDATA *)value) = 0;
+		keyFound = FALSE;
+#endif /* defined(OMR_GC_MODRON_CONCURRENT_MARK) */
 		break;
 	default:
 		/* key is either invalid or unknown for this configuration - should not have been requested */
