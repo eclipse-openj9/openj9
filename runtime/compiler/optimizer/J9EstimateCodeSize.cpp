@@ -55,6 +55,10 @@ const float TR_J9EstimateCodeSize::CONST_ARG_IN_CALLEE_ADJUSTMENT_FACTOR = 0.75f
 
 #define DEFAULT_FREQ_CUTOFF 40
 
+#define FREQ_CUTOFF_INTERPRETED_HOTANDABOVE 700
+
+#define FREQ_CUTOFF_INTERPRETED_WARM 50
+
 #define DEFAULT_GRACE_INLINING_THRESHOLD 100
 
 #define DEFAULT_ANALYZED_ALLOWANCE_FACTOR 2
@@ -1730,10 +1734,39 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                   }
                else
                   {
+                  // Now check the invocation count for the callee if interpreted.
+                  bool isInterpretedCallWithLowFrequency = false;
+                  static bool shouldNotInlineInterpretedMethods = feGetEnv("TR_DisableSkippingInliningOfColdInterpretedMethods") == NULL;
+                  if (shouldNotInlineInterpretedMethods)
+                     {
+                     static bool includeWarmCompilationsAsWell = feGetEnv("TR_EnableSkippingInliningOfColdInterpretedMethodsInWarm") != NULL;
+                     if (targetCallee->_calleeMethod->isInterpretedForHeuristics() && !comp()->fej9()->compiledAsDLTBefore(targetCallee->_calleeMethod))
+                        {
+                        if (comp()->getMethodHotness() > warm)
+                           {
+                           static const char *cutOffHotAndAbove = feGetEnv("TR_FreqCutOffForInterpretedCalleeInHotAndAbove");
+                           static const int32_t cutOffFreqForHotAndAbove = cutOffHotAndAbove ? atoi(cutOffHotAndAbove) : FREQ_CUTOFF_INTERPRETED_HOTANDABOVE;
+                           isInterpretedCallWithLowFrequency = currentBlock->getFrequency() < cutOffFreqForHotAndAbove;
+                           }
+                        else if (includeWarmCompilationsAsWell && comp()->getMethodHotness() == warm)
+                           {
+                           static const char *cutOffForWarm = feGetEnv("TR_FreqCutOffForInterpretedCalleeInWarm");
+                           static const int32_t cutOffFreqForWarm = cutOffForWarm ? atoi(cutOffForWarm) : FREQ_CUTOFF_INTERPRETED_WARM;
+                           isInterpretedCallWithLowFrequency = currentBlock->getFrequency() < cutOffFreqForWarm;
+                           }
+                        heuristicTrace(tracer(),"Depth %d: callee %s is interpreted and isInterpretedCallWithLowFrequency = %s.",_recursionDepth,calleeName,isInterpretedCallWithLowFrequency ? "true" : "false");
+                        }
+                     }
+
                   static const char *fc = feGetEnv("TR_FrequencyCutoff");
                   static const int32_t freqCutoff = fc ? atoi(fc) : DEFAULT_FREQ_CUTOFF;
 
-                  bool isColdCall = (((comp()->getMethodHotness() <= warm) && profileManager->isColdCall(targetCallee->_calleeMethod->getPersistentIdentifier(), calltarget->_calleeMethod->getPersistentIdentifier(), i, comp())) || (currentBlock->getFrequency() < freqCutoff)) && !_inliner->alwaysWorthInlining(targetCallee->_calleeMethod, NULL);
+                  bool isColdCall = ((comp()->getMethodHotness() <= warm \
+                                       && profileManager->isColdCall(targetCallee->_calleeMethod->getPersistentIdentifier(),
+                                                                        calltarget->_calleeMethod->getPersistentIdentifier(), i, comp())) \
+                                       || currentBlock->getFrequency() < freqCutoff \
+                                       || isInterpretedCallWithLowFrequency) \
+                                    && !(_inliner->alwaysWorthInlining(targetCallee->_calleeMethod, NULL));
 
                   if (coldCallInfoIsReliable && isColdCall)
                      {
