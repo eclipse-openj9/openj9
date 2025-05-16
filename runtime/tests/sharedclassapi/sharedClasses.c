@@ -27,27 +27,20 @@
  #include <string.h>
  #include <time.h>
  #include <stdlib.h>
- 
  #include "jvmti.h"
  #include "ibmjvmti.h"
- 
  #define INVALID_COM_IBM_ITERATE_SHARED_CACHES_VERSION (COM_IBM_ITERATE_SHARED_CACHES_VERSION_1 + 999)
  #define INVALID_COM_IBM_ITERATE_SHARED_CACHES_NO_FLAGS (COM_IBM_ITERATE_SHARED_CACHES_NO_FLAGS + 100)
- 
  /* Arguments to pass to the destroy cache function */
  #define CACHE_TYPE_PERSISTENT 1
  #define CACHE_TYPE_NONPERSISTENT 2
  #define CACHE_TYPE_INVALID 3
- 
  /* Forward declaration of the iterator callback function */
  static jint JNICALL validateSharedCacheInfo(jvmtiEnv *jvmti, jvmtiSharedCacheInfo *cache_info, jobject user_data);
- 
  /* the jvmti extension functions that will be used. */
  static jvmtiExtensionFunction iterateSharedCacheFunction = NULL;
  static jvmtiExtensionFunction destroySharedCacheFunction = NULL;
- 
  static int foundCacheCount = 0;
- 
  /* Options parsed from the command line  */
  static int expectedCacheCount = -1;
  static jboolean useCommandLineValues = JNI_FALSE;
@@ -55,12 +48,9 @@
  static char* cachePrefix = NULL; /* All caches created by the test should start with this. */
  static const jbyte *cacheDir = NULL;
  static char *cacheDirPrintable = NULL; /* the name of the cache dir in appropriate ascii/ebcdic for printing */
- 
- 
  #if defined(ZOS)
  #pragma convlit(suspend)
  #endif /* defined(ZOS) */
- 
  /**
   * All message strings are defined here, as on z/OS they need to
   * be kept as EBCDIC, rather than converted to ASCII, as all
@@ -109,14 +99,12 @@
  static char* msg41 = "No Cache prefix was specified. All caches will be deleted";
  static char* msg42 = "onload processing complete\n\n";
  static char* msg43 = "Unexpected return code '%d' from '%s'\n\n";
- 
  #if defined(ZOS)
  #pragma convlit(suspend)
  #endif /* defined(ZOS) */
- 
  /**
   * Returns a newly allocated copy of original. If length is
-  * -1, then, copies the whole of original. If length is > 0 
+  * -1, then, copies the whole of original. If length is > 0
   * and less then length of original, then only that number
   * of chars will be copied. The length of the returned string
   * will be 'length' + the null terminator
@@ -136,19 +124,14 @@
         strcpy(newCopy, original);
         return newCopy;
     }
- 
      newCopy = malloc(length + 1);
      if (newCopy == NULL) {
          return newCopy;
      }
- 
      strncpy(newCopy, original, length);
- 
      newCopy[length] = '\0';
      return newCopy;
  }
- 
- 
  /**
   * This should be called as a pair with freeConvertedString
   *
@@ -160,7 +143,6 @@
   *
   */
  char* copyAndConvert(char* asciiString) {
- 
      #if defined(ZOS)
          char *copiedString = copyString(asciiString, -1);
          if (NULL != copiedString) {
@@ -171,7 +153,6 @@
          return asciiString;
      #endif /* defined(ZOS) */
  }
- 
  /**
   * This should be called after copyAndConvert to free the copied
   * string.
@@ -186,59 +167,45 @@
     #endif /* defined(ZOS) */
     return;
  }
- 
- 
  /**
   * Prints messages with a timestamp
   */
  void iteratorLogger(const char* msg, ...) {
- 
     va_list args;
     time_t now;
     char *formattedTime = NULL;
- 
     time(&now);
     formattedTime = ctime(&now);
- 
     #if defined(ZOS)
     #pragma convlit(suspend) /* Need this for the printf format strings below */
     #endif /* defined(ZOS) */
- 
     va_start(args, msg);
     printf("%s", formattedTime);
     vprintf(msg, args);
     printf("\n");
     va_end(args);
- 
     #if defined(ZOS)
     #pragma convlit(resume)
     #endif /* defined(ZOS) */
- 
     return;
  }
- 
- 
  /**
   * Call back for iterating over the shared classes caches
   */
  static jint JNICALL validateSharedCacheInfo(jvmtiEnv *jvmti, jvmtiSharedCacheInfo *cache_info, jobject user_data) {
- 
     int deleteThis = 0;
     foundCacheCount++;
- 
     iteratorLogger(msg1, foundCacheCount);
     {
         char *convertedName = copyAndConvert((char *)cache_info->name);
         iteratorLogger(msg2, convertedName);
         freeConvertedString(convertedName);
     }
- 
     if (cache_info->isPersistent) {
         iteratorLogger(msg3);
     } else {
         iteratorLogger(msg4);
     }
- 
      /* Work out if the cache should be deleted  */
      if (deleteCaches) {
          iteratorLogger(msg5);
@@ -255,13 +222,10 @@
              }
          }
      }
- 
      if (deleteThis) {
- 
          jvmtiError err = JVMTI_ERROR_NONE;
          jint cacheType = 0;
          jint errorCode = 0;
- 
          iteratorLogger(msg9);
          if (cache_info->isPersistent) {
              cacheType = (jint)CACHE_TYPE_PERSISTENT;
@@ -281,12 +245,9 @@
              iteratorLogger(msg11, errorCode);
          }
      }
- 
      iteratorLogger(msg12, foundCacheCount);
      return JNI_OK;
  }
- 
- 
  /**
   * Iterate over all the shared classes caches using the JVMTI
   * extension function. Uses the cacheDir in the static cacheDir
@@ -294,27 +255,22 @@
   *
   */
  int iterateOverCaches(jvmtiEnv *jvmti_env) {
- 
      jint extensionCount;
      jvmtiExtensionFunctionInfo *extensionFunctions;
      jvmtiError err;
      int i;
      jint flags = (jint) 0;
- 
      if (useCommandLineValues) {
          iteratorLogger(msg13);
          iteratorLogger(msg14, cacheDirPrintable);
      } else {
          iteratorLogger(msg15, cacheDirPrintable);
      }
- 
      err = (*jvmti_env)->GetExtensionFunctions(jvmti_env, &extensionCount, &extensionFunctions);
      if ( JVMTI_ERROR_NONE != err ) {
          iteratorLogger(msg16);
          return -1;
      }
- 
- 
      for (i = 0; i < extensionCount; i++) {
          if (strcmp(extensionFunctions[i].id, COM_IBM_ITERATE_SHARED_CACHES) == 0) {
              iterateSharedCacheFunction = extensionFunctions[i].func;
@@ -323,24 +279,19 @@
              destroySharedCacheFunction = extensionFunctions[i].func;
          }
      }
- 
      err = (*jvmti_env)->Deallocate(jvmti_env, (unsigned char*)extensionFunctions);
      if (err != JVMTI_ERROR_NONE) {
          iteratorLogger(msg17);
          return -1;
      }
- 
      if (iterateSharedCacheFunction == NULL) {
          iteratorLogger(msg18);
          return -1;
      }
- 
      if (destroySharedCacheFunction == NULL) {
          iteratorLogger(msg19);
          return -1;
      }
- 
- 
      /* Check that iterate fails if an invalid version is supplied  */
      err = (iterateSharedCacheFunction)(jvmti_env,
                                         INVALID_COM_IBM_ITERATE_SHARED_CACHES_VERSION,
@@ -353,8 +304,6 @@
          iteratorLogger(msg20);
          return -1;
      }
- 
- 
      /* check that iterate fails if an invalid flags field is supplied  */
      err = (iterateSharedCacheFunction)(jvmti_env,
                                         COM_IBM_ITERATE_SHARED_CACHES_VERSION_1,
@@ -367,8 +316,6 @@
          iteratorLogger(msg21);
          return -1;
      }
- 
- 
      /* Run the real iteration step with valid arguments. */
      err = (iterateSharedCacheFunction)(jvmti_env,
                                         COM_IBM_ITERATE_SHARED_CACHES_VERSION_1,
@@ -381,7 +328,6 @@
          iteratorLogger(msg22);
          return -1;
      }
- 
      iteratorLogger(msg23, foundCacheCount);
      if (expectedCacheCount != -1) {
          if (foundCacheCount >= expectedCacheCount) {
@@ -391,31 +337,22 @@
              return -1;
          }
      }
- 
      return 0;
  }
- 
  /**
   * Callback for the vm init event.
   * Calls the cache iterator function.
   */
  void JNICALL VMInitCallback(jvmtiEnv *jvmti_env, JNIEnv* jni_env, jthread thread) {
- 
      int rv;
- 
      iteratorLogger(msg26);
- 
      rv = iterateOverCaches(jvmti_env);
- 
      if (rv) {
          iteratorLogger(msg27);
      } else {
          iteratorLogger(msg28);
      }
  }
- 
- 
- 
  /**
   * Retuns a newly malloced null terminated string containing the
   * option value. Assumes the option string is in the form:
@@ -428,16 +365,13 @@
   *
   */
  char* findOption(const char* optionString, char* optionName) {
- 
      char* optionStart = NULL;
      char* valueStart;
      size_t remainingLength;
      size_t optionNameLength;
      char* trailingCommaPos;
      int valueLength;
- 
      optionStart = strstr(optionString, optionName);
- 
      if (optionStart == NULL) {
          {
              char* convertedName;
@@ -447,11 +381,9 @@
          }
          return NULL;
      }
- 
      /* The option name exists, need to check whether it is
         in the middle of another string, is really an option
         i.e. needs to be ',optionName=' */
- 
      if (optionStart != optionString) {
          /* This is not the first option. We need to check for a preceding comma */
          char* leadingCommaPosition = optionStart - 1;
@@ -460,7 +392,6 @@
              return findOption((optionStart+1), optionName);
          }
      }
- 
      /* The name is at the start of the option string or is
       preceded by a comma. Check that it is followed by '='
       and a value  */
@@ -472,8 +403,6 @@
           down the option string.  */
          return findOption((optionStart+1), optionName);
      }
- 
- 
      /* We have the start of the option name, and there are at least two characters after it
       hopefully '=' and a value */
      valueStart = optionStart + optionNameLength;
@@ -482,7 +411,6 @@
          return findOption((optionStart+1), optionName);
      }
      valueStart++;
- 
      /* The start position of the option name is known, and it is preceded by a comma
       (or is at the start of the option string). It has an '=' after it and at least one more
       char, so there is a valid value for this option
@@ -492,29 +420,23 @@
          /* No more commas, the value is the whole thing  */
          return copyString(valueStart, -1);
      }
- 
      valueLength = (int)(trailingCommaPos - valueStart);
      return copyString(valueStart, valueLength);
  }
- 
- 
  /**
   * Parse the options that were passed to this agent on the
   * command line. The options are received via the JVM
   * and hence expected to be a UTF8 string.
   */
  void parseOptions(const char* options) {
- 
      char* expectedCacheString = NULL;
      char* useCommandLineValuesString = NULL;
      char* deleteCachesString = NULL;
- 
      {
          char* convertedOptions = copyAndConvert( (char *) options);
          iteratorLogger(msg30, convertedOptions);
          freeConvertedString(convertedOptions);
      }
- 
      /* option 'cacheDir'. Should be a string path. If missing, then the default will be used  */
      cacheDir = (jbyte*)findOption(options, "cacheDir");
      if (cacheDir == NULL) {
@@ -523,15 +445,11 @@
          cacheDirPrintable = copyAndConvert( (char *) cacheDir);
          iteratorLogger(msg32, cacheDirPrintable);
      }
- 
- 
      /* option 'expectedCacheCount'. Should be an int. If missing, this won't be checked */
      expectedCacheString = findOption(options, "expectedCacheCount");
      if (expectedCacheString != NULL) {
- 
          char* convertedExpectedCacheCount = copyAndConvert( (char *) expectedCacheString);
          int success;
- 
          #if defined(ZOS)
          #pragma convlit(suspend) /* needed for the format string in scanf  */
          #endif /* defined(ZOS) */
@@ -539,23 +457,18 @@
          #if defined(ZOS)
          #pragma convlit(resume)
          #endif /* defined(ZOS) */
- 
          if (success != 1) {
              /* Failed to parse an integer  */
              iteratorLogger(msg33, convertedExpectedCacheCount);
              expectedCacheCount = -1;
          }
- 
          freeConvertedString(convertedExpectedCacheCount);
      }
- 
      if (expectedCacheCount == -1) {
          iteratorLogger(msg34);
      } else {
          iteratorLogger(msg35, expectedCacheCount);
      }
- 
- 
      /* Option 'useCommandLineValues'. Look for the exact string 'true'. Anything else is false
      If set, the cacheDir option will be ignored, and the JVM will be asked to used the value
      from the -Xshareclasses option for the cache directory  */
@@ -570,8 +483,6 @@
      } else {
          iteratorLogger(msg37);
      }
- 
- 
      /* option 'deleteCaches'. If set to the string 'true', ask the jvm to delete the caches
      after the iterator has queried them */
      deleteCachesString = findOption(options, "deleteCaches");
@@ -585,7 +496,6 @@
      } else {
          iteratorLogger(msg39);
      }
- 
     /* option 'cachePrefix'. If set, only caches whose name start with prefix will
      be deleted. Necessary when working with the default cache directory so as
      other processes caches aren't deleted. */
@@ -597,31 +507,24 @@
      } else {
          iteratorLogger(msg41);
      }
- 
      return;
  }
- 
  /**
   * JVMTI agent initialisation function, invoked as agent is loaded by the JVM
   * Parse the agent's options, and sets up a callback for the vm
   * init event, where all the work is done.
   */
  JNIEXPORT jint JNICALL Agent_OnLoad(JavaVM *jvm, char *options, void *reserved) {
- 
      jvmtiEnv *jvmti = NULL;
      jvmtiError rc;
      jvmtiEventCallbacks eventCallbacks;
- 
      parseOptions(options);
- 
      /* Get access to JVMTI */
      (*jvm)->GetEnv(jvm, (void **)&jvmti, JVMTI_VERSION_1_0);
- 
      /* Setup the callback function for vm init */
      memset(&eventCallbacks, 0, sizeof(eventCallbacks));
      eventCallbacks.VMInit = &VMInitCallback;
      rc = (*jvmti)->SetEventCallbacks(jvmti, &eventCallbacks, sizeof(eventCallbacks));
- 
      /* Enable callback event for vm init */
      rc = (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE, JVMTI_EVENT_VM_INIT, (jthread)NULL);
      if (rc == JVMTI_ERROR_NONE) {
@@ -631,8 +534,5 @@
         iteratorLogger(msg43, rc, "SetEventNotificationMode");
         return rc;
      }
- 
      return JNI_OK;
- 
  }
- 
