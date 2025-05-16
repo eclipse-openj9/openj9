@@ -614,9 +614,12 @@ getClassContextIterator(J9VMThread * currentThread, J9StackWalkState * walkState
 JNIEXPORT void JNICALL
 JVM_GC_Impl(void)
 {
-	J9InternalVMFunctions *vmFuncs = VM.javaVM->internalVMFunctions;
-	J9VMThread *currentThread = vmFuncs->currentVMThread(VM.javaVM);
-	J9MemoryManagerFunctions *mmFuncs = VM.javaVM->memoryManagerFunctions;
+	J9JavaVM *vm = VM.javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	J9VMThread *currentThread = vmFuncs->currentVMThread(vm);
+	J9MemoryManagerFunctions *mmFuncs = vm->memoryManagerFunctions;
+	I_64 startTicks = 0;
+	PORT_ACCESS_FROM_JAVAVM(vm);
 
 	Trc_SunVMI_GC_Entry(currentThread);
 
@@ -626,9 +629,14 @@ JVM_GC_Impl(void)
 	vmFuncs->internalAcquireVMAccess(currentThread);
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 
+	if (J9_EVENT_IS_HOOKED(vm->hookInterface, J9HOOK_SYSTEM_GC_CALLED)) {
+		startTicks = j9time_nano_time();
+	}
+
 	/* Two GC requests are required to guarantee a GC actually occurs. */
 	mmFuncs->j9gc_modron_global_collect(currentThread);
 	mmFuncs->j9gc_modron_global_collect(currentThread);
+	TRIGGER_J9HOOK_SYSTEM_GC_CALLED(vm->hookInterface, currentThread, startTicks);
 
 	/* make sure we actually release VMAccess as finalization cannot be run with it */
 	vmFuncs->internalReleaseVMAccess(currentThread);
