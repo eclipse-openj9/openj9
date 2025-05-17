@@ -87,8 +87,9 @@ J9::Z::CodeGenerator::initialize()
    if (cg->getSupportsVectorRegisters() && !comp->getOption(TR_DisableSIMDStringCaseConv))
       cg->setSupportsInlineStringCaseConversion();
 
-   if (cg->getSupportsVectorRegisters() && !comp->getOption(TR_DisableFastStringIndexOf) &&
-       !TR::Compiler->om.canGenerateArraylets() && !TR::Compiler->om.isOffHeapAllocationEnabled())
+   if (cg->getSupportsVectorRegisters()
+         && !comp->getOption(TR_DisableFastStringIndexOf)
+         && !TR::Compiler->om.canGenerateArraylets())
       {
       cg->setSupportsInlineStringIndexOf();
       }
