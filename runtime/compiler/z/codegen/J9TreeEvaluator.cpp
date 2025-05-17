@@ -14379,10 +14379,26 @@ J9::Z::TreeEvaluator::inlineIntegerToCharsForLatin1Strings(TR::Node *node, TR::C
    TR::Register *inputValueReg = cg->evaluate(inputValueNode);
    TR::Register *stringSizeReg = cg->gprClobberEvaluate(stringSizeNode, true);
    TR::Register *byteArrayReg = cg->gprClobberEvaluate(byteArrayNode, true);
+   // Offset to be added to array object pointer to get to the data elements
+   int32_t offsetToDataElements = static_cast<int32_t>(TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+#ifdef J9VM_GC_SPARSE_HEAP_ALLOCATION
+   if (TR::Compiler->om.isOffHeapAllocationEnabled())
+      {
+      // Load first data element address
+      generateRXInstruction(cg,
+         TR::InstOpCode::getLoadOpCode(),
+         byteArrayNode,
+         byteArrayReg,
+         generateS390MemoryReference(byteArrayReg, cg->comp()->fej9()->getOffsetOfContiguousDataAddrField(), cg));
+
+      // Since the first data element address is retrieved from the array header, the offset is set to 0
+      offsetToDataElements = 0;
+      }
+#endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
 
    bool inputIs64Bit = inputValueNode->getDataType() == TR::Int64;
 
-   TR::MemoryReference *destinationArrayMemRef = generateS390MemoryReference(byteArrayReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg);
+   TR::MemoryReference *destinationArrayMemRef = generateS390MemoryReference(byteArrayReg, offsetToDataElements, cg);
 
    TR::LabelSymbol *cFlowRegionStart = generateLabelSymbol(cg);
    cFlowRegionStart->setStartInternalControlFlow();
@@ -14553,6 +14569,22 @@ J9::Z::TreeEvaluator::inlineIntegerToCharsForUTF16Strings(TR::Node *node, TR::Co
    TR::Register *inputValueReg = cg->evaluate(inputValueNode);
    TR::Register *stringSizeReg = cg->gprClobberEvaluate(stringSizeNode, true);
    TR::Register *byteArrayReg = cg->gprClobberEvaluate(byteArrayNode, true);
+   // Offset to be added to array object pointer to get to the data elements
+   int32_t offsetToDataElements = static_cast<int32_t>(TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+#ifdef J9VM_GC_SPARSE_HEAP_ALLOCATION
+   if (TR::Compiler->om.isOffHeapAllocationEnabled())
+      {
+      // Load first data element address
+      generateRXInstruction(cg,
+         TR::InstOpCode::getLoadOpCode(),
+         byteArrayNode,
+         byteArrayReg,
+         generateS390MemoryReference(byteArrayReg, cg->comp()->fej9()->getOffsetOfContiguousDataAddrField(), cg));
+
+      // Since the first data element address is retrieved from the array header, the offset is set to 0
+      offsetToDataElements = 0;
+      }
+#endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
 
    bool inputIs64Bit = inputValueNode->getDataType() == TR::Int64;
 
@@ -14567,7 +14599,7 @@ J9::Z::TreeEvaluator::inlineIntegerToCharsForUTF16Strings(TR::Node *node, TR::Co
    TR::Register *numCharsRemainingReg = cg->allocateRegister(); // this is also the index of the position of the first char after we have populated the buffer
    TR::LabelSymbol *nonZeroInputLabel = generateLabelSymbol(cg);
    generateS390CompareAndBranchInstruction(cg, inputIs64Bit ? TR::InstOpCode::CG : TR::InstOpCode::C, node, inputValueReg, 0, TR::InstOpCode::COND_BNE, nonZeroInputLabel, false);
-   TR::MemoryReference *destinationArrayMemRef = generateS390MemoryReference(byteArrayReg, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg);
+   TR::MemoryReference *destinationArrayMemRef = generateS390MemoryReference(byteArrayReg, offsetToDataElements, cg);
    generateSILInstruction(cg, TR::InstOpCode::MVHHI, node, destinationArrayMemRef, 48);
    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, cFlowRegionEnd);
 

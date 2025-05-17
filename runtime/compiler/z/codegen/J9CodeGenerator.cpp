@@ -264,9 +264,19 @@ J9::Z::CodeGenerator::initialize()
       }
 
    static bool disableIntegerToChars = (feGetEnv("TR_DisableIntegerToChars") != NULL);
-   if (cg->getSupportsVectorRegisters() && !TR::Compiler->om.canGenerateArraylets() && !TR::Compiler->om.isOffHeapAllocationEnabled() && !disableIntegerToChars && comp->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z16))
+   if (cg->getSupportsVectorRegisters()
+       && comp->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z16)
+       && !disableIntegerToChars
+       && !TR::Compiler->om.canGenerateArraylets())
       {
       cg->setSupportsIntegerToChars();
+      }
+
+   static bool disableIntegerStringSize = (feGetEnv("TR_DisableIntegerStringSize") != NULL);
+   if (cg->getSupportsVectorRegisters()
+       && comp->target().cpu.isAtLeast(OMR_PROCESSOR_S390_Z16)
+       && !disableIntegerStringSize)
+      {
       cg->setSupportsIntegerStringSize();
       }
 
