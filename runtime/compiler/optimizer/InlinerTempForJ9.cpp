@@ -6846,9 +6846,17 @@ static bool treeMatchesCallSite(TR::TreeTop* tt, TR::ResolvedMethodSymbol* calle
 
 
 
-      //make sure classes are compatible
+      // Make sure classes are compatible, but only for non-LambdaForm generated methods, as the class lookup
+      // for LF generated methods would result in failure to obtain the classes, and therefore, can't be checked
+      // for compatibility. It is safe to skip this check for LF methods, as the name and signature matching performed
+      // below would return false if call node and call site LF method classes do not match.
+      //
+      bool isLFMethod = false;
+      if (callsite->_initialCalleeMethod
+          && TR::comp()->fej9()->isLambdaFormGeneratedMethod(callsite->_initialCalleeMethod))
+         isLFMethod = true;
 
-      if (!callNodeClass || !callSiteClass || callerSymbol->getResolvedMethod()->fe()->isInstanceOf (callNodeClass, callSiteClass, true, true, true) != TR_yes)
+      if (!isLFMethod && (!callNodeClass || !callSiteClass || callerSymbol->getResolvedMethod()->fe()->isInstanceOf (callNodeClass, callSiteClass, true, true, true) != TR_yes))
          {
          if (tracer->heuristicLevel())
             {
