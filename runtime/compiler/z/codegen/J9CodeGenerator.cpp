@@ -141,7 +141,7 @@ J9::Z::CodeGenerator::initialize()
       }
 
    static char *disableInlineEncodeASCII = feGetEnv("TR_disableInlineEncodeASCII");
-   if (comp->fej9()->isStringCompressionEnabledVM() && cg->getSupportsVectorRegisters() && !TR::Compiler->om.canGenerateArraylets() && !TR::Compiler->om.isOffHeapAllocationEnabled() && !disableInlineEncodeASCII)
+   if (comp->fej9()->isStringCompressionEnabledVM() && cg->getSupportsVectorRegisters() && !TR::Compiler->om.canGenerateArraylets() && !disableInlineEncodeASCII)
       {
       cg->setSupportsInlineEncodeASCII();
       }
