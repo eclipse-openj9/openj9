@@ -353,7 +353,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		</variations>
 		<disables>
 			<disable>
-				<comment>ibm_git/runtimes/backlog/issues/1654</comment>
+				<comment>ibm_git/runtimes/backlog/issues/1659</comment>
 				<impl>ibm</impl>
 			</disable>
 		</disables>
@@ -490,6 +490,13 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
 		</variations>
+		<disables>
+			<disable>
+				<comment>ibm_git/runtimes/backlog/issues/1659</comment>
+				<version>8</version>
+				<impl>ibm</impl>
+			</disable>
+		</disables>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
 			$(SQ)$(JAVA_SHARED_LIBRARIES_DIR)$(D)thrstatetest$(SQ) $(JVM_OPTIONS) -Djava.home=$(THRSTATETEST_JRE_HOME) -Dcom.ibm.tools.attach.enable=no -Dibm.java9.forceCommonCleanerShutdown=true ; \
 			$(TEST_STATUS)
