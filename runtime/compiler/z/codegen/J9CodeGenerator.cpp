@@ -94,8 +94,7 @@ J9::Z::CodeGenerator::initialize()
       cg->setSupportsInlineStringIndexOf();
       }
 
-   if (cg->getSupportsVectorRegisters() && !comp->getOption(TR_DisableSIMDStringHashCode) &&
-       !TR::Compiler->om.canGenerateArraylets() && !TR::Compiler->om.isOffHeapAllocationEnabled())
+   if (cg->getSupportsVectorRegisters() && !comp->getOption(TR_DisableSIMDStringHashCode) && !TR::Compiler->om.canGenerateArraylets())
       {
       cg->setSupportsInlineStringHashCode();
       cg->setSupportsInlineVectorizedHashCode();
