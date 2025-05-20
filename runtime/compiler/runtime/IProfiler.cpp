@@ -738,21 +738,6 @@ TR_IProfiler::isSwitch (U_8 byteCode)
            (byteCode == JBtableswitch));
    }
 
-bool isCallByteCode(U_8 byteCode)
-   {
-   switch(byteCode)
-      {
-      case JBinvokestatic:
-      case JBinvokespecial:
-      case JBinvokeinterface:
-      case JBinvokeinterface2:
-      case JBinvokevirtual:
-        return true;
-      default:
-        return false;
-      }
-   }
-
 bool isInterfaceBytecode(U_8 byteCode)
    {
    return (byteCode == JBinvokeinterface);
