@@ -115,6 +115,7 @@ restart:
 			}
 		} else if (count & OBJECT_HEADER_LOCK_LEARNING) {
 			/* Lock is in Learning state but unowned (if it were owned it would have been caught by the first Learning state check) */
+			Trc_VM_objectMonitorExit_Exit_LearningStateUnowned(vmStruct, lock, object);
 			goto done;
 		} else if (count >= OBJECT_HEADER_LOCK_FIRST_RECURSION_BIT) {
 			/* just decrement the flatlock recursion count */
