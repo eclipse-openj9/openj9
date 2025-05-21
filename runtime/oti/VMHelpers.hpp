@@ -627,17 +627,43 @@ cacheCastable:
 			} else if (J9CLASS_IS_ARRAY(castClass)) {
 				/* the instanceClass must be an array to continue */
 				if (J9CLASS_IS_ARRAY(instanceClass)) {
+					// fetch java.lang.Object ref
+					J9Class *objClass = castClass->superclasses[0];
 					/* castClass is an array - if base type, they must be the same primitive type */
 					UDATA castArity = ((J9ArrayClass*)castClass)->arity;
+					UDATA instanceArity = ((J9ArrayClass*)instanceClass)->arity;
 					J9Class *castClassLeafComponent = ((J9ArrayClass*)castClass)->leafComponentType;
+					J9Class *instanceClassLeafComponent = ((J9ArrayClass*)instanceClass)->leafComponentType;
+					if (instanceArity == castArity) {
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+						if (J9_IS_J9ARRAYCLASS_NULL_RESTRICTED(instanceClass)
+							|| !J9_IS_J9ARRAYCLASS_NULL_RESTRICTED(castClass)
+						) {
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+							if (J9CLASS_IS_MIXED(instanceClassLeafComponent)) {
+								/* we know arities are the same, so skip directly to the terminal case */
+								instanceClass = instanceClassLeafComponent;
+								castClass = castClassLeafComponent;
+								didRetry = true;
+								goto retry;
+							}
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+						}
+						/* else fail since a nullable array class cannot be cast to a null-restricted class */
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+					} else if (instanceArity > castArity) {
+					
 					if (J9CLASS_IS_MIXED(castClassLeafComponent)) {
-						UDATA instanceArity = ((J9ArrayClass*)instanceClass)->arity;
 						if (instanceArity > castArity) {
+							if (castClassLeafComponent == objClass) {
+								castable = true;
+							}
 							J9Class *workingInstanceClass = instanceClass;
 							/* strip out the extra layers of [ and find what is left */
 							while (castArity > 0) {
 								workingInstanceClass = ((J9ArrayClass*)workingInstanceClass)->componentType;
 								castArity -= 1;
+								goto done;
 							}
 							/* try again with the arities stripped down to minimum */
 							instanceClass = workingInstanceClass;
@@ -646,31 +672,14 @@ cacheCastable:
 							goto retry;
 						} else {
 							/* check the [[O -> [[O case.  Don't allow [[I -> [[O */
-							if (instanceArity == castArity) {
-								J9Class *instanceClassLeafComponent = ((J9ArrayClass*)instanceClass)->leafComponentType;
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-								if (J9_IS_J9ARRAYCLASS_NULL_RESTRICTED(instanceClass)
-									|| !J9_IS_J9ARRAYCLASS_NULL_RESTRICTED(castClass)
-								) {
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
-									if (J9CLASS_IS_MIXED(instanceClassLeafComponent)) {
-										/* we know arities are the same, so skip directly to the terminal case */
-										instanceClass = instanceClassLeafComponent;
-										castClass = castClassLeafComponent;
-										didRetry = true;
-										goto retry;
-									}
-#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-								}
-								/* else fail since a nullable array class cannot be cast to a null-restricted class */
-#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
-							}
+							
 							/* else the arity of the instance wasn't high enough, so we fail */
 						}
 					}
 					/* else we have a base type castClass and it isn't equal (from the trivial case at the top), so it can't be valid so we fail */
 				}
 			}
+		}
 			/* fallthrough cases are all invalid casts that should be cached */
 			if (updateCache) {
 				instanceClass->castClassCache = (UDATA)castClass | 1;
