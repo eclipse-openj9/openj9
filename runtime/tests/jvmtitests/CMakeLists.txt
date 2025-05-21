@@ -26,9 +26,18 @@ target_include_directories(j9vm_jvmtitest_includes
 		"${CMAKE_CURRENT_SOURCE_DIR}/include"
 )
 
-j9vm_add_library(jvmtitest SHARED
-	fakeref.c
-)
+# If building with OpenXL on AIX, we need to skip the strip step for libjvmtitest.so
+# (https://github.com/eclipse-openj9/openj9/issues/21528).
+if (OMR_OS_AIX AND CMAKE_C_COMPILER_IS_OPENXL)
+	j9vm_add_library(jvmtitest SHARED SKIP_STRIP
+		fakeref.c
+	)
+else()
+	j9vm_add_library(jvmtitest SHARED
+		fakeref.c
+	)
+endif()
+
 target_link_libraries(jvmtitest
 	PRIVATE
 		j9vm_interface
