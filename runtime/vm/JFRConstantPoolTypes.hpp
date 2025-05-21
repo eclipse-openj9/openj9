@@ -275,6 +275,13 @@ struct ThreadStatisticsEntry {
 	U_64 peakThreadCount;
 };
 
+struct SystemGCEntry {
+	I_64 ticks;
+	I_64 duration;
+	U_32 eventThreadIndex;
+	U_32 stackTraceIndex;
+};
+
 struct JVMInformationEntry {
 	const char *jvmName;
 	const char *jvmVersion;
@@ -402,6 +409,8 @@ private:
 	J9Pool *_nativeLibrariesTable;
 	UDATA _nativeLibrariesCount;
 	UDATA _nativeLibraryPathSizeTotal;
+	J9Pool *_systemGCTable;
+	UDATA _systemGCCount;
 
 	/* Processing buffers */
 	StackFrame *_currentStackFrameBuffer;
@@ -679,6 +688,8 @@ public:
 
 	void addThreadStatisticsEntry(J9JFRThreadStatistics *threadStatisticsData);
 
+	void addSystemGCEntry(J9JFRSystemGC *systemGCData);
+
 	J9Pool *getExecutionSampleTable()
 	{
 		return _executionSampleTable;
@@ -752,6 +763,16 @@ public:
 	UDATA getExecutionSampleCount()
 	{
 		return _executionSampleCount;
+	}
+
+	J9Pool *getSystemGCTable()
+	{
+		return _systemGCTable;
+	}
+
+	UDATA getsystemGCCount()
+	{
+		return _systemGCCount;
 	}
 
 	UDATA getThreadStartCount()
@@ -994,6 +1015,9 @@ public:
 				break;
 			case J9JFR_EVENT_TYPE_THREAD_STATISTICS:
 				addThreadStatisticsEntry((J9JFRThreadStatistics *)event);
+				break;
+			case J9JFR_EVENT_TYPE_SYSTEM_GC:
+				addSystemGCEntry((J9JFRSystemGC *)event);
 				break;
 			default:
 				Assert_VM_unreachable();
@@ -1471,6 +1495,8 @@ done:
 		, _nativeLibrariesTable(NULL)
 		, _nativeLibrariesCount(0)
 		, _nativeLibraryPathSizeTotal(0)
+		, _systemGCTable(NULL)
+		, _systemGCCount(0)
 		, _previousStackTraceEntry(NULL)
 		, _firstStackTraceEntry(NULL)
 		, _previousThreadEntry(NULL)
@@ -1629,6 +1655,12 @@ done:
 			goto done;
 		}
 
+		_systemGCTable = pool_new(sizeof(SystemGCEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		if (NULL == _systemGCTable) {
+			_buildResult = OutOfMemory;
+			goto done;
+		}
+
 		/* Add reserved index for default entries. For strings zero is the empty or NUll string.
 		 * For package zero is the deafult package, for Module zero is the unnamed module. ThreadGroup
 		 * zero is NULL threadGroup.
@@ -1724,6 +1756,7 @@ done:
 		pool_kill(_threadStatisticsTable);
 		pool_kill(_systemProcessTable);
 		pool_kill(_nativeLibrariesTable);
+		pool_kill(_systemGCTable);
 		j9mem_free_memory(_globalStringTable);
 	}
 

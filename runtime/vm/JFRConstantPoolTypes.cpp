@@ -1273,6 +1273,32 @@ done:
 }
 
 void
+VM_JFRConstantPoolTypes::addSystemGCEntry(J9JFRSystemGC *systemGCData)
+{
+	SystemGCEntry *entry = (SystemGCEntry *)pool_newElement(_systemGCTable);
+
+	if (NULL == entry) {
+		_buildResult = OutOfMemory;
+		goto done;
+	}
+
+	entry->ticks = systemGCData->startTicks;
+	entry->duration = systemGCData->duration;
+
+	entry->eventThreadIndex = addThreadEntry(systemGCData->vmThread);
+	if (isResultNotOKay()) goto done;
+
+	entry->stackTraceIndex = consumeStackTrace(systemGCData->vmThread, J9JFRSYSTEMGC_STACKTRACE(systemGCData), systemGCData->stackTraceSize);
+	if (isResultNotOKay()) goto done;
+
+	_systemGCCount += 1;
+
+done:
+	return;
+
+}
+
+void
 VM_JFRConstantPoolTypes::printTables()
 {
 	j9tty_printf(PORTLIB, "--------------- StringUTF8Table ---------------\n");
