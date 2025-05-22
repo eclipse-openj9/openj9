@@ -1229,6 +1229,8 @@ obj:
 					}
 					/* Clear the runtime flag as contended monitor enter/entered events are already triggered. */
 					continuation->runtimeFlags &= ~J9VM_CONTINUATION_RUNTIMEFLAG_JVMTI_CONTENDED_MONITOR_ENTER_RECORDED;
+					j9object_t continuationObject = J9VMJAVALANGVIRTUALTHREAD_CONT(_currentThread, _currentThread->threadObject);
+					J9VMJDKINTERNALVMCONTINUATION_SET_BLOCKER(_currentThread, continuationObject, NULL);
 				}
 			}
 		}
@@ -5815,7 +5817,6 @@ ffi_OOM:
 		}
 #if JAVA_SPEC_VERSION >= 24
 		j9object_t syncObject = J9VMJDKINTERNALVMCONTINUATION_BLOCKER(_currentThread, continuationObject);
-		J9VMJDKINTERNALVMCONTINUATION_SET_BLOCKER(_currentThread, continuationObject, NULL);
 
 		switch (_currentThread->currentContinuation->returnState) {
 		case J9VM_CONTINUATION_RETURN_FROM_YIELD:
@@ -5827,6 +5828,7 @@ ffi_OOM:
 			rc = tryEnterBlockingMonitor(REGISTER_ARGS, syncObject, J9VM_CONTINUATION_RETURN_FROM_OBJECT_WAIT);
 			J9VMContinuation *continuation = _currentThread->currentContinuation;
 			if ((NULL != continuation) && (EXECUTE_BYTECODE == rc)) {
+				J9VMJDKINTERNALVMCONTINUATION_SET_BLOCKER(_currentThread, continuationObject, NULL);
 				syncObject = *(j9object_t *)(_sp + 3);
 				omrthread_monitor_t monitor = getMonitorForWait(_currentThread, syncObject);
 				monitor->count = continuation->waitingMonitorEnterCount;
