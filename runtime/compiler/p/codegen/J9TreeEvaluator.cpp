@@ -2213,14 +2213,14 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    // (in which case they should be handled inside the function), and they use registers different
    // from the main line
    // I don't know if this is possible at all, every time I tested the results are just all zeros
+   TR::Node *callNode = outlinedHelperCall->getCallNode();
    int callUsesFirstChild = (callNode->getFirstChild() == node->getFirstChild()) &&
-                            (callNode->getFirstChild()->getRegister()) &&;
+                            (callNode->getFirstChild()->getRegister()) &&
                             (callNode->getFirstChild()->getRegister() != dimsPtrReg);
    int callUsesSecondChild = (callNode->getSecondChild() == node->getSecondChild()) &&
-                            (callNode->getSecondChild()->getRegister()) &&;
-                            (callNode->getSecondChild()->getRegister() != dimReg);
+                            (callNode->getSecondChild()->getRegister());
    int callUsesThirdChild = (callNode->getThirdChild() == node->getThirdChild()) &&
-                            (callNode->getThirdChild()->getRegister()) &&;
+                            (callNode->getThirdChild()->getRegister()) &&
                             (callNode->getThirdChild()->getRegister() != classReg);
    int numDeps = 10 + callUsesFirstChild + callUsesSecondChild + callUsesThirdChild;
 
@@ -2249,12 +2249,11 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    dependencies->addPostCondition(vmThreadReg, TR::RealRegister::NoReg);
    dependencies->addPostCondition(condReg, TR::RealRegister::NoReg);
 
-   TR::Node *callNode = outlinedHelperCall->getCallNode();
    TR::Register *reg;
    if (callNode->getFirstChild() == node->getFirstChild())
       {
       reg = callNode->getFirstChild()->getRegister();
-      if (reg)
+      if (reg && reg != dimsPtrReg)
          dependencies->addPostCondition(reg, TR::RealRegister::NoReg);
       }
    if (callNode->getSecondChild() == node->getSecondChild())
@@ -2266,7 +2265,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    if (callNode->getThirdChild() == node->getThirdChild())
       {
       reg = callNode->getThirdChild()->getRegister();
-      if (reg)
+      if (reg && reg != classReg)
          dependencies->addPostCondition(reg, TR::RealRegister::NoReg);
       }
 
