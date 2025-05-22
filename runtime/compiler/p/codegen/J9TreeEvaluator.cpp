@@ -1964,6 +1964,9 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    // class pointer of objects in the array - in the 2D case this is the class of the 1D array
    TR::Register *classReg = cg->evaluate(node->getThirdChild());
 
+   // the class of the object rather than the class of the array
+   TR::Register *componentClassReg = cg->allocateRegister();
+
    // points to the resulting array allocated
    TR::Register *targetReg = cg->allocateRegister();
 
@@ -2125,7 +2128,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
          fej9->getOffsetOfContiguousArraySizeField(), 4), firstDimLenReg);
 
    // load the component class
-   generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, classReg,
+   generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, componentClassReg,
       TR::MemoryReference::createWithDisplacement(cg, classReg,
          offsetof(J9ArrayClass, componentType), addrSize));
 
@@ -2155,7 +2158,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    // initialise a header in the second dimension with class = component, size = 0, mustBeZero = 0
    generateMemSrc1Instruction(cg, storeClassOp, node,
       TR::MemoryReference::createWithDisplacement(cg, temp2Reg,
-         TR::Compiler->om.offsetOfObjectVftField(), classPtrLen), classReg);
+         TR::Compiler->om.offsetOfObjectVftField(), classPtrLen), componentClassReg);
    generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node,
       TR::MemoryReference::createWithDisplacement(cg, temp2Reg, offsetOfMustBeZeroField, 4), secondDimLenReg);
    generateMemSrc1Instruction(cg, TR::InstOpCode::stw, node,
@@ -2206,13 +2209,30 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    generateLabelInstruction(cg, TR::InstOpCode::label, node, oolJumpLabel);
    generateLabelInstruction(cg, TR::InstOpCode::b, node, oolFailLabel);
 
+   // we need to include post dependencies from the call node if they didn't copy the children nodes
+   // (in which case they should be handled inside the function), and they use registers different
+   // from the main line
+   // I don't know if this is possible at all, every time I tested the results are just all zeros
+   int callUsesFirstChild = (callNode->getFirstChild() == node->getFirstChild()) &&
+                            (callNode->getFirstChild()->getRegister()) &&;
+                            (callNode->getFirstChild()->getRegister() != dimsPtrReg);
+   int callUsesSecondChild = (callNode->getSecondChild() == node->getSecondChild()) &&
+                            (callNode->getSecondChild()->getRegister()) &&;
+                            (callNode->getSecondChild()->getRegister() != dimReg);
+   int callUsesThirdChild = (callNode->getThirdChild() == node->getThirdChild()) &&
+                            (callNode->getThirdChild()->getRegister()) &&;
+                            (callNode->getThirdChild()->getRegister() != classReg);
+   int numDeps = 10 + callUsesFirstChild + callUsesSecondChild + callUsesThirdChild;
+
    TR::RegisterDependencyConditions *dependencies =
-      new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 12, cg->trMemory());
+      new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, numDeps, cg->trMemory());
    dependencies->addPostCondition(dimsPtrReg, TR::RealRegister::NoReg);
    dependencies->getPostConditions()->getRegisterDependency(dependencies->getAddCursorForPost() - 1)->setExcludeGPR0();
 
    dependencies->addPostCondition(classReg, TR::RealRegister::NoReg);
    dependencies->getPostConditions()->getRegisterDependency(dependencies->getAddCursorForPost() - 1)->setExcludeGPR0();
+
+   dependencies->addPostCondition(componentClassReg, TR::RealRegister::NoReg);
 
    dependencies->addPostCondition(targetReg, TR::RealRegister::NoReg);
    dependencies->getPostConditions()->getRegisterDependency(dependencies->getAddCursorForPost() - 1)->setExcludeGPR0();
@@ -2259,6 +2279,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    cg->stopUsingRegister(targetReg);
    cg->stopUsingRegister(dimsPtrReg);
    cg->stopUsingRegister(classReg);
+   cg->stopUsingRegister(componentClassReg);
    cg->stopUsingRegister(firstDimLenReg);
    cg->stopUsingRegister(secondDimLenReg);
    cg->stopUsingRegister(temp1Reg);
