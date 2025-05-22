@@ -109,6 +109,11 @@ J9::X86::CodeGenerator::initialize()
        !TR::Compiler->om.canGenerateArraylets() && !TR::Compiler->om.isOffHeapAllocationEnabled())
       {
       cg->setSupportsInlineStringIndexOf();
+      if (comp->target().is64Bit())
+         {
+         // Not supported on 32-bit platform
+         cg->setSupportsInlineStringIndexOfString();
+         }
       }
 
    if (comp->target().cpu.supportsFeature(OMR_FEATURE_X86_SSE4_1) &&
