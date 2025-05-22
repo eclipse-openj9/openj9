@@ -442,14 +442,24 @@ public:
    void setSupportsInlineStringCaseConversion() { _j9Flags.set(SupportsInlineStringCaseConversion);}
 
    /** \brief
-    *    Determines whether the code generator supports inlining of java/lang/String.indexOf()
+    *    Determines whether the code generator supports inlining of java/lang/String.indexOf(int)
     */
    bool getSupportsInlineStringIndexOf() { return _j9Flags.testAny(SupportsInlineStringIndexOf);}
 
    /** \brief
-    *    The code generator supports inlining of java/lang/String.indexOf()
+    *    The code generator supports inlining of java/lang/String.indexOf(int)
     */
    void setSupportsInlineStringIndexOf() { _j9Flags.set(SupportsInlineStringIndexOf);}
+
+   /** \brief
+    *    Determines whether the code generator supports inlining of java/lang/String.indexOf(String)
+    */
+   bool getSupportsInlineStringIndexOfString() { return _j9Flags.testAny(SupportsInlineStringIndexOfString);}
+
+   /** \brief
+    *    The code generator supports inlining of java/lang/String.indexOf(String)
+    */
+   void setSupportsInlineStringIndexOfString() { _j9Flags.set(SupportsInlineStringIndexOfString);}
 
    /** \brief
    *    Determines whether the code generator supports inlining of java/lang/String.hashCode()
@@ -764,6 +774,7 @@ private:
       SupportsInlineMath_MaxMin_FD                        = 0x00010000,
       SupportsInlineUnsafeCompareAndSet                   = 0x00020000,
       SupportsInlineUnsafeCompareAndExchange              = 0x00040000,
+      SupportsInlineStringIndexOfString                   = 0x00080000, /*! codegen inlining of Java string index of string */
       };
 
    flags32_t _j9Flags;
