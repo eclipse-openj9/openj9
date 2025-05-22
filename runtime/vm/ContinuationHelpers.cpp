@@ -781,6 +781,7 @@ detachMonitorInfo(J9VMThread *currentThread, j9object_t lockObject)
 
 	J9ThreadAbstractMonitor *monitor = (J9ThreadAbstractMonitor *)objectMonitor->monitor;
 	monitor->owner = (J9Thread *)J9_OBJECT_MONITOR_OWNER_DETACHED;
+	Assert_VM_notNull(currentThread->currentContinuation);
 	objectMonitor->ownerContinuation = currentThread->currentContinuation;
 
 	return objectMonitor;
