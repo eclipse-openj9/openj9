@@ -154,7 +154,7 @@ TraceExit=Trc_VM_flushForClassesUnload_Exit group=profilingbc Overhead=1 Level=1
 
 TraceEntry=Trc_VM_objectMonitorExit_Entry Overhead=1 Level=4 Template="objectMonitorExit (obj=%p)"
 TraceEvent=Trc_VM_objectMonitorExit_SmartDecisionPoint Overhead=1 Level=4 Template="pro=%d,anti=%d"
-TraceExit=Trc_VM_objectMonitorExit_Exit Overhead=1 Level=4 Template="objectMonitorExit"
+TraceExit=Trc_VM_objectMonitorExit_Exit Obsolete Overhead=1 Level=4 Template="objectMonitorExit"
 TraceExit=Trc_VM_objectMonitorExit_Exit_FCBSet Overhead=1 Level=4 Template="objectMonitorExit (FCB is set)"
 TraceExit-Exception=Trc_VM_objectMonitorExit_Exit_IllegalInflatedLock Overhead=1 Level=4 Template="objectMonitorExit (IllegalMonitorState in objectMonitorExit. Inflated monitor's owner is %p, not %p)"
 TraceExit-Exception=Trc_VM_objectMonitorExit_Exit_IllegalFlatLock Overhead=1 Level=4 Template="objectMonitorExit (IllegalMonitorState in objectMonitorExit. Flat lock = %p, object=%p)"
@@ -1019,3 +1019,4 @@ TraceEntry=Trc_VM_getTypeId_Entry Overhead=1 Level=5 Template="getTypeId clazz=%
 TraceExit=Trc_VM_getTypeId_Exit Overhead=1 Level=5 Template="getTypeId clazz=%p result=%lli"
 
 TraceEvent=Trc_systemPropertyIterator Overhead=1 Level=10 Template="systemPropertyIterator: added VM system property '%s'='%s'"
+TraceExit-Exception=Trc_VM_objectMonitorExit_Exit_LearningStateUnowned Overhead=1 Level=4 Template="objectMonitorExit (IllegalMonitorState: Lock in learning state but unowned. Flat lock=%p, object=%p)"
