@@ -2311,14 +2311,27 @@ MM_CopyForwardScheme::updateMarkMapAndCardTableOnCopy(MM_EnvironmentVLHGC *env, 
 MMINLINE void
 MM_CopyForwardScheme::scanOwnableSynchronizerObjectSlots(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, J9Object *objectPtr, ScanReason reason)
 {
-	if (SCAN_REASON_COPYSCANCACHE == reason) {
-		addOwnableSynchronizerObjectInList(env, objectPtr);
-	} else if (SCAN_REASON_PACKET == reason) {
-		if (isObjectInEvacuateMemoryNoCheck(objectPtr)) {
+	/* If object has been scanned without triggering abort add it to the list.
+	 * If object scan has triggered abort, it is added to work packet
+	 * and it is going to be rescanned again. It should not be added to the list
+	 * in the case of abort to prevent duplication during second scan.
+	 */
+	if (scanMixedObjectSlots(env, reservingContext, objectPtr, reason)) {
+		if (SCAN_REASON_COPYSCANCACHE == reason) {
 			addOwnableSynchronizerObjectInList(env, objectPtr);
+		} else if (SCAN_REASON_PACKET == reason) {
+			if (isObjectInEvacuateMemoryNoCheck(objectPtr) || isObjectInSurvivorMemory(objectPtr)) {
+				addOwnableSynchronizerObjectInList(env, objectPtr);
+			} else {
+				/* Avoid adding it if the original reason was DIRTY_CARD (hence never meant to be added to start with),
+				 * but failed during scanning and now it is being rescanned (while abortInProgress is true)
+				 * to update references with PACKET reason. While the original reason is lost, the case can still be recoginized
+				 * (object not in Collection Set and not copied).
+				 */
+				Assert_MM_true(_abortInProgress);
+			}
 		}
 	}
-	scanMixedObjectSlots(env, reservingContext, objectPtr, reason);
 }
 
 void
@@ -2469,7 +2482,7 @@ MM_CopyForwardScheme::iterateAndCopyforwardSlotReference(MM_EnvironmentVLHGC *en
 	return success;
 }
 
-void
+bool
 MM_CopyForwardScheme::scanMixedObjectSlots(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, J9Object *objectPtr, ScanReason reason)
 {
 	if (_tracingEnabled) {
@@ -2485,6 +2498,7 @@ MM_CopyForwardScheme::scanMixedObjectSlots(MM_EnvironmentVLHGC *env, MM_Allocati
 	}
 
 	updateScanStats(env, objectPtr, reason);
+	return success;
 }
 
 void
