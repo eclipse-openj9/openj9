@@ -47,7 +47,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<flag id="build_stage_ottawa_vmlab" value="true"/>
 		<flag id="build_uma" value="true"/>
 		<flag id="compiler_promotion" value="true"/>
-		<flag id="gc_classesOnHeap" value="true"/>
 		<flag id="gc_compressedPointerBarrier" value="false"/>
 		<flag id="gc_fragmentedHeap" value="true"/>
 		<flag id="gc_modronGC" value="true"/>

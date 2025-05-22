@@ -818,7 +818,6 @@ C|gc_alwaysCallObjectAccessBarrier
 C|gc_alwaysCallWriteBarrier
 C|gc_arraylets
 C|gc_batchClearTLH
-C|gc_classesOnHeap
 C|gc_combinationSpec
 C|gc_compressedPointerBarrier
 C|gc_compressedPointers

@@ -328,10 +328,6 @@ Currently only available on linux_x86 and win_x96 32 bit builds.</description>
 			<require flag="gc_modronGC"/>
 		</requires>
 	</flag>
-	<flag id="gc_classesOnHeap">
-		<description>Enable classes on the heap</description>
-		<ifRemoved>UNSUPPORTED: disable classes on the heap</ifRemoved>
-	</flag>
 	<flag id="gc_combinationSpec">
 		<description>Set on specs which implement LIR 16325:  reduce memory footprint by combining multiple sidecars into the same set of libraries.</description>
 		<ifRemoved></ifRemoved>
@@ -367,7 +363,6 @@ all data is stored in their own region. It additionaly reduces footprint, mainly
 		<description>Object fields are compressed to 32-bits</description>
 		<ifRemoved>Full 64-bit memory space is available</ifRemoved>
 		<requires>
-			<require flag="gc_classesOnHeap"/>
 			<require flag="gc_objectAccessBarrier"/>
 		</requires>
 	</flag>
