@@ -10612,13 +10612,19 @@ static TR::Register* inlineHasNegativesOrCountPositives(TR::Node* node, TR::Reco
       xmmChunkReg = cg->allocateRegister(TR_VRF);
       }
 
-   uint8_t numDependencies = useVectorInstructions ? 6 : 5;
+   uint8_t numDependencies = useVectorInstructions ? 9 : 8;
    TR::RegisterDependencyConditions *dependencies = generateRegisterDependencyConditions(numDependencies, numDependencies, cg);
+   dependencies->addPreCondition(bufReg, TR::RealRegister::NoReg, cg);
+   dependencies->addPreCondition(offsetReg, TR::RealRegister::NoReg, cg);
+   dependencies->addPreCondition(lengthReg, TR::RealRegister::NoReg, cg);
    dependencies->addPreCondition(loopLimitReg, TR::RealRegister::NoReg, cg);
    dependencies->addPreCondition(limitReg, TR::RealRegister::NoReg, cg);
    dependencies->addPreCondition(maskReg, TR::RealRegister::NoReg, cg);
    dependencies->addPreCondition(indexReg, TR::RealRegister::NoReg, cg);
    dependencies->addPreCondition(chunkReg, TR::RealRegister::NoReg, cg);
+   dependencies->addPostCondition(bufReg, TR::RealRegister::NoReg, cg);
+   dependencies->addPostCondition(offsetReg, TR::RealRegister::NoReg, cg);
+   dependencies->addPostCondition(lengthReg, TR::RealRegister::NoReg, cg);
    dependencies->addPostCondition(loopLimitReg, TR::RealRegister::NoReg, cg);
    dependencies->addPostCondition(limitReg, TR::RealRegister::NoReg, cg);
    dependencies->addPostCondition(maskReg, TR::RealRegister::NoReg, cg);
