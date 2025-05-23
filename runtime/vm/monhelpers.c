@@ -110,7 +110,7 @@ restart:
 			}
 		} else {
 			j9objectmonitor_t newLock = 0;
-			I_32 casSuccess = FALSE;
+			BOOLEAN casSuccess = FALSE;
 			if (0x00 == count) {
 				/* Just release the flatlock. */
 			} else if ((count & OBJECT_HEADER_LOCK_LEARNING) && J9_ARE_ANY_BITS_SET(count, OBJECT_HEADER_LOCK_LEARNING_RECURSION_MASK)) {
@@ -149,7 +149,7 @@ restart:
 			J9_STORE_LOCKWORD(vmStruct, lockEA, 0);
 		} else if ((count & OBJECT_HEADER_LOCK_LEARNING) && (count & OBJECT_HEADER_LOCK_LEARNING_RECURSION_MASK)) {
 			/* Learning state case */
-			I_32 casSuccess = FALSE;
+			BOOLEAN casSuccess = FALSE;
 
 			if (1 == J9_FLATLOCK_COUNT(lock)) {
 				/* if RC field is 1, this fully unlocks the object so a write barrier is needed */
