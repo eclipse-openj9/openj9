@@ -82,6 +82,8 @@ public:
    virtual TR_OpaqueClassBlock * getLeafComponentClassFromArrayClass(TR_OpaqueClassBlock * arrayClass) override;
    virtual TR_OpaqueClassBlock *getClassFromSignature(const char *sig, int32_t length, J9ConstantPool *constantPool, bool isVettedForAOT = false) override;
    virtual void * getSystemClassLoader() override;
+   virtual void * getExtensionClassLoader() override;
+   virtual void * getApplicationClassLoader() override;
    virtual bool jitFieldsAreSame(TR_ResolvedMethod * method1, I_32 cpIndex1, TR_ResolvedMethod * method2, I_32 cpIndex2, int32_t isStatic) override;
    virtual bool jitStaticsAreSame(TR_ResolvedMethod *method1, I_32 cpIndex1, TR_ResolvedMethod *method2, I_32 cpIndex2) override;
    virtual TR_OpaqueClassBlock * getComponentClassFromArrayClass(TR_OpaqueClassBlock *arrayClass) override;

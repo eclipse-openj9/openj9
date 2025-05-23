@@ -407,6 +407,22 @@ TR_J9ServerVM::getSystemClassLoader()
    return vmInfo->_systemClassLoader;
    }
 
+void *
+TR_J9ServerVM::getExtensionClassLoader()
+   {
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   auto *vmInfo = _compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+   return vmInfo->_extensionClassLoader;
+   }
+
+void *
+TR_J9ServerVM::getApplicationClassLoader()
+   {
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   auto *vmInfo = _compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+   return vmInfo->_applicationClassLoader;
+   }
+
 bool
 TR_J9ServerVM::jitFieldsOrStaticsAreIdentical(TR_ResolvedMethod * method1, I_32 cpIndex1, TR_ResolvedMethod * method2, I_32 cpIndex2, int32_t isStatic)
    {

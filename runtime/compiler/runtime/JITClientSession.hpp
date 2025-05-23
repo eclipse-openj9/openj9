@@ -278,6 +278,8 @@ public:
    struct VMInfo
       {
       void *_systemClassLoader;
+      void *_extensionClassLoader;
+      void *_applicationClassLoader;
       uintptr_t _processID;
       bool _canMethodEnterEventBeHooked;
       bool _canMethodExitEventBeHooked;
@@ -551,7 +553,11 @@ public:
    void printSharedProfileCacheStats() const;
    void printIProfilerCacheStats();
 
+   void setExtensionClassLoader(void *loader);
+   void setApplicationClassLoader(void *loader);
+
 private:
+   void setClassLoader(void **slot, void *loader, const char *which);
    void destroyMonitors();
 
    // If this function sets the missingLoaderInfo flag then a NULL result is due to missing class loader info;

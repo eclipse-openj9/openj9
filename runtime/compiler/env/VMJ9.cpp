@@ -7179,6 +7179,18 @@ TR_J9VMBase::getSystemClassLoader()
    return vmThread()->javaVM->systemClassLoader;
    }
 
+void *
+TR_J9VMBase::getExtensionClassLoader()
+   {
+   return vmThread()->javaVM->extensionClassLoader;
+   }
+
+void *
+TR_J9VMBase::getApplicationClassLoader()
+   {
+   return vmThread()->javaVM->applicationClassLoader;
+   }
+
 bool
 TR_J9VMBase::acquireClassTableMutex()
    {
