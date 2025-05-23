@@ -994,7 +994,9 @@ restart:
 										| ((count - 1) << OBJECT_HEADER_LOCK_V2_RECURSION_OFFSET)
 										| OBJECT_HEADER_LOCK_FLC;
 						}
+						Assert_VM_true(newLockword != OBJECT_HEADER_LOCK_FLC);
 						j9objectmonitor_t const oldValue = lock;
+						VM_AtomicSupport::writeBarrier();
 						lock = VM_ObjectMonitor::compareAndSwapLockword(currentThread, lwEA, lock, (j9objectmonitor_t)newLockword);
 						if (lock == oldValue) {
 							/* CAS succeeded, we can proceed with using the inflated monitor. */
