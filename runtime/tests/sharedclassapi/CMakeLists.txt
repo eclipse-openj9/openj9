@@ -20,42 +20,16 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
 ################################################################################
 
-add_subdirectory(access)
-if(OMR_OS_AIX)
-	add_subdirectory(aixerrmsg)
-endif()
-add_subdirectory(algorithm)
-add_subdirectory(annotationtests)
-if(OMR_OS_WINDOWS AND NOT OMR_ENV_DATA64)
-	add_subdirectory(bcprof)
-endif()
-add_subdirectory(bcverify)
-add_subdirectory(clinkerffi)
-add_subdirectory(cutest)
-add_subdirectory(gp)
-add_subdirectory(j9vm)
-add_subdirectory(jni)
-add_subdirectory(jniarg)
-add_subdirectory(jsig)
-add_subdirectory(jvmtitests)
-add_subdirectory(lazyclassload)
-if(OMR_OS_OSX)
-	add_subdirectory(loadLibraryTest)
-endif()
-add_subdirectory(port)
-add_subdirectory(props)
-add_subdirectory(redirector)
-add_subdirectory(shared)
-add_subdirectory(sharedclassapi)
-if(OMR_OS_WINDOWS AND NOT OMR_ENV_DATA64)
-	add_subdirectory(shared_service)
-endif()
-add_subdirectory(thread)
-if(OMR_OS_LINUX)
-	add_subdirectory(unresolved)
-endif()
-add_subdirectory(vm)
-add_subdirectory(vm_lifecycle)
-if(OMR_OS_ZOS)
-	add_subdirectory(zos)
-endif()
+j9vm_add_library(sharedClasses SHARED
+	sharedClasses.c
+)
+
+target_link_libraries(sharedClasses
+	PRIVATE
+		j9vm_interface
+		j9prt
+)
+
+omr_add_exports(sharedClasses
+	Agent_OnLoad
+)
