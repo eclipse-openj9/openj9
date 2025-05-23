@@ -188,7 +188,7 @@ freeConvertedString(char *ebcdicString)
 /**
  * Prints messages with a timestamp.
  */
-void 
+void
 iteratorLogger(const char *msg, ...)
 {
 	va_list args;
@@ -286,7 +286,7 @@ static jint JNICALL validateSharedCacheInfo(jvmtiEnv *jvmti, jvmtiSharedCacheInf
  * extension function. Uses the cacheDir in the static cacheDir
  * variable.
  */
-int 
+int
 iterateOverCaches(jvmtiEnv *jvmti_env)
 {
 	jint extensionCount = 0;
@@ -391,7 +391,7 @@ iterateOverCaches(jvmtiEnv *jvmti_env)
  * Callback for the VM init event.
  * Calls the cache iterator function.
  */
-void 
+void
 JNICALL VMInitCallback(jvmtiEnv *jvmti_env, JNIEnv *jni_env, jthread thread)
 {
 	int rv = 0;
@@ -417,7 +417,7 @@ JNICALL VMInitCallback(jvmtiEnv *jvmti_env, JNIEnv *jni_env, jthread thread)
  *
  * Returns NULL if the option is not found or has no value.
  */
-char 
+char
 *findOption(const char *optionString, char *optionName)
 {
 	char *optionStart = NULL;
@@ -453,10 +453,10 @@ char
 		}
 	}
 
-	/** 
+	/**
      * The name is at the start of the option string or is
 	 * preceded by a comma. Check that it is followed by '='
-	 * and a value. 
+	 * and a value.
      */
 	optionNameLength = strlen(optionName);
 	remainingLength = strlen(optionStart);
@@ -464,15 +464,14 @@ char
 		/**
          * There isn't enough space for an equals sign and a value after the option name
 		 * The value must be blank, or this isn't correctly formatted. Look further
-		 * down the option string. 
+		 * down the option string.
          */
 		return findOption((optionStart + 1), optionName);
 	}
 
-
-	/** 
+	/**
      * We have the start of the option name, and there are at least two characters after it
-	 * hopefully '=' and a value. 
+	 * hopefully '=' and a value.
      */
 	valueStart = optionStart + optionNameLength;
 	if (*valueStart != '=') {
@@ -481,11 +480,11 @@ char
 	}
 	valueStart++;
 
-	/** 
+	/**
      * The start position of the option name is known, and it is preceded by a comma
 	 * (or is at the start of the option string). It has an '=' after it and at least one more
 	 * char, so there is a valid value for this option
-	 * The value is the rest of the string till the next comma or the end of the string. 
+	 * The value is the rest of the string till the next comma or the end of the string.
      */
 	trailingCommaPos = strchr(valueStart, ',');
 	if (NULL == trailingCommaPos) {
@@ -502,7 +501,7 @@ char
  * command line. The options are received via the JVM
  * and hence expected to be a UTF-8 string.
  */
-void 
+void
 parseOptions(const char *options)
 {
 	char *expectedCacheString = NULL;
@@ -554,10 +553,10 @@ parseOptions(const char *options)
 		iteratorLogger(msg35, expectedCacheCount);
 	}
 
-	/**  
+	/**
      * Option 'useCommandLineValues'. Look for the exact string 'true'. Anything else is false
 	 * If set, the cacheDir option will be ignored, and the JVM will be asked to used the value
-	 * from the -Xshareclasses option for the cache directory. 
+	 * from the -Xshareclasses option for the cache directory.
      */
 	useCommandLineValuesString = findOption(options, "useCommandLineValues");
 	if (NULL != useCommandLineValuesString) {
@@ -571,9 +570,9 @@ parseOptions(const char *options)
 		iteratorLogger(msg37);
 	}
 
-	/**  
+	/**
      * Option 'deleteCaches'. If set to the string 'true', ask the JVM to delete the caches
-	 * after the iterator has queried them. 
+	 * after the iterator has queried them.
      */
 	deleteCachesString = findOption(options, "deleteCaches");
 	if (NULL != deleteCachesString) {
@@ -587,10 +586,10 @@ parseOptions(const char *options)
 		iteratorLogger(msg39);
 	}
 
-	/** 
+	/**
      * Option 'cachePrefix'. If set, only caches whose name start with prefix will
 	 * be deleted. Necessary when working with the default cache directory so as
-	 * other processes caches aren't deleted. 
+	 * other processes caches aren't deleted.
      */
 	cachePrefix = findOption(options, "cachePrefix");
 	if (NULL != cachePrefix) {
