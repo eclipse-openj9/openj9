@@ -1222,28 +1222,25 @@ initializeJavaVM(void * osMainThread, J9JavaVM ** vmPtr, J9CreateJavaVMParams *c
 	}
 #endif /* J9VM_OPT_JITSERVER */
 
-/*
- * Disable AVX+ vector register preservation on x86 due to a large performance regression.
- * Issue: #15716
- */
-#if defined(J9HAMMER) && (JAVA_SPEC_VERSION >= 17) && 0
+#if defined(J9HAMMER)
 {
 	OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
 	OMRProcessorDesc desc;
 	omrsysinfo_get_processor_description(&desc);
 
-	if (omrsysinfo_processor_has_feature(&desc, OMR_FEATURE_X86_AVX512F)
-	&&  omrsysinfo_processor_has_feature(&desc, OMR_FEATURE_X86_AVX512BW)
+	/*
+	 * Set runtime flag J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS
+	 * if AVX is supported. This is used to determine if the vzeroupper
+	 * instruction is needed in JIT helper code to avoid performance
+	 * penalties when transitioning between AVX and legacy SSE code.
+	 */
+	if (omrsysinfo_processor_has_feature(&desc, OMR_FEATURE_X86_AVX)
+		&& omrsysinfo_processor_has_feature(&desc, OMR_FEATURE_X86_XSAVE_AVX)
 	) {
-		vm->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS;
-		vm->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_USE_EXTENDED_VECTOR_REGISTERS;
-	} else if (omrsysinfo_processor_has_feature(&desc, OMR_FEATURE_X86_AVX512F)) {
-		vm->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_USE_EXTENDED_VECTOR_REGISTERS;
-	} else if (omrsysinfo_processor_has_feature(&desc, OMR_FEATURE_X86_AVX)) {
 		vm->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS;
 	}
 }
-#endif /* defined(J9HAMMER) && (JAVA_SPEC_VERSION >= 17) && 0 */
+#endif /* defined(J9HAMMER) */
 
 	initArgs.j2seVersion = createParams->j2seVersion;
 	initArgs.j2seRootDirectory = createParams->j2seRootDirectory;
