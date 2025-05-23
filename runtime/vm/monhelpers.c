@@ -94,37 +94,43 @@ restart:
 				J9_STORE_LOCKWORD(vmStruct, lockEA, 0);
 			} else {
 				omrthread_monitor_t monitor = objectMonitor->monitor;
+				J9JavaVM *vm = vmStruct->javaVM;
 
-				TRIGGER_J9HOOK_VM_MONITOR_CONTENDED_EXIT(vmStruct->javaVM->hookInterface, vmStruct, monitor);
+				TRIGGER_J9HOOK_VM_MONITOR_CONTENDED_EXIT(vm->hookInterface, vmStruct, monitor);
 
 				omrthread_monitor_exit(monitor);
 
-				if (J9_ARE_ANY_BITS_SET(vmStruct->javaVM->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)
+				if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)
 				&& (0 != objectMonitor->virtualThreadWaitCount)
 				) {
-					omrthread_monitor_enter(vmStruct->javaVM->blockedVirtualThreadsMutex);
-					omrthread_monitor_notify(vmStruct->javaVM->blockedVirtualThreadsMutex);
-					omrthread_monitor_exit(vmStruct->javaVM->blockedVirtualThreadsMutex);
+					omrthread_monitor_enter(vm->blockedVirtualThreadsMutex);
+					omrthread_monitor_notify(vm->blockedVirtualThreadsMutex);
+					omrthread_monitor_exit(vm->blockedVirtualThreadsMutex);
 				}
-
 			}
 		} else {
 			j9objectmonitor_t newLock = 0;
 			BOOLEAN casSuccess = FALSE;
 			if (0x00 == count) {
 				/* Just release the flatlock. */
-			} else if ((count & OBJECT_HEADER_LOCK_LEARNING) && J9_ARE_ANY_BITS_SET(count, OBJECT_HEADER_LOCK_LEARNING_RECURSION_MASK)) {
+			} else if (J9_ARE_ANY_BITS_SET(count, OBJECT_HEADER_LOCK_LEARNING)
+				&& J9_ARE_ANY_BITS_SET(count, OBJECT_HEADER_LOCK_LEARNING_RECURSION_MASK)
+			) {
 				/* Learning state case. */
 				newLock = lock - OBJECT_HEADER_LOCK_LEARNING_FIRST_RECURSION_BIT;
-			} else if (count & OBJECT_HEADER_LOCK_LEARNING) {
-				/* Lock is in Learning state but unowned (if it were owned it would have been caught by the first Learning state check). */
+			} else if (J9_ARE_ANY_BITS_SET(count, OBJECT_HEADER_LOCK_LEARNING)) {
+				/* Lock is in Learning state but unowned.
+				 * (if it were owned it would have been caught by the first Learning state check)
+				 */
 				goto done;
 			} else if (count >= OBJECT_HEADER_LOCK_FIRST_RECURSION_BIT) {
 				/* Just decrement the flatlock recursion count. */
 				newLock = lock - OBJECT_HEADER_LOCK_FIRST_RECURSION_BIT;
 #ifdef J9VM_THR_LOCK_RESERVATION
-			} else if (count & OBJECT_HEADER_LOCK_RESERVED) {
-				/* Lock is reserved but unowned (if it were owned the count would be >= OBJECT_HEADER_LOCK_FIRST_RECURSION_BIT). */
+			} else if (J9_ARE_ANY_BITS_SET(count, OBJECT_HEADER_LOCK_RESERVED)) {
+				/* Lock is reserved but unowned.
+				 * (if it were owned the count would be >= OBJECT_HEADER_LOCK_FIRST_RECURSION_BIT)
+				 */
 				Trc_VM_objectMonitorExit_Exit_ReservedButUnownedFlatLock(vmStruct, lock, object);
 				goto done;
 #endif /* J9VM_THR_LOCK_RESERVATION */
