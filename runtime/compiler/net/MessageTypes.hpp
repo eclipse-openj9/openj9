@@ -299,7 +299,6 @@ enum MessageType : uint16_t
    AOTCacheMap_request,
    AOTCacheMap_reply,
 
-
    MessageType_MAXTYPE
    };
    extern const char *messageNames[];

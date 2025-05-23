@@ -30,6 +30,7 @@
 #include "env/CompilerEnv.hpp"
 #include "env/CHTable.hpp"
 #include "env/HeuristicRegion.hpp"
+#include "env/J9RetainedMethodSet.hpp"
 #include "env/PersistentCHTable.hpp"
 #include "env/VMJ9.h"
 #include "env/jittypes.h"
@@ -158,6 +159,19 @@ TR_CallSite* TR_CallSite::create(TR::TreeTop* callNodeTreeTop,
    TR::MethodSymbol *calleeSymbol = symRef->getSymbol()->castToMethodSymbol();
    TR_ResolvedMethod* lCaller = caller ? caller : symRef->getOwningMethod(comp);
 
+   // Take note when the call node has previously been refined based on a known
+   // object. This allows inlining to create a keepalive if needed for the call
+   // site.
+   //
+   // The earlier refinement may have necessitated a global keepalive class,
+   // but that doesn't factor into inlining because it isn't specific to a
+   // particular inlined call path. Taking it into account would interfere with
+   // the ability of the inliner's analysis to prefer bond to keepalive.
+   // Additionally, the global keepalive is needed and therefore created only
+   // for static calls.
+   //
+   bool wasRefinedFromKnownObject = callNode->isCallThatWasRefinedFromKnownObject();
+
    if (callNode->getOpCode().isCallIndirect())
       {
       if (calleeSymbol->isInterface() )
@@ -177,7 +191,9 @@ TR_CallSite* TR_CallSite::create(TR::TreeTop* callNodeTreeTop,
                               callNode->getByteCodeInfo(),
                               comp,
                               depth,
-                              allConsts);
+                              allConsts,
+                              comp->retainedMethods(),
+                              wasRefinedFromKnownObject);
          }
       else
          {
@@ -200,7 +216,9 @@ TR_CallSite* TR_CallSite::create(TR::TreeTop* callNodeTreeTop,
                      callNode->getByteCodeInfo(),
                      comp,
                      depth,
-                     allConsts) ;
+                     allConsts,
+                     comp->retainedMethods(),
+                     wasRefinedFromKnownObject);
             }
 
          if (calleeSymbol->getResolvedMethodSymbol() && calleeSymbol->getResolvedMethodSymbol()->getRecognizedMethod() == TR::java_lang_invoke_MethodHandle_invokeExact)
@@ -220,7 +238,9 @@ TR_CallSite* TR_CallSite::create(TR::TreeTop* callNodeTreeTop,
                   callNode->getByteCodeInfo(),
                   comp,
                   depth,
-                  allConsts) ;
+                  allConsts,
+                  comp->retainedMethods(),
+                  wasRefinedFromKnownObject);
             }
 
          return new (trMemory, kind) TR_J9VirtualCallSite  (lCaller,
@@ -238,7 +258,9 @@ TR_CallSite* TR_CallSite::create(TR::TreeTop* callNodeTreeTop,
                               callNode->getByteCodeInfo(),
                               comp,
                               depth,
-                              allConsts) ;
+                              allConsts,
+                              comp->retainedMethods(),
+                              wasRefinedFromKnownObject);
 
          }
       }
@@ -258,7 +280,9 @@ TR_CallSite* TR_CallSite::create(TR::TreeTop* callNodeTreeTop,
                               callNode->getByteCodeInfo(),
                               comp,
                               depth,
-                              allConsts) ;
+                              allConsts,
+                              comp->retainedMethods(),
+                              wasRefinedFromKnownObject);
 
    }
 
