@@ -1370,15 +1370,34 @@ intptr_t
 j9shmem_createDir(struct J9PortLibrary* portLibrary, char* cacheDirName, uintptr_t cacheDirPerm, BOOLEAN cleanMemorySegments)
 {
 	OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
-	intptr_t rc, rc2;
+	intptr_t rc, rc1, rc2;
 	char pathBuffer[J9SH_MAXPATH];
+	char homeDirPathBuffer[J9SH_MAXPATH];
+	char cacheDirPathBuffer[J9SH_MAXPATH];
 	BOOLEAN usingDefaultTmp = FALSE;
+	BOOLEAN usingUserHome = FALSE;
 
 	Trc_PRT_j9shmem_createDir_Entry();
 	if (0 == j9shmem_getDir(portLibrary, NULL, J9SHMEM_GETDIR_APPEND_BASEDIR, pathBuffer, J9SH_MAXPATH)) {
 		if (0 == strcmp(cacheDirName, (const char*)pathBuffer)) {
 			usingDefaultTmp = TRUE;
 		}
+	}
+
+	if (0 == omrsysinfo_get_env("HOME", homeDirPathBuffer, J9SH_MAXPATH)) {
+		int pathLen = 1 + strlen(homeDirPathBuffer) + strlen(J9SH_HIDDENDIR);
+		if(pathLen <= J9SH_MAXPATH)
+		{
+			strncpy(cacheDirPathBuffer, homeDirPathBuffer, strlen(homeDirPathBuffer));
+			strncat(cacheDirPathBuffer, "/", 1);
+			strncat(cacheDirPathBuffer, J9SH_HIDDENDIR, strlen(J9SH_HIDDENDIR));
+			if(NULL != strstr(cacheDirName, (const char*)cacheDirPathBuffer))
+			{
+				usingUserHome = TRUE;
+			}
+		}
+	} else {
+		Trc_PRT_j9shmem_getDir_tryHomeDirFailed_getEnvHomeFailed();
 	}
 
 	rc = omrfile_attr(cacheDirName);
@@ -1419,6 +1438,14 @@ j9shmem_createDir(struct J9PortLibrary* portLibrary, char* cacheDirName, uintptr
 		rc = createDirectory(portLibrary, (char*)pathBuffer, cacheDirPerm);
 		if (J9SH_FAILED != rc) {
 			if (J9SH_DIRPERM_ABSENT == cacheDirPerm) {
+				if(usingUserHome)
+				{
+					rc1 = changeDirectoryPermission(portLibrary, cacheDirPathBuffer, J9SH_DIRPERM);
+				}
+				if (J9SH_FILE_DOES_NOT_EXIST == rc1) {
+					Trc_PRT_shared_createDir_Exit5(errno);
+					return -1;
+				}
 				if (usingDefaultTmp) {
 					rc2 = changeDirectoryPermission(portLibrary, cacheDirName, J9SH_DIRPERM_DEFAULT_TMP);
 				} else {
