@@ -1020,3 +1020,10 @@ TraceExit=Trc_VM_getTypeId_Exit Overhead=1 Level=5 Template="getTypeId clazz=%p 
 
 TraceEvent=Trc_systemPropertyIterator Overhead=1 Level=10 Template="systemPropertyIterator: added VM system property '%s'='%s'"
 TraceExit-Exception=Trc_VM_objectMonitorExit_Exit_LearningStateUnowned Overhead=1 Level=4 Template="objectMonitorExit (IllegalMonitorState: Lock in learning state but unowned. Flat lock=%p, object=%p)"
+
+TraceEvent=Trc_VM_criu_getNotCheckpointSafeClassMethodArray_classMethod_Counter_Array Overhead=1 Level=5 Template="getNotCheckpointSafeClassMethodArray() classMethodCounter = %zu, notcheckpointsafeArray = %p"
+TraceEvent=Trc_VM_criu_getNotCheckpointSafeClassMethodArray_classMethodItem Overhead=1 Level=5 Template="getNotCheckpointSafeClassMethodArray() notcheckpointsafeArray[%zu] = %s"
+TraceEvent=Trc_VM_criu_getNotCheckpointSafeClassMethodArray_propValue Overhead=1 Level=5 Template="getNotCheckpointSafeClassMethodArray() notcheckpointsafeValue = %s"
+TraceException=Trc_VM_criu_getNotCheckpointSafeClassMethodArray_noSysProp Overhead=1 Level=5 Template="getNotCheckpointSafeClassMethodArray() no system property openj9.internal.criu.notcheckpointsafe"
+TraceException=Trc_VM_criu_getNotCheckpointSafeClassMethodArray_oom Overhead=1 Level=1 Template="getNotCheckpointSafeClassMethodArray() OOM"
+TraceException=Trc_VM_criu_notCheckpointSafeOrClinitFrameWalkFunction_foundTargetItem Overhead=1 Level=1 Template="notCheckpointSafeOrClinitFrameWalkFunction() found a NotCheckpointSafe package/class.method %s"
