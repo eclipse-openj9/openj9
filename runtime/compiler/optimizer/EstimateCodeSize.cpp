@@ -137,9 +137,9 @@ TR_EstimateCodeSize::isInlineable(TR_CallStack * prevCallStack, TR_CallSite *cal
    heuristicTrace(tracer(),"Depth %d: Created Call Site %p for call found at bc index %d. Signature %s  Looking for call targets.",
                              _recursionDepth, callsite, callsite->_byteCodeIndex, tracer()->traceSignature(callsite));
 
-   if (_inliner->getPolicy()->supressInliningRecognizedInitialCallee(callsite, _inliner->comp()))
+   if (_inliner->getPolicy()->suppressInliningRecognizedInitialCallee(callsite, _inliner->comp()))
       {
-      heuristicTrace(tracer(),"Skip looking for call targets because supressInliningRecognizedInitialCallee is true for this call site %p\n", callsite);
+      heuristicTrace(tracer(), "Skip looking for call targets because suppressInliningRecognizedInitialCallee is true for this call site %p\n", callsite);
       return false;
       }
 
