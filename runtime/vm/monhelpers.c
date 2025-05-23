@@ -38,7 +38,7 @@ objectMonitorExit(J9VMThread* vmStruct, j9object_t object)
 	j9objectmonitor_t lock = 0;
 
 	Assert_VM_true(vmStruct != NULL);
-	Assert_VM_true(0 == ((UDATA)vmStruct & OBJECT_HEADER_LOCK_BITS_MASK));
+	Assert_VM_true(J9_ARE_NO_BITS_SET((UDATA)vmStruct, OBJECT_HEADER_LOCK_BITS_MASK));
 
 	Trc_VM_objectMonitorExit_Entry(vmStruct, object);
 
@@ -46,7 +46,7 @@ objectMonitorExit(J9VMThread* vmStruct, j9object_t object)
 		J9ObjectMonitor *objectMonitor = NULL;
 
 		objectMonitor = monitorTableAt(vmStruct, object);
-		if (objectMonitor == NULL) {
+		if (NULL == objectMonitor) {
 			Trc_VM_objectMonitorExit_Exit_IllegalNullMonitor(vmStruct, object);
 			goto done;
 		}
@@ -59,7 +59,7 @@ restart:
 	lock = J9_LOAD_LOCKWORD(vmStruct, lockEA);
 
 	if (J9_FLATLOCK_OWNER(lock) == vmStruct) {
-		/* the current thread owns the monitor, and it's a flat lock */
+		/* The current thread owns the monitor, and it's a flat lock. */
 		UDATA count = (UDATA)lock & OBJECT_HEADER_LOCK_BITS_MASK;
 		/*
 		 * If the learning bit is set, the lock is in the learning state. CAS should be used to decrement the RC field.
@@ -74,57 +74,63 @@ restart:
 		 *   >=16 (RC >= 1)
 		 */
 
-		Assert_VM_false(lock & OBJECT_HEADER_LOCK_INFLATED);
+		Assert_VM_false(J9_ARE_ANY_BITS_SET(lock, OBJECT_HEADER_LOCK_INFLATED));
 #ifndef J9VM_THR_LOCK_RESERVATION
-		Assert_VM_false(lock & OBJECT_HEADER_LOCK_RESERVED);
+		Assert_VM_false(J9_ARE_ANY_BITS_SET(lock, OBJECT_HEADER_LOCK_RESERVED));
 
 		/* Global Lock Reservation is currently only supported on Power. Learning bit should be clear on other platforms. */
 #if !(defined(AIXPPC) || defined(LINUXPPC))
-		Assert_VM_false(lock & OBJECT_HEADER_LOCK_LEARNING);
+		Assert_VM_false(J9_ARE_ANY_BITS_SET(lock, OBJECT_HEADER_LOCK_LEARNING));
 #endif /* if !(defined(AIXPPC) || defined(LINUXPPC)) */
 #endif /* ifndef J9VM_THR_LOCK_RESERVATION */
 #if JAVA_SPEC_VERSION >= 24
 		if (0x02 == count) {
-			/* FLC set, non-recursive */
+			/* FLC set, non-recursive. */
 			J9ObjectMonitor *objectMonitor = objectMonitorInflate(vmStruct, object, lock);
 
 			if (NULL == objectMonitor) {
-				/* out of memory - impossible? */
+				/* Out of memory - impossible? */
 				monitorExitWriteBarrier();
 				J9_STORE_LOCKWORD(vmStruct, lockEA, 0);
 			} else {
 				omrthread_monitor_t monitor = objectMonitor->monitor;
+				J9JavaVM *vm = vmStruct->javaVM;
 
-				TRIGGER_J9HOOK_VM_MONITOR_CONTENDED_EXIT(vmStruct->javaVM->hookInterface, vmStruct, monitor);
+				TRIGGER_J9HOOK_VM_MONITOR_CONTENDED_EXIT(vm->hookInterface, vmStruct, monitor);
 
 				omrthread_monitor_exit(monitor);
 
-				if (J9_ARE_ANY_BITS_SET(vmStruct->javaVM->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)
+				if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)
 				&& (0 != objectMonitor->virtualThreadWaitCount)
 				) {
-					omrthread_monitor_enter(vmStruct->javaVM->blockedVirtualThreadsMutex);
-					omrthread_monitor_notify(vmStruct->javaVM->blockedVirtualThreadsMutex);
-					omrthread_monitor_exit(vmStruct->javaVM->blockedVirtualThreadsMutex);
+					omrthread_monitor_enter(vm->blockedVirtualThreadsMutex);
+					omrthread_monitor_notify(vm->blockedVirtualThreadsMutex);
+					omrthread_monitor_exit(vm->blockedVirtualThreadsMutex);
 				}
-
 			}
 		} else {
 			j9objectmonitor_t newLock = 0;
 			BOOLEAN casSuccess = FALSE;
 			if (0x00 == count) {
 				/* Just release the flatlock. */
-			} else if ((count & OBJECT_HEADER_LOCK_LEARNING) && J9_ARE_ANY_BITS_SET(count, OBJECT_HEADER_LOCK_LEARNING_RECURSION_MASK)) {
+			} else if (J9_ARE_ANY_BITS_SET(count, OBJECT_HEADER_LOCK_LEARNING)
+				&& J9_ARE_ANY_BITS_SET(count, OBJECT_HEADER_LOCK_LEARNING_RECURSION_MASK)
+			) {
 				/* Learning state case. */
 				newLock = lock - OBJECT_HEADER_LOCK_LEARNING_FIRST_RECURSION_BIT;
-			} else if (count & OBJECT_HEADER_LOCK_LEARNING) {
-				/* Lock is in Learning state but unowned (if it were owned it would have been caught by the first Learning state check). */
+			} else if (J9_ARE_ANY_BITS_SET(count, OBJECT_HEADER_LOCK_LEARNING)) {
+				/* Lock is in Learning state but unowned.
+				 * (if it were owned it would have been caught by the first Learning state check)
+				 */
 				goto done;
 			} else if (count >= OBJECT_HEADER_LOCK_FIRST_RECURSION_BIT) {
 				/* Just decrement the flatlock recursion count. */
 				newLock = lock - OBJECT_HEADER_LOCK_FIRST_RECURSION_BIT;
 #ifdef J9VM_THR_LOCK_RESERVATION
-			} else if (count & OBJECT_HEADER_LOCK_RESERVED) {
-				/* Lock is reserved but unowned (if it were owned the count would be >= OBJECT_HEADER_LOCK_FIRST_RECURSION_BIT). */
+			} else if (J9_ARE_ANY_BITS_SET(count, OBJECT_HEADER_LOCK_RESERVED)) {
+				/* Lock is reserved but unowned.
+				 * (if it were owned the count would be >= OBJECT_HEADER_LOCK_FIRST_RECURSION_BIT)
+				 */
 				Trc_VM_objectMonitorExit_Exit_ReservedButUnownedFlatLock(vmStruct, lock, object);
 				goto done;
 #endif /* J9VM_THR_LOCK_RESERVATION */
@@ -143,16 +149,18 @@ restart:
 			}
 		}
 #else /* JAVA_SPEC_VERSION >= 24 */
-		if (count == 0x00) {
-			/* just release the flatlock */
+		if (0x00 == count) {
+			/* Just release the flatlock. */
 			monitorExitWriteBarrier();
 			J9_STORE_LOCKWORD(vmStruct, lockEA, 0);
-		} else if ((count & OBJECT_HEADER_LOCK_LEARNING) && (count & OBJECT_HEADER_LOCK_LEARNING_RECURSION_MASK)) {
-			/* Learning state case */
+		} else if (J9_ARE_ANY_BITS_SET(count, OBJECT_HEADER_LOCK_LEARNING)
+			&& J9_ARE_ANY_BITS_SET(count, OBJECT_HEADER_LOCK_LEARNING_RECURSION_MASK)
+		) {
+			/* Learning state case. */
 			BOOLEAN casSuccess = FALSE;
 
 			if (1 == J9_FLATLOCK_COUNT(lock)) {
-				/* if RC field is 1, this fully unlocks the object so a write barrier is needed */
+				/* If RC field is 1, this fully unlocks the object so a write barrier is needed. */
 				monitorExitWriteBarrier();
 			}
 
@@ -172,26 +180,30 @@ restart:
 				 */
 				goto restart;
 			}
-		} else if (count & OBJECT_HEADER_LOCK_LEARNING) {
-			/* Lock is in Learning state but unowned (if it were owned it would have been caught by the first Learning state check) */
+		} else if (J9_ARE_ANY_BITS_SET(count, OBJECT_HEADER_LOCK_LEARNING)) {
+			/* Lock is in Learning state but unowned.
+			 * (if it were owned it would have been caught by the first Learning state check)
+			 */
 			Trc_VM_objectMonitorExit_Exit_LearningStateUnowned(vmStruct, lock, object);
 			goto done;
 		} else if (count >= OBJECT_HEADER_LOCK_FIRST_RECURSION_BIT) {
-			/* just decrement the flatlock recursion count */
+			/* Just decrement the flatlock recursion count. */
 			lock -= OBJECT_HEADER_LOCK_FIRST_RECURSION_BIT;
 			J9_STORE_LOCKWORD(vmStruct, lockEA, lock);
 #ifdef J9VM_THR_LOCK_RESERVATION
-		} else if (count & OBJECT_HEADER_LOCK_RESERVED) {
-			/* lock is reserved but unowned (if it were owned the count would be >= OBJECT_HEADER_LOCK_FIRST_RECURSION_BIT) */
+		} else if (J9_ARE_ANY_BITS_SET(count, OBJECT_HEADER_LOCK_RESERVED)) {
+			/* Lock is reserved but unowned.
+			 * (if it were owned the count would be >= OBJECT_HEADER_LOCK_FIRST_RECURSION_BIT)
+			 */
 			Trc_VM_objectMonitorExit_Exit_ReservedButUnownedFlatLock(vmStruct, lock, object);
 			goto done;
-#endif
+#endif /* J9VM_THR_LOCK_RESERVATION */
 		} else {
-			/* FLC set, non-recursive */
+			/* FLC set, non-recursive. */
 			J9ObjectMonitor *objectMonitor = objectMonitorInflate(vmStruct, object, lock);
 
 			if (NULL == objectMonitor) {
-				/* out of memory - impossible? */
+				/* Out of memory - impossible? */
 				monitorExitWriteBarrier();
 				J9_STORE_LOCKWORD(vmStruct, lockEA, 0);
 			} else {
@@ -205,10 +217,11 @@ restart:
 		rc = 0;
 		goto done;
 	} else if (J9_LOCK_IS_INFLATED(lock)) {
-		/* Dealing with an inflated monitor */
+		/* Dealing with an inflated monitor. */
 		J9ObjectMonitor *objectMonitor = NULL;
 		J9ThreadAbstractMonitor *monitor = NULL;
 		IDATA deflate = 1;
+		J9JavaVM *vm = vmStruct->javaVM;
 
 		objectMonitor = J9_INFLLOCK_OBJECT_MONITOR(lock);
 		monitor = (J9ThreadAbstractMonitor *)objectMonitor->monitor;
@@ -216,12 +229,13 @@ restart:
 		Assert_VM_false(IS_J9_OBJECT_MONITOR_OWNER_DETACHED(monitor->owner));
 
 #ifdef OMR_THR_ADAPTIVE_SPIN
-		/* for now we don't allow deflation if spinning has been disabled for this monitor
-		 * because it has a longer hold time */
-		if ((NULL != monitor->tracing) && (0 != (monitor->flags & J9THREAD_MONITOR_DISABLE_SPINNING))) {
+		/* For now we don't allow deflation if spinning has been disabled
+		 * for this monitor because it has a longer hold time.
+		 */
+		if ((NULL != monitor->tracing) && J9_ARE_ANY_BITS_SET(monitor->flags, J9THREAD_MONITOR_DISABLE_SPINNING)) {
 			deflate = 0;
 		}
-#endif
+#endif /* OMR_THR_ADAPTIVE_SPIN */
 
 		if (monitor->owner != vmStruct->osThread) {
 			Trc_VM_objectMonitorExit_Exit_IllegalInflatedLock(vmStruct, monitor->owner, vmStruct->osThread);
@@ -237,11 +251,11 @@ restart:
 		 * We can deflate if no thread is blocked on this inflated monitor (pin count is 0) and
 		 *   iff the deflation policy in effect decides it's ok.
 		 */
-		if (monitor->count == 1) {
+		if (1 == monitor->count) {
 			if (0 == monitor->pinCount) {
 				if (deflate) {
 					deflate = 0;
-					switch (vmStruct->javaVM->thrDeflationPolicy) {
+					switch (vm->thrDeflationPolicy) {
 					case J9VM_DEFLATION_POLICY_NEVER:
 						break;
 					case J9VM_DEFLATION_POLICY_ASAP:
@@ -267,12 +281,12 @@ restart:
 					}
 				}
 			} else {
-				if (J9_EVENT_IS_HOOKED(vmStruct->javaVM->hookInterface, J9HOOK_VM_MONITOR_CONTENDED_EXIT)) {
+				if (J9_EVENT_IS_HOOKED(vm->hookInterface, J9HOOK_VM_MONITOR_CONTENDED_EXIT)) {
 					/* Are CONTENDED_EXIT events suppressed? */
 					if (!(monitor->flags & J9THREAD_MONITOR_SUPPRESS_CONTENDED_EXIT)) {
-						/* Any threads blocked on this monitor? If so, report contended exit */
+						/* Any threads blocked on this monitor? If so, report contended exit. */
 						if ((monitor->pinCount - omrthread_monitor_num_waiting((omrthread_monitor_t)monitor)) > 0) {
-							ALWAYS_TRIGGER_J9HOOK_VM_MONITOR_CONTENDED_EXIT(vmStruct->javaVM->hookInterface, vmStruct, (omrthread_monitor_t)monitor);
+							ALWAYS_TRIGGER_J9HOOK_VM_MONITOR_CONTENDED_EXIT(vm->hookInterface, vmStruct, (omrthread_monitor_t)monitor);
 							monitor->flags |= J9THREAD_MONITOR_SUPPRESS_CONTENDED_EXIT;
 						}
 					}
@@ -281,18 +295,18 @@ restart:
 		}
 		rc = omrthread_monitor_exit((omrthread_monitor_t)monitor);
 #if JAVA_SPEC_VERSION >= 24
-		if (J9_ARE_ANY_BITS_SET(vmStruct->javaVM->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)
+		if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)
 		&& (0 != objectMonitor->virtualThreadWaitCount)
 		) {
-			omrthread_monitor_enter(vmStruct->javaVM->blockedVirtualThreadsMutex);
-			omrthread_monitor_notify(vmStruct->javaVM->blockedVirtualThreadsMutex);
-			omrthread_monitor_exit(vmStruct->javaVM->blockedVirtualThreadsMutex);
+			omrthread_monitor_enter(vm->blockedVirtualThreadsMutex);
+			omrthread_monitor_notify(vm->blockedVirtualThreadsMutex);
+			omrthread_monitor_exit(vm->blockedVirtualThreadsMutex);
 		}
 #endif /* JAVA_SPEC_VERSION >= 24 */
 		Trc_VM_objectMonitorExit_Exit_InflatedLock(vmStruct, rc);
 		goto done;
 	} else {
-		/* flat lock, but wrong thread */
+		/* Flat lock, but wrong thread. */
 		Assert_VM_true( (lock == 0) || (lock == OBJECT_HEADER_LOCK_LEARNING) || (lock == OBJECT_HEADER_LOCK_RESERVED) || ((UDATA)lock & ~(UDATA)OBJECT_HEADER_LOCK_BITS_MASK) );
 		Trc_VM_objectMonitorExit_Exit_IllegalFlatLock(vmStruct, lock, object);
 		goto done;
