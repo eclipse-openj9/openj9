@@ -614,35 +614,6 @@ VMSnapshotImpl::removeUnpersistedClassLoaders()
 
 	for (UDATA i = 0; i < count; i++) {
 		J9ClassLoader *currentClassLoader = removeLoaders[i];
-
-		J9HashTableState moduleWalkState = {0};
-		J9Module **modulePtr = (J9Module **)hashTableStartDo(currentClassLoader->moduleHashTable, &moduleWalkState);
-		while (NULL != modulePtr) {
-			J9Module *moduleDel = *modulePtr;
-			modulePtr = (J9Module **)hashTableNextDo(&moduleWalkState);
-			freeJ9Module(_vm, moduleDel);
-		}
-
-		J9HashTableState packageWalkState = {0};
-		J9Package **packagePtr = (J9Package **)hashTableStartDo(currentClassLoader->packageHashTable, &packageWalkState);
-		while (NULL != packagePtr) {
-			J9Package *packageDel = *packagePtr;
-			packagePtr = (J9Package **)hashTableNextDo(&packageWalkState);
-			J9HashTableState walkState = {0};
-
-			J9Module **modulePtr = (J9Module **)hashTableStartDo(packageDel->exportsHashTable, &walkState);
-			while (NULL != modulePtr) {
-				if (NULL != (*modulePtr)->removeExportsHashTable) {
-					hashTableRemove((*modulePtr)->removeExportsHashTable, &packageDel);
-				}
-				J9Module *moduleDel = *modulePtr;
-				modulePtr = (J9Module **)hashTableNextDo(&walkState);
-				freeJ9Module(_vm, moduleDel);
-			}
-			hashTableFree(packageDel->exportsHashTable);
-			j9mem_free_memory(packageDel->packageName);
-			pool_removeElement(_vm->modularityPool, packageDel);
-		}
 		freeClassLoader(currentClassLoader, _vm, vmThread, FALSE);
 	}
 
