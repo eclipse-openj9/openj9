@@ -3253,8 +3253,11 @@ fail:
 			tempClassDepthAndFlags &= J9AccClassRomToRamMask;
 
 			if (superclass == NULL) {
-				/* Place a NULL at superclasses[-1] for quick get superclass on java.lang.Object. */
-				*ramClass->superclasses++ = superclass;
+				/* In Fast HCR the ramClass fragment for super classes is shared, therefore it is already set and incrementing it again leads to data corruption. */
+				if (!fastHCR) {
+					/* Place a NULL at superclasses[-1] for quick get superclass on java.lang.Object. */
+					*ramClass->superclasses++ = superclass;
+				}
 			} else {
 				UDATA superclassCount = J9CLASS_DEPTH(superclass);
 
