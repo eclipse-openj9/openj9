@@ -451,6 +451,7 @@ J9::Compilation::isConverterMethod(TR::RecognizedMethod rm)
       case TR::sun_nio_cs_UTF_8_Decoder_decodeUTF_8:
       case TR::sun_nio_cs_UTF16_Encoder_encodeUTF16Big:
       case TR::sun_nio_cs_UTF16_Encoder_encodeUTF16Little:
+      case TR::sun_nio_cs_SingleByteDecoder_decodeToLatin1Impl:
          return true;
       default:
          return false;
@@ -495,6 +496,7 @@ J9::Compilation::canTransformConverterMethod(TR::RecognizedMethod rm)
          return genTRxx && self()->cg()->getSupportsTestCharComparisonControl();
 
       case TR::sun_nio_cs_ext_SBCS_Decoder_decodeSBCS:
+      case TR::sun_nio_cs_SingleByteDecoder_decodeToLatin1Impl:
          return genTRxx;
 
       // devinmp: I'm not sure whether these could be transformed in AOT, but
