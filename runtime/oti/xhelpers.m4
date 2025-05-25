@@ -20,6 +20,19 @@ dnl SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpat
 
 include(jilvalues.m4)
 
+define({INC_VZU_COUNT},{define({VZU_COUNT},incr(VZU_COUNT))})
+
+define({EMIT_VZEROUPPER_IF_AVX}, {
+	INC_VZU_COUNT()
+	mov r8, J9TR_VMThread_javaVM[J9VMTHREAD]
+	test dword ptr J9TR_JavaVM_extendedRuntimeFlags[r8], J9TR_J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS
+	jz LABEL(skip_vzu{}VZU_COUNT)
+
+	vzeroupper
+
+	LABEL(skip_vzu{}VZU_COUNT):
+})
+
 J9CONST({CINTERP_STACK_SIZE},J9TR_cframe_sizeof)
 
 ifdef({WIN32},{
@@ -309,6 +322,7 @@ define({SAVE_C_VOLATILE_REGS},{
 	mov qword ptr J9TR_cframe_r9[_rsp],r9
 	mov qword ptr J9TR_cframe_r10[_rsp],r10
 	mov qword ptr J9TR_cframe_r11[_rsp],r11
+	EMIT_VZEROUPPER_IF_AVX()
 ifdef({METHOD_INVOCATION},{
 	movq qword ptr J9TR_cframe_jitFPRs+(0*8)[_rsp],xmm0
 	movq qword ptr J9TR_cframe_jitFPRs+(1*8)[_rsp],xmm1
@@ -371,6 +385,7 @@ define({SAVE_C_NONVOLATILE_REGS},{
 ifdef({METHOD_INVOCATION},{
 dnl xmm6-7 are preserved as they are JIT FP arguments which may need
 dnl to be read in order to decompile.  They do not need to be restored.
+	EMIT_VZEROUPPER_IF_AVX()
 	movq qword ptr J9TR_cframe_jitFPRs+(6*8)[_rsp],xmm6
 	movq qword ptr J9TR_cframe_jitFPRs+(7*8)[_rsp],xmm7
 }) dnl METHOD_INVOCATION
@@ -398,6 +413,7 @@ define({SAVE_C_VOLATILE_REGS},{
 	mov qword ptr J9TR_cframe_r9[_rsp],r9
 	mov qword ptr J9TR_cframe_r10[_rsp],r10
 	mov qword ptr J9TR_cframe_r11[_rsp],r11
+	EMIT_VZEROUPPER_IF_AVX()
 ifdef({METHOD_INVOCATION},{
 	movq qword ptr J9TR_cframe_jitFPRs+(0*8)[_rsp],xmm0
 	movq qword ptr J9TR_cframe_jitFPRs+(1*8)[_rsp],xmm1
@@ -527,6 +543,7 @@ define({SAVE_C_VOLATILE_REGS},{
 ifdef({METHOD_INVOCATION},{
 dnl No FP parameter registers
 },{ dnl METHOD_INVOCATION
+	EMIT_VZEROUPPER_IF_AVX()
 	movdqa J9TR_cframe_jitFPRs+(0*16)[_rsp],xmm0
 	movdqa J9TR_cframe_jitFPRs+(1*16)[_rsp],xmm1
 	movdqa J9TR_cframe_jitFPRs+(2*16)[_rsp],xmm2
