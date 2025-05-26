@@ -30,6 +30,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+import javax.management.DynamicMBean;
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;
@@ -40,6 +41,8 @@ import javax.management.MBeanServerPermission;
 import javax.management.NotCompliantMBeanException;
 import javax.management.NotificationEmitter;
 import javax.management.ObjectName;
+import javax.management.StandardEmitterMBean;
+import javax.management.StandardMBean;
 
 import com.ibm.java.lang.management.internal.ClassLoadingMXBeanImpl;
 import com.ibm.java.lang.management.internal.CompilationMXBeanImpl;
@@ -512,7 +515,15 @@ public class ManagementFactory {
 				}
 
 				try {
-					server.registerMBean(bean, objectName);
+					final DynamicMBean dmbean;
+					if (bean instanceof DynamicMBean) {
+						dmbean = (DynamicMBean)bean;
+					} else if (bean instanceof NotificationEmitter) {
+						dmbean = new StandardEmitterMBean(bean, null, true, (NotificationEmitter)bean);
+					} else {
+						dmbean = new StandardMBean(bean, null, true);
+					}
+					server.registerMBean(dmbean, objectName);
 				} catch (InstanceAlreadyExistsException | MBeanRegistrationException | NullPointerException e) {
 					if (ManagementUtils.VERBOSE_MODE) {
 						e.printStackTrace(System.err);
