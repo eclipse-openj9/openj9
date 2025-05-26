@@ -1412,7 +1412,7 @@ private:
 	}
 
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
-	virtual void doObjectInVirtualLargeObjectHeap(J9Object *objectPtr, bool *sparseHeapAllocation) {
+	virtual void doObjectInVirtualLargeObjectHeap(J9Object *objectPtr) {
 		MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(_env);
 		env->_markVLHGCStats._offHeapRegionCandidates += 1;
 		if (!_markingScheme->isMarked(objectPtr)) {
@@ -1421,7 +1421,9 @@ private:
 			if (NULL != dataAddr) {
 				_extensions->largeObjectVirtualMemory->freeSparseRegionAndUnmapFromHeapObject(_env, dataAddr, objectPtr, _extensions->indexableObjectModel.getDataSizeInBytes((J9IndexableObject *)objectPtr));
 
-				*sparseHeapAllocation = false;
+				PORT_ACCESS_FROM_ENVIRONMENT(env);
+				j9tty_printf(PORTLIB, "doObjectInVirtualLargeObjectHeap-global freeSparseRegionAndUnmapFromHeapObject objectPtr=%p, byteAmount=%zu\n", objectPtr, _extensions->indexableObjectModel.getDataSizeInBytes((J9IndexableObject *)objectPtr));
+
 			}
 		}
 	}
