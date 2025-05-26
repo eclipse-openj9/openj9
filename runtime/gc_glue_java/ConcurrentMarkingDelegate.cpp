@@ -398,6 +398,11 @@ MM_ConcurrentMarkingDelegate::concurrentClassMark(MM_EnvironmentBase *env, bool 
 					while (NULL != modulePtr) {
 						J9Module * const module = *modulePtr;
 
+						Assert_GC_true_with_message2(
+								env, (NULL != module->moduleObject),
+								"Module %p Classloader %p has moduleObject set to NULL\n",
+								 module, classLoader);
+
 						_markingScheme->markObject(env, (j9object_t)module->moduleObject);
 						if (NULL != module->version) {
 							_markingScheme->markObject(env, (j9object_t)module->version);
@@ -409,6 +414,12 @@ MM_ConcurrentMarkingDelegate::concurrentClassMark(MM_EnvironmentBase *env, bool 
 					}
 
 					if (classLoader == _javaVM->systemClassLoader) {
+
+						Assert_GC_true_with_message(
+								env, (NULL != _javaVM->unnamedModuleForSystemLoader->moduleObject),
+								"Unnamed Module For System Loader %p has moduleObject set to NULL\n",
+								_javaVM->unnamedModuleForSystemLoader);
+
 						_markingScheme->markObject(env, _javaVM->unnamedModuleForSystemLoader->moduleObject);
 					}
 				}

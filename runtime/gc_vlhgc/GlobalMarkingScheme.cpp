@@ -926,7 +926,12 @@ MM_GlobalMarkingScheme::scanClassLoaderObject(MM_EnvironmentVLHGC *env, J9Object
 			J9Module **modulePtr = (J9Module **)hashTableStartDo(classLoader->moduleHashTable, &walkState);
 			while (NULL != modulePtr) {
 				J9Module * const module = *modulePtr;
-				Assert_MM_true(NULL != module->moduleObject);
+
+				Assert_GC_true_with_message2(
+						env, (NULL != module->moduleObject),
+						"Module %p Classloader %p has moduleObject set to NULL\n",
+						 module, classLoader);
+
 				markObject(env, module->moduleObject);
 				rememberReferenceIfRequired(env, classLoaderObject, module->moduleObject);
 				if (NULL != module->version) {
@@ -937,7 +942,12 @@ MM_GlobalMarkingScheme::scanClassLoaderObject(MM_EnvironmentVLHGC *env, J9Object
 			}
 
 			if (classLoader == _javaVM->systemClassLoader) {
-				Assert_MM_true(NULL != _javaVM->unnamedModuleForSystemLoader->moduleObject);
+
+				Assert_GC_true_with_message(
+						env, (NULL != _javaVM->unnamedModuleForSystemLoader->moduleObject),
+						"Unnamed Module For System Loader %p has moduleObject set to NULL\n",
+						_javaVM->unnamedModuleForSystemLoader);
+
 				markObject(env, _javaVM->unnamedModuleForSystemLoader->moduleObject);
 				rememberReferenceIfRequired(env, classLoaderObject, _javaVM->unnamedModuleForSystemLoader->moduleObject);
 			}

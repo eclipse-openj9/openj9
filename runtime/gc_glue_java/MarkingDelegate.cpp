@@ -455,6 +455,11 @@ MM_MarkingDelegate::completeMarking(MM_EnvironmentBase *env)
 									while (NULL != modulePtr) {
 										J9Module * const module = *modulePtr;
 
+										Assert_GC_true_with_message2(
+												env, (NULL != module->moduleObject),
+												"Module %p Classloader %p has moduleObject set to NULL\n",
+												 module, classLoader);
+
 										_markingScheme->markObjectNoCheck(env, (omrobjectptr_t )module->moduleObject);
 										if (NULL != module->version) {
 											_markingScheme->markObjectNoCheck(env, (omrobjectptr_t )module->version);
@@ -463,6 +468,12 @@ MM_MarkingDelegate::completeMarking(MM_EnvironmentBase *env)
 									}
 
 									if (classLoader == javaVM->systemClassLoader) {
+
+										Assert_GC_true_with_message(
+												env, (NULL != javaVM->unnamedModuleForSystemLoader->moduleObject),
+												"Unnamed Module For System Loader %p has moduleObject set to NULL\n",
+												javaVM->unnamedModuleForSystemLoader);
+
 										_markingScheme->markObjectNoCheck(env, (omrobjectptr_t )javaVM->unnamedModuleForSystemLoader->moduleObject);
 									}
 								}
