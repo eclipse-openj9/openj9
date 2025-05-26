@@ -92,6 +92,7 @@ J9::Z::CodeGenerator::initialize()
          && !TR::Compiler->om.canGenerateArraylets())
       {
       cg->setSupportsInlineStringIndexOf();
+      cg->setSupportsInlineStringIndexOfString();
       }
 
    if (cg->getSupportsVectorRegisters() && !comp->getOption(TR_DisableSIMDStringHashCode) && !TR::Compiler->om.canGenerateArraylets())
@@ -4231,6 +4232,15 @@ J9::Z::CodeGenerator::inlineDirectCall(
          case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfUTF16:
             resultReg = TR::TreeEvaluator::inlineIntrinsicIndexOf(node, cg, false);
             return true;
+         default:
+            break;
+         }
+      }
+
+   if (cg->getSupportsInlineStringIndexOfString())
+      {
+      switch (methodSymbol->getRecognizedMethod())
+         {
          case TR::java_lang_StringLatin1_indexOf:
          case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfStringLatin1:
                resultReg = TR::TreeEvaluator::inlineVectorizedStringIndexOf(node, cg, false);
