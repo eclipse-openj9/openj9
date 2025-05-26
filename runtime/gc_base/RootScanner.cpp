@@ -88,8 +88,9 @@ MM_RootScanner::scanModularityObjects(J9ClassLoader * classLoader)
 		J9Module **modulePtr = (J9Module**)hashTableStartDo(classLoader->moduleHashTable, &moduleWalkState);
 		while (NULL != modulePtr) {
 			J9Module * const module = *modulePtr;
-
-			doSlot(&module->moduleObject);
+			if (NULL != module->moduleObject) {
+				doSlot(&module->moduleObject);
+			}
 			if (NULL != module->version) {
 				doSlot(&module->version);
 			}
@@ -97,7 +98,9 @@ MM_RootScanner::scanModularityObjects(J9ClassLoader * classLoader)
 		}
 
 		if (classLoader == _javaVM->systemClassLoader) {
-			doSlot(&_javaVM->unnamedModuleForSystemLoader->moduleObject);
+			if (NULL != _javaVM->unnamedModuleForSystemLoader->moduleObject) {
+				doSlot(&_javaVM->unnamedModuleForSystemLoader->moduleObject);
+			}
 		}
 	}
 }

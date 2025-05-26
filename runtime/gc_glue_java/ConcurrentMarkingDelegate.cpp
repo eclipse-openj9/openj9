@@ -397,8 +397,9 @@ MM_ConcurrentMarkingDelegate::concurrentClassMark(MM_EnvironmentBase *env, bool 
 					J9Module **modulePtr = (J9Module**)hashTableStartDo(classLoader->moduleHashTable, &moduleWalkState);
 					while (NULL != modulePtr) {
 						J9Module * const module = *modulePtr;
-
-						_markingScheme->markObject(env, (j9object_t)module->moduleObject);
+						if (NULL != module->moduleObject) {
+							_markingScheme->markObject(env, (j9object_t)module->moduleObject);
+						}
 						if (NULL != module->version) {
 							_markingScheme->markObject(env, (j9object_t)module->version);
 						}
@@ -409,7 +410,9 @@ MM_ConcurrentMarkingDelegate::concurrentClassMark(MM_EnvironmentBase *env, bool 
 					}
 
 					if (classLoader == _javaVM->systemClassLoader) {
-						_markingScheme->markObject(env, _javaVM->unnamedModuleForSystemLoader->moduleObject);
+						if (NULL != _javaVM->unnamedModuleForSystemLoader->moduleObject) {
+							_markingScheme->markObject(env, _javaVM->unnamedModuleForSystemLoader->moduleObject);
+						}
 					}
 				}
 

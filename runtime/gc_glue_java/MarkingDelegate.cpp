@@ -454,8 +454,9 @@ MM_MarkingDelegate::completeMarking(MM_EnvironmentBase *env)
 									J9Module **modulePtr = (J9Module**)hashTableStartDo(classLoader->moduleHashTable, &moduleWalkState);
 									while (NULL != modulePtr) {
 										J9Module * const module = *modulePtr;
-
-										_markingScheme->markObjectNoCheck(env, (omrobjectptr_t )module->moduleObject);
+										if (NULL != module->moduleObject) {
+											_markingScheme->markObjectNoCheck(env, (omrobjectptr_t )module->moduleObject);
+										}
 										if (NULL != module->version) {
 											_markingScheme->markObjectNoCheck(env, (omrobjectptr_t )module->version);
 										}
@@ -463,7 +464,9 @@ MM_MarkingDelegate::completeMarking(MM_EnvironmentBase *env)
 									}
 
 									if (classLoader == javaVM->systemClassLoader) {
-										_markingScheme->markObjectNoCheck(env, (omrobjectptr_t )javaVM->unnamedModuleForSystemLoader->moduleObject);
+										if (NULL != javaVM->unnamedModuleForSystemLoader->moduleObject) {
+											_markingScheme->markObjectNoCheck(env, (omrobjectptr_t )javaVM->unnamedModuleForSystemLoader->moduleObject);
+										}
 									}
 								}
 							}
