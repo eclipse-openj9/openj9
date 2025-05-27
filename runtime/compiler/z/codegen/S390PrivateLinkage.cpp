@@ -1559,8 +1559,8 @@ addLastITableInstructions(TR::Compilation * comp, TR_J9VMBase * fej9, TR::CodeGe
 
       // Test if matches
       TR::InstOpCode::Mnemonic cmpOp = TR::InstOpCode::getCmpLogicalOpCode();
-      if (comp->target().is64Bit() && TR::Compiler->om.generateCompressedObjectHeaders())
-         cmpOp = TR::InstOpCode::CL;
+      //if (comp->target().is64Bit() && TR::Compiler->om.generateCompressedObjectHeaders())
+         //cmpOp = TR::InstOpCode::CL;
       cursor = generateRXInstruction(codeGen, cmpOp, node, tmpReg3, interfaceClass, cursor);
 
       //Branch if equal
