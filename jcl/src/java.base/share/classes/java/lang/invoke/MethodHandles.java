@@ -5800,9 +5800,9 @@ public class MethodHandles {
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION >= 15 */
 
-	/*[IF Sidecar18-SE-OpenJ9]*/
+	/*[IF !VENDOR_UMA]*/
 	static MethodHandle basicInvoker(MethodType mt) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
-	/*[ENDIF] Sidecar18-SE-OpenJ9 */
+	/*[ENDIF] !VENDOR_UMA */
 }
