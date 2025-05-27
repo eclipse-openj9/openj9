@@ -1528,7 +1528,7 @@ J9::Z::PrivateLinkage::createEpilogue(TR::Instruction * cursor)
 
 static TR::Instruction *
 addLastITableInstructions(TR::Compilation * comp, TR_J9VMBase * fej9, TR::CodeGenerator * codeGen, TR::Node * node, TR::SymbolReference * methodSymRef,
-   TR::Register * vftReg, TR::Register * tmpReg, TR::Register * tmpReg2, TR::Register * thisReg, TR::Instruction * cursor)
+   TR::Register * vftReg, TR::Register * tmpReg, TR::Register * tmpReg2, TR::Register * tmpReg3, TR::Instruction * cursor)
    {
    // Start of last I table Implementation.
    // Check if it is enabled and can be used.
@@ -1553,13 +1553,15 @@ addLastITableInstructions(TR::Compilation * comp, TR_J9VMBase * fej9, TR::CodeGe
       TR::MemoryReference * iTableOffset = generateS390MemoryReference(tmpReg, fej9->convertITableIndexToOffset(itableIndex), codeGen);
       cursor = generateRXInstruction(codeGen, TR::InstOpCode::getSubstractOpCode(), node, tmpReg2, iTableOffset);
 
+     cursor = genLoadLongConstant(codeGen, node, (int64_t)declaringClass, tmpReg3, cursor);
+
       TR::MemoryReference * interfaceClass = generateS390MemoryReference(tmpReg, fej9->getOffsetOfInterfaceClassFromITableField(), codeGen);
 
       // Test if matches
       TR::InstOpCode::Mnemonic cmpOp = TR::InstOpCode::getCmpLogicalOpCode();
       if (comp->target().is64Bit() && TR::Compiler->om.generateCompressedObjectHeaders())
          cmpOp = TR::InstOpCode::CL;
-      cursor = generateRXInstruction(codeGen, cmpOp, node, thisReg, interfaceClass, cursor);
+      cursor = generateRXInstruction(codeGen, cmpOp, node, tmpReg3, interfaceClass, cursor);
 
       //Branch if equal
       cursor = generateS390RegInstruction(codeGen, TR::InstOpCode::BCR, node, tmpReg2, cursor);
@@ -1981,6 +1983,7 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
       int32_t i=0;
       TR::Register * thisClassRegister;
       TR::Register * methodRegister ;
+      TR::Register * tmpRegister ;
       TR::RegisterPair * classMethodEPPairRegister;
       int32_t numInterfaceCallCacheSlots =  comp()->getOptions()->getNumInterfaceCallCacheSlots();
 
@@ -2126,6 +2129,7 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
             TR::Register * classRegister = cg()->allocateRegister();
             TR::Register * methodRegister = cg()->allocateRegister();
             classMethodEPPairRegister = cg()->allocateConsecutiveRegisterPair(methodRegister, classRegister);
+            tmpRegister = classRegister;
 
             postDeps->addPostCondition(classMethodEPPairRegister, TR::RealRegister::EvenOddPair);
             postDeps->addPostCondition(classRegister, TR::RealRegister::LegalEvenOfPair);
@@ -2168,6 +2172,7 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
                                    );
 
             // Load the interface call data snippet pointer to register is required for non-CLFI / BRCL sequence.
+            tmpRegister = cg()->allocateRegister();
             if (!useCLFIandBRCL)
                {
                cursor = new (trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::LARL, callNode, snippetReg, ifcSnippet->getDataConstantSnippet(), cg());
@@ -2243,7 +2248,7 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
                   }
                }
 
-            cursor = addLastITableInstructions(comp(), fej9, cg(), callNode, methodSymRef, vftReg, snippetReg, methodRegister, RegThis, cursor);
+            cursor = addLastITableInstructions(comp(), fej9, cg(), callNode, methodSymRef, vftReg, snippetReg, methodRegister, tmpRegister, cursor);
 
             cursor = new (trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::LARL, callNode, snippetReg, ifcSnippet,cursor, cg());
 
@@ -2259,6 +2264,8 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
 
             if (!useCLFIandBRCL)
               postDeps->addPostCondition(methodRegister, TR::RealRegister::AssignAny);
+
+            postDeps->addPostCondition(tmpRegister, TR::RealRegister::AssignAny);
             }
 
          gcPoint = cursor;
@@ -2272,6 +2279,7 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
             }
          else
             {
+            cg()->stopUsingRegister(tmpRegister);
             if (!useCLFIandBRCL)
                cg()->stopUsingRegister(methodRegister);
             }
