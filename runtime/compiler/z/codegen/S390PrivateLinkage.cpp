@@ -1542,6 +1542,7 @@ addLastITableInstructions(TR::Compilation * comp, TR_J9VMBase * fej9, TR::CodeGe
       && performTransformation(comp, "O^O useLastITableCache for n%dn itableIndex=%d\n",
             node->getGlobalIndex(), (int)itableIndex))
       {
+      printf("decaringClass: %p\n", declaringClass);
       // TODO: breakBeforeInterfaceDispatchUsingLastITable
       TR::MemoryReference * lastITable = generateS390MemoryReference(vftReg, (int32_t)fej9->getOffsetOfLastITableFromClassField(), codeGen);
       cursor = generateRXInstruction(codeGen, TR::InstOpCode::getLoadOpCode(), node, tmpReg, lastITable, cursor);
