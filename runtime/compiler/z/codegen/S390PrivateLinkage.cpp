@@ -1562,7 +1562,7 @@ addLastITableInstructions(TR::Compilation * comp, TR_J9VMBase * fej9, TR::CodeGe
 
       //Branch if equal
       cursor = generateS390RegInstruction(codeGen, TR::InstOpCode::BCR, node, tmpReg2, cursor);
-      ((TR::S390RegInstruction *)cursor)->setBranchCondition(TR::InstOpCxode::COND_BER);
+      ((TR::S390RegInstruction *)cursor)->setBranchCondition(TR::InstOpCode::COND_BER);
       }
    return cursor;
    }
