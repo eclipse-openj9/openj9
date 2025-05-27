@@ -1527,23 +1527,20 @@ J9::Z::PrivateLinkage::createEpilogue(TR::Instruction * cursor)
    }
 
 static TR::Instruction *
-addLastITableInstructions(TR_J9VMBase * fej9, TR::CodeGenerator * codeGen, TR::Node * node, TR::SymbolReference * methodSymRef,
-   TR::RealRegister * vftReg, TR::RealRegister * tmpReg, TR::RealRegister * tmpReg2, TR::RealRegister * thisReg, TR::Instruction * cursor)
+addLastITableInstructions(TR::Compilation * comp, TR_J9VMBase * fej9, TR::CodeGenerator * codeGen, TR::Node * node, TR::SymbolReference * methodSymRef,
+   TR::Register * vftReg, TR::Register * tmpReg, TR::Register * tmpReg2, TR::Register * thisReg, TR::Instruction * cursor)
    {
    // Start of last I table Implementation.
    // Check if it is enabled and can be used.
-   TR::Method *method = methodSymRef->getMethod();
    uintptr_t itableIndex;
+   TR_OpaqueClassBlock *declaringClass = NULL;
 
    static bool EnableLastITableCache = feGetEnv("TR_EnableLastITable") != NULL;
 
    // TODO: useLastITableCache
-   if ( EnableLastITableCache && (declaringClass = methodSymRef->getOwningMethod(comp())->getResolvedInterfaceMethod(methodSymRef->getCPIndex(), &itableIndex))
-      && performTransformation(comp(), "O^O useLastITableCache for n%dn itableIndex=%d: %.*s.%.*s%.*s\n",
-            callNode->getGlobalIndex(), (int)itableIndex,
-            method->classNameLength(), method->classNameChars(),
-            method->nameLength(),      method->nameChars(),
-            method->signatureLength(), method->signatureChars()))
+   if ( EnableLastITableCache && (declaringClass = methodSymRef->getOwningMethod(comp)->getResolvedInterfaceMethod(methodSymRef->getCPIndex(), &itableIndex))
+      && performTransformation(comp, "O^O useLastITableCache for n%dn itableIndex=%d\n",
+            node->getGlobalIndex(), (int)itableIndex))
       {
       // TODO: breakBeforeInterfaceDispatchUsingLastITable
       TR::MemoryReference * lastITable = generateS390MemoryReference(vftReg, (int32_t)fej9->getOffsetOfLastITableFromClassField(), codeGen);
@@ -1559,16 +1556,15 @@ addLastITableInstructions(TR_J9VMBase * fej9, TR::CodeGenerator * codeGen, TR::N
 
       // Test if matches
       TR::InstOpCode::Mnemonic cmpOp = TR::InstOpCode::getCmpLogicalOpCode();
-      if (comp()->target().is64Bit() && TR::Compiler->om.generateCompressedObjectHeaders())
+      if (comp->target().is64Bit() && TR::Compiler->om.generateCompressedObjectHeaders())
          cmpOp = TR::InstOpCode::CL;
       cursor = generateRXInstruction(codeGen, cmpOp, node, thisReg, interfaceClass, cursor);
 
       //Branch if equal
       cursor = generateS390RegInstruction(codeGen, TR::InstOpCode::BCR, node, tmpReg2, cursor);
       ((TR::S390RegInstruction *)cursor)->setBranchCondition(TR::InstOpCxode::COND_BER);
-
-      return cursor;
       }
+   return cursor;
    }
 ////////////////////////////////////////////////////////////////////////////////
 // J9::Z::PrivateLinkage::buildVirtualDispatch - build virtual function call
@@ -2245,8 +2241,8 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
                   slotOffset += 2*TR::Compiler->om.sizeofReferenceAddress();
                   }
                }
-               
-            addLastITableInstructions(fej9, cg(), callNode, methodSymRef, vftReg, snippetReg, methodRegister, RegThis, cursor);
+
+            addLastITableInstructions(comp(), fej9, cg(), callNode, methodSymRef, vftReg, snippetReg, methodRegister, RegThis, cursor);
 
             cursor = new (trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::LARL, callNode, snippetReg, ifcSnippet,cursor, cg());
 
