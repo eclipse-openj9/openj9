@@ -322,8 +322,9 @@ private:
 	 * @param reservingContext[in] The context to which we would prefer to copy any objects discovered in this method
 	 * @param objectPtr current object being scanned.
 	 * @param reason to scan (dirty card, packet, scan cache, overflow)
+	 * @return true if all slots have been copied successfully
 	 */
-	void scanMixedObjectSlots(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, J9Object *objectPtr, ScanReason reason);
+	bool scanMixedObjectSlots(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, J9Object *objectPtr, ScanReason reason);
 	/**
 	 * Scan the slots of a reference mixed object.
 	 * Copy and forward all relevant slots values found in the object.
