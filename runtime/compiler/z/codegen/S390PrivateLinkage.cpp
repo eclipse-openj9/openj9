@@ -2243,7 +2243,7 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
                   }
                }
 
-            addLastITableInstructions(comp(), fej9, cg(), callNode, methodSymRef, vftReg, snippetReg, methodRegister, RegThis, cursor);
+            cursor = addLastITableInstructions(comp(), fej9, cg(), callNode, methodSymRef, vftReg, snippetReg, methodRegister, RegThis, cursor);
 
             cursor = new (trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::LARL, callNode, snippetReg, ifcSnippet,cursor, cg());
 
