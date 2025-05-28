@@ -1396,6 +1396,9 @@ isPrivilegedFrameIteratorGetAccSnapshot(J9VMThread * currentThread, J9StackWalkS
  * 			 or just the ProtectionDomain of the caller of doPrivileged in case of flag forDoPrivilegedWithCombiner is true
  * 			Permission object array
  * 		 Until a full permission privileged frame or the end of the stack reached.
+ * 	There is a special case that the limited doPrivileged method is in a Java main() method, there is no caller frame,
+ * 	the last frame (walkState.framesWalked) is the doPrivileged frame, hence the ProtectionDomain object array (the second element) is null,
+ * 	the first element is an AccessControlContext object inherited from current thread, and the third element is null as well.
  *
  * Note: 1. The reason to have Pre-JEP140 and JEP 140 format is to keep similar format and processing logic
  *			when there is no limited doPrivileged method (JEP 140 implementation) involved.
