@@ -989,18 +989,25 @@ restart:
 
 					/* Loop until either lock is inflated or FLC bit is set. */
 					while (!J9_LOCK_IS_INFLATED(lock)) {
+#if defined(J9VM_THR_LOCK_RESERVATION)
+						if (J9_ARE_ANY_BITS_SET(lock, OBJECT_HEADER_LOCK_RESERVED)) {
+							/* Lock is now reserved, exit the inflated monitor and restart to cancel lock reservation. */
+							omrthread_monitor_exit(monitor);
+							goto restart;
+						}
+#endif /* J9VM_THR_LOCK_RESERVATION */
 						/* The monitor isn't inflated yet, but we can update the lockword now. */
 						UDATA newLockword = 0;
-						UDATA count = J9_FLATLOCK_COUNT(lock);
-						if (0 == count) {
-							/* Lock is unlocked, so try to directly acquire it as a flatlock. */
-							newLockword = (UDATA)currentThread;
-						} else {
+						if (J9_LOCK_IS_FLATLOCKED(lock)) {
 							/* Change the lock to flat with FLC bit set so it will be inflated during exit. */
 							newLockword = (UDATA)J9_FLATLOCK_OWNER(lock)
-										| ((count - 1) << OBJECT_HEADER_LOCK_V2_RECURSION_OFFSET)
+										| ((J9_FLATLOCK_COUNT(lock) - 1) << OBJECT_HEADER_LOCK_V2_RECURSION_OFFSET)
 										| OBJECT_HEADER_LOCK_FLC;
+						} else {
+							/* Lock is unlocked, so try to directly acquire it as a flatlock. */
+							newLockword = (UDATA)currentThread;
 						}
+
 						Assert_VM_true(OBJECT_HEADER_LOCK_FLC != newLockword);
 						j9objectmonitor_t const oldValue = lock;
 						VM_AtomicSupport::writeBarrier();
@@ -1018,12 +1025,6 @@ restart:
 								goto success;
 							}
 							break;
-#if defined(J9VM_THR_LOCK_RESERVATION)
-						} else if (OBJECT_HEADER_LOCK_RESERVED == (lock & (OBJECT_HEADER_LOCK_RESERVED | OBJECT_HEADER_LOCK_INFLATED))) {
-							/* Lock is now reserved, exit the inflated monitor and restart to cancel lock reservation. */
-							omrthread_monitor_exit(monitor);
-							goto restart;
-#endif /* J9VM_THR_LOCK_RESERVATION */
 						}
 						/* CAS failed, another thread must have updated the lockword, retry the check. */
 					}
