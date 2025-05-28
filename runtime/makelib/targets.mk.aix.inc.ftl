@@ -106,7 +106,7 @@ ifeq (,$(findstring xlclang,$(notdir $(CC))))
     # for openxl do nothing
   else
     # xlc options
-    CFLAGS += -q mbcs -qinfo=pro
+    CFLAGS += -q mbcs -qinfo=pro -qc_stdinc
   endif
 else
   # xlclang options
@@ -132,7 +132,7 @@ ifeq (,$(findstring xlclang++,$(notdir $(CXX))))
     CXXFLAGS += -fno-rtti -fno-exceptions
   else
     # xlc++ options
-    CXXFLAGS += -q mbcs -qinfo=pro
+    CXXFLAGS += -q mbcs -qinfo=pro -qcpp_stdinc
   endif
 else
   # xlclang++ options
