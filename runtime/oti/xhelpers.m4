@@ -20,6 +20,29 @@ dnl SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpat
 
 include(jilvalues.m4)
 
+ifdef({VZU_COUNT}, , define({VZU_COUNT}, 0))
+define({INC_VZU_COUNT},{define({VZU_COUNT},incr(VZU_COUNT))})
+
+dnl This macro conditionally executes a VZEROUPPER instruction when YMM
+dnl registers are enabled (set by J9TR_J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS)
+dnl to avoid costly AVX-SSE transition penalties.
+define({EMIT_VZEROUPPER_IF_AVX}, {
+	INC_VZU_COUNT()
+
+ifdef({ASM_J9VM_ENV_DATA64},{
+	mov rax, J9TR_VMThread_javaVM[J9VMTHREAD]
+	test dword ptr J9TR_JavaVM_extendedRuntimeFlags[rax], J9TR_J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS
+}, { dnl ASM_J9VM_ENV_DATA64
+	mov eax, dword ptr J9TR_VMThread_javaVM[J9VMTHREAD]
+	test dword ptr J9TR_JavaVM_extendedRuntimeFlags[eax], J9TR_J9_EXTENDED_RUNTIME_USE_VECTOR_REGISTERS
+})
+	jz LABEL(skip_vzu{}VZU_COUNT)
+
+	vzeroupper
+
+	LABEL(skip_vzu{}VZU_COUNT):
+})
+
 J9CONST({CINTERP_STACK_SIZE},J9TR_cframe_sizeof)
 
 ifdef({WIN32},{
