@@ -782,7 +782,9 @@ MM_StandardAccessBarrier::preObjectRead(J9VMThread *vmThread, J9Class *srcClass,
 }
 
 
-#define GLOBAL_READ_BARRIR_STATS_UPDATE_THRESHOLD 32
+#define GLOBAL_READ_BARRIR_STATS_UPDATE_COUNT_THRESHOLD 64
+#define GLOBAL_READ_BARRIR_STATS_UPDATE_BYTES_THRESHOLD (64 * 1024)
+
 
 bool
 MM_StandardAccessBarrier::preObjectRead(J9VMThread *vmThread, J9Object *srcObject, fj9object_t *srcAddress)
@@ -804,8 +806,8 @@ MM_StandardAccessBarrier::preObjectRead(J9VMThread *vmThread, J9Object *srcObjec
 			 */
 
 			env->_scavengerStats._readObjectBarrierUpdate += 1;
-			if (GLOBAL_READ_BARRIR_STATS_UPDATE_THRESHOLD == env->_scavengerStats._readObjectBarrierUpdate) {
-				MM_AtomicOperations::addU64(&_extensions->scavengerStats._readObjectBarrierUpdate, GLOBAL_READ_BARRIR_STATS_UPDATE_THRESHOLD);
+			if (GLOBAL_READ_BARRIR_STATS_UPDATE_COUNT_THRESHOLD == env->_scavengerStats._readObjectBarrierUpdate) {
+				MM_AtomicOperations::addU64(&_extensions->scavengerStats._readObjectBarrierUpdate, GLOBAL_READ_BARRIR_STATS_UPDATE_COUNT_THRESHOLD);
 				env->_scavengerStats._readObjectBarrierUpdate = 0;
 			}
 
@@ -836,9 +838,19 @@ MM_StandardAccessBarrier::preObjectRead(J9VMThread *vmThread, J9Object *srcObjec
 					slotObject.atomicWriteReferenceToSlot(object, destinationObjectPtr);
 
 					env->_scavengerStats._readObjectBarrierCopy += 1;
-					if (GLOBAL_READ_BARRIR_STATS_UPDATE_THRESHOLD == env->_scavengerStats._readObjectBarrierCopy) {
-						MM_AtomicOperations::addU64(&_extensions->scavengerStats._readObjectBarrierCopy, GLOBAL_READ_BARRIR_STATS_UPDATE_THRESHOLD);
+					if (GLOBAL_READ_BARRIR_STATS_UPDATE_COUNT_THRESHOLD == env->_scavengerStats._readObjectBarrierCopy) {
+						MM_AtomicOperations::addU64(&_extensions->scavengerStats._readObjectBarrierCopy, GLOBAL_READ_BARRIR_STATS_UPDATE_COUNT_THRESHOLD);
 						env->_scavengerStats._readObjectBarrierCopy = 0;
+					}
+
+					if (env->_scavengerStats._flipBytes > GLOBAL_READ_BARRIR_STATS_UPDATE_BYTES_THRESHOLD) {
+						MM_AtomicOperations::addU64(&_extensions->incrementScavengerStats._readObjectBarrierFlipBytes, env->_scavengerStats._flipBytes);
+						env->_scavengerStats._flipBytes = 0;
+					}
+
+					if (env->_scavengerStats._tenureAggregateBytes > GLOBAL_READ_BARRIR_STATS_UPDATE_BYTES_THRESHOLD) {
+						MM_AtomicOperations::addU64(&_extensions->incrementScavengerStats._readObjectBarrierTenureBytes, env->_scavengerStats._tenureAggregateBytes);
+						env->_scavengerStats._tenureAggregateBytes = 0;
 					}
 				}
 			}
