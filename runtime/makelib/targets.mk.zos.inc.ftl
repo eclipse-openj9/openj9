@@ -70,7 +70,7 @@ endif
 
 # _ISOC99_SOURCE Exposes c99 standard library changes which dont require c99 compiler support. (Also needed for c++, see below)
 # __STDC_LIMIT_MACROS Is needed to expose limit macros from <stdint.h> on c++ (also requires _ISOC99_SOURCE)
-UMA_ZOS_FLAGS += -DJ9ZOS390 -DLONGLONG -DJ9VM_TIERED_CODE_CACHE -D_ALL_SOURCE -D_XOPEN_SOURCE_EXTENDED -DIBM_ATOE -D_POSIX_SOURCE -D_ISOC99_SOURCE -D__STDC_LIMIT_MACROS
+UMA_ZOS_FLAGS += -DJ9ZOS390 -DLONGLONG -DJ9VM_TIERED_CODE_CACHE -D_ALL_SOURCE -D_XOPEN_SOURCE_EXTENDED -DIBM_ATOE -D_AE_BIMODAL -D_POSIX_SOURCE -D_ISOC99_SOURCE -D__STDC_LIMIT_MACROS
 UMA_ZOS_FLAGS += -I$(OMR_DIR)/util/a2e/headers $(UMA_OPTIMIZATION_FLAGS) $(UMA_OPTIMIZATION_LINKER_FLAGS) \
 	-Wc,"convlit(ISO8859-1),xplink,rostring,FLOAT(IEEE,FOLD,AFP),enum(4)" -Wa,goff -Wc,NOANSIALIAS -Wc,"inline(auto,noreport,600,5000)"
 UMA_ZOS_FLAGS += -Wc,"SERVICE(j${uma.buildinfo.build_date})"

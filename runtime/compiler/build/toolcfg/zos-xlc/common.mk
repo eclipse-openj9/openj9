@@ -110,6 +110,7 @@ CX_FLAGS+=\
     -qnosearch \
     $(patsubst %,-I%,$(PRODUCT_INCLUDES)) \
     -DIBM_ATOE \
+    -D_AE_BIMODAL \
     -Wc,"convlit(ISO8859-1)" \
     -qsearch=$(J9SRC)/a2e/headers \
     -qsearch=$(J9SRC)/zos_zlib/hzc/include \
