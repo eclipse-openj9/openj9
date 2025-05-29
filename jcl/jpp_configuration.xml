@@ -79,6 +79,7 @@
 		  flags="Sidecar18-SE-OpenJ9,DAA"
 		  dependencies="SIDECAR18-SE"
 		  jdkcompliance="1.8">
+		<classpathentry kind="lib" path="/binaries/common/ibm/ibmjzos.jar"/>
 		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sun180.jar"/>
 		<source path="src/java.base/share/classes"/>
 		<source path="src/java.desktop/share/classes"/>
@@ -90,9 +91,12 @@
 		<source path="src/openj9.criu/share/classes" />
 		<source path="src/openj9.cuda/share/classes" />
 		<source path="src/openj9.dataaccess/share/classes"/>
+		<source path="src/openj9.dtfj/share/classes"/>
+		<source path="src/openj9.dtfjview/share/classes"/>
 		<source path="src/openj9.gpu/share/classes" />
 		<source path="src/openj9.jvm/share/classes"/>
 		<source path="src/openj9.sharedclasses/share/classes"/>
+		<source path="src/openj9.traceformat/share/classes"/>
 		<source path="src/openj9.zosconditionhandling/share/classes"/>
 		<parameter name="macro:define" value="JAVA_SPEC_VERSION=8"/>
 		<parameter name="msg:outputdir" value="com/ibm/oti/util"/>
@@ -329,21 +333,6 @@
 		<parameter name="macro:define" value="JAVA_SPEC_VERSION=8"/>
 		<parameter name="msg:outputdir" value="com/ibm/oti/util"/>
 		<parameter name="jxerules:outputdir" value="java/lang"/>
-	</configuration>
-
-	<configuration
-		  label="SIDECAR18-TOOLS-OPENJ9"
-		  outputpath="SIDECAR18-TOOLS/src"
-		  dependencies="SIDECAR18-SE-OPENJ9"
-		  jdkcompliance="1.8">
-		<classpathentry kind="src" path="/pConfig SIDECAR18-SE-OPENJ9"/>
-		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sun180.jar"/>
-		<classpathentry kind="lib" path="/binaries/common/ibm/ibmjzos.jar"/>
-		<source path="src/openj9.dtfj/share/classes"/>
-		<source path="src/openj9.dtfjview/share/classes"/>
-		<source path="src/openj9.traceformat/share/classes"/>
-		<parameter name="macro:define" value="JAVA_SPEC_VERSION=8"/>
-		<parameter name="msg:outputdir" value=""/>
 	</configuration>
 
 	<!--
