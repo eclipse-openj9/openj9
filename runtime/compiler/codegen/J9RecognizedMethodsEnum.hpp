@@ -547,6 +547,7 @@
    sun_nio_cs_UTF_8_Decoder_decodeUTF_8,
    sun_nio_cs_UTF_8_Encoder_encodeUTF_8,
    sun_nio_cs_ext_IBM1388_Encoder_encodeArrayLoop,
+   sun_nio_cs_SingleByteDecoder_decodeToLatin1Impl,
 
    sun_nio_cs_UTF16_Encoder_encodeUTF16Big,
    sun_nio_cs_UTF16_Encoder_encodeUTF16Little,
