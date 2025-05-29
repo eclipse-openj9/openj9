@@ -30,10 +30,10 @@ com.ibm.jvmti.tests
 8096_Bootstrap
 8096_Utils
 
-# Root level .project should be ignored as Eclipse automatically creates this file when new repositories are added as Projects for C/C++ indexing
-/.cproject
-/.project
-/.settings/
+# Eclipse metadata should be ignored.
+.cproject
+.project
+.settings/
 
 # Visual Studio
 /.vs
