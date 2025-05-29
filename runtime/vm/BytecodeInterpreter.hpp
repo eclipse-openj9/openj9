@@ -5853,7 +5853,6 @@ ffi_OOM:
 					/* Build a native frame on vthread stack before throwing exception. */
 					buildInternalNativeStackFrame(REGISTER_ARGS);
 					updateVMStruct(REGISTER_ARGS);
-					prepareForExceptionThrow(_currentThread);
 					setCurrentException(_currentThread, J9VMCONSTANTPOOL_JAVALANGINTERRUPTEDEXCEPTION, NULL);
 					VMStructHasBeenUpdated(REGISTER_ARGS);
 					rc = GOTO_THROW_CURRENT_EXCEPTION;
