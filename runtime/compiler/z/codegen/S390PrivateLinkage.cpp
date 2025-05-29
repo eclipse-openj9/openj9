@@ -1542,30 +1542,34 @@ addLastITableInstructions(TR::Compilation * comp, TR_J9VMBase * fej9, TR::CodeGe
       && performTransformation(comp, "O^O useLastITableCache for n%dn itableIndex=%d\n",
             node->getGlobalIndex(), (int)itableIndex))
       {
-      printf("decaringClass: %p\n", declaringClass);
+      TR::LabelSymbol * noMatchLabel = generateLabelSymbol(codeGen);
       // TODO: breakBeforeInterfaceDispatchUsingLastITable
+      printf("decaringClass: %p\n", declaringClass);
+      // load the costant to the register. TODO: use compare immediate in 32 bit case! `generateS390CompareAndBranchInstruction` with const
+      cursor = genLoadLongConstant(codeGen, node, (int64_t)declaringClass, tmpReg3, cursor);
+
+      // reg = vft J9Class.IlastTable
       TR::MemoryReference * lastITable = generateS390MemoryReference(vftReg, (int32_t)fej9->getOffsetOfLastITableFromClassField(), codeGen);
       cursor = generateRXInstruction(codeGen, TR::InstOpCode::getLoadOpCode(), node, tmpReg, lastITable, cursor);
 
-
-      cursor = generateRIEInstruction(codeGen, TR::InstOpCode::getAddLogicalRegRegImmediateOpCode(), node, tmpReg2, vftReg, fej9->getITableEntryJitVTableOffset());
-      //cursor = generateRIInstruction(codeGen, TR::InstOpCode::getLoadHalfWordImmOpCode(), node, tmpReg2, fej9->getITableEntryJitVTableOffset());
-      TR::MemoryReference * iTableOffset = generateS390MemoryReference(tmpReg, fej9->convertITableIndexToOffset(itableIndex), codeGen);
-      cursor = generateRXInstruction(codeGen, TR::InstOpCode::getSubstractOpCode(), node, tmpReg2, iTableOffset);
-
-     cursor = genLoadLongConstant(codeGen, node, (int64_t)declaringClass, tmpReg3, cursor);
-
       TR::MemoryReference * interfaceClass = generateS390MemoryReference(tmpReg, fej9->getOffsetOfInterfaceClassFromITableField(), codeGen);
 
-      // Test if matches
-      TR::InstOpCode::Mnemonic cmpOp = TR::InstOpCode::getCmpLogicalOpCode();
-      //if (comp->target().is64Bit() && TR::Compiler->om.generateCompressedObjectHeaders())
-         //cmpOp = TR::InstOpCode::CL;
-      cursor = generateRXInstruction(codeGen, cmpOp, node, tmpReg3, interfaceClass, cursor);
+      cursor = generateRXInstruction(codeGen, TR::InstOpCode::getCmpLogicalOpCode(), node, tmpReg3, interfaceClass, cursor);
+      cursor = generateS390BranchInstruction(codeGen, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, node, noMatchLabel, cursor);
 
-      //Branch if equal
-      cursor = generateS390RegInstruction(codeGen, TR::InstOpCode::BCR, node, tmpReg2, cursor);
-      ((TR::S390RegInstruction *)cursor)->setBranchCondition(TR::InstOpCode::COND_BER);
+      //we got a match. jump to entry point. tmpReg pointing to the lastITable
+      cursor = generateRIInstruction(codeGen, TR::InstOpCode::getLoadHalfWordImmOpCode() , node, tmpReg3, fej9->getITableEntryJitVTableOffset(), cursor);
+
+      cursor = generateRXInstruction(codeGen, TR::InstOpCode::getSubstractOpCode(), node, tmpReg3,
+                               generateS390MemoryReference(tmpReg, fej9->convertITableIndexToOffset(itableIndex), codeGen), cursor);
+
+      TR::MemoryReference * methodEntry = generateS390MemoryReference(tmpReg3, vftReg, 0, codeGen);
+      cursor = generateRXInstruction(codeGen, TR::InstOpCode::getLoadOpCode(), node, tmpReg, methodEntry, cursor);
+
+      cursor = generateS390BranchInstruction(codeGen, TR::InstOpCode::BRC, TR::InstOpCode::COND_B, node, tmpReg, cursor);
+
+      // jump here if no itable match was found!
+      cursor = generateS390LabelInstruction(codeGen, TR::InstOpCode::label, node, noMatchLabel, cursor);
       }
    return cursor;
    }
