@@ -1436,14 +1436,31 @@ TR_VectorAPIExpansion::boxChild(TR::TreeTop *treeTop, TR::Node *node, uint32_t i
    int32_t bitsLength;
    vapiObjType objectType;
    bool scalarized;
+   TR::ILOpCodes maskStoreOpCode;
+   TR::ILOpCodes maskConv;
+   bool boxingSupported = true;
 
    if (!isVectorizedOrScalarizedNode(child, elementType, bitsLength, objectType, scalarized))
       return;
 
+   TR::VectorLength vectorLength = OMR::DataType::bitsToVectorLength(bitsLength);
+   int32_t elementSize = OMR::DataType::getSize(elementType);
+   int32_t numLanes = bitsLength/8/elementSize;
+
    if ((objectType != Vector && objectType != Mask) ||
-       bitsLength != 128 ||
+       bitsLength != 128 ||             // will support other classes soon
        elementType != TR::Int8 ||
        scalarized)
+      {
+      boxingSupported = false;
+      }
+   else if (objectType == Mask)
+      {
+      maskConv = getMaskToStoreConversion(numLanes, TR::DataType::createMaskType(elementType, vectorLength), maskStoreOpCode);
+      boxingSupported = isOpCodeImplemented(comp(), maskConv);
+      }
+
+   if (!boxingSupported)
       {
       TR_ASSERT_FATAL(checkBoxing, "Incorrect boxing type can only be encountered during check mode");
 
@@ -1467,9 +1484,6 @@ TR_VectorAPIExpansion::boxChild(TR::TreeTop *treeTop, TR::Node *node, uint32_t i
    TR_OpaqueClassBlock *j9arrayClass = comp()->fej9()->getArrayClassFromDataType(elementType,
                                                                                 objectType == Mask);
 
-   int32_t elementSize = OMR::DataType::getSize(elementType);
-   int32_t numLanes = bitsLength/8/elementSize;
-
    TR::Node *lenConst = TR::Node::iconst(node, numLanes);
    TR::Node *typeConst = TR::Node::iconst(node, comp()->fe()->getNewArrayTypeFromClass(j9arrayClass));
    TR::SymbolReference *symRef = comp()->getSymRefTab()->findOrCreateNewArraySymbolRef(comp()->getMethodSymbol());
@@ -1478,8 +1492,6 @@ TR_VectorAPIExpansion::boxChild(TR::TreeTop *treeTop, TR::Node *node, uint32_t i
    treeTop->insertBefore(TR::TreeTop::create(comp(), TR::Node::create(TR::treetop, 1, newArray)));
 
    // Generate vector store to the payload array
-
-   TR::VectorLength vectorLength = OMR::DataType::bitsToVectorLength(bitsLength);
    TR::DataType opCodeType = (objectType == Vector) ?
                                TR::DataType::createVectorType(elementType, vectorLength)
                                : TR::DataType::createMaskType(elementType, vectorLength);
@@ -1489,10 +1501,16 @@ TR_VectorAPIExpansion::boxChild(TR::TreeTop *treeTop, TR::Node *node, uint32_t i
    if (!child->getOpCode().isVectorOpCode())  // not vectorized yet
       vloadNode = vectorizeLoadOrStore(this, child, opCodeType, true);
 
+   if (objectType == Mask)
+      {
+      vloadNode = TR::Node::create(node, maskConv, 1, vloadNode);
+      }
+
    TR::Node *aladdNode = generateArrayElementAddressNode(comp(), newArray, TR::Node::lconst(node, 0), elementSize);
 
    TR::SymbolReference *vectorShadow = comp()->getSymRefTab()->findOrCreateArrayShadowSymbolRef(opCodeType, NULL);
-   TR::ILOpCodes storeOpcode = TR::ILOpCode::createVectorOpCode(TR::vstorei, opCodeType);
+   TR::ILOpCodes storeOpcode = (objectType == Vector) ? TR::ILOpCode::createVectorOpCode(TR::vstorei, opCodeType)
+                                                      : maskStoreOpCode;
    TR::Node *storeNode = TR::Node::createWithSymRef(storeOpcode, 2, aladdNode, vloadNode, 0, vectorShadow);
    treeTop->insertBefore(TR::TreeTop::create(comp(), storeNode));
    TR::Node *fence = TR::Node::createAllocationFence(newArray, newArray);
@@ -2273,6 +2291,49 @@ TR_VectorAPIExpansion::getLoadToMaskConversion(int32_t numLanes, TR::DataType ma
    return op;
 }
 
+
+TR::ILOpCodes
+TR_VectorAPIExpansion::getMaskToStoreConversion(int32_t numLanes, TR::DataType maskType, TR::ILOpCodes &storeOpCode)
+   {
+   TR::ILOpCodes op;
+
+   switch (numLanes)
+      {
+      case 1:
+         op = TR::ILOpCode::createVectorOpCode(TR::m2b, maskType);
+         storeOpCode = TR::bstorei;
+         break;
+      case 2:
+         op = TR::ILOpCode::createVectorOpCode(TR::m2s, maskType);
+         storeOpCode = TR::sstorei;
+         break;
+      case 4:
+         op = TR::ILOpCode::createVectorOpCode(TR::m2i, maskType);
+         storeOpCode = TR::istorei;
+         break;
+      case 8:
+         op = TR::ILOpCode::createVectorOpCode(TR::m2l, maskType);
+         storeOpCode = TR::lstorei;
+         break;
+      case 16:
+      case 32:
+      case 64:
+         {
+         TR::VectorLength vectorLength = OMR::DataType::bitsToVectorLength(numLanes*8);
+         TR::DataType targetType = TR::DataType::createVectorType(TR::Int8, vectorLength);
+         op = TR::ILOpCode::createVectorOpCode(TR::m2v, maskType, targetType);
+         storeOpCode = TR::ILOpCode::createVectorOpCode(TR::vstorei, targetType);
+         break;
+         }
+      default:
+         TR_ASSERT_FATAL(false, "Unsupported number of lanes when loading a mask\n");
+         return TR::BadILOp;
+      }
+
+   return op;
+   }
+
+
 TR::Node *TR_VectorAPIExpansion::unsupportedHandler(TR_VectorAPIExpansion *opt, TR::TreeTop *treeTop,
                                                     TR::Node *node, TR::DataType elementType,
                                                     TR::VectorLength vectorLength, vapiObjType objectType, int32_t numLanes,
@@ -2462,36 +2523,8 @@ TR::Node *TR_VectorAPIExpansion::storeIntrinsicHandler(TR_VectorAPIExpansion *op
             traceMsg(comp, "Mask store with numLanes %d in node %p\n", numLanes, node);
 
          TR::DataType sourceType = TR::DataType::createMaskType(elementType, vectorLength);
-         TR::ILOpCodes maskConversionOpCode;
-
-         switch (numLanes)
-            {
-            case 1:
-               maskConversionOpCode = TR::ILOpCode::createVectorOpCode(TR::m2b, sourceType);
-               break;
-            case 2:
-               maskConversionOpCode = TR::ILOpCode::createVectorOpCode(TR::m2s, sourceType);
-               break;
-            case 4:
-               maskConversionOpCode = TR::ILOpCode::createVectorOpCode(TR::m2i, sourceType);
-               break;
-            case 8:
-               maskConversionOpCode = TR::ILOpCode::createVectorOpCode(TR::m2l, sourceType);
-               break;
-            case 16:
-            case 32:
-            case 64:
-               {
-               TR::VectorLength vectorLength = supportedOnPlatform(comp, numLanes*8);
-               if (vectorLength == TR::NoVectorLength) return NULL;
-               TR::DataType resultType = TR::DataType::createVectorType(TR::Int8, vectorLength);
-               maskConversionOpCode = TR::ILOpCode::createVectorOpCode(TR::m2v, sourceType, resultType);
-               break;
-               }
-            default:
-               TR_ASSERT_FATAL(false, "Unsupported number of lanes when loading a mask\n");
-               return NULL;
-            }
+         TR::ILOpCodes unused;
+         TR::ILOpCodes maskConversionOpCode = getMaskToStoreConversion(numLanes, sourceType, unused);
 
          if (!isOpCodeImplemented(comp, maskConversionOpCode))
             return NULL;
@@ -2594,39 +2627,7 @@ TR::Node *TR_VectorAPIExpansion::transformStoreToArray(TR_VectorAPIExpansion *op
       else if (objectType == Mask)
          {
          TR::ILOpCodes storeOpCode;
-
-         switch (numLanes)
-            {
-            case 1:
-               op = TR::ILOpCode::createVectorOpCode(TR::m2b, opCodeType);
-               storeOpCode = TR::bstorei;
-               break;
-            case 2:
-               op = TR::ILOpCode::createVectorOpCode(TR::m2s, opCodeType);
-               storeOpCode = TR::sstorei;
-               break;
-            case 4:
-               op = TR::ILOpCode::createVectorOpCode(TR::m2i, opCodeType);
-               storeOpCode = TR::istorei;
-               break;
-            case 8:
-               op = TR::ILOpCode::createVectorOpCode(TR::m2l, opCodeType);
-               storeOpCode = TR::lstorei;
-               break;
-            case 16:
-            case 32:
-            case 64:
-               {
-               TR::VectorLength vectorLength = OMR::DataType::bitsToVectorLength(numLanes*8);
-               TR::DataType targetType = TR::DataType::createVectorType(TR::Int8, vectorLength);
-               op = TR::ILOpCode::createVectorOpCode(TR::m2v, opCodeType, targetType);
-               storeOpCode = TR::ILOpCode::createVectorOpCode(TR::vstorei, targetType);
-               break;
-               }
-            default:
-               TR_ASSERT_FATAL(false, "Unsupported number of lanes when loading a mask\n");
-               return NULL;
-            }
+         op = getMaskToStoreConversion(numLanes, opCodeType, storeOpCode);
 
          // need to alias with boolean array elements, so creating GenericIntArrayShadow
          TR::SymbolReference *symRef = comp->getSymRefTab()->findOrCreateGenericIntArrayShadowSymbolReference(0);
