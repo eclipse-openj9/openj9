@@ -1566,7 +1566,9 @@ addLastITableInstructions(TR::Compilation * comp, TR_J9VMBase * fej9, TR::CodeGe
       TR::MemoryReference * methodEntry = generateS390MemoryReference(tmpReg3, vftReg, 0, codeGen);
       cursor = generateRXInstruction(codeGen, TR::InstOpCode::getLoadOpCode(), node, tmpReg, methodEntry, cursor);
 
-      cursor = generateS390BranchInstruction(codeGen, TR::InstOpCode::BRC, TR::InstOpCode::COND_B, node, tmpReg, cursor);
+      cursor = generateS390RegInstruction(codeGen, TR::InstOpCode::BCR, node, tmpReg, cursor);
+      ((TR::S390RegInstruction *)cursor)->setBranchCondition(TR::InstOpCode::COND_B);
+      
 
       // jump here if no itable match was found!
       cursor = generateS390LabelInstruction(codeGen, TR::InstOpCode::label, node, noMatchLabel, cursor);
