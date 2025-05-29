@@ -2071,12 +2071,13 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
                                            TR::Compiler->om.getObjectAlignmentInBytes());
    int32_t alignmentCompensation = (referenceFieldSize == refFieldSizeAligned) ? 0 : refFieldSizeAligned-1;
    // shift required for multiplication
-   static const uint8_t shiftMap[] = {0, 0, 1, 0, 2, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 4};
+   static const uint8_t shiftMap[] = {0, 0, 1, 0, 2, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 4
+                                         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5};
 
    // get the number of bytes needed for the reference fields
    TR_ASSERT_FATAL(shiftMap[refFieldSizeAligned] != 0, "Unexpected size in multianewarray");
    generateShiftLeftImmediate(cg, node, temp1Reg, firstDimLenReg, shiftMap[referenceFieldSize]);
-
+   // get some space for the header
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, temp1Reg, temp1Reg,
       TR::Compiler->om.contiguousArrayHeaderSizeInBytes() + alignmentCompensation);
    if (alignmentCompensation != 0) // do a mask to ensure alignment
@@ -2235,23 +2236,20 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    dependencies->addPostCondition(condReg, TR::RealRegister::NoReg);
 
    TR::Register *reg;
-   if (callNode->getFirstChild() == node->getFirstChild())
+   if (callUsesFirstChild)
       {
-      reg = callNode->getFirstChild()->getRegister();
-      if (reg && reg != dimsPtrReg)
-         dependencies->addPostCondition(reg, TR::RealRegister::NoReg);
+      dependencies->addPostCondition(callNode->getFirstChild()->getRegister(),
+                                     TR::RealRegister::NoReg);
       }
-   if (callNode->getSecondChild() == node->getSecondChild())
+   if (callUsesSecondChild)
       {
-      reg = callNode->getSecondChild()->getRegister();
-      if (reg)
-         dependencies->addPostCondition(reg, TR::RealRegister::NoReg);
+      dependencies->addPostCondition(callNode->getSecondChild()->getRegister(),
+                                     TR::RealRegister::NoReg);
       }
-   if (callNode->getThirdChild() == node->getThirdChild())
+   if (callUsesThirdChild)
       {
-      reg = callNode->getThirdChild()->getRegister();
-      if (reg && reg != classReg)
-         dependencies->addPostCondition(reg, TR::RealRegister::NoReg);
+      dependencies->addPostCondition(callNode->getThirdChild()->getRegister(),
+                                     TR::RealRegister::NoReg);
       }
 
    generateDepLabelInstruction(cg, TR::InstOpCode::label, node, endLabel, dependencies);
