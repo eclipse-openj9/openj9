@@ -25,7 +25,6 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/x/codegen/ControlFlowEvaluator.cpp \
     omr/compiler/x/codegen/DataSnippet.cpp \
     omr/compiler/x/codegen/DivideCheckSnippet.cpp \
-    omr/compiler/x/codegen/FPBinaryArithmeticAnalyser.cpp \
     omr/compiler/x/codegen/FPCompareAnalyser.cpp \
     omr/compiler/x/codegen/FPTreeEvaluator.cpp \
     omr/compiler/x/codegen/HelperCallSnippet.cpp \
