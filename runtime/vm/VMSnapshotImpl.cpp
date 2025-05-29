@@ -588,66 +588,15 @@ void
 VMSnapshotImpl::removeUnpersistedClassLoaders()
 {
 	pool_state classLoaderWalkState = {0};
-	UDATA numOfClassLoaders = pool_numElements(_vm->classLoaderBlocks);
-	U_8 buf[CLASS_LOADER_REMOVE_COUNT * sizeof(J9ClassLoader *)];
-	J9ClassLoader **removeLoaders = (J9ClassLoader **)buf;
 	J9VMThread *vmThread = currentVMThread(_vm);
-	UDATA count = 0;
-	PORT_ACCESS_FROM_PORT(_portLibrary);
 
-	if (CLASS_LOADER_REMOVE_COUNT < numOfClassLoaders) {
-		removeLoaders = (J9ClassLoader **)j9mem_allocate_memory(numOfClassLoaders * sizeof(J9ClassLoader *), J9MEM_CATEGORY_CLASSES);
-		if (NULL == removeLoaders) {
-			/* TODO: Add error handling for fixups. */
-			Assert_VM_unreachable();
+	for (J9ClassLoader *classLoader = (J9ClassLoader *)pool_startDo(_vm->classLoaderBlocks, &classLoaderWalkState);
+		NULL != classLoader;
+		classLoader = (J9ClassLoader *)pool_nextDo(&classLoaderWalkState)
+	) {
+		if (!isImmortalClassLoader(classLoader)) {
+			freeClassLoader(classLoader, _vm, vmThread, FALSE);
 		}
-	}
-
-	J9ClassLoader *classloader = (J9ClassLoader *)pool_startDo(_vm->classLoaderBlocks, &classLoaderWalkState);
-	while (NULL != classloader) {
-		if (!isImmortalClassLoader(classloader)) {
-			removeLoaders[count] = classloader;
-			count++;
-		}
-		classloader = (J9ClassLoader *)pool_nextDo(&classLoaderWalkState);
-	}
-
-	for (UDATA i = 0; i < count; i++) {
-		J9ClassLoader *currentClassLoader = removeLoaders[i];
-
-		J9HashTableState moduleWalkState = {0};
-		J9Module **modulePtr = (J9Module **)hashTableStartDo(currentClassLoader->moduleHashTable, &moduleWalkState);
-		while (NULL != modulePtr) {
-			J9Module *moduleDel = *modulePtr;
-			modulePtr = (J9Module **)hashTableNextDo(&moduleWalkState);
-			freeJ9Module(_vm, moduleDel);
-		}
-
-		J9HashTableState packageWalkState = {0};
-		J9Package **packagePtr = (J9Package **)hashTableStartDo(currentClassLoader->packageHashTable, &packageWalkState);
-		while (NULL != packagePtr) {
-			J9Package *packageDel = *packagePtr;
-			packagePtr = (J9Package **)hashTableNextDo(&packageWalkState);
-			J9HashTableState walkState = {0};
-
-			J9Module **modulePtr = (J9Module **)hashTableStartDo(packageDel->exportsHashTable, &walkState);
-			while (NULL != modulePtr) {
-				if (NULL != (*modulePtr)->removeExportsHashTable) {
-					hashTableRemove((*modulePtr)->removeExportsHashTable, &packageDel);
-				}
-				J9Module *moduleDel = *modulePtr;
-				modulePtr = (J9Module **)hashTableNextDo(&walkState);
-				freeJ9Module(_vm, moduleDel);
-			}
-			hashTableFree(packageDel->exportsHashTable);
-			j9mem_free_memory(packageDel->packageName);
-			pool_removeElement(_vm->modularityPool, packageDel);
-		}
-		freeClassLoader(currentClassLoader, _vm, vmThread, FALSE);
-	}
-
-	if ((J9ClassLoader **)buf != removeLoaders) {
-		j9mem_free_memory(removeLoaders);
 	}
 }
 

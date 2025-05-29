@@ -59,7 +59,6 @@ public:
 	/* TODO: This initial heap size restriction will be removed once MMAP MAP_FIXED removed (See @ref VMSnapshotImpl::readSnapshotFromFile) */
 	static const UDATA GENERAL_MEMORY_SECTION_SIZE = 512 * 1024 * 1024;
 	static const UDATA SUB4G_MEMORY_SECTION_SIZE = 100 * 1024 * 1024;
-	static const UDATA CLASS_LOADER_REMOVE_COUNT = 8;
 	/* Corresponds to the number of J9Class* members refering to primitive
 	 * and array classes persisted from the J9JavaVM struct (see SnapshotFileFormat.h).
 	 */
