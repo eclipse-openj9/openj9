@@ -2071,7 +2071,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
                                            TR::Compiler->om.getObjectAlignmentInBytes());
    int32_t alignmentCompensation = (referenceFieldSize == refFieldSizeAligned) ? 0 : refFieldSizeAligned-1;
    // shift required for multiplication
-   static const uint8_t shiftMap[] = {0, 0, 1, 0, 2, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 4
+   static const uint8_t shiftMap[] = {0, 0, 1, 0, 2, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 4,
                                          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5};
 
    // get the number of bytes needed for the reference fields
