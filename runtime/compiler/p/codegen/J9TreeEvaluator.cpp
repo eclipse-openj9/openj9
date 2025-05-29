@@ -2075,7 +2075,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
 
    // get the number of bytes needed for the reference fields
    TR_ASSERT_FATAL(shiftMap[refFieldSizeAligned] != 0, "Unexpected size in multianewarray");
-   generateShiftLeftImmediate(cg, node, temp1Reg, firstDimLenReg, shiftMap[refFieldSizeAligned]);
+   generateShiftLeftImmediate(cg, node, temp1Reg, firstDimLenReg, shiftMap[referenceFieldSize]);
 
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, temp1Reg, temp1Reg,
       TR::Compiler->om.contiguousArrayHeaderSizeInBytes() + alignmentCompensation);
