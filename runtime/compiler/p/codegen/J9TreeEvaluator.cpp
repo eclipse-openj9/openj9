@@ -2070,28 +2070,13 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    int32_t refFieldSizeAligned = OMR::align(referenceFieldSize,
                                            TR::Compiler->om.getObjectAlignmentInBytes());
    int32_t alignmentCompensation = (referenceFieldSize == refFieldSizeAligned) ? 0 : refFieldSizeAligned-1;
-   switch (referenceFieldSize) // get the number of bytes needed for the reference fields
-      {
-      case 8:
-         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, temp1Reg, firstDimLenReg,
-                                         3, 0xFFFFFFF8);
-         break;
-      case 4:
-         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, temp1Reg, firstDimLenReg,
-                                         2, 0xFFFFFFFC);
-         break;
-      case 2:
-         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, temp1Reg, firstDimLenReg,
-                                         1, 0xFFFFFFFE);
-         break;
-      case 0:
-         generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, temp1Reg, firstDimLenReg,
-                                         0, 0xFFFFFFFF);
+   // shift required for multiplication
+   static const uint8_t shiftMap[] = {0, 0, 1, 0, 2, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 4};
 
-         break;
-      default:
-         TR_ASSERT_FATAL(false, "Unexpected size in multianewarray");
-      }
+   // get the number of bytes needed for the reference fields
+   TR_ASSERT_FATAL(shiftMap[refFieldSizeAligned] != 0, "Unexpected size in multianewarray");
+   generateShiftLeftImmediate(cg, node, temp1Reg, firstDimLenReg, shiftMap[refFieldSizeAligned]);
+
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, temp1Reg, temp1Reg,
       TR::Compiler->om.contiguousArrayHeaderSizeInBytes() + alignmentCompensation);
    if (alignmentCompensation != 0) // do a mask to ensure alignment
@@ -2100,8 +2085,8 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
                                        0, -refFieldSizeAligned);
       }
    // we also need space for N zero-sized arrays
-   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::mulli, node,
-                                  temp2Reg, firstDimLenReg, zeroArraySizeAligned);
+   TR_ASSERT_FATAL(shiftMap[zeroArraySizeAligned] != 0, "Unexpected size in multianewarray");
+   generateShiftLeftImmediate(cg, node, temp2Reg, firstDimLenReg, shiftMap[zeroArraySizeAligned]);
    // temp2Reg = temp2Reg + temp1Reg + (targetReg = heapAlloc)
    generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, temp2Reg, temp2Reg, temp1Reg);
    generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, node, targetReg,
@@ -2246,7 +2231,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
    dependencies->addPostCondition(temp2Reg, TR::RealRegister::NoReg);
    dependencies->getPostConditions()->getRegisterDependency(dependencies->getAddCursorForPost() - 1)->setExcludeGPR0();
 
-   dependencies->addPostCondition(vmThreadReg, TR::RealRegister::NoReg);
+   dependencies->addPostCondition(vmThreadReg, TR::RealRegister::NoReg); // do we need this?
    dependencies->addPostCondition(condReg, TR::RealRegister::NoReg);
 
    TR::Register *reg;
