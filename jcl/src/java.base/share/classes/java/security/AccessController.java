@@ -114,6 +114,10 @@ private AccessController() {
  *           or just the ProtectionDomain of the caller of doPrivileged in case of flag forDoPrivilegedWithCombiner is true
  *          Permission object array
  *       Until a full permission privileged frame or the end of the stack reached.
+ *  There is a special case that the limited doPrivileged method is in a Java main() method, there is no caller frame,
+ *  the first element is an AccessControlContext object inherited from current thread,
+ *  the second element (ProtectionDomain object array) is NULL,
+ * 	the third element is NULL as well.
  *
  * Note: 1. The reason to have Pre-JEP140 and JEP 140 format is to keep similar format and processing logic
  *          when there is no limited doPrivileged method (JEP 140 implementation) involved.
@@ -543,7 +547,9 @@ private static AccessControlContext getContextHelper(boolean forDoPrivilegedWith
 			/*[PR JAZZ 66930] j.s.AccessControlContext.checkPermission() invoke untrusted ProtectionDomain.implies */
 			// the actual ProtectionDomain element starts at index 1
 			pDomains = generatePDarray(activeDC, acc, (Object[]) domains[j * OBJS_ARRAY_SIZE + OBJS_INDEX_PDS], false, 1);
-			newAuthorizedState = getNewAuthorizedState(acc, (ProtectionDomain)((Object[]) domains[j * OBJS_ARRAY_SIZE + OBJS_INDEX_PDS])[0]);
+			Object[] objDomains = (Object[])domains[j * OBJS_ARRAY_SIZE + OBJS_INDEX_PDS];
+			ProtectionDomain callerPD = ((objDomains == null) || (objDomains.length == 0)) ? null : (ProtectionDomain)objDomains[0];
+			newAuthorizedState = getNewAuthorizedState(acc, callerPD);
 		}
 		if (((null != acc) && acc.isLimitedContext) || (1 < frameNbr)) {
 			// there is a limited doPrivilege frame
