@@ -374,6 +374,7 @@ static bool isArrayWithConstantElements(TR::SymbolReference *symRef, TR::Compila
          case TR::Symbol::Java_lang_invoke_VarHandle_handleTable:
          case TR::Symbol::Java_lang_invoke_MethodHandleImpl_LoopClauses_clauses:
          case TR::Symbol::Java_lang_String_value:
+         case TR::Symbol::Java_lang_invoke_VarHandle_methodHandleTable:
             return true;
          default:
             break;
