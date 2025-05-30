@@ -440,6 +440,11 @@ TR_MethodHandleTransformer::visitStoreToLocalVariable(TR::TreeTop* tt, TR::Node*
    {
    TR::Node *rhs = node->getFirstChild();
    TR::Symbol *local = node->getSymbolReference()->getSymbol();
+
+   // if we are storing the result of a call that is transformed into PassThrough
+   if (rhs->getOpCodeValue() == TR::PassThrough)
+      rhs = node->getFirstChild()->getFirstChild();
+
    if (rhs->getDataType().isAddress())
       {
       // Get object info of the rhs
@@ -535,6 +540,9 @@ void TR_MethodHandleTransformer::visitCall(TR::TreeTop* tt, TR::Node* node)
       case TR::java_lang_invoke_Invokers_checkExactType:
          process_java_lang_invoke_Invokers_checkExactType(tt, node);
          break;
+      case TR::java_lang_invoke_Invokers_checkVarHandleGenericType:
+         process_java_lang_invoke_Invokers_checkVarHandleGenericType(tt, node);
+         break;
 
       default:
          break;
@@ -557,7 +565,7 @@ TR_MethodHandleTransformer::visitNode(TR::TreeTop* tt, TR::Node* node, TR::NodeC
    for (int32_t i = 0; i < node->getNumChildren(); i++)
        visitNode(tt, node->getChild(i), visitedNodes);
 
-   if (node->getOpCode().isStoreDirect() && node->getSymbolReference()->getSymbol()->isAutoOrParm() && node->getType() == TR::Address)
+   if (node->getOpCode().isStoreDirect() && node->getSymbolReference()->getSymbol()->isAutoOrParm() && (node->getType() == TR::Address || node->getFirstChild()->getOpCodeValue() == TR::PassThrough))
       {
       visitStoreToLocalVariable(tt, node);
       }
@@ -771,5 +779,157 @@ TR_MethodHandleTransformer::process_java_lang_invoke_Invokers_checkCustomized(TR
       if (!performTransformation(comp(), "%sRemoving checkCustomized call node n%dn as it is now redundant as MethodHandle has known object index\n", optDetailString(), node->getGlobalIndex()))
          return;
       TR::TransformUtil::transformCallNodeToPassThrough(this, node, tt, node->getFirstArgument());
+      }
+   }
+
+
+/*
+When the VarHandle object and the AccessDescriptor objects are known, we can perform a compile-time lookup of the corresponding
+entry in the VarHandle's MethodHandle table. This function replaces Invokers.checkVarHandleGenericType call nodes with a
+PassThrough node holding the load of the MethodHandle object that would have been returned by Invokers.checkVarHandleGenericType.
+This is achieved through inserting trees that perform loads of the field containing the MethodHandle table. The various checks that
+Invokers.checkVarHandleGenericType would have performed are done in TR_J9VMBase::getMethodHandleTableEntryIndex which returns the
+object index of the MethodHandle entry in the table if the checks succeed, following which the Invokers.checkVarHandleGenericType
+can be folded.
+
+Blocks before transformation ==>
+start Block_A
+...
+treetop
+acall  java/lang/invoke/Invokers.checkVarHandleGenericType(Ljava/lang/invoke/VarHandle;Ljava/lang/invoke/VarHandle$AccessDescriptor;)Ljava/lang/invoke/MethodHandle;
+   aload  <VarHandle>
+   aload  <AccessDescriptor>
+...
+astore  <auto slot n>
+   ==>acall <MethodHandle returned by checkVarHandleGenericType>
+...
+end Block_A
+
+Blocks after transformation (JAVA_SPEC_VERSION <= 17) ==>
+start Block_A
+...
+compressedRefs
+  aloadi  java/lang/invoke/VarHandle.typesAndInvokers Ljava/lang/invoke/VarHandle$TypesAndInvokers;
+    aload <VarHandle>
+  lconst 0 (highWordZero X==0 X>=0 X<=0 )
+compressedRefs
+  aloadi  unknown field <MethodHandle>
+    aladd (internalPtr )
+      aloadi  java/lang/invoke/VarHandle$TypesAndInvokers.methodHandle_table [Ljava/lang/invoke/MethodHandle;
+        ==>aloadi <VarHandle$TypesAndInvokers>
+      ladd (X>=0 )
+        lshl
+          i2l
+            iconst 0 (X==0 X>=0 X<=0 )
+          iconst 2 (X!=0 X>=0 )
+        lconst 8 (highWordZero X!=0 X>=0 )
+  lconst 0 (highWordZero X==0 X>=0 X<=0 )
+treetop
+  PassThrough
+    ==>aloadi <MethodHandle object>
+astore  <auto slot n>
+  ==>PassThrough
+...
+end Block_A
+
+
+For JDK 21 and above, the trees would look similar to the above, but not require an additional load of the
+VarHandle$TypesAndInvokers field as the MethodHandle table exists as a field of the VarHandle object.
+*/
+void
+TR_MethodHandleTransformer::process_java_lang_invoke_Invokers_checkVarHandleGenericType(TR::TreeTop* tt, TR::Node* node)
+   {
+   static const bool disableFoldingVHGenType = feGetEnv("TR_disableFoldingVHGenType") != NULL;
+   if (disableFoldingVHGenType) return;
+
+   auto vhIndex = getObjectInfoOfNode(node->getFirstArgument());
+   auto adIndex = getObjectInfoOfNode(node->getLastChild());
+   auto mhIndex = TR::KnownObjectTable::UNKNOWN;
+   auto knot = comp()->getKnownObjectTable();
+   if (knot
+      && isKnownObject(adIndex)
+      && isKnownObject(vhIndex)
+      && !knot->isNull(vhIndex)
+      && !knot->isNull(adIndex))
+      {
+      mhIndex = comp()->fej9()->getMethodHandleTableEntryIndex(comp(), vhIndex, adIndex);
+
+      if (mhIndex != TR::KnownObjectTable::UNKNOWN)
+         {
+         if (trace())
+            traceMsg(comp(), "Replacing Invokers.checkVarHandleGenericType call at n%dn with its resulting MH table entry. VarHandle object %d, MH object %d\n", node->getGlobalIndex(), vhIndex, mhIndex);
+
+         // obtain symref(s) for creating load for the MH table base
+#if JAVA_SPEC_VERSION <= 17
+         uint32_t typesAndInvokersOffset = comp()->fej9()->getInstanceFieldOffsetIncludingHeader("Ljava/lang/invoke/VarHandle;", "typesAndInvokers", "Ljava/lang/invoke/VarHandle$TypesAndInvokers;", comp()->getCurrentMethod());
+         const char * tisFieldNameAndSig = "java/lang/invoke/VarHandle.typesAndInvokers Ljava/lang/invoke/VarHandle$TypesAndInvokers;";
+         TR::SymbolReference *tisSymRef = comp()->getSymRefTab()->findOrFabricateShadowSymbol(comp()->getMethodSymbol(),
+                                                                                 TR::Symbol::Java_lang_invoke_VarHandle_typesAndInvokers,
+                                                                                 TR::Address,
+                                                                                 typesAndInvokersOffset,
+                                                                                 false,
+                                                                                 true,
+                                                                                 true,
+                                                                                 tisFieldNameAndSig);
+         TR::Node *tisNode = TR::Node::createWithSymRef(comp()->il.opCodeForIndirectLoad(TR::Address), 1, 1, node->getFirstArgument(), tisSymRef);
+         tisNode->copyByteCodeInfo(node);
+         if (comp()->useCompressedPointers())
+            tt->insertBefore(TR::TreeTop::create(comp(), TR::Node::createCompressedRefsAnchor(tisNode)));
+         else
+            tt->insertBefore(TR::TreeTop::create(comp(), TR::Node::create(node, TR::treetop, 1, tisNode)));
+
+         uint32_t mhTableOffset = comp()->fej9()->getInstanceFieldOffsetIncludingHeader("Ljava/lang/invoke/VarHandle$TypesAndInvokers;", "methodHandle_table", "[Ljava/lang/invoke/MethodHandle;", comp()->getCurrentMethod());
+         const char * mhTableFieldNameAndSig = "java/lang/invoke/VarHandle$TypesAndInvokers.methodHandle_table [Ljava/lang/invoke/MethodHandle;";
+         TR::Node *mhTableHolder = tisNode;
+#else
+         uint32_t mhTableOffset = comp()->fej9()->getInstanceFieldOffsetIncludingHeader("Ljava/lang/invoke/VarHandle;", "methodHandleTable", "[Ljava/lang/invoke/MethodHandle;", comp()->getCurrentMethod());
+         const char * mhTableFieldNameAndSig = "java/lang/invoke/VarHandle.methodHandleTable [Ljava/lang/invoke/MethodHandle;";
+         TR::Node *mhTableHolder = node->getFirstArgument();
+#endif /* JAVA_SPEC_VERSION <= 17 */
+         TR::SymbolReference *mhTableSymRef = comp()->getSymRefTab()->findOrFabricateShadowSymbol(comp()->getMethodSymbol(),
+                                                                                 TR::Symbol::Java_lang_invoke_VarHandle_methodHandleTable,
+                                                                                 TR::Address,
+                                                                                 mhTableOffset,
+                                                                                 false,
+                                                                                 true,
+                                                                                 true,
+                                                                                 mhTableFieldNameAndSig);
+         TR::Node *mhTableNode = TR::Node::createWithSymRef(comp()->il.opCodeForIndirectLoad(TR::Address), 1, 1, mhTableHolder, mhTableSymRef);
+         mhTableNode->copyByteCodeInfo(node);
+
+         // get index for load
+         uintptr_t accessDescriptorObj = knot->getPointer(adIndex);
+         int32_t mhEntryIndex = comp()->fej9()->getInt32Field(accessDescriptorObj, "mode");
+         TR::Node *arrayIndexNode = TR::Node::create(TR::iconst, 0, mhEntryIndex);
+         arrayIndexNode->copyByteCodeInfo(node);
+
+         // calculate element address, create load from array, and refine MH symref with known object info
+         TR::Node *mhAddressNode = J9::TransformUtil::calculateElementAddress(comp(), mhTableNode, arrayIndexNode, TR::Address);
+         TR::Node *mhNode = TR::Node::createWithSymRef(comp()->il.opCodeForIndirectArrayLoad(TR::Address), 1, 1, mhAddressNode, comp()->getSymRefTab()->findOrCreateArrayShadowSymbolRef(TR::Address, mhTableNode));
+         mhNode->copyByteCodeInfo(node);
+         TR::SymbolReference *refinedMHSymRef = comp()->getSymRefTab()->findOrCreateSymRefWithKnownObject(mhNode->getSymbolReference(), mhIndex);
+         mhNode->setSymbolReference(refinedMHSymRef);
+
+         // Insert spine check for arraylets
+         if (TR::Compiler->om.canGenerateArraylets())
+            {
+            TR::SymbolReference * spineCHKSymRef = comp()->getSymRefTab()->findOrCreateArrayBoundsCheckSymbolRef(comp()->getMethodSymbol());
+            TR::Node * spineCHKNode = TR::Node::create(node, TR::SpineCHK, 3);
+            spineCHKNode->setAndIncChild(0, mhNode);
+            spineCHKNode->setAndIncChild(1, mhTableNode);
+            spineCHKNode->setAndIncChild(2, arrayIndexNode);
+            spineCHKNode->setSymbolReference(spineCHKSymRef);
+            spineCHKNode->setSpineCheckWithArrayElementChild(true, comp());
+            tt->insertBefore(TR::TreeTop::create(comp(), spineCHKNode));
+            }
+
+         if (comp()->useCompressedPointers())
+            tt->insertBefore(TR::TreeTop::create(comp(), TR::Node::createCompressedRefsAnchor(mhNode)));
+         else
+            tt->insertBefore(TR::TreeTop::create(comp(), TR::Node::create(node, TR::treetop, 1, mhNode)));
+
+         TR::TransformUtil::transformCallNodeToPassThrough(this, node, tt, mhNode);
+         }
+      else return;
       }
    }
