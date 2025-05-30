@@ -1300,7 +1300,20 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, fe->inSnapshotMode());
          }
          break;
+      case MessageType::VM_mutableCallSiteEpoch:
+         {
+         auto recv = client->getRecvData<TR::KnownObjectTable::Index>();
+         TR::KnownObjectTable::Index mcs = std::get<0>(recv);
+         TR::KnownObjectTable::Index result = fe->mutableCallSiteEpoch(comp, mcs);
+         uintptr_t *resultRefLocation = NULL;
+         if (result != TR::KnownObjectTable::UNKNOWN)
+            {
+            resultRefLocation = knot->getPointerLocation(result);
+            }
 
+         client->write(response, result, resultRefLocation);
+         }
+         break;
       case MessageType::mirrorResolvedJ9Method:
          {
          // allocate a new TR_ResolvedJ9Method on the heap, to be used as a mirror for performing actions which are only
@@ -2771,31 +2784,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          {
          uintptr_t *objectPointerReference = std::get<0>(client->getRecvData<uintptr_t*>());
          client->write(response, knot->getExistingIndexAt(objectPointerReference));
-         }
-         break;
-      case MessageType::KnownObjectTable_mutableCallSiteEpoch:
-         {
-         auto recv = client->getRecvData<uintptr_t*, bool>();
-         uintptr_t* mcsReferenceLocation = std::get<0>(recv);
-         bool knotEnabled = std::get<1>(recv);
-
-         uintptr_t mcsObject = 0;
-         TR::KnownObjectTable::Index knotIndex = TR::KnownObjectTable::UNKNOWN;
-         uintptr_t *objectPointerReference = NULL;
-
-            {
-            TR::VMAccessCriticalSection mutableCallSiteEpoch(fe);
-            mcsObject = fe->getStaticReferenceFieldAtAddress((uintptr_t)mcsReferenceLocation);
-            if (mcsObject && knotEnabled && knot)
-               {
-               TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe);
-               knotIndex = fej9->mutableCallSiteEpoch(comp, mcsObject);
-               if (knotIndex != TR::KnownObjectTable::UNKNOWN)
-                  objectPointerReference = knot->getPointerLocation(knotIndex);
-               }
-            }
-
-         client->write(response, mcsObject, knotIndex, objectPointerReference);
          }
          break;
       case MessageType::KnownObjectTable_dereferenceKnownObjectField:

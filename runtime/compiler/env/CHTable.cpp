@@ -575,9 +575,10 @@ TR_CHTable::commitVirtualGuard(TR_VirtualGuard *info, List<TR_VirtualGuardSite> 
          // outside TR_CHTable::commit() in the future.
          TR_ASSERT(!comp->isOutOfProcessCompilation(), "TR_CHTable::commitVirtualGuard() should not be called at the server\n");
 #endif /* defined(J9VM_OPT_JITSERVER) */
-         uintptr_t *mcsReferenceLocation = info->mutableCallSiteObject();
+         TR::KnownObjectTable::Index mcs = info->mutableCallSiteObject();
          TR::KnownObjectTable *knot = comp->getKnownObjectTable();
          TR_ASSERT(knot, "MutableCallSiteTargetGuard requires the Known Object Table");
+         uintptr_t *mcsReferenceLocation = knot->getPointerLocation(mcs);
          void *cookiePointer = comp->trPersistentMemory()->allocatePersistentMemory(1);
          uintptr_t potentialCookie = (uintptr_t)(uintptr_t)cookiePointer;
          uintptr_t cookie = 0;
@@ -587,7 +588,7 @@ TR_CHTable::commitVirtualGuard(TR_VirtualGuard *info, List<TR_VirtualGuardSite> 
             {
             TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
             TR::VMAccessCriticalSection invalidateMCSTargetGuards(fej9);
-            currentIndex = fej9->mutableCallSiteEpoch(comp, *mcsReferenceLocation);
+            currentIndex = fej9->mutableCallSiteEpoch(comp, mcs);
             if (info->mutableCallSiteEpoch() == currentIndex)
                cookie = fej9->mutableCallSiteCookie(*mcsReferenceLocation, potentialCookie);
             else
@@ -776,8 +777,13 @@ VirtualGuardInfoForCHTable getImportantVGuardInfo(TR::Compilation *comp, TR_Virt
    info._mergedWithHCRGuard = vguard->mergedWithHCRGuard();
    info._mergedWithOSRGuard = vguard->mergedWithOSRGuard();
 
-   info._mutableCallSiteObject = info._kind == TR_MutableCallSiteTargetGuard ? vguard->mutableCallSiteObject() : NULL;
-   info._mutableCallSiteEpoch = info._kind == TR_MutableCallSiteTargetGuard ? vguard->mutableCallSiteEpoch() : -1;
+   info._mutableCallSiteObject = TR::KnownObjectTable::UNKNOWN;
+   info._mutableCallSiteEpoch = TR::KnownObjectTable::UNKNOWN;
+   if (info._kind == TR_MutableCallSiteTargetGuard)
+      {
+      info._mutableCallSiteObject = vguard->mutableCallSiteObject();
+      info._mutableCallSiteEpoch = vguard->mutableCallSiteEpoch();
+      }
 
    info._inlinedResolvedMethod = info._kind == TR_BreakpointGuard
       ? static_cast<TR_ResolvedJ9JITServerMethod *>(comp->getInlinedResolvedMethod(info._calleeIndex))->getRemoteMirror()

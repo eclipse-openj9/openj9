@@ -1650,7 +1650,7 @@ InterpreterEmulator::visitInvokevirtual()
             TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
             MutableCallsiteTargetOperand *mcsOperand = receiver->asMutableCallsiteTargetOperand();
             TR::KnownObjectTable::Index mcsIndex = mcsOperand->getMutableCallsiteIndex();
-            inlinerMcs->setMCSReferenceLocation(knot->getPointerLocation(mcsIndex));
+            inlinerMcs->setMCS(mcsIndex);
             }
 
          callsite = inlinerMcs;
@@ -1780,7 +1780,9 @@ InterpreterEmulator::visitInvokestatic()
          if (mcsIndex != TR::KnownObjectTable::UNKNOWN)
             {
             if (comp()->getKnownObjectTable())
-               mcs->setMCSReferenceLocation(comp()->getKnownObjectTable()->getPointerLocation(mcsIndex));
+               {
+               mcs->setMCS(mcsIndex);
+               }
             }
          callsite = mcs;
          }

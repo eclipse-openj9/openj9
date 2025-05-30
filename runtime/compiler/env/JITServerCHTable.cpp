@@ -412,9 +412,10 @@ JITClientCommitVirtualGuard(const VirtualGuardInfoForCHTable *info, std::vector<
       static char *dontInvalidateMCSTargetGuards = feGetEnv("TR_dontInvalidateMCSTargetGuards");
       if (!dontInvalidateMCSTargetGuards)
          {
-         uintptr_t *mcsReferenceLocation = info->_mutableCallSiteObject;
          TR::KnownObjectTable *knot = comp->getKnownObjectTable();
          TR_ASSERT(knot, "MutableCallSiteTargetGuard requires the Known Object Table");
+         TR::KnownObjectTable::Index mcs = info->_mutableCallSiteObject;
+         uintptr_t *mcsReferenceLocation = knot->getPointerLocation(mcs);
          void *cookiePointer = comp->trPersistentMemory()->allocatePersistentMemory(1);
          uintptr_t potentialCookie = (uintptr_t)(uintptr_t)cookiePointer;
          uintptr_t cookie = 0;
@@ -430,7 +431,7 @@ JITClientCommitVirtualGuard(const VirtualGuardInfoForCHTable *info, std::vector<
             // However, JITClientCHTableCommit() is called at the end of compilation,
             // and therefore it cannot cause any issues.
             TR::VMAccessCriticalSection invalidateMCSTargetGuards(fej9);
-            currentIndex = fej9->mutableCallSiteEpoch(comp, *mcsReferenceLocation);
+            currentIndex = fej9->mutableCallSiteEpoch(comp, mcs);
             if (info->_mutableCallSiteEpoch == currentIndex)
                cookie = fej9->mutableCallSiteCookie(*mcsReferenceLocation, potentialCookie);
             else
