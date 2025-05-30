@@ -1547,7 +1547,6 @@ addLastITableInstructions(TR::Compilation * comp, TR_J9VMBase * fej9, TR::CodeGe
       TR::LabelSymbol * unsuccessfulExit = generateLabelSymbol(codeGen);
       TR::LabelSymbol * loopLabel = generateLabelSymbol(codeGen);
       // TODO: breakBeforeInterfaceDispatchUsingLastITable
-      printf("decaringClass: %p\n", declaringClass);
       // load the costant to the register. TODO: use compare immediate in 32 bit case! `generateS390CompareAndBranchInstruction` with const
       cursor = genLoadLongConstant(codeGen, node, (int64_t)declaringClass, vTableIndexRegister, cursor);
 
