@@ -1573,8 +1573,7 @@ addLastITableInstructions(TR::Compilation * comp, TR_J9VMBase * fej9, TR::CodeGe
       cursor = generateRXInstruction(codeGen, TR::InstOpCode::getLoadOpCode(), node, scratchRegister, methodEntry, cursor);
 
       cursor = generateS390RegInstruction(codeGen, TR::InstOpCode::BCR, node, scratchRegister, cursor);
-      static bool notJump = feGetEnv("TR_LastITableNotJump") != NULL;
-      ((TR::S390RegInstruction *)cursor)->setBranchCondition(notJump? TR::InstOpCode::COND_NOP : TR::InstOpCode::COND_B);
+      ((TR::S390RegInstruction *)cursor)->setBranchCondition(TR::InstOpCode::COND_B);
 
       
       // jump here if no itable match was found!
