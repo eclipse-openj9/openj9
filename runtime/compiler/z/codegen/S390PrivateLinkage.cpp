@@ -1528,7 +1528,7 @@ J9::Z::PrivateLinkage::createEpilogue(TR::Instruction * cursor)
 
 static TR::Instruction *
 addLastITableInstructions(TR::Compilation * comp, TR_J9VMBase * fej9, TR::CodeGenerator * codeGen, TR::Node * node, TR::SymbolReference * methodSymRef,
-   TR::Register * vftReg, TR::Register * tmpReg, TR::Register * tmpReg2, TR::Register * tmpReg3, TR::Instruction * cursor)
+   TR::Register * vftReg, TR::Register * scratchRegister, TR::Register * vTableIndexRegister, TR::Instruction * cursor)
    {
    // Start of last I table Implementation.
    // Check if it is enabled and can be used.
@@ -1546,27 +1546,27 @@ addLastITableInstructions(TR::Compilation * comp, TR_J9VMBase * fej9, TR::CodeGe
       // TODO: breakBeforeInterfaceDispatchUsingLastITable
       printf("decaringClass: %p\n", declaringClass);
       // load the costant to the register. TODO: use compare immediate in 32 bit case! `generateS390CompareAndBranchInstruction` with const
-      cursor = genLoadLongConstant(codeGen, node, (int64_t)declaringClass, tmpReg3, cursor);
+      cursor = genLoadLongConstant(codeGen, node, (int64_t)declaringClass, vTableIndexRegister, cursor);
 
       // reg = vft J9Class.IlastTable
       TR::MemoryReference * lastITable = generateS390MemoryReference(vftReg, (int32_t)fej9->getOffsetOfLastITableFromClassField(), codeGen);
-      cursor = generateRXInstruction(codeGen, TR::InstOpCode::getLoadOpCode(), node, tmpReg, lastITable, cursor);
+      cursor = generateRXInstruction(codeGen, TR::InstOpCode::getLoadOpCode(), node, scratchRegister, lastITable, cursor);
 
-      TR::MemoryReference * interfaceClass = generateS390MemoryReference(tmpReg, fej9->getOffsetOfInterfaceClassFromITableField(), codeGen);
+      TR::MemoryReference * interfaceClass = generateS390MemoryReference(scratchRegister, fej9->getOffsetOfInterfaceClassFromITableField(), codeGen);
 
-      cursor = generateRXInstruction(codeGen, TR::InstOpCode::getCmpLogicalOpCode(), node, tmpReg3, interfaceClass, cursor);
+      cursor = generateRXInstruction(codeGen, TR::InstOpCode::getCmpLogicalOpCode(), node, vTableIndexRegister, interfaceClass, cursor);
       cursor = generateS390BranchInstruction(codeGen, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, node, noMatchLabel, cursor);
 
-      //we got a match. jump to entry point. tmpReg pointing to the lastITable
-      cursor = generateRIInstruction(codeGen, TR::InstOpCode::getLoadHalfWordImmOpCode() , node, tmpReg3, fej9->getITableEntryJitVTableOffset(), cursor);
+      //we got a match. jump to entry point. scratchRegister pointing to the lastITable
+      cursor = generateRIInstruction(codeGen, TR::InstOpCode::getLoadHalfWordImmOpCode() , node, vTableIndexRegister, fej9->getITableEntryJitVTableOffset(), cursor);
 
-      cursor = generateRXInstruction(codeGen, TR::InstOpCode::getSubstractOpCode(), node, tmpReg3,
-                               generateS390MemoryReference(tmpReg, fej9->convertITableIndexToOffset(itableIndex), codeGen), cursor);
+      cursor = generateRXInstruction(codeGen, TR::InstOpCode::getSubstractOpCode(), node, vTableIndexRegister,
+                               generateS390MemoryReference(scratchRegister, fej9->convertITableIndexToOffset(itableIndex), codeGen), cursor);
 
-      TR::MemoryReference * methodEntry = generateS390MemoryReference(tmpReg3, vftReg, 0, codeGen);
-      cursor = generateRXInstruction(codeGen, TR::InstOpCode::getLoadOpCode(), node, tmpReg, methodEntry, cursor);
+      TR::MemoryReference * methodEntry = generateS390MemoryReference(vTableIndexRegister, vftReg, 0, codeGen);
+      cursor = generateRXInstruction(codeGen, TR::InstOpCode::getLoadOpCode(), node, scratchRegister, methodEntry, cursor);
 
-      cursor = generateS390RegInstruction(codeGen, TR::InstOpCode::BCR, node, tmpReg, cursor);
+      cursor = generateS390RegInstruction(codeGen, TR::InstOpCode::BCR, node, scratchRegister, cursor);
       static bool notJump = feGetEnv("TR_LastITableNotJump") != NULL;
       ((TR::S390RegInstruction *)cursor)->setBranchCondition(notJump? TR::InstOpCode::COND_NOP : TR::InstOpCode::COND_B);
 
@@ -1993,6 +1993,7 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
       TR::Register * tmpRegister ;
       TR::RegisterPair * classMethodEPPairRegister;
       int32_t numInterfaceCallCacheSlots =  comp()->getOptions()->getNumInterfaceCallCacheSlots();
+      TR::Register * vTableIndexRegister = getVTableIndexArgumentRegisterRealRegister();
 
       if (comp()->getOption(TR_disableInterfaceCallCaching))
          {
@@ -2136,7 +2137,6 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
             TR::Register * classRegister = cg()->allocateRegister();
             TR::Register * methodRegister = cg()->allocateRegister();
             classMethodEPPairRegister = cg()->allocateConsecutiveRegisterPair(methodRegister, classRegister);
-            tmpRegister = classRegister;
 
             postDeps->addPostCondition(classMethodEPPairRegister, TR::RealRegister::EvenOddPair);
             postDeps->addPostCondition(classRegister, TR::RealRegister::LegalEvenOfPair);
@@ -2179,7 +2179,6 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
                                    );
 
             // Load the interface call data snippet pointer to register is required for non-CLFI / BRCL sequence.
-            tmpRegister = cg()->allocateRegister();
             if (!useCLFIandBRCL)
                {
                cursor = new (trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::LARL, callNode, snippetReg, ifcSnippet->getDataConstantSnippet(), cg());
@@ -2255,7 +2254,7 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
                   }
                }
 
-            cursor = addLastITableInstructions(comp(), fej9, cg(), callNode, methodSymRef, vftReg, snippetReg, methodRegister, tmpRegister, cursor);
+            cursor = addLastITableInstructions(comp(), fej9, cg(), callNode, methodSymRef, vftReg, snippetReg, vTableIndexRegister, cursor);
 
             cursor = new (trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::LARL, callNode, snippetReg, ifcSnippet,cursor, cg());
 
@@ -2271,8 +2270,6 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
 
             if (!useCLFIandBRCL)
               postDeps->addPostCondition(methodRegister, TR::RealRegister::AssignAny);
-
-            postDeps->addPostCondition(tmpRegister, TR::RealRegister::AssignAny);
             }
 
          gcPoint = cursor;
@@ -2286,7 +2283,6 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
             }
          else
             {
-            cg()->stopUsingRegister(tmpRegister);
             if (!useCLFIandBRCL)
                cg()->stopUsingRegister(methodRegister);
             }
