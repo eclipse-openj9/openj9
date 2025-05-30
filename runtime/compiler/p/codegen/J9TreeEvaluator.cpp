@@ -2098,7 +2098,7 @@ static TR::Register * generateMultianewArrayWithInlineAllocators(TR::Node *node,
       TR::Compiler->om.contiguousArrayHeaderSizeInBytes() + alignmentCompensation);
    if (alignmentCompensation != 0) // do a mask to ensure alignment
       {
-      generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldic, node, temp1Reg, temp1Reg,
+      generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldicr, node, temp1Reg, temp1Reg,
                                        0, -refFieldSizeAligned);
       }
    // we also need space for N zero-sized arrays
