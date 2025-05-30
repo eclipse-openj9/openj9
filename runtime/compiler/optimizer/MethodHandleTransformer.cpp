@@ -440,6 +440,11 @@ TR_MethodHandleTransformer::visitStoreToLocalVariable(TR::TreeTop* tt, TR::Node*
    {
    TR::Node *rhs = node->getFirstChild();
    TR::Symbol *local = node->getSymbolReference()->getSymbol();
+
+   // if we are storing the result of a call that is transformed into PassThrough
+   if (rhs->getOpCodeValue() == TR::PassThrough)
+      rhs = node->getFirstChild()->getFirstChild();
+
    if (rhs->getDataType().isAddress())
       {
       // Get object info of the rhs
@@ -560,7 +565,7 @@ TR_MethodHandleTransformer::visitNode(TR::TreeTop* tt, TR::Node* node, TR::NodeC
    for (int32_t i = 0; i < node->getNumChildren(); i++)
        visitNode(tt, node->getChild(i), visitedNodes);
 
-   if (node->getOpCode().isStoreDirect() && node->getSymbolReference()->getSymbol()->isAutoOrParm() && node->getType() == TR::Address)
+   if (node->getOpCode().isStoreDirect() && node->getSymbolReference()->getSymbol()->isAutoOrParm() && (node->getType() == TR::Address || node->getFirstChild()->getOpCodeValue() == TR::PassThrough))
       {
       visitStoreToLocalVariable(tt, node);
       }
