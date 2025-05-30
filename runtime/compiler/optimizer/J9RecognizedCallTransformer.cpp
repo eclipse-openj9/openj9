@@ -616,14 +616,14 @@ void J9::RecognizedCallTransformer::process_jdk_internal_util_ArraysSupport_vect
       {
       int aLen, bLen;
       const char *aObjTypeSig = a->getSymbolReference() ?
-         a->getSymbolReference()->getTypeSignature(aLen) : 0;
+         a->getSymbolReference()->getTypeSignature(aLen) : NULL;
       const char *bObjTypeSig = b->getSymbolReference() ?
-         b->getSymbolReference()->getTypeSignature(aLen) : 0;
+         b->getSymbolReference()->getTypeSignature(bLen) : NULL;
 
-      bool aCheckNeeded, bCheckNeeded; // true if object type not known at compile time
-      if (!aObjTypeSig)
-         aCheckNeeded = true;
-      else
+      // if the object type is not known at compile time we need to check for arrays at runtime
+      bool aCheckNeeded = (aObjTypeSig == NULL);
+      bool bCheckNeeded = (bObjTypeSig == NULL);
+      if (!aCheckNeeded) // we do know it on compile
          {
          TR_OpaqueClassBlock *aClass = comp()->fej9()->getClassFromSignature(aObjTypeSig,
             aLen, a->getSymbolReference()->getOwningMethod(comp()));
@@ -631,9 +631,7 @@ void J9::RecognizedCallTransformer::process_jdk_internal_util_ArraysSupport_vect
                         aClass == comp()->getObjectClassPointer() ||
                         TR::Compiler->cls.isInterfaceClass(comp(), aClass);
          }
-      if (!bObjTypeSig)
-         bCheckNeeded = true;
-      else
+      if (!bCheckNeeded)
          {
          TR_OpaqueClassBlock *bClass = comp()->fej9()->getClassFromSignature(bObjTypeSig,
             bLen, b->getSymbolReference()->getOwningMethod(comp()));
@@ -644,8 +642,8 @@ void J9::RecognizedCallTransformer::process_jdk_internal_util_ArraysSupport_vect
 
 
       // true if the object type is either an array, or not known at compile time
-      bool aAdjustmentNeeded = aCheckNeeded || aObjTypeSig[0] == '[';
-      bool bAdjustmentNeeded = bCheckNeeded || bObjTypeSig[0] == '[';
+      bool aAdjustmentNeeded = aCheckNeeded || (aObjTypeSig[0] == '[');
+      bool bAdjustmentNeeded = bCheckNeeded || (bObjTypeSig[0] == '[');
 
       TR::TransformUtil::separateNullCheck(comp(), treetop);
 
