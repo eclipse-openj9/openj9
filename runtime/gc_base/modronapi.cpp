@@ -991,6 +991,18 @@ j9gc_get_explicit_GC_disabled(J9JavaVM *javaVM)
 }
 
 /**
+ * API to return a unique GC ID based on all counts
+ *
+ * @parm[in] javaVM The J9JavaVM
+ * @return unique GC ID count
+ */
+U_64
+j9gc_get_unique_GC_count(J9JavaVM *javaVM)
+{
+	return (MM_GCExtensions::getExtensions(javaVM)->globalGCStats.gcCount + MM_GCExtensions::getExtensions(javaVM)->scavengerStats._gcCount);
+}
+
+/**
  * Called whenever the allocation threshold values or enablement state changes.
  * 
  * @parm[in] currentThread The current VM Thread
