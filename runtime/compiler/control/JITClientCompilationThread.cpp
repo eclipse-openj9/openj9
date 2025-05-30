@@ -2898,33 +2898,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, resultIndex, objectPointerReference);
          }
          break;
-      case MessageType::KnownObjectTable_getReferenceField:
-         {
-         auto recv = (client->getRecvData<bool, uintptr_t*, int32_t, bool>());
-         bool isStatic = std::get<0>(recv);
-         uintptr_t *baseObjectRefLocation = std::get<1>(recv);
-         int32_t fieldOffset = std::get<2>(recv);
-         bool knotEnabled = std::get<3>(recv);
-
-         TR::KnownObjectTable::Index resultIndex = TR::KnownObjectTable::UNKNOWN;
-         uintptr_t *objectPointerReference = NULL;
-         uintptr_t targetObjectReference = 0;
-
-            {
-            TR::VMAccessCriticalSection getReferenceField(fe);
-            uintptr_t baseObjectRef = isStatic ? fe->getStaticReferenceFieldAtAddress((uintptr_t)baseObjectRefLocation) : *baseObjectRefLocation;
-            targetObjectReference = fe->getReferenceFieldAt(baseObjectRef, fieldOffset);
-
-            if (knotEnabled && knot)
-               {
-               resultIndex = knot->getOrCreateIndexAt(&targetObjectReference);
-               objectPointerReference = knot->getPointerLocation(resultIndex);
-               }
-            }
-
-         client->write(response, resultIndex, objectPointerReference, targetObjectReference);
-         }
-         break;
       case MessageType::KnownObjectTable_getKnownObjectTableDumpInfo:
          {
          client->getRecvData<JITServer::Void>();

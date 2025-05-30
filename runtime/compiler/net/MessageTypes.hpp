@@ -283,7 +283,6 @@ enum MessageType : uint16_t
    KnownObjectTable_dereferenceKnownObjectField,
    KnownObjectTable_dereferenceKnownObjectField2,
    KnownObjectTable_createSymRefWithKnownObject,
-   KnownObjectTable_getReferenceField,
    KnownObjectTable_getKnownObjectTableDumpInfo,
    // for getting a J9Class from KnownObjectTable
    KnownObjectTable_getOpaqueClass,

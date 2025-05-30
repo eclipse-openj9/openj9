@@ -258,7 +258,6 @@ const char *messageNames[] =
    "KnownObjectTable_dereferenceKnownObjectField",
    "KnownObjectTable_dereferenceKnownObjectField2",
    "KnownObjectTable_createSymRefWithKnownObject",
-   "KnownObjectTable_getReferenceField",
    "KnownObjectTable_getKnownObjectTableDumpInfo",
    "KnownObjectTable_getOpaqueClass",
    "KnownObjectTable_getVectorBitSize",
