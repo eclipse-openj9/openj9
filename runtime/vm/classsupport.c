@@ -747,6 +747,7 @@ callLoadClass(J9VMThread* vmThread, U_8* className, UDATA classNameLength, J9Cla
 {
 	j9object_t classNameString, sendLoadClassResult;
 	J9Class *foundClass = NULL;
+	BOOLEAN addedClassToInitiatingLoader = FALSE;
 
 	Assert_VM_mustHaveVMAccess(vmThread);
 
@@ -838,6 +839,8 @@ callLoadClass(J9VMThread* vmThread, U_8* className, UDATA classNameLength, J9Cla
 								omrthread_monitor_exit(vm->classTableMutex);
 								setNativeOutOfMemoryError(vmThread, 0, 0);
 								return NULL;
+							} else {
+								addedClassToInitiatingLoader = TRUE;
 							}
 						} else {
 							/* If the existing class in the table is different than the value from loadClass, fail */
@@ -846,6 +849,8 @@ callLoadClass(J9VMThread* vmThread, U_8* className, UDATA classNameLength, J9Cla
 								foundClass = NULL;
 							}
 						}
+					} else {
+						addedClassToInitiatingLoader = TRUE;
 					}
 				} else {
 					/* If the existing class in the table is different than the value from loadClass, fail */
@@ -855,6 +860,11 @@ callLoadClass(J9VMThread* vmThread, U_8* className, UDATA classNameLength, J9Cla
 					}
 				}
 			}
+
+			if (addedClassToInitiatingLoader) {
+				addOutlivingLoader(vmThread, classLoader, foundClass->classLoader);
+			}
+
 			omrthread_monitor_exit(vm->classTableMutex);
  		}
 	} else {

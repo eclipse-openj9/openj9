@@ -23,6 +23,7 @@
 #include "env/CHTable.hpp"
 #include "env/JITServerPersistentCHTable.hpp"
 #include "env/j9methodServer.hpp"
+#include "env/J9RetainedMethodSet.hpp"
 #include "infra/List.hpp"                      // for TR::list
 #include "compile/VirtualGuard.hpp"            // for TR_VirtualGuard
 #include "il/SymbolReference.hpp"              // for SymbolReference
@@ -100,11 +101,26 @@ bool JITClientCHTableCommit(
    FlatClassExtendCheck &compClassesThatShouldNotBeNewlyExtended = std::get<6>(data);
    std::vector<TR_OpaqueClassBlock*> &classesForOSRRedefinition = std::get<7>(data);
    std::vector<TR_OpaqueClassBlock*> &classesForStaticFinalFieldModification = std::get<8>(data);
-   uint8_t *serverStartPC = std::get<9>(data);
+   std::vector<J9::RepeatRetainedMethodsAnalysis::InlinedSiteInfo> &inlinedSiteInfo = std::get<9>(data);
+   std::vector<TR_ResolvedMethod*> &serverKeepaliveMethods = std::get<10>(data);
+   std::vector<TR_ResolvedMethod*> &serverBondMethods = std::get<11>(data);
+   uint8_t *serverStartPC = std::get<12>(data);
    uint8_t *startPC = (uint8_t*) metaData->startPC;
 
-   if (vguards.empty() && sideEffectPatchSites.empty() && preXMethods.empty() && classes.empty() && classesThatShouldNotBeNewlyExtended.empty())
+   OMR::RetainedMethodSet *retainedMethods =
+      J9::RepeatRetainedMethodsAnalysis::analyzeOnClient(
+         comp, metaData, inlinedSiteInfo, serverKeepaliveMethods, serverBondMethods);
+
+   TR_ResolvedMethod *bondMethod = NULL;
+   if (vguards.empty()
+       && sideEffectPatchSites.empty()
+       && preXMethods.empty()
+       && classes.empty()
+       && classesThatShouldNotBeNewlyExtended.empty()
+       && !retainedMethods->bondMethods().next(&bondMethod))
+      {
       return true;
+      }
 
    cleanupNewlyExtendedInfo(comp, classesThatShouldNotBeNewlyExtended);
    if (comp->getFailCHTableCommit())
@@ -198,6 +214,20 @@ bool JITClientCHTableCommit(
 
       if (invalidAssumption) return false;
       } //  if (classesThatShouldNotBeNewlyExtended)
+
+   // Invalidate the body and recompile if any inlined method is unloaded.
+   auto bondIter = retainedMethods->bondMethods();
+   while (bondIter.next(&bondMethod))
+      {
+      TR_ClassUnloadRecompile::make(
+         comp->fe(),
+         comp->trPersistentMemory(),
+         bondMethod->containingClass(),
+         startPC,
+         comp->getMetadataAssumptionList());
+
+      comp->setHasClassUnloadAssumptions();
+      }
 
    // Check if the assumptions for static final field are still valid
    // Returning false will cause CHTable opts to be disabled in the next compilation of this method,
