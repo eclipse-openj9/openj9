@@ -515,31 +515,6 @@ s390x_linux_valhalla:
 s390x_linux_vt_standard:
   extends: ['s390x_linux', 'valhalla_standard']
 #========================================#
-# Linux x86 64bits compiled with GCC 11
-#========================================#
-x86-64_linux_gcc11:
-  extends: ['x86-64_linux']
-  build_env:
-    cmd:
-      all: 'source /home/jenkins/set_gcc_11.2.0_env'
-    vars: 'OPENJ9_JAVA_OPTIONS=-Xdump:system+java:events=systhrow,filter=java/lang/ClassCastException,request=exclusive+prepwalk+preempt'
-#========================================#
-# Linux PPCLE 64bits compiled with GCC 11
-#========================================#
-ppc64le_linux_gcc11:
-  extends: ['ppc64le_linux']
-  build_env:
-    cmd:
-      all: 'source /home/jenkins/set_gcc_11.2.0_env'
-#========================================#
-# Linux s390x 64bits compiled with GCC 11
-#========================================#
-s390x_linux_gcc11:
-  extends: ['s390x_linux']
-  build_env:
-    cmd:
-      all: 'source /home/jenkins/set_gcc_11.2.0_env'
-#========================================#
 # Linux Aarch64 64bits compiled with GCC 11
 #========================================#
 aarch64_linux_gcc11:
