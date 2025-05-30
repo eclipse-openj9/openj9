@@ -611,6 +611,9 @@ void J9::RecognizedCallTransformer::process_jdk_internal_util_ArraysSupport_vect
       TR::Node::create(node, TR::lxor, 2, mask, TR::Node::lconst(node, -1)));
 
    TR::Node* mismatchByteIndex = TR::Node::create(node, TR::arraycmplen, 3);
+
+   anchorAllChildren(node, treetop);
+
 #if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
    if (TR::Compiler->om.isOffHeapAllocationEnabled())
       {
@@ -657,19 +660,6 @@ void J9::RecognizedCallTransformer::process_jdk_internal_util_ArraysSupport_vect
       // are not an array and fall through to the default implementation.
       if (aAdjustmentNeeded || bAdjustmentNeeded)
          {
-         // Anchor nodes
-         for (int32_t i=1; i < node->getNumChildren(); i++)
-            {
-            TR::Node* childNode = node->getChild(i);
-            if ( !(childNode->getOpCode().isLoadConst() ||
-                  (childNode->getOpCode().isLoadVarDirect() &&
-                     childNode->getSymbolReference()->getSymbol()->isAutoOrParm())) )
-               {
-               treetop->insertBefore(
-                  TR::TreeTop::create(comp(), TR::Node::create(TR::treetop, 1, childNode)));
-               }
-            }
-
          // callBlock should contain the tree of this treetop only
          TR::CFG *cfg = comp()->getFlowGraph();
          TR::Block *currentBlock = treetop->getEnclosingBlock();
@@ -695,7 +685,7 @@ void J9::RecognizedCallTransformer::process_jdk_internal_util_ArraysSupport_vect
             // insert null check tree 1/3
             TR::Node* nullCheckNode = TR::Node::createif(TR::ifacmpeq,
                                                          a->duplicateTree(),
-                                                         TR::Node::create(a, TR::aconst, 0, 0),
+                                                         TR::Node::aconst(a, 0),
                                                          newCallBlock->getEntry());
             nullCheckBlock->append(TR::TreeTop::create(comp(), nullCheckNode));
             cfg->addEdge(nullCheckBlock, newCallBlock);
@@ -708,7 +698,7 @@ void J9::RecognizedCallTransformer::process_jdk_internal_util_ArraysSupport_vect
                TR::Node *vftLoad = TR::Node::createWithSymRef(TR::aloadi, 1, 1, a->duplicateTree(), comp()->getSymRefTab()->findOrCreateVftSymbolRef());
                TR::Node *maskedIsArrayClassNode = comp()->fej9()->testIsClassArrayType(vftLoad);
                TR::Node *arrayCheckNode = TR::Node::createif(TR::ificmpeq, maskedIsArrayClassNode,
-                                                            TR::Node::create(a, TR::iconst, 0),
+                                                            TR::Node::iconst(a, 0),
                                                             newCallBlock->getEntry());
 
                arrayCheckBlock->append(TR::TreeTop::create(comp(), arrayCheckNode, NULL, NULL));
@@ -724,6 +714,7 @@ void J9::RecognizedCallTransformer::process_jdk_internal_util_ArraysSupport_vect
 
             a = TR::Node::createLoad(node, aTempRef);
             }
+
          if (bAdjustmentNeeded)
             {
             bTempRef = comp()->getSymRefTab()->createTemporary(comp()->getMethodSymbol(), TR::Address);
@@ -741,7 +732,7 @@ void J9::RecognizedCallTransformer::process_jdk_internal_util_ArraysSupport_vect
             // insert null check tree 1/3
             TR::Node* nullCheckNode = TR::Node::createif(TR::ifacmpeq,
                                                          b->duplicateTree(),
-                                                         TR::Node::create(b, TR::aconst, 0, 0),
+                                                         TR::Node::aconst(b, 0),
                                                          newCallBlock->getEntry());
             nullCheckBlock->append(TR::TreeTop::create(comp(), nullCheckNode));
             cfg->addEdge(nullCheckBlock, newCallBlock);
@@ -754,7 +745,7 @@ void J9::RecognizedCallTransformer::process_jdk_internal_util_ArraysSupport_vect
                TR::Node *vftLoad = TR::Node::createWithSymRef(TR::aloadi, 1, 1, b->duplicateTree(), comp()->getSymRefTab()->findOrCreateVftSymbolRef());
                TR::Node *maskedIsArrayClassNode = comp()->fej9()->testIsClassArrayType(vftLoad);
                TR::Node *arrayCheckNode = TR::Node::createif(TR::ificmpeq, maskedIsArrayClassNode,
-                                                            TR::Node::create(b, TR::iconst, 0),
+                                                            TR::Node::iconst(b, 0),
                                                             newCallBlock->getEntry());
 
                arrayCheckBlock->append(TR::TreeTop::create(comp(), arrayCheckNode, NULL, NULL));
@@ -789,7 +780,6 @@ void J9::RecognizedCallTransformer::process_jdk_internal_util_ArraysSupport_vect
    TR::Node* mismatchElementIndex = TR::Node::create(node, TR::l2i, 1, TR::Node::create(node, TR::lshr, 2, mismatchByteIndex, log2ArrayIndexScale));
    TR::Node* noMismatchFound = TR::Node::create(node, TR::lcmpeq, 2, mismatchByteIndex, lengthToCompare);
 
-   anchorAllChildren(node, treetop);
    prepareToReplaceNode(node);
 
    TR::Node::recreate(node, TR::iselect);
