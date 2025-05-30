@@ -1562,8 +1562,10 @@ addLastITableInstructions(TR::Compilation * comp, TR_J9VMBase * fej9, TR::CodeGe
 
       cursor = generateRXInstruction(codeGen, TR::InstOpCode::getSubstractOpCode(), node, vTableIndexRegister,
                                generateS390MemoryReference(scratchRegister, fej9->convertITableIndexToOffset(itableIndex), codeGen), cursor);
+      // Copy r0 (vTableIndexRegister) to scratchRegister because we cant have a memory reference with r0!
+      cursor = generateRRInstruction(codeGen, TR::InstOpCode::getLoadRegOpCode(), node, scratchRegister, vTableIndexRegister, cursor);
 
-      TR::MemoryReference * methodEntry = generateS390MemoryReference(vTableIndexRegister, vftReg, 0, codeGen);
+      TR::MemoryReference * methodEntry = generateS390MemoryReference(scratchRegister, vftReg, 0, codeGen);
       cursor = generateRXInstruction(codeGen, TR::InstOpCode::getLoadOpCode(), node, scratchRegister, methodEntry, cursor);
 
       cursor = generateS390RegInstruction(codeGen, TR::InstOpCode::BCR, node, scratchRegister, cursor);
