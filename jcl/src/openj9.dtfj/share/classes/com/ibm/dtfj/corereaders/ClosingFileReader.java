@@ -159,7 +159,7 @@ public class ClosingFileReader extends ImageInputStreamImpl implements ResourceR
 		}
 	}
 
-	/*[IF PLATFORM-mz31 | PLATFORM-mz64 | !Sidecar18-SE-OpenJ9]*/
+	/*[IF PLATFORM-mz31 | PLATFORM-mz64 | COMMON_JCL8]*/
 	/**
 	 * z/OS native implementation of IRandomAccessFile - wrappers com.ibm.recordio.RandomAccessRecordFile
 	 */
@@ -265,12 +265,12 @@ public class ClosingFileReader extends ImageInputStreamImpl implements ResourceR
 			_seekOffset = pos%_recordLength;
 		}
 	}
-	/*[ENDIF] PLATFORM-mz31 | PLATFORM-mz64 | !Sidecar18-SE-OpenJ9]*/
+	/*[ENDIF] PLATFORM-mz31 | PLATFORM-mz64 | COMMON_JCL8]*/
 
 	public ClosingFileReader(File file) throws IOException
 	{
 		_fileRef = file;
-		/*[IF PLATFORM-mz31 | PLATFORM-mz64 | !Sidecar18-SE-OpenJ9]*/
+		/*[IF PLATFORM-mz31 | PLATFORM-mz64 | COMMON_JCL8]*/
 		try {
 			_file = new BaseRandomAccessFile(_fileRef, "r");
 		} catch (FileNotFoundException e1) {
@@ -287,9 +287,9 @@ public class ClosingFileReader extends ImageInputStreamImpl implements ResourceR
 				throw e;
 			}
 		}
-		/*[ELSE] PLATFORM-mz31 | PLATFORM-mz64 | !Sidecar18-SE-OpenJ9 */
+		/*[ELSE] PLATFORM-mz31 | PLATFORM-mz64 | COMMON_JCL8 */
 		_file = new BaseRandomAccessFile(_fileRef, "r");
-		/*[ENDIF] PLATFORM-mz31 | PLATFORM-mz64 | !Sidecar18-SE-OpenJ9 */
+		/*[ENDIF] PLATFORM-mz31 | PLATFORM-mz64 | COMMON_JCL8 */
 	}
 
 	/**
@@ -561,11 +561,11 @@ public class ClosingFileReader extends ImageInputStreamImpl implements ResourceR
 
 	public boolean isMVSFile()
 	{
-		/*[IF PLATFORM-mz31 | PLATFORM-mz64 | !Sidecar18-SE-OpenJ9]*/
+		/*[IF PLATFORM-mz31 | PLATFORM-mz64 | COMMON_JCL8]*/
 		return _file instanceof ZosRandomAccessFile;
-		/*[ELSE] PLATFORM-mz31 | PLATFORM-mz64 | !Sidecar18-SE-OpenJ9 */
+		/*[ELSE] PLATFORM-mz31 | PLATFORM-mz64 | COMMON_JCL8 */
 		return false;
-		/*[ENDIF] PLATFORM-mz31 | PLATFORM-mz64 | !Sidecar18-SE-OpenJ9 */
+		/*[ENDIF] PLATFORM-mz31 | PLATFORM-mz64 | COMMON_JCL8 */
 	}
 
 	public void releaseResources() throws IOException {
