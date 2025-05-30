@@ -2464,6 +2464,15 @@ TR_ResolvedRelocatableJ9JITServerMethod::getDeclaringClassFromFieldOrStatic(TR::
       if (!comp->getSymbolValidationManager()->addDeclaringClassFromFieldOrStaticRecord(definingClass, cp(), cpIndex))
          return NULL;
       }
+   else
+      {
+      // Outside of JITServer, getDeclaringClassFromFieldOrStatic() always
+      // returns null in non-SVM AOT. Explicitly return null for consistency.
+      // Otherwise the result could be non-null if it was cached by an earlier
+      // non-AOT remote compilation.
+      return NULL;
+      }
+
    return definingClass;
    }
 
