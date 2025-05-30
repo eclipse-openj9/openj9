@@ -149,14 +149,43 @@ private:
 
    bool         runMacro(TR::SymbolReference *);
    bool         runFEMacro(TR::SymbolReference *);
-   TR::Node *    genInvoke(TR::SymbolReference *, TR::Node *indirectCallFirstChild, TR::Node *invokedynamicReceiver = NULL);
+
+   /**
+    * \brief
+    *    Generates IL for invoke bytecodes
+    * \param symRef reference to method being invoked
+    * \param indirectCallFirstChild first child of indirect call node (if applicable)
+    * \param invokedynamicReceiver receiver node for invokedynamic call (if applicable)
+    * \param numExpectedArgs the number of arguments the call expects. Defaults to -1 since this can usually be calculated
+    * from the symbol reference
+    */
+   TR::Node *    genInvoke(TR::SymbolReference *symRef, TR::Node *indirectCallFirstChild, TR::Node *invokedynamicReceiver = NULL, int32_t numExpectedArgs = -1);
+
+   /**
+    * \brief
+    *    Generates IL for invoke bytecodes
+    * \param symRef reference to the method being invoked
+    * \param indirectCallFirstChild first child of indirect call node (if applicable)
+    * \param invokedynamicReceiver receiver node for invokedynamic call (if applicable)
+    * \param requiredKoi required Known Object Index constant (if applicable)
+    * \param numExpectedArgs the number of arguments the call expects. Defaults to -1 since this can usually be calculated
+    * from the symbol reference
+    */
    TR::Node *    genInvokeInner(
-      TR::SymbolReference *,
+      TR::SymbolReference *symRef,
       TR::Node *indirectCallFirstChild,
       TR::Node *invokedynamicReceiver,
-      TR::KnownObjectTable::Index *requiredKoi);
+      TR::KnownObjectTable::Index *requiredKoi,
+      int32_t numExpectedArgs = -1);
 
-   TR::Node *    genInvokeDirect(TR::SymbolReference *symRef){ return genInvoke(symRef, NULL); }
+   /**
+    * \brief
+    *    Generates IL for direct invoke bytecodes
+    * \param symRef reference to method being invoked
+    * \param numExpectedArgs the number of arguments the call expects. Defaults to -1 since this can usually be calculated
+    * from the symbol reference
+    */
+   TR::Node *    genInvokeDirect(TR::SymbolReference *symRef, int32_t numExpectedArgs = -1) { return genInvoke(symRef, NULL, NULL, numExpectedArgs); }
    TR::Node *    genInvokeWithVFTChild(TR::SymbolReference *);
    TR::Node *    getReceiverFor(TR::SymbolReference *);
    void          stashArgumentsForOSR(TR_J9ByteCode byteCode);
