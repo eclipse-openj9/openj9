@@ -1041,12 +1041,23 @@ MM_MetronomeDelegate::doClassTracing(MM_EnvironmentRealtime *env)
 						while (NULL != modulePtr) {
 							J9Module * const module = *modulePtr;
 
+							Assert_GC_true_with_message2(
+									env, (NULL != module->moduleObject),
+									"Module %p Classloader %p has moduleObject set to NULL\n",
+									 module, classLoader);
+
 							didWork |= _markingScheme->markObject(env, module->moduleObject);
 							didWork |= _markingScheme->markObject(env, module->version);
 							modulePtr = (J9Module**)hashTableNextDo(&walkState);
 						}
 
 						if (classLoader == _javaVM->systemClassLoader) {
+
+							Assert_GC_true_with_message(
+									env, (NULL != _javaVM->unnamedModuleForSystemLoader->moduleObject),
+									"Unnamed Module For System Loader %p has moduleObject set to NULL\n",
+									_javaVM->unnamedModuleForSystemLoader);
+
 							didWork |= _markingScheme->markObject(env, _javaVM->unnamedModuleForSystemLoader->moduleObject);
 						}
 					}

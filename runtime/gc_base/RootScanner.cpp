@@ -89,6 +89,8 @@ MM_RootScanner::scanModularityObjects(J9ClassLoader * classLoader)
 		while (NULL != modulePtr) {
 			J9Module * const module = *modulePtr;
 
+			Assert_MM_true(NULL != module->moduleObject);
+
 			doSlot(&module->moduleObject);
 			if (NULL != module->version) {
 				doSlot(&module->version);
@@ -97,6 +99,9 @@ MM_RootScanner::scanModularityObjects(J9ClassLoader * classLoader)
 		}
 
 		if (classLoader == _javaVM->systemClassLoader) {
+
+			Assert_MM_true(NULL != _javaVM->unnamedModuleForSystemLoader->moduleObject);
+
 			doSlot(&_javaVM->unnamedModuleForSystemLoader->moduleObject);
 		}
 	}

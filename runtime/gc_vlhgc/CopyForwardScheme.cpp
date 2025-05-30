@@ -2748,6 +2748,12 @@ MM_CopyForwardScheme::scanClassLoaderObjectSlots(MM_EnvironmentVLHGC *env, MM_Al
 				J9Module **modulePtr = (J9Module **)hashTableStartDo(classLoader->moduleHashTable, &walkState);
 				while (success && (NULL != modulePtr)) {
 					J9Module * const module = *modulePtr;
+
+					Assert_GC_true_with_message2(
+							env, (NULL != module->moduleObject),
+							"Module %p Classloader %p has moduleObject set to NULL\n",
+							 module, classLoader);
+
 					success = copyAndForward(env, reservingContext, classLoaderObject, (J9Object **)&(module->moduleObject));
 					if (success) {
 						if (NULL != module->version) {
@@ -2758,6 +2764,12 @@ MM_CopyForwardScheme::scanClassLoaderObjectSlots(MM_EnvironmentVLHGC *env, MM_Al
 				}
 
 				if (success && (classLoader == _javaVM->systemClassLoader)) {
+
+					Assert_GC_true_with_message(
+							env, (NULL != _javaVM->unnamedModuleForSystemLoader->moduleObject),
+							"Unnamed Module For System Loader %p has moduleObject set to NULL\n",
+							_javaVM->unnamedModuleForSystemLoader);
+
 					success = copyAndForward(env, reservingContext, classLoaderObject, (J9Object **)&(_javaVM->unnamedModuleForSystemLoader->moduleObject));
 				}
 			}
@@ -4540,6 +4552,12 @@ MM_CopyForwardScheme::scanRoots(MM_EnvironmentVLHGC *env)
 									J9Module **modulePtr = (J9Module **)hashTableStartDo(classLoader->moduleHashTable, &walkState);
 									while (success && (NULL != modulePtr)) {
 										J9Module * const module = *modulePtr;
+
+										Assert_GC_true_with_message2(
+												env, (NULL != module->moduleObject),
+												"Module %p Classloader %p has moduleObject set to NULL\n",
+												 module, classLoader);
+
 										success = copyAndForward(env, getContextForHeapAddress(module->moduleObject), (J9Object **)&(module->moduleObject));
 										if (success) {
 											if (NULL != module->version) {
@@ -4550,6 +4568,12 @@ MM_CopyForwardScheme::scanRoots(MM_EnvironmentVLHGC *env)
 									}
 
 									if (success && (classLoader == _javaVM->systemClassLoader)) {
+
+										Assert_GC_true_with_message(
+												env, (NULL != _javaVM->unnamedModuleForSystemLoader->moduleObject),
+												"Unnamed Module For System Loader %p has moduleObject set to NULL\n",
+												_javaVM->unnamedModuleForSystemLoader);
+
 										success = copyAndForward(env, getContextForHeapAddress(_javaVM->unnamedModuleForSystemLoader->moduleObject), (J9Object **)&(_javaVM->unnamedModuleForSystemLoader->moduleObject));
 									}
 								}
