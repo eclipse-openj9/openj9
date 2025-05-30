@@ -1543,6 +1543,9 @@ addLastITableInstructions(TR::Compilation * comp, TR_J9VMBase * fej9, TR::CodeGe
             node->getGlobalIndex(), (int)itableIndex))
       {
       TR::LabelSymbol * noMatchLabel = generateLabelSymbol(codeGen);
+      TR::LabelSymbol * matchLabel = generateLabelSymbol(codeGen);
+      TR::LabelSymbol * unsuccessfulExit = generateLabelSymbol(codeGen);
+      TR::LabelSymbol * loopLabel = generateLabelSymbol(codeGen);
       // TODO: breakBeforeInterfaceDispatchUsingLastITable
       printf("decaringClass: %p\n", declaringClass);
       // load the costant to the register. TODO: use compare immediate in 32 bit case! `generateS390CompareAndBranchInstruction` with const
@@ -1555,9 +1558,11 @@ addLastITableInstructions(TR::Compilation * comp, TR_J9VMBase * fej9, TR::CodeGe
       TR::MemoryReference * interfaceClass = generateS390MemoryReference(scratchRegister, fej9->getOffsetOfInterfaceClassFromITableField(), codeGen);
 
       cursor = generateRXInstruction(codeGen, TR::InstOpCode::getCmpLogicalOpCode(), node, vTableIndexRegister, interfaceClass, cursor);
+      // jump to dispatch instructions if we got a match!
       cursor = generateS390BranchInstruction(codeGen, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, node, noMatchLabel, cursor);
 
       //we got a match. jump to entry point. scratchRegister pointing to the lastITable
+      cursor = generateS390LabelInstruction(codeGen, TR::InstOpCode::label, node, matchLabel, cursor);
       cursor = generateRIInstruction(codeGen, TR::InstOpCode::getLoadHalfWordImmOpCode() , node, vTableIndexRegister, fej9->getITableEntryJitVTableOffset(), cursor);
 
       cursor = generateRXInstruction(codeGen, TR::InstOpCode::getSubstractOpCode(), node, vTableIndexRegister,
@@ -1575,6 +1580,30 @@ addLastITableInstructions(TR::Compilation * comp, TR_J9VMBase * fej9, TR::CodeGe
       
       // jump here if no itable match was found!
       cursor = generateS390LabelInstruction(codeGen, TR::InstOpCode::label, node, noMatchLabel, cursor);
+      //We didn't get a last ITable match, lets try iTable entries!
+      
+      TR::MemoryReference * iTable = generateS390MemoryReference(vftReg, offsetof(J9Class, iTable), codeGen);
+      cursor = generateRXInstruction(codeGen, TR::InstOpCode::getLoadTestOpCode(), node, scratchRegister, iTable, cursor);
+      // exit if null
+      cursor = generateS390BranchInstruction(codeGen, TR::InstOpCode::BRC, TR::InstOpCode::COND_BZ, node, unsuccessfulExit, cursor);
+      interfaceClass = generateS390MemoryReference(scratchRegister, fej9->getOffsetOfInterfaceClassFromITableField(), codeGen);
+      cursor = generateRXInstruction(codeGen, TR::InstOpCode::getCmpLogicalOpCode(), node, vTableIndexRegister, interfaceClass, cursor);
+      cursor = generateS390BranchInstruction(codeGen, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, matchLabel, cursor);
+
+
+      //loop
+      cursor = generateS390LabelInstruction(codeGen, TR::InstOpCode::label, node, loopLabel, cursor);
+      iTable = generateS390MemoryReference(scratchRegister, offsetof(J9ITable, next), codeGen);
+      cursor = generateRXInstruction(codeGen, TR::InstOpCode::getLoadTestOpCode(), node, scratchRegister, iTable, cursor);
+      // exit if null
+      cursor = generateS390BranchInstruction(codeGen, TR::InstOpCode::BRC, TR::InstOpCode::COND_BZ, node, unsuccessfulExit, cursor);
+      interfaceClass = generateS390MemoryReference(scratchRegister, fej9->getOffsetOfInterfaceClassFromITableField(), codeGen);
+      cursor = generateRXInstruction(codeGen, TR::InstOpCode::getCmpLogicalOpCode(), node, vTableIndexRegister, interfaceClass, cursor);
+      cursor = generateS390BranchInstruction(codeGen, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, matchLabel, cursor);
+      //loop until next is null or we get a match
+      cursor = generateS390BranchInstruction(codeGen, TR::InstOpCode::BRC, TR::InstOpCode::COND_B, node, loopLabel, cursor);
+
+      cursor = generateS390LabelInstruction(codeGen, TR::InstOpCode::label, node, unsuccessfulExit, cursor);
       }
    return cursor;
    }
