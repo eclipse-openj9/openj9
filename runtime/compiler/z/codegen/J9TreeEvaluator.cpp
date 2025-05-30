@@ -9688,6 +9688,14 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    //    CS      monitorReg,GPR13,#lwOffset(objectReg)
    //    BRC     BLRC(0x4), callLabel (OOL path)
 
+   static char* enableNIAIMonEntExit = feGetEnv("TR_enableNIAIMonEntExit");
+   if (enableNIAIMonEntExit)
+      {
+      TR::Register *niaiTempReg = srm->findOrCreateScratchRegister();
+      generateRXInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), node, niaiTempReg, generateS390MemoryReference(baseReg, lwOffset, cg));
+      generateS390IEInstruction(cg, TR::InstOpCode::NIAI, 8, 0, node);
+      srm->reclaimScratchRegister(niaiTempReg);
+      }
    //Compare and Swap the lock value with R13 if the lock value is 0.
    generateRSInstruction(cg, casOp, node, monitorReg, metaReg, generateS390MemoryReference(baseReg, lwOffset, cg));
 
@@ -9813,6 +9821,7 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, cFlowRegionEnd, conditions);
 
    cg->stopUsingRegister(monitorReg);
+   srm->stopUsingRegisters();
    if (wasteReg)
       cg->stopUsingRegister(wasteReg);
    if (objectClassReg)
@@ -9835,6 +9844,7 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
    int32_t lwOffset = fej9->getByteOffsetToLockword((TR_OpaqueClassBlock *) cg->getMonClass(node));
    J9::Z::CHelperLinkage *helperLink =  static_cast<J9::Z::CHelperLinkage*>(cg->getLinkage(TR_CHelper));
    TR_YesNoMaybe isMonitorValueBasedOrValueType = cg->isMonitorValueBasedOrValueType(node);
+   TR_S390ScratchRegisterManager *srm = cg->generateScratchRegisterManager();
 
    if ((isMonitorValueBasedOrValueType == TR_yes) ||
        comp->getOption(TR_DisableInlineMonExit) ||
@@ -10106,6 +10116,14 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
    //    MVHI    #lwOffset(objectReg), 0
 
    //TODO - use compareAndBranch instruction
+   static char* enableNIAIMonEntExit = feGetEnv("TR_enableNIAIMonEntExit");
+   if (enableNIAIMonEntExit)
+      {
+      TR::Register *niaiTempReg = srm->findOrCreateScratchRegister();
+      generateRXInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), node, niaiTempReg, generateS390MemoryReference(baseReg, lwOffset, cg));
+      generateS390IEInstruction(cg, TR::InstOpCode::NIAI, 7, 0, node);
+      srm->reclaimScratchRegister(niaiTempReg);
+      }
    // Check if the lockWord in the object contains our VMThread
    generateRXInstruction(cg, compareImmOp, node, metaReg, generateS390MemoryReference(baseReg, lwOffset, cg));
    // If VMThread does not match, call helper.
@@ -10233,6 +10251,7 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, cFlowRegionEnd, conditions);
 
    cg->stopUsingRegister(monitorReg);
+   srm->stopUsingRegisters();
    if (objectClassReg)
       cg->stopUsingRegister(objectClassReg);
    if (lookupOffsetReg)
