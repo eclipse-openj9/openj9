@@ -4753,13 +4753,17 @@ uintptr_t TR_J9VMBase::mutableCallSiteCookie(uintptr_t mutableCallSite, uintptr_
    return result;
    }
 
-TR::KnownObjectTable::Index TR_J9VMBase::mutableCallSiteEpoch(TR::Compilation *comp, uintptr_t mutableCallSite)
+TR::KnownObjectTable::Index TR_J9VMBase::mutableCallSiteEpoch(
+   TR::Compilation *comp, TR::KnownObjectTable::Index mcs)
    {
-   TR_ASSERT_FATAL(haveAccess(), "mutableCallSiteEpoch requires VM access");
-
    TR::KnownObjectTable *knot = comp->getKnownObjectTable();
    if (knot == NULL)
+      {
       return TR::KnownObjectTable::UNKNOWN;
+      }
+
+   TR::VMAccessCriticalSection mutableCallSiteEpoch(this);
+   uintptr_t mutableCallSite = knot->getPointer(mcs);
 
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
    // There is no separate epoch field

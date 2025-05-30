@@ -1943,6 +1943,22 @@ TR_J9ServerVM::createMethodHandleArchetypeSpecimen(TR_Memory *trMemory, uintptr_
    return result;
    }
 
+TR::KnownObjectTable::Index
+TR_J9ServerVM::mutableCallSiteEpoch(TR::Compilation *comp, TR::KnownObjectTable::Index mcs)
+   {
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JITServer::MessageType::VM_mutableCallSiteEpoch, mcs);
+
+   auto recv = stream->read<TR::KnownObjectTable::Index, uintptr_t*>();
+   TR::KnownObjectTable::Index result = std::get<0>(recv);
+   uintptr_t *resultRefLocation = std::get<1>(recv);
+
+   TR::KnownObjectTable *knot = comp->getKnownObjectTable();
+   knot->updateKnownObjectTableAtServer(result, resultRefLocation);
+
+   return result;
+   }
+
 intptr_t
 TR_J9ServerVM::getVFTEntry(TR_OpaqueClassBlock *clazz, int32_t offset)
    {

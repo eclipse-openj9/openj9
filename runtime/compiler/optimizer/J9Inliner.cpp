@@ -60,20 +60,24 @@ extern int32_t          *InlinedSizes;       // Defined in Inliner.cpp
 
 
 //duplicated as long as there are two versions of findInlineTargets
-static uintptr_t *failMCS(const char *reason, TR_CallSite *callSite, TR_InlinerBase* inliner)
+static TR::KnownObjectTable::Index failMCS(
+   const char *reason, TR_CallSite *callSite, TR_InlinerBase* inliner)
    {
    debugTrace(inliner->tracer(),"  Fail isMutableCallSiteTargetInvokeExact(%p): %s", callSite, reason);
-   return NULL;
+   return TR::KnownObjectTable::UNKNOWN;
    }
 
-static uintptr_t *isMutableCallSiteTargetInvokeExact(TR_CallSite *callSite, TR_InlinerBase *inliner)
+static TR::KnownObjectTable::Index isMutableCallSiteTargetInvokeExact(
+   TR_CallSite *callSite, TR_InlinerBase *inliner)
    {
    // Looking for either mcs.target.invokeExact(...) or mcs.getTarget().invokeExact(...)
    // on some known/fixed MutableCallSite object mcs.
-   // Return NULL if it's neither of these.
+   // Return UNKNOWN if it's neither of these.
 
    if (inliner->comp()->getOption(TR_DisableMutableCallSiteGuards))
-      return NULL;
+      {
+      return TR::KnownObjectTable::UNKNOWN;
+      }
 
    TR::Node *callNode = callSite->_callNode;
    if (!callNode || !callNode->getOpCode().isCall())
@@ -122,14 +126,8 @@ static uintptr_t *isMutableCallSiteTargetInvokeExact(TR_CallSite *callSite, TR_I
 
    if (mcsNode->getSymbolReference()->hasKnownObjectIndex())
       {
-      uintptr_t *result = mcsNode->getSymbolReference()->getKnownObjectReferenceLocation(inliner->comp());
-      heuristicTrace(inliner->tracer(), "  Success: isMutableCallSiteTargetInvokeExact(%p)=%p (obj%d)", callSite, result, mcsNode->getSymbolReference()->getKnownObjectIndex());
-      return result;
-      }
-   else if (mcsNode->getSymbol()->isFixedObjectRef())
-      {
-      uintptr_t *result = (uintptr_t*)mcsNode->getSymbol()->castToStaticSymbol()->getStaticAddress();
-      heuristicTrace(inliner->tracer(),"  Success: isMutableCallSiteTargetInvokeExact(%p)=%p (fixed object reference)", callSite, result);
+      TR::KnownObjectTable::Index result = mcsNode->getSymbolReference()->getKnownObjectIndex();
+      heuristicTrace(inliner->tracer(), "  Success: isMutableCallSiteTargetInvokeExact(%p)=obj%d", callSite, result);
       return result;
       }
    else
@@ -1051,9 +1049,12 @@ bool TR_J9MethodHandleCallSite::findCallSiteTarget (TR_CallStack *callStack, TR_
 
 bool TR_J9MutableCallSite::findCallSiteTarget (TR_CallStack *callStack, TR_InlinerBase* inliner)
    {
-   if (!_mcsReferenceLocation)
-      _mcsReferenceLocation = isMutableCallSiteTargetInvokeExact(this, inliner); // JSR292: Looking for calls through MutableCallSite
-   if (_mcsReferenceLocation)
+   if (_mcs == TR::KnownObjectTable::UNKNOWN)
+      {
+      _mcs = isMutableCallSiteTargetInvokeExact(this, inliner); // JSR292: Looking for calls through MutableCallSite
+      }
+
+   if (_mcs != TR::KnownObjectTable::UNKNOWN)
       {
       // TODO:JSR292: This belongs behind the FE interface
       heuristicTrace(inliner->tracer(),"Call is MutableCallSite.target.invokeExact call.");
@@ -1063,47 +1064,18 @@ bool TR_J9MutableCallSite::findCallSiteTarget (TR_CallStack *callStack, TR_Inlin
          return false;
          }
       TR_VirtualGuardSelection *vgs = new (comp()->trHeapMemory()) TR_VirtualGuardSelection(TR_MutableCallSiteTargetGuard, TR_DummyTest);
-      vgs->_mutableCallSiteObject = _mcsReferenceLocation;
+      vgs->_mutableCallSiteObject = _mcs;
       TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
 
-#if defined(J9VM_OPT_JITSERVER)
-      if (comp()->isOutOfProcessCompilation())
+      vgs->_mutableCallSiteEpoch = TR::KnownObjectTable::UNKNOWN;
+      if (!knot->isNull(_mcs))
          {
-         vgs->_mutableCallSiteEpoch = TR::KnownObjectTable::UNKNOWN;
-         bool knotEnabled = (knot != NULL);
-         auto stream = comp()->getStream();
-         stream->write(JITServer::MessageType::KnownObjectTable_mutableCallSiteEpoch, _mcsReferenceLocation, knotEnabled);
-
-         auto recv = stream->read<uintptr_t, TR::KnownObjectTable::Index, uintptr_t *>();
-         uintptr_t mcsObject = std::get<0>(recv);
-         TR::KnownObjectTable::Index knotIndex = std::get<1>(recv);
-         uintptr_t *objectPointerReference = std::get<2>(recv);
-
-         if (mcsObject && knot && (knotIndex != TR::KnownObjectTable::UNKNOWN))
-            {
-            vgs->_mutableCallSiteEpoch = knotIndex;
-            knot->updateKnownObjectTableAtServer(knotIndex, objectPointerReference);
-            }
-         else
-            {
-            vgs->_mutableCallSiteObject = NULL;
-            }
+         TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp()->fej9());
+         vgs->_mutableCallSiteEpoch = fej9->mutableCallSiteEpoch(comp(), _mcs);
          }
       else
-#endif /* defined(J9VM_OPT_JITSERVER) */
          {
-         TR::VMAccessCriticalSection mutableCallSiteEpoch(comp()->fej9());
-         vgs->_mutableCallSiteEpoch = TR::KnownObjectTable::UNKNOWN;
-         uintptr_t mcsObject = comp()->fej9()->getStaticReferenceFieldAtAddress((uintptr_t)_mcsReferenceLocation);
-         if (mcsObject && knot)
-            {
-            TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp()->fej9());
-            vgs->_mutableCallSiteEpoch = fej9->mutableCallSiteEpoch(comp(), mcsObject);
-            }
-         else
-            {
-            vgs->_mutableCallSiteObject = NULL;
-            }
+         vgs->_mutableCallSiteObject = TR::KnownObjectTable::UNKNOWN;
          }
 
       if (vgs->_mutableCallSiteEpoch != TR::KnownObjectTable::UNKNOWN)
@@ -1145,13 +1117,13 @@ bool TR_J9MutableCallSite::findCallSiteTarget (TR_CallStack *callStack, TR_Inlin
 
          return true;
          }
-      else if (vgs->_mutableCallSiteObject)
+      else if (vgs->_mutableCallSiteObject != TR::KnownObjectTable::UNKNOWN)
          {
-         heuristicTrace(inliner->tracer(),"  MutableCallSite.epoch is currently NULL.  Can't devirtualize.");
+         heuristicTrace(inliner->tracer(),"  MutableCallSite.epoch is currently UNKNOWN.  Can't devirtualize.");
          }
       else
          {
-         heuristicTrace(inliner->tracer(),"  MutableCallSite is NULL!  That is rather unexpected.");
+         heuristicTrace(inliner->tracer(),"  MutableCallSite is UNKNOWN!  That is rather unexpected.");
          }
       return false;
       }
