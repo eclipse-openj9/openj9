@@ -20,6 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
+#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
@@ -198,8 +199,7 @@ uintptr_t scan_udata(char **scan_start, uintptr_t* result)
 	uintptr_t total = 0, rc = 1;
 	char *c = *scan_start;
 
-	/* isdigit isn't properly supported everywhere */
-	while ( *c >= '0' && *c <= '9' ) {
+	while (OMR_ISDIGIT(*c)) {
 		uintptr_t digitValue = *c - '0';
 
 		if (total > ((uintptr_t)-1) / 10 ) {
@@ -236,8 +236,7 @@ scan_u64(char **scan_start, uint64_t* result)
 	uintptr_t rc = 1;
 	char *c = *scan_start;
 
-	/* isdigit isn't properly supported everywhere */
-	while ( *c >= '0' && *c <= '9' ) {
+	while (OMR_ISDIGIT(*c)) {
 		uintptr_t digitValue = *c - '0';
 
 		if (total > ((uint64_t)-1) / 10 ) {
@@ -274,8 +273,7 @@ scan_u32(char **scan_start, uint32_t* result)
 	uintptr_t rc = 1;
 	char *c = *scan_start;
 
-	/* isdigit isn't properly supported everywhere */
-	while ( *c >= '0' && *c <= '9' ) {
+	while (OMR_ISDIGIT(*c)) {
 		uint32_t digitValue = *c - '0';
 
 		if (total > ((uint32_t)-1) / 10 ) {
