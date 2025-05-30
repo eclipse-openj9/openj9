@@ -1055,8 +1055,24 @@ J9::TransformUtil::canFoldStaticFinalField(TR::Compilation *comp, TR::Node* node
       return TR_no;
 
    TR_ResolvedMethod *owningMethod = symRef->getOwningMethod(comp);
-   TR_OpaqueClassBlock* declaringClass = owningMethod->getClassFromFieldOrStatic(comp, symRef->getCPIndex(), true);
    TR::Symbol::RecognizedField recField = sym->getRecognizedField();
+
+   // In AOT without SVM, getDeclaringClassFromFieldOrStatic() returns null.
+   // With SVM, it is possible to get the declaring class, but doing so would
+   // create a validation that would be pointless most of the time, since in
+   // AOT we'll fold only if recField is Java_lang_String_enableCompression.
+   TR_OpaqueClassBlock* declaringClass = NULL;
+   if (!comp->compileRelocatableCode())
+      {
+      declaringClass =
+         owningMethod->getDeclaringClassFromFieldOrStatic(comp, symRef->getCPIndex());
+      }
+   else if (recField == TR::Symbol::Java_lang_String_enableCompression)
+      {
+      declaringClass =
+         comp->fej9()->getSystemClassFromClassName("java/lang/String", 16, true);
+      }
+
    return TR::TransformUtil::canFoldStaticFinalField(
       comp, declaringClass, recField, owningMethod, symRef->getCPIndex());
    }
@@ -1485,7 +1501,9 @@ bool J9::TransformUtil::attemptStaticFinalFieldFoldingImpl(TR::Optimization* opt
       }
 
    int32_t cpIndex = symRef->getCPIndex();
-   TR_OpaqueClassBlock* declaringClass = symRef->getOwningMethod(comp)->getClassFromFieldOrStatic(comp, cpIndex);
+   TR_OpaqueClassBlock* declaringClass =
+      symRef->getOwningMethod(comp)->getDeclaringClassFromFieldOrStatic(comp, cpIndex);
+
    if (J9::TransformUtil::canFoldStaticFinalField(comp, node) != TR_maybe
        || !declaringClass)
       {
