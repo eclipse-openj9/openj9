@@ -132,10 +132,12 @@ updateCache(J9JavaVM *vm, J9ClassLoader *classLoader, void *key, J9HashTable **c
 void
 j9cached_ArgBitsForPC0(J9JavaVM *vm, J9ROMClass *romClass, J9ROMMethod *romMethod, U_32 *resultArrayBase, J9ClassLoader *classLoader)
 {
-	if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_CACHE_MAPS)) {
+	UDATA mapWords = (J9_ARG_COUNT_FROM_ROM_METHOD(romMethod) + 31) >> 5;
+
+	if (!checkCache(vm, classLoader, (void*)romMethod, classLoader->argBitsCache, resultArrayBase, mapWords)) {
+		/* Cache miss - perform the map and attempt to cache the result */
 		j9localmap_ArgBitsForPC0(romClass, romMethod, resultArrayBase);
-	} else {
-		j9localmap_ArgBitsForPC0(romClass, romMethod, resultArrayBase);
+		updateCache(vm, classLoader, (void*)romMethod, &classLoader->argBitsCache, resultArrayBase, mapWords);
 	}
 }
 

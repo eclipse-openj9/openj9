@@ -1520,8 +1520,7 @@ getLocalsMap(J9StackWalkState * walkState, J9ROMClass * romClass, J9ROMMethod * 
 			/* j9localmap_ArgBitsForPC0 only deals with args, so zero out the result array to make sure the temps are non-object */
 
 			memset(result, 0, ((argTempCount + 31) / 32) * sizeof(U_32));
-
-			j9localmap_ArgBitsForPC0(romClass, romMethod, result);
+			j9cached_ArgBitsForPC0(romClass, romMethod, result);
 			return;
 		}
 	}
