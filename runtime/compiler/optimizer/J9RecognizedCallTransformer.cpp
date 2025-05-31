@@ -658,6 +658,22 @@ void J9::RecognizedCallTransformer::process_jdk_internal_util_ArraysSupport_vect
       //
       // Otherwise, we will do an additional check at run time, and skip the loading if the objects
       // are not an array and fall through to the default implementation.
+      //
+      // The resulting blocks should look like this:
+      // CurrentBlock:
+      //    Trees anchoring the callNode's children
+      //    Trees preceding the callNode's tree
+      //    storeTree
+      // callBlock i.e. nullCheckBlock:
+      //    Tree for null check
+      // arrayCheckBlock (only if type is uncertain on compile):
+      //    Tree for type check
+      // adjustBlock:
+      //    newStoreTree
+      // newCallBlock:
+      //    Tree containing callNode (later transformed into iselect)
+      // nextBlock:
+      //    Trees after callNode's tree
       if (aAdjustmentNeeded || bAdjustmentNeeded)
          {
          // callBlock should contain the tree of this treetop only
