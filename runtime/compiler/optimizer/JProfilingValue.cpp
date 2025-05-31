@@ -211,29 +211,37 @@ void TR_JProfilingValue::cleanUpAndAddProfilingCandidates()
        */
       TR::TreeTop *nextTT = cursor->getNextTreeTop();
       if (node->isProfilingCode()
-         && node->getOpCodeValue() == TR::treetop
-         && node->getFirstChild()->getOpCode().isCall()
-         && (comp()->getSymRefTab()->isNonHelper(node->getFirstChild()->getSymbolReference(), TR::SymbolReferenceTable::jProfileValueSymbol)
-            || comp()->getSymRefTab()->isNonHelper(node->getFirstChild()->getSymbolReference(), TR::SymbolReferenceTable::jProfileValueWithNullCHKSymbol)))
+          && node->getOpCodeValue() == TR::treetop
+          && node->getFirstChild()->getOpCode().isCall())
          {
-         TR::Node *value = node->getFirstChild()->getFirstChild();
+         TR::SymbolReference *callSymRef = node->getFirstChild()->getSymbolReference();
 
-         if ((alreadyProfiledValues->isSet(value->getGlobalIndex()) || value->getOpCode().isLoadConst()) &&
-               performTransformation(comp(), "%s Removing profiling treetop, node n%dn is already profiled\n",
-                  optDetailString(), value->getGlobalIndex()))
-            /* Found that second and third child were having more than one ref counts.
-            TR_ASSERT_FATAL(node->getFirstChild()->getSecondChild()->getReferenceCount() == 1 &&
-               node->getFirstChild()->getThirdChild()->getReferenceCount() == 1,
-               "Second and Third Child of the value calls should be referenced only once");
-            */
-            {
-            TR::TransformUtil::removeTree(comp(), cursor);
-            }
-         else
-            {
-            alreadyProfiledValues->set(value->getGlobalIndex());
-            }
+         bool isJProfileValueNonHelperCall =
+                  comp()->getSymRefTab()->isNonHelper(callSymRef, TR::SymbolReferenceTable::jProfileValueSymbol);
+         bool isJProfileValueWithNullCHKNonHelperCall =
+                  comp()->getSymRefTab()->isNonHelper(callSymRef, TR::SymbolReferenceTable::jProfileValueWithNullCHKSymbol);
 
+         if (isJProfileValueNonHelperCall || isJProfileValueWithNullCHKNonHelperCall)
+            {
+            TR::Node *value = isJProfileValueNonHelperCall ? node->getFirstChild()->getFirstChild()
+                                                           : node->getFirstChild();
+
+            if ((alreadyProfiledValues->isSet(value->getGlobalIndex()) || value->getOpCode().isLoadConst())
+                && performTransformation(comp(), "%s Removing profiling treetop, node n%dn is already profiled\n",
+                      optDetailString(), value->getGlobalIndex()))
+               /* Found that second and third child were having more than one ref counts.
+               TR_ASSERT_FATAL(node->getFirstChild()->getSecondChild()->getReferenceCount() == 1 &&
+                     node->getFirstChild()->getThirdChild()->getReferenceCount() == 1,
+                     "Second and Third Child of the value calls should be referenced only once");
+               */
+               {
+               TR::TransformUtil::removeTree(comp(), cursor);
+               }
+            else
+               {
+               alreadyProfiledValues->set(value->getGlobalIndex());
+               }
+            }
          }
       // Emptying a bit vector after scanning whole extended basic blocks will keep number of bits set in bit vector low.
       else if (node->getOpCodeValue() == TR::BBStart && !node->getBlock()->isExtensionOfPreviousBlock())
@@ -289,9 +297,8 @@ TR_JProfilingValue::performOnNode(TR::Node *node, TR::TreeTop *cursor, TR_BitVec
                || node->getOpCodeValue() == TR::checkcastAndNULLCHK)
             && !alreadyProfiledValues->isSet(node->getFirstChild()->getGlobalIndex()))
       {
+      profiledNode = node->getFirstChild();
       preceedingTT = cursor->getPrevTreeTop();
-      profiledNode = TR::Node::createWithSymRef(node, TR::aloadi, 1, node->getFirstChild(),
-                                                getSymRefTab()->findOrCreateVftSymbolRef());
       profiler = comp()->getSymRefTab()->findOrCreateJProfileValuePlaceHolderWithNullCHKSymbolRef();
       performTransformation(comp(), "%s Adding JProfiling PlaceHolder call to profile, instanceof/checkcast at n%dn profiling vft load of n%dn\n",
          optDetailString(), node->getGlobalIndex(), node->getFirstChild());
@@ -418,7 +425,6 @@ TR_JProfilingValue::lowerCalls()
  * | ...                                                                       |
  * | call jProfileValueSymbol/jProfileValueWithNullCHKSymbol // insertionPoint |
  * |     value                                                                 |
- * |        object (In case of VFT Profiling - jProfileValueWithNullCHKSymbol) |
  * |     aconst <table address>                                                |
  * | ...                                                                       |
  * |---------------------------------------------------------------------------|
@@ -476,21 +482,21 @@ TR_JProfilingValue::lowerCalls()
  *                         |                                                           |
  *                         |--------------------------------|                          |
  *                         |                                |                          |
- *                         v                                |                          |
- *          |------------------------------|                |                          |
- *          | quickInc                     |                |                          |
- *          |------------------------------|                |                          |
- *          | istorei                      |                |                          |
- *          |    al/aiadd                  |                v                          |
- *          |       aconst <table address> |        |-------------------------------|  |
- *          |       l/imul                 |        | helper                        |  |
- *          |           l/iselect          |        |-------------------------------|  |
- *          |          width               |        | call TR_jProfile32/64BitValue |  |
- *          |     iadd                     |        |    value                      |  |
- *          |        iloadi                |        |    table address              |  |
- *          |           => al/aiadd        |        |-------------------------------|  |
- *          |        iconst 1              |                         |                 |
+ *                         v                                v                          |
+ *          |------------------------------|        |-------------------------------|  |
+ *          | quickInc                     |        | helper                        |  |
+ *          |------------------------------|        |-------------------------------|  |
+ *          | istorei                      |        | call TR_jProfile32/64BitValue |  |
+ *          |    al/aiadd                  |        |    value                      |  |
+ *          |       aconst <table address> |        |       OR                      |  |
+ *          |       l/imul                 |        |    aloadi <vft-symbol>        |  |
+ *          |           l/iselect          |        |      value                    |  |
+ *          |          width               |        |    table address              |  |
+ *          |     iadd                     |        |-------------------------------|  |
+ *          |        iloadi                |                         |                 |
+ *          |           => al/aiadd        |                         |                 |
  *          |------------------------------|                         |                 |
+ *                         |                                         |                 |
  *                         |                                         |                 |
  *                         |<----------------------------------------|-----------------|
  *                         v
@@ -606,8 +612,7 @@ TR_JProfilingValue::addProfilingTrees(
        * In case some one else decides to add VFT profiling around type test in other pass, it should also add the null test to guard
        * the profiling, as due to other optimizations it might be possible that VFT load is uncommoned and converted to load from the temp slot or register.
        */
-      TR_ASSERT_FATAL(value->getNumChildren() == 1, "JProfilingValue : NULL check can only be done when object node is available.");
-      TR::Node *nullTest = TR::Node::createif(TR::ifacmpeq, value->getFirstChild(), TR::Node::aconst(value, 0), mainlineReturn->getEntry());
+      TR::Node *nullTest = TR::Node::createif(TR::ifacmpeq, value, TR::Node::aconst(value, 0), mainlineReturn->getEntry());
       TR::TreeTop *nullTestTree = TR::TreeTop::create(comp, nullTest);
       iter->append(nullTestTree);
       if (lastBranchToMainlineReturnTT != NULL)
@@ -761,6 +766,13 @@ TR_JProfilingValue::addProfilingTrees(
          TR::TreeTop *storeValue = TR::TreeTop::create(comp, quickTestBlock->getEntry(), storeNode(comp,  profilingValue, storedValueSymRef));
          }
       valueChildOfHelperCall = TR::Node::createLoad(value, storedValueSymRef);
+      }
+
+   if (addNullCheck)
+      {
+      valueChildOfHelperCall =
+            TR::Node::createWithSymRef(valueChildOfHelperCall, TR::aloadi, 1, valueChildOfHelperCall,
+                                       comp->getSymRefTab()->findOrCreateVftSymbolRef());
       }
 
    // Add the call to the helper and return to the mainline
