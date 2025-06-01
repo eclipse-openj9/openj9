@@ -490,4 +490,5 @@ J9InternalVMFunctions J9InternalFunctions = {
 	detachMonitorInfo,
 #endif /* JAVA_SPEC_VERSION >= 24 */
 	getSystemPropertyList,
+	freeMapCaches,
 };

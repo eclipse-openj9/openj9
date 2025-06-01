@@ -196,6 +196,19 @@ j9stackmap_StackBitsForPC(J9PortLibrary * portLib, UDATA pc, J9ROMClass * romCla
 		UDATA * (* getBuffer) (void * userData), 
 		void (* releaseBuffer) (void * userData));
 
+
+/* ------------------- mapcache.cpp ----------------- */
+
+void
+j9cached_ArgBitsForPC0(J9JavaVM *vm, J9ROMClass *romClass, J9ROMMethod *romMethod, U_32 *resultArrayBase, J9ClassLoader *classLoader);
+
+IDATA
+j9cached_LocalBitsForPC(J9JavaVM *vm, J9ROMClass * romClass, J9ROMMethod * romMethod, UDATA pc, U_32 * resultArrayBase,
+								void * userData,
+								UDATA * (* getBuffer) (void * userData),
+								void (* releaseBuffer) (void * userData),
+								J9ClassLoader * classLoader);
+
 #ifdef __cplusplus
 }
 #endif

@@ -413,6 +413,9 @@ MM_ClassLoaderManager::addDyingClassesToList(MM_EnvironmentBase *env, J9ClassLoa
 								J9UTF8_DATA(J9ROMCLASS_CLASSNAME(clazz->romClass)));
 					TRIGGER_J9HOOK_VM_CLASS_UNLOAD(_javaVM->hookInterface, vmThread, clazz);
 
+					/* Free the local map caches */
+					_javaVM->internalVMFunctions->freeMapCaches(classLoader);
+
 					/* add class to dying classes link list */
 					clazz->gcLink = classUnloadList;
 					classUnloadList = clazz;

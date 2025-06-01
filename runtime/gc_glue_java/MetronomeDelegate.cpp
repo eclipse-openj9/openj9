@@ -558,7 +558,10 @@ MM_MetronomeDelegate::addDyingClassesToList(MM_EnvironmentRealtime *env, J9Class
 								(UDATA) J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(clazz->romClass)),
 								J9UTF8_DATA(J9ROMCLASS_CLASSNAME(clazz->romClass)));
 					TRIGGER_J9HOOK_VM_CLASS_UNLOAD(_javaVM->hookInterface, vmThread, clazz);
-						
+
+					/* Free the local map caches */
+					_javaVM->internalVMFunctions->freeMapCaches(classLoader);
+
 					/* add class to dying anonymous classes link list */
 					clazz->gcLink = classUnloadList;
 					classUnloadList = clazz;

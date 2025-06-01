@@ -449,7 +449,7 @@ j9localmap_LocalBitsForPC(J9PortLibrary * portLib, J9ROMClass * romClass, J9ROMM
 												(UDATA) J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(romClass)), J9UTF8_DATA(J9ROMCLASS_CLASSNAME(romClass)),
 												(UDATA) J9UTF8_LENGTH(J9ROMMETHOD_NAME(romMethod)), J9UTF8_DATA(J9ROMMETHOD_NAME(romMethod)),
 												(UDATA) J9UTF8_LENGTH(J9ROMMETHOD_SIGNATURE(romMethod)), J9UTF8_DATA(J9ROMMETHOD_SIGNATURE(romMethod)));
-	
+
 	/* clear the result map as we may not write all of it */
 	memset ((U_8 *)resultArrayBase, 0, mapWords * sizeof (U_32));
 
