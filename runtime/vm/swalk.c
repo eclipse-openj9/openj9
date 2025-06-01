@@ -754,11 +754,12 @@ walkMethodFrame(J9StackWalkState * walkState)
 			if (walkState->argCount) {
 				/* Max size as argCount always <= 255 */
 				U_32 result[8];
+				J9Class *methodClass = UNTAGGED_METHOD_CP(walkState->method)->ramClass;
 
 #ifdef J9VM_INTERP_STACKWALK_TRACING
 				swPrintf(walkState, 4, "\tUsing signature mapper\n");
 #endif
-				j9localmap_ArgBitsForPC0(UNTAGGED_METHOD_CP(walkState->method)->ramClass->romClass, romMethod, result);
+				j9cached_ArgBitsForPC0(walkState->javaVM, methodClass->romClass, romMethod, result, methodClass->classLoader);
 
 #ifdef J9VM_INTERP_STACKWALK_TRACING
 				swPrintf(walkState, 4, "\tArguments starting at %p for %d slots\n", walkState->arg0EA, walkState->argCount);
@@ -1520,7 +1521,7 @@ getLocalsMap(J9StackWalkState * walkState, J9ROMClass * romClass, J9ROMMethod * 
 			/* j9localmap_ArgBitsForPC0 only deals with args, so zero out the result array to make sure the temps are non-object */
 
 			memset(result, 0, ((argTempCount + 31) / 32) * sizeof(U_32));
-			j9cached_ArgBitsForPC0(romClass, romMethod, result);
+			j9cached_ArgBitsForPC0(walkState->javaVM, romClass, romMethod, result, UNTAGGED_METHOD_CP(walkState->method)->ramClass->classLoader);
 			return;
 		}
 	}
