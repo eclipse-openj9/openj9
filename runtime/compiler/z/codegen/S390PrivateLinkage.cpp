@@ -1538,7 +1538,7 @@ J9::Z::PrivateLinkage::createEpilogue(TR::Instruction * cursor)
       // capped at MAX_ITABLE_ITERATIONS.
       //
 static int
-getITableIterationsNumber(TR::Compilation * comp, TR::SymbolReference * methodSymRef, TR_OpaqueClassBlock *declaringClass)
+getITableIterationsNumber(TR::Compilation * comp, TR_J9VMBase * fej9, TR::SymbolReference * methodSymRef, TR_OpaqueClassBlock *declaringClass)
    {
    // TODO: Get the numbers from settings or explain why these arbitrary bumbers are selected.
    const uint32_t MAX_IMPLEMENTERS_TO_EVALUATE = 30;
@@ -1593,7 +1593,7 @@ getITableIterationsNumber(TR::Compilation * comp, TR::SymbolReference * methodSy
    }
 
 TR::Instruction *
-J9::Z::PrivateLinkage::generateLastITableAndITableInstructions(TR::Compilation * comp, TR_J9VMBase * fej9, TR::CodeGenerator * codeGen, TR::Node * node, TR::SymbolReference * methodSymRef,
+generateLastITableAndITableInstructions(TR::Compilation * comp, TR_J9VMBase * fej9, TR::CodeGenerator * codeGen, TR::Node * node, TR::SymbolReference * methodSymRef,
    TR::Register * vftReg, TR::Register * scratchRegister, TR::Register * vTableIndexRegister, TR::Instruction * cursor)
    {
    // Start of last I table Implementation.
