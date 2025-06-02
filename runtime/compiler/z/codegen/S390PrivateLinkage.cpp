@@ -1526,8 +1526,74 @@ J9::Z::PrivateLinkage::createEpilogue(TR::Instruction * cursor)
 
    }
 
-static TR::Instruction *
-addLastITableInstructions(TR::Compilation * comp, TR_J9VMBase * fej9, TR::CodeGenerator * codeGen, TR::Node * node, TR::SymbolReference * methodSymRef,
+      //------------
+      // Estimate how many entries to iterate on the iTable by looking at how many
+      // interfaces the receiver class might implement:
+      // First finds all possible implementers of the declaring interface class.
+      // For each implementer, look at how many interfaces an implementer
+      // implements. We take the max number of the interfaces the implementer
+      // implements, which is eventually capped at MAX_ITABLE_ITERATIONS.
+      //
+      // By default or if CHTable is disabled, the number of iterations is
+      // capped at MAX_ITABLE_ITERATIONS.
+      //
+static int
+getITableIterationsNumber(TR::Compilation * comp, TR::SymbolReference * methodSymRef, TR_OpaqueClassBlock *declaringClass)
+   {
+   // TODO: Get the numbers from settings or explain why these arbitrary bumbers are selected.
+   const uint32_t MAX_IMPLEMENTERS_TO_EVALUATE = 30;
+   const uint32_t MIN_ITABLE_ITERATIONS = 1;
+   const uint32_t MAX_ITABLE_ITERATIONS = 4;
+   uint32_t iterations = MAX_ITABLE_ITERATIONS;
+
+   bool trace = comp->getOption(TR_TraceCG);
+   static bool *disableITableIterationsAfterLastITableCacheCheck = feGetEnv("TR_DisableITableIterationsAfterLastITableCacheCheck") != NULL;
+   if (disableITableIterationsAfterLastITableCacheCheck)
+      {
+      if (trace)
+         traceMsg(comp, "Itable iteration after lastITable check is disabled.\n");
+      return 0;
+      }
+
+   static char *numITableIterationsAfterLastITableCacheCheck = feGetEnv("TR_NumITableIterationsAfterLastITableCacheCheck");
+   if (numITableIterationsAfterLastITableCacheCheck)
+      {
+      iterations = atoi(numITableIterationsAfterLastITableCacheCheck);
+      if (trace)
+         traceMsg(comp, "Itable iteration is %d because TR_NumITableIterationsAfterLastITableCacheCheck was set.\n", iterations);
+      return iterations;
+      }
+
+   TR_ResolvedMethod **implArray = new (comp->trStackMemory()) TR_ResolvedMethod*[MAX_IMPLEMENTERS_TO_EVALUATE+1];
+   TR_PersistentCHTable *chTable = comp->getPersistentInfo()->getPersistentCHTable();
+   int32_t cpIndex = methodSymRef->getCPIndex();
+   // Find out how many implementers are for the declaring interface class.
+   // TODO: if fail, it return MAX_IMPLEMENTERS_TO_EVALUATE+1, why on x86 they pass MAX_IMPLEMENTERS_TO_EVALUATE+1 to this function? also it check TR_DisableCHOpts so no redundant cheking!
+   int32_t numImplementers = chTable->findnInterfaceImplementers(declaringClass, MAX_IMPLEMENTERS_TO_EVALUATE, implArray, cpIndex, methodSymRef->getOwningMethod(comp), comp);
+   if ((numImplementers != 0) && (numImplementers <= MAX_IMPLEMENTERS_TO_EVALUATE))
+      {
+      // Find out how many interfaces each implementer implements
+      uint32_t maxInterfaces = MIN_ITABLE_ITERATIONS;
+
+      for (int32_t i=0; i < numImplementers; ++i)
+         {
+         TR_OpaqueClassBlock *containingClass = implArray[i]->containingClass();
+         uint32_t numInterfaces = fej9->numInterfacesImplemented((J9Class *)containingClass);
+         maxInterfaces = (numInterfaces > maxInterfaces) ? numInterfaces : maxInterfaces;
+         }
+
+      iterations = (maxInterfaces > MAX_ITABLE_ITERATIONS) ? MAX_ITABLE_ITERATIONS : maxInterfaces;
+
+      if (trace)
+         traceMsg(comp, "ITable declaringClass %p numImplementers %d maxInterfaces %d iterations %d\n", declaringClass, numImplementers, maxInterfaces, iterations);
+      }
+   else if (trace)
+      traceMsg(comp, "Itable iteration is %d from a fix value.\n", iterations);
+   return iterations;
+   }
+
+J9::Z::PrivateLinkage:: TR::Instruction *
+generateLastITableAndITableInstructions(TR::Compilation * comp, TR_J9VMBase * fej9, TR::CodeGenerator * codeGen, TR::Node * node, TR::SymbolReference * methodSymRef,
    TR::Register * vftReg, TR::Register * scratchRegister, TR::Register * vTableIndexRegister, TR::Instruction * cursor)
    {
    // Start of last I table Implementation.
@@ -2283,7 +2349,7 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
                   }
                }
 
-            cursor = addLastITableInstructions(comp(), fej9, cg(), callNode, methodSymRef, vftReg, snippetReg, vTableIndexRegister, cursor);
+            cursor = generateLastITableAndITableInstructions(comp(), fej9, cg(), callNode, methodSymRef, vftReg, snippetReg, vTableIndexRegister, cursor);
 
             cursor = new (trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::LARL, callNode, snippetReg, ifcSnippet,cursor, cg());
 
