@@ -1881,13 +1881,15 @@ walkLiveMonitorSlotsForYield(J9StackWalkState *walkState, J9JITStackAtlas *gcSta
 				j9object_t obj = *objAddress;
 
 				if ((NULL != obj) && (targetSyncObject != obj)) {
-					J9ObjectMonitor *mon = vmFuncs->detachMonitorInfo(currentThread, obj);
+					BOOLEAN alreadyDetached = FALSE;
+					J9ObjectMonitor *mon = vmFuncs->detachMonitorInfo(currentThread, obj, &alreadyDetached);
 					if (NULL == mon) {
 						return J9_STACKWALK_RC_NO_MEMORY;
+					} else if (!alreadyDetached) {
+						mon->next = objMonitorHead;
+						objMonitorHead = mon;
+						monitorCount++;
 					}
-					mon->next = objMonitorHead;
-					objMonitorHead = mon;
-					monitorCount++;
 				}
 			}
 		}

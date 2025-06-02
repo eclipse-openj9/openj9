@@ -4803,11 +4803,12 @@ takeVirtualThreadListToUnblock(J9VMThread *currentThread);
  *
  * @param currentThread the current thread
  * @param lockObject the object with monitor to detach
+ * @param alreadyDetached whether object monitor has already been detached
  *
  * @return the inflated J9ObjectMonitor pointer
  */
 J9ObjectMonitor *
-detachMonitorInfo(J9VMThread *currentThread, j9object_t lockObject);
+detachMonitorInfo(J9VMThread *currentThread, j9object_t lockObject, BOOLEAN *alreadyDetached);
 #endif /* JAVA_SPEC_VERSION >= 24 */
 /* ---------------- hookableAsync.c ---------------- */
 
