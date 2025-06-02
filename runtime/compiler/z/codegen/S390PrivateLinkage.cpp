@@ -1547,7 +1547,7 @@ getITableIterationsNumber(TR::Compilation * comp, TR_J9VMBase * fej9, TR::Symbol
    uint32_t iterations = MAX_ITABLE_ITERATIONS;
 
    bool trace = comp->getOption(TR_TraceCG);
-   static bool *disableITableIterationsAfterLastITableCacheCheck = feGetEnv("TR_DisableITableIterationsAfterLastITableCacheCheck") != NULL;
+   static bool disableITableIterationsAfterLastITableCacheCheck = feGetEnv("TR_DisableITableIterationsAfterLastITableCacheCheck") != NULL;
    if (disableITableIterationsAfterLastITableCacheCheck)
       {
       if (trace)
