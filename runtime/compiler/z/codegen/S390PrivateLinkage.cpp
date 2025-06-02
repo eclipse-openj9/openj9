@@ -1592,8 +1592,8 @@ getITableIterationsNumber(TR::Compilation * comp, TR::SymbolReference * methodSy
    return iterations;
    }
 
-J9::Z::PrivateLinkage:: TR::Instruction *
-generateLastITableAndITableInstructions(TR::Compilation * comp, TR_J9VMBase * fej9, TR::CodeGenerator * codeGen, TR::Node * node, TR::SymbolReference * methodSymRef,
+TR::Instruction *
+J9::Z::PrivateLinkage::generateLastITableAndITableInstructions(TR::Compilation * comp, TR_J9VMBase * fej9, TR::CodeGenerator * codeGen, TR::Node * node, TR::SymbolReference * methodSymRef,
    TR::Register * vftReg, TR::Register * scratchRegister, TR::Register * vTableIndexRegister, TR::Instruction * cursor)
    {
    // Start of last I table Implementation.
