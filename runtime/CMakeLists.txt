@@ -143,10 +143,19 @@ add_custom_target(j9vm_hookgen
 
 # Generate NLS headers
 file(GLOB_RECURSE nls_files "${CMAKE_CURRENT_SOURCE_DIR}/nls/*.nls")
+
+# For Java 21+ on z/OS, nls generated files must be tagged as ASCII to allow for accurate EBCDIC conversion.
+if(OMR_OS_ZOS AND NOT (JAVA_SPEC_VERSION LESS 21))
+	set(tag_nls_headers find ${CMAKE_CURRENT_BINARY_DIR}/nls -name "*.h" | xargs chtag -t -c ISO8859-1)
+else()
+	set(tag_nls_headers true)
+endif()
+
 add_custom_command(
 	OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/nls.stamp"
 	DEPENDS j9nls ${nls_files}
 	COMMAND "${Java_JAVA_EXECUTABLE}" -cp "$<TARGET_PROPERTY:j9nls,JAR_FILE>" com.ibm.oti.NLSTool.J9NLS -source "${CMAKE_CURRENT_SOURCE_DIR}"
+	COMMAND ${tag_nls_headers}
 	COMMAND "${CMAKE_COMMAND}" -E touch "${CMAKE_CURRENT_BINARY_DIR}/nls.stamp"
 	COMMENT "Generating NLS files"
 	VERBATIM
