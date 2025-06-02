@@ -1611,14 +1611,6 @@ obj:
 		 * mutually exclusive.
 		 */
 		if (J9_OBJECT_MONITOR_ENTER_FAILED(monitorRC)) {
-			if (J9VM_CONTINUATION_RETURN_FROM_OBJECT_WAIT == returnState) {
-				/* The previous INL frame was removed when we re-mounted the continution. Build another one
-				 * since we will be blocking and un-mounting again.
-				 */
-				buildInternalNativeStackFrame(REGISTER_ARGS);
-				updateVMStruct(REGISTER_ARGS);
-			}
-
 			switch (monitorRC) {
 			case J9_OBJECT_MONITOR_VALUE_TYPE_IMSE:
 				_currentThread->tempSlot = (UDATA)syncObject;
@@ -5829,7 +5821,7 @@ ffi_OOM:
 			J9VMContinuation *continuation = _currentThread->currentContinuation;
 			if ((NULL != continuation) && (EXECUTE_BYTECODE == rc)) {
 				J9VMJDKINTERNALVMCONTINUATION_SET_BLOCKER(_currentThread, continuationObject, NULL);
-				syncObject = *(j9object_t *)(_sp + 3);
+				syncObject = *(j9object_t *)(_sp + 8);
 				omrthread_monitor_t monitor = getMonitorForWait(_currentThread, syncObject);
 				monitor->count = continuation->waitingMonitorEnterCount;
 				_currentThread->ownedMonitorCount += monitor->count - 1;
@@ -5852,14 +5844,12 @@ ffi_OOM:
 
 				/* Only throw an exception if the virtual thread has not been notified. */
 				if (interrupted	&& !notified) {
-					/* Build a native frame on vthread stack before throwing exception. */
-					buildInternalNativeStackFrame(REGISTER_ARGS);
-					updateVMStruct(REGISTER_ARGS);
-					prepareForExceptionThrow(_currentThread);
 					setCurrentException(_currentThread, J9VMCONSTANTPOOL_JAVALANGINTERRUPTEDEXCEPTION, NULL);
 					VMStructHasBeenUpdated(REGISTER_ARGS);
 					rc = GOTO_THROW_CURRENT_EXCEPTION;
 				} else {
+					restoreInternalNativeStackFrame(REGISTER_ARGS);
+					updateVMStruct(REGISTER_ARGS);
 					returnVoidFromINL(REGISTER_ARGS, 4);
 				}
 			}
