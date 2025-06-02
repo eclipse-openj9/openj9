@@ -138,8 +138,11 @@ outOfProcessCompilationEnd(TR_MethodToBeCompiled *entry, TR::Compilation *comp)
    std::string codeCacheStr((const char *)codeCacheHeader, codeSize);
    std::string dataCacheStr((const char *)dataCacheHeader, dataSize);
 
+   // The CH table commit data may be needed even if TR_DisableCHOpts is set,
+   // because if there were bonds, it may be necessary for the client's CH
+   // table commit to create unload assumptions.
    CHTableCommitData chTableData;
-   if (!comp->getOption(TR_DisableCHOpts) && !entry->_useAotCompilation)
+   if (!entry->_useAotCompilation)
       {
       TR_CHTable *chTable = comp->getCHTable();
       chTableData = chTable->computeDataForCHTableCommit(comp);

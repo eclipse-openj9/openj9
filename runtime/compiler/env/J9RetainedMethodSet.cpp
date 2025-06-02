@@ -25,6 +25,7 @@
 #include "j9nonbuilder.h"
 #include "compile/Compilation.hpp"
 #include "compile/ResolvedMethod.hpp"
+#include "env/ClassLoaderTable.hpp"
 #include "env/ClassTableCriticalSection.hpp"
 #include "env/StackMemoryRegion.hpp"
 #include "ilgen/J9ByteCode.hpp"
@@ -151,12 +152,13 @@ J9::RetainedMethodSet *
 J9::RetainedMethodSet::create(
    TR::Compilation *comp,
    TR_ResolvedMethod *method,
-   const TR::vector<J9::ResolvedInlinedCallSite, TR::Region&> &inliningTable)
+   const TR::vector<J9::ResolvedInlinedCallSite, TR::Region&> &inliningTable,
+   const TR::vector<J9ClassLoader*, TR::Region&> *permanentLoaders)
    {
    TR::Region &region = comp->trMemory()->heapMemoryRegion();
    auto *inlTab = new (region) VectorInliningTable(comp, inliningTable);
    auto *result = new (region) J9::RetainedMethodSet(comp, method, NULL, inlTab);
-   result->init();
+   result->init(permanentLoaders);
    return result;
    }
 
@@ -203,39 +205,35 @@ traceNamedLoader(
    }
 
 void
-J9::RetainedMethodSet::init()
+J9::RetainedMethodSet::init(
+   const TR::vector<J9ClassLoader*, TR::Region&> *permanentLoaders)
    {
    if (parent() == NULL)
       {
-      TR_J9VMBase *fe = comp()->fej9();
-      addPermanentLoader((J9ClassLoader*)fe->getSystemClassLoader(), "system");
-      addPermanentLoader((J9ClassLoader*)fe->getExtensionClassLoader(), "extension");
-      addPermanentLoader((J9ClassLoader*)fe->getApplicationClassLoader(), "application");
+      bool trace = comp()->getOption(TR_TraceRetainedMethods);
+
+      if (permanentLoaders == NULL)
+         {
+         permanentLoaders = &comp()->permanentLoaders();
+         }
+
+      auto end = permanentLoaders->end();
+      for (auto it = permanentLoaders->begin(); it != end; it++)
+         {
+         J9ClassLoader *loader = *it;
+         _loaders.insert(loader);
+         if (trace)
+            {
+            traceMsg(
+               comp(),
+               "RetainedMethodSet %p: add permanent loader %p\n",
+               this,
+               loader);
+            }
+         }
       }
 
    attestWillRemainLoaded(method());
-   }
-
-void
-J9::RetainedMethodSet::addPermanentLoader(J9ClassLoader *loader, const char *name)
-   {
-   bool trace = comp()->getOption(TR_TraceRetainedMethods);
-   if (loader == NULL)
-      {
-      if (trace)
-         {
-         traceMsg(comp(), "RetainedMethodSet %p: no %s loader\n", this, name);
-         }
-      }
-   else
-      {
-      if (trace)
-         {
-         traceMsg(comp(), "RetainedMethodSet %p: add %s loader %p\n", this, name, loader);
-         }
-
-      _loaders.insert(loader);
-      }
    }
 
 template <typename T>
@@ -486,7 +484,8 @@ J9::RetainedMethodSet::scan(J9Class *clazz)
       // thread and missed the update anyway. This is fine because the set is
       // not required to be exhaustive.
       void *outlivingLoaders = loader->outlivingLoaders;
-      if (outlivingLoaders == NULL)
+      if (outlivingLoaders == NULL
+          || outlivingLoaders == J9CLASSLOADER_OUTLIVING_LOADERS_PERMANENT)
          {
          // Empty set.
          }
@@ -793,8 +792,47 @@ J9::RepeatRetainedMethodsAnalysis::analyzeOnClient(
       return result;
       }
 
+   // Ensure that the set of permanent loaders used for analysis is up to date.
+   // Otherwise, we'd use the set belonging to the compilation object, and the
+   // following sequence of events would be possible:
+   //
+   // 1. Permanent loaders are determined for this compilation on the client
+   //    before sending the compilation request.
+   // 2. The client JIT is informed of a newly discovered permanent loader.
+   // 3. A different compilation thread sends another compilation request that
+   //    informs the server of the new permanent loader.
+   // 4. The server takes note of the new permanent loader.
+   // 5. Permanent loaders are determined for this compilation on the server.
+   //
+   // In this case, this compilation's permanent loaders on the client would be
+   // a strict subset of those on the server, but (if the sets aren't identical)
+   // the opposite containment relationship is required.
+   //
+   // By freshly collecting the permanent loaders here, we guarantee that the
+   // server's set will be a (possibly non-strict) subset of the client's. To
+   // see why, consider any permanent loader L known to the server in the
+   // current compilation. We know that the following events must happen in the
+   // order in which they are listed, since each causally precedes the next:
+   //
+   // - L is found to be permanent on the client and reported to the JIT.
+   // - L is sent to the server.
+   // - L is considered permanent for the current compilation on the server.
+   // - The current compilation does getDataForClient() on the server.
+   // - The current compilation starts analyzeOnClient() on the client (in progress).
+   // - The client freshly determines the permanent loaders (just below).
+   //
+   // Therefore, L is included in the freshly determined permanent loaders.
+   //
+   TR::PersistentInfo *persistentInfo = comp->getPersistentInfo();
+   TR_PersistentClassLoaderTable *loaderTable =
+      persistentInfo->getPersistentClassLoaderTable();
+
+   TR::Region &stackRegion = comp->trMemory()->currentStackRegion();
+   TR::vector<J9ClassLoader*, TR::Region&> permanentLoaders(stackRegion);
+   loaderTable->getPermanentLoaders(comp->fej9()->vmThread(), permanentLoaders);
+
    J9::RetainedMethodSet *root = J9::RetainedMethodSet::create(
-      comp, comp->getMethodBeingCompiled(), inliningTable);
+      comp, comp->getMethodBeingCompiled(), inliningTable, &permanentLoaders);
 
    uint32_t n = (uint32_t)inliningTable.size();
    TR::vector<J9::RetainedMethodSet*, TR::Region&> retainedMethods(comp->region());
