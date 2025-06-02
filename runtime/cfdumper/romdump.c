@@ -698,14 +698,14 @@ parseROMQuery(J9Pool *allocator, const char *query)
 
 		if ('[' == *query) {
 			query++;
-			if (!isdigit(*query)) {
+			if (!OMR_ISDIGIT(*query)) {
 				return NULL;
 			}
 
 			component->arrayIndex = atoi(query);
 			do {
 				query++;
-			} while (isdigit(*query));
+			} while (OMR_ISDIGIT(*query));
 
 			if (']' != *query) {
 				return NULL;

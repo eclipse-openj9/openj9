@@ -1057,7 +1057,7 @@ J9::DataType::getBCDPrecisionFromString(char *str, TR::DataType dt) // +123 prec
       }
    else
       {
-      TR_ASSERT(isdigit(str[0]),"expecting a minus/plus sign or a decimal digit and not 0x%x\n",str[0]);
+      TR_ASSERT(OMR_ISDIGIT(str[0]), "expecting a minus/plus sign or a decimal digit and not 0x%x\n", str[0]);
       }
    return precision;
    }
@@ -1073,7 +1073,7 @@ J9::DataType::getBCDStringFirstIndex(char *str, TR::DataType dt)
       }
    else
       {
-      TR_ASSERT(isdigit(firstChar),"expecting a minus/plus sign or a decimal digit and not 0x%x\n",firstChar);
+      TR_ASSERT(OMR_ISDIGIT(firstChar), "expecting a minus/plus sign or a decimal digit and not 0x%x\n", firstChar);
       firstIndex = 0;
       }
    return firstIndex;
