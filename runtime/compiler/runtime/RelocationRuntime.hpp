@@ -521,7 +521,7 @@ public:
       virtual OMRProcessorDesc getProcessorDescriptionFromSCC(J9VMThread *curThread) override
          { TR_ASSERT_FATAL(false, "Should not be called in this RelocationRuntime!"); return OMRProcessorDesc(); }
 
-      static uint8_t *copyDataToCodeCache(const void *startAddress, size_t totalSize, TR_J9VMBase *fe);
+      static uint8_t *copyDataToCodeCache(const void *startAddress, size_t totalSize, TR_J9VMBase *fe, TR::CodeCacheKind kind);
 
 private:
       virtual uint8_t * allocateSpaceInCodeCache(UDATA codeSize) override;

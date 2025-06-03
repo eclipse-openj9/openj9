@@ -1150,7 +1150,7 @@ TR_SharedCacheRelocationRuntime::allocateSpaceInCodeCache(UDATA codeSize)
       {
       int32_t numReserved;
 
-      _codeCache = manager->reserveCodeCache(false, codeSize, compThreadID, &numReserved);  // Acquire a cold/warm code cache.
+      _codeCache = manager->reserveCodeCache(false, codeSize, compThreadID, &numReserved, _comp->codeCacheKind());  // Acquire a cold/warm code cache.
       if (!codeCache())
          {
          // TODO: how do we pass back error codes to trigger retrial?
@@ -1561,7 +1561,7 @@ TR_JITServerRelocationRuntime::allocateSpaceInCodeCache(UDATA codeSize)
       {
       int32_t numReserved;
 
-      _codeCache = manager->reserveCodeCache(false, codeSize, compThreadID, &numReserved);  // Acquire a cold/warm code cache.
+      _codeCache = manager->reserveCodeCache(false, codeSize, compThreadID, &numReserved, _comp->codeCacheKind());  // Acquire a cold/warm code cache.
       if (!codeCache())
          {
          // TODO: How do we pass back error codes to trigger retrial?
@@ -1609,14 +1609,14 @@ TR_JITServerRelocationRuntime::allocateSpaceInDataCache(uintptr_t metaDataSize,
    }
 
 uint8_t *
-TR_JITServerRelocationRuntime::copyDataToCodeCache(const void *startAddress, size_t totalSize, TR_J9VMBase *fe)
+TR_JITServerRelocationRuntime::copyDataToCodeCache(const void *startAddress, size_t totalSize, TR_J9VMBase *fe, TR::CodeCacheKind kind)
    {
    TR::CompilationInfoPerThreadBase *compInfoPT = fe->_compInfoPT;
    int32_t numReserved;
    TR::CodeCache *codeCache = NULL;
    TR::CodeCacheManager *manager = TR::CodeCacheManager::instance();
    TR_ASSERT(!compInfoPT->getCompilation()->cg()->getCodeCache(), "No code caches should be reserved when copying a thunk");
-   codeCache = manager->reserveCodeCache(false, totalSize, compInfoPT->getCompThreadId(), &numReserved);
+   codeCache = manager->reserveCodeCache(false, totalSize, compInfoPT->getCompThreadId(), &numReserved, kind);
    if (!codeCache)
       return NULL;
 
