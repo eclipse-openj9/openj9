@@ -3447,7 +3447,23 @@ TR_IProfiler::setWarmCallGraphTooBig(TR_OpaqueMethodBlock *method, int32_t bcInd
    {
    TR_IPBytecodeHashTableEntry *entry = profilingSample(method, bcIndex, comp);
    if (entry)
+      {
       entry->setWarmCallGraphTooBig(set);
+      }
+   else
+      {
+      // This PC does not exist in the IProfiler hashtable.
+      // special/static invokes are not tracked by the IProfiler, yet we still want to set the warmCallGraphTooBig flag.
+      // Create an artificial entry for the sole purpose of setting the warmCallGraphTooBig flag.
+      uintptr_t pc = getSearchPC(method, bcIndex, comp);
+      uint8_t bytecode = *((U_8*)pc);
+      if (isSpecialOrStatic(bytecode))
+         {
+         TR_IPBytecodeHashTableEntry *entry = profilingSample(pc, /*data=*/1, /*addIt=*/true);
+         if (entry)
+            entry->setWarmCallGraphTooBig(set);
+         }
+      }
    }
 
 bool
