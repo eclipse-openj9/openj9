@@ -1526,17 +1526,6 @@ J9::Z::PrivateLinkage::createEpilogue(TR::Instruction * cursor)
 
    }
 
-      //------------
-      // Estimate how many entries to iterate on the iTable by looking at how many
-      // interfaces the receiver class might implement:
-      // First finds all possible implementers of the declaring interface class.
-      // For each implementer, look at how many interfaces an implementer
-      // implements. We take the max number of the interfaces the implementer
-      // implements, which is eventually capped at MAX_ITABLE_ITERATIONS.
-      //
-      // By default or if CHTable is disabled, the number of iterations is
-      // capped at MAX_ITABLE_ITERATIONS.
-      //
 static int32_t
 getITableIterationsNumber(TR::Compilation * comp, TR::SymbolReference * methodSymRef, TR_OpaqueClassBlock *declaringClass)
    {
@@ -1723,9 +1712,12 @@ generateLastITableAndITableInstructions(TR::CodeGenerator * cg, TR::Node * callN
                      iTablePointerReference = generateS390MemoryReference(scratchRegister, offsetof(J9ITable, next), cg);
 
                   cursor = generateRXInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), callNode, scratchRegister, iTablePointerReference, cursor);
+                  // Exit if the value is NULL.
                   cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BZ, callNode, exitLabel, cursor);
                   TR::MemoryReference * classPointerReference = generateS390MemoryReference(scratchRegister, fej9->getOffsetOfInterfaceClassFromITableField(), cg);
                   cursor = generateRXInstruction(cg, TR::InstOpCode::getCmpLogicalOpCode(), callNode, vTableIndexRegister, classPointerReference, cursor);
+                  // Compare the class with the target interface and jump to the dispatch sequence if match.
+                  // vTableIndexRegister contains the value of the target interface.
                   cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, callNode, matchLabel, cursor);
                }
             }
@@ -1740,6 +1732,7 @@ generateLastITableAndITableInstructions(TR::CodeGenerator * cg, TR::Node * callN
       }
    return cursor;
    }
+
 ////////////////////////////////////////////////////////////////////////////////
 // J9::Z::PrivateLinkage::buildVirtualDispatch - build virtual function call
 ////////////////////////////////////////////////////////////////////////////////
