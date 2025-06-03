@@ -1595,7 +1595,7 @@ getITableIterationsNumber(TR::Compilation * comp, TR::SymbolReference * methodSy
 
 TR::Instruction *
 generateLastITableAndITableInstructions(TR::CodeGenerator * cg, TR::Node * callNode, TR::SymbolReference * methodSymRef,
-   TR::Register * vftReg, TR::Register * scratchRegister, TR::Register * loopCountRegister, TR::Register * vTableIndexRegister, TR::Instruction * cursor)
+   TR::Register * vftReg, TR::Register * scratchRegister, TR::Register * loopCountRegister, TR::Register * vTableIndexRegister, TR::RegisterDependencyConditions * postDeps, TR::Instruction * cursor)
    {
    TR::Compilation * comp = cg->comp(); 
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
@@ -1613,11 +1613,9 @@ generateLastITableAndITableInstructions(TR::CodeGenerator * cg, TR::Node * callN
 
       int32_t iTableIterations = getITableIterationsNumber(comp, methodSymRef, declaringClass);
       // if the iteration is larger than 0x7fff, check all entries without counting.
-      bool checkAllITableEnrties = iTableIterations == INT16_MAX;
+      bool checkAllITableEnrties = iTableIterations > INT16_MAX;
       bool checkLimitedNumberOfITableEntries = !checkAllITableEnrties && iTableIterations > 1;
-      bool noITableCheck = iTableIterations == 0;
-      // It is strange to check just one iTable entry but we should handle this case.
-      bool checkSingleITableEntrie = iTableIterations == 1;
+      bool checkITableEntries = iTableIterations > 0;
 
       static bool breakBeforeIPICUsingLastITable = feGetEnv("TR_breakBeforeIPICUsingLastITable");
       if (breakBeforeIPICUsingLastITable)
@@ -1639,7 +1637,7 @@ generateLastITableAndITableInstructions(TR::CodeGenerator * cg, TR::Node * callN
 
 
       /********* Step 2: Dispatch to the method implementation. *********/
-      if (iTableIterations > 0)
+      if (checkITableEntries)
          cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, callNode, matchLabel, cursor);
       // Calculating vTableIndex value. vTableIndexRegister must have the vTableIndex value when dispatching.
       cursor = generateRIInstruction(cg, TR::InstOpCode::getLoadHalfWordImmOpCode() , callNode, vTableIndexRegister, fej9->getITableEntryJitVTableOffset(), cursor);
@@ -1661,12 +1659,19 @@ generateLastITableAndITableInstructions(TR::CodeGenerator * cg, TR::Node * callN
       // jump here if no itable match was found!
       cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, callNode, noMatchLabel, cursor);
 
-      if (!noITableCheck)
+      if (checkITableEntries)
          {
          TR::LabelSymbol * exitLabel = generateLabelSymbol(cg);
+         bool stopUsingLoopCountReg = false;
          if (checkLimitedNumberOfITableEntries)
             {
             // Load the limit to the loop count register.
+            if (loopCountRegister == NULL)
+               {
+               loopCountRegister = cg->allocateRegister();
+               postDeps->addPostCondition(loopCountRegister);
+               stopUsingLoopCountReg = true;
+               }
             cursor = generateRIInstruction(cg, TR::InstOpCode::getLoadHalfWordImmOpCode() , callNode, loopCountRegister, iTableIterations, cursor);
             }
 
@@ -1719,6 +1724,10 @@ generateLastITableAndITableInstructions(TR::CodeGenerator * cg, TR::Node * callN
 
          // No iTable entry matches the target interface. Exit the sequence.
          cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, callNode, exitLabel, cursor);
+         }
+      if (stopUsingLoopCountReg)
+         {
+         cg->stopUsingRegister(loopCountRegister);
          }
       }
    return cursor;
@@ -2136,7 +2145,7 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
       {
       int32_t i=0;
       TR::Register * thisClassRegister;
-      TR::Register * methodRegister ;
+      TR::Register * methodRegister = NULL;
       TR::Register * tmpRegister ;
       TR::RegisterPair * classMethodEPPairRegister;
       int32_t numInterfaceCallCacheSlots =  comp()->getOptions()->getNumInterfaceCallCacheSlots();
@@ -2230,6 +2239,12 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
          postDeps->setAddCursorForPre(0);        // Ignore all pre-deps that were copied.
          postDeps->setNumPreConditions(0, trMemory());        // Ignore all pre-deps that were copied.
 
+
+         // Add instructions for LastITable and ITable check.
+         // methodRegister and snippetReg are used as scratch registers and the existing value is not used.
+         // The current value of vTableIndexRegister does not matter and the vTableIndex value will be loaded there if dispatch.
+         //cursor = generateLastITableAndITableInstructions(cg(), callNode, methodSymRef, vftReg, snippetReg, methodRegister, vTableIndexRegister, postDeps, cursor);
+
          gcPoint = generateSnippetCall(cg(), callNode, ifcSnippet, dependencies,methodSymRef);
 
          // NOP is necessary so that the VM doesn't confuse Virtual Dispatch (expected to always use BASR
@@ -2309,6 +2324,11 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
             //Cache hit? then jumpto cached method entrypoint directly
             cursor = generateS390RegInstruction(cg(), TR::InstOpCode::BCR, callNode, methodRegister, cursor);
             ((TR::S390RegInstruction *)cursor)->setBranchCondition(TR::InstOpCode::COND_BER);
+
+            // Add instructions for LastITable and ITable check.
+            // methodRegister and snippetReg are used as scratch registers and the existing value is not used.
+            // The current value of vTableIndexRegister does not matter and the vTableIndex value will be loaded there if dispatch.
+            cursor = generateLastITableAndITableInstructions(cg(), callNode, methodSymRef, vftReg, snippetReg, methodRegister, vTableIndexRegister, postDeps, cursor);
 
             cursor = new (trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::LARL, callNode, snippetReg, ifcSnippet,cursor, cg());
 
@@ -2401,7 +2421,11 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
                   }
                }
 
-            cursor = generateLastITableAndITableInstructions(cg(), callNode, methodSymRef, vftReg, snippetReg, NULL, vTableIndexRegister, cursor);
+            // Add instructions for LastITable and ITable check.
+            // methodRegister and snippetReg are used as scratch registers and the existing value is not used.
+            // The current value of vTableIndexRegister does not matter and the vTableIndex value will be loaded there if dispatch.
+            // It will allocate register if methodRegister is NULL.
+            cursor = generateLastITableAndITableInstructions(cg(), callNode, methodSymRef, vftReg, snippetReg, methodRegister, vTableIndexRegister, postDeps, cursor);
 
             cursor = new (trHeapMemory()) TR::S390RILInstruction(TR::InstOpCode::LARL, callNode, snippetReg, ifcSnippet,cursor, cg());
 
