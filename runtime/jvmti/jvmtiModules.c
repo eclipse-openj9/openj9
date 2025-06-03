@@ -398,7 +398,7 @@ jvmtiAddModuleReads(jvmtiEnv* jvmtiEnv, jobject fromModule, jobject toModule)
 
 				vm->addReads = addReads;
 			}
-			(*env)->CallObjectMethod(env, fromModule, vm->addReads, toModule, JNI_TRUE);
+			(*env)->CallVoidMethod(env, fromModule, vm->addReads, toModule, JNI_TRUE);
 			if ((*env)->ExceptionCheck(env)) {
 				rc = JVMTI_ERROR_INTERNAL;
 			}
