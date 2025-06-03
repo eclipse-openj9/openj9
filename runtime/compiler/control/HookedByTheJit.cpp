@@ -4450,8 +4450,6 @@ void JitShutdown(J9JITConfig * jitConfig)
    if (options && options->getOption(TR_VerboseInlineProfiling))
       {
       j9tty_printf(PORTLIB, "Inlining statistics:\n");
-      j9tty_printf(PORTLIB, "\tFailed to devirtualize virtual calls:    %10d\n", TR::Options::INLINE_failedToDevirtualize);
-      j9tty_printf(PORTLIB, "\tFailed to devirtualize interface calls:  %10d\n", TR::Options::INLINE_failedToDevirtualizeInterface);
       j9tty_printf(PORTLIB, "\tCallee method is too big:                %10d\n", TR::Options::INLINE_calleeToBig);
       j9tty_printf(PORTLIB, "\tCallee method is too deep:               %10d\n", TR::Options::INLINE_calleeToDeep);
       j9tty_printf(PORTLIB, "\tCallee method has too many nodes:        %10d\n", TR::Options::INLINE_calleeHasTooManyNodes);
