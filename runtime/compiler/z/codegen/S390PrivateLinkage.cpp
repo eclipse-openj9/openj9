@@ -1669,7 +1669,7 @@ generateLastITableAndITableInstructions(TR::CodeGenerator * cg, TR::Node * callN
             if (loopCountRegister == NULL)
                {
                loopCountRegister = cg->allocateRegister();
-               postDeps->addPostCondition(loopCountRegister);
+               postDeps->addPostCondition(loopCountRegister, TR::RealRegister::AssignAny);
                stopUsingLoopCountReg = true;
                }
             cursor = generateRIInstruction(cg, TR::InstOpCode::getLoadHalfWordImmOpCode() , callNode, loopCountRegister, iTableIterations, cursor);
@@ -1724,10 +1724,10 @@ generateLastITableAndITableInstructions(TR::CodeGenerator * cg, TR::Node * callN
 
          // No iTable entry matches the target interface. Exit the sequence.
          cursor = generateS390LabelInstruction(cg, TR::InstOpCode::label, callNode, exitLabel, cursor);
-         }
-      if (stopUsingLoopCountReg)
-         {
-         cg->stopUsingRegister(loopCountRegister);
+         if (stopUsingLoopCountReg)
+            {
+            cg->stopUsingRegister(loopCountRegister);
+            }
          }
       }
    return cursor;
