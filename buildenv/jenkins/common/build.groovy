@@ -849,17 +849,19 @@ def build_all() {
         timeout(time: 10, unit: 'HOURS') {
             node("${NODE}") {
                 timeout(time: 5, unit: 'HOURS') {
-                    if ("${DOCKER_IMAGE}") {
-                        // TODO: Remove this workaround when https://github.com/adoptium/infrastructure/issues/3597 is resolved. Related: infra 9292.
-                        if ((PLATFORM ==~ /ppc64le_linux.*/) || (PLATFORM ==~ /x86-64_linux.*/)) {
-                            create_docker_image_locally()
-                        }
-                        prepare_docker_environment()
-                        docker.image(DOCKER_IMAGE_ID).inside("-v /home/jenkins/openjdk_cache:/home/jenkins/openjdk_cache:rw,z -v /home/jenkins/.ssh:/home/jenkins/.ssh:rw,z") {
+                    stage('Setup') {
+                        if ("${DOCKER_IMAGE}") {
+                            // TODO: Remove this workaround when https://github.com/adoptium/infrastructure/issues/3597 is resolved. Related: infra 9292.
+                            if ((PLATFORM ==~ /ppc64le_linux.*/) || (PLATFORM ==~ /x86-64_linux.*/)) {
+                                create_docker_image_locally()
+                            }
+                            prepare_docker_environment()
+                            docker.image(DOCKER_IMAGE_ID).inside("-v /home/jenkins/openjdk_cache:/home/jenkins/openjdk_cache:rw,z -v /home/jenkins/.ssh:/home/jenkins/.ssh:rw,z") {
+                                _build_all()
+                            }
+                        } else {
                             _build_all()
                         }
-                    } else {
-                        _build_all()
                     }
                 }
             }
