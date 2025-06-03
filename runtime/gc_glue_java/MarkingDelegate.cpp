@@ -444,6 +444,9 @@ MM_MarkingDelegate::completeMarking(MM_EnvironmentBase *env)
 								Assert_MM_true(NULL != classLoader->classHashTable);
 								clazz = javaVM->internalVMFunctions->hashClassTableStartDo(classLoader, &walkState, 0);
 								while (NULL != clazz) {
+#if defined(J9VM_OPT_SNAPSHOTS)
+									if (IS_SNAPSHOT_RUN(javaVM) || (NULL != clazz->classObject))
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 									_markingScheme->markObjectNoCheck(env, (omrobjectptr_t )clazz->classObject);
 									_anotherClassMarkPass = true;
 									clazz = javaVM->internalVMFunctions->hashClassTableNextDo(&walkState);
@@ -454,7 +457,9 @@ MM_MarkingDelegate::completeMarking(MM_EnvironmentBase *env)
 									J9Module **modulePtr = (J9Module**)hashTableStartDo(classLoader->moduleHashTable, &moduleWalkState);
 									while (NULL != modulePtr) {
 										J9Module * const module = *modulePtr;
-
+#if defined(J9VM_OPT_SNAPSHOTS)
+										if ((IS_SNAPSHOT_RUN(javaVM)) || (NULL != module->moduleObject))
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 										_markingScheme->markObjectNoCheck(env, (omrobjectptr_t )module->moduleObject);
 										if (NULL != module->version) {
 											_markingScheme->markObjectNoCheck(env, (omrobjectptr_t )module->version);
