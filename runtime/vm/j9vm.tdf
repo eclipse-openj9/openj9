@@ -1020,3 +1020,8 @@ TraceExit=Trc_VM_getTypeId_Exit Overhead=1 Level=5 Template="getTypeId clazz=%p 
 
 TraceEvent=Trc_systemPropertyIterator Overhead=1 Level=10 Template="systemPropertyIterator: added VM system property '%s'='%s'"
 TraceExit-Exception=Trc_VM_objectMonitorExit_Exit_LearningStateUnowned Overhead=1 Level=4 Template="objectMonitorExit (IllegalMonitorState: Lock in learning state but unowned. Flat lock=%p, object=%p)"
+TraceEvent=Trc_VM_objectMonitorExit_OMRThread_Monitor_Exit Overhead=1 Level=6 Template="objectMonitorExit: Exiting monior (%p) via omrthread_monitor_exit, monitor->count (%zu)"
+TraceEvent=Trc_VM_enterContinuation_Mount Overhead=1 Level=6 Template="enterContinuation: Mounted continuation %p, returnState (%zu), ownedMonitorCount (%zu), continuation->enteredMonitors (%p)"
+TraceEvent=Trc_VM_yieldContinuation_Unmount Overhead=1 Level=6 Template="yieldContinuation: Unmounted continuation %p, returnState (%zu), ownedMonitorCount (%zu), enteredMonitors (%p)"
+TraceEvent=Trc_VM_detachMonitorInfo_Detach Overhead=1 Level=6 Template="Detach monitor: currentContinuation (%p), objectMonitor (%p), monitor (%p), monitor->owner (%p), monitor->count (%zu), osThread (%p)"
+TraceEvent=Trc_VM_updateMonitorInfo_Attach Overhead=1 Level=6 Template="Attach monitor: currentContinuation (%p), objectMonitor (%p), monitor (%p), monitor->owner (%p), monitor->count (%zu), osThread (%p)"

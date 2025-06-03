@@ -293,6 +293,9 @@ restart:
 				}
 			}
 		}
+#if JAVA_SPEC_VERSION >= 24
+		Trc_VM_objectMonitorExit_OMRThread_Monitor_Exit(vmStruct, monitor, monitor->count);
+#endif /*  JAVA_SPEC_VERSION >= 24 */
 		rc = omrthread_monitor_exit((omrthread_monitor_t)monitor);
 #if JAVA_SPEC_VERSION >= 24
 		if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)
