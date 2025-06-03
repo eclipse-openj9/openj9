@@ -3381,7 +3381,7 @@ TR_J9SharedCacheServerVM::getDesignatedCodeCache(TR::Compilation *comp)
    int32_t compThreadID = comp ? comp->getCompThreadID() : -1;
    bool hadClassUnloadMonitor = false;
    bool hadVMAccess = releaseClassUnloadMonitorAndAcquireVMaccessIfNeeded(comp, &hadClassUnloadMonitor);
-   TR::CodeCache * codeCache = TR::CodeCacheManager::instance()->reserveCodeCache(true, 0, compThreadID, &numReserved);
+   TR::CodeCache * codeCache = TR::CodeCacheManager::instance()->reserveCodeCache(true, 0, compThreadID, &numReserved, comp->codeCacheKind());
    acquireClassUnloadMonitorAndReleaseVMAccessIfNeeded(comp, hadVMAccess, hadClassUnloadMonitor);
    // For AOT we need some alignment
    if (codeCache)

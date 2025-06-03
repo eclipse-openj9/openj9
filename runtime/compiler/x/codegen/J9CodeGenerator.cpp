@@ -498,7 +498,7 @@ J9::X86::CodeGenerator::reserveNTrampolines(int32_t numTrampolines)
          newCache = 0;
          if (self()->getCodeGeneratorPhase() != TR::CodeGenPhase::BinaryEncodingPhase)
             {
-            newCache = TR::CodeCacheManager::instance()->getNewCodeCache(comp->getCompThreadID());
+            newCache = TR::CodeCacheManager::instance()->getNewCodeCache(comp->getCompThreadID(), curCache->_kind);
             if (newCache)
                {
                status = newCache->reserveSpaceForTrampoline_bridge(numTrampolines);

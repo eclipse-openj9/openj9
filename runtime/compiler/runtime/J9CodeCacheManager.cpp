@@ -257,12 +257,15 @@ TR::CodeCache*
 J9::CodeCacheManager::reserveCodeCache(bool compilationCodeAllocationsMustBeContiguous,
                                       size_t sizeEstimate,
                                       int32_t compThreadID,
-                                      int32_t *numReserved)
+                                      int32_t *numReserved,
+                                      TR::CodeCacheKind kind)
    {
    TR::CodeCache *codeCache = self()->OMR::CodeCacheManager::reserveCodeCache(compilationCodeAllocationsMustBeContiguous,
                                                                             sizeEstimate,
                                                                             compThreadID,
-                                                                            numReserved);
+                                                                            numReserved,
+                                                                            kind);
+
    if (codeCache == NULL)
       {
       J9JITConfig *jitConfig = self()->fej9()->getJ9JITConfig();
