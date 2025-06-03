@@ -1698,12 +1698,12 @@ generateLastITableAndITableInstructions(TR::CodeGenerator * cg, TR::Node * callN
             if (checkAllITableEnrties)
                {
                // Check the next entry. It will exit the loop at the last entry because the "next"  pointer will be null.
-               cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_B, callNode, loopLabel, cursor);
+               cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_B, callNode, loopTopLabel, cursor);
                }
             else
                {
                // Check the next entry for "iTableIterations" time or until the last entry.
-               cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRCT, node, loopCountRegister, loopTopLabel, cursor);
+               cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRCT, callNode, loopCountRegister, loopTopLabel, cursor);
                }
             }
          else
@@ -1712,7 +1712,8 @@ generateLastITableAndITableInstructions(TR::CodeGenerator * cg, TR::Node * callN
             TR::MemoryReference * iTablePointerReference = generateS390MemoryReference(vftReg, offsetof(J9Class, iTable), cg);
             cursor = generateRXInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), callNode, scratchRegister, iTablePointerReference, cursor);
             cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BZ, callNode, exitLabel, cursor);
-            cursor = generateRXInstruction(cg, TR::InstOpCode::getCmpLogicalOpCode(), callNode, vTableIndexRegister, interfaceClass, cursor);
+            TR::MemoryReference * classPointerReference = generateS390MemoryReference(scratchRegister, fej9->getOffsetOfInterfaceClassFromITableField(), cg);
+            cursor = generateRXInstruction(cg, TR::InstOpCode::getCmpLogicalOpCode(), callNode, vTableIndexRegister, classPointerReference, cursor);
             cursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, callNode, matchLabel, cursor);
             }
 
