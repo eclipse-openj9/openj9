@@ -3733,9 +3733,12 @@ typedef struct J9ClassLoader {
 	 * Permanent loaders are excluded, since they would be uninformative
 	 * (systemClassLoader, applicationClassLoader, and extensionClassLoader).
 	 * Similarly, there's no need to maintain a graph of the permanent loaders,
-	 * so they have an empty outliving loader set.
+	 * so for them nothing will be added to the outliving loader set. Instead,
+	 * the field will be set to a special value to indicate that the loader is
+	 * permanent.
 	 *
 	 * The value is one of the following representations:
+	 * - empty set, permanent loader: J9CLASSLOADER_OUTLIVING_LOADERS_PERMANENT
 	 * - empty set: null
 	 * - singleton set: J9ClassLoader pointer tagged with J9CLASSLOADER_OUTLIVING_LOADERS_SINGLE_TAG
 	 * - set of two or more: untagged pointer to J9HashTable of J9ClassLoader pointers
@@ -3760,6 +3763,12 @@ typedef struct J9ClassLoader {
 #define TMP_J9CLASSLOADER_CLASSLOADEROBJECT(object) ((object)->classLoaderObject)
 
 #define J9CLASSLOADER_OUTLIVING_LOADERS_SINGLE_TAG 1
+
+/* Use -2 insetad of -1 so that J9CLASSLOADER_OUTLIVING_LOADERS_SINGLE_TAG doesn't appear to
+ * be set. This way, it's possible to test for J9CLASSLOADER_OUTLIVING_LOADERS_PERMANENT and
+ * J9CLASSLOADER_OUTLIVING_LOADERS_SINGLE_TAG in either order.
+ */
+#define J9CLASSLOADER_OUTLIVING_LOADERS_PERMANENT ((void *)(UDATA)-2)
 
 #if defined(_MSC_VER)
 #pragma warning(push)
@@ -4352,6 +4361,7 @@ typedef struct J9JITConfig {
 	void  ( *jitFlushCompilationQueue)(struct J9VMThread * currentThread, J9JITFlushCompilationQueueReason reason) ;
 	void  ( *jitDecompileMethodForFramePop)(struct J9VMThread * currentThread, UDATA skipCount) ;
 	void  ( *jitExceptionCaught)(struct J9VMThread * currentThread) ;
+	void  ( *jitAddPermanentLoader)(struct J9VMThread * currentThread, struct J9ClassLoader * loader) ;
 	void  ( *j9jit_printf)(void *voidConfig, const char *format, ...) ;
 	void* tracingHook;
 	void  ( *jitCheckScavengeOnResolve)(struct J9VMThread *currentThread) ;

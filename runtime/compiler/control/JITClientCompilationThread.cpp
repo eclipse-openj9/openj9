@@ -3471,6 +3471,37 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
       }
    compInfo->getSequencingMonitor()->exit();
 
+   // Determine which permanent loaders (if any) need to be sent to the server.
+   // Each ClientStream sends each permanent loader once. This avoids problems
+   // with concurrency because each ClientStream is only accessed from a single
+   // thread, and it ensures that the permanent loaders will be sent to every
+   // server we connect to (in case e.g. the server dies, we lose connection,
+   // and then reconnect to a new server). However, this does mean that there
+   // will be some duplication, with each loader typically being sent once per
+   // compilation thread. The additional traffic should be minimal because
+   // there should generally be very few permanent loaders (usually exactly 3).
+   auto permanentLoaders = compiler->permanentLoaders();
+   size_t numPermanentLoadersSent = client->numPermanentLoadersSent();
+
+   TR_ASSERT_FATAL(
+      numPermanentLoadersSent <= permanentLoaders.size(),
+      "ClientStream %p claims it has sent %llu permanent loaders to the server,"
+      " but only %llu exist",
+      client,
+      (unsigned long long)numPermanentLoadersSent,
+      (unsigned long long)permanentLoaders.size());
+
+   size_t numNewPermanentLoaders = permanentLoaders.size() - numPermanentLoadersSent;
+
+   std::vector<J9ClassLoader*> newPermanentLoaders;
+   newPermanentLoaders.reserve(numNewPermanentLoaders);
+   for (size_t i = 0; i < numNewPermanentLoaders; i++)
+      {
+      newPermanentLoaders.push_back(permanentLoaders[numPermanentLoadersSent + i]);
+      }
+
+   client->addPermanentLoadersSent(numNewPermanentLoaders);
+
    uint32_t statusCode = compilationFailure;
    std::string codeCacheStr;
    std::string dataCacheStr;
@@ -3502,7 +3533,7 @@ remoteCompile(J9VMThread *vmThread, TR::Compilation *compiler, TR_ResolvedMethod
          detailsStr, details.getType(), unloadedClasses, illegalModificationList, classInfoTuple, optionsStr,
          recompMethodInfoStr, chtableUpdates.first, chtableUpdates.second, useAotCompilation,
          TR::Compiler->vm.isVMInStartupPhase(compInfoPT->getJitConfig()), aotCacheStore, aotCacheLoad, methodIndex,
-         classChainOffset, ramClassChain, uncachedRAMClasses, uncachedClassInfos, newKnownIds
+         classChainOffset, ramClassChain, uncachedRAMClasses, uncachedClassInfos, newKnownIds, newPermanentLoaders
       );
 
       JITServer::MessageType response;

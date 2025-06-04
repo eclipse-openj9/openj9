@@ -56,6 +56,7 @@ ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo, TR_Pers
    _rtResolve(false),
    _registeredJ2IThunksMap(decltype(_registeredJ2IThunksMap)::allocator_type(persistentMemory->_persistentAllocator.get())),
    _registeredInvokeExactJ2IThunksSet(decltype(_registeredInvokeExactJ2IThunksSet)::allocator_type(persistentMemory->_persistentAllocator.get())),
+   _permanentLoaders(decltype(_permanentLoaders)::allocator_type(persistentMemory->_persistentAllocator.get())),
    _wellKnownClasses(),
    _isInStartupPhase(false),
    _aotCacheName(), _aotCache(NULL), _aotHeaderRecord(NULL),
@@ -82,6 +83,7 @@ ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo, TR_Pers
    _staticMapMonitor = TR::Monitor::create("JIT-JITServerStaticMapMonitor");
    _markedForDeletion = false;
    _thunkSetMonitor = TR::Monitor::create("JIT-JITServerThunkSetMonitor");
+   _permanentLoadersMonitor = TR::Monitor::create("JIT-JITServerPermanentLoadersMonitor");
 
    _bClassUnloadingAttempt = false;
    _classUnloadRWMutex = NULL;
@@ -1625,6 +1627,41 @@ ClientSessionData::writeReleaseClassUnloadRWMutex()
    {
    _bClassUnloadingAttempt = false;
    omrthread_rwmutex_exit_write(_classUnloadRWMutex);
+   }
+
+void
+ClientSessionData::addPermanentLoaders(const std::vector<J9ClassLoader*> &loaders)
+   {
+   if (loaders.empty())
+      {
+      return;
+      }
+
+   OMR::CriticalSection lock(_permanentLoadersMonitor);
+   for (auto it = loaders.begin(); it != loaders.end(); it++)
+      {
+      _permanentLoaders.insert(*it);
+      }
+   }
+
+void
+ClientSessionData::getPermanentLoaders(TR::vector<J9ClassLoader*, TR::Region&> &dest)
+   {
+   OMR::CriticalSection lock(_permanentLoadersMonitor);
+   dest.clear();
+   for (auto it = _permanentLoaders.begin(); it != _permanentLoaders.end(); it++)
+      {
+      dest.push_back(*it);
+      }
+
+   // Avoid observing the arbitrary iteration order.
+   //
+   // Prior to C++20, without an explicit comparator the sort would be based on
+   // operator<, which is not necessarily a total order for pointers from
+   // separate allocations. (Never mind that the values in dest don't even
+   // point to allocations in the current process...)
+   //
+   std::sort(dest.begin(), dest.end(), std::less<J9ClassLoader*>());
    }
 
 const void *

@@ -286,7 +286,7 @@ openSSLConnection(SSL_CTX *ctx, int connfd)
    }
 
 ClientStream::ClientStream(TR::PersistentInfo *info)
-   : CommunicationStream(), _versionCheckStatus(NOT_DONE)
+   : CommunicationStream(), _versionCheckStatus(NOT_DONE), _numPermanentLoadersSent(0)
    {
    int connfd = openConnection(info->getJITServerAddress(), info->getJITServerPort(), info->getSocketTimeout());
    BIO *ssl = openSSLConnection(_sslCtx, connfd);

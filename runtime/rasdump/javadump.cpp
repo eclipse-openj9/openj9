@@ -5574,6 +5574,11 @@ JavaCoreDumpWriter::writeOutlivingLoaders(J9ClassLoader *classLoader)
 		_OutputStream.writeCharacters(" anonymous");
 	}
 
+	if (J9CLASSLOADER_OUTLIVING_LOADERS_PERMANENT == classLoader->outlivingLoaders) {
+		_OutputStream.writeCharacters(" (permanent)\n");
+		return;
+	}
+
 	_OutputStream.writeCharacters("\n");
 	if (J9_ARE_ANY_BITS_SET((UDATA)classLoader->outlivingLoaders, J9CLASSLOADER_OUTLIVING_LOADERS_SINGLE_TAG)) {
 		_OutputStream.writeCharacters("3CLTEXTOUTLIVIN\t\t\t");

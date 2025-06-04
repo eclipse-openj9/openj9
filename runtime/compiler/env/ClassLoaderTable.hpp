@@ -24,10 +24,11 @@
 #define CLASSLOADERTABLE_INCL
 
 #include "env/TRMemory.hpp"
-
+#include "infra/vector.hpp"
 
 #define CLASSLOADERTABLE_SIZE 2053
 
+struct J9ClassLoader;
 class TR_J9SharedCache;
 struct TR_ClassLoaderInfo;
 
@@ -54,12 +55,35 @@ public:
    TR_J9SharedCache *getSharedCache() const { return _sharedCache; }
    void setSharedCache(TR_J9SharedCache *sharedCache) { _sharedCache = sharedCache; }
 
+   /**
+    * \brief Remember that \p loader is permanent.
+    *
+    * It will be included in the result of later calls to getPermanentLoaders().
+    *
+    * \param vmThread the J9VMThread of the current thread
+    * \param loader the permanent class loader
+    */
+   void addPermanentLoader(J9VMThread *vmThread, J9ClassLoader *loader);
+
+   /**
+    * \brief Populate \p dest with the class loaders that are known to be permanent.
+    *
+    * \param vmThread the J9VMThread of the current thread
+    * \param[out] dest the resulting vector of class loader pointers
+    */
+   void getPermanentLoaders(
+      J9VMThread *vmThread, TR::vector<J9ClassLoader*, TR::Region&> &dest);
+
 private:
 
    friend class TR_Debug;
 
    TR_PersistentMemory *const _persistentMemory;
    TR_J9SharedCache *_sharedCache;
+
+   typedef TR::typed_allocator<J9ClassLoader*, TR::PersistentAllocator&> ClassLoaderPtrAlloc;
+   typedef std::vector<J9ClassLoader*, ClassLoaderPtrAlloc> ClassLoaderPtrVec;
+   ClassLoaderPtrVec _permanentLoaders;
 
    TR_ClassLoaderInfo *_loaderTable[CLASSLOADERTABLE_SIZE];
    TR_ClassLoaderInfo *_chainTable[CLASSLOADERTABLE_SIZE];
