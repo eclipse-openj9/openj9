@@ -1606,6 +1606,14 @@ generateLastITableAndITableInstructions(TR::CodeGenerator * cg, TR::Node * callN
       bool checkAllITableEnrties = iTableIterations > INT16_MAX;
       bool checkLimitedNumberOfITableEntries = !checkAllITableEnrties && iTableIterations > DYNAMIC_LOOP_THRESHOLD;
       bool checkITableEntries = iTableIterations > 0;
+      bool stopUsingScratchRegister = false;
+
+      if (scratchRegister == NULL)
+         {
+         scratchRegister = cg->allocateRegister();
+         postDeps->addPostCondition(scratchRegister, TR::RealRegister::AssignAny);
+         stopUsingScratchRegister = true;
+         }
 
       static bool breakBeforeIPICUsingLastITable = feGetEnv("TR_breakBeforeIPICUsingLastITable");
       if (breakBeforeIPICUsingLastITable)
@@ -1728,6 +1736,10 @@ generateLastITableAndITableInstructions(TR::CodeGenerator * cg, TR::Node * callN
             {
             cg->stopUsingRegister(loopCountRegister);
             }
+         }
+      if (stopUsingScratchRegister)
+         {
+         cg->stopUsingRegister(scratchRegister);
          }
       }
    return cursor;
