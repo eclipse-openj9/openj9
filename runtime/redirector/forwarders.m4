@@ -457,4 +457,6 @@ _IF([JAVA_SPEC_VERSION >= 24],
 _IF([JAVA_SPEC_VERSION >= 24],
 	[_X(JVM_TakeVirtualThreadListToUnblock, JNICALL, false, jobject, JNIEnv* env, jclass ignored)])
 _IF([JAVA_SPEC_VERSION >= 25],
+	[_X(JVM_CreateThreadSnapshot, JNICALL, false, jobject, JNIEnv *env, jobject thread)])
+_IF([JAVA_SPEC_VERSION >= 25],
 	[_X(JVM_NeedsClassInitBarrierForCDS, JNICALL, false, jboolean, JNIEnv *env, jclass clazz)])

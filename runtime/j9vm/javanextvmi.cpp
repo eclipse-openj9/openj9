@@ -679,6 +679,13 @@ JVM_TakeVirtualThreadListToUnblock(JNIEnv *env, jclass ignored)
 #endif /* JAVA_SPEC_VERSION >= 24 */
 
 #if JAVA_SPEC_VERSION >= 25
+JNIEXPORT jobject JNICALL
+JVM_CreateThreadSnapshot(JNIEnv *env, jobject thread)
+{
+	Assert_SC_true(!"JVM_CreateThreadSnapshot unimplemented");
+	return NULL;
+}
+
 JNIEXPORT jboolean JNICALL
 JVM_NeedsClassInitBarrierForCDS(JNIEnv *env, jclass cls)
 {
