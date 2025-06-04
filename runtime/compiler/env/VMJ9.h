@@ -444,6 +444,16 @@ public:
       }
 
    /**
+    * @brief Get the int32 value in the VarHandle$AccessDescriptor's mode field. This value is used as the index of the MethodHandle for
+    * the access mode in the MethodHandle table.
+    *
+    * @param comp the compilation
+    * @param adIndex the AccessDescriptor known object index
+    * @return int32_t the value in the mode field. -1 if unsuccessful.
+    */
+   virtual int32_t getVarHandleAccessDescriptorMode(TR::Compilation *comp, TR::KnownObjectTable::Index adIndex);
+
+   /**
     * @brief Get the known object index of a MethodHandle cached in a VarHandle's MH table
     * corresponding to the access descriptor. When the VarHandle is known, we can evaluate
     * the result of java/lang/invoke/Invokers.checkVarHandleGenericType at compile time and
