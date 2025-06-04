@@ -20,6 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
+#include "env/KnownObjectTable.hpp"
 #include "optimizer/CallInfo.hpp"
 #include "il/J9DataTypes.hpp"
 
@@ -52,12 +53,18 @@ class TR_J9MethodHandleCallSite : public  TR_FunctionPointerCallSite
 class TR_J9MutableCallSite : public  TR_FunctionPointerCallSite
    {
    public:
-      TR_CALLSITE_TR_ALLOC_AND_INHERIT_CONSTRUCTOR(TR_J9MutableCallSite, TR_FunctionPointerCallSite) { _mcsReferenceLocation = NULL; };
-      virtual bool findCallSiteTarget (TR_CallStack *callStack, TR_InlinerBase* inliner);
-		virtual const char*  name () { return "TR_J9MutableCallSite"; }
-      virtual void setMCSReferenceLocation(uintptr_t *mcsReferenceLocation) { _mcsReferenceLocation = mcsReferenceLocation; }
+      TR_CALLSITE_TR_ALLOC_AND_INHERIT_CONSTRUCTOR(
+         TR_J9MutableCallSite, TR_FunctionPointerCallSite)
+         {
+         _mcs = TR::KnownObjectTable::UNKNOWN;
+         }
+
+      virtual bool findCallSiteTarget(TR_CallStack *callStack, TR_InlinerBase* inliner);
+      virtual const char *name() { return "TR_J9MutableCallSite"; }
+      virtual void setMCS(TR::KnownObjectTable::Index mcs) { _mcs = mcs; }
+
    private:
-      uintptr_t * _mcsReferenceLocation;
+      TR::KnownObjectTable::Index _mcs;
    };
 
 class TR_J9VirtualCallSite : public TR_ProfileableCallSite

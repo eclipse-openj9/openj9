@@ -204,6 +204,7 @@ enum MessageType : uint16_t
    VM_isInvokeCacheEntryAnArray,
    VM_getMethodHandleTableEntryIndex,
    VM_getLayoutVarHandle,
+   VM_mutableCallSiteEpoch,
 
    // For static TR::CompilationInfo methods
    CompInfo_isCompiled,
@@ -279,7 +280,6 @@ enum MessageType : uint16_t
    KnownObjectTable_getPointer,
    KnownObjectTable_getExistingIndexAt,
    // for KnownObjectTable outside J9::KnownObjectTable class
-   KnownObjectTable_mutableCallSiteEpoch,
    KnownObjectTable_dereferenceKnownObjectField,
    KnownObjectTable_dereferenceKnownObjectField2,
    KnownObjectTable_createSymRefWithKnownObject,
