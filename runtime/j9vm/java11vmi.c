@@ -524,15 +524,16 @@ addPackageDefinition(J9VMThread *currentThread, J9Module *fromModule, const char
 }
 
 static void
-removeMulPackageDefinitions(J9VMThread * currentThread, J9Module * fromModule, const char* const* packages, U_32 packagesIndex)
+removeMulPackageDefinitions(J9VMThread *currentThread, J9Module *fromModule, const char *const *packages, U_32 packagesIndex)
 {
 	BOOLEAN stopLoop = FALSE;
 	U_32 i = packagesIndex;
 
 	while (!stopLoop) {
 		const char *packageName = packages[i];
+		BOOLEAN removed = removePackageDefinition(currentThread, fromModule, packageName);
 
-		Assert_SC_true(removePackageDefinition(currentThread, fromModule, packageName));
+		Assert_SC_true(removed);
 
 		stopLoop = (0 == i);
 		--i;
