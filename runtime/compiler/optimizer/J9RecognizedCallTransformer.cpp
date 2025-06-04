@@ -586,6 +586,7 @@ void J9::RecognizedCallTransformer::process_java_lang_StringUTF16_toBytes(TR::Tr
    fallbackPathBlock->setIsCold();
    }
 
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
 // helper function for process_jdk_internal_util_ArraysSupport_vectorizedMismatch
 // see comments there for more details
 static TR::Node* insertVectorizedMisMatchArgumentChecksAndAdjustForOffHeap(TR::Compilation* comp,
@@ -642,8 +643,7 @@ static TR::Node* insertVectorizedMisMatchArgumentChecksAndAdjustForOffHeap(TR::C
    TR::Node* resultNode = TR::Node::createLoad(node, symRef);
    return resultNode;
    }
-
-
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 
 void J9::RecognizedCallTransformer::process_jdk_internal_util_ArraysSupport_vectorizedMismatch(TR::TreeTop* treetop, TR::Node* node)
    {
@@ -761,7 +761,7 @@ void J9::RecognizedCallTransformer::process_jdk_internal_util_ArraysSupport_vect
             }
          }
       }
-#endif
+#endif /* defined(J9VM_GC_SPARSE_HEAP_ALLOCATION) */
 
    mismatchByteIndex->setAndIncChild(0, TR::Node::create(node, TR::aladd, 2, a, aOffset));
    mismatchByteIndex->setAndIncChild(1, TR::Node::create(node, TR::aladd, 2, b, bOffset));
